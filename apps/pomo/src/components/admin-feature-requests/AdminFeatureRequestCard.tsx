@@ -1,4 +1,5 @@
 import {createSignal, For, Show, untrack} from 'solid-js'
+import * as m from '@paraglide/message'
 
 import {
   FEATURE_REQUEST_STATUSES,
@@ -13,11 +14,21 @@ interface AdminFeatureRequestCardProps {
   readonly request: FeatureRequest
 }
 
-const STATUS_LABELS: Record<FeatureRequestStatus, string> = {
-  completed: '투표 완료됨',
-  confirmed: '개발 확정',
-  requested: '요청됨',
-  voting: '투표중',
+const getStatusLabel = (status: FeatureRequestStatus): string => {
+  switch (status) {
+    case 'completed':
+      return m.feature_request_status_completed()
+    case 'confirmed':
+      return m.feature_request_status_confirmed()
+    case 'requested':
+      return m.feature_request_status_requested()
+    case 'voting':
+      return m.feature_request_status_voting()
+    default: {
+      const exhaustiveStatus: never = status
+      return exhaustiveStatus
+    }
+  }
 }
 
 export const AdminFeatureRequestCard = (props: AdminFeatureRequestCardProps) => {
@@ -40,7 +51,7 @@ export const AdminFeatureRequestCard = (props: AdminFeatureRequestCardProps) => 
       targetRequired &&
       (parsedTarget === null || !Number.isInteger(parsedTarget) || parsedTarget < 1)
     ) {
-      setErrorMessage('투표 목표는 1 이상의 정수여야 합니다.')
+      setErrorMessage(m.admin_feature_request_target_invalid())
       return
     }
 
@@ -57,9 +68,11 @@ export const AdminFeatureRequestCard = (props: AdminFeatureRequestCardProps) => 
       <header>
         <div class="flex flex-wrap items-center gap-2">
           <span class="text-xs font-750 tracking-[0.16em] text-#e8bc88 uppercase">
-            {STATUS_LABELS[props.request.status]}
+            {getStatusLabel(props.request.status)}
           </span>
-          <span class="text-xs text-white/45">· {props.request.voteCount}표</span>
+          <span class="text-xs text-white/45">
+            · {m.feature_request_vote_count({count: props.request.voteCount})}
+          </span>
         </div>
         <h2 class="mb-0 mt-2 text-lg font-750">{props.request.title}</h2>
         <Show when={props.request.description}>
@@ -71,7 +84,7 @@ export const AdminFeatureRequestCard = (props: AdminFeatureRequestCardProps) => 
 
       <form class="grid gap-4 border-t border-white/10 pt-4" onSubmit={handleSave}>
         <fieldset class="grid gap-2" disabled={props.disabled}>
-          <legend class="text-sm font-700">상태 변경</legend>
+          <legend class="text-sm font-700">{m.admin_feature_request_status_change()}</legend>
           <div class="flex flex-wrap gap-2">
             <For each={FEATURE_REQUEST_STATUSES}>
               {(option) => (
@@ -85,7 +98,7 @@ export const AdminFeatureRequestCard = (props: AdminFeatureRequestCardProps) => 
                   onClick={() => setStatus(option)}
                   type="button"
                 >
-                  {STATUS_LABELS[option]}
+                  {getStatusLabel(option)}
                 </button>
               )}
             </For>
@@ -94,7 +107,7 @@ export const AdminFeatureRequestCard = (props: AdminFeatureRequestCardProps) => 
 
         <Show when={requiresTarget()}>
           <label class="grid gap-2 text-sm font-700">
-            투표 목표 수
+            {m.admin_feature_request_vote_goal()}
             <input
               class={
                 'h-10 rounded-2 border border-white/15 bg-black/15 px-3 text-sm text-white ' +
@@ -119,7 +132,7 @@ export const AdminFeatureRequestCard = (props: AdminFeatureRequestCardProps) => 
             disabled={props.disabled}
             type="submit"
           >
-            {props.disabled ? '저장 중…' : '상태 저장'}
+            {props.disabled ? m.admin_feature_request_saving() : m.admin_feature_request_save()}
           </button>
           <Show when={errorMessage()}>
             {(message) => (

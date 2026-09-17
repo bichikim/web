@@ -14,8 +14,12 @@ export interface AdminFeatureRequestStatusInput {
 }
 
 export interface AdminFeatureRequestsController {
+  readonly hasMore: () => boolean
   readonly isLoading: () => boolean
+  readonly isLoadingMore: () => boolean
   readonly loadFailed: () => boolean
+  readonly loadMore: () => Promise<void>
+  readonly loadMoreFailed: () => boolean
   readonly refresh: () => Promise<void>
   readonly requests: () => ReadonlyArray<FeatureRequest>
   readonly updateRequest: (
@@ -26,20 +30,47 @@ export interface AdminFeatureRequestsController {
 
 export const useAdminFeatureRequests = (): AdminFeatureRequestsController => {
   const [requests, setRequests] = createSignal<ReadonlyArray<FeatureRequest>>([])
+  const [hasMore, setHasMore] = createSignal(false)
   const [isLoading, setIsLoading] = createSignal(true)
+  const [isLoadingMore, setIsLoadingMore] = createSignal(false)
   const [loadFailed, setLoadFailed] = createSignal(false)
+  const [loadMoreFailed, setLoadMoreFailed] = createSignal(false)
   const [updatingRequestId, setUpdatingRequestId] = createSignal<string | null>(null)
 
   const refresh = async (): Promise<void> => {
     setIsLoading(true)
     setLoadFailed(false)
+    setLoadMoreFailed(false)
+    setHasMore(false)
 
     try {
-      setRequests(await listAdminFeatureRequests())
+      const page = await listAdminFeatureRequests()
+      setHasMore(page.hasMore)
+      setRequests(page.requests)
     } catch {
       setLoadFailed(true)
     } finally {
       setIsLoading(false)
+    }
+  }
+
+  const loadMore = async (): Promise<void> => {
+    if (!hasMore() || isLoadingMore()) {
+      return
+    }
+
+    const offset = requests().length
+    setIsLoadingMore(true)
+    setLoadMoreFailed(false)
+
+    try {
+      const page = await listAdminFeatureRequests({offset})
+      setRequests((currentRequests) => [...currentRequests, ...page.requests])
+      setHasMore(page.hasMore)
+    } catch {
+      setLoadMoreFailed(true)
+    } finally {
+      setIsLoadingMore(false)
     }
   }
 
@@ -66,8 +97,12 @@ export const useAdminFeatureRequests = (): AdminFeatureRequestsController => {
   })
 
   return {
+    hasMore,
     isLoading,
+    isLoadingMore,
     loadFailed,
+    loadMore,
+    loadMoreFailed,
     refresh,
     requests,
     updateRequest,

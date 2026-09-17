@@ -27,6 +27,7 @@ const REQUEST = {
   voteCount: 2,
   votedByCurrentUser: false,
 } as const
+const REQUEST_PAGE = {hasMore: false, requests: [REQUEST]}
 
 const createRequest = (body: unknown): Request =>
   new Request('https://pomo.example/api/feature-requests', {
@@ -38,7 +39,7 @@ const createRequest = (body: unknown): Request =>
 beforeEach(() => {
   vi.clearAllMocks()
   authMocks.resolveUserRequest.mockResolvedValue({cookies: [], userId: null})
-  repositoryMocks.listFeatureRequests.mockResolvedValue([REQUEST])
+  repositoryMocks.listFeatureRequests.mockResolvedValue(REQUEST_PAGE)
   repositoryMocks.createFeatureRequest.mockResolvedValue({id: REQUEST.id})
 })
 
@@ -49,8 +50,28 @@ it('should list feature requests for an anonymous visitor', async () => {
   )
 
   expect(response.status).toBe(200)
-  await expect(response.json()).resolves.toEqual({requests: [REQUEST]})
-  expect(repositoryMocks.listFeatureRequests).toHaveBeenCalledWith(null)
+  await expect(response.json()).resolves.toEqual(REQUEST_PAGE)
+  expect(repositoryMocks.listFeatureRequests).toHaveBeenCalledWith(null, {offset: 0})
+})
+
+it('should pass a valid list offset to the repository', async () => {
+  const response = await invokeApiRoute(
+    GET,
+    new Request('https://pomo.example/api/feature-requests?offset=20'),
+  )
+
+  expect(response.status).toBe(200)
+  expect(repositoryMocks.listFeatureRequests).toHaveBeenCalledWith(null, {offset: 20})
+})
+
+it('should reject an invalid list offset', async () => {
+  const response = await invokeApiRoute(
+    GET,
+    new Request('https://pomo.example/api/feature-requests?offset=not-a-number'),
+  )
+
+  expect(response.status).toBe(400)
+  expect(repositoryMocks.listFeatureRequests).not.toHaveBeenCalled()
 })
 
 it('should require an authenticated user before creating a request', async () => {

@@ -14,7 +14,7 @@ import {invokeApiRoute} from '../../../__tests__/invoke'
 beforeEach(() => {
   vi.clearAllMocks()
   authMocks.authorizeAdminRequest.mockResolvedValue({authorized: true, cookies: ['admin=1']})
-  repositoryMocks.listAdminFeatureRequests.mockResolvedValue([])
+  repositoryMocks.listAdminFeatureRequests.mockResolvedValue({hasMore: false, requests: []})
 })
 
 it('should return the authorization response before listing requests', async () => {
@@ -40,5 +40,26 @@ it('should list all feature requests for an administrator', async () => {
 
   expect(response.status).toBe(200)
   expect(response.headers.getSetCookie()).toEqual(['admin=1'])
-  await expect(response.json()).resolves.toEqual({requests: []})
+  await expect(response.json()).resolves.toEqual({hasMore: false, requests: []})
+  expect(repositoryMocks.listAdminFeatureRequests).toHaveBeenCalledWith({offset: 0})
+})
+
+it('should pass a valid list offset to the repository', async () => {
+  const response = await invokeApiRoute(
+    GET,
+    new Request('https://pomo.example/api/admin/feature-requests?offset=40'),
+  )
+
+  expect(response.status).toBe(200)
+  expect(repositoryMocks.listAdminFeatureRequests).toHaveBeenCalledWith({offset: 40})
+})
+
+it('should reject an invalid list offset', async () => {
+  const response = await invokeApiRoute(
+    GET,
+    new Request('https://pomo.example/api/admin/feature-requests?offset=-1'),
+  )
+
+  expect(response.status).toBe(400)
+  expect(repositoryMocks.listAdminFeatureRequests).not.toHaveBeenCalled()
 })

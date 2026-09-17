@@ -13,6 +13,15 @@ export interface FeatureRequest {
   readonly votedByCurrentUser: boolean
 }
 
+export interface FeatureRequestPage {
+  readonly hasMore: boolean
+  readonly requests: ReadonlyArray<FeatureRequest>
+}
+
+export interface FeatureRequestListOptions {
+  readonly offset?: number
+}
+
 export interface CreateFeatureRequestInput {
   readonly description: string
   readonly title: string

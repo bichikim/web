@@ -24,4 +24,10 @@ export type {
   AdminFeatureRequestsController,
 } from './use-admin-feature-requests'
 export {FEATURE_REQUEST_STATUSES} from './types'
-export type {CreateFeatureRequestInput, FeatureRequest, FeatureRequestStatus} from './types'
+export type {
+  CreateFeatureRequestInput,
+  FeatureRequest,
+  FeatureRequestListOptions,
+  FeatureRequestPage,
+  FeatureRequestStatus,
+} from './types'

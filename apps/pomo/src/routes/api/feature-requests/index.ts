@@ -15,10 +15,14 @@ const HTTP_CREATED = 201
 const HTTP_INTERNAL_SERVER_ERROR = 500
 const HTTP_UNAUTHORIZED = 401
 const HTTP_SERVICE_UNAVAILABLE = 503
+const MAXIMUM_LIST_OFFSET = 10_000
 
 const createFeatureRequestSchema = z.object({
   description: z.string().trim().max(MAXIMUM_DESCRIPTION_LENGTH),
   title: z.string().trim().min(1).max(MAXIMUM_TITLE_LENGTH),
+})
+const listFeatureRequestQuerySchema = z.object({
+  offset: z.coerce.number().int().min(0).max(MAXIMUM_LIST_OFFSET).default(0),
 })
 
 const resolveIdentity = async (event: APIEvent) => {
@@ -47,11 +51,20 @@ export const GET = async (event: APIEvent): Promise<Response> => {
     return resolved.response
   }
 
-  try {
+  const parsedQuery = listFeatureRequestQuerySchema.safeParse(
+    Object.fromEntries(new URL(event.request.url).searchParams),
+  )
+
+  if (!parsedQuery.success) {
     return noStoreJson(
-      {requests: await listFeatureRequests(resolved.identity.userId)},
-      {cookies: resolved.identity.cookies},
+      {error: 'invalid_request'},
+      {cookies: resolved.identity.cookies, status: HTTP_BAD_REQUEST},
     )
+  }
+
+  try {
+    const page = await listFeatureRequests(resolved.identity.userId, parsedQuery.data)
+    return noStoreJson(page, {cookies: resolved.identity.cookies})
   } catch (error: unknown) {
     console.error('Failed to list feature requests', error)
     return noStoreJson(

@@ -25,9 +25,13 @@ const authentication: AuthController = {
 const createRequest = vi.fn()
 const model: FeatureRequestsController = {
   createRequest,
+  hasMore: () => false,
   isLoading: () => false,
+  isLoadingMore: () => false,
   isSubmitting: () => false,
   loadFailed: () => false,
+  loadMore: vi.fn(async () => undefined),
+  loadMoreFailed: () => false,
   refresh: vi.fn(async () => undefined),
   requests: () => [],
   voteRequest: vi.fn(),

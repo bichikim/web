@@ -1,5 +1,6 @@
 import {Title} from '@solidjs/meta'
 import {A, useAction} from '@solidjs/router'
+import * as m from '@paraglide/message'
 import {cx} from 'class-variance-authority'
 import {type JSX, Show} from 'solid-js'
 
@@ -12,7 +13,7 @@ const BUTTON_CLASSES = cx(
   'transition hover:border-white/30 hover:bg-white/10 focus-visible:outline-2',
   'focus-visible:outline-offset-3 focus-visible:outline-#e8bc88 disabled:opacity-55',
 )
-const MUSIC_CARD_CLASSES = cx(
+const ADMIN_CARD_CLASSES = cx(
   'group rounded-5 border border-white/10 bg-white/4 p-6 text-inherit no-underline transition',
   'hover:border-#e8bc88/55 hover:bg-white/7 focus-visible:outline-2',
   'focus-visible:outline-offset-3 focus-visible:outline-#e8bc88',
@@ -51,7 +52,7 @@ export const AdminDashboard = () => {
       </Show>
 
       <section class="mx-auto mt-12 grid w-full max-w-6xl gap-5 sm:grid-cols-2">
-        <A class={MUSIC_CARD_CLASSES} href="/admin/music">
+        <A class={ADMIN_CARD_CLASSES} href="/admin/music">
           <p class="m-0 text-xs font-750 tracking-[0.18em] text-#e8bc88 uppercase">Catalog</p>
           <h2 class="mb-0 mt-3 text-lg font-750">음악 / 앨범 관리</h2>
           <p class="mb-0 mt-3 max-w-xl text-sm leading-6 text-white/60">
@@ -61,14 +62,16 @@ export const AdminDashboard = () => {
             관리 페이지 열기 →
           </span>
         </A>
-        <A class={MUSIC_CARD_CLASSES} href="/admin/feature-requests">
-          <p class="m-0 text-xs font-750 tracking-[0.18em] text-#e8bc88 uppercase">Community</p>
-          <h2 class="mb-0 mt-3 text-lg font-750">기능 요청 관리</h2>
+        <A class={ADMIN_CARD_CLASSES} href="/admin/feature-requests">
+          <p class="m-0 text-xs font-750 tracking-[0.18em] text-#e8bc88 uppercase">
+            {m.admin_feature_request_dashboard_eyebrow()}
+          </p>
+          <h2 class="mb-0 mt-3 text-lg font-750">{m.admin_feature_request_dashboard_title()}</h2>
           <p class="mb-0 mt-3 max-w-xl text-sm leading-6 text-white/60">
-            사용자 요청을 확인하고 투표·개발 상태와 목표 표 수를 관리합니다.
+            {m.admin_feature_request_dashboard_description()}
           </p>
           <span class="mt-6 inline-block text-sm font-700 text-#f3d1a9 group-hover:underline">
-            관리 페이지 열기 →
+            {m.admin_feature_request_dashboard_open()}
           </span>
         </A>
       </section>

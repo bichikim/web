@@ -50,6 +50,18 @@ const featureRequestStatusOrder = sql<number>`case
   when ${featureRequests.status} = 'requested' then 2
   else 3
 end`
+const DEFAULT_FEATURE_REQUEST_PAGE_SIZE = 20
+const MAXIMUM_FEATURE_REQUEST_PAGE_SIZE = 50
+
+export interface FeatureRequestListOptions {
+  readonly limit?: number
+  readonly offset?: number
+}
+
+export interface FeatureRequestListPage {
+  readonly hasMore: boolean
+  readonly requests: ReadonlyArray<FeatureRequestListItem>
+}
 
 const createVotedByCurrentUserExpression = (userId: string | null) =>
   userId === null
@@ -83,8 +95,18 @@ const toFeatureRequestListItem = (row: {
 
 export const listFeatureRequests = async (
   userId: string | null,
-): Promise<ReadonlyArray<FeatureRequestListItem>> => {
-  const voteCount = sql<number>`count(${featureRequestVotes.userId})`.mapWith(Number)
+  options: FeatureRequestListOptions = {},
+): Promise<FeatureRequestListPage> => {
+  const pageSize = Math.min(
+    Math.max(options.limit ?? DEFAULT_FEATURE_REQUEST_PAGE_SIZE, 1),
+    MAXIMUM_FEATURE_REQUEST_PAGE_SIZE,
+  )
+  const offset = Math.max(options.offset ?? 0, 0)
+  const voteCount = sql<number>`(
+    select count(*)
+    from ${featureRequestVotes}
+    where ${featureRequestVotes.requestId} = ${featureRequests.id}
+  )`.mapWith(Number)
   const rows = await getDatabase()
     .select({
       createdAt: featureRequests.createdAt,
@@ -97,15 +119,24 @@ export const listFeatureRequests = async (
       votedByCurrentUser: createVotedByCurrentUserExpression(userId),
     })
     .from(featureRequests)
-    .leftJoin(featureRequestVotes, eq(featureRequestVotes.requestId, featureRequests.id))
-    .groupBy(featureRequests.id)
-    .orderBy(asc(featureRequestStatusOrder), desc(voteCount), desc(featureRequests.createdAt))
+    .orderBy(
+      asc(featureRequestStatusOrder),
+      desc(voteCount),
+      desc(featureRequests.createdAt),
+      asc(featureRequests.id),
+    )
+    .limit(pageSize + 1)
+    .offset(offset)
 
-  return rows.map(toFeatureRequestListItem)
+  return {
+    hasMore: rows.length > pageSize,
+    requests: rows.slice(0, pageSize).map(toFeatureRequestListItem),
+  }
 }
 
-export const listAdminFeatureRequests = (): Promise<ReadonlyArray<FeatureRequestListItem>> =>
-  listFeatureRequests(null)
+export const listAdminFeatureRequests = (
+  options: FeatureRequestListOptions = {},
+): Promise<FeatureRequestListPage> => listFeatureRequests(null, options)
 
 export const createFeatureRequest = async (
   input: CreateFeatureRequestInput,

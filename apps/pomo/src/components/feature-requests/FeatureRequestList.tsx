@@ -113,6 +113,28 @@ export const FeatureRequestList = (props: FeatureRequestListProps) => {
         </Show>
       </Show>
 
+      <Show when={props.model.hasMore()}>
+        <div class="grid justify-items-center gap-2">
+          <PButton
+            bordered
+            disabled={props.model.isLoadingMore()}
+            onPress={() => props.model.loadMore().catch(() => undefined)}
+            size="small"
+            tone="secondary"
+            transparent
+          >
+            {props.model.isLoadingMore()
+              ? m.feature_request_loading_more()
+              : m.feature_request_load_more()}
+          </PButton>
+          <Show when={props.model.loadMoreFailed()}>
+            <span class="text-sm text-danger" role="alert">
+              {m.feature_request_load_more_failed()}
+            </span>
+          </Show>
+        </div>
+      </Show>
+
       <Show when={voteMessage()}>
         {(message) => (
           <PFormMessage tone="error">

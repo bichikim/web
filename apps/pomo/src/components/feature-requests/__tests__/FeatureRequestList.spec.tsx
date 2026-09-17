@@ -17,9 +17,13 @@ const authentication: AuthController = {
 }
 const model: FeatureRequestsController = {
   createRequest: vi.fn(),
+  hasMore: () => false,
   isLoading: () => false,
+  isLoadingMore: () => false,
   isSubmitting: () => false,
   loadFailed: () => false,
+  loadMore: vi.fn(async () => undefined),
+  loadMoreFailed: () => false,
   refresh: vi.fn(async () => undefined),
   requests: () => [],
   voteRequest: vi.fn(),
@@ -39,4 +43,25 @@ it('should place the new request action in the list header', () => {
   const newRequestAction = screen.getByRole('button', {name: m.feature_request_new()})
 
   expect(heading.parentElement).toContainElement(newRequestAction)
+})
+
+it('should show a load more action when more requests are available', () => {
+  const loadMore = vi.fn(async () => undefined)
+  const paginatedModel: FeatureRequestsController = {
+    ...model,
+    hasMore: () => true,
+    loadMore,
+  }
+
+  render(() => (
+    <FeatureRequestList
+      authentication={authentication}
+      model={paginatedModel}
+      newRequestAction={<button type="button">{m.feature_request_new()}</button>}
+    />
+  ))
+
+  screen.getByRole('button', {name: m.feature_request_load_more()}).click()
+
+  expect(loadMore).toHaveBeenCalledOnce()
 })

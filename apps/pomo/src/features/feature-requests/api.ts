@@ -6,6 +6,8 @@ import {
   type CreateFeatureRequestInput,
   FEATURE_REQUEST_STATUSES,
   type FeatureRequest,
+  type FeatureRequestListOptions,
+  type FeatureRequestPage,
 } from './types'
 
 const HTTP_BAD_REQUEST = 400
@@ -23,7 +25,10 @@ const featureRequestSchema: z.ZodType<FeatureRequest> = z.object({
   voteCount: z.number().int().nonnegative(),
   votedByCurrentUser: z.boolean(),
 })
-const featureRequestsResponseSchema = z.object({requests: z.array(featureRequestSchema)})
+const featureRequestsResponseSchema: z.ZodType<FeatureRequestPage> = z.object({
+  hasMore: z.boolean(),
+  requests: z.array(featureRequestSchema),
+})
 const voteResponseSchema = z.object({status: z.enum(['already-voted', 'voted'])})
 
 interface FeatureRequestRequestOptions {
@@ -61,13 +66,18 @@ const createRequestOptions = async (): Promise<FeatureRequestRequestOptions> => 
   return token === null ? {} : {headers: {Authorization: `Bearer ${token}`}}
 }
 
-export const listFeatureRequests = async (): Promise<ReadonlyArray<FeatureRequest>> =>
-  (
-    await apiJson('feature-requests', {
-      ...(await createRequestOptions()),
-      responseSchema: featureRequestsResponseSchema,
-    })
-  ).requests
+const createListPath = (path: string, options: FeatureRequestListOptions): string => {
+  const offset = options.offset ?? 0
+  return offset === 0 ? path : `${path}?offset=${encodeURIComponent(offset)}`
+}
+
+export const listFeatureRequests = async (
+  options: FeatureRequestListOptions = {},
+): Promise<FeatureRequestPage> =>
+  apiJson(createListPath('feature-requests', options), {
+    ...(await createRequestOptions()),
+    responseSchema: featureRequestsResponseSchema,
+  })
 
 export const createFeatureRequest = async (
   input: CreateFeatureRequestInput,
@@ -118,13 +128,13 @@ export const voteFeatureRequest = async (requestId: string): Promise<VoteFeature
   return parseJsonResponse(response, voteResponseSchema)
 }
 
-export const listAdminFeatureRequests = async (): Promise<ReadonlyArray<FeatureRequest>> =>
-  (
-    await apiJson('admin/feature-requests', {
-      credentials: 'include',
-      responseSchema: featureRequestsResponseSchema,
-    })
-  ).requests
+export const listAdminFeatureRequests = async (
+  options: FeatureRequestListOptions = {},
+): Promise<FeatureRequestPage> =>
+  apiJson(createListPath('admin/feature-requests', options), {
+    credentials: 'include',
+    responseSchema: featureRequestsResponseSchema,
+  })
 
 export const updateAdminFeatureRequest = async (input: {
   readonly requestId: string

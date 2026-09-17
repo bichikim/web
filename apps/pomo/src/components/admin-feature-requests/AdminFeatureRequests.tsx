@@ -1,6 +1,7 @@
 import {Title} from '@solidjs/meta'
 import {A} from '@solidjs/router'
 import {For, Show} from 'solid-js'
+import * as m from '@paraglide/message'
 
 import {useAdminFeatureRequests} from '../../features/feature-requests/use-admin-feature-requests'
 import {AdminFeatureRequestCard} from './AdminFeatureRequestCard'
@@ -15,27 +16,31 @@ export const AdminFeatureRequests = () => {
     }
 
     return result.status === 'not-found'
-      ? '요청을 찾지 못했습니다.'
+      ? m.admin_feature_request_update_not_found()
       : result.status === 'invalid'
-        ? '입력한 상태를 저장할 수 없습니다.'
+        ? m.admin_feature_request_update_invalid()
         : result.status === 'conflict'
-          ? '현재 상태와 충돌했습니다. 목록을 새로고침해 주세요.'
-          : '상태를 저장하지 못했습니다.'
+          ? m.admin_feature_request_update_conflict()
+          : m.admin_feature_request_update_failed()
   }
 
   return (
     <main class="min-h-dvh bg-#15120f px-5 py-8 text-#fffaf1 sm:px-8">
-      <Title>기능 요청 관리 · 앱</Title>
+      <Title>{m.admin_feature_requests_page_title()}</Title>
       <header class="mx-auto flex w-full max-w-4xl items-center justify-between gap-4">
         <div>
-          <p class="m-0 text-xs font-750 tracking-[0.24em] text-#e8bc88 uppercase">앱 관리</p>
-          <h1 class="mb-0 mt-2 text-2xl font-800 tracking--0.03em">기능 요청 관리</h1>
+          <p class="m-0 text-xs font-750 tracking-[0.24em] text-#e8bc88 uppercase">
+            {m.admin_feature_requests_eyebrow()}
+          </p>
+          <h1 class="mb-0 mt-2 text-2xl font-800 tracking--0.03em">
+            {m.admin_feature_requests_heading()}
+          </h1>
         </div>
         <A
           class="rounded-2 border border-white/15 px-3 py-2 text-sm text-white/75 no-underline hover:bg-white/10"
           href="/admin"
         >
-          관리자 홈
+          {m.admin_feature_requests_home()}
         </A>
       </header>
 
@@ -47,13 +52,13 @@ export const AdminFeatureRequests = () => {
           }
           role="alert"
         >
-          <span>기능 요청을 불러오지 못했습니다.</span>
+          <span>{m.admin_feature_requests_load_failed()}</span>
           <button
             class="rounded-2 bg-white/10 px-3 py-2 font-700 hover:bg-white/15"
             onClick={() => model.refresh().catch(() => undefined)}
             type="button"
           >
-            다시 시도
+            {m.feature_request_retry()}
           </button>
         </div>
       </Show>
@@ -61,7 +66,7 @@ export const AdminFeatureRequests = () => {
       <Show when={!model.isLoading()}>
         <section class="mx-auto mt-8 grid w-full max-w-4xl gap-4">
           <Show
-            fallback={<p class="text-sm text-white/55">등록된 기능 요청이 없습니다.</p>}
+            fallback={<p class="text-sm text-white/55">{m.admin_feature_requests_empty()}</p>}
             when={model.requests().length > 0}
           >
             <For each={model.requests()}>
@@ -75,6 +80,26 @@ export const AdminFeatureRequests = () => {
             </For>
           </Show>
         </section>
+      </Show>
+
+      <Show when={model.hasMore()}>
+        <div class="mx-auto mt-6 grid justify-items-center gap-2">
+          <button
+            class="rounded-2 bg-white/10 px-3 py-2 text-sm font-700 hover:bg-white/15 disabled:opacity-50"
+            disabled={model.isLoadingMore()}
+            onClick={() => model.loadMore().catch(() => undefined)}
+            type="button"
+          >
+            {model.isLoadingMore()
+              ? m.feature_request_loading_more()
+              : m.feature_request_load_more()}
+          </button>
+          <Show when={model.loadMoreFailed()}>
+            <span class="text-sm text-#ff9e8f" role="alert">
+              {m.feature_request_load_more_failed()}
+            </span>
+          </Show>
+        </div>
       </Show>
     </main>
   )
