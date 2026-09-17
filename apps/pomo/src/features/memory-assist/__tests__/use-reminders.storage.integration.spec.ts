@@ -108,3 +108,79 @@ it('should not replay a reminder after a persisted edit reaches the reminder hoo
     view.cleanup()
   }
 })
+
+it('should persist an exact delivery before delivering a simultaneously due recall', async () => {
+  const dueAt = '2026-09-04T03:00:00.000Z'
+  const memo = {
+    ...createMemoryMemo({
+      exactReminderAt: null,
+      id: 'memo-1',
+      now: new Date('2026-09-04T02:50:00.000Z'),
+      random: () => 0,
+      recallMode: 'reinforcement',
+      text: '메모',
+    }),
+    dialogueId: 'dialogue-1',
+    nextExactReminderAt: dueAt,
+    nextRecallAt: dueAt,
+  }
+  localStorage.setItem('pomo:memory-memos:v1', JSON.stringify([memo]))
+
+  const firstPlayback = Promise.withResolvers<boolean>()
+  const events = {
+    deleteDialogue: vi.fn(),
+    playDialogue: vi.fn().mockReturnValueOnce(firstPlayback.promise).mockResolvedValue(true),
+    refreshDialogues: vi.fn().mockResolvedValue(undefined),
+  } as unknown as PEventContextValue
+  const view = renderHook(() => useMemoryReminders({events, random: () => 0}))
+
+  try {
+    await flushPromises()
+    await vi.advanceTimersToNextTimerAsync()
+    expect(events.playDialogue).toHaveBeenCalledOnce()
+
+    firstPlayback.resolve(true)
+    await flushPromises()
+
+    expect(JSON.parse(localStorage.getItem('pomo:memory-memos:v1') ?? 'null')).toMatchObject([
+      {
+        nextExactReminderAt: null,
+        nextRecallAt: dueAt,
+        reinforcementIndex: 0,
+        reminderEvents: [
+          {
+            deliveredAt: dueAt,
+            kind: 'exact',
+            scheduledAt: dueAt,
+          },
+        ],
+      },
+    ])
+
+    await vi.advanceTimersByTimeAsync(0)
+    await flushPromises()
+
+    expect(events.playDialogue).toHaveBeenCalledTimes(2)
+    expect(JSON.parse(localStorage.getItem('pomo:memory-memos:v1') ?? 'null')).toMatchObject([
+      {
+        nextExactReminderAt: null,
+        nextRecallAt: '2026-09-04T11:00:00.000Z',
+        reinforcementIndex: 1,
+        reminderEvents: [
+          {
+            deliveredAt: dueAt,
+            kind: 'exact',
+            scheduledAt: dueAt,
+          },
+          {
+            deliveredAt: dueAt,
+            kind: 'recall',
+            scheduledAt: dueAt,
+          },
+        ],
+      },
+    ])
+  } finally {
+    view.cleanup()
+  }
+})
