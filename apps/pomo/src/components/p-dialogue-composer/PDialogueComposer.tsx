@@ -2,16 +2,29 @@ import {PInput} from 'src/components/p-input/PInput'
 import {isNonBlankString} from 'src/utils/is-non-blank-string'
 import {useEvent} from '@winter-love/solid-use'
 import {cx} from 'class-variance-authority'
-import {type Accessor, createEffect, createSignal, type Setter, Show} from 'solid-js'
+import {type Accessor, createEffect, createSignal, type Setter, Show, untrack} from 'solid-js'
 import * as m from '@paraglide/message'
 import {DialogueTrigger} from '../dialogue-composer/DialogueTrigger'
 
-export interface PDialogueComposerProps {
+interface PDialogueComposerCommonProps {
   readonly autoExpand?: boolean
   readonly disabled?: boolean
   readonly loading?: boolean
   readonly onSubmit?: (text: string) => boolean | Promise<boolean> | Promise<void> | void
 }
+
+interface LocalDraftProps {
+  readonly draft?: undefined
+  readonly onDraftChange?: undefined
+}
+
+interface ControlledDraftProps {
+  readonly draft: Accessor<string>
+  readonly onDraftChange: (text: string) => void
+}
+
+export type PDialogueComposerProps = PDialogueComposerCommonProps &
+  (ControlledDraftProps | LocalDraftProps)
 
 const focusMountedInput = (element: HTMLInputElement | undefined) => {
   queueMicrotask(() => element?.focus())
@@ -72,11 +85,36 @@ const SUBMIT_CLASSES = cx(
   'disabled:opacity-45 disabled:transform-none motion-reduce:transition-none',
 )
 
+interface DraftController {
+  readonly draft: Accessor<string>
+  readonly setDraft: (text: string) => void
+}
+
+type DraftProps = ControlledDraftProps | LocalDraftProps
+
+const createDraftController = (props: DraftProps): DraftController => {
+  const [localDraft, setLocalDraft] = createSignal('')
+  const draft = () => {
+    const controlledDraft = props.draft
+    return controlledDraft === undefined ? localDraft() : controlledDraft()
+  }
+  const setDraft = (text: string) => {
+    if (props.draft === undefined) {
+      setLocalDraft(text)
+      return
+    }
+
+    untrack(() => props.onDraftChange)(text)
+  }
+
+  return {draft, setDraft}
+}
+
 export const PDialogueComposer = (props: PDialogueComposerProps) => {
-  const [draft, setDraft] = createSignal('')
   const [isExpanded, setIsExpanded] = createSignal(false)
   const [composer, setComposer] = createSignal<HTMLFormElement>()
   const [input, setInput] = createSignal<HTMLInputElement>()
+  const {draft, setDraft} = createDraftController(props)
   let focusInputAfterMount = false
   let restoreTriggerFocus = false
   useAutoExpand({
@@ -149,7 +187,7 @@ export const PDialogueComposer = (props: PDialogueComposerProps) => {
   const handleSubmit = async (event: SubmitEvent) => {
     event.preventDefault()
     const submittedDraft = draft()
-    const text = draft().trim()
+    const text = submittedDraft.trim()
 
     if (text.length === 0 || isDisabled() || props.onSubmit === undefined) {
       return
@@ -162,7 +200,9 @@ export const PDialogueComposer = (props: PDialogueComposerProps) => {
       return
     }
 
-    setDraft((currentDraft) => (currentDraft === submittedDraft ? '' : currentDraft))
+    if (draft() === submittedDraft) {
+      setDraft('')
+    }
     focusMountedInput(input())
   }
 
