@@ -11,6 +11,7 @@ export function useLoopPlayer() {
   const [status, setStatus] = createSignal('반복할 오디오 파일을 선택해 주세요.')
   let player: LoopPlayback | undefined
   let url: string | undefined
+  let positionBeforeScrubbing = 0
   const clear = () => {
     const previous = player
     const previousUrl = url
@@ -32,6 +33,7 @@ export function useLoopPlayer() {
     setDuration(0)
     setPosition(0)
     setScrubbing(false)
+    positionBeforeScrubbing = 0
   }
   onCleanup(clear)
   const select = (file: File | null) => {
@@ -90,6 +92,9 @@ export function useLoopPlayer() {
     setStatus('정지했습니다.')
   }
   const previewPosition = (seconds: number) => {
+    if (!scrubbing()) {
+      positionBeforeScrubbing = position()
+    }
     setScrubbing(true)
     setPosition(seconds)
   }
@@ -102,8 +107,10 @@ export function useLoopPlayer() {
     }
     try {
       await current.seek(target)
+      positionBeforeScrubbing = position()
     } catch (cause) {
       if (current === player) {
+        setPosition(positionBeforeScrubbing)
         setStatus(cause instanceof Error ? cause.message : '위치 이동 실패')
       }
     }
