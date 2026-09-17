@@ -1,7 +1,6 @@
 import {dayjs} from 'src/utils/zoned-dayjs'
 import type {FeedEntry, FeedProvider} from './contract'
 
-const KOREA_TIME_ZONE = 'Asia/Seoul'
 const FEED_SLUG = 'today-in-history'
 const ENTRY_LIMIT = 50
 
@@ -30,10 +29,14 @@ export interface HistoricalMomentsProviderOptions {
   readonly now?: () => Date
   readonly origin: string
   readonly source: HistoricalMomentSource
+  readonly timeZone: string
 }
 
-const getKoreaCalendarDate = (date: Date): Pick<HistoricalMomentQuery, 'day' | 'month'> => {
-  const local = dayjs(date).tz(KOREA_TIME_ZONE)
+const getCalendarDate = (
+  date: Date,
+  timeZone: string,
+): Pick<HistoricalMomentQuery, 'day' | 'month'> => {
+  const local = dayjs(date).tz(timeZone)
   return {day: local.date(), month: local.month() + 1}
 }
 
@@ -51,7 +54,7 @@ const createEntry = (origin: string, record: HistoricalMomentRecord): FeedEntry 
   }
 }
 
-/** Creates the public provider for historical moments matching today's Korean calendar date. */
+/** Creates the public provider for historical moments matching the viewer's calendar date. */
 export const createHistoricalMomentsProvider = (
   options: HistoricalMomentsProviderOptions,
 ): FeedProvider => {
@@ -69,7 +72,7 @@ export const createHistoricalMomentsProvider = (
       title: '오늘 있었던 역사적 순간',
     },
     async listEntries() {
-      const calendarDate = getKoreaCalendarDate(now())
+      const calendarDate = getCalendarDate(now(), options.timeZone)
       const records = await options.source.listPublished({...calendarDate, limit: ENTRY_LIMIT})
 
       return records.map((record) => createEntry(origin, record))

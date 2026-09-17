@@ -1,3 +1,4 @@
+import {isValidTimeZone} from 'src/utils/is-valid-time-zone'
 import type {APIEvent} from '@solidjs/start/server'
 import {z} from 'zod'
 
@@ -26,16 +27,6 @@ const querySchema = z.object({
   start: z.iso.datetime(),
   timeZone: z.string().min(1).max(MAXIMUM_TIME_ZONE_CHARACTERS),
 })
-
-const isValidTimeZone = (timeZone: string) => {
-  try {
-    const formatter = new Intl.DateTimeFormat('en', {timeZone})
-    formatter.resolvedOptions()
-    return true
-  } catch {
-    return false
-  }
-}
 
 export const GET = async (event: APIEvent): Promise<Response> => {
   let identity: Awaited<ReturnType<typeof resolveUserRequest>>
