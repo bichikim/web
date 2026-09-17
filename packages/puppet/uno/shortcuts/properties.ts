@@ -156,7 +156,8 @@ export const propertiesShortcuts = {
     '[.puppet-editor_&_h3]:m-0 [.puppet-editor_&_h3]:min-w-0 [.puppet-editor_&_h3]:truncate',
     '[.puppet-editor_&_h3]:[color:#bfeee1] [.puppet-editor_&_h3]:[font-size:0.625rem]',
     '[.puppet-editor_&_code]:[margin-left:0.25rem] [.puppet-editor_&_code]:[color:#84918c]',
-    '[.puppet-editor_&_code]:[font-family:SFMono-Regular,_Consolas,_monospace] [.puppet-editor_&_code]:[font-size:0.5rem]',
+    '[.puppet-editor_&_code]:[font-family:SFMono-Regular,_Consolas,_monospace]',
+    '[.puppet-editor_&_code]:[font-size:0.5rem]',
   ],
   'physics-pendulum-list': [
     '[.puppet-editor_&]:grid [.puppet-editor_&]:[gap:0.5rem] [.puppet-editor_&]:[margin-top:0.125rem]',
