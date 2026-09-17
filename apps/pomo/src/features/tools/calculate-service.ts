@@ -1,4 +1,5 @@
 import {addDays, dateEpoch, formatDate, parseDate, periodEnd} from '../civil-date'
+import {isValidServiceDays} from './service-days'
 
 const PERCENT_SCALE = 100
 const DAY_MILLISECONDS = 86400000
@@ -25,7 +26,7 @@ export const calculateService = (options: CalculateServiceOptions): ServiceResul
   if (options.days === undefined && options.start < '2022-01-01') {
     return null
   }
-  if (options.days !== undefined && (!Number.isSafeInteger(options.days) || options.days < 1)) {
+  if (options.days !== undefined && !isValidServiceDays(options.days)) {
     return null
   }
   const end =

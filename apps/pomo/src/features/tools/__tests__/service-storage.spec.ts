@@ -17,6 +17,14 @@ it('should restore custom duration and mode along with the date and branch', asy
   await repository.write({...settings, manual: false})
   await expect(repository.read()).resolves.toEqual({...settings, manual: false})
 })
+it.each(['not-a-number', '0', '-1', '1.5', '9007199254740992'])(
+  'should clear invalid saved service duration %s while preserving the other settings',
+  async (days) => {
+    const settings = {branch: 'army', days, manual: true, start: '2026-09-01'} as const
+    fixture.web.set('pomo:service-settings:v1', JSON.stringify(settings))
+    await expect(repository.read()).resolves.toEqual({...settings, days: ''})
+  },
+)
 it('should preserve the previously saved enlistment date and reject malformed data', async () => {
   fixture.web.set('pomo:service-start:v1', '"2026-09-01"')
   await expect(repository.read()).resolves.toMatchObject({manual: false, start: '2026-09-01'})

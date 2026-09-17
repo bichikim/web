@@ -2,6 +2,7 @@ import {createMemo, createSignal, onCleanup, onMount, Show} from 'solid-js'
 import {
   calculateService,
   DEFAULT_SERVICE_SETTINGS,
+  parseServiceDays,
   readServiceSettings,
   type ServiceSettings,
   writeServiceSettings,
@@ -47,11 +48,11 @@ export const Service = () => {
         }
       })
   })
-  const serviceDays = () => (/^\d+$/u.test(settings().days) ? Number(settings().days) : NaN)
+  const serviceDays = createMemo(() => parseServiceDays(settings().days))
   const result = createMemo(() =>
     calculateService({
       branch: branch(),
-      days: manual() ? serviceDays() : undefined,
+      days: manual() ? (serviceDays() ?? NaN) : undefined,
       start: start(),
       today: today(),
     }),
@@ -94,9 +95,7 @@ export const Service = () => {
             disabled={!ready()}
             value={settings().days}
             onInput={(event) => handleChange({days: event.currentTarget.value})}
-            aria-invalid={
-              settings().days !== '' && (!Number.isSafeInteger(serviceDays()) || serviceDays() < 1)
-            }
+            aria-invalid={settings().days !== '' && serviceDays() === null}
           />
           <span class="text-xs leading-5">1일 이상의 정수를 입력하세요.</span>
         </label>

@@ -1,5 +1,6 @@
 import {z} from 'zod'
 import {type ServiceBranch} from './calculate-service'
+import {normalizeServiceDays} from './service-days'
 import {toolStorageAdapter, type ToolStorageAdapter} from './storage-adapter'
 import {parseDate} from '../civil-date'
 
@@ -19,7 +20,7 @@ export const DEFAULT_SERVICE_SETTINGS: ServiceSettings = {
 }
 const settingsSchema = z.object({
   branch: z.enum(['army', 'marines', 'navy', 'air']),
-  days: z.string(),
+  days: z.string().transform(normalizeServiceDays),
   manual: z.boolean(),
   start: z.string().refine((value) => value === '' || parseDate(value) !== null),
 })
