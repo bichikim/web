@@ -290,6 +290,11 @@ export const deleteParameter = (options: ParameterBindingTarget): PuppetDocument
   const removedParameterIds = new Set(
     binding.parameterIds.filter((parameterId) => !retainedParameterIds.has(parameterId)),
   )
+  const pendulums = options.document.physics?.pendulums.filter(
+    (pendulum) =>
+      !removedParameterIds.has(pendulum.inputParameterId) &&
+      !removedParameterIds.has(pendulum.outputParameterId),
+  )
   return {
     ...options.document,
     motions: options.document.motions.map((motion) => ({
@@ -302,6 +307,7 @@ export const deleteParameter = (options: ParameterBindingTarget): PuppetDocument
     parameters: getDocumentParameters(options.document).filter(
       (parameter) => !removedParameterIds.has(parameter.id),
     ),
+    physics: pendulums === undefined || pendulums.length === 0 ? undefined : {pendulums},
   }
 }
 

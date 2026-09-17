@@ -36,7 +36,7 @@ test('should update textures while retaining geometry, keyforms, Glue and the sc
   }
   const plan = createPsdReimportPlan(document, incoming)
   expect(plan.rows.every((row) => row.kind === 'update')).toBe(true)
-  const result = applyPsdReimport(plan, false)
+  const result = applyPsdReimport(plan)
   expect(result.parts[0]!.texture.src).toBe('updated.png')
   expect(result.parts[0]!.mesh.vertices).toBe(document.parts[0]!.mesh.vertices)
   expect(result.parameterBindings).toBe(document.parameterBindings)
@@ -56,7 +56,7 @@ test('should remap UVs for expanded images without moving the mesh', () => {
       texture: {...part.texture, width: part.texture.width * 2},
     })),
   }
-  const result = applyPsdReimport(createPsdReimportPlan(document, incoming), false)
+  const result = applyPsdReimport(createPsdReimportPlan(document, incoming))
   expect(result.parts[0]!.mesh.uvs[2]).toBe(document.parts[0]!.mesh.uvs[2]! / 2)
   expect(result.parts[0]!.mesh.vertices).toBe(document.parts[0]!.mesh.vertices)
 })
@@ -67,7 +67,7 @@ test('should retain cropped, missing and ambiguous layers instead of overwriting
   const incoming = {...document, parts: [{...first, psdSource: {...first.psdSource, width: 1}}]}
   const plan = createPsdReimportPlan(document, incoming)
   expect(plan.rows.map((row) => row.kind)).toEqual(['conflict', 'keep', 'keep'])
-  expect(applyPsdReimport(plan, false).parts).toEqual(document.parts)
+  expect(applyPsdReimport(plan).parts).toEqual(document.parts)
   const duplicate = createPsdReimportPlan(document, {
     ...document,
     parts: [first, {...first, id: 'duplicate'}],
@@ -99,8 +99,13 @@ test('should append selected new layers with collision-free ids and mapped clipp
     },
   }
   const plan = createPsdReimportPlan(document, incoming)
-  expect(applyPsdReimport(plan, false).parts).toHaveLength(3)
-  const result = applyPsdReimport(plan, true)
+  const withoutAdditions = {...plan, rows: plan.rows.filter((row) => row.kind !== 'add')}
+  expect(applyPsdReimport(withoutAdditions).parts).toHaveLength(3)
+  const selected = {
+    ...plan,
+    rows: plan.rows.filter((row) => row.kind === 'add' || row.kind === 'update'),
+  }
+  const result = applyPsdReimport(selected)
   expect(parseDocument(serializeDocument(result)).ok).toBe(true)
   expect(result.parts).toHaveLength(4)
   expect(result.parts[3]!.id).not.toBe(fresh.id)
@@ -190,7 +195,11 @@ test('should require a source choice for duplicate file names and preserve it af
   expect(undecided.sourceId).toBeUndefined()
   expect(undecided.rows).toEqual([])
   const plan = createPsdReimportPlan(document, incoming, 'copy-a')
-  const result = applyPsdReimport(plan, true)
+  const selected = {
+    ...plan,
+    rows: plan.rows.filter((row) => row.kind === 'add' || row.kind === 'update'),
+  }
+  const result = applyPsdReimport(selected)
   expect(result.parts[0]!.psdSource!.documentId).toBe('copy-a')
   expect(result.parts[3]!.psdSource!.documentId).toBe('copy-a')
   expect(result.parts[1]).toBe(document.parts[1])

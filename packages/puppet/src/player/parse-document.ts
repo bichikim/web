@@ -18,6 +18,7 @@ import {
   type PuppetParameterPartKeyform,
   type PuppetPart,
   type PuppetPartRenderProperties,
+  type PuppetPhysics,
   type PuppetScene,
   type PuppetSceneNode,
   type PuppetTexture,
@@ -34,6 +35,8 @@ import {
   isDeformer,
   isParameterDeformerKeyform,
 } from './internal/parse-deformer'
+import {hasValidTrackTargets} from './internal/parse-motion'
+import {hasValidPhysics} from './internal/parse-physics'
 
 export type ParseDocumentErrorCode = 'invalid-document' | 'invalid-json'
 
@@ -410,43 +413,6 @@ const hasValidPartMasks = (parts: ReadonlyArray<PuppetPart>) => {
   })
 }
 
-const hasValidTrackTargets = (
-  parts: ReadonlyArray<PuppetPart>,
-  parameters: ReadonlyArray<PuppetParameter>,
-  motions: ReadonlyArray<PuppetMotion>,
-) => {
-  const partById = new Map(parts.map((part) => [part.id, part]))
-  const parameterById = new Map(parameters.map((parameter) => [parameter.id, parameter]))
-
-  return motions.every((motion) => {
-    const parameterTrackIds = motion.tracks.flatMap((track) =>
-      track.kind === 'parameter' ? [track.parameterId] : [],
-    )
-
-    return (
-      new Set(parameterTrackIds).size === parameterTrackIds.length &&
-      motion.tracks.every((track) => {
-        if (track.kind === 'parameter') {
-          const parameter = parameterById.get(track.parameterId)
-          return (
-            parameter !== undefined &&
-            track.keyframes.every(
-              (keyframe) =>
-                keyframe.value >= parameter.minimum && keyframe.value <= parameter.maximum,
-            )
-          )
-        }
-
-        const part = partById.get(track.partId)
-        const vertexCount =
-          part === undefined ? 0 : part.mesh.vertices.length / COORDINATES_PER_VERTEX
-
-        return part !== undefined && track.vertexIndex < vertexCount
-      })
-    )
-  })
-}
-
 const hasValidParameterBindings = (
   parts: ReadonlyArray<PuppetPart>,
   parameters: ReadonlyArray<PuppetParameter>,
@@ -528,6 +494,7 @@ interface CurrentDocumentValue {
   readonly parameterBindings?: ReadonlyArray<PuppetParameterBinding>
   readonly parameters?: ReadonlyArray<PuppetParameter>
   readonly parts: ReadonlyArray<PuppetPart>
+  readonly physics?: PuppetPhysics
   readonly scene?: PuppetScene
   readonly version: typeof PUPPET_DOCUMENT_VERSION
   readonly viewport: PuppetViewport
@@ -562,6 +529,7 @@ const isDocument = (value: unknown): value is PuppetDocument => {
 
   return (
     hasValidGlueKeyforms(value.glue, parameterBindings, value.parts) &&
+    hasValidPhysics(value.physics, parameters) &&
     hasUniqueIds(value.parts) &&
     hasValidPartMasks(value.parts) &&
     hasUniqueIds(value.motions) &&

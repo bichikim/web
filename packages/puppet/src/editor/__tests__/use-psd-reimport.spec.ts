@@ -15,8 +15,8 @@ test('should ignore a cancelled import and prevent applying a stale document', a
     const controller = usePsdReimport({
       document,
       onDocumentChange: onChange,
-      readPsd,
       onNotice: vi.fn(),
+      readPsd,
     })
     let resolve!: (result: Awaited<ReturnType<typeof importPsd>>) => void
     readPsd.mockImplementationOnce(
@@ -49,16 +49,16 @@ test('should apply reviewed additions as one undoable document change', async ()
     const controller = usePsdReimport({
       document: history.document,
       onDocumentChange: history.setDocument,
-      readPsd,
       onNotice: vi.fn(),
+      readPsd,
     })
     readPsd.mockResolvedValue({document: initial, ok: true, warnings: []})
     await controller.load(new File([], 'model.psd'))
     controller.apply()
     expect(history.canUndo()).toBe(false)
-    expect(controller.selection().count).toBe(0)
+    expect(controller.selection().view.count).toBe(0)
     controller.setIncludeNew(true)
-    expect(controller.selection().count).toBe(3)
+    expect(controller.selection().view.count).toBe(3)
     controller.apply()
     expect(controller.state().kind).toBe('idle')
     expect(history.document().parts).toHaveLength(6)
@@ -80,11 +80,11 @@ test('should keep missing layers by default and delete them only when selected',
       parts: demo.parts.map((part, index) => ({
         ...part,
         psdSource: {
+          height: part.texture.height,
           layerId: index,
           path: [part.id],
           width: part.texture.width,
           x: 0,
-          height: part.texture.height,
           y: 0,
         },
       })),
@@ -93,8 +93,8 @@ test('should keep missing layers by default and delete them only when selected',
     const controller = usePsdReimport({
       document: history.document,
       onDocumentChange: history.setDocument,
-      readPsd,
       onNotice: vi.fn(),
+      readPsd,
     })
     readPsd.mockResolvedValue({
       document: {...original, parts: [original.parts[0]!]},
@@ -105,10 +105,10 @@ test('should keep missing layers by default and delete them only when selected',
     controller.apply()
     expect(history.document().parts).toHaveLength(3)
     await controller.load(new File([], 'model.psd'))
-    expect(controller.selection().count).toBe(1)
+    expect(controller.selection().view.count).toBe(1)
     controller.setRemoveMissing(true)
-    expect(controller.selection().count).toBe(3)
-    expect(controller.selection().rows.filter((row) => row.label === '삭제')).toHaveLength(2)
+    expect(controller.selection().view.count).toBe(3)
+    expect(controller.selection().view.rows.filter((row) => row.label === '삭제')).toHaveLength(2)
     controller.apply()
     expect(history.document().parts).toHaveLength(1)
     expect(history.undo()).toBe(true)
@@ -139,7 +139,7 @@ test('should show reader failures without changing the document', async () => {
       message: 'PSD를 읽지 못했습니다. 파일을 다시 선택하세요.',
     })
     expect(onDocumentChange).not.toHaveBeenCalled()
-    expect(controller.selection().count).toBe(0)
+    expect(controller.selection().view.count).toBe(0)
     dispose()
   })
 })
