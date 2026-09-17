@@ -30,6 +30,7 @@ export const useMemoryMemos = (): Accessor<ReadonlyArray<MemoryMemo>> => {
   const [memos, setMemos] = createSignal<ReadonlyArray<MemoryMemo>>([])
   let isDisposed = false
   let storageRevision = 0
+  const pendingDeletionIds = new Set<string>()
 
   onMount(() => {
     const initialRevision = storageRevision
@@ -41,6 +42,11 @@ export const useMemoryMemos = (): Accessor<ReadonlyArray<MemoryMemo>> => {
       const change = parseMemoryMemosChangedEvent(event.detail)
 
       if (change !== null && change.revision > storageRevision) {
+        for (const memo of change.memos) {
+          if (isMemoryMemoDeletionPending(memo)) {
+            pendingDeletionIds.add(memo.id)
+          }
+        }
         storageRevision = change.revision
         setMemos(change.memos)
       }
@@ -62,5 +68,6 @@ export const useMemoryMemos = (): Accessor<ReadonlyArray<MemoryMemo>> => {
     })
   })
 
-  return () => memos().filter((memo) => !isMemoryMemoDeletionPending(memo))
+  return () =>
+    memos().filter((memo) => !pendingDeletionIds.has(memo.id) && !isMemoryMemoDeletionPending(memo))
 }

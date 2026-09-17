@@ -86,3 +86,22 @@ it('should hide persisted deletion tombstones from the list and reminders', asyn
   expect(view.result()).toEqual([])
   view.cleanup()
 })
+
+it('should not resurrect a tombstoned memo from a newer storage event', () => {
+  const memo = createMemoryMemo({
+    exactReminderAt: null,
+    id: 'deleted',
+    now: new Date('2026-09-04T02:00:00.000Z'),
+    random: () => 0,
+    recallMode: 'random',
+    text: '삭제한 메모',
+  })
+  mocks.readMemos.mockResolvedValue([])
+  const view = renderHook(useMemoryMemos)
+
+  window.dispatchEvent(createMemoryMemosChangedEvent([{...memo, deletionPending: true}], 2))
+  window.dispatchEvent(createMemoryMemosChangedEvent([memo], 3))
+
+  expect(view.result()).toEqual([])
+  view.cleanup()
+})
