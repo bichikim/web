@@ -10,15 +10,15 @@ Review the explicit target and relevant callers, callees, types, tests, and conf
 
 ## Review perspectives
 
-Apply these three independent perspectives directly in the parent model for every target:
+Review every target through these three perspectives:
 
 1. **Behavior bugs:** verify correctness, security, lifecycle, accessibility, and performance defects through consumer contracts, errors, races, and cleanup; inspect structure only as needed to establish behavior.
 2. **Refactoring:** coupling, testability, avoidable complexity, declarative programming, state derivation, and side-effect boundaries.
 3. **Naming and structure:** apply skills' naming and folder rules to names, file placement, and module organization.
 
-Each perspective stays within its role but reports any behavior defect encountered, regardless of role. Severity follows verified impact, not the perspective's role; never downgrade verified behavior defects to P3. Each returns scope, findings with evidence and fixes (or explicitly none), and verification gaps.
+Report any behavior defect encountered, regardless of the perspective that reveals it. Severity follows verified impact, not the perspective; never downgrade verified behavior defects to P3. Cover scope, findings with evidence and fixes (or explicitly none), and verification gaps.
 
-Complete all three perspectives before producing the report. Merge findings sharing a root cause and fix, preserving distinct impacts and locations. Return one report under the verification gate and output contract below. Disclose unfinished coverage; do not claim completion when a perspective or required verification cannot finish.
+Complete all three perspectives before producing one report. Merge findings sharing a root cause and fix, preserving distinct impacts and locations. Use the verification gate and output contract below. Disclose unfinished coverage; do not claim completion when a perspective or required verification cannot finish.
 
 ## Shared review rules
 
