@@ -1,6 +1,6 @@
 /** @vitest-environment jsdom */
 
-import {cleanup, fireEvent, render, screen} from '@solidjs/testing-library'
+import {cleanup, fireEvent, render, screen, within} from '@solidjs/testing-library'
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 
 import * as m from '@paraglide/message'
@@ -89,12 +89,12 @@ describe('PMusicPlayerContent transport integration', () => {
 
     expect(HTMLMediaElement.prototype.play).not.toHaveBeenCalled()
     expect(onPlayingChange).toHaveBeenLastCalledWith(true)
-    expect(
-      screen
-        .getByRole('button', {name: '이전 곡'})
-        .parentElement?.querySelector('media-play-button')
-        ?.getAttribute('aria-label'),
-    ).toBe('일시 정지')
+    const transportControls = screen.getByRole('button', {name: '이전 곡'}).parentElement
+    if (!(transportControls instanceof HTMLElement)) {
+      throw new TypeError('Expected the expanded transport controls to be rendered')
+    }
+    const preparingPlayButton = within(transportControls).getByRole('button', {name: '일시 정지'})
+    expect(preparingPlayButton).toHaveAttribute('aria-busy', 'true')
 
     fireEvent(audio, new Event('loadedmetadata'))
     await Promise.resolve()

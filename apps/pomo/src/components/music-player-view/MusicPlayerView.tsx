@@ -20,9 +20,11 @@ export const MusicPlayerView = (props: MusicPlayerViewProps) => {
         backdropBlur={props.backdropBlur}
         currentTrack={props.currentTrack}
         expanded={props.expanded}
+        isPreparing={props.isPreparing}
         isPlaying={props.isPlaying}
         levels={props.levels}
         onExpandedChange={props.onExpandedChange}
+        onPause={props.onPause}
         sceneStyle={props.sceneStyle}
         summaryActions={
           <PAlbumLibrary
@@ -46,8 +48,10 @@ export const MusicPlayerView = (props: MusicPlayerViewProps) => {
               canNavigateNextTrack={props.canNavigateNextTrack}
               canNavigatePreviousTrack={props.canNavigatePreviousTrack}
               hasTrack={props.currentTrack !== undefined}
+              isPreparing={props.isPreparing}
               isPlaying={props.isPlaying}
               onNextTrack={props.onNextTrack}
+              onPause={props.onPause}
               onPreviousTrack={props.onPreviousTrack}
               onRepeatModeChange={props.onRepeatModeChange}
               onShuffleChange={props.onShuffleChange}

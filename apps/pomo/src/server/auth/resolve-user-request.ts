@@ -1,8 +1,10 @@
 import {findOrCreateNeonUser} from '../repositories/auth'
 import {getAuthSession} from './get-auth-session'
 import {UserRequestResolutionError} from './user-request-resolution-error'
+import type {AuthAccess} from './types'
 
 export interface UserRequestIdentity {
+  readonly access: AuthAccess
   readonly cookies: ReadonlyArray<string>
   readonly userId: string | null
 }
@@ -10,12 +12,17 @@ export interface UserRequestIdentity {
 /** Resolves a Pomo user ID, creating the web user when an authenticated Neon identity needs one. */
 export const resolveUserRequest = async (request: Request): Promise<UserRequestIdentity> => {
   const session = await getAuthSession(request)
+
+  if (session.access === 'invalid') {
+    return {access: session.access, cookies: session.setCookies, userId: null}
+  }
+
   if (session.provider === 'toss') {
-    return {cookies: session.setCookies, userId: session.userId}
+    return {access: session.access, cookies: session.setCookies, userId: session.userId}
   }
 
   if (session.identity === null) {
-    return {cookies: session.setCookies, userId: null}
+    return {access: session.access, cookies: session.setCookies, userId: null}
   }
 
   let userId: string
@@ -25,5 +32,5 @@ export const resolveUserRequest = async (request: Request): Promise<UserRequestI
     throw new UserRequestResolutionError(session.setCookies, error)
   }
 
-  return {cookies: session.setCookies, userId}
+  return {access: session.access, cookies: session.setCookies, userId}
 }

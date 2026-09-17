@@ -25,9 +25,11 @@ export interface FrameProps extends Pick<
   | 'backdropBlur'
   | 'currentTrack'
   | 'expanded'
+  | 'isPreparing'
   | 'isPlaying'
   | 'levels'
   | 'onExpandedChange'
+  | 'onPause'
   | 'sceneStyle'
 > {
   readonly summaryActions?: JSX.Element
@@ -47,6 +49,7 @@ export const Frame = (props: FrameProps) => (
         props.expanded ? 'h-full overflow-visible' : 'overflow-hidden',
         getShellClasses(props.sceneStyle),
       )}
+      data-preparing={props.isPreparing ? 'true' : undefined}
     >
       <div
         aria-hidden="true"
@@ -68,7 +71,11 @@ export const Frame = (props: FrameProps) => (
       >
         <div
           aria-label={m.player_audio_levels()}
-          class={cx(CLASSES.playerVisualizer, 'absolute flex items-end gap-0.5')}
+          class={cx(
+            CLASSES.playerVisualizer,
+            'absolute flex items-end gap-0.5',
+            props.isPreparing && 'animate-pulse motion-reduce:animate-none',
+          )}
         >
           <For each={props.levels}>
             {(level) => (
@@ -78,7 +85,7 @@ export const Frame = (props: FrameProps) => (
                   CLASSES.level,
                   'min-w-0 flex-1 rounded-t-full [height:var(--pomo-level-height)]',
                   'transition-[height,opacity] duration-75',
-                  props.isPlaying ? 'opacity-76' : 'opacity-34',
+                  props.isPlaying || props.isPreparing ? 'opacity-76' : 'opacity-34',
                 )}
                 style={{'--pomo-level-height': `${level}%`}}
               />
@@ -100,20 +107,24 @@ export const Frame = (props: FrameProps) => (
       <div class={CLASSES.playerSummary} data-player-summary="">
         <Show when={!props.expanded}>
           <SummaryPlayButton
+            isPreparing={props.isPreparing}
             isPlaying={props.isPlaying}
             currentTrack={props.currentTrack}
+            onPause={props.onPause}
             sceneStyle={props.sceneStyle}
           />
         </Show>
         <Show when={props.expanded}>
           <ExpandedSummaryPlayback
+            isPreparing={props.isPreparing}
             isPlaying={props.isPlaying}
             currentTrack={props.currentTrack}
+            onPause={props.onPause}
             sceneStyle={props.sceneStyle}
           />
         </Show>
 
-        <TrackSummary currentTrack={props.currentTrack} />
+        <TrackSummary currentTrack={props.currentTrack} isPreparing={props.isPreparing} />
 
         <Show when={!props.expanded}>{props.summaryActions}</Show>
 

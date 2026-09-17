@@ -87,12 +87,14 @@ interface RenderMusicPlayerViewOptions {
   readonly onAlbumClear?: () => void
   readonly onExpandedChange?: () => void
   readonly onNextTrack?: () => void
+  readonly onPause?: () => void
   readonly onPreviewEnd?: () => void
   readonly onPreviewStart?: (stopPreview: () => void) => void
   readonly onPreviousTrack?: () => void
   readonly onRepeatModeChange?: (mode: 'repeat-all' | 'repeat-one') => void
   readonly onShuffleChange?: () => void
   readonly onTrackSelect?: (index: number) => void
+  readonly isPreparing?: boolean
   readonly sceneStyle?: PSceneStyle
 }
 
@@ -115,12 +117,14 @@ export const renderMusicPlayerView = (options: RenderMusicPlayerViewOptions = {}
         onAlbumClear={options.onAlbumClear}
         onExpandedChange={options.onExpandedChange ?? vi.fn()}
         onNextTrack={options.onNextTrack ?? vi.fn()}
+        onPause={options.onPause ?? vi.fn()}
         onPreviewEnd={options.onPreviewEnd}
         onPreviewStart={options.onPreviewStart}
         onPreviousTrack={options.onPreviousTrack ?? vi.fn()}
         onRepeatModeChange={options.onRepeatModeChange ?? vi.fn()}
         onShuffleChange={options.onShuffleChange ?? vi.fn()}
         onTrackSelect={options.onTrackSelect ?? vi.fn()}
+        isPreparing={options.isPreparing ?? false}
         repeatMode="repeat-all"
         sceneStyle={options.sceneStyle ?? 'original'}
         shuffleEnabled={true}

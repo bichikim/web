@@ -2,6 +2,7 @@
 import {cleanup, fireEvent, render, screen, waitFor, within} from '@solidjs/testing-library'
 import {createSignal} from 'solid-js'
 import {afterEach, beforeEach, expect, it, vi} from 'vitest'
+import {PModelDownloadProvider} from '../../../../features/model-download'
 import type {PictureDiaryImage, PictureDiaryStroke} from '../../../../features/picture-diary'
 import {PictureDiaryDrawing} from '../Drawing'
 
@@ -94,7 +95,11 @@ it('should remove the generated image without clearing the hand drawing', () => 
 })
 
 it('should place the drawing modes in the modal header and associate their panels', async () => {
-  render(() => <PictureDiaryDrawing strokes={[]} onImageChange={vi.fn()} />)
+  render(() => (
+    <PModelDownloadProvider>
+      <PictureDiaryDrawing strokes={[]} onImageChange={vi.fn()} />
+    </PModelDownloadProvider>
+  ))
   fireEvent.click(screen.getByRole('button', {name: '그림 그리기'}))
   const dialog = screen.getByRole('dialog')
   const header = dialog.querySelector('header')!
@@ -105,7 +110,8 @@ it('should place the drawing modes in the modal header and associate their panel
   expect(screen.getByRole('tabpanel', {name: '직접 그리기'})).toBeInTheDocument()
   fireEvent.click(generate)
   expect(generate).toHaveAttribute('aria-selected', 'true')
-  expect(screen.getByRole('tabpanel', {name: '이미지 생성'})).toBeInTheDocument()
+  const generationPanel = screen.getByRole('tabpanel', {name: '이미지 생성'})
+  await waitFor(() => expect(within(generationPanel).getByRole('textbox')).toBeInTheDocument())
   expect(screen.queryByRole('tabpanel', {name: '직접 그리기'})).not.toBeInTheDocument()
   fireEvent.click(draw)
   expect(screen.getByRole('tabpanel', {name: '직접 그리기'})).toBeInTheDocument()
