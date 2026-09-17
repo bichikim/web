@@ -15,9 +15,9 @@ vi.mock('@solidjs/router', () => ({
 
 import {createEmptyAlbumTranslations} from '../album-draft'
 import {
-  readAlbumDraftData,
+  readAlbumDraftDataOrNull,
   writeAlbumDraftCover,
-  readAlbumDraftCover,
+  readAlbumDraftCoverOrNull,
   writeAlbumDraftData,
 } from '../album-draft-storage'
 import {useAlbumDraft} from '../use-album-draft'
@@ -82,7 +82,7 @@ it('should retain an expired cover referenced by another open tab session', asyn
     coverImageUrl: 'https://example.com/edited-after-cover.webp',
   })
 
-  await expect(readAlbumDraftCover(coverId)).resolves.not.toBeNull()
+  await expect(readAlbumDraftCoverOrNull(coverId)).resolves.not.toBeNull()
   expect(firstTabStorage.getItem('pomo:admin-music:album-draft:v1')).toContain(coverId)
 
   replaceSessionStorage(secondTabStorage)
@@ -95,7 +95,7 @@ it('should retain an expired cover referenced by another open tab session', asyn
 
   try {
     expect(firstTabStorage.getItem('pomo:admin-music:album-draft:v1')).toContain(coverId)
-    await expect(readAlbumDraftCover(coverId)).resolves.not.toBeNull()
+    await expect(readAlbumDraftCoverOrNull(coverId)).resolves.not.toBeNull()
   } finally {
     cleanup()
     database.close()
@@ -155,7 +155,7 @@ it('should retain an expired cover while another tab hook is still mounted', asy
   await waitFor(() => expect(secondTab.result.isRestoringDraft()).toBe(false))
 
   try {
-    await expect(readAlbumDraftCover(coverId)).resolves.not.toBeNull()
+    await expect(readAlbumDraftCoverOrNull(coverId)).resolves.not.toBeNull()
   } finally {
     secondTab.cleanup()
     firstTab.cleanup()
@@ -206,7 +206,7 @@ it.each(['removal', 'replacement', 'clearing'] as const)(
           preventDefault: vi.fn(),
           target: form,
         } as unknown as SubmitEvent & {currentTarget: HTMLFormElement; target: Element})
-        expect(readAlbumDraftData()).toBeNull()
+        expect(readAlbumDraftDataOrNull()).toBeNull()
       } else {
         const input = document.createElement('input')
         const file =
@@ -221,9 +221,9 @@ it.each(['removal', 'replacement', 'clearing'] as const)(
           currentTarget: HTMLInputElement
           target: Element
         })
-        expect(readAlbumDraftData()?.coverDraftId).not.toBe(coverId)
+        expect(readAlbumDraftDataOrNull()?.coverDraftId).not.toBe(coverId)
       }
-      await expect(readAlbumDraftCover(coverId)).resolves.not.toBeNull()
+      await expect(readAlbumDraftCoverOrNull(coverId)).resolves.not.toBeNull()
       replaceSessionStorage(duplicate)
       second.cleanup()
       const restored = renderHook(() =>
@@ -232,7 +232,7 @@ it.each(['removal', 'replacement', 'clearing'] as const)(
       try {
         await waitFor(() => expect(restored.result.isRestoringDraft()).toBe(false))
         expect(restored.result.coverPreviewUrl()).toBe('blob:restored-cover')
-        expect(readAlbumDraftData()).toEqual(draft)
+        expect(readAlbumDraftDataOrNull()).toEqual(draft)
       } finally {
         restored.cleanup()
       }
@@ -274,8 +274,8 @@ it('should reclaim the sole tab cover after successful album creation', async ()
       currentTarget: HTMLFormElement
       target: Element
     })
-    expect(readAlbumDraftData()).toBeNull()
-    await expect(readAlbumDraftCover(coverId)).resolves.toBeNull()
+    expect(readAlbumDraftDataOrNull()).toBeNull()
+    await expect(readAlbumDraftCoverOrNull(coverId)).resolves.toBeNull()
   } finally {
     hook.cleanup()
   }
