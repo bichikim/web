@@ -105,3 +105,51 @@ it('should not resurrect a tombstoned memo from a newer storage event', () => {
   expect(view.result()).toEqual([])
   view.cleanup()
 })
+
+it('should continue hiding a stale memo after its tombstone is removed', () => {
+  const memo = createMemoryMemo({
+    exactReminderAt: null,
+    id: 'deleted',
+    now: new Date('2026-09-04T02:00:00.000Z'),
+    random: () => 0,
+    recallMode: 'random',
+    text: '삭제한 메모',
+  })
+  mocks.readMemos.mockResolvedValue([])
+  const view = renderHook(useMemoryMemos)
+
+  window.dispatchEvent(createMemoryMemosChangedEvent([{...memo, deletionPending: true}], 2))
+  window.dispatchEvent(createMemoryMemosChangedEvent([], 3))
+  window.dispatchEvent(createMemoryMemosChangedEvent([memo], 4))
+
+  expect(view.result()).toEqual([])
+  view.cleanup()
+})
+
+it('should show a recreated memo with the same id after deletion', () => {
+  const memo = createMemoryMemo({
+    exactReminderAt: null,
+    id: 'deleted',
+    now: new Date('2026-09-04T02:00:00.000Z'),
+    random: () => 0,
+    recallMode: 'random',
+    text: '삭제한 메모',
+  })
+  const recreatedMemo = createMemoryMemo({
+    exactReminderAt: null,
+    id: memo.id,
+    now: new Date('2026-09-04T04:00:00.000Z'),
+    random: () => 0,
+    recallMode: 'random',
+    text: '새 메모',
+  })
+  mocks.readMemos.mockResolvedValue([])
+  const view = renderHook(useMemoryMemos)
+
+  window.dispatchEvent(createMemoryMemosChangedEvent([{...memo, deletionPending: true}], 2))
+  window.dispatchEvent(createMemoryMemosChangedEvent([], 3))
+  window.dispatchEvent(createMemoryMemosChangedEvent([recreatedMemo], 4))
+
+  expect(view.result()).toEqual([recreatedMemo])
+  view.cleanup()
+})
