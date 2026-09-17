@@ -1,19 +1,21 @@
 import {Title} from '@solidjs/meta'
 import {A} from '@solidjs/router'
 import {createEffect, createSignal, on, onCleanup, Show} from 'solid-js'
-import {useSoundGeneration} from 'src/features/sound-generation'
+import {
+  DEFAULT_CONNECTION_SECONDS,
+  MAX_AI_CONNECTION_SECONDS,
+  useSoundGeneration,
+} from 'src/features/sound-generation'
 import {isNonBlankString} from 'src/utils/is-non-blank-string'
 import {ModelTerms} from './sound-generation/ModelTerms'
 import {Preview} from './sound-loop/Preview'
 
-const DEFAULT_TRANSITION = 4
-const MAX_TRANSITION = 8
 const INPUT = 'min-h-11 rounded-xl border border-white/20 bg-#17131f p-3 text-#f8edf1'
 export function SoundLoopPage() {
   const [source, setSource] = createSignal<File | null>(null)
   const [sourceUrl, setSourceUrl] = createSignal<string | null>(null)
   const [resultName, setResultName] = createSignal('')
-  const [transition, setTransition] = createSignal(DEFAULT_TRANSITION)
+  const [connectionSeconds, setConnectionSeconds] = createSignal(DEFAULT_CONNECTION_SECONDS)
   const [prompt, setPrompt] = createSignal(
     'Continuous gentle rain ambience, consistent texture and loudness, no silence, no music, no speech.',
   )
@@ -47,9 +49,9 @@ export function SoundLoopPage() {
     }
     pendingName = file.name
     generation.generate({
+      connectionSeconds: connectionSeconds(),
       prompt: prompt(),
       source: file,
-      transitionSeconds: transition(),
       type: 'loop',
     })
   }
@@ -85,18 +87,20 @@ export function SoundLoopPage() {
         <Show when={sourceUrl()}>{(url) => <Preview label="원본" url={url()} />}</Show>
         <fieldset disabled={generation.busy()} class="m-0 grid gap-4 border-0 p-0">
           <label class="grid gap-2">
-            교체할 연결 구간 (초)
+            연결 구간 (초)
             <input
               class={INPUT}
               type="number"
               min="1"
-              max="8"
+              max={MAX_AI_CONNECTION_SECONDS}
               step="0.5"
-              value={transition()}
-              onInput={(event) => setTransition(event.currentTarget.valueAsNumber)}
+              value={connectionSeconds()}
+              onInput={(event) => setConnectionSeconds(event.currentTarget.valueAsNumber)}
             />
           </label>
-          <p class="m-0 text-sm text-#bdb2c4">4초 설정 시 원본 끝 2초와 시작 2초를 교체합니다.</p>
+          <p class="m-0 text-sm text-#bdb2c4">
+            4초 설정 시 원본 끝 2초와 시작 2초를 연결합니다. (최대 {MAX_AI_CONNECTION_SECONDS}초)
+          </p>
           <label class="grid gap-2">
             영어 소리 설명
             <textarea
@@ -114,9 +118,9 @@ export function SoundLoopPage() {
               generation.busy() ||
               source() === null ||
               !isNonBlankString(prompt()) ||
-              !Number.isFinite(transition()) ||
-              transition() < 1 ||
-              transition() > MAX_TRANSITION
+              !Number.isFinite(connectionSeconds()) ||
+              connectionSeconds() < 1 ||
+              connectionSeconds() > MAX_AI_CONNECTION_SECONDS
             }
             onClick={generate}
           >
@@ -149,10 +153,7 @@ export function SoundLoopPage() {
             </>
           )}
         </Show>
-        <p class="text-sm text-#bdb2c4">
-          원본과 결과 모두 반복 재생이 기본으로 켜져 있습니다. 끝 3초부터 들어 연결 부위를
-          비교하세요. 오디오는 서버로 전송하지 않습니다.
-        </p>
+        <p class="text-sm text-#bdb2c4">연결 부위를 비교하려면 끝 3초부터 들어 보세요.</p>
         <ModelTerms />
       </div>
     </main>

@@ -53,7 +53,7 @@ beforeEach(() => {
   vi.clearAllMocks()
   sessionStorage.clear()
   vi.useFakeTimers({toFake: ['Date']})
-  vi.setSystemTime(new Date('2026-09-04T03:00:00.000Z'))
+  vi.setSystemTime(new Date(2026, 8, 4, 12))
   overwriteGetLocale(() => 'ko')
   vi.mocked(listCalendarEvents).mockResolvedValue({
     connectedConnections: 1,

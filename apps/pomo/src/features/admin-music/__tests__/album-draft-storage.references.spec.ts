@@ -9,7 +9,7 @@ import {
   deleteAlbumDraftCover,
   deleteAlbumDraftReference,
   deleteExpiredAlbumDraftCovers,
-  readAlbumDraftCover,
+  readAlbumDraftCoverOrNull,
   writeAlbumDraftCover,
   writeAlbumDraftReference,
 } from '../album-draft-storage'
@@ -30,11 +30,11 @@ it('should retain legacy tab references until their retention period ends', asyn
   localStorage.setItem('pomo:admin-music:album-draft-session:v1:malformed', '{invalid')
 
   await deleteExpiredAlbumDraftCovers({activeCoverDraftId: null})
-  await expect(readAlbumDraftCover('legacy-cover')).resolves.not.toBeNull()
+  await expect(readAlbumDraftCoverOrNull('legacy-cover')).resolves.not.toBeNull()
 
   clock.mockReturnValue(Date.UTC(2026, 9, 12))
   await deleteExpiredAlbumDraftCovers({activeCoverDraftId: null})
-  await expect(readAlbumDraftCover('legacy-cover')).resolves.toBeNull()
+  await expect(readAlbumDraftCoverOrNull('legacy-cover')).resolves.toBeNull()
 })
 
 it('should preserve a recently active cover after its page releases the reference', async () => {
@@ -46,10 +46,10 @@ it('should preserve a recently active cover after its page releases the referenc
 
   await deleteExpiredAlbumDraftCovers({activeCoverDraftId: null})
 
-  await expect(readAlbumDraftCover('navigation-cover')).resolves.not.toBeNull()
+  await expect(readAlbumDraftCoverOrNull('navigation-cover')).resolves.not.toBeNull()
   clock.mockReturnValue(Date.UTC(2026, 9, 12))
   await deleteExpiredAlbumDraftCovers({activeCoverDraftId: null})
-  await expect(readAlbumDraftCover('navigation-cover')).resolves.toBeNull()
+  await expect(readAlbumDraftCoverOrNull('navigation-cover')).resolves.toBeNull()
 })
 
 it('should reclaim a cover after an abandoned reference expires', async () => {
@@ -60,7 +60,7 @@ it('should reclaim a cover after an abandoned reference expires', async () => {
 
   await deleteExpiredAlbumDraftCovers({activeCoverDraftId: null})
 
-  await expect(readAlbumDraftCover('abandoned-cover')).resolves.toBeNull()
+  await expect(readAlbumDraftCoverOrNull('abandoned-cover')).resolves.toBeNull()
 })
 
 it.each([deleteAlbumDraftCover, deleteAlbumDraft])(
@@ -73,11 +73,11 @@ it.each([deleteAlbumDraftCover, deleteAlbumDraft])(
     await deleteAlbumDraftReference('first')
 
     await expect(remove(id)).resolves.toEqual({success: true})
-    await expect(readAlbumDraftCover(id)).resolves.not.toBeNull()
+    await expect(readAlbumDraftCoverOrNull(id)).resolves.not.toBeNull()
 
     await deleteAlbumDraftReference('second')
     await expect(remove(id)).resolves.toEqual({success: true})
-    await expect(readAlbumDraftCover(id)).resolves.toBeNull()
+    await expect(readAlbumDraftCoverOrNull(id)).resolves.toBeNull()
   },
 )
 
@@ -89,9 +89,9 @@ it('should preserve a legacy reference at the retention boundary during explicit
     JSON.stringify({coverDraftId: id, lastSeenAt: Date.UTC(2026, 7, 12)}),
   )
   await deleteAlbumDraftCover(id, {now: () => Date.UTC(2026, 8, 11)})
-  await expect(readAlbumDraftCover(id)).resolves.not.toBeNull()
+  await expect(readAlbumDraftCoverOrNull(id)).resolves.not.toBeNull()
   await deleteAlbumDraftCover(id, {now: () => Date.UTC(2026, 8, 11) + 1})
-  await expect(readAlbumDraftCover(id)).resolves.toBeNull()
+  await expect(readAlbumDraftCoverOrNull(id)).resolves.toBeNull()
 })
 
 it('should ignore expired IndexedDB references during explicit deletion', async () => {
@@ -99,7 +99,7 @@ it('should ignore expired IndexedDB references during explicit deletion', async 
   await writeAlbumDraftCover(id, new File(['cover'], 'cover.webp'))
   await writeAlbumDraftReference({coverDraftId: id, now: () => 0, referenceId: id})
   await deleteAlbumDraftCover(id)
-  await expect(readAlbumDraftCover(id)).resolves.toBeNull()
+  await expect(readAlbumDraftCoverOrNull(id)).resolves.toBeNull()
 })
 
 it.each([deleteAlbumDraftCover, deleteAlbumDraft])(
@@ -114,10 +114,10 @@ it.each([deleteAlbumDraftCover, deleteAlbumDraft])(
     })
 
     await expect(remove(id, {now: () => Date.UTC(2026, 8, 11)})).resolves.toEqual({success: true})
-    await expect(readAlbumDraftCover(id)).resolves.not.toBeNull()
+    await expect(readAlbumDraftCoverOrNull(id)).resolves.not.toBeNull()
     await expect(remove(id, {now: () => Date.UTC(2026, 8, 11) + 1})).resolves.toEqual({
       success: true,
     })
-    await expect(readAlbumDraftCover(id)).resolves.toBeNull()
+    await expect(readAlbumDraftCoverOrNull(id)).resolves.toBeNull()
   },
 )

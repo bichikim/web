@@ -26,7 +26,7 @@ vi.mock('../providers/google', () => ({
 vi.mock('../providers/microsoft', () => ({
   createMicrosoftCalendarProvider: mocks.createMicrosoftCalendarProvider,
 }))
-vi.mock('../repository', () => ({calendarRepository: {}}))
+vi.mock('../../repositories/calendar', () => ({calendarRepository: {}}))
 vi.mock('../service', () => ({createCalendarService: mocks.createCalendarService}))
 vi.mock('../token-vault', () => ({createTokenVault: mocks.createTokenVault}))
 

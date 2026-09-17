@@ -1,5 +1,7 @@
 import {z} from 'zod'
 
+const MILLISECONDS_PER_MINUTE = 60_000
+
 export const MEMORY_RECALL_MODES = ['none', 'random', 'reinforcement'] as const
 export const MAXIMUM_MEMORY_MEMO_LENGTH = 200
 
@@ -39,12 +41,35 @@ const memoryMemoSchema = z.object({
   version: z.literal(1),
 })
 
+const hasConsumedExactReminder = (memo: z.infer<typeof memoryMemoSchema>) => {
+  if (memo.exactReminderAt === null) {
+    return false
+  }
+
+  if (memo.reminderEvents.length > 0) {
+    return memo.reminderEvents.some((event) => event.kind === 'exact')
+  }
+
+  const firstExactReminderTime =
+    Date.parse(memo.exactReminderAt) - memo.exactReminderAdvanceMinutes * MILLISECONDS_PER_MINUTE
+  return memo.reminderHistory.some(
+    (deliveredAt) => Date.parse(deliveredAt) >= firstExactReminderTime,
+  )
+}
+
+const getNormalizedNextExactReminderAt = (memo: z.infer<typeof memoryMemoSchema>) => {
+  if (memo.nextExactReminderAt !== undefined) {
+    return memo.nextExactReminderAt
+  }
+
+  return hasConsumedExactReminder(memo) ? null : memo.exactReminderAt
+}
+
 const normalizedMemoryMemoSchema = memoryMemoSchema.transform((memo) => {
   const hasExactReminder = memo.exactReminderAt !== null
   return {
     ...memo,
-    nextExactReminderAt:
-      memo.nextExactReminderAt === undefined ? memo.exactReminderAt : memo.nextExactReminderAt,
+    nextExactReminderAt: getNormalizedNextExactReminderAt(memo),
     nextRecallAt: hasExactReminder ? null : memo.nextRecallAt,
     recallMode: hasExactReminder ? ('none' as const) : memo.recallMode,
     reinforcementIndex: hasExactReminder ? 0 : memo.reinforcementIndex,

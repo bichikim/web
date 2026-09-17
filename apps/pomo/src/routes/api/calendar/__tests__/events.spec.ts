@@ -27,7 +27,11 @@ const createEvent = (query: string): APIEvent =>
 
 beforeEach(() => {
   vi.clearAllMocks()
-  dependencyMocks.resolveUserRequest.mockResolvedValue({cookies: [], userId: 'user-1'})
+  dependencyMocks.resolveUserRequest.mockResolvedValue({
+    access: 'user',
+    cookies: [],
+    userId: 'user-1',
+  })
   dependencyMocks.getCalendarService.mockReturnValue({listEvents: dependencyMocks.listEvents})
   dependencyMocks.listEvents.mockResolvedValue({
     connectedConnections: 0,
@@ -43,6 +47,7 @@ afterEach(() => {
 
 it('should require a user session', async () => {
   dependencyMocks.resolveUserRequest.mockResolvedValue({
+    access: 'anonymous',
     cookies: ['session=refreshed'],
     userId: null,
   })
@@ -55,6 +60,25 @@ it('should require a user session', async () => {
 
   expect(response.status).toBe(401)
   expect(response.headers.getSetCookie()).toEqual(['session=refreshed'])
+})
+
+it('should report when the Neon session is invalid', async () => {
+  dependencyMocks.resolveUserRequest.mockResolvedValue({
+    access: 'invalid',
+    cookies: ['session=refreshed'],
+    userId: null,
+  })
+
+  const response = await GET(
+    createEvent(
+      'start=2026-09-04T00%3A00%3A00.000Z&end=2026-09-05T00%3A00%3A00.000Z&timeZone=Asia%2FSeoul',
+    ),
+  )
+
+  expect(response.status).toBe(503)
+  await expect(response.json()).resolves.toEqual({error: 'authentication_unavailable'})
+  expect(response.headers.getSetCookie()).toEqual(['session=refreshed'])
+  expect(dependencyMocks.listEvents).not.toHaveBeenCalled()
 })
 
 it('should preserve refreshed cookies when user resolution fails', async () => {

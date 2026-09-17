@@ -41,16 +41,44 @@ const createRequest = (
 ) => ({headers, method, url}) as IncomingMessage
 
 describe('createDevFeedDocument', () => {
+  it.each(['rss', 'atom'] as const)(
+    'should preserve the selected time zone through the %s self link',
+    (format) => {
+      const now = new Date('2026-05-04T01:30:00Z')
+      const document = createDevFeedDocument({
+        format,
+        now,
+        origin: ORIGIN,
+        timeZone: 'America/New_York',
+      })
+      const href = document.match(/href="([^"]+)" rel="self"/u)?.[1]
+      if (href === undefined) {
+        throw new Error('Missing feed self link')
+      }
+      const self = new URL(href)
+      const reread = createDevFeedDocument({
+        format,
+        now,
+        origin: self.origin,
+        timeZone: self.searchParams.get('timeZone') ?? undefined,
+      })
+      expect(reread).toBe(document)
+    },
+  )
+
   it('should create an RSS snapshot aligned to the latest five-minute boundary', () => {
     const document = createDevFeedDocument({
       format: 'rss',
       now: new Date('2026-05-04T13:34:43.000Z'),
       origin: ORIGIN,
+      timeZone: 'Asia/Seoul',
     })
 
     expect(document).toMatch(/<title>“[^”]+” — [^<]+ · 2026년 5월 4일 22시 30분<\/title>/u)
     expect(document).toContain('<pubDate>Mon, 04 May 2026 13:30:00 GMT</pubDate>')
-    expect(document).toContain('href="http://localhost:3200/__dev/feeds/rss.xml"')
+    expect(document).toContain(
+      'href="http://localhost:3200/__dev/feeds/rss.xml?timeZone=Asia%2FSeoul"',
+    )
     expect(document.match(/<item>/gu)).toHaveLength(12)
   })
 
@@ -59,16 +87,19 @@ describe('createDevFeedDocument', () => {
       format: 'atom',
       now: new Date('2026-08-13T15:09:59.000Z'),
       origin: ORIGIN,
+      timeZone: 'Asia/Seoul',
     })
     const sameWindowDocument = createDevFeedDocument({
       format: 'atom',
       now: new Date('2026-08-13T15:05:01.000Z'),
       origin: ORIGIN,
+      timeZone: 'Asia/Seoul',
     })
     const nextDocument = createDevFeedDocument({
       format: 'atom',
       now: new Date('2026-08-13T15:10:00.000Z'),
       origin: ORIGIN,
+      timeZone: 'Asia/Seoul',
     })
 
     expect(firstDocument).toBe(sameWindowDocument)
@@ -82,6 +113,7 @@ describe('createDevFeedDocument', () => {
       format: 'atom',
       now: new Date('2026-08-13T21:00:00.000Z'),
       origin: ORIGIN,
+      timeZone: 'Asia/Seoul',
     })
 
     expect(document).toMatch(/<title>[^<]+ · 2026년 8월 14일 6시<\/title>/u)
@@ -93,6 +125,7 @@ describe('createDevFeedDocument', () => {
       format: 'atom',
       now: new Date('2026-08-13T15:00:00.000Z'),
       origin: ORIGIN,
+      timeZone: 'Asia/Seoul',
     })
 
     expect(document).toMatch(/<title>[^<]+ · 2026년 8월 14일<\/title>/u)
@@ -103,6 +136,7 @@ describe('createDevFeedDocument', () => {
       format: 'rss',
       now: new Date('1970-01-01T00:00:00.000Z'),
       origin: ORIGIN,
+      timeZone: 'Asia/Seoul',
     })
 
     expect(document.match(/<item>/gu)).toHaveLength(12)
@@ -130,6 +164,7 @@ describe('createDevFeedDocument', () => {
           format: 'atom',
           now: new Date('2026-08-13T15:05:00.000Z'),
           origin: ORIGIN,
+          timeZone: 'Asia/Seoul',
         }),
       ).toThrow('개발 피드 항목을 만들지 못했어요.')
     } finally {
@@ -149,6 +184,7 @@ describe('createDevFeedDocument', () => {
           format: 'rss',
           now: new Date('2026-08-13T15:05:00.000Z'),
           origin: ORIGIN,
+          timeZone: 'Asia/Seoul',
         }),
       ).toThrow('개발 피드 명언을 고르지 못했어요.')
     } finally {
@@ -223,4 +259,20 @@ describe('createDevFeedPlugin', () => {
 
     expect(next).toHaveBeenCalledTimes(2)
   })
+})
+
+it('should render the requested time zone independently of the server', () => {
+  const document = createDevFeedDocument({
+    format: 'rss',
+    now: new Date('2026-05-04T13:30:00Z'),
+    origin: ORIGIN,
+    timeZone: 'America/New_York',
+  })
+  expect(document).toContain('2026년 5월 4일 9시 30분')
+})
+it('should reject an invalid time zone before rendering', () => {
+  const {middleware} = getMiddleware()
+  const {response} = createResponse()
+  middleware(createRequest('GET', '/__dev/feeds/rss.xml?timeZone=invalid'), response, vi.fn())
+  expect(response.statusCode).toBe(400)
 })

@@ -1,5 +1,5 @@
 import {
-  getNextKoreanDate,
+  getNextPublicationDate,
   HISTORY_PROMPT_VERSION,
   HISTORY_SOURCE_POLICY,
 } from 'src/features/history-generation'
@@ -8,7 +8,7 @@ import {
   markGenerationSubmissionUnknown,
   markGenerationSubmitted,
   prepareGenerationRun,
-} from './generation-repository'
+} from '../repositories/history-generation'
 import {HistorySubmissionError, submitHistoryResponse} from './openai-client'
 import {
   persistGenerationSubmission,
@@ -50,7 +50,7 @@ const getErrorMessage = (error: HistorySubmissionError): string =>
 export const startHistoryGeneration = async (
   dependencies: StartGenerationDependencies = DEFAULT_DEPENDENCIES,
 ): Promise<StartGenerationResult> => {
-  const targetDate = getNextKoreanDate(dependencies.now())
+  const targetDate = getNextPublicationDate(dependencies.now())
   const prepared = await dependencies.prepare({
     promptVersion: HISTORY_PROMPT_VERSION,
     sourcePolicyVersion: HISTORY_SOURCE_POLICY.version,

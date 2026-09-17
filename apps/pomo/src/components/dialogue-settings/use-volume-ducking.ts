@@ -107,5 +107,5 @@ export const useVolumeDucking = (): VolumeDuckingState => {
   const changeVolume = (playerVolumePercent: number) =>
     scheduleSave({...settings(), playerVolumePercent})
 
-  return {isLoading, settings, changeEnabled, message, changeVolume}
+  return {changeEnabled, isLoading, changeVolume, settings, message}
 }

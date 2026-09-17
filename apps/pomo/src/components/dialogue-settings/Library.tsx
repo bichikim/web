@@ -25,6 +25,7 @@ export interface DialogueLibraryEntry {
 export interface DialogueLibraryProps {
   readonly entries: ReadonlyArray<DialogueLibraryEntry>
   readonly onAfterDelete?: (dialogue: PDialogue) => void
+  readonly onDelete?: (dialogue: PDialogue) => Promise<void>
   readonly onRequestClose?: () => void
   readonly textLineLimit?: DialogueLibraryItemProps['lineLimit']
 }
@@ -140,7 +141,11 @@ export const DialogueLibrary = (props: DialogueLibraryProps) => {
   const handleDelete = async (dialogue: PDialogue) => {
     try {
       stopPlayback()
-      await events.deleteDialogue(dialogue.id)
+      if (props.onDelete === undefined) {
+        await events.deleteDialogue(dialogue.id)
+      } else {
+        await props.onDelete(dialogue)
+      }
       props.onAfterDelete?.(dialogue)
       setPendingDeleteId(null)
     } catch (error: unknown) {

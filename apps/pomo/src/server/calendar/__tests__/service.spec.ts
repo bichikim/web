@@ -155,6 +155,7 @@ it('should refresh expired tokens and preserve events from another provider fail
       },
     ],
     truncated: true,
+    unavailableCalendars: 0,
   })
   vi.mocked(microsoftProvider.listEvents).mockRejectedValue(new Error('Graph unavailable'))
   const service = createCalendarService({
@@ -224,6 +225,7 @@ it('should preserve more than forty events for the calendar view', async () => {
       title: `일정 ${index}`,
     })),
     truncated: false,
+    unavailableCalendars: 0,
   })
   const service = createCalendarService({providerFor, repository, vault})
 
@@ -235,6 +237,62 @@ it('should preserve more than forty events for the calendar view', async () => {
   })
 
   expect(result.events).toHaveLength(41)
+})
+
+it('should preserve events when one connected calendar is unavailable', async () => {
+  vi.mocked(repository.listConnections).mockResolvedValue([
+    {
+      accountLabel: 'work@example.com',
+      encryptedTokens: 'google-sealed',
+      id: 'google-connection',
+      provider: 'google',
+    },
+  ])
+  vi.mocked(vault.open).mockReturnValue({
+    accessToken: 'access',
+    expiresAt: null,
+    refreshToken: null,
+  })
+  vi.mocked(googleProvider.listEvents).mockResolvedValue({
+    events: [
+      {
+        allDay: true,
+        calendarLabel: '업무',
+        end: '2026-09-05',
+        id: 'event-1',
+        start: '2026-09-04',
+        title: '회의',
+      },
+    ],
+    truncated: false,
+    unavailableCalendars: 1,
+  })
+  const service = createCalendarService({providerFor, repository, vault})
+
+  await expect(
+    service.listEvents({
+      displayTimeZone: 'UTC',
+      end: '2026-09-06T00:00:00.000Z',
+      start: '2026-09-03T00:00:00.000Z',
+      userId: 'user-1',
+    }),
+  ).resolves.toEqual({
+    connectedConnections: 1,
+    events: [
+      {
+        accountLabel: 'work@example.com',
+        allDay: true,
+        calendarLabel: '업무',
+        end: '2026-09-05',
+        id: 'google-connection:event-1',
+        provider: 'google',
+        start: '2026-09-04',
+        title: '회의',
+      },
+    ],
+    truncated: false,
+    unavailableConnections: 1,
+  })
 })
 
 it('should keep the same Google event independent across calendars and connections', async () => {

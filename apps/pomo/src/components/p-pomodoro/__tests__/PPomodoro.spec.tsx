@@ -445,6 +445,7 @@ describe('PPomodoro', () => {
         progress: () => 0,
         remainingSeconds: () => 1_500,
         state: () => invalidState,
+        waitForInitialization: async () => undefined,
       } satisfies PomodoroTimerController
 
       return {...actual, usePomodoroTimer: () => controller}

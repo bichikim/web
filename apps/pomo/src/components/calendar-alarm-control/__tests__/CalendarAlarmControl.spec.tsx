@@ -5,11 +5,13 @@ import {createSignal, type JSX} from 'solid-js'
 import {afterEach, beforeEach, expect, it, vi} from 'vitest'
 
 import type {CalendarEvent} from '../../../features/calendar'
+import {MEMORY_MEMOS_CHANGED_EVENT} from '../../../features/memory-assist/repository'
 import {
   advanceMemoryMemo,
   createMemoryMemo,
   getDueMemoryReminder,
   type MemoryMemo,
+  useMemoryMemos,
 } from '../../../features/memory-assist'
 import {CalendarAlarmControl} from '../CalendarAlarmControl'
 
@@ -191,6 +193,36 @@ const ownedAlarm = () => ({
     text: '팀 회의 일정 알람이에요.',
   }),
   dialogueId: 'memory-memo-calendar-alarm:connection-1:event-1',
+})
+
+it('should mark a consumed exact calendar alarm inactive', () => {
+  mocks.memos = [{...ownedAlarm(), nextExactReminderAt: null}]
+  render(() => <CalendarAlarmControl now={now} event={event} memos={() => mocks.memos} />)
+
+  expect(screen.getByRole('button', {name: '팀 회의 알람 설정'})).toBeVisible()
+  expect(screen.queryByRole('button', {name: '팀 회의 알람 수정'})).not.toBeInTheDocument()
+})
+
+it('should keep a deleted calendar alarm inactive after a newer storage event', () => {
+  const memo = ownedAlarm()
+  render(() => {
+    const memos = useMemoryMemos()
+    return <CalendarAlarmControl now={now} event={event} memos={memos} />
+  })
+
+  window.dispatchEvent(
+    new CustomEvent(MEMORY_MEMOS_CHANGED_EVENT, {
+      detail: {memos: [{...memo, deletionPending: true as const}], revision: 2},
+    }),
+  )
+  window.dispatchEvent(
+    new CustomEvent(MEMORY_MEMOS_CHANGED_EVENT, {
+      detail: {memos: [memo], revision: 3},
+    }),
+  )
+
+  expect(screen.getByRole('button', {name: '팀 회의 알람 설정'})).toBeVisible()
+  expect(screen.queryByRole('button', {name: '팀 회의 알람 수정'})).not.toBeInTheDocument()
 })
 
 it('should retain the stored alarm date instead of the selected day', () => {

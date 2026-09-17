@@ -58,7 +58,6 @@ interface LoadCalendarPromptContextOptions {
   readonly now?: Date
   readonly text: string
   readonly timeZone?: string
-  readonly timeZoneOffsetMinutes?: number
 }
 
 interface CalendarRequestOptions {
@@ -135,17 +134,17 @@ export const loadCalendarPromptContext = async (
   options: LoadCalendarPromptContextOptions,
 ): Promise<string | null> => {
   const now = options.now ?? new Date()
+  const timeZone = options.timeZone ?? Intl.DateTimeFormat().resolvedOptions().timeZone
   const query = createCalendarQuery({
     now,
     text: options.text,
-    timeZoneOffsetMinutes: options.timeZoneOffsetMinutes,
+    timeZone,
   })
 
   if (query === null) {
     return null
   }
 
-  const timeZone = options.timeZone ?? Intl.DateTimeFormat().resolvedOptions().timeZone
   const response = await listCalendarEvents({...query, timeZone})
 
   if (response.connectedConnections === 0) {

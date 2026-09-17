@@ -384,6 +384,71 @@ describe('createPlayer', () => {
     player.destroy()
   })
 
+  test('should switch motions and finish a one-shot playback', async () => {
+    let tick: ((ticker: {readonly deltaMS: number}) => void) | undefined
+    const application = {
+      destroy: vi.fn(),
+      init: vi.fn().mockResolvedValue(undefined),
+      render: vi.fn(),
+      screen: {height: 100, width: 200},
+      stage: {addChild: vi.fn()},
+      start: vi.fn(),
+      stop: vi.fn(),
+      ticker: {
+        add: vi.fn((handler: (ticker: {readonly deltaMS: number}) => void) => {
+          tick = handler
+        }),
+      },
+    }
+    const root = {
+      addChild: vi.fn(),
+      position: {set: vi.fn()},
+      scale: {set: vi.fn()},
+    }
+    const onFrame = vi.fn()
+    const source = prepareDocument({
+      ...puppetDocument,
+      motions: [
+        {duration: 2, id: 'idle', tracks: []},
+        {duration: 0.5, id: 'blink', tracks: []},
+      ],
+    })
+
+    mocks.Application.mockImplementation(
+      class {
+        constructor() {
+          Object.assign(this, application)
+        }
+      } as unknown as () => unknown,
+    )
+    mocks.Container.mockImplementation(
+      class {
+        constructor() {
+          Object.assign(this, root)
+        }
+      } as unknown as () => unknown,
+    )
+
+    const player = await createPlayer({
+      canvas: document.createElement('canvas'),
+      document: source,
+      onFrame,
+    })
+    const onComplete = vi.fn()
+
+    expect(player.setMotion('blink')).toBe(true)
+    expect(onFrame).toHaveBeenLastCalledWith({duration: 0.5, motionId: 'blink', time: 0})
+    expect(player.playMotion('blink', {loop: false, onComplete})).toBe(true)
+    tick?.({deltaMS: 600})
+
+    expect(onFrame).toHaveBeenLastCalledWith({duration: 0.5, motionId: 'blink', time: 0.5})
+    expect(application.stop).toHaveBeenCalledOnce()
+    expect(onComplete).toHaveBeenCalledOnce()
+    expect(player.setMotion('missing')).toBe(false)
+
+    player.destroy()
+  })
+
   test('should apply pendulum output to parameter deformation at a fixed simulation step', async () => {
     let tick: ((ticker: {readonly deltaMS: number}) => void) | undefined
     const application = {

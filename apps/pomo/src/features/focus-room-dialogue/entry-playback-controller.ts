@@ -69,7 +69,7 @@ export interface EntryPlaybackController {
   readonly playSequence: (
     repository: PDialogueRepository,
     options: PlayPDialogueSequenceOptions,
-  ) => Promise<void>
+  ) => Promise<PlaybackCompletion>
   readonly retry: () => void
   readonly scheduledDialogueCount: Accessor<number>
   readonly skip: () => void
@@ -477,7 +477,7 @@ export const createEntryPlaybackController = (): EntryPlaybackController => {
       dialogue?.id === dialogueId || queue.isScheduled(dialogueId),
     isPlaying,
     async playSequence(repository, options) {
-      await queue.enqueue(repository, options)
+      return queue.enqueue(repository, options)
     },
     async prepare(repository, dialogueId) {
       if (isDisposed) {

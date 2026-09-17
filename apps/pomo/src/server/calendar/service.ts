@@ -88,6 +88,10 @@ interface ConnectionEventsResult {
   readonly truncated: boolean
 }
 
+interface ProviderConnectionEventsResult extends ConnectionEventsResult {
+  readonly unavailableCalendars: number
+}
+
 export interface CalendarEventsResult extends ConnectionEventsResult {
   readonly connectedConnections: number
   readonly events: ReadonlyArray<CalendarEvent>
@@ -112,7 +116,7 @@ export const createCalendarService = (options: CreateCalendarServiceOptions): Ca
   const readConnectionEvents = async (
     connection: CalendarConnectionRecord,
     range: Omit<ListCalendarEventsOptions, 'userId'>,
-  ): Promise<ConnectionEventsResult> => {
+  ): Promise<ProviderConnectionEventsResult> => {
     const provider = options.providerFor(connection.provider)
     let tokens = options.vault.open(connection.encryptedTokens)
 
@@ -146,6 +150,7 @@ export const createCalendarService = (options: CreateCalendarServiceOptions): Ca
         provider: connection.provider,
       })),
       truncated: result.truncated,
+      unavailableCalendars: result.unavailableCalendars,
     }
   }
 
@@ -207,7 +212,9 @@ export const createCalendarService = (options: CreateCalendarServiceOptions): Ca
         truncated: results.some(
           (result) => result.status === 'fulfilled' && result.value.truncated,
         ),
-        unavailableConnections: results.filter((result) => result.status === 'rejected').length,
+        unavailableConnections: results.filter(
+          (result) => result.status === 'rejected' || result.value.unavailableCalendars > 0,
+        ).length,
       }
     },
   }

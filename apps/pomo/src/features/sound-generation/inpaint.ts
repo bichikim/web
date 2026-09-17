@@ -1,4 +1,5 @@
-const RATE = 44100
+import {SAMPLE_RATE} from './connection'
+
 const CHANNELS = 256
 const STRIDE = 4096
 export interface InpaintAudio {
@@ -10,7 +11,7 @@ export interface InpaintAudio {
 
 export function validateInpaint(audio: InpaintAudio, seconds: number) {
   if (
-    audio.left.length !== seconds * RATE ||
+    audio.left.length !== seconds * SAMPLE_RATE ||
     audio.right.length !== audio.left.length ||
     !Number.isFinite(audio.start) ||
     !Number.isFinite(audio.end) ||
@@ -33,7 +34,7 @@ export function createInpaintCondition(
   }
   const result = new Float32Array((CHANNELS + 1) * length)
   for (let index = 0; index < length; index += 1) {
-    const time = (index * STRIDE) / RATE
+    const time = (index * STRIDE) / SAMPLE_RATE
     const keep = time < start || time >= end ? 1 : 0
     result[index] = keep
     for (let channel = 0; channel < CHANNELS; channel += 1) {

@@ -2,11 +2,12 @@ import {createMemo, createSignal, onCleanup, onMount, Show} from 'solid-js'
 import {
   calculateService,
   DEFAULT_SERVICE_SETTINGS,
+  parseServiceDays,
   readServiceSettings,
   type ServiceSettings,
   writeServiceSettings,
 } from 'src/features/tools'
-import {useKoreanToday} from 'src/features/civil-date'
+import {useLocalDate} from 'src/features/civil-date'
 import {PDatePicker} from '../p-date-picker/PDatePicker'
 import {PSelect} from '../p-select/PSelect'
 import {PInput} from '../p-input/PInput'
@@ -16,7 +17,7 @@ import {Result} from './Result'
 export const Service = () => {
   const [settings, setSettings] = createSignal(DEFAULT_SERVICE_SETTINGS)
   const [ready, setReady] = createSignal(false)
-  const today = useKoreanToday()
+  const today = useLocalDate()
   const start = () => settings().start
   const manual = () => settings().manual
   const branch = () => settings().branch
@@ -47,11 +48,11 @@ export const Service = () => {
         }
       })
   })
-  const serviceDays = () => (/^\d+$/u.test(settings().days) ? Number(settings().days) : NaN)
+  const serviceDays = createMemo(() => parseServiceDays(settings().days))
   const result = createMemo(() =>
     calculateService({
       branch: branch(),
-      days: manual() ? serviceDays() : undefined,
+      days: manual() ? (serviceDays() ?? NaN) : undefined,
       start: start(),
       today: today(),
     }),
@@ -94,9 +95,7 @@ export const Service = () => {
             disabled={!ready()}
             value={settings().days}
             onInput={(event) => handleChange({days: event.currentTarget.value})}
-            aria-invalid={
-              settings().days !== '' && (!Number.isSafeInteger(serviceDays()) || serviceDays() < 1)
-            }
+            aria-invalid={settings().days !== '' && serviceDays() === null}
           />
           <span class="text-xs leading-5">1일 이상의 정수를 입력하세요.</span>
         </label>
@@ -117,8 +116,8 @@ export const Service = () => {
         )}
       </Show>
       <p class="m-0 text-sm leading-6 text-muted-foreground">
-        한국 날짜 {today()} 기준. 자동 계산은 2022년 이후 입대하는 현역병의 현재 복무기간을 적용한
-        예상치입니다. 입대일을 포함하며 복무 제외 기간·개인별 조정은 자동 반영하지 않습니다.
+        현재 기기의 날짜 {today()} 기준. 자동 계산은 2022년 이후 입대하는 현역병의 현재 복무기간을
+        적용한 예상치입니다. 입대일을 포함하며 복무 제외 기간·개인별 조정은 자동 반영하지 않습니다.
         진행률은 완료한 날짜를 기준으로 계산하며, 예상 전역일부터 100%로 표시합니다.
       </p>
     </div>

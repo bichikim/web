@@ -8,7 +8,7 @@ const repositoryMocks = vi.hoisted(() => ({
 }))
 
 vi.mock('src/server/auth/authenticate-app-request', () => authMocks)
-vi.mock('src/server/auth/repository', () => repositoryMocks)
+vi.mock('src/server/repositories/auth', () => repositoryMocks)
 vi.mock('src/server/auth/token', () => ({readBearerToken: authMocks.readBearerToken}))
 
 import {DELETE, GET, PATCH} from '../session'

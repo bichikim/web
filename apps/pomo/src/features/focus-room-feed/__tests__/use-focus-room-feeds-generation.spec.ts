@@ -10,6 +10,7 @@ import {renderHook} from '@solidjs/testing-library'
 import {expect, it, vi} from 'vitest'
 
 import type {SupertonicClient} from '../../supertonic'
+import type {FeedSyncSummary} from '../feed-sync'
 import {feedGenerationRuntime} from '../generation-runtime'
 import {usePFeeds} from '../use-focus-room-feeds'
 
@@ -282,4 +283,57 @@ it('should keep generation active while moving to the next queued feed dialogue'
   finishSecondGeneration()
   await vi.waitFor(() => expect(view.result.state().status).toBe('idle'))
   view.cleanup()
+})
+
+it('should preserve syncing state when generation finishes during a refresh', async () => {
+  const connection = createConnection()
+  const job = createJob()
+  const item = createItem()
+  const refreshCompletion = Promise.withResolvers<FeedSyncSummary>()
+  const generationCompletion = Promise.withResolvers<void>()
+  const voiceClient = createVoiceClient()
+  vi.spyOn(feedGenerationRuntime, 'createVoiceClient').mockResolvedValue(voiceClient)
+  vi.spyOn(feedGenerationRuntime, 'generateDialogueAudio').mockImplementation(async () => {
+    await generationCompletion.promise
+    return {
+      ok: true,
+      value: {
+        audio: new Blob(['audio']),
+        durationMs: 1000,
+        segments: [{durationMs: 1000, index: 0, startMs: 0, text: job.script}],
+      },
+    }
+  })
+  repositoryMocks.listConnections.mockReturnValue([connection])
+  repositoryMocks.feedRepository.listJobs.mockResolvedValue([job])
+  repositoryMocks.feedRepository.listItems.mockResolvedValue([item])
+  syncMocks.synchronizeFeeds.mockResolvedValueOnce({
+    failures: [],
+    queuedJobIds: [job.id],
+    successfulConnections: 1,
+  })
+  preparationMocks.prepareFeedGeneration.mockImplementationOnce(async (options) => {
+    await options.prepareModel(job.modelId)
+    return {job, status: 'ready'}
+  })
+  const view = renderHook(() => usePFeeds({events: createEventContext()}))
+  await vi.waitFor(() => expect(feedGenerationRuntime.generateDialogueAudio).toHaveBeenCalledOnce())
+
+  syncMocks.synchronizeFeeds.mockReturnValueOnce(refreshCompletion.promise)
+  const refresh = view.result.syncNow()
+  await vi.waitFor(() => expect(syncMocks.synchronizeFeeds).toHaveBeenCalledTimes(2))
+
+  try {
+    generationCompletion.resolve()
+    await vi.waitFor(() => expect(repositoryMocks.feedRepository.complete).toHaveBeenCalledOnce())
+    expect(view.result.state()).toEqual({
+      message: '새 피드를 확인하고 있어요…',
+      progress: null,
+      status: 'syncing',
+    })
+  } finally {
+    refreshCompletion.resolve({failures: [], queuedJobIds: [], successfulConnections: 1})
+    await refresh
+    view.cleanup()
+  }
 })

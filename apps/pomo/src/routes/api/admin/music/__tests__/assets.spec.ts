@@ -18,7 +18,7 @@ const artworkMocks = vi.hoisted(() => ({storeTrackArtwork: vi.fn()}))
 const deletionMocks = vi.hoisted(() => ({deleteTrackAssetStorage: vi.fn()}))
 
 vi.mock('src/server/auth/authorize-admin-request', () => authMocks)
-vi.mock('src/server/music/track-registration-repository', () => repositoryMocks)
+vi.mock('src/server/repositories/music-track-registration', () => repositoryMocks)
 vi.mock('src/server/music/cover-upload', () => artworkMocks)
 vi.mock('src/server/music/track-storage-deletion', () => deletionMocks)
 vi.mock('src/server/music/track-upload', () => uploadMocks)

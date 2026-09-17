@@ -5,7 +5,7 @@ import {
   finalizeTrackDeletion,
   markTrackDeletionStorageDeleted,
   prepareTrackDeletion,
-} from './track-deletion-repository'
+} from '../repositories/music-track-deletion'
 import {deleteTrackAssetStorage} from './track-storage-deletion'
 
 const FINALIZE_BATCH_SIZE = 25

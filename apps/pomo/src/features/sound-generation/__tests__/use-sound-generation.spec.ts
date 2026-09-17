@@ -59,9 +59,9 @@ it('should pass loop input to the Worker without applying generation duration va
     try {
       const generation = useSoundGeneration()
       const request = {
+        connectionSeconds: 4,
         prompt: 'rain',
         source: new Blob(['wav']),
-        transitionSeconds: 4,
         type: 'loop' as const,
       }
       generation.generate(request)

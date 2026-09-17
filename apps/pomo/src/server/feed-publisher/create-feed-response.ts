@@ -1,3 +1,4 @@
+import {isValidTimeZone} from 'src/utils/is-valid-time-zone'
 import {createHash} from 'node:crypto'
 
 import {
@@ -15,6 +16,8 @@ const MAX_DOCUMENT_KIBIBYTES = 512
 const MAX_DOCUMENT_BYTES = MAX_DOCUMENT_KIBIBYTES * BYTES_PER_KIBIBYTE
 const CACHE_SECONDS = 300
 const STALE_SECONDS = 60
+const MAXIMUM_TIME_ZONE_CHARACTERS = 100
+const HTTP_STATUS_BAD_REQUEST = 400
 const HTTP_STATUS_PERMANENT_REDIRECT = 308
 const HTTP_STATUS_METHOD_NOT_ALLOWED = 405
 const HTTP_STATUS_NOT_FOUND = 404
@@ -45,11 +48,15 @@ const createUncachedResponse = (status: number, headers?: HeadersInit): Response
 const createCanonicalRedirect = (request: Request): Response | undefined => {
   const url = new URL(request.url)
 
-  if (url.search.length === 0) {
+  if ([...url.searchParams.keys()].every((key) => key === 'timeZone')) {
     return undefined
   }
 
+  const timeZone = url.searchParams.get('timeZone')
   url.search = ''
+  if (timeZone !== null) {
+    url.searchParams.set('timeZone', timeZone)
+  }
   return createUncachedResponse(HTTP_STATUS_PERMANENT_REDIRECT, {Location: url.toString()})
 }
 
@@ -121,6 +128,14 @@ export const createFeedResponse = async (options: CreateFeedResponseOptions): Pr
     return createUncachedResponse(HTTP_STATUS_METHOD_NOT_ALLOWED, {Allow: 'GET, HEAD'})
   }
 
+  const timeZones = new URL(options.request.url).searchParams.getAll('timeZone')
+  if (
+    timeZones.length > 1 ||
+    timeZones.some((zone) => zone.length > MAXIMUM_TIME_ZONE_CHARACTERS || !isValidTimeZone(zone))
+  ) {
+    return createUncachedResponse(HTTP_STATUS_BAD_REQUEST)
+  }
+
   const redirect = createCanonicalRedirect(options.request)
 
   if (redirect !== undefined) {
@@ -136,7 +151,10 @@ export const createFeedResponse = async (options: CreateFeedResponseOptions): Pr
   try {
     const feed = normalizeFeed(await provider.listEntries())
     const requestUrl = new URL(options.request.url)
-    const selfUrl = new URL(requestUrl.pathname, provider.definition.homeUrl).toString()
+    const selfUrl = new URL(
+      `${requestUrl.pathname}${requestUrl.search}`,
+      provider.definition.homeUrl,
+    ).toString()
     const document = renderDocument(options.format, {
       definition: provider.definition,
       entries: feed.entries,

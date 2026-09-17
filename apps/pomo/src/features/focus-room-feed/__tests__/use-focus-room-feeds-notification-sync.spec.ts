@@ -54,6 +54,7 @@ const repositoryMocks = vi.hoisted(() => {
     listJobs: vi.fn().mockResolvedValue([]),
     listMetadata: vi.fn().mockResolvedValue([]),
     markListened: vi.fn().mockResolvedValue(undefined),
+    removeItem: vi.fn().mockResolvedValue(undefined),
     removeMetadata: vi.fn().mockResolvedValue(undefined),
     retryJobs: vi.fn().mockResolvedValue(undefined),
     startJob: vi.fn().mockResolvedValue(true),
@@ -115,6 +116,7 @@ beforeEach(() => {
   repositoryMocks.feedRepository.listJobs.mockResolvedValue([])
   repositoryMocks.feedRepository.listMetadata.mockResolvedValue([])
   repositoryMocks.feedRepository.markListened.mockResolvedValue(undefined)
+  repositoryMocks.feedRepository.removeItem.mockResolvedValue(undefined)
   repositoryMocks.feedRepository.removeMetadata.mockResolvedValue(undefined)
   repositoryMocks.feedRepository.retryJobs.mockResolvedValue(undefined)
   repositoryMocks.feedRepository.startJob.mockResolvedValue(true)
@@ -342,6 +344,8 @@ it('should preserve expired dialogues that are active or queued for playback', (
 })
 
 it('should refresh from lifecycle events and remove every listener on cleanup', async () => {
+  const documentAdd = vi.spyOn(document, 'addEventListener')
+  const documentRemove = vi.spyOn(document, 'removeEventListener')
   const windowAdd = vi.spyOn(window, 'addEventListener')
   const windowRemove = vi.spyOn(window, 'removeEventListener')
   const refreshDialogues = vi.fn(async () => undefined)
@@ -357,7 +361,7 @@ it('should refresh from lifecycle events and remove every listener on cleanup', 
   await vi.waitFor(() =>
     expect(repositoryMocks.listConnections.mock.calls.length).toBeGreaterThan(listCount),
   )
-  expect(windowAdd).toHaveBeenCalledWith('visibilitychange', expect.any(Function))
+  expect(documentAdd).toHaveBeenCalledWith('visibilitychange', expect.any(Function))
   expect(windowAdd).toHaveBeenCalledWith(FEED_CONNECTIONS_CHANGED_EVENT, expect.any(Function), {})
   expect(windowAdd).toHaveBeenCalledWith(
     feedGenerationRuntime.settingsChangedEvent,
@@ -367,7 +371,7 @@ it('should refresh from lifecycle events and remove every listener on cleanup', 
 
   view.cleanup()
 
-  expect(windowRemove).toHaveBeenCalledWith('visibilitychange', expect.any(Function))
+  expect(documentRemove).toHaveBeenCalledWith('visibilitychange', expect.any(Function))
   expect(windowRemove).toHaveBeenCalledWith(
     FEED_CONNECTIONS_CHANGED_EVENT,
     expect.any(Function),

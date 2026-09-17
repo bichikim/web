@@ -9,7 +9,7 @@ const mocks = vi.hoisted(() => ({
   startHistoryGeneration: vi.fn(),
 }))
 
-vi.mock('../generation-recovery-repository', () => ({
+vi.mock('../../repositories/history-generation-recovery', () => ({
   expireGenerationSubmission: mocks.expireGenerationSubmission,
   listRecoverableGenerationRuns: mocks.listRecoverableGenerationRuns,
 }))

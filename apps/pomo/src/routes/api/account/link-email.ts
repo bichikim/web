@@ -8,7 +8,7 @@ import {sendAccountLinkEmail} from 'src/server/auth/magic-link'
 import {
   createAccountLinkChallenge,
   invalidateAccountLinkChallenge,
-} from 'src/server/auth/repository'
+} from 'src/server/repositories/auth'
 
 const MAXIMUM_BODY_SIZE = 4096
 const MAX_EMAIL_LENGTH = 320

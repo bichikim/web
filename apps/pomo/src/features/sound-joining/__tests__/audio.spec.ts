@@ -7,9 +7,9 @@ const source = (value: number) => ({
 })
 it('should trim both sources and preserve samples outside the replacement region', async () => {
   const plan = prepareJoin({
+    connectionSeconds: 4,
     first: source(0.1),
     second: source(0.2),
-    transition: 4,
     trimEnd: 2,
     trimStart: 2,
   })
@@ -33,8 +33,14 @@ it('should trim both sources and preserve samples outside the replacement region
   expect(sample(8, 0)).toBe(Math.round(0.3 * 32767))
   expect(sample(8, 1)).toBe(-Math.round(0.3 * 32767))
 })
-it('should reject cuts leaving insufficient context and invalid transitions', () => {
-  const options = {first: source(0.1), second: source(0.2), transition: 4, trimEnd: 2, trimStart: 2}
+it('should reject cuts leaving insufficient context and invalid connection durations', () => {
+  const options = {
+    connectionSeconds: 4,
+    first: source(0.1),
+    second: source(0.2),
+    trimEnd: 2,
+    trimStart: 2,
+  }
   expect(() => prepareJoin({...options, trimEnd: 5})).toThrow('최소 6초')
-  expect(() => prepareJoin({...options, transition: Number.NaN})).toThrow('1~8초')
+  expect(() => prepareJoin({...options, connectionSeconds: Number.NaN})).toThrow('1~10초')
 })

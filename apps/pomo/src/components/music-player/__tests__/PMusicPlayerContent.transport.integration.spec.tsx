@@ -1,6 +1,6 @@
 /** @vitest-environment jsdom */
 
-import {cleanup, fireEvent, render, screen} from '@solidjs/testing-library'
+import {cleanup, fireEvent, render, screen, within} from '@solidjs/testing-library'
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 
 import * as m from '@paraglide/message'
@@ -89,12 +89,12 @@ describe('PMusicPlayerContent transport integration', () => {
 
     expect(HTMLMediaElement.prototype.play).not.toHaveBeenCalled()
     expect(onPlayingChange).toHaveBeenLastCalledWith(true)
-    expect(
-      screen
-        .getByRole('button', {name: '이전 곡'})
-        .parentElement?.querySelector('media-play-button')
-        ?.getAttribute('aria-label'),
-    ).toBe('일시 정지')
+    const transportControls = screen.getByRole('button', {name: '이전 곡'}).parentElement
+    if (!(transportControls instanceof HTMLElement)) {
+      throw new TypeError('Expected the expanded transport controls to be rendered')
+    }
+    const preparingPlayButton = within(transportControls).getByRole('button', {name: '일시 정지'})
+    expect(preparingPlayButton).toHaveAttribute('aria-busy', 'true')
 
     fireEvent(audio, new Event('loadedmetadata'))
     await Promise.resolve()
@@ -103,6 +103,27 @@ describe('PMusicPlayerContent transport integration', () => {
     expect(audio.load).toHaveBeenCalledOnce()
     expect(HTMLMediaElement.prototype.play).toHaveBeenCalledOnce()
     expect(audio.pause).not.toHaveBeenCalled()
+  })
+
+  it('should resume the next track after seeking before metadata', async () => {
+    localStorage.clear()
+    const result = render(() => <PMusicPlayerContent tracks={TRACKS} />)
+    const audio = getAudioElement(result.container)
+
+    vi.spyOn(audio, 'load').mockImplementation(() => undefined)
+    fireEvent(audio, new Event('play'))
+    fireEvent.click(screen.getByRole('button', {name: '플레이어 펼치기'}))
+    fireEvent.click(screen.getByRole('button', {name: '다음 곡'}))
+    await Promise.resolve()
+    audio.currentTime = 8
+    fireEvent(audio, new Event('seeking'))
+    fireEvent(audio, new Event('pause'))
+
+    markAudioMetadataReady(audio)
+    fireEvent(audio, new Event('loadedmetadata'))
+
+    expect(audio.currentTime).toBe(8)
+    expect(HTMLMediaElement.prototype.play).toHaveBeenCalledOnce()
   })
 
   it('should report the current track when selection changes', async () => {

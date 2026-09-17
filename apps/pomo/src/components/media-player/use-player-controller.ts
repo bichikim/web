@@ -53,6 +53,7 @@ export const usePlayerController = (props: UsePlayerControllerProps): PlayerCont
   const initialState = createInitialPlaybackState({trackCount: initialTracks.length})
   const [loadedTracks, setLoadedTracks] = createSignal<readonly PTrack[]>(initialTracks)
   const [isPlaylistLoading, setIsPlaylistLoading] = createSignal(props.tracks === undefined)
+  const [isPreparing, setIsPreparing] = createSignal(false)
   const tracks = () => props.tracks ?? loadedTracks()
   const [currentIndex, setCurrentIndex] = createSignal(initialState.currentIndex)
   const visualizer = usePAudioVisualizer()
@@ -68,10 +69,14 @@ export const usePlayerController = (props: UsePlayerControllerProps): PlayerCont
   let playbackTransition: PlaybackTransition | null = null
   const shouldIgnoreNativePause = () =>
     getCurrentPlaybackTransition(playbackTransition, currentTrack()?.id)?.pauseProtected === true
+  const clearPlaybackTransition = () => {
+    playbackTransition = null
+    setIsPreparing(false)
+  }
   const playback = usePlayback({
     element: props.element,
     onError: (error) => {
-      playbackTransition = null
+      clearPlaybackTransition()
       cancelPendingRestart()
       visualizer.stop()
       playbackPersistence.persistPlaybackError()
@@ -79,7 +84,7 @@ export const usePlayerController = (props: UsePlayerControllerProps): PlayerCont
     },
     onPause: (wasPlaying, isUserIntent) => handlePause(wasPlaying, isUserIntent),
     onPauseRequest: (isUserIntent) => {
-      playbackTransition = null
+      clearPlaybackTransition()
       clearPendingRestart()
       if (isUserIntent) {
         playbackPersistence.persistPlaybackIntent(false)
@@ -95,8 +100,14 @@ export const usePlayerController = (props: UsePlayerControllerProps): PlayerCont
     isPlaying,
   })
   const getPlaybackTransition = () => {
-    playbackTransition = getCurrentPlaybackTransition(playbackTransition, currentTrack()?.id)
-    return playbackTransition
+    const transition = getCurrentPlaybackTransition(playbackTransition, currentTrack()?.id)
+    if (transition === null) {
+      clearPlaybackTransition()
+      return null
+    }
+
+    playbackTransition = transition
+    return transition
   }
   const persistPlaybackTransition = () =>
     persistRestoredPlayback({
@@ -112,7 +123,7 @@ export const usePlayerController = (props: UsePlayerControllerProps): PlayerCont
     onRestart: () => restartCurrentTrack(),
     onSelect: (options) => selectTrack(options),
     onStop: () => {
-      playbackTransition = null
+      clearPlaybackTransition()
       playback.onPause()
     },
     trackCount: () => tracks().length,
@@ -138,6 +149,7 @@ export const usePlayerController = (props: UsePlayerControllerProps): PlayerCont
   }
   const prepareTrackChange = (shouldResume: boolean, trackId: string) => {
     playbackTransition = shouldResume ? {pauseProtected: true, phase: 'loading', trackId} : null
+    setIsPreparing(shouldResume)
   }
   createEffect(() => {
     const currentIsPlaying = isPlaying()
@@ -187,9 +199,7 @@ export const usePlayerController = (props: UsePlayerControllerProps): PlayerCont
   }
   const queueController = createPlayerQueueController({
     cancelPendingRestart,
-    clearPlaybackTransition: () => {
-      playbackTransition = null
-    },
+    clearPlaybackTransition,
     isPlaying,
     isQueueControlled: () => props.tracks !== undefined,
     onPlaybackRevisionChange: () => {
@@ -233,15 +243,17 @@ export const usePlayerController = (props: UsePlayerControllerProps): PlayerCont
     playbackPersistence.writePlayback(nextPlayback)
     queueMicrotask(restorePendingPlayback)
   }
+  let previousTrackKey: string | null = null
   createEffect(() => {
     const track = currentTrack() ?? null
+    const trackKey = track === null ? null : JSON.stringify([track.id, track.source])
+    const currentTrackChanged = trackKey !== previousTrackKey
+    previousTrackKey = trackKey
     cancelPendingRestart()
-    const shouldResumeControlledTrack = untrack(
-      () =>
-        props.tracks !== undefined &&
-        isPlaying() &&
-        getCurrentPlaybackTransition(playbackTransition, track?.id) === null,
-    )
+    const shouldResumeControlledTrack = untrack(() => {
+      const transition = getPlaybackTransition()
+      return props.tracks !== undefined && currentTrackChanged && isPlaying() && transition === null
+    })
     if (track !== null && shouldResumeControlledTrack) {
       selectTrack({index: untrack(currentIndex), shouldResume: true})
     }
@@ -249,7 +261,7 @@ export const usePlayerController = (props: UsePlayerControllerProps): PlayerCont
   })
 
   const handlePlay = () => {
-    playbackTransition = null
+    clearPlaybackTransition()
     clearPendingRestart()
     previewPlayback.stopBeforePlayback()
 
@@ -263,7 +275,7 @@ export const usePlayerController = (props: UsePlayerControllerProps): PlayerCont
   }
 
   const handlePause = (wasPlaying: boolean, isUserIntent: boolean) => {
-    playbackTransition = null
+    clearPlaybackTransition()
     clearPendingRestart()
     if (wasPlaying) {
       playback.invalidate()
@@ -286,8 +298,8 @@ export const usePlayerController = (props: UsePlayerControllerProps): PlayerCont
     const track = currentTrack()
     const shouldWaitForPlay = track !== undefined && !isPlaying()
     restartPlaybackPending = shouldWaitForPlay
-    restartSeekPending = shouldWaitForPlay
-    playbackTransition = null
+    restartSeekPending = track !== undefined
+    clearPlaybackTransition()
     playback.seek(0)
     playbackRevision += 1
     if (track !== undefined) {
@@ -306,11 +318,11 @@ export const usePlayerController = (props: UsePlayerControllerProps): PlayerCont
 
     const transition = getPlaybackTransition()
     if (transition?.phase === 'restoring') {
-      const positionSeconds = readPlaybackPosition(props.element())
-      if (transition.seekPending && positionSeconds === transition.playback.positionSeconds) {
+      if (transition.seekPending) {
         return
       }
 
+      const positionSeconds = readPlaybackPosition(props.element())
       playbackTransition =
         positionSeconds === null
           ? null
@@ -320,8 +332,17 @@ export const usePlayerController = (props: UsePlayerControllerProps): PlayerCont
               playback: {...transition.playback, positionSeconds},
               seekPending: false,
             }
+    } else if (transition?.phase === 'loading' || transition?.phase === 'awaiting-metadata') {
+      const positionSeconds = readPlaybackPosition(props.element())
+      playbackPersistence.setPendingPosition(
+        positionSeconds === null
+          ? null
+          : {isPlaying: true, positionSeconds, trackId: transition.trackId},
+      )
+      cancelPendingRestart()
+      return
     } else if (transition !== null) {
-      playbackTransition = null
+      clearPlaybackTransition()
     }
 
     cancelPendingRestart()
@@ -378,7 +399,7 @@ export const usePlayerController = (props: UsePlayerControllerProps): PlayerCont
         return
       }
 
-      playbackTransition = null
+      clearPlaybackTransition()
     }
 
     playbackPersistence.persistSeekedPlayback()
@@ -401,7 +422,7 @@ export const usePlayerController = (props: UsePlayerControllerProps): PlayerCont
 
   onCleanup(() => {
     if (props.stopOnUnmount) {
-      playbackTransition = null
+      clearPlaybackTransition()
       playback.stop()
       if (playbackRevision === 0) {
         stopPPlayback().catch(globalThis.reportError)
@@ -425,6 +446,7 @@ export const usePlayerController = (props: UsePlayerControllerProps): PlayerCont
     invalidate: playback.invalidate,
     isPlaying,
     isPlaylistLoading,
+    isPreparing,
     levels: visualizer.levels,
     markPauseIntent: playback.markPauseIntent,
     onEnded: order.handleEnded,

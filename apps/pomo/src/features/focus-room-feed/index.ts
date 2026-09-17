@@ -59,3 +59,5 @@ export {
   useAutoPreparePreference,
   readFeedAutoPreparePreference,
 } from './use-auto-prepare-preference'
+
+export {getFeedRequestUrl, type FeedUrlEnvironment} from './feed-request-url'

@@ -21,6 +21,7 @@ import {isMemoryMemoDeletionPending} from './is-memory-memo-deletion-pending'
 import {updateMemoryMemos} from './repository'
 import {advanceMemoryMemo, getDueMemoryReminder, type MemoryReminderKind} from './schedule'
 import type {MemoryMemo} from './schema'
+import {type DeliveryState, transitionDeliveryState} from './delivery-state'
 import {useMemoryMemos} from './use-memos'
 
 const MAXIMUM_TIMEOUT = 2_147_483_647
@@ -98,6 +99,11 @@ const getMemoryMemoDeliverySnapshot = (memo: MemoryMemo) =>
     updatedAt: memo.updatedAt,
     version: memo.version,
   })
+
+interface RetryAfter {
+  readonly availableAt: number
+  readonly reminderTime: number | null
+}
 
 const isMemoryMemoDeliverySnapshotCurrent = (
   memos: ReadonlyArray<MemoryMemo>,
@@ -245,9 +251,9 @@ export const useMemoryReminders = (props: UseMemoryRemindersProps): MemoryRemind
   const memos = useMemoryMemos()
   useDeletionRecovery(() => memoryMemoDeletion.retry(props.events.deleteDialogue))
   const [clockRevision, setClockRevision] = createSignal(0)
-  const [isPending, setIsPending] = createSignal(false)
+  const [deliveryState, setDeliveryState] = createSignal<DeliveryState>({status: 'idle'})
   const [skippedMemos, setSkippedMemos] = createSignal<ReadonlyArray<MemoryMemo>>([])
-  const retryAfter = new Map<string, number>()
+  const retryAfter = new Map<string, RetryAfter>()
   const invalidatedReminders = new Map<string, InvalidatedReminder>()
   let client: SupertonicClient | null = null
   let clientModelId: SupertonicModelId | null = null
@@ -292,9 +298,35 @@ export const useMemoryReminders = (props: UseMemoryRemindersProps): MemoryRemind
     return clientPreparation
   }
 
+  const setRetryAfter = (memo: MemoryMemo) => {
+    retryAfter.set(memo.id, {
+      availableAt: Date.now() + RETRY_DELAY,
+      reminderTime: getReminderTime(memo),
+    })
+  }
+
+  const getMemoRetryAfter = (memo: MemoryMemo) => {
+    const retry = retryAfter.get(memo.id)
+
+    if (retry === undefined) {
+      return 0
+    }
+
+    if (getReminderTime(memo) !== retry.reminderTime) {
+      retryAfter.delete(memo.id)
+      return 0
+    }
+
+    return retry.availableAt
+  }
+
   const markSkippedMemo = (memo: MemoryMemo) => {
+    if (deliveryState().status === 'removed') {
+      return
+    }
+
     setSkippedMemos((current) => [...current.filter((item) => item.id !== memo.id), memo])
-    retryAfter.set(memo.id, Date.now() + RETRY_DELAY)
+    setRetryAfter(memo)
   }
 
   const deliver = async (memo: MemoryMemo) => {
@@ -405,18 +437,27 @@ export const useMemoryReminders = (props: UseMemoryRemindersProps): MemoryRemind
   }
 
   const runDelivery = async (memo: MemoryMemo) => {
-    setIsPending(true)
+    setDeliveryState((currentState) =>
+      transitionDeliveryState(currentState, {memoId: memo.id, type: 'start'}),
+    )
 
     try {
       await deliver(memo)
     } catch (error: unknown) {
       console.error('Failed to deliver a memory memo reminder.', error)
-      retryAfter.set(memo.id, Date.now() + RETRY_DELAY)
+      if (deliveryState().status === 'removed') {
+        return
+      }
+      if (isDisposed) {
+        setRetryAfter(memo)
+      } else {
+        markSkippedMemo(memo)
+      }
     } finally {
+      setDeliveryState((currentState) => transitionDeliveryState(currentState, {type: 'finish'}))
       if (isDisposed) {
         repository?.dispose()
       } else {
-        setIsPending(false)
         setClockRevision((revision) => revision + 1)
       }
     }
@@ -434,7 +475,7 @@ export const useMemoryReminders = (props: UseMemoryRemindersProps): MemoryRemind
       isDisposed = true
       client?.dispose()
       client = null
-      if (!isPending()) {
+      if (deliveryState().status === 'idle') {
         repository?.dispose()
       }
     })
@@ -443,16 +484,32 @@ export const useMemoryReminders = (props: UseMemoryRemindersProps): MemoryRemind
   createEffect(() => {
     clockRevision()
     const currentMemos = memos()
-
-    if (isPending()) {
-      return
-    }
-
     const currentMemoIds = new Set(currentMemos.map((memo) => memo.id))
+
+    for (const memoId of retryAfter.keys()) {
+      if (!currentMemoIds.has(memoId)) {
+        retryAfter.delete(memoId)
+      }
+    }
     for (const memoId of invalidatedReminders.keys()) {
       if (!currentMemoIds.has(memoId)) {
         invalidatedReminders.delete(memoId)
       }
+    }
+
+    let currentDeliveryState = deliveryState()
+    if (
+      currentDeliveryState.status === 'pending' &&
+      !currentMemoIds.has(currentDeliveryState.memoId)
+    ) {
+      currentDeliveryState = transitionDeliveryState(currentDeliveryState, {
+        type: 'memo-removed',
+      })
+      setDeliveryState(currentDeliveryState)
+    }
+
+    if (currentDeliveryState.status !== 'idle') {
+      return
     }
 
     const scheduledMemos = currentMemos
@@ -482,7 +539,7 @@ export const useMemoryReminders = (props: UseMemoryRemindersProps): MemoryRemind
           return []
         }
 
-        const availableAt = Math.max(reminderTime, retryAfter.get(memo.id) ?? 0)
+        const availableAt = Math.max(reminderTime, getMemoRetryAfter(scheduledMemo))
         return Number.isFinite(availableAt) ? [{availableAt, memo: scheduledMemo}] : []
       })
       .sort((left, right) => left.availableAt - right.availableAt)

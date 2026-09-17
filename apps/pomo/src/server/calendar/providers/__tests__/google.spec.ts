@@ -68,6 +68,55 @@ it.each([false, true])(
   },
 )
 
+it.each(['complete', 'page'] as const)(
+  'should retain readable Google events when a sibling calendar %s fails',
+  async (failureMode) => {
+    const fetch = vi.fn<typeof globalThis.fetch>().mockImplementation(async (input) => {
+      const url = new URL(String(input))
+      if (url.pathname.endsWith('/calendarList')) {
+        return Response.json({
+          items: [
+            {id: 'readable', summary: 'Readable'},
+            {id: 'unavailable', summary: 'Unavailable'},
+          ],
+        })
+      }
+      if (url.pathname.includes('/calendars/readable/events')) {
+        return Response.json({
+          items: [{end: {date: '2026-09-05'}, id: 'readable-event', start: {date: '2026-09-04'}}],
+        })
+      }
+      if (failureMode === 'page' && !url.searchParams.has('pageToken')) {
+        return Response.json({
+          items: [{end: {date: '2026-09-07'}, id: 'partial-event', start: {date: '2026-09-06'}}],
+          nextPageToken: 'next-page',
+        })
+      }
+      return Response.json({error: {code: 403, message: 'Forbidden'}}, {status: 403})
+    })
+    const provider = createGoogleCalendarProvider({
+      clientId: 'client',
+      clientSecret: 'secret',
+      fetch,
+    })
+
+    const result = await provider.listEvents({
+      accessToken: 'access',
+      displayTimeZone: 'UTC',
+      end: '2026-09-08T00:00:00.000Z',
+      start: '2026-09-03T00:00:00.000Z',
+    })
+
+    expect(result.events.map((event) => event.id)).toEqual(
+      failureMode === 'page'
+        ? ['["readable","readable-event"]', '["unavailable","partial-event"]']
+        : ['["readable","readable-event"]'],
+    )
+    expect(result.truncated).toBe(false)
+    expect(result.unavailableCalendars).toBe(1)
+  },
+)
+
 it('should create a Google offline read-only authorization request with PKCE', () => {
   const provider = createGoogleCalendarProvider({
     clientId: 'google-client',
@@ -187,6 +236,7 @@ it('should expand recurring Google events and normalize timed and all-day values
       },
     ],
     truncated: false,
+    unavailableCalendars: 0,
   })
 
   const requestUrl = new URL(String(fetch.mock.calls[1]?.[0]))

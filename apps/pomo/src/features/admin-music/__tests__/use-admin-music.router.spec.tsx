@@ -106,11 +106,11 @@ it.each([false, true])(
       albums: [
         {
           coverFallback: 'music',
-          id: 'new-album',
           coverImageUrl: null,
-          status: 'draft',
+          id: 'new-album',
           release: {blockers: [], ready: false},
-          translations: [{albumId: 'new-album', locale: 'ko', description: '', title: '새 앨범'}],
+          status: 'draft',
+          translations: [{albumId: 'new-album', description: '', locale: 'ko', title: '새 앨범'}],
         },
       ],
     }

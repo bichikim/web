@@ -1,5 +1,7 @@
 /** @vitest-environment jsdom */
 
+import 'fake-indexeddb/auto'
+
 import {cleanup, fireEvent, screen, waitFor} from '@solidjs/testing-library'
 import {describe, expect, it, vi} from 'vitest'
 

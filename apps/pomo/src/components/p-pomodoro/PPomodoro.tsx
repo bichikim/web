@@ -12,6 +12,7 @@ import type {PSceneStyle} from '../../features/focus-room-animation'
 import {
   formatPomodoroTime,
   type PomodoroPhase,
+  type PomodoroTimerController,
   type PomodoroTimerEvent,
   type PomodoroTimerEventDeliveryOptions,
   type PomodoroTimerState,
@@ -133,7 +134,7 @@ interface PomodoroPanelProps {
   readonly sceneStyle?: PSceneStyle
   readonly statusLabel: Accessor<string>
   readonly timeLabel: Accessor<string>
-  readonly timer: ReturnType<typeof usePomodoroTimer>
+  readonly timer: PomodoroTimerController
 }
 
 const PomodoroPanel = (props: PomodoroPanelProps) => (
@@ -221,7 +222,14 @@ const PomodoroPanel = (props: PomodoroPanelProps) => (
 )
 
 export const PPomodoro = (props: PPomodoroProps) => {
-  const timer = usePomodoroTimer(props)
+  const timer = usePomodoroTimer({
+    get onEvents() {
+      return props.onEvents
+    },
+    get stopOnUnmount() {
+      return props.stopOnUnmount
+    },
+  })
   const [isOpen, setIsOpen] = createSignal(false)
   const [isEditingDurations, setIsEditingDurations] = createSignal(false)
   const [actionContainer, setActionContainer] = createSignal<HTMLDivElement | null>(null)

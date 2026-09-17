@@ -120,9 +120,13 @@ const listCalendarEvents = async (
     }
   }
 
-  await loadPage(null, 0)
+  try {
+    await loadPage(null, 0)
+  } catch {
+    return {events, truncated: false, unavailableCalendars: 1}
+  }
 
-  return {events, truncated}
+  return {events, truncated, unavailableCalendars: 0}
 }
 
 interface CalendarListResult {
@@ -172,13 +176,19 @@ const listEvents = async (
   options: ListProviderEventsOptions,
   fetch: typeof globalThis.fetch,
 ): Promise<ProviderEventsResult> => {
-  const result = await listCalendars(options.accessToken, fetch)
-  const eventLists = await mapInBatches(result.calendars, EVENT_REQUEST_CONCURRENCY, (calendar) =>
-    listCalendarEvents(calendar.id, calendar.summary, options, fetch),
+  const calendarList = await listCalendars(options.accessToken, fetch)
+  const eventLists = await mapInBatches(
+    calendarList.calendars,
+    EVENT_REQUEST_CONCURRENCY,
+    (calendar) => listCalendarEvents(calendar.id, calendar.summary, options, fetch),
   )
   return {
-    events: eventLists.flatMap((result) => result.events),
-    truncated: result.truncated || eventLists.some((result) => result.truncated),
+    events: eventLists.flatMap((eventList) => eventList.events),
+    truncated: calendarList.truncated || eventLists.some((eventList) => eventList.truncated),
+    unavailableCalendars: eventLists.reduce(
+      (count, eventList) => count + eventList.unavailableCalendars,
+      0,
+    ),
   }
 }
 

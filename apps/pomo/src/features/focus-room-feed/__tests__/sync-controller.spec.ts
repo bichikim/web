@@ -16,10 +16,10 @@ it.each(['success', 'failure'] as const)(
       discardMissingConnections: vi.fn(),
       getConnections: () => [
         {
-          id: 'feed',
           createdAt: '',
-          url: 'https://example.com/feed',
+          id: 'feed',
           updatedAt: '',
+          url: 'https://example.com/feed',
           version: 1,
           voiceId: 'default',
         },

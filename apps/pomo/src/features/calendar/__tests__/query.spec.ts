@@ -19,9 +19,7 @@ describe('createCalendarQuery', () => {
   })
 
   it('should query the remaining local day for today', () => {
-    expect(
-      createCalendarQuery({now, text: '오늘 일정 알려줘', timeZoneOffsetMinutes: 540}),
-    ).toEqual({
+    expect(createCalendarQuery({now, text: '오늘 일정 알려줘', timeZone: 'Asia/Seoul'})).toEqual({
       end: '2026-09-04T15:00:00.000Z',
       start: '2026-09-04T10:30:00.000Z',
     })
@@ -29,7 +27,7 @@ describe('createCalendarQuery', () => {
 
   it('should query tomorrow in the local timezone', () => {
     expect(
-      createCalendarQuery({now, text: '내일 오전에 뭐 있어?', timeZoneOffsetMinutes: 540}),
+      createCalendarQuery({now, text: '내일 오전에 뭐 있어?', timeZone: 'Asia/Seoul'}),
     ).toEqual({
       end: '2026-09-05T03:00:00.000Z',
       start: '2026-09-04T15:00:00.000Z',
@@ -38,7 +36,7 @@ describe('createCalendarQuery', () => {
 
   it('should query through Sunday for this week', () => {
     expect(
-      createCalendarQuery({now, text: '이번 주 중요한 일정 알려줘', timeZoneOffsetMinutes: 540}),
+      createCalendarQuery({now, text: '이번 주 중요한 일정 알려줘', timeZone: 'Asia/Seoul'}),
     ).toEqual({
       end: '2026-09-06T15:00:00.000Z',
       start: '2026-09-04T10:30:00.000Z',
@@ -46,11 +44,27 @@ describe('createCalendarQuery', () => {
   })
 
   it('should use a bounded future window for the next meeting', () => {
-    expect(
-      createCalendarQuery({now, text: '다음 미팅 언제야?', timeZoneOffsetMinutes: 540}),
-    ).toEqual({
+    expect(createCalendarQuery({now, text: '다음 미팅 언제야?', timeZone: 'Asia/Seoul'})).toEqual({
       end: '2026-10-04T10:30:00.000Z',
       start: '2026-09-04T10:30:00.000Z',
     })
   })
+})
+
+it.each([
+  ['2026-03-07T18:00:00Z', '2026-03-08T05:00:00.000Z', '2026-03-09T04:00:00.000Z'],
+  ['2026-10-31T18:00:00Z', '2026-11-01T04:00:00.000Z', '2026-11-02T05:00:00.000Z'],
+])('should use the requested zone across daylight saving at %s', (now, start, end) => {
+  expect(
+    createCalendarQuery({now: new Date(now), text: '내일 일정', timeZone: 'America/New_York'}),
+  ).toEqual({end, start})
+})
+it('should resolve tomorrow morning through DST in the requested zone', () => {
+  expect(
+    createCalendarQuery({
+      now: new Date('2026-03-07T18:00:00Z'),
+      text: '내일 오전 일정',
+      timeZone: 'America/New_York',
+    }),
+  ).toEqual({end: '2026-03-08T16:00:00.000Z', start: '2026-03-08T05:00:00.000Z'})
 })

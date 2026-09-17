@@ -15,7 +15,7 @@ vi.mock('../../database', async () => {
 
   return {...actual, getDatabase: databaseMocks.getDatabase}
 })
-vi.mock('../track-deletion-repository', () => deletionMocks)
+vi.mock('../../repositories/music-track-deletion', () => deletionMocks)
 vi.mock('../track-storage-deletion', () => storageMocks)
 
 import {

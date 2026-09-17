@@ -5,7 +5,7 @@ import {noStoreJson} from 'src/server/http/response'
 import {
   findEntitledTrackPlaybackAsset,
   findPublishedTrackPreviewAsset,
-} from 'src/server/music/catalog-repository'
+} from 'src/server/repositories/music-catalog'
 import {createPlaybackAccess} from 'src/server/music/playback-access'
 import {createPreviewAccess} from 'src/server/music/preview-access'
 import {resolveUserRequest} from 'src/server/auth/resolve-user-request'
@@ -29,6 +29,13 @@ export const GET = async (event: APIEvent): Promise<Response> => {
   try {
     const identity = await resolveUserRequest(event.request)
     responseCookies = identity.cookies
+
+    if (identity.access === 'invalid') {
+      return noStoreJson(
+        {error: 'authentication_unavailable'},
+        {cookies: identity.cookies, status: HTTP_SERVICE_UNAVAILABLE},
+      )
+    }
 
     if (identity.userId === null) {
       return noStoreJson(

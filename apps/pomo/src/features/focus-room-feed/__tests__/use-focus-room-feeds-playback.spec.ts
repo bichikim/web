@@ -59,6 +59,7 @@ const repositoryMocks = vi.hoisted(() => {
     listMetadata: vi.fn().mockResolvedValue([]),
     markListened: vi.fn().mockResolvedValue(undefined),
     recoverMissingDialogue: vi.fn().mockResolvedValue(true),
+    removeItem: vi.fn().mockResolvedValue(undefined),
     removeMetadata: vi.fn().mockResolvedValue(undefined),
     retryJobs: vi.fn().mockResolvedValue(undefined),
     startJob: vi.fn().mockResolvedValue(true),
@@ -124,6 +125,7 @@ beforeEach(() => {
   repositoryMocks.feedRepository.listMetadata.mockResolvedValue([])
   repositoryMocks.feedRepository.markListened.mockResolvedValue(undefined)
   repositoryMocks.feedRepository.recoverMissingDialogue.mockResolvedValue(true)
+  repositoryMocks.feedRepository.removeItem.mockResolvedValue(undefined)
   repositoryMocks.feedRepository.removeMetadata.mockResolvedValue(undefined)
   repositoryMocks.feedRepository.retryJobs.mockResolvedValue(undefined)
   repositoryMocks.feedRepository.startJob.mockResolvedValue(true)
@@ -589,11 +591,30 @@ it('should reload dialogues after metadata removal succeeds or fails', async () 
 
   await view.result.onDeleteDialogue('delete-me')
   expect(events.deleteDialogue).toHaveBeenCalledWith('delete-me')
+  expect(repositoryMocks.feedRepository.removeItem).toHaveBeenCalledWith('feed-1', 'item-delete-me')
   expect(repositoryMocks.feedRepository.removeMetadata).toHaveBeenCalledWith('delete-me')
 
   repositoryMocks.feedRepository.removeMetadata.mockRejectedValueOnce(new Error('remove failed'))
   await expect(view.result.onDeleteDialogue('delete-me')).rejects.toThrow('remove failed')
   expect(lifecycleMocks.loadFeedDialogueList).toHaveBeenCalledTimes(3)
+  view.cleanup()
+})
+
+it('should remove stored feed items when the dialogue is not loaded in feed state', async () => {
+  const orphan = createDialogue('orphan', null)
+  repositoryMocks.feedRepository.listMetadata.mockResolvedValue([orphan.metadata])
+  const events = createEventContext()
+  const view = renderHook(() => usePFeeds({events}))
+
+  await vi.waitFor(() => expect(view.result.dialogues()).toEqual([]))
+  await view.result.onDeleteDialogue(orphan.dialogue.id)
+
+  expect(events.deleteDialogue).toHaveBeenCalledWith(orphan.dialogue.id)
+  expect(repositoryMocks.feedRepository.removeItem).toHaveBeenCalledWith(
+    orphan.metadata.feedConnectionId,
+    orphan.metadata.feedItemId,
+  )
+  expect(repositoryMocks.feedRepository.removeMetadata).toHaveBeenCalledWith(orphan.dialogue.id)
   view.cleanup()
 })
 

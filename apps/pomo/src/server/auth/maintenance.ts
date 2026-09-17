@@ -1,4 +1,4 @@
-import {createAuthMaintenanceRepository} from './maintenance-repository'
+import {createAuthMaintenanceRepository} from '../repositories/auth-maintenance'
 
 const MILLISECONDS_PER_SECOND = 1000
 const SECONDS_PER_MINUTE = 60

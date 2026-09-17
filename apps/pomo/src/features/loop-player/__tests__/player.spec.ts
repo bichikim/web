@@ -84,7 +84,7 @@ it('should start the next copy at zero and crossfade both gains over four second
   expect(media[0].play).toHaveBeenCalledTimes(2)
   await player.close()
 })
-it('should preview immediately before the overlap and stop all scheduled work', async () => {
+it('should preview immediately before the connection and stop all scheduled work', async () => {
   const player = createLoopPlayer('blob:audio', vi.fn(), vi.fn())
   await player.play(8, true)
   expect(media[0].currentTime).toBe(111)
@@ -95,13 +95,13 @@ it('should preview immediately before the overlap and stop all scheduled work', 
   await player.close()
   expect(close).toHaveBeenCalledOnce()
 })
-it.each([0, -1, 61, NaN, Infinity])('should reject invalid overlap %s', async (seconds) => {
+it.each([0, -1, 61, NaN, Infinity])('should reject invalid connection %s', async (seconds) => {
   const player = createLoopPlayer('blob:audio', vi.fn(), vi.fn())
   await expect(player.play(seconds)).rejects.toThrow()
   expect(media[0].play).not.toHaveBeenCalled()
   await player.close()
 })
-it('should stop both copies and report a rejected overlap playback', async () => {
+it('should stop both copies and report a rejected connection playback', async () => {
   const status = vi.fn()
   const player = createLoopPlayer('blob:audio', status, vi.fn())
   await player.play()
@@ -176,7 +176,7 @@ it('should ignore time updates and ended events after stopping', async () => {
   await player.close()
 })
 
-it('should continue a short overlap when time updates miss its transition window', async () => {
+it('should continue a short connection when time updates miss its transition window', async () => {
   const status = vi.fn()
   const player = createLoopPlayer('blob:audio', status, vi.fn())
   await player.play(0.1)

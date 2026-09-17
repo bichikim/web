@@ -104,11 +104,6 @@ const buildHistoryResponseRequest = (
         filters: {allowed_domains: [...options.policy.allowedDomains]},
         search_context_size: 'medium',
         type: 'web_search',
-        user_location: {
-          country: 'KR',
-          timezone: 'Asia/Seoul',
-          type: 'approximate',
-        },
       },
     ],
   }

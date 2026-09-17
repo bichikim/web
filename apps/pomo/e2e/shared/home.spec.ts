@@ -21,7 +21,7 @@ test('hydrates the home route in its configured runtime', async ({page}, testInf
     expect(await page.evaluate(() => '__ait' in window)).toBe(false)
   }
 
-  await expect(page).toHaveTitle('Pomofi')
+  await expect(page).toHaveTitle(/^Pomofi(?: — .+)?$/u)
   await expect(page.getByRole('region', {exact: true, name: 'Pomo'})).toBeVisible()
   await expect(page.locator('meta[name="robots"]')).toHaveAttribute(
     'content',

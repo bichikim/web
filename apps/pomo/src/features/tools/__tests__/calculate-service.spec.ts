@@ -35,6 +35,20 @@ it('should keep a one-day service incomplete before enlistment', () => {
   ).toMatchObject({progress: 0, remaining: 1})
 })
 
+it.each([
+  {days: undefined, total: 546},
+  {days: 300, total: 300},
+] as const)('should cap remaining days at total before enlistment', (period) => {
+  expect(
+    calculateService({
+      branch: 'army',
+      days: period.days,
+      start: '2026-01-01',
+      today: '2025-01-01',
+    }),
+  ).toMatchObject({progress: 0, remaining: period.total, total: period.total})
+})
+
 it('should calculate modern service terms including enlistment day', () => {
   expect(
     calculateService({branch: 'army', start: '2026-01-01', today: '2026-01-01'}),

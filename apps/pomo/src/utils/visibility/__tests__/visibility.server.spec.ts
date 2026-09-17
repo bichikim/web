@@ -1,6 +1,6 @@
 /** @vitest-environment node */
 import {expect, it, vi} from 'vitest'
-import {visibility} from '..'
+import {visibility} from '../visibility'
 
 it('should register and clean up without a window', () => {
   const callback = vi.fn()

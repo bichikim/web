@@ -65,7 +65,7 @@ describe('handleUserAuthRequest', () => {
   it('should exchange a verifier on the account route', async () => {
     authMocks.handleAuthProxyRequest.mockResolvedValue(
       Response.json(
-        {session: {id: 'session'}, user: {id: 'user'}},
+        {session: {id: 'session'}, user: {email: 'user@example.com', id: 'user'}},
         {headers: {'Set-Cookie': 'session=signed; HttpOnly'}},
       ),
     )
@@ -89,7 +89,7 @@ describe('handleUserAuthRequest', () => {
   it('should exchange the verifier and remove only that callback parameter', async () => {
     authMocks.handleAuthProxyRequest.mockResolvedValue(
       Response.json(
-        {session: {id: 'session'}, user: {id: 'user'}},
+        {session: {id: 'session'}, user: {email: 'user@example.com', id: 'user'}},
         {headers: {'Set-Cookie': 'session=signed; HttpOnly'}},
       ),
     )
