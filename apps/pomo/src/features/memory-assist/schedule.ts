@@ -126,6 +126,10 @@ const getNextExactReminderAtAfterEdit = (
 ): string | null => {
   const currentNextExactReminderAt = options.memo.nextExactReminderAt
 
+  if (currentNextExactReminderAt === null) {
+    return options.exactReminderAt === null ? null : options.exactSchedule.nextExactReminderAt
+  }
+
   if (!options.exactScheduleChanged) {
     return currentNextExactReminderAt
   }
@@ -139,7 +143,7 @@ const getNextExactReminderAtAfterEdit = (
     options.memo.exactReminderAdvanceMinutes,
   )
 
-  if (currentNextExactReminderAt === null || currentNextExactReminderAt === firstExactReminderAt) {
+  if (currentNextExactReminderAt === firstExactReminderAt) {
     return options.exactSchedule.nextExactReminderAt
   }
 

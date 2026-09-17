@@ -6,13 +6,8 @@ disable-model-invocation: true
 
 # Critical Review Fix Loop
 
-## Ownership
-
-- The `critical-review` subagents only inspect, verify, and propose fixes. They never modify files or resolve findings.
-- The parent model that invoked this skill is the sole owner of authorization, fixes, integration, and verification. Keep its selected model and reasoning setting for the resolution phase.
-
 1. Use the user's target, otherwise the current task's diff; ask once if neither is reliable.
-2. Read `$critical-review`, record a full P0–P4 review, then have the parent model fix every authorized P0–P2 while preserving unrelated changes and verify each fix.
+2. Read `$critical-review`, record a full P0–P4 review, then fix every authorized P0–P2 while preserving unrelated changes and verify each fix.
 3. Re-run a fresh full review over the relevance cone until no P0–P2 remains and relevant unit tests, `typecheck`, lint, and formatting pass. Lint or build cannot replace tests or `typecheck`.
 4. Diagnose the root cause before retrying a surviving finding; never omit or downgrade one to finish.
 5. Keep P3/P4 evidence and fixes. After correctness closure, group structural P3s into an unimplemented refactor proposal requiring user authorization.

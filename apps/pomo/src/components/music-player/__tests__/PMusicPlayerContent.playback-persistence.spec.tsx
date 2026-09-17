@@ -142,6 +142,26 @@ describe('PMusicPlayerContent playback persistence', () => {
     })
   })
 
+  it('should not cancel restored autoplay when seeking reports an intermediate position', async () => {
+    localStorage.setItem(
+      'pomo:focus-room-playback:v1',
+      JSON.stringify({isPlaying: true, positionSeconds: 22, savedAt: 1, trackId: 'three'}),
+    )
+    const result = render(() => <PMusicPlayerContent tracks={TRACKS} />)
+    const audio = getAudioElement(result.container)
+
+    markAudioMetadataReady(audio)
+    await Promise.resolve()
+    await Promise.resolve()
+    fireEvent(audio, new Event('loadedmetadata'))
+    // Model a native seeking event before the restored position has settled.
+    audio.currentTime = 0
+    fireEvent(audio, new Event('seeking'))
+
+    expect(HTMLMediaElement.prototype.play).toHaveBeenCalledOnce()
+    expect(audio.pause).not.toHaveBeenCalled()
+  })
+
   it('should preserve restored playback through pagehide before play starts', async () => {
     localStorage.setItem(
       'pomo:focus-room-playback:v1',
