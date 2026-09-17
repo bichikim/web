@@ -50,6 +50,29 @@ describe('createPScenePreferencesRepository', () => {
     expect(first.storage.readWeb('pomo:focus-room-scene-preferences:v1')).toEqual(preferences)
   })
 
+  it('should wait for an active native write before reading preferences', async () => {
+    const {repository, storage} = createRepository()
+    let completeWrite: () => void = () => undefined
+    storage.readToss.mockResolvedValue(preferences)
+    storage.writeToss.mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          completeWrite = resolve
+        }),
+    )
+
+    const pendingWrite = repository.write(preferences)
+    await vi.waitFor(() => expect(storage.writeToss).toHaveBeenCalledOnce())
+    const pendingRead = repository.read()
+
+    expect(storage.readToss).not.toHaveBeenCalled()
+    completeWrite()
+
+    await expect(pendingWrite).resolves.toBeUndefined()
+    await expect(pendingRead).resolves.toEqual(preferences)
+    expect(storage.readToss).toHaveBeenCalledOnce()
+  })
+
   it('should allow another repository to write while one native queue is blocked', async () => {
     const first = createRepository()
     const second = createRepository()
@@ -74,6 +97,14 @@ describe('createPScenePreferencesRepository', () => {
 
     await expect(repository.read()).resolves.toEqual(preferences)
     expect(storage.writeToss).not.toHaveBeenCalled()
+  })
+
+  it('should preserve browser preferences after a native write fails', async () => {
+    const {repository, storage} = createRepository()
+    storage.writeToss.mockRejectedValueOnce(new Error('unavailable'))
+
+    await expect(repository.write(preferences)).resolves.toBeUndefined()
+    await expect(repository.read()).resolves.toEqual(preferences)
   })
 
   it('should recover the native queue after a failed explicit write', async () => {

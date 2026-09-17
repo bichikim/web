@@ -37,9 +37,30 @@ export const createPScenePreferencesRepository = (
 ): PScenePreferencesRepository => {
   const {storage} = options
   let preferenceWriteRevision = 0
+  let failedNativeWriteRevision: number | null = null
+  let tossWriteQueue: Promise<void> | null = null
   const writeLatestToss = createLatestStorageWriter(SCENE_PREFERENCES_STORAGE_KEY, (key, value) =>
     storage.writeToss(key, value),
   )
+  const enqueueTossWrite = (preferences: PScenePreferences, writeRevision: number) => {
+    const tossWrite = writeLatestToss(preferences)
+    const completion = tossWrite.then(
+      () => {
+        failedNativeWriteRevision = null
+        if (tossWriteQueue === completion) {
+          tossWriteQueue = null
+        }
+      },
+      () => {
+        failedNativeWriteRevision = writeRevision
+        if (tossWriteQueue === completion) {
+          tossWriteQueue = null
+        }
+      },
+    )
+    tossWriteQueue = completion
+    return tossWrite
+  }
   const readWebPreferences = () =>
     parseScenePreferences(storage.readWeb(SCENE_PREFERENCES_STORAGE_KEY))
   const writeWebPreferences = (preferences: PScenePreferences) => {
@@ -50,6 +71,17 @@ export const createPScenePreferencesRepository = (
     const initialWriteRevision = preferenceWriteRevision
 
     if (!storage.usesTossStorage()) {
+      return readWebPreferences() ?? DEFAULT_P_SCENE_PREFERENCES
+    }
+
+    const pendingTossWrite = tossWriteQueue
+    if (pendingTossWrite !== null) {
+      await pendingTossWrite
+    }
+    if (preferenceWriteRevision !== initialWriteRevision) {
+      return readWebPreferences() ?? DEFAULT_P_SCENE_PREFERENCES
+    }
+    if (failedNativeWriteRevision === preferenceWriteRevision) {
       return readWebPreferences() ?? DEFAULT_P_SCENE_PREFERENCES
     }
 
@@ -70,12 +102,13 @@ export const createPScenePreferencesRepository = (
   }
 
   const write = async (preferences: PScenePreferences): Promise<void> => {
-    preferenceWriteRevision += 1
+    const writeRevision = (preferenceWriteRevision += 1)
     writeWebPreferences(preferences)
     if (!storage.usesTossStorage()) {
+      failedNativeWriteRevision = null
       return
     }
-    await withPromiseNull(writeLatestToss(preferences))
+    await withPromiseNull(enqueueTossWrite(preferences, writeRevision))
   }
 
   return {read, write}
