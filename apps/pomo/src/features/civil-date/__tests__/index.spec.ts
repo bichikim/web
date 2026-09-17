@@ -14,9 +14,17 @@ describe('civil dates', () => {
     expect(daysInMonth(2024, 2)).toBe(29)
     expect(daysInMonth(2100, 2)).toBe(28)
   })
-  it('should end an inclusive calendar-month period on the preceding date or month end', () => {
-    expect(formatDate(periodEnd({day: 1, month: 1, year: 2026}, 18))).toBe('2027-06-30')
-    expect(formatDate(periodEnd({day: 31, month: 8, year: 2026}, 18))).toBe('2028-02-29')
+  it.each([
+    {date: {day: 15, month: 1, year: 2023}, expected: '2023-02-14', months: 1},
+    {date: {day: 31, month: 1, year: 2023}, expected: '2023-02-27', months: 1},
+    {date: {day: 31, month: 1, year: 2023}, expected: '2024-09-29', months: 20},
+    {date: {day: 31, month: 3, year: 2023}, expected: '2024-09-29', months: 18},
+    {date: {day: 31, month: 5, year: 2023}, expected: '2024-11-29', months: 18},
+    {date: {day: 31, month: 8, year: 2026}, expected: '2028-02-28', months: 18},
+    {date: {day: 31, month: 1, year: 2023}, expected: '2024-10-30', months: 21},
+    {date: {day: 1, month: 1, year: 2026}, expected: '2027-06-30', months: 18},
+  ])('should end an inclusive calendar-month period at $expected', (period) => {
+    expect(formatDate(periodEnd(period.date, period.months))).toBe(period.expected)
   })
 })
 
