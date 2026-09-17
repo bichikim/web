@@ -22,7 +22,7 @@ Work in `bichikim/web`. Select exactly three open issues that have the `bug` lab
    - a project `worktree` environment starting from the current `origin/dev` ref
    - a unique title containing the issue number
    - a prompt containing the issue URL and the instructions below
-5. In each task, inspect the issue and relevant callers, callees, types, tests, and configuration; reproduce or otherwise verify the root cause; implement the smallest compatible fix; add regression coverage; run relevant tests, `pnpm lint`, and `pnpm format`; and report changed files, evidence, verification results, and limitations. Do not create additional tasks, close the issue, remove `WIP`, or create a pull request.
+5. In each task, inspect the issue and relevant callers, callees, types, tests, and configuration; reproduce or otherwise verify the root cause; implement the smallest compatible fix; add regression coverage; run relevant tests, `pnpm lint`, and `pnpm format`; and report changed files, evidence, verification results, and limitations. When the fix is complete, create a draft PR against `dev` from that task's branch and include `Fixes #<issue-number>` in the PR body so GitHub closes the issue when the PR is merged. Do not manually close the issue, remove `WIP`, or create additional tasks.
 6. When `create_thread` returns ready `threadId` values, wait for all three tasks with `wait_threads`. Never pass a pending `clientThreadId` to a thread tool; report pending handles until the task IDs become available.
 7. Finish with the selected issue URLs, WIP-label result, per-task chat/worktree status, and verification results. Leave `WIP` on every selected issue.
 

@@ -31,6 +31,8 @@ Before committing or pushing:
 - Unless the user explicitly asks for a ready (non-draft) PR, create it as a **draft**.
 - Generate the PR title automatically based on the changes.
 - Prefer GitHub MCP when it is configured. Otherwise, use the authenticated GitHub CLI (`gh pr create`). Stop only when neither is available or authentication fails.
+- Do not perform a separate duplicate-PR lookup before creation; attempt PR creation directly and report the GitHub response if the branch already has a PR.
+- When the changes fix a GitHub issue, include one closing reference per issue in the PR body using `Fixes #<issue-number>`. Use `Fixes owner/repo#<issue-number>` for issues in another repository. Use only issue numbers explicitly provided or directly verified from the current task or branch context; if the mapping is ambiguous, ask instead of guessing.
 
 Include the following sections in the PR body:
 
