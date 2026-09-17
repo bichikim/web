@@ -10,11 +10,17 @@ import {
   restoreInpaintContext,
   validateInpaint,
 } from './inpaint'
-import {createNoise, createSchedule, createStereoWave} from './audio'
+import {createSchedule, createStereoWave} from './audio'
+import {SAMPLE_RATE} from './connection'
+import {createNoise, createRandomNoiseSource, type NoiseSource} from './noise'
 
 export type {SoundProgress} from './assets'
 
-const SAMPLE_RATE = 44_100
+export interface GenerateSoundOptions {
+  readonly inpaint?: InpaintAudio
+  readonly noiseSource?: NoiseSource
+}
+
 const CHANNELS = 256
 const STRIDE = 4096
 const TOKENS = 256
@@ -99,8 +105,9 @@ export async function generateSound(
   prompt: string,
   seconds: number,
   progress: SoundProgress,
-  inpaint?: InpaintAudio,
+  options: GenerateSoundOptions = {},
 ): Promise<Blob> {
+  const {inpaint, noiseSource} = options
   if (
     !isNonBlankString(prompt) ||
     !Number.isInteger(seconds) ||
@@ -121,7 +128,8 @@ export async function generateSound(
   const frames = seconds * SAMPLE_RATE
   const framesPerLatent = Math.ceil(frames / STRIDE)
   const length = inpaint === undefined ? framesPerLatent : Math.ceil(framesPerLatent / 2) * 2
-  const latent = createNoise(CHANNELS * length)
+  const source = noiseSource ?? createRandomNoiseSource()
+  const latent = createNoise(CHANNELS * length, source)
   const conditioning = await encodeInpaint(inpaint, length, progress)
   const {hidden, mask} = await encodePrompt(prompt, progress)
   const condition = new ort.Tensor('float32', conditioning, [1, CHANNELS + 1, length])
@@ -142,7 +150,7 @@ export async function generateSound(
       try {
         const output = await dit.run(inputs)
         const velocity = output.velocity.data
-        const noise = createNoise(latent.length)
+        const noise = createNoise(latent.length, source)
         const next = schedule[step + 1]
         for (let index = 0; index < latent.length; index += 1) {
           latent[index] =

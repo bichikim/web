@@ -12,7 +12,9 @@ const LAYER: SoundLayer = {id: 'rain', source: '/rain.wav', title: '비', volume
 it('should emit changed layer copies and keep the supplied layer unchanged', () => {
   const onChange = vi.fn()
   const result = render(() => <SoundLayerControls layer={LAYER} onChange={onChange} />)
-  fireEvent.change(result.getByRole('spinbutton'), {target: {value: '2.5'}})
+  fireEvent.change(result.getByRole('spinbutton', {name: '비 연결 구간'}), {
+    target: {value: '2.5'},
+  })
   expect(onChange).toHaveBeenLastCalledWith({...LAYER, overlapSeconds: 2.5})
   expect(onChange.mock.lastCall?.[0]).not.toBe(LAYER)
   fireEvent.input(result.getByRole('slider'), {target: {value: '0.25'}})

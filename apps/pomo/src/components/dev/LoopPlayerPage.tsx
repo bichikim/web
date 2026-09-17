@@ -5,15 +5,15 @@ import {useLoopPlayer} from 'src/features/loop-player'
 const INPUT = 'min-h-11 rounded-xl border border-white/20 bg-#17131f p-3 text-#f8edf1'
 export function LoopPlayerPage() {
   const {
+    connectionSeconds,
     duration,
-    overlap,
     play,
     playing,
     position,
     previewPosition,
     seek,
     select,
-    setOverlap,
+    setConnectionSeconds,
     status,
     stop,
   } = useLoopPlayer()
@@ -39,20 +39,20 @@ export function LoopPlayerPage() {
           />
         </label>
         <label class="grid gap-2">
-          겹쳐 재생할 시간 (초)
+          연결 구간 (초)
           <input
             class={INPUT}
             type="number"
             min="0.1"
             max={duration() / 2 || undefined}
             step="0.1"
-            value={overlap()}
+            value={connectionSeconds()}
             disabled={playing()}
-            onInput={(event) => setOverlap(event.currentTarget.valueAsNumber)}
+            onInput={(event) => setConnectionSeconds(event.currentTarget.valueAsNumber)}
           />
         </label>
         <p class="m-0 text-sm text-#bdb2c4">
-          음원 길이: {duration().toFixed(1)}초 · 기본 겹침 4초 · 최대 음원 길이의 절반
+          음원 길이: {duration().toFixed(1)}초 · 기본 연결 구간 4초 · 최대 음원 길이의 절반
         </p>
         <label class="grid gap-2">
           재생 위치 · {position().toFixed(1)} / {duration().toFixed(1)}초

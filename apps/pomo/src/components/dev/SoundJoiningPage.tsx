@@ -1,13 +1,17 @@
 import {Title} from '@solidjs/meta'
 import {A} from '@solidjs/router'
-import {createSignal, Show} from 'solid-js'
+import {type Accessor, createSignal, Show} from 'solid-js'
+import {
+  DEFAULT_CONNECTION_SECONDS,
+  MAX_AI_CONNECTION_SECONDS,
+  MIN_AI_CONNECTION_SECONDS,
+} from 'src/features/sound-generation'
 import {useSoundJoining} from 'src/features/sound-joining'
 import {isNonBlankString} from 'src/utils/is-non-blank-string'
 import {ModelTerms} from './sound-generation/ModelTerms'
 import {Source} from './sound-joining/Source'
 import {Introduction} from './sound-joining/Introduction'
 
-const DEFAULT_TRANSITION = 4
 const DEFAULT_PROMPT =
   'Continuous gentle rain ambience, consistent texture and loudness, no silence, no music, no speech.'
 const INPUT = 'min-h-11 rounded-xl border border-white/20 bg-#17131f p-3 text-#f8edf1'
@@ -16,7 +20,7 @@ export function SoundJoiningPage() {
   const [second, setSecond] = createSignal<File | null>(null)
   const [trimEnd, setTrimEnd] = createSignal(2)
   const [trimStart, setTrimStart] = createSignal(2)
-  const [transition, setTransition] = createSignal(DEFAULT_TRANSITION)
+  const [connectionSeconds, setConnectionSeconds] = createSignal(DEFAULT_CONNECTION_SECONDS)
   const [repeat, setRepeat] = createSignal(false)
   const [prompt, setPrompt] = createSignal(DEFAULT_PROMPT)
   const joining = useSoundJoining()
@@ -25,10 +29,10 @@ export function SoundJoiningPage() {
     const secondFile = second()
     if (firstFile !== null && secondFile !== null) {
       return joining.generate({
+        connectionSeconds: connectionSeconds(),
         first: firstFile,
         prompt: prompt(),
         second: secondFile,
-        transition: transition(),
         trimEnd: trimEnd(),
         trimStart: trimStart(),
       })
@@ -75,15 +79,15 @@ export function SoundJoiningPage() {
             />
           </label>
           <label class="grid gap-2 text-sm">
-            AI로 바꿀 연결 구간 (초)
+            연결 구간 (초)
             <input
               class={INPUT}
               type="number"
               min="1"
-              max="8"
+              max={MAX_AI_CONNECTION_SECONDS}
               step="0.5"
-              value={transition()}
-              onInput={(event) => setTransition(event.currentTarget.valueAsNumber)}
+              value={connectionSeconds()}
+              onInput={(event) => setConnectionSeconds(event.currentTarget.valueAsNumber)}
             />
           </label>
         </fieldset>
@@ -105,7 +109,13 @@ export function SoundJoiningPage() {
             class="min-h-11 rounded-xl border-0 bg-#b8e8d0 px-6 text-#17131f font-700 disabled:opacity-50"
             type="button"
             disabled={
-              joining.busy() || first() === null || second() === null || !isNonBlankString(prompt())
+              joining.busy() ||
+              first() === null ||
+              second() === null ||
+              !isNonBlankString(prompt()) ||
+              !Number.isFinite(connectionSeconds()) ||
+              connectionSeconds() < MIN_AI_CONNECTION_SECONDS ||
+              connectionSeconds() > MAX_AI_CONNECTION_SECONDS
             }
             onClick={generate}
           >
@@ -127,31 +137,7 @@ export function SoundJoiningPage() {
             </p>
           )}
         </Show>
-        <Show when={joining.url()}>
-          {(url) => (
-            <section class="grid gap-3 border-t border-white/15 pt-5" aria-label="연결 결과">
-              <h2 class="m-0 text-xl">연결 결과</h2>
-              <audio
-                aria-label="연결 결과 재생"
-                class="w-full"
-                src={url()}
-                controls
-                loop={repeat()}
-              />
-              <label class="flex min-h-11 items-center gap-2">
-                <input
-                  type="checkbox"
-                  checked={repeat()}
-                  onChange={(event) => setRepeat(event.currentTarget.checked)}
-                />
-                반복 재생
-              </label>
-              <a class="text-#b8e8d0 underline" href={url()} download="joined.wav">
-                연결한 WAV 다운로드
-              </a>
-            </section>
-          )}
-        </Show>
+        <JoiningResult onRepeatChange={setRepeat} repeat={repeat} url={joining.url} />
         <p class="text-sm text-#bdb2c4">
           브라우저에서 처리하며 오디오 파일은 서버로 전송하지 않습니다. 첫 실행에는 생성 모델과 추가
           오디오 인코더를 내려받습니다. 연결 음질은 파일과 설명에 따라 달라집니다.
@@ -159,5 +145,41 @@ export function SoundJoiningPage() {
         <ModelTerms />
       </div>
     </main>
+  )
+}
+
+interface JoiningResultProps {
+  readonly onRepeatChange: (checked: boolean) => void
+  readonly repeat: Accessor<boolean>
+  readonly url: Accessor<string | null>
+}
+
+function JoiningResult(props: JoiningResultProps) {
+  return (
+    <Show when={props.url()}>
+      {(url) => (
+        <section class="grid gap-3 border-t border-white/15 pt-5" aria-label="연결 결과">
+          <h2 class="m-0 text-xl">연결 결과</h2>
+          <audio
+            aria-label="연결 결과 재생"
+            class="w-full"
+            src={url()}
+            controls
+            loop={props.repeat()}
+          />
+          <label class="flex min-h-11 items-center gap-2">
+            <input
+              type="checkbox"
+              checked={props.repeat()}
+              onChange={(event) => props.onRepeatChange(event.currentTarget.checked)}
+            />
+            반복 재생
+          </label>
+          <a class="text-#b8e8d0 underline" href={url()} download="joined.wav">
+            연결한 WAV 다운로드
+          </a>
+        </section>
+      )}
+    </Show>
   )
 }

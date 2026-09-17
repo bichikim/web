@@ -36,10 +36,10 @@ function createBlob(): Blob {
 
 function createRequest() {
   return {
+    connectionSeconds: 4,
     first: createFile('first.wav'),
     prompt: 'continuous rainfall',
     second: createFile('second.wav'),
-    transition: 4,
     trimEnd: 0,
     trimStart: 0,
   }
