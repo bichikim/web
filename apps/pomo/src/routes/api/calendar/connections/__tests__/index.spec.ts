@@ -19,7 +19,11 @@ import {GET} from '../index'
 
 beforeEach(() => {
   vi.clearAllMocks()
-  dependencyMocks.resolveUserRequest.mockResolvedValue({cookies: [], userId: 'user-1'})
+  dependencyMocks.resolveUserRequest.mockResolvedValue({
+    access: 'user',
+    cookies: [],
+    userId: 'user-1',
+  })
   dependencyMocks.listConnections.mockResolvedValue([
     {accountLabel: 'person@example.com', id: 'connection-1', provider: 'google'},
   ])
@@ -38,6 +42,23 @@ it('should list calendar accounts without returning stored tokens', async () => 
     connections: [{accountLabel: 'person@example.com', id: 'connection-1', provider: 'google'}],
   })
   expect(dependencyMocks.listConnections).toHaveBeenCalledWith('user-1')
+})
+
+it('should report when the Neon session is invalid', async () => {
+  dependencyMocks.resolveUserRequest.mockResolvedValue({
+    access: 'invalid',
+    cookies: ['session=refreshed'],
+    userId: null,
+  })
+
+  const response = await GET({
+    request: new Request('https://www.pomofi.io/api/calendar/connections'),
+  } as APIEvent)
+
+  expect(response.status).toBe(503)
+  await expect(response.json()).resolves.toEqual({error: 'authentication_unavailable'})
+  expect(response.headers.getSetCookie()).toEqual(['session=refreshed'])
+  expect(dependencyMocks.listConnections).not.toHaveBeenCalled()
 })
 
 it('should preserve refreshed cookies when user resolution fails', async () => {

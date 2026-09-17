@@ -36,7 +36,9 @@ const createRequest = (authorization?: string): Request =>
 describe('track access route', () => {
   beforeEach(() => {
     authMocks.authenticateAppRequest.mockReset().mockResolvedValue(null)
-    neonMocks.getNeonSession.mockReset().mockResolvedValue({identity: null, setCookies: []})
+    neonMocks.getNeonSession
+      .mockReset()
+      .mockResolvedValue({access: 'anonymous', identity: null, setCookies: []})
     playbackMocks.createPlaybackAccess.mockReset().mockResolvedValue({
       expiresAt: new Date('2026-08-23T01:15:00.000Z'),
       url: 'https://audio.pomofi.io/tracks/asset/source.mp3?token=signed',
@@ -65,6 +67,7 @@ describe('track access route', () => {
 
   it('should issue a bounded preview URL for an authenticated web user without entitlement', async () => {
     neonMocks.getNeonSession.mockResolvedValue({
+      access: 'user',
       identity: {id: 'neon-user-id'},
       setCookies: ['neon-session=refreshed'],
     })
@@ -111,6 +114,21 @@ describe('track access route', () => {
     expect(repositoryMocks.findEntitledTrackPlaybackAsset).not.toHaveBeenCalled()
     expect(repositoryMocks.findPublishedTrackPreviewAsset).not.toHaveBeenCalled()
     expect(playbackMocks.createPlaybackAccess).not.toHaveBeenCalled()
+  })
+
+  it('should report when the Neon session is invalid', async () => {
+    neonMocks.getNeonSession.mockResolvedValue({
+      access: 'invalid',
+      identity: null,
+      setCookies: ['neon-session=refreshed'],
+    })
+
+    const response = await invokeApiRoute(GET, createRequest(), {trackId: TRACK_ID})
+
+    expect(response.status).toBe(503)
+    await expect(response.json()).resolves.toEqual({error: 'authentication_unavailable'})
+    expect(response.headers.getSetCookie()).toEqual(['neon-session=refreshed'])
+    expect(repositoryMocks.findPublishedTrackPreviewAsset).not.toHaveBeenCalled()
   })
 
   it('should reject an invalid track identifier before authentication', async () => {

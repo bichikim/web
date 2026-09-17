@@ -70,15 +70,24 @@ it('should preserve cookies and ignore an unsuccessful session response', () => 
 })
 
 it.each([
-  ['a non-object payload', 'null'],
-  ['a payload without a user record', JSON.stringify({user: null})],
-  ['a user without a string email', JSON.stringify({user: {email: 1, id: 'user-1'}})],
-  ['a user without a string id', JSON.stringify({user: {email: 'user@example.com', id: 1}})],
-])('should ignore %s', (_label, body) => {
+  ['a non-object payload', 'null', 'anonymous'],
+  ['a payload without a user record', JSON.stringify({user: null}), 'invalid'],
+  [
+    'a user without a string email',
+    JSON.stringify({session: {id: 'session-1'}, user: {email: 1, id: 'user-1'}}),
+    'invalid',
+  ],
+  [
+    'a user without a string id',
+    JSON.stringify({session: {id: 'session-1'}, user: {email: 'user@example.com', id: 1}}),
+    'invalid',
+  ],
+] as const)('should classify %s without a usable identity', (_label, body, access) => {
   authMocks.handleAuthProxyRequest.mockResolvedValue(createResponse(body))
 
   return expect(getNeonSession(new Request('https://pomo.example/account'))).resolves.toMatchObject(
     {
+      access,
       identity: null,
     },
   )
@@ -89,6 +98,7 @@ it('should ignore an invalid JSON session payload', () => {
 
   return expect(getNeonSession(new Request('https://pomo.example/account'))).resolves.toMatchObject(
     {
+      access: 'invalid',
       identity: null,
     },
   )
