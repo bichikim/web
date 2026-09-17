@@ -169,6 +169,8 @@ export const editMemoryMemo = (options: EditMemoryMemoOptions): MemoryMemo => {
     exactSchedule.exactReminderRepeatIntervalMinutes !==
       options.memo.exactReminderRepeatIntervalMinutes ||
     exactSchedule.exactReminderRepeatUntilMinutes !== options.memo.exactReminderRepeatUntilMinutes
+  const shouldRearmExactReminder =
+    options.exactReminderAt !== null && options.memo.nextExactReminderAt === null
 
   return {
     ...options.memo,
@@ -177,9 +179,10 @@ export const editMemoryMemo = (options: EditMemoryMemoOptions): MemoryMemo => {
     exactReminderAt: options.exactReminderAt,
     exactReminderRepeatIntervalMinutes: exactSchedule.exactReminderRepeatIntervalMinutes,
     exactReminderRepeatUntilMinutes: exactSchedule.exactReminderRepeatUntilMinutes,
-    nextExactReminderAt: exactScheduleChanged
-      ? exactSchedule.nextExactReminderAt
-      : options.memo.nextExactReminderAt,
+    nextExactReminderAt:
+      exactScheduleChanged || shouldRearmExactReminder
+        ? exactSchedule.nextExactReminderAt
+        : options.memo.nextExactReminderAt,
     nextRecallAt: recallScheduleChanged
       ? getNextRecallAt({
           mode: recallMode,

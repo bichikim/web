@@ -170,6 +170,31 @@ describe('editMemoryMemo', () => {
       updatedAt: '2026-09-04T03:30:00.000Z',
     })
   })
+
+  it('should rearm a consumed exact reminder when saving the same schedule', () => {
+    const memo = {
+      ...createMemoryMemo({
+        exactReminderAt: '2026-09-04T04:00:00.000Z',
+        id: 'memo-1',
+        now: NOW,
+        random: () => 0,
+        recallMode: 'none' as const,
+        text: '여권 갱신하기',
+      }),
+      nextExactReminderAt: null,
+    }
+
+    const saved = editMemoryMemo({
+      exactReminderAt: '2026-09-04T04:00:00.000Z',
+      memo,
+      now: new Date('2026-09-04T03:30:00.000Z'),
+      random: () => 0,
+      recallMode: 'none',
+      text: memo.text,
+    })
+
+    expect(saved.nextExactReminderAt).toBe('2026-09-04T04:00:00.000Z')
+  })
 })
 
 describe('getDueMemoryReminder', () => {
