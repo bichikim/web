@@ -2,10 +2,10 @@ import {PsdSourceSelect} from './PsdSourceSelect'
 import {Dialog} from '@kobalte/core/dialog'
 import {createUniqueId, For, Match, Show, Switch} from 'solid-js'
 import {EditorButton, EditorCheckbox, useEditorPortalMount} from '../../design-system'
-import type {PsdReimportController} from '../use-psd-reimport'
+import type {PsdReimportDialogController} from '../use-psd-reimport'
 
 interface PsdReimportDialogProps {
-  readonly controller: PsdReimportController
+  readonly controller: PsdReimportDialogController
 }
 export const PsdReimportDialog = (props: PsdReimportDialogProps) => {
   const mount = useEditorPortalMount()
@@ -61,7 +61,7 @@ export const PsdReimportDialog = (props: PsdReimportDialogProps) => {
                       <p>원본 캔버스 크기가 변경되었습니다. 기존 모델 크기를 유지합니다.</p>
                     </Show>
                     <ul class="psd-reimport-list">
-                      <For each={props.controller.selection().rows}>
+                      <For each={props.controller.selection().view.rows}>
                         {(row) => (
                           <li>
                             <span>{row.label}</span>
@@ -73,7 +73,7 @@ export const PsdReimportDialog = (props: PsdReimportDialogProps) => {
                         )}
                       </For>
                     </ul>
-                    <Show when={props.controller.selection().hasAdditions}>
+                    <Show when={props.controller.selection().view.hasAdditions}>
                       <div class="psd-reimport-add">
                         <EditorCheckbox
                           inputId={includeNewId}
@@ -84,7 +84,7 @@ export const PsdReimportDialog = (props: PsdReimportDialogProps) => {
                         <label for={includeNewId}>새 레이어도 추가 (기존 레이어 위)</label>
                       </div>
                     </Show>
-                    <Show when={props.controller.selection().hasMissing}>
+                    <Show when={props.controller.selection().view.hasMissing}>
                       <div class="psd-reimport-add">
                         <EditorCheckbox
                           inputId={removeMissingId}
@@ -101,7 +101,7 @@ export const PsdReimportDialog = (props: PsdReimportDialogProps) => {
                         </p>
                       </Show>
                     </Show>
-                    <Show when={props.controller.selection().hasRetained}>
+                    <Show when={props.controller.selection().view.hasRetained}>
                       <p>
                         충돌하거나 잠긴 레이어는 유지합니다. 사라진 레이어도 삭제를 선택하지 않으면
                         유지합니다.
@@ -116,8 +116,8 @@ export const PsdReimportDialog = (props: PsdReimportDialogProps) => {
               <Dialog.CloseButton class="secondary" aria-label="취소">
                 취소
               </Dialog.CloseButton>
-              <EditorButton type="submit" disabled={props.controller.selection().count === 0}>
-                적용 {props.controller.selection().count}개
+              <EditorButton type="submit" disabled={props.controller.selection().view.count === 0}>
+                적용 {props.controller.selection().view.count}개
               </EditorButton>
             </footer>
           </form>

@@ -241,6 +241,43 @@ describe('advanceMemoryMemo', () => {
     })
   })
 
+  it('should leave an overdue recall pending when an exact reminder is delivered first', () => {
+    const dueAt = '2026-09-04T03:10:00.000Z'
+    const memo = {
+      ...createMemoryMemo({
+        exactReminderAt: null,
+        id: 'memo-1',
+        now: NOW,
+        random: () => 0,
+        recallMode: 'reinforcement',
+        text: '여권 갱신하기',
+      }),
+      nextExactReminderAt: dueAt,
+      nextRecallAt: dueAt,
+    }
+    const advanced = advanceMemoryMemo({
+      kind: 'exact',
+      memo,
+      now: new Date(dueAt),
+      random: () => 0,
+    })
+
+    expect(getDueMemoryReminder(memo, new Date(dueAt))).toBe('exact')
+    expect(advanced).toMatchObject({
+      nextExactReminderAt: null,
+      nextRecallAt: dueAt,
+      reinforcementIndex: 0,
+      reminderEvents: [
+        {
+          deliveredAt: dueAt,
+          kind: 'exact',
+          scheduledAt: dueAt,
+        },
+      ],
+    })
+    expect(getDueMemoryReminder(advanced, new Date(dueAt))).toBe('recall')
+  })
+
   it('should record the scheduled and delivered times for a delayed exact reminder', () => {
     const memo = createMemoryMemo({
       exactReminderAt: '2026-09-04T03:10:00.000Z',

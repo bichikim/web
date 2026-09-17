@@ -29,7 +29,7 @@ const getPngErrorMessage = (code: ImportPngErrorCode) => {
     }
   }
 }
-interface UseEditorImportsOptions {
+export interface UseEditorImportsProps {
   readonly readPsd?: typeof importPsd
   readonly document: Accessor<PuppetDocument>
   readonly onReimportDocumentChange: (document: PuppetDocument) => void
@@ -50,13 +50,18 @@ const readFile = async (
   signal: AbortSignal,
   readPsd: typeof importPsd = importPsd,
 ): Promise<ReadFileSuccess | ReadFileFailure> => {
-  switch (file.name.split('.').at(-1)?.toLowerCase()) {
-    case 'json': {
-      const result = await preparePuppetDocument({signal, source: await file.text()})
-      return result.ok
-        ? {...result, notice: ''}
-        : {notice: 'Puppet 문서가 아니거나 JSON 형식이 올바르지 않습니다.', ok: false}
-    }
+  const extension = file.name.split('.').at(-1)?.toLowerCase()
+  if (extension === 'json' || file.type === 'application/json') {
+    const result = await preparePuppetDocument({
+      signal,
+      source: (await file.text()).replace(/^\uFEFF/u, ''),
+    })
+    return result.ok
+      ? {...result, notice: ''}
+      : {notice: 'Puppet 문서가 아니거나 JSON 형식이 올바르지 않습니다.', ok: false}
+  }
+
+  switch (extension) {
     case 'png': {
       const result = await importPng(file)
       return result.ok
@@ -73,12 +78,12 @@ const readFile = async (
       return {notice: 'PNG, PSD, JSON 파일을 선택하세요.', ok: false}
   }
 }
-export const useEditorImports = (options: UseEditorImportsOptions) => {
+export const useEditorImports = (props: UseEditorImportsProps) => {
   const reimport = usePsdReimport({
-    document: options.document,
-    readPsd: options.readPsd,
-    onDocumentChange: options.onReimportDocumentChange,
-    onNotice: options.onNotice,
+    document: props.document,
+    onDocumentChange: props.onReimportDocumentChange,
+    onNotice: props.onNotice,
+    readPsd: props.readPsd,
   })
   const [revision, setRevision] = createSignal(0)
   let generation = 0
@@ -95,39 +100,39 @@ export const useEditorImports = (options: UseEditorImportsOptions) => {
     const current = generation
     controller?.abort()
     controller = new AbortController()
-    const original = options.document()
+    const original = props.document()
     reimport.cancel()
-    options.onNotice(`${file.name}을 읽는 중입니다.`)
+    props.onNotice(`${file.name}을 읽는 중입니다.`)
     try {
-      const result = await readFile(file, controller.signal, options.readPsd)
+      const result = await readFile(file, controller.signal, props.readPsd)
       if (current !== generation) {
         return
       }
       if (!result.ok) {
-        options.onNotice(result.notice)
+        props.onNotice(result.notice)
         return
       }
-      if (original !== options.document()) {
-        options.onNotice('읽는 동안 문서가 변경되었습니다. 파일을 다시 선택하세요.')
+      if (original !== props.document()) {
+        props.onNotice('읽는 동안 문서가 변경되었습니다. 파일을 다시 선택하세요.')
         return
       }
       const next = mode === 'append' ? mergeDocument(original, result.document) : result
       if (!next.ok) {
-        options.onNotice('모델의 연결 관계를 유지할 수 없어 추가하지 않았습니다.')
+        props.onNotice('모델의 연결 관계를 유지할 수 없어 추가하지 않았습니다.')
         return
       }
       if (mode === 'append') {
-        options.onReimportDocumentChange(next.document)
+        props.onReimportDocumentChange(next.document)
       } else {
-        options.onDocumentChange(next.document)
+        props.onDocumentChange(next.document)
         setRevision((value) => value + 1)
       }
-      options.onNotice(
+      props.onNotice(
         `${file.name}: ${mode === 'append' ? '기존 문서에 추가했습니다.' : '문서를 교체했습니다.'} 실행 취소로 복원할 수 있습니다. ${result.notice}`,
       )
     } catch {
       if (current === generation) {
-        options.onNotice('파일을 읽지 못했습니다.')
+        props.onNotice('파일을 읽지 못했습니다.')
       }
     }
   }

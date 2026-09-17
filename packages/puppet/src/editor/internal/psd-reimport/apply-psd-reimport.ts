@@ -1,7 +1,7 @@
 import type {PuppetDocument, PuppetSceneNode} from '../../../player/document'
 import {getDocumentScene} from '../../../player/scene'
 import type {PsdReimportPlan} from './types'
-export const applyPsdReimport = (plan: PsdReimportPlan, includeNew: boolean): PuppetDocument => {
+export const applyPsdReimport = (plan: PsdReimportPlan): PuppetDocument => {
   const updates = new Map(
     plan.rows.flatMap((row) =>
       row.kind === 'update'
@@ -23,9 +23,7 @@ export const applyPsdReimport = (plan: PsdReimportPlan, includeNew: boolean): Pu
         : [],
     ),
   )
-  const additions = includeNew
-    ? plan.rows.flatMap((row) => (row.kind === 'add' ? [row.part] : []))
-    : []
+  const additions = plan.rows.flatMap((row) => (row.kind === 'add' ? [row.part] : []))
   const mapping = new Map(plan.mapping)
   const ids = new Set<string>()
   const collect = (nodes: ReadonlyArray<PuppetSceneNode>) => {

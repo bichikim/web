@@ -6,6 +6,7 @@ import {
   applyPsdReimport,
   createPsdReimportPlan,
   type PsdReimportPlan,
+  type PsdReimportSelection,
   selectPsdReimportOperations,
 } from './internal/psd-reimport'
 
@@ -23,15 +24,35 @@ export interface ReimportError {
   readonly kind: 'error'
   readonly message: string
 }
-type ReimportState = ReimportReview | ReimportLoading | ReimportError | {readonly kind: 'idle'}
-interface PsdReimportOptions {
+export type ReimportState =
+  | ReimportReview
+  | ReimportLoading
+  | ReimportError
+  | {readonly kind: 'idle'}
+export interface UsePsdReimportProps {
   readonly readPsd?: (file: File) => Promise<ImportPsdResult>
   readonly document: Accessor<PuppetDocument>
   readonly onDocumentChange: (document: PuppetDocument) => void
   readonly onNotice: (message: string) => void
 }
 
-export const usePsdReimport = (options: PsdReimportOptions) => {
+export interface PsdReimportDialogController {
+  readonly apply: () => void
+  readonly cancel: () => void
+  readonly includeNew: Accessor<boolean>
+  readonly removeMissing: Accessor<boolean>
+  readonly selectSource: (id: string) => void
+  readonly selection: Accessor<PsdReimportSelection>
+  readonly setIncludeNew: (value: boolean) => void
+  readonly setRemoveMissing: (value: boolean) => void
+  readonly state: Accessor<ReimportState>
+}
+
+export interface PsdReimportController extends PsdReimportDialogController {
+  readonly load: (file: File | undefined) => Promise<void>
+}
+
+export const usePsdReimport = (props: UsePsdReimportProps): PsdReimportController => {
   const [state, setState] = createSignal<ReimportState>({kind: 'idle'})
   const [includeNew, setIncludeNew] = createSignal(false)
   const [removeMissing, setRemoveMissing] = createSignal(false)
@@ -39,8 +60,8 @@ export const usePsdReimport = (options: PsdReimportOptions) => {
     const current = state()
     return selectPsdReimportOperations({
       includeNew: includeNew(),
-      rows: current.kind === 'review' ? current.plan.rows : [],
       removeMissing: removeMissing(),
+      rows: current.kind === 'review' ? current.plan.rows : [],
     })
   })
   let generation = 0
@@ -57,16 +78,16 @@ export const usePsdReimport = (options: PsdReimportOptions) => {
     }
     generation += 1
     const revision = generation
-    const document = options.document()
+    const document = props.document()
     setIncludeNew(false)
     setRemoveMissing(false)
     setState({fileName: file.name, kind: 'loading'})
     try {
-      const result = await (options.readPsd ?? importPsd)(file)
+      const result = await (props.readPsd ?? importPsd)(file)
       if (revision !== generation) {
         return
       }
-      if (document !== options.document()) {
+      if (document !== props.document()) {
         setState({
           kind: 'error',
           message: '불러오는 동안 문서가 변경되었습니다. PSD를 다시 선택하세요.',
@@ -106,16 +127,16 @@ export const usePsdReimport = (options: PsdReimportOptions) => {
     if (review.kind !== 'review') {
       return
     }
-    if (review.plan.document !== options.document()) {
+    if (review.plan.document !== props.document()) {
       setState({kind: 'error', message: '문서가 변경되었습니다. PSD를 다시 선택하세요.'})
       return
     }
     const selected = selection()
-    if (selected.count === 0) {
+    if (selected.view.count === 0) {
       return
     }
-    const updated = applyPsdReimport({...review.plan, rows: selected.selectedRows}, true)
-    const result = removeParts(updated, selected.removedIds)
+    const updated = applyPsdReimport({...review.plan, rows: selected.operations.rows})
+    const result = removeParts(updated, selected.operations.removedPartIds)
     if (!result.ok) {
       setState({
         kind: 'error',
@@ -124,21 +145,20 @@ export const usePsdReimport = (options: PsdReimportOptions) => {
       })
       return
     }
-    options.onDocumentChange(result.document)
-    options.onNotice('PSD의 그림을 갱신했습니다. 실행 취소로 이전 상태를 복원할 수 있습니다.')
+    props.onDocumentChange(result.document)
+    props.onNotice('PSD의 그림을 갱신했습니다. 실행 취소로 이전 상태를 복원할 수 있습니다.')
     cancel()
   }
   return {
-    removeMissing,
-    selection,
-    includeNew,
-    selectSource,
     apply,
     cancel,
-    setRemoveMissing,
+    includeNew,
     load,
+    removeMissing,
+    selection,
+    selectSource,
     setIncludeNew,
+    setRemoveMissing,
     state,
   }
 }
-export type PsdReimportController = ReturnType<typeof usePsdReimport>

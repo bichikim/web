@@ -364,8 +364,11 @@ export const usePomodoroTimer = (props: UsePomodoroTimerProps = {}): PomodoroTim
     )
   }
   const onConfigChange = (nextConfig: PomodoroTimerConfig) => {
+    const currentTime = Date.now()
+    setNow(currentTime)
     setConfig(nextConfig)
-    applyState(stopPomodoroTimer(state(), nextConfig))
+    const synchronizedState = synchronizePomodoroTimer(state(), currentTime, nextConfig)
+    applyState(stopPomodoroTimer(synchronizedState, nextConfig))
   }
   const onAutoStartChange = (isEnabled: boolean) => {
     autoStartRevision += 1
