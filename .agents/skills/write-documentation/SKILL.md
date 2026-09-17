@@ -5,7 +5,7 @@ description: Write or edit codebase documentation without duplicating code, keep
 
 # Write Documentation
 
-Keep documentation as small as possible and place it beside its subject.
+Keep documentation minimal and beside its subject.
 
 ## Principles
 
@@ -13,4 +13,4 @@ Keep documentation as small as possible and place it beside its subject.
 - For JavaScript and TypeScript, use comments when they can provide the required documentation, following the project's comment conventions.
 - When file-level documentation cannot be expressed as comments, place a same-named `.md` file beside the target file.
 - Document a directory as a whole in that directory's `README.md`.
-- Before creating broader documentation, check whether a smaller document beside the subject is sufficient.
+- Before creating broader documentation, check whether a smaller adjacent document is sufficient.
