@@ -233,12 +233,17 @@ export const usePlayerController = (props: UsePlayerControllerProps): PlayerCont
     playbackPersistence.writePlayback(nextPlayback)
     queueMicrotask(restorePendingPlayback)
   }
+  let previousTrackKey: string | null = null
   createEffect(() => {
     const track = currentTrack() ?? null
+    const trackKey = track === null ? null : JSON.stringify([track.id, track.source])
+    const currentTrackChanged = trackKey !== previousTrackKey
+    previousTrackKey = trackKey
     cancelPendingRestart()
     const shouldResumeControlledTrack = untrack(
       () =>
         props.tracks !== undefined &&
+        currentTrackChanged &&
         isPlaying() &&
         getCurrentPlaybackTransition(playbackTransition, track?.id) === null,
     )

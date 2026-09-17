@@ -259,3 +259,14 @@ it('should preserve playback when controlled tracks replace the current source',
     trackId: NEXT_TRACK.id,
   })
 })
+
+it('should not reload when controlled tracks refresh with identical track identity', async () => {
+  const {audio, controller, setTracks} = renderControlledController()
+
+  controller.onPlay()
+  vi.mocked(audio.load).mockClear()
+  setTracks([{...TRACK}])
+  await Promise.resolve()
+
+  expect(audio.load).not.toHaveBeenCalled()
+})
