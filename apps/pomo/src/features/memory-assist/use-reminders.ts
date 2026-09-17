@@ -132,6 +132,56 @@ interface InvalidatedReminder {
   readonly scheduleIdentity: string
 }
 
+interface IdleDeliveryState {
+  readonly status: 'idle'
+}
+
+interface PendingDeliveryState {
+  readonly memoId: string
+  readonly status: 'pending'
+}
+
+interface RemovedDeliveryState {
+  readonly memoId: string
+  readonly status: 'removed'
+}
+
+type DeliveryState = IdleDeliveryState | PendingDeliveryState | RemovedDeliveryState
+
+interface StartDeliveryEvent {
+  readonly memoId: string
+  readonly type: 'start'
+}
+
+interface MemoRemovedEvent {
+  readonly type: 'memo-removed'
+}
+
+interface FinishDeliveryEvent {
+  readonly type: 'finish'
+}
+
+type DeliveryEvent = StartDeliveryEvent | MemoRemovedEvent | FinishDeliveryEvent
+
+const transitionDeliveryState = (
+  currentState: DeliveryState,
+  event: DeliveryEvent,
+): DeliveryState => {
+  switch (event.type) {
+    case 'start':
+      return {memoId: event.memoId, status: 'pending'}
+    case 'memo-removed':
+      return currentState.status === 'pending'
+        ? {memoId: currentState.memoId, status: 'removed'}
+        : currentState
+    case 'finish':
+      return {status: 'idle'}
+  }
+
+  const unreachableEvent: never = event
+  throw new Error(`Unsupported memory memo delivery event: ${String(unreachableEvent)}`)
+}
+
 interface VerifyMemoAfterPlaybackOptions {
   readonly currentMemos: ReadonlyArray<MemoryMemo>
   readonly deliveredMemo: MemoryMemo
@@ -245,7 +295,7 @@ export const useMemoryReminders = (props: UseMemoryRemindersProps): MemoryRemind
   const memos = useMemoryMemos()
   useDeletionRecovery(() => memoryMemoDeletion.retry(props.events.deleteDialogue))
   const [clockRevision, setClockRevision] = createSignal(0)
-  const [isPending, setIsPending] = createSignal(false)
+  const [deliveryState, setDeliveryState] = createSignal<DeliveryState>({status: 'idle'})
   const [skippedMemos, setSkippedMemos] = createSignal<ReadonlyArray<MemoryMemo>>([])
   const retryAfter = new Map<string, number>()
   const invalidatedReminders = new Map<string, InvalidatedReminder>()
@@ -293,6 +343,10 @@ export const useMemoryReminders = (props: UseMemoryRemindersProps): MemoryRemind
   }
 
   const markSkippedMemo = (memo: MemoryMemo) => {
+    if (deliveryState().status === 'removed') {
+      return
+    }
+
     setSkippedMemos((current) => [...current.filter((item) => item.id !== memo.id), memo])
     retryAfter.set(memo.id, Date.now() + RETRY_DELAY)
   }
@@ -405,18 +459,22 @@ export const useMemoryReminders = (props: UseMemoryRemindersProps): MemoryRemind
   }
 
   const runDelivery = async (memo: MemoryMemo) => {
-    setIsPending(true)
+    setDeliveryState((currentState) =>
+      transitionDeliveryState(currentState, {memoId: memo.id, type: 'start'}),
+    )
 
     try {
       await deliver(memo)
     } catch (error: unknown) {
       console.error('Failed to deliver a memory memo reminder.', error)
-      retryAfter.set(memo.id, Date.now() + RETRY_DELAY)
+      if (deliveryState().status !== 'removed') {
+        retryAfter.set(memo.id, Date.now() + RETRY_DELAY)
+      }
     } finally {
+      setDeliveryState((currentState) => transitionDeliveryState(currentState, {type: 'finish'}))
       if (isDisposed) {
         repository?.dispose()
       } else {
-        setIsPending(false)
         setClockRevision((revision) => revision + 1)
       }
     }
@@ -434,7 +492,7 @@ export const useMemoryReminders = (props: UseMemoryRemindersProps): MemoryRemind
       isDisposed = true
       client?.dispose()
       client = null
-      if (!isPending()) {
+      if (deliveryState().status === 'idle') {
         repository?.dispose()
       }
     })
@@ -443,16 +501,32 @@ export const useMemoryReminders = (props: UseMemoryRemindersProps): MemoryRemind
   createEffect(() => {
     clockRevision()
     const currentMemos = memos()
-
-    if (isPending()) {
-      return
-    }
-
     const currentMemoIds = new Set(currentMemos.map((memo) => memo.id))
+
+    for (const memoId of retryAfter.keys()) {
+      if (!currentMemoIds.has(memoId)) {
+        retryAfter.delete(memoId)
+      }
+    }
     for (const memoId of invalidatedReminders.keys()) {
       if (!currentMemoIds.has(memoId)) {
         invalidatedReminders.delete(memoId)
       }
+    }
+
+    let currentDeliveryState = deliveryState()
+    if (
+      currentDeliveryState.status === 'pending' &&
+      !currentMemoIds.has(currentDeliveryState.memoId)
+    ) {
+      currentDeliveryState = transitionDeliveryState(currentDeliveryState, {
+        type: 'memo-removed',
+      })
+      setDeliveryState(currentDeliveryState)
+    }
+
+    if (currentDeliveryState.status !== 'idle') {
+      return
     }
 
     const scheduledMemos = currentMemos
