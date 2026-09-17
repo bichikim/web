@@ -1,12 +1,24 @@
 import {lte, sql, type SQL} from 'drizzle-orm'
 
 import {type Database, getDatabase, weather} from '../../database'
-import type {
-  WeatherCacheMaintenanceBatchResult,
-  WeatherCacheMaintenanceRepository,
-} from '../../weather/cache-maintenance'
 
 const BATCH_LOOKAHEAD = 1
+
+interface DeleteWeatherBatchOptions {
+  readonly batchSize: number
+  readonly cutoff: Date
+}
+
+export interface WeatherCacheMaintenanceBatchResult {
+  readonly deleted: number
+  readonly hasMore: boolean
+}
+
+export interface WeatherCacheMaintenanceRepository {
+  readonly deleteWeatherBatch: (
+    options: DeleteWeatherBatchOptions,
+  ) => Promise<WeatherCacheMaintenanceBatchResult>
+}
 
 interface BatchResultRow extends Record<string, unknown> {
   readonly deleted: number

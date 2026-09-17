@@ -6,7 +6,6 @@ import {
   pomoAccountLinkChallenges,
   pomoAppSessions,
 } from '../../database'
-import type {AuthMaintenanceBatchResult, AuthMaintenanceRepository} from '../../auth/maintenance'
 
 const BATCH_LOOKAHEAD = 1
 
@@ -20,6 +19,20 @@ interface DeleteAppSessionBatchOptions {
   readonly expiresAtCutoff: Date
   readonly pendingExpiresAtCutoff: Date
   readonly revokedAtCutoff: Date
+}
+
+export interface AuthMaintenanceBatchResult {
+  readonly deleted: number
+  readonly hasMore: boolean
+}
+
+export interface AuthMaintenanceRepository {
+  readonly deleteAccountLinkChallengeBatch: (
+    options: DeleteBatchOptions,
+  ) => Promise<AuthMaintenanceBatchResult>
+  readonly deleteAppSessionBatch: (
+    options: DeleteAppSessionBatchOptions,
+  ) => Promise<AuthMaintenanceBatchResult>
 }
 
 interface BatchResultRow extends Record<string, unknown> {

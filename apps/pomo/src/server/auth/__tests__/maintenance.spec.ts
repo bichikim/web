@@ -1,7 +1,8 @@
 /** @vitest-environment node */
 import {beforeEach, describe, expect, it, vi} from 'vitest'
 
-import {type AuthMaintenanceRepository, runAuthMaintenance} from '../maintenance'
+import {type AuthMaintenanceRepository} from '../../repositories/auth-maintenance'
+import {runAuthMaintenance} from '../maintenance'
 
 vi.mock('src/env', () => ({env: {}}))
 

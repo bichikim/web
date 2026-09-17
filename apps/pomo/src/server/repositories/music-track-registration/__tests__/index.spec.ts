@@ -7,7 +7,7 @@ import {
   failTrackAsset,
   findActiveTrackAsset,
   findTrackAsset,
-  reserveTrackAsset,
+  savePendingTrackAsset,
 } from '..'
 
 const databaseMocks = vi.hoisted(() => ({getDatabase: vi.fn(), withTransactionalDatabase: vi.fn()}))
@@ -22,6 +22,13 @@ vi.mock('../../../database', async () => {
 const ALBUM_ID = '019d1990-1dc9-7255-a7b5-f9459dfaf780'
 const TRACK_ID = '019d1990-1dc9-7255-a7b5-f9459dfaf781'
 const ASSET_ID = '019d1990-1dc9-7255-a7b5-f9459dfaf782'
+const CANDIDATE_ASSET_ID = '019d1990-1dc9-7255-a7b5-f9459dfaf783'
+const OBJECT_KEY = `tracks/${TRACK_ID}/${ASSET_ID}/source.mp3`
+const RESERVE_INPUT = {
+  assetId: ASSET_ID,
+  objectKey: OBJECT_KEY,
+  trackId: TRACK_ID,
+}
 const COMPLETE_INPUT = {
   artworkUrl: null,
   assetId: ASSET_ID,
@@ -167,13 +174,13 @@ describe('completeTrackRegistration', () => {
   })
 })
 
-describe('reserveTrackAsset', () => {
+describe('savePendingTrackAsset', () => {
   it('should reject an asset reservation for a track without a pending registration', async () => {
     select
       .mockReturnValueOnce(createLockedQuery([{id: TRACK_ID}]))
       .mockReturnValueOnce(createLimitedQuery([]))
 
-    await expect(reserveTrackAsset(TRACK_ID)).resolves.toBeNull()
+    await expect(savePendingTrackAsset(RESERVE_INPUT)).resolves.toEqual({status: 'unavailable'})
     expect(insert).not.toHaveBeenCalled()
   })
 
@@ -183,19 +190,24 @@ describe('reserveTrackAsset', () => {
       .mockReturnValueOnce(createLimitedQuery([{trackId: TRACK_ID}]))
       .mockReturnValueOnce(createLimitedQuery([{trackId: TRACK_ID}]))
 
-    await expect(reserveTrackAsset(TRACK_ID)).resolves.toBeNull()
+    await expect(savePendingTrackAsset(RESERVE_INPUT)).resolves.toEqual({status: 'unavailable'})
     expect(insert).not.toHaveBeenCalled()
   })
 
   it('should reuse the pending asset instead of creating an orphaned duplicate', async () => {
-    const objectKey = `tracks/${TRACK_ID}/${ASSET_ID}/source.mp3`
     select
       .mockReturnValueOnce(createLockedQuery([{id: TRACK_ID}]))
       .mockReturnValueOnce(createLimitedQuery([{trackId: TRACK_ID}]))
       .mockReturnValueOnce(createLimitedQuery([]))
-      .mockReturnValueOnce(createLimitedQuery([{assetId: ASSET_ID, objectKey}]))
+      .mockReturnValueOnce(createLimitedQuery([{assetId: ASSET_ID, objectKey: OBJECT_KEY}]))
 
-    await expect(reserveTrackAsset(TRACK_ID)).resolves.toEqual({assetId: ASSET_ID, objectKey})
+    await expect(
+      savePendingTrackAsset({
+        assetId: CANDIDATE_ASSET_ID,
+        objectKey: `tracks/${TRACK_ID}/${CANDIDATE_ASSET_ID}/source.mp3`,
+        trackId: TRACK_ID,
+      }),
+    ).resolves.toEqual({assetId: ASSET_ID, objectKey: OBJECT_KEY, status: 'existing'})
     expect(insert).not.toHaveBeenCalled()
   })
 })
@@ -222,11 +234,11 @@ describe('createPendingTrack edge cases', () => {
   })
 })
 
-describe('reserveTrackAsset edge cases', () => {
-  it('should return null when the track does not exist', async () => {
+describe('savePendingTrackAsset edge cases', () => {
+  it('should return unavailable when the track does not exist', async () => {
     select.mockReturnValueOnce(createLockedQuery([]))
 
-    await expect(reserveTrackAsset(TRACK_ID)).resolves.toBeNull()
+    await expect(savePendingTrackAsset(RESERVE_INPUT)).resolves.toEqual({status: 'unavailable'})
   })
 
   it('should create a new pending asset when no reservation exists', async () => {
@@ -238,15 +250,10 @@ describe('reserveTrackAsset edge cases', () => {
     const values = vi.fn().mockResolvedValue(undefined)
     insert.mockReturnValueOnce({values})
 
-    const result = await reserveTrackAsset(TRACK_ID)
-
-    expect(result?.assetId).toMatch(
-      /^[\da-f]{8}-[\da-f]{4}-4[\da-f]{3}-[89ab][\da-f]{3}-[\da-f]{12}$/,
-    )
-    expect(result?.objectKey).toBe(`tracks/${TRACK_ID}/${result?.assetId}/source.mp3`)
+    await expect(savePendingTrackAsset(RESERVE_INPUT)).resolves.toEqual({status: 'created'})
     expect(values).toHaveBeenCalledWith({
-      id: result?.assetId,
-      objectKey: result?.objectKey,
+      id: ASSET_ID,
+      objectKey: OBJECT_KEY,
       trackId: TRACK_ID,
     })
   })
@@ -397,7 +404,7 @@ describe('track asset reads and failures', () => {
 describe('transaction failures', () => {
   it.each([
     ['track creation', () => createPendingTrack({albumId: ALBUM_ID, artist: 'A', title: 'T'})],
-    ['asset reservation', () => reserveTrackAsset(TRACK_ID)],
+    ['asset reservation', () => savePendingTrackAsset(RESERVE_INPUT)],
     ['registration completion', () => completeTrackRegistration(COMPLETE_INPUT)],
   ] as const)('should propagate a %s transaction failure', async (_name, operation) => {
     database.transaction.mockRejectedValueOnce(new Error('transaction failed'))

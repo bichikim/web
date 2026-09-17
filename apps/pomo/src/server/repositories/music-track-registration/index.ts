@@ -10,7 +10,6 @@ import {
   musicTracks,
   withTransactionalDatabase,
 } from '../../database'
-import {createTrackAssetKey} from '../../music/asset-key'
 
 export interface CreatePendingTrackInput {
   readonly albumId: string
@@ -25,6 +24,17 @@ export interface CompleteTrackRegistrationInput {
   readonly etag: string
   readonly sizeBytes: bigint
 }
+
+export interface SavePendingTrackAssetInput {
+  readonly assetId: string
+  readonly objectKey: string
+  readonly trackId: string
+}
+
+export type SavePendingTrackAssetResult =
+  | {readonly status: 'created'}
+  | {readonly status: 'existing'; readonly assetId: string; readonly objectKey: string}
+  | {readonly status: 'unavailable'}
 
 export const createPendingTrack = async (input: CreatePendingTrackInput) =>
   withTransactionalDatabase((database) =>
@@ -56,54 +66,64 @@ export const createPendingTrack = async (input: CreatePendingTrackInput) =>
     }),
   )
 
-export const reserveTrackAsset = async (trackId: string) =>
+export const savePendingTrackAsset = async (
+  input: SavePendingTrackAssetInput,
+): Promise<SavePendingTrackAssetResult> =>
   withTransactionalDatabase((database) =>
     database.transaction(async (transaction) => {
       const [track] = await transaction
         .select({id: musicTracks.id})
         .from(musicTracks)
-        .where(eq(musicTracks.id, trackId))
+        .where(eq(musicTracks.id, input.trackId))
         .for('update')
         .limit(1)
 
       if (track === undefined) {
-        return null
+        return {status: 'unavailable'}
       }
 
       const [registration] = await transaction
         .select({trackId: musicTrackRegistrations.trackId})
         .from(musicTrackRegistrations)
-        .where(eq(musicTrackRegistrations.trackId, trackId))
+        .where(eq(musicTrackRegistrations.trackId, input.trackId))
         .limit(1)
 
       if (registration === undefined) {
-        return null
+        return {status: 'unavailable'}
       }
 
       const [deletionJob] = await transaction
         .select({trackId: musicTrackDeletionJobs.trackId})
         .from(musicTrackDeletionJobs)
-        .where(eq(musicTrackDeletionJobs.trackId, trackId))
+        .where(eq(musicTrackDeletionJobs.trackId, input.trackId))
         .limit(1)
 
       if (deletionJob !== undefined) {
-        return null
+        return {status: 'unavailable'}
       }
 
       const [pendingAsset] = await transaction
         .select({assetId: musicTrackAssets.id, objectKey: musicTrackAssets.objectKey})
         .from(musicTrackAssets)
-        .where(and(eq(musicTrackAssets.trackId, trackId), eq(musicTrackAssets.status, 'pending')))
+        .where(
+          and(eq(musicTrackAssets.trackId, input.trackId), eq(musicTrackAssets.status, 'pending')),
+        )
         .limit(1)
 
       if (pendingAsset !== undefined) {
-        return pendingAsset
+        return {
+          assetId: pendingAsset.assetId,
+          objectKey: pendingAsset.objectKey,
+          status: 'existing',
+        }
       }
 
-      const assetId = crypto.randomUUID()
-      const objectKey = createTrackAssetKey({assetId, trackId})
-      await transaction.insert(musicTrackAssets).values({id: assetId, objectKey, trackId})
-      return {assetId, objectKey}
+      await transaction.insert(musicTrackAssets).values({
+        id: input.assetId,
+        objectKey: input.objectKey,
+        trackId: input.trackId,
+      })
+      return {status: 'created'}
     }),
   )
 
