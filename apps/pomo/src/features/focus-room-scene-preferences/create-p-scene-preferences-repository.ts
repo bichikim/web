@@ -29,14 +29,13 @@ export interface PScenePreferencesRepository {
 
 export interface CreatePScenePreferencesRepositoryOptions {
   readonly storage: PScenePreferencesStorage
-  readonly reportError: (error: unknown) => void
 }
 
 /** Creates scene preference coordination owned by one repository instance. */
 export const createPScenePreferencesRepository = (
   options: CreatePScenePreferencesRepositoryOptions,
 ): PScenePreferencesRepository => {
-  const {storage, reportError} = options
+  const {storage} = options
   let preferenceWriteRevision = 0
   const writeLatestToss = createLatestStorageWriter(SCENE_PREFERENCES_STORAGE_KEY, (key, value) =>
     storage.writeToss(key, value),
@@ -49,17 +48,9 @@ export const createPScenePreferencesRepository = (
 
   const read = async (): Promise<PScenePreferences> => {
     const initialWriteRevision = preferenceWriteRevision
-    const webPreferences = readWebPreferences()
-
-    if (webPreferences !== null) {
-      if (storage.usesTossStorage()) {
-        writeLatestToss(webPreferences).catch(reportError)
-      }
-      return webPreferences
-    }
 
     if (!storage.usesTossStorage()) {
-      return DEFAULT_P_SCENE_PREFERENCES
+      return readWebPreferences() ?? DEFAULT_P_SCENE_PREFERENCES
     }
 
     try {
@@ -69,11 +60,10 @@ export const createPScenePreferencesRepository = (
       if (preferenceWriteRevision !== initialWriteRevision) {
         return readWebPreferences() ?? DEFAULT_P_SCENE_PREFERENCES
       }
-      if (tossPreferences === null) {
-        return DEFAULT_P_SCENE_PREFERENCES
-      }
-      writeWebPreferences(tossPreferences)
-      return tossPreferences
+
+      const restoredPreferences = tossPreferences ?? DEFAULT_P_SCENE_PREFERENCES
+      writeWebPreferences(restoredPreferences)
+      return restoredPreferences
     } catch {
       return readWebPreferences() ?? DEFAULT_P_SCENE_PREFERENCES
     }
