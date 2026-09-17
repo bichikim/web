@@ -49,9 +49,9 @@ export const SoundLayerControls = (props: SoundLayerControlsProps) => {
         </label>
       </div>
       <label class="grid gap-2">
-        연결 시간 (초)
+        연결 구간 (초)
         <input
-          aria-label={`${props.layer.title ?? props.layer.id} 연결 시간`}
+          aria-label={`${props.layer.title ?? props.layer.id} 연결 구간`}
           class="min-h-11 rounded-xl border border-solid border-#60566b bg-transparent px-3 text-inherit"
           type="number"
           min="0"
@@ -61,8 +61,8 @@ export const SoundLayerControls = (props: SoundLayerControlsProps) => {
           onChange={handleOverlapChange}
         />
         <span class="text-sm text-#bdb2c4">
-          끝과 다음 시작을 겹쳐 재생합니다. 0초는 일반 반복이며, 최대 음원 길이의 절반까지
-          가능합니다.
+          연결 구간만큼 끝과 다음 시작을 겹쳐 재생합니다. 0초는 일반 반복이며, 최대 음원 길이의
+          절반까지 가능합니다.
         </span>
       </label>
       <label class="grid gap-2">

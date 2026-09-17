@@ -56,12 +56,12 @@ it('should submit both selected files with the configured joining values', () =>
   const second = new File(['second'], 'second.wav', {type: 'audio/wav'})
   fireEvent.change(screen.getByLabelText('첫 번째 오디오'), {target: {files: [first]}})
   fireEvent.change(screen.getByLabelText('두 번째 오디오'), {target: {files: [second]}})
-  fireEvent.input(screen.getByRole('spinbutton', {name: 'AI로 바꿀 연결 구간 (초)'}), {
+  fireEvent.input(screen.getByRole('spinbutton', {name: '연결 구간 (초)'}), {
     target: {value: '6'},
   })
   fireEvent.click(screen.getByRole('button', {name: 'AI로 연결하기'}))
 
   expect(generate).toHaveBeenCalledWith(
-    expect.objectContaining({first, second, transition: 6, trimEnd: 2, trimStart: 2}),
+    expect.objectContaining({connectionSeconds: 6, first, second, trimEnd: 2, trimStart: 2}),
   )
 })

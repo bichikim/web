@@ -80,6 +80,11 @@ export interface SendChatOptions {
   readonly supplementaryContext?: string
 }
 
+interface PendingUser {
+  readonly draftRevision: number
+  readonly message: ChatMessage
+}
+
 const EMPTY_CONTEXT: ChatContext = {messages: [], summary: ''}
 const DEFAULT_RUNTIME: ChatRuntime = {
   createClient: createChatClient,
@@ -162,7 +167,13 @@ export const useChat = (props: UseChatProps): ChatController => {
   const [state, setState] = createSignal<ChatState>(
     runtime.supportsWebGpu() ? {status: 'idle'} : {status: 'unsupported'},
   )
-  let pendingUser: ChatMessage | null = null
+  let draftRevision = 0
+  let pendingUser: PendingUser | null = null
+
+  const updateDraft = (value: string) => {
+    draftRevision += 1
+    setDraft(value)
+  }
 
   const isBusy = createMemo(() => isChatBusy(state()))
   const isModelReady = createMemo(() => isChatModelReady(state()))
@@ -200,11 +211,13 @@ export const useChat = (props: UseChatProps): ChatController => {
 
         if (pendingUser !== null) {
           const failedUser = pendingUser
-          setDraft(failedUser.content)
-          setMessages((value) => value.filter((message) => message.id !== failedUser.id))
+          if (draftRevision === failedUser.draftRevision) {
+            setDraft(failedUser.message.content)
+          }
+          setMessages((value) => value.filter((message) => message.id !== failedUser.message.id))
           setContext((value) => ({
             ...value,
-            messages: value.messages.filter((message) => message.id !== failedUser.id),
+            messages: value.messages.filter((message) => message.id !== failedUser.message.id),
           }))
           pendingUser = null
         }
@@ -276,7 +289,7 @@ export const useChat = (props: UseChatProps): ChatController => {
       role: 'user',
     }
     const nextContext = {...context(), messages: [...context().messages, userMessage]}
-    pendingUser = userMessage
+    pendingUser = {draftRevision, message: userMessage}
     setMessages((value) => [...value, userMessage])
     setContext(nextContext)
     setDraft('')
@@ -321,7 +334,7 @@ export const useChat = (props: UseChatProps): ChatController => {
     prepare,
     selectModel,
     send,
-    setDraft,
+    setDraft: updateDraft,
     state,
     statusMessage,
     streamingText,

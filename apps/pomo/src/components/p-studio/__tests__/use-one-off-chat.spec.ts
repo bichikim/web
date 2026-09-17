@@ -10,7 +10,7 @@ import {
   type ChatState,
   useChat,
 } from '../../../features/chat'
-import {useModelDownload} from '../../../features/model-download'
+import {type ModelDownloadResult, useModelDownload} from '../../../features/model-download'
 import {isTextModelDownloaded} from '../../../features/text-generation'
 import {useOneOffChat} from '../use-one-off-chat'
 
@@ -40,7 +40,10 @@ const createChat = () => {
     isModelReady: () => state().status === 'ready',
     messages,
     prepare: vi.fn(() => setState({percentage: 0, status: 'loading'})),
-    send: vi.fn(() => setState({status: 'generating'})),
+    send: vi.fn(() => {
+      setDraft('')
+      setState({status: 'generating'})
+    }),
     setDraft: updateDraft,
     state,
   } as unknown as ChatController
@@ -49,7 +52,7 @@ const createChat = () => {
 }
 
 const download = {
-  startTextModel: vi.fn(async () => ({status: 'complete'}) as const),
+  startTextModel: vi.fn(async (): Promise<ModelDownloadResult> => ({status: 'complete'})),
   state: () => ({status: 'idle'}) as const,
 }
 
@@ -133,7 +136,7 @@ describe('useOneOffChat', () => {
     cleanup()
   })
 
-  it('should release a failed model preparation and allow it to be retried', async () => {
+  it('should restore a failed preparation question and allow it to be retried', async () => {
     const {chat, setState} = createChat()
     vi.mocked(useChat).mockReturnValue(chat)
     vi.mocked(isTextModelDownloaded).mockResolvedValue(true)
@@ -143,11 +146,12 @@ describe('useOneOffChat', () => {
     setState({message: '모델 준비 실패', modelReady: false, status: 'error'})
 
     expect(result.errorMessage()).toBe('모델 준비 실패')
+    expect(chat.draft()).toBe('첫 질문')
     expect(result.isBusy()).toBe(false)
 
     const retry = await result.submit('다시 시도')
 
-    expect(retry).toBe(true)
+    expect(retry).toBe(false)
     expect(chat.prepare).toHaveBeenCalledTimes(2)
     expect(result.errorMessage()).toBeNull()
 
@@ -155,6 +159,106 @@ describe('useOneOffChat', () => {
 
     expect(chat.setDraft).toHaveBeenLastCalledWith('다시 시도')
     expect(chat.send).toHaveBeenCalledOnce()
+    cleanup()
+  })
+
+  it('should preserve a newer draft while sending a pending question', async () => {
+    const {chat, setState} = createChat()
+    vi.mocked(useChat).mockReturnValue(chat)
+    vi.mocked(isTextModelDownloaded).mockResolvedValue(true)
+    const {cleanup, result} = renderHook(() => useOneOffChat({onReply: vi.fn()}))
+
+    await result.submit('첫 질문')
+    result.setDraft('다음 질문')
+    setState({status: 'ready'})
+
+    expect(chat.send).toHaveBeenCalledOnce()
+    expect(chat.draft()).toBe('다음 질문')
+    cleanup()
+  })
+
+  it('should preserve a same-valued draft while sending a pending question', async () => {
+    const {chat, setState} = createChat()
+    vi.mocked(useChat).mockReturnValue(chat)
+    vi.mocked(isTextModelDownloaded).mockResolvedValue(true)
+    const {cleanup, result} = renderHook(() => useOneOffChat({onReply: vi.fn()}))
+
+    result.setDraft('첫 질문')
+    await result.submit('첫 질문')
+    result.setDraft('첫 질문')
+    setState({status: 'ready'})
+
+    expect(chat.send).toHaveBeenCalledOnce()
+    expect(result.draft()).toBe('첫 질문')
+    cleanup()
+  })
+
+  it('should preserve a newer draft when preparation fails', async () => {
+    const {chat, setState} = createChat()
+    vi.mocked(useChat).mockReturnValue(chat)
+    vi.mocked(isTextModelDownloaded).mockResolvedValue(true)
+    const {cleanup, result} = renderHook(() => useOneOffChat({onReply: vi.fn()}))
+
+    await result.submit('첫 질문')
+    result.setDraft('다음 질문')
+    setState({message: '모델 준비 실패', modelReady: false, status: 'error'})
+
+    expect(result.errorMessage()).toBe('모델 준비 실패')
+    expect(chat.draft()).toBe('다음 질문')
+    cleanup()
+  })
+
+  it('should preserve an intentionally cleared draft when preparation fails', async () => {
+    const {chat, setState} = createChat()
+    vi.mocked(useChat).mockReturnValue(chat)
+    vi.mocked(isTextModelDownloaded).mockResolvedValue(true)
+    const {cleanup, result} = renderHook(() => useOneOffChat({onReply: vi.fn()}))
+
+    result.setDraft('첫 질문')
+    await result.submit('첫 질문')
+    result.setDraft('')
+    setState({message: '모델 준비 실패', modelReady: false, status: 'error'})
+
+    expect(result.errorMessage()).toBe('모델 준비 실패')
+    expect(result.draft()).toBe('')
+    cleanup()
+  })
+
+  it('should keep the draft when download consent is cancelled', async () => {
+    const {chat} = createChat()
+    vi.mocked(useChat).mockReturnValue(chat)
+    vi.mocked(isTextModelDownloaded).mockResolvedValue(false)
+    const {cleanup, result} = renderHook(() => useOneOffChat({onReply: vi.fn()}))
+
+    result.setDraft('다운로드 전에 남길 질문')
+    const accepted = await result.submit('다운로드 전에 남길 질문')
+
+    expect(accepted).toBe(false)
+    expect(result.draft()).toBe('다운로드 전에 남길 질문')
+    result.cancelDownloadConsent()
+
+    expect(result.draft()).toBe('다운로드 전에 남길 질문')
+    expect(result.isBusy()).toBe(false)
+    cleanup()
+  })
+
+  it('should keep the draft and expose a download failure', async () => {
+    const {chat} = createChat()
+    vi.mocked(useChat).mockReturnValue(chat)
+    vi.mocked(isTextModelDownloaded).mockResolvedValue(false)
+    vi.mocked(download.startTextModel).mockResolvedValue({
+      message: '모델 다운로드 실패',
+      status: 'error',
+    })
+    const {cleanup, result} = renderHook(() => useOneOffChat({onReply: vi.fn()}))
+
+    result.setDraft('다운로드 실패에도 남길 질문')
+    await result.submit('다운로드 실패에도 남길 질문')
+    await result.startDownload()
+
+    expect(result.draft()).toBe('다운로드 실패에도 남길 질문')
+    expect(result.errorMessage()).toBe('모델 다운로드 실패')
+    expect(result.isBusy()).toBe(false)
     cleanup()
   })
 

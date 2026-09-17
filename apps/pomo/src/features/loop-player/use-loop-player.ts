@@ -1,11 +1,11 @@
 import {createSignal, onCleanup} from 'solid-js'
+import {DEFAULT_CONNECTION_SECONDS} from '../sound-generation/connection'
 import {createLoopPlayer, type LoopPlayback} from './player'
 
-const DEFAULT_OVERLAP = 4
 export function useLoopPlayer() {
   const [position, setPosition] = createSignal(0)
   const [scrubbing, setScrubbing] = createSignal(false)
-  const [overlap, setOverlap] = createSignal(DEFAULT_OVERLAP)
+  const [connectionSeconds, setConnectionSeconds] = createSignal(DEFAULT_CONNECTION_SECONDS)
   const [duration, setDuration] = createSignal(0)
   const [playing, setPlaying] = createSignal(false)
   const [status, setStatus] = createSignal('반복할 오디오 파일을 선택해 주세요.')
@@ -76,7 +76,7 @@ export function useLoopPlayer() {
     }
     setPlaying(true)
     try {
-      await current.play(overlap(), preview, position())
+      await current.play(connectionSeconds(), preview, position())
     } catch (cause) {
       if (current === player) {
         setPlaying(false)
@@ -109,15 +109,15 @@ export function useLoopPlayer() {
     }
   }
   return {
+    connectionSeconds,
     duration,
-    overlap,
     play,
     playing,
     position,
     previewPosition,
     seek,
     select,
-    setOverlap,
+    setConnectionSeconds,
     status,
     stop,
   }
