@@ -87,8 +87,8 @@ export const useCalendarAlarmController = (
     )
   })
   const activeAlarm = createMemo(() => {
-    const exactReminderAt = storedMemo()?.exactReminderAt
-    return exactReminderAt !== null && exactReminderAt !== undefined
+    const nextExactReminderAt = storedMemo()?.nextExactReminderAt
+    return nextExactReminderAt !== null && nextExactReminderAt !== undefined
   })
 
   const resetFields = () => {
