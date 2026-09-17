@@ -1,5 +1,5 @@
 /** @vitest-environment node */
-import {describe, expect, it} from 'vitest'
+import {describe, expect, it, vi} from 'vitest'
 
 import {
   advancePomodoroTimer,
@@ -260,6 +260,27 @@ describe('advancePomodoroTimer', () => {
 })
 
 describe('stopPomodoroTimer', () => {
+  it('should synchronize an expired running focus before stopping', () => {
+    const runningState = {
+      completedFocusSessions: 0,
+      endsAt: 10_000,
+      phase: 'focus',
+      status: 'running',
+    } satisfies PomodoroTimerState
+    const now = vi.spyOn(Date, 'now').mockReturnValue(11_000)
+
+    try {
+      expect(stopPomodoroTimer(runningState, CONFIG)).toEqual({
+        completedFocusSessions: 1,
+        phase: 'shortBreak',
+        remainingSeconds: 4,
+        status: 'idle',
+      })
+    } finally {
+      now.mockRestore()
+    }
+  })
+
   it('should reset the current phase without changing completed focus sessions', () => {
     const pausedState = {
       completedFocusSessions: 3,
