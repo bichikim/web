@@ -346,6 +346,32 @@ it('should persist a stopped timer when disabled on unmount', async () => {
   restored.cleanup()
 })
 
+it('should synchronize an expired timer before stopping it on unmount', async () => {
+  localStorage.setItem(CONFIG_STORAGE_KEY, JSON.stringify(CONFIG))
+  localStorage.setItem(
+    STATE_STORAGE_KEY,
+    JSON.stringify({
+      completedFocusSessions: 0,
+      endsAt: 10_000,
+      phase: 'focus',
+      status: 'running',
+    }),
+  )
+
+  const timer = renderHook(() => usePomodoroTimer({stopOnUnmount: true}))
+  await finishMount()
+  vi.setSystemTime(11_000)
+
+  timer.cleanup()
+
+  expect(JSON.parse(localStorage.getItem(STATE_STORAGE_KEY) ?? '{}')).toEqual({
+    completedFocusSessions: 1,
+    phase: 'shortBreak',
+    remainingSeconds: 4,
+    status: 'idle',
+  })
+})
+
 it('should synchronize an expired phase on the next frame without duplicate events', async () => {
   const onEvents = vi.fn()
   const view = renderHook(() => usePomodoroTimer({onEvents}))
