@@ -1,5 +1,6 @@
 import {createSignal, onCleanup} from 'solid-js'
 import {isNonBlankString} from 'src/utils/is-non-blank-string'
+import {CONNECTION_CONTEXT_SECONDS, SAMPLE_RATE} from '../sound-generation/connection'
 import type {SoundMessage} from '../sound-generation/worker'
 import {assembleJoin, prepareJoin, type StereoAudio} from './audio'
 
@@ -8,15 +9,13 @@ export interface JoinRequest {
   readonly second: File
   readonly trimEnd: number
   readonly trimStart: number
-  readonly transition: number
+  readonly connectionSeconds: number
   readonly prompt: string
 }
-const RATE = 44100
 const MAX_SECONDS = 600
-const CONTEXT_SECONDS = 6
 
 async function decode(blob: Blob): Promise<StereoAudio> {
-  const context = new AudioContext({sampleRate: RATE})
+  const context = new AudioContext({sampleRate: SAMPLE_RATE})
   try {
     const buffer = await context.decodeAudioData(await blob.arrayBuffer())
     if (buffer.duration > MAX_SECONDS) {
@@ -102,8 +101,8 @@ export function useSoundJoining() {
         execution.postMessage({
           inpaint: {
             ...plan.context,
-            end: CONTEXT_SECONDS + request.transition / 2,
-            start: CONTEXT_SECONDS - request.transition / 2,
+            end: CONNECTION_CONTEXT_SECONDS + request.connectionSeconds / 2,
+            start: CONNECTION_CONTEXT_SECONDS - request.connectionSeconds / 2,
           },
           prompt: request.prompt,
           seconds: 12,
@@ -126,7 +125,7 @@ export function useSoundJoining() {
         URL.revokeObjectURL(previous)
       }
       setUrl(URL.createObjectURL(joined))
-      setStatus(`연결 완료 · ${(plan.left.length / RATE).toFixed(1)}초`)
+      setStatus(`연결 완료 · ${(plan.left.length / SAMPLE_RATE).toFixed(1)}초`)
     } catch (cause) {
       if (current === revision) {
         setError(cause instanceof Error ? cause.message : String(cause))

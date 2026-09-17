@@ -1,5 +1,7 @@
 export * from './assets'
 export * from './audio'
+export * from './connection'
 export * from './extension'
 export * from './loop'
+export * from './noise'
 export * from './use-sound-generation'
