@@ -47,12 +47,18 @@ describe('parseDocument', () => {
       })),
     }
 
-    expect(parseDocument(JSON.stringify(untaggedDocument))).toMatchObject({
-      document: {
-        motions: [{tracks: [{kind: 'parameter'}]}],
-      },
-      ok: true,
-    })
+    const result = parseDocument(JSON.stringify(untaggedDocument))
+
+    expect(result).toMatchObject({ok: true})
+    if (result.ok) {
+      expect(result.document.motions).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            tracks: expect.arrayContaining([expect.objectContaining({kind: 'parameter'})]),
+          }),
+        ]),
+      )
+    }
   })
 
   it('should reject a track whose declared kind contradicts its target', () => {

@@ -14,6 +14,7 @@ const MAXIMUM_RENDER_DIMENSION = 4096
 export interface PlayerCanvasProps {
   /** Editor-owned document. Untrusted input must be parsed before reaching this component. */
   readonly document: PuppetDocument
+  readonly motionId?: string
   readonly onFrame?: (frame: PlayerFrame) => void
   readonly onPlayerChange?: (player: Player | null) => void
   readonly onStatusChange?: (status: PlayerCanvasStatus) => void
@@ -49,6 +50,13 @@ export const PlayerCanvas = (props: PlayerCanvasProps) => {
   createEffect(() => {
     const currentParameterValues = props.parameterValues
     player()?.setParameterValues(currentParameterValues ?? {})
+  })
+
+  createEffect(() => {
+    const {motionId} = props
+    if (motionId !== undefined) {
+      player()?.setMotion(motionId)
+    }
   })
 
   createEffect(() => {
@@ -92,6 +100,7 @@ export const PlayerCanvas = (props: PlayerCanvasProps) => {
     createPlayer({
       canvas: canvasElement,
       document: preparedDocument,
+      motionId: untrack(() => props.motionId),
       onFrame: notifyFrame,
       parameterValues: untrack(() => props.parameterValues),
       resizeTo: hostElement,

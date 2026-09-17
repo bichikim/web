@@ -20,8 +20,10 @@ const player: Player = {
   destroy: vi.fn(),
   pause: vi.fn(),
   play: vi.fn(),
+  playMotion: vi.fn(() => true),
   resize: vi.fn(),
   seek: vi.fn(),
+  setMotion: vi.fn(() => true),
   setParameterValues: vi.fn(),
   updateDocument: vi.fn(() => true),
 }
