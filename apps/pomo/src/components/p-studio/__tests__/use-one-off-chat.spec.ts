@@ -120,6 +120,26 @@ describe('useOneOffChat', () => {
     cleanup()
   })
 
+  it('should expose a speech failure after clearing a completed reply', async () => {
+    const onReply = vi.fn().mockRejectedValue(new Error('TTS failed'))
+    const {chat, setMessages, setState} = createChat()
+    vi.mocked(useChat).mockReturnValue(chat)
+    vi.mocked(isTextModelDownloaded).mockResolvedValue(true)
+    const {cleanup, result} = renderHook(() => useOneOffChat({onReply}))
+
+    await result.submit('짧게 인사해 줘')
+    setState({status: 'ready'})
+    await vi.waitFor(() => expect(chat.send).toHaveBeenCalledOnce())
+    const reply = {content: '반가워요.', id: 'reply-1', role: 'assistant'} as const
+    setMessages([{content: '짧게 인사해 줘', id: 'user-1', role: 'user'}, reply])
+    setState({status: 'ready'})
+
+    await vi.waitFor(() => expect(onReply).toHaveBeenCalledWith('반가워요.'))
+    await vi.waitFor(() => expect(result.errorMessage()).toBe('TTS failed'))
+    expect(chat.messages()).toEqual([])
+    cleanup()
+  })
+
   it('should reject unsupported submissions without entering a permanent busy state', async () => {
     const {chat, setState} = createChat()
     setState({status: 'unsupported'})
