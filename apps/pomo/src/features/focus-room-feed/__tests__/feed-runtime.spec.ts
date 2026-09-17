@@ -16,6 +16,10 @@ it('should calculate bounded generation progress', () => {
   expect(getFeedGenerationProgress(4, 3)).toBe(100)
 })
 
+it('should return zero when the total size is unknown', () => {
+  expect(getFeedGenerationProgress(0, 0)).toBe(0)
+})
+
 it('should create a no-store feed request with a bounded timeout', () => {
   const signal = AbortSignal.abort()
   vi.spyOn(AbortSignal, 'timeout').mockReturnValue(signal)

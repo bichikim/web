@@ -125,6 +125,76 @@ it('should persist a stopped timer when disabled on unmount', async () => {
   restored.cleanup()
 })
 
+it('should preserve paused progress when disabled on unmount', async () => {
+  const timer = renderHook(() => usePomodoroTimer({stopOnUnmount: true}))
+  await finishInitialization(timer)
+  timer.result.onConfigChange(CONFIG)
+  timer.result.onStart()
+  vi.setSystemTime(1_000)
+  timer.result.onPause()
+
+  expect(timer.result.state()).toEqual({
+    completedFocusSessions: 0,
+    phase: 'focus',
+    remainingSeconds: 9,
+    status: 'paused',
+  })
+
+  timer.cleanup()
+
+  const restored = renderHook(() => usePomodoroTimer({stopOnUnmount: true}))
+  await finishInitialization(restored)
+
+  expect(restored.result.state()).toEqual({
+    completedFocusSessions: 0,
+    phase: 'focus',
+    remainingSeconds: 9,
+    status: 'idle',
+  })
+
+  restored.cleanup()
+
+  expect(JSON.parse(localStorage.getItem(STATE_STORAGE_KEY) ?? '{}')).toEqual({
+    completedFocusSessions: 0,
+    phase: 'focus',
+    remainingSeconds: 9,
+    status: 'idle',
+  })
+})
+
+it('should preserve paused progress after auto-start catch-up on unmount', async () => {
+  const runningBreak = {
+    completedFocusSessions: 1,
+    endsAt: 4_000,
+    phase: 'shortBreak',
+    status: 'running',
+  } satisfies PomodoroTimerState
+  localStorage.setItem(CONFIG_STORAGE_KEY, JSON.stringify(CONFIG))
+  localStorage.setItem(STATE_STORAGE_KEY, JSON.stringify(runningBreak))
+  autoStartMocks.read.mockResolvedValue(true)
+
+  const timer = renderHook(() => usePomodoroTimer({stopOnUnmount: true}))
+  await finishInitialization(timer)
+  vi.setSystemTime(5_000)
+  timer.result.onPause()
+
+  expect(timer.result.state()).toEqual({
+    completedFocusSessions: 1,
+    phase: 'focus',
+    remainingSeconds: 9,
+    status: 'paused',
+  })
+
+  timer.cleanup()
+
+  expect(JSON.parse(localStorage.getItem(STATE_STORAGE_KEY) ?? '{}')).toEqual({
+    completedFocusSessions: 1,
+    phase: 'focus',
+    remainingSeconds: 9,
+    status: 'idle',
+  })
+})
+
 it('should synchronize an expired timer before stopping it on unmount', async () => {
   localStorage.setItem(CONFIG_STORAGE_KEY, JSON.stringify(CONFIG))
   localStorage.setItem(

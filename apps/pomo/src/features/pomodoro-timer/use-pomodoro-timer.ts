@@ -317,7 +317,12 @@ export const usePomodoroTimer = (props: UsePomodoroTimerProps = {}): PomodoroTim
         const currentTime = Date.now()
         const currentConfig = config()
         const synchronizedState = synchronizePomodoroTimer(state(), currentTime, currentConfig)
-        writeStoredState(stopPomodoroTimer(synchronizedState, currentConfig))
+        writeStoredState(
+          stopPomodoroTimer(synchronizedState, currentConfig, {
+            now: currentTime,
+            preserveRemainingProgress: true,
+          }),
+        )
       }
     })
   })
@@ -361,7 +366,7 @@ export const usePomodoroTimer = (props: UsePomodoroTimerProps = {}): PomodoroTim
     setNow(currentTime)
     setConfig(nextConfig)
     const synchronizedState = synchronizePomodoroTimer(state(), currentTime, nextConfig)
-    applyState(stopPomodoroTimer(synchronizedState, nextConfig))
+    applyState(stopPomodoroTimer(synchronizedState, nextConfig, {now: currentTime}))
   }
   const onAutoStartChange = (isEnabled: boolean) => {
     autoStartRevision += 1
@@ -397,7 +402,7 @@ export const usePomodoroTimer = (props: UsePomodoroTimerProps = {}): PomodoroTim
     const currentConfig = config()
     setNow(currentTime)
     const synchronizedState = synchronizePomodoroTimer(state(), currentTime, currentConfig)
-    applyState(stopPomodoroTimer(synchronizedState, currentConfig))
+    applyState(stopPomodoroTimer(synchronizedState, currentConfig, {now: currentTime}))
   }
   const remainingSeconds = createMemo(() => getPomodoroRemainingSeconds(state(), now()))
   const progress = createMemo(() => getPomodoroProgress(state(), now(), config()))

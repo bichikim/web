@@ -6,7 +6,9 @@ const MAXIMUM_PROGRESS = 100
 
 export const FEED_POLLING_INTERVAL_MS = 60_000
 export const getFeedGenerationProgress = (loadedBytes: number, totalBytes: number) =>
-  Math.min(MAXIMUM_PROGRESS, Math.round((loadedBytes / totalBytes) * MAXIMUM_PROGRESS))
+  totalBytes > 0
+    ? Math.min(MAXIMUM_PROGRESS, Math.round((loadedBytes / totalBytes) * MAXIMUM_PROGRESS))
+    : 0
 export const createFeedFetcher = () => (url: string) =>
   httpFetch(url, {cache: 'no-store', signal: AbortSignal.timeout(FEED_REQUEST_TIMEOUT_MS)})
 
