@@ -359,7 +359,9 @@ export const usePomodoroTimer = (props: UsePomodoroTimerProps = {}): PomodoroTim
         const currentTime = Date.now()
         const currentConfig = config()
         const synchronizedState = synchronizePomodoroTimer(state(), currentTime, currentConfig)
-        writeStoredState(stopPomodoroTimer(synchronizedState, currentConfig))
+        writeStoredState(
+          stopPomodoroTimer(synchronizedState, currentConfig, {preserveRemainingProgress: true}),
+        )
       }
     })
   })
