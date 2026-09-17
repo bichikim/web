@@ -5,7 +5,7 @@ const repositoryMocks = vi.hoisted(() => ({
   createWeatherCacheMaintenanceRepository: vi.fn(),
 }))
 
-vi.mock('../cache-maintenance-repository', () => repositoryMocks)
+vi.mock('../../repositories/weather-cache-maintenance', () => repositoryMocks)
 
 import {
   runWeatherCacheMaintenance,

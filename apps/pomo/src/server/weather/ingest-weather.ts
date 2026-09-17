@@ -18,7 +18,7 @@ import {
   saveWeather,
   setWeatherCollectionLease,
   type WeatherCollectionLease,
-} from './repository'
+} from '../repositories/weather'
 
 const COLLECTION_LEASE_MILLISECONDS = 15_000
 const COLLECTION_POLL_MILLISECONDS = 2_000

@@ -4,7 +4,7 @@ import {z} from 'zod'
 import {authorizeAdminRequest} from 'src/server/auth/authorize-admin-request'
 import {readJsonBody} from 'src/server/http/body'
 import {noStoreJson} from 'src/server/http/response'
-import {updateAlbumStatus} from 'src/server/music/admin-repository'
+import {updateAlbumStatus} from 'src/server/repositories/music-admin'
 
 const MAXIMUM_BODY_SIZE = 4096
 const HTTP_BAD_REQUEST = 400

@@ -1,5 +1,5 @@
 import dayjs from 'dayjs'
-import {useLocalDate} from 'src/utils/use-local-date'
+import {useLocalDate} from './use-local-date'
 import {formatLocalDate} from 'src/utils/format-local-date'
 import {type Accessor, createEffect, createMemo, createResource, createSignal} from 'solid-js'
 import {

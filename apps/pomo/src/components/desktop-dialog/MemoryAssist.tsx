@@ -1,5 +1,5 @@
 import {Tabs} from '@kobalte/core/tabs'
-import {ErrorBoundary, lazy, Suspense, createSignal} from 'solid-js'
+import {createSignal, ErrorBoundary, lazy, Suspense} from 'solid-js'
 import * as m from '@paraglide/message'
 
 import {closeDesktopDialog} from '../../features/desktop-mode/dialogs'

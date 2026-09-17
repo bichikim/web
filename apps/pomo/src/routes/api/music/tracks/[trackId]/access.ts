@@ -5,7 +5,7 @@ import {noStoreJson} from 'src/server/http/response'
 import {
   findEntitledTrackPlaybackAsset,
   findPublishedTrackPreviewAsset,
-} from 'src/server/music/catalog-repository'
+} from 'src/server/repositories/music-catalog'
 import {createPlaybackAccess} from 'src/server/music/playback-access'
 import {createPreviewAccess} from 'src/server/music/preview-access'
 import {resolveUserRequest} from 'src/server/auth/resolve-user-request'

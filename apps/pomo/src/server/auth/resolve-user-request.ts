@@ -1,5 +1,5 @@
 import {getAuthSession} from './get-auth-session'
-import {findOrCreateNeonUser} from './repository'
+import {findOrCreateNeonUser} from '../repositories/auth'
 
 export interface UserRequestIdentity {
   readonly cookies: ReadonlyArray<string>

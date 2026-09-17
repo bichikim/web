@@ -1,6 +1,6 @@
 /** @vitest-environment jsdom */
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
-import {visibilityInterval} from '..'
+import {visibilityInterval} from '../visibility-interval'
 
 const INTERVAL = 1000
 
@@ -20,7 +20,7 @@ describe('visibilityInterval', () => {
 
   const changeVisibility = (hidden: boolean) => {
     documentHidden = hidden
-    document.dispatchEvent(new Event('visibilitychange', {bubbles: true}))
+    document.dispatchEvent(new Event('visibilitychange'))
   }
 
   it('should call the callback on each interval while the document is visible', () => {

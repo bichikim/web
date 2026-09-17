@@ -6,8 +6,8 @@ import {afterEach, beforeEach, expect, it, vi} from 'vitest'
 import {useDesktopSettingsState} from '../../desktop-surface/use-settings-state'
 import {closeDesktopDialog} from '../../../features/desktop-mode/dialogs'
 import {
-  usePDisplayPreferences,
   type PDisplayPreferencesController,
+  usePDisplayPreferences,
 } from 'src/features/focus-room-display-preferences'
 import {useUiAutoHide} from 'src/features/ui-auto-hide'
 import {PSettings} from '../../p-settings/PSettings'
