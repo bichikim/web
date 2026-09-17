@@ -140,6 +140,45 @@ describe('useOneOffChat', () => {
     cleanup()
   })
 
+  it('should ignore a stale speech failure after a new question is submitted', async () => {
+    let rejectFirstReply: (error: unknown) => void = () => undefined
+    const report = vi.spyOn(console, 'error').mockImplementation(() => undefined)
+    const firstSpeech = new Promise<void>((_, reject) => {
+      rejectFirstReply = reject
+    })
+    const onReply = vi
+      .fn<(text: string) => Promise<void>>()
+      .mockReturnValueOnce(firstSpeech)
+      .mockResolvedValueOnce(undefined)
+    const {chat, setMessages, setState} = createChat()
+    vi.mocked(useChat).mockReturnValue(chat)
+    vi.mocked(isTextModelDownloaded).mockResolvedValue(true)
+    const {cleanup, result} = renderHook(() => useOneOffChat({onReply}))
+
+    await result.submit('첫 질문')
+    setState({status: 'ready'})
+    await vi.waitFor(() => expect(chat.send).toHaveBeenCalledOnce())
+    setMessages([{content: '첫 답변', id: 'reply-1', role: 'assistant'}])
+    setState({status: 'ready'})
+    await vi.waitFor(() => expect(onReply).toHaveBeenCalledWith('첫 답변'))
+
+    await result.submit('두 번째 질문')
+    await vi.waitFor(() => expect(chat.send).toHaveBeenCalledTimes(2))
+    setMessages([{content: '두 번째 답변', id: 'reply-2', role: 'assistant'}])
+    setState({status: 'ready'})
+    await vi.waitFor(() => expect(onReply).toHaveBeenCalledWith('두 번째 답변'))
+
+    rejectFirstReply(new Error('stale TTS failed'))
+    await firstSpeech.catch(() => undefined)
+    expect(result.errorMessage()).toBeNull()
+    expect(report).toHaveBeenCalledWith(
+      'Failed to speak the one-off chat reply.',
+      expect.any(Error),
+    )
+    report.mockRestore()
+    cleanup()
+  })
+
   it('should reject unsupported submissions without entering a permanent busy state', async () => {
     const {chat, setState} = createChat()
     setState({status: 'unsupported'})
