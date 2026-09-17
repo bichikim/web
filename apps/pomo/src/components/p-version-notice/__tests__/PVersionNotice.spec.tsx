@@ -8,6 +8,7 @@ import {PModal, type PModalProps} from '../../p-modal/PModal'
 import {POrbitBorder, type POrbitBorderProps} from '../../p-orbit-border/POrbitBorder'
 import {PVersionNotice} from '../PVersionNotice'
 import {PScribbleCircleControl} from '../../scribble/CircleControl'
+import {openDesktopDialog} from '../../../features/desktop-mode/dialogs'
 
 const versionMocks = vi.hoisted(() => ({
   load: vi.fn(),
@@ -31,6 +32,7 @@ vi.mock('../../scribble/CircleControl', () => ({PScribbleCircleControl: vi.fn()}
 vi.mock('../../p-feature-request/PFeatureRequest', () => ({
   PFeatureRequest: vi.fn(() => <button type="button">기능 요청</button>),
 }))
+vi.mock('../../../features/desktop-mode/dialogs', () => ({openDesktopDialog: vi.fn()}))
 
 const catalog = {
   releases: [
@@ -56,6 +58,7 @@ beforeEach(() => {
   versionMocks.load.mockResolvedValue(catalog)
   versionMocks.read.mockResolvedValue(null)
   versionMocks.write.mockResolvedValue(undefined)
+  vi.mocked(openDesktopDialog).mockResolvedValue(undefined)
   vi.mocked(PModal).mockImplementation((props: PModalProps) => (
     <div aria-label={props.title} hidden={!props.isOpen} role="dialog">
       {props.children}
@@ -131,6 +134,33 @@ it('should show recent releases in a gift modal and persist the newest marker on
     releasedAt: '2026-09-03T00:57:00+09:00',
     version: '2026. 09. 03 00:57',
   })
+})
+
+it('should persist the newest marker before closing the desktop dialog', async () => {
+  const onRequestClose = vi.fn()
+  render(() => <PVersionNotice desktopDialog onRequestClose={onRequestClose} />)
+
+  await screen.findByRole('heading', {name: '업데이트'})
+  fireEvent.click(screen.getByRole('button', {name: '닫기'}))
+
+  await waitFor(() =>
+    expect(versionMocks.write).toHaveBeenCalledWith({
+      formatVersion: 1,
+      releasedAt: '2026-09-03T00:57:00+09:00',
+      version: '2026. 09. 03 00:57',
+    }),
+  )
+  expect(onRequestClose).toHaveBeenCalledOnce()
+})
+
+it('should hide the desktop-surface trigger after opening the desktop dialog', async () => {
+  render(() => <PVersionNotice desktopSurface />)
+
+  const trigger = await screen.findByRole('button', {name: '새 업데이트 보기'})
+  fireEvent.click(trigger)
+
+  await waitFor(() => expect(openDesktopDialog).toHaveBeenCalledExactlyOnceWith('versionNotice'))
+  expect(screen.queryByRole('button', {name: '새 업데이트 보기'})).toBeNull()
 })
 
 it('should show the feature request trigger when the newest release was already viewed', async () => {

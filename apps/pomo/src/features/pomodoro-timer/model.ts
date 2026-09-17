@@ -48,6 +48,11 @@ export interface PomodoroSynchronizationOptions {
   readonly autoStartNextPhase?: boolean
 }
 
+export interface PomodoroStopOptions {
+  readonly now?: number
+  readonly preserveRemainingProgress?: boolean
+}
+
 export const getPomodoroPhaseDuration = (
   phase: PomodoroPhase,
   config: PomodoroTimerConfig = POMODORO_TIMER_CONFIG,
@@ -201,7 +206,23 @@ export const pausePomodoroTimer = (
 export const stopPomodoroTimer = (
   state: PomodoroTimerState,
   config: PomodoroTimerConfig = POMODORO_TIMER_CONFIG,
-): PomodoroTimerState => createIdleState(state.phase, state.completedFocusSessions, config)
+  options: PomodoroStopOptions = {},
+): PomodoroTimerState => {
+  const now = options.now ?? Date.now()
+  const synchronizedState =
+    state.status === 'running' ? synchronizePomodoroTimer(state, now, config) : state
+
+  if (options.preserveRemainingProgress) {
+    return {
+      completedFocusSessions: synchronizedState.completedFocusSessions,
+      phase: synchronizedState.phase,
+      remainingSeconds: getPomodoroRemainingSeconds(synchronizedState, now),
+      status: 'idle',
+    }
+  }
+
+  return createIdleState(synchronizedState.phase, synchronizedState.completedFocusSessions, config)
+}
 
 export const getPomodoroProgress = (
   state: PomodoroTimerState,

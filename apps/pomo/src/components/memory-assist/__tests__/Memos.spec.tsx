@@ -376,6 +376,37 @@ it('should stop ongoing recall when an exact reminder is enabled while editing',
   expect(mocks.deleteDialogue).not.toHaveBeenCalled()
 })
 
+it('should allow editing a repeated reminder while its next occurrence is pending', async () => {
+  vi.useFakeTimers()
+  const exactReminderAt = new Date(2026, 8, 4, 4).toISOString()
+  const nextExactReminderAt = new Date(2026, 8, 4, 4, 10).toISOString()
+  vi.setSystemTime(new Date(2026, 8, 4, 4, 5))
+  mocks.memos = [
+    {
+      ...createStoredMemo(),
+      exactReminderAt,
+      exactReminderRepeatIntervalMinutes: 10,
+      exactReminderRepeatUntilMinutes: 20,
+      nextExactReminderAt,
+      nextRecallAt: null,
+      recallMode: 'none',
+      reinforcementIndex: 0,
+    },
+  ]
+  render(() => <MemoryMemoList />)
+
+  fireEvent.click(screen.getByRole('button', {name: '여권 갱신하기 메모 편집'}))
+  fireEvent.click(screen.getByLabelText('예약 알림 반복'))
+  fireEvent.click(screen.getByRole('button', {name: '변경 저장'}))
+
+  await vi.runAllTimersAsync()
+  expect(mocks.memos[0]).toMatchObject({
+    exactReminderAt,
+    exactReminderRepeatIntervalMinutes: null,
+    nextExactReminderAt,
+  })
+})
+
 it('should preserve memo audio when deleting the memo cannot be persisted', async () => {
   mocks.memos = [createStoredMemo()]
   mocks.updateMemos.mockRejectedValueOnce(new Error('write failed'))

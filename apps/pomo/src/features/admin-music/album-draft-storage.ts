@@ -234,6 +234,10 @@ export type AlbumDraftStorageResult =
   | {readonly success: true}
   | {readonly error: unknown; readonly success: false}
 
+export type AlbumDraftReadResult<T> =
+  | {readonly data: T; readonly success: true}
+  | {readonly error: unknown; readonly success: false}
+
 const storageSuccess = (): AlbumDraftStorageResult => ({success: true})
 const storageFailure = (error: unknown): AlbumDraftStorageResult => ({error, success: false})
 
@@ -290,14 +294,50 @@ export const deleteExpiredAlbumDraftCovers = async (
 
 export const readAlbumDraftData = (
   storage: AlbumDraftStorage = BROWSER_STORAGE,
-): AlbumDraftData | null => {
+): AlbumDraftReadResult<AlbumDraftData | null> => {
   try {
     const storedDraft = storage.readData()
-    return storedDraft === null ? null : albumDraftSchema.parse(JSON.parse(storedDraft))
+    return {
+      data: storedDraft === null ? null : albumDraftSchema.parse(JSON.parse(storedDraft)),
+      success: true,
+    }
   } catch (error: unknown) {
     console.warn('Failed to read the admin album draft.', error)
-    return null
+    return {error, success: false}
   }
+}
+
+/** Returns null when the browser draft cannot be read. */
+export const readAlbumDraftDataOrNull = (
+  storage: AlbumDraftStorage = BROWSER_STORAGE,
+): AlbumDraftData | null => {
+  const result = readAlbumDraftData(storage)
+  return result.success ? result.data : null
+}
+
+export const readAlbumDraftCover = async (
+  id: string,
+  storage: AlbumDraftStorage = BROWSER_STORAGE,
+): Promise<AlbumDraftReadResult<File | null>> => {
+  try {
+    const blob = await storage.readCover(id)
+    return {
+      data: blob === null ? null : new File([blob], 'cover.webp', {type: blob.type}),
+      success: true,
+    }
+  } catch (error: unknown) {
+    console.warn('Failed to read the admin album cover draft.', error)
+    return {error, success: false}
+  }
+}
+
+/** Returns null when the browser cover cannot be read. */
+export const readAlbumDraftCoverOrNull = async (
+  id: string,
+  storage: AlbumDraftStorage = BROWSER_STORAGE,
+): Promise<File | null> => {
+  const result = await readAlbumDraftCover(id, storage)
+  return result.success ? result.data : null
 }
 
 export const writeAlbumDraftData = (
@@ -310,19 +350,6 @@ export const writeAlbumDraftData = (
   } catch (error: unknown) {
     console.warn('Failed to save the admin album draft.', error)
     return storageFailure(error)
-  }
-}
-
-export const readAlbumDraftCover = async (
-  id: string,
-  storage: AlbumDraftStorage = BROWSER_STORAGE,
-): Promise<File | null> => {
-  try {
-    const blob = await storage.readCover(id)
-    return blob === null ? null : new File([blob], 'cover.webp', {type: blob.type})
-  } catch (error: unknown) {
-    console.warn('Failed to read the admin album cover draft.', error)
-    return null
   }
 }
 

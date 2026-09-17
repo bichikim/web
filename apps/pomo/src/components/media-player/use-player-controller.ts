@@ -243,12 +243,16 @@ export const usePlayerController = (props: UsePlayerControllerProps): PlayerCont
     playbackPersistence.writePlayback(nextPlayback)
     queueMicrotask(restorePendingPlayback)
   }
+  let previousTrackKey: string | null = null
   createEffect(() => {
     const track = currentTrack() ?? null
+    const trackKey = track === null ? null : JSON.stringify([track.id, track.source])
+    const currentTrackChanged = trackKey !== previousTrackKey
+    previousTrackKey = trackKey
     cancelPendingRestart()
     const shouldResumeControlledTrack = untrack(() => {
       const transition = getPlaybackTransition()
-      return props.tracks !== undefined && isPlaying() && transition === null
+      return props.tracks !== undefined && currentTrackChanged && isPlaying() && transition === null
     })
     if (track !== null && shouldResumeControlledTrack) {
       selectTrack({index: untrack(currentIndex), shouldResume: true})
@@ -294,7 +298,7 @@ export const usePlayerController = (props: UsePlayerControllerProps): PlayerCont
     const track = currentTrack()
     const shouldWaitForPlay = track !== undefined && !isPlaying()
     restartPlaybackPending = shouldWaitForPlay
-    restartSeekPending = shouldWaitForPlay
+    restartSeekPending = track !== undefined
     clearPlaybackTransition()
     playback.seek(0)
     playbackRevision += 1
@@ -314,11 +318,11 @@ export const usePlayerController = (props: UsePlayerControllerProps): PlayerCont
 
     const transition = getPlaybackTransition()
     if (transition?.phase === 'restoring') {
-      const positionSeconds = readPlaybackPosition(props.element())
-      if (transition.seekPending && positionSeconds === transition.playback.positionSeconds) {
+      if (transition.seekPending) {
         return
       }
 
+      const positionSeconds = readPlaybackPosition(props.element())
       playbackTransition =
         positionSeconds === null
           ? null
@@ -328,6 +332,15 @@ export const usePlayerController = (props: UsePlayerControllerProps): PlayerCont
               playback: {...transition.playback, positionSeconds},
               seekPending: false,
             }
+    } else if (transition?.phase === 'loading' || transition?.phase === 'awaiting-metadata') {
+      const positionSeconds = readPlaybackPosition(props.element())
+      playbackPersistence.setPendingPosition(
+        positionSeconds === null
+          ? null
+          : {isPlaying: true, positionSeconds, trackId: transition.trackId},
+      )
+      cancelPendingRestart()
+      return
     } else if (transition !== null) {
       clearPlaybackTransition()
     }

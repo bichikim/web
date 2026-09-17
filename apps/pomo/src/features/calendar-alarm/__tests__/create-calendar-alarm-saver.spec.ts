@@ -40,6 +40,39 @@ it('should retain the current memo when persistence fails without starting clean
   expect(memo.dialogueId).toBe('memory-memo-calendar-alarm:event')
 })
 
+it('should rearm a consumed calendar alarm when saving the same schedule', async () => {
+  let stored: ReadonlyArray<MemoryMemo> = [
+    {
+      ...memo,
+      nextExactReminderAt: null,
+      reminderEvents: [
+        {
+          deliveredAt: options.alarmAt.toISOString(),
+          kind: 'exact',
+          scheduledAt: options.alarmAt.toISOString(),
+        },
+      ],
+      reminderHistory: [options.alarmAt.toISOString()],
+    },
+  ]
+  const save = createCalendarAlarmSaver({
+    cleanup: vi.fn().mockResolvedValue(undefined),
+    reportError: vi.fn(),
+    updateMemos: async (update) => {
+      stored = update(stored)
+      return stored
+    },
+  })
+
+  await save(options)
+
+  expect(stored[0]).toMatchObject({
+    exactReminderAt: options.alarmAt.toISOString(),
+    nextExactReminderAt: options.alarmAt.toISOString(),
+    reminderHistory: [options.alarmAt.toISOString()],
+  })
+})
+
 it('should persist retirement before cleanup and report cleanup failure without rejecting the save', async () => {
   let stored: ReadonlyArray<MemoryMemo> = [memo]
   let snapshot: ReadonlyArray<MemoryMemo> = []

@@ -195,6 +195,14 @@ const ownedAlarm = () => ({
   dialogueId: 'memory-memo-calendar-alarm:connection-1:event-1',
 })
 
+it('should mark a consumed exact calendar alarm inactive', () => {
+  mocks.memos = [{...ownedAlarm(), nextExactReminderAt: null}]
+  render(() => <CalendarAlarmControl now={now} event={event} memos={() => mocks.memos} />)
+
+  expect(screen.getByRole('button', {name: '팀 회의 알람 설정'})).toBeVisible()
+  expect(screen.queryByRole('button', {name: '팀 회의 알람 수정'})).not.toBeInTheDocument()
+})
+
 it('should keep a deleted calendar alarm inactive after a newer storage event', () => {
   const memo = ownedAlarm()
   render(() => {

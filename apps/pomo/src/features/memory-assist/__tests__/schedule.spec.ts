@@ -170,6 +170,100 @@ describe('editMemoryMemo', () => {
       updatedAt: '2026-09-04T03:30:00.000Z',
     })
   })
+
+  it('should rearm a consumed exact reminder when saving the same schedule', () => {
+    const memo = {
+      ...createMemoryMemo({
+        exactReminderAt: '2026-09-04T04:00:00.000Z',
+        id: 'memo-1',
+        now: NOW,
+        random: () => 0,
+        recallMode: 'none' as const,
+        text: '여권 갱신하기',
+      }),
+      nextExactReminderAt: null,
+    }
+
+    const saved = editMemoryMemo({
+      exactReminderAt: '2026-09-04T04:00:00.000Z',
+      memo,
+      now: new Date('2026-09-04T03:30:00.000Z'),
+      random: () => 0,
+      recallMode: 'none',
+      text: memo.text,
+    })
+
+    expect(saved.nextExactReminderAt).toBe('2026-09-04T04:00:00.000Z')
+  })
+
+  it('should preserve the pending exact occurrence when repeat is disabled', () => {
+    const first = advanceMemoryMemo({
+      kind: 'exact',
+      memo: createMemoryMemo({
+        exactReminderAt: '2026-09-04T04:00:00.000Z',
+        exactReminderRepeatIntervalMinutes: 10,
+        exactReminderRepeatUntilMinutes: 20,
+        id: 'memo-1',
+        now: NOW,
+        random: () => 0,
+        recallMode: 'none',
+        text: '여권 갱신하기',
+      }),
+      now: new Date('2026-09-04T04:00:00.000Z'),
+      random: () => 0,
+    })
+
+    const edited = editMemoryMemo({
+      exactReminderAt: first.exactReminderAt,
+      exactReminderRepeatIntervalMinutes: null,
+      exactReminderRepeatUntilMinutes: 0,
+      memo: first,
+      now: new Date('2026-09-04T04:05:00.000Z'),
+      random: () => 0,
+      recallMode: 'none',
+      text: first.text,
+    })
+
+    expect(edited).toMatchObject({
+      exactReminderAt: '2026-09-04T04:00:00.000Z',
+      exactReminderRepeatIntervalMinutes: null,
+      nextExactReminderAt: '2026-09-04T04:10:00.000Z',
+    })
+    expect(getDueMemoryReminder(edited, new Date('2026-09-04T04:05:00.000Z'))).toBeNull()
+    expect(getDueMemoryReminder(edited, new Date('2026-09-04T04:10:00.000Z'))).toBe('exact')
+  })
+
+  it('should discard an advanced exact occurrence outside a shortened repeat window', () => {
+    const first = advanceMemoryMemo({
+      kind: 'exact',
+      memo: createMemoryMemo({
+        exactReminderAt: '2026-09-04T04:00:00.000Z',
+        exactReminderRepeatIntervalMinutes: 10,
+        exactReminderRepeatUntilMinutes: 20,
+        id: 'memo-1',
+        now: NOW,
+        random: () => 0,
+        recallMode: 'none',
+        text: '여권 갱신하기',
+      }),
+      now: new Date('2026-09-04T04:00:00.000Z'),
+      random: () => 0,
+    })
+
+    const edited = editMemoryMemo({
+      exactReminderAt: first.exactReminderAt,
+      exactReminderRepeatIntervalMinutes: 10,
+      exactReminderRepeatUntilMinutes: 5,
+      memo: first,
+      now: new Date('2026-09-04T04:05:00.000Z'),
+      random: () => 0,
+      recallMode: 'none',
+      text: first.text,
+    })
+
+    expect(edited.nextExactReminderAt).toBeNull()
+    expect(getDueMemoryReminder(edited, new Date('2026-09-04T04:05:00.000Z'))).toBeNull()
+  })
 })
 
 describe('getDueMemoryReminder', () => {

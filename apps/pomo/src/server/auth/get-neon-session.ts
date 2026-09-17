@@ -47,9 +47,11 @@ export const getNeonSession = async (request: Request): Promise<NeonSession> => 
   }
 
   const data: unknown = await response.json().catch(() => undefined)
+  const access = classifyAuthAccess(data)
+  const identity = parseIdentity(data)
   return {
-    access: classifyAuthAccess(data),
-    identity: parseIdentity(data),
+    access: identity === null && access !== 'anonymous' ? 'invalid' : access,
+    identity,
     provider: 'neon',
     setCookies,
   }

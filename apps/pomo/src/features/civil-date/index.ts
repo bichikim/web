@@ -50,7 +50,7 @@ export const periodEnd = (date: CivilDate, months: number): CivilDate => {
   const year = first.getUTCFullYear()
   const month = first.getUTCMonth() + 1
   const last = daysInMonth(year, month)
-  return date.day > last ? {day: last, month, year} : addDays({day: date.day, month, year}, -1)
+  return addDays({day: Math.min(date.day, last), month, year}, -1)
 }
 
 export {koreanToday} from './korean-today'

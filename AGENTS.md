@@ -35,12 +35,10 @@
 
 ## Evidence
 
-- Do not present unverified facts as established. Use conversation context to interpret user intent and scope; verify factual claims separately and distinguish assumptions from observations.
-- Use only directly observed evidence from the actual project's files, configuration, and data; its actual runtime; current official documentation; relevant existing tests executed against the actual code path; or new tests created and executed against that path as sources of truth.
-- Verify every factual or technical conclusion with the source capable of proving it. Source inspection does not prove runtime behavior, an unexecuted test does not prove behavior, and a passing test proves only the assertions and environment it exercised.
-- Verify changeable external information from a current authoritative source in the same turn. Before relying on a term, status, label, or qualifier, establish its exact contextual meaning and separately verify the consequence relevant to the question.
-- When direct evidence is missing, run the smallest relevant test or runtime experiment that can establish the fact. Distinguish product evidence from setup, runner, sandbox, and environment failures.
-- Show the user the decisive evidence. If the permitted sources cannot verify a claim and no viable experiment can establish it, state that it cannot be determined; do not provide a likely answer.
+- Treat assumptions as assumptions, not facts. Establish factual or technical conclusions from the source capable of proving them: the actual project's files, configuration, data, runtime, executed tests, current authoritative documentation, or a focused experiment.
+- Match the evidence to the claim: source inspection does not prove runtime behavior, an unexecuted test does not prove behavior, and a passing test proves only the assertions and environment it exercised. For changeable external information, verify the exact meaning and relevant consequence from a current authoritative source in the same turn.
+- When direct evidence is missing, run the smallest relevant test or runtime experiment and distinguish product defects from setup, runner, sandbox, and environment failures.
+- Show the decisive evidence. If no permitted source or viable experiment can establish the claim, state that it cannot be determined instead of guessing.
 
 ## Architecture authority
 

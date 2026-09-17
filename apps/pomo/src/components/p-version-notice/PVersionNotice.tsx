@@ -54,20 +54,19 @@ export const PVersionNotice = (props: PVersionNoticeProps) => {
     setTriggerElement(source)
 
     if (props.desktopSurface) {
-      openDesktopDialog('versionNotice').catch((error: unknown) => {
-        console.error('Failed to open the desktop version notice dialog.', error)
-      })
+      openDesktopDialog('versionNotice')
+        .then(() => setReleases([]))
+        .catch((error: unknown) => {
+          console.error('Failed to open the desktop version notice dialog.', error)
+        })
       return
     }
 
     setIsOpen(true)
   }
-  const handleOpenChange = (nextIsOpen: boolean) => {
+  const persistViewedRelease = () => {
     const [newestRelease] = releases()
-    const wasOpen = isOpen()
-    setIsOpen(nextIsOpen)
-
-    if (nextIsOpen || !wasOpen || newestRelease === undefined) {
+    if (newestRelease === undefined) {
       return
     }
 
@@ -76,6 +75,16 @@ export const PVersionNotice = (props: PVersionNoticeProps) => {
       releasedAt: newestRelease.releasedAt,
       version: newestRelease.version,
     }).catch((error: unknown) => console.error('Failed to persist viewed version release.', error))
+  }
+  const handleOpenChange = (nextIsOpen: boolean) => {
+    const wasOpen = isOpen()
+    setIsOpen(nextIsOpen)
+
+    if (nextIsOpen || !wasOpen) {
+      return
+    }
+
+    persistViewedRelease()
   }
   const handleCloseAutoFocus = () => {
     triggerElement()?.focus()
@@ -100,7 +109,13 @@ export const PVersionNotice = (props: PVersionNoticeProps) => {
     />
   )
   const desktopVersionNoticeContent = () => (
-    <DesktopDialogFrame onClose={() => props.onRequestClose?.()} title={m.version_notice_title()}>
+    <DesktopDialogFrame
+      onClose={() => {
+        persistViewedRelease()
+        props.onRequestClose?.()
+      }}
+      title={m.version_notice_title()}
+    >
       {releaseContent()}
     </DesktopDialogFrame>
   )
