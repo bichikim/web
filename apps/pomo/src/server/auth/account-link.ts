@@ -29,7 +29,8 @@ export type CreateAccountLinkChallengeResult =
   | CreatedAccountLinkChallenge
   | RateLimitedAccountLinkChallenge
 
-const normalizeEmailAddress = (email: string): string => email.trim().toLowerCase()
+const normalizeEmailAddress = (email: string): string =>
+  email.normalize('NFKC').trim().toLowerCase()
 
 export const createAccountLinkChallenge = async (
   userId: string,
