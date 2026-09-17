@@ -234,24 +234,27 @@ it.each([
       },
     ],
   },
-])('should not infer a missing next reminder from delivery history (%j)', ({reminderEvents}) => {
-  const exactReminderAt = '2026-09-04T04:00:00.000Z'
-  const result = parseMemoryMemos([
-    {
-      createdAt: '2026-09-04T03:00:00.000Z',
-      dialogueId: null,
-      exactReminderAt,
-      id: 'memo-1',
-      nextRecallAt: null,
-      recallMode: 'none',
-      reinforcementIndex: 0,
-      reminderEvents,
-      reminderHistory: [exactReminderAt],
-      text: '여권 갱신하기',
-      updatedAt: exactReminderAt,
-      version: 1,
-    },
-  ])
+])(
+  'should restore a consumed legacy exact reminder from delivery history (%j)',
+  ({reminderEvents}) => {
+    const exactReminderAt = '2026-09-04T04:00:00.000Z'
+    const result = parseMemoryMemos([
+      {
+        createdAt: '2026-09-04T03:00:00.000Z',
+        dialogueId: null,
+        exactReminderAt,
+        id: 'memo-1',
+        nextRecallAt: null,
+        recallMode: 'none',
+        reinforcementIndex: 0,
+        reminderEvents,
+        reminderHistory: [exactReminderAt],
+        text: '여권 갱신하기',
+        updatedAt: exactReminderAt,
+        version: 1,
+      },
+    ])
 
-  expect(result?.[0]?.nextExactReminderAt).toBe(exactReminderAt)
-})
+    expect(result?.[0]?.nextExactReminderAt).toBeNull()
+  },
+)
