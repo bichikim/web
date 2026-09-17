@@ -379,10 +379,13 @@ const runScheduledJobs = async (context: FeedGenerationContext) => {
     context.isGenerating = false
 
     if (!context.isDisposed) {
-      context.options.setState({
-        message: '다음 피드 확인을 기다리고 있어요.',
-        status: 'idle',
-      })
+      const currentState = context.options.getState()
+      if (currentState.status !== 'syncing') {
+        context.options.setState({
+          message: '다음 피드 확인을 기다리고 있어요.',
+          status: 'idle',
+        })
+      }
     }
   }
 }
