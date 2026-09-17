@@ -394,7 +394,13 @@ export const usePomodoroTimer = (props: UsePomodoroTimerProps = {}): PomodoroTim
     applyState(nextState, synchronizedState === currentState ? undefined : {isCatchUp: true})
   }
   const onReset = () => applyState(createPomodoroTimerState(config()))
-  const onStop = () => applyState(stopPomodoroTimer(state(), config()))
+  const onStop = () => {
+    const currentTime = Date.now()
+    const currentConfig = config()
+    setNow(currentTime)
+    const synchronizedState = synchronizePomodoroTimer(state(), currentTime, currentConfig)
+    applyState(stopPomodoroTimer(synchronizedState, currentConfig))
+  }
   const remainingSeconds = createMemo(() => getPomodoroRemainingSeconds(state(), now()))
   const progress = createMemo(() => getPomodoroProgress(state(), now(), config()))
 

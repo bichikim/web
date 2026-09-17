@@ -484,6 +484,33 @@ it('should synchronize an expired running break before applying configuration ch
   view.cleanup()
 })
 
+it('should synchronize an expired running break before stopping', async () => {
+  const runningBreak = {
+    completedFocusSessions: 1,
+    endsAt: 4_000,
+    phase: 'shortBreak',
+    status: 'running',
+  } satisfies PomodoroTimerState
+  const onEvents = vi.fn()
+  localStorage.setItem(CONFIG_STORAGE_KEY, JSON.stringify(CONFIG))
+  localStorage.setItem(STATE_STORAGE_KEY, JSON.stringify(runningBreak))
+
+  const view = renderHook(() => usePomodoroTimer({onEvents}))
+  await finishMount()
+  vi.setSystemTime(5_000)
+
+  view.result.onStop()
+
+  expect(view.result.state()).toEqual({
+    completedFocusSessions: 1,
+    phase: 'focus',
+    remainingSeconds: 10,
+    status: 'idle',
+  })
+  expect(onEvents).toHaveBeenCalledExactlyOnceWith(['break-end'])
+  view.cleanup()
+})
+
 it('should stop frame updates after cleanup', async () => {
   const view = renderHook(usePomodoroTimer)
   await finishMount()
