@@ -362,6 +362,26 @@ it('should synchronize an expired phase on the next frame without duplicate even
   view.cleanup()
 })
 
+it('should synchronize an expired phase before applying a new configuration', async () => {
+  const view = renderHook(usePomodoroTimer)
+  await finishMount()
+  view.result.onConfigChange(CONFIG)
+  view.result.onStart()
+
+  vi.setSystemTime(12_000)
+  const nextConfig = {...CONFIG, focusSeconds: 20}
+  view.result.onConfigChange(nextConfig)
+
+  expect(view.result.config()).toEqual(nextConfig)
+  expect(view.result.state()).toEqual({
+    completedFocusSessions: 1,
+    phase: 'shortBreak',
+    remainingSeconds: 4,
+    status: 'idle',
+  })
+  view.cleanup()
+})
+
 it('should synchronize an expired break before advancing with auto-start enabled', async () => {
   const onEvents = vi.fn()
   const view = renderHook(() => usePomodoroTimer({onEvents}))
@@ -479,6 +499,26 @@ it('should synchronize an expired running break before applying configuration ch
     completedFocusSessions: 1,
     phase: 'focus',
     remainingSeconds: 10,
+    status: 'idle',
+  })
+  view.cleanup()
+})
+
+it('should stop after the first expired phase when applying configuration changes', async () => {
+  const view = renderHook(usePomodoroTimer)
+  await finishMount()
+  view.result.onConfigChange(CONFIG)
+  view.result.onAutoStartChange(true)
+  view.result.onStart()
+
+  vi.setSystemTime(25_000)
+  const nextConfig = {...CONFIG, focusSeconds: 20}
+  view.result.onConfigChange(nextConfig)
+
+  expect(view.result.state()).toEqual({
+    completedFocusSessions: 1,
+    phase: 'shortBreak',
+    remainingSeconds: 4,
     status: 'idle',
   })
   view.cleanup()
