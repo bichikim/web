@@ -17,6 +17,7 @@ import {PlayerCanvas, type PlayerCanvasStatus} from './PlayerCanvas'
 
 export interface EditorViewportProps {
   readonly meshEditingDisabled?: boolean
+  readonly motionId?: string
   readonly onMeshEditingStart?: () => void
   readonly onRestDocumentChange?: (document: PuppetDocument) => void
   readonly fitRevision?: number
@@ -140,6 +141,7 @@ export const EditorViewport = (props: EditorViewportProps) => {
       >
         <PlayerCanvas
           document={displayDocument()}
+          motionId={props.motionId}
           onFrame={(frame: PlayerFrame) => props.onTimeChange?.(frame.time)}
           onPlayerChange={props.onPlayerChange}
           onStatusChange={props.onStatusChange}

@@ -1,3 +1,5 @@
+/* eslint-disable max-lines -- Rendering and playback lifecycle share one player boundary. */
+
 import {composeParameterGlue} from '../deformation/parameter-glue'
 import {
   AlphaMask,
@@ -35,11 +37,18 @@ import {layoutPlayerRoot} from './internal/layout-player-root'
 export interface Player {
   destroy(): void
   pause(): void
-  play(): void
+  play(options?: PlayerPlaybackOptions): void
+  playMotion(motionId: string, options?: PlayerPlaybackOptions): boolean
   resize(): void
   seek(time: number): void
+  setMotion(motionId: string): boolean
   setParameterValues(values: PuppetParameterValueMap): void
   updateDocument(document: PreparedPuppetDocument): boolean
+}
+
+export interface PlayerPlaybackOptions {
+  readonly loop?: boolean
+  readonly onComplete?: () => void
 }
 
 export interface PlayerFrame {
@@ -202,9 +211,12 @@ const createPlayerFrame = (motion: PuppetMotion | undefined, time: number): Play
 
 const getSeekTime = (motion: PuppetMotion | undefined, time: number) => {
   const clampedTime = Math.max(0, time)
-  return motion === undefined || clampedTime <= motion.duration
-    ? clampedTime
-    : clampedTime % motion.duration
+
+  if (motion === undefined || motion.duration <= 0) {
+    return clampedTime
+  }
+
+  return clampedTime <= motion.duration ? clampedTime : clampedTime % motion.duration
 }
 
 const loadTexture = async (source: string) => {
@@ -441,6 +453,7 @@ const applyRuntimeFrame = (
   return physicsResult.physicsState
 }
 
+// eslint-disable-next-line max-lines-per-function
 export const createPlayer = async (options: CreatePlayerOptions): Promise<Player> => {
   assertPreparedPuppetDocument(options.document)
 
@@ -465,6 +478,8 @@ export const createPlayer = async (options: CreatePlayerOptions): Promise<Player
   let {parameterValues} = options
   let physicsState = createPhysicsState(document)
   let elapsedTime = 0
+  let isLooping = true
+  let onMotionComplete: (() => void) | undefined
   let destroyed = false
 
   const destroy = () => {
@@ -509,11 +524,22 @@ export const createPlayer = async (options: CreatePlayerOptions): Promise<Player
   }
 
   application.ticker.add((ticker) => {
-    if (motion !== undefined) {
-      elapsedTime = (elapsedTime + ticker.deltaMS / MILLISECONDS_PER_SECOND) % motion.duration
+    let completed = false
+
+    if (motion !== undefined && motion.duration > 0) {
+      const nextTime = elapsedTime + ticker.deltaMS / MILLISECONDS_PER_SECOND
+      completed = !isLooping && nextTime >= motion.duration
+      elapsedTime = isLooping ? nextTime % motion.duration : Math.min(nextTime, motion.duration)
     }
 
     applyFrame(motion, elapsedTime, ticker.deltaMS / MILLISECONDS_PER_SECOND)
+
+    if (completed) {
+      application.stop()
+      const complete = onMotionComplete
+      onMotionComplete = undefined
+      complete?.()
+    }
   })
 
   applyFrame(motion, elapsedTime)
@@ -529,7 +555,9 @@ export const createPlayer = async (options: CreatePlayerOptions): Promise<Player
     }
 
     document = nextDocument
-    motion = getMotion(document, options.motionId)
+    motion = getMotion(document, motion?.id ?? options.motionId) ?? document.motions[0]
+    isLooping = true
+    onMotionComplete = undefined
     physicsState = createPhysicsState(document)
 
     for (const part of document.parts) {
@@ -551,14 +579,60 @@ export const createPlayer = async (options: CreatePlayerOptions): Promise<Player
     return true
   }
 
+  const setMotion = (motionId: string) => {
+    const nextMotion = getMotion(document, motionId)
+
+    if (nextMotion === undefined) {
+      return false
+    }
+
+    if (motion?.id === nextMotion.id) {
+      return true
+    }
+
+    motion = nextMotion
+    elapsedTime = 0
+    isLooping = true
+    onMotionComplete = undefined
+    applyFrame(motion, elapsedTime)
+    application.render()
+    return true
+  }
+
+  const playMotion = (motionId: string, playbackOptions: PlayerPlaybackOptions = {}) => {
+    const nextMotion = getMotion(document, motionId)
+
+    if (nextMotion === undefined) {
+      return false
+    }
+
+    if (motion?.id === nextMotion.id) {
+      elapsedTime = 0
+      applyFrame(motion, elapsedTime)
+      application.render()
+    } else {
+      setMotion(motionId)
+    }
+
+    isLooping = playbackOptions.loop ?? true
+    onMotionComplete = playbackOptions.onComplete
+    application.start()
+    return true
+  }
+
   return {
     destroy,
     pause() {
       application.stop()
+      isLooping = true
+      onMotionComplete = undefined
     },
-    play() {
+    play(playbackOptions) {
+      isLooping = playbackOptions?.loop ?? true
+      onMotionComplete = playbackOptions?.onComplete
       application.start()
     },
+    playMotion,
     resize() {
       application.resize()
       layoutRoot()
@@ -569,6 +643,7 @@ export const createPlayer = async (options: CreatePlayerOptions): Promise<Player
       applyFrame(motion, elapsedTime)
       application.render()
     },
+    setMotion,
     setParameterValues(values) {
       parameterValues = values
       applyFrame(motion, elapsedTime)
