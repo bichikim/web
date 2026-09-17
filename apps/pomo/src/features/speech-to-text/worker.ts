@@ -17,7 +17,7 @@ import type {SpeechBackend} from './recognizer'
 
 const MAXIMUM_PROGRESS = 100
 const MINIMUM_PROGRESS = 0
-const workerScope = self as DedicatedWorkerGlobalScope
+const workerScope = globalThis.self as DedicatedWorkerGlobalScope
 
 let transcriber: AutomaticSpeechRecognitionPipeline | null = null
 let activeBackend: SpeechBackend | null = null

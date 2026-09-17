@@ -89,7 +89,7 @@ export const PlayerCanvas = (props: PlayerCanvasProps) => {
       return
     }
 
-    const canvasElement = window.document.createElement('canvas')
+    const canvasElement = globalThis.document.createElement('canvas')
 
     currentPlayer?.destroy()
     notifyPlayerChange(null)

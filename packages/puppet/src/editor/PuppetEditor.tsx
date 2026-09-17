@@ -46,13 +46,13 @@ export interface PuppetEditorProps {
 const downloadDocument = (document: PuppetDocument) => {
   const source = serializeDocument(document)
   const url = URL.createObjectURL(new Blob([source], {type: 'application/json'}))
-  const anchor = window.document.createElement('a')
+  const anchor = globalThis.document.createElement('a')
   anchor.download = 'puppet-model.json'
   anchor.href = url
-  window.document.body.append(anchor)
+  globalThis.document.body.append(anchor)
   anchor.click()
   anchor.remove()
-  window.setTimeout(() => URL.revokeObjectURL(url), 0)
+  globalThis.setTimeout(() => URL.revokeObjectURL(url), 0)
 }
 const setPlayerPlayback = (player: Player, isPlaying: boolean) => {
   if (isPlaying) {

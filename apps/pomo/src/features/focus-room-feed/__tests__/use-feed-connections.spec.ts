@@ -47,7 +47,7 @@ it('should add, deduplicate, update, and delete persistent feed connections', as
   Object.defineProperty(navigator, 'storage', {configurable: true, value: {persist}})
   mocks.createRepository.mockReturnValue({list: () => [], save})
   const changed = vi.fn()
-  window.addEventListener(FEED_CONNECTIONS_CHANGED_EVENT, changed)
+  globalThis.addEventListener(FEED_CONNECTIONS_CHANGED_EVENT, changed)
   const {controller, unmount} = mountController()
 
   expect(controller.isLoading()).toBe(false)
@@ -72,7 +72,7 @@ it('should add, deduplicate, update, and delete persistent feed connections', as
   expect(controller.connections()).toHaveLength(1)
   expect(save).toHaveBeenCalledTimes(6)
   unmount()
-  window.removeEventListener(FEED_CONNECTIONS_CHANGED_EVENT, changed)
+  globalThis.removeEventListener(FEED_CONNECTIONS_CHANGED_EVENT, changed)
 })
 
 it('should report repository initialization and save failures', () => {

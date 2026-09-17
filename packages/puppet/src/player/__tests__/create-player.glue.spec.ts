@@ -65,7 +65,7 @@ test('should apply keyed Glue after parameter deformation and restore it after s
     throw new Error('Expected valid Glue model')
   }
   const player = await createPlayer({
-    canvas: window.document.createElement('canvas'),
+    canvas: globalThis.document.createElement('canvas'),
     document: parsed.document,
   })
   const first = meshes[0]!

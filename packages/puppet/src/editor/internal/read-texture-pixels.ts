@@ -49,7 +49,7 @@ export const readTexturePixels = async (
     return {error: {code: 'decode-failed'}, ok: false}
   }
 
-  const canvas = window.document.createElement('canvas')
+  const canvas = globalThis.document.createElement('canvas')
   canvas.width = texture.width
   canvas.height = texture.height
   const context = canvas.getContext('2d', {willReadFrequently: true})

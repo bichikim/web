@@ -44,7 +44,7 @@ import {failureResult, type Result, successResult} from 'src/features/result'
 import {splitSpeechText} from './text-chunking'
 import {createSupertonicWorkerDispatch} from './worker/dispatch'
 
-const workerScope = self as DedicatedWorkerGlobalScope
+const workerScope = globalThis.self as DedicatedWorkerGlobalScope
 const modelStorage = createModelStorage()
 const voiceCache = new Map<SupertonicVoiceId, SupertonicVoice>()
 const REQUEST_TIMEOUT_STATUS = 408

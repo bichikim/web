@@ -21,11 +21,11 @@ export const Upload = (props: UploadProps) => {
         }
       }
     }
-    window.addEventListener('dragover', preventNavigation)
-    window.addEventListener('drop', preventNavigation)
+    globalThis.addEventListener('dragover', preventNavigation)
+    globalThis.addEventListener('drop', preventNavigation)
     onCleanup(() => {
-      window.removeEventListener('dragover', preventNavigation)
-      window.removeEventListener('drop', preventNavigation)
+      globalThis.removeEventListener('dragover', preventNavigation)
+      globalThis.removeEventListener('drop', preventNavigation)
     })
   })
   return (

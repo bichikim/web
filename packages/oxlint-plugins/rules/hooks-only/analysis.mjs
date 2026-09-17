@@ -21,10 +21,19 @@ const hookApis = new Set([
   'createMutable',
 ])
 
-export const isSupportFile = (filename) =>
-  /(?:^|[/\\])(?:__tests__|__mocks__)(?:[/\\]|$)|\.(?:spec|test|e2e|story)\.[^/\\]+$|\.d\.[cm]?ts$/u.test(
-    filename,
+export const isSupportFile = (filename) => {
+  const segments = filename.split(/[/\\]/u)
+  if (segments.some((segment) => segment === '__tests__' || segment === '__mocks__')) {
+    return true
+  }
+  const basename = segments.at(-1) ?? ''
+  return (
+    ['.spec.', '.test.', '.e2e.', '.story.'].some((marker) => {
+      const index = basename.indexOf(marker)
+      return index !== -1 && index + marker.length < basename.length
+    }) || /\.d\.[cm]?ts$/u.test(basename)
   )
+}
 
 const sourceFiles = (directory) =>
   readdirSync(directory, {withFileTypes: true}).flatMap((entry) => {

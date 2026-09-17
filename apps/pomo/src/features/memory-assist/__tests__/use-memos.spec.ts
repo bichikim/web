@@ -35,7 +35,7 @@ it('should not replace a newer storage event with a stale initial read', async (
   const newMemo = {...staleMemo, id: 'new', text: '새 메모'}
   const view = renderHook(useMemoryMemos)
 
-  window.dispatchEvent(createMemoryMemosChangedEvent([newMemo], 1))
+  globalThis.dispatchEvent(createMemoryMemosChangedEvent([newMemo], 1))
   read.resolve([staleMemo])
   await flushPromises()
 
@@ -60,8 +60,8 @@ it('should ignore an older storage event after a newer event', () => {
   mocks.readMemos.mockResolvedValue([currentMemo])
   const view = renderHook(useMemoryMemos)
 
-  window.dispatchEvent(createMemoryMemosChangedEvent([currentMemo], 2))
-  window.dispatchEvent(createMemoryMemosChangedEvent([staleMemo], 1))
+  globalThis.dispatchEvent(createMemoryMemosChangedEvent([currentMemo], 2))
+  globalThis.dispatchEvent(createMemoryMemosChangedEvent([staleMemo], 1))
 
   expect(view.result()).toEqual([currentMemo])
   view.cleanup()
@@ -80,9 +80,9 @@ it('should hide persisted deletion tombstones from the list and reminders', asyn
   const view = renderHook(useMemoryMemos)
   await flushPromises()
   expect(view.result()).toEqual([])
-  window.dispatchEvent(createMemoryMemosChangedEvent([memo], 1))
+  globalThis.dispatchEvent(createMemoryMemosChangedEvent([memo], 1))
   expect(view.result()).toEqual([memo])
-  window.dispatchEvent(createMemoryMemosChangedEvent([{...memo, deletionPending: true}], 2))
+  globalThis.dispatchEvent(createMemoryMemosChangedEvent([{...memo, deletionPending: true}], 2))
   expect(view.result()).toEqual([])
   view.cleanup()
 })
@@ -99,8 +99,8 @@ it('should not resurrect a tombstoned memo from a newer storage event', () => {
   mocks.readMemos.mockResolvedValue([])
   const view = renderHook(useMemoryMemos)
 
-  window.dispatchEvent(createMemoryMemosChangedEvent([{...memo, deletionPending: true}], 2))
-  window.dispatchEvent(createMemoryMemosChangedEvent([memo], 3))
+  globalThis.dispatchEvent(createMemoryMemosChangedEvent([{...memo, deletionPending: true}], 2))
+  globalThis.dispatchEvent(createMemoryMemosChangedEvent([memo], 3))
 
   expect(view.result()).toEqual([])
   view.cleanup()
@@ -118,9 +118,9 @@ it('should continue hiding a stale memo after its tombstone is removed', () => {
   mocks.readMemos.mockResolvedValue([])
   const view = renderHook(useMemoryMemos)
 
-  window.dispatchEvent(createMemoryMemosChangedEvent([{...memo, deletionPending: true}], 2))
-  window.dispatchEvent(createMemoryMemosChangedEvent([], 3))
-  window.dispatchEvent(createMemoryMemosChangedEvent([memo], 4))
+  globalThis.dispatchEvent(createMemoryMemosChangedEvent([{...memo, deletionPending: true}], 2))
+  globalThis.dispatchEvent(createMemoryMemosChangedEvent([], 3))
+  globalThis.dispatchEvent(createMemoryMemosChangedEvent([memo], 4))
 
   expect(view.result()).toEqual([])
   view.cleanup()
@@ -146,9 +146,9 @@ it('should show a recreated memo with the same id after deletion', () => {
   mocks.readMemos.mockResolvedValue([])
   const view = renderHook(useMemoryMemos)
 
-  window.dispatchEvent(createMemoryMemosChangedEvent([{...memo, deletionPending: true}], 2))
-  window.dispatchEvent(createMemoryMemosChangedEvent([], 3))
-  window.dispatchEvent(createMemoryMemosChangedEvent([recreatedMemo], 4))
+  globalThis.dispatchEvent(createMemoryMemosChangedEvent([{...memo, deletionPending: true}], 2))
+  globalThis.dispatchEvent(createMemoryMemosChangedEvent([], 3))
+  globalThis.dispatchEvent(createMemoryMemosChangedEvent([recreatedMemo], 4))
 
   expect(view.result()).toEqual([recreatedMemo])
   view.cleanup()

@@ -224,7 +224,7 @@ describe('language learning word source preference', () => {
 describe('language learning storage', () => {
   it('should write, append, read, and announce stored sentences', () => {
     const listener = vi.fn()
-    window.addEventListener('pomo:language-learning:sentences-changed', listener)
+    globalThis.addEventListener('pomo:language-learning:sentences-changed', listener)
     writeLanguageLearningSentences([STORED_SENTENCE])
     appendLanguageLearningSentences([
       {...STORED_SENTENCE, dialogueId: 'dialogue-2', text: 'Welcome home.'},
@@ -268,7 +268,7 @@ describe('language learning word storage', () => {
   it('should append each new word and report individually skipped duplicates', () => {
     appendLanguageLearningWords('en', ['Home', 'wave'])
     const listener = vi.fn()
-    window.addEventListener('pomo:language-learning:words-changed', listener, {once: true})
+    globalThis.addEventListener('pomo:language-learning:words-changed', listener, {once: true})
 
     const result = appendLanguageLearningWords('en', ['home', 'asset', 'ASSET', 'perspective'])
     const duplicateResult = appendLanguageLearningWords('en', ['HOME', 'wave'])
@@ -286,7 +286,7 @@ describe('language learning word storage', () => {
 
   it('should store language-specific words without duplicates and announce changes', () => {
     const listener = vi.fn()
-    window.addEventListener('pomo:language-learning:words-changed', listener)
+    globalThis.addEventListener('pomo:language-learning:words-changed', listener)
 
     appendLanguageLearningWords('en', ['Home', 'wave', 'home'])
     appendLanguageLearningWords('ja', ['家'])
@@ -314,7 +314,7 @@ describe('language learning word storage', () => {
     appendLanguageLearningWords('en', ['Home', 'wave', 'asset'])
     appendLanguageLearningWords('ja', ['家'])
     const listener = vi.fn()
-    window.addEventListener('pomo:language-learning:words-changed', listener)
+    globalThis.addEventListener('pomo:language-learning:words-changed', listener)
 
     setLanguageLearningWordsMemorized({
       language: 'en',

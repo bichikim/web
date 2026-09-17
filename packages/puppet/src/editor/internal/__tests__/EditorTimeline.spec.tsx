@@ -161,9 +161,9 @@ describe('EditorTimeline', () => {
     vi.spyOn(input, 'getBoundingClientRect').mockReturnValue(DOMRect.fromRect({width: 46, x: 100}))
 
     fireEvent(input, new MouseEvent('pointerdown', {bubbles: true, button: 0, clientX: 123}))
-    fireEvent(window, new MouseEvent('pointermove', {bubbles: true, clientX: 146}))
-    fireEvent(window, new MouseEvent('pointermove', {bubbles: true, clientX: 100}))
-    fireEvent(window, new MouseEvent('pointerup', {bubbles: true, clientX: 100}))
+    fireEvent(globalThis.window, new MouseEvent('pointermove', {bubbles: true, clientX: 146}))
+    fireEvent(globalThis.window, new MouseEvent('pointermove', {bubbles: true, clientX: 100}))
+    fireEvent(globalThis.window, new MouseEvent('pointerup', {bubbles: true, clientX: 100}))
 
     expect(
       document().motions[0]?.tracks.find(

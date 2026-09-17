@@ -8,7 +8,7 @@ test('initializes the Apps in Toss locale without leaving the launch path', asyn
     }
   })
   await page.addInitScript(() => {
-    window.localStorage.setItem('PARAGLIDE_LOCALE', 'en')
+    globalThis.localStorage.setItem('PARAGLIDE_LOCALE', 'en')
   })
 
   const response = await page.goto('/')

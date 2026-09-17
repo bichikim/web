@@ -176,12 +176,12 @@ describe('useClientStorage', () => {
       setItem: vi.fn(),
     }
 
-    Object.defineProperty(window, 'localStorage', {
+    Object.defineProperty(globalThis, 'localStorage', {
       value: localStorageMock,
       writable: true,
     })
 
-    Object.defineProperty(window, 'sessionStorage', {
+    Object.defineProperty(globalThis, 'sessionStorage', {
       value: sessionStorageMock,
       writable: true,
     })
@@ -362,7 +362,7 @@ describe('useStorage', () => {
       setItem: vi.fn(),
     }
 
-    Object.defineProperty(window, 'localStorage', {
+    Object.defineProperty(globalThis, 'localStorage', {
       value: localStorageMock,
       writable: true,
     })
@@ -385,7 +385,7 @@ describe('useStorage', () => {
       setItem: vi.fn(),
     }
 
-    Object.defineProperty(window, 'sessionStorage', {
+    Object.defineProperty(globalThis, 'sessionStorage', {
       value: sessionStorageMock,
       writable: true,
     })

@@ -1,6 +1,6 @@
 const {
   core: {invoke},
-} = window.__TAURI__
+} = globalThis.__TAURI__
 const status = document.querySelector('#status')
 const backgroundInteractionButton = document.querySelector('#background-interaction')
 const interactionButton = document.querySelector('#interact')

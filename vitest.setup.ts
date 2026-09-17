@@ -37,8 +37,8 @@ const installBrowserMocks = () => {
     })
   }
 
-  if (typeof window !== 'undefined') {
-    Object.defineProperty(window, 'scrollTo', {
+  if (typeof globalThis.window !== 'undefined') {
+    Object.defineProperty(globalThis, 'scrollTo', {
       configurable: true,
       value: vi.fn(() => undefined),
       writable: true,

@@ -40,7 +40,7 @@ const requestMagicLink = async (
   }
 
   try {
-    const wasSent = await request({email, origin: window.location.origin})
+    const wasSent = await request({email, origin: globalThis.location.origin})
 
     return {status: wasSent ? 'sent' : 'rejected'}
   } catch {

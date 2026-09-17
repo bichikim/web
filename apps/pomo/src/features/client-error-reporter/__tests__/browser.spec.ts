@@ -44,7 +44,7 @@ const createReporter = (send = vi.fn()) => ({
 const dispatchRejection = (reason: unknown) => {
   const event = new Event('unhandledrejection')
   Object.defineProperty(event, 'reason', {value: reason})
-  window.dispatchEvent(event)
+  globalThis.dispatchEvent(event)
 }
 
 const getHandlerState = () =>
@@ -67,7 +67,7 @@ describe('installClientErrorHandlers', () => {
       const cleanup = installClientErrorHandlers()
 
       expect(() => {
-        window.dispatchEvent(new ErrorEvent('error', {message: 'missing error object'}))
+        globalThis.dispatchEvent(new ErrorEvent('error', {message: 'missing error object'}))
         globalThis.reportError(new Error('reported by default'))
       }).not.toThrow()
 
@@ -112,7 +112,7 @@ describe('installClientErrorHandlers', () => {
     const error = new Error('shared failure')
 
     globalThis.reportError(error)
-    window.dispatchEvent(new ErrorEvent('error', {error, message: error.message}))
+    globalThis.dispatchEvent(new ErrorEvent('error', {error, message: error.message}))
     dispatchRejection('private rejection content')
 
     expect(previousReportError).toHaveBeenCalledWith(error)
@@ -134,19 +134,19 @@ describe('installClientErrorHandlers', () => {
     const cleanupSecond = installClientErrorHandlers({reporter: second.reporter})
     cleanups.push(cleanupFirst, cleanupSecond)
 
-    window.dispatchEvent(new ErrorEvent('error', {error: new Error('first')}))
+    globalThis.dispatchEvent(new ErrorEvent('error', {error: new Error('first')}))
     expect(first.send).not.toHaveBeenCalled()
     expect(second.send).toHaveBeenCalledTimes(1)
 
     cleanupFirst()
-    window.dispatchEvent(new ErrorEvent('error', {error: new Error('second')}))
+    globalThis.dispatchEvent(new ErrorEvent('error', {error: new Error('second')}))
     expect(second.send).toHaveBeenCalledTimes(2)
 
     cleanupSecond()
     const preventDefault = (event: ErrorEvent) => event.preventDefault()
-    window.addEventListener('error', preventDefault)
-    window.dispatchEvent(new ErrorEvent('error', {cancelable: true, error: new Error('third')}))
-    window.removeEventListener('error', preventDefault)
+    globalThis.addEventListener('error', preventDefault)
+    globalThis.dispatchEvent(new ErrorEvent('error', {cancelable: true, error: new Error('third')}))
+    globalThis.removeEventListener('error', preventDefault)
     expect(second.send).toHaveBeenCalledTimes(2)
   })
 
@@ -158,7 +158,7 @@ describe('installClientErrorHandlers', () => {
     cleanups.push(cleanupFirst, cleanupSecond)
 
     cleanupSecond()
-    window.dispatchEvent(new ErrorEvent('error', {error: new Error('remaining registration')}))
+    globalThis.dispatchEvent(new ErrorEvent('error', {error: new Error('remaining registration')}))
 
     expect(first.send).toHaveBeenCalledTimes(1)
     expect(second.send).not.toHaveBeenCalled()
@@ -192,7 +192,7 @@ describe('installClientErrorHandlers', () => {
     const {reporter, send} = createReporter()
 
     const cleanup = installClientErrorHandlers({reporter})
-    window.dispatchEvent(new ErrorEvent('error', {error: new Error('application failed')}))
+    globalThis.dispatchEvent(new ErrorEvent('error', {error: new Error('application failed')}))
     cleanup()
 
     expect(send).toHaveBeenCalledTimes(1)
@@ -216,7 +216,7 @@ describe('installClientErrorHandlers', () => {
 
     expect(() => globalThis.reportError(new Error('application failed'))).not.toThrow()
     expect(() =>
-      window.dispatchEvent(new ErrorEvent('error', {error: new Error('render failed')})),
+      globalThis.dispatchEvent(new ErrorEvent('error', {error: new Error('render failed')})),
     ).not.toThrow()
     expect(previousReportError).toHaveBeenCalledTimes(1)
   })

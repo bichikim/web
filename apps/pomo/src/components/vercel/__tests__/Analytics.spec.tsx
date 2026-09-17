@@ -8,9 +8,9 @@ import {Analytics} from '..'
 afterEach(() => {
   cleanup()
   document.head.querySelectorAll('script[data-sdkn]').forEach((script) => script.remove())
-  delete window.va
-  delete window.vaq
-  delete window.vam
+  delete globalThis.window.va
+  delete globalThis.window.vaq
+  delete globalThis.window.vam
   vi.unstubAllEnvs()
 })
 
@@ -42,13 +42,18 @@ it.each([true, false])(
     expect(
       document.head.querySelector('script[data-sdkn]')?.getAttribute('data-disable-auto-track'),
     ).toBe('1')
-    expect(window.vaq).toEqual([['pageview', {path: '/items/first', route: '/items/:id'}]])
+    expect(globalThis.window.vaq).toEqual([
+      ['pageview', {path: '/items/first', route: '/items/:id'}],
+    ])
     history.set({value: '/items/second'})
-    await waitFor(() => expect(window.vaq).toHaveLength(2))
-    expect(window.vaq?.at(-1)).toEqual(['pageview', {path: '/items/second', route: '/items/:id'}])
+    await waitFor(() => expect(globalThis.window.vaq).toHaveLength(2))
+    expect(globalThis.window.vaq?.at(-1)).toEqual([
+      'pageview',
+      {path: '/items/second', route: '/items/:id'},
+    ])
     history.set({value: '/items/second?tab=other#section'})
     await Promise.resolve()
-    expect(window.vaq).toHaveLength(2)
+    expect(globalThis.window.vaq).toHaveLength(2)
     expect(document.head.querySelectorAll('script[data-sdkn]')).toHaveLength(1)
   },
 )
@@ -58,7 +63,7 @@ it.each(['VITE_POMO_IS_APPS_IN_TOSS', 'VITE_POMO_IS_DESKTOP'])(
   (target) => {
     vi.stubEnv(target, 'true')
     render(() => <Analytics />)
-    expect(window.va).toBeUndefined()
+    expect(globalThis.window.va).toBeUndefined()
     expect(document.head.querySelector('script[data-sdkn]')).toBeNull()
   },
 )

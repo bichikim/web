@@ -12,7 +12,7 @@ afterEach(() => {
 
 it('should count active tracks and require confirmation before removal', async () => {
   const {model} = createModelHarness()
-  const confirm = vi.spyOn(window, 'confirm').mockReturnValue(false)
+  const confirm = vi.spyOn(globalThis, 'confirm').mockReturnValue(false)
   render(() => (
     <TrackPanel
       albumId="album"
