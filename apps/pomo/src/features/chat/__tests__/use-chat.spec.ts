@@ -263,7 +263,7 @@ describe('useChat', () => {
 
   it('should return to idle after synchronous preparation failure', () => {
     const error = new DOMException('Unable to clone request', 'DataCloneError')
-    const prepare = vi.fn(() => {
+    const prepare = vi.fn().mockImplementationOnce(() => {
       throw error
     })
     const {clients, runtime} = createRuntime({prepare})
@@ -275,12 +275,17 @@ describe('useChat', () => {
     expect(result.state()).toEqual({status: 'idle'})
     expect(result.isBusy()).toBe(false)
     expect(result.canPrepare()).toBe(true)
+
+    result.prepare()
+
+    expect(prepare).toHaveBeenCalledTimes(2)
+    expect(result.state()).toEqual({percentage: 0, status: 'loading'})
     cleanup()
   })
 
   it('should restore a question after synchronous generation failure', () => {
     const error = new DOMException('Unable to clone request', 'DataCloneError')
-    const generate = vi.fn(() => {
+    const generate = vi.fn().mockImplementationOnce(() => {
       throw error
     })
     const {clients, runtime} = createRuntime({generate})
@@ -298,6 +303,7 @@ describe('useChat', () => {
     expect(result.canSend()).toBe(true)
 
     result.send()
+    expect(generate).toHaveBeenCalledTimes(2)
     expect(clientRecord?.client.generate).toHaveBeenLastCalledWith(
       {
         messages: [{content: '다시 시도할 질문', id: 'id-3', role: 'user'}],
@@ -306,6 +312,8 @@ describe('useChat', () => {
       'id-4',
       {refineAnswer: true},
     )
+    expect(result.state()).toEqual({status: 'generating'})
+    expect(result.draft()).toBe('')
     cleanup()
   })
 
