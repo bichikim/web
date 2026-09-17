@@ -144,10 +144,10 @@ describe('createEntryPlaybackController', () => {
 
     await expect(
       controller.playSequence(createRepository(null), createOptions('missing-dialogue')),
-    ).resolves.toBeUndefined()
+    ).resolves.toBe('ended')
     await expect(
       controller.playSequence(createRepository(DIALOGUE, null), createOptions('missing-audio')),
-    ).resolves.toBeUndefined()
+    ).resolves.toBe('ended')
     expect(onDialogueUnavailable).toHaveBeenNthCalledWith(1, 'missing-dialogue')
     expect(onDialogueUnavailable).toHaveBeenNthCalledWith(2, 'missing-audio')
     expect(controller.isPlaying()).toBe(false)
@@ -238,6 +238,21 @@ describe('createEntryPlaybackController', () => {
     await flush()
     await playback
     expect(error).toHaveBeenCalled()
+  })
+
+  it('should report a failed sequence completion after a non-autoplay error', async () => {
+    vi.spyOn(console, 'error').mockImplementation(() => undefined)
+    TestAudio.playImplementation = () => Promise.reject(new Error('speaker failed'))
+    const controller = createEntryPlaybackController()
+    const playback = controller.playSequence(createRepository(), {
+      dialogueIds: [DIALOGUE.id],
+      onDialogueStart: vi.fn(),
+      onSequenceStop: vi.fn(),
+    })
+
+    await flush()
+
+    await expect(playback).resolves.toBe('failed')
   })
 
   it('should stop active and queued requests and report stop callback failures', async () => {
