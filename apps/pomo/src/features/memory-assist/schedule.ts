@@ -219,10 +219,7 @@ export const advanceMemoryMemo = (options: AdvanceMemoryMemoOptions): MemoryMemo
     throw new Error('Cannot record a reminder without its scheduled time.')
   }
 
-  const shouldAdvanceRecall =
-    options.kind === 'recall' ||
-    (options.memo.nextRecallAt !== null &&
-      Date.parse(options.memo.nextRecallAt) <= options.now.getTime())
+  const shouldAdvanceRecall = options.kind === 'recall'
   const nextReinforcementIndex =
     shouldAdvanceRecall && options.memo.recallMode === 'reinforcement'
       ? options.memo.reinforcementIndex + 1

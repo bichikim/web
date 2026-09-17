@@ -408,6 +408,102 @@ it('should delay a skipped invalidated repeat before retrying it', async () => {
   }
 })
 
+it('should keep a simultaneously due recall pending when exact playback is skipped', async () => {
+  const dueAt = '2026-09-04T03:00:00.000Z'
+  mocks.memos = [
+    {
+      ...createMemoryMemo({
+        exactReminderAt: null,
+        id: 'memo-1',
+        now: new Date('2026-09-04T02:50:00.000Z'),
+        random: () => 0,
+        recallMode: 'reinforcement',
+        text: '메모',
+      }),
+      dialogueId: 'dialogue-1',
+      nextExactReminderAt: dueAt,
+      nextRecallAt: dueAt,
+    },
+  ]
+  const events = {
+    playDialogue: vi.fn().mockResolvedValue(false),
+    refreshDialogues: vi.fn().mockResolvedValue(undefined),
+  } as unknown as PEventContextValue
+  const view = renderHook(() => useMemoryReminders({events}))
+
+  try {
+    await vi.advanceTimersToNextTimerAsync()
+    await flushPromises()
+
+    expect(events.playDialogue).toHaveBeenCalledOnce()
+    expect(mocks.updateMemos).not.toHaveBeenCalled()
+    expect(mocks.memos[0]).toMatchObject({
+      nextExactReminderAt: dueAt,
+      nextRecallAt: dueAt,
+      reinforcementIndex: 0,
+      reminderEvents: [],
+      reminderHistory: [],
+    })
+  } finally {
+    view.cleanup()
+  }
+})
+
+it('should deliver a simultaneously due recall when exact playback is invalidated', async () => {
+  const dueAt = '2026-09-04T03:00:00.000Z'
+  const memo = {
+    ...createMemoryMemo({
+      exactReminderAt: null,
+      id: 'memo-1',
+      now: new Date('2026-09-04T02:50:00.000Z'),
+      random: () => 0,
+      recallMode: 'reinforcement',
+      text: '메모',
+    }),
+    dialogueId: 'dialogue-1',
+    nextExactReminderAt: dueAt,
+    nextRecallAt: dueAt,
+  }
+  mocks.memos = [memo]
+  const firstPlayback = Promise.withResolvers<boolean>()
+  const playDialogue = vi.fn().mockReturnValueOnce(firstPlayback.promise).mockResolvedValue(true)
+  const events = {
+    playDialogue,
+    refreshDialogues: vi.fn().mockResolvedValue(undefined),
+  } as unknown as PEventContextValue
+  const view = renderHook(() => useMemoryReminders({events}))
+
+  try {
+    await vi.advanceTimersToNextTimerAsync()
+    expect(playDialogue).toHaveBeenCalledOnce()
+
+    mocks.memos = [{...memo, updatedAt: '2026-09-04T03:00:01.000Z'}]
+    firstPlayback.resolve(true)
+    await flushPromises()
+    await vi.advanceTimersByTimeAsync(0)
+    await flushPromises()
+
+    expect(playDialogue).toHaveBeenCalledTimes(2)
+    expect(mocks.updateMemos).toHaveBeenCalledOnce()
+    expect(mocks.memos[0]).toMatchObject({
+      nextExactReminderAt: null,
+      nextRecallAt: '2026-09-04T11:00:00.000Z',
+      reinforcementIndex: 1,
+      reminderEvents: [
+        {
+          deliveredAt: dueAt,
+          kind: 'recall',
+          scheduledAt: dueAt,
+        },
+      ],
+      reminderHistory: [dueAt],
+      updatedAt: dueAt,
+    })
+  } finally {
+    view.cleanup()
+  }
+})
+
 it('should not advance a reminder when playback is skipped', async () => {
   mocks.memos = [
     createMemoryMemo({
