@@ -323,6 +323,16 @@ export const usePlayerController = (props: UsePlayerControllerProps): PlayerCont
     }
 
     cancelPendingRestart()
+    if (transition?.phase === 'loading' || transition?.phase === 'awaiting-metadata') {
+      const positionSeconds = readPlaybackPosition(props.element())
+      playbackPersistence.setPendingPosition(
+        positionSeconds === null
+          ? null
+          : {isPlaying: true, positionSeconds, trackId: transition.trackId},
+      )
+      return
+    }
+
     playbackPersistence.setPendingPosition(null)
   }
 

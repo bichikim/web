@@ -105,6 +105,27 @@ describe('PMusicPlayerContent transport integration', () => {
     expect(audio.pause).not.toHaveBeenCalled()
   })
 
+  it('should resume the next track after seeking before metadata', async () => {
+    localStorage.clear()
+    const result = render(() => <PMusicPlayerContent tracks={TRACKS} />)
+    const audio = getAudioElement(result.container)
+
+    vi.spyOn(audio, 'load').mockImplementation(() => undefined)
+    fireEvent(audio, new Event('play'))
+    fireEvent.click(screen.getByRole('button', {name: '플레이어 펼치기'}))
+    fireEvent.click(screen.getByRole('button', {name: '다음 곡'}))
+    await Promise.resolve()
+    audio.currentTime = 8
+    fireEvent(audio, new Event('seeking'))
+    fireEvent(audio, new Event('pause'))
+
+    markAudioMetadataReady(audio)
+    fireEvent(audio, new Event('loadedmetadata'))
+
+    expect(audio.currentTime).toBe(8)
+    expect(HTMLMediaElement.prototype.play).toHaveBeenCalledOnce()
+  })
+
   it('should report the current track when selection changes', async () => {
     const onTrackChange = vi.fn()
     const result = render(() => (

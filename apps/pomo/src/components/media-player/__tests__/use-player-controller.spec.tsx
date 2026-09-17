@@ -276,3 +276,21 @@ it('should preserve playback when seeking before metadata during track replaceme
     trackId: NEXT_TRACK.id,
   })
 })
+
+it('should resume the media element after seeking before metadata during track replacement', async () => {
+  const {audio, controller, setTracks} = renderControlledController()
+
+  controller.onPlay()
+  setTracks([NEXT_TRACK])
+  await Promise.resolve()
+  await Promise.resolve()
+  audio.currentTime = 8
+  controller.onSeeking()
+  Object.defineProperty(audio, 'readyState', {
+    configurable: true,
+    value: HTMLMediaElement.HAVE_METADATA,
+  })
+  controller.onLoadedMetadata()
+
+  expect(audio.play).toHaveBeenCalled()
+})
