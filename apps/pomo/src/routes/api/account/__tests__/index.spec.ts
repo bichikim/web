@@ -16,6 +16,7 @@ beforeEach(() => {
 
 it('should return an unauthorized response with refreshed session cookies', async () => {
   sessionMocks.getAuthSession.mockResolvedValue({
+    access: 'anonymous',
     identity: null,
     provider: 'neon',
     setCookies: ['session=; Max-Age=0'],
@@ -29,8 +30,25 @@ it('should return an unauthorized response with refreshed session cookies', asyn
   expect(repositoryMocks.findOrCreateNeonUser).not.toHaveBeenCalled()
 })
 
+it('should report when the Neon session is invalid', async () => {
+  sessionMocks.getAuthSession.mockResolvedValue({
+    access: 'invalid',
+    identity: null,
+    provider: 'neon',
+    setCookies: ['session=refreshed'],
+  })
+
+  const response = await invokeApiRoute(GET, new Request('https://pomo.example/api/account'))
+
+  expect(response.status).toBe(503)
+  expect(response.headers.getSetCookie()).toEqual(['session=refreshed'])
+  await expect(response.json()).resolves.toEqual({error: 'authentication_unavailable'})
+  expect(repositoryMocks.findOrCreateNeonUser).not.toHaveBeenCalled()
+})
+
 it('should return the linked Pomo user for an authenticated Neon identity', async () => {
   sessionMocks.getAuthSession.mockResolvedValue({
+    access: 'user',
     identity: {email: 'user@example.com', id: 'neon-1'},
     provider: 'neon',
     setCookies: ['session=refreshed'],
