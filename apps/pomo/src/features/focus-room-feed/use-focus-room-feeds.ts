@@ -76,9 +76,9 @@ export const usePFeeds = (props: UsePFeedsProps): PFeedController => {
     createFetcher: createFeedFetcher,
     createId: () => crypto.randomUUID(),
     discardMissingConnections: discardJobsForMissingConnections,
-    getState: feedState.state,
     getConnections: listFeedConnections,
     getRepository: () => getRepositories().feedRepository,
+    getState: feedState.state,
     now: () => new Date(),
     onSynchronized: feedState.reloadRecovery,
     reloadIssues: feedState.reloadIssues,
@@ -111,6 +111,7 @@ export const usePFeeds = (props: UsePFeedsProps): PFeedController => {
         getConnections: listFeedConnections,
         getState: feedState.state,
         isRecoveryDismissed: (jobId) => feedState.isRecoveryDismissed(jobId),
+        isSyncing: syncController.isSyncing,
         now: () => new Date(),
         onCompleted: async () => {
           await Promise.all([
