@@ -84,6 +84,26 @@ it('should preserve audio when a memo is recreated with the same id during delet
   expect(mocks.audio).not.toHaveBeenCalledWith(memo.dialogueId)
 })
 
+it('should preserve a pending memo recreation with the same id during deletion', async () => {
+  const recreatedMemo = {
+    ...createMemoryMemo({
+      exactReminderAt: null,
+      id: memo.id,
+      now: new Date('2026-09-04T04:00:00.000Z'),
+      random: () => 0,
+      recallMode: 'random',
+      text: '새 메모',
+    }),
+    deletionPending: true as const,
+  }
+  mocks.deleteDialogue.mockImplementation(async () => {
+    mocks.memos = [recreatedMemo]
+  })
+
+  await expect(remove()).resolves.toBe('deleted')
+  expect(mocks.memos).toEqual([recreatedMemo])
+})
+
 it.each(['dialogue', 'audio', 'final persistence'])(
   'should retry %s failure from a persisted tombstone',
   async (failure) => {

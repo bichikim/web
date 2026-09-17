@@ -97,7 +97,12 @@ export const createMemoryMemoDeletion = (
       }
 
       await dependencies.update((memos) =>
-        memos.filter((current) => current.id !== memo.id || !isMemoryMemoDeletionPending(current)),
+        memos.filter(
+          (current) =>
+            current.id !== memo.id ||
+            current.createdAt !== memo.createdAt ||
+            !isMemoryMemoDeletionPending(current),
+        ),
       )
       return 'deleted'
     } catch (error: unknown) {
