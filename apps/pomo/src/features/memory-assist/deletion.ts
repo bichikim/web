@@ -85,7 +85,15 @@ export const createMemoryMemoDeletion = (
       if (memo.dialogueId !== null && isMemoryMemoOwnedDialogue(memo.dialogueId, memo.id)) {
         await options.deleteDialogue(memo.dialogueId)
         // Metadata may already be gone after an earlier attempt; retain the owned audio key until both formats are removed.
-        await dependencies.deleteAudio(memo.dialogueId)
+        const currentMemos = await dependencies.read()
+        const currentMemo = currentMemos.find((current) => current.id === memo.id)
+        if (
+          currentMemo !== undefined &&
+          currentMemo.createdAt === memo.createdAt &&
+          isMemoryMemoDeletionPending(currentMemo)
+        ) {
+          await dependencies.deleteAudio(memo.dialogueId)
+        }
       }
 
       await dependencies.update((memos) =>
