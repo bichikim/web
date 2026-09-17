@@ -229,6 +229,42 @@ it('should preserve changes made while the auto-start preference is loading', as
   view.cleanup()
 })
 
+it('should recover auto-start catch-up after pausing an expired restore while loading', async () => {
+  const preference = createDeferred<boolean>()
+  const runningState = {
+    completedFocusSessions: 0,
+    endsAt: 1,
+    phase: 'focus',
+    status: 'running',
+  } satisfies PomodoroTimerState
+  localStorage.setItem(CONFIG_STORAGE_KEY, JSON.stringify(CONFIG))
+  localStorage.setItem(STATE_STORAGE_KEY, JSON.stringify(runningState))
+  autoStartMocks.read.mockReturnValue(preference.promise)
+  vi.setSystemTime(40_000)
+
+  const view = renderHook(usePomodoroTimer)
+  view.result.onPause()
+
+  expect(view.result.state()).toEqual({
+    completedFocusSessions: 1,
+    phase: 'shortBreak',
+    remainingSeconds: 4,
+    status: 'idle',
+  })
+
+  preference.resolve(true)
+  await finishMount()
+
+  expect(view.result.isAutoStartEnabled()).toBe(true)
+  expect(view.result.state()).toEqual({
+    completedFocusSessions: 3,
+    endsAt: 44_001,
+    phase: 'focus',
+    status: 'running',
+  })
+  view.cleanup()
+})
+
 it('should synchronize timer actions between mounted controllers', async () => {
   const first = renderHook(() => usePomodoroTimer())
   const second = renderHook(() => usePomodoroTimer())
