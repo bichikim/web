@@ -272,6 +272,29 @@ describe('album draft restoration', () => {
     cleanup()
   })
 
+  it('should normalize an orphan cover identifier without a cover file', async () => {
+    const draft = createDraft({coverDraftId: 'orphan-cover'})
+    storageMocks.readAlbumDraftData.mockReturnValue(draft)
+    const {cleanup, result} = renderAlbumDraft()
+
+    await waitForRestoration(result)
+
+    expect(storageMocks.writeAlbumDraftData).toHaveBeenCalledWith({
+      ...draft,
+      coverDraftId: null,
+    })
+    expect(storageMocks.deleteExpiredAlbumDraftCovers).toHaveBeenCalledWith({
+      activeCoverDraftId: null,
+    })
+    expect(storageMocks.writeAlbumDraftReference).toHaveBeenCalledOnce()
+    expect(storageMocks.writeAlbumDraftReference).toHaveBeenLastCalledWith({
+      coverDraftId: null,
+      referenceId: COVER_DRAFT_ID,
+    })
+    expect(result.coverPreviewUrl()).toBeNull()
+    cleanup()
+  })
+
   it('should restore a persisted cover and revoke its preview during cleanup', async () => {
     storageMocks.readAlbumDraftData.mockReturnValue(
       createDraft({coverDraftId: 'stored-cover', hasCoverFile: true}),

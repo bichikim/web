@@ -28,7 +28,11 @@ const restoreAlbumDraft = async (
     readAlbumDraftData,
     writeAlbumDraftData,
   } = await getAlbumDraftStorage()
-  const draft = readAlbumDraftData()
+  const storedDraft = readAlbumDraftData()
+  const draft =
+    storedDraft !== null && !storedDraft.hasCoverFile && storedDraft.coverDraftId !== null
+      ? {...storedDraft, coverDraftId: null}
+      : storedDraft
 
   await options.updateDraftReference(draft?.coverDraftId ?? null)
 
@@ -36,6 +40,11 @@ const restoreAlbumDraft = async (
 
   if (draft === null) {
     return null
+  }
+
+  if (draft !== storedDraft) {
+    writeAlbumDraftData(draft)
+    return {coverFile: null, draft}
   }
 
   if (!draft.hasCoverFile || draft.coverDraftId === null) {
