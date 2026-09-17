@@ -298,7 +298,7 @@ export const usePlayerController = (props: UsePlayerControllerProps): PlayerCont
     const track = currentTrack()
     const shouldWaitForPlay = track !== undefined && !isPlaying()
     restartPlaybackPending = shouldWaitForPlay
-    restartSeekPending = shouldWaitForPlay
+    restartSeekPending = track !== undefined
     clearPlaybackTransition()
     playback.seek(0)
     playbackRevision += 1

@@ -164,6 +164,20 @@ it('should keep persistence active when restarting an already-playing track', ()
   })
 })
 
+it('should keep a pending restart play request when seeking an already-playing track', () => {
+  const {audio, controller} = renderController()
+
+  controller.onPlay()
+  controller.selectNextTrack()
+  expect(audio.play).toHaveBeenCalledOnce()
+  controller.onSeeking()
+  Object.defineProperty(audio, 'paused', {configurable: true, value: false})
+  controller.onPlay()
+
+  expect(audio.pause).not.toHaveBeenCalled()
+  expect(controller.isPlaying()).toBe(true)
+})
+
 it('should release pending restart persistence when track selection cancels playback', async () => {
   const {audio, controller} = renderController()
 
