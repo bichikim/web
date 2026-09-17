@@ -73,7 +73,12 @@ export const createEntryEventPlayback = (
         onDialogueStart: () => undefined,
         onSequenceStop: () => undefined,
       })
-      .then(() => {
+      .then((completion) => {
+        if (completion === 'failed') {
+          hasStarted = false
+          return
+        }
+
         writePlaybackSession()
       })
       .catch((error: unknown) => {
