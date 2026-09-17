@@ -4,8 +4,9 @@ import {afterEach, beforeEach, expect, it, vi} from 'vitest'
 
 import {UserRequestResolutionError} from 'src/server/auth/user-request-resolution-error'
 import {createMicrosoftCalendarProvider} from 'src/server/calendar/providers/microsoft'
-import {type CalendarRepository, createCalendarService} from 'src/server/calendar/service'
+import {createCalendarService} from 'src/server/calendar/service'
 import type {TokenVault} from 'src/server/calendar/token-vault'
+import {type CalendarRepository} from 'src/server/repositories/calendar'
 
 const dependencyMocks = vi.hoisted(() => ({
   getCalendarService: vi.fn(),

@@ -1,4 +1,8 @@
-import {createAuthMaintenanceRepository} from '../repositories/auth-maintenance'
+import {
+  type AuthMaintenanceBatchResult,
+  type AuthMaintenanceRepository,
+  createAuthMaintenanceRepository,
+} from '../repositories/auth-maintenance'
 
 const MILLISECONDS_PER_SECOND = 1000
 const SECONDS_PER_MINUTE = 60
@@ -11,32 +15,6 @@ const REVOKED_SESSION_RETENTION = DAYS_PER_WEEK * HOURS_PER_DAY * MILLISECONDS_P
 const ACCOUNT_LINK_CHALLENGE_RETENTION = MILLISECONDS_PER_HOUR
 const DELETE_BATCH_SIZE = 500
 const MAXIMUM_BATCHES = 20
-
-interface DeleteBatchOptions {
-  readonly batchSize: number
-  readonly cutoff: Date
-}
-
-interface DeleteAppSessionBatchOptions {
-  readonly batchSize: number
-  readonly expiresAtCutoff: Date
-  readonly pendingExpiresAtCutoff: Date
-  readonly revokedAtCutoff: Date
-}
-
-export interface AuthMaintenanceBatchResult {
-  readonly deleted: number
-  readonly hasMore: boolean
-}
-
-export interface AuthMaintenanceRepository {
-  readonly deleteAccountLinkChallengeBatch: (
-    options: DeleteBatchOptions,
-  ) => Promise<AuthMaintenanceBatchResult>
-  readonly deleteAppSessionBatch: (
-    options: DeleteAppSessionBatchOptions,
-  ) => Promise<AuthMaintenanceBatchResult>
-}
 
 interface AuthMaintenanceDependencies {
   readonly now: () => Date

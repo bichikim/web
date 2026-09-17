@@ -1,5 +1,4 @@
 /** @vitest-environment node */
-import {createHash} from 'node:crypto'
 import type {SQL} from 'drizzle-orm'
 import {PgDialect} from 'drizzle-orm/pg-core'
 import {beforeEach, expect, it, vi} from 'vitest'
@@ -48,23 +47,17 @@ beforeEach(() => {
   )
 })
 
-it('should persist a hashed OAuth state with a matching PKCE challenge and expiry', async () => {
-  const startedAt = Date.now()
+it('should persist a provided OAuth state hash, PKCE verifier, and expiry', async () => {
   const options = {
+    codeVerifier: 'verifier',
+    expiresAt: new Date('2026-09-05T00:10:00Z'),
     provider: 'google' as const,
     redirectUri: 'https://pomofi.io/callback',
+    stateHash: 'state-hash',
     userId: 'user-1',
   }
-  const result = await calendarRepository.createOauthState(options)
-  const stored = values.mock.calls[0][0]
-  expect(stored).toMatchObject(options)
-  expect(stored.stateHash).toBe(createHash('sha256').update(result.state).digest('hex'))
-  expect(stored.stateHash).not.toBe(result.state)
-  expect(stored.expiresAt.getTime()).toBeGreaterThanOrEqual(startedAt + 600_000)
-  expect(stored.expiresAt.getTime()).toBeLessThanOrEqual(Date.now() + 600_000)
-  expect(result.codeChallenge).toBe(
-    createHash('sha256').update(stored.codeVerifier).digest('base64url'),
-  )
+  await calendarRepository.createOauthState(options)
+  expect(values).toHaveBeenCalledWith(options)
 })
 
 it.each([true, false])(
@@ -77,16 +70,12 @@ it.each([true, false])(
     }
     returning.mockResolvedValue(found ? [state] : [])
     const now = new Date('2026-09-05T00:00:00Z')
-    expect(await calendarRepository.consumeOauthState('google', 'token', now)).toEqual(
+    expect(await calendarRepository.consumeOauthState('google', 'state-hash', now)).toEqual(
       found ? state : null,
     )
     const filter = query(where.mock.calls[0][0])
     expect(filter.sql).toContain('"expires_at" >')
-    expect(filter.params).toEqual([
-      'google',
-      createHash('sha256').update('token').digest('hex'),
-      now.toISOString(),
-    ])
+    expect(filter.params).toEqual(['google', 'state-hash', now.toISOString()])
   },
 )
 
