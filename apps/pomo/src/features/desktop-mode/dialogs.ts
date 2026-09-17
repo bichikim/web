@@ -1,4 +1,11 @@
 const DESKTOP_DIALOG_OPTIONS = {
+  featureRequests: {
+    cornerRadius: 20,
+    height: 760,
+    label: 'desktop-dialog-feature-requests',
+    path: '/desktop/dialog/feature-requests/',
+    width: 760,
+  },
   memoryAssist: {
     cornerRadius: 20,
     height: 760,
