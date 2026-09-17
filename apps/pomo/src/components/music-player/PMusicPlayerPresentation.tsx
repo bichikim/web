@@ -28,6 +28,7 @@ export function PMusicPlayerPresentation(props: PMusicPlayerPresentationProps) {
       currentIndex={player.currentIndex()}
       currentTrack={player.currentTrack()}
       expanded={expanded()}
+      isPreparing={player.isPreparing()}
       isPlaying={player.isPlaying()}
       isPlaylistLoading={player.isPlaylistLoading()}
       levels={player.levels()}
@@ -35,6 +36,7 @@ export function PMusicPlayerPresentation(props: PMusicPlayerPresentationProps) {
       onAlbumClear={player.canEditQueue() ? player.clearTrackQueue : undefined}
       onExpandedChange={handleExpandedChange}
       onNextTrack={player.selectNextTrack}
+      onPause={player.pause}
       onPreviousTrack={player.selectPreviousTrack}
       onPreviewEnd={player.previewPlayback.finish}
       onPreviewStart={player.previewPlayback.start}

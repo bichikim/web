@@ -1,4 +1,4 @@
-import type {JSX} from 'solid-js'
+import {type JSX, Show} from 'solid-js'
 import {useTooltipTrigger} from '../tooltip'
 import {PTooltip} from '../p-tooltip/PTooltip'
 import {cx} from 'class-variance-authority'
@@ -15,10 +15,84 @@ const SKIP_BUTTON_CLASSES = cx(
   'disabled:opacity-35 player-compact:size-9',
 )
 
+interface ExpandedMainPlayButtonProps extends Pick<
+  MusicPlayerViewProps,
+  'isPlaying' | 'isPreparing' | 'sceneStyle'
+> {
+  readonly hasTrack: boolean
+  readonly onPause?: () => void
+}
+
+const ExpandedMainPlayButton = (props: ExpandedMainPlayButtonProps) => {
+  const playTooltip = useTooltipTrigger()
+  const isPauseAction = () => props.isPlaying || props.isPreparing
+  return (
+    <>
+      <Show
+        when={props.isPreparing}
+        fallback={
+          <media-play-button
+            ref={playTooltip.setTarget}
+            aria-label={isPauseAction() ? m.player_pause() : m.player_play()}
+            class={cx(CLASSES.playerPlay, CLASSES.playerPlayLarge)}
+            disabled={!props.hasTrack}
+            onBlur={playTooltip.onBlur}
+            onFocus={playTooltip.onFocus}
+            onPointerDown={playTooltip.onPointerDown}
+            onPointerEnter={playTooltip.onPointerEnter}
+            onPointerLeave={playTooltip.onPointerLeave}
+            attr:notooltip=""
+          >
+            <PlayerIcon
+              icon="i-tabler-player-play"
+              sceneStyle={props.sceneStyle}
+              size="size-6"
+              slot="play"
+            />
+            <PlayerIcon
+              icon="i-tabler-player-pause"
+              sceneStyle={props.sceneStyle}
+              size="size-6"
+              slot="pause"
+            />
+          </media-play-button>
+        }
+      >
+        <button
+          ref={playTooltip.setTarget}
+          aria-busy="true"
+          aria-label={m.player_pause()}
+          class={cx(
+            CLASSES.playerPlay,
+            CLASSES.playerPlayLarge,
+            'relative grid shrink-0 place-items-center rounded-full border-0 p-0',
+          )}
+          disabled={!props.hasTrack || props.onPause === undefined}
+          onBlur={playTooltip.onBlur}
+          onClick={() => props.onPause?.()}
+          onFocus={playTooltip.onFocus}
+          onPointerDown={playTooltip.onPointerDown}
+          onPointerEnter={playTooltip.onPointerEnter}
+          onPointerLeave={playTooltip.onPointerLeave}
+          type="button"
+        >
+          <PlayerIcon icon="i-tabler-player-pause" sceneStyle={props.sceneStyle} size="size-6" />
+        </button>
+      </Show>
+      <PTooltip
+        target={playTooltip.target()}
+        show={playTooltip.show()}
+        text={isPauseAction() ? m.player_pause() : m.player_play()}
+      />
+    </>
+  )
+}
+
 interface ExpandedPlayerControlsProps extends Pick<
   MusicPlayerViewProps,
   | 'canNavigateNextTrack'
   | 'canNavigatePreviousTrack'
+  | 'isPreparing'
   | 'isPlaying'
   | 'onNextTrack'
   | 'onPreviousTrack'
@@ -29,12 +103,12 @@ interface ExpandedPlayerControlsProps extends Pick<
   | 'shuffleEnabled'
 > {
   readonly hasTrack: boolean
+  readonly onPause?: () => void
   readonly actions?: JSX.Element
 }
 
 export const ExpandedPlayerControls = (props: ExpandedPlayerControlsProps) => {
   const previousTooltip = useTooltipTrigger()
-  const playTooltip = useTooltipTrigger()
   const nextTooltip = useTooltipTrigger()
   return (
     <div
@@ -86,35 +160,12 @@ export const ExpandedPlayerControls = (props: ExpandedPlayerControlsProps) => {
           class="player-compact:hidden"
           enabled={props.sceneStyle === 'scribble'}
         >
-          <media-play-button
-            ref={playTooltip.setTarget}
-            aria-label={props.isPlaying ? m.player_pause() : m.player_play()}
-            class={cx(CLASSES.playerPlay, CLASSES.playerPlayLarge)}
-            disabled={!props.hasTrack}
-            onBlur={playTooltip.onBlur}
-            onFocus={playTooltip.onFocus}
-            onPointerDown={playTooltip.onPointerDown}
-            onPointerEnter={playTooltip.onPointerEnter}
-            onPointerLeave={playTooltip.onPointerLeave}
-            attr:notooltip=""
-          >
-            <PlayerIcon
-              icon="i-tabler-player-play"
-              sceneStyle={props.sceneStyle}
-              size="size-6"
-              slot="play"
-            />
-            <PlayerIcon
-              icon="i-tabler-player-pause"
-              sceneStyle={props.sceneStyle}
-              size="size-6"
-              slot="pause"
-            />
-          </media-play-button>
-          <PTooltip
-            target={playTooltip.target()}
-            show={playTooltip.show()}
-            text={props.isPlaying ? m.player_pause() : m.player_play()}
+          <ExpandedMainPlayButton
+            hasTrack={props.hasTrack}
+            isPlaying={props.isPlaying}
+            isPreparing={props.isPreparing}
+            onPause={props.onPause}
+            sceneStyle={props.sceneStyle}
           />
         </PScribbleCircleControl>
 
