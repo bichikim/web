@@ -415,6 +415,36 @@ describe('album draft restoration', () => {
     cleanup()
   })
 
+  it('should preserve every failure when restoring an orphan reference also fails', async () => {
+    const draft = createDraft({coverDraftId: 'orphan-cover'})
+    const referenceError = new Error('reference unavailable')
+    const compensationError = new Error('reference recovery unavailable')
+    const warning = vi.spyOn(console, 'warn').mockImplementation(() => undefined)
+    storageMocks.readAlbumDraftData.mockReturnValue(draft)
+    storageMocks.writeAlbumDraftReference
+      .mockResolvedValueOnce({error: referenceError, success: false})
+      .mockResolvedValueOnce({error: compensationError, success: false})
+    const {cleanup, result, setMessage} = renderAlbumDraft()
+
+    await waitForRestoration(result)
+
+    const restorationError = warning.mock.calls[0]?.[1]
+    expect(restorationError).toBeInstanceOf(AggregateError)
+    expect(restorationError).toMatchObject({
+      errors: [
+        expect.objectContaining({cause: referenceError}),
+        expect.objectContaining({cause: compensationError}),
+      ],
+    })
+    expect(setMessage).toHaveBeenCalledWith(
+      '브라우저 초안을 복원했지만 저장하지 못했습니다. 이 탭을 닫기 전에 다시 시도해 주세요.',
+    )
+    expect(storageMocks.writeAlbumDraftReference).toHaveBeenCalledTimes(2)
+    expect(storageMocks.deleteExpiredAlbumDraftCovers).not.toHaveBeenCalled()
+    expect(result.coverPreviewUrl()).toBeNull()
+    cleanup()
+  })
+
   it('should restore a persisted cover and revoke its preview during cleanup', async () => {
     storageMocks.readAlbumDraftData.mockReturnValue(
       createDraft({coverDraftId: 'stored-cover', hasCoverFile: true}),
@@ -558,6 +588,35 @@ describe('album draft restoration', () => {
     )
     expect(result.coverFallback()).toBe('cd')
     expect(result.coverImageUrl()).toBe('https://example.com/cover.webp')
+    cleanup()
+  })
+
+  it('should show every user-facing message when restoration has multiple failures', async () => {
+    const coverReadError = new Error('cover read unavailable')
+    const cleanupError = new Error('cleanup unavailable')
+    const warning = vi.spyOn(console, 'warn').mockImplementation(() => undefined)
+    storageMocks.readAlbumDraftData.mockReturnValue(
+      createDraft({coverDraftId: 'stored-cover', hasCoverFile: true}),
+    )
+    storageMocks.readAlbumDraftCover.mockRejectedValue(coverReadError)
+    storageMocks.deleteExpiredAlbumDraftCovers.mockResolvedValue({
+      error: cleanupError,
+      success: false,
+    })
+    const {cleanup, result, setMessage} = renderAlbumDraft()
+
+    await waitForRestoration(result)
+
+    expect(warning).toHaveBeenCalledWith(
+      'Failed to restore the admin album draft.',
+      expect.any(AggregateError),
+    )
+    expect(setMessage).toHaveBeenCalledWith(
+      [
+        '브라우저 초안은 복원했지만 오래된 커버를 정리하지 못했습니다. 이 탭을 닫기 전에 다시 시도해 주세요.',
+        '브라우저 초안을 읽지 못했습니다. 저장된 내용은 변경하지 않고 이 탭에 유지합니다.',
+      ].join('\n'),
+    )
     cleanup()
   })
 

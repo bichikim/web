@@ -292,7 +292,7 @@ export const deleteExpiredAlbumDraftCovers = async (
   }
 }
 
-export const readAlbumDraftDataResult = (
+export const readAlbumDraftData = (
   storage: AlbumDraftStorage = BROWSER_STORAGE,
 ): AlbumDraftReadResult<AlbumDraftData | null> => {
   try {
@@ -307,14 +307,15 @@ export const readAlbumDraftDataResult = (
   }
 }
 
-export const readAlbumDraftData = (
+/** Returns null when the browser draft cannot be read. */
+export const readAlbumDraftDataOrNull = (
   storage: AlbumDraftStorage = BROWSER_STORAGE,
 ): AlbumDraftData | null => {
-  const result = readAlbumDraftDataResult(storage)
+  const result = readAlbumDraftData(storage)
   return result.success ? result.data : null
 }
 
-export const readAlbumDraftCoverResult = async (
+export const readAlbumDraftCover = async (
   id: string,
   storage: AlbumDraftStorage = BROWSER_STORAGE,
 ): Promise<AlbumDraftReadResult<File | null>> => {
@@ -330,11 +331,12 @@ export const readAlbumDraftCoverResult = async (
   }
 }
 
-export const readAlbumDraftCover = async (
+/** Returns null when the browser cover cannot be read. */
+export const readAlbumDraftCoverOrNull = async (
   id: string,
   storage: AlbumDraftStorage = BROWSER_STORAGE,
 ): Promise<File | null> => {
-  const result = await readAlbumDraftCoverResult(id, storage)
+  const result = await readAlbumDraftCover(id, storage)
   return result.success ? result.data : null
 }
 

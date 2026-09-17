@@ -10,26 +10,47 @@ vi.mock('@solidjs/router', () => ({
 import {type AlbumDraftData, type AlbumDraftTranslations} from '../../album-draft'
 import {useAlbumDraft} from '../../use-album-draft'
 
-const storageMocks = vi.hoisted(() => ({
-  deleteAlbumDraft: vi.fn(),
-  deleteAlbumDraftCover: vi.fn(),
-  deleteAlbumDraftReference: vi.fn(),
-  deleteExpiredAlbumDraftCovers: vi.fn(),
-  readAlbumDraftCover: vi.fn(),
-  readAlbumDraftCoverResult: vi.fn(),
-  readAlbumDraftData: vi.fn(),
-  readAlbumDraftDataResult: vi.fn(),
-  writeAlbumDraftCover: vi.fn(),
-  writeAlbumDraftData: vi.fn(),
-  writeAlbumDraftReference: vi.fn(),
-}))
+const {storageMocks, storageModule} = vi.hoisted(() => {
+  const storageMocks = {
+    deleteAlbumDraft: vi.fn(),
+    deleteAlbumDraftCover: vi.fn(),
+    deleteAlbumDraftReference: vi.fn(),
+    deleteExpiredAlbumDraftCovers: vi.fn(),
+    readAlbumDraftCover: vi.fn(),
+    readAlbumDraftData: vi.fn(),
+    writeAlbumDraftCover: vi.fn(),
+    writeAlbumDraftData: vi.fn(),
+    writeAlbumDraftReference: vi.fn(),
+  }
+
+  return {
+    storageMocks,
+    storageModule: {
+      ...storageMocks,
+      readAlbumDraftCover: async (id: string) => {
+        try {
+          return {data: await storageMocks.readAlbumDraftCover(id), success: true as const}
+        } catch (error: unknown) {
+          return {error, success: false as const}
+        }
+      },
+      readAlbumDraftData: () => {
+        try {
+          return {data: storageMocks.readAlbumDraftData(), success: true as const}
+        } catch (error: unknown) {
+          return {error, success: false as const}
+        }
+      },
+    },
+  }
+})
 const coverMocks = vi.hoisted(() => ({
   prepareAlbumCover: vi.fn(),
   uploadAlbumCover: vi.fn(),
   validateAlbumCover: vi.fn(),
 }))
 
-vi.mock('../../album-draft-storage', () => storageMocks)
+vi.mock('../../album-draft-storage', () => storageModule)
 vi.mock('../../cover-image', () => ({prepareAlbumCover: coverMocks.prepareAlbumCover}))
 vi.mock('../../cover-upload', () => ({
   uploadAlbumCover: coverMocks.uploadAlbumCover,
@@ -99,21 +120,7 @@ beforeEach(() => {
   storageMocks.deleteAlbumDraftReference.mockResolvedValue({success: true})
   storageMocks.deleteExpiredAlbumDraftCovers.mockResolvedValue({success: true})
   storageMocks.readAlbumDraftCover.mockResolvedValue(null)
-  storageMocks.readAlbumDraftCoverResult.mockImplementation(async (id: string) => {
-    try {
-      return {data: await storageMocks.readAlbumDraftCover(id), success: true as const}
-    } catch (error: unknown) {
-      return {error, success: false as const}
-    }
-  })
   storageMocks.readAlbumDraftData.mockReturnValue(null)
-  storageMocks.readAlbumDraftDataResult.mockImplementation(() => {
-    try {
-      return {data: storageMocks.readAlbumDraftData(), success: true as const}
-    } catch (error: unknown) {
-      return {error, success: false as const}
-    }
-  })
   storageMocks.writeAlbumDraftCover.mockResolvedValue({success: true})
   storageMocks.writeAlbumDraftReference.mockResolvedValue({success: true})
   storageMocks.writeAlbumDraftData.mockReturnValue({success: true})

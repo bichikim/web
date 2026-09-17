@@ -1,126 +1,20 @@
 /** @vitest-environment jsdom */
 
-import {renderHook, waitFor} from '@solidjs/testing-library'
-import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
+import {waitFor} from '@solidjs/testing-library'
+import {describe, expect, it, vi} from 'vitest'
 
-vi.mock('@solidjs/router', () => ({
-  action: vi.fn((clientAction) => clientAction),
-  useAction: vi.fn((clientAction) => clientAction),
-  useSubmission: vi.fn(() => ({clear: vi.fn(), pending: false})),
-}))
-
-import {type AlbumDraftData, type AlbumDraftTranslations} from '../album-draft'
-import {useAlbumDraft} from '../use-album-draft'
-
-const storageMocks = vi.hoisted(() => ({
-  deleteAlbumDraft: vi.fn(),
-  deleteAlbumDraftCover: vi.fn(),
-  deleteAlbumDraftReference: vi.fn(),
-  deleteExpiredAlbumDraftCovers: vi.fn(),
-  readAlbumDraftCover: vi.fn(),
-  readAlbumDraftCoverResult: vi.fn(),
-  readAlbumDraftData: vi.fn(),
-  readAlbumDraftDataResult: vi.fn(),
-  writeAlbumDraftCover: vi.fn(),
-  writeAlbumDraftData: vi.fn(),
-  writeAlbumDraftReference: vi.fn(),
-}))
-const coverMocks = vi.hoisted(() => ({
-  prepareAlbumCover: vi.fn(),
-  uploadAlbumCover: vi.fn(),
-  validateAlbumCover: vi.fn(),
-}))
-
-vi.mock('../album-draft-storage', () => storageMocks)
-vi.mock('../cover-image', () => ({prepareAlbumCover: coverMocks.prepareAlbumCover}))
-vi.mock('../cover-upload', () => ({
-  uploadAlbumCover: coverMocks.uploadAlbumCover,
-  validateAlbumCover: coverMocks.validateAlbumCover,
-}))
-
-const VALID_COVER = new File(['source'], 'source.png', {type: 'image/png'})
-const PREPARED_COVER = new File(['prepared'], 'cover.webp', {type: 'image/webp'})
-const COVER_DRAFT_ID = '00000000-0000-4000-8000-000000000001'
-
-const createTranslations = (): AlbumDraftTranslations => ({
-  en: {description: '', title: ''},
-  ja: {description: '', title: ''},
-  ko: {description: ' 한국어 설명 ', title: ' 한국어 제목 '},
-  'zh-Hans': {description: '', title: ''},
-})
-
-const createDraft = (overrides: Partial<AlbumDraftData> = {}): AlbumDraftData => ({
-  albumId: COVER_DRAFT_ID,
-  coverDraftId: null,
-  coverFallback: 'lp',
-  coverImageUrl: '',
-  hasCoverFile: false,
-  translations: createTranslations(),
-  ...overrides,
-})
-
-const createCoverEvent = (file: File | null) => {
-  const input = document.createElement('input')
-  input.value = file === null ? '' : 'selected-cover'
-  Object.defineProperty(input, 'files', {configurable: true, value: {item: () => file}})
-  return {
-    event: {currentTarget: input, target: input} as unknown as Event & {
-      currentTarget: HTMLInputElement
-      target: Element
-    },
-    input,
-  }
-}
-
-const flushPromises = async () => {
-  await Promise.resolve()
-  await Promise.resolve()
-}
-
-beforeEach(() => {
-  vi.resetAllMocks()
-  storageMocks.deleteAlbumDraft.mockResolvedValue({success: true})
-  storageMocks.deleteAlbumDraftCover.mockResolvedValue({success: true})
-  storageMocks.deleteAlbumDraftReference.mockResolvedValue({success: true})
-  storageMocks.deleteExpiredAlbumDraftCovers.mockResolvedValue({success: true})
-  storageMocks.readAlbumDraftCover.mockResolvedValue(null)
-  storageMocks.readAlbumDraftCoverResult.mockImplementation(async (id: string) => {
-    try {
-      return {data: await storageMocks.readAlbumDraftCover(id), success: true as const}
-    } catch (error: unknown) {
-      return {error, success: false as const}
-    }
-  })
-  storageMocks.readAlbumDraftData.mockReturnValue(null)
-  storageMocks.readAlbumDraftDataResult.mockImplementation(() => {
-    try {
-      return {data: storageMocks.readAlbumDraftData(), success: true as const}
-    } catch (error: unknown) {
-      return {error, success: false as const}
-    }
-  })
-  storageMocks.writeAlbumDraftCover.mockResolvedValue({success: true})
-  storageMocks.writeAlbumDraftReference.mockResolvedValue({success: true})
-  storageMocks.writeAlbumDraftData.mockReturnValue({success: true})
-  coverMocks.prepareAlbumCover.mockResolvedValue(PREPARED_COVER)
-  vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob:album-cover')
-  vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => undefined)
-  vi.spyOn(crypto, 'randomUUID').mockReturnValue(COVER_DRAFT_ID)
-})
-
-afterEach(() => vi.restoreAllMocks())
-
-const renderAlbumDraft = () => {
-  const setMessage = vi.fn()
-  const hook = renderHook(() =>
-    useAlbumDraft({refreshCatalog: vi.fn().mockResolvedValue(undefined), setMessage}),
-  )
-  return {...hook, setMessage}
-}
-
-const waitForRestoration = async (result: ReturnType<typeof renderAlbumDraft>['result']) => {
-  await waitFor(() => expect(result.isRestoringDraft()).toBe(false))
-}
+import {
+  COVER_DRAFT_ID,
+  coverMocks,
+  createCoverEvent,
+  createDraft,
+  flushPromises,
+  PREPARED_COVER,
+  renderAlbumDraft,
+  storageMocks,
+  VALID_COVER,
+  waitForRestoration,
+} from './fixtures/draft'
 
 describe('useAlbumDraft cover preparation', () => {
   it('should ignore a deferred clear superseded by a new cover selection', async () => {
