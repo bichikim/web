@@ -12,13 +12,15 @@ export const mergeDocument = (document: PuppetDocument, incoming: PuppetDocument
   }
   const rename = (id: string) => `import-${index}:${id}`
   const added = mapDocumentReferences({document: incoming, rename})
+  const pendulums = [...(document.physics?.pendulums ?? []), ...(added.physics?.pendulums ?? [])]
   return parseDocumentValue({
     ...document,
     glue: [...(document.glue ?? []), ...(added.glue ?? [])],
     motions: [...document.motions, ...added.motions],
-    parameters: [...(document.parameters ?? []), ...(added.parameters ?? [])],
     parameterBindings: [...(document.parameterBindings ?? []), ...(added.parameterBindings ?? [])],
+    parameters: [...(document.parameters ?? []), ...(added.parameters ?? [])],
     parts: [...document.parts, ...added.parts],
+    physics: pendulums.length === 0 ? undefined : {pendulums},
     scene: {roots: [...getDocumentScene(document).roots, ...getDocumentScene(added).roots]},
   })
 }

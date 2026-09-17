@@ -7,6 +7,7 @@ import {describe, expect, test, vi} from 'vitest'
 import {isTwoDimensionalParameterBinding} from '../../../deformation'
 import {createDemoDocument, getDocumentScene, type PuppetDocument} from '../../../player'
 import {getDeformerAngle} from '../deformer-transform'
+import {useDocumentHistory} from '../../use-document-history'
 import {
   addParameter,
   insertParameterKeyform,
@@ -422,8 +423,8 @@ describe('EditorInspector', () => {
     const second = addParameter({document: first.document, nodeIds: [rest.id]})!
     const posed = setParameterKeyformDeformerControlPoints({
       bindingId: second.binding.id,
-      document: second.document,
       controlPoints: rest.controlPoints.map((value, index) => value + (index % 2 === 0 ? 20 : 5)),
+      document: second.document,
       nodeId: rest.id,
       rotationOrigin: {x: 200, y: 200},
       values: [0],
@@ -530,6 +531,33 @@ describe('EditorInspector', () => {
     setDocument(setSceneNodeState({document: document(), locked: true, nodeId: deformer.id})!)
     expect(view.getByRole('spinbutton', {name: '격자 가로 칸'})).toBeDisabled()
     expect(view.getByRole('spinbutton', {name: '격자 제어점 1 X'})).toBeDisabled()
+  })
+
+  test('should keep Physics edits in source history while viewing a temporary document', () => {
+    const sourceDocument = createDemoDocument()
+    const history = useDocumentHistory({initialDocument: sourceDocument})
+    const [temporaryDocument, setTemporaryDocument] = createSignal({
+      ...sourceDocument,
+      parts: sourceDocument.parts.map((part) => ({
+        ...part,
+        properties: {...part.properties, opacity: 0.5},
+      })),
+    })
+    const view = render(() => (
+      <EditorInspector
+        document={temporaryDocument()}
+        onDocumentChange={setTemporaryDocument}
+        onPhysicsDocumentChange={history.setDocument}
+        physicsDocument={history.document()}
+      />
+    ))
+
+    fireEvent.click(view.getByRole('button', {name: 'Pendulum 추가'}))
+
+    expect(history.document().physics?.pendulums).toHaveLength(1)
+    expect(temporaryDocument().physics).toBeUndefined()
+    expect(history.undo()).toBe(true)
+    expect(history.document().physics).toBeUndefined()
   })
 })
 

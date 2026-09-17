@@ -1,1 +1,1 @@
-export {visibilityInterval} from './visibility-interval'
+export {type VisibilityIntervalOptions, visibilityInterval} from './visibility-interval'

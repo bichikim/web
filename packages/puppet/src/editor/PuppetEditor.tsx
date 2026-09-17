@@ -191,9 +191,9 @@ export const PuppetEditor = (props: PuppetEditorProps) => {
   }
   const editorImports = useEditorImports({
     document: sourceDocument,
-    onReimportDocumentChange: history.setDocument,
     onDocumentChange: resetEditorDocument,
     onNotice: setNotice,
+    onReimportDocumentChange: history.setDocument,
   })
   const pausePlayback = () => {
     const currentPlayer = player()
@@ -326,6 +326,7 @@ export const PuppetEditor = (props: PuppetEditorProps) => {
                 temporary.update(document)
               }
             }}
+            onPhysicsDocumentChange={history.setDocument}
             onEditEnd={history.endTransaction}
             onEditStart={handleDocumentEditStart}
             onMaskPickCancel={() => setMaskPickSourcePartId(null)}
@@ -333,6 +334,7 @@ export const PuppetEditor = (props: PuppetEditorProps) => {
               setMaskPickSourcePartId(partId)
               setNotice('마스크를 적용할 대상 레이어를 왼쪽 패널에서 선택하세요.')
             }}
+            physicsDocument={sourceDocument()}
             previewDocument={parameterPreviewDocument()}
             selectedControlPointIndices={deformerControlSelection.selectedPointIndices()}
             targetNodeIds={temporary.targets()}

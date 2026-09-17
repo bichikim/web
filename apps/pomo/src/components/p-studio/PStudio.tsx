@@ -185,11 +185,11 @@ const useStudioRuntime = (options: StudioRuntimeOptions) => {
     const gyroscopeAvailable = supportsPSceneGyroscope()
     const updateAutomaticPeriod = () =>
       options.setAutomaticPeriod(getAutomaticScenePeriod(new Date()))
-    const stopPeriodRefresh = visibilityInterval(
-      updateAutomaticPeriod,
-      AUTOMATIC_PERIOD_REFRESH,
-      true,
-    )
+    const stopPeriodRefresh = visibilityInterval({
+      callback: updateAutomaticPeriod,
+      interval: AUTOMATIC_PERIOD_REFRESH,
+      runOnVisible: true,
+    })
     options.entry.restore()
     options.setCanUseGyroscope(gyroscopeAvailable)
     if (gyroscopeAvailable) {

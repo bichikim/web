@@ -1,5 +1,6 @@
 import {clampUnit} from 'src/utils/clamp-unit'
 
+import {isMemoryMemoDeletionPending} from './is-memory-memo-deletion-pending'
 import type {MemoryMemo, MemoryRecallMode, MemoryReminderKind} from './schema'
 export type {MemoryReminderKind} from './schema'
 
@@ -194,6 +195,10 @@ export const editMemoryMemo = (options: EditMemoryMemoOptions): MemoryMemo => {
 }
 
 export const getDueMemoryReminder = (memo: MemoryMemo, now: Date): MemoryReminderKind | null => {
+  if (isMemoryMemoDeletionPending(memo)) {
+    return null
+  }
+
   const nowTime = now.getTime()
 
   if (memo.nextExactReminderAt !== null && Date.parse(memo.nextExactReminderAt) <= nowTime) {
@@ -214,10 +219,7 @@ export const advanceMemoryMemo = (options: AdvanceMemoryMemoOptions): MemoryMemo
     throw new Error('Cannot record a reminder without its scheduled time.')
   }
 
-  const shouldAdvanceRecall =
-    options.kind === 'recall' ||
-    (options.memo.nextRecallAt !== null &&
-      Date.parse(options.memo.nextRecallAt) <= options.now.getTime())
+  const shouldAdvanceRecall = options.kind === 'recall'
   const nextReinforcementIndex =
     shouldAdvanceRecall && options.memo.recallMode === 'reinforcement'
       ? options.memo.reinforcementIndex + 1

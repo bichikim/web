@@ -289,6 +289,26 @@ export interface PuppetMotion {
   readonly tracks: ReadonlyArray<PuppetTrack>
 }
 
+export interface PuppetPendulum {
+  /** Velocity damping coefficient per second. */
+  readonly damping: number
+  /** Downward acceleration used by the pendulum solver. */
+  readonly gravity: number
+  readonly id: string
+  readonly inputParameterId: string
+  /** Converts input parameter units into the pendulum's target position. */
+  readonly inputScale: number
+  /** Pendulum length in solver units. */
+  readonly length: number
+  readonly outputParameterId: string
+  /** Converts pendulum position into output parameter units. */
+  readonly outputScale: number
+}
+
+export interface PuppetPhysics {
+  readonly pendulums: ReadonlyArray<PuppetPendulum>
+}
+
 export interface PuppetEdgeReference extends PuppetVertexReference {
   readonly edge: {readonly endIndex: number; readonly position: number}
 }
@@ -309,6 +329,7 @@ export interface PuppetDocument {
   readonly parameterBindings?: ReadonlyArray<PuppetParameterBinding>
   readonly parameters?: ReadonlyArray<PuppetParameter>
   readonly parts: ReadonlyArray<PuppetPart>
+  readonly physics?: PuppetPhysics
   readonly scene?: PuppetScene
   readonly version: typeof PUPPET_DOCUMENT_VERSION
   readonly viewport: PuppetViewport

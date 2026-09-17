@@ -143,6 +143,9 @@ export const useOneOffChat = (props: UseOneOffChatProps): OneOffChatController =
     if (reply === undefined || reply.id === handledReplyId) {
       return
     }
+    if (chat.state().status !== 'ready') {
+      return
+    }
 
     handledReplyId = reply.id
     const speech = untrack(() => props.onReply(reply.content))

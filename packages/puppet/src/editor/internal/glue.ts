@@ -1,12 +1,21 @@
-import {
-  isTwoDimensionalParameterBinding,
-  parameterValuesEqual,
-  type PuppetParameterValues,
-} from '../../deformation'
-import type {PuppetParameterKeyform} from '../../player/document'
+import {parameterValuesEqual, type PuppetParameterValues} from '../../deformation'
+import type {PuppetParameterBinding, PuppetParameterKeyform} from '../../player/document'
 import type {PuppetDocument, PuppetGlue, PuppetVertexReference} from '../../player'
 import {hasValidGlue, isBoundaryReference} from '../../player/internal/parse-glue'
 import {isSceneNodeLocked} from './scene-graph'
+
+interface UpdateParameterBindingKeyformsOptions {
+  readonly binding: PuppetParameterBinding
+  readonly replace: <Form extends PuppetParameterKeyform>(candidate: Form) => Form
+}
+
+const updateParameterBindingKeyforms = (
+  options: UpdateParameterBindingKeyformsOptions,
+): PuppetParameterBinding =>
+  ({
+    ...options.binding,
+    keyforms: options.binding.keyforms.map(options.replace),
+  }) as PuppetParameterBinding
 
 export const canGlueVertex = (document: PuppetDocument, vertex: PuppetVertexReference): boolean =>
   isBoundaryReference(vertex, document.parts) &&
@@ -112,9 +121,7 @@ export const setGlueKeyform = (options: SetGlueKeyformOptions): PuppetDocument |
           ),
         }
       : candidate
-  const next = isTwoDimensionalParameterBinding(binding)
-    ? {...binding, keyforms: binding.keyforms.map(replace)}
-    : {...binding, keyforms: binding.keyforms.map(replace)}
+  const next = updateParameterBindingKeyforms({binding, replace})
   return {
     ...options.document,
     parameterBindings: options.document.parameterBindings?.map((candidate) =>
@@ -143,9 +150,7 @@ export const reconcileGlueKeyforms = (document: PuppetDocument): PuppetDocument 
   return {
     ...document,
     parameterBindings: document.parameterBindings?.map((binding) =>
-      isTwoDimensionalParameterBinding(binding)
-        ? {...binding, keyforms: binding.keyforms.map(replace)}
-        : {...binding, keyforms: binding.keyforms.map(replace)},
+      updateParameterBindingKeyforms({binding, replace}),
     ),
   }
 }
