@@ -162,6 +162,23 @@ it('should preserve paused progress when disabled on unmount', async () => {
   })
 })
 
+it('should preserve running progress when disabled on unmount', async () => {
+  const timer = renderHook(() => usePomodoroTimer({stopOnUnmount: true}))
+  await finishInitialization(timer)
+  timer.result.onConfigChange(CONFIG)
+  timer.result.onStart()
+  vi.setSystemTime(1_000)
+
+  timer.cleanup()
+
+  expect(JSON.parse(localStorage.getItem(STATE_STORAGE_KEY) ?? '{}')).toEqual({
+    completedFocusSessions: 0,
+    phase: 'focus',
+    remainingSeconds: 9,
+    status: 'idle',
+  })
+})
+
 it('should preserve paused progress after auto-start catch-up on unmount', async () => {
   const runningBreak = {
     completedFocusSessions: 1,
