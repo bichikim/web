@@ -1,5 +1,5 @@
 import dayjs from 'dayjs'
-import {useLocalDate} from './use-local-date'
+import {localDateRuntime, useLocalDate} from 'src/features/civil-date'
 import {formatLocalDate} from 'src/utils/format-local-date'
 import {type Accessor, createEffect, createMemo, createResource, createSignal} from 'solid-js'
 import {
@@ -106,7 +106,10 @@ export const useMonth = (props: UseMonthProps): MonthController => {
     return revision + 1
   }, 0)
   const today = props.environment.now()
-  const todayKey = useLocalDate({initialDate: today, now: () => props.environment.now()})
+  const todayKey = useLocalDate({
+    initialDate: today,
+    runtime: {...localDateRuntime, now: () => props.environment.now()},
+  })
   const [month, setMonth] = createSignal(dayjs(today).startOf('month').toDate())
   const [selectedDate, setSelectedDate] = createSignal(new Date(today))
   const monthRange = createMemo(() => {

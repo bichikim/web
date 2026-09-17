@@ -1,6 +1,6 @@
 /** @vitest-environment node */
 import {describe, expect, it} from 'vitest'
-import {addDays, daysInMonth, formatDate, koreanToday, parseDate, periodEnd} from '../index'
+import {addDays, daysInMonth, formatDate, parseDate, periodEnd} from '../index'
 
 describe('civil dates', () => {
   it('should reject invalid dates without JavaScript rollover', () => {
@@ -26,9 +26,4 @@ describe('civil dates', () => {
   ])('should end an inclusive calendar-month period at $expected', (period) => {
     expect(formatDate(periodEnd(period.date, period.months))).toBe(period.expected)
   })
-})
-
-it('should change the Korean date at UTC 15:00', () => {
-  expect(koreanToday(new Date('2026-12-31T14:59:59Z'))).toBe('2026-12-31')
-  expect(koreanToday(new Date('2026-12-31T15:00:00Z'))).toBe('2027-01-01')
 })

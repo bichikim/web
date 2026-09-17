@@ -13,7 +13,7 @@ it('should request a cohesive radio script without spoken section labels', () =>
     targetDate: {day: 16, isoDate: '2026-08-16', month: 8},
   })
 
-  expect(HISTORY_PROMPT_VERSION).toBe('today-in-history-v2-radio')
+  expect(HISTORY_PROMPT_VERSION).toBe('today-in-history-v3-local-date')
   expect(prompt).toContain('한국어 라디오 작가')
   expect(prompt).toContain('화면을 보지 않는 청취자')
   expect(prompt).toContain('하나의 이야기처럼 자연스럽게 이어 쓴다')

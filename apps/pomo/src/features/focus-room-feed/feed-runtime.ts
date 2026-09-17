@@ -1,3 +1,4 @@
+import {getFeedRequestUrl} from './feed-request-url'
 import {httpFetch} from '../http-client'
 import type {FeedDialogueMetadata} from './feed-dialogue-schema'
 
@@ -10,7 +11,17 @@ export const getFeedGenerationProgress = (loadedBytes: number, totalBytes: numbe
     ? Math.min(MAXIMUM_PROGRESS, Math.round((loadedBytes / totalBytes) * MAXIMUM_PROGRESS))
     : 0
 export const createFeedFetcher = () => (url: string) =>
-  httpFetch(url, {cache: 'no-store', signal: AbortSignal.timeout(FEED_REQUEST_TIMEOUT_MS)})
+  httpFetch(
+    getFeedRequestUrl(url, {
+      localOrigin: globalThis.location?.origin,
+      publicOrigin: import.meta.env.VITE_POMO_PUBLIC_ORIGIN,
+      timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+    }),
+    {
+      cache: 'no-store',
+      signal: AbortSignal.timeout(FEED_REQUEST_TIMEOUT_MS),
+    },
+  )
 
 export interface FindRemovableExpiredDialoguesOptions {
   readonly expired: ReadonlyArray<FeedDialogueMetadata>

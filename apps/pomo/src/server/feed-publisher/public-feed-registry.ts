@@ -4,9 +4,10 @@ import {historicalMomentsSource} from './historical-moments-source'
 
 /** Creates the public feed registry for the current request origin. */
 export const createPublicFeedRegistry = (request: Request) => {
-  const {origin} = new URL(request.url)
+  const {origin, searchParams} = new URL(request.url)
+  const timeZone = searchParams.get('timeZone') ?? 'UTC'
 
   return createFeedRegistry([
-    createHistoricalMomentsProvider({origin, source: historicalMomentsSource}),
+    createHistoricalMomentsProvider({origin, source: historicalMomentsSource, timeZone}),
   ])
 }
