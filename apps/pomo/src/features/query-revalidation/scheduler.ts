@@ -45,20 +45,33 @@ export const createQueryRevalidationScheduler = (
       return
     }
 
-    let remainingDelay = getScheduleDelay(schedule)
+    const delay = getScheduleDelay(schedule)
+    const revalidateQuery = (): void => {
+      revalidate(key).catch(() => undefined)
+    }
+
+    if (delay <= MAXIMUM_TIMEOUT_DELAY_MILLISECONDS) {
+      const timer = setTimeout(revalidateQuery, delay)
+      onCleanup(() => clearTimeout(timer))
+      return
+    }
+
+    const deadline = Date.now() + delay
     let timer: ReturnType<typeof setTimeout>
 
     const scheduleTimer = (): void => {
-      const delay = Math.min(remainingDelay, MAXIMUM_TIMEOUT_DELAY_MILLISECONDS)
-      timer = setTimeout(() => {
-        remainingDelay -= delay
-        if (remainingDelay > 0) {
-          scheduleTimer()
-          return
-        }
+      const remainingDelay = Math.max(0, deadline - Date.now())
+      timer = setTimeout(
+        () => {
+          if (Date.now() < deadline) {
+            scheduleTimer()
+            return
+          }
 
-        revalidate(key).catch(() => undefined)
-      }, delay)
+          revalidateQuery()
+        },
+        Math.min(remainingDelay, MAXIMUM_TIMEOUT_DELAY_MILLISECONDS),
+      )
     }
 
     scheduleTimer()
