@@ -17,9 +17,16 @@ export const DEFAULT_SERVICE_SETTINGS: ServiceSettings = {
   manual: false,
   start: '',
 }
+const normalizeServiceDays = (value: string): string => {
+  if (value === '') {
+    return value
+  }
+  const numericValue = /^\d+$/u.test(value) ? Number(value) : NaN
+  return Number.isSafeInteger(numericValue) && numericValue > 0 ? value : ''
+}
 const settingsSchema = z.object({
   branch: z.enum(['army', 'marines', 'navy', 'air']),
-  days: z.string(),
+  days: z.string().transform(normalizeServiceDays),
   manual: z.boolean(),
   start: z.string().refine((value) => value === '' || parseDate(value) !== null),
 })
