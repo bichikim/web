@@ -114,6 +114,49 @@ const getExactReminderSchedule = (
   }
 }
 
+interface GetNextExactReminderAtAfterEditOptions {
+  readonly exactReminderAt: string | null
+  readonly exactSchedule: ReturnType<typeof getExactReminderSchedule>
+  readonly exactScheduleChanged: boolean
+  readonly memo: MemoryMemo
+}
+
+const getNextExactReminderAtAfterEdit = (
+  options: GetNextExactReminderAtAfterEditOptions,
+): string | null => {
+  const currentNextExactReminderAt = options.memo.nextExactReminderAt
+
+  if (!options.exactScheduleChanged) {
+    return currentNextExactReminderAt
+  }
+
+  if (options.exactReminderAt !== options.memo.exactReminderAt) {
+    return options.exactSchedule.nextExactReminderAt
+  }
+
+  const firstExactReminderAt = getFirstExactReminderAt(
+    options.memo.exactReminderAt,
+    options.memo.exactReminderAdvanceMinutes,
+  )
+
+  if (currentNextExactReminderAt === null || currentNextExactReminderAt === firstExactReminderAt) {
+    return options.exactSchedule.nextExactReminderAt
+  }
+
+  if (options.exactReminderAt === null) {
+    return null
+  }
+
+  if (options.exactSchedule.exactReminderRepeatIntervalMinutes === null) {
+    return currentNextExactReminderAt
+  }
+
+  const endTime =
+    Date.parse(options.exactReminderAt) +
+    options.exactSchedule.exactReminderRepeatUntilMinutes * MINUTE
+  return Date.parse(currentNextExactReminderAt) <= endTime ? currentNextExactReminderAt : null
+}
+
 export const getNextRecallAt = (options: GetNextRecallAtOptions): string | null => {
   switch (options.mode) {
     case 'none':
@@ -169,18 +212,12 @@ export const editMemoryMemo = (options: EditMemoryMemoOptions): MemoryMemo => {
     exactSchedule.exactReminderRepeatIntervalMinutes !==
       options.memo.exactReminderRepeatIntervalMinutes ||
     exactSchedule.exactReminderRepeatUntilMinutes !== options.memo.exactReminderRepeatUntilMinutes
-  const hasConsumedExactReminder =
-    options.exactReminderAt === options.memo.exactReminderAt &&
-    options.memo.nextExactReminderAt !== null &&
-    options.memo.nextExactReminderAt !==
-      getFirstExactReminderAt(
-        options.memo.exactReminderAt,
-        options.memo.exactReminderAdvanceMinutes,
-      )
-  const nextExactReminderAt =
-    !exactScheduleChanged || hasConsumedExactReminder
-      ? options.memo.nextExactReminderAt
-      : exactSchedule.nextExactReminderAt
+  const nextExactReminderAt = getNextExactReminderAtAfterEdit({
+    exactReminderAt: options.exactReminderAt,
+    exactSchedule,
+    exactScheduleChanged,
+    memo: options.memo,
+  })
 
   return {
     ...options.memo,
