@@ -580,6 +580,7 @@
   "player_play": "재생",
   "player_pause": "일시 정지",
   "player_next": "다음 곡",
+  "player_next_track_preparing": "다음 곡을 준비 중이에요",
   "player_mute": "음소거",
   "player_toggle_mute": "음소거 켜기/끄기",
   "player_volume": "음량 조절",
