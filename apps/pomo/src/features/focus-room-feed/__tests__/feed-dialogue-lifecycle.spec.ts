@@ -76,17 +76,28 @@ const createItem = (
   version: 1,
 })
 
-it('should join metadata only with dialogue records that still exist', async () => {
+it('should remove orphaned feed records while joining available dialogues', async () => {
   const availableMetadata = createMetadata(DIALOGUE.id)
   const missingMetadata = createMetadata('missing')
+  const removeItem = vi.fn(async () => undefined)
+  const removeMetadata = vi.fn(async () => undefined)
   const result = await loadFeedDialogueList({
     dialogueRepository: {
       getDialogue: vi.fn(async (dialogueId) => (dialogueId === DIALOGUE.id ? DIALOGUE : null)),
     },
-    feedRepository: {listMetadata: vi.fn(async () => [availableMetadata, missingMetadata])},
+    feedRepository: {
+      listMetadata: vi.fn(async () => [availableMetadata, missingMetadata]),
+      removeItem,
+      removeMetadata,
+    },
   })
 
   expect(result).toEqual([{dialogue: DIALOGUE, metadata: availableMetadata}])
+  expect(removeItem).toHaveBeenCalledWith(
+    missingMetadata.feedConnectionId,
+    missingMetadata.feedItemId,
+  )
+  expect(removeMetadata).toHaveBeenCalledWith(missingMetadata.dialogueId)
 })
 
 it('should delete expired dialogues except active or queued playback', async () => {

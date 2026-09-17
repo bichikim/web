@@ -1,0 +1,95 @@
+/** @vitest-environment jsdom */
+
+import {fireEvent, render, screen} from '@solidjs/testing-library'
+import {type JSX} from 'solid-js'
+import {beforeEach, expect, it, vi} from 'vitest'
+
+import {
+  type PDialogue,
+  type PEventContextValue,
+  usePEvents,
+} from '../../../features/focus-room-dialogue'
+import {DialogueLibrary} from '../Library'
+
+vi.mock('@solidjs/router', () => ({
+  A: (props: {readonly children?: JSX.Element; readonly href: string}) => (
+    <a href={props.href}>{props.children}</a>
+  ),
+}))
+vi.mock('../../../features/focus-room-dialogue', async () => {
+  const actual: typeof import('../../../features/focus-room-dialogue') = await vi.importActual(
+    '../../../features/focus-room-dialogue',
+  )
+
+  return {...actual, usePEvents: vi.fn()}
+})
+
+const DIALOGUE: PDialogue = {
+  audioKey: 'audio-dialogue-1',
+  createdAt: '2026-08-14T00:00:00.000Z',
+  durationMs: 1000,
+  id: 'dialogue-1',
+  language: 'ko',
+  modelId: 'full',
+  segments: [{durationMs: 1000, index: 0, startMs: 0, text: '안녕하세요'}],
+  text: '안녕하세요',
+  updatedAt: '2026-08-14T00:00:00.000Z',
+  version: 1,
+  voiceId: 'Yuna',
+}
+
+const createEvents = (): PEventContextValue => ({
+  activeDialogueId: () => null,
+  activeSegmentCount: () => 0,
+  activeSegmentMood: () => null,
+  activeSegmentPosition: () => null,
+  activeText: () => null,
+  activeViseme: () => 'rest',
+  deleteDialogue: vi.fn(async () => undefined),
+  dialogues: () => [DIALOGUE],
+  enterFocusRoom: vi.fn(),
+  entryDialogueId: () => null,
+  entryDialogueIds: () => [],
+  errorMessage: () => null,
+  eventDialogueIds: () => ({}),
+  eventPlaybackModes: () => ({}),
+  getAudio: vi.fn(async () => null),
+  hasEnteredFocusRoom: () => true,
+  isDialoguePlaybackBlocked: () => false,
+  isDialoguePlaying: () => false,
+  isDialogueScheduled: () => false,
+  isEntryPlaybackBlocked: () => false,
+  isLoading: () => false,
+  onStopDialoguePlayback: vi.fn(),
+  onStopEntryPlayback: vi.fn(),
+  playDialogue: vi.fn(async () => true),
+  playDialogueEvents: vi.fn(async () => undefined),
+  playDialogueSequence: vi.fn(async () => undefined),
+  refreshDialogues: vi.fn(async () => undefined),
+  retryDialoguePlayback: vi.fn(),
+  retryEntryPlayback: vi.fn(),
+  scheduledDialogueCount: () => 0,
+  setEntryDialogue: vi.fn(async () => undefined),
+  setEntryDialogues: vi.fn(async () => undefined),
+  setEventDialogue: vi.fn(async () => undefined),
+  setEventDialogues: vi.fn(async () => undefined),
+  setEventPlaybackMode: vi.fn(async () => undefined),
+  skipDialoguePlayback: vi.fn(),
+})
+
+beforeEach(() => {
+  vi.clearAllMocks()
+  vi.mocked(usePEvents).mockReturnValue(createEvents())
+})
+
+it('should use a custom deletion handler for the selected dialogue', async () => {
+  const onDelete = vi.fn(async () => undefined)
+
+  render(() => <DialogueLibrary entries={[{dialogue: DIALOGUE}]} onDelete={onDelete} />)
+
+  fireEvent.click(screen.getByRole('button', {name: '삭제'}))
+  fireEvent.click(screen.getByRole('button', {name: '삭제 확인'}))
+
+  await vi.waitFor(() => expect(onDelete).toHaveBeenCalledWith(DIALOGUE))
+  expect(vi.mocked(usePEvents)().deleteDialogue).not.toHaveBeenCalled()
+})

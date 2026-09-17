@@ -118,10 +118,27 @@ export const createFeedStateController = (
       }
     },
     async deleteDialogue(dialogueId) {
-      const repository = options.getRepositories().feedRepository
+      const feedDialogue = dialogues().find((item) => item.metadata.dialogueId === dialogueId)
       await options.events.deleteDialogue(dialogueId)
 
+      let repository: FeedDialogueRepository
+
       try {
+        repository = options.getRepositories().feedRepository
+      } catch {
+        // The event deletion remains valid while feed storage is initializing. Initialization
+        // reloads feed metadata and repairs the orphaned records afterward.
+        return
+      }
+
+      try {
+        const metadata =
+          feedDialogue?.metadata ??
+          (await repository.listMetadata()).find((item) => item.dialogueId === dialogueId)
+
+        if (metadata !== undefined) {
+          await repository.removeItem(metadata.feedConnectionId, metadata.feedItemId)
+        }
         await repository.removeMetadata(dialogueId)
       } finally {
         await reloadDialogues()
