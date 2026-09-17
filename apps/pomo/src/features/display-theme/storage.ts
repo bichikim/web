@@ -68,13 +68,25 @@ export const createDisplayThemePreferenceRepository = (
 
   const read = async (): Promise<DisplayThemePreference> => {
     const initialWriteRevision = preferenceWriteRevision
+    const usesTossStorage = storage.usesTossStorage()
 
-    if (!storage.usesTossStorage()) {
+    if (!usesTossStorage) {
       return readWebPreference() ?? DEFAULT_DISPLAY_THEME
     }
 
     try {
       await tossWriteQueue
+      if (preferenceWriteRevision !== initialWriteRevision) {
+        return read()
+      }
+
+      const webPreference = readWebPreference()
+
+      if (webPreference !== null) {
+        enqueueTossWrite(webPreference).catch(() => undefined)
+        return webPreference
+      }
+
       const tossPreference = parseDisplayThemePreference(
         await storage.readToss(DISPLAY_THEME_STORAGE_KEY),
       )
