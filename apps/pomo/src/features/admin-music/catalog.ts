@@ -32,6 +32,7 @@ const pendingTrackSchema = z.object({
   title: z.string(),
 })
 const assetSchema = z.object({
+  artworkUrl: z.string().url().nullable().optional(),
   id: z.string(),
   status: z.enum(['pending', 'uploaded', 'ready', 'active', 'failed', 'retired', 'deleted']),
   trackId: z.string(),

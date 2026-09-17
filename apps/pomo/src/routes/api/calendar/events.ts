@@ -3,7 +3,8 @@ import {z} from 'zod'
 
 import {getCalendarService} from 'src/server/calendar/runtime'
 import {noStoreJson} from 'src/server/http/response'
-import {authenticateUserRequest} from 'src/server/user-auth/request'
+import {resolveUserRequest} from 'src/server/auth/resolve-user-request'
+import {isUserRequestResolutionError} from 'src/server/auth/user-request-resolution-error'
 
 const HTTP_BAD_REQUEST = 400
 const HTTP_UNAUTHORIZED = 401
@@ -37,7 +38,19 @@ const isValidTimeZone = (timeZone: string) => {
 }
 
 export const GET = async (event: APIEvent): Promise<Response> => {
-  const identity = await authenticateUserRequest(event.request)
+  let identity: Awaited<ReturnType<typeof resolveUserRequest>>
+  try {
+    identity = await resolveUserRequest(event.request)
+  } catch (error: unknown) {
+    if (!isUserRequestResolutionError(error)) {
+      throw error
+    }
+    console.error('Failed to resolve calendar user', error.cause)
+    return noStoreJson(
+      {error: 'calendar_unavailable'},
+      {cookies: error.cookies, status: HTTP_SERVICE_UNAVAILABLE},
+    )
+  }
 
   if (identity.userId === null) {
     return noStoreJson(

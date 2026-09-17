@@ -265,7 +265,7 @@ PixiJS 플레이어, 단위 테스트와 실제 브라우저 확인까지 연결
 정점과 파트의 opacity·multiply/screen color를 보간하는 1축·2축 grid keyform,
 blend mode·clipping/invert mask, warp deformer, 정점 motion track, undo/redo와 PixiJS 재생 경로까지
 지원한다. 계층이 없는 기존 `parts[]` 문서는 각 part를 루트 노드로 해석하고 다음 저장에서 명시적인
-scene을 기록한다. 범용 parameter 영향도 관계를 지원하며, 전용 rotation deformer의 중심점·방향 손잡이와 계층 회전도 지원한다. 모델링 기능 백로그 4, 6–8의 전체 완료 여부는 별도 검증이 필요하다.
+scene을 기록한다. 범용 parameter 영향도 관계를 지원하며, 전용 rotation deformer의 중심점·방향 손잡이와 계층 회전도 지원한다. JSON v1의 선택적 `physics.pendulums`를 통해 입력·출력 parameter 사이의 damped pendulum을 120Hz 고정 step으로 평가하고, 출력 parameter를 기존 변형 경로에 합성한다. 모델링 inspector에서 physics pendulum을 추가·삭제하고 입력·출력 parameter와 물리값을 편집할 수 있다. physics 미리보기·keyframe bake와 eye blink·lip sync·breath·random pose 검사는 아직 Stage 7 후속 범위다. 모델링 기능 백로그 4, 6–8의 전체 완료 여부는 별도 검증이 필요하다.
 
 ## 확인한 구현 정보
 

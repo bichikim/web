@@ -14,10 +14,39 @@ interface ReimportAdd extends ReimportRowBase {
   readonly part: PuppetPart
 }
 interface ReimportKeep extends ReimportRowBase {
-  readonly kind: 'keep' | 'conflict'
+  readonly kind: 'keep'
   readonly removablePartId?: string
 }
-export type PsdReimportRow = ReimportUpdate | ReimportAdd | ReimportKeep
+interface ReimportConflict extends ReimportRowBase {
+  readonly kind: 'conflict'
+}
+export type PsdReimportRow = ReimportUpdate | ReimportAdd | ReimportKeep | ReimportConflict
+
+export interface PsdReimportSelectionRow {
+  readonly detail: string
+  readonly id: string
+  readonly label: string
+  readonly name: string
+}
+
+export interface PsdReimportSelectionView {
+  readonly count: number
+  readonly hasAdditions: boolean
+  readonly hasMissing: boolean
+  readonly hasRetained: boolean
+  readonly rows: ReadonlyArray<PsdReimportSelectionRow>
+}
+
+export interface PsdReimportOperations {
+  readonly removedPartIds: ReadonlySet<string>
+  readonly rows: ReadonlyArray<PsdReimportRow>
+}
+
+export interface PsdReimportSelection {
+  readonly operations: PsdReimportOperations
+  readonly view: PsdReimportSelectionView
+}
+
 export interface PsdReimportPlan {
   readonly document: PuppetDocument
   readonly sources: ReadonlyArray<PsdSourceOption>

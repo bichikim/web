@@ -1,4 +1,4 @@
-import {action} from '@solidjs/router'
+import {action, json} from '@solidjs/router'
 
 import {ALBUM_LOCALES, type AlbumDraftData} from './album-draft'
 import {albumCreationServices} from './album-creation-adapter'
@@ -187,7 +187,10 @@ const runRequestTrackPlayback = async (
 }
 
 export const createAdminAlbumAction = action(runCreateAlbum, 'create-admin-music-album')
-export const createAdminTrackAction = action(runCreateTrack, 'create-admin-music-track')
+export const createAdminTrackAction = action(async (values: FormValues) => {
+  // Refresh the catalog once after the import batch has settled.
+  return json(await runCreateTrack(values), {revalidate: []})
+}, 'create-admin-music-track')
 export const connectAdminAlbumOfferAction = action(
   runConnectOffer,
   'connect-admin-music-album-offer',

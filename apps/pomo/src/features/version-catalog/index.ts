@@ -1,12 +1,12 @@
 import {z} from 'zod'
 
 import {getLocale, type Locale} from '@paraglide/runtime'
-import {getPublicAssetUrl} from 'src/features/public-assets'
+import {loadPublicJson, type PublicAssetPath} from 'src/features/public-assets'
 
 const VERSION_CATALOG_PATHS = {
   en: '/versions/v2/en.json',
   ko: '/versions/v2/ko.json',
-} as const satisfies Record<Locale, `/${string}`>
+} as const satisfies Record<Locale, PublicAssetPath>
 const VERSION_PATTERN = /^\d{4}\. \d{2}\. \d{2} \d{2}:\d{2}$/u
 const RELEASE_TIMESTAMP_PATTERN =
   /^(?<year>\d{4})-(?<month>\d{2})-(?<day>\d{2})T(?<hour>\d{2}):(?<minute>\d{2})/u
@@ -64,40 +64,16 @@ export interface VersionCatalog {
   readonly releases: ReadonlyArray<VersionRelease>
 }
 
-const parseVersionCatalog = (value: unknown): VersionCatalog => {
-  const result = VERSION_CATALOG_SCHEMA.safeParse(value)
-
-  if (!result.success) {
-    throw new Error('Invalid version catalog.', {cause: result.error})
-  }
-
-  return result.data
-}
-
 /** Fetches and validates the public Pomofi version catalog. */
-export const loadVersionCatalog = async (): Promise<VersionCatalog> => {
-  let response: Response
-
-  try {
-    response = await fetch(getPublicAssetUrl(VERSION_CATALOG_PATHS[getLocale()]))
-  } catch (error) {
-    throw new Error('Failed to fetch version catalog.', {cause: error})
-  }
-
-  if (!response.ok) {
-    throw new Error(`Failed to fetch version catalog: ${response.status}`)
-  }
-
-  let value: unknown
-
-  try {
-    value = await response.json()
-  } catch (error) {
-    throw new Error('Failed to parse version catalog.', {cause: error})
-  }
-
-  return parseVersionCatalog(value)
-}
+export const loadVersionCatalog = (): Promise<VersionCatalog> =>
+  loadPublicJson(VERSION_CATALOG_PATHS[getLocale()], VERSION_CATALOG_SCHEMA, {
+    formatFetchFailure: ({status}) =>
+      status === undefined
+        ? 'Failed to fetch version catalog.'
+        : `Failed to fetch version catalog: ${status}`,
+    formatInvalid: () => 'Invalid version catalog.',
+    formatParseFailure: () => 'Failed to parse version catalog.',
+  })
 
 export * from './recent-releases'
 export * from './viewed-release-storage'

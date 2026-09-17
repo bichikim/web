@@ -8,31 +8,14 @@ import {
 } from 'src/server/music/catalog-repository'
 import {createPlaybackAccess} from 'src/server/music/playback-access'
 import {createPreviewAccess} from 'src/server/music/preview-access'
-import {authenticateAppRequest} from 'src/server/user-auth/http'
-import {getNeonSession} from 'src/server/user-auth/neon-session'
-import {findOrCreateNeonUser} from 'src/server/user-auth/repository'
+import {resolveUserRequest} from 'src/server/auth/resolve-user-request'
+import {isUserRequestResolutionError} from 'src/server/auth/user-request-resolution-error'
 
 const HTTP_BAD_REQUEST = 400
 const HTTP_NOT_FOUND = 404
 const HTTP_UNAUTHORIZED = 401
 const HTTP_SERVICE_UNAVAILABLE = 503
 const trackIdSchema = z.string().uuid()
-
-interface OptionalIdentity {
-  readonly cookies: ReadonlyArray<string>
-  readonly userId: string | null
-}
-
-const resolveOptionalIdentity = async (request: Request): Promise<OptionalIdentity> => {
-  if (request.headers.has('Authorization')) {
-    const identity = await authenticateAppRequest(request)
-    return {cookies: [], userId: identity?.userId ?? null}
-  }
-
-  const session = await getNeonSession(request)
-  const userId = session.identity === null ? null : await findOrCreateNeonUser(session.identity.id)
-  return {cookies: session.cookies, userId}
-}
 
 export const GET = async (event: APIEvent): Promise<Response> => {
   const parsedTrackId = trackIdSchema.safeParse(event.params.trackId)
@@ -41,8 +24,11 @@ export const GET = async (event: APIEvent): Promise<Response> => {
     return noStoreJson({error: 'invalid_track_id'}, {status: HTTP_BAD_REQUEST})
   }
 
+  let responseCookies: ReadonlyArray<string> = []
+
   try {
-    const identity = await resolveOptionalIdentity(event.request)
+    const identity = await resolveUserRequest(event.request)
+    responseCookies = identity.cookies
 
     if (identity.userId === null) {
       return noStoreJson(
@@ -73,7 +59,13 @@ export const GET = async (event: APIEvent): Promise<Response> => {
     const access = await createPreviewAccess({asset: previewAsset, trackId: parsedTrackId.data})
     return noStoreJson({mode: 'preview', url: access.url}, {cookies: identity.cookies})
   } catch (error) {
-    console.error('Failed to resolve music track access', error)
-    return noStoreJson({error: 'track_access_unavailable'}, {status: HTTP_SERVICE_UNAVAILABLE})
+    const userRequestError = isUserRequestResolutionError(error) ? error : undefined
+    const errorCookies = userRequestError?.cookies ?? responseCookies
+    const errorDetails = userRequestError === undefined ? error : userRequestError.cause
+    console.error('Failed to resolve music track access', errorDetails)
+    return noStoreJson(
+      {error: 'track_access_unavailable'},
+      {cookies: errorCookies, status: HTTP_SERVICE_UNAVAILABLE},
+    )
   }
 }

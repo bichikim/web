@@ -1,9 +1,9 @@
 import type {APIEvent} from '@solidjs/start/server'
 
 import {noStoreJson} from 'src/server/http/response'
-import {authenticateAppRequest} from 'src/server/user-auth/http'
-import {resolveAppSessionUserId, revokeAppSession} from 'src/server/user-auth/repository'
-import {readBearerToken} from 'src/server/user-auth/token'
+import {authenticateAppRequest} from 'src/server/auth/authenticate-app-request'
+import {resolveAppSessionUserId, revokeAppSession} from 'src/server/auth/repository'
+import {readBearerToken} from 'src/server/auth/token'
 
 const HTTP_UNAUTHORIZED = 401
 

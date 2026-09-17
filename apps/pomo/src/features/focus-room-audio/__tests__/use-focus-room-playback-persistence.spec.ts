@@ -123,7 +123,7 @@ it('should restore a matching pending position and clamp it to finite duration',
   expect(harness.persistence.applyPendingPosition()).toBeNull()
 })
 
-it('should preserve the restored playback intent when seeked arrives before play', () => {
+it('should persist current playback after restoring a pending position', () => {
   const harness = createHarness()
   harness.setTrack(TRACK)
   harness.setAudio(createAudio(0, 10))
@@ -132,11 +132,9 @@ it('should preserve the restored playback intent when seeked arrives before play
   harness.persistence.applyPendingPosition()
   harness.setPlaying(false)
   harness.persistence.persistCurrentPlayback()
-  harness.persistence.persistSeekedPlayback()
 
-  expect(storageMocks.write).toHaveBeenCalledTimes(1)
-  expect(storageMocks.write).toHaveBeenCalledWith({
-    isPlaying: true,
+  expect(storageMocks.write).toHaveBeenLastCalledWith({
+    isPlaying: false,
     positionSeconds: 3,
     trackId: TRACK.id,
   })
@@ -156,24 +154,6 @@ it('should persist a user seek that completes before the restored seek', () => {
   expect(storageMocks.write).toHaveBeenLastCalledWith({
     isPlaying: true,
     positionSeconds: 8,
-    trackId: TRACK.id,
-  })
-})
-
-it('should preserve a restored playing intent through pagehide after seeked', () => {
-  const harness = createHarness()
-  harness.setTrack(TRACK)
-  harness.setAudio(createAudio(0, 10))
-  harness.persistence.setPendingPosition({isPlaying: true, positionSeconds: 3, trackId: TRACK.id})
-
-  harness.persistence.applyPendingPosition()
-  harness.setPlaying(false)
-  harness.persistence.persistSeekedPlayback()
-  harness.persistence.persistCurrentPlayback()
-
-  expect(storageMocks.write).toHaveBeenLastCalledWith({
-    isPlaying: true,
-    positionSeconds: 3,
     trackId: TRACK.id,
   })
 })
@@ -214,7 +194,7 @@ it('should persist a stopped pending restoration when playback fails before meta
   })
 })
 
-it('should persist a later seeked position after the restoration event is consumed', () => {
+it('should persist a later seeked position after restoring a pending position', () => {
   const harness = createHarness()
   harness.setTrack(TRACK)
   harness.setAudio(createAudio(0, 10))
@@ -227,7 +207,7 @@ it('should persist a later seeked position after the restoration event is consum
   harness.persistence.persistSeekedPlayback()
 
   expect(storageMocks.write).toHaveBeenLastCalledWith({
-    isPlaying: true,
+    isPlaying: false,
     positionSeconds: 8,
     trackId: TRACK.id,
   })

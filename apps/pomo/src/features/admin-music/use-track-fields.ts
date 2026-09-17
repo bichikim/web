@@ -1,9 +1,10 @@
-import {createEffect, createSignal, on} from 'solid-js'
+import {createEffect, createSignal, on, onCleanup} from 'solid-js'
 
 import {readTrackMetadata} from './track-metadata'
 
 export interface UseTrackFieldsProps {
   readonly onArtistChange: (artist: string) => void
+  readonly onMetadataPendingChange?: (pending: boolean) => void
   readonly onTitleChange: (title: string) => void
   readonly resetVersion: number
 }
@@ -26,6 +27,7 @@ export const useTrackFields = (props: UseTrackFieldsProps): TrackFieldsControlle
       () => {
         readVersion += 1
         setMetadataMessage(null)
+        props.onMetadataPendingChange?.(false)
         setUseMetadata(true)
       },
       {defer: true},
@@ -36,6 +38,7 @@ export const useTrackFields = (props: UseTrackFieldsProps): TrackFieldsControlle
     readVersion += 1
     const currentVersion = readVersion
     setMetadataMessage('MP3 정보를 읽는 중…')
+    props.onMetadataPendingChange?.(true)
 
     try {
       const metadata = await readTrackMetadata(file)
@@ -61,10 +64,21 @@ export const useTrackFields = (props: UseTrackFieldsProps): TrackFieldsControlle
       if (currentVersion === readVersion) {
         setMetadataMessage('MP3 정보를 읽지 못했습니다. 직접 입력해 주세요.')
       }
+    } finally {
+      if (currentVersion === readVersion) {
+        props.onMetadataPendingChange?.(false)
+      }
     }
   }
 
+  onCleanup(() => {
+    readVersion += 1
+  })
+
   const onAudioFileChange = async (file: File | undefined): Promise<void> => {
+    readVersion += 1
+    setMetadataMessage(null)
+    props.onMetadataPendingChange?.(false)
     if (file !== undefined && useMetadata()) {
       await applyMetadata(file)
     }
@@ -79,6 +93,7 @@ export const useTrackFields = (props: UseTrackFieldsProps): TrackFieldsControlle
     if (!shouldUseMetadata) {
       readVersion += 1
       setMetadataMessage(null)
+      props.onMetadataPendingChange?.(false)
       return
     }
 

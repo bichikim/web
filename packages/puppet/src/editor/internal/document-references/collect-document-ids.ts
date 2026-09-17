@@ -16,4 +16,5 @@ export const collectDocumentIds = (document: PuppetDocument): ReadonlySet<string
     ...(document.parameterBindings ?? []).map((binding) => binding.id),
     ...(document.glue ?? []).map((glue) => glue.id),
     ...document.motions.map((motion) => motion.id),
+    ...(document.physics?.pendulums ?? []).map((pendulum) => pendulum.id),
   ])

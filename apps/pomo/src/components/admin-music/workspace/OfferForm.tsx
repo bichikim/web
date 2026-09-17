@@ -10,6 +10,7 @@ const FIELD_CLASSES = cx(
 
 export const OfferForm = (props: AlbumTaskFormProps) => (
   <form
+    aria-label="일회성 상품 연결"
     class="rounded-4 border border-white/10 bg-black/12 p-5"
     onSubmit={(event) => props.model.handleOfferSubmit(event)}
   >

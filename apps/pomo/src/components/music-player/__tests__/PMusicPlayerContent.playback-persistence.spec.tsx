@@ -131,6 +131,7 @@ describe('PMusicPlayerContent playback persistence', () => {
     await Promise.resolve()
     await Promise.resolve()
     fireEvent(audio, new Event('loadedmetadata'))
+    fireEvent(audio, new Event('pause'))
     fireEvent(audio, new Event('seeked'))
     await Promise.resolve()
 

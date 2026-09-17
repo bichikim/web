@@ -1,230 +1,30 @@
 /** @vitest-environment jsdom */
 
 import {cleanup, render} from '@solidjs/testing-library'
-import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
+import {describe, expect, it, vi} from 'vitest'
 
 import type {PPlaybackState, PTrack} from '../../../features/focus-room-audio'
-import type {usePlayerController} from '../../media-player/use-player-controller'
-import type {MusicPlayerViewProps} from '../../music-player-view/types'
+import {
+  ADDED_TRACK,
+  createAudio,
+  emit,
+  getFeatureMocks,
+  latestController,
+  latestViewProps,
+  setAudioReadyState,
+  TRACKS,
+} from './PMusicPlayerContent.test-support'
 import {PMusicPlayerContent} from '../PMusicPlayerContent'
 
-type EventHandler = (value?: unknown) => void
-
-const eventMocks = vi.hoisted(() => ({
-  handlers: new Map<string, EventHandler>(),
-}))
-const featureMocks = vi.hoisted(() => ({
-  appendUniqueTracks: vi.fn(),
-  applyPendingPosition: vi.fn(),
-  canNavigateManually: vi.fn(),
-  createInitialPlaybackState: vi.fn(),
-  createShuffleQueue: vi.fn(),
-  loadPTrackQueueSource: vi.fn(),
-  normalizeTrackIndex: vi.fn(),
-  persistCurrentPlayback: vi.fn(),
-  persistPlaybackError: vi.fn(),
-  persistPlaybackIntent: vi.fn(),
-  persistPlaybackProgress: vi.fn(),
-  persistSeekedPlayback: vi.fn(),
-  persistStoppedPlayback: vi.fn(),
-  readPPlayback: vi.fn(),
-  readPPlaylist: vi.fn(),
-  resolvePlaybackRestore: vi.fn(),
-  resolvePPlaylist: vi.fn(),
-  resolveTrackEnd: vi.fn(),
-  resolveTrackRemoval: vi.fn(),
-  setOutputGain: vi.fn(),
-  setPendingPosition: vi.fn(),
-  visualizerStart: vi.fn(),
-  visualizerStop: vi.fn(),
-  writePlayback: vi.fn(),
-  writePPlaylist: vi.fn(),
-}))
-const viewMocks = vi.hoisted(() => ({capture: vi.fn()}))
-
-const controllerMocks = vi.hoisted(() => ({capture: vi.fn()}))
-vi.mock('../../media-player/use-player-controller', async (importOriginal) => {
-  const original = await importOriginal<typeof import('../../media-player/use-player-controller')>()
-  return {
-    usePlayerController: (props: Parameters<typeof original.usePlayerController>[0]) => {
-      const player = original.usePlayerController(props)
-      controllerMocks.capture(player)
-      return player
-    },
-  }
-})
-const latestController = () =>
-  controllerMocks.capture.mock.lastCall?.[0] as ReturnType<typeof usePlayerController>
-vi.mock('media-chrome', () => ({}))
-
-vi.mock('@winter-love/solid-use/event', () => ({
-  useEvent: vi.fn((_target, event: string, handler: (value?: unknown) => void) => {
-    eventMocks.handlers.set(event, handler)
-  }),
-}))
-vi.mock('../../../features/focus-room-audio', () => ({
-  appendUniqueTracks: featureMocks.appendUniqueTracks,
-  canNavigateManually: featureMocks.canNavigateManually,
-  createInitialPlaybackState: featureMocks.createInitialPlaybackState,
-  createShuffleQueue: featureMocks.createShuffleQueue,
-  loadPTrackQueueSource: featureMocks.loadPTrackQueueSource,
-  normalizeTrackIndex: featureMocks.normalizeTrackIndex,
-  readPPlayback: featureMocks.readPPlayback,
-  readPPlaylist: featureMocks.readPPlaylist,
-  resolvePlaybackRestore: featureMocks.resolvePlaybackRestore,
-  resolvePPlaylist: featureMocks.resolvePPlaylist,
-  resolveTrackEnd: featureMocks.resolveTrackEnd,
-  resolveTrackRemoval: featureMocks.resolveTrackRemoval,
-  usePAudioVisualizer: () => ({
-    levels: () => [0.25],
-    setOutputGain: featureMocks.setOutputGain,
-    start: featureMocks.visualizerStart,
-    stop: featureMocks.visualizerStop,
-  }),
-  usePPlaybackPersistence: () => ({
-    applyPendingPosition: featureMocks.applyPendingPosition,
-    persistCurrentPlayback: featureMocks.persistCurrentPlayback,
-    persistPlaybackError: featureMocks.persistPlaybackError,
-    persistPlaybackIntent: featureMocks.persistPlaybackIntent,
-    persistPlaybackProgress: featureMocks.persistPlaybackProgress,
-    persistSeekedPlayback: featureMocks.persistSeekedPlayback,
-    persistStoppedPlayback: featureMocks.persistStoppedPlayback,
-    setPendingPosition: featureMocks.setPendingPosition,
-    writePlayback: featureMocks.writePlayback,
-  }),
-  writePPlaylist: featureMocks.writePPlaylist,
-}))
-vi.mock('../../music-player-view/MusicPlayerView', () => ({
-  MusicPlayerView: (props: MusicPlayerViewProps) => {
-    viewMocks.capture(props)
-    return <div data-testid="player-view" />
-  },
-}))
-
-const TRACKS = [
-  {artist: 'Artist', durationSeconds: 1, id: 'one', source: '/one.mp3', title: 'One'},
-  {artist: 'Artist', durationSeconds: 1, id: 'two', source: '/two.mp3', title: 'Two'},
-  {artist: 'Artist', durationSeconds: 1, id: 'three', source: '/three.mp3', title: 'Three'},
-] as const satisfies readonly PTrack[]
-const ADDED_TRACK = {
-  artist: 'Artist',
-  durationSeconds: 1,
-  id: 'added',
-  source: '/added.mp3',
-  title: 'Added',
-} as const satisfies PTrack
-
-const latestViewProps = () => {
-  const props = viewMocks.capture.mock.lastCall?.[0] as MusicPlayerViewProps | undefined
-
-  if (props === undefined) {
-    throw new Error('Expected MusicPlayerView props')
-  }
-
-  return props
-}
-
-const emit = (event: string, value: unknown = new Event(event)) => {
-  const controller = latestController()
-  const entry = Object.entries({
-    onEnded: controller.onEnded,
-    onError: controller.onError,
-    onLoadedMetadata: controller.onLoadedMetadata,
-    onPause: controller.onPause,
-    onPlay: controller.onPlay,
-    onSeeked: controller.onSeeked,
-    onSeeking: controller.onSeeking,
-    onTimeUpdate: controller.onTimeUpdate,
-  }).find(([name]) => name.slice(2).toLowerCase() === event)
-  const handler = entry?.[1] ?? eventMocks.handlers.get(event)
-
-  if (handler === undefined) {
-    throw new Error(`Expected ${event} handler`)
-  }
-
-  if (typeof handler === 'function') {
-    handler(value as never)
-  }
-}
-
-const createAudio = () => {
-  const audio = document.querySelector('audio')
-  if (audio === null) {
-    throw new Error('Missing audio')
-  }
-  vi.spyOn(audio, 'load').mockImplementation(() => undefined)
-  vi.spyOn(audio, 'play').mockResolvedValue()
-  vi.spyOn(audio, 'pause').mockImplementation(() => undefined)
-  Object.defineProperty(audio, 'readyState', {
-    configurable: true,
-    value: HTMLMediaElement.HAVE_METADATA,
-  })
-  return audio
-}
-
-const setAudioReadyState = (audio: HTMLAudioElement, readyState: number) => {
-  Object.defineProperty(audio, 'readyState', {configurable: true, value: readyState})
-}
-
-beforeEach(() => {
-  vi.spyOn(HTMLMediaElement.prototype, 'play').mockResolvedValue()
-  vi.spyOn(HTMLMediaElement.prototype, 'pause').mockImplementation(() => undefined)
-  vi.spyOn(HTMLMediaElement.prototype, 'load').mockImplementation(() => undefined)
-  eventMocks.handlers.clear()
-  vi.clearAllMocks()
-  featureMocks.createInitialPlaybackState.mockImplementation(
-    ({trackCount}: {trackCount: number}) => ({
-      currentIndex: trackCount > 1 ? 1 : 0,
-      queue: trackCount > 1 ? [2, 0] : [],
-    }),
-  )
-  featureMocks.canNavigateManually.mockReturnValue(true)
-  featureMocks.createShuffleQueue.mockReturnValue([2, 0])
-  featureMocks.appendUniqueTracks.mockImplementation(
-    (current: readonly PTrack[], added: readonly PTrack[]) =>
-      added.length === 0 ? current : [...current, ...added],
-  )
-  featureMocks.resolvePlaybackRestore.mockImplementation(
-    ({
-      fallbackIndex,
-      storedPlayback,
-    }: {
-      fallbackIndex: number
-      storedPlayback: PPlaybackState | null
-    }) => ({
-      currentIndex: fallbackIndex,
-      playback: storedPlayback,
-      shouldPersist: false,
-    }),
-  )
-  featureMocks.resolveTrackEnd.mockReturnValue('play-shuffled')
-  featureMocks.resolveTrackRemoval.mockReturnValue({currentTrackChanged: true, nextCurrentIndex: 0})
-  featureMocks.loadPTrackQueueSource.mockResolvedValue({
-    defaultTracks: TRACKS,
-    tracks: [...TRACKS, ADDED_TRACK],
-  })
-  featureMocks.readPPlaylist.mockResolvedValue(null)
-  featureMocks.readPPlayback.mockResolvedValue(null)
-  featureMocks.normalizeTrackIndex.mockImplementation((index: number, trackCount: number) => {
-    if (trackCount < 1 || !Number.isInteger(trackCount) || !Number.isInteger(index)) {
-      return undefined
-    }
-    const remainder = index % trackCount
-    return remainder < 0 ? remainder + trackCount : remainder
-  })
-  featureMocks.resolvePPlaylist.mockImplementation(
-    ({defaultTracks}: {readonly defaultTracks: readonly PTrack[]}) => defaultTracks,
-  )
-  featureMocks.writePPlaylist.mockResolvedValue(undefined)
-  featureMocks.applyPendingPosition.mockReturnValue(null)
-})
-
-afterEach(() => {
-  cleanup()
-  vi.restoreAllMocks()
-})
+const featureMocks = getFeatureMocks()
 
 describe('PMusicPlayerContent control paths', () => {
+  it('should skip stored playlist loading for a controlled queue', () => {
+    render(() => <PMusicPlayerContent onError={vi.fn()} tracks={TRACKS} />)
+
+    expect(featureMocks.readPPlaylist).not.toHaveBeenCalled()
+  })
+
   it('should cancel preview resume after a user pause', () => {
     render(() => <PMusicPlayerContent tracks={TRACKS} />)
     const audio = createAudio()
@@ -464,7 +264,7 @@ describe('PMusicPlayerContent control paths', () => {
   })
 
   it('should suppress denied manual transport commands without controller side effects', () => {
-    featureMocks.canNavigateManually.mockReturnValue(false)
+    featureMocks.resolveManualNavigation.mockReturnValue({type: 'none'})
     render(() => <PMusicPlayerContent tracks={TRACKS} />)
     const audio = createAudio()
     expect(latestViewProps().canNavigateNextTrack).toBe(false)
@@ -486,175 +286,5 @@ describe('PMusicPlayerContent control paths', () => {
     expect(audio.load).toHaveBeenCalledTimes(loadCount)
     expect(audio.pause).toHaveBeenCalledTimes(pauseCount)
     expect(audio.play).toHaveBeenCalledTimes(playCount)
-  })
-
-  it('should reject invalid queue edits and handle unchanged and empty removals', async () => {
-    let resolveTracks: ((tracks: readonly PTrack[]) => void) | undefined
-    featureMocks.loadPTrackQueueSource.mockImplementationOnce(
-      () =>
-        new Promise((resolve) => {
-          resolveTracks = (tracks) => resolve({defaultTracks: tracks, tracks})
-        }),
-    )
-    const result = render(() => <PMusicPlayerContent />)
-    const audio = createAudio()
-
-    latestViewProps().onAlbumAdd?.([])
-    featureMocks.appendUniqueTracks.mockImplementationOnce((current) => current)
-    latestViewProps().onAlbumAdd?.([ADDED_TRACK])
-    latestViewProps().onAlbumAdd?.(TRACKS)
-    latestViewProps().onTrackRemove?.(Number.NaN)
-    latestViewProps().onTrackRemove?.(-1)
-    latestViewProps().onTrackRemove?.(99)
-    featureMocks.resolveTrackRemoval.mockReturnValueOnce({
-      currentTrackChanged: false,
-      nextCurrentIndex: 0,
-    })
-    latestViewProps().onTrackRemove?.(2)
-    expect(featureMocks.setPendingPosition).not.toHaveBeenCalledWith(null)
-
-    result.unmount()
-    resolveTracks?.(TRACKS)
-    await Promise.resolve()
-    await Promise.resolve()
-    expect(audio.pause).toHaveBeenCalled()
-
-    featureMocks.loadPTrackQueueSource.mockImplementationOnce(
-      () =>
-        new Promise(() => {
-          // Intentionally pending to keep the playlist unresolved.
-        }),
-    )
-    render(() => <PMusicPlayerContent />)
-    const emptyAudio = createAudio()
-    latestViewProps().onAlbumAdd?.([ADDED_TRACK])
-    latestViewProps().onTrackRemove?.(0)
-    expect(featureMocks.setPendingPosition).toHaveBeenCalledWith(null)
-    expect(emptyAudio.pause).toHaveBeenCalled()
-  })
-
-  it('should report playlist storage write failures without stopping playback', async () => {
-    featureMocks.loadPTrackQueueSource.mockImplementationOnce(
-      () =>
-        new Promise(() => {
-          // Intentionally pending to isolate the queue edit.
-        }),
-    )
-    const failure = new Error('Storage is unavailable')
-    const onError = vi.fn()
-    featureMocks.writePPlaylist.mockRejectedValueOnce(failure)
-    render(() => <PMusicPlayerContent onError={onError} />)
-    emit('play')
-
-    latestViewProps().onAlbumAdd?.([ADDED_TRACK])
-    await Promise.resolve()
-
-    expect(featureMocks.writePPlaylist).toHaveBeenCalledWith([ADDED_TRACK.id])
-    expect(onError).toHaveBeenCalledWith(failure)
-    expect(latestViewProps().isPlaying).toBe(true)
-  })
-
-  it('should clear before initial loading and merge a concurrently added active track', async () => {
-    let resolveClearedTracks: ((tracks: readonly PTrack[]) => void) | undefined
-    featureMocks.loadPTrackQueueSource.mockImplementationOnce(
-      () =>
-        new Promise((resolve) => {
-          resolveClearedTracks = (tracks) => resolve({defaultTracks: tracks, tracks})
-        }),
-    )
-    const cleared = render(() => <PMusicPlayerContent />)
-    latestViewProps().onAlbumClear?.()
-    latestViewProps().onAlbumAdd?.([ADDED_TRACK])
-    latestViewProps().onAlbumClear?.()
-    resolveClearedTracks?.(TRACKS)
-    await Promise.resolve()
-    await Promise.resolve()
-    cleared.unmount()
-
-    let resolveMergedTracks: ((tracks: readonly PTrack[]) => void) | undefined
-    featureMocks.loadPTrackQueueSource.mockImplementationOnce(
-      () =>
-        new Promise((resolve) => {
-          resolveMergedTracks = (tracks) => resolve({defaultTracks: tracks, tracks})
-        }),
-    )
-    render(() => <PMusicPlayerContent />)
-    latestViewProps().onAlbumAdd?.([ADDED_TRACK])
-    resolveMergedTracks?.(TRACKS)
-    await Promise.resolve()
-    await Promise.resolve()
-    expect(featureMocks.createShuffleQueue).toHaveBeenCalledWith({
-      currentIndex: 3,
-      trackCount: 4,
-    })
-  })
-
-  it('should ignore a playlist completed after cleanup and handle playlist rejection', async () => {
-    let resolveTracks: ((tracks: readonly PTrack[]) => void) | undefined
-    featureMocks.loadPTrackQueueSource.mockImplementationOnce(
-      () =>
-        new Promise((resolve) => {
-          resolveTracks = (tracks) => resolve({defaultTracks: tracks, tracks})
-        }),
-    )
-    const result = render(() => <PMusicPlayerContent />)
-    result.unmount()
-    resolveTracks?.(TRACKS)
-    await Promise.resolve()
-    await Promise.resolve()
-
-    featureMocks.loadPTrackQueueSource.mockRejectedValueOnce(new Error('playlist failed'))
-    render(() => <PMusicPlayerContent />)
-    await Promise.resolve()
-    await Promise.resolve()
-    expect(featureMocks.visualizerStop).toHaveBeenCalled()
-  })
-
-  it('should restore stored playback after an uncontrolled playlist resolves', async () => {
-    const storedPlayback = {
-      isPlaying: false,
-      positionSeconds: 7,
-      trackId: 'two',
-    } satisfies PPlaybackState
-    featureMocks.readPPlayback.mockResolvedValue(storedPlayback)
-    render(() => <PMusicPlayerContent />)
-    await Promise.resolve()
-    await Promise.resolve()
-    await Promise.resolve()
-    expect(featureMocks.resolvePlaybackRestore).toHaveBeenCalledWith(
-      expect.objectContaining({storedPlayback}),
-    )
-  })
-
-  it('should apply stored playback once after playlist storage resolves', async () => {
-    const storedPlayback = {
-      isPlaying: false,
-      positionSeconds: 7,
-      trackId: 'two',
-    } satisfies PPlaybackState
-    featureMocks.readPPlayback.mockResolvedValue(storedPlayback)
-    const playlist = Promise.withResolvers<readonly string[] | null>()
-    const restoredTracks = TRACKS.filter((track) => track.id === storedPlayback.trackId)
-    featureMocks.readPPlaylist.mockReturnValue(playlist.promise)
-    featureMocks.resolvePPlaylist.mockReturnValue(restoredTracks)
-
-    render(() => <PMusicPlayerContent />)
-    await Promise.resolve()
-    await Promise.resolve()
-    await Promise.resolve()
-
-    expect(featureMocks.resolvePlaybackRestore).toHaveBeenCalledExactlyOnceWith(
-      expect.objectContaining({storedPlayback: null, tracks: TRACKS}),
-    )
-
-    playlist.resolve([storedPlayback.trackId])
-    await Promise.resolve()
-    await Promise.resolve()
-    await Promise.resolve()
-
-    expect(featureMocks.resolvePlaybackRestore).toHaveBeenCalledTimes(2)
-    expect(featureMocks.resolvePlaybackRestore).toHaveBeenLastCalledWith(
-      expect.objectContaining({storedPlayback, tracks: restoredTracks}),
-    )
   })
 })

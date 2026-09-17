@@ -37,7 +37,7 @@ it('should create a track and upload its MP3 successfully', async () => {
   ).resolves.toEqual({success: true})
 })
 
-it('should reject when the track record cannot be created', async () => {
+it('should preserve uncertainty when track creation returns a server error', async () => {
   vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(null, {status: 503})))
 
   await expect(
@@ -47,7 +47,7 @@ it('should reject when the track record cannot be created', async () => {
       audio: new File(['mp3'], 'track.mp3', {type: 'audio/mpeg'}),
       title: '곡명',
     }),
-  ).rejects.toThrow('곡 정보를 저장하지 못했습니다.')
+  ).resolves.toMatchObject({cleanupStatus: 'preserved', success: false})
 })
 
 it('should remove the track record when its MP3 upload cannot start', async () => {
@@ -180,4 +180,18 @@ it('should preserve a track when authorization expires after a lost completion r
   expect(fetcher).not.toHaveBeenCalledWith(`/api/admin/music/tracks/${TRACK_ID}`, {
     method: 'DELETE',
   })
+})
+
+it('should reject a confirmed client error without preserving an unknown track', async () => {
+  const fetcher = vi.fn().mockResolvedValue(new Response(null, {status: 400}))
+  vi.stubGlobal('fetch', fetcher)
+  await expect(
+    createTrackWithAudio({
+      albumId: ALBUM_ID,
+      artist: '아티스트',
+      audio: new File(['mp3'], 'track.mp3', {type: 'audio/mpeg'}),
+      title: '곡명',
+    }),
+  ).rejects.toThrow('곡 정보를 저장하지 못했습니다.')
+  expect(fetcher).toHaveBeenCalledTimes(1)
 })

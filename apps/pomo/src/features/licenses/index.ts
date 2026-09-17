@@ -1,8 +1,8 @@
 import {z} from 'zod'
 
-import {getPublicAssetUrl} from 'src/features/public-assets'
+import {loadPublicJson, type PublicAssetPath} from 'src/features/public-assets'
 
-const LICENSE_DATA_PATH = '/licenses.json'
+const LICENSE_DATA_PATH: PublicAssetPath = '/licenses.json'
 
 const LICENSE_LINK_SCHEMA = z.object({
   label: z.string(),
@@ -55,40 +55,16 @@ export interface LicenseData {
   readonly lastReviewed: string
 }
 
-const parseLicenseData = (value: unknown): LicenseData => {
-  const result = LICENSE_DATA_SCHEMA.safeParse(value)
-
-  if (!result.success) {
-    throw new Error('Invalid license data.', {cause: result.error})
-  }
-
-  return result.data
-}
-
 /** Fetches and validates the public Pomofi license manifest. */
-export const loadLicenseData = async (): Promise<LicenseData> => {
-  let response: Response
-
-  try {
-    response = await fetch(getPublicAssetUrl(LICENSE_DATA_PATH))
-  } catch (error) {
-    throw new Error('Failed to fetch license data.', {cause: error})
-  }
-
-  if (!response.ok) {
-    throw new Error(`Failed to fetch license data: ${response.status}`)
-  }
-
-  let value: unknown
-
-  try {
-    value = await response.json()
-  } catch (error) {
-    throw new Error('Failed to parse license data.', {cause: error})
-  }
-
-  return parseLicenseData(value)
-}
+export const loadLicenseData = (): Promise<LicenseData> =>
+  loadPublicJson(LICENSE_DATA_PATH, LICENSE_DATA_SCHEMA, {
+    formatFetchFailure: ({status}) =>
+      status === undefined
+        ? 'Failed to fetch license data.'
+        : `Failed to fetch license data: ${status}`,
+    formatInvalid: () => 'Invalid license data.',
+    formatParseFailure: () => 'Failed to parse license data.',
+  })
 
 export const findLicenseGroup = (licenseData: LicenseData, id: string): LicenseGroup => {
   const group = licenseData.groups.find((entry) => entry.id === id)

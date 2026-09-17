@@ -1,12 +1,25 @@
 /** @vitest-environment jsdom */
 
-import {cleanup, fireEvent, render} from '@solidjs/testing-library'
+import {cleanup, fireEvent, render, screen} from '@solidjs/testing-library'
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 
 import {PMusicPlayerContent} from '../PMusicPlayerContent'
 import {TRACKS} from './test-support/player-fixtures'
 
 vi.mock('media-chrome', () => ({}))
+
+const dispatchMediaSessionAction = (
+  handlers: Map<string, MediaSessionActionHandler | null>,
+  action: 'nexttrack' | 'previoustrack',
+) => {
+  const handler = handlers.get(action)
+
+  if (handler === undefined || handler === null) {
+    throw new Error(`Expected a ${action} media session handler`)
+  }
+
+  handler({action})
+}
 
 describe('PMusicPlayerContent device integration', () => {
   beforeEach(() => {
@@ -60,5 +73,93 @@ describe('PMusicPlayerContent device integration', () => {
     expect(mediaSession.metadata).toBeNull()
     expect(mediaSession.playbackState).toBe('none')
     expect(setActionHandler).toHaveBeenCalledWith('play', null)
+  })
+
+  it('should stop repeat-disabled boundary navigation from buttons and media session actions', () => {
+    const handlers = new Map<string, MediaSessionActionHandler | null>()
+    const mediaSession = {
+      metadata: null,
+      playbackState: 'none',
+      setActionHandler: (action: string, handler: MediaSessionActionHandler | null) =>
+        handlers.set(action, handler),
+    }
+    Object.defineProperty(navigator, 'mediaSession', {configurable: true, value: mediaSession})
+
+    const result = render(() => <PMusicPlayerContent tracks={TRACKS} />)
+    const audio = result.container.querySelector('audio')
+
+    if (!(audio instanceof HTMLAudioElement)) {
+      throw new TypeError('Expected the Pomo audio element to be rendered')
+    }
+
+    fireEvent.click(screen.getByRole('button', {name: '플레이어 펼치기'}))
+    fireEvent.click(screen.getByRole('button', {name: '전체 반복'}))
+    fireEvent.click(screen.getByRole('button', {name: '랜덤 재생'}))
+
+    const previousButton = screen.getByRole('button', {name: '이전 곡'}) as HTMLButtonElement
+    const nextButton = screen.getByRole('button', {name: '다음 곡'}) as HTMLButtonElement
+    for (let attempt = 0; attempt < TRACKS.length && !previousButton.disabled; attempt += 1) {
+      fireEvent.click(previousButton)
+    }
+    expect(previousButton).toBeDisabled()
+
+    const firstSource = audio.getAttribute('src')
+    const firstPlayCount = vi.mocked(HTMLMediaElement.prototype.play).mock.calls.length
+    dispatchMediaSessionAction(handlers, 'previoustrack')
+    expect(audio.getAttribute('src')).toBe(firstSource)
+    expect(HTMLMediaElement.prototype.play).toHaveBeenCalledTimes(firstPlayCount)
+
+    for (let attempt = 0; attempt < TRACKS.length && !nextButton.disabled; attempt += 1) {
+      fireEvent.click(nextButton)
+    }
+    expect(nextButton).toBeDisabled()
+
+    const lastSource = audio.getAttribute('src')
+    const lastPlayCount = vi.mocked(HTMLMediaElement.prototype.play).mock.calls.length
+    fireEvent(audio, new Event('ended'))
+    dispatchMediaSessionAction(handlers, 'nexttrack')
+    expect(audio.getAttribute('src')).toBe(lastSource)
+    expect(HTMLMediaElement.prototype.play).toHaveBeenCalledTimes(lastPlayCount)
+
+    result.unmount()
+  })
+
+  it('should keep media next inert after a repeat-disabled shuffled cycle ends', () => {
+    const handlers = new Map<string, MediaSessionActionHandler | null>()
+    const mediaSession = {
+      metadata: null,
+      playbackState: 'none',
+      setActionHandler: (action: string, handler: MediaSessionActionHandler | null) =>
+        handlers.set(action, handler),
+    }
+    Object.defineProperty(navigator, 'mediaSession', {configurable: true, value: mediaSession})
+
+    const result = render(() => <PMusicPlayerContent tracks={TRACKS} />)
+    const audio = result.container.querySelector('audio')
+
+    if (!(audio instanceof HTMLAudioElement)) {
+      throw new TypeError('Expected the Pomo audio element to be rendered')
+    }
+
+    fireEvent.click(screen.getByRole('button', {name: '플레이어 펼치기'}))
+    fireEvent.click(screen.getByRole('button', {name: '전체 반복'}))
+    const nextButton = screen.getByRole('button', {name: '다음 곡'}) as HTMLButtonElement
+    const shuffledSources = new Set<string | null>([audio.getAttribute('src')])
+
+    for (let attempt = 0; attempt < TRACKS.length && !nextButton.disabled; attempt += 1) {
+      fireEvent.click(nextButton)
+      shuffledSources.add(audio.getAttribute('src'))
+    }
+    expect(nextButton).toBeDisabled()
+    expect(shuffledSources.size).toBe(TRACKS.length)
+
+    const endedSource = audio.getAttribute('src')
+    const playCount = vi.mocked(HTMLMediaElement.prototype.play).mock.calls.length
+    fireEvent(audio, new Event('ended'))
+    dispatchMediaSessionAction(handlers, 'nexttrack')
+    expect(audio.getAttribute('src')).toBe(endedSource)
+    expect(HTMLMediaElement.prototype.play).toHaveBeenCalledTimes(playCount)
+
+    result.unmount()
   })
 })

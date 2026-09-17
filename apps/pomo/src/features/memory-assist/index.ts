@@ -19,6 +19,7 @@ export type {MemoryMemo, MemoryRecallMode, MemoryReminderEvent} from './schema'
 export {useMemoryMemos} from './use-memos'
 export {useMemoryReminders, type MemoryReminders} from './use-reminders'
 export type {UseMemoryRemindersProps} from './use-reminders'
+export {isMemoryMemoDeletionPending} from './is-memory-memo-deletion-pending'
 export {createMemoryMemoDialogue} from './dialogue'
 export type {CreateMemoryMemoDialogueOptions} from './dialogue'
 export {

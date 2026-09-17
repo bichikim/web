@@ -1,8 +1,30 @@
 import {type Accessor, createSignal, onCleanup, onMount} from 'solid-js'
 import {useEvent} from '@winter-love/solid-use/event'
 
-import {MEMORY_MEMOS_CHANGED_EVENT, readMemoryMemos} from './repository'
+import {isMemoryMemoDeletionPending} from './is-memory-memo-deletion-pending'
+import {
+  MEMORY_MEMOS_CHANGED_EVENT,
+  type MemoryMemosChangedEventDetail,
+  readMemoryMemos,
+} from './repository'
 import {type MemoryMemo, parseMemoryMemos} from './schema'
+
+const parseMemoryMemosChangedEvent = (detail: unknown): MemoryMemosChangedEventDetail | null => {
+  if (
+    typeof detail !== 'object' ||
+    detail === null ||
+    !('memos' in detail) ||
+    !('revision' in detail) ||
+    typeof detail.revision !== 'number' ||
+    !Number.isSafeInteger(detail.revision) ||
+    detail.revision <= 0
+  ) {
+    return null
+  }
+
+  const memos = parseMemoryMemos(detail.memos)
+  return memos === null ? null : {memos, revision: detail.revision}
+}
 
 export const useMemoryMemos = (): Accessor<ReadonlyArray<MemoryMemo>> => {
   const [memos, setMemos] = createSignal<ReadonlyArray<MemoryMemo>>([])
@@ -16,11 +38,11 @@ export const useMemoryMemos = (): Accessor<ReadonlyArray<MemoryMemo>> => {
         return
       }
 
-      const nextMemos = parseMemoryMemos(event.detail)
+      const change = parseMemoryMemosChangedEvent(event.detail)
 
-      if (nextMemos !== null) {
-        storageRevision += 1
-        setMemos(nextMemos)
+      if (change !== null && change.revision > storageRevision) {
+        storageRevision = change.revision
+        setMemos(change.memos)
       }
     }
 
@@ -40,5 +62,5 @@ export const useMemoryMemos = (): Accessor<ReadonlyArray<MemoryMemo>> => {
     })
   })
 
-  return () => memos().filter((memo) => memo.deletionPending !== true)
+  return () => memos().filter((memo) => !isMemoryMemoDeletionPending(memo))
 }

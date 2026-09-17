@@ -12,6 +12,7 @@ import {
 
 const {
   DEFAULT_BACKGROUND,
+  getAutomaticScenePeriod,
   PTour,
   SceneToolbar,
   readFocusRoomEntrySession,
@@ -31,11 +32,39 @@ const expectTourStepTargets = (
 }
 
 beforeEach(setupStudio)
+let restoreDocumentHidden: (() => void) | undefined
+
 afterEach(() => {
   vi.useRealTimers()
+  restoreDocumentHidden?.()
+  restoreDocumentHidden = undefined
 })
 
 describe('PStudio', () => {
+  it('should refresh the automatic scene period after returning from a hidden tab', () => {
+    vi.setSystemTime(new Date(2026, 8, 16, 18, 59, 30))
+    configureStudio({entrySession: true})
+    vi.mocked(getAutomaticScenePeriod).mockImplementation((date) =>
+      date.getHours() >= 19 ? 'night' : 'day',
+    )
+
+    renderStudio()
+    fireEvent.click(screen.getByRole('button', {name: '자동 시간'}))
+
+    const scene = screen.getByRole('button', {name: '장면 로드 완료'}).parentElement
+    expect(scene).toHaveAttribute('data-time', 'day')
+
+    const documentHidden = vi.spyOn(document, 'hidden', 'get')
+    restoreDocumentHidden = () => documentHidden.mockRestore()
+    documentHidden.mockReturnValueOnce(true).mockReturnValueOnce(false)
+    document.dispatchEvent(new Event('visibilitychange', {bubbles: true}))
+    vi.setSystemTime(new Date(2026, 8, 16, 19, 0, 10))
+    expect(scene).toHaveAttribute('data-time', 'day')
+
+    document.dispatchEvent(new Event('visibilitychange', {bubbles: true}))
+    expect(scene).toHaveAttribute('data-time', 'night')
+  })
+
   it.each([false, true])(
     'should wait for display restoration before mounting the toolbar with visibility %s',
     (visible) => {

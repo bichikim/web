@@ -4,7 +4,12 @@ import {type Accessor, createMemo, createSignal, createUniqueId, type Setter} fr
 import * as m from '@paraglide/message'
 import {type CalendarEvent, getLegacyEventId} from '../calendar'
 import {usePEvents} from '../focus-room-dialogue'
-import {type MemoryMemo, memoryMemoDeletion, updateMemoryMemos} from '../memory-assist'
+import {
+  isMemoryMemoDeletionPending,
+  type MemoryMemo,
+  memoryMemoDeletion,
+  updateMemoryMemos,
+} from '../memory-assist'
 import {createCalendarAlarmSaver} from './create-calendar-alarm-saver'
 const CALENDAR_ALARM_ID_PREFIX = 'calendar-alarm:'
 const ALL_DAY_ALARM_HOUR = 9
@@ -70,16 +75,14 @@ export const useCalendarAlarmController = (
   const [time, setTime] = createSignal('')
   const [message, setMessage] = createSignal<string | null>(null)
   const [pending, setPending] = createSignal(false)
-  const storedMemo = createMemo(() => memos().find((memo) => memo.id === alarmId()))
+  const usableMemos = () => memos().filter((memo) => !isMemoryMemoDeletionPending(memo))
+  const storedMemo = createMemo(() => usableMemos().find((memo) => memo.id === alarmId()))
   const legacyAlarm = createMemo(() => {
     const legacyId = getLegacyEventId(event())
     return (
       legacyId !== null &&
-      memos().some(
-        (memo) =>
-          memo.id === getMemoId(legacyId) &&
-          memo.nextExactReminderAt !== null &&
-          memo.deletionPending !== true,
+      usableMemos().some(
+        (memo) => memo.id === getMemoId(legacyId) && memo.nextExactReminderAt !== null,
       )
     )
   })

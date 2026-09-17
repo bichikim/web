@@ -16,6 +16,7 @@ const SETTINGS_BUTTON_CLASSES = cx(
 )
 
 export interface AlbumReleaseCardProps {
+  readonly disabled?: boolean
   readonly album: AdminAlbum
   readonly activeOfferCount?: number
   readonly onPublicSettingsSelect?: () => void
@@ -48,6 +49,7 @@ export const AlbumReleaseCard = (props: AlbumReleaseCardProps) => (
       <Show when={props.onPublicSettingsSelect !== undefined}>
         <button
           class={SETTINGS_BUTTON_CLASSES}
+          disabled={props.disabled}
           onClick={() => props.onPublicSettingsSelect?.()}
           type="button"
         >

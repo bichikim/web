@@ -1,8 +1,6 @@
 // oxlint-disable no-magic-numbers, eslint/no-bitwise -- MPEG and ID3 use fixed binary fields.
-const ID3_HEADER_BYTES = 10
-const ID3_FOOTER_BYTES = 10
-const ID3_FOOTER_FLAG = 0x10
-const MAXIMUM_ID3_BYTES = 512 * 1024
+import {getMp3AudioOffset} from './get-mp3-audio-offset'
+
 const MAXIMUM_SYNC_SEARCH_BYTES = 64 * 1024
 const MAXIMUM_VBR_HEADER_OFFSET = 128
 const MPEG_VERSION_1 = 0b11
@@ -91,45 +89,6 @@ const rewriteVbriHeader = (bytes: Uint8Array, frameBytes: number, frameCount: nu
   view.setUint32(markerOffset + 14, frameCount)
 }
 
-const readSynchsafeInteger = (bytes: Uint8Array, offset: number): number => {
-  const first = bytes[offset]
-  const second = bytes[offset + 1]
-  const third = bytes[offset + 2]
-  const fourth = bytes[offset + 3]
-
-  if (
-    first === undefined ||
-    second === undefined ||
-    third === undefined ||
-    fourth === undefined ||
-    (first | second | third | fourth) > 0x7f
-  ) {
-    throw new TypeError('invalid_mp3_id3')
-  }
-
-  return (first << 21) | (second << 14) | (third << 7) | fourth
-}
-
-const getAudioStart = (bytes: Uint8Array): number => {
-  if (bytes[0] !== 0x49 || bytes[1] !== 0x44 || bytes[2] !== 0x33) {
-    return 0
-  }
-
-  if (bytes.byteLength < ID3_HEADER_BYTES) {
-    throw new TypeError('invalid_mp3_id3')
-  }
-
-  const bodyBytes = readSynchsafeInteger(bytes, 6)
-  const footerBytes = (bytes[5] & ID3_FOOTER_FLAG) === 0 ? 0 : ID3_FOOTER_BYTES
-  const totalBytes = ID3_HEADER_BYTES + bodyBytes + footerBytes
-
-  if (totalBytes > MAXIMUM_ID3_BYTES || totalBytes > bytes.byteLength) {
-    throw new TypeError('invalid_mp3_id3')
-  }
-
-  return totalBytes
-}
-
 const getSampleRate = (version: number, sampleRateIndex: number): number => {
   const baseRate = MPEG_1_SAMPLE_RATES[sampleRateIndex]!
   if (version === MPEG_VERSION_1) {
@@ -203,7 +162,10 @@ export const extractMp3Preview = (bytes: Uint8Array, maximumDurationMs: number):
     throw new TypeError('invalid_preview_duration')
   }
 
-  const audioStart = getAudioStart(bytes)
+  const audioStart = getMp3AudioOffset(bytes)
+  if (audioStart > bytes.byteLength) {
+    throw new TypeError('invalid_mp3_id3')
+  }
   const firstFrame = findFirstFrame(bytes, audioStart)
   let durationMs = 0
   let frameOffset = firstFrame

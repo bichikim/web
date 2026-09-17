@@ -187,6 +187,7 @@ export const useChat = (props: UseChatProps): ChatController => {
         setContextTokens(response.contextTokens)
         setMessages((value) => [...value, response.message])
         setStreamingText('')
+        setAnswerDraft(null)
         setSummaryCount((value) => value + (response.wasCompacted ? 1 : 0))
         pendingUser = null
         setState({status: 'ready'})

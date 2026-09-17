@@ -31,6 +31,7 @@ interface AdminMusicFormProps {
 
 export const AlbumDraftForm = (props: AdminMusicFormProps) => (
   <form
+    aria-label="앨범 초안 만들기"
     class="rounded-5 border border-#e8bc88/20 bg-white/4 p-5 sm:p-7"
     onSubmit={(event) => props.model.handleAlbumSubmit(event)}
   >

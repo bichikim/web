@@ -2,18 +2,19 @@
 import type {APIEvent} from '@solidjs/start/server'
 import {afterEach, beforeEach, expect, it, vi} from 'vitest'
 
+import {UserRequestResolutionError} from 'src/server/auth/user-request-resolution-error'
 import {createMicrosoftCalendarProvider} from 'src/server/calendar/providers/microsoft'
 import {type CalendarRepository, createCalendarService} from 'src/server/calendar/service'
 import type {TokenVault} from 'src/server/calendar/token-vault'
 
 const dependencyMocks = vi.hoisted(() => ({
-  authenticateUserRequest: vi.fn(),
   getCalendarService: vi.fn(),
   listEvents: vi.fn(),
+  resolveUserRequest: vi.fn(),
 }))
 
-vi.mock('src/server/user-auth/request', () => ({
-  authenticateUserRequest: dependencyMocks.authenticateUserRequest,
+vi.mock('src/server/auth/resolve-user-request', () => ({
+  resolveUserRequest: dependencyMocks.resolveUserRequest,
 }))
 vi.mock('src/server/calendar/runtime', () => ({
   getCalendarService: dependencyMocks.getCalendarService,
@@ -26,7 +27,7 @@ const createEvent = (query: string): APIEvent =>
 
 beforeEach(() => {
   vi.clearAllMocks()
-  dependencyMocks.authenticateUserRequest.mockResolvedValue({cookies: [], userId: 'user-1'})
+  dependencyMocks.resolveUserRequest.mockResolvedValue({cookies: [], userId: 'user-1'})
   dependencyMocks.getCalendarService.mockReturnValue({listEvents: dependencyMocks.listEvents})
   dependencyMocks.listEvents.mockResolvedValue({
     connectedConnections: 0,
@@ -41,7 +42,7 @@ afterEach(() => {
 })
 
 it('should require a user session', async () => {
-  dependencyMocks.authenticateUserRequest.mockResolvedValue({
+  dependencyMocks.resolveUserRequest.mockResolvedValue({
     cookies: ['session=refreshed'],
     userId: null,
   })
@@ -54,6 +55,25 @@ it('should require a user session', async () => {
 
   expect(response.status).toBe(401)
   expect(response.headers.getSetCookie()).toEqual(['session=refreshed'])
+})
+
+it('should preserve refreshed cookies when user resolution fails', async () => {
+  const error = new Error('user mapping down')
+  const consoleError = vi.spyOn(console, 'error').mockImplementation(() => undefined)
+  dependencyMocks.resolveUserRequest.mockRejectedValue(
+    new UserRequestResolutionError(['session=refreshed'], error),
+  )
+
+  const response = await GET(
+    createEvent(
+      'start=2026-09-04T00%3A00%3A00.000Z&end=2026-09-05T00%3A00%3A00.000Z&timeZone=Asia%2FSeoul',
+    ),
+  )
+
+  expect(response.status).toBe(503)
+  await expect(response.json()).resolves.toEqual({error: 'calendar_unavailable'})
+  expect(response.headers.getSetCookie()).toEqual(['session=refreshed'])
+  expect(consoleError).toHaveBeenCalledWith('Failed to resolve calendar user', error)
 })
 
 it('should reject reversed or unbounded query ranges', async () => {

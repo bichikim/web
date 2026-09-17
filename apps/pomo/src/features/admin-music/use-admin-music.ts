@@ -1,3 +1,6 @@
+import type {TrackImportTask} from './types'
+import {useImportNavigation} from './use-import-navigation'
+import {useAsyncTask} from '../async-task'
 import {createAsync, revalidate, useAction, useSubmission, useSubmissions} from '@solidjs/router'
 import {createEffect, createMemo, createSignal, type JSX, onMount} from 'solid-js'
 
@@ -6,6 +9,12 @@ import {type AdminCatalog, type AlbumStatusAction} from './catalog'
 import {adminCatalogQuery} from './catalog-query'
 import {useAlbumDraft} from './use-album-draft'
 import {useTrackManagement} from './use-track-management'
+
+const getAlbumStats = (albums: AdminCatalog['albums']) => ({
+  draft: albums.filter((album) => album.status === 'draft').length,
+  published: albums.filter((album) => album.status === 'published').length,
+  total: albums.length,
+})
 
 export const useAdminMusic = () => {
   const changeAlbumStatus = useAction(changeAdminAlbumStatusAction)
@@ -40,9 +49,15 @@ export const useAdminMusic = () => {
         : (nextCatalog.albums[0]?.id ?? null),
     )
   }
+  let catalogRevision = 0
   const refreshCatalog = async (): Promise<void> => {
+    catalogRevision += 1
+    const revision = catalogRevision
     await revalidate(adminCatalogQuery.key)
     const result = await adminCatalogQuery()
+    if (revision !== catalogRevision) {
+      return
+    }
 
     if (result.status === 'failed') {
       throw new Error(result.message)
@@ -51,24 +66,29 @@ export const useAdminMusic = () => {
     applyCatalog(result.catalog)
   }
 
+  const trackManagement = useTrackManagement({refreshCatalog, setMessage})
+  const trackImport = useAsyncTask({
+    concurrency: 'exhaust',
+    task: async (importTracks: TrackImportTask) => {
+      const summary = await importTracks()
+      if (summary !== undefined) {
+        await trackManagement.completeTrackImport(summary)
+      }
+    },
+  })
+  const isImportingTracks = () => trackImport.state().status === 'pending'
+  const importNavigation = useImportNavigation(isImportingTracks)
   const albumDraft = useAlbumDraft({
     onAlbumCreated: (albumId) => {
-      setSelectedAlbumId(albumId)
+      if (!isImportingTracks()) {
+        setSelectedAlbumId(albumId)
+      }
       setIsAlbumEditorOpen(false)
     },
     refreshCatalog,
     setMessage,
   })
-  const trackManagement = useTrackManagement({refreshCatalog, setMessage})
-  const albumStats = createMemo(() => {
-    const {albums} = catalog()
-
-    return {
-      draft: albums.filter((album) => album.status === 'draft').length,
-      published: albums.filter((album) => album.status === 'published').length,
-      total: albums.length,
-    }
-  })
+  const albumStats = createMemo(() => getAlbumStats(catalog().albums))
   const getTrackCount = (albumId: string): number => {
     const currentCatalog = catalog()
     const albumTrackIds = new Set(
@@ -135,12 +155,14 @@ export const useAdminMusic = () => {
   return {
     ...albumDraft,
     ...trackManagement,
+    ...importNavigation,
     albumStats,
     catalog,
     getTrackCount,
     handleAlbumStatusChange,
     handleOfferSubmit,
     isAlbumEditorOpen,
+    isImportingTracks,
     isLoading: catalogLoading,
     isSavingOffer: () => offerSubmission.pending === true,
     isUpdatingAlbum: (albumId: string) =>
@@ -148,6 +170,7 @@ export const useAdminMusic = () => {
         (submission) => submission.pending && submission.input[0] === albumId,
       ),
     message,
+    runTrackImport: trackImport.execute,
     selectedAlbumId,
     setIsAlbumEditorOpen,
     setSelectedAlbumId,

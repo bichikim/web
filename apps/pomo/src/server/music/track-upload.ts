@@ -1,3 +1,4 @@
+import {validateMp3Header} from './validate-mp3-header'
 import {parseWebStream} from 'music-metadata'
 
 import {createLegacyTrackPreviewKey, createTrackPreviewKey} from './track-upload/preview'
@@ -228,7 +229,10 @@ export const inspectTrackUpload = async (
 
   const parseAudio =
     options.parseAudio ?? ((stream, fileInfo) => parseWebStream(stream, fileInfo, {duration: true}))
-  const metadata = await parseAudio(response.body, {mimeType: 'audio/mpeg', size})
+  const metadata = await parseAudio(validateMp3Header(response.body, size), {
+    mimeType: 'audio/mpeg',
+    size,
+  })
   const {duration} = metadata.format
   const {codec} = metadata.format
 
