@@ -33,10 +33,15 @@ export const MemoryMemoList = () => {
 
   const handleEdit = async (memo: MemoryMemo, edit: MemoryMemoEdit) => {
     const now = new Date()
+    const hasPendingExactReminder =
+      edit.exactReminderAt === memo.exactReminderAt &&
+      memo.nextExactReminderAt !== null &&
+      Date.parse(memo.nextExactReminderAt) > now.getTime()
 
     if (
       edit.exactEnabled &&
-      !isFirstReminderInFuture(edit.exactReminderAt, edit.exactReminderAdvanceMinutes, now)
+      !isFirstReminderInFuture(edit.exactReminderAt, edit.exactReminderAdvanceMinutes, now) &&
+      !hasPendingExactReminder
     ) {
       return m.memory_memo_invalid_time()
     }
