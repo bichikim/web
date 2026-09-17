@@ -320,8 +320,6 @@ export const usePlayerController = (props: UsePlayerControllerProps): PlayerCont
               playback: {...transition.playback, positionSeconds},
               seekPending: false,
             }
-    } else if (transition !== null) {
-      playbackTransition = null
     }
 
     cancelPendingRestart()
