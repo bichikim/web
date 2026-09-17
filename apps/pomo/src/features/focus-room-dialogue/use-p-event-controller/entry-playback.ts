@@ -67,14 +67,17 @@ export const createEntryEventPlayback = (
     }
 
     hasStarted = true
-    writePlaybackSession()
     options.playback
       .playSequence(repository, {
         dialogueIds: selectedDialogueIds,
         onDialogueStart: () => undefined,
         onSequenceStop: () => undefined,
       })
+      .then(() => {
+        writePlaybackSession()
+      })
       .catch((error: unknown) => {
+        hasStarted = false
         console.error('Unexpected entry dialogue sequence failure.', error)
       })
   }
