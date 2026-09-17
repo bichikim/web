@@ -23,7 +23,7 @@ it('should load and validate the administrator catalog through the existing endp
 
   await expect(adminCatalogQuery()).resolves.toEqual({catalog: emptyCatalog, status: 'ready'})
   expect(fetchMock).toHaveBeenCalledOnce()
-  expect(fetchMock).toHaveBeenCalledWith('/api/admin/music')
+  expect(fetchMock).toHaveBeenCalledWith('/api/admin/music', expect.any(Object))
 })
 
 it('should deduplicate simultaneous catalog requests', async () => {

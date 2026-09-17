@@ -1,8 +1,8 @@
 import type {z} from 'zod'
 
-import {apiFetch} from '../http-client'
+import {apiFetch, type HttpRequestInit} from '../http-client'
 
-export interface ApiJsonRequestOptions extends Omit<RequestInit, 'body'> {
+export interface ApiJsonRequestOptions extends Omit<HttpRequestInit, 'body'> {
   readonly body?: object
 }
 
@@ -48,7 +48,7 @@ export class ApiJsonError extends Error {
   }
 }
 
-const createJsonRequestInit = (options: ApiJsonRequestOptions): RequestInit => {
+const createJsonRequestInit = (options: ApiJsonRequestOptions): HttpRequestInit => {
   const {body, ...init} = options
 
   if (body === undefined) {

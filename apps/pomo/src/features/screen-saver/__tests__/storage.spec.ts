@@ -47,24 +47,6 @@ describe('createScreenSaverRepository', () => {
     expect(await repository.read()).toBe('off')
   })
 
-  it('should return the web choice during repair and serialize a newer write after it', async () => {
-    const storage = createStorage()
-    const completion = Promise.withResolvers<void>()
-    const persist = storage.writeToss.getMockImplementation()!
-    storage.writeToss.mockImplementationOnce(async (key, value) => {
-      await completion.promise
-      await persist(key, value)
-    })
-    const repository = createScreenSaverRepository(storage)
-
-    expect(await repository.read()).toBe('10m')
-    const write = repository.write('off')
-    completion.resolve()
-    await write
-    expect(await storage.readToss()).toBe('off')
-    expect(storage.writeToss.mock.calls.map((call) => call[1])).toEqual(['10m', 'off'])
-  })
-
   it.each([
     [false, false],
     [false, true],
@@ -127,57 +109,6 @@ describe('createScreenSaverRepository', () => {
     expect(await storage.readToss()).toBe('off')
     expect(await repository.read()).toBe('10m')
   })
-
-  it('should serialize complete writes and wait for them before reading', async () => {
-    const storage = createStorage()
-    const completion = Promise.withResolvers<void>()
-    const started = Promise.withResolvers<void>()
-    storage.writeWeb.mockReturnValueOnce(new Error('web unavailable'))
-    storage.writeToss.mockImplementationOnce(async () => {
-      started.resolve()
-      await completion.promise
-    })
-    const repository = createScreenSaverRepository(storage)
-    const first = repository.write('1m')
-    await started.promise
-    const second = repository.write('off')
-    const read = repository.read()
-    expect(storage.writeWeb).toHaveBeenCalledTimes(1)
-    completion.resolve()
-    await Promise.all([first, second])
-    expect(await read).toBe('off')
-    expect(storage.writeToss.mock.calls.map((call) => call[1])).toEqual(['1m', 'off', 'off'])
-  })
-
-  it.each(['value', 'missing', 'error'] as const)(
-    'should retry a late native read returning %s after a new write',
-    async (outcome) => {
-      const storage = createStorage()
-      storage.readWeb.mockReturnValueOnce(null)
-      const completion = Promise.withResolvers<unknown>()
-      const started = Promise.withResolvers<void>()
-      storage.readToss.mockImplementationOnce(() => {
-        started.resolve()
-        return completion.promise
-      })
-      const repository = createScreenSaverRepository(storage)
-      const read = repository.read()
-      await started.promise
-      await repository.write('off')
-      switch (outcome) {
-        case 'value':
-          completion.resolve('20m')
-          break
-        case 'missing':
-          completion.resolve(null)
-          break
-        case 'error':
-          completion.reject(new Error('native unavailable'))
-          break
-      }
-      expect(await read).toBe('off')
-    },
-  )
 
   it.each([null, 'invalid', '20m'])(
     'should validate native restoration of %s and rebuild the web copy',

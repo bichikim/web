@@ -1,3 +1,4 @@
+import {type Preference, usePreference} from 'src/hooks/use-preference'
 import {type Accessor, createEffect, createMemo, createSignal, onCleanup, untrack} from 'solid-js'
 import {useEvent} from '@winter-love/solid-use/event'
 
@@ -5,11 +6,12 @@ import {
   createInitialPlaybackState,
   createShuffleQueue,
   normalizeTrackIndex,
+  playlistPreference,
+  type PlaylistPreference,
   type PTrack,
   stopPPlayback,
   usePAudioVisualizer,
   usePPlaybackPersistence,
-  writePPlaylist,
 } from '../../features/focus-room-audio'
 import {usePlayerVolumeDucking} from '../../features/focus-room-dialogue'
 import type {MediaPlayerOptions, PlayerState, SelectTrackOptions} from './types'
@@ -136,8 +138,14 @@ export const usePlayerController = (props: UsePlayerControllerProps): PlayerCont
     }
     notifyError(error)
   }
+  const [savedPlaylist, setSavedPlaylist] = untrack(
+    (): Preference<PlaylistPreference> =>
+      props.tracks === undefined
+        ? usePreference({...playlistPreference, onError: handleStorageError})
+        : [() => null, () => undefined],
+  )
   const persistTrackQueue = (queue: readonly PTrack[]) => {
-    writePPlaylist(queue.map((track) => track.id)).catch(handleStorageError)
+    setSavedPlaylist({trackIds: queue.map((track) => track.id)})
   }
   const clearPendingRestart = () => {
     restartPlaybackPending = false
@@ -357,10 +365,10 @@ export const usePlayerController = (props: UsePlayerControllerProps): PlayerCont
     onRestore: queueController.initializePlayback,
     playbackRevision: () => playbackRevision,
     queueRevision: queueController.queueRevision,
+    savedPlaylist,
     tracks,
   })
 
-  const {window} = globalThis
   const persistCurrentPlayback = () => {
     if (restartPlaybackPending) {
       return
@@ -416,8 +424,8 @@ export const usePlayerController = (props: UsePlayerControllerProps): PlayerCont
     playbackPersistence.persistPlaybackProgress()
   }
 
-  if (typeof window !== 'undefined') {
-    useEvent(window, 'pagehide', persistCurrentPlayback)
+  if (typeof globalThis.addEventListener === 'function') {
+    useEvent(globalThis, 'pagehide', persistCurrentPlayback)
   }
 
   onCleanup(() => {

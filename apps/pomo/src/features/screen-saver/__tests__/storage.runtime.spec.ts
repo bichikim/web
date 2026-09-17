@@ -22,7 +22,7 @@ describe('screen-saver storage', () => {
 
   afterEach(() => {
     vi.restoreAllMocks()
-    Reflect.deleteProperty(window, 'ReactNativeWebView')
+    Reflect.deleteProperty(globalThis, 'ReactNativeWebView')
   })
 
   it('should default to ten minutes when no valid preference exists', async () => {
@@ -41,7 +41,7 @@ describe('screen-saver storage', () => {
   })
 
   it('should use native storage when the host bridge is available', async () => {
-    Object.defineProperty(window, 'ReactNativeWebView', {configurable: true, value: {}})
+    Object.defineProperty(globalThis, 'ReactNativeWebView', {configurable: true, value: {}})
     storageMocks.getItem.mockResolvedValue('"1h"')
     storageMocks.setItem.mockResolvedValue()
 
@@ -53,7 +53,7 @@ describe('screen-saver storage', () => {
   })
 
   it('should restore a repaired native choice after web storage is cleared', async () => {
-    Object.defineProperty(window, 'ReactNativeWebView', {configurable: true, value: {}})
+    Object.defineProperty(globalThis, 'ReactNativeWebView', {configurable: true, value: {}})
     localStorage.setItem('pomo:screen-saver-delay:v1', '"off"')
     let stored = '"10m"'
     storageMocks.getItem.mockImplementation(async () => stored)
@@ -68,28 +68,8 @@ describe('screen-saver storage', () => {
     expect(localStorage.getItem('pomo:screen-saver-delay:v1')).toBe('"off"')
   })
 
-  it('should return the latest saved choice when a pending native read returns an older value', async () => {
-    Object.defineProperty(window, 'ReactNativeWebView', {configurable: true, value: {}})
-    const completion = Promise.withResolvers<string | null>()
-    const started = Promise.withResolvers<void>()
-    storageMocks.getItem.mockImplementationOnce(() => {
-      started.resolve()
-      return completion.promise
-    })
-    storageMocks.setItem.mockResolvedValue()
-
-    const read = readScreenSaverDelay()
-    await started.promise
-    await writeScreenSaverDelay('off')
-    completion.resolve('"20m"')
-
-    expect(await read).toBe('off')
-    expect(localStorage.getItem('pomo:screen-saver-delay:v1')).toBe('"off"')
-    expect(storageMocks.setItem).toHaveBeenCalledWith('pomo:screen-saver-delay:v1', '"off"')
-  })
-
   it('should restore a native choice after a failed web write and module reload', async () => {
-    Object.defineProperty(window, 'ReactNativeWebView', {configurable: true, value: {}})
+    Object.defineProperty(globalThis, 'ReactNativeWebView', {configurable: true, value: {}})
     localStorage.setItem('pomo:screen-saver-delay:v1', '"10m"')
     let stored = '"10m"'
     storageMocks.getItem.mockImplementation(async () => stored)

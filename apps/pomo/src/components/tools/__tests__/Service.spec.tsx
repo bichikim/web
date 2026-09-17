@@ -1,4 +1,5 @@
 /** @vitest-environment jsdom */
+import {PreferenceProvider} from 'src/hooks/use-preference'
 import {fireEvent, render, screen, waitFor} from '@solidjs/testing-library'
 import {afterEach, expect, it} from 'vitest'
 import {Service} from '../Service'
@@ -8,7 +9,11 @@ afterEach(() => {
 })
 it('should not mark valid service days invalid while the enlistment date is empty', async () => {
   localStorage.clear()
-  render(() => <Service />)
+  render(() => (
+    <PreferenceProvider>
+      <Service />
+    </PreferenceProvider>
+  ))
   const manual = screen.getByRole('switch', {name: '복무기간 직접 입력'})
   await waitFor(() => expect(manual).toBeEnabled())
   fireEvent.click(manual)

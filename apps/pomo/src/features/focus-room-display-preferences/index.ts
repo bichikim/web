@@ -6,6 +6,8 @@ export {
 export {
   type CreatePDisplayPreferencesRepositoryOptions,
   createPDisplayPreferencesRepository,
+  DISPLAY_PREFERENCES_STORAGE_KEY,
+  parsePDisplayPreferences,
   type PDisplayPreferencesRepository,
   type PDisplayPreferencesStorage,
   readPDisplayPreferences,

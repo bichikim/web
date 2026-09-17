@@ -1,10 +1,14 @@
 import {WEATHER_CITY_SLUGS, type WeatherCitySlug} from 'src/features/weather'
 import {getWeatherFeedState, type WeatherFeedState} from './get-weather-feed-state'
 import {ingestWeatherCity, type WeatherIngestionResult} from './ingest-weather'
+import {
+  getWeatherRetryAfterSeconds,
+  weatherFeedSuccessResponse,
+  weatherNotFoundResponse,
+  weatherUnavailableResponse,
+} from './feed-http'
 import {getSecondsUntilNextKmaAvailability} from './kma-time'
 
-const HTTP_NOT_FOUND = 404
-const HTTP_SERVICE_UNAVAILABLE = 503
 const MILLISECONDS_PER_SECOND = 1_000
 const UNEXPECTED_FAILURE_RETRY_SECONDS = 60
 
@@ -77,10 +81,7 @@ export const createWeatherFeedResponse = async (
   now = new Date(),
 ): Promise<Response> => {
   if (!isWeatherCitySlug(city)) {
-    return Response.json(
-      {code: 'weather_city_not_found'},
-      {headers: {'Cache-Control': 'no-store'}, status: HTTP_NOT_FOUND},
-    )
+    return weatherNotFoundResponse('weather_city_not_found')
   }
 
   let outcome: WeatherFeedOutcome | undefined
@@ -95,30 +96,18 @@ export const createWeatherFeedResponse = async (
     const retryAfterSeconds =
       outcome?.retryAfter === undefined
         ? undefined
-        : Math.max(
-            1,
-            Math.ceil((outcome.retryAfter.getTime() - now.getTime()) / MILLISECONDS_PER_SECOND),
-          )
-    const headers: Record<string, string> = {'Cache-Control': 'no-store'}
-
-    if (retryAfterSeconds !== undefined) {
-      headers['Retry-After'] = retryAfterSeconds.toString()
-    }
-
+        : getWeatherRetryAfterSeconds(outcome.retryAfter, now)
     const code =
       outcome?.collectionStatus === 'collecting' ? 'weather_collecting' : 'weather_unavailable'
 
-    return Response.json({code}, {headers, status: HTTP_SERVICE_UNAVAILABLE})
+    return weatherUnavailableResponse({code, retryAfterSeconds})
   }
 
   const nextAvailabilityMaxAge = getSecondsUntilNextKmaAvailability(now)
   const retryMaxAge =
     outcome.retryAfter === undefined
       ? undefined
-      : Math.max(
-          1,
-          Math.ceil((outcome.retryAfter.getTime() - now.getTime()) / MILLISECONDS_PER_SECOND),
-        )
+      : getWeatherRetryAfterSeconds(outcome.retryAfter, now)
   const maxAge =
     retryMaxAge === undefined
       ? nextAvailabilityMaxAge
@@ -131,10 +120,5 @@ export const createWeatherFeedResponse = async (
           expiresAt: new Date(now.getTime() + maxAge * MILLISECONDS_PER_SECOND).toISOString(),
         }
 
-  return Response.json(feed, {
-    headers: {
-      'Cache-Control': `public, max-age=${maxAge}, s-maxage=${maxAge}`,
-      'X-Content-Type-Options': 'nosniff',
-    },
-  })
+  return weatherFeedSuccessResponse(feed, maxAge)
 }

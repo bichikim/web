@@ -1,5 +1,6 @@
 /** @vitest-environment jsdom */
 
+import {PreferenceProvider} from 'src/hooks/use-preference'
 import {render} from '@solidjs/testing-library'
 import {describe, expect, it, vi} from 'vitest'
 
@@ -26,7 +27,7 @@ describe('PMusicPlayerContent queue and restoration paths', () => {
           resolveTracks = (tracks) => resolve({defaultTracks: tracks, tracks})
         }),
     )
-    const result = render(() => <PMusicPlayerContent />)
+    const result = render(() => <PMusicPlayerContent />, {wrapper: PreferenceProvider})
     const audio = createAudio()
 
     latestViewProps().onAlbumAdd?.([])
@@ -55,7 +56,7 @@ describe('PMusicPlayerContent queue and restoration paths', () => {
           // Intentionally pending to keep the playlist unresolved.
         }),
     )
-    render(() => <PMusicPlayerContent />)
+    render(() => <PMusicPlayerContent />, {wrapper: PreferenceProvider})
     const emptyAudio = createAudio()
     latestViewProps().onAlbumAdd?.([ADDED_TRACK])
     latestViewProps().onTrackRemove?.(0)
@@ -73,14 +74,16 @@ describe('PMusicPlayerContent queue and restoration paths', () => {
     const failure = new Error('Storage is unavailable')
     const onError = vi.fn()
     featureMocks.writePPlaylist.mockRejectedValueOnce(failure)
-    render(() => <PMusicPlayerContent onError={onError} />)
+    render(() => <PMusicPlayerContent onError={onError} />, {wrapper: PreferenceProvider})
     emit('play')
 
     latestViewProps().onAlbumAdd?.([ADDED_TRACK])
     await Promise.resolve()
 
-    expect(featureMocks.writePPlaylist).toHaveBeenCalledWith([ADDED_TRACK.id])
-    expect(onError).toHaveBeenCalledWith(failure)
+    await vi.waitFor(() =>
+      expect(featureMocks.writePPlaylist).toHaveBeenCalledWith([ADDED_TRACK.id]),
+    )
+    await vi.waitFor(() => expect(onError).toHaveBeenCalledWith(failure))
     expect(latestViewProps().isPlaying).toBe(true)
   })
 
@@ -91,7 +94,7 @@ describe('PMusicPlayerContent queue and restoration paths', () => {
           // Intentionally pending to isolate the queue edit.
         }),
     )
-    render(() => <PMusicPlayerContent />)
+    render(() => <PMusicPlayerContent />, {wrapper: PreferenceProvider})
     const audio = createAudio()
 
     latestViewProps().onAlbumAdd?.([ADDED_TRACK, TRACKS[0], TRACKS[1]])
@@ -113,7 +116,7 @@ describe('PMusicPlayerContent queue and restoration paths', () => {
           // Intentionally pending to isolate the queue edit.
         }),
     )
-    render(() => <PMusicPlayerContent />)
+    render(() => <PMusicPlayerContent />, {wrapper: PreferenceProvider})
     const audio = createAudio()
 
     latestViewProps().onAlbumAdd?.([ADDED_TRACK, TRACKS[0], TRACKS[1]])
@@ -145,7 +148,7 @@ describe('PMusicPlayerContent queue and restoration paths', () => {
           resolveClearedTracks = (tracks) => resolve({defaultTracks: tracks, tracks})
         }),
     )
-    const cleared = render(() => <PMusicPlayerContent />)
+    const cleared = render(() => <PMusicPlayerContent />, {wrapper: PreferenceProvider})
     latestViewProps().onAlbumClear?.()
     latestViewProps().onAlbumAdd?.([ADDED_TRACK])
     latestViewProps().onAlbumClear?.()
@@ -161,7 +164,7 @@ describe('PMusicPlayerContent queue and restoration paths', () => {
           resolveMergedTracks = (tracks) => resolve({defaultTracks: tracks, tracks})
         }),
     )
-    render(() => <PMusicPlayerContent />)
+    render(() => <PMusicPlayerContent />, {wrapper: PreferenceProvider})
     latestViewProps().onAlbumAdd?.([ADDED_TRACK])
     resolveMergedTracks?.(TRACKS)
     await Promise.resolve()
@@ -180,14 +183,14 @@ describe('PMusicPlayerContent queue and restoration paths', () => {
           resolveTracks = (tracks) => resolve({defaultTracks: tracks, tracks})
         }),
     )
-    const result = render(() => <PMusicPlayerContent />)
+    const result = render(() => <PMusicPlayerContent />, {wrapper: PreferenceProvider})
     result.unmount()
     resolveTracks?.(TRACKS)
     await Promise.resolve()
     await Promise.resolve()
 
     featureMocks.loadPTrackQueueSource.mockRejectedValueOnce(new Error('playlist failed'))
-    render(() => <PMusicPlayerContent />)
+    render(() => <PMusicPlayerContent />, {wrapper: PreferenceProvider})
     await Promise.resolve()
     await Promise.resolve()
     expect(featureMocks.visualizerStop).toHaveBeenCalled()
@@ -200,7 +203,7 @@ describe('PMusicPlayerContent queue and restoration paths', () => {
       trackId: 'two',
     } satisfies PPlaybackState
     featureMocks.readPPlayback.mockResolvedValue(storedPlayback)
-    render(() => <PMusicPlayerContent />)
+    render(() => <PMusicPlayerContent />, {wrapper: PreferenceProvider})
     await Promise.resolve()
     await Promise.resolve()
     await Promise.resolve()
@@ -221,7 +224,7 @@ describe('PMusicPlayerContent queue and restoration paths', () => {
     featureMocks.readPPlaylist.mockReturnValue(playlist.promise)
     featureMocks.resolvePPlaylist.mockReturnValue(restoredTracks)
 
-    render(() => <PMusicPlayerContent />)
+    render(() => <PMusicPlayerContent />, {wrapper: PreferenceProvider})
     await Promise.resolve()
     await Promise.resolve()
     await Promise.resolve()
@@ -269,7 +272,7 @@ describe('PMusicPlayerContent queue and restoration paths', () => {
       }),
     )
 
-    render(() => <PMusicPlayerContent />)
+    render(() => <PMusicPlayerContent />, {wrapper: PreferenceProvider})
     latestViewProps().onAlbumAdd?.([ADDED_TRACK])
     resolveTracks?.(TRACKS)
     await vi.waitFor(() =>
@@ -315,7 +318,7 @@ describe('PMusicPlayerContent queue and restoration paths', () => {
       }),
     )
 
-    render(() => <PMusicPlayerContent />)
+    render(() => <PMusicPlayerContent />, {wrapper: PreferenceProvider})
     latestViewProps().onAlbumAdd?.([ADDED_TRACK])
     resolveTracks?.(TRACKS)
     await vi.waitFor(() => expect(latestViewProps().tracks).toEqual([...TRACKS, ADDED_TRACK]))
@@ -355,7 +358,7 @@ describe('PMusicPlayerContent queue and restoration paths', () => {
       }),
     )
 
-    render(() => <PMusicPlayerContent />)
+    render(() => <PMusicPlayerContent />, {wrapper: PreferenceProvider})
     latestViewProps().onAlbumAdd?.([ADDED_TRACK, TRACKS[0]])
     featureMocks.resolveTrackRemoval.mockReturnValueOnce({
       currentTrackChanged: false,

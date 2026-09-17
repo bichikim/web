@@ -1,6 +1,7 @@
 import {z} from 'zod'
 
 import type {LanguageLearningLanguage} from './schema'
+import type {LanguageLearningStorageOptions} from './storage'
 import {type LanguageLearningWord, languageLearningWordSchema} from './word-schema'
 
 const STORAGE_KEY = 'pomo:language-learning:words:v1'
@@ -12,9 +13,11 @@ export interface AppendLanguageLearningWordsResult {
   readonly skippedCount: number
 }
 
-export const readLanguageLearningWords = (): ReadonlyArray<LanguageLearningWord> => {
+export const readLanguageLearningWords = (
+  options?: LanguageLearningStorageOptions,
+): ReadonlyArray<LanguageLearningWord> => {
   try {
-    const stored = localStorage.getItem(STORAGE_KEY)
+    const stored = (options?.storage ?? globalThis.localStorage).getItem(STORAGE_KEY)
     return stored === null ? [] : storedWordsSchema.parse(JSON.parse(stored))
   } catch (error: unknown) {
     console.warn('Failed to read language learning words.', error)
@@ -22,17 +25,23 @@ export const readLanguageLearningWords = (): ReadonlyArray<LanguageLearningWord>
   }
 }
 
-export const writeLanguageLearningWords = (words: ReadonlyArray<LanguageLearningWord>) => {
+export const writeLanguageLearningWords = (
+  words: ReadonlyArray<LanguageLearningWord>,
+  options?: LanguageLearningStorageOptions,
+): void => {
   const parsed = storedWordsSchema.parse(words)
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(parsed))
-  window.dispatchEvent(new CustomEvent(LANGUAGE_LEARNING_WORDS_CHANGED_EVENT))
+  const storage = options?.storage ?? globalThis.localStorage
+  storage.setItem(STORAGE_KEY, JSON.stringify(parsed))
+  const events = options?.events ?? globalThis
+  events.dispatchEvent(new CustomEvent(LANGUAGE_LEARNING_WORDS_CHANGED_EVENT))
 }
 
 export const appendLanguageLearningWords = (
   language: LanguageLearningLanguage,
   values: ReadonlyArray<string>,
+  options?: LanguageLearningStorageOptions,
 ): AppendLanguageLearningWordsResult => {
-  const storedWords = readLanguageLearningWords()
+  const storedWords = readLanguageLearningWords(options)
   const existingValues = new Set(
     storedWords
       .filter((word) => word.language === language)
@@ -51,7 +60,7 @@ export const appendLanguageLearningWords = (
   })
 
   if (newWords.length > 0) {
-    writeLanguageLearningWords([...storedWords, ...newWords])
+    writeLanguageLearningWords([...storedWords, ...newWords], options)
   }
 
   return {
@@ -63,17 +72,22 @@ export const appendLanguageLearningWords = (
 export const deleteLanguageLearningWords = (
   language: LanguageLearningLanguage,
   values: ReadonlyArray<string>,
-) => {
+  options?: LanguageLearningStorageOptions,
+): void => {
   const selectedValues = new Set(values)
   writeLanguageLearningWords(
-    readLanguageLearningWords().filter(
+    readLanguageLearningWords(options).filter(
       (word) => word.language !== language || !selectedValues.has(word.value),
     ),
+    options,
   )
 }
 
-export const deleteLanguageLearningWord = (language: LanguageLearningLanguage, value: string) =>
-  deleteLanguageLearningWords(language, [value])
+export const deleteLanguageLearningWord = (
+  language: LanguageLearningLanguage,
+  value: string,
+  options?: LanguageLearningStorageOptions,
+): void => deleteLanguageLearningWords(language, [value], options)
 
 export interface SetLanguageLearningWordMemorizedOptions {
   readonly language: LanguageLearningLanguage
@@ -89,22 +103,28 @@ export interface SetLanguageLearningWordsMemorizedOptions {
 
 export const setLanguageLearningWordsMemorized = (
   options: SetLanguageLearningWordsMemorizedOptions,
-) => {
+  storageOptions?: LanguageLearningStorageOptions,
+): void => {
   const selectedValues = new Set(options.values)
   writeLanguageLearningWords(
-    readLanguageLearningWords().map((word) =>
+    readLanguageLearningWords(storageOptions).map((word) =>
       word.language === options.language && selectedValues.has(word.value)
         ? {...word, memorized: options.memorized}
         : word,
     ),
+    storageOptions,
   )
 }
 
 export const setLanguageLearningWordMemorized = (
   options: SetLanguageLearningWordMemorizedOptions,
-) =>
-  setLanguageLearningWordsMemorized({
-    language: options.language,
-    memorized: options.memorized,
-    values: [options.value],
-  })
+  storageOptions?: LanguageLearningStorageOptions,
+): void =>
+  setLanguageLearningWordsMemorized(
+    {
+      language: options.language,
+      memorized: options.memorized,
+      values: [options.value],
+    },
+    storageOptions,
+  )

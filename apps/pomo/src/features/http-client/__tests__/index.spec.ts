@@ -131,3 +131,11 @@ it.each([
 
   expect(fetchMock).toHaveBeenCalledWith(scenario.expected, expect.any(Object))
 })
+
+it('should preserve a caller-requested single GET attempt', async () => {
+  const fetchMock = vi.fn<typeof fetch>().mockResolvedValue(new Response(null, {status: 503}))
+  vi.stubGlobal('fetch', fetchMock)
+  const response = await apiFetch('admin/music', {retry: false})
+  expect(response.status).toBe(503)
+  expect(fetchMock).toHaveBeenCalledOnce()
+})

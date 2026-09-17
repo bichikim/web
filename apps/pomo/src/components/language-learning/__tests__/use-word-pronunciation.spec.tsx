@@ -1,6 +1,7 @@
 /** @vitest-environment jsdom */
 
 import {render, screen} from '@solidjs/testing-library'
+import {PreferenceProvider} from 'src/hooks/use-preference'
 import {afterEach, beforeEach, expect, it, vi} from 'vitest'
 
 import {getLocale, overwriteGetLocale} from '@paraglide/runtime'
@@ -71,6 +72,8 @@ const Harness = () => {
   )
 }
 
+const renderPronunciation = () => render(() => <Harness />, {wrapper: PreferenceProvider})
+
 beforeEach(() => {
   overwriteGetLocale(() => 'ko')
   vi.clearAllMocks()
@@ -102,7 +105,7 @@ it('should localize word-audio storage failures at the UI boundary', async () =>
   audioRepository.get.mockRejectedValueOnce(
     new LanguageLearningWordAudioStorageError('read', {cause: new Error('cache unavailable')}),
   )
-  render(() => <Harness />)
+  renderPronunciation()
 
   requestWord(word)
 
@@ -118,7 +121,7 @@ it('should generate a pronunciation with a ready model and expose the audio URL'
     status: 'complete',
     value: await task(),
   }))
-  render(() => <Harness />)
+  renderPronunciation()
 
   requestWord(word)
 
@@ -149,7 +152,7 @@ it('should ask for consent when the model disappears after the initial readiness
   vi.mocked(manager.runAfterVoiceModel)
     .mockResolvedValueOnce({status: 'missing'})
     .mockImplementationOnce(async ({task}) => ({status: 'complete', value: await task()}))
-  render(() => <Harness />)
+  renderPronunciation()
 
   requestWord(word)
 
@@ -180,7 +183,7 @@ it('should invalidate active pronunciation work before deleting its cached audio
       resolveResult = resolve
     }),
   )
-  render(() => <Harness />)
+  renderPronunciation()
 
   requestWord(word)
   await vi.waitFor(() => expect(manager.runAfterVoiceModel).toHaveBeenCalledOnce())
@@ -220,7 +223,7 @@ it('should preserve newer cached audio when an older save finishes late', async 
   vi.mocked(generateLanguageLearningWordPronunciation)
     .mockResolvedValueOnce({audio: new Blob(['old']), status: 'complete'})
     .mockResolvedValueOnce({audio: new Blob(['newer audio']), status: 'complete'})
-  render(() => <Harness />)
+  renderPronunciation()
 
   requestWord(word)
   await vi.waitFor(() => expect(audioRepository.save).toHaveBeenCalledOnce())
@@ -250,7 +253,7 @@ it('should abort active pronunciation work when its owner unmounts', async () =>
         })
       }),
   )
-  const result = render(() => <Harness />)
+  const result = renderPronunciation()
 
   requestWord(word)
   await vi.waitFor(() => expect(generationSignal).toBeInstanceOf(AbortSignal))
@@ -265,7 +268,7 @@ it('should ask before downloading a missing model and continue the word after co
     status: 'complete',
     value: await task(),
   }))
-  render(() => <Harness />)
+  renderPronunciation()
 
   requestWord(word)
   await vi.waitFor(() => expect(screen.getByTestId('pending')).toHaveTextContent('Home'))
@@ -280,7 +283,7 @@ it('should ask before downloading a missing model and continue the word after co
 
 it('should reuse saved word audio without checking the model or generating again', async () => {
   audioRepository.get.mockResolvedValueOnce(new Blob(['saved audio']))
-  render(() => <Harness />)
+  renderPronunciation()
 
   requestWord(word)
 
@@ -294,7 +297,7 @@ it('should reuse saved word audio without checking the model or generating again
 
 it('should cancel a pending download without running a task', async () => {
   vi.mocked(isSupertonicModelDownloaded).mockResolvedValue(false)
-  render(() => <Harness />)
+  renderPronunciation()
 
   requestWord(word)
   await vi.waitFor(() => expect(screen.getByTestId('pending')).toHaveTextContent('Home'))
@@ -306,7 +309,7 @@ it('should cancel a pending download without running a task', async () => {
 
 it('should report preparation, generation, and download failures', async () => {
   vi.mocked(isSupertonicModelDownloaded).mockRejectedValueOnce(new Error('storage unavailable'))
-  render(() => <Harness />)
+  renderPronunciation()
   requestWord(word)
   await vi.waitFor(() =>
     expect(screen.getByTestId('error')).toHaveTextContent('storage unavailable'),

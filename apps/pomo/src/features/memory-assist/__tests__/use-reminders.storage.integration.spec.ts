@@ -1,6 +1,7 @@
 /** @vitest-environment jsdom */
 
 import {renderHook} from '@solidjs/testing-library'
+import {PreferenceProvider} from 'src/hooks/use-preference'
 import flushPromises from 'flush-promises'
 import {afterEach, beforeEach, expect, it, vi} from 'vitest'
 
@@ -27,6 +28,9 @@ vi.mock('../../supertonic', () => ({
   createSupertonicClient: mocks.createClient,
   getSupertonicErrorMessage: () => 'voice failed',
 }))
+
+const renderReminders = <Value>(callback: () => Value) =>
+  renderHook(callback, {wrapper: PreferenceProvider})
 
 beforeEach(() => {
   vi.useFakeTimers()
@@ -70,7 +74,7 @@ it('should not replay a reminder after a persisted edit reaches the reminder hoo
     playDialogue: vi.fn().mockReturnValue(playback.promise),
     refreshDialogues: vi.fn().mockResolvedValue(undefined),
   } as unknown as PEventContextValue
-  const view = renderHook(() => useMemoryReminders({events, random: () => 0}))
+  const view = renderReminders(() => useMemoryReminders({events, random: () => 0}))
 
   try {
     await flushPromises()
@@ -132,7 +136,7 @@ it('should replay a persisted replacement with the same ID without the old retry
     playDialogue: vi.fn().mockResolvedValueOnce(false).mockResolvedValue(true),
     refreshDialogues: vi.fn().mockResolvedValue(undefined),
   } as unknown as PEventContextValue
-  const view = renderHook(() => useMemoryReminders({events}))
+  const view = renderReminders(() => useMemoryReminders({events}))
 
   try {
     await flushPromises()
@@ -176,7 +180,7 @@ it('should persist an exact delivery before delivering a simultaneously due reca
     playDialogue: vi.fn().mockReturnValueOnce(firstPlayback.promise).mockResolvedValue(true),
     refreshDialogues: vi.fn().mockResolvedValue(undefined),
   } as unknown as PEventContextValue
-  const view = renderHook(() => useMemoryReminders({events, random: () => 0}))
+  const view = renderReminders(() => useMemoryReminders({events, random: () => 0}))
 
   try {
     await flushPromises()

@@ -31,7 +31,10 @@ it('should load a private playback URL and clear playback errors when ready', as
 
   await controller.startPlayback()
 
-  expect(fetcher).toHaveBeenCalledWith('/api/admin/music/tracks/track%2Fid/playback')
+  expect(fetcher).toHaveBeenCalledWith(
+    '/api/admin/music/tracks/track%2Fid/playback',
+    expect.objectContaining({retry: 0}),
+  )
   expect(controller.loading()).toBe(false)
   expect(controller.playbackUrl()).toBe('https://example.com/private-track.mp3')
   expect(submissionMocks.clear).toHaveBeenCalledOnce()

@@ -1,10 +1,10 @@
-import {type Accessor, onCleanup, onMount} from 'solid-js'
+import {type Accessor, createEffect, onCleanup, onMount} from 'solid-js'
 import {
   loadPTrackQueueSource,
+  type PlaylistPreference,
   type PPlaybackState,
   type PTrack,
   readPPlayback,
-  readPPlaylist,
 } from '../../features/focus-room-audio'
 import {restorePPlayerState} from './restoration'
 
@@ -14,6 +14,7 @@ export interface PlaylistLoad {
 }
 
 export interface UsePlaylistRestorationProps {
+  readonly savedPlaylist: Accessor<PlaylistPreference | null>
   readonly tracks: Accessor<readonly PTrack[]>
   readonly isQueueControlled: Accessor<boolean>
   readonly playbackRevision: Accessor<number>
@@ -26,6 +27,13 @@ export interface UsePlaylistRestorationProps {
 
 /** 목록과 저장된 재생 상태를 불러오고, 사용자 조작 이후의 오래된 복원과 종료 후 적용을 막는다. */
 export const usePlaylistRestoration = (props: UsePlaylistRestorationProps): void => {
+  const playlist = Promise.withResolvers<readonly string[] | null>()
+  createEffect(() => {
+    const saved = props.savedPlaylist()
+    if (saved !== null) {
+      playlist.resolve(saved.trackIds)
+    }
+  })
   const request = new AbortController()
   let disposed = false
   const handleError = (error: unknown) => {
@@ -55,10 +63,7 @@ export const usePlaylistRestoration = (props: UsePlaylistRestorationProps): void
       return
     }
 
-    const playlistRequest = readPPlaylist().catch((error: unknown) => {
-      handleError(error)
-      return null
-    })
+    const playlistRequest = playlist.promise
 
     loadPTrackQueueSource({signal: request.signal})
       .then((source) => {
@@ -96,6 +101,7 @@ export const usePlaylistRestoration = (props: UsePlaylistRestorationProps): void
 
   onCleanup(() => {
     disposed = true
+    playlist.resolve(null)
     request.abort()
   })
 }

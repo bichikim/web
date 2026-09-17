@@ -75,6 +75,16 @@ vi.mock('../../../features/focus-room-audio', () => ({
   createShuffleQueue: featureMocks.createShuffleQueue,
   loadPTrackQueueSource: featureMocks.loadPTrackQueueSource,
   normalizeTrackIndex: featureMocks.normalizeTrackIndex,
+  playlistPreference: {
+    defaultValue: {trackIds: null},
+    key: 'pomo:focus-room-playlist:v1',
+    parse: (value: unknown) => value,
+    storage: {
+      read: async () => ({trackIds: await featureMocks.readPPlaylist()}),
+      write: (_key: string, value: {trackIds: readonly string[]}) =>
+        featureMocks.writePPlaylist(value.trackIds),
+    },
+  },
   readPPlayback: featureMocks.readPPlayback,
   readPPlaylist: featureMocks.readPPlaylist,
   resolveManualNavigation: featureMocks.resolveManualNavigation,

@@ -1,7 +1,8 @@
 /** @vitest-environment jsdom */
 
-import {createRoot} from 'solid-js'
+import {cleanup, renderHook} from '@solidjs/testing-library'
 import {afterEach, beforeEach, expect, it, vi} from 'vitest'
+import {PreferenceProvider} from 'src/hooks/use-preference'
 
 const preferenceMocks = vi.hoisted(() => {
   const seoulLocation = {
@@ -25,11 +26,15 @@ const queryMocks = vi.hoisted(() => ({
   }),
 }))
 
-vi.mock('../preference', () => ({
-  DEFAULT_WEATHER_PREFERENCE: preferenceMocks.defaultPreference,
-  readWeatherPreference: preferenceMocks.readWeatherPreference,
-  writeWeatherPreference: preferenceMocks.writeWeatherPreference,
-}))
+vi.mock('../preference', async () => {
+  const actual: typeof import('../preference') = await vi.importActual('../preference')
+  return {
+    ...actual,
+    DEFAULT_WEATHER_PREFERENCE: preferenceMocks.defaultPreference,
+    readWeatherPreference: preferenceMocks.readWeatherPreference,
+    writeWeatherPreference: preferenceMocks.writeWeatherPreference,
+  }
+})
 vi.mock('../query', () => queryMocks)
 
 import {type WeatherController, useWeather} from '../use-weather'
@@ -69,13 +74,8 @@ const createWeatherRoot = (): {
   readonly controller: WeatherController
   readonly dispose: () => void
 } => {
-  let disposeRoot: () => void = () => undefined
-  const controller = createRoot((dispose) => {
-    disposeRoot = dispose
-    return useWeather()
-  })
-
-  return {controller, dispose: disposeRoot}
+  const view = renderHook(() => useWeather(), {wrapper: PreferenceProvider})
+  return {controller: view.result, dispose: view.cleanup}
 }
 
 const flushPromises = async () => {
@@ -105,6 +105,7 @@ beforeEach(() => {
 })
 
 afterEach(() => {
+  cleanup()
   vi.clearAllMocks()
   vi.useRealTimers()
 })
@@ -324,7 +325,7 @@ it('should ignore stored preferences and query results after disposal', async ()
   expect(queryRoot.controller.state()).toEqual({location: seoulLocation, status: 'loading'})
 })
 
-it('should retain incoming changes while restoring untouched weather preferences', async () => {
+it('should keep one whole preference edited while restoring', async () => {
   const stored = Promise.withResolvers<WeatherPreference>()
   preferenceMocks.readWeatherPreference.mockReturnValueOnce(stored.promise)
   const root = createWeatherRoot()
@@ -333,12 +334,12 @@ it('should retain incoming changes while restoring untouched weather preferences
   await flushPromises()
 
   expect(root.controller.location()).toEqual(busanLocation)
-  expect(root.controller.enabled()).toBe(false)
-  expect(root.controller.sceneMode()).toBe('rain')
+  expect(root.controller.enabled()).toBe(true)
+  expect(root.controller.sceneMode()).toBe('auto')
   expect(preferenceMocks.writeWeatherPreference).toHaveBeenLastCalledWith({
-    enabled: false,
+    enabled: true,
     location: busanLocation,
-    sceneMode: 'rain',
+    sceneMode: 'auto',
   })
   root.dispose()
 })

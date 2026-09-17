@@ -1,4 +1,5 @@
 import {z} from 'zod'
+
 import {type ServiceBranch} from './calculate-service'
 import {normalizeServiceDays} from './service-days'
 import {toolStorageAdapter, type ToolStorageAdapter} from './storage-adapter'
@@ -40,28 +41,17 @@ export interface CreateServiceSettingsStorageOptions {
   readonly reportRepairError: (error: unknown) => void
 }
 
-/** Creates service settings persistence with an isolated write queue and revision. */
+/** Reads and writes service settings, including legacy start dates. */
 export const createServiceSettingsStorage = (
   options: CreateServiceSettingsStorageOptions,
 ): ServiceSettingsStorage => {
   const {storage, reportRepairError} = options
-  let pendingWrite = Promise.resolve()
-  let writeRevision = 0
   const read = async (): Promise<ServiceSettings> => {
-    const revision = writeRevision
     const usesTossStorage = storage.usesTossStorage()
-    if (usesTossStorage) {
-      await pendingWrite
-      if (revision !== writeRevision) {
-        return read()
-      }
-    }
     const webSettings = storage.readWeb(STORAGE_KEY, parseSettings)
     if (webSettings !== null) {
       if (usesTossStorage) {
-        pendingWrite = pendingWrite
-          .then(() => storage.writeToss(STORAGE_KEY, webSettings))
-          .catch(reportRepairError)
+        await storage.writeToss(STORAGE_KEY, webSettings).catch(reportRepairError)
       }
       return webSettings
     }
@@ -72,34 +62,19 @@ export const createServiceSettingsStorage = (
     if (!usesTossStorage) {
       return legacySettings()
     }
-    try {
-      const tossSettings = await storage.readToss(STORAGE_KEY, parseSettings)
-      if (revision !== writeRevision) {
-        return read()
-      }
-      if (tossSettings !== null) {
-        return tossSettings
-      }
-      const webLegacy = legacySettings()
-      if (webLegacy.start !== '') {
-        return webLegacy
-      }
-      const nativeStart = await storage.readToss(LEGACY_KEY, parseStart)
-      if (revision !== writeRevision) {
-        return read()
-      }
-      return {...DEFAULT_SERVICE_SETTINGS, start: nativeStart ?? ''}
-    } catch (error: unknown) {
-      if (revision !== writeRevision) {
-        return read()
-      }
-      throw error
+    const tossSettings = await storage.readToss(STORAGE_KEY, parseSettings)
+    if (tossSettings !== null) {
+      return tossSettings
     }
+    const webLegacy = legacySettings()
+    if (webLegacy.start !== '') {
+      return webLegacy
+    }
+    const nativeStart = await storage.readToss(LEGACY_KEY, parseStart)
+    return {...DEFAULT_SERVICE_SETTINGS, start: nativeStart ?? ''}
   }
 
   const write = async (value: ServiceSettings): Promise<void> => {
-    writeRevision += 1
-    const revision = writeRevision
     const webError = storage.writeWeb(STORAGE_KEY, value)
     if (!storage.usesTossStorage()) {
       if (webError !== null) {
@@ -107,18 +82,14 @@ export const createServiceSettingsStorage = (
       }
       return
     }
-    const write = pendingWrite.then(async () => {
-      await storage.writeToss(STORAGE_KEY, value)
-      // A failed web replacement must not shadow the newly persisted native value.
-      if (webError !== null && revision === writeRevision) {
-        const error = storage.removeWeb(STORAGE_KEY)
-        if (error !== null && storage.readWeb(STORAGE_KEY, parseSettings) !== null) {
-          throw new Error('Failed to discard stale service settings.', {cause: error})
-        }
+    await storage.writeToss(STORAGE_KEY, value)
+    // A failed web replacement must not shadow the newly persisted native value.
+    if (webError !== null) {
+      const error = storage.removeWeb(STORAGE_KEY)
+      if (error !== null && storage.readWeb(STORAGE_KEY, parseSettings) !== null) {
+        throw new Error('Failed to discard stale service settings.', {cause: error})
       }
-    })
-    pendingWrite = write.catch(() => undefined)
-    await write
+    }
   }
   return {read, write}
 }
@@ -131,3 +102,21 @@ const runtimeStorage = createServiceSettingsStorage({
 })
 export const readServiceSettings = runtimeStorage.read
 export const writeServiceSettings = runtimeStorage.write
+
+const draftSchema = settingsSchema.extend({days: z.string()})
+const parseDraft = (value: unknown): ServiceSettings | null => {
+  const result = draftSchema.safeParse(value)
+  return result.success ? result.data : null
+}
+export const servicePreference = {
+  defaultValue: DEFAULT_SERVICE_SETTINGS,
+  key: STORAGE_KEY,
+  parse: parseDraft,
+  storage: {
+    read: readServiceSettings,
+    write: (_key: string, value: unknown) => {
+      const parsed = parseDraft(value)
+      return parsed === null ? null : writeServiceSettings(parsed)
+    },
+  },
+}

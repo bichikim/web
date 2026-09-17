@@ -1,7 +1,9 @@
 /** @vitest-environment jsdom */
 
-import {cleanup, renderHook} from '@solidjs/testing-library'
+import {cleanup, render, renderHook} from '@solidjs/testing-library'
 import {afterEach, expect, it, vi} from 'vitest'
+import {PreferenceProvider} from 'src/hooks/use-preference'
+import {createSignal, Show} from 'solid-js'
 
 import {useScreenSaver} from '../use-screen-saver'
 
@@ -13,13 +15,13 @@ afterEach(() => {
   vi.restoreAllMocks()
   vi.clearAllMocks()
   localStorage.clear()
-  Reflect.deleteProperty(window, 'ReactNativeWebView')
+  Reflect.deleteProperty(globalThis, 'ReactNativeWebView')
 })
 
 it.each(['pending', 'completed'] as const)(
   'should restore the disabled screen saver on remount with native persistence %s',
   async (phase) => {
-    Object.defineProperty(window, 'ReactNativeWebView', {configurable: true, value: {}})
+    Object.defineProperty(globalThis, 'ReactNativeWebView', {configurable: true, value: {}})
     localStorage.setItem('pomo:screen-saver-delay:v1', '"10m"')
     let stored = '"10m"'
     const completion = Promise.withResolvers<void>()
@@ -30,13 +32,25 @@ it.each(['pending', 'completed'] as const)(
       }
       stored = value
     })
-    const first = renderHook(() => useScreenSaver())
-    await vi.waitFor(() => expect(first.result.delay()).toBe('10m'))
+    const [visible, setVisible] = createSignal(true)
+    let current: ReturnType<typeof useScreenSaver>
+    const Consumer = () => {
+      current = useScreenSaver()
+      return null
+    }
+    const first = render(() => (
+      <PreferenceProvider>
+        <Show when={visible()}>
+          <Consumer />
+        </Show>
+      </PreferenceProvider>
+    ))
+    await vi.waitFor(() => expect(current.delay()).toBe('10m'))
     const webWrite = vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
       throw new DOMException('storage full', 'QuotaExceededError')
     })
 
-    first.result.onDelayChange('off')
+    current!.onDelayChange('off')
     await vi.waitFor(() =>
       expect(native.setItem).toHaveBeenCalledWith('pomo:screen-saver-delay:v1', '"off"'),
     )
@@ -44,12 +58,16 @@ it.each(['pending', 'completed'] as const)(
       completion.resolve()
       await vi.waitFor(() => expect(stored).toBe('"off"'))
     }
-    expect(first.result.delay()).toBe('off')
-    first.cleanup()
+    expect(current!.delay()).toBe('off')
+    setVisible(false)
     webWrite.mockRestore()
-    const restored = renderHook(() => useScreenSaver())
+    setVisible(true)
+    expect(current!.delay()).toBe('off')
     completion.resolve()
-
+    await vi.waitFor(() => expect(stored).toBe('"off"'))
+    await vi.waitFor(() => expect(localStorage.getItem('pomo:screen-saver-delay:v1')).toBeNull())
+    first.unmount()
+    const restored = renderHook(() => useScreenSaver(), {wrapper: PreferenceProvider})
     await vi.waitFor(() => expect(native.getItem).toHaveBeenCalled())
     await vi.waitFor(() => {
       expect(localStorage.getItem('pomo:screen-saver-delay:v1')).toBe('"off"')

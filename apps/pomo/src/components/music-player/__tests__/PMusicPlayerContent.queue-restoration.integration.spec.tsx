@@ -1,5 +1,6 @@
 /** @vitest-environment jsdom */
 
+import {PreferenceProvider} from 'src/hooks/use-preference'
 import {cleanup, fireEvent, render, screen, waitFor} from '@solidjs/testing-library'
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 
@@ -59,7 +60,7 @@ describe('PMusicPlayerContent queue restoration integration', () => {
 
   afterEach(() => {
     cleanup()
-    Reflect.deleteProperty(window, 'ReactNativeWebView')
+    Reflect.deleteProperty(globalThis, 'ReactNativeWebView')
     vi.unstubAllGlobals()
     vi.restoreAllMocks()
   })
@@ -69,7 +70,9 @@ describe('PMusicPlayerContent queue restoration integration', () => {
       'pomo:focus-room-playback:v1',
       JSON.stringify({isPlaying: true, positionSeconds: 22, savedAt: 1, trackId: 'three'}),
     )
-    const result = render(() => <PMusicPlayerContent tracks={TRACKS} />)
+    const result = render(() => <PMusicPlayerContent tracks={TRACKS} />, {
+      wrapper: PreferenceProvider,
+    })
     const audio = getAudioElement(result.container)
 
     markAudioMetadataReady(audio)
@@ -85,7 +88,9 @@ describe('PMusicPlayerContent queue restoration integration', () => {
       'pomo:focus-room-playback:v1',
       JSON.stringify({isPlaying: true, positionSeconds: 22, savedAt: 1, trackId: 'three'}),
     )
-    const result = render(() => <PMusicPlayerContent tracks={TRACKS} />)
+    const result = render(() => <PMusicPlayerContent tracks={TRACKS} />, {
+      wrapper: PreferenceProvider,
+    })
     const audio = getAudioElement(result.container)
 
     await Promise.resolve()
@@ -106,7 +111,9 @@ describe('PMusicPlayerContent queue restoration integration', () => {
       'pomo:focus-room-playback:v1',
       JSON.stringify({isPlaying: false, positionSeconds: 22, savedAt: 1, trackId: 'three'}),
     )
-    const result = render(() => <PMusicPlayerContent tracks={TRACKS} />)
+    const result = render(() => <PMusicPlayerContent tracks={TRACKS} />, {
+      wrapper: PreferenceProvider,
+    })
     const audio = getAudioElement(result.container)
 
     await Promise.resolve()
@@ -130,7 +137,9 @@ describe('PMusicPlayerContent queue restoration integration', () => {
       'pomo:focus-room-playback:v1',
       JSON.stringify({isPlaying: true, positionSeconds: 22, savedAt: 1, trackId: 'three'}),
     )
-    const result = render(() => <PMusicPlayerContent tracks={TRACKS} />)
+    const result = render(() => <PMusicPlayerContent tracks={TRACKS} />, {
+      wrapper: PreferenceProvider,
+    })
     const audio = getAudioElement(result.container)
     const controller = audio.parentElement
 
@@ -157,7 +166,9 @@ describe('PMusicPlayerContent queue restoration integration', () => {
   })
 
   it('should cancel preview resume when a media pause request arrives during preview', () => {
-    const result = render(() => <PMusicPlayerContent tracks={TRACKS} />)
+    const result = render(() => <PMusicPlayerContent tracks={TRACKS} />, {
+      wrapper: PreferenceProvider,
+    })
     const audio = getAudioElement(result.container)
     const controller = audio.parentElement
 
@@ -183,7 +194,9 @@ describe('PMusicPlayerContent queue restoration integration', () => {
       'pomo:focus-room-playback:v1',
       JSON.stringify({isPlaying: true, positionSeconds: 22, savedAt: 1, trackId: 'three'}),
     )
-    const result = render(() => <PMusicPlayerContent tracks={TRACKS} />)
+    const result = render(() => <PMusicPlayerContent tracks={TRACKS} />, {
+      wrapper: PreferenceProvider,
+    })
     const audio = getAudioElement(result.container)
 
     markAudioMetadataReady(audio)
@@ -201,7 +214,7 @@ describe('PMusicPlayerContent queue restoration integration', () => {
   })
 
   it('should not overwrite playback changed before native restoration finishes', async () => {
-    Object.defineProperty(window, 'ReactNativeWebView', {configurable: true, value: {}})
+    Object.defineProperty(globalThis, 'ReactNativeWebView', {configurable: true, value: {}})
     let completeRead: ((value: string | null) => void) | undefined
     storageMocks.getItem.mockImplementationOnce(
       () =>
@@ -213,7 +226,9 @@ describe('PMusicPlayerContent queue restoration integration', () => {
       'pomo:focus-room-playback:v1',
       JSON.stringify({isPlaying: false, positionSeconds: 22, savedAt: 1, trackId: 'three'}),
     )
-    const result = render(() => <PMusicPlayerContent tracks={TRACKS} />)
+    const result = render(() => <PMusicPlayerContent tracks={TRACKS} />, {
+      wrapper: PreferenceProvider,
+    })
     const audio = getAudioElement(result.container)
 
     fireEvent(audio, new Event('play'))
@@ -225,7 +240,7 @@ describe('PMusicPlayerContent queue restoration integration', () => {
   })
 
   it('should not overwrite a position sought before native restoration finishes', async () => {
-    Object.defineProperty(window, 'ReactNativeWebView', {configurable: true, value: {}})
+    Object.defineProperty(globalThis, 'ReactNativeWebView', {configurable: true, value: {}})
     let completeRead: ((value: string | null) => void) | undefined
     storageMocks.getItem.mockImplementationOnce(
       () =>
@@ -237,7 +252,9 @@ describe('PMusicPlayerContent queue restoration integration', () => {
       'pomo:focus-room-playback:v1',
       JSON.stringify({isPlaying: false, positionSeconds: 22, savedAt: 1, trackId: 'three'}),
     )
-    const result = render(() => <PMusicPlayerContent tracks={TRACKS} />)
+    const result = render(() => <PMusicPlayerContent tracks={TRACKS} />, {
+      wrapper: PreferenceProvider,
+    })
     const audio = getAudioElement(result.container)
 
     audio.currentTime = 9
@@ -255,7 +272,9 @@ describe('PMusicPlayerContent queue restoration integration', () => {
       'pomo:focus-room-playback:v1',
       JSON.stringify({isPlaying: false, positionSeconds: 22, savedAt: 1, trackId: 'three'}),
     )
-    const result = render(() => <PMusicPlayerContent tracks={TRACKS} />)
+    const result = render(() => <PMusicPlayerContent tracks={TRACKS} />, {
+      wrapper: PreferenceProvider,
+    })
     const audio = getAudioElement(result.container)
 
     await Promise.resolve()
@@ -270,7 +289,7 @@ describe('PMusicPlayerContent queue restoration integration', () => {
   })
 
   it('should load the playlist without waiting for native storage', async () => {
-    Object.defineProperty(window, 'ReactNativeWebView', {configurable: true, value: {}})
+    Object.defineProperty(globalThis, 'ReactNativeWebView', {configurable: true, value: {}})
     storageMocks.getItem.mockImplementationOnce(
       () =>
         new Promise(() => {
@@ -290,7 +309,7 @@ describe('PMusicPlayerContent queue restoration integration', () => {
           ok: true,
         }),
     )
-    const result = render(() => <PMusicPlayerContent />)
+    const result = render(() => <PMusicPlayerContent />, {wrapper: PreferenceProvider})
     const audio = getAudioElement(result.container)
 
     await waitFor(() => expect(audio.getAttribute('src')).toBe('/two.mp3'))
@@ -308,7 +327,7 @@ describe('PMusicPlayerContent queue restoration integration', () => {
   })
 
   it('should preserve album additions when native playback restoration finishes later', async () => {
-    Object.defineProperty(window, 'ReactNativeWebView', {configurable: true, value: {}})
+    Object.defineProperty(globalThis, 'ReactNativeWebView', {configurable: true, value: {}})
     let completeRead: ((value: string | null) => void) | undefined
     storageMocks.getItem.mockImplementationOnce(
       () =>
@@ -333,7 +352,7 @@ describe('PMusicPlayerContent queue restoration integration', () => {
           ok: true,
         }),
     )
-    render(() => <PMusicPlayerContent />)
+    render(() => <PMusicPlayerContent />, {wrapper: PreferenceProvider})
 
     await waitFor(() =>
       expect(
@@ -356,7 +375,7 @@ describe('PMusicPlayerContent queue restoration integration', () => {
 
   it('should restore album additions after the player remounts', async () => {
     stubPlaylistFetch(2)
-    const first = render(() => <PMusicPlayerContent />)
+    const first = render(() => <PMusicPlayerContent />, {wrapper: PreferenceProvider})
 
     await waitFor(() =>
       expect(
@@ -373,7 +392,7 @@ describe('PMusicPlayerContent queue restoration integration', () => {
     })
     first.unmount()
 
-    render(() => <PMusicPlayerContent />)
+    render(() => <PMusicPlayerContent />, {wrapper: PreferenceProvider})
 
     await waitFor(() =>
       expect(
@@ -384,7 +403,7 @@ describe('PMusicPlayerContent queue restoration integration', () => {
 
   it('should preserve removed tracks after the player remounts', async () => {
     stubPlaylistFetch(2)
-    const first = render(() => <PMusicPlayerContent />)
+    const first = render(() => <PMusicPlayerContent />, {wrapper: PreferenceProvider})
 
     await waitFor(() =>
       expect(
@@ -406,7 +425,7 @@ describe('PMusicPlayerContent queue restoration integration', () => {
     })
     first.unmount()
 
-    render(() => <PMusicPlayerContent />)
+    render(() => <PMusicPlayerContent />, {wrapper: PreferenceProvider})
 
     await waitFor(() =>
       expect(
@@ -422,7 +441,7 @@ describe('PMusicPlayerContent queue restoration integration', () => {
 
   it('should preserve an empty playlist after the player remounts', async () => {
     stubPlaylistFetch(2)
-    const first = render(() => <PMusicPlayerContent />)
+    const first = render(() => <PMusicPlayerContent />, {wrapper: PreferenceProvider})
 
     await waitFor(() =>
       expect(
@@ -436,7 +455,7 @@ describe('PMusicPlayerContent queue restoration integration', () => {
     })
     first.unmount()
 
-    render(() => <PMusicPlayerContent />)
+    render(() => <PMusicPlayerContent />, {wrapper: PreferenceProvider})
 
     await waitFor(() => expect(fetch).toHaveBeenCalledTimes(4))
     await Promise.resolve()
@@ -474,7 +493,7 @@ describe('PMusicPlayerContent queue restoration integration', () => {
           ok: true,
         }),
     )
-    const result = render(() => <PMusicPlayerContent />)
+    const result = render(() => <PMusicPlayerContent />, {wrapper: PreferenceProvider})
     const audio = getAudioElement(result.container)
 
     fireEvent.click(screen.getByRole('button', {name: '앨범 추가'}))
@@ -519,7 +538,7 @@ describe('PMusicPlayerContent queue restoration integration', () => {
           ok: true,
         }),
     )
-    render(() => <PMusicPlayerContent />)
+    render(() => <PMusicPlayerContent />, {wrapper: PreferenceProvider})
 
     fireEvent.click(screen.getByRole('button', {name: '앨범 추가'}))
     fireEvent.keyDown(
@@ -555,7 +574,7 @@ describe('PMusicPlayerContent queue restoration integration', () => {
           ok: true,
         }),
     )
-    const result = render(() => <PMusicPlayerContent />)
+    const result = render(() => <PMusicPlayerContent />, {wrapper: PreferenceProvider})
     const audio = getAudioElement(result.container)
 
     await waitFor(() => expect(audio.getAttribute('src')).toBe('/two.mp3'))
@@ -586,7 +605,7 @@ describe('PMusicPlayerContent queue restoration integration', () => {
           ok: true,
         }),
     )
-    const result = render(() => <PMusicPlayerContent />)
+    const result = render(() => <PMusicPlayerContent />, {wrapper: PreferenceProvider})
     const audio = getAudioElement(result.container)
 
     await waitFor(() => expect(audio.getAttribute('src')).toBe('/two.mp3'))
@@ -617,7 +636,7 @@ describe('PMusicPlayerContent queue restoration integration', () => {
           ok: true,
         }),
     )
-    const result = render(() => <PMusicPlayerContent />)
+    const result = render(() => <PMusicPlayerContent />, {wrapper: PreferenceProvider})
     const audio = getAudioElement(result.container)
 
     await waitFor(() => expect(audio.getAttribute('src')).toBe('/two.mp3'))
@@ -654,7 +673,7 @@ describe('PMusicPlayerContent queue restoration integration', () => {
           ok: true,
         }),
     )
-    const result = render(() => <PMusicPlayerContent />)
+    const result = render(() => <PMusicPlayerContent />, {wrapper: PreferenceProvider})
     const audio = getAudioElement(result.container)
 
     await waitFor(() => expect(audio.getAttribute('src')).toBe('/two.mp3'))

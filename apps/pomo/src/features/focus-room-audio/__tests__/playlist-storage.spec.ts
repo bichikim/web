@@ -135,46 +135,6 @@ it('should return no playlist when both storage reads are unavailable', async ()
   await expect(playlistStorage.read()).resolves.toBeNull()
 })
 
-it('should not overwrite a playlist changed while Toss storage is being read', async () => {
-  let completeRead: ((playlist: StoredPlaylist | null) => void) | undefined
-  const storage = createStorage({
-    usesTossStorage: true,
-    webPlaylist: createStoredPlaylist(['web'], 15),
-  })
-  storage.readToss.mockImplementationOnce(
-    () =>
-      new Promise((resolve) => {
-        completeRead = resolve
-      }),
-  )
-  const playlistStorage = createPPlaylistStorage(storage, {now: () => 20})
-  const playlistRequest = playlistStorage.read()
-
-  await playlistStorage.write(['latest'])
-  completeRead?.(createStoredPlaylist(['stale'], 10))
-
-  await expect(playlistRequest).resolves.toEqual(['latest'])
-})
-
-it('should ignore a Toss read after a web write failure', async () => {
-  let completeRead: ((playlist: StoredPlaylist | null) => void) | undefined
-  const storage = createStorage({usesTossStorage: true})
-  storage.readToss.mockImplementationOnce(
-    () =>
-      new Promise((resolve) => {
-        completeRead = resolve
-      }),
-  )
-  storage.writeWeb.mockReturnValueOnce(new DOMException('Storage is unavailable', 'SecurityError'))
-  const playlistStorage = createPPlaylistStorage(storage, {now: () => 20})
-  const playlistRequest = playlistStorage.read()
-
-  await playlistStorage.write(['latest'])
-  completeRead?.(createStoredPlaylist(['stale'], 10))
-
-  await expect(playlistRequest).resolves.toBeNull()
-})
-
 it('should isolate a pending read from writes made through another storage instance', async () => {
   let completeRead: ((playlist: StoredPlaylist | null) => void) | undefined
   const firstStorage = createStorage({

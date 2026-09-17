@@ -1,6 +1,7 @@
 /** @vitest-environment jsdom */
 
 import {renderHook} from '@solidjs/testing-library'
+import {PreferenceProvider} from 'src/hooks/use-preference'
 import flushPromises from 'flush-promises'
 import {afterEach, beforeEach, expect, it, vi} from 'vitest'
 
@@ -36,6 +37,9 @@ vi.mock('../../supertonic', () => ({
   getSupertonicErrorMessage: () => 'voice failed',
 }))
 
+const renderReminders = <Value>(callback: () => Value) =>
+  renderHook(callback, {wrapper: PreferenceProvider})
+
 beforeEach(() => {
   vi.useFakeTimers()
   vi.setSystemTime(new Date('2026-09-04T03:00:00.000Z'))
@@ -66,12 +70,12 @@ it('should clear a scheduled reminder when storage marks its memo pending deleti
     playDialogue: vi.fn().mockResolvedValue(true),
     refreshDialogues: vi.fn().mockResolvedValue(undefined),
   } as unknown as PEventContextValue
-  const view = renderHook(() => useMemoryReminders({events}))
+  const view = renderReminders(() => useMemoryReminders({events}))
 
   await flushPromises()
   expect(vi.getTimerCount()).toBe(1)
 
-  window.dispatchEvent(
+  globalThis.dispatchEvent(
     new CustomEvent(MEMORY_MEMOS_CHANGED_EVENT, {
       detail: {memos: [{...memo, deletionPending: true as const}], revision: 1},
     }),

@@ -11,6 +11,7 @@ beforeEach(() => {
 import {render} from '@solidjs/testing-library'
 import {createEffect} from 'solid-js'
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
+import {PreferenceProvider} from 'src/hooks/use-preference'
 
 import type {ScreenSaverController} from '../model'
 import {useScreenSaver} from '../use-screen-saver'
@@ -20,10 +21,14 @@ const preferenceMocks = vi.hoisted(() => ({
   write: vi.fn(),
 }))
 
-vi.mock('../storage', () => ({
-  readScreenSaverDelay: preferenceMocks.read,
-  writeScreenSaverDelay: preferenceMocks.write,
-}))
+vi.mock('../storage', async () => {
+  const actual: typeof import('../storage') = await vi.importActual('../storage')
+  return {
+    ...actual,
+    readScreenSaverDelay: preferenceMocks.read,
+    writeScreenSaverDelay: preferenceMocks.write,
+  }
+})
 
 interface ScreenSaverHarnessProps {
   readonly onController: (controller: ScreenSaverController) => void
@@ -37,6 +42,12 @@ const ScreenSaverHarness = (props: ScreenSaverHarnessProps) => {
 
   return null
 }
+
+const ScreenSaverProviderHarness = (props: ScreenSaverHarnessProps) => (
+  <PreferenceProvider>
+    <ScreenSaverHarness {...props} />
+  </PreferenceProvider>
+)
 
 describe('useScreenSaver', () => {
   beforeEach(() => {
@@ -55,7 +66,7 @@ describe('useScreenSaver', () => {
     const onStateChange = vi.fn()
 
     render(() => (
-      <ScreenSaverHarness
+      <ScreenSaverProviderHarness
         onController={(nextController) => {
           controller = nextController
         }}
@@ -77,7 +88,7 @@ describe('useScreenSaver', () => {
     let controller: ScreenSaverController | undefined
 
     render(() => (
-      <ScreenSaverHarness
+      <ScreenSaverProviderHarness
         onController={(nextController) => {
           controller = nextController
         }}
@@ -89,7 +100,7 @@ describe('useScreenSaver', () => {
     vi.advanceTimersByTime(60_000)
     expect(controller?.isActive()).toBe(true)
 
-    window.dispatchEvent(new Event('pointerdown'))
+    globalThis.window.dispatchEvent(new Event('pointerdown'))
     expect(controller?.isActive()).toBe(false)
 
     vi.advanceTimersByTime(59_999)
@@ -104,7 +115,7 @@ describe('useScreenSaver', () => {
       let controller: ScreenSaverController | undefined
 
       render(() => (
-        <ScreenSaverHarness
+        <ScreenSaverProviderHarness
           onController={(nextController) => {
             controller = nextController
           }}
@@ -114,7 +125,7 @@ describe('useScreenSaver', () => {
       await Promise.resolve()
       vi.advanceTimersByTime(60_000)
 
-      window.dispatchEvent(new Event(eventName))
+      globalThis.window.dispatchEvent(new Event(eventName))
 
       expect(controller?.isActive()).toBe(false)
     },
@@ -124,7 +135,7 @@ describe('useScreenSaver', () => {
     let controller: ScreenSaverController | undefined
 
     render(() => (
-      <ScreenSaverHarness
+      <ScreenSaverProviderHarness
         onController={(nextController) => {
           controller = nextController
         }}
@@ -150,7 +161,7 @@ describe('useScreenSaver', () => {
     )
     let controller: ScreenSaverController | undefined
     const result = render(() => (
-      <ScreenSaverHarness
+      <ScreenSaverProviderHarness
         onController={(nextController) => {
           controller = nextController
         }}
@@ -169,7 +180,7 @@ describe('useScreenSaver', () => {
     let controller: ScreenSaverController | undefined
 
     render(() => (
-      <ScreenSaverHarness
+      <ScreenSaverProviderHarness
         onController={(nextController) => {
           controller = nextController
         }}
@@ -190,7 +201,7 @@ describe('useScreenSaver', () => {
     vi.mocked(getMonotonicTime).mockReturnValue(0)
     let controller: ScreenSaverController | undefined
     render(() => (
-      <ScreenSaverHarness
+      <ScreenSaverProviderHarness
         onController={(nextController) => {
           controller = nextController
         }}
@@ -215,7 +226,7 @@ describe('useScreenSaver', () => {
     let controller: ScreenSaverController | undefined
 
     render(() => (
-      <ScreenSaverHarness
+      <ScreenSaverProviderHarness
         onController={(nextController) => {
           controller = nextController
         }}
@@ -241,7 +252,7 @@ describe('useScreenSaver', () => {
     let controller: ScreenSaverController | undefined
 
     render(() => (
-      <ScreenSaverHarness
+      <ScreenSaverProviderHarness
         onController={(nextController) => {
           controller = nextController
         }}
@@ -260,7 +271,7 @@ describe('useScreenSaver', () => {
     let controller: ScreenSaverController | undefined
 
     render(() => (
-      <ScreenSaverHarness
+      <ScreenSaverProviderHarness
         onController={(nextController) => {
           controller = nextController
         }}

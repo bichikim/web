@@ -1,4 +1,5 @@
 import {z} from 'zod'
+
 import {toolStorageAdapter, type ToolStorageAdapter} from './storage-adapter'
 import {getUnits, type UnitCategory} from './units'
 
@@ -13,6 +14,8 @@ export interface MovingSelection {
 }
 export type LunarDirection = 'solar' | 'lunar'
 export interface SelectionStorage<T> {
+  readonly key: string
+  readonly parse: (value: unknown) => T | null
   readonly read: () => Promise<T | null>
   readonly write: (value: T) => Promise<void>
 }
@@ -22,39 +25,22 @@ const createSelectionStorage = <T>(
   parse: (value: unknown) => T | null,
   reportRepairError: (error: unknown) => void,
 ): SelectionStorage<T> => {
-  let pending = Promise.resolve()
-  let writeRevision = 0
   const read = async (): Promise<T | null> => {
-    const revision = writeRevision
     const usesTossStorage = storage.usesTossStorage()
-    if (usesTossStorage) {
-      await pending
-      if (revision !== writeRevision) {
-        return read()
-      }
-    }
     const webValue = storage.readWeb(key, parse)
     if (webValue !== null || !usesTossStorage) {
       if (webValue !== null && usesTossStorage) {
-        pending = pending.then(() => storage.writeToss(key, webValue)).catch(reportRepairError)
+        await storage.writeToss(key, webValue).catch(reportRepairError)
       }
       return webValue
     }
-    try {
-      const nativeValue = await storage.readToss(key, parse)
-      return revision === writeRevision ? nativeValue : read()
-    } catch (error: unknown) {
-      if (revision !== writeRevision) {
-        return read()
-      }
-      throw error
-    }
+    return storage.readToss(key, parse)
   }
   return {
+    key,
+    parse,
     read,
     async write(value) {
-      writeRevision += 1
-      const revision = writeRevision
       const error = storage.writeWeb(key, value)
       if (!storage.usesTossStorage()) {
         if (error !== null) {
@@ -62,18 +48,14 @@ const createSelectionStorage = <T>(
         }
         return
       }
-      const write = pending.then(async () => {
-        await storage.writeToss(key, value)
-        // An older native completion must not discard a newer web selection.
-        if (error !== null && revision === writeRevision) {
-          const removalError = storage.removeWeb(key)
-          if (removalError !== null && storage.readWeb(key, parse) !== null) {
-            throw new Error('Failed to discard stale tool selection.', {cause: removalError})
-          }
+      await storage.writeToss(key, value)
+      // Discard the stale web copy after its native replacement persists.
+      if (error !== null) {
+        const removalError = storage.removeWeb(key)
+        if (removalError !== null && storage.readWeb(key, parse) !== null) {
+          throw new Error('Failed to discard stale tool selection.', {cause: removalError})
         }
-      })
-      pending = write.catch(() => undefined)
-      await write
+      }
     },
   }
 }
@@ -108,7 +90,7 @@ export interface CreateToolSelectionStoragesOptions {
   readonly reportRepairError: (error: unknown) => void
 }
 
-/** Creates independently queued selection repositories over one storage adapter. */
+/** Reads and writes tool selections using one storage adapter. */
 export const createToolSelectionStorages = (
   options: CreateToolSelectionStoragesOptions,
 ): ToolSelectionStorages => {

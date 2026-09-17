@@ -1,4 +1,5 @@
 /** @vitest-environment jsdom */
+import {PreferenceProvider} from 'src/hooks/use-preference'
 import {render, screen} from '@solidjs/testing-library'
 import {afterEach, expect, it} from 'vitest'
 import {Moving} from '../Moving'
@@ -6,7 +7,11 @@ import {Moving} from '../Moving'
 afterEach(() => localStorage.clear())
 it('should restore the chosen month and mark its lunar moving days', async () => {
   localStorage.setItem('pomo:tool-moving:v1', JSON.stringify({month: '2', year: '2026'}))
-  render(() => <Moving />)
+  render(() => (
+    <PreferenceProvider>
+      <Moving />
+    </PreferenceProvider>
+  ))
   const calendar = await screen.findByRole('group', {name: '2026년 2월 손 없는 날 달력'})
   expect(calendar.querySelectorAll('[data-moving]')).toHaveLength(5)
   expect(calendar.querySelector('[aria-label="2026-02-25 손 없는 날"]')).toBeInTheDocument()
