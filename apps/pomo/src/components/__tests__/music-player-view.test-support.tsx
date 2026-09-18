@@ -96,38 +96,41 @@ interface RenderMusicPlayerViewOptions {
   readonly sceneStyle?: PSceneStyle
 }
 
-export const renderMusicPlayerView = (options: RenderMusicPlayerViewOptions = {}) =>
-  render(() => (
+export const renderMusicPlayerView = (options: RenderMusicPlayerViewOptions = {}) => {
+  const PlayerView = () => (
+    <MusicPlayerView
+      canNavigateNextTrack={options.canNavigateNextTrack ?? true}
+      canNavigatePreviousTrack={options.canNavigatePreviousTrack ?? true}
+      currentIndex={0}
+      currentTrack={options.currentTrack === null ? undefined : (options.currentTrack ?? TRACKS[0])}
+      backdropBlur={options.backdropBlur}
+      expanded={options.expanded ?? true}
+      isPlaying={options.isPlaying ?? false}
+      isPlaylistLoading={options.isPlaylistLoading ?? false}
+      levels={options.levels ?? []}
+      onAlbumAdd={options.onAlbumAdd}
+      onAlbumClear={options.onAlbumClear}
+      onExpandedChange={options.onExpandedChange ?? vi.fn()}
+      onNextTrack={options.onNextTrack ?? vi.fn()}
+      onPreviewEnd={options.onPreviewEnd}
+      onPreviewStart={options.onPreviewStart}
+      onPreviousTrack={options.onPreviousTrack ?? vi.fn()}
+      onRepeatModeChange={options.onRepeatModeChange ?? vi.fn()}
+      onShuffleChange={options.onShuffleChange ?? vi.fn()}
+      onTrackSelect={options.onTrackSelect ?? vi.fn()}
+      repeatMode="repeat-all"
+      sceneStyle={options.sceneStyle ?? 'original'}
+      shuffleEnabled={true}
+      tracks={TRACKS}
+    />
+  )
+
+  return render(() => (
     <PTooltipProvider>
-      <MusicPlayerView
-        canNavigateNextTrack={options.canNavigateNextTrack ?? true}
-        canNavigatePreviousTrack={options.canNavigatePreviousTrack ?? true}
-        currentIndex={0}
-        currentTrack={
-          options.currentTrack === null ? undefined : (options.currentTrack ?? TRACKS[0])
-        }
-        backdropBlur={options.backdropBlur}
-        expanded={options.expanded ?? true}
-        isPlaying={options.isPlaying ?? false}
-        isPlaylistLoading={options.isPlaylistLoading ?? false}
-        levels={options.levels ?? []}
-        onAlbumAdd={options.onAlbumAdd}
-        onAlbumClear={options.onAlbumClear}
-        onExpandedChange={options.onExpandedChange ?? vi.fn()}
-        onNextTrack={options.onNextTrack ?? vi.fn()}
-        onPreviewEnd={options.onPreviewEnd}
-        onPreviewStart={options.onPreviewStart}
-        onPreviousTrack={options.onPreviousTrack ?? vi.fn()}
-        onRepeatModeChange={options.onRepeatModeChange ?? vi.fn()}
-        onShuffleChange={options.onShuffleChange ?? vi.fn()}
-        onTrackSelect={options.onTrackSelect ?? vi.fn()}
-        repeatMode="repeat-all"
-        sceneStyle={options.sceneStyle ?? 'original'}
-        shuffleEnabled={true}
-        tracks={TRACKS}
-      />
+      <PlayerView />
     </PTooltipProvider>
   ))
+}
 
 export const getPlayerShell = (container: HTMLElement) => {
   const shell = getPlayerFrame(container).firstElementChild

@@ -9,6 +9,7 @@ import {usePlayerMediaSession} from './use-session'
 export interface MediaPlayerProps extends MediaPlayerOptions {
   readonly children?: JSX.Element
   readonly class?: string
+  readonly onPlayRequest?: () => void
 }
 
 const readDuration = (element: HTMLAudioElement) => {
@@ -65,10 +66,14 @@ export const MediaPlayer = (props: MediaPlayerProps) => {
     player.previewPlayback.preventResume()
     player.markPauseIntent()
   }
+  const handlePlayRequest = () => {
+    props.onPlayRequest?.()
+  }
   const handlePause = () => {
     player.previewPlayback.preventResume()
     player.pause()
   }
+  useEvent(controller, 'mediaplayrequest', handlePlayRequest)
   useEvent(controller, 'mediapauserequest', handlePauseRequest)
   usePlayerMediaSession({
     currentTrack: player.currentTrack,

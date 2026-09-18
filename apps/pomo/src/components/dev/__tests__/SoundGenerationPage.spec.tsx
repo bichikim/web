@@ -79,6 +79,7 @@ it.each([1, 5, 10, 30, 60, 120])(
     expect(worker.postMessage).toHaveBeenCalledWith({
       chunkNoiseMode: 'continuous',
       connectionSeconds: 4,
+      negativePrompt: '',
       prompt: expect.stringContaining('ocean waves'),
       seconds,
     })

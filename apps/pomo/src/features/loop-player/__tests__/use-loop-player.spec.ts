@@ -30,7 +30,13 @@ function createFile(): File {
 }
 
 function createPlayback(close: () => Promise<void>): LoopPlayback {
-  return {close, play: vi.fn(async () => {}), seek: vi.fn(async () => {}), stop: vi.fn()}
+  return {
+    close,
+    play: vi.fn(async () => {}),
+    seek: vi.fn(async () => {}),
+    setVolume: vi.fn(),
+    stop: vi.fn(),
+  }
 }
 
 afterEach(() => {

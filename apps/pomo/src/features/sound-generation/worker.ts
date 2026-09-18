@@ -6,6 +6,7 @@ import type {InpaintAudio} from './inpaint'
 import type {ChunkNoiseMode} from './noise'
 
 export interface SoundRequest {
+  readonly negativePrompt?: string
   readonly prompt: string
   readonly seconds: number
   readonly inpaint?: InpaintAudio
@@ -51,9 +52,11 @@ scope.onmessage = async (event: MessageEvent<SoundRequest | LoopRequest>) => {
         ? await generateExtendedSound(event.data.prompt, event.data.seconds, progress, {
             chunkNoiseMode: event.data.chunkNoiseMode,
             connectionSeconds: event.data.connectionSeconds,
+            negativePrompt: event.data.negativePrompt,
           })
         : await generateSound(event.data.prompt, event.data.seconds, progress, {
             inpaint: event.data.inpaint,
+            negativePrompt: event.data.negativePrompt,
           })
     send({blob, type: 'result'})
   } catch (error) {

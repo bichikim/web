@@ -4,6 +4,7 @@ import {cleanup, render} from '@solidjs/testing-library'
 import {describe, expect, it, vi} from 'vitest'
 
 import type {PPlaybackState, PTrack} from '../../../features/focus-room-audio'
+import {SoundEffectsContext, type SoundEffectsController} from '../../../features/sound-effects'
 import {
   ADDED_TRACK,
   createAudio,
@@ -23,6 +24,25 @@ describe('PMusicPlayerContent control paths', () => {
     render(() => <PMusicPlayerContent onError={vi.fn()} tracks={TRACKS} />)
 
     expect(featureMocks.readPPlaylist).not.toHaveBeenCalled()
+  })
+
+  it('should activate global sound effects on a player play request', () => {
+    const activate = vi.fn()
+    const soundEffects: SoundEffectsController = {
+      activate,
+      effects: () => [],
+      getPlayback: () => undefined,
+      status: () => 'ready',
+    }
+
+    render(() => (
+      <SoundEffectsContext.Provider value={soundEffects}>
+        <PMusicPlayerContent tracks={TRACKS} />
+      </SoundEffectsContext.Provider>
+    ))
+    emit('mediaplayrequest')
+
+    expect(activate).toHaveBeenCalledOnce()
   })
 
   it('should cancel preview resume after a user pause', () => {
