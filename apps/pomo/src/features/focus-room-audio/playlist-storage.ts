@@ -1,5 +1,7 @@
 import {z} from 'zod'
 
+import {createLatestAsyncTask} from 'src/utils/create-latest-async-task'
+
 import {
   hasNativeStorageBridge,
   readTossStorageJson,
@@ -79,8 +81,12 @@ export const createPPlaylistStorage = (
   clock: PlaylistClock = systemClock,
   reportError: (error: unknown) => void = globalThis.reportError,
 ): PPlaylistStorage => {
+  const writeLatestToss = createLatestAsyncTask(storage.writeToss)
+  let playlistRevision = 0
+
   return {
     async read() {
+      const initialPlaylistRevision = playlistRevision
       const webPlaylist = storage.readWeb()
 
       if (!storage.usesTossStorage()) {
@@ -90,18 +96,30 @@ export const createPPlaylistStorage = (
       try {
         const tossPlaylist = await storage.readToss()
 
+        if (playlistRevision !== initialPlaylistRevision) {
+          return storage.readWeb()?.trackIds ?? null
+        }
+
         const latestPlaylist = selectLatestPlaylist(webPlaylist, tossPlaylist)
 
         if (latestPlaylist !== null) {
           storage.writeWeb(latestPlaylist)
 
           if (latestPlaylist === webPlaylist) {
-            await storage.writeToss(latestPlaylist).catch(reportError)
+            await writeLatestToss(latestPlaylist).catch(reportError)
           }
+        }
+
+        if (playlistRevision !== initialPlaylistRevision) {
+          return storage.readWeb()?.trackIds ?? null
         }
 
         return latestPlaylist?.trackIds ?? null
       } catch {
+        if (playlistRevision !== initialPlaylistRevision) {
+          return storage.readWeb()?.trackIds ?? null
+        }
+
         return webPlaylist?.trackIds ?? null
       }
     },
@@ -111,13 +129,14 @@ export const createPPlaylistStorage = (
         trackIds,
         version: 1,
       } satisfies StoredPlaylist
+      playlistRevision += 1
       storage.writeWeb(storedPlaylist)
 
       if (!storage.usesTossStorage()) {
         return
       }
 
-      await storage.writeToss(storedPlaylist).catch(() => undefined)
+      await writeLatestToss(storedPlaylist).catch(() => undefined)
     },
   }
 }
