@@ -16,6 +16,7 @@ const playback = vi.hoisted(() => ({
   playing: vi.fn(() => false),
   ready: () => true,
   setVolume: vi.fn(),
+  stop: vi.fn(),
   volume: () => 0.25,
 }))
 
@@ -31,7 +32,9 @@ const controller: SoundEffectsController = {
   activate: vi.fn(),
   effects: () => [EFFECT],
   getPlayback: () => playback,
+  isStopped: () => false,
   status: () => 'ready',
+  stop: vi.fn(),
 }
 
 const renderControl = () =>

@@ -425,7 +425,7 @@ export const PStudio = () => {
         activeViseme={activeViseme()}
         hasSceneRendered={hasSceneRendered()}
         isDesktopWallpaper={isDesktopWallpaper()}
-        isReady={scenePreferences.isReady()}
+        isReady={scenePreferences.isReady() && weather.isReady()}
         motionInput={motionInput()}
         motionMode={motionMode()}
         onLoadingChange={createLoadingHandler(setIsSceneLoading, setHasSceneRendered)}

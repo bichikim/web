@@ -42,6 +42,7 @@ export type WeatherState =
 
 export interface WeatherController {
   readonly enabled: Accessor<boolean>
+  readonly isReady: Accessor<boolean>
   readonly onEnabledChange: (enabled: boolean) => void
   readonly location: Accessor<WeatherLocation>
   readonly onLocationChange: (location: WeatherLocation) => void
@@ -167,6 +168,7 @@ export const useWeather = (): WeatherController => {
 
   return {
     enabled: isWeatherEnabled,
+    isReady: preferenceReady,
     location: () => preference().location,
     onEnabledChange: (enabled) => persistPreference({enabled}),
     onLocationChange: (location) => persistPreference({location}),

@@ -80,7 +80,11 @@ vi.mock('../ConnectionMenu', () => ({
           ),
           ...(props.actions ?? []).map(
             (action): EventBindingItem => ({
-              id: action.id as 'music-start' | 'music-stop',
+              id: action.id as
+                | 'music-start'
+                | 'music-stop'
+                | 'sound-effects-start'
+                | 'sound-effects-stop',
               type: 'action',
             }),
           ),
@@ -239,6 +243,8 @@ describe('PDialogueSettingsContent', () => {
       {id: second.id, type: 'dialogue'},
       {id: 'music-stop', type: 'action'},
       {id: 'music-start', type: 'action'},
+      {id: 'sound-effects-stop', type: 'action'},
+      {id: 'sound-effects-start', type: 'action'},
     ])
     expect(events.setEventPlaybackMode).toHaveBeenCalledWith('focus-start', 'random-one')
     expect(FEEDS.onDeleteDialogue).toHaveBeenCalledWith(DIALOGUE.id)

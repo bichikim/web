@@ -9,7 +9,9 @@ export interface SoundEffectsController {
   readonly activate: () => void
   readonly effects: Accessor<readonly SoundEffect[]>
   readonly getPlayback: (effectId: string) => SoundEffectPlayback | undefined
+  readonly isStopped: Accessor<boolean>
   readonly status: Accessor<SoundEffectsStatus>
+  readonly stop: () => void
 }
 
 export const SoundEffectsContext = createContext<SoundEffectsController>()

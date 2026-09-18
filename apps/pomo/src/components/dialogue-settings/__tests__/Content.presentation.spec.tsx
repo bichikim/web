@@ -247,6 +247,18 @@ it('should hide learning dialogues only from the saved dialogue library', () => 
           label: '음악 시작',
           value: 'action:music-start',
         },
+        {
+          description: '모든 효과음을 멈춰요.',
+          icon: 'i-tabler-volume-off',
+          label: '효과음 모두 끄기',
+          value: 'action:sound-effects-stop',
+        },
+        {
+          description: '모든 효과음을 다시 재생해요.',
+          icon: 'i-tabler-volume-2',
+          label: '효과음 모두 켜기',
+          value: 'action:sound-effects-start',
+        },
       ],
     }),
   )

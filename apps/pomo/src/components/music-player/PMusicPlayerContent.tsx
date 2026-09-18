@@ -5,12 +5,19 @@ import {PMusicPlayerPresentation} from './PMusicPlayerPresentation'
 
 export function PMusicPlayerContent(props: PMusicPlayerContentProps) {
   const soundEffects = useOptionalSoundEffects()
+  const handlePlayRequest = () => {
+    if (soundEffects === undefined || soundEffects.isStopped()) {
+      return
+    }
+
+    soundEffects.activate()
+  }
 
   return (
     <MediaPlayer
       {...props}
       class="contents [&::part(vertical-layer)]:contents"
-      onPlayRequest={soundEffects?.activate}
+      onPlayRequest={soundEffects === undefined ? undefined : handlePlayRequest}
     >
       <PMusicPlayerPresentation
         backdropBlur={props.backdropBlur}

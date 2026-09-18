@@ -86,6 +86,8 @@ interface StudioOptions {
   readonly isScreenSaverActive?: boolean
   readonly isReady?: boolean
   readonly styleReady?: boolean
+  readonly weatherReady?: boolean
+  readonly weatherSceneMode?: 'auto' | 'rain'
 }
 
 const modelDownloadRuntime: ModelDownloadRuntime = {
@@ -124,7 +126,10 @@ export const configureStudio = (options: StudioOptions = {}) => {
   const [sceneStyle, setSceneStyle] = createSignal<'original' | 'scribble'>('original')
   const [weatherEnabled, setWeatherEnabled] = createSignal(false)
   const [weatherLocation, setWeatherLocation] = createSignal<WeatherLocation>(seoulLocation)
-  const [weatherSceneMode, setWeatherSceneMode] = createSignal<'auto' | 'rain'>('auto')
+  const [weatherReady, setWeatherReady] = createSignal(options.weatherReady ?? true)
+  const [weatherSceneMode, setWeatherSceneMode] = createSignal<'auto' | 'rain'>(
+    options.weatherSceneMode ?? 'auto',
+  )
 
   vi.mocked(usePEvents).mockReturnValue({
     activeViseme: () => 'rest',
@@ -171,6 +176,7 @@ export const configureStudio = (options: StudioOptions = {}) => {
   } as ReturnType<typeof usePSceneStyle>)
   vi.mocked(useWeather).mockReturnValue({
     enabled: weatherEnabled,
+    isReady: weatherReady,
     location: weatherLocation,
     onEnabledChange: setWeatherEnabled,
     onLocationChange: setWeatherLocation,
@@ -213,7 +219,7 @@ export const configureStudio = (options: StudioOptions = {}) => {
   vi.mocked(readFocusRoomEntrySession).mockReturnValue(options.entrySession ?? false)
   vi.mocked(supportsPSceneGyroscope).mockReturnValue(options.gyroscope ?? false)
 
-  return {setDesktopMode}
+  return {setDesktopMode, setWeatherReady}
 }
 
 export const publish = vi.fn()

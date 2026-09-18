@@ -18,7 +18,10 @@ export const PFocusRoomLayout = (props: PFocusRoomLayoutProps) => {
   return (
     <Show when={isLayoutEnabled()} fallback={props.children}>
       {/* AI_NOTE - This provider must outlive home/editor route swaps so one Pomo session owns one entry greeting. */}
-      <PEventProvider isPlaybackEnabled={isPlaybackEnabled()}>
+      <PEventProvider
+        isDelayedEndEventEnabled={isLayoutEnabled()}
+        isPlaybackEnabled={isPlaybackEnabled()}
+      >
         <PFeedProvider>
           <Show when={isPlaybackEnabled()} fallback={props.children}>
             <SoundEffectsProvider>{props.children}</SoundEffectsProvider>
