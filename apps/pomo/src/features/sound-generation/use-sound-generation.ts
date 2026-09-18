@@ -29,6 +29,8 @@ export function useSoundGeneration() {
   })
   const generate = (request: SoundRequest | LoopRequest) => {
     if (busy()) {
+      setError('이미 생성 중인 작업이 있습니다. 완료 후 다시 시도해 주세요.')
+      setStatus('생성이 진행 중입니다. 완료 후 다시 시도해 주세요.')
       return
     }
     if (
@@ -66,6 +68,7 @@ export function useSoundGeneration() {
             if (previous !== null) {
               URL.revokeObjectURL(previous)
             }
+            setError(null)
             setUrl(URL.createObjectURL(message.blob))
             setStatus('환경음 생성 완료')
             terminate()
