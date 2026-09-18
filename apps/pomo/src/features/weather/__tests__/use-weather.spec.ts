@@ -123,6 +123,27 @@ it('should load the stored preference and expose the query result', async () => 
   root.dispose()
 })
 
+it('should hide weather until the stored preference is restored', async () => {
+  const stored = Promise.withResolvers<WeatherPreference>()
+  preferenceMocks.readWeatherPreference.mockReturnValueOnce(stored.promise)
+  const root = createWeatherRoot()
+
+  expect(root.controller.enabled()).toBe(false)
+  expect(root.controller.state()).toEqual({status: 'disabled'})
+  expect(queryMocks.weatherFeedQuery).not.toHaveBeenCalled()
+
+  stored.resolve({
+    enabled: false,
+    location: seoulLocation,
+    sceneMode: 'auto',
+  })
+  await flushPromises()
+
+  expect(root.controller.enabled()).toBe(false)
+  expect(root.controller.state()).toEqual({status: 'disabled'})
+  root.dispose()
+})
+
 it('should hide weather status but keep querying for an automatic scene', async () => {
   const overcastFeed = {...feed, current: {...feed.current, condition: 'overcast' as const}}
   preferenceMocks.readWeatherPreference.mockResolvedValueOnce({
