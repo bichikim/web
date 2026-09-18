@@ -118,9 +118,22 @@ export const createAutoStartStorage = ({
   /** Persists the auto-start preference until the host app or browser data is removed. */
   const write = async (isEnabled: boolean) => {
     const preference = {isEnabled, savedAt: now()} satisfies StoredPreference
-    writeWebPreference(preference)
-    if (storage.usesTossStorage()) {
-      await storage.writeToss(AUTO_START_STORAGE_KEY, preference).catch(() => undefined)
+    const webWriteError = writeWebPreference(preference)
+
+    if (!storage.usesTossStorage()) {
+      if (webWriteError !== null) {
+        throw new Error('Failed to persist auto-start preference.', {cause: webWriteError})
+      }
+
+      return
+    }
+
+    try {
+      await storage.writeToss(AUTO_START_STORAGE_KEY, preference)
+    } catch (error: unknown) {
+      if (webWriteError !== null) {
+        throw new Error('Failed to persist auto-start preference.', {cause: error})
+      }
     }
   }
 
