@@ -33,7 +33,7 @@ function createPlayback(
   close: () => Promise<void>,
   seek: (seconds: number) => Promise<void> = vi.fn(async (_seconds: number) => {}),
 ): LoopPlayback {
-  return {close, play: vi.fn(async () => {}), seek, stop: vi.fn()}
+  return {close, play: vi.fn(async () => {}), seek, setVolume: vi.fn(), stop: vi.fn()}
 }
 
 afterEach(() => {

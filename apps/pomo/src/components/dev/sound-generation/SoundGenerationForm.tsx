@@ -16,7 +16,9 @@ const DEFAULT_SECONDS = 5
 const PRESETS = [
   {
     label: '비',
-    prompt: 'Gentle steady rain falling on leaves, no thunder, no music, no speech.',
+    prompt:
+      'Steady continuous rainfall ambience only, with soft even raindrops falling on a window, roof, leaves, ' +
+      'and wet ground. Uniform intensity, stable volume, consistent texture from beginning to end.',
   },
   {
     label: '파도',
@@ -46,6 +48,7 @@ function isValidConnection(enabled: boolean, value: number, totalSeconds: number
 export interface SoundGenerationFormRequest {
   readonly chunkNoiseMode: ChunkNoiseMode
   readonly connectionSeconds: number
+  readonly negativePrompt: string
   readonly prompt: string
   readonly seconds: number
 }
@@ -63,6 +66,7 @@ export interface SoundGenerationFormProps {
 }
 
 export function SoundGenerationForm(props: SoundGenerationFormProps) {
+  const [negativePrompt, setNegativePrompt] = createSignal('')
   const [prompt, setPrompt] = createSignal(PRESETS[0].prompt)
   const [seconds, setSeconds] = createSignal(DEFAULT_SECONDS)
   const [chunkNoiseMode, setChunkNoiseMode] = createSignal<ChunkNoiseMode>(DEFAULT_CHUNK_NOISE_MODE)
@@ -72,6 +76,7 @@ export function SoundGenerationForm(props: SoundGenerationFormProps) {
     props.onGenerate({
       chunkNoiseMode: chunkNoiseMode(),
       connectionSeconds: props.connectionEnabled() ? props.connectionSeconds() : 0,
+      negativePrompt: negativePrompt(),
       prompt: prompt(),
       seconds: seconds(),
     })
@@ -107,6 +112,23 @@ export function SoundGenerationForm(props: SoundGenerationFormProps) {
         onInput={(event) => setPrompt(event.currentTarget.value)}
         value={prompt()}
       />
+      <label class="mt-5 mb-2 block text-sm font-700" for="sound-negative-prompt">
+        네거티브 프롬프트
+      </label>
+      <textarea
+        aria-describedby="sound-negative-prompt-help"
+        class={cx(
+          'min-h-28 w-full resize-y rounded-xl border border-white/20 bg-#17131f p-4',
+          'text-base leading-7 text-#f8edf1 focus-visible:outline-2 focus-visible:outline-#9ed6bb',
+        )}
+        id="sound-negative-prompt"
+        onInput={(event) => setNegativePrompt(event.currentTarget.value)}
+        placeholder="예: no rain, no thunder, no wind, no voices, no music"
+        value={negativePrompt()}
+      />
+      <p class="mt-2 text-xs leading-5 text-#bdb2c4" id="sound-negative-prompt-help">
+        원하지 않는 소리를 영어로 쉼표로 구분해 입력하세요. 예: no rain, no wind, no music
+      </p>
       <div class="mt-5 flex flex-wrap items-end gap-4">
         <label class="grid gap-2 text-sm font-700" for="sound-duration">
           길이

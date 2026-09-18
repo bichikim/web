@@ -47,8 +47,8 @@ it('should extend sequentially using the previous tail and write exactly 300 sec
       expect(context?.start).toBe(4)
       expect(context?.end).toBe(seconds)
       expect(context?.left.length).toBe(seconds * 44100)
-      expect(context?.left[0]).toBe(((calls - 1) * 1000) / 32768)
-      expect(context?.right[0]).toBe(((calls - 1) * 1000) / 32768)
+      expect(context?.left[0]).toBe(1000 / 32768)
+      expect(context?.right[0]).toBe(1000 / 32768)
       expect(context?.left[4 * 44100]).toBe(0)
     }
     return createWave(seconds, calls * 1000)
@@ -62,13 +62,13 @@ it('should extend sequentially using the previous tail and write exactly 300 sec
     [
       [115, 1000],
       [116, 1000],
-      [119, 1750],
-      [120, 2000],
-      [227, 2000],
-      [228, 2000],
-      [231, 2750],
-      [232, 3000],
-      [299, 3000],
+      [119, 1307],
+      [120, 1000],
+      [227, 1000],
+      [228, 1000],
+      [231, 1307],
+      [232, 1000],
+      [299, 1000],
     ].map(async ([second, sample]) => {
       const position = 44 + second * 44100 * 4
       expect(
@@ -76,6 +76,52 @@ it('should extend sequentially using the previous tail and write exactly 300 sec
       ).toBe(sample)
     }),
   )
+})
+it('should keep a quieter generated chunk at the previous level after its connection', async () => {
+  let calls = 0
+  vi.mocked(generateSound).mockImplementation(async (_prompt, seconds) => {
+    calls += 1
+    return createWave(seconds, calls === 1 ? 2000 : 1000)
+  })
+
+  const result = await generateExtendedSound('rain', 121, vi.fn())
+  const readSample = async (second: number): Promise<number> => {
+    const position = 44 + second * 44100 * 4
+    const view = new DataView(await result.slice(position, position + 2).arrayBuffer())
+    return view.getInt16(0, true)
+  }
+
+  expect(await readSample(120)).toBe(2000)
+  expect(await readSample(120.5)).toBe(2000)
+})
+it('should prompt later chunks to continue the same sound', async () => {
+  const prompts: string[] = []
+  vi.mocked(generateSound).mockImplementation(async (prompt, seconds) => {
+    prompts.push(prompt)
+    return createWave(seconds)
+  })
+
+  await generateExtendedSound('steady rain', 121, vi.fn(), {connectionSeconds: 4})
+
+  expect(prompts).toHaveLength(2)
+  expect(prompts[0]).toBe('steady rain')
+  expect(prompts[1]).toContain('Continue the exact same sound')
+  expect(prompts[1]).toContain('steady rain')
+})
+
+it('should preserve the negative prompt across every generated chunk', async () => {
+  const negativePrompts: Array<string | undefined> = []
+  vi.mocked(generateSound).mockImplementation(async (_prompt, seconds, _progress, options) => {
+    negativePrompts.push(options?.negativePrompt)
+    return createWave(seconds)
+  })
+
+  await generateExtendedSound('steady thunder', 121, vi.fn(), {
+    connectionSeconds: 4,
+    negativePrompt: 'rain, rainfall',
+  })
+
+  expect(negativePrompts).toEqual(['rain, rainfall', 'rain, rainfall'])
 })
 it('should share one seeded noise stream across continuous chunks', async () => {
   const sources: NoiseSource[] = []
