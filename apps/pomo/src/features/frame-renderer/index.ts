@@ -279,29 +279,37 @@ export class FrameRenderer {
       texture?.destroy(true)
       media.dispose()
     }
-    const result = await media.ready
-    if (!active()) {
-      return false
-    }
-    if (!result) {
-      throw new Error('Unable to decode background media.')
-    }
-    if (video === null) {
-      texture = Texture.from(source)
-    } else if (this.#options.videoTextureMode === 'canvas') {
-      const {texture: canvasTexture, update} = createCanvasVideoTexture(video)
-      texture = canvasTexture
-      this.#updateVideoTexture = update
-    } else {
-      const videoSource = new VideoSource({autoLoad: false, autoPlay: false, resource: video})
-      texture = new Texture({source: videoSource})
-      await videoSource.load()
+    try {
+      const result = await media.ready
       if (!active()) {
         return false
       }
+      if (!result) {
+        throw new Error('Unable to decode background media.')
+      }
+      if (video === null) {
+        texture = Texture.from(source)
+      } else if (this.#options.videoTextureMode === 'canvas') {
+        const {texture: canvasTexture, update} = createCanvasVideoTexture(video)
+        texture = canvasTexture
+        this.#updateVideoTexture = update
+      } else {
+        const videoSource = new VideoSource({autoLoad: false, autoPlay: false, resource: video})
+        texture = new Texture({source: videoSource})
+        await videoSource.load()
+        if (!active()) {
+          return false
+        }
+      }
+      sprite = this.#mount(texture, kind)
+      return video === null ? true : this.#playVideo(video, blob, id, active)
+    } catch (error) {
+      if (active()) {
+        this.#clearMedia()
+        this.#kind = null
+      }
+      throw error
     }
-    sprite = this.#mount(texture, kind)
-    return video === null ? true : this.#playVideo(video, blob, id, active)
   }
 
   async #playVideo(
