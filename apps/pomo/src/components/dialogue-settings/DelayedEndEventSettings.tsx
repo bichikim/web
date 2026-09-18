@@ -13,6 +13,7 @@ import {DialogueEventSettingRow} from './EventSettingRow'
 const CONTROL_GROUP_CLASS = 'flex flex-wrap items-end gap-2'
 const INPUT_LABEL_CLASS = 'grid min-w-0 gap-1 text-sm leading-5 font-bold text-muted-foreground'
 const MESSAGE_CLASS = 'm-0 text-sm leading-[1.5] text-muted-foreground'
+const SAVE_DEBOUNCE_MILLISECONDS = 500
 
 const parseDuration = (value: string) => {
   const durationMinutes = Number(value)
@@ -31,12 +32,10 @@ export const DelayedEndEventSettings = () => {
   let hasEdited = false
   let editRevision = 0
   let isDisposed = false
+  let pendingSave: {readonly revision: number; readonly value: string} | null = null
+  let saveTimeout: ReturnType<typeof globalThis.setTimeout> | null = null
   const duration = () => parseDuration(draft())
   const isRunning = () => events.delayedEndEventIsRunning()
-
-  onCleanup(() => {
-    isDisposed = true
-  })
 
   createEffect(() => {
     if (!hasEdited && !events.isLoading()) {
@@ -59,6 +58,38 @@ export const DelayedEndEventSettings = () => {
       }
     })
   }
+  const scheduleSave = (value: string, revision: number) => {
+    pendingSave = {revision, value}
+
+    if (saveTimeout !== null) {
+      globalThis.clearTimeout(saveTimeout)
+    }
+
+    saveTimeout = globalThis.setTimeout(() => {
+      saveTimeout = null
+      const nextSave = pendingSave
+      pendingSave = null
+      if (nextSave !== null) {
+        saveDuration(nextSave.value, nextSave.revision)
+      }
+    }, SAVE_DEBOUNCE_MILLISECONDS)
+  }
+  const flushPendingSave = () => {
+    if (saveTimeout !== null) {
+      globalThis.clearTimeout(saveTimeout)
+      saveTimeout = null
+    }
+
+    const nextSave = pendingSave
+    pendingSave = null
+    if (nextSave !== null) {
+      saveDuration(nextSave.value, nextSave.revision)
+    }
+  }
+  onCleanup(() => {
+    isDisposed = true
+    flushPendingSave()
+  })
 
   const handleStartOrCancel = () => {
     setMessage(null)
@@ -68,6 +99,7 @@ export const DelayedEndEventSettings = () => {
     }
 
     if (duration() !== null) {
+      flushPendingSave()
       events.startDelayedEndEvent()
     }
   }
@@ -76,7 +108,7 @@ export const DelayedEndEventSettings = () => {
     const revision = (editRevision += 1)
     setMessage(null)
     setDraft(value)
-    saveDuration(value, revision)
+    scheduleSave(value, revision)
   }
 
   return (
