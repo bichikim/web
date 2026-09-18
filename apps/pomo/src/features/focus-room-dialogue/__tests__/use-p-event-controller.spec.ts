@@ -63,6 +63,23 @@ it('should return false when playback is disabled', async () => {
   view.cleanup()
 })
 
+it('should start a delayed-end timer while playback is suspended', async () => {
+  const view = renderHook(() =>
+    usePEventController({isDelayedEndEventEnabled: true, isPlaybackEnabled: false}),
+  )
+  await vi.waitFor(() => expect(view.result.isLoading()).toBe(false))
+  vi.useFakeTimers()
+
+  try {
+    view.result.startDelayedEndEvent()
+
+    expect(view.result.delayedEndEventIsRunning()).toBe(true)
+  } finally {
+    view.cleanup()
+    vi.useRealTimers()
+  }
+})
+
 it('should cap only catch-up event dialogue playback', async () => {
   const dialogueIds = Array.from({length: 40}, (_, index) => `dialogue-${index}`)
   repositoryMocks.listEventBindings.mockResolvedValue([
