@@ -143,11 +143,16 @@ export const PStudioEvents = (props: PStudioEventsProps) => {
     }
   }
   let unregisterEventActionExecutor: (() => void) | undefined
+  let unregisterBeforePlayback: (() => void) | undefined
   onMount(() => {
     // The executor reads the latest media controls when an event fires.
     unregisterEventActionExecutor = events.registerEventActionExecutor(runEventAction)
+    unregisterBeforePlayback = events.registerBeforePlayback?.(props.pomoSay.stop)
   })
-  onCleanup(() => unregisterEventActionExecutor?.())
+  onCleanup(() => {
+    unregisterEventActionExecutor?.()
+    unregisterBeforePlayback?.()
+  })
   const isDialoguePresented = createMemo((wasPresented) => {
     const hasVisibleContent =
       events.activeText() !== null ||

@@ -173,6 +173,7 @@ const createEvents = (
     readonly activeText?: string | null
     readonly blocked?: boolean
     readonly isPlaying?: boolean
+    readonly registerBeforePlayback?: (callback: () => void) => () => void
     readonly registerEventActionExecutor?: (
       executor: (
         actionId: 'music-start' | 'music-stop' | 'sound-effects-start' | 'sound-effects-stop',
@@ -187,6 +188,7 @@ const createEvents = (
     isDialoguePlaybackBlocked: () => overrides.blocked ?? false,
     isDialoguePlaying: () => overrides.isPlaying ?? false,
     playDialogueEvents: overrides.playDialogueEvents ?? vi.fn(async () => undefined),
+    registerBeforePlayback: overrides.registerBeforePlayback ?? vi.fn(() => vi.fn()),
     registerEventActionExecutor: overrides.registerEventActionExecutor ?? vi.fn(() => vi.fn()),
     scheduledDialogueCount: () => overrides.scheduledCount ?? 0,
   }) as unknown as ReturnType<typeof usePEvents>
@@ -462,6 +464,25 @@ describe('PStudioEvents', () => {
     reminderProps?.onBeforePlayback?.()
 
     expect(pomoSay.stop).toHaveBeenCalledOnce()
+  })
+
+  it('should register external speech stop for controller-owned playback', () => {
+    let beforePlayback: (() => void) | undefined
+    const unregister = vi.fn()
+    const events = createEvents({
+      registerBeforePlayback: (callback) => {
+        beforePlayback = callback
+        return unregister
+      },
+    })
+    const pomoSay = createPomoSay()
+    const result = renderEvents({events, pomoSay})
+
+    beforePlayback?.()
+
+    expect(pomoSay.stop).toHaveBeenCalledOnce()
+    result.unmount()
+    expect(unregister).toHaveBeenCalledOnce()
   })
 
   it('should lower music for either event dialogue or external speech playback', () => {
