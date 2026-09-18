@@ -92,6 +92,30 @@ it('should not show a success message after saving the waiting time', async () =
   expect(screen.queryByRole('status')).toBeNull()
 })
 
+it('should wait for a complete multi-digit waiting time before saving', async () => {
+  const events = createEvents()
+  eventMocks.usePEvents.mockReturnValue(events)
+  vi.useFakeTimers()
+
+  try {
+    render(() => <DelayedEndEventSettings />)
+    const input = screen.getByRole('spinbutton', {name: '대기 시간(분)'})
+
+    fireEvent.input(input, {target: {value: '9'}})
+    expect(events.setDelayedEndEventDuration).not.toHaveBeenCalledWith(9)
+
+    fireEvent.input(input, {target: {value: '90'}})
+    await vi.advanceTimersByTimeAsync(499)
+    expect(events.setDelayedEndEventDuration).not.toHaveBeenCalled()
+
+    await vi.advanceTimersByTimeAsync(1)
+    expect(events.setDelayedEndEventDuration).toHaveBeenCalledOnce()
+    expect(events.setDelayedEndEventDuration).toHaveBeenCalledWith(90)
+  } finally {
+    vi.useRealTimers()
+  }
+})
+
 it('should restore the persisted waiting time when saving fails', async () => {
   const saveError = new Error('storage unavailable')
   const events = createEvents({
