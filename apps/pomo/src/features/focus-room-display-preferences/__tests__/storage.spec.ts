@@ -19,6 +19,7 @@ vi.mock('@apps-in-toss/web-framework', () => ({Storage: storageMocks}))
 
 const visiblePreferences = {
   dialogueComposerVisible: true,
+  featureRequestVisible: true,
   memoryAssistVisible: true,
   playerVisible: true,
   pomodoroVisible: true,
@@ -150,6 +151,7 @@ it('should replace a stale browser copy with the toss preferences', async () => 
   Object.defineProperty(globalThis, 'ReactNativeWebView', {configurable: true, value: {}})
   const hiddenPreferences = {
     dialogueComposerVisible: false,
+    featureRequestVisible: true,
     memoryAssistVisible: true,
     playerVisible: true,
     pomodoroVisible: true,
@@ -179,6 +181,7 @@ it('should restore toss state after a failed toss save', async () => {
   Object.defineProperty(globalThis, 'ReactNativeWebView', {configurable: true, value: {}})
   const hiddenPreferences = {
     dialogueComposerVisible: false,
+    featureRequestVisible: true,
     memoryAssistVisible: true,
     playerVisible: true,
     pomodoroVisible: true,
@@ -205,6 +208,7 @@ it('should preserve toss write order during rapid preference changes', async () 
   })
   const hiddenPreferences = {
     dialogueComposerVisible: false,
+    featureRequestVisible: true,
     memoryAssistVisible: true,
     playerVisible: true,
     pomodoroVisible: true,
@@ -240,6 +244,7 @@ it('should keep the tour visible for preferences saved before the tour setting e
   harness.webValues.set(STORAGE_KEY, {dialogueComposerVisible: true})
   await expect(harness.repository.read()).resolves.toEqual({
     dialogueComposerVisible: true,
+    featureRequestVisible: true,
     memoryAssistVisible: true,
     playerVisible: true,
     pomodoroVisible: true,
@@ -252,6 +257,7 @@ it('should persist and restore a hidden tour button', async () => {
   const harness = createStorageHarness()
   await harness.repository.write({
     dialogueComposerVisible: false,
+    featureRequestVisible: true,
     memoryAssistVisible: true,
     playerVisible: true,
     pomodoroVisible: true,
@@ -260,12 +266,22 @@ it('should persist and restore a hidden tour button', async () => {
   })
   await expect(harness.repository.read()).resolves.toEqual({
     dialogueComposerVisible: false,
+    featureRequestVisible: true,
     memoryAssistVisible: true,
     playerVisible: true,
     pomodoroVisible: true,
     toolsButtonVisible: true,
     tourButtonVisible: false,
   })
+})
+
+it('should persist and restore a hidden feature request button', async () => {
+  const harness = createStorageHarness()
+  const hiddenPreferences = {...visiblePreferences, featureRequestVisible: false}
+
+  await harness.repository.write(hiddenPreferences)
+
+  await expect(harness.repository.read()).resolves.toEqual(hiddenPreferences)
 })
 
 it.each([false, true])(
@@ -305,6 +321,7 @@ it.each([false, true])('should persist hidden widgets (toss=%s)', async (toss) =
   harness.storage.usesTossStorage.mockReturnValue(toss)
   await harness.repository.write({
     dialogueComposerVisible: false,
+    featureRequestVisible: true,
     memoryAssistVisible: true,
     playerVisible: false,
     pomodoroVisible: false,
