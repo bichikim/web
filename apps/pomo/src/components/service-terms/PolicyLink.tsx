@@ -1,7 +1,7 @@
 import {cva, type VariantProps} from 'class-variance-authority'
 import {Show} from 'solid-js'
 
-const POLICY_LINK_CLASSES = cva('rounded-sm text-inherit', {
+export const POLICY_LINK_CLASSES = cva('rounded-sm text-inherit', {
   defaultVariants: {
     current: false,
     tone: 'surface',

@@ -51,8 +51,11 @@ it('should show the newest changes and the first release from the public catalog
   expect(screen.getAllByRole('listitem')).toHaveLength(44)
   expect(screen.getByRole('heading', {name: '첫 출시'})).toBeTruthy()
   expect(screen.getByText('2026. 08. 25 05:26')).toBeTruthy()
-  expect(screen.getAllByRole('link', {name: '앱으로 돌아가기'})).toHaveLength(2)
-  for (const link of screen.getAllByRole('link', {name: '앱으로 돌아가기'})) {
+  const returnLinks = screen.getAllByRole('link', {name: '앱으로 돌아가기'})
+  expect(returnLinks).toHaveLength(2)
+  expect(returnLinks[0]).toHaveClass('min-h-11', 'rounded-full', 'text-base', 'text-foreground')
+  expect(returnLinks[0].parentElement).toHaveClass('flex', 'justify-end')
+  for (const link of returnLinks) {
     expect(link).toHaveAttribute('href', '/')
   }
 })

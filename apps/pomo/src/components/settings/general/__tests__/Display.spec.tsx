@@ -247,6 +247,22 @@ it('should show toolbar toggles enabled by default and emit hidden choices', () 
   }
 })
 
+it('should show the weather display switch in general settings and forward its change', () => {
+  const onWeatherEnabledChange = vi.fn()
+  render(() => (
+    <PGeneralDisplaySettings
+      wakeLock={useScreenWakeLock()}
+      onWeatherEnabledChange={onWeatherEnabledChange}
+      weatherEnabled={false}
+    />
+  ))
+
+  const weatherSwitch = screen.getByRole('button', {name: '날씨 표시'})
+  expect(weatherSwitch).toHaveAttribute('aria-pressed', 'false')
+  fireEvent.click(weatherSwitch)
+  expect(onWeatherEnabledChange).toHaveBeenCalledWith(true)
+})
+
 it('should describe every display switch', () => {
   render(() => (
     <PGeneralDisplaySettings

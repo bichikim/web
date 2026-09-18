@@ -1,14 +1,11 @@
 import {FIELD_DESCRIPTION} from 'src/components/field-classes'
 import {PSelect} from '../p-select/PSelect'
-import {PSwitch} from '../p-switch/PSwitch'
 import {getLocalizedWeatherSceneModeOptions} from '../../features/localization'
 import type {WeatherLocation, WeatherSceneMode} from '../../features/weather'
 import * as m from '@paraglide/message'
 import {PWeatherLocationSearch} from '../p-weather-location-search/PWeatherLocationSearch'
 
 export interface PWeatherSettingsProps {
-  readonly enabled?: boolean
-  readonly onEnabledChange?: (enabled: boolean) => void
   readonly location?: WeatherLocation
   readonly onLocationChange?: (location: WeatherLocation) => void
   readonly onSceneModeChange?: (mode: WeatherSceneMode) => void
@@ -17,13 +14,6 @@ export interface PWeatherSettingsProps {
 
 export const PWeatherSettings = (props: PWeatherSettingsProps) => (
   <div class="grid items-start gap-4 min-[60rem]:grid-cols-2">
-    <PSwitch
-      checked={props.enabled ?? true}
-      class="col-span-full"
-      description={m.weather_show_description()}
-      label={m.weather_show()}
-      onChange={(enabled) => props.onEnabledChange?.(enabled)}
-    />
     <PSelect
       label={m.weather_scene()}
       onChange={(mode) => props.onSceneModeChange?.(mode)}
