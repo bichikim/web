@@ -74,9 +74,7 @@ export const DelayedEndEventSettings = () => {
       }
     }, SAVE_DEBOUNCE_MILLISECONDS)
   }
-  onCleanup(() => {
-    isDisposed = true
-
+  const flushPendingSave = () => {
     if (saveTimeout !== null) {
       globalThis.clearTimeout(saveTimeout)
       saveTimeout = null
@@ -87,6 +85,10 @@ export const DelayedEndEventSettings = () => {
     if (nextSave !== null) {
       saveDuration(nextSave.value, nextSave.revision)
     }
+  }
+  onCleanup(() => {
+    isDisposed = true
+    flushPendingSave()
   })
 
   const handleStartOrCancel = () => {
@@ -97,6 +99,7 @@ export const DelayedEndEventSettings = () => {
     }
 
     if (duration() !== null) {
+      flushPendingSave()
       events.startDelayedEndEvent()
     }
   }
