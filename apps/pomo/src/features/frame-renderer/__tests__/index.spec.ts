@@ -226,6 +226,25 @@ it('should release media when canvas video texture creation fails', async () => 
   renderer.destroy()
 })
 
+it('should release media when photo texture creation fails', async () => {
+  vi.mocked(Texture.from).mockImplementationOnce(() => {
+    throw new Error('texture')
+  })
+  const renderer = new FrameRenderer({
+    canvas: document.createElement('canvas'),
+    onEnded: vi.fn(),
+    onError: vi.fn(),
+  })
+  await renderer.initialize()
+  const showing = renderer.show(new Blob(['image']), 'photo')
+  finishMedia(true)
+
+  await expect(showing).rejects.toThrow('texture')
+  expect(disposeMedia).toHaveBeenCalledOnce()
+
+  renderer.destroy()
+})
+
 it('should cancel pending media and destroy an application that finishes initializing after disposal', async () => {
   const renderer = new FrameRenderer({
     canvas: document.createElement('canvas'),
@@ -267,9 +286,9 @@ it('should reject failed media readiness without mounting a sprite', async () =>
   const showing = renderer.show(new Blob(['invalid']), 'photo')
   finishMedia(false)
   await expect(showing).rejects.toThrow('decode')
+  expect(disposeMedia).toHaveBeenCalledOnce()
   expect(application.stage.addChild).not.toHaveBeenCalled()
   renderer.destroy()
-  expect(disposeMedia).toHaveBeenCalledOnce()
 })
 
 it('should preserve the outgoing photo before releasing media and cancel a pending replacement', async () => {
