@@ -281,6 +281,25 @@ describe('PStudio', () => {
     expect(screen.queryByRole('button', {name: '장면 로드 완료'})).not.toBeInTheDocument()
     expect(SceneToolbar).not.toHaveBeenCalled()
   })
+
+  it('should wait for weather restoration before mounting the scene', () => {
+    const {setWeatherReady} = configureStudio({
+      entrySession: true,
+      weatherReady: false,
+      weatherSceneMode: 'rain',
+    })
+
+    renderStudio()
+
+    expect(screen.queryByRole('button', {name: '장면 로드 완료'})).not.toBeInTheDocument()
+
+    setWeatherReady(true)
+
+    expect(screen.getByRole('button', {name: '장면 로드 완료'}).parentElement).toHaveAttribute(
+      'data-weather',
+      'rain',
+    )
+  })
 })
 
 it('should unmount the character scene in frame mode while keeping the timer and controls', () => {
