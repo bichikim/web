@@ -88,6 +88,11 @@ export const useWeather = (): WeatherController => {
   })
   const preference = () => storedPreference() ?? DEFAULT_WEATHER_PREFERENCE
   const preferenceReady = () => storedPreference() !== null
+  const isWeatherEnabled = () => {
+    const currentPreference = storedPreference()
+    return currentPreference !== null && currentPreference.enabled
+  }
+
   const sceneReady = () => {
     const currentPreference = storedPreference()
     if (currentPreference === null || currentPreference.sceneMode !== 'auto') {
@@ -171,7 +176,7 @@ export const useWeather = (): WeatherController => {
   }
 
   return {
-    enabled: () => preference().enabled,
+    enabled: isWeatherEnabled,
     isReady: sceneReady,
     location: () => preference().location,
     onEnabledChange: (enabled) => persistPreference({enabled}),
@@ -190,6 +195,6 @@ export const useWeather = (): WeatherController => {
       return resolveWeatherSceneCondition(currentPreference.sceneMode, observedCondition)
     },
     sceneMode: () => preference().sceneMode,
-    state: () => (preference().enabled ? feedState() : DISABLED_WEATHER_STATE),
+    state: () => (isWeatherEnabled() ? feedState() : DISABLED_WEATHER_STATE),
   }
 }

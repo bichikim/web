@@ -1,7 +1,7 @@
 /** @vitest-environment jsdom */
 
 import {renderHook} from '@solidjs/testing-library'
-import {expect, it, vi} from 'vitest'
+import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 
 import {usePEventController} from '../use-p-event-controller'
 import {MAX_LATEST_REPLACEMENT_DIALOGUE_IDS} from '../dialogue-playback-policy'
@@ -228,4 +228,45 @@ it('should keep the last persisted duration after overlapping saves fail', async
   await expect(secondSave).rejects.toBe(failure)
   expect(view.result.delayedEndEventDurationMinutes?.()).toBe(30)
   view.cleanup()
+})
+
+describe('delayed-end playback', () => {
+  beforeEach(() => {
+    vi.useFakeTimers()
+    repositoryMocks.listEventBindings.mockReset().mockResolvedValue([
+      {
+        dialogueIds: ['delayed-end-dialogue'],
+        event: 'delayed-end',
+        playbackMode: 'sequential-all',
+        version: 3,
+      },
+    ])
+    delayedEndEventSettingsMocks.write.mockReset().mockResolvedValue(undefined)
+    playback.playSequence.mockReset().mockResolvedValue(undefined)
+  })
+
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
+  it('should stop registered external speech before playback starts', async () => {
+    const playbackOrder: string[] = []
+    const stopExternalSpeech = vi.fn(() => playbackOrder.push('stop'))
+    playback.playSequence.mockImplementationOnce(async () => {
+      playbackOrder.push('play')
+    })
+
+    const view = renderHook(() => usePEventController({}))
+    await vi.waitFor(() => expect(view.result.isLoading()).toBe(false))
+    await view.result.setDelayedEndEventDuration?.(1)
+    const unregister = view.result.registerBeforePlayback?.(stopExternalSpeech)
+
+    view.result.startDelayedEndEvent?.()
+    await vi.advanceTimersByTimeAsync(60_000)
+
+    expect(stopExternalSpeech).toHaveBeenCalledOnce()
+    expect(playbackOrder).toEqual(['stop', 'play'])
+    unregister?.()
+    view.cleanup()
+  })
 })
