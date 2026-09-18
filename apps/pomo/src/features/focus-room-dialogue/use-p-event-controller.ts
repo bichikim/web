@@ -112,6 +112,7 @@ export const usePEventController = (props: UsePEventControllerProps): PEventCont
   let delayedEndEventDurationRevision = 0
   let eventActionExecutor: EventActionExecutor | null = null
   let pendingEventActions: EventActionId[] = []
+  const beforePlaybackCallbacks = new Set<() => void>()
   let hasRegisteredEventActionExecutor = false
   let pendingEntryEvent = false
   let resolveInitialization: (() => void) | null = null
@@ -348,7 +349,10 @@ export const usePEventController = (props: UsePEventControllerProps): PEventCont
 
   const delayedEndEvent = useDelayedEndEvent({
     isEnabled: isPlaybackEnabled,
-    onEvent: () => playDialogueEvents([DELAYED_END_EVENT]),
+    onEvent: () =>
+      playDialogueEvents([DELAYED_END_EVENT], () => {
+        beforePlaybackCallbacks.forEach((callback) => callback())
+      }),
   })
 
   const setDelayedEndEventDuration = async (durationMinutes: number): Promise<void> => {
@@ -481,6 +485,12 @@ export const usePEventController = (props: UsePEventControllerProps): PEventCont
         }
       }
     },
+    registerBeforePlayback: (callback) => {
+      beforePlaybackCallbacks.add(callback)
+      return () => {
+        beforePlaybackCallbacks.delete(callback)
+      }
+    },
     registerEventActionExecutor: (executor) => {
       hasRegisteredEventActionExecutor = true
       eventActionExecutor = executor
@@ -573,6 +583,7 @@ export const usePEventController = (props: UsePEventControllerProps): PEventCont
     isDisposed = true
     pendingEntryEvent = false
     pendingEventActions = []
+    beforePlaybackCallbacks.clear()
     resolveInitialization?.()
     playback.dispose()
     repository?.dispose()
