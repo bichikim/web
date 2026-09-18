@@ -1,9 +1,26 @@
 import {createSignal, For, type JSX, onCleanup, onMount} from 'solid-js'
 
+import {readWebStorageJson, writeWebStorageJson} from 'src/utils/runtime-storage'
+
 import {SoundEffectsContext, type SoundEffectsController} from './context'
 import {loadSoundEffects} from './load-sound-effects'
 import type {SoundEffect} from './types'
 import {type SoundEffectPlayback, useSoundEffectPlayback} from './use-sound-effect'
+
+const SOUND_EFFECTS_STOPPED_STORAGE_KEY = 'pomo:sound-effects-stopped:v1'
+
+const parseStoredStopped = (value: unknown): boolean | null =>
+  typeof value === 'boolean' ? value : null
+
+const readStoredStopped = (): boolean =>
+  readWebStorageJson(SOUND_EFFECTS_STOPPED_STORAGE_KEY, parseStoredStopped) ?? false
+
+const writeStoredStopped = (isStopped: boolean): void => {
+  const error = writeWebStorageJson(SOUND_EFFECTS_STOPPED_STORAGE_KEY, isStopped)
+  if (error !== null) {
+    console.warn('Sound-effect stop state could not be persisted', error)
+  }
+}
 
 export interface SoundEffectsProviderProps {
   readonly children: JSX.Element
@@ -58,6 +75,7 @@ export const SoundEffectsProvider = (props: SoundEffectsProviderProps) => {
 
   const activate = () => {
     setIsStopped(false)
+    writeStoredStopped(false)
     const currentPlaybacks = playbacks()
     for (const playback of currentPlaybacks.values()) {
       playback.activate()
@@ -66,6 +84,7 @@ export const SoundEffectsProvider = (props: SoundEffectsProviderProps) => {
 
   const stop = () => {
     setIsStopped(true)
+    writeStoredStopped(true)
     const currentPlaybacks = playbacks()
     for (const playback of currentPlaybacks.values()) {
       playback.stop()
@@ -83,6 +102,7 @@ export const SoundEffectsProvider = (props: SoundEffectsProviderProps) => {
   }
 
   onMount(() => {
+    setIsStopped(readStoredStopped())
     loadSoundEffects({signal: controller.signal})
       .then((loadedEffects) => {
         setEffects(loadedEffects)
