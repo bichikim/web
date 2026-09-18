@@ -47,7 +47,7 @@ export interface WeatherController {
   readonly location: Accessor<WeatherLocation>
   readonly onLocationChange: (location: WeatherLocation) => void
   readonly onSceneModeChange: (mode: WeatherSceneMode) => void
-  readonly sceneCondition: Accessor<WeatherSceneCondition>
+  readonly sceneCondition: Accessor<WeatherSceneCondition | undefined>
   readonly sceneMode: Accessor<WeatherSceneMode>
   readonly state: Accessor<WeatherState>
 }
@@ -91,6 +91,15 @@ export const useWeather = (): WeatherController => {
   const isWeatherEnabled = () => {
     const currentPreference = storedPreference()
     return currentPreference !== null && currentPreference.enabled
+  }
+
+  const sceneReady = () => {
+    const currentPreference = storedPreference()
+    if (currentPreference === null || currentPreference.sceneMode !== 'auto') {
+      return currentPreference !== null
+    }
+
+    return feedState().status !== 'loading'
   }
 
   const weatherResult = createAsync<WeatherFeedQueryResult | undefined>(async () => {
@@ -168,17 +177,22 @@ export const useWeather = (): WeatherController => {
 
   return {
     enabled: isWeatherEnabled,
-    isReady: preferenceReady,
+    isReady: sceneReady,
     location: () => preference().location,
     onEnabledChange: (enabled) => persistPreference({enabled}),
     onLocationChange: (location) => persistPreference({location}),
     onSceneModeChange: (sceneMode) => persistPreference({sceneMode}),
     sceneCondition: () => {
+      const currentPreference = preference()
       const currentState = feedState()
+      if (currentPreference.sceneMode === 'auto' && currentState.status === 'loading') {
+        return undefined
+      }
+
       const observedCondition =
         currentState.status === 'ready' ? currentState.feed.current.condition : 'unknown'
 
-      return resolveWeatherSceneCondition(preference().sceneMode, observedCondition)
+      return resolveWeatherSceneCondition(currentPreference.sceneMode, observedCondition)
     },
     sceneMode: () => preference().sceneMode,
     state: () => (isWeatherEnabled() ? feedState() : DISABLED_WEATHER_STATE),

@@ -133,7 +133,7 @@ interface StudioSceneViewProps {
   readonly sceneGaze: PGaze
   readonly sceneStyle: PSceneStyle
   readonly time: SceneTime
-  readonly weatherCondition: WeatherSceneCondition
+  readonly weatherCondition?: WeatherSceneCondition
   readonly isReady: boolean
   readonly styleReady: boolean
 }
