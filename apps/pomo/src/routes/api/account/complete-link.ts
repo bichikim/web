@@ -4,13 +4,14 @@ import {z} from 'zod'
 import {readJsonBody} from 'src/server/http/body'
 import {noStoreJson} from 'src/server/http/response'
 import {getAuthSession} from 'src/server/auth/get-auth-session'
-import {completeAccountLink} from 'src/server/repositories/auth'
+import {completeAccountLink} from 'src/server/auth/account-link'
 
 const MAXIMUM_BODY_SIZE = 4096
 const MINIMUM_TOKEN_LENGTH = 32
 const MAXIMUM_TOKEN_LENGTH = 512
 const HTTP_BAD_REQUEST = 400
 const HTTP_UNAUTHORIZED = 401
+const HTTP_SERVICE_UNAVAILABLE = 503
 const HTTP_CONFLICT = 409
 const HTTP_GONE = 410
 const completeLinkRequestSchema = z.object({
@@ -31,6 +32,13 @@ export const POST = async (event: APIEvent): Promise<Response> => {
   }
 
   const session = await getAuthSession(event.request, {provider: 'neon'})
+
+  if (session.access === 'invalid') {
+    return noStoreJson(
+      {error: 'authentication_unavailable'},
+      {cookies: session.setCookies, status: HTTP_SERVICE_UNAVAILABLE},
+    )
+  }
 
   if (session.identity === null) {
     return noStoreJson(

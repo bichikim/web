@@ -1,5 +1,6 @@
 /** @vitest-environment jsdom */
 
+import {PreferenceProvider} from 'src/hooks/use-preference'
 import {createSignal} from 'solid-js'
 import {cleanup, render} from '@solidjs/testing-library'
 import {afterEach, beforeEach, expect, it, vi} from 'vitest'
@@ -55,10 +56,13 @@ const readStoredPlayback = () =>
 const renderController = () => {
   const [element, setElement] = createSignal<HTMLAudioElement>()
   let controller: PlayerController | undefined
-  render(() => {
-    controller = usePlayerController({element, tracks: [TRACK]})
-    return null
-  })
+  render(
+    () => {
+      controller = usePlayerController({element, tracks: [TRACK]})
+      return null
+    },
+    {wrapper: PreferenceProvider},
+  )
 
   const audio = document.createElement('audio')
   vi.spyOn(audio, 'load').mockImplementation(() => undefined)
@@ -81,7 +85,9 @@ const renderControlledController = () => {
     controller = usePlayerController(props)
     return null
   }
-  render(() => <ControllerHarness element={element} tracks={tracks()} />)
+  render(() => <ControllerHarness element={element} tracks={tracks()} />, {
+    wrapper: PreferenceProvider,
+  })
 
   const audio = document.createElement('audio')
   vi.spyOn(audio, 'load').mockImplementation(() => undefined)
@@ -116,7 +122,7 @@ it('should preserve restart playback intent until the play event follows seeked'
   })
 
   controller.onSeeking()
-  window.dispatchEvent(new Event('pagehide'))
+  globalThis.dispatchEvent(new Event('pagehide'))
   controller.onSeeked()
   controller.onTimeUpdate()
   expect(readStoredPlayback()).toMatchObject({
@@ -164,6 +170,20 @@ it('should keep persistence active when restarting an already-playing track', ()
   })
 })
 
+it('should keep a pending restart play request when seeking an already-playing track', () => {
+  const {audio, controller} = renderController()
+
+  controller.onPlay()
+  controller.selectNextTrack()
+  expect(audio.play).toHaveBeenCalledOnce()
+  controller.onSeeking()
+  Object.defineProperty(audio, 'paused', {configurable: true, value: false})
+  controller.onPlay()
+
+  expect(audio.pause).not.toHaveBeenCalled()
+  expect(controller.isPlaying()).toBe(true)
+})
+
 it('should release pending restart persistence when track selection cancels playback', async () => {
   const {audio, controller} = renderController()
 
@@ -204,7 +224,7 @@ it('should persist a user pause when it cancels a pending restart', () => {
 
   controller.onEnded()
   controller.pause()
-  window.dispatchEvent(new Event('pagehide'))
+  globalThis.dispatchEvent(new Event('pagehide'))
   controller.onSeeked()
 
   expect(readStoredPlayback()).toMatchObject({
@@ -219,7 +239,7 @@ it('should persist a media-controller pause intent without a native pause event'
 
   controller.onEnded()
   controller.markPauseIntent()
-  window.dispatchEvent(new Event('pagehide'))
+  globalThis.dispatchEvent(new Event('pagehide'))
 
   expect(readStoredPlayback()).toMatchObject({
     isPlaying: false,
@@ -258,4 +278,75 @@ it('should preserve playback when controlled tracks replace the current source',
     positionSeconds: 0,
     trackId: NEXT_TRACK.id,
   })
+})
+
+it('should preserve playback when seeking before metadata during track replacement', async () => {
+  const {controller, setTracks} = renderControlledController()
+
+  controller.onPlay()
+  setTracks([NEXT_TRACK])
+  await Promise.resolve()
+  controller.onSeeking()
+  controller.onPause()
+
+  expect(controller.isPlaying()).toBe(true)
+  expect(readStoredPlayback()).toMatchObject({
+    isPlaying: true,
+    positionSeconds: 0,
+    trackId: NEXT_TRACK.id,
+  })
+})
+
+it('should resume the media element after seeking before metadata during track replacement', async () => {
+  const {audio, controller, setTracks} = renderControlledController()
+
+  controller.onPlay()
+  setTracks([NEXT_TRACK])
+  await Promise.resolve()
+  await Promise.resolve()
+  audio.currentTime = 8
+  controller.onSeeking()
+  Object.defineProperty(audio, 'readyState', {
+    configurable: true,
+    value: HTMLMediaElement.HAVE_METADATA,
+  })
+  controller.onLoadedMetadata()
+
+  expect(audio.play).toHaveBeenCalled()
+})
+
+it('should honor an explicit pause after seeking before metadata during track replacement', async () => {
+  const {audio, controller, setTracks} = renderControlledController()
+
+  controller.onPlay()
+  setTracks([NEXT_TRACK])
+  await Promise.resolve()
+  await Promise.resolve()
+  audio.currentTime = 8
+  controller.onSeeking()
+  controller.pause()
+  Object.defineProperty(audio, 'readyState', {
+    configurable: true,
+    value: HTMLMediaElement.HAVE_METADATA,
+  })
+  controller.onLoadedMetadata()
+
+  expect(controller.isPlaying()).toBe(false)
+  expect(audio.play).not.toHaveBeenCalled()
+  expect(readStoredPlayback()).toMatchObject({
+    isPlaying: false,
+    positionSeconds: 8,
+    trackId: NEXT_TRACK.id,
+  })
+})
+
+it('should not reload when controlled tracks refresh with identical track identity', async () => {
+  const {audio, controller, setTracks} = renderControlledController()
+
+  controller.onPlay()
+  vi.mocked(audio.load).mockClear()
+  setTracks([{...TRACK}])
+  await Promise.resolve()
+
+  expect(audio.load).not.toHaveBeenCalled()
 })

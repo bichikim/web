@@ -46,13 +46,13 @@ export interface PuppetEditorProps {
 const downloadDocument = (document: PuppetDocument) => {
   const source = serializeDocument(document)
   const url = URL.createObjectURL(new Blob([source], {type: 'application/json'}))
-  const anchor = window.document.createElement('a')
+  const anchor = globalThis.document.createElement('a')
   anchor.download = 'puppet-model.json'
   anchor.href = url
-  window.document.body.append(anchor)
+  globalThis.document.body.append(anchor)
   anchor.click()
   anchor.remove()
-  window.setTimeout(() => URL.revokeObjectURL(url), 0)
+  globalThis.setTimeout(() => URL.revokeObjectURL(url), 0)
 }
 const setPlayerPlayback = (player: Player, isPlaying: boolean) => {
   if (isPlaying) {
@@ -77,9 +77,11 @@ interface EditorWorkspacePanelProps {
   readonly document: PuppetDocument
   readonly editor: ParameterEditorResult
   readonly isPlaying: boolean
+  readonly motionId: string | null
   readonly onDocumentChange: (document: PuppetDocument) => void
   readonly onEditEnd?: () => void
   readonly onEditStart?: () => void
+  readonly onMotionChange?: (motionId: string) => void
   readonly onPlaybackToggle?: () => void
   readonly onSeek?: (time: number) => void
   readonly selectedNodeIds: ReadonlyArray<string>
@@ -93,9 +95,11 @@ const EditorWorkspacePanel = (props: EditorWorkspacePanelProps) => (
         currentTime={props.currentTime}
         document={props.document}
         isPlaying={props.isPlaying}
+        motionId={props.motionId ?? undefined}
         onDocumentChange={props.onDocumentChange}
         onEditEnd={props.onEditEnd}
         onEditStart={props.onEditStart}
+        onMotionChange={props.onMotionChange}
         onPlaybackToggle={props.onPlaybackToggle}
         onSeek={props.onSeek}
         parameterValues={props.editor.parameterValueMap()}
@@ -116,7 +120,7 @@ const EditorWorkspacePanel = (props: EditorWorkspacePanelProps) => (
 
 const WORKSPACE_EDIT_MODES = {animation: 'motion', modeling: 'parameter'} as const
 
-// eslint-disable-next-line max-lines-per-function
+// eslint-disable-next-line complexity, max-lines-per-function, max-statements
 export const PuppetEditor = (props: PuppetEditorProps) => {
   const initialDocument = untrack(() => props.initialDocument ?? createDemoDocument())
   const initialPartId = initialDocument.parts[0]?.id ?? null
@@ -138,6 +142,9 @@ export const PuppetEditor = (props: PuppetEditorProps) => {
   const [player, setPlayer] = createSignal<Player | null>(null)
   const [currentTime, setCurrentTime] = createSignal(0)
   const [isPlaying, setIsPlaying] = createSignal(false)
+  const [activeMotionId, setActiveMotionId] = createSignal<string | null>(
+    initialDocument.motions[0]?.id ?? null,
+  )
   const [inspectorMount, setInspectorMount] = createSignal<HTMLDivElement>()
   const [notice, setNotice] = createSignal<string | null>(null)
   const [maskPickSourcePartId, setMaskPickSourcePartId] = createSignal<string | null>(null)
@@ -202,6 +209,17 @@ export const PuppetEditor = (props: PuppetEditorProps) => {
       setIsPlaying(false)
     }
   }
+
+  createEffect(() => {
+    const {motions} = sourceDocument()
+    const selectedMotionId = activeMotionId()
+
+    if (selectedMotionId !== null && motions.some((motion) => motion.id === selectedMotionId)) {
+      return
+    }
+
+    setActiveMotionId(motions[0]?.id ?? null)
+  })
   const handleDocumentEditStart = () => {
     pausePlayback()
     history.beginTransaction()
@@ -251,6 +269,17 @@ export const PuppetEditor = (props: PuppetEditorProps) => {
     }
   }
 
+  const handleMotionChange = (motionId: string) => {
+    if (!sourceDocument().motions.some((motion) => motion.id === motionId)) {
+      return
+    }
+
+    pausePlayback()
+    setActiveMotionId(motionId)
+    setCurrentTime(0)
+    player()?.setMotion(motionId)
+  }
+
   const handleTimelineDocumentChange = (document: PuppetDocument) => {
     pausePlayback()
     history.setDocument(document)
@@ -297,9 +326,11 @@ export const PuppetEditor = (props: PuppetEditorProps) => {
             document={sourceDocument()}
             editor={parameterEditor}
             isPlaying={isPlaying()}
+            motionId={activeMotionId()}
             onDocumentChange={handleTimelineDocumentChange}
             onEditEnd={history.endTransaction}
             onEditStart={handleDocumentEditStart}
+            onMotionChange={handleMotionChange}
             onPlaybackToggle={player() === null ? undefined : handlePlaybackToggle}
             onSeek={player() === null ? undefined : (time) => player()?.seek(time)}
             selectedNodeIds={selectedNodeIds()}
@@ -458,6 +489,7 @@ export const PuppetEditor = (props: PuppetEditorProps) => {
             deformerControlSelection={deformerControlSelection}
             document={temporary.document()}
             editMode={WORKSPACE_EDIT_MODES[workspace()]}
+            motionId={activeMotionId() ?? undefined}
             onDeformerEditEnd={history.endTransaction}
             onDeformerEditStart={handleDocumentEditStart}
             onDocumentChange={temporary.update}

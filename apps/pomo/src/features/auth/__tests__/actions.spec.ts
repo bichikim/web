@@ -29,7 +29,7 @@ afterEach(() => {
 
 describe('magic-link actions', () => {
   it('should adapt account form values to the existing browser request', async () => {
-    window.history.replaceState(null, '', '/account')
+    globalThis.history.replaceState(null, '', '/account')
     vi.mocked(requestUserMagicLink).mockResolvedValue(true)
 
     await expect(
@@ -37,7 +37,7 @@ describe('magic-link actions', () => {
     ).resolves.toEqual({status: 'sent'})
     expect(requestUserMagicLink).toHaveBeenCalledWith({
       email: 'user@example.com',
-      origin: window.location.origin,
+      origin: globalThis.location.origin,
     })
   })
 

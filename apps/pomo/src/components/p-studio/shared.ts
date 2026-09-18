@@ -21,12 +21,20 @@ export const CLASSES = {
     'lg:mbe-entry-bottom',
     'lg:[margin-inline-start:calc(2.5rem_+_var(--pomo-safe-area-inset-left))]',
   ),
+  entryDescription: cx(
+    'm-0 max-w-[22rem] text-sm leading-6',
+    'text-[#fff9f1]/80 [text-shadow:0_0.0625rem_0.1875rem_rgb(0_0_0_/_55%)]',
+  ),
   entryTitle: cx(
     'absolute left-safe-left-mobile top-safe-top-mobile',
     'm-0 text-[1.75rem] font-semibold tracking-[-0.055em] leading-none text-[#fff9f1]',
     '[text-shadow:0_2px_16px_rgb(0_0_0_/_25%)] lg:text-[2rem]',
     'lg:left-[calc(2.5rem_+_var(--pomo-safe-area-inset-left))]',
     'lg:top-entry-top',
+  ),
+  entryWhatsNewLink: cx(
+    'w-fit text-sm font-700 text-[#fff9f1]/80',
+    'underline decoration-white/30 underline-offset-4 hover:text-white',
   ),
   mediaControls: cx(
     'pomo-media-controls flex w-full min-h-0 max-h-full [flex:0_1_auto]',

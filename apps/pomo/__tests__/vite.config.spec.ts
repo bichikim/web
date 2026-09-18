@@ -90,6 +90,59 @@ it.each(['android', 'ios'] as const)(
   },
 )
 
+it('should configure the Steam distribution without changing the desktop runtime', async () => {
+  vi.stubEnv('POMO_BUILD_TARGET', 'desktop')
+  vi.stubEnv('POMO_RUNTIME_TARGET', 'desktop')
+  vi.stubEnv('POMO_DISTRIBUTION_TARGET', 'steam')
+  vi.stubEnv('POMO_VALIDATE_STEAM_ASSETS', 'false')
+
+  const result = await loadConfigFromFile(
+    {command: 'build', mode: 'production'},
+    resolve(root, 'vite.config.ts'),
+    root,
+  )
+
+  expect(result).not.toBeNull()
+  expect(result?.config.define).toMatchObject({
+    'import.meta.env.VITE_POMO_DISTRIBUTION_TARGET': JSON.stringify('steam'),
+    'import.meta.env.VITE_POMO_RUNTIME_TARGET': JSON.stringify('desktop'),
+  })
+  expect(result?.config.nitro?.publicAssets).toContainEqual({
+    baseURL: '/assets-steam',
+    dir: './assets-steam',
+    maxAge: 31_536_000,
+  })
+})
+
+it('should reject an incomplete Steam asset manifest in release validation mode', async () => {
+  vi.stubEnv('POMO_BUILD_TARGET', 'desktop')
+  vi.stubEnv('POMO_RUNTIME_TARGET', 'desktop')
+  vi.stubEnv('POMO_DISTRIBUTION_TARGET', 'steam')
+  vi.stubEnv('POMO_VALIDATE_STEAM_ASSETS', 'true')
+
+  await expect(
+    loadConfigFromFile(
+      {command: 'build', mode: 'production'},
+      resolve(root, 'vite.config.ts'),
+      root,
+    ),
+  ).rejects.toThrow('Required asset types are missing')
+})
+
+it('should reject the Steam distribution outside the desktop runtime', async () => {
+  vi.stubEnv('POMO_BUILD_TARGET', 'web')
+  vi.stubEnv('POMO_RUNTIME_TARGET', 'web')
+  vi.stubEnv('POMO_DISTRIBUTION_TARGET', 'steam')
+
+  await expect(
+    loadConfigFromFile(
+      {command: 'build', mode: 'production'},
+      resolve(root, 'vite.config.ts'),
+      root,
+    ),
+  ).rejects.toThrow('POMO_DISTRIBUTION_TARGET=steam requires POMO_RUNTIME_TARGET=desktop.')
+})
+
 it.each([
   {build: 'android', message: 'POMO_RUNTIME_TARGET=android', runtime: ''},
   {build: 'android', message: 'POMO_RUNTIME_TARGET=android', runtime: 'ios'},

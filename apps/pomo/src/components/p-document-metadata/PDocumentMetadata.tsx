@@ -23,9 +23,12 @@ const INDEXABLE_ROBOTS =
   'index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1'
 
 const PRIVATE_ROBOTS = 'noindex, nofollow'
+const SOCIAL_IMAGE_URL = new URL('/icons/512.png', SEARCH_CONFIG.origin).href
 
 const getTitle = (pathname: string) => {
   switch (normalizePathname(pathname)) {
+    case '/':
+      return m.app_home_title()
     case SERVICE_POLICY_PATHS.appsInToss.privacy:
       return 'Pomofi — 앱인토스 개인정보처리방침'
     case SERVICE_POLICY_PATHS.refund:
@@ -72,24 +75,40 @@ const getDescription = (pathname: string) => {
 
 export const PDocumentMetadata = () => {
   const location = useLocation()
+  const locale = getLocale() === 'ko' ? 'ko_KR' : 'en_US'
   const canonicalUrl = () =>
     new URL(getCanonicalPathname(location.pathname), SEARCH_CONFIG.origin).href
+  const description = () => getDescription(location.pathname)
+  const title = () => getTitle(location.pathname)
 
   onMount(() => {
-    const locale = getLocale()
+    const hydratedLocale = getLocale()
 
-    document.documentElement.lang = locale
-    document.documentElement.dir = getTextDirection(locale)
+    document.documentElement.lang = hydratedLocale
+    document.documentElement.dir = getTextDirection(hydratedLocale)
   })
 
   return (
     <>
-      <Title>{getTitle(location.pathname)}</Title>
-      <Meta content={getDescription(location.pathname)} name="description" />
+      <Title>{title()}</Title>
+      <Meta content={description()} name="description" />
       <Meta
         content={isSearchIndexablePath(location.pathname) ? INDEXABLE_ROBOTS : PRIVATE_ROBOTS}
         name="robots"
       />
+      <Meta content="Pomofi" property="og:site_name" />
+      <Meta content="website" property="og:type" />
+      <Meta content={title()} property="og:title" />
+      <Meta content={description()} property="og:description" />
+      <Meta content={canonicalUrl()} property="og:url" />
+      <Meta content={SOCIAL_IMAGE_URL} property="og:image" />
+      <Meta content="Pomofi app icon" property="og:image:alt" />
+      <Meta content={locale} property="og:locale" />
+      <Meta content="summary" name="twitter:card" />
+      <Meta content={title()} name="twitter:title" />
+      <Meta content={description()} name="twitter:description" />
+      <Meta content={SOCIAL_IMAGE_URL} name="twitter:image" />
+      <Meta content="Pomofi app icon" name="twitter:image:alt" />
       <Link href={canonicalUrl()} rel="canonical" />
       <Link href="/llms.txt" rel="describedby" type="text/markdown" />
     </>

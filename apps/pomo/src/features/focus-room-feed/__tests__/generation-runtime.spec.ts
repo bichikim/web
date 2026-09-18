@@ -35,5 +35,4 @@ it('should lazily delegate every feed-generation dependency', async () => {
   expect(mocks.generateAudio).toHaveBeenCalledWith(audioOptions)
   expect(mocks.createRepository).toHaveBeenCalledWith(storage)
   expect(mocks.isDownloaded).toHaveBeenCalledWith({modelId: 'full'})
-  expect(feedGenerationRuntime.settingsChangedEvent).toBeTruthy()
 })

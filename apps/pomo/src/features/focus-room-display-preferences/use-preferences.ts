@@ -1,148 +1,75 @@
-import {createSignal, onCleanup, onMount} from 'solid-js'
+import {usePreference} from 'src/hooks/use-preference'
+import type {PreferenceStorage} from 'src/utils/preference-storage'
 
-import {DEFAULT_P_DISPLAY_PREFERENCES, type PDisplayPreferencesController} from './model'
-import {readPDisplayPreferences, writePDisplayPreferences} from './storage'
+import {
+  DEFAULT_P_DISPLAY_PREFERENCES,
+  type PDisplayPreferences,
+  type PDisplayPreferencesController,
+} from './model'
+import {
+  DISPLAY_PREFERENCES_STORAGE_KEY,
+  parsePDisplayPreferences,
+  readPDisplayPreferences,
+  writePDisplayPreferences,
+} from './storage'
 
-/** Owns the browser lifecycle for persisted focus-room display preferences. */
+const pDisplayPreferencesStorage: PreferenceStorage = {
+  read: () => readPDisplayPreferences(),
+  write: (_key, value) => {
+    const preferences = parsePDisplayPreferences(value)
+    return preferences === null
+      ? new Error('Invalid focus-room display preferences.')
+      : writePDisplayPreferences(preferences)
+  },
+}
+
+const updatePreference = (
+  preference: PDisplayPreferences,
+  changes: Partial<PDisplayPreferences>,
+): PDisplayPreferences => ({...preference, ...changes})
+
+/** Shares the persisted focus-room display preferences across mounted consumers. */
 export const usePDisplayPreferences = (): PDisplayPreferencesController => {
-  const [dialogueComposerVisible, setDialogueComposerVisible] = createSignal<boolean>(
-    DEFAULT_P_DISPLAY_PREFERENCES.dialogueComposerVisible,
-  )
-  const [tourButtonVisible, setTourButtonVisible] = createSignal<boolean>(true)
-  const [toolsButtonVisible, setToolsButtonVisible] = createSignal(true)
-  const [playerVisible, setPlayerVisible] = createSignal(true)
-  let playerRevision = 0
-  const [pomodoroVisible, setPomodoroVisible] = createSignal(true)
-  let pomodoroRevision = 0
-  let toolsRevision = 0
-  const [memoryAssistVisible, setMemoryAssistVisible] = createSignal(true)
-  let memoryRevision = 0
-  let tourRevision = 0
-  const persist = () => {
-    writePDisplayPreferences({
-      dialogueComposerVisible: dialogueComposerVisible(),
-      memoryAssistVisible: memoryAssistVisible(),
-      playerVisible: playerVisible(),
-      pomodoroVisible: pomodoroVisible(),
-      toolsButtonVisible: toolsButtonVisible(),
-      tourButtonVisible: tourButtonVisible(),
-    }).catch(globalThis.reportError)
-  }
-  const onPlayerVisibleChange = (visible: boolean) => {
-    playerRevision += 1
-    setPlayerVisible(visible)
-    if (isReady()) {
-      persist()
-    }
-  }
-  const onPomodoroVisibleChange = (visible: boolean) => {
-    pomodoroRevision += 1
-    setPomodoroVisible(visible)
-    if (isReady()) {
-      persist()
-    }
-  }
-  const onTourButtonVisibleChange = (visible: boolean) => {
-    tourRevision += 1
-    setTourButtonVisible(visible)
-    if (isReady()) {
-      persist()
-    }
-  }
-  const onToolsButtonVisibleChange = (visible: boolean) => {
-    toolsRevision += 1
-    setToolsButtonVisible(visible)
-    if (isReady()) {
-      persist()
-    }
-  }
-  const onMemoryAssistVisibleChange = (visible: boolean) => {
-    memoryRevision += 1
-    setMemoryAssistVisible(visible)
-    if (isReady()) {
-      persist()
-    }
-  }
-  const [isReady, setIsReady] = createSignal(false)
-  let visibilityRevision = 0
+  const [storedPreference, setStoredPreference] = usePreference({
+    defaultValue: DEFAULT_P_DISPLAY_PREFERENCES,
+    key: DISPLAY_PREFERENCES_STORAGE_KEY,
+    parse: parsePDisplayPreferences,
+    storage: pDisplayPreferencesStorage,
+  })
+  const preference = () => storedPreference() ?? DEFAULT_P_DISPLAY_PREFERENCES
 
   const onDialogueComposerVisibleChange = (visible: boolean) => {
-    visibilityRevision += 1
-    setDialogueComposerVisible(visible)
-
-    if (isReady()) {
-      persist()
-    }
+    setStoredPreference(updatePreference(preference(), {dialogueComposerVisible: visible}))
+  }
+  const onMemoryAssistVisibleChange = (visible: boolean) => {
+    setStoredPreference(updatePreference(preference(), {memoryAssistVisible: visible}))
+  }
+  const onPlayerVisibleChange = (visible: boolean) => {
+    setStoredPreference(updatePreference(preference(), {playerVisible: visible}))
+  }
+  const onPomodoroVisibleChange = (visible: boolean) => {
+    setStoredPreference(updatePreference(preference(), {pomodoroVisible: visible}))
+  }
+  const onToolsButtonVisibleChange = (visible: boolean) => {
+    setStoredPreference(updatePreference(preference(), {toolsButtonVisible: visible}))
+  }
+  const onTourButtonVisibleChange = (visible: boolean) => {
+    setStoredPreference(updatePreference(preference(), {tourButtonVisible: visible}))
   }
 
-  onMount(() => {
-    let active = true
-    const initialPlayerRevision = playerRevision
-    const initialPomodoroRevision = pomodoroRevision
-    const initialToolsRevision = toolsRevision
-    const initialMemoryRevision = memoryRevision
-    const initialTourRevision = tourRevision
-    const initialVisibilityRevision = visibilityRevision
-
-    readPDisplayPreferences()
-      .then((storedPreferences) => {
-        if (active && playerRevision === initialPlayerRevision) {
-          setPlayerVisible(storedPreferences.playerVisible)
-        }
-        if (active && pomodoroRevision === initialPomodoroRevision) {
-          setPomodoroVisible(storedPreferences.pomodoroVisible)
-        }
-        if (active && toolsRevision === initialToolsRevision) {
-          setToolsButtonVisible(storedPreferences.toolsButtonVisible)
-        }
-        if (active && memoryRevision === initialMemoryRevision) {
-          setMemoryAssistVisible(storedPreferences.memoryAssistVisible)
-        }
-        if (active && tourRevision === initialTourRevision) {
-          setTourButtonVisible(storedPreferences.tourButtonVisible)
-        }
-        if (active && visibilityRevision === initialVisibilityRevision) {
-          setDialogueComposerVisible(storedPreferences.dialogueComposerVisible)
-        }
-      })
-      .catch(globalThis.reportError)
-      .finally(() => {
-        if (!active) {
-          return
-        }
-
-        const changedDuringRestore =
-          playerRevision !== initialPlayerRevision ||
-          pomodoroRevision !== initialPomodoroRevision ||
-          toolsRevision !== initialToolsRevision ||
-          memoryRevision !== initialMemoryRevision ||
-          visibilityRevision !== initialVisibilityRevision ||
-          tourRevision !== initialTourRevision
-        setIsReady(true)
-
-        if (changedDuringRestore) {
-          persist()
-        }
-      })
-
-    onCleanup(() => {
-      active = false
-    })
-  })
-
   return {
-    dialogueComposerVisible,
-    isReady,
-    memoryAssistVisible,
+    dialogueComposerVisible: () => preference().dialogueComposerVisible,
+    isReady: () => storedPreference() !== null,
+    memoryAssistVisible: () => preference().memoryAssistVisible,
     onDialogueComposerVisibleChange,
     onMemoryAssistVisibleChange,
     onPlayerVisibleChange,
     onPomodoroVisibleChange,
     onToolsButtonVisibleChange,
     onTourButtonVisibleChange,
-    playerVisible,
-    pomodoroVisible,
-    toolsButtonVisible,
-    tourButtonVisible,
+    playerVisible: () => preference().playerVisible,
+    pomodoroVisible: () => preference().pomodoroVisible,
+    toolsButtonVisible: () => preference().toolsButtonVisible,
+    tourButtonVisible: () => preference().tourButtonVisible,
   }
 }

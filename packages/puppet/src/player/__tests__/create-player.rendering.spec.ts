@@ -123,7 +123,7 @@ describe('createPlayer', () => {
       parts: sourceDocument.parts.map((part) => ({...part, properties: undefined})),
     }
     const player = await createPlayer({
-      canvas: window.document.createElement('canvas'),
+      canvas: globalThis.document.createElement('canvas'),
       document: prepareDocument(document),
     })
     const runtimeMeshes = mocks.MeshSimple.mock.results.map(
@@ -290,7 +290,7 @@ describe('createPlayer', () => {
       ],
     }
     const player = await createPlayer({
-      canvas: window.document.createElement('canvas'),
+      canvas: globalThis.document.createElement('canvas'),
       document: prepareDocument(renderDocument),
       parameterValues: {'angle-x': 15, 'angle-y': 0},
     })

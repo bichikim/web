@@ -66,7 +66,7 @@ export const useWebAccount = (): WebAccountController => {
 
   onMount(() => {
     const loadAccount = async () => {
-      const url = new URL(window.location.href)
+      const url = new URL(globalThis.location.href)
       const linkError = url.searchParams.get('link_error')
       const linkToken = url.searchParams.get('link_token')
 
@@ -84,7 +84,7 @@ export const useWebAccount = (): WebAccountController => {
           url.searchParams.delete('link_error')
         }
 
-        window.history.replaceState(null, '', url)
+        globalThis.history.replaceState(null, '', url)
 
         if (linkResult.status === 'linked') {
           if (authentication.state().kind === 'unavailable') {
@@ -102,7 +102,7 @@ export const useWebAccount = (): WebAccountController => {
         setLocalErrorMessage(accountCallbackErrorMessage)
       }
 
-      window.history.replaceState(null, '', url)
+      globalThis.history.replaceState(null, '', url)
     }
 
     loadAccount().catch(() => {

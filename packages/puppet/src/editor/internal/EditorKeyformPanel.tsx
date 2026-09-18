@@ -84,14 +84,14 @@ const ParameterValueScrubber = (props: ParameterValueScrubberProps) => {
     // The stored callback only removes native drag listeners during completion or cleanup.
     // eslint-disable-next-line solid/reactivity
     removePointerListeners = () => {
-      window.removeEventListener('pointercancel', finishPointerDrag)
-      window.removeEventListener('pointermove', handlePointerMove)
-      window.removeEventListener('pointerup', finishPointerDrag)
+      globalThis.removeEventListener('pointercancel', finishPointerDrag)
+      globalThis.removeEventListener('pointermove', handlePointerMove)
+      globalThis.removeEventListener('pointerup', finishPointerDrag)
       removePointerListeners = undefined
     }
-    window.addEventListener('pointercancel', finishPointerDrag)
-    window.addEventListener('pointermove', handlePointerMove)
-    window.addEventListener('pointerup', finishPointerDrag)
+    globalThis.addEventListener('pointercancel', finishPointerDrag)
+    globalThis.addEventListener('pointermove', handlePointerMove)
+    globalThis.addEventListener('pointerup', finishPointerDrag)
   }
   onCleanup(() => removePointerListeners?.())
   return (
@@ -178,14 +178,14 @@ const TwoDimensionalGrid = (props: TwoDimensionalGridProps) => {
     // The stored callback only removes native drag listeners during completion or cleanup.
     // eslint-disable-next-line solid/reactivity
     removePointerListeners = () => {
-      window.removeEventListener('pointercancel', finishPointerDrag)
-      window.removeEventListener('pointermove', handlePointerMove)
-      window.removeEventListener('pointerup', finishPointerDrag)
+      globalThis.removeEventListener('pointercancel', finishPointerDrag)
+      globalThis.removeEventListener('pointermove', handlePointerMove)
+      globalThis.removeEventListener('pointerup', finishPointerDrag)
       removePointerListeners = undefined
     }
-    window.addEventListener('pointercancel', finishPointerDrag)
-    window.addEventListener('pointermove', handlePointerMove)
-    window.addEventListener('pointerup', finishPointerDrag)
+    globalThis.addEventListener('pointercancel', finishPointerDrag)
+    globalThis.addEventListener('pointermove', handlePointerMove)
+    globalThis.addEventListener('pointerup', finishPointerDrag)
   }
 
   onCleanup(() => removePointerListeners?.())

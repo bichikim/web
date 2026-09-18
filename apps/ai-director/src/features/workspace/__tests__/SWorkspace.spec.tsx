@@ -6,7 +6,7 @@ import SWorkspace from '../SWorkspace'
 const original = {height: 16, url: 'data:image/png;base64,original', width: 24}
 const result = {height: 64, url: 'data:image/png;base64,result', width: 96}
 afterEach(() => {
-  delete window.__TAURI__
+  delete globalThis.__TAURI__
 })
 
 it('should require an image, keep Lanczos as default, and run and save the selected SPAN-F result', async () => {
@@ -15,7 +15,7 @@ it('should require an image, keep Lanczos as default, and run and save the selec
     .mockResolvedValueOnce(original)
     .mockResolvedValueOnce(result)
     .mockResolvedValueOnce(true)
-  window.__TAURI__ = {core: {invoke}}
+  globalThis.__TAURI__ = {core: {invoke}}
   const view = render(() => <SWorkspace />)
   expect(view.getByRole('radio', {name: /Lanczos/})).toBeChecked()
   expect(view.getByRole('button', {name: '4배 확대'})).toBeDisabled()
@@ -41,7 +41,7 @@ it('should disable conflicting actions while processing and send a real cancel c
     .mockResolvedValueOnce(original)
     .mockImplementationOnce(() => pending.promise)
     .mockResolvedValueOnce(undefined)
-  window.__TAURI__ = {core: {invoke}}
+  globalThis.__TAURI__ = {core: {invoke}}
   const view = render(() => <SWorkspace />)
   fireEvent.click(view.getByRole('button', {name: '이미지 열기'}))
   await waitFor(() => expect(view.getByRole('button', {name: '4배 확대'})).toBeEnabled())
@@ -57,7 +57,7 @@ it('should disable conflicting actions while processing and send a real cancel c
 
 it('should surface native capture errors and allow retry', async () => {
   const invoke = vi.fn().mockRejectedValue('capture_failed')
-  window.__TAURI__ = {core: {invoke}}
+  globalThis.__TAURI__ = {core: {invoke}}
   const view = render(() => <SWorkspace />)
   fireEvent.click(view.getByRole('button', {name: '＋ 영역 캡처'}))
   await waitFor(() => expect(view.getByRole('alert')).toHaveTextContent('화면 기록 권한'))

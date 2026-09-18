@@ -31,7 +31,7 @@ import {
 const CONTEXT_COMPACTION_TOKENS = 4608
 const MAXIMUM_ANSWER_TOKENS = 256
 const MAXIMUM_SUMMARY_TOKENS = 384
-const workerScope = self as DedicatedWorkerGlobalScope
+const workerScope = globalThis.self as DedicatedWorkerGlobalScope
 
 const sendResponse = (response: ChatWorkerResponse) => workerScope.postMessage(response)
 let textRuntimePromise: Promise<TextGenerationRuntime> | null = null

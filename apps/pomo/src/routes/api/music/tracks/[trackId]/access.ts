@@ -30,6 +30,13 @@ export const GET = async (event: APIEvent): Promise<Response> => {
     const identity = await resolveUserRequest(event.request)
     responseCookies = identity.cookies
 
+    if (identity.access === 'invalid') {
+      return noStoreJson(
+        {error: 'authentication_unavailable'},
+        {cookies: identity.cookies, status: HTTP_SERVICE_UNAVAILABLE},
+      )
+    }
+
     if (identity.userId === null) {
       return noStoreJson(
         {error: 'unauthorized'},

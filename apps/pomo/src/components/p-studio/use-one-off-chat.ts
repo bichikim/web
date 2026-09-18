@@ -35,9 +35,11 @@ export const useOneOffChat = (props: UseOneOffChatProps): OneOffChatController =
   const modelDownload = useModelDownload()
   const [downloadConsentOpen, setDownloadConsentOpen] = createSignal(false)
   const [downloadError, setDownloadError] = createSignal<string | null>(null)
+  const [replyError, setReplyError] = createSignal<string | null>(null)
   const [isCheckingModel, setIsCheckingModel] = createSignal(false)
   const [pendingText, setPendingText] = createSignal<PendingText | null>(null)
   let draftRevision = 0
+  let replyRevision = 0
   let disposed = false
   let handledReplyId: string | null = null
 
@@ -53,7 +55,7 @@ export const useOneOffChat = (props: UseOneOffChatProps): OneOffChatController =
     pendingText() !== null || isCheckingModel() || isModelDownloading() || chat.isBusy()
   const errorMessage = () => {
     const state = chat.state()
-    return downloadError() ?? (state.status === 'error' ? state.message : null)
+    return downloadError() ?? replyError() ?? (state.status === 'error' ? state.message : null)
   }
   const setDraft = (draft: string) => {
     draftRevision += 1
@@ -100,6 +102,8 @@ export const useOneOffChat = (props: UseOneOffChatProps): OneOffChatController =
     }
 
     setDownloadError(null)
+    setReplyError(null)
+    replyRevision += 1
     setPendingText({draftRevision, text: normalizedText})
 
     if (chat.isModelReady()) {
@@ -198,9 +202,17 @@ export const useOneOffChat = (props: UseOneOffChatProps): OneOffChatController =
     }
 
     handledReplyId = reply.id
+    const speechRevision = replyRevision
     const speech = untrack(() => props.onReply(reply.content))
     chat.clear()
     speech.catch((error: unknown) => {
+      if (!disposed && speechRevision === replyRevision) {
+        setReplyError(
+          error instanceof Error && error.message.length > 0
+            ? error.message
+            : '음성을 재생하지 못했어요.',
+        )
+      }
       console.error('Failed to speak the one-off chat reply.', error)
     })
   })

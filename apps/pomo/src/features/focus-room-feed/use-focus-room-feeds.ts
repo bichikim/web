@@ -1,3 +1,5 @@
+import {usePreference} from 'src/hooks/use-preference'
+import {createAutomaticDialoguePreferenceOptions} from '../focus-room-dialogue/automatic-dialogue-settings'
 import {useAutoPreparePreference} from './use-auto-prepare-preference'
 import {isFeedJobAwaitingAction} from './feed-dialogue-schema'
 import {onCleanup} from 'solid-js'
@@ -13,8 +15,7 @@ import {
   createFeedGenerationController,
   type FeedGenerationController,
 } from './generation-controller'
-import {resolveCurrentGenerationSettings} from './generation-settings-runtime'
-import {createFeedConnectionRepository} from './repository'
+import {feedSettingsRuntime} from './settings-runtime'
 import {synchronizeFeeds} from './feed-sync'
 import type {PFeedController, UsePFeedsProps} from './feed-controller'
 import {discardFeedJobs} from './feed-dialogue-lifecycle'
@@ -25,10 +26,12 @@ import {createFeedSyncController} from './sync-controller'
 import {FEED_CONNECTIONS_CHANGED_EVENT} from './use-feed-connections'
 import {useFeedRefreshEvents} from './use-feed-refresh-events'
 
-const listFeedConnections = () => createFeedConnectionRepository(window.localStorage).list()
-
 export const usePFeeds = (props: UsePFeedsProps): PFeedController => {
+  const settingsRuntime = props.settingsRuntime ?? feedSettingsRuntime
   const automaticPreparation = useAutoPreparePreference()
+  const [automaticSettings] = usePreference(createAutomaticDialoguePreferenceOptions())
+  const resolveGeneration = (connectionId: string) =>
+    settingsRuntime.resolveGeneration(connectionId, automaticSettings() ?? undefined)
   let dialogueRepository: PDialogueRepository | null = null
   let feedRepository: FeedDialogueRepository | null = null
   let generationController: FeedGenerationController | null = null
@@ -43,7 +46,7 @@ export const usePFeeds = (props: UsePFeedsProps): PFeedController => {
   const feedState = createFeedStateController({
     events: props.events,
     getRepositories,
-    listConnections: listFeedConnections,
+    listConnections: settingsRuntime.listConnections,
     now: () => new Date(),
   })
   const getGenerationController = () => {
@@ -67,27 +70,25 @@ export const usePFeeds = (props: UsePFeedsProps): PFeedController => {
     getGenerationController().remove(new Set(jobIds))
     await feedState.reloadRecovery()
   }
-  const scheduleJobs = (jobIds: ReadonlyArray<string>, allowModelDownload = false) => {
+  const scheduleJobs = (jobIds: ReadonlyArray<string>, allowModelDownload = false) =>
     getGenerationController().schedule({allowModelDownload, jobIds})
-  }
   const syncController = createFeedSyncController({
-    autoPrepare: automaticPreparation.enabled,
+    autoPrepare: () => automaticPreparation.enabled() === true,
     cleanupExpiredDialogues: feedState.cleanupExpiredDialogues,
     createFetcher: createFeedFetcher,
     createId: () => crypto.randomUUID(),
     discardMissingConnections: discardJobsForMissingConnections,
-    getState: feedState.state,
-    getConnections: listFeedConnections,
+    getConnections: settingsRuntime.listConnections,
     getRepository: () => getRepositories().feedRepository,
+    getState: feedState.state,
     now: () => new Date(),
     onSynchronized: feedState.reloadRecovery,
     reloadIssues: feedState.reloadIssues,
-    resolveGenerationSettings: resolveCurrentGenerationSettings,
+    resolveGenerationSettings: resolveGeneration,
     scheduleJobs,
     setState: feedState.setState,
     synchronize: synchronizeFeeds,
   })
-  const syncNow = syncController.sync
   const playback = createFeedPlaybackController({
     createId: () => crypto.randomUUID(),
     dialogues: feedState.dialogues,
@@ -108,9 +109,10 @@ export const usePFeeds = (props: UsePFeedsProps): PFeedController => {
         createId: () => crypto.randomUUID(),
         dialogueRepository: repositories.dialogueRepository,
         feedRepository: repositories.feedRepository,
-        getConnections: listFeedConnections,
+        getConnections: settingsRuntime.listConnections,
         getState: feedState.state,
         isRecoveryDismissed: (jobId) => feedState.isRecoveryDismissed(jobId),
+        isSyncing: syncController.isSyncing,
         now: () => new Date(),
         onCompleted: async () => {
           await Promise.all([
@@ -127,24 +129,24 @@ export const usePFeeds = (props: UsePFeedsProps): PFeedController => {
           feedState.setRecoveryJobs(jobs)
           feedState.setState({message: '다음 피드 확인을 기다리고 있어요.', status: 'idle'})
         },
-        resolveGenerationSettings: resolveCurrentGenerationSettings,
+        resolveGenerationSettings: resolveGeneration,
         runtime: feedGenerationRuntime,
         setState: feedState.setState,
       })
       await feedState.repairMalformedDialogues()
-      const jobs = await getRepositories().feedRepository.interruptUnfinishedJobs(
+      const jobs = await repositories.feedRepository.interruptUnfinishedJobs(
         new Date().toISOString(),
       )
       feedState.setRecoveryJobs(jobs.filter((job) => isFeedJobAwaitingAction(job)))
       await feedState.reloadDialogues()
-      await syncNow()
+      await syncController.sync()
     },
     onInitializationFailure() {
       feedState.setState({message: '피드 기능을 시작하지 못했어요.', status: 'error'})
     },
     pollingIntervalMs: FEED_POLLING_INTERVAL_MS,
-    refresh: syncNow,
-    settingsChangedEvent: feedGenerationRuntime.settingsChangedEvent,
+    refresh: syncController.sync,
+    settings: automaticSettings,
   })
 
   onCleanup(() => {
@@ -158,9 +160,7 @@ export const usePFeeds = (props: UsePFeedsProps): PFeedController => {
 
   return {
     automaticPreparation,
-    async cancelProcessing() {
-      await getGenerationController().cancel()
-    },
+    cancelProcessing: async () => getGenerationController().cancel(),
     deleteRecovery: feedState.deleteRecovery,
     dialogues: feedState.dialogues,
     dismissRecovery: feedState.dismissRecovery,
@@ -179,7 +179,7 @@ export const usePFeeds = (props: UsePFeedsProps): PFeedController => {
       }
     },
     state: feedState.state,
-    syncNow,
+    syncNow: syncController.sync,
     unlistenedDialogues: feedState.unlistenedDialogues,
   }
 }

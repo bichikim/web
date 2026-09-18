@@ -43,6 +43,7 @@ export interface CreateFeedGenerationControllerOptions {
   readonly getConnections: () => ReadonlyArray<FeedConnection>
   readonly getState: () => PFeedState
   readonly isRecoveryDismissed: (jobId: string) => boolean
+  readonly isSyncing?: () => boolean
   readonly now: () => Date
   readonly onCompleted: () => Promise<void>
   readonly onDiscarded: () => Promise<void>
@@ -379,10 +380,25 @@ const runScheduledJobs = async (context: FeedGenerationContext) => {
     context.isGenerating = false
 
     if (!context.isDisposed) {
-      context.options.setState({
-        message: '다음 피드 확인을 기다리고 있어요.',
-        status: 'idle',
-      })
+      const currentState = context.options.getState()
+      if (currentState.status !== 'syncing') {
+        const isSyncing = context.options.isSyncing?.() ?? false
+        const isGeneratingState =
+          currentState.status === 'generating' || currentState.status === 'preparing'
+
+        if (isSyncing && isGeneratingState) {
+          context.options.setState({
+            message: '새 피드를 확인하고 있어요…',
+            progress: null,
+            status: 'syncing',
+          })
+        } else if (!isSyncing) {
+          context.options.setState({
+            message: '다음 피드 확인을 기다리고 있어요.',
+            status: 'idle',
+          })
+        }
+      }
     }
   }
 }

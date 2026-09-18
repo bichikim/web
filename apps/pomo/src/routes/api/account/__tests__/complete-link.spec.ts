@@ -5,7 +5,7 @@ const sessionMocks = vi.hoisted(() => ({getAuthSession: vi.fn()}))
 const repositoryMocks = vi.hoisted(() => ({completeAccountLink: vi.fn()}))
 
 vi.mock('src/server/auth/get-auth-session', () => sessionMocks)
-vi.mock('src/server/repositories/auth', () => repositoryMocks)
+vi.mock('src/server/auth/account-link', () => repositoryMocks)
 
 import {POST} from '../complete-link'
 import {invokeApiRoute} from '../../__tests__/invoke'
@@ -27,6 +27,7 @@ const createRequestWithBody = (body: string): Request =>
 describe('complete account link route', () => {
   beforeEach(() => {
     sessionMocks.getAuthSession.mockReset().mockResolvedValue({
+      access: 'user',
       identity: {email: 'User@Example.com', id: 'neon-user-id'},
       provider: 'neon',
       setCookies: [],
@@ -64,6 +65,7 @@ describe('complete account link route', () => {
 
   it('should require an authenticated session', async () => {
     sessionMocks.getAuthSession.mockResolvedValue({
+      access: 'anonymous',
       identity: null,
       provider: 'neon',
       setCookies: ['session=; Max-Age=0'],
@@ -77,8 +79,25 @@ describe('complete account link route', () => {
     expect(repositoryMocks.completeAccountLink).not.toHaveBeenCalled()
   })
 
+  it('should report when the Neon session is invalid', async () => {
+    sessionMocks.getAuthSession.mockResolvedValue({
+      access: 'invalid',
+      identity: null,
+      provider: 'neon',
+      setCookies: ['session=refreshed'],
+    })
+
+    const response = await invokeApiRoute(POST, createRequest())
+
+    expect(response.status).toBe(503)
+    await expect(response.json()).resolves.toEqual({error: 'authentication_unavailable'})
+    expect(response.headers.getSetCookie()).toEqual(['session=refreshed'])
+    expect(repositoryMocks.completeAccountLink).not.toHaveBeenCalled()
+  })
+
   it('should require Neon email verification even for an authenticated Toss user', async () => {
     sessionMocks.getAuthSession.mockResolvedValue({
+      access: 'anonymous',
       identity: null,
       provider: 'neon',
       setCookies: [],

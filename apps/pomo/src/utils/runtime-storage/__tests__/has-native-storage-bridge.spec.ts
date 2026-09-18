@@ -14,12 +14,12 @@ beforeEach(() => {
   storageMocks.setItem.mockReset()
 })
 afterEach(() => {
-  Reflect.deleteProperty(window, 'ReactNativeWebView')
+  Reflect.deleteProperty(globalThis.window, 'ReactNativeWebView')
   vi.restoreAllMocks()
 })
 it('should detect the native bridge without loading storage', () => {
   expect(hasNativeStorageBridge()).toBe(false)
-  Object.defineProperty(window, 'ReactNativeWebView', {configurable: true, value: {}})
+  Object.defineProperty(globalThis, 'ReactNativeWebView', {configurable: true, value: {}})
   expect(hasNativeStorageBridge()).toBe(true)
   expect(storageMocks.getItem).not.toHaveBeenCalled()
 })

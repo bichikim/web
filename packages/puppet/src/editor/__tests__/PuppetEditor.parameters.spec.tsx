@@ -20,8 +20,10 @@ const player: Player = {
   destroy: vi.fn(),
   pause: vi.fn(),
   play: vi.fn(),
+  playMotion: vi.fn(() => true),
   resize: vi.fn(),
   seek: vi.fn(),
+  setMotion: vi.fn(() => true),
   setParameterValues: vi.fn(),
   updateDocument: vi.fn(() => true),
 }
@@ -274,8 +276,8 @@ describe('PuppetEditor', () => {
     const marker = view.getByRole('button', {name: 'Parameter 3 0 키폼'})
 
     marker.dispatchEvent(new MouseEvent('pointerdown', {bubbles: true, button: 0, clientX: 400}))
-    window.dispatchEvent(new MouseEvent('pointermove', {clientX: 550}))
-    window.dispatchEvent(new MouseEvent('pointerup'))
+    globalThis.dispatchEvent(new MouseEvent('pointermove', {clientX: 550}))
+    globalThis.dispatchEvent(new MouseEvent('pointerup'))
 
     await waitFor(() => {
       const document: PuppetDocument | undefined = onDocumentChange.mock.calls.at(-1)?.[0]
@@ -377,10 +379,10 @@ describe('PuppetEditor', () => {
 
     const parameter = view.getByRole('button', {name: 'Angle X'})
     parameter.dispatchEvent(new MouseEvent('pointerdown', {bubbles: true, button: 0, clientX: 200}))
-    window.dispatchEvent(new MouseEvent('pointermove', {clientX: 120}))
+    globalThis.dispatchEvent(new MouseEvent('pointermove', {clientX: 120}))
     expect(view.getByText('놓아 삭제')).toBeVisible()
     expect(view.getByRole('button', {name: 'Angle X'})).toBeVisible()
-    window.dispatchEvent(new MouseEvent('pointerup'))
+    globalThis.dispatchEvent(new MouseEvent('pointerup'))
 
     await waitFor(() => {
       const document = onDocumentChange.mock.calls.at(-1)?.[0]

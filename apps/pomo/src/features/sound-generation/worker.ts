@@ -32,7 +32,7 @@ export interface SoundResultMessage {
   readonly blob: Blob
 }
 export type SoundMessage = SoundProgressMessage | SoundErrorMessage | SoundResultMessage
-const scope = self as DedicatedWorkerGlobalScope
+const scope = globalThis.self as DedicatedWorkerGlobalScope
 scope.onmessage = async (event: MessageEvent<SoundRequest | LoopRequest>) => {
   const send = (message: SoundMessage) => scope.postMessage(message)
   try {

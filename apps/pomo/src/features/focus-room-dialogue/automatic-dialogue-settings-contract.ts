@@ -1,7 +1,5 @@
 import type {SupertonicModelId, SupertonicVoiceId} from '../supertonic/model'
 
-export const AUTOMATIC_DIALOGUE_SETTINGS_CHANGED_EVENT = 'pomo:automatic-dialogue-settings-changed'
-
 export interface AutomaticDialogueSettings {
   readonly modelId: SupertonicModelId
   readonly version: 1

@@ -134,6 +134,13 @@
       "when": 1788517330501,
       "tag": "0018_gifted_jack_murdock",
       "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1789633501872,
+      "tag": "0019_mature_arachne",
+      "breakpoints": true
     }
   ]
 }

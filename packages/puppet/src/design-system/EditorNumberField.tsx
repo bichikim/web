@@ -36,6 +36,10 @@ const formatValue = (value: number | undefined) =>
   value === undefined ? '' : String(roundValue(value))
 
 interface StartScrubOptions {
+  readonly bounds?: {
+    readonly left: number
+    readonly right: number
+  }
   readonly event: PointerEvent
   readonly maximum?: number
   readonly minimum?: number
@@ -47,13 +51,33 @@ interface StartScrubOptions {
   readonly step: number
 }
 
+const getBoundedScrubValue = (options: StartScrubOptions, pointerX: number) => {
+  const {bounds} = options
+  const minimum = options.minimum!
+  const maximum = options.maximum!
+  const startPointerX = options.event.clientX
+  const startValue = constrainValue(options.startValue, minimum, maximum)
+
+  if (pointerX >= startPointerX) {
+    const distance = bounds!.right - startPointerX
+    const progress = distance <= 0 ? 1 : clamp((pointerX - startPointerX) / distance, 0, 1)
+
+    return startValue + (maximum - startValue) * progress
+  }
+
+  const distance = startPointerX - bounds!.left
+  const progress = distance <= 0 ? 1 : clamp((startPointerX - pointerX) / distance, 0, 1)
+
+  return startValue - (startValue - minimum) * progress
+}
+
 const startScrub = (options: StartScrubOptions) => {
   const startPointerX = options.event.clientX
   let moved = false
   const remove = () => {
-    window.removeEventListener('pointercancel', cancel)
-    window.removeEventListener('pointermove', move)
-    window.removeEventListener('pointerup', finish)
+    globalThis.removeEventListener('pointercancel', cancel)
+    globalThis.removeEventListener('pointermove', move)
+    globalThis.removeEventListener('pointerup', finish)
   }
   const move = (event: PointerEvent) => {
     const pointerDistance = event.clientX - startPointerX
@@ -67,13 +91,15 @@ const startScrub = (options: StartScrubOptions) => {
     }
     event.preventDefault()
     const precision = event.shiftKey ? PRECISION_MULTIPLIER : 1
-    options.onChange(
-      constrainValue(
-        roundValue(options.startValue + pointerDistance * options.step * precision),
-        options.minimum,
-        options.maximum,
-      ),
-    )
+    const hasBoundedRange =
+      options.bounds !== undefined && options.minimum !== undefined && options.maximum !== undefined
+    const scrubbedValue = hasBoundedRange
+      ? getBoundedScrubValue(options, event.clientX)
+      : options.startValue + pointerDistance * options.step * precision
+    const nextValue = hasBoundedRange
+      ? options.startValue + (scrubbedValue - options.startValue) * precision
+      : scrubbedValue
+    options.onChange(constrainValue(roundValue(nextValue), options.minimum, options.maximum))
   }
   const finish = () => {
     remove()
@@ -88,9 +114,9 @@ const startScrub = (options: StartScrubOptions) => {
     }
   }
 
-  window.addEventListener('pointercancel', cancel)
-  window.addEventListener('pointermove', move)
-  window.addEventListener('pointerup', finish)
+  globalThis.addEventListener('pointercancel', cancel)
+  globalThis.addEventListener('pointermove', move)
+  globalThis.addEventListener('pointerup', finish)
   return remove
 }
 
@@ -193,15 +219,16 @@ export const EditorNumberField = (props: EditorNumberFieldProps) => {
       return
     }
 
-    if (document.activeElement === input()) {
-      return
+    const isInputFocused = document.activeElement === input()
+    if (!isInputFocused) {
+      event.preventDefault()
     }
-    event.preventDefault()
     ignoreNextClick = false
-    const inputWidth = input()?.getBoundingClientRect().width ?? 0
-    const scrubDistance = inputWidth > 0 ? inputWidth : FALLBACK_SCRUB_DISTANCE
+    const inputBounds = input()?.getBoundingClientRect()
+    const hasScrubBounds = inputBounds !== undefined && inputBounds.width > 0
     removeGestureListeners?.()
     removeGestureListeners = startScrub({
+      bounds: hasScrubBounds ? {left: inputBounds.left, right: inputBounds.right} : undefined,
       event,
       maximum: props.maximum,
       minimum: props.minimum,
@@ -225,7 +252,7 @@ export const EditorNumberField = (props: EditorNumberFieldProps) => {
         input()?.blur()
       },
       startValue: props.value ?? 0,
-      step: scrubStep(scrubDistance),
+      step: scrubStep(hasScrubBounds ? inputBounds.width : FALLBACK_SCRUB_DISTANCE),
     })
   }
 

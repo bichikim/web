@@ -10,7 +10,12 @@ import {
   type PEventContextValue,
   usePEvents,
 } from '../../../features/focus-room-dialogue'
-import {type PFeedController, usePFeedContext} from '../../../features/focus-room-feed'
+import {
+  type FeedDialogueListItem,
+  type PFeedController,
+  usePFeedContext,
+} from '../../../features/focus-room-feed'
+import {PreferenceProvider} from '../../../hooks/use-preference'
 
 vi.mock('@kobalte/core/tabs', () => ({Tabs: {Content: vi.fn()}}))
 vi.mock('solid-js', async () => {
@@ -188,7 +193,9 @@ describe('PDialogueSettingsContent', () => {
       eventPlaybackModes: () => ({'focus-start': 'random-all'}),
     })
     vi.mocked(usePEvents).mockReturnValue(events)
-    render(() => <PDialogueSettingsContent onRequestClose={vi.fn()} />)
+    render(() => <PDialogueSettingsContent onRequestClose={vi.fn()} />, {
+      wrapper: PreferenceProvider,
+    })
 
     expect(screen.getAllByText('Yuna · 1:01 · 1개 말풍선')).toHaveLength(1)
     expect(screen.getByRole('button', {name: '입장 대화 연결'})).toHaveAttribute(
@@ -204,7 +211,46 @@ describe('PDialogueSettingsContent', () => {
 
     expect(events.setEventDialogues).toHaveBeenCalledWith('focus-start', [DIALOGUE.id, second.id])
     expect(events.setEventPlaybackMode).toHaveBeenCalledWith('focus-start', 'random-one')
-    expect(events.deleteDialogue).toHaveBeenCalledWith(DIALOGUE.id)
+    expect(FEEDS.onDeleteDialogue).toHaveBeenCalledWith(DIALOGUE.id)
+    expect(events.deleteDialogue).not.toHaveBeenCalled()
+  })
+
+  it('should use feed deletion lifecycle for a feed dialogue in the library', async () => {
+    const feedDialogue: FeedDialogueListItem = {
+      dialogue: DIALOGUE,
+      metadata: {
+        createdAt: '2026-08-15T00:00:00.000Z',
+        dialogueId: DIALOGUE.id,
+        expiresAt: '2026-08-17T00:00:00.000Z',
+        feedConnectionId: 'feed-1',
+        feedItemId: 'item-1',
+        itemTitle: '피드 대화',
+        listenedAt: null,
+        publishedAt: '2026-08-15T00:00:00.000Z',
+        sourceTitle: '테스트 피드',
+        sourceUrl: 'https://example.com/article',
+        version: 1,
+      },
+    }
+    const events = createEvents()
+    const onDeleteDialogue = vi.fn(async () => undefined)
+    vi.mocked(usePEvents).mockReturnValue(events)
+    vi.mocked(usePFeedContext).mockReturnValue({
+      ...FEEDS,
+      dialogues: () => [feedDialogue],
+      onDeleteDialogue,
+    })
+    render(() => (
+      <PreferenceProvider>
+        <PDialogueSettingsContent />
+      </PreferenceProvider>
+    ))
+
+    fireEvent.click(screen.getByRole('button', {name: '삭제'}))
+    fireEvent.click(screen.getByRole('button', {name: '삭제 확인'}))
+
+    await vi.waitFor(() => expect(onDeleteDialogue).toHaveBeenCalledWith(DIALOGUE.id))
+    expect(events.deleteDialogue).not.toHaveBeenCalled()
   })
 
   it('should report loading, empty, and failed event updates', async () => {
@@ -217,7 +263,7 @@ describe('PDialogueSettingsContent', () => {
       }),
     })
     vi.mocked(usePEvents).mockReturnValue(events)
-    render(() => <PDialogueSettingsContent />)
+    render(() => <PDialogueSettingsContent />, {wrapper: PreferenceProvider})
 
     expect(screen.getByText('이벤트와 대화를 불러오는 중')).toBeInTheDocument()
     expect(screen.getByText('대화를 불러오는 중')).toBeInTheDocument()
@@ -228,7 +274,9 @@ describe('PDialogueSettingsContent', () => {
     const onRequestClose = vi.fn()
     const missingAudioEvents = createEvents()
     vi.mocked(usePEvents).mockReturnValue(missingAudioEvents)
-    render(() => <PDialogueSettingsContent onRequestClose={onRequestClose} />)
+    render(() => <PDialogueSettingsContent onRequestClose={onRequestClose} />, {
+      wrapper: PreferenceProvider,
+    })
 
     fireEvent.click(screen.getByRole('button', {name: '듣기'}))
     await vi.waitFor(() =>
@@ -254,7 +302,7 @@ describe('PDialogueSettingsContent', () => {
       dialogues: () => [DIALOGUE, {...DIALOGUE, id: 'second', text: '다른 대화'}],
     })
     vi.mocked(usePEvents).mockReturnValue(events)
-    render(() => <PDialogueSettingsContent />)
+    render(() => <PDialogueSettingsContent />, {wrapper: PreferenceProvider})
     const rows = within(screen.getByRole('list', {name: '저장된 대화'})).getAllByRole('listitem')
     fireEvent.click(within(rows[0]!).getByRole('button', {name: '캐릭터로 듣기'}))
     expect(await within(rows[0]!).findByRole('status')).toHaveTextContent(
@@ -276,7 +324,9 @@ describe('PDialogueSettingsContent', () => {
       }),
     })
     vi.mocked(usePEvents).mockReturnValue(events)
-    render(() => <PDialogueSettingsContent onRequestClose={onRequestClose} />)
+    render(() => <PDialogueSettingsContent onRequestClose={onRequestClose} />, {
+      wrapper: PreferenceProvider,
+    })
 
     fireEvent.click(screen.getByRole('button', {name: '캐릭터로 듣기'}))
 
@@ -292,7 +342,9 @@ describe('PDialogueSettingsContent', () => {
     const audio = Promise.withResolvers<Blob>()
     const events = createEvents({getAudio: vi.fn(() => audio.promise)})
     vi.mocked(usePEvents).mockReturnValue(events)
-    const view = render(() => <PDialogueSettingsContent onRequestClose={onRequestClose} />)
+    const view = render(() => <PDialogueSettingsContent onRequestClose={onRequestClose} />, {
+      wrapper: PreferenceProvider,
+    })
 
     fireEvent.click(screen.getByRole('button', {name: '캐릭터로 듣기'}))
     view.unmount()
@@ -311,7 +363,7 @@ describe('PDialogueSettingsContent', () => {
         : actual.createSignal(initialValue)) as typeof createSignal)
     const events = createEvents({getAudio: vi.fn(async () => new Blob(['audio']))})
     vi.mocked(usePEvents).mockReturnValue(events)
-    render(() => <PDialogueSettingsContent />)
+    render(() => <PDialogueSettingsContent />, {wrapper: PreferenceProvider})
 
     fireEvent.click(screen.getByRole('button', {name: '듣기'}))
 
@@ -327,7 +379,7 @@ describe('PDialogueSettingsContent', () => {
     const play = vi.spyOn(HTMLMediaElement.prototype, 'play').mockResolvedValue(undefined)
     const events = createEvents({getAudio: vi.fn(async () => new Blob(['audio']))})
     vi.mocked(usePEvents).mockReturnValue(events)
-    render(() => <PDialogueSettingsContent />)
+    render(() => <PDialogueSettingsContent />, {wrapper: PreferenceProvider})
 
     fireEvent.click(screen.getByRole('button', {name: '듣기'}))
     await vi.waitFor(() => expect(play).toHaveBeenCalledOnce())
@@ -347,7 +399,7 @@ describe('PDialogueSettingsContent', () => {
       }),
     })
     vi.mocked(usePEvents).mockReturnValue(events)
-    render(() => <PDialogueSettingsContent />)
+    render(() => <PDialogueSettingsContent />, {wrapper: PreferenceProvider})
 
     fireEvent.click(screen.getByRole('button', {name: '듣기'}))
     await vi.waitFor(() => expect(screen.getAllByText('음성을 재생하지 못했어요.')).toHaveLength(1))
@@ -372,7 +424,7 @@ describe('PDialogueSettingsContent', () => {
         .mockResolvedValueOnce(null),
     })
     vi.mocked(usePEvents).mockReturnValue(events)
-    render(() => <PDialogueSettingsContent />)
+    render(() => <PDialogueSettingsContent />, {wrapper: PreferenceProvider})
 
     fireEvent.click(screen.getByRole('button', {name: '듣기'}))
     fireEvent.click(screen.getByRole('button', {name: '듣기'}))
@@ -392,7 +444,7 @@ describe('PDialogueSettingsContent', () => {
         .mockResolvedValueOnce(null),
     })
     vi.mocked(usePEvents).mockReturnValue(events)
-    render(() => <PDialogueSettingsContent />)
+    render(() => <PDialogueSettingsContent />, {wrapper: PreferenceProvider})
 
     fireEvent.click(screen.getByRole('button', {name: '듣기'}))
     fireEvent.click(screen.getByRole('button', {name: '듣기'}))
@@ -402,10 +454,8 @@ describe('PDialogueSettingsContent', () => {
 
   it('should report failed event changes and dialogue deletion', async () => {
     const second = {...DIALOGUE, id: 'second-dialogue'} satisfies PDialogue
+    vi.mocked(FEEDS.onDeleteDialogue).mockRejectedValueOnce(new Error('delete'))
     const events = createEvents({
-      deleteDialogue: vi.fn(async () => {
-        throw new Error('delete')
-      }),
       dialogues: () => [DIALOGUE, second],
       eventDialogueIds: () => ({'focus-start': [DIALOGUE.id, second.id]}),
       setEventDialogues: vi.fn(async () => {
@@ -416,7 +466,7 @@ describe('PDialogueSettingsContent', () => {
       }),
     })
     vi.mocked(usePEvents).mockReturnValue(events)
-    render(() => <PDialogueSettingsContent />)
+    render(() => <PDialogueSettingsContent />, {wrapper: PreferenceProvider})
 
     fireEvent.click(screen.getByRole('button', {name: '입장 대화 연결'}))
     await vi.waitFor(() => expect(events.setEventDialogues).toHaveBeenCalledOnce())
@@ -429,7 +479,7 @@ describe('PDialogueSettingsContent', () => {
 
   it('should render an empty dialogue library after loading finishes', () => {
     vi.mocked(usePEvents).mockReturnValue(createEvents({dialogues: () => []}))
-    render(() => <PDialogueSettingsContent />)
+    render(() => <PDialogueSettingsContent />, {wrapper: PreferenceProvider})
 
     expect(
       screen.getByText('아직 저장된 대화가 없어요. 새 대화를 만들어 보세요.'),

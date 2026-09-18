@@ -1,3 +1,4 @@
+import {PreferenceProvider} from 'src/hooks/use-preference'
 import {useModelDownload} from 'src/features/model-download'
 import {createFeeds, createModelDownload} from '../../__tests__/feed-status/fixtures'
 /** @vitest-environment jsdom */
@@ -16,7 +17,7 @@ vi.mock('src/features/model-download', () => ({useModelDownload: vi.fn()}))
 vi.mock('@kobalte/core/tabs', () => ({Tabs: {Content: vi.fn()}}))
 vi.mock('src/components/p-select/PSelect', () => ({PSelect: vi.fn()}))
 
-const renderSettings = () => render(() => <PFeedSettingsContent />)
+const renderSettings = () => render(() => <PFeedSettingsContent />, {wrapper: PreferenceProvider})
 const originalGetLocale = getLocale
 
 beforeEach(() => {
@@ -120,9 +121,11 @@ it.each(['', 'true'])(
     vi.stubEnv('DEV', true)
     vi.stubEnv('VITE_POMO_IS_MOBILE', mobile)
     renderSettings()
-    const recommendedAddress = new URL('/__dev/feeds/rss.xml', window.location.origin).href
-    const historyAddress = new URL('/api/feeds/today-in-history/rss.xml', window.location.origin)
-      .href
+    const recommendedAddress = new URL('/__dev/feeds/rss.xml', globalThis.location.origin).href
+    const historyAddress = new URL(
+      '/api/feeds/today-in-history/rss.xml',
+      globalThis.location.origin,
+    ).href
 
     expect(screen.queryByText('아직 저장된 피드가 없어요. 피드 주소를 추가해 주세요.')).toBeNull()
     expect(screen.getByText('오늘의 역사')).toBeDefined()
@@ -151,7 +154,7 @@ it.each(['VITE_POMO_IS_APPS_IN_TOSS', 'VITE_POMO_IS_DESKTOP'] as const)(
     vi.stubEnv(runtime, 'true')
     vi.stubEnv('VITE_POMO_PUBLIC_ORIGIN', 'https://www.pomofi.io')
     renderSettings()
-    const developmentAddress = new URL('/__dev/feeds/rss.xml', window.location.origin).href
+    const developmentAddress = new URL('/__dev/feeds/rss.xml', globalThis.location.origin).href
 
     fireEvent.click(screen.getByRole('button', {name: '오늘의 역사 추천 피드 추가'}))
     fireEvent.click(screen.getByRole('button', {name: 'Pomofi 5분 RSS 추천 피드 추가'}))
@@ -182,11 +185,14 @@ it('should render saved dialogues when a feed runtime is available', () => {
     state: () => ({message: '음성 준비 중', progress: 25, status: 'preparing'}),
   })
 
-  render(() => (
-    <PFeedContext.Provider value={runtime}>
-      <PFeedSettingsContent />
-    </PFeedContext.Provider>
-  ))
+  render(
+    () => (
+      <PFeedContext.Provider value={runtime}>
+        <PFeedSettingsContent />
+      </PFeedContext.Provider>
+    ),
+    {wrapper: PreferenceProvider},
+  )
 
   const heading = screen.getByRole('heading', {name: '피드 대화'})
   expect(screen.getByRole('status').compareDocumentPosition(heading)).toBe(

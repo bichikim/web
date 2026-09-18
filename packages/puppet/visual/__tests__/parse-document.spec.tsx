@@ -44,7 +44,7 @@ test('should keep the browser responsive while validating a 5,000 triangle fan',
   const startedAt = new Event('measurement').timeStamp
   const parsing = preparePuppetDocument({source})
   const tickDuration = await new Promise<number>((resolve) => {
-    window.setTimeout(() => resolve(new Event('measurement').timeStamp - startedAt), 0)
+    globalThis.setTimeout(() => resolve(new Event('measurement').timeStamp - startedAt), 0)
   })
 
   expect(tickDuration).toBeLessThan(MAXIMUM_PARSE_DURATION_MS)

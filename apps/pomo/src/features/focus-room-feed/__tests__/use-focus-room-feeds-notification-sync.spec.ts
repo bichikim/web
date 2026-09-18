@@ -1,3 +1,5 @@
+import {PreferenceProvider, usePreference} from 'src/hooks/use-preference'
+import {createAutomaticDialoguePreferenceOptions} from '../../focus-room-dialogue/automatic-dialogue-settings'
 import {renderHook} from '@solidjs/testing-library'
 import {afterEach, beforeEach, expect, it, vi} from 'vitest'
 
@@ -54,6 +56,7 @@ const repositoryMocks = vi.hoisted(() => {
     listJobs: vi.fn().mockResolvedValue([]),
     listMetadata: vi.fn().mockResolvedValue([]),
     markListened: vi.fn().mockResolvedValue(undefined),
+    removeItem: vi.fn().mockResolvedValue(undefined),
     removeMetadata: vi.fn().mockResolvedValue(undefined),
     retryJobs: vi.fn().mockResolvedValue(undefined),
     startJob: vi.fn().mockResolvedValue(true),
@@ -115,6 +118,7 @@ beforeEach(() => {
   repositoryMocks.feedRepository.listJobs.mockResolvedValue([])
   repositoryMocks.feedRepository.listMetadata.mockResolvedValue([])
   repositoryMocks.feedRepository.markListened.mockResolvedValue(undefined)
+  repositoryMocks.feedRepository.removeItem.mockResolvedValue(undefined)
   repositoryMocks.feedRepository.removeMetadata.mockResolvedValue(undefined)
   repositoryMocks.feedRepository.retryJobs.mockResolvedValue(undefined)
   repositoryMocks.feedRepository.startJob.mockResolvedValue(true)
@@ -344,39 +348,29 @@ it('should preserve expired dialogues that are active or queued for playback', (
 it('should refresh from lifecycle events and remove every listener on cleanup', async () => {
   const documentAdd = vi.spyOn(document, 'addEventListener')
   const documentRemove = vi.spyOn(document, 'removeEventListener')
-  const windowAdd = vi.spyOn(window, 'addEventListener')
-  const windowRemove = vi.spyOn(window, 'removeEventListener')
+  const windowAdd = vi.spyOn(globalThis, 'addEventListener')
+  const windowRemove = vi.spyOn(globalThis, 'removeEventListener')
   const refreshDialogues = vi.fn(async () => undefined)
   const events = createEventContext(refreshDialogues)
-  const view = renderHook(() => usePFeeds({events}))
+  const view = renderHook(() => usePFeeds({events}), {wrapper: PreferenceProvider})
   await vi.waitFor(() =>
     expect(view.result.state()).toMatchObject({message: '설정에서 구독 피드를 추가해 주세요.'}),
   )
 
   const listCount = repositoryMocks.listConnections.mock.calls.length
-  window.dispatchEvent(new CustomEvent(FEED_CONNECTIONS_CHANGED_EVENT))
+  globalThis.dispatchEvent(new CustomEvent(FEED_CONNECTIONS_CHANGED_EVENT))
 
   await vi.waitFor(() =>
     expect(repositoryMocks.listConnections.mock.calls.length).toBeGreaterThan(listCount),
   )
   expect(documentAdd).toHaveBeenCalledWith('visibilitychange', expect.any(Function))
   expect(windowAdd).toHaveBeenCalledWith(FEED_CONNECTIONS_CHANGED_EVENT, expect.any(Function), {})
-  expect(windowAdd).toHaveBeenCalledWith(
-    feedGenerationRuntime.settingsChangedEvent,
-    expect.any(Function),
-    {},
-  )
 
   view.cleanup()
 
   expect(documentRemove).toHaveBeenCalledWith('visibilitychange', expect.any(Function))
   expect(windowRemove).toHaveBeenCalledWith(
     FEED_CONNECTIONS_CHANGED_EVENT,
-    expect.any(Function),
-    {},
-  )
-  expect(windowRemove).toHaveBeenCalledWith(
-    feedGenerationRuntime.settingsChangedEvent,
     expect.any(Function),
     {},
   )
@@ -394,13 +388,15 @@ it('should synchronize again with changed connections after an active sync', asy
   }
   repositoryMocks.listConnections.mockReturnValue([initialConnection])
   syncMocks.synchronizeFeeds.mockImplementationOnce(() => firstSync.promise)
-  const view = renderHook(() => usePFeeds({events: createEventContext()}))
+  const view = renderHook(() => usePFeeds({events: createEventContext()}), {
+    wrapper: PreferenceProvider,
+  })
   await vi.waitFor(() => expect(syncMocks.synchronizeFeeds).toHaveBeenCalledTimes(1))
 
   repositoryMocks.listConnections.mockReturnValue([
     {...initialConnection, updatedAt: '2026-08-14T00:01:00.000Z', voiceId: 'Yuna'},
   ])
-  window.dispatchEvent(new CustomEvent(FEED_CONNECTIONS_CHANGED_EVENT))
+  globalThis.dispatchEvent(new CustomEvent(FEED_CONNECTIONS_CHANGED_EVENT))
   firstSync.resolve({failures: [], queuedJobIds: [], successfulConnections: 1})
 
   await vi.waitFor(() => expect(syncMocks.synchronizeFeeds).toHaveBeenCalledTimes(2))
@@ -493,16 +489,18 @@ it('should generate with a voice changed after the feed job settings were resolv
     repositoryMocks.listConnections.mockReturnValue([
       {...initialConnection, updatedAt: '2026-08-14T00:01:00.000Z', voiceId: 'Yuna'},
     ])
-    window.dispatchEvent(new CustomEvent(FEED_CONNECTIONS_CHANGED_EVENT))
+    globalThis.dispatchEvent(new CustomEvent(FEED_CONNECTIONS_CHANGED_EVENT))
     return {failures: [], queuedJobIds: [job.id], successfulConnections: 1}
   })
-  const view = renderHook(() => usePFeeds({events: createEventContext()}))
+  const view = renderHook(() => usePFeeds({events: createEventContext()}), {
+    wrapper: PreferenceProvider,
+  })
 
   await vi.waitFor(() => expect(repositoryMocks.feedRepository.startJob).toHaveBeenCalledOnce())
   repositoryMocks.listConnections.mockReturnValue([
     {...initialConnection, updatedAt: '2026-08-14T00:02:00.000Z', voiceId: 'M2'},
   ])
-  window.dispatchEvent(new CustomEvent(FEED_CONNECTIONS_CHANGED_EVENT))
+  globalThis.dispatchEvent(new CustomEvent(FEED_CONNECTIONS_CHANGED_EVENT))
   jobStart.resolve(true)
 
   await vi.waitFor(() => expect(generateDialogueAudio).toHaveBeenCalledOnce())
@@ -510,4 +508,29 @@ it('should generate with a voice changed after the feed job settings were resolv
   view.cleanup()
 
   expect(generationOptions).toMatchObject({modelId: 'int8', voiceId: 'M2'})
+})
+
+it('should refresh when shared generation preferences change without dispatching a settings event', async () => {
+  const events = createEventContext(vi.fn(async () => undefined))
+  const view = renderHook(
+    () => ({
+      controller: usePFeeds({events}),
+      preference: usePreference(createAutomaticDialoguePreferenceOptions()),
+    }),
+    {wrapper: PreferenceProvider},
+  )
+  await vi.waitFor(() => {
+    expect(view.result.preference[0]()).not.toBeNull()
+    expect(view.result.controller.state()).toMatchObject({
+      message: '설정에서 구독 피드를 추가해 주세요.',
+    })
+  })
+  const count = repositoryMocks.listConnections.mock.calls.length
+  const dispatch = vi.spyOn(globalThis, 'dispatchEvent')
+  view.result.preference[1]({modelId: 'int8', version: 1, voiceId: 'Yuna'})
+  await vi.waitFor(() =>
+    expect(repositoryMocks.listConnections.mock.calls.length).toBeGreaterThan(count),
+  )
+  expect(dispatch).not.toHaveBeenCalled()
+  view.cleanup()
 })

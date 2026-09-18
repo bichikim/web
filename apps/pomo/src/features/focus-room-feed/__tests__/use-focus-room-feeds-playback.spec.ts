@@ -1,3 +1,4 @@
+import {PreferenceProvider} from 'src/hooks/use-preference'
 import {renderHook} from '@solidjs/testing-library'
 import {afterEach, beforeEach, expect, it, vi} from 'vitest'
 
@@ -59,6 +60,7 @@ const repositoryMocks = vi.hoisted(() => {
     listMetadata: vi.fn().mockResolvedValue([]),
     markListened: vi.fn().mockResolvedValue(undefined),
     recoverMissingDialogue: vi.fn().mockResolvedValue(true),
+    removeItem: vi.fn().mockResolvedValue(undefined),
     removeMetadata: vi.fn().mockResolvedValue(undefined),
     retryJobs: vi.fn().mockResolvedValue(undefined),
     startJob: vi.fn().mockResolvedValue(true),
@@ -124,6 +126,7 @@ beforeEach(() => {
   repositoryMocks.feedRepository.listMetadata.mockResolvedValue([])
   repositoryMocks.feedRepository.markListened.mockResolvedValue(undefined)
   repositoryMocks.feedRepository.recoverMissingDialogue.mockResolvedValue(true)
+  repositoryMocks.feedRepository.removeItem.mockResolvedValue(undefined)
   repositoryMocks.feedRepository.removeMetadata.mockResolvedValue(undefined)
   repositoryMocks.feedRepository.retryJobs.mockResolvedValue(undefined)
   repositoryMocks.feedRepository.startJob.mockResolvedValue(true)
@@ -336,7 +339,9 @@ it('should load dialogue, issue, and recovery state during initialization', asyn
   ])
   lifecycleMocks.loadFeedDialogueList.mockResolvedValue(available)
   lifecycleMocks.loadFeedIssues.mockResolvedValue([issue])
-  const view = renderHook(() => usePFeeds({events: createEventContext()}))
+  const view = renderHook(() => usePFeeds({events: createEventContext()}), {
+    wrapper: PreferenceProvider,
+  })
 
   await vi.waitFor(() => expect(view.result.dialogues()).toEqual(available))
 
@@ -357,7 +362,7 @@ it('should mark an unlistened dialogue when individual playback starts', async (
   vi.mocked(events.playDialogueSequence).mockImplementation(async (options) => {
     await options.onDialogueStart?.(options.dialogueIds[0] as string)
   })
-  const view = renderHook(() => usePFeeds({events}))
+  const view = renderHook(() => usePFeeds({events}), {wrapper: PreferenceProvider})
   await vi.waitFor(() => expect(view.result.dialogues()).toEqual(available))
 
   await view.result.listen('new')
@@ -377,7 +382,7 @@ it('should play all unlistened dialogues once and mark sequence callbacks', asyn
   const playback = Promise.withResolvers<void>()
   const events = createEventContext()
   vi.mocked(events.playDialogueSequence).mockReturnValue(playback.promise)
-  const view = renderHook(() => usePFeeds({events}))
+  const view = renderHook(() => usePFeeds({events}), {wrapper: PreferenceProvider})
   await vi.waitFor(() => expect(view.result.dialogues()).toEqual(available))
 
   const first = view.result.listenAll()
@@ -411,7 +416,7 @@ it('should regenerate unavailable feed audio instead of repeating the ready noti
   vi.mocked(events.playDialogueSequence).mockImplementation(async (options) => {
     await options.onDialogueUnavailable?.('missing')
   })
-  const view = renderHook(() => usePFeeds({events}))
+  const view = renderHook(() => usePFeeds({events}), {wrapper: PreferenceProvider})
   await vi.waitFor(() => expect(view.result.dialogues()).toEqual(available))
 
   await view.result.listenAll()
@@ -453,7 +458,7 @@ it('should discard stale local feed state when another request owns audio recove
   vi.mocked(events.playDialogueSequence).mockImplementation(async (options) => {
     await options.onDialogueUnavailable?.('missing')
   })
-  const view = renderHook(() => usePFeeds({events}))
+  const view = renderHook(() => usePFeeds({events}), {wrapper: PreferenceProvider})
   await vi.waitFor(() => expect(view.result.dialogues()).toEqual(available))
 
   await view.result.listenAll()
@@ -471,7 +476,7 @@ it('should ignore an unavailable callback for a dialogue outside the current fee
   vi.mocked(events.playDialogueSequence).mockImplementation(async (options) => {
     await options.onDialogueUnavailable?.('unknown')
   })
-  const view = renderHook(() => usePFeeds({events}))
+  const view = renderHook(() => usePFeeds({events}), {wrapper: PreferenceProvider})
   await vi.waitFor(() => expect(view.result.dialogues()).toEqual(available))
 
   await view.result.listenAll()
@@ -491,7 +496,7 @@ it('should leave recovered persistence for the next mount when disposed during r
   vi.mocked(events.playDialogueSequence).mockImplementation(async (options) => {
     await options.onDialogueUnavailable?.('missing')
   })
-  const view = renderHook(() => usePFeeds({events}))
+  const view = renderHook(() => usePFeeds({events}), {wrapper: PreferenceProvider})
   await vi.waitFor(() => expect(view.result.dialogues()).toEqual(available))
 
   const listening = view.result.listenAll()
@@ -508,7 +513,7 @@ it('should leave recovered persistence for the next mount when disposed during r
 
 it('should skip listening to an empty feed batch', async () => {
   const events = createEventContext()
-  const view = renderHook(() => usePFeeds({events}))
+  const view = renderHook(() => usePFeeds({events}), {wrapper: PreferenceProvider})
   await vi.waitFor(() => expect(view.result.state().status).toBe('idle'))
 
   await view.result.listenAll()
@@ -518,7 +523,9 @@ it('should skip listening to an empty feed batch', async () => {
 })
 
 it('should ignore a recovery retry when no jobs remain', async () => {
-  const view = renderHook(() => usePFeeds({events: createEventContext()}))
+  const view = renderHook(() => usePFeeds({events: createEventContext()}), {
+    wrapper: PreferenceProvider,
+  })
   await vi.waitFor(() => expect(view.result.state().status).toBe('idle'))
   const initialState = view.result.state()
 
@@ -533,7 +540,9 @@ it('should ignore a recovery retry when no jobs remain', async () => {
 it('should delete, dismiss, and retry recovery jobs', async () => {
   const jobs = [createJob({id: 'failed', status: 'failed'})]
   repositoryMocks.feedRepository.interruptUnfinishedJobs.mockResolvedValue(jobs)
-  const view = renderHook(() => usePFeeds({events: createEventContext()}))
+  const view = renderHook(() => usePFeeds({events: createEventContext()}), {
+    wrapper: PreferenceProvider,
+  })
   await vi.waitFor(() => expect(view.result.recoveryJobs()).toEqual(jobs))
 
   await view.result.deleteRecovery()
@@ -546,7 +555,9 @@ it('should delete, dismiss, and retry recovery jobs', async () => {
   repositoryMocks.feedRepository.interruptUnfinishedJobs.mockResolvedValue(jobs)
   view.cleanup()
 
-  const retryView = renderHook(() => usePFeeds({events: createEventContext()}))
+  const retryView = renderHook(() => usePFeeds({events: createEventContext()}), {
+    wrapper: PreferenceProvider,
+  })
   await vi.waitFor(() => expect(retryView.result.recoveryJobs()).toEqual(jobs))
   await retryView.result.retryRecovery()
   expect(repositoryMocks.feedRepository.retryJobs).toHaveBeenCalledWith(
@@ -568,7 +579,9 @@ it('should expose preparation while recovered jobs wait for the generation queue
   const jobs = [createJob({id: 'failed', status: 'failed'})]
   repositoryMocks.feedRepository.interruptUnfinishedJobs.mockResolvedValue(jobs)
   queueMocks.scheduleFeedJobs.mockImplementationOnce(() => undefined)
-  const view = renderHook(() => usePFeeds({events: createEventContext()}))
+  const view = renderHook(() => usePFeeds({events: createEventContext()}), {
+    wrapper: PreferenceProvider,
+  })
   await vi.waitFor(() => expect(view.result.recoveryJobs()).toEqual(jobs))
 
   await view.result.retryRecovery()
@@ -584,11 +597,12 @@ it('should expose preparation while recovered jobs wait for the generation queue
 it('should reload dialogues after metadata removal succeeds or fails', async () => {
   lifecycleMocks.loadFeedDialogueList.mockResolvedValue([createDialogue('delete-me', null)])
   const events = createEventContext()
-  const view = renderHook(() => usePFeeds({events}))
+  const view = renderHook(() => usePFeeds({events}), {wrapper: PreferenceProvider})
   await vi.waitFor(() => expect(view.result.dialogues()).toHaveLength(1))
 
   await view.result.onDeleteDialogue('delete-me')
   expect(events.deleteDialogue).toHaveBeenCalledWith('delete-me')
+  expect(repositoryMocks.feedRepository.removeItem).toHaveBeenCalledWith('feed-1', 'item-delete-me')
   expect(repositoryMocks.feedRepository.removeMetadata).toHaveBeenCalledWith('delete-me')
 
   repositoryMocks.feedRepository.removeMetadata.mockRejectedValueOnce(new Error('remove failed'))
@@ -597,11 +611,31 @@ it('should reload dialogues after metadata removal succeeds or fails', async () 
   view.cleanup()
 })
 
+it('should remove stored feed items when the dialogue is not loaded in feed state', async () => {
+  const orphan = createDialogue('orphan', null)
+  repositoryMocks.feedRepository.listMetadata.mockResolvedValue([orphan.metadata])
+  const events = createEventContext()
+  const view = renderHook(() => usePFeeds({events}), {wrapper: PreferenceProvider})
+
+  await vi.waitFor(() => expect(view.result.dialogues()).toEqual([]))
+  await view.result.onDeleteDialogue(orphan.dialogue.id)
+
+  expect(events.deleteDialogue).toHaveBeenCalledWith(orphan.dialogue.id)
+  expect(repositoryMocks.feedRepository.removeItem).toHaveBeenCalledWith(
+    orphan.metadata.feedConnectionId,
+    orphan.metadata.feedItemId,
+  )
+  expect(repositoryMocks.feedRepository.removeMetadata).toHaveBeenCalledWith(orphan.dialogue.id)
+  view.cleanup()
+})
+
 it('should refresh repaired and expired dialogues', async () => {
   repairMocks.repairStoredDevFeedDialogues.mockResolvedValue(1)
   lifecycleMocks.deleteExpiredFeedDialogues.mockResolvedValue(1)
   const refreshDialogues = vi.fn(async () => undefined)
-  const view = renderHook(() => usePFeeds({events: createEventContext(refreshDialogues)}))
+  const view = renderHook(() => usePFeeds({events: createEventContext(refreshDialogues)}), {
+    wrapper: PreferenceProvider,
+  })
 
   await vi.waitFor(() => expect(refreshDialogues).toHaveBeenCalledTimes(2))
 

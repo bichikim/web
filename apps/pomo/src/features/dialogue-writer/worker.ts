@@ -9,7 +9,7 @@ import type {DialogueWorkerRequest, DialogueWorkerResponse} from './messages'
 import {createDirectAnswerMessages, type DialogueOutputLanguage} from './prompt'
 
 const MAXIMUM_NEW_TOKENS = 1024
-const workerScope = self as DedicatedWorkerGlobalScope
+const workerScope = globalThis.self as DedicatedWorkerGlobalScope
 
 const sendResponse = (response: DialogueWorkerResponse) => workerScope.postMessage(response)
 let textRuntimePromise: Promise<TextGenerationRuntime> | null = null

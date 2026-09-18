@@ -21,7 +21,7 @@ describe('playback-storage', () => {
   })
 
   afterEach(() => {
-    Reflect.deleteProperty(window, 'ReactNativeWebView')
+    Reflect.deleteProperty(globalThis.window, 'ReactNativeWebView')
     vi.restoreAllMocks()
   })
 
@@ -89,7 +89,7 @@ describe('playback-storage', () => {
   })
 
   it('should select the latest app or browser copy', async () => {
-    Object.defineProperty(window, 'ReactNativeWebView', {configurable: true, value: {}})
+    Object.defineProperty(globalThis, 'ReactNativeWebView', {configurable: true, value: {}})
     localStorage.setItem(
       'pomo:focus-room-playback:v1',
       JSON.stringify({positionSeconds: 4, savedAt: 10, trackId: 'web-track'}),

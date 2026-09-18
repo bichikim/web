@@ -154,6 +154,26 @@ it('should preserve native playback position when enabling repeated playback', (
   expect(loopPlayback.play).toHaveBeenCalledWith(4, false, 7)
 })
 
+it('should restore the confirmed repeat position when seeking fails', async () => {
+  render(() => <SoundGenerationPage />)
+  fireEvent.click(screen.getByRole('button', {name: '환경음 생성'}))
+  TestWorker.current.onmessage?.({data: {blob: new Blob(['wav']), type: 'result'}})
+  fireEvent.click(screen.getByRole('checkbox', {name: '반복 재생'}))
+  loopPlayback.onStatus?.('루프 재생 중', true)
+  loopPlayback.onPosition?.(5)
+  const position = screen.getByRole('slider', {name: '크로스페이드 오디오 위치'})
+  fireEvent.input(position, {target: {value: '10'}})
+  fireEvent.input(position, {target: {value: '15'}})
+  loopPlayback.seek.mockRejectedValueOnce(new Error('seek failed'))
+
+  fireEvent.change(position)
+
+  await vi.waitFor(() => expect(loopPlayback.seek).toHaveBeenCalledWith(15))
+  expect(position).toHaveValue('5')
+  expect(screen.getByRole('button', {name: '재생'})).toBeInTheDocument()
+  expect(screen.getByText('seek failed')).toBeInTheDocument()
+})
+
 it('should use a changed connection duration for a generated result', () => {
   render(() => <SoundGenerationPage />)
   fireEvent.click(screen.getByRole('button', {name: '환경음 생성'}))

@@ -87,12 +87,14 @@ interface RenderMusicPlayerViewOptions {
   readonly onAlbumClear?: () => void
   readonly onExpandedChange?: () => void
   readonly onNextTrack?: () => void
+  readonly onPause?: () => void
   readonly onPreviewEnd?: () => void
   readonly onPreviewStart?: (stopPreview: () => void) => void
   readonly onPreviousTrack?: () => void
   readonly onRepeatModeChange?: (mode: 'repeat-all' | 'repeat-one') => void
   readonly onShuffleChange?: () => void
   readonly onTrackSelect?: (index: number) => void
+  readonly isPreparing?: boolean
   readonly sceneStyle?: PSceneStyle
 }
 
@@ -105,6 +107,7 @@ export const renderMusicPlayerView = (options: RenderMusicPlayerViewOptions = {}
       currentTrack={options.currentTrack === null ? undefined : (options.currentTrack ?? TRACKS[0])}
       backdropBlur={options.backdropBlur}
       expanded={options.expanded ?? true}
+      isPreparing={options.isPreparing ?? false}
       isPlaying={options.isPlaying ?? false}
       isPlaylistLoading={options.isPlaylistLoading ?? false}
       levels={options.levels ?? []}
@@ -112,6 +115,7 @@ export const renderMusicPlayerView = (options: RenderMusicPlayerViewOptions = {}
       onAlbumClear={options.onAlbumClear}
       onExpandedChange={options.onExpandedChange ?? vi.fn()}
       onNextTrack={options.onNextTrack ?? vi.fn()}
+      onPause={options.onPause}
       onPreviewEnd={options.onPreviewEnd}
       onPreviewStart={options.onPreviewStart}
       onPreviousTrack={options.onPreviousTrack ?? vi.fn()}

@@ -1,3 +1,4 @@
+import {isValidTimeZone} from 'src/utils/is-valid-time-zone'
 import type {APIEvent} from '@solidjs/start/server'
 import {z} from 'zod'
 
@@ -27,16 +28,6 @@ const querySchema = z.object({
   timeZone: z.string().min(1).max(MAXIMUM_TIME_ZONE_CHARACTERS),
 })
 
-const isValidTimeZone = (timeZone: string) => {
-  try {
-    const formatter = new Intl.DateTimeFormat('en', {timeZone})
-    formatter.resolvedOptions()
-    return true
-  } catch {
-    return false
-  }
-}
-
 export const GET = async (event: APIEvent): Promise<Response> => {
   let identity: Awaited<ReturnType<typeof resolveUserRequest>>
   try {
@@ -49,6 +40,13 @@ export const GET = async (event: APIEvent): Promise<Response> => {
     return noStoreJson(
       {error: 'calendar_unavailable'},
       {cookies: error.cookies, status: HTTP_SERVICE_UNAVAILABLE},
+    )
+  }
+
+  if (identity.access === 'invalid') {
+    return noStoreJson(
+      {error: 'authentication_unavailable'},
+      {cookies: identity.cookies, status: HTTP_SERVICE_UNAVAILABLE},
     )
   }
 

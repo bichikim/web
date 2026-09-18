@@ -59,7 +59,7 @@ beforeEach(() => {
 })
 
 afterEach(() => {
-  Reflect.deleteProperty(window, 'ReactNativeWebView')
+  Reflect.deleteProperty(globalThis, 'ReactNativeWebView')
   vi.unstubAllGlobals()
 })
 
@@ -101,31 +101,6 @@ describe('focus-room display preference repository', () => {
     await expect(repository.write(visiblePreferences)).resolves.toBeUndefined()
     expect(tossValues.get(STORAGE_KEY)).toEqual(visiblePreferences)
   })
-
-  it('should wait for an active toss write before reading the preferences', async () => {
-    const {tossValues, repository, storage} = createStorageHarness()
-    storage.usesTossStorage.mockReturnValue(true)
-    tossValues.set(STORAGE_KEY, DEFAULT_P_DISPLAY_PREFERENCES)
-    let completeWrite: () => void = () => undefined
-    storage.writeToss.mockImplementation(
-      (key, value) =>
-        new Promise((resolve) => {
-          completeWrite = () => {
-            tossValues.set(key, value)
-            resolve()
-          }
-        }),
-    )
-
-    const pendingWrite = repository.write(visiblePreferences)
-    await vi.waitFor(() => expect(storage.writeToss).toHaveBeenCalledOnce())
-    const pendingRead = repository.read()
-    completeWrite()
-
-    await expect(pendingWrite).resolves.toBeUndefined()
-    await expect(pendingRead).resolves.toEqual(visiblePreferences)
-    expect(storage.readToss).toHaveBeenCalledOnce()
-  })
 })
 
 it('should default dialogue composer visibility to off when no valid setting exists', async () => {
@@ -145,7 +120,7 @@ it('should persist and restore dialogue composer visibility on the web', async (
 })
 
 it('should restore toss preferences and rebuild the browser copy', async () => {
-  Object.defineProperty(window, 'ReactNativeWebView', {configurable: true, value: {}})
+  Object.defineProperty(globalThis, 'ReactNativeWebView', {configurable: true, value: {}})
   storageMocks.getItem.mockResolvedValue(JSON.stringify(visiblePreferences))
 
   await expect(readPDisplayPreferences()).resolves.toEqual(visiblePreferences)
@@ -155,14 +130,14 @@ it('should restore toss preferences and rebuild the browser copy', async () => {
 })
 
 it('should use the default when toss preferences are empty', async () => {
-  Object.defineProperty(window, 'ReactNativeWebView', {configurable: true, value: {}})
+  Object.defineProperty(globalThis, 'ReactNativeWebView', {configurable: true, value: {}})
   storageMocks.getItem.mockResolvedValue(null)
 
   await expect(readPDisplayPreferences()).resolves.toEqual(DEFAULT_P_DISPLAY_PREFERENCES)
 })
 
 it('should reject a toss read failure instead of using the browser copy', async () => {
-  Object.defineProperty(window, 'ReactNativeWebView', {configurable: true, value: {}})
+  Object.defineProperty(globalThis, 'ReactNativeWebView', {configurable: true, value: {}})
   localStorage.setItem('pomo:focus-room-display-preferences:v1', JSON.stringify(visiblePreferences))
   storageMocks.getItem.mockRejectedValue(new Error('toss unavailable'))
 
@@ -172,7 +147,7 @@ it('should reject a toss read failure instead of using the browser copy', async 
 })
 
 it('should replace a stale browser copy with the toss preferences', async () => {
-  Object.defineProperty(window, 'ReactNativeWebView', {configurable: true, value: {}})
+  Object.defineProperty(globalThis, 'ReactNativeWebView', {configurable: true, value: {}})
   const hiddenPreferences = {
     dialogueComposerVisible: false,
     memoryAssistVisible: true,
@@ -192,7 +167,7 @@ it('should replace a stale browser copy with the toss preferences', async () => 
 })
 
 it('should reject a toss save when toss storage fails', async () => {
-  Object.defineProperty(window, 'ReactNativeWebView', {configurable: true, value: {}})
+  Object.defineProperty(globalThis, 'ReactNativeWebView', {configurable: true, value: {}})
   storageMocks.setItem.mockRejectedValue(new Error('toss unavailable'))
 
   await expect(writePDisplayPreferences(visiblePreferences)).rejects.toThrow(
@@ -201,7 +176,7 @@ it('should reject a toss save when toss storage fails', async () => {
 })
 
 it('should restore toss state after a failed toss save', async () => {
-  Object.defineProperty(window, 'ReactNativeWebView', {configurable: true, value: {}})
+  Object.defineProperty(globalThis, 'ReactNativeWebView', {configurable: true, value: {}})
   const hiddenPreferences = {
     dialogueComposerVisible: false,
     memoryAssistVisible: true,
@@ -222,46 +197,8 @@ it('should restore toss state after a failed toss save', async () => {
   )
 })
 
-it('should preserve a newer choice while toss preferences are loading', async () => {
-  Object.defineProperty(window, 'ReactNativeWebView', {configurable: true, value: {}})
-  let tossPreferences = JSON.stringify({
-    dialogueComposerVisible: false,
-    memoryAssistVisible: true,
-    playerVisible: true,
-    pomodoroVisible: true,
-    toolsButtonVisible: true,
-    tourButtonVisible: true,
-  })
-  let completeRead: (value: string) => void = () => undefined
-  storageMocks.getItem
-    .mockReturnValueOnce(
-      new Promise((resolve) => {
-        completeRead = resolve
-      }),
-    )
-    .mockImplementation(async () => tossPreferences)
-  storageMocks.setItem.mockImplementation(async (_key, value) => {
-    tossPreferences = value
-  })
-
-  const pendingRead = readPDisplayPreferences()
-  await writePDisplayPreferences(visiblePreferences)
-  completeRead(
-    JSON.stringify({
-      dialogueComposerVisible: false,
-      memoryAssistVisible: true,
-      playerVisible: true,
-      pomodoroVisible: true,
-      toolsButtonVisible: true,
-      tourButtonVisible: true,
-    }),
-  )
-
-  await expect(pendingRead).resolves.toEqual(visiblePreferences)
-})
-
 it('should preserve toss write order during rapid preference changes', async () => {
-  Object.defineProperty(window, 'ReactNativeWebView', {configurable: true, value: {}})
+  Object.defineProperty(globalThis, 'ReactNativeWebView', {configurable: true, value: {}})
   const tossWrites: string[] = []
   storageMocks.setItem.mockImplementation(async (_key, value) => {
     tossWrites.push(value)
@@ -287,7 +224,7 @@ it('should preserve toss write order during rapid preference changes', async () 
 })
 
 it('should persist dialogue composer visibility to toss storage', async () => {
-  Object.defineProperty(window, 'ReactNativeWebView', {configurable: true, value: {}})
+  Object.defineProperty(globalThis, 'ReactNativeWebView', {configurable: true, value: {}})
   storageMocks.setItem.mockResolvedValue()
 
   await writePDisplayPreferences(visiblePreferences)

@@ -239,3 +239,17 @@ it('should record a savepoint failure before releasing the lease', async () => {
   })
   expect(repositoryMocks.resetWeatherCollectionFailure).not.toHaveBeenCalled()
 })
+
+it('should propagate an outer save transaction failure to the feed response', async () => {
+  const error = new Error('transaction connection failed')
+  databaseMocks.withTransactionalDatabase
+    .mockImplementationOnce(async (operation) =>
+      operation({
+        transaction: vi.fn(async (transactionOperation) => transactionOperation({})),
+      } as never),
+    )
+    .mockRejectedValueOnce(error)
+
+  await expect(ingestWorldWeather(location, NOW)).rejects.toBe(error)
+  expect(repositoryMocks.recordWeatherCollectionFailure).not.toHaveBeenCalled()
+})

@@ -36,12 +36,12 @@ class TestResizeObserver {
   unobserve = vi.fn()
 }
 
-const getComputedStyle = window.getComputedStyle.bind(window)
+const getComputedStyle = globalThis.getComputedStyle.bind(globalThis)
 
 beforeEach(() => {
   vi.clearAllMocks()
   vi.stubGlobal('ResizeObserver', TestResizeObserver)
-  vi.spyOn(window, 'getComputedStyle').mockImplementation((element, pseudoElement) => {
+  vi.spyOn(globalThis, 'getComputedStyle').mockImplementation((element, pseudoElement) => {
     const styles = getComputedStyle(element, pseudoElement)
     Object.defineProperty(styles, 'animationName', {configurable: true, value: 'none'})
     return styles

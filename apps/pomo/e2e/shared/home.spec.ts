@@ -12,16 +12,16 @@ test('hydrates the home route in its configured runtime', async ({page}, testInf
   expect(await page.evaluate(() => localStorage.getItem('PARAGLIDE_LOCALE'))).toBe('ko')
   await expect(page).toHaveURL(/\/$/u)
   if (isAppsInToss) {
-    await page.waitForFunction(() => '__ait' in window)
+    await page.waitForFunction(() => '__ait' in globalThis.window)
     await expect(page.locator('html')).toHaveAttribute(
       'style',
       /--pomo-safe-area-inset-top:\s*0rem/u,
     )
   } else {
-    expect(await page.evaluate(() => '__ait' in window)).toBe(false)
+    expect(await page.evaluate(() => '__ait' in globalThis.window)).toBe(false)
   }
 
-  await expect(page).toHaveTitle('Pomofi')
+  await expect(page).toHaveTitle(/^Pomofi(?: — .+)?$/u)
   await expect(page.getByRole('region', {exact: true, name: 'Pomo'})).toBeVisible()
   await expect(page.locator('meta[name="robots"]')).toHaveAttribute(
     'content',

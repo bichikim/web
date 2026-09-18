@@ -55,10 +55,13 @@ export interface PAlbumLibrary {
   readonly publishedCatalog: PPublishedAlbumCatalog
 }
 
-export interface LoadPTracksOptions {
-  readonly playlistUrl?: string
+export interface LoadPTrackCatalogOptions {
   readonly signal?: AbortSignal
   readonly tracksUrl?: string
+}
+
+export interface LoadPTracksOptions extends LoadPTrackCatalogOptions {
+  readonly playlistUrl?: string
 }
 
 export interface PTrackQueueSource {

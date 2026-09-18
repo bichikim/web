@@ -14,7 +14,7 @@ const RUN = {
   status: 'preparing' as const,
   submissionExpiresAt: null,
   submissionState: null,
-  targetDate: '2026-08-15',
+  targetDate: '2026-08-14',
 }
 
 it('should submit a newly prepared run and persist its response ID', async () => {
@@ -34,7 +34,7 @@ it('should submit a newly prepared run and persist its response ID', async () =>
     responseId: 'resp-1',
     runId: 'run-1',
     status: 'submitted',
-    targetDate: '2026-08-15',
+    targetDate: '2026-08-14',
   })
   expect(submit).toHaveBeenCalledOnce()
   expect(submit).toHaveBeenCalledWith(

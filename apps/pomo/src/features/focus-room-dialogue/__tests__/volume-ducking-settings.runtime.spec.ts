@@ -22,7 +22,7 @@ beforeEach(() => {
 })
 
 afterEach(() => {
-  Reflect.deleteProperty(window, 'ReactNativeWebView')
+  Reflect.deleteProperty(globalThis.window, 'ReactNativeWebView')
   vi.restoreAllMocks()
 })
 
@@ -37,7 +37,7 @@ it('should connect the browser repository to local storage', async () => {
 
 it('should connect the native repository to Apps in Toss storage', async () => {
   const settings = {enabled: false, playerVolumePercent: 20, version: 2} as const
-  Object.defineProperty(window, 'ReactNativeWebView', {configurable: true, value: {}})
+  Object.defineProperty(globalThis, 'ReactNativeWebView', {configurable: true, value: {}})
   storageMocks.getItem.mockResolvedValue(JSON.stringify(settings))
   storageMocks.setItem.mockResolvedValue(undefined)
 
@@ -57,7 +57,7 @@ it('should translate browser and native adapter write failures', async () => {
   )
 
   browserWrite.mockRestore()
-  Object.defineProperty(window, 'ReactNativeWebView', {configurable: true, value: {}})
+  Object.defineProperty(globalThis, 'ReactNativeWebView', {configurable: true, value: {}})
   storageMocks.setItem.mockRejectedValue(new Error('native unavailable'))
 
   await expect(writeDialogueVolumeDuckingSettings(settings)).rejects.toThrow(

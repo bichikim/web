@@ -43,7 +43,7 @@ const readPanelPreference = () => {
   let storedPreference: string | null
 
   try {
-    storedPreference = window.localStorage.getItem(PANEL_PREFERENCE_KEY)
+    storedPreference = globalThis.localStorage.getItem(PANEL_PREFERENCE_KEY)
   } catch (error) {
     console.warn('Puppet editor panel preference could not be read.', error)
     return undefined
@@ -63,7 +63,7 @@ const readPanelPreference = () => {
 
 const writePanelPreference = (preference: EditorPanelPreference) => {
   try {
-    window.localStorage.setItem(PANEL_PREFERENCE_KEY, JSON.stringify(preference))
+    globalThis.localStorage.setItem(PANEL_PREFERENCE_KEY, JSON.stringify(preference))
   } catch (error) {
     console.warn('Puppet editor panel preference could not be saved.', error)
   }
@@ -196,15 +196,15 @@ export const usePanelLayout = () => {
     const handlePointerCancel = () => stopResize?.()
 
     stopResize = () => {
-      window.removeEventListener('pointercancel', handlePointerCancel)
-      window.removeEventListener('pointermove', handlePointerMove)
-      window.removeEventListener('pointerup', handlePointerUp)
+      globalThis.removeEventListener('pointercancel', handlePointerCancel)
+      globalThis.removeEventListener('pointermove', handlePointerMove)
+      globalThis.removeEventListener('pointerup', handlePointerUp)
       setResizingPosition(null)
       stopResize = undefined
     }
-    window.addEventListener('pointercancel', handlePointerCancel)
-    window.addEventListener('pointermove', handlePointerMove)
-    window.addEventListener('pointerup', handlePointerUp)
+    globalThis.addEventListener('pointercancel', handlePointerCancel)
+    globalThis.addEventListener('pointermove', handlePointerMove)
+    globalThis.addEventListener('pointerup', handlePointerUp)
   }
 
   onCleanup(() => stopResize?.())

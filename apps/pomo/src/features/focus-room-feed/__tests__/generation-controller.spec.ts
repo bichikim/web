@@ -157,6 +157,34 @@ it('should generate and persist a queued feed job through the controller boundar
   expect(fixture.feedRepository.complete).toHaveBeenCalledOnce()
 })
 
+it('should preserve a sync state written before generation completes', async () => {
+  const fixture = createFixture()
+  fixture.runtime.generateDialogueAudio.mockImplementation(async () => {
+    fixture.setState({
+      message: '새 피드를 확인하고 있어요…',
+      progress: null,
+      status: 'syncing',
+    })
+    return {
+      ok: true,
+      value: {
+        audio: new Blob(['audio']),
+        durationMs: 1000,
+        segments: [{durationMs: 1000, index: 0, startMs: 0, text: '새 소식'}],
+      },
+    }
+  })
+  fixture.controller.schedule({jobIds: ['job-1']})
+
+  await vi.waitFor(() => expect(fixture.onCompleted).toHaveBeenCalledOnce())
+
+  expect(fixture.setState).toHaveBeenLastCalledWith({
+    message: '새 피드를 확인하고 있어요…',
+    progress: null,
+    status: 'syncing',
+  })
+})
+
 it('should preserve an interrupted job when cancel races generation start', async () => {
   const fixture = createFixture()
   const generationStart = Promise.withResolvers<boolean>()

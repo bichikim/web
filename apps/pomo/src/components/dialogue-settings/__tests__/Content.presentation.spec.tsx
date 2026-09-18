@@ -7,6 +7,7 @@ import {afterEach, beforeEach, expect, it, vi} from 'vitest'
 
 import {getLocale, overwriteGetLocale} from '@paraglide/runtime'
 import {PSelect} from 'src/components/p-select/PSelect'
+import {PreferenceProvider} from 'src/hooks/use-preference'
 import {type PDialogue, type PEventContextValue, usePEvents} from 'src/features/focus-room-dialogue'
 import {type PFeedController, usePFeedContext} from 'src/features/focus-room-feed'
 import {writeLanguageLearningSentences} from 'src/features/language-learning'
@@ -139,7 +140,7 @@ it('should render event and dialogue settings in English', () => {
   overwriteGetLocale(() => 'en')
   vi.mocked(usePEvents).mockReturnValue(createEvents())
 
-  render(() => <PDialogueSettingsContent />)
+  render(() => <PDialogueSettingsContent />, {wrapper: PreferenceProvider})
 
   expect(screen.getByRole('heading', {name: 'Events'})).toBeDefined()
   expect(screen.getByRole('heading', {name: 'Enter Pomofi'})).toBeDefined()
@@ -153,7 +154,7 @@ it('should render event and dialogue settings in English', () => {
 it('should keep saved dialogue content full-width with bounded text and actions', () => {
   vi.mocked(usePEvents).mockReturnValue(createEvents())
 
-  render(() => <PDialogueSettingsContent />)
+  render(() => <PDialogueSettingsContent />, {wrapper: PreferenceProvider})
 
   expect(screen.queryByRole('heading', {name: '이벤트별 대화'})).toBeNull()
   expect(
@@ -207,7 +208,7 @@ it('should hide learning dialogues only from the saved dialogue library', () => 
   ])
   vi.mocked(usePEvents).mockReturnValue(createEvents({dialogues: () => [DIALOGUE, manualDialogue]}))
 
-  render(() => <PDialogueSettingsContent />)
+  render(() => <PDialogueSettingsContent />, {wrapper: PreferenceProvider})
 
   const library = screen.getByRole('list', {name: '저장된 대화'})
   expect(within(library).queryByText(DIALOGUE.text)).toBeNull()
@@ -234,7 +235,7 @@ it('should hide learning dialogues only from the saved dialogue library', () => 
 it('should apply compact spacing to dialogue settings groups', () => {
   vi.mocked(usePEvents).mockReturnValue(createEvents())
 
-  render(() => <PDialogueSettingsContent />)
+  render(() => <PDialogueSettingsContent />, {wrapper: PreferenceProvider})
   const [list] = screen.getAllByRole('list')
   const section = list?.parentElement
   const automatic = screen.getByRole('region', {name: '자동 음성 생성'})
@@ -247,7 +248,7 @@ it('should apply compact spacing to dialogue settings groups', () => {
 it('should use the theme surface for an empty dialogue library', () => {
   vi.mocked(usePEvents).mockReturnValue(createEvents({dialogues: () => []}))
 
-  render(() => <PDialogueSettingsContent />)
+  render(() => <PDialogueSettingsContent />, {wrapper: PreferenceProvider})
 
   expect(screen.getByText('아직 저장된 대화가 없어요. 새 대화를 만들어 보세요.')).toHaveClass(
     'bg-content-surface',
@@ -300,7 +301,7 @@ it('should offer and save a playback mode when an event has multiple dialogues',
   vi.spyOn(HTMLMediaElement.prototype, 'load').mockImplementation(() => undefined)
   vi.mocked(usePEvents).mockReturnValue(events)
 
-  render(() => <PDialogueSettingsContent />)
+  render(() => <PDialogueSettingsContent />, {wrapper: PreferenceProvider})
 
   const modeSelect = screen.getByRole('combobox', {name: '포모도르 집중 시작 재생 방식'})
   const modeLayout = modeSelect.parentElement?.parentElement?.parentElement
@@ -339,7 +340,9 @@ it('should queue a saved dialogue through the character without stopping existin
   const loadAudio = vi.spyOn(HTMLMediaElement.prototype, 'load').mockImplementation(() => undefined)
   vi.mocked(usePEvents).mockReturnValue(events)
 
-  render(() => <PDialogueSettingsContent onRequestClose={onRequestClose} />)
+  render(() => <PDialogueSettingsContent onRequestClose={onRequestClose} />, {
+    wrapper: PreferenceProvider,
+  })
   fireEvent.click(screen.getByRole('button', {name: '캐릭터로 듣기'}))
 
   expect(pauseAudio).toHaveBeenCalledOnce()

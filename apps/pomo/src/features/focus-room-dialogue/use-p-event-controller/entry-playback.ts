@@ -8,17 +8,25 @@ import {DEFAULT_DIALOGUE_EVENT_PLAYBACK_MODE, FOCUS_ROOM_ENTRY_EVENT} from '../s
 
 const ENTRY_PLAYBACK_SESSION_KEY = 'pomo:focus-room-entry-playback:v1'
 
-const readPlaybackSession = (): boolean => {
+export interface EntryPlaybackSessionStorage {
+  readonly getItem: (key: string) => string | null
+  readonly setItem: (key: string, value: string) => void
+}
+
+const getStorage = (storage?: EntryPlaybackSessionStorage): EntryPlaybackSessionStorage =>
+  storage ?? globalThis.sessionStorage
+
+const readPlaybackSession = (storage?: EntryPlaybackSessionStorage): boolean => {
   try {
-    return sessionStorage.getItem(ENTRY_PLAYBACK_SESSION_KEY) !== null
+    return getStorage(storage).getItem(ENTRY_PLAYBACK_SESSION_KEY) !== null
   } catch {
     return false
   }
 }
 
-const writePlaybackSession = (): void => {
+const writePlaybackSession = (storage?: EntryPlaybackSessionStorage): void => {
   try {
-    sessionStorage.setItem(ENTRY_PLAYBACK_SESSION_KEY, 'true')
+    getStorage(storage).setItem(ENTRY_PLAYBACK_SESSION_KEY, 'true')
   } catch {
     // Storage restrictions must not prevent entry dialogue playback.
   }
@@ -30,6 +38,7 @@ export interface CreateEntryEventPlaybackOptions {
   readonly getRepository: () => PDialogueRepository | null
   readonly isPlaybackEnabled: () => boolean
   readonly playback: EntryPlaybackController
+  readonly sessionStorage?: EntryPlaybackSessionStorage
 }
 
 export interface EntryEventPlayback {
@@ -52,7 +61,7 @@ export const createEntryEventPlayback = (
       !hasEnteredFocusRoom() ||
       !options.isPlaybackEnabled() ||
       repository === null ||
-      readPlaybackSession()
+      readPlaybackSession(options.sessionStorage)
     ) {
       return
     }
@@ -67,14 +76,22 @@ export const createEntryEventPlayback = (
     }
 
     hasStarted = true
-    writePlaybackSession()
     options.playback
       .playSequence(repository, {
         dialogueIds: selectedDialogueIds,
         onDialogueStart: () => undefined,
         onSequenceStop: () => undefined,
       })
+      .then((completion) => {
+        if (completion === 'failed') {
+          hasStarted = false
+          return
+        }
+
+        writePlaybackSession(options.sessionStorage)
+      })
       .catch((error: unknown) => {
+        hasStarted = false
         console.error('Unexpected entry dialogue sequence failure.', error)
       })
   }

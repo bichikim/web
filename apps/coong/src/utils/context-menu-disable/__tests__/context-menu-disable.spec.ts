@@ -11,7 +11,7 @@ describe('createContextMenuDisable', () => {
 
   it('should disable context menu when off is true', () => {
     const disableContextMenu = createContextMenuDisable()
-    const addEventListenerSpy = vi.spyOn(window, 'addEventListener')
+    const addEventListenerSpy = vi.spyOn(globalThis, 'addEventListener')
     const preventDefaultSpy = vi.spyOn(MouseEvent.prototype, 'preventDefault')
     const stopPropagationSpy = vi.spyOn(MouseEvent.prototype, 'stopPropagation')
 
@@ -33,7 +33,7 @@ describe('createContextMenuDisable', () => {
 
   it('should enable context menu when off is false', () => {
     const disableContextMenu = createContextMenuDisable()
-    const removeEventListenerSpy = vi.spyOn(window, 'removeEventListener')
+    const removeEventListenerSpy = vi.spyOn(globalThis, 'removeEventListener')
 
     // First disable
     disableContextMenu(true)
@@ -46,7 +46,7 @@ describe('createContextMenuDisable', () => {
 
   it('should not add listener if already disabled', () => {
     const disableContextMenu = createContextMenuDisable()
-    const addEventListenerSpy = vi.spyOn(window, 'addEventListener')
+    const addEventListenerSpy = vi.spyOn(globalThis, 'addEventListener')
 
     // First disable
     disableContextMenu(true)
@@ -58,7 +58,7 @@ describe('createContextMenuDisable', () => {
 
   it('should not remove listener if not disabled', () => {
     const disableContextMenu = createContextMenuDisable()
-    const removeEventListenerSpy = vi.spyOn(window, 'removeEventListener')
+    const removeEventListenerSpy = vi.spyOn(globalThis, 'removeEventListener')
 
     // Try to enable without disabling first
     disableContextMenu(false)
