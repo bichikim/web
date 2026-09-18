@@ -128,7 +128,13 @@ export const createAutoStartStorage = ({
       return
     }
 
-    await storage.writeToss(AUTO_START_STORAGE_KEY, preference).catch(() => undefined)
+    try {
+      await storage.writeToss(AUTO_START_STORAGE_KEY, preference)
+    } catch (error: unknown) {
+      if (webWriteError !== null) {
+        throw new Error('Failed to persist auto-start preference.', {cause: error})
+      }
+    }
   }
 
   return {read, write}

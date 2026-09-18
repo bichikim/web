@@ -86,6 +86,20 @@ describe('auto-start-storage', () => {
     })
   })
 
+  it('should reject when browser and native storage cannot persist the preference', async () => {
+    Object.defineProperty(globalThis, 'ReactNativeWebView', {configurable: true, value: {}})
+    const nativeStorageError = new Error('native storage unavailable')
+    vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
+      throw new Error('browser storage unavailable')
+    })
+    storageMocks.setItem.mockRejectedValue(nativeStorageError)
+
+    await expect(writeRuntimePreference(true)).rejects.toMatchObject({
+      cause: nativeStorageError,
+      message: 'Failed to persist auto-start preference.',
+    })
+  })
+
   it('should read the legacy browser preference', async () => {
     localStorage.setItem('pomo:timer-auto-start:v1', 'true')
 
@@ -247,8 +261,12 @@ describe('auto-start-storage', () => {
     vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
       throw new Error('browser storage unavailable')
     })
-    storageMocks.setItem.mockRejectedValue(new Error('native storage unavailable'))
-    await writeAutoStartPreference(false)
+    const nativeStorageError = new Error('native storage unavailable')
+    storageMocks.setItem.mockRejectedValue(nativeStorageError)
+    await expect(writeAutoStartPreference(false)).rejects.toMatchObject({
+      cause: nativeStorageError,
+      message: 'Failed to persist auto-start preference.',
+    })
     pendingRead.resolve(JSON.stringify({isEnabled: false, savedAt: 10}))
 
     expect(await reading).toBe(true)
