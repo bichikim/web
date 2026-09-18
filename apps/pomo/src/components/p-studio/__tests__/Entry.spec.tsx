@@ -22,11 +22,12 @@ vi.mock('../../p-service-policy-links/PServicePolicyLinks', () => ({
   PServicePolicyLinks: vi.fn(() => null),
 }))
 vi.mock('@solidjs/router', () => ({
-  A: (props: {readonly children: JSX.Element; readonly href: string}) => (
-    <a href={props.href}>{props.children}</a>
+  A: (props: {readonly children?: JSX.Element; readonly class?: string; readonly href: string}) => (
+    <a class={props.class} href={props.href}>
+      {props.children}
+    </a>
   ),
 }))
-
 afterEach(() => {
   vi.clearAllMocks()
 })
@@ -42,8 +43,10 @@ it('should enter and finish its own exit animation', () => {
   expect(PButton).toHaveBeenCalledWith(expect.objectContaining({leadingOverflow: true, pill: true}))
   expect(section).not.toHaveAttribute('data-exiting')
   expect(section).not.toHaveAttribute('style')
-  expect(screen.getByText(/Pomo와 함께 포모도로 타이머/u)).toBeInTheDocument()
-  expect(screen.getByRole('link', {name: '새로운 소식'})).toHaveAttribute('href', '/whats-new')
+  expect(screen.queryByText(/Pomo와 함께 포모도로 타이머/u)).not.toBeInTheDocument()
+  const newLink = screen.getByRole('link', {name: '새로운 소식'})
+  expect(newLink).toHaveAttribute('href', '/whats-new')
+  expect(newLink.parentElement).toHaveClass('text-sm', 'leading-5')
   fireEvent.click(screen.getByRole('button', {name: '시작하기'}))
   expect(onEnter).toHaveBeenCalledOnce()
   fireEvent.animationEnd(section)

@@ -9,6 +9,9 @@ it('should describe web account data and shared processing details', () => {
   render(() => <PPrivacyPolicy platform="web" />)
 
   expect(screen.getByRole('heading', {name: 'Pomofi 개인정보처리방침'})).toBeTruthy()
+  const returnLink = screen.getByRole('link', {name: '앱으로 돌아가기'})
+  expect(returnLink).toHaveClass('min-h-11', 'rounded-full', 'text-base', 'text-foreground')
+  expect(returnLink.parentElement?.lastElementChild).toBe(returnLink)
   expect(screen.queryByRole('link', {name: '개인정보처리방침'})).toBeNull()
   expect(screen.getByText('개인정보처리방침').getAttribute('aria-current')).toBe('page')
   expect(screen.getByRole('link', {name: '서비스 이용약관'}).getAttribute('href')).toBe(

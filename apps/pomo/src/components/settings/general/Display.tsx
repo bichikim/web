@@ -3,6 +3,7 @@ import {FIELD_DESCRIPTION} from 'src/components/field-classes'
 import {createMemo, Show} from 'solid-js'
 import {PSelect, type PSelectOption} from '../../p-select/PSelect'
 import {PSwitch} from '../../p-switch/PSwitch'
+import {PWeatherDisplaySwitch} from '../../p-weather-settings/PWeatherDisplaySwitch'
 import {useFullscreen} from '../../../features/fullscreen'
 import type {ScreenSaverDelay} from '../../../features/screen-saver'
 import {type ScreenWakeLockController} from '../../../features/screen-wake-lock'
@@ -86,6 +87,7 @@ export const PGeneralDisplaySettings = (props: PGeneralDisplaySettingsProps) => 
     <section aria-label={m.settings_section_display()} class={CLASSES.settingsSection}>
       <div class={CLASSES.settingsGrid}>
         <PUiAutoHideSettings controller={props.uiAutoHide} />
+        <PWeatherDisplaySwitch {...props} />
         <Show when={props.onDialogueComposerVisibleChange}>
           {(onDialogueComposerVisibleChange) => (
             <PSwitch

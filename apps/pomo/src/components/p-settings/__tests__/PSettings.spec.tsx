@@ -139,7 +139,6 @@ beforeEach(() => {
       data-location={props.location?.id}
       data-scene-mode={props.sceneMode}
       onClick={() => {
-        props.onEnabledChange?.(!props.enabled)
         props.onLocationChange?.(LEGACY_WEATHER_LOCATIONS.seoul)
         props.onSceneModeChange?.('rain')
       }}
@@ -231,6 +230,7 @@ it('should forward every scene, weather, and modal action', async () => {
       onWeatherLocationChange={onWeatherLocationChange}
       onWeatherEnabledChange={onWeatherEnabledChange}
       onWeatherSceneModeChange={onWeatherSceneModeChange}
+      weatherEnabled={false}
     />
   ))
 
@@ -245,6 +245,7 @@ it('should forward every scene, weather, and modal action', async () => {
   fireEvent.click(screen.getByRole('button', {name: '전체 화면'}))
   fireEvent.click(screen.getByRole('button', {name: '화면 자동 꺼짐 방지'}))
   fireEvent.click(screen.getByRole('button', {name: '대화 입력 버튼 표시'}))
+  fireEvent.click(screen.getByRole('button', {name: '날씨 표시'}))
   fireEvent.click(screen.getByRole('button', {name: '날씨 변경'}))
   fireEvent.click(screen.getByRole('button', {name: '대화 닫기'}))
 
