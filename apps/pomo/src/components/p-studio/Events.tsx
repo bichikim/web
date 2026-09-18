@@ -66,6 +66,10 @@ const runSoundEffectsAction = (
 ) => {
   switch (actionId) {
     case 'sound-effects-start':
+      if (actions.isStopped()) {
+        return
+      }
+
       actions.activate()
       return
     case 'sound-effects-stop':

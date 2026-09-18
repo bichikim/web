@@ -295,6 +295,30 @@ describe('PStudioEvents', () => {
     expect(soundEffectsMocks.activate).toHaveBeenCalledOnce()
   })
 
+  it('should not activate sound effects from events when all effects are stopped', () => {
+    vi.mocked(useOptionalSoundEffects).mockReturnValue({
+      activate: soundEffectsMocks.activate,
+      effects: () => [],
+      getPlayback: () => undefined,
+      isStopped: () => true,
+      status: () => 'ready',
+      stop: soundEffectsMocks.stop,
+    })
+    const runAction = vi.fn()
+    const registerEventActionExecutor = vi.fn(
+      (executor: (actionId: 'sound-effects-start' | 'sound-effects-stop') => void) => {
+        runAction.mockImplementation(executor)
+        return vi.fn()
+      },
+    )
+    const events = createEvents({registerEventActionExecutor})
+
+    renderEvents({events})
+    runAction('sound-effects-start')
+
+    expect(soundEffectsMocks.activate).not.toHaveBeenCalled()
+  })
+
   it('should show skipped reminder text and remove its alert after recovery', () => {
     const memo = createMemoryMemo({
       exactReminderAt: '2026-09-04T03:00:00.000Z',
