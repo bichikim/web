@@ -58,6 +58,7 @@ const baseProps = {
   activity: 'reading',
   canUseGyroscope: true,
   dialogueComposerVisible: false,
+  featureRequestVisible: true,
   gaze: 'focused',
   isSceneTransitioning: false,
   motionInput: 'drag',
@@ -126,6 +127,9 @@ describe('SceneToolbar', () => {
         weatherSceneMode: 'auto',
       }),
     )
+    expect(VersionNoticePanel).toHaveBeenCalledWith(
+      expect.objectContaining({featureRequestVisible: true}),
+    )
     expect(screen.getByText('memory assist control')).toBeInTheDocument()
     expect(screen.getByText('version notice control')).toBeInTheDocument()
     expect(
@@ -183,4 +187,12 @@ it('should hide optional toolbar controls while keeping settings available', () 
   expect(screen.queryByRole('button', {name: '도구'})).not.toBeInTheDocument()
   expect(screen.queryByText('memory assist control')).not.toBeInTheDocument()
   expect(screen.getByText('settings control')).toBeInTheDocument()
+})
+
+it('should forward the feature request visibility preference to the notice panel', () => {
+  render(() => <SceneToolbar {...baseProps} featureRequestVisible={false} />)
+
+  expect(VersionNoticePanel).toHaveBeenCalledWith(
+    expect.objectContaining({featureRequestVisible: false}),
+  )
 })

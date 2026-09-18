@@ -37,6 +37,7 @@ it('should publish playback, time, duration, volume and errors without exposing 
   const onDurationChange = vi.fn()
   const onVolumeChange = vi.fn()
   const onError = vi.fn()
+  const onPlayRequest = vi.fn()
   const observeControls = vi.fn()
   const ContextProbe = () => {
     observeControls(useMediaPlayer())
@@ -52,6 +53,7 @@ it('should publish playback, time, duration, volume and errors without exposing 
         onDurationChange={onDurationChange}
         onVolumeChange={onVolumeChange}
         onError={onError}
+        onPlayRequest={onPlayRequest}
       >
         <media-play-button />
         <ContextProbe />
@@ -66,6 +68,8 @@ it('should publish playback, time, duration, volume and errors without exposing 
   expect(audio.parentElement?.tagName).toBe('MEDIA-CONTROLLER')
   expect(onTrackChange).toHaveBeenLastCalledWith(TRACKS[0])
   expect(onPlayingChange).toHaveBeenLastCalledWith(false)
+  audio.parentElement?.dispatchEvent(new Event('mediaplayrequest', {bubbles: true}))
+  expect(onPlayRequest).toHaveBeenCalledOnce()
   fireEvent.play(audio)
   expect(onPlayingChange).toHaveBeenLastCalledWith(true)
   fireEvent.pause(audio)

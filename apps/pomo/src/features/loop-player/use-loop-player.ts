@@ -11,7 +11,10 @@ export function useLoopPlayer() {
   const [status, setStatus] = createSignal('반복할 오디오 파일을 선택해 주세요.')
   let player: LoopPlayback | undefined
   let url: string | undefined
+  let positionBeforeScrubbing = 0
+  let seekRevision = 0
   const clear = () => {
+    seekRevision += 1
     const previous = player
     const previousUrl = url
     player = undefined
@@ -32,6 +35,7 @@ export function useLoopPlayer() {
     setDuration(0)
     setPosition(0)
     setScrubbing(false)
+    positionBeforeScrubbing = 0
   }
   onCleanup(clear)
   const select = (file: File | null) => {
@@ -70,6 +74,7 @@ export function useLoopPlayer() {
     }
   }
   const play = async (preview: boolean) => {
+    seekRevision += 1
     const current = player
     if (current === undefined) {
       return
@@ -85,25 +90,37 @@ export function useLoopPlayer() {
     }
   }
   const stop = () => {
+    seekRevision += 1
     player?.stop()
     setPlaying(false)
     setStatus('정지했습니다.')
   }
   const previewPosition = (seconds: number) => {
+    seekRevision += 1
+    if (!scrubbing()) {
+      positionBeforeScrubbing = position()
+    }
     setScrubbing(true)
     setPosition(seconds)
   }
   const seek = async () => {
     const current = player
     const target = position()
+    const previousPosition = positionBeforeScrubbing
+    const revision = (seekRevision += 1)
     setScrubbing(false)
     if (current === undefined) {
       return
     }
     try {
       await current.seek(target)
+      if (revision === seekRevision && current === player) {
+        positionBeforeScrubbing = position()
+      }
     } catch (cause) {
-      if (current === player) {
+      if (revision === seekRevision && current === player) {
+        setPlaying(false)
+        setPosition(previousPosition)
         setStatus(cause instanceof Error ? cause.message : '위치 이동 실패')
       }
     }

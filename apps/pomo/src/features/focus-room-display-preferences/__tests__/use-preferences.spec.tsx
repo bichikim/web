@@ -43,6 +43,7 @@ const PreferencesProviderHarness = (props: PreferencesHarnessProps) => (
 beforeEach(() => {
   storageMocks.read.mockReset().mockResolvedValue({
     dialogueComposerVisible: false,
+    featureRequestVisible: true,
     memoryAssistVisible: true,
     playerVisible: true,
     pomodoroVisible: true,
@@ -55,6 +56,7 @@ beforeEach(() => {
 it('should start hidden and restore stored dialogue composer visibility', async () => {
   storageMocks.read.mockResolvedValueOnce({
     dialogueComposerVisible: true,
+    featureRequestVisible: true,
     memoryAssistVisible: true,
     playerVisible: true,
     pomodoroVisible: true,
@@ -94,6 +96,7 @@ it('should persist the latest dialogue composer visibility choice', async () => 
   expect(controller?.dialogueComposerVisible()).toBe(true)
   expect(storageMocks.write).toHaveBeenCalledWith({
     dialogueComposerVisible: true,
+    featureRequestVisible: true,
     memoryAssistVisible: true,
     playerVisible: true,
     pomodoroVisible: true,
@@ -122,6 +125,7 @@ it('should not overwrite a newer choice when restoration finishes late', async (
   controller?.onDialogueComposerVisibleChange(true)
   completeRead({
     dialogueComposerVisible: false,
+    featureRequestVisible: true,
     memoryAssistVisible: true,
     playerVisible: true,
     pomodoroVisible: true,
@@ -133,6 +137,7 @@ it('should not overwrite a newer choice when restoration finishes late', async (
   expect(controller?.dialogueComposerVisible()).toBe(true)
   expect(storageMocks.write).toHaveBeenCalledWith({
     dialogueComposerVisible: true,
+    featureRequestVisible: true,
     memoryAssistVisible: true,
     playerVisible: true,
     pomodoroVisible: true,
@@ -160,6 +165,7 @@ it('should ignore a pending restoration after cleanup', async () => {
   result.unmount()
   completeRead({
     dialogueComposerVisible: true,
+    featureRequestVisible: true,
     memoryAssistVisible: true,
     playerVisible: true,
     pomodoroVisible: true,
@@ -189,6 +195,7 @@ it('should show the tour by default and persist hiding it without changing the c
   expect(controller?.tourButtonVisible()).toBe(false)
   expect(storageMocks.write).toHaveBeenCalledWith({
     dialogueComposerVisible: false,
+    featureRequestVisible: true,
     memoryAssistVisible: true,
     playerVisible: true,
     pomodoroVisible: true,
@@ -197,9 +204,30 @@ it('should show the tour by default and persist hiding it without changing the c
   })
 })
 
+it('should show the feature request button by default and persist hiding it', async () => {
+  let controller: PDisplayPreferencesController | undefined
+  render(() => (
+    <PreferencesProviderHarness
+      onController={(value) => {
+        controller = value
+      }}
+    />
+  ))
+
+  expect(controller?.featureRequestVisible()).toBe(true)
+  await vi.waitFor(() => expect(controller?.isReady()).toBe(true))
+  controller?.onFeatureRequestVisibleChange(false)
+
+  expect(controller?.featureRequestVisible()).toBe(false)
+  expect(storageMocks.write).toHaveBeenCalledWith(
+    expect.objectContaining({featureRequestVisible: false}),
+  )
+})
+
 it('should keep one whole preference edited during loading', async () => {
   let completeRead: (value: {
     dialogueComposerVisible: boolean
+    featureRequestVisible: boolean
     playerVisible: boolean
     pomodoroVisible: boolean
     toolsButtonVisible: true
@@ -222,6 +250,7 @@ it('should keep one whole preference edited during loading', async () => {
   controller?.onTourButtonVisibleChange(false)
   completeRead({
     dialogueComposerVisible: true,
+    featureRequestVisible: true,
     memoryAssistVisible: true,
     playerVisible: true,
     pomodoroVisible: true,
@@ -233,6 +262,7 @@ it('should keep one whole preference edited during loading', async () => {
   expect(controller?.tourButtonVisible()).toBe(false)
   expect(storageMocks.write).toHaveBeenCalledWith({
     dialogueComposerVisible: false,
+    featureRequestVisible: true,
     memoryAssistVisible: true,
     playerVisible: true,
     pomodoroVisible: true,
@@ -262,6 +292,7 @@ it('should preserve toolbar choices changed during restoration and persist both 
   controller?.onMemoryAssistVisibleChange(false)
   complete({
     dialogueComposerVisible: false,
+    featureRequestVisible: true,
     memoryAssistVisible: true,
     playerVisible: true,
     pomodoroVisible: true,
@@ -273,6 +304,7 @@ it('should preserve toolbar choices changed during restoration and persist both 
   expect(controller?.memoryAssistVisible()).toBe(false)
   expect(storageMocks.write).toHaveBeenLastCalledWith({
     dialogueComposerVisible: false,
+    featureRequestVisible: true,
     memoryAssistVisible: false,
     playerVisible: true,
     pomodoroVisible: true,
@@ -300,6 +332,7 @@ it('should keep widget choices made during restoration and persist them', async 
   controller?.onPomodoroVisibleChange(false)
   complete({
     dialogueComposerVisible: false,
+    featureRequestVisible: true,
     memoryAssistVisible: true,
     playerVisible: true,
     pomodoroVisible: true,

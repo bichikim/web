@@ -1,0 +1,45 @@
+{
+  "version": 1,
+  "effects": [
+    {
+      "id": "waves",
+      "title": {
+        "en": "Waves",
+        "ko": "파도 소리"
+      },
+      "artworkUrl": "/audio/artwork/waves.png",
+      "durationSeconds": 300,
+      "source": "https://storage.pomofi.io/sound-effects/waves-24818bd8b9ce.mp3"
+    },
+    {
+      "id": "rain",
+      "title": {
+        "en": "Rain Sound",
+        "ko": "비 소리"
+      },
+      "artworkUrl": "/audio/artwork/rain.png",
+      "durationSeconds": 300,
+      "source": "/audio/sound-effects/rain.mp3"
+    },
+    {
+      "id": "thunder",
+      "title": {
+        "en": "Thunder",
+        "ko": "천둥 소리"
+      },
+      "artworkUrl": "/audio/artwork/thunder.png",
+      "durationSeconds": 300,
+      "source": "/audio/sound-effects/thunder.mp3"
+    },
+    {
+      "id": "cafe-conversation",
+      "title": {
+        "en": "Cafe Conversations",
+        "ko": "카페 대화 소리"
+      },
+      "artworkUrl": "/audio/artwork/cafe-conversation-groups-table.png",
+      "durationSeconds": 300,
+      "source": "/audio/sound-effects/cafe-conversation.mp3"
+    }
+  ]
+}

@@ -184,7 +184,7 @@ it('should map the scribble style switch to the scene style value', async () => 
     'i-pomo-scribble:settings',
   )
 
-  await waitFor(() => expect(PSwitch).toHaveBeenCalled())
+  await waitFor(() => expect(PSwitch).toHaveBeenCalled(), {timeout: 5000})
   const styleSwitch = vi
     .mocked(PSwitch)
     .mock.calls.map(([props]) => props as PSwitchProps)

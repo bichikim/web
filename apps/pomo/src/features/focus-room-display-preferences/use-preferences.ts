@@ -44,6 +44,9 @@ export const usePDisplayPreferences = (): PDisplayPreferencesController => {
   const onMemoryAssistVisibleChange = (visible: boolean) => {
     setStoredPreference(updatePreference(preference(), {memoryAssistVisible: visible}))
   }
+  const onFeatureRequestVisibleChange = (visible: boolean) => {
+    setStoredPreference(updatePreference(preference(), {featureRequestVisible: visible}))
+  }
   const onPlayerVisibleChange = (visible: boolean) => {
     setStoredPreference(updatePreference(preference(), {playerVisible: visible}))
   }
@@ -59,9 +62,11 @@ export const usePDisplayPreferences = (): PDisplayPreferencesController => {
 
   return {
     dialogueComposerVisible: () => preference().dialogueComposerVisible,
+    featureRequestVisible: () => preference().featureRequestVisible,
     isReady: () => storedPreference() !== null,
     memoryAssistVisible: () => preference().memoryAssistVisible,
     onDialogueComposerVisibleChange,
+    onFeatureRequestVisibleChange,
     onMemoryAssistVisibleChange,
     onPlayerVisibleChange,
     onPomodoroVisibleChange,

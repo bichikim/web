@@ -36,6 +36,7 @@ export const Canvas = (props: CanvasProps) => {
       onEnded: playback.onEnded,
       onError: playback.onError,
       onVideoStart: playback.onVideoStart,
+      videoTextureMode: import.meta.env.VITE_POMO_IS_APPS_IN_TOSS === 'true' ? 'canvas' : 'webgl',
     })
     let disposed = false
     renderer

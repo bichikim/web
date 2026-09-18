@@ -29,8 +29,11 @@ function createFile(): File {
   return {} as File
 }
 
-function createPlayback(close: () => Promise<void>): LoopPlayback {
-  return {close, play: vi.fn(async () => {}), seek: vi.fn(async () => {}), stop: vi.fn()}
+function createPlayback(
+  close: () => Promise<void>,
+  seek: (seconds: number) => Promise<void> = vi.fn(async (_seconds: number) => {}),
+): LoopPlayback {
+  return {close, play: vi.fn(async () => {}), seek, setVolume: vi.fn(), stop: vi.fn()}
 }
 
 afterEach(() => {
@@ -129,5 +132,69 @@ it('should defer position callbacks while scrubbing until the selected position 
 
   expect(playback.seek).toHaveBeenCalledWith(60)
   expect(root.player.position()).toBe(20)
+  root.dispose()
+})
+
+it('should restore the confirmed position when seeking the preview fails', async () => {
+  const seek = vi.fn(async (_seconds: number) => {
+    throw new Error('seek failed')
+  })
+  const playback = createPlayback(async () => {}, seek)
+  let callbacks: PlayerCallbacks | undefined
+  vi.mocked(createLoopPlayer).mockImplementation((_url, onStatus, onReady, onPosition) => {
+    callbacks = {onPosition: onPosition ?? (() => undefined), onReady, onStatus}
+    return playback
+  })
+  vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob:audio')
+  vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => undefined)
+  const root = createRoot((dispose) => ({dispose, player: useLoopPlayer()}))
+
+  root.player.select(createFile())
+  callbacks?.onPosition(30)
+  await root.player.play(false)
+  expect(root.player.playing()).toBe(true)
+  root.player.previewPosition(45)
+  root.player.previewPosition(60)
+  await root.player.seek()
+
+  expect(seek).toHaveBeenCalledWith(60)
+  expect(root.player.position()).toBe(30)
+  expect(root.player.playing()).toBe(false)
+  expect(root.player.status()).toBe('seek failed')
+  root.dispose()
+})
+
+it('should ignore a stale failed seek after a newer preview starts', async () => {
+  const firstSeek = Promise.withResolvers<void>()
+  const secondSeek = Promise.withResolvers<void>()
+  const seek = vi.fn(async (_seconds: number) => {})
+  seek.mockReturnValueOnce(firstSeek.promise).mockReturnValueOnce(secondSeek.promise)
+  const playback = createPlayback(async () => {}, seek)
+  let callbacks: PlayerCallbacks | undefined
+  vi.mocked(createLoopPlayer).mockImplementation((_url, onStatus, onReady, onPosition) => {
+    callbacks = {onPosition: onPosition ?? (() => undefined), onReady, onStatus}
+    return playback
+  })
+  vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob:audio')
+  vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => undefined)
+  const root = createRoot((dispose) => ({dispose, player: useLoopPlayer()}))
+
+  root.player.select(createFile())
+  callbacks?.onPosition(30)
+  root.player.previewPosition(45)
+  const firstOperation = root.player.seek()
+  root.player.previewPosition(60)
+  const secondOperation = root.player.seek()
+
+  firstSeek.reject(new Error('stale seek failed'))
+  await firstOperation
+
+  expect(seek).toHaveBeenNthCalledWith(1, 45)
+  expect(seek).toHaveBeenNthCalledWith(2, 60)
+  expect(root.player.position()).toBe(60)
+  expect(root.player.status()).toBe('오디오를 읽고 있어요…')
+
+  secondSeek.resolve()
+  await secondOperation
   root.dispose()
 })

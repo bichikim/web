@@ -41,6 +41,8 @@ interface SceneToolbarProps {
   readonly background?: BackgroundController
   readonly activity: PActivity
   readonly canUseGyroscope?: boolean
+  readonly featureRequestVisible?: boolean
+  readonly onFeatureRequestVisibleChange?: (visible: boolean) => void
   readonly toolsButtonVisible?: boolean
   readonly onToolsButtonVisibleChange?: (visible: boolean) => void
   readonly memoryAssistVisible?: boolean
@@ -122,10 +124,12 @@ export const SceneToolbar = (props: SceneToolbarProps) => {
             background={props.background}
             activity={props.activity}
             canUseGyroscope={props.canUseGyroscope}
+            featureRequestVisible={props.featureRequestVisible}
             toolsButtonVisible={props.toolsButtonVisible}
             onToolsButtonVisibleChange={props.onToolsButtonVisibleChange}
             memoryAssistVisible={props.memoryAssistVisible}
             onMemoryAssistVisibleChange={props.onMemoryAssistVisibleChange}
+            onFeatureRequestVisibleChange={props.onFeatureRequestVisibleChange}
             tourButtonVisible={props.tourButtonVisible}
             onTourButtonVisibleChange={props.onTourButtonVisibleChange}
             dialogueComposerVisible={props.dialogueComposerVisible}
@@ -154,6 +158,7 @@ export const SceneToolbar = (props: SceneToolbarProps) => {
         <div class="pomo-toolbar-secondary flex flex-none gap-2">
           <VersionNoticePanel
             desktopSurface={props.layout === 'surface'}
+            featureRequestVisible={props.featureRequestVisible}
             sceneStyle={props.sceneStyle}
           />
           <Show when={props.onTourOpen !== undefined && (props.tourButtonVisible ?? true)}>

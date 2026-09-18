@@ -74,6 +74,7 @@ describe('PStudio', () => {
       const [visibility, setVisibility] = createSignal(true)
       vi.mocked(usePDisplayPreferences).mockReturnValue({
         ...preferences,
+        featureRequestVisible: visibility,
         isReady,
         memoryAssistVisible: visibility,
         toolsButtonVisible: visibility,
@@ -90,11 +91,13 @@ describe('PStudio', () => {
       expect(SceneToolbar).toHaveBeenCalledOnce()
       const toolbar = vi.mocked(SceneToolbar).mock.calls[0][0]
       expect(toolbar.memoryAssistVisible).toBe(visible)
+      expect(toolbar.featureRequestVisible).toBe(visible)
       expect(toolbar.toolsButtonVisible).toBe(visible)
       expect(toolbar.tourButtonVisible).toBe(visible)
 
       setVisibility(!visible)
       expect(toolbar.memoryAssistVisible).toBe(!visible)
+      expect(toolbar.featureRequestVisible).toBe(!visible)
       expect(toolbar.toolsButtonVisible).toBe(!visible)
       expect(toolbar.tourButtonVisible).toBe(!visible)
     },

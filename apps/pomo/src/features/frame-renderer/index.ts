@@ -1,6 +1,7 @@
 import {VideoLoop} from './video-loop'
 import {createMedia} from './media'
 import {calculateLayout} from './layout'
+import {createCanvasVideoTexture} from './video-texture'
 export * from './edges'
 export * from './effect'
 export * from './layout'
@@ -28,6 +29,7 @@ export interface FrameRendererOptions {
   readonly onVideoStart?: () => void
   readonly onEnded: () => void
   readonly onError: () => void
+  readonly videoTextureMode?: 'canvas' | 'webgl'
 }
 
 /** Owns one Pixi application and releases each media source when replaced or destroyed. */
@@ -49,6 +51,7 @@ export class FrameRenderer {
   #kind: MediaKind | null = null
   #transition: PhotoTransition | null = null
   #cancelLoad: (() => void) | null = null
+  #updateVideoTexture: (() => void) | null = null
 
   constructor(options: FrameRendererOptions) {
     this.#options = options
@@ -220,6 +223,7 @@ export class FrameRenderer {
     this.#release?.()
     this.#release = null
     this.#cancelLoad = null
+    this.#updateVideoTexture = null
     this.#sprite = null
     this.#video = null
     if (this.#initialized) {
@@ -284,6 +288,10 @@ export class FrameRenderer {
     }
     if (video === null) {
       texture = Texture.from(source)
+    } else if (this.#options.videoTextureMode === 'canvas') {
+      const {texture: canvasTexture, update} = createCanvasVideoTexture(video)
+      texture = canvasTexture
+      this.#updateVideoTexture = update
     } else {
       const videoSource = new VideoSource({autoLoad: false, autoPlay: false, resource: video})
       texture = new Texture({source: videoSource})
@@ -325,7 +333,10 @@ export class FrameRenderer {
     this.#edges = edges
     this.#application.stage.addChildAt(edges.view, 0)
     this.#resize()
-    const update = (ticker: Ticker) => edges.update(video.currentTime, ticker.elapsedMS)
+    const update = (ticker: Ticker) => {
+      this.#updateVideoTexture?.()
+      edges.update(video.currentTime, ticker.elapsedMS)
+    }
     this.#application.ticker.add(update)
     const release = this.#release
     this.#release = () => {

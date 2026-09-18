@@ -95,4 +95,44 @@ describe('completeAccountLink', () => {
       tokenHash: `hash:${TOKEN}`,
     })
   })
+
+  it('should use the same email hash for canonically equivalent addresses', async () => {
+    persistMocks.saveAccountLinkChallenge.mockResolvedValue({status: 'created'})
+    persistMocks.consumeAccountLinkChallenge.mockResolvedValue({
+      status: 'linked',
+      userId: 'user-1',
+    })
+    const composedEmail = 'café@example.com'
+    const decomposedEmail = 'cafe\u0301@example.com'
+
+    await createAccountLinkChallenge('user-1', composedEmail, NOW)
+    await completeAccountLink(TOKEN, 'neon-subject', decomposedEmail, NOW)
+
+    expect(persistMocks.saveAccountLinkChallenge).toHaveBeenCalledWith(
+      expect.objectContaining({emailHash: `hash:${composedEmail}`}),
+    )
+    expect(persistMocks.consumeAccountLinkChallenge).toHaveBeenCalledWith(
+      expect.objectContaining({emailHash: `hash:${composedEmail}`}),
+    )
+  })
+
+  it('should preserve compatibility-distinct email hashes', async () => {
+    persistMocks.saveAccountLinkChallenge.mockResolvedValue({status: 'created'})
+    persistMocks.consumeAccountLinkChallenge.mockResolvedValue({
+      status: 'linked',
+      userId: 'user-1',
+    })
+    const asciiEmail = 'ffi@example.com'
+    const compatibilityEmail = 'ﬃ@example.com'
+
+    await createAccountLinkChallenge('user-1', asciiEmail, NOW)
+    await completeAccountLink(TOKEN, 'neon-subject', compatibilityEmail, NOW)
+
+    expect(persistMocks.saveAccountLinkChallenge).toHaveBeenCalledWith(
+      expect.objectContaining({emailHash: `hash:${asciiEmail}`}),
+    )
+    expect(persistMocks.consumeAccountLinkChallenge).toHaveBeenCalledWith(
+      expect.objectContaining({emailHash: `hash:${compatibilityEmail}`}),
+    )
+  })
 })
