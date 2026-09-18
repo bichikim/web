@@ -9,54 +9,63 @@ import {
 } from '../schema'
 
 interface EventActionRunner {
+  readonly clearDelayedEndActions: () => void
   readonly dispose: () => void
   readonly register: (executor: EventActionExecutor) => () => void
   readonly run: (eventIds: ReadonlyArray<DialogueEventId>) => void
+}
+
+interface PendingEventAction {
+  readonly actionId: EventActionId
+  readonly eventId: DialogueEventId
+}
+
+const executeEventAction = (actionId: EventActionId, executor: EventActionExecutor | null) => {
+  if (executor === null) {
+    return
+  }
+
+  try {
+    executor(actionId)
+  } catch (error: unknown) {
+    console.error('Failed to run a focus room event action.', error)
+  }
 }
 
 export const createEventActionRunner = (
   eventActionIds: Accessor<EventActionIds>,
 ): EventActionRunner => {
   let eventActionExecutor: EventActionExecutor | null = null
-  let pendingEventActions: EventActionId[] = []
+  let pendingEventActions: PendingEventAction[] = []
   let hasRegisteredEventActionExecutor = false
 
-  function executeEventAction(
-    actionId: EventActionId,
-    executor = eventActionExecutor,
-    queueIfUnavailable = false,
-  ) {
-    if (executor === null) {
-      if (queueIfUnavailable && !hasRegisteredEventActionExecutor) {
-        pendingEventActions.push(actionId)
-      }
-      return
-    }
-
-    try {
-      executor(actionId)
-    } catch (error: unknown) {
-      console.error('Failed to run a focus room event action.', error)
-    }
+  const queueEventAction = (eventId: DialogueEventId, actionId: EventActionId) => {
+    pendingEventActions.push({actionId, eventId})
   }
 
   const run = (eventIds: ReadonlyArray<DialogueEventId>) => {
     const actionBindings = eventActionIds()
     for (const eventId of eventIds) {
       for (const actionId of actionBindings[eventId] ?? []) {
-        const shouldQueueDelayedEndAction =
-          eventId === DELAYED_END_EVENT && eventActionExecutor === null
+        const executor = eventActionExecutor
+        const shouldQueueAction =
+          executor === null &&
+          (eventId === DELAYED_END_EVENT ||
+            (eventId === FOCUS_ROOM_ENTRY_EVENT && !hasRegisteredEventActionExecutor))
 
-        if (shouldQueueDelayedEndAction) {
-          pendingEventActions.push(actionId)
+        if (shouldQueueAction) {
+          queueEventAction(eventId, actionId)
         } else {
-          executeEventAction(actionId, eventActionExecutor, eventId === FOCUS_ROOM_ENTRY_EVENT)
+          executeEventAction(actionId, executor)
         }
       }
     }
   }
 
   return {
+    clearDelayedEndActions() {
+      pendingEventActions = pendingEventActions.filter(({eventId}) => eventId !== DELAYED_END_EVENT)
+    },
     dispose() {
       pendingEventActions = []
     },
@@ -65,8 +74,8 @@ export const createEventActionRunner = (
       eventActionExecutor = executor
       const pendingActions = pendingEventActions
       pendingEventActions = []
-      for (const actionId of pendingActions) {
-        executeEventAction(actionId, executor)
+      for (const pendingAction of pendingActions) {
+        executeEventAction(pendingAction.actionId, executor)
       }
       return () => {
         if (eventActionExecutor === executor) {
