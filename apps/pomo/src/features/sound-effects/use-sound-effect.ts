@@ -15,6 +15,7 @@ export interface SoundEffectPlayback {
   readonly playing: Accessor<boolean>
   readonly ready: Accessor<boolean>
   readonly setVolume: (volume: number) => void
+  readonly stop: () => void
   readonly volume: Accessor<number>
 }
 
@@ -50,28 +51,34 @@ export const useSoundEffectPlayback = (getEffect: Accessor<SoundEffect>): SoundE
   let player: LoopPlayback | undefined
   let pendingPlay = false
   let starting = false
+  let startingRevision: number | undefined
   let effectId: string | undefined
+  let manuallyStopped = false
+  let playbackRevision = 0
 
   const start = async () => {
     const current = player
+    const currentRevision = playbackRevision
     if (current === undefined || !ready() || volume() <= 0 || starting) {
       return
     }
 
     starting = true
+    startingRevision = currentRevision
     pendingPlay = false
     try {
       await current.play()
-      if (current === player && volume() > 0) {
+      if (current === player && currentRevision === playbackRevision && volume() > 0) {
         setPlaying(true)
       }
     } catch (cause: unknown) {
-      if (current === player && volume() > 0) {
+      if (current === player && currentRevision === playbackRevision && volume() > 0) {
         setPlaying(false)
         setError(toError(cause))
       }
     } finally {
       starting = false
+      startingRevision = undefined
       if (current === player && pendingPlay && volume() > 0) {
         start().catch(() => undefined)
       }
@@ -79,18 +86,37 @@ export const useSoundEffectPlayback = (getEffect: Accessor<SoundEffect>): SoundE
   }
 
   const requestPlay = () => {
-    if (playing() || volume() <= 0 || starting) {
+    if (playing() || volume() <= 0) {
       return
     }
     setError(null)
+    if (starting) {
+      if (startingRevision !== playbackRevision) {
+        pendingPlay = true
+      }
+      return
+    }
     pendingPlay = true
-    if (ready() && !playing() && !starting) {
+    if (ready()) {
       start().catch(() => undefined)
     }
   }
 
   const activate = () => {
+    manuallyStopped = false
     requestPlay()
+  }
+
+  const stopPlayback = () => {
+    playbackRevision += 1
+    pendingPlay = false
+    player?.stop()
+    setPlaying(false)
+  }
+
+  const stop = () => {
+    manuallyStopped = true
+    stopPlayback()
   }
 
   const setVolume = (nextVolume: number) => {
@@ -106,13 +132,13 @@ export const useSoundEffectPlayback = (getEffect: Accessor<SoundEffect>): SoundE
     }
 
     if (next === 0) {
-      pendingPlay = false
-      player?.stop()
-      setPlaying(false)
+      stopPlayback()
       return
     }
 
-    requestPlay()
+    if (!manuallyStopped) {
+      requestPlay()
+    }
   }
 
   onMount(() => {
@@ -155,5 +181,5 @@ export const useSoundEffectPlayback = (getEffect: Accessor<SoundEffect>): SoundE
     }
   })
 
-  return {activate, error, playing, ready, setVolume, volume}
+  return {activate, error, playing, ready, setVolume, stop, volume}
 }

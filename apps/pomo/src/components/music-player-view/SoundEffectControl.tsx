@@ -1,6 +1,6 @@
 import {getLocale} from '@paraglide/runtime'
 import {cx} from 'class-variance-authority'
-import {onMount, Show} from 'solid-js'
+import {type Accessor, onMount, Show} from 'solid-js'
 import * as m from '@paraglide/message'
 
 import {
@@ -18,6 +18,7 @@ interface SoundEffectControlProps {
 }
 
 interface SoundEffectControlViewProps extends SoundEffectControlProps {
+  readonly isStopped: Accessor<boolean>
   readonly playback: SoundEffectPlayback
 }
 
@@ -30,7 +31,11 @@ const SoundEffectControlView = (props: SoundEffectControlViewProps) => {
   const title = () => getTitle(props.effect)
   let dragStart: {readonly clientY: number; readonly volume: number} | undefined
 
-  onMount(() => props.playback.activate())
+  onMount(() => {
+    if (!props.isStopped()) {
+      props.playback.activate()
+    }
+  })
 
   const updateVolume = (event: PointerEvent & {currentTarget: HTMLButtonElement}) => {
     const start = dragStart
@@ -136,7 +141,11 @@ export const SoundEffectControl = (props: SoundEffectControlProps) => {
   return (
     <Show when={playback()}>
       {(currentPlayback) => (
-        <SoundEffectControlView effect={props.effect} playback={currentPlayback()} />
+        <SoundEffectControlView
+          effect={props.effect}
+          isStopped={soundEffects.isStopped}
+          playback={currentPlayback()}
+        />
       )}
     </Show>
   )

@@ -30,6 +30,7 @@ const createPlayback = (): SoundEffectPlayback => ({
   playing: () => false,
   ready: () => true,
   setVolume: vi.fn(),
+  stop: vi.fn(),
   volume: () => 0.4,
 })
 
@@ -119,5 +120,56 @@ it('should expose a global playback activation command', async () => {
   observedController?.activate()
 
   expect(playback.activate).toHaveBeenCalledOnce()
+  result.unmount()
+})
+
+it('should expose a global playback stop command', async () => {
+  const playback = createPlayback()
+  mocks.loadSoundEffects.mockResolvedValue([EFFECT])
+  mocks.useSoundEffectPlayback.mockReturnValue(playback)
+  let observedController: ReturnType<typeof useSoundEffects> | undefined
+
+  const Consumer = () => {
+    observedController = useSoundEffects()
+    return null
+  }
+
+  const result = render(() => (
+    <SoundEffectsProvider>
+      <Consumer />
+    </SoundEffectsProvider>
+  ))
+
+  await waitFor(() => expect(observedController?.getPlayback(EFFECT.id)).toBe(playback))
+
+  observedController?.stop()
+
+  expect(playback.stop).toHaveBeenCalledOnce()
+  result.unmount()
+})
+
+it('should preserve a global stop across later user activation attempts', async () => {
+  const playback = createPlayback()
+  mocks.loadSoundEffects.mockResolvedValue([EFFECT])
+  mocks.useSoundEffectPlayback.mockReturnValue(playback)
+  let observedController: ReturnType<typeof useSoundEffects> | undefined
+
+  const Consumer = () => {
+    observedController = useSoundEffects()
+    return null
+  }
+
+  const result = render(() => (
+    <SoundEffectsProvider>
+      <Consumer />
+    </SoundEffectsProvider>
+  ))
+
+  await waitFor(() => expect(observedController?.getPlayback(EFFECT.id)).toBe(playback))
+
+  observedController?.stop()
+  document.dispatchEvent(new Event('pointerdown'))
+
+  expect(playback.activate).not.toHaveBeenCalled()
   result.unmount()
 })

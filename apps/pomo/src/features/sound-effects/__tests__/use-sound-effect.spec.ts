@@ -63,6 +63,94 @@ it('should autoplay a ready effect and resume after its volume leaves zero', asy
   root.dispose()
 })
 
+it('should stop playback without changing the saved volume and resume on activation', async () => {
+  const playback = createPlayback()
+  let onReady: ((duration: number) => void) | undefined
+  vi.mocked(createLoopPlayer).mockImplementation((_url, _onStatus, ready) => {
+    onReady = ready
+    return playback
+  })
+
+  const root = createRoot((dispose) => ({
+    controller: useSoundEffectPlayback(() => EFFECT),
+    dispose,
+  }))
+  await Promise.resolve()
+  onReady?.(EFFECT.durationSeconds)
+  await Promise.resolve()
+
+  root.controller.stop()
+
+  expect(playback.stop).toHaveBeenCalledOnce()
+  expect(root.controller.volume()).toBe(0.4)
+  expect(root.controller.playing()).toBe(false)
+
+  root.controller.activate()
+  await Promise.resolve()
+
+  expect(playback.play).toHaveBeenCalledTimes(2)
+  root.dispose()
+})
+
+it('should keep playback stopped while changing volume until activation', async () => {
+  const playback = createPlayback()
+  let onReady: ((duration: number) => void) | undefined
+  vi.mocked(createLoopPlayer).mockImplementation((_url, _onStatus, ready) => {
+    onReady = ready
+    return playback
+  })
+
+  const root = createRoot((dispose) => ({
+    controller: useSoundEffectPlayback(() => EFFECT),
+    dispose,
+  }))
+  await Promise.resolve()
+  onReady?.(EFFECT.durationSeconds)
+  await Promise.resolve()
+
+  root.controller.stop()
+  root.controller.setVolume(0.2)
+  await Promise.resolve()
+
+  expect(playback.play).toHaveBeenCalledOnce()
+  root.controller.activate()
+  await Promise.resolve()
+
+  expect(playback.play).toHaveBeenCalledTimes(2)
+  root.dispose()
+})
+
+it('should resume when activation follows a stop during playback startup', async () => {
+  const firstPlayRequest = Promise.withResolvers<undefined>()
+  const secondPlayRequest = Promise.withResolvers<undefined>()
+  const playback = createPlayback()
+  playback.play
+    .mockReturnValueOnce(firstPlayRequest.promise)
+    .mockReturnValueOnce(secondPlayRequest.promise)
+  let onReady: ((duration: number) => void) | undefined
+  vi.mocked(createLoopPlayer).mockImplementation((_url, _onStatus, ready) => {
+    onReady = ready
+    return playback
+  })
+
+  const root = createRoot((dispose) => ({
+    controller: useSoundEffectPlayback(() => EFFECT),
+    dispose,
+  }))
+  await Promise.resolve()
+  onReady?.(EFFECT.durationSeconds)
+  await Promise.resolve()
+
+  root.controller.stop()
+  root.controller.activate()
+  firstPlayRequest.resolve(undefined)
+  await Promise.resolve()
+
+  expect(playback.play).toHaveBeenCalledTimes(2)
+  secondPlayRequest.resolve(undefined)
+  root.dispose()
+})
+
 it('should restore the saved volume before starting the effect', async () => {
   localStorage.setItem(VOLUME_STORAGE_KEY, '0.65')
   const playback = createPlayback()

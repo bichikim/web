@@ -51,7 +51,9 @@ describe('PMusicPlayerContent control paths', () => {
       activate,
       effects: () => [],
       getPlayback: () => undefined,
+      isStopped: () => false,
       status: () => 'ready',
+      stop: vi.fn(),
     }
 
     render(
@@ -65,6 +67,30 @@ describe('PMusicPlayerContent control paths', () => {
     emit('mediaplayrequest')
 
     expect(activate).toHaveBeenCalledOnce()
+  })
+
+  it('should preserve stopped sound effects on a player play request', () => {
+    const activate = vi.fn()
+    const soundEffects: SoundEffectsController = {
+      activate,
+      effects: () => [],
+      getPlayback: () => undefined,
+      isStopped: () => true,
+      status: () => 'ready',
+      stop: vi.fn(),
+    }
+
+    render(
+      () => (
+        <SoundEffectsContext.Provider value={soundEffects}>
+          <PMusicPlayerContent tracks={TRACKS} />
+        </SoundEffectsContext.Provider>
+      ),
+      {wrapper: PreferenceProvider},
+    )
+    emit('mediaplayrequest')
+
+    expect(activate).not.toHaveBeenCalled()
   })
 
   it('should cancel preview resume after a user pause', () => {

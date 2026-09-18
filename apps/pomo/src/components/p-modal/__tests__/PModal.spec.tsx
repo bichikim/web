@@ -119,6 +119,24 @@ it('should render and close the default modal content', async () => {
   await waitFor(() => expect(onOpenChange).toHaveBeenCalledWith(false))
 })
 
+it('should render header actions beside the close control', () => {
+  render(() => (
+    <PModal
+      headerActions={<button type="button">Header action</button>}
+      isOpen
+      onOpenChange={vi.fn()}
+      title="Modal title"
+    >
+      <p>Modal body</p>
+    </PModal>
+  ))
+
+  const header = screen.getByRole('heading', {name: 'Modal title'}).closest('header')
+  expect(header).not.toBeNull()
+  expect(header).toContainElement(screen.getByRole('button', {name: 'Header action'}))
+  expect(header).toContainElement(screen.getByRole('button', {name: m.common_close()}))
+})
+
 it('should render visually hidden navigation with compact close controls', () => {
   render(() => (
     <PModal

@@ -84,4 +84,16 @@ export const getDialogueEventActions = (): ReadonlyArray<DialogueEventActionDefi
     id: 'music-start',
     label: m.settings_event_action_music_start(),
   },
+  {
+    description: m.settings_event_action_sound_effects_stop_description(),
+    icon: 'i-tabler-volume-off',
+    id: 'sound-effects-stop',
+    label: m.settings_event_action_sound_effects_stop(),
+  },
+  {
+    description: m.settings_event_action_sound_effects_start_description(),
+    icon: 'i-tabler-volume-2',
+    id: 'sound-effects-start',
+    label: m.settings_event_action_sound_effects_start(),
+  },
 ]
