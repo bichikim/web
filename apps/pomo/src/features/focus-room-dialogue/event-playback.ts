@@ -1,4 +1,9 @@
-import type {DialogueEventPlaybackMode} from './schema'
+import type {EventDialogueIds, EventPlaybackModes} from './event-context'
+import {
+  DEFAULT_DIALOGUE_EVENT_PLAYBACK_MODE,
+  type DialogueEventId,
+  type DialogueEventPlaybackMode,
+} from './schema'
 
 export interface SelectEventDialoguesOptions {
   readonly dialogueIds: ReadonlyArray<string>
@@ -63,3 +68,23 @@ export const selectEventDialogues = (
     }
   }
 }
+
+/** Selects dialogue ids for each event occurrence while applying an optional catch-up cap. */
+export const selectDialogueIdsForEvents = (
+  eventIds: ReadonlyArray<DialogueEventId>,
+  bindings: EventDialogueIds,
+  playbackModes: EventPlaybackModes,
+  maxLatestDialogueIds?: number,
+): ReadonlyArray<string> =>
+  eventIds.reduce<Array<string>>((dialogueIds, eventId) => {
+    const selectedDialogueIds = selectEventDialogues({
+      dialogueIds: bindings[eventId] ?? [],
+      maxLatestDialogueIds,
+      playbackMode: playbackModes[eventId] ?? DEFAULT_DIALOGUE_EVENT_PLAYBACK_MODE,
+    })
+    const nextDialogueIds = [...dialogueIds, ...selectedDialogueIds]
+
+    return maxLatestDialogueIds === undefined
+      ? nextDialogueIds
+      : nextDialogueIds.slice(-maxLatestDialogueIds)
+  }, [])

@@ -6,6 +6,7 @@ import {createSignal, type JSX} from 'solid-js'
 import {beforeEach, describe, expect, it, vi} from 'vitest'
 
 import {
+  type EventBindingItem,
   type PDialogue,
   type PEventContextValue,
   usePEvents,
@@ -56,18 +57,34 @@ vi.mock('../EventSettingRow', () => ({
 vi.mock('../ConnectionMenu', () => ({
   DialogueConnectionMenu: (props: {
     readonly accessibleLabel: string
+    readonly actions?: ReadonlyArray<{readonly id: string; readonly label: string}>
     readonly dialogues: ReadonlyArray<PDialogue>
     readonly disabled: boolean
     readonly getMetadata: (dialogue: PDialogue) => string
-    readonly onChange: (dialogueIds: ReadonlyArray<string>) => void
-    readonly selectedDialogueIds: ReadonlyArray<string>
+    readonly onChange: (items: ReadonlyArray<EventBindingItem>) => void
+    readonly selectedItems?: ReadonlyArray<EventBindingItem>
   }) => (
     <button
       aria-label={props.accessibleLabel}
       data-metadata={props.dialogues.map((dialogue) => props.getMetadata(dialogue)).join('|')}
-      data-selected-dialogues={props.selectedDialogueIds.join(',')}
+      data-selected-dialogues={props.selectedItems
+        ?.filter((item) => item.type === 'dialogue')
+        .map((item) => item.id)
+        .join(',')}
       disabled={props.disabled}
-      onClick={() => props.onChange(props.dialogues.map((dialogue) => dialogue.id))}
+      onClick={() =>
+        props.onChange([
+          ...props.dialogues.map(
+            (dialogue): EventBindingItem => ({id: dialogue.id, type: 'dialogue'}),
+          ),
+          ...(props.actions ?? []).map(
+            (action): EventBindingItem => ({
+              id: action.id as 'music-start' | 'music-stop',
+              type: 'action',
+            }),
+          ),
+        ])
+      }
       type="button"
     >
       연결
@@ -116,12 +133,16 @@ const createEvents = (overrides: Partial<PEventContextValue> = {}): PEventContex
   activeSegmentPosition: () => null,
   activeText: () => null,
   activeViseme: () => 'rest',
+  cancelDelayedEndEvent: vi.fn(),
+  delayedEndEventDurationMinutes: () => 30,
+  delayedEndEventIsRunning: () => false,
   deleteDialogue: vi.fn(async () => undefined),
   dialogues: () => [DIALOGUE],
   enterFocusRoom: vi.fn(),
   entryDialogueId: () => null,
   entryDialogueIds: () => [],
   errorMessage: () => null,
+  eventActionIds: () => ({}),
   eventDialogueIds: () => ({}),
   eventPlaybackModes: () => ({}),
   getAudio: vi.fn(async () => null),
@@ -137,15 +158,19 @@ const createEvents = (overrides: Partial<PEventContextValue> = {}): PEventContex
   playDialogueEvents: vi.fn(async () => undefined),
   playDialogueSequence: vi.fn(async () => undefined),
   refreshDialogues: vi.fn(async () => undefined),
+  registerEventActionExecutor: vi.fn(() => vi.fn()),
   retryDialoguePlayback: vi.fn(),
   retryEntryPlayback: vi.fn(),
   scheduledDialogueCount: () => 0,
+  setDelayedEndEventDuration: vi.fn(async () => undefined),
   setEntryDialogue: vi.fn(async () => undefined),
   setEntryDialogues: vi.fn(async () => undefined),
   setEventDialogue: vi.fn(async () => undefined),
   setEventDialogues: vi.fn(async () => undefined),
+  setEventItems: vi.fn(async () => undefined),
   setEventPlaybackMode: vi.fn(async () => undefined),
   skipDialoguePlayback: vi.fn(),
+  startDelayedEndEvent: vi.fn(),
   ...overrides,
 })
 
@@ -195,18 +220,23 @@ describe('PDialogueSettingsContent', () => {
     render(() => <PDialogueSettingsContent onRequestClose={vi.fn()} />)
 
     expect(screen.getAllByText('Yuna · 1:01 · 1개 말풍선')).toHaveLength(1)
-    expect(screen.getByRole('button', {name: '입장 대화 연결'})).toHaveAttribute(
+    expect(screen.getByRole('button', {name: '입장 대화 및 행동 연결'})).toHaveAttribute(
       'data-metadata',
       'Yuna · 1:01 · 1개 말풍선|retired-voice · 1:01 · 1개 말풍선',
     )
-    fireEvent.click(screen.getByRole('button', {name: '포모도르 집중 시작 대화 연결'}))
+    fireEvent.click(screen.getByRole('button', {name: '포모도르 집중 시작 대화 및 행동 연결'}))
     fireEvent.click(screen.getByRole('button', {name: '포모도르 집중 시작 재생 방식'}))
     fireEvent.click(screen.getAllByRole('button', {name: '삭제'})[0]!)
     fireEvent.click(screen.getByRole('button', {name: '취소'}))
     fireEvent.click(screen.getAllByRole('button', {name: '삭제'})[0]!)
     fireEvent.click(screen.getByRole('button', {name: '삭제 확인'}))
 
-    expect(events.setEventDialogues).toHaveBeenCalledWith('focus-start', [DIALOGUE.id, second.id])
+    expect(events.setEventItems).toHaveBeenCalledWith('focus-start', [
+      {id: DIALOGUE.id, type: 'dialogue'},
+      {id: second.id, type: 'dialogue'},
+      {id: 'music-stop', type: 'action'},
+      {id: 'music-start', type: 'action'},
+    ])
     expect(events.setEventPlaybackMode).toHaveBeenCalledWith('focus-start', 'random-one')
     expect(FEEDS.onDeleteDialogue).toHaveBeenCalledWith(DIALOGUE.id)
     expect(events.deleteDialogue).not.toHaveBeenCalled()
@@ -251,7 +281,7 @@ describe('PDialogueSettingsContent', () => {
       dialogues: () => [],
       errorMessage: () => '저장소 오류',
       isLoading: () => true,
-      setEventDialogues: vi.fn(async () => {
+      setEventItems: vi.fn(async () => {
         throw new Error('failed')
       }),
     })
@@ -445,7 +475,7 @@ describe('PDialogueSettingsContent', () => {
     const events = createEvents({
       dialogues: () => [DIALOGUE, second],
       eventDialogueIds: () => ({'focus-start': [DIALOGUE.id, second.id]}),
-      setEventDialogues: vi.fn(async () => {
+      setEventItems: vi.fn(async () => {
         throw new Error('binding')
       }),
       setEventPlaybackMode: vi.fn(async () => {
@@ -455,8 +485,8 @@ describe('PDialogueSettingsContent', () => {
     vi.mocked(usePEvents).mockReturnValue(events)
     render(() => <PDialogueSettingsContent />)
 
-    fireEvent.click(screen.getByRole('button', {name: '입장 대화 연결'}))
-    await vi.waitFor(() => expect(events.setEventDialogues).toHaveBeenCalledOnce())
+    fireEvent.click(screen.getByRole('button', {name: '입장 대화 및 행동 연결'}))
+    await vi.waitFor(() => expect(events.setEventItems).toHaveBeenCalledOnce())
     fireEvent.click(screen.getByRole('button', {name: '포모도르 집중 시작 재생 방식'}))
     await vi.waitFor(() => expect(events.setEventPlaybackMode).toHaveBeenCalledOnce())
     fireEvent.click(screen.getAllByRole('button', {name: '삭제'})[0]!)
@@ -471,6 +501,6 @@ describe('PDialogueSettingsContent', () => {
     expect(
       screen.getByText('아직 저장된 대화가 없어요. 새 대화를 만들어 보세요.'),
     ).toBeInTheDocument()
-    expect(screen.getByRole('button', {name: '입장 대화 연결'})).toBeDisabled()
+    expect(screen.getByRole('button', {name: '입장 대화 및 행동 연결'})).not.toBeDisabled()
   })
 })

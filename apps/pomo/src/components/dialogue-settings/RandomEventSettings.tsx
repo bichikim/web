@@ -1,5 +1,4 @@
-import {PInput} from 'src/components/p-input/PInput'
-import {cx} from 'class-variance-authority'
+import {PNumberInput} from 'src/components/p-number-input/PNumberInput'
 import {createEffect, createMemo, createSignal, onCleanup, onMount, Show, untrack} from 'solid-js'
 
 import {
@@ -15,11 +14,6 @@ import {DialogueEventSettingRow} from './EventSettingRow'
 const CLASSES = {
   field: 'grid min-w-0 gap-1 text-sm leading-5 font-bold text-muted-foreground',
   fields: 'grid grid-cols-[repeat(2,_minmax(0,_1fr))] gap-2',
-  input: cx(
-    'h-9 min-w-0 w-full box-border rounded-control border border-solid border-border',
-    'bg-surface px-3 text-base leading-6 font-bold tabular-nums text-foreground outline-none',
-    'focus:border-highlight disabled:cursor-not-allowed disabled:opacity-45',
-  ),
   interval: 'grid gap-2',
   message: 'm-0 text-sm leading-[1.5] text-muted-foreground',
 } as const
@@ -117,6 +111,15 @@ export const RandomEventSettings = () => {
     }
   }
 
+  const updateMinimum = (value: string) => {
+    setMessage(null)
+    setDraft((current) => ({...current, minimum: value}))
+  }
+  const updateMaximum = (value: string) => {
+    setMessage(null)
+    setDraft((current) => ({...current, maximum: value}))
+  }
+
   onCleanup(() => {
     isDisposed = true
     const nextInterval = pendingInterval
@@ -159,37 +162,35 @@ export const RandomEventSettings = () => {
         <div class={CLASSES.fields}>
           <label class={CLASSES.field}>
             <span>{m.settings_random_interval_minimum()}</span>
-            <PInput
-              unstyled
+            <PNumberInput
               aria-label={m.settings_random_interval_minimum_label()}
               aria-invalid={interval() === null}
-              class={CLASSES.input}
+              class="w-full"
+              decrementLabel={m.settings_random_interval_minimum_decrease()}
               disabled={isLoading()}
+              incrementLabel={m.settings_random_interval_minimum_increase()}
               max={MAXIMUM_INTERVAL_MINUTES}
               min={MINIMUM_INTERVAL_MINUTES}
-              onInput={(event) => {
-                setMessage(null)
-                setDraft((current) => ({...current, minimum: event.currentTarget.value}))
-              }}
-              type="number"
+              onInputValueChange={updateMinimum}
+              onValueChange={(value) => updateMinimum(String(value))}
+              size="small"
               value={draft().minimum}
             />
           </label>
           <label class={CLASSES.field}>
             <span>{m.settings_random_interval_maximum()}</span>
-            <PInput
-              unstyled
+            <PNumberInput
               aria-label={m.settings_random_interval_maximum_label()}
               aria-invalid={interval() === null}
-              class={CLASSES.input}
+              class="w-full"
+              decrementLabel={m.settings_random_interval_maximum_decrease()}
               disabled={isLoading()}
+              incrementLabel={m.settings_random_interval_maximum_increase()}
               max={MAXIMUM_INTERVAL_MINUTES}
               min={MINIMUM_INTERVAL_MINUTES}
-              onInput={(event) => {
-                setMessage(null)
-                setDraft((current) => ({...current, maximum: event.currentTarget.value}))
-              }}
-              type="number"
+              onInputValueChange={updateMaximum}
+              onValueChange={(value) => updateMaximum(String(value))}
+              size="small"
               value={draft().maximum}
             />
           </label>

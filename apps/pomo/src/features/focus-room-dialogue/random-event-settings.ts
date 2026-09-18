@@ -1,8 +1,7 @@
 import {z} from 'zod'
 
-import {createLatestAsyncTask} from 'src/utils/create-latest-async-task'
-import {withPromiseNull} from 'src/utils/with-promise-null'
 import {
+  createVersionedPreferenceRepository,
   hasNativeStorageBridge,
   readTossStorageJson,
   readWebStorageJson,
@@ -57,107 +56,19 @@ export interface RandomEventSettingsRepository {
 /** Creates random event persistence with independent revision and latest-write coordination. */
 export const createRandomEventSettingsRepository = (
   storage: RandomEventSettingsStorage,
-): RandomEventSettingsRepository => {
-  let preferenceWriteRevision = 0
-  let prefersNativeSettings = false
-  let pendingNativeSave: Promise<void> | null = null
-  const writeLatestToss = createLatestAsyncTask((settings: RandomEventSettings) =>
-    storage.writeToss(settings),
-  )
-
-  /** Reads the random event settings from storage whose lifetime matches the current runtime. */
-  const read = async (): Promise<RandomEventSettings> => {
-    const initialWriteRevision = preferenceWriteRevision
-
-    if (pendingNativeSave !== null) {
-      await withPromiseNull(pendingNativeSave)
-
-      if (preferenceWriteRevision !== initialWriteRevision) {
-        return read()
-      }
-    }
-
-    const isNative = storage.isNative()
-    const webSettings = isNative && prefersNativeSettings ? null : storage.readWeb()
-
-    if (webSettings !== null) {
-      if (isNative) {
-        withPromiseNull(writeLatestToss(webSettings))
-      }
-
-      return webSettings
-    }
-
-    if (!isNative) {
-      return DEFAULT_RANDOM_EVENT_SETTINGS
-    }
-
-    try {
-      const tossSettings = await storage.readToss()
-
-      if (preferenceWriteRevision !== initialWriteRevision) {
-        return read()
-      }
-
-      if (tossSettings === null) {
-        return DEFAULT_RANDOM_EVENT_SETTINGS
-      }
-
-      prefersNativeSettings = storage.writeWeb(tossSettings) !== null
-      return tossSettings
-    } catch {
-      if (preferenceWriteRevision !== initialWriteRevision) {
-        return read()
-      }
-
-      return storage.readWeb() ?? DEFAULT_RANDOM_EVENT_SETTINGS
-    }
-  }
-
-  /** Persists random event settings until the host app or browser data is removed. */
-  const write = async (settings: RandomEventSettings): Promise<void> => {
-    const snapshot = randomEventSettingsSchema.parse(settings)
-    preferenceWriteRevision += 1
-    const writeRevision = preferenceWriteRevision
-    const webWriteError = storage.writeWeb(snapshot)
-
-    if (webWriteError === null) {
-      prefersNativeSettings = false
-    }
-
-    if (!storage.isNative()) {
-      if (webWriteError !== null) {
-        throw new Error('Failed to persist random event settings.', {cause: webWriteError})
-      }
-
-      return
-    }
-
-    const nativeWrite = writeLatestToss(snapshot)
-
-    if (webWriteError !== null) {
-      pendingNativeSave = nativeWrite
-    }
-
-    try {
-      await nativeWrite
-
-      if (preferenceWriteRevision === writeRevision && webWriteError !== null) {
-        prefersNativeSettings = true
-      }
-    } catch (error: unknown) {
-      if (webWriteError !== null) {
-        throw new Error('Failed to persist random event settings.', {cause: error})
-      }
-    } finally {
-      if (preferenceWriteRevision === writeRevision) {
-        pendingNativeSave = null
-      }
-    }
-  }
-
-  return {read, write}
-}
+): RandomEventSettingsRepository =>
+  createVersionedPreferenceRepository({
+    defaultValue: DEFAULT_RANDOM_EVENT_SETTINGS,
+    parse: (settings) => randomEventSettingsSchema.parse(settings),
+    storage: {
+      isNative: storage.isNative,
+      readNative: storage.readToss,
+      readWeb: storage.readWeb,
+      writeNative: storage.writeToss,
+      writeWeb: storage.writeWeb,
+    },
+    writeFailureMessage: 'Failed to persist random event settings.',
+  })
 
 const runtimeRepository = createRandomEventSettingsRepository({
   isNative: hasNativeStorageBridge,

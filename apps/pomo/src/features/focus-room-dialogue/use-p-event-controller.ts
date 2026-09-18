@@ -2,20 +2,33 @@ import {createEffect, createSignal, onCleanup, onMount} from 'solid-js'
 
 import {createEntryPlaybackController} from './entry-playback-controller'
 import {MAX_LATEST_REPLACEMENT_DIALOGUE_IDS} from './dialogue-playback-policy'
+import {getEventActionIds, updateEventActionBinding} from './event-actions'
 import {
+  type EventActionExecutor,
+  type EventActionIds,
+  type EventBindingItem,
   type EventDialogueIds,
   type EventPlaybackModes,
   type PEventContextValue,
   type PlayDialogueEventsOptions,
 } from './event-context'
-import {selectEventDialogues} from './event-playback'
+import {
+  DEFAULT_DELAYED_END_EVENT_SETTINGS,
+  parseDelayedEndEventSettings,
+  readDelayedEndEventSettings,
+  writeDelayedEndEventSettings,
+} from './delayed-end-event-settings'
+import {selectDialogueIdsForEvents} from './event-playback'
 import {createEntryEventPlayback} from './use-p-event-controller/entry-playback'
+import {useDelayedEndEvent} from './use-delayed-end-event'
 import type {PDialogueRepository} from './repository'
 import {
   DEFAULT_DIALOGUE_EVENT_PLAYBACK_MODE,
+  DELAYED_END_EVENT,
   type DialogueEventBinding,
   type DialogueEventId,
   type DialogueEventPlaybackMode,
+  type EventActionId,
   FOCUS_ROOM_ENTRY_EVENT,
   type PDialogue,
 } from './schema'
@@ -74,31 +87,16 @@ const updateEventPlaybackMode = (
   return nextModes
 }
 
-const selectDialogueIdsForEvents = (
-  eventIds: ReadonlyArray<DialogueEventId>,
-  bindings: EventDialogueIds,
-  playbackModes: EventPlaybackModes,
-  maxLatestDialogueIds?: number,
-): ReadonlyArray<string> =>
-  eventIds.reduce<Array<string>>((dialogueIds, eventId) => {
-    const selectedDialogueIds = selectEventDialogues({
-      dialogueIds: bindings[eventId] ?? [],
-      maxLatestDialogueIds,
-      playbackMode: playbackModes[eventId] ?? DEFAULT_DIALOGUE_EVENT_PLAYBACK_MODE,
-    })
-    const nextDialogueIds = [...dialogueIds, ...selectedDialogueIds]
-
-    return maxLatestDialogueIds === undefined
-      ? nextDialogueIds
-      : nextDialogueIds.slice(-maxLatestDialogueIds)
-  }, [])
-
 // oxlint-disable-next-line eslint/max-lines-per-function -- One hook coordinates repository initialization, bindings, and queued playback lifecycle.
 export const usePEventController = (props: UsePEventControllerProps): PEventContextValue => {
   const playback = createEntryPlaybackController()
   const [dialogues, setDialogues] = createSignal<ReadonlyArray<PDialogue>>([])
   const [eventDialogueIds, setEventDialogueIds] = createSignal<EventDialogueIds>({})
+  const [eventActionIds, setEventActionIds] = createSignal<EventActionIds>({})
   const [eventPlaybackModes, setEventPlaybackModes] = createSignal<EventPlaybackModes>({})
+  const [delayedEndEventDurationMinutes, setDelayedEndEventDurationMinutes] = createSignal<number>(
+    DEFAULT_DELAYED_END_EVENT_SETTINGS.durationMinutes,
+  )
   const [errorMessage, setErrorMessage] = createSignal<string | null>(null)
   const [isLoading, setIsLoading] = createSignal(true)
   let repository: PDialogueRepository | null = null
@@ -107,7 +105,15 @@ export const usePEventController = (props: UsePEventControllerProps): PEventCont
   let bindingRevision = 0
   const eventBindingRevisions: Partial<Record<DialogueEventId, number>> = {}
   let persistedBindings: EventDialogueIds = {}
+  let persistedActionBindings: EventActionIds = {}
   let persistedPlaybackModes: EventPlaybackModes = {}
+  let persistedDelayedEndEventDurationMinutes: number =
+    DEFAULT_DELAYED_END_EVENT_SETTINGS.durationMinutes
+  let delayedEndEventDurationRevision = 0
+  let eventActionExecutor: EventActionExecutor | null = null
+  let pendingEventActions: EventActionId[] = []
+  let hasRegisteredEventActionExecutor = false
+  let pendingEntryEvent = false
   let resolveInitialization: (() => void) | null = null
   const initialization = new Promise<void>((resolve) => {
     resolveInitialization = resolve
@@ -127,6 +133,14 @@ export const usePEventController = (props: UsePEventControllerProps): PEventCont
     eventPlaybackModes,
     getRepository: () => repository,
     isPlaybackEnabled,
+    onEvent: () => {
+      if (isLoading()) {
+        pendingEntryEvent = true
+        return
+      }
+
+      runEventActions([FOCUS_ROOM_ENTRY_EVENT])
+    },
     playback,
   })
 
@@ -140,9 +154,10 @@ export const usePEventController = (props: UsePEventControllerProps): PEventCont
 
       const currentRepository = repositoryModule.createPDialogueRepository()
       repository = currentRepository
-      const [storedDialogues, eventBindings] = await Promise.all([
+      const [storedDialogues, eventBindings, delayedEndEventSettings] = await Promise.all([
         currentRepository.listDialogues(),
         currentRepository.listEventBindings(),
+        readDelayedEndEventSettings(),
       ])
 
       if (isDisposed) {
@@ -150,13 +165,22 @@ export const usePEventController = (props: UsePEventControllerProps): PEventCont
       }
 
       const storedBindings = getEventDialogueIds(eventBindings)
+      const storedActionBindings = getEventActionIds(eventBindings)
       const storedPlaybackModes = getEventPlaybackModes(eventBindings)
       setDialogues(storedDialogues)
       persistedBindings = storedBindings
+      persistedActionBindings = storedActionBindings
       persistedPlaybackModes = storedPlaybackModes
+      persistedDelayedEndEventDurationMinutes = delayedEndEventSettings.durationMinutes
       setEventDialogueIds(storedBindings)
+      setEventActionIds(storedActionBindings)
       setEventPlaybackModes(storedPlaybackModes)
+      setDelayedEndEventDurationMinutes(delayedEndEventSettings.durationMinutes)
       setErrorMessage(null)
+      if (pendingEntryEvent) {
+        pendingEntryEvent = false
+        runEventActions([FOCUS_ROOM_ENTRY_EVENT])
+      }
 
       entryPlayback.tryPlay()
     } catch (error: unknown) {
@@ -179,8 +203,11 @@ export const usePEventController = (props: UsePEventControllerProps): PEventCont
     eventId: DialogueEventId,
     dialogueIds: ReadonlyArray<string>,
     playbackMode: DialogueEventPlaybackMode,
+    actionIds: ReadonlyArray<EventActionId> = eventActionIds()[eventId] ?? [],
   ) => {
     const uniqueDialogueIds = [...new Set(dialogueIds)]
+    const uniqueActionIds = [...new Set(actionIds)]
+    const hasBinding = uniqueDialogueIds.length > 0 || uniqueActionIds.length > 0
     bindingRevision += 1
     const currentEventRevision = (eventBindingRevisions[eventId] ?? 0) + 1
     eventBindingRevisions[eventId] = currentEventRevision
@@ -194,18 +221,36 @@ export const usePEventController = (props: UsePEventControllerProps): PEventCont
         uniqueDialogueIds.length === 0 ? null : playbackMode,
       ),
     )
+    setEventActionIds((currentBindings) =>
+      updateEventActionBinding(currentBindings, eventId, uniqueActionIds),
+    )
     const update = bindingUpdate
       .catch(() => undefined)
-      .then(() => getRepository().setEventBinding(eventId, uniqueDialogueIds, playbackMode))
+      .then(() => {
+        const currentRepository = getRepository()
+        return uniqueActionIds.length === 0
+          ? currentRepository.setEventBinding(eventId, uniqueDialogueIds, playbackMode)
+          : currentRepository.setEventBinding(
+              eventId,
+              uniqueDialogueIds,
+              playbackMode,
+              uniqueActionIds,
+            )
+      })
     bindingUpdate = update
 
     try {
       await update
       persistedBindings = updateEventBinding(persistedBindings, eventId, uniqueDialogueIds)
+      persistedActionBindings = updateEventActionBinding(
+        persistedActionBindings,
+        eventId,
+        uniqueActionIds,
+      )
       persistedPlaybackModes = updateEventPlaybackMode(
         persistedPlaybackModes,
         eventId,
-        uniqueDialogueIds.length === 0 ? null : playbackMode,
+        hasBinding && uniqueDialogueIds.length > 0 ? playbackMode : null,
       )
 
       if (!isDisposed) {
@@ -218,11 +263,111 @@ export const usePEventController = (props: UsePEventControllerProps): PEventCont
         setEventDialogueIds((currentBindings) =>
           updateEventBinding(currentBindings, eventId, persistedBindings[eventId] ?? []),
         )
+        setEventActionIds((currentBindings) =>
+          updateEventActionBinding(
+            currentBindings,
+            eventId,
+            persistedActionBindings[eventId] ?? [],
+          ),
+        )
         setEventPlaybackModes((currentModes) =>
           updateEventPlaybackMode(currentModes, eventId, persistedPlaybackModes[eventId] ?? null),
         )
       }
 
+      throw error
+    }
+  }
+
+  function executeEventAction(
+    actionId: EventActionId,
+    executor = eventActionExecutor,
+    queueIfUnavailable = false,
+  ) {
+    if (executor === null) {
+      if (queueIfUnavailable && !hasRegisteredEventActionExecutor) {
+        pendingEventActions.push(actionId)
+      }
+      return
+    }
+
+    try {
+      executor(actionId)
+    } catch (error: unknown) {
+      console.error('Failed to run a focus room event action.', error)
+    }
+  }
+
+  function runEventActions(eventIds: ReadonlyArray<DialogueEventId>) {
+    const actionBindings = eventActionIds()
+    for (const eventId of eventIds) {
+      for (const actionId of actionBindings[eventId] ?? []) {
+        executeEventAction(actionId, eventActionExecutor, eventId === FOCUS_ROOM_ENTRY_EVENT)
+      }
+    }
+  }
+
+  const playDialogueEvents = async (
+    eventIds: ReadonlyArray<DialogueEventId>,
+    onBeforePlayback?: () => void,
+    options?: PlayDialogueEventsOptions,
+  ): Promise<void> => {
+    if (!isPlaybackEnabled()) {
+      return
+    }
+
+    if (repository === null) {
+      await initialization
+    }
+
+    if (isDisposed || !isPlaybackEnabled() || repository === null) {
+      return
+    }
+
+    runEventActions(eventIds)
+    const bindings = eventDialogueIds()
+    const playbackModes = eventPlaybackModes()
+    const dialogueIds = selectDialogueIdsForEvents(
+      eventIds,
+      bindings,
+      playbackModes,
+      options?.replacementPolicy === 'latest' ? MAX_LATEST_REPLACEMENT_DIALOGUE_IDS : undefined,
+    )
+
+    if (dialogueIds.length > 0) {
+      onBeforePlayback?.()
+      const sequenceOptions = {
+        dialogueIds,
+        onDialogueStart: () => undefined,
+        onSequenceStop: () => undefined,
+        ...(options?.replacementPolicy === 'latest' ? {replacementPolicy: 'latest' as const} : {}),
+      }
+      await playback.playSequence(repository, sequenceOptions)
+    }
+  }
+
+  const delayedEndEvent = useDelayedEndEvent({
+    isEnabled: isPlaybackEnabled,
+    onEvent: () => playDialogueEvents([DELAYED_END_EVENT]),
+  })
+
+  const setDelayedEndEventDuration = async (durationMinutes: number): Promise<void> => {
+    const nextSettings = parseDelayedEndEventSettings({durationMinutes, version: 1})
+
+    if (nextSettings === null) {
+      throw new Error('지정 시간은 1~120분 사이의 정수여야 해요.')
+    }
+
+    const currentRevision = (delayedEndEventDurationRevision += 1)
+    setDelayedEndEventDurationMinutes(nextSettings.durationMinutes)
+
+    try {
+      await writeDelayedEndEventSettings(nextSettings)
+      persistedDelayedEndEventDurationMinutes = nextSettings.durationMinutes
+    } catch (error: unknown) {
+      if (!isDisposed && currentRevision === delayedEndEventDurationRevision) {
+        setDelayedEndEventDurationMinutes(persistedDelayedEndEventDurationMinutes)
+      }
       throw error
     }
   }
@@ -234,6 +379,9 @@ export const usePEventController = (props: UsePEventControllerProps): PEventCont
     activeSegmentPosition: playback.activeSegmentPosition,
     activeText: playback.activeText,
     activeViseme: playback.activeViseme,
+    cancelDelayedEndEvent: delayedEndEvent.cancel,
+    delayedEndEventDurationMinutes,
+    delayedEndEventIsRunning: delayedEndEvent.isRunning,
     async deleteDialogue(dialogueId) {
       await bindingUpdate.catch(() => undefined)
       await getRepository().deleteDialogue(dialogueId)
@@ -262,6 +410,7 @@ export const usePEventController = (props: UsePEventControllerProps): PEventCont
     entryDialogueId: () => eventDialogueIds()[FOCUS_ROOM_ENTRY_EVENT]?.[0] ?? null,
     entryDialogueIds: () => eventDialogueIds()[FOCUS_ROOM_ENTRY_EVENT] ?? [],
     errorMessage,
+    eventActionIds,
     eventDialogueIds,
     eventPlaybackModes,
     getAudio: (audioKey) => getRepository().getAudio(audioKey),
@@ -288,41 +437,7 @@ export const usePEventController = (props: UsePEventControllerProps): PEventCont
 
       return playback.prepare(repository, dialogueId)
     },
-    async playDialogueEvents(eventIds, onBeforePlayback, options?: PlayDialogueEventsOptions) {
-      if (!isPlaybackEnabled()) {
-        return
-      }
-
-      if (repository === null) {
-        await initialization
-      }
-
-      if (isDisposed || !isPlaybackEnabled() || repository === null) {
-        return
-      }
-
-      const bindings = eventDialogueIds()
-      const playbackModes = eventPlaybackModes()
-      const dialogueIds = selectDialogueIdsForEvents(
-        eventIds,
-        bindings,
-        playbackModes,
-        options?.replacementPolicy === 'latest' ? MAX_LATEST_REPLACEMENT_DIALOGUE_IDS : undefined,
-      )
-
-      if (dialogueIds.length > 0) {
-        onBeforePlayback?.()
-        const sequenceOptions = {
-          dialogueIds,
-          onDialogueStart: () => undefined,
-          onSequenceStop: () => undefined,
-          ...(options?.replacementPolicy === 'latest'
-            ? {replacementPolicy: 'latest' as const}
-            : {}),
-        }
-        await playback.playSequence(repository, sequenceOptions)
-      }
-    },
+    playDialogueEvents,
     async playDialogueSequence(options) {
       if (!isPlaybackEnabled()) {
         return
@@ -355,11 +470,28 @@ export const usePEventController = (props: UsePEventControllerProps): PEventCont
 
         if (refreshRevision === bindingRevision) {
           const storedBindings = getEventDialogueIds(eventBindings)
+          const storedActionBindings = getEventActionIds(eventBindings)
           const storedPlaybackModes = getEventPlaybackModes(eventBindings)
           persistedBindings = storedBindings
+          persistedActionBindings = storedActionBindings
           persistedPlaybackModes = storedPlaybackModes
           setEventDialogueIds(storedBindings)
+          setEventActionIds(storedActionBindings)
           setEventPlaybackModes(storedPlaybackModes)
+        }
+      }
+    },
+    registerEventActionExecutor: (executor) => {
+      hasRegisteredEventActionExecutor = true
+      eventActionExecutor = executor
+      const pendingActions = pendingEventActions
+      pendingEventActions = []
+      for (const actionId of pendingActions) {
+        executeEventAction(actionId, executor)
+      }
+      return () => {
+        if (eventActionExecutor === executor) {
+          eventActionExecutor = null
         }
       }
     },
@@ -374,6 +506,7 @@ export const usePEventController = (props: UsePEventControllerProps): PEventCont
       }
     },
     scheduledDialogueCount: playback.scheduledDialogueCount,
+    setDelayedEndEventDuration,
     setEntryDialogue: (dialogueId) =>
       persistEventBinding(
         FOCUS_ROOM_ENTRY_EVENT,
@@ -398,6 +531,16 @@ export const usePEventController = (props: UsePEventControllerProps): PEventCont
         dialogueIds,
         eventPlaybackModes()[eventId] ?? DEFAULT_DIALOGUE_EVENT_PLAYBACK_MODE,
       ),
+    setEventItems: (eventId, items) => {
+      const dialogueIds = items.flatMap((item) => (item.type === 'dialogue' ? [item.id] : []))
+      const actionIds = items.flatMap((item) => (item.type === 'action' ? [item.id] : []))
+      return persistEventBinding(
+        eventId,
+        dialogueIds,
+        eventPlaybackModes()[eventId] ?? DEFAULT_DIALOGUE_EVENT_PLAYBACK_MODE,
+        actionIds,
+      )
+    },
     setEventPlaybackMode: (eventId, playbackMode) => {
       const dialogueIds = eventDialogueIds()[eventId] ?? []
 
@@ -408,6 +551,7 @@ export const usePEventController = (props: UsePEventControllerProps): PEventCont
       return persistEventBinding(eventId, dialogueIds, playbackMode)
     },
     skipDialoguePlayback: playback.skip,
+    startDelayedEndEvent: () => delayedEndEvent.start(delayedEndEventDurationMinutes()),
   }
 
   onMount(() => {
@@ -427,6 +571,8 @@ export const usePEventController = (props: UsePEventControllerProps): PEventCont
 
   onCleanup(() => {
     isDisposed = true
+    pendingEntryEvent = false
+    pendingEventActions = []
     resolveInitialization?.()
     playback.dispose()
     repository?.dispose()

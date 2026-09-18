@@ -69,12 +69,16 @@ const createEvents = (overrides: Partial<PEventContextValue> = {}): PEventContex
   activeSegmentPosition: () => null,
   activeText: () => null,
   activeViseme: () => 'rest',
+  cancelDelayedEndEvent: vi.fn(),
+  delayedEndEventDurationMinutes: () => 30,
+  delayedEndEventIsRunning: () => false,
   deleteDialogue: vi.fn(async () => undefined),
   dialogues: () => [DIALOGUE],
   enterFocusRoom: vi.fn(),
   entryDialogueId: () => null,
   entryDialogueIds: () => [],
   errorMessage: () => null,
+  eventActionIds: () => ({}),
   eventDialogueIds: () => ({}),
   eventPlaybackModes: () => ({}),
   getAudio: vi.fn(async () => null),
@@ -90,15 +94,19 @@ const createEvents = (overrides: Partial<PEventContextValue> = {}): PEventContex
   playDialogueEvents: vi.fn(async () => undefined),
   playDialogueSequence: vi.fn(async () => undefined),
   refreshDialogues: vi.fn(async () => undefined),
+  registerEventActionExecutor: vi.fn(() => vi.fn()),
   retryDialoguePlayback: vi.fn(),
   retryEntryPlayback: vi.fn(),
   scheduledDialogueCount: () => 0,
+  setDelayedEndEventDuration: vi.fn(async () => undefined),
   setEntryDialogue: vi.fn(async () => undefined),
   setEntryDialogues: vi.fn(async () => undefined),
   setEventDialogue: vi.fn(async () => undefined),
   setEventDialogues: vi.fn(async () => undefined),
+  setEventItems: vi.fn(async () => undefined),
   setEventPlaybackMode: vi.fn(async () => undefined),
   skipDialoguePlayback: vi.fn(),
+  startDelayedEndEvent: vi.fn(),
   ...overrides,
 })
 
@@ -214,17 +222,29 @@ it('should hide learning dialogues only from the saved dialogue library', () => 
   expect(within(library).getByText(manualDialogue.text)).toBeDefined()
   expect(PSelect).toHaveBeenCalledWith(
     expect.objectContaining({
-      accessibleLabel: '입장 대화 연결',
+      accessibleLabel: '입장 대화 및 행동 연결',
       options: [
         {
           description: 'Yuna · 0:01 · 1개 말풍선',
           label: DIALOGUE.text,
-          value: DIALOGUE.id,
+          value: `dialogue:${DIALOGUE.id}`,
         },
         {
           description: 'Yuna · 0:01 · 1개 말풍선',
           label: manualDialogue.text,
-          value: manualDialogue.id,
+          value: `dialogue:${manualDialogue.id}`,
+        },
+        {
+          description: '현재 음악을 일시 정지해요.',
+          icon: 'i-tabler-player-stop',
+          label: '음악 종료',
+          value: 'action:music-stop',
+        },
+        {
+          description: '현재 음악을 재생해요.',
+          icon: 'i-tabler-player-play',
+          label: '음악 시작',
+          value: 'action:music-start',
         },
       ],
     }),
@@ -313,16 +333,25 @@ it('should offer and save a playback mode when an event has multiple dialogues',
   expect(modeLayout?.classList).toContain('grid-cols-[minmax(12rem,_2fr)_minmax(16rem,_5fr)]')
   expect(modeLayout?.classList).toContain('settings-compact:grid-cols-[1fr]')
   expect(modeControlLayout?.classList).toContain('w-full')
-  expect(screen.getByText('2개 대화 연결됨')).toBeDefined()
-  expect(screen.getAllByText('대화 선택')).toHaveLength(7)
-  expect(screen.getByRole('button', {name: '포모도르 집중 시작 대화 연결'})).toBeDefined()
-  expect(screen.getByRole('button', {name: '포모도르 휴식 시작 대화 연결'})).toBeDefined()
-  expect(screen.getByRole('button', {name: '포모도르 휴식 종료 대화 연결'})).toBeDefined()
-  expect(screen.getByRole('button', {name: '포모도르 긴 휴식 시작 대화 연결'})).toBeDefined()
-  expect(screen.getByRole('button', {name: '포모도르 긴 휴식 종료 대화 연결'})).toBeDefined()
-  expect(screen.getByRole('button', {name: '랜덤 이벤트 대화 연결'})).toBeDefined()
+  expect(screen.getByText('2개 대화/행동 연결됨')).toBeDefined()
+  expect(screen.getAllByText('대화 또는 행동 선택')).toHaveLength(8)
+  expect(screen.getByRole('button', {name: '포모도르 집중 시작 대화 및 행동 연결'})).toBeDefined()
+  expect(screen.getByRole('button', {name: '포모도르 집중 종료 대화 및 행동 연결'})).toBeDefined()
+  expect(screen.getByRole('button', {name: '포모도르 휴식 시작 대화 및 행동 연결'})).toBeDefined()
+  expect(screen.getByRole('button', {name: '포모도르 휴식 종료 대화 및 행동 연결'})).toBeDefined()
+  expect(
+    screen.getByRole('button', {name: '포모도르 긴 휴식 시작 대화 및 행동 연결'}),
+  ).toBeDefined()
+  expect(
+    screen.getByRole('button', {name: '포모도르 긴 휴식 종료 대화 및 행동 연결'}),
+  ).toBeDefined()
+  expect(screen.getByRole('button', {name: '지정 시간 후 종료 대화 및 행동 연결'})).toBeDefined()
+  expect(screen.getByRole('button', {name: '랜덤 이벤트 대화 및 행동 연결'})).toBeDefined()
+  expect(
+    screen.queryByText('시작 버튼을 누른 뒤 지정한 시간이 지나면 연결한 대화와 행동을 실행'),
+  ).toBeNull()
   expect(screen.queryByRole('switch', {name: '랜덤 이벤트 사용'})).toBeNull()
-  expect(screen.getByRole('button', {name: '입장 대화 연결'})).toBeDefined()
+  expect(screen.getByRole('button', {name: '입장 대화 및 행동 연결'})).toBeDefined()
   expect(screen.getByText('이벤트가 발생할 때마다 모든 대화의 순서를 섞어요.')).toBeDefined()
   expect(screen.queryByRole('list', {name: '포모도르 집중 시작 대화 재생 대상'})).toBeNull()
 
@@ -346,6 +375,6 @@ it('should queue a saved dialogue through the character without stopping existin
   expect(loadAudio).toHaveBeenCalledOnce()
   expect(events.onStopDialoguePlayback).not.toHaveBeenCalled()
   await vi.waitFor(() => expect(events.playDialogue).toHaveBeenCalledWith(DIALOGUE.id))
-  expect(events.setEventDialogues).not.toHaveBeenCalled()
+  expect(events.setEventItems).not.toHaveBeenCalled()
   expect(onRequestClose).toHaveBeenCalledOnce()
 })

@@ -20,12 +20,13 @@ const createPlayback = () => {
   }
 }
 
-const createEntryPlayback = (playback: EntryPlaybackController) =>
+const createEntryPlayback = (playback: EntryPlaybackController, onEvent: () => void = vi.fn()) =>
   createEntryEventPlayback({
     eventDialogueIds: () => ENTRY_DIALOGUE_IDS,
     eventPlaybackModes: () => ENTRY_PLAYBACK_MODES,
     getRepository: () => ({}) as PDialogueRepository,
     isPlaybackEnabled: () => true,
+    onEvent,
     playback,
   })
 
@@ -103,5 +104,24 @@ describe('createEntryEventPlayback', () => {
     await pendingPlayback.promise
 
     expect(sessionStorage.getItem(ENTRY_PLAYBACK_SESSION_KEY)).toBe('true')
+  })
+
+  it('should trigger the entry event even when it has no dialogue binding', () => {
+    const {playback} = createPlayback()
+    const onEvent = vi.fn()
+    const entryPlayback = createEntryEventPlayback({
+      eventDialogueIds: () => ({}),
+      eventPlaybackModes: () => ({}),
+      getRepository: () => ({}) as PDialogueRepository,
+      isPlaybackEnabled: () => true,
+      onEvent,
+      playback,
+    })
+
+    entryPlayback.enterFocusRoom()
+    entryPlayback.enterFocusRoom()
+
+    expect(onEvent).toHaveBeenCalledOnce()
+    expect(playback.playSequence).not.toHaveBeenCalled()
   })
 })

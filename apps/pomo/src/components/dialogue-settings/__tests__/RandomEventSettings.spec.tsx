@@ -74,6 +74,22 @@ it('should save a valid interval after changes remain idle for 500 milliseconds'
   })
 })
 
+it('should support arrow controls for the minimum interval', async () => {
+  render(() => <RandomEventSettings />)
+  await vi.advanceTimersByTimeAsync(0)
+
+  const minimumInput = screen.getByRole('spinbutton', {name: '랜덤 이벤트 최소 간격(분)'})
+  expect(minimumInput).toHaveClass('h-auto', 'py-2')
+
+  fireEvent.click(screen.getByRole('button', {name: '랜덤 이벤트 최소 간격 줄이기'}))
+  await vi.advanceTimersByTimeAsync(500)
+
+  expect(settingsMocks.write).toHaveBeenCalledWith({
+    ...DEFAULT_RANDOM_EVENT_SETTINGS,
+    minimumMinutes: DEFAULT_RANDOM_EVENT_SETTINGS.minimumMinutes - 1,
+  })
+})
+
 it('should cancel a pending save when the interval becomes invalid', async () => {
   render(() => <RandomEventSettings />)
   await vi.advanceTimersByTimeAsync(0)

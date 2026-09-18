@@ -26,6 +26,20 @@ describe('PMusicPlayerContent control paths', () => {
     expect(featureMocks.readPPlaylist).not.toHaveBeenCalled()
   })
 
+  it('should expose music actions while the player is mounted', () => {
+    const onPlaybackActionsReady = vi.fn()
+    const result = render(() => (
+      <PMusicPlayerContent onPlaybackActionsReady={onPlaybackActionsReady} tracks={TRACKS} />
+    ))
+
+    expect(onPlaybackActionsReady).toHaveBeenCalledWith({
+      pause: expect.any(Function),
+      play: expect.any(Function),
+    })
+    result.unmount()
+    expect(onPlaybackActionsReady).toHaveBeenLastCalledWith(null)
+  })
+
   it('should cancel preview resume after a user pause', () => {
     render(() => <PMusicPlayerContent tracks={TRACKS} />)
     const audio = createAudio()
