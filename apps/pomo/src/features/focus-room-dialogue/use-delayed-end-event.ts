@@ -23,7 +23,7 @@ const isValidDuration = (durationMinutes: number) =>
   durationMinutes >= MIN_DELAYED_END_EVENT_MINUTES &&
   durationMinutes <= MAX_DELAYED_END_EVENT_MINUTES
 
-/** Schedules one delayed-end event and cancels it when the owner or playback scope closes. */
+/** Schedules one delayed-end event and cancels it when the owner or enabled scope closes. */
 export const useDelayedEndEvent = (props: UseDelayedEndEventProps): DelayedEndEventController => {
   const [isRunning, setIsRunning] = createSignal(false)
   let timerId: ReturnType<typeof globalThis.setTimeout> | null = null
