@@ -219,9 +219,13 @@ const useStudioViseme = (
 }
 
 const toolbarVisibility = (preferences: PDisplayPreferencesController) => ({
+  get featureRequestVisible() {
+    return preferences.featureRequestVisible()
+  },
   get memoryAssistVisible() {
     return preferences.memoryAssistVisible()
   },
+  onFeatureRequestVisibleChange: preferences.onFeatureRequestVisibleChange,
   onMemoryAssistVisibleChange: preferences.onMemoryAssistVisibleChange,
   onPlayerVisibleChange: preferences.onPlayerVisibleChange,
   onPomodoroVisibleChange: preferences.onPomodoroVisibleChange,

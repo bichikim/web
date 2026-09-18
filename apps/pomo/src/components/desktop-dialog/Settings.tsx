@@ -16,12 +16,14 @@ export const DesktopSettingsDialog = () => {
       background={settings.background}
       canUseGyroscope={settings.canUseGyroscope()}
       dialogueComposerVisible={displayPreferences.dialogueComposerVisible()}
+      featureRequestVisible={displayPreferences.featureRequestVisible()}
       gaze={settings.gaze()}
       memoryAssistVisible={displayPreferences.memoryAssistVisible()}
       motionInput={settings.motionInput()}
       motionMode={settings.motionMode()}
       onActivityChange={settings.onActivityChange}
       onDialogueComposerVisibleChange={displayPreferences.onDialogueComposerVisibleChange}
+      onFeatureRequestVisibleChange={displayPreferences.onFeatureRequestVisibleChange}
       onGazeChange={settings.onGazeChange}
       onMemoryAssistVisibleChange={displayPreferences.onMemoryAssistVisibleChange}
       onMotionInputChange={settings.onMotionInputChange}

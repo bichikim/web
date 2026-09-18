@@ -140,9 +140,11 @@ export const configureStudio = (options: StudioOptions = {}) => {
   } as unknown as ReturnType<typeof usePSay>)
   vi.mocked(usePDisplayPreferences).mockReturnValue({
     dialogueComposerVisible,
+    featureRequestVisible: () => true,
     isReady: () => true,
     memoryAssistVisible: () => true,
     onDialogueComposerVisibleChange: setDialogueComposerVisible,
+    onFeatureRequestVisibleChange: vi.fn(),
     onMemoryAssistVisibleChange: vi.fn(),
     onPlayerVisibleChange: vi.fn(),
     onPomodoroVisibleChange: vi.fn(),

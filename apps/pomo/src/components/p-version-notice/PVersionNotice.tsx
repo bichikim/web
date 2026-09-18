@@ -23,6 +23,7 @@ import {openDesktopDialog} from '../../features/desktop-mode/dialogs'
 export interface PVersionNoticeProps {
   readonly desktopDialog?: boolean
   readonly desktopSurface?: boolean
+  readonly featureRequestVisible?: boolean
   readonly onRequestClose?: () => void
   readonly sceneStyle?: PSceneStyle
 }
@@ -90,6 +91,7 @@ export const PVersionNotice = (props: PVersionNoticeProps) => {
     triggerElement()?.focus()
     setReleases([])
   }
+  const showFeatureRequest = () => props.featureRequestVisible ?? true
   const releaseContent = () => (
     <Show
       when={releases().length > 0}
@@ -147,16 +149,17 @@ export const PVersionNotice = (props: PVersionNoticeProps) => {
   )
 
   return (
-    <Show when={props.desktopDialog || catalogAvailable()}>
+    <Show
+      when={!props.desktopDialog || catalogAvailable()}
+      fallback={desktopVersionNoticeContent()}
+    >
       <Show
-        fallback={
-          <Show when={props.desktopDialog} fallback={inlineVersionNoticeContent()}>
-            {desktopVersionNoticeContent()}
-          </Show>
-        }
-        when={catalogAvailable() && releases().length === 0}
+        fallback={<Show when={showFeatureRequest()}>{featureRequestContent()}</Show>}
+        when={releases().length > 0}
       >
-        {featureRequestContent()}
+        <Show when={props.desktopDialog} fallback={inlineVersionNoticeContent()}>
+          {desktopVersionNoticeContent()}
+        </Show>
       </Show>
     </Show>
   )

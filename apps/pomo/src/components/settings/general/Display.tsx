@@ -25,6 +25,20 @@ interface PGeneralDisplaySettingsProps extends PSettingsProps {
   readonly wakeLock: ScreenWakeLockController
 }
 
+const PFeatureRequestVisibilitySetting = (props: PSettingsProps) => (
+  <Show when={props.onFeatureRequestVisibleChange}>
+    {(onChange) => (
+      <PSwitch
+        checked={props.featureRequestVisible ?? true}
+        class={CLASSES.settingsToggle}
+        description={m.settings_feature_request_visible_description()}
+        label={m.settings_feature_request_visible()}
+        onChange={onChange()}
+      />
+    )}
+  </Show>
+)
+
 export const PGeneralDisplaySettings = (props: PGeneralDisplaySettingsProps) => {
   const fullscreen = useFullscreen()
   const fullscreenDescription = createMemo(() => {
@@ -102,11 +116,13 @@ export const PGeneralDisplaySettings = (props: PGeneralDisplaySettingsProps) => 
             <PSwitch
               checked={props.memoryAssistVisible ?? true}
               class={CLASSES.settingsToggle}
+              description={m.settings_memory_visible_description()}
               label={m.settings_memory_visible()}
               onChange={onChange()}
             />
           )}
         </Show>
+        <PFeatureRequestVisibilitySetting {...props} />
         <Show when={props.onPlayerVisibleChange}>
           {(onChange) => (
             <PSwitch
@@ -134,6 +150,7 @@ export const PGeneralDisplaySettings = (props: PGeneralDisplaySettingsProps) => 
             <PSwitch
               checked={props.toolsButtonVisible ?? true}
               class={CLASSES.settingsToggle}
+              description={m.settings_tools_visible_description()}
               label={m.settings_tools_visible()}
               onChange={onChange()}
             />
