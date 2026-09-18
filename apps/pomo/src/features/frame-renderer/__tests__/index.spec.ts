@@ -209,6 +209,23 @@ it('should render video through a canvas texture when requested', async () => {
   renderer.destroy()
 })
 
+it('should release media when canvas video texture creation fails', async () => {
+  const renderer = new FrameRenderer({
+    canvas: document.createElement('canvas'),
+    onEnded: vi.fn(),
+    onError: vi.fn(),
+    videoTextureMode: 'canvas',
+  })
+  await renderer.initialize()
+  const showing = renderer.show(new Blob(['video']), 'video')
+  finishMedia(true)
+
+  await expect(showing).rejects.toThrow('dimensions')
+  expect(disposeMedia).toHaveBeenCalledOnce()
+
+  renderer.destroy()
+})
+
 it('should cancel pending media and destroy an application that finishes initializing after disposal', async () => {
   const renderer = new FrameRenderer({
     canvas: document.createElement('canvas'),

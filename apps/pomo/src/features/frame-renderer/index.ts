@@ -289,9 +289,15 @@ export class FrameRenderer {
     if (video === null) {
       texture = Texture.from(source)
     } else if (this.#options.videoTextureMode === 'canvas') {
-      const {texture: canvasTexture, update} = createCanvasVideoTexture(video)
-      texture = canvasTexture
-      this.#updateVideoTexture = update
+      try {
+        const {texture: canvasTexture, update} = createCanvasVideoTexture(video)
+        texture = canvasTexture
+        this.#updateVideoTexture = update
+      } catch (error) {
+        this.#release?.()
+        this.#release = null
+        throw error
+      }
     } else {
       const videoSource = new VideoSource({autoLoad: false, autoPlay: false, resource: video})
       texture = new Texture({source: videoSource})
