@@ -16,6 +16,7 @@ export function PMusicPlayerContent(props: PMusicPlayerContentProps) {
         backdropBlur={props.backdropBlur}
         expanded={props.expanded}
         onExpandedChange={props.onExpandedChange}
+        onPlaybackActionsReady={props.onPlaybackActionsReady}
         sceneStyle={props.sceneStyle}
       />
     </MediaPlayer>

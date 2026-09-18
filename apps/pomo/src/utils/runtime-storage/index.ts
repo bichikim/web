@@ -1,4 +1,5 @@
 export * from './create-latest-storage-writer'
+export * from './create-versioned-preference-repository'
 export * from './has-native-storage-bridge'
 export * from './load-toss-storage'
 export * from './parse-storage-json'

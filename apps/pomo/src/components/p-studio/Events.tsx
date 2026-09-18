@@ -1,7 +1,7 @@
 import {type PSceneStyle} from '../../features/focus-room-animation/index'
 import type {PTrack} from '../../features/focus-room-audio/index'
 import type {PomodoroTimerEventDeliveryOptions} from '../../features/pomodoro-timer'
-import {createMemo, createSignal, For, Show} from 'solid-js'
+import {createMemo, createSignal, For, onCleanup, onMount, Show} from 'solid-js'
 import * as m from '@paraglide/message'
 import {
   RANDOM_DIALOGUE_EVENT,
@@ -16,12 +16,14 @@ import {PFeedStatus} from '../p-feed-status/PFeedStatus'
 import {PFormMessage} from '../p-form-message/PFormMessage'
 import {PModelDownloadConsent} from '../p-model-download-consent/PModelDownloadConsent'
 import {PMusicPlayer} from '../p-music-player/PMusicPlayer'
+import type {MusicPlaybackActions} from '../music-player/types'
 import {PPomodoro, type PPomodoroPresentation} from '../p-pomodoro/PPomodoro'
 import {CLASSES} from './shared'
 import {ONE_OFF_CHAT_MODEL, useOneOffChat} from './use-one-off-chat'
 import {useReplySpeechQueue} from './use-reply-speech-queue'
 import {useChildPresence} from './use-child-presence'
 import {useMobileLayout} from './use-mobile-layout'
+import type {EventActionId} from '../../features/focus-room-dialogue'
 
 interface PStudioEventsProps {
   readonly pomodoroVisible?: boolean
@@ -36,8 +38,27 @@ interface PStudioEventsProps {
   readonly sceneStyle: PSceneStyle
 }
 
+const runMusicAction = (actions: MusicPlaybackActions, actionId: EventActionId) => {
+  switch (actionId) {
+    case 'music-start':
+      actions.play()
+      return
+    case 'music-stop':
+      actions.pause()
+      return
+    default: {
+      const exhaustiveAction: never = actionId
+      return exhaustiveAction
+    }
+  }
+}
+
 export const PStudioEvents = (props: PStudioEventsProps) => {
   const events = usePEvents()
+  const [musicPlaybackActions, setMusicPlaybackActions] = createSignal<MusicPlaybackActions | null>(
+    null,
+  )
+  let pendingMusicActions: EventActionId[] = []
   const [mediaMessages, setMediaMessages] = createSignal<HTMLDivElement>()
   const hasMediaMessages = useChildPresence(mediaMessages)
   const isMobileLayout = useMobileLayout()
@@ -54,6 +75,36 @@ export const PStudioEvents = (props: PStudioEventsProps) => {
   const oneOffChat = useOneOffChat({
     onReply: replySpeechQueue.enqueue,
   })
+  const runEventAction = (actionId: EventActionId) => {
+    const actions = musicPlaybackActions()
+    if (actions === null) {
+      if (props.playerVisible ?? true) {
+        pendingMusicActions.push(actionId)
+      }
+      return
+    }
+
+    runMusicAction(actions, actionId)
+  }
+  const handlePlaybackActionsReady = (actions: MusicPlaybackActions | null) => {
+    setMusicPlaybackActions(actions)
+    if (actions === null) {
+      pendingMusicActions = []
+      return
+    }
+
+    const pendingActions = pendingMusicActions
+    pendingMusicActions = []
+    for (const actionId of pendingActions) {
+      runMusicAction(actions, actionId)
+    }
+  }
+  let unregisterEventActionExecutor: (() => void) | undefined
+  onMount(() => {
+    // The executor reads the latest music controls when an event fires.
+    unregisterEventActionExecutor = events.registerEventActionExecutor(runEventAction)
+  })
+  onCleanup(() => unregisterEventActionExecutor?.())
   const isDialoguePresented = createMemo((wasPresented) => {
     const hasVisibleContent =
       events.activeText() !== null ||
@@ -113,6 +164,7 @@ export const PStudioEvents = (props: PStudioEventsProps) => {
               isDialogueActive={events.isDialoguePlaying() || props.pomoSay.isPlaying()}
               onPlayingChange={props.onMusicPlayingChange}
               onExpandedChange={props.onPlayerExpandedChange}
+              onPlaybackActionsReady={handlePlaybackActionsReady}
               onTrackChange={props.onTrackChange}
               sceneStyle={props.sceneStyle}
             />

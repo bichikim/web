@@ -1,7 +1,7 @@
 /** @vitest-environment jsdom */
 
 import {fireEvent, render, screen} from '@solidjs/testing-library'
-import {createSignal} from 'solid-js'
+import {createSignal, onCleanup, onMount} from 'solid-js'
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 import type {PTrack} from '../../../features/focus-room-audio'
 import {
@@ -27,6 +27,10 @@ const oneOffChatMocks = vi.hoisted(() => ({
   setDraft: vi.fn(),
   startDownload: vi.fn(async () => undefined),
   submit: vi.fn(async () => undefined),
+}))
+const musicPlaybackMocks = vi.hoisted(() => ({
+  pause: vi.fn(),
+  play: vi.fn(),
 }))
 
 vi.mock('../../../features/focus-room-dialogue', () => ({
@@ -91,26 +95,36 @@ vi.mock('../../p-music-player/PMusicPlayer', () => ({
     readonly expanded: boolean
     readonly isDialogueActive: boolean
     readonly onExpandedChange: (expanded: boolean) => void
+    readonly onPlaybackActionsReady?: (
+      actions: {
+        readonly pause: () => void
+        readonly play: () => void
+      } | null,
+    ) => void
     readonly onPlayingChange: (playing: boolean) => void
     readonly onTrackChange: (track: PTrack | null) => void
     readonly sceneStyle: string
-  }) => (
-    <div
-      data-music-dialogue-active={props.isDialogueActive}
-      data-expanded={props.expanded}
-      data-music-scene={props.sceneStyle}
-    >
-      <button onClick={() => props.onPlayingChange(true)} type="button">
-        음악 재생
-      </button>
-      <button onClick={() => props.onExpandedChange(true)} type="button">
-        플레이어 펼치기
-      </button>
-      <button onClick={() => props.onTrackChange(null)} type="button">
-        트랙 지우기
-      </button>
-    </div>
-  ),
+  }) => {
+    onMount(() => props.onPlaybackActionsReady?.(musicPlaybackMocks))
+    onCleanup(() => props.onPlaybackActionsReady?.(null))
+    return (
+      <div
+        data-music-dialogue-active={props.isDialogueActive}
+        data-expanded={props.expanded}
+        data-music-scene={props.sceneStyle}
+      >
+        <button onClick={() => props.onPlayingChange(true)} type="button">
+          음악 재생
+        </button>
+        <button onClick={() => props.onExpandedChange(true)} type="button">
+          플레이어 펼치기
+        </button>
+        <button onClick={() => props.onTrackChange(null)} type="button">
+          트랙 지우기
+        </button>
+      </div>
+    )
+  },
 }))
 vi.mock('../../p-pomodoro/PPomodoro', () => ({
   PPomodoro: (props: {
@@ -153,6 +167,9 @@ const createEvents = (
     readonly activeText?: string | null
     readonly blocked?: boolean
     readonly isPlaying?: boolean
+    readonly registerEventActionExecutor?: (
+      executor: (actionId: 'music-start' | 'music-stop') => void,
+    ) => () => void
     readonly scheduledCount?: number
     readonly playDialogueEvents?: ReturnType<typeof vi.fn>
   } = {},
@@ -162,6 +179,7 @@ const createEvents = (
     isDialoguePlaybackBlocked: () => overrides.blocked ?? false,
     isDialoguePlaying: () => overrides.isPlaying ?? false,
     playDialogueEvents: overrides.playDialogueEvents ?? vi.fn(async () => undefined),
+    registerEventActionExecutor: overrides.registerEventActionExecutor ?? vi.fn(() => vi.fn()),
     scheduledDialogueCount: () => overrides.scheduledCount ?? 0,
   }) as unknown as ReturnType<typeof usePEvents>
 
@@ -216,6 +234,28 @@ describe('PStudioEvents', () => {
     oneOffChatMocks.draft.mockReturnValue('')
     oneOffChatMocks.errorMessage.mockReturnValue(null)
     oneOffChatMocks.isBusy.mockReturnValue(false)
+    musicPlaybackMocks.pause.mockReset()
+    musicPlaybackMocks.play.mockReset()
+  })
+
+  it('should register music controls for event actions', () => {
+    const runAction = vi.fn()
+    const unregister = vi.fn()
+    const registerEventActionExecutor = vi.fn(
+      (executor: (actionId: 'music-start' | 'music-stop') => void) => {
+        runAction.mockImplementation(executor)
+        return unregister
+      },
+    )
+    const events = createEvents({registerEventActionExecutor})
+
+    const result = renderEvents({events})
+    runAction('music-stop')
+    runAction('music-start')
+
+    expect(registerEventActionExecutor).toHaveBeenCalledOnce()
+    result.unmount()
+    expect(unregister).toHaveBeenCalledOnce()
   })
 
   it('should show skipped reminder text and remove its alert after recovery', () => {
@@ -512,6 +552,42 @@ describe('PStudioEvents', () => {
       'Unexpected pomodoro dialogue playback failure.',
       failure,
     )
+  })
+
+  it('should discard music actions that arrive while the player is hidden', async () => {
+    let runAction: ((actionId: 'music-start' | 'music-stop') => void) | undefined
+    const registerEventActionExecutor = vi.fn(
+      (executor: (actionId: 'music-start' | 'music-stop') => void) => {
+        runAction = executor
+        return vi.fn()
+      },
+    )
+    const events = createEvents({registerEventActionExecutor})
+    vi.mocked(usePEvents).mockReturnValue(events)
+    const [playerVisible, setPlayerVisible] = createSignal(true)
+    const result = render(() => (
+      <PStudioEvents
+        playerVisible={playerVisible()}
+        dialogueComposerVisible={false}
+        isPlayerExpanded={false}
+        onMusicPlayingChange={vi.fn()}
+        onPlayerExpandedChange={vi.fn()}
+        onPomodoroPresentationChange={vi.fn()}
+        onTrackChange={vi.fn()}
+        pomoSay={createPomoSay()}
+        sceneStyle="original"
+      />
+    ))
+
+    runAction?.('music-start')
+    expect(musicPlaybackMocks.play).toHaveBeenCalledOnce()
+
+    setPlayerVisible(false)
+    runAction?.('music-stop')
+    setPlayerVisible(true)
+
+    expect(musicPlaybackMocks.pause).not.toHaveBeenCalled()
+    result.unmount()
   })
 
   it('should compact only after scheduled dialogue becomes visible', () => {

@@ -37,6 +37,7 @@ export interface CreateEntryEventPlaybackOptions {
   readonly eventPlaybackModes: Accessor<EventPlaybackModes>
   readonly getRepository: () => PDialogueRepository | null
   readonly isPlaybackEnabled: () => boolean
+  readonly onEvent?: () => void
   readonly playback: EntryPlaybackController
   readonly sessionStorage?: EntryPlaybackSessionStorage
 }
@@ -103,6 +104,7 @@ export const createEntryEventPlayback = (
       }
 
       setHasEnteredFocusRoom(true)
+      options.onEvent?.()
       tryPlay()
     },
     hasEnteredFocusRoom,

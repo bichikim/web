@@ -1,10 +1,17 @@
-import type {DialogueEventId} from '../../features/focus-room-dialogue'
+import type {DialogueEventId, EventActionId} from '../../features/focus-room-dialogue'
 import * as m from '@paraglide/message'
 
 export interface DialogueEventDefinition {
-  readonly description: string
+  readonly description?: string
   readonly icon: string
   readonly id: DialogueEventId
+  readonly label: string
+}
+
+export interface DialogueEventActionDefinition {
+  readonly description: string
+  readonly icon: string
+  readonly id: EventActionId
   readonly label: string
 }
 
@@ -52,9 +59,29 @@ export const getDialogueEvents = (): ReadonlyArray<DialogueEventDefinition> => [
     label: m.settings_event_long_break_end(),
   },
   {
+    icon: 'i-tabler-hourglass-high',
+    id: 'delayed-end',
+    label: m.settings_event_delayed_end(),
+  },
+  {
     description: m.settings_event_random_description(),
     icon: 'i-tabler-dice-5',
     id: 'random',
     label: m.settings_event_random(),
+  },
+]
+
+export const getDialogueEventActions = (): ReadonlyArray<DialogueEventActionDefinition> => [
+  {
+    description: m.settings_event_action_music_stop_description(),
+    icon: 'i-tabler-player-stop',
+    id: 'music-stop',
+    label: m.settings_event_action_music_stop(),
+  },
+  {
+    description: m.settings_event_action_music_start_description(),
+    icon: 'i-tabler-player-play',
+    id: 'music-start',
+    label: m.settings_event_action_music_start(),
   },
 ]

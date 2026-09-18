@@ -5,9 +5,33 @@ export type {
   SaveDialogueOptions,
 } from './repository'
 export {PEventContext, usePEvents} from './event-context'
-export type {PEventContextValue, PlayDialogueEventsOptions} from './event-context'
+export type {
+  EventActionExecutor,
+  EventActionIds,
+  EventBindingItem,
+  EventDialogueIds,
+  EventPlaybackModes,
+  PEventContextValue,
+  PlayDialogueEventsOptions,
+} from './event-context'
 export {usePEventController} from './use-p-event-controller'
 export type {UsePEventControllerProps} from './use-p-event-controller'
+export {
+  createDelayedEndEventSettingsRepository,
+  DEFAULT_DELAYED_END_EVENT_SETTINGS,
+  MAX_DELAYED_END_EVENT_MINUTES,
+  MIN_DELAYED_END_EVENT_MINUTES,
+  parseDelayedEndEventSettings,
+  readDelayedEndEventSettings,
+  writeDelayedEndEventSettings,
+} from './delayed-end-event-settings'
+export type {
+  DelayedEndEventSettings,
+  DelayedEndEventSettingsRepository,
+  DelayedEndEventSettingsStorage,
+} from './delayed-end-event-settings'
+export {useDelayedEndEvent} from './use-delayed-end-event'
+export type {DelayedEndEventController, UseDelayedEndEventProps} from './use-delayed-end-event'
 export type {PlayPDialogueSequenceOptions} from './entry-playback-controller'
 export {
   MAX_LATEST_REPLACEMENT_DIALOGUE_IDS,
@@ -20,7 +44,10 @@ export {
   dialogueEventPlaybackModeSchema,
   DIALOGUE_EVENT_PLAYBACK_MODES,
   DEFAULT_DIALOGUE_EVENT_PLAYBACK_MODE,
+  DELAYED_END_EVENT,
   dialogueSegmentMoodSchema,
+  EVENT_ACTION_IDS,
+  eventActionIdSchema,
   FOCUS_ROOM_DIALOGUE_EVENTS,
   FOCUS_ROOM_ENTRY_EVENT,
   focusRoomDialogueSchema,
@@ -32,6 +59,7 @@ export type {
   DialogueEventPlaybackMode,
   DialogueSegment,
   DialogueSegmentMood,
+  EventActionId,
   PDialogue,
 } from './schema'
 export {analyzeDialogueSegmentMoods} from './segment-mood'

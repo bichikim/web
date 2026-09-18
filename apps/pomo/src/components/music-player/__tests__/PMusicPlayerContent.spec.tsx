@@ -30,6 +30,21 @@ describe('PMusicPlayerContent control paths', () => {
     expect(featureMocks.readPPlaylist).not.toHaveBeenCalled()
   })
 
+  it('should expose music actions while the player is mounted', () => {
+    const onPlaybackActionsReady = vi.fn()
+    const result = render(
+      () => <PMusicPlayerContent onPlaybackActionsReady={onPlaybackActionsReady} tracks={TRACKS} />,
+      {wrapper: PreferenceProvider},
+    )
+
+    expect(onPlaybackActionsReady).toHaveBeenCalledWith({
+      pause: expect.any(Function),
+      play: expect.any(Function),
+    })
+    result.unmount()
+    expect(onPlaybackActionsReady).toHaveBeenLastCalledWith(null)
+  })
+
   it('should activate global sound effects on a player play request', () => {
     const activate = vi.fn()
     const soundEffects: SoundEffectsController = {

@@ -6,6 +6,7 @@ import {HButton} from '../h-button'
 import {PTooltip} from '../p-tooltip/PTooltip'
 import {TEXT_DETAIL} from '../typography-classes'
 import {useTooltipTrigger} from '../tooltip'
+import {CONTROL_HEIGHT_CLASSES, CONTROL_PADDING_CLASSES} from '../control-size-classes'
 
 // oxlint-disable-next-line eslint-js/max-len -- UnoCSS must extract the complete arbitrary-value utility.
 const BUTTON_TRANSITION =
@@ -101,11 +102,11 @@ export const P_BUTTON_CLASSES = cva(
       },
       size: {
         medium:
-          'min-h-control-md px-5 py-3 text-sm ' +
+          `${CONTROL_HEIGHT_CLASSES.medium} px-5 ${CONTROL_PADDING_CLASSES.medium} text-sm ` +
           'data-[icon-only]:h-control-md data-[icon-only]:min-w-control-md ' +
           'data-[icon-only]:px-0 data-[icon-only]:py-0',
         small: cx(
-          'min-h-control-sm px-3.5 py-2',
+          `${CONTROL_HEIGHT_CLASSES.small} px-3.5 ${CONTROL_PADDING_CLASSES.small}`,
           TEXT_DETAIL,
           'data-[icon-only]:h-control-sm data-[icon-only]:min-w-control-sm',
           'data-[icon-only]:px-0 data-[icon-only]:py-0',
