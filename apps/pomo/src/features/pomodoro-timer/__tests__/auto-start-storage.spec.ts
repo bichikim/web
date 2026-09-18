@@ -74,6 +74,18 @@ describe('auto-start-storage', () => {
     expect(storageMocks.setItem).not.toHaveBeenCalled()
   })
 
+  it('should reject when browser storage cannot persist the preference', async () => {
+    const storageError = new Error('browser storage unavailable')
+    vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
+      throw storageError
+    })
+
+    await expect(writeAutoStartPreference(true)).rejects.toMatchObject({
+      cause: storageError,
+      message: 'Failed to persist auto-start preference.',
+    })
+  })
+
   it('should read the legacy browser preference', async () => {
     localStorage.setItem('pomo:timer-auto-start:v1', 'true')
 
