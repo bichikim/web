@@ -27,7 +27,9 @@ it('should show the newest changes and the first release from the public catalog
   render(() => <WhatsNewPage />)
 
   expect(await screen.findByRole('heading', {name: '새로운 소식'})).toBeTruthy()
-  expect(screen.getAllByRole('heading', {name: 'Pomo 업데이트 안내'})).toHaveLength(3)
+  expect(screen.getAllByRole('heading', {name: 'Pomo 업데이트 안내'})).toHaveLength(4)
+  expect(screen.getByText('2026. 09. 18 03:03')).toBeVisible()
+  expect(screen.getByText('기능 제안과 투표')).toBeVisible()
   expect(screen.getByText('2026. 09. 13 10:43')).toBeVisible()
   expect(
     screen.getByText(
@@ -46,7 +48,7 @@ it('should show the newest changes and the first release from the public catalog
   expect(
     screen.getByText('집중 공간의 캐릭터 움직임과 표정을 더 자연스럽게 다듬었습니다.'),
   ).toBeTruthy()
-  expect(screen.getAllByRole('listitem')).toHaveLength(36)
+  expect(screen.getAllByRole('listitem')).toHaveLength(44)
   expect(screen.getByRole('heading', {name: '첫 출시'})).toBeTruthy()
   expect(screen.getByText('2026. 08. 25 05:26')).toBeTruthy()
   expect(screen.getAllByRole('link', {name: '앱으로 돌아가기'})).toHaveLength(2)

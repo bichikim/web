@@ -2,6 +2,46 @@
   "releases": [
     {
       "title": "Pomo update",
+      "summary": "Keep timers and music playing more reliably, manage memo reminders and calendars with more confidence, and suggest features directly.",
+      "changes": [
+        {
+          "title": "Feature requests and voting",
+          "description": "Suggest new features, vote on other requests, and check each request's progress and goal status."
+        },
+        {
+          "title": "More reliable timer progress",
+          "description": "Running and paused time now continues more naturally when you move between surfaces or reopen the timer. Phase transitions, auto-start, overtime, and configuration changes are handled more reliably."
+        },
+        {
+          "title": "Music playback and playlist improvements",
+          "description": "Playback state and position are better preserved when changing tracks, editing the queue, previewing, or seeking. You can also see when a playlist or the next track is being prepared."
+        },
+        {
+          "title": "Memo reminder reliability",
+          "description": "Reminder settings and scheduled state are preserved while memos are edited or deleted. Reduced repeated reminders and reminders for deleted memos, with clearer retry and failure notices."
+        },
+        {
+          "title": "Calendar time zones and partial failures",
+          "description": "Today and tomorrow queries and feed dates now use the browser time zone. If one connected calendar is unavailable, events from calendars that still respond remain visible."
+        },
+        {
+          "title": "Feed and chat recovery",
+          "description": "Feed voice generation and chat responses now preserve drafts, sync state, and retry flows more reliably after errors. Orphaned feed records are also removed from the list."
+        },
+        {
+          "title": "Mobile runtime support",
+          "description": "Added the runtime foundation for using Pomo as an Android or iOS app, including mobile layout insets."
+        },
+        {
+          "title": "Dialogue audio and character improvements",
+          "description": "Dialogue playback completion and retry states are clearer, and character lip sync now better matches Korean pronunciation."
+        }
+      ],
+      "version": "2026. 09. 18 03:03",
+      "releasedAt": "2026-09-18T03:03:00+09:00"
+    },
+    {
+      "title": "Pomo update",
       "summary": "Customize your focus screen and enjoy more control over feed audio, memos, and drawing.",
       "changes": [
         {
