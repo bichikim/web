@@ -30,9 +30,13 @@ export const SoundEffectsProvider = (props: SoundEffectsProviderProps) => {
     new Map(),
   )
   const [status, setStatus] = createSignal<'loading' | 'ready' | 'failed'>('loading')
+  const [isStopped, setIsStopped] = createSignal(false)
   const controller = new AbortController()
 
   const registerPlayback = (effectId: string, playback: SoundEffectPlayback) => {
+    if (isStopped()) {
+      playback.stop()
+    }
     setPlaybacks((current) => {
       const next = new Map(current)
       next.set(effectId, playback)
@@ -53,14 +57,23 @@ export const SoundEffectsProvider = (props: SoundEffectsProviderProps) => {
   }
 
   const activate = () => {
+    setIsStopped(false)
     const currentPlaybacks = playbacks()
     for (const playback of currentPlaybacks.values()) {
       playback.activate()
     }
   }
 
+  const stop = () => {
+    setIsStopped(true)
+    const currentPlaybacks = playbacks()
+    for (const playback of currentPlaybacks.values()) {
+      playback.stop()
+    }
+  }
+
   const handleUserActivation = () => {
-    if (playbacks().size === 0) {
+    if (isStopped() || playbacks().size === 0) {
       return
     }
 
@@ -98,7 +111,9 @@ export const SoundEffectsProvider = (props: SoundEffectsProviderProps) => {
     activate,
     effects,
     getPlayback: (effectId) => playbacks().get(effectId),
+    isStopped,
     status,
+    stop,
   }
 
   return (

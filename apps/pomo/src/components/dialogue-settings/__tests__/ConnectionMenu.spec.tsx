@@ -138,7 +138,7 @@ describe('DialogueConnectionMenu', () => {
     expect(onChange).toHaveBeenCalledWith([{id: 'dialogue-two', type: 'dialogue'}])
   })
 
-  it('should include music actions in the same selection as dialogues', () => {
+  it('should include music and sound-effect actions in the same selection as dialogues', () => {
     const onChange = vi.fn<(items: ReadonlyArray<EventBindingItem>) => void>()
 
     render(() => (
@@ -149,6 +149,12 @@ describe('DialogueConnectionMenu', () => {
             icon: 'i-tabler-player-stop',
             id: 'music-stop',
             label: '음악 종료',
+          },
+          {
+            description: '모든 효과음을 멈춰요.',
+            icon: 'i-tabler-volume-off',
+            id: 'sound-effects-stop',
+            label: '효과음 모두 끄기',
           },
         ]}
         dialogues={DIALOGUES}
@@ -165,6 +171,12 @@ describe('DialogueConnectionMenu', () => {
       icon: 'i-tabler-player-stop',
       label: '음악 종료',
       value: 'action:music-stop',
+    })
+    expect(props.options).toContainEqual({
+      description: '모든 효과음을 멈춰요.',
+      icon: 'i-tabler-volume-off',
+      label: '효과음 모두 끄기',
+      value: 'action:sound-effects-stop',
     })
     expect(props.value).toContain('action:music-stop')
 
