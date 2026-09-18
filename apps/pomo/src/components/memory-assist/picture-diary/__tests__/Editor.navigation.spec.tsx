@@ -165,12 +165,12 @@ it('should close the back cover after the last entry and reopen it toward that e
   expect(olderButton).toBeEnabled()
   const olderEdge = book.querySelector('[data-picture-diary-edge="older"]')!
   fireEvent.pointerDown(olderEdge, {button: 0, clientX: 8, clientY: 180, pointerId: 1})
-  fireEvent.pointerMove(window, {clientX: 600, clientY: 180, pointerId: 1})
+  fireEvent.pointerMove(globalThis.window, {clientX: 600, clientY: 180, pointerId: 1})
   const closingCover = book.querySelector('[data-picture-diary-cover-turn]')
   expect(closingCover).toHaveAttribute('data-turn-direction', 'older')
   expect(closingCover?.getAttribute('style')).toContain('--picture-diary-hard-angle')
   expect(onCloseBackCover).not.toHaveBeenCalled()
-  fireEvent.pointerUp(window, {clientX: 600, clientY: 180, pointerId: 1})
+  fireEvent.pointerUp(globalThis.window, {clientX: 600, clientY: 180, pointerId: 1})
   finishPageTurn()
   expect(onCloseBackCover).toHaveBeenCalledOnce()
 
@@ -192,12 +192,12 @@ it('should close the back cover after the last entry and reopen it toward that e
   expect(newerButton).toBeEnabled()
   const newerEdge = closedBook.querySelector('[data-picture-diary-edge="newer"]')!
   fireEvent.pointerDown(newerEdge, {button: 0, clientX: 792, clientY: 180, pointerId: 2})
-  fireEvent.pointerMove(window, {clientX: 200, clientY: 180, pointerId: 2})
+  fireEvent.pointerMove(globalThis.window, {clientX: 200, clientY: 180, pointerId: 2})
   expect(onOpenBackCover).not.toHaveBeenCalled()
   expect(
     screen.getByLabelText('일기장').querySelector('[data-picture-diary-cover-turn]'),
   ).toHaveAttribute('data-turn-direction', 'newer')
-  fireEvent.pointerUp(window, {clientX: 200, clientY: 180, pointerId: 2})
+  fireEvent.pointerUp(globalThis.window, {clientX: 200, clientY: 180, pointerId: 2})
   finishPageTurn()
   expect(onOpenBackCover).toHaveBeenCalledOnce()
 })

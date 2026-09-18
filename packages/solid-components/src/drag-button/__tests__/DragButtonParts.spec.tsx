@@ -41,7 +41,7 @@ describe('drag button parts', () => {
 
     const button = view.getByRole('button', {name: 'Drag me'})
     await fireEvent.mouseDown(button, {clientX: 0, clientY: 0})
-    window.dispatchEvent(new MouseEvent('pointerup', {clientX: 1, clientY: 1}))
+    globalThis.dispatchEvent(new MouseEvent('pointerup', {clientX: 1, clientY: 1}))
 
     expect(onClick).toHaveBeenCalledOnce()
   })

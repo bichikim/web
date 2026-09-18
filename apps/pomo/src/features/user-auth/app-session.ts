@@ -1,3 +1,4 @@
+import {createSerialTaskQueue} from 'src/utils/create-serial-task-queue'
 import {z} from 'zod'
 
 import {apiJson, ApiJsonError, apiJsonRequest} from '../api-json'
@@ -40,35 +41,42 @@ const getAuthorizationHeaders = (token: string): HeadersInit => ({
   Authorization: `Bearer ${token}`,
 })
 
-export const readStoredAppSession = async (): Promise<string | null> => {
-  const {Storage} = await import('@apps-in-toss/web-framework')
-  return Storage.getItem(APP_SESSION_STORAGE_KEY)
+export interface AppSessionStorage {
+  readonly getItem: (key: string) => Promise<string | null>
+  readonly setItem: (key: string, token: string) => Promise<void>
+  readonly removeItem: (key: string) => Promise<void>
 }
 
-let storageMutation: Promise<void> = Promise.resolve()
-
-const mutateStoredSession = (operation: () => Promise<void>): Promise<void> => {
-  const result = storageMutation.then(operation)
-  // A failed native operation must not block subsequent session writes.
-  storageMutation = result.catch(() => undefined)
-  return result
+export interface StoredAppSession {
+  readonly read: () => Promise<string | null>
+  readonly write: (token: string) => Promise<void>
+  readonly clear: (token: string) => Promise<void>
 }
 
-export const storeAppSession = (token: string): Promise<void> =>
-  mutateStoredSession(async () => {
-    const {Storage} = await import('@apps-in-toss/web-framework')
-    await Storage.setItem(APP_SESSION_STORAGE_KEY, token)
-  })
+/** Serializes session mutations and conditionally removes only the supplied token. */
+export const createStoredAppSession = (storage: AppSessionStorage): StoredAppSession => {
+  const queue = createSerialTaskQueue()
+  return {
+    clear: (token) =>
+      queue.run(async () => {
+        if ((await storage.getItem(APP_SESSION_STORAGE_KEY)) === token) {
+          await storage.removeItem(APP_SESSION_STORAGE_KEY)
+        }
+      }),
+    read: () => storage.getItem(APP_SESSION_STORAGE_KEY),
+    write: (token) => queue.run(() => storage.setItem(APP_SESSION_STORAGE_KEY, token)),
+  }
+}
 
-/** Removes the stored session only when it still belongs to the supplied token. */
-export const clearStoredAppSession = (token: string): Promise<void> =>
-  mutateStoredSession(async () => {
-    const {Storage} = await import('@apps-in-toss/web-framework')
-    const storedToken = await Storage.getItem(APP_SESSION_STORAGE_KEY)
-    if (storedToken === token) {
-      await Storage.removeItem(APP_SESSION_STORAGE_KEY)
-    }
-  })
+const runtimeSession = createStoredAppSession({
+  getItem: async (key) => (await import('@apps-in-toss/web-framework')).Storage.getItem(key),
+  removeItem: async (key) => (await import('@apps-in-toss/web-framework')).Storage.removeItem(key),
+  setItem: async (key, token) =>
+    (await import('@apps-in-toss/web-framework')).Storage.setItem(key, token),
+})
+export const readStoredAppSession = () => runtimeSession.read()
+export const storeAppSession = (token: string) => runtimeSession.write(token)
+export const clearStoredAppSession = (token: string) => runtimeSession.clear(token)
 
 export const validateAppSession = async (token: string): Promise<boolean> => {
   const response = await apiFetch('app-auth/session', {

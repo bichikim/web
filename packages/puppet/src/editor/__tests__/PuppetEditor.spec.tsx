@@ -275,9 +275,9 @@ describe('PuppetEditor', () => {
     const undoButton = screen.getByRole('button', {name: '실행 취소'})
 
     fireEvent(opacityField, new MouseEvent('pointerdown', {bubbles: true, button: 0, clientX: 100}))
-    fireEvent(window, new MouseEvent('pointermove', {bubbles: true, clientX: 90}))
-    fireEvent(window, new MouseEvent('pointermove', {bubbles: true, clientX: 80}))
-    fireEvent(window, new MouseEvent('pointerup', {bubbles: true, clientX: 80}))
+    fireEvent(globalThis.window, new MouseEvent('pointermove', {bubbles: true, clientX: 90}))
+    fireEvent(globalThis.window, new MouseEvent('pointermove', {bubbles: true, clientX: 80}))
+    fireEvent(globalThis.window, new MouseEvent('pointerup', {bubbles: true, clientX: 80}))
 
     await waitFor(() => {
       const document = onDocumentChange.mock.calls.at(-1)?.[0]
@@ -306,12 +306,12 @@ describe('PuppetEditor', () => {
     const view = render(() => <PuppetEditor onDocumentChange={onDocumentChange} />)
 
     fireEvent.click(view.getByRole('button', {name: '1차원 Parameter 추가'}))
-    fireEvent.keyDown(window, {ctrlKey: true, key: 'z'})
+    fireEvent.keyDown(globalThis.window, {ctrlKey: true, key: 'z'})
     await waitFor(() => {
       expect(onDocumentChange.mock.calls.at(-1)?.[0]?.parameters).toHaveLength(2)
     })
 
-    fireEvent.keyDown(window, {ctrlKey: true, key: 'y'})
+    fireEvent.keyDown(globalThis.window, {ctrlKey: true, key: 'y'})
     await waitFor(() => {
       expect(onDocumentChange.mock.calls.at(-1)?.[0]?.parameters).toHaveLength(3)
     })

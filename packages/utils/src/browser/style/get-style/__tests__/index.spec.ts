@@ -6,13 +6,13 @@ import {getStyle} from '../'
 
 describe('getStyle', () => {
   afterEach(() => {
-    vi.spyOn(window, 'getComputedStyle').mockRestore()
+    vi.spyOn(globalThis, 'getComputedStyle').mockRestore()
   })
 
   const setup = () => {
     const getPropertyValue = vi.fn(() => 'mock')
 
-    vi.spyOn(window, 'getComputedStyle').mockReturnValueOnce({
+    vi.spyOn(globalThis, 'getComputedStyle').mockReturnValueOnce({
       getPropertyValue,
     } as any)
     const element = document.createElement('div')

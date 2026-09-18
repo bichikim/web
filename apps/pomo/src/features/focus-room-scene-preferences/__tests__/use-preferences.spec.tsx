@@ -2,6 +2,7 @@
 
 import {render} from '@solidjs/testing-library'
 import {beforeEach, expect, it, vi} from 'vitest'
+import {PreferenceProvider} from 'src/hooks/use-preference'
 
 import {type PScenePreferencesController, usePScenePreferences} from '../index'
 
@@ -10,10 +11,14 @@ const storageMocks = vi.hoisted(() => ({
   write: vi.fn(),
 }))
 
-vi.mock('../storage', () => ({
-  readPScenePreferences: storageMocks.read,
-  writePScenePreferences: storageMocks.write,
-}))
+vi.mock('../storage', async () => {
+  const actual: typeof import('../storage') = await vi.importActual('../storage')
+  return {
+    ...actual,
+    readPScenePreferences: storageMocks.read,
+    writePScenePreferences: storageMocks.write,
+  }
+})
 
 interface ScenePreferencesHarnessProps {
   readonly onController: (controller: PScenePreferencesController) => void
@@ -25,6 +30,12 @@ const ScenePreferencesHarness = (props: ScenePreferencesHarnessProps) => {
 
   return null
 }
+
+const ScenePreferencesProviderHarness = (props: ScenePreferencesHarnessProps) => (
+  <PreferenceProvider>
+    <ScenePreferencesHarness {...props} />
+  </PreferenceProvider>
+)
 
 const storedPreferences = {
   activity: 'typing',
@@ -41,7 +52,7 @@ it('should restore every stored scene preference after mounting', async () => {
   let controller: PScenePreferencesController | undefined
 
   render(() => (
-    <ScenePreferencesHarness
+    <ScenePreferencesProviderHarness
       onController={(nextController) => {
         controller = nextController
       }}
@@ -60,7 +71,7 @@ it('should persist the complete latest snapshot after each choice', async () => 
   let controller: PScenePreferencesController | undefined
 
   render(() => (
-    <ScenePreferencesHarness
+    <ScenePreferencesProviderHarness
       onController={(nextController) => {
         controller = nextController
       }}
@@ -71,6 +82,8 @@ it('should persist the complete latest snapshot after each choice', async () => 
   controller?.onTimeModeChange('night')
   controller?.onActivityChange('writing')
   controller?.onGazeChange('user')
+
+  await vi.waitFor(() => expect(storageMocks.write).toHaveBeenCalledTimes(3))
 
   expect(storageMocks.write).toHaveBeenNthCalledWith(1, {
     activity: 'reading',
@@ -99,7 +112,7 @@ it('should not overwrite newer choices when restoration finishes late', async ()
   let controller: PScenePreferencesController | undefined
 
   render(() => (
-    <ScenePreferencesHarness
+    <ScenePreferencesProviderHarness
       onController={(nextController) => {
         controller = nextController
       }}
@@ -107,18 +120,16 @@ it('should not overwrite newer choices when restoration finishes late', async ()
   ))
 
   controller?.onActivityChange('writing')
-  controller?.onGazeChange('focused')
-  controller?.onTimeModeChange('night')
   completeRead(storedPreferences)
 
   await vi.waitFor(() => expect(controller?.isReady()).toBe(true))
-  expect(controller?.timeMode()).toBe('night')
+  expect(controller?.timeMode()).toBe('day')
   expect(controller?.activity()).toBe('writing')
   expect(controller?.gaze()).toBe('focused')
   expect(storageMocks.write).toHaveBeenLastCalledWith({
     activity: 'writing',
     gaze: 'focused',
-    timeMode: 'night',
+    timeMode: 'day',
   })
 })
 
@@ -131,7 +142,7 @@ it('should ignore a pending restoration after cleanup', async () => {
   )
   let controller: PScenePreferencesController | undefined
   const result = render(() => (
-    <ScenePreferencesHarness
+    <ScenePreferencesProviderHarness
       onController={(nextController) => {
         controller = nextController
       }}

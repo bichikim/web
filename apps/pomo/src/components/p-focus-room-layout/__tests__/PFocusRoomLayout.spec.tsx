@@ -32,6 +32,11 @@ vi.mock('../../p-feed-provider/PFeedProvider', () => ({
     <div data-testid="feed-provider">{props.children}</div>
   ),
 }))
+vi.mock('../../../features/sound-effects', () => ({
+  SoundEffectsProvider: (props: {readonly children: JSX.Element}) => (
+    <div data-testid="sound-effects-provider">{props.children}</div>
+  ),
+}))
 
 import {PFocusRoomLayout} from '../PFocusRoomLayout'
 
@@ -43,7 +48,7 @@ it('should bypass providers outside Pomo layout routes', () => {
   expect(screen.queryByTestId('event-provider')).not.toBeInTheDocument()
 })
 
-it('should retain providers and update playback state across Pomo routes', () => {
+it('should retain layout providers and update playback state across Pomo routes', () => {
   eventPlaybackStates.length = 0
   setPathname('/')
   render(() => <PFocusRoomLayout>content</PFocusRoomLayout>)
@@ -54,4 +59,15 @@ it('should retain providers and update playback state across Pomo routes', () =>
   setPathname('/studio')
   expect(screen.getByTestId('event-provider')).toBeInTheDocument()
   expect(eventPlaybackStates).toContain(false)
+})
+
+it('should mount sound effects only on the Pomo home route', () => {
+  setPathname('/')
+  render(() => <PFocusRoomLayout>content</PFocusRoomLayout>)
+
+  expect(screen.getByTestId('sound-effects-provider')).toContainElement(screen.getByText('content'))
+
+  setPathname('/studio')
+
+  expect(screen.queryByTestId('sound-effects-provider')).not.toBeInTheDocument()
 })

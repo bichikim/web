@@ -1,6 +1,7 @@
 /** @vitest-environment jsdom */
 import {cleanup, renderHook, waitFor} from '@solidjs/testing-library'
 import {afterEach, beforeEach, expect, it, vi} from 'vitest'
+import {PreferenceProvider} from 'src/hooks/use-preference'
 import {loadTossStorage} from 'src/utils/runtime-storage/load-toss-storage'
 import {useVisibilityPreferences} from '../use-visibility-preferences'
 
@@ -30,7 +31,7 @@ it.each([null, JSON.stringify({enabled: false, seconds: 30})])(
   async (native) => {
     localStorage.setItem(key, JSON.stringify(stored))
     getItem.mockResolvedValue(native)
-    const {result} = renderHook(useVisibilityPreferences)
+    const {result} = renderHook(useVisibilityPreferences, {wrapper: PreferenceProvider})
     await waitFor(() => expect(setItem).toHaveBeenCalledWith(key, JSON.stringify(stored)))
     expect(result.preferences()).toEqual(stored)
     expect(getItem).not.toHaveBeenCalled()
@@ -39,14 +40,14 @@ it.each([null, JSON.stringify({enabled: false, seconds: 30})])(
 
 it('should restore native preferences when web storage is empty', async () => {
   getItem.mockResolvedValue(JSON.stringify(stored))
-  const {result} = renderHook(useVisibilityPreferences)
+  const {result} = renderHook(useVisibilityPreferences, {wrapper: PreferenceProvider})
   await waitFor(() => expect(result.preferences()).toEqual(stored))
 })
 
 it('should preserve edits while native restoration is pending', async () => {
   const pending = Promise.withResolvers<string | null>()
   getItem.mockReturnValue(pending.promise)
-  const {result} = renderHook(useVisibilityPreferences)
+  const {result} = renderHook(useVisibilityPreferences, {wrapper: PreferenceProvider})
   result.onSecondsChange(90)
   pending.resolve(JSON.stringify(stored))
   await waitFor(() => expect(setItem).toHaveBeenCalled())
@@ -57,7 +58,7 @@ it('should report repair failure without losing web preferences', async () => {
   const error = new Error('native write failed')
   localStorage.setItem(key, JSON.stringify(stored))
   setItem.mockRejectedValue(error)
-  const {result} = renderHook(useVisibilityPreferences)
+  const {result} = renderHook(useVisibilityPreferences, {wrapper: PreferenceProvider})
   await waitFor(() => expect(globalThis.reportError).toHaveBeenCalledWith(error))
   expect(result.preferences()).toEqual(stored)
 })
@@ -65,7 +66,7 @@ it('should report repair failure without losing web preferences', async () => {
 it('should restore web preferences without native calls in a browser', () => {
   Reflect.deleteProperty(globalThis, 'ReactNativeWebView')
   localStorage.setItem(key, JSON.stringify(stored))
-  const {result} = renderHook(useVisibilityPreferences)
+  const {result} = renderHook(useVisibilityPreferences, {wrapper: PreferenceProvider})
   expect(result.preferences()).toEqual(stored)
   expect(loadTossStorage).not.toHaveBeenCalled()
 })
@@ -74,7 +75,7 @@ it('should persist the latest edit after an in-flight repair', async () => {
   const pending = Promise.withResolvers<void>()
   localStorage.setItem(key, JSON.stringify(stored))
   setItem.mockReturnValueOnce(pending.promise)
-  const {result} = renderHook(useVisibilityPreferences)
+  const {result} = renderHook(useVisibilityPreferences, {wrapper: PreferenceProvider})
   await waitFor(() => expect(setItem).toHaveBeenCalledTimes(1))
   result.onSecondsChange(90)
   pending.resolve()
@@ -87,7 +88,7 @@ it('should persist the latest edit after an in-flight repair', async () => {
 it('should ignore native restoration after disposal', async () => {
   const pending = Promise.withResolvers<string | null>()
   getItem.mockReturnValue(pending.promise)
-  const view = renderHook(useVisibilityPreferences)
+  const view = renderHook(useVisibilityPreferences, {wrapper: PreferenceProvider})
   await waitFor(() => expect(getItem).toHaveBeenCalled())
   view.cleanup()
   pending.resolve(JSON.stringify(stored))

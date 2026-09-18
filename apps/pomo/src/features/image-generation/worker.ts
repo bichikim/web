@@ -5,7 +5,7 @@ import {createPromptMessages, parseSettings} from './settings'
 import {loadImageModel} from './loader'
 
 const PERCENTAGE_SCALE = 100
-const scope = self as DedicatedWorkerGlobalScope
+const scope = globalThis.self as DedicatedWorkerGlobalScope
 const send = (response: GenerationResponse) => scope.postMessage(response)
 
 const generate = async (request: GenerationRequest) => {

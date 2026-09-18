@@ -11,13 +11,13 @@ import {
 
 import type {ScreenSaverDelay} from './model'
 
-const SCREEN_SAVER_STORAGE_KEY = 'pomo:screen-saver-delay:v1'
-const DEFAULT_SCREEN_SAVER_DELAY: ScreenSaverDelay = '10m'
+export const SCREEN_SAVER_STORAGE_KEY = 'pomo:screen-saver-delay:v1'
+export const DEFAULT_SCREEN_SAVER_DELAY: ScreenSaverDelay = '10m'
 const screenSaverDelaySchema = import.meta.env.DEV
   ? z.enum(['off', '5s', '1m', '10m', '20m', '1h'])
   : z.enum(['off', '1m', '10m', '20m', '1h'])
 
-const parseScreenSaverDelay = (value: unknown): ScreenSaverDelay | null => {
+export const parseScreenSaverDelay = (value: unknown): ScreenSaverDelay | null => {
   const result = screenSaverDelaySchema.safeParse(value)
   return result.success ? result.data : null
 }
@@ -38,10 +38,8 @@ export interface ScreenSaverRepository {
   readonly write: (delay: ScreenSaverDelay) => Promise<void>
 }
 
-/** Creates screen saver persistence with one independent write queue and storage boundary. */
+/** Reads and writes screen saver settings using the supplied runtime storage. */
 export const createScreenSaverRepository = (storage: ScreenSaverStorage): ScreenSaverRepository => {
-  let preferenceWriteRevision = 0
-  let writeQueue = Promise.resolve()
   const readWebPreference = (): ScreenSaverDelay | null => {
     return parseScreenSaverDelay(storage.readWeb(SCREEN_SAVER_STORAGE_KEY))
   }
@@ -52,20 +50,12 @@ export const createScreenSaverRepository = (storage: ScreenSaverStorage): Screen
 
   /** Reads the screen saver delay from storage whose lifetime matches the current runtime. */
   const read = async (): Promise<ScreenSaverDelay> => {
-    const initialWriteRevision = preferenceWriteRevision
-    await writeQueue
-    if (preferenceWriteRevision !== initialWriteRevision) {
-      return read()
-    }
     const webPreference = readWebPreference()
 
     if (webPreference !== null) {
       if (storage.usesTossStorage()) {
-        // Share the write queue so a repair cannot overwrite a newer user choice.
-        writeQueue = writeQueue
-          .then(() => storage.writeToss(SCREEN_SAVER_STORAGE_KEY, webPreference))
-          // Keep the authoritative web choice available and retry repair on the next read.
-          .catch(() => undefined)
+        // Complete repair before usePreference can persist a newer edit.
+        await storage.writeToss(SCREEN_SAVER_STORAGE_KEY, webPreference).catch(() => undefined)
       }
       return webPreference
     }
@@ -77,10 +67,6 @@ export const createScreenSaverRepository = (storage: ScreenSaverStorage): Screen
     try {
       const tossPreference = parseScreenSaverDelay(await storage.readToss(SCREEN_SAVER_STORAGE_KEY))
 
-      if (preferenceWriteRevision !== initialWriteRevision) {
-        return read()
-      }
-
       if (tossPreference === null) {
         return DEFAULT_SCREEN_SAVER_DELAY
       }
@@ -89,9 +75,6 @@ export const createScreenSaverRepository = (storage: ScreenSaverStorage): Screen
       writeWebPreference(tossPreference)
       return tossPreference
     } catch {
-      if (preferenceWriteRevision !== initialWriteRevision) {
-        return read()
-      }
       return DEFAULT_SCREEN_SAVER_DELAY
     }
   }
@@ -126,19 +109,15 @@ export const createScreenSaverRepository = (storage: ScreenSaverStorage): Screen
 
   /** Persists the screen saver delay until the host app or browser data is removed. */
   const write = (delay: ScreenSaverDelay): Promise<void> => {
-    preferenceWriteRevision += 1
-    const write = writeQueue.then(() => persistScreenSaverDelay(delay))
-    writeQueue = write.catch(() => undefined)
-    return write
+    return persistScreenSaverDelay(delay)
   }
 
   return {read, write}
 }
 
-const preserveStoredValue = (value: unknown) => value
 const runtimeRepository = createScreenSaverRepository({
-  readToss: (key) => readTossStorageJson(key, preserveStoredValue),
-  readWeb: (key) => readWebStorageJson(key, preserveStoredValue),
+  readToss: (key) => readTossStorageJson(key, (value) => value),
+  readWeb: (key) => readWebStorageJson(key, (value) => value),
   removeWeb: removeWebStorageItem,
   usesTossStorage: hasNativeStorageBridge,
   writeToss: writeTossStorageJson,

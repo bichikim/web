@@ -1,7 +1,6 @@
 import {z} from 'zod'
 
 import {
-  createLatestStorageWriter,
   hasNativeStorageBridge,
   readTossStorageJson,
   readWebStorageJson,
@@ -66,16 +65,11 @@ interface AutoStartStorageOptions {
   readonly now: () => number
 }
 
-/** Creates auto-start persistence with instance-owned read and write coordination. */
+/** Reads and writes auto-start preferences, including the legacy format. */
 export const createAutoStartStorage = ({
   storage,
   now,
 }: AutoStartStorageOptions): AutoStartStorage => {
-  const writeLatestToss = createLatestStorageWriter(AUTO_START_STORAGE_KEY, storage.writeToss)
-  let latestWebWrite: StoredPreference | null = null
-  let writeRevision = 0
-  let pendingWrites = 0
-
   const readWebPreference = () => {
     return (
       storage.readWeb(AUTO_START_STORAGE_KEY, parsePreference) ??
@@ -99,9 +93,6 @@ export const createAutoStartStorage = ({
 
   /** Reads the latest auto-start preference saved by the app or browser runtime. */
   const read = async () => {
-    const initialWebWrite = latestWebWrite
-    const initialWriteRevision = writeRevision
-    const hadPendingWrite = pendingWrites > 0
     const webPreference = readWebPreference()
 
     if (!storage.usesTossStorage()) {
@@ -111,21 +102,11 @@ export const createAutoStartStorage = ({
     try {
       const tossPreference = await readTossPreference()
 
-      if (latestWebWrite !== initialWebWrite && latestWebWrite !== null) {
-        return readWebPreference()?.isEnabled ?? false
-      }
-
       const currentWebPreference = readWebPreference()
       const latestPreference = selectLatestPreference(currentWebPreference, tossPreference)
 
-      if (
-        latestPreference !== null &&
-        latestPreference === currentWebPreference &&
-        writeRevision === initialWriteRevision &&
-        !hadPendingWrite
-      ) {
-        // Keep native persistence current without delaying timer initialization on a repair.
-        writeLatestToss(latestPreference).catch(() => undefined)
+      if (latestPreference !== null && latestPreference === currentWebPreference) {
+        await storage.writeToss(AUTO_START_STORAGE_KEY, latestPreference).catch(() => undefined)
       }
 
       return latestPreference?.isEnabled ?? false
@@ -136,21 +117,23 @@ export const createAutoStartStorage = ({
 
   /** Persists the auto-start preference until the host app or browser data is removed. */
   const write = async (isEnabled: boolean) => {
-    writeRevision += 1
     const preference = {isEnabled, savedAt: now()} satisfies StoredPreference
     const webWriteError = writeWebPreference(preference)
 
-    latestWebWrite = webWriteError === null ? preference : null
-
     if (!storage.usesTossStorage()) {
+      if (webWriteError !== null) {
+        throw new Error('Failed to persist auto-start preference.', {cause: webWriteError})
+      }
+
       return
     }
 
-    pendingWrites += 1
     try {
-      await writeLatestToss(preference).catch(() => undefined)
-    } finally {
-      pendingWrites -= 1
+      await storage.writeToss(AUTO_START_STORAGE_KEY, preference)
+    } catch (error: unknown) {
+      if (webWriteError !== null) {
+        throw new Error('Failed to persist auto-start preference.', {cause: error})
+      }
     }
   }
 

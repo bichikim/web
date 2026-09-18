@@ -91,42 +91,46 @@ export type {
   UsePDialogueEditorProps,
 } from './use-focus-room-dialogue-editor'
 export {
-  AUTOMATIC_DIALOGUE_SETTINGS_CHANGED_EVENT,
+  AUTOMATIC_DIALOGUE_SETTINGS_STORAGE_KEY,
+  createAutomaticDialoguePreferenceOptions,
   DEFAULT_AUTOMATIC_DIALOGUE_SETTINGS,
-} from './automatic-dialogue-settings-contract'
+  parseAutomaticDialogueSettings,
+} from './automatic-dialogue-settings'
 export {
   createRandomEventSettingsRepository,
+  createRandomEventPreferenceOptions,
   type RandomEventSettingsRepository,
   type RandomEventSettingsStorage,
   DEFAULT_RANDOM_EVENT_SETTINGS,
-  RANDOM_EVENT_SETTINGS_CHANGED_EVENT,
   readRandomEventSettings,
   writeRandomEventSettings,
 } from './random-event-settings'
-export type {RandomEventSettings} from './random-event-settings'
+export type {RandomEventPreferenceOptions, RandomEventSettings} from './random-event-settings'
 export {useRandomEvent} from './use-random-event'
 export type {UseRandomEventProps} from './use-random-event'
 export {resolveDialoguePlayerGain, usePlayerVolumeDucking} from './use-player-volume-ducking'
 export type {UsePlayerVolumeDuckingOptions} from './use-player-volume-ducking'
 export {
   createDialogueVolumeDuckingSettingsRepository,
+  createDialogueVolumeDuckingPreferenceOptions,
   DEFAULT_DIALOGUE_VOLUME_DUCKING_SETTINGS,
-  DIALOGUE_VOLUME_DUCKING_SETTINGS_CHANGED_EVENT,
   parseDialogueVolumeDuckingSettings,
   readDialogueVolumeDuckingSettings,
   writeDialogueVolumeDuckingSettings,
 } from './volume-ducking-settings'
 export type {
   CreateDialogueVolumeDuckingSettingsRepositoryOptions,
+  DialogueVolumeDuckingPreferenceOptions,
   DialogueVolumeDuckingSettings,
   DialogueVolumeDuckingSettingsRepository,
   DialogueVolumeDuckingSettingsStorage,
 } from './volume-ducking-settings'
 export type {
+  AutomaticDialoguePreferenceOptions,
   AutomaticDialogueSettings,
   AutomaticDialogueSettingsRepository,
   AutomaticDialogueSettingsStorage,
-} from './automatic-dialogue-settings-contract'
+} from './automatic-dialogue-settings'
 export {
   createDialogueAudioSamples,
   generateCompressedDialogueAudio,

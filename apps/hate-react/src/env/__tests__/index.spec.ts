@@ -22,7 +22,8 @@ describe('supporter environment', () => {
 
 describe('getApiBaseUrl', () => {
   it('should use the current browser origin in the browser', () => {
-    vi.stubGlobal('window', {location: {origin: 'https://client.example'}})
+    vi.stubGlobal('window', {})
+    vi.stubGlobal('location', {origin: 'https://client.example'})
 
     expect(getApiBaseUrl()).toBe('https://client.example')
   })

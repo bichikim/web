@@ -1,6 +1,5 @@
 import type {Accessor} from 'solid-js'
 
-import {readAutoStartPreference} from './auto-start-storage'
 import {type PomodoroTimerConfig, type PomodoroTimerState, synchronizePomodoroTimer} from './model'
 
 export interface PomodoroTimerApplyStateOptions {
@@ -15,27 +14,18 @@ export interface PomodoroTimerInitializationOptions {
     options?: PomodoroTimerApplyStateOptions,
   ) => void
   readonly getAutoStartEnabled: Accessor<boolean>
-  readonly getAutoStartRevision: () => number
   readonly getConfig: Accessor<PomodoroTimerConfig>
   readonly getState: Accessor<PomodoroTimerState>
   readonly getStateToRestore: () => PomodoroTimerState | null
   readonly isDisposed: () => boolean
-  readonly setAutoStartEnabled: (isEnabled: boolean) => void
   readonly setNow: (now: number) => void
   readonly setStorageReady: (isReady: boolean) => void
   readonly storedState: PomodoroTimerState
 }
 
-export const initializePomodoroTimer = async (options: PomodoroTimerInitializationOptions) => {
-  const initialRevision = options.getAutoStartRevision()
-  const storedAutoStart = await readAutoStartPreference()
-
+export const initializePomodoroTimer = (options: PomodoroTimerInitializationOptions) => {
   if (options.isDisposed()) {
     return
-  }
-
-  if (options.getAutoStartRevision() === initialRevision) {
-    options.setAutoStartEnabled(storedAutoStart)
   }
 
   const autoStartNextPhase = options.getAutoStartEnabled()

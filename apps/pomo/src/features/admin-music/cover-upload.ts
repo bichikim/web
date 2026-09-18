@@ -1,3 +1,5 @@
+import {apiFetch} from '../http-client'
+import {parseJsonResponse} from '../api-json'
 import {z} from 'zod'
 
 // oxlint-disable-next-line eslint/no-magic-numbers -- Product upload limit is ten MiB.
@@ -38,7 +40,7 @@ export const uploadAlbumCover = async (
     throw new TypeError('커버 이미지 초안 ID가 없습니다. 커버를 다시 선택해 주세요.')
   }
 
-  const uploadResponse = await fetch('/api/admin/music/covers', {
+  const uploadResponse = await apiFetch('admin/music/covers', {
     body: file,
     headers: {'Content-Type': 'image/webp', 'X-Pomo-Cover-Id': coverDraftId},
     method: 'POST',
@@ -48,5 +50,5 @@ export const uploadAlbumCover = async (
     throw new Error('커버 이미지를 R2에 업로드하지 못했습니다.')
   }
 
-  return uploadSchema.parse(await uploadResponse.json())
+  return parseJsonResponse(uploadResponse, uploadSchema)
 }

@@ -1,5 +1,6 @@
 /** @vitest-environment jsdom */
 
+import {PreferenceProvider} from 'src/hooks/use-preference'
 import {cleanup, fireEvent, render, screen, within} from '@solidjs/testing-library'
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 
@@ -22,7 +23,9 @@ describe('PMusicPlayerContent transport integration', () => {
   })
 
   it('should start a new shuffled cycle when repeat all is enabled', async () => {
-    const result = render(() => <PMusicPlayerContent tracks={TRACKS} />)
+    const result = render(() => <PMusicPlayerContent tracks={TRACKS} />, {
+      wrapper: PreferenceProvider,
+    })
     const audio = getAudioElement(result.container)
 
     markAudioMetadataReady(audio)
@@ -55,7 +58,9 @@ describe('PMusicPlayerContent transport integration', () => {
     vi.mocked(HTMLMediaElement.prototype.play).mockRejectedValueOnce(
       new DOMException('The play request was interrupted', 'AbortError'),
     )
-    const result = render(() => <PMusicPlayerContent tracks={TRACKS} />)
+    const result = render(() => <PMusicPlayerContent tracks={TRACKS} />, {
+      wrapper: PreferenceProvider,
+    })
     const audio = getAudioElement(result.container)
 
     fireEvent(audio, new Event('play'))
@@ -74,9 +79,10 @@ describe('PMusicPlayerContent transport integration', () => {
   it('should resume the next track after the source replacement pause', async () => {
     localStorage.clear()
     const onPlayingChange = vi.fn()
-    const result = render(() => (
-      <PMusicPlayerContent onPlayingChange={onPlayingChange} tracks={TRACKS} />
-    ))
+    const result = render(
+      () => <PMusicPlayerContent onPlayingChange={onPlayingChange} tracks={TRACKS} />,
+      {wrapper: PreferenceProvider},
+    )
     const audio = getAudioElement(result.container)
 
     vi.spyOn(audio, 'load').mockImplementation(() => undefined)
@@ -107,7 +113,9 @@ describe('PMusicPlayerContent transport integration', () => {
 
   it('should resume the next track after seeking before metadata', async () => {
     localStorage.clear()
-    const result = render(() => <PMusicPlayerContent tracks={TRACKS} />)
+    const result = render(() => <PMusicPlayerContent tracks={TRACKS} />, {
+      wrapper: PreferenceProvider,
+    })
     const audio = getAudioElement(result.container)
 
     vi.spyOn(audio, 'load').mockImplementation(() => undefined)
@@ -128,9 +136,10 @@ describe('PMusicPlayerContent transport integration', () => {
 
   it('should report the current track when selection changes', async () => {
     const onTrackChange = vi.fn()
-    const result = render(() => (
-      <PMusicPlayerContent onTrackChange={onTrackChange} tracks={TRACKS} />
-    ))
+    const result = render(
+      () => <PMusicPlayerContent onTrackChange={onTrackChange} tracks={TRACKS} />,
+      {wrapper: PreferenceProvider},
+    )
     const audio = getAudioElement(result.container)
 
     expect(onTrackChange).toHaveBeenLastCalledWith(TRACKS[1])
@@ -141,9 +150,10 @@ describe('PMusicPlayerContent transport integration', () => {
 
   it('should report the actual playback state', () => {
     const onPlayingChange = vi.fn()
-    const result = render(() => (
-      <PMusicPlayerContent onPlayingChange={onPlayingChange} tracks={TRACKS} />
-    ))
+    const result = render(
+      () => <PMusicPlayerContent onPlayingChange={onPlayingChange} tracks={TRACKS} />,
+      {wrapper: PreferenceProvider},
+    )
     const audio = getAudioElement(result.container)
 
     expect(onPlayingChange).toHaveBeenLastCalledWith(false)

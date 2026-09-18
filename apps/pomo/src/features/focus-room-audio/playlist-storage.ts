@@ -1,5 +1,7 @@
 import {z} from 'zod'
 
+import {createLatestAsyncTask} from 'src/utils/create-latest-async-task'
+
 import {
   hasNativeStorageBridge,
   readTossStorageJson,
@@ -7,7 +9,6 @@ import {
   writeTossStorageJson,
   writeWebStorageJson,
 } from 'src/utils/runtime-storage'
-import {createLatestAsyncTask} from 'src/utils/create-latest-async-task'
 
 const PLAYLIST_STORAGE_KEY = 'pomo:focus-room-playlist:v1'
 
@@ -74,18 +75,18 @@ const systemClock = {
   now: Date.now,
 } satisfies PlaylistClock
 
-/** Creates an independently coordinated playlist storage boundary. */
+/** Reads and writes playlists using their persisted timestamps. */
 export const createPPlaylistStorage = (
   storage: PlaylistStorageAdapter = runtimeStorage,
   clock: PlaylistClock = systemClock,
   reportError: (error: unknown) => void = globalThis.reportError,
 ): PPlaylistStorage => {
   const writeLatestToss = createLatestAsyncTask(storage.writeToss)
-  let writeRevision = 0
+  let playlistRevision = 0
 
   return {
     async read() {
-      const initialWriteRevision = writeRevision
+      const initialPlaylistRevision = playlistRevision
       const webPlaylist = storage.readWeb()
 
       if (!storage.usesTossStorage()) {
@@ -95,7 +96,7 @@ export const createPPlaylistStorage = (
       try {
         const tossPlaylist = await storage.readToss()
 
-        if (writeRevision !== initialWriteRevision) {
+        if (playlistRevision !== initialPlaylistRevision) {
           return storage.readWeb()?.trackIds ?? null
         }
 
@@ -105,22 +106,30 @@ export const createPPlaylistStorage = (
           storage.writeWeb(latestPlaylist)
 
           if (latestPlaylist === webPlaylist) {
-            writeLatestToss(latestPlaylist).catch(reportError)
+            await writeLatestToss(latestPlaylist).catch(reportError)
           }
+        }
+
+        if (playlistRevision !== initialPlaylistRevision) {
+          return storage.readWeb()?.trackIds ?? null
         }
 
         return latestPlaylist?.trackIds ?? null
       } catch {
+        if (playlistRevision !== initialPlaylistRevision) {
+          return storage.readWeb()?.trackIds ?? null
+        }
+
         return webPlaylist?.trackIds ?? null
       }
     },
     async write(trackIds) {
-      writeRevision += 1
       const storedPlaylist = {
         savedAt: clock.now(),
         trackIds,
         version: 1,
       } satisfies StoredPlaylist
+      playlistRevision += 1
       storage.writeWeb(storedPlaylist)
 
       if (!storage.usesTossStorage()) {
@@ -140,3 +149,27 @@ export const readPPlaylist = () => runtimePlaylistStorage.read()
 /** Persists the user-edited playlist until the host app or browser data is removed. */
 export const writePPlaylist = (trackIds: readonly string[]) =>
   runtimePlaylistStorage.write(trackIds)
+
+export interface PlaylistPreference {
+  readonly trackIds: readonly string[] | null
+}
+
+const playlistPreferenceSchema = z.object({trackIds: z.array(z.string().min(1)).nullable()})
+
+export const playlistPreference = {
+  defaultValue: {trackIds: null} satisfies PlaylistPreference,
+  key: PLAYLIST_STORAGE_KEY,
+  parse: (value: unknown): PlaylistPreference | null => {
+    const result = playlistPreferenceSchema.safeParse(value)
+    return result.success ? result.data : null
+  },
+  storage: {
+    read: async () => ({trackIds: await readPPlaylist()}),
+    write: (_key: string, value: unknown) => {
+      const result = playlistPreferenceSchema.safeParse(value)
+      return result.success && result.data.trackIds !== null
+        ? writePPlaylist(result.data.trackIds)
+        : null
+    },
+  },
+}

@@ -11,13 +11,13 @@ let disposeView: (() => void) | undefined
 afterEach(() => {
   disposeView?.()
   disposeView = undefined
-  window.document.body.replaceChildren()
+  globalThis.document.body.replaceChildren()
 })
 
 test('should drag a root part into a group in Chromium', async () => {
-  const root = window.document.createElement('div')
+  const root = globalThis.document.createElement('div')
   const [document, setDocument] = createSignal<PuppetDocument>(createDemoDocument())
-  window.document.body.replaceChildren(root)
+  globalThis.document.body.replaceChildren(root)
   disposeView = render(
     () => <EditorLayerPanel document={document()} onDocumentChange={setDocument} />,
     root,

@@ -1,5 +1,6 @@
 import {createEffect, createSignal, onCleanup, onMount} from 'solid-js'
 import {useEvent} from '@winter-love/solid-use/event'
+import {usePreference} from 'src/hooks/use-preference'
 
 import {getLocale} from '@paraglide/runtime'
 import {
@@ -8,6 +9,7 @@ import {
   type PDialogueRepository,
   type PEventContextValue,
 } from '../focus-room-dialogue'
+import {createAutomaticDialoguePreferenceOptions} from '../focus-room-dialogue/automatic-dialogue-settings'
 import {
   createSupertonicClient,
   getSupertonicErrorMessage,
@@ -32,12 +34,6 @@ export interface UseMemoryRemindersProps {
   readonly loadSettings?: () => Promise<AutomaticDialogueSettings>
   readonly onBeforePlayback?: () => void
   readonly random?: () => number
-}
-
-const loadAutomaticDialogueSettings = async () => {
-  const {createAutomaticDialogueSettingsRepository} =
-    await import('../focus-room-dialogue/automatic-dialogue-settings')
-  return createAutomaticDialogueSettingsRepository(window.localStorage).load()
 }
 
 const getReminderTime = (memo: MemoryMemo) => {
@@ -248,6 +244,7 @@ export interface MemoryReminders {
 /** Runs persisted memo reminders while the Pomo room is mounted. */
 // oxlint-disable-next-line eslint/max-lines-per-function -- One owner coordinates reminder scheduling, delivery, and asynchronous resource cleanup.
 export const useMemoryReminders = (props: UseMemoryRemindersProps): MemoryReminders => {
+  const [automaticSettings] = usePreference(createAutomaticDialoguePreferenceOptions())
   const memos = useMemoryMemos()
   useDeletionRecovery(() => memoryMemoDeletion.retry(props.events.deleteDialogue))
   const [clockRevision, setClockRevision] = createSignal(0)
@@ -260,6 +257,14 @@ export const useMemoryReminders = (props: UseMemoryRemindersProps): MemoryRemind
   let clientPreparation: Promise<SupertonicClient> | null = null
   let repository: PDialogueRepository | null = null
   let isDisposed = false
+
+  const loadAutomaticDialogueSettings = async () => {
+    const settings = automaticSettings()
+    if (settings === null) {
+      throw new Error('자동 음성 생성 설정이 아직 준비되지 않았어요.')
+    }
+    return settings
+  }
 
   const getClient = (modelId: SupertonicModelId) => {
     if (clientModelId !== null && clientModelId !== modelId) {

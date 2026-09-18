@@ -96,7 +96,7 @@ const createPianoRoot = () => {
 beforeEach(() => {
   vi.clearAllMocks()
   vi.useRealTimers()
-  vi.mocked(getWindow).mockReturnValue(window)
+  vi.mocked(getWindow).mockReturnValue(globalThis.window)
   vi.mocked(useIsCleanup).mockReturnValue(() => false)
   vi.mocked(prepareAudioContext).mockReturnValue(vi.fn())
 })

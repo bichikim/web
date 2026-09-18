@@ -1,5 +1,6 @@
 /** @vitest-environment jsdom */
 
+import {PreferenceProvider} from 'src/hooks/use-preference'
 import {createSignal} from 'solid-js'
 import {cleanup, render} from '@solidjs/testing-library'
 import {afterEach, beforeEach, expect, it, vi} from 'vitest'
@@ -55,10 +56,13 @@ const readStoredPlayback = () =>
 const renderController = () => {
   const [element, setElement] = createSignal<HTMLAudioElement>()
   let controller: PlayerController | undefined
-  render(() => {
-    controller = usePlayerController({element, tracks: [TRACK]})
-    return null
-  })
+  render(
+    () => {
+      controller = usePlayerController({element, tracks: [TRACK]})
+      return null
+    },
+    {wrapper: PreferenceProvider},
+  )
 
   const audio = document.createElement('audio')
   vi.spyOn(audio, 'load').mockImplementation(() => undefined)
@@ -81,7 +85,9 @@ const renderControlledController = () => {
     controller = usePlayerController(props)
     return null
   }
-  render(() => <ControllerHarness element={element} tracks={tracks()} />)
+  render(() => <ControllerHarness element={element} tracks={tracks()} />, {
+    wrapper: PreferenceProvider,
+  })
 
   const audio = document.createElement('audio')
   vi.spyOn(audio, 'load').mockImplementation(() => undefined)
@@ -116,7 +122,7 @@ it('should preserve restart playback intent until the play event follows seeked'
   })
 
   controller.onSeeking()
-  window.dispatchEvent(new Event('pagehide'))
+  globalThis.dispatchEvent(new Event('pagehide'))
   controller.onSeeked()
   controller.onTimeUpdate()
   expect(readStoredPlayback()).toMatchObject({
@@ -218,7 +224,7 @@ it('should persist a user pause when it cancels a pending restart', () => {
 
   controller.onEnded()
   controller.pause()
-  window.dispatchEvent(new Event('pagehide'))
+  globalThis.dispatchEvent(new Event('pagehide'))
   controller.onSeeked()
 
   expect(readStoredPlayback()).toMatchObject({
@@ -233,7 +239,7 @@ it('should persist a media-controller pause intent without a native pause event'
 
   controller.onEnded()
   controller.markPauseIntent()
-  window.dispatchEvent(new Event('pagehide'))
+  globalThis.dispatchEvent(new Event('pagehide'))
 
   expect(readStoredPlayback()).toMatchObject({
     isPlaying: false,

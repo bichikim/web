@@ -377,7 +377,7 @@ describe('reportClientError', () => {
         platform: 'apps-in-toss',
         release: 'local',
         route: {
-          origin: window.location.origin,
+          origin: globalThis.location.origin,
           template: '/',
         },
       }),

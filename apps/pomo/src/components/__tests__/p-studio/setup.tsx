@@ -1,5 +1,7 @@
 /** @vitest-environment jsdom */
 
+import {PreferenceProvider} from 'src/hooks/use-preference'
+
 import {render} from '@solidjs/testing-library'
 import {createSignal} from 'solid-js'
 import {vi} from 'vitest'
@@ -105,9 +107,11 @@ export const seoulLocation = {
 
 export const renderStudio = () =>
   render(() => (
-    <PModelDownloadProvider runtime={modelDownloadRuntime}>
-      <PStudio />
-    </PModelDownloadProvider>
+    <PreferenceProvider>
+      <PModelDownloadProvider runtime={modelDownloadRuntime}>
+        <PStudio />
+      </PModelDownloadProvider>
+    </PreferenceProvider>
   ))
 
 export const configureStudio = (options: StudioOptions = {}) => {
@@ -136,9 +140,11 @@ export const configureStudio = (options: StudioOptions = {}) => {
   } as unknown as ReturnType<typeof usePSay>)
   vi.mocked(usePDisplayPreferences).mockReturnValue({
     dialogueComposerVisible,
+    featureRequestVisible: () => true,
     isReady: () => true,
     memoryAssistVisible: () => true,
     onDialogueComposerVisibleChange: setDialogueComposerVisible,
+    onFeatureRequestVisibleChange: vi.fn(),
     onMemoryAssistVisibleChange: vi.fn(),
     onPlayerVisibleChange: vi.fn(),
     onPomodoroVisibleChange: vi.fn(),

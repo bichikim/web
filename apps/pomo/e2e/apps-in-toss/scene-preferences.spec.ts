@@ -7,7 +7,7 @@ test('should restore scene choices from Toss dev storage after removing the brow
 }, information) => {
   await page.addInitScript(() => {
     // Devtools replaces the SDK but does not create the host marker used by storage routing.
-    Object.defineProperty(window, 'ReactNativeWebView', {configurable: true, value: {}})
+    Object.defineProperty(globalThis, 'ReactNativeWebView', {configurable: true, value: {}})
     localStorage.setItem('PARAGLIDE_LOCALE', 'ko')
   })
   await page.goto('/')

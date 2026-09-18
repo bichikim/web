@@ -32,6 +32,7 @@ export const DesktopSettings = () => {
         motionMode={settings.motionMode()}
         onActivityChange={settings.onActivityChange}
         onDesktopModeChange={settings.desktopMode.onModeChange}
+        onFeatureRequestVisibleChange={displayPreferences.onFeatureRequestVisibleChange}
         onGazeChange={settings.onGazeChange}
         onMemoryAssistVisibleChange={displayPreferences.onMemoryAssistVisibleChange}
         onMotionInputChange={settings.onMotionInputChange}
@@ -45,6 +46,7 @@ export const DesktopSettings = () => {
         onWeatherEnabledChange={settings.onWeatherEnabledChange}
         onWeatherLocationChange={settings.onWeatherLocationChange}
         onWeatherSceneModeChange={settings.onWeatherSceneModeChange}
+        featureRequestVisible={displayPreferences.featureRequestVisible()}
         playerVisible={displayPreferences.playerVisible()}
         pomodoroVisible={displayPreferences.pomodoroVisible()}
         sceneStyle={settings.sceneStyle()}

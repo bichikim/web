@@ -2,7 +2,11 @@
 
 import {beforeEach, describe, expect, it, vi} from 'vitest'
 
-import {readFocusRoomEntrySession, writeFocusRoomEntrySession} from '..'
+import {
+  type FocusRoomEntrySessionStorage,
+  readFocusRoomEntrySession,
+  writeFocusRoomEntrySession,
+} from '..'
 
 describe('focus room entry session', () => {
   beforeEach(() => {
@@ -30,5 +34,17 @@ describe('focus room entry session', () => {
       throw new Error('storage unavailable')
     })
     expect(() => writeFocusRoomEntrySession()).not.toThrow()
+  })
+
+  it('should persist through an injected session store', () => {
+    const values = new Map<string, string>()
+    const storage: FocusRoomEntrySessionStorage = {
+      getItem: (key) => values.get(key) ?? null,
+      setItem: (key, value) => values.set(key, value),
+    }
+
+    expect(readFocusRoomEntrySession(storage)).toBe(false)
+    writeFocusRoomEntrySession(storage)
+    expect(readFocusRoomEntrySession(storage)).toBe(true)
   })
 })

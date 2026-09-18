@@ -213,11 +213,11 @@ export const useSelectMenu = (props: UseSelectMenuProps = {}): SelectMenuControl
       notifyAnchorRectFromTrigger()
     }
 
-    window.addEventListener('keydown', handleKeyDown)
+    globalThis.addEventListener('keydown', handleKeyDown)
     window.addEventListener('resize', handleReposition)
     window.addEventListener('scroll', handleReposition, true)
     onCleanup(() => {
-      window.removeEventListener('keydown', handleKeyDown)
+      globalThis.removeEventListener('keydown', handleKeyDown)
       window.removeEventListener('resize', handleReposition)
       window.removeEventListener('scroll', handleReposition, true)
     })

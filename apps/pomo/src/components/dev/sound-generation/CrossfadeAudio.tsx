@@ -15,6 +15,7 @@ export interface CrossfadePlaybackState {
   readonly position: number
 }
 
+// oxlint-disable-next-line eslint/max-lines-per-function -- This component owns one disposable playback lifecycle and its view state.
 export function CrossfadeAudio(props: CrossfadeAudioProps) {
   const [duration, setDuration] = createSignal(0)
   const [position, setPosition] = createSignal(0)
@@ -24,8 +25,11 @@ export function CrossfadeAudio(props: CrossfadeAudioProps) {
   let playback: LoopPlayback | undefined
   let autoPlayed = false
   let currentConnection: number | undefined
+  let positionBeforeScrubbing = 0
+  let seekRevision = 0
 
   const close = (preserveState = false) => {
+    seekRevision += 1
     const current = playback
     playback = undefined
     if (current !== undefined) {
@@ -35,6 +39,8 @@ export function CrossfadeAudio(props: CrossfadeAudioProps) {
       current.close().catch((cause) => console.warn('Audio cleanup failed', cause))
     }
     setPlaying(false)
+    setScrubbing(false)
+    positionBeforeScrubbing = 0
   }
 
   const connection = () =>
@@ -44,6 +50,7 @@ export function CrossfadeAudio(props: CrossfadeAudioProps) {
     return Number.isInteger(value) ? String(value) : value.toFixed(1)
   }
   const play = async (requestedPosition = position()) => {
+    seekRevision += 1
     const current = playback
     if (current === undefined || duration() <= 0) {
       return
@@ -68,6 +75,7 @@ export function CrossfadeAudio(props: CrossfadeAudioProps) {
     currentConnection = undefined
     setDuration(0)
     setPosition(Math.max(initialPosition, 0))
+    setScrubbing(false)
     setStatus('재생 준비 중…')
     try {
       playback = createLoopPlayer(
@@ -119,6 +127,7 @@ export function CrossfadeAudio(props: CrossfadeAudioProps) {
       return
     }
     if (playing()) {
+      seekRevision += 1
       current.stop()
       setPlaying(false)
       setStatus('정지했습니다.')
@@ -134,14 +143,24 @@ export function CrossfadeAudio(props: CrossfadeAudioProps) {
 
   const seek = async () => {
     const current = playback
+    const target = position()
+    const previousPosition = positionBeforeScrubbing
+    const revision = (seekRevision += 1)
     setScrubbing(false)
     if (current === undefined) {
       return
     }
     try {
-      await current.seek(position())
+      await current.seek(target)
+      if (revision === seekRevision && current === playback) {
+        positionBeforeScrubbing = position()
+      }
     } catch (cause) {
-      setStatus(cause instanceof Error ? cause.message : '위치를 이동하지 못했습니다.')
+      if (revision === seekRevision && current === playback) {
+        setPlaying(false)
+        setPosition(previousPosition)
+        setStatus(cause instanceof Error ? cause.message : '위치를 이동하지 못했습니다.')
+      }
     }
   }
 
@@ -152,6 +171,10 @@ export function CrossfadeAudio(props: CrossfadeAudioProps) {
       connection={displayedConnection()}
       duration={duration()}
       onPreview={(seconds) => {
+        seekRevision += 1
+        if (!scrubbing()) {
+          positionBeforeScrubbing = position()
+        }
         setScrubbing(true)
         setPosition(seconds)
       }}

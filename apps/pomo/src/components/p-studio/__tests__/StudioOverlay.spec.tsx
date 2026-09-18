@@ -14,9 +14,11 @@ const createOptions = (): ComponentProps<typeof StudioOverlay> => ({
   desktopMode: 'normal',
   displayPreferences: {
     dialogueComposerVisible: () => false,
+    featureRequestVisible: () => true,
     isReady: () => true,
     memoryAssistVisible: () => true,
     onDialogueComposerVisibleChange: vi.fn(),
+    onFeatureRequestVisibleChange: vi.fn(),
     onMemoryAssistVisibleChange: vi.fn(),
     onPlayerVisibleChange: vi.fn(),
     onPomodoroVisibleChange: vi.fn(),

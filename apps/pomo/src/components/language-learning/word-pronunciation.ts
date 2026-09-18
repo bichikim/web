@@ -2,11 +2,11 @@ import * as m from '@paraglide/message'
 import {generateCompressedDialogueAudio} from '../../features/focus-room-dialogue'
 import type {LanguageLearningLanguage} from '../../features/language-learning'
 import {
-  createSupertonicClient,
   getSupertonicErrorMessage,
   type SupertonicModelId,
   type SupertonicVoiceId,
 } from '../../features/supertonic'
+import {runLanguageLearningSupertonic} from './supertonic-lifecycle'
 
 interface CompletedWordPronunciation {
   readonly audio: Blob
@@ -45,52 +45,46 @@ export const generateLanguageLearningWordPronunciation = async (
     return {status: 'cancelled'}
   }
 
-  const client = createSupertonicClient()
-  let isClientDisposed = false
-  const disposeClient = () => {
-    if (!isClientDisposed) {
-      isClientDisposed = true
-      client.dispose()
-    }
-  }
-  options.signal?.addEventListener('abort', disposeClient, {once: true})
-
   try {
-    if (isAborted(options.signal)) {
-      return {status: 'cancelled'}
+    const result =
+      await runLanguageLearningSupertonic<GenerateLanguageLearningWordPronunciationResult>({
+        modelId: options.modelId,
+        onProgress: () => undefined,
+        onStatus: () => undefined,
+        run: async (client) => {
+          if (isAborted(options.signal)) {
+            return {status: 'cancelled'}
+          }
+
+          const generated = await generateCompressedDialogueAudio({
+            client,
+            language: options.language,
+            modelId: options.modelId,
+            onChunk: () => undefined,
+            signal: options.signal,
+            text: options.text,
+            voiceId: options.voiceId,
+          })
+
+          if (isAborted(options.signal)) {
+            return {status: 'cancelled'}
+          }
+
+          return generated.ok
+            ? {audio: generated.value.audio, status: 'complete'}
+            : {message: generated.message, status: 'error'}
+        },
+        signal: options.signal,
+      })
+
+    switch (result.status) {
+      case 'cancelled':
+        return result
+      case 'initialization-error':
+        return {message: getSupertonicErrorMessage(result.error), status: 'error'}
+      case 'complete':
+        return result.value
     }
-
-    const initialized = await client.initialize({
-      modelId: options.modelId,
-      onProgress: () => undefined,
-      onStatus: () => undefined,
-    })
-
-    if (isAborted(options.signal)) {
-      return {status: 'cancelled'}
-    }
-
-    if (!initialized.ok) {
-      return {message: getSupertonicErrorMessage(initialized.error), status: 'error'}
-    }
-
-    const generated = await generateCompressedDialogueAudio({
-      client,
-      language: options.language,
-      modelId: options.modelId,
-      onChunk: () => undefined,
-      signal: options.signal,
-      text: options.text,
-      voiceId: options.voiceId,
-    })
-
-    if (isAborted(options.signal)) {
-      return {status: 'cancelled'}
-    }
-
-    return generated.ok
-      ? {audio: generated.value.audio, status: 'complete'}
-      : {message: generated.message, status: 'error'}
   } catch (error: unknown) {
     if (isAborted(options.signal)) {
       return {status: 'cancelled'}
@@ -98,8 +92,5 @@ export const generateLanguageLearningWordPronunciation = async (
 
     console.error('Failed to generate language learning word pronunciation.', error)
     return {message: m.learning_words_pronunciation_failed(), status: 'error'}
-  } finally {
-    options.signal?.removeEventListener('abort', disposeClient)
-    disposeClient()
   }
 }

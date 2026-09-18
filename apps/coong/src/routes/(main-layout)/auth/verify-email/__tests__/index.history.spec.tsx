@@ -34,7 +34,7 @@ vi.mock('../_components/bg.png', () => ({
 describe('VerifyEmailPage browser history', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    window.history.replaceState(null, '', '/auth/verify-email?token_hash=once&type=signup')
+    globalThis.history.replaceState(null, '', '/auth/verify-email?token_hash=once&type=signup')
     verifyOtp.mockResolvedValueOnce({id: 'user-1'}).mockRejectedValue(new Error('Already used'))
   })
 
@@ -48,16 +48,16 @@ describe('VerifyEmailPage browser history', () => {
       </Router>
     ))
     await waitFor(() => expect(verifyOtp).toHaveBeenCalledTimes(1))
-    window.history.pushState({destination: true}, '', '/auth/sign-in?redirect=%2Fprotected')
-    window.dispatchEvent(new PopStateEvent('popstate'))
+    globalThis.history.pushState({destination: true}, '', '/auth/sign-in?redirect=%2Fprotected')
+    globalThis.dispatchEvent(new PopStateEvent('popstate'))
     await screen.findByText('Sign in destination')
     verification.resolve({id: 'user-1'})
     await verification.promise
     await new Promise((resolve) => {
       setTimeout(resolve, 0)
     })
-    expect(window.location.search).toBe('?redirect=%2Fprotected')
-    expect(window.history.state).toMatchObject({destination: true})
+    expect(globalThis.location.search).toBe('?redirect=%2Fprotected')
+    expect(globalThis.history.state).toMatchObject({destination: true})
   })
 
   it('should restore success from browser history when the router remounts after refresh', async () => {
@@ -68,8 +68,8 @@ describe('VerifyEmailPage browser history', () => {
         </Router>
       ))
     const page = mount()
-    await waitFor(() => expect(window.location.search).toBe(''))
-    expect(window.history.state).toMatchObject({emailVerified: true})
+    await waitFor(() => expect(globalThis.location.search).toBe(''))
+    expect(globalThis.history.state).toMatchObject({emailVerified: true})
     expect(screen.getByText('user@example.com')).toBeInTheDocument()
     page.unmount()
     mount()

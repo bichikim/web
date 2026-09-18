@@ -1,5 +1,6 @@
 import {z} from 'zod'
 
+import {type PreferenceStorage, webLocalStorage} from 'src/utils/preference-storage'
 import {
   createVersionedPreferenceRepository,
   hasNativeStorageBridge,
@@ -8,8 +9,6 @@ import {
   writeTossStorageJson,
   writeWebStorageJson,
 } from 'src/utils/runtime-storage'
-
-export const RANDOM_EVENT_SETTINGS_CHANGED_EVENT = 'pomo:random-event-settings-changed'
 
 export interface RandomEventSettings {
   readonly maximumMinutes: number
@@ -53,7 +52,7 @@ export interface RandomEventSettingsRepository {
   readonly write: (settings: RandomEventSettings) => Promise<void>
 }
 
-/** Creates random event persistence with independent revision and latest-write coordination. */
+/** Reads and writes random event settings using the selected runtime storage. */
 export const createRandomEventSettingsRepository = (
   storage: RandomEventSettingsStorage,
 ): RandomEventSettingsRepository =>
@@ -76,6 +75,33 @@ const runtimeRepository = createRandomEventSettingsRepository({
   readWeb: () => readWebStorageJson(STORAGE_KEY, parseRandomEventSettings),
   writeToss: (settings) => writeTossStorageJson(STORAGE_KEY, settings),
   writeWeb: (settings) => writeWebStorageJson(STORAGE_KEY, settings),
+})
+
+const preferenceStorage: PreferenceStorage = {
+  read: () => runtimeRepository.read(),
+  subscribe: webLocalStorage.subscribe,
+  write: (_key, value) => {
+    const settings = parseRandomEventSettings(value)
+
+    return settings === null
+      ? new Error('Invalid random event settings.')
+      : runtimeRepository.write(settings).then(() => undefined)
+  },
+}
+
+export interface RandomEventPreferenceOptions {
+  readonly onError?: (error: unknown) => void
+  readonly onSaved?: () => void
+}
+
+/** Creates the shared preference definition for random event settings. */
+export const createRandomEventPreferenceOptions = (options: RandomEventPreferenceOptions = {}) => ({
+  defaultValue: DEFAULT_RANDOM_EVENT_SETTINGS,
+  key: STORAGE_KEY,
+  onError: options.onError,
+  onSaved: options.onSaved,
+  parse: parseRandomEventSettings,
+  storage: preferenceStorage,
 })
 
 /** Reads random event settings for the current runtime. */

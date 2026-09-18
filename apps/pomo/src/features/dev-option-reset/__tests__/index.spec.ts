@@ -22,7 +22,7 @@ afterEach(() => {
   document.cookie = `${cookieName}=; path=/; max-age=0`
   localStorage.clear()
   sessionStorage.clear()
-  Reflect.deleteProperty(window, 'ReactNativeWebView')
+  Reflect.deleteProperty(globalThis.window, 'ReactNativeWebView')
   storageMocks.getItem.mockReset()
   storageMocks.removeItem.mockReset()
   storageMocks.setItem.mockReset()
@@ -376,7 +376,7 @@ it('should converge runtime web storage with toss values after restoration fails
     'pomo:weather-preference:v1',
     'pomo:screen-saver-delay:v1',
   ]
-  Object.defineProperty(window, 'ReactNativeWebView', {configurable: true, value: {}})
+  Object.defineProperty(globalThis, 'ReactNativeWebView', {configurable: true, value: {}})
   for (const groupKey of groupKeys) {
     tossValues.set(groupKey, `${groupKey}:toss`)
     localStorage.setItem(groupKey, `${groupKey}:web`)
@@ -420,7 +420,7 @@ it('should remove the Paraglide cookie when every option is reset', async () => 
 })
 
 it('should use the preferred browser locale on the next web bootstrap after reset', async () => {
-  vi.spyOn(window.navigator, 'languages', 'get').mockReturnValue(['en-US'])
+  vi.spyOn(globalThis.navigator, 'languages', 'get').mockReturnValue(['en-US'])
   await setLocale('ko', {reload: false})
   localStorage.setItem(localStorageKey, 'ko')
 
@@ -448,7 +448,7 @@ it.each(['entry', 'all'] as const)(
 )
 
 it('should remove native entry history as part of the entry reset', async () => {
-  Object.defineProperty(window, 'ReactNativeWebView', {configurable: true, value: {}})
+  Object.defineProperty(globalThis, 'ReactNativeWebView', {configurable: true, value: {}})
   storageMocks.getItem.mockResolvedValue('true')
   storageMocks.removeItem.mockResolvedValue()
   localStorage.setItem('pomo:focus-room-entry-history:v1', 'true')

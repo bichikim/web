@@ -54,7 +54,7 @@ export const useMemoryMemos = (): Accessor<ReadonlyArray<MemoryMemo>> => {
       }
     }
 
-    useEvent(window, MEMORY_MEMOS_CHANGED_EVENT, handleChange)
+    useEvent(globalThis.window, MEMORY_MEMOS_CHANGED_EVENT, handleChange)
     readMemoryMemos()
       .then((storedMemos) => {
         if (!isDisposed && storageRevision === initialRevision) {

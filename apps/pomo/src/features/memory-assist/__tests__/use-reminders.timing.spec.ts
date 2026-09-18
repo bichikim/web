@@ -1,6 +1,7 @@
 /** @vitest-environment jsdom */
 
 import {renderHook} from '@solidjs/testing-library'
+import {PreferenceProvider} from 'src/hooks/use-preference'
 import flushPromises from 'flush-promises'
 import {afterEach, beforeEach, expect, it, vi} from 'vitest'
 
@@ -33,6 +34,9 @@ vi.mock('../../supertonic', () => ({
   createSupertonicClient: mocks.createClient,
   getSupertonicErrorMessage: () => 'voice failed',
 }))
+
+const renderReminders = <Value>(callback: () => Value) =>
+  renderHook(callback, {wrapper: PreferenceProvider})
 
 beforeEach(() => {
   vi.useFakeTimers()
@@ -103,7 +107,7 @@ it.each([
     }
     stages[stage]()
     const events = {playDialogue, refreshDialogues} as unknown as PEventContextValue
-    const view = renderHook(() =>
+    const view = renderReminders(() =>
       useMemoryReminders({events, loadSettings: mocks.loadSettings, random: () => 0}),
     )
 
@@ -168,7 +172,7 @@ it('should continue an exact repeat after invalidating an edited playback occurr
     playDialogue,
     refreshDialogues: vi.fn().mockResolvedValue(undefined),
   } as unknown as PEventContextValue
-  const view = renderHook(() => useMemoryReminders({events, random: () => 0}))
+  const view = renderReminders(() => useMemoryReminders({events, random: () => 0}))
 
   try {
     await vi.advanceTimersToNextTimerAsync()
@@ -210,7 +214,7 @@ it('should retain an invalidated occurrence across later edits to the same sched
     playDialogue,
     refreshDialogues: vi.fn().mockResolvedValue(undefined),
   } as unknown as PEventContextValue
-  const view = renderHook(() => useMemoryReminders({events, random: () => 0}))
+  const view = renderReminders(() => useMemoryReminders({events, random: () => 0}))
 
   try {
     await vi.advanceTimersToNextTimerAsync()
@@ -268,7 +272,7 @@ it('should advance a later invalidated occurrence after editing during its playb
     playDialogue,
     refreshDialogues: vi.fn().mockResolvedValue(undefined),
   } as unknown as PEventContextValue
-  const view = renderHook(() => useMemoryReminders({events, random: () => 0}))
+  const view = renderReminders(() => useMemoryReminders({events, random: () => 0}))
 
   try {
     await vi.advanceTimersToNextTimerAsync()
@@ -325,7 +329,7 @@ it('should discard an invalidated occurrence when its schedule is edited', async
     playDialogue,
     refreshDialogues: vi.fn().mockResolvedValue(undefined),
   } as unknown as PEventContextValue
-  const view = renderHook(() => useMemoryReminders({events, random: () => 0}))
+  const view = renderReminders(() => useMemoryReminders({events, random: () => 0}))
 
   try {
     await vi.advanceTimersToNextTimerAsync()
@@ -375,7 +379,7 @@ it('should keep a simultaneously due recall pending when exact playback is skipp
     playDialogue: vi.fn().mockResolvedValue(false),
     refreshDialogues: vi.fn().mockResolvedValue(undefined),
   } as unknown as PEventContextValue
-  const view = renderHook(() => useMemoryReminders({events}))
+  const view = renderReminders(() => useMemoryReminders({events}))
 
   try {
     await vi.advanceTimersToNextTimerAsync()
@@ -417,7 +421,7 @@ it('should deliver a simultaneously due recall when exact playback is invalidate
     playDialogue,
     refreshDialogues: vi.fn().mockResolvedValue(undefined),
   } as unknown as PEventContextValue
-  const view = renderHook(() => useMemoryReminders({events}))
+  const view = renderReminders(() => useMemoryReminders({events}))
 
   try {
     await vi.advanceTimersToNextTimerAsync()

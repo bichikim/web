@@ -49,7 +49,7 @@ jobs:
         run: pnpm install
 
       - name: Unit Test
-        run: pnpm run test
+        run: pnpm test:vitest
 
       - name: Build
         run: pnpm run build:coong-client

@@ -10,6 +10,7 @@ import type {
 import {mapInBatches} from './batch'
 import {formatCalendarDate} from './format-calendar-date'
 import {requestTokens} from './oauth'
+import {paginate, PAGINATION_LIMITS} from './paginate'
 
 const MICROSOFT_ACCOUNT_API =
   'https://graph.microsoft.com/v1.0/me?$select=id,displayName,mail,userPrincipalName'
@@ -19,12 +20,6 @@ const MICROSOFT_TOKEN_URL = 'https://login.microsoftonline.com/common/oauth2/v2.
 const MICROSOFT_SCOPES = ['openid', 'email', 'offline_access', 'User.Read', 'Calendars.Read'].join(
   ' ',
 )
-const EVENT_PAGE_SIZE = 250
-const MAXIMUM_EVENT_PAGES = 20
-const MAXIMUM_EVENTS_PER_CALENDAR = EVENT_PAGE_SIZE * MAXIMUM_EVENT_PAGES
-const CALENDAR_PAGE_SIZE = 250
-const MAXIMUM_CALENDAR_PAGES = 20
-const MAXIMUM_CALENDARS = 100
 const EVENT_REQUEST_CONCURRENCY = 4
 const CALENDAR_DATE_LENGTH = 10
 const graphDateTimeSchema = z.object({dateTime: z.string(), timeZone: z.string()})
@@ -122,8 +117,6 @@ const listCalendarEvents = async ({
   eventOptions,
   fetch,
 }: ListCalendarEventsOptions): Promise<ProviderEventsResult> => {
-  const events: Array<ProviderEvent> = []
-  let truncated = false
   const headers = {
     Authorization: `Bearer ${eventOptions.accessToken}`,
     Prefer: 'outlook.timezone="UTC"',
@@ -133,41 +126,39 @@ const listCalendarEvents = async ({
   )
   initialUrl.searchParams.set('$orderby', 'start/dateTime')
   initialUrl.searchParams.set('$select', 'id,subject,start,end,isAllDay,isCancelled')
-  initialUrl.searchParams.set('$top', String(EVENT_PAGE_SIZE))
+  initialUrl.searchParams.set('$top', String(PAGINATION_LIMITS.events.pageSize))
   initialUrl.searchParams.set('endDateTime', eventOptions.end)
   initialUrl.searchParams.set('startDateTime', eventOptions.start)
-  const loadPage = async (url: URL, pageCount: number): Promise<void> => {
-    const response = await fetch(url, {headers})
-    if (!response.ok) {
-      throw new Error(`Microsoft Calendar events request failed with status ${response.status}`)
-    }
+  let unavailableCalendars = 0
+  const result = await paginate<ProviderEvent, URL>({
+    loadPage: async (nextUrl) => {
+      try {
+        const url = nextUrl ?? initialUrl
+        const response = await fetch(url, {headers})
+        if (!response.ok) {
+          throw new Error(`Microsoft Calendar events request failed with status ${response.status}`)
+        }
 
-    const body = graphEventsSchema.parse(await response.json())
-    const normalizedEvents = body.value.flatMap((event) => {
-      const normalized = normalizeEvent(event, calendarLabel, displayTimeZoneFormatter)
-      return normalized === null ? [] : [normalized]
-    })
-    const remainingEvents = MAXIMUM_EVENTS_PER_CALENDAR - events.length
-    truncated = normalizedEvents.length > remainingEvents
-    events.push(...normalizedEvents.slice(0, remainingEvents))
-    const nextUrl = readNextUrl(body['@odata.nextLink'])
-    truncated ||= nextUrl !== null
-    if (
-      nextUrl !== null &&
-      pageCount + 1 < MAXIMUM_EVENT_PAGES &&
-      events.length < MAXIMUM_EVENTS_PER_CALENDAR
-    ) {
-      await loadPage(nextUrl, pageCount + 1)
-    }
+        const body = graphEventsSchema.parse(await response.json())
+        const items = body.value.flatMap((event) => {
+          const normalized = normalizeEvent(event, calendarLabel, displayTimeZoneFormatter)
+          return normalized === null ? [] : [normalized]
+        })
+        return {items, nextCursor: readNextUrl(body['@odata.nextLink'])}
+      } catch {
+        unavailableCalendars = 1
+        return {items: [], nextCursor: null}
+      }
+    },
+    maximumItems: PAGINATION_LIMITS.events.maximumItems,
+    maximumPages: PAGINATION_LIMITS.events.maximumPages,
+  })
+
+  return {
+    events: result.items,
+    truncated: unavailableCalendars === 0 && result.truncated,
+    unavailableCalendars,
   }
-
-  try {
-    await loadPage(initialUrl, 0)
-  } catch {
-    return {events, truncated: false, unavailableCalendars: 1}
-  }
-
-  return {events, truncated, unavailableCalendars: 0}
 }
 
 interface CalendarListResult {
@@ -179,34 +170,25 @@ const listCalendars = async (
   accessToken: string,
   fetch: typeof globalThis.fetch,
 ): Promise<CalendarListResult> => {
-  const calendars: Array<z.infer<typeof graphCalendarsSchema>['value'][number]> = []
-  let truncated = false
   const headers = {Authorization: `Bearer ${accessToken}`}
   const initialUrl = new URL(`${MICROSOFT_GRAPH_API}/me/calendars`)
-  initialUrl.searchParams.set('$top', String(CALENDAR_PAGE_SIZE))
-  const loadPage = async (url: URL, pageCount: number): Promise<void> => {
-    const response = await fetch(url, {headers})
-    if (!response.ok) {
-      throw new Error(`Microsoft Calendar list request failed with status ${response.status}`)
-    }
+  initialUrl.searchParams.set('$top', String(PAGINATION_LIMITS.calendars.pageSize))
+  const result = await paginate<z.infer<typeof graphCalendarsSchema>['value'][number], URL>({
+    loadPage: async (nextUrl) => {
+      const url = nextUrl ?? initialUrl
+      const response = await fetch(url, {headers})
+      if (!response.ok) {
+        throw new Error(`Microsoft Calendar list request failed with status ${response.status}`)
+      }
 
-    const body = graphCalendarsSchema.parse(await response.json())
-    truncated = body.value.length > MAXIMUM_CALENDARS - calendars.length
-    calendars.push(...body.value.slice(0, MAXIMUM_CALENDARS - calendars.length))
-    const nextUrl = readNextUrl(body['@odata.nextLink'])
-    truncated ||= nextUrl !== null
-    if (
-      nextUrl !== null &&
-      pageCount + 1 < MAXIMUM_CALENDAR_PAGES &&
-      calendars.length < MAXIMUM_CALENDARS
-    ) {
-      await loadPage(nextUrl, pageCount + 1)
-    }
-  }
+      const body = graphCalendarsSchema.parse(await response.json())
+      return {items: body.value, nextCursor: readNextUrl(body['@odata.nextLink'])}
+    },
+    maximumItems: PAGINATION_LIMITS.calendars.maximumItems,
+    maximumPages: PAGINATION_LIMITS.calendars.maximumPages,
+  })
 
-  await loadPage(initialUrl, 0)
-
-  return {calendars, truncated}
+  return {calendars: result.items, truncated: result.truncated}
 }
 
 const listEvents = async (

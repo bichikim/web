@@ -9,6 +9,9 @@ it('should share the core terms on the web page', () => {
   render(() => <PServiceTerms platform="web" />)
 
   expect(screen.getByRole('heading', {name: 'Pomofi 서비스 이용약관'})).toBeTruthy()
+  const returnLink = screen.getByRole('link', {name: '앱으로 돌아가기'})
+  expect(returnLink).toHaveClass('min-h-11', 'rounded-full', 'text-base', 'text-foreground')
+  expect(returnLink.parentElement?.lastElementChild).toBe(returnLink)
   expect(screen.queryByRole('link', {name: '서비스 이용약관'})).toBeNull()
   expect(screen.getByText('서비스 이용약관').getAttribute('aria-current')).toBe('page')
   expect(screen.getByRole('link', {name: '개인정보처리방침'}).getAttribute('href')).toBe(
@@ -41,6 +44,14 @@ it('should replace only the platform terms on the Apps in Toss page', () => {
   expect(screen.queryByText(/만 14세 이상만 이용할 수 있습니다/u)).toBeNull()
   expect(screen.queryByText(/지원 브라우저에서 제공됩니다/u)).toBeNull()
   expect(screen.queryByText(/웹 서비스에서는 현재 유료 상품을 판매하지 않습니다/u)).toBeNull()
+})
+
+it('should preserve custom back link details with the shared button', () => {
+  render(() => <PServiceTerms backHref="/dev" backLabel="실험실 목록" platform="web" />)
+
+  const returnLink = screen.getByRole('link', {name: '실험실 목록'})
+  expect(returnLink).toHaveAttribute('href', '/dev')
+  expect(returnLink).toHaveClass('min-h-11', 'rounded-full')
 })
 
 it('should default policy navigation to the web platform', () => {
