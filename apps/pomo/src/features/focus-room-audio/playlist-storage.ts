@@ -79,8 +79,13 @@ export const createPPlaylistStorage = (
   clock: PlaylistClock = systemClock,
   reportError: (error: unknown) => void = globalThis.reportError,
 ): PPlaylistStorage => {
+  let latestWebWrite: StoredPlaylist | null = null
+  let playlistRevision = 0
+
   return {
     async read() {
+      const initialWebWrite = latestWebWrite
+      const initialPlaylistRevision = playlistRevision
       const webPlaylist = storage.readWeb()
 
       if (!storage.usesTossStorage()) {
@@ -90,9 +95,14 @@ export const createPPlaylistStorage = (
       try {
         const tossPlaylist = await storage.readToss()
 
+        if (latestWebWrite !== initialWebWrite) {
+          const currentWebPlaylist = storage.readWeb()
+          return currentWebPlaylist?.trackIds ?? null
+        }
+
         const latestPlaylist = selectLatestPlaylist(webPlaylist, tossPlaylist)
 
-        if (latestPlaylist !== null) {
+        if (latestPlaylist !== null && playlistRevision === initialPlaylistRevision) {
           storage.writeWeb(latestPlaylist)
 
           if (latestPlaylist === webPlaylist) {
@@ -111,7 +121,10 @@ export const createPPlaylistStorage = (
         trackIds,
         version: 1,
       } satisfies StoredPlaylist
-      storage.writeWeb(storedPlaylist)
+      playlistRevision += 1
+      if (storage.writeWeb(storedPlaylist) === null) {
+        latestWebWrite = storedPlaylist
+      }
 
       if (!storage.usesTossStorage()) {
         return

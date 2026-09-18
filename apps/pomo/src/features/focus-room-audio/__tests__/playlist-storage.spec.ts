@@ -127,6 +127,24 @@ it('should fall back to the browser playlist when Toss storage cannot be read', 
   await expect(playlistStorage.read()).resolves.toEqual(['web'])
 })
 
+it('should preserve a browser playlist written while native storage is read', async () => {
+  const storage = createStorage({
+    usesTossStorage: true,
+    webPlaylist: createStoredPlaylist(['stale'], 10),
+  })
+  const pendingRead = Promise.withResolvers<StoredPlaylist | null>()
+  storage.readToss.mockReturnValueOnce(pendingRead.promise)
+  const playlistStorage = createPPlaylistStorage(storage, {now: () => 20})
+
+  const reading = playlistStorage.read()
+  await vi.waitFor(() => expect(storage.readToss).toHaveBeenCalledOnce())
+  await playlistStorage.write(['fresh'])
+  pendingRead.resolve(createStoredPlaylist(['native-stale'], 15))
+
+  await expect(reading).resolves.toEqual(['fresh'])
+  expect(storage.readWeb()).toEqual(createStoredPlaylist(['fresh'], 20))
+})
+
 it('should return no playlist when both storage reads are unavailable', async () => {
   const storage = createStorage({usesTossStorage: true})
   storage.readToss.mockRejectedValue(new Error('Toss storage is unavailable'))
