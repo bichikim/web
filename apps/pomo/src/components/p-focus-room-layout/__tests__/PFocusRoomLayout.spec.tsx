@@ -6,6 +6,7 @@ import {expect, it, vi} from 'vitest'
 
 const [pathname, setPathname] = createSignal('/outside')
 const eventPlaybackStates: boolean[] = []
+const delayedEndEventStates: boolean[] = []
 
 vi.mock('@solidjs/router', () => ({
   useLocation: () => ({
@@ -16,14 +17,17 @@ vi.mock('@solidjs/router', () => ({
 }))
 vi.mock('../../pomo-route', () => ({
   isPomoHomePath: (path: string) => path === '/',
-  usesPomoLayout: (path: string) => path === '/' || path === '/studio',
+  usesPomoLayout: (path: string) =>
+    path === '/' || path === '/studio' || path === '/desktop/dialog/settings',
 }))
 vi.mock('../../p-event-provider/PEventProvider', () => ({
   PEventProvider: (props: {
     readonly children: JSX.Element
+    readonly isDelayedEndEventEnabled: boolean
     readonly isPlaybackEnabled: boolean
   }) => {
     createEffect(() => eventPlaybackStates.push(props.isPlaybackEnabled))
+    createEffect(() => delayedEndEventStates.push(props.isDelayedEndEventEnabled))
     return <div data-testid="event-provider">{props.children}</div>
   },
 }))
@@ -50,15 +54,18 @@ it('should bypass providers outside Pomo layout routes', () => {
 
 it('should retain layout providers and update playback state across Pomo routes', () => {
   eventPlaybackStates.length = 0
+  delayedEndEventStates.length = 0
   setPathname('/')
   render(() => <PFocusRoomLayout>content</PFocusRoomLayout>)
 
   expect(screen.getByTestId('event-provider')).toContainElement(screen.getByTestId('feed-provider'))
   expect(eventPlaybackStates).toContain(true)
+  expect(delayedEndEventStates).toContain(true)
 
-  setPathname('/studio')
+  setPathname('/desktop/dialog/settings')
   expect(screen.getByTestId('event-provider')).toBeInTheDocument()
   expect(eventPlaybackStates).toContain(false)
+  expect(delayedEndEventStates).toContain(true)
 })
 
 it('should mount sound effects only on the Pomo home route', () => {

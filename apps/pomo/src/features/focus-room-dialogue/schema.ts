@@ -12,7 +12,12 @@ import {MOOD_MODIFIER_IDS, PRIMARY_MOOD_IDS} from '../text-mood/labels'
 export const DEFAULT_FOCUS_ROOM_DIALOGUE_LANGUAGE = 'ko' satisfies SupertonicLanguage
 export const RANDOM_DIALOGUE_EVENT = 'random' as const
 export const DELAYED_END_EVENT = 'delayed-end' as const
-export const EVENT_ACTION_IDS = ['music-stop', 'music-start'] as const
+export const EVENT_ACTION_IDS = [
+  'music-stop',
+  'music-start',
+  'sound-effects-stop',
+  'sound-effects-start',
+] as const
 
 export const FOCUS_ROOM_DIALOGUE_EVENTS = [
   'room-enter',

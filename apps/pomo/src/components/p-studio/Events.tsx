@@ -17,6 +17,7 @@ import {PFormMessage} from '../p-form-message/PFormMessage'
 import {PModelDownloadConsent} from '../p-model-download-consent/PModelDownloadConsent'
 import {PMusicPlayer} from '../p-music-player/PMusicPlayer'
 import type {MusicPlaybackActions} from '../music-player/types'
+import {type SoundEffectsController, useOptionalSoundEffects} from '../../features/sound-effects'
 import {PPomodoro, type PPomodoroPresentation} from '../p-pomodoro/PPomodoro'
 import {CLASSES} from './shared'
 import {ONE_OFF_CHAT_MODEL, useOneOffChat} from './use-one-off-chat'
@@ -38,7 +39,13 @@ interface PStudioEventsProps {
   readonly sceneStyle: PSceneStyle
 }
 
-const runMusicAction = (actions: MusicPlaybackActions, actionId: EventActionId) => {
+type MusicEventActionId = Extract<EventActionId, 'music-start' | 'music-stop'>
+type SoundEffectsEventActionId = Extract<
+  EventActionId,
+  'sound-effects-start' | 'sound-effects-stop'
+>
+
+const runMusicAction = (actions: MusicPlaybackActions, actionId: MusicEventActionId) => {
   switch (actionId) {
     case 'music-start':
       actions.play()
@@ -53,12 +60,32 @@ const runMusicAction = (actions: MusicPlaybackActions, actionId: EventActionId) 
   }
 }
 
+const runSoundEffectsAction = (
+  actions: SoundEffectsController,
+  actionId: SoundEffectsEventActionId,
+) => {
+  switch (actionId) {
+    case 'sound-effects-start':
+      actions.activate()
+      return
+    case 'sound-effects-stop':
+      actions.stop()
+      return
+    default: {
+      const exhaustiveAction: never = actionId
+      return exhaustiveAction
+    }
+  }
+}
+
+// oxlint-disable-next-line eslint/max-lines-per-function -- Event and media lifecycles share one owner.
 export const PStudioEvents = (props: PStudioEventsProps) => {
   const events = usePEvents()
+  const soundEffects = useOptionalSoundEffects()
   const [musicPlaybackActions, setMusicPlaybackActions] = createSignal<MusicPlaybackActions | null>(
     null,
   )
-  let pendingMusicActions: EventActionId[] = []
+  let pendingMusicActions: MusicEventActionId[] = []
   const [mediaMessages, setMediaMessages] = createSignal<HTMLDivElement>()
   const hasMediaMessages = useChildPresence(mediaMessages)
   const isMobileLayout = useMobileLayout()
@@ -76,15 +103,31 @@ export const PStudioEvents = (props: PStudioEventsProps) => {
     onReply: replySpeechQueue.enqueue,
   })
   const runEventAction = (actionId: EventActionId) => {
-    const actions = musicPlaybackActions()
-    if (actions === null) {
-      if (props.playerVisible ?? true) {
-        pendingMusicActions.push(actionId)
-      }
-      return
-    }
+    switch (actionId) {
+      case 'music-start':
+      case 'music-stop': {
+        const actions = musicPlaybackActions()
+        if (actions === null) {
+          if (props.playerVisible ?? true) {
+            pendingMusicActions.push(actionId)
+          }
+          return
+        }
 
-    runMusicAction(actions, actionId)
+        runMusicAction(actions, actionId)
+        return
+      }
+      case 'sound-effects-start':
+      case 'sound-effects-stop':
+        if (soundEffects !== undefined) {
+          runSoundEffectsAction(soundEffects, actionId)
+        }
+        return
+      default: {
+        const exhaustiveAction: never = actionId
+        return exhaustiveAction
+      }
+    }
   }
   const handlePlaybackActionsReady = (actions: MusicPlaybackActions | null) => {
     setMusicPlaybackActions(actions)
@@ -102,7 +145,7 @@ export const PStudioEvents = (props: PStudioEventsProps) => {
   let unregisterEventActionExecutor: (() => void) | undefined
   let unregisterBeforePlayback: (() => void) | undefined
   onMount(() => {
-    // The executor reads the latest music controls when an event fires.
+    // The executor reads the latest media controls when an event fires.
     unregisterEventActionExecutor = events.registerEventActionExecutor(runEventAction)
     unregisterBeforePlayback = events.registerBeforePlayback?.(props.pomoSay.stop)
   })

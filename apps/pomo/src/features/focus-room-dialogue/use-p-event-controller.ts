@@ -35,6 +35,7 @@ import {
 import * as m from '@paraglide/message'
 
 export interface UsePEventControllerProps {
+  readonly isDelayedEndEventEnabled?: boolean
   readonly isPlaybackEnabled?: boolean
 }
 
@@ -348,7 +349,7 @@ export const usePEventController = (props: UsePEventControllerProps): PEventCont
   }
 
   const delayedEndEvent = useDelayedEndEvent({
-    isEnabled: isPlaybackEnabled,
+    isEnabled: () => props.isDelayedEndEventEnabled ?? isPlaybackEnabled(),
     onEvent: () =>
       playDialogueEvents([DELAYED_END_EVENT], () => {
         beforePlaybackCallbacks.forEach((callback) => callback())

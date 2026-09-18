@@ -9,6 +9,7 @@ import {
   usePEvents,
   useRandomEvent,
 } from '../../../features/focus-room-dialogue'
+import {useOptionalSoundEffects} from '../../../features/sound-effects'
 import * as m from '@paraglide/message'
 import {createMemoryMemo} from '../../../features/memory-assist/schedule'
 import {useMemoryReminders} from '../../../features/memory-assist'
@@ -32,6 +33,10 @@ const musicPlaybackMocks = vi.hoisted(() => ({
   pause: vi.fn(),
   play: vi.fn(),
 }))
+const soundEffectsMocks = vi.hoisted(() => ({
+  activate: vi.fn(),
+  stop: vi.fn(),
+}))
 
 vi.mock('../../../features/focus-room-dialogue', () => ({
   RANDOM_DIALOGUE_EVENT: 'random-event',
@@ -41,6 +46,7 @@ vi.mock('../../../features/focus-room-dialogue', () => ({
 vi.mock('../../../features/memory-assist', () => ({
   useMemoryReminders: vi.fn(() => ({skippedReminders: () => []})),
 }))
+vi.mock('../../../features/sound-effects', () => ({useOptionalSoundEffects: vi.fn()}))
 vi.mock('../use-one-off-chat', () => ({
   ONE_OFF_CHAT_MODEL: {downloadSize: '3.7GB'},
   useOneOffChat: vi.fn(() => oneOffChatMocks),
@@ -169,7 +175,9 @@ const createEvents = (
     readonly isPlaying?: boolean
     readonly registerBeforePlayback?: (callback: () => void) => () => void
     readonly registerEventActionExecutor?: (
-      executor: (actionId: 'music-start' | 'music-stop') => void,
+      executor: (
+        actionId: 'music-start' | 'music-stop' | 'sound-effects-start' | 'sound-effects-stop',
+      ) => void,
     ) => () => void
     readonly scheduledCount?: number
     readonly playDialogueEvents?: ReturnType<typeof vi.fn>
@@ -232,6 +240,7 @@ describe('PStudioEvents', () => {
     vi.mocked(useMemoryReminders).mockReturnValue({skippedReminders: () => []})
     vi.mocked(useChildPresence).mockReturnValue(() => false)
     vi.mocked(useMobileLayout).mockReturnValue(() => false)
+    vi.mocked(useOptionalSoundEffects).mockReturnValue(undefined)
     oneOffChatMocks.downloadConsentOpen.mockReturnValue(false)
     oneOffChatMocks.draft.mockReturnValue('')
     oneOffChatMocks.errorMessage.mockReturnValue(null)
@@ -258,6 +267,32 @@ describe('PStudioEvents', () => {
     expect(registerEventActionExecutor).toHaveBeenCalledOnce()
     result.unmount()
     expect(unregister).toHaveBeenCalledOnce()
+  })
+
+  it('should register sound-effect controls for event actions', () => {
+    vi.mocked(useOptionalSoundEffects).mockReturnValue({
+      activate: soundEffectsMocks.activate,
+      effects: () => [],
+      getPlayback: () => undefined,
+      isStopped: () => false,
+      status: () => 'ready',
+      stop: soundEffectsMocks.stop,
+    })
+    const runAction = vi.fn()
+    const registerEventActionExecutor = vi.fn(
+      (executor: (actionId: 'sound-effects-start' | 'sound-effects-stop') => void) => {
+        runAction.mockImplementation(executor)
+        return vi.fn()
+      },
+    )
+    const events = createEvents({registerEventActionExecutor})
+
+    renderEvents({events})
+    runAction('sound-effects-stop')
+    runAction('sound-effects-start')
+
+    expect(soundEffectsMocks.stop).toHaveBeenCalledOnce()
+    expect(soundEffectsMocks.activate).toHaveBeenCalledOnce()
   })
 
   it('should show skipped reminder text and remove its alert after recovery', () => {

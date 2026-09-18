@@ -4,11 +4,39 @@ import {useOptionalSoundEffects, useSoundEffects} from '../../features/sound-eff
 import type {PSceneStyle} from '../../features/focus-room-animation'
 import {getPomoIconClass} from '../icon-style'
 import {PModal} from '../p-modal/PModal'
+import {PButton} from '../p-button/PButton'
 import {PPlayerUtilityButton} from '../p-player-utility-button/PPlayerUtilityButton'
 import {SoundEffectControl} from './SoundEffectControl'
 
 interface SoundEffectsProps {
   readonly sceneStyle?: PSceneStyle
+}
+
+const SoundEffectsPlaybackToggle = () => {
+  const soundEffects = useSoundEffects()
+  const handlePlaybackToggle = () => {
+    if (soundEffects.isStopped()) {
+      soundEffects.activate()
+      return
+    }
+
+    soundEffects.stop()
+  }
+
+  return (
+    <Show when={soundEffects.status() === 'ready' && soundEffects.effects().length > 0}>
+      <PButton
+        bordered
+        icon={soundEffects.isStopped() ? 'i-tabler-volume-2' : 'i-tabler-volume-off'}
+        onPress={handlePlaybackToggle}
+        size="small"
+        tone="secondary"
+        transparent
+      >
+        {soundEffects.isStopped() ? m.sound_effects_start_all() : m.sound_effects_stop_all()}
+      </PButton>
+    </Show>
+  )
 }
 
 const SoundEffectsContent = () => {
@@ -74,6 +102,7 @@ export const SoundEffects = (props: SoundEffectsProps) => {
             onOpenChange={setIsOpen}
             onCloseAutoFocus={() => trigger()?.focus()}
             description={m.sound_effects_drag_hint()}
+            headerActions={<SoundEffectsPlaybackToggle />}
             title={m.sound_effects_title()}
           >
             <SoundEffectsContent />
