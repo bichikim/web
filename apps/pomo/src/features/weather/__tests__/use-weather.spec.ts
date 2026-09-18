@@ -123,12 +123,15 @@ it('should load the stored preference and expose the query result', async () => 
   root.dispose()
 })
 
-it('should expose scene readiness while restoring the stored preference', async () => {
+it('should hide weather and scene until the stored preference is restored', async () => {
   const stored = Promise.withResolvers<WeatherPreference>()
   preferenceMocks.readWeatherPreference.mockReturnValueOnce(stored.promise)
   const root = createWeatherRoot()
 
   expect(root.controller.isReady()).toBe(false)
+  expect(root.controller.enabled()).toBe(false)
+  expect(root.controller.state()).toEqual({status: 'disabled'})
+  expect(queryMocks.weatherFeedQuery).not.toHaveBeenCalled()
 
   stored.resolve({
     enabled: false,
@@ -138,6 +141,8 @@ it('should expose scene readiness while restoring the stored preference', async 
   await flushPromises()
 
   expect(root.controller.isReady()).toBe(true)
+  expect(root.controller.enabled()).toBe(false)
+  expect(root.controller.state()).toEqual({status: 'disabled'})
   expect(root.controller.sceneCondition()).toBe('rain')
   root.dispose()
 })
