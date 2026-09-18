@@ -12,7 +12,7 @@ import {SoundEffectControl} from '../SoundEffectControl'
 
 const playback = vi.hoisted(() => ({
   activate: vi.fn(),
-  error: () => null,
+  error: vi.fn<() => Error | null>(() => null),
   playing: vi.fn(() => false),
   ready: () => true,
   setVolume: vi.fn(),
@@ -44,6 +44,7 @@ const renderControl = () =>
 afterEach(() => {
   cleanup()
   vi.clearAllMocks()
+  playback.error.mockReturnValue(null)
   playback.playing.mockReturnValue(false)
 })
 
@@ -103,4 +104,20 @@ it('should expose arrow-key volume controls without toggling on click', () => {
   playback.setVolume.mockClear()
   fireEvent.click(control)
   expect(playback.setVolume).not.toHaveBeenCalled()
+})
+
+it('should keep keyboard and drag volume controls available after a playback error', () => {
+  playback.error.mockReturnValue(new Error('Playback failed'))
+  const view = renderControl()
+  const control = view.getByRole('slider')
+
+  expect(control).not.toBeDisabled()
+
+  fireEvent.keyDown(control, {key: 'ArrowUp'})
+  fireEvent(control, new MouseEvent('pointerdown', {bubbles: true, button: 0, clientY: 200}))
+  fireEvent(control, new MouseEvent('pointermove', {bubbles: true, clientY: 140}))
+  fireEvent(control, new MouseEvent('pointerup', {bubbles: true, clientY: 140}))
+
+  expect(playback.setVolume).toHaveBeenNthCalledWith(1, 0.3)
+  expect(playback.setVolume).toHaveBeenNthCalledWith(2, 0.75)
 })

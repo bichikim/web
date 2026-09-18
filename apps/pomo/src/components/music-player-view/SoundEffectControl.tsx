@@ -97,7 +97,6 @@ const SoundEffectControlView = (props: SoundEffectControlViewProps) => {
         )}
         data-playing={props.playback.playing()}
         data-ready={props.playback.ready()}
-        disabled={props.playback.error() !== null}
         onKeyDown={handleKeyDown}
         onPointerCancel={releasePointer}
         onPointerDown={handlePointerDown}
