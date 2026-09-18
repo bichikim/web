@@ -123,6 +123,26 @@ it('should load the stored preference and expose the query result', async () => 
   root.dispose()
 })
 
+it('should wait for an automatic feed before exposing scene readiness', async () => {
+  const rainyFeed = {...feed, current: {...feed.current, condition: 'rain' as const}}
+  const rainyResult = {feed: rainyFeed, locationId: seoulLocation.id, status: 'available'} as const
+  const weatherRequest = Promise.withResolvers<typeof rainyResult>()
+  queryMocks.weatherFeedQuery.mockReturnValueOnce(weatherRequest.promise)
+  const root = createWeatherRoot()
+
+  await flushPromises()
+
+  expect(root.controller.isReady()).toBe(false)
+  expect(root.controller.sceneCondition()).toBeUndefined()
+
+  weatherRequest.resolve(rainyResult)
+  await flushPromises()
+
+  expect(root.controller.isReady()).toBe(true)
+  expect(root.controller.sceneCondition()).toBe('rain')
+  root.dispose()
+})
+
 it('should expose scene readiness while restoring the stored preference', async () => {
   const stored = Promise.withResolvers<WeatherPreference>()
   preferenceMocks.readWeatherPreference.mockReturnValueOnce(stored.promise)
@@ -204,9 +224,11 @@ it('should persist a location change, show loading, and ignore the superseded re
   root.controller.onLocationChange(busanLocation)
   expect(root.controller.location()).toEqual(busanLocation)
   expect(root.controller.state()).toEqual({location: busanLocation, status: 'loading'})
+  expect(root.controller.isReady()).toBe(false)
   await flushPromises()
 
   expect(root.controller.state()).toEqual({feed: busanFeed, status: 'ready'})
+  expect(root.controller.isReady()).toBe(true)
   expect(preferenceMocks.writeWeatherPreference).toHaveBeenCalledWith({
     enabled: true,
     location: busanLocation,
