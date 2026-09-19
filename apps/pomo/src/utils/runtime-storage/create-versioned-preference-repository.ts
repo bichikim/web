@@ -43,9 +43,9 @@ export const createVersionedPreferenceRepository = <Value>(
     }
 
     const isNative = options.storage.isNative()
-    const webValue = isNative && prefersNativeSettings ? null : options.storage.readWeb()
+    const webValue = options.storage.readWeb()
 
-    if (webValue !== null) {
+    if (webValue !== null && !prefersNativeSettings) {
       if (isNative) {
         withPromiseNull(writeLatestNative(webValue))
       }
@@ -70,6 +70,12 @@ export const createVersionedPreferenceRepository = <Value>(
 
       const webWriteError = options.storage.writeWeb(nativeValue)
       prefersNativeSettings = webWriteError !== null
+
+      if (webWriteError !== null && webValue !== null) {
+        withPromiseNull(writeLatestNative(webValue))
+        return webValue
+      }
+
       return nativeValue
     } catch {
       if (preferenceWriteRevision !== initialWriteRevision) {

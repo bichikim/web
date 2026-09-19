@@ -70,6 +70,28 @@ describe('createVersionedPreferenceRepository', () => {
     await expect(pendingRead).resolves.toEqual({value: 8})
   })
 
+  it('should use a recovered browser value after falling back to native storage', async () => {
+    let nativeValue: Preference | null = null
+    let webValue: Preference | null = null
+    const repository = createRepository(
+      createStorage({
+        isNative: () => true,
+        readNative: async () => nativeValue,
+        readWeb: () => webValue,
+        writeNative: async (value) => {
+          nativeValue = value
+        },
+        writeWeb: () => new Error('browser unavailable'),
+      }),
+    )
+
+    await repository.write({value: 1})
+    webValue = {value: 2}
+
+    await expect(repository.read()).resolves.toEqual({value: 2})
+    expect(nativeValue).toEqual({value: 2})
+  })
+
   it('should translate a failed browser and native write', async () => {
     const repository = createRepository(
       createStorage({
