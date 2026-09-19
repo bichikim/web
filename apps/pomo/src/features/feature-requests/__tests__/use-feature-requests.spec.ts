@@ -3,7 +3,7 @@
 import {renderHook, waitFor} from '@solidjs/testing-library'
 import {beforeEach, expect, it, vi} from 'vitest'
 
-import type {FeatureRequest} from '../types'
+import type {FeatureRequest, FeatureRequestPage} from '../types'
 
 const apiMocks = vi.hoisted(() => ({
   createFeatureRequest: vi.fn(),
@@ -47,6 +47,36 @@ it('should load a page and append the next page at the current offset', async ()
   expect(apiMocks.listFeatureRequests).toHaveBeenNthCalledWith(2, {offset: 1})
   expect(result.requests()).toEqual([REQUEST, NEXT_REQUEST])
   expect(result.hasMore()).toBe(false)
+  cleanup()
+})
+
+it('should ignore a load more response that started before refresh', async () => {
+  const loadMoreResponse = Promise.withResolvers<FeatureRequestPage>()
+  const refreshResponse = Promise.withResolvers<FeatureRequestPage>()
+  const refreshedRequest = {...REQUEST, title: '새로 고침된 기능'}
+  apiMocks.listFeatureRequests
+    .mockResolvedValueOnce({hasMore: true, requests: [REQUEST]})
+    .mockReturnValueOnce(loadMoreResponse.promise)
+    .mockReturnValueOnce(refreshResponse.promise)
+
+  const {cleanup, result} = renderHook(() => useFeatureRequests())
+  await waitFor(() => expect(result.isLoading()).toBe(false))
+
+  const loadMorePromise = result.loadMore()
+  await waitFor(() => expect(result.isLoadingMore()).toBe(true))
+
+  const refreshPromise = result.refresh()
+  expect(result.isLoading()).toBe(true)
+
+  refreshResponse.resolve({hasMore: true, requests: [refreshedRequest]})
+  await refreshPromise
+  loadMoreResponse.resolve({hasMore: false, requests: [NEXT_REQUEST]})
+  await loadMorePromise
+
+  expect(result.requests()).toEqual([refreshedRequest])
+  expect(result.hasMore()).toBe(true)
+  expect(result.isLoadingMore()).toBe(false)
+  expect(result.loadMoreFailed()).toBe(false)
   cleanup()
 })
 
