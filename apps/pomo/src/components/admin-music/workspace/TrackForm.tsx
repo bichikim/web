@@ -87,6 +87,7 @@ export const TrackForm = (props: TrackFormProps) => {
               <TrackFields
                 artist={track.artist}
                 audioFile={track.audio}
+                disabled={track.status === 'preserved'}
                 onArtistChange={(value) => importer.updateTrack(track.id, 'artist', value)}
                 onMetadataPendingChange={(reading) => importer.setReading(track.id, reading)}
                 onTitleChange={(value) => importer.updateTrack(track.id, 'title', value)}

@@ -12,6 +12,7 @@ const FIELD_CLASSES = cx(
 
 interface TrackFieldsProps {
   readonly audioFile?: File
+  readonly disabled?: boolean
   readonly onMetadataPendingChange?: (pending: boolean) => void
   readonly artist: string
   readonly onArtistChange: (artist: string) => void
@@ -41,7 +42,7 @@ export const TrackFields = (props: TrackFieldsProps) => {
         <PInput
           unstyled
           class={FIELD_CLASSES}
-          disabled={fields.useMetadata()}
+          disabled={props.disabled || fields.useMetadata()}
           maxlength="120"
           name="title"
           onInput={(event) => props.onTitleChange(event.currentTarget.value)}
@@ -54,7 +55,7 @@ export const TrackFields = (props: TrackFieldsProps) => {
         <PInput
           unstyled
           class={FIELD_CLASSES}
-          disabled={fields.useMetadata()}
+          disabled={props.disabled || fields.useMetadata()}
           maxlength="120"
           name="artist"
           onInput={(event) => props.onArtistChange(event.currentTarget.value)}
@@ -68,6 +69,7 @@ export const TrackFields = (props: TrackFieldsProps) => {
           <input
             accept="audio/mpeg,audio/mp3,.mp3"
             class={FIELD_CLASSES}
+            disabled={props.disabled}
             name="audio"
             onChange={(event) => fields.onAudioFileChange(event.currentTarget.files?.[0])}
             ref={setAudioInput}
@@ -83,6 +85,7 @@ export const TrackFields = (props: TrackFieldsProps) => {
         <input
           attr:checked=""
           checked={fields.useMetadata()}
+          disabled={props.disabled}
           onChange={(event) =>
             fields.onMetadataToggle(
               event.currentTarget.checked,
@@ -93,8 +96,18 @@ export const TrackFields = (props: TrackFieldsProps) => {
         />
         MP3 정보로 제목·아티스트 채우기
       </label>
-      <input disabled={!fields.useMetadata()} name="title" type="hidden" value={props.title} />
-      <input disabled={!fields.useMetadata()} name="artist" type="hidden" value={props.artist} />
+      <input
+        disabled={props.disabled || !fields.useMetadata()}
+        name="title"
+        type="hidden"
+        value={props.title}
+      />
+      <input
+        disabled={props.disabled || !fields.useMetadata()}
+        name="artist"
+        type="hidden"
+        value={props.artist}
+      />
       <p aria-live="polite" class="m-0 min-h-5 text-xs text-white/45">
         {fields.metadataMessage()}
       </p>
