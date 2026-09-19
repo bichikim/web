@@ -77,8 +77,8 @@ const renderController = () => {
   return {audio, controller}
 }
 
-const renderControlledController = () => {
-  const [tracks, setTracks] = createSignal<readonly PTrack[]>([TRACK])
+const renderControlledController = (initialTracks: readonly PTrack[] = [TRACK]) => {
+  const [tracks, setTracks] = createSignal<readonly PTrack[]>(initialTracks)
   const [element, setElement] = createSignal<HTMLAudioElement>()
   let controller: PlayerController | undefined
   const ControllerHarness = (props: Parameters<typeof usePlayerController>[0]) => {
@@ -278,6 +278,17 @@ it('should preserve playback when controlled tracks replace the current source',
     positionSeconds: 0,
     trackId: NEXT_TRACK.id,
   })
+})
+
+it('should preserve playback preparation after an aborted source replacement error', () => {
+  const {controller} = renderControlledController([TRACK, NEXT_TRACK])
+
+  controller.onPlay()
+  controller.selectChosenTrack(1)
+  controller.onError({code: 1, message: 'The user aborted a request.'})
+
+  expect(controller.isPlaying()).toBe(true)
+  expect(controller.isPreparing()).toBe(true)
 })
 
 it('should preserve playback when seeking before metadata during track replacement', async () => {
