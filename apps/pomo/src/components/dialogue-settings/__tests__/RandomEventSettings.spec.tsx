@@ -135,18 +135,20 @@ it('should flush a pending valid interval when the settings unmount', async () =
   })
 })
 
-it('should report an automatic save failure', async () => {
+it('should restore the persisted interval after an automatic save failure', async () => {
   const consoleError = vi.spyOn(console, 'error').mockImplementation(() => undefined)
   settingsMocks.write.mockRejectedValue(new Error('Storage unavailable'))
   render(() => <RandomEventSettings />, {wrapper: PreferenceProvider})
   await vi.advanceTimersByTimeAsync(0)
 
-  fireEvent.input(screen.getByRole('spinbutton', {name: '랜덤 이벤트 최소 간격(분)'}), {
+  const minimumInput = screen.getByRole('spinbutton', {name: '랜덤 이벤트 최소 간격(분)'})
+  fireEvent.input(minimumInput, {
     target: {value: '12'},
   })
   await vi.advanceTimersByTimeAsync(500)
 
   expect(screen.getByRole('status').textContent).toBe('랜덤 이벤트 설정을 저장하지 못했어요.')
+  expect(minimumInput).toHaveValue(DEFAULT_RANDOM_EVENT_SETTINGS.minimumMinutes)
   expect(consoleError).toHaveBeenCalledOnce()
 })
 
