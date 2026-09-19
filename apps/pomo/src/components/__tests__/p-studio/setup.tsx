@@ -130,6 +130,7 @@ export const configureStudio = (options: StudioOptions = {}) => {
   const [weatherSceneMode, setWeatherSceneMode] = createSignal<'auto' | 'rain'>(
     options.weatherSceneMode ?? 'auto',
   )
+  const registerEventActionExecutor = vi.fn(() => vi.fn())
 
   vi.mocked(usePEvents).mockReturnValue({
     activeViseme: () => 'rest',
@@ -137,6 +138,7 @@ export const configureStudio = (options: StudioOptions = {}) => {
     hasEnteredFocusRoom: hasEntered,
     isDialoguePlaying: () => false,
     onStopDialoguePlayback: vi.fn(),
+    registerEventActionExecutor,
   } as unknown as ReturnType<typeof usePEvents>)
   vi.mocked(usePSay).mockReturnValue({
     activeViseme: () => 'aa',
@@ -219,7 +221,7 @@ export const configureStudio = (options: StudioOptions = {}) => {
   vi.mocked(readFocusRoomEntrySession).mockReturnValue(options.entrySession ?? false)
   vi.mocked(supportsPSceneGyroscope).mockReturnValue(options.gyroscope ?? false)
 
-  return {setDesktopMode, setWeatherReady}
+  return {registerEventActionExecutor, setDesktopMode, setWeatherReady}
 }
 
 export const publish = vi.fn()
