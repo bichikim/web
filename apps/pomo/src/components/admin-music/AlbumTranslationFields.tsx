@@ -39,10 +39,11 @@ export const AlbumTranslationFields = (props: AlbumTranslationFieldsProps) => {
         currentKorean.description !== translationSource.description ||
         currentKorean.title !== translationSource.title
       ) {
-        return
+        return false
       }
 
       props.onValuesChange({...props.values, ...translatedValues})
+      return true
     },
   })
 

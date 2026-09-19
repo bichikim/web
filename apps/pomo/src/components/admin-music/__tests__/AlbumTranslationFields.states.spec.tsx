@@ -15,11 +15,11 @@ const [isBusy, setIsBusy] = createSignal(false)
 const state = vi.fn<() => {readonly message?: string; readonly status: string}>(() => ({
   status: 'idle',
 }))
-let complete: ((values: Partial<AlbumDraftTranslations>) => void) | undefined
+let complete: ((values: Partial<AlbumDraftTranslations>) => boolean | void) | undefined
 
 vi.mock('../../../features/album-translation/use-album-translation', () => ({
   useAlbumTranslation: (options: {
-    readonly onComplete: (values: Partial<AlbumDraftTranslations>) => void
+    readonly onComplete: (values: Partial<AlbumDraftTranslations>) => boolean | void
   }) => {
     complete = options.onComplete
     return {isBusy, state, translate}
@@ -71,11 +71,13 @@ it('should ignore translations generated from Korean text edited during translat
   fireEvent.input(screen.getAllByLabelText(/^앨범명/u)[0]!, {target: {value: '수정한 제목'}})
   fireEvent.input(screen.getAllByLabelText(/^설명/u)[0]!, {target: {value: '수정한 설명'}})
 
-  complete?.({
-    en: {description: 'old en description', title: 'old en title'},
-    ja: {description: 'old ja description', title: 'old ja title'},
-    'zh-Hans': {description: 'old zh description', title: 'old zh title'},
-  })
+  expect(
+    complete?.({
+      en: {description: 'old en description', title: 'old en title'},
+      ja: {description: 'old ja description', title: 'old ja title'},
+      'zh-Hans': {description: 'old zh description', title: 'old zh title'},
+    }),
+  ).toBe(false)
 
   expect(onValuesChange).toHaveBeenCalled()
   expect(values().ko).toEqual({description: '수정한 설명', title: '수정한 제목'})
