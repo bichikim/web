@@ -193,3 +193,39 @@ it('should not resubmit after an accepted response becomes persisted', async () 
   expect(submit).toHaveBeenCalledOnce()
   expect(markFailed).not.toHaveBeenCalled()
 })
+
+it('should not resubmit when accepted response persistence becomes ambiguous', async () => {
+  const markFailed = vi.fn()
+  const markUnknown = vi.fn().mockResolvedValue(undefined)
+  const prepare = vi
+    .fn()
+    .mockResolvedValueOnce({created: true, run: RUN})
+    .mockResolvedValueOnce({
+      created: false,
+      run: {
+        ...RUN,
+        submissionExpiresAt: new Date('2026-08-13T16:00:00.000Z'),
+        submissionState: 'unknown' as const,
+      },
+    })
+  const submit = vi.fn().mockResolvedValue({responseId: 'resp-accepted'})
+  const dependencies = {
+    markFailed,
+    markSubmitted: vi.fn().mockRejectedValue(new Error('Database unavailable')),
+    markUnknown,
+    now: () => new Date('2026-08-13T15:30:00.000Z'),
+    prepare,
+    submit,
+  }
+
+  await expect(startHistoryGeneration(dependencies)).rejects.toBeInstanceOf(AggregateError)
+  await expect(startHistoryGeneration(dependencies)).resolves.toMatchObject({status: 'existing'})
+  expect(markUnknown).toHaveBeenCalledWith({
+    errorMessage: 'Failed to persist the accepted OpenAI response ID',
+    runId: 'run-1',
+    submissionExpiresAt: new Date('2026-08-13T16:00:00.000Z'),
+    submissionKey: RUN.openAiSubmissionKey,
+  })
+  expect(submit).toHaveBeenCalledOnce()
+  expect(markFailed).not.toHaveBeenCalled()
+})

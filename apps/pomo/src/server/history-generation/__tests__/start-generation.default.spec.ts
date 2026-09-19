@@ -22,6 +22,12 @@ vi.mock('../openai-client', async (importOriginal) => {
   return {...original, submitHistoryResponse: generationMocks.submit}
 })
 
+vi.mock('../submission-lock', () => ({
+  withHistoryGenerationLock: vi.fn(async (_targetDate: string, operation: () => Promise<unknown>) =>
+    operation(),
+  ),
+}))
+
 beforeEach(() => {
   vi.clearAllMocks()
 })
