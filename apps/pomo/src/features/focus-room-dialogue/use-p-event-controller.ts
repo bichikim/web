@@ -544,6 +544,7 @@ export const usePEventController = (props: UsePEventControllerProps): PEventCont
     } else {
       // AI_NOTE - Route suspension cancels without stop callbacks so queued feeds are not marked listened.
       eventActionRunner.clearDelayedEndActions()
+      delayedEndPlayback.retainPendingEventOnSuspension()
       playback.cancel()
     }
   })
