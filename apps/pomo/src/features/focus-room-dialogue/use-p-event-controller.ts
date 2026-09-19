@@ -285,7 +285,15 @@ export const usePEventController = (props: UsePEventControllerProps): PEventCont
       return
     }
 
-    eventActionRunner.run(eventIds)
+    const actionExecution = eventActionRunner.run(eventIds)
+    if (actionExecution !== undefined) {
+      await actionExecution
+
+      if (isDisposed || !isPlaybackEnabled() || repository === null) {
+        return
+      }
+    }
+
     const bindings = eventDialogueIds()
     const playbackModes = eventPlaybackModes()
     const dialogueIds = selectDialogueIdsForEvents(

@@ -116,17 +116,16 @@ describe('delayed-end route transitions', () => {
     expect(playback.playSequence).not.toHaveBeenCalled()
     expect(initialRunAction).not.toHaveBeenCalled()
 
-    setPlayback?.(true)
-    await vi.waitFor(() => expect(playback.playSequence).toHaveBeenCalledOnce())
-
     const runAction = vi.fn()
     capturedController.registerEventActionExecutor?.(runAction)
+    setPlayback?.(true)
+    await vi.waitFor(() => expect(playback.playSequence).toHaveBeenCalledOnce())
     expect(runAction).toHaveBeenCalledExactlyOnceWith('music-stop')
 
     view.unmount()
   })
 
-  it('should discard delayed-end actions after catch-up completes without an executor', async () => {
+  it('should discard delayed-end actions when catch-up is interrupted before executor registration', async () => {
     let controller: PEventContextValue | undefined
     let setPlayback: ((enabled: boolean) => void) | undefined
     const view = render(() => {
@@ -161,7 +160,6 @@ describe('delayed-end route transitions', () => {
     await vi.advanceTimersByTimeAsync(60_000)
 
     setPlayback?.(true)
-    await vi.waitFor(() => expect(playback.playSequence).toHaveBeenCalledOnce())
     await Promise.resolve()
     await Promise.resolve()
     await Promise.resolve()
@@ -170,11 +168,11 @@ describe('delayed-end route transitions', () => {
     setPlayback?.(false)
     await vi.waitFor(() => expect(playback.cancel).toHaveBeenCalledTimes(2))
 
-    setPlayback?.(true)
     const runAction = vi.fn()
     capturedController.registerEventActionExecutor?.(runAction)
 
     expect(runAction).not.toHaveBeenCalled()
+    expect(playback.playSequence).not.toHaveBeenCalled()
     view.unmount()
   })
 
@@ -216,6 +214,7 @@ describe('delayed-end route transitions', () => {
         }),
     )
 
+    capturedController.registerEventActionExecutor?.(vi.fn())
     setPlayback?.(true)
     await vi.waitFor(() => expect(playback.playSequence).toHaveBeenCalledOnce())
 
@@ -273,6 +272,51 @@ describe('delayed-end route transitions', () => {
 
     capturedController.registerEventActionExecutor?.(runAction)
     await vi.waitFor(() => expect(playbackOrder).toEqual(['action', 'dialogue']))
+
+    view.unmount()
+  })
+
+  it('should wait for a delayed-end action before starting dialogue playback', async () => {
+    let controller: PEventContextValue | undefined
+    const playbackOrder: string[] = []
+    const view = render(() => {
+      return (
+        <EventControllerHarness
+          isDelayedEndEventEnabled={true}
+          isPlaybackEnabled={true}
+          onController={(nextController) => {
+            controller = nextController
+          }}
+        />
+      )
+    })
+
+    await vi.waitFor(() => expect(controller?.isLoading()).toBe(false))
+    const capturedController = controller
+
+    if (capturedController === undefined) {
+      throw new Error('Expected the event controller to be captured.')
+    }
+
+    playback.playSequence.mockImplementationOnce(async () => {
+      playbackOrder.push('dialogue')
+    })
+
+    const initialRunAction = vi.fn()
+    const unregisterInitialExecutor =
+      capturedController.registerEventActionExecutor?.(initialRunAction)
+    unregisterInitialExecutor?.()
+
+    const playbackRequest = capturedController.playDialogueEvents(['delayed-end'])
+    expect(playback.playSequence).not.toHaveBeenCalled()
+
+    const runAction = vi.fn(() => {
+      playbackOrder.push('action')
+    })
+    capturedController.registerEventActionExecutor?.(runAction)
+    await playbackRequest
+
+    expect(playbackOrder).toEqual(['action', 'dialogue'])
 
     view.unmount()
   })
