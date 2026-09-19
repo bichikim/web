@@ -85,6 +85,7 @@ export const usePPlaybackPersistence = (
   }
 
   const persistSeekedPlayback = () => {
+    pendingPosition = null
     persistCurrentPlayback()
   }
 

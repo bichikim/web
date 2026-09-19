@@ -123,6 +123,24 @@ it('should restore a matching pending position and clamp it to finite duration',
   expect(harness.persistence.applyPendingPosition()).toBeNull()
 })
 
+it('should persist a user seek before applying the pending position', () => {
+  const harness = createHarness()
+  const audio = createAudio(45, 60)
+  harness.setTrack(TRACK)
+  harness.setAudio(audio)
+  harness.persistence.setPendingPosition({isPlaying: true, positionSeconds: 30, trackId: TRACK.id})
+
+  harness.persistence.persistSeekedPlayback()
+
+  expect(storageMocks.write).toHaveBeenLastCalledWith({
+    isPlaying: true,
+    positionSeconds: 45,
+    trackId: TRACK.id,
+  })
+  expect(harness.persistence.applyPendingPosition()).toBeNull()
+  expect(audio.currentTime).toBe(45)
+})
+
 it('should persist current playback after restoring a pending position', () => {
   const harness = createHarness()
   harness.setTrack(TRACK)
