@@ -57,7 +57,13 @@ export const startHistoryGeneration = async (
     targetDate,
   })
 
-  if (!prepared.created) {
+  const shouldSubmit =
+    prepared.created ||
+    (prepared.run.status === 'preparing' &&
+      prepared.run.openAiResponseId === null &&
+      prepared.run.submissionState === null)
+
+  if (!shouldSubmit) {
     return {
       responseId: prepared.run.openAiResponseId,
       runId: prepared.run.id,

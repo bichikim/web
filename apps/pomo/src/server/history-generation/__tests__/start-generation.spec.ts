@@ -43,6 +43,46 @@ it('should submit a newly prepared run and persist its response ID', async () =>
   expect(markSubmitted).toHaveBeenCalledWith('run-1', RUN.openAiSubmissionKey, 'resp-1')
 })
 
+it('should submit an existing preparing run with no prior submission', async () => {
+  const markSubmitted = vi.fn().mockResolvedValue(undefined)
+  const submit = vi.fn().mockResolvedValue({responseId: 'resp-1'})
+
+  await expect(
+    startHistoryGeneration({
+      markFailed: vi.fn(),
+      markSubmitted,
+      markUnknown: vi.fn(),
+      now: () => new Date('2026-08-13T15:30:00.000Z'),
+      prepare: vi.fn().mockResolvedValue({created: false, run: RUN}),
+      submit,
+    }),
+  ).resolves.toMatchObject({runId: 'run-1', status: 'submitted'})
+  expect(submit).toHaveBeenCalledOnce()
+  expect(markSubmitted).toHaveBeenCalledWith('run-1', RUN.openAiSubmissionKey, 'resp-1')
+})
+
+it.each(['unknown', 'expired'] as const)(
+  'should not resubmit an existing %s submission',
+  async (submissionState) => {
+    const submit = vi.fn()
+
+    await expect(
+      startHistoryGeneration({
+        markFailed: vi.fn(),
+        markSubmitted: vi.fn(),
+        markUnknown: vi.fn(),
+        now: () => new Date('2026-08-13T15:30:00.000Z'),
+        prepare: vi.fn().mockResolvedValue({
+          created: false,
+          run: {...RUN, submissionState},
+        }),
+        submit,
+      }),
+    ).resolves.toMatchObject({runId: 'run-1', status: 'existing'})
+    expect(submit).not.toHaveBeenCalled()
+  },
+)
+
 it('should not submit a duplicate daily run', async () => {
   const submit = vi.fn()
 
@@ -52,7 +92,10 @@ it('should not submit a duplicate daily run', async () => {
       markSubmitted: vi.fn(),
       markUnknown: vi.fn(),
       now: () => new Date('2026-08-13T15:30:00.000Z'),
-      prepare: vi.fn().mockResolvedValue({created: false, run: RUN}),
+      prepare: vi.fn().mockResolvedValue({
+        created: false,
+        run: {...RUN, openAiResponseId: 'resp-existing', status: 'submitted' as const},
+      }),
       submit,
     }),
   ).resolves.toMatchObject({runId: 'run-1', status: 'existing'})
@@ -126,12 +169,15 @@ it('should retry response ID persistence without submitting again', async () => 
   expect(markFailed).not.toHaveBeenCalled()
 })
 
-it('should not resubmit an accepted response when persistence remains unavailable', async () => {
+it('should not resubmit after an accepted response becomes persisted', async () => {
   const markFailed = vi.fn()
   const prepare = vi
     .fn()
     .mockResolvedValueOnce({created: true, run: RUN})
-    .mockResolvedValueOnce({created: false, run: RUN})
+    .mockResolvedValueOnce({
+      created: false,
+      run: {...RUN, openAiResponseId: 'resp-accepted', status: 'submitted' as const},
+    })
   const submit = vi.fn().mockResolvedValue({responseId: 'resp-accepted'})
   const dependencies = {
     markFailed,
