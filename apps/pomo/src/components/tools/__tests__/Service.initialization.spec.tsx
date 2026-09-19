@@ -1,36 +1,51 @@
 /** @vitest-environment jsdom */
-import {PreferenceProvider} from 'src/hooks/use-preference'
-import {render, screen, waitFor} from '@solidjs/testing-library'
-import {afterEach, expect, it, vi} from 'vitest'
-import {useLocalDate} from 'src/features/civil-date'
-import {servicePreference} from 'src/features/tools'
+import {createSignal} from 'solid-js'
+import {render} from '@solidjs/testing-library'
+import {expect, it, vi} from 'vitest'
+import {PreferenceContext, type PreferenceEntry} from 'src/hooks/use-preference'
+import type {LocalDateRuntime} from 'src/features/civil-date'
 import {Service} from '../Service'
 
-vi.mock('src/features/civil-date/use-local-date', () => ({useLocalDate: vi.fn()}))
+const resultState = vi.hoisted(() => ({values: [] as string[]}))
 
-afterEach(() => {
-  vi.restoreAllMocks()
-})
+vi.mock('../../p-date-picker/PDatePicker', () => ({PDatePicker: () => null}))
+vi.mock('../../p-select/PSelect', () => ({PSelect: () => null}))
+vi.mock('../../p-input/PInput', () => ({PInput: () => null}))
+vi.mock('../../p-switch/PSwitch', () => ({PSwitch: () => null}))
+vi.mock('../Result', () => ({
+  Result: (props: {readonly label?: string; readonly value: string}) => {
+    resultState.values.push(props.value)
+    return <section aria-label={props.label}>{props.value}</section>
+  },
+}))
 
-it('should calculate a saved service period from the initial local date', async () => {
-  vi.mocked(useLocalDate).mockImplementation(
-    (props = {}) =>
-      () =>
-        props.initialDate === undefined ? '' : '2026-01-01',
-  )
-  vi.spyOn(servicePreference.storage, 'read').mockResolvedValue({
-    branch: 'army',
-    days: '',
-    manual: false,
-    start: '2026-01-01',
+it('should render the service result before the client date lifecycle refreshes', () => {
+  const runtime = {
+    now: vi.fn(() => new Date(2026, 0, 1)),
+    schedule: vi.fn<(callback: () => void, delay: number) => () => void>(() => vi.fn()),
+    subscribe: vi.fn<(callback: (isHidden: boolean) => void) => () => void>(() => vi.fn()),
+  } satisfies LocalDateRuntime
+  const [snapshot] = createSignal({
+    value: {
+      branch: 'army',
+      days: '',
+      manual: false,
+      start: '2026-01-01',
+    },
   })
+  const entry: PreferenceEntry = {
+    setValue: vi.fn(),
+    snapshot,
+    subscribeErrors: vi.fn(() => () => undefined),
+    subscribeSaves: vi.fn(() => () => undefined),
+  }
 
   render(() => (
-    <PreferenceProvider>
-      <Service />
-    </PreferenceProvider>
+    <PreferenceContext.Provider value={{get: () => entry}}>
+      <Service runtime={runtime} />
+    </PreferenceContext.Provider>
   ))
 
-  await waitFor(() => expect(screen.getByRole('region', {name: '예상 전역일'})).toBeVisible())
-  expect(screen.getByText(/2027-06-30/u)).toBeVisible()
+  expect(resultState.values[0]).toContain('2027-06-30')
+  expect(runtime.now).toHaveBeenCalledTimes(2)
 })
