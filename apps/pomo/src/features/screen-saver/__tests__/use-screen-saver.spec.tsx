@@ -88,6 +88,35 @@ describe('useScreenSaver', () => {
     expect(controller?.delay()).toBe('1m')
   })
 
+  it('should not activate while the stored preference is loading', async () => {
+    let completeRead: (delay: 'off') => void = () => undefined
+    preferenceMocks.read.mockReturnValue(
+      new Promise((resolve) => {
+        completeRead = resolve
+      }),
+    )
+    let controller: ScreenSaverController | undefined
+
+    render(() => (
+      <ScreenSaverProviderHarness
+        onController={(nextController) => {
+          controller = nextController
+        }}
+        onStateChange={() => undefined}
+      />
+    ))
+
+    vi.advanceTimersByTime(600_000)
+
+    expect(controller?.isActive()).toBe(false)
+
+    completeRead('off')
+    await Promise.resolve()
+
+    expect(controller?.delay()).toBe('off')
+    expect(controller?.isActive()).toBe(false)
+  })
+
   it('should activate after the stored inactivity delay', async () => {
     let controller: ScreenSaverController | undefined
     const onStateChange = vi.fn()
