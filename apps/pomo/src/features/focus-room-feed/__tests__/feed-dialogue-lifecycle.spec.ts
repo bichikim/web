@@ -76,27 +76,36 @@ const createItem = (
   version: 1,
 })
 
-it('should remove orphaned feed records while joining available dialogues', async () => {
+it('should dismiss orphaned feed records while joining available dialogues', async () => {
   const availableMetadata = createMetadata(DIALOGUE.id)
   const missingMetadata = createMetadata('missing')
-  const removeItem = vi.fn(async () => undefined)
+  const dismissItem = vi.fn(async () => undefined)
   const removeMetadata = vi.fn(async () => undefined)
   const result = await loadFeedDialogueList({
     dialogueRepository: {
       getDialogue: vi.fn(async (dialogueId) => (dialogueId === DIALOGUE.id ? DIALOGUE : null)),
     },
     feedRepository: {
+      dismissItem,
       listMetadata: vi.fn(async () => [availableMetadata, missingMetadata]),
-      removeItem,
       removeMetadata,
     },
+    now: new Date('2026-08-17T00:00:00.000Z'),
   })
 
   expect(result).toEqual([{dialogue: DIALOGUE, metadata: availableMetadata}])
-  expect(removeItem).toHaveBeenCalledWith(
-    missingMetadata.feedConnectionId,
-    missingMetadata.feedItemId,
-  )
+  expect(dismissItem).toHaveBeenCalledWith({
+    fallback: {
+      itemTitle: missingMetadata.itemTitle,
+      publishedAt: missingMetadata.publishedAt,
+      sourceTitle: missingMetadata.sourceTitle,
+      sourceUrl: missingMetadata.sourceUrl,
+    },
+    feedConnectionId: missingMetadata.feedConnectionId,
+    feedItemId: missingMetadata.feedItemId,
+    message: '대화를 찾을 수 없어 피드 항목을 정리했어요.',
+    updatedAt: '2026-08-17T00:00:00.000Z',
+  })
   expect(removeMetadata).toHaveBeenCalledWith(missingMetadata.dialogueId)
 })
 

@@ -60,6 +60,7 @@ const repositoryMocks = vi.hoisted(() => {
     listMetadata: vi.fn().mockResolvedValue([]),
     markListened: vi.fn().mockResolvedValue(undefined),
     recoverMissingDialogue: vi.fn().mockResolvedValue(true),
+    dismissItem: vi.fn().mockResolvedValue(undefined),
     removeItem: vi.fn().mockResolvedValue(undefined),
     removeMetadata: vi.fn().mockResolvedValue(undefined),
     retryJobs: vi.fn().mockResolvedValue(undefined),
@@ -126,6 +127,7 @@ beforeEach(() => {
   repositoryMocks.feedRepository.listMetadata.mockResolvedValue([])
   repositoryMocks.feedRepository.markListened.mockResolvedValue(undefined)
   repositoryMocks.feedRepository.recoverMissingDialogue.mockResolvedValue(true)
+  repositoryMocks.feedRepository.dismissItem.mockResolvedValue(undefined)
   repositoryMocks.feedRepository.removeItem.mockResolvedValue(undefined)
   repositoryMocks.feedRepository.removeMetadata.mockResolvedValue(undefined)
   repositoryMocks.feedRepository.retryJobs.mockResolvedValue(undefined)
@@ -610,7 +612,13 @@ it('should reload dialogues after metadata removal succeeds or fails', async () 
 
   await view.result.onDeleteDialogue('delete-me')
   expect(events.deleteDialogue).toHaveBeenCalledWith('delete-me')
-  expect(repositoryMocks.feedRepository.removeItem).toHaveBeenCalledWith('feed-1', 'item-delete-me')
+  expect(repositoryMocks.feedRepository.dismissItem).toHaveBeenCalledWith(
+    expect.objectContaining({
+      feedConnectionId: 'feed-1',
+      feedItemId: 'item-delete-me',
+      message: '사용자가 피드 대화를 삭제했어요.',
+    }),
+  )
   expect(repositoryMocks.feedRepository.removeMetadata).toHaveBeenCalledWith('delete-me')
 
   repositoryMocks.feedRepository.removeMetadata.mockRejectedValueOnce(new Error('remove failed'))
@@ -619,7 +627,7 @@ it('should reload dialogues after metadata removal succeeds or fails', async () 
   view.cleanup()
 })
 
-it('should remove stored feed items when the dialogue is not loaded in feed state', async () => {
+it('should dismiss stored feed items when the dialogue is not loaded in feed state', async () => {
   const orphan = createDialogue('orphan', null)
   repositoryMocks.feedRepository.listMetadata.mockResolvedValue([orphan.metadata])
   const events = createEventContext()
@@ -629,9 +637,12 @@ it('should remove stored feed items when the dialogue is not loaded in feed stat
   await view.result.onDeleteDialogue(orphan.dialogue.id)
 
   expect(events.deleteDialogue).toHaveBeenCalledWith(orphan.dialogue.id)
-  expect(repositoryMocks.feedRepository.removeItem).toHaveBeenCalledWith(
-    orphan.metadata.feedConnectionId,
-    orphan.metadata.feedItemId,
+  expect(repositoryMocks.feedRepository.dismissItem).toHaveBeenCalledWith(
+    expect.objectContaining({
+      feedConnectionId: orphan.metadata.feedConnectionId,
+      feedItemId: orphan.metadata.feedItemId,
+      message: '사용자가 피드 대화를 삭제했어요.',
+    }),
   )
   expect(repositoryMocks.feedRepository.removeMetadata).toHaveBeenCalledWith(orphan.dialogue.id)
   view.cleanup()

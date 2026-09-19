@@ -22,12 +22,15 @@ interface FeedDialogueJobRepository extends Pick<
 
 interface FeedDialogueListRepository extends Pick<
   FeedDialogueRepository,
-  'listMetadata' | 'removeItem' | 'removeMetadata'
+  'dismissItem' | 'listMetadata' | 'removeMetadata'
 > {}
+
+const ORPHAN_FEED_ITEM_MESSAGE = '대화를 찾을 수 없어 피드 항목을 정리했어요.'
 
 export interface LoadFeedDialogueListOptions {
   readonly dialogueRepository: DialogueLookupRepository
   readonly feedRepository: FeedDialogueListRepository
+  readonly now: Date
 }
 
 export interface DeleteExpiredFeedDialoguesOptions {
@@ -58,7 +61,19 @@ export const loadFeedDialogueList = async (
       const dialogue = await options.dialogueRepository.getDialogue(item.dialogueId)
 
       if (dialogue === null) {
-        await options.feedRepository.removeItem(item.feedConnectionId, item.feedItemId)
+        const updatedAt = options.now.toISOString()
+        await options.feedRepository.dismissItem({
+          fallback: {
+            itemTitle: item.itemTitle,
+            publishedAt: item.publishedAt,
+            sourceTitle: item.sourceTitle,
+            sourceUrl: item.sourceUrl,
+          },
+          feedConnectionId: item.feedConnectionId,
+          feedItemId: item.feedItemId,
+          message: ORPHAN_FEED_ITEM_MESSAGE,
+          updatedAt,
+        })
         await options.feedRepository.removeMetadata(item.dialogueId)
         return null
       }
