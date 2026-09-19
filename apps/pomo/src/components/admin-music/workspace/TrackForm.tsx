@@ -81,7 +81,7 @@ export const TrackForm = (props: TrackFormProps) => {
           {(track) => (
             <fieldset
               class="m-0 min-w-0 rounded-3 border border-white/15 p-4"
-              disabled={isBusy() || track.status === 'created' || track.status === 'preserved'}
+              disabled={isBusy() || track.status === 'created'}
             >
               <legend class="max-w-full break-all px-2 text-sm font-700">{track.audio.name}</legend>
               <TrackFields

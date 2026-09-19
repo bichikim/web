@@ -72,3 +72,18 @@ it('should allow removing files and closing before saving', async () => {
   fireEvent.click(screen.getByRole('button', {name: '닫기'}))
   expect(onCancel).toHaveBeenCalledOnce()
 })
+
+it('should allow removing a file when its registration result is uncertain', async () => {
+  const {submitTrack} = setup()
+  submitTrack.mockRejectedValueOnce(new Error('response lost'))
+  fireEvent.drop(screen.getByRole('group', {name: '파일 드롭 영역'}), {
+    dataTransfer: {files: [new File(['uncertain'], 'uncertain.mp3')]},
+  })
+  await waitFor(() => expect(screen.getByRole('button', {name: '1곡 추가'})).toBeEnabled())
+  fireEvent.submit(screen.getByRole('form', {name: '곡 추가'}))
+  await screen.findByText('등록 결과를 확인하지 못했습니다. 목록에서 상태를 확인해 주세요.')
+  const removeButton = screen.getByRole('button', {name: 'uncertain.mp3 목록에서 제외'})
+  expect(removeButton).toBeEnabled()
+  fireEvent.click(removeButton)
+  expect(screen.queryByRole('group', {name: 'uncertain.mp3'})).toBeNull()
+})
