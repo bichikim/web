@@ -231,11 +231,19 @@ export const usePomodoroTimer = (props: UsePomodoroTimerProps = {}): PomodoroTim
         stateToRestore = result.data.state
       }
 
+      const currentTime = Date.now()
+      const synchronizedState = synchronizePomodoroTimer(
+        result.data.state,
+        currentTime,
+        result.data.config,
+        {autoStartNextPhase: result.data.isAutoStartEnabled},
+      )
+
       batch(() => {
         setConfig(result.data.config)
         setIsAutoStartEnabled(result.data.isAutoStartEnabled)
-        setNow(Date.now())
-        setState(result.data.state)
+        setNow(currentTime)
+        setState(synchronizedState)
       })
     })
 
