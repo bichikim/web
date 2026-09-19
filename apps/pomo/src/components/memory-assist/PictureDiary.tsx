@@ -99,6 +99,7 @@ export const PictureDiary = (props: PictureDiaryProps) => {
   })
   const [view, setView] = createSignal<PictureDiaryView>({kind: 'writing'})
   const [date, setDate] = createSignal(formatLocalDate(environment.now()))
+  const [dateEdited, setDateEdited] = createSignal(false)
   const [strokes, setStrokes] = createSignal<ReadonlyArray<PictureDiaryStroke>>([])
   const [image, setImage] = createSignal<PictureDiaryImage>()
   const [text, setText] = createSignal('')
@@ -115,7 +116,6 @@ export const PictureDiary = (props: PictureDiaryProps) => {
   const pagination = createMemo(() =>
     getViewPagination({compact: compact(), entries: entries(), view: view()}),
   )
-  const canCloseBackCover = createMemo(() => !backCoverClosed() && pagination().older === null)
 
   const handleOpenSpread = (spread: BookSpread | null) => {
     if (spread === null) {
@@ -127,6 +127,7 @@ export const PictureDiary = (props: PictureDiaryProps) => {
 
   const handleDateChange = (nextDate: string) => {
     setDate(nextDate)
+    setDateEdited(true)
     setMessage(null)
   }
 
@@ -153,7 +154,7 @@ export const PictureDiary = (props: PictureDiaryProps) => {
       const now = environment.now()
       const entry = createPictureDiaryEntry({
         createdAt: now.toISOString(),
-        date: snapshot.date,
+        date: dateEdited() ? snapshot.date : formatLocalDate(now),
         id: environment.createId(),
         image: snapshot.image,
         now,
@@ -170,6 +171,7 @@ export const PictureDiary = (props: PictureDiaryProps) => {
         text() === snapshot.text
       ) {
         setDate(formatLocalDate(environment.now()))
+        setDateEdited(false)
         setStrokes([])
         setImage(undefined)
         setText('')
@@ -218,7 +220,7 @@ export const PictureDiary = (props: PictureDiaryProps) => {
         frontCoverClosed={view().kind === 'front-cover'}
         onFrontCoverChange={(closed) => setView({kind: closed ? 'front-cover' : 'ending'})}
         backCoverClosed={backCoverClosed()}
-        canCloseBackCover={canCloseBackCover()}
+        canCloseBackCover={!backCoverClosed() && pagination().older === null}
         canGoNewer={pagination().newer !== null}
         canGoOlder={pagination().older !== null}
         canSave={canSave()}
