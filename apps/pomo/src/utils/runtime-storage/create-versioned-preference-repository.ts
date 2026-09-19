@@ -28,6 +28,7 @@ export const createVersionedPreferenceRepository = <Value>(
 ): VersionedPreferenceRepository<Value> => {
   let preferenceWriteRevision = 0
   let prefersNativeSettings = false
+  let browserCopyMissing = false
   let pendingNativeSave: Promise<void> | null = null
   const writeLatestNative = createLatestAsyncTask(options.storage.writeNative)
 
@@ -45,10 +46,13 @@ export const createVersionedPreferenceRepository = <Value>(
     const isNative = options.storage.isNative()
     const webValue = options.storage.readWeb()
 
-    if (webValue !== null && !prefersNativeSettings) {
+    if (webValue !== null && (!isNative || !prefersNativeSettings || browserCopyMissing)) {
       if (isNative) {
         withPromiseNull(writeLatestNative(webValue))
       }
+
+      prefersNativeSettings = false
+      browserCopyMissing = false
 
       return webValue
     }
@@ -64,17 +68,22 @@ export const createVersionedPreferenceRepository = <Value>(
         return read()
       }
 
+      const latestWebValue = webValue === null ? options.storage.readWeb() : webValue
+
+      if (browserCopyMissing && latestWebValue !== null) {
+        prefersNativeSettings = false
+        browserCopyMissing = false
+        withPromiseNull(writeLatestNative(latestWebValue))
+        return latestWebValue
+      }
+
       if (nativeValue === null) {
         return options.defaultValue
       }
 
       const webWriteError = options.storage.writeWeb(nativeValue)
       prefersNativeSettings = webWriteError !== null
-
-      if (webWriteError !== null && webValue !== null) {
-        withPromiseNull(writeLatestNative(webValue))
-        return webValue
-      }
+      browserCopyMissing = webWriteError !== null && latestWebValue === null
 
       return nativeValue
     } catch {
@@ -94,6 +103,9 @@ export const createVersionedPreferenceRepository = <Value>(
 
     if (webWriteError === null) {
       prefersNativeSettings = false
+      browserCopyMissing = false
+    } else {
+      browserCopyMissing = options.storage.readWeb() === null
     }
 
     if (!options.storage.isNative()) {
