@@ -113,6 +113,17 @@ const useStudioEntry = (events: ReturnType<typeof usePEvents>) => {
   return {enter, hide: () => setIsVisible(false), isVisible, restore}
 }
 
+const DesktopWallpaperEventActionFallback = () => {
+  const events = usePEvents()
+
+  onMount(() => {
+    const unregister = events.registerEventActionExecutor(() => undefined)
+    onCleanup(unregister)
+  })
+
+  return null
+}
+
 const createLoadingHandler =
   (setLoading: Setter<boolean>, setRendered: Setter<boolean>) => (isLoading: boolean) => {
     setLoading(isLoading)
@@ -463,6 +474,9 @@ export const PStudio = () => {
           uiAutoHide={uiAutoHide}
           weather={weather}
         />
+      </Show>
+      <Show when={isDesktopWallpaper()}>
+        <DesktopWallpaperEventActionFallback />
       </Show>
       <Show when={import.meta.env.VITE_POMO_IS_DESKTOP === 'true' && isDesktopWidget()}>
         <DesktopSurfaceHandle

@@ -99,7 +99,7 @@ export const useWeather = (): WeatherController => {
       return currentPreference !== null
     }
 
-    return feedState().status !== 'loading'
+    return feedState().status === 'ready'
   }
 
   const weatherResult = createAsync<WeatherFeedQueryResult | undefined>(async () => {
@@ -185,7 +185,7 @@ export const useWeather = (): WeatherController => {
     sceneCondition: () => {
       const currentPreference = preference()
       const currentState = feedState()
-      if (currentPreference.sceneMode === 'auto' && currentState.status === 'loading') {
+      if (currentPreference.sceneMode === 'auto' && currentState.status !== 'ready') {
         return undefined
       }
 

@@ -47,7 +47,10 @@ describe('PStudio', () => {
   })
 
   it('should keep only the scene visible while the window is the desktop background', () => {
-    configureStudio({desktopMode: 'desktop', entrySession: true})
+    const {registerEventActionExecutor} = configureStudio({
+      desktopMode: 'desktop',
+      entrySession: true,
+    })
 
     renderStudio()
 
@@ -58,6 +61,7 @@ describe('PStudio', () => {
     expect(screen.queryByText('화면 보호기')).not.toBeInTheDocument()
     expect(vi.mocked(PStudioScene).mock.calls[0]?.[0].interactive).toBe(false)
     expect(SceneToolbar).not.toHaveBeenCalled()
+    expect(registerEventActionExecutor).toHaveBeenCalledOnce()
   })
 
   it('should keep the studio controls on the interactive desktop background', () => {

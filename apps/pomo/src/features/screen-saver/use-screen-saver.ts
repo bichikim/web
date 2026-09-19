@@ -42,7 +42,7 @@ export const useScreenSaver = (): ScreenSaverController => {
   const [activityRevision, setActivityRevision] = createSignal(0)
   let lastActivityTime = Number.NEGATIVE_INFINITY
 
-  const delay = () => storedDelay() ?? 'off'
+  const delay = () => storedDelay() ?? DEFAULT_SCREEN_SAVER_DELAY
 
   const recordActivity = () => {
     const wasActive = isActive()

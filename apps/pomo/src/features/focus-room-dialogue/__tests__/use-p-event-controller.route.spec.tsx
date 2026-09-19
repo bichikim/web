@@ -230,4 +230,50 @@ describe('delayed-end route transitions', () => {
 
     view.unmount()
   })
+
+  it('should run a queued room-enter action before starting entry dialogue', async () => {
+    repositoryMocks.listEventBindings.mockResolvedValueOnce([
+      {
+        actionIds: ['music-stop'],
+        dialogueIds: ['entry-dialogue'],
+        event: 'room-enter',
+        playbackMode: 'sequential-all',
+        version: 3,
+      },
+    ])
+    let controller: PEventContextValue | undefined
+    const playbackOrder: string[] = []
+    const view = render(() => (
+      <EventControllerHarness
+        isDelayedEndEventEnabled={true}
+        isPlaybackEnabled={true}
+        onController={(nextController) => {
+          controller = nextController
+        }}
+      />
+    ))
+
+    await vi.waitFor(() => expect(controller?.isLoading()).toBe(false))
+    const capturedController = controller
+
+    if (capturedController === undefined) {
+      throw new Error('Expected the event controller to be captured.')
+    }
+
+    playback.playSequence.mockImplementationOnce(async () => {
+      playbackOrder.push('dialogue')
+    })
+    const runAction = vi.fn(() => {
+      playbackOrder.push('action')
+    })
+
+    capturedController.enterFocusRoom()
+
+    expect(playback.playSequence).not.toHaveBeenCalled()
+
+    capturedController.registerEventActionExecutor?.(runAction)
+    await vi.waitFor(() => expect(playbackOrder).toEqual(['action', 'dialogue']))
+
+    view.unmount()
+  })
 })

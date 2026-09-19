@@ -5,6 +5,12 @@ import {useAlbumTranslation} from '../use-album-translation'
 
 vi.mock('../../text-generation/environment', () => ({supportsWebGpu: () => false}))
 
+const TRANSLATIONS = {
+  en: {description: 'en', title: 'en'},
+  ja: {description: 'ja', title: 'ja'},
+  'zh-Hans': {description: 'zh', title: 'zh'},
+} as const
+
 it('should translate, expose worker progress, complete, and dispose', () => {
   let options: CreateAlbumTranslationClientOptions | undefined
   const dispose = vi.fn()
@@ -38,16 +44,32 @@ it('should translate, expose worker progress, complete, and dispose', () => {
   expect(controller.state()).toMatchObject({progress: 42, status: 'loading'})
   options?.onResponse({type: 'started'})
   expect(controller.state()).toMatchObject({status: 'generating'})
-  const translations = {
-    en: {description: 'en', title: 'en'},
-    ja: {description: 'ja', title: 'ja'},
-    'zh-Hans': {description: 'zh', title: 'zh'},
-  }
-  options?.onResponse({translations, type: 'complete'})
-  expect(complete).toHaveBeenCalledWith(translations)
+  options?.onResponse({translations: TRANSLATIONS, type: 'complete'})
+  expect(complete).toHaveBeenCalledWith(TRANSLATIONS)
   expect(controller.state()).toEqual({status: 'complete'})
   cleanup()
   expect(dispose).toHaveBeenCalledOnce()
+})
+
+it('should stay idle when the completion consumer discards translations', () => {
+  let options: CreateAlbumTranslationClientOptions | undefined
+  const controller = createRoot(() =>
+    useAlbumTranslation({
+      onComplete: () => false,
+      runtime: {
+        createClient: (nextOptions) => {
+          options = nextOptions
+          return {dispose: vi.fn(), translate: vi.fn()}
+        },
+        supportsWebGpu: () => true,
+      },
+    }),
+  )
+
+  controller.translate({description: '설명', title: '제목'})
+  options?.onResponse({translations: TRANSLATIONS, type: 'complete'})
+
+  expect(controller.state()).toEqual({status: 'idle'})
 })
 
 it('should reject unsupported, blank, and busy translations and recover worker errors', () => {

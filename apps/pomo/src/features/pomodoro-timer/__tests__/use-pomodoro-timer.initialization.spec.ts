@@ -457,6 +457,45 @@ it('should synchronize timer actions between mounted controllers', async () => {
   second.cleanup()
 })
 
+it('should catch up an expired cross-tab running state before persisting it', async () => {
+  vi.spyOn(globalThis, 'requestAnimationFrame').mockReturnValue(0)
+  const source = renderHook(() => usePomodoroTimer(), {wrapper: PreferenceProvider})
+  const receiver = renderHook(() => usePomodoroTimer(), {wrapper: PreferenceProvider})
+  await Promise.all([finishInitialization(source), finishInitialization(receiver)])
+
+  source.result.onConfigChange(CONFIG)
+  source.result.onStart()
+  await vi.waitFor(() => {
+    expect(receiver.result.state()).toEqual({
+      completedFocusSessions: 0,
+      endsAt: 10_000,
+      phase: 'focus',
+      status: 'running',
+    })
+  })
+
+  vi.setSystemTime(20_000)
+  source.result.onAutoStartChange(false)
+
+  await vi.waitFor(() => {
+    expect(receiver.result.state()).toEqual({
+      completedFocusSessions: 1,
+      phase: 'shortBreak',
+      remainingSeconds: 4,
+      status: 'idle',
+    })
+  })
+
+  expect(JSON.parse(localStorage.getItem(STATE_STORAGE_KEY) ?? '')).toEqual({
+    completedFocusSessions: 1,
+    phase: 'shortBreak',
+    remainingSeconds: 4,
+    status: 'idle',
+  })
+  source.cleanup()
+  receiver.cleanup()
+})
+
 it('should abandon pending preference restoration after cleanup', async () => {
   const preference = createDeferred<boolean>()
   autoStartMocks.read.mockReturnValue(preference.promise)

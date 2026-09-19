@@ -33,8 +33,11 @@ export const useFeatureRequests = (): FeatureRequestsController => {
   const [loadMoreFailed, setLoadMoreFailed] = createSignal(false)
   const [isSubmitting, setIsSubmitting] = createSignal(false)
   const [votingRequestId, setVotingRequestId] = createSignal<string | null>(null)
+  let listGeneration = 0
 
   const refresh = async (): Promise<void> => {
+    listGeneration += 1
+    const generation = listGeneration
     setIsLoading(true)
     setLoadFailed(false)
     setLoadMoreFailed(false)
@@ -42,12 +45,22 @@ export const useFeatureRequests = (): FeatureRequestsController => {
 
     try {
       const page = await listFeatureRequests()
+      if (generation !== listGeneration) {
+        return
+      }
+
       setHasMore(page.hasMore)
       setRequests(page.requests)
     } catch {
+      if (generation !== listGeneration) {
+        return
+      }
+
       setLoadFailed(true)
     } finally {
-      setIsLoading(false)
+      if (generation === listGeneration) {
+        setIsLoading(false)
+      }
     }
   }
 
@@ -57,14 +70,23 @@ export const useFeatureRequests = (): FeatureRequestsController => {
     }
 
     const offset = requests().length
+    const generation = listGeneration
     setIsLoadingMore(true)
     setLoadMoreFailed(false)
 
     try {
       const page = await listFeatureRequests({offset})
+      if (generation !== listGeneration) {
+        return
+      }
+
       setRequests((currentRequests) => [...currentRequests, ...page.requests])
       setHasMore(page.hasMore)
     } catch {
+      if (generation !== listGeneration) {
+        return
+      }
+
       setLoadMoreFailed(true)
     } finally {
       setIsLoadingMore(false)

@@ -102,20 +102,32 @@ it('should queue with generation settings resolved after fetching the feed item'
   expect(jobs[0]).toMatchObject({modelId: 'full', voiceId: 'Yuna'})
 })
 
-it('should not queue an item whose connection was removed during synchronization', async () => {
-  const {jobs, repository} = createRepository()
-
-  const summary = await synchronizeFeeds({
+it('should persist a failed item when generation settings are unavailable', async () => {
+  const {items, jobs, repository} = createRepository()
+  const resolveGenerationSettings = vi.fn(async () => null)
+  const fetcher = vi.fn(async () => new Response(createRss([{id: 'new', minute: '05'}])))
+  const options = {
     connections: [CONNECTION],
     createId: () => 'removed-connection-job',
-    fetcher: vi.fn(async () => new Response(createRss([{id: 'new', minute: '05'}]))),
+    fetcher,
     now: new Date('2026-08-14T00:06:00.000Z'),
     repository,
-    resolveGenerationSettings: vi.fn(async () => null),
-  })
+    resolveGenerationSettings,
+  }
+  const firstSummary = await synchronizeFeeds(options)
+  const secondSummary = await synchronizeFeeds(options)
 
-  expect(summary.queuedJobIds).toEqual([])
+  expect(firstSummary.queuedJobIds).toEqual([])
+  expect(secondSummary.queuedJobIds).toEqual([])
   expect(jobs).toHaveLength(0)
+  expect(fetcher).toHaveBeenCalledTimes(2)
+  expect(resolveGenerationSettings).toHaveBeenCalledOnce()
+  expect(items).toHaveLength(1)
+  expect(items[0]).toMatchObject({
+    feedItemId: 'new',
+    message: '음성 생성 설정을 찾지 못했어요.',
+    status: 'failed',
+  })
 })
 
 it('should ignore feed items published more than three days ago', async () => {
