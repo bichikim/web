@@ -316,6 +316,20 @@ it('should distinguish collecting from unavailable and failed initial results', 
   failedRoot.dispose()
 })
 
+it.each([
+  {locationId: seoulLocation.id, status: 'failed'},
+  {locationId: seoulLocation.id, retryAfterMilliseconds: null, status: 'unavailable'},
+] as const)('should withhold an automatic scene after an initial weather error', async (result) => {
+  queryMocks.weatherFeedQuery.mockResolvedValueOnce(result)
+  const root = createWeatherRoot()
+
+  await flushPromises()
+
+  expect(root.controller.isReady()).toBe(false)
+  expect(root.controller.sceneCondition()).toBeUndefined()
+  root.dispose()
+})
+
 it('should use the default preference when stored preference loading fails', async () => {
   preferenceMocks.readWeatherPreference.mockRejectedValueOnce(new Error('storage unavailable'))
   queryMocks.weatherFeedQuery.mockResolvedValueOnce(availableResult)
