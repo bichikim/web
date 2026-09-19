@@ -230,6 +230,51 @@ describe('createEntryPlaybackController', () => {
     await blockedPlayback
   })
 
+  it('should notify dialogue start only after audio playback starts', async () => {
+    const controller = createEntryPlaybackController()
+    const onDialogueStart = vi.fn()
+    const playback = controller.playSequence(createRepository(), {
+      dialogueIds: [DIALOGUE.id],
+      onDialogueStart,
+      onSequenceStop: vi.fn(),
+    })
+
+    await flush()
+    await flush()
+
+    expect(onDialogueStart).toHaveBeenCalledOnce()
+    expect(onDialogueStart).toHaveBeenCalledWith(DIALOGUE.id)
+    latestAudio().dispatchEvent(new Event('ended'))
+    await expect(playback).resolves.toBe('ended')
+  })
+
+  it('should wait to notify dialogue start until blocked audio is retried', async () => {
+    TestAudio.playImplementation = vi
+      .fn<() => Promise<void>>()
+      .mockRejectedValueOnce(new DOMException('blocked', 'NotAllowedError'))
+      .mockResolvedValue(undefined)
+    const controller = createEntryPlaybackController()
+    const onDialogueStart = vi.fn()
+    const playback = controller.playSequence(createRepository(), {
+      dialogueIds: [DIALOGUE.id],
+      onDialogueStart,
+      onSequenceStop: vi.fn(),
+    })
+
+    await flush()
+    await flush()
+
+    expect(controller.isBlocked()).toBe(true)
+    expect(onDialogueStart).not.toHaveBeenCalled()
+    controller.retry()
+    await flush()
+
+    expect(onDialogueStart).toHaveBeenCalledOnce()
+    expect(onDialogueStart).toHaveBeenCalledWith(DIALOGUE.id)
+    latestAudio().dispatchEvent(new Event('ended'))
+    await expect(playback).resolves.toBe('ended')
+  })
+
   it('should fail a non-autoplay playback error', async () => {
     const error = vi.spyOn(console, 'error').mockImplementation(() => undefined)
     TestAudio.playImplementation = () => Promise.reject(new Error('speaker failed'))
@@ -244,15 +289,17 @@ describe('createEntryPlaybackController', () => {
     vi.spyOn(console, 'error').mockImplementation(() => undefined)
     TestAudio.playImplementation = () => Promise.reject(new Error('speaker failed'))
     const controller = createEntryPlaybackController()
+    const onDialogueStart = vi.fn()
     const playback = controller.playSequence(createRepository(), {
       dialogueIds: [DIALOGUE.id],
-      onDialogueStart: vi.fn(),
+      onDialogueStart,
       onSequenceStop: vi.fn(),
     })
 
     await flush()
 
     await expect(playback).resolves.toBe('failed')
+    expect(onDialogueStart).not.toHaveBeenCalled()
   })
 
   it('should stop active and queued requests and report stop callback failures', async () => {
