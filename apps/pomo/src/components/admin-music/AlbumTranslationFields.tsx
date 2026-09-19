@@ -29,8 +29,21 @@ export interface AlbumTranslationFieldsProps {
 }
 
 export const AlbumTranslationFields = (props: AlbumTranslationFieldsProps) => {
+  let translationSource: AlbumDraftTranslation | null = null
   const translation = useAlbumTranslation({
-    onComplete: (translatedValues) => props.onValuesChange({...props.values, ...translatedValues}),
+    onComplete: (translatedValues) => {
+      const currentKorean = props.values.ko
+
+      if (
+        translationSource === null ||
+        currentKorean.description !== translationSource.description ||
+        currentKorean.title !== translationSource.title
+      ) {
+        return
+      }
+
+      props.onValuesChange({...props.values, ...translatedValues})
+    },
   })
 
   const setField = (locale: AlbumLocale, field: keyof AlbumDraftTranslation, value: string) =>
@@ -40,8 +53,8 @@ export const AlbumTranslationFields = (props: AlbumTranslationFieldsProps) => {
     })
 
   const handleTranslate = () => {
-    const korean = props.values.ko
-    translation.translate(korean)
+    translationSource = {...props.values.ko}
+    translation.translate(translationSource)
   }
 
   return (

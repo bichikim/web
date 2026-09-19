@@ -62,6 +62,28 @@ it('should edit localized fields, translate Korean input, and merge completed dr
   expect(screen.getByText(/번역 초안을 채웠습니다/u)).toBeInTheDocument()
 })
 
+it('should ignore translations generated from Korean text edited during translation', () => {
+  const initial = createEmptyAlbumTranslations()
+  initial.ko = {description: '기존 설명', title: '기존 제목'}
+  const {onValuesChange, values} = renderFields(initial)
+
+  fireEvent.click(screen.getByRole('button', {name: '한국어에서 자동 번역'}))
+  fireEvent.input(screen.getAllByLabelText(/^앨범명/u)[0]!, {target: {value: '수정한 제목'}})
+  fireEvent.input(screen.getAllByLabelText(/^설명/u)[0]!, {target: {value: '수정한 설명'}})
+
+  complete?.({
+    en: {description: 'old en description', title: 'old en title'},
+    ja: {description: 'old ja description', title: 'old ja title'},
+    'zh-Hans': {description: 'old zh description', title: 'old zh title'},
+  })
+
+  expect(onValuesChange).toHaveBeenCalled()
+  expect(values().ko).toEqual({description: '수정한 설명', title: '수정한 제목'})
+  expect(values().en).toEqual({description: '', title: ''})
+  expect(values().ja).toEqual({description: '', title: ''})
+  expect(values()['zh-Hans']).toEqual({description: '', title: ''})
+})
+
 it.each([
   ['error', '실패'],
   ['generating', '생성 중'],
