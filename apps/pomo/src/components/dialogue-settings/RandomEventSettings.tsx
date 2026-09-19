@@ -36,6 +36,13 @@ const createIntervalDraft = (settings: RandomEventSettingsValue): IntervalDraft 
   minimum: String(settings.minimumMinutes),
 })
 
+const logPreferenceError = (isSaveError: boolean, error: unknown) => {
+  console.error(
+    isSaveError ? 'Failed to save random event settings.' : 'Failed to load random event settings.',
+    error,
+  )
+}
+
 const parseInterval = (draft: IntervalDraft): RandomEventInterval | null => {
   const maximumMinutes = Number(draft.maximum)
   const minimumMinutes = Number(draft.minimum)
@@ -63,17 +70,17 @@ export const RandomEventSettings = () => {
   let edited = false
   let isDisposed = false
   let pendingInterval: RandomEventInterval | null = null
+  let previousSettings: RandomEventSettingsValue | null = null
 
   const handlePreferenceError = (error: unknown) => {
     const isSaveError = edited
-    console.error(
-      isSaveError
-        ? 'Failed to save random event settings.'
-        : 'Failed to load random event settings.',
-      error,
-    )
+    logPreferenceError(isSaveError, error)
 
     if (!isDisposed) {
+      if (isSaveError && previousSettings !== null) {
+        setSettings(previousSettings)
+        setDraft(createIntervalDraft(previousSettings))
+      }
       setMessage(isSaveError ? m.settings_random_save_failed() : m.settings_random_load_failed())
     }
   }
@@ -102,6 +109,7 @@ export const RandomEventSettings = () => {
   })
 
   const saveSettings = (nextSettings: RandomEventSettingsValue) => {
+    previousSettings = untrack(settings)
     setStoredSettings(nextSettings)
 
     if (!isDisposed) {
