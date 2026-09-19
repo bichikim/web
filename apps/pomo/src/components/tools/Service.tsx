@@ -21,7 +21,7 @@ export const Service = () => {
   })
   const settings = createMemo(() => preference() ?? DEFAULT_SERVICE_SETTINGS)
   const ready = () => preference() !== null
-  const today = useLocalDate()
+  const today = useLocalDate({initialDate: new Date()})
   const start = () => settings().start
   const manual = () => settings().manual
   const branch = () => settings().branch
