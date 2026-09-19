@@ -12,7 +12,7 @@ interface EventActionRunner {
   readonly clearDelayedEndActions: () => void
   readonly dispose: () => void
   readonly register: (executor: EventActionExecutor) => () => void
-  readonly run: (eventIds: ReadonlyArray<DialogueEventId>) => void
+  readonly run: (eventIds: ReadonlyArray<DialogueEventId>) => Promise<void> | undefined
 }
 
 interface PendingEventAction {
@@ -37,14 +37,24 @@ export const createEventActionRunner = (
 ): EventActionRunner => {
   let eventActionExecutor: EventActionExecutor | null = null
   let pendingEventActions: PendingEventAction[] = []
+  let pendingActionWaiters: Array<() => void> = []
   let hasRegisteredEventActionExecutor = false
 
   const queueEventAction = (eventId: DialogueEventId, actionId: EventActionId) => {
     pendingEventActions.push({actionId, eventId})
   }
 
+  const resolvePendingActionWaiters = () => {
+    const waiters = pendingActionWaiters
+    pendingActionWaiters = []
+    for (const resolve of waiters) {
+      resolve()
+    }
+  }
+
   const run = (eventIds: ReadonlyArray<DialogueEventId>) => {
     const actionBindings = eventActionIds()
+    let shouldWaitForActionExecution = false
     for (const eventId of eventIds) {
       for (const actionId of actionBindings[eventId] ?? []) {
         const executor = eventActionExecutor
@@ -55,11 +65,20 @@ export const createEventActionRunner = (
 
         if (shouldQueueAction) {
           queueEventAction(eventId, actionId)
+          shouldWaitForActionExecution ||= eventId === FOCUS_ROOM_ENTRY_EVENT
         } else {
           executeEventAction(actionId, executor)
         }
       }
     }
+
+    if (!shouldWaitForActionExecution) {
+      return undefined
+    }
+
+    const actionExecution = Promise.withResolvers<void>()
+    pendingActionWaiters.push(actionExecution.resolve)
+    return actionExecution.promise
   }
 
   return {
@@ -68,6 +87,7 @@ export const createEventActionRunner = (
     },
     dispose() {
       pendingEventActions = []
+      resolvePendingActionWaiters()
     },
     register(executor) {
       hasRegisteredEventActionExecutor = true
@@ -77,6 +97,7 @@ export const createEventActionRunner = (
       for (const pendingAction of pendingActions) {
         executeEventAction(pendingAction.actionId, executor)
       }
+      resolvePendingActionWaiters()
       return () => {
         if (eventActionExecutor === executor) {
           eventActionExecutor = null

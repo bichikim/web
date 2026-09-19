@@ -37,7 +37,7 @@ export interface CreateEntryEventPlaybackOptions {
   readonly eventPlaybackModes: Accessor<EventPlaybackModes>
   readonly getRepository: () => PDialogueRepository | null
   readonly isPlaybackEnabled: () => boolean
-  readonly onEvent?: () => void
+  readonly onEvent?: () => Promise<void> | void
   readonly playback: EntryPlaybackController
   readonly sessionStorage?: EntryPlaybackSessionStorage
 }
@@ -54,16 +54,29 @@ export const createEntryEventPlayback = (
 ): EntryEventPlayback => {
   const [hasEnteredFocusRoom, setHasEnteredFocusRoom] = createSignal(false)
   let hasStarted = false
+  let hasTriggeredEvent = false
+  let isPlaybackPending = false
+  let pendingEventExecution: Promise<void> | undefined
 
   const tryPlay = () => {
     const repository = options.getRepository()
     if (
       hasStarted ||
+      isPlaybackPending ||
       !hasEnteredFocusRoom() ||
       !options.isPlaybackEnabled() ||
-      repository === null ||
-      readPlaybackSession(options.sessionStorage)
+      repository === null
     ) {
+      return
+    }
+
+    if (!hasTriggeredEvent) {
+      hasTriggeredEvent = true
+      const eventExecution = options.onEvent?.()
+      pendingEventExecution = eventExecution instanceof Promise ? eventExecution : undefined
+    }
+
+    if (readPlaybackSession(options.sessionStorage)) {
       return
     }
 
@@ -76,25 +89,52 @@ export const createEntryEventPlayback = (
       return
     }
 
-    hasStarted = true
-    options.playback
-      .playSequence(repository, {
-        dialogueIds: selectedDialogueIds,
-        onDialogueStart: () => undefined,
-        onSequenceStop: () => undefined,
-      })
-      .then((completion) => {
-        if (completion === 'failed') {
-          hasStarted = false
-          return
-        }
+    const startPlayback = () => {
+      const currentRepository = options.getRepository()
+      if (
+        currentRepository === null ||
+        !options.isPlaybackEnabled() ||
+        readPlaybackSession(options.sessionStorage)
+      ) {
+        isPlaybackPending = false
+        return
+      }
 
-        writePlaybackSession(options.sessionStorage)
-      })
-      .catch((error: unknown) => {
-        hasStarted = false
-        console.error('Unexpected entry dialogue sequence failure.', error)
-      })
+      pendingEventExecution = undefined
+      hasStarted = true
+      isPlaybackPending = false
+      options.playback
+        .playSequence(currentRepository, {
+          dialogueIds: selectedDialogueIds,
+          onDialogueStart: () => undefined,
+          onSequenceStop: () => undefined,
+        })
+        .then((completion) => {
+          if (completion === 'failed') {
+            hasStarted = false
+            return
+          }
+
+          writePlaybackSession(options.sessionStorage)
+        })
+        .catch((error: unknown) => {
+          hasStarted = false
+          console.error('Unexpected entry dialogue sequence failure.', error)
+        })
+    }
+
+    if (pendingEventExecution === undefined) {
+      startPlayback()
+      return
+    }
+
+    isPlaybackPending = true
+    const eventExecution = pendingEventExecution
+    pendingEventExecution = eventExecution.then(startPlayback).catch((error: unknown) => {
+      pendingEventExecution = undefined
+      isPlaybackPending = false
+      console.error('Unexpected entry event action execution failure.', error)
+    })
   }
 
   return {
@@ -104,7 +144,6 @@ export const createEntryEventPlayback = (
       }
 
       setHasEnteredFocusRoom(true)
-      options.onEvent?.()
       tryPlay()
     },
     hasEnteredFocusRoom,

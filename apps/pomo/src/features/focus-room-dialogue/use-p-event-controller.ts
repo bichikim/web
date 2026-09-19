@@ -112,7 +112,6 @@ export const usePEventController = (props: UsePEventControllerProps): PEventCont
     DEFAULT_DELAYED_END_EVENT_SETTINGS.durationMinutes
   let delayedEndEventDurationRevision = 0
   const beforePlaybackCallbacks = new Set<() => void>()
-  let pendingEntryEvent = false
   let resolveInitialization: (() => void) | null = null
   const initialization = new Promise<void>((resolve) => {
     resolveInitialization = resolve
@@ -132,16 +131,9 @@ export const usePEventController = (props: UsePEventControllerProps): PEventCont
   const entryPlayback = createEntryEventPlayback({
     eventDialogueIds,
     eventPlaybackModes,
-    getRepository: () => repository,
+    getRepository: () => (isDisposed || isLoading() ? null : repository),
     isPlaybackEnabled,
-    onEvent: () => {
-      if (isLoading()) {
-        pendingEntryEvent = true
-        return
-      }
-
-      eventActionRunner.run([FOCUS_ROOM_ENTRY_EVENT])
-    },
+    onEvent: () => eventActionRunner.run([FOCUS_ROOM_ENTRY_EVENT]),
     playback,
   })
 
@@ -178,11 +170,7 @@ export const usePEventController = (props: UsePEventControllerProps): PEventCont
       setEventPlaybackModes(storedPlaybackModes)
       setDelayedEndEventDurationMinutes(delayedEndEventSettings.durationMinutes)
       setErrorMessage(null)
-      if (pendingEntryEvent) {
-        pendingEntryEvent = false
-        eventActionRunner.run([FOCUS_ROOM_ENTRY_EVENT])
-      }
-
+      setIsLoading(false)
       entryPlayback.tryPlay()
     } catch (error: unknown) {
       if (isDisposed) {
@@ -551,7 +539,6 @@ export const usePEventController = (props: UsePEventControllerProps): PEventCont
 
   onCleanup(() => {
     isDisposed = true
-    pendingEntryEvent = false
     eventActionRunner.dispose()
     beforePlaybackCallbacks.clear()
     resolveInitialization?.()
