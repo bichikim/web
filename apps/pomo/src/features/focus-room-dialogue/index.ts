@@ -7,6 +7,8 @@ export type {
 export {PEventContext, usePEvents} from './event-context'
 export type {
   EventActionExecutor,
+  EventActionExecutorMode,
+  EventActionExecutorRegistrationOptions,
   EventActionIds,
   EventBindingItem,
   EventDialogueIds,

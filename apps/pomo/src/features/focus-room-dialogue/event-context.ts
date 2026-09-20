@@ -25,6 +25,11 @@ export type EventBindingItem =
   | {readonly type: 'dialogue'; readonly id: string}
   | {readonly type: 'action'; readonly id: EventActionId}
 export type EventActionExecutor = (actionId: EventActionId) => void
+export type EventActionExecutorMode = 'active' | 'deferred'
+
+export interface EventActionExecutorRegistrationOptions {
+  readonly mode?: EventActionExecutorMode
+}
 
 export interface PlayDialogueEventsOptions {
   readonly replacementPolicy?: DialogueSequenceReplacementPolicy
@@ -83,7 +88,10 @@ export interface PEventContextValue {
     eventId: DialogueEventId,
     playbackMode: DialogueEventPlaybackMode,
   ) => Promise<void>
-  readonly registerEventActionExecutor: (executor: EventActionExecutor) => () => void
+  readonly registerEventActionExecutor: (
+    executor: EventActionExecutor,
+    options?: EventActionExecutorRegistrationOptions,
+  ) => () => void
   readonly delayedEndEventDurationMinutes: Accessor<number>
   readonly delayedEndEventIsRunning: Accessor<boolean>
   readonly setDelayedEndEventDuration: (durationMinutes: number) => Promise<void>

@@ -117,7 +117,7 @@ const DesktopWallpaperEventActionFallback = () => {
   const events = usePEvents()
 
   onMount(() => {
-    const unregister = events.registerEventActionExecutor(() => undefined)
+    const unregister = events.registerEventActionExecutor(() => undefined, {mode: 'deferred'})
     onCleanup(unregister)
   })
 
