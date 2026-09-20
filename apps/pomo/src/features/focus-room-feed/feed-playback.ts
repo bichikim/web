@@ -89,6 +89,10 @@ export const createFeedPlaybackController = (
   return {
     isListening,
     async listen(dialogueId) {
+      if (isListening()) {
+        return
+      }
+
       await options.events.playDialogueSequence({
         dialogueIds: [dialogueId],
         onDialogueStart: markListened,
