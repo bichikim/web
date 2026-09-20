@@ -49,9 +49,11 @@ export const SoundEffectsProvider = (props: SoundEffectsProviderProps) => {
   const [status, setStatus] = createSignal<'loading' | 'ready' | 'failed'>('loading')
   const [isStopped, setIsStopped] = createSignal(false)
   const controller = new AbortController()
+  let hasUserActivation = false
 
   const registerPlayback = (effectId: string, playback: SoundEffectPlayback) => {
-    if (isStopped()) {
+    const stopped = isStopped()
+    if (stopped) {
       playback.stop()
     }
     setPlaybacks((current) => {
@@ -59,6 +61,9 @@ export const SoundEffectsProvider = (props: SoundEffectsProviderProps) => {
       next.set(effectId, playback)
       return next
     })
+    if (!stopped && hasUserActivation) {
+      playback.activate()
+    }
   }
 
   const unregisterPlayback = (effectId: string, playback: SoundEffectPlayback) => {
@@ -92,11 +97,14 @@ export const SoundEffectsProvider = (props: SoundEffectsProviderProps) => {
   }
 
   const handleUserActivation = () => {
-    if (isStopped() || playbacks().size === 0) {
+    if (isStopped()) {
       return
     }
 
-    activate()
+    hasUserActivation = true
+    if (playbacks().size > 0) {
+      activate()
+    }
     globalThis.document.removeEventListener('keydown', handleUserActivation)
     globalThis.document.removeEventListener('pointerdown', handleUserActivation)
   }
