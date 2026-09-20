@@ -1,3 +1,4 @@
+import {getExceptionMessage} from '../error-detail'
 /// <reference lib="webworker" />
 
 import type {GenerationRequest, GenerationResponse} from './messages'
@@ -79,7 +80,7 @@ const generate = async (request: GenerationRequest) => {
 scope.onmessage = (event: MessageEvent<GenerationRequest>) => {
   generate(event.data).catch((error: unknown) => {
     send({
-      message: error instanceof Error ? error.message : '이미지를 생성하지 못했어요.',
+      message: getExceptionMessage(error, '이미지를 생성하지 못했어요.'),
       type: 'error',
     })
   })

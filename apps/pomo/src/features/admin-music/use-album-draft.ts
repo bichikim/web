@@ -1,3 +1,4 @@
+import {getExceptionMessage} from '../error-detail'
 import {useAction, useSubmission} from '@solidjs/router'
 import {createSignal, type JSX, onCleanup, type Setter} from 'solid-js'
 import {z} from 'zod'
@@ -447,7 +448,7 @@ const createCoverChangeHandler =
       options.setMessage(message)
     } catch (error) {
       input.value = ''
-      options.setMessage(error instanceof Error ? error.message : COVER_SELECTION_ERROR)
+      options.setMessage(getExceptionMessage(error, COVER_SELECTION_ERROR))
     } finally {
       if (preparationId === options.coverPreparation.id) {
         options.setIsProcessingCover(false)

@@ -1,3 +1,4 @@
+import {createCatalogRequestInit, hasUniqueIds} from 'src/features/catalog-policy'
 import {audioFetch, httpFetch} from '../http-client'
 import {resolvePomoAssetUrl} from '../product-assets'
 import * as m from '@paraglide/message'
@@ -36,8 +37,6 @@ interface PPlaylist {
 }
 
 const isString = (value: unknown): value is string => typeof value === 'string'
-
-const hasUniqueIds = (ids: readonly string[]) => new Set(ids).size === ids.length
 
 const isPAlbum = (value: unknown): value is PAlbum => {
   if (typeof value !== 'object' || value === null) {
@@ -118,11 +117,6 @@ const resolveBundledTrack = (track: PTrack): PTrack => ({
   source: resolvePomoAssetUrl(track.source),
 })
 
-const createRequestInit = (signal?: AbortSignal): RequestInit => ({
-  cache: import.meta.env.DEV ? 'no-store' : 'default',
-  signal,
-})
-
 const localizeBundledAlbum = (album: PAlbum, locale: Locale | undefined): PAlbum => {
   const options = {locale}
 
@@ -168,8 +162,8 @@ const fetchAudioJson = (
   signal?: AbortSignal,
 ) =>
   overrideUrl === undefined
-    ? audioFetch(defaultPath, createRequestInit(signal))
-    : httpFetch(overrideUrl, createRequestInit(signal))
+    ? audioFetch(defaultPath, createCatalogRequestInit(signal))
+    : httpFetch(overrideUrl, createCatalogRequestInit(signal))
 
 /** Loads and validates the bundled focus-room albums and their tracks. */
 export const loadBundledPAlbums = async (

@@ -1,3 +1,4 @@
+import {getExceptionMessage} from '../error-detail'
 import {type ModelDownloadItem, useModelDownload} from '../model-download'
 import {createMemo, createSignal, onCleanup} from 'solid-js'
 import {type TextModelId} from '../text-generation'
@@ -148,7 +149,7 @@ export const useImageGeneration = () => {
         return
       }
       if (!abort.signal.aborted && !disposed) {
-        setError(failure instanceof Error ? failure.message : '이미지를 생성하지 못했어요.')
+        setError(getExceptionMessage(failure, '이미지를 생성하지 못했어요.'))
         setStatus('설정과 오류를 확인한 뒤 다시 시도해 주세요.')
       }
     } finally {

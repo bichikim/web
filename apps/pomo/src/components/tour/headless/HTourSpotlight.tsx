@@ -1,3 +1,4 @@
+import {clamp} from 'es-toolkit/math'
 import {type Accessor, createEffect, createSignal, type JSX, onCleanup} from 'solid-js'
 
 import type {TourTargetBounds} from './types'
@@ -12,10 +13,10 @@ const resolveTargetBounds = (element: Element, padding: number): TourTargetBound
   const rectangle = element.getBoundingClientRect()
   const viewportWidth = window.innerWidth
   const viewportHeight = window.innerHeight
-  const left = Math.max(0, Math.min(viewportWidth, rectangle.left - padding))
-  const right = Math.max(0, Math.min(viewportWidth, rectangle.right + padding))
-  const top = Math.max(0, Math.min(viewportHeight, rectangle.top - padding))
-  const bottom = Math.max(0, Math.min(viewportHeight, rectangle.bottom + padding))
+  const left = clamp(rectangle.left - padding, 0, Math.max(0, viewportWidth))
+  const right = clamp(rectangle.right + padding, 0, Math.max(0, viewportWidth))
+  const top = clamp(rectangle.top - padding, 0, Math.max(0, viewportHeight))
+  const bottom = clamp(rectangle.bottom + padding, 0, Math.max(0, viewportHeight))
 
   if (right <= left || bottom <= top) {
     return null

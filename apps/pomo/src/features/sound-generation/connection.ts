@@ -1,3 +1,4 @@
+import {clamp} from 'es-toolkit/math'
 // oxlint-disable no-magic-numbers -- Shared PCM layout and audio-connection policy.
 
 export const DEFAULT_CONNECTION_SECONDS = 4
@@ -183,11 +184,7 @@ function applyPcmGain(source: ArrayBuffer, gain: number): ArrayBuffer {
   for (let offset = 0; offset < source.byteLength; offset += 2) {
     const sample = sourceView.getInt16(offset, true)
     const scaledSample = Math.round(sample * gain)
-    resultView.setInt16(
-      offset,
-      Math.max(-PCM16_SCALE, Math.min(MAX_PCM16_SAMPLE, scaledSample)),
-      true,
-    )
+    resultView.setInt16(offset, clamp(scaledSample, -PCM16_SCALE, MAX_PCM16_SAMPLE), true)
   }
   return result
 }

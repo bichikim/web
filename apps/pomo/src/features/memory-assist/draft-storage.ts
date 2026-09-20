@@ -1,3 +1,4 @@
+import {createDraftStorage, createJsonCodec} from '../value-storage'
 import {z} from 'zod'
 
 const MEMORY_MEMO_DRAFT_KEY = 'pomo:memory-memo:draft:v1'
@@ -39,36 +40,28 @@ export interface MemoryMemoDraftStorage {
   readonly setItem: (key: string, value: string) => void
 }
 
-const getStorage = (storage?: MemoryMemoDraftStorage): MemoryMemoDraftStorage =>
-  storage ?? globalThis.sessionStorage
+const getDraftStorage = (storage?: MemoryMemoDraftStorage) =>
+  createDraftStorage({
+    ...createJsonCodec((value): MemoryMemoDraft | null => {
+      const result = memoryMemoDraftSchema.safeParse(value)
+      return result.success ? result.data : null
+    }),
+    key: MEMORY_MEMO_DRAFT_KEY,
+    messages: {
+      delete: 'Failed to delete the memory memo draft.',
+      read: 'Failed to read the memory memo draft.',
+      write: 'Failed to save the memory memo draft.',
+    },
+    storage: () => storage ?? globalThis.sessionStorage,
+  })
 
-export const readMemoryMemoDraft = (storage?: MemoryMemoDraftStorage): MemoryMemoDraft | null => {
-  try {
-    const storedDraft = getStorage(storage).getItem(MEMORY_MEMO_DRAFT_KEY)
-    if (storedDraft === null) {
-      return null
-    }
+export const readMemoryMemoDraft = (storage?: MemoryMemoDraftStorage): MemoryMemoDraft | null =>
+  getDraftStorage(storage).read()
 
-    const result = memoryMemoDraftSchema.safeParse(JSON.parse(storedDraft))
-    return result.success ? result.data : null
-  } catch (error: unknown) {
-    console.warn('Failed to read the memory memo draft.', error)
-    return null
-  }
-}
+export const writeMemoryMemoDraft = (
+  draft: MemoryMemoDraft,
+  storage?: MemoryMemoDraftStorage,
+): void => getDraftStorage(storage).write(draft)
 
-export const writeMemoryMemoDraft = (draft: MemoryMemoDraft, storage?: MemoryMemoDraftStorage) => {
-  try {
-    getStorage(storage).setItem(MEMORY_MEMO_DRAFT_KEY, JSON.stringify(draft))
-  } catch (error: unknown) {
-    console.warn('Failed to save the memory memo draft.', error)
-  }
-}
-
-export const deleteMemoryMemoDraft = (storage?: MemoryMemoDraftStorage): void => {
-  try {
-    getStorage(storage).removeItem(MEMORY_MEMO_DRAFT_KEY)
-  } catch (error: unknown) {
-    console.warn('Failed to delete the memory memo draft.', error)
-  }
-}
+export const deleteMemoryMemoDraft = (storage?: MemoryMemoDraftStorage): void =>
+  getDraftStorage(storage).delete()

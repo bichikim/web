@@ -26,6 +26,7 @@ const playback = vi.hoisted(() => ({
 vi.mock('../entry-playback-controller', () => ({createEntryPlaybackController: () => playback}))
 const repositoryMocks = vi.hoisted(() => ({
   listEventBindings: vi.fn(async (): Promise<unknown[]> => []),
+  setEventBinding: vi.fn(async () => undefined),
 }))
 const delayedEndEventSettingsMocks = vi.hoisted(() => ({
   read: vi.fn(async () => ({durationMinutes: 30, version: 1 as const})),
@@ -36,6 +37,7 @@ vi.mock('../repository', () => ({
     dispose: vi.fn(),
     listDialogues: async () => [],
     listEventBindings: repositoryMocks.listEventBindings,
+    setEventBinding: repositoryMocks.setEventBinding,
   }),
 }))
 vi.mock('../delayed-end-event-settings', async () => {
@@ -268,5 +270,61 @@ describe('delayed-end playback', () => {
     expect(playbackOrder).toEqual(['stop', 'play'])
     unregister?.()
     view.cleanup()
+  })
+})
+
+describe('event binding persistence', () => {
+  beforeEach(() => {
+    repositoryMocks.listEventBindings.mockReset().mockResolvedValue([])
+    repositoryMocks.setEventBinding.mockReset().mockResolvedValue(undefined)
+  })
+
+  it('should preserve unrelated bindings and remove empty dialogue, action, and mode entries', async () => {
+    const view = renderHook(() => usePEventController({}))
+    await vi.waitFor(() => expect(view.result.isLoading()).toBe(false))
+    try {
+      await view.result.setEventDialogues('focus-end', ['unrelated'])
+      await view.result.setEventItems('focus-start', [
+        {id: 'first', type: 'dialogue'},
+        {id: 'music-stop', type: 'action'},
+      ])
+      expect(view.result.eventDialogueIds()['focus-start']).toEqual(['first'])
+      expect(view.result.eventActionIds()['focus-start']).toEqual(['music-stop'])
+      expect(Object.hasOwn(view.result.eventPlaybackModes(), 'focus-start')).toBe(true)
+      await view.result.setEventItems('focus-start', [{id: 'music-stop', type: 'action'}])
+      expect(Object.hasOwn(view.result.eventDialogueIds(), 'focus-start')).toBe(false)
+      expect(Object.hasOwn(view.result.eventPlaybackModes(), 'focus-start')).toBe(false)
+      expect(view.result.eventActionIds()['focus-start']).toEqual(['music-stop'])
+      await view.result.setEventItems('focus-start', [])
+      expect(Object.hasOwn(view.result.eventActionIds(), 'focus-start')).toBe(false)
+      expect(view.result.eventDialogueIds()['focus-end']).toEqual(['unrelated'])
+      expect(repositoryMocks.setEventBinding).toHaveBeenLastCalledWith(
+        'focus-start',
+        [],
+        expect.any(String),
+      )
+    } finally {
+      view.cleanup()
+    }
+  })
+
+  it('should restore every persisted binding entry after deletion fails', async () => {
+    const view = renderHook(() => usePEventController({}))
+    await vi.waitFor(() => expect(view.result.isLoading()).toBe(false))
+    try {
+      await view.result.setEventItems('focus-start', [
+        {id: 'first', type: 'dialogue'},
+        {id: 'music-stop', type: 'action'},
+      ])
+      const modes = view.result.eventPlaybackModes()
+      const failure = new Error('binding storage unavailable')
+      repositoryMocks.setEventBinding.mockRejectedValueOnce(failure)
+      await expect(view.result.setEventItems('focus-start', [])).rejects.toBe(failure)
+      expect(view.result.eventDialogueIds()['focus-start']).toEqual(['first'])
+      expect(view.result.eventActionIds()['focus-start']).toEqual(['music-stop'])
+      expect(view.result.eventPlaybackModes()).toEqual(modes)
+    } finally {
+      view.cleanup()
+    }
   })
 })

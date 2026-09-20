@@ -1,3 +1,4 @@
+import {createPendingSave} from 'src/features/pending-save'
 import {PButton} from 'src/components/p-button/PButton'
 import {PNumberInput} from 'src/components/p-number-input/PNumberInput'
 import {createEffect, createSignal, onCleanup, Show} from 'solid-js'
@@ -32,8 +33,6 @@ export const DelayedEndEventSettings = () => {
   let hasEdited = false
   let editRevision = 0
   let isDisposed = false
-  let pendingSave: {readonly revision: number; readonly value: string} | null = null
-  let saveTimeout: ReturnType<typeof globalThis.setTimeout> | null = null
   const duration = () => parseDuration(draft())
   const isRunning = () => events.delayedEndEventIsRunning()
 
@@ -58,37 +57,14 @@ export const DelayedEndEventSettings = () => {
       }
     })
   }
-  const scheduleSave = (value: string, revision: number) => {
-    pendingSave = {revision, value}
-
-    if (saveTimeout !== null) {
-      globalThis.clearTimeout(saveTimeout)
-    }
-
-    saveTimeout = globalThis.setTimeout(() => {
-      saveTimeout = null
-      const nextSave = pendingSave
-      pendingSave = null
-      if (nextSave !== null) {
-        saveDuration(nextSave.value, nextSave.revision)
-      }
-    }, SAVE_DEBOUNCE_MILLISECONDS)
-  }
-  const flushPendingSave = () => {
-    if (saveTimeout !== null) {
-      globalThis.clearTimeout(saveTimeout)
-      saveTimeout = null
-    }
-
-    const nextSave = pendingSave
-    pendingSave = null
-    if (nextSave !== null) {
-      saveDuration(nextSave.value, nextSave.revision)
-    }
-  }
+  const pendingSave = createPendingSave({
+    delayMilliseconds: SAVE_DEBOUNCE_MILLISECONDS,
+    save: (snapshot: {readonly value: string; readonly revision: number}) =>
+      saveDuration(snapshot.value, snapshot.revision),
+  })
   onCleanup(() => {
     isDisposed = true
-    flushPendingSave()
+    pendingSave.flush()
   })
 
   const handleStartOrCancel = () => {
@@ -99,7 +75,7 @@ export const DelayedEndEventSettings = () => {
     }
 
     if (duration() !== null) {
-      flushPendingSave()
+      pendingSave.flush()
       events.startDelayedEndEvent()
     }
   }
@@ -108,7 +84,7 @@ export const DelayedEndEventSettings = () => {
     const revision = (editRevision += 1)
     setMessage(null)
     setDraft(value)
-    scheduleSave(value, revision)
+    pendingSave.schedule({revision, value})
   }
 
   return (

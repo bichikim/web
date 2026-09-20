@@ -1,5 +1,5 @@
 import {usePreference} from 'src/hooks/use-preference'
-import type {PreferenceStorage} from 'src/utils/preference-storage'
+import {createParsedPreferenceStorage} from '../parsed-preference-storage'
 
 import {
   DEFAULT_P_DISPLAY_PREFERENCES,
@@ -13,15 +13,12 @@ import {
   writePDisplayPreferences,
 } from './storage'
 
-const pDisplayPreferencesStorage: PreferenceStorage = {
+const pDisplayPreferencesStorage = createParsedPreferenceStorage({
+  invalidMessage: 'Invalid focus-room display preferences.',
+  parse: parsePDisplayPreferences,
   read: () => readPDisplayPreferences(),
-  write: (_key, value) => {
-    const preferences = parsePDisplayPreferences(value)
-    return preferences === null
-      ? new Error('Invalid focus-room display preferences.')
-      : writePDisplayPreferences(preferences)
-  },
-}
+  write: (value) => writePDisplayPreferences(value),
+})
 
 const updatePreference = (
   preference: PDisplayPreferences,

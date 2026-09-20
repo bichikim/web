@@ -1,3 +1,4 @@
+import {createCollectionStorage} from '../value-storage'
 import {z} from 'zod'
 
 import {type LanguageLearningSentence, languageLearningSentenceSchema} from './schema'
@@ -21,34 +22,26 @@ export interface LanguageLearningStorageOptions {
   readonly storage?: LanguageLearningStorage
 }
 
-const getStorage = (storage?: LanguageLearningStorage): LanguageLearningStorage =>
-  storage ?? globalThis.localStorage
-
-const getEvents = (events?: LanguageLearningEventTarget): LanguageLearningEventTarget =>
-  events ?? globalThis
+const getCollectionStorage = (options?: LanguageLearningStorageOptions) =>
+  createCollectionStorage({
+    key: STORAGE_KEY,
+    onChange: () => {
+      const events = options?.events ?? globalThis
+      events.dispatchEvent(new CustomEvent(LANGUAGE_LEARNING_SENTENCES_CHANGED_EVENT))
+    },
+    parse: (value) => storedSentencesSchema.parse(value),
+    readFailureMessage: 'Failed to read language learning sentences.',
+    storage: () => options?.storage ?? globalThis.localStorage,
+  })
 
 export const readLanguageLearningSentences = (
   options?: LanguageLearningStorageOptions,
-): ReadonlyArray<LanguageLearningSentence> => {
-  try {
-    const stored = getStorage(options?.storage).getItem(STORAGE_KEY)
-    return stored === null ? [] : storedSentencesSchema.parse(JSON.parse(stored))
-  } catch (error: unknown) {
-    console.warn('Failed to read language learning sentences.', error)
-    return []
-  }
-}
+): ReadonlyArray<LanguageLearningSentence> => getCollectionStorage(options).read()
 
 export const writeLanguageLearningSentences = (
-  sentences: ReadonlyArray<LanguageLearningSentence>,
+  values: ReadonlyArray<LanguageLearningSentence>,
   options?: LanguageLearningStorageOptions,
-): void => {
-  const parsed = storedSentencesSchema.parse(sentences)
-  getStorage(options?.storage).setItem(STORAGE_KEY, JSON.stringify(parsed))
-  getEvents(options?.events).dispatchEvent(
-    new CustomEvent(LANGUAGE_LEARNING_SENTENCES_CHANGED_EVENT),
-  )
-}
+): void => getCollectionStorage(options).write(values)
 
 export const appendLanguageLearningSentences = (
   sentences: ReadonlyArray<LanguageLearningSentence>,

@@ -1,3 +1,4 @@
+import {clamp} from 'es-toolkit/math'
 // oxlint-disable no-magic-numbers -- These constants are fixed offsets and ranges in the PCM WAV specification.
 export const createWaveBlob = (samples: Float32Array, sampleRate: number) => {
   const headerSize = 44
@@ -25,7 +26,7 @@ export const createWaveBlob = (samples: Float32Array, sampleRate: number) => {
   view.setUint32(40, samples.length * 2, true)
 
   for (let index = 0; index < samples.length; index += 1) {
-    const sample = Math.max(-1, Math.min(1, samples[index]))
+    const sample = clamp(samples[index], -1, 1)
     view.setInt16(headerSize + index * 2, sample < 0 ? sample * 32_768 : sample * 32_767, true)
   }
 

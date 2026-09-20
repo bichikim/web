@@ -1,3 +1,4 @@
+import {clamp} from 'es-toolkit/math'
 /// <reference lib="webworker" />
 import {getMonotonicTime} from 'src/utils/get-monotonic-time'
 
@@ -48,10 +49,7 @@ const reportProgress = (progress: ProgressInfo) => {
     return
   }
 
-  const percentage = Math.min(
-    MAXIMUM_PROGRESS,
-    Math.max(MINIMUM_PROGRESS, Math.round(progress.progress)),
-  )
+  const percentage = clamp(Math.round(progress.progress), MINIMUM_PROGRESS, MAXIMUM_PROGRESS)
   sendResponse({progress: percentage, type: 'loading'})
 }
 

@@ -1,3 +1,4 @@
+import {createSerialTaskQueue} from 'src/utils/create-serial-task-queue'
 import {z} from 'zod'
 
 import {
@@ -48,7 +49,7 @@ const parseViewedRelease = (value: unknown): ViewedRelease | null => {
 export const createViewedReleaseRepository = (
   options: CreateViewedReleaseRepositoryOptions,
 ): ViewedReleaseRepository => {
-  let writeQueue = Promise.resolve()
+  const writeQueue = createSerialTaskQueue()
 
   return {
     async read() {
@@ -78,7 +79,7 @@ export const createViewedReleaseRepository = (
       const parsedValue = VIEWED_RELEASE_SCHEMA.parse(value)
 
       if (options.storage.usesTossStorage()) {
-        const write = writeQueue.then(async () => {
+        return writeQueue.run(async () => {
           let storedValue: ViewedRelease
           try {
             const currentValue = parseViewedRelease(await options.storage.readToss())
@@ -100,9 +101,6 @@ export const createViewedReleaseRepository = (
             // Browser storage is only a cache when native storage is authoritative.
           }
         })
-        // A failed write must not block later attempts; its caller still receives the rejection.
-        writeQueue = write.catch(() => undefined)
-        return write
       }
 
       let writeError: unknown | null

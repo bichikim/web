@@ -1,3 +1,5 @@
+import {getExceptionMessage} from 'src/features/error-detail'
+import {replaceBlobObjectUrl} from 'src/features/blob-object-url'
 import {createSignal, onCleanup} from 'solid-js'
 import {isNonBlankString} from 'src/utils/is-non-blank-string'
 import {CONNECTION_CONTEXT_SECONDS, SAMPLE_RATE} from '../sound-generation/connection'
@@ -120,15 +122,11 @@ export function useSoundJoining() {
         return
       }
       const joined = assembleJoin(plan, generated)
-      const previous = url()
-      if (previous !== null) {
-        URL.revokeObjectURL(previous)
-      }
-      setUrl(URL.createObjectURL(joined))
+      setUrl(replaceBlobObjectUrl(url(), () => joined))
       setStatus(`연결 완료 · ${(plan.left.length / SAMPLE_RATE).toFixed(1)}초`)
     } catch (cause) {
       if (current === revision) {
-        setError(cause instanceof Error ? cause.message : String(cause))
+        setError(getExceptionMessage(cause, () => String(cause)))
       }
     } finally {
       if (current === revision) {

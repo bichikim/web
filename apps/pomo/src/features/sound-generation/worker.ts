@@ -1,3 +1,4 @@
+import {getExceptionMessage} from 'src/features/error-detail'
 /// <reference lib="webworker" />
 import {generateSound} from './runtime'
 import {generateExtendedSound} from './extension'
@@ -60,6 +61,6 @@ scope.onmessage = async (event: MessageEvent<SoundRequest | LoopRequest>) => {
           })
     send({blob, type: 'result'})
   } catch (error) {
-    send({message: error instanceof Error ? error.message : String(error), type: 'error'})
+    send({message: getExceptionMessage(error, () => String(error)), type: 'error'})
   }
 }

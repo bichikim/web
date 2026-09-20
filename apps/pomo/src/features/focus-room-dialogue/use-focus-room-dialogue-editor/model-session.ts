@@ -1,3 +1,4 @@
+import {getDownloadPercentage} from 'src/features/download-progress'
 import type {Accessor} from 'solid-js'
 
 import {
@@ -7,8 +8,6 @@ import {
   type SupertonicModelId,
 } from '../../supertonic'
 import type {DialogueEditorState} from '../dialogue-editor-state'
-
-const MAXIMUM_PROGRESS = 100
 
 export interface CreateDialogueModelSessionOptions {
   readonly isDisposed: () => boolean
@@ -26,7 +25,7 @@ export interface DialogueModelSession {
 }
 
 const getProgress = (loadedBytes: number, totalBytes: number) =>
-  Math.min(MAXIMUM_PROGRESS, Math.round((loadedBytes / totalBytes) * MAXIMUM_PROGRESS))
+  getDownloadPercentage(loadedBytes, totalBytes)
 
 /** Owns the disposable Supertonic client used by one dialogue editor. */
 export const createDialogueModelSession = (

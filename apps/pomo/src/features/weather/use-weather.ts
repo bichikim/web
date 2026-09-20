@@ -2,7 +2,7 @@ import {createAsync} from '@solidjs/router'
 import {type Accessor, createEffect, createSignal, untrack} from 'solid-js'
 
 import {usePreference} from 'src/hooks/use-preference'
-import type {PreferenceStorage} from 'src/utils/preference-storage'
+import {createParsedPreferenceStorage} from '../parsed-preference-storage'
 
 import {createQueryRevalidationScheduler} from '../query-revalidation'
 import type {WeatherFeed, WeatherLocation} from './contract'
@@ -24,15 +24,12 @@ import {
 
 const DISABLED_WEATHER_STATE = {status: 'disabled'} as const
 
-const weatherPreferenceStorage: PreferenceStorage = {
+const weatherPreferenceStorage = createParsedPreferenceStorage({
+  invalidMessage: 'Invalid weather preference.',
+  parse: parseWeatherPreference,
   read: () => readWeatherPreference(),
-  write: (_key, value) => {
-    const preference = parseWeatherPreference(value)
-    return preference === null
-      ? new Error('Invalid weather preference.')
-      : writeWeatherPreference(preference)
-  },
-}
+  write: (value) => writeWeatherPreference(value),
+})
 
 export type WeatherState =
   | {readonly status: 'disabled'}

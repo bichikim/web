@@ -1,3 +1,4 @@
+import {getDownloadPercentage} from 'src/features/download-progress'
 import {type Accessor, createMemo, createSignal, onCleanup, type Setter, untrack} from 'solid-js'
 
 import {
@@ -22,7 +23,6 @@ export type {
   StreamingSpeechBuffer,
 } from './streaming-speech-buffer'
 
-const MAXIMUM_PROGRESS = 100
 // Full/WebGPU intentionally matches the voice lab's low latency despite sharing GPU memory with chat.
 const DEFAULT_MODEL_ID: SupertonicModelId = 'full'
 
@@ -231,10 +231,7 @@ const createPrepare = (options: CreatePrepareOptions) => {
       onProgress: (progress) => {
         if (options.clientReference.current === client) {
           options.setState({
-            progress: Math.min(
-              MAXIMUM_PROGRESS,
-              Math.round((progress.loadedBytes / progress.totalBytes) * MAXIMUM_PROGRESS),
-            ),
+            progress: getDownloadPercentage(progress.loadedBytes, progress.totalBytes),
             status: 'preparing',
           })
         }

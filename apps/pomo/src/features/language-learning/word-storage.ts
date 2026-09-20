@@ -1,3 +1,4 @@
+import {createCollectionStorage} from '../value-storage'
 import {z} from 'zod'
 
 import type {LanguageLearningLanguage} from './schema'
@@ -13,28 +14,26 @@ export interface AppendLanguageLearningWordsResult {
   readonly skippedCount: number
 }
 
+const getCollectionStorage = (options?: LanguageLearningStorageOptions) =>
+  createCollectionStorage({
+    key: STORAGE_KEY,
+    onChange: () => {
+      const events = options?.events ?? globalThis
+      events.dispatchEvent(new CustomEvent(LANGUAGE_LEARNING_WORDS_CHANGED_EVENT))
+    },
+    parse: (value) => storedWordsSchema.parse(value),
+    readFailureMessage: 'Failed to read language learning words.',
+    storage: () => options?.storage ?? globalThis.localStorage,
+  })
+
 export const readLanguageLearningWords = (
   options?: LanguageLearningStorageOptions,
-): ReadonlyArray<LanguageLearningWord> => {
-  try {
-    const stored = (options?.storage ?? globalThis.localStorage).getItem(STORAGE_KEY)
-    return stored === null ? [] : storedWordsSchema.parse(JSON.parse(stored))
-  } catch (error: unknown) {
-    console.warn('Failed to read language learning words.', error)
-    return []
-  }
-}
+): ReadonlyArray<LanguageLearningWord> => getCollectionStorage(options).read()
 
 export const writeLanguageLearningWords = (
-  words: ReadonlyArray<LanguageLearningWord>,
+  values: ReadonlyArray<LanguageLearningWord>,
   options?: LanguageLearningStorageOptions,
-): void => {
-  const parsed = storedWordsSchema.parse(words)
-  const storage = options?.storage ?? globalThis.localStorage
-  storage.setItem(STORAGE_KEY, JSON.stringify(parsed))
-  const events = options?.events ?? globalThis
-  events.dispatchEvent(new CustomEvent(LANGUAGE_LEARNING_WORDS_CHANGED_EVENT))
-}
+): void => getCollectionStorage(options).write(values)
 
 export const appendLanguageLearningWords = (
   language: LanguageLearningLanguage,

@@ -1,4 +1,4 @@
-import {reportClientError} from '../client-error-reporter/reporter'
+import {createWorkerFailureHandler} from '../worker-failure'
 import {createWorkerTransport} from 'src/utils/worker-transport'
 import type {
   AlbumTranslationWorkerRequest,
@@ -26,17 +26,11 @@ export const createAlbumTranslationClient = (
     AlbumTranslationWorkerRequest,
     AlbumTranslationWorkerResponse
   >({
-    onFailure: (failure) => {
-      reportClientError(failure.cause, {feature: 'album-translation', source: 'worker'})
-      options.onResponse({
-        message:
-          failure.code === 'message-error'
-            ? 'Worker 응답을 읽지 못했습니다.'
-            : failure.detail || 'Gemma 4 번역 Worker 실행 오류',
-        restartRequired: true,
-        type: 'error',
-      })
-    },
+    onFailure: createWorkerFailureHandler({
+      fallbackDetail: 'Gemma 4 번역 Worker 실행 오류',
+      feature: 'album-translation',
+      onResponse: options.onResponse,
+    }),
     onResponse: options.onResponse,
     worker,
   })

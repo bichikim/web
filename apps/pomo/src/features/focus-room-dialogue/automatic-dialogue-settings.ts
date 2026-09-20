@@ -1,6 +1,7 @@
+import {createParsedPreferenceStorage} from '../parsed-preference-storage'
 import {z} from 'zod'
 
-import {type PreferenceStorage, webLocalStorage} from 'src/utils/preference-storage'
+import {webLocalStorage} from 'src/utils/preference-storage'
 import {
   SUPERTONIC_MODELS,
   SUPERTONIC_VOICES,
@@ -73,16 +74,12 @@ export const createAutomaticDialogueSettingsRepository = (
   },
 })
 
-const automaticDialoguePreferenceStorage: PreferenceStorage = {
+const automaticDialoguePreferenceStorage = createParsedPreferenceStorage({
+  invalidMessage: 'Invalid automatic dialogue settings.',
+  parse: parseAutomaticDialogueSettings,
   read: () => createRuntimeRepository().load(),
   subscribe: webLocalStorage.subscribe,
-  write: (_key, value) => {
-    const settings = parseAutomaticDialogueSettings(value)
-
-    if (settings === null) {
-      return new Error('Invalid automatic dialogue settings.')
-    }
-
+  write: (settings) => {
     try {
       createRuntimeRepository().save(settings)
       return null
@@ -90,7 +87,7 @@ const automaticDialoguePreferenceStorage: PreferenceStorage = {
       return error
     }
   },
-}
+})
 
 export interface AutomaticDialoguePreferenceOptions {
   readonly onError?: (error: unknown) => void

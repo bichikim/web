@@ -1,3 +1,4 @@
+import {restorePreferredValue} from '../preference-persistence'
 import {withPromiseNull} from 'src/utils/with-promise-null'
 import {
   hasNativeStorageBridge,
@@ -39,34 +40,30 @@ export const createPSceneStyleRepository = (storage: PSceneStyleStorage): PScene
   }
 
   /** Reads the scene style from storage whose lifetime matches the current runtime. */
-  const read = async (): Promise<PSceneStyle> => {
-    const webPreference = readWebPreference()
-
-    if (webPreference !== null) {
-      if (storage.usesTossStorage()) {
-        await withPromiseNull(storage.writeToss(SCENE_STYLE_STORAGE_KEY, webPreference))
-      }
-
-      return webPreference
-    }
-
-    if (!storage.usesTossStorage()) {
-      return storage.getDefault()
-    }
-
-    try {
-      const tossPreference = parseSceneStyle(await storage.readToss(SCENE_STYLE_STORAGE_KEY))
-
-      if (tossPreference === null) {
-        return storage.getDefault()
-      }
-
-      writeWebPreference(tossPreference)
-      return tossPreference
-    } catch {
-      return readWebPreference() ?? storage.getDefault()
-    }
-  }
+  const read = async (): Promise<PSceneStyle> =>
+    restorePreferredValue({
+      preferred: readWebPreference(),
+      repair: async (value) => {
+        if (storage.usesTossStorage()) {
+          await withPromiseNull(storage.writeToss(SCENE_STYLE_STORAGE_KEY, value))
+        }
+      },
+      restore: async () => {
+        if (!storage.usesTossStorage()) {
+          return storage.getDefault()
+        }
+        try {
+          const tossPreference = parseSceneStyle(await storage.readToss(SCENE_STYLE_STORAGE_KEY))
+          if (tossPreference === null) {
+            return storage.getDefault()
+          }
+          writeWebPreference(tossPreference)
+          return tossPreference
+        } catch {
+          return readWebPreference() ?? storage.getDefault()
+        }
+      },
+    })
 
   /** Persists the scene style until the host app or browser data is removed. */
   const write = async (sceneStyle: PSceneStyle): Promise<void> => {

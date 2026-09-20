@@ -1,3 +1,4 @@
+import {invalidJsonBodyResponse} from 'src/server/http/invalid-json-body-response'
 import type {APIEvent} from '@solidjs/start/server'
 import {z} from 'zod'
 
@@ -12,7 +13,6 @@ import {
 
 const MAXIMUM_BODY_SIZE = 4096
 const MAX_EMAIL_LENGTH = 320
-const HTTP_BAD_REQUEST = 400
 const HTTP_UNAUTHORIZED = 401
 const HTTP_TOO_MANY_REQUESTS = 429
 const HTTP_BAD_GATEWAY = 502
@@ -31,10 +31,7 @@ export const POST = async (event: APIEvent): Promise<Response> => {
   )
 
   if (!parsedRequest.success) {
-    return noStoreJson(
-      {error: 'invalid_email'},
-      {status: bodyResult.success ? HTTP_BAD_REQUEST : bodyResult.status},
-    )
+    return invalidJsonBodyResponse(bodyResult, {error: 'invalid_email'})
   }
 
   const challenge = await createAccountLinkChallenge(identity.userId, parsedRequest.data.email)
