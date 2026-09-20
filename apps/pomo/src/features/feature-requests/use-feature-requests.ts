@@ -9,6 +9,10 @@ import {
 } from './api'
 import type {CreateFeatureRequestInput, FeatureRequest} from './types'
 
+interface FeatureRequestsRefreshOptions {
+  readonly preserveLoadedPages?: boolean
+}
+
 export interface FeatureRequestsController {
   readonly createRequest: (input: CreateFeatureRequestInput) => Promise<CreateFeatureRequestResult>
   readonly hasMore: () => boolean
@@ -34,8 +38,15 @@ export const useFeatureRequests = (): FeatureRequestsController => {
   const [isSubmitting, setIsSubmitting] = createSignal(false)
   const [votingRequestId, setVotingRequestId] = createSignal<string | null>(null)
   let listGeneration = 0
+  let hasLoadedMore = false
 
-  const refresh = async (): Promise<void> => {
+  const refresh = async (options: FeatureRequestsRefreshOptions = {}): Promise<void> => {
+    const preserveLoadedPages = options.preserveLoadedPages === true
+    const previousHasMore = hasMore()
+    if (!preserveLoadedPages) {
+      hasLoadedMore = false
+    }
+
     listGeneration += 1
     const generation = listGeneration
     setIsLoading(true)
@@ -49,8 +60,17 @@ export const useFeatureRequests = (): FeatureRequestsController => {
         return
       }
 
-      setHasMore(page.hasMore)
-      setRequests(page.requests)
+      if (preserveLoadedPages) {
+        setHasMore(previousHasMore)
+        const refreshedRequestIds = new Set(page.requests.map((request) => request.id))
+        setRequests((currentRequests) => [
+          ...page.requests,
+          ...currentRequests.filter((request) => !refreshedRequestIds.has(request.id)),
+        ])
+      } else {
+        setHasMore(page.hasMore)
+        setRequests(page.requests)
+      }
     } catch {
       if (generation !== listGeneration) {
         return
@@ -82,6 +102,7 @@ export const useFeatureRequests = (): FeatureRequestsController => {
 
       setRequests((currentRequests) => [...currentRequests, ...page.requests])
       setHasMore(page.hasMore)
+      hasLoadedMore = true
     } catch {
       if (generation !== listGeneration) {
         return
@@ -102,7 +123,7 @@ export const useFeatureRequests = (): FeatureRequestsController => {
       const result = await createFeatureRequest(input)
 
       if (result.status === 'created') {
-        await refresh()
+        await refresh({preserveLoadedPages: hasLoadedMore})
       }
 
       return result
