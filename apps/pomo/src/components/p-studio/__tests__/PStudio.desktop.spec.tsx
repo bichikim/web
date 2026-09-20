@@ -61,7 +61,9 @@ describe('PStudio', () => {
     expect(screen.queryByText('화면 보호기')).not.toBeInTheDocument()
     expect(vi.mocked(PStudioScene).mock.calls[0]?.[0].interactive).toBe(false)
     expect(SceneToolbar).not.toHaveBeenCalled()
-    expect(registerEventActionExecutor).toHaveBeenCalledOnce()
+    expect(registerEventActionExecutor).toHaveBeenCalledExactlyOnceWith(expect.any(Function), {
+      mode: 'deferred',
+    })
   })
 
   it('should keep the studio controls on the interactive desktop background', () => {
