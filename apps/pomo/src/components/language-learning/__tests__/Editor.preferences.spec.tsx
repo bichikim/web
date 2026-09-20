@@ -5,6 +5,7 @@ import {
   getLatestProps,
   LanguageLearningEditorWithPreferences,
   renderGeneratedReview,
+  setWriterState,
 } from './editor.setup'
 import {render, renderHook, screen} from '@solidjs/testing-library'
 import {type ComponentProps, createSignal, onMount} from 'solid-js'
@@ -47,6 +48,22 @@ it('should clear generated sentences and candidates when changing the word sourc
   expect(view.result.candidates()).toEqual([])
   expect(URL.revokeObjectURL).toHaveBeenCalledWith('blob:generated')
   view.cleanup()
+})
+
+it('should keep the editor busy while the writer is generating after changing the word source', () => {
+  render(() => <LanguageLearningEditorWithPreferences />)
+  setWriterState({status: 'generating'})
+
+  getLatestProps<ComponentProps<typeof LanguageLearningWordSourceControl>>(
+    vi.mocked(LanguageLearningWordSourceControl),
+  ).onSourceChange('saved')
+
+  expect(screen.getByRole('button', {name: 'generate'})).toBeDisabled()
+  expect(
+    getLatestProps<ComponentProps<typeof LanguageLearningWordSourceControl>>(
+      vi.mocked(LanguageLearningWordSourceControl),
+    ).disabled,
+  ).toBe(true)
 })
 
 it('should change source and language while keeping saved words available only when eligible', () => {
