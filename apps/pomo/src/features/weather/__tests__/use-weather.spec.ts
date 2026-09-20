@@ -246,6 +246,28 @@ it('should persist a location change, show loading, and ignore the superseded re
   root.dispose()
 })
 
+it('should withhold an automatic scene after a location change fetch failure', async () => {
+  const rainyFeed = {...feed, current: {...feed.current, condition: 'rain' as const}}
+  const rainyResult = {feed: rainyFeed, locationId: seoulLocation.id, status: 'available'} as const
+  queryMocks.weatherFeedQuery
+    .mockResolvedValueOnce(rainyResult)
+    .mockResolvedValueOnce({locationId: busanLocation.id, status: 'failed'})
+  const root = createWeatherRoot()
+
+  await flushPromises()
+
+  expect(root.controller.state()).toEqual({feed: rainyFeed, status: 'ready'})
+  expect(root.controller.sceneCondition()).toBe('rain')
+
+  root.controller.onLocationChange(busanLocation)
+  await flushPromises()
+
+  expect(root.controller.state()).toEqual({location: busanLocation, status: 'error'})
+  expect(root.controller.isReady()).toBe(false)
+  expect(root.controller.sceneCondition()).toBeUndefined()
+  root.dispose()
+})
+
 it('should keep the previous feed while the current location collects', async () => {
   queryMocks.weatherFeedQuery.mockResolvedValueOnce(availableResult).mockResolvedValueOnce({
     locationId: seoulLocation.id,
