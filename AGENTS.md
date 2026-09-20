@@ -110,6 +110,7 @@ pnpm + Turborepo (`@winter-love/web`) · Node ≥24 · pnpm 11.x (`package.json`
 **Gotcha:** Without Supabase, auth/DB features error but the app renders. Re-run `turbo prepare-build` after cleaning `node_modules` or `dist/`.
 
 <!-- graft:start -->
+
 ## Graft — repo context graph
 
 This repo is indexed in `graft/`: small linked markdown nodes that explain each
@@ -149,4 +150,5 @@ re-read whole files.
 
 After big code changes, refresh the graph with `graft build` (deterministic,
 no API key, $0).
+
 <!-- graft:end -->
