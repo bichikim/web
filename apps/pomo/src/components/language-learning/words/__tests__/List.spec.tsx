@@ -21,7 +21,6 @@ it('should expose selected words and forward word selection', () => {
   render(() => (
     <LanguageLearningWordList
       autoplayKey={() => null}
-      pronunciationBusy={false}
       getAudioUrl={() => null}
       isPronunciationLoading={() => false}
       onDelete={vi.fn()}
