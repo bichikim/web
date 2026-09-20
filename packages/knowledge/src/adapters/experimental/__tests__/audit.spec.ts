@@ -24,6 +24,36 @@ const finding = {
   reason: 'Explicit scope.',
   supported: true,
 }
+it('should combine each flat question check with the unchanged answer audit', async () => {
+  const questions = [
+    ...options.questions,
+    {
+      ...options.questions[0],
+      evidence: [{id: 'other:0', text: 'Other scope is explicit.'}],
+      id: 'other',
+      question: 'Other scope?',
+    },
+  ]
+  const rejected = {...finding, evidence: [], missing: questions[0].question, supported: false}
+  const other = {...finding, evidence: ['other:0'], questionId: 'other'}
+  vi.mocked(generateInspectionJson)
+    .mockResolvedValueOnce({choice: 'undetermined', quote: '', reason: finding.reason})
+    .mockResolvedValueOnce({
+      choice: 'determined',
+      quote: questions[1].evidence[0].text,
+      reason: finding.reason,
+    })
+    .mockResolvedValueOnce({findings: [finding, other]})
+  expect(await auditInquiryAnswers({...options, evidenceReview: 'flat', questions})).toEqual({
+    checks: {answers: [finding, other], evidence: [rejected, other]},
+    ok: true,
+    value: [rejected, other],
+  })
+  expect(generateInspectionJson).toHaveBeenCalledTimes(3)
+  expect(vi.mocked(generateInspectionJson).mock.calls[2][0].prompt).toContain(
+    JSON.stringify({original: options.original, questions}),
+  )
+})
 it('should audit only the supplied questions and evidence with a constrained schema', async () => {
   vi.mocked(generateInspectionJson).mockResolvedValue({findings: [finding]})
   expect(await auditInquiryAnswers(options)).toEqual({ok: true, value: [finding]})

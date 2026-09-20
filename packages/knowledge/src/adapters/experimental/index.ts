@@ -1,4 +1,5 @@
 export * from './audit'
 export * from './contextual'
+export * from './flat'
 export * from './research'
 export * from './separated'

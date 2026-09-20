@@ -21,6 +21,8 @@ import {
 } from './contextual'
 
 export interface ClassifyResearchPairOptions extends ClassifyContextualPairOptions {
+  readonly evidenceReview?: 'flat'
+  readonly maxCalls?: number
   readonly history?: ResearchJournal
   readonly linked?: ReadonlyArray<StoredKnowledgePoint>
   readonly reader: ResearchReader
@@ -132,6 +134,26 @@ const assess = async (
 export const classifyResearchPair = async (
   options: ClassifyResearchPairOptions,
 ): Promise<ResearchResult> => {
+  const DEFAULT_MAX_CALLS = 14
+  const INITIAL_CALLS = 3
+  const AUDIT_CALLS = 2
+  const limit = options.maxCalls ?? DEFAULT_MAX_CALLS
+  if (!Number.isSafeInteger(limit) || limit < 0) {
+    return {error: {code: 'invalid-inspection-budget'}, ok: false}
+  }
+  let reserved = 0
+  const reserve = (count: number): boolean => {
+    if (count > limit - reserved) {
+      return false
+    }
+    reserved += count
+    return true
+  }
+  const exhausted = {error: {code: 'inspection-call-limit'}, ok: false} as const
+  // The empty-context initial stage has two separated requests and one premise request.
+  if (!reserve(INITIAL_CALLS)) {
+    return exhausted
+  }
   const initial = await classifyContextualPair({...options, points: [], questionFocus: 'operation'})
   if (!initial.ok) {
     return initial
@@ -139,6 +161,9 @@ export const classifyResearchPair = async (
   try {
     let questions = initial.review.unresolved
     if (questions.length === 0 && initial.value.kind === 'uncertain') {
+      if (!reserve(1)) {
+        return exhausted
+      }
       const original = {
         left: options.pair.left.payload.text,
         right: options.pair.right.payload.text,
@@ -166,16 +191,25 @@ export const classifyResearchPair = async (
     }
     const result = await runInquiryResearch({
       ...options,
-      assessor: (state) => assess({...state, baseUrl: options.baseUrl, model: options.model.name}),
+      assessor: async (state) =>
+        reserve(1)
+          ? assess({...state, baseUrl: options.baseUrl, model: options.model.name})
+          : exhausted,
       auditor: (state) =>
-        auditInquiryAnswers({
-          ...state,
-          baseUrl: options.baseUrl,
-          evidenceFirst: true,
-          model: options.model.name,
-        }),
+        reserve(options.evidenceReview === 'flat' ? state.questions.length + 1 : AUDIT_CALLS)
+          ? auditInquiryAnswers({
+              ...state,
+              baseUrl: options.baseUrl,
+              evidenceFirst: true,
+              evidenceReview: options.evidenceReview,
+              model: options.model.name,
+            })
+          : Promise.resolve(exhausted),
       initial: initial.value,
       planner: async (state) => {
+        if (!reserve(1)) {
+          return exhausted
+        }
         const MAX_QUESTION = 300
         const MAX_QUERIES = 3
         const original = {
@@ -234,7 +268,7 @@ export const classifyResearchPair = async (
     if (!model.ok || model.value.digest !== options.model.digest) {
       return {error: {code: 'inspection-model-changed'}, ok: false}
     }
-    return result
+    return {...result, research: {...result.research, budget: {limit, reserved}}}
   } catch {
     return {error: {code: 'inspection-request-failed'}, ok: false}
   }

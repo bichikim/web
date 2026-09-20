@@ -1,6 +1,6 @@
 import {isDeepStrictEqual} from 'node:util'
 import type {KnowledgeIndexSearchResult, StoredKnowledgePoint} from '../indexing/store'
-import type {InquiryAuditRecord} from './audit'
+import type {AuditQuestion, InquiryAuditRecord} from './audit'
 import {
   contextPassages,
   contextQuestionsSchema,
@@ -15,7 +15,7 @@ import {
   parseAssessment,
 } from './pairs'
 
-export const RESEARCH_INSPECTION_VERSION = 27
+export const RESEARCH_INSPECTION_VERSION = 28
 export const RESEARCH_LIMITS = {queries: 3, results: 3, rounds: 2, text: 12000} as const
 export interface ResearchSearchOptions {
   readonly query: string
@@ -35,6 +35,8 @@ export interface ResearchQueries {
   readonly value: ReadonlyArray<string>
 }
 export interface ResearchDecision {
+  readonly stop?: 'call-limit'
+  readonly unreviewed?: ReadonlyArray<AuditQuestion>
   readonly audits?: ReadonlyArray<InquiryAuditRecord>
   readonly proposed: Assessment
   readonly unresolved: ReadonlyArray<string>
@@ -58,12 +60,14 @@ export interface ResearchRound {
   readonly decision?: ResearchDecision
 }
 export type ResearchStop =
+  | 'call-limit'
   | 'resolved'
   | 'round-limit'
   | 'text-limit'
   | 'no-new-queries'
   | 'no-new-evidence'
 export interface ResearchReview {
+  readonly budget?: ResearchBudget
   readonly journal?: ResearchJournal
   readonly reused?: ResearchReuse
   readonly initial: Assessment
@@ -71,6 +75,10 @@ export interface ResearchReview {
   readonly selection: ContextSelection
   readonly unresolved: ReadonlyArray<string>
   readonly stop: ResearchStop
+}
+export interface ResearchBudget {
+  readonly limit: number
+  readonly reserved: number
 }
 export interface QuestionEvidence {
   readonly pointId: string
@@ -234,6 +242,7 @@ interface PrepareResearchOptions extends RunInspectionResearchOptions {
   readonly texts: Set<string>
 }
 interface PreparedResearch {
+  readonly stop?: 'call-limit'
   readonly ok: true
   readonly assessment: Assessment
   readonly questions: ReadonlyArray<string>
@@ -282,6 +291,15 @@ const prepareResearch = async (
     questions: options.questions,
     selection,
   })
+  if (!decision.ok && decision.error.code === 'inspection-call-limit') {
+    return {
+      assessment: options.initial,
+      ok: true,
+      questions: options.questions,
+      selection,
+      stop: 'call-limit',
+    }
+  }
   return decision.ok
     ? {
         assessment: decision.value.proposed,
@@ -289,12 +307,18 @@ const prepareResearch = async (
         questions: decision.value.unresolved,
         reused: {added: [...selected], decision: decision.value},
         selection,
+        ...(decision.value.stop === undefined ? {} : {stop: decision.value.stop}),
       }
     : decision
 }
-const executeResearch = async (options: RunInspectionResearchOptions): Promise<ResearchResult> => {
-  const rounds: ResearchRound[] = []
-  const queries = new Set<string>()
+interface ResearchSetup extends PreparedResearch {
+  readonly seen: Set<string>
+  readonly texts: Set<string>
+  readonly snapshot: ReadonlyMap<string, StoredKnowledgePoint>
+}
+const initializeResearch = async (
+  options: RunInspectionResearchOptions,
+): Promise<ResearchSetup | InspectionFailure> => {
   const seen = new Set([options.pair.left.pointId, options.pair.right.pointId])
   const texts = new Set([options.pair.left.payload.text, options.pair.right.payload.text])
   const snapshot = new Map(
@@ -307,11 +331,17 @@ const executeResearch = async (options: RunInspectionResearchOptions): Promise<R
       .map((point) => [point.pointId, point]),
   )
   const prepared = await prepareResearch({...options, seen, snapshot, texts})
+  return prepared.ok ? {...prepared, seen, snapshot, texts} : prepared
+}
+const executeResearch = async (options: RunInspectionResearchOptions): Promise<ResearchResult> => {
+  const rounds: ResearchRound[] = []
+  const queries = new Set<string>()
+  const prepared = await initializeResearch(options)
   if (!prepared.ok) {
     return prepared
   }
   let {assessment, questions, selection} = prepared
-  const {reused} = prepared
+  const {reused, seen, snapshot, texts} = prepared
   const finish = (stop: ResearchStop): ResearchSuccess => ({
     ok: true,
     research: {
@@ -325,8 +355,8 @@ const executeResearch = async (options: RunInspectionResearchOptions): Promise<R
     value: resolveContextAssessment({proposed: assessment, unresolved: questions}),
   })
   for (let round = 0; round < RESEARCH_LIMITS.rounds; round += 1) {
-    if (questions.length === 0) {
-      return finish('resolved')
+    if (prepared.stop !== undefined || questions.length === 0) {
+      return finish(prepared.stop ?? 'resolved')
     }
     const used = selection.sources.reduce((total, source) => total + source.text.length, 0)
     if (used >= RESEARCH_LIMITS.text) {
@@ -345,7 +375,7 @@ const executeResearch = async (options: RunInspectionResearchOptions): Promise<R
       texts,
     })
     if (!found.ok) {
-      return found
+      return found.error.code === 'inspection-call-limit' ? finish('call-limit') : found
     }
     if (found.queries.length === 0) {
       return finish('no-new-queries')
@@ -387,21 +417,27 @@ const executeResearch = async (options: RunInspectionResearchOptions): Promise<R
         selection,
       })
       if (!decision.ok) {
+        if (decision.error.code === 'inspection-call-limit') {
+          rounds.push(record)
+          return finish('call-limit')
+        }
         return decision
       }
       rounds.push({...record, decision: decision.value})
       assessment = decision.value.proposed
       questions = [...decision.value.unresolved]
+      if (decision.value.stop === 'call-limit') {
+        return finish('call-limit')
+      }
     }
   }
-  if (questions.length === 0) {
-    return finish('resolved')
-  }
   return finish(
-    selection.sources.reduce((total, source) => total + source.text.length, 0) >=
-      RESEARCH_LIMITS.text
-      ? 'text-limit'
-      : 'round-limit',
+    questions.length === 0
+      ? 'resolved'
+      : selection.sources.reduce((total, source) => total + source.text.length, 0) >=
+          RESEARCH_LIMITS.text
+        ? 'text-limit'
+        : 'round-limit',
   )
 }
 /** Investigates unresolved conditions with bounded queries and cumulative evidence; absence never proves contradiction. */

@@ -63,7 +63,7 @@ collection: knowledge-v1
 - 결과의 `embedded`, `metadata`, `unchanged`, `deleted`는 unit 개수다. 변경이 없어도 모델·차원 확인을 위한 probe 임베딩은 한 번 실행한다.
 - 도중 실패하면 이미 완료된 쓰기는 남는다. 원인을 해결한 뒤 다시 색인하면 수렴한다. 검색은 collection을 생성하지 않으며, 모델·차원이 기존 collection과 다르면 실패한다. 모델을 바꿀 때는 별도 `KNOWLEDGE_COLLECTION`으로 색인한다.
 - 로컬 잠금은 같은 연결·collection·저장소·workspace에 대한 동시 실행을 막는다. 다른 머신까지 조정하는 잠금은 아니다. 강제 종료 후 잠금 오류가 나면 실행 중인 색인 process가 없는지 확인하고 오류에 표시된 lock 파일을 제거한다.
-- 검색은 해당 저장소·workspace 범위의 dense + BM25 RRF 결과다. 문서 상태와 원문 위치를 출력하지만 상태별 순위 보정, 변경 이력, 중복 다양화와 eval은 아직 제공하지 않는다.
+- 검색은 해당 저장소·workspace 범위의 dense + BM25 RRF 결과다. 문서 상태와 원문 위치를 출력한다. [검색 평가](#검색-품질-평가)는 제공하지만 상태별 순위 보정, 변경 이력과 중복 다양화는 제공하지 않는다.
 
 정상 종료는 exit code 0, 실행 실패는 1, 잘못된 CLI 인자는 2다. 결과는 stdout, 오류와 관계 진단은 stderr로 출력한다.
 
@@ -98,7 +98,7 @@ know doctor /path/to/repository --model gemma4:latest --inspection-mode research
 
 `--model`이 있을 때만 추가 생성 모델 진단을 실행한다. 모델 설치·다운로드는 하지 않는다. 모델을 생략하면 기본 doctor 동작과 출력은 유지되며 `--limit`·`--cache-dir`·`--inspection-mode`만 지정하는 입력은 거부한다. 생성 모델을 사용할 수 없어도 기본 index/search 코드는 바뀌지 않는다. 다만 기존 임베딩 모델과 Qdrant 연결은 여전히 필요하다.
 
-`--inspection-mode`의 기본값은 `combined`(v3)이다. `separated`(후보 v7)는 분류를 먼저 정하고 두 번째 생성 요청에서 원문 근거 구간을 선택한다. 성공 시 쌍당 생성 호출이 두 번 필요하다. 두 모드는 같은 캐시 디렉터리에서도 버전별 키를 사용해 결과를 재사용하지 않는다. v7 실패 시 v3으로 자동 전환하지 않는다. [CLI 전체 평가](evaluation/inspection/runs/prompt-7/cli/README.md)를 참고한다.
+`--inspection-mode`의 기본값은 `combined`(v3)이다. `separated`(후보 v7)는 분류를 먼저 정하고 두 번째 생성 요청에서 원문 근거 구간을 선택한다. 성공 시 쌍당 생성 호출이 두 번 필요하다. 두 모드는 같은 캐시 디렉터리에서도 버전별 키를 사용해 결과를 재사용하지 않는다. v7 실패 시 v3으로 자동 전환하지 않는다. CLI 전체 평가 (로컬 보관: `.local/evaluation/inspection/runs/prompt-7/cli/README.md`)를 참고한다.
 
 - **검사 범위:** 현재 repo/workspace의 active unit 중 point ID 순으로 최대 20개를 기준으로 삼는다. 저장된 dense 벡터로 같은 scope 전체에서 기준당 최대 10개 active 이웃을 찾는다. 자기 자신과 역방향 중복 쌍은 제외하고 유사도 순으로 검사한다. `--limit`는 분류할 쌍 수이며 기본 10, 최대 100이다. 유사도는 후보 우선순위일 뿐 중복·충돌의 증거가 아니다. 재임베딩은 하지 않는다.
 - **범위 표시:** `consideredUnits/eligibleUnits`는 검색 기준으로 삼은 unit 수와 전체 active 수다. `retrieval.candidatePairs`는 찾은 고유 쌍 수, `selectedPairs/totalPairs`는 분류 대상으로 선택한 쌍 수와 전체 active unit으로 만들 수 있는 쌍 수다. `truncated`가 true면 전체 쌍을 선택하지 않았다. 기준 수·이웃 수·분류 수가 제한되므로 결과가 없다고 전체 저장소에 문제가 없다고 해석하지 않는다. 전체 scope의 payload 조회량은 이 검색 예산으로 제한되지 않는다.

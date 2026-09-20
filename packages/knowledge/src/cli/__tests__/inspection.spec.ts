@@ -90,9 +90,9 @@ it('should pass the full knowledge snapshot to research and never reuse prior re
   expect(await inspectKnowledgeRepository(input)).toMatchObject({
     assessments: [{research}],
     cached: 0,
-    promptVersion: 27,
+    promptVersion: 28,
   })
-  expect(await inspectKnowledgeRepository(input)).toMatchObject({cached: 0, promptVersion: 27})
+  expect(await inspectKnowledgeRepository(input)).toMatchObject({cached: 0, promptVersion: 28})
   expect(classifyResearchPair).toHaveBeenCalledTimes(2)
   expect(classifyResearchPair).toHaveBeenCalledWith(
     expect.objectContaining({points: source.points, reader}),

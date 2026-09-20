@@ -1,6 +1,0 @@
-version: 1
-repoId: demo/inspection-placement/missing
-embedding:
-  model: bge-m3
-include:
-  - docs/**/*.md

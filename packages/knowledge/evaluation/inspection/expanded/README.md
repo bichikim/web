@@ -1,8 +1,8 @@
 # 확장 진단 평가
 
-사용자 승인에 따라 기본 동작은 버전 3으로 복원했다. 후보 6의 구현·평가 기록은 보존하고, [분류·근거 분리 후보 7](../runs/prompt-7/README.md)을 별도 평가한다. 아래 후보 3·4·5·6 기록은 과거 실행 이력이며 채택 상태는 이 문단과 후보 7 기록을 기준으로 본다.
+사용자 승인에 따라 기본 동작은 버전 3으로 복원했다. 후보 6의 구현·평가 기록은 보존하고, 분류·근거 분리 후보 7 (로컬 보관: `.local/evaluation/inspection/runs/prompt-7/README.md`)을 별도 평가한다. 아래 후보 3·4·5·6 기록은 과거 실행 이력이며 채택 상태는 이 문단과 후보 7 기록을 기준으로 본다.
 
-연속 인용 [후보 버전 5](../workplace/runs/prompt-5/README.md)도 1회 평가에서 12/16으로 회귀해 채택하지 않았다. 현재 버전 3을 유지한다.
+연속 인용 후보 버전 5 (로컬 보관: `.local/evaluation/inspection/workplace/runs/prompt-5/README.md`)도 1회 평가에서 12/16으로 회귀해 채택하지 않았다. 현재 버전 3을 유지한다.
 
 순서형 지침 후보 버전 4는 매회 12/16으로 회귀해 채택하지 않았다. 현재 실행 프롬프트는 버전 3이다.
 
@@ -62,11 +62,11 @@ know doctor /private/tmp/knowledge-expanded.ZZPA5Q \
 
 ## 3회 평가 결과
 
-| 회차 | 진단 원본                       | 평가                        | 전체 선택 | 중복·충돌 정답 선택 | 정답 일치   | 캐시 재사용 |
-| ---- | ------------------------------- | --------------------------- | --------- | ------------------- | ----------- | ----------- |
-| 1    | [진단](runs/01/diagnostic.json) | [새 기준선](baseline.json)  | 55/55     | 6/6                 | 12/16 (75%) | 0           |
-| 2    | [진단](runs/02/diagnostic.json) | [비교](runs/02/report.json) | 55/55     | 6/6                 | 12/16 (75%) | 0           |
-| 3    | [진단](runs/03/diagnostic.json) | [비교](runs/03/report.json) | 55/55     | 6/6                 | 12/16 (75%) | 0           |
+| 회차 | 진단 원본                                                                         | 평가                                                                          | 전체 선택 | 중복·충돌 정답 선택 | 정답 일치   | 캐시 재사용 |
+| ---- | --------------------------------------------------------------------------------- | ----------------------------------------------------------------------------- | --------- | ------------------- | ----------- | ----------- |
+| 1    | 진단 (로컬 보관: `.local/evaluation/inspection/expanded/runs/01/diagnostic.json`) | [새 기준선](baseline.json)                                                    | 55/55     | 6/6                 | 12/16 (75%) | 0           |
+| 2    | 진단 (로컬 보관: `.local/evaluation/inspection/expanded/runs/02/diagnostic.json`) | 비교 (로컬 보관: `.local/evaluation/inspection/expanded/runs/02/report.json`) | 55/55     | 6/6                 | 12/16 (75%) | 0           |
+| 3    | 진단 (로컬 보관: `.local/evaluation/inspection/expanded/runs/03/diagnostic.json`) | 비교 (로컬 보관: `.local/evaluation/inspection/expanded/runs/03/report.json`) | 55/55     | 6/6                 | 12/16 (75%) | 0           |
 
 세 회차 모두 정상 종료했고 진단·검색 오류가 없었다. 모델은 `gemma4:latest`, digest는 `c6eb396dbd5992bbe3f5cdb947e8bbc0ee413d7c17e2beaae69f5d569cf982eb`이다. 정답·원본 해시, 모델 digest, 프롬프트 버전, 검사 예산, 선택된 쌍이 세 회차에서 일치함을 확인했다. 정답 16쌍뿐 아니라 전체 55쌍의 분류도 세 회차 모두 같았다. 이는 이번 실행의 반복 일치 결과이지 일반적인 재현성이나 정확도 보장은 아니다. 정답이 없는 나머지 39쌍은 정확도 계산에서 제외한다.
 
@@ -97,11 +97,11 @@ know eval-inspection packages/knowledge/evaluation/inspection/expanded/golden.js
 
 2026-09-06에 같은 임시 저장소·원본·모델 digest·검사 예산으로 다시 실행했다. 각 캐시는 `/private/tmp/knowledge-expanded.ZZPA5Q-prompt-3-01`, `-02`, `-03`으로 분리했다. 다음 결과는 버전 2 [기준선](baseline.json)과 비교한다.
 
-| 회차 | 진단 원본                                | 비교 결과                            | 전체 선택 | 중복·충돌 정답 선택 | 정답 일치     | 캐시 재사용 |
-| ---- | ---------------------------------------- | ------------------------------------ | --------- | ------------------- | ------------- | ----------- |
-| 1    | [진단](runs/prompt-3/01/diagnostic.json) | [비교](runs/prompt-3/01/report.json) | 55/55     | 6/6                 | 14/16 (87.5%) | 0           |
-| 2    | [진단](runs/prompt-3/02/diagnostic.json) | [비교](runs/prompt-3/02/report.json) | 55/55     | 6/6                 | 14/16 (87.5%) | 0           |
-| 3    | [진단](runs/prompt-3/03/diagnostic.json) | [비교](runs/prompt-3/03/report.json) | 55/55     | 6/6                 | 14/16 (87.5%) | 0           |
+| 회차 | 진단 원본                                                                                  | 비교 결과                                                                              | 전체 선택 | 중복·충돌 정답 선택 | 정답 일치     | 캐시 재사용 |
+| ---- | ------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------- | --------- | ------------------- | ------------- | ----------- |
+| 1    | 진단 (로컬 보관: `.local/evaluation/inspection/expanded/runs/prompt-3/01/diagnostic.json`) | 비교 (로컬 보관: `.local/evaluation/inspection/expanded/runs/prompt-3/01/report.json`) | 55/55     | 6/6                 | 14/16 (87.5%) | 0           |
+| 2    | 진단 (로컬 보관: `.local/evaluation/inspection/expanded/runs/prompt-3/02/diagnostic.json`) | 비교 (로컬 보관: `.local/evaluation/inspection/expanded/runs/prompt-3/02/report.json`) | 55/55     | 6/6                 | 14/16 (87.5%) | 0           |
+| 3    | 진단 (로컬 보관: `.local/evaluation/inspection/expanded/runs/prompt-3/03/diagnostic.json`) | 비교 (로컬 보관: `.local/evaluation/inspection/expanded/runs/prompt-3/03/report.json`) | 55/55     | 6/6                 | 14/16 (87.5%) | 0           |
 
 세 회차 모두 정상 종료했고 오류와 기준선 대비 회귀가 없었다. 정답·원본 해시와 선택 쌍, 모델 digest, 검사 예산이 기준선과 일치함을 확인했다. 전체 55쌍의 분류가 이번 세 회차에서도 모두 같았다. 정확도는 정답이 있는 16쌍만 계산했다.
 
@@ -114,23 +114,23 @@ know eval-inspection packages/knowledge/evaluation/inspection/expanded/golden.js
 
 남은 오분류도 세 회차에서 반복됐다. staging 사례는 정책의 적용 범위를 몰라 비교하기 어렵다고 설명하면서 unrelated로 분류했다. 감사 로그 사례는 원문에 없는 비순차 실행 가능성을 가정해 conflict로 분류했다. 이번 지침 변경은 2쌍을 개선했지만 이 2쌍을 해결하지 못했다. 후속 개선은 이 실패 기록을 기준으로 검증해야 한다.
 
-기존 승인 4쌍도 [새 실제 모델 실행](../runs/prompt-3/diagnostic.json)으로 4/4를 유지했다. [버전 2 대비 비교](../runs/prompt-3/report.json)에 회귀가 없고 캐시 재사용은 0건이다. 단위 테스트 315개와 타입·lint 검사는 통과했다. 단위 테스트는 전송 지침과 캐시 분리 등을 검증하며 위 모델 품질을 증명하지 않는다. 이 자료는 개선에 사용한 작은 평가 자료이므로 보지 않은 업무 문서의 정확도를 나타내지 않는다.
+기존 승인 4쌍도 새 실제 모델 실행 (로컬 보관: `.local/evaluation/inspection/runs/prompt-3/diagnostic.json`)으로 4/4를 유지했다. 버전 2 대비 비교 (로컬 보관: `.local/evaluation/inspection/runs/prompt-3/report.json`)에 회귀가 없고 캐시 재사용은 0건이다. 단위 테스트 315개와 타입·lint 검사는 통과했다. 단위 테스트는 전송 지침과 캐시 분리 등을 검증하며 위 모델 품질을 증명하지 않는다. 이 자료는 개선에 사용한 작은 평가 자료이므로 보지 않은 업무 문서의 정확도를 나타내지 않는다.
 
 ## 후보 버전 4: 회귀로 미채택
 
-2026-09-06에 대상 차이 → 정의·범위 부족 → 분리된 조건·독립적인 요구 → 같은 요구 → 양립 불가능한 요구 순서로 먼저 해당하는 기준을 적용하도록 실험했다. [후보 소스와 해시](runs/prompt-4/policy.json)를 보존했다. 현재 소스는 이 후보가 아니라 버전 3이다. 이후 다른 후보에는 버전 4를 재사용하지 않는다.
+2026-09-06에 대상 차이 → 정의·범위 부족 → 분리된 조건·독립적인 요구 → 같은 요구 → 양립 불가능한 요구 순서로 먼저 해당하는 기준을 적용하도록 실험했다. 후보 소스와 해시 (로컬 보관: `.local/evaluation/inspection/expanded/runs/prompt-4/policy.json`)를 보존했다. 현재 소스는 이 후보가 아니라 버전 3이다. 이후 다른 후보에는 버전 4를 재사용하지 않는다.
 
 모델 digest·정답·원본 해시·선택 쌍·검사 예산은 버전 3과 같았다. 캐시는 `/private/tmp/knowledge-expanded.ZZPA5Q-prompt-4-01`, `-02`, `-03`으로 분리했다.
 
-| 회차 | 진단 원본                                | 버전 3 대비 평가                     | 정답 일치   | 중복·충돌 정답 선택 | 캐시 재사용 |
-| ---- | ---------------------------------------- | ------------------------------------ | ----------- | ------------------- | ----------- |
-| 1    | [진단](runs/prompt-4/01/diagnostic.json) | [비교](runs/prompt-4/01/report.json) | 12/16 (75%) | 6/6                 | 0           |
-| 2    | [진단](runs/prompt-4/02/diagnostic.json) | [비교](runs/prompt-4/02/report.json) | 12/16 (75%) | 6/6                 | 0           |
-| 3    | [진단](runs/prompt-4/03/diagnostic.json) | [비교](runs/prompt-4/03/report.json) | 12/16 (75%) | 6/6                 | 0           |
+| 회차 | 진단 원본                                                                                  | 버전 3 대비 평가                                                                       | 정답 일치   | 중복·충돌 정답 선택 | 캐시 재사용 |
+| ---- | ------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------- | ----------- | ------------------- | ----------- |
+| 1    | 진단 (로컬 보관: `.local/evaluation/inspection/expanded/runs/prompt-4/01/diagnostic.json`) | 비교 (로컬 보관: `.local/evaluation/inspection/expanded/runs/prompt-4/01/report.json`) | 12/16 (75%) | 6/6                 | 0           |
+| 2    | 진단 (로컬 보관: `.local/evaluation/inspection/expanded/runs/prompt-4/02/diagnostic.json`) | 비교 (로컬 보관: `.local/evaluation/inspection/expanded/runs/prompt-4/02/report.json`) | 12/16 (75%) | 6/6                 | 0           |
+| 3    | 진단 (로컬 보관: `.local/evaluation/inspection/expanded/runs/prompt-4/03/diagnostic.json`) | 비교 (로컬 보관: `.local/evaluation/inspection/expanded/runs/prompt-4/03/report.json`) | 12/16 (75%) | 6/6                 | 0           |
 
 세 회차 모두 오류 없이 전체 55쌍을 분류했으며 모든 쌍의 분류가 반복 실행 간 일치했다. 하지만 버전 3 대비 `bilingual-undefined-policy`, `production-undefined-policy`가 uncertain에서 unrelated로 회귀했다. 기존 `staging-undefined-policy`와 `complementary-audit` 오분류도 해결하지 못했다. 정답 일치율이 12.5%p 낮아져 후보를 제외하고 버전 3의 프롬프트와 캐시 버전을 복원했다. 정답이나 이전 결과는 바꾸지 않았다.
 
-기존 4쌍 자료의 [최초 진단](../runs/prompt-4/diagnostic.json)은 1쌍에서 `inspection-pair-unavailable`이 발생해 partial이었다. 평가 실행기가 이를 거부했으므로 최초 실행의 정확도는 계산하지 않았다. 같은 캐시로 실패한 쌍을 한 번 [재시도](../runs/prompt-4/retry/diagnostic.json)한 결과는 complete이며, [평가](../runs/prompt-4/retry/report.json)는 4/4·회귀 없음이다. 재시도는 9쌍의 캐시를 사용했으므로 캐시 없이 완주한 단일 실행으로 해석하지 않는다.
+기존 4쌍 자료의 최초 진단 (로컬 보관: `.local/evaluation/inspection/runs/prompt-4/diagnostic.json`)은 1쌍에서 `inspection-pair-unavailable`이 발생해 partial이었다. 평가 실행기가 이를 거부했으므로 최초 실행의 정확도는 계산하지 않았다. 같은 캐시로 실패한 쌍을 한 번 재시도 (로컬 보관: `.local/evaluation/inspection/runs/prompt-4/retry/diagnostic.json`)한 결과는 complete이며, 평가 (로컬 보관: `.local/evaluation/inspection/runs/prompt-4/retry/report.json`)는 4/4·회귀 없음이다. 재시도는 9쌍의 캐시를 사용했으므로 캐시 없이 완주한 단일 실행으로 해석하지 않는다.
 
 이번 실험은 순서형 지침만으로 남은 2쌍을 해결하지 못했다. 다음 후보를 진행하더라도 버전 3을 비교 기준으로 유지하고, 현재 자료에 대한 반복 조정 결과와 별도 업무 문서의 검증을 구분한다.
 

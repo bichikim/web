@@ -2,7 +2,7 @@
 
 [실사용 문서 14쌍](operations/README.md)에 사용자 의견을 반영했다. 1번은 conflict·uncertain 복수 정답, 2번은 uncertain 승인이다. 3번 잠정 동의·4번 의견·나머지 미검토는 채점에서 제외한다. 기존 golden이나 기본 분류 모드는 바꾸지 않는다.
 
-[보조 문맥 모드 v8 검증](runs/prompt-8/README.md)을 추가했다. 실제 원본 문맥을 붙인 1·2번은 미해결 조건이 남아 최종 uncertain이었으며, 모델의 제안과 코드가 보정한 결과를 구분해 기록했다. 기존 정답·보고서는 변경하지 않았다.
+보조 문맥 모드 v8 검증 (로컬 보관: `.local/evaluation/inspection/runs/prompt-8/README.md`)을 추가했다. 실제 원본 문맥을 붙인 1·2번은 미해결 조건이 남아 최종 uncertain이었으며, 모델의 제안과 코드가 보정한 결과를 구분해 기록했다. 기존 정답·보고서는 변경하지 않았다.
 
 ## 부분 검토와 복수 정답
 
@@ -14,9 +14,9 @@ v2 보고서는 승인 수(`approvedCases`)와 제외 수(`excludedCases`)를 �
 
 기존 v1 draft·golden과 저장된 기준선은 계속 읽을 수 있다. v2 기준선은 동일한 검토 자료로 만든 v2 보고서끼리 비교한다. 허용 정답의 순서는 무관하지만 정답·검토 상태·기록이 바뀌면 기존 기준선과 비교하지 않는다. 모델 결과에 맞춰 정답을 자동 변경하지 않는다.
 
-사용자 승인에 따라 기본 동작은 버전 3으로 복원했다. 후보 6의 구현·평가 기록은 보존하고, [분류·근거 분리 후보 7](runs/prompt-7/README.md)을 별도 평가한다. 아래 후보 3·4·5·6 기록은 과거 실행 이력이며 채택 상태는 이 문단과 후보 7 기록을 기준으로 본다.
+사용자 승인에 따라 기본 동작은 버전 3으로 복원했다. 후보 6의 구현·평가 기록은 보존하고, 분류·근거 분리 후보 7 (로컬 보관: `.local/evaluation/inspection/runs/prompt-7/README.md`)을 별도 평가한다. 아래 후보 3·4·5·6 기록은 과거 실행 이력이며 채택 상태는 이 문단과 후보 7 기록을 기준으로 본다.
 
-연속 인용 [후보 버전 5 실험](workplace/runs/prompt-5/README.md)은 업무 문서 오류 지속과 합성 자료 회귀로 미채택했다. 현재 실행 버전은 3이며 업무 문서의 정상 기준선은 없다.
+연속 인용 후보 버전 5 실험 (로컬 보관: `.local/evaluation/inspection/workplace/runs/prompt-5/README.md`)은 업무 문서 오류 지속과 합성 자료 회귀로 미채택했다. 현재 실행 버전은 3이며 업무 문서의 정상 기준선은 없다.
 
 사용자가 [실제 업무 문서의 정답 8쌍](workplace/README.md)을 승인했다. 별도 scope의 버전 3 실행에서 같은 태그 비교 응답이 3회와 각 재시도 모두 검증에 실패했다. 모든 진단이 partial이라 정확도·기준선은 생성하지 않았고, 실행 기록을 해당 문서에 보존했다.
 
@@ -75,7 +75,7 @@ know doctor /private/tmp/knowledge-evaluation.eLR4PC \
 
 비교에 필요한 정의·조건이 없으면 uncertain으로 판단하고, 명시적으로 양립 불가능한 주장만 conflict로 분류하도록 [프롬프트](../../src/adapters/inspection.ts)를 보완했다. 특정 문서명이나 정책 R에 대한 예외 처리는 넣지 않았다. [버전](../../src/inspection/pairs.ts)을 2로 올려 이전 분류 캐시와 분리했다.
 
-동일 gemma4 digest·원본·검사 예산으로 실행한 [새 진단](runs/prompt-2/diagnostic.json)과 [비교 결과](runs/prompt-2/report.json)를 보존했다. 처음에는 캐시 사용 없이 10쌍을 분류했고 재실행에서는 새 캐시 10개를 사용했다. 중복·충돌 정답 쌍 선택은 2/2를 유지하며, 분류 일치는 3/4에서 4/4로 개선되고 회귀는 없었다. 정책 R 사례는 conflict에서 uncertain으로 바뀌었다. 기존 golden·기준선은 덮어쓰지 않았다.
+동일 gemma4 digest·원본·검사 예산으로 실행한 새 진단 (로컬 보관: `.local/evaluation/inspection/runs/prompt-2/diagnostic.json`)과 비교 결과 (로컬 보관: `.local/evaluation/inspection/runs/prompt-2/report.json`)를 보존했다. 처음에는 캐시 사용 없이 10쌍을 분류했고 재실행에서는 새 캐시 10개를 사용했다. 중복·충돌 정답 쌍 선택은 2/2를 유지하며, 분류 일치는 3/4에서 4/4로 개선되고 회귀는 없었다. 정책 R 사례는 conflict에서 uncertain으로 바뀌었다. 기존 golden·기준선은 덮어쓰지 않았다.
 
 ```sh
 know eval-inspection packages/knowledge/evaluation/inspection/golden.json \
@@ -87,4 +87,4 @@ know eval-inspection packages/knowledge/evaluation/inspection/golden.json \
 
 ## 프롬프트 버전 3 회귀 검증
 
-정의가 없는 참조와 독립적인 요구 사항을 구분하도록 프롬프트를 보완한 뒤, 같은 원본·모델 digest·검사 예산으로 [실제 진단](runs/prompt-3/diagnostic.json)을 새로 실행했다. 캐시 경로는 `/private/tmp/knowledge-evaluation.eLR4PC-prompt-3`이며 재사용은 0건이다. 전체 10쌍을 분류했고 승인 정답 4쌍을 모두 맞혔다. [비교 결과](runs/prompt-3/report.json)는 버전 2 결과를 기준으로 하며 회귀가 없다. 원래 golden·기준선과 버전 2 결과는 보존했다.
+정의가 없는 참조와 독립적인 요구 사항을 구분하도록 프롬프트를 보완한 뒤, 같은 원본·모델 digest·검사 예산으로 실제 진단 (로컬 보관: `.local/evaluation/inspection/runs/prompt-3/diagnostic.json`)을 새로 실행했다. 캐시 경로는 `/private/tmp/knowledge-evaluation.eLR4PC-prompt-3`이며 재사용은 0건이다. 전체 10쌍을 분류했고 승인 정답 4쌍을 모두 맞혔다. 비교 결과 (로컬 보관: `.local/evaluation/inspection/runs/prompt-3/report.json`)는 버전 2 결과를 기준으로 하며 회귀가 없다. 원래 golden·기준선과 버전 2 결과는 보존했다.

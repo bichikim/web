@@ -1,7 +1,12 @@
 import {createHash} from 'node:crypto'
 import {z} from 'zod'
 import type {StoredKnowledgePoint} from '../indexing/store'
-import {type InquiryAuditor, type InquiryAuditRecord, parseInquiryAudit} from './audit'
+import {
+  type AuditQuestion,
+  type InquiryAuditor,
+  type InquiryAuditRecord,
+  parseInquiryAudit,
+} from './audit'
 import {contextPassages, contextQuestionsSchema, type ContextSelection} from './context'
 import {
   type Assessment,
@@ -327,6 +332,7 @@ const assessQuestions = async (
     return failure
   }
   let audits: ReadonlyArray<InquiryAuditRecord> | undefined
+  let unreviewed: ReadonlyArray<AuditQuestion> | undefined
   if (options.auditor !== undefined && unresolved.length === 0 && values.length > 0) {
     const questions = values.map((finding) => ({
       answer: finding.confirmed,
@@ -342,39 +348,48 @@ const assessQuestions = async (
       original: {left: options.pair.left.payload.text, right: options.pair.right.payload.text},
       questions,
     })
-    if (!reviewed.ok) {
-      return reviewed
-    }
-    const checked = parseInquiryAudit({checks: reviewed.checks, input: reviewed.value, questions})
-    if (!checked.ok) {
-      return checked
-    }
-    audits = checked.value.map((audit) => {
-      const question = questions.find((entry) => entry.id === audit.questionId)!
-      const evidenceCheck = checked.checks?.evidence.find(
-        (entry) => entry.questionId === audit.questionId,
-      )
-      const answerCheck = checked.checks?.answers.find(
-        (entry) => entry.questionId === audit.questionId,
-      )
-      const checks =
-        evidenceCheck === undefined || answerCheck === undefined
-          ? undefined
-          : {answers: answerCheck, evidence: evidenceCheck}
-      return {
-        ...audit,
-        answer: question.answer,
-        question: question.question,
-        sources: question.evidence,
-        ...(checks === undefined ? {} : {checks}),
+    if (!reviewed.ok && reviewed.error.code === 'inspection-call-limit') {
+      unreviewed = questions
+      values = values.map((finding) => ({
+        ...finding,
+        confirmed: '',
+        remaining: questions.find((question) => question.id === finding.questionId)!.question,
+      }))
+    } else {
+      if (!reviewed.ok) {
+        return reviewed
       }
-    })
-    values = values.map((finding) => {
-      const audit = audits!.find((entry) => entry.questionId === finding.questionId)!
-      return audit.supported
-        ? finding
-        : {...finding, confirmed: '', remaining: audit.missing.trim()}
-    })
+      const checked = parseInquiryAudit({checks: reviewed.checks, input: reviewed.value, questions})
+      if (!checked.ok) {
+        return checked
+      }
+      audits = checked.value.map((audit) => {
+        const question = questions.find((entry) => entry.id === audit.questionId)!
+        const evidenceCheck = checked.checks?.evidence.find(
+          (entry) => entry.questionId === audit.questionId,
+        )
+        const answerCheck = checked.checks?.answers.find(
+          (entry) => entry.questionId === audit.questionId,
+        )
+        const checks =
+          evidenceCheck === undefined || answerCheck === undefined
+            ? undefined
+            : {answers: answerCheck, evidence: evidenceCheck}
+        return {
+          ...audit,
+          answer: question.answer,
+          question: question.question,
+          sources: question.evidence,
+          ...(checks === undefined ? {} : {checks}),
+        }
+      })
+      values = values.map((finding) => {
+        const audit = audits!.find((entry) => entry.questionId === finding.questionId)!
+        return audit.supported
+          ? finding
+          : {...finding, confirmed: '', remaining: audit.missing.trim()}
+      })
+    }
     unresolved = [...new Set(values.map((finding) => finding.remaining).filter(Boolean))]
   }
   state.journal = {
@@ -398,6 +413,7 @@ const assessQuestions = async (
       proposed: result.value.proposed,
       unresolved,
       ...(audits === undefined ? {} : {audits}),
+      ...(unreviewed === undefined ? {} : {stop: 'call-limit', unreviewed}),
     },
   }
 }

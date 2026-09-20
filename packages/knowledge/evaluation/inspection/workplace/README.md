@@ -1,10 +1,10 @@
 # 업무 문서 검증
 
-사용자 승인에 따라 기본 동작은 버전 3으로 복원했다. 후보 6의 구현·평가 기록은 보존하고, [분류·근거 분리 후보 7](../runs/prompt-7/README.md)을 별도 평가한다. 아래 후보 3·4·5·6 기록은 과거 실행 이력이며 채택 상태는 이 문단과 후보 7 기록을 기준으로 본다.
+사용자 승인에 따라 기본 동작은 버전 3으로 복원했다. 후보 6의 구현·평가 기록은 보존하고, 분류·근거 분리 후보 7 (로컬 보관: `.local/evaluation/inspection/runs/prompt-7/README.md`)을 별도 평가한다. 아래 후보 3·4·5·6 기록은 과거 실행 이력이며 채택 상태는 이 문단과 후보 7 기록을 기준으로 본다.
 
-연속 인용 지침을 추가한 [후보 버전 5](runs/prompt-5/README.md)도 업무 문서 3회에서 같은 오류가 발생했고 합성 자료가 회귀해 채택하지 않았다. 당시 실행 프롬프트를 버전 3으로 복원했으며 정상 기준선은 없었다.
+연속 인용 지침을 추가한 후보 버전 5 (로컬 보관: `.local/evaluation/inspection/workplace/runs/prompt-5/README.md`)도 업무 문서 3회에서 같은 오류가 발생했고 합성 자료가 회귀해 채택하지 않았다. 당시 실행 프롬프트를 버전 3으로 복원했으며 정상 기준선은 없었다.
 
-후속 [원시 응답 재현](investigation/README.md)에서 태그 비교 인용에 원문에 없는 `...`가 삽입되는 문제를 확인했다. 원래 평가 결과는 여전히 partial이며, 정상 기준선을 새로 만들지 않았다.
+후속 원시 응답 재현 (로컬 보관: `.local/evaluation/inspection/workplace/investigation/README.md`)에서 태그 비교 인용에 원문에 없는 `...`가 삽입되는 문제를 확인했다. 원래 평가 결과는 여전히 partial이며, 정상 기준선을 새로 만들지 않았다.
 
 현재 저장소의 실제 문서 3개에서 8개 문단·목록 항목을 발췌한 [정답 8쌍](golden.json)을 사용자가 2026-09-06에 승인했다. 승인 전 [초안](draft.json)은 보존한다. 프롬프트는 버전 3을 유지한다. 기존 합성 16쌍의 문장을 변형하거나 분류 결과에 맞춰 원문을 만들지 않았다.
 
@@ -45,11 +45,11 @@ duplicate 3쌍, unrelated 5쌍이다. 이 묶음에는 conflict·uncertain 사�
 
 [실행 요약](summary.json)에 세 회차와 재시도 결과를 모았다. 모델은 `gemma4:latest`, digest는 `c6eb396dbd5992bbe3f5cdb947e8bbc0ee413d7c17e2beaae69f5d569cf982eb`이다. 모든 실행에서 모델·원본 목록·내용 해시가 일치했고 검색 오류 없이 28쌍을 선택했다. 그중 27쌍의 응답을 수락하고 1쌍을 거부했다. 이는 정답률 27/28이라는 뜻이 아니다.
 
-| 회차 | 최초 실행                       | 최초 캐시 사용 | 재시도                                | 재시도 캐시 사용 | 결과         |
-| ---- | ------------------------------- | -------------- | ------------------------------------- | ---------------- | ------------ |
-| 1    | [진단](runs/01/diagnostic.json) | 0              | [진단](runs/01/retry/diagnostic.json) | 27               | 모두 partial |
-| 2    | [진단](runs/02/diagnostic.json) | 0              | [진단](runs/02/retry/diagnostic.json) | 27               | 모두 partial |
-| 3    | [진단](runs/03/diagnostic.json) | 0              | [진단](runs/03/retry/diagnostic.json) | 27               | 모두 partial |
+| 회차 | 최초 실행                                                                          | 최초 캐시 사용 | 재시도                                                                                   | 재시도 캐시 사용 | 결과         |
+| ---- | ---------------------------------------------------------------------------------- | -------------- | ---------------------------------------------------------------------------------------- | ---------------- | ------------ |
+| 1    | 진단 (로컬 보관: `.local/evaluation/inspection/workplace/runs/01/diagnostic.json`) | 0              | 진단 (로컬 보관: `.local/evaluation/inspection/workplace/runs/01/retry/diagnostic.json`) | 27               | 모두 partial |
+| 2    | 진단 (로컬 보관: `.local/evaluation/inspection/workplace/runs/02/diagnostic.json`) | 0              | 진단 (로컬 보관: `.local/evaluation/inspection/workplace/runs/02/retry/diagnostic.json`) | 27               | 모두 partial |
+| 3    | 진단 (로컬 보관: `.local/evaluation/inspection/workplace/runs/03/diagnostic.json`) | 0              | 진단 (로컬 보관: `.local/evaluation/inspection/workplace/runs/03/retry/diagnostic.json`) | 27               | 모두 partial |
 
 캐시는 `/private/tmp/knowledge-workplace.GHDWKr-cache-01`, `-02`, `-03`이다. 각 진단 옆의 `execution.json`에 시작·종료 시각, 종료 코드와 캐시 경로를 기록했다.
 
