@@ -85,12 +85,18 @@ export const useScreenSaver = (): ScreenSaverController => {
     useEvent(globalThis.document, 'visibilitychange', handleVisibilityChange)
 
     createEffect(() => {
-      const currentDelay = delay()
+      const currentDelay = storedDelay()
       const isVisible = isDocumentVisible()
       activityRevision()
+
+      if (!isVisible || currentDelay === null) {
+        setIsActive(false)
+        return
+      }
+
       const delayMilliseconds = getScreenSaverDelayMilliseconds(currentDelay)
 
-      if (!isVisible || delayMilliseconds === null) {
+      if (delayMilliseconds === null) {
         setIsActive(false)
         return
       }
