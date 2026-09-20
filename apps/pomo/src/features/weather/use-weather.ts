@@ -185,7 +185,10 @@ export const useWeather = (): WeatherController => {
     sceneCondition: () => {
       const currentPreference = preference()
       const currentState = feedState()
-      if (currentPreference.sceneMode === 'auto' && currentState.status !== 'ready') {
+      if (
+        currentPreference.sceneMode === 'auto' &&
+        (currentState.status !== 'ready' || currentState.feed.stale)
+      ) {
         return undefined
       }
 
