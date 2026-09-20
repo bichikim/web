@@ -43,7 +43,6 @@ export const createEventActionRunner = (
   let eventActionExecutor: EventActionExecutor | null = null
   let pendingEventActions: PendingEventAction[] = []
   let pendingActionWaiters: PendingActionWaiter[] = []
-  let hasRegisteredEventActionExecutor = false
 
   const queueEventAction = (eventId: DialogueEventId, actionId: EventActionId) => {
     pendingEventActions.push({actionId, eventId})
@@ -67,9 +66,7 @@ export const createEventActionRunner = (
       for (const actionId of actionBindings[eventId] ?? []) {
         const executor = eventActionExecutor
         const shouldQueueAction =
-          executor === null &&
-          (eventId === DELAYED_END_EVENT ||
-            (eventId === FOCUS_ROOM_ENTRY_EVENT && !hasRegisteredEventActionExecutor))
+          executor === null && (eventId === DELAYED_END_EVENT || eventId === FOCUS_ROOM_ENTRY_EVENT)
 
         if (shouldQueueAction) {
           queueEventAction(eventId, actionId)
@@ -102,7 +99,6 @@ export const createEventActionRunner = (
       resolvePendingActionWaiters()
     },
     register(executor) {
-      hasRegisteredEventActionExecutor = true
       eventActionExecutor = executor
       const pendingActions = pendingEventActions
       pendingEventActions = []

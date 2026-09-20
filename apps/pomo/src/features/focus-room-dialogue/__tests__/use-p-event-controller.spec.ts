@@ -212,6 +212,34 @@ it('should not replay an event action after its executor has been unregistered',
   view.cleanup()
 })
 
+it('should retain an entry action after its executor has been unregistered', async () => {
+  repositoryMocks.listEventBindings.mockResolvedValue([
+    {
+      actionIds: ['music-stop'],
+      dialogueIds: [],
+      event: 'room-enter',
+      playbackMode: 'sequential-all',
+      version: 3,
+    },
+  ])
+
+  const view = renderHook(() => usePEventController({}))
+  await vi.waitFor(() => expect(view.result.isLoading()).toBe(false))
+
+  const initialExecutor = vi.fn()
+  const unregister = view.result.registerEventActionExecutor?.(initialExecutor)
+  unregister?.()
+
+  view.result.enterFocusRoom()
+
+  const nextExecutor = vi.fn()
+  view.result.registerEventActionExecutor?.(nextExecutor)
+
+  expect(initialExecutor).not.toHaveBeenCalled()
+  expect(nextExecutor).toHaveBeenCalledExactlyOnceWith('music-stop')
+  view.cleanup()
+})
+
 it('should keep the last persisted duration after overlapping saves fail', async () => {
   const pendingSave = Promise.withResolvers<undefined>()
   delayedEndEventSettingsMocks.write.mockReturnValue(pendingSave.promise)
