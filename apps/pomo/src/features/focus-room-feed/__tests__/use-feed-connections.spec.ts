@@ -38,6 +38,7 @@ beforeEach(() => {
 
 afterEach(() => {
   vi.unstubAllGlobals()
+  vi.unstubAllEnvs()
   vi.restoreAllMocks()
 })
 
@@ -73,6 +74,41 @@ it('should add, deduplicate, update, and delete persistent feed connections', as
   expect(save).toHaveBeenCalledTimes(6)
   unmount()
   globalThis.removeEventListener(FEED_CONNECTIONS_CHANGED_EVENT, changed)
+})
+
+it('should deduplicate owned today-in-history URLs after applying the viewer time zone', () => {
+  vi.stubEnv('VITE_POMO_PUBLIC_ORIGIN', 'https://www.pomofi.io')
+  mocks.createRepository.mockReturnValue({list: () => [], save: vi.fn()})
+  const {controller, unmount} = mountController()
+
+  expect(
+    controller.onAddRecommendation(
+      'https://www.pomofi.io/api/feeds/today-in-history/rss.xml?timeZone=America%2FNew_York',
+    ),
+  ).toBe(true)
+  expect(
+    controller.onAddRecommendation('https://www.pomofi.io/api/feeds/today-in-history/rss.xml'),
+  ).toBe(false)
+  expect(controller.connections()).toHaveLength(1)
+
+  unmount()
+})
+
+it('should preserve time zone variants for external feed URLs', () => {
+  mocks.createRepository.mockReturnValue({list: () => [], save: vi.fn()})
+  const {controller, unmount} = mountController()
+
+  expect(
+    controller.onAddRecommendation('https://example.test/api/feeds/today-in-history/rss.xml'),
+  ).toBe(true)
+  expect(
+    controller.onAddRecommendation(
+      'https://example.test/api/feeds/today-in-history/rss.xml?timeZone=America%2FNew_York',
+    ),
+  ).toBe(true)
+  expect(controller.connections()).toHaveLength(2)
+
+  unmount()
 })
 
 it('should report repository initialization and save failures', () => {
