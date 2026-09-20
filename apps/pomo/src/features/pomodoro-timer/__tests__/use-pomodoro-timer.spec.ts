@@ -450,6 +450,39 @@ it('should synchronize an expired running break before applying configuration ch
   view.cleanup()
 })
 
+it.each([
+  {completedFocusSessions: 1, endsAt: 10_000, phase: 'shortBreak'},
+  {completedFocusSessions: 2, endsAt: 12_000, phase: 'longBreak'},
+] as const)(
+  'should reset an unfinished running $phase to focus before applying configuration changes',
+  async (scenario) => {
+    const runningBreak = {
+      completedFocusSessions: scenario.completedFocusSessions,
+      endsAt: scenario.endsAt,
+      phase: scenario.phase,
+      status: 'running',
+    } satisfies PomodoroTimerState
+    const nextConfig = {...CONFIG, longBreakSeconds: 9, shortBreakSeconds: 8}
+    localStorage.setItem(CONFIG_STORAGE_KEY, JSON.stringify(CONFIG))
+    localStorage.setItem(STATE_STORAGE_KEY, JSON.stringify(runningBreak))
+
+    const view = renderHook(usePomodoroTimer, {wrapper: PreferenceProvider})
+    await finishInitialization(view)
+    vi.setSystemTime(5_000)
+
+    view.result.onConfigChange(nextConfig)
+
+    expect(view.result.config()).toEqual(nextConfig)
+    expect(view.result.state()).toEqual({
+      completedFocusSessions: scenario.completedFocusSessions,
+      phase: 'focus',
+      remainingSeconds: 10,
+      status: 'idle',
+    })
+    view.cleanup()
+  },
+)
+
 it('should stop after the first expired phase when applying configuration changes', async () => {
   const view = renderHook(usePomodoroTimer, {wrapper: PreferenceProvider})
   await finishInitialization(view)
