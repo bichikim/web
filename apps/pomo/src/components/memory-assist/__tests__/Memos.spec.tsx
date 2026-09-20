@@ -138,6 +138,23 @@ it('should save a memo with random recall enabled', async () => {
   expect(sessionStorage.getItem('pomo:memory-memo:draft:v1')).toBeNull()
 })
 
+it.each(['random', 'reinforcement'] as const)(
+  'should preserve %s recall mode after toggling an exact reminder off before saving',
+  async (recallMode) => {
+    render(() => <MemoryMemoList />)
+
+    fireEvent.click(screen.getByRole('button', {name: '새 메모'}))
+    fireEvent.input(screen.getByLabelText('기억할 메모'), {target: {value: '여권 갱신하기'}})
+    fireEvent.change(screen.getByLabelText('기억 반복'), {target: {value: recallMode}})
+    fireEvent.click(screen.getByLabelText('날짜와 시간에 알려주기'))
+    fireEvent.click(screen.getByLabelText('날짜와 시간에 알려주기'))
+    fireEvent.click(screen.getByRole('button', {name: '메모 저장'}))
+
+    await waitFor(() => expect(mocks.updateMemos).toHaveBeenCalledOnce())
+    expect(mocks.memos[0]).toMatchObject({recallMode})
+  },
+)
+
 it('should preserve a newer creation draft when an earlier save completes late', async () => {
   const persistence = Promise.withResolvers<ReadonlyArray<MemoryMemo>>()
   mocks.updateMemos.mockReturnValue(persistence.promise)
