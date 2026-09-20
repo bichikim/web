@@ -28,6 +28,28 @@ export interface FeatureRequestsController {
   readonly votingRequestId: () => string | null
 }
 
+const preserveCurrentVotesInRefresh = (
+  currentRequests: ReadonlyArray<FeatureRequest>,
+  refreshedRequests: ReadonlyArray<FeatureRequest>,
+): ReadonlyArray<FeatureRequest> => {
+  const currentRequestsById = new Map(
+    currentRequests.map((request) => [request.id, request] as const),
+  )
+
+  return refreshedRequests.map((request) => {
+    const currentRequest = currentRequestsById.get(request.id)
+    if (currentRequest?.votedByCurrentUser !== true) {
+      return request
+    }
+
+    return {
+      ...request,
+      voteCount: Math.max(request.voteCount, currentRequest.voteCount),
+      votedByCurrentUser: true,
+    }
+  })
+}
+
 export const useFeatureRequests = (): FeatureRequestsController => {
   const [requests, setRequests] = createSignal<ReadonlyArray<FeatureRequest>>([])
   const [hasMore, setHasMore] = createSignal(false)
@@ -62,14 +84,19 @@ export const useFeatureRequests = (): FeatureRequestsController => {
 
       if (preserveLoadedPages) {
         setHasMore(previousHasMore)
-        const refreshedRequestIds = new Set(page.requests.map((request) => request.id))
-        setRequests((currentRequests) => [
-          ...page.requests,
-          ...currentRequests.filter((request) => !refreshedRequestIds.has(request.id)),
-        ])
+        setRequests((currentRequests) => {
+          const refreshedRequestIds = new Set(page.requests.map((request) => request.id))
+          const refreshedRequests = [
+            ...page.requests,
+            ...currentRequests.filter((request) => !refreshedRequestIds.has(request.id)),
+          ]
+          return preserveCurrentVotesInRefresh(currentRequests, refreshedRequests)
+        })
       } else {
         setHasMore(page.hasMore)
-        setRequests(page.requests)
+        setRequests((currentRequests) =>
+          preserveCurrentVotesInRefresh(currentRequests, page.requests),
+        )
       }
     } catch {
       if (generation !== listGeneration) {

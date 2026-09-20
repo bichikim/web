@@ -130,6 +130,36 @@ it('should retain loaded pages when a later-page request was already voted', asy
   cleanup()
 })
 
+it('should keep a successful vote visible when refresh completes after voting', async () => {
+  const voteResponse = Promise.withResolvers<{status: 'voted'}>()
+  const refreshResponse = Promise.withResolvers<FeatureRequestPage>()
+  apiMocks.listFeatureRequests
+    .mockResolvedValueOnce({hasMore: false, requests: [REQUEST]})
+    .mockReturnValueOnce(refreshResponse.promise)
+  apiMocks.voteFeatureRequest.mockReturnValueOnce(voteResponse.promise)
+
+  const {cleanup, result} = renderHook(() => useFeatureRequests())
+  await waitFor(() => expect(result.isLoading()).toBe(false))
+
+  const votePromise = result.voteRequest(REQUEST.id)
+  const refreshPromise = result.refresh()
+
+  voteResponse.resolve({status: 'voted'})
+  await votePromise
+
+  expect(result.requests()).toEqual([
+    {...REQUEST, voteCount: REQUEST.voteCount + 1, votedByCurrentUser: true},
+  ])
+
+  refreshResponse.resolve({hasMore: false, requests: [REQUEST]})
+  await refreshPromise
+
+  expect(result.requests()).toEqual([
+    {...REQUEST, voteCount: REQUEST.voteCount + 1, votedByCurrentUser: true},
+  ])
+  cleanup()
+})
+
 it('should ignore a load more response that started before refresh', async () => {
   const loadMoreResponse = Promise.withResolvers<FeatureRequestPage>()
   const refreshResponse = Promise.withResolvers<FeatureRequestPage>()
