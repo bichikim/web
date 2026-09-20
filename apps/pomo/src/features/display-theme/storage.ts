@@ -5,6 +5,7 @@ import {
   hasNativeStorageBridge,
   readTossStorageJson,
   readWebStorageJson,
+  removeWebStorageItem,
   writeTossStorageJson,
   writeWebStorageJson,
 } from 'src/utils/runtime-storage'
@@ -19,6 +20,7 @@ export interface DisplayThemePreferenceStorage {
   readonly usesTossStorage: () => boolean
   readonly readToss: (key: string) => Promise<unknown | null>
   readonly readWeb: (key: string) => unknown | null
+  readonly removeWeb: (key: string) => unknown | null
   readonly writeToss: (key: string, value: unknown) => Promise<void>
   readonly writeWeb: (key: string, value: unknown) => void
 }
@@ -86,6 +88,7 @@ export const createDisplayThemePreferenceRepository = (
   const write = createAuthoritativeWriter({
     failureMessage: 'Failed to persist display theme preference.',
     isNative: () => storage.usesTossStorage(),
+    removeWeb: () => storage.removeWeb(DISPLAY_THEME_STORAGE_KEY),
     writeNative: (value) => storage.writeToss(DISPLAY_THEME_STORAGE_KEY, value),
     writeWeb: writeWebPreference,
   })
@@ -97,6 +100,7 @@ const runtimeRepository = createDisplayThemePreferenceRepository({
   storage: {
     readToss: (key) => readTossStorageJson(key, (value) => value),
     readWeb: (key) => readWebStorageJson(key, (value) => value),
+    removeWeb: removeWebStorageItem,
     usesTossStorage: hasNativeStorageBridge,
     writeToss: writeTossStorageJson,
     writeWeb(key, value) {
