@@ -1,5 +1,5 @@
 import {cva, cx} from 'class-variance-authority'
-import {createSignal, type JSX, Show, splitProps, untrack} from 'solid-js'
+import {createEffect, createSignal, type JSX, Show, splitProps, untrack} from 'solid-js'
 import {CONTROL_HEIGHT_CLASSES, CONTROL_PADDING_CLASSES} from '../control-size-classes'
 import {type NumberInputRange, useNumberInputGesture} from './use-number-input-gesture'
 
@@ -147,18 +147,33 @@ export const PNumberInput = (props: PNumberInputProps) => {
   const [uncontrolledValue, setUncontrolledValue] = createSignal(
     untrack(() => (local.value === undefined ? String(local.min ?? 0) : String(local.value))),
   )
+  const [lastValue, setLastValue] = createSignal<number | undefined>(
+    untrack(() => parseValue(local.value === undefined ? uncontrolledValue() : local.value)),
+  )
+  createEffect(() => {
+    const currentValue = parseValue(local.value === undefined ? uncontrolledValue() : local.value)
+    if (currentValue !== undefined) {
+      setLastValue(currentValue)
+    }
+  })
   const getSize = () => local.size ?? 'small'
 
   const getBounds = (): NumberInputRange => getRange(local.min, local.max)
   const getCurrentValue = () => {
     const bounds = getBounds()
     const currentValue = parseValue(local.value === undefined ? uncontrolledValue() : local.value)
-    return normalizeValue(currentValue ?? 0, getStep(local.step), bounds.min, bounds.max)
+    return normalizeValue(
+      currentValue ?? lastValue() ?? 0,
+      getStep(local.step),
+      bounds.min,
+      bounds.max,
+    )
   }
   const emitValue = (value: number) => {
     const bounds = getBounds()
     const nextValue = normalizeValue(value, getStep(local.step), bounds.min, bounds.max)
 
+    setLastValue(nextValue)
     if (local.value === undefined) {
       setUncontrolledValue(String(nextValue))
     }
@@ -170,6 +185,10 @@ export const PNumberInput = (props: PNumberInputProps) => {
 
   const handleInput: JSX.EventHandler<HTMLInputElement, InputEvent> = (event) => {
     const nextValue = event.currentTarget.value
+    const parsedValue = parseValue(nextValue)
+    if (parsedValue !== undefined) {
+      setLastValue(parsedValue)
+    }
     if (local.value === undefined) {
       setUncontrolledValue(nextValue)
     }
