@@ -147,8 +147,10 @@ export const PNumberInput = (props: PNumberInputProps) => {
   const [uncontrolledValue, setUncontrolledValue] = createSignal(
     untrack(() => (local.value === undefined ? String(local.min ?? 0) : String(local.value))),
   )
-  const [lastValue, setLastValue] = createSignal<number | undefined>(
-    untrack(() => parseValue(local.value === undefined ? uncontrolledValue() : local.value)),
+  const [lastValue, setLastValue] = createSignal<number | null>(
+    untrack(
+      () => parseValue(local.value === undefined ? uncontrolledValue() : local.value) ?? null,
+    ),
   )
   createEffect(() => {
     const currentValue = parseValue(local.value === undefined ? uncontrolledValue() : local.value)
