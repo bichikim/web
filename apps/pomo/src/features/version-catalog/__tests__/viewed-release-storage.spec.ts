@@ -214,6 +214,34 @@ it.each([true, false])(
   },
 )
 
+it('should serialize overlapping web writes before comparing the incoming marker', async () => {
+  const storage = createStorage()
+  let marker: ViewedRelease | null = null
+  let hasReentered = false
+  let overlappingWrite: Promise<void> | undefined
+  const older = {...viewedRelease, releasedAt: '2026-09-03T00:52:00+09:00'}
+  const repository = createViewedReleaseRepository({storage})
+
+  vi.mocked(storage.readWeb).mockImplementation(() => {
+    const snapshot = marker
+    if (!hasReentered) {
+      hasReentered = true
+      overlappingWrite = repository.write(viewedRelease)
+    }
+    return snapshot
+  })
+  vi.mocked(storage.writeWeb).mockImplementation((value) => {
+    marker = value
+    return null
+  })
+
+  const firstWrite = repository.write(older)
+  await firstWrite
+  await overlappingWrite
+
+  expect(marker).toEqual(viewedRelease)
+})
+
 it('should reject failed native checks without writing and allow the next queued write', async () => {
   const storage = createStorage()
   vi.mocked(storage.usesTossStorage).mockReturnValue(true)
