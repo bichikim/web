@@ -49,6 +49,22 @@ describe('playback-storage', () => {
     expect(storage.state.web).toMatchObject({isPlaying: false, savedAt: 40})
   })
 
+  it('should preserve the optional playlist index during storage round trips', async () => {
+    await playbackStorage.write({
+      isPlaying: true,
+      positionSeconds: 12,
+      trackId: 'track-one',
+      trackIndex: 1,
+    })
+
+    await expect(playbackStorage.read()).resolves.toEqual({
+      isPlaying: true,
+      positionSeconds: 12,
+      trackId: 'track-one',
+      trackIndex: 1,
+    })
+  })
+
   it('should return null after browser playback storage is removed', async () => {
     await playbackStorage.write({isPlaying: true, positionSeconds: 12, trackId: 'track-one'})
     storage.state.web = null

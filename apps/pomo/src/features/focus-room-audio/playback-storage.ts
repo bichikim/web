@@ -17,12 +17,14 @@ const storedPlaybackSchema = z.object({
   positionSeconds: z.number().finite().nonnegative(),
   savedAt: z.number().finite().nonnegative(),
   trackId: z.string().min(1),
+  trackIndex: z.number().int().nonnegative().optional(),
 })
 
 export interface PPlaybackState {
   readonly isPlaying: boolean
   readonly positionSeconds: number
   readonly trackId: string
+  readonly trackIndex?: number
 }
 
 export interface StoredPlaybackState extends PPlaybackState {
@@ -56,8 +58,10 @@ const toPlaybackState = (state: StoredPlaybackState | null): PPlaybackState | nu
     return null
   }
 
-  const {isPlaying, positionSeconds, trackId} = state
-  return {isPlaying, positionSeconds, trackId}
+  const {isPlaying, positionSeconds, trackId, trackIndex} = state
+  return trackIndex === undefined
+    ? {isPlaying, positionSeconds, trackId}
+    : {isPlaying, positionSeconds, trackId, trackIndex}
 }
 
 export interface PlaybackClock {

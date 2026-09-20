@@ -27,7 +27,7 @@ export interface CreatePlayerQueueControllerOptions {
   readonly playback: Pick<Playback, 'invalidate' | 'stop'>
   readonly playbackPersistence: Pick<
     PPlaybackPersistence,
-    'persistStoppedPlayback' | 'setPendingPosition' | 'writePlayback'
+    'persistCurrentPlayback' | 'persistStoppedPlayback' | 'setPendingPosition' | 'writePlayback'
   >
   readonly previewPlayback: Pick<PreviewPlayback, 'preventResume'>
   readonly readCurrentIndex: Accessor<number>
@@ -52,6 +52,27 @@ const stopPlayback = (options: CreatePlayerQueueControllerOptions) => {
   options.playback.stop()
   options.playbackPersistence.persistStoppedPlayback()
   options.playbackPersistence.setPendingPosition(null)
+}
+
+const createPlaybackState = (
+  track: PTrack,
+  trackIndex: number,
+  isPlaying: boolean,
+): PPlaybackState => ({
+  isPlaying,
+  positionSeconds: 0,
+  trackId: track.id,
+  trackIndex,
+})
+
+const persistShiftedCurrentPlayback = (
+  options: Pick<CreatePlayerQueueControllerOptions, 'playbackPersistence'>,
+  currentIndex: number,
+  resolution: ReturnType<typeof resolveTrackRemoval>,
+) => {
+  if (!resolution.currentTrackChanged && resolution.nextCurrentIndex !== currentIndex) {
+    options.playbackPersistence.persistCurrentPlayback()
+  }
 }
 
 /** Coordinates playlist state changes without owning transport or navigation policy. */
@@ -121,8 +142,9 @@ export const createPlayerQueueController = (
       return
     }
 
+    const currentIndex = options.readCurrentIndex()
     const resolution = resolveTrackRemoval({
-      currentIndex: options.readCurrentIndex(),
+      currentIndex,
       removeIndex,
       trackCount: currentTracks.length,
     })
@@ -143,7 +165,7 @@ export const createPlayerQueueController = (
     queueRevision += 1
 
     if (resolution.currentTrackChanged && nextTrack !== undefined) {
-      const nextPlayback = {isPlaying: shouldResume, positionSeconds: 0, trackId: nextTrack.id}
+      const nextPlayback = createPlaybackState(nextTrack, resolution.nextCurrentIndex, shouldResume)
       options.prepareTrackChange(shouldResume, nextTrack.id)
       options.playbackPersistence.setPendingPosition(nextPlayback)
       options.playbackPersistence.writePlayback(nextPlayback)
@@ -158,6 +180,7 @@ export const createPlayerQueueController = (
       options.setLoadedTracks(nextTracks)
       options.setCurrentIndex(resolution.nextCurrentIndex)
     })
+    persistShiftedCurrentPlayback(options, currentIndex, resolution)
     options.persistTrackQueue(nextTracks)
     options.order.resetOrder()
 

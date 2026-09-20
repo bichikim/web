@@ -63,6 +63,7 @@ const readStoredPlayback = () =>
     readonly isPlaying: boolean
     readonly positionSeconds: number
     readonly trackId: string
+    readonly trackIndex?: number
   } | null
 
 const renderController = () => {
@@ -158,6 +159,25 @@ it('should preserve restart playback intent until the play event follows seeked'
     positionSeconds: 8,
     trackId: TRACK.id,
   })
+})
+
+it('should restore the saved occurrence when a controlled playlist repeats a track ID', async () => {
+  const duplicateTracks = [TRACK, TRACK, NEXT_TRACK]
+  localStorage.setItem(
+    PLAYBACK_STORAGE_KEY,
+    JSON.stringify({
+      isPlaying: false,
+      positionSeconds: 8,
+      savedAt: 1,
+      trackId: TRACK.id,
+      trackIndex: 1,
+    }),
+  )
+
+  const {controller} = renderControlledController(duplicateTracks)
+
+  await vi.waitFor(() => expect(controller.currentIndex()).toBe(1))
+  expect(controller.currentTrack()).toBe(duplicateTracks[1])
 })
 
 it('should persist a failed restart as paused after releasing the pending intent', () => {
