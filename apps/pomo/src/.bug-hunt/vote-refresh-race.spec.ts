@@ -3,7 +3,7 @@
 import {renderHook, waitFor} from '@solidjs/testing-library'
 import {beforeEach, expect, it, vi} from 'vitest'
 
-import type {FeatureRequest, FeatureRequestPage} from '../features/feature-requests/types'
+import type {FeatureRequest, FeatureRequestPage} from 'src/features/feature-requests/types'
 
 const apiMocks = vi.hoisted(() => ({
   createFeatureRequest: vi.fn(),
@@ -11,9 +11,9 @@ const apiMocks = vi.hoisted(() => ({
   voteFeatureRequest: vi.fn(),
 }))
 
-vi.mock('../features/feature-requests/api', () => apiMocks)
+vi.mock('src/features/feature-requests/api', () => apiMocks)
 
-import {useFeatureRequests} from '../features/feature-requests/use-feature-requests'
+import {useFeatureRequests} from 'src/features/feature-requests/use-feature-requests'
 
 const REQUEST: FeatureRequest = {
   createdAt: '2026-09-17T01:00:00.000Z',

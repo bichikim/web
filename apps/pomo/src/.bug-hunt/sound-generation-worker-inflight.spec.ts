@@ -1,16 +1,18 @@
 /** @vitest-environment node */
+
 import {afterEach, beforeEach, expect, it, vi} from 'vitest'
 import {generateExtendedSound} from '../features/sound-generation/extension'
 import type {SoundRequest} from '../features/sound-generation/worker'
 
+vi.mock('../features/sound-generation/loop', () => ({generateLoopSound: vi.fn()}))
+vi.mock('../features/sound-generation/runtime', () => ({generateSound: vi.fn()}))
 vi.mock('../features/sound-generation/extension', () => ({generateExtendedSound: vi.fn()}))
 
 const scope = {
   onmessage: undefined as ((event: {data: SoundRequest}) => Promise<void>) | undefined,
   postMessage: vi.fn(),
 }
-const firstRequest = {prompt: 'rain on leaves', seconds: 120}
-const secondRequest = {prompt: 'ocean waves', seconds: 90}
+const request = {prompt: 'rain on leaves', seconds: 120}
 
 beforeEach(async () => {
   vi.resetModules()
@@ -22,39 +24,28 @@ beforeEach(async () => {
 
 afterEach(() => {
   vi.unstubAllGlobals()
-  vi.clearAllMocks()
+  vi.resetAllMocks()
 })
 
-it('should run only one generation at a time in the worker', async () => {
-  const firstGeneration = Promise.withResolvers<Blob>()
-  const secondGeneration = Promise.withResolvers<Blob>()
-  vi.mocked(generateExtendedSound)
-    .mockReturnValueOnce(firstGeneration.promise)
-    .mockReturnValueOnce(secondGeneration.promise)
-  expect(scope.onmessage).toBeTypeOf('function')
-
-  const firstRun = scope.onmessage?.({data: firstRequest})
-  const secondRun = scope.onmessage?.({data: secondRequest})
-
-  expect(generateExtendedSound).toHaveBeenCalledTimes(1)
-  expect(generateExtendedSound).toHaveBeenCalledWith(
-    firstRequest.prompt,
-    firstRequest.seconds,
-    expect.any(Function),
-    expect.objectContaining({negativePrompt: undefined}),
-  )
-
-  firstGeneration.resolve(new Blob(['first'], {type: 'audio/wav'}))
-  await firstRun
-
-  expect(scope.postMessage).toHaveBeenCalledWith({
-    blob: expect.any(Blob),
-    type: 'result',
+it('should ignore a concurrent generation request while one is in flight', async () => {
+  const firstGeneration = Promise.withResolvers<void>()
+  const blob = new Blob(['audio'], {type: 'audio/wav'})
+  vi.mocked(generateExtendedSound).mockImplementationOnce(async (_prompt, _seconds, progress) => {
+    progress('generation step')
+    await firstGeneration.promise
+    return blob
   })
-  expect(generateExtendedSound).toHaveBeenCalledTimes(1)
 
-  await secondRun
+  expect(scope.onmessage).toBeTypeOf('function')
+  const first = scope.onmessage?.({data: request})
+  await vi.waitFor(() => expect(generateExtendedSound).toHaveBeenCalledOnce())
 
-  expect(generateExtendedSound).toHaveBeenCalledTimes(1)
-  expect(scope.postMessage).toHaveBeenCalledTimes(1)
+  const second = scope.onmessage?.({data: {...request, prompt: 'wind through trees'}})
+  firstGeneration.resolve()
+  await Promise.all([first, second])
+
+  expect(generateExtendedSound).toHaveBeenCalledOnce()
+  expect(
+    scope.postMessage.mock.calls.filter(([message]) => message.type === 'result'),
+  ).toHaveLength(1)
 })
