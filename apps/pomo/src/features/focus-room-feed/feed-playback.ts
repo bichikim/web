@@ -93,7 +93,7 @@ export const createFeedPlaybackController = (
         dialogueIds: [dialogueId],
         onDialogueStart: markListened,
         onDialogueUnavailable: recoverUnavailableDialogue,
-        onSequenceStop: markDialoguesListened,
+        onSequenceStop: () => undefined,
       })
     },
     async listenAll() {
