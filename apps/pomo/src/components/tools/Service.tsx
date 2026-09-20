@@ -7,21 +7,26 @@ import {
   servicePreference,
   type ServiceSettings,
 } from 'src/features/tools'
-import {useLocalDate} from 'src/features/civil-date'
+import {localDateRuntime, type LocalDateRuntime, useLocalDate} from 'src/features/civil-date'
 import {PDatePicker} from '../p-date-picker/PDatePicker'
 import {PSelect} from '../p-select/PSelect'
 import {PInput} from '../p-input/PInput'
 import {PSwitch} from '../p-switch/PSwitch'
 import {Result} from './Result'
 
-export const Service = () => {
+export interface ServiceProps {
+  readonly runtime?: LocalDateRuntime
+}
+
+export const Service = (props: ServiceProps = {}) => {
+  const runtime = props.runtime ?? localDateRuntime
   const [preference, setPreference] = usePreference({
     ...servicePreference,
     onError: (error) => console.warn('Failed to persist service settings.', error),
   })
   const settings = createMemo(() => preference() ?? DEFAULT_SERVICE_SETTINGS)
   const ready = () => preference() !== null
-  const today = useLocalDate()
+  const today = useLocalDate({initialDate: runtime.now(), runtime})
   const start = () => settings().start
   const manual = () => settings().manual
   const branch = () => settings().branch
