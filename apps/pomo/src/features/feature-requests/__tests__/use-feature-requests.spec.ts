@@ -50,6 +50,45 @@ it('should load a page and append the next page at the current offset', async ()
   cleanup()
 })
 
+it('should retain loaded pages when voting for a later-page request', async () => {
+  apiMocks.listFeatureRequests
+    .mockResolvedValueOnce({hasMore: true, requests: [REQUEST]})
+    .mockResolvedValueOnce({hasMore: false, requests: [NEXT_REQUEST]})
+    .mockResolvedValue({hasMore: false, requests: [REQUEST]})
+  apiMocks.voteFeatureRequest.mockResolvedValue({status: 'voted'})
+
+  const {cleanup, result} = renderHook(() => useFeatureRequests())
+  await waitFor(() => expect(result.isLoading()).toBe(false))
+
+  await result.loadMore()
+  await result.voteRequest(NEXT_REQUEST.id)
+
+  expect(apiMocks.listFeatureRequests).toHaveBeenCalledTimes(2)
+  expect(result.requests()).toEqual([
+    REQUEST,
+    {...NEXT_REQUEST, voteCount: NEXT_REQUEST.voteCount + 1, votedByCurrentUser: true},
+  ])
+  cleanup()
+})
+
+it('should retain loaded pages when a later-page request was already voted', async () => {
+  apiMocks.listFeatureRequests
+    .mockResolvedValueOnce({hasMore: true, requests: [REQUEST]})
+    .mockResolvedValueOnce({hasMore: false, requests: [NEXT_REQUEST]})
+    .mockResolvedValue({hasMore: false, requests: [REQUEST]})
+  apiMocks.voteFeatureRequest.mockResolvedValue({status: 'already-voted'})
+
+  const {cleanup, result} = renderHook(() => useFeatureRequests())
+  await waitFor(() => expect(result.isLoading()).toBe(false))
+
+  await result.loadMore()
+  await result.voteRequest(NEXT_REQUEST.id)
+
+  expect(apiMocks.listFeatureRequests).toHaveBeenCalledTimes(2)
+  expect(result.requests()).toEqual([REQUEST, {...NEXT_REQUEST, votedByCurrentUser: true}])
+  cleanup()
+})
+
 it('should ignore a load more response that started before refresh', async () => {
   const loadMoreResponse = Promise.withResolvers<FeatureRequestPage>()
   const refreshResponse = Promise.withResolvers<FeatureRequestPage>()
@@ -80,7 +119,7 @@ it('should ignore a load more response that started before refresh', async () =>
   cleanup()
 })
 
-it('should refresh after creating and voting for a request', async () => {
+it('should refresh after creating and update the request after voting', async () => {
   apiMocks.listFeatureRequests.mockResolvedValue({hasMore: false, requests: [REQUEST]})
   apiMocks.createFeatureRequest.mockResolvedValue({status: 'created'})
   apiMocks.voteFeatureRequest.mockResolvedValue({status: 'voted'})
@@ -98,7 +137,10 @@ it('should refresh after creating and voting for a request', async () => {
     title: '요청',
   })
   expect(apiMocks.voteFeatureRequest).toHaveBeenCalledWith(REQUEST.id)
-  expect(apiMocks.listFeatureRequests).toHaveBeenCalledTimes(3)
+  expect(apiMocks.listFeatureRequests).toHaveBeenCalledTimes(2)
+  expect(result.requests()).toEqual([
+    {...REQUEST, voteCount: REQUEST.voteCount + 1, votedByCurrentUser: true},
+  ])
   expect(result.votingRequestId()).toBeNull()
   cleanup()
 })

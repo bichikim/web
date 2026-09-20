@@ -113,6 +113,20 @@ export const useFeatureRequests = (): FeatureRequestsController => {
     }
   }
 
+  const updateRequestVote = (requestId: string, hasNewVote: boolean): void => {
+    setRequests((currentRequests) =>
+      currentRequests.map((request) =>
+        request.id === requestId
+          ? {
+              ...request,
+              voteCount: hasNewVote ? request.voteCount + 1 : request.voteCount,
+              votedByCurrentUser: true,
+            }
+          : request,
+      ),
+    )
+  }
+
   const voteRequest = async (requestId: string): Promise<VoteFeatureRequestResult> => {
     setVotingRequestId(requestId)
 
@@ -120,7 +134,7 @@ export const useFeatureRequests = (): FeatureRequestsController => {
       const result = await voteFeatureRequest(requestId)
 
       if (result.status === 'voted' || result.status === 'already-voted') {
-        await refresh()
+        updateRequestVote(requestId, result.status === 'voted')
       }
 
       return result
