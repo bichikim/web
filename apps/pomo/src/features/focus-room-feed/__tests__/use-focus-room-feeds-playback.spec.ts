@@ -411,6 +411,25 @@ it('should play all unlistened dialogues once and mark sequence callbacks', asyn
   view.cleanup()
 })
 
+it('should ignore individual playback while batch playback is active', async () => {
+  const available = [createDialogue('first', null), createDialogue('second', null)]
+  lifecycleMocks.loadFeedDialogueList.mockResolvedValue(available)
+  const playback = Promise.withResolvers<void>()
+  const events = createEventContext()
+  vi.mocked(events.playDialogueSequence).mockReturnValue(playback.promise)
+  const view = renderHook(() => usePFeeds({events}), {wrapper: PreferenceProvider})
+  await vi.waitFor(() => expect(view.result.dialogues()).toEqual(available))
+
+  const batchPlayback = view.result.listenAll()
+  await vi.waitFor(() => expect(events.playDialogueSequence).toHaveBeenCalledOnce())
+  const individualPlayback = view.result.listen('second')
+  playback.resolve()
+  await Promise.all([batchPlayback, individualPlayback])
+
+  expect(events.playDialogueSequence).toHaveBeenCalledOnce()
+  view.cleanup()
+})
+
 it('should regenerate unavailable feed audio instead of repeating the ready notice', async () => {
   const available = [createDialogue('missing', null)]
   const storedItem = createItem({
