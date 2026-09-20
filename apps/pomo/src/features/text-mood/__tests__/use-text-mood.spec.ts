@@ -132,6 +132,18 @@ describe('useTextMood', () => {
     root.dispose()
   })
 
+  it('should ignore another prepare request when the model is ready', async () => {
+    const runtime = createRuntime()
+    const root = createTextMoodRoot(runtime)
+
+    await root.controller.prepare()
+    await root.controller.prepare()
+
+    expect(runtime.analyzer.prepare).toHaveBeenCalledOnce()
+    expect(root.controller.state()).toEqual({status: 'ready'})
+    root.dispose()
+  })
+
   it('should analyze trimmed text and expose the complete result', async () => {
     const runtime = createRuntime()
     const root = createTextMoodRoot(runtime)
