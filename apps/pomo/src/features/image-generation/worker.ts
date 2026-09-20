@@ -1,5 +1,6 @@
 /// <reference lib="webworker" />
 
+import {createTextGenerationExecutor, type TextGenerationError} from '../text-generation/execution'
 import type {GenerationRequest, GenerationResponse} from './messages'
 import {createPromptMessages, parseSettings} from './settings'
 import {loadImageModel} from './loader'
@@ -7,32 +8,55 @@ import {loadImageModel} from './loader'
 const PERCENTAGE_SCALE = 100
 const scope = self as DedicatedWorkerGlobalScope
 const send = (response: GenerationResponse) => scope.postMessage(response)
+const textExecutor = createTextGenerationExecutor({
+  onProgress: (progress) =>
+    send({
+      label: '프롬프트 모델을 준비하고 있어요',
+      percentage: progress.percentage,
+      type: 'progress',
+    }),
+})
+let nextRequestId = 0
+
+const createGenerationFailure = (error: TextGenerationError) =>
+  new Error(error.detail ?? '이미지를 생성하지 못했어요.')
+
+const createRequestId = () => {
+  const requestId = `image-prompt-${nextRequestId}`
+  nextRequestId += 1
+  return requestId
+}
 
 const generate = async (request: GenerationRequest) => {
   switch (request.type) {
     case 'prompt': {
-      const {createTransformersRuntime} = await import('../text-generation/transformers-runtime')
-      const runtime = createTransformersRuntime({
-        onProgress: (progress) =>
-          send({
-            label: '프롬프트 모델을 준비하고 있어요',
-            percentage: progress.percentage,
-            type: 'progress',
-          }),
-      })
-      await runtime.prepare(request.modelId)
+      const preparation = await textExecutor.prepare({kind: 'device', modelId: request.modelId})
+      if (!preparation.ok) {
+        throw createGenerationFailure(preparation.error)
+      }
+
       send({label: '이미지 생성을 위한 프롬프트를 준비하고 있어요', type: 'progress'})
-      const prompt = (
-        await runtime.generate({
-          maximumTokens: 192,
+      const result = await textExecutor.generate(
+        {
+          execution: {kind: 'device', modelId: request.modelId},
           messages: createPromptMessages(request.idea),
-          noRepeatNgramSize: 4,
-          repetitionPenalty: 1.1,
-          temperature: 0.4,
-          topK: 40,
-          topP: 0.9,
-        })
-      ).trim()
+          parameters: {
+            maximumTokens: 192,
+            noRepeatNgramSize: 4,
+            repetitionPenalty: 1.1,
+            temperature: 0.4,
+            topK: 40,
+            topP: 0.9,
+          },
+          requestId: createRequestId(),
+        },
+        {onResponse: () => undefined},
+      )
+      if (!result.ok) {
+        throw createGenerationFailure(result.error)
+      }
+
+      const prompt = result.value.trim()
       if (!/[a-z]/iu.test(prompt) || /[\p{Script=Hangul}\p{Script=Han}]/u.test(prompt)) {
         throw new Error(
           '이미지 생성을 위한 프롬프트를 만들지 못했어요. 내용을 조금 더 구체적으로 적고 다시 시도해 주세요.',

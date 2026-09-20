@@ -9,6 +9,7 @@ import {
   type ProgressInfo,
   TextStreamer,
 } from '@huggingface/transformers'
+import * as transformers from '@huggingface/transformers'
 
 import {getTextModelImplementation, type TextModelId, type TextModelImplementation} from './model'
 import {createTextGenerationProgress} from './progress'
@@ -38,6 +39,21 @@ const GEMMA_TOKENIZER_CACHE_MIGRATION_VERSION = 1
 type TextGenerationModel =
   | Awaited<ReturnType<typeof Gemma4ForCausalLM.from_pretrained>>
   | QwenTextGenerationModel
+
+const createGenerationCancellation = (signal?: AbortSignal) => {
+  const stoppingCriteria =
+    signal === undefined ? undefined : new transformers.InterruptableStoppingCriteria()
+  const interruptGeneration = () => stoppingCriteria?.interrupt()
+  signal?.addEventListener('abort', interruptGeneration, {once: true})
+  if (signal?.aborted) {
+    stoppingCriteria?.interrupt()
+  }
+
+  return {
+    cleanup: () => signal?.removeEventListener('abort', interruptGeneration),
+    stoppingCriteria,
+  }
+}
 
 const loadModel = (
   modelDefinition: TextModelImplementation,
@@ -199,31 +215,38 @@ export const createTransformersRuntime = (
       throw new Error('텍스트 모델이 준비되지 않았어요.')
     }
 
-    const tokenizer = getProcessorTokenizer()
-    const inputs = await processor(createPrompt(processor, generationOptions.messages))
-    let output = ''
+    const {cleanup, stoppingCriteria} = createGenerationCancellation(generationOptions.signal)
 
-    await model.generate({
-      ...inputs,
-      do_sample: true,
-      max_new_tokens: generationOptions.maximumTokens,
-      no_repeat_ngram_size: generationOptions.noRepeatNgramSize,
-      repetition_penalty: generationOptions.repetitionPenalty,
-      streamer: new TextStreamer(tokenizer, {
-        callback_function: (text) => {
-          output += text
-          generationOptions.onToken?.(text)
-        },
-        skip_prompt: true,
-        skip_special_tokens: true,
-      }),
-      suppress_tokens: generationOptions.suppressedTokenIds,
-      temperature: generationOptions.temperature,
-      top_k: generationOptions.topK,
-      top_p: generationOptions.topP,
-    })
+    try {
+      const tokenizer = getProcessorTokenizer()
+      const inputs = await processor(createPrompt(processor, generationOptions.messages))
+      let output = ''
 
-    return output
+      await model.generate({
+        ...inputs,
+        do_sample: true,
+        max_new_tokens: generationOptions.maximumTokens,
+        no_repeat_ngram_size: generationOptions.noRepeatNgramSize,
+        repetition_penalty: generationOptions.repetitionPenalty,
+        ...(stoppingCriteria === undefined ? {} : {stopping_criteria: stoppingCriteria}),
+        streamer: new TextStreamer(tokenizer, {
+          callback_function: (text) => {
+            output += text
+            generationOptions.onToken?.(text)
+          },
+          skip_prompt: true,
+          skip_special_tokens: true,
+        }),
+        suppress_tokens: generationOptions.suppressedTokenIds,
+        temperature: generationOptions.temperature,
+        top_k: generationOptions.topK,
+        top_p: generationOptions.topP,
+      })
+
+      return output
+    } finally {
+      cleanup()
+    }
   }
 
   return {countTokens, generate, getTokenizer, prepare}

@@ -6,6 +6,32 @@ export {createLazyClient} from './lazy-client'
 export type {LazyClient} from './lazy-client'
 export {getTextModel, TEXT_MODEL_IDS, TEXT_MODELS} from './model'
 export type {TextModelDefinition, TextModelId} from './model'
+export {createTextGenerationExecutor} from './execution'
+export type {
+  CreateServerTextGenerationProviderOptions,
+  CreateTextGenerationExecutorOptions,
+  DeviceTextGenerationTarget,
+  ServerTextGenerationTarget,
+  TextGenerationCancelledError,
+  TextGenerationExecutionCancelledResponse,
+  TextGenerationExecutionCompleteResponse,
+  TextGenerationError,
+  TextGenerationExecutionError,
+  TextGenerationExecutionErrorResponse,
+  TextGenerationExecutionProvider,
+  TextGenerationExecutor,
+  TextGenerationExecutionStartedResponse,
+  TextGenerationExecutionTokenResponse,
+  TextGenerationInvalidRequestError,
+  TextGenerationParameters,
+  TextGenerationPhase,
+  TextGenerationRequest,
+  TextGenerationResponse,
+  TextGenerationResponseObserver,
+  TextGenerationServerUnavailableError,
+  TextGenerationExecutionTarget,
+  TextGenerationBusyError,
+} from './execution'
 export type {
   PrepareTextModelRequest,
   TextGenerationErrorResponse,

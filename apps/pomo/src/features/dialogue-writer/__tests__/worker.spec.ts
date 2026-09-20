@@ -42,6 +42,9 @@ vi.mock('@huggingface/transformers', () => ({
   AutoProcessor: {from_pretrained: transformers.processorFromPretrained},
   env: transformers.environment,
   Gemma4ForCausalLM: {from_pretrained: transformers.gemmaModelFromPretrained},
+  InterruptableStoppingCriteria: class {
+    interrupt() {}
+  },
   Qwen3_5ForCausalLM: {from_pretrained: transformers.qwenModelFromPretrained},
   TextStreamer: class {
     readonly emit: (text: string) => void
