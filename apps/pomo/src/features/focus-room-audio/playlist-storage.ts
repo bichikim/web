@@ -15,9 +15,7 @@ const PLAYLIST_STORAGE_KEY = 'pomo:focus-room-playlist:v1'
 
 const storedPlaylistSchema = z.object({
   savedAt: z.number().finite().nonnegative(),
-  trackIds: z
-    .array(z.string().min(1))
-    .refine((trackIds) => new Set(trackIds).size === trackIds.length),
+  trackIds: z.array(z.string().min(1)),
   version: z.literal(1),
 })
 
