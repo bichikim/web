@@ -26,8 +26,18 @@ export const useVolumeDucking = (): VolumeDuckingState => {
   const [message, setMessage] = createSignal<string | null>(null)
   let edited = false
   let isDisposed = false
+  let pendingSaveCount = 0
   let pendingSettings: DialogueVolumeDuckingSettingsValue | null = null
   let saveTimeout: ReturnType<typeof globalThis.setTimeout> | null = null
+
+  const settleSave = () => {
+    if (pendingSaveCount > 0) {
+      pendingSaveCount -= 1
+    }
+    if (pendingSaveCount === 0 && pendingSettings === null) {
+      edited = false
+    }
+  }
 
   const handlePreferenceError = (error: unknown) => {
     const isSaveError = edited
@@ -42,8 +52,12 @@ export const useVolumeDucking = (): VolumeDuckingState => {
         ? m.settings_dialogue_volume_save_failed()
         : m.settings_dialogue_volume_loaded_failed(),
     )
+    if (isSaveError) {
+      settleSave()
+    }
   }
   const handlePreferenceSaved = () => {
+    settleSave()
     if (!isDisposed) {
       setMessage(null)
     }
@@ -54,6 +68,11 @@ export const useVolumeDucking = (): VolumeDuckingState => {
       onSaved: handlePreferenceSaved,
     }),
   )
+
+  const persistSettings = (nextSettings: DialogueVolumeDuckingSettingsValue) => {
+    pendingSaveCount += 1
+    setStoredSettings(nextSettings)
+  }
 
   const scheduleSave = (nextSettings: DialogueVolumeDuckingSettingsValue) => {
     edited = true
@@ -68,7 +87,7 @@ export const useVolumeDucking = (): VolumeDuckingState => {
     saveTimeout = globalThis.setTimeout(() => {
       saveTimeout = null
       pendingSettings = null
-      setStoredSettings(nextSettings)
+      persistSettings(nextSettings)
     }, SAVE_DEBOUNCE_MILLISECONDS)
   }
 
@@ -93,7 +112,7 @@ export const useVolumeDucking = (): VolumeDuckingState => {
     const nextSettings = pendingSettings
     pendingSettings = null
     if (nextSettings !== null) {
-      setStoredSettings(nextSettings)
+      persistSettings(nextSettings)
     }
   })
 
