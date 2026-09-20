@@ -232,7 +232,7 @@ export const usePDialogueEditor = (props: UsePDialogueEditorProps): PDialogueEdi
         moodAnalyzer = null
       })
       draftKey = getDialogueDraftKey(selectedId)
-      const draft = readDialogueDraft(draftKey)
+      const draft = selectedId === null ? readDialogueDraft(draftKey) : null
       setDialogueId(selectedId)
       createdAt = null
       clearGeneratedAudio()
@@ -256,8 +256,9 @@ export const usePDialogueEditor = (props: UsePDialogueEditorProps): PDialogueEdi
 
       loadDialogue(selectedId, isCurrent)
         .then(() => {
-          if (isCurrent() && draft !== null && draft !== text()) {
-            setText(draft)
+          const latestDraft = isCurrent() ? readDialogueDraft(draftKey) : null
+          if (latestDraft !== null && latestDraft !== text()) {
+            setText(latestDraft)
             clearGeneratedAudio()
           }
         })
