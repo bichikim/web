@@ -111,3 +111,6 @@ opencode.jsonc
 .pnpm-store
 .worktrees
 .vercel
+
+# graft's local graph cache — regenerable, not committed (run `graft build`).
+/graft/
