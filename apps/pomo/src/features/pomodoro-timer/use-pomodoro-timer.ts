@@ -366,8 +366,11 @@ export const usePomodoroTimer = (props: UsePomodoroTimerProps = {}): PomodoroTim
     cancelStateRestore()
     const currentTime = Date.now()
     const currentConfig = config()
+    const autoStartNextPhase = isAutoStartEnabled()
     setNow(currentTime)
-    const synchronizedState = synchronizePomodoroTimer(state(), currentTime, currentConfig)
+    const synchronizedState = synchronizePomodoroTimer(state(), currentTime, currentConfig, {
+      autoStartNextPhase,
+    })
     applyState(stopPomodoroTimer(synchronizedState, currentConfig, {now: currentTime}))
   }
   const remainingSeconds = createMemo(() => getPomodoroRemainingSeconds(state(), now()))

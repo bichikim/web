@@ -429,6 +429,25 @@ it('should stop after the first expired phase when applying configuration change
   view.cleanup()
 })
 
+it('should catch up every expired phase before stopping with auto-start enabled', async () => {
+  const view = renderHook(usePomodoroTimer, {wrapper: PreferenceProvider})
+  await finishInitialization(view)
+  view.result.onConfigChange(CONFIG)
+  view.result.onAutoStartChange(true)
+  view.result.onStart()
+
+  vi.setSystemTime(15_000)
+  view.result.onStop()
+
+  expect(view.result.state()).toEqual({
+    completedFocusSessions: 1,
+    phase: 'focus',
+    remainingSeconds: 10,
+    status: 'idle',
+  })
+  view.cleanup()
+})
+
 it('should synchronize an expired running break before stopping', async () => {
   const runningBreak = {
     completedFocusSessions: 1,
