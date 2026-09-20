@@ -155,6 +155,25 @@ it.each(['random', 'reinforcement'] as const)(
   },
 )
 
+it('should preserve a recall mode when an exact reminder draft is remounted before being disabled', async () => {
+  const view = render(() => <MemoryMemoList />)
+
+  fireEvent.click(screen.getByRole('button', {name: '새 메모'}))
+  fireEvent.input(screen.getByLabelText('기억할 메모'), {target: {value: '여권 갱신하기'}})
+  fireEvent.change(screen.getByLabelText('기억 반복'), {target: {value: 'random'}})
+  fireEvent.click(screen.getByLabelText('날짜와 시간에 알려주기'))
+  fireEvent.click(screen.getByRole('button', {name: '닫기'}))
+  view.unmount()
+
+  render(() => <MemoryMemoList />)
+  fireEvent.click(screen.getByRole('button', {name: '새 메모'}))
+  fireEvent.click(screen.getByLabelText('날짜와 시간에 알려주기'))
+  fireEvent.click(screen.getByRole('button', {name: '메모 저장'}))
+
+  await waitFor(() => expect(mocks.updateMemos).toHaveBeenCalledOnce())
+  expect(mocks.memos[0]).toMatchObject({recallMode: 'random'})
+})
+
 it('should preserve a newer creation draft when an earlier save completes late', async () => {
   const persistence = Promise.withResolvers<ReadonlyArray<MemoryMemo>>()
   mocks.updateMemos.mockReturnValue(persistence.promise)
@@ -308,6 +327,29 @@ it('should use the same memo modal for creating and editing memos', () => {
   expect(creator).not.toHaveClass('rounded-control', 'bg-black/20')
   expect(within(editorDialog).getByLabelText('기억 반복')).toHaveValue('reinforcement')
   expect(within(editorDialog).getByRole('button', {name: '변경 저장'})).toBeDisabled()
+})
+
+it('should not mark an unchanged exact reminder edit dirty after a temporary recall selection', () => {
+  const exactReminderAt = new Date('2026-09-21T14:30').toISOString()
+  mocks.memos = [
+    {
+      ...createStoredMemo(),
+      exactReminderAt,
+      nextExactReminderAt: exactReminderAt,
+      nextRecallAt: null,
+      recallMode: 'none',
+      reinforcementIndex: 0,
+    },
+  ]
+  render(() => <MemoryMemoList />)
+
+  fireEvent.click(screen.getByRole('button', {name: '여권 갱신하기 메모 편집'}))
+  const saveButton = screen.getByRole('button', {name: '변경 저장'})
+  fireEvent.click(screen.getByLabelText('날짜와 시간에 알려주기'))
+  fireEvent.change(screen.getByLabelText('기억 반복'), {target: {value: 'random'}})
+  fireEvent.click(screen.getByLabelText('날짜와 시간에 알려주기'))
+
+  expect(saveButton).toBeDisabled()
 })
 
 it('should cancel or save a memo edit and discard audio generated from old text', async () => {

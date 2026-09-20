@@ -48,10 +48,10 @@ it('should ignore malformed stored drafts', () => {
   expect(readMemoryMemoDraft()).toBeNull()
 })
 
-it('should disable ongoing recall in a stored exact reminder draft', () => {
+it('should preserve the selected recall mode in a stored exact reminder draft', () => {
   writeMemoryMemoDraft({...draft, recallMode: 'reinforcement'})
 
-  expect(readMemoryMemoDraft()?.recallMode).toBe('none')
+  expect(readMemoryMemoDraft()?.recallMode).toBe('reinforcement')
 })
 
 it('should remove the draft after the memo is saved', () => {
