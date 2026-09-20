@@ -6,6 +6,7 @@ export interface PomodoroTimerApplyStateOptions {
   readonly deferEvents?: boolean
   readonly eventPreviousState?: PomodoroTimerState
   readonly isCatchUp?: boolean
+  readonly shouldPublish?: boolean
 }
 
 export interface PomodoroTimerInitializationOptions {

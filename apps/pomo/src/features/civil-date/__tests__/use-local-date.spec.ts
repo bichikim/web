@@ -38,6 +38,49 @@ it('should refresh at midnight and replace and dispose scheduled work', () => {
   expect(runtime.subscribe.mock.results[0].value).toHaveBeenCalledOnce()
 })
 
+it('should format and schedule at midnight in a configured time zone', () => {
+  vi.stubEnv('TZ', 'UTC')
+  try {
+    let now = new Date('2026-08-31T16:00:00.000Z')
+    const runtime = createRuntime(() => now)
+    const view = renderHook(() => useLocalDate({runtime, timeZone: 'Asia/Seoul'}))
+
+    expect(view.result()).toBe('2026-09-01')
+    expect(runtime.schedule).toHaveBeenLastCalledWith(expect.any(Function), 82_800_000)
+    now = new Date('2026-09-02T15:00:00.000Z')
+    runtime.schedule.mock.calls[0][0]()
+    expect(view.result()).toBe('2026-09-03')
+    expect(runtime.schedule).toHaveBeenLastCalledWith(expect.any(Function), 86_400_000)
+    view.cleanup()
+  } finally {
+    vi.unstubAllEnvs()
+  }
+})
+
+it('should use one time zone snapshot for each refresh', () => {
+  vi.stubEnv('TZ', 'UTC')
+  try {
+    const now = new Date('2026-08-31T16:00:00.000Z')
+    let reads = 0
+    const runtime = createRuntime(() => now)
+    const props = {
+      get timeZone() {
+        reads += 1
+        return reads === 1 ? 'Asia/Seoul' : 'America/New_York'
+      },
+      runtime,
+    }
+    const view = renderHook(() => useLocalDate(props))
+
+    expect(view.result()).toBe('2026-09-01')
+    expect(reads).toBe(1)
+    expect(runtime.schedule).toHaveBeenLastCalledWith(expect.any(Function), 82_800_000)
+    view.cleanup()
+  } finally {
+    vi.unstubAllEnvs()
+  }
+})
+
 it('should refresh on visible return but not on hidden notification', () => {
   let now = new Date(2026, 11, 31)
   const runtime = createRuntime(() => now)

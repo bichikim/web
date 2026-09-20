@@ -77,9 +77,10 @@ export const createViewedReleaseRepository = (
     },
     async write(value) {
       const parsedValue = VIEWED_RELEASE_SCHEMA.parse(value)
+      const usesTossStorage = options.storage.usesTossStorage()
 
-      if (options.storage.usesTossStorage()) {
-        return writeQueue.run(async () => {
+      return writeQueue.run(async () => {
+        if (usesTossStorage) {
           let storedValue: ViewedRelease
           try {
             const currentValue = parseViewedRelease(await options.storage.readToss())
@@ -100,27 +101,28 @@ export const createViewedReleaseRepository = (
           } catch {
             // Browser storage is only a cache when native storage is authoritative.
           }
-        })
-      }
-
-      let writeError: unknown | null
-
-      try {
-        const currentValue = parseViewedRelease(options.storage.readWeb())
-        if (
-          currentValue !== null &&
-          Date.parse(currentValue.releasedAt) >= Date.parse(parsedValue.releasedAt)
-        ) {
           return
         }
 
-        writeError = options.storage.writeWeb(parsedValue)
-      } catch (error) {
-        writeError = error
-      }
-      if (writeError !== null) {
-        throw new Error('Failed to persist viewed version release.', {cause: writeError})
-      }
+        let writeError: unknown | null
+
+        try {
+          const currentValue = parseViewedRelease(options.storage.readWeb())
+          if (
+            currentValue !== null &&
+            Date.parse(currentValue.releasedAt) >= Date.parse(parsedValue.releasedAt)
+          ) {
+            return
+          }
+
+          writeError = options.storage.writeWeb(parsedValue)
+        } catch (error) {
+          writeError = error
+        }
+        if (writeError !== null) {
+          throw new Error('Failed to persist viewed version release.', {cause: writeError})
+        }
+      })
     },
   }
 }

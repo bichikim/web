@@ -45,6 +45,18 @@ const NEXT_TRACK = {
   source: '/track-2.mp3',
   title: 'Track 2',
 } as const satisfies PTrack
+const THIRD_TRACK = {
+  ...TRACK,
+  id: 'track-3',
+  source: '/track-3.mp3',
+  title: 'Track 3',
+} as const satisfies PTrack
+const FOURTH_TRACK = {
+  ...TRACK,
+  id: 'track-4',
+  source: '/track-4.mp3',
+  title: 'Track 4',
+} as const satisfies PTrack
 
 const readStoredPlayback = () =>
   JSON.parse(localStorage.getItem(PLAYBACK_STORAGE_KEY) ?? 'null') as {
@@ -77,7 +89,10 @@ const renderController = () => {
   return {audio, controller}
 }
 
-const renderControlledController = (initialTracks: readonly PTrack[] = [TRACK]) => {
+const renderControlledController = (
+  initialTracks: readonly PTrack[] = [TRACK],
+  onTrackChange?: (track: PTrack | null) => void,
+) => {
   const [tracks, setTracks] = createSignal<readonly PTrack[]>(initialTracks)
   const [element, setElement] = createSignal<HTMLAudioElement>()
   let controller: PlayerController | undefined
@@ -85,9 +100,12 @@ const renderControlledController = (initialTracks: readonly PTrack[] = [TRACK]) 
     controller = usePlayerController(props)
     return null
   }
-  render(() => <ControllerHarness element={element} tracks={tracks()} />, {
-    wrapper: PreferenceProvider,
-  })
+  render(
+    () => <ControllerHarness element={element} onTrackChange={onTrackChange} tracks={tracks()} />,
+    {
+      wrapper: PreferenceProvider,
+    },
+  )
 
   const audio = document.createElement('audio')
   vi.spyOn(audio, 'load').mockImplementation(() => undefined)
@@ -360,4 +378,25 @@ it('should not reload when controlled tracks refresh with identical track identi
   await Promise.resolve()
 
   expect(audio.load).not.toHaveBeenCalled()
+})
+
+it('should clamp the current index when controlled tracks shrink', async () => {
+  const initialTracks = [TRACK, NEXT_TRACK, THIRD_TRACK, FOURTH_TRACK]
+  const onTrackChange = vi.fn()
+  const {controller, setTracks} = renderControlledController(initialTracks, onTrackChange)
+
+  controller.selectChosenTrack(3)
+  controller.onPlay()
+  setTracks(initialTracks.slice(0, 2))
+
+  expect(controller.currentIndex()).toBe(1)
+  expect(controller.currentTrack()).toBe(NEXT_TRACK)
+
+  await Promise.resolve()
+
+  expect(controller.currentIndex()).toBe(1)
+  expect(controller.currentTrack()).toBe(NEXT_TRACK)
+  expect(controller.isPlaying()).toBe(true)
+  expect(onTrackChange).toHaveBeenLastCalledWith(NEXT_TRACK)
+  expect(onTrackChange).not.toHaveBeenCalledWith(null)
 })

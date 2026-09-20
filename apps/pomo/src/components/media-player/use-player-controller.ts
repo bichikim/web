@@ -48,6 +48,9 @@ export interface PlayerController extends PlayerState {
   readonly stop: Playback['stop']
 }
 
+const clampTrackIndex = (index: number, trackCount: number) =>
+  Math.min(Math.max(index, 0), Math.max(trackCount - 1, 0))
+
 /** 음악 목록, 곡 선택·반복·셔플 정책, 저장된 재생 위치 복원과 미리듣기를 조율한다. */
 // oxlint-disable-next-line eslint/max-lines-per-function, eslint/max-statements -- Transport, persistence, and lifecycle callbacks remain coordinated here; playlist queue mutations are extracted to create-player-queue-controller.
 export const usePlayerController = (props: UsePlayerControllerProps): PlayerController => {
@@ -57,13 +60,22 @@ export const usePlayerController = (props: UsePlayerControllerProps): PlayerCont
   const [isPlaylistLoading, setIsPlaylistLoading] = createSignal(props.tracks === undefined)
   const [isPreparing, setIsPreparing] = createSignal(false)
   const tracks = () => props.tracks ?? loadedTracks()
-  const [currentIndex, setCurrentIndex] = createSignal(initialState.currentIndex)
+  const [currentIndexValue, setCurrentIndex] = createSignal(initialState.currentIndex)
+  const currentIndex = createMemo(() => clampTrackIndex(currentIndexValue(), tracks().length))
   const visualizer = usePAudioVisualizer()
   usePlayerVolumeDucking({
     isDialogueActive: () => props.isDialogueActive ?? false,
     onGainChange: visualizer.setOutputGain,
   })
   const currentTrack = createMemo(() => tracks()[currentIndex()])
+  createEffect(() => {
+    const currentIndexSnapshot = currentIndexValue()
+    const nextIndex = currentIndex()
+
+    if (nextIndex !== currentIndexSnapshot) {
+      setCurrentIndex(nextIndex)
+    }
+  })
   let destroyed = false
   let playbackRevision = 0
   let restartPlaybackPending = false

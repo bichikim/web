@@ -171,7 +171,7 @@ export const usePomodoroTimer = (props: UsePomodoroTimerProps = {}): PomodoroTim
       }
     }
 
-    if (nextState !== previousState) {
+    if (nextState !== previousState && options.shouldPublish !== false) {
       publishSnapshot()
     }
   }
@@ -227,7 +227,8 @@ export const usePomodoroTimer = (props: UsePomodoroTimerProps = {}): PomodoroTim
         return
       }
 
-      if (!isStorageReady()) {
+      const shouldDeferEvents = !isStorageReady()
+      if (shouldDeferEvents) {
         stateToRestore = result.data.state
       }
 
@@ -243,7 +244,11 @@ export const usePomodoroTimer = (props: UsePomodoroTimerProps = {}): PomodoroTim
         setConfig(result.data.config)
         setIsAutoStartEnabled(result.data.isAutoStartEnabled)
         setNow(currentTime)
-        setState(synchronizedState)
+        applyState(synchronizedState, {
+          deferEvents: shouldDeferEvents,
+          isCatchUp: true,
+          shouldPublish: false,
+        })
       })
     })
 
@@ -362,7 +367,7 @@ export const usePomodoroTimer = (props: UsePomodoroTimerProps = {}): PomodoroTim
   }
   const onReset = () => {
     cancelStateRestore()
-    applyState(createPomodoroTimerState(config()))
+    applyState(createPomodoroTimerState(config()), {deferEvents: true})
   }
   const onStop = () => {
     cancelStateRestore()

@@ -27,6 +27,10 @@ const createStorageHarness = () => {
       return tossValues.get(key) ?? null
     }),
     readWeb: vi.fn<(key: string) => unknown | null>((key) => webValues.get(key) ?? null),
+    removeWeb: vi.fn((key: string) => {
+      webValues.delete(key)
+      return null as unknown
+    }),
     usesTossStorage: vi.fn(() => false),
     writeToss: vi.fn(async (key: string, value: unknown) => {
       tossValues.set(key, value)
@@ -141,6 +145,22 @@ describe('display theme preference repository', () => {
 
     await expect(repository.write('dark')).resolves.toBeUndefined()
     expect(tossValues.get(STORAGE_KEY)).toBe('dark')
+  })
+
+  it('should remove a stale browser copy after native persistence succeeds', async () => {
+    storage.usesTossStorage.mockReturnValue(true)
+    webValues.set(STORAGE_KEY, 'dark')
+    storage.writeWeb.mockImplementationOnce(() => {
+      throw new Error('Browser storage unavailable')
+    })
+
+    await expect(repository.write('bright')).resolves.toBeUndefined()
+
+    expect(tossValues.get(STORAGE_KEY)).toBe('bright')
+    expect(storage.removeWeb).toHaveBeenCalledWith(STORAGE_KEY)
+    expect(webValues.get(STORAGE_KEY)).toBeUndefined()
+    await expect(repository.read()).resolves.toBe('bright')
+    expect(tossValues.get(STORAGE_KEY)).toBe('bright')
   })
 
   it('should reject a toss save when toss storage fails', async () => {

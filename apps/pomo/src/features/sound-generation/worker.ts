@@ -34,8 +34,15 @@ export interface SoundResultMessage {
 }
 export type SoundMessage = SoundProgressMessage | SoundErrorMessage | SoundResultMessage
 const scope = globalThis.self as DedicatedWorkerGlobalScope
+const IN_FLIGHT_ERROR_MESSAGE = '이미 환경음을 생성하고 있습니다.'
+let inFlight = false
 scope.onmessage = async (event: MessageEvent<SoundRequest | LoopRequest>) => {
   const send = (message: SoundMessage) => scope.postMessage(message)
+  if (inFlight) {
+    send({message: IN_FLIGHT_ERROR_MESSAGE, type: 'error'})
+    return
+  }
+  inFlight = true
   try {
     const progress = (message: string) => send({message, type: 'progress'})
     if ('type' in event.data) {
@@ -62,5 +69,7 @@ scope.onmessage = async (event: MessageEvent<SoundRequest | LoopRequest>) => {
     send({blob, type: 'result'})
   } catch (error) {
     send({message: getExceptionMessage(error, () => String(error)), type: 'error'})
+  } finally {
+    inFlight = false
   }
 }

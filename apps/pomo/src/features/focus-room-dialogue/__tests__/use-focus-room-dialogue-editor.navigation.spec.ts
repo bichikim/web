@@ -90,6 +90,28 @@ describe('usePDialogueEditor', () => {
     editor.dispose()
   })
 
+  it('should preserve a draft edited while a saved dialogue is loading', async () => {
+    const pendingDialogue = Promise.withResolvers<PDialogue | null>()
+    repositoryMocks.getDialogue.mockReturnValueOnce(pendingDialogue.promise)
+    repositoryMocks.getAudio.mockResolvedValueOnce(new Blob(['stored audio']))
+    sessionStorage.setItem(
+      'pomo:focus-room-dialogue:draft:loading-dialogue',
+      'draft captured before loading',
+    )
+    const editor = createEditorRoot('loading-dialogue')
+
+    await vi.waitFor(() =>
+      expect(repositoryMocks.getDialogue).toHaveBeenCalledWith('loading-dialogue'),
+    )
+    editor.controller.setText('draft edited while loading')
+    pendingDialogue.resolve(createStoredDialogue('loading-dialogue', 'stored dialogue'))
+
+    await vi.waitFor(() => expect(URL.revokeObjectURL).toHaveBeenCalledWith('blob:dialogue'))
+    expect(editor.controller.text()).toBe('draft edited while loading')
+    expect(editor.controller.audioUrl()).toBeNull()
+    editor.dispose()
+  })
+
   it('should clear previous audio when navigating to a missing dialogue', async () => {
     repositoryMocks.getDialogue
       .mockResolvedValueOnce(createStoredDialogue('a'))

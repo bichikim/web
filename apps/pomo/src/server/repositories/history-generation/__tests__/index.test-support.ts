@@ -134,17 +134,15 @@ export const createGenerationDatabase = (
       })),
     })),
   }))
-  const set = vi.fn((_values: Record<string, unknown>) => ({
-    where: vi.fn(() => ({
-      returning: vi.fn(async () => [reclaimed]),
-    })),
-  }))
+  const where = vi.fn((_condition: SQL) => ({returning: vi.fn(async () => [reclaimed])}))
+  const set = vi.fn((_values: Record<string, unknown>) => ({where}))
   const update = vi.fn(() => ({set}))
 
   return {
     database: {insert, select, update} as unknown as Database,
     set,
     update,
+    where,
   }
 }
 
