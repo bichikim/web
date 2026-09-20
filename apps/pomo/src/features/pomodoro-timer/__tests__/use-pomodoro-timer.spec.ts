@@ -88,6 +88,27 @@ it('should expose every timer action and derived value', async () => {
   view.cleanup()
 })
 
+it('should not emit lifecycle events when resetting a running phase', async () => {
+  const onEvents = vi.fn()
+  const view = renderHook(() => usePomodoroTimer({onEvents}), {wrapper: PreferenceProvider})
+  await finishInitialization(view)
+
+  view.result.onConfigChange(CONFIG)
+  view.result.onStart()
+  onEvents.mockClear()
+
+  view.result.onReset()
+
+  expect(view.result.state()).toEqual({
+    completedFocusSessions: 0,
+    phase: 'focus',
+    remainingSeconds: 10,
+    status: 'idle',
+  })
+  expect(onEvents).not.toHaveBeenCalled()
+  view.cleanup()
+})
+
 it('should refresh on visibility changes and stop after owner cleanup', async () => {
   const add = vi.spyOn(document, 'addEventListener')
   const remove = vi.spyOn(document, 'removeEventListener')

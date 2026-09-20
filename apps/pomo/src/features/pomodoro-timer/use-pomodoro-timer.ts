@@ -362,7 +362,7 @@ export const usePomodoroTimer = (props: UsePomodoroTimerProps = {}): PomodoroTim
   }
   const onReset = () => {
     cancelStateRestore()
-    applyState(createPomodoroTimerState(config()))
+    applyState(createPomodoroTimerState(config()), {deferEvents: true})
   }
   const onStop = () => {
     cancelStateRestore()
