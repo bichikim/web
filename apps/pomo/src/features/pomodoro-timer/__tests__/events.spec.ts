@@ -4,6 +4,7 @@ import {describe, expect, it} from 'vitest'
 import {getPomodoroTimerEvents, MAX_POMODORO_TIMER_CATCH_UP_EVENTS} from '../events'
 import {
   advancePomodoroTimer,
+  pausePomodoroTimer,
   type PomodoroTimerConfig,
   type PomodoroTimerState,
   synchronizePomodoroTimer,
@@ -155,6 +156,19 @@ it('should retain transitions when both endpoints are short breaks', () => {
     'focus-end',
     'break-start',
   ])
+})
+
+it('should omit the next phase start when pausing at an auto-start boundary', () => {
+  const previous = {...createState('focus', 'running'), endsAt: 1_000}
+  const next = pausePomodoroTimer(previous, 1_000, CONFIG, {autoStartNextPhase: true})
+
+  expect(next).toEqual({
+    completedFocusSessions: 1,
+    phase: 'shortBreak',
+    remainingSeconds: 4,
+    status: 'paused',
+  })
+  expect(getPomodoroTimerEvents(previous, next, CONFIG)).toEqual(['focus-end'])
 })
 
 it('should cap catch-up events while skipping older completed cycles', () => {
