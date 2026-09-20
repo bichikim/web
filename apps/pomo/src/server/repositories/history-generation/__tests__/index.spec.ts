@@ -48,8 +48,8 @@ it('should not reclaim an ambiguous submission before recovery', async () => {
   expect(update).not.toHaveBeenCalled()
 })
 
-it('should not automatically retry an expired ambiguous submission', async () => {
-  const existing = createRun('preparing', null, undefined, 'expired')
+it('should not retry an expired ambiguous submission after the automatic attempt limit', async () => {
+  const existing = {...createRun('preparing', null, undefined, 'expired'), attemptCount: 2}
   const {database, update} = createGenerationDatabase(existing, existing)
 
   await expect(prepareGenerationRun(CREATE_OPTIONS, database)).resolves.toEqual({
@@ -57,6 +57,50 @@ it('should not automatically retry an expired ambiguous submission', async () =>
     run: expect.objectContaining({status: 'preparing', submissionState: 'expired'}),
   })
   expect(update).not.toHaveBeenCalled()
+})
+
+it('should reopen an expired ambiguous submission for the next automatic attempt', async () => {
+  const existing = {
+    ...createRun('preparing', null, undefined, 'expired'),
+    errorMessage: 'Response lost',
+    submissionExpiresAt: new Date('2026-08-15T00:30:00.000Z'),
+  }
+  const retried = {
+    ...existing,
+    attemptCount: 2,
+    errorMessage: null,
+    openAiSubmissionKey: '019d0000-0000-7000-8000-000000000004',
+    submissionExpiresAt: null,
+    submissionState: null,
+  }
+  const {database, set, where} = createGenerationDatabase(existing, retried)
+
+  await expect(prepareGenerationRun(CREATE_OPTIONS, database)).resolves.toEqual({
+    created: true,
+    run: expect.objectContaining({
+      openAiSubmissionKey: retried.openAiSubmissionKey,
+      status: 'preparing',
+      submissionExpiresAt: null,
+      submissionState: null,
+    }),
+  })
+  expect(set).toHaveBeenCalledWith(
+    expect.objectContaining({
+      attemptCount: 2,
+      errorMessage: null,
+      openAiResponseId: null,
+      submissionExpiresAt: null,
+      submissionState: null,
+    }),
+  )
+  expect(set.mock.calls[0]?.[0].openAiSubmissionKey).not.toBe(existing.openAiSubmissionKey)
+  const condition = where.mock.calls[0]?.[0]
+  if (condition === undefined) {
+    throw new Error('Retry condition was not built')
+  }
+  const query = new PgDialect({casing: 'snake_case'}).sqlToQuery(condition)
+  expect(query.params).toEqual([RUN_ID, 1, 'preparing', 'expired'])
+  expect(query.sql).toContain('"open_ai_response_id" is null')
 })
 
 it('should retry a confirmed failed submission', async () => {
