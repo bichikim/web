@@ -2,6 +2,7 @@ import {z} from 'zod'
 import {DEFAULT_P_SCENE_PREFERENCES, type PScenePreferences} from './model'
 
 export const SCENE_PREFERENCES_STORAGE_KEY = 'pomo:focus-room-scene-preferences:v1'
+const NATIVE_WRITE_FAILURE_STORAGE_KEY = 'pomo:focus-room-scene-preferences:native-write-failure:v1'
 const scenePreferencesSchema = z.object({
   activity: z.enum(['reading', 'writing', 'typing']),
   gaze: z.enum(['focused', 'user']),
@@ -34,15 +35,40 @@ export const createPScenePreferencesRepository = (
   options: CreatePScenePreferencesRepositoryOptions,
 ): PScenePreferencesRepository => {
   const {storage} = options
+  let nativeWriteFailed = false
   const readWebPreferences = () =>
     parsePScenePreferences(storage.readWeb(SCENE_PREFERENCES_STORAGE_KEY))
   const writeWebPreferences = (preferences: PScenePreferences) => {
     storage.writeWeb(SCENE_PREFERENCES_STORAGE_KEY, preferences)
   }
+  const readWebPreferencesSafely = () => {
+    try {
+      return readWebPreferences()
+    } catch {
+      return null
+    }
+  }
+  const readNativeWriteFailure = () => {
+    try {
+      return storage.readWeb(NATIVE_WRITE_FAILURE_STORAGE_KEY) === true
+    } catch {
+      return false
+    }
+  }
+  const setNativeWriteFailure = (failed: boolean) => {
+    try {
+      storage.writeWeb(NATIVE_WRITE_FAILURE_STORAGE_KEY, failed)
+    } catch {}
+  }
 
   const read = async (): Promise<PScenePreferences> => {
     if (!storage.usesTossStorage()) {
       return readWebPreferences() ?? DEFAULT_P_SCENE_PREFERENCES
+    }
+
+    const webPreferences = readWebPreferencesSafely()
+    if (!nativeWriteFailed && webPreferences !== null && readNativeWriteFailure()) {
+      return webPreferences
     }
 
     try {
@@ -52,6 +78,9 @@ export const createPScenePreferencesRepository = (
 
       const restoredPreferences =
         tossPreferences ?? readWebPreferences() ?? DEFAULT_P_SCENE_PREFERENCES
+      if (tossPreferences !== null) {
+        setNativeWriteFailure(false)
+      }
       writeWebPreferences(restoredPreferences)
       return restoredPreferences
     } catch {
@@ -62,11 +91,18 @@ export const createPScenePreferencesRepository = (
   const write = async (preferences: PScenePreferences): Promise<void> => {
     writeWebPreferences(preferences)
     if (!storage.usesTossStorage()) {
+      nativeWriteFailed = false
+      setNativeWriteFailure(false)
       return
     }
     try {
       await storage.writeToss(SCENE_PREFERENCES_STORAGE_KEY, preferences)
-    } catch {}
+      nativeWriteFailed = false
+      setNativeWriteFailure(false)
+    } catch {
+      nativeWriteFailed = true
+      setNativeWriteFailure(true)
+    }
   }
 
   return {read, write}
