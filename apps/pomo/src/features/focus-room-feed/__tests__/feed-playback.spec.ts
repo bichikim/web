@@ -122,6 +122,25 @@ it('should mark an individual dialogue when playback starts', async () => {
   view.dispose()
 })
 
+it('should ignore an individual dialogue while another individual playback is active', async () => {
+  const view = createPlayback([createListItem('first', null), createListItem('second', null)])
+  const playback = Promise.withResolvers<void>()
+  vi.mocked(view.events.playDialogueSequence).mockReturnValue(playback.promise)
+
+  const first = view.playback.listen('first')
+  const second = view.playback.listen('second')
+
+  expect(view.playback.isListening()).toBe(true)
+  expect(view.events.playDialogueSequence).toHaveBeenCalledOnce()
+
+  playback.resolve()
+  await Promise.all([first, second])
+
+  expect(view.events.playDialogueSequence).toHaveBeenCalledOnce()
+  expect(view.playback.isListening()).toBe(false)
+  view.dispose()
+})
+
 it('should mark every dialogue in a stopped batch', async () => {
   const view = createPlayback([createListItem('first', null), createListItem('second', null)])
   vi.mocked(view.events.playDialogueSequence).mockImplementation(async (options) => {

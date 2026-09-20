@@ -93,12 +93,20 @@ export const createFeedPlaybackController = (
         return
       }
 
-      await options.events.playDialogueSequence({
-        dialogueIds: [dialogueId],
-        onDialogueStart: markListened,
-        onDialogueUnavailable: recoverUnavailableDialogue,
-        onSequenceStop: () => undefined,
-      })
+      setIsListening(true)
+
+      try {
+        await options.events.playDialogueSequence({
+          dialogueIds: [dialogueId],
+          onDialogueStart: markListened,
+          onDialogueUnavailable: recoverUnavailableDialogue,
+          onSequenceStop: () => undefined,
+        })
+      } finally {
+        if (!options.isDisposed()) {
+          setIsListening(false)
+        }
+      }
     },
     async listenAll() {
       if (isListening()) {
