@@ -147,6 +147,34 @@ it('should use the latest waiting time when starting before the save debounce co
   }
 })
 
+it('should synchronize an externally changed waiting time after saving', async () => {
+  const [duration, setDuration] = createSignal(30)
+  const save = Promise.withResolvers<void>()
+  const events = createEvents({
+    delayedEndEventDurationMinutes: duration,
+    setDelayedEndEventDuration: vi.fn(() => save.promise),
+  })
+  eventMocks.usePEvents.mockReturnValue(events)
+  vi.useFakeTimers()
+
+  try {
+    render(() => <DelayedEndEventSettings />)
+    const input = screen.getByRole('spinbutton', {name: '대기 시간(분)'})
+
+    fireEvent.input(input, {target: {value: '45'}})
+    await vi.advanceTimersByTimeAsync(500)
+    expect(events.setDelayedEndEventDuration).toHaveBeenCalledWith(45)
+
+    save.resolve()
+    await save.promise
+    setDuration(60)
+
+    await vi.waitFor(() => expect(input).toHaveValue(60))
+  } finally {
+    vi.useRealTimers()
+  }
+})
+
 it('should flush a pending waiting time when the settings unmount', () => {
   const events = createEvents()
   eventMocks.usePEvents.mockReturnValue(events)
