@@ -503,7 +503,12 @@ export const usePEventController = (props: UsePEventControllerProps): PEventCont
       return persistEventBinding(eventId, dialogueIds, playbackMode)
     },
     skipDialoguePlayback: playback.skip,
-    startDelayedEndEvent: () => delayedEndEvent.start(delayedEndEventDurationMinutes()),
+    startDelayedEndEvent: () => {
+      delayedEndEvent.start(delayedEndEventDurationMinutes())
+      if (delayedEndEvent.isRunning()) {
+        delayedEndPlayback.clearPendingEvent()
+      }
+    },
   }
 
   onMount(() => {
