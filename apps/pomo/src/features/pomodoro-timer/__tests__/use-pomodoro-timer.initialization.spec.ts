@@ -457,6 +457,44 @@ it('should synchronize timer actions between mounted controllers', async () => {
   second.cleanup()
 })
 
+it('should deliver lifecycle events for a cross-tab phase transition', async () => {
+  const sourceEvents = vi.fn()
+  const receiverEvents = vi.fn()
+  const source = renderHook(() => usePomodoroTimer({onEvents: sourceEvents}), {
+    wrapper: PreferenceProvider,
+  })
+  const receiver = renderHook(() => usePomodoroTimer({onEvents: receiverEvents}), {
+    wrapper: PreferenceProvider,
+  })
+  await Promise.all([finishInitialization(source), finishInitialization(receiver)])
+
+  source.result.onConfigChange(CONFIG)
+  source.result.onAutoStartChange(true)
+  source.result.onStart()
+
+  await vi.waitFor(() => {
+    expect(receiver.result.state()).toEqual({
+      completedFocusSessions: 0,
+      endsAt: 10_000,
+      phase: 'focus',
+      status: 'running',
+    })
+  })
+  receiverEvents.mockClear()
+
+  vi.setSystemTime(10_000)
+  source.result.onNextPhase()
+
+  await vi.waitFor(() => {
+    expect(receiverEvents).toHaveBeenCalledExactlyOnceWith(['focus-end', 'break-start'], {
+      isCatchUp: true,
+    })
+  })
+
+  source.cleanup()
+  receiver.cleanup()
+})
+
 it('should catch up an expired cross-tab running state before persisting it', async () => {
   vi.spyOn(globalThis, 'requestAnimationFrame').mockReturnValue(0)
   const source = renderHook(() => usePomodoroTimer(), {wrapper: PreferenceProvider})
