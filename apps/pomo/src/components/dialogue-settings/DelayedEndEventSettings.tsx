@@ -49,14 +49,21 @@ export const DelayedEndEventSettings = () => {
       return
     }
 
-    events.setDelayedEndEventDuration(nextDuration).catch((error: unknown) => {
-      console.error('Failed to save delayed end event settings.', error)
-      if (!isDisposed && revision === editRevision) {
-        hasEdited = false
-        setDraft(String(getDuration()))
-        setMessage(m.settings_delayed_end_save_failed())
-      }
-    })
+    events
+      .setDelayedEndEventDuration(nextDuration)
+      .then(() => {
+        if (!isDisposed && revision === editRevision) {
+          hasEdited = false
+        }
+      })
+      .catch((error: unknown) => {
+        console.error('Failed to save delayed end event settings.', error)
+        if (!isDisposed && revision === editRevision) {
+          hasEdited = false
+          setDraft(String(getDuration()))
+          setMessage(m.settings_delayed_end_save_failed())
+        }
+      })
   }
   const scheduleSave = (value: string, revision: number) => {
     pendingSave = {revision, value}
