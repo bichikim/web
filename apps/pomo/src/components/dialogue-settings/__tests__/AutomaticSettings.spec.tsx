@@ -128,10 +128,10 @@ describe('AutomaticDialogueSettings', () => {
     })
   })
 
-  it('should explain save failures after settings finish loading', async () => {
+  it('should restore the saved settings after a save failure', async () => {
     const failure = new Error('storage unavailable')
     const consoleError = vi.spyOn(console, 'error').mockImplementation(() => undefined)
-    mocks.write.mockRejectedValueOnce(failure)
+    mocks.write.mockReturnValueOnce(failure)
 
     render(() => <AutomaticDialogueSettings />, {wrapper: PreferenceProvider})
     const model = await screen.findByRole('combobox', {name: '자동 음성 생성 모델'})
@@ -142,6 +142,7 @@ describe('AutomaticDialogueSettings', () => {
         '자동 음성 생성 설정을 저장하지 못했어요.',
       ),
     )
+    expect(model).toHaveValue('int8')
     expect(consoleError).toHaveBeenCalledWith(
       'Failed to save automatic dialogue settings.',
       failure,
