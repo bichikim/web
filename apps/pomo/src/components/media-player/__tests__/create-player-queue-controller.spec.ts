@@ -16,11 +16,12 @@ const createTrack = (id: string): PTrack => ({
 
 const INITIAL_TRACKS = [createTrack('track-1'), createTrack('track-2'), createTrack('track-3')]
 
-const createHarness = () => {
-  const [tracks, setTracks] = createSignal<readonly PTrack[]>(INITIAL_TRACKS)
-  const [currentIndex, setCurrentIndex] = createSignal(0)
+const createHarness = (initialTracks = INITIAL_TRACKS, initialIndex = 0) => {
+  const [tracks, setTracks] = createSignal<readonly PTrack[]>(initialTracks)
+  const [currentIndex, setCurrentIndex] = createSignal(initialIndex)
   const cancelPendingRestart = vi.fn()
   const invalidate = vi.fn()
+  const persistCurrentPlayback = vi.fn()
   const controller = createPlayerQueueController({
     cancelPendingRestart,
     clearPlaybackTransition: vi.fn(),
@@ -37,6 +38,7 @@ const createHarness = () => {
       stop: vi.fn(),
     },
     playbackPersistence: {
+      persistCurrentPlayback,
       persistStoppedPlayback: vi.fn(),
       setPendingPosition: vi.fn(),
       writePlayback: vi.fn(),
@@ -51,7 +53,14 @@ const createHarness = () => {
     visualizer: {stop: vi.fn()},
   })
 
-  return {cancelPendingRestart, controller, invalidate, tracks}
+  return {
+    cancelPendingRestart,
+    controller,
+    currentIndex,
+    invalidate,
+    persistCurrentPlayback,
+    tracks,
+  }
 }
 
 describe('removeTrackFromQueue', () => {
@@ -72,5 +81,15 @@ describe('removeTrackFromQueue', () => {
 
     expect(cancelPendingRestart).toHaveBeenCalledOnce()
     expect(invalidate).toHaveBeenCalledOnce()
+  })
+
+  it('should persist the current occurrence index when removing a preceding track', () => {
+    const duplicateTracks = [createTrack('track-1'), createTrack('track-1'), createTrack('track-2')]
+    const {controller, currentIndex, persistCurrentPlayback} = createHarness(duplicateTracks, 2)
+
+    controller.removeTrackFromQueue(0)
+
+    expect(currentIndex()).toBe(1)
+    expect(persistCurrentPlayback).toHaveBeenCalledOnce()
   })
 })

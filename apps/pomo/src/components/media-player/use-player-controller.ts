@@ -109,6 +109,7 @@ export const usePlayerController = (props: UsePlayerControllerProps): PlayerCont
   })
   const {isPlaying} = playback
   const playbackPersistence = usePPlaybackPersistence({
+    currentIndex,
     currentTrack,
     getAudioElement: props.element,
     isPlaying,
@@ -253,7 +254,12 @@ export const usePlayerController = (props: UsePlayerControllerProps): PlayerCont
     }
 
     const nextTrack = trackList[nextIndex]
-    const nextPlayback = {isPlaying: shouldResume, positionSeconds: 0, trackId: nextTrack.id}
+    const nextPlayback = {
+      isPlaying: shouldResume,
+      positionSeconds: 0,
+      trackId: nextTrack.id,
+      trackIndex: nextIndex,
+    }
     cancelPendingRestart()
     prepareTrackChange(shouldResume, nextTrack.id)
     playback.invalidate()
@@ -323,7 +329,12 @@ export const usePlayerController = (props: UsePlayerControllerProps): PlayerCont
     playback.seek(0)
     playbackRevision += 1
     if (track !== undefined) {
-      playbackPersistence.writePlayback({isPlaying: true, positionSeconds: 0, trackId: track.id})
+      playbackPersistence.writePlayback({
+        isPlaying: true,
+        positionSeconds: 0,
+        trackId: track.id,
+        trackIndex: currentIndex(),
+      })
     }
     playAudio()
   }
@@ -357,7 +368,12 @@ export const usePlayerController = (props: UsePlayerControllerProps): PlayerCont
       playbackPersistence.setPendingPosition(
         positionSeconds === null
           ? null
-          : {isPlaying: true, positionSeconds, trackId: transition.trackId},
+          : {
+              isPlaying: true,
+              positionSeconds,
+              trackId: transition.trackId,
+              trackIndex: currentIndex(),
+            },
       )
       cancelPendingRestart()
       return
