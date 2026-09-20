@@ -63,9 +63,10 @@ it('should persist completed entry playback in the injected session storage', as
   const completion =
     Promise.withResolvers<Awaited<ReturnType<EntryPlaybackController['playSequence']>>>()
   const playSequence = vi.fn<EntryPlaybackController['playSequence']>(() => completion.promise)
-  const playback = createPlayback(async (...args) => {
+  const playback = createPlayback((repository, options) => {
+    void options.onDialogueStart('dialogue-1')
     expect(storage.getItem('pomo:focus-room-entry-playback:v1')).toBeNull()
-    return playSequence(...args)
+    return playSequence(repository, options)
   })
 
   createRoot((dispose) => {

@@ -102,15 +102,18 @@ export const createEntryEventPlayback = (
 
       pendingEventExecution = undefined
       hasStarted = true
+      let hasPlayedDialogue = false
       isPlaybackPending = false
       options.playback
         .playSequence(currentRepository, {
           dialogueIds: selectedDialogueIds,
-          onDialogueStart: () => undefined,
+          onDialogueStart: () => {
+            hasPlayedDialogue = true
+          },
           onSequenceStop: () => undefined,
         })
         .then((completion) => {
-          if (completion === 'failed' || completion === 'cancelled') {
+          if (!hasPlayedDialogue || completion === 'failed' || completion === 'cancelled') {
             hasStarted = false
             return
           }

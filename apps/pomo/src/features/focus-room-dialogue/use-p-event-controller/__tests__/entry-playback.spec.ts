@@ -30,6 +30,15 @@ const createEntryPlayback = (playback: EntryPlaybackController, onEvent: () => v
     playback,
   })
 
+const mockSuccessfulPlayback = (
+  playSequence: ReturnType<typeof createPlayback>['playSequence'],
+) => {
+  playSequence.mockImplementationOnce((_repository, options) => {
+    void options.onDialogueStart('dialogue')
+    return Promise.resolve('ended')
+  })
+}
+
 const flushPlaybackFailure = async () => {
   await Promise.resolve()
   await Promise.resolve()
@@ -48,7 +57,8 @@ describe('createEntryEventPlayback', () => {
   it('should allow retrying after playback failure before committing the session', async () => {
     const {playback, playSequence} = createPlayback()
     const failure = new Error('playback failed')
-    playSequence.mockRejectedValueOnce(failure).mockResolvedValueOnce('ended')
+    playSequence.mockRejectedValueOnce(failure)
+    mockSuccessfulPlayback(playSequence)
     vi.spyOn(console, 'error').mockImplementation(() => undefined)
 
     const entryPlayback = createEntryPlayback(playback)
@@ -75,7 +85,8 @@ describe('createEntryEventPlayback', () => {
     'should allow retrying after a %s playback completion',
     async (completion) => {
       const {playback, playSequence} = createPlayback()
-      playSequence.mockResolvedValueOnce(completion).mockResolvedValueOnce('ended')
+      playSequence.mockResolvedValueOnce(completion)
+      mockSuccessfulPlayback(playSequence)
 
       const entryPlayback = createEntryPlayback(playback)
       entryPlayback.enterFocusRoom()
@@ -91,10 +102,31 @@ describe('createEntryEventPlayback', () => {
     },
   )
 
+  it('should allow retrying when playback ends without starting a dialogue', async () => {
+    const {playback, playSequence} = createPlayback()
+    playSequence.mockResolvedValueOnce('ended')
+    mockSuccessfulPlayback(playSequence)
+
+    const entryPlayback = createEntryPlayback(playback)
+    entryPlayback.enterFocusRoom()
+    await Promise.resolve()
+
+    expect(sessionStorage.getItem(ENTRY_PLAYBACK_SESSION_KEY)).toBeNull()
+
+    entryPlayback.tryPlay()
+    await Promise.resolve()
+
+    expect(playSequence).toHaveBeenCalledTimes(2)
+    expect(sessionStorage.getItem(ENTRY_PLAYBACK_SESSION_KEY)).toBe('true')
+  })
+
   it('should ignore repeated attempts while playback is pending', async () => {
     const {playback, playSequence} = createPlayback()
     const pendingPlayback = Promise.withResolvers<'ended'>()
-    playSequence.mockReturnValue(pendingPlayback.promise)
+    playSequence.mockImplementation((_repository, options) => {
+      void options.onDialogueStart('dialogue')
+      return pendingPlayback.promise
+    })
 
     const entryPlayback = createEntryPlayback(playback)
     entryPlayback.enterFocusRoom()
