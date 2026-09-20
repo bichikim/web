@@ -1,5 +1,5 @@
 import {describe, expect, it} from 'vitest'
-import {createReminderDraft, resolveReminderAt} from '../reminder-draft'
+import {areReminderDraftsEqual, createReminderDraft, resolveReminderAt} from '../reminder-draft'
 
 describe('reminder draft dates', () => {
   it('should resolve tomorrow across a local year boundary without changing now', () => {
@@ -26,5 +26,14 @@ describe('reminder draft dates', () => {
     const create = (date: Date) =>
       createReminderDraft({exactReminderAt: null, now: date, recallMode: 'none'})
     expect(create(now)).toEqual(create(earlier))
+  })
+  it('should ignore a hidden recall mode difference while exact reminders are enabled', () => {
+    const draft = createReminderDraft({
+      exactReminderAt: new Date('2026-09-21T14:30').toISOString(),
+      now: new Date('2026-09-20T12:00'),
+      recallMode: 'none',
+    })
+
+    expect(areReminderDraftsEqual(draft, {...draft, recallMode: 'random'})).toBe(true)
   })
 })
