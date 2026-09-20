@@ -12,6 +12,7 @@ const workerScope = globalThis.self as DedicatedWorkerGlobalScope
 
 const sendResponse = (response: AlbumTranslationWorkerResponse) => workerScope.postMessage(response)
 let textRuntimePromise: Promise<TextGenerationRuntime> | null = null
+let translationInFlight = false
 
 const getTextRuntime = () => {
   textRuntimePromise ??= import('../text-generation/transformers-runtime').then(
@@ -39,8 +40,19 @@ const translateAlbum = async (request: AlbumTranslationWorkerRequest) => {
   sendResponse({translations: parseAlbumTranslation(trimRepetitiveTail(output)), type: 'complete'})
 }
 
+const handleRequest = (request: AlbumTranslationWorkerRequest): Promise<void> => {
+  if (translationInFlight) {
+    return Promise.resolve()
+  }
+
+  translationInFlight = true
+  return translateAlbum(request).finally(() => {
+    translationInFlight = false
+  })
+}
+
 workerScope.addEventListener('message', (event: MessageEvent<AlbumTranslationWorkerRequest>) => {
-  translateAlbum(event.data).catch((error: unknown) => {
+  handleRequest(event.data).catch((error: unknown) => {
     sendResponse({
       message: getErrorMessage(error, 'Gemma 4 번역을 실행하지 못했습니다.'),
       restartRequired: false,
