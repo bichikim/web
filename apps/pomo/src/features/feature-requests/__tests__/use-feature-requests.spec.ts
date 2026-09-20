@@ -72,6 +72,31 @@ it('should keep loaded pages when creating a feature request', async () => {
   cleanup()
 })
 
+it('should keep loaded pages after refreshing before creating a feature request', async () => {
+  const refreshedRequest = {...REQUEST, title: '새로 고침된 기능'}
+  apiMocks.listFeatureRequests
+    .mockResolvedValueOnce({hasMore: true, requests: [REQUEST]})
+    .mockResolvedValueOnce({hasMore: false, requests: [NEXT_REQUEST]})
+    .mockResolvedValueOnce({hasMore: true, requests: [refreshedRequest]})
+    .mockResolvedValueOnce({hasMore: true, requests: [refreshedRequest]})
+  apiMocks.createFeatureRequest.mockResolvedValue({status: 'created'})
+
+  const {cleanup, result} = renderHook(() => useFeatureRequests())
+  await waitFor(() => expect(result.isLoading()).toBe(false))
+
+  await result.loadMore()
+  await result.refresh()
+
+  expect(result.requests()).toEqual([refreshedRequest, NEXT_REQUEST])
+  expect(result.hasMore()).toBe(false)
+
+  await result.createRequest({description: '상세 설명', title: '새 요청'})
+
+  expect(result.requests()).toEqual([refreshedRequest, NEXT_REQUEST])
+  expect(result.hasMore()).toBe(false)
+  cleanup()
+})
+
 it('should keep existing requests when a created request enters the first page', async () => {
   const createdRequest = {...REQUEST, id: '019d1990-1dc9-7255-a7b5-f9459dfaf784'}
   apiMocks.listFeatureRequests
