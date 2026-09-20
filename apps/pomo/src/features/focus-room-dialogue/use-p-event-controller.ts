@@ -320,7 +320,9 @@ export const usePEventController = (props: UsePEventControllerProps): PEventCont
 
     try {
       await writeDelayedEndEventSettings(nextSettings)
-      persistedDelayedEndEventDurationMinutes = nextSettings.durationMinutes
+      if (currentRevision === delayedEndEventDurationRevision) {
+        persistedDelayedEndEventDurationMinutes = nextSettings.durationMinutes
+      }
     } catch (error: unknown) {
       if (!isDisposed && currentRevision === delayedEndEventDurationRevision) {
         setDelayedEndEventDurationMinutes(persistedDelayedEndEventDurationMinutes)

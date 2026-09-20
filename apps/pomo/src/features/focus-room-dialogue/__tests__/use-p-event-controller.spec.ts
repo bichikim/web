@@ -260,6 +260,39 @@ it('should keep the last persisted duration after overlapping saves fail', async
   view.cleanup()
 })
 
+it('should keep the newest persisted duration after overlapping saves complete out of order', async () => {
+  const firstSave = Promise.withResolvers<undefined>()
+  const secondSave = Promise.withResolvers<undefined>()
+  const thirdSave = Promise.withResolvers<undefined>()
+  delayedEndEventSettingsMocks.write
+    .mockReset()
+    .mockReturnValueOnce(firstSave.promise)
+    .mockReturnValueOnce(secondSave.promise)
+    .mockReturnValueOnce(thirdSave.promise)
+
+  const view = renderHook(() => usePEventController({}))
+  await vi.waitFor(() => expect(view.result.isLoading()).toBe(false))
+
+  const firstSaveRequest = view.result.setDelayedEndEventDuration?.(40)
+  const secondSaveRequest = view.result.setDelayedEndEventDuration?.(50)
+  await vi.waitFor(() => expect(delayedEndEventSettingsMocks.write).toHaveBeenCalledTimes(2))
+
+  secondSave.resolve(undefined)
+  await secondSaveRequest
+  firstSave.resolve(undefined)
+  await firstSaveRequest
+
+  const thirdSaveRequest = view.result.setDelayedEndEventDuration?.(60)
+  await vi.waitFor(() => expect(delayedEndEventSettingsMocks.write).toHaveBeenCalledTimes(3))
+
+  const failure = new Error('native settings unavailable')
+  thirdSave.reject(failure)
+
+  await expect(thirdSaveRequest).rejects.toBe(failure)
+  expect(view.result.delayedEndEventDurationMinutes?.()).toBe(50)
+  view.cleanup()
+})
+
 describe('delayed-end playback', () => {
   beforeEach(() => {
     vi.useFakeTimers()
