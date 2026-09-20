@@ -76,7 +76,27 @@ it('should ignore a load more response that started before refresh', async () =>
   cleanup()
 })
 
-it('should refresh after a successful status update and expose failures', async () => {
+it('should update a request in place without collapsing appended pages', async () => {
+  const updatedRequest = {...NEXT_REQUEST, status: 'voting' as const, targetVoteCount: 10}
+  const input = {requestId: NEXT_REQUEST.id, status: 'voting' as const, targetVoteCount: 10}
+  apiMocks.listAdminFeatureRequests
+    .mockResolvedValueOnce({hasMore: true, requests: [REQUEST]})
+    .mockResolvedValueOnce({hasMore: false, requests: [NEXT_REQUEST]})
+  apiMocks.updateAdminFeatureRequest.mockResolvedValueOnce({status: 'updated'})
+
+  const {cleanup, result} = renderHook(() => useAdminFeatureRequests())
+  await waitFor(() => expect(result.isLoading()).toBe(false))
+
+  await result.loadMore()
+  await expect(result.updateRequest(input)).resolves.toEqual({status: 'updated'})
+
+  expect(apiMocks.listAdminFeatureRequests).toHaveBeenCalledTimes(2)
+  expect(result.requests()).toEqual([REQUEST, updatedRequest])
+  expect(result.hasMore()).toBe(false)
+  cleanup()
+})
+
+it('should update status without another list request and expose failures', async () => {
   apiMocks.listAdminFeatureRequests.mockResolvedValue({hasMore: false, requests: [REQUEST]})
   apiMocks.updateAdminFeatureRequest.mockResolvedValueOnce({status: 'updated'})
 
@@ -86,7 +106,8 @@ it('should refresh after a successful status update and expose failures', async 
   const input = {requestId: REQUEST.id, status: 'voting' as const, targetVoteCount: 10}
   await expect(result.updateRequest(input)).resolves.toEqual({status: 'updated'})
   expect(apiMocks.updateAdminFeatureRequest).toHaveBeenCalledWith(input)
-  expect(apiMocks.listAdminFeatureRequests).toHaveBeenCalledTimes(2)
+  expect(apiMocks.listAdminFeatureRequests).toHaveBeenCalledOnce()
+  expect(result.requests()).toEqual([{...REQUEST, status: 'voting', targetVoteCount: 10}])
   expect(result.updatingRequestId()).toBeNull()
 
   apiMocks.updateAdminFeatureRequest.mockRejectedValueOnce(new Error('update failed'))
