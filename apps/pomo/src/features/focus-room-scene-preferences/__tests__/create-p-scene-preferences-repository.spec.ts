@@ -84,6 +84,29 @@ describe('createPScenePreferencesRepository', () => {
     await expect(repository.read()).resolves.toEqual(preferences)
   })
 
+  it('should retry native reads after a failed native write', async () => {
+    const {repository, storage} = createRepository()
+    const initialNativePreferences = {
+      activity: 'reading',
+      gaze: 'focused',
+      timeMode: 'day',
+    } as const
+    const recoveredNativePreferences = {
+      activity: 'writing',
+      gaze: 'user',
+      timeMode: 'auto',
+    } as const
+    storage.readToss.mockResolvedValueOnce(initialNativePreferences)
+
+    await expect(repository.read()).resolves.toEqual(initialNativePreferences)
+    storage.writeToss.mockRejectedValueOnce(new Error('unavailable'))
+    await repository.write(preferences)
+    storage.readToss.mockResolvedValueOnce(recoveredNativePreferences)
+
+    await expect(repository.read()).resolves.toEqual(recoveredNativePreferences)
+    expect(storage.readToss).toHaveBeenCalledTimes(2)
+  })
+
   it('should recover the native queue after a failed explicit write', async () => {
     const {repository, storage} = createRepository()
     storage.writeToss.mockRejectedValueOnce(new Error('unavailable'))
