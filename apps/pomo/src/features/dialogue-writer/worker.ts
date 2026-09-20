@@ -23,6 +23,7 @@ const getTextRuntime = () => {
   return textRuntimePromise
 }
 let suppressedTokenIds: Array<number> | undefined
+let generationInFlight = false
 
 const prepareModel = async (modelId: TextModelId) => {
   const textRuntime = await getTextRuntime()
@@ -60,8 +61,20 @@ const generateDirectAnswer = async (
 
 const handleRequest = (request: DialogueWorkerRequest): Promise<void> => {
   switch (request.type) {
-    case 'generate':
-      return generateDirectAnswer(request.modelId, request.outputLanguage ?? 'ko', request.request)
+    case 'generate': {
+      if (generationInFlight) {
+        return Promise.resolve()
+      }
+
+      generationInFlight = true
+      return generateDirectAnswer(
+        request.modelId,
+        request.outputLanguage ?? 'ko',
+        request.request,
+      ).finally(() => {
+        generationInFlight = false
+      })
+    }
     case 'prepare':
       return prepareModel(request.modelId)
   }
