@@ -8,6 +8,7 @@ import {
   DEFAULT_DIALOGUE_VOLUME_DUCKING_SETTINGS,
   type DialogueVolumeDuckingSettings as DialogueVolumeDuckingSettingsValue,
 } from 'src/features/focus-room-dialogue'
+import {webLocalStorage} from 'src/utils/preference-storage'
 import {useVolumeDucking} from '../use-volume-ducking'
 
 const settingsMocks = vi.hoisted(() => ({
@@ -26,6 +27,7 @@ vi.mock('src/features/focus-room-dialogue', async () => {
       ...actual.createDialogueVolumeDuckingPreferenceOptions(options),
       storage: {
         read: () => settingsMocks.read(),
+        subscribe: webLocalStorage.subscribe,
         write: (_key: string, value: unknown) => {
           const settings = actual.parseDialogueVolumeDuckingSettings(value)
           return settings === null
@@ -85,6 +87,69 @@ it('should report loading and saving failures', async () => {
   await vi.advanceTimersByTimeAsync(0)
 
   expect(view.result.message()).toBe('플레이어 음량 설정을 저장하지 못했어요.')
+})
+
+it('should report a later reload failure as a load failure after a successful edit', async () => {
+  const consoleError = vi.spyOn(console, 'error').mockImplementation(() => undefined)
+  const view = renderHook(useVolumeDucking, {wrapper: PreferenceProvider})
+  await vi.advanceTimersByTimeAsync(0)
+
+  view.result.changeVolume(72)
+  await vi.advanceTimersByTimeAsync(300)
+  await vi.advanceTimersByTimeAsync(0)
+
+  expect(settingsMocks.write).toHaveBeenCalledOnce()
+
+  const reloadFailure = new Error('reload failed')
+  settingsMocks.read.mockRejectedValueOnce(reloadFailure)
+  globalThis.dispatchEvent(
+    new StorageEvent('storage', {
+      key: 'pomo:dialogue-volume-ducking-settings:v2',
+      storageArea: globalThis.localStorage,
+    }),
+  )
+  await vi.advanceTimersByTimeAsync(0)
+
+  expect(view.result.message()).toBe('플레이어 음량 설정을 불러오지 못했어요.')
+  expect(view.result.settings().playerVolumePercent).toBe(72)
+  expect(consoleError).toHaveBeenLastCalledWith(
+    'Failed to load dialogue volume ducking settings.',
+    reloadFailure,
+  )
+  view.cleanup()
+})
+
+it('should report a queued save failure as a save failure after an earlier save succeeds', async () => {
+  const consoleError = vi.spyOn(console, 'error').mockImplementation(() => undefined)
+  const firstWrite = Promise.withResolvers<void>()
+  const secondWrite = Promise.withResolvers<void>()
+  settingsMocks.write
+    .mockReturnValueOnce(firstWrite.promise)
+    .mockReturnValueOnce(secondWrite.promise)
+  const view = renderHook(useVolumeDucking, {wrapper: PreferenceProvider})
+  await vi.advanceTimersByTimeAsync(0)
+
+  view.result.changeVolume(35)
+  await vi.advanceTimersByTimeAsync(300)
+  view.result.changeVolume(40)
+  await vi.advanceTimersByTimeAsync(300)
+
+  expect(settingsMocks.write).toHaveBeenCalledOnce()
+
+  firstWrite.resolve()
+  await vi.advanceTimersByTimeAsync(0)
+  expect(settingsMocks.write).toHaveBeenCalledTimes(2)
+
+  const secondFailure = new Error('second save failed')
+  secondWrite.reject(secondFailure)
+  await vi.advanceTimersByTimeAsync(0)
+
+  expect(view.result.message()).toBe('플레이어 음량 설정을 저장하지 못했어요.')
+  expect(consoleError).toHaveBeenLastCalledWith(
+    'Failed to save dialogue volume ducking settings.',
+    secondFailure,
+  )
+  view.cleanup()
 })
 
 it('should clear an earlier save failure when the following save succeeds without success feedback', async () => {
