@@ -49,6 +49,7 @@ export const initializePomodoroTimer = (options: PomodoroTimerInitializationOpti
     )
 
     options.applyState(synchronizedState, {
+      deferEvents: !autoStartNextPhase,
       eventPreviousState: stateToRestore ?? undefined,
       isCatchUp: true,
     })

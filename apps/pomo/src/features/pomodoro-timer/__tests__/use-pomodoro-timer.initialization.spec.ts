@@ -161,7 +161,8 @@ it('should synchronize a running stored timer and publish mount events', async (
   view.cleanup()
 })
 
-it('should restore an already expired running timer as an inactive next phase', async () => {
+it('should restore an already expired running timer as an inactive next phase without events', async () => {
+  const onEvents = vi.fn()
   const runningState = {
     completedFocusSessions: 0,
     endsAt: 1,
@@ -172,7 +173,7 @@ it('should restore an already expired running timer as an inactive next phase', 
   localStorage.setItem(STATE_STORAGE_KEY, JSON.stringify(runningState))
   vi.setSystemTime(1_000)
 
-  const view = renderHook(usePomodoroTimer, {wrapper: PreferenceProvider})
+  const view = renderHook(() => usePomodoroTimer({onEvents}), {wrapper: PreferenceProvider})
   await finishInitialization(view)
 
   expect(view.result.state()).toEqual({
@@ -181,6 +182,7 @@ it('should restore an already expired running timer as an inactive next phase', 
     remainingSeconds: 4,
     status: 'idle',
   })
+  expect(onEvents).not.toHaveBeenCalled()
   view.cleanup()
 })
 
