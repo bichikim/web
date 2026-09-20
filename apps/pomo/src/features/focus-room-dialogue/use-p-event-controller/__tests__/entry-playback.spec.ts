@@ -71,22 +71,25 @@ describe('createEntryEventPlayback', () => {
     expect(playSequence).toHaveBeenCalledTimes(2)
   })
 
-  it('should allow retrying after a failed playback completion', async () => {
-    const {playback, playSequence} = createPlayback()
-    playSequence.mockResolvedValueOnce('failed').mockResolvedValueOnce('ended')
+  it.each(['failed', 'cancelled'] as const)(
+    'should allow retrying after a %s playback completion',
+    async (completion) => {
+      const {playback, playSequence} = createPlayback()
+      playSequence.mockResolvedValueOnce(completion).mockResolvedValueOnce('ended')
 
-    const entryPlayback = createEntryPlayback(playback)
-    entryPlayback.enterFocusRoom()
-    await Promise.resolve()
+      const entryPlayback = createEntryPlayback(playback)
+      entryPlayback.enterFocusRoom()
+      await Promise.resolve()
 
-    expect(sessionStorage.getItem(ENTRY_PLAYBACK_SESSION_KEY)).toBeNull()
+      expect(sessionStorage.getItem(ENTRY_PLAYBACK_SESSION_KEY)).toBeNull()
 
-    entryPlayback.tryPlay()
-    await Promise.resolve()
+      entryPlayback.tryPlay()
+      await Promise.resolve()
 
-    expect(playSequence).toHaveBeenCalledTimes(2)
-    expect(sessionStorage.getItem(ENTRY_PLAYBACK_SESSION_KEY)).toBe('true')
-  })
+      expect(playSequence).toHaveBeenCalledTimes(2)
+      expect(sessionStorage.getItem(ENTRY_PLAYBACK_SESSION_KEY)).toBe('true')
+    },
+  )
 
   it('should ignore repeated attempts while playback is pending', async () => {
     const {playback, playSequence} = createPlayback()

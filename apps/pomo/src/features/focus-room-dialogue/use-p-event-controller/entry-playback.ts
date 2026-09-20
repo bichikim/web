@@ -110,7 +110,7 @@ export const createEntryEventPlayback = (
           onSequenceStop: () => undefined,
         })
         .then((completion) => {
-          if (completion === 'failed') {
+          if (completion === 'failed' || completion === 'cancelled') {
             hasStarted = false
             return
           }
