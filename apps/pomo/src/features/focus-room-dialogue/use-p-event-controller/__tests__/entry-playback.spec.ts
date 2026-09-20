@@ -109,6 +109,37 @@ describe('createEntryEventPlayback', () => {
     expect(sessionStorage.getItem(ENTRY_PLAYBACK_SESSION_KEY)).toBe('true')
   })
 
+  it('should retry the entry event after its execution fails', async () => {
+    const {playback, playSequence} = createPlayback()
+    const eventFailure = new Error('entry event failed')
+    const onEvent = vi
+      .fn<() => Promise<void>>()
+      .mockRejectedValueOnce(eventFailure)
+      .mockResolvedValueOnce(undefined)
+    playSequence.mockResolvedValueOnce('ended')
+    vi.spyOn(console, 'error').mockImplementation(() => undefined)
+
+    const entryPlayback = createEntryEventPlayback({
+      eventDialogueIds: () => ENTRY_DIALOGUE_IDS,
+      eventPlaybackModes: () => ENTRY_PLAYBACK_MODES,
+      getRepository: () => ({}) as PDialogueRepository,
+      isPlaybackEnabled: () => true,
+      onEvent,
+      playback,
+    })
+    entryPlayback.enterFocusRoom()
+
+    await flushPlaybackFailure()
+    entryPlayback.tryPlay()
+
+    expect(onEvent).toHaveBeenCalledTimes(2)
+    expect(playSequence).not.toHaveBeenCalled()
+
+    await flushPlaybackFailure()
+
+    expect(playSequence).toHaveBeenCalledOnce()
+  })
+
   it('should trigger the entry event even when it has no dialogue binding', () => {
     const {playback} = createPlayback()
     const onEvent = vi.fn()
