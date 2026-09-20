@@ -1,7 +1,11 @@
 /** @vitest-environment jsdom */
 
-import {getLatestProps, LanguageLearningEditorWithPreferences} from './editor.setup'
-import {render} from '@solidjs/testing-library'
+import {
+  getLatestProps,
+  LanguageLearningEditorWithPreferences,
+  renderGeneratedReview,
+} from './editor.setup'
+import {render, screen} from '@solidjs/testing-library'
 import {type ComponentProps, createSignal, onMount} from 'solid-js'
 import {expect, it, vi} from 'vitest'
 import {
@@ -10,6 +14,24 @@ import {
 } from '../../../features/language-learning'
 import {LanguageLearningSettings} from '../Settings'
 import {LanguageLearningWordSourceControl} from '../WordSource'
+import {LanguageLearningReview} from '../Review'
+
+it('should clear generated review state when changing the learning language', async () => {
+  const view = await renderGeneratedReview()
+  const reviewProps = getLatestProps<ComponentProps<typeof LanguageLearningReview>>(
+    vi.mocked(LanguageLearningReview),
+  )
+  expect(reviewProps.candidates).toHaveLength(1)
+
+  const settingsProps = getLatestProps<ComponentProps<typeof LanguageLearningSettings>>(
+    vi.mocked(LanguageLearningSettings),
+  )
+  settingsProps.onLanguageChange('ko')
+
+  expect(reviewProps.candidates).toEqual([])
+  expect(screen.queryByRole('button', {name: 'save'})).toBeNull()
+  view.unmount()
+})
 
 it('should change source and language while keeping saved words available only when eligible', () => {
   render(() => <LanguageLearningEditorWithPreferences />)
