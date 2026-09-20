@@ -134,6 +134,7 @@ export const createEntryEventPlayback = (
     isPlaybackPending = true
     const eventExecution = pendingEventExecution
     pendingEventExecution = eventExecution.then(startPlayback).catch((error: unknown) => {
+      hasTriggeredEvent = false
       pendingEventExecution = undefined
       isPlaybackPending = false
       console.error('Unexpected entry event action execution failure.', error)
