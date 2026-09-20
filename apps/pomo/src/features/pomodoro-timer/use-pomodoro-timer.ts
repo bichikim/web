@@ -55,14 +55,20 @@ const autoStartStorage = {
 const TIMER_SYNC_CHANNEL = 'pomo:pomodoro-timer:v1'
 const timerSyncMessageSchema = z.object({
   config: pomodoroTimerConfigSchema,
+  deferEvents: z.boolean().optional(),
   isAutoStartEnabled: z.boolean(),
   state: pomodoroTimerStateSchema,
 })
 
 interface TimerSyncSnapshot {
   readonly config: PomodoroTimerConfig
+  readonly deferEvents: boolean
   readonly isAutoStartEnabled: boolean
   readonly state: PomodoroTimerState
+}
+
+interface TimerSyncPublishOptions {
+  readonly deferEvents?: boolean
 }
 
 interface TimerSyncController {
@@ -141,9 +147,10 @@ export const usePomodoroTimer = (props: UsePomodoroTimerProps = {}): PomodoroTim
   const [now, setNow] = createSignal(0)
   const [isStorageReady, setIsStorageReady] = createSignal(false)
 
-  const publishSnapshot = () =>
+  const publishSnapshot = (options: TimerSyncPublishOptions = {}) =>
     syncController?.publish({
       config: config(),
+      deferEvents: options.deferEvents === true,
       isAutoStartEnabled: isAutoStartEnabled(),
       state: state(),
     })
@@ -172,7 +179,7 @@ export const usePomodoroTimer = (props: UsePomodoroTimerProps = {}): PomodoroTim
     }
 
     if (nextState !== previousState && options.shouldPublish !== false) {
-      publishSnapshot()
+      publishSnapshot({deferEvents: options.deferEvents})
     }
   }
 
@@ -227,7 +234,7 @@ export const usePomodoroTimer = (props: UsePomodoroTimerProps = {}): PomodoroTim
         return
       }
 
-      const shouldDeferEvents = !isStorageReady()
+      const shouldDeferEvents = !isStorageReady() || result.data.deferEvents === true
       if (shouldDeferEvents) {
         stateToRestore = result.data.state
       }
