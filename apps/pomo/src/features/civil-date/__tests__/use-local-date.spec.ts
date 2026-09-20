@@ -57,6 +57,30 @@ it('should format and schedule at midnight in a configured time zone', () => {
   }
 })
 
+it('should use one time zone snapshot for each refresh', () => {
+  vi.stubEnv('TZ', 'UTC')
+  try {
+    const now = new Date('2026-08-31T16:00:00.000Z')
+    let reads = 0
+    const runtime = createRuntime(() => now)
+    const props = {
+      get timeZone() {
+        reads += 1
+        return reads === 1 ? 'Asia/Seoul' : 'America/New_York'
+      },
+      runtime,
+    }
+    const view = renderHook(() => useLocalDate(props))
+
+    expect(view.result()).toBe('2026-09-01')
+    expect(reads).toBe(1)
+    expect(runtime.schedule).toHaveBeenLastCalledWith(expect.any(Function), 82_800_000)
+    view.cleanup()
+  } finally {
+    vi.unstubAllEnvs()
+  }
+})
+
 it('should refresh on visible return but not on hidden notification', () => {
   let now = new Date(2026, 11, 31)
   const runtime = createRuntime(() => now)
