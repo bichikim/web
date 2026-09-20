@@ -50,7 +50,7 @@ it('should load a page and append the next page at the current offset', async ()
   cleanup()
 })
 
-it('should keep loaded pages when creating a feature request', async () => {
+it('should update hasMore when creating after loading all available pages', async () => {
   apiMocks.listFeatureRequests
     .mockResolvedValueOnce({hasMore: true, requests: [REQUEST]})
     .mockResolvedValueOnce({hasMore: false, requests: [NEXT_REQUEST]})
@@ -68,7 +68,7 @@ it('should keep loaded pages when creating a feature request', async () => {
 
   expect(apiMocks.listFeatureRequests).toHaveBeenCalledTimes(3)
   expect(result.requests()).toEqual([REQUEST, NEXT_REQUEST])
-  expect(result.hasMore()).toBe(false)
+  expect(result.hasMore()).toBe(true)
   cleanup()
 })
 
@@ -112,7 +112,7 @@ it('should keep existing requests when a created request enters the first page',
   await result.createRequest({description: '상세 설명', title: '새 요청'})
 
   expect(result.requests()).toEqual([createdRequest, REQUEST, NEXT_REQUEST])
-  expect(result.hasMore()).toBe(false)
+  expect(result.hasMore()).toBe(true)
   cleanup()
 })
 
