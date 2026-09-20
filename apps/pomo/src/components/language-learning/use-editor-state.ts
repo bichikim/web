@@ -92,6 +92,7 @@ export const useLanguageLearningEditorState = () => {
     setCandidates([])
   }
   const handleWordSourceChange = (nextSource: LanguageLearningWordSource) => {
+    writer.release()
     clearCandidates()
     setSentences([])
     setStoredWordSource(nextSource)

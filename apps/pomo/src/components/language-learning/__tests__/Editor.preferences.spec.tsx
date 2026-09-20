@@ -36,13 +36,14 @@ it('should clear generated review state when changing the learning language', as
   view.unmount()
 })
 
-it('should clear generated sentences and candidates when changing the word source', () => {
+it('should cancel generation and clear generated state when changing the word source', () => {
   const view = renderHook(() => useLanguageLearningEditorState(), {wrapper: PreferenceProvider})
   view.result.setSentences(['A useful sentence.'])
   view.result.setCandidates([candidate()])
 
   view.result.handleWordSourceChange('saved')
 
+  expect(view.result.writer.release).toHaveBeenCalledOnce()
   expect(view.result.sentences()).toEqual([])
   expect(view.result.candidates()).toEqual([])
   expect(URL.revokeObjectURL).toHaveBeenCalledWith('blob:generated')
