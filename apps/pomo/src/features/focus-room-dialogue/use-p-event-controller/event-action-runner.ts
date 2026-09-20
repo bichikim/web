@@ -20,6 +20,11 @@ interface PendingEventAction {
   readonly eventId: DialogueEventId
 }
 
+interface PendingActionWaiter {
+  readonly eventId: DialogueEventId
+  readonly resolve: () => void
+}
+
 const executeEventAction = (actionId: EventActionId, executor: EventActionExecutor | null) => {
   if (executor === null) {
     return
@@ -37,24 +42,27 @@ export const createEventActionRunner = (
 ): EventActionRunner => {
   let eventActionExecutor: EventActionExecutor | null = null
   let pendingEventActions: PendingEventAction[] = []
-  let pendingActionWaiters: Array<() => void> = []
+  let pendingActionWaiters: PendingActionWaiter[] = []
   let hasRegisteredEventActionExecutor = false
 
   const queueEventAction = (eventId: DialogueEventId, actionId: EventActionId) => {
     pendingEventActions.push({actionId, eventId})
   }
 
-  const resolvePendingActionWaiters = () => {
+  const resolvePendingActionWaiters = (eventId?: DialogueEventId) => {
     const waiters = pendingActionWaiters
-    pendingActionWaiters = []
-    for (const resolve of waiters) {
-      resolve()
+    pendingActionWaiters =
+      eventId === undefined ? [] : waiters.filter((waiter) => waiter.eventId !== eventId)
+    for (const waiter of waiters) {
+      if (eventId === undefined || waiter.eventId === eventId) {
+        waiter.resolve()
+      }
     }
   }
 
   const run = (eventIds: ReadonlyArray<DialogueEventId>) => {
     const actionBindings = eventActionIds()
-    let shouldWaitForActionExecution = false
+    const queuedActionEventIds = new Set<DialogueEventId>()
     for (const eventId of eventIds) {
       for (const actionId of actionBindings[eventId] ?? []) {
         const executor = eventActionExecutor
@@ -65,25 +73,29 @@ export const createEventActionRunner = (
 
         if (shouldQueueAction) {
           queueEventAction(eventId, actionId)
-          shouldWaitForActionExecution ||= eventId === FOCUS_ROOM_ENTRY_EVENT
+          queuedActionEventIds.add(eventId)
         } else {
           executeEventAction(actionId, executor)
         }
       }
     }
 
-    if (!shouldWaitForActionExecution) {
+    if (queuedActionEventIds.size === 0) {
       return undefined
     }
 
-    const actionExecution = Promise.withResolvers<void>()
-    pendingActionWaiters.push(actionExecution.resolve)
-    return actionExecution.promise
+    const actionExecutions = [...queuedActionEventIds].map((eventId) => {
+      const actionExecution = Promise.withResolvers<void>()
+      pendingActionWaiters.push({eventId, resolve: actionExecution.resolve})
+      return actionExecution.promise
+    })
+    return Promise.all(actionExecutions).then(() => undefined)
   }
 
   return {
     clearDelayedEndActions() {
       pendingEventActions = pendingEventActions.filter(({eventId}) => eventId !== DELAYED_END_EVENT)
+      resolvePendingActionWaiters(DELAYED_END_EVENT)
     },
     dispose() {
       pendingEventActions = []
