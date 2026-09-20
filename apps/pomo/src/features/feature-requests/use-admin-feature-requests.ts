@@ -104,7 +104,13 @@ export const useAdminFeatureRequests = (): AdminFeatureRequestsController => {
     try {
       const result = await updateAdminFeatureRequest(input)
       if (result.status === 'updated') {
-        await refresh()
+        setRequests((currentRequests) =>
+          currentRequests.map((request) =>
+            request.id === input.requestId
+              ? {...request, status: input.status, targetVoteCount: input.targetVoteCount}
+              : request,
+          ),
+        )
       }
       return result
     } catch {
