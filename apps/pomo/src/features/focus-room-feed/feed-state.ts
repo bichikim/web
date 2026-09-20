@@ -31,6 +31,29 @@ interface FeedStateRepositories {
   readonly feedRepository: FeedDialogueRepository
 }
 
+const mergeListenedAt = (
+  available: ReadonlyArray<FeedDialogueListItem>,
+  current: ReadonlyArray<FeedDialogueListItem>,
+): ReadonlyArray<FeedDialogueListItem> => {
+  const currentListenedAtById = new Map(
+    current.map((item) => [item.metadata.dialogueId, item.metadata.listenedAt]),
+  )
+
+  return available.map((item) => {
+    const currentListenedAt = currentListenedAtById.get(item.metadata.dialogueId)
+
+    if (currentListenedAt === undefined || currentListenedAt === null) {
+      return item
+    }
+
+    if (item.metadata.listenedAt === currentListenedAt) {
+      return item
+    }
+
+    return {...item, metadata: {...item.metadata, listenedAt: currentListenedAt}}
+  })
+}
+
 export interface CreateFeedStateControllerOptions {
   readonly events: FeedStateEvents
   readonly getRepositories: () => FeedStateRepositories
@@ -81,7 +104,7 @@ export const createFeedStateController = (
     const available = await loadFeedDialogueList(options.getRepositories())
 
     if (!isDisposed) {
-      setDialogues(available)
+      setDialogues((current) => mergeListenedAt(available, current))
     }
   }
   const reloadRecovery = async () => {
