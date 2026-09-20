@@ -61,27 +61,52 @@ it('should submit an existing preparing run with no prior submission', async () 
   expect(markSubmitted).toHaveBeenCalledWith('run-1', RUN.openAiSubmissionKey, 'resp-1')
 })
 
-it.each(['unknown', 'expired'] as const)(
-  'should not resubmit an existing %s submission',
-  async (submissionState) => {
-    const submit = vi.fn()
+it('should not resubmit an existing unknown submission', async () => {
+  const submit = vi.fn()
 
-    await expect(
-      startHistoryGeneration({
-        markFailed: vi.fn(),
-        markSubmitted: vi.fn(),
-        markUnknown: vi.fn(),
-        now: () => new Date('2026-08-13T15:30:00.000Z'),
-        prepare: vi.fn().mockResolvedValue({
-          created: false,
-          run: {...RUN, submissionState},
-        }),
-        submit,
+  await expect(
+    startHistoryGeneration({
+      markFailed: vi.fn(),
+      markSubmitted: vi.fn(),
+      markUnknown: vi.fn(),
+      now: () => new Date('2026-08-13T15:30:00.000Z'),
+      prepare: vi.fn().mockResolvedValue({
+        created: false,
+        run: {...RUN, submissionState: 'unknown' as const},
       }),
-    ).resolves.toMatchObject({runId: 'run-1', status: 'existing'})
-    expect(submit).not.toHaveBeenCalled()
-  },
-)
+      submit,
+    }),
+  ).resolves.toMatchObject({runId: 'run-1', status: 'existing'})
+  expect(submit).not.toHaveBeenCalled()
+})
+
+it('should submit a run reopened after an expired ambiguous submission', async () => {
+  const markSubmitted = vi.fn().mockResolvedValue(undefined)
+  const submit = vi.fn().mockResolvedValue({responseId: 'resp-retry'})
+  const reopenedRun = {
+    ...RUN,
+    openAiSubmissionKey: '019d0000-0000-7000-8000-000000000004',
+  }
+
+  await expect(
+    startHistoryGeneration({
+      markFailed: vi.fn(),
+      markSubmitted,
+      markUnknown: vi.fn(),
+      now: () => new Date('2026-08-13T15:30:00.000Z'),
+      prepare: vi.fn().mockResolvedValue({created: true, run: reopenedRun}),
+      submit,
+    }),
+  ).resolves.toMatchObject({responseId: 'resp-retry', runId: 'run-1', status: 'submitted'})
+  expect(submit).toHaveBeenCalledWith(
+    expect.objectContaining({submissionKey: reopenedRun.openAiSubmissionKey}),
+  )
+  expect(markSubmitted).toHaveBeenCalledWith(
+    reopenedRun.id,
+    reopenedRun.openAiSubmissionKey,
+    'resp-retry',
+  )
+})
 
 it('should not submit a duplicate daily run', async () => {
   const submit = vi.fn()
