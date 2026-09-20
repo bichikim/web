@@ -11,7 +11,7 @@ beforeEach(() => {
   vi.setSystemTime(0)
 })
 afterEach(() => vi.useRealTimers())
-const setup = (videoMode: BackgroundPreferences['videoMode']) => {
+const setup = (videoMode: BackgroundPreferences['videoMode'], initializeVideo = true) => {
   const [preferences, setPreferences] = createSignal({...DEFAULT_BACKGROUND, videoMode})
   const background = {
     failedIds: () => [],
@@ -22,8 +22,10 @@ const setup = (videoMode: BackgroundPreferences['videoMode']) => {
     preferences,
   } as unknown as BackgroundController
   const hook = renderHook(() => usePlayback({background}))
-  hook.result.onVideoStart()
-  hook.result.onReady()
+  if (initializeVideo) {
+    hook.result.onVideoStart()
+    hook.result.onReady()
+  }
   return {...hook, setPreferences}
 }
 it('should ignore display time in end mode', () => {
@@ -39,6 +41,19 @@ it('should count video playback toward the hold deadline', () => {
   vi.advanceTimersByTime(4000)
   result.onEnded()
   vi.advanceTimersByTime(5999)
+  expect(result.current()?.id).toBe('video')
+  vi.advanceTimersByTime(1)
+  expect(result.current()?.id).toBe('photo')
+  cleanup()
+})
+it('should preserve the ready deadline when video starts after the frame is ready', () => {
+  const {result, cleanup} = setup('hold', false)
+  result.onReady()
+  vi.advanceTimersByTime(5000)
+  result.onVideoStart()
+  vi.advanceTimersByTime(4000)
+  result.onEnded()
+  vi.advanceTimersByTime(999)
   expect(result.current()?.id).toBe('video')
   vi.advanceTimersByTime(1)
   expect(result.current()?.id).toBe('photo')

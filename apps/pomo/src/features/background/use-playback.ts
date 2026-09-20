@@ -113,6 +113,6 @@ export const usePlayback = (props: UsePlaybackProps) => {
         }
         setIsLoaded(true)
       }),
-    onVideoStart: () => setStartedAt(Date.now()),
+    onVideoStart: () => setStartedAt((value) => value ?? Date.now()),
   }
 }
