@@ -22,7 +22,7 @@ export const createDelayedEndEventPlayback = (
   options: CreateDelayedEndEventPlaybackOptions,
 ): DelayedEndEventPlayback => {
   const [hasPendingEvent, setHasPendingEvent] = createSignal(false)
-  let isRequestActive = false
+  let activeRequest: Promise<void> | null = null
 
   const playEvent = () =>
     options.playDialogueEvents([DELAYED_END_EVENT], () => {
@@ -35,17 +35,28 @@ export const createDelayedEndEventPlayback = (
       return
     }
 
-    isRequestActive = true
+    if (activeRequest !== null) {
+      await activeRequest
+      if (options.isPlaybackEnabled() && hasPendingEvent()) {
+        await request()
+      }
+      return
+    }
+
     setHasPendingEvent(false)
+    const currentRequest = playEvent()
+    activeRequest = currentRequest
     try {
-      await playEvent()
+      await currentRequest
     } finally {
-      isRequestActive = false
+      if (activeRequest === currentRequest) {
+        activeRequest = null
+      }
     }
   }
 
   const retainPendingEventOnSuspension = () => {
-    if (isRequestActive) {
+    if (activeRequest !== null) {
       setHasPendingEvent(true)
     }
   }
