@@ -103,6 +103,10 @@ export const useLanguageLearningEditorState = () => {
       language: nextLanguage,
       words: learningWords(),
     }).length
+    clearCandidates()
+    setSentences([])
+    setMessage(m.learning_editor_idle())
+    setPhase('idle')
     setLanguage(nextLanguage)
 
     if (wordSource() === 'saved') {
@@ -110,8 +114,6 @@ export const useLanguageLearningEditorState = () => {
 
       if (nextSavedWordCount < MINIMUM_RANDOM_LANGUAGE_LEARNING_WORDS) {
         setStoredWordSource('direct')
-        setMessage(m.learning_editor_idle())
-        setPhase('idle')
       }
     }
   }
