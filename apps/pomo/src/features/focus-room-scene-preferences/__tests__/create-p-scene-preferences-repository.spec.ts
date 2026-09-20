@@ -76,12 +76,72 @@ describe('createPScenePreferencesRepository', () => {
     expect(storage.writeToss).not.toHaveBeenCalled()
   })
 
+  it('should restore native preferences when browser marker reads fail', async () => {
+    const writeWeb = vi.fn()
+    const repository = createPScenePreferencesRepository({
+      storage: {
+        readToss: vi.fn(async () => preferences),
+        readWeb: () => {
+          throw new Error('browser unavailable')
+        },
+        usesTossStorage: () => true,
+        writeToss: vi.fn(async () => undefined),
+        writeWeb,
+      },
+    })
+
+    await expect(repository.read()).resolves.toEqual(preferences)
+    expect(writeWeb).toHaveBeenCalledWith('pomo:focus-room-scene-preferences:v1', preferences)
+  })
+
   it('should preserve browser preferences after a native write fails', async () => {
     const {repository, storage} = createRepository()
     storage.writeToss.mockRejectedValueOnce(new Error('unavailable'))
 
     await expect(repository.write(preferences)).resolves.toBeUndefined()
     await expect(repository.read()).resolves.toEqual(preferences)
+  })
+
+  it('should preserve browser preferences after a native write fails and the repository reloads', async () => {
+    const values = new Map<string, unknown>()
+    const stalePreferences = {
+      activity: 'reading',
+      gaze: 'focused',
+      timeMode: 'day',
+    } as const
+    let nativePreferences: unknown = stalePreferences
+    let shouldFailNativeWrite = true
+    const readToss = vi.fn(async () => nativePreferences)
+    const writeToss = vi.fn(async (_key: string, value: unknown) => {
+      if (shouldFailNativeWrite) {
+        shouldFailNativeWrite = false
+        throw new Error('unavailable')
+      }
+      nativePreferences = value
+    })
+    const createRepositoryFromStorage = () =>
+      createPScenePreferencesRepository({
+        storage: {
+          readToss,
+          readWeb: (key: string) => values.get(key) ?? null,
+          usesTossStorage: () => true,
+          writeToss,
+          writeWeb: (key: string, value: unknown) => {
+            values.set(key, value)
+          },
+        },
+      })
+    const repository = createRepositoryFromStorage()
+
+    await expect(repository.read()).resolves.toEqual(stalePreferences)
+    await repository.write(preferences)
+
+    return expect(createRepositoryFromStorage().read())
+      .resolves.toEqual(preferences)
+      .then(() => {
+        expect(nativePreferences).toEqual(stalePreferences)
+        expect(readToss).toHaveBeenCalledOnce()
+      })
   })
 
   it('should retry native reads after a failed native write', async () => {
