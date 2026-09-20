@@ -41,7 +41,7 @@ export const useFeatureRequests = (): FeatureRequestsController => {
   let hasLoadedMore = false
 
   const refresh = async (options: FeatureRequestsRefreshOptions = {}): Promise<void> => {
-    const preserveLoadedPages = options.preserveLoadedPages === true
+    const preserveLoadedPages = options.preserveLoadedPages === true || hasLoadedMore
     const previousHasMore = hasMore()
     if (!preserveLoadedPages) {
       hasLoadedMore = false
