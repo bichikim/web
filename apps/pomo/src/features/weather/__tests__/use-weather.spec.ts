@@ -284,7 +284,7 @@ it('should keep the previous feed while the current location collects', async ()
   root.dispose()
 })
 
-it('should mark an expired retained feed stale after unavailable and failed results', async () => {
+it('should hide an automatic scene when revalidation retains an expired feed', async () => {
   queryMocks.weatherFeedQuery
     .mockResolvedValueOnce(availableResult)
     .mockResolvedValueOnce({
@@ -300,10 +300,12 @@ it('should mark an expired retained feed stale after unavailable and failed resu
   root.controller.onLocationChange(seoulLocation)
   await flushPromises()
   expect(root.controller.state()).toEqual({feed: {...feed, stale: true}, status: 'ready'})
+  expect(root.controller.sceneCondition()).toBeUndefined()
 
   root.controller.onLocationChange(seoulLocation)
   await flushPromises()
   expect(root.controller.state()).toEqual({feed: {...feed, stale: true}, status: 'ready'})
+  expect(root.controller.sceneCondition()).toBeUndefined()
   root.dispose()
 })
 
