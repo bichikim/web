@@ -1,3 +1,4 @@
+import {createAuthoritativePreferenceRepository} from '../authoritative-preference'
 import {z} from 'zod'
 
 import {
@@ -61,43 +62,23 @@ export const createPDisplayPreferencesRepository = (
     }
   }
 
-  const read = async (): Promise<PDisplayPreferences> => {
-    if (!storage.usesTossStorage()) {
-      return readWebPreferences() ?? DEFAULT_P_DISPLAY_PREFERENCES
-    }
-
-    try {
-      const tossPreferences = parsePDisplayPreferences(
-        await storage.readToss(DISPLAY_PREFERENCES_STORAGE_KEY),
-      )
-
-      const restoredPreferences = tossPreferences ?? DEFAULT_P_DISPLAY_PREFERENCES
-      writeWebPreferences(restoredPreferences)
-      return restoredPreferences
-    } catch (error: unknown) {
-      throw new Error('Failed to read focus-room display preferences.', {cause: error})
-    }
-  }
-
-  const write = async (preferences: PDisplayPreferences): Promise<void> => {
-    const snapshot = displayPreferencesSchema.parse(preferences)
-    const webWriteError = writeWebPreferences(snapshot)
-
-    if (!storage.usesTossStorage()) {
-      if (webWriteError !== null) {
-        throw new Error('Failed to persist focus-room display preferences.', {
-          cause: webWriteError,
-        })
-      }
-
-      return
-    }
-
-    try {
-      await storage.writeToss(DISPLAY_PREFERENCES_STORAGE_KEY, snapshot)
-    } catch (error: unknown) {
-      throw new Error('Failed to persist focus-room display preferences.', {cause: error})
-    }
+  const repository = createAuthoritativePreferenceRepository({
+    defaultValue: DEFAULT_P_DISPLAY_PREFERENCES,
+    readFailureMessage: 'Failed to read focus-room display preferences.',
+    storage: {
+      isNative: () => storage.usesTossStorage(),
+      readNative: async () =>
+        parsePDisplayPreferences(await storage.readToss(DISPLAY_PREFERENCES_STORAGE_KEY)),
+      readWeb: readWebPreferences,
+      writeNative: (value) => storage.writeToss(DISPLAY_PREFERENCES_STORAGE_KEY, value),
+      writeWeb: writeWebPreferences,
+    },
+    writeFailureMessage: 'Failed to persist focus-room display preferences.',
+  })
+  const read = () => repository.read()
+  const write = async (value: PDisplayPreferences): Promise<void> => {
+    const snapshot = displayPreferencesSchema.parse(value)
+    await repository.write(snapshot)
   }
 
   return {read, write}

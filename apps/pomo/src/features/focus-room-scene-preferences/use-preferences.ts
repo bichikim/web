@@ -1,5 +1,5 @@
 import {usePreference} from 'src/hooks/use-preference'
-import type {PreferenceStorage} from 'src/utils/preference-storage'
+import {createParsedPreferenceStorage} from '../parsed-preference-storage'
 
 import {
   DEFAULT_P_SCENE_PREFERENCES,
@@ -13,15 +13,12 @@ import {
   writePScenePreferences,
 } from './storage'
 
-const pScenePreferencesStorage: PreferenceStorage = {
+const pScenePreferencesStorage = createParsedPreferenceStorage({
+  invalidMessage: 'Invalid focus-room scene preferences.',
+  parse: parsePScenePreferences,
   read: () => readPScenePreferences(),
-  write: (_key, value) => {
-    const preferences = parsePScenePreferences(value)
-    return preferences === null
-      ? new Error('Invalid focus-room scene preferences.')
-      : writePScenePreferences(preferences)
-  },
-}
+  write: (value) => writePScenePreferences(value),
+})
 
 const updatePreference = (
   preference: PScenePreferences,

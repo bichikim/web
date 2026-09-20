@@ -1,3 +1,4 @@
+import {createPendingSave} from 'src/features/pending-save'
 import {PNumberInput} from 'src/components/p-number-input/PNumberInput'
 import {usePreference} from 'src/hooks/use-preference'
 import {createEffect, createMemo, createSignal, onCleanup, Show, untrack} from 'solid-js'
@@ -69,7 +70,6 @@ export const RandomEventSettings = () => {
   const interval = createMemo(() => parseInterval(draft()))
   let edited = false
   let isDisposed = false
-  let pendingInterval: RandomEventInterval | null = null
   let previousSettings: RandomEventSettingsValue | null = null
 
   const handlePreferenceError = (error: unknown) => {
@@ -100,7 +100,7 @@ export const RandomEventSettings = () => {
   createEffect(() => {
     const nextSettings = storedSettings()
 
-    if (nextSettings === null || pendingInterval !== null) {
+    if (nextSettings === null || pendingSave.hasPending()) {
       return
     }
 
@@ -118,6 +118,12 @@ export const RandomEventSettings = () => {
     }
   }
 
+  const pendingSave = createPendingSave({
+    delayMilliseconds: SAVE_DEBOUNCE_MILLISECONDS,
+    save: (nextInterval: RandomEventInterval) =>
+      saveSettings({...untrack(settings), ...nextInterval}),
+  })
+
   const updateMinimum = (value: string) => {
     edited = true
     setMessage(null)
@@ -131,12 +137,7 @@ export const RandomEventSettings = () => {
 
   onCleanup(() => {
     isDisposed = true
-    const nextInterval = pendingInterval
-    pendingInterval = null
-
-    if (nextInterval !== null) {
-      saveSettings({...untrack(settings), ...nextInterval})
-    }
+    pendingSave.flush()
   })
 
   createEffect(() => {
@@ -149,17 +150,11 @@ export const RandomEventSettings = () => {
       (nextInterval.minimumMinutes === currentSettings.minimumMinutes &&
         nextInterval.maximumMinutes === currentSettings.maximumMinutes)
     ) {
-      pendingInterval = null
+      pendingSave.cancel()
       return
     }
 
-    pendingInterval = nextInterval
-    const timeoutId = globalThis.setTimeout(() => {
-      pendingInterval = null
-      saveSettings({...untrack(settings), ...nextInterval})
-    }, SAVE_DEBOUNCE_MILLISECONDS)
-
-    onCleanup(() => globalThis.clearTimeout(timeoutId))
+    pendingSave.schedule(nextInterval)
   })
 
   return (

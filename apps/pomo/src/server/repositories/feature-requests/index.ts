@@ -1,3 +1,4 @@
+import {clamp} from 'es-toolkit/math'
 import {asc, desc, eq, sql} from 'drizzle-orm'
 
 import {
@@ -97,8 +98,9 @@ export const listFeatureRequests = async (
   userId: string | null,
   options: FeatureRequestListOptions = {},
 ): Promise<FeatureRequestListPage> => {
-  const pageSize = Math.min(
-    Math.max(options.limit ?? DEFAULT_FEATURE_REQUEST_PAGE_SIZE, 1),
+  const pageSize = clamp(
+    options.limit ?? DEFAULT_FEATURE_REQUEST_PAGE_SIZE,
+    1,
     MAXIMUM_FEATURE_REQUEST_PAGE_SIZE,
   )
   const offset = Math.max(options.offset ?? 0, 0)

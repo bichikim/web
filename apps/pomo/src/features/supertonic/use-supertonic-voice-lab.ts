@@ -1,3 +1,4 @@
+import {getDownloadPercentage} from 'src/features/download-progress'
 import {type Accessor, createMemo, createSignal, onCleanup, type Setter, untrack} from 'solid-js'
 import {isNonBlankString} from 'src/utils/is-non-blank-string'
 
@@ -178,10 +179,7 @@ const reportUnexpectedError = (error: unknown) => {
 }
 
 const getProgressPercentage = (progress: SupertonicProgress) =>
-  Math.min(
-    MAXIMUM_PROGRESS,
-    Math.round((progress.loadedBytes / progress.totalBytes) * MAXIMUM_PROGRESS),
-  )
+  getDownloadPercentage(progress.loadedBytes, progress.totalBytes)
 
 const revokeAudioUrls = (
   runtime: SupertonicVoiceLabRuntime,

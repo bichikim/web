@@ -1,3 +1,4 @@
+import {selectMaximumBy} from 'src/utils/select-maximum-by'
 import {z} from 'zod'
 
 import {createLatestAsyncTask} from 'src/utils/create-latest-async-task'
@@ -48,21 +49,6 @@ const parseStoredPlaylist = (value: unknown): StoredPlaylist | null => {
   return result.success ? result.data : null
 }
 
-const selectLatestPlaylist = (
-  webPlaylist: StoredPlaylist | null,
-  tossPlaylist: StoredPlaylist | null,
-) => {
-  if (webPlaylist === null) {
-    return tossPlaylist
-  }
-
-  if (tossPlaylist === null || webPlaylist.savedAt >= tossPlaylist.savedAt) {
-    return webPlaylist
-  }
-
-  return tossPlaylist
-}
-
 const runtimeStorage = {
   readToss: () => readTossStorageJson(PLAYLIST_STORAGE_KEY, parseStoredPlaylist),
   readWeb: () => readWebStorageJson(PLAYLIST_STORAGE_KEY, parseStoredPlaylist),
@@ -100,7 +86,7 @@ export const createPPlaylistStorage = (
           return storage.readWeb()?.trackIds ?? null
         }
 
-        const latestPlaylist = selectLatestPlaylist(webPlaylist, tossPlaylist)
+        const latestPlaylist = selectMaximumBy(webPlaylist, tossPlaylist, (value) => value.savedAt)
 
         if (latestPlaylist !== null) {
           storage.writeWeb(latestPlaylist)

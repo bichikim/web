@@ -1,3 +1,4 @@
+import {setOptionalRecordEntry} from 'src/utils/set-optional-record-entry'
 import {createEffect, createSignal, onCleanup, onMount} from 'solid-js'
 
 import {createEntryPlaybackController} from './entry-playback-controller'
@@ -60,33 +61,14 @@ const updateEventBinding = (
   bindings: EventDialogueIds,
   eventId: DialogueEventId,
   dialogueIds: ReadonlyArray<string>,
-): EventDialogueIds => {
-  const nextBindings = {...bindings}
-
-  if (dialogueIds.length === 0) {
-    delete nextBindings[eventId]
-  } else {
-    nextBindings[eventId] = dialogueIds
-  }
-
-  return nextBindings
-}
+): EventDialogueIds =>
+  setOptionalRecordEntry(bindings, eventId, dialogueIds.length === 0 ? null : dialogueIds)
 
 const updateEventPlaybackMode = (
   modes: EventPlaybackModes,
   eventId: DialogueEventId,
   playbackMode: DialogueEventPlaybackMode | null,
-): EventPlaybackModes => {
-  const nextModes = {...modes}
-
-  if (playbackMode === null) {
-    delete nextModes[eventId]
-  } else {
-    nextModes[eventId] = playbackMode
-  }
-
-  return nextModes
-}
+): EventPlaybackModes => setOptionalRecordEntry(modes, eventId, playbackMode)
 
 // oxlint-disable-next-line eslint/max-lines-per-function -- One hook coordinates repository initialization, bindings, and queued playback lifecycle.
 export const usePEventController = (props: UsePEventControllerProps): PEventContextValue => {

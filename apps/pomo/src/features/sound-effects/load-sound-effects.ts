@@ -1,3 +1,4 @@
+import {createCatalogRequestInit, hasUniqueIds} from 'src/features/catalog-policy'
 import {audioFetch, httpFetch} from '../http-client'
 import type {SoundEffect} from './types'
 
@@ -42,8 +43,6 @@ const isSoundEffect = (value: unknown): value is SoundEffect => {
   )
 }
 
-const hasUniqueIds = (ids: readonly string[]) => new Set(ids).size === ids.length
-
 const isSoundEffectCollection = (value: unknown): value is SoundEffectCollection => {
   if (typeof value !== 'object' || value === null) {
     return false
@@ -58,19 +57,14 @@ const isSoundEffectCollection = (value: unknown): value is SoundEffectCollection
   )
 }
 
-const createRequestInit = (signal?: AbortSignal): RequestInit => ({
-  cache: import.meta.env.DEV ? 'no-store' : 'default',
-  signal,
-})
-
 /** Loads and validates the public sound-effect catalog. */
 export const loadSoundEffects = async (
   options: LoadSoundEffectsOptions = {},
 ): Promise<readonly SoundEffect[]> => {
   const response =
     options.url === undefined
-      ? await audioFetch('sound-effects.json', createRequestInit(options.signal))
-      : await httpFetch(options.url, createRequestInit(options.signal))
+      ? await audioFetch('sound-effects.json', createCatalogRequestInit(options.signal))
+      : await httpFetch(options.url, createCatalogRequestInit(options.signal))
 
   if (!response.ok) {
     throw new Error(`Sound effects request failed: ${response.status}`)

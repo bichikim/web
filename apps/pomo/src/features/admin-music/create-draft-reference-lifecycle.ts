@@ -1,3 +1,4 @@
+import {createSerialTaskQueue} from 'src/utils/create-serial-task-queue'
 import type {AlbumDraftStorageResult} from './album-draft-storage'
 
 export type DraftReferenceUpdater = (
@@ -30,16 +31,7 @@ export const createDraftReferenceLifecycle = (
   let isReleased = false
   let referenceId: string | null = null
   let releasePromise: Promise<void> | null = null
-  let referenceOperation: Promise<void> = Promise.resolve()
-
-  const enqueueReferenceOperation = <T>(operation: () => Promise<T>): Promise<T> => {
-    const queuedOperation = referenceOperation.then(operation)
-    referenceOperation = queuedOperation.then(
-      () => undefined,
-      () => undefined,
-    )
-    return queuedOperation
-  }
+  const queue = createSerialTaskQueue()
 
   const setId = (id: string): void => {
     referenceId = id
@@ -62,7 +54,7 @@ export const createDraftReferenceLifecycle = (
       })
     }
 
-    return enqueueReferenceOperation(async () => {
+    return queue.run(async () => {
       try {
         const {writeAlbumDraftReference} = await options.loadStorage()
 
@@ -90,7 +82,7 @@ export const createDraftReferenceLifecycle = (
 
     isReleased = true
     const currentReferenceId = referenceId
-    releasePromise = enqueueReferenceOperation(async () => {
+    releasePromise = queue.run(async () => {
       if (currentReferenceId === null) {
         return
       }

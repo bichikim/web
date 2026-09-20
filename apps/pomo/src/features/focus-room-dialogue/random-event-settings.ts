@@ -1,6 +1,7 @@
+import {createParsedPreferenceStorage} from '../parsed-preference-storage'
 import {z} from 'zod'
 
-import {type PreferenceStorage, webLocalStorage} from 'src/utils/preference-storage'
+import {webLocalStorage} from 'src/utils/preference-storage'
 import {
   createVersionedPreferenceRepository,
   hasNativeStorageBridge,
@@ -77,17 +78,13 @@ const runtimeRepository = createRandomEventSettingsRepository({
   writeWeb: (settings) => writeWebStorageJson(STORAGE_KEY, settings),
 })
 
-const preferenceStorage: PreferenceStorage = {
+const preferenceStorage = createParsedPreferenceStorage({
+  invalidMessage: 'Invalid random event settings.',
+  parse: parseRandomEventSettings,
   read: () => runtimeRepository.read(),
   subscribe: webLocalStorage.subscribe,
-  write: (_key, value) => {
-    const settings = parseRandomEventSettings(value)
-
-    return settings === null
-      ? new Error('Invalid random event settings.')
-      : runtimeRepository.write(settings).then(() => undefined)
-  },
-}
+  write: (settings) => runtimeRepository.write(settings).then(() => undefined),
+})
 
 export interface RandomEventPreferenceOptions {
   readonly onError?: (error: unknown) => void

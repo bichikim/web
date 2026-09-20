@@ -1,3 +1,4 @@
+import {createDraftStorage, createJsonCodec} from '../value-storage'
 import {z} from 'zod'
 
 const FEATURE_REQUEST_DRAFT_KEY = 'pomo:feature-request:draft:v1'
@@ -10,33 +11,35 @@ const featureRequestDraftSchema = z.object({
 
 export type FeatureRequestDraft = z.infer<typeof featureRequestDraftSchema>
 
-export const readFeatureRequestDraft = (): FeatureRequestDraft | null => {
-  try {
-    const storedDraft = globalThis.sessionStorage.getItem(FEATURE_REQUEST_DRAFT_KEY)
-    if (storedDraft === null) {
-      return null
-    }
-
-    const result = featureRequestDraftSchema.safeParse(JSON.parse(storedDraft))
-    return result.success ? result.data : null
-  } catch (error: unknown) {
-    console.warn('Failed to read the feature request draft.', error)
-    return null
-  }
+export interface FeatureRequestDraftStorage {
+  readonly getItem: (key: string) => string | null
+  readonly setItem: (key: string, value: string) => void
+  readonly removeItem: (key: string) => void
 }
 
-export const writeFeatureRequestDraft = (draft: FeatureRequestDraft) => {
-  try {
-    globalThis.sessionStorage.setItem(FEATURE_REQUEST_DRAFT_KEY, JSON.stringify(draft))
-  } catch (error: unknown) {
-    console.warn('Failed to save the feature request draft.', error)
-  }
-}
+const getDraftStorage = (storage?: FeatureRequestDraftStorage) =>
+  createDraftStorage({
+    ...createJsonCodec((value): FeatureRequestDraft | null => {
+      const result = featureRequestDraftSchema.safeParse(value)
+      return result.success ? result.data : null
+    }),
+    key: FEATURE_REQUEST_DRAFT_KEY,
+    messages: {
+      delete: 'Failed to delete the feature request draft.',
+      read: 'Failed to read the feature request draft.',
+      write: 'Failed to save the feature request draft.',
+    },
+    storage: () => storage ?? globalThis.sessionStorage,
+  })
 
-export const deleteFeatureRequestDraft = () => {
-  try {
-    globalThis.sessionStorage.removeItem(FEATURE_REQUEST_DRAFT_KEY)
-  } catch (error: unknown) {
-    console.warn('Failed to delete the feature request draft.', error)
-  }
-}
+export const readFeatureRequestDraft = (
+  storage?: FeatureRequestDraftStorage,
+): FeatureRequestDraft | null => getDraftStorage(storage).read()
+
+export const writeFeatureRequestDraft = (
+  draft: FeatureRequestDraft,
+  storage?: FeatureRequestDraftStorage,
+): void => getDraftStorage(storage).write(draft)
+
+export const deleteFeatureRequestDraft = (storage?: FeatureRequestDraftStorage): void =>
+  getDraftStorage(storage).delete()

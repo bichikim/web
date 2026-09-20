@@ -1,3 +1,4 @@
+import {createPresenceFlag} from '../../value-storage'
 import {type Accessor, createSignal} from 'solid-js'
 
 import type {EntryPlaybackController} from '../entry-playback-controller'
@@ -11,25 +12,6 @@ const ENTRY_PLAYBACK_SESSION_KEY = 'pomo:focus-room-entry-playback:v1'
 export interface EntryPlaybackSessionStorage {
   readonly getItem: (key: string) => string | null
   readonly setItem: (key: string, value: string) => void
-}
-
-const getStorage = (storage?: EntryPlaybackSessionStorage): EntryPlaybackSessionStorage =>
-  storage ?? globalThis.sessionStorage
-
-const readPlaybackSession = (storage?: EntryPlaybackSessionStorage): boolean => {
-  try {
-    return getStorage(storage).getItem(ENTRY_PLAYBACK_SESSION_KEY) !== null
-  } catch {
-    return false
-  }
-}
-
-const writePlaybackSession = (storage?: EntryPlaybackSessionStorage): void => {
-  try {
-    getStorage(storage).setItem(ENTRY_PLAYBACK_SESSION_KEY, 'true')
-  } catch {
-    // Storage restrictions must not prevent entry dialogue playback.
-  }
 }
 
 export interface CreateEntryEventPlaybackOptions {
@@ -52,6 +34,10 @@ export interface EntryEventPlayback {
 export const createEntryEventPlayback = (
   options: CreateEntryEventPlaybackOptions,
 ): EntryEventPlayback => {
+  const sessionFlag = createPresenceFlag({
+    key: ENTRY_PLAYBACK_SESSION_KEY,
+    storage: () => options.sessionStorage ?? globalThis.sessionStorage,
+  })
   const [hasEnteredFocusRoom, setHasEnteredFocusRoom] = createSignal(false)
   let hasStarted = false
   let hasTriggeredEvent = false
@@ -76,7 +62,7 @@ export const createEntryEventPlayback = (
       pendingEventExecution = eventExecution instanceof Promise ? eventExecution : undefined
     }
 
-    if (readPlaybackSession(options.sessionStorage)) {
+    if (sessionFlag.read()) {
       return
     }
 
@@ -91,11 +77,7 @@ export const createEntryEventPlayback = (
 
     const startPlayback = () => {
       const currentRepository = options.getRepository()
-      if (
-        currentRepository === null ||
-        !options.isPlaybackEnabled() ||
-        readPlaybackSession(options.sessionStorage)
-      ) {
+      if (currentRepository === null || !options.isPlaybackEnabled() || sessionFlag.read()) {
         isPlaybackPending = false
         return
       }
@@ -118,7 +100,7 @@ export const createEntryEventPlayback = (
             return
           }
 
-          writePlaybackSession(options.sessionStorage)
+          sessionFlag.write()
         })
         .catch((error: unknown) => {
           hasStarted = false

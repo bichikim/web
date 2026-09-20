@@ -1,3 +1,4 @@
+import {clamp} from 'es-toolkit/math'
 // oxlint-disable no-magic-numbers -- Fixed PCM header fields and the official SA3 LogSNR schedule.
 import {SAMPLE_RATE, STEREO_FRAME_BYTES, WAV_HEADER_BYTES} from './connection'
 
@@ -40,7 +41,7 @@ export function createStereoWave(pcm: Int32Array, frames: number): Blob {
   text(36, 'data')
   view.setUint32(40, frames * STEREO_FRAME_BYTES, true)
   for (let index = 0; index < frames * 2; index += 1) {
-    view.setInt16(WAV_HEADER_BYTES + index * 2, Math.max(-32768, Math.min(32767, pcm[index])), true)
+    view.setInt16(WAV_HEADER_BYTES + index * 2, clamp(pcm[index], -32768, 32767), true)
   }
   return new Blob([buffer], {type: 'audio/wav'})
 }

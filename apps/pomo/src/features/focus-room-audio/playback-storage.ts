@@ -1,3 +1,4 @@
+import {selectMaximumBy} from 'src/utils/select-maximum-by'
 import {z} from 'zod'
 
 import {createLatestAsyncTask} from 'src/utils/create-latest-async-task'
@@ -49,21 +50,6 @@ const runtimeStorage = {
   writeToss: (state) => writeTossStorageJson(PLAYBACK_STORAGE_KEY, state),
   writeWeb: (state) => writeWebStorageJson(PLAYBACK_STORAGE_KEY, state),
 } satisfies PlaybackStorageAdapter
-
-const selectLatestPlayback = (
-  webPlayback: StoredPlaybackState | null,
-  nativePlayback: StoredPlaybackState | null,
-) => {
-  if (webPlayback === null) {
-    return nativePlayback
-  }
-
-  if (nativePlayback === null || webPlayback.savedAt >= nativePlayback.savedAt) {
-    return webPlayback
-  }
-
-  return nativePlayback
-}
 
 const toPlaybackState = (state: StoredPlaybackState | null): PPlaybackState | null => {
   if (state === null) {
@@ -119,7 +105,7 @@ export const createPPlaybackStorage = (
       if (latestWebWrite !== initialWebWrite) {
         return toPlaybackState(storage.readWeb())
       }
-      const latestPlayback = selectLatestPlayback(webPlayback, nativePlayback)
+      const latestPlayback = selectMaximumBy(webPlayback, nativePlayback, (value) => value.savedAt)
       if (
         latestPlayback !== null &&
         latestPlayback === webPlayback &&

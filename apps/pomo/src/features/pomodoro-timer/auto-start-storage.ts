@@ -1,3 +1,4 @@
+import {selectMaximumBy} from 'src/utils/select-maximum-by'
 import {z} from 'zod'
 
 import {
@@ -30,21 +31,6 @@ const parsePreference = (value: unknown): StoredPreference | null => {
 const parseLegacyPreference = (value: unknown): StoredPreference | null => {
   const result = legacyPreferenceSchema.safeParse(value)
   return result.success ? {isEnabled: result.data, savedAt: 0} : null
-}
-
-const selectLatestPreference = (
-  webPreference: StoredPreference | null,
-  tossPreference: StoredPreference | null,
-) => {
-  if (webPreference === null) {
-    return tossPreference
-  }
-
-  if (tossPreference === null || webPreference.savedAt >= tossPreference.savedAt) {
-    return webPreference
-  }
-
-  return tossPreference
 }
 
 export interface AutoStartStorage {
@@ -103,7 +89,11 @@ export const createAutoStartStorage = ({
       const tossPreference = await readTossPreference()
 
       const currentWebPreference = readWebPreference()
-      const latestPreference = selectLatestPreference(currentWebPreference, tossPreference)
+      const latestPreference = selectMaximumBy(
+        currentWebPreference,
+        tossPreference,
+        (value) => value.savedAt,
+      )
 
       if (latestPreference !== null && latestPreference === currentWebPreference) {
         await storage.writeToss(AUTO_START_STORAGE_KEY, latestPreference).catch(() => undefined)
