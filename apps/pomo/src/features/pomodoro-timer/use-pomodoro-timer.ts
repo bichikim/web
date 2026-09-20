@@ -283,7 +283,9 @@ export const usePomodoroTimer = (props: UsePomodoroTimerProps = {}): PomodoroTim
       if (props.stopOnUnmount) {
         const currentTime = Date.now()
         const currentConfig = config()
-        const synchronizedState = synchronizePomodoroTimer(state(), currentTime, currentConfig)
+        const synchronizedState = synchronizePomodoroTimer(state(), currentTime, currentConfig, {
+          autoStartNextPhase: isAutoStartEnabled(),
+        })
         writePomodoroTimerState(
           stopPomodoroTimer(synchronizedState, currentConfig, {
             now: currentTime,

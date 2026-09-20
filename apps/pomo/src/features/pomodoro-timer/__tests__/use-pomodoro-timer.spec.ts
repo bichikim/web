@@ -251,6 +251,26 @@ it('should synchronize an expired timer before stopping it on unmount', async ()
   })
 })
 
+it('should catch up every expired phase before stopping on unmount with auto-start enabled', async () => {
+  const timer = renderHook(() => usePomodoroTimer({stopOnUnmount: true}), {
+    wrapper: PreferenceProvider,
+  })
+  await finishInitialization(timer)
+  timer.result.onConfigChange(CONFIG)
+  timer.result.onAutoStartChange(true)
+  timer.result.onStart()
+
+  vi.setSystemTime(14_000)
+  timer.cleanup()
+
+  expect(JSON.parse(localStorage.getItem(STATE_STORAGE_KEY) ?? '{}')).toEqual({
+    completedFocusSessions: 1,
+    phase: 'focus',
+    remainingSeconds: 10,
+    status: 'idle',
+  })
+})
+
 it('should synchronize an expired phase on the next frame without duplicate events', async () => {
   const onEvents = vi.fn()
   const view = renderHook(() => usePomodoroTimer({onEvents}), {wrapper: PreferenceProvider})
