@@ -90,13 +90,18 @@ export const Canvas = (props: CanvasProps) => {
       transition: untrack(() => selectTransition(props.background.preferences())),
     })
       .then((shown) => {
-        if (!disposed && shown !== null) {
-          setCompanionId(shown.companionId)
-          if (shown.companionId !== null) {
-            playback.consume(shown.companionId)
-          }
-          playback.onReady()
+        if (disposed) {
+          return
         }
+        if (shown === null) {
+          playback.onError()
+          return
+        }
+        setCompanionId(shown.companionId)
+        if (shown.companionId !== null) {
+          playback.consume(shown.companionId)
+        }
+        playback.onReady()
       })
       .catch((error: unknown) => {
         if (!disposed) {
