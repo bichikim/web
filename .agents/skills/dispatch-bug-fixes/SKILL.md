@@ -25,7 +25,7 @@ In `bichikim/web`, select at most three open issues with `bug` and without `WIP`
    - every P0–P2 finding from all passes, with severity, root cause, changed files or behavior, and before/after verification;
    - every confirmed P3–P4 problem remaining or addressed, with one unique review number, evidence, and follow-up/fixed status; and
    - every verification gap, not-applicable or partially covered check, with its reason and limitation.
-5. Wait for all ready task IDs with `wait_threads`; never pass a pending `clientThreadId` to another thread tool. Finish with selected issue URLs, WIP results, each task's chat/worktree status, and verification results. Leave `WIP` on every selected issue.
+5. Once every created task exposes a ready task ID, take one immediate status snapshot with `wait_threads` (`timeoutMs: 0`) for all ready IDs. This is a status check, not a request to wait for task completion; do not block or poll for completion. Never pass a pending `clientThreadId` to another thread tool. Finish with selected issue URLs, WIP results, each task's current chat/worktree status, and verification results. Leave `WIP` on every selected issue.
 
 ## Guardrails
 
