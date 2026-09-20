@@ -24,6 +24,28 @@ export interface FeatureRequestsController {
   readonly votingRequestId: () => string | null
 }
 
+const preserveCurrentVotesInRefresh = (
+  currentRequests: ReadonlyArray<FeatureRequest>,
+  refreshedRequests: ReadonlyArray<FeatureRequest>,
+): ReadonlyArray<FeatureRequest> => {
+  const currentRequestsById = new Map(
+    currentRequests.map((request) => [request.id, request] as const),
+  )
+
+  return refreshedRequests.map((request) => {
+    const currentRequest = currentRequestsById.get(request.id)
+    if (currentRequest?.votedByCurrentUser !== true) {
+      return request
+    }
+
+    return {
+      ...request,
+      voteCount: Math.max(request.voteCount, currentRequest.voteCount),
+      votedByCurrentUser: true,
+    }
+  })
+}
+
 export const useFeatureRequests = (): FeatureRequestsController => {
   const [requests, setRequests] = createSignal<ReadonlyArray<FeatureRequest>>([])
   const [hasMore, setHasMore] = createSignal(false)
@@ -50,7 +72,9 @@ export const useFeatureRequests = (): FeatureRequestsController => {
       }
 
       setHasMore(page.hasMore)
-      setRequests(page.requests)
+      setRequests((currentRequests) =>
+        preserveCurrentVotesInRefresh(currentRequests, page.requests),
+      )
     } catch {
       if (generation !== listGeneration) {
         return
