@@ -67,7 +67,7 @@ it('should flush a pending change when the settings unmount', async () => {
   })
 })
 
-it('should report loading and saving failures', async () => {
+it('should restore the saved settings after a save failure', async () => {
   const loadFailure = new Error('load failed')
   const consoleError = vi.spyOn(console, 'error').mockImplementation(() => undefined)
   settingsMocks.read.mockRejectedValueOnce(loadFailure)
@@ -87,6 +87,7 @@ it('should report loading and saving failures', async () => {
   await vi.advanceTimersByTimeAsync(0)
 
   expect(view.result.message()).toBe('플레이어 음량 설정을 저장하지 못했어요.')
+  expect(view.result.settings().enabled).toBe(true)
 })
 
 it('should report a later reload failure as a load failure after a successful edit', async () => {
