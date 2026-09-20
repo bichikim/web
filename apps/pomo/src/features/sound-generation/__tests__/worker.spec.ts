@@ -48,15 +48,51 @@ it('should forward progress and the generated blob for the requested prompt and 
   ])
 })
 
+it('should reject overlapping requests and accept a request after the active one finishes', async () => {
+  const firstResult = new Blob(['first'], {type: 'audio/wav'})
+  const secondResult = new Blob(['second'], {type: 'audio/wav'})
+  let finish: (blob: Blob) => void = () => {}
+  vi.mocked(generateExtendedSound).mockImplementationOnce(
+    () =>
+      new Promise((resolve) => {
+        finish = resolve
+      }),
+  )
+  vi.mocked(generateExtendedSound).mockResolvedValue(secondResult)
+
+  const first = scope.onmessage?.({data: request})
+  await scope.onmessage?.({data: {...request, prompt: 'ocean waves'}})
+
+  expect(generateExtendedSound).toHaveBeenCalledOnce()
+  expect(scope.postMessage).toHaveBeenCalledWith({
+    message: '이미 환경음을 생성하고 있습니다.',
+    type: 'error',
+  })
+
+  finish(firstResult)
+  await first
+  await scope.onmessage?.({data: {...request, prompt: 'forest wind'}})
+
+  expect(generateExtendedSound).toHaveBeenCalledTimes(2)
+  expect(scope.postMessage).toHaveBeenCalledWith({blob: firstResult, type: 'result'})
+  expect(scope.postMessage).toHaveBeenCalledWith({blob: secondResult, type: 'result'})
+})
+
 it.each([new Error('download failed'), 'download failed'])(
-  'should serialize a generation failure without sending a result: %s',
+  'should serialize a generation failure and allow a retry: %s',
   async (failure) => {
-    vi.mocked(generateExtendedSound).mockRejectedValue(failure)
+    const retryResult = new Blob(['retry'], {type: 'audio/wav'})
+    vi.mocked(generateExtendedSound)
+      .mockRejectedValueOnce(failure)
+      .mockResolvedValueOnce(retryResult)
     await scope.onmessage?.({data: request})
     expect(scope.postMessage).toHaveBeenCalledExactlyOnceWith({
       message: 'download failed',
       type: 'error',
     })
+
+    await scope.onmessage?.({data: request})
+    expect(scope.postMessage).toHaveBeenCalledWith({blob: retryResult, type: 'result'})
   },
 )
 
