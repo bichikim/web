@@ -292,6 +292,10 @@ export const usePomodoroTimer = (props: UsePomodoroTimerProps = {}): PomodoroTim
       globalThis.cancelAnimationFrame(frame)
       syncController?.close()
       syncController = null
+      const shouldPersistBeforeInitialization = !isStorageReady()
+      if (shouldPersistBeforeInitialization) {
+        writePomodoroTimerConfig(config(), props.storage)
+      }
       if (props.stopOnUnmount) {
         const currentTime = Date.now()
         const currentConfig = config()
@@ -305,6 +309,8 @@ export const usePomodoroTimer = (props: UsePomodoroTimerProps = {}): PomodoroTim
           }),
           props.storage,
         )
+      } else if (shouldPersistBeforeInitialization) {
+        writePomodoroTimerState(state(), props.storage)
       }
     })
   })
