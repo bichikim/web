@@ -10,7 +10,7 @@ it('should recognize any present string and write the existing marker', () => {
   expect(flag.read()).toBe(true)
   storage.setItem('entered', 'false')
   expect(flag.read()).toBe(true)
-  flag.write()
+  expect(flag.write()).toBe(true)
   expect(storage.getItem('entered')).toBe('true')
 })
 
@@ -22,5 +22,5 @@ it('should remain best-effort when storage access is blocked', () => {
     },
   })
   expect(flag.read()).toBe(false)
-  expect(() => flag.write()).not.toThrow()
+  expect(flag.write()).toBe(false)
 })

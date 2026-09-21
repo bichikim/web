@@ -5,7 +5,7 @@ import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 import type {EntryPlaybackController} from '../../entry-playback-controller'
 import type {EventDialogueIds, EventPlaybackModes} from '../../event-context'
 import type {PDialogueRepository} from '../../repository'
-import {createEntryEventPlayback} from '../entry-playback'
+import {createEntryEventPlayback, type EntryPlaybackSessionStorage} from '../entry-playback'
 
 const ENTRY_DIALOGUE_IDS: EventDialogueIds = {'room-enter': ['dialogue']}
 const ENTRY_PLAYBACK_MODES: EventPlaybackModes = {'room-enter': 'sequential-all'}
@@ -20,7 +20,11 @@ const createPlayback = () => {
   }
 }
 
-const createEntryPlayback = (playback: EntryPlaybackController, onEvent: () => void = vi.fn()) =>
+const createEntryPlayback = (
+  playback: EntryPlaybackController,
+  onEvent: () => void = vi.fn(),
+  sessionStorage?: EntryPlaybackSessionStorage,
+) =>
   createEntryEventPlayback({
     eventDialogueIds: () => ENTRY_DIALOGUE_IDS,
     eventPlaybackModes: () => ENTRY_PLAYBACK_MODES,
@@ -28,6 +32,7 @@ const createEntryPlayback = (playback: EntryPlaybackController, onEvent: () => v
     isPlaybackEnabled: () => true,
     onEvent,
     playback,
+    sessionStorage,
   })
 
 const mockSuccessfulPlayback = (
@@ -139,6 +144,26 @@ describe('createEntryEventPlayback', () => {
     await pendingPlayback.promise
 
     expect(sessionStorage.getItem(ENTRY_PLAYBACK_SESSION_KEY)).toBe('true')
+  })
+
+  it('should not replay after a successful playback when the session flag write fails', async () => {
+    const sessionStorage = {
+      getItem: () => null,
+      setItem: () => {
+        throw new Error('blocked')
+      },
+    }
+    const firstPlayback = createPlayback()
+    mockSuccessfulPlayback(firstPlayback.playSequence)
+
+    createEntryPlayback(firstPlayback.playback, vi.fn(), sessionStorage).enterFocusRoom()
+    await Promise.resolve()
+
+    const remountedPlayback = createPlayback()
+    createEntryPlayback(remountedPlayback.playback, vi.fn(), sessionStorage).enterFocusRoom()
+
+    expect(firstPlayback.playSequence).toHaveBeenCalledOnce()
+    expect(remountedPlayback.playSequence).not.toHaveBeenCalled()
   })
 
   it('should retry the entry event after its execution fails', async () => {

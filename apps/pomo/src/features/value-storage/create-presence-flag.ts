@@ -8,10 +8,10 @@ export interface CreatePresenceFlagOptions {
 
 export interface PresenceFlag {
   readonly read: () => boolean
-  readonly write: () => void
+  readonly write: () => boolean
 }
 
-/** Records key presence with best-effort storage; unavailable reads are false and writes are ignored. */
+/** Records key presence with best-effort storage and reports whether writing succeeded. */
 export const createPresenceFlag = (options: CreatePresenceFlagOptions): PresenceFlag => {
   const value = createValueStorage({
     ...options,
@@ -29,8 +29,10 @@ export const createPresenceFlag = (options: CreatePresenceFlagOptions): Presence
     write() {
       try {
         value.write(true)
+        return true
       } catch {
         // A presence marker must not prevent the associated user action.
+        return false
       }
     },
   }
