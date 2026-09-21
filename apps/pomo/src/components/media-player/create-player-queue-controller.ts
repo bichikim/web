@@ -75,6 +75,21 @@ const persistShiftedCurrentPlayback = (
   }
 }
 
+const findActiveTrackIndex = (
+  currentTracks: readonly PTrack[],
+  mergedTracks: readonly PTrack[],
+  currentIndex: number,
+) => {
+  const activeTrackId = currentTracks[currentIndex]?.id
+  const activeIndex = mergedTracks.findIndex(
+    (track, index) => index >= currentIndex && track.id === activeTrackId,
+  )
+
+  return activeIndex < 0
+    ? mergedTracks.findIndex((track) => track.id === activeTrackId)
+    : activeIndex
+}
+
 /** Coordinates playlist state changes without owning transport or navigation policy. */
 export const createPlayerQueueController = (
   options: CreatePlayerQueueControllerOptions,
@@ -231,9 +246,10 @@ export const createPlayerQueueController = (
       return availableTracks
     }
 
-    const activeTrackId = options.readTracks()[options.readCurrentIndex()]?.id
-    const mergedTracks = appendUniqueTracks(availableTracks, options.readTracks())
-    const activeIndex = mergedTracks.findIndex((track) => track.id === activeTrackId)
+    const currentTracks = options.readTracks()
+    const currentIndex = options.readCurrentIndex()
+    const mergedTracks = appendUniqueTracks(availableTracks, currentTracks)
+    const activeIndex = findActiveTrackIndex(currentTracks, mergedTracks, currentIndex)
     batch(() => {
       options.setLoadedTracks(mergedTracks)
       options.setCurrentIndex(activeIndex < 0 ? 0 : activeIndex)
