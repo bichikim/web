@@ -34,6 +34,13 @@ vi.mock('@apps-in-toss/web-framework', () => ({
   Storage: {getItem: vi.fn(), setItem: vi.fn()},
 }))
 
+let documentHidden = false
+
+const changeVisibility = (hidden: boolean) => {
+  documentHidden = hidden
+  document.dispatchEvent(new Event('visibilitychange'))
+}
+
 const renderRandomEvent = (props: UseRandomEventProps) => {
   let setSettings: (settings: RandomEventSettings) => void = () => undefined
   const view = render(
@@ -52,6 +59,8 @@ beforeEach(() => {
   localStorage.clear()
   settingsMocks.read.mockResolvedValue({maximumMinutes: 20, minimumMinutes: 10, version: 1})
   settingsMocks.write.mockResolvedValue(undefined)
+  documentHidden = false
+  vi.spyOn(document, 'hidden', 'get').mockImplementation(() => documentHidden)
   vi.useFakeTimers()
 })
 
@@ -64,6 +73,55 @@ it('should calculate a delay within the configured interval', () => {
   expect(getRandomEventDelay({maximumMinutes: 20, minimumMinutes: 10, version: 1}, () => 0.5)).toBe(
     15 * 60_000,
   )
+})
+
+it('should pause scheduling while the document is hidden', async () => {
+  settingsMocks.read.mockResolvedValue({maximumMinutes: 1, minimumMinutes: 1, version: 1})
+  const onEvent = vi.fn()
+  const result = renderRandomEvent({onEvent, random: () => 0})
+  await vi.advanceTimersByTimeAsync(0)
+
+  changeVisibility(true)
+  await vi.advanceTimersByTimeAsync(60_000)
+  expect(onEvent).not.toHaveBeenCalled()
+
+  changeVisibility(false)
+  await vi.advanceTimersByTimeAsync(60_000)
+  expect(onEvent).toHaveBeenCalledOnce()
+  result.view.unmount()
+})
+
+it('should wait for visibility before starting when initially hidden', async () => {
+  documentHidden = true
+  settingsMocks.read.mockResolvedValue({maximumMinutes: 1, minimumMinutes: 1, version: 1})
+  const onEvent = vi.fn()
+  const result = renderRandomEvent({onEvent, random: () => 0})
+  await vi.advanceTimersByTimeAsync(0)
+
+  await vi.advanceTimersByTimeAsync(60_000)
+  expect(onEvent).not.toHaveBeenCalled()
+
+  changeVisibility(false)
+  await vi.advanceTimersByTimeAsync(60_000)
+  expect(onEvent).toHaveBeenCalledOnce()
+  result.view.unmount()
+})
+
+it('should not queue an event when a pending timer fires while hidden', async () => {
+  settingsMocks.read.mockResolvedValue({maximumMinutes: 1, minimumMinutes: 1, version: 1})
+  const onEvent = vi.fn()
+  const result = renderRandomEvent({onEvent, random: () => 0})
+  await vi.advanceTimersByTimeAsync(0)
+
+  documentHidden = true
+  await vi.advanceTimersByTimeAsync(60_000)
+  expect(onEvent).not.toHaveBeenCalled()
+
+  changeVisibility(true)
+  changeVisibility(false)
+  await vi.advanceTimersByTimeAsync(60_000)
+  expect(onEvent).toHaveBeenCalledOnce()
+  result.view.unmount()
 })
 
 it('should wait for earlier playback before scheduling another random event', async () => {
