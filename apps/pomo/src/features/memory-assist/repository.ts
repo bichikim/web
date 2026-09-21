@@ -53,11 +53,20 @@ export const createMemoryMemoRepository = (
         storage.writeWeb(tossMemos)
         return tossMemos
       }
+
+      const webMemos = storage.readWeb()
+      if (webMemos !== null) {
+        await storage.writeToss(webMemos).catch((error: unknown) => {
+          globalThis.reportError?.(error)
+        })
+        return webMemos
+      }
+
+      storage.writeWeb([])
     } catch (error) {
       throw new Error('Failed to read memory memos.', {cause: error})
     }
 
-    storage.writeWeb([])
     return []
   },
   async write(memos) {

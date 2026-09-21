@@ -5,7 +5,8 @@ import {createSignal} from 'solid-js'
 import {cleanup, render} from '@solidjs/testing-library'
 import {afterEach, beforeEach, expect, it, vi} from 'vitest'
 
-import type {PTrack} from '../../../features/focus-room-audio'
+import * as focusRoomAudio from '../../../features/focus-room-audio'
+import type {PPlaybackState, PTrack} from '../../../features/focus-room-audio'
 import {type PlayerController, usePlayerController} from '../use-player-controller'
 
 vi.mock('@apps-in-toss/web-framework', () => ({
@@ -178,6 +179,28 @@ it('should restore the saved occurrence when a controlled playlist repeats a tra
 
   await vi.waitFor(() => expect(controller.currentIndex()).toBe(1))
   expect(controller.currentTrack()).toBe(duplicateTracks[1])
+})
+
+it('should wait for controlled tracks before restoring saved playback', async () => {
+  const storedPlayback = {
+    isPlaying: false,
+    positionSeconds: 8,
+    trackId: TRACK.id,
+  } satisfies PPlaybackState
+  const playback = Promise.withResolvers<PPlaybackState | null>()
+  vi.spyOn(focusRoomAudio, 'readPPlayback').mockReturnValueOnce(playback.promise)
+
+  const {controller, setTracks} = renderControlledController([])
+
+  await Promise.resolve()
+  playback.resolve(storedPlayback)
+  await playback.promise
+  await Promise.resolve()
+  await Promise.resolve()
+  setTracks([NEXT_TRACK, TRACK])
+
+  await vi.waitFor(() => expect(controller.currentIndex()).toBe(1))
+  expect(controller.currentTrack()).toBe(TRACK)
 })
 
 it('should persist a failed restart as paused after releasing the pending intent', () => {

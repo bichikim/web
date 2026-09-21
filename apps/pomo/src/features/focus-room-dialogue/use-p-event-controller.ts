@@ -510,6 +510,9 @@ export const usePEventController = (props: UsePEventControllerProps): PEventCont
       delayedEndEvent.start(delayedEndEventDurationMinutes())
       if (delayedEndEvent.isRunning()) {
         delayedEndPlayback.clearPendingEvent()
+        if (delayedEndPlayback.isActive()) {
+          playback.cancel()
+        }
       }
     },
   }

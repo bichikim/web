@@ -50,6 +50,48 @@ it('should load a page and append the next page at the current offset', async ()
   cleanup()
 })
 
+it('should base the next offset on the refreshed server page instead of preserved ghosts', async () => {
+  const ghostRequest = {...REQUEST, id: '019d1990-1dc9-7255-a7b5-f9459dfaf784'}
+  apiMocks.listFeatureRequests
+    .mockResolvedValueOnce({hasMore: true, requests: [REQUEST]})
+    .mockResolvedValueOnce({hasMore: true, requests: [ghostRequest]})
+    .mockResolvedValueOnce({hasMore: true, requests: [REQUEST]})
+    .mockResolvedValueOnce({hasMore: false, requests: [NEXT_REQUEST]})
+
+  const {cleanup, result} = renderHook(() => useFeatureRequests())
+  await waitFor(() => expect(result.isLoading()).toBe(false))
+
+  await result.loadMore()
+  await result.refresh()
+
+  expect(result.requests()).toEqual([REQUEST, ghostRequest])
+
+  await result.loadMore()
+
+  expect(apiMocks.listFeatureRequests).toHaveBeenNthCalledWith(4, {offset: 1})
+  expect(result.requests()).toEqual([REQUEST, ghostRequest, NEXT_REQUEST])
+  cleanup()
+})
+
+it('should not duplicate a preserved request when loading its refreshed page again', async () => {
+  apiMocks.listFeatureRequests
+    .mockResolvedValueOnce({hasMore: true, requests: [REQUEST]})
+    .mockResolvedValueOnce({hasMore: true, requests: [NEXT_REQUEST]})
+    .mockResolvedValueOnce({hasMore: true, requests: [REQUEST]})
+    .mockResolvedValueOnce({hasMore: false, requests: [NEXT_REQUEST]})
+
+  const {cleanup, result} = renderHook(() => useFeatureRequests())
+  await waitFor(() => expect(result.isLoading()).toBe(false))
+
+  await result.loadMore()
+  await result.refresh()
+  await result.loadMore()
+
+  expect(apiMocks.listFeatureRequests).toHaveBeenNthCalledWith(4, {offset: 1})
+  expect(result.requests()).toEqual([REQUEST, NEXT_REQUEST])
+  cleanup()
+})
+
 it('should preserve hasMore when refreshing fails after loading more requests', async () => {
   apiMocks.listFeatureRequests
     .mockResolvedValueOnce({hasMore: true, requests: [REQUEST]})
