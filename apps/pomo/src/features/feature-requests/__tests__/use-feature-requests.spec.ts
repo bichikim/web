@@ -50,6 +50,26 @@ it('should load a page and append the next page at the current offset', async ()
   cleanup()
 })
 
+it('should preserve hasMore when refreshing fails after loading more requests', async () => {
+  apiMocks.listFeatureRequests
+    .mockResolvedValueOnce({hasMore: true, requests: [REQUEST]})
+    .mockResolvedValueOnce({hasMore: true, requests: [NEXT_REQUEST]})
+    .mockRejectedValueOnce(new Error('refresh failed'))
+
+  const {cleanup, result} = renderHook(() => useFeatureRequests())
+  await waitFor(() => expect(result.isLoading()).toBe(false))
+
+  await result.loadMore()
+  expect(result.hasMore()).toBe(true)
+
+  await result.refresh()
+
+  expect(result.loadFailed()).toBe(true)
+  expect(result.requests()).toEqual([REQUEST, NEXT_REQUEST])
+  expect(result.hasMore()).toBe(true)
+  cleanup()
+})
+
 it('should update hasMore when creating after loading all available pages', async () => {
   apiMocks.listFeatureRequests
     .mockResolvedValueOnce({hasMore: true, requests: [REQUEST]})

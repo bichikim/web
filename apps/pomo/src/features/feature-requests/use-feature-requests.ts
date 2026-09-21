@@ -111,6 +111,7 @@ export const useFeatureRequests = (): FeatureRequestsController => {
         return
       }
 
+      setHasMore(previousHasMore)
       setLoadFailed(true)
     } finally {
       if (generation === listGeneration) {
