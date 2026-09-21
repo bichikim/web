@@ -43,3 +43,29 @@ it('should use the supplied date and ID and release its viewport subscription on
   unmount()
   expect(release).toHaveBeenCalledOnce()
 })
+
+it('should discard a new entry when saving completes after disposal', async () => {
+  const pending = Promise.withResolvers<void>()
+  const environment: PictureDiaryEnvironment = {
+    createId: () => 'disposed-entry',
+    now: () => new Date('2026-09-04T03:00:00.000Z'),
+    observeCompact: vi.fn(() => () => undefined),
+  }
+  const repository: PictureDiaryRepository = {
+    delete: vi.fn().mockResolvedValue(undefined),
+    list: vi.fn().mockResolvedValue([]),
+    save: vi.fn().mockReturnValue(pending.promise),
+  }
+  const {unmount} = render(() => <PictureDiary environment={environment} repository={repository} />)
+
+  fireEvent.input(screen.getByLabelText('그림일기 내용'), {target: {value: '닫히는 동안 저장'}})
+  fireEvent.click(screen.getByRole('button', {name: '일기 저장'}))
+  await waitFor(() => expect(repository.save).toHaveBeenCalledOnce())
+
+  const savedEntryId = vi.mocked(repository.save).mock.calls[0]![0].id
+  unmount()
+  pending.resolve()
+  await pending.promise
+
+  await waitFor(() => expect(repository.delete).toHaveBeenCalledWith(savedEntryId))
+})
