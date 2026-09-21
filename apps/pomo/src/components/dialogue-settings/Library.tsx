@@ -95,6 +95,11 @@ export const DialogueLibrary = (props: DialogueLibraryProps) => {
       player.src = playbackUrl
       setPlayingDialogueId(dialogue.id)
       setMessage(null)
+
+      if (currentRequestId !== playbackRequestId) {
+        return
+      }
+
       await player.play()
     } catch (error: unknown) {
       if (currentRequestId !== playbackRequestId) {

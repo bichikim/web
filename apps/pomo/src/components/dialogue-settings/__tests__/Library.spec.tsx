@@ -2,7 +2,7 @@
 
 import {fireEvent, render, screen} from '@solidjs/testing-library'
 import {type JSX} from 'solid-js'
-import {beforeEach, expect, it, vi} from 'vitest'
+import {afterEach, beforeEach, expect, it, vi} from 'vitest'
 
 import {
   type PDialogue,
@@ -37,6 +37,12 @@ const DIALOGUE: PDialogue = {
   version: 1,
   voiceId: 'Yuna',
 }
+
+const SECOND_DIALOGUE = {
+  ...DIALOGUE,
+  audioKey: 'audio-dialogue-2',
+  id: 'dialogue-2',
+} satisfies PDialogue
 
 const createEvents = (): PEventContextValue => ({
   activeDialogueId: () => null,
@@ -90,6 +96,10 @@ beforeEach(() => {
   vi.mocked(usePEvents).mockReturnValue(createEvents())
 })
 
+afterEach(() => {
+  vi.restoreAllMocks()
+})
+
 it('should use a custom deletion handler for the selected dialogue', async () => {
   const onDelete = vi.fn(async () => undefined)
 
@@ -100,4 +110,33 @@ it('should use a custom deletion handler for the selected dialogue', async () =>
 
   await vi.waitFor(() => expect(onDelete).toHaveBeenCalledWith(DIALOGUE))
   expect(vi.mocked(usePEvents)().deleteDialogue).not.toHaveBeenCalled()
+})
+
+it('should not play a superseded inline request after audio preparation', async () => {
+  const secondAudio = Promise.withResolvers<Blob>()
+  const events = createEvents()
+  vi.mocked(events.getAudio)
+    .mockResolvedValueOnce(new Blob(['first audio']))
+    .mockImplementationOnce(() => secondAudio.promise)
+  vi.mocked(usePEvents).mockReturnValue(events)
+
+  const play = vi.spyOn(HTMLMediaElement.prototype, 'play').mockResolvedValue(undefined)
+  render(() => <DialogueLibrary entries={[{dialogue: DIALOGUE}, {dialogue: SECOND_DIALOGUE}]} />)
+  const listenButtons = screen.getAllByRole('button', {name: '듣기'})
+  let didReplaceRequest = false
+  vi.spyOn(URL, 'createObjectURL').mockImplementation(() => {
+    if (!didReplaceRequest) {
+      didReplaceRequest = true
+      fireEvent.click(listenButtons[1]!)
+    }
+
+    return 'blob:dialogue'
+  })
+
+  fireEvent.click(listenButtons[0]!)
+  await vi.waitFor(() => expect(events.getAudio).toHaveBeenCalledTimes(2))
+  expect(play).not.toHaveBeenCalled()
+
+  secondAudio.resolve(new Blob(['second audio']))
+  await vi.waitFor(() => expect(play).toHaveBeenCalledOnce())
 })
