@@ -125,9 +125,13 @@ export const DialogueLibrary = (props: DialogueLibraryProps) => {
       }
 
       setMessage(null)
-      const playback = events.playDialogue(dialogue.id)
+      const didPlay = await events.playDialogue(dialogue.id)
+
+      if (currentRequestId !== playbackRequestId || !didPlay) {
+        return
+      }
+
       props.onRequestClose?.()
-      await playback
     } catch (error: unknown) {
       if (currentRequestId !== playbackRequestId) {
         return

@@ -1,6 +1,6 @@
 /** @vitest-environment jsdom */
 
-import {fireEvent, render, screen} from '@solidjs/testing-library'
+import {fireEvent, render, screen, within} from '@solidjs/testing-library'
 import {type JSX} from 'solid-js'
 import {beforeEach, expect, it, vi} from 'vitest'
 
@@ -38,7 +38,7 @@ const DIALOGUE: PDialogue = {
   voiceId: 'Yuna',
 }
 
-const createEvents = (): PEventContextValue => ({
+const createEvents = (overrides: Partial<PEventContextValue> = {}): PEventContextValue => ({
   activeDialogueId: () => null,
   activeSegmentCount: () => 0,
   activeSegmentMood: () => null,
@@ -83,6 +83,7 @@ const createEvents = (): PEventContextValue => ({
   setEventPlaybackMode: vi.fn(async () => undefined),
   skipDialoguePlayback: vi.fn(),
   startDelayedEndEvent: vi.fn(),
+  ...overrides,
 })
 
 beforeEach(() => {
@@ -100,4 +101,81 @@ it('should use a custom deletion handler for the selected dialogue', async () =>
 
   await vi.waitFor(() => expect(onDelete).toHaveBeenCalledWith(DIALOGUE))
   expect(vi.mocked(usePEvents)().deleteDialogue).not.toHaveBeenCalled()
+})
+
+it('should ignore a superseded character playback request', async () => {
+  const firstAudio = Promise.withResolvers<Blob>()
+  const secondAudio = Promise.withResolvers<Blob>()
+  const secondDialogue = {...DIALOGUE, id: 'dialogue-2', text: '두 번째 대화'}
+  const events = createEvents()
+  vi.mocked(events.getAudio)
+    .mockImplementationOnce(() => firstAudio.promise)
+    .mockImplementationOnce(() => secondAudio.promise)
+  vi.mocked(usePEvents).mockReturnValue(events)
+  const onRequestClose = vi.fn()
+
+  render(() => (
+    <DialogueLibrary
+      entries={[{dialogue: DIALOGUE}, {dialogue: secondDialogue}]}
+      onRequestClose={onRequestClose}
+    />
+  ))
+
+  const rows = within(screen.getByRole('list', {name: '저장된 대화'})).getAllByRole('listitem')
+  fireEvent.click(within(rows[0]!).getByRole('button', {name: '캐릭터로 듣기'}))
+  fireEvent.click(within(rows[1]!).getByRole('button', {name: '캐릭터로 듣기'}))
+  firstAudio.resolve(new Blob(['first audio']))
+  secondAudio.resolve(new Blob(['second audio']))
+
+  await vi.waitFor(() => expect(events.playDialogue).toHaveBeenCalledOnce())
+  expect(events.playDialogue).toHaveBeenCalledWith(secondDialogue.id)
+  expect(onRequestClose).toHaveBeenCalledOnce()
+})
+
+it('should not close the library for character playback superseded after starting', async () => {
+  const firstPlayback = Promise.withResolvers<boolean>()
+  const secondDialogue = {...DIALOGUE, id: 'dialogue-2', text: '두 번째 대화'}
+  const events = createEvents({
+    getAudio: vi.fn(async () => new Blob(['audio'])),
+    playDialogue: vi
+      .fn()
+      .mockImplementationOnce(() => firstPlayback.promise)
+      .mockResolvedValueOnce(true),
+  })
+  vi.mocked(usePEvents).mockReturnValue(events)
+  const onRequestClose = vi.fn()
+
+  render(() => (
+    <DialogueLibrary
+      entries={[{dialogue: DIALOGUE}, {dialogue: secondDialogue}]}
+      onRequestClose={onRequestClose}
+    />
+  ))
+
+  const rows = within(screen.getByRole('list', {name: '저장된 대화'})).getAllByRole('listitem')
+  fireEvent.click(within(rows[0]!).getByRole('button', {name: '캐릭터로 듣기'}))
+  await vi.waitFor(() => expect(events.playDialogue).toHaveBeenCalledWith(DIALOGUE.id))
+  fireEvent.click(within(rows[1]!).getByRole('button', {name: '캐릭터로 듣기'}))
+  await vi.waitFor(() => expect(events.playDialogue).toHaveBeenCalledWith(secondDialogue.id))
+  await vi.waitFor(() => expect(onRequestClose).toHaveBeenCalledOnce())
+
+  firstPlayback.resolve(true)
+  await firstPlayback.promise
+  expect(onRequestClose).toHaveBeenCalledOnce()
+})
+
+it('should keep the library open when character playback does not start', async () => {
+  const events = createEvents({
+    getAudio: vi.fn(async () => new Blob(['audio'])),
+    playDialogue: vi.fn(async () => false),
+  })
+  vi.mocked(usePEvents).mockReturnValue(events)
+  const onRequestClose = vi.fn()
+
+  render(() => <DialogueLibrary entries={[{dialogue: DIALOGUE}]} onRequestClose={onRequestClose} />)
+
+  fireEvent.click(screen.getByRole('button', {name: '캐릭터로 듣기'}))
+
+  await vi.waitFor(() => expect(events.playDialogue).toHaveBeenCalledWith(DIALOGUE.id))
+  expect(onRequestClose).not.toHaveBeenCalled()
 })
