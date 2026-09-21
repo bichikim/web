@@ -291,7 +291,9 @@ const StudioUi = (props: StudioUiProps) => (
             props.displayPreferences.isReady() && props.displayPreferences.pomodoroVisible()
           }
           playerVisible={
-            props.displayPreferences.isReady() && props.displayPreferences.playerVisible()
+            props.displayPreferences.isReady()
+              ? props.displayPreferences.playerVisible()
+              : undefined
           }
           dialogueComposerVisible={props.displayPreferences.dialogueComposerVisible()}
           isPlayerExpanded={props.isPlayerExpanded}
