@@ -231,7 +231,10 @@ const createPrepare = (options: CreatePrepareOptions) => {
       onProgress: (progress) => {
         if (options.clientReference.current === client) {
           options.setState({
-            progress: getDownloadPercentage(progress.loadedBytes, progress.totalBytes),
+            progress:
+              progress.totalBytes > 0
+                ? getDownloadPercentage(progress.loadedBytes, progress.totalBytes)
+                : 0,
             status: 'preparing',
           })
         }

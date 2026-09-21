@@ -27,7 +27,7 @@ export interface DialogueModelSession {
 }
 
 const getProgress = (loadedBytes: number, totalBytes: number) =>
-  getDownloadPercentage(loadedBytes, totalBytes)
+  totalBytes > 0 ? getDownloadPercentage(loadedBytes, totalBytes) : 0
 
 /** Owns the disposable Supertonic client used by one dialogue editor. */
 export const createDialogueModelSession = (
