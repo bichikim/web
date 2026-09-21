@@ -23,7 +23,13 @@ const workerScope = globalThis.self as DedicatedWorkerGlobalScope
 let transcriber: AutomaticSpeechRecognitionPipeline | null = null
 let activeBackend: SpeechBackend | null = null
 let activeModelId: SpeechModelId | null = null
-let preparePromise: Promise<SpeechBackend> | null = null
+
+interface PendingPreparation {
+  readonly modelId: SpeechModelId
+  readonly promise: Promise<SpeechBackend>
+}
+
+let pendingPreparation: PendingPreparation | null = null
 
 const sendResponse = (response: SpeechWorkerResponse) => workerScope.postMessage(response)
 
@@ -58,34 +64,51 @@ const loadTranscriber = async (backend: SpeechBackend, model: SpeechModelDefinit
 }
 
 const prepareModel = async (preferredBackend: SpeechBackend, modelId: SpeechModelId) => {
+  const existingPreparation = pendingPreparation
+
+  if (existingPreparation !== null && existingPreparation.modelId !== modelId) {
+    await existingPreparation.promise.catch(() => undefined)
+
+    if (pendingPreparation === existingPreparation) {
+      pendingPreparation = null
+    }
+
+    return prepareModel(preferredBackend, modelId)
+  }
+
   if (transcriber !== null && activeBackend !== null && activeModelId === modelId) {
     return activeBackend
   }
 
-  if (preparePromise === null) {
-    const model = getSpeechModel(modelId)
-    sendResponse({progress: MINIMUM_PROGRESS, type: 'loading'})
-    preparePromise = (async () => {
-      if (preferredBackend === 'webgpu') {
-        try {
-          return await loadTranscriber('webgpu', model)
-        } catch {
-          transcriber = null
-          activeBackend = null
-          activeModelId = null
-          sendResponse({backend: 'wasm', type: 'backend-changed'})
-        }
-      }
-
-      return loadTranscriber('wasm', model)
-    })()
+  if (existingPreparation !== null) {
+    return existingPreparation.promise
   }
 
+  const model = getSpeechModel(modelId)
+  sendResponse({progress: MINIMUM_PROGRESS, type: 'loading'})
+  const currentPreparation = (async () => {
+    if (preferredBackend === 'webgpu') {
+      try {
+        return await loadTranscriber('webgpu', model)
+      } catch {
+        transcriber = null
+        activeBackend = null
+        activeModelId = null
+        sendResponse({backend: 'wasm', type: 'backend-changed'})
+      }
+    }
+
+    return loadTranscriber('wasm', model)
+  })()
+  const nextPreparation = {modelId, promise: currentPreparation}
+  pendingPreparation = nextPreparation
+
   try {
-    return await preparePromise
-  } catch (error) {
-    preparePromise = null
-    throw error
+    return await currentPreparation
+  } finally {
+    if (pendingPreparation === nextPreparation) {
+      pendingPreparation = null
+    }
   }
 }
 
