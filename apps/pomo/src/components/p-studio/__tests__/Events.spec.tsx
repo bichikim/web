@@ -598,6 +598,17 @@ describe('PStudioEvents', () => {
     expect(pomoSay.speak).toHaveBeenCalledWith({text: '스택에 추가할 답변'})
   })
 
+  it('should cancel a queued input reply when the composer is hidden', async () => {
+    const pomoSay = createPomoSay()
+    renderEvents({dialogueComposerVisible: false, pomoSay})
+    const oneOffChatOptions = vi.mocked(useOneOffChat).mock.calls[0]?.[0]
+
+    const reply = oneOffChatOptions?.onReply('숨겨진 입력기의 답변')
+
+    await expect(reply).rejects.toMatchObject({name: 'AbortError'})
+    expect(pomoSay.speak).not.toHaveBeenCalled()
+  })
+
   it('should omit the dialogue composer when its display setting is off', () => {
     const {container} = renderEvents({dialogueComposerVisible: false})
 

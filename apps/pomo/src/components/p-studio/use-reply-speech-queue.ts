@@ -7,6 +7,7 @@ interface ReplySpeechRequest {
 }
 
 interface UseReplySpeechQueueOptions {
+  readonly isEnabled?: Accessor<boolean>
   readonly isOccupied: Accessor<boolean>
   readonly speak: (text: string) => Promise<void>
 }
@@ -20,6 +21,8 @@ export const useReplySpeechQueue = (options: UseReplySpeechQueueOptions) => {
   const [isSpeaking, setIsSpeaking] = createSignal(false)
   let activeRequest: ReplySpeechRequest | null = null
   let disposed = false
+
+  const isEnabled = () => options.isEnabled?.() ?? true
 
   const enqueue = (text: string) =>
     new Promise<void>((resolve, reject) => {
@@ -40,10 +43,25 @@ export const useReplySpeechQueue = (options: UseReplySpeechQueueOptions) => {
     }
   }
 
+  const cancelPendingRequests = () => {
+    const pendingRequests = requests()
+    if (pendingRequests.length === 0) {
+      return
+    }
+
+    setRequests([])
+    const error = createCancelledError()
+    pendingRequests.forEach((request) => request.reject(error))
+  }
+
   createEffect(() => {
     const [request] = requests()
 
-    if (disposed || request === undefined || isSpeaking() || options.isOccupied()) {
+    if (disposed || !isEnabled()) {
+      cancelPendingRequests()
+      return
+    }
+    if (request === undefined || isSpeaking() || options.isOccupied()) {
       return
     }
 
