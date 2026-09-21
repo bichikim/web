@@ -14,6 +14,7 @@ interface CreateDelayedEndEventPlaybackOptions {
 interface DelayedEndEventPlayback {
   readonly clearPendingEvent: () => void
   readonly hasPendingEvent: Accessor<boolean>
+  readonly isActive: Accessor<boolean>
   readonly retainPendingEventOnSuspension: () => void
   readonly request: () => Promise<void>
 }
@@ -65,5 +66,11 @@ export const createDelayedEndEventPlayback = (
     setHasPendingEvent(false)
   }
 
-  return {clearPendingEvent, hasPendingEvent, request, retainPendingEventOnSuspension}
+  return {
+    clearPendingEvent,
+    hasPendingEvent,
+    isActive: () => activeRequest !== null,
+    request,
+    retainPendingEventOnSuspension,
+  }
 }
