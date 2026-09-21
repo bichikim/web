@@ -52,6 +52,18 @@ const preserveCurrentVotesInRefresh = (
   })
 }
 
+const appendNewRequests = (
+  currentRequests: ReadonlyArray<FeatureRequest>,
+  nextRequests: ReadonlyArray<FeatureRequest>,
+): ReadonlyArray<FeatureRequest> => {
+  const currentRequestIds = new Set(currentRequests.map((request) => request.id))
+
+  return [
+    ...currentRequests,
+    ...nextRequests.filter((request) => !currentRequestIds.has(request.id)),
+  ]
+}
+
 export const useFeatureRequests = (): FeatureRequestsController => {
   const [requests, setRequests] = createSignal<ReadonlyArray<FeatureRequest>>([])
   const [hasMore, setHasMore] = createSignal(false)
@@ -63,6 +75,7 @@ export const useFeatureRequests = (): FeatureRequestsController => {
   const [votingRequestId, setVotingRequestId] = createSignal<string | null>(null)
   let listGeneration = 0
   let loadedPagesState: LoadedPagesState = 'none'
+  let nextOffset = 0
 
   const refresh = async (options: FeatureRequestsRefreshOptions = {}): Promise<void> => {
     const preserveLoadedPagesExplicitly = options.preserveLoadedPages === true
@@ -70,9 +83,6 @@ export const useFeatureRequests = (): FeatureRequestsController => {
     const previousHasMore = hasMore()
     const preservePreviousHasMore =
       loadedPagesState === 'refreshed' || !preserveLoadedPagesExplicitly
-    if (!preserveLoadedPages) {
-      loadedPagesState = 'none'
-    }
 
     listGeneration += 1
     const generation = listGeneration
@@ -87,6 +97,7 @@ export const useFeatureRequests = (): FeatureRequestsController => {
         return
       }
 
+      nextOffset = page.requests.length
       if (preserveLoadedPages) {
         setHasMore(preservePreviousHasMore ? previousHasMore : page.hasMore)
         setRequests((currentRequests) => {
@@ -125,7 +136,7 @@ export const useFeatureRequests = (): FeatureRequestsController => {
       return
     }
 
-    const offset = requests().length
+    const offset = nextOffset
     const generation = listGeneration
     setIsLoadingMore(true)
     setLoadMoreFailed(false)
@@ -136,7 +147,8 @@ export const useFeatureRequests = (): FeatureRequestsController => {
         return
       }
 
-      setRequests((currentRequests) => [...currentRequests, ...page.requests])
+      nextOffset += page.requests.length
+      setRequests((currentRequests) => appendNewRequests(currentRequests, page.requests))
       setHasMore(page.hasMore)
       loadedPagesState = 'loaded'
     } catch {
