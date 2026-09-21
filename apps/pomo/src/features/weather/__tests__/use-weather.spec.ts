@@ -284,6 +284,27 @@ it('should keep the previous feed while the current location collects', async ()
   root.dispose()
 })
 
+it('should hide an automatic scene when revalidation returns an expired available feed', async () => {
+  queryMocks.weatherFeedQuery.mockResolvedValueOnce(availableResult).mockResolvedValueOnce({
+    feed,
+    locationId: seoulLocation.id,
+    status: 'available',
+  })
+  const root = createWeatherRoot()
+  await flushPromises()
+
+  expect(root.controller.sceneCondition()).toBe('clear')
+
+  vi.setSystemTime(new Date('2026-08-23T03:06:00.000Z'))
+  root.controller.onLocationChange(seoulLocation)
+  await flushPromises()
+
+  expect(root.controller.state()).toEqual({feed: {...feed, stale: true}, status: 'ready'})
+  expect(root.controller.isReady()).toBe(false)
+  expect(root.controller.sceneCondition()).toBeUndefined()
+  root.dispose()
+})
+
 it('should hide an automatic scene when revalidation retains an expired feed', async () => {
   queryMocks.weatherFeedQuery
     .mockResolvedValueOnce(availableResult)
@@ -300,11 +321,13 @@ it('should hide an automatic scene when revalidation retains an expired feed', a
   root.controller.onLocationChange(seoulLocation)
   await flushPromises()
   expect(root.controller.state()).toEqual({feed: {...feed, stale: true}, status: 'ready'})
+  expect(root.controller.isReady()).toBe(false)
   expect(root.controller.sceneCondition()).toBeUndefined()
 
   root.controller.onLocationChange(seoulLocation)
   await flushPromises()
   expect(root.controller.state()).toEqual({feed: {...feed, stale: true}, status: 'ready'})
+  expect(root.controller.isReady()).toBe(false)
   expect(root.controller.sceneCondition()).toBeUndefined()
   root.dispose()
 })

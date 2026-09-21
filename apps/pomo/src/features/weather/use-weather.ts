@@ -58,6 +58,13 @@ const isReadyForLocation = (
 const isWeatherFeedRequired = (preference: WeatherPreference): boolean =>
   preference.enabled || preference.sceneMode === 'auto'
 
+const getReadyFeedState = (
+  feed: WeatherFeed,
+): Extract<WeatherState, {readonly status: 'ready'}> => {
+  const stale = feed.stale || Date.parse(feed.expiresAt) <= Date.now()
+  return {feed: {...feed, stale}, status: 'ready'}
+}
+
 const getRetainedFeedState = (
   state: WeatherState,
   locationId: WeatherLocation['id'],
@@ -66,8 +73,7 @@ const getRetainedFeedState = (
     return null
   }
 
-  const stale = Date.parse(state.feed.expiresAt) <= Date.now()
-  return {feed: {...state.feed, stale}, status: 'ready'}
+  return getReadyFeedState(state.feed)
 }
 
 /** Owns weather preferences, presentation state, and the feed required by automatic scenes. */
@@ -96,7 +102,8 @@ export const useWeather = (): WeatherController => {
       return currentPreference !== null
     }
 
-    return feedState().status === 'ready'
+    const currentState = feedState()
+    return currentState.status === 'ready' && !currentState.feed.stale
   }
 
   const weatherResult = createAsync<WeatherFeedQueryResult | undefined>(async () => {
@@ -130,7 +137,7 @@ export const useWeather = (): WeatherController => {
     const previousState = untrack(feedState)
     switch (result.status) {
       case 'available':
-        setFeedState({feed: result.feed, status: 'ready'})
+        setFeedState(getReadyFeedState(result.feed))
         return
       case 'collecting':
         setFeedState(
