@@ -4,11 +4,11 @@ import {describe, expect, it, vi} from 'vitest'
 
 import {
   appendLanguageLearningWords,
-  deleteLanguageLearningWord,
+  deleteLanguageLearningWords,
   type LanguageLearningEventTarget,
   type LanguageLearningStorage,
   readLanguageLearningWords,
-  setLanguageLearningWordMemorized,
+  setLanguageLearningWordsMemorized,
   writeLanguageLearningWords,
 } from '../index'
 
@@ -26,7 +26,7 @@ const createEvents = (): LanguageLearningEventTarget => {
   return events
 }
 
-it('should preserve word deduplication, memorization, deletion, and events per injected store', () => {
+it('should match word identity without regard to case for memorization and deletion', () => {
   const storage = createStorage()
   const events = createEvents()
   const options = {events, storage}
@@ -39,8 +39,8 @@ it('should preserve word deduplication, memorization, deletion, and events per i
     addedCount: 1,
     skippedCount: 0,
   })
-  setLanguageLearningWordMemorized({language: 'en', memorized: true, value: 'Home'}, options)
-  deleteLanguageLearningWord('en', 'wave', options)
+  setLanguageLearningWordsMemorized({language: 'en', memorized: true, values: ['home']}, options)
+  deleteLanguageLearningWords('en', ['WAVE'], options)
 
   expect(readLanguageLearningWords({storage})).toMatchObject([
     {language: 'en', memorized: true, value: 'Home', version: 1},

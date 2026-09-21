@@ -8,6 +8,7 @@ import {type LanguageLearningWord, languageLearningWordSchema} from './word-sche
 const STORAGE_KEY = 'pomo:language-learning:words:v1'
 export const LANGUAGE_LEARNING_WORDS_CHANGED_EVENT = 'pomo:language-learning:words-changed'
 const storedWordsSchema = z.array(languageLearningWordSchema).readonly()
+const normalizeLanguageLearningWordValue = (value: string): string => value.toLocaleLowerCase()
 
 export interface AppendLanguageLearningWordsResult {
   readonly addedCount: number
@@ -33,7 +34,7 @@ const deduplicateLanguageLearningWords = (
 
   return values.filter((word) => {
     const languageValues = normalizedValuesByLanguage.get(word.language) ?? new Set<string>()
-    const normalizedValue = word.value.toLocaleLowerCase()
+    const normalizedValue = normalizeLanguageLearningWordValue(word.value)
     const isUnique = !languageValues.has(normalizedValue)
 
     languageValues.add(normalizedValue)
@@ -60,11 +61,11 @@ export const appendLanguageLearningWords = (
   const existingValues = new Set(
     storedWords
       .filter((word) => word.language === language)
-      .map((word) => word.value.toLocaleLowerCase()),
+      .map((word) => normalizeLanguageLearningWordValue(word.value)),
   )
   const createdAt = new Date().toISOString()
   const newWords = values.flatMap((value): ReadonlyArray<LanguageLearningWord> => {
-    const normalizedValue = value.toLocaleLowerCase()
+    const normalizedValue = normalizeLanguageLearningWordValue(value)
 
     if (existingValues.has(normalizedValue)) {
       return []
@@ -89,10 +90,12 @@ export const deleteLanguageLearningWords = (
   values: ReadonlyArray<string>,
   options?: LanguageLearningStorageOptions,
 ): void => {
-  const selectedValues = new Set(values)
+  const selectedValues = new Set(values.map(normalizeLanguageLearningWordValue))
   writeLanguageLearningWords(
     readLanguageLearningWords(options).filter(
-      (word) => word.language !== language || !selectedValues.has(word.value),
+      (word) =>
+        word.language !== language ||
+        !selectedValues.has(normalizeLanguageLearningWordValue(word.value)),
     ),
     options,
   )
@@ -120,10 +123,11 @@ export const setLanguageLearningWordsMemorized = (
   options: SetLanguageLearningWordsMemorizedOptions,
   storageOptions?: LanguageLearningStorageOptions,
 ): void => {
-  const selectedValues = new Set(options.values)
+  const selectedValues = new Set(options.values.map(normalizeLanguageLearningWordValue))
   writeLanguageLearningWords(
     readLanguageLearningWords(storageOptions).map((word) =>
-      word.language === options.language && selectedValues.has(word.value)
+      word.language === options.language &&
+      selectedValues.has(normalizeLanguageLearningWordValue(word.value))
         ? {...word, memorized: options.memorized}
         : word,
     ),
