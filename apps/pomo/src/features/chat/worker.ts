@@ -1,5 +1,14 @@
 /// <reference lib="webworker" />
 
+import {
+  createDeviceTarget,
+  createGenerationFailure,
+  createRequestSequence,
+  type TextGenerationMessage,
+  type TextModelId,
+  trimRepetitiveTail,
+} from '../text-generation'
+
 // oxlint-disable no-await-in-loop -- Contaminated sentences share one WebGPU model and must be refined sequentially.
 
 import {getErrorMessage} from 'src/utils/get-error-message'
@@ -12,12 +21,7 @@ import {
   type KoreanTextSegment,
   replaceUnrefinedSentences,
 } from '../korean-text-postprocessor'
-import {
-  type TextGenerationMessage,
-  type TextGenerationRuntime,
-  type TextModelId,
-  trimRepetitiveTail,
-} from '../text-generation'
+import {createTextGenerationExecutor} from '../text-generation/execution'
 import {partitionChatHistory} from './context'
 import type {ChatContext, ChatMessage, ChatWorkerRequest, ChatWorkerResponse} from './messages'
 import {
@@ -34,56 +38,82 @@ const MAXIMUM_SUMMARY_TOKENS = 384
 const workerScope = globalThis.self as DedicatedWorkerGlobalScope
 
 const sendResponse = (response: ChatWorkerResponse) => workerScope.postMessage(response)
-let textRuntimePromise: Promise<TextGenerationRuntime> | null = null
+const textExecutor = createTextGenerationExecutor({
+  onProgress: (progress) => sendResponse({...progress, type: 'loading'}),
+})
 let generationInFlight = false
-const getTextRuntime = () => {
-  textRuntimePromise ??= import('../text-generation/transformers-runtime').then(
-    ({createTransformersRuntime}) =>
-      createTransformersRuntime({
-        onProgress: (progress) => sendResponse({...progress, type: 'loading'}),
-      }),
-  )
-  return textRuntimePromise
-}
 let suppressedCjkTokenIds: Array<number> | null = null
+const createRequestId = createRequestSequence('chat')
 
 const prepareModel = async (modelId: TextModelId) => {
-  const textRuntime = await getTextRuntime()
-  await textRuntime.prepare(modelId)
+  const result = await textExecutor.prepare(createDeviceTarget(modelId))
+  if (!result.ok) {
+    throw createGenerationFailure(result.error, '채팅 모델을 실행하지 못했어요.')
+  }
+
   sendResponse({type: 'ready'})
 }
 
-const countPromptTokens = async (context: ChatContext, supplementaryContext?: string) => {
-  const textRuntime = await getTextRuntime()
-  return textRuntime.countTokens(createChatMessages({...context, supplementaryContext}))
+const countPromptTokens = async (
+  context: ChatContext,
+  modelId: TextModelId,
+  supplementaryContext?: string,
+) => {
+  const result = await textExecutor.countTokens(
+    createDeviceTarget(modelId),
+    createChatMessages({...context, supplementaryContext}),
+  )
+  if (!result.ok) {
+    throw createGenerationFailure(result.error, '채팅 모델을 실행하지 못했어요.')
+  }
+
+  return result.value
 }
 
 interface GenerateChatTextOptions {
   readonly maximumTokens: number
   readonly messages: Array<TextGenerationMessage>
+  readonly modelId: TextModelId
   readonly onToken?: (text: string) => void
   readonly suppressedTokenIds?: Array<number>
 }
 
 const generateText = async (options: GenerateChatTextOptions) => {
-  const textRuntime = await getTextRuntime()
-  const output = await textRuntime.generate({
-    maximumTokens: options.maximumTokens,
-    messages: options.messages,
-    noRepeatNgramSize: 4,
-    onToken: options.onToken,
-    repetitionPenalty: 1.1,
-    suppressedTokenIds: options.suppressedTokenIds,
-    temperature: 0.65,
-    topK: 40,
-    topP: 0.9,
-  })
+  const result = await textExecutor.generate(
+    {
+      execution: createDeviceTarget(options.modelId),
+      messages: options.messages,
+      parameters: {
+        maximumTokens: options.maximumTokens,
+        noRepeatNgramSize: 4,
+        repetitionPenalty: 1.1,
+        suppressedTokenIds: options.suppressedTokenIds,
+        temperature: 0.65,
+        topK: 40,
+        topP: 0.9,
+      },
+      requestId: createRequestId(),
+    },
+    {
+      onResponse: (response) => {
+        if (response.type === 'token') {
+          options.onToken?.(response.text)
+        }
+      },
+    },
+  )
+  if (!result.ok) {
+    throw createGenerationFailure(result.error, '채팅 모델을 실행하지 못했어요.')
+  }
+
+  const output = result.value
 
   return trimRepetitiveTail(output).trim()
 }
 
 const refineKoreanSegment = async (
   segment: KoreanTextSegment,
+  modelId: TextModelId,
   suppressedTokenIds: Array<number>,
 ) => {
   switch (segment.kind) {
@@ -92,6 +122,7 @@ const refineKoreanSegment = async (
       const refinedText = await generateText({
         maximumTokens: MAXIMUM_ANSWER_TOKENS,
         messages: createKoreanRefinementMessages(segment.text.trim()),
+        modelId,
         suppressedTokenIds,
       })
       return containsForeignCjk(refinedText)
@@ -105,7 +136,7 @@ const refineKoreanSegment = async (
   segment satisfies never
 }
 
-const refineKoreanAnswer = async (text: string) => {
+const refineKoreanAnswer = async (text: string, modelId: TextModelId) => {
   const segments = createKoreanTextSegments(text)
 
   if (!segments.some((segment) => segment.kind === 'refining')) {
@@ -113,12 +144,15 @@ const refineKoreanAnswer = async (text: string) => {
   }
 
   sendResponse({type: 'refining'})
-  const textRuntime = await getTextRuntime()
-  suppressedCjkTokenIds ??= createForeignCjkTokenIds(textRuntime.getTokenizer())
+  const tokenizerResult = textExecutor.getTokenizer(createDeviceTarget(modelId))
+  if (!tokenizerResult.ok) {
+    throw createGenerationFailure(tokenizerResult.error, '채팅 모델을 실행하지 못했어요.')
+  }
+  suppressedCjkTokenIds ??= createForeignCjkTokenIds(tokenizerResult.value)
   const refinedSegments: Array<string> = []
 
   for (const segment of segments) {
-    refinedSegments.push(await refineKoreanSegment(segment, suppressedCjkTokenIds))
+    refinedSegments.push(await refineKoreanSegment(segment, modelId, suppressedCjkTokenIds))
   }
 
   return refinedSegments.join('')
@@ -129,8 +163,11 @@ interface CompactedContext {
   readonly wasCompacted: boolean
 }
 
-const compactContext = async (context: ChatContext): Promise<CompactedContext> => {
-  const tokenCount = await countPromptTokens(context)
+const compactContext = async (
+  context: ChatContext,
+  modelId: TextModelId,
+): Promise<CompactedContext> => {
+  const tokenCount = await countPromptTokens(context, modelId)
 
   if (tokenCount <= CONTEXT_COMPACTION_TOKENS) {
     return {context, wasCompacted: false}
@@ -149,6 +186,7 @@ const compactContext = async (context: ChatContext): Promise<CompactedContext> =
       messages: messagesToSummarize,
       previousSummary: context.summary,
     }),
+    modelId,
   })
 
   if (summary.length === 0) {
@@ -170,11 +208,17 @@ interface GenerateAnswerOptions {
 }
 
 const generateAnswer = async (options: GenerateAnswerOptions) => {
-  const textRuntime = await getTextRuntime()
-  await textRuntime.prepare(options.modelId)
+  const preparation = await textExecutor.prepare(createDeviceTarget(options.modelId))
+  if (!preparation.ok) {
+    throw createGenerationFailure(preparation.error, '채팅 모델을 실행하지 못했어요.')
+  }
 
-  const compacted = await compactContext(options.context)
-  const contextTokens = await countPromptTokens(compacted.context, options.supplementaryContext)
+  const compacted = await compactContext(options.context, options.modelId)
+  const contextTokens = await countPromptTokens(
+    compacted.context,
+    options.modelId,
+    options.supplementaryContext,
+  )
   let streamedCharacters = 0
   sendResponse({contextTokens, type: 'started', wasCompacted: compacted.wasCompacted})
   const rawGeneratedText = await generateText({
@@ -183,6 +227,7 @@ const generateAnswer = async (options: GenerateAnswerOptions) => {
       ...compacted.context,
       supplementaryContext: options.supplementaryContext,
     }),
+    modelId: options.modelId,
     onToken: (token) => {
       const remainingCharacters = MAXIMUM_CHAT_ANSWER_CHARACTERS - streamedCharacters
       const visibleText = takeChatAnswerPrefix(token, remainingCharacters)
@@ -195,7 +240,9 @@ const generateAnswer = async (options: GenerateAnswerOptions) => {
   })
   const generatedText = limitChatAnswer(rawGeneratedText)
   sendResponse({draft: {content: generatedText, id: options.replyId}, type: 'draft'})
-  const refinedText = options.refineAnswer ? await refineKoreanAnswer(generatedText) : generatedText
+  const refinedText = options.refineAnswer
+    ? await refineKoreanAnswer(generatedText, options.modelId)
+    : generatedText
   const text = limitChatAnswer(refinedText)
   const message: ChatMessage = {content: text, id: options.replyId, role: 'assistant'}
 
