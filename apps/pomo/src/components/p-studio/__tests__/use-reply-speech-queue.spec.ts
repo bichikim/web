@@ -36,3 +36,23 @@ it('should preserve existing dialogue and play queued replies in order', async (
   await secondReply
   cleanup()
 })
+
+it('should reject an active reply when disposed', async () => {
+  const [isOccupied] = createSignal(false)
+  let completeSpeech = () => {}
+  const speak = vi.fn(
+    () =>
+      new Promise<void>((resolve) => {
+        completeSpeech = resolve
+      }),
+  )
+  const {cleanup, result} = renderHook(() => useReplySpeechQueue({isOccupied, speak}))
+
+  const reply = result.enqueue('dispose 중인 답변')
+  await vi.waitFor(() => expect(speak).toHaveBeenCalledWith('dispose 중인 답변'))
+
+  cleanup()
+  completeSpeech()
+
+  return expect(reply).rejects.toMatchObject({name: 'AbortError'})
+})
