@@ -5,12 +5,21 @@ import {afterEach, beforeEach, expect, it, vi} from 'vitest'
 import {type BackgroundPreferences, DEFAULT_BACKGROUND} from '../model'
 import {type BackgroundController} from '../use-background'
 import {usePlayback} from '../use-playback'
+import {getMonotonicTime} from 'src/utils/get-monotonic-time'
+
+vi.mock('src/utils/get-monotonic-time', () => ({getMonotonicTime: vi.fn()}))
+
+const monotonicTime = vi.mocked(getMonotonicTime)
 
 beforeEach(() => {
   vi.useFakeTimers()
   vi.setSystemTime(0)
+  monotonicTime.mockImplementation(() => vi.getMockedSystemTime()?.getTime() ?? 0)
 })
-afterEach(() => vi.useRealTimers())
+afterEach(() => {
+  vi.restoreAllMocks()
+  vi.useRealTimers()
+})
 const setup = (videoMode: BackgroundPreferences['videoMode'], initializeVideo = true) => {
   const [preferences, setPreferences] = createSignal({...DEFAULT_BACKGROUND, videoMode})
   const background = {
@@ -78,6 +87,19 @@ it('should preserve elapsed time when duration changes', () => {
   vi.advanceTimersByTime(4000)
   setPreferences((previous) => ({...previous, photoSeconds: 5}))
   vi.advanceTimersByTime(1000)
+  expect(result.current()?.id).toBe('photo')
+  cleanup()
+})
+it('should ignore wall-clock jumps when rescheduling the deadline', () => {
+  const {result, cleanup, setPreferences} = setup('loop')
+  vi.advanceTimersByTime(4000)
+  const wallTime = Date.now()
+  vi.spyOn(Date, 'now').mockReturnValue(wallTime + 60_000)
+  setPreferences((previous) => ({...previous}))
+  expect(result.current()?.id).toBe('video')
+  vi.advanceTimersByTime(5999)
+  expect(result.current()?.id).toBe('video')
+  vi.advanceTimersByTime(1)
   expect(result.current()?.id).toBe('photo')
   cleanup()
 })
