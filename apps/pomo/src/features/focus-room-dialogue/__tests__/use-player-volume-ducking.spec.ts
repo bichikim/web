@@ -10,6 +10,7 @@ import {
   DEFAULT_DIALOGUE_VOLUME_DUCKING_SETTINGS,
   type DialogueVolumeDuckingSettings,
 } from '../volume-ducking-settings'
+import {useVolumeDucking} from 'src/components/dialogue-settings/use-volume-ducking'
 import {resolveDialoguePlayerGain, usePlayerVolumeDucking} from '../use-player-volume-ducking'
 
 const settingsMocks = vi.hoisted(() => ({
@@ -86,6 +87,32 @@ it('should react to dialogue playback and live setting changes', async () => {
   setSettings({enabled: false, playerVolumePercent: 35, version: 2})
   expect(onGainChange).toHaveBeenLastCalledWith(1)
   view.cleanup()
+})
+
+it('should apply a settings edit before its debounced save completes', async () => {
+  vi.useFakeTimers()
+  let changeVolume: (playerVolumePercent: number) => void = () => undefined
+  const onGainChange = vi.fn()
+  const view = renderHook(
+    () => {
+      const settings = useVolumeDucking()
+      changeVolume = settings.changeVolume
+      usePlayerVolumeDucking({isDialogueActive: () => true, onGainChange})
+    },
+    {wrapper: PreferenceProvider},
+  )
+  try {
+    await vi.advanceTimersByTimeAsync(0)
+    settingsMocks.write.mockClear()
+
+    changeVolume(10)
+
+    expect(onGainChange).toHaveBeenLastCalledWith(0.1)
+    expect(settingsMocks.write).not.toHaveBeenCalled()
+  } finally {
+    view.cleanup()
+    vi.useRealTimers()
+  }
 })
 
 it('should not track signals read by the gain callback', async () => {
