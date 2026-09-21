@@ -1,17 +1,26 @@
 /** @vitest-environment jsdom */
 
 import {A} from '@solidjs/router'
-import {render, screen} from '@solidjs/testing-library'
+import {render, screen, waitFor} from '@solidjs/testing-library'
 import {afterEach, beforeEach, expect, it, vi} from 'vitest'
 
 import catalog from '../../../public/versions/v2/ko.json' with {type: 'json'}
 
 import WhatsNewPage from '../whats-new'
 
+const versionCatalogMocks = vi.hoisted(() => ({
+  write: vi.fn(),
+}))
+
 vi.mock('@solidjs/router', () => ({A: vi.fn()}))
+vi.mock('src/features/version-catalog', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('src/features/version-catalog')>()
+  return {...actual, writeViewedRelease: versionCatalogMocks.write}
+})
 
 beforeEach(() => {
   vi.clearAllMocks()
+  versionCatalogMocks.write.mockResolvedValue(undefined)
   vi.stubGlobal(
     'fetch',
     vi.fn(async () => new Response(JSON.stringify(catalog))),
@@ -60,10 +69,27 @@ it('should show the newest changes and the first release from the public catalog
   }
 })
 
+it('should persist the newest release after loading the public catalog', async () => {
+  vi.mocked(fetch).mockResolvedValueOnce(
+    new Response(JSON.stringify({releases: catalog.releases.toReversed()})),
+  )
+  render(() => <WhatsNewPage />)
+
+  expect(await screen.findByRole('heading', {name: '새로운 소식'})).toBeVisible()
+  await waitFor(() =>
+    expect(versionCatalogMocks.write).toHaveBeenCalledWith({
+      formatVersion: 1,
+      releasedAt: '2026-09-18T03:03:00+09:00',
+      version: '2026. 09. 18 03:03',
+    }),
+  )
+})
+
 it('should report a catalog fetch failure', async () => {
   vi.mocked(fetch).mockRejectedValue(new Error('offline'))
 
   render(() => <WhatsNewPage />)
 
   expect(await screen.findByRole('alert')).toHaveTextContent('업데이트 내역을 불러오지 못했습니다.')
+  expect(versionCatalogMocks.write).not.toHaveBeenCalled()
 })
