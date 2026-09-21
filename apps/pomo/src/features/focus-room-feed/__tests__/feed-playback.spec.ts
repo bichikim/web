@@ -49,6 +49,7 @@ const createRepository = () =>
   ({
     complete: vi.fn(),
     deleteJobs: vi.fn(),
+    dismissItem: vi.fn(),
     dispose: vi.fn(),
     failJob: vi.fn(),
     interruptUnfinishedJobs: vi.fn(),
