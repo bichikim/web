@@ -20,6 +20,7 @@ export interface OneOffChatController {
 }
 
 export interface UseOneOffChatProps {
+  readonly isEnabled?: Accessor<boolean>
   readonly onReply: (text: string) => Promise<void>
 }
 
@@ -42,6 +43,9 @@ export const useOneOffChat = (props: UseOneOffChatProps): OneOffChatController =
   let replyRevision = 0
   let disposed = false
   let handledReplyId: string | null = null
+  let wasEnabled = true
+
+  const isEnabled = () => props.isEnabled?.() ?? true
 
   const isModelDownloading = () => {
     const state = modelDownload.state()
@@ -97,7 +101,12 @@ export const useOneOffChat = (props: UseOneOffChatProps): OneOffChatController =
   const submit = async (text: string) => {
     const normalizedText = text.trim()
 
-    if (normalizedText.length === 0 || isBusy() || chat.state().status === 'unsupported') {
+    if (
+      !isEnabled() ||
+      normalizedText.length === 0 ||
+      isBusy() ||
+      chat.state().status === 'unsupported'
+    ) {
       return false
     }
 
@@ -120,7 +129,10 @@ export const useOneOffChat = (props: UseOneOffChatProps): OneOffChatController =
         return false
       }
 
-      if (isDownloaded) {
+      const enabled = isEnabled()
+      if (!enabled) {
+        restorePendingDraft()
+      } else if (isDownloaded) {
         prepare()
       } else {
         setDownloadConsentOpen(true)
@@ -151,7 +163,11 @@ export const useOneOffChat = (props: UseOneOffChatProps): OneOffChatController =
       }
 
       if (result.status === 'complete') {
-        prepare()
+        if (isEnabled()) {
+          prepare()
+        } else {
+          restorePendingDraft()
+        }
         return
       }
 
@@ -179,8 +195,29 @@ export const useOneOffChat = (props: UseOneOffChatProps): OneOffChatController =
   }
 
   createEffect(() => {
+    const enabled = isEnabled()
+
+    if (enabled) {
+      wasEnabled = true
+      return
+    }
+    if (!wasEnabled) {
+      return
+    }
+
+    wasEnabled = false
+    replyRevision += 1
+    setDownloadConsentOpen(false)
+    setPendingText(null)
+    setReplyError(null)
+  })
+
+  createEffect(() => {
     const {status} = chat.state()
 
+    if (!isEnabled()) {
+      return
+    }
     if (status === 'error') {
       restorePendingDraft()
       return
@@ -194,6 +231,17 @@ export const useOneOffChat = (props: UseOneOffChatProps): OneOffChatController =
   createEffect(() => {
     const reply = chat.messages().findLast((message) => message.role === 'assistant')
 
+    if (!isEnabled()) {
+      if (reply !== undefined) {
+        if (reply.id !== handledReplyId) {
+          handledReplyId = reply.id
+        }
+        if (chat.state().status === 'ready') {
+          chat.clear()
+        }
+      }
+      return
+    }
     if (reply === undefined || reply.id === handledReplyId) {
       return
     }
@@ -206,6 +254,9 @@ export const useOneOffChat = (props: UseOneOffChatProps): OneOffChatController =
     const speech = untrack(() => props.onReply(reply.content))
     chat.clear()
     speech.catch((error: unknown) => {
+      if (!isEnabled() && error instanceof DOMException && error.name === 'AbortError') {
+        return
+      }
       if (!disposed && speechRevision === replyRevision) {
         setReplyError(
           error instanceof Error && error.message.length > 0

@@ -99,3 +99,17 @@ it('should reject an active reply when disposed', async () => {
 
   return expect(reply).rejects.toMatchObject({name: 'AbortError'})
 })
+
+it('should reject pending replies when disabled', async () => {
+  const [isEnabled, setIsEnabled] = createSignal(true)
+  const [isOccupied] = createSignal(true)
+  const speak = vi.fn(async () => undefined)
+  const {cleanup, result} = renderHook(() => useReplySpeechQueue({isEnabled, isOccupied, speak}))
+
+  const reply = result.enqueue('숨겨진 입력기의 답변')
+  setIsEnabled(false)
+
+  await expect(reply).rejects.toMatchObject({name: 'AbortError'})
+  expect(speak).not.toHaveBeenCalled()
+  cleanup()
+})

@@ -120,6 +120,27 @@ describe('useOneOffChat', () => {
     cleanup()
   })
 
+  it('should discard a reply that completes after the composer is hidden', async () => {
+    const [isEnabled, setIsEnabled] = createSignal(true)
+    const onReply = vi.fn(async () => undefined)
+    const {chat, setMessages, setState} = createChat()
+    vi.mocked(useChat).mockReturnValue(chat)
+    vi.mocked(isTextModelDownloaded).mockResolvedValue(true)
+    const {cleanup, result} = renderHook(() => useOneOffChat({isEnabled, onReply}))
+
+    await result.submit('숨기기 전에 보낸 질문')
+    setState({status: 'ready'})
+    await vi.waitFor(() => expect(chat.send).toHaveBeenCalledOnce())
+
+    setIsEnabled(false)
+    setMessages([{content: '숨겨진 답변', id: 'reply-1', role: 'assistant'}])
+    setState({status: 'ready'})
+
+    await vi.waitFor(() => expect(chat.clear).toHaveBeenCalledOnce())
+    expect(onReply).not.toHaveBeenCalled()
+    cleanup()
+  })
+
   it('should expose a speech failure after clearing a completed reply', async () => {
     const onReply = vi.fn().mockRejectedValue(new Error('TTS failed'))
     const {chat, setMessages, setState} = createChat()
