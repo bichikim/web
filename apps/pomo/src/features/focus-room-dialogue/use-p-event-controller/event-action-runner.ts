@@ -81,8 +81,9 @@ export const createEventActionRunner = (
         const isDeferredExecutor = registration?.mode === 'deferred'
         const executor = isDeferredExecutor ? null : (registration?.executor ?? null)
         const shouldQueueAction =
-          (executor === null || isDeferredExecutor) &&
-          (eventId === DELAYED_END_EVENT || eventId === FOCUS_ROOM_ENTRY_EVENT)
+          isDeferredExecutor ||
+          (executor === null &&
+            (eventId === DELAYED_END_EVENT || eventId === FOCUS_ROOM_ENTRY_EVENT))
 
         if (shouldQueueAction) {
           queueEventAction(eventId, actionId)
