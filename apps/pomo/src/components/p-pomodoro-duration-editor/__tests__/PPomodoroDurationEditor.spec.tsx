@@ -42,6 +42,10 @@ describe('PPomodoroDurationEditor', () => {
     )
     expect(screen.getByRole('spinbutton', {name: '긴 휴식 시간(분)'})).toHaveProperty('value', '15')
 
+    const focusInput = screen.getByRole('spinbutton', {name: '집중 시간(분)'})
+    fireEvent.click(screen.getByRole('button', {name: '집중 시간(분) 늘리기'}))
+    expect(focusInput).toHaveProperty('value', '26')
+
     fireEvent.input(screen.getByRole('spinbutton', {name: '집중 횟수(회)'}), {
       target: {value: '6'},
     })

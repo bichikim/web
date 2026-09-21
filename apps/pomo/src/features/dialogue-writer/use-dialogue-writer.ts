@@ -1,5 +1,7 @@
+import * as m from '@paraglide/message'
 import {type Accessor, createMemo, createSignal, onCleanup, untrack} from 'solid-js'
 import {isNonBlankString} from 'src/utils/is-non-blank-string'
+import {localizeErrorMessage} from 'src/features/localization/localized-messages'
 
 import {createDialogueClient, type CreateDialogueClientOptions, type DialogueClient} from './client'
 import type {DialogueWorkerResponse} from './messages'
@@ -9,7 +11,6 @@ import type {TextModelId} from '../text-generation/model'
 import type {TextGenerationProgress} from '../text-generation/progress'
 import type {DialogueOutputLanguage} from './prompt'
 
-const INITIAL_STATUS_MESSAGE = '모델은 처음 한 번만 내려받고 보관해요.'
 const MAXIMUM_PROGRESS = 100
 
 interface IdleState {
@@ -136,23 +137,23 @@ export const useDialogueWriter = (props: UseDialogueWriterProps): DialogueWriter
 
     switch (currentState.status) {
       case 'complete':
-        return '완성했어요. 다음 요청은 이 결과를 기억하지 않아요.'
+        return m.dialogue_writer_complete_status()
       case 'error':
-        return currentState.message
+        return localizeErrorMessage(currentState.message, m.dialogue_writer_error())
       case 'generating':
-        return '현재 요청에 대한 답변을 만들고 있어요…'
+        return m.dialogue_writer_generating_status()
       case 'idle':
-        return INITIAL_STATUS_MESSAGE
+        return m.dialogue_writer_initial_status()
       case 'loading':
         if (currentState.percentage === MAXIMUM_PROGRESS) {
-          return '다운로드 완료 · 모델 시작 중…'
+          return m.dialogue_writer_download_complete_status()
         }
 
-        return `모델 전체 내려받는 중 · ${currentState.percentage}%`
+        return m.dialogue_writer_downloading_status({percentage: currentState.percentage})
       case 'ready':
-        return '모델 준비가 끝났어요. 입력한 내용에 바로 답해요.'
+        return m.dialogue_writer_ready_status()
       case 'unsupported':
-        return '이 브라우저에서는 WebGPU를 사용할 수 없어요. 최신 Chrome 또는 Edge에서 열어 주세요.'
+        return m.dialogue_writer_unsupported_status()
     }
   })
 

@@ -33,21 +33,23 @@ export const ThirdPartyNoticesDocument = (props: {readonly licenseData: LicenseD
 
         <header>
           <p class="m-0 text-xs font-750 tracking-[0.24em] text-#f2a7b8 uppercase">
-            Third-party notices
+            {m.third_party_notices_eyebrow()}
           </p>
           <h1 class="mb-0 mt-4 max-w-3xl text-3xl font-800 tracking--0.04em xs:text-5xl xs:leading-tight">
-            제3자 라이선스 및 배포 고지
+            {m.third_party_notices_title()}
           </h1>
           <p class="mb-0 mt-5 max-w-3xl text-sm leading-7 text-#d8cbd9 xs:text-base xs:leading-8">
-            Pomofi가 배포하거나 기능 실행 중 내려받는 외부 소프트웨어와 공개 가중치 모델의 사용
-            범위와 배포 조건을 안내합니다.
+            {m.third_party_notices_description()}
           </p>
           <p class="mb-0 mt-3 text-xs text-#a99cab">
-            마지막 확인일 {props.licenseData.lastReviewed}
+            {m.third_party_notices_last_reviewed({date: props.licenseData.lastReviewed})}
           </p>
         </header>
 
-        <nav aria-label="제3자 라이선스 문서 목차" class="flex flex-wrap gap-x-5 gap-y-2 text-sm">
+        <nav
+          aria-label={m.third_party_notices_navigation()}
+          class="flex flex-wrap gap-x-5 gap-y-2 text-sm"
+        >
           <For each={props.licenseData.groups}>
             {(group) => (
               <a class={LINK_CLASSES} href={`#${group.id}`}>
@@ -64,10 +66,11 @@ export const ThirdPartyNoticesDocument = (props: {readonly licenseData: LicenseD
             </For>
 
             <aside class="rounded-5 border border-#f2a7b8/20 bg-#f2a7b8/7 p-5" role="note">
-              <h2 class="m-0 text-base font-750 text-#ffd4de">원문 라이선스 우선</h2>
+              <h2 class="m-0 text-base font-750 text-#ffd4de">
+                {m.third_party_notices_original_license_title()}
+              </h2>
               <p class="mb-0 mt-2 text-sm leading-6 text-#d8cbd9">
-                이 페이지는 이해를 돕기 위한 배포 고지이며 법률 자문이나 원문 라이선스를 대체하지
-                않습니다. 내용이 다르면 각 항목에 연결된 원문 라이선스가 우선합니다.
+                {m.third_party_notices_original_license_description()}
               </p>
             </aside>
           </div>

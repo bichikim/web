@@ -1,5 +1,4 @@
-import {PInput} from 'src/components/p-input/PInput'
-import {NumberField} from '@kobalte/core/number-field'
+import {PNumberInput} from 'src/components/p-number-input/PNumberInput'
 import {CLASSES} from './shared'
 
 interface DurationFieldProps {
@@ -7,26 +6,28 @@ interface DurationFieldProps {
   readonly label: string
   readonly max: number
   readonly min: number
+  readonly decrementLabel?: string
+  readonly incrementLabel?: string
   readonly onInput: (value: string) => void
   readonly suffix: string
   readonly value: string
 }
 
 export const DurationField = (props: DurationFieldProps) => (
-  <NumberField
-    class={CLASSES.pomodoroPanelDurationField}
-    format={false}
-    maxValue={props.max}
-    minValue={props.min}
-    onChange={props.onInput}
-    step={1}
-    value={props.value}
-  >
-    <span aria-hidden="true">{props.label}</span>
-    <NumberField.Label class="sr-only">{props.accessibleLabel}</NumberField.Label>
-    <span class={CLASSES.pomodoroPanelDurationInput}>
-      <NumberField.Input as={PInput} unstyled />
-      <span>{props.suffix}</span>
-    </span>
-  </NumberField>
+  <label class={CLASSES.pomodoroPanelDurationField}>
+    <span>{props.label}</span>
+    <PNumberInput
+      aria-label={props.accessibleLabel}
+      class="w-full"
+      decrementLabel={props.decrementLabel}
+      incrementLabel={props.incrementLabel}
+      max={props.max}
+      min={props.min}
+      onInputValueChange={props.onInput}
+      onValueChange={(value) => props.onInput(String(value))}
+      step={1}
+      unit={props.suffix}
+      value={props.value}
+    />
+  </label>
 )

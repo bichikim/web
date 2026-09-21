@@ -118,6 +118,8 @@ export const PPomodoroDurationEditor = (props: PPomodoroDurationEditorProps) => 
           <div class={CLASSES.pomodoroPanelDurationFields}>
             <DurationField
               accessibleLabel={m.pomodoro_focus_count_accessible()}
+              decrementLabel={m.pomodoro_decrease({label: m.pomodoro_focus_count_accessible()})}
+              incrementLabel={m.pomodoro_increase({label: m.pomodoro_focus_count_accessible()})}
               label={m.pomodoro_focus_count_label()}
               max={POMODORO_TIMER_LIMITS.maxFocusSessions}
               min={MIN_FOCUS_SESSIONS}
@@ -127,6 +129,8 @@ export const PPomodoroDurationEditor = (props: PPomodoroDurationEditorProps) => 
             />
             <DurationField
               accessibleLabel={m.pomodoro_focus_duration_accessible()}
+              decrementLabel={m.pomodoro_decrease({label: m.pomodoro_focus_duration_accessible()})}
+              incrementLabel={m.pomodoro_increase({label: m.pomodoro_focus_duration_accessible()})}
               label={m.pomodoro_focus_duration()}
               max={POMODORO_TIMER_LIMITS.maxDurationMinutes}
               min={MIN_DURATION_MINUTES}
@@ -136,6 +140,8 @@ export const PPomodoroDurationEditor = (props: PPomodoroDurationEditorProps) => 
             />
             <DurationField
               accessibleLabel={m.pomodoro_short_break_accessible()}
+              decrementLabel={m.pomodoro_decrease({label: m.pomodoro_short_break_accessible()})}
+              incrementLabel={m.pomodoro_increase({label: m.pomodoro_short_break_accessible()})}
               label={m.pomodoro_short_break()}
               max={POMODORO_TIMER_LIMITS.maxDurationMinutes}
               min={MIN_DURATION_MINUTES}
@@ -145,6 +151,8 @@ export const PPomodoroDurationEditor = (props: PPomodoroDurationEditorProps) => 
             />
             <DurationField
               accessibleLabel={m.pomodoro_long_break_accessible()}
+              decrementLabel={m.pomodoro_decrease({label: m.pomodoro_long_break_accessible()})}
+              incrementLabel={m.pomodoro_increase({label: m.pomodoro_long_break_accessible()})}
               label={m.pomodoro_long_break_duration()}
               max={POMODORO_TIMER_LIMITS.maxDurationMinutes}
               min={MIN_DURATION_MINUTES}

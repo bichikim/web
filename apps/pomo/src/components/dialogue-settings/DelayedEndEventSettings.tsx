@@ -115,7 +115,7 @@ export const DelayedEndEventSettings = () => {
               onInputValueChange={updateDuration}
               onValueChange={(value) => updateDuration(String(value))}
               step={1}
-              unit="분"
+              unit={m.pomodoro_minute_suffix()}
               value={draft()}
             />
           </label>

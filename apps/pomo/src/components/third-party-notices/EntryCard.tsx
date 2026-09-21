@@ -1,3 +1,4 @@
+import * as m from '@paraglide/message'
 import {For} from 'solid-js'
 import {type LicenseEntry} from 'src/features/licenses'
 import {LINK_CLASSES} from './shared'
@@ -10,11 +11,11 @@ export const NoticeEntryCard = (props: {readonly entry: LicenseEntry}) => (
     </div>
     <dl class="mb-0 mt-4 grid gap-3 text-sm leading-6">
       <div class="grid gap-1 sm:grid-cols-[6rem_minmax(0,1fr)] sm:gap-3">
-        <dt class="font-700 text-#a99cab">사용 범위</dt>
+        <dt class="font-700 text-#a99cab">{m.third_party_notices_use()}</dt>
         <dd class="m-0 text-#d8cbd9">{props.entry.use}</dd>
       </div>
       <div class="grid gap-1 sm:grid-cols-[6rem_minmax(0,1fr)] sm:gap-3">
-        <dt class="font-700 text-#a99cab">배포 조치</dt>
+        <dt class="font-700 text-#a99cab">{m.third_party_notices_distribution_action()}</dt>
         <dd class="m-0 text-#d8cbd9">{props.entry.condition}</dd>
       </div>
     </dl>
@@ -23,7 +24,7 @@ export const NoticeEntryCard = (props: {readonly entry: LicenseEntry}) => (
         {(link) => (
           <a class={LINK_CLASSES} href={link.url} rel="noreferrer" target="_blank">
             {link.label}
-            <span class="sr-only"> 새 창에서 열기</span>
+            <span class="sr-only"> {m.third_party_notices_new_window()}</span>
           </a>
         )}
       </For>
