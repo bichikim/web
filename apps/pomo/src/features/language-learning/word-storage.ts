@@ -26,6 +26,22 @@ const getCollectionStorage = (options?: LanguageLearningStorageOptions) =>
     storage: () => options?.storage ?? globalThis.localStorage,
   })
 
+const deduplicateLanguageLearningWords = (
+  values: ReadonlyArray<LanguageLearningWord>,
+): ReadonlyArray<LanguageLearningWord> => {
+  const normalizedValuesByLanguage = new Map<LanguageLearningLanguage, Set<string>>()
+
+  return values.filter((word) => {
+    const languageValues = normalizedValuesByLanguage.get(word.language) ?? new Set<string>()
+    const normalizedValue = word.value.toLocaleLowerCase()
+    const isUnique = !languageValues.has(normalizedValue)
+
+    languageValues.add(normalizedValue)
+    normalizedValuesByLanguage.set(word.language, languageValues)
+    return isUnique
+  })
+}
+
 export const readLanguageLearningWords = (
   options?: LanguageLearningStorageOptions,
 ): ReadonlyArray<LanguageLearningWord> => getCollectionStorage(options).read()
@@ -33,7 +49,7 @@ export const readLanguageLearningWords = (
 export const writeLanguageLearningWords = (
   values: ReadonlyArray<LanguageLearningWord>,
   options?: LanguageLearningStorageOptions,
-): void => getCollectionStorage(options).write(values)
+): void => getCollectionStorage(options).write(deduplicateLanguageLearningWords(values))
 
 export const appendLanguageLearningWords = (
   language: LanguageLearningLanguage,
