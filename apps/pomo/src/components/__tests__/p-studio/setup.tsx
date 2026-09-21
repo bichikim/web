@@ -1,5 +1,7 @@
 /** @vitest-environment jsdom */
 
+import {PreferenceProvider} from 'src/hooks/use-preference'
+
 import {render} from '@solidjs/testing-library'
 import {createSignal} from 'solid-js'
 import {vi} from 'vitest'
@@ -84,6 +86,8 @@ interface StudioOptions {
   readonly isScreenSaverActive?: boolean
   readonly isReady?: boolean
   readonly styleReady?: boolean
+  readonly weatherReady?: boolean
+  readonly weatherSceneMode?: 'auto' | 'rain'
 }
 
 const modelDownloadRuntime: ModelDownloadRuntime = {
@@ -105,9 +109,11 @@ export const seoulLocation = {
 
 export const renderStudio = () =>
   render(() => (
-    <PModelDownloadProvider runtime={modelDownloadRuntime}>
-      <PStudio />
-    </PModelDownloadProvider>
+    <PreferenceProvider>
+      <PModelDownloadProvider runtime={modelDownloadRuntime}>
+        <PStudio />
+      </PModelDownloadProvider>
+    </PreferenceProvider>
   ))
 
 export const configureStudio = (options: StudioOptions = {}) => {
@@ -120,7 +126,11 @@ export const configureStudio = (options: StudioOptions = {}) => {
   const [sceneStyle, setSceneStyle] = createSignal<'original' | 'scribble'>('original')
   const [weatherEnabled, setWeatherEnabled] = createSignal(false)
   const [weatherLocation, setWeatherLocation] = createSignal<WeatherLocation>(seoulLocation)
-  const [weatherSceneMode, setWeatherSceneMode] = createSignal<'auto' | 'rain'>('auto')
+  const [weatherReady, setWeatherReady] = createSignal(options.weatherReady ?? true)
+  const [weatherSceneMode, setWeatherSceneMode] = createSignal<'auto' | 'rain'>(
+    options.weatherSceneMode ?? 'auto',
+  )
+  const registerEventActionExecutor = vi.fn(() => vi.fn())
 
   vi.mocked(usePEvents).mockReturnValue({
     activeViseme: () => 'rest',
@@ -128,6 +138,7 @@ export const configureStudio = (options: StudioOptions = {}) => {
     hasEnteredFocusRoom: hasEntered,
     isDialoguePlaying: () => false,
     onStopDialoguePlayback: vi.fn(),
+    registerEventActionExecutor,
   } as unknown as ReturnType<typeof usePEvents>)
   vi.mocked(usePSay).mockReturnValue({
     activeViseme: () => 'aa',
@@ -136,9 +147,11 @@ export const configureStudio = (options: StudioOptions = {}) => {
   } as unknown as ReturnType<typeof usePSay>)
   vi.mocked(usePDisplayPreferences).mockReturnValue({
     dialogueComposerVisible,
+    featureRequestVisible: () => true,
     isReady: () => true,
     memoryAssistVisible: () => true,
     onDialogueComposerVisibleChange: setDialogueComposerVisible,
+    onFeatureRequestVisibleChange: vi.fn(),
     onMemoryAssistVisibleChange: vi.fn(),
     onPlayerVisibleChange: vi.fn(),
     onPomodoroVisibleChange: vi.fn(),
@@ -165,6 +178,7 @@ export const configureStudio = (options: StudioOptions = {}) => {
   } as ReturnType<typeof usePSceneStyle>)
   vi.mocked(useWeather).mockReturnValue({
     enabled: weatherEnabled,
+    isReady: weatherReady,
     location: weatherLocation,
     onEnabledChange: setWeatherEnabled,
     onLocationChange: setWeatherLocation,
@@ -207,7 +221,7 @@ export const configureStudio = (options: StudioOptions = {}) => {
   vi.mocked(readFocusRoomEntrySession).mockReturnValue(options.entrySession ?? false)
   vi.mocked(supportsPSceneGyroscope).mockReturnValue(options.gyroscope ?? false)
 
-  return {setDesktopMode}
+  return {registerEventActionExecutor, setDesktopMode, setWeatherReady}
 }
 
 export const publish = vi.fn()
@@ -339,6 +353,7 @@ export const studioMocks = {
   DEFAULT_BACKGROUND,
   getAutomaticScenePeriod,
   isDesktopBackgroundMode,
+  PStudioEvents,
   PStudioScene,
   PTour,
   readFocusRoomEntrySession,

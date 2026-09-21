@@ -1,3 +1,4 @@
+import {clamp} from 'es-toolkit/math'
 import {Dialog} from '@kobalte/core/dialog'
 import {cx} from 'class-variance-authority'
 import {createEffect, createMemo, createSignal, type JSX, onCleanup} from 'solid-js'
@@ -44,10 +45,11 @@ const resolvePlacement = (options: ResolvePlacementOptions): TourContentPlacemen
   const gap = Math.max(0, options.gap ?? DEFAULT_GAP)
   const viewportInset = Math.max(0, options.viewportInset ?? DEFAULT_VIEWPORT_INSET)
   const availableWidth = Math.max(0, bounds.viewportWidth - viewportInset * 2)
-  const contentWidth = Math.min(Math.max(0, options.contentWidth ?? availableWidth), availableWidth)
-  const left = Math.max(
+  const contentWidth = clamp(options.contentWidth ?? availableWidth, 0, availableWidth)
+  const left = clamp(
+    bounds.left,
     viewportInset,
-    Math.min(bounds.left, bounds.viewportWidth - contentWidth - viewportInset),
+    Math.max(viewportInset, bounds.viewportWidth - contentWidth - viewportInset),
   )
   const spaceAbove = bounds.top
   const spaceBelow = bounds.viewportHeight - bounds.bottom

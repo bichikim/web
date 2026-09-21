@@ -45,7 +45,7 @@ export const useApplicationRecovery = (
       return
     }
 
-    window.location.reload()
+    globalThis.location.reload()
   }
 
   const onReady = () => setCanRetry(true)

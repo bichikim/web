@@ -27,7 +27,7 @@ describe('runtime scene preference persistence', () => {
   })
 
   afterEach(() => {
-    Reflect.deleteProperty(window, 'ReactNativeWebView')
+    Reflect.deleteProperty(globalThis, 'ReactNativeWebView')
     vi.unstubAllGlobals()
   })
 
@@ -67,7 +67,7 @@ describe('runtime scene preference persistence', () => {
   })
 
   it('should restore native preferences and rebuild the browser copy', async () => {
-    Object.defineProperty(window, 'ReactNativeWebView', {configurable: true, value: {}})
+    Object.defineProperty(globalThis, 'ReactNativeWebView', {configurable: true, value: {}})
     storageMocks.getItem.mockResolvedValue(JSON.stringify(preferences))
 
     await expect(readPScenePreferences()).resolves.toEqual(preferences)
@@ -77,7 +77,7 @@ describe('runtime scene preference persistence', () => {
   })
 
   it('should use defaults when native preferences are empty or unavailable', async () => {
-    Object.defineProperty(window, 'ReactNativeWebView', {configurable: true, value: {}})
+    Object.defineProperty(globalThis, 'ReactNativeWebView', {configurable: true, value: {}})
     storageMocks.getItem.mockResolvedValueOnce(null).mockRejectedValueOnce(new Error('unavailable'))
 
     await expect(readPScenePreferences()).resolves.toEqual({
@@ -93,7 +93,7 @@ describe('runtime scene preference persistence', () => {
   })
 
   it('should recover browser preferences when a native read fails', async () => {
-    Object.defineProperty(window, 'ReactNativeWebView', {configurable: true, value: {}})
+    Object.defineProperty(globalThis, 'ReactNativeWebView', {configurable: true, value: {}})
     let rejectRead: (error: Error) => void = () => undefined
     storageMocks.getItem.mockReturnValue(
       new Promise((_resolve, reject) => {
@@ -109,7 +109,7 @@ describe('runtime scene preference persistence', () => {
   })
 
   it('should replace a stale browser copy with native preferences', async () => {
-    Object.defineProperty(window, 'ReactNativeWebView', {configurable: true, value: {}})
+    Object.defineProperty(globalThis, 'ReactNativeWebView', {configurable: true, value: {}})
     const stalePreferences = {
       activity: 'reading',
       gaze: 'focused',
@@ -126,47 +126,8 @@ describe('runtime scene preference persistence', () => {
     )
   })
 
-  it('should preserve a newer choice while native preferences are loading', async () => {
-    Object.defineProperty(window, 'ReactNativeWebView', {configurable: true, value: {}})
-    let completeRead: (value: string) => void = () => undefined
-    storageMocks.getItem.mockReturnValue(
-      new Promise((resolve) => {
-        completeRead = resolve
-      }),
-    )
-    storageMocks.setItem.mockResolvedValue()
-
-    const pendingRead = readPScenePreferences()
-    await writePScenePreferences(preferences)
-    completeRead(JSON.stringify({...preferences, timeMode: 'auto'}))
-
-    await expect(pendingRead).resolves.toEqual(preferences)
-  })
-
-  it('should use defaults when a newer choice is no longer readable', async () => {
-    Object.defineProperty(window, 'ReactNativeWebView', {configurable: true, value: {}})
-    let completeRead: (value: string) => void = () => undefined
-    storageMocks.getItem.mockReturnValue(
-      new Promise((resolve) => {
-        completeRead = resolve
-      }),
-    )
-    storageMocks.setItem.mockResolvedValue()
-
-    const pendingRead = readPScenePreferences()
-    await writePScenePreferences(preferences)
-    localStorage.clear()
-    completeRead(JSON.stringify(preferences))
-
-    await expect(pendingRead).resolves.toEqual({
-      activity: 'reading',
-      gaze: 'focused',
-      timeMode: 'day',
-    })
-  })
-
   it('should preserve native write order during rapid preference changes', async () => {
-    Object.defineProperty(window, 'ReactNativeWebView', {configurable: true, value: {}})
+    Object.defineProperty(globalThis, 'ReactNativeWebView', {configurable: true, value: {}})
     const nativeWrites: string[] = []
     storageMocks.setItem.mockImplementation(async (_key, value) => {
       nativeWrites.push(value)

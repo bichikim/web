@@ -1,3 +1,4 @@
+import {getExceptionMessage} from '../error-detail'
 import {useAction, useSubmission} from '@solidjs/router'
 import {createSignal, type JSX, onCleanup, type Setter} from 'solid-js'
 import {z} from 'zod'
@@ -177,6 +178,7 @@ const createDraftDataGetter = (options: CreateDraftDataGetterOptions) => (): Alb
 })
 
 interface DraftPersistence {
+  readonly enqueue: <Value>(operation: () => Promise<Value>) => Promise<Value>
   readonly persist: () => void
   readonly wait: () => Promise<void>
 }
@@ -187,12 +189,20 @@ const createDraftPersistence = (
   updateDraftReference: DraftReferenceUpdater,
 ): DraftPersistence => {
   let persistence = Promise.resolve()
+  const enqueue = <Value>(operation: () => Promise<Value>): Promise<Value> => {
+    const queuedOperation = persistence.then(operation)
+    persistence = queuedOperation.then(
+      () => undefined,
+      () => undefined,
+    )
+    return queuedOperation
+  }
+
   return {
+    enqueue,
     persist: () => {
       const draft = getDraftData()
-      persistence = persistence.then(() =>
-        persistDraftData(draft, setMessage, updateDraftReference),
-      )
+      enqueue(() => persistDraftData(draft, setMessage, updateDraftReference))
     },
     wait: () => persistence,
   }
@@ -371,6 +381,7 @@ interface CoverPreparationState {
 interface CreateCoverChangeHandlerOptions {
   readonly clearPreparedCover: () => void
   readonly coverPreparation: CoverPreparationState
+  readonly enqueuePersistence: <Value>(operation: () => Promise<Value>) => Promise<Value>
   readonly getCoverDraftId: () => string | null
   readonly getCoverPreviewUrl: () => string | null
   readonly getDraftData: () => AlbumDraftData
@@ -385,6 +396,24 @@ interface CreateCoverChangeHandlerOptions {
   readonly updateDraftReference: DraftReferenceUpdater
 }
 
+const handleCoverClear = async (options: CreateCoverChangeHandlerOptions): Promise<void> => {
+  const previousCoverDraftId = options.getCoverDraftId()
+  options.markCoverEdited()
+  options.clearPreparedCover()
+  options.setCoverDraftId(null)
+  const clearingId = options.coverPreparation.id
+  await options.restorationBarrier.wait()
+  if (options.getIsDisposed() || clearingId !== options.coverPreparation.id) {
+    return
+  }
+
+  const draft = options.getDraftData()
+  const message = await options.enqueuePersistence(() =>
+    removePreparedCoverDraft(previousCoverDraftId, draft, options.updateDraftReference),
+  )
+  options.setMessage(message)
+}
+
 const createCoverChangeHandler =
   (options: CreateCoverChangeHandlerOptions): JSX.EventHandler<HTMLInputElement, Event> =>
   async (event) => {
@@ -394,22 +423,7 @@ const createCoverChangeHandler =
     options.setMessage(null)
 
     if (file === null) {
-      const previousCoverDraftId = options.getCoverDraftId()
-      options.markCoverEdited()
-      options.clearPreparedCover()
-      options.setCoverDraftId(null)
-      const clearingId = options.coverPreparation.id
-      await options.restorationBarrier.wait()
-      if (options.getIsDisposed() || clearingId !== options.coverPreparation.id) {
-        return
-      }
-
-      const message = await removePreparedCoverDraft(
-        previousCoverDraftId,
-        options.getDraftData(),
-        options.updateDraftReference,
-      )
-      options.setMessage(message)
+      await handleCoverClear(options)
       return
     }
 
@@ -437,17 +451,19 @@ const createCoverChangeHandler =
         return
       }
 
-      const message = await persistPreparedCover({
-        draft: options.getDraftData(),
-        file: preparedFile,
-        nextCoverDraftId,
-        previousCoverDraftId,
-        updateDraftReference: options.updateDraftReference,
-      })
+      const message = await options.enqueuePersistence(() =>
+        persistPreparedCover({
+          draft: options.getDraftData(),
+          file: preparedFile,
+          nextCoverDraftId,
+          previousCoverDraftId,
+          updateDraftReference: options.updateDraftReference,
+        }),
+      )
       options.setMessage(message)
     } catch (error) {
       input.value = ''
-      options.setMessage(error instanceof Error ? error.message : COVER_SELECTION_ERROR)
+      options.setMessage(getExceptionMessage(error, COVER_SELECTION_ERROR))
     } finally {
       if (preparationId === options.coverPreparation.id) {
         options.setIsProcessingCover(false)
@@ -549,6 +565,7 @@ export const useAlbumDraft = (props: UseAlbumDraftProps) => {
   const handleCoverChange = createCoverChangeHandler({
     clearPreparedCover,
     coverPreparation,
+    enqueuePersistence: draftPersistence.enqueue,
     getCoverDraftId: coverDraftId,
     getCoverPreviewUrl: coverPreviewUrl,
     getDraftData,

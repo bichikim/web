@@ -31,11 +31,21 @@ vi.mock('@solidjs/meta', () => ({
 
 vi.mock('@solidjs/router', () => ({useLocation: () => metadata.location}))
 vi.mock('@paraglide/message', () => ({
-  app_default_description: () => '기본 설명',
-  app_home_description: () => '홈 설명',
-  app_home_title: () => '홈 제목',
-  version_catalog_metadata_description: () => '업데이트 내역 설명',
-  version_notice_title: () => '새로운 소식',
+  app_default_description: () => 'Default description',
+  app_home_description: () => 'Home description',
+  app_home_title: () => 'Home title',
+  metadata_privacy_apps_in_toss_title: () => 'Apps in Toss privacy title',
+  metadata_privacy_description: () => 'Privacy description',
+  metadata_privacy_web_title: () => 'Web privacy title',
+  metadata_refund_description: () => 'Refund description',
+  metadata_refund_title: () => 'Refund title',
+  metadata_terms_apps_in_toss_title: () => 'Apps in Toss terms title',
+  metadata_terms_description: () => 'Terms description',
+  metadata_terms_web_title: () => 'Web terms title',
+  metadata_third_party_description: () => 'Third-party description',
+  metadata_third_party_title: () => 'Third-party title',
+  version_catalog_metadata_description: () => 'Version description',
+  version_notice_title: () => "What's new",
 }))
 vi.mock('@paraglide/runtime', () => ({
   getLocale: () => 'en',
@@ -68,22 +78,17 @@ it('should synchronize the document language with the hydrated locale', () => {
 })
 
 it.each([
-  ['/', '홈 제목', '홈 설명', 'index, follow'],
-  ['/app-in-toss/privacy', 'Pomofi — 앱인토스 개인정보처리방침', '계정·세션 정보', 'noindex'],
-  ['/refund-policy', 'Pomofi — 환불 및 청약철회 정책', '환불 및 청약철회 기준', 'index, follow'],
-  ['/app-in-toss/terms', 'Pomofi — 앱인토스 서비스 이용약관', '이용 조건', 'noindex'],
-  ['/terms', 'Pomofi — 서비스 이용약관', '이용 조건', 'noindex'],
-  ['/web/terms', 'Pomofi — 서비스 이용약관', '이용 조건', 'noindex'],
-  ['/privacy', 'Pomofi — 개인정보처리방침', '계정·세션 정보', 'noindex'],
-  ['/web/privacy', 'Pomofi — 개인정보처리방침', '계정·세션 정보', 'noindex'],
-  [
-    '/third-party-notices',
-    'Pomofi — 제3자 라이선스 및 배포 고지',
-    '제3자 소프트웨어',
-    'index, follow',
-  ],
-  ['/whats-new', 'Pomofi — 새로운 소식', '업데이트 내역', 'index, follow'],
-  ['/dialogue/', 'Pomofi', '기본 설명', 'noindex'],
+  ['/', 'Home title', 'Home description', 'index, follow'],
+  ['/app-in-toss/privacy', 'Apps in Toss privacy title', 'Privacy description', 'noindex'],
+  ['/refund-policy', 'Refund title', 'Refund description', 'index, follow'],
+  ['/app-in-toss/terms', 'Apps in Toss terms title', 'Terms description', 'noindex'],
+  ['/terms', 'Web terms title', 'Terms description', 'noindex'],
+  ['/web/terms', 'Web terms title', 'Terms description', 'noindex'],
+  ['/privacy', 'Web privacy title', 'Privacy description', 'noindex'],
+  ['/web/privacy', 'Web privacy title', 'Privacy description', 'noindex'],
+  ['/third-party-notices', 'Third-party title', 'Third-party description', 'index, follow'],
+  ['/whats-new', "Pomofi — What's new", 'Version description', 'index, follow'],
+  ['/dialogue/', 'Pomofi', 'Default description', 'noindex'],
 ])('should render metadata for %s', (pathname, title, description, robots) => {
   metadata.location.pathname = pathname
 

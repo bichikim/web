@@ -1,3 +1,4 @@
+import {apiJsonRequest, parseJsonResponse} from '../api-json'
 import {z} from 'zod'
 
 import {uploadTrackAudio} from './track-upload'
@@ -44,9 +45,8 @@ const createTrack = async (
   body: Readonly<Record<string, unknown>>,
 ): Promise<CreatedTrack | UnconfirmedTrack | RejectedTrack> => {
   try {
-    const response = await fetch('/api/admin/music/tracks', {
-      body: JSON.stringify(body),
-      headers: {'Content-Type': 'application/json'},
+    const response = await apiJsonRequest('admin/music/tracks', {
+      body,
       method: 'POST',
     })
     if (!response.ok) {
@@ -59,7 +59,7 @@ const createTrack = async (
             : 'unconfirmed',
       }
     }
-    return {id: createdTrackSchema.parse(await response.json()).id, status: 'created'}
+    return {id: (await parseJsonResponse(response, createdTrackSchema)).id, status: 'created'}
   } catch (error) {
     return {error, status: 'unconfirmed'}
   }

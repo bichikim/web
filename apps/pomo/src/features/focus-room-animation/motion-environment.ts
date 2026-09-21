@@ -32,5 +32,5 @@ export const createMotionEnvironment = (): MotionEnvironment => ({
   orientation: globalThis.screen.orientation,
   requestFrame: (callback) => globalThis.requestAnimationFrame(callback),
   setTimer: (callback, delay) => globalThis.setTimeout(callback, delay),
-  window,
+  window: globalThis.window,
 })

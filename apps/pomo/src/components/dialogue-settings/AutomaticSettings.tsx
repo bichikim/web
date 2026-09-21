@@ -1,10 +1,11 @@
 import {cx} from 'class-variance-authority'
-import {createSignal, onCleanup, onMount, Show} from 'solid-js'
+import {usePreference} from 'src/hooks/use-preference'
+import {createEffect, createSignal, Show} from 'solid-js'
 
 import {PSelect, type PSelectOption} from '../p-select/PSelect'
 import {
-  AUTOMATIC_DIALOGUE_SETTINGS_CHANGED_EVENT,
-  type AutomaticDialogueSettingsRepository,
+  type AutomaticDialogueSettings as AutomaticDialogueSettingsValue,
+  createAutomaticDialoguePreferenceOptions,
   DEFAULT_AUTOMATIC_DIALOGUE_SETTINGS,
 } from '../../features/focus-room-dialogue'
 import {
@@ -46,57 +47,99 @@ const VOICE_OPTIONS: ReadonlyArray<PSelectOption<SupertonicVoiceId>> = SUPERTONI
   (voice) => ({label: voice.label, value: voice.id}),
 )
 
+const areAutomaticDialogueSettingsEqual = (
+  left: AutomaticDialogueSettingsValue,
+  right: AutomaticDialogueSettingsValue,
+) =>
+  left.modelId === right.modelId && left.version === right.version && left.voiceId === right.voiceId
+
 export const AutomaticDialogueSettings = () => {
-  const [settings, setSettings] = createSignal(DEFAULT_AUTOMATIC_DIALOGUE_SETTINGS)
-  const [isLoading, setIsLoading] = createSignal(true)
+  const [failedSettings, setFailedSettings] = createSignal<AutomaticDialogueSettingsValue | null>(
+    null,
+  )
   const [message, setMessage] = createSignal<string | null>(null)
-  let repository: AutomaticDialogueSettingsRepository | null = null
+  const pendingSaves: Array<AutomaticDialogueSettingsValue> = []
+  let committedSettings = DEFAULT_AUTOMATIC_DIALOGUE_SETTINGS
+  let failedStoredSettings: AutomaticDialogueSettingsValue | null = null
 
-  onMount(() => {
-    let disposed = false
-    import('../../features/focus-room-dialogue/automatic-dialogue-settings')
-      .then(({createAutomaticDialogueSettingsRepository}) => {
-        const nextRepository = createAutomaticDialogueSettingsRepository(window.localStorage)
+  const settleSave = (didSave: boolean): AutomaticDialogueSettingsValue | null => {
+    const settledSettings = pendingSaves.shift() ?? null
+    if (didSave && settledSettings !== null) {
+      committedSettings = settledSettings
+    }
+    return settledSettings
+  }
 
-        if (!disposed) {
-          repository = nextRepository
-          setSettings(nextRepository.load())
-        }
-      })
-      .catch((error: unknown) => {
-        console.error('Failed to load automatic dialogue settings.', error)
-        if (!disposed) {
-          setMessage(m.settings_dialogue_automatic_load_failed())
-        }
-      })
-      .finally(() => {
-        if (!disposed) {
-          setIsLoading(false)
-        }
-      })
+  const handlePreferenceError = (error: unknown) => {
+    const isSaveError = pendingSaves.length > 0
+    console.error(
+      isSaveError
+        ? 'Failed to save automatic dialogue settings.'
+        : 'Failed to load automatic dialogue settings.',
+      error,
+    )
 
-    onCleanup(() => {
-      disposed = true
-    })
+    if (isSaveError) {
+      const settledSettings = settleSave(false)
+      if (settledSettings !== null && pendingSaves.length === 0) {
+        setFailedSettings(committedSettings)
+      }
+    }
+    setMessage(
+      isSaveError
+        ? m.settings_dialogue_automatic_save_failed()
+        : m.settings_dialogue_automatic_load_failed(),
+    )
+  }
+  const handlePreferenceSaved = () => {
+    const settledSettings = settleSave(true)
+    if (settledSettings !== null) {
+      if (pendingSaves.length === 0) {
+        failedStoredSettings = null
+        setFailedSettings(null)
+      }
+      setMessage(m.settings_dialogue_automatic_saved())
+    }
+  }
+  const [storedSettings, setStoredSettings] = usePreference(
+    createAutomaticDialoguePreferenceOptions({
+      onError: handlePreferenceError,
+      onSaved: handlePreferenceSaved,
+    }),
+  )
+
+  const settings = () => failedSettings() ?? storedSettings() ?? DEFAULT_AUTOMATIC_DIALOGUE_SETTINGS
+  const isLoading = () => storedSettings() === null
+
+  createEffect(() => {
+    const currentSettings = storedSettings()
+
+    if (currentSettings === null || pendingSaves.length > 0) {
+      return
+    }
+
+    if (failedStoredSettings !== null) {
+      if (areAutomaticDialogueSettingsEqual(currentSettings, failedStoredSettings)) {
+        return
+      }
+      failedStoredSettings = null
+      setFailedSettings(null)
+    }
+
+    committedSettings = currentSettings
   })
 
-  const saveSettings = (nextSettings: typeof DEFAULT_AUTOMATIC_DIALOGUE_SETTINGS) => {
-    const currentRepository = repository
-
-    if (currentRepository === null) {
+  const saveSettings = (nextSettings: AutomaticDialogueSettingsValue) => {
+    if (storedSettings() === null) {
       setMessage(m.settings_dialogue_automatic_not_ready())
       return
     }
 
-    try {
-      currentRepository.save(nextSettings)
-      setSettings(nextSettings)
-      setMessage(m.settings_dialogue_automatic_saved())
-      window.dispatchEvent(new CustomEvent(AUTOMATIC_DIALOGUE_SETTINGS_CHANGED_EVENT))
-    } catch (error: unknown) {
-      console.error('Failed to save automatic dialogue settings.', error)
-      setMessage(m.settings_dialogue_automatic_save_failed())
-    }
+    failedStoredSettings = null
+    setFailedSettings(null)
+    pendingSaves.push(nextSettings)
+    failedStoredSettings = nextSettings
+    setStoredSettings(nextSettings)
   }
 
   return (

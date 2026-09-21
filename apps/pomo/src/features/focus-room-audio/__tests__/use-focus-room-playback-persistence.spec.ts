@@ -11,11 +11,13 @@ import {usePPlaybackPersistence} from '../use-focus-room-playback-persistence'
 
 const TRACK = {id: 'track-1'} as PTrack
 
-const createHarness = () => {
+const createHarness = (currentIndex?: number) => {
   let audio: HTMLAudioElement | undefined
   let playing = true
   let track: PTrack | undefined
+  let currentIndexValue = currentIndex ?? 0
   const persistence = usePPlaybackPersistence({
+    currentIndex: currentIndex === undefined ? undefined : () => currentIndexValue,
     currentTrack: () => track,
     getAudioElement: () => audio,
     isPlaying: () => playing,
@@ -25,6 +27,9 @@ const createHarness = () => {
     persistence,
     setAudio: (value: HTMLAudioElement | undefined) => {
       audio = value
+    },
+    setCurrentIndex: (value: number) => {
+      currentIndexValue = value
     },
     setPlaying: (value: boolean) => {
       playing = value
@@ -66,6 +71,49 @@ it('should persist only valid current playback and skip unchanged pending playba
     isPlaying: false,
     positionSeconds: 0,
     trackId: TRACK.id,
+  })
+})
+
+it('should persist the current playlist index with playback position', () => {
+  const harness = createHarness(1)
+  harness.setTrack(TRACK)
+  harness.setAudio(createAudio(4, 10))
+
+  harness.persistence.persistCurrentPlayback()
+
+  expect(storageMocks.write).toHaveBeenCalledWith({
+    isPlaying: true,
+    positionSeconds: 4,
+    trackId: TRACK.id,
+    trackIndex: 1,
+  })
+})
+
+it('should update a pending playlist index when the queue shifts the current track', () => {
+  const harness = createHarness(2)
+  harness.setTrack(TRACK)
+  harness.setAudio(createAudio(0, 10))
+  harness.persistence.setPendingPosition({
+    isPlaying: true,
+    positionSeconds: 3,
+    trackId: TRACK.id,
+    trackIndex: 2,
+  })
+  harness.setCurrentIndex(1)
+
+  harness.persistence.persistCurrentPlayback()
+
+  expect(storageMocks.write).toHaveBeenCalledWith({
+    isPlaying: true,
+    positionSeconds: 3,
+    trackId: TRACK.id,
+    trackIndex: 1,
+  })
+  expect(harness.persistence.applyPendingPosition()).toEqual({
+    isPlaying: true,
+    positionSeconds: 3,
+    trackId: TRACK.id,
+    trackIndex: 1,
   })
 })
 
@@ -121,6 +169,24 @@ it('should restore a matching pending position and clamp it to finite duration',
   })
   expect(audio.currentTime).toBe(10)
   expect(harness.persistence.applyPendingPosition()).toBeNull()
+})
+
+it('should persist a user seek before applying the pending position', () => {
+  const harness = createHarness()
+  const audio = createAudio(45, 60)
+  harness.setTrack(TRACK)
+  harness.setAudio(audio)
+  harness.persistence.setPendingPosition({isPlaying: true, positionSeconds: 30, trackId: TRACK.id})
+
+  harness.persistence.persistSeekedPlayback()
+
+  expect(storageMocks.write).toHaveBeenLastCalledWith({
+    isPlaying: true,
+    positionSeconds: 45,
+    trackId: TRACK.id,
+  })
+  expect(harness.persistence.applyPendingPosition()).toBeNull()
+  expect(audio.currentTime).toBe(45)
 })
 
 it('should persist current playback after restoring a pending position', () => {

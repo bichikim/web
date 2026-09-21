@@ -1,3 +1,4 @@
+import {createPresenceFlag} from '../../value-storage'
 import {type Accessor, createSignal} from 'solid-js'
 
 import type {EntryPlaybackController} from '../entry-playback-controller'
@@ -8,28 +9,21 @@ import {DEFAULT_DIALOGUE_EVENT_PLAYBACK_MODE, FOCUS_ROOM_ENTRY_EVENT} from '../s
 
 const ENTRY_PLAYBACK_SESSION_KEY = 'pomo:focus-room-entry-playback:v1'
 
-const readPlaybackSession = (): boolean => {
-  try {
-    return sessionStorage.getItem(ENTRY_PLAYBACK_SESSION_KEY) !== null
-  } catch {
-    return false
-  }
+export interface EntryPlaybackSessionStorage {
+  readonly getItem: (key: string) => string | null
+  readonly setItem: (key: string, value: string) => void
 }
 
-const writePlaybackSession = (): void => {
-  try {
-    sessionStorage.setItem(ENTRY_PLAYBACK_SESSION_KEY, 'true')
-  } catch {
-    // Storage restrictions must not prevent entry dialogue playback.
-  }
-}
+const failedSessionWrites = new WeakSet<EntryPlaybackSessionStorage>()
 
 export interface CreateEntryEventPlaybackOptions {
   readonly eventDialogueIds: Accessor<EventDialogueIds>
   readonly eventPlaybackModes: Accessor<EventPlaybackModes>
   readonly getRepository: () => PDialogueRepository | null
   readonly isPlaybackEnabled: () => boolean
+  readonly onEvent?: () => Promise<void> | void
   readonly playback: EntryPlaybackController
+  readonly sessionStorage?: EntryPlaybackSessionStorage
 }
 
 export interface EntryEventPlayback {
@@ -42,18 +36,54 @@ export interface EntryEventPlayback {
 export const createEntryEventPlayback = (
   options: CreateEntryEventPlaybackOptions,
 ): EntryEventPlayback => {
+  let resolvedSessionStorage: EntryPlaybackSessionStorage | undefined
+  const resolveSessionStorage = () => {
+    resolvedSessionStorage = undefined
+    const storage = options.sessionStorage ?? globalThis.sessionStorage
+    resolvedSessionStorage = storage
+    return storage
+  }
+  const sessionFlag = createPresenceFlag({
+    key: ENTRY_PLAYBACK_SESSION_KEY,
+    storage: resolveSessionStorage,
+  })
+  const readSessionFlag = () =>
+    sessionFlag.read() ||
+    (resolvedSessionStorage !== undefined && failedSessionWrites.has(resolvedSessionStorage))
+  const writeSessionFlag = () => {
+    const didWrite = sessionFlag.write()
+
+    if (didWrite || resolvedSessionStorage === undefined) {
+      return
+    }
+
+    failedSessionWrites.add(resolvedSessionStorage)
+  }
   const [hasEnteredFocusRoom, setHasEnteredFocusRoom] = createSignal(false)
   let hasStarted = false
+  let hasTriggeredEvent = false
+  let isPlaybackPending = false
+  let pendingEventExecution: Promise<void> | undefined
 
   const tryPlay = () => {
     const repository = options.getRepository()
     if (
       hasStarted ||
+      isPlaybackPending ||
       !hasEnteredFocusRoom() ||
       !options.isPlaybackEnabled() ||
-      repository === null ||
-      readPlaybackSession()
+      repository === null
     ) {
+      return
+    }
+
+    if (!hasTriggeredEvent) {
+      hasTriggeredEvent = true
+      const eventExecution = options.onEvent?.()
+      pendingEventExecution = eventExecution instanceof Promise ? eventExecution : undefined
+    }
+
+    if (readSessionFlag()) {
       return
     }
 
@@ -66,25 +96,66 @@ export const createEntryEventPlayback = (
       return
     }
 
-    hasStarted = true
-    options.playback
-      .playSequence(repository, {
-        dialogueIds: selectedDialogueIds,
-        onDialogueStart: () => undefined,
-        onSequenceStop: () => undefined,
-      })
-      .then((completion) => {
-        if (completion === 'failed') {
-          hasStarted = false
-          return
-        }
+    const startPlayback = () => {
+      const currentRepository = options.getRepository()
+      if (currentRepository === null || !options.isPlaybackEnabled() || readSessionFlag()) {
+        isPlaybackPending = false
+        return
+      }
 
-        writePlaybackSession()
-      })
-      .catch((error: unknown) => {
-        hasStarted = false
-        console.error('Unexpected entry dialogue sequence failure.', error)
-      })
+      pendingEventExecution = undefined
+      hasStarted = true
+      let hasPlayedDialogue = false
+      isPlaybackPending = false
+      options.playback
+        .playSequence(currentRepository, {
+          dialogueIds: selectedDialogueIds,
+          onDialogueStart: () => {
+            hasPlayedDialogue = true
+          },
+          onSequenceStop: () => undefined,
+        })
+        .then((completion) => {
+          if (!hasPlayedDialogue) {
+            hasStarted = false
+            return
+          }
+
+          switch (completion) {
+            case 'cancelled':
+            case 'failed':
+            case 'stopped':
+              hasStarted = false
+              return
+            case 'ended':
+            case 'missing':
+              writeSessionFlag()
+              return
+            default: {
+              const unhandledCompletion: never = completion
+              return unhandledCompletion
+            }
+          }
+        })
+        .catch((error: unknown) => {
+          hasStarted = false
+          console.error('Unexpected entry dialogue sequence failure.', error)
+        })
+    }
+
+    if (pendingEventExecution === undefined) {
+      startPlayback()
+      return
+    }
+
+    isPlaybackPending = true
+    const eventExecution = pendingEventExecution
+    pendingEventExecution = eventExecution.then(startPlayback).catch((error: unknown) => {
+      hasTriggeredEvent = false
+      pendingEventExecution = undefined
+      isPlaybackPending = false
+      console.error('Unexpected entry event action execution failure.', error)
+    })
   }
 
   return {

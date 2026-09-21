@@ -15,11 +15,11 @@ const [isBusy, setIsBusy] = createSignal(false)
 const state = vi.fn<() => {readonly message?: string; readonly status: string}>(() => ({
   status: 'idle',
 }))
-let complete: ((values: Partial<AlbumDraftTranslations>) => void) | undefined
+let complete: ((values: Partial<AlbumDraftTranslations>) => boolean | void) | undefined
 
 vi.mock('../../../features/album-translation/use-album-translation', () => ({
   useAlbumTranslation: (options: {
-    readonly onComplete: (values: Partial<AlbumDraftTranslations>) => void
+    readonly onComplete: (values: Partial<AlbumDraftTranslations>) => boolean | void
   }) => {
     complete = options.onComplete
     return {isBusy, state, translate}
@@ -60,6 +60,30 @@ it('should edit localized fields, translate Korean input, and merge completed dr
   complete?.({ja: japanese})
   expect(onValuesChange).toHaveBeenLastCalledWith(expect.objectContaining({ja: japanese}))
   expect(screen.getByText(/번역 초안을 채웠습니다/u)).toBeInTheDocument()
+})
+
+it('should ignore translations generated from Korean text edited during translation', () => {
+  const initial = createEmptyAlbumTranslations()
+  initial.ko = {description: '기존 설명', title: '기존 제목'}
+  const {onValuesChange, values} = renderFields(initial)
+
+  fireEvent.click(screen.getByRole('button', {name: '한국어에서 자동 번역'}))
+  fireEvent.input(screen.getAllByLabelText(/^앨범명/u)[0]!, {target: {value: '수정한 제목'}})
+  fireEvent.input(screen.getAllByLabelText(/^설명/u)[0]!, {target: {value: '수정한 설명'}})
+
+  expect(
+    complete?.({
+      en: {description: 'old en description', title: 'old en title'},
+      ja: {description: 'old ja description', title: 'old ja title'},
+      'zh-Hans': {description: 'old zh description', title: 'old zh title'},
+    }),
+  ).toBe(false)
+
+  expect(onValuesChange).toHaveBeenCalled()
+  expect(values().ko).toEqual({description: '수정한 설명', title: '수정한 제목'})
+  expect(values().en).toEqual({description: '', title: ''})
+  expect(values().ja).toEqual({description: '', title: ''})
+  expect(values()['zh-Hans']).toEqual({description: '', title: ''})
 })
 
 it.each([

@@ -1,3 +1,4 @@
+import {PreferenceProvider} from 'src/hooks/use-preference'
 /** @vitest-environment jsdom */
 import {cleanup, fireEvent, render, screen} from '@solidjs/testing-library'
 import {createSignal} from 'solid-js'
@@ -18,7 +19,7 @@ it('should show progress and stop controls even when the studio progress card is
   const feeds = createFeeds([], false, [], {
     state: () => ({message: '음성 생성 중', progress: 40, status: 'generating'}),
   })
-  render(() => <PFeedProgress controller={feeds} />)
+  render(() => <PFeedProgress controller={feeds} />, {wrapper: PreferenceProvider})
   expect(screen.getByText(/음성 생성 중/)).toBeInTheDocument()
   expect(screen.getByText(/40%/)).toBeInTheDocument()
   fireEvent.click(screen.getByRole('button', {name: '중지'}))
@@ -32,7 +33,7 @@ it('should remove progress when the work completes', () => {
         ? {message: '준비 중', progress: null, status: 'preparing'}
         : {message: '완료', status: 'idle'},
   })
-  render(() => <PFeedProgress controller={feeds} />)
+  render(() => <PFeedProgress controller={feeds} />, {wrapper: PreferenceProvider})
   expect(screen.getByRole('button', {name: '중지'})).toBeInTheDocument()
   setBusy(false)
   expect(screen.queryByRole('button', {name: '중지'})).toBeNull()
@@ -43,7 +44,7 @@ it('should disable duplicate stop requests and show failures', async () => {
     cancelProcessing: vi.fn(() => pending.promise),
     state: () => ({message: '생성 중', progress: null, status: 'generating'}),
   })
-  render(() => <PFeedProgress controller={feeds} />)
+  render(() => <PFeedProgress controller={feeds} />, {wrapper: PreferenceProvider})
   const button = screen.getByRole('button', {name: '중지'})
   fireEvent.click(button)
   expect(button).toBeDisabled()

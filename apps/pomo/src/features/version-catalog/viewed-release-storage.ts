@@ -1,3 +1,4 @@
+import {createSerialTaskQueue} from 'src/utils/create-serial-task-queue'
 import {z} from 'zod'
 
 import {
@@ -48,7 +49,7 @@ const parseViewedRelease = (value: unknown): ViewedRelease | null => {
 export const createViewedReleaseRepository = (
   options: CreateViewedReleaseRepositoryOptions,
 ): ViewedReleaseRepository => {
-  let writeQueue = Promise.resolve()
+  const writeQueue = createSerialTaskQueue()
 
   return {
     async read() {
@@ -76,9 +77,10 @@ export const createViewedReleaseRepository = (
     },
     async write(value) {
       const parsedValue = VIEWED_RELEASE_SCHEMA.parse(value)
+      const usesTossStorage = options.storage.usesTossStorage()
 
-      if (options.storage.usesTossStorage()) {
-        const write = writeQueue.then(async () => {
+      return writeQueue.run(async () => {
+        if (usesTossStorage) {
           let storedValue: ViewedRelease
           try {
             const currentValue = parseViewedRelease(await options.storage.readToss())
@@ -99,30 +101,28 @@ export const createViewedReleaseRepository = (
           } catch {
             // Browser storage is only a cache when native storage is authoritative.
           }
-        })
-        // A failed write must not block later attempts; its caller still receives the rejection.
-        writeQueue = write.catch(() => undefined)
-        return write
-      }
-
-      let writeError: unknown | null
-
-      try {
-        const currentValue = parseViewedRelease(options.storage.readWeb())
-        if (
-          currentValue !== null &&
-          Date.parse(currentValue.releasedAt) >= Date.parse(parsedValue.releasedAt)
-        ) {
           return
         }
 
-        writeError = options.storage.writeWeb(parsedValue)
-      } catch (error) {
-        writeError = error
-      }
-      if (writeError !== null) {
-        throw new Error('Failed to persist viewed version release.', {cause: writeError})
-      }
+        let writeError: unknown | null
+
+        try {
+          const currentValue = parseViewedRelease(options.storage.readWeb())
+          if (
+            currentValue !== null &&
+            Date.parse(currentValue.releasedAt) >= Date.parse(parsedValue.releasedAt)
+          ) {
+            return
+          }
+
+          writeError = options.storage.writeWeb(parsedValue)
+        } catch (error) {
+          writeError = error
+        }
+        if (writeError !== null) {
+          throw new Error('Failed to persist viewed version release.', {cause: writeError})
+        }
+      })
     },
   }
 }

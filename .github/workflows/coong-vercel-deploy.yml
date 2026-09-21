@@ -72,7 +72,7 @@ jobs:
         run: pnpm exec playwright install --with-deps --only-shell chromium
 
       - name: Unit Test
-        run: pnpm run test
+        run: pnpm test:vitest
 
       - name: Build
         run: pnpm --filter @apps/coong run build

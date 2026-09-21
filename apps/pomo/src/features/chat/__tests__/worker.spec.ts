@@ -263,6 +263,62 @@ describe('chat worker context compaction', () => {
 })
 
 describe('chat worker generation', () => {
+  it('should ignore a concurrent generate request while one is in flight', async () => {
+    const firstGeneration = Promise.withResolvers<string>()
+    runtimeMocks.generate.mockImplementationOnce(() => firstGeneration.promise)
+    const worker = await loadWorker()
+
+    worker.dispatch(generateRequest({replyId: 'reply-a'}))
+    await vi.waitFor(() => expect(runtimeMocks.generate).toHaveBeenCalledOnce())
+
+    worker.dispatch(generateRequest({replyId: 'reply-b'}))
+    firstGeneration.resolve(' 첫 답변 ')
+
+    await vi.waitFor(() => {
+      expect(worker.postMessage).toHaveBeenCalledWith(
+        expect.objectContaining({
+          message: expect.objectContaining({content: '첫 답변', id: 'reply-a'}),
+          type: 'complete',
+        }),
+      )
+    })
+
+    expect(runtimeMocks.generate).toHaveBeenCalledOnce()
+    const completeResponses = worker.postMessage.mock.calls
+      .map(([response]) => response)
+      .filter((response): response is Extract<ChatWorkerResponse, {type: 'complete'}> => {
+        return response.type === 'complete'
+      })
+
+    expect(completeResponses).toHaveLength(1)
+  })
+
+  it('should release the generation guard after a generation failure', async () => {
+    runtimeMocks.generate.mockRejectedValueOnce(new Error('첫 생성 실패'))
+    const worker = await loadWorker()
+
+    worker.dispatch(generateRequest({replyId: 'reply-a'}))
+    await vi.waitFor(() => {
+      expect(worker.postMessage).toHaveBeenCalledWith({
+        message: '첫 생성 실패',
+        restartRequired: false,
+        type: 'error',
+      })
+    })
+
+    worker.dispatch(generateRequest({replyId: 'reply-b'}))
+    await vi.waitFor(() => {
+      expect(worker.postMessage).toHaveBeenCalledWith(
+        expect.objectContaining({
+          message: expect.objectContaining({id: 'reply-b'}),
+          type: 'complete',
+        }),
+      )
+    })
+
+    expect(runtimeMocks.generate).toHaveBeenCalledTimes(2)
+  })
+
   it('should stream only visible text and complete without refinement', async () => {
     runtimeMocks.generate.mockImplementation(async (options: GenerateTextOptions) => {
       options.onToken?.('보이는 답변')

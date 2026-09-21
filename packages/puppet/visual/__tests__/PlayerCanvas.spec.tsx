@@ -113,8 +113,8 @@ const waitForFrame = () =>
   })
 
 const renderDocument = async (document: PuppetDocument) => {
-  const root = window.document.createElement('div')
-  window.document.body.replaceChildren(root)
+  const root = globalThis.document.createElement('div')
+  globalThis.document.body.replaceChildren(root)
   const ready = new Promise<void>((resolve, reject) => {
     const handleStatusChange = (status: PlayerCanvasStatus) => {
       if (status === 'ready') {
@@ -146,7 +146,7 @@ const renderDocument = async (document: PuppetDocument) => {
 afterEach(() => {
   disposeView?.()
   disposeView = undefined
-  window.document.body.replaceChildren()
+  globalThis.document.body.replaceChildren()
 })
 
 describe('PlayerCanvas visual rendering', () => {

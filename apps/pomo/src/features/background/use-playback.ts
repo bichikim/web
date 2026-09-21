@@ -1,4 +1,5 @@
 import {batch, createEffect, createMemo, createSignal, onCleanup, untrack} from 'solid-js'
+import {getMonotonicTime} from 'src/utils/get-monotonic-time'
 import type {BackgroundController} from './use-background'
 import {nextSlide, type Slide} from './playlist'
 
@@ -75,7 +76,7 @@ export const usePlayback = (props: UsePlaybackProps) => {
         return
       }
     }
-    const remaining = photoSeconds * MILLISECONDS_PER_SECOND - (Date.now() - started)
+    const remaining = photoSeconds * MILLISECONDS_PER_SECOND - (getMonotonicTime() - started)
     if (remaining <= 0) {
       untrack(advance)
       return
@@ -109,10 +110,10 @@ export const usePlayback = (props: UsePlaybackProps) => {
     onReady: () =>
       batch(() => {
         if (startedAt() === null) {
-          setStartedAt(Date.now())
+          setStartedAt(getMonotonicTime())
         }
         setIsLoaded(true)
       }),
-    onVideoStart: () => setStartedAt(Date.now()),
+    onVideoStart: () => setStartedAt((value) => value ?? getMonotonicTime()),
   }
 }

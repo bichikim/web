@@ -1,4 +1,5 @@
 export * from './events'
 export * from './limits'
 export * from './model'
+export * from './storage'
 export * from './use-pomodoro-timer'

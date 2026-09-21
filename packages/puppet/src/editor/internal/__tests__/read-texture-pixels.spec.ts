@@ -43,7 +43,7 @@ describe('readTexturePixels', () => {
     }
     const {canvas, context, pixels} = createCanvas()
     vi.stubGlobal('Image', ImageConstructor)
-    vi.spyOn(window.document, 'createElement').mockReturnValue(canvas as unknown as HTMLElement)
+    vi.spyOn(globalThis.document, 'createElement').mockReturnValue(canvas as unknown as HTMLElement)
 
     await expect(readTexturePixels({texture})).resolves.toEqual({ok: true, pixels})
     const image = context.drawImage.mock.calls[0]?.[0]
@@ -92,7 +92,7 @@ describe('readTexturePixels', () => {
 
   test('should translate unavailable and unreadable canvas contexts', async () => {
     vi.stubGlobal('Image', DecodedImage)
-    vi.spyOn(window.document, 'createElement').mockReturnValue({
+    vi.spyOn(globalThis.document, 'createElement').mockReturnValue({
       getContext: () => null,
       height: 0,
       width: 0,
@@ -109,7 +109,7 @@ describe('readTexturePixels', () => {
       throw new DOMException('The canvas is tainted.')
     })
     vi.stubGlobal('Image', DecodedImage)
-    vi.spyOn(window.document, 'createElement').mockReturnValue(canvas as unknown as HTMLElement)
+    vi.spyOn(globalThis.document, 'createElement').mockReturnValue(canvas as unknown as HTMLElement)
 
     await expect(readTexturePixels({texture})).resolves.toEqual({
       error: {code: 'render-failed'},

@@ -1,3 +1,4 @@
+import {selectMaximumBy} from 'src/utils/select-maximum-by'
 import {z} from 'zod'
 
 import {createLatestAsyncTask} from 'src/utils/create-latest-async-task'
@@ -16,12 +17,14 @@ const storedPlaybackSchema = z.object({
   positionSeconds: z.number().finite().nonnegative(),
   savedAt: z.number().finite().nonnegative(),
   trackId: z.string().min(1),
+  trackIndex: z.number().int().nonnegative().optional(),
 })
 
 export interface PPlaybackState {
   readonly isPlaying: boolean
   readonly positionSeconds: number
   readonly trackId: string
+  readonly trackIndex?: number
 }
 
 export interface StoredPlaybackState extends PPlaybackState {
@@ -50,28 +53,15 @@ const runtimeStorage = {
   writeWeb: (state) => writeWebStorageJson(PLAYBACK_STORAGE_KEY, state),
 } satisfies PlaybackStorageAdapter
 
-const selectLatestPlayback = (
-  webPlayback: StoredPlaybackState | null,
-  nativePlayback: StoredPlaybackState | null,
-) => {
-  if (webPlayback === null) {
-    return nativePlayback
-  }
-
-  if (nativePlayback === null || webPlayback.savedAt >= nativePlayback.savedAt) {
-    return webPlayback
-  }
-
-  return nativePlayback
-}
-
 const toPlaybackState = (state: StoredPlaybackState | null): PPlaybackState | null => {
   if (state === null) {
     return null
   }
 
-  const {isPlaying, positionSeconds, trackId} = state
-  return {isPlaying, positionSeconds, trackId}
+  const {isPlaying, positionSeconds, trackId, trackIndex} = state
+  return trackIndex === undefined
+    ? {isPlaying, positionSeconds, trackId}
+    : {isPlaying, positionSeconds, trackId, trackIndex}
 }
 
 export interface PlaybackClock {
@@ -99,15 +89,15 @@ export const createPPlaybackStorage = (
       reportError(error)
     }
   })
+  let latestWebWrite: StoredPlaybackState | null = null
   let playbackRevision = 0
-  let playbackWriteRevision = 0
   let pendingNativeWrites = 0
   let pendingStop: Promise<void> | null = null
 
   const readStoredPlayback = async (): Promise<PPlaybackState | null> => {
+    const initialWebWrite = latestWebWrite
     const initialPlaybackRevision = playbackRevision
     const hadPendingWrite = pendingNativeWrites > 0
-    const initialRevision = playbackWriteRevision
     const webPlayback = storage.readWeb()
 
     if (!storage.usesTossStorage()) {
@@ -116,10 +106,10 @@ export const createPPlaybackStorage = (
 
     try {
       const nativePlayback = await storage.readToss()
-      if (playbackWriteRevision !== initialRevision) {
+      if (latestWebWrite !== initialWebWrite) {
         return toPlaybackState(storage.readWeb())
       }
-      const latestPlayback = selectLatestPlayback(webPlayback, nativePlayback)
+      const latestPlayback = selectMaximumBy(webPlayback, nativePlayback, (value) => value.savedAt)
       if (
         latestPlayback !== null &&
         latestPlayback === webPlayback &&
@@ -165,7 +155,7 @@ export const createPPlaybackStorage = (
     playbackRevision += 1
     const storedState = {...state, savedAt: clock.now()} satisfies StoredPlaybackState
     if (storage.writeWeb(storedState) === null) {
-      playbackWriteRevision += 1
+      latestWebWrite = storedState
     }
 
     if (!storage.usesTossStorage()) {

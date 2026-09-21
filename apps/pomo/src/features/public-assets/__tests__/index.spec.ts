@@ -190,3 +190,28 @@ it('should reject an SSR public asset path that changes origin', () => {
     'Invalid public asset path.',
   )
 })
+
+it('should forward cancellation to the public JSON request without wrapping its reason', async () => {
+  const controller = new AbortController()
+  const reason = new DOMException('Cancelled', 'AbortError')
+  controller.abort(reason)
+  vi.mocked(fetch).mockRejectedValue(reason)
+  await expect(
+    loadPublicJson('/catalog.json', z.unknown(), {signal: controller.signal}),
+  ).rejects.toBe(reason)
+  expect(fetch).toHaveBeenCalledWith('/catalog.json', {signal: controller.signal})
+})
+
+it('should preserve cancellation while reading the public JSON body', async () => {
+  const controller = new AbortController()
+  const reason = new Error('cancelled by caller')
+  const response = Response.json({})
+  vi.spyOn(response, 'json').mockImplementation(async () => {
+    controller.abort(reason)
+    throw reason
+  })
+  vi.mocked(fetch).mockResolvedValue(response)
+  await expect(
+    loadPublicJson('/catalog.json', z.unknown(), {signal: controller.signal}),
+  ).rejects.toBe(reason)
+})

@@ -19,7 +19,6 @@ it('should show filter counts and forward the selected filter', () => {
           <>
             <LanguageLearningSavedWords
               autoplayKey={() => null}
-              pronunciationBusy={false}
               getAudioUrl={() => null}
               isPronunciationLoading={() => false}
               onDelete={vi.fn()}

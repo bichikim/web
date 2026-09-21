@@ -1,15 +1,14 @@
-import {withPromiseNull} from 'src/utils/with-promise-null'
 import {z} from 'zod'
-import {createLatestStorageWriter} from 'src/utils/runtime-storage/create-latest-storage-writer'
 import {DEFAULT_P_SCENE_PREFERENCES, type PScenePreferences} from './model'
 
-const SCENE_PREFERENCES_STORAGE_KEY = 'pomo:focus-room-scene-preferences:v1'
+export const SCENE_PREFERENCES_STORAGE_KEY = 'pomo:focus-room-scene-preferences:v1'
+const NATIVE_WRITE_FAILURE_STORAGE_KEY = 'pomo:focus-room-scene-preferences:native-write-failure:v1'
 const scenePreferencesSchema = z.object({
   activity: z.enum(['reading', 'writing', 'typing']),
   gaze: z.enum(['focused', 'user']),
   timeMode: z.enum(['day', 'night', 'auto']),
 })
-const parseScenePreferences = (value: unknown): PScenePreferences | null => {
+export const parsePScenePreferences = (value: unknown): PScenePreferences | null => {
   const result = scenePreferencesSchema.safeParse(value)
   return result.success ? result.data : null
 }
@@ -31,69 +30,57 @@ export interface CreatePScenePreferencesRepositoryOptions {
   readonly storage: PScenePreferencesStorage
 }
 
-/** Creates scene preference coordination owned by one repository instance. */
+/** Reads and writes scene preferences using the selected runtime storage. */
 export const createPScenePreferencesRepository = (
   options: CreatePScenePreferencesRepositoryOptions,
 ): PScenePreferencesRepository => {
   const {storage} = options
-  let preferenceWriteRevision = 0
-  let failedNativeWriteRevision: number | null = null
-  let tossWriteQueue: Promise<void> | null = null
-  const writeLatestToss = createLatestStorageWriter(SCENE_PREFERENCES_STORAGE_KEY, (key, value) =>
-    storage.writeToss(key, value),
-  )
-  const enqueueTossWrite = (preferences: PScenePreferences, writeRevision: number) => {
-    const tossWrite = writeLatestToss(preferences)
-    const completion = tossWrite.then(
-      () => {
-        failedNativeWriteRevision = null
-        if (tossWriteQueue === completion) {
-          tossWriteQueue = null
-        }
-      },
-      () => {
-        failedNativeWriteRevision = writeRevision
-        if (tossWriteQueue === completion) {
-          tossWriteQueue = null
-        }
-      },
-    )
-    tossWriteQueue = completion
-    return tossWrite
-  }
+  let nativeWriteFailed = false
   const readWebPreferences = () =>
-    parseScenePreferences(storage.readWeb(SCENE_PREFERENCES_STORAGE_KEY))
+    parsePScenePreferences(storage.readWeb(SCENE_PREFERENCES_STORAGE_KEY))
   const writeWebPreferences = (preferences: PScenePreferences) => {
     storage.writeWeb(SCENE_PREFERENCES_STORAGE_KEY, preferences)
   }
+  const readWebPreferencesSafely = () => {
+    try {
+      return readWebPreferences()
+    } catch {
+      return null
+    }
+  }
+  const readNativeWriteFailure = () => {
+    try {
+      return storage.readWeb(NATIVE_WRITE_FAILURE_STORAGE_KEY) === true
+    } catch {
+      return false
+    }
+  }
+  const setNativeWriteFailure = (failed: boolean) => {
+    try {
+      storage.writeWeb(NATIVE_WRITE_FAILURE_STORAGE_KEY, failed)
+    } catch {}
+  }
 
   const read = async (): Promise<PScenePreferences> => {
-    const initialWriteRevision = preferenceWriteRevision
-
     if (!storage.usesTossStorage()) {
       return readWebPreferences() ?? DEFAULT_P_SCENE_PREFERENCES
     }
 
-    const pendingTossWrite = tossWriteQueue
-    if (pendingTossWrite !== null) {
-      await pendingTossWrite
-    }
-    if (preferenceWriteRevision !== initialWriteRevision) {
-      return readWebPreferences() ?? DEFAULT_P_SCENE_PREFERENCES
-    }
-    if (failedNativeWriteRevision === preferenceWriteRevision) {
-      return readWebPreferences() ?? DEFAULT_P_SCENE_PREFERENCES
+    const webPreferences = readWebPreferencesSafely()
+    if (!nativeWriteFailed && webPreferences !== null && readNativeWriteFailure()) {
+      return webPreferences
     }
 
     try {
-      const tossPreferences = parseScenePreferences(
+      const tossPreferences = parsePScenePreferences(
         await storage.readToss(SCENE_PREFERENCES_STORAGE_KEY),
       )
-      if (preferenceWriteRevision !== initialWriteRevision) {
-        return readWebPreferences() ?? DEFAULT_P_SCENE_PREFERENCES
-      }
 
-      const restoredPreferences = tossPreferences ?? DEFAULT_P_SCENE_PREFERENCES
+      const restoredPreferences =
+        tossPreferences ?? readWebPreferences() ?? DEFAULT_P_SCENE_PREFERENCES
+      if (tossPreferences !== null) {
+        setNativeWriteFailure(false)
+      }
       writeWebPreferences(restoredPreferences)
       return restoredPreferences
     } catch {
@@ -102,13 +89,20 @@ export const createPScenePreferencesRepository = (
   }
 
   const write = async (preferences: PScenePreferences): Promise<void> => {
-    const writeRevision = (preferenceWriteRevision += 1)
     writeWebPreferences(preferences)
     if (!storage.usesTossStorage()) {
-      failedNativeWriteRevision = null
+      nativeWriteFailed = false
+      setNativeWriteFailure(false)
       return
     }
-    await withPromiseNull(enqueueTossWrite(preferences, writeRevision))
+    try {
+      await storage.writeToss(SCENE_PREFERENCES_STORAGE_KEY, preferences)
+      nativeWriteFailed = false
+      setNativeWriteFailure(false)
+    } catch {
+      nativeWriteFailed = true
+      setNativeWriteFailure(true)
+    }
   }
 
   return {read, write}

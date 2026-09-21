@@ -89,7 +89,7 @@ export const createStoredReminderDraft = (memo: MemoryMemo) =>
 
 export const areReminderDraftsEqual = (left: ReminderDraft, right: ReminderDraft) =>
   left.exactEnabled === right.exactEnabled &&
-  left.recallMode === right.recallMode &&
+  (left.exactEnabled || left.recallMode === right.recallMode) &&
   (!left.exactEnabled ||
     (left.exactReminderAdvanceMinutes === right.exactReminderAdvanceMinutes &&
       left.exactReminderRepeatEnabled === right.exactReminderRepeatEnabled &&

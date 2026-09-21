@@ -6,16 +6,16 @@ import {getBounds} from '../get-bounds'
 
 describe('getBounds', () => {
   it('should return viewport bounds for window with x and y at zero', () => {
-    Object.defineProperty(window, 'innerWidth', {
+    Object.defineProperty(globalThis, 'innerWidth', {
       configurable: true,
       value: 1280,
     })
-    Object.defineProperty(window, 'innerHeight', {
+    Object.defineProperty(globalThis, 'innerHeight', {
       configurable: true,
       value: 720,
     })
 
-    expect(getBounds(window)).toEqual({
+    expect(getBounds(globalThis.window)).toEqual({
       height: 720,
       width: 1280,
       x: 0,

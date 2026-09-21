@@ -13,6 +13,7 @@ import {
 const {
   DEFAULT_BACKGROUND,
   getAutomaticScenePeriod,
+  PStudioEvents,
   PTour,
   SceneToolbar,
   readFocusRoomEntrySession,
@@ -74,6 +75,7 @@ describe('PStudio', () => {
       const [visibility, setVisibility] = createSignal(true)
       vi.mocked(usePDisplayPreferences).mockReturnValue({
         ...preferences,
+        featureRequestVisible: visibility,
         isReady,
         memoryAssistVisible: visibility,
         toolsButtonVisible: visibility,
@@ -90,15 +92,40 @@ describe('PStudio', () => {
       expect(SceneToolbar).toHaveBeenCalledOnce()
       const toolbar = vi.mocked(SceneToolbar).mock.calls[0][0]
       expect(toolbar.memoryAssistVisible).toBe(visible)
+      expect(toolbar.featureRequestVisible).toBe(visible)
       expect(toolbar.toolsButtonVisible).toBe(visible)
       expect(toolbar.tourButtonVisible).toBe(visible)
 
       setVisibility(!visible)
       expect(toolbar.memoryAssistVisible).toBe(!visible)
+      expect(toolbar.featureRequestVisible).toBe(!visible)
       expect(toolbar.toolsButtonVisible).toBe(!visible)
       expect(toolbar.tourButtonVisible).toBe(!visible)
     },
   )
+
+  it('should keep player visibility unknown until display restoration completes', () => {
+    configureStudio({entrySession: true})
+    const preferences = vi.mocked(usePDisplayPreferences)()
+    const [isReady, setIsReady] = createSignal(false)
+    const [playerVisible, setPlayerVisible] = createSignal(true)
+    vi.mocked(usePDisplayPreferences).mockReturnValue({
+      ...preferences,
+      isReady,
+      playerVisible,
+    })
+
+    renderStudio()
+
+    const events = vi.mocked(PStudioEvents).mock.calls[0]?.[0]
+    expect(events?.playerVisible).toBeUndefined()
+
+    setIsReady(true)
+    expect(events?.playerVisible).toBe(true)
+
+    setPlayerVisible(false)
+    expect(events?.playerVisible).toBe(false)
+  })
 
   it('should enter the focus room and pass toolbar changes to the scene', () => {
     configureStudio({gyroscope: true, isScreenSaverActive: true})
@@ -277,6 +304,25 @@ describe('PStudio', () => {
     expect(screen.queryByText('입장')).not.toBeInTheDocument()
     expect(screen.queryByRole('button', {name: '장면 로드 완료'})).not.toBeInTheDocument()
     expect(SceneToolbar).not.toHaveBeenCalled()
+  })
+
+  it('should wait for weather restoration before mounting the scene', () => {
+    const {setWeatherReady} = configureStudio({
+      entrySession: true,
+      weatherReady: false,
+      weatherSceneMode: 'rain',
+    })
+
+    renderStudio()
+
+    expect(screen.queryByRole('button', {name: '장면 로드 완료'})).not.toBeInTheDocument()
+
+    setWeatherReady(true)
+
+    expect(screen.getByRole('button', {name: '장면 로드 완료'}).parentElement).toHaveAttribute(
+      'data-weather',
+      'rain',
+    )
   })
 })
 

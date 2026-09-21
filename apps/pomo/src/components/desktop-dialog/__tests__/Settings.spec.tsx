@@ -29,9 +29,11 @@ const seoulLocation = {
 
 const displayPreferences = {
   dialogueComposerVisible: () => true,
+  featureRequestVisible: () => true,
   isReady: () => true,
   memoryAssistVisible: () => true,
   onDialogueComposerVisibleChange: vi.fn(),
+  onFeatureRequestVisibleChange: vi.fn(),
   onMemoryAssistVisibleChange: vi.fn(),
   onPlayerVisibleChange: vi.fn(),
   onPomodoroVisibleChange: vi.fn(),

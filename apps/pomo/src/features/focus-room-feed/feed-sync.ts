@@ -223,6 +223,13 @@ const processFeedItem = async (options: ProcessFeedItemOptions): Promise<string 
   const generationSettings = await options.resolveGenerationSettings(options.connection.id)
 
   if (generationSettings === null) {
+    const item = {
+      ...recordBase,
+      contentLength: script.length,
+      message: '음성 생성 설정을 찾지 못했어요.',
+      status: 'failed' as const,
+    } satisfies FeedItemRecord
+    await options.repository.saveItems([item])
     return null
   }
 

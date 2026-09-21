@@ -113,6 +113,17 @@ const useStudioEntry = (events: ReturnType<typeof usePEvents>) => {
   return {enter, hide: () => setIsVisible(false), isVisible, restore}
 }
 
+const DesktopWallpaperEventActionFallback = () => {
+  const events = usePEvents()
+
+  onMount(() => {
+    const unregister = events.registerEventActionExecutor(() => undefined, {mode: 'deferred'})
+    onCleanup(unregister)
+  })
+
+  return null
+}
+
 const createLoadingHandler =
   (setLoading: Setter<boolean>, setRendered: Setter<boolean>) => (isLoading: boolean) => {
     setLoading(isLoading)
@@ -133,7 +144,7 @@ interface StudioSceneViewProps {
   readonly sceneGaze: PGaze
   readonly sceneStyle: PSceneStyle
   readonly time: SceneTime
-  readonly weatherCondition: WeatherSceneCondition
+  readonly weatherCondition?: WeatherSceneCondition
   readonly isReady: boolean
   readonly styleReady: boolean
 }
@@ -219,9 +230,13 @@ const useStudioViseme = (
 }
 
 const toolbarVisibility = (preferences: PDisplayPreferencesController) => ({
+  get featureRequestVisible() {
+    return preferences.featureRequestVisible()
+  },
   get memoryAssistVisible() {
     return preferences.memoryAssistVisible()
   },
+  onFeatureRequestVisibleChange: preferences.onFeatureRequestVisibleChange,
   onMemoryAssistVisibleChange: preferences.onMemoryAssistVisibleChange,
   onPlayerVisibleChange: preferences.onPlayerVisibleChange,
   onPomodoroVisibleChange: preferences.onPomodoroVisibleChange,
@@ -276,7 +291,9 @@ const StudioUi = (props: StudioUiProps) => (
             props.displayPreferences.isReady() && props.displayPreferences.pomodoroVisible()
           }
           playerVisible={
-            props.displayPreferences.isReady() && props.displayPreferences.playerVisible()
+            props.displayPreferences.isReady()
+              ? props.displayPreferences.playerVisible()
+              : undefined
           }
           dialogueComposerVisible={props.displayPreferences.dialogueComposerVisible()}
           isPlayerExpanded={props.isPlayerExpanded}
@@ -421,7 +438,7 @@ export const PStudio = () => {
         activeViseme={activeViseme()}
         hasSceneRendered={hasSceneRendered()}
         isDesktopWallpaper={isDesktopWallpaper()}
-        isReady={scenePreferences.isReady()}
+        isReady={scenePreferences.isReady() && weather.isReady()}
         motionInput={motionInput()}
         motionMode={motionMode()}
         onLoadingChange={createLoadingHandler(setIsSceneLoading, setHasSceneRendered)}
@@ -459,6 +476,9 @@ export const PStudio = () => {
           uiAutoHide={uiAutoHide}
           weather={weather}
         />
+      </Show>
+      <Show when={isDesktopWallpaper()}>
+        <DesktopWallpaperEventActionFallback />
       </Show>
       <Show when={import.meta.env.VITE_POMO_IS_DESKTOP === 'true' && isDesktopWidget()}>
         <DesktopSurfaceHandle

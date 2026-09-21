@@ -108,6 +108,7 @@ export const createEntryPlaybackController = (): EntryPlaybackController => {
   let dialogue: PDialogue | null = null
   let isAwaitingSceneInteraction = false
   let isDisposed = false
+  let onPlaybackStarted: (() => Promise<void> | void) | null = null
   let playbackGeneration = 0
   let resolveCompletion: ((completion: PlaybackCompletion) => void) | null = null
   const reportPlaybackFailure = console.error.bind(
@@ -190,6 +191,7 @@ export const createEntryPlaybackController = (): EntryPlaybackController => {
 
     audioSource = null
     resumingAudio = null
+    onPlaybackStarted = null
     suspendAudioContext()
     audio = null
     audioEnvelope = null
@@ -213,6 +215,12 @@ export const createEntryPlaybackController = (): EntryPlaybackController => {
   const finishPlayback = (completion: PlaybackCompletion) => {
     settleCompletion(completion)
     clearPlayback(completion === 'ended' ? 'delayed' : 'immediate')
+  }
+
+  const notifyPlaybackStarted = async () => {
+    const callback = onPlaybackStarted
+    onPlaybackStarted = null
+    await callback?.()
   }
 
   const start = async (currentAudio: HTMLAudioElement) => {
@@ -243,17 +251,6 @@ export const createEntryPlaybackController = (): EntryPlaybackController => {
         return
       }
       await currentAudio.play()
-
-      if (audio !== currentAudio || isDisposed) {
-        return
-      }
-
-      isAwaitingSceneInteraction = false
-      setIsBlocked(false)
-      setIsPlaying(true)
-      silentMouthReturn.cancel()
-      cancelFrame()
-      updateSubtitle()
     } catch (error: unknown) {
       if (audio !== currentAudio || isDisposed) {
         return
@@ -267,7 +264,30 @@ export const createEntryPlaybackController = (): EntryPlaybackController => {
 
       console.error('Failed to play focus room entry dialogue.', error)
       finishPlayback('failed')
+      return
     }
+
+    if (audio !== currentAudio || isDisposed) {
+      return
+    }
+
+    isAwaitingSceneInteraction = false
+    setIsBlocked(false)
+    setIsPlaying(true)
+    try {
+      await notifyPlaybackStarted()
+    } catch (error: unknown) {
+      finishPlayback('failed')
+      throw error
+    }
+
+    if (audio !== currentAudio || isDisposed) {
+      return
+    }
+
+    silentMouthReturn.cancel()
+    cancelFrame()
+    updateSubtitle()
   }
 
   const loadDialogue = async (
@@ -328,18 +348,6 @@ export const createEntryPlaybackController = (): EntryPlaybackController => {
       return 'missing'
     }
 
-    try {
-      await options.onDialogueStart(options.dialogueId)
-    } catch (error: unknown) {
-      clearPlayback()
-      throw error
-    }
-
-    if (isDisposed || options.generation !== playbackGeneration) {
-      clearPlayback()
-      return 'cancelled'
-    }
-
     const completion = new Promise<PlaybackCompletion>((resolve) => {
       resolveCompletion = resolve
     })
@@ -367,7 +375,13 @@ export const createEntryPlaybackController = (): EntryPlaybackController => {
       },
       {once: true},
     )
-    await start(currentAudio)
+    onPlaybackStarted = () => options.onDialogueStart(options.dialogueId)
+    try {
+      await start(currentAudio)
+    } catch (error: unknown) {
+      clearPlayback()
+      throw error
+    }
     return completion
   }
 

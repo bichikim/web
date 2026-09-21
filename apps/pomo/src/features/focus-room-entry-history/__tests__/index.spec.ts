@@ -5,7 +5,12 @@ import {
   readTossStorageJson,
   writeTossStorageJson,
 } from 'src/utils/runtime-storage'
-import {readFocusRoomEntryHistory, settleEntryHistoryWrites, writeFocusRoomEntryHistory} from '..'
+import {
+  createEntryHistoryRepository,
+  readFocusRoomEntryHistory,
+  settleEntryHistoryWrites,
+  writeFocusRoomEntryHistory,
+} from '..'
 
 vi.mock('src/utils/runtime-storage', async () => {
   const actual = await vi.importActual<typeof import('src/utils/runtime-storage')>(
@@ -116,4 +121,33 @@ describe('focus room entry history', () => {
     vi.mocked(hasNativeStorageBridge).mockReturnValue(false)
     await expect(writeFocusRoomEntryHistory()).rejects.toThrow('Failed to persist')
   })
+})
+
+it('should settle writes independently for separate entry-history stores', async () => {
+  const blocked = Promise.withResolvers<void>()
+  const first = createEntryHistoryRepository({
+    readToss: async () => null,
+    readWeb: () => null,
+    usesNative: () => true,
+    writeToss: () => blocked.promise,
+    writeWeb: () => null,
+  })
+  let entered: true | null = null
+  const second = createEntryHistoryRepository({
+    readToss: async () => null,
+    readWeb: () => entered,
+    usesNative: () => false,
+    writeToss: async () => undefined,
+    writeWeb: () => {
+      entered = true
+      return null
+    },
+  })
+  const pending = first.write()
+  await second.write()
+  await second.settle()
+  await expect(second.read()).resolves.toBe(true)
+  blocked.resolve()
+  await pending
+  await first.settle()
 })

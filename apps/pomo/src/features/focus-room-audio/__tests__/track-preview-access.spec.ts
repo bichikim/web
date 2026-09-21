@@ -21,7 +21,7 @@ describe('loadTrackPreviewSource', () => {
     vi.stubEnv('VITE_POMO_IS_DESKTOP', '')
     vi.stubEnv('VITE_POMO_IS_MOBILE', '')
     vi.stubEnv('VITE_POMO_PUBLIC_ORIGIN', 'https://www.pomofi.io')
-    vi.stubGlobal('window', {location: new URL('http://127.0.0.1:1425/')})
+    vi.stubGlobal('location', new URL('http://127.0.0.1:1425/'))
     sessionMocks.readStoredAppSession.mockReset().mockResolvedValue(null)
     vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob:pomo-track-preview')
     vi.spyOn(URL, 'revokeObjectURL').mockReturnValue(undefined)

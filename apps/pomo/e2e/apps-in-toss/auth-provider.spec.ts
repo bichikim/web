@@ -9,7 +9,7 @@ test('should share a delayed Toss session across account and settings after sign
 }) => {
   await page.addInitScript(
     ({storageKey}) => {
-      window.localStorage.setItem(storageKey, 'e2e-toss-session')
+      globalThis.localStorage.setItem(storageKey, 'e2e-toss-session')
     },
     {storageKey: TOSS_SESSION_STORAGE_KEY},
   )
@@ -46,7 +46,9 @@ test('should share a delayed Toss session across account and settings after sign
   await expect(page.getByText('로그아웃했습니다.', {exact: true})).toBeVisible()
   await expect(page.getByRole('button', {name: '토스로 시작하기'})).toBeVisible()
   await expect
-    .poll(() => page.evaluate((key) => window.localStorage.getItem(key), TOSS_SESSION_STORAGE_KEY))
+    .poll(() =>
+      page.evaluate((key) => globalThis.localStorage.getItem(key), TOSS_SESSION_STORAGE_KEY),
+    )
     .toBeNull()
 
   await page.goBack()

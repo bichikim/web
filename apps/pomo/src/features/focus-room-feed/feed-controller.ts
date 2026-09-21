@@ -1,3 +1,4 @@
+import type {FeedSettingsRuntime} from './settings-runtime'
 import type {useAutoPreparePreference} from './use-auto-prepare-preference'
 import type {Accessor} from 'solid-js'
 
@@ -47,6 +48,7 @@ export interface PFeedController {
 }
 
 export interface UsePFeedsProps {
+  readonly settingsRuntime?: FeedSettingsRuntime
   readonly events: PEventContextValue
 }
 

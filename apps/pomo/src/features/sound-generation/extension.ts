@@ -4,6 +4,7 @@ import {isNonBlankString} from 'src/utils/is-non-blank-string'
 import type {SoundProgress} from './assets'
 import {
   createPcmCrossfade,
+  createPcmLevelMatchedBuffer,
   DEFAULT_CONNECTION_SECONDS,
   MAX_GENERATION_CONNECTION_SECONDS,
   MIN_CONNECTION_SECONDS,
@@ -25,11 +26,15 @@ import {
 export const MAX_GENERATION_SECONDS = 21600
 const CHUNK_SECONDS = 120
 const MAX_CHUNKS = 512
+const CONTINUATION_PROMPT =
+  'Continue the exact same sound from the preserved beginning. ' +
+  'Keep the same source, intensity, texture, and volume without introducing new events or variations.'
 let running = false
 
 export interface GenerateExtendedSoundOptions {
   readonly chunkNoiseMode?: ChunkNoiseMode
   readonly connectionSeconds?: number
+  readonly negativePrompt?: string
 }
 
 export function canCreateGenerationPlan(seconds: number, connectionSeconds: number): boolean {
@@ -144,29 +149,32 @@ async function appendConnectedChunk(
   parts: Blob[],
   chunk: Blob,
   connectionSeconds: number,
-): Promise<void> {
+): Promise<Blob> {
   if (parts.length === 0 || connectionSeconds === MIN_CONNECTION_SECONDS) {
     parts.push(chunk.slice(WAV_HEADER_BYTES))
-    return
+    return chunk
   }
 
   const connectionFrames = connectionSeconds * SAMPLE_RATE
   const connectionBytes = connectionFrames * STEREO_FRAME_BYTES
   const previousTail = takeTail(parts, connectionBytes)
-  const generatedHead = chunk.slice(
-    WAV_HEADER_BYTES + connectionBytes,
-    WAV_HEADER_BYTES + connectionBytes * 2,
-  )
-  const [previousBuffer, generatedBuffer] = await Promise.all([
+  const [previousBuffer, chunkBuffer] = await Promise.all([
     previousTail.arrayBuffer(),
-    generatedHead.arrayBuffer(),
+    chunk.slice(WAV_HEADER_BYTES).arrayBuffer(),
   ])
-  const mixed = createPcmCrossfade({next: generatedBuffer, previous: previousBuffer})
+  const levelMatchedChunk = createPcmLevelMatchedBuffer({
+    reference: previousBuffer,
+    source: chunkBuffer,
+    sourceMatch: chunkBuffer,
+  })
+  const matchedGeneratedBuffer = levelMatchedChunk.slice(connectionBytes, connectionBytes * 2)
+  const mixed = createPcmCrossfade({next: matchedGeneratedBuffer, previous: previousBuffer})
   removeTail(parts, connectionBytes)
   parts.push(
     new Blob([mixed], {type: 'audio/wav'}),
-    chunk.slice(WAV_HEADER_BYTES + connectionBytes * 2),
+    new Blob([levelMatchedChunk.slice(connectionBytes * 2)], {type: 'audio/wav'}),
   )
+  return new Blob([chunk.slice(0, WAV_HEADER_BYTES), levelMatchedChunk], {type: 'audio/wav'})
 }
 
 /** Generates 1–21,600 seconds sequentially in a Worker; terminate the Worker to cancel active inference. */
@@ -199,11 +207,16 @@ export async function generateExtendedSound(
           ? undefined
           : await createContext(previous, duration, connectionSeconds)
       const prefix = `${index + 1}/${plan.length} 구간 · ${completed}/${seconds}초`
+      const chunkPrompt = index === 0 ? prompt : `${CONTINUATION_PROMPT} ${prompt}`
       const chunk = await generateSound(
-        prompt,
+        chunkPrompt,
         duration,
         (message) => progress(`${prefix} · ${message}`),
-        {inpaint: context, noiseSource: nextNoiseSource()},
+        {
+          inpaint: context,
+          negativePrompt: options.negativePrompt,
+          noiseSource: nextNoiseSource(),
+        },
       )
       if (chunk.size !== WAV_HEADER_BYTES + duration * SAMPLE_RATE * STEREO_FRAME_BYTES) {
         throw new Error('생성된 WAV 길이가 요청과 다릅니다.')
@@ -211,9 +224,9 @@ export async function generateExtendedSound(
       if (header === undefined) {
         header = await chunk.slice(0, WAV_HEADER_BYTES).arrayBuffer()
       }
-      await appendConnectedChunk(parts, chunk, connectionSeconds)
-      completed += previous === undefined ? duration : duration - connectionSeconds * 2
-      previous = chunk
+      const hadPreviousChunk = previous !== undefined
+      previous = await appendConnectedChunk(parts, chunk, connectionSeconds)
+      completed += hadPreviousChunk ? duration - connectionSeconds * 2 : duration
     }
     if (header === undefined) {
       throw new Error('생성된 오디오가 없습니다.')

@@ -116,9 +116,11 @@ beforeEach(() => {
   vi.clearAllMocks()
   vi.mocked(usePDisplayPreferences).mockReturnValue({
     dialogueComposerVisible: () => false,
+    featureRequestVisible: () => true,
     isReady: () => true,
     memoryAssistVisible: () => true,
     onDialogueComposerVisibleChange: vi.fn(),
+    onFeatureRequestVisibleChange: vi.fn(),
     onMemoryAssistVisibleChange: vi.fn(),
     onPlayerVisibleChange: vi.fn(),
     onPomodoroVisibleChange: vi.fn(),
@@ -162,6 +164,7 @@ beforeEach(() => {
   })
   vi.mocked(useWeather).mockReturnValue({
     enabled: () => false,
+    isReady: () => true,
     location: () => seoulLocation,
     onEnabledChange: vi.fn(),
     onLocationChange: vi.fn(),

@@ -19,8 +19,8 @@ describe('useDrag', () => {
       element.dispatchEvent(
         new MouseEvent('pointerdown', {bubbles: true, clientX: 10, clientY: 20}),
       )
-      window.dispatchEvent(new Event(eventType))
-      window.dispatchEvent(new MouseEvent('pointermove', {clientX: 30, clientY: 40}))
+      globalThis.dispatchEvent(new Event(eventType))
+      globalThis.dispatchEvent(new MouseEvent('pointermove', {clientX: 30, clientY: 40}))
 
       expect(callback).toHaveBeenCalledTimes(2)
       expect(callback).toHaveBeenNthCalledWith(

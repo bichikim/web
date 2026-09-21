@@ -1,3 +1,4 @@
+import {getExceptionMessage} from 'src/features/error-detail'
 import {getMonotonicTime} from 'src/utils/get-monotonic-time'
 import {
   type Accessor,
@@ -164,7 +165,7 @@ const createRecordingActions = (options: CreateRecordingActionsOptions) => {
     options.modelOwner.prepare().catch((error: unknown) => {
       if (!options.isDisposed()) {
         options.setModelState({status: 'idle'})
-        options.setErrorMessage(error instanceof Error ? error.message : '음성 인식 모델 준비 오류')
+        options.setErrorMessage(getExceptionMessage(error, '음성 인식 모델 준비 오류'))
       }
     })
   }
@@ -216,7 +217,7 @@ const createRecordingActions = (options: CreateRecordingActionsOptions) => {
     if (currentActivity === 'recording') {
       stopRecording().catch((error: unknown) => {
         if (!options.isDisposed()) {
-          options.setErrorMessage(error instanceof Error ? error.message : '음성 처리 오류')
+          options.setErrorMessage(getExceptionMessage(error, '음성 처리 오류'))
           options.setActivity('idle')
         }
       })
@@ -226,7 +227,7 @@ const createRecordingActions = (options: CreateRecordingActionsOptions) => {
     if (currentActivity === 'idle') {
       startRecording().catch((error: unknown) => {
         if (!options.isDisposed()) {
-          options.setErrorMessage(error instanceof Error ? error.message : '마이크 실행 오류')
+          options.setErrorMessage(getExceptionMessage(error, '마이크 실행 오류'))
           options.setActivity('idle')
         }
       })
@@ -300,7 +301,7 @@ export const useSpeechToText = (props: UseSpeechToTextProps = {}): SpeechToTextC
     },
     onUnexpectedError: (error) => {
       if (!disposed) {
-        setErrorMessage(error instanceof Error ? error.message : '음성 처리 오류')
+        setErrorMessage(getExceptionMessage(error, '음성 처리 오류'))
       }
     },
     transcribeAudio,

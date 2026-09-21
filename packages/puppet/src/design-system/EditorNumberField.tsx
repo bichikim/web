@@ -75,9 +75,9 @@ const startScrub = (options: StartScrubOptions) => {
   const startPointerX = options.event.clientX
   let moved = false
   const remove = () => {
-    window.removeEventListener('pointercancel', cancel)
-    window.removeEventListener('pointermove', move)
-    window.removeEventListener('pointerup', finish)
+    globalThis.removeEventListener('pointercancel', cancel)
+    globalThis.removeEventListener('pointermove', move)
+    globalThis.removeEventListener('pointerup', finish)
   }
   const move = (event: PointerEvent) => {
     const pointerDistance = event.clientX - startPointerX
@@ -114,9 +114,9 @@ const startScrub = (options: StartScrubOptions) => {
     }
   }
 
-  window.addEventListener('pointercancel', cancel)
-  window.addEventListener('pointermove', move)
-  window.addEventListener('pointerup', finish)
+  globalThis.addEventListener('pointercancel', cancel)
+  globalThis.addEventListener('pointermove', move)
+  globalThis.addEventListener('pointerup', finish)
   return remove
 }
 

@@ -28,6 +28,8 @@ export interface PSettingsProps {
   readonly onToolsButtonVisibleChange?: (visible: boolean) => void
   readonly memoryAssistVisible?: boolean
   readonly onMemoryAssistVisibleChange?: (visible: boolean) => void
+  readonly featureRequestVisible?: boolean
+  readonly onFeatureRequestVisibleChange?: (visible: boolean) => void
   readonly tourButtonVisible?: boolean
   readonly onTourButtonVisibleChange?: (visible: boolean) => void
   readonly activity?: PActivity

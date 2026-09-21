@@ -1,5 +1,6 @@
 /** @vitest-environment jsdom */
 
+import {PreferenceProvider} from 'src/hooks/use-preference'
 import {cleanup, fireEvent, render, screen} from '@solidjs/testing-library'
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 
@@ -29,7 +30,9 @@ describe('PMusicPlayerContent preview integration', () => {
   })
 
   it('should pause active playback for a preview and resume after it ends', () => {
-    const result = render(() => <PMusicPlayerContent tracks={TRACKS} />)
+    const result = render(() => <PMusicPlayerContent tracks={TRACKS} />, {
+      wrapper: PreferenceProvider,
+    })
     const audio = getAudioElement(result.container)
 
     fireEvent(audio, new Event('play'))
@@ -46,7 +49,9 @@ describe('PMusicPlayerContent preview integration', () => {
   })
 
   it('should stop an active preview when the main player starts', () => {
-    const result = render(() => <PMusicPlayerContent tracks={TRACKS} />)
+    const result = render(() => <PMusicPlayerContent tracks={TRACKS} />, {
+      wrapper: PreferenceProvider,
+    })
     const audio = getAudioElement(result.container)
 
     fireEvent.click(screen.getByRole('button', {name: '미리듣기 시작'}))

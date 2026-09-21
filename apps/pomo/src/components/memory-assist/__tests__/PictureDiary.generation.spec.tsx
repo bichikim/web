@@ -20,8 +20,8 @@ it.each(['draw', 'done', 'switch-tabs'])(
         observe = vi.fn()
       },
     )
-    const getComputedStyle = window.getComputedStyle.bind(window)
-    vi.spyOn(window, 'getComputedStyle').mockImplementation((element, pseudoElement) => {
+    const getComputedStyle = globalThis.getComputedStyle.bind(globalThis)
+    vi.spyOn(globalThis, 'getComputedStyle').mockImplementation((element, pseudoElement) => {
       const styles = getComputedStyle(element, pseudoElement)
       Object.defineProperty(styles, 'animationName', {configurable: true, value: 'none'})
       return styles

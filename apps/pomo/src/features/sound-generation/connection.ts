@@ -1,3 +1,4 @@
+import {clamp} from 'es-toolkit/math'
 // oxlint-disable no-magic-numbers -- Shared PCM layout and audio-connection policy.
 
 export const DEFAULT_CONNECTION_SECONDS = 4
@@ -12,12 +13,22 @@ export const STEREO_FRAME_BYTES = 4
 export const WAV_HEADER_BYTES = 44
 export const PCM16_SCALE = 32768
 export const EDGE_RAMP_SECONDS = 0.2
+const MAX_PCM16_SAMPLE = PCM16_SCALE - 1
+const MIN_PCM_RMS = 1 / PCM16_SCALE
+const MAX_LEVEL_GAIN = 2
+const CROSSFADE_QUARTER_TURN = Math.PI / 2
 
 export type PcmBlendDirection = 'generated-to-original' | 'original-to-generated'
 
 export interface PcmCrossfadeOptions {
   readonly next: ArrayBuffer
   readonly previous: ArrayBuffer
+}
+
+export interface CreatePcmLevelMatchedBufferOptions {
+  readonly reference: ArrayBuffer
+  readonly source: ArrayBuffer
+  readonly sourceMatch: ArrayBuffer
 }
 
 export interface PcmEdgeBlendOptions {
@@ -28,7 +39,7 @@ export interface PcmEdgeBlendOptions {
   readonly rampFrames: number
 }
 
-/** Crossfades two same-length stereo PCM16 buffers while preserving both channels. */
+/** Crossfades two same-length stereo PCM16 buffers with an equal-power curve. */
 export function createPcmCrossfade(options: PcmCrossfadeOptions): ArrayBuffer {
   const {next, previous} = options
   validatePcmPair(previous, next)
@@ -39,18 +50,43 @@ export function createPcmCrossfade(options: PcmCrossfadeOptions): ArrayBuffer {
   const resultView = new DataView(result)
   for (let frame = 0; frame < frames; frame += 1) {
     const progress = frames === 1 ? 1 : frame / (frames - 1)
+    const previousWeight = Math.cos(progress * CROSSFADE_QUARTER_TURN)
+    const nextWeight = Math.sin(progress * CROSSFADE_QUARTER_TURN)
     for (let channel = 0; channel < 2; channel += 1) {
       const offset = frame * STEREO_FRAME_BYTES + channel * 2
       const previousSample = previousView.getInt16(offset, true)
       const nextSample = nextView.getInt16(offset, true)
       resultView.setInt16(
         offset,
-        Math.round(previousSample * (1 - progress) + nextSample * progress),
+        Math.round(previousSample * previousWeight + nextSample * nextWeight),
         true,
       )
     }
   }
   return result
+}
+
+/** Scales a stereo PCM16 source toward a reference RMS without exceeding PCM16 headroom. */
+export function createPcmLevelMatchedBuffer(
+  options: CreatePcmLevelMatchedBufferOptions,
+): ArrayBuffer {
+  const {reference, source, sourceMatch} = options
+  validatePcmBuffer(reference)
+  validatePcmBuffer(sourceMatch)
+  validatePcmBuffer(source)
+
+  const referenceRms = calculatePcmStatistics(reference).rms
+  const sourceMatchStatistics = calculatePcmStatistics(sourceMatch)
+  const sourcePeak = calculatePcmStatistics(source).peak
+  const requestedGain =
+    referenceRms > MIN_PCM_RMS && sourceMatchStatistics.rms > MIN_PCM_RMS
+      ? referenceRms / sourceMatchStatistics.rms
+      : 1
+  const clippingGain =
+    sourcePeak === 0 ? Number.POSITIVE_INFINITY : MAX_PCM16_SAMPLE / (PCM16_SCALE * sourcePeak)
+  const gain = Math.min(MAX_LEVEL_GAIN, requestedGain, clippingGain)
+
+  return applyPcmGain(source, gain)
 }
 
 /** Blends a generated connection patch into an original edge using one shared linear ramp. */
@@ -107,4 +143,48 @@ function validatePcmPair(previous: ArrayBuffer, next: ArrayBuffer): void {
   ) {
     throw new Error('연결할 오디오가 같은 길이의 스테레오 PCM16 프레임이어야 합니다.')
   }
+}
+
+function validatePcmBuffer(buffer: ArrayBuffer): void {
+  if (buffer.byteLength === 0 || buffer.byteLength % STEREO_FRAME_BYTES !== 0) {
+    throw new Error('오디오가 스테레오 PCM16 프레임으로 정렬되지 않았습니다.')
+  }
+}
+
+interface PcmStatistics {
+  readonly peak: number
+  readonly rms: number
+}
+
+function calculatePcmStatistics(buffer: ArrayBuffer): PcmStatistics {
+  validatePcmBuffer(buffer)
+  const view = new DataView(buffer)
+  let sumOfSquares = 0
+  let peak = 0
+  for (let offset = 0; offset < buffer.byteLength; offset += 2) {
+    const sample = view.getInt16(offset, true)
+    const normalizedSample = sample / PCM16_SCALE
+    sumOfSquares += normalizedSample * normalizedSample
+    peak = Math.max(peak, Math.abs(normalizedSample))
+  }
+  return {
+    peak,
+    rms: Math.sqrt(sumOfSquares / (buffer.byteLength / 2)),
+  }
+}
+
+function applyPcmGain(source: ArrayBuffer, gain: number): ArrayBuffer {
+  const result = source.slice(0)
+  if (gain === 1) {
+    return result
+  }
+
+  const sourceView = new DataView(source)
+  const resultView = new DataView(result)
+  for (let offset = 0; offset < source.byteLength; offset += 2) {
+    const sample = sourceView.getInt16(offset, true)
+    const scaledSample = Math.round(sample * gain)
+    resultView.setInt16(offset, clamp(scaledSample, -PCM16_SCALE, MAX_PCM16_SAMPLE), true)
+  }
+  return result
 }

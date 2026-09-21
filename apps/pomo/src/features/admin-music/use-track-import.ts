@@ -1,3 +1,4 @@
+import {getExceptionMessage} from '../error-detail'
 import {createSignal, onCleanup} from 'solid-js'
 import {createStore} from 'solid-js/store'
 import type {CreateTrackActionResult} from './actions'
@@ -56,9 +57,7 @@ export const useTrackImport = (props: UseTrackImportProps) => {
           })
         }
       } catch (error) {
-        errors.push(
-          `${audio.name}: ${error instanceof Error ? error.message : '파일을 추가하지 못했습니다.'}`,
-        )
+        errors.push(`${audio.name}: ${getExceptionMessage(error, '파일을 추가하지 못했습니다.')}`)
       }
     }
     setMessage(errors.length > 0 ? errors.join('\n') : null)

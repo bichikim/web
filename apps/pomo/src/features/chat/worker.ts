@@ -31,10 +31,11 @@ import {
 const CONTEXT_COMPACTION_TOKENS = 4608
 const MAXIMUM_ANSWER_TOKENS = 256
 const MAXIMUM_SUMMARY_TOKENS = 384
-const workerScope = self as DedicatedWorkerGlobalScope
+const workerScope = globalThis.self as DedicatedWorkerGlobalScope
 
 const sendResponse = (response: ChatWorkerResponse) => workerScope.postMessage(response)
 let textRuntimePromise: Promise<TextGenerationRuntime> | null = null
+let generationInFlight = false
 const getTextRuntime = () => {
   textRuntimePromise ??= import('../text-generation/transformers-runtime').then(
     ({createTransformersRuntime}) =>
@@ -212,8 +213,16 @@ const generateAnswer = async (options: GenerateAnswerOptions) => {
 
 const handleRequest = (request: ChatWorkerRequest): Promise<void> => {
   switch (request.type) {
-    case 'generate':
-      return generateAnswer(request)
+    case 'generate': {
+      if (generationInFlight) {
+        return Promise.resolve()
+      }
+
+      generationInFlight = true
+      return generateAnswer(request).finally(() => {
+        generationInFlight = false
+      })
+    }
     case 'prepare':
       return prepareModel(request.modelId)
   }

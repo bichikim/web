@@ -1,3 +1,4 @@
+import {clamp} from 'es-toolkit/math'
 /// <reference lib="webworker" />
 import {getMonotonicTime} from 'src/utils/get-monotonic-time'
 
@@ -19,7 +20,7 @@ import {TEXT_MOOD_MODEL} from './model'
 
 const MAXIMUM_PROGRESS = 100
 const MINIMUM_PROGRESS = 0
-const workerScope = self as DedicatedWorkerGlobalScope
+const workerScope = globalThis.self as DedicatedWorkerGlobalScope
 
 // AI_NOTE - 감정 분석 런타임 자산은 외부 Hub fallback 없이 버전 고정된 Pomo R2 미러에서만 읽는다.
 env.allowLocalModels = false
@@ -48,10 +49,7 @@ const reportProgress = (progress: ProgressInfo) => {
     return
   }
 
-  const percentage = Math.min(
-    MAXIMUM_PROGRESS,
-    Math.max(MINIMUM_PROGRESS, Math.round(progress.progress)),
-  )
+  const percentage = clamp(Math.round(progress.progress), MINIMUM_PROGRESS, MAXIMUM_PROGRESS)
   sendResponse({progress: percentage, type: 'loading'})
 }
 

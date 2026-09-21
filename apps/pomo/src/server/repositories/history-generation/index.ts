@@ -155,7 +155,21 @@ export const prepareGenerationRun = async (
     throw new Error('Generation run disappeared after a uniqueness conflict')
   }
 
-  if (existing.status === 'failed' && existing.attemptCount < MAX_GENERATION_ATTEMPTS) {
+  const retryCondition =
+    existing.status === 'failed'
+      ? eq(historicalGenerationRuns.status, 'failed')
+      : existing.status === 'preparing' &&
+          existing.openAiResponseId === null &&
+          existing.submissionState === 'expired'
+        ? and(
+            eq(historicalGenerationRuns.status, 'preparing'),
+            isNull(historicalGenerationRuns.openAiResponseId),
+            eq(historicalGenerationRuns.submissionState, 'expired'),
+          )
+        : undefined
+
+  // Rotate the key so a late response for the expired attempt cannot claim this retry.
+  if (existing.attemptCount < MAX_GENERATION_ATTEMPTS && retryCondition !== undefined) {
     const [retried] = await database
       .update(historicalGenerationRuns)
       .set({
@@ -164,13 +178,15 @@ export const prepareGenerationRun = async (
         openAiResponseId: null,
         openAiSubmissionKey: randomUUID(),
         status: 'preparing',
+        submissionExpiresAt: null,
+        submissionState: null,
         updatedAt: new Date(),
       })
       .where(
         and(
           eq(historicalGenerationRuns.id, existing.id),
-          eq(historicalGenerationRuns.status, 'failed'),
           eq(historicalGenerationRuns.attemptCount, existing.attemptCount),
+          retryCondition,
         ),
       )
       .returning()

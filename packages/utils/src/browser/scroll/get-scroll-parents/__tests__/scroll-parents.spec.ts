@@ -23,7 +23,7 @@ describe('getScrollParents', () => {
     inner.append(element)
     document.body.append(outer)
 
-    expect(getScrollParents(element)).toEqual([inner, outer, window])
+    expect(getScrollParents(element)).toEqual([inner, outer, globalThis.window])
   })
 
   it('should return only window when no element ancestor is scrollable', () => {
@@ -33,7 +33,7 @@ describe('getScrollParents', () => {
     parent.append(element)
     document.body.append(parent)
 
-    expect(getScrollParents(element)).toEqual([window])
+    expect(getScrollParents(element)).toEqual([globalThis.window])
   })
 
   it("should return the target element's own window", () => {

@@ -39,7 +39,7 @@ beforeEach(() => {
 })
 
 afterEach(() => {
-  Reflect.deleteProperty(window, 'ReactNativeWebView')
+  Reflect.deleteProperty(globalThis.window, 'ReactNativeWebView')
   vi.restoreAllMocks()
 })
 
@@ -52,7 +52,7 @@ it('should read and write the browser storage for web and desktop runtimes', asy
 })
 
 it('should use Apps in Toss storage as the native source of truth', async () => {
-  Object.defineProperty(window, 'ReactNativeWebView', {configurable: true, value: {}})
+  Object.defineProperty(globalThis, 'ReactNativeWebView', {configurable: true, value: {}})
   localStorage.setItem(
     STORAGE_KEY,
     JSON.stringify({...viewedRelease, version: 'stale browser version'}),
@@ -86,7 +86,7 @@ it('should advance an older web marker and replace malformed stored data', async
 })
 
 it('should persist native values regardless of a newer browser cache', async () => {
-  Object.defineProperty(window, 'ReactNativeWebView', {configurable: true, value: {}})
+  Object.defineProperty(globalThis, 'ReactNativeWebView', {configurable: true, value: {}})
   localStorage.setItem(
     STORAGE_KEY,
     JSON.stringify({...viewedRelease, releasedAt: '2026-09-04T00:57:00+09:00'}),
@@ -162,7 +162,7 @@ it('should surface browser write failures but ignore native cache write failures
 it.each(['2026-09-03T00:52:00+09:00', '2026-09-02T15:57:00Z'])(
   'should preserve the native marker when an incoming release is not newer: %s',
   async (releasedAt) => {
-    Object.defineProperty(window, 'ReactNativeWebView', {configurable: true, value: {}})
+    Object.defineProperty(globalThis, 'ReactNativeWebView', {configurable: true, value: {}})
     nativeStorageMocks.getItem.mockResolvedValue(JSON.stringify(viewedRelease))
 
     await writeViewedRelease({...viewedRelease, releasedAt})
@@ -214,6 +214,34 @@ it.each([true, false])(
   },
 )
 
+it('should serialize overlapping web writes before comparing the incoming marker', async () => {
+  const storage = createStorage()
+  let marker: ViewedRelease | null = null
+  let hasReentered = false
+  let overlappingWrite: Promise<void> | undefined
+  const older = {...viewedRelease, releasedAt: '2026-09-03T00:52:00+09:00'}
+  const repository = createViewedReleaseRepository({storage})
+
+  vi.mocked(storage.readWeb).mockImplementation(() => {
+    const snapshot = marker
+    if (!hasReentered) {
+      hasReentered = true
+      overlappingWrite = repository.write(viewedRelease)
+    }
+    return snapshot
+  })
+  vi.mocked(storage.writeWeb).mockImplementation((value) => {
+    marker = value
+    return null
+  })
+
+  const firstWrite = repository.write(older)
+  await firstWrite
+  await overlappingWrite
+
+  expect(marker).toEqual(viewedRelease)
+})
+
 it('should reject failed native checks without writing and allow the next queued write', async () => {
   const storage = createStorage()
   vi.mocked(storage.usesTossStorage).mockReturnValue(true)
@@ -231,7 +259,7 @@ it('should reject failed native checks without writing and allow the next queued
 })
 
 it('should retain the latest native marker after an older notice is dismissed and storage is read again', async () => {
-  Object.defineProperty(window, 'ReactNativeWebView', {configurable: true, value: {}})
+  Object.defineProperty(globalThis, 'ReactNativeWebView', {configurable: true, value: {}})
   let marker: string | null = null
   nativeStorageMocks.getItem.mockImplementation(async () => marker)
   nativeStorageMocks.setItem.mockImplementation(async (_key, value) => {

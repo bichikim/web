@@ -75,3 +75,105 @@ it('should pass loop input to the Worker without applying generation duration va
     }
   })
 })
+
+it('should report a busy request and clear the error when stopped', () => {
+  const postMessage = vi.fn()
+  const worker = vi.fn(function MockWorker() {
+    return {postMessage, terminate: vi.fn()}
+  })
+  vi.stubGlobal('Worker', worker)
+
+  createRoot((dispose) => {
+    try {
+      const generation = useSoundGeneration()
+      const firstRequest = {prompt: 'rain', seconds: 30}
+      const secondRequest = {prompt: 'ocean', seconds: 45}
+
+      generation.generate(firstRequest)
+      generation.generate(secondRequest)
+
+      expect(worker).toHaveBeenCalledOnce()
+      expect(postMessage).toHaveBeenCalledOnce()
+      expect(postMessage).toHaveBeenCalledWith(firstRequest)
+      expect(generation.error()).toBe('이미 생성 중인 작업이 있습니다. 완료 후 다시 시도해 주세요.')
+      expect(generation.status()).toBe('생성이 진행 중입니다. 완료 후 다시 시도해 주세요.')
+
+      generation.stop()
+
+      expect(generation.busy()).toBe(false)
+      expect(generation.error()).toBeNull()
+      expect(generation.status()).toBe('생성을 중지했습니다.')
+    } finally {
+      dispose()
+    }
+  })
+})
+
+it('should preserve a worker error when stopped after failure', () => {
+  const worker = {
+    onerror: null as ((event: ErrorEvent) => void) | null,
+    onmessage: null as ((event: MessageEvent) => void) | null,
+    postMessage: vi.fn(),
+    terminate: vi.fn(),
+  }
+  vi.stubGlobal(
+    'Worker',
+    vi.fn(function MockWorker() {
+      return worker
+    }),
+  )
+
+  createRoot((dispose) => {
+    try {
+      const generation = useSoundGeneration()
+      generation.generate({prompt: 'rain', seconds: 30})
+      worker.onerror?.({message: 'worker failed'} as ErrorEvent)
+
+      generation.stop()
+
+      expect(generation.error()).toBe('worker failed')
+      expect(generation.status()).toBe('생성을 중지했습니다.')
+    } finally {
+      dispose()
+    }
+  })
+})
+
+it('should clear the busy error after the active generation succeeds', () => {
+  const postMessage = vi.fn()
+  const worker = {
+    onmessage: null as ((event: MessageEvent) => void) | null,
+    postMessage,
+    terminate: vi.fn(),
+  }
+  const nativeUrl = URL
+  vi.stubGlobal(
+    'URL',
+    class extends nativeUrl {
+      static createObjectURL = vi.fn(() => 'blob:result')
+      static revokeObjectURL = vi.fn()
+    },
+  )
+  vi.stubGlobal(
+    'Worker',
+    vi.fn(function MockWorker() {
+      return worker
+    }),
+  )
+
+  createRoot((dispose) => {
+    try {
+      const generation = useSoundGeneration()
+      generation.generate({prompt: 'rain', seconds: 30})
+      generation.generate({prompt: 'ocean', seconds: 45})
+      expect(generation.error()).not.toBeNull()
+
+      worker.onmessage?.({data: {blob: new Blob(['wav']), type: 'result'}} as MessageEvent)
+
+      expect(generation.error()).toBeNull()
+      expect(generation.url()).toBe('blob:result')
+    } finally {
+      dispose()
+    }
+  })
+})

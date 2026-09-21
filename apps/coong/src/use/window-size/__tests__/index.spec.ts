@@ -21,7 +21,7 @@ describe('useWindowSize', () => {
   })
 
   it('should update the viewport size from resize events while active', () => {
-    Object.defineProperties(window, {
+    Object.defineProperties(globalThis, {
       innerHeight: {configurable: true, value: 700},
       innerWidth: {configurable: true, value: 1000},
     })
@@ -29,7 +29,7 @@ describe('useWindowSize', () => {
     const [target, eventName, listener] = mocks.useEvent.mock.calls[0]
 
     expect(result()).toEqual({height: 700, width: 1000})
-    expect(target()).toBe(window)
+    expect(target()).toBe(globalThis.window)
     expect(eventName).toBe('resize')
 
     listener({target: {innerHeight: 800, innerWidth: 1200}} as unknown as Event)

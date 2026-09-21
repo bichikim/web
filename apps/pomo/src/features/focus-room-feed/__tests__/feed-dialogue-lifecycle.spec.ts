@@ -113,11 +113,13 @@ it('should delete expired dialogues except active or queued playback', async () 
   const active = createMetadata('active')
   const idle = createMetadata('idle')
   const deleteDialogue = vi.fn(async () => undefined)
+  const removeItem = vi.fn(async () => undefined)
   const removeMetadata = vi.fn(async () => undefined)
   const deletedCount = await deleteExpiredFeedDialogues({
     dialogueRepository: {deleteDialogue},
     feedRepository: {
       listExpiredMetadata: vi.fn(async () => [active, idle]),
+      removeItem,
       removeMetadata,
     },
     isDialogueScheduled: (dialogueId) => dialogueId === active.dialogueId,
@@ -126,6 +128,8 @@ it('should delete expired dialogues except active or queued playback', async () 
 
   expect(deletedCount).toBe(1)
   expect(deleteDialogue).toHaveBeenCalledWith(idle.dialogueId)
+  expect(removeItem).toHaveBeenCalledWith(idle.feedConnectionId, idle.feedItemId)
+  expect(removeItem).toHaveBeenCalledTimes(1)
   expect(removeMetadata).toHaveBeenCalledWith(idle.dialogueId)
 })
 

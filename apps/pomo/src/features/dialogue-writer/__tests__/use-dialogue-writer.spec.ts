@@ -1,6 +1,7 @@
 /** @vitest-environment jsdom */
 
 import {createRoot} from 'solid-js'
+import {getLocale, overwriteGetLocale} from '@paraglide/runtime'
 import {afterEach, describe, expect, it, vi} from 'vitest'
 
 import {
@@ -20,6 +21,8 @@ interface TestRuntime extends DialogueWriterRuntime {
   readonly client: DialogueClient
   readonly emit: (response: DialogueWorkerResponse) => void
 }
+
+const originalGetLocale = getLocale
 
 const createRuntime = (supported: boolean): TestRuntime => {
   let onResponse: ((response: DialogueWorkerResponse) => void) | null = null
@@ -67,6 +70,7 @@ const createDialogueRoot = (
 }
 
 afterEach(() => {
+  overwriteGetLocale(originalGetLocale)
   vi.unstubAllGlobals()
   vi.clearAllMocks()
 })
@@ -84,6 +88,29 @@ describe('useDialogueWriter', () => {
     expect(root.controller.canGenerate()).toBe(false)
     expect(root.controller.statusMessage()).toContain('WebGPU를 사용할 수 없어요')
     expect(runtime.createClient).not.toHaveBeenCalled()
+    root.dispose()
+  })
+
+  it('should keep writer statuses and errors in English for the English locale', () => {
+    overwriteGetLocale(() => 'en')
+    const runtime = createRuntime(true)
+    const root = createDialogueRoot(runtime)
+
+    expect(root.controller.statusMessage()).toBe(
+      'The model is downloaded once and kept on this device.',
+    )
+    root.controller.prepare()
+    runtime.emit({files: [], loadedBytes: 50, percentage: 50, totalBytes: 100, type: 'loading'})
+    expect(root.controller.statusMessage()).toBe('Downloading the model · 50%')
+    runtime.emit({
+      message: '대화문 모델을 실행하지 못했어요.',
+      restartRequired: false,
+      type: 'error',
+    })
+    expect(root.controller.statusMessage()).toBe(
+      'The dialogue model could not complete the request.',
+    )
+    expect(root.controller.statusMessage()).not.toMatch(/[가-힣]/u)
     root.dispose()
   })
 
@@ -171,6 +198,23 @@ describe('useDialogueWriter', () => {
 
     expect(stateDuringCompletion).toEqual({status: 'generating'})
     expect(controller.state()).toEqual({status: 'complete'})
+    root.dispose()
+  })
+
+  it('should ignore a late readiness response while generating', () => {
+    const runtime = createRuntime(true)
+    const root = createDialogueRoot(runtime)
+
+    root.controller.prepare()
+    runtime.emit({type: 'ready'})
+    root.controller.generate()
+
+    runtime.emit({type: 'ready'})
+
+    expect(root.controller.state()).toEqual({status: 'generating'})
+    expect(root.controller.isBusy()).toBe(true)
+    expect(root.controller.canGenerate()).toBe(false)
+
     root.dispose()
   })
 

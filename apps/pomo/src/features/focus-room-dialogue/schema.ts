@@ -11,6 +11,13 @@ import {MOOD_MODIFIER_IDS, PRIMARY_MOOD_IDS} from '../text-mood/labels'
 
 export const DEFAULT_FOCUS_ROOM_DIALOGUE_LANGUAGE = 'ko' satisfies SupertonicLanguage
 export const RANDOM_DIALOGUE_EVENT = 'random' as const
+export const DELAYED_END_EVENT = 'delayed-end' as const
+export const EVENT_ACTION_IDS = [
+  'music-stop',
+  'music-start',
+  'sound-effects-stop',
+  'sound-effects-start',
+] as const
 
 export const FOCUS_ROOM_DIALOGUE_EVENTS = [
   'room-enter',
@@ -20,10 +27,12 @@ export const FOCUS_ROOM_DIALOGUE_EVENTS = [
   'break-end',
   'long-break-start',
   'long-break-end',
+  DELAYED_END_EVENT,
   RANDOM_DIALOGUE_EVENT,
 ] as const
 export const FOCUS_ROOM_ENTRY_EVENT = 'room-enter' as const
 export const dialogueEventIdSchema = z.enum(FOCUS_ROOM_DIALOGUE_EVENTS)
+export const eventActionIdSchema = z.enum(EVENT_ACTION_IDS)
 export const DIALOGUE_EVENT_PLAYBACK_MODES = ['sequential-all', 'random-all', 'random-one'] as const
 export const DEFAULT_DIALOGUE_EVENT_PLAYBACK_MODE = 'sequential-all' as const
 export const dialogueEventPlaybackModeSchema = z.enum(DIALOGUE_EVENT_PLAYBACK_MODES)
@@ -92,12 +101,18 @@ const orderedDialogueEventBindingSchema = z.object({
   event: dialogueEventIdSchema,
   version: z.literal(2),
 })
-const currentDialogueEventBindingSchema = z.object({
-  dialogueIds: z.array(z.string().min(1)).min(1).readonly(),
-  event: dialogueEventIdSchema,
-  playbackMode: dialogueEventPlaybackModeSchema,
-  version: z.literal(CURRENT_DIALOGUE_EVENT_BINDING_VERSION),
-})
+const currentDialogueEventBindingSchema = z
+  .object({
+    actionIds: z.array(eventActionIdSchema).min(1).readonly().optional(),
+    dialogueIds: z.array(z.string().min(1)).readonly(),
+    event: dialogueEventIdSchema,
+    playbackMode: dialogueEventPlaybackModeSchema,
+    version: z.literal(CURRENT_DIALOGUE_EVENT_BINDING_VERSION),
+  })
+  .refine(
+    (binding) => binding.dialogueIds.length > 0 || (binding.actionIds?.length ?? 0) > 0,
+    '이벤트에는 대화 또는 행동이 하나 이상 연결되어야 해요.',
+  )
 
 export type DialogueEventBinding = z.infer<typeof currentDialogueEventBindingSchema>
 
@@ -124,3 +139,4 @@ export type DialogueSegmentMood = z.infer<typeof dialogueSegmentMoodSchema>
 export type PDialogue = z.infer<typeof focusRoomDialogueSchema>
 export type DialogueEventId = z.infer<typeof dialogueEventIdSchema>
 export type DialogueEventPlaybackMode = z.infer<typeof dialogueEventPlaybackModeSchema>
+export type EventActionId = z.infer<typeof eventActionIdSchema>

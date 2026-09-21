@@ -6,7 +6,7 @@ import {PModelDownloadProvider} from '../../../../features/model-download'
 import type {PictureDiaryImage, PictureDiaryStroke} from '../../../../features/picture-diary'
 import {PictureDiaryDrawing} from '../Drawing'
 
-const getComputedStyle = window.getComputedStyle.bind(window)
+const getComputedStyle = globalThis.getComputedStyle.bind(globalThis)
 
 beforeEach(() => {
   vi.stubGlobal(
@@ -16,7 +16,7 @@ beforeEach(() => {
       observe = vi.fn()
     },
   )
-  vi.spyOn(window, 'getComputedStyle').mockImplementation((element, pseudoElement) => {
+  vi.spyOn(globalThis, 'getComputedStyle').mockImplementation((element, pseudoElement) => {
     const styles = getComputedStyle(element, pseudoElement)
     Object.defineProperty(styles, 'animationName', {configurable: true, value: 'none'})
     return styles

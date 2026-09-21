@@ -8,7 +8,7 @@ export const createBrowserDiaryEnvironment = (): PictureDiaryEnvironment => ({
   createId: () => crypto.randomUUID(),
   now: () => new Date(),
   observeCompact: (onChange) => {
-    const media = window.matchMedia?.('(width < 48rem)')
+    const media = globalThis.matchMedia?.('(width < 48rem)')
     const update = () => onChange(media?.matches ?? false)
     update()
     media?.addEventListener?.('change', update)

@@ -5,18 +5,18 @@ import {
   disposeRepository,
   expectStatusMessage,
   flush,
+  LanguageLearningEditorWithPreferences,
   navigate,
   setWriterState,
 } from './editor.setup'
 import {fireEvent, render, screen, waitFor} from '@solidjs/testing-library'
 import {expect, it, vi} from 'vitest'
-import {LanguageLearningEditor} from '../Editor'
 import {LanguageLearningReview} from '../Review'
 import {saveLanguageLearningCandidates} from '../save'
 import {regenerateCandidateVoice} from '../voice-generation'
 
 it('should generate, review, regenerate, toggle, and save a sentence', async () => {
-  const result = render(() => <LanguageLearningEditor />)
+  const result = render(() => <LanguageLearningEditorWithPreferences />)
 
   expect(result.container.querySelector('main')).toHaveClass(
     '[background:var(--pomo-editor-background)]',
@@ -42,7 +42,7 @@ it('should generate, review, regenerate, toggle, and save a sentence', async () 
 
 it('should report save failures', async () => {
   vi.mocked(saveLanguageLearningCandidates).mockRejectedValue(new Error('save failed'))
-  render(() => <LanguageLearningEditor />)
+  render(() => <LanguageLearningEditorWithPreferences />)
   fireEvent.click(screen.getByRole('button', {name: 'generate'}))
   await flush()
   setWriterState({status: 'generating'})

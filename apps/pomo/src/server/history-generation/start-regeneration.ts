@@ -11,10 +11,11 @@ import {
 } from '../repositories/history-generation'
 import {HistorySubmissionError, submitHistoryResponse} from './openai-client'
 import {
-  persistGenerationSubmission,
+  persistAcceptedGenerationSubmission,
   persistUnknownGenerationSubmission,
 } from './submission-persistence'
 import {getSubmissionRecoveryDeadline} from './submission-recovery-policy'
+import {withHistoryGenerationLock} from './submission-lock'
 
 const MAX_ERROR_LENGTH = 2000
 
@@ -37,6 +38,7 @@ interface StartRegenerationDependencies {
   readonly now: () => Date
   readonly prepare: typeof prepareGenerationRerun
   readonly submit: typeof submitHistoryResponse
+  readonly withLock?: typeof withHistoryGenerationLock
 }
 
 const DEFAULT_DEPENDENCIES: StartRegenerationDependencies = {
@@ -46,15 +48,15 @@ const DEFAULT_DEPENDENCIES: StartRegenerationDependencies = {
   now: () => new Date(),
   prepare: prepareGenerationRerun,
   submit: submitHistoryResponse,
+  withLock: withHistoryGenerationLock,
 }
 
 const getErrorMessage = (error: HistorySubmissionError): string =>
   error.message.slice(0, MAX_ERROR_LENGTH)
 
-/** Reopens one daily run and submits selected moments for replacement. */
-export const startHistoryRegeneration = async (
+const startHistoryRegenerationWithoutLock = async (
   options: StartRegenerationOptions,
-  dependencies: StartRegenerationDependencies = DEFAULT_DEPENDENCIES,
+  dependencies: StartRegenerationDependencies,
 ): Promise<StartRegenerationResult> => {
   const run = await dependencies.prepare({
     promptVersion: HISTORY_PROMPT_VERSION,
@@ -94,12 +96,14 @@ export const startHistoryRegeneration = async (
     throw error
   }
 
-  await persistGenerationSubmission(
-    run.id,
-    run.openAiSubmissionKey,
-    submitted.responseId,
-    dependencies.markSubmitted,
-  )
+  await persistAcceptedGenerationSubmission({
+    markSubmitted: dependencies.markSubmitted,
+    markUnknown: dependencies.markUnknown,
+    now: dependencies.now,
+    responseId: submitted.responseId,
+    runId: run.id,
+    submissionKey: run.openAiSubmissionKey,
+  })
 
   return {
     responseId: submitted.responseId,
@@ -107,4 +111,16 @@ export const startHistoryRegeneration = async (
     status: 'submitted',
     targetDate: options.targetDate.isoDate,
   }
+}
+
+/** Reopens one daily run and submits selected moments for replacement. */
+export const startHistoryRegeneration = async (
+  options: StartRegenerationOptions,
+  dependencies: StartRegenerationDependencies = DEFAULT_DEPENDENCIES,
+): Promise<StartRegenerationResult> => {
+  const withLock = dependencies.withLock ?? ((_targetDate, operation) => operation())
+
+  return withLock(options.targetDate.isoDate, () =>
+    startHistoryRegenerationWithoutLock(options, dependencies),
+  )
 }

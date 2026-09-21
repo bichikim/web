@@ -75,7 +75,7 @@ export const registerLifecycleHandlers = (options: LifecycleOptions): void => {
           )
         })
         .then(async () => {
-          await self.clients.claim()
+          await globalThis.self.clients.claim()
           await options.notifyClients({type: 'SW_ACTIVATED', version: options.cacheVersion})
         }),
     )
@@ -94,7 +94,7 @@ export const registerLifecycleHandlers = (options: LifecycleOptions): void => {
         return
       case 'SKIP_WAITING':
         options.log('info', 'Received skip waiting message')
-        event.waitUntil(self.skipWaiting())
+        event.waitUntil(globalThis.self.skipWaiting())
         return
     }
 

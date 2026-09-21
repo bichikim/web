@@ -1,3 +1,5 @@
+import * as m from '@paraglide/message'
+import {localizeModelDownloadSize} from '../../features/model-storage'
 import {PButton} from '../p-button/PButton'
 import {PModal} from '../p-modal/PModal'
 
@@ -18,21 +20,19 @@ export const PModelDownloadConsent = (props: PModelDownloadConsentProps) => (
         props.onCancel()
       }
     }}
-    title={`${props.downloadSize} 모델을 받을까요?`}
+    title={m.dialogue_download_title({size: localizeModelDownloadSize(props.downloadSize)})}
   >
     <div class="grid gap-5">
-      <p class="m-0 text-sm leading-6 text-foreground">
-        모바일 네트워크에서는 데이터 요금이 발생할 수 있어요. Wi-Fi 연결을 권장해요.
-      </p>
+      <p class="m-0 text-sm leading-6 text-foreground">{m.dialogue_download_network_note()}</p>
       <p class="m-0 text-sm leading-5 text-muted-foreground">
-        받은 모델은 보관되며, 다운로드 후 {props.actionLabel}가 자동으로 시작돼요.
+        {m.dialogue_download_storage_note({action: props.actionLabel})}
       </p>
       <div class="flex justify-end gap-2">
         <PButton bordered transparent onPress={props.onCancel} tone="secondary">
-          취소
+          {m.dialogue_download_cancel()}
         </PButton>
         <PButton raised onPress={props.onConfirm}>
-          받고 시작
+          {m.dialogue_download_start()}
         </PButton>
       </div>
     </div>

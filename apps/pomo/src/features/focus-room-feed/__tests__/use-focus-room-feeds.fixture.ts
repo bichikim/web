@@ -5,6 +5,8 @@ import type {SupertonicClient} from '../../supertonic'
 import type {FeedDialogueJob, FeedItemRecord} from '../feed-dialogue-schema'
 import type {FeedConnection} from '../schema'
 
+const DEFAULT_DELAYED_END_EVENT_DURATION_MINUTES = 30
+
 const syncMocks = vi.hoisted(() => ({
   synchronizeFeeds: vi.fn(),
 }))
@@ -189,12 +191,16 @@ export const createEventContext = (
   activeSegmentPosition: vi.fn(() => null),
   activeText: vi.fn(() => null),
   activeViseme: vi.fn(() => 'rest' as const),
+  cancelDelayedEndEvent: vi.fn(),
+  delayedEndEventDurationMinutes: vi.fn(() => DEFAULT_DELAYED_END_EVENT_DURATION_MINUTES),
+  delayedEndEventIsRunning: vi.fn(() => false),
   deleteDialogue: vi.fn(async () => undefined),
   dialogues: vi.fn(() => []),
   enterFocusRoom: vi.fn(),
   entryDialogueId: vi.fn(() => null),
   entryDialogueIds: vi.fn(() => []),
   errorMessage: vi.fn(() => null),
+  eventActionIds: vi.fn(() => ({})),
   eventDialogueIds: vi.fn(() => ({})),
   eventPlaybackModes: vi.fn(() => ({})),
   getAudio: vi.fn(async () => null),
@@ -210,15 +216,19 @@ export const createEventContext = (
   playDialogueEvents: vi.fn(async () => undefined),
   playDialogueSequence: vi.fn(async () => undefined),
   refreshDialogues,
+  registerEventActionExecutor: vi.fn(() => vi.fn()),
   retryDialoguePlayback: vi.fn(),
   retryEntryPlayback: vi.fn(),
   scheduledDialogueCount: vi.fn(() => 0),
+  setDelayedEndEventDuration: vi.fn(async () => undefined),
   setEntryDialogue: vi.fn(async () => undefined),
   setEntryDialogues: vi.fn(async () => undefined),
   setEventDialogue: vi.fn(async () => undefined),
   setEventDialogues: vi.fn(async () => undefined),
+  setEventItems: vi.fn(async () => undefined),
   setEventPlaybackMode: vi.fn(async () => undefined),
   skipDialoguePlayback: vi.fn(),
+  startDelayedEndEvent: vi.fn(),
 })
 
 export const createConnection = (overrides: Partial<FeedConnection> = {}): FeedConnection => ({

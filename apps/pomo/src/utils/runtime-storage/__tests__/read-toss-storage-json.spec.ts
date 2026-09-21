@@ -15,7 +15,7 @@ beforeEach(() => {
   storageMocks.setItem.mockReset()
 })
 afterEach(() => {
-  Reflect.deleteProperty(window, 'ReactNativeWebView')
+  Reflect.deleteProperty(globalThis.window, 'ReactNativeWebView')
   vi.restoreAllMocks()
 })
 it('should load and parse Toss storage on demand', async () => {

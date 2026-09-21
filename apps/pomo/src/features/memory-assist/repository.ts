@@ -1,3 +1,4 @@
+import {createSerialTaskQueue} from 'src/utils/create-serial-task-queue'
 import {
   createLatestStorageWriter,
   hasNativeStorageBridge,
@@ -29,18 +30,16 @@ export interface MemoryMemosChangedEventDetail {
   readonly revision: number
 }
 
-const runtimeTossWriter = createLatestStorageWriter(STORAGE_KEY, writeTossStorageJson)
-
-const runtimeStorage = {
+const createRuntimeStorage = (): MemoryMemoStorage => ({
   readToss: () => readTossStorageJson(STORAGE_KEY, parseMemoryMemos),
   readWeb: () => parseStorageJson(localStorage.getItem(STORAGE_KEY), parseMemoryMemos),
   usesTossStorage: hasNativeStorageBridge,
-  writeToss: runtimeTossWriter,
+  writeToss: createLatestStorageWriter(STORAGE_KEY, writeTossStorageJson),
   writeWeb: (memos) => writeWebStorageJson(STORAGE_KEY, memos),
-} satisfies MemoryMemoStorage
+})
 
 export const createMemoryMemoRepository = (
-  storage: MemoryMemoStorage = runtimeStorage,
+  storage: MemoryMemoStorage = createRuntimeStorage(),
 ): MemoryMemoRepository => ({
   async read() {
     if (!storage.usesTossStorage()) {
@@ -54,11 +53,20 @@ export const createMemoryMemoRepository = (
         storage.writeWeb(tossMemos)
         return tossMemos
       }
+
+      const webMemos = storage.readWeb()
+      if (webMemos !== null) {
+        await storage.writeToss(webMemos).catch((error: unknown) => {
+          globalThis.reportError?.(error)
+        })
+        return webMemos
+      }
+
+      storage.writeWeb([])
     } catch (error) {
       throw new Error('Failed to read memory memos.', {cause: error})
     }
 
-    storage.writeWeb([])
     return []
   },
   async write(memos) {
@@ -86,30 +94,43 @@ export const createMemoryMemoRepository = (
   },
 })
 
-const runtimeRepository = createMemoryMemoRepository()
-let updateQueue = Promise.resolve<ReadonlyArray<MemoryMemo>>([])
-let memoryMemosRevision = 0
-
-export const readMemoryMemos = () => runtimeRepository.read()
-
-export const writeMemoryMemos = async (memos: ReadonlyArray<MemoryMemo>) => {
-  await runtimeRepository.write(memos)
-  const revision = (memoryMemosRevision += 1)
-  const detail: MemoryMemosChangedEventDetail = {memos, revision}
-  window.dispatchEvent(new CustomEvent(MEMORY_MEMOS_CHANGED_EVENT, {detail}))
+export interface MemoryMemoStore extends MemoryMemoRepository {
+  readonly update: (
+    update: (memos: ReadonlyArray<MemoryMemo>) => ReadonlyArray<MemoryMemo>,
+  ) => Promise<ReadonlyArray<MemoryMemo>>
 }
 
+/** Owns serialized memo updates and successful-write notifications for one persistence boundary. */
+export const createMemoryMemoStore = (
+  storage: MemoryMemoStorage,
+  notify: (detail: MemoryMemosChangedEventDetail) => void,
+): MemoryMemoStore => {
+  const repository = createMemoryMemoRepository(storage)
+  const queue = createSerialTaskQueue()
+  let revision = 0
+  const persist = async (memos: ReadonlyArray<MemoryMemo>) => {
+    await repository.write(memos)
+    revision += 1
+    notify({memos, revision})
+  }
+  return {
+    read: () => queue.run(repository.read),
+    update: (update) =>
+      queue.run(async () => {
+        const memos = update(await repository.read())
+        await persist(memos)
+        return memos
+      }),
+    write: (memos) => queue.run(() => persist(memos)),
+  }
+}
+
+const runtimeStore = createMemoryMemoStore(createRuntimeStorage(), (detail) => {
+  globalThis.dispatchEvent(new CustomEvent(MEMORY_MEMOS_CHANGED_EVENT, {detail}))
+})
+
+export const readMemoryMemos = () => runtimeStore.read()
+export const writeMemoryMemos = (memos: ReadonlyArray<MemoryMemo>) => runtimeStore.write(memos)
 export const updateMemoryMemos = (
   update: (memos: ReadonlyArray<MemoryMemo>) => ReadonlyArray<MemoryMemo>,
-) => {
-  const pendingUpdate = updateQueue
-    .catch(() => [])
-    .then(async () => {
-      const currentMemos = await runtimeRepository.read()
-      const nextMemos = update(currentMemos)
-      await writeMemoryMemos(nextMemos)
-      return nextMemos
-    })
-  updateQueue = pendingUpdate
-  return pendingUpdate
-}
+) => runtimeStore.update(update)

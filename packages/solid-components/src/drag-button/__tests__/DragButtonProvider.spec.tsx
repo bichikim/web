@@ -30,7 +30,7 @@ describe('DragButtonProvider', () => {
     const button = getByRole('button', {name: 'Drag'})
 
     await fireEvent.mouseDown(button, {clientX: 0, clientY: 0})
-    window.dispatchEvent(new MouseEvent('mousemove', {clientX: 0, clientY: -25}))
+    globalThis.dispatchEvent(new MouseEvent('mousemove', {clientX: 0, clientY: -25}))
 
     expect(container.querySelector('output')?.getAttribute('data-drag-y')).toBe('-25')
   })
@@ -46,7 +46,7 @@ describe('DragButtonProvider', () => {
     const button = getByRole('button', {name: 'Drag'})
 
     await fireEvent.mouseDown(button, {clientX: 0, clientY: 0})
-    window.dispatchEvent(new MouseEvent('pointerup', {clientX: 100, clientY: 0}))
+    globalThis.dispatchEvent(new MouseEvent('pointerup', {clientX: 100, clientY: 0}))
 
     expect(onLeftExecute).toHaveBeenCalledOnce()
     expect(onClick).not.toHaveBeenCalled()
@@ -64,9 +64,9 @@ describe('DragButtonProvider', () => {
     const button = getByRole('button', {name: 'Drag'})
 
     await fireEvent.mouseDown(button, {clientX: 0, clientY: 0})
-    window.dispatchEvent(new MouseEvent('mousemove', {clientX: 25, clientY: 0}))
-    window.dispatchEvent(new Event('pointercancel'))
-    window.dispatchEvent(new MouseEvent('pointerup', {clientX: 100, clientY: 0}))
+    globalThis.dispatchEvent(new MouseEvent('mousemove', {clientX: 25, clientY: 0}))
+    globalThis.dispatchEvent(new Event('pointercancel'))
+    globalThis.dispatchEvent(new MouseEvent('pointerup', {clientX: 100, clientY: 0}))
 
     expect(container.querySelector('output')?.getAttribute('data-drag-x')).toBe('0')
     expect(onClick).not.toHaveBeenCalled()

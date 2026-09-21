@@ -2,6 +2,7 @@
 
 import {fireEvent, render, screen, within} from '@solidjs/testing-library'
 import {For} from 'solid-js'
+import {PreferenceProvider} from 'src/hooks/use-preference'
 import {afterEach, beforeEach, expect, it, vi} from 'vitest'
 
 import {getLocale, overwriteGetLocale} from '@paraglide/runtime'
@@ -46,6 +47,8 @@ vi.mock('../../../features/supertonic', () => ({
 vi.mock('../word-pronunciation', () => ({
   generateLanguageLearningWordPronunciation: vi.fn(),
 }))
+
+const renderWords = () => render(() => <LanguageLearningWords />, {wrapper: PreferenceProvider})
 
 beforeEach(() => {
   overwriteGetLocale(() => 'ko')
@@ -95,7 +98,7 @@ afterEach(() => {
 
 it('should localize the saved-word heading count in English', () => {
   overwriteGetLocale(() => 'en')
-  render(() => <LanguageLearningWords />)
+  renderWords()
   const input = screen.getByRole('textbox', {name: 'Unknown words'})
 
   fireEvent.input(input, {target: {value: 'acknowledge,perspective,reluctant'}})
@@ -107,7 +110,7 @@ it('should localize the saved-word heading count in English', () => {
 })
 
 it('should add several unknown words at once and filter them by language', () => {
-  const result = render(() => <LanguageLearningWords />)
+  const result = renderWords()
   const input = screen.getByRole('textbox', {name: '모르는 단어'})
 
   expect(input.parentElement?.className).toContain('bg-surface')
@@ -146,7 +149,7 @@ it('should add several unknown words at once and filter them by language', () =>
 })
 
 it('should save the current input, deduplicate words, and delete a saved word', () => {
-  render(() => <LanguageLearningWords />)
+  renderWords()
   const input = screen.getByRole('textbox', {name: '모르는 단어'})
 
   fireEvent.input(input, {target: {value: 'Home,home,wave'}})
@@ -161,7 +164,7 @@ it('should save the current input, deduplicate words, and delete a saved word', 
 })
 
 it('should add and remove word selections and change all selected memorized states', () => {
-  render(() => <LanguageLearningWords />)
+  renderWords()
   const input = screen.getByRole('textbox', {name: '모르는 단어'})
 
   fireEvent.input(input, {target: {value: 'Home,wave'}})
@@ -220,7 +223,7 @@ it('should add and remove word selections and change all selected memorized stat
 })
 
 it('should keep selection actions visible and disabled while no words are selected', () => {
-  render(() => <LanguageLearningWords />)
+  renderWords()
   const input = screen.getByRole('textbox', {name: '모르는 단어'})
 
   fireEvent.input(input, {target: {value: 'Home'}})
@@ -251,7 +254,7 @@ it('should keep selection actions visible and disabled while no words are select
 })
 
 it('should filter all, unmemorized, and memorized words in one tab panel', () => {
-  render(() => <LanguageLearningWords />)
+  renderWords()
   const input = screen.getByRole('textbox', {name: '모르는 단어'})
 
   fireEvent.input(input, {target: {value: 'words,asset'}})
@@ -288,7 +291,7 @@ it('should filter all, unmemorized, and memorized words in one tab panel', () =>
 })
 
 it('should show only a speaker after the selectable word and request pronunciation', async () => {
-  render(() => <LanguageLearningWords />)
+  renderWords()
   const input = screen.getByRole('textbox', {name: '모르는 단어'})
 
   fireEvent.input(input, {target: {value: 'Home'}})
@@ -305,7 +308,7 @@ it('should show only a speaker after the selectable word and request pronunciati
   )
 })
 
-it('should disable every pronunciation button while one cached audio read is pending', async () => {
+it('should allow another pronunciation request while one cached audio read is pending', async () => {
   const get = vi.fn(
     () =>
       new Promise<null>(() => {
@@ -317,7 +320,7 @@ it('should disable every pronunciation button while one cached audio read is pen
     get,
     save: vi.fn(async () => undefined),
   })
-  render(() => <LanguageLearningWords />)
+  renderWords()
   const input = screen.getByRole('textbox', {name: '모르는 단어'})
 
   fireEvent.input(input, {target: {value: 'Home,wave'}})
@@ -330,12 +333,62 @@ it('should disable every pronunciation button while one cached audio read is pen
   await vi.waitFor(() => expect(get).toHaveBeenCalledOnce())
   expect(homeButton).toBeDisabled()
   expect(homeButton).toHaveAttribute('aria-busy', 'true')
-  expect(waveButton).toBeDisabled()
+  expect(waveButton).not.toBeDisabled()
   expect(waveButton).toHaveAttribute('aria-busy', 'false')
-  expect(waveButton).toHaveClass('disabled:cursor-not-allowed', 'disabled:opacity-40')
 
   fireEvent.click(waveButton)
-  expect(get).toHaveBeenCalledOnce()
+  await vi.waitFor(() => expect(get).toHaveBeenCalledTimes(2))
+})
+
+it('should replace an active pronunciation when another word is clicked', async () => {
+  vi.spyOn(HTMLMediaElement.prototype, 'play').mockResolvedValue(undefined)
+  let firstSignal: AbortSignal | undefined
+  let resolveSecond: (() => void) | undefined
+  let generationCount = 0
+  vi.mocked(generateLanguageLearningWordPronunciation).mockImplementation((options) => {
+    generationCount += 1
+    if (generationCount === 1) {
+      firstSignal = options.signal
+      return new Promise((resolve) => {
+        options.signal?.addEventListener('abort', () => resolve({status: 'cancelled'}), {
+          once: true,
+        })
+      })
+    }
+
+    return new Promise((resolve) => {
+      resolveSecond = () =>
+        resolve({
+          audio: new Blob(['wave audio'], {type: 'audio/ogg; codecs=opus'}),
+          status: 'complete',
+        })
+    })
+  })
+  vi.mocked(useModelAssetManager).mockReturnValue({
+    runAfterModel: vi.fn(),
+    runAfterVoiceModel: async (options) => ({status: 'complete', value: await options.task()}),
+  })
+  vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob:word-audio')
+
+  renderWords()
+  const input = screen.getByRole('textbox', {name: '모르는 단어'})
+  fireEvent.input(input, {target: {value: 'Home,wave'}})
+  fireEvent.click(screen.getByRole('button', {name: '단어 저장'}))
+
+  const homeButton = screen.getByRole('button', {name: 'Home 발음 듣기'})
+  const waveButton = screen.getByRole('button', {name: 'wave 발음 듣기'})
+  fireEvent.click(homeButton)
+  await vi.waitFor(() => expect(firstSignal).toBeInstanceOf(AbortSignal))
+
+  expect(waveButton).not.toBeDisabled()
+  fireEvent.click(waveButton)
+
+  await vi.waitFor(() => expect(firstSignal?.aborted).toBe(true))
+  await vi.waitFor(() => expect(generationCount).toBe(2))
+  expect(waveButton).toHaveAttribute('aria-busy', 'true')
+  resolveSecond?.()
+  await vi.waitFor(() => expect(waveButton).toHaveAttribute('aria-busy', 'false'))
+  expect(generateLanguageLearningWordPronunciation).toHaveBeenCalledTimes(2)
 })
 
 it('should play only the requested word when saved and memorized words share the page', async () => {
@@ -365,7 +418,7 @@ it('should play only the requested word when saved and memorized words share the
     runAfterVoiceModel,
   })
 
-  render(() => <LanguageLearningWords />)
+  renderWords()
   const input = screen.getByRole('textbox', {name: '모르는 단어'})
   fireEvent.input(input, {target: {value: 'words,asset'}})
   fireEvent.click(screen.getByRole('button', {name: '단어 저장'}))
@@ -402,7 +455,7 @@ it('should replace the speaker with an alert when audio playback is rejected', a
     runAfterModel: vi.fn(),
     runAfterVoiceModel: async (options) => ({status: 'complete', value: await options.task()}),
   })
-  render(() => <LanguageLearningWords />)
+  renderWords()
   const input = screen.getByRole('textbox', {name: '모르는 단어'})
   fireEvent.input(input, {target: {value: 'Home'}})
   fireEvent.click(screen.getByRole('button', {name: '단어 저장'}))
@@ -418,7 +471,7 @@ it('should replace the speaker with an alert when audio playback is rejected', a
 
 it('should report storage failures while saving and deleting words', () => {
   const error = vi.spyOn(console, 'error').mockImplementation(() => undefined)
-  const result = render(() => <LanguageLearningWords />)
+  const result = renderWords()
   const input = screen.getByRole('textbox', {name: '모르는 단어'})
   const setItem = vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
     throw new Error('storage unavailable')
@@ -432,7 +485,7 @@ it('should report storage failures while saving and deleting words', () => {
   setItem.mockRestore()
   result.unmount()
 
-  const deleteResult = render(() => <LanguageLearningWords />)
+  const deleteResult = renderWords()
   const deleteInput = screen.getByRole('textbox', {name: '모르는 단어'})
   fireEvent.input(deleteInput, {target: {value: 'removable'}})
   fireEvent.click(screen.getByRole('button', {name: '단어 저장'}))
@@ -451,7 +504,7 @@ it('should report storage failures while saving and deleting words', () => {
 
 it('should report storage failures while changing the memorized state', () => {
   const error = vi.spyOn(console, 'error').mockImplementation(() => undefined)
-  render(() => <LanguageLearningWords />)
+  renderWords()
   const input = screen.getByRole('textbox', {name: '모르는 단어'})
 
   fireEvent.input(input, {target: {value: 'unavailable'}})

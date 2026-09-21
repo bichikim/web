@@ -10,7 +10,7 @@ interface DialogueLookupRepository extends Pick<PDialogueRepository, 'getDialogu
 
 interface FeedDialogueDeleteRepository extends Pick<
   FeedDialogueRepository,
-  'listExpiredMetadata' | 'removeMetadata'
+  'listExpiredMetadata' | 'removeItem' | 'removeMetadata'
 > {}
 
 interface FeedDialogueIssueRepository extends Pick<FeedDialogueRepository, 'listItems'> {}
@@ -122,6 +122,7 @@ export const deleteExpiredFeedDialogues = async (options: DeleteExpiredFeedDialo
   await Promise.all(
     removable.map(async (metadata) => {
       await options.dialogueRepository.deleteDialogue(metadata.dialogueId)
+      await options.feedRepository.removeItem(metadata.feedConnectionId, metadata.feedItemId)
       await options.feedRepository.removeMetadata(metadata.dialogueId)
     }),
   )

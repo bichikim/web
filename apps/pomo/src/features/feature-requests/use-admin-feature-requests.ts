@@ -36,8 +36,11 @@ export const useAdminFeatureRequests = (): AdminFeatureRequestsController => {
   const [loadFailed, setLoadFailed] = createSignal(false)
   const [loadMoreFailed, setLoadMoreFailed] = createSignal(false)
   const [updatingRequestId, setUpdatingRequestId] = createSignal<string | null>(null)
+  let listGeneration = 0
 
   const refresh = async (): Promise<void> => {
+    listGeneration += 1
+    const generation = listGeneration
     setIsLoading(true)
     setLoadFailed(false)
     setLoadMoreFailed(false)
@@ -45,12 +48,22 @@ export const useAdminFeatureRequests = (): AdminFeatureRequestsController => {
 
     try {
       const page = await listAdminFeatureRequests()
+      if (generation !== listGeneration) {
+        return
+      }
+
       setHasMore(page.hasMore)
       setRequests(page.requests)
     } catch {
+      if (generation !== listGeneration) {
+        return
+      }
+
       setLoadFailed(true)
     } finally {
-      setIsLoading(false)
+      if (generation === listGeneration) {
+        setIsLoading(false)
+      }
     }
   }
 
@@ -60,14 +73,23 @@ export const useAdminFeatureRequests = (): AdminFeatureRequestsController => {
     }
 
     const offset = requests().length
+    const generation = listGeneration
     setIsLoadingMore(true)
     setLoadMoreFailed(false)
 
     try {
       const page = await listAdminFeatureRequests({offset})
+      if (generation !== listGeneration) {
+        return
+      }
+
       setRequests((currentRequests) => [...currentRequests, ...page.requests])
       setHasMore(page.hasMore)
     } catch {
+      if (generation !== listGeneration) {
+        return
+      }
+
       setLoadMoreFailed(true)
     } finally {
       setIsLoadingMore(false)
@@ -82,7 +104,13 @@ export const useAdminFeatureRequests = (): AdminFeatureRequestsController => {
     try {
       const result = await updateAdminFeatureRequest(input)
       if (result.status === 'updated') {
-        await refresh()
+        setRequests((currentRequests) =>
+          currentRequests.map((request) =>
+            request.id === input.requestId
+              ? {...request, status: input.status, targetVoteCount: input.targetVoteCount}
+              : request,
+          ),
+        )
       }
       return result
     } catch {

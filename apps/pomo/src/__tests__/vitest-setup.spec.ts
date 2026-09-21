@@ -5,7 +5,7 @@ describe.sequential('shared browser mocks', () => {
     vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue(null)
     vi.spyOn(HTMLMediaElement.prototype, 'load').mockImplementation(() => undefined)
     vi.spyOn(HTMLMediaElement.prototype, 'pause').mockImplementation(() => undefined)
-    vi.spyOn(window, 'scrollTo').mockImplementation(() => undefined)
+    vi.spyOn(globalThis, 'scrollTo').mockImplementation(() => undefined)
 
     vi.restoreAllMocks()
   })

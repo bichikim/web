@@ -1,3 +1,5 @@
+import * as m from '@paraglide/message'
+import {getLocale} from '@paraglide/runtime'
 import type {SupertonicError} from './errors'
 
 const assertNever = (value: never): never => {
@@ -7,23 +9,26 @@ const assertNever = (value: never): never => {
 export const getSupertonicErrorMessage = (error: SupertonicError): string => {
   switch (error.code) {
     case 'backend-failed':
-      return `${error.backend.toUpperCase()} 음성 엔진을 준비하지 못했어요.`
+      return m.supertonic_backend_failed({backend: error.backend.toUpperCase()})
     case 'cancelled':
-      return 'Supertonic 작업이 취소됐어요.'
-    case 'download-failed':
-      return `${error.fileName} 다운로드에 실패했어요.${
-        error.status === null ? '' : ` (${error.status})`
-      }`
+      return m.supertonic_cancelled()
+    case 'download-failed': {
+      const status = error.status === null ? '' : ` (${error.status})`
+      return m.supertonic_download_failed({
+        fileName: getLocale() === 'en' ? 'voice model file' : error.fileName,
+        status,
+      })
+    }
     case 'generation-busy':
-      return '다른 음성을 만들고 있어요.'
+      return m.supertonic_generation_busy()
     case 'invalid-model-data':
-      return 'Supertonic 모델 데이터 형식이 올바르지 않아요.'
+      return m.supertonic_invalid_model_data()
     case 'invalid-model':
-      return '지원하지 않는 Supertonic 모델이에요.'
+      return m.supertonic_invalid_model()
     case 'model-not-ready':
-      return 'Supertonic 모델을 먼저 준비해 주세요.'
+      return m.supertonic_model_not_ready()
     case 'worker-failed':
-      return 'Supertonic 음성 엔진을 실행하지 못했어요.'
+      return m.supertonic_worker_failed()
     default:
       return assertNever(error)
   }

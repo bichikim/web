@@ -7,6 +7,7 @@ import type {
   DialogueEventId,
   DialogueEventPlaybackMode,
   DialogueSegmentMood,
+  EventActionId,
   PDialogue,
 } from './schema'
 
@@ -17,6 +18,18 @@ export type EventDialogueIds = Readonly<Partial<Record<DialogueEventId, Readonly
 export type EventPlaybackModes = Readonly<
   Partial<Record<DialogueEventId, DialogueEventPlaybackMode>>
 >
+export type EventActionIds = Readonly<
+  Partial<Record<DialogueEventId, ReadonlyArray<EventActionId>>>
+>
+export type EventBindingItem =
+  | {readonly type: 'dialogue'; readonly id: string}
+  | {readonly type: 'action'; readonly id: EventActionId}
+export type EventActionExecutor = (actionId: EventActionId) => void
+export type EventActionExecutorMode = 'active' | 'deferred'
+
+export interface EventActionExecutorRegistrationOptions {
+  readonly mode?: EventActionExecutorMode
+}
 
 export interface PlayDialogueEventsOptions {
   readonly replacementPolicy?: DialogueSequenceReplacementPolicy
@@ -35,6 +48,7 @@ export interface PEventContextValue {
   readonly entryDialogueIds: Accessor<ReadonlyArray<string>>
   readonly errorMessage: Accessor<string | null>
   readonly eventDialogueIds: Accessor<EventDialogueIds>
+  readonly eventActionIds: Accessor<EventActionIds>
   readonly eventPlaybackModes: Accessor<EventPlaybackModes>
   readonly getAudio: (audioKey: string) => Promise<Blob | null>
   readonly hasEnteredFocusRoom: Accessor<boolean>
@@ -47,6 +61,7 @@ export interface PEventContextValue {
   readonly onStopEntryPlayback: () => void
   readonly enterFocusRoom: () => void
   readonly playDialogue: (dialogueId: string) => Promise<boolean>
+  readonly registerBeforePlayback?: (callback: () => void) => () => void
   readonly playDialogueEvents: (
     eventIds: ReadonlyArray<DialogueEventId>,
     onBeforePlayback?: () => void,
@@ -65,10 +80,23 @@ export interface PEventContextValue {
     eventId: DialogueEventId,
     dialogueIds: ReadonlyArray<string>,
   ) => Promise<void>
+  readonly setEventItems: (
+    eventId: DialogueEventId,
+    items: ReadonlyArray<EventBindingItem>,
+  ) => Promise<void>
   readonly setEventPlaybackMode: (
     eventId: DialogueEventId,
     playbackMode: DialogueEventPlaybackMode,
   ) => Promise<void>
+  readonly registerEventActionExecutor: (
+    executor: EventActionExecutor,
+    options?: EventActionExecutorRegistrationOptions,
+  ) => () => void
+  readonly delayedEndEventDurationMinutes: Accessor<number>
+  readonly delayedEndEventIsRunning: Accessor<boolean>
+  readonly setDelayedEndEventDuration: (durationMinutes: number) => Promise<void>
+  readonly startDelayedEndEvent: () => void
+  readonly cancelDelayedEndEvent: () => void
 }
 
 export const PEventContext = createContext<PEventContextValue>()

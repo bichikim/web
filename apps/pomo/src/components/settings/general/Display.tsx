@@ -3,6 +3,7 @@ import {FIELD_DESCRIPTION} from 'src/components/field-classes'
 import {createMemo, Show} from 'solid-js'
 import {PSelect, type PSelectOption} from '../../p-select/PSelect'
 import {PSwitch} from '../../p-switch/PSwitch'
+import {PWeatherDisplaySwitch} from '../../p-weather-settings/PWeatherDisplaySwitch'
 import {useFullscreen} from '../../../features/fullscreen'
 import type {ScreenSaverDelay} from '../../../features/screen-saver'
 import {type ScreenWakeLockController} from '../../../features/screen-wake-lock'
@@ -25,9 +26,9 @@ interface PGeneralDisplaySettingsProps extends PSettingsProps {
   readonly wakeLock: ScreenWakeLockController
 }
 
-export const PGeneralDisplaySettings = (props: PGeneralDisplaySettingsProps) => {
+const PFullscreenSetting = () => {
   const fullscreen = useFullscreen()
-  const fullscreenDescription = createMemo(() => {
+  const description = createMemo(() => {
     const error = fullscreen.error()
     if (error !== null) {
       switch (error) {
@@ -56,6 +57,34 @@ export const PGeneralDisplaySettings = (props: PGeneralDisplaySettingsProps) => 
     const exhaustiveAvailability: never = availability
     return exhaustiveAvailability
   })
+
+  return (
+    <PSwitch
+      checked={fullscreen.isEnabled()}
+      class={CLASSES.settingsToggle}
+      description={description()}
+      disabled={fullscreen.availability() !== 'supported' || fullscreen.isRequestPending()}
+      label={m.settings_fullscreen()}
+      onChange={fullscreen.onEnabledChange}
+    />
+  )
+}
+
+const PFeatureRequestVisibilitySetting = (props: PSettingsProps) => (
+  <Show when={props.onFeatureRequestVisibleChange}>
+    {(onChange) => (
+      <PSwitch
+        checked={props.featureRequestVisible ?? true}
+        class={CLASSES.settingsToggle}
+        description={m.settings_feature_request_visible_description()}
+        label={m.settings_feature_request_visible()}
+        onChange={onChange()}
+      />
+    )}
+  </Show>
+)
+
+export const PGeneralDisplaySettings = (props: PGeneralDisplaySettingsProps) => {
   const wakeLockDescription = createMemo(() => {
     const errorMessage = props.wakeLock.errorMessage()
 
@@ -78,14 +107,13 @@ export const PGeneralDisplaySettings = (props: PGeneralDisplaySettingsProps) => 
     const exhaustiveAvailability: never = availability
     return exhaustiveAvailability
   })
-  const isFullscreenDisabled = () =>
-    fullscreen.availability() !== 'supported' || fullscreen.isRequestPending()
   const isWakeLockDisabled = () => props.wakeLock.availability() !== 'supported'
 
   return (
     <section aria-label={m.settings_section_display()} class={CLASSES.settingsSection}>
       <div class={CLASSES.settingsGrid}>
         <PUiAutoHideSettings controller={props.uiAutoHide} />
+        <PWeatherDisplaySwitch {...props} />
         <Show when={props.onDialogueComposerVisibleChange}>
           {(onDialogueComposerVisibleChange) => (
             <PSwitch
@@ -102,11 +130,13 @@ export const PGeneralDisplaySettings = (props: PGeneralDisplaySettingsProps) => 
             <PSwitch
               checked={props.memoryAssistVisible ?? true}
               class={CLASSES.settingsToggle}
+              description={m.settings_memory_visible_description()}
               label={m.settings_memory_visible()}
               onChange={onChange()}
             />
           )}
         </Show>
+        <PFeatureRequestVisibilitySetting {...props} />
         <Show when={props.onPlayerVisibleChange}>
           {(onChange) => (
             <PSwitch
@@ -134,6 +164,7 @@ export const PGeneralDisplaySettings = (props: PGeneralDisplaySettingsProps) => 
             <PSwitch
               checked={props.toolsButtonVisible ?? true}
               class={CLASSES.settingsToggle}
+              description={m.settings_tools_visible_description()}
               label={m.settings_tools_visible()}
               onChange={onChange()}
             />
@@ -150,14 +181,7 @@ export const PGeneralDisplaySettings = (props: PGeneralDisplaySettingsProps) => 
             />
           )}
         </Show>
-        <PSwitch
-          checked={fullscreen.isEnabled()}
-          class={CLASSES.settingsToggle}
-          description={fullscreenDescription()}
-          disabled={isFullscreenDisabled()}
-          label={m.settings_fullscreen()}
-          onChange={fullscreen.onEnabledChange}
-        />
+        <PFullscreenSetting />
         <PSwitch
           checked={props.wakeLock.isEnabled()}
           class={CLASSES.settingsToggle}

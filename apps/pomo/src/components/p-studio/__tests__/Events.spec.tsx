@@ -1,7 +1,7 @@
 /** @vitest-environment jsdom */
 
 import {fireEvent, render, screen} from '@solidjs/testing-library'
-import {createSignal} from 'solid-js'
+import {createSignal, onCleanup, onMount} from 'solid-js'
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 import type {PTrack} from '../../../features/focus-room-audio'
 import {
@@ -9,6 +9,7 @@ import {
   usePEvents,
   useRandomEvent,
 } from '../../../features/focus-room-dialogue'
+import {useOptionalSoundEffects} from '../../../features/sound-effects'
 import * as m from '@paraglide/message'
 import {createMemoryMemo} from '../../../features/memory-assist/schedule'
 import {useMemoryReminders} from '../../../features/memory-assist'
@@ -28,6 +29,17 @@ const oneOffChatMocks = vi.hoisted(() => ({
   startDownload: vi.fn(async () => undefined),
   submit: vi.fn(async () => undefined),
 }))
+const musicPlaybackMocks = vi.hoisted(() => ({
+  pause: vi.fn(),
+  play: vi.fn(),
+}))
+const musicPlayerLifecycleMocks = vi.hoisted(() => ({
+  actionsReady: true,
+}))
+const soundEffectsMocks = vi.hoisted(() => ({
+  activate: vi.fn(),
+  stop: vi.fn(),
+}))
 
 vi.mock('../../../features/focus-room-dialogue', () => ({
   RANDOM_DIALOGUE_EVENT: 'random-event',
@@ -37,6 +49,7 @@ vi.mock('../../../features/focus-room-dialogue', () => ({
 vi.mock('../../../features/memory-assist', () => ({
   useMemoryReminders: vi.fn(() => ({skippedReminders: () => []})),
 }))
+vi.mock('../../../features/sound-effects', () => ({useOptionalSoundEffects: vi.fn()}))
 vi.mock('../use-one-off-chat', () => ({
   ONE_OFF_CHAT_MODEL: {downloadSize: '3.7GB'},
   useOneOffChat: vi.fn(() => oneOffChatMocks),
@@ -91,26 +104,40 @@ vi.mock('../../p-music-player/PMusicPlayer', () => ({
     readonly expanded: boolean
     readonly isDialogueActive: boolean
     readonly onExpandedChange: (expanded: boolean) => void
+    readonly onPlaybackActionsReady?: (
+      actions: {
+        readonly pause: () => void
+        readonly play: () => void
+      } | null,
+    ) => void
     readonly onPlayingChange: (playing: boolean) => void
     readonly onTrackChange: (track: PTrack | null) => void
     readonly sceneStyle: string
-  }) => (
-    <div
-      data-music-dialogue-active={props.isDialogueActive}
-      data-expanded={props.expanded}
-      data-music-scene={props.sceneStyle}
-    >
-      <button onClick={() => props.onPlayingChange(true)} type="button">
-        음악 재생
-      </button>
-      <button onClick={() => props.onExpandedChange(true)} type="button">
-        플레이어 펼치기
-      </button>
-      <button onClick={() => props.onTrackChange(null)} type="button">
-        트랙 지우기
-      </button>
-    </div>
-  ),
+  }) => {
+    onMount(() => {
+      if (musicPlayerLifecycleMocks.actionsReady) {
+        props.onPlaybackActionsReady?.(musicPlaybackMocks)
+      }
+    })
+    onCleanup(() => props.onPlaybackActionsReady?.(null))
+    return (
+      <div
+        data-music-dialogue-active={props.isDialogueActive}
+        data-expanded={props.expanded}
+        data-music-scene={props.sceneStyle}
+      >
+        <button onClick={() => props.onPlayingChange(true)} type="button">
+          음악 재생
+        </button>
+        <button onClick={() => props.onExpandedChange(true)} type="button">
+          플레이어 펼치기
+        </button>
+        <button onClick={() => props.onTrackChange(null)} type="button">
+          트랙 지우기
+        </button>
+      </div>
+    )
+  },
 }))
 vi.mock('../../p-pomodoro/PPomodoro', () => ({
   PPomodoro: (props: {
@@ -153,6 +180,12 @@ const createEvents = (
     readonly activeText?: string | null
     readonly blocked?: boolean
     readonly isPlaying?: boolean
+    readonly registerBeforePlayback?: (callback: () => void) => () => void
+    readonly registerEventActionExecutor?: (
+      executor: (
+        actionId: 'music-start' | 'music-stop' | 'sound-effects-start' | 'sound-effects-stop',
+      ) => void,
+    ) => () => void
     readonly scheduledCount?: number
     readonly playDialogueEvents?: ReturnType<typeof vi.fn>
   } = {},
@@ -162,6 +195,8 @@ const createEvents = (
     isDialoguePlaybackBlocked: () => overrides.blocked ?? false,
     isDialoguePlaying: () => overrides.isPlaying ?? false,
     playDialogueEvents: overrides.playDialogueEvents ?? vi.fn(async () => undefined),
+    registerBeforePlayback: overrides.registerBeforePlayback ?? vi.fn(() => vi.fn()),
+    registerEventActionExecutor: overrides.registerEventActionExecutor ?? vi.fn(() => vi.fn()),
     scheduledDialogueCount: () => overrides.scheduledCount ?? 0,
   }) as unknown as ReturnType<typeof usePEvents>
 
@@ -212,10 +247,84 @@ describe('PStudioEvents', () => {
     vi.mocked(useMemoryReminders).mockReturnValue({skippedReminders: () => []})
     vi.mocked(useChildPresence).mockReturnValue(() => false)
     vi.mocked(useMobileLayout).mockReturnValue(() => false)
+    vi.mocked(useOptionalSoundEffects).mockReturnValue(undefined)
     oneOffChatMocks.downloadConsentOpen.mockReturnValue(false)
     oneOffChatMocks.draft.mockReturnValue('')
     oneOffChatMocks.errorMessage.mockReturnValue(null)
     oneOffChatMocks.isBusy.mockReturnValue(false)
+    musicPlaybackMocks.pause.mockReset()
+    musicPlaybackMocks.play.mockReset()
+    musicPlayerLifecycleMocks.actionsReady = true
+  })
+
+  it('should register music controls for event actions', () => {
+    const runAction = vi.fn()
+    const unregister = vi.fn()
+    const registerEventActionExecutor = vi.fn(
+      (executor: (actionId: 'music-start' | 'music-stop') => void) => {
+        runAction.mockImplementation(executor)
+        return unregister
+      },
+    )
+    const events = createEvents({registerEventActionExecutor})
+
+    const result = renderEvents({events})
+    runAction('music-stop')
+    runAction('music-start')
+
+    expect(registerEventActionExecutor).toHaveBeenCalledOnce()
+    result.unmount()
+    expect(unregister).toHaveBeenCalledOnce()
+  })
+
+  it('should register sound-effect controls for event actions', () => {
+    vi.mocked(useOptionalSoundEffects).mockReturnValue({
+      activate: soundEffectsMocks.activate,
+      effects: () => [],
+      getPlayback: () => undefined,
+      isStopped: () => false,
+      status: () => 'ready',
+      stop: soundEffectsMocks.stop,
+    })
+    const runAction = vi.fn()
+    const registerEventActionExecutor = vi.fn(
+      (executor: (actionId: 'sound-effects-start' | 'sound-effects-stop') => void) => {
+        runAction.mockImplementation(executor)
+        return vi.fn()
+      },
+    )
+    const events = createEvents({registerEventActionExecutor})
+
+    renderEvents({events})
+    runAction('sound-effects-stop')
+    runAction('sound-effects-start')
+
+    expect(soundEffectsMocks.stop).toHaveBeenCalledOnce()
+    expect(soundEffectsMocks.activate).toHaveBeenCalledOnce()
+  })
+
+  it('should not activate sound effects from events when all effects are stopped', () => {
+    vi.mocked(useOptionalSoundEffects).mockReturnValue({
+      activate: soundEffectsMocks.activate,
+      effects: () => [],
+      getPlayback: () => undefined,
+      isStopped: () => true,
+      status: () => 'ready',
+      stop: soundEffectsMocks.stop,
+    })
+    const runAction = vi.fn()
+    const registerEventActionExecutor = vi.fn(
+      (executor: (actionId: 'sound-effects-start' | 'sound-effects-stop') => void) => {
+        runAction.mockImplementation(executor)
+        return vi.fn()
+      },
+    )
+    const events = createEvents({registerEventActionExecutor})
+
+    renderEvents({events})
+    runAction('sound-effects-start')
+
+    expect(soundEffectsMocks.activate).not.toHaveBeenCalled()
   })
 
   it('should show skipped reminder text and remove its alert after recovery', () => {
@@ -389,6 +498,25 @@ describe('PStudioEvents', () => {
     expect(pomoSay.stop).toHaveBeenCalledOnce()
   })
 
+  it('should register external speech stop for controller-owned playback', () => {
+    let beforePlayback: (() => void) | undefined
+    const unregister = vi.fn()
+    const events = createEvents({
+      registerBeforePlayback: (callback) => {
+        beforePlayback = callback
+        return unregister
+      },
+    })
+    const pomoSay = createPomoSay()
+    const result = renderEvents({events, pomoSay})
+
+    beforePlayback?.()
+
+    expect(pomoSay.stop).toHaveBeenCalledOnce()
+    result.unmount()
+    expect(unregister).toHaveBeenCalledOnce()
+  })
+
   it('should lower music for either event dialogue or external speech playback', () => {
     const dialogueResult = renderEvents({events: createEvents({isPlaying: true})})
 
@@ -470,6 +598,17 @@ describe('PStudioEvents', () => {
     expect(pomoSay.speak).toHaveBeenCalledWith({text: '스택에 추가할 답변'})
   })
 
+  it('should cancel a queued input reply when the composer is hidden', async () => {
+    const pomoSay = createPomoSay()
+    renderEvents({dialogueComposerVisible: false, pomoSay})
+    const oneOffChatOptions = vi.mocked(useOneOffChat).mock.calls[0]?.[0]
+
+    const reply = oneOffChatOptions?.onReply('숨겨진 입력기의 답변')
+
+    await expect(reply).rejects.toMatchObject({name: 'AbortError'})
+    expect(pomoSay.speak).not.toHaveBeenCalled()
+  })
+
   it('should omit the dialogue composer when its display setting is off', () => {
     const {container} = renderEvents({dialogueComposerVisible: false})
 
@@ -512,6 +651,79 @@ describe('PStudioEvents', () => {
       'Unexpected pomodoro dialogue playback failure.',
       failure,
     )
+  })
+
+  it('should discard music actions that arrive while the player is hidden', async () => {
+    let runAction: ((actionId: 'music-start' | 'music-stop') => void) | undefined
+    const registerEventActionExecutor = vi.fn(
+      (executor: (actionId: 'music-start' | 'music-stop') => void) => {
+        runAction = executor
+        return vi.fn()
+      },
+    )
+    const events = createEvents({registerEventActionExecutor})
+    vi.mocked(usePEvents).mockReturnValue(events)
+    const [playerVisible, setPlayerVisible] = createSignal(true)
+    const result = render(() => (
+      <PStudioEvents
+        playerVisible={playerVisible()}
+        dialogueComposerVisible={false}
+        isPlayerExpanded={false}
+        onMusicPlayingChange={vi.fn()}
+        onPlayerExpandedChange={vi.fn()}
+        onPomodoroPresentationChange={vi.fn()}
+        onTrackChange={vi.fn()}
+        pomoSay={createPomoSay()}
+        sceneStyle="original"
+      />
+    ))
+
+    runAction?.('music-start')
+    expect(musicPlaybackMocks.play).toHaveBeenCalledOnce()
+
+    setPlayerVisible(false)
+    runAction?.('music-stop')
+    setPlayerVisible(true)
+
+    expect(musicPlaybackMocks.pause).not.toHaveBeenCalled()
+    result.unmount()
+  })
+
+  it('should preserve pending music actions across player remount', () => {
+    let runAction: ((actionId: 'music-start' | 'music-stop') => void) | undefined
+    const registerEventActionExecutor = vi.fn(
+      (executor: (actionId: 'music-start' | 'music-stop') => void) => {
+        runAction = executor
+        return vi.fn()
+      },
+    )
+    const events = createEvents({registerEventActionExecutor})
+    vi.mocked(usePEvents).mockReturnValue(events)
+    const [playerVisible, setPlayerVisible] = createSignal(true)
+    musicPlayerLifecycleMocks.actionsReady = false
+    const result = render(() => (
+      <PStudioEvents
+        playerVisible={playerVisible()}
+        dialogueComposerVisible={false}
+        isPlayerExpanded={false}
+        onMusicPlayingChange={vi.fn()}
+        onPlayerExpandedChange={vi.fn()}
+        onPomodoroPresentationChange={vi.fn()}
+        onTrackChange={vi.fn()}
+        pomoSay={createPomoSay()}
+        sceneStyle="original"
+      />
+    ))
+
+    runAction?.('music-stop')
+    expect(musicPlaybackMocks.pause).not.toHaveBeenCalled()
+
+    setPlayerVisible(false)
+    musicPlayerLifecycleMocks.actionsReady = true
+    setPlayerVisible(true)
+
+    expect(musicPlaybackMocks.pause).toHaveBeenCalledOnce()
+    result.unmount()
   })
 
   it('should compact only after scheduled dialogue becomes visible', () => {

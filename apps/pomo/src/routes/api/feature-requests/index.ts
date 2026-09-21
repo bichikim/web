@@ -1,3 +1,4 @@
+import {invalidJsonBodyResponse} from 'src/server/http/invalid-json-body-response'
 import type {APIEvent} from '@solidjs/start/server'
 import {z} from 'zod'
 
@@ -94,13 +95,10 @@ export const POST = async (event: APIEvent): Promise<Response> => {
   )
 
   if (!parsedBody.success) {
-    return noStoreJson(
-      {error: 'invalid_request'},
-      {
-        cookies: resolved.identity.cookies,
-        status: bodyResult.success ? HTTP_BAD_REQUEST : bodyResult.status,
-      },
-    )
+    return invalidJsonBodyResponse(bodyResult, {
+      cookies: resolved.identity.cookies,
+      error: 'invalid_request',
+    })
   }
 
   try {

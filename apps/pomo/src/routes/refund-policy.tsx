@@ -1,10 +1,13 @@
+import {getLocale} from '@paraglide/runtime'
 import * as m from '@paraglide/message'
 
 import {A} from '@solidjs/router'
 import {cx} from 'class-variance-authority'
+import {Show} from 'solid-js'
 
 import {SERVICE_OPERATOR} from 'src/features/service-operator'
 import {PServicePolicyLinks} from 'src/components/p-service-policy-links/PServicePolicyLinks'
+import {EnglishRefundPolicyContent} from 'src/components/refund-policy/EnglishRefundPolicyContent'
 import {PolicyArticle} from '../components/refund-policy/PolicyArticle'
 import {PolicyIntro} from '../components/refund-policy/PolicyIntro'
 import {PolicyNavigation} from '../components/refund-policy/PolicyNavigation'
@@ -23,37 +26,43 @@ const FOOTER_CLASSES = cx(
   'sm:flex sm:items-end sm:justify-between',
 )
 
+const renderKoreanRefundPolicy = () => (
+  <main class={MAIN_CLASSES}>
+    <div class={BACKGROUND_CLASSES} />
+
+    <div class="relative mx-auto grid w-full max-w-6xl gap-8">
+      <div class="flex flex-wrap items-center justify-between gap-4">
+        <A class="w-fit text-sm font-700 text-#d8cbd9 no-underline hover:text-white" href="/">
+          <span aria-hidden="true">←</span> {m.app_return()}
+        </A>
+        <PServicePolicyLinks currentPolicy="refund" platform="apps-in-toss" tone="overlay" />
+      </div>
+
+      <PolicyIntro />
+      <div class="grid gap-8 lg:grid-cols-[13rem_minmax(0,1fr)] lg:items-start">
+        <PolicyNavigation />
+        <PolicyArticle />
+      </div>
+
+      <footer class={FOOTER_CLASSES}>
+        <div>
+          <p class="m-0 font-700 text-#a99cab">환불 접수 및 문의</p>
+          <p class="mb-0 mt-1">
+            <a class={CONTENT_LINK_CLASSES} href={`mailto:${SERVICE_OPERATOR.supportEmail}`}>
+              {SERVICE_OPERATOR.supportEmail}
+            </a>
+          </p>
+        </div>
+        <span>© Pomofi</span>
+      </footer>
+    </div>
+  </main>
+)
+
 export default function RefundPolicyPage() {
   return (
-    <main class={MAIN_CLASSES}>
-      <div class={BACKGROUND_CLASSES} />
-
-      <div class="relative mx-auto grid w-full max-w-6xl gap-8">
-        <div class="flex flex-wrap items-center justify-between gap-4">
-          <A class="w-fit text-sm font-700 text-#d8cbd9 no-underline hover:text-white" href="/">
-            <span aria-hidden="true">←</span> {m.app_return()}
-          </A>
-          <PServicePolicyLinks currentPolicy="refund" platform="apps-in-toss" tone="overlay" />
-        </div>
-
-        <PolicyIntro />
-        <div class="grid gap-8 lg:grid-cols-[13rem_minmax(0,1fr)] lg:items-start">
-          <PolicyNavigation />
-          <PolicyArticle />
-        </div>
-
-        <footer class={FOOTER_CLASSES}>
-          <div>
-            <p class="m-0 font-700 text-#a99cab">환불 접수 및 문의</p>
-            <p class="mb-0 mt-1">
-              <a class={CONTENT_LINK_CLASSES} href={`mailto:${SERVICE_OPERATOR.supportEmail}`}>
-                {SERVICE_OPERATOR.supportEmail}
-              </a>
-            </p>
-          </div>
-          <span>© Pomofi</span>
-        </footer>
-      </div>
-    </main>
+    <Show fallback={renderKoreanRefundPolicy()} when={getLocale() === 'en'}>
+      <EnglishRefundPolicyContent />
+    </Show>
   )
 }

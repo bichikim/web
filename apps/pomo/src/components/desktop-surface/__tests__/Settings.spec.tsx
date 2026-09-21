@@ -1,5 +1,7 @@
 /** @vitest-environment jsdom */
 
+import {PreferenceProvider} from 'src/hooks/use-preference'
+
 import {fireEvent, render, screen} from '@solidjs/testing-library'
 import {createSignal} from 'solid-js'
 import {afterEach, beforeEach, expect, it, vi} from 'vitest'
@@ -7,6 +9,10 @@ import {afterEach, beforeEach, expect, it, vi} from 'vitest'
 import {useDesktopMode, useDesktopSceneSettingsPublisher} from '../../../features/desktop-mode'
 import {supportsPSceneGyroscope, usePSceneStyle} from '../../../features/focus-room-animation'
 import {usePScenePreferences} from '../../../features/focus-room-scene-preferences'
+import {
+  type PDisplayPreferencesController,
+  usePDisplayPreferences,
+} from '../../../features/focus-room-display-preferences'
 import {useScreenSaver} from '../../../features/screen-saver'
 import {useWeather, type WeatherLocation} from '../../../features/weather'
 import {SceneToolbar} from '../../p-studio/Toolbar'
@@ -16,6 +22,9 @@ vi.mock('@solidjs/meta', () => ({Title: (props: {readonly children?: unknown}) =
 vi.mock('../../../features/focus-room-animation', () => ({
   supportsPSceneGyroscope: vi.fn(),
   usePSceneStyle: vi.fn(),
+}))
+vi.mock('../../../features/focus-room-display-preferences', () => ({
+  usePDisplayPreferences: vi.fn(),
 }))
 vi.mock('../../../features/focus-room-scene-preferences', () => ({
   usePScenePreferences: vi.fn(),
@@ -100,11 +109,29 @@ const jejuLocation = {
 const publish = vi.fn()
 const onModeChange = vi.fn().mockResolvedValue(undefined)
 let mode: 'desktop' | 'normal' = 'desktop'
+const displayPreferences: PDisplayPreferencesController = {
+  dialogueComposerVisible: () => false,
+  featureRequestVisible: () => true,
+  isReady: () => true,
+  memoryAssistVisible: () => true,
+  onDialogueComposerVisibleChange: vi.fn(),
+  onFeatureRequestVisibleChange: vi.fn(),
+  onMemoryAssistVisibleChange: vi.fn(),
+  onPlayerVisibleChange: vi.fn(),
+  onPomodoroVisibleChange: vi.fn(),
+  onToolsButtonVisibleChange: vi.fn(),
+  onTourButtonVisibleChange: vi.fn(),
+  playerVisible: () => true,
+  pomodoroVisible: () => true,
+  toolsButtonVisible: () => true,
+  tourButtonVisible: () => true,
+}
 
 beforeEach(() => {
   vi.useFakeTimers()
   vi.clearAllMocks()
   mode = 'desktop'
+  vi.mocked(usePDisplayPreferences).mockReturnValue(displayPreferences)
   vi.mocked(useDesktopMode).mockImplementation(() => ({
     error: () => null,
     isChanging: () => false,
@@ -137,6 +164,7 @@ beforeEach(() => {
   })
   vi.mocked(useWeather).mockReturnValue({
     enabled: () => false,
+    isReady: () => true,
     location: () => seoulLocation,
     onEnabledChange: vi.fn(),
     onLocationChange: vi.fn(),
@@ -155,7 +183,11 @@ afterEach(() => {
   document.body.style.removeProperty('background')
 })
 it('should publish every setting change from the separate scene toolbar', () => {
-  render(() => <DesktopSettings />)
+  render(() => (
+    <PreferenceProvider>
+      <DesktopSettings />
+    </PreferenceProvider>
+  ))
 
   expect(SceneToolbar).toHaveBeenCalledOnce()
   expect(screen.getByText('설정')).toHaveAttribute('data-layout', 'surface')
@@ -203,13 +235,21 @@ it('should publish every setting change from the separate scene toolbar', () => 
 })
 it('should retain drag input when the desktop has no gyroscope', () => {
   vi.mocked(supportsPSceneGyroscope).mockReturnValue(false)
-  render(() => <DesktopSettings />)
+  render(() => (
+    <PreferenceProvider>
+      <DesktopSettings />
+    </PreferenceProvider>
+  ))
 
   expect(vi.mocked(SceneToolbar).mock.calls[0]?.[0].motionInput).toBe('drag')
 })
 
 it('should apply every received scene setting without echoing it to other WebViews', () => {
-  render(() => <DesktopSettings />)
+  render(() => (
+    <PreferenceProvider>
+      <DesktopSettings />
+    </PreferenceProvider>
+  ))
   expect(useDesktopSceneSettingsPublisher).toHaveBeenCalledOnce()
   const listener = vi.mocked(useDesktopSceneSettingsPublisher).mock.calls[0]?.[0]?.handlers
   if (listener === undefined) {
@@ -245,11 +285,37 @@ it('should apply every received scene setting without echoing it to other WebVie
 
 it('should request owner motion without choosing gyroscope locally', () => {
   vi.mocked(supportsPSceneGyroscope).mockReturnValue(true)
-  render(() => <DesktopSettings />)
+  render(() => (
+    <PreferenceProvider>
+      <DesktopSettings />
+    </PreferenceProvider>
+  ))
   expect(vi.mocked(useDesktopSceneSettingsPublisher).mock.calls[0]?.[0]?.requestSnapshot).toBe(true)
   expect(vi.mocked(SceneToolbar).mock.calls[0]?.[0]).toMatchObject({
     canUseGyroscope: true,
     motionInput: 'drag',
   })
   expect(publish).not.toHaveBeenCalled()
+})
+
+it('should wait for restored display preferences before mounting the toolbar', () => {
+  const [isReady, setIsReady] = createSignal(false)
+  vi.mocked(usePDisplayPreferences).mockReturnValue({
+    ...displayPreferences,
+    featureRequestVisible: () => false,
+    isReady,
+  })
+
+  render(() => (
+    <PreferenceProvider>
+      <DesktopSettings />
+    </PreferenceProvider>
+  ))
+
+  expect(SceneToolbar).not.toHaveBeenCalled()
+
+  setIsReady(true)
+
+  expect(SceneToolbar).toHaveBeenCalledOnce()
+  expect(vi.mocked(SceneToolbar).mock.calls[0]?.[0].featureRequestVisible).toBe(false)
 })

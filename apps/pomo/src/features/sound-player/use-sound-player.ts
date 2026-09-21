@@ -1,3 +1,4 @@
+import {getExceptionMessage} from 'src/features/error-detail'
 import {createEffect, createSignal, onCleanup, untrack} from 'solid-js'
 import {DEFAULT_OVERLAP_SECONDS} from './crossfade'
 import {createSoundRuntime} from './runtime'
@@ -66,7 +67,7 @@ export const useSoundPlayer = (props: UseSoundPlayerProps): SoundPlayback => {
   const fail = (cause: unknown) => {
     revision += 1
     release()
-    setError(cause instanceof Error ? cause.message : '효과음을 재생하지 못했습니다.')
+    setError(getExceptionMessage(cause, '효과음을 재생하지 못했습니다.'))
     setStatus('error')
   }
   let sourceKey = ''

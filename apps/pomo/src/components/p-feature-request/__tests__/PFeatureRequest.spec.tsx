@@ -60,6 +60,12 @@ beforeEach(() => {
   vi.mocked(FeatureRequestContent).mockImplementation(() => <div>기능 요청 내용</div>)
 })
 
+it('should use the pill-shaped trigger shared by the settings controls', () => {
+  render(() => <PFeatureRequest />)
+
+  expect(PButton).toHaveBeenCalledWith(expect.objectContaining({pill: true}))
+})
+
 it('should open the inline feature request modal from its trigger', () => {
   render(() => <PFeatureRequest sceneStyle="scribble" />)
 

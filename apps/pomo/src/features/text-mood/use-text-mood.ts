@@ -113,7 +113,7 @@ export const useTextMood = (props: UseTextMoodProps = {}): TextMoodController =>
   })
 
   const prepare = async () => {
-    if (isBusy()) {
+    if (isBusy() || state().status === 'ready') {
       return
     }
 

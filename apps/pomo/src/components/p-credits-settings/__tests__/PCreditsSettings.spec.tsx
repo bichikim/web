@@ -7,6 +7,7 @@ import type {JSX} from 'solid-js'
 import {afterEach, beforeEach, expect, it, vi} from 'vitest'
 
 import licenseData from '../../../../public/licenses.json' with {type: 'json'}
+import englishLicenseData from '../../../../public/licenses.en.json' with {type: 'json'}
 
 import {getLocale, overwriteGetLocale} from '@paraglide/runtime'
 import {PCreditsSettings} from '../PCreditsSettings'
@@ -21,7 +22,10 @@ beforeEach(() => {
   vi.clearAllMocks()
   vi.stubGlobal(
     'fetch',
-    vi.fn(async () => new Response(JSON.stringify(licenseData))),
+    vi.fn(
+      async () =>
+        new Response(JSON.stringify(getLocale() === 'en' ? englishLicenseData : licenseData)),
+    ),
   )
   Object.assign(Tabs, {
     Content: (props: {children: JSX.Element}) => <>{props.children}</>,
@@ -53,6 +57,8 @@ it('should render license link roles in English', async () => {
   ).toHaveTextContent(
     'See the third-party license document for the complete versions and distribution terms.',
   )
+  expect(screen.getByRole('link', {name: 'source repository Opens in a new window'})).toBeTruthy()
+  expect(screen.queryByText(/소스 저장소|라이선스 원문|직접 작성한 셰이더/u)).toBeNull()
 })
 
 it('should credit the creator and disclose current software and model licenses', async () => {

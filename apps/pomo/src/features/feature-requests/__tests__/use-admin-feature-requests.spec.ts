@@ -3,7 +3,7 @@
 import {renderHook, waitFor} from '@solidjs/testing-library'
 import {beforeEach, expect, it, vi} from 'vitest'
 
-import type {FeatureRequest} from '../types'
+import type {FeatureRequest, FeatureRequestPage} from '../types'
 
 const apiMocks = vi.hoisted(() => ({
   listAdminFeatureRequests: vi.fn(),
@@ -46,7 +46,57 @@ it('should load and append administrator request pages', async () => {
   cleanup()
 })
 
-it('should refresh after a successful status update and expose failures', async () => {
+it('should ignore a load more response that started before refresh', async () => {
+  const loadMoreResponse = Promise.withResolvers<FeatureRequestPage>()
+  const refreshResponse = Promise.withResolvers<FeatureRequestPage>()
+  const refreshedRequest = {...REQUEST, title: '새로 고침된 기능'}
+  apiMocks.listAdminFeatureRequests
+    .mockResolvedValueOnce({hasMore: true, requests: [REQUEST]})
+    .mockReturnValueOnce(loadMoreResponse.promise)
+    .mockReturnValueOnce(refreshResponse.promise)
+
+  const {cleanup, result} = renderHook(() => useAdminFeatureRequests())
+  await waitFor(() => expect(result.isLoading()).toBe(false))
+
+  const loadMorePromise = result.loadMore()
+  await waitFor(() => expect(result.isLoadingMore()).toBe(true))
+
+  const refreshPromise = result.refresh()
+  expect(result.isLoading()).toBe(true)
+
+  refreshResponse.resolve({hasMore: true, requests: [refreshedRequest]})
+  await refreshPromise
+  loadMoreResponse.resolve({hasMore: false, requests: [NEXT_REQUEST]})
+  await loadMorePromise
+
+  expect(result.requests()).toEqual([refreshedRequest])
+  expect(result.hasMore()).toBe(true)
+  expect(result.isLoadingMore()).toBe(false)
+  expect(result.loadMoreFailed()).toBe(false)
+  cleanup()
+})
+
+it('should update a request in place without collapsing appended pages', async () => {
+  const updatedRequest = {...NEXT_REQUEST, status: 'voting' as const, targetVoteCount: 10}
+  const input = {requestId: NEXT_REQUEST.id, status: 'voting' as const, targetVoteCount: 10}
+  apiMocks.listAdminFeatureRequests
+    .mockResolvedValueOnce({hasMore: true, requests: [REQUEST]})
+    .mockResolvedValueOnce({hasMore: false, requests: [NEXT_REQUEST]})
+  apiMocks.updateAdminFeatureRequest.mockResolvedValueOnce({status: 'updated'})
+
+  const {cleanup, result} = renderHook(() => useAdminFeatureRequests())
+  await waitFor(() => expect(result.isLoading()).toBe(false))
+
+  await result.loadMore()
+  await expect(result.updateRequest(input)).resolves.toEqual({status: 'updated'})
+
+  expect(apiMocks.listAdminFeatureRequests).toHaveBeenCalledTimes(2)
+  expect(result.requests()).toEqual([REQUEST, updatedRequest])
+  expect(result.hasMore()).toBe(false)
+  cleanup()
+})
+
+it('should update status without another list request and expose failures', async () => {
   apiMocks.listAdminFeatureRequests.mockResolvedValue({hasMore: false, requests: [REQUEST]})
   apiMocks.updateAdminFeatureRequest.mockResolvedValueOnce({status: 'updated'})
 
@@ -56,7 +106,8 @@ it('should refresh after a successful status update and expose failures', async 
   const input = {requestId: REQUEST.id, status: 'voting' as const, targetVoteCount: 10}
   await expect(result.updateRequest(input)).resolves.toEqual({status: 'updated'})
   expect(apiMocks.updateAdminFeatureRequest).toHaveBeenCalledWith(input)
-  expect(apiMocks.listAdminFeatureRequests).toHaveBeenCalledTimes(2)
+  expect(apiMocks.listAdminFeatureRequests).toHaveBeenCalledOnce()
+  expect(result.requests()).toEqual([{...REQUEST, status: 'voting', targetVoteCount: 10}])
   expect(result.updatingRequestId()).toBeNull()
 
   apiMocks.updateAdminFeatureRequest.mockRejectedValueOnce(new Error('update failed'))

@@ -1,3 +1,4 @@
+import {PreferenceProvider} from 'src/hooks/use-preference'
 import {renderHook} from '@solidjs/testing-library'
 import {afterEach, beforeEach, expect, it, vi} from 'vitest'
 
@@ -195,12 +196,16 @@ const createEventContext = (
   activeSegmentPosition: vi.fn(() => null),
   activeText: vi.fn(() => null),
   activeViseme: vi.fn(() => 'rest' as const),
+  cancelDelayedEndEvent: vi.fn(),
+  delayedEndEventDurationMinutes: vi.fn(() => 30),
+  delayedEndEventIsRunning: vi.fn(() => false),
   deleteDialogue: vi.fn(async () => undefined),
   dialogues: vi.fn(() => []),
   enterFocusRoom: vi.fn(),
   entryDialogueId: vi.fn(() => null),
   entryDialogueIds: vi.fn(() => []),
   errorMessage: vi.fn(() => null),
+  eventActionIds: vi.fn(() => ({})),
   eventDialogueIds: vi.fn(() => ({})),
   eventPlaybackModes: vi.fn(() => ({})),
   getAudio: vi.fn(async () => null),
@@ -216,15 +221,19 @@ const createEventContext = (
   playDialogueEvents: vi.fn(async () => undefined),
   playDialogueSequence: vi.fn(async () => undefined),
   refreshDialogues,
+  registerEventActionExecutor: vi.fn(() => vi.fn()),
   retryDialoguePlayback: vi.fn(),
   retryEntryPlayback: vi.fn(),
   scheduledDialogueCount: vi.fn(() => 0),
+  setDelayedEndEventDuration: vi.fn(async () => undefined),
   setEntryDialogue: vi.fn(async () => undefined),
   setEntryDialogues: vi.fn(async () => undefined),
   setEventDialogue: vi.fn(async () => undefined),
   setEventDialogues: vi.fn(async () => undefined),
+  setEventItems: vi.fn(async () => undefined),
   setEventPlaybackMode: vi.fn(async () => undefined),
   skipDialoguePlayback: vi.fn(),
+  startDelayedEndEvent: vi.fn(),
 })
 
 const createDialogue = (dialogueId: string, listenedAt: string | null): FeedDialogueListItem => ({
@@ -319,20 +328,22 @@ const createVoiceClient = (
 })
 
 it('should reject repository actions before the hook is mounted', async () => {
-  const dialogueRepository = repositoryMocks.dialogueRepository
-  Object.defineProperty(repositoryMocks, 'dialogueRepository', {value: null, writable: true})
-  const controller = usePFeeds({events: createEventContext()})
-
-  await expect(controller.deleteRecovery()).rejects.toThrow(
-    '피드 대화 저장소가 아직 준비되지 않았어요.',
+  const view = renderHook(
+    () => {
+      const controller = usePFeeds({events: createEventContext()})
+      return {
+        cancel: controller.cancelProcessing(),
+        deletion: controller.deleteRecovery(),
+      }
+    },
+    {wrapper: PreferenceProvider},
   )
-  await expect(controller.cancelProcessing()).rejects.toThrow(
-    '피드 대화 저장소가 아직 준비되지 않았어요.',
-  )
-  Object.defineProperty(repositoryMocks, 'dialogueRepository', {
-    value: dialogueRepository,
-    writable: true,
-  })
+  try {
+    await expect(view.result.deletion).rejects.toThrow('피드 대화 저장소가 아직 준비되지 않았어요.')
+    await expect(view.result.cancel).rejects.toThrow('피드 대화 저장소가 아직 준비되지 않았어요.')
+  } finally {
+    view.cleanup()
+  }
 })
 
 it('should remove scheduled jobs whose connections disappeared', async () => {
@@ -348,7 +359,9 @@ it('should remove scheduled jobs whose connections disappeared', async () => {
   queueMocks.scheduleFeedJobs.mockImplementation((queue, jobIds) => {
     queue.push(...jobIds.map((id: string) => ({allowModelDownload: false, id})))
   })
-  const view = renderHook(() => usePFeeds({events: createEventContext()}))
+  const view = renderHook(() => usePFeeds({events: createEventContext()}), {
+    wrapper: PreferenceProvider,
+  })
   await vi.waitFor(() => expect(queueMocks.scheduleFeedJobs).toHaveBeenCalled())
 
   await view.result.syncNow()
@@ -378,7 +391,9 @@ it('should dispose a client whose model initialization fails', async () => {
     const prepared = await options.prepareModel('int8')
     return prepared ? {job, status: 'ready'} : {job, status: 'model-preparation-failed'}
   })
-  const view = renderHook(() => usePFeeds({events: createEventContext()}))
+  const view = renderHook(() => usePFeeds({events: createEventContext()}), {
+    wrapper: PreferenceProvider,
+  })
 
   await vi.waitFor(() => expect(client.dispose).toHaveBeenCalled())
 
@@ -399,7 +414,9 @@ it('should discard a connection-missing preparation', async () => {
     repositoryMocks.listConnections.mockReturnValue([])
     return {status: 'connection-missing'}
   })
-  const view = renderHook(() => usePFeeds({events: createEventContext()}))
+  const view = renderHook(() => usePFeeds({events: createEventContext()}), {
+    wrapper: PreferenceProvider,
+  })
 
   await vi.waitFor(() => expect(repositoryMocks.feedRepository.deleteJobs).toHaveBeenCalled())
 
@@ -426,7 +443,9 @@ it('should fail generation when the stored feed item is missing', async () => {
     return {job, status: 'ready'}
   })
   const error = vi.spyOn(console, 'error').mockImplementation(() => undefined)
-  const view = renderHook(() => usePFeeds({events: createEventContext()}))
+  const view = renderHook(() => usePFeeds({events: createEventContext()}), {
+    wrapper: PreferenceProvider,
+  })
 
   await vi.waitFor(() => expect(repositoryMocks.feedRepository.failJob).toHaveBeenCalled())
 
@@ -462,7 +481,9 @@ it('should stop deferred generation cleanly after disposal', async () => {
     await options.prepareModel('int8')
     return {job, status: 'ready'}
   })
-  const view = renderHook(() => usePFeeds({events: createEventContext()}))
+  const view = renderHook(() => usePFeeds({events: createEventContext()}), {
+    wrapper: PreferenceProvider,
+  })
   await vi.waitFor(() => expect(feedGenerationRuntime.generateDialogueAudio).toHaveBeenCalled())
 
   view.cleanup()
@@ -486,7 +507,9 @@ it('should ignore a missing scheduled queue entry', async () => {
     queue.push(undefined)
     void run()
   })
-  const view = renderHook(() => usePFeeds({events: createEventContext()}))
+  const view = renderHook(() => usePFeeds({events: createEventContext()}), {
+    wrapper: PreferenceProvider,
+  })
 
   await vi.waitFor(() => expect(queueMocks.scheduleFeedJobs).toHaveBeenCalled())
   expect(queueMocks.processScheduledFeedJob).not.toHaveBeenCalled()
@@ -499,7 +522,9 @@ it('should expose sync failures and create feed item ids', async () => {
     expect(options.createId()).toEqual(expect.any(String))
     return {failures: [{message: 'failed'}], queuedJobIds: [], successfulConnections: 0}
   })
-  const view = renderHook(() => usePFeeds({events: createEventContext()}))
+  const view = renderHook(() => usePFeeds({events: createEventContext()}), {
+    wrapper: PreferenceProvider,
+  })
 
   await vi.waitFor(() => expect(view.result.state().status).toBe('error'))
 
@@ -511,7 +536,9 @@ it('should report unexpected synchronization and initialization failures', async
   const error = vi.spyOn(console, 'error').mockImplementation(() => undefined)
   repositoryMocks.listConnections.mockReturnValue([createConnection()])
   syncMocks.synchronizeFeeds.mockRejectedValueOnce(new Error('sync failed'))
-  const syncView = renderHook(() => usePFeeds({events: createEventContext()}))
+  const syncView = renderHook(() => usePFeeds({events: createEventContext()}), {
+    wrapper: PreferenceProvider,
+  })
   await vi.waitFor(() => expect(syncView.result.state().message).toBe('피드를 확인하지 못했어요.'))
   expect(error).toHaveBeenCalledWith('Failed to synchronize focus room feeds.', expect.any(Error))
   syncView.cleanup()
@@ -519,7 +546,9 @@ it('should report unexpected synchronization and initialization failures', async
   repositoryMocks.feedRepository.interruptUnfinishedJobs.mockRejectedValueOnce(
     new Error('initialize failed'),
   )
-  const initializeView = renderHook(() => usePFeeds({events: createEventContext()}))
+  const initializeView = renderHook(() => usePFeeds({events: createEventContext()}), {
+    wrapper: PreferenceProvider,
+  })
   await vi.waitFor(() =>
     expect(initializeView.result.state().message).toBe('피드 기능을 시작하지 못했어요.'),
   )

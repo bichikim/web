@@ -3,6 +3,7 @@ import {afterEach, describe, expect, it, vi} from 'vitest'
 
 import {
   deleteDialogueDraft,
+  type DialogueDraftStorage,
   getDialogueDraftKey,
   readDialogueDraft,
   writeDialogueDraft,
@@ -11,6 +12,15 @@ import {
 afterEach(() => {
   vi.restoreAllMocks()
 })
+
+const createStorage = (): DialogueDraftStorage => {
+  const values = new Map<string, string>()
+  return {
+    getItem: (key) => values.get(key) ?? null,
+    removeItem: (key) => values.delete(key),
+    setItem: (key, value) => values.set(key, value),
+  }
+}
 
 describe('dialogue draft storage', () => {
   it('should derive keys for new and existing dialogues', () => {
@@ -37,5 +47,15 @@ describe('dialogue draft storage', () => {
     expect(warning).toHaveBeenNthCalledWith(1, 'Failed to read focus room dialogue draft.', cause)
     expect(warning).toHaveBeenNthCalledWith(2, 'Failed to save focus room dialogue draft.', cause)
     expect(warning).toHaveBeenNthCalledWith(3, 'Failed to delete focus room dialogue draft.', cause)
+  })
+
+  it('should persist through an injected session store', () => {
+    const storage = createStorage()
+
+    writeDialogueDraft('draft', 'text', storage)
+
+    expect(readDialogueDraft('draft', storage)).toBe('text')
+    deleteDialogueDraft('draft', storage)
+    expect(readDialogueDraft('draft', storage)).toBeNull()
   })
 })

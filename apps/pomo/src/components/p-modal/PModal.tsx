@@ -62,6 +62,7 @@ export interface PModalProps {
   readonly description?: string
   readonly footer?: JSX.Element
   readonly getInitialFocus?: () => HTMLElement | null
+  readonly headerActions?: JSX.Element
   readonly headerMode?: 'closeOnly' | 'default' | 'hidden'
   readonly isOpen: boolean
   readonly navigation?: JSX.Element
@@ -72,6 +73,45 @@ export interface PModalProps {
   readonly title: string
   readonly titleVisibility?: 'visible' | 'visually-hidden'
 }
+
+type ModalHeaderControlsProps = Pick<
+  PModalProps,
+  'closeButtonVisibility' | 'headerActions' | 'navigation' | 'titleVisibility'
+>
+
+const ModalHeaderControls = (props: ModalHeaderControlsProps) => (
+  <div class="flex flex-none items-center gap-2">
+    <Show when={props.headerActions}>
+      {(headerActions) => <div class="flex flex-none items-center">{headerActions()}</div>}
+    </Show>
+    <Show when={(props.closeButtonVisibility ?? 'visible') === 'visible'}>
+      <div
+        class={cx(
+          'flex flex-none items-center justify-center',
+          props.navigation !== undefined && 'self-stretch',
+          props.navigation !== undefined &&
+            props.titleVisibility === 'visually-hidden' &&
+            'border-l border-solid border-border px-3 ' +
+              'max-md:col-start-2 max-md:row-start-1 ' +
+              'max-md:px-2',
+        )}
+      >
+        <Dialog.CloseButton
+          aria-label={m.common_close()}
+          class={cx(
+            'grid flex-none cursor-pointer place-items-center border-0 ' +
+              'rounded-full bg-transparent text-muted-foreground ' +
+              'outline-none transition-[background-color_140ms_ease,color_140ms_ease] ' +
+              'hover:bg-secondary-soft hover:text-foreground ' +
+              'focus-visible:shadow-focus motion-reduce:transition-none size-11',
+          )}
+        >
+          <span aria-hidden="true" class="i-tabler-x size-5" />
+        </Dialog.CloseButton>
+      </div>
+    </Show>
+  </div>
+)
 
 const resolveHeaderLayout = (
   mode: PModalProps['headerMode'],
@@ -206,32 +246,12 @@ export const PModal = (props: PModalProps) => {
                   </div>
                 )}
               </Show>
-              <Show when={(props.closeButtonVisibility ?? 'visible') === 'visible'}>
-                <div
-                  class={cx(
-                    'flex flex-none items-center justify-center',
-                    props.navigation !== undefined && 'self-stretch',
-                    props.navigation !== undefined &&
-                      props.titleVisibility === 'visually-hidden' &&
-                      'border-l border-solid border-border px-3 ' +
-                        'max-md:col-start-2 max-md:row-start-1 ' +
-                        'max-md:px-2',
-                  )}
-                >
-                  <Dialog.CloseButton
-                    aria-label={m.common_close()}
-                    class={cx(
-                      'grid flex-none cursor-pointer place-items-center border-0 ' +
-                        'rounded-full bg-transparent text-muted-foreground ' +
-                        'outline-none transition-[background-color_140ms_ease,color_140ms_ease] ' +
-                        'hover:bg-secondary-soft hover:text-foreground ' +
-                        'focus-visible:shadow-focus motion-reduce:transition-none size-11',
-                    )}
-                  >
-                    <span aria-hidden="true" class="i-tabler-x size-5" />
-                  </Dialog.CloseButton>
-                </div>
-              </Show>
+              <ModalHeaderControls
+                closeButtonVisibility={props.closeButtonVisibility}
+                headerActions={props.headerActions}
+                navigation={props.navigation}
+                titleVisibility={props.titleVisibility}
+              />
             </header>
           </Show>
           <div
