@@ -16,6 +16,10 @@ const ALL_DAY_ALARM_HOUR = 9
 const DATE_KEY_LENGTH = 10
 const getTimeInputValue = (date: Date) => dayjs(date).format('HH:mm')
 const getMemoId = (eventId: string) => `${CALENDAR_ALARM_ID_PREFIX}${eventId}`
+const getLegacyMemoId = (event: CalendarEvent) => {
+  const legacyEventId = getLegacyEventId(event)
+  return legacyEventId === null ? undefined : getMemoId(legacyEventId)
+}
 const getEventAlarmAt = (event: CalendarEvent, defaultAlarmDate?: Date) => {
   if (event.allDay) {
     if (defaultAlarmDate !== undefined) {
@@ -63,8 +67,10 @@ export const useCalendarAlarmController = (
   const saveToStorage = createCalendarAlarmSaver({
     cleanup: (memoId) =>
       memoryMemoDeletion.cleanup({deleteDialogue: events.deleteDialogue, memoId}),
-    reportError: (error) =>
-      console.error('Calendar alarm saved; retired dialogue cleanup will retry.', error),
+    deleteMemo: async (memoId) => {
+      await memoryMemoDeletion.delete({deleteDialogue: events.deleteDialogue, memoId})
+    },
+    reportError: (error) => console.error('Calendar alarm saved; cleanup will retry.', error),
     updateMemos: updateMemoryMemos,
   })
   const popoverId = createUniqueId()
@@ -78,12 +84,10 @@ export const useCalendarAlarmController = (
   const usableMemos = () => memos().filter((memo) => !isMemoryMemoDeletionPending(memo))
   const storedMemo = createMemo(() => usableMemos().find((memo) => memo.id === alarmId()))
   const legacyAlarm = createMemo(() => {
-    const legacyId = getLegacyEventId(event())
+    const legacyMemoId = getLegacyMemoId(event())
     return (
-      legacyId !== null &&
-      usableMemos().some(
-        (memo) => memo.id === getMemoId(legacyId) && memo.nextExactReminderAt !== null,
-      )
+      legacyMemoId !== undefined &&
+      usableMemos().some((memo) => memo.id === legacyMemoId && memo.nextExactReminderAt !== null)
     )
   })
   const activeAlarm = createMemo(() => {
@@ -129,6 +133,7 @@ export const useCalendarAlarmController = (
     try {
       await saveToStorage({
         alarmAt,
+        legacyMemoId: getLegacyMemoId(event()),
         memoId: alarmId(),
         now: clock(),
         random: Math.random,
