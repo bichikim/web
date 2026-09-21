@@ -338,7 +338,10 @@ export const usePEventController = (props: UsePEventControllerProps): PEventCont
     activeSegmentPosition: playback.activeSegmentPosition,
     activeText: playback.activeText,
     activeViseme: playback.activeViseme,
-    cancelDelayedEndEvent: delayedEndEvent.cancel,
+    cancelDelayedEndEvent: () => {
+      delayedEndEvent.cancel()
+      delayedEndPlayback.clearPendingEvent()
+    },
     delayedEndEventDurationMinutes,
     delayedEndEventIsRunning: delayedEndEvent.isRunning,
     async deleteDialogue(dialogueId) {
