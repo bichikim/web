@@ -18,6 +18,7 @@ const createCancelledError = () =>
 export const useReplySpeechQueue = (options: UseReplySpeechQueueOptions) => {
   const [requests, setRequests] = createSignal<ReadonlyArray<ReplySpeechRequest>>([])
   const [isSpeaking, setIsSpeaking] = createSignal(false)
+  let activeRequest: ReplySpeechRequest | null = null
   let disposed = false
 
   const enqueue = (text: string) =>
@@ -34,8 +35,10 @@ export const useReplySpeechQueue = (options: UseReplySpeechQueueOptions) => {
 
     setRequests((current) => current.slice(1))
     setIsSpeaking(true)
+    activeRequest = request
     const speech = untrack(() => options.speak(request.text))
     speech.then(request.resolve, request.reject).finally(() => {
+      activeRequest = null
       if (!disposed) {
         setIsSpeaking(false)
       }
@@ -45,6 +48,7 @@ export const useReplySpeechQueue = (options: UseReplySpeechQueueOptions) => {
   onCleanup(() => {
     disposed = true
     const error = createCancelledError()
+    activeRequest?.reject(error)
     requests().forEach((request) => request.reject(error))
     setRequests([])
   })
