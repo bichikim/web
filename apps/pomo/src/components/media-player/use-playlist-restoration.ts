@@ -36,15 +36,43 @@ export const usePlaylistRestoration = (props: UsePlaylistRestorationProps): void
   })
   const request = new AbortController()
   let disposed = false
+  let controlledRestoreRevision: number | undefined
+  let controlledPlayback: PPlaybackState | null | undefined
+  let controlledPlaybackRestored = false
   const handleError = (error: unknown) => {
     if (!disposed) {
       props.onError(error)
     }
   }
+  const restoreControlledPlayback = (tracks: readonly PTrack[]) => {
+    if (
+      disposed ||
+      controlledRestoreRevision === undefined ||
+      props.playbackRevision() !== controlledRestoreRevision ||
+      controlledPlayback === undefined ||
+      controlledPlayback === null ||
+      controlledPlaybackRestored ||
+      tracks.length === 0
+    ) {
+      return
+    }
+
+    controlledPlaybackRestored = true
+    props.onRestore(tracks, controlledPlayback)
+  }
+  createEffect(() => {
+    if (!props.isQueueControlled()) {
+      return
+    }
+
+    const tracks = props.tracks()
+    restoreControlledPlayback(tracks)
+  })
 
   // 복원 콜백이 오디오 요소를 사용하므로 ref가 연결된 뒤 복원을 시작한다.
   onMount(() => {
     const restoreRevision = props.playbackRevision()
+    controlledRestoreRevision = restoreRevision
     const initialQueueRevision = props.queueRevision()
     let resolvedQueueRevision = initialQueueRevision
     const playbackRequest = readPPlayback().catch((error: unknown) => {
@@ -54,10 +82,8 @@ export const usePlaylistRestoration = (props: UsePlaylistRestorationProps): void
     if (props.isQueueControlled()) {
       playbackRequest
         .then((playback) => {
-          if (disposed || props.playbackRevision() !== restoreRevision || playback === null) {
-            return
-          }
-          props.onRestore(props.tracks(), playback)
+          controlledPlayback = playback
+          restoreControlledPlayback(props.tracks())
         })
         .catch(handleError)
       return
