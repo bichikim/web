@@ -104,12 +104,14 @@ const isDialogueModelReady = (state: DialogueWriterState) => {
   }
 }
 
+const isDialoguePreparationAllowed = (state: DialogueWriterState) =>
+  state.status === 'idle' || state.status === 'error'
+
 export const useDialogueWriter = (props: UseDialogueWriterProps): DialogueWriterController => {
-  const initialRequest = untrack(() => props.initialRequest ?? '')
   const modelId = untrack(() => props.modelId)
   const outputLanguage = untrack(() => props.outputLanguage)
   const runtime = untrack(() => props.runtime ?? DEFAULT_RUNTIME)
-  const [request, setRequest] = createSignal(initialRequest)
+  const [request, setRequest] = createSignal(untrack(() => props.initialRequest ?? ''))
   const [output, setOutput] = createSignal('')
   const [state, setState] = createSignal<DialogueWriterState>(
     runtime.supportsWebGpu() ? {status: 'idle'} : {status: 'unsupported'},
@@ -117,10 +119,7 @@ export const useDialogueWriter = (props: UseDialogueWriterProps): DialogueWriter
   let shouldGenerateAfterPreparation = false
   const isBusy = createMemo(() => isDialogueBusy(state()))
   const isModelReady = createMemo(() => isDialogueModelReady(state()))
-  const canPrepare = createMemo(() => {
-    const currentState = state()
-    return currentState.status === 'idle' || currentState.status === 'error'
-  })
+  const canPrepare = createMemo(() => isDialoguePreparationAllowed(state()))
   const canGenerate = createMemo(() => isModelReady() && !isBusy() && isNonBlankString(request()))
   const canCopy = createMemo(() => !isBusy() && output().length > 0)
   const progress = createMemo(() => {
@@ -179,6 +178,10 @@ export const useDialogueWriter = (props: UseDialogueWriterProps): DialogueWriter
         setState({...response, status: 'loading'})
         return
       case 'ready':
+        if (state().status === 'generating') {
+          return
+        }
+
         setState({status: 'ready'})
 
         if (shouldGenerateAfterPreparation) {

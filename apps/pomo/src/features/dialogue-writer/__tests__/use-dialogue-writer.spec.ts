@@ -174,6 +174,23 @@ describe('useDialogueWriter', () => {
     root.dispose()
   })
 
+  it('should ignore a late readiness response while generating', () => {
+    const runtime = createRuntime(true)
+    const root = createDialogueRoot(runtime)
+
+    root.controller.prepare()
+    runtime.emit({type: 'ready'})
+    root.controller.generate()
+
+    runtime.emit({type: 'ready'})
+
+    expect(root.controller.state()).toEqual({status: 'generating'})
+    expect(root.controller.isBusy()).toBe(true)
+    expect(root.controller.canGenerate()).toBe(false)
+
+    root.dispose()
+  })
+
   it('should prepare and then generate from one request', () => {
     const runtime = createRuntime(true)
     const root = createDialogueRoot(runtime)
