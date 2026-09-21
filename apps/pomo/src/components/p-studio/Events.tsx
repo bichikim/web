@@ -103,6 +103,7 @@ export const PStudioEvents = (props: PStudioEventsProps) => {
       props.pomoSay.isPreparing() ||
       props.pomoSay.isPlaying(),
     speak: (text) => props.pomoSay.speak({text}),
+    stop: () => props.pomoSay.stop(),
   })
   const oneOffChat = useOneOffChat({
     isEnabled: () => props.dialogueComposerVisible,
