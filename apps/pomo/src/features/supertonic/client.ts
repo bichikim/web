@@ -32,6 +32,14 @@ interface PendingRequest {
   readonly resolve: (result: Result<SupertonicAudio, SupertonicError>) => void
 }
 
+interface PendingInitialization {
+  readonly modelId: SupertonicModelId
+  readonly onProgressCallbacks: Array<(progress: SupertonicProgress) => void>
+  readonly onStatusCallbacks: Array<(message: string) => void>
+  readonly promise: Promise<Result<void, SupertonicError>>
+  readonly resolve: (result: Result<void, SupertonicError>) => void
+}
+
 export interface SupertonicClient {
   readonly cancelGeneration: () => void
   readonly dispose: () => void
@@ -136,6 +144,90 @@ const observeSupertonicWorker = (options: ObserveSupertonicWorkerOptions) => {
   })
 }
 
+interface SupertonicInitializationControllerOptions {
+  readonly getFailure: () => WorkerFailedError | null
+  readonly isDisposed: () => boolean
+  readonly post: (modelId: SupertonicModelId) => void
+}
+
+const createSupertonicInitializationController = (
+  options: SupertonicInitializationControllerOptions,
+) => {
+  let activeInitialization: PendingInitialization | null = null
+  const initializationQueue: Array<PendingInitialization> = []
+
+  const startNextInitialization = () => {
+    if (activeInitialization !== null || options.isDisposed() || options.getFailure() !== null) {
+      return
+    }
+
+    const nextInitialization = initializationQueue.shift()
+    if (nextInitialization === undefined) {
+      return
+    }
+
+    activeInitialization = nextInitialization
+    options.post(nextInitialization.modelId)
+  }
+
+  const resolveActive = (result: Result<void, SupertonicError>) => {
+    const initialization = activeInitialization
+    if (initialization === null) {
+      return
+    }
+
+    activeInitialization = null
+    initialization.resolve(result)
+    startNextInitialization()
+  }
+
+  const resolveAll = (result: Result<void, SupertonicError>) => {
+    const initialization = activeInitialization
+    activeInitialization = null
+    initialization?.resolve(result)
+
+    for (const queuedInitialization of initializationQueue.splice(0)) {
+      queuedInitialization.resolve(result)
+    }
+  }
+
+  const initialize = (initializeOptions: InitializeSupertonicOptions) => {
+    const existingInitialization =
+      activeInitialization?.modelId === initializeOptions.modelId
+        ? activeInitialization
+        : initializationQueue.find(
+            (pendingInitialization) => pendingInitialization.modelId === initializeOptions.modelId,
+          )
+
+    if (existingInitialization !== undefined) {
+      existingInitialization.onProgressCallbacks.push(initializeOptions.onProgress)
+      existingInitialization.onStatusCallbacks.push(initializeOptions.onStatus)
+      return existingInitialization.promise
+    }
+
+    let resolve: ((result: Result<void, SupertonicError>) => void) | undefined
+    const promise = new Promise<Result<void, SupertonicError>>((nextResolve) => {
+      resolve = nextResolve
+    })
+    initializationQueue.push({
+      modelId: initializeOptions.modelId,
+      onProgressCallbacks: [initializeOptions.onProgress],
+      onStatusCallbacks: [initializeOptions.onStatus],
+      promise,
+      resolve: resolve!,
+    })
+    startNextInitialization()
+    return promise
+  }
+
+  return {
+    getActive: () => activeInitialization,
+    initialize,
+    resolveActive,
+    resolveAll,
+  }
+}
+
 type SupertonicGenerateRequest = (
   options: GenerateSupertonicOptions,
   onChunk: (audio: SupertonicAudioChunk) => void,
@@ -180,24 +272,26 @@ async function* generateSupertonicStream(
 /** Creates an isolated Supertonic Worker client and owns it until disposal. */
 export const createSupertonicClient = (): SupertonicClient => {
   const worker = new Worker(new URL('./worker.ts', import.meta.url), {type: 'module'})
-  let initializeResolve: ((result: Result<void, SupertonicError>) => void) | null = null
   let nextRequestId = 1
-  let onProgress: ((progress: SupertonicProgress) => void) | null = null
-  let onStatus: ((message: string) => void) | null = null
   let pendingRequest: PendingRequest | null = null
   let disposed = false
   const workerFailureState = createWorkerFailureState(worker)
+  const initialization = createSupertonicInitializationController({
+    getFailure: workerFailureState.getFailure,
+    isDisposed: () => disposed,
+    post: (modelId) =>
+      worker.postMessage({modelId, type: 'initialize'} satisfies SupertonicWorkerInput),
+  })
 
   const resolveFailures = (error: WorkerFailedError) => {
     if (!workerFailureState.recordFailure(error)) {
       return
     }
 
-    initializeResolve?.(failureResult(error))
+    initialization.resolveAll(failureResult(error))
     pendingRequest?.resolve(
       failureResult({...error, phase: 'generate'} satisfies WorkerFailedError),
     )
-    initializeResolve = null
     pendingRequest = null
   }
 
@@ -212,19 +306,19 @@ export const createSupertonicClient = (): SupertonicClient => {
       case 'error':
         if (message.requestId === null) {
           reportClientError(message.error, {feature: 'supertonic-model', source: 'worker'})
-          initializeResolve?.(failureResult(message.error))
-          initializeResolve = null
+          initialization.resolveActive(failureResult(message.error))
         } else {
           pendingRequest?.resolve(failureResult(message.error))
           pendingRequest = null
         }
         return
       case 'progress':
-        onProgress?.(message.progress)
+        for (const callback of initialization.getActive()?.onProgressCallbacks ?? []) {
+          callback(message.progress)
+        }
         return
       case 'ready':
-        initializeResolve?.(successResult(undefined))
-        initializeResolve = null
+        initialization.resolveActive(successResult(undefined))
         return
       case 'result':
         pendingRequest?.resolve(
@@ -237,7 +331,9 @@ export const createSupertonicClient = (): SupertonicClient => {
         pendingRequest = null
         return
       case 'status':
-        onStatus?.(message.message)
+        for (const callback of initialization.getActive()?.onStatusCallbacks ?? []) {
+          callback(message.message)
+        }
     }
   }
 
@@ -253,14 +349,7 @@ export const createSupertonicClient = (): SupertonicClient => {
       return Promise.resolve(failureResult({...workerFailure, phase: 'initialize'}))
     }
 
-    const {modelId, onProgress: progressCallback, onStatus: statusCallback} = options
-    onProgress = progressCallback
-    onStatus = statusCallback
-
-    return new Promise((resolve) => {
-      initializeResolve = resolve
-      worker.postMessage({modelId, type: 'initialize'} satisfies SupertonicWorkerInput)
-    })
+    return initialization.initialize(options)
   }
 
   const generateRequest = (
@@ -322,9 +411,8 @@ export const createSupertonicClient = (): SupertonicClient => {
     if (workerFailureState.getFailure() === null) {
       worker.postMessage({type: 'dispose'} satisfies SupertonicWorkerInput)
     }
-    initializeResolve?.(failureResult(createCancelledError('initialize')))
+    initialization.resolveAll(failureResult(createCancelledError('initialize')))
     pendingRequest?.resolve(failureResult(createCancelledError('generate')))
-    initializeResolve = null
     pendingRequest = null
   }
 

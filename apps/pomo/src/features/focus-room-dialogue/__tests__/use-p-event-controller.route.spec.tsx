@@ -125,6 +125,49 @@ describe('delayed-end route transitions', () => {
     view.unmount()
   })
 
+  it('should retry delayed-end catch-up after playback fails', async () => {
+    let controller: PEventContextValue | undefined
+    let setPlayback: ((enabled: boolean) => void) | undefined
+    const view = render(() => {
+      const [isPlaybackEnabled, setIsPlaybackEnabled] = createSignal(true)
+      setPlayback = setIsPlaybackEnabled
+
+      return (
+        <EventControllerHarness
+          isDelayedEndEventEnabled={true}
+          isPlaybackEnabled={isPlaybackEnabled()}
+          onController={(nextController) => {
+            controller = nextController
+          }}
+        />
+      )
+    })
+
+    await vi.waitFor(() => expect(controller?.isLoading()).toBe(false))
+    const capturedController = controller
+
+    if (capturedController === undefined) {
+      throw new Error('Expected the event controller to be captured.')
+    }
+
+    capturedController.startDelayedEndEvent()
+    setPlayback?.(false)
+    await vi.waitFor(() => expect(playback.cancel).toHaveBeenCalledOnce())
+    await vi.advanceTimersByTimeAsync(60_000)
+
+    const playbackFailure = new Error('Playback failed')
+    playback.playSequence.mockRejectedValueOnce(playbackFailure).mockResolvedValueOnce(undefined)
+    capturedController.registerEventActionExecutor?.(vi.fn())
+    setPlayback?.(true)
+
+    await vi.waitFor(() => expect(playback.playSequence).toHaveBeenCalledOnce())
+    setPlayback?.(false)
+    await vi.waitFor(() => expect(playback.cancel).toHaveBeenCalledTimes(2))
+    setPlayback?.(true)
+    await vi.waitFor(() => expect(playback.playSequence).toHaveBeenCalledTimes(2))
+    view.unmount()
+  })
+
   it('should discard a pending delayed-end catch-up when restarting the timer', async () => {
     let controller: PEventContextValue | undefined
     let setPlayback: ((enabled: boolean) => void) | undefined
@@ -169,6 +212,48 @@ describe('delayed-end route transitions', () => {
     await vi.advanceTimersByTimeAsync(60_000)
 
     expect(playback.playSequence).toHaveBeenCalledOnce()
+    view.unmount()
+  })
+
+  it('should discard a pending delayed-end catch-up when cancelling after timer expiry', async () => {
+    let controller: PEventContextValue | undefined
+    let setPlayback: ((enabled: boolean) => void) | undefined
+    const view = render(() => {
+      const [isPlaybackEnabled, setIsPlaybackEnabled] = createSignal(true)
+      setPlayback = setIsPlaybackEnabled
+
+      return (
+        <EventControllerHarness
+          isDelayedEndEventEnabled={true}
+          isPlaybackEnabled={isPlaybackEnabled()}
+          onController={(nextController) => {
+            controller = nextController
+          }}
+        />
+      )
+    })
+
+    await vi.waitFor(() => expect(controller?.isLoading()).toBe(false))
+    const capturedController = controller
+
+    if (capturedController === undefined) {
+      throw new Error('Expected the event controller to be captured.')
+    }
+
+    capturedController.startDelayedEndEvent()
+    setPlayback?.(false)
+    await vi.waitFor(() => expect(playback.cancel).toHaveBeenCalledOnce())
+    await vi.advanceTimersByTimeAsync(60_000)
+
+    expect(capturedController.delayedEndEventIsRunning()).toBe(false)
+    capturedController.cancelDelayedEndEvent()
+
+    capturedController.registerEventActionExecutor?.(vi.fn())
+    setPlayback?.(true)
+    await Promise.resolve()
+    await Promise.resolve()
+
+    expect(playback.playSequence).not.toHaveBeenCalled()
     view.unmount()
   })
 

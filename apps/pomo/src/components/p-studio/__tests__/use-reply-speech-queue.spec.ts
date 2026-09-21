@@ -37,6 +37,49 @@ it('should preserve existing dialogue and play queued replies in order', async (
   cleanup()
 })
 
+it('should continue the queue after an active reply speech fails', async () => {
+  const [isOccupied, setIsOccupied] = createSignal(true)
+  const firstError = new Error('첫 답변 음성 실패')
+  const speak = vi.fn().mockRejectedValueOnce(firstError).mockResolvedValueOnce(undefined)
+  const {cleanup, result} = renderHook(() => useReplySpeechQueue({isOccupied, speak}))
+
+  const firstReply = result.enqueue('첫 답변')
+  setIsOccupied(false)
+  await vi.waitFor(() => expect(speak).toHaveBeenCalledWith('첫 답변'))
+  const secondReply = result.enqueue('두 번째 답변')
+
+  await expect(firstReply).rejects.toBe(firstError)
+  await vi.waitFor(() => expect(speak).toHaveBeenCalledTimes(2))
+  await expect(secondReply).resolves.toBeUndefined()
+
+  expect(speak).toHaveBeenNthCalledWith(1, '첫 답변')
+  expect(speak).toHaveBeenNthCalledWith(2, '두 번째 답변')
+  cleanup()
+})
+
+it('should continue the queue when active reply speech throws before returning a promise', async () => {
+  const [isOccupied] = createSignal(false)
+  const firstError = new Error('첫 답변 음성 예외')
+  const speak = vi
+    .fn<(text: string) => Promise<void>>()
+    .mockImplementationOnce(() => {
+      throw firstError
+    })
+    .mockResolvedValueOnce(undefined)
+  const {cleanup, result} = renderHook(() => useReplySpeechQueue({isOccupied, speak}))
+
+  const firstReply = result.enqueue('첫 답변')
+  const secondReply = result.enqueue('두 번째 답변')
+
+  await expect(firstReply).rejects.toBe(firstError)
+  await vi.waitFor(() => expect(speak).toHaveBeenCalledTimes(2))
+  await expect(secondReply).resolves.toBeUndefined()
+
+  expect(speak).toHaveBeenNthCalledWith(1, '첫 답변')
+  expect(speak).toHaveBeenNthCalledWith(2, '두 번째 답변')
+  cleanup()
+})
+
 it('should reject an active reply when disposed', async () => {
   const [isOccupied] = createSignal(false)
   let completeSpeech = () => {}

@@ -24,6 +24,7 @@ export const createDelayedEndEventPlayback = (
 ): DelayedEndEventPlayback => {
   const [hasPendingEvent, setHasPendingEvent] = createSignal(false)
   let activeRequest: Promise<void> | null = null
+  let pendingEventClearRevision = 0
 
   const playEvent = () =>
     options.playDialogueEvents([DELAYED_END_EVENT], () => {
@@ -45,10 +46,16 @@ export const createDelayedEndEventPlayback = (
     }
 
     setHasPendingEvent(false)
+    const requestClearRevision = pendingEventClearRevision
     const currentRequest = playEvent()
     activeRequest = currentRequest
     try {
       await currentRequest
+    } catch (error: unknown) {
+      if (requestClearRevision === pendingEventClearRevision) {
+        setHasPendingEvent(true)
+      }
+      throw error
     } finally {
       if (activeRequest === currentRequest) {
         activeRequest = null
@@ -63,6 +70,7 @@ export const createDelayedEndEventPlayback = (
   }
 
   const clearPendingEvent = () => {
+    pendingEventClearRevision += 1
     setHasPendingEvent(false)
   }
 

@@ -39,6 +39,7 @@ export const usePlaylistRestoration = (props: UsePlaylistRestorationProps): void
   let controlledRestoreRevision: number | undefined
   let controlledPlayback: PPlaybackState | null | undefined
   let controlledPlaybackRestored = false
+  let controlledRestoreWaitingForTracks = false
   const handleError = (error: unknown) => {
     if (!disposed) {
       props.onError(error)
@@ -48,15 +49,25 @@ export const usePlaylistRestoration = (props: UsePlaylistRestorationProps): void
     if (
       disposed ||
       controlledRestoreRevision === undefined ||
-      props.playbackRevision() !== controlledRestoreRevision ||
       controlledPlayback === undefined ||
       controlledPlayback === null ||
-      controlledPlaybackRestored ||
-      tracks.length === 0
+      controlledPlaybackRestored
     ) {
       return
     }
 
+    const playbackRevision = props.playbackRevision()
+    if (tracks.length === 0) {
+      controlledRestoreWaitingForTracks = true
+      return
+    }
+
+    if (!controlledRestoreWaitingForTracks && playbackRevision !== controlledRestoreRevision) {
+      return
+    }
+
+    // 트랙 대기 중에는 복원을 무효화할 재생 대상이 없으므로 도착 시점의 revision을 기준으로 삼는다.
+    controlledRestoreRevision = playbackRevision
     controlledPlaybackRestored = true
     props.onRestore(tracks, controlledPlayback)
   }

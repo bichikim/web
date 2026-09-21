@@ -26,6 +26,20 @@ export const useReplySpeechQueue = (options: UseReplySpeechQueueOptions) => {
       setRequests((current) => [...current, {reject, resolve, text}])
     })
 
+  const runRequest = async (request: ReplySpeechRequest) => {
+    try {
+      await untrack(() => options.speak(request.text))
+      request.resolve()
+    } catch (error: unknown) {
+      request.reject(error)
+    } finally {
+      activeRequest = null
+      if (!disposed) {
+        setIsSpeaking(false)
+      }
+    }
+  }
+
   createEffect(() => {
     const [request] = requests()
 
@@ -36,12 +50,8 @@ export const useReplySpeechQueue = (options: UseReplySpeechQueueOptions) => {
     setRequests((current) => current.slice(1))
     setIsSpeaking(true)
     activeRequest = request
-    const speech = untrack(() => options.speak(request.text))
-    speech.then(request.resolve, request.reject).finally(() => {
-      activeRequest = null
-      if (!disposed) {
-        setIsSpeaking(false)
-      }
+    runRequest(request).catch((error: unknown) => {
+      console.error('Unexpected reply speech queue failure.', error)
     })
   })
 

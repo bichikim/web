@@ -14,5 +14,6 @@ export const readFocusRoomEntrySession = (storage?: FocusRoomEntrySessionStorage
   getEntryFlag(storage).read()
 
 /** Marks the focus-room intro as completed for the current browser session. */
-export const writeFocusRoomEntrySession = (storage?: FocusRoomEntrySessionStorage): void =>
+export const writeFocusRoomEntrySession = (storage?: FocusRoomEntrySessionStorage): void => {
   getEntryFlag(storage).write()
+}
