@@ -1,5 +1,7 @@
 import {usePreference} from 'src/hooks/use-preference'
-import {createEffect, createSignal, onCleanup} from 'solid-js'
+import {visibility} from 'src/utils/visibility'
+import {getDocument} from '@winter-love/utils'
+import {createEffect, createSignal, onCleanup, onMount} from 'solid-js'
 
 import {createRandomEventPreferenceOptions, type RandomEventSettings} from './random-event-settings'
 
@@ -22,22 +24,37 @@ export const getRandomEventDelay = (
 /** Repeats an event at a newly randomized interval after the focus room starts. */
 export const useRandomEvent = (props: UseRandomEventProps) => {
   const [isEventPending, setIsEventPending] = createSignal(false)
+  const [isDocumentVisible, setIsDocumentVisible] = createSignal(false)
   const [settings] = usePreference(
     createRandomEventPreferenceOptions({
       onError: (error) => console.error('Failed to load random event settings.', error),
     }),
   )
   let isDisposed = false
+  let clearVisibilityWatch: (() => void) | undefined
+
+  onMount(() => {
+    setIsDocumentVisible(getDocument()?.hidden === false)
+    clearVisibilityWatch = visibility((isHidden) => {
+      setIsDocumentVisible(!isHidden)
+    })
+  })
+
+  onCleanup(() => clearVisibilityWatch?.())
 
   createEffect(() => {
     const currentSettings = settings()
 
-    if (currentSettings === null || isEventPending()) {
+    if (currentSettings === null || isEventPending() || !isDocumentVisible()) {
       return
     }
 
     const timerId = globalThis.setTimeout(
       () => {
+        if (getDocument()?.hidden !== false) {
+          return
+        }
+
         setIsEventPending(true)
         Promise.resolve()
           .then(() => props.onEvent())
