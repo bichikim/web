@@ -166,6 +166,8 @@ describe('useChatVoice preparation', () => {
     initializeOptions?.onProgress({fileName: '음성 모델', loadedBytes: 12, totalBytes: 10})
 
     expect(chatVoice.controller.statusMessage()).toBe('답변 음성 모델 준비 중 · 100%')
+    initializeOptions?.onProgress({fileName: '음성 모델', loadedBytes: 0, totalBytes: 0})
+    expect(chatVoice.controller.state()).toEqual({progress: 0, status: 'preparing'})
     chatVoice.dispose()
     initializeOptions?.onProgress({fileName: '음성 모델', loadedBytes: 1, totalBytes: 10})
     releaseInitialization()
