@@ -353,6 +353,7 @@ export const studioMocks = {
   DEFAULT_BACKGROUND,
   getAutomaticScenePeriod,
   isDesktopBackgroundMode,
+  PStudioEvents,
   PStudioScene,
   PTour,
   readFocusRoomEntrySession,
