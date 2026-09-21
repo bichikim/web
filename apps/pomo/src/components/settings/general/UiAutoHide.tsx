@@ -1,3 +1,4 @@
+import * as m from '@paraglide/message'
 import {Show} from 'solid-js'
 import type {useUiAutoHide} from 'src/features/ui-auto-hide'
 import {PSelect} from '../../p-select/PSelect'
@@ -15,20 +16,20 @@ export const PUiAutoHideSettings = (props: PUiAutoHideSettingsProps) => {
           <PSwitch
             checked={controller().enabled()}
             onChange={controller().onEnabledChange}
-            label="UI 자동 숨김"
-            description="조작하지 않으면 배경만 남깁니다. 마우스를 움직이거나 화면을 터치하면 UI가 다시 나타납니다."
+            label={m.settings_ui_auto_hide()}
+            description={m.settings_ui_auto_hide_description()}
           />
           <PSelect
-            label="숨기기까지 대기 시간"
+            label={m.settings_ui_auto_hide_delay()}
             value={String(controller().seconds())}
             disabled={!controller().enabled()}
             onChange={handleSecondsChange}
             options={[
-              {label: '5초', value: '5'},
-              {label: '15초', value: '15'},
-              {label: '30초', value: '30'},
-              {label: '1분', value: '60'},
-              {label: '5분', value: '300'},
+              {label: m.settings_ui_auto_hide_five_seconds(), value: '5'},
+              {label: m.settings_ui_auto_hide_fifteen_seconds(), value: '15'},
+              {label: m.settings_ui_auto_hide_thirty_seconds(), value: '30'},
+              {label: m.settings_ui_auto_hide_one_minute(), value: '60'},
+              {label: m.settings_ui_auto_hide_five_minutes(), value: '300'},
             ]}
           />
         </>

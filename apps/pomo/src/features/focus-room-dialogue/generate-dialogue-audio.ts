@@ -1,3 +1,4 @@
+import * as m from '@paraglide/message'
 import {joinAudioChunks} from '../supertonic/audio'
 import {getSupertonicSpeechSpeed, type SupertonicClient} from '../supertonic/client'
 import {getSupertonicErrorMessage} from '../supertonic/error-message'
@@ -67,7 +68,7 @@ export interface RegenerateDialogueSegmentAudioOptions {
 
 const getGenerationFailure = (error: unknown): DialogueAudioFailure => {
   console.error('Failed to generate dialogue audio.', error)
-  return {message: '음성을 만들지 못했어요.', ok: false}
+  return {message: m.dialogue_audio_generation_failed(), ok: false}
 }
 
 /** Joins editable segments only when a preview or stored file needs complete PCM. */
@@ -133,7 +134,7 @@ export const generateDialogueAudio = async (
     return getGenerationFailure(error)
   }
 
-  return {message: '완성된 음성을 받지 못했어요.', ok: false}
+  return {message: m.dialogue_audio_incomplete(), ok: false}
 }
 
 /** Generates dialogue audio and compresses it for non-editing consumers. */
@@ -172,7 +173,7 @@ export const regenerateDialogueSegmentAudio = async (
   const previousChunk = options.current.audioChunks[options.position]
 
   if (segment === undefined || previousChunk === undefined) {
-    return {message: '다시 만들 말풍선을 찾지 못했어요.', ok: false}
+    return {message: m.dialogue_segment_not_found(), ok: false}
   }
 
   try {
@@ -188,7 +189,7 @@ export const regenerateDialogueSegmentAudio = async (
     }
 
     if (generated.value.sampleRate !== options.current.sampleRate) {
-      return {message: '다시 만든 음성 형식이 기존 음성과 달라요.', ok: false}
+      return {message: m.dialogue_segment_format_mismatch(), ok: false}
     }
 
     const audioChunks = options.current.audioChunks.map((chunk, position) =>
