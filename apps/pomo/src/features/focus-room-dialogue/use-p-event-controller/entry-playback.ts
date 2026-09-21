@@ -95,12 +95,26 @@ export const createEntryEventPlayback = (
           onSequenceStop: () => undefined,
         })
         .then((completion) => {
-          if (!hasPlayedDialogue || completion === 'failed' || completion === 'cancelled') {
+          if (!hasPlayedDialogue) {
             hasStarted = false
             return
           }
 
-          sessionFlag.write()
+          switch (completion) {
+            case 'cancelled':
+            case 'failed':
+            case 'stopped':
+              hasStarted = false
+              return
+            case 'ended':
+            case 'missing':
+              sessionFlag.write()
+              return
+            default: {
+              const unhandledCompletion: never = completion
+              return unhandledCompletion
+            }
+          }
         })
         .catch((error: unknown) => {
           hasStarted = false
