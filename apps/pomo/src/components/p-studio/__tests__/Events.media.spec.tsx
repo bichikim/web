@@ -3,6 +3,7 @@ import {
   createEvents,
   createPomoSay,
   musicPlaybackMocks,
+  musicPlayerLifecycleMocks,
   oneOffChatMocks,
   renderEvents,
   soundEffectsMocks,
@@ -35,6 +36,7 @@ describe('PStudioEvents', () => {
     oneOffChatMocks.isBusy.mockReturnValue(false)
     musicPlaybackMocks.pause.mockReset()
     musicPlaybackMocks.play.mockReset()
+    musicPlayerLifecycleMocks.actionsReady = true
   })
 
   afterEach(() => {
@@ -268,6 +270,43 @@ describe('PStudioEvents', () => {
       'data-music-dialogue-active',
       'true',
     )
+  })
+
+  it('should preserve pending music actions across player remount', () => {
+    let runAction: ((actionId: 'music-start' | 'music-stop') => void) | undefined
+    const registerEventActionExecutor = vi.fn(
+      (executor: (actionId: 'music-start' | 'music-stop') => void) => {
+        runAction = executor
+        return vi.fn()
+      },
+    )
+    const events = createEvents({registerEventActionExecutor})
+    vi.mocked(usePEvents).mockReturnValue(events)
+    const [playerVisible, setPlayerVisible] = createSignal(true)
+    musicPlayerLifecycleMocks.actionsReady = false
+    const result = render(() => (
+      <PStudioEvents
+        playerVisible={playerVisible()}
+        dialogueComposerVisible={false}
+        isPlayerExpanded={false}
+        onMusicPlayingChange={vi.fn()}
+        onPlayerExpandedChange={vi.fn()}
+        onPomodoroPresentationChange={vi.fn()}
+        onTrackChange={vi.fn()}
+        pomoSay={createPomoSay()}
+        sceneStyle="original"
+      />
+    ))
+
+    runAction?.('music-stop')
+    expect(musicPlaybackMocks.pause).not.toHaveBeenCalled()
+
+    setPlayerVisible(false)
+    musicPlayerLifecycleMocks.actionsReady = true
+    setPlayerVisible(true)
+
+    expect(musicPlaybackMocks.pause).toHaveBeenCalledOnce()
+    result.unmount()
   })
 
   it('should discard music actions that arrive while the player is hidden', async () => {

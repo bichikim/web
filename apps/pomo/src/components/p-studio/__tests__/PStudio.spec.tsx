@@ -13,6 +13,7 @@ import {
 const {
   DEFAULT_BACKGROUND,
   getAutomaticScenePeriod,
+  PStudioEvents,
   PTour,
   SceneToolbar,
   readFocusRoomEntrySession,
@@ -102,6 +103,29 @@ describe('PStudio', () => {
       expect(toolbar.tourButtonVisible).toBe(!visible)
     },
   )
+
+  it('should keep player visibility unknown until display restoration completes', () => {
+    configureStudio({entrySession: true})
+    const preferences = vi.mocked(usePDisplayPreferences)()
+    const [isReady, setIsReady] = createSignal(false)
+    const [playerVisible, setPlayerVisible] = createSignal(true)
+    vi.mocked(usePDisplayPreferences).mockReturnValue({
+      ...preferences,
+      isReady,
+      playerVisible,
+    })
+
+    renderStudio()
+
+    const events = vi.mocked(PStudioEvents).mock.calls[0]?.[0]
+    expect(events?.playerVisible).toBeUndefined()
+
+    setIsReady(true)
+    expect(events?.playerVisible).toBe(true)
+
+    setPlayerVisible(false)
+    expect(events?.playerVisible).toBe(false)
+  })
 
   it('should enter the focus room and pass toolbar changes to the scene', () => {
     configureStudio({gyroscope: true, isScreenSaverActive: true})

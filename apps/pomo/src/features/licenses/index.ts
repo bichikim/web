@@ -1,8 +1,10 @@
 import {z} from 'zod'
+import {getLocale} from '@paraglide/runtime'
 
 import {loadPublicJson, type PublicAssetPath} from 'src/features/public-assets'
 
-const LICENSE_DATA_PATH: PublicAssetPath = '/licenses.json'
+const getLicenseDataPath = (): PublicAssetPath =>
+  getLocale() === 'en' ? '/licenses.en.json' : '/licenses.json'
 
 const LICENSE_LINK_SCHEMA = z.object({
   label: z.string(),
@@ -57,7 +59,7 @@ export interface LicenseData {
 
 /** Fetches and validates the public Pomofi license manifest. */
 export const loadLicenseData = (): Promise<LicenseData> =>
-  loadPublicJson(LICENSE_DATA_PATH, LICENSE_DATA_SCHEMA, {
+  loadPublicJson(getLicenseDataPath(), LICENSE_DATA_SCHEMA, {
     formatFetchFailure: ({status}) =>
       status === undefined
         ? 'Failed to fetch license data.'

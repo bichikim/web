@@ -14,6 +14,8 @@ export interface EntryPlaybackSessionStorage {
   readonly setItem: (key: string, value: string) => void
 }
 
+const failedSessionWrites = new WeakSet<EntryPlaybackSessionStorage>()
+
 export interface CreateEntryEventPlaybackOptions {
   readonly eventDialogueIds: Accessor<EventDialogueIds>
   readonly eventPlaybackModes: Accessor<EventPlaybackModes>
@@ -34,10 +36,29 @@ export interface EntryEventPlayback {
 export const createEntryEventPlayback = (
   options: CreateEntryEventPlaybackOptions,
 ): EntryEventPlayback => {
+  let resolvedSessionStorage: EntryPlaybackSessionStorage | undefined
+  const resolveSessionStorage = () => {
+    resolvedSessionStorage = undefined
+    const storage = options.sessionStorage ?? globalThis.sessionStorage
+    resolvedSessionStorage = storage
+    return storage
+  }
   const sessionFlag = createPresenceFlag({
     key: ENTRY_PLAYBACK_SESSION_KEY,
-    storage: () => options.sessionStorage ?? globalThis.sessionStorage,
+    storage: resolveSessionStorage,
   })
+  const readSessionFlag = () =>
+    sessionFlag.read() ||
+    (resolvedSessionStorage !== undefined && failedSessionWrites.has(resolvedSessionStorage))
+  const writeSessionFlag = () => {
+    const didWrite = sessionFlag.write()
+
+    if (didWrite || resolvedSessionStorage === undefined) {
+      return
+    }
+
+    failedSessionWrites.add(resolvedSessionStorage)
+  }
   const [hasEnteredFocusRoom, setHasEnteredFocusRoom] = createSignal(false)
   let hasStarted = false
   let hasTriggeredEvent = false
@@ -62,7 +83,7 @@ export const createEntryEventPlayback = (
       pendingEventExecution = eventExecution instanceof Promise ? eventExecution : undefined
     }
 
-    if (sessionFlag.read()) {
+    if (readSessionFlag()) {
       return
     }
 
@@ -77,7 +98,7 @@ export const createEntryEventPlayback = (
 
     const startPlayback = () => {
       const currentRepository = options.getRepository()
-      if (currentRepository === null || !options.isPlaybackEnabled() || sessionFlag.read()) {
+      if (currentRepository === null || !options.isPlaybackEnabled() || readSessionFlag()) {
         isPlaybackPending = false
         return
       }
@@ -95,12 +116,26 @@ export const createEntryEventPlayback = (
           onSequenceStop: () => undefined,
         })
         .then((completion) => {
-          if (!hasPlayedDialogue || completion === 'failed' || completion === 'cancelled') {
+          if (!hasPlayedDialogue) {
             hasStarted = false
             return
           }
 
-          sessionFlag.write()
+          switch (completion) {
+            case 'cancelled':
+            case 'failed':
+            case 'stopped':
+              hasStarted = false
+              return
+            case 'ended':
+            case 'missing':
+              writeSessionFlag()
+              return
+            default: {
+              const unhandledCompletion: never = completion
+              return unhandledCompletion
+            }
+          }
         })
         .catch((error: unknown) => {
           hasStarted = false

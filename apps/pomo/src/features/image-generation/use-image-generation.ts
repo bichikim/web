@@ -1,7 +1,13 @@
+import * as m from '@paraglide/message'
 import {getExceptionMessage} from '../error-detail'
 import {type ModelDownloadItem, useModelDownload} from '../model-download'
-import {createMemo, createSignal, onCleanup} from 'solid-js'
+import {createMemo, createSignal, onCleanup, type Setter} from 'solid-js'
 import {type TextModelId} from '../text-generation'
+import type {GenerationUpdate} from './messages'
+import {
+  localizeErrorMessage,
+  localizeImageGenerationProgress,
+} from '../localization/localized-messages'
 import {runImageGeneration} from './client'
 import {useImageSupport} from './use-support'
 import type {ArtStyle} from './styles'
@@ -25,7 +31,7 @@ export interface ImageResult {
 
 const parseSeed = (text: string) => {
   if (text !== '' && !/^\d+$/u.test(text)) {
-    throw new Error('시드는 0–4,294,967,295 사이의 정수로 입력해 주세요.')
+    throw new Error(m.picture_diary_generation_seed_error())
   }
   return text === '' ? crypto.getRandomValues(new Uint32Array(1))[0]! : Number(text)
 }
@@ -44,6 +50,25 @@ const selectDownload = (options: DownloadProgressOptions) =>
         (item.target.kind === 'text' && item.target.modelId === options.modelId)),
   )
 
+interface GenerationUpdateHandlers {
+  readonly setPercentage: Setter<number | undefined>
+  readonly setPrompt: Setter<string>
+  readonly setStatus: Setter<string>
+}
+
+const handleGenerationUpdate = (update: GenerationUpdate, handlers: GenerationUpdateHandlers) => {
+  switch (update.type) {
+    case 'prompt':
+      handlers.setPrompt(update.prompt)
+      return
+    case 'progress':
+      handlers.setStatus(localizeImageGenerationProgress(update.label))
+      handlers.setPercentage(update.percentage)
+      return
+  }
+  update satisfies never
+}
+
 export type ImageGenerationController = ReturnType<typeof useImageGeneration>
 
 export const useImageGeneration = () => {
@@ -58,7 +83,7 @@ export const useImageGeneration = () => {
   const [seed, setSeed] = createSignal('')
   const [prompt, setPrompt] = createSignal('')
   const [busy, setBusy] = createSignal(false)
-  const [status, setStatus] = createSignal('WebGPU를 확인하고 있어요…')
+  const [status, setStatus] = createSignal<string>(m.picture_diary_generation_checking())
   const [percentage, setPercentage] = createSignal<number | undefined>()
   const [error, setError] = createSignal<string | null>(null)
   const [result, setResult] = createSignal<ImageResult | null>(null)
@@ -78,7 +103,7 @@ export const useImageGeneration = () => {
     controller = null
     setBusy(false)
     setPercentage(undefined)
-    setStatus('생성을 중지했어요.')
+    setStatus(m.picture_diary_generation_stopped())
   }
 
   onCleanup(() => {
@@ -100,6 +125,12 @@ export const useImageGeneration = () => {
     setError(null)
     setPrompt('')
     const seedText = seed().trim()
+    const handleUpdate = (update: GenerationUpdate) => {
+      if (abort.signal.aborted || disposed) {
+        return
+      }
+      handleGenerationUpdate(update, {setPercentage, setPrompt, setStatus})
+    }
     try {
       const settings = {
         height: height(),
@@ -112,21 +143,7 @@ export const useImageGeneration = () => {
         downloads,
         idea: idea(),
         modelId: modelId(),
-        onUpdate: (update) => {
-          if (abort.signal.aborted || disposed) {
-            return
-          }
-          switch (update.type) {
-            case 'prompt':
-              setPrompt(update.prompt)
-              return
-            case 'progress':
-              setStatus(update.label)
-              setPercentage(update.percentage)
-              return
-          }
-          update satisfies never
-        },
+        onUpdate: handleUpdate,
         settings,
         signal: abort.signal,
         style: style(),
@@ -140,7 +157,7 @@ export const useImageGeneration = () => {
       if (previous !== null) {
         URL.revokeObjectURL(previous.url)
       }
-      setStatus('이미지를 만들었어요.')
+      setStatus(m.picture_diary_generation_complete())
     } catch (failure) {
       if (failure instanceof DOMException && failure.name === 'AbortError') {
         if (!disposed && controller === abort) {
@@ -149,8 +166,13 @@ export const useImageGeneration = () => {
         return
       }
       if (!abort.signal.aborted && !disposed) {
-        setError(getExceptionMessage(failure, '이미지를 생성하지 못했어요.'))
-        setStatus('설정과 오류를 확인한 뒤 다시 시도해 주세요.')
+        setError(
+          localizeErrorMessage(
+            getExceptionMessage(failure, m.picture_diary_generation_error()),
+            m.picture_diary_generation_error(),
+          ),
+        )
+        setStatus(m.picture_diary_generation_check_settings())
       }
     } finally {
       if (controller === abort) {
@@ -191,7 +213,11 @@ export const useImageGeneration = () => {
     setWidth,
     status: () => {
       const download = downloadProgress()
-      return download === undefined ? status() : `${download.label} 모델을 내려받고 있어요`
+      return download === undefined
+        ? status()
+        : m.picture_diary_generation_downloading_model({
+            model: localizeImageGenerationProgress(download.label),
+          })
     },
     steps,
     stop,

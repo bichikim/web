@@ -7,6 +7,7 @@ interface ReplySpeechRequest {
 }
 
 interface UseReplySpeechQueueOptions {
+  readonly isEnabled?: Accessor<boolean>
   readonly isOccupied: Accessor<boolean>
   readonly speak: (text: string) => Promise<void>
 }
@@ -18,33 +19,64 @@ const createCancelledError = () =>
 export const useReplySpeechQueue = (options: UseReplySpeechQueueOptions) => {
   const [requests, setRequests] = createSignal<ReadonlyArray<ReplySpeechRequest>>([])
   const [isSpeaking, setIsSpeaking] = createSignal(false)
+  let activeRequest: ReplySpeechRequest | null = null
   let disposed = false
+
+  const isEnabled = () => options.isEnabled?.() ?? true
 
   const enqueue = (text: string) =>
     new Promise<void>((resolve, reject) => {
       setRequests((current) => [...current, {reject, resolve, text}])
     })
 
+  const runRequest = async (request: ReplySpeechRequest) => {
+    try {
+      await untrack(() => options.speak(request.text))
+      request.resolve()
+    } catch (error: unknown) {
+      request.reject(error)
+    } finally {
+      activeRequest = null
+      if (!disposed) {
+        setIsSpeaking(false)
+      }
+    }
+  }
+
+  const cancelPendingRequests = () => {
+    const pendingRequests = requests()
+    if (pendingRequests.length === 0) {
+      return
+    }
+
+    setRequests([])
+    const error = createCancelledError()
+    pendingRequests.forEach((request) => request.reject(error))
+  }
+
   createEffect(() => {
     const [request] = requests()
 
-    if (disposed || request === undefined || isSpeaking() || options.isOccupied()) {
+    if (disposed || !isEnabled()) {
+      cancelPendingRequests()
+      return
+    }
+    if (request === undefined || isSpeaking() || options.isOccupied()) {
       return
     }
 
     setRequests((current) => current.slice(1))
     setIsSpeaking(true)
-    const speech = untrack(() => options.speak(request.text))
-    speech.then(request.resolve, request.reject).finally(() => {
-      if (!disposed) {
-        setIsSpeaking(false)
-      }
+    activeRequest = request
+    runRequest(request).catch((error: unknown) => {
+      console.error('Unexpected reply speech queue failure.', error)
     })
   })
 
   onCleanup(() => {
     disposed = true
     const error = createCancelledError()
+    activeRequest?.reject(error)
     requests().forEach((request) => request.reject(error))
     setRequests([])
   })

@@ -96,6 +96,7 @@ export const PStudioEvents = (props: PStudioEventsProps) => {
   const hasMediaMessages = useChildPresence(mediaMessages)
   const isMobileLayout = useMobileLayout()
   const replySpeechQueue = useReplySpeechQueue({
+    isEnabled: () => props.dialogueComposerVisible,
     isOccupied: () =>
       events.activeText() !== null ||
       events.isDialoguePlaying() ||
@@ -106,6 +107,7 @@ export const PStudioEvents = (props: PStudioEventsProps) => {
     speak: (text) => props.pomoSay.speak({text}),
   })
   const oneOffChat = useOneOffChat({
+    isEnabled: () => props.dialogueComposerVisible,
     onReply: replySpeechQueue.enqueue,
   })
   const runEventAction = (actionId: EventActionId) => {
@@ -138,7 +140,7 @@ export const PStudioEvents = (props: PStudioEventsProps) => {
   const handlePlaybackActionsReady = (actions: MusicPlaybackActions | null) => {
     setMusicPlaybackActions(actions)
     if (actions === null) {
-      pendingMusicActions = []
+      // Preserve actions queued before a visible player remounts.
       return
     }
 

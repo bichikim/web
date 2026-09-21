@@ -179,7 +179,7 @@ const reportUnexpectedError = (error: unknown) => {
 }
 
 const getProgressPercentage = (progress: SupertonicProgress) =>
-  getDownloadPercentage(progress.loadedBytes, progress.totalBytes)
+  progress.totalBytes > 0 ? getDownloadPercentage(progress.loadedBytes, progress.totalBytes) : 0
 
 const revokeAudioUrls = (
   runtime: SupertonicVoiceLabRuntime,

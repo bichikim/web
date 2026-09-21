@@ -60,6 +60,7 @@ const musicPlaybackMocks = vi.hoisted(() => ({
   pause: vi.fn(),
   play: vi.fn(),
 }))
+const musicPlayerLifecycleMocks = vi.hoisted(() => ({actionsReady: true}))
 const soundEffectsMocks = vi.hoisted(() => ({
   activate: vi.fn(),
   stop: vi.fn(),
@@ -138,7 +139,11 @@ vi.mock('../../../p-music-player/PMusicPlayer', () => ({
     readonly onTrackChange: (track: PTrack | null) => void
     readonly sceneStyle: string
   }) => {
-    onMount(() => props.onPlaybackActionsReady?.(musicPlaybackMocks))
+    onMount(() => {
+      if (musicPlayerLifecycleMocks.actionsReady) {
+        props.onPlaybackActionsReady?.(musicPlaybackMocks)
+      }
+    })
     onCleanup(() => props.onPlaybackActionsReady?.(null))
     return (
       <div
@@ -271,3 +276,5 @@ export {
 }
 
 vi.mock('src/features/ai-job/release', () => ({SERVER_AI_RELEASED: true}))
+
+export {musicPlayerLifecycleMocks}

@@ -100,6 +100,20 @@ beforeEach(() => {
 })
 
 describe('useOneOffChat', () => {
+  it('should reject server submissions when the composer is disabled', async () => {
+    const serverJob = createServerJob('server')
+    const {chat} = createChat()
+    vi.mocked(useAiTextJob).mockReturnValue(serverJob)
+    vi.mocked(useChat).mockReturnValue(chat)
+    const {cleanup, result} = renderHook(() =>
+      useOneOffChat({isEnabled: () => false, onReply: vi.fn()}),
+    )
+    await expect(result.submit('서버 요청')).resolves.toBe(false)
+    expect(serverJob.submit).not.toHaveBeenCalled()
+    expect(isTextModelDownloaded).not.toHaveBeenCalled()
+    cleanup()
+  })
+
   it('should submit to the server without checking or downloading the local model', async () => {
     const serverJob = createServerJob('server')
     const {chat} = createChat()
@@ -172,6 +186,27 @@ describe('useOneOffChat', () => {
     await vi.waitFor(() => expect(onReply).toHaveBeenCalledWith('반가워요.'))
     await vi.waitFor(() => expect(chat.clear).toHaveBeenCalledOnce())
     expect(chat.messages()).toEqual([])
+    cleanup()
+  })
+
+  it('should discard a reply that completes after the composer is hidden', async () => {
+    const [isEnabled, setIsEnabled] = createSignal(true)
+    const onReply = vi.fn(async () => undefined)
+    const {chat, setMessages, setState} = createChat()
+    vi.mocked(useChat).mockReturnValue(chat)
+    vi.mocked(isTextModelDownloaded).mockResolvedValue(true)
+    const {cleanup, result} = renderHook(() => useOneOffChat({isEnabled, onReply}))
+
+    await result.submit('숨기기 전에 보낸 질문')
+    setState({status: 'ready'})
+    await vi.waitFor(() => expect(chat.send).toHaveBeenCalledOnce())
+
+    setIsEnabled(false)
+    setMessages([{content: '숨겨진 답변', id: 'reply-1', role: 'assistant'}])
+    setState({status: 'ready'})
+
+    await vi.waitFor(() => expect(chat.clear).toHaveBeenCalledOnce())
+    expect(onReply).not.toHaveBeenCalled()
     cleanup()
   })
 

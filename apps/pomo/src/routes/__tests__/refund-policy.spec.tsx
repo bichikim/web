@@ -2,13 +2,20 @@
 
 import {render, screen} from '@solidjs/testing-library'
 import type {JSX} from 'solid-js'
-import {expect, it, vi} from 'vitest'
+import {getLocale, overwriteGetLocale} from '@paraglide/runtime'
+import {afterEach, expect, it, vi} from 'vitest'
 
 import RefundPolicyPage from 'src/routes/refund-policy'
 
 vi.mock('@solidjs/router', () => ({
   A: (props: JSX.AnchorHTMLAttributes<HTMLAnchorElement>) => <a {...props} />,
 }))
+
+const originalGetLocale = getLocale
+
+afterEach(() => {
+  overwriteGetLocale(originalGetLocale)
+})
 
 it('should describe only the current Apps in Toss music purchase', () => {
   render(() => <RefundPolicyPage />)
@@ -25,4 +32,18 @@ it('should describe only the current Apps in Toss music purchase', () => {
   )
   expect(screen.queryByText(/실물 응원 굿즈/u)).toBeNull()
   expect(screen.queryByText(/주간·월간/u)).toBeNull()
+})
+
+it('should render the refund policy in English', () => {
+  overwriteGetLocale(() => 'en')
+  render(() => <RefundPolicyPage />)
+
+  expect(
+    screen.getByRole('heading', {name: 'Pomofi consumer refund and withdrawal policy'}),
+  ).toBeInTheDocument()
+  expect(screen.getByRole('heading', {name: '1. Music access pass'})).toBeInTheDocument()
+  expect(
+    screen.getByRole('heading', {name: '6. Evidence, disputes, and governing law'}),
+  ).toBeInTheDocument()
+  expect(screen.queryByText(/[가-힣]/u)).toBeNull()
 })

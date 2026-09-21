@@ -1,13 +1,15 @@
 /** @vitest-environment jsdom */
 
-import {PreferenceProvider} from 'src/hooks/use-preference'
+import {PreferenceProvider, usePreference} from 'src/hooks/use-preference'
 import {renderHook} from '@solidjs/testing-library'
 import {afterEach, beforeEach, expect, it, vi} from 'vitest'
 
 import {
+  createDialogueVolumeDuckingPreferenceOptions,
   DEFAULT_DIALOGUE_VOLUME_DUCKING_SETTINGS,
   type DialogueVolumeDuckingSettings as DialogueVolumeDuckingSettingsValue,
 } from 'src/features/focus-room-dialogue'
+import {resolveDialoguePlayerGain} from 'src/features/focus-room-dialogue/use-player-volume-ducking'
 import {webLocalStorage} from 'src/utils/preference-storage'
 import {useVolumeDucking} from '../use-volume-ducking'
 
@@ -306,4 +308,60 @@ it('should restore settings and debounce storage while publishing changes immedi
   view.cleanup()
   await vi.advanceTimersByTimeAsync(300)
   expect(settingsMocks.write).toHaveBeenCalledTimes(1)
+})
+
+it('should publish edited settings to player gain consumers before the save debounce', async () => {
+  const view = renderHook(
+    () => {
+      const settings = useVolumeDucking()
+      const [storedSettings] = usePreference(createDialogueVolumeDuckingPreferenceOptions())
+      return {settings, storedSettings}
+    },
+    {wrapper: PreferenceProvider},
+  )
+  await vi.advanceTimersByTimeAsync(0)
+
+  view.result.settings.changeVolume(10)
+
+  expect(
+    resolveDialoguePlayerGain(
+      view.result.storedSettings() ?? DEFAULT_DIALOGUE_VOLUME_DUCKING_SETTINGS,
+      true,
+    ),
+  ).toBe(0.1)
+  expect(settingsMocks.write).not.toHaveBeenCalled()
+
+  view.cleanup()
+})
+
+it('should restore player gain consumers when a debounced save fails', async () => {
+  const consoleError = vi.spyOn(console, 'error').mockImplementation(() => undefined)
+  settingsMocks.write.mockRejectedValueOnce(new Error('save failed'))
+  const view = renderHook(
+    () => {
+      const settings = useVolumeDucking()
+      const [storedSettings] = usePreference(createDialogueVolumeDuckingPreferenceOptions())
+      return {settings, storedSettings}
+    },
+    {wrapper: PreferenceProvider},
+  )
+  await vi.advanceTimersByTimeAsync(0)
+
+  view.result.settings.changeVolume(10)
+  await vi.advanceTimersByTimeAsync(300)
+  await vi.advanceTimersByTimeAsync(0)
+
+  expect(view.result.settings.settings().playerVolumePercent).toBe(50)
+  expect(
+    resolveDialoguePlayerGain(
+      view.result.storedSettings() ?? DEFAULT_DIALOGUE_VOLUME_DUCKING_SETTINGS,
+      true,
+    ),
+  ).toBe(0.5)
+  expect(consoleError).toHaveBeenCalledWith(
+    'Failed to save dialogue volume ducking settings.',
+    expect.any(Error),
+  )
+
+  view.cleanup()
 })

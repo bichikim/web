@@ -1,7 +1,7 @@
 import {isPromise} from '@winter-love/utils'
 import {batch, createSignal} from 'solid-js'
 import type {PreferenceStorage} from 'src/utils/preference-storage'
-import type {PreferenceEntry, PreferenceSnapshot} from './context'
+import type {PreferenceEntry, PreferenceSetValueOptions, PreferenceSnapshot} from './context'
 
 interface PreferenceReadFailure {
   readonly error: unknown
@@ -18,6 +18,16 @@ export interface PreferenceEntryOptions {
   readonly onError: (error: unknown) => void
 }
 
+const subscribePreferenceListener = <Listener>(
+  listeners: Set<Listener>,
+  listener: Listener,
+): (() => void) => {
+  listeners.add(listener)
+  return () => {
+    listeners.delete(listener)
+  }
+}
+
 /** Shares a preference; initial edits replace restoration and persist after it settles. */
 export const createPreferenceEntry = (options: PreferenceEntryOptions): StoredPreference => {
   const [snapshot, setSnapshot] = createSignal<PreferenceSnapshot | null>(null)
@@ -27,6 +37,7 @@ export const createPreferenceEntry = (options: PreferenceEntryOptions): StoredPr
   let initialized = false
   let restoring = false
   let edited = false
+  let shouldPersistInitialEdit = false
   let pending: Promise<void> | null = null
   const reportError = (error: unknown) => {
     if (listeners.size === 0) {
@@ -67,9 +78,10 @@ export const createPreferenceEntry = (options: PreferenceEntryOptions): StoredPr
     initialized = true
     restoring = false
     const current = snapshot()
-    if (edited && current !== null) {
+    if (edited && current !== null && shouldPersistInitialEdit) {
       enqueue(current.value)
     }
+    shouldPersistInitialEdit = false
   }
   const read = (version: number, initial: boolean) => {
     if (!options.isActive() || (!initial && version !== revision)) {
@@ -141,31 +153,29 @@ export const createPreferenceEntry = (options: PreferenceEntryOptions): StoredPr
         pending.then(() => read(version, initial))
       }
     },
-    setValue(value) {
+    setValue(value, valueOptions?: PreferenceSetValueOptions) {
       if (!options.isActive()) {
         return
       }
       revision += 1
+      const shouldPersist = valueOptions?.persist !== false
       edited = true
+      if (shouldPersist) {
+        shouldPersistInitialEdit = true
+      }
       batch(() => {
         setSnapshot({value})
-        if (initialized) {
+        if (initialized && shouldPersist) {
           enqueue(value)
         }
       })
     },
     snapshot,
     subscribeErrors(listener) {
-      listeners.add(listener)
-      return () => {
-        listeners.delete(listener)
-      }
+      return subscribePreferenceListener(listeners, listener)
     },
     subscribeSaves(listener) {
-      saves.add(listener)
-      return () => {
-        saves.delete(listener)
-      }
+      return subscribePreferenceListener(saves, listener)
     },
   }
 }

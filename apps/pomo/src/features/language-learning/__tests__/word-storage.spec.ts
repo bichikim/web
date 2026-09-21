@@ -2,13 +2,15 @@
 
 import {describe, expect, it, vi} from 'vitest'
 
-import type {LanguageLearningEventTarget, LanguageLearningStorage} from '../storage'
 import {
   appendLanguageLearningWords,
-  deleteLanguageLearningWord,
+  deleteLanguageLearningWords,
+  type LanguageLearningEventTarget,
+  type LanguageLearningStorage,
   readLanguageLearningWords,
-  setLanguageLearningWordMemorized,
-} from '../word-storage'
+  setLanguageLearningWordsMemorized,
+  writeLanguageLearningWords,
+} from '../index'
 
 const createStorage = (): LanguageLearningStorage => {
   const values = new Map<string, string>()
@@ -24,7 +26,7 @@ const createEvents = (): LanguageLearningEventTarget => {
   return events
 }
 
-it('should preserve word deduplication, memorization, deletion, and events per injected store', () => {
+it('should match word identity without regard to case for memorization and deletion', () => {
   const storage = createStorage()
   const events = createEvents()
   const options = {events, storage}
@@ -37,12 +39,66 @@ it('should preserve word deduplication, memorization, deletion, and events per i
     addedCount: 1,
     skippedCount: 0,
   })
-  setLanguageLearningWordMemorized({language: 'en', memorized: true, value: 'Home'}, options)
-  deleteLanguageLearningWord('en', 'wave', options)
+  setLanguageLearningWordsMemorized({language: 'en', memorized: true, values: ['home']}, options)
+  deleteLanguageLearningWords('en', ['WAVE'], options)
 
   expect(readLanguageLearningWords({storage})).toMatchObject([
     {language: 'en', memorized: true, value: 'Home', version: 1},
     {language: 'ja', memorized: false, value: '家', version: 1},
   ])
   expect(events.dispatchEvent).toHaveBeenCalledTimes(4)
+})
+
+it('should deduplicate directly written words by language and case-insensitive value', () => {
+  const storage = createStorage()
+  const options = {storage}
+
+  writeLanguageLearningWords(
+    [
+      {
+        createdAt: '2026-08-29T00:00:00.000Z',
+        language: 'en',
+        memorized: false,
+        value: 'Home',
+        version: 1,
+      },
+      {
+        createdAt: '2026-08-29T00:00:01.000Z',
+        language: 'en',
+        memorized: true,
+        value: 'home',
+        version: 1,
+      },
+      {
+        createdAt: '2026-08-29T00:00:02.000Z',
+        language: 'ja',
+        memorized: false,
+        value: 'HOME',
+        version: 1,
+      },
+      {
+        createdAt: '2026-08-29T00:00:03.000Z',
+        language: 'en',
+        memorized: false,
+        value: 'Wave',
+        version: 1,
+      },
+      {
+        createdAt: '2026-08-29T00:00:04.000Z',
+        language: 'en',
+        memorized: false,
+        value: 'wave',
+        version: 1,
+      },
+    ],
+    options,
+  )
+
+  expect(
+    readLanguageLearningWords(options).map(({language, value}) => ({language, value})),
+  ).toEqual([
+    {language: 'en', value: 'Home'},
+    {language: 'ja', value: 'HOME'},
+    {language: 'en', value: 'Wave'},
+  ])
 })
