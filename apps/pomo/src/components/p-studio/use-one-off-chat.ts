@@ -41,6 +41,7 @@ export const useOneOffChat = (props: UseOneOffChatProps): OneOffChatController =
   const [pendingText, setPendingText] = createSignal<PendingText | null>(null)
   let draftRevision = 0
   let replyRevision = 0
+  let activeReplyRevision: number | null = null
   let disposed = false
   let handledReplyId: string | null = null
   let wasEnabled = true
@@ -83,6 +84,7 @@ export const useOneOffChat = (props: UseOneOffChatProps): OneOffChatController =
     const currentDraft = chat.draft()
     const shouldRestoreCurrentDraft = draftRevision !== pending.draftRevision
     setPendingText(null)
+    activeReplyRevision = replyRevision
 
     if (chat.canClear()) {
       chat.clear()
@@ -246,6 +248,11 @@ export const useOneOffChat = (props: UseOneOffChatProps): OneOffChatController =
       return
     }
     if (chat.state().status !== 'ready') {
+      return
+    }
+    if (activeReplyRevision !== replyRevision) {
+      handledReplyId = reply.id
+      chat.clear()
       return
     }
 
