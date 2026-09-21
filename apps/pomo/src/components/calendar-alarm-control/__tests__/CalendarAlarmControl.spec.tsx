@@ -403,15 +403,18 @@ it('should use the current injected clock when saving after the editor opens', a
   expect(mocks.memos[0]?.createdAt).toBe(currentTime.toISOString())
 })
 
-it('should save, edit and remove scoped alarms independently while preserving a legacy alarm', async () => {
-  const legacy = createMemoryMemo({
-    exactReminderAt: new Date('2026-09-05T09:00').toISOString(),
-    id: 'calendar-alarm:connection-1:abcde12345',
-    now: now(),
-    random: () => 0,
-    recallMode: 'none',
-    text: '기존 일정 알람',
-  })
+it('should save, edit and remove scoped alarms independently while replacing a legacy alarm', async () => {
+  const legacy = {
+    ...createMemoryMemo({
+      exactReminderAt: new Date('2026-09-05T09:00').toISOString(),
+      id: 'calendar-alarm:connection-1:abcde12345',
+      now: now(),
+      random: () => 0,
+      recallMode: 'none',
+      text: '기존 일정 알람',
+    }),
+    dialogueId: 'memory-memo-calendar-alarm:connection-1:abcde12345',
+  }
   const [memos, setMemos] = createSignal<ReadonlyArray<MemoryMemo>>([legacy])
   mocks.memos = memos()
   mocks.updateMemos.mockImplementation(async (update) => {
@@ -434,11 +437,14 @@ it('should save, edit and remove scoped alarms independently while preserving a 
   ).toBeInTheDocument()
   fireEvent.click(workControl.getByRole('button', {name: 'Work 알람 설정'}))
   fireEvent.click(workControl.getByRole('button', {name: '알람 저장'}))
-  await waitFor(() => expect(memos()).toHaveLength(2))
+  await waitFor(() => expect(memos()).toHaveLength(1))
+  expect(mocks.deleteDialogue).toHaveBeenCalledExactlyOnceWith(legacy.dialogueId)
+  expect(workControl.queryByRole('status')).not.toBeInTheDocument()
+  expect(personalControl.queryByRole('status')).not.toBeInTheDocument()
   expect(personalControl.getByRole('button', {name: 'Personal 알람 설정'})).toBeInTheDocument()
   fireEvent.click(personalControl.getByRole('button', {name: 'Personal 알람 설정'}))
   fireEvent.click(personalControl.getByRole('button', {name: '알람 저장'}))
-  await waitFor(() => expect(memos()).toHaveLength(3))
+  await waitFor(() => expect(memos()).toHaveLength(2))
   const personalMemo = memos().find((memo) => memo.id === `calendar-alarm:${personal.id}`)
   expect(personalMemo).toBeDefined()
 
@@ -454,17 +460,9 @@ it('should save, edit and remove scoped alarms independently while preserving a 
   expect(memos()).toContainEqual(personalMemo)
   await waitFor(() => expect(workControl.getByRole('button', {name: '알람 해제'})).toBeEnabled())
   fireEvent.click(workControl.getByRole('button', {name: '알람 해제'}))
-  await waitFor(() => expect(memos()).toEqual([personalMemo, legacy]))
+  await waitFor(() => expect(memos()).toEqual([personalMemo]))
   expect(workControl.getByRole('button', {name: 'Work 알람 설정'})).toBeInTheDocument()
   expect(personalControl.getByRole('button', {name: 'Personal 알람 수정'})).toBeInTheDocument()
-  expect(workControl.getByRole('status')).toHaveTextContent('이전 일정 알람')
-  setMemos(
-    memos().map((memo) => (memo.id === legacy.id ? {...memo, nextExactReminderAt: null} : memo)),
-  )
-  expect(workControl.queryByRole('status')).not.toBeInTheDocument()
-  setMemos(memos().map((memo) => (memo.id === legacy.id ? legacy : memo)))
-  expect(workControl.getByRole('status')).toHaveTextContent('이전 일정 알람')
-  setMemos(memos().filter((memo) => memo.id !== legacy.id))
   expect(workControl.queryByRole('status')).not.toBeInTheDocument()
   expect(personalControl.queryByRole('status')).not.toBeInTheDocument()
 })
