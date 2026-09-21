@@ -136,7 +136,7 @@ export const PStudioEvents = (props: PStudioEventsProps) => {
   const handlePlaybackActionsReady = (actions: MusicPlaybackActions | null) => {
     setMusicPlaybackActions(actions)
     if (actions === null) {
-      pendingMusicActions = []
+      // Preserve actions queued before a visible player remounts.
       return
     }
 

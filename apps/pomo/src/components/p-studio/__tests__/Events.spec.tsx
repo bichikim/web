@@ -33,6 +33,9 @@ const musicPlaybackMocks = vi.hoisted(() => ({
   pause: vi.fn(),
   play: vi.fn(),
 }))
+const musicPlayerLifecycleMocks = vi.hoisted(() => ({
+  actionsReady: true,
+}))
 const soundEffectsMocks = vi.hoisted(() => ({
   activate: vi.fn(),
   stop: vi.fn(),
@@ -111,7 +114,11 @@ vi.mock('../../p-music-player/PMusicPlayer', () => ({
     readonly onTrackChange: (track: PTrack | null) => void
     readonly sceneStyle: string
   }) => {
-    onMount(() => props.onPlaybackActionsReady?.(musicPlaybackMocks))
+    onMount(() => {
+      if (musicPlayerLifecycleMocks.actionsReady) {
+        props.onPlaybackActionsReady?.(musicPlaybackMocks)
+      }
+    })
     onCleanup(() => props.onPlaybackActionsReady?.(null))
     return (
       <div
@@ -247,6 +254,7 @@ describe('PStudioEvents', () => {
     oneOffChatMocks.isBusy.mockReturnValue(false)
     musicPlaybackMocks.pause.mockReset()
     musicPlaybackMocks.play.mockReset()
+    musicPlayerLifecycleMocks.actionsReady = true
   })
 
   it('should register music controls for event actions', () => {
@@ -667,6 +675,43 @@ describe('PStudioEvents', () => {
     setPlayerVisible(true)
 
     expect(musicPlaybackMocks.pause).not.toHaveBeenCalled()
+    result.unmount()
+  })
+
+  it('should preserve pending music actions across player remount', () => {
+    let runAction: ((actionId: 'music-start' | 'music-stop') => void) | undefined
+    const registerEventActionExecutor = vi.fn(
+      (executor: (actionId: 'music-start' | 'music-stop') => void) => {
+        runAction = executor
+        return vi.fn()
+      },
+    )
+    const events = createEvents({registerEventActionExecutor})
+    vi.mocked(usePEvents).mockReturnValue(events)
+    const [playerVisible, setPlayerVisible] = createSignal(true)
+    musicPlayerLifecycleMocks.actionsReady = false
+    const result = render(() => (
+      <PStudioEvents
+        playerVisible={playerVisible()}
+        dialogueComposerVisible={false}
+        isPlayerExpanded={false}
+        onMusicPlayingChange={vi.fn()}
+        onPlayerExpandedChange={vi.fn()}
+        onPomodoroPresentationChange={vi.fn()}
+        onTrackChange={vi.fn()}
+        pomoSay={createPomoSay()}
+        sceneStyle="original"
+      />
+    ))
+
+    runAction?.('music-stop')
+    expect(musicPlaybackMocks.pause).not.toHaveBeenCalled()
+
+    setPlayerVisible(false)
+    musicPlayerLifecycleMocks.actionsReady = true
+    setPlayerVisible(true)
+
+    expect(musicPlaybackMocks.pause).toHaveBeenCalledOnce()
     result.unmount()
   })
 
