@@ -1,5 +1,5 @@
 import {type Accessor, createMemo, onCleanup, untrack, useContext} from 'solid-js'
-import {PreferenceContext} from './context'
+import {PreferenceContext, type PreferenceSetValueOptions} from './context'
 import type {PreferenceStorage} from 'src/utils/preference-storage'
 
 export interface PreferenceOptions<Value> {
@@ -15,7 +15,7 @@ export interface PreferenceOptions<Value> {
 
 export type Preference<Value> = readonly [
   value: Accessor<Value | null>,
-  setValue: (value: Value | null) => void,
+  setValue: (value: Value | null, options?: PreferenceSetValueOptions) => void,
 ]
 
 /** Reads a provider-owned preference, applying its default to absent or null values. */

@@ -69,6 +69,7 @@ export const useVolumeDucking = (): VolumeDuckingState => {
       const settledSettings = settleSave(false)
       if (settledSettings !== null && pendingSaves.length === 0) {
         setSettings(committedSettings)
+        setStoredSettings(committedSettings, {persist: false})
       }
     }
   }
@@ -100,12 +101,19 @@ export const useVolumeDucking = (): VolumeDuckingState => {
     setStoredSettings(nextSettings)
   }
 
+  const publishSettings = (nextSettings: DialogueVolumeDuckingSettingsValue) => {
+    if (storedSettings() !== null) {
+      setStoredSettings(nextSettings, {persist: false})
+    }
+  }
+
   const scheduleSave = (nextSettings: DialogueVolumeDuckingSettingsValue) => {
     failedStoredSettings = null
     edited = true
     setSettings(nextSettings)
     setMessage(null)
     pendingSettings = nextSettings
+    publishSettings(nextSettings)
 
     if (saveTimeout !== null) {
       globalThis.clearTimeout(saveTimeout)
