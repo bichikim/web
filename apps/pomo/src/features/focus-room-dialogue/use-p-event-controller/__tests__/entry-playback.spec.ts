@@ -107,6 +107,27 @@ describe('createEntryEventPlayback', () => {
     },
   )
 
+  it('should allow retrying after the user stops playback', async () => {
+    const {playback, playSequence} = createPlayback()
+    playSequence.mockImplementationOnce((_repository, options) => {
+      void options.onDialogueStart('dialogue')
+      return Promise.resolve('stopped')
+    })
+    mockSuccessfulPlayback(playSequence)
+
+    const entryPlayback = createEntryPlayback(playback)
+    entryPlayback.enterFocusRoom()
+    await Promise.resolve()
+
+    expect(sessionStorage.getItem(ENTRY_PLAYBACK_SESSION_KEY)).toBeNull()
+
+    entryPlayback.tryPlay()
+    await Promise.resolve()
+
+    expect(playSequence).toHaveBeenCalledTimes(2)
+    expect(sessionStorage.getItem(ENTRY_PLAYBACK_SESSION_KEY)).toBe('true')
+  })
+
   it('should allow retrying when playback ends without starting a dialogue', async () => {
     const {playback, playSequence} = createPlayback()
     playSequence.mockResolvedValueOnce('ended')
