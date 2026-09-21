@@ -85,6 +85,42 @@ const parseItems = (values: ReadonlyArray<unknown>) =>
 const parseMetadata = (values: ReadonlyArray<unknown>) =>
   values.map((value) => feedDialogueMetadataSchema.parse(value))
 
+const dismissFeedItem = async (database: PDatabase, options: DismissFeedItemOptions) => {
+  const itemId = getFeedItemRecordId(options.feedConnectionId, options.feedItemId)
+  const storedValue = await database.feedItems.get(itemId)
+
+  if (storedValue !== undefined) {
+    const item = feedItemRecordSchema.parse(storedValue)
+    await database.feedItems.put({
+      ...item,
+      message: options.message,
+      status: 'dismissed',
+      updatedAt: options.updatedAt,
+    })
+    return
+  }
+
+  if (options.fallback === undefined) {
+    return
+  }
+
+  await database.feedItems.put({
+    contentLength: 0,
+    discoveredAt: options.updatedAt,
+    feedConnectionId: options.feedConnectionId,
+    feedItemId: options.feedItemId,
+    id: itemId,
+    itemTitle: options.fallback.itemTitle,
+    message: options.message,
+    publishedAt: options.fallback.publishedAt,
+    sourceTitle: options.fallback.sourceTitle,
+    sourceUrl: options.fallback.sourceUrl,
+    status: 'dismissed',
+    updatedAt: options.updatedAt,
+    version: 1,
+  })
+}
+
 const updateRecoverableJobs = async (
   database: PDatabase,
   jobIds: ReadonlyArray<string>,
@@ -194,41 +230,7 @@ export const createFeedDialogueRepository = (
     },
     deleteJobs: (jobIds, updatedAt) =>
       updateRecoverableJobs(database, jobIds, updatedAt, 'dismissed'),
-    async dismissItem(options) {
-      const itemId = getFeedItemRecordId(options.feedConnectionId, options.feedItemId)
-      const storedValue = await database.feedItems.get(itemId)
-
-      if (storedValue !== undefined) {
-        const item = feedItemRecordSchema.parse(storedValue)
-        await database.feedItems.put({
-          ...item,
-          message: options.message,
-          status: 'dismissed',
-          updatedAt: options.updatedAt,
-        })
-        return
-      }
-
-      if (options.fallback === undefined) {
-        return
-      }
-
-      await database.feedItems.put({
-        contentLength: 0,
-        discoveredAt: options.updatedAt,
-        feedConnectionId: options.feedConnectionId,
-        feedItemId: options.feedItemId,
-        id: itemId,
-        itemTitle: options.fallback.itemTitle,
-        message: options.message,
-        publishedAt: options.fallback.publishedAt,
-        sourceTitle: options.fallback.sourceTitle,
-        sourceUrl: options.fallback.sourceUrl,
-        status: 'dismissed',
-        updatedAt: options.updatedAt,
-        version: 1,
-      })
-    },
+    dismissItem: (options) => dismissFeedItem(database, options),
     dispose() {
       database.close()
     },
