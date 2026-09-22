@@ -29,6 +29,11 @@ export const useReplySpeechQueue = (options: UseReplySpeechQueueOptions) => {
 
   const enqueue = (text: string) =>
     new Promise<void>((resolve, reject) => {
+      if (disposed) {
+        reject(createCancelledError())
+        return
+      }
+
       setRequests((current) => [...current, {cancelled: false, reject, resolve, text}])
     })
 
