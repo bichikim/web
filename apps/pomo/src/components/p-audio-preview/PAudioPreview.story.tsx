@@ -46,16 +46,18 @@ export const Ready: Story = {
   play: async ({canvasElement}: PreviewPlayContext) => {
     const canvas = within(canvasElement)
 
-    await expect(canvas.getByRole('button', {name: 'Brunch Terrace 재생'})).toBeVisible()
-    await expect(canvas.getByRole('slider', {name: 'Brunch Terrace 재생 위치'})).toBeVisible()
-    await expect(canvas.getByRole('button', {name: 'Brunch Terrace 음소거'})).toBeVisible()
+    await expect(canvas.getByRole('button', {name: 'Brunch Terrace play'})).toBeVisible()
+    await expect(
+      canvas.getByRole('slider', {name: 'Brunch Terrace playback position'}),
+    ).toBeVisible()
+    await expect(canvas.getByRole('button', {name: 'Brunch Terrace mute'})).toBeVisible()
   },
 }
 
 export const Request: Story = {
   args: {src: null},
   play: async ({canvasElement}: PreviewPlayContext) => {
-    const button = within(canvasElement).getByRole('button', {name: 'Brunch Terrace 미리 듣기'})
+    const button = within(canvasElement).getByRole('button', {name: 'Brunch Terrace Listen'})
 
     await userEvent.click(button)
     await expect(meta.args.onRequest).toHaveBeenCalledOnce()
