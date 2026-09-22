@@ -7,7 +7,7 @@ import {
   renderEvents,
 } from './fixtures/events'
 
-import {screen} from '@solidjs/testing-library'
+import {render, screen} from '@solidjs/testing-library'
 import {createSignal} from 'solid-js'
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 
@@ -16,6 +16,7 @@ import {useOptionalSoundEffects} from '../../../features/sound-effects'
 import * as m from '@paraglide/message'
 import {createMemoryMemo} from '../../../features/memory-assist/schedule'
 import {useMemoryReminders} from '../../../features/memory-assist'
+import type {PSayController} from '../../../features/pomo-webmcp'
 
 import {PStudioEvents} from '../Events'
 import {useChildPresence} from '../use-child-presence'
