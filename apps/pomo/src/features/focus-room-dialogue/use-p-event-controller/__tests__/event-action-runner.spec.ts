@@ -5,6 +5,24 @@ import type {EventActionIds} from '../../event-context'
 import {createEventActionRunner} from '../event-action-runner'
 
 describe('createEventActionRunner', () => {
+  it('should retain actions until an active executor is registered', async () => {
+    const actionIds: EventActionIds = {'focus-start': ['music-start']}
+    const [getActionIds] = createSignal(actionIds)
+    const runner = createEventActionRunner(getActionIds)
+    const pendingActions = runner.run(['focus-start'])
+
+    if (pendingActions === undefined) {
+      throw new Error('Expected focus-start actions to wait for an executor.')
+    }
+
+    const executor = vi.fn()
+    runner.register(executor)
+    await pendingActions
+
+    expect(executor).toHaveBeenCalledExactlyOnceWith('music-start')
+    runner.dispose()
+  })
+
   it('should retain non-lifecycle actions while a deferred executor is registered', () => {
     const actionIds: EventActionIds = {'focus-start': ['music-start']}
     const [getActionIds] = createSignal(actionIds)
