@@ -158,6 +158,28 @@ it('should apply a generated preview when completing from the drawing tab', asyn
   expect(onImageChange).toHaveBeenCalledWith(expect.objectContaining({prompt: 'Generated park'}))
 })
 
+it('should discard a generated preview when dismissing the drawing modal', async () => {
+  const onImageChange = vi.fn()
+  render(() => (
+    <PModelDownloadProvider>
+      <PictureDiaryDrawing strokes={[]} onImageChange={onImageChange} />
+    </PModelDownloadProvider>
+  ))
+  fireEvent.click(screen.getByRole('button', {name: '그림 그리기'}))
+  const dialog = screen.getByRole('dialog')
+  const header = dialog.querySelector('header')!
+  fireEvent.click(within(header).getByRole('tab', {name: '이미지 생성'}))
+  fireEvent.click(await within(dialog).findByRole('button', {name: '생성 미리보기 준비'}))
+  fireEvent.click(within(header).getByRole('tab', {name: '직접 그리기'}))
+  fireEvent.click(within(header).getByRole('button', {name: '닫기'}))
+  await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument())
+
+  fireEvent.click(screen.getByRole('button', {name: '그림 그리기'}))
+  fireEvent.click(screen.getByRole('button', {name: '완료'}))
+  await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument())
+  expect(onImageChange).not.toHaveBeenCalled()
+})
+
 it('should not apply a generated image twice after choosing to draw on it', async () => {
   const onImageChange = vi.fn()
   render(() => (
