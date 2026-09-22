@@ -5,6 +5,28 @@ import type {EventActionIds} from '../../event-context'
 import {createEventActionRunner} from '../event-action-runner'
 
 describe('createEventActionRunner', () => {
+  it('should retain focus-end and break-end actions before active registration', async () => {
+    const actionIds: EventActionIds = {
+      'break-end': ['music-start'],
+      'focus-end': ['music-stop'],
+    }
+    const [getActionIds] = createSignal(actionIds)
+    const runner = createEventActionRunner(getActionIds)
+    const pendingPlayback = runner.run(['break-end', 'focus-end'])
+    if (pendingPlayback === undefined) {
+      throw new Error('Expected lifecycle playback to wait for an executor.')
+    }
+
+    const activeExecutor = vi.fn()
+    runner.register(activeExecutor)
+    await pendingPlayback
+
+    expect(activeExecutor).toHaveBeenCalledTimes(2)
+    expect(activeExecutor).toHaveBeenNthCalledWith(1, 'music-start')
+    expect(activeExecutor).toHaveBeenNthCalledWith(2, 'music-stop')
+    runner.dispose()
+  })
+
   it('should retain actions until an active executor is registered', async () => {
     const actionIds: EventActionIds = {'focus-start': ['music-start']}
     const [getActionIds] = createSignal(actionIds)

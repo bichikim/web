@@ -1,3 +1,4 @@
+export * from './ai-jobs'
 export * from './calendar'
 export * from './commerce'
 export * from './feature-requests'

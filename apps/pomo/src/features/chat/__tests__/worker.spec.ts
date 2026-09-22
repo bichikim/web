@@ -35,7 +35,10 @@ vi.mock('../../korean-text-postprocessor', () => ({
   createKoreanTextSegments: koreanMocks.createKoreanTextSegments,
   replaceUnrefinedSentences: koreanMocks.replaceUnrefinedSentences,
 }))
-vi.mock('../../text-generation', () => ({trimRepetitiveTail: textMocks.trimRepetitiveTail}))
+vi.mock('../../text-generation', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../text-generation')>()),
+  trimRepetitiveTail: textMocks.trimRepetitiveTail,
+}))
 vi.mock('../../text-generation/transformers-runtime', () => ({
   createTransformersRuntime: runtimeMocks.create,
 }))

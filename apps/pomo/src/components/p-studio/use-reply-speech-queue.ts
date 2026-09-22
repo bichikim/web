@@ -1,6 +1,7 @@
 import {type Accessor, createEffect, createSignal, onCleanup, untrack} from 'solid-js'
 
 interface ReplySpeechRequest {
+  cancelled: boolean
   readonly reject: (error: unknown) => void
   readonly resolve: () => void
   readonly text: string
@@ -33,7 +34,7 @@ export const useReplySpeechQueue = (options: UseReplySpeechQueueOptions) => {
         return
       }
 
-      setRequests((current) => [...current, {reject, resolve, text}])
+      setRequests((current) => [...current, {cancelled: false, reject, resolve, text}])
     })
 
   const runRequest = async (request: ReplySpeechRequest) => {
@@ -65,12 +66,11 @@ export const useReplySpeechQueue = (options: UseReplySpeechQueueOptions) => {
   const cancelActiveRequest = () => {
     const request = activeRequest
 
-    if (request === null) {
+    if (request === null || request.cancelled) {
       return
     }
 
-    activeRequest = null
-    setIsSpeaking(false)
+    request.cancelled = true
     request.reject(createCancelledError())
     options.stop()
   }

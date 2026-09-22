@@ -6,6 +6,26 @@ import {PModelDownloadProvider} from '../../../../features/model-download'
 import type {PictureDiaryImage, PictureDiaryStroke} from '../../../../features/picture-diary'
 import {PictureDiaryDrawing} from '../Drawing'
 
+vi.mock('../Generation', () => ({
+  Generation: (props: {
+    readonly onApply?: (image: PictureDiaryImage) => void
+    readonly onPreviewChange?: (image: PictureDiaryImage | undefined) => void
+  }) => {
+    const image = {blob: new Blob(['png'], {type: 'image/png'}), prompt: 'Generated park'}
+    return (
+      <>
+        <textarea aria-label="생성 설명" />
+        <button type="button" onClick={() => props.onPreviewChange?.(image)}>
+          생성 미리보기 준비
+        </button>
+        <button type="button" onClick={() => props.onApply?.(image)}>
+          생성 이미지 적용
+        </button>
+      </>
+    )
+  },
+}))
+
 const getComputedStyle = globalThis.getComputedStyle.bind(globalThis)
 
 beforeEach(() => {
@@ -58,9 +78,8 @@ it('should edit in a popup, retain the drawing ratio, and update the page previe
   expect(preview.querySelectorAll('circle')).toHaveLength(1)
   await waitFor(() => expect(trigger).toHaveFocus())
   fireEvent.click(trigger)
-  fireEvent.click(screen.getByRole('button', {name: '한 획 취소'}))
-  expect(preview.querySelectorAll('circle')).toHaveLength(0)
-  expect(screen.getByRole('button', {name: '그림 지우기'})).toBeDisabled()
+  expect(screen.getByRole('button', {name: '한 획 취소'})).toBeDisabled()
+  expect(preview.querySelectorAll('circle')).toHaveLength(1)
 })
 
 it('should clear existing drawing only from the popup', () => {
@@ -117,6 +136,44 @@ it('should place the drawing modes in the modal header and associate their panel
   expect(screen.getByRole('tabpanel', {name: '직접 그리기'})).toBeInTheDocument()
   fireEvent.click(within(header).getByRole('button', {name: '닫기'}))
   await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument())
+})
+
+it('should apply a generated preview when completing from the drawing tab', async () => {
+  const onImageChange = vi.fn()
+  render(() => (
+    <PModelDownloadProvider>
+      <PictureDiaryDrawing strokes={[]} onImageChange={onImageChange} />
+    </PModelDownloadProvider>
+  ))
+  fireEvent.click(screen.getByRole('button', {name: '그림 그리기'}))
+  const dialog = screen.getByRole('dialog')
+  const header = dialog.querySelector('header')!
+  fireEvent.click(within(header).getByRole('tab', {name: '이미지 생성'}))
+  fireEvent.click(await within(dialog).findByRole('button', {name: '생성 미리보기 준비'}))
+  expect(onImageChange).not.toHaveBeenCalled()
+  fireEvent.click(within(header).getByRole('tab', {name: '직접 그리기'}))
+  fireEvent.click(within(dialog).getByRole('button', {name: '완료'}))
+  await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument())
+  expect(onImageChange).toHaveBeenCalledWith(expect.objectContaining({prompt: 'Generated park'}))
+})
+
+it('should not apply a generated image twice after choosing to draw on it', async () => {
+  const onImageChange = vi.fn()
+  render(() => (
+    <PModelDownloadProvider>
+      <PictureDiaryDrawing strokes={[]} onImageChange={onImageChange} />
+    </PModelDownloadProvider>
+  ))
+  fireEvent.click(screen.getByRole('button', {name: '그림 그리기'}))
+  const dialog = screen.getByRole('dialog')
+  const header = dialog.querySelector('header')!
+  fireEvent.click(within(header).getByRole('tab', {name: '이미지 생성'}))
+  fireEvent.click(await within(dialog).findByRole('button', {name: '생성 미리보기 준비'}))
+  fireEvent.click(within(dialog).getByRole('button', {name: '생성 이미지 적용'}))
+  expect(onImageChange).toHaveBeenCalledTimes(1)
+  fireEvent.click(within(dialog).getByRole('button', {name: '완료'}))
+  await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument())
+  expect(onImageChange).toHaveBeenCalledTimes(1)
 })
 
 it('should undo and redo clearing without losing stroke styles', () => {

@@ -94,6 +94,39 @@ describe('middleware index', () => {
     vi.unstubAllEnvs()
   })
 
+  it.each([
+    '/api/ai/access',
+    '/api/ai/jobs',
+    '/api/ai/jobs/job/result',
+    '/api/ai/jobs/job/cancel',
+    '/api/ai/jobs/job/save',
+    '/api/cron/ai-jobs',
+    '/api/%61i/jobs',
+  ])('should hide unreleased server AI at %s before route execution', async (path) => {
+    const middleware = await importMiddleware(false)
+    const event = createEvent()
+    const request = new Request(`https://pomo.example${path}`, {method: 'POST'})
+    const next = vi.fn(async () => new Response('unexpected'))
+    const response = await middleware[4]?.(
+      {...event, req: request, url: new URL(request.url)},
+      next,
+    )
+    expect(response?.status).toBe(404)
+    expect(next).not.toHaveBeenCalled()
+    expect(handleUserAuthRequest).not.toHaveBeenCalled()
+    expect(handleAdminAuthRequest).not.toHaveBeenCalled()
+  })
+
+  it('should reject malformed encoded paths without calling a route', async () => {
+    const middleware = await importMiddleware(false)
+    const event = createEvent()
+    const url = new URL('https://pomo.example/api/%ZZ')
+    const next = vi.fn(async () => new Response('unexpected'))
+    const response = await middleware[4]?.({...event, req: new Request(url), url}, next)
+    expect(response?.status).toBe(400)
+    expect(next).not.toHaveBeenCalled()
+  })
+
   it('should register middleware in order and bridge the next response through Paraglide', async () => {
     const middleware = await importMiddleware(false)
     const event = createEvent()

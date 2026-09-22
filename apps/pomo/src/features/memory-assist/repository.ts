@@ -50,7 +50,11 @@ export const createMemoryMemoRepository = (
       const tossMemos = await storage.readToss()
 
       if (tossMemos !== null) {
-        storage.writeWeb(tossMemos)
+        const webError = storage.writeWeb(tossMemos)
+        if (webError !== null) {
+          throw webError
+        }
+
         return tossMemos
       }
 

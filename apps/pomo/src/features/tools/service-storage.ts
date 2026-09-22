@@ -64,6 +64,8 @@ export const createServiceSettingsStorage = (
     }
     const tossSettings = await storage.readToss(STORAGE_KEY, parseSettings)
     if (tossSettings !== null) {
+      // Keep the settings available when the Toss bridge disappears before the next read.
+      storage.writeWeb(STORAGE_KEY, tossSettings)
       return tossSettings
     }
     const webLegacy = legacySettings()

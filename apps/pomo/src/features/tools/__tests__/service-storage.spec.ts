@@ -66,6 +66,18 @@ it('should restore current native settings before a legacy web date', async () =
   fixture.getItem.mockResolvedValue(JSON.stringify(settings))
   await expect(repository.read()).resolves.toEqual(settings)
 })
+it('should cache native settings for a later bridge-free read', async () => {
+  fixture.usesTossStorage.mockReturnValue(true)
+  const settings = {branch: 'navy', days: '300', manual: true, start: '2026-09-01'} as const
+  fixture.getItem.mockResolvedValue(JSON.stringify(settings))
+
+  await expect(repository.read()).resolves.toEqual(settings)
+  expect(fixture.web.get('pomo:service-settings:v1')).toBe(JSON.stringify(settings))
+
+  fixture.usesTossStorage.mockReturnValue(false)
+
+  await expect(repository.read()).resolves.toEqual(settings)
+})
 it('should preserve native read errors when there is no web copy', async () => {
   fixture.usesTossStorage.mockReturnValue(true)
   fixture.getItem.mockRejectedValue(new Error('read failed'))
