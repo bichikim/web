@@ -218,6 +218,70 @@ describe('useDialogueWriter', () => {
     root.dispose()
   })
 
+  it('should ignore generation responses after the request changes', () => {
+    const onComplete = vi.fn()
+    const runtime = createRuntime(true)
+    const root = createDialogueRoot(runtime, onComplete)
+
+    root.controller.prepare()
+    runtime.emit({type: 'ready'})
+    root.controller.generate()
+    runtime.emit({type: 'started'})
+    runtime.emit({text: '이전 ', type: 'token'})
+
+    root.controller.setRequest('두 번째 요청')
+    runtime.emit({files: [], loadedBytes: 75, percentage: 75, totalBytes: 100, type: 'loading'})
+    runtime.emit({text: '출력', type: 'token'})
+    runtime.emit({text: '이전 출력', type: 'complete'})
+    runtime.emit({message: '이전 오류', restartRequired: false, type: 'error'})
+
+    expect(root.controller.output()).toBe('')
+    expect(root.controller.state()).toEqual({status: 'idle'})
+    expect(runtime.client.dispose).toHaveBeenCalledTimes(1)
+    expect(onComplete).not.toHaveBeenCalled()
+    root.dispose()
+  })
+
+  it('should ignore generation responses after the request changes while preparing', () => {
+    const onComplete = vi.fn()
+    const runtime = createRuntime(true)
+    const root = createDialogueRoot(runtime, onComplete)
+
+    root.controller.prepare()
+    runtime.emit({type: 'ready'})
+    root.controller.generate()
+    runtime.emit({files: [], loadedBytes: 50, percentage: 50, totalBytes: 100, type: 'loading'})
+
+    root.controller.setRequest('두 번째 요청')
+    runtime.emit({files: [], loadedBytes: 75, percentage: 75, totalBytes: 100, type: 'loading'})
+    runtime.emit({type: 'started'})
+    runtime.emit({text: '이전 출력', type: 'complete'})
+
+    expect(root.controller.output()).toBe('')
+    expect(root.controller.state()).toEqual({status: 'idle'})
+    expect(runtime.client.dispose).toHaveBeenCalledTimes(1)
+    expect(onComplete).not.toHaveBeenCalled()
+    root.dispose()
+  })
+
+  it('should generate the latest request after invalidating a generating client', () => {
+    const runtime = createRuntime(true)
+    const root = createDialogueRoot(runtime)
+
+    root.controller.prepare()
+    runtime.emit({type: 'ready'})
+    root.controller.generate()
+    runtime.emit({type: 'started'})
+
+    root.controller.setRequest('두 번째 요청')
+    root.controller.generateWithPreparation()
+    runtime.emit({type: 'ready'})
+
+    expect(runtime.createClient).toHaveBeenCalledTimes(2)
+    expect(runtime.client.generate).toHaveBeenLastCalledWith('두 번째 요청')
+    root.dispose()
+  })
+
   it('should prepare and then generate from one request', () => {
     const runtime = createRuntime(true)
     const root = createDialogueRoot(runtime)

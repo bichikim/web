@@ -76,6 +76,41 @@ export interface DialogueWriterController {
 
 const DEFAULT_RUNTIME: DialogueWriterRuntime = {createClient: createDialogueClient, supportsWebGpu}
 
+interface DialogueClientSessionOptions {
+  readonly createClient: DialogueWriterRuntime['createClient']
+  readonly modelId: TextModelId
+  readonly onResponse: (response: DialogueWorkerResponse) => void
+}
+
+const createDialogueClientSession = (options: DialogueClientSessionOptions) => {
+  let nextClientId = 0
+  let activeClientId: number | null = null
+  const clientOwner = createLazyClient(() => {
+    nextClientId += 1
+    const clientId = nextClientId
+    activeClientId = clientId
+
+    return options.createClient({
+      modelId: options.modelId,
+      onResponse: (response) => {
+        if (clientId !== activeClientId) {
+          return
+        }
+
+        options.onResponse(response)
+      },
+    })
+  })
+
+  return {
+    dispose: () => {
+      activeClientId = null
+      clientOwner.dispose()
+    },
+    get: () => clientOwner.get(),
+  }
+}
+
 const isDialogueBusy = (state: DialogueWriterState) => {
   switch (state.status) {
     case 'generating':
@@ -108,6 +143,31 @@ const isDialogueModelReady = (state: DialogueWriterState) => {
 const isDialoguePreparationAllowed = (state: DialogueWriterState) =>
   state.status === 'idle' || state.status === 'error'
 
+const getDialogueWriterStatusMessage = (currentState: DialogueWriterState): string => {
+  switch (currentState.status) {
+    case 'complete':
+      return m.dialogue_writer_complete_status()
+    case 'error':
+      return localizeErrorMessage(currentState.message, m.dialogue_writer_error())
+    case 'generating':
+      return m.dialogue_writer_generating_status()
+    case 'idle':
+      return m.dialogue_writer_initial_status()
+    case 'loading':
+      if (currentState.percentage === MAXIMUM_PROGRESS) {
+        return m.dialogue_writer_download_complete_status()
+      }
+
+      return m.dialogue_writer_downloading_status({percentage: currentState.percentage})
+    case 'ready':
+      return m.dialogue_writer_ready_status()
+    case 'unsupported':
+      return m.dialogue_writer_unsupported_status()
+  }
+
+  currentState satisfies never
+}
+
 export const useDialogueWriter = (props: UseDialogueWriterProps): DialogueWriterController => {
   const modelId = untrack(() => props.modelId)
   const outputLanguage = untrack(() => props.outputLanguage)
@@ -118,6 +178,7 @@ export const useDialogueWriter = (props: UseDialogueWriterProps): DialogueWriter
     runtime.supportsWebGpu() ? {status: 'idle'} : {status: 'unsupported'},
   )
   let shouldGenerateAfterPreparation = false
+  let generationInFlight = false
   const isBusy = createMemo(() => isDialogueBusy(state()))
   const isModelReady = createMemo(() => isDialogueModelReady(state()))
   const canPrepare = createMemo(() => isDialoguePreparationAllowed(state()))
@@ -132,44 +193,23 @@ export const useDialogueWriter = (props: UseDialogueWriterProps): DialogueWriter
 
     return isModelReady() ? MAXIMUM_PROGRESS : 0
   })
-  const statusMessage = createMemo(() => {
-    const currentState = state()
-
-    switch (currentState.status) {
-      case 'complete':
-        return m.dialogue_writer_complete_status()
-      case 'error':
-        return localizeErrorMessage(currentState.message, m.dialogue_writer_error())
-      case 'generating':
-        return m.dialogue_writer_generating_status()
-      case 'idle':
-        return m.dialogue_writer_initial_status()
-      case 'loading':
-        if (currentState.percentage === MAXIMUM_PROGRESS) {
-          return m.dialogue_writer_download_complete_status()
-        }
-
-        return m.dialogue_writer_downloading_status({percentage: currentState.percentage})
-      case 'ready':
-        return m.dialogue_writer_ready_status()
-      case 'unsupported':
-        return m.dialogue_writer_unsupported_status()
-    }
-  })
+  const statusMessage = createMemo(() => getDialogueWriterStatusMessage(state()))
 
   const handleResponse = (response: DialogueWorkerResponse) => {
     switch (response.type) {
       case 'complete':
+        generationInFlight = false
         setOutput(response.text)
         props.onComplete?.(response.text)
         setState({status: 'complete'})
         return
       case 'error': {
+        generationInFlight = false
         shouldGenerateAfterPreparation = false
         const modelReady = !response.restartRequired && isModelReady()
 
         if (response.restartRequired) {
-          clientOwner.dispose()
+          clientSession.dispose()
         }
 
         setState({message: response.message, modelReady, status: 'error'})
@@ -203,9 +243,29 @@ export const useDialogueWriter = (props: UseDialogueWriterProps): DialogueWriter
     response satisfies never
   }
 
-  const clientOwner = createLazyClient(() =>
-    runtime.createClient({modelId, onResponse: handleResponse}),
-  )
+  const clientSession = createDialogueClientSession({
+    createClient: runtime.createClient,
+    modelId,
+    onResponse: handleResponse,
+  })
+
+  const updateRequest = (nextRequest: string) => {
+    const currentRequest = request()
+    if (currentRequest === nextRequest) {
+      return
+    }
+
+    const isGenerating = generationInFlight
+    setRequest(nextRequest)
+
+    if (!isGenerating) {
+      return
+    }
+
+    setOutput('')
+    clientSession.dispose()
+    setState({status: 'idle'})
+  }
 
   const prepare = () => {
     if (!canPrepare() || !runtime.supportsWebGpu()) {
@@ -213,7 +273,7 @@ export const useDialogueWriter = (props: UseDialogueWriterProps): DialogueWriter
     }
 
     setState({files: [], loadedBytes: 0, percentage: 0, status: 'loading', totalBytes: 0})
-    clientOwner.get().prepare()
+    clientSession.get().prepare()
   }
 
   const generate = () => {
@@ -222,9 +282,10 @@ export const useDialogueWriter = (props: UseDialogueWriterProps): DialogueWriter
     }
 
     shouldGenerateAfterPreparation = false
+    generationInFlight = true
     setState({status: 'generating'})
     setOutput('')
-    const client = clientOwner.get()
+    const client = clientSession.get()
     const trimmedRequest = request().trim()
 
     if (outputLanguage === undefined) {
@@ -256,11 +317,12 @@ export const useDialogueWriter = (props: UseDialogueWriterProps): DialogueWriter
 
   const release = () => {
     shouldGenerateAfterPreparation = false
-    clientOwner.dispose()
+    generationInFlight = false
+    clientSession.dispose()
     setState(runtime.supportsWebGpu() ? {status: 'idle'} : {status: 'unsupported'})
   }
 
-  onCleanup(clientOwner.dispose)
+  onCleanup(clientSession.dispose)
 
   return {
     canCopy,
@@ -276,7 +338,7 @@ export const useDialogueWriter = (props: UseDialogueWriterProps): DialogueWriter
     progress,
     release,
     request,
-    setRequest,
+    setRequest: updateRequest,
     state,
     statusMessage,
   }
