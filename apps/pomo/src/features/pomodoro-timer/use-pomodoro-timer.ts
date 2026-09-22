@@ -352,7 +352,9 @@ export const usePomodoroTimer = (props: UsePomodoroTimerProps = {}): PomodoroTim
       synchronizedState.status === 'running' && synchronizedState.phase !== 'focus'
         ? advancePomodoroTimer(synchronizedState, nextConfig)
         : synchronizedState
-    applyState(stopPomodoroTimer(stateToStop, nextConfig, {now: currentTime}))
+    applyState(stopPomodoroTimer(stateToStop, nextConfig, {now: currentTime}), {
+      deferEvents: true,
+    })
   }
   const onAutoStartChange = (isEnabled: boolean) => {
     setIsAutoStartEnabled(isEnabled)
