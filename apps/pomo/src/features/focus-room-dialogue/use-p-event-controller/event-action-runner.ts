@@ -110,6 +110,10 @@ export const createEventActionRunner = (
 
   return {
     clearDelayedEndActions() {
+      if (eventActionRegistration?.mode === 'deferred') {
+        return
+      }
+
       pendingEventActions = pendingEventActions.filter(({eventId}) => eventId !== DELAYED_END_EVENT)
       resolvePendingActionWaiters(DELAYED_END_EVENT)
     },

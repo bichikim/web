@@ -24,6 +24,23 @@ describe('createEventActionRunner', () => {
     runner.dispose()
   })
 
+  it('should retain delayed-end actions when clearing while a deferred executor is registered', () => {
+    const actionIds: EventActionIds = {'delayed-end': ['music-start']}
+    const [getActionIds] = createSignal(actionIds)
+    const runner = createEventActionRunner(getActionIds)
+    const unregisterDeferredExecutor = runner.register(vi.fn(), {mode: 'deferred'})
+
+    runner.run(['delayed-end'])
+    runner.clearDelayedEndActions()
+    unregisterDeferredExecutor()
+
+    const activeExecutor = vi.fn()
+    runner.register(activeExecutor)
+
+    expect(activeExecutor).toHaveBeenCalledExactlyOnceWith('music-start')
+    runner.dispose()
+  })
+
   it('should retain room-enter and delayed-end actions while a deferred executor releases playback', async () => {
     const actionIds: EventActionIds = {
       'delayed-end': ['music-start'],
