@@ -46,6 +46,7 @@ export const createRepository = () => {
       items.push(item)
     }),
     recoverMissingDialogue: vi.fn(),
+    dismissItem: vi.fn(),
     removeItem: vi.fn(),
     removeMetadata: vi.fn(),
     retryJobs: vi.fn(),

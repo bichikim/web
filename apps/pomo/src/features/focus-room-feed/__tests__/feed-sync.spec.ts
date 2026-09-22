@@ -514,6 +514,47 @@ it('should normalize defensive defaults while ignoring a stale parser item', asy
   })
 })
 
+it('should skip dismissed feed items during sync', async () => {
+  const {items, jobs, repository} = createRepository()
+  items.push({
+    contentLength: 10,
+    discoveredAt: '2026-08-14T00:00:00.000Z',
+    feedConnectionId: CONNECTION.id,
+    feedItemId: 'deleted',
+    id: `${CONNECTION.id}\u0000deleted`,
+    itemTitle: '삭제한 피드',
+    message: '사용자가 피드 대화를 삭제했어요.',
+    publishedAt: '2026-08-14T00:05:00.000Z',
+    sourceTitle: 'Pomo 테스트',
+    sourceUrl: 'https://example.com/deleted',
+    status: 'dismissed',
+    updatedAt: '2026-08-14T00:10:00.000Z',
+    version: 1,
+  })
+
+  const summary = await synchronizeFeeds({
+    connections: [CONNECTION],
+    createId: () => 'job-1',
+    fetcher: vi.fn(
+      async () =>
+        new Response(
+          createRss([
+            {id: 'deleted', minute: '05'},
+            {id: 'new', minute: '06'},
+          ]),
+        ),
+    ),
+    now: new Date('2026-08-14T00:07:00.000Z'),
+    repository,
+    resolveGenerationSettings: createSettingsResolver(),
+  })
+
+  expect(summary).toEqual({failures: [], queuedJobIds: ['job-1'], successfulConnections: 1})
+  expect(jobs).toHaveLength(1)
+  expect(jobs[0]).toMatchObject({feedItemId: 'new'})
+  expect(items.filter((item) => item.feedItemId === 'deleted')).toHaveLength(1)
+})
+
 it('should queue multiple undated feed items without inventing a sort timestamp', async () => {
   const {jobs, repository} = createRepository()
   let nextId = 0
