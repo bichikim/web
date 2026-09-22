@@ -27,6 +27,24 @@ describe('createEventActionRunner', () => {
     runner.dispose()
   })
 
+  it('should retain actions until an active executor is registered', async () => {
+    const actionIds: EventActionIds = {'focus-start': ['music-start']}
+    const [getActionIds] = createSignal(actionIds)
+    const runner = createEventActionRunner(getActionIds)
+    const pendingActions = runner.run(['focus-start'])
+
+    if (pendingActions === undefined) {
+      throw new Error('Expected focus-start actions to wait for an executor.')
+    }
+
+    const executor = vi.fn()
+    runner.register(executor)
+    await pendingActions
+
+    expect(executor).toHaveBeenCalledExactlyOnceWith('music-start')
+    runner.dispose()
+  })
+
   it('should retain non-lifecycle actions while a deferred executor is registered', () => {
     const actionIds: EventActionIds = {'focus-start': ['music-start']}
     const [getActionIds] = createSignal(actionIds)
@@ -39,6 +57,23 @@ describe('createEventActionRunner', () => {
     expect(deferredExecutor).not.toHaveBeenCalled()
 
     unregisterDeferredExecutor()
+    const activeExecutor = vi.fn()
+    runner.register(activeExecutor)
+
+    expect(activeExecutor).toHaveBeenCalledExactlyOnceWith('music-start')
+    runner.dispose()
+  })
+
+  it('should retain delayed-end actions when clearing while a deferred executor is registered', () => {
+    const actionIds: EventActionIds = {'delayed-end': ['music-start']}
+    const [getActionIds] = createSignal(actionIds)
+    const runner = createEventActionRunner(getActionIds)
+    const unregisterDeferredExecutor = runner.register(vi.fn(), {mode: 'deferred'})
+
+    runner.run(['delayed-end'])
+    runner.clearDelayedEndActions()
+    unregisterDeferredExecutor()
+
     const activeExecutor = vi.fn()
     runner.register(activeExecutor)
 

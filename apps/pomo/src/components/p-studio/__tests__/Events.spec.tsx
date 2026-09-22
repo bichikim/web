@@ -609,6 +609,41 @@ describe('PStudioEvents', () => {
     expect(pomoSay.speak).not.toHaveBeenCalled()
   })
 
+  it('should stop an active input reply when the composer is hidden', async () => {
+    const [dialogueComposerVisible, setDialogueComposerVisible] = createSignal(true)
+    let completeSpeech: () => void = () => undefined
+    const speak: PSayController['speak'] = vi.fn(
+      () =>
+        new Promise<void>((resolve) => {
+          completeSpeech = resolve
+        }),
+    )
+    const stop = vi.fn(() => completeSpeech())
+    const pomoSay: PSayController = {...createPomoSay(), speak, stop}
+    const events = createEvents()
+    const result = render(() => (
+      <PStudioEvents
+        dialogueComposerVisible={dialogueComposerVisible()}
+        isPlayerExpanded={false}
+        onMusicPlayingChange={vi.fn()}
+        onPlayerExpandedChange={vi.fn()}
+        onPomodoroPresentationChange={vi.fn()}
+        onTrackChange={vi.fn()}
+        pomoSay={pomoSay}
+        sceneStyle="original"
+      />
+    ))
+    const oneOffChatOptions = vi.mocked(useOneOffChat).mock.calls[0]?.[0]
+    const reply = oneOffChatOptions?.onReply('재생 중인 답변')
+
+    await vi.waitFor(() => expect(speak).toHaveBeenCalledWith({text: '재생 중인 답변'}))
+    setDialogueComposerVisible(false)
+
+    await expect(reply).rejects.toMatchObject({name: 'AbortError'})
+    expect(stop).toHaveBeenCalledOnce()
+    result.unmount()
+  })
+
   it('should omit the dialogue composer when its display setting is off', () => {
     const {container} = renderEvents({dialogueComposerVisible: false})
 
