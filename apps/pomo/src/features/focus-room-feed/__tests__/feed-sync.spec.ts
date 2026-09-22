@@ -10,6 +10,8 @@ import {
 import {expect, it, vi} from 'vitest'
 
 import {createFeedScript, type ParsedFeedItem, parseFeedXml} from '../feed-parser'
+import {deleteExpiredFeedDialogues} from '../feed-dialogue-lifecycle'
+import type {FeedDialogueMetadata} from '../feed-dialogue-schema'
 import {synchronizeFeeds} from '../feed-sync'
 import type {FeedConnection} from '../schema'
 
@@ -553,6 +555,57 @@ it('should skip dismissed feed items during sync', async () => {
   expect(jobs).toHaveLength(1)
   expect(jobs[0]).toMatchObject({feedItemId: 'new'})
   expect(items.filter((item) => item.feedItemId === 'deleted')).toHaveLength(1)
+})
+
+it('should preserve the dedupe tombstone when an expired dialogue is cleaned up', async () => {
+  const {items, jobs, repository} = createRepository()
+  const rss = createRss([{id: 'expired', minute: '05'}])
+  const fetcher = vi.fn(async () => new Response(rss))
+
+  await synchronizeFeeds({
+    connections: [CONNECTION],
+    createId: () => 'job-1',
+    fetcher,
+    now: new Date('2026-08-14T00:06:00.000Z'),
+    repository,
+    resolveGenerationSettings: createSettingsResolver(),
+  })
+
+  expect(jobs).toHaveLength(1)
+  const metadata: FeedDialogueMetadata = {
+    createdAt: '2026-08-14T00:06:00.000Z',
+    dialogueId: 'dialogue-expired',
+    expiresAt: '2026-08-16T00:06:00.000Z',
+    feedConnectionId: CONNECTION.id,
+    feedItemId: 'expired',
+    itemTitle: '안녕하세요 05',
+    listenedAt: null,
+    publishedAt: '2026-08-14T00:05:00.000Z',
+    sourceTitle: 'Pomo 테스트',
+    sourceUrl: 'https://example.com/expired',
+    version: 1,
+  }
+  vi.mocked(repository.listExpiredMetadata).mockResolvedValue([metadata])
+
+  await deleteExpiredFeedDialogues({
+    dialogueRepository: {deleteDialogue: vi.fn(async () => undefined)},
+    feedRepository: repository,
+    isDialogueScheduled: () => false,
+    now: new Date('2026-08-16T00:07:00.000Z'),
+  })
+
+  jobs.length = 0
+  await synchronizeFeeds({
+    connections: [CONNECTION],
+    createId: () => 'job-2',
+    fetcher,
+    now: new Date('2026-08-16T00:08:00.000Z'),
+    repository,
+    resolveGenerationSettings: createSettingsResolver(),
+  })
+
+  expect(jobs).toHaveLength(0)
+  expect(items).toEqual([expect.objectContaining({feedItemId: 'expired', status: 'dismissed'})])
 })
 
 it('should queue multiple undated feed items without inventing a sort timestamp', async () => {

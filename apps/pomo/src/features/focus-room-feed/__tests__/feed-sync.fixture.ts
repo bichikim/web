@@ -31,6 +31,22 @@ export const createRepository = () => {
   const repository: FeedDialogueRepository = {
     complete: vi.fn(),
     deleteJobs: vi.fn(),
+    dismissItem: vi.fn(async (options) => {
+      const index = items.findIndex(
+        (item) =>
+          item.feedConnectionId === options.feedConnectionId &&
+          item.feedItemId === options.feedItemId,
+      )
+      const item = items[index]
+      if (item !== undefined) {
+        items[index] = {
+          ...item,
+          message: options.message,
+          status: 'dismissed',
+          updatedAt: options.updatedAt,
+        }
+      }
+    }),
     dispose: vi.fn(),
     failJob: vi.fn(async () => true),
     interruptUnfinishedJobs: vi.fn(async () => []),
@@ -46,8 +62,14 @@ export const createRepository = () => {
       items.push(item)
     }),
     recoverMissingDialogue: vi.fn(),
-    dismissItem: vi.fn(),
-    removeItem: vi.fn(),
+    removeItem: vi.fn(async (feedConnectionId, feedItemId) => {
+      const index = items.findIndex(
+        (item) => item.feedConnectionId === feedConnectionId && item.feedItemId === feedItemId,
+      )
+      if (index >= 0) {
+        items.splice(index, 1)
+      }
+    }),
     removeMetadata: vi.fn(),
     retryJobs: vi.fn(),
     saveItems: vi.fn(async (nextItems) => {
