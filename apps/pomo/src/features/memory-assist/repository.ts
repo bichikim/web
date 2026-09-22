@@ -81,12 +81,11 @@ export const createMemoryMemoRepository = (
     }
 
     const webError = storage.writeWeb(snapshot)
+    if (webError !== null) {
+      throw new Error('Failed to persist memory memos.', {cause: webError})
+    }
 
     if (!storage.usesTossStorage()) {
-      if (webError !== null) {
-        throw new Error('Failed to persist memory memos.', {cause: webError})
-      }
-
       return
     }
 

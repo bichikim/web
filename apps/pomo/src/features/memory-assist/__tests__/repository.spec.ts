@@ -65,6 +65,24 @@ it('should persist structured reminder events to web and Toss storage', async ()
   expect(writeToss).toHaveBeenCalledWith([deliveredMemo])
 })
 
+it('should reject a Toss write when the web snapshot cannot be persisted', async () => {
+  const webWriteError = new Error('Web storage unavailable')
+  const writeToss = vi.fn<MemoryMemoStorage['writeToss']>().mockResolvedValue()
+  const repository = createMemoryMemoRepository({
+    readToss: vi.fn().mockResolvedValue(null),
+    readWeb: vi.fn().mockReturnValue(null),
+    usesTossStorage: () => true,
+    writeToss,
+    writeWeb: vi.fn().mockReturnValue(webWriteError),
+  })
+
+  await expect(repository.write([])).rejects.toMatchObject({
+    cause: webWriteError,
+    message: 'Failed to persist memory memos.',
+  })
+  expect(writeToss).not.toHaveBeenCalled()
+})
+
 it('should restore Toss memos and converge the web snapshot', async () => {
   const memo = createMemoryMemo({
     exactReminderAt: null,
