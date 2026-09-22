@@ -10,6 +10,7 @@ interface UseReplySpeechQueueOptions {
   readonly isEnabled?: Accessor<boolean>
   readonly isOccupied: Accessor<boolean>
   readonly speak: (text: string) => Promise<void>
+  readonly stop: () => void
 }
 
 const createCancelledError = () =>
@@ -23,6 +24,7 @@ export const useReplySpeechQueue = (options: UseReplySpeechQueueOptions) => {
   let disposed = false
 
   const isEnabled = () => options.isEnabled?.() ?? true
+  let wasEnabled = isEnabled()
 
   const enqueue = (text: string) =>
     new Promise<void>((resolve, reject) => {
@@ -36,9 +38,11 @@ export const useReplySpeechQueue = (options: UseReplySpeechQueueOptions) => {
     } catch (error: unknown) {
       request.reject(error)
     } finally {
-      activeRequest = null
-      if (!disposed) {
-        setIsSpeaking(false)
+      if (activeRequest === request) {
+        activeRequest = null
+        if (!disposed) {
+          setIsSpeaking(false)
+        }
       }
     }
   }
@@ -53,14 +57,38 @@ export const useReplySpeechQueue = (options: UseReplySpeechQueueOptions) => {
     const error = createCancelledError()
     pendingRequests.forEach((request) => request.reject(error))
   }
+  const cancelActiveRequest = () => {
+    const request = activeRequest
+
+    if (request === null) {
+      return
+    }
+
+    activeRequest = null
+    setIsSpeaking(false)
+    request.reject(createCancelledError())
+    options.stop()
+  }
 
   createEffect(() => {
+    const enabled = isEnabled()
     const [request] = requests()
 
-    if (disposed || !isEnabled()) {
+    if (disposed) {
       cancelPendingRequests()
       return
     }
+    if (!enabled) {
+      const shouldCancelActiveRequest = wasEnabled
+      wasEnabled = false
+      cancelPendingRequests()
+      if (shouldCancelActiveRequest) {
+        cancelActiveRequest()
+      }
+      return
+    }
+
+    wasEnabled = true
     if (request === undefined || isSpeaking() || options.isOccupied()) {
       return
     }
@@ -75,10 +103,8 @@ export const useReplySpeechQueue = (options: UseReplySpeechQueueOptions) => {
 
   onCleanup(() => {
     disposed = true
-    const error = createCancelledError()
-    activeRequest?.reject(error)
-    requests().forEach((request) => request.reject(error))
-    setRequests([])
+    cancelActiveRequest()
+    cancelPendingRequests()
   })
 
   return {enqueue}

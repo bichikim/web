@@ -15,7 +15,9 @@ it('should preserve existing dialogue and play queued replies in order', async (
         completions.push(resolve)
       }),
   )
-  const {cleanup, result} = renderHook(() => useReplySpeechQueue({isOccupied, speak}))
+  const {cleanup, result} = renderHook(() =>
+    useReplySpeechQueue({isOccupied, speak, stop: vi.fn()}),
+  )
 
   const firstReply = result.enqueue('기존 대화 다음 답변')
   const secondReply = result.enqueue('그다음 답변')
@@ -41,7 +43,9 @@ it('should continue the queue after an active reply speech fails', async () => {
   const [isOccupied, setIsOccupied] = createSignal(true)
   const firstError = new Error('첫 답변 음성 실패')
   const speak = vi.fn().mockRejectedValueOnce(firstError).mockResolvedValueOnce(undefined)
-  const {cleanup, result} = renderHook(() => useReplySpeechQueue({isOccupied, speak}))
+  const {cleanup, result} = renderHook(() =>
+    useReplySpeechQueue({isOccupied, speak, stop: vi.fn()}),
+  )
 
   const firstReply = result.enqueue('첫 답변')
   setIsOccupied(false)
@@ -66,7 +70,9 @@ it('should continue the queue when active reply speech throws before returning a
       throw firstError
     })
     .mockResolvedValueOnce(undefined)
-  const {cleanup, result} = renderHook(() => useReplySpeechQueue({isOccupied, speak}))
+  const {cleanup, result} = renderHook(() =>
+    useReplySpeechQueue({isOccupied, speak, stop: vi.fn()}),
+  )
 
   const firstReply = result.enqueue('첫 답변')
   const secondReply = result.enqueue('두 번째 답변')
@@ -89,7 +95,9 @@ it('should reject an active reply when disposed', async () => {
         completeSpeech = resolve
       }),
   )
-  const {cleanup, result} = renderHook(() => useReplySpeechQueue({isOccupied, speak}))
+  const {cleanup, result} = renderHook(() =>
+    useReplySpeechQueue({isOccupied, speak, stop: vi.fn()}),
+  )
 
   const reply = result.enqueue('dispose 중인 답변')
   await vi.waitFor(() => expect(speak).toHaveBeenCalledWith('dispose 중인 답변'))
@@ -104,12 +112,39 @@ it('should reject pending replies when disabled', async () => {
   const [isEnabled, setIsEnabled] = createSignal(true)
   const [isOccupied] = createSignal(true)
   const speak = vi.fn(async () => undefined)
-  const {cleanup, result} = renderHook(() => useReplySpeechQueue({isEnabled, isOccupied, speak}))
+  const {cleanup, result} = renderHook(() =>
+    useReplySpeechQueue({isEnabled, isOccupied, speak, stop: vi.fn()}),
+  )
 
   const reply = result.enqueue('숨겨진 입력기의 답변')
   setIsEnabled(false)
 
   await expect(reply).rejects.toMatchObject({name: 'AbortError'})
   expect(speak).not.toHaveBeenCalled()
+  cleanup()
+})
+
+it('should stop an active reply when disabled', async () => {
+  const [isEnabled, setIsEnabled] = createSignal(true)
+  const [isOccupied] = createSignal(false)
+  let completeSpeech: () => void = () => undefined
+  const speak = vi.fn(
+    () =>
+      new Promise<void>((resolve) => {
+        completeSpeech = resolve
+      }),
+  )
+  const stop = vi.fn(() => completeSpeech())
+  const {cleanup, result} = renderHook(() =>
+    useReplySpeechQueue({isEnabled, isOccupied, speak, stop}),
+  )
+
+  const reply = result.enqueue('재생 중인 답변')
+  await vi.waitFor(() => expect(speak).toHaveBeenCalledWith('재생 중인 답변'))
+
+  setIsEnabled(false)
+
+  await vi.waitFor(() => expect(stop).toHaveBeenCalledOnce())
+  await expect(reply).rejects.toMatchObject({name: 'AbortError'})
   cleanup()
 })
