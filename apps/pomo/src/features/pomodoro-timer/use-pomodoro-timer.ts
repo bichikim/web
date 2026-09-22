@@ -293,6 +293,8 @@ export const usePomodoroTimer = (props: UsePomodoroTimerProps = {}): PomodoroTim
       syncController?.close()
       syncController = null
       const shouldPersistBeforeInitialization = !isStorageReady()
+      const shouldPersistStateBeforeInitialization =
+        shouldPersistBeforeInitialization && state().status !== 'idle'
       if (shouldPersistBeforeInitialization) {
         writePomodoroTimerConfig(config(), props.storage)
       }
@@ -309,7 +311,7 @@ export const usePomodoroTimer = (props: UsePomodoroTimerProps = {}): PomodoroTim
           }),
           props.storage,
         )
-      } else if (shouldPersistBeforeInitialization) {
+      } else if (shouldPersistStateBeforeInitialization) {
         writePomodoroTimerState(state(), props.storage)
       }
     })
