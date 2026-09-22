@@ -112,6 +112,30 @@ it('should prefer the authoritative Toss snapshot when the bridge is available',
   expect(writeWeb).toHaveBeenCalledWith([tossMemo])
 })
 
+it('should reject a Toss read when synchronizing the web snapshot fails', async () => {
+  const memo = createMemoryMemo({
+    exactReminderAt: null,
+    id: 'memo-1',
+    now: new Date('2026-09-04T03:00:00.000Z'),
+    random: () => 0,
+    recallMode: 'none',
+    text: '웹 동기화에 실패한 메모',
+  })
+  const webWriteError = new Error('Web storage unavailable')
+  const repository = createMemoryMemoRepository({
+    readToss: vi.fn().mockResolvedValue([memo]),
+    readWeb: vi.fn().mockReturnValue(null),
+    usesTossStorage: () => true,
+    writeToss: vi.fn<MemoryMemoStorage['writeToss']>().mockResolvedValue(),
+    writeWeb: vi.fn().mockReturnValue(webWriteError),
+  })
+
+  await expect(repository.read()).rejects.toMatchObject({
+    cause: webWriteError,
+    message: 'Failed to read memory memos.',
+  })
+})
+
 it('should retain a Toss write failure as the persistence error cause', async () => {
   const tossWriteError = new Error('Toss write failed')
   const repository = createMemoryMemoRepository({

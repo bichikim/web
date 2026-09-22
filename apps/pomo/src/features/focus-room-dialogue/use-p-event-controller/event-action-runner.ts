@@ -66,6 +66,7 @@ export const createEventActionRunner = (
 ): EventActionRunner => {
   let eventActionRegistration: RegisteredEventActionExecutor | null = null
   const eventActionHandlers = new Set<EventActionHandler>()
+  let hasRegisteredActiveEventActionExecutor = false
   let pendingEventActions: PendingEventAction[] = []
   let pendingActionWaiters: PendingActionWaiter[] = []
 
@@ -105,7 +106,10 @@ export const createEventActionRunner = (
     const executor = isDeferredExecutor ? null : (registration?.executor ?? null)
     const shouldQueueAction =
       isDeferredExecutor ||
-      (executor === null && (eventId === DELAYED_END_EVENT || eventId === FOCUS_ROOM_ENTRY_EVENT))
+      (executor === null &&
+        (!hasRegisteredActiveEventActionExecutor ||
+          eventId === DELAYED_END_EVENT ||
+          eventId === FOCUS_ROOM_ENTRY_EVENT))
 
     if (isHandledByHandler) {
       return
@@ -156,6 +160,10 @@ export const createEventActionRunner = (
 
   return {
     clearDelayedEndActions() {
+      if (eventActionRegistration?.mode === 'deferred') {
+        return
+      }
+
       pendingEventActions = pendingEventActions.filter(({eventId}) => eventId !== DELAYED_END_EVENT)
       resolvePendingActionWaiters(DELAYED_END_EVENT)
     },
@@ -169,6 +177,7 @@ export const createEventActionRunner = (
         executor,
         mode: options?.mode ?? 'active',
       } satisfies RegisteredEventActionExecutor
+      hasRegisteredActiveEventActionExecutor ||= registration.mode === 'active'
       eventActionRegistration = registration
       if (registration.mode === 'deferred') {
         resolvePendingActionWaiters()

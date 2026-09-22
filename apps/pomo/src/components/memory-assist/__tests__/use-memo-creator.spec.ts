@@ -84,7 +84,7 @@ it.each(scenarios)(
   },
 )
 
-it.each(scenarios)('should ignore a late failure after $name', async (scenario) => {
+it.each(scenarios)('should report a late failure after $name', async (scenario) => {
   const persistence = Promise.withResolvers<ReadonlyArray<MemoryMemo>>()
   vi.mocked(updateMemoryMemos).mockReturnValueOnce(persistence.promise)
   const {result: creator} = renderHook(useMemoCreator)
@@ -96,7 +96,7 @@ it.each(scenarios)('should ignore a late failure after $name', async (scenario) 
   persistence.reject(new Error('write failed'))
   await saving
 
-  expect(creator.message()).toBeNull()
+  expect(creator.message()).toBeTruthy()
   expect(creator.text()).toBe(scenario.text)
   expect(sessionStorage.getItem('pomo:memory-memo:draft:v1')).toBe(draft)
 })
