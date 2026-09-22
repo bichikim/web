@@ -23,6 +23,16 @@ export interface CreatePluginsOptions {
   readonly usesAppsInTossDevtools: boolean
 }
 
+export const resolveParaglideOutdir = (
+  command: ConfigEnv['command'],
+  runtimeTarget: PomoTarget,
+): string =>
+  command !== 'serve'
+    ? PARAGLIDE_CONFIG.common.outdir
+    : runtimeTarget === 'apps-in-toss'
+      ? PARAGLIDE_CONFIG.development.appsInTossOutdir
+      : PARAGLIDE_CONFIG.development.webOutdir
+
 export const createPlugins = (options: CreatePluginsOptions): Array<PluginOption> => {
   const isStaticBuild = options.buildTarget !== 'web'
   const isAppsInToss = options.runtimeTarget === 'apps-in-toss'
@@ -39,6 +49,7 @@ export const createPlugins = (options: CreatePluginsOptions): Array<PluginOption
     paraglideVitePlugin({
       emitTsDeclarations: true,
       ...PARAGLIDE_CONFIG.common,
+      outdir: resolveParaglideOutdir(options.command, options.runtimeTarget),
       outputStructure:
         options.command === 'serve'
           ? PARAGLIDE_CONFIG.development.outputStructure

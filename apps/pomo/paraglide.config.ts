@@ -34,6 +34,8 @@ export const PARAGLIDE_CONFIG = {
     project: PARAGLIDE_PROJECT,
   },
   development: {
+    appsInTossOutdir: `${PARAGLIDE_OUTDIR}/apps-in-toss`,
+    webOutdir: `${PARAGLIDE_OUTDIR}/web`,
     outputStructure: PARAGLIDE_OUTPUT_STRUCTURE_DEVELOPMENT,
   },
   web: {
