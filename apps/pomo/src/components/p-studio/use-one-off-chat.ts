@@ -3,6 +3,7 @@ import {type Accessor, createEffect, createSignal, onCleanup, untrack} from 'sol
 import {useChat} from '../../features/chat'
 import {useModelDownload} from '../../features/model-download'
 import {getTextModel, isTextModelDownloaded} from '../../features/text-generation'
+import {type AiTextJobController, useAiTextJob} from '../../features/ai-job/use-ai-text-job'
 
 const CHAT_MODEL_ID = 'gemma-4-e2b'
 
@@ -15,6 +16,7 @@ export interface OneOffChatController {
   readonly errorMessage: Accessor<string | null>
   readonly isBusy: Accessor<boolean>
   readonly setDraft: (draft: string) => void
+  readonly serverJob: AiTextJobController
   readonly startDownload: () => Promise<void>
   readonly submit: (text: string) => Promise<boolean>
 }
@@ -34,6 +36,7 @@ interface PendingText {
 export const useOneOffChat = (props: UseOneOffChatProps): OneOffChatController => {
   const chat = useChat({modelId: CHAT_MODEL_ID})
   const modelDownload = useModelDownload()
+  const serverJob = useAiTextJob({onComplete: props.onReply})
   const [downloadConsentOpen, setDownloadConsentOpen] = createSignal(false)
   const [downloadError, setDownloadError] = createSignal<string | null>(null)
   const [replyError, setReplyError] = createSignal<string | null>(null)
@@ -57,10 +60,18 @@ export const useOneOffChat = (props: UseOneOffChatProps): OneOffChatController =
     )
   }
   const isBusy = () =>
-    pendingText() !== null || isCheckingModel() || isModelDownloading() || chat.isBusy()
+    pendingText() !== null ||
+    isCheckingModel() ||
+    isModelDownloading() ||
+    chat.isBusy() ||
+    serverJob.isBusy()
   const errorMessage = () => {
     const state = chat.state()
-    return downloadError() ?? replyError() ?? (state.status === 'error' ? state.message : null)
+    const localError =
+      downloadError() ?? replyError() ?? (state.status === 'error' ? state.message : null)
+    return serverJob.executionMode() === 'server'
+      ? (serverJob.errorMessage() ?? localError)
+      : localError
   }
   const setDraft = (draft: string) => {
     draftRevision += 1
@@ -103,12 +114,15 @@ export const useOneOffChat = (props: UseOneOffChatProps): OneOffChatController =
   const submit = async (text: string) => {
     const normalizedText = text.trim()
 
-    if (
-      !isEnabled() ||
-      normalizedText.length === 0 ||
-      isBusy() ||
-      chat.state().status === 'unsupported'
-    ) {
+    if (!isEnabled() || normalizedText.length === 0 || isBusy()) {
+      return false
+    }
+
+    if (serverJob.executionMode() === 'server') {
+      return serverJob.submit(normalizedText)
+    }
+
+    if (chat.state().status === 'unsupported') {
       return false
     }
 
@@ -285,6 +299,7 @@ export const useOneOffChat = (props: UseOneOffChatProps): OneOffChatController =
     draft: chat.draft,
     errorMessage,
     isBusy,
+    serverJob,
     setDraft,
     startDownload,
     submit,

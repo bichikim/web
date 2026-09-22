@@ -6,11 +6,13 @@ const mocks = vi.hoisted(() => ({
   deletePartial: vi.fn(),
   env: {} as Record<string, unknown>,
   gemmaFromPretrained: vi.fn(),
+  interrupt: vi.fn(),
   loadQwenModel: vi.fn(),
   onProgress: vi.fn(),
   processorFromPretrained: vi.fn(),
   reportStorageError: vi.fn(),
   resumableOptions: null as null | {readonly fetcher?: typeof fetch},
+  stoppingCriteria: null as null | {readonly interrupt: () => void},
   streamerOptions: null as null | {callback_function: (text: string) => void},
 }))
 
@@ -18,6 +20,15 @@ vi.mock('@huggingface/transformers', () => ({
   AutoProcessor: {from_pretrained: mocks.processorFromPretrained},
   env: mocks.env,
   Gemma4ForCausalLM: {from_pretrained: mocks.gemmaFromPretrained},
+  InterruptableStoppingCriteria: class InterruptableStoppingCriteriaMock {
+    constructor() {
+      mocks.stoppingCriteria = this
+    }
+
+    interrupt() {
+      mocks.interrupt()
+    }
+  },
   TextStreamer: class TextStreamerMock {
     constructor(_tokenizer: unknown, options: {callback_function: (text: string) => void}) {
       mocks.streamerOptions = options
@@ -87,6 +98,7 @@ beforeEach(() => {
   }
   mocks.cacheOptions = null
   mocks.resumableOptions = null
+  mocks.stoppingCriteria = null
   mocks.streamerOptions = null
 })
 
@@ -197,6 +209,47 @@ it('should count and generate tokens through the prepared processor', async () =
     topK: 0,
     topP: 1,
   })
+})
+
+it('should interrupt Transformers generation when its signal is aborted', async () => {
+  const processor = createProcessor()
+  let resolveGeneration: (() => void) | undefined
+  const model = {
+    generate: vi.fn(
+      () =>
+        new Promise<void>((resolve) => {
+          resolveGeneration = resolve
+        }),
+    ),
+  }
+  mocks.processorFromPretrained.mockResolvedValue(processor)
+  mocks.gemmaFromPretrained.mockResolvedValue(model)
+  const runtime = createTransformersRuntime({onProgress: vi.fn()})
+  await runtime.prepare('gemma-4-e2b-mobile')
+
+  const controller = new AbortController()
+  const generation = runtime.generate({
+    maximumTokens: 12,
+    messages,
+    noRepeatNgramSize: 2,
+    repetitionPenalty: 1.1,
+    signal: controller.signal,
+    suppressedTokenIds: [3],
+    temperature: 0.7,
+    topK: 5,
+    topP: 0.9,
+  })
+
+  await vi.waitFor(() => expect(model.generate).toHaveBeenCalledOnce())
+  expect(model.generate).toHaveBeenCalledWith(
+    expect.objectContaining({stopping_criteria: mocks.stoppingCriteria}),
+  )
+
+  controller.abort()
+  expect(mocks.interrupt).toHaveBeenCalledOnce()
+
+  resolveGeneration?.()
+  await expect(generation).resolves.toBe('')
 })
 
 it('should enforce preparation and prompt contracts', async () => {

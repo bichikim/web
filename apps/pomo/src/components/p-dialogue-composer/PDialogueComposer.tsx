@@ -5,12 +5,17 @@ import {cx} from 'class-variance-authority'
 import {type Accessor, createEffect, createSignal, type Setter, Show, untrack} from 'solid-js'
 import * as m from '@paraglide/message'
 import {DialogueTrigger} from '../dialogue-composer/DialogueTrigger'
+import type {AiTextAccessStatus, AiTextExecutionMode} from '../../features/ai-job/use-ai-text-job'
 
 interface PDialogueComposerCommonProps {
+  readonly executionMode?: AiTextExecutionMode
   readonly autoExpand?: boolean
   readonly disabled?: boolean
   readonly loading?: boolean
   readonly onSubmit?: (text: string) => boolean | Promise<boolean> | Promise<void> | void
+  readonly onExecutionModeChange?: (mode: AiTextExecutionMode) => void
+  readonly serverAccessStatus?: AiTextAccessStatus
+  readonly serverAvailable?: boolean
 }
 
 interface LocalDraftProps {
@@ -110,6 +115,75 @@ const createDraftController = (props: DraftProps): DraftController => {
   return {draft, setDraft}
 }
 
+interface ExecutionModeSelectProps {
+  readonly disabled: boolean
+  readonly executionMode?: AiTextExecutionMode
+  readonly onChange: (mode: AiTextExecutionMode) => void
+  readonly serverAccessStatus?: AiTextAccessStatus
+  readonly serverAvailable?: boolean
+}
+
+const ExecutionModeSelect = (props: ExecutionModeSelectProps) => (
+  <label class="col-span-full flex items-center justify-between gap-2 px-4 pb-2 text-xs text-muted-foreground">
+    <span>AI 실행 위치</span>
+    <select
+      aria-label="AI 실행 위치"
+      class={cx(
+        'min-w-0 rounded border border-border bg-surface px-2 py-1 text-xs text-foreground',
+        'outline-none focus-visible:shadow-focus',
+      )}
+      disabled={props.disabled}
+      onChange={(event) => {
+        const mode = event.currentTarget.value
+        if (mode === 'local' || mode === 'server') {
+          props.onChange(mode)
+        }
+      }}
+      value={props.executionMode ?? 'local'}
+    >
+      <option value="local">기기 Gemma</option>
+      <option disabled={!props.serverAvailable} value="server">
+        {props.serverAvailable
+          ? '서버 Luna (구독)'
+          : props.serverAccessStatus === 'checking'
+            ? '서버 Luna (확인 중)'
+            : '서버 Luna (구독 필요)'}
+      </option>
+    </select>
+  </label>
+)
+
+interface SubmitHandlerOptions {
+  readonly draft: Accessor<string>
+  readonly input: Accessor<HTMLInputElement | undefined>
+  readonly isDisabled: Accessor<boolean>
+  readonly onSubmit: Accessor<PDialogueComposerCommonProps['onSubmit']>
+  readonly setDraft: (text: string) => void
+}
+
+const createSubmitHandler = (options: SubmitHandlerOptions) => async (event: SubmitEvent) => {
+  event.preventDefault()
+  const submittedDraft = options.draft()
+  const text = submittedDraft.trim()
+
+  const submit = options.onSubmit()
+  if (text.length === 0 || options.isDisabled() || submit === undefined) {
+    return
+  }
+
+  const result = await submit(text)
+
+  if (result === false) {
+    focusMountedInput(options.input())
+    return
+  }
+
+  if (options.draft() === submittedDraft) {
+    options.setDraft('')
+  }
+  focusMountedInput(options.input())
+}
+
 export const PDialogueComposer = (props: PDialogueComposerProps) => {
   const [isExpanded, setIsExpanded] = createSignal(false)
   const [composer, setComposer] = createSignal<HTMLFormElement>()
@@ -184,27 +258,13 @@ export const PDialogueComposer = (props: PDialogueComposerProps) => {
       collapse()
     }
   }
-  const handleSubmit = async (event: SubmitEvent) => {
-    event.preventDefault()
-    const submittedDraft = draft()
-    const text = submittedDraft.trim()
-
-    if (text.length === 0 || isDisabled() || props.onSubmit === undefined) {
-      return
-    }
-
-    const result = await props.onSubmit(text)
-
-    if (result === false) {
-      focusMountedInput(input())
-      return
-    }
-
-    if (draft() === submittedDraft) {
-      setDraft('')
-    }
-    focusMountedInput(input())
-  }
+  const handleSubmit = createSubmitHandler({
+    draft,
+    input,
+    isDisabled,
+    onSubmit: () => props.onSubmit,
+    setDraft,
+  })
 
   useEvent(() => composer()?.ownerDocument, 'pointerdown', handleOutsidePointer)
 
@@ -246,6 +306,15 @@ export const PDialogueComposer = (props: PDialogueComposerProps) => {
             value={draft()}
           />
         </label>
+        <Show when={props.onExecutionModeChange !== undefined}>
+          <ExecutionModeSelect
+            disabled={isDisabled()}
+            executionMode={props.executionMode}
+            onChange={(mode) => props.onExecutionModeChange?.(mode)}
+            serverAccessStatus={props.serverAccessStatus}
+            serverAvailable={props.serverAvailable}
+          />
+        </Show>
         <button
           aria-label={
             props.loading ? m.dialogue_composer_preparing_label() : m.dialogue_composer_send_label()
