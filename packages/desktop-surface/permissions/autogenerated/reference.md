@@ -6,7 +6,9 @@ Allows an application to manage its desktop background and control surfaces.
 
 - `allow-close-control-surface`
 - `allow-get-background-interaction`
+- `allow-navigate-background-surface`
 - `allow-open-control-surface`
+- `allow-restore-background-content`
 - `allow-restore-surface`
 - `allow-set-background-interaction`
 - `allow-set-background-surface`
@@ -76,6 +78,32 @@ Denies the get_background_interaction command without any pre-configured scope.
 <tr>
 <td>
 
+`desktop-surface:allow-navigate-background-surface`
+
+</td>
+<td>
+
+Enables the navigate_background_surface command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+`desktop-surface:deny-navigate-background-surface`
+
+</td>
+<td>
+
+Denies the navigate_background_surface command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
 `desktop-surface:allow-open-control-surface`
 
 </td>
@@ -95,6 +123,32 @@ Enables the open_control_surface command without any pre-configured scope.
 <td>
 
 Denies the open_control_surface command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+`desktop-surface:allow-restore-background-content`
+
+</td>
+<td>
+
+Enables the restore_background_content command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+`desktop-surface:deny-restore-background-content`
+
+</td>
+<td>
+
+Denies the restore_background_content command without any pre-configured scope.
 
 </td>
 </tr>

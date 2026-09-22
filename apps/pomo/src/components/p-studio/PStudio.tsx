@@ -5,7 +5,16 @@ import {useUiAutoHide} from 'src/features/ui-auto-hide'
 import {useStudioDesktopSceneSettings} from './use-studio-desktop-scene-settings'
 import {type BackgroundController, useBackground} from '../../features/background'
 import {Player as FramePlayer} from '../frame/Player'
-import {createMemo, createSignal, onCleanup, onMount, type Setter, Show} from 'solid-js'
+import {
+  createMemo,
+  createSignal,
+  Match,
+  onCleanup,
+  onMount,
+  type Setter,
+  Show,
+  Switch,
+} from 'solid-js'
 
 import {
   getPScene,
@@ -151,38 +160,48 @@ interface StudioSceneViewProps {
 
 const StudioSceneView = (props: StudioSceneViewProps) => (
   <Show when={props.background.ready() || props.background.error() !== null}>
-    <Show
-      when={props.background.preferences().mode === 'character'}
-      fallback={<FramePlayer background={props.background} />}
-    >
-      <figure
-        aria-label={props.scene.label}
-        class="pomo-scene relative m-0 h-full w-full overflow-hidden bg-background"
-        role="img"
+    <Switch fallback={<FramePlayer background={props.background} />}>
+      <Match when={props.background.preferences().mode === 'character'}>
+        <figure
+          aria-label={props.scene.label}
+          class="pomo-scene relative m-0 h-full w-full overflow-hidden bg-background"
+          role="img"
+        >
+          <Show when={!props.hasSceneRendered && !props.isDesktopWallpaper}>
+            <PSceneFallback />
+          </Show>
+          <Show when={props.isReady && props.styleReady}>
+            <PStudioScene
+              activity={props.activity}
+              depthSource={props.scene.depthSource}
+              gaze={props.sceneGaze}
+              interactive={!props.isDesktopWallpaper}
+              motionInput={props.motionInput}
+              motionMode={props.motionMode}
+              onLoadingChange={props.onLoadingChange}
+              onMotionInputChange={props.onMotionInputChange}
+              source={props.scene.source}
+              sceneId={props.scene.id}
+              sceneStyle={props.sceneStyle}
+              time={props.time}
+              viseme={props.activeViseme}
+              weatherCondition={props.weatherCondition}
+            />
+          </Show>
+        </figure>
+      </Match>
+      <Match when={props.background.preferences().mode === 'frame'}>
+        <FramePlayer background={props.background} />
+      </Match>
+      <Match
+        when={
+          import.meta.env.VITE_POMO_IS_DESKTOP === 'true' &&
+          props.background.preferences().mode === 'website'
+        }
       >
-        <Show when={!props.hasSceneRendered && !props.isDesktopWallpaper}>
-          <PSceneFallback />
-        </Show>
-        <Show when={props.isReady && props.styleReady}>
-          <PStudioScene
-            activity={props.activity}
-            depthSource={props.scene.depthSource}
-            gaze={props.sceneGaze}
-            interactive={!props.isDesktopWallpaper}
-            motionInput={props.motionInput}
-            motionMode={props.motionMode}
-            onLoadingChange={props.onLoadingChange}
-            onMotionInputChange={props.onMotionInputChange}
-            source={props.scene.source}
-            sceneId={props.scene.id}
-            sceneStyle={props.sceneStyle}
-            time={props.time}
-            viseme={props.activeViseme}
-            weatherCondition={props.weatherCondition}
-          />
-        </Show>
-      </figure>
-    </Show>
+        <div class="h-full w-full bg-background" />
+      </Match>
+    </Switch>
   </Show>
 )
 

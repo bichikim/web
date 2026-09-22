@@ -1,6 +1,7 @@
-import {Show, untrack} from 'solid-js'
+import {Match, Show, Switch, untrack} from 'solid-js'
 import * as m from '@paraglide/message'
-import {type BackgroundError, useBackground} from 'src/features/background'
+import {type BackgroundError, type BackgroundMode, useBackground} from 'src/features/background'
+import {synchronizeDesktopBackground} from 'src/features/desktop-mode'
 import {PRadioSwitch} from '../../p-radio-switch/PRadioSwitch'
 import {PSettingsActionButton} from '../ActionButton'
 import {CLASSES, type PSettingsProps} from '../general/shared'
@@ -8,6 +9,15 @@ import {Scene} from './Scene'
 import {Style} from './Style'
 import {Weather} from './Weather'
 import {Frame} from './Frame'
+import {Website} from './Website'
+
+const isDesktopBuild = () => import.meta.env.VITE_POMO_IS_DESKTOP === 'true'
+
+const getBackgroundModeOptions = () => [
+  {label: m.background_character(), value: 'character' as const},
+  {label: m.background_frame(), value: 'frame' as const},
+  ...(isDesktopBuild() ? [{label: m.background_website(), value: 'website' as const}] : []),
+]
 
 const getErrorMessage = (error: BackgroundError | null) => {
   switch (error) {
@@ -29,19 +39,24 @@ const getErrorMessage = (error: BackgroundError | null) => {
 
 export const Background = (props: PSettingsProps) => {
   const background = untrack(() => props.background) ?? useBackground()
+  const handleModeChange = (mode: BackgroundMode) => {
+    background
+      .configure({mode})
+      .then(() => synchronizeDesktopBackground())
+      .catch(() => undefined)
+  }
   return (
     <div class={CLASSES.settingsContent}>
       <PRadioSwitch
         label={m.settings_tab_background()}
-        value={background.preferences().mode}
+        value={
+          !isDesktopBuild() && background.preferences().mode === 'website'
+            ? 'character'
+            : background.preferences().mode
+        }
         disabled={!background.ready()}
-        options={[
-          {label: m.background_character(), value: 'character'},
-          {label: m.background_frame(), value: 'frame'},
-        ]}
-        onChange={(mode) => {
-          background.configure({mode})
-        }}
+        options={getBackgroundModeOptions()}
+        onChange={handleModeChange}
       />
       <Show when={background.error()}>
         <div class="grid gap-2" role="alert">
@@ -58,14 +73,24 @@ export const Background = (props: PSettingsProps) => {
           </Show>
         </div>
       </Show>
-      <Show
-        when={background.preferences().mode === 'character'}
-        fallback={<Frame background={background} />}
-      >
-        <Scene {...props} />
-        <Style {...props} />
-        <Weather {...props} />
-      </Show>
+      <Switch fallback={<Frame background={background} />}>
+        <Match
+          when={
+            background.preferences().mode === 'character' ||
+            (!isDesktopBuild() && background.preferences().mode === 'website')
+          }
+        >
+          <Scene {...props} />
+          <Style {...props} />
+          <Weather {...props} />
+        </Match>
+        <Match when={background.preferences().mode === 'frame'}>
+          <Frame background={background} />
+        </Match>
+        <Match when={isDesktopBuild() && background.preferences().mode === 'website'}>
+          <Website background={background} />
+        </Match>
+      </Switch>
     </div>
   )
 }

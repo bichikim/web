@@ -1,6 +1,7 @@
 use std::path::PathBuf;
 
 use serde::{Deserialize, Serialize};
+use tauri::Url;
 
 use crate::error::{Error, Result};
 
@@ -28,6 +29,19 @@ pub(crate) struct BackgroundInteractionOptions {
 pub(crate) struct BackgroundSurfaceOptions {
     pub(crate) interaction: Option<BackgroundInteraction>,
     pub(crate) label: String,
+}
+
+#[derive(Clone, Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub(crate) struct BackgroundNavigationOptions {
+    pub(crate) label: String,
+    pub(crate) url: String,
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub(crate) struct ValidatedBackgroundNavigation {
+    pub(crate) label: String,
+    pub(crate) url: Url,
 }
 
 #[derive(Clone, Debug, Deserialize)]
@@ -83,6 +97,21 @@ pub(crate) fn validate_label(label: String) -> Result<String> {
     }
 
     Ok(label.to_owned())
+}
+
+impl TryFrom<BackgroundNavigationOptions> for ValidatedBackgroundNavigation {
+    type Error = Error;
+
+    fn try_from(options: BackgroundNavigationOptions) -> Result<Self> {
+        let label = validate_label(options.label)?;
+        let url = Url::parse(options.url.trim()).map_err(|_| Error::InvalidUrl)?;
+
+        if url.scheme() != "https" || url.host().is_none() {
+            return Err(Error::InvalidUrl);
+        }
+
+        Ok(Self { label, url })
+    }
 }
 
 impl TryFrom<ControlSurfaceOptions> for ValidatedControlSurface {
@@ -166,8 +195,8 @@ fn validate_corner_radius(corner_radius: Option<f64>) -> Result<Option<f64>> {
 #[cfg(test)]
 mod tests {
     use super::{
-        ControlSurfaceOptions, ValidatedControlSurface, ValidatedWidgetSurface,
-        WidgetSurfaceOptions,
+        BackgroundNavigationOptions, ControlSurfaceOptions, ValidatedBackgroundNavigation,
+        ValidatedControlSurface, ValidatedWidgetSurface, WidgetSurfaceOptions,
     };
 
     fn options() -> ControlSurfaceOptions {
@@ -285,6 +314,36 @@ mod tests {
             };
 
             assert!(ValidatedWidgetSurface::try_from(options).is_err());
+        }
+    }
+
+    #[test]
+    fn should_validate_https_background_navigation_urls() {
+        let navigation = ValidatedBackgroundNavigation::try_from(BackgroundNavigationOptions {
+            label: " background ".to_owned(),
+            url: " https://example.com/path ".to_owned(),
+        })
+        .expect("valid background URL");
+
+        assert_eq!(navigation.label, "background");
+        assert_eq!(navigation.url.as_str(), "https://example.com/path");
+    }
+
+    #[test]
+    fn should_reject_non_https_background_navigation_urls() {
+        for url in [
+            "http://example.com",
+            "javascript:alert(1)",
+            "not a URL",
+            "https://",
+        ] {
+            assert!(
+                ValidatedBackgroundNavigation::try_from(BackgroundNavigationOptions {
+                    label: "background".to_owned(),
+                    url: url.to_owned(),
+                })
+                .is_err()
+            );
         }
     }
 }

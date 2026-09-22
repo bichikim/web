@@ -21,7 +21,7 @@ use objc2_app_kit::{
 use objc2_core_graphics::{CGWindowLevelForKey, CGWindowLevelKey};
 use objc2_foundation::{NSNotification, NSNotificationCenter, NSNotificationName, NSRect};
 use tauri::{
-    AppHandle, LogicalSize, Manager, PhysicalPosition, PhysicalSize, Position, Runtime, Size,
+    AppHandle, LogicalSize, Manager, PhysicalPosition, PhysicalSize, Position, Runtime, Size, Url,
     WebviewWindow,
 };
 
@@ -52,6 +52,7 @@ struct WindowSnapshot {
 
 #[derive(Default)]
 pub(crate) struct SurfaceState {
+    background_urls: Mutex<HashMap<String, Url>>,
     backgrounds: Mutex<HashMap<String, BackgroundInteraction>>,
     operation: Mutex<()>,
     snapshots: Mutex<HashMap<String, WindowSnapshot>>,
@@ -436,6 +437,73 @@ fn wait_for_logical_size<R: Runtime>(
     }
 }
 
+fn restore_background_content_unlocked<R: Runtime>(
+    state: &SurfaceState,
+    window: &WebviewWindow<R>,
+) -> Result<()> {
+    let original_url = state
+        .background_urls
+        .lock()
+        .map_err(|error| Error::WindowOperation(error.to_string()))?
+        .get(window.label())
+        .cloned();
+
+    if let Some(original_url) = original_url {
+        window.navigate(original_url)?;
+        state
+            .background_urls
+            .lock()
+            .map_err(|error| Error::WindowOperation(error.to_string()))?
+            .remove(window.label());
+    }
+
+    Ok(())
+}
+
+pub(crate) fn navigate_background<R: Runtime>(
+    state: &SurfaceState,
+    window: &WebviewWindow<R>,
+    url: Url,
+) -> Result<()> {
+    let _operation = lock_operation(state)?;
+    let label = window.label().to_owned();
+    active_background_interaction(state, &label)?;
+    let original_url = window.url()?;
+    let inserted = {
+        let mut background_urls = state
+            .background_urls
+            .lock()
+            .map_err(|error| Error::WindowOperation(error.to_string()))?;
+        if background_urls.contains_key(&label) {
+            false
+        } else {
+            background_urls.insert(label.clone(), original_url);
+            true
+        }
+    };
+
+    if let Err(error) = window.navigate(url) {
+        if inserted {
+            state
+                .background_urls
+                .lock()
+                .map_err(|lock_error| Error::WindowOperation(lock_error.to_string()))?
+                .remove(&label);
+        }
+        return Err(error.into());
+    }
+
+    Ok(())
+}
+
+pub(crate) fn restore_background_content<R: Runtime>(
+    state: &SurfaceState,
+    window: &WebviewWindow<R>,
+) -> Result<()> {
+    let _operation = lock_operation(state)?;
+    restore_background_content_unlocked(state, window)
+}
+
 pub(crate) fn set_background<R: Runtime>(
     state: &SurfaceState,
     window: &WebviewWindow<R>,
@@ -608,6 +676,7 @@ pub(crate) fn set_widget<R: Runtime>(
 
 pub(crate) fn restore<R: Runtime>(state: &SurfaceState, window: &WebviewWindow<R>) -> Result<()> {
     let _operation = lock_operation(state)?;
+    restore_background_content_unlocked(state, window)?;
     set_background_state(state, window.label(), None)?;
     let snapshot = state
         .snapshots

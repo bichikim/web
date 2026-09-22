@@ -156,7 +156,11 @@ const GROUP_DEFINITIONS: ReadonlyArray<OptionResetGroupDefinition> = [
     description: '데스크톱 표시 모드와 종료 상태',
     id: 'desktop',
     label: '데스크톱 모드',
-    storageKeys: ['pomo:desktop-mode:v1', 'pomo:desktop-clean-exit:v1'],
+    storageKeys: [
+      'pomo:desktop-mode:v1',
+      'pomo:desktop-clean-exit:v1',
+      'pomo:desktop-mode-owner:v1',
+    ],
   },
   {
     description: '선택한 화면 언어',

@@ -2,11 +2,14 @@ import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 
 import {
   closeControlSurface,
+  navigateBackgroundSurface,
   openControlSurface,
+  restoreBackgroundContent,
   restoreSurface,
   setBackgroundSurface,
   setWidgetSurface,
 } from '@winter-love/desktop-surface'
+import {getBackgroundRepository} from 'src/features/background'
 import {
   DEFAULT_P_DISPLAY_PREFERENCES,
   writePDisplayPreferences,
@@ -15,34 +18,48 @@ import {
   applyDesktopMode,
   finishDesktopModeTransition,
   prepareDesktopModeTransition,
+  synchronizeDesktopBackground,
 } from '../runtime'
 
 vi.mock('@winter-love/desktop-surface', () => ({
   closeControlSurface: vi.fn(),
+  navigateBackgroundSurface: vi.fn(),
   openControlSurface: vi.fn(),
+  restoreBackgroundContent: vi.fn(),
   restoreSurface: vi.fn(),
   setBackgroundSurface: vi.fn(),
   setWidgetSurface: vi.fn(),
 }))
 
+vi.mock('src/features/background', () => ({getBackgroundRepository: vi.fn()}))
+
 beforeEach(() => {
   localStorage.clear()
   vi.stubGlobal('screen', {availHeight: 900, availLeft: 0, availTop: 0, availWidth: 1440})
   vi.mocked(closeControlSurface).mockResolvedValue()
+  vi.mocked(navigateBackgroundSurface).mockResolvedValue()
   vi.mocked(openControlSurface).mockResolvedValue({created: true})
+  vi.mocked(restoreBackgroundContent).mockResolvedValue()
   vi.mocked(restoreSurface).mockResolvedValue()
   vi.mocked(setBackgroundSurface).mockResolvedValue()
   vi.mocked(setWidgetSurface).mockResolvedValue()
+  vi.mocked(getBackgroundRepository).mockResolvedValue({
+    read: vi.fn(async () => ({
+      items: [],
+      preferences: {mode: 'character', websiteUrl: null},
+    })),
+  } as never)
 })
 
 afterEach(() => {
   vi.clearAllMocks()
+  vi.unstubAllEnvs()
   vi.unstubAllGlobals()
 })
 
 describe('applyDesktopMode', () => {
   it('should restore the normal window before controller cleanup', async () => {
-    await expect(applyDesktopMode('normal')).resolves.toBeUndefined()
+    await expect(applyDesktopMode('normal')).resolves.toBe(false)
     expect(restoreSurface).toHaveBeenCalledWith({label: 'background'})
     expect(closeControlSurface).not.toHaveBeenCalled()
   })
@@ -125,6 +142,32 @@ describe('applyDesktopMode', () => {
     expect(vi.mocked(setBackgroundSurface).mock.invocationCallOrder[0]).toBeLessThan(
       vi.mocked(openControlSurface).mock.invocationCallOrder[0] ?? Number.MAX_SAFE_INTEGER,
     )
+  })
+
+  it('should navigate the background WebView to the saved website in desktop mode', async () => {
+    vi.mocked(getBackgroundRepository).mockResolvedValue({
+      read: vi.fn(async () => ({
+        items: [],
+        preferences: {mode: 'website', websiteUrl: 'https://example.com/dashboard'},
+      })),
+    } as never)
+
+    await expect(applyDesktopMode('desktop')).resolves.toBe(true)
+
+    expect(navigateBackgroundSurface).toHaveBeenCalledWith({
+      label: 'background',
+      url: 'https://example.com/dashboard',
+    })
+  })
+
+  it('should restore the local background document when a non-website background is selected', async () => {
+    vi.stubEnv('VITE_POMO_IS_DESKTOP', 'true')
+    localStorage.setItem('pomo:desktop-mode:v1', 'desktop')
+
+    await synchronizeDesktopBackground()
+
+    expect(restoreBackgroundContent).toHaveBeenCalledWith({label: 'background'})
+    expect(navigateBackgroundSurface).not.toHaveBeenCalled()
   })
 
   it.each([
@@ -240,6 +283,24 @@ describe('applyDesktopMode', () => {
       label: 'background',
     })
     expect(openControlSurface).not.toHaveBeenCalled()
+  })
+
+  it('should keep a settings surface available for an interactive website background', async () => {
+    vi.mocked(getBackgroundRepository).mockResolvedValue({
+      read: vi.fn(async () => ({
+        items: [],
+        preferences: {mode: 'website', websiteUrl: 'https://example.com/dashboard'},
+      })),
+    } as never)
+
+    await expect(applyDesktopMode('interactiveDesktop')).resolves.toBe(true)
+    expect(openControlSurface).toHaveBeenCalledWith(
+      expect.objectContaining({label: 'desktop-settings'}),
+    )
+
+    vi.mocked(closeControlSurface).mockClear()
+    await finishDesktopModeTransition('interactiveDesktop')
+    expect(closeControlSurface).not.toHaveBeenCalled()
   })
 
   it('should keep every initial surface inside a smaller work area', async () => {

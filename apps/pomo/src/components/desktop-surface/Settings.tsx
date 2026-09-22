@@ -9,13 +9,17 @@ import {useDesktopSettingsState} from './use-settings-state'
 
 export const DesktopSettings = () => {
   const displayPreferences = usePDisplayPreferences()
-  const settings = useDesktopSettingsState()
+  const settings = useDesktopSettingsState({isHandoffOwner: true})
 
   return (
     <DesktopSurfaceFrame
       accessibleLabel={m.desktop_settings_label()}
       class="w-fit"
-      isVisible={settings.desktopMode.mode() === 'desktop'}
+      isVisible={
+        settings.desktopMode.mode() === 'desktop' ||
+        (settings.desktopMode.mode() === 'interactiveDesktop' &&
+          settings.background.preferences().mode === 'website')
+      }
       title={m.desktop_settings_title()}
     >
       <Show when={displayPreferences.isReady()}>

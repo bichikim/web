@@ -4,7 +4,9 @@ import {afterEach, describe, expect, it, vi} from 'vitest'
 import {
   closeControlSurface,
   getBackgroundInteraction,
+  navigateBackgroundSurface,
   openControlSurface,
+  restoreBackgroundContent,
   restoreSurface,
   setBackgroundInteraction,
   setBackgroundSurface,
@@ -62,5 +64,21 @@ describe('desktop surface guest API', () => {
 
     await expect(openControlSurface(options)).resolves.toEqual({created: true})
     expect(invoke).toHaveBeenCalledWith('plugin:desktop-surface|open_control_surface', {options})
+  })
+
+  it('should navigate and restore the background document by window label', async () => {
+    vi.mocked(invoke).mockResolvedValue(undefined)
+
+    await navigateBackgroundSurface({label: 'background', url: 'https://example.com'})
+    await restoreBackgroundContent({label: 'background'})
+
+    expect(invoke).toHaveBeenNthCalledWith(
+      1,
+      'plugin:desktop-surface|navigate_background_surface',
+      {options: {label: 'background', url: 'https://example.com'}},
+    )
+    expect(invoke).toHaveBeenNthCalledWith(2, 'plugin:desktop-surface|restore_background_content', {
+      label: 'background',
+    })
   })
 })

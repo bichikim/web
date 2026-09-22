@@ -5,7 +5,9 @@ description = "Allows an application to manage its desktop background and contro
 permissions = [
   "allow-close-control-surface",
   "allow-get-background-interaction",
+  "allow-navigate-background-surface",
   "allow-open-control-surface",
+  "allow-restore-background-content",
   "allow-restore-surface",
   "allow-set-background-interaction",
   "allow-set-background-surface",

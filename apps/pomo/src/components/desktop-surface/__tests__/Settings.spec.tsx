@@ -190,6 +190,7 @@ it('should publish every setting change from the separate scene toolbar', () => 
   ))
 
   expect(SceneToolbar).toHaveBeenCalledOnce()
+  expect(useDesktopMode).toHaveBeenCalledWith({isHandoffOwner: true})
   expect(screen.getByText('설정')).toHaveAttribute('data-layout', 'surface')
   for (const name of [
     '활동',

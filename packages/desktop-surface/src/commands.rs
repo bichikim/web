@@ -4,9 +4,10 @@ use crate::{
     SurfaceState,
     error::{CommandError, Error},
     model::{
-        BackgroundInteraction, BackgroundInteractionOptions, BackgroundSurfaceOptions,
-        ControlSurfaceOptions, ControlSurfaceStatus, ValidatedControlSurface,
-        ValidatedWidgetSurface, WidgetSurfaceOptions, validate_label,
+        BackgroundInteraction, BackgroundInteractionOptions, BackgroundNavigationOptions,
+        BackgroundSurfaceOptions, ControlSurfaceOptions, ControlSurfaceStatus,
+        ValidatedBackgroundNavigation, ValidatedControlSurface, ValidatedWidgetSurface,
+        WidgetSurfaceOptions, validate_label,
     },
 };
 
@@ -64,6 +65,38 @@ pub(crate) async fn set_background_surface<R: Runtime>(
 
     #[cfg(target_os = "macos")]
     return crate::macos::set_background(&state, &window, interaction).map_err(Into::into);
+
+    #[cfg(not(target_os = "macos"))]
+    Err(Error::UnsupportedPlatform(std::env::consts::OS).into())
+}
+
+#[tauri::command]
+pub(crate) async fn navigate_background_surface<R: Runtime>(
+    app: AppHandle<R>,
+    state: tauri::State<'_, SurfaceState>,
+    options: BackgroundNavigationOptions,
+) -> Result<(), CommandError> {
+    #[cfg(not(target_os = "macos"))]
+    return Err(Error::UnsupportedPlatform(std::env::consts::OS).into());
+
+    #[cfg(target_os = "macos")]
+    {
+        let options = ValidatedBackgroundNavigation::try_from(options)?;
+        let window = find_window(&app, options.label)?;
+        crate::macos::navigate_background(&state, &window, options.url).map_err(Into::into)
+    }
+}
+
+#[tauri::command]
+pub(crate) async fn restore_background_content<R: Runtime>(
+    app: AppHandle<R>,
+    state: tauri::State<'_, SurfaceState>,
+    label: String,
+) -> Result<(), CommandError> {
+    let window = find_window(&app, label)?;
+
+    #[cfg(target_os = "macos")]
+    return crate::macos::restore_background_content(&state, &window).map_err(Into::into);
 
     #[cfg(not(target_os = "macos"))]
     Err(Error::UnsupportedPlatform(std::env::consts::OS).into())
