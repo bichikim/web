@@ -1,3 +1,4 @@
+import {SERVER_AI_RELEASED} from '../../features/ai-job/release'
 import {type PSceneStyle} from '../../features/focus-room-animation/index'
 import type {PTrack} from '../../features/focus-room-audio/index'
 import type {PomodoroTimerEventDeliveryOptions} from '../../features/pomodoro-timer'
@@ -12,6 +13,7 @@ import {useMemoryReminders} from '../../features/memory-assist'
 import {type PSayController} from '../../features/pomo-webmcp/index'
 import {PDialogueComposer} from '../p-dialogue-composer/PDialogueComposer'
 import {PDialoguePlayer} from '../p-dialogue-player/PDialoguePlayer'
+import {PAiJobStatus} from './PAiJobStatus'
 import {PFeedStatus} from '../p-feed-status/PFeedStatus'
 import {PFormMessage} from '../p-form-message/PFormMessage'
 import {PModelDownloadConsent} from '../p-model-download-consent/PModelDownloadConsent'
@@ -103,6 +105,7 @@ export const PStudioEvents = (props: PStudioEventsProps) => {
       props.pomoSay.isPreparing() ||
       props.pomoSay.isPlaying(),
     speak: (text) => props.pomoSay.speak({text}),
+    stop: () => props.pomoSay.stop(),
   })
   const oneOffChat = useOneOffChat({
     isEnabled: () => props.dialogueComposerVisible,
@@ -206,9 +209,15 @@ export const PStudioEvents = (props: PStudioEventsProps) => {
             <PDialogueComposer
               autoExpand={isMobileLayout() && !hasMediaMessages()}
               draft={oneOffChat.draft}
+              executionMode={oneOffChat.serverJob.executionMode()}
               loading={oneOffChat.isBusy() || props.pomoSay.isPreparing()}
               onDraftChange={oneOffChat.setDraft}
+              onExecutionModeChange={
+                SERVER_AI_RELEASED ? oneOffChat.serverJob.setExecutionMode : undefined
+              }
               onSubmit={oneOffChat.submit}
+              serverAccessStatus={oneOffChat.serverJob.accessStatus()}
+              serverAvailable={oneOffChat.serverJob.serverAvailable()}
             />
           </Show>
           <Show when={props.playerVisible ?? true}>
@@ -227,6 +236,9 @@ export const PStudioEvents = (props: PStudioEventsProps) => {
         <div class={CLASSES.mediaMessages} ref={setMediaMessages}>
           <Show when={oneOffChat.errorMessage()}>
             {(message) => <PFormMessage tone="error">{message()}</PFormMessage>}
+          </Show>
+          <Show when={SERVER_AI_RELEASED}>
+            <PAiJobStatus job={oneOffChat.serverJob} />
           </Show>
           <For each={reminders.skippedReminders()}>
             {(memo) => (

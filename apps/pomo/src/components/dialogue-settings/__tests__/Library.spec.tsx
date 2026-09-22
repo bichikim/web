@@ -190,7 +190,7 @@ it('should keep the library open when character playback does not start', async 
   expect(onRequestClose).not.toHaveBeenCalled()
 })
 
-it('should not play a superseded inline request after audio preparation', async () => {
+it('should revoke a superseded inline playback URL', async () => {
   const secondAudio = Promise.withResolvers<Blob>()
   const events = createEvents()
   vi.mocked(events.getAudio)
@@ -199,16 +199,19 @@ it('should not play a superseded inline request after audio preparation', async 
   vi.mocked(usePEvents).mockReturnValue(events)
 
   const play = vi.spyOn(HTMLMediaElement.prototype, 'play').mockResolvedValue(undefined)
+  const revokeObjectURL = vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => undefined)
   render(() => <DialogueLibrary entries={[{dialogue: DIALOGUE}, {dialogue: SECOND_DIALOGUE}]} />)
   const listenButtons = screen.getAllByRole('button', {name: '듣기'})
   let didReplaceRequest = false
+  let createdUrlCount = 0
   vi.spyOn(URL, 'createObjectURL').mockImplementation(() => {
     if (!didReplaceRequest) {
       didReplaceRequest = true
       fireEvent.click(listenButtons[1]!)
     }
 
-    return 'blob:dialogue'
+    createdUrlCount += 1
+    return `blob:dialogue-${createdUrlCount}`
   })
 
   fireEvent.click(listenButtons[0]!)
@@ -217,4 +220,5 @@ it('should not play a superseded inline request after audio preparation', async 
 
   secondAudio.resolve(new Blob(['second audio']))
   await vi.waitFor(() => expect(play).toHaveBeenCalledOnce())
+  expect(revokeObjectURL).toHaveBeenCalledWith('blob:dialogue-1')
 })

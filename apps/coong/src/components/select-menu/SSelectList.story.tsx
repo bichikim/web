@@ -73,7 +73,8 @@ export const WithCustomWidth: Story = {
     const menu = await within(canvasElement).findByRole('menu')
 
     expect(menu).toBeVisible()
-    expect(getComputedStyle(menu).width).toBe('288px')
+    expect(menu.style.getPropertyValue('--select-menu-width')).toBe('288px')
+    expect(menu).toHaveClass('w-[var(--select-menu-width)]!')
   },
   render: () => {
     const menu = useSelectMenu()

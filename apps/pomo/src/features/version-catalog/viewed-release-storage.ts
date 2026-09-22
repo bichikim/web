@@ -50,11 +50,26 @@ export const createViewedReleaseRepository = (
   options: CreateViewedReleaseRepositoryOptions,
 ): ViewedReleaseRepository => {
   const writeQueue = createSerialTaskQueue()
+  let nativeSnapshot: ViewedRelease | null = null
+  const cacheNativeSnapshot = (value: ViewedRelease | null): void => {
+    nativeSnapshot = value
+    if (value === null) {
+      return
+    }
+
+    try {
+      if (options.storage.writeWeb(value) === null) {
+        nativeSnapshot = null
+      }
+    } catch {
+      // Browser storage is only a cache when native storage is authoritative.
+    }
+  }
 
   return {
     async read() {
       if (!options.storage.usesTossStorage()) {
-        return parseViewedRelease(options.storage.readWeb())
+        return nativeSnapshot ?? parseViewedRelease(options.storage.readWeb())
       }
 
       let value: ViewedRelease | null
@@ -65,13 +80,7 @@ export const createViewedReleaseRepository = (
         throw new Error('Failed to read viewed version release.', {cause: error})
       }
 
-      if (value !== null) {
-        try {
-          options.storage.writeWeb(value)
-        } catch {
-          // Browser storage is only a cache when native storage is authoritative.
-        }
-      }
+      cacheNativeSnapshot(value)
 
       return value
     },
@@ -96,11 +105,7 @@ export const createViewedReleaseRepository = (
             throw new Error('Failed to persist viewed version release.', {cause: error})
           }
 
-          try {
-            options.storage.writeWeb(storedValue)
-          } catch {
-            // Browser storage is only a cache when native storage is authoritative.
-          }
+          cacheNativeSnapshot(storedValue)
           return
         }
 
@@ -122,6 +127,7 @@ export const createViewedReleaseRepository = (
         if (writeError !== null) {
           throw new Error('Failed to persist viewed version release.', {cause: writeError})
         }
+        nativeSnapshot = null
       })
     },
   }

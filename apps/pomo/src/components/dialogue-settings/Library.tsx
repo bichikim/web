@@ -91,8 +91,15 @@ export const DialogueLibrary = (props: DialogueLibraryProps) => {
         return
       }
 
-      playbackUrl = URL.createObjectURL(audio)
-      player.src = playbackUrl
+      const nextPlaybackUrl = URL.createObjectURL(audio)
+
+      if (currentRequestId !== playbackRequestId) {
+        URL.revokeObjectURL(nextPlaybackUrl)
+        return
+      }
+
+      playbackUrl = nextPlaybackUrl
+      player.src = nextPlaybackUrl
       setPlayingDialogueId(dialogue.id)
       setMessage(null)
 
