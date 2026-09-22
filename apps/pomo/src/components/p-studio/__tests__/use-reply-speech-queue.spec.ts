@@ -108,6 +108,20 @@ it('should reject an active reply when disposed', async () => {
   return expect(reply).rejects.toMatchObject({name: 'AbortError'})
 })
 
+it('should reject replies enqueued after disposal', async () => {
+  const [isOccupied] = createSignal(true)
+  const speak = vi.fn(async () => undefined)
+  const {cleanup, result} = renderHook(() =>
+    useReplySpeechQueue({isOccupied, speak, stop: vi.fn()}),
+  )
+
+  cleanup()
+
+  const reply = result.enqueue('dispose 이후 추가된 답변')
+
+  return expect(reply).rejects.toMatchObject({name: 'AbortError'})
+})
+
 it('should reject pending replies when disabled', async () => {
   const [isEnabled, setIsEnabled] = createSignal(true)
   const [isOccupied] = createSignal(true)
