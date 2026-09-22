@@ -9,6 +9,13 @@ import {
   type ViewedRelease,
   writeViewedRelease,
 } from '../viewed-release-storage'
+import {
+  hasNativeStorageBridge,
+  readTossStorageJson,
+  readWebStorageJson,
+  writeTossStorageJson,
+  writeWebStorageJson,
+} from 'src/utils/runtime-storage'
 
 const STORAGE_KEY = 'pomo:viewed-version-release:v1'
 const viewedRelease = {
@@ -180,6 +187,31 @@ it.each([
     await expect(repository.read()).resolves.toEqual(viewedRelease)
   },
 )
+
+it('should retain the native marker through the runtime storage adapters after bridge loss', async () => {
+  Object.defineProperty(globalThis, 'ReactNativeWebView', {configurable: true, value: {}})
+  nativeStorageMocks.getItem.mockResolvedValue(JSON.stringify(viewedRelease))
+
+  const storage: VersionNoticeStorage = {
+    readToss: () => readTossStorageJson(STORAGE_KEY, (value) => value as ViewedRelease),
+    readWeb: () => readWebStorageJson(STORAGE_KEY, (value) => value as ViewedRelease),
+    usesTossStorage: hasNativeStorageBridge,
+    writeToss: (value) => writeTossStorageJson(STORAGE_KEY, value),
+    writeWeb: (value) => writeWebStorageJson(STORAGE_KEY, value),
+  }
+  const writeWeb = vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
+    throw new Error('QuotaExceededError')
+  })
+  const repository = createViewedReleaseRepository({storage})
+
+  await expect(repository.read()).resolves.toEqual(viewedRelease)
+  expect(nativeStorageMocks.getItem).toHaveBeenCalledWith(STORAGE_KEY)
+  expect(writeWeb).toHaveBeenCalledWith(STORAGE_KEY, JSON.stringify(viewedRelease))
+
+  Reflect.deleteProperty(globalThis, 'ReactNativeWebView')
+
+  await expect(repository.read()).resolves.toEqual(viewedRelease)
+})
 
 it.each(['2026-09-03T00:52:00+09:00', '2026-09-02T15:57:00Z'])(
   'should preserve the native marker when an incoming release is not newer: %s',
