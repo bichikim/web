@@ -2,7 +2,10 @@
 
 import {describe, expect, it, vi} from 'vitest'
 
-import {createAutoStartStorage, type AutoStartStorageAdapter} from '../features/pomodoro-timer/auto-start-storage'
+import {
+  createAutoStartStorage,
+  type AutoStartStorageAdapter,
+} from '../features/pomodoro-timer/auto-start-storage'
 
 describe('auto-start stale native after web eviction (bug hunt)', () => {
   it('should not restore an older native value after a newer write when web storage was cleared', async () => {
