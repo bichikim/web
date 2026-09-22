@@ -29,7 +29,7 @@ const createStorage = (): VersionNoticeStorage =>
     readWeb: vi.fn(() => null),
     usesTossStorage: vi.fn(() => false),
     writeToss: vi.fn(),
-    writeWeb: vi.fn(),
+    writeWeb: vi.fn(() => null),
   }) satisfies VersionNoticeStorage
 
 beforeEach(() => {
@@ -158,6 +158,28 @@ it('should surface browser write failures but ignore native cache write failures
   await expect(repository.read()).resolves.toEqual(viewedRelease)
   await expect(repository.write(viewedRelease)).resolves.toBeUndefined()
 })
+
+it.each([
+  null,
+  {...viewedRelease, releasedAt: '2026-09-02T00:57:00+09:00', version: '2026. 09. 02 00:57'},
+])(
+  'should retain the native marker after a browser cache write failure and bridge loss: %j',
+  async (webValue) => {
+    const storage = createStorage()
+    let usesTossStorage = true
+    vi.mocked(storage.usesTossStorage).mockImplementation(() => usesTossStorage)
+    vi.mocked(storage.readToss).mockResolvedValue(viewedRelease)
+    vi.mocked(storage.readWeb).mockReturnValue(webValue)
+    vi.mocked(storage.writeWeb).mockReturnValue(new Error('QuotaExceededError'))
+    const repository = createViewedReleaseRepository({storage})
+
+    await expect(repository.read()).resolves.toEqual(viewedRelease)
+
+    usesTossStorage = false
+
+    await expect(repository.read()).resolves.toEqual(viewedRelease)
+  },
+)
 
 it.each(['2026-09-03T00:52:00+09:00', '2026-09-02T15:57:00Z'])(
   'should preserve the native marker when an incoming release is not newer: %s',
