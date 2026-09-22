@@ -83,7 +83,10 @@ export const createEventActionRunner = (
         const shouldQueueAction =
           isDeferredExecutor ||
           (executor === null &&
-            (eventId === DELAYED_END_EVENT || eventId === FOCUS_ROOM_ENTRY_EVENT))
+            (eventId === DELAYED_END_EVENT ||
+              eventId === FOCUS_ROOM_ENTRY_EVENT ||
+              eventId === 'break-end' ||
+              eventId === 'focus-end'))
 
         if (shouldQueueAction) {
           queueEventAction(eventId, actionId)
