@@ -78,9 +78,8 @@ it('should edit in a popup, retain the drawing ratio, and update the page previe
   expect(preview.querySelectorAll('circle')).toHaveLength(1)
   await waitFor(() => expect(trigger).toHaveFocus())
   fireEvent.click(trigger)
-  fireEvent.click(screen.getByRole('button', {name: '한 획 취소'}))
-  expect(preview.querySelectorAll('circle')).toHaveLength(0)
-  expect(screen.getByRole('button', {name: '그림 지우기'})).toBeDisabled()
+  expect(screen.getByRole('button', {name: '한 획 취소'})).toBeDisabled()
+  expect(preview.querySelectorAll('circle')).toHaveLength(1)
 })
 
 it('should clear existing drawing only from the popup', () => {

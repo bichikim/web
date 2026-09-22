@@ -9,6 +9,13 @@ import {
   type ViewedRelease,
   writeViewedRelease,
 } from '../viewed-release-storage'
+import {
+  hasNativeStorageBridge,
+  readTossStorageJson,
+  readWebStorageJson,
+  writeTossStorageJson,
+  writeWebStorageJson,
+} from 'src/utils/runtime-storage'
 
 const STORAGE_KEY = 'pomo:viewed-version-release:v1'
 const viewedRelease = {
@@ -29,7 +36,7 @@ const createStorage = (): VersionNoticeStorage =>
     readWeb: vi.fn(() => null),
     usesTossStorage: vi.fn(() => false),
     writeToss: vi.fn(),
-    writeWeb: vi.fn(),
+    writeWeb: vi.fn(() => null),
   }) satisfies VersionNoticeStorage
 
 beforeEach(() => {
@@ -157,6 +164,53 @@ it('should surface browser write failures but ignore native cache write failures
   vi.mocked(storage.writeToss).mockResolvedValue(undefined)
   await expect(repository.read()).resolves.toEqual(viewedRelease)
   await expect(repository.write(viewedRelease)).resolves.toBeUndefined()
+})
+
+it.each([
+  null,
+  {...viewedRelease, releasedAt: '2026-09-02T00:57:00+09:00', version: '2026. 09. 02 00:57'},
+])(
+  'should retain the native marker after a browser cache write failure and bridge loss: %j',
+  async (webValue) => {
+    const storage = createStorage()
+    let usesTossStorage = true
+    vi.mocked(storage.usesTossStorage).mockImplementation(() => usesTossStorage)
+    vi.mocked(storage.readToss).mockResolvedValue(viewedRelease)
+    vi.mocked(storage.readWeb).mockReturnValue(webValue)
+    vi.mocked(storage.writeWeb).mockReturnValue(new Error('QuotaExceededError'))
+    const repository = createViewedReleaseRepository({storage})
+
+    await expect(repository.read()).resolves.toEqual(viewedRelease)
+
+    usesTossStorage = false
+
+    await expect(repository.read()).resolves.toEqual(viewedRelease)
+  },
+)
+
+it('should retain the native marker through the runtime storage adapters after bridge loss', async () => {
+  Object.defineProperty(globalThis, 'ReactNativeWebView', {configurable: true, value: {}})
+  nativeStorageMocks.getItem.mockResolvedValue(JSON.stringify(viewedRelease))
+
+  const storage: VersionNoticeStorage = {
+    readToss: () => readTossStorageJson(STORAGE_KEY, (value) => value as ViewedRelease),
+    readWeb: () => readWebStorageJson(STORAGE_KEY, (value) => value as ViewedRelease),
+    usesTossStorage: hasNativeStorageBridge,
+    writeToss: (value) => writeTossStorageJson(STORAGE_KEY, value),
+    writeWeb: (value) => writeWebStorageJson(STORAGE_KEY, value),
+  }
+  const writeWeb = vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
+    throw new Error('QuotaExceededError')
+  })
+  const repository = createViewedReleaseRepository({storage})
+
+  await expect(repository.read()).resolves.toEqual(viewedRelease)
+  expect(nativeStorageMocks.getItem).toHaveBeenCalledWith(STORAGE_KEY)
+  expect(writeWeb).toHaveBeenCalledWith(STORAGE_KEY, JSON.stringify(viewedRelease))
+
+  Reflect.deleteProperty(globalThis, 'ReactNativeWebView')
+
+  await expect(repository.read()).resolves.toEqual(viewedRelease)
 })
 
 it.each(['2026-09-03T00:52:00+09:00', '2026-09-02T15:57:00Z'])(

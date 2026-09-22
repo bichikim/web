@@ -101,7 +101,10 @@ export const createFeedStateController = (
   const dismissedRecoveryIds = new Set<string>()
   let isDisposed = false
   const reloadDialogues = async () => {
-    const available = await loadFeedDialogueList(options.getRepositories())
+    const available = await loadFeedDialogueList({
+      ...options.getRepositories(),
+      now: options.now(),
+    })
 
     if (!isDisposed) {
       setDialogues((current) => mergeListenedAt(available, current))
@@ -160,7 +163,18 @@ export const createFeedStateController = (
           (await repository.listMetadata()).find((item) => item.dialogueId === dialogueId)
 
         if (metadata !== undefined) {
-          await repository.removeItem(metadata.feedConnectionId, metadata.feedItemId)
+          await repository.dismissItem({
+            fallback: {
+              itemTitle: metadata.itemTitle,
+              publishedAt: metadata.publishedAt,
+              sourceTitle: metadata.sourceTitle,
+              sourceUrl: metadata.sourceUrl,
+            },
+            feedConnectionId: metadata.feedConnectionId,
+            feedItemId: metadata.feedItemId,
+            message: '사용자가 피드 대화를 삭제했어요.',
+            updatedAt: options.now().toISOString(),
+          })
         }
         await repository.removeMetadata(dialogueId)
       } finally {
