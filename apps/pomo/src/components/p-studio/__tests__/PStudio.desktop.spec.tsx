@@ -20,9 +20,20 @@ const {
   useStudioScreenSaver,
 } = studioMocks
 
+class TestBroadcastChannel {
+  static instances: TestBroadcastChannel[] = []
+  readonly close = vi.fn()
+  readonly postMessage = vi.fn()
+
+  constructor(readonly name: string) {
+    TestBroadcastChannel.instances.push(this)
+  }
+}
+
 beforeEach(setupStudio)
 afterEach(() => {
   vi.unstubAllEnvs()
+  vi.unstubAllGlobals()
   vi.useRealTimers()
 })
 
@@ -63,6 +74,28 @@ describe('PStudio', () => {
     expect(SceneToolbar).not.toHaveBeenCalled()
     expect(registerEventActionExecutor).toHaveBeenCalledExactlyOnceWith(expect.any(Function), {
       mode: 'deferred',
+    })
+  })
+
+  it('should forward desktop wallpaper music actions to the desktop player', () => {
+    const {registerEventActionHandler} = configureStudio({
+      desktopMode: 'desktop',
+      entrySession: true,
+    })
+    TestBroadcastChannel.instances = []
+    vi.stubGlobal('BroadcastChannel', TestBroadcastChannel)
+
+    renderStudio()
+
+    const handler = registerEventActionHandler.mock.calls[0]?.[0]
+    if (handler === undefined) {
+      throw new Error('Expected the desktop wallpaper event action handler to be registered.')
+    }
+
+    expect(handler('music-stop')).toBe(true)
+
+    expect(TestBroadcastChannel.instances[0]?.postMessage).toHaveBeenCalledExactlyOnceWith({
+      actionId: 'music-stop',
     })
   })
 
