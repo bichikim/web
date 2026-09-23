@@ -1,10 +1,15 @@
 import {type Accessor, createEffect, createSignal, onCleanup, untrack} from 'solid-js'
+import {getErrorMessage} from 'src/utils/get-error-message'
 
 import {useChat} from '../../features/chat'
 import {useModelDownload} from '../../features/model-download'
 import {getTextModel, isTextModelDownloaded} from '../../features/text-generation'
+import {type AiTextJobController, useAiTextJob} from '../../features/ai-job/use-ai-text-job'
 
 const CHAT_MODEL_ID = 'gemma-4-e2b'
+
+const getChatErrorMessage = (error: unknown, fallback: string): string =>
+  error instanceof Error ? getErrorMessage(error, fallback) : fallback
 
 export const ONE_OFF_CHAT_MODEL = getTextModel(CHAT_MODEL_ID)
 
@@ -15,11 +20,13 @@ export interface OneOffChatController {
   readonly errorMessage: Accessor<string | null>
   readonly isBusy: Accessor<boolean>
   readonly setDraft: (draft: string) => void
+  readonly serverJob: AiTextJobController
   readonly startDownload: () => Promise<void>
   readonly submit: (text: string) => Promise<boolean>
 }
 
 export interface UseOneOffChatProps {
+  readonly isEnabled?: Accessor<boolean>
   readonly onReply: (text: string) => Promise<void>
 }
 
@@ -33,6 +40,7 @@ interface PendingText {
 export const useOneOffChat = (props: UseOneOffChatProps): OneOffChatController => {
   const chat = useChat({modelId: CHAT_MODEL_ID})
   const modelDownload = useModelDownload()
+  const serverJob = useAiTextJob({onComplete: props.onReply})
   const [downloadConsentOpen, setDownloadConsentOpen] = createSignal(false)
   const [downloadError, setDownloadError] = createSignal<string | null>(null)
   const [replyError, setReplyError] = createSignal<string | null>(null)
@@ -40,8 +48,12 @@ export const useOneOffChat = (props: UseOneOffChatProps): OneOffChatController =
   const [pendingText, setPendingText] = createSignal<PendingText | null>(null)
   let draftRevision = 0
   let replyRevision = 0
+  let activeReplyRevision: number | null = null
   let disposed = false
   let handledReplyId: string | null = null
+  let wasEnabled = true
+
+  const isEnabled = () => props.isEnabled?.() ?? true
 
   const isModelDownloading = () => {
     const state = modelDownload.state()
@@ -52,10 +64,18 @@ export const useOneOffChat = (props: UseOneOffChatProps): OneOffChatController =
     )
   }
   const isBusy = () =>
-    pendingText() !== null || isCheckingModel() || isModelDownloading() || chat.isBusy()
+    pendingText() !== null ||
+    isCheckingModel() ||
+    isModelDownloading() ||
+    chat.isBusy() ||
+    serverJob.isBusy()
   const errorMessage = () => {
     const state = chat.state()
-    return downloadError() ?? replyError() ?? (state.status === 'error' ? state.message : null)
+    const localError =
+      downloadError() ?? replyError() ?? (state.status === 'error' ? state.message : null)
+    return serverJob.executionMode() === 'server'
+      ? (serverJob.errorMessage() ?? localError)
+      : localError
   }
   const setDraft = (draft: string) => {
     draftRevision += 1
@@ -79,6 +99,7 @@ export const useOneOffChat = (props: UseOneOffChatProps): OneOffChatController =
     const currentDraft = chat.draft()
     const shouldRestoreCurrentDraft = draftRevision !== pending.draftRevision
     setPendingText(null)
+    activeReplyRevision = replyRevision
 
     if (chat.canClear()) {
       chat.clear()
@@ -97,7 +118,15 @@ export const useOneOffChat = (props: UseOneOffChatProps): OneOffChatController =
   const submit = async (text: string) => {
     const normalizedText = text.trim()
 
-    if (normalizedText.length === 0 || isBusy() || chat.state().status === 'unsupported') {
+    if (!isEnabled() || normalizedText.length === 0 || isBusy()) {
+      return false
+    }
+
+    if (serverJob.executionMode() === 'server') {
+      return serverJob.submit(normalizedText)
+    }
+
+    if (chat.state().status === 'unsupported') {
       return false
     }
 
@@ -120,18 +149,17 @@ export const useOneOffChat = (props: UseOneOffChatProps): OneOffChatController =
         return false
       }
 
-      if (isDownloaded) {
+      const enabled = isEnabled()
+      if (!enabled) {
+        restorePendingDraft()
+      } else if (isDownloaded) {
         prepare()
       } else {
         setDownloadConsentOpen(true)
       }
       return false
     } catch (error: unknown) {
-      setDownloadError(
-        error instanceof Error && error.message.length > 0
-          ? error.message
-          : '모델 준비 상태를 확인하지 못했어요.',
-      )
+      setDownloadError(getChatErrorMessage(error, '모델 준비 상태를 확인하지 못했어요.'))
       restorePendingDraft()
       console.error('Failed to check the one-off chat model.', error)
       return false
@@ -151,7 +179,11 @@ export const useOneOffChat = (props: UseOneOffChatProps): OneOffChatController =
       }
 
       if (result.status === 'complete') {
-        prepare()
+        if (isEnabled()) {
+          prepare()
+        } else {
+          restorePendingDraft()
+        }
         return
       }
 
@@ -164,11 +196,7 @@ export const useOneOffChat = (props: UseOneOffChatProps): OneOffChatController =
         return
       }
 
-      setDownloadError(
-        error instanceof Error && error.message.length > 0
-          ? error.message
-          : '모델을 내려받지 못했어요.',
-      )
+      setDownloadError(getChatErrorMessage(error, '모델을 내려받지 못했어요.'))
       restorePendingDraft()
       console.error('Failed to download the one-off chat model.', error)
     }
@@ -179,8 +207,29 @@ export const useOneOffChat = (props: UseOneOffChatProps): OneOffChatController =
   }
 
   createEffect(() => {
+    const enabled = isEnabled()
+
+    if (enabled) {
+      wasEnabled = true
+      return
+    }
+    if (!wasEnabled) {
+      return
+    }
+
+    wasEnabled = false
+    replyRevision += 1
+    setDownloadConsentOpen(false)
+    setPendingText(null)
+    setReplyError(null)
+  })
+
+  createEffect(() => {
     const {status} = chat.state()
 
+    if (!isEnabled()) {
+      return
+    }
     if (status === 'error') {
       restorePendingDraft()
       return
@@ -194,10 +243,26 @@ export const useOneOffChat = (props: UseOneOffChatProps): OneOffChatController =
   createEffect(() => {
     const reply = chat.messages().findLast((message) => message.role === 'assistant')
 
+    if (!isEnabled()) {
+      if (reply !== undefined) {
+        if (reply.id !== handledReplyId) {
+          handledReplyId = reply.id
+        }
+        if (chat.state().status === 'ready') {
+          chat.clear()
+        }
+      }
+      return
+    }
     if (reply === undefined || reply.id === handledReplyId) {
       return
     }
     if (chat.state().status !== 'ready') {
+      return
+    }
+    if (activeReplyRevision !== replyRevision) {
+      handledReplyId = reply.id
+      chat.clear()
       return
     }
 
@@ -206,12 +271,11 @@ export const useOneOffChat = (props: UseOneOffChatProps): OneOffChatController =
     const speech = untrack(() => props.onReply(reply.content))
     chat.clear()
     speech.catch((error: unknown) => {
+      if (!isEnabled() && error instanceof DOMException && error.name === 'AbortError') {
+        return
+      }
       if (!disposed && speechRevision === replyRevision) {
-        setReplyError(
-          error instanceof Error && error.message.length > 0
-            ? error.message
-            : '음성을 재생하지 못했어요.',
-        )
+        setReplyError(getChatErrorMessage(error, '음성을 재생하지 못했어요.'))
       }
       console.error('Failed to speak the one-off chat reply.', error)
     })
@@ -227,6 +291,7 @@ export const useOneOffChat = (props: UseOneOffChatProps): OneOffChatController =
     draft: chat.draft,
     errorMessage,
     isBusy,
+    serverJob,
     setDraft,
     startDownload,
     submit,

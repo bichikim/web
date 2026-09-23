@@ -1,3 +1,4 @@
+import {createSerialTaskQueue} from 'src/utils/create-serial-task-queue'
 import {type Accessor, createSignal, onCleanup, onMount} from 'solid-js'
 import {browserWakeLock} from './browser-wake-lock'
 
@@ -81,7 +82,7 @@ export const useScreenWakeLock = (): ScreenWakeLockController => {
   const [errorMessage, setErrorMessage] = createSignal<string | null>(null)
   const [isEnabled, setIsEnabled] = createSignal(false)
   const [isRequestPending, setIsRequestPending] = createSignal(false)
-  let appsInTossRequestQueue = Promise.resolve()
+  const requestQueue = createSerialTaskQueue()
   let requestRevision = 0
   let appsInTossWakeLockRequested = false
   let disposed = false
@@ -97,8 +98,7 @@ export const useScreenWakeLock = (): ScreenWakeLockController => {
       setErrorMessage(null)
     }
 
-    const request = appsInTossRequestQueue.then(() => requestAppsInTossWakeLock(nextEnabled))
-    appsInTossRequestQueue = request.catch(() => undefined)
+    const request = requestQueue.run(() => requestAppsInTossWakeLock(nextEnabled))
 
     request
       .then(() => {

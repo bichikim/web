@@ -8,7 +8,10 @@ import {createAuthMaintenanceRepository} from '..'
 
 vi.mock('src/env', () => ({env: {}}))
 
-const compile = (statement: SQL) => new PgDialect({casing: 'snake_case'}).sqlToQuery(statement)
+const compile = (statement: SQL) => {
+  const query = new PgDialect({casing: 'snake_case'}).sqlToQuery(statement)
+  return {...query, sql: query.sql.replace(/\s+/gu, ' ').trim()}
+}
 
 it('should generate a bounded concurrent-safe app session delete', async () => {
   const execute = vi.fn().mockResolvedValue({rows: [{deleted: 2, hasMore: false}]})
@@ -32,11 +35,9 @@ it('should generate a bounded concurrent-safe app session delete', async () => {
   expect(query.sql).toContain('"pomo_app_sessions"."activated_at" is null')
   expect(query.sql).toContain('"pomo_app_sessions"."expires_at" <= $1)')
   expect(query.sql).toContain('or "pomo_app_sessions"."revoked_at" <= $3)')
-  expect(query.sql).toContain('limit $4\n        for update skip locked')
-  expect(query.sql).toContain(
-    'deletion_candidates as (\n        select id from candidates limit $5',
-  )
-  expect(query.sql).toContain('delete from "pomo_app_sessions"\n        using deletion_candidates')
+  expect(query.sql).toContain('limit $4 for update skip locked')
+  expect(query.sql).toContain('deletion_candidates as ( select id from candidates limit $5')
+  expect(query.sql).toContain('delete from "pomo_app_sessions" using deletion_candidates')
   expect(query.sql).toContain('(select count(*) from candidates) > $6 as "hasMore"')
   expect(query.params).toEqual([
     expiresAtCutoff.toISOString(),
@@ -60,12 +61,10 @@ it('should generate one expiry-based account link challenge delete', async () =>
   const query = compile(execute.mock.calls[0]?.[0] as SQL)
   expect(query.sql).toContain('where "pomo_account_link_challenges"."expires_at" <= $1')
   expect(query.sql).not.toContain('consumed_at')
-  expect(query.sql).toContain('limit $2\n        for update skip locked')
+  expect(query.sql).toContain('limit $2 for update skip locked')
+  expect(query.sql).toContain('deletion_candidates as ( select id from candidates limit $3')
   expect(query.sql).toContain(
-    'deletion_candidates as (\n        select id from candidates limit $3',
-  )
-  expect(query.sql).toContain(
-    'delete from "pomo_account_link_challenges"\n        using deletion_candidates',
+    'delete from "pomo_account_link_challenges" using deletion_candidates',
   )
   expect(query.sql).toContain('(select count(*) from candidates) > $4 as "hasMore"')
   expect(query.params).toEqual([cutoff.toISOString(), 501, 500, 500])

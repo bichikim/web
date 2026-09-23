@@ -108,3 +108,18 @@ pnpm + Turborepo (`@winter-love/web`) · Node ≥24 · pnpm 11.x (`package.json`
 **Commands:** `pnpm lint` · `pnpm test` · `turbo prepare-build` · `pnpm typecheck` (`apps/coong`)
 
 **Gotcha:** Without Supabase, auth/DB features error but the app renders. Re-run `turbo prepare-build` after cleaning `node_modules` or `dist/`.
+
+<!-- graft:start -->
+
+## Graft — repo context graph
+
+For indexed code, use Graft before searching or opening source. Choose the tool
+for the question: `graft ask "<question>" --source` to locate and understand,
+`graft grep "<literal>"` for every occurrence, `graft skeleton <file>` for a
+known file's API, and `graft callers <symbol>` before changing a shared symbol.
+Use `graft map` when repository orientation is needed. Open source at a returned
+span only when the graph lacks a necessary detail. Read instruction files and
+unindexed content directly. Refresh the graph with `graft build` after big code
+changes.
+
+<!-- graft:end -->

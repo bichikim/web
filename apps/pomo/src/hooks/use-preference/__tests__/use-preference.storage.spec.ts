@@ -21,6 +21,7 @@ it('should own edits during repository restoration and serialize subsequent nati
     storage: {
       readToss: () => restoring.promise,
       readWeb: () => null,
+      removeWeb: () => null,
       usesTossStorage: () => true,
       writeToss,
       writeWeb: vi.fn(),
@@ -64,6 +65,7 @@ it('should finish native repair before saving an edit made during restoration', 
     storage: {
       readToss: vi.fn(),
       readWeb: () => 'bright',
+      removeWeb: () => null,
       usesTossStorage: () => true,
       writeToss,
       writeWeb: vi.fn(),

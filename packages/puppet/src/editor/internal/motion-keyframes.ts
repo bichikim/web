@@ -11,6 +11,7 @@ import type {
   PuppetVertexTrack,
 } from '../../player/document'
 import {sampleMotionVertices} from '../../player/internal/motion'
+import {resolveParameterValue} from '../../player/parameter-value'
 import type {VertexPoint} from '../edit-document'
 
 export interface VertexKeyframeTarget {
@@ -52,7 +53,34 @@ export interface EditParameterKeyframeOptions extends ParameterKeyframeTarget {
   readonly document: PuppetDocument
 }
 
+export interface ParameterKeyframesTarget {
+  readonly motionId: string
+  readonly parameterId: string
+  readonly times: ReadonlyArray<number>
+}
+
+export interface EditParameterKeyframesOptions extends ParameterKeyframesTarget {
+  readonly document: PuppetDocument
+}
+
+export interface MoveParameterKeyframeOptions extends EditParameterKeyframeOptions {
+  readonly nextTime: number
+}
+
+export interface MoveParameterKeyframesTarget extends ParameterKeyframesTarget {
+  readonly nextTime: number
+  readonly time: number
+}
+
+export interface MoveParameterKeyframesOptions extends MoveParameterKeyframesTarget {
+  readonly document: PuppetDocument
+}
+
 export interface SetParameterKeyframeEasingOptions extends EditParameterKeyframeOptions {
+  readonly easing: PuppetEasing
+}
+
+export interface SetParameterKeyframesEasingOptions extends EditParameterKeyframesOptions {
   readonly easing: PuppetEasing
 }
 
@@ -60,6 +88,9 @@ const COORDINATES_PER_VERTEX = 2
 const TIME_EPSILON = 0.000_001
 
 const hasSameTime = (first: number, second: number) => Math.abs(first - second) <= TIME_EPSILON
+
+const includesTime = (times: ReadonlyArray<number>, time: number) =>
+  times.some((candidate) => hasSameTime(candidate, time))
 
 const upsertKeyframe = (
   keyframes: ReadonlyArray<PuppetKeyframe>,
@@ -149,7 +180,7 @@ export const setParameterKeyframe = (
     const keyframes = upsertKeyframe(
       trackIndex < 0 ? [] : (motion.tracks[trackIndex]?.keyframes ?? []),
       time,
-      clamp(options.value, parameter.minimum, parameter.maximum),
+      resolveParameterValue(parameter, options.value),
     )
     const track: PuppetParameterTrack = {
       keyframes,
@@ -169,6 +200,10 @@ export const setParameterKeyframe = (
 
 export const deleteParameterKeyframe = (
   options: EditParameterKeyframeOptions,
+): PuppetDocument | undefined => deleteParameterKeyframes({...options, times: [options.time]})
+
+export const deleteParameterKeyframes = (
+  options: EditParameterKeyframesOptions,
 ): PuppetDocument | undefined =>
   replaceMotion(options.document, options.motionId, (motion) => ({
     ...motion,
@@ -178,14 +213,83 @@ export const deleteParameterKeyframe = (
       }
 
       const keyframes = track.keyframes.filter(
-        (keyframe) => !hasSameTime(keyframe.time, options.time),
+        (keyframe) => !includesTime(options.times, keyframe.time),
       )
       return keyframes.length === 0 ? [] : [{...track, keyframes}]
     }),
   }))
 
+export const moveParameterKeyframe = (
+  options: MoveParameterKeyframeOptions,
+): PuppetDocument | undefined => moveParameterKeyframes({...options, times: [options.time]})
+
+export const moveParameterKeyframes = (
+  options: MoveParameterKeyframesOptions,
+): PuppetDocument | undefined => {
+  const motion = options.document.motions.find((candidate) => candidate.id === options.motionId)
+  const track = motion?.tracks.find(
+    (candidate) => candidate.kind === 'parameter' && candidate.parameterId === options.parameterId,
+  )
+  const sourceKeyframe = track?.keyframes.find((keyframe) =>
+    hasSameTime(keyframe.time, options.time),
+  )
+
+  if (
+    motion === undefined ||
+    track === undefined ||
+    sourceKeyframe === undefined ||
+    !includesTime(options.times, options.time)
+  ) {
+    return undefined
+  }
+
+  const timeOffset = options.nextTime - options.time
+  const selectedKeyframes = track.keyframes.filter((keyframe) =>
+    includesTime(options.times, keyframe.time),
+  )
+  const nextTimes = selectedKeyframes.map((keyframe) => keyframe.time + timeOffset)
+  const outsideDuration = nextTimes.some((time) => time < 0 || time > motion.duration)
+  const occupied = track.keyframes.some(
+    (keyframe) =>
+      !includesTime(options.times, keyframe.time) &&
+      nextTimes.some((time) => hasSameTime(keyframe.time, time)),
+  )
+
+  if (
+    selectedKeyframes.length === 0 ||
+    hasSameTime(options.time, options.nextTime) ||
+    outsideDuration ||
+    occupied
+  ) {
+    return undefined
+  }
+
+  return replaceMotion(options.document, options.motionId, (candidate) => ({
+    ...candidate,
+    tracks: candidate.tracks.map((candidateTrack) =>
+      candidateTrack.kind === 'parameter' && candidateTrack.parameterId === options.parameterId
+        ? {
+            ...candidateTrack,
+            keyframes: sortBy(
+              candidateTrack.keyframes.map((keyframe) =>
+                includesTime(options.times, keyframe.time)
+                  ? {...keyframe, time: keyframe.time + timeOffset}
+                  : keyframe,
+              ),
+              ['time'],
+            ),
+          }
+        : candidateTrack,
+    ),
+  }))
+}
+
 export const setParameterKeyframeEasing = (
   options: SetParameterKeyframeEasingOptions,
+): PuppetDocument | undefined => setParameterKeyframesEasing({...options, times: [options.time]})
+
+export const setParameterKeyframesEasing = (
+  options: SetParameterKeyframesEasingOptions,
 ): PuppetDocument | undefined =>
   replaceMotion(options.document, options.motionId, (motion) => ({
     ...motion,
@@ -194,7 +298,7 @@ export const setParameterKeyframeEasing = (
         ? {
             ...track,
             keyframes: track.keyframes.map((keyframe) =>
-              hasSameTime(keyframe.time, options.time)
+              includesTime(options.times, keyframe.time)
                 ? {...keyframe, easing: options.easing}
                 : keyframe,
             ),

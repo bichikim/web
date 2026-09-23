@@ -49,6 +49,27 @@ it('should localize the dialogue placeholder in English', () => {
   expect(screen.getByRole('button', {name: 'Send dialogue'})).toBeDisabled()
 })
 
+it('should expose the device and entitled server execution choices', () => {
+  const onExecutionModeChange = vi.fn()
+  render(() => (
+    <PDialogueComposer
+      executionMode="local"
+      onExecutionModeChange={onExecutionModeChange}
+      serverAccessStatus="available"
+      serverAvailable
+    />
+  ))
+
+  fireEvent.click(screen.getByRole('button', {name: '대화 시작하기'}))
+  const selector = screen.getByRole('combobox', {name: 'AI 실행 위치'})
+  expect(selector).toHaveValue('local')
+  expect(screen.getByRole('option', {name: '서버 Luna (구독)'})).toBeEnabled()
+
+  fireEvent.change(selector, {target: {value: 'server'}})
+
+  expect(onExecutionModeChange).toHaveBeenCalledWith('server')
+})
+
 it('should update and restore a draft owned by the caller', () => {
   const [draft, setDraft] = createSignal('')
   render(() => <PDialogueComposer draft={draft} onDraftChange={setDraft} />)

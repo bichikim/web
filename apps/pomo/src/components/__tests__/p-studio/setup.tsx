@@ -15,7 +15,7 @@ import {
   useWebsiteBackgroundInteraction,
 } from 'src/features/desktop-mode'
 import {getPScene, supportsPSceneGyroscope, usePSceneStyle} from 'src/features/focus-room-animation'
-import {usePEvents} from 'src/features/focus-room-dialogue/event-context'
+import {type EventActionHandler, usePEvents} from 'src/features/focus-room-dialogue/event-context'
 import {usePDisplayPreferences} from 'src/features/focus-room-display-preferences'
 import {readFocusRoomEntrySession, writeFocusRoomEntrySession} from 'src/features/focus-room-entry'
 import {usePScenePreferences} from 'src/features/focus-room-scene-preferences'
@@ -160,6 +160,9 @@ export const configureStudio = (options: StudioOptions = {}) => {
     mode: options.backgroundMode ?? DEFAULT_BACKGROUND.mode,
     websiteUrl: options.websiteUrl ?? DEFAULT_BACKGROUND.websiteUrl,
   })
+  const registerEventActionHandler = vi.fn<(handler: EventActionHandler) => () => void>(() =>
+    vi.fn(),
+  )
   const registerEventActionExecutor = vi.fn(() => vi.fn())
   const background: BackgroundController = {
     add: vi.fn(),
@@ -185,6 +188,7 @@ export const configureStudio = (options: StudioOptions = {}) => {
     isDialoguePlaying: () => false,
     onStopDialoguePlayback: vi.fn(),
     registerEventActionExecutor,
+    registerEventActionHandler,
   } as unknown as ReturnType<typeof usePEvents>)
   vi.mocked(usePSay).mockReturnValue({
     activeViseme: () => 'aa',
@@ -270,6 +274,7 @@ export const configureStudio = (options: StudioOptions = {}) => {
   return {
     background,
     registerEventActionExecutor,
+    registerEventActionHandler,
     setBackgroundPreferences,
     setDesktopMode,
     setWeatherReady,
@@ -390,6 +395,7 @@ export const studioMocks = {
   DEFAULT_BACKGROUND,
   getAutomaticScenePeriod,
   isDesktopBackgroundMode,
+  PStudioEvents,
   PStudioScene,
   PTour,
   readFocusRoomEntrySession,

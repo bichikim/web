@@ -10,11 +10,23 @@ beforeEach(() => {
 
 it.each([
   ['malformed JSON', '{invalid'],
-  ['duplicate track IDs', JSON.stringify({savedAt: 10, trackIds: ['one', 'one'], version: 1})],
   ['an unsupported version', JSON.stringify({savedAt: 10, trackIds: ['one'], version: 2})],
 ])('should reject %s through the runtime storage adapter', async (_label, storedValue) => {
   localStorage.setItem(STORAGE_KEY, storedValue)
   expect(await readPPlaylist()).toBeNull()
+})
+
+it('should preserve duplicate track IDs through the runtime storage adapter', async () => {
+  const trackIds = ['one', 'one']
+
+  await writePPlaylist(trackIds)
+
+  expect(await readPPlaylist()).toEqual(trackIds)
+  expect(JSON.parse(localStorage.getItem(STORAGE_KEY) ?? '')).toEqual({
+    savedAt: expect.any(Number),
+    trackIds,
+    version: 1,
+  })
 })
 
 it('should persist and restore ordered tracks through the default runtime adapter', async () => {

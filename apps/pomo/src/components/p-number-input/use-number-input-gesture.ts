@@ -1,4 +1,6 @@
 import {type Accessor, createSignal, type JSX, onCleanup} from 'solid-js'
+import {releaseCapturedPointer} from 'src/utils/release-captured-pointer'
+import {clampOptionalBounds} from './clamp-optional-bounds'
 
 const DRAG_INTENT_DISTANCE = 6
 const PIXELS_PER_STEP = 8
@@ -42,11 +44,6 @@ interface DragCalculation {
   readonly width: number
 }
 
-const clamp = (value: number, min: number | undefined, max: number | undefined): number => {
-  const lowerBoundedValue = min === undefined ? value : Math.max(value, min)
-  return max === undefined ? lowerBoundedValue : Math.min(lowerBoundedValue, max)
-}
-
 const getDraggedValue = ({
   clientX,
   left,
@@ -61,17 +58,11 @@ const getDraggedValue = ({
       return range.min
     }
 
-    const ratio = clamp((clientX - left) / width, 0, 1)
+    const ratio = clampOptionalBounds((clientX - left) / width, 0, 1)
     return range.min + (range.max - range.min) * ratio
   }
 
   return startValue + Math.round((clientX - startX) / PIXELS_PER_STEP) * step
-}
-
-const releasePointer = (element: HTMLInputElement, pointerId: number) => {
-  if (element.hasPointerCapture?.(pointerId)) {
-    element.releasePointerCapture?.(pointerId)
-  }
 }
 
 export const useNumberInputGesture = (props: UseNumberInputGestureProps): NumberInputGesture => {
@@ -130,7 +121,7 @@ export const useNumberInputGesture = (props: UseNumberInputGestureProps): Number
     suppressClick = shouldSuppressClick || currentDrag.dragged
     dragState = undefined
     setDragging(false)
-    releasePointer(event.currentTarget as HTMLInputElement, event.pointerId)
+    releaseCapturedPointer(event.currentTarget as HTMLInputElement, event.pointerId)
   }
   const handlePointerUp: JSX.EventHandler<HTMLInputElement, PointerEvent> = (event) => {
     finishPointer(event, false)

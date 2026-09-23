@@ -5,10 +5,14 @@ vi.mock('src/features/model-download', () => ({useModelDownload: vi.fn()}))
 
 import {cleanup, fireEvent, render, screen, waitFor} from '@solidjs/testing-library'
 import {runImageGeneration} from 'src/features/image-generation/client'
+import {getLocale, overwriteGetLocale} from '@paraglide/runtime'
 import {afterEach, beforeEach, expect, it, vi} from 'vitest'
 import {Generation} from '../Generation'
 
 vi.mock('src/features/image-generation/client', () => ({runImageGeneration: vi.fn()}))
+
+const originalGetLocale = getLocale
+
 beforeEach(() => {
   vi.mocked(useModelDownload).mockReturnValue(createModelDownloadController())
   vi.stubGlobal('navigator', {
@@ -19,8 +23,26 @@ beforeEach(() => {
 })
 afterEach(() => {
   cleanup()
+  overwriteGetLocale(originalGetLocale)
   vi.unstubAllGlobals()
   vi.restoreAllMocks()
+})
+
+it('should show the image generation ready status in English', async () => {
+  overwriteGetLocale(() => 'en')
+  render(() => <Generation />)
+
+  await waitFor(() => expect(screen.getByRole('status')).toHaveTextContent('Enter a scene'))
+  expect(screen.queryByRole('status')).not.toHaveTextContent(/[가-힣]/u)
+})
+
+it('should show unsupported image generation status in English', async () => {
+  overwriteGetLocale(() => 'en')
+  vi.stubGlobal('navigator', {})
+  render(() => <Generation />)
+
+  await waitFor(() => expect(screen.getByRole('status')).toHaveTextContent('does not support'))
+  expect(screen.queryByRole('status')).not.toHaveTextContent(/[가-힣]/u)
 })
 
 it('should generate from the diary text and apply the PNG only on request', async () => {

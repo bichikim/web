@@ -25,6 +25,19 @@ export const mapDocumentReferences = (options: MapDocumentReferencesOptions): Pu
       id: rename(value.id),
       second: {...value.second, partId: rename(value.second.partId)},
     })),
+    layerOrderRules: document.layerOrderRules?.flatMap((rule) => {
+      const partIds = rule.partIds.filter(keepPart).map(rename)
+      return keepPart(rule.referencePartId) && partIds.length > 0
+        ? [
+            {
+              ...rule,
+              partIds,
+              referencePartId: rename(rule.referencePartId),
+              when: {...rule.when, parameterIds: rule.when.parameterIds.map(rename)},
+            },
+          ]
+        : []
+    }),
     motions: document.motions.map((motion) => ({
       ...motion,
       id: rename(motion.id),

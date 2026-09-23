@@ -1,6 +1,6 @@
 import {cx} from 'class-variance-authority'
 import {usePreference} from 'src/hooks/use-preference'
-import {createSignal, Show} from 'solid-js'
+import {createEffect, createSignal, Show} from 'solid-js'
 
 import {PSelect, type PSelectOption} from '../p-select/PSelect'
 import {
@@ -47,13 +47,31 @@ const VOICE_OPTIONS: ReadonlyArray<PSelectOption<SupertonicVoiceId>> = SUPERTONI
   (voice) => ({label: voice.label, value: voice.id}),
 )
 
+const areAutomaticDialogueSettingsEqual = (
+  left: AutomaticDialogueSettingsValue,
+  right: AutomaticDialogueSettingsValue,
+) =>
+  left.modelId === right.modelId && left.version === right.version && left.voiceId === right.voiceId
+
 export const AutomaticDialogueSettings = () => {
+  const [failedSettings, setFailedSettings] = createSignal<AutomaticDialogueSettingsValue | null>(
+    null,
+  )
   const [message, setMessage] = createSignal<string | null>(null)
-  let hasPendingSave = false
+  const pendingSaves: Array<AutomaticDialogueSettingsValue> = []
+  let committedSettings = DEFAULT_AUTOMATIC_DIALOGUE_SETTINGS
+  let failedStoredSettings: AutomaticDialogueSettingsValue | null = null
+
+  const settleSave = (didSave: boolean): AutomaticDialogueSettingsValue | null => {
+    const settledSettings = pendingSaves.shift() ?? null
+    if (didSave && settledSettings !== null) {
+      committedSettings = settledSettings
+    }
+    return settledSettings
+  }
 
   const handlePreferenceError = (error: unknown) => {
-    const isSaveError = hasPendingSave
-    hasPendingSave = false
+    const isSaveError = pendingSaves.length > 0
     console.error(
       isSaveError
         ? 'Failed to save automatic dialogue settings.'
@@ -61,6 +79,12 @@ export const AutomaticDialogueSettings = () => {
       error,
     )
 
+    if (isSaveError) {
+      const settledSettings = settleSave(false)
+      if (settledSettings !== null && pendingSaves.length === 0) {
+        setFailedSettings(committedSettings)
+      }
+    }
     setMessage(
       isSaveError
         ? m.settings_dialogue_automatic_save_failed()
@@ -68,8 +92,12 @@ export const AutomaticDialogueSettings = () => {
     )
   }
   const handlePreferenceSaved = () => {
-    if (hasPendingSave) {
-      hasPendingSave = false
+    const settledSettings = settleSave(true)
+    if (settledSettings !== null) {
+      if (pendingSaves.length === 0) {
+        failedStoredSettings = null
+        setFailedSettings(null)
+      }
       setMessage(m.settings_dialogue_automatic_saved())
     }
   }
@@ -80,8 +108,26 @@ export const AutomaticDialogueSettings = () => {
     }),
   )
 
-  const settings = () => storedSettings() ?? DEFAULT_AUTOMATIC_DIALOGUE_SETTINGS
+  const settings = () => failedSettings() ?? storedSettings() ?? DEFAULT_AUTOMATIC_DIALOGUE_SETTINGS
   const isLoading = () => storedSettings() === null
+
+  createEffect(() => {
+    const currentSettings = storedSettings()
+
+    if (currentSettings === null || pendingSaves.length > 0) {
+      return
+    }
+
+    if (failedStoredSettings !== null) {
+      if (areAutomaticDialogueSettingsEqual(currentSettings, failedStoredSettings)) {
+        return
+      }
+      failedStoredSettings = null
+      setFailedSettings(null)
+    }
+
+    committedSettings = currentSettings
+  })
 
   const saveSettings = (nextSettings: AutomaticDialogueSettingsValue) => {
     if (storedSettings() === null) {
@@ -89,7 +135,10 @@ export const AutomaticDialogueSettings = () => {
       return
     }
 
-    hasPendingSave = true
+    failedStoredSettings = null
+    setFailedSettings(null)
+    pendingSaves.push(nextSettings)
+    failedStoredSettings = nextSettings
     setStoredSettings(nextSettings)
   }
 

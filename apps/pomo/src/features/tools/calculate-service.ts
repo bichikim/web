@@ -1,4 +1,5 @@
 import {addDays, dateEpoch, formatDate, parseDate, periodEnd} from '../civil-date'
+import {clamp} from 'es-toolkit/math'
 import {isValidServiceDays} from './service-days'
 
 const PERCENT_SCALE = 100
@@ -38,10 +39,7 @@ export const calculateService = (options: CalculateServiceOptions): ServiceResul
   }
   const total = (dateEpoch(end) - dateEpoch(start)) / DAY_MILLISECONDS + 1
   const elapsed = (dateEpoch(today) - dateEpoch(start)) / DAY_MILLISECONDS
-  const remaining = Math.min(
-    total,
-    Math.max(0, (dateEpoch(end) - dateEpoch(today)) / DAY_MILLISECONDS),
-  )
+  const remaining = clamp((dateEpoch(end) - dateEpoch(today)) / DAY_MILLISECONDS, 0, total)
   return {
     end: formatDate(end),
     progress: remaining === 0 ? PERCENT_SCALE : Math.max(0, (elapsed / total) * PERCENT_SCALE),

@@ -1,3 +1,4 @@
+import {getExceptionMessage} from '../error-detail'
 import {batch, createMemo, createSignal} from 'solid-js'
 import type {
   ModelDownloadClient,
@@ -18,8 +19,6 @@ interface DownloadJob {
 const sameTarget = (left: ModelDownloadTarget, right: ModelDownloadTarget) =>
   left.kind === right.kind && left.modelId === right.modelId
 const NOOP_RESOLVER = () => undefined
-const errorMessage = (error: unknown) =>
-  error instanceof Error ? error.message : '모델 파일을 내려받지 못했어요.'
 
 /** Queues model preparations in request order and joins requests for the same model. */
 export const createDownloadQueue = () => {
@@ -119,7 +118,10 @@ export const createDownloadQueue = () => {
       }
       client.prepare()
     } catch (error) {
-      finish(job, {message: errorMessage(error), status: 'error'})
+      finish(job, {
+        message: getExceptionMessage(error, '모델 파일을 내려받지 못했어요.'),
+        status: 'error',
+      })
     }
   }
   const start = (options: StartModelDownloadOptions) => {

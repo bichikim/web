@@ -129,9 +129,7 @@ export const createVersionedPreferenceRepository = <Value>(
         prefersNativeSettings = true
       }
     } catch (error: unknown) {
-      if (webWriteError !== null) {
-        throw new Error(options.writeFailureMessage, {cause: error})
-      }
+      throw new Error(options.writeFailureMessage, {cause: error})
     } finally {
       if (preferenceWriteRevision === writeRevision) {
         pendingNativeSave = null

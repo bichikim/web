@@ -1,3 +1,4 @@
+import {replaceBlobObjectUrl} from 'src/features/blob-object-url'
 import {Title} from '@solidjs/meta'
 import {A} from '@solidjs/router'
 import {createEffect, createSignal, on, onCleanup, Show} from 'solid-js'
@@ -35,12 +36,12 @@ export function SoundLoopPage() {
     }
   })
   const selectFile = (file: File | null) => {
-    const previous = sourceUrl()
-    if (previous !== null) {
-      URL.revokeObjectURL(previous)
-    }
-    setSource(file)
-    setSourceUrl(file === null ? null : URL.createObjectURL(file))
+    setSourceUrl(
+      replaceBlobObjectUrl(sourceUrl(), () => {
+        setSource(file)
+        return file
+      }),
+    )
   }
   const generate = () => {
     const file = source()

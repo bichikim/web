@@ -45,6 +45,67 @@ const createDocument = (): PuppetDocument => ({
 })
 
 describe('getPartRenderPlans', () => {
+  test('should move a cohesive set only beyond the combined parameter threshold and restore scene order', () => {
+    const document = {
+      ...createDocument(),
+      layerOrderRules: [
+        {
+          partIds: ['source', 'middle'],
+          placement: 'before' as const,
+          referencePartId: 'target',
+          when: {comparison: 'greater-than' as const, parameterIds: ['yaw', 'body'], threshold: 20},
+        },
+      ],
+      parameters: ['yaw', 'body'].map((id) => ({
+        defaultValue: 0,
+        id,
+        maximum: 30,
+        minimum: -30,
+        name: id,
+      })),
+    }
+    const order = (values?: Record<string, number>) =>
+      getPartRenderPlans(document, values).map((plan) => plan.partId)
+    expect(order()).toEqual(['target', 'middle', 'source'])
+    expect(order({body: 10, yaw: 10})).toEqual(['target', 'middle', 'source'])
+    expect(order({body: 10, yaw: 11})).toEqual(['middle', 'source', 'target'])
+    expect(order({body: -20, yaw: 100})).toEqual(['target', 'middle', 'source'])
+    expect(order({body: 0, yaw: Number.NaN})).toEqual(['target', 'middle', 'source'])
+    expect(order({body: 0, yaw: 0})).toEqual(['target', 'middle', 'source'])
+    expect(document.scene).toEqual(createDocument().scene)
+  })
+
+  test('should apply matching rules in array order using defaults and preserve unrelated parts', () => {
+    const document = {
+      ...createDocument(),
+      layerOrderRules: [
+        {
+          partIds: ['target'],
+          placement: 'after' as const,
+          referencePartId: 'source',
+          when: {comparison: 'less-than' as const, parameterIds: ['yaw'], threshold: -5},
+        },
+        {
+          partIds: ['source'],
+          placement: 'before' as const,
+          referencePartId: 'middle',
+          when: {comparison: 'less-than' as const, parameterIds: ['yaw'], threshold: -5},
+        },
+      ],
+      parameters: [{defaultValue: -10, id: 'yaw', maximum: 30, minimum: -30, name: 'Yaw'}],
+    }
+    expect(getPartRenderPlans(document).map((plan) => plan.partId)).toEqual([
+      'source',
+      'middle',
+      'target',
+    ])
+    expect(getPartRenderPlans(document, {yaw: -5}).map((plan) => plan.partId)).toEqual([
+      'target',
+      'middle',
+      'source',
+    ])
+  })
+
   test('should resolve scene order, mask visibility, render properties, and chained masks', () => {
     const plans = getPartRenderPlans(createDocument())
 
@@ -74,6 +135,60 @@ describe('getPartRenderPlans', () => {
         visible: true,
       },
     ])
+  })
+
+  test('should reuse mask structure while resolving frame properties independently', () => {
+    const base = createDocument()
+    const vertices = base.parts[0]!.mesh.vertices
+    const document = {
+      ...base,
+      parameterBindings: [
+        {
+          id: 'fade',
+          keyforms: [
+            {parts: [{partId: 'target', properties: {opacity: 0.5}, vertices}], values: [0]},
+            {parts: [{partId: 'target', properties: {opacity: 1}, vertices}], values: [1]},
+          ],
+          parameterIds: ['fade'] as const,
+          targetPartIds: ['target'],
+        },
+      ],
+      parameters: [{defaultValue: 0, id: 'fade', maximum: 1, minimum: 0, name: 'Fade'}],
+    } satisfies PuppetDocument
+    const initial = getPartRenderPlans(document)
+    const next = getPartRenderPlans(document, {fade: 1})
+
+    expect(next[0]?.mask).toBe(initial[0]?.mask)
+    expect(initial[0]?.properties.opacity).toBe(0.5)
+    expect(next[0]?.properties.opacity).toBe(1)
+  })
+
+  test('should rebuild mask structure for an updated document', () => {
+    const document = createDocument()
+    const initial = getPartRenderPlans(document)
+    const changed: PuppetDocument = {
+      ...document,
+      parts: document.parts.map((part) =>
+        part.id === 'target'
+          ? {...part, properties: {...part.properties, clippingMaskIds: ['source']}}
+          : part,
+      ),
+    }
+    const next = getPartRenderPlans(changed)
+
+    expect(initial[0]?.mask?.sources.map((source) => source.partId)).toEqual(['middle'])
+    expect(next[0]?.mask?.sources.map((source) => source.partId)).toEqual(['source'])
+    expect(next[0]?.mask).not.toBe(initial[0]?.mask)
+  })
+
+  test('should retain first-match behavior for duplicate part IDs', () => {
+    const base = createDocument()
+    const document: PuppetDocument = {
+      ...base,
+      parts: [...base.parts, {...base.parts[0]!, properties: {clippingMaskIds: ['source']}}],
+    }
+
+    expect(getPartRenderPlans(document)[0]?.mask?.sources[0]?.partId).toBe('middle')
   })
 })
 

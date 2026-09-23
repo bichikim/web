@@ -2,8 +2,9 @@
 
 import {fireEvent, render, screen} from '@solidjs/testing-library'
 import {createSignal} from 'solid-js'
-import {beforeEach, expect, it, vi} from 'vitest'
+import {afterEach, beforeEach, expect, it, vi} from 'vitest'
 
+import {getLocale, overwriteGetLocale} from '@paraglide/runtime'
 import {type PEventContextValue, usePEvents} from '../../../features/focus-room-dialogue'
 
 const eventMocks = vi.hoisted(() => ({usePEvents: vi.fn()}))
@@ -17,6 +18,8 @@ vi.mock('../../../features/focus-room-dialogue', async () => {
 })
 
 import {DelayedEndEventSettings} from '../DelayedEndEventSettings'
+
+const originalGetLocale = getLocale
 
 const createEvents = (overrides: Partial<PEventContextValue> = {}): PEventContextValue => ({
   activeDialogueId: () => null,
@@ -68,6 +71,21 @@ const createEvents = (overrides: Partial<PEventContextValue> = {}): PEventContex
 
 beforeEach(() => {
   vi.clearAllMocks()
+})
+
+afterEach(() => {
+  overwriteGetLocale(originalGetLocale)
+})
+
+it('should render the waiting-time unit in English', () => {
+  overwriteGetLocale(() => 'en')
+  eventMocks.usePEvents.mockReturnValue(createEvents())
+
+  render(() => <DelayedEndEventSettings />)
+
+  expect(screen.getByText('Time (minutes)')).toBeInTheDocument()
+  expect(screen.getByText('min')).toBeInTheDocument()
+  expect(screen.queryByText('분')).toBeNull()
 })
 
 it('should show concise context for the waiting time', () => {
@@ -142,6 +160,34 @@ it('should use the latest waiting time when starting before the save debounce co
 
     expect(startedWithDuration).toBe(90)
     expect(events.setDelayedEndEventDuration).toHaveBeenCalledWith(90)
+  } finally {
+    vi.useRealTimers()
+  }
+})
+
+it('should synchronize an externally changed waiting time after saving', async () => {
+  const [duration, setDuration] = createSignal(30)
+  const save = Promise.withResolvers<void>()
+  const events = createEvents({
+    delayedEndEventDurationMinutes: duration,
+    setDelayedEndEventDuration: vi.fn(() => save.promise),
+  })
+  eventMocks.usePEvents.mockReturnValue(events)
+  vi.useFakeTimers()
+
+  try {
+    render(() => <DelayedEndEventSettings />)
+    const input = screen.getByRole('spinbutton', {name: '대기 시간(분)'})
+
+    fireEvent.input(input, {target: {value: '45'}})
+    await vi.advanceTimersByTimeAsync(500)
+    expect(events.setDelayedEndEventDuration).toHaveBeenCalledWith(45)
+
+    save.resolve()
+    await save.promise
+    setDuration(60)
+
+    await vi.waitFor(() => expect(input).toHaveValue(60))
   } finally {
     vi.useRealTimers()
   }

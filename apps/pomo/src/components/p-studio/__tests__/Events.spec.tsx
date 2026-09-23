@@ -1,238 +1,27 @@
 /** @vitest-environment jsdom */
-
-import {fireEvent, render, screen} from '@solidjs/testing-library'
-import {createSignal, onCleanup, onMount} from 'solid-js'
-import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
-import type {PTrack} from '../../../features/focus-room-audio'
 import {
-  RANDOM_DIALOGUE_EVENT,
-  usePEvents,
-  useRandomEvent,
-} from '../../../features/focus-room-dialogue'
+  createEvents,
+  createPomoSay,
+  musicPlaybackMocks,
+  oneOffChatMocks,
+  renderEvents,
+} from './fixtures/events'
+
+import {render, screen} from '@solidjs/testing-library'
+import {createSignal} from 'solid-js'
+import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
+
+import {RANDOM_DIALOGUE_EVENT, useRandomEvent} from '../../../features/focus-room-dialogue'
 import {useOptionalSoundEffects} from '../../../features/sound-effects'
 import * as m from '@paraglide/message'
 import {createMemoryMemo} from '../../../features/memory-assist/schedule'
 import {useMemoryReminders} from '../../../features/memory-assist'
 import type {PSayController} from '../../../features/pomo-webmcp'
+
 import {PStudioEvents} from '../Events'
 import {useChildPresence} from '../use-child-presence'
 import {useMobileLayout} from '../use-mobile-layout'
 import {useOneOffChat} from '../use-one-off-chat'
-
-const oneOffChatMocks = vi.hoisted(() => ({
-  cancelDownloadConsent: vi.fn(),
-  downloadConsentOpen: vi.fn(() => false),
-  draft: vi.fn(() => ''),
-  errorMessage: vi.fn((): string | null => null),
-  isBusy: vi.fn(() => false),
-  setDraft: vi.fn(),
-  startDownload: vi.fn(async () => undefined),
-  submit: vi.fn(async () => undefined),
-}))
-const musicPlaybackMocks = vi.hoisted(() => ({
-  pause: vi.fn(),
-  play: vi.fn(),
-}))
-const soundEffectsMocks = vi.hoisted(() => ({
-  activate: vi.fn(),
-  stop: vi.fn(),
-}))
-
-vi.mock('../../../features/focus-room-dialogue', () => ({
-  RANDOM_DIALOGUE_EVENT: 'random-event',
-  usePEvents: vi.fn(),
-  useRandomEvent: vi.fn(),
-}))
-vi.mock('../../../features/memory-assist', () => ({
-  useMemoryReminders: vi.fn(() => ({skippedReminders: () => []})),
-}))
-vi.mock('../../../features/sound-effects', () => ({useOptionalSoundEffects: vi.fn()}))
-vi.mock('../use-one-off-chat', () => ({
-  ONE_OFF_CHAT_MODEL: {downloadSize: '3.7GB'},
-  useOneOffChat: vi.fn(() => oneOffChatMocks),
-}))
-vi.mock('../use-mobile-layout', () => ({
-  useMobileLayout: vi.fn(() => false),
-}))
-vi.mock('../use-child-presence', () => ({
-  useChildPresence: vi.fn(() => () => false),
-}))
-vi.mock('../../p-dialogue-composer/PDialogueComposer', () => ({
-  PDialogueComposer: (props: {
-    readonly autoExpand?: boolean
-    readonly draft?: () => string
-    readonly loading?: boolean
-    readonly onDraftChange?: (text: string) => void
-    readonly onSubmit?: (text: string) => void
-  }) => (
-    <form class="pomo-dialogue-composer" data-auto-expand={props.autoExpand ? '' : undefined}>
-      <input
-        aria-label="대화 입력"
-        onInput={(event) => props.onDraftChange?.(event.currentTarget.value)}
-        value={props.draft?.() ?? ''}
-      />
-      <button disabled={props.loading} onClick={() => props.onSubmit?.('집중 방법')} type="button">
-        대화 보내기
-      </button>
-    </form>
-  ),
-}))
-vi.mock('../../p-model-download-consent/PModelDownloadConsent', () => ({
-  PModelDownloadConsent: () => null,
-}))
-vi.mock('../../p-dialogue-player/PDialoguePlayer', () => ({
-  PDialoguePlayer: (props: {
-    readonly externalText: string | null
-    readonly onStopExternalSpeech: () => void
-    readonly sceneStyle: string
-  }) => (
-    <div data-dialogue-scene={props.sceneStyle} data-external-text={props.externalText ?? ''}>
-      <button onClick={props.onStopExternalSpeech} type="button">
-        외부 발화 중지
-      </button>
-    </div>
-  ),
-}))
-vi.mock('../../p-feed-status/PFeedStatus', () => ({
-  PFeedStatus: (props: {readonly sceneStyle: string}) => <div data-feed-scene={props.sceneStyle} />,
-}))
-vi.mock('../../p-music-player/PMusicPlayer', () => ({
-  PMusicPlayer: (props: {
-    readonly expanded: boolean
-    readonly isDialogueActive: boolean
-    readonly onExpandedChange: (expanded: boolean) => void
-    readonly onPlaybackActionsReady?: (
-      actions: {
-        readonly pause: () => void
-        readonly play: () => void
-      } | null,
-    ) => void
-    readonly onPlayingChange: (playing: boolean) => void
-    readonly onTrackChange: (track: PTrack | null) => void
-    readonly sceneStyle: string
-  }) => {
-    onMount(() => props.onPlaybackActionsReady?.(musicPlaybackMocks))
-    onCleanup(() => props.onPlaybackActionsReady?.(null))
-    return (
-      <div
-        data-music-dialogue-active={props.isDialogueActive}
-        data-expanded={props.expanded}
-        data-music-scene={props.sceneStyle}
-      >
-        <button onClick={() => props.onPlayingChange(true)} type="button">
-          음악 재생
-        </button>
-        <button onClick={() => props.onExpandedChange(true)} type="button">
-          플레이어 펼치기
-        </button>
-        <button onClick={() => props.onTrackChange(null)} type="button">
-          트랙 지우기
-        </button>
-      </div>
-    )
-  },
-}))
-vi.mock('../../p-pomodoro/PPomodoro', () => ({
-  PPomodoro: (props: {
-    readonly onEvents: (
-      eventIds: ReadonlyArray<string>,
-      options?: {readonly isCatchUp: true},
-    ) => void
-    readonly onPresentationChange: (presentation: {
-      readonly phaseLabel: string
-      readonly statusLabel: string
-      readonly timeLabel: string
-    }) => void
-    readonly sceneStyle: string
-  }) => (
-    <div data-pomodoro-scene={props.sceneStyle}>
-      <button onClick={() => props.onEvents(['focus-start'])} type="button">
-        집중 시작 이벤트
-      </button>
-      <button onClick={() => props.onEvents(['focus-end'], {isCatchUp: true})} type="button">
-        복원 이벤트
-      </button>
-      <button
-        onClick={() =>
-          props.onPresentationChange({
-            phaseLabel: '집중',
-            statusLabel: '진행 중',
-            timeLabel: '25:00',
-          })
-        }
-        type="button"
-      >
-        타이머 표시 갱신
-      </button>
-    </div>
-  ),
-}))
-
-const createEvents = (
-  overrides: {
-    readonly activeText?: string | null
-    readonly blocked?: boolean
-    readonly isPlaying?: boolean
-    readonly registerBeforePlayback?: (callback: () => void) => () => void
-    readonly registerEventActionExecutor?: (
-      executor: (
-        actionId: 'music-start' | 'music-stop' | 'sound-effects-start' | 'sound-effects-stop',
-      ) => void,
-    ) => () => void
-    readonly scheduledCount?: number
-    readonly playDialogueEvents?: ReturnType<typeof vi.fn>
-  } = {},
-) =>
-  ({
-    activeText: () => overrides.activeText ?? null,
-    isDialoguePlaybackBlocked: () => overrides.blocked ?? false,
-    isDialoguePlaying: () => overrides.isPlaying ?? false,
-    playDialogueEvents: overrides.playDialogueEvents ?? vi.fn(async () => undefined),
-    registerBeforePlayback: overrides.registerBeforePlayback ?? vi.fn(() => vi.fn()),
-    registerEventActionExecutor: overrides.registerEventActionExecutor ?? vi.fn(() => vi.fn()),
-    scheduledDialogueCount: () => overrides.scheduledCount ?? 0,
-  }) as unknown as ReturnType<typeof usePEvents>
-
-const createPomoSay = (speechText: string | null = null, isPreparing = false): PSayController => ({
-  activeViseme: () => 'rest',
-  isPlaying: () => false,
-  isPreparing: () => isPreparing,
-  speak: vi.fn(async () => undefined),
-  speechText: () => speechText,
-  stop: vi.fn(),
-})
-
-const renderEvents = (
-  options: {
-    readonly dialogueComposerVisible?: boolean
-    readonly events?: ReturnType<typeof createEvents>
-    readonly expanded?: boolean
-    readonly pomoSay?: PSayController
-    readonly onMusicPlayingChange?: (isPlaying: boolean) => void
-    readonly onPlayerExpandedChange?: (isExpanded: boolean) => void
-    readonly onPomodoroPresentationChange?: (presentation: {
-      readonly phaseLabel: string
-      readonly statusLabel: string
-      readonly timeLabel: string
-    }) => void
-    readonly onTrackChange?: (track: PTrack | null) => void
-  } = {},
-) => {
-  vi.mocked(usePEvents).mockReturnValue(options.events ?? createEvents())
-
-  return render(() => (
-    <PStudioEvents
-      dialogueComposerVisible={options.dialogueComposerVisible ?? true}
-      isPlayerExpanded={options.expanded ?? false}
-      onMusicPlayingChange={options.onMusicPlayingChange ?? vi.fn()}
-      onPlayerExpandedChange={options.onPlayerExpandedChange ?? vi.fn()}
-      onPomodoroPresentationChange={options.onPomodoroPresentationChange ?? vi.fn()}
-      onTrackChange={options.onTrackChange ?? vi.fn()}
-      pomoSay={options.pomoSay ?? createPomoSay()}
-      sceneStyle="original"
-    />
-  ))
-}
 
 describe('PStudioEvents', () => {
   beforeEach(() => {
@@ -249,74 +38,8 @@ describe('PStudioEvents', () => {
     musicPlaybackMocks.play.mockReset()
   })
 
-  it('should register music controls for event actions', () => {
-    const runAction = vi.fn()
-    const unregister = vi.fn()
-    const registerEventActionExecutor = vi.fn(
-      (executor: (actionId: 'music-start' | 'music-stop') => void) => {
-        runAction.mockImplementation(executor)
-        return unregister
-      },
-    )
-    const events = createEvents({registerEventActionExecutor})
-
-    const result = renderEvents({events})
-    runAction('music-stop')
-    runAction('music-start')
-
-    expect(registerEventActionExecutor).toHaveBeenCalledOnce()
-    result.unmount()
-    expect(unregister).toHaveBeenCalledOnce()
-  })
-
-  it('should register sound-effect controls for event actions', () => {
-    vi.mocked(useOptionalSoundEffects).mockReturnValue({
-      activate: soundEffectsMocks.activate,
-      effects: () => [],
-      getPlayback: () => undefined,
-      isStopped: () => false,
-      status: () => 'ready',
-      stop: soundEffectsMocks.stop,
-    })
-    const runAction = vi.fn()
-    const registerEventActionExecutor = vi.fn(
-      (executor: (actionId: 'sound-effects-start' | 'sound-effects-stop') => void) => {
-        runAction.mockImplementation(executor)
-        return vi.fn()
-      },
-    )
-    const events = createEvents({registerEventActionExecutor})
-
-    renderEvents({events})
-    runAction('sound-effects-stop')
-    runAction('sound-effects-start')
-
-    expect(soundEffectsMocks.stop).toHaveBeenCalledOnce()
-    expect(soundEffectsMocks.activate).toHaveBeenCalledOnce()
-  })
-
-  it('should not activate sound effects from events when all effects are stopped', () => {
-    vi.mocked(useOptionalSoundEffects).mockReturnValue({
-      activate: soundEffectsMocks.activate,
-      effects: () => [],
-      getPlayback: () => undefined,
-      isStopped: () => true,
-      status: () => 'ready',
-      stop: soundEffectsMocks.stop,
-    })
-    const runAction = vi.fn()
-    const registerEventActionExecutor = vi.fn(
-      (executor: (actionId: 'sound-effects-start' | 'sound-effects-stop') => void) => {
-        runAction.mockImplementation(executor)
-        return vi.fn()
-      },
-    )
-    const events = createEvents({registerEventActionExecutor})
-
-    renderEvents({events})
-    runAction('sound-effects-start')
-
-    expect(soundEffectsMocks.activate).not.toHaveBeenCalled()
+  afterEach(() => {
+    vi.restoreAllMocks()
   })
 
   it('should show skipped reminder text and remove its alert after recovery', () => {
@@ -361,169 +84,6 @@ describe('PStudioEvents', () => {
 
     expect(screen.getByRole('textbox', {name: '대화 입력'}).closest('form')).not.toHaveAttribute(
       'data-auto-expand',
-    )
-  })
-
-  afterEach(() => {
-    vi.restoreAllMocks()
-  })
-
-  it('should forward timer, music, player, and external-speech interactions', async () => {
-    const events = createEvents()
-    const pomoSay = createPomoSay()
-    const onMusicPlayingChange = vi.fn()
-    const onPlayerExpandedChange = vi.fn()
-    const onPomodoroPresentationChange = vi.fn()
-    const onTrackChange = vi.fn()
-
-    const {container} = renderEvents({
-      events,
-      onMusicPlayingChange,
-      onPlayerExpandedChange,
-      onPomodoroPresentationChange,
-      onTrackChange,
-      pomoSay,
-    })
-
-    expect(container.querySelector('[data-dialogue-active]')).toBeNull()
-    expect(container.querySelector('[data-player-expanded]')).toBeNull()
-    expect(container.querySelector('[data-pomodoro-scene]')).toHaveAttribute(
-      'data-pomodoro-scene',
-      'original',
-    )
-    expect(container.querySelector('[data-music-scene]')).toHaveAttribute(
-      'data-music-scene',
-      'original',
-    )
-    expect(container.querySelector('[data-music-scene]')).toHaveAttribute(
-      'data-music-dialogue-active',
-      'false',
-    )
-    expect(container.querySelector('[data-feed-scene]')).toHaveAttribute(
-      'data-feed-scene',
-      'original',
-    )
-    const dialogueComposer = screen.getByRole('textbox', {name: '대화 입력'}).closest('form')
-    const mediaControls = dialogueComposer?.parentElement
-    const mediaDock = mediaControls?.parentElement
-    const mediaMessages = mediaDock?.lastElementChild
-    expect(mediaDock).toHaveClass('[&_.pomo-player-stage]:[flex:0_1_auto]')
-    expect(mediaDock).not.toHaveClass('[&[data-player-expanded]_.pomo-player-stage]:[flex:1_1_0%]')
-    expect(mediaDock).toHaveClass('[&[data-player-expanded]_.pomo-player-stage]:h-[19.875rem]')
-    const constrainedMessagesClass =
-      '[&:has(.pomo-media-messages:not(:empty))' +
-      ':has(.pomo-dialogue-composer:not([data-expanded]))_.pomo-media-messages]' +
-      ':w-[min(36rem,_calc(100%_-_4rem))]'
-    expect(mediaDock).toHaveClass(
-      '[&:has(.pomo-media-messages:not(:empty))_.pomo-dialogue-composer:not([data-expanded])]:absolute',
-      '[&:has(.pomo-media-messages:not(:empty))_.pomo-dialogue-composer:not([data-expanded])]:bottom-0',
-      '[&:has(.pomo-media-messages:not(:empty))_.pomo-dialogue-composer:not([data-expanded])]:right-0',
-      constrainedMessagesClass,
-    )
-    expect(mediaControls).toHaveClass(
-      'flex-col-reverse',
-      'justify-start',
-      'max-h-full',
-      'min-h-0',
-      '[&_.pomo-player-stage]:mr-auto',
-      'sm:flex-row-reverse',
-      'sm:flex-wrap-reverse',
-      'sm:items-start',
-    )
-    expect(mediaControls).not.toHaveClass(
-      'flex-row-reverse',
-      'flex-wrap',
-      'sm:flex-wrap',
-      'sm:items-end',
-      'sm:[&:has(.pomo-dialogue-composer[data-expanded])]:flex-wrap-reverse',
-      '[&:has(.pomo-dialogue-composer[data-expanded])]:flex-wrap-reverse',
-      'xs:[&:has(.pomo-dialogue-composer[data-expanded])]:flex-wrap-reverse',
-    )
-    expect(mediaControls?.children.item(0)).toBe(dialogueComposer)
-    expect(mediaControls?.children.item(1)).toBe(container.querySelector('[data-music-scene]'))
-    expect(mediaDock?.children.item(0)).toBe(mediaControls)
-    expect(mediaDock?.children.item(1)).toBe(mediaMessages)
-    expect(mediaMessages).toHaveClass('self-start', 'w-[min(36rem,_100%)]')
-    expect(useMemoryReminders).toHaveBeenCalledWith({
-      events,
-      onBeforePlayback: expect.any(Function),
-    })
-
-    fireEvent.click(screen.getByRole('button', {name: '대화 보내기'}))
-    expect(oneOffChatMocks.submit).toHaveBeenCalledWith('집중 방법')
-    const oneOffChatOptions = vi.mocked(useOneOffChat).mock.calls[0]?.[0]
-    await oneOffChatOptions?.onReply('천천히 시작해 봐요.')
-    expect(pomoSay.speak).toHaveBeenCalledWith({text: '천천히 시작해 봐요.'})
-
-    fireEvent.click(screen.getByRole('button', {name: '집중 시작 이벤트'}))
-    fireEvent.click(screen.getByRole('button', {name: '복원 이벤트'}))
-    fireEvent.click(screen.getByRole('button', {name: '타이머 표시 갱신'}))
-    fireEvent.click(screen.getByRole('button', {name: '음악 재생'}))
-    fireEvent.click(screen.getByRole('button', {name: '플레이어 펼치기'}))
-    fireEvent.click(screen.getByRole('button', {name: '트랙 지우기'}))
-    fireEvent.click(screen.getByRole('button', {name: '외부 발화 중지'}))
-    await Promise.resolve()
-
-    expect(events.playDialogueEvents).toHaveBeenCalledWith(['focus-start'], pomoSay.stop)
-    expect(events.playDialogueEvents).toHaveBeenCalledWith(['focus-end'], pomoSay.stop, {
-      replacementPolicy: 'latest',
-    })
-    expect(onPomodoroPresentationChange).toHaveBeenCalledWith({
-      phaseLabel: '집중',
-      statusLabel: '진행 중',
-      timeLabel: '25:00',
-    })
-    expect(onMusicPlayingChange).toHaveBeenCalledWith(true)
-    expect(onPlayerExpandedChange).toHaveBeenCalledWith(true)
-    expect(onTrackChange).toHaveBeenCalledWith(null)
-    expect(pomoSay.stop).toHaveBeenCalledOnce()
-  })
-
-  it('should stop external speech before a memory reminder starts playback', () => {
-    const events = createEvents()
-    const pomoSay = createPomoSay()
-
-    renderEvents({events, pomoSay})
-    const reminderProps = vi.mocked(useMemoryReminders).mock.calls[0]?.[0]
-    reminderProps?.onBeforePlayback?.()
-
-    expect(pomoSay.stop).toHaveBeenCalledOnce()
-  })
-
-  it('should register external speech stop for controller-owned playback', () => {
-    let beforePlayback: (() => void) | undefined
-    const unregister = vi.fn()
-    const events = createEvents({
-      registerBeforePlayback: (callback) => {
-        beforePlayback = callback
-        return unregister
-      },
-    })
-    const pomoSay = createPomoSay()
-    const result = renderEvents({events, pomoSay})
-
-    beforePlayback?.()
-
-    expect(pomoSay.stop).toHaveBeenCalledOnce()
-    result.unmount()
-    expect(unregister).toHaveBeenCalledOnce()
-  })
-
-  it('should lower music for either event dialogue or external speech playback', () => {
-    const dialogueResult = renderEvents({events: createEvents({isPlaying: true})})
-
-    expect(dialogueResult.container.querySelector('[data-music-scene]')).toHaveAttribute(
-      'data-music-dialogue-active',
-      'true',
-    )
-    dialogueResult.unmount()
-
-    const pomoSay = {...createPomoSay(), isPlaying: () => true}
-    const speechResult = renderEvents({pomoSay})
-
-    expect(speechResult.container.querySelector('[data-music-scene]')).toHaveAttribute(
-      'data-music-dialogue-active',
-      'true',
     )
   })
 
@@ -590,6 +150,52 @@ describe('PStudioEvents', () => {
     expect(pomoSay.speak).toHaveBeenCalledWith({text: '스택에 추가할 답변'})
   })
 
+  it('should cancel a queued input reply when the composer is hidden', async () => {
+    const pomoSay = createPomoSay()
+    renderEvents({dialogueComposerVisible: false, pomoSay})
+    const oneOffChatOptions = vi.mocked(useOneOffChat).mock.calls[0]?.[0]
+
+    const reply = oneOffChatOptions?.onReply('숨겨진 입력기의 답변')
+
+    await expect(reply).rejects.toMatchObject({name: 'AbortError'})
+    expect(pomoSay.speak).not.toHaveBeenCalled()
+  })
+
+  it('should stop an active input reply when the composer is hidden', async () => {
+    const [dialogueComposerVisible, setDialogueComposerVisible] = createSignal(true)
+    let completeSpeech: () => void = () => undefined
+    const speak: PSayController['speak'] = vi.fn(
+      () =>
+        new Promise<void>((resolve) => {
+          completeSpeech = resolve
+        }),
+    )
+    const stop = vi.fn(() => completeSpeech())
+    const pomoSay: PSayController = {...createPomoSay(), speak, stop}
+    const events = createEvents()
+    const result = render(() => (
+      <PStudioEvents
+        dialogueComposerVisible={dialogueComposerVisible()}
+        isPlayerExpanded={false}
+        onMusicPlayingChange={vi.fn()}
+        onPlayerExpandedChange={vi.fn()}
+        onPomodoroPresentationChange={vi.fn()}
+        onTrackChange={vi.fn()}
+        pomoSay={pomoSay}
+        sceneStyle="original"
+      />
+    ))
+    const oneOffChatOptions = vi.mocked(useOneOffChat).mock.calls[0]?.[0]
+    const reply = oneOffChatOptions?.onReply('재생 중인 답변')
+
+    await vi.waitFor(() => expect(speak).toHaveBeenCalledWith({text: '재생 중인 답변'}))
+    setDialogueComposerVisible(false)
+
+    await expect(reply).rejects.toMatchObject({name: 'AbortError'})
+    expect(stop).toHaveBeenCalledOnce()
+    result.unmount()
+  })
+
   it('should omit the dialogue composer when its display setting is off', () => {
     const {container} = renderEvents({dialogueComposerVisible: false})
 
@@ -634,42 +240,6 @@ describe('PStudioEvents', () => {
     )
   })
 
-  it('should discard music actions that arrive while the player is hidden', async () => {
-    let runAction: ((actionId: 'music-start' | 'music-stop') => void) | undefined
-    const registerEventActionExecutor = vi.fn(
-      (executor: (actionId: 'music-start' | 'music-stop') => void) => {
-        runAction = executor
-        return vi.fn()
-      },
-    )
-    const events = createEvents({registerEventActionExecutor})
-    vi.mocked(usePEvents).mockReturnValue(events)
-    const [playerVisible, setPlayerVisible] = createSignal(true)
-    const result = render(() => (
-      <PStudioEvents
-        playerVisible={playerVisible()}
-        dialogueComposerVisible={false}
-        isPlayerExpanded={false}
-        onMusicPlayingChange={vi.fn()}
-        onPlayerExpandedChange={vi.fn()}
-        onPomodoroPresentationChange={vi.fn()}
-        onTrackChange={vi.fn()}
-        pomoSay={createPomoSay()}
-        sceneStyle="original"
-      />
-    ))
-
-    runAction?.('music-start')
-    expect(musicPlaybackMocks.play).toHaveBeenCalledOnce()
-
-    setPlayerVisible(false)
-    runAction?.('music-stop')
-    setPlayerVisible(true)
-
-    expect(musicPlaybackMocks.pause).not.toHaveBeenCalled()
-    result.unmount()
-  })
-
   it('should compact only after scheduled dialogue becomes visible', () => {
     const [activeText, setActiveText] = createSignal<string | null>(null)
     const [scheduledCount, setScheduledCount] = createSignal(1)
@@ -697,34 +267,4 @@ describe('PStudioEvents', () => {
     setScheduledCount(0)
     expect(container.querySelector('[data-dialogue-active]')).toBeNull()
   })
-})
-
-it('should unmount disabled widgets and mount them again independently', () => {
-  vi.mocked(usePEvents).mockReturnValue(createEvents())
-  const [playerVisible, setPlayerVisible] = createSignal(true)
-  const [pomodoroVisible, setPomodoroVisible] = createSignal(true)
-  const result = render(() => (
-    <PStudioEvents
-      playerVisible={playerVisible()}
-      pomodoroVisible={pomodoroVisible()}
-      dialogueComposerVisible={false}
-      isPlayerExpanded={false}
-      onMusicPlayingChange={vi.fn()}
-      onPlayerExpandedChange={vi.fn()}
-      onPomodoroPresentationChange={vi.fn()}
-      onTrackChange={vi.fn()}
-      pomoSay={createPomoSay()}
-      sceneStyle="original"
-    />
-  ))
-  const player = result.container.querySelector('[data-music-scene]')
-  const timer = result.container.querySelector('[data-pomodoro-scene]')
-  setPlayerVisible(false)
-  expect(player?.isConnected).toBe(false)
-  expect(timer?.isConnected).toBe(true)
-  setPomodoroVisible(false)
-  expect(timer?.isConnected).toBe(false)
-  setPlayerVisible(true)
-  expect(result.container.querySelector('[data-music-scene]')).not.toBe(player)
-  expect(result.container.querySelector('[data-pomodoro-scene]')).toBeNull()
 })

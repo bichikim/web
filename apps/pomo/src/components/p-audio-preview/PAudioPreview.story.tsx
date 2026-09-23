@@ -1,3 +1,4 @@
+import * as m from '@paraglide/message'
 import {expect, fn, userEvent, within} from 'storybook/test'
 import type {Meta, StoryObj} from 'storybook-solidjs-vite'
 
@@ -46,16 +47,24 @@ export const Ready: Story = {
   play: async ({canvasElement}: PreviewPlayContext) => {
     const canvas = within(canvasElement)
 
-    await expect(canvas.getByRole('button', {name: 'Brunch Terrace 재생'})).toBeVisible()
-    await expect(canvas.getByRole('slider', {name: 'Brunch Terrace 재생 위치'})).toBeVisible()
-    await expect(canvas.getByRole('button', {name: 'Brunch Terrace 음소거'})).toBeVisible()
+    await expect(
+      canvas.getByRole('button', {name: m.audio_preview_play({title: 'Brunch Terrace'})}),
+    ).toBeVisible()
+    await expect(
+      canvas.getByRole('slider', {name: m.audio_preview_position({title: 'Brunch Terrace'})}),
+    ).toBeVisible()
+    await expect(
+      canvas.getByRole('button', {name: m.audio_preview_mute({title: 'Brunch Terrace'})}),
+    ).toBeVisible()
   },
 }
 
 export const Request: Story = {
   args: {src: null},
   play: async ({canvasElement}: PreviewPlayContext) => {
-    const button = within(canvasElement).getByRole('button', {name: 'Brunch Terrace 미리 듣기'})
+    const button = within(canvasElement).getByRole('button', {
+      name: `Brunch Terrace ${m.audio_preview_listen()}`,
+    })
 
     await userEvent.click(button)
     await expect(meta.args.onRequest).toHaveBeenCalledOnce()

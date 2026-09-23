@@ -3,7 +3,7 @@
  * 브라우저 테스트 환경에 jest-dom matcher, 브라우저 mock과
  * Solid Testing Library DOM cleanup을 적용한다.
  */
-import {afterEach, beforeEach, vi} from 'vitest'
+import {afterAll, afterEach, beforeEach, vi} from 'vitest'
 
 const RGBA_CHANNEL_COUNT = 4
 
@@ -47,6 +47,23 @@ const installBrowserMocks = () => {
 }
 
 if (typeof document !== 'undefined') {
+  const {jsdom} = globalThis as typeof globalThis & {jsdom?: {window: Window}}
+  const {localStorage: browserStorage} = jsdom?.window ?? {localStorage: undefined}
+  if (browserStorage !== undefined) {
+    const originalStorage = Object.getOwnPropertyDescriptor(globalThis, 'localStorage')
+    Object.defineProperty(globalThis, 'localStorage', {
+      configurable: true,
+      value: browserStorage,
+      writable: true,
+    })
+    afterAll(() => {
+      if (originalStorage === undefined) {
+        Reflect.deleteProperty(globalThis, 'localStorage')
+      } else {
+        Object.defineProperty(globalThis, 'localStorage', originalStorage)
+      }
+    })
+  }
   await import('@testing-library/jest-dom/vitest')
   const {cleanup} = await import('@solidjs/testing-library')
 

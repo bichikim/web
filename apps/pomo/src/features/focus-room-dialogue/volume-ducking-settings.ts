@@ -1,6 +1,8 @@
+import {createAuthoritativePreferenceRepository} from '../authoritative-preference'
+import {createParsedPreferenceStorage} from '../parsed-preference-storage'
 import {z} from 'zod'
 
-import {type PreferenceStorage, webLocalStorage} from 'src/utils/preference-storage'
+import {webLocalStorage} from 'src/utils/preference-storage'
 import {
   hasNativeStorageBridge,
   readTossStorageJson,
@@ -131,47 +133,22 @@ export const createDialogueVolumeDuckingSettingsRepository = (
     return legacySettings === null ? null : migrateLegacySettings(legacySettings)
   }
 
-  const read = async (): Promise<DialogueVolumeDuckingSettings> => {
-    if (!storage.usesTossStorage()) {
-      return readWebSettings() ?? DEFAULT_DIALOGUE_VOLUME_DUCKING_SETTINGS
-    }
-
-    try {
-      const tossSettings = await readTossSettings()
-
-      if (tossSettings === null) {
-        writeWebSettings(DEFAULT_DIALOGUE_VOLUME_DUCKING_SETTINGS)
-        return DEFAULT_DIALOGUE_VOLUME_DUCKING_SETTINGS
-      }
-
-      writeWebSettings(tossSettings)
-      return tossSettings
-    } catch (error: unknown) {
-      throw new Error('Failed to read dialogue volume ducking settings.', {cause: error})
-    }
-  }
-
-  const write = async (settings: DialogueVolumeDuckingSettings): Promise<void> => {
-    const snapshot = settingsSchema.parse(settings)
-    const webWriteError = writeWebSettings(snapshot)
-
-    if (!storage.usesTossStorage()) {
-      if (webWriteError !== null) {
-        throw new Error('Failed to persist dialogue volume ducking settings.', {
-          cause: webWriteError,
-        })
-      }
-
-      return
-    }
-
-    try {
-      await storage.writeToss(STORAGE_KEY, snapshot)
-    } catch (error: unknown) {
-      throw new Error('Failed to persist dialogue volume ducking settings.', {
-        cause: error,
-      })
-    }
+  const repository = createAuthoritativePreferenceRepository({
+    defaultValue: DEFAULT_DIALOGUE_VOLUME_DUCKING_SETTINGS,
+    readFailureMessage: 'Failed to read dialogue volume ducking settings.',
+    storage: {
+      isNative: () => storage.usesTossStorage(),
+      readNative: readTossSettings,
+      readWeb: readWebSettings,
+      writeNative: (value) => storage.writeToss(STORAGE_KEY, value),
+      writeWeb: writeWebSettings,
+    },
+    writeFailureMessage: 'Failed to persist dialogue volume ducking settings.',
+  })
+  const read = () => repository.read()
+  const write = async (value: DialogueVolumeDuckingSettings): Promise<void> => {
+    const snapshot = settingsSchema.parse(value)
+    await repository.write(snapshot)
   }
 
   return {read, write}
@@ -192,17 +169,13 @@ const runtimeRepository = createDialogueVolumeDuckingSettingsRepository({
   },
 })
 
-const preferenceStorage: PreferenceStorage = {
+const preferenceStorage = createParsedPreferenceStorage({
+  invalidMessage: 'Invalid dialogue volume ducking settings.',
+  parse: parseDialogueVolumeDuckingSettings,
   read: () => runtimeRepository.read(),
   subscribe: webLocalStorage.subscribe,
-  write: (_key, value) => {
-    const settings = parseDialogueVolumeDuckingSettings(value)
-
-    return settings === null
-      ? new Error('Invalid dialogue volume ducking settings.')
-      : runtimeRepository.write(settings).then(() => undefined)
-  },
-}
+  write: (settings) => runtimeRepository.write(settings).then(() => undefined),
+})
 
 export interface DialogueVolumeDuckingPreferenceOptions {
   readonly onError?: (error: unknown) => void

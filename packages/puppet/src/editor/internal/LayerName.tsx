@@ -32,13 +32,21 @@ export const LayerName = (props: LayerNameProps) => {
   })
   return (
     <strong
-      ref={viewport}
+      ref={(element) => {
+        viewport = element
+      }}
       class="layer-name"
       title={props.name}
       data-scrolling={props.selected && overflow() > 0 ? '' : undefined}
     >
       <span class="layer-name-track">
-        <span ref={text}>{props.name}</span>
+        <span
+          ref={(element) => {
+            text = element
+          }}
+        >
+          {props.name}
+        </span>
         <span class="layer-name-copy" aria-hidden="true">
           {props.name}
         </span>

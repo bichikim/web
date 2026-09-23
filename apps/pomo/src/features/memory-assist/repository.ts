@@ -50,14 +50,27 @@ export const createMemoryMemoRepository = (
       const tossMemos = await storage.readToss()
 
       if (tossMemos !== null) {
-        storage.writeWeb(tossMemos)
+        const webError = storage.writeWeb(tossMemos)
+        if (webError !== null) {
+          throw webError
+        }
+
         return tossMemos
       }
+
+      const webMemos = storage.readWeb()
+      if (webMemos !== null) {
+        await storage.writeToss(webMemos).catch((error: unknown) => {
+          globalThis.reportError?.(error)
+        })
+        return webMemos
+      }
+
+      storage.writeWeb([])
     } catch (error) {
       throw new Error('Failed to read memory memos.', {cause: error})
     }
 
-    storage.writeWeb([])
     return []
   },
   async write(memos) {
@@ -68,12 +81,11 @@ export const createMemoryMemoRepository = (
     }
 
     const webError = storage.writeWeb(snapshot)
+    if (webError !== null) {
+      throw new Error('Failed to persist memory memos.', {cause: webError})
+    }
 
     if (!storage.usesTossStorage()) {
-      if (webError !== null) {
-        throw new Error('Failed to persist memory memos.', {cause: webError})
-      }
-
       return
     }
 

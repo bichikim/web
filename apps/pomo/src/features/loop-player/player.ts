@@ -1,3 +1,4 @@
+import {getExceptionMessage} from 'src/features/error-detail'
 import {DEFAULT_CONNECTION_SECONDS} from '../sound-generation/connection'
 
 export interface LoopPlayback {
@@ -38,7 +39,7 @@ export function createLoopPlayer(
   }
   const fail = (cause: unknown) => {
     stop()
-    onStatus(cause instanceof Error ? cause.message : '재생하지 못했습니다.', false)
+    onStatus(getExceptionMessage(cause, '재생하지 못했습니다.'), false)
   }
   const transition = async () => {
     const active = audio[current]

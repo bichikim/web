@@ -20,9 +20,38 @@ const {
   useStudioScreenSaver,
 } = studioMocks
 
+class TestBroadcastChannel {
+  static instances: TestBroadcastChannel[] = []
+  readonly close = vi.fn()
+  readonly listeners: Array<(event: MessageEvent) => void> = []
+  readonly postMessage = vi.fn()
+
+  constructor(readonly name: string) {
+    TestBroadcastChannel.instances.push(this)
+  }
+
+  addEventListener(_type: string, listener: (event: MessageEvent) => void) {
+    this.listeners.push(listener)
+  }
+
+  removeEventListener(_type: string, listener: (event: MessageEvent) => void) {
+    const listenerIndex = this.listeners.indexOf(listener)
+    if (listenerIndex >= 0) {
+      this.listeners.splice(listenerIndex, 1)
+    }
+  }
+
+  dispatch(data: unknown) {
+    for (const listener of this.listeners) {
+      listener(new MessageEvent('message', {data}))
+    }
+  }
+}
+
 beforeEach(setupStudio)
 afterEach(() => {
   vi.unstubAllEnvs()
+  vi.unstubAllGlobals()
   vi.useRealTimers()
 })
 
@@ -128,7 +157,86 @@ describe('PStudio', () => {
     expect(screen.queryByText('화면 보호기')).not.toBeInTheDocument()
     expect(vi.mocked(PStudioScene).mock.calls[0]?.[0].interactive).toBe(false)
     expect(SceneToolbar).not.toHaveBeenCalled()
-    expect(registerEventActionExecutor).toHaveBeenCalledOnce()
+    expect(registerEventActionExecutor).toHaveBeenCalledExactlyOnceWith(expect.any(Function), {
+      mode: 'deferred',
+    })
+  })
+
+  it('should forward desktop wallpaper music actions to the desktop player', () => {
+    const {registerEventActionHandler} = configureStudio({
+      desktopMode: 'desktop',
+      entrySession: true,
+    })
+    TestBroadcastChannel.instances = []
+    vi.stubGlobal('BroadcastChannel', TestBroadcastChannel)
+
+    renderStudio()
+
+    const handler = registerEventActionHandler.mock.calls[0]?.[0]
+    if (handler === undefined) {
+      throw new Error('Expected the desktop wallpaper event action handler to be registered.')
+    }
+
+    TestBroadcastChannel.instances[0]?.dispatch({type: 'player-ready'})
+    expect(handler('music-stop')).toBe(true)
+
+    expect(TestBroadcastChannel.instances[0]?.postMessage).toHaveBeenNthCalledWith(2, {
+      actionId: 'music-stop',
+    })
+  })
+
+  it('should keep music actions until the desktop player subscribes', () => {
+    const {registerEventActionHandler} = configureStudio({
+      desktopMode: 'desktop',
+      entrySession: true,
+    })
+    TestBroadcastChannel.instances = []
+    vi.stubGlobal('BroadcastChannel', TestBroadcastChannel)
+
+    renderStudio()
+
+    const handler = registerEventActionHandler.mock.calls[0]?.[0]
+    const channel = TestBroadcastChannel.instances[0]
+    if (handler === undefined || channel === undefined) {
+      throw new Error('Expected the desktop wallpaper action bridge to be ready.')
+    }
+
+    expect(handler('music-start')).toBe(true)
+    expect(handler('music-stop')).toBe(true)
+    expect(channel.postMessage).toHaveBeenCalledExactlyOnceWith({type: 'request-player-ready'})
+
+    channel.dispatch({type: 'player-ready'})
+
+    expect(channel.postMessage).toHaveBeenNthCalledWith(2, {actionId: 'music-start'})
+    expect(channel.postMessage).toHaveBeenNthCalledWith(3, {actionId: 'music-stop'})
+  })
+
+  it('should queue music actions again after the desktop player disconnects', () => {
+    const {registerEventActionHandler} = configureStudio({
+      desktopMode: 'desktop',
+      entrySession: true,
+    })
+    TestBroadcastChannel.instances = []
+    vi.stubGlobal('BroadcastChannel', TestBroadcastChannel)
+
+    renderStudio()
+
+    const handler = registerEventActionHandler.mock.calls[0]?.[0]
+    const channel = TestBroadcastChannel.instances[0]
+    if (handler === undefined || channel === undefined) {
+      throw new Error('Expected the desktop wallpaper action bridge to be ready.')
+    }
+
+    channel.dispatch({type: 'player-ready'})
+    expect(handler('music-stop')).toBe(true)
+    expect(channel.postMessage).toHaveBeenNthCalledWith(2, {actionId: 'music-stop'})
+
+    channel.dispatch({type: 'player-unavailable'})
+    expect(handler('music-start')).toBe(true)
+    expect(channel.postMessage).toHaveBeenCalledTimes(2)
+
+    channel.dispatch({type: 'player-ready'})
+    expect(channel.postMessage).toHaveBeenNthCalledWith(3, {actionId: 'music-start'})
   })
 
   it('should keep the studio controls on the interactive desktop background', () => {

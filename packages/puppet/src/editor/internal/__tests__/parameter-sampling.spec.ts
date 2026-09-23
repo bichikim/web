@@ -1,6 +1,11 @@
 import {describe, expect, test} from 'vitest'
 
-import {createDemoDocument} from '../../../player'
+import {
+  createDemoDocument,
+  type PuppetDocument,
+  type PuppetParameterBinding1D,
+} from '../../../player'
+import {getPartRenderPlans} from '../../../player/internal/render-plan'
 import {
   addParameter,
   insertParameterKeyform,
@@ -8,7 +13,11 @@ import {
   setParameterKeyformDeformerCurveHandle,
   setParameterKeyformDeformerPoint,
 } from '../parameter-keyforms'
-import {createParameterPreview, sampleParameterVertices} from '../parameter-sampling'
+import {
+  createParameterPreview,
+  sampleParameterVertices,
+  samplePartKeyform,
+} from '../parameter-sampling'
 import {
   getDeformerAngle,
   getDeformerRotationOrigin,
@@ -35,7 +44,77 @@ describe('sampleParameterVertices', () => {
   })
 })
 
+describe('samplePartKeyform', () => {
+  test('should retain interpolated opacity and colors in an intermediate keyform', () => {
+    const document = createDemoDocument()
+    const part = document.parts[0]!
+    const binding: PuppetParameterBinding1D = {
+      id: 'appearance',
+      keyforms: [
+        {parts: [{partId: part.id, vertices: part.mesh.vertices}], values: [0]},
+        {
+          parts: [
+            {
+              partId: part.id,
+              properties: {multiplyColor: [0, 1, 0], opacity: 0, screenColor: [1, 0, 1]},
+              vertices: part.mesh.vertices,
+            },
+          ],
+          values: [30],
+        },
+      ],
+      parameterIds: ['angle-x'],
+      targetPartIds: [part.id],
+    }
+
+    expect(samplePartKeyform({binding, document, part, values: [15]})).toMatchObject({
+      partId: part.id,
+      properties: {multiplyColor: [0.5, 1, 0.5], opacity: 0.5, screenColor: [0.5, 0, 0.5]},
+      vertices: part.mesh.vertices,
+    })
+    expect(
+      samplePartKeyform({
+        binding: document.parameterBindings![0]!,
+        document,
+        part,
+        values: [15, 0],
+      }).properties,
+    ).toBeUndefined()
+  })
+})
+
 describe('createParameterPreview', () => {
+  test.each([-30, 0, 30])('should retain conditional paint order in a sampled yaw of %s', (yaw) => {
+    const source = createDemoDocument()
+    const [first, second] = source.parts
+    const document: PuppetDocument = {
+      ...source,
+      layerOrderRules: [
+        {
+          partIds: [first!.id],
+          placement: 'after',
+          referencePartId: second!.id,
+          when: {comparison: 'greater-than', parameterIds: ['angle-x', 'angle-y'], threshold: 22},
+        },
+        {
+          partIds: [first!.id],
+          placement: 'after',
+          referencePartId: second!.id,
+          when: {comparison: 'less-than', parameterIds: ['angle-x', 'angle-y'], threshold: -22},
+        },
+      ],
+    }
+    const parameterValues = {'angle-x': yaw / 2, 'angle-y': yaw / 2}
+    const preview = createParameterPreview({document, parameterValues})
+    expect(getPartRenderPlans(preview).map((plan) => plan.partId)).toEqual(
+      getPartRenderPlans(document, parameterValues).map((plan) => plan.partId),
+    )
+    expect(preview.parameterBindings).toEqual([])
+    expect(preview.parts[0]!.mesh.vertices).toEqual(
+      createParameterPreview({document: preview}).parts[0]!.mesh.vertices,
+    )
+  })
+
   test('should clamp outside values and retain unaffected parts', () => {
     const document = createDemoDocument()
     const parameterId = document.parameters?.[0]?.id

@@ -21,6 +21,7 @@ export interface GenerateTextOptions {
   readonly noRepeatNgramSize: number
   readonly onToken?: (text: string) => void
   readonly repetitionPenalty: number
+  readonly signal?: AbortSignal
   readonly suppressedTokenIds?: Array<number>
   readonly temperature: number
   readonly topK: number

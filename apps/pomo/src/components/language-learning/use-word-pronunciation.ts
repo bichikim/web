@@ -1,5 +1,6 @@
-import {createSignal, onCleanup} from 'solid-js'
+import {createEffect, createSignal, onCleanup} from 'solid-js'
 import {usePreference} from 'src/hooks/use-preference'
+import {replaceBlobObjectUrl, replaceObjectUrl} from '../../features/blob-object-url'
 
 import * as m from '@paraglide/message'
 import {
@@ -24,6 +25,16 @@ interface PendingPronunciation {
   readonly revision: number
   readonly voiceId: AutomaticDialogueSettings['voiceId']
   readonly word: LanguageLearningWord
+}
+
+interface PendingSettingsPronunciation {
+  readonly revision: number
+  readonly word: LanguageLearningWord
+}
+
+interface ActivePronunciationRequest {
+  readonly key: string
+  readonly revision: number
 }
 
 type AudioUrlMap = Readonly<Record<string, string>>
@@ -75,12 +86,12 @@ const createAudioPublisher = (options: AudioPublisherOptions) => {
     }
 
     const key = getWordKey(word)
-    const url = URL.createObjectURL(audio)
     const currentUrls = options.getAudioUrls()
-    const previousUrl = currentUrls[key]
-    if (previousUrl !== undefined) {
-      URL.revokeObjectURL(previousUrl)
-    }
+    const url = replaceObjectUrl(currentUrls[key] ?? null, () => audio, {
+      create: (blob) => URL.createObjectURL(blob),
+      order: 'create-first',
+      revoke: (previous) => URL.revokeObjectURL(previous),
+    })
     options.setAudioUrls({...currentUrls, [key]: url})
     requestAutoplay(key)
   }
@@ -186,7 +197,6 @@ export interface LanguageLearningWordPronunciationState {
   readonly cancelDownload: () => void
   readonly confirmDownload: () => void
   readonly error: () => string | null
-  readonly isBusy: () => boolean
   readonly isLoading: (word: LanguageLearningWord) => boolean
   readonly pendingModelId: () => AutomaticDialogueSettings['modelId'] | null
   readonly pendingWord: () => LanguageLearningWord | null
@@ -203,8 +213,11 @@ export const useLanguageLearningWordPronunciation = (): LanguageLearningWordPron
   const [error, setError] = createSignal<string | null>(null)
   const [loadingKey, setLoadingKey] = createSignal<string | null>(null)
   const [pendingRequest, setPendingRequest] = createSignal<PendingPronunciation | null>(null)
+  const [pendingSettingsRequest, setPendingSettingsRequest] =
+    createSignal<PendingSettingsPronunciation | null>(null)
   let audioRepository: LanguageLearningWordAudioRepository | null = null
   let activeGeneration: {readonly controller: AbortController; readonly key: string} | null = null
+  let activeRequest: ActivePronunciationRequest | null = null
   let disposed = false
   const requestRevisions = new Map<string, number>()
   const publisher = createAudioPublisher({
@@ -223,18 +236,39 @@ export const useLanguageLearningWordPronunciation = (): LanguageLearningWordPron
     return audioRepository
   }
 
-  const isCurrentRequest = (request: PendingPronunciation) =>
-    !disposed && requestRevisions.get(getWordKey(request.word)) === request.revision
+  const isCurrentRevision = (key: string, revision: number) =>
+    !disposed &&
+    activeRequest?.key === key &&
+    activeRequest.revision === revision &&
+    requestRevisions.get(key) === revision
+
+  const isCurrentRequest = (request: PendingPronunciation) => {
+    const key = getWordKey(request.word)
+    return isCurrentRevision(key, request.revision)
+  }
+
+  const abortActiveGeneration = () => {
+    activeGeneration?.controller.abort()
+    activeGeneration = null
+  }
+
+  const cancelActiveRequest = () => {
+    activeRequest = null
+    abortActiveGeneration()
+    setPendingRequest(null)
+    setPendingSettingsRequest(null)
+    setLoadingKey(null)
+  }
 
   const generate = (request: PendingPronunciation, downloadIfMissing: boolean) => {
-    activeGeneration?.controller.abort()
+    abortActiveGeneration()
     const controller = new AbortController()
     const key = getWordKey(request.word)
     activeGeneration = {controller, key}
     generatePronunciation({
       audioRepository: getAudioRepository(),
       downloadIfMissing,
-      isCurrent: () => isCurrentRequest(request),
+      isCurrent: () => activeGeneration?.controller === controller && isCurrentRequest(request),
       modelAssets,
       onMissingModel: setPendingRequest,
       publish: publisher.publish,
@@ -251,27 +285,61 @@ export const useLanguageLearningWordPronunciation = (): LanguageLearningWordPron
       .catch(() => undefined)
   }
 
+  const preparePronunciation = async (
+    request: PendingSettingsPronunciation,
+    settings: AutomaticDialogueSettings,
+  ) => {
+    const key = getWordKey(request.word)
+    try {
+      const downloaded = await isSupertonicModelDownloaded({modelId: settings.modelId})
+      if (!isCurrentRevision(key, request.revision)) {
+        return
+      }
+
+      const pending: PendingPronunciation = {
+        audioOwner: globalThis.crypto.randomUUID(),
+        modelId: settings.modelId,
+        revision: request.revision,
+        voiceId: settings.voiceId,
+        word: request.word,
+      }
+      setLoadingKey(null)
+      if (downloaded) {
+        generate(pending, false)
+        return
+      }
+
+      setPendingRequest(pending)
+    } catch (reason: unknown) {
+      if (isCurrentRevision(key, request.revision)) {
+        setLoadingKey(null)
+        setError(getFailureMessage(reason))
+      }
+    }
+  }
+
   const request = (word: LanguageLearningWord) => {
     const key = getWordKey(word)
     const currentUrls = audioUrls()
     if (currentUrls[key] !== undefined) {
+      cancelActiveRequest()
       publisher.replay(word)
-      return
-    }
-
-    if (loadingKey() !== null) {
       return
     }
 
     const revision = (requestRevisions.get(key) ?? 0) + 1
     requestRevisions.set(key, revision)
+    activeRequest = {key, revision}
+    abortActiveGeneration()
+    setPendingRequest(null)
+    setPendingSettingsRequest(null)
 
     setError(null)
     setLoadingKey(key)
     Promise.resolve()
       .then(async () => {
         const storedAudio = await getAudioRepository().get(word)
-        if (disposed || requestRevisions.get(key) !== revision) {
+        if (!isCurrentRevision(key, revision)) {
           return
         }
 
@@ -283,35 +351,31 @@ export const useLanguageLearningWordPronunciation = (): LanguageLearningWordPron
 
         const settings = automaticSettings()
         if (settings === null) {
-          throw new Error('자동 음성 생성 설정이 아직 준비되지 않았어요.')
-        }
-        const downloaded = await isSupertonicModelDownloaded({modelId: settings.modelId})
-        if (disposed || requestRevisions.get(key) !== revision) {
+          setPendingSettingsRequest({revision, word})
           return
         }
-
-        const pending = {
-          audioOwner: globalThis.crypto.randomUUID(),
-          modelId: settings.modelId,
-          revision,
-          voiceId: settings.voiceId,
-          word,
-        }
-        setLoadingKey(null)
-        if (downloaded) {
-          generate(pending, false)
-          return
-        }
-
-        setPendingRequest(pending)
+        await preparePronunciation({revision, word}, settings)
       })
       .catch((reason: unknown) => {
-        if (!disposed && requestRevisions.get(key) === revision) {
+        if (isCurrentRevision(key, revision)) {
           setLoadingKey(null)
           setError(getFailureMessage(reason))
         }
       })
   }
+
+  createEffect(() => {
+    const request = pendingSettingsRequest()
+    if (request === null) {
+      return
+    }
+
+    const settings = automaticSettings()
+    if (settings !== null) {
+      setPendingSettingsRequest(null)
+      preparePronunciation(request, settings).catch(() => undefined)
+    }
+  })
 
   const confirmDownload = () => {
     const request = pendingRequest()
@@ -325,9 +389,11 @@ export const useLanguageLearningWordPronunciation = (): LanguageLearningWordPron
   const remove = (word: LanguageLearningWord) => {
     const key = getWordKey(word)
     requestRevisions.set(key, (requestRevisions.get(key) ?? 0) + 1)
+    if (activeRequest?.key === key) {
+      activeRequest = null
+    }
     if (activeGeneration?.key === key) {
-      activeGeneration.controller.abort()
-      activeGeneration = null
+      abortActiveGeneration()
     }
     if (loadingKey() === key) {
       setLoadingKey(null)
@@ -335,7 +401,7 @@ export const useLanguageLearningWordPronunciation = (): LanguageLearningWordPron
     const currentUrls = audioUrls()
     const url = currentUrls[key]
     if (url !== undefined) {
-      URL.revokeObjectURL(url)
+      replaceBlobObjectUrl(url, () => null)
       const nextUrls = {...currentUrls}
       delete nextUrls[key]
       setAudioUrls(nextUrls)
@@ -343,6 +409,10 @@ export const useLanguageLearningWordPronunciation = (): LanguageLearningWordPron
     const pending = pendingRequest()
     if (pending !== null && getWordKey(pending.word) === key) {
       setPendingRequest(null)
+    }
+    const settingsPending = pendingSettingsRequest()
+    if (settingsPending !== null && getWordKey(settingsPending.word) === key) {
+      setPendingSettingsRequest(null)
     }
     getAudioRepository()
       .delete(word)
@@ -355,10 +425,9 @@ export const useLanguageLearningWordPronunciation = (): LanguageLearningWordPron
 
   onCleanup(() => {
     disposed = true
-    activeGeneration?.controller.abort()
-    activeGeneration = null
+    abortActiveGeneration()
     for (const url of Object.values(audioUrls())) {
-      URL.revokeObjectURL(url)
+      replaceBlobObjectUrl(url, () => null)
     }
   })
 
@@ -368,7 +437,6 @@ export const useLanguageLearningWordPronunciation = (): LanguageLearningWordPron
     cancelDownload,
     confirmDownload,
     error,
-    isBusy: () => loadingKey() !== null,
     isLoading: (word) => loadingKey() === getWordKey(word),
     pendingModelId: () => pendingRequest()?.modelId ?? null,
     pendingWord: () => pendingRequest()?.word ?? null,

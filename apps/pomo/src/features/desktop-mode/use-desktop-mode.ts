@@ -1,3 +1,4 @@
+import {createSerialTaskQueue} from 'src/utils/create-serial-task-queue'
 import {type Accessor, createSignal, onCleanup, onMount, type Setter} from 'solid-js'
 
 import {
@@ -142,13 +143,8 @@ const handleModeChannelMessage = (
 }
 
 const createModeQueue = (changeMode: (mode: DesktopMode) => Promise<void>) => {
-  let transitionQueue = Promise.resolve()
-
-  return (nextMode: DesktopMode): Promise<void> => {
-    const transition = transitionQueue.then(() => changeMode(nextMode))
-    transitionQueue = transition.catch(() => undefined)
-    return transition
-  }
+  const queue = createSerialTaskQueue()
+  return (nextMode: DesktopMode): Promise<void> => queue.run(() => changeMode(nextMode))
 }
 
 const listenToNativeModeRequests = async (

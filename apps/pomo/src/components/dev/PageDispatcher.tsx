@@ -6,6 +6,10 @@ const DEV_PAGE_COMPONENTS: Readonly<Partial<Record<string, Component>>> = {
     const {HomePage} = await import('./HomePage')
     return {default: HomePage}
   }),
+  '/dev/3d-world': lazy(async () => {
+    const {WorldPage} = await import('./WorldPage')
+    return {default: WorldPage}
+  }),
   '/dev/ai-conversation': lazy(async () => {
     const {AiConversationPage} = await import('./AiConversationPage')
     return {default: AiConversationPage}

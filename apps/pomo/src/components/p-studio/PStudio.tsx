@@ -61,6 +61,7 @@ import {
   useWebsiteBackgroundInteraction,
 } from '../../features/desktop-mode'
 import {PEntry} from './Entry'
+import {DesktopWallpaperEventActionBridge} from './DesktopWallpaperEventActionBridge'
 import {resolvePSceneViseme} from '../pomo-scene-options'
 import {PSceneFallback} from './SceneFallback'
 import {SceneModelDownloadFallback} from './ModelDownloadFallback'
@@ -130,17 +131,6 @@ const useStudioEntry = (events: ReturnType<typeof usePEvents>) => {
   }
 
   return {enter, hide: () => setIsVisible(false), isVisible, restore}
-}
-
-const DesktopWallpaperEventActionFallback = () => {
-  const events = usePEvents()
-
-  onMount(() => {
-    const unregister = events.registerEventActionExecutor(() => undefined)
-    onCleanup(unregister)
-  })
-
-  return null
 }
 
 const createLoadingHandler =
@@ -339,7 +329,9 @@ const StudioUi = (props: StudioUiProps) => (
             props.displayPreferences.isReady() && props.displayPreferences.pomodoroVisible()
           }
           playerVisible={
-            props.displayPreferences.isReady() && props.displayPreferences.playerVisible()
+            props.displayPreferences.isReady()
+              ? props.displayPreferences.playerVisible()
+              : undefined
           }
           dialogueComposerVisible={props.displayPreferences.dialogueComposerVisible()}
           isPlayerExpanded={props.isPlayerExpanded}
@@ -537,7 +529,7 @@ export const PStudio = () => {
         />
       </Show>
       <Show when={isDesktopWallpaper()}>
-        <DesktopWallpaperEventActionFallback />
+        <DesktopWallpaperEventActionBridge />
       </Show>
       <Show when={import.meta.env.VITE_POMO_IS_DESKTOP === 'true' && isDesktopWidget()}>
         <DesktopSurfaceHandle

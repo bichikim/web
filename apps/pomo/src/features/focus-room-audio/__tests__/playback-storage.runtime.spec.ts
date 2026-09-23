@@ -27,7 +27,12 @@ describe('playback-storage', () => {
 
   it('should persist playback in browser storage', async () => {
     const startedAt = Date.now()
-    await writePPlayback({isPlaying: true, positionSeconds: 12, trackId: 'track-one'})
+    await writePPlayback({
+      isPlaying: true,
+      positionSeconds: 12,
+      trackId: 'track-one',
+      trackIndex: 1,
+    })
     const stored = JSON.parse(localStorage.getItem('pomo:focus-room-playback:v1') ?? 'null')
     expect(stored.savedAt).toBeGreaterThanOrEqual(startedAt)
     expect(stored.savedAt).toBeLessThanOrEqual(Date.now())
@@ -36,6 +41,7 @@ describe('playback-storage', () => {
       isPlaying: true,
       positionSeconds: 12,
       trackId: 'track-one',
+      trackIndex: 1,
     })
   })
 

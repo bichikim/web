@@ -1,3 +1,4 @@
+import {createCollectionStorage} from '../value-storage'
 import {z} from 'zod'
 
 import type {LanguageLearningLanguage} from './schema'
@@ -7,34 +8,49 @@ import {type LanguageLearningWord, languageLearningWordSchema} from './word-sche
 const STORAGE_KEY = 'pomo:language-learning:words:v1'
 export const LANGUAGE_LEARNING_WORDS_CHANGED_EVENT = 'pomo:language-learning:words-changed'
 const storedWordsSchema = z.array(languageLearningWordSchema).readonly()
+const normalizeLanguageLearningWordValue = (value: string): string => value.toLocaleLowerCase()
 
 export interface AppendLanguageLearningWordsResult {
   readonly addedCount: number
   readonly skippedCount: number
 }
 
-export const readLanguageLearningWords = (
-  options?: LanguageLearningStorageOptions,
+const getCollectionStorage = (options?: LanguageLearningStorageOptions) =>
+  createCollectionStorage({
+    key: STORAGE_KEY,
+    onChange: () => {
+      const events = options?.events ?? globalThis
+      events.dispatchEvent(new CustomEvent(LANGUAGE_LEARNING_WORDS_CHANGED_EVENT))
+    },
+    parse: (value) => storedWordsSchema.parse(value),
+    readFailureMessage: 'Failed to read language learning words.',
+    storage: () => options?.storage ?? globalThis.localStorage,
+  })
+
+const deduplicateLanguageLearningWords = (
+  values: ReadonlyArray<LanguageLearningWord>,
 ): ReadonlyArray<LanguageLearningWord> => {
-  try {
-    const stored = (options?.storage ?? globalThis.localStorage).getItem(STORAGE_KEY)
-    return stored === null ? [] : storedWordsSchema.parse(JSON.parse(stored))
-  } catch (error: unknown) {
-    console.warn('Failed to read language learning words.', error)
-    return []
-  }
+  const normalizedValuesByLanguage = new Map<LanguageLearningLanguage, Set<string>>()
+
+  return values.filter((word) => {
+    const languageValues = normalizedValuesByLanguage.get(word.language) ?? new Set<string>()
+    const normalizedValue = normalizeLanguageLearningWordValue(word.value)
+    const isUnique = !languageValues.has(normalizedValue)
+
+    languageValues.add(normalizedValue)
+    normalizedValuesByLanguage.set(word.language, languageValues)
+    return isUnique
+  })
 }
 
-export const writeLanguageLearningWords = (
-  words: ReadonlyArray<LanguageLearningWord>,
+export const readLanguageLearningWords = (
   options?: LanguageLearningStorageOptions,
-): void => {
-  const parsed = storedWordsSchema.parse(words)
-  const storage = options?.storage ?? globalThis.localStorage
-  storage.setItem(STORAGE_KEY, JSON.stringify(parsed))
-  const events = options?.events ?? globalThis
-  events.dispatchEvent(new CustomEvent(LANGUAGE_LEARNING_WORDS_CHANGED_EVENT))
-}
+): ReadonlyArray<LanguageLearningWord> => getCollectionStorage(options).read()
+
+export const writeLanguageLearningWords = (
+  values: ReadonlyArray<LanguageLearningWord>,
+  options?: LanguageLearningStorageOptions,
+): void => getCollectionStorage(options).write(deduplicateLanguageLearningWords(values))
 
 export const appendLanguageLearningWords = (
   language: LanguageLearningLanguage,
@@ -45,11 +61,11 @@ export const appendLanguageLearningWords = (
   const existingValues = new Set(
     storedWords
       .filter((word) => word.language === language)
-      .map((word) => word.value.toLocaleLowerCase()),
+      .map((word) => normalizeLanguageLearningWordValue(word.value)),
   )
   const createdAt = new Date().toISOString()
   const newWords = values.flatMap((value): ReadonlyArray<LanguageLearningWord> => {
-    const normalizedValue = value.toLocaleLowerCase()
+    const normalizedValue = normalizeLanguageLearningWordValue(value)
 
     if (existingValues.has(normalizedValue)) {
       return []
@@ -74,10 +90,12 @@ export const deleteLanguageLearningWords = (
   values: ReadonlyArray<string>,
   options?: LanguageLearningStorageOptions,
 ): void => {
-  const selectedValues = new Set(values)
+  const selectedValues = new Set(values.map(normalizeLanguageLearningWordValue))
   writeLanguageLearningWords(
     readLanguageLearningWords(options).filter(
-      (word) => word.language !== language || !selectedValues.has(word.value),
+      (word) =>
+        word.language !== language ||
+        !selectedValues.has(normalizeLanguageLearningWordValue(word.value)),
     ),
     options,
   )
@@ -105,10 +123,11 @@ export const setLanguageLearningWordsMemorized = (
   options: SetLanguageLearningWordsMemorizedOptions,
   storageOptions?: LanguageLearningStorageOptions,
 ): void => {
-  const selectedValues = new Set(options.values)
+  const selectedValues = new Set(options.values.map(normalizeLanguageLearningWordValue))
   writeLanguageLearningWords(
     readLanguageLearningWords(storageOptions).map((word) =>
-      word.language === options.language && selectedValues.has(word.value)
+      word.language === options.language &&
+      selectedValues.has(normalizeLanguageLearningWordValue(word.value))
         ? {...word, memorized: options.memorized}
         : word,
     ),

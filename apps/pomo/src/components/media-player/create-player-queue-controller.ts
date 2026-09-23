@@ -27,7 +27,7 @@ export interface CreatePlayerQueueControllerOptions {
   readonly playback: Pick<Playback, 'invalidate' | 'stop'>
   readonly playbackPersistence: Pick<
     PPlaybackPersistence,
-    'persistStoppedPlayback' | 'setPendingPosition' | 'writePlayback'
+    'persistCurrentPlayback' | 'persistStoppedPlayback' | 'setPendingPosition' | 'writePlayback'
   >
   readonly previewPlayback: Pick<PreviewPlayback, 'preventResume'>
   readonly readCurrentIndex: Accessor<number>
@@ -54,6 +54,58 @@ const stopPlayback = (options: CreatePlayerQueueControllerOptions) => {
   options.playbackPersistence.setPendingPosition(null)
 }
 
+const createPlaybackState = (
+  track: PTrack,
+  trackIndex: number,
+  isPlaying: boolean,
+): PPlaybackState => ({
+  isPlaying,
+  positionSeconds: 0,
+  trackId: track.id,
+  trackIndex,
+})
+
+const persistShiftedCurrentPlayback = (
+  options: Pick<CreatePlayerQueueControllerOptions, 'playbackPersistence'>,
+  currentIndex: number,
+  resolution: ReturnType<typeof resolveTrackRemoval>,
+) => {
+  if (!resolution.currentTrackChanged && resolution.nextCurrentIndex !== currentIndex) {
+    options.playbackPersistence.persistCurrentPlayback()
+  }
+}
+
+const findActiveTrackIndex = (
+  currentTracks: readonly PTrack[],
+  mergedTracks: readonly PTrack[],
+  currentIndex: number,
+) => {
+  const activeTrackId = currentTracks[currentIndex]?.id
+  const activeIndex = mergedTracks.findIndex(
+    (track, index) => index >= currentIndex && track.id === activeTrackId,
+  )
+
+  return activeIndex < 0
+    ? mergedTracks.findIndex((track) => track.id === activeTrackId)
+    : activeIndex
+}
+
+const filterRemovedTrackOccurrences = (
+  tracks: readonly PTrack[],
+  removedTrackCounts: ReadonlyMap<string, number>,
+) => {
+  const remainingCounts = new Map(removedTrackCounts)
+  return tracks.filter((track) => {
+    const removedTrackCount = remainingCounts.get(track.id) ?? 0
+    if (removedTrackCount === 0) {
+      return true
+    }
+
+    remainingCounts.set(track.id, removedTrackCount - 1)
+    return false
+  })
+}
+
 /** Coordinates playlist state changes without owning transport or navigation policy. */
 export const createPlayerQueueController = (
   options: CreatePlayerQueueControllerOptions,
@@ -61,7 +113,7 @@ export const createPlayerQueueController = (
   let queueRevision = 0
   let initialPlaylistResolved = options.isQueueControlled()
   let clearedBeforeLoad = false
-  const removedBeforeLoad = new Set<string>()
+  const removedBeforeLoad = new Map<string, number>()
 
   const initializePlayback = (
     nextTracks: readonly PTrack[],
@@ -121,8 +173,9 @@ export const createPlayerQueueController = (
       return
     }
 
+    const currentIndex = options.readCurrentIndex()
     const resolution = resolveTrackRemoval({
-      currentIndex: options.readCurrentIndex(),
+      currentIndex,
       removeIndex,
       trackCount: currentTracks.length,
     })
@@ -132,7 +185,7 @@ export const createPlayerQueueController = (
     const shouldResume = options.isPlaying()
 
     if (!initialPlaylistResolved && removedTrack !== undefined) {
-      removedBeforeLoad.add(removedTrack.id)
+      removedBeforeLoad.set(removedTrack.id, (removedBeforeLoad.get(removedTrack.id) ?? 0) + 1)
     }
 
     if (resolution.currentTrackChanged) {
@@ -143,7 +196,7 @@ export const createPlayerQueueController = (
     queueRevision += 1
 
     if (resolution.currentTrackChanged && nextTrack !== undefined) {
-      const nextPlayback = {isPlaying: shouldResume, positionSeconds: 0, trackId: nextTrack.id}
+      const nextPlayback = createPlaybackState(nextTrack, resolution.nextCurrentIndex, shouldResume)
       options.prepareTrackChange(shouldResume, nextTrack.id)
       options.playbackPersistence.setPendingPosition(nextPlayback)
       options.playbackPersistence.writePlayback(nextPlayback)
@@ -158,6 +211,7 @@ export const createPlayerQueueController = (
       options.setLoadedTracks(nextTracks)
       options.setCurrentIndex(resolution.nextCurrentIndex)
     })
+    persistShiftedCurrentPlayback(options, currentIndex, resolution)
     options.persistTrackQueue(nextTracks)
     options.order.resetOrder()
 
@@ -201,16 +255,17 @@ export const createPlayerQueueController = (
     initialPlaylistResolved = true
     const availableTracks = clearedBeforeLoad
       ? []
-      : loaded.defaultTracks.filter((track) => !removedBeforeLoad.has(track.id))
+      : filterRemovedTrackOccurrences(loaded.defaultTracks, removedBeforeLoad)
 
     if (!loaded.queueChanged) {
       initializePlayback(availableTracks, null)
       return availableTracks
     }
 
-    const activeTrackId = options.readTracks()[options.readCurrentIndex()]?.id
-    const mergedTracks = appendUniqueTracks(availableTracks, options.readTracks())
-    const activeIndex = mergedTracks.findIndex((track) => track.id === activeTrackId)
+    const currentTracks = options.readTracks()
+    const currentIndex = options.readCurrentIndex()
+    const mergedTracks = appendUniqueTracks(availableTracks, currentTracks)
+    const activeIndex = findActiveTrackIndex(currentTracks, mergedTracks, currentIndex)
     batch(() => {
       options.setLoadedTracks(mergedTracks)
       options.setCurrentIndex(activeIndex < 0 ? 0 : activeIndex)

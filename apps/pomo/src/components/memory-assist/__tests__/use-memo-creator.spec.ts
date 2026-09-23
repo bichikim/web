@@ -52,6 +52,7 @@ const scenarios: ReadonlyArray<DraftScenario> = [
 
 beforeEach(() => {
   vi.clearAllMocks()
+  localStorage.removeItem('pomo:memory-memos:v1')
   sessionStorage.clear()
   vi.mocked(updateMemoryMemos).mockImplementation(async (update) => update([]))
 })
@@ -84,7 +85,7 @@ it.each(scenarios)(
   },
 )
 
-it.each(scenarios)('should ignore a late failure after $name', async (scenario) => {
+it.each(scenarios)('should report a late failure after $name', async (scenario) => {
   const persistence = Promise.withResolvers<ReadonlyArray<MemoryMemo>>()
   vi.mocked(updateMemoryMemos).mockReturnValueOnce(persistence.promise)
   const {result: creator} = renderHook(useMemoCreator)
@@ -96,9 +97,35 @@ it.each(scenarios)('should ignore a late failure after $name', async (scenario) 
   persistence.reject(new Error('write failed'))
   await saving
 
-  expect(creator.message()).toBeNull()
+  expect(creator.message()).toBeTruthy()
   expect(creator.text()).toBe(scenario.text)
   expect(sessionStorage.getItem('pomo:memory-memo:draft:v1')).toBe(draft)
+})
+
+it('should not persist a superseded memo after text changes during saving', async () => {
+  const actual = await vi.importActual<typeof import('../../../features/memory-assist')>(
+    '../../../features/memory-assist',
+  )
+  const persistence = Promise.withResolvers<void>()
+  vi.mocked(updateMemoryMemos)
+    .mockImplementationOnce(async (update) => {
+      await persistence.promise
+      return actual.updateMemoryMemos(update)
+    })
+    .mockImplementation(actual.updateMemoryMemos)
+
+  const {result: creator} = renderHook(useMemoCreator)
+  creator.changeOpen(true)
+  creator.changeText('first')
+  const saving = creator.save()
+  creator.changeText('second')
+  persistence.resolve()
+  await saving
+  await creator.save()
+
+  const memos = await actual.readMemoryMemos()
+  expect(memos).toHaveLength(1)
+  expect(memos[0]?.text).toBe('second')
 })
 
 it('should retain the draft and report a failure in the original session', async () => {

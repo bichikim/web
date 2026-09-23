@@ -1,0 +1,87 @@
+{
+  "name": "@winter-love/vite-plugin-natural-lint",
+  "version": "0.1.0",
+  "description": "Local natural-language lint decisions for CLI and Vite",
+  "homepage": "https://github.com/bichikim/web/tree/dev/packages/vite-plugin-natural-lint",
+  "bugs": {
+    "url": "https://github.com/bichikim/web/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/bichikim/web.git",
+    "directory": "packages/vite-plugin-natural-lint"
+  },
+  "bin": {
+    "natural-lint": "bin/index.js"
+  },
+  "files": [
+    "bin/*",
+    "bridge/*",
+    "dist/**/*",
+    "examples/backend-benchmark/README.md",
+    "examples/backend-benchmark/benchmark.py",
+    "examples/backend-benchmark/benchmark_test.py",
+    "examples/backend-benchmark/cases.jsonl",
+    "examples/backend-benchmark/requirements.txt",
+    "examples/ai-mistakes/EVALUATION.md",
+    "examples/ai-mistakes/HOLDOUT.md",
+    "examples/ai-mistakes/README.md",
+    "examples/ai-mistakes/fixtures/**/*",
+    "examples/ai-mistakes/natural-lint.config.mjs",
+    "examples/filename-rules/README.md",
+    "examples/filename-rules/natural-lint.config.mjs",
+    "examples/filename-rules/holdout/**/*.ts",
+    "examples/filename-rules/src/*",
+    "examples/project-flow/README.md",
+    "examples/project-flow/index.html",
+    "examples/project-flow/natural-lint.config.mjs",
+    "examples/project-flow/src/*",
+    "examples/project-flow/vite.config.mjs",
+    "examples/repository-dogfood/README.md",
+    "examples/repository-dogfood/natural-lint.config.mjs",
+    "README.md",
+    "RULE_AUTHORING.md",
+    "THIRD_PARTY_NOTICES.md"
+  ],
+  "type": "module",
+  "main": "dist/index.mjs",
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs"
+    },
+    "./*": "./*"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "build": "vite build",
+    "prepare-build": "pnpm run build",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@opentui/core": "0.5.11",
+    "@receptron/laya": "0.1.1",
+    "@typesafe-ai/sdk": "^0.6.0",
+    "@typescript/typescript6": "catalog:",
+    "solid-js": "1.9.12",
+    "tinyglobby": "^0.2.17",
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "@opentui/solid": "0.5.11",
+    "@types/node": "catalog:",
+    "@winter-love/vite-lib-config": "workspace:*",
+    "vite": "catalog:",
+    "vite-plugin-solid": "2.11.12"
+  },
+  "peerDependencies": {
+    "vite": ">=7"
+  },
+  "engines": {
+    "node": ">=26.4.0"
+  }
+}

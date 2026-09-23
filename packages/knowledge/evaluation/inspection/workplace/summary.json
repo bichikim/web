@@ -1,0 +1,103 @@
+{
+  "version": 1,
+  "model": {
+    "digest": "c6eb396dbd5992bbe3f5cdb947e8bbc0ee413d7c17e2beaae69f5d569cf982eb",
+    "name": "gemma4:latest"
+  },
+  "promptVersion": 3,
+  "status": "evaluation-unavailable",
+  "reason": "All diagnostics are partial; evaluator rejected all six attempts.",
+  "failingCase": "tag-equivalence",
+  "runs": [
+    {
+      "id": "01",
+      "retry": false,
+      "diagnostic": "runs/01/diagnostic.json",
+      "status": "partial",
+      "selectedPairs": 28,
+      "assessments": 27,
+      "cached": 0,
+      "errors": [
+        {
+          "cacheKey": "76dbea96464a8695dc875d1a0a25ebc2b687042c875b83b51872c8953ab9b05f",
+          "code": "invalid-inspection-response"
+        }
+      ]
+    },
+    {
+      "id": "01",
+      "retry": true,
+      "diagnostic": "runs/01/retry/diagnostic.json",
+      "status": "partial",
+      "selectedPairs": 28,
+      "assessments": 27,
+      "cached": 27,
+      "errors": [
+        {
+          "cacheKey": "76dbea96464a8695dc875d1a0a25ebc2b687042c875b83b51872c8953ab9b05f",
+          "code": "invalid-inspection-response"
+        }
+      ]
+    },
+    {
+      "id": "02",
+      "retry": false,
+      "diagnostic": "runs/02/diagnostic.json",
+      "status": "partial",
+      "selectedPairs": 28,
+      "assessments": 27,
+      "cached": 0,
+      "errors": [
+        {
+          "cacheKey": "76dbea96464a8695dc875d1a0a25ebc2b687042c875b83b51872c8953ab9b05f",
+          "code": "invalid-inspection-response"
+        }
+      ]
+    },
+    {
+      "id": "02",
+      "retry": true,
+      "diagnostic": "runs/02/retry/diagnostic.json",
+      "status": "partial",
+      "selectedPairs": 28,
+      "assessments": 27,
+      "cached": 27,
+      "errors": [
+        {
+          "cacheKey": "76dbea96464a8695dc875d1a0a25ebc2b687042c875b83b51872c8953ab9b05f",
+          "code": "invalid-inspection-response"
+        }
+      ]
+    },
+    {
+      "id": "03",
+      "retry": false,
+      "diagnostic": "runs/03/diagnostic.json",
+      "status": "partial",
+      "selectedPairs": 28,
+      "assessments": 27,
+      "cached": 0,
+      "errors": [
+        {
+          "cacheKey": "76dbea96464a8695dc875d1a0a25ebc2b687042c875b83b51872c8953ab9b05f",
+          "code": "invalid-inspection-response"
+        }
+      ]
+    },
+    {
+      "id": "03",
+      "retry": true,
+      "diagnostic": "runs/03/retry/diagnostic.json",
+      "status": "partial",
+      "selectedPairs": 28,
+      "assessments": 27,
+      "cached": 27,
+      "errors": [
+        {
+          "cacheKey": "76dbea96464a8695dc875d1a0a25ebc2b687042c875b83b51872c8953ab9b05f",
+          "code": "invalid-inspection-response"
+        }
+      ]
+    }
+  ]
+}

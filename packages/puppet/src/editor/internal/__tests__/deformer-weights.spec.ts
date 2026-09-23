@@ -53,8 +53,8 @@ test('should assign a batch of normalized vertex weights in one document update'
   const document = createDocument()
   const result = setDeformerVertexWeights({
     changes: [0, 1, 2].map((vertexIndex) => ({
-      partId: 'mesh-preview',
       boneIndex: 1,
+      partId: 'mesh-preview',
       vertexIndex,
       weight: 0.8,
     })),
@@ -95,9 +95,9 @@ test('should round trip and reset the influence mask for pin, curve and grid def
       targetKind,
     })!
     const options = {
+      boneIndex: 0,
       document: source,
       nodeId: 'shapes',
-      boneIndex: 0,
       partId: 'shape-circle',
       vertexIndex: 0,
       weight: 0.25,

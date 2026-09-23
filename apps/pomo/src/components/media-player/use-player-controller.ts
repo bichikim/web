@@ -1,6 +1,7 @@
 import {type Preference, usePreference} from 'src/hooks/use-preference'
 import {type Accessor, createEffect, createMemo, createSignal, onCleanup, untrack} from 'solid-js'
 import {useEvent} from '@winter-love/solid-use/event'
+import {clamp} from 'es-toolkit/math'
 
 import {
   createInitialPlaybackState,
@@ -48,6 +49,9 @@ export interface PlayerController extends PlayerState {
   readonly stop: Playback['stop']
 }
 
+const clampTrackIndex = (index: number, trackCount: number) =>
+  clamp(index, 0, Math.max(trackCount - 1, 0))
+
 /** 음악 목록, 곡 선택·반복·셔플 정책, 저장된 재생 위치 복원과 미리듣기를 조율한다. */
 // oxlint-disable-next-line eslint/max-lines-per-function, eslint/max-statements -- Transport, persistence, and lifecycle callbacks remain coordinated here; playlist queue mutations are extracted to create-player-queue-controller.
 export const usePlayerController = (props: UsePlayerControllerProps): PlayerController => {
@@ -57,13 +61,22 @@ export const usePlayerController = (props: UsePlayerControllerProps): PlayerCont
   const [isPlaylistLoading, setIsPlaylistLoading] = createSignal(props.tracks === undefined)
   const [isPreparing, setIsPreparing] = createSignal(false)
   const tracks = () => props.tracks ?? loadedTracks()
-  const [currentIndex, setCurrentIndex] = createSignal(initialState.currentIndex)
+  const [currentIndexValue, setCurrentIndex] = createSignal(initialState.currentIndex)
+  const currentIndex = createMemo(() => clampTrackIndex(currentIndexValue(), tracks().length))
   const visualizer = usePAudioVisualizer()
   usePlayerVolumeDucking({
     isDialogueActive: () => props.isDialogueActive ?? false,
     onGainChange: visualizer.setOutputGain,
   })
   const currentTrack = createMemo(() => tracks()[currentIndex()])
+  createEffect(() => {
+    const currentIndexSnapshot = currentIndexValue()
+    const nextIndex = currentIndex()
+
+    if (nextIndex !== currentIndexSnapshot) {
+      setCurrentIndex(nextIndex)
+    }
+  })
   let destroyed = false
   let playbackRevision = 0
   let restartPlaybackPending = false
@@ -97,6 +110,7 @@ export const usePlayerController = (props: UsePlayerControllerProps): PlayerCont
   })
   const {isPlaying} = playback
   const playbackPersistence = usePPlaybackPersistence({
+    currentIndex,
     currentTrack,
     getAudioElement: props.element,
     isPlaying,
@@ -241,7 +255,12 @@ export const usePlayerController = (props: UsePlayerControllerProps): PlayerCont
     }
 
     const nextTrack = trackList[nextIndex]
-    const nextPlayback = {isPlaying: shouldResume, positionSeconds: 0, trackId: nextTrack.id}
+    const nextPlayback = {
+      isPlaying: shouldResume,
+      positionSeconds: 0,
+      trackId: nextTrack.id,
+      trackIndex: nextIndex,
+    }
     cancelPendingRestart()
     prepareTrackChange(shouldResume, nextTrack.id)
     playback.invalidate()
@@ -311,7 +330,12 @@ export const usePlayerController = (props: UsePlayerControllerProps): PlayerCont
     playback.seek(0)
     playbackRevision += 1
     if (track !== undefined) {
-      playbackPersistence.writePlayback({isPlaying: true, positionSeconds: 0, trackId: track.id})
+      playbackPersistence.writePlayback({
+        isPlaying: true,
+        positionSeconds: 0,
+        trackId: track.id,
+        trackIndex: currentIndex(),
+      })
     }
     playAudio()
   }
@@ -345,7 +369,12 @@ export const usePlayerController = (props: UsePlayerControllerProps): PlayerCont
       playbackPersistence.setPendingPosition(
         positionSeconds === null
           ? null
-          : {isPlaying: true, positionSeconds, trackId: transition.trackId},
+          : {
+              isPlaying: true,
+              positionSeconds,
+              trackId: transition.trackId,
+              trackIndex: currentIndex(),
+            },
       )
       cancelPendingRestart()
       return

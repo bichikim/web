@@ -26,6 +26,20 @@ describe('updatePhysics', () => {
     expect(parseDocumentValue(updated).ok).toBe(true)
   })
 
+  test('should add a pendulum to the requested input parameter', () => {
+    const document = createDemoDocument()
+    const updated = updatePhysics({
+      document,
+      operation: {inputParameterId: 'angle-y', kind: 'add'},
+    })
+
+    expect(updated?.physics?.pendulums[0]).toMatchObject({
+      inputParameterId: 'angle-y',
+      outputParameterId: 'angle-x',
+    })
+    expect(parseDocumentValue(updated).ok).toBe(true)
+  })
+
   test('should update a pendulum while preserving a valid parameter mapping', () => {
     const added = addPendulum(createDemoDocument())!
     const updated = updatePhysics({

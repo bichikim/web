@@ -2,6 +2,7 @@ import type {
   PuppetEasing,
   PuppetKeyframe,
   PuppetMotion,
+  PuppetParameter,
   PuppetParameterTrack,
   PuppetVertexTrack,
 } from '../document'
@@ -24,6 +25,7 @@ export interface SampleMotionVerticesOptions {
 export interface SampleMotionParameterValuesOptions {
   readonly motion: PuppetMotion | undefined
   readonly parameterValues?: PuppetParameterValueMap
+  readonly parameters?: ReadonlyArray<PuppetParameter>
   readonly time: number
 }
 
@@ -80,6 +82,13 @@ const sampleKeyframes = (keyframes: ReadonlyArray<PuppetKeyframe>, time: number)
   return previousKeyframe.value + (nextKeyframe.value - previousKeyframe.value) * easedProgress
 }
 
+const sampleDiscreteKeyframes = (keyframes: ReadonlyArray<PuppetKeyframe>, time: number) => {
+  const nextIndex = keyframes.findIndex((keyframe) => keyframe.time > time)
+  return nextIndex === -1
+    ? (keyframes.at(-1)?.value ?? 0)
+    : (keyframes[Math.max(0, nextIndex - 1)]?.value ?? 0)
+}
+
 export const isParameterTrack = (
   track: PuppetParameterTrack | PuppetVertexTrack,
 ): track is PuppetParameterTrack => track.kind === 'parameter'
@@ -103,10 +112,15 @@ export const sampleMotionParameterValues = (
   options: SampleMotionParameterValuesOptions,
 ): PuppetParameterValueMap => {
   const values = {...options.parameterValues}
+  const parameterById = new Map(options.parameters?.map((parameter) => [parameter.id, parameter]))
 
   for (const track of options.motion?.tracks ?? []) {
     if (isParameterTrack(track)) {
-      values[track.parameterId] = sampleKeyframes(track.keyframes, options.time)
+      const parameter = parameterById.get(track.parameterId)
+      values[track.parameterId] =
+        parameter?.options === undefined
+          ? sampleKeyframes(track.keyframes, options.time)
+          : sampleDiscreteKeyframes(track.keyframes, options.time)
     }
   }
 

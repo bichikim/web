@@ -1,3 +1,4 @@
+export * from './desktop-music-actions'
 export * from './error'
 export * from './model'
 export * from './runtime'

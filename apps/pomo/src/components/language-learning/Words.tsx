@@ -180,7 +180,6 @@ export const LanguageLearningWords = () => {
         onPronounce={pronunciation.request}
         onSelect={handleSelect}
         onToggleMemorized={handleToggleMemorized}
-        pronunciationBusy={pronunciation.isBusy()}
         selectedWords={selectedWords}
         unmemorizedWords={unmemorizedWords()}
       />

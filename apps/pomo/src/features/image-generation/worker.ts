@@ -1,38 +1,62 @@
 /// <reference lib="webworker" />
 
+import {
+  createDeviceTarget,
+  createGenerationFailure,
+  createRequestSequence,
+} from '../text-generation'
+import {getExceptionMessage} from '../error-detail'
+
+import {createTextGenerationExecutor} from '../text-generation/execution'
 import type {GenerationRequest, GenerationResponse} from './messages'
 import {createPromptMessages, parseSettings} from './settings'
 import {loadImageModel} from './loader'
 
 const PERCENTAGE_SCALE = 100
 const scope = globalThis.self as DedicatedWorkerGlobalScope
+const IN_FLIGHT_ERROR_MESSAGE = '이미 이미지 생성을 진행하고 있습니다.'
+let inFlight = false
 const send = (response: GenerationResponse) => scope.postMessage(response)
+const textExecutor = createTextGenerationExecutor({
+  onProgress: (progress) =>
+    send({
+      label: '프롬프트 모델을 준비하고 있어요',
+      percentage: progress.percentage,
+      type: 'progress',
+    }),
+})
+const createRequestId = createRequestSequence('image-prompt')
 
 const generate = async (request: GenerationRequest) => {
   switch (request.type) {
     case 'prompt': {
-      const {createTransformersRuntime} = await import('../text-generation/transformers-runtime')
-      const runtime = createTransformersRuntime({
-        onProgress: (progress) =>
-          send({
-            label: '프롬프트 모델을 준비하고 있어요',
-            percentage: progress.percentage,
-            type: 'progress',
-          }),
-      })
-      await runtime.prepare(request.modelId)
+      const preparation = await textExecutor.prepare(createDeviceTarget(request.modelId))
+      if (!preparation.ok) {
+        throw createGenerationFailure(preparation.error, '이미지를 생성하지 못했어요.')
+      }
+
       send({label: '이미지 생성을 위한 프롬프트를 준비하고 있어요', type: 'progress'})
-      const prompt = (
-        await runtime.generate({
-          maximumTokens: 192,
+      const result = await textExecutor.generate(
+        {
+          execution: createDeviceTarget(request.modelId),
           messages: createPromptMessages(request.idea),
-          noRepeatNgramSize: 4,
-          repetitionPenalty: 1.1,
-          temperature: 0.4,
-          topK: 40,
-          topP: 0.9,
-        })
-      ).trim()
+          parameters: {
+            maximumTokens: 192,
+            noRepeatNgramSize: 4,
+            repetitionPenalty: 1.1,
+            temperature: 0.4,
+            topK: 40,
+            topP: 0.9,
+          },
+          requestId: createRequestId(),
+        },
+        {onResponse: () => undefined},
+      )
+      if (!result.ok) {
+        throw createGenerationFailure(result.error, '이미지를 생성하지 못했어요.')
+      }
+
+      const prompt = result.value.trim()
       if (!/[a-z]/iu.test(prompt) || /[\p{Script=Hangul}\p{Script=Han}]/u.test(prompt)) {
         throw new Error(
           '이미지 생성을 위한 프롬프트를 만들지 못했어요. 내용을 조금 더 구체적으로 적고 다시 시도해 주세요.',
@@ -76,11 +100,20 @@ const generate = async (request: GenerationRequest) => {
   request satisfies never
 }
 
-scope.onmessage = (event: MessageEvent<GenerationRequest>) => {
-  generate(event.data).catch((error: unknown) => {
+scope.onmessage = async (event: MessageEvent<GenerationRequest>) => {
+  if (inFlight) {
+    send({message: IN_FLIGHT_ERROR_MESSAGE, type: 'error'})
+    return
+  }
+  inFlight = true
+  try {
+    await generate(event.data)
+  } catch (error: unknown) {
     send({
-      message: error instanceof Error ? error.message : '이미지를 생성하지 못했어요.',
+      message: getExceptionMessage(error, '이미지를 생성하지 못했어요.'),
       type: 'error',
     })
-  })
+  } finally {
+    inFlight = false
+  }
 }

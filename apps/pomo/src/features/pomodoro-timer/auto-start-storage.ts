@@ -1,6 +1,8 @@
+import {selectMaximumBy} from 'src/utils/select-maximum-by'
 import {z} from 'zod'
 
 import {
+  createLatestStorageWriter,
   hasNativeStorageBridge,
   readTossStorageJson,
   readWebStorageJson,
@@ -32,21 +34,6 @@ const parseLegacyPreference = (value: unknown): StoredPreference | null => {
   return result.success ? {isEnabled: result.data, savedAt: 0} : null
 }
 
-const selectLatestPreference = (
-  webPreference: StoredPreference | null,
-  tossPreference: StoredPreference | null,
-) => {
-  if (webPreference === null) {
-    return tossPreference
-  }
-
-  if (tossPreference === null || webPreference.savedAt >= tossPreference.savedAt) {
-    return webPreference
-  }
-
-  return tossPreference
-}
-
 export interface AutoStartStorage {
   read(): Promise<boolean>
   write(isEnabled: boolean): Promise<void>
@@ -70,6 +57,8 @@ export const createAutoStartStorage = ({
   storage,
   now,
 }: AutoStartStorageOptions): AutoStartStorage => {
+  const writeLatestToss = createLatestStorageWriter(AUTO_START_STORAGE_KEY, storage.writeToss)
+
   const readWebPreference = () => {
     return (
       storage.readWeb(AUTO_START_STORAGE_KEY, parsePreference) ??
@@ -103,10 +92,14 @@ export const createAutoStartStorage = ({
       const tossPreference = await readTossPreference()
 
       const currentWebPreference = readWebPreference()
-      const latestPreference = selectLatestPreference(currentWebPreference, tossPreference)
+      const latestPreference = selectMaximumBy(
+        currentWebPreference,
+        tossPreference,
+        (value) => value.savedAt,
+      )
 
       if (latestPreference !== null && latestPreference === currentWebPreference) {
-        await storage.writeToss(AUTO_START_STORAGE_KEY, latestPreference).catch(() => undefined)
+        await writeLatestToss(latestPreference).catch(() => undefined)
       }
 
       return latestPreference?.isEnabled ?? false
@@ -129,7 +122,7 @@ export const createAutoStartStorage = ({
     }
 
     try {
-      await storage.writeToss(AUTO_START_STORAGE_KEY, preference)
+      await writeLatestToss(preference)
     } catch (error: unknown) {
       if (webWriteError !== null) {
         throw new Error('Failed to persist auto-start preference.', {cause: error})

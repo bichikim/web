@@ -55,6 +55,42 @@ it('should keep dialogs visible and cancel timers on disposal', () => {
   view.cleanup()
   expect(vi.getTimerCount()).toBe(0)
 })
+it('should restore visibility when a dialog opens after the UI is hidden', async () => {
+  const {result} = renderHook(useUiAutoHide, {wrapper: PreferenceProvider})
+  result.onEnabledChange(true)
+  vi.advanceTimersByTime(30_000)
+  expect(result.hidden()).toBe(true)
+
+  const dialog = document.createElement('div')
+  dialog.setAttribute('role', 'dialog')
+  vi.spyOn(dialog, 'getClientRects').mockReturnValue({length: 1} as DOMRectList)
+  document.body.append(dialog)
+
+  try {
+    await Promise.resolve()
+    expect(result.hidden()).toBe(false)
+  } finally {
+    dialog.remove()
+  }
+})
+it('should restore visibility when an existing visible element becomes a dialog', async () => {
+  const dialog = document.createElement('div')
+  vi.spyOn(dialog, 'getClientRects').mockReturnValue({length: 1} as DOMRectList)
+  document.body.append(dialog)
+
+  try {
+    const {result} = renderHook(useUiAutoHide, {wrapper: PreferenceProvider})
+    result.onEnabledChange(true)
+    vi.advanceTimersByTime(30_000)
+    expect(result.hidden()).toBe(true)
+
+    dialog.setAttribute('role', 'dialog')
+    await Promise.resolve()
+    expect(result.hidden()).toBe(false)
+  } finally {
+    dialog.remove()
+  }
+})
 it('should restart the countdown when the duration changes and ignore invalid durations', () => {
   const {result} = renderHook(useUiAutoHide, {wrapper: PreferenceProvider})
   result.onEnabledChange(true)

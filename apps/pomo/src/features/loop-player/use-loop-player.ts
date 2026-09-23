@@ -1,3 +1,4 @@
+import {getExceptionMessage} from 'src/features/error-detail'
 import {createSignal, onCleanup} from 'solid-js'
 import {DEFAULT_CONNECTION_SECONDS} from '../sound-generation/connection'
 import {createLoopPlayer, type LoopPlayback} from './player'
@@ -70,7 +71,7 @@ export function useLoopPlayer() {
       )
     } catch (cause) {
       clear()
-      setStatus(cause instanceof Error ? cause.message : '플레이어를 준비하지 못했습니다.')
+      setStatus(getExceptionMessage(cause, '플레이어를 준비하지 못했습니다.'))
     }
   }
   const play = async (preview: boolean) => {
@@ -85,7 +86,7 @@ export function useLoopPlayer() {
     } catch (cause) {
       if (current === player) {
         setPlaying(false)
-        setStatus(cause instanceof Error ? cause.message : '재생 실패')
+        setStatus(getExceptionMessage(cause, '재생 실패'))
       }
     }
   }
@@ -121,7 +122,7 @@ export function useLoopPlayer() {
       if (revision === seekRevision && current === player) {
         setPlaying(false)
         setPosition(previousPosition)
-        setStatus(cause instanceof Error ? cause.message : '위치 이동 실패')
+        setStatus(getExceptionMessage(cause, '위치 이동 실패'))
       }
     }
   }

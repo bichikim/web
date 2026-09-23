@@ -1,0 +1,68 @@
+{
+  "version": 1,
+  "kind": "golden",
+  "repoId": "demo/inspection-evaluation",
+  "workspaceId": "refs/heads/main",
+  "cases": [
+    {
+      "id": "same-concurrency",
+      "left": {
+        "docId": "refresh/serial",
+        "unitId": "policy",
+        "contentHash": "sha256:f9d6cd1e06ba0eb63088233c12f4744ac824e847b40cdd6f84740a267d7883de"
+      },
+      "right": {
+        "docId": "refresh/duplicate",
+        "unitId": "policy",
+        "contentHash": "sha256:d7d392335eb9ffacb1339ff51047d2ba017b09d2ee2a44426547e55a12e661ee"
+      },
+      "expected": "duplicate"
+    },
+    {
+      "id": "opposite-concurrency",
+      "left": {
+        "docId": "refresh/serial",
+        "unitId": "policy",
+        "contentHash": "sha256:f9d6cd1e06ba0eb63088233c12f4744ac824e847b40cdd6f84740a267d7883de"
+      },
+      "right": {
+        "docId": "refresh/concurrent",
+        "unitId": "policy",
+        "contentHash": "sha256:6b3adf74a8d0d3eca29b811e07c6151bfa0c97301368980aa461548686f15176"
+      },
+      "expected": "conflict"
+    },
+    {
+      "id": "different-domains",
+      "left": {
+        "docId": "refresh/serial",
+        "unitId": "policy",
+        "contentHash": "sha256:f9d6cd1e06ba0eb63088233c12f4744ac824e847b40cdd6f84740a267d7883de"
+      },
+      "right": {
+        "docId": "payment/refund",
+        "unitId": "policy",
+        "contentHash": "sha256:c5e65d8efc76166d0784972099b3f1d058fc98dfd7a42c1b12c3efb450b77261"
+      },
+      "expected": "unrelated"
+    },
+    {
+      "id": "undefined-policy",
+      "left": {
+        "docId": "refresh/serial",
+        "unitId": "policy",
+        "contentHash": "sha256:f9d6cd1e06ba0eb63088233c12f4744ac824e847b40cdd6f84740a267d7883de"
+      },
+      "right": {
+        "docId": "refresh/unspecified",
+        "unitId": "policy",
+        "contentHash": "sha256:a1f3ec2d93e05791e15073411c942d227b995650c9beacbc1b146452fabe5760"
+      },
+      "expected": "uncertain"
+    }
+  ],
+  "review": {
+    "reviewer": "user approval in task 01a06d52-95a9-77e2-8a91-ec2fcf6195b3",
+    "reviewedAt": "2026-09-06T07:41:38Z"
+  }
+}

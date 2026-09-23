@@ -81,7 +81,7 @@ describe('createTextMoodAnalyzer', () => {
     const worker = getWorker()
     const preparation = analyzer.prepare()
 
-    expect(worker.postMessage).toHaveBeenCalledWith({requestId: 1, type: 'prepare'})
+    expect(worker.postMessage).toHaveBeenCalledWith({requestId: 1, type: 'prepare'}, [])
     worker.emitMessage({progress: 52, type: 'loading'})
     worker.emitMessage({requestId: 1, type: 'ready'})
 
@@ -138,12 +138,15 @@ describe('createTextMoodAnalyzer', () => {
         status: 'complete',
       },
     })
-    expect(worker.postMessage).toHaveBeenCalledWith({
-      context: '이전 문장',
-      requestId: 1,
-      text: '현재 문장',
-      type: 'analyze',
-    })
+    expect(worker.postMessage).toHaveBeenCalledWith(
+      {
+        context: '이전 문장',
+        requestId: 1,
+        text: '현재 문장',
+        type: 'analyze',
+      },
+      [],
+    )
     analyzer.dispose()
   })
 
@@ -269,4 +272,38 @@ describe('createTextMoodAnalyzer', () => {
       ok: false,
     })
   })
+})
+
+it('should cancel both pending request kinds and terminate only once on disposal', async () => {
+  const analyzer = createTextMoodAnalyzer()
+  const worker = getWorker()
+  const preparation = analyzer.prepare()
+  const analysis = analyzer.analyze({text: '문장'})
+  analyzer.dispose()
+  analyzer.dispose()
+  await expect(preparation).resolves.toMatchObject({
+    error: {code: 'cancelled', phase: 'prepare'},
+    ok: false,
+  })
+  await expect(analysis).resolves.toMatchObject({
+    error: {code: 'cancelled', phase: 'analyze'},
+    ok: false,
+  })
+  expect(worker.terminate).toHaveBeenCalledOnce()
+})
+
+it('should return a send failure and allow the next preparation to complete', async () => {
+  const analyzer = createTextMoodAnalyzer()
+  const worker = getWorker()
+  worker.postMessage.mockImplementationOnce(() => {
+    throw new Error('send failed')
+  })
+  await expect(analyzer.prepare()).resolves.toMatchObject({
+    error: {code: 'worker-failed', detail: 'send failed', phase: 'prepare'},
+    ok: false,
+  })
+  const retry = analyzer.prepare()
+  worker.emitMessage({requestId: 2, type: 'ready'})
+  await expect(retry).resolves.toMatchObject({ok: true})
+  analyzer.dispose()
 })

@@ -91,7 +91,10 @@ export const PictureDiaryDrawing = (props: PictureDiaryDrawingProps) => {
             />
           }
           isOpen={isOpen()}
-          onOpenChange={setIsOpen}
+          onOpenChange={(open) => {
+            setPreview((current) => (open ? current : undefined))
+            setIsOpen(open)
+          }}
           onCloseAutoFocus={() => trigger()?.focus()}
           size="wide"
           title={m.picture_diary_edit_drawing()}
@@ -108,7 +111,7 @@ export const PictureDiaryDrawing = (props: PictureDiaryDrawingProps) => {
               doneDisabled={mode() === 'generate' && generating()}
               onDone={() => {
                 const image = preview()
-                if (mode() === 'generate' && image !== undefined) {
+                if (image !== undefined) {
                   props.onImageChange?.(image)
                 }
                 setIsOpen(false)
@@ -169,6 +172,7 @@ export const PictureDiaryDrawing = (props: PictureDiaryDrawingProps) => {
                 onBusyChange={setGenerating}
                 onApply={(image) => {
                   props.onImageChange?.(image)
+                  setPreview(undefined)
                   setMode('draw')
                 }}
                 fallback={<p role="status">{m.picture_diary_generation_loading()}</p>}

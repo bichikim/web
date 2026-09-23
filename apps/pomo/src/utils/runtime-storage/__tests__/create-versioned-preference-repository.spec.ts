@@ -171,4 +171,28 @@ describe('createVersionedPreferenceRepository', () => {
 
     await expect(repository.write({value: 3})).rejects.toThrow('Failed to persist preference.')
   })
+
+  it('should translate a failed native write after a successful browser write', () => {
+    const nativeError = new Error('native unavailable')
+    const writeNative = vi.fn(async () => {
+      throw nativeError
+    })
+    const writeWeb = vi.fn(() => null)
+    const repository = createRepository(
+      createStorage({
+        isNative: () => true,
+        writeNative,
+        writeWeb,
+      }),
+    )
+
+    const rejection = expect(repository.write({value: 4})).rejects.toMatchObject({
+      cause: nativeError,
+      message: 'Failed to persist preference.',
+    })
+    expect(writeWeb).toHaveBeenCalledWith({value: 4})
+    expect(writeNative).toHaveBeenCalledWith({value: 4})
+
+    return rejection
+  })
 })

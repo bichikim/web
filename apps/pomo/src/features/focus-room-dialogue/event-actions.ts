@@ -1,3 +1,4 @@
+import {setOptionalRecordEntry} from 'src/utils/set-optional-record-entry'
 import type {EventActionIds} from './event-context'
 import type {DialogueEventBinding, DialogueEventId, EventActionId} from './schema'
 
@@ -13,14 +14,5 @@ export const updateEventActionBinding = (
   bindings: EventActionIds,
   eventId: DialogueEventId,
   actionIds: ReadonlyArray<EventActionId>,
-): EventActionIds => {
-  const nextBindings = {...bindings}
-
-  if (actionIds.length === 0) {
-    delete nextBindings[eventId]
-  } else {
-    nextBindings[eventId] = actionIds
-  }
-
-  return nextBindings
-}
+): EventActionIds =>
+  setOptionalRecordEntry(bindings, eventId, actionIds.length === 0 ? null : actionIds)

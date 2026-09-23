@@ -74,6 +74,34 @@ it('should restore valid native data when the web copy is invalid', async () => 
   fixture.getItem.mockResolvedValue('"solar"')
   await expect(lunarDirectionStorage.read()).resolves.toBe('solar')
 })
+it.each([
+  {
+    key: 'pomo:tool-units:v1',
+    storage: 'unitSelectionStorage' as const,
+    value: {category: 'area', from: 'pyeong', to: 'm2'},
+  },
+  {
+    key: 'pomo:tool-lunar-direction:v1',
+    storage: 'lunarDirectionStorage' as const,
+    value: 'solar',
+  },
+  {
+    key: 'pomo:tool-moving:v1',
+    storage: 'movingSelectionStorage' as const,
+    value: {month: '5', year: '2027'},
+  },
+])('should cache native $key for a later bridge-free read', async ({storage, key, value}) => {
+  fixture.usesTossStorage.mockReturnValue(true)
+  fixture.getItem.mockResolvedValue(JSON.stringify(value))
+  const repositories = createToolSelectionStorages({reportRepairError, storage: fixture.adapter})
+
+  await expect(repositories[storage].read()).resolves.toEqual(value)
+  expect(fixture.web.get(key)).toBe(JSON.stringify(value))
+
+  fixture.usesTossStorage.mockReturnValue(false)
+
+  await expect(repositories[storage].read()).resolves.toEqual(value)
+})
 it('should preserve native read errors when there is no web copy', async () => {
   fixture.usesTossStorage.mockReturnValue(true)
   fixture.getItem.mockRejectedValue(new Error('read failed'))

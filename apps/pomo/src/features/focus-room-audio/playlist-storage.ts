@@ -1,3 +1,4 @@
+import {selectMaximumBy} from 'src/utils/select-maximum-by'
 import {z} from 'zod'
 
 import {createLatestAsyncTask} from 'src/utils/create-latest-async-task'
@@ -14,9 +15,7 @@ const PLAYLIST_STORAGE_KEY = 'pomo:focus-room-playlist:v1'
 
 const storedPlaylistSchema = z.object({
   savedAt: z.number().finite().nonnegative(),
-  trackIds: z
-    .array(z.string().min(1))
-    .refine((trackIds) => new Set(trackIds).size === trackIds.length),
+  trackIds: z.array(z.string().min(1)),
   version: z.literal(1),
 })
 
@@ -48,21 +47,6 @@ const parseStoredPlaylist = (value: unknown): StoredPlaylist | null => {
   return result.success ? result.data : null
 }
 
-const selectLatestPlaylist = (
-  webPlaylist: StoredPlaylist | null,
-  tossPlaylist: StoredPlaylist | null,
-) => {
-  if (webPlaylist === null) {
-    return tossPlaylist
-  }
-
-  if (tossPlaylist === null || webPlaylist.savedAt >= tossPlaylist.savedAt) {
-    return webPlaylist
-  }
-
-  return tossPlaylist
-}
-
 const runtimeStorage = {
   readToss: () => readTossStorageJson(PLAYLIST_STORAGE_KEY, parseStoredPlaylist),
   readWeb: () => readWebStorageJson(PLAYLIST_STORAGE_KEY, parseStoredPlaylist),
@@ -75,13 +59,21 @@ const systemClock = {
   now: Date.now,
 } satisfies PlaylistClock
 
+interface PlaylistTossWrite {
+  readonly playlist: StoredPlaylist
+  readonly write: PlaylistStorageAdapter['writeToss']
+}
+
+const writeLatestToss = createLatestAsyncTask<PlaylistTossWrite>(({playlist, write}) =>
+  write(playlist),
+)
+
 /** Reads and writes playlists using their persisted timestamps. */
 export const createPPlaylistStorage = (
   storage: PlaylistStorageAdapter = runtimeStorage,
   clock: PlaylistClock = systemClock,
   reportError: (error: unknown) => void = globalThis.reportError,
 ): PPlaylistStorage => {
-  const writeLatestToss = createLatestAsyncTask(storage.writeToss)
   let playlistRevision = 0
 
   return {
@@ -100,13 +92,15 @@ export const createPPlaylistStorage = (
           return storage.readWeb()?.trackIds ?? null
         }
 
-        const latestPlaylist = selectLatestPlaylist(webPlaylist, tossPlaylist)
+        const latestPlaylist = selectMaximumBy(webPlaylist, tossPlaylist, (value) => value.savedAt)
 
         if (latestPlaylist !== null) {
           storage.writeWeb(latestPlaylist)
 
           if (latestPlaylist === webPlaylist) {
-            await writeLatestToss(latestPlaylist).catch(reportError)
+            await writeLatestToss({playlist: latestPlaylist, write: storage.writeToss}).catch(
+              reportError,
+            )
           }
         }
 
@@ -136,7 +130,9 @@ export const createPPlaylistStorage = (
         return
       }
 
-      await writeLatestToss(storedPlaylist).catch(() => undefined)
+      await writeLatestToss({playlist: storedPlaylist, write: storage.writeToss}).catch(
+        () => undefined,
+      )
     },
   }
 }

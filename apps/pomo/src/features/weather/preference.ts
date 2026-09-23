@@ -1,3 +1,4 @@
+import {createAuthoritativePreferenceRepository} from '../authoritative-preference'
 import {
   hasNativeStorageBridge,
   readTossStorageJson,
@@ -132,43 +133,20 @@ export const createWeatherPreferenceRepository = (
     )
   }
 
-  const read = async (): Promise<WeatherPreference> => {
-    if (!storage.usesTossStorage()) {
-      return readWebPreference() ?? DEFAULT_WEATHER_PREFERENCE
-    }
-
-    try {
-      const restoredPreference = await readTossPreference()
-
-      if (restoredPreference === null) {
-        writeWebPreference(DEFAULT_WEATHER_PREFERENCE)
-        return DEFAULT_WEATHER_PREFERENCE
-      }
-
-      writeWebPreference(restoredPreference)
-      return restoredPreference
-    } catch (error: unknown) {
-      throw new Error('Failed to read weather preference.', {cause: error})
-    }
-  }
-
-  const write = async (preference: WeatherPreference): Promise<void> => {
-    const webWriteError = writeWebPreference(preference)
-
-    if (!storage.usesTossStorage()) {
-      if (webWriteError !== null) {
-        throw new Error('Failed to persist weather preference.', {cause: webWriteError})
-      }
-
-      return
-    }
-
-    try {
-      await storage.writeToss(WEATHER_PREFERENCE_STORAGE_KEY, preference)
-    } catch (error: unknown) {
-      throw new Error('Failed to persist weather preference.', {cause: error})
-    }
-  }
+  const repository = createAuthoritativePreferenceRepository({
+    defaultValue: DEFAULT_WEATHER_PREFERENCE,
+    readFailureMessage: 'Failed to read weather preference.',
+    storage: {
+      isNative: () => storage.usesTossStorage(),
+      readNative: readTossPreference,
+      readWeb: readWebPreference,
+      writeNative: (value) => storage.writeToss(WEATHER_PREFERENCE_STORAGE_KEY, value),
+      writeWeb: writeWebPreference,
+    },
+    writeFailureMessage: 'Failed to persist weather preference.',
+  })
+  const read = () => repository.read()
+  const write = (value: WeatherPreference) => repository.write(value)
 
   const readWithNames = async (): Promise<WeatherPreference> => {
     const saved = await read()

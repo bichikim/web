@@ -1,3 +1,4 @@
+import {createCatalogRequestInit, hasUniqueIds} from 'src/features/catalog-policy'
 import {audioFetch, httpFetch} from '../http-client'
 import type {SoundEffect} from './types'
 
@@ -42,8 +43,6 @@ const isSoundEffect = (value: unknown): value is SoundEffect => {
   )
 }
 
-const hasUniqueIds = (ids: readonly string[]) => new Set(ids).size === ids.length
-
 const isSoundEffectCollection = (value: unknown): value is SoundEffectCollection => {
   if (typeof value !== 'object' || value === null) {
     return false
@@ -58,13 +57,8 @@ const isSoundEffectCollection = (value: unknown): value is SoundEffectCollection
   )
 }
 
-const createRequestInit = (signal?: AbortSignal): RequestInit => ({
-  cache: import.meta.env.DEV ? 'no-store' : 'default',
-  signal,
-})
-
 const fetchDefaultSoundEffects = (signal?: AbortSignal): Promise<Response> => {
-  const requestInit = createRequestInit(signal)
+  const requestInit = createCatalogRequestInit(signal)
 
   // Desktop development serves public assets from Vite while the desktop client uses the
   // remote asset origin for packaged assets.
@@ -82,7 +76,7 @@ export const loadSoundEffects = async (
   const response =
     options.url === undefined
       ? await fetchDefaultSoundEffects(options.signal)
-      : await httpFetch(options.url, createRequestInit(options.signal))
+      : await httpFetch(options.url, createCatalogRequestInit(options.signal))
 
   if (!response.ok) {
     throw new Error(`Sound effects request failed: ${response.status}`)

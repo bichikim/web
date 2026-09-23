@@ -1,3 +1,4 @@
+import * as m from '@paraglide/message'
 import {Title} from '@solidjs/meta'
 import {useSearchParams} from '@solidjs/router'
 import {DialogueEditorContent} from '../components/dialogue-page/EditorContent'
@@ -11,7 +12,9 @@ export default function PDialoguePage() {
 
   return (
     <>
-      <Title>{dialogueId() === null ? 'Pomofi — 대화 만들기' : 'Pomofi — 대화 편집하기'}</Title>
+      <Title>
+        {dialogueId() === null ? m.dialogue_page_new_title() : m.dialogue_page_edit_title()}
+      </Title>
       <DialogueEditorContent dialogueId={dialogueId()} />
     </>
   )

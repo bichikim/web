@@ -29,6 +29,7 @@ it('should retain the current memo when persistence fails without starting clean
   const cleanup = vi.fn()
   const save = createCalendarAlarmSaver({
     cleanup,
+    deleteMemo: vi.fn(),
     reportError: vi.fn(),
     updateMemos: async (update) => {
       update([memo])
@@ -57,6 +58,7 @@ it('should rearm a consumed calendar alarm when saving the same schedule', async
   ]
   const save = createCalendarAlarmSaver({
     cleanup: vi.fn().mockResolvedValue(undefined),
+    deleteMemo: vi.fn(),
     reportError: vi.fn(),
     updateMemos: async (update) => {
       stored = update(stored)
@@ -83,6 +85,7 @@ it('should persist retirement before cleanup and report cleanup failure without 
       snapshot = stored
       throw error
     },
+    deleteMemo: vi.fn(),
     reportError,
     updateMemos: async (update) => {
       stored = update(stored)
@@ -105,6 +108,7 @@ it.each([memo.dialogueId, 'external-dialogue'])(
     const cleanup = vi.fn().mockResolvedValue(undefined)
     const save = createCalendarAlarmSaver({
       cleanup,
+      deleteMemo: vi.fn(),
       reportError: vi.fn(),
       updateMemos: async (update) => {
         stored = update(stored)
@@ -125,9 +129,78 @@ it('should reject rearming a memo awaiting deletion', async () => {
   const cleanup = vi.fn()
   const save = createCalendarAlarmSaver({
     cleanup,
+    deleteMemo: vi.fn(),
     reportError: vi.fn(),
     updateMemos: async (update) => update([{...memo, deletionPending: true}]),
   })
   await expect(save(options)).rejects.toThrow('cleanup must finish')
   expect(cleanup).not.toHaveBeenCalled()
+})
+
+it('should retire and delete the legacy alarm when saving a scoped alarm', async () => {
+  const legacyMemoId = 'calendar-alarm:connection:legacy-event'
+  const legacyMemo = createMemoryMemo({
+    exactReminderAt: options.alarmAt.toISOString(),
+    id: legacyMemoId,
+    now: options.now,
+    random: options.random,
+    recallMode: 'none',
+    text: 'Legacy alarm',
+  })
+  let stored: ReadonlyArray<MemoryMemo> = [legacyMemo]
+  const snapshots: ReadonlyArray<MemoryMemo>[] = []
+  const deleteMemo = vi.fn(async (memoId: string) => {
+    stored = stored.filter((memo) => memo.id !== memoId)
+  })
+  const save = createCalendarAlarmSaver({
+    cleanup: vi.fn().mockResolvedValue(undefined),
+    deleteMemo,
+    reportError: vi.fn(),
+    updateMemos: async (update) => {
+      stored = update(stored)
+      snapshots.push(stored)
+      return stored
+    },
+  })
+
+  await save({...options, legacyMemoId})
+
+  expect(snapshots[0]).toEqual([
+    expect.objectContaining({id: options.memoId}),
+    expect.objectContaining({deletionPending: true, id: legacyMemoId}),
+  ])
+  expect(deleteMemo).toHaveBeenCalledExactlyOnceWith(legacyMemoId)
+  expect(stored).toEqual([expect.objectContaining({id: options.memoId})])
+})
+
+it('should keep the legacy alarm inactive when its cleanup cannot start', async () => {
+  const legacyMemoId = 'calendar-alarm:connection:legacy-event'
+  const legacyMemo = createMemoryMemo({
+    exactReminderAt: options.alarmAt.toISOString(),
+    id: legacyMemoId,
+    now: options.now,
+    random: options.random,
+    recallMode: 'none',
+    text: 'Legacy alarm',
+  })
+  let stored: ReadonlyArray<MemoryMemo> = [legacyMemo]
+  const error = new Error('legacy cleanup persistence failed')
+  const reportError = vi.fn()
+  const save = createCalendarAlarmSaver({
+    cleanup: vi.fn().mockResolvedValue(undefined),
+    deleteMemo: vi.fn().mockRejectedValue(error),
+    reportError,
+    updateMemos: async (update) => {
+      stored = update(stored)
+      return stored
+    },
+  })
+
+  await expect(save({...options, legacyMemoId})).resolves.toBeUndefined()
+
+  expect(stored).toEqual([
+    expect.objectContaining({id: options.memoId}),
+    expect.objectContaining({deletionPending: true, id: legacyMemoId}),
+  ])
+  expect(reportError).toHaveBeenCalledExactlyOnceWith(error)
 })

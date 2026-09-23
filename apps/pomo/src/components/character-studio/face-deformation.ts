@@ -1,3 +1,4 @@
+import {clamp} from 'es-toolkit/math'
 export const FACE_CONTROLS = [
   {id: 'ear-size', initial: 0, label: '귀 크기', min: -1},
   {id: 'ear-tip-height', initial: 0, label: '귀 끝 위아래 조정', min: -1},
@@ -38,9 +39,7 @@ export const applyFaceDeformation = (
   const weights = new Map<string, number>()
   for (const control of FACE_CONTROLS) {
     const input = settings[control.id] ?? control.initial
-    const value = Number.isFinite(input)
-      ? Math.min(1, Math.max(control.min, input))
-      : control.initial
+    const value = Number.isFinite(input) ? clamp(input, control.min, 1) : control.initial
     weights.set(
       `PomoFace:${control.id}:plus`,
       value > control.initial ? (value - control.initial) / (1 - control.initial) : 0,

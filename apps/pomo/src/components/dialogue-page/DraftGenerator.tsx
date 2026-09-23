@@ -1,3 +1,4 @@
+import * as m from '@paraglide/message'
 import {PInput} from 'src/components/p-input/PInput'
 import {isNonBlankString} from 'src/utils/is-non-blank-string'
 import {cx} from 'class-variance-authority'
@@ -19,12 +20,12 @@ import {
   MAXIMUM_DIALOGUE_SCRIPT_LENGTH,
   MINIMUM_DIALOGUE_SCRIPT_LENGTH,
 } from '../../features/focus-room-dialogue'
+import {localizeErrorMessage} from '../../features/localization/localized-messages'
 import {type ModelDownloadState, useModelDownload} from '../../features/model-download'
 import {getTextModel, isTextModelDownloaded} from '../../features/text-generation'
 import {PGenerationStatus} from '../p-generation-status/PGenerationStatus'
 import {PModelDownloadConsent} from '../p-model-download-consent/PModelDownloadConsent'
 
-const DEFAULT_TOPIC = '오늘 힘이 나는 말 한마디'
 const GEMMA_MODEL_ID = 'gemma-4-e2b'
 const GEMMA_MODEL = getTextModel(GEMMA_MODEL_ID)
 const MAXIMUM_PROGRESS = 100
@@ -138,13 +139,16 @@ const useDialogueGenerationStatus = (props: UseDialogueGenerationStatusProps) =>
 
   const status = createMemo((): DialogueGenerationStatus => {
     if (props.isCheckingModel()) {
-      return {message: '저장된 대사 모델을 확인하고 있어요.', progress: null}
+      return {message: m.dialogue_status_checking_model(), progress: null}
     }
 
     const downloadError = props.downloadError()
 
     if (downloadError !== null) {
-      return {message: downloadError, progress: null}
+      return {
+        message: localizeErrorMessage(downloadError, m.dialogue_model_download_error()),
+        progress: null,
+      }
     }
 
     const downloadState = props.downloadState()
@@ -155,8 +159,7 @@ const useDialogueGenerationStatus = (props: UseDialogueGenerationStatusProps) =>
       downloadState.target.modelId === GEMMA_MODEL_ID
     ) {
       return {
-        message:
-          '대사 모델 파일을 백그라운드에서 내려받고 있어요. 메인으로 이동해도 백그라운드에서 계속 받아요.',
+        message: m.dialogue_status_downloading_model_background(),
         progress: downloadState.percentage,
       }
     }
@@ -166,34 +169,37 @@ const useDialogueGenerationStatus = (props: UseDialogueGenerationStatusProps) =>
 
     switch (currentState.status) {
       case 'complete':
-        return {message: '완성된 초안을 대사 입력창에 반영했어요.', progress: currentProgress}
+        return {message: m.dialogue_status_generated(), progress: currentProgress}
       case 'error':
-        return {message: currentState.message, progress: null}
+        return {
+          message: localizeErrorMessage(currentState.message, m.dialogue_writer_error()),
+          progress: null,
+        }
       case 'generating':
         if (currentProgress === FINAL_GENERATING_PROGRESS) {
           return {
-            message: '완성된 초안을 대사 입력창에 반영하고 있어요.',
+            message: m.dialogue_status_generating(),
             progress: currentProgress,
           }
         }
 
         if (currentProgress !== null && currentProgress > GENERATED_CONTENT_PROGRESS) {
-          return {message: '문장을 자연스럽게 마무리하고 있어요.', progress: currentProgress}
+          return {message: m.dialogue_status_finishing(), progress: currentProgress}
         }
 
-        return {message: '대사 초안을 작성하고 있어요.', progress: currentProgress}
+        return {message: m.dialogue_status_writing(), progress: currentProgress}
       case 'idle':
-        return {message: '주제와 분량을 정한 뒤 대사 만들기를 눌러 주세요.', progress: null}
+        return {message: m.dialogue_status_choose_topic(), progress: null}
       case 'loading':
         return {
           message:
             currentState.percentage === MAXIMUM_PROGRESS
-              ? '받은 대사 모델을 실행할 준비를 하고 있어요.'
-              : '대사 모델 파일을 내려받고 있어요.',
+              ? m.dialogue_status_prepare_model()
+              : m.dialogue_status_downloading_model(),
           progress: currentState.percentage,
         }
       case 'ready':
-        return {message: '대사 모델이 준비됐어요.', progress: null}
+        return {message: m.dialogue_status_model_ready(), progress: null}
       case 'unsupported':
         return {message: props.writer.statusMessage(), progress: null}
     }
@@ -304,7 +310,7 @@ const useDialogueDraftModel = (props: UseDialogueDraftModelProps): DialogueDraft
 }
 
 export function PDialogueDraftGenerator(props: PDialogueDraftGeneratorProps) {
-  const [topic, setTopic] = createSignal(DEFAULT_TOPIC)
+  const [topic, setTopic] = createSignal<string>(m.dialogue_draft_default_topic())
   const [length, setLength] = createSignal(DEFAULT_DIALOGUE_SCRIPT_LENGTH)
   const [isExpanded, setIsExpanded] = createSignal(false)
   const writer = useDialogueWriter({
@@ -335,9 +341,11 @@ export function PDialogueDraftGenerator(props: PDialogueDraftGeneratorProps) {
       >
         <span class="grid min-w-0 flex-1 gap-1">
           <span class="text-[0.95rem] font-[750]" id="dialogue-draft-title">
-            초안 만들기
+            {m.dialogue_draft_title()}
           </span>
-          <span class="text-muted-foreground text-xs leading-[1.5]">AI 도움 · 선택 기능</span>
+          <span class="text-muted-foreground text-xs leading-[1.5]">
+            {m.dialogue_draft_optional()}
+          </span>
         </span>
         <span
           aria-hidden="true"
@@ -349,16 +357,16 @@ export function PDialogueDraftGenerator(props: PDialogueDraftGeneratorProps) {
       <div hidden={!isExpanded()} id="dialogue-draft-content">
         <div class="grid gap-4 px-4 pb-4">
           <p class="m-0 text-muted-foreground text-xs leading-[1.5]">
-            주제와 분량을 정하면 기기 안에서 대사 초안을 작성해요.
+            {m.dialogue_draft_description()}
           </p>
           <label class={FIELD_CLASSES}>
-            <span>어떤 말을 만들까요?</span>
+            <span>{m.dialogue_draft_topic_label()}</span>
             <PInput
               unstyled
               disabled={props.disabled || draftModel.isBusy()}
               maxlength="200"
               onInput={(event) => setTopic(event.currentTarget.value)}
-              placeholder="예: 오늘 힘이 나는 말 한마디"
+              placeholder={m.dialogue_draft_topic_placeholder()}
               type="text"
               value={topic()}
             />
@@ -366,12 +374,14 @@ export function PDialogueDraftGenerator(props: PDialogueDraftGeneratorProps) {
 
           <label class="grid gap-2 text-foreground text-[0.82rem] font-bold">
             <span class="flex justify-between gap-4">
-              생성 분량
-              <strong class="text-highlight">{length()}자</strong>
+              {m.dialogue_draft_length_label()}
+              <strong class="text-highlight">
+                {m.dialogue_draft_characters({count: length()})}
+              </strong>
             </span>
             <input
-              aria-label="생성 분량"
-              aria-valuetext={`${length()}자`}
+              aria-label={m.dialogue_draft_length_label()}
+              aria-valuetext={m.dialogue_draft_characters({count: length()})}
               class="w-full accent-highlight"
               disabled={props.disabled || draftModel.isBusy()}
               max={MAXIMUM_DIALOGUE_SCRIPT_LENGTH}
@@ -382,8 +392,8 @@ export function PDialogueDraftGenerator(props: PDialogueDraftGeneratorProps) {
               value={length()}
             />
             <span class="flex justify-between text-muted-foreground text-[0.72rem] font-[550]">
-              <span>{MINIMUM_DIALOGUE_SCRIPT_LENGTH}자</span>
-              <span>{MAXIMUM_DIALOGUE_SCRIPT_LENGTH}자</span>
+              <span>{m.dialogue_draft_characters({count: MINIMUM_DIALOGUE_SCRIPT_LENGTH})}</span>
+              <span>{m.dialogue_draft_characters({count: MAXIMUM_DIALOGUE_SCRIPT_LENGTH})}</span>
             </span>
           </label>
 
@@ -392,7 +402,7 @@ export function PDialogueDraftGenerator(props: PDialogueDraftGeneratorProps) {
             message={draftModel.generationStatus().message}
             onCancel={draftModel.canCancelDownload() ? draftModel.cancelDownload : undefined}
             progress={draftModel.generationStatus().progress}
-            progressLabel="대사 생성 진행률"
+            progressLabel={m.dialogue_draft_progress()}
           />
           <div class={ACTION_CLASSES}>
             <button
@@ -401,13 +411,13 @@ export function PDialogueDraftGenerator(props: PDialogueDraftGeneratorProps) {
               onClick={draftModel.generate}
               type="button"
             >
-              대사 만들기
+              {m.dialogue_draft_create()}
             </button>
           </div>
         </div>
       </div>
       <PModelDownloadConsent
-        actionLabel="대사 만들기"
+        actionLabel={m.dialogue_draft_create()}
         downloadSize={GEMMA_MODEL.downloadSize}
         isOpen={draftModel.downloadConsentOpen()}
         onCancel={draftModel.cancelDownloadConsent}

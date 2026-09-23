@@ -1,4 +1,5 @@
 import {type Accessor, createSignal, onCleanup} from 'solid-js'
+import {isAbortError as hasAbortErrorName} from 'src/utils/is-cancellation-reason'
 
 export interface UsePlaybackProps {
   readonly element: Accessor<HTMLAudioElement | undefined>
@@ -36,7 +37,7 @@ const isMediaError = (error: unknown): error is Pick<MediaError, 'code' | 'messa
   typeof error.message === 'string'
 
 const isAbortError = (error: unknown) =>
-  (error instanceof DOMException && error.name === 'AbortError') ||
+  (error instanceof DOMException && hasAbortErrorName(error)) ||
   (isMediaError(error) && error.code === 1)
 
 /** 단일 오디오의 재생 상태와 명령, 오래된 재생 요청의 오류를 관리한다. */

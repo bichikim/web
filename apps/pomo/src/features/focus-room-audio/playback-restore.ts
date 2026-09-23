@@ -25,17 +25,22 @@ export const resolvePlaybackRestore = (options: ResolvePlaybackRestoreOptions): 
     return {currentIndex, playback: null, shouldPersist: false}
   }
 
-  const storedIndex = options.tracks.findIndex(
-    (track) => track.id === options.storedPlayback?.trackId,
-  )
+  const storedIndex = options.storedPlayback.trackIndex
+  const matchedIndex =
+    storedIndex !== undefined &&
+    Number.isInteger(storedIndex) &&
+    storedIndex >= 0 &&
+    options.tracks[storedIndex]?.id === options.storedPlayback.trackId
+      ? storedIndex
+      : options.tracks.findIndex((track) => track.id === options.storedPlayback?.trackId)
 
-  if (storedIndex >= 0) {
-    return {currentIndex: storedIndex, playback: options.storedPlayback, shouldPersist: false}
+  if (matchedIndex >= 0) {
+    return {currentIndex: matchedIndex, playback: options.storedPlayback, shouldPersist: false}
   }
 
   return {
     currentIndex: 0,
-    playback: {isPlaying: false, positionSeconds: 0, trackId: options.tracks[0].id},
+    playback: {isPlaying: false, positionSeconds: 0, trackId: options.tracks[0].id, trackIndex: 0},
     shouldPersist: true,
   }
 }
