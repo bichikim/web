@@ -113,13 +113,13 @@ it('should delete expired dialogues except active or queued playback', async () 
   const active = createMetadata('active')
   const idle = createMetadata('idle')
   const deleteDialogue = vi.fn(async () => undefined)
-  const removeItem = vi.fn(async () => undefined)
+  const dismissItem = vi.fn(async () => undefined)
   const removeMetadata = vi.fn(async () => undefined)
   const deletedCount = await deleteExpiredFeedDialogues({
     dialogueRepository: {deleteDialogue},
     feedRepository: {
+      dismissItem,
       listExpiredMetadata: vi.fn(async () => [active, idle]),
-      removeItem,
       removeMetadata,
     },
     isDialogueScheduled: (dialogueId) => dialogueId === active.dialogueId,
@@ -128,8 +128,19 @@ it('should delete expired dialogues except active or queued playback', async () 
 
   expect(deletedCount).toBe(1)
   expect(deleteDialogue).toHaveBeenCalledWith(idle.dialogueId)
-  expect(removeItem).toHaveBeenCalledWith(idle.feedConnectionId, idle.feedItemId)
-  expect(removeItem).toHaveBeenCalledTimes(1)
+  expect(dismissItem).toHaveBeenCalledWith({
+    fallback: {
+      itemTitle: idle.itemTitle,
+      publishedAt: idle.publishedAt,
+      sourceTitle: idle.sourceTitle,
+      sourceUrl: idle.sourceUrl,
+    },
+    feedConnectionId: idle.feedConnectionId,
+    feedItemId: idle.feedItemId,
+    message: '피드 대화가 만료되어 정리했어요.',
+    updatedAt: '2026-08-17T00:00:00.000Z',
+  })
+  expect(dismissItem).toHaveBeenCalledTimes(1)
   expect(removeMetadata).toHaveBeenCalledWith(idle.dialogueId)
 })
 
