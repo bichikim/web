@@ -1,6 +1,6 @@
 import type {HistorySourcePolicy, HistoryTargetDate} from './contract'
 
-export const HISTORY_PROMPT_VERSION = 'today-in-history-v3-local-date'
+export const HISTORY_PROMPT_VERSION = 'today-in-history-v4-required-title-order'
 
 interface BuildHistoryPromptOptions {
   readonly policy: HistorySourcePolicy
@@ -14,7 +14,7 @@ const buildSelectionRequirements = (requiredTitles: ReadonlyArray<string> | unde
   }
 
   return `- 아래 ${requiredTitles.length}개 사건만 작성하고 다른 사건은 추가하지 않는다.
-- title은 아래 표기를 글자까지 정확히 유지한다.
+- title은 아래 표기를 글자까지 정확히 유지하고, moments 배열도 아래 목록 순서대로 작성한다.
 ${requiredTitles.map((title) => `  - ${title}`).join('\n')}`
 }
 
