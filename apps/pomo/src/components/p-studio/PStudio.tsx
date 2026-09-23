@@ -423,7 +423,6 @@ export const PStudio = () => {
   const desktopMode = useDesktopMode({isSurfaceOwner: true})
   const websiteBackgroundInteraction = useWebsiteBackgroundInteraction()
   const isDesktopWallpaper = createMemo(() => desktopMode.mode() === 'desktop')
-  const isDesktopInteractive = createMemo(() => desktopMode.mode() === 'interactiveDesktop')
   const isDesktopWidget = createMemo(() => desktopMode.mode() === 'widget')
   const desktopSafeAreaTop = useDesktopSafeAreaTop(desktopMode.mode)
   const displayPreferences = usePDisplayPreferences()
@@ -494,7 +493,7 @@ export const PStudio = () => {
         websiteBackgroundInteraction={websiteBackgroundInteraction}
         weatherCondition={weather.sceneCondition()}
       />
-      <Show when={!isDesktopWallpaper() && !isDesktopInteractive()}>
+      <Show when={!isDesktopWallpaper()}>
         <StudioUi
           background={background}
           canUseGyroscope={canUseGyroscope()}

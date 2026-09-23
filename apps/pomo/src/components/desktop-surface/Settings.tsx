@@ -15,11 +15,7 @@ export const DesktopSettings = () => {
     <DesktopSurfaceFrame
       accessibleLabel={m.desktop_settings_label()}
       class="w-fit"
-      isVisible={
-        settings.desktopMode.mode() === 'desktop' ||
-        (settings.desktopMode.mode() === 'interactiveDesktop' &&
-          settings.background.preferences().mode === 'website')
-      }
+      isVisible={settings.desktopMode.mode() === 'desktop'}
       title={m.desktop_settings_title()}
     >
       <Show when={displayPreferences.isReady()}>

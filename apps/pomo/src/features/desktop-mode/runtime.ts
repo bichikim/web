@@ -102,7 +102,7 @@ const readWebsiteBackgroundUrl = async (): Promise<string | null> => {
 }
 
 export const shouldHandoffDesktopModeOwner = async (mode: DesktopMode): Promise<boolean> =>
-  isDesktopBackgroundMode(mode) && (await readWebsiteBackgroundUrl()) !== null
+  mode === 'desktop' && (await readWebsiteBackgroundUrl()) !== null
 
 interface SynchronizeBackgroundContentOptions {
   readonly restoreWhenMissing?: boolean
@@ -227,23 +227,14 @@ export const applyDesktopMode = async (mode: DesktopMode): Promise<boolean> => {
     case 'desktop':
       return enterDesktopMode()
     case 'interactiveDesktop':
-      const {openControlSurface, restoreBackgroundContent, setBackgroundSurface} =
-        await getSurfaceApi()
+      const {restoreBackgroundContent, setBackgroundSurface} = await getSurfaceApi()
       await restoreBackgroundContent({label: BACKGROUND_LABEL})
       await setBackgroundSurface({interaction: 'interactive', label: BACKGROUND_LABEL})
-      const usesWebsiteBackground = await synchronizeBackgroundContent({
+      await synchronizeBackgroundContent({
         restoreWhenMissing: false,
         useChild: true,
       })
-      if (usesWebsiteBackground) {
-        const settingsSurface = getControlSurfaceOptions().find(
-          ({label}) => label === SETTINGS_SURFACE_LABEL,
-        )
-        if (settingsSurface !== undefined) {
-          await openControlSurface(settingsSurface)
-        }
-      }
-      return usesWebsiteBackground
+      return false
     case 'normal':
       await restoreNormalMode()
       return false
@@ -289,10 +280,6 @@ export const prepareDesktopModeTransition = async (mode: DesktopMode): Promise<v
 /** Releases the mode controller after all windows have observed the new mode. */
 export const finishDesktopModeTransition = async (mode: DesktopMode): Promise<void> => {
   if (mode === 'desktop') {
-    return
-  }
-
-  if (mode === 'interactiveDesktop' && (await readWebsiteBackgroundUrl()) !== null) {
     return
   }
 

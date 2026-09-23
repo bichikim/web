@@ -18,6 +18,7 @@ import {
   applyDesktopMode,
   finishDesktopModeTransition,
   prepareDesktopModeTransition,
+  shouldHandoffDesktopModeOwner,
   synchronizeDesktopBackground,
 } from '../runtime'
 
@@ -169,7 +170,7 @@ describe('applyDesktopMode', () => {
       })),
     } as never)
 
-    await expect(applyDesktopMode('interactiveDesktop')).resolves.toBe(true)
+    await expect(applyDesktopMode('interactiveDesktop')).resolves.toBe(false)
 
     expect(navigateBackgroundSurface).toHaveBeenCalledWith({
       label: 'background',
@@ -389,7 +390,7 @@ describe('applyDesktopMode', () => {
     expect(openControlSurface).not.toHaveBeenCalled()
   })
 
-  it('should keep a settings surface available for an interactive website background', async () => {
+  it('should close the desktop settings surface for an interactive website background', async () => {
     vi.mocked(getBackgroundRepository).mockResolvedValue({
       read: vi.fn(async () => ({
         items: [],
@@ -397,14 +398,23 @@ describe('applyDesktopMode', () => {
       })),
     } as never)
 
-    await expect(applyDesktopMode('interactiveDesktop')).resolves.toBe(true)
-    expect(openControlSurface).toHaveBeenCalledWith(
-      expect.objectContaining({label: 'desktop-settings'}),
-    )
+    await expect(applyDesktopMode('interactiveDesktop')).resolves.toBe(false)
+    expect(openControlSurface).not.toHaveBeenCalled()
 
     vi.mocked(closeControlSurface).mockClear()
     await finishDesktopModeTransition('interactiveDesktop')
-    expect(closeControlSurface).not.toHaveBeenCalled()
+    expect(closeControlSurface).toHaveBeenCalledWith({label: 'desktop-settings'})
+  })
+
+  it('should keep the main surface as owner for an interactive website background', async () => {
+    vi.mocked(getBackgroundRepository).mockResolvedValue({
+      read: vi.fn(async () => ({
+        items: [],
+        preferences: {mode: 'website', websiteUrl: 'https://example.com/dashboard'},
+      })),
+    } as never)
+
+    await expect(shouldHandoffDesktopModeOwner('interactiveDesktop')).resolves.toBe(false)
   })
 
   it('should keep every initial surface inside a smaller work area', async () => {
