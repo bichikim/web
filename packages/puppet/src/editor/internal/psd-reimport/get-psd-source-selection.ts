@@ -30,5 +30,5 @@ export const getPsdSourceSelection = (
     selectedSource ??
     (sources.length === 1 ? sources[0]?.id : named.length === 1 ? named[0]?.id : undefined)
   const candidates = sources.find((source) => source.id === sourceId)?.parts ?? []
-  return {sourceId, candidates, sources}
+  return {candidates, sourceId, sources}
 }

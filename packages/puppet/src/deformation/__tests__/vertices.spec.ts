@@ -11,11 +11,11 @@ import {rebindDeformer} from '../binding'
 
 const node: PuppetSceneDeformerNode = {
   boneRestPoints: [0, 0, 50, 0, 100, 0],
-  bounds: {height: 100, width: 100, x: 0, y: 0},
   boneWeights: [
     {partId: 'a', vertexIndex: 0, weights: [1, 0]},
     {partId: 'a', vertexIndex: 1, weights: [0, 1]},
   ],
+  bounds: {height: 100, width: 100, x: 0, y: 0},
   children: ['a', 'b'].map((id) => ({id, kind: 'part', locked: false, name: id, visible: true})),
   columns: 1,
   controlPoints: [0, 0, 50, 0, 50, 50],

@@ -47,6 +47,7 @@ const repositoryMocks = vi.hoisted(() => {
   const feedRepository = {
     complete: vi.fn().mockResolvedValue(undefined),
     deleteJobs: vi.fn().mockResolvedValue(undefined),
+    dismissItem: vi.fn().mockResolvedValue(undefined),
     dispose: vi.fn(),
     failJob: vi.fn().mockResolvedValue(true),
     interruptUnfinishedJobs: vi.fn().mockResolvedValue([]),
@@ -55,7 +56,6 @@ const repositoryMocks = vi.hoisted(() => {
     listJobs: vi.fn().mockResolvedValue([]),
     listMetadata: vi.fn().mockResolvedValue([]),
     markListened: vi.fn().mockResolvedValue(undefined),
-    dismissItem: vi.fn().mockResolvedValue(undefined),
     removeItem: vi.fn().mockResolvedValue(undefined),
     removeMetadata: vi.fn().mockResolvedValue(undefined),
     retryJobs: vi.fn().mockResolvedValue(undefined),

@@ -10,14 +10,13 @@ import {
   parseDocument,
   type Player,
   type PuppetDocument,
+  type PuppetSceneDeformerNode,
   serializeDocument,
 } from '../../player'
 import {transformDeformerPoint} from '../../deformation'
-import type {PuppetSceneDeformerNode} from '../../player'
-import {getSceneNode} from '../internal/scene-graph'
+import {createDeformer, getSceneNode} from '../internal/scene-graph'
 import {getDeformerAngle} from '../internal/deformer-transform'
 import {addParameter} from '../internal/parameter-keyforms'
-import {createDeformer} from '../internal/scene-graph'
 import {PuppetEditor} from '../PuppetEditor'
 
 const mocks = vi.hoisted(() => ({

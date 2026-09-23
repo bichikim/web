@@ -23,8 +23,8 @@ const rest: PuppetSceneDeformerNode = {
   kind: 'deformer',
   locked: false,
   name: 'Deformer',
-  rows: 1,
   rotationOrigin: {x: 50, y: 50},
+  rows: 1,
   visible: true,
 }
 

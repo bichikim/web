@@ -101,7 +101,7 @@ const convertContainer = (
       ...base,
       columns: 1,
       controlPoints: [x, y],
-      pins: [{radius: Math.max(bounds.width, bounds.height) / 2, x, strength: 1, y}],
+      pins: [{radius: Math.max(bounds.width, bounds.height) / 2, strength: 1, x, y}],
       rotationOrigin: undefined,
       rows: 1,
     }
@@ -120,8 +120,8 @@ const convertContainer = (
     boneRestPoints: rigid ? controlPoints : undefined,
     columns: 1,
     controlPoints,
-    deformerType: targetKind === 'rotation' ? 'rotation' : undefined,
     curveAxis: targetKind === 'curve' ? axis : undefined,
+    deformerType: targetKind === 'rotation' ? 'rotation' : undefined,
     rotationOrigin: undefined,
     rows: 1,
   }

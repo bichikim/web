@@ -50,7 +50,9 @@ export const ViewCameraControls = (props: ViewCameraControlsProps) => {
         title="보기 설정"
         aria-expanded={expanded()}
         aria-controls={settingsId}
-        ref={trigger}
+        ref={(element) => {
+          trigger = element
+        }}
         onClick={() => setExpanded(!expanded())}
       >
         <span class="puppet-icon puppet-icon-adjustments-horizontal" aria-hidden="true" />
@@ -58,7 +60,9 @@ export const ViewCameraControls = (props: ViewCameraControlsProps) => {
       <Show when={expanded()}>
         <div
           id={settingsId}
-          ref={settings}
+          ref={(element) => {
+            settings = element
+          }}
           class="view-camera-settings"
           role="group"
           aria-label="보기 설정"

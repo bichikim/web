@@ -18,16 +18,16 @@ const part: PuppetScenePartNode = {
   visible: true,
 }
 const rotation = (id: string, x: number): PuppetSceneDeformerNode => ({
-  deformerType: 'rotation',
-  bounds: {width: 100, x: 0, height: 100, y: 0},
-  id,
   boneRestPoints: [x, 0, x + 50, 0],
-  kind: 'deformer',
+  bounds: {height: 100, width: 100, x: 0, y: 0},
   children: [],
-  locked: false,
   columns: 1,
-  name: id,
   controlPoints: [x, 0, x + 50, 0],
+  deformerType: 'rotation',
+  id,
+  kind: 'deformer',
+  locked: false,
+  name: id,
   rows: 1,
   visible: true,
 })
@@ -267,10 +267,10 @@ test('should blend a selected child without a selected parent but exclude discon
     children: [
       part,
       {
+        children: [child, remote],
         id: 'group',
         kind: 'group' as const,
         locked: false,
-        children: [child, remote],
         name: 'Group',
         visible: true,
       },
@@ -290,23 +290,23 @@ test('should spread smooth automatic weights across neighboring bones and honor 
     rotation('d', 150),
   ]
   const narrow = createConfiguredSkinBinding({
-    nodes: roots,
     nodeIds: ['a', 'b', 'c', 'd'],
-    partId: 'part',
+    nodes: roots,
     options: {
       mode: 'smooth',
       range: 0.5,
     },
+    partId: 'part',
     vertices: [75, 0],
   })!
   const wide = createConfiguredSkinBinding({
-    nodes: roots,
     nodeIds: ['a', 'b', 'c', 'd'],
-    partId: 'part',
+    nodes: roots,
     options: {
       mode: 'smooth',
       range: 2,
     },
+    partId: 'part',
     vertices: [75, 0],
   })!
   expect(wide.influences[3]!.weights[0]).toBeGreaterThan(narrow.influences[3]!.weights[0]!)

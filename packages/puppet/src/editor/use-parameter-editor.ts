@@ -450,19 +450,18 @@ export const useParameterEditor = (props: UseParameterEditorProps): ParameterEdi
       }
       props.onNotice('Parameter를 삭제했습니다.')
     },
-    influence,
     disconnectSelection: () => {
       const binding = activeBinding()
       if (binding !== undefined) {
         updateParameterConnection(props, binding, 'disconnect')
       }
     },
-    previewDocument,
+    influence,
     moveKeyform,
-    previewInfluences,
     parameterValueMap,
-    setInfluences: (influences) => applyInfluences(props, activeBinding(), influences),
     parameterValues,
+    previewDocument,
+    previewInfluences,
     renameParameter: (parameterId, name) =>
       applyParameterName(props, activeBindingId(), parameterId, name),
     reset(document) {
@@ -480,6 +479,7 @@ export const useParameterEditor = (props: UseParameterEditorProps): ParameterEdi
       updateValues(values)
     },
     setAllParametersVisible,
+    setInfluences: (influences) => applyInfluences(props, activeBinding(), influences),
     setParameterValues: updateValues,
   }
 }
