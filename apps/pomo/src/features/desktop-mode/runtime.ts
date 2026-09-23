@@ -216,10 +216,12 @@ export const applyDesktopMode = async (mode: DesktopMode): Promise<boolean> => {
 }
 
 export const synchronizeDesktopBackground = async (): Promise<void> => {
-  if (
-    import.meta.env.VITE_POMO_IS_DESKTOP !== 'true' ||
-    !isDesktopBackgroundMode(readDesktopMode())
-  ) {
+  if (import.meta.env.VITE_POMO_IS_DESKTOP !== 'true') {
+    return
+  }
+
+  const mode = readDesktopMode()
+  if (mode !== 'normal' && !isDesktopBackgroundMode(mode)) {
     return
   }
 

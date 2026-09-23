@@ -357,7 +357,9 @@ body {
 :root:has(.pomo-desktop-surface),
 :root:has(.pomo-desktop-surface) body,
 :root:has(.pomo-desktop-dialog),
-:root:has(.pomo-desktop-dialog) body {
+:root:has(.pomo-desktop-dialog) body,
+:root:has(.pomo-desktop-background),
+:root:has(.pomo-desktop-background) body {
   background: transparent !important;
 }
 

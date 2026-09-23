@@ -6,6 +6,7 @@ import {useStudioDesktopSceneSettings} from './use-studio-desktop-scene-settings
 import {type BackgroundController, useBackground} from '../../features/background'
 import {Player as FramePlayer} from '../frame/Player'
 import {
+  createEffect,
   createMemo,
   createSignal,
   Match,
@@ -50,7 +51,7 @@ import {
 import {usePSay} from '../../features/pomo-webmcp'
 import {useWeather, type WeatherSceneCondition} from '../../features/weather'
 import {
-  isDesktopBackgroundMode,
+  synchronizeDesktopBackground,
   useDesktopMode,
   useDesktopSafeAreaTop,
 } from '../../features/desktop-mode'
@@ -67,7 +68,6 @@ import {useDialogueSceneGaze} from '../use-dialogue-scene-gaze'
 import {StudioOverlay} from './StudioOverlay'
 import {useStudioTour} from './use-tour'
 import {DesktopSurfaceHandle} from '../desktop-surface/DesktopSurfaceHandle'
-import {WebsiteBackground} from './WebsiteBackground'
 
 const AUTOMATIC_PERIOD_REFRESH = 60_000
 
@@ -149,7 +149,6 @@ interface StudioSceneViewProps {
   readonly activity: PActivity
   readonly activeViseme: PViseme
   readonly hasSceneRendered: boolean
-  readonly isDesktopBackground: boolean
   readonly isDesktopWallpaper: boolean
   readonly motionInput: PSceneMotionInput
   readonly motionMode: PSceneMotionMode
@@ -205,12 +204,7 @@ const StudioSceneView = (props: StudioSceneViewProps) => (
           props.background.preferences().mode === 'website'
         }
       >
-        <Show
-          fallback={<div class="h-full w-full bg-background" />}
-          when={!props.isDesktopBackground && props.background.preferences().websiteUrl}
-        >
-          {(url) => <WebsiteBackground url={url()} />}
-        </Show>
+        <div class="h-full w-full bg-transparent" />
       </Match>
     </Switch>
   </Show>
@@ -448,6 +442,13 @@ export const PStudio = () => {
   )
   const activeViseme = useStudioViseme(events, pomoSay)
   const tourHint = useStudioTourHint(entry.enter, () => tour.setIsOpen(true))
+  createEffect(() => {
+    background.ready()
+    background.preferences()
+    if (import.meta.env.VITE_POMO_IS_DESKTOP === 'true' && desktopMode.mode() === 'normal') {
+      synchronizeDesktopBackground().catch(() => undefined)
+    }
+  })
   useStudioRuntime({entry, setAutomaticPeriod, setCanUseGyroscope, setMotionInput})
   return (
     <section
@@ -465,7 +466,6 @@ export const PStudio = () => {
         activity={scenePreferences.activity()}
         activeViseme={activeViseme()}
         hasSceneRendered={hasSceneRendered()}
-        isDesktopBackground={isDesktopBackgroundMode(desktopMode.mode())}
         isDesktopWallpaper={isDesktopWallpaper()}
         isReady={scenePreferences.isReady() && weather.isReady()}
         motionInput={motionInput()}

@@ -8,6 +8,7 @@ import {vi} from 'vitest'
 
 import {
   isDesktopBackgroundMode,
+  synchronizeDesktopBackground,
   useDesktopMode,
   useDesktopSafeAreaTop,
   useDesktopSceneSettingsPublisher,
@@ -59,6 +60,7 @@ vi.mock('src/features/desktop-mode', () => ({
   isDesktopBackgroundMode: vi.fn(
     (mode: string) => mode === 'desktop' || mode === 'interactiveDesktop',
   ),
+  synchronizeDesktopBackground: vi.fn(async () => undefined),
   useDesktopMode: vi.fn(),
   useDesktopSafeAreaTop: vi.fn(),
   useDesktopSceneSettingsPublisher: vi.fn(),
@@ -369,6 +371,7 @@ export const studioMocks = {
   PTour,
   readFocusRoomEntrySession,
   SceneToolbar,
+  synchronizeDesktopBackground,
   useBackground,
   useDesktopSafeAreaTop,
   useDesktopSceneSettingsPublisher,

@@ -160,6 +160,25 @@ describe('applyDesktopMode', () => {
     })
   })
 
+  it('should synchronize the native website layer in normal desktop mode', async () => {
+    vi.stubEnv('VITE_POMO_IS_DESKTOP', 'true')
+    localStorage.setItem('pomo:desktop-mode:v1', 'normal')
+    vi.mocked(getBackgroundRepository).mockResolvedValue({
+      read: vi.fn(async () => ({
+        items: [],
+        preferences: {mode: 'website', websiteUrl: 'https://example.com/dashboard'},
+      })),
+    } as never)
+
+    await synchronizeDesktopBackground()
+
+    expect(navigateBackgroundSurface).toHaveBeenCalledWith({
+      label: 'background',
+      url: 'https://example.com/dashboard',
+    })
+    expect(restoreBackgroundContent).not.toHaveBeenCalled()
+  })
+
   it('should restore the local background document when a non-website background is selected', async () => {
     vi.stubEnv('VITE_POMO_IS_DESKTOP', 'true')
     localStorage.setItem('pomo:desktop-mode:v1', 'desktop')

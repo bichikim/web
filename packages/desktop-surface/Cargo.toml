@@ -19,7 +19,7 @@ crate-type = ["lib"]
 [dependencies]
 serde = { version = "1", features = ["derive"] }
 thiserror = "2"
-tauri = { version = "2", features = ["macos-private-api"] }
+tauri = { version = "2", features = ["macos-private-api", "unstable"] }
 
 [target.'cfg(target_os = "macos")'.dependencies]
 block2 = "0.6.2"
@@ -31,6 +31,7 @@ objc2-app-kit = { version = "0.3.2", features = [
   "NSView",
   "NSWindow",
   "NSWorkspace",
+  "NSGraphics",
   "objc2-quartz-core",
 ] }
 objc2-core-graphics = { version = "0.3.2", features = ["CGWindowLevel"] }

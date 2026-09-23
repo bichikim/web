@@ -46,7 +46,7 @@ describe('PStudio', () => {
     expect(screen.getByRole('button', {name: '입장'})).toBeInTheDocument()
   })
 
-  it('should render the saved website in the normal desktop window', () => {
+  it('should leave the normal desktop scene transparent for the native website layer', () => {
     vi.stubEnv('VITE_POMO_IS_DESKTOP', 'true')
     configureStudio({
       backgroundMode: 'website',
@@ -57,10 +57,9 @@ describe('PStudio', () => {
 
     renderStudio()
 
-    expect(screen.getByTitle('웹사이트 주소')).toHaveAttribute(
-      'src',
-      'https://example.com/dashboard',
-    )
+    expect(screen.getByLabelText('Pomo')).toBeInTheDocument()
+    expect(screen.queryByTitle('웹사이트 주소')).not.toBeInTheDocument()
+    expect(vi.mocked(studioMocks.synchronizeDesktopBackground)).toHaveBeenCalled()
   })
 
   it('should keep only the scene visible while the window is the desktop background', () => {

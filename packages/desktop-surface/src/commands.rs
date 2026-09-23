@@ -83,7 +83,7 @@ pub(crate) async fn navigate_background_surface<R: Runtime>(
     {
         let options = ValidatedBackgroundNavigation::try_from(options)?;
         let window = find_window(&app, options.label)?;
-        crate::macos::navigate_background(&state, &window, options.url).map_err(Into::into)
+        crate::macos::navigate_background_surface(&state, &window, options.url).map_err(Into::into)
     }
 }
 
