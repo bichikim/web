@@ -89,6 +89,81 @@ describe('parameter composition', () => {
       }),
     ).toBe(restVertices)
   })
+
+  test('should apply a binding once when its explicit target list repeats a part', () => {
+    const initial = createComposedDocument()
+    const part = initial.parts[0]!
+    const smile = initial.parameterBindings.at(-1)!
+    const document: PuppetDocument = {
+      ...initial,
+      parameterBindings: [{...smile, targetPartIds: [part.id, part.id]}],
+    }
+
+    expect(
+      composeParameterVertices({
+        document,
+        parameterValues: {smile: 10},
+        partId: part.id,
+        restVertices: part.mesh.vertices,
+      }).at(-2),
+    ).toBe(330)
+  })
+
+  test('should find parts from keyforms when explicit targets are absent', () => {
+    const initial = createComposedDocument()
+    const part = initial.parts[0]!
+    const {targetPartIds: _targetPartIds, ...smile} = initial.parameterBindings.at(-1)!
+    const document: PuppetDocument = {...initial, parameterBindings: [smile]}
+
+    expect(
+      composeParameterVertices({
+        document,
+        parameterValues: {smile: 10},
+        partId: part.id,
+        restVertices: part.mesh.vertices,
+      }).at(-2),
+    ).toBe(330)
+  })
+
+  test('should let an explicit empty target list override keyform parts', () => {
+    const initial = createComposedDocument()
+    const part = initial.parts[0]!
+    const smile = initial.parameterBindings.at(-1)!
+    const document: PuppetDocument = {
+      ...initial,
+      parameterBindings: [{...smile, targetPartIds: []}],
+    }
+
+    expect(
+      composeParameterVertices({
+        document,
+        parameterValues: {smile: 10},
+        partId: part.id,
+        restVertices: part.mesh.vertices,
+      }),
+    ).toBe(part.mesh.vertices)
+  })
+
+  test('should use the latest binding list after an immutable document update', () => {
+    const initial = createComposedDocument()
+    const part = initial.parts[0]!
+    const smile = initial.parameterBindings.at(-1)!
+    const document: PuppetDocument = {...initial, parameterBindings: [smile]}
+    const options = {
+      document,
+      parameterValues: {smile: 10},
+      partId: part.id,
+      restVertices: part.mesh.vertices,
+    }
+
+    expect(composeParameterVertices(options).at(-2)).toBe(330)
+    expect(
+      composeParameterVertices({
+        ...options,
+        document: {...document, parameterBindings: []},
+      }),
+    ).toBe(part.mesh.vertices)
+  })
 })
 
 test('should attenuate only the selected binding delta using another raw parameter', () => {

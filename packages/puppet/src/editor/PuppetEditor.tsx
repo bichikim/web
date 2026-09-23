@@ -158,6 +158,7 @@ export const PuppetEditor = (props: PuppetEditorProps) => {
   const [playerStatus, setPlayerStatus] = createSignal<PlayerCanvasStatus>('loading')
   const [player, setPlayer] = createSignal<Player | null>(null)
   const [currentTime, setCurrentTime] = createSignal(0)
+  const [playbackPreviewTime, setPlaybackPreviewTime] = createSignal(0)
   const [isPlaying, setIsPlaying] = createSignal(false)
   const [physicsPreview, setPhysicsPreview] = createSignal(true)
   const [activeMotionId, setActiveMotionId] = createSignal<string | null>(initialMotionId)
@@ -281,6 +282,9 @@ export const PuppetEditor = (props: PuppetEditorProps) => {
     const currentPlayer = player()
 
     if (currentPlayer !== null) {
+      if (!isPlaying()) {
+        setPlaybackPreviewTime(currentTime())
+      }
       setIsPlaying(togglePlayerPlayback(currentPlayer, isPlaying()))
     }
   }
@@ -530,7 +534,7 @@ export const PuppetEditor = (props: PuppetEditorProps) => {
             activeNodeId={layerSelection().activeNodeId ?? undefined}
             activePartId={activePartId() ?? undefined}
             activeVertexIndex={activeVertexIndex()}
-            currentTime={currentTime()}
+            currentTime={isPlaying() ? playbackPreviewTime() : currentTime()}
             deformerControlSelection={deformerControlSelection}
             document={temporary.document()}
             editMode={WORKSPACE_EDIT_MODES[workspace()]}
@@ -544,6 +548,7 @@ export const PuppetEditor = (props: PuppetEditorProps) => {
             onTimeChange={setCurrentTime}
             onVertexEditStart={pausePlayback}
             onVertexSelect={setActiveVertexIndex}
+            playbackActive={isPlaying()}
             parameterValues={temporary.target()?.values ?? parameterEditor.parameterValues()}
             parameterValueMap={temporary.valueMap()}
             previewDocument={parameterPreviewDocument()}

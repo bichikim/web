@@ -69,6 +69,22 @@ beforeEach(() => {
 })
 
 describe('PuppetEditor', () => {
+  test('should hide portaled deformer controls during playback and restore them on pause', async () => {
+    const document = createDeformer(createDemoDocument(), ['mesh-preview'])!
+    const view = render(() => (
+      <PuppetEditor initialDocument={document} initialWorkspace="animation" />
+    ))
+    await waitFor(() => expect(mocks.createPlayer).toHaveBeenCalled())
+    fireEvent.click(view.getByRole('button', {name: '새 자유 변형 디포머 레이어 선택'}))
+    expect(view.getByRole('group', {name: '디포머 편집 도구'})).toBeInTheDocument()
+
+    fireEvent.click(view.getByRole('button', {name: '재생'}))
+    expect(view.queryByRole('group', {name: '디포머 편집 도구'})).not.toBeInTheDocument()
+
+    fireEvent.click(view.getByRole('button', {name: '정지'}))
+    expect(view.getByRole('group', {name: '디포머 편집 도구'})).toBeInTheDocument()
+  })
+
   test('should hide selection actions for mixed node kinds', () => {
     const view = render(() => <PuppetEditor initialDocument={createDemoDocument()} />)
 
