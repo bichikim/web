@@ -70,12 +70,41 @@ const addParameterDelta = (
     return currentCoordinate + (sampledCoordinate - restCoordinate) * weight
   })
 
+const bindingsByPart = new WeakMap<
+  ReadonlyArray<PuppetParameterBinding>,
+  Map<string, PuppetParameterBinding[]>
+>()
+
+const getPartBindings = (
+  bindings: ReadonlyArray<PuppetParameterBinding>,
+  partId: string,
+): ReadonlyArray<PuppetParameterBinding> => {
+  let indexed = bindingsByPart.get(bindings)
+  if (indexed === undefined) {
+    indexed = new Map()
+    for (const binding of bindings) {
+      const partIds = new Set(
+        binding.targetPartIds ??
+          binding.keyforms.flatMap((keyform) => keyform.parts.map((part) => part.partId)),
+      )
+      for (const targetId of partIds) {
+        const partBindings = indexed.get(targetId) ?? []
+        partBindings.push(binding)
+        indexed.set(targetId, partBindings)
+      }
+    }
+    bindingsByPart.set(bindings, indexed)
+  }
+
+  return indexed.get(partId) ?? []
+}
+
 export const composeParameterVertices = (
   options: ComposeParameterVerticesOptions,
 ): ReadonlyArray<number> => {
   let composedVertices = options.restVertices
 
-  for (const binding of options.document.parameterBindings ?? []) {
+  for (const binding of getPartBindings(options.document.parameterBindings ?? [], options.partId)) {
     const sampledVertices = sampleParameterVertices({
       binding,
       partId: options.partId,

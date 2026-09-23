@@ -218,6 +218,35 @@ describe('PuppetEditor', () => {
     expect(view.getByRole('region', {name: 'Timeline'})).toBeVisible()
   })
 
+  test('should hold editing geometry during playback and catch up when paused', async () => {
+    const view = render(() => (
+      <PuppetEditor initialDocument={createDemoDocument()} initialWorkspace="animation" />
+    ))
+    await waitFor(() => expect(mocks.createPlayer).toHaveBeenCalledOnce())
+    const onFrame = mocks.createPlayer.mock.calls[0]?.[0].onFrame
+    const vertex = () =>
+      view.container.querySelectorAll('[data-part-id="mesh-preview"] circle')[4]?.getAttribute('cy')
+    const overlays = view.container.querySelector('.editing-overlays')
+    expect(view.getByRole('group', {name: '표시 설정'})).toBeInTheDocument()
+    onFrame?.({duration: 2, motionId: 'idle-deform', time: 0.5})
+    const startPosition = vertex()
+
+    fireEvent.click(view.getByRole('button', {name: '재생'}))
+    onFrame?.({duration: 2, motionId: 'idle-deform', time: 1})
+
+    expect(view.getByRole('slider', {name: '재생 위치'})).toHaveAttribute('aria-valuenow', '1')
+    expect(vertex()).toBe(startPosition)
+    expect(overlays).toHaveAttribute('aria-hidden', 'true')
+    expect(overlays).toHaveProperty('inert', true)
+    expect(view.queryByRole('group', {name: '표시 설정'})).not.toBeInTheDocument()
+
+    fireEvent.click(view.getByRole('button', {name: '정지'}))
+    expect(vertex()).toBe('176')
+    expect(overlays).toHaveAttribute('aria-hidden', 'false')
+    expect(overlays).toHaveProperty('inert', false)
+    expect(view.getByRole('group', {name: '표시 설정'})).toBeInTheDocument()
+  })
+
   test('should edit mesh topology only from the modeling workspace and include it in history', async () => {
     const onDocumentChange = vi.fn<(document: PuppetDocument) => void>()
     const view = render(() => (

@@ -136,6 +136,60 @@ describe('getPartRenderPlans', () => {
       },
     ])
   })
+
+  test('should reuse mask structure while resolving frame properties independently', () => {
+    const base = createDocument()
+    const vertices = base.parts[0]!.mesh.vertices
+    const document = {
+      ...base,
+      parameterBindings: [
+        {
+          id: 'fade',
+          keyforms: [
+            {parts: [{partId: 'target', properties: {opacity: 0.5}, vertices}], values: [0]},
+            {parts: [{partId: 'target', properties: {opacity: 1}, vertices}], values: [1]},
+          ],
+          parameterIds: ['fade'] as const,
+          targetPartIds: ['target'],
+        },
+      ],
+      parameters: [{defaultValue: 0, id: 'fade', maximum: 1, minimum: 0, name: 'Fade'}],
+    } satisfies PuppetDocument
+    const initial = getPartRenderPlans(document)
+    const next = getPartRenderPlans(document, {fade: 1})
+
+    expect(next[0]?.mask).toBe(initial[0]?.mask)
+    expect(initial[0]?.properties.opacity).toBe(0.5)
+    expect(next[0]?.properties.opacity).toBe(1)
+  })
+
+  test('should rebuild mask structure for an updated document', () => {
+    const document = createDocument()
+    const initial = getPartRenderPlans(document)
+    const changed: PuppetDocument = {
+      ...document,
+      parts: document.parts.map((part) =>
+        part.id === 'target'
+          ? {...part, properties: {...part.properties, clippingMaskIds: ['source']}}
+          : part,
+      ),
+    }
+    const next = getPartRenderPlans(changed)
+
+    expect(initial[0]?.mask?.sources.map((source) => source.partId)).toEqual(['middle'])
+    expect(next[0]?.mask?.sources.map((source) => source.partId)).toEqual(['source'])
+    expect(next[0]?.mask).not.toBe(initial[0]?.mask)
+  })
+
+  test('should retain first-match behavior for duplicate part IDs', () => {
+    const base = createDocument()
+    const document: PuppetDocument = {
+      ...base,
+      parts: [...base.parts, {...base.parts[0]!, properties: {clippingMaskIds: ['source']}}],
+    }
+
+    expect(getPartRenderPlans(document)[0]?.mask?.sources[0]?.partId).toBe('middle')
+  })
 })
 
 describe('canReusePartResources', () => {

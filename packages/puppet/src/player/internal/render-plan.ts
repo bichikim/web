@@ -3,7 +3,7 @@ import {
   type PuppetParameterValueMap,
   type ResolvedPartRenderProperties,
 } from '../../deformation'
-import type {PuppetDocument} from '../document'
+import type {PuppetDocument, PuppetPart} from '../document'
 import {getScenePartStates} from '../scene'
 import {resolveParameterValue} from '../parameter-value'
 
@@ -29,6 +29,13 @@ interface CreatePartMaskPlanOptions {
   readonly ancestorPartIds: ReadonlySet<string>
   readonly document: PuppetDocument
   readonly partId: string
+  readonly partById: ReadonlyMap<string, PuppetPart>
+}
+
+interface StaticMaskStructure {
+  readonly maskPartIds: ReadonlySet<string>
+  readonly partById: ReadonlyMap<string, PuppetPart>
+  readonly planByPartId: Map<string, PartMaskRenderPlan | undefined>
 }
 
 const createPartMaskPlan = (options: CreatePartMaskPlanOptions): PartMaskRenderPlan | undefined => {
@@ -36,7 +43,7 @@ const createPartMaskPlan = (options: CreatePartMaskPlanOptions): PartMaskRenderP
     return undefined
   }
 
-  const part = options.document.parts.find((candidate) => candidate.id === options.partId)
+  const part = options.partById.get(options.partId)
   const maskPartIds = part?.properties?.clippingMaskIds ?? []
   if (maskPartIds.length === 0) {
     return undefined
@@ -45,7 +52,7 @@ const createPartMaskPlan = (options: CreatePartMaskPlanOptions): PartMaskRenderP
   const ancestorPartIds = new Set(options.ancestorPartIds)
   ancestorPartIds.add(options.partId)
   const sources = maskPartIds.flatMap((partId): ReadonlyArray<PartMaskSourcePlan> => {
-    const sourcePart = options.document.parts.find((candidate) => candidate.id === partId)
+    const sourcePart = options.partById.get(partId)
     if (sourcePart === undefined) {
       return []
     }
@@ -56,7 +63,12 @@ const createPartMaskPlan = (options: CreatePartMaskPlanOptions): PartMaskRenderP
           document: options.document,
           partId,
         }).invertedMask,
-        mask: createPartMaskPlan({ancestorPartIds, document: options.document, partId}),
+        mask: createPartMaskPlan({
+          ancestorPartIds,
+          document: options.document,
+          partById: options.partById,
+          partId,
+        }),
         partId,
       },
     ]
@@ -65,13 +77,56 @@ const createPartMaskPlan = (options: CreatePartMaskPlanOptions): PartMaskRenderP
   return {sources}
 }
 
+const maskStructureByDocument = new WeakMap<PuppetDocument, StaticMaskStructure>()
+
+const getStaticMaskStructure = (document: PuppetDocument): StaticMaskStructure => {
+  let structure = maskStructureByDocument.get(document)
+  if (structure === undefined) {
+    const partById = new Map<string, PuppetPart>()
+    for (const part of document.parts) {
+      if (!partById.has(part.id)) {
+        partById.set(part.id, part)
+      }
+    }
+
+    structure = {
+      maskPartIds: new Set(
+        document.parts.flatMap((part) => part.properties?.clippingMaskIds ?? []),
+      ),
+      partById,
+      planByPartId: new Map(),
+    }
+    maskStructureByDocument.set(document, structure)
+  }
+
+  return structure
+}
+
+const getPartMaskPlan = (
+  document: PuppetDocument,
+  structure: StaticMaskStructure,
+  partId: string,
+): PartMaskRenderPlan | undefined => {
+  if (!structure.planByPartId.has(partId)) {
+    structure.planByPartId.set(
+      partId,
+      createPartMaskPlan({
+        ancestorPartIds: new Set(),
+        document,
+        partById: structure.partById,
+        partId,
+      }),
+    )
+  }
+
+  return structure.planByPartId.get(partId)
+}
+
 export const getPartRenderPlans = (
   document: PuppetDocument,
   parameterValues?: PuppetParameterValueMap,
 ): ReadonlyArray<PartRenderPlan> => {
-  const maskPartIds = new Set(
-    document.parts.flatMap((part) => part.properties?.clippingMaskIds ?? []),
-  )
+  const maskStructure = getStaticMaskStructure(document)
 
   const states = (document.layerOrderRules ?? []).reduce((orderedStates, rule) => {
     const total = rule.when.parameterIds.reduce((sum, id) => {
@@ -101,7 +156,7 @@ export const getPartRenderPlans = (
   }, getScenePartStates(document))
 
   return states.flatMap((state): ReadonlyArray<PartRenderPlan> => {
-    const part = document.parts.find((candidate) => candidate.id === state.partId)
+    const part = maskStructure.partById.get(state.partId)
     if (part === undefined) {
       return []
     }
@@ -111,14 +166,10 @@ export const getPartRenderPlans = (
       parameterValues,
       partId: state.partId,
     })
-    const render = !maskPartIds.has(state.partId) || properties.renderWhenUsedAsMask
+    const render = !maskStructure.maskPartIds.has(state.partId) || properties.renderWhenUsedAsMask
     return [
       {
-        mask: createPartMaskPlan({
-          ancestorPartIds: new Set(),
-          document,
-          partId: state.partId,
-        }),
+        mask: getPartMaskPlan(document, maskStructure, state.partId),
         partId: state.partId,
         properties,
         render,
