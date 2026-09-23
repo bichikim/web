@@ -4,6 +4,7 @@ import {afterEach, beforeEach, expect, it, vi} from 'vitest'
 
 import {
   createDesktopMusicActionChannel,
+  isDesktopMusicActionConnectionMessage,
   isDesktopMusicActionMessage,
 } from '../desktop-music-actions'
 
@@ -37,6 +38,21 @@ it.each([null, {}, {actionId: 'sound-effects-start'}, {actionId: 1}])(
   'should reject an unsupported desktop music action message %#',
   (message) => {
     expect(isDesktopMusicActionMessage(message)).toBe(false)
+  },
+)
+
+it.each([
+  {type: 'player-ready'},
+  {type: 'request-player-ready'},
+  {type: 'player-unavailable'},
+] as const)('should accept desktop music connection message $type', (message) => {
+  expect(isDesktopMusicActionConnectionMessage(message)).toBe(true)
+})
+
+it.each([null, {}, {type: 'unrecognized'}, {type: 1}])(
+  'should reject an unsupported desktop music connection message %#',
+  (message) => {
+    expect(isDesktopMusicActionConnectionMessage(message)).toBe(false)
   },
 )
 
