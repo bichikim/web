@@ -100,6 +100,11 @@ interface CreatePrepareOptions {
   readonly setState: Setter<ChatVoiceState>
 }
 
+interface ActivePreparation {
+  readonly client: SupertonicClient | null
+  readonly promise: Promise<void>
+}
+
 interface CreateSpeechQueueOptions {
   readonly clientReference: ClientReference
   readonly isModelReady: Accessor<boolean>
@@ -237,7 +242,7 @@ const updateStateAfterStop = (options: CreateSpeechQueueOptions) => {
 }
 
 const createPrepare = (options: CreatePrepareOptions) => {
-  let preparation: Promise<void> | null = null
+  let preparation: ActivePreparation | null = null
 
   const run = async () => {
     disposeClient(options.clientReference)
@@ -292,19 +297,27 @@ const createPrepare = (options: CreatePrepareOptions) => {
   }
 
   return () => {
-    if (preparation !== null) {
-      return preparation
+    const currentPreparation = preparation
+    if (
+      currentPreparation !== null &&
+      currentPreparation.client === options.clientReference.current
+    ) {
+      return currentPreparation.promise
     }
 
     if (!options.canPrepare()) {
       return Promise.resolve()
     }
 
-    preparation = run().finally(() => {
-      preparation = null
+    const running = run()
+    const promise = running.finally(() => {
+      if (preparation?.promise === promise) {
+        preparation = null
+      }
     })
+    preparation = {client: options.clientReference.current, promise}
 
-    return preparation
+    return promise
   }
 }
 
