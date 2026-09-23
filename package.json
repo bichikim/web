@@ -54,10 +54,10 @@
     "@types/node": "catalog:",
     "@typescript/typescript6": "catalog:",
     "@unocss/vite": "catalog:",
-    "@vitest/browser": "4.1.10",
-    "@vitest/browser-playwright": "4.1.10",
-    "@vitest/coverage-v8": "4.1.10",
-    "@vitest/ui": "4.1.10",
+    "@vitest/browser": "4.1.11",
+    "@vitest/browser-playwright": "4.1.11",
+    "@vitest/coverage-v8": "4.1.11",
+    "@vitest/ui": "4.1.11",
     "@winter-love/oxlint-plugins": "workspace:*",
     "@winter-love/solid-test": "workspace:*",
     "@winter-love/unocss-config": "workspace:*",
@@ -91,7 +91,7 @@
     "vite-plugin-dts": "^5.0.3",
     "vite-plugin-solid": "^2.11.12",
     "vite-plugin-static-copy": "^3.4.0",
-    "vitest": "4.1.10",
+    "vitest": "4.1.11",
     "wrangler": "^4.125.0"
   },
   "browserslist": [

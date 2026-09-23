@@ -75,7 +75,7 @@
     "onnxruntime-node": "1.24.3",
     "onnxruntime-web": "1.23.2",
     "openai": "^7.4.0",
-    "pixi.js": "^8.19.0",
+    "pixi.js": "^8.21.0",
     "solid-js": "catalog:",
     "tone": "^15.1.22",
     "unocss": "catalog:",
@@ -110,7 +110,7 @@
     "storybook-solidjs-vite": "10.7.1",
     "tag-soup": "3.2.0",
     "typescript": "catalog:",
-    "vitest": "4.1.10"
+    "vitest": "4.1.11"
   },
   "engines": {
     "node": ">=24"
