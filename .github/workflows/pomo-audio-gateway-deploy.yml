@@ -24,7 +24,7 @@ permissions:
   contents: read
 
 env:
-  NODE_VERSION: 24
+  NODE_VERSION: 26.4.0
   PNPM_VERSION: 11.8.0
   VERCEL_CLI_VERSION: 59.5.0
   VERCEL_ORG_ID: team_Ic8YKQ9jWkFLhVzeljhB4ZLV

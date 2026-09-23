@@ -27,6 +27,7 @@ export const createConfig = ({
   entry = {},
   alias = {},
   target,
+  solid = {},
   plugins = [],
   rollupOutputPlugins = [],
 } = {}) => {
@@ -84,7 +85,7 @@ export const createConfig = ({
         exclude: [],
       },
       plugins: [
-        solidPlugin(),
+        solidPlugin(solid),
         dts({
           afterDiagnostic(diagnostics) {
             // TypeScript DiagnosticCategory.Error 값으로 오류만 빌드 실패에 반영한다.
