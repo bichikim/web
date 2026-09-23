@@ -3,6 +3,7 @@ import {afterEach, describe, expect, it, vi} from 'vitest'
 
 import {
   closeControlSurface,
+  forwardBackgroundMouseEvent,
   getBackgroundInteraction,
   navigateBackgroundSurface,
   openControlSurface,
@@ -79,6 +80,29 @@ describe('desktop surface guest API', () => {
     )
     expect(invoke).toHaveBeenNthCalledWith(2, 'plugin:desktop-surface|restore_background_content', {
       label: 'background',
+    })
+  })
+
+  it('should forward a background mouse event as one command object', async () => {
+    vi.mocked(invoke).mockResolvedValue(undefined)
+    const options = {
+      altKey: false,
+      button: 0,
+      buttons: 1,
+      clickCount: 1,
+      ctrlKey: false,
+      kind: 'down' as const,
+      label: 'background',
+      metaKey: false,
+      shiftKey: false,
+      x: 120,
+      y: 80,
+    }
+
+    await forwardBackgroundMouseEvent(options)
+
+    expect(invoke).toHaveBeenCalledWith('plugin:desktop-surface|forward_background_mouse_event', {
+      options,
     })
   })
 })

@@ -117,6 +117,32 @@ const synchronizeBackgroundContent = async (): Promise<boolean> => {
   return true
 }
 
+export type DesktopBackgroundMouseEventKind = 'down' | 'up' | 'dragged'
+
+export interface DesktopBackgroundMouseEvent {
+  readonly altKey: boolean
+  readonly button: number
+  readonly buttons: number
+  readonly clickCount: number
+  readonly ctrlKey: boolean
+  readonly kind: DesktopBackgroundMouseEventKind
+  readonly metaKey: boolean
+  readonly shiftKey: boolean
+  readonly x: number
+  readonly y: number
+}
+
+export const forwardDesktopBackgroundMouseEvent = async (
+  event: DesktopBackgroundMouseEvent,
+): Promise<void> => {
+  if (import.meta.env.VITE_POMO_IS_DESKTOP !== 'true' || readDesktopMode() !== 'normal') {
+    return
+  }
+
+  const {forwardBackgroundMouseEvent} = await getSurfaceApi()
+  await forwardBackgroundMouseEvent({label: BACKGROUND_LABEL, ...event})
+}
+
 const closeSurfaces = async (labels: ReadonlyArray<string>): Promise<void> => {
   const {closeControlSurface} = await getSurfaceApi()
   const results = await Promise.allSettled(labels.map((label) => closeControlSurface({label})))

@@ -4,10 +4,10 @@ use crate::{
     SurfaceState,
     error::{CommandError, Error},
     model::{
-        BackgroundInteraction, BackgroundInteractionOptions, BackgroundNavigationOptions,
-        BackgroundSurfaceOptions, ControlSurfaceOptions, ControlSurfaceStatus,
-        ValidatedBackgroundNavigation, ValidatedControlSurface, ValidatedWidgetSurface,
-        WidgetSurfaceOptions, validate_label,
+        BackgroundInteraction, BackgroundInteractionOptions, BackgroundMouseEventOptions,
+        BackgroundNavigationOptions, BackgroundSurfaceOptions, ControlSurfaceOptions,
+        ControlSurfaceStatus, ValidatedBackgroundMouseEvent, ValidatedBackgroundNavigation,
+        ValidatedControlSurface, ValidatedWidgetSurface, WidgetSurfaceOptions, validate_label,
     },
 };
 
@@ -84,6 +84,23 @@ pub(crate) async fn navigate_background_surface<R: Runtime>(
         let options = ValidatedBackgroundNavigation::try_from(options)?;
         let window = find_window(&app, options.label)?;
         crate::macos::navigate_background_surface(&state, &window, options.url).map_err(Into::into)
+    }
+}
+
+#[tauri::command]
+pub(crate) async fn forward_background_mouse_event<R: Runtime>(
+    app: AppHandle<R>,
+    state: tauri::State<'_, SurfaceState>,
+    options: BackgroundMouseEventOptions,
+) -> Result<(), CommandError> {
+    #[cfg(not(target_os = "macos"))]
+    return Err(Error::UnsupportedPlatform(std::env::consts::OS).into());
+
+    #[cfg(target_os = "macos")]
+    {
+        let options = ValidatedBackgroundMouseEvent::try_from(options)?;
+        let window = find_window(&app, options.label.clone())?;
+        crate::macos::forward_background_mouse_event(&state, &window, options).map_err(Into::into)
     }
 }
 

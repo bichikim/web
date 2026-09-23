@@ -38,6 +38,45 @@ pub(crate) struct BackgroundNavigationOptions {
     pub(crate) url: String,
 }
 
+#[derive(Clone, Copy, Debug, Deserialize, PartialEq)]
+#[serde(rename_all = "camelCase")]
+pub(crate) enum BackgroundMouseEventKind {
+    Down,
+    Up,
+    Dragged,
+}
+
+#[derive(Clone, Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub(crate) struct BackgroundMouseEventOptions {
+    pub(crate) alt_key: bool,
+    pub(crate) button: u8,
+    pub(crate) buttons: u16,
+    pub(crate) click_count: u32,
+    pub(crate) ctrl_key: bool,
+    pub(crate) kind: BackgroundMouseEventKind,
+    pub(crate) label: String,
+    pub(crate) meta_key: bool,
+    pub(crate) shift_key: bool,
+    pub(crate) x: f64,
+    pub(crate) y: f64,
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub(crate) struct ValidatedBackgroundMouseEvent {
+    pub(crate) alt_key: bool,
+    pub(crate) button: u8,
+    pub(crate) buttons: u16,
+    pub(crate) click_count: u32,
+    pub(crate) ctrl_key: bool,
+    pub(crate) kind: BackgroundMouseEventKind,
+    pub(crate) label: String,
+    pub(crate) meta_key: bool,
+    pub(crate) shift_key: bool,
+    pub(crate) x: f64,
+    pub(crate) y: f64,
+}
+
 #[derive(Clone, Debug, PartialEq)]
 pub(crate) struct ValidatedBackgroundNavigation {
     pub(crate) label: String,
@@ -111,6 +150,36 @@ impl TryFrom<BackgroundNavigationOptions> for ValidatedBackgroundNavigation {
         }
 
         Ok(Self { label, url })
+    }
+}
+
+impl TryFrom<BackgroundMouseEventOptions> for ValidatedBackgroundMouseEvent {
+    type Error = Error;
+
+    fn try_from(options: BackgroundMouseEventOptions) -> Result<Self> {
+        let label = validate_label(options.label)?;
+
+        if !options.x.is_finite() || !options.y.is_finite() || options.x < 0.0 || options.y < 0.0 {
+            return Err(Error::InvalidMouseEvent);
+        }
+
+        if options.button > 2 || options.click_count == 0 {
+            return Err(Error::InvalidMouseEvent);
+        }
+
+        Ok(Self {
+            alt_key: options.alt_key,
+            button: options.button,
+            buttons: options.buttons,
+            click_count: options.click_count,
+            ctrl_key: options.ctrl_key,
+            kind: options.kind,
+            label,
+            meta_key: options.meta_key,
+            shift_key: options.shift_key,
+            x: options.x,
+            y: options.y,
+        })
     }
 }
 
@@ -195,7 +264,8 @@ fn validate_corner_radius(corner_radius: Option<f64>) -> Result<Option<f64>> {
 #[cfg(test)]
 mod tests {
     use super::{
-        BackgroundNavigationOptions, ControlSurfaceOptions, ValidatedBackgroundNavigation,
+        BackgroundMouseEventKind, BackgroundMouseEventOptions, BackgroundNavigationOptions,
+        ControlSurfaceOptions, ValidatedBackgroundMouseEvent, ValidatedBackgroundNavigation,
         ValidatedControlSurface, ValidatedWidgetSurface, WidgetSurfaceOptions,
     };
 
@@ -208,6 +278,22 @@ mod tests {
             width: None,
             x: None,
             y: None,
+        }
+    }
+
+    fn background_mouse_event_options() -> BackgroundMouseEventOptions {
+        BackgroundMouseEventOptions {
+            alt_key: false,
+            button: 0,
+            buttons: 1,
+            click_count: 1,
+            ctrl_key: false,
+            kind: BackgroundMouseEventKind::Down,
+            label: "background".to_owned(),
+            meta_key: false,
+            shift_key: false,
+            x: 120.0,
+            y: 80.0,
         }
     }
 
@@ -344,6 +430,24 @@ mod tests {
                 })
                 .is_err()
             );
+        }
+    }
+
+    #[test]
+    fn should_validate_background_mouse_event_coordinates() {
+        let mut valid_options = background_mouse_event_options();
+        valid_options.label = " background ".to_owned();
+        let event = ValidatedBackgroundMouseEvent::try_from(valid_options)
+            .expect("valid background mouse event");
+
+        assert_eq!(event.label, "background");
+
+        for (x, y) in [(f64::NAN, 80.0), (120.0, f64::INFINITY), (-1.0, 80.0)] {
+            let mut invalid = background_mouse_event_options();
+            invalid.x = x;
+            invalid.y = y;
+
+            assert!(ValidatedBackgroundMouseEvent::try_from(invalid).is_err());
         }
     }
 }

@@ -54,6 +54,7 @@ import {
   synchronizeDesktopBackground,
   useDesktopMode,
   useDesktopSafeAreaTop,
+  useWebsiteBackgroundInteraction,
 } from '../../features/desktop-mode'
 import {PEntry} from './Entry'
 import {resolvePSceneViseme} from '../pomo-scene-options'
@@ -161,6 +162,7 @@ interface StudioSceneViewProps {
   readonly weatherCondition?: WeatherSceneCondition
   readonly isReady: boolean
   readonly styleReady: boolean
+  readonly websiteBackgroundInteraction?: ReturnType<typeof useWebsiteBackgroundInteraction>
 }
 
 const StudioSceneView = (props: StudioSceneViewProps) => (
@@ -204,7 +206,17 @@ const StudioSceneView = (props: StudioSceneViewProps) => (
           props.background.preferences().mode === 'website'
         }
       >
-        <div class="h-full w-full bg-transparent" />
+        <div
+          class="h-full w-full bg-transparent"
+          onClick={(event) => props.websiteBackgroundInteraction?.handleClick(event)}
+          onContextMenu={(event) => props.websiteBackgroundInteraction?.handleContextMenu(event)}
+          onPointerCancel={(event) =>
+            props.websiteBackgroundInteraction?.handlePointerCancel(event)
+          }
+          onPointerDown={(event) => props.websiteBackgroundInteraction?.handlePointerDown(event)}
+          onPointerMove={(event) => props.websiteBackgroundInteraction?.handlePointerMove(event)}
+          onPointerUp={(event) => props.websiteBackgroundInteraction?.handlePointerUp(event)}
+        />
       </Match>
     </Switch>
   </Show>
@@ -409,6 +421,7 @@ export const PStudio = () => {
   const screenSaver = useStudioScreenSaver()
   const weather = useWeather()
   const desktopMode = useDesktopMode({isSurfaceOwner: true})
+  const websiteBackgroundInteraction = useWebsiteBackgroundInteraction()
   const isDesktopWallpaper = createMemo(() => desktopMode.mode() === 'desktop')
   const isDesktopWidget = createMemo(() => desktopMode.mode() === 'widget')
   const desktopSafeAreaTop = useDesktopSafeAreaTop(desktopMode.mode)
@@ -477,6 +490,7 @@ export const PStudio = () => {
         sceneStyle={style.sceneStyle()}
         styleReady={style.isReady()}
         time={time()}
+        websiteBackgroundInteraction={websiteBackgroundInteraction}
         weatherCondition={weather.sceneCondition()}
       />
       <Show when={!isDesktopWallpaper()}>

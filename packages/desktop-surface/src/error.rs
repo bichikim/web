@@ -15,6 +15,8 @@ pub(crate) enum Error {
     InvalidLabel,
     #[error("background URL must be an HTTPS URL with a host")]
     InvalidUrl,
+    #[error("background mouse event is invalid")]
+    InvalidMouseEvent,
     #[error("window '{0}' is not an active background surface")]
     NotBackgroundSurface(String),
     #[cfg(not(target_os = "macos"))]
@@ -41,7 +43,8 @@ impl From<Error> for CommandError {
             | Error::InvalidPath
             | Error::InvalidPosition
             | Error::InvalidSize
-            | Error::InvalidUrl => "invalid-configuration",
+            | Error::InvalidUrl
+            | Error::InvalidMouseEvent => "invalid-configuration",
             Error::NotBackgroundSurface(_) => "invalid-surface-state",
             #[cfg(not(target_os = "macos"))]
             Error::UnsupportedPlatform(_) => "unsupported-platform",

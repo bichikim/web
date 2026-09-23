@@ -12,6 +12,7 @@ import {
   useDesktopMode,
   useDesktopSafeAreaTop,
   useDesktopSceneSettingsPublisher,
+  useWebsiteBackgroundInteraction,
 } from 'src/features/desktop-mode'
 import {getPScene, supportsPSceneGyroscope, usePSceneStyle} from 'src/features/focus-room-animation'
 import {usePEvents} from 'src/features/focus-room-dialogue/event-context'
@@ -64,6 +65,14 @@ vi.mock('src/features/desktop-mode', () => ({
   useDesktopMode: vi.fn(),
   useDesktopSafeAreaTop: vi.fn(),
   useDesktopSceneSettingsPublisher: vi.fn(),
+  useWebsiteBackgroundInteraction: vi.fn(() => ({
+    handleClick: vi.fn(),
+    handleContextMenu: vi.fn(),
+    handlePointerCancel: vi.fn(),
+    handlePointerDown: vi.fn(),
+    handlePointerMove: vi.fn(),
+    handlePointerUp: vi.fn(),
+  })),
 }))
 vi.mock('src/features/background', () => ({
   DEFAULT_BACKGROUND: {
@@ -378,5 +387,6 @@ export const studioMocks = {
   usePDisplayPreferences,
   usePScenePreferences,
   useStudioScreenSaver,
+  useWebsiteBackgroundInteraction,
   writeFocusRoomEntrySession,
 }

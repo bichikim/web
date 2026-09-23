@@ -1,5 +1,6 @@
 const COMMANDS: &[&str] = &[
     "close_control_surface",
+    "forward_background_mouse_event",
     "get_background_interaction",
     "navigate_background_surface",
     "open_control_surface",

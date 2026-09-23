@@ -20,6 +20,21 @@ export interface BackgroundNavigationOptions extends SurfaceTarget {
   readonly url: string
 }
 
+export type BackgroundMouseEventKind = 'down' | 'up' | 'dragged'
+
+export interface BackgroundMouseEventOptions extends SurfaceTarget {
+  readonly altKey: boolean
+  readonly button: number
+  readonly buttons: number
+  readonly clickCount: number
+  readonly ctrlKey: boolean
+  readonly kind: BackgroundMouseEventKind
+  readonly metaKey: boolean
+  readonly shiftKey: boolean
+  readonly x: number
+  readonly y: number
+}
+
 export interface OpenControlSurfaceOptions extends SurfaceTarget {
   readonly cornerRadius?: number
   readonly height?: number
@@ -44,6 +59,9 @@ export const setBackgroundSurface = (options: BackgroundSurfaceOptions): Promise
 
 export const navigateBackgroundSurface = (options: BackgroundNavigationOptions): Promise<void> =>
   invoke(`${COMMAND_PREFIX}navigate_background_surface`, {options})
+
+export const forwardBackgroundMouseEvent = (options: BackgroundMouseEventOptions): Promise<void> =>
+  invoke(`${COMMAND_PREFIX}forward_background_mouse_event`, {options})
 
 export const getBackgroundInteraction = (target: SurfaceTarget): Promise<BackgroundInteraction> =>
   invoke(`${COMMAND_PREFIX}get_background_interaction`, {label: target.label})

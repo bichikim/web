@@ -13,11 +13,11 @@ use block2::RcBlock;
 use objc2::MainThreadMarker;
 use objc2_app_kit::{
     NSApp, NSApplicationActivationPolicy, NSApplicationDidChangeScreenParametersNotification,
-    NSColor, NSScreen, NSView, NSWindow, NSWindowCollectionBehavior, NSWindowLevel,
-    NSWindowOrderingMode, NSWorkspace, NSWorkspaceDidWakeNotification,
-    NSWorkspaceScreensDidSleepNotification, NSWorkspaceScreensDidWakeNotification,
-    NSWorkspaceSessionDidBecomeActiveNotification, NSWorkspaceSessionDidResignActiveNotification,
-    NSWorkspaceWillSleepNotification,
+    NSColor, NSEvent, NSEventModifierFlags, NSEventType, NSScreen, NSView, NSWindow,
+    NSWindowCollectionBehavior, NSWindowLevel, NSWindowOrderingMode, NSWorkspace,
+    NSWorkspaceDidWakeNotification, NSWorkspaceScreensDidSleepNotification,
+    NSWorkspaceScreensDidWakeNotification, NSWorkspaceSessionDidBecomeActiveNotification,
+    NSWorkspaceSessionDidResignActiveNotification, NSWorkspaceWillSleepNotification,
 };
 use objc2_core_graphics::{CGWindowLevelForKey, CGWindowLevelKey};
 use objc2_foundation::{NSNotification, NSNotificationCenter, NSNotificationName, NSRect};
@@ -28,7 +28,7 @@ use tauri::{
 
 use crate::{
     error::{Error, Result},
-    model::BackgroundInteraction,
+    model::{BackgroundInteraction, BackgroundMouseEventKind, ValidatedBackgroundMouseEvent},
 };
 
 #[derive(Clone, Copy, Debug)]
@@ -332,6 +332,108 @@ fn place_website_background_below<R: Runtime>(
             );
         }) {
             eprintln!("failed to place website background below the app view: {error}");
+        }
+    })?;
+
+    Ok(())
+}
+
+fn background_mouse_event_type(kind: BackgroundMouseEventKind, button: u8) -> NSEventType {
+    match (kind, button) {
+        (BackgroundMouseEventKind::Down, 0) => NSEventType::LeftMouseDown,
+        (BackgroundMouseEventKind::Up, 0) => NSEventType::LeftMouseUp,
+        (BackgroundMouseEventKind::Down, 2) => NSEventType::RightMouseDown,
+        (BackgroundMouseEventKind::Up, 2) => NSEventType::RightMouseUp,
+        (BackgroundMouseEventKind::Down, _) => NSEventType::OtherMouseDown,
+        (BackgroundMouseEventKind::Up, _) => NSEventType::OtherMouseUp,
+        (BackgroundMouseEventKind::Dragged, 1) => NSEventType::OtherMouseDragged,
+        (BackgroundMouseEventKind::Dragged, 2) => NSEventType::RightMouseDragged,
+        (BackgroundMouseEventKind::Dragged, _) => NSEventType::LeftMouseDragged,
+    }
+}
+
+fn background_mouse_modifiers(event: &ValidatedBackgroundMouseEvent) -> NSEventModifierFlags {
+    let mut modifiers = NSEventModifierFlags::empty();
+
+    if event.alt_key {
+        modifiers.insert(NSEventModifierFlags::Option);
+    }
+    if event.ctrl_key {
+        modifiers.insert(NSEventModifierFlags::Control);
+    }
+    if event.meta_key {
+        modifiers.insert(NSEventModifierFlags::Command);
+    }
+    if event.shift_key {
+        modifiers.insert(NSEventModifierFlags::Shift);
+    }
+
+    modifiers
+}
+
+pub(crate) fn forward_background_mouse_event<R: Runtime>(
+    state: &SurfaceState,
+    window: &WebviewWindow<R>,
+    event: ValidatedBackgroundMouseEvent,
+) -> Result<()> {
+    let _operation = lock_operation(state)?;
+    let parent = window.as_ref().window();
+    let label = website_background_webview_label(window.label());
+    let Some(child) = parent
+        .webviews()
+        .into_iter()
+        .find(|webview| webview.label() == label)
+    else {
+        return Ok(());
+    };
+
+    let main_view = window.ns_view()? as usize;
+    child.with_webview(move |child_platform_webview| {
+        let main_view = unsafe { &*(main_view as *const NSView) };
+        let child_view = unsafe { &*(child_platform_webview.inner() as *const NSView) };
+        let main_bounds = main_view.bounds();
+        let y = if main_view.isFlipped() {
+            event.y
+        } else {
+            main_bounds.origin.y + main_bounds.size.height - event.y
+        };
+        let main_point = objc2_foundation::NSPoint::new(event.x, y);
+        let child_point = child_view.convertPoint_fromView(main_point, Some(main_view));
+        let window_point = child_view.convertPoint_fromView(child_point, None);
+        let Some(native_window) = child_view.window() else {
+            return;
+        };
+        let event_type = background_mouse_event_type(event.kind, event.button);
+        let Some(native_event) = NSEvent::mouseEventWithType_location_modifierFlags_timestamp_windowNumber_context_eventNumber_clickCount_pressure(
+            event_type,
+            window_point,
+            background_mouse_modifiers(&event),
+            0.0,
+            native_window.windowNumber(),
+            None,
+            0,
+            event.click_count as _,
+            1.0,
+        ) else {
+            return;
+        };
+
+        native_window.makeFirstResponder(Some(child_view));
+        match event.kind {
+            BackgroundMouseEventKind::Down => match event.button {
+                0 => child_view.mouseDown(&native_event),
+                2 => child_view.rightMouseDown(&native_event),
+                _ => child_view.otherMouseDown(&native_event),
+            },
+            BackgroundMouseEventKind::Up => match event.button {
+                0 => child_view.mouseUp(&native_event),
+                2 => child_view.rightMouseUp(&native_event),
+                _ => child_view.otherMouseUp(&native_event),
+            },
+            BackgroundMouseEventKind::Dragged => match event.button {
+                2 => child_view.rightMouseDragged(&native_event),
+                _ => child_view.mouseDragged(&native_event),
+            },
         }
     })?;
 

@@ -5,6 +5,7 @@ Allows an application to manage its desktop background and control surfaces.
 #### This default permission set includes the following:
 
 - `allow-close-control-surface`
+- `allow-forward-background-mouse-event`
 - `allow-get-background-interaction`
 - `allow-navigate-background-surface`
 - `allow-open-control-surface`
@@ -45,6 +46,32 @@ Enables the close_control_surface command without any pre-configured scope.
 <td>
 
 Denies the close_control_surface command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+`desktop-surface:allow-forward-background-mouse-event`
+
+</td>
+<td>
+
+Enables the forward_background_mouse_event command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+`desktop-surface:deny-forward-background-mouse-event`
+
+</td>
+<td>
+
+Denies the forward_background_mouse_event command without any pre-configured scope.
 
 </td>
 </tr>
