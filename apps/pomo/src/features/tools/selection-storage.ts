@@ -34,7 +34,12 @@ const createSelectionStorage = <T>(
       }
       return webValue
     }
-    return storage.readToss(key, parse)
+    const tossValue = await storage.readToss(key, parse)
+    if (tossValue !== null) {
+      // Keep the selection available when the Toss bridge disappears before the next read.
+      storage.writeWeb(key, tossValue)
+    }
+    return tossValue
   }
   return {
     key,
