@@ -73,6 +73,24 @@ it('should restore visibility when a dialog opens after the UI is hidden', async
     dialog.remove()
   }
 })
+it('should restore visibility when an existing visible element becomes a dialog', async () => {
+  const dialog = document.createElement('div')
+  vi.spyOn(dialog, 'getClientRects').mockReturnValue({length: 1} as DOMRectList)
+  document.body.append(dialog)
+
+  try {
+    const {result} = renderHook(useUiAutoHide, {wrapper: PreferenceProvider})
+    result.onEnabledChange(true)
+    vi.advanceTimersByTime(30_000)
+    expect(result.hidden()).toBe(true)
+
+    dialog.setAttribute('role', 'dialog')
+    await Promise.resolve()
+    expect(result.hidden()).toBe(false)
+  } finally {
+    dialog.remove()
+  }
+})
 it('should restart the countdown when the duration changes and ignore invalid durations', () => {
   const {result} = renderHook(useUiAutoHide, {wrapper: PreferenceProvider})
   result.onEnabledChange(true)
