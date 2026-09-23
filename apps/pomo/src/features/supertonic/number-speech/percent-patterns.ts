@@ -1,0 +1,10 @@
+import {INTEGER_PATTERN_SOURCE, NUMBER_TOKEN_START_PATTERN_SOURCE} from './number-patterns'
+
+export const DECIMAL_PERCENT_PATTERN = new RegExp(
+  `${NUMBER_TOKEN_START_PATTERN_SOURCE}(${INTEGER_PATTERN_SOURCE}\\.\\d+)\\s*%`,
+  'gu',
+)
+export const INTEGER_PERCENT_PATTERN = new RegExp(
+  `${NUMBER_TOKEN_START_PATTERN_SOURCE}(${INTEGER_PATTERN_SOURCE})\\s*%`,
+  'gu',
+)

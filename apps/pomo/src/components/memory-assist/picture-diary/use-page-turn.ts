@@ -7,6 +7,7 @@ import {
   type Setter,
   untrack,
 } from 'solid-js'
+import {clamp} from 'es-toolkit/math'
 
 import {
   createBrowserTurnEnvironment,
@@ -317,7 +318,7 @@ class PictureDiaryPageTurnMachine {
     return {
       x:
         clientX - metrics.left - (metrics.compact && direction === 'newer' ? 0 : metrics.pageWidth),
-      y: Math.max(0, Math.min(metrics.height, clientY - metrics.top)),
+      y: clamp(clientY - metrics.top, 0, metrics.height),
     }
   }
 

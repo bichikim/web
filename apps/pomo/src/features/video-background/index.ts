@@ -1,4 +1,5 @@
 import Dexie, {type Table} from 'dexie'
+import {createSerialTaskQueue} from 'src/utils/create-serial-task-queue'
 import {sampleVideo, type VideoSample} from './sample'
 export * from './sample'
 export * from './timeline'
@@ -21,7 +22,7 @@ interface PendingVideo {
   readonly result: Promise<readonly VideoSample[] | null>
 }
 const pending = new Map<string, PendingVideo>()
-let queue: Promise<unknown> = Promise.resolve()
+const queue = createSerialTaskQueue()
 
 /** Loads cached samples or queues one decoder; failure leaves the first-frame background usable. */
 export const prepareVideoBackground = (
@@ -33,8 +34,8 @@ export const prepareVideoBackground = (
     return current.result
   }
   const controller = new AbortController()
-  const result = queue
-    .then(async () => {
+  const result = queue.run(async () => {
+    try {
       controller.signal.throwIfAborted()
       const cached = await storage().get(id)
       if (cached !== undefined) {
@@ -44,18 +45,16 @@ export const prepareVideoBackground = (
       controller.signal.throwIfAborted()
       await storage().put({id, samples})
       return samples
-    })
-    .catch((error: unknown) => {
+    } catch (error: unknown) {
       if (!controller.signal.aborted) {
         console.warn('Video background preparation failed; using first frame.', error)
       }
       return null
-    })
-    .finally(() => {
+    } finally {
       pending.delete(id)
-    })
+    }
+  })
   pending.set(id, {controller, result})
-  queue = result
   return result
 }
 

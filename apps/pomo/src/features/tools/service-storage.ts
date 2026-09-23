@@ -4,6 +4,7 @@ import {type ServiceBranch} from './calculate-service'
 import {normalizeServiceDays} from './service-days'
 import {toolStorageAdapter, type ToolStorageAdapter} from './storage-adapter'
 import {parseDate} from '../civil-date'
+import {createAuthoritativeWriter} from '../preference-persistence'
 
 const STORAGE_KEY = 'pomo:service-settings:v1'
 const LEGACY_KEY = 'pomo:service-start:v1'
@@ -76,23 +77,19 @@ export const createServiceSettingsStorage = (
     return {...DEFAULT_SERVICE_SETTINGS, start: nativeStart ?? ''}
   }
 
-  const write = async (value: ServiceSettings): Promise<void> => {
-    const webError = storage.writeWeb(STORAGE_KEY, value)
-    if (!storage.usesTossStorage()) {
-      if (webError !== null) {
-        throw new Error('Failed to persist service settings.', {cause: webError})
-      }
-      return
-    }
-    await storage.writeToss(STORAGE_KEY, value)
-    // A failed web replacement must not shadow the newly persisted native value.
-    if (webError !== null) {
+  const write = createAuthoritativeWriter<ServiceSettings>({
+    failureMessage: 'Failed to persist service settings.',
+    isNative: storage.usesTossStorage,
+    mapNativeFailure: (error) => error,
+    mapRemovalFailure: (error) =>
+      new Error('Failed to discard stale service settings.', {cause: error}),
+    removeWeb: () => {
       const error = storage.removeWeb(STORAGE_KEY)
-      if (error !== null && storage.readWeb(STORAGE_KEY, parseSettings) !== null) {
-        throw new Error('Failed to discard stale service settings.', {cause: error})
-      }
-    }
-  }
+      return error !== null && storage.readWeb(STORAGE_KEY, parseSettings) !== null ? error : null
+    },
+    writeNative: (value) => storage.writeToss(STORAGE_KEY, value),
+    writeWeb: (value) => storage.writeWeb(STORAGE_KEY, value),
+  })
   return {read, write}
 }
 

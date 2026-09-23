@@ -101,6 +101,22 @@ afterEach(() => {
   vi.restoreAllMocks()
 })
 
+it.each(['듣기', '캐릭터로 듣기'])(
+  'should report a missing audio file before %s playback',
+  async (action) => {
+    const events = createEvents()
+    vi.mocked(usePEvents).mockReturnValue(events)
+    const play = vi.spyOn(HTMLMediaElement.prototype, 'play').mockResolvedValue(undefined)
+    render(() => <DialogueLibrary entries={[{dialogue: DIALOGUE}]} />)
+
+    fireEvent.click(screen.getByRole('button', {name: action}))
+
+    expect(await screen.findByRole('status')).toBeVisible()
+    expect(play).not.toHaveBeenCalled()
+    expect(events.playDialogue).not.toHaveBeenCalled()
+  },
+)
+
 it('should use a custom deletion handler for the selected dialogue', async () => {
   const onDelete = vi.fn(async () => undefined)
 

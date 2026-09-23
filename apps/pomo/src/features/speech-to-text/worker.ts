@@ -1,22 +1,17 @@
-import {clamp} from 'es-toolkit/math'
 /// <reference lib="webworker" />
 
 // oxlint-disable eslint-js/camelcase -- Transformers.js option names are fixed external contracts.
 
-import {
-  type AutomaticSpeechRecognitionPipeline,
-  pipeline,
-  type ProgressInfo,
-} from '@huggingface/transformers'
+import {type AutomaticSpeechRecognitionPipeline, pipeline} from '@huggingface/transformers'
 
 import {getErrorMessage} from 'src/utils/get-error-message'
+import {createPercentProgressReporter} from '../transformers-progress'
 
 import type {SpeechRecognitionError, SpeechRecognitionPhase} from './errors'
 import type {SpeechWorkerRequest, SpeechWorkerResponse} from './messages'
 import {getSpeechModel, type SpeechModelDefinition, type SpeechModelId} from './models'
 import type {SpeechBackend} from './recognizer'
 
-const MAXIMUM_PROGRESS = 100
 const MINIMUM_PROGRESS = 0
 const workerScope = globalThis.self as DedicatedWorkerGlobalScope
 
@@ -43,14 +38,9 @@ const createModelError = (
   retryable: true,
 })
 
-const reportProgress = (progress: ProgressInfo) => {
-  if (progress.status !== 'progress_total') {
-    return
-  }
-
-  const percentage = clamp(Math.round(progress.progress), MINIMUM_PROGRESS, MAXIMUM_PROGRESS)
-  sendResponse({progress: percentage, type: 'loading'})
-}
+const reportProgress = createPercentProgressReporter((progress) =>
+  sendResponse({progress, type: 'loading'}),
+)
 
 const loadTranscriber = async (backend: SpeechBackend, model: SpeechModelDefinition) => {
   const loadedTranscriber = await pipeline('automatic-speech-recognition', model.repositoryId, {

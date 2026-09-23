@@ -61,3 +61,28 @@ it('should tolerate a failing storage resolver and preserve operation-specific w
     [messages.delete, failure],
   ])
 })
+
+it('should route failures to a supplied reporter without logging', () => {
+  const failure = new Error('blocked')
+  const warning = vi.spyOn(console, 'warn').mockImplementation(() => undefined)
+  const reportError = vi.fn()
+  const draft = createDraftStorage({
+    decode: String,
+    encode: String,
+    key: 'draft',
+    messages,
+    reportError,
+    storage: () => {
+      throw failure
+    },
+  })
+  expect(draft.read()).toBeNull()
+  draft.write('text')
+  draft.delete()
+  expect(reportError.mock.calls).toEqual([
+    [messages.read, failure],
+    [messages.write, failure],
+    [messages.delete, failure],
+  ])
+  expect(warning).not.toHaveBeenCalled()
+})

@@ -1,4 +1,7 @@
 export {classifySpeechNumber} from './classify-speech-number'
+export {hasNumberKind} from './has-number-kind'
+export {parseInteger} from './parse-integer'
+export {DECIMAL_PERCENT_PATTERN, INTEGER_PERCENT_PATTERN} from './percent-patterns'
 export {normalizeEnglishSpeechText} from './normalize-english-speech-text'
 export {normalizeKoreanSpeechText} from './normalize-korean-speech-text'
 export {normalizeSpeechText} from './normalize-speech-text'

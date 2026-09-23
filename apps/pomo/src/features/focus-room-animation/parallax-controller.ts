@@ -1,3 +1,5 @@
+import {clamp} from 'es-toolkit/math'
+import {releaseCapturedPointer} from 'src/utils/release-captured-pointer'
 import {getOrientationAxes, getOrientationOffset, type OrientationAxes} from './device-orientation'
 import {createMotionEnvironment, type MotionEnvironment} from './motion-environment'
 import type {PSceneMotionInput} from './scene-motion'
@@ -22,7 +24,6 @@ export interface ParallaxControllerOptions {
   readonly onMotionPreferenceChange?: MotionPreferenceChange
 }
 
-const clamp = (value: number) => Math.max(-1, Math.min(1, value))
 const getFrameEasing = (duration: number, timeConstant: number) =>
   1 - Math.exp(-duration / timeConstant)
 
@@ -76,7 +77,7 @@ export class ParallaxController {
       return
     }
 
-    this.#releasePointer(event.pointerId)
+    releaseCapturedPointer(this.#host, event.pointerId)
     this.#activePointerId = null
     this.#scheduleDragReturn()
   }
@@ -97,8 +98,8 @@ export class ParallaxController {
 
     const horizontalDistance = (event.clientX - this.#dragStartX) / bounds.width
     const verticalDistance = (event.clientY - this.#dragStartY) / bounds.height
-    this.#targetX = clamp(this.#dragStartOffsetX - horizontalDistance / DRAG_RANGE_RATIO)
-    this.#targetY = clamp(this.#dragStartOffsetY - verticalDistance / DRAG_RANGE_RATIO)
+    this.#targetX = clamp(this.#dragStartOffsetX - horizontalDistance / DRAG_RANGE_RATIO, -1, 1)
+    this.#targetY = clamp(this.#dragStartOffsetY - verticalDistance / DRAG_RANGE_RATIO, -1, 1)
     this.#requestFrame()
     event.preventDefault()
   }
@@ -139,7 +140,7 @@ export class ParallaxController {
   }
   readonly #handleWindowBlur = () => {
     if (this.#activePointerId !== null) {
-      this.#releasePointer(this.#activePointerId)
+      releaseCapturedPointer(this.#host, this.#activePointerId)
       this.#activePointerId = null
     }
 
@@ -288,17 +289,11 @@ export class ParallaxController {
     this.#dragListening = false
 
     if (this.#activePointerId !== null) {
-      this.#releasePointer(this.#activePointerId)
+      releaseCapturedPointer(this.#host, this.#activePointerId)
       this.#activePointerId = null
     }
 
     this.#cancelDragReturn()
-  }
-
-  #releasePointer(pointerId: number) {
-    if (this.#host.hasPointerCapture?.(pointerId)) {
-      this.#host.releasePointerCapture(pointerId)
-    }
   }
 
   #startGyroscopeInput() {

@@ -1,3 +1,5 @@
+import {clamp} from 'es-toolkit/math'
+
 const MAXIMUM_PROGRESS = 100
 const MAXIMUM_GENERATING_PROGRESS = 96
 
@@ -19,5 +21,5 @@ export const calculateDialogueScriptProgress = (
   const progress = Math.floor(
     (options.generatedLength / targetLength) * MAXIMUM_GENERATING_PROGRESS,
   )
-  return Math.min(MAXIMUM_GENERATING_PROGRESS, Math.max(0, progress))
+  return clamp(progress, 0, MAXIMUM_GENERATING_PROGRESS)
 }

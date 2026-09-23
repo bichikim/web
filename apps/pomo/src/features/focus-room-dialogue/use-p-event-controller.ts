@@ -1,4 +1,5 @@
 import {setOptionalRecordEntry} from 'src/utils/set-optional-record-entry'
+import {createSerialTaskQueue} from 'src/utils/create-serial-task-queue'
 import {createEffect, createSignal, onCleanup, onMount} from 'solid-js'
 
 import {createEntryPlaybackController} from './entry-playback-controller'
@@ -84,7 +85,7 @@ export const usePEventController = (props: UsePEventControllerProps): PEventCont
   const [isLoading, setIsLoading] = createSignal(true)
   let repository: PDialogueRepository | null = null
   let isDisposed = false
-  let bindingUpdate = Promise.resolve()
+  const bindingUpdates = createSerialTaskQueue()
   let bindingRevision = 0
   const eventBindingRevisions: Partial<Record<DialogueEventId, number>> = {}
   let persistedBindings: EventDialogueIds = {}
@@ -115,7 +116,10 @@ export const usePEventController = (props: UsePEventControllerProps): PEventCont
     eventPlaybackModes,
     getRepository: () => (isDisposed || isLoading() ? null : repository),
     isPlaybackEnabled,
-    onEvent: () => eventActionRunner.run([FOCUS_ROOM_ENTRY_EVENT]),
+    onEvent: () => {
+      const result = eventActionRunner.run([FOCUS_ROOM_ENTRY_EVENT])
+      return result.kind === 'queued' ? result.completion : undefined
+    },
     playback,
   })
 
@@ -195,20 +199,17 @@ export const usePEventController = (props: UsePEventControllerProps): PEventCont
     setEventActionIds((currentBindings) =>
       updateEventActionBinding(currentBindings, eventId, uniqueActionIds),
     )
-    const update = bindingUpdate
-      .catch(() => undefined)
-      .then(() => {
-        const currentRepository = getRepository()
-        return uniqueActionIds.length === 0
-          ? currentRepository.setEventBinding(eventId, uniqueDialogueIds, playbackMode)
-          : currentRepository.setEventBinding(
-              eventId,
-              uniqueDialogueIds,
-              playbackMode,
-              uniqueActionIds,
-            )
-      })
-    bindingUpdate = update
+    const update = bindingUpdates.run(() => {
+      const currentRepository = getRepository()
+      return uniqueActionIds.length === 0
+        ? currentRepository.setEventBinding(eventId, uniqueDialogueIds, playbackMode)
+        : currentRepository.setEventBinding(
+            eventId,
+            uniqueDialogueIds,
+            playbackMode,
+            uniqueActionIds,
+          )
+    })
 
     try {
       await update
@@ -268,8 +269,8 @@ export const usePEventController = (props: UsePEventControllerProps): PEventCont
     }
 
     const actionExecution = eventActionRunner.run(eventIds)
-    if (actionExecution !== undefined) {
-      await actionExecution
+    if (actionExecution.kind === 'queued') {
+      await actionExecution.completion
 
       if (isDisposed || !isPlaybackEnabled() || repository === null) {
         return
@@ -345,7 +346,7 @@ export const usePEventController = (props: UsePEventControllerProps): PEventCont
     delayedEndEventDurationMinutes,
     delayedEndEventIsRunning: delayedEndEvent.isRunning,
     async deleteDialogue(dialogueId) {
-      await bindingUpdate.catch(() => undefined)
+      await bindingUpdates.settle()
       await getRepository().deleteDialogue(dialogueId)
 
       if (isDisposed) {
@@ -415,7 +416,7 @@ export const usePEventController = (props: UsePEventControllerProps): PEventCont
     },
     async refreshDialogues() {
       await initialization
-      await bindingUpdate.catch(() => undefined)
+      await bindingUpdates.settle()
 
       if (isDisposed || repository === null) {
         return
