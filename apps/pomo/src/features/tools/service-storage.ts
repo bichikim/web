@@ -50,10 +50,13 @@ export const createServiceSettingsStorage = (
     const usesTossStorage = storage.usesTossStorage()
     const webSettings = storage.readWeb(STORAGE_KEY, parseSettings)
     if (webSettings !== null) {
+      const legacyStart = webSettings.start === '' ? storage.readWeb(LEGACY_KEY, parseStart) : null
+      const restoredSettings =
+        legacyStart === null ? webSettings : {...webSettings, start: legacyStart}
       if (usesTossStorage) {
-        await storage.writeToss(STORAGE_KEY, webSettings).catch(reportRepairError)
+        await storage.writeToss(STORAGE_KEY, restoredSettings).catch(reportRepairError)
       }
-      return webSettings
+      return restoredSettings
     }
     const legacySettings = () => ({
       ...DEFAULT_SERVICE_SETTINGS,
