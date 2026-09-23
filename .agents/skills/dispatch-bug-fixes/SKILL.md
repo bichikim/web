@@ -16,7 +16,7 @@ In `bichikim/web`, select at most three open issues with `bug` and without `WIP`
 1. Refresh issue and label state through the configured GitHub integration, or authenticated GitHub CLI. Ensure the exact `WIP` label exists; if absent, create it with color `fbca04` and description `Work in progress` without changing existing metadata.
 2. Immediately before mutation, revalidate every selected issue as open, `bug`-labeled, and not `WIP`. Apply `WIP` to all and verify. If labeling fails, stop and report which issues changed.
 3. Fetch the latest `origin/dev`, resolve the repository project with `list_projects`, and create one separate user-visible Codex task per issue with `mcp__codex_app__create_thread`:
-   - `model: "gpt-5.6-luna"`, `thinking: "max"`
+   - `model: "gpt-6-luna"`, `thinking: "max"`
    - project `worktree` starting from the current `origin/dev` ref
    - a unique title containing the issue number and a prompt containing its URL
    - the task prompt must require a dedicated branch before any edits or commits: check `git branch --show-current` at startup, and if the worktree is detached, create and checkout a unique `codex/bug-<issue-number>-<slug>` branch from the current `HEAD` (add a short unique suffix on collision); verify the branch name is non-empty before continuing
