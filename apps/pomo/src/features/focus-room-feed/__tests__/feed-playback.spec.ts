@@ -49,6 +49,7 @@ const createRepository = () =>
   ({
     complete: vi.fn(),
     deleteJobs: vi.fn(),
+    dismissItem: vi.fn(),
     dispose: vi.fn(),
     failJob: vi.fn(),
     interruptUnfinishedJobs: vi.fn(),
@@ -119,6 +120,25 @@ it('should mark an individual dialogue when playback starts', async () => {
   expect(view.repository.markListened).toHaveBeenCalledOnce()
   expect(view.repository.markListened).toHaveBeenCalledWith(DIALOGUE.id, LISTENED_AT)
   expect(view.dialogues()[0]?.metadata.listenedAt).toBe(LISTENED_AT)
+  view.dispose()
+})
+
+it('should ignore an individual dialogue while another individual playback is active', async () => {
+  const view = createPlayback([createListItem('first', null), createListItem('second', null)])
+  const playback = Promise.withResolvers<void>()
+  vi.mocked(view.events.playDialogueSequence).mockReturnValue(playback.promise)
+
+  const first = view.playback.listen('first')
+  const second = view.playback.listen('second')
+
+  expect(view.playback.isListening()).toBe(true)
+  expect(view.events.playDialogueSequence).toHaveBeenCalledOnce()
+
+  playback.resolve()
+  await Promise.all([first, second])
+
+  expect(view.events.playDialogueSequence).toHaveBeenCalledOnce()
+  expect(view.playback.isListening()).toBe(false)
   view.dispose()
 })
 

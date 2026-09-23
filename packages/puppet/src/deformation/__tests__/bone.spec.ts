@@ -3,9 +3,9 @@ import type {PuppetSceneDeformerNode} from '../../player/document'
 import {moveBoneJoint, normalizeBonePose, transformBonePoint} from '../bone'
 
 const node: PuppetSceneDeformerNode = {
+  boneRestPoints: [0, 0, 50, 0, 100, 0],
   bounds: {height: 100, width: 100, x: 0, y: 0},
   children: [],
-  boneRestPoints: [0, 0, 50, 0, 100, 0],
   columns: 1,
   controlPoints: [0, 0, 50, 0, 100, 0],
   id: 'bone',

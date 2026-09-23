@@ -12,7 +12,9 @@ interface CreateDelayedEndEventPlaybackOptions {
 }
 
 interface DelayedEndEventPlayback {
+  readonly clearPendingEvent: () => void
   readonly hasPendingEvent: Accessor<boolean>
+  readonly isActive: Accessor<boolean>
   readonly retainPendingEventOnSuspension: () => void
   readonly request: () => Promise<void>
 }
@@ -21,7 +23,8 @@ export const createDelayedEndEventPlayback = (
   options: CreateDelayedEndEventPlaybackOptions,
 ): DelayedEndEventPlayback => {
   const [hasPendingEvent, setHasPendingEvent] = createSignal(false)
-  let isRequestActive = false
+  let activeRequest: Promise<void> | null = null
+  let pendingEventClearRevision = 0
 
   const playEvent = () =>
     options.playDialogueEvents([DELAYED_END_EVENT], () => {
@@ -34,20 +37,48 @@ export const createDelayedEndEventPlayback = (
       return
     }
 
-    isRequestActive = true
+    if (activeRequest !== null) {
+      await activeRequest
+      if (options.isPlaybackEnabled() && hasPendingEvent()) {
+        await request()
+      }
+      return
+    }
+
     setHasPendingEvent(false)
+    const requestClearRevision = pendingEventClearRevision
+    const currentRequest = playEvent()
+    activeRequest = currentRequest
     try {
-      await playEvent()
+      await currentRequest
+    } catch (error: unknown) {
+      if (requestClearRevision === pendingEventClearRevision) {
+        setHasPendingEvent(true)
+      }
+      throw error
     } finally {
-      isRequestActive = false
+      if (activeRequest === currentRequest) {
+        activeRequest = null
+      }
     }
   }
 
   const retainPendingEventOnSuspension = () => {
-    if (isRequestActive) {
+    if (activeRequest !== null) {
       setHasPendingEvent(true)
     }
   }
 
-  return {hasPendingEvent, request, retainPendingEventOnSuspension}
+  const clearPendingEvent = () => {
+    pendingEventClearRevision += 1
+    setHasPendingEvent(false)
+  }
+
+  return {
+    clearPendingEvent,
+    hasPendingEvent,
+    isActive: () => activeRequest !== null,
+    request,
+    retainPendingEventOnSuspension,
+  }
 }

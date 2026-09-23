@@ -1,3 +1,4 @@
+import {createCatalogRequestInit, hasUniqueIds} from 'src/features/catalog-policy'
 import {audioFetch, httpFetch} from '../../http-client'
 import type {LoadPTrackCatalogOptions, PTrack} from './model'
 
@@ -27,8 +28,6 @@ const isPTrack = (value: unknown): value is PTrack => {
   )
 }
 
-const hasUniqueIds = (ids: readonly string[]) => new Set(ids).size === ids.length
-
 const isPTrackCollection = (value: unknown): value is PTrackCollection => {
   if (typeof value !== 'object' || value === null) {
     return false
@@ -56,8 +55,8 @@ export const loadPTrackCatalog = async (
 ): Promise<readonly PTrack[]> => {
   const response =
     options.tracksUrl === undefined
-      ? await audioFetch('tracks.json', createRequestInit(options.signal))
-      : await httpFetch(options.tracksUrl, createRequestInit(options.signal))
+      ? await audioFetch('tracks.json', createCatalogRequestInit(options.signal))
+      : await httpFetch(options.tracksUrl, createCatalogRequestInit(options.signal))
 
   if (!response.ok) {
     throw new Error(`Focus-room tracks request failed: ${response.status}`)

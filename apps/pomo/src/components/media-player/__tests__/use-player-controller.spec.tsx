@@ -5,7 +5,8 @@ import {createSignal} from 'solid-js'
 import {cleanup, render} from '@solidjs/testing-library'
 import {afterEach, beforeEach, expect, it, vi} from 'vitest'
 
-import type {PTrack} from '../../../features/focus-room-audio'
+import * as focusRoomAudio from '../../../features/focus-room-audio'
+import type {PPlaybackState, PTrack} from '../../../features/focus-room-audio'
 import {type PlayerController, usePlayerController} from '../use-player-controller'
 
 vi.mock('@apps-in-toss/web-framework', () => ({
@@ -45,12 +46,25 @@ const NEXT_TRACK = {
   source: '/track-2.mp3',
   title: 'Track 2',
 } as const satisfies PTrack
+const THIRD_TRACK = {
+  ...TRACK,
+  id: 'track-3',
+  source: '/track-3.mp3',
+  title: 'Track 3',
+} as const satisfies PTrack
+const FOURTH_TRACK = {
+  ...TRACK,
+  id: 'track-4',
+  source: '/track-4.mp3',
+  title: 'Track 4',
+} as const satisfies PTrack
 
 const readStoredPlayback = () =>
   JSON.parse(localStorage.getItem(PLAYBACK_STORAGE_KEY) ?? 'null') as {
     readonly isPlaying: boolean
     readonly positionSeconds: number
     readonly trackId: string
+    readonly trackIndex?: number
   } | null
 
 const renderController = () => {
@@ -77,7 +91,10 @@ const renderController = () => {
   return {audio, controller}
 }
 
-const renderControlledController = (initialTracks: readonly PTrack[] = [TRACK]) => {
+const renderControlledController = (
+  initialTracks: readonly PTrack[] = [TRACK],
+  onTrackChange?: (track: PTrack | null) => void,
+) => {
   const [tracks, setTracks] = createSignal<readonly PTrack[]>(initialTracks)
   const [element, setElement] = createSignal<HTMLAudioElement>()
   let controller: PlayerController | undefined
@@ -85,9 +102,12 @@ const renderControlledController = (initialTracks: readonly PTrack[] = [TRACK]) 
     controller = usePlayerController(props)
     return null
   }
-  render(() => <ControllerHarness element={element} tracks={tracks()} />, {
-    wrapper: PreferenceProvider,
-  })
+  render(
+    () => <ControllerHarness element={element} onTrackChange={onTrackChange} tracks={tracks()} />,
+    {
+      wrapper: PreferenceProvider,
+    },
+  )
 
   const audio = document.createElement('audio')
   vi.spyOn(audio, 'load').mockImplementation(() => undefined)
@@ -140,6 +160,47 @@ it('should preserve restart playback intent until the play event follows seeked'
     positionSeconds: 8,
     trackId: TRACK.id,
   })
+})
+
+it('should restore the saved occurrence when a controlled playlist repeats a track ID', async () => {
+  const duplicateTracks = [TRACK, TRACK, NEXT_TRACK]
+  localStorage.setItem(
+    PLAYBACK_STORAGE_KEY,
+    JSON.stringify({
+      isPlaying: false,
+      positionSeconds: 8,
+      savedAt: 1,
+      trackId: TRACK.id,
+      trackIndex: 1,
+    }),
+  )
+
+  const {controller} = renderControlledController(duplicateTracks)
+
+  await vi.waitFor(() => expect(controller.currentIndex()).toBe(1))
+  expect(controller.currentTrack()).toBe(duplicateTracks[1])
+})
+
+it('should wait for controlled tracks before restoring saved playback', async () => {
+  const storedPlayback = {
+    isPlaying: false,
+    positionSeconds: 8,
+    trackId: TRACK.id,
+  } satisfies PPlaybackState
+  const playback = Promise.withResolvers<PPlaybackState | null>()
+  vi.spyOn(focusRoomAudio, 'readPPlayback').mockReturnValueOnce(playback.promise)
+
+  const {controller, setTracks} = renderControlledController([])
+
+  await Promise.resolve()
+  playback.resolve(storedPlayback)
+  await playback.promise
+  await Promise.resolve()
+  await Promise.resolve()
+  setTracks([NEXT_TRACK, TRACK])
+
+  await vi.waitFor(() => expect(controller.currentIndex()).toBe(1))
+  expect(controller.currentTrack()).toBe(TRACK)
 })
 
 it('should persist a failed restart as paused after releasing the pending intent', () => {
@@ -360,4 +421,25 @@ it('should not reload when controlled tracks refresh with identical track identi
   await Promise.resolve()
 
   expect(audio.load).not.toHaveBeenCalled()
+})
+
+it('should clamp the current index when controlled tracks shrink', async () => {
+  const initialTracks = [TRACK, NEXT_TRACK, THIRD_TRACK, FOURTH_TRACK]
+  const onTrackChange = vi.fn()
+  const {controller, setTracks} = renderControlledController(initialTracks, onTrackChange)
+
+  controller.selectChosenTrack(3)
+  controller.onPlay()
+  setTracks(initialTracks.slice(0, 2))
+
+  expect(controller.currentIndex()).toBe(1)
+  expect(controller.currentTrack()).toBe(NEXT_TRACK)
+
+  await Promise.resolve()
+
+  expect(controller.currentIndex()).toBe(1)
+  expect(controller.currentTrack()).toBe(NEXT_TRACK)
+  expect(controller.isPlaying()).toBe(true)
+  expect(onTrackChange).toHaveBeenLastCalledWith(NEXT_TRACK)
+  expect(onTrackChange).not.toHaveBeenCalledWith(null)
 })

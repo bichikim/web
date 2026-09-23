@@ -13,7 +13,7 @@ import {
   useDesktopSceneSettingsPublisher,
 } from 'src/features/desktop-mode'
 import {getPScene, supportsPSceneGyroscope, usePSceneStyle} from 'src/features/focus-room-animation'
-import {usePEvents} from 'src/features/focus-room-dialogue/event-context'
+import {type EventActionHandler, usePEvents} from 'src/features/focus-room-dialogue/event-context'
 import {usePDisplayPreferences} from 'src/features/focus-room-display-preferences'
 import {readFocusRoomEntrySession, writeFocusRoomEntrySession} from 'src/features/focus-room-entry'
 import {usePScenePreferences} from 'src/features/focus-room-scene-preferences'
@@ -130,6 +130,9 @@ export const configureStudio = (options: StudioOptions = {}) => {
   const [weatherSceneMode, setWeatherSceneMode] = createSignal<'auto' | 'rain'>(
     options.weatherSceneMode ?? 'auto',
   )
+  const registerEventActionHandler = vi.fn<(handler: EventActionHandler) => () => void>(() =>
+    vi.fn(),
+  )
   const registerEventActionExecutor = vi.fn(() => vi.fn())
 
   vi.mocked(usePEvents).mockReturnValue({
@@ -139,6 +142,7 @@ export const configureStudio = (options: StudioOptions = {}) => {
     isDialoguePlaying: () => false,
     onStopDialoguePlayback: vi.fn(),
     registerEventActionExecutor,
+    registerEventActionHandler,
   } as unknown as ReturnType<typeof usePEvents>)
   vi.mocked(usePSay).mockReturnValue({
     activeViseme: () => 'aa',
@@ -221,7 +225,7 @@ export const configureStudio = (options: StudioOptions = {}) => {
   vi.mocked(readFocusRoomEntrySession).mockReturnValue(options.entrySession ?? false)
   vi.mocked(supportsPSceneGyroscope).mockReturnValue(options.gyroscope ?? false)
 
-  return {registerEventActionExecutor, setDesktopMode, setWeatherReady}
+  return {registerEventActionExecutor, registerEventActionHandler, setDesktopMode, setWeatherReady}
 }
 
 export const publish = vi.fn()
@@ -353,6 +357,7 @@ export const studioMocks = {
   DEFAULT_BACKGROUND,
   getAutomaticScenePeriod,
   isDesktopBackgroundMode,
+  PStudioEvents,
   PStudioScene,
   PTour,
   readFocusRoomEntrySession,

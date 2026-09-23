@@ -1,3 +1,4 @@
+import {selectMaximumBy} from 'src/utils/select-maximum-by'
 import {z} from 'zod'
 
 import {createLatestAsyncTask} from 'src/utils/create-latest-async-task'
@@ -14,9 +15,7 @@ const PLAYLIST_STORAGE_KEY = 'pomo:focus-room-playlist:v1'
 
 const storedPlaylistSchema = z.object({
   savedAt: z.number().finite().nonnegative(),
-  trackIds: z
-    .array(z.string().min(1))
-    .refine((trackIds) => new Set(trackIds).size === trackIds.length),
+  trackIds: z.array(z.string().min(1)),
   version: z.literal(1),
 })
 
@@ -46,21 +45,6 @@ export interface PPlaylistStorage {
 const parseStoredPlaylist = (value: unknown): StoredPlaylist | null => {
   const result = storedPlaylistSchema.safeParse(value)
   return result.success ? result.data : null
-}
-
-const selectLatestPlaylist = (
-  webPlaylist: StoredPlaylist | null,
-  tossPlaylist: StoredPlaylist | null,
-) => {
-  if (webPlaylist === null) {
-    return tossPlaylist
-  }
-
-  if (tossPlaylist === null || webPlaylist.savedAt >= tossPlaylist.savedAt) {
-    return webPlaylist
-  }
-
-  return tossPlaylist
 }
 
 const runtimeStorage = {
@@ -100,7 +84,7 @@ export const createPPlaylistStorage = (
           return storage.readWeb()?.trackIds ?? null
         }
 
-        const latestPlaylist = selectLatestPlaylist(webPlaylist, tossPlaylist)
+        const latestPlaylist = selectMaximumBy(webPlaylist, tossPlaylist, (value) => value.savedAt)
 
         if (latestPlaylist !== null) {
           storage.writeWeb(latestPlaylist)

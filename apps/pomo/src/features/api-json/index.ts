@@ -1,4 +1,5 @@
 import type {z} from 'zod'
+import {isCancellationReason} from 'src/utils/is-cancellation-reason'
 
 import {apiFetch, type HttpRequestInit} from '../http-client'
 
@@ -63,12 +64,6 @@ const createJsonRequestInit = (options: ApiJsonRequestOptions): HttpRequestInit 
 
   return {...init, body: JSON.stringify(body), headers}
 }
-
-const isAbortError = (value: unknown): boolean =>
-  typeof value === 'object' && value !== null && 'name' in value && value.name === 'AbortError'
-
-const isCancellationReason = (value: unknown, signal?: AbortSignal | null): boolean =>
-  isAbortError(value) || (signal?.aborted === true && value === signal.reason)
 
 /** Sends a JSON request while preserving the raw response status, headers, and body. */
 export const apiJsonRequest = (

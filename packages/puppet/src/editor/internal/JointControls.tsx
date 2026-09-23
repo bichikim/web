@@ -26,8 +26,8 @@ export const JointControls = (props: JointControlsProps) => (
           cy={props.editor.point(index).y}
           classList={{
             'angle-handle': props.rotation && index === 1,
-            'rotation-origin-hit': props.rotation && index === 0,
             'joint-origin-hit': props.rotation && index === 0,
+            'rotation-origin-hit': props.rotation && index === 0,
             selected: props.editor.selected() === index && !(props.rotation && index === 0),
           }}
           r={props.editor.radius()}

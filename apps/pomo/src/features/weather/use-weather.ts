@@ -2,7 +2,7 @@ import {createAsync} from '@solidjs/router'
 import {type Accessor, createEffect, createSignal, untrack} from 'solid-js'
 
 import {usePreference} from 'src/hooks/use-preference'
-import type {PreferenceStorage} from 'src/utils/preference-storage'
+import {createParsedPreferenceStorage} from '../parsed-preference-storage'
 
 import {createQueryRevalidationScheduler} from '../query-revalidation'
 import type {WeatherFeed, WeatherLocation} from './contract'
@@ -24,15 +24,12 @@ import {
 
 const DISABLED_WEATHER_STATE = {status: 'disabled'} as const
 
-const weatherPreferenceStorage: PreferenceStorage = {
+const weatherPreferenceStorage = createParsedPreferenceStorage({
+  invalidMessage: 'Invalid weather preference.',
+  parse: parseWeatherPreference,
   read: () => readWeatherPreference(),
-  write: (_key, value) => {
-    const preference = parseWeatherPreference(value)
-    return preference === null
-      ? new Error('Invalid weather preference.')
-      : writeWeatherPreference(preference)
-  },
-}
+  write: (value) => writeWeatherPreference(value),
+})
 
 export type WeatherState =
   | {readonly status: 'disabled'}
@@ -61,6 +58,13 @@ const isReadyForLocation = (
 const isWeatherFeedRequired = (preference: WeatherPreference): boolean =>
   preference.enabled || preference.sceneMode === 'auto'
 
+const getReadyFeedState = (
+  feed: WeatherFeed,
+): Extract<WeatherState, {readonly status: 'ready'}> => {
+  const stale = feed.stale || Date.parse(feed.expiresAt) <= Date.now()
+  return {feed: {...feed, stale}, status: 'ready'}
+}
+
 const getRetainedFeedState = (
   state: WeatherState,
   locationId: WeatherLocation['id'],
@@ -69,8 +73,7 @@ const getRetainedFeedState = (
     return null
   }
 
-  const stale = Date.parse(state.feed.expiresAt) <= Date.now()
-  return {feed: {...state.feed, stale}, status: 'ready'}
+  return getReadyFeedState(state.feed)
 }
 
 /** Owns weather preferences, presentation state, and the feed required by automatic scenes. */
@@ -99,7 +102,8 @@ export const useWeather = (): WeatherController => {
       return currentPreference !== null
     }
 
-    return feedState().status === 'ready'
+    const currentState = feedState()
+    return currentState.status === 'ready' && !currentState.feed.stale
   }
 
   const weatherResult = createAsync<WeatherFeedQueryResult | undefined>(async () => {
@@ -133,7 +137,7 @@ export const useWeather = (): WeatherController => {
     const previousState = untrack(feedState)
     switch (result.status) {
       case 'available':
-        setFeedState({feed: result.feed, status: 'ready'})
+        setFeedState(getReadyFeedState(result.feed))
         return
       case 'collecting':
         setFeedState(

@@ -1,6 +1,6 @@
-import * as m from '@paraglide/message'
-
+import {getLocale} from '@paraglide/runtime'
 import {cx} from 'class-variance-authority'
+import {Show} from 'solid-js'
 
 import {SERVICE_OPERATOR} from 'src/features/service-operator'
 import {PServicePolicyLinks} from '../p-service-policy-links/PServicePolicyLinks'
@@ -11,6 +11,7 @@ import {PolicyNavigation} from '../privacy-policy/PolicyNavigation'
 import {RightsAndProtectionSections} from '../privacy-policy/RightsAndProtectionSections'
 import {SharingAndProcessingSections} from '../privacy-policy/SharingAndProcessingSections'
 import {PAppReturnLink} from '../p-app-return-link/PAppReturnLink'
+import {EnglishPrivacyPolicyContent} from './EnglishPrivacyPolicyContent'
 import {CONTENT_LINK_CLASSES, type PPrivacyPolicyProps} from '../privacy-policy/shared'
 export type {PPrivacyPolicyProps, PrivacyPolicyPlatform} from '../privacy-policy/shared'
 
@@ -31,7 +32,7 @@ const FOOTER_CLASSES = cx(
   'sm:flex sm:items-end sm:justify-between',
 )
 
-export const PPrivacyPolicy = (props: PPrivacyPolicyProps) => (
+const renderKoreanPrivacyPolicy = (props: PPrivacyPolicyProps) => (
   <main class={MAIN_CLASSES}>
     <div class={BACKGROUND_CLASSES} />
     <div class="relative mx-auto grid w-full max-w-6xl gap-8">
@@ -74,4 +75,10 @@ export const PPrivacyPolicy = (props: PPrivacyPolicyProps) => (
       </footer>
     </div>
   </main>
+)
+
+export const PPrivacyPolicy = (props: PPrivacyPolicyProps) => (
+  <Show fallback={renderKoreanPrivacyPolicy(props)} when={getLocale() === 'en'}>
+    <EnglishPrivacyPolicyContent {...props} />
+  </Show>
 )

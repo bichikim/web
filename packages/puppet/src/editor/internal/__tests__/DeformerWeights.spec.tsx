@@ -55,15 +55,15 @@ test('should paint multiple vertices as one undoable stroke and stop after captu
   fireEvent.click(view.getByRole('button', {name: '칠할 본 2'}))
   const svg = view.getByLabelText('디포머 영향도 정점 선택')
   vi.spyOn(svg, 'getBoundingClientRect').mockReturnValue({
-    left: 0,
     bottom: 720,
-    right: 960,
     height: 720,
-    x: 0,
+    left: 0,
+    right: 960,
     toJSON: () => ({}),
-    y: 0,
     top: 0,
     width: 960,
+    x: 0,
+    y: 0,
   })
   fireEvent(
     svg,
@@ -125,15 +125,15 @@ test('should subtract influence from a single bone with the brush', () => {
   fireEvent.click(view.getByRole('button', {name: '빼기'}))
   const svg = view.getByLabelText('디포머 영향도 정점 선택')
   vi.spyOn(svg, 'getBoundingClientRect').mockReturnValue({
-    left: 0,
     bottom: 720,
-    right: 960,
     height: 720,
-    x: 0,
+    left: 0,
+    right: 960,
     toJSON: () => ({}),
-    y: 0,
     top: 0,
     width: 960,
+    x: 0,
+    y: 0,
   })
   fireEvent(
     svg,

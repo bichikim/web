@@ -132,15 +132,15 @@ export const useGlueEditor = (props: UseGlueEditorProps) => {
     )
   return {
     canEdit,
-    first,
     change,
-    hasParameter,
     connect,
-    label,
     connections,
-    selected,
+    first,
+    hasParameter,
+    label,
     sampled,
-    setFirst,
     selectable,
+    selected,
+    setFirst,
   }
 }

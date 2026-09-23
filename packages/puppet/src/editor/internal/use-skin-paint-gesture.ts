@@ -61,6 +61,17 @@ export const useSkinPaintGesture = (options: SkinPaintGestureOptions) => {
         stop()
       }
     },
+    leave: () => {
+      if (paint === undefined) {
+        setCursor(null)
+      }
+    },
+    move: (event: PointerEvent) => {
+      if (pointer !== undefined && pointer !== event.pointerId) {
+        return
+      }
+      apply(position(event))
+    },
     start: (event: PointerEvent) => {
       if (event.button !== 0 || paint !== undefined) {
         return
@@ -80,17 +91,6 @@ export const useSkinPaintGesture = (options: SkinPaintGestureOptions) => {
       options.onStart?.()
       apply(position(event))
     },
-    leave: () => {
-      if (paint === undefined) {
-        setCursor(null)
-      }
-    },
     stop,
-    move: (event: PointerEvent) => {
-      if (pointer !== undefined && pointer !== event.pointerId) {
-        return
-      }
-      apply(position(event))
-    },
   }
 }

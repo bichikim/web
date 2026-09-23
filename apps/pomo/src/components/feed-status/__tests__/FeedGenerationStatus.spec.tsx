@@ -1,7 +1,7 @@
+/** @vitest-environment jsdom */
 import {PreferenceProvider} from 'src/hooks/use-preference'
 import * as m from '@paraglide/message'
 import {createSignal} from 'solid-js'
-/** @vitest-environment jsdom */
 import {cleanup, fireEvent, render, screen} from '@solidjs/testing-library'
 import {afterEach, beforeEach, expect, it, vi} from 'vitest'
 import {useReadingStatusPreference} from 'src/features/feed-display-preferences'
@@ -32,6 +32,42 @@ it('should hide the progress card and restore its stop action when enabled again
   preference!.onVisibleChange(true)
   fireEvent.click(screen.getByRole('button', {name: '중지'}))
   expect(onCancel).toHaveBeenCalledOnce()
+})
+
+it('should use the default during null hydration and hide a persisted false preference', async () => {
+  const read = Promise.withResolvers<unknown>()
+  const onCancel = vi.fn()
+  let preference: ReturnType<typeof useReadingStatusPreference> | undefined
+  render(
+    () => {
+      preference = useReadingStatusPreference()
+      return (
+        <FeedGenerationStatus
+          cancelDisabled={false}
+          message="생성 진행 중"
+          onCancel={onCancel}
+          state="generating"
+        />
+      )
+    },
+    {
+      wrapper: (props) => (
+        <PreferenceProvider storage={{read: () => read.promise, write: () => null}}>
+          {props.children}
+        </PreferenceProvider>
+      ),
+    },
+  )
+
+  expect(preference?.visible()).toBeNull()
+  expect(screen.getByRole('status')).toBeVisible()
+
+  read.resolve(false)
+  await read.promise
+  await vi.waitFor(() => {
+    expect(preference?.visible()).toBe(false)
+    expect(screen.queryByRole('status')).toBeNull()
+  })
 })
 
 it('should show progress and forward cancellation only while enabled', () => {

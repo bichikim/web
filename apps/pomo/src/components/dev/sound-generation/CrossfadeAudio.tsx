@@ -1,3 +1,5 @@
+import {getExceptionMessage} from 'src/features/error-detail'
+import {clamp} from 'es-toolkit/math'
 import {createEffect, createSignal, onCleanup, untrack} from 'solid-js'
 
 import {createLoopPlayer, type LoopPlayback} from 'src/features/loop-player'
@@ -55,13 +57,13 @@ export function CrossfadeAudio(props: CrossfadeAudioProps) {
     if (current === undefined || duration() <= 0) {
       return
     }
-    const target = Math.min(Math.max(requestedPosition, 0), duration())
+    const target = clamp(requestedPosition, 0, duration())
     setPosition(target)
     try {
       await current.play(connection(), false, target)
     } catch (cause) {
       setPlaying(false)
-      setStatus(cause instanceof Error ? cause.message : '재생하지 못했습니다.')
+      setStatus(getExceptionMessage(cause, '재생하지 못했습니다.'))
     }
   }
 
@@ -95,7 +97,7 @@ export function CrossfadeAudio(props: CrossfadeAudioProps) {
         },
       )
     } catch (cause) {
-      setStatus(cause instanceof Error ? cause.message : '오디오 플레이어를 준비하지 못했습니다.')
+      setStatus(getExceptionMessage(cause, '오디오 플레이어를 준비하지 못했습니다.'))
     }
   })
 
@@ -137,7 +139,7 @@ export function CrossfadeAudio(props: CrossfadeAudioProps) {
       await play(position())
     } catch (cause) {
       setPlaying(false)
-      setStatus(cause instanceof Error ? cause.message : '재생하지 못했습니다.')
+      setStatus(getExceptionMessage(cause, '재생하지 못했습니다.'))
     }
   }
 
@@ -159,7 +161,7 @@ export function CrossfadeAudio(props: CrossfadeAudioProps) {
       if (revision === seekRevision && current === playback) {
         setPlaying(false)
         setPosition(previousPosition)
-        setStatus(cause instanceof Error ? cause.message : '위치를 이동하지 못했습니다.')
+        setStatus(getExceptionMessage(cause, '위치를 이동하지 못했습니다.'))
       }
     }
   }

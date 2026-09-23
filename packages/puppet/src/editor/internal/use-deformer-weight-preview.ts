@@ -108,11 +108,11 @@ export const useDeformerWeightPreview = (props: UseDeformerWeightPreviewProps) =
         },
       ),
     triangles,
+    vertexWeights,
+    vertices,
     viewBox: () => {
       const bounds = getEditorViewBox(props.document)
       return `${bounds.x} ${bounds.y} ${bounds.width} ${bounds.height}`
     },
-    vertexWeights,
-    vertices,
   }
 }

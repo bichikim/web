@@ -1,8 +1,13 @@
 import {getRequestEvent} from 'solid-js/web'
 import type {z} from 'zod'
+import {isAbortError} from 'src/utils/is-cancellation-reason'
 
 const TRUSTED_LOCAL_HOSTNAMES = new Set(['127.0.0.1', 'localhost'])
 const PUBLIC_ASSET_VALIDATION_ORIGIN = 'https://public-assets.invalid'
+
+const isPublicAssetCancellation = (cause: unknown, signal?: AbortSignal): boolean =>
+  (signal?.aborted === true && cause === signal.reason) ||
+  (cause instanceof Error && isAbortError(cause))
 
 export type PublicAssetPath = `/${string}`
 
@@ -120,10 +125,7 @@ export const loadPublicJson = async <Output>(
         ? await fetch(assetUrl)
         : await fetch(assetUrl, {signal: options.signal})
   } catch (cause: unknown) {
-    if (
-      (options.signal?.aborted && cause === options.signal.reason) ||
-      (cause instanceof Error && cause.name === 'AbortError')
-    ) {
+    if (isPublicAssetCancellation(cause, options.signal)) {
       throw cause
     }
     throw createPublicJsonError(
@@ -147,10 +149,7 @@ export const loadPublicJson = async <Output>(
   try {
     value = await response.json()
   } catch (cause: unknown) {
-    if (
-      (options.signal?.aborted && cause === options.signal.reason) ||
-      (cause instanceof Error && cause.name === 'AbortError')
-    ) {
+    if (isPublicAssetCancellation(cause, options.signal)) {
       throw cause
     }
     throw createPublicJsonError(

@@ -144,5 +144,5 @@ export const useTooltip = () => {
       document.defaultView?.removeEventListener('blur', close)
     })
   })
-  return {anchor, id, side, arrow, text, setSurface}
+  return {anchor, arrow, id, setSurface, side, text}
 }

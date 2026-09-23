@@ -1,3 +1,4 @@
+import {replaceBlobObjectUrl} from 'src/features/blob-object-url'
 import {createSignal, onCleanup, Show} from 'solid-js'
 interface SourceProps {
   readonly label: string
@@ -14,11 +15,7 @@ export const Source = (props: SourceProps) => {
   })
   const handleFileChange = (event: Event & {currentTarget: HTMLInputElement}) => {
     const file = event.currentTarget.files?.[0] ?? null
-    const previous = url()
-    if (previous !== null) {
-      URL.revokeObjectURL(previous)
-    }
-    setUrl(file === null ? null : URL.createObjectURL(file))
+    setUrl(replaceBlobObjectUrl(url(), () => file))
     props.onFile(file)
   }
   return (

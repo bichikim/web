@@ -54,18 +54,18 @@ test('should support vertical curves and collapsed tangent handles', () => {
 
 test('should invert a manually weighted vertex using its part and vertex identity', () => {
   const bone: PuppetSceneDeformerNode = {
+    boneRestPoints: [0, 0, 50, 0, 100, 0],
+    boneWeights: [{partId: 'a', vertexIndex: 0, weights: [1, 0]}],
+    bounds: {height: 100, width: 100, x: 0, y: 0},
+    children: [],
+    columns: 1,
+    controlPoints: [0, 0, 50, 0, 50, 50],
     id: 'bone',
     kind: 'deformer',
     locked: false,
-    bounds: {x: 0, width: 100, y: 0, height: 100},
     name: 'Bone',
-    columns: 1,
-    children: [],
-    visible: true,
-    boneRestPoints: [0, 0, 50, 0, 100, 0],
-    boneWeights: [{partId: 'a', vertexIndex: 0, weights: [1, 0]}],
     rows: 1,
-    controlPoints: [0, 0, 50, 0, 50, 50],
+    visible: true,
   }
   const reference = {partId: 'a', vertexIndex: 0}
   const point = {x: 75, y: 10}
@@ -82,17 +82,17 @@ test('should expose the preserved binding coordinates used for current bone infl
   const {getDeformerInputPoint} = await import('../grid')
   const {rebindDeformer} = await import('../binding')
   const bone: PuppetSceneDeformerNode = {
+    boneRestPoints: [0, 0, 50, 0],
+    bounds: {height: 100, width: 100, x: 0, y: 0},
+    children: [],
+    columns: 1,
+    controlPoints: [0, 0, 0, 50],
     id: 'bone',
     kind: 'deformer',
     locked: false,
-    bounds: {x: 0, width: 100, y: 0, height: 100},
     name: 'Bone',
-    columns: 1,
-    children: [],
-    visible: true,
-    boneRestPoints: [0, 0, 50, 0],
-    controlPoints: [0, 0, 0, 50],
     rows: 1,
+    visible: true,
   }
   const rebound = rebindDeformer(bone, {
     ...bone,
@@ -112,7 +112,7 @@ test('should blend grid, curve and pin deformation per vertex and invert the ble
       ...node,
       controlPoints: [55, 20],
       curveAxis: undefined,
-      pins: [{radius: 100, x: 45, strength: 1, y: 10}],
+      pins: [{radius: 100, strength: 1, x: 45, y: 10}],
     },
   ]
   const point = {x: 45, y: 10}

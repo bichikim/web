@@ -24,23 +24,23 @@ test.each([
 ])('should import a %i by %i canvas with bounded layer textures', async (width, height) => {
   vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue({
     createImageData: (width: number, height: number) => ({
-      height,
       data: new Uint8ClampedArray(width * height * 4),
+      height,
       width,
     }),
     putImageData: vi.fn(),
   } as unknown as ReturnType<HTMLCanvasElement['getContext']>)
   vi.spyOn(HTMLCanvasElement.prototype, 'toDataURL').mockReturnValue('data:image/png;base64,test')
   const bytes = writePsd({
-    height: 100,
     children: [
       {
+        imageData: {data: new Uint8ClampedArray(8 * 8 * 4).fill(255), height: 8, width: 8},
         left: 20,
         name: '눈',
-        imageData: {width: 8, height: 8, data: new Uint8ClampedArray(8 * 8 * 4).fill(255)},
         top: 30,
       },
     ],
+    height: 100,
     width: 100,
   })
   // Change only the document bounds; importing skips the composite bitmap.

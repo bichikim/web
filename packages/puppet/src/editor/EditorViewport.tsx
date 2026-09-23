@@ -52,8 +52,8 @@ export interface EditorViewportProps {
   readonly targetNodeIds?: ReadonlyArray<string>
 }
 
-const useViewportMeshIssue = (props: EditorViewportProps) =>
-  createMemo(() =>
+const useViewportMeshIssue = (props: EditorViewportProps) => {
+  const issue = createMemo(() =>
     props.meshEditingDisabled
       ? '임시 변경을 저장하거나 삭제한 후 메시를 편집하세요.'
       : getMeshEditingIssue({
@@ -61,6 +61,8 @@ const useViewportMeshIssue = (props: EditorViewportProps) =>
           partId: props.activePartId,
         }),
   )
+  return issue
+}
 
 const getPlaybackDocument = (options: EditorViewportProps) =>
   options.editMode === 'parameter' ? {...options.document, motions: []} : options.document

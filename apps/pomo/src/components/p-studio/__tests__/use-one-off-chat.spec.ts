@@ -12,10 +12,16 @@ import {
 } from '../../../features/chat'
 import {type ModelDownloadResult, useModelDownload} from '../../../features/model-download'
 import {isTextModelDownloaded} from '../../../features/text-generation'
+import {
+  type AiTextExecutionMode,
+  type AiTextJobController,
+  useAiTextJob,
+} from '../../../features/ai-job/use-ai-text-job'
 import {useOneOffChat} from '../use-one-off-chat'
 
 vi.mock('../../../features/chat', () => ({useChat: vi.fn()}))
 vi.mock('../../../features/model-download', () => ({useModelDownload: vi.fn()}))
+vi.mock('../../../features/ai-job/use-ai-text-job', () => ({useAiTextJob: vi.fn()}))
 vi.mock('../../../features/text-generation', () => ({
   getTextModel: () => ({downloadSize: '3.7GB', id: 'gemma-4-e2b', label: 'Gemma 4 E2B'}),
   isTextModelDownloaded: vi.fn(),
@@ -56,12 +62,75 @@ const download = {
   state: () => ({status: 'idle'}) as const,
 }
 
+const createServerJob = (executionMode: AiTextExecutionMode = 'local') => {
+  const [mode] = createSignal(executionMode)
+  return {
+    accessMessage: () => null,
+    accessStatus: () => 'available' as const,
+    actionMessage: () => null,
+    artifactDeleted: () => false,
+    cancel: vi.fn(async () => false),
+    deleteArtifact: vi.fn(async () => false),
+    errorMessage: () => null,
+    executionMode: mode,
+    isBusy: () => false,
+    isCancelling: () => false,
+    isDeleting: () => false,
+    isRefreshingResult: () => false,
+    isSaving: () => false,
+    job: () => null,
+    jobResult: () => null,
+    jobStatus: () => 'idle' as const,
+    refresh: vi.fn(async () => false),
+    refreshResult: vi.fn(async () => false),
+    retry: vi.fn(async () => false),
+    saveArtifact: vi.fn(async () => false),
+    serverAvailable: () => executionMode === 'server',
+    setExecutionMode: vi.fn(),
+    speakResult: vi.fn(async () => false),
+    statusMessage: () => null,
+    submit: vi.fn(async () => true),
+  } as unknown as AiTextJobController
+}
+
 beforeEach(() => {
   vi.clearAllMocks()
   vi.mocked(useModelDownload).mockReturnValue(download as never)
+  vi.mocked(useAiTextJob).mockReturnValue(createServerJob())
 })
 
 describe('useOneOffChat', () => {
+  it('should reject server submissions when the composer is disabled', async () => {
+    const serverJob = createServerJob('server')
+    const {chat} = createChat()
+    vi.mocked(useAiTextJob).mockReturnValue(serverJob)
+    vi.mocked(useChat).mockReturnValue(chat)
+    const {cleanup, result} = renderHook(() =>
+      useOneOffChat({isEnabled: () => false, onReply: vi.fn()}),
+    )
+    await expect(result.submit('서버 요청')).resolves.toBe(false)
+    expect(serverJob.submit).not.toHaveBeenCalled()
+    expect(isTextModelDownloaded).not.toHaveBeenCalled()
+    cleanup()
+  })
+
+  it('should submit to the server without checking or downloading the local model', async () => {
+    const serverJob = createServerJob('server')
+    const {chat} = createChat()
+    vi.mocked(useAiTextJob).mockReturnValue(serverJob)
+    vi.mocked(useChat).mockReturnValue(chat)
+
+    const {cleanup, result} = renderHook(() => useOneOffChat({onReply: vi.fn()}))
+    const submitted = await result.submit('서버에서 실행해 줘')
+
+    expect(submitted).toBe(true)
+    expect(serverJob.submit).toHaveBeenCalledWith('서버에서 실행해 줘')
+    expect(isTextModelDownloaded).not.toHaveBeenCalled()
+    expect(chat.prepare).not.toHaveBeenCalled()
+    expect(download.startTextModel).not.toHaveBeenCalled()
+    cleanup()
+  })
+
   it('should prepare a downloaded model and send one trimmed question', async () => {
     const {chat, setState} = createChat()
     vi.mocked(useChat).mockReturnValue(chat)
@@ -117,6 +186,50 @@ describe('useOneOffChat', () => {
     await vi.waitFor(() => expect(onReply).toHaveBeenCalledWith('반가워요.'))
     await vi.waitFor(() => expect(chat.clear).toHaveBeenCalledOnce())
     expect(chat.messages()).toEqual([])
+    cleanup()
+  })
+
+  it('should discard a reply that completes after the composer is hidden', async () => {
+    const [isEnabled, setIsEnabled] = createSignal(true)
+    const onReply = vi.fn(async () => undefined)
+    const {chat, setMessages, setState} = createChat()
+    vi.mocked(useChat).mockReturnValue(chat)
+    vi.mocked(isTextModelDownloaded).mockResolvedValue(true)
+    const {cleanup, result} = renderHook(() => useOneOffChat({isEnabled, onReply}))
+
+    await result.submit('숨기기 전에 보낸 질문')
+    setState({status: 'ready'})
+    await vi.waitFor(() => expect(chat.send).toHaveBeenCalledOnce())
+
+    setIsEnabled(false)
+    setMessages([{content: '숨겨진 답변', id: 'reply-1', role: 'assistant'}])
+    setState({status: 'ready'})
+
+    await vi.waitFor(() => expect(chat.clear).toHaveBeenCalledOnce())
+    expect(onReply).not.toHaveBeenCalled()
+    cleanup()
+  })
+
+  it('should discard a reply whose generation started before the composer was hidden and reshown', async () => {
+    const [isEnabled, setIsEnabled] = createSignal(true)
+    const onReply = vi.fn(async () => undefined)
+    const {chat, setMessages, setState} = createChat()
+    vi.mocked(useChat).mockReturnValue(chat)
+    vi.mocked(isTextModelDownloaded).mockResolvedValue(true)
+    const {cleanup, result} = renderHook(() => useOneOffChat({isEnabled, onReply}))
+
+    await result.submit('숨겼다가 다시 표시할 질문')
+    setState({status: 'ready'})
+    await vi.waitFor(() => expect(chat.send).toHaveBeenCalledOnce())
+
+    setIsEnabled(false)
+    await Promise.resolve()
+    setIsEnabled(true)
+    setMessages([{content: '다시 표시한 뒤 도착한 답변', id: 'reply-1', role: 'assistant'}])
+    setState({status: 'ready'})
+
+    await vi.waitFor(() => expect(chat.clear).toHaveBeenCalledOnce())
+    expect(onReply).not.toHaveBeenCalled()
     cleanup()
   })
 
@@ -319,6 +432,22 @@ describe('useOneOffChat', () => {
     expect(result.errorMessage()).toBe('모델 다운로드 실패')
     expect(result.isBusy()).toBe(false)
     cleanup()
+  })
+
+  it('should use the fallback when a download rejects with a non-Error message object', async () => {
+    const {chat} = createChat()
+    vi.mocked(useChat).mockReturnValue(chat)
+    vi.mocked(isTextModelDownloaded).mockResolvedValue(false)
+    vi.mocked(download.startTextModel).mockRejectedValue({message: 'unexpected object'})
+    const report = vi.spyOn(console, 'error').mockImplementation(() => undefined)
+    const {cleanup, result} = renderHook(() => useOneOffChat({onReply: vi.fn()}))
+
+    await result.submit('질문')
+    await result.startDownload()
+
+    expect(result.errorMessage()).toBe('모델을 내려받지 못했어요.')
+    cleanup()
+    report.mockRestore()
   })
 
   it('should expose a generation failure after the pending question was sent', async () => {

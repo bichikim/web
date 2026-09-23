@@ -1,8 +1,8 @@
+import {invalidJsonBodyResponse} from 'src/server/http/invalid-json-body-response'
 import type {APIEvent} from '@solidjs/start/server'
 import {z} from 'zod'
 
-import {isUserRequestResolutionError} from 'src/server/auth/user-request-resolution-error'
-import {resolveUserRequest} from 'src/server/auth/resolve-user-request'
+import {resolveUserRequestOrUnavailable} from 'src/server/auth/resolve-user-request-or-unavailable'
 import {readJsonBody} from 'src/server/http/body'
 import {noStoreJson} from 'src/server/http/response'
 import {createFeatureRequest, listFeatureRequests} from 'src/server/repositories/feature-requests'
@@ -14,7 +14,6 @@ const HTTP_BAD_REQUEST = 400
 const HTTP_CREATED = 201
 const HTTP_INTERNAL_SERVER_ERROR = 500
 const HTTP_UNAUTHORIZED = 401
-const HTTP_SERVICE_UNAVAILABLE = 503
 const MAXIMUM_LIST_OFFSET = 10_000
 
 const createFeatureRequestSchema = z.object({
@@ -26,22 +25,13 @@ const listFeatureRequestQuerySchema = z.object({
 })
 
 const resolveIdentity = async (event: APIEvent) => {
-  try {
-    return {identity: await resolveUserRequest(event.request), response: null}
-  } catch (error: unknown) {
-    if (!isUserRequestResolutionError(error)) {
-      throw error
-    }
-
-    console.error('Failed to resolve feature request user', error.cause)
-    return {
-      identity: null,
-      response: noStoreJson(
-        {error: 'feature_request_unavailable'},
-        {cookies: error.cookies, status: HTTP_SERVICE_UNAVAILABLE},
-      ),
-    }
-  }
+  const resolved = await resolveUserRequestOrUnavailable(event.request, {
+    logMessage: 'Failed to resolve feature request user',
+    unavailableError: 'feature_request_unavailable',
+  })
+  return resolved.kind === 'ok'
+    ? {identity: resolved.identity, response: null}
+    : {identity: null, response: resolved.response}
 }
 
 export const GET = async (event: APIEvent): Promise<Response> => {
@@ -94,13 +84,10 @@ export const POST = async (event: APIEvent): Promise<Response> => {
   )
 
   if (!parsedBody.success) {
-    return noStoreJson(
-      {error: 'invalid_request'},
-      {
-        cookies: resolved.identity.cookies,
-        status: bodyResult.success ? HTTP_BAD_REQUEST : bodyResult.status,
-      },
-    )
+    return invalidJsonBodyResponse(bodyResult, {
+      cookies: resolved.identity.cookies,
+      error: 'invalid_request',
+    })
   }
 
   try {

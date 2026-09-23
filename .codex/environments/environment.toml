@@ -3,7 +3,7 @@ version = 1
 name = "web"
 
 [setup]
-script = "cd "
+script = "graft build"
 
 [setup.darwin]
 script = '''
@@ -36,6 +36,9 @@ REPOSITORY_PATH="${CODEX_SOURCE_TREE_PATH:-$(dirname "$(git rev-parse --git-comm
 if [ -z "$(git status --porcelain)" ] && [ "$(git rev-list --count origin/dev..HEAD 2>/dev/null || echo 1)" -eq 0 ]; then
   git reset --hard origin/dev
 fi
+
+# Build the ignored per-worktree context graph after the checkout is finalized.
+graft build
 
 if [ -f "$REPOSITORY_PATH/apps/coong/.env" ]; then
   cp "$REPOSITORY_PATH/apps/coong/.env" apps/coong/.env

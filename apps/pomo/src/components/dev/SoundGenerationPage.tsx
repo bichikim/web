@@ -1,6 +1,7 @@
 import {Title} from '@solidjs/meta'
 import {A} from '@solidjs/router'
 import {createEffect, createSignal, Show} from 'solid-js'
+import {clamp} from 'es-toolkit/math'
 
 import {DEFAULT_CONNECTION_SECONDS, useSoundGeneration} from 'src/features/sound-generation'
 import {ModelTerms} from './sound-generation/ModelTerms'
@@ -27,7 +28,7 @@ export function SoundGenerationPage() {
     if (element.readyState < 1 || !Number.isFinite(element.duration)) {
       return
     }
-    element.currentTime = Math.min(Math.max(state.position, 0), element.duration)
+    element.currentTime = clamp(state.position, 0, element.duration)
     if (state.playing) {
       Promise.resolve(element.play()).catch(() => undefined)
     }

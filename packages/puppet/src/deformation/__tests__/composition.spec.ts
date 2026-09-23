@@ -139,7 +139,6 @@ test('should combine five independent inputs with authored suppression through a
           {value: 1, weight: 0},
         ],
       })),
-      parameterIds: [id],
       keyforms: [
         {parts: [{partId: part.id, vertices: part.mesh.vertices}], values: [0]},
         {
@@ -154,9 +153,10 @@ test('should combine five independent inputs with authored suppression through a
           values: [1],
         },
       ],
+      parameterIds: [id],
       targetPartIds: [part.id],
     })),
-    parameters: ids.map((id) => ({id, minimum: 0, defaultValue: 0, name: id, maximum: 1})),
+    parameters: ids.map((id) => ({defaultValue: 0, id, maximum: 1, minimum: 0, name: id})),
   }
   const parsed = parseDocument(serializeDocument(document))
   if (!parsed.ok) {

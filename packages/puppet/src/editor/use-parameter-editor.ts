@@ -472,12 +472,12 @@ export const useParameterEditor = (props: UseParameterEditorProps): ParameterEdi
         setters,
       )
     },
-    setInfluences: (influences) => applyInfluences(props, activeBinding(), influences),
     selectBinding,
     selectKeyform(values) {
       updateValues(values)
     },
     setAllParametersVisible,
+    setInfluences: (influences) => applyInfluences(props, activeBinding(), influences),
     setParameterValues: updateValues,
   }
 }

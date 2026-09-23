@@ -1,4 +1,4 @@
-import {createSignal} from 'solid-js'
+import {createSignal, onCleanup} from 'solid-js'
 import * as m from '@paraglide/message'
 import {
   createPictureDiaryEntry,
@@ -15,10 +15,27 @@ interface EntryEditingOptions {
   readonly onSaved: (entry: PictureDiaryEntry) => void
 }
 
+const restorePictureDiaryEntry = async (
+  repository: PictureDiaryRepository,
+  entry: PictureDiaryEntry,
+): Promise<void> => {
+  try {
+    await repository.save(entry)
+  } catch (error: unknown) {
+    console.error('Failed to restore a picture diary entry after disposal.', error)
+  }
+}
+
 export const useEntryEditing = (options: EntryEditingOptions) => {
   const [entry, setEntry] = createSignal<PictureDiaryEntry>()
   const [saving, setSaving] = createSignal(false)
   const [message, setMessage] = createSignal<string>()
+  let isDisposed = false
+
+  onCleanup(() => {
+    isDisposed = true
+  })
+
   const update = (change: Partial<PictureDiaryEntry>) => {
     if (!saving()) {
       setEntry((current) => current && {...current, ...change})
@@ -41,12 +58,22 @@ export const useEntryEditing = (options: EntryEditingOptions) => {
     try {
       const updated = createPictureDiaryEntry({...draft, now: options.environment.now()})
       await options.repository.save(updated)
+      if (isDisposed) {
+        await restorePictureDiaryEntry(options.repository, draft)
+        return
+      }
       options.onSaved(updated)
-      setEntry(undefined)
+      if (!isDisposed) {
+        setEntry(undefined)
+      }
     } catch {
-      setMessage(m.picture_diary_save_failed())
+      if (!isDisposed) {
+        setMessage(m.picture_diary_save_failed())
+      }
     } finally {
-      setSaving(false)
+      if (!isDisposed) {
+        setSaving(false)
+      }
     }
   }
   const editor = () => {

@@ -97,6 +97,27 @@ describe('PNumberInput', () => {
     expect(input).toHaveValue(5)
   })
 
+  it('should increment from the last value after the input is cleared', () => {
+    const {input, onValueChange} = renderNumberInput({max: 10, min: 1, value: '5'})
+
+    fireEvent.input(input, {target: {value: ''}})
+    fireEvent.click(screen.getByRole('button', {name: 'Increase Duration'}))
+
+    expect(onValueChange).toHaveBeenCalledWith(6)
+    expect(input).toHaveValue(6)
+  })
+
+  it('should increment from the latest edited value after the input is cleared', () => {
+    const {input, onValueChange} = renderNumberInput({max: 10, min: 1, value: '5'})
+
+    fireEvent.input(input, {target: {value: '7'}})
+    fireEvent.input(input, {target: {value: ''}})
+    fireEvent.click(screen.getByRole('button', {name: 'Increase Duration'}))
+
+    expect(onValueChange).toHaveBeenCalledWith(8)
+    expect(input).toHaveValue(8)
+  })
+
   it('should forward raw text while the center field is edited', () => {
     const {input, onInputValueChange} = renderNumberInput({max: 10, min: 1, value: '5'})
 

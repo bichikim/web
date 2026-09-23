@@ -7,12 +7,12 @@ const grid: PuppetSceneDeformerNode = {
   bounds: {height: 100, width: 100, x: 0, y: 0},
   children: [],
   columns: 1,
+  controlPoints: [10, 20, 110, 20, 10, 120, 110, 120],
   id: 'grid',
   kind: 'deformer',
   locked: false,
-  controlPoints: [10, 20, 110, 20, 10, 120, 110, 120],
-  rows: 1,
   name: 'Grid',
+  rows: 1,
   visible: true,
 }
 const curve: PuppetSceneDeformerNode = {

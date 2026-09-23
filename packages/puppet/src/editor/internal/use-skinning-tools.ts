@@ -1,6 +1,5 @@
 import {useSkinSessionControls} from './skin-session'
-import {createEffect, createMemo, createSignal, on} from 'solid-js'
-import type {JSX} from 'solid-js'
+import {createEffect, createMemo, createSignal, type JSX, on} from 'solid-js'
 import {useSkinPaintGesture} from './use-skin-paint-gesture'
 import {getDocumentScene, type PuppetDocument} from '../../player'
 import type {MeshEditorProps} from '../mesh-editor-contract'
@@ -89,13 +88,13 @@ export const useSkinningTools = (props: SkinningToolsProps) => {
       const stroke = createSkinStroke({
         binding: skin,
         indices: mesh.indices,
-        target: target(),
-        radius: radius(),
-        vertices: positions(),
         mode: mode as WeightPaintMode,
         protect: protect(),
-        strength: amount() / PERCENT,
+        radius: radius(),
         selected: selected(),
+        strength: amount() / PERCENT,
+        target: target(),
+        vertices: positions(),
       })
       return (point) => update(stroke.paint(point))
     },
@@ -115,26 +114,26 @@ export const useSkinningTools = (props: SkinningToolsProps) => {
     ),
   )
   return {
+    amount,
     binding,
     enabled,
     locked,
     part,
     positions,
-    setEnabled,
-    radius,
-    setTarget,
-    amount,
-    triangles,
     protect,
-    setTool,
+    radius,
     selected,
-    tool,
     setAmount,
-    target,
+    setEnabled,
     setProtect,
     setRadius,
     setSelected,
+    setTarget,
+    setTool,
     setValue,
+    target,
+    tool,
+    triangles,
     value,
     ...gesture,
     apply: () => {

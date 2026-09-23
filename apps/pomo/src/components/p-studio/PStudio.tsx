@@ -41,6 +41,10 @@ import {
 import {usePSay} from '../../features/pomo-webmcp'
 import {useWeather, type WeatherSceneCondition} from '../../features/weather'
 import {useDesktopMode, useDesktopSafeAreaTop} from '../../features/desktop-mode'
+import {
+  createDesktopMusicActionChannel,
+  isDesktopMusicAction,
+} from '../../features/desktop-mode/desktop-music-actions'
 import {PEntry} from './Entry'
 import {resolvePSceneViseme} from '../pomo-scene-options'
 import {PSceneFallback} from './SceneFallback'
@@ -113,12 +117,30 @@ const useStudioEntry = (events: ReturnType<typeof usePEvents>) => {
   return {enter, hide: () => setIsVisible(false), isVisible, restore}
 }
 
-const DesktopWallpaperEventActionFallback = () => {
+const DesktopWallpaperEventActionBridge = () => {
   const events = usePEvents()
 
   onMount(() => {
-    const unregister = events.registerEventActionExecutor(() => undefined)
-    onCleanup(unregister)
+    const channel = createDesktopMusicActionChannel()
+    const unregisterHandler =
+      channel === null
+        ? undefined
+        : events.registerEventActionHandler?.((actionId) => {
+            if (!isDesktopMusicAction(actionId)) {
+              return false
+            }
+
+            channel.postMessage({actionId})
+            return true
+          })
+    const unregisterExecutor = events.registerEventActionExecutor(() => undefined, {
+      mode: 'deferred',
+    })
+    onCleanup(() => {
+      unregisterHandler?.()
+      unregisterExecutor()
+      channel?.close()
+    })
   })
 
   return null
@@ -291,7 +313,9 @@ const StudioUi = (props: StudioUiProps) => (
             props.displayPreferences.isReady() && props.displayPreferences.pomodoroVisible()
           }
           playerVisible={
-            props.displayPreferences.isReady() && props.displayPreferences.playerVisible()
+            props.displayPreferences.isReady()
+              ? props.displayPreferences.playerVisible()
+              : undefined
           }
           dialogueComposerVisible={props.displayPreferences.dialogueComposerVisible()}
           isPlayerExpanded={props.isPlayerExpanded}
@@ -476,7 +500,7 @@ export const PStudio = () => {
         />
       </Show>
       <Show when={isDesktopWallpaper()}>
-        <DesktopWallpaperEventActionFallback />
+        <DesktopWallpaperEventActionBridge />
       </Show>
       <Show when={import.meta.env.VITE_POMO_IS_DESKTOP === 'true' && isDesktopWidget()}>
         <DesktopSurfaceHandle

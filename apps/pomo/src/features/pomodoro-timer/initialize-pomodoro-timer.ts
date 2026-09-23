@@ -6,6 +6,7 @@ export interface PomodoroTimerApplyStateOptions {
   readonly deferEvents?: boolean
   readonly eventPreviousState?: PomodoroTimerState
   readonly isCatchUp?: boolean
+  readonly shouldPublish?: boolean
 }
 
 export interface PomodoroTimerInitializationOptions {
@@ -48,6 +49,7 @@ export const initializePomodoroTimer = (options: PomodoroTimerInitializationOpti
     )
 
     options.applyState(synchronizedState, {
+      deferEvents: !autoStartNextPhase,
       eventPreviousState: stateToRestore ?? undefined,
       isCatchUp: true,
     })

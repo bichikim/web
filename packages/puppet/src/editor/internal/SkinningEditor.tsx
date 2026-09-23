@@ -73,9 +73,8 @@ export const SkinningEditor = (props: SkinningEditorProps) => {
     isSceneNodeLocked(props.document, props.partId) ||
     props.onDocumentChange === undefined
   const update = (skinning: ReturnType<typeof binding>) => {
-    const {partId} = props
-    if (partId !== undefined) {
-      props.onDocumentChange?.(setPartSkinning(props.document, partId, skinning))
+    if (props.partId !== undefined) {
+      props.onDocumentChange?.(setPartSkinning(props.document, props.partId, skinning))
     }
   }
   const connect = () => {

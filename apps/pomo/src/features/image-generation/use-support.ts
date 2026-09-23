@@ -1,3 +1,4 @@
+import * as m from '@paraglide/message'
 import {createSignal, onCleanup, onMount} from 'solid-js'
 
 export interface ImageSupportOptions {
@@ -21,13 +22,11 @@ export const useImageSupport = (options: ImageSupportOptions) => {
         }
         setSupported(available)
         options.onStatus(
-          available
-            ? '장면을 입력하고 이미지를 만들어 보세요.'
-            : 'WebGPU와 shader-f16을 지원하는 브라우저·GPU가 필요해요.',
+          available ? m.picture_diary_generation_ready() : m.picture_diary_generation_unsupported(),
         )
       } catch {
         if (!disposed) {
-          options.onStatus('WebGPU를 확인하지 못했어요. 브라우저의 GPU 설정을 확인해 주세요.')
+          options.onStatus(m.picture_diary_generation_support_error())
         }
       }
     })()

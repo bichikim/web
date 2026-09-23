@@ -1,6 +1,6 @@
-import * as m from '@paraglide/message'
-
+import {getLocale} from '@paraglide/runtime'
 import {cx} from 'class-variance-authority'
+import {Show} from 'solid-js'
 
 import {SERVICE_OPERATOR} from 'src/features/service-operator'
 
@@ -13,6 +13,7 @@ import {PServicePolicyLinks} from '../p-service-policy-links/PServicePolicyLinks
 import {TermsIntro} from '../service-terms/TermsIntro'
 import {TermsNavigation} from '../service-terms/TermsNavigation'
 import {PAppReturnLink} from '../p-app-return-link/PAppReturnLink'
+import {EnglishServiceTermsContent} from './EnglishServiceTermsContent'
 export type {PServiceTermsProps, ServiceTermsPlatform} from '../service-terms/shared'
 
 const MAIN_CLASSES = cx(
@@ -32,7 +33,7 @@ const FOOTER_CLASSES = cx(
   'sm:flex sm:items-end sm:justify-between',
 )
 
-export const PServiceTerms = (props: PServiceTermsProps) => (
+const renderKoreanServiceTerms = (props: PServiceTermsProps) => (
   <main class={MAIN_CLASSES}>
     <div class={BACKGROUND_CLASSES} />
     <div class="relative mx-auto grid w-full max-w-6xl gap-8">
@@ -74,4 +75,10 @@ export const PServiceTerms = (props: PServiceTermsProps) => (
       </footer>
     </div>
   </main>
+)
+
+export const PServiceTerms = (props: PServiceTermsProps) => (
+  <Show fallback={renderKoreanServiceTerms(props)} when={getLocale() === 'en'}>
+    <EnglishServiceTermsContent {...props} />
+  </Show>
 )

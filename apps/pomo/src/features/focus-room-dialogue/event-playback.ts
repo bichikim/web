@@ -36,6 +36,23 @@ const shuffleDialogues = (dialogueIds: ReadonlyArray<string>, random: () => numb
   return shuffledIds
 }
 
+const appendDialogueIdsWithinLimit = (
+  dialogueIds: ReadonlyArray<string>,
+  selectedDialogueIds: ReadonlyArray<string>,
+  maxLatestDialogueIds?: number,
+): ReadonlyArray<string> => {
+  if (maxLatestDialogueIds === undefined) {
+    return [...dialogueIds, ...selectedDialogueIds]
+  }
+
+  const remainingDialogueCount = maxLatestDialogueIds - dialogueIds.length
+  if (remainingDialogueCount <= 0) {
+    return [...dialogueIds]
+  }
+
+  return [...dialogueIds, ...selectedDialogueIds.slice(-remainingDialogueCount)]
+}
+
 /** Selects and orders the dialogues for one event occurrence. */
 export const selectEventDialogues = (
   options: SelectEventDialoguesOptions,
@@ -76,15 +93,12 @@ export const selectDialogueIdsForEvents = (
   playbackModes: EventPlaybackModes,
   maxLatestDialogueIds?: number,
 ): ReadonlyArray<string> =>
-  eventIds.reduce<Array<string>>((dialogueIds, eventId) => {
+  eventIds.reduce<ReadonlyArray<string>>((dialogueIds, eventId) => {
     const selectedDialogueIds = selectEventDialogues({
       dialogueIds: bindings[eventId] ?? [],
       maxLatestDialogueIds,
       playbackMode: playbackModes[eventId] ?? DEFAULT_DIALOGUE_EVENT_PLAYBACK_MODE,
     })
-    const nextDialogueIds = [...dialogueIds, ...selectedDialogueIds]
 
-    return maxLatestDialogueIds === undefined
-      ? nextDialogueIds
-      : nextDialogueIds.slice(-maxLatestDialogueIds)
+    return appendDialogueIdsWithinLimit(dialogueIds, selectedDialogueIds, maxLatestDialogueIds)
   }, [])

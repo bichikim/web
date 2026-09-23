@@ -1,13 +1,16 @@
 /** @vitest-environment jsdom */
 
 import {
+  candidate,
   getLatestProps,
   LanguageLearningEditorWithPreferences,
   renderGeneratedReview,
+  setWriterState,
 } from './editor.setup'
-import {render, screen} from '@solidjs/testing-library'
+import {render, renderHook, screen} from '@solidjs/testing-library'
 import {type ComponentProps, createSignal, onMount} from 'solid-js'
 import {expect, it, vi} from 'vitest'
+import {PreferenceProvider} from '../../../hooks/use-preference'
 import {
   getUnmemorizedLanguageLearningWordValues,
   useLanguageLearningWords,
@@ -15,6 +18,7 @@ import {
 import {LanguageLearningSettings} from '../Settings'
 import {LanguageLearningWordSourceControl} from '../WordSource'
 import {LanguageLearningReview} from '../Review'
+import {useLanguageLearningEditorState} from '../use-editor-state'
 
 it('should clear generated review state when changing the learning language', async () => {
   const view = await renderGeneratedReview()
@@ -31,6 +35,36 @@ it('should clear generated review state when changing the learning language', as
   expect(reviewProps.candidates).toEqual([])
   expect(screen.queryByRole('button', {name: 'save'})).toBeNull()
   view.unmount()
+})
+
+it('should cancel generation and clear generated state when changing the word source', () => {
+  const view = renderHook(() => useLanguageLearningEditorState(), {wrapper: PreferenceProvider})
+  view.result.setSentences(['A useful sentence.'])
+  view.result.setCandidates([candidate()])
+
+  view.result.handleWordSourceChange('saved')
+
+  expect(view.result.writer.release).toHaveBeenCalledOnce()
+  expect(view.result.sentences()).toEqual([])
+  expect(view.result.candidates()).toEqual([])
+  expect(URL.revokeObjectURL).toHaveBeenCalledWith('blob:generated')
+  view.cleanup()
+})
+
+it('should keep the editor busy while the writer is generating after changing the word source', () => {
+  render(() => <LanguageLearningEditorWithPreferences />)
+  setWriterState({status: 'generating'})
+
+  getLatestProps<ComponentProps<typeof LanguageLearningWordSourceControl>>(
+    vi.mocked(LanguageLearningWordSourceControl),
+  ).onSourceChange('saved')
+
+  expect(screen.getByRole('button', {name: 'generate'})).toBeDisabled()
+  expect(
+    getLatestProps<ComponentProps<typeof LanguageLearningWordSourceControl>>(
+      vi.mocked(LanguageLearningWordSourceControl),
+    ).disabled,
+  ).toBe(true)
 })
 
 it('should change source and language while keeping saved words available only when eligible', () => {

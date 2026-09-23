@@ -17,9 +17,9 @@ describe('timeline keyframe selection', () => {
       physics: {
         pendulums: [
           {
+            damping: 1.2,
             gravity: 9.8,
             id: 'hair',
-            damping: 1.2,
             inputParameterId: 'angle-x',
             inputScale: 1,
             length: 1,

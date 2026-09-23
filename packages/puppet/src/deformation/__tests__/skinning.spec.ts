@@ -18,14 +18,14 @@ const part: PuppetScenePartNode = {
   visible: true,
 }
 const rotation = (id: string, x: number): PuppetSceneDeformerNode => ({
-  bounds: {width: 100, height: 100, x: 0, y: 0},
   boneRestPoints: [x, 0, x + 50, 0],
-  deformerType: 'rotation',
+  bounds: {height: 100, width: 100, x: 0, y: 0},
   children: [],
-  id,
   columns: 1,
-  kind: 'deformer',
   controlPoints: [x, 0, x + 50, 0],
+  deformerType: 'rotation',
+  id,
+  kind: 'deformer',
   locked: false,
   name: id,
   rows: 1,
@@ -267,8 +267,8 @@ test('should blend a selected child without a selected parent but exclude discon
     children: [
       part,
       {
-        id: 'group',
         children: [child, remote],
+        id: 'group',
         kind: 'group' as const,
         locked: false,
         name: 'Group',

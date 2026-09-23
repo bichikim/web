@@ -1,12 +1,20 @@
 /** @vitest-environment jsdom */
 
 import {fireEvent, render, screen} from '@solidjs/testing-library'
-import {expect, it, vi} from 'vitest'
+import {afterEach, expect, it, vi} from 'vitest'
 
 import {PModal, type PModalProps} from 'src/components/p-modal/PModal'
+import {getLocale, overwriteGetLocale} from '@paraglide/runtime'
+
 import {PModelDownloadConsent} from '../PModelDownloadConsent'
 
 vi.mock('src/components/p-modal/PModal', () => ({PModal: vi.fn()}))
+
+const originalGetLocale = getLocale
+
+afterEach(() => {
+  overwriteGetLocale(originalGetLocale)
+})
 
 it('should explain download size and possible network charges before confirmation', () => {
   vi.mocked(PModal).mockImplementation((props: PModalProps) =>
@@ -47,4 +55,23 @@ it('should explain download size and possible network charges before confirmatio
 
   fireEvent.click(screen.getByRole('button', {name: '받고 시작'}))
   expect(onConfirm).toHaveBeenCalledTimes(1)
+})
+
+it('should localize model size in English even when the caller provides Korean copy', () => {
+  overwriteGetLocale(() => 'en')
+  vi.mocked(PModal).mockImplementation((props: PModalProps) =>
+    props.isOpen ? <div aria-label={props.title} role="dialog" /> : null,
+  )
+
+  render(() => (
+    <PModelDownloadConsent
+      actionLabel="Create dialogue"
+      downloadSize="약 3.7GB"
+      isOpen
+      onCancel={vi.fn()}
+      onConfirm={vi.fn()}
+    />
+  ))
+
+  expect(screen.getByRole('dialog', {name: 'Download the about 3.7GB model?'})).toBeInTheDocument()
 })

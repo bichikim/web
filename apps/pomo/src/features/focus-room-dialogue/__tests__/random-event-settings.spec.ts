@@ -155,13 +155,19 @@ describe('writeRandomEventSettings', () => {
     ).resolves.toBeUndefined()
   })
 
-  it('should retain a successful browser save when native storage is unavailable', async () => {
+  it('should report native storage failure after browser storage succeeds', async () => {
     Object.defineProperty(globalThis, 'ReactNativeWebView', {configurable: true, value: {}})
-    storageMocks.setItem.mockRejectedValue(new Error('Native storage unavailable'))
+    const nativeError = new Error('Native storage unavailable')
+    const settings = {maximumMinutes: 30, minimumMinutes: 15, version: 1} as const
+    storageMocks.setItem.mockRejectedValue(nativeError)
 
-    await expect(
-      writeRandomEventSettings({maximumMinutes: 30, minimumMinutes: 15, version: 1}),
-    ).resolves.toBeUndefined()
+    await expect(writeRandomEventSettings(settings)).rejects.toMatchObject({
+      cause: nativeError,
+      message: 'Failed to persist random event settings.',
+    })
+    expect(JSON.parse(localStorage.getItem('pomo:random-event-settings:v1') ?? '')).toEqual(
+      settings,
+    )
   })
 
   it('should preserve native write order during rapid settings changes', async () => {

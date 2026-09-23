@@ -1,3 +1,4 @@
+import {createCatalogRequestInit, hasUniqueIds} from 'src/features/catalog-policy'
 import * as m from '@paraglide/message'
 
 import {apiFetch, httpFetch} from '../../http-client'
@@ -22,8 +23,6 @@ interface PublishedAlbum {
 }
 
 const isString = (value: unknown): value is string => typeof value === 'string'
-
-const hasUniqueIds = (ids: readonly string[]) => new Set(ids).size === ids.length
 
 const isTrackListing = (value: unknown): value is PTrackListing => {
   if (typeof value !== 'object' || value === null) {
@@ -125,8 +124,8 @@ export const loadPublishedPAlbums = async (
         : `${albumsUrl}${albumsUrl.includes('?') ? '&' : '?'}locale=${encodeURIComponent(options.locale)}`
     const response =
       options.publishedAlbumsUrl === undefined
-        ? await apiFetch(localizedAlbumsUrl, createRequestInit(options.signal))
-        : await httpFetch(localizedAlbumsUrl, createRequestInit(options.signal))
+        ? await apiFetch(localizedAlbumsUrl, createCatalogRequestInit(options.signal))
+        : await httpFetch(localizedAlbumsUrl, createCatalogRequestInit(options.signal))
 
     if (!response.ok) {
       throw new Error(`Published focus-room albums request failed: ${response.status}`)

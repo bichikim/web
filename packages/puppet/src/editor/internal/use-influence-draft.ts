@@ -69,6 +69,16 @@ export const useInfluenceDraft = (props: UseInfluenceDraftProps) => {
       : undefined
   }
   return {
+    addPoint: (index: number) => {
+      const point = insertion(index)
+      const relation = relations()[index]
+      if (point !== undefined && relation !== undefined) {
+        replaceRelation(index, {
+          ...relation,
+          points: [...relation.points, point].sort((left, right) => left.value - right.value),
+        })
+      }
+    },
     addRelation: () => {
       const [source] = availableSources()
       if (source !== undefined) {
@@ -76,12 +86,7 @@ export const useInfluenceDraft = (props: UseInfluenceDraftProps) => {
       }
     },
     availableSources,
-    changeSource: (index: number, id: string) => {
-      const source = sources(index).find((item) => item.id === id)
-      if (source !== undefined) {
-        replaceRelation(index, createRelation(source))
-      }
-    },
+    canAddPoint: (index: number) => insertion(index) !== undefined,
     changePoint: (index: number, pointIndex: number, patch: Partial<PuppetInfluencePoint>) => {
       const relation = relations()[index]
       if (relation !== undefined) {
@@ -93,11 +98,17 @@ export const useInfluenceDraft = (props: UseInfluenceDraftProps) => {
         })
       }
     },
+    changeSource: (index: number, id: string) => {
+      const source = sources(index).find((item) => item.id === id)
+      if (source !== undefined) {
+        replaceRelation(index, createRelation(source))
+      }
+    },
     error: () =>
       isParameterInfluences(relations()) && hasValidInfluences(relations(), props.parameters)
         ? null
         : '입력값은 parameter 범위 안에서 작은 값부터 중복 없이 입력하세요.',
-    canAddPoint: (index: number) => insertion(index) !== undefined,
+    parameter,
     preset: (index: number, preset: InfluencePreset, maximum: number) => {
       const source = parameter(index)
       if (source !== undefined) {
@@ -120,17 +131,6 @@ export const useInfluenceDraft = (props: UseInfluenceDraftProps) => {
         })
       }
     },
-    addPoint: (index: number) => {
-      const point = insertion(index)
-      const relation = relations()[index]
-      if (point !== undefined && relation !== undefined) {
-        replaceRelation(index, {
-          ...relation,
-          points: [...relation.points, point].sort((left, right) => left.value - right.value),
-        })
-      }
-    },
-    parameter,
     relations,
     removePoint: (index: number, pointIndex: number) => {
       const relation = relations()[index]

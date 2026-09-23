@@ -8,6 +8,7 @@ import {
   DEFAULT_RANDOM_EVENT_SETTINGS,
   type RandomEventSettings as RandomEventSettingsValue,
 } from 'src/features/focus-room-dialogue'
+import {webLocalStorage} from 'src/utils/preference-storage/web-local-storage'
 import {RandomEventSettings} from '../RandomEventSettings'
 
 const settingsMocks = vi.hoisted(() => ({
@@ -26,6 +27,7 @@ vi.mock('src/features/focus-room-dialogue', async () => {
       ...actual.createRandomEventPreferenceOptions(options),
       storage: {
         read: () => settingsMocks.read(),
+        subscribe: webLocalStorage.subscribe,
         write: (_key: string, value: unknown) => settingsMocks.write(value),
       },
     }),
@@ -150,6 +152,92 @@ it('should restore the persisted interval after an automatic save failure', asyn
   expect(screen.getByRole('status').textContent).toBe('랜덤 이벤트 설정을 저장하지 못했어요.')
   expect(minimumInput).toHaveValue(DEFAULT_RANDOM_EVENT_SETTINGS.minimumMinutes)
   expect(consoleError).toHaveBeenCalledOnce()
+})
+
+it('should report a load failure after a successful edit when settings reload', async () => {
+  const consoleError = vi.spyOn(console, 'error').mockImplementation(() => undefined)
+  render(() => <RandomEventSettings />, {wrapper: PreferenceProvider})
+  await vi.advanceTimersByTimeAsync(0)
+
+  const minimumInput = screen.getByRole('spinbutton', {name: '랜덤 이벤트 최소 간격(분)'})
+  fireEvent.input(minimumInput, {target: {value: '12'}})
+  await vi.advanceTimersByTimeAsync(500)
+
+  expect(settingsMocks.write).toHaveBeenCalledOnce()
+  expect(minimumInput).toHaveValue(12)
+
+  const reloadFailure = new Error('Storage unavailable on reload')
+  settingsMocks.read.mockRejectedValueOnce(reloadFailure)
+  globalThis.dispatchEvent(
+    new StorageEvent('storage', {
+      key: 'pomo:random-event-settings:v1',
+      storageArea: globalThis.localStorage,
+    }),
+  )
+  await vi.advanceTimersByTimeAsync(0)
+
+  expect(screen.getByRole('status')).toHaveTextContent('랜덤 이벤트 설정을 불러오지 못했어요.')
+  expect(minimumInput).toHaveValue(12)
+  expect(consoleError).toHaveBeenCalledWith('Failed to load random event settings.', reloadFailure)
+})
+
+it('should keep a save failure classification while a later edit is pending', async () => {
+  const firstWrite = createDeferred<void>()
+  const consoleError = vi.spyOn(console, 'error').mockImplementation(() => undefined)
+  settingsMocks.write.mockReturnValueOnce(firstWrite.promise)
+  render(() => <RandomEventSettings />, {wrapper: PreferenceProvider})
+  await vi.advanceTimersByTimeAsync(0)
+
+  const minimumInput = screen.getByRole('spinbutton', {name: '랜덤 이벤트 최소 간격(분)'})
+  fireEvent.input(minimumInput, {target: {value: '12'}})
+  await vi.advanceTimersByTimeAsync(500)
+  fireEvent.input(minimumInput, {target: {value: '13'}})
+  firstWrite.resolve()
+  await vi.advanceTimersByTimeAsync(0)
+
+  const reloadFailure = new Error('Storage unavailable on reload')
+  settingsMocks.read.mockRejectedValueOnce(reloadFailure)
+  globalThis.dispatchEvent(
+    new StorageEvent('storage', {
+      key: 'pomo:random-event-settings:v1',
+      storageArea: globalThis.localStorage,
+    }),
+  )
+  await vi.advanceTimersByTimeAsync(0)
+
+  expect(screen.getByRole('status')).toHaveTextContent('랜덤 이벤트 설정을 저장하지 못했어요.')
+  expect(minimumInput).toHaveValue(DEFAULT_RANDOM_EVENT_SETTINGS.minimumMinutes)
+  expect(consoleError).toHaveBeenCalledWith('Failed to save random event settings.', reloadFailure)
+})
+
+it('should report a failure for a later write queued behind an earlier save', async () => {
+  const firstWrite = createDeferred<void>()
+  const secondWrite = createDeferred<void>()
+  const saveFailure = new Error('Storage unavailable on the later save')
+  const consoleError = vi.spyOn(console, 'error').mockImplementation(() => undefined)
+  settingsMocks.write
+    .mockReturnValueOnce(firstWrite.promise)
+    .mockReturnValueOnce(secondWrite.promise)
+  render(() => <RandomEventSettings />, {wrapper: PreferenceProvider})
+  await vi.advanceTimersByTimeAsync(0)
+
+  const minimumInput = screen.getByRole('spinbutton', {name: '랜덤 이벤트 최소 간격(분)'})
+  fireEvent.input(minimumInput, {target: {value: '12'}})
+  await vi.advanceTimersByTimeAsync(500)
+  fireEvent.input(minimumInput, {target: {value: '13'}})
+  await vi.advanceTimersByTimeAsync(500)
+
+  expect(settingsMocks.write).toHaveBeenCalledOnce()
+  firstWrite.resolve()
+  await vi.advanceTimersByTimeAsync(0)
+
+  expect(settingsMocks.write).toHaveBeenCalledTimes(2)
+  secondWrite.reject(saveFailure)
+  await vi.advanceTimersByTimeAsync(0)
+
+  expect(screen.getByRole('status')).toHaveTextContent('랜덤 이벤트 설정을 저장하지 못했어요.')
+  expect(minimumInput).toHaveValue(12)
+  expect(consoleError).toHaveBeenCalledWith('Failed to save random event settings.', saveFailure)
 })
 
 it('should report a loading failure after enabling interval inputs', async () => {

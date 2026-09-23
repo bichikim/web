@@ -118,7 +118,9 @@ export const useMemoCreator = (): MemoCreator => {
     })
 
     try {
-      await updateMemoryMemos((currentMemos) => [memo, ...currentMemos])
+      await updateMemoryMemos((currentMemos) =>
+        savedRevision === draftRevision ? [memo, ...currentMemos] : currentMemos,
+      )
       if (savedRevision !== draftRevision) {
         return
       }
@@ -131,9 +133,7 @@ export const useMemoCreator = (): MemoCreator => {
       setIsOpen(false)
     } catch (error: unknown) {
       console.error('Failed to save a memory memo.', error)
-      if (savedRevision === draftRevision) {
-        setMessage(m.memory_memo_save_failed())
-      }
+      setMessage(m.memory_memo_save_failed())
     }
   }
 

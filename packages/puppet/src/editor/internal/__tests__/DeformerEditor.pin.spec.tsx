@@ -109,8 +109,8 @@ test('should stop captured dragging when pointer capture is lost', () => {
     right: 960,
     toJSON: () => ({}),
     top: 0,
-    x: 0,
     width: 960,
+    x: 0,
     y: 0,
   })
   fireEvent(

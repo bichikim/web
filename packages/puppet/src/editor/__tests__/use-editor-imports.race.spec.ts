@@ -12,8 +12,8 @@ test('should supersede a pending open when reimport starts', async () => {
       document: history.document,
       onDocumentChange: history.setDocument,
       onNotice: vi.fn(),
-      readPsd: () => new Promise(() => {}),
       onReimportDocumentChange: history.setDocument,
+      readPsd: () => new Promise(() => {}),
     })
     let resolveText!: (value: string) => void
     const file = new File([], 'old.json')

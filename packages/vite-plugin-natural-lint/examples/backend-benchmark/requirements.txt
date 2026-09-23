@@ -1,0 +1,3 @@
+laya-coreml==0.1.0
+poorjev[local]==0.1.0
+von-sdk==1.0.1

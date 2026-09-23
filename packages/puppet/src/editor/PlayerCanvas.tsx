@@ -59,9 +59,8 @@ export const PlayerCanvas = (props: PlayerCanvasProps) => {
   })
 
   createEffect(() => {
-    const {motionId} = props
-    if (motionId !== undefined) {
-      player()?.setMotion(motionId)
+    if (props.motionId !== undefined) {
+      player()?.setMotion(props.motionId)
     }
   })
 

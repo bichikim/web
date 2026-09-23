@@ -5,7 +5,9 @@ import {loadConfigFromFile} from 'vite'
 import {afterEach, beforeEach, expect, it, vi} from 'vitest'
 
 const root = resolve('apps/pomo')
-const modelPaths = [
+const developmentAssetPaths = [
+  'assets/3d-world/forest.exr',
+  'assets/3d-world/hinata-model.glb',
   'assets/train-cabin/scene.glb',
   'assets/character-studio/haru.vrm',
   'assets/character-studio/vroid.glb',
@@ -23,7 +25,7 @@ afterEach(() => {
 })
 
 it.each(['web', 'apps-in-toss', 'desktop'])(
-  'should exclude development models from the %s production public directories',
+  'should exclude development assets from the %s production public directories',
   async (target) => {
     vi.stubEnv('POMO_BUILD_TARGET', target)
     const result = await loadConfigFromFile(
@@ -38,7 +40,7 @@ it.each(['web', 'apps-in-toss', 'desktop'])(
     ]
     expect(
       directories.flatMap((directory) =>
-        modelPaths.filter((model) => existsSync(resolve(directory, model))),
+        developmentAssetPaths.filter((asset) => existsSync(resolve(directory, asset))),
       ),
     ).toEqual([])
   },
@@ -161,7 +163,7 @@ it.each([
   ).rejects.toThrow(message)
 })
 
-it('should keep every development model available at its existing URL in development', async () => {
+it('should keep every development asset available at its existing URL in development', async () => {
   const result = await loadConfigFromFile(
     {command: 'serve', mode: 'development'},
     resolve(root, 'vite.config.ts'),
@@ -175,8 +177,8 @@ it('should keep every development model available at its existing URL in develop
   ]
   expect(result).not.toBeNull()
   expect(
-    modelPaths.every((model) =>
-      directories.some((directory) => existsSync(resolve(directory, model))),
+    developmentAssetPaths.every((asset) =>
+      directories.some((directory) => existsSync(resolve(directory, asset))),
     ),
   ).toBe(true)
 })

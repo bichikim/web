@@ -1,3 +1,4 @@
+import {createPresenceFlag} from '../../value-storage'
 import {type Accessor, createSignal} from 'solid-js'
 
 import type {EntryPlaybackController} from '../entry-playback-controller'
@@ -13,24 +14,7 @@ export interface EntryPlaybackSessionStorage {
   readonly setItem: (key: string, value: string) => void
 }
 
-const getStorage = (storage?: EntryPlaybackSessionStorage): EntryPlaybackSessionStorage =>
-  storage ?? globalThis.sessionStorage
-
-const readPlaybackSession = (storage?: EntryPlaybackSessionStorage): boolean => {
-  try {
-    return getStorage(storage).getItem(ENTRY_PLAYBACK_SESSION_KEY) !== null
-  } catch {
-    return false
-  }
-}
-
-const writePlaybackSession = (storage?: EntryPlaybackSessionStorage): void => {
-  try {
-    getStorage(storage).setItem(ENTRY_PLAYBACK_SESSION_KEY, 'true')
-  } catch {
-    // Storage restrictions must not prevent entry dialogue playback.
-  }
-}
+const failedSessionWrites = new WeakSet<EntryPlaybackSessionStorage>()
 
 export interface CreateEntryEventPlaybackOptions {
   readonly eventDialogueIds: Accessor<EventDialogueIds>
@@ -52,6 +36,29 @@ export interface EntryEventPlayback {
 export const createEntryEventPlayback = (
   options: CreateEntryEventPlaybackOptions,
 ): EntryEventPlayback => {
+  let resolvedSessionStorage: EntryPlaybackSessionStorage | undefined
+  const resolveSessionStorage = () => {
+    resolvedSessionStorage = undefined
+    const storage = options.sessionStorage ?? globalThis.sessionStorage
+    resolvedSessionStorage = storage
+    return storage
+  }
+  const sessionFlag = createPresenceFlag({
+    key: ENTRY_PLAYBACK_SESSION_KEY,
+    storage: resolveSessionStorage,
+  })
+  const readSessionFlag = () =>
+    sessionFlag.read() ||
+    (resolvedSessionStorage !== undefined && failedSessionWrites.has(resolvedSessionStorage))
+  const writeSessionFlag = () => {
+    const didWrite = sessionFlag.write()
+
+    if (didWrite || resolvedSessionStorage === undefined) {
+      return
+    }
+
+    failedSessionWrites.add(resolvedSessionStorage)
+  }
   const [hasEnteredFocusRoom, setHasEnteredFocusRoom] = createSignal(false)
   let hasStarted = false
   let hasTriggeredEvent = false
@@ -76,7 +83,7 @@ export const createEntryEventPlayback = (
       pendingEventExecution = eventExecution instanceof Promise ? eventExecution : undefined
     }
 
-    if (readPlaybackSession(options.sessionStorage)) {
+    if (readSessionFlag()) {
       return
     }
 
@@ -91,11 +98,7 @@ export const createEntryEventPlayback = (
 
     const startPlayback = () => {
       const currentRepository = options.getRepository()
-      if (
-        currentRepository === null ||
-        !options.isPlaybackEnabled() ||
-        readPlaybackSession(options.sessionStorage)
-      ) {
+      if (currentRepository === null || !options.isPlaybackEnabled() || readSessionFlag()) {
         isPlaybackPending = false
         return
       }
@@ -113,12 +116,26 @@ export const createEntryEventPlayback = (
           onSequenceStop: () => undefined,
         })
         .then((completion) => {
-          if (!hasPlayedDialogue || completion === 'failed' || completion === 'cancelled') {
+          if (!hasPlayedDialogue) {
             hasStarted = false
             return
           }
 
-          writePlaybackSession(options.sessionStorage)
+          switch (completion) {
+            case 'cancelled':
+            case 'failed':
+            case 'stopped':
+              hasStarted = false
+              return
+            case 'ended':
+            case 'missing':
+              writeSessionFlag()
+              return
+            default: {
+              const unhandledCompletion: never = completion
+              return unhandledCompletion
+            }
+          }
         })
         .catch((error: unknown) => {
           hasStarted = false

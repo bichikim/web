@@ -67,6 +67,7 @@ const feedItems = {
   bulkGet: vi.fn(),
   bulkPut: vi.fn(),
   delete: vi.fn(),
+  get: vi.fn(),
   put: vi.fn(),
   where: itemWhere,
 }
@@ -462,6 +463,60 @@ describe('feed dialogue repository reads and recovery', () => {
     expect(feedDialogueJobs.bulkPut).toHaveBeenCalledWith([
       {...failed, errorMessage: null, status: 'queued', updatedAt: UPDATED_AT},
     ])
+  })
+
+  it('should dismiss an existing feed item without deleting it', async () => {
+    const repository = createFeedDialogueRepository()
+    const item = createItem({message: null, status: 'ready'})
+    feedItems.get.mockResolvedValue(item)
+
+    await repository.dismissItem({
+      feedConnectionId: 'feed-1',
+      feedItemId: 'item-1',
+      message: '사용자가 피드 대화를 삭제했어요.',
+      updatedAt: UPDATED_AT,
+    })
+
+    expect(feedItems.put).toHaveBeenCalledWith({
+      ...item,
+      message: '사용자가 피드 대화를 삭제했어요.',
+      status: 'dismissed',
+      updatedAt: UPDATED_AT,
+    })
+  })
+
+  it('should create a dismissed feed item when cleanup has no stored item', async () => {
+    const repository = createFeedDialogueRepository()
+    feedItems.get.mockResolvedValue(undefined)
+
+    await repository.dismissItem({
+      fallback: {
+        itemTitle: '삭제된 피드',
+        publishedAt: '2026-08-14T00:00:00.000Z',
+        sourceTitle: '테스트 피드',
+        sourceUrl: 'https://example.com/deleted',
+      },
+      feedConnectionId: 'feed-1',
+      feedItemId: 'item-1',
+      message: '대화를 찾을 수 없어 피드 항목을 정리했어요.',
+      updatedAt: UPDATED_AT,
+    })
+
+    expect(feedItems.put).toHaveBeenCalledWith({
+      contentLength: 0,
+      discoveredAt: UPDATED_AT,
+      feedConnectionId: 'feed-1',
+      feedItemId: 'item-1',
+      id: getFeedItemRecordId('feed-1', 'item-1'),
+      itemTitle: '삭제된 피드',
+      message: '대화를 찾을 수 없어 피드 항목을 정리했어요.',
+      publishedAt: '2026-08-14T00:00:00.000Z',
+      sourceTitle: '테스트 피드',
+      sourceUrl: 'https://example.com/deleted',
+      status: 'dismissed',
+      updatedAt: UPDATED_AT,
+      version: 1,
+    })
   })
 
   it('should delete stored jobs and dismiss only their existing feed items', async () => {

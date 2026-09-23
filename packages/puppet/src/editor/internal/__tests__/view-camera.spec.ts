@@ -14,7 +14,7 @@ test('should map a panned and zoomed editing surface back to unchanged model coo
     getEditorPoint({
       bounds: {height: 900, left: -360, top: -210, width: 1200},
       clientPoint: {x: 140, y: 190},
-      viewBox: {width: 600, x: -100, height: 450, y: -75},
+      viewBox: {height: 450, width: 600, x: -100, y: -75},
     }),
   ).toEqual({x: 150, y: 125})
   expect(zoomViewCamera({x: 0, y: 0, zoom: 1}, 100, {x: 0, y: 0}).zoom).toBe(8)

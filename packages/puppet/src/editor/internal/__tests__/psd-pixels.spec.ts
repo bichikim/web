@@ -10,7 +10,7 @@ test('should apply mask coordinates and outside color without altering source pi
   const layer = {imageData, left: 10, top: 20}
   const mask = {
     defaultColor: 0,
-    imageData: {height: 1, width: 1, data: new Uint8ClampedArray([128, 128, 128, 255])},
+    imageData: {data: new Uint8ClampedArray([128, 128, 128, 255]), height: 1, width: 1},
     left: 11,
     top: 20,
   }

@@ -211,6 +211,25 @@ describe('createPSceneStyleRepository', () => {
     expect(firstStorage.writeWeb).toHaveBeenCalledWith('pomo:focus-room-scene-style:v1', 'scribble')
   })
 
+  it('should keep a newer write when a native read completes late', async () => {
+    const storage = createStorage()
+    const webValues = new Map<string, unknown>()
+    const nativeRead = Promise.withResolvers<unknown>()
+    storage.readToss.mockReturnValue(nativeRead.promise)
+    storage.readWeb.mockImplementation((key) => webValues.get(key) ?? null)
+    storage.writeWeb.mockImplementation((key, value) => {
+      webValues.set(key, value)
+    })
+    const repository = createPSceneStyleRepository(storage)
+
+    const pendingRead = repository.read()
+    await repository.write('scribble')
+    nativeRead.resolve('original')
+
+    await expect(pendingRead).resolves.toBe('scribble')
+    expect(webValues.get('pomo:focus-room-scene-style:v1')).toBe('scribble')
+  })
+
   it('should complete writes independently while another repository has a pending write', async () => {
     const firstStorage = createStorage()
     const secondStorage = createStorage()

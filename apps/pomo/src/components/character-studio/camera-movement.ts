@@ -1,5 +1,6 @@
 import type {ArcRotateCamera} from '@babylonjs/core/Cameras/arcRotateCamera'
 import {Vector3} from '@babylonjs/core/Maths/math.vector'
+import {clamp} from 'es-toolkit/math'
 
 const MOVEMENT = {maximumDelta: 0.05, speed: 0.8}
 const KEYS = new Set(['KeyW', 'KeyA', 'KeyS', 'KeyD'])
@@ -29,7 +30,7 @@ export const createCameraMovement = () => {
         .scale(forwardAmount)
         .add(right.scale(rightAmount))
         .normalize()
-        .scaleInPlace(MOVEMENT.speed * Math.min(Math.max(delta, 0), MOVEMENT.maximumDelta))
+        .scaleInPlace(MOVEMENT.speed * clamp(delta, 0, MOVEMENT.maximumDelta))
       const position = camera.position.add(offset)
       camera.setTarget(camera.target.add(offset))
       camera.setPosition(position)

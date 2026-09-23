@@ -60,6 +60,7 @@ export const useLanguageLearningEditorState = () => {
   const writer = useDialogueWriter({modelId: TEXT_MODEL_ID, outputLanguage: language})
   const isBusy = () =>
     isLanguageLearningEditorBusy(phase(), regeneratingCandidateId()) ||
+    writer.isBusy() ||
     downloadContinuationActive() ||
     textModelCheckActive() ||
     modelDownload.state().status === 'loading'
@@ -92,6 +93,9 @@ export const useLanguageLearningEditorState = () => {
     setCandidates([])
   }
   const handleWordSourceChange = (nextSource: LanguageLearningWordSource) => {
+    writer.release()
+    clearCandidates()
+    setSentences([])
     setStoredWordSource(nextSource)
     setTags([])
     setTagInput('')

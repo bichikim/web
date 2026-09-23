@@ -1,9 +1,17 @@
 /** @vitest-environment jsdom */
 
 import {render, screen} from '@solidjs/testing-library'
-import {expect, it} from 'vitest'
+import {afterEach, expect, it} from 'vitest'
+
+import {getLocale, overwriteGetLocale} from '@paraglide/runtime'
 
 import {PServiceTerms} from '../PServiceTerms'
+
+const originalGetLocale = getLocale
+
+afterEach(() => {
+  overwriteGetLocale(originalGetLocale)
+})
 
 it('should share the core terms on the web page', () => {
   render(() => <PServiceTerms platform="web" />)
@@ -61,4 +69,16 @@ it('should default policy navigation to the web platform', () => {
     'href',
     '/web/privacy',
   )
+})
+
+it('should render the web terms in English', () => {
+  overwriteGetLocale(() => 'en')
+  render(() => <PServiceTerms platform="web" />)
+
+  expect(screen.getByRole('heading', {name: 'Pomofi terms of service'})).toBeInTheDocument()
+  expect(screen.getByRole('heading', {name: 'Article 7. AI voice features'})).toBeInTheDocument()
+  expect(
+    screen.getByText(/The web service is available only to people aged 14 or older/u),
+  ).toBeInTheDocument()
+  expect(screen.queryByText(/[가-힣]/u)).toBeNull()
 })

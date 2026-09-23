@@ -4,18 +4,18 @@ const JOINT_LENGTH = 50
 export const createSkinDocument = () => {
   const document = createDemoDocument()
   const rotation = (id: string, x: number): PuppetSceneDeformerNode => ({
+    boneRestPoints: [x, 0, x + JOINT_LENGTH, 0],
+    bounds: {height: 100, width: 100, x: 0, y: 0},
+    children: [],
+    columns: 1,
+    controlPoints: [x, 0, x + JOINT_LENGTH, 0],
     deformerType: 'rotation',
     id,
     kind: 'deformer',
     locked: false,
-    bounds: {width: 100, x: 0, height: 100, y: 0},
     name: id,
-    boneRestPoints: [x, 0, x + JOINT_LENGTH, 0],
-    children: [],
-    visible: true,
-    columns: 1,
-    controlPoints: [x, 0, x + JOINT_LENGTH, 0],
     rows: 1,
+    visible: true,
   })
   const roots = [
     ...getDocumentScene(document).roots,

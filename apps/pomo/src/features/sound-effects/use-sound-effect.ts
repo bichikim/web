@@ -1,3 +1,4 @@
+import {clampUnit} from 'src/utils/clamp-unit'
 import {type Accessor, createSignal, onCleanup, onMount} from 'solid-js'
 
 import {createLoopPlayer, type LoopPlayback} from '../loop-player'
@@ -23,7 +24,7 @@ const toError = (cause: unknown): Error =>
   cause instanceof Error ? cause : new Error('효과음을 재생하지 못했어요.', {cause})
 
 const normalizeVolume = (volume: number): number =>
-  Math.min(1, Math.max(0, Math.round(volume * PERCENT_SCALE) / PERCENT_SCALE))
+  clampUnit(Math.round(volume * PERCENT_SCALE) / PERCENT_SCALE)
 
 const parseStoredVolume = (value: unknown): number | null => {
   if (typeof value !== 'number' || !Number.isFinite(value) || value < 0 || value > 1) {

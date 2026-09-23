@@ -25,9 +25,9 @@ test('should hide output-only bindings and retain the hidden baseline when expan
     physics: {
       pendulums: [
         {
+          damping: 1.2,
           gravity: 9.8,
           id: 'hair',
-          damping: 1.2,
           inputParameterId: 'angle-x',
           inputScale: 1,
           length: 1,
@@ -58,9 +58,9 @@ test('should hide both output axes in a chained physics-only binding', () => {
     physics: {
       pendulums: [
         {
+          damping: 1.2,
           gravity: 9.8,
           id: 'first',
-          damping: 1.2,
           inputParameterId: 'driver',
           inputScale: 1,
           length: 1,
@@ -68,9 +68,9 @@ test('should hide both output axes in a chained physics-only binding', () => {
           outputScale: 1,
         },
         {
+          damping: 1.2,
           gravity: 9.8,
           id: 'second',
-          damping: 1.2,
           inputParameterId: 'angle-x',
           inputScale: 1,
           length: 1,

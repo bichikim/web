@@ -101,6 +101,38 @@ it('should retry global playback on the first user interaction', async () => {
   result.unmount()
 })
 
+it.each(['keydown', 'pointerdown'] as const)(
+  'should preserve an early %s until playback is registered',
+  async (eventType) => {
+    const playback = createPlayback()
+    const catalog = Promise.withResolvers<ReadonlyArray<typeof EFFECT>>()
+    mocks.loadSoundEffects.mockReturnValue(catalog.promise)
+    mocks.useSoundEffectPlayback.mockReturnValue(playback)
+    let observedController: ReturnType<typeof useSoundEffects> | undefined
+
+    const Consumer = () => {
+      observedController = useSoundEffects()
+      return null
+    }
+
+    const result = render(() => (
+      <SoundEffectsProvider>
+        <Consumer />
+      </SoundEffectsProvider>
+    ))
+
+    document.dispatchEvent(new Event(eventType))
+
+    expect(playback.activate).not.toHaveBeenCalled()
+    catalog.resolve([EFFECT])
+
+    await waitFor(() => expect(observedController?.getPlayback(EFFECT.id)).toBe(playback))
+
+    expect(playback.activate).toHaveBeenCalledOnce()
+    result.unmount()
+  },
+)
+
 it('should expose a global playback activation command', async () => {
   const playback = createPlayback()
   localStorage.setItem(STOP_STORAGE_KEY, 'true')

@@ -107,6 +107,25 @@ describe('useCharacterRenderer', () => {
     expect(runtime.revokeObjectUrl).toHaveBeenCalledTimes(2)
   })
 
+  it('should keep the current model URL when creating its replacement fails', () => {
+    const runtime = createRuntime()
+    runtime.createObjectUrl.mockReturnValueOnce('blob:first').mockImplementationOnce(() => {
+      throw new Error('creation failed')
+    })
+    const renderer = createRendererRoot(runtime)
+    const firstFile = new File(['first'], 'first.glb')
+
+    renderer.controller.loadFile(firstFile)
+    expect(() => renderer.controller.loadFile(new File(['second'], 'second.glb'))).toThrow(
+      'creation failed',
+    )
+
+    expect(renderer.controller.modelUrl()).toBe('blob:first')
+    expect(runtime.revokeObjectUrl).not.toHaveBeenCalled()
+    renderer.dispose()
+    expect(runtime.revokeObjectUrl).toHaveBeenCalledExactlyOnceWith('blob:first')
+  })
+
   it('should normalize external URLs and restore the default model', () => {
     const renderer = createRendererRoot(createRuntime())
 

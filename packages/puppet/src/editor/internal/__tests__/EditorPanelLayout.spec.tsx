@@ -218,28 +218,28 @@ test('should clamp valid persisted sizes and replace malformed preferences with 
 
 test.each([
   {
+    axis: 'clientX',
+    direction: 1,
     initial: 300,
     label: '왼쪽 패널 너비 조절',
-    direction: 1,
-    position: 'left',
-    axis: 'clientX',
     minimum: 220,
+    position: 'left',
   },
   {
+    axis: 'clientX',
+    direction: -1,
     initial: 260,
     label: '오른쪽 패널 너비 조절',
-    direction: -1,
-    position: 'right',
-    axis: 'clientX',
     minimum: 220,
+    position: 'right',
   },
   {
+    axis: 'clientY',
+    direction: -1,
     initial: 260,
     label: '아래 프레임 높이 조절',
-    direction: -1,
-    position: 'bottom',
-    axis: 'clientY',
     minimum: 180,
+    position: 'bottom',
   },
 ])('should close $position only at half its minimum size on release', (panel) => {
   const view = render(() => <EditorPanelLayout />)

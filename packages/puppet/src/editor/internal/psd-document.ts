@@ -112,12 +112,12 @@ const convertPart = (options: PartOptions): PuppetPart | undefined => {
       renderWhenUsedAsMask: true,
     },
     psdSource: {
+      height: pixels.height,
       layerId: layer.id,
       path: options.path,
+      width: pixels.width,
       x: layer.left ?? 0,
       y: layer.top ?? 0,
-      width: pixels.width,
-      height: pixels.height,
     },
     texture: {
       height: pixels.height,
@@ -169,8 +169,8 @@ const convertLayers = (
     warnLayer(layer, context.warnings)
     if (layer.children === undefined) {
       const part = convertPart({
-        context,
         clippingBase: appliedMask,
+        context,
         id,
         layer,
         masks,
@@ -194,8 +194,8 @@ const convertLayers = (
       const children = convertLayers(layer.children, context, {
         clippingBase: appliedMask,
         masks,
-        path: [...(parent.path ?? []), name],
         opacity,
+        path: [...(parent.path ?? []), name],
       })
       nodes.push({
         ...base,

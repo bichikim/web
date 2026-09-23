@@ -1,8 +1,7 @@
 import type {APIEvent} from '@solidjs/start/server'
 import {z} from 'zod'
 
-import {isUserRequestResolutionError} from 'src/server/auth/user-request-resolution-error'
-import {resolveUserRequest} from 'src/server/auth/resolve-user-request'
+import {resolveUserRequestOrUnavailable} from 'src/server/auth/resolve-user-request-or-unavailable'
 import {noStoreJson} from 'src/server/http/response'
 import {voteFeatureRequest} from 'src/server/repositories/feature-requests'
 
@@ -10,7 +9,6 @@ const HTTP_BAD_REQUEST = 400
 const HTTP_CONFLICT = 409
 const HTTP_INTERNAL_SERVER_ERROR = 500
 const HTTP_NOT_FOUND = 404
-const HTTP_SERVICE_UNAVAILABLE = 503
 const HTTP_UNAUTHORIZED = 401
 const requestIdSchema = z.string().uuid()
 
@@ -21,20 +19,14 @@ export const POST = async (event: APIEvent): Promise<Response> => {
     return noStoreJson({error: 'invalid_request'}, {status: HTTP_BAD_REQUEST})
   }
 
-  let identity: Awaited<ReturnType<typeof resolveUserRequest>>
-  try {
-    identity = await resolveUserRequest(event.request)
-  } catch (error: unknown) {
-    if (!isUserRequestResolutionError(error)) {
-      throw error
-    }
-
-    console.error('Failed to resolve feature request voter', error.cause)
-    return noStoreJson(
-      {error: 'feature_request_unavailable'},
-      {cookies: error.cookies, status: HTTP_SERVICE_UNAVAILABLE},
-    )
+  const resolved = await resolveUserRequestOrUnavailable(event.request, {
+    logMessage: 'Failed to resolve feature request voter',
+    unavailableError: 'feature_request_unavailable',
+  })
+  if (resolved.kind === 'unavailable') {
+    return resolved.response
   }
+  const {identity} = resolved
 
   if (identity.userId === null) {
     return noStoreJson(
