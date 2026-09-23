@@ -48,6 +48,25 @@ describe('createEventActionRunner', () => {
     runner.dispose()
   })
 
+  it('should retain long-break-end actions after an active executor is unregistered', async () => {
+    const actionIds: EventActionIds = {'long-break-end': ['music-stop']}
+    const [getActionIds] = createSignal(actionIds)
+    const runner = createEventActionRunner(getActionIds)
+    const firstExecutor = vi.fn()
+    const unregister = runner.register(firstExecutor)
+    unregister()
+
+    const pendingPlayback = runner.run(['long-break-end'])
+    expect(pendingPlayback).toBeDefined()
+
+    const secondExecutor = vi.fn()
+    runner.register(secondExecutor)
+    await pendingPlayback
+
+    expect(secondExecutor).toHaveBeenCalledExactlyOnceWith('music-stop')
+    runner.dispose()
+  })
+
   it('should retain actions until an active executor is registered', async () => {
     const actionIds: EventActionIds = {'focus-start': ['music-start']}
     const [getActionIds] = createSignal(actionIds)

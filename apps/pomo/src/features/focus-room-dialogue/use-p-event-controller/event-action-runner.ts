@@ -111,6 +111,7 @@ export const createEventActionRunner = (
           eventId === DELAYED_END_EVENT ||
           eventId === FOCUS_ROOM_ENTRY_EVENT ||
           eventId === 'break-end' ||
+          eventId === 'long-break-end' ||
           eventId === 'focus-end'))
 
     if (isHandledByHandler) {
