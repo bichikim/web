@@ -59,7 +59,6 @@ export const CLASSES = {
     '[&:has(.pomo-media-messages:not(:empty)):has(.pomo-dialogue-composer:not([data-expanded]))_.pomo-media-messages]:w-[min(36rem,_calc(100%_-_4rem))]',
     '[&[data-dialogue-active]:not([data-player-expanded])_.pomo-player-stage]:w-[var(--pomo-player-compact-width)]',
     '[&[data-dialogue-active]:not([data-player-expanded])_[data-player-summary]]:justify-center',
-    '[&[data-dialogue-active]:not([data-player-expanded])_[data-player-play-summary-frame]]:hidden',
     '[&[data-dialogue-active]:not([data-player-expanded])_[data-pomo-player-title]]:hidden',
     '[&[data-dialogue-active]:not([data-player-expanded])_[data-player-utility=album]]:hidden',
     '[&[data-player-expanded]_.pomo-player-stage]:[container-type:size]',

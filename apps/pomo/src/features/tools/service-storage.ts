@@ -73,7 +73,11 @@ export const createServiceSettingsStorage = (
       return webLegacy
     }
     const nativeStart = await storage.readToss(LEGACY_KEY, parseStart)
-    return {...DEFAULT_SERVICE_SETTINGS, start: nativeStart ?? ''}
+    const nativeLegacySettings = {...DEFAULT_SERVICE_SETTINGS, start: nativeStart ?? ''}
+    if (nativeStart !== null) {
+      storage.writeWeb(STORAGE_KEY, nativeLegacySettings)
+    }
+    return nativeLegacySettings
   }
 
   const write = async (value: ServiceSettings): Promise<void> => {

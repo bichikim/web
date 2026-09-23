@@ -45,6 +45,46 @@ export interface PlaybackStorageAdapter {
   readonly writeToss: (state: StoredPlaybackState) => Promise<void>
 }
 
+interface PlaybackNativeWriteRequest {
+  readonly state: StoredPlaybackState
+  readonly write: (state: StoredPlaybackState) => Promise<void>
+}
+
+let activeNativeWriteCount = 0
+let latestNativeWrite: PlaybackNativeWriteRequest | null = null
+
+const writeNativePlayback = async (
+  storage: PlaybackStorageAdapter,
+  state: StoredPlaybackState,
+): Promise<void> => {
+  const request = {state, write: storage.writeToss} satisfies PlaybackNativeWriteRequest
+  const currentLatestWrite = latestNativeWrite
+  if (currentLatestWrite === null || state.savedAt >= currentLatestWrite.state.savedAt) {
+    latestNativeWrite = request
+  }
+  activeNativeWriteCount += 1
+
+  try {
+    await request.write(request.state)
+    let completedRequest = request
+    while (latestNativeWrite !== completedRequest) {
+      const latestRequest = latestNativeWrite
+      if (latestRequest === null) {
+        return
+      }
+      // Reconcile again after each write because a newer instance may submit while it is pending.
+      // eslint-disable-next-line no-await-in-loop
+      await latestRequest.write(latestRequest.state)
+      completedRequest = latestRequest
+    }
+  } finally {
+    activeNativeWriteCount -= 1
+    if (activeNativeWriteCount === 0) {
+      latestNativeWrite = null
+    }
+  }
+}
+
 const runtimeStorage = {
   readToss: () => readTossStorageJson(PLAYBACK_STORAGE_KEY, parseStoredPlayback),
   readWeb: () => readWebStorageJson(PLAYBACK_STORAGE_KEY, parseStoredPlayback),
@@ -76,7 +116,7 @@ export interface PPlaybackStorage {
 
 const systemClock: PlaybackClock = {now: Date.now}
 
-/** Creates playback storage with its own coordination state and the supplied clock. */
+/** Creates playback storage with the supplied clock and storage dependencies. */
 export const createPPlaybackStorage = (
   clock: PlaybackClock = systemClock,
   storage: PlaybackStorageAdapter = runtimeStorage,
@@ -84,7 +124,7 @@ export const createPPlaybackStorage = (
 ): PPlaybackStorage => {
   const writeLatestToss = createLatestAsyncTask(async (state: StoredPlaybackState) => {
     try {
-      await storage.writeToss(state)
+      await writeNativePlayback(storage, state)
     } catch (error: unknown) {
       reportError(error)
     }
