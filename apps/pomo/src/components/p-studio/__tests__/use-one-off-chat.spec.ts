@@ -95,6 +95,8 @@ const createServerJob = (executionMode: AiTextExecutionMode = 'local') => {
 
 beforeEach(() => {
   vi.clearAllMocks()
+  vi.mocked(download.startTextModel).mockReset()
+  vi.mocked(download.startTextModel).mockResolvedValue({status: 'complete'})
   vi.mocked(useModelDownload).mockReturnValue(download as never)
   vi.mocked(useAiTextJob).mockReturnValue(createServerJob())
 })
@@ -166,6 +168,42 @@ describe('useOneOffChat', () => {
 
     setState({status: 'ready'})
     expect(chat.send).toHaveBeenCalledOnce()
+    cleanup()
+  })
+
+  it('should send a pending question after download when the composer is hidden and reshown', async () => {
+    const [isEnabled, setIsEnabled] = createSignal(true)
+    const {chat, setState} = createChat()
+    let completeDownload: (result: ModelDownloadResult) => void = () => undefined
+    const downloadResult = new Promise<ModelDownloadResult>((resolve) => {
+      completeDownload = resolve
+    })
+    vi.mocked(useChat).mockReturnValue(chat)
+    vi.mocked(isTextModelDownloaded).mockResolvedValue(false)
+    vi.mocked(download.startTextModel).mockReturnValueOnce(downloadResult)
+    const {cleanup, result} = renderHook(() => useOneOffChat({isEnabled, onReply: vi.fn()}))
+    const question = '숨긴 뒤에도 보존할 질문'
+
+    result.setDraft(question)
+    await result.submit(question)
+    expect(result.downloadConsentOpen()).toBe(true)
+
+    setIsEnabled(false)
+    await vi.waitFor(() => {
+      expect(result.downloadConsentOpen()).toBe(true)
+    })
+
+    const pendingDownload = result.startDownload()
+    expect(download.startTextModel).toHaveBeenCalledWith('gemma-4-e2b')
+    completeDownload({status: 'complete'})
+    await pendingDownload
+    expect(chat.prepare).toHaveBeenCalledOnce()
+
+    setState({status: 'ready'})
+    expect(chat.send).not.toHaveBeenCalled()
+
+    setIsEnabled(true)
+    await vi.waitFor(() => expect(chat.send).toHaveBeenCalledWith({refineAnswer: true}))
     cleanup()
   })
 
