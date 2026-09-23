@@ -5,6 +5,7 @@ export const createConfig: (payload?: {
   entry?: Record<string, string>
   alias?: Record<string, string>
   target?: 'modules' | string
+  solid?: Partial<import('vite-plugin-solid').Options>
   plugins?: import('vite').Plugin[]
   rollupOutputPlugins?: import('rollup').OutputPluginOption[]
 }) => import('vite').UserConfigFnObject
