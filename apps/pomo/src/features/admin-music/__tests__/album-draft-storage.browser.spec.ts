@@ -148,6 +148,20 @@ it('should use session storage and initialize the browser cover database once', 
   expect(dexie.modify).toHaveBeenCalledWith({updatedAt: expect.any(Number)})
 })
 
+it('should preserve the session draft when deleting a stale cover id', async () => {
+  const activeDraft = {...DRAFT, coverDraftId: 'active-cover', hasCoverFile: true}
+  const cover = new File(['cover'], 'cover.webp', {type: 'image/webp'})
+  await writeAlbumDraftCover('active-cover', cover)
+  await writeAlbumDraftCover('stale-cover', cover)
+  expect(writeAlbumDraftData(activeDraft)).toEqual({success: true})
+
+  await expect(deleteAlbumDraft('stale-cover')).resolves.toEqual({success: true})
+
+  expect(readAlbumDraftDataOrNull()).toEqual(activeDraft)
+  await expect(readAlbumDraftCoverOrNull('active-cover')).resolves.not.toBeNull()
+  await expect(readAlbumDraftCoverOrNull('stale-cover')).resolves.toBeNull()
+})
+
 it('should delete expired browser covers while preserving an active cover', async () => {
   const cover = new File(['webp'], 'cover.webp', {type: 'image/webp'})
   await writeAlbumDraftCover('old', cover)
