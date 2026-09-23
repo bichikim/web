@@ -118,7 +118,9 @@ export const useMemoCreator = (): MemoCreator => {
     })
 
     try {
-      await updateMemoryMemos((currentMemos) => [memo, ...currentMemos])
+      await updateMemoryMemos((currentMemos) =>
+        savedRevision === draftRevision ? [memo, ...currentMemos] : currentMemos,
+      )
       if (savedRevision !== draftRevision) {
         return
       }
