@@ -38,6 +38,7 @@ export const resolveParaglideOutdir = (
 
 export const createPlugins = (options: CreatePluginsOptions): Array<PluginOption> => {
   const isStaticBuild = options.buildTarget !== 'web'
+  const isDesktopDevelopment = options.command === 'serve' && options.runtimeTarget === 'desktop'
   const isAppsInToss = options.runtimeTarget === 'apps-in-toss'
   const isMobileRuntime = options.runtimeTarget === 'android' || options.runtimeTarget === 'ios'
   const localeConfig = isAppsInToss ? PARAGLIDE_CONFIG.appsInToss : PARAGLIDE_CONFIG.web
@@ -74,7 +75,7 @@ export const createPlugins = (options: CreatePluginsOptions): Array<PluginOption
     }),
     createDevFeedPlugin(),
     createScribbleIconRestartPlugin({iconSetPath: options.scribbleIconPath}),
-    nitro(),
+    ...(isDesktopDevelopment ? [] : [nitro()]),
     ...(isStaticBuild && options.command === 'build' ? [staticNitroEntryPlugin] : []),
   ]
 }

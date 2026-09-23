@@ -36,6 +36,7 @@ beforeEach(setupStudio)
 let restoreDocumentHidden: (() => void) | undefined
 
 afterEach(() => {
+  vi.unstubAllEnvs()
   vi.useRealTimers()
   restoreDocumentHidden?.()
   restoreDocumentHidden = undefined
@@ -323,6 +324,16 @@ describe('PStudio', () => {
       'data-weather',
       'rain',
     )
+  })
+
+  it('should render the character scene for a persisted website mode in the web app', () => {
+    vi.stubEnv('VITE_POMO_IS_DESKTOP', '')
+    configureStudio({backgroundMode: 'website', entrySession: true})
+
+    renderStudio()
+
+    expect(screen.getByRole('img', {name: 'day-reading-focused'})).toBeInTheDocument()
+    expect(screen.queryByText('frame player')).not.toBeInTheDocument()
   })
 })
 

@@ -12,10 +12,14 @@ import {usePScenePreferences} from '../../features/focus-room-scene-preferences'
 import {useScreenSaver} from '../../features/screen-saver'
 import {useWeather} from '../../features/weather'
 
+export interface UseDesktopSettingsStateProps {
+  readonly isHandoffOwner?: boolean
+}
+
 /** Owns the scene-setting state shared by the desktop toolbar and its settings window. */
-export const useDesktopSettingsState = () => {
+export const useDesktopSettingsState = (props: UseDesktopSettingsStateProps = {}) => {
   const background = useBackground()
-  const desktopMode = useDesktopMode()
+  const desktopMode = useDesktopMode({isHandoffOwner: props.isHandoffOwner})
   const scenePreferences = usePScenePreferences()
   const sceneStyle = usePSceneStyle()
   const screenSaver = useScreenSaver()

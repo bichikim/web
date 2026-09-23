@@ -1,18 +1,21 @@
 import {createSerialTaskQueue} from 'src/utils/create-serial-task-queue'
-import {type Accessor, createSignal, onCleanup, onMount} from 'solid-js'
+import {type Accessor, createSignal, onCleanup, onMount, type Setter} from 'solid-js'
 
 import {
   type DesktopMode,
   isDesktopMode,
   readCleanExit,
   readDesktopMode,
+  readDesktopModeOwnerStorage,
   writeCleanExit,
   writeDesktopMode,
+  writeDesktopModeOwnerStorage,
 } from './model'
 import {
   applyDesktopMode,
   finishDesktopModeTransition,
   prepareDesktopModeTransition,
+  shouldHandoffDesktopModeOwner,
 } from './runtime'
 import {getDesktopErrorMessage} from './error'
 
@@ -35,6 +38,14 @@ interface ModeFailedMessage {
   readonly message: string
   readonly requestId: string
   readonly type: 'mode-change-failed'
+}
+
+interface ModeOwnerReleasedMessage {
+  readonly type: 'mode-owner-released'
+}
+
+interface ModeOwnerReclaimedMessage {
+  readonly type: 'mode-owner-reclaimed'
 }
 
 interface PendingModeRequest {
@@ -61,11 +72,19 @@ const isModeFailedMessage = (value: unknown): value is ModeFailedMessage =>
   typeof value.requestId === 'string' &&
   typeof value.message === 'string'
 
+const isModeOwnerReleasedMessage = (value: unknown): value is ModeOwnerReleasedMessage =>
+  isRecord(value) && value.type === 'mode-owner-released'
+
+const isModeOwnerReclaimedMessage = (value: unknown): value is ModeOwnerReclaimedMessage =>
+  isRecord(value) && value.type === 'mode-owner-reclaimed'
+
 interface ModeChannelMessageContext {
   readonly channel: BroadcastChannel
   readonly getPendingRequest: () => PendingModeRequest | null
-  readonly isSurfaceOwner: boolean
+  readonly isSurfaceOwner: () => boolean
   readonly onModeChangeRequested: (mode: DesktopMode) => Promise<void>
+  readonly onModeOwnerReclaimed: () => void
+  readonly onModeOwnerReleased: () => void
   readonly onModeReceived: (mode: DesktopMode) => void
   readonly onRequestFailed: (message: string) => void
   readonly setPendingRequest: (request: PendingModeRequest | null) => void
@@ -80,7 +99,17 @@ const handleModeChannelMessage = (
     return
   }
 
-  if (context.isSurfaceOwner && isModeRequestMessage(event.data)) {
+  if (isModeOwnerReleasedMessage(event.data)) {
+    context.onModeOwnerReleased()
+    return
+  }
+
+  if (isModeOwnerReclaimedMessage(event.data)) {
+    context.onModeOwnerReclaimed()
+    return
+  }
+
+  if (context.isSurfaceOwner() && isModeRequestMessage(event.data)) {
     const request = event.data
     context
       .onModeChangeRequested(request.mode)
@@ -137,7 +166,277 @@ export interface DesktopModeController {
 }
 
 export interface UseDesktopModeProps {
+  /** Enables ownership handoff for a control surface that outlives the main background page. */
+  readonly isHandoffOwner?: boolean
   readonly isSurfaceOwner?: boolean
+}
+
+interface ModeControllerState {
+  readonly error: Accessor<string | null>
+  readonly handoffOwner: boolean
+  readonly isChanging: Accessor<boolean>
+  readonly mode: Accessor<DesktopMode>
+  readonly setError: Setter<string | null>
+  readonly setIsChanging: Setter<boolean>
+  readonly setMode: Setter<DesktopMode>
+  readonly surfaceOwner: boolean
+  channel: BroadcastChannel | null
+  isDisposed: boolean
+  isNativeListenerStarting: boolean
+  ownsModeTransitions: boolean
+  pendingRequest: PendingModeRequest | null
+  removeModeListener: (() => void) | null
+  requestMode: ((mode: DesktopMode) => Promise<void>) | null
+}
+
+const publishMode = (state: ModeControllerState, nextMode: DesktopMode) => {
+  writeDesktopMode(nextMode)
+  state.setMode(nextMode)
+  state.channel?.postMessage(nextMode)
+}
+
+const relinquishModeOwnership = (state: ModeControllerState) => {
+  state.ownsModeTransitions = false
+  state.removeModeListener?.()
+  state.removeModeListener = null
+}
+
+const startNativeModeListener = (state: ModeControllerState) => {
+  if (state.removeModeListener !== null || state.isNativeListenerStarting) {
+    return
+  }
+
+  state.isNativeListenerStarting = true
+  listenToNativeModeRequests((nextMode) => {
+    if (state.ownsModeTransitions) {
+      const request = state.requestMode?.(nextMode)
+      request?.catch(() => undefined)
+    }
+  })
+    .then((unlisten) => {
+      state.isNativeListenerStarting = false
+      if (state.isDisposed || !state.ownsModeTransitions) {
+        unlisten()
+      } else {
+        state.removeModeListener = unlisten
+      }
+    })
+    .catch((listenError: unknown) => {
+      state.isNativeListenerStarting = false
+      if (!state.isDisposed) {
+        state.setError(getDesktopErrorMessage(listenError))
+      }
+    })
+}
+
+const activateHandoffOwner = (state: ModeControllerState) => {
+  if (state.ownsModeTransitions || !state.handoffOwner) {
+    return
+  }
+
+  state.ownsModeTransitions = true
+  state.setMode(readDesktopMode())
+  startNativeModeListener(state)
+}
+
+const deactivateHandoffOwner = (state: ModeControllerState) => {
+  if (state.surfaceOwner || !state.handoffOwner) {
+    return
+  }
+
+  relinquishModeOwnership(state)
+}
+
+const prepareOwnerHandoff = async (
+  state: ModeControllerState,
+  nextMode: DesktopMode,
+): Promise<boolean> => {
+  if (!state.surfaceOwner || !(await shouldHandoffDesktopModeOwner(nextMode))) {
+    return false
+  }
+
+  relinquishModeOwnership(state)
+  writeDesktopModeOwnerStorage('released')
+  writeDesktopMode(nextMode)
+  state.channel?.postMessage({type: 'mode-owner-released'})
+  return true
+}
+
+const reconcileModeOwner = (
+  state: ModeControllerState,
+  usesWebsiteBackground: boolean,
+  releasedForTransition: boolean,
+): boolean => {
+  if (releasedForTransition && !usesWebsiteBackground) {
+    state.ownsModeTransitions = true
+    startNativeModeListener(state)
+    writeDesktopModeOwnerStorage('primary')
+    state.channel?.postMessage({type: 'mode-owner-reclaimed'})
+    return false
+  }
+
+  if (state.surfaceOwner && usesWebsiteBackground && !releasedForTransition) {
+    relinquishModeOwnership(state)
+    writeDesktopModeOwnerStorage('released')
+    state.channel?.postMessage({type: 'mode-owner-released'})
+    return true
+  }
+
+  if (
+    !releasedForTransition &&
+    (state.surfaceOwner || (state.handoffOwner && state.ownsModeTransitions))
+  ) {
+    writeDesktopModeOwnerStorage('primary')
+  }
+  return releasedForTransition
+}
+
+const restoreMode = async (state: ModeControllerState, previousMode: DesktopMode) => {
+  await applyDesktopMode(previousMode)
+  await prepareDesktopModeTransition(previousMode)
+  await finishDesktopModeTransition(previousMode)
+  if (state.mode() !== previousMode) {
+    publishMode(state, previousMode)
+  }
+}
+
+const applyModeChange = async (state: ModeControllerState, nextMode: DesktopMode) => {
+  if (nextMode === state.mode()) {
+    return
+  }
+
+  state.setIsChanging(true)
+  state.setError(null)
+  const previousMode = state.mode()
+  let releasedForTransition = false
+  let persistedLocalReturn = false
+  try {
+    releasedForTransition = await prepareOwnerHandoff(state, nextMode)
+    // Surface windows read the mode during their first mount, before the owner can broadcast it.
+    const restoresLocalBackground = nextMode === 'normal' || nextMode === 'widget'
+    if (
+      nextMode === 'desktop' ||
+      releasedForTransition ||
+      (state.handoffOwner && state.ownsModeTransitions && restoresLocalBackground)
+    ) {
+      writeDesktopMode(nextMode)
+    }
+    if (state.handoffOwner && state.ownsModeTransitions && restoresLocalBackground) {
+      persistedLocalReturn = true
+      writeCleanExit(true)
+    }
+    const usesWebsiteBackground = await applyDesktopMode(nextMode)
+    releasedForTransition = reconcileModeOwner(state, usesWebsiteBackground, releasedForTransition)
+    await prepareDesktopModeTransition(nextMode)
+    publishMode(state, nextMode)
+    await finishDesktopModeTransition(nextMode)
+  } catch (transitionError: unknown) {
+    let reportedError = transitionError
+    writeDesktopMode(previousMode)
+    if (persistedLocalReturn) {
+      writeCleanExit(false)
+    }
+    if (releasedForTransition) {
+      state.ownsModeTransitions = true
+      startNativeModeListener(state)
+      state.channel?.postMessage({type: 'mode-owner-reclaimed'})
+    }
+    if (state.surfaceOwner || (state.handoffOwner && state.ownsModeTransitions)) {
+      writeDesktopModeOwnerStorage('primary')
+    }
+
+    try {
+      await restoreMode(state, previousMode)
+    } catch (rollbackError: unknown) {
+      reportedError = new AggregateError(
+        [transitionError, rollbackError],
+        'Desktop mode transition and rollback failed',
+      )
+    }
+
+    state.setError(getDesktopErrorMessage(reportedError))
+    throw reportedError
+  } finally {
+    state.setIsChanging(false)
+  }
+}
+
+const requestOwnerMode = (state: ModeControllerState, nextMode: DesktopMode): Promise<void> => {
+  if (state.isChanging() || nextMode === state.mode()) {
+    return Promise.resolve()
+  }
+
+  const activeChannel = state.channel
+  /* v8 ignore next -- onMount initializes the channel before consumers can call the controller. */
+  if (activeChannel === null) {
+    return Promise.reject(new Error('Desktop mode owner channel is not available'))
+  }
+
+  state.setIsChanging(true)
+  state.setError(null)
+  const requestId = crypto.randomUUID()
+  return new Promise<void>((resolve, reject) => {
+    state.pendingRequest = {reject, requestId, resolve}
+    activeChannel.postMessage({mode: nextMode, requestId, type: 'mode-requested'})
+  }).finally(() => state.setIsChanging(false))
+}
+
+const mountModeController = (
+  state: ModeControllerState,
+  queueModeChange: (mode: DesktopMode) => Promise<void>,
+): void => {
+  if (!(import.meta.env.VITE_POMO_IS_DESKTOP === 'true')) {
+    return
+  }
+
+  const activeChannel = new BroadcastChannel(MODE_CHANNEL)
+  state.channel = activeChannel
+  activeChannel.addEventListener('message', (event: MessageEvent<unknown>) =>
+    handleModeChannelMessage(event, {
+      channel: activeChannel,
+      getPendingRequest: () => state.pendingRequest,
+      isSurfaceOwner: () => state.ownsModeTransitions,
+      onModeChangeRequested: queueModeChange,
+      onModeOwnerReclaimed: () => deactivateHandoffOwner(state),
+      onModeOwnerReleased: () => activateHandoffOwner(state),
+      onModeReceived: (nextMode) => {
+        state.setError(null)
+        state.setMode(nextMode)
+      },
+      onRequestFailed: (message) => state.setError(message),
+      setPendingRequest: (request) => {
+        state.pendingRequest = request
+      },
+    }),
+  )
+
+  if (state.surfaceOwner) {
+    const storedMode = readCleanExit() ? readDesktopMode() : 'normal'
+    writeDesktopModeOwnerStorage('primary')
+    activeChannel.postMessage({type: 'mode-owner-reclaimed'})
+    writeCleanExit(false)
+    const request = state.requestMode?.(storedMode)
+    request?.catch(() => undefined)
+    window.addEventListener('beforeunload', handleBeforeUnload)
+    startNativeModeListener(state)
+    onCleanup(() => window.removeEventListener('beforeunload', handleBeforeUnload))
+  } else if (state.handoffOwner) {
+    state.setMode(readDesktopMode())
+    if (readDesktopModeOwnerStorage() === 'released') {
+      activateHandoffOwner(state)
+    }
+  } else {
+    state.setMode(readDesktopMode())
+  }
+
+  onCleanup(() => {
+    state.isDisposed = true
+    state.pendingRequest?.reject(new Error('Desktop mode controller was disposed'))
+    state.pendingRequest = null
+    state.removeModeListener?.()
+    state.channel?.close()
+    state.channel = null
+  })
 }
 
 /** Owns desktop mode persistence, native transitions, and cross-window convergence. */
@@ -145,151 +444,37 @@ export const useDesktopMode = (props: UseDesktopModeProps = {}): DesktopModeCont
   const [mode, setMode] = createSignal<DesktopMode>('normal')
   const [isChanging, setIsChanging] = createSignal(false)
   const [error, setError] = createSignal<string | null>(null)
-  let channel: BroadcastChannel | null = null
-  let pendingRequest: PendingModeRequest | null = null
-  let removeModeListener: (() => void) | null = null
-  let isDisposed = false
   const surfaceOwner = props.isSurfaceOwner ?? false
-
-  const publishMode = (nextMode: DesktopMode) => {
-    writeDesktopMode(nextMode)
-    setMode(nextMode)
-    channel?.postMessage(nextMode)
+  const handoffOwner = props.isHandoffOwner ?? false
+  const state: ModeControllerState = {
+    channel: null,
+    error,
+    handoffOwner,
+    isChanging,
+    isDisposed: false,
+    isNativeListenerStarting: false,
+    mode,
+    ownsModeTransitions: surfaceOwner,
+    pendingRequest: null,
+    removeModeListener: null,
+    requestMode: null,
+    setError,
+    setIsChanging,
+    setMode,
+    surfaceOwner,
   }
-
-  const restoreMode = async (previousMode: DesktopMode) => {
-    await applyDesktopMode(previousMode)
-    await prepareDesktopModeTransition(previousMode)
-    await finishDesktopModeTransition(previousMode)
-    if (mode() !== previousMode) {
-      publishMode(previousMode)
-    }
-  }
-
-  const applyModeChange = async (nextMode: DesktopMode) => {
-    if (nextMode === mode()) {
-      return
-    }
-
-    setIsChanging(true)
-    setError(null)
-    const previousMode = mode()
-    try {
-      // Surface windows read the mode during their first mount, before the owner can broadcast it.
-      if (nextMode === 'desktop') {
-        writeDesktopMode(nextMode)
-      }
-      await applyDesktopMode(nextMode)
-      await prepareDesktopModeTransition(nextMode)
-      publishMode(nextMode)
-      await finishDesktopModeTransition(nextMode)
-    } catch (transitionError: unknown) {
-      let reportedError = transitionError
-      writeDesktopMode(previousMode)
-
-      try {
-        await restoreMode(previousMode)
-      } catch (rollbackError: unknown) {
-        reportedError = new AggregateError(
-          [transitionError, rollbackError],
-          'Desktop mode transition and rollback failed',
-        )
-      }
-
-      setError(getDesktopErrorMessage(reportedError))
-      throw reportedError
-    } finally {
-      setIsChanging(false)
-    }
-  }
-
-  const queueModeChange = createModeQueue(applyModeChange)
+  const queueModeChange = createModeQueue((nextMode) => applyModeChange(state, nextMode))
   const requestMode = (nextMode: DesktopMode) => queueModeChange(nextMode).catch(() => undefined)
-
-  const requestOwnerMode = (nextMode: DesktopMode): Promise<void> => {
-    if (isChanging() || nextMode === mode()) {
-      return Promise.resolve()
-    }
-
-    const activeChannel = channel
-    /* v8 ignore next -- onMount initializes the channel before consumers can call the controller. */
-    if (activeChannel === null) {
-      return Promise.reject(new Error('Desktop mode owner channel is not available'))
-    }
-
-    setIsChanging(true)
-    setError(null)
-    const requestId = crypto.randomUUID()
-    return new Promise<void>((resolve, reject) => {
-      pendingRequest = {reject, requestId, resolve}
-      activeChannel.postMessage({mode: nextMode, requestId, type: 'mode-requested'})
-    }).finally(() => setIsChanging(false))
-  }
-
+  state.requestMode = requestMode
   const onModeChange = (nextMode: DesktopMode): Promise<void> => {
     if (!(import.meta.env.VITE_POMO_IS_DESKTOP === 'true')) {
       return Promise.resolve()
     }
 
-    return surfaceOwner ? queueModeChange(nextMode) : requestOwnerMode(nextMode)
+    return state.ownsModeTransitions ? queueModeChange(nextMode) : requestOwnerMode(state, nextMode)
   }
 
-  onMount(() => {
-    if (!(import.meta.env.VITE_POMO_IS_DESKTOP === 'true')) {
-      return
-    }
-
-    const activeChannel = new BroadcastChannel(MODE_CHANNEL)
-    channel = activeChannel
-    activeChannel.addEventListener('message', (event: MessageEvent<unknown>) =>
-      handleModeChannelMessage(event, {
-        channel: activeChannel,
-        getPendingRequest: () => pendingRequest,
-        isSurfaceOwner: surfaceOwner,
-        onModeChangeRequested: queueModeChange,
-        onModeReceived: (nextMode) => {
-          setError(null)
-          setMode(nextMode)
-        },
-        onRequestFailed: (message) => setError(message),
-        setPendingRequest: (request) => {
-          pendingRequest = request
-        },
-      }),
-    )
-
-    if (surfaceOwner) {
-      const storedMode = readCleanExit() ? readDesktopMode() : 'normal'
-      writeCleanExit(false)
-      requestMode(storedMode)
-      window.addEventListener('beforeunload', handleBeforeUnload)
-      listenToNativeModeRequests(requestMode)
-        .then((unlisten) => {
-          if (isDisposed) {
-            unlisten()
-          } else {
-            removeModeListener = unlisten
-          }
-        })
-        .catch((listenError: unknown) => {
-          if (!isDisposed) {
-            setError(getDesktopErrorMessage(listenError))
-          }
-        })
-      onCleanup(() => window.removeEventListener('beforeunload', handleBeforeUnload))
-    } else {
-      setMode(readDesktopMode())
-    }
-
-    onCleanup(() => {
-      isDisposed = true
-      pendingRequest?.reject(new Error('Desktop mode controller was disposed'))
-      pendingRequest = null
-      removeModeListener?.()
-      channel?.close()
-      channel = null
-    })
-  })
+  onMount(() => mountModeController(state, queueModeChange))
 
   return {error, isChanging, mode, onModeChange}
 }

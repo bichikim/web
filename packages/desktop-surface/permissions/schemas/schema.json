@@ -307,6 +307,18 @@
           "markdownDescription": "Denies the close_control_surface command without any pre-configured scope."
         },
         {
+          "description": "Enables the forward_background_mouse_event command without any pre-configured scope.",
+          "type": "string",
+          "const": "allow-forward-background-mouse-event",
+          "markdownDescription": "Enables the forward_background_mouse_event command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the forward_background_mouse_event command without any pre-configured scope.",
+          "type": "string",
+          "const": "deny-forward-background-mouse-event",
+          "markdownDescription": "Denies the forward_background_mouse_event command without any pre-configured scope."
+        },
+        {
           "description": "Enables the get_background_interaction command without any pre-configured scope.",
           "type": "string",
           "const": "allow-get-background-interaction",
@@ -319,6 +331,18 @@
           "markdownDescription": "Denies the get_background_interaction command without any pre-configured scope."
         },
         {
+          "description": "Enables the navigate_background_surface command without any pre-configured scope.",
+          "type": "string",
+          "const": "allow-navigate-background-surface",
+          "markdownDescription": "Enables the navigate_background_surface command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the navigate_background_surface command without any pre-configured scope.",
+          "type": "string",
+          "const": "deny-navigate-background-surface",
+          "markdownDescription": "Denies the navigate_background_surface command without any pre-configured scope."
+        },
+        {
           "description": "Enables the open_control_surface command without any pre-configured scope.",
           "type": "string",
           "const": "allow-open-control-surface",
@@ -329,6 +353,18 @@
           "type": "string",
           "const": "deny-open-control-surface",
           "markdownDescription": "Denies the open_control_surface command without any pre-configured scope."
+        },
+        {
+          "description": "Enables the restore_background_content command without any pre-configured scope.",
+          "type": "string",
+          "const": "allow-restore-background-content",
+          "markdownDescription": "Enables the restore_background_content command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the restore_background_content command without any pre-configured scope.",
+          "type": "string",
+          "const": "deny-restore-background-content",
+          "markdownDescription": "Denies the restore_background_content command without any pre-configured scope."
         },
         {
           "description": "Enables the restore_surface command without any pre-configured scope.",
@@ -379,10 +415,10 @@
           "markdownDescription": "Denies the set_widget_surface command without any pre-configured scope."
         },
         {
-          "description": "Allows an application to manage its desktop background and control surfaces.\n#### This default permission set includes:\n\n- `allow-close-control-surface`\n- `allow-get-background-interaction`\n- `allow-open-control-surface`\n- `allow-restore-surface`\n- `allow-set-background-interaction`\n- `allow-set-background-surface`\n- `allow-set-widget-surface`",
+          "description": "Allows an application to manage its desktop background and control surfaces.\n#### This default permission set includes:\n\n- `allow-close-control-surface`\n- `allow-forward-background-mouse-event`\n- `allow-get-background-interaction`\n- `allow-navigate-background-surface`\n- `allow-open-control-surface`\n- `allow-restore-background-content`\n- `allow-restore-surface`\n- `allow-set-background-interaction`\n- `allow-set-background-surface`\n- `allow-set-widget-surface`",
           "type": "string",
           "const": "default",
-          "markdownDescription": "Allows an application to manage its desktop background and control surfaces.\n#### This default permission set includes:\n\n- `allow-close-control-surface`\n- `allow-get-background-interaction`\n- `allow-open-control-surface`\n- `allow-restore-surface`\n- `allow-set-background-interaction`\n- `allow-set-background-surface`\n- `allow-set-widget-surface`"
+          "markdownDescription": "Allows an application to manage its desktop background and control surfaces.\n#### This default permission set includes:\n\n- `allow-close-control-surface`\n- `allow-forward-background-mouse-event`\n- `allow-get-background-interaction`\n- `allow-navigate-background-surface`\n- `allow-open-control-surface`\n- `allow-restore-background-content`\n- `allow-restore-surface`\n- `allow-set-background-interaction`\n- `allow-set-background-surface`\n- `allow-set-widget-surface`"
         }
       ]
     }

@@ -3,9 +3,23 @@ import * as m from '@paraglide/message'
 import {useStudioTourHint} from './use-studio-tour-hint'
 import {useUiAutoHide} from 'src/features/ui-auto-hide'
 import {useStudioDesktopSceneSettings} from './use-studio-desktop-scene-settings'
-import {type BackgroundController, useBackground} from '../../features/background'
+import {
+  type BackgroundController,
+  type BackgroundPreferences,
+  useBackground,
+} from '../../features/background'
 import {Player as FramePlayer} from '../frame/Player'
-import {createMemo, createSignal, onCleanup, onMount, type Setter, Show} from 'solid-js'
+import {
+  createEffect,
+  createMemo,
+  createSignal,
+  Match,
+  onCleanup,
+  onMount,
+  type Setter,
+  Show,
+  Switch,
+} from 'solid-js'
 
 import {
   getPScene,
@@ -40,14 +54,14 @@ import {
 } from '../../features/focus-room-time'
 import {usePSay} from '../../features/pomo-webmcp'
 import {useWeather, type WeatherSceneCondition} from '../../features/weather'
-import {useDesktopMode, useDesktopSafeAreaTop} from '../../features/desktop-mode'
 import {
-  createDesktopMusicActionChannel,
-  type DesktopMusicAction,
-  isDesktopMusicAction,
-  isDesktopMusicActionConnectionMessage,
-} from '../../features/desktop-mode/desktop-music-actions'
+  synchronizeDesktopBackground,
+  useDesktopMode,
+  useDesktopSafeAreaTop,
+  useWebsiteBackgroundInteraction,
+} from '../../features/desktop-mode'
 import {PEntry} from './Entry'
+import {DesktopWallpaperEventActionBridge} from './DesktopWallpaperEventActionBridge'
 import {resolvePSceneViseme} from '../pomo-scene-options'
 import {PSceneFallback} from './SceneFallback'
 import {SceneModelDownloadFallback} from './ModelDownloadFallback'
@@ -119,72 +133,6 @@ const useStudioEntry = (events: ReturnType<typeof usePEvents>) => {
   return {enter, hide: () => setIsVisible(false), isVisible, restore}
 }
 
-const DesktopWallpaperEventActionBridge = () => {
-  const events = usePEvents()
-
-  onMount(() => {
-    const channel = createDesktopMusicActionChannel()
-    const pendingMusicActions: DesktopMusicAction[] = []
-    let isPlayerReady = false
-    const flushPendingMusicActions = () => {
-      const queuedActions = pendingMusicActions.splice(0)
-      for (const actionId of queuedActions) {
-        channel?.postMessage({actionId})
-      }
-    }
-    const handleChannelMessage = (event: MessageEvent<unknown>) => {
-      const message = event.data
-      if (!isDesktopMusicActionConnectionMessage(message)) {
-        return
-      }
-
-      switch (message.type) {
-        case 'player-ready':
-          isPlayerReady = true
-          flushPendingMusicActions()
-          return
-        case 'player-unavailable':
-          isPlayerReady = false
-          break
-        case 'request-player-ready':
-          break
-        default: {
-          const exhaustiveMessage: never = message
-          return exhaustiveMessage
-        }
-      }
-    }
-    channel?.addEventListener('message', handleChannelMessage)
-    channel?.postMessage({type: 'request-player-ready'})
-    const unregisterHandler =
-      channel === null
-        ? undefined
-        : events.registerEventActionHandler?.((actionId) => {
-            if (!isDesktopMusicAction(actionId)) {
-              return false
-            }
-
-            if (isPlayerReady) {
-              channel.postMessage({actionId})
-            } else {
-              pendingMusicActions.push(actionId)
-            }
-            return true
-          })
-    const unregisterExecutor = events.registerEventActionExecutor(() => undefined, {
-      mode: 'deferred',
-    })
-    onCleanup(() => {
-      unregisterHandler?.()
-      unregisterExecutor()
-      channel?.removeEventListener('message', handleChannelMessage)
-      channel?.close()
-    })
-  })
-
-  return null
-}
-
 const createLoadingHandler =
   (setLoading: Setter<boolean>, setRendered: Setter<boolean>) => (isLoading: boolean) => {
     setLoading(isLoading)
@@ -208,42 +156,71 @@ interface StudioSceneViewProps {
   readonly weatherCondition?: WeatherSceneCondition
   readonly isReady: boolean
   readonly styleReady: boolean
+  readonly websiteBackgroundInteraction?: ReturnType<typeof useWebsiteBackgroundInteraction>
 }
+
+const shouldRenderCharacterScene = (preferences: BackgroundPreferences): boolean =>
+  preferences.mode === 'character' ||
+  (preferences.mode === 'website' &&
+    (import.meta.env.VITE_POMO_IS_DESKTOP !== 'true' || preferences.websiteUrl === null))
 
 const StudioSceneView = (props: StudioSceneViewProps) => (
   <Show when={props.background.ready() || props.background.error() !== null}>
-    <Show
-      when={props.background.preferences().mode === 'character'}
-      fallback={<FramePlayer background={props.background} />}
-    >
-      <figure
-        aria-label={props.scene.label}
-        class="pomo-scene relative m-0 h-full w-full overflow-hidden bg-background"
-        role="img"
+    <Switch fallback={<FramePlayer background={props.background} />}>
+      <Match when={shouldRenderCharacterScene(props.background.preferences())}>
+        <figure
+          aria-label={props.scene.label}
+          class="pomo-scene relative m-0 h-full w-full overflow-hidden bg-background"
+          role="img"
+        >
+          <Show when={!props.hasSceneRendered && !props.isDesktopWallpaper}>
+            <PSceneFallback />
+          </Show>
+          <Show when={props.isReady && props.styleReady}>
+            <PStudioScene
+              activity={props.activity}
+              depthSource={props.scene.depthSource}
+              gaze={props.sceneGaze}
+              interactive={!props.isDesktopWallpaper}
+              motionInput={props.motionInput}
+              motionMode={props.motionMode}
+              onLoadingChange={props.onLoadingChange}
+              onMotionInputChange={props.onMotionInputChange}
+              source={props.scene.source}
+              sceneId={props.scene.id}
+              sceneStyle={props.sceneStyle}
+              time={props.time}
+              viseme={props.activeViseme}
+              weatherCondition={props.weatherCondition}
+            />
+          </Show>
+        </figure>
+      </Match>
+      <Match when={props.background.preferences().mode === 'frame'}>
+        <FramePlayer background={props.background} />
+      </Match>
+      <Match
+        when={
+          import.meta.env.VITE_POMO_IS_DESKTOP === 'true' &&
+          props.background.preferences().mode === 'website' &&
+          props.background.preferences().websiteUrl !== null
+        }
       >
-        <Show when={!props.hasSceneRendered && !props.isDesktopWallpaper}>
-          <PSceneFallback />
-        </Show>
-        <Show when={props.isReady && props.styleReady}>
-          <PStudioScene
-            activity={props.activity}
-            depthSource={props.scene.depthSource}
-            gaze={props.sceneGaze}
-            interactive={!props.isDesktopWallpaper}
-            motionInput={props.motionInput}
-            motionMode={props.motionMode}
-            onLoadingChange={props.onLoadingChange}
-            onMotionInputChange={props.onMotionInputChange}
-            source={props.scene.source}
-            sceneId={props.scene.id}
-            sceneStyle={props.sceneStyle}
-            time={props.time}
-            viseme={props.activeViseme}
-            weatherCondition={props.weatherCondition}
-          />
-        </Show>
-      </figure>
-    </Show>
+        <div
+          class="pointer-events-auto absolute inset-0 bg-transparent"
+          onClick={(event) => props.websiteBackgroundInteraction?.handleClick(event)}
+          onContextMenu={(event) => props.websiteBackgroundInteraction?.handleContextMenu(event)}
+          onPointerCancel={(event) =>
+            props.websiteBackgroundInteraction?.handlePointerCancel(event)
+          }
+          onPointerDown={(event) => props.websiteBackgroundInteraction?.handlePointerDown(event)}
+          onPointerLeave={(event) => props.websiteBackgroundInteraction?.handlePointerLeave(event)}
+          onPointerMove={(event) => props.websiteBackgroundInteraction?.handlePointerMove(event)}
+          onPointerUp={(event) => props.websiteBackgroundInteraction?.handlePointerUp(event)}
+          onWheel={(event) => props.websiteBackgroundInteraction?.handleWheel(event)}
+        />
+      </Match>
+    </Switch>
   </Show>
 )
 
@@ -448,6 +425,7 @@ export const PStudio = () => {
   const screenSaver = useStudioScreenSaver()
   const weather = useWeather()
   const desktopMode = useDesktopMode({isSurfaceOwner: true})
+  const websiteBackgroundInteraction = useWebsiteBackgroundInteraction()
   const isDesktopWallpaper = createMemo(() => desktopMode.mode() === 'desktop')
   const isDesktopWidget = createMemo(() => desktopMode.mode() === 'widget')
   const desktopSafeAreaTop = useDesktopSafeAreaTop(desktopMode.mode)
@@ -481,6 +459,17 @@ export const PStudio = () => {
   )
   const activeViseme = useStudioViseme(events, pomoSay)
   const tourHint = useStudioTourHint(entry.enter, () => tour.setIsOpen(true))
+  const backgroundContent = createMemo(() => {
+    const preferences = background.preferences()
+    return preferences.mode === 'website' ? preferences.websiteUrl : preferences.mode
+  })
+  createEffect(() => {
+    background.ready()
+    backgroundContent()
+    if (import.meta.env.VITE_POMO_IS_DESKTOP === 'true' && desktopMode.mode() === 'normal') {
+      synchronizeDesktopBackground().catch(() => undefined)
+    }
+  })
   useStudioRuntime({entry, setAutomaticPeriod, setCanUseGyroscope, setMotionInput})
   return (
     <section
@@ -509,6 +498,7 @@ export const PStudio = () => {
         sceneStyle={style.sceneStyle()}
         styleReady={style.isReady()}
         time={time()}
+        websiteBackgroundInteraction={websiteBackgroundInteraction}
         weatherCondition={weather.sceneCondition()}
       />
       <Show when={!isDesktopWallpaper()}>

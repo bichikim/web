@@ -8,9 +8,11 @@ import {vi} from 'vitest'
 
 import {
   isDesktopBackgroundMode,
+  synchronizeDesktopBackground,
   useDesktopMode,
   useDesktopSafeAreaTop,
   useDesktopSceneSettingsPublisher,
+  useWebsiteBackgroundInteraction,
 } from 'src/features/desktop-mode'
 import {getPScene, supportsPSceneGyroscope, usePSceneStyle} from 'src/features/focus-room-animation'
 import {type EventActionHandler, usePEvents} from 'src/features/focus-room-dialogue/event-context'
@@ -31,7 +33,12 @@ import {PStudioTourHint} from 'src/components/p-studio/TourHint'
 import {useStudioScreenSaver} from 'src/components/p-studio/use-screen-saver'
 import {PScreenSaver} from 'src/components/p-screen-saver/PScreenSaver'
 import {PStudio} from 'src/components/p-studio/PStudio'
-import {DEFAULT_BACKGROUND, useBackground} from 'src/features/background'
+import {
+  type BackgroundController,
+  type BackgroundPreferences,
+  DEFAULT_BACKGROUND,
+  useBackground,
+} from 'src/features/background'
 import {Player as FramePlayer} from 'src/components/frame/Player'
 import {PTour} from 'src/components/tour/PTour'
 import {useDialogueSceneGaze} from 'src/components/use-dialogue-scene-gaze'
@@ -59,12 +66,28 @@ vi.mock('src/features/desktop-mode', () => ({
   isDesktopBackgroundMode: vi.fn(
     (mode: string) => mode === 'desktop' || mode === 'interactiveDesktop',
   ),
+  synchronizeDesktopBackground: vi.fn(async () => undefined),
   useDesktopMode: vi.fn(),
   useDesktopSafeAreaTop: vi.fn(),
   useDesktopSceneSettingsPublisher: vi.fn(),
+  useWebsiteBackgroundInteraction: vi.fn(() => ({
+    handleClick: vi.fn(),
+    handleContextMenu: vi.fn(),
+    handlePointerCancel: vi.fn(),
+    handlePointerDown: vi.fn(),
+    handlePointerLeave: vi.fn(),
+    handlePointerMove: vi.fn(),
+    handlePointerUp: vi.fn(),
+    handleWheel: vi.fn(),
+  })),
 }))
 vi.mock('src/features/background', () => ({
-  DEFAULT_BACKGROUND: {mode: 'character', order: 'sequential', photoSeconds: 10},
+  DEFAULT_BACKGROUND: {
+    mode: 'character',
+    order: 'sequential',
+    photoSeconds: 10,
+    websiteUrl: null,
+  },
   useBackground: vi.fn(),
 }))
 vi.mock('src/components/frame/Player', () => ({Player: vi.fn()}))
@@ -80,6 +103,8 @@ vi.mock('src/components/tour/PTour', () => ({PTour: vi.fn()}))
 vi.mock('src/components/use-dialogue-scene-gaze', () => ({useDialogueSceneGaze: vi.fn()}))
 
 interface StudioOptions {
+  readonly backgroundMode?: 'character' | 'frame' | 'website'
+  readonly websiteUrl?: string | null
   readonly desktopMode?: 'desktop' | 'interactiveDesktop' | 'normal' | 'widget'
   readonly entrySession?: boolean
   readonly gyroscope?: boolean
@@ -130,10 +155,31 @@ export const configureStudio = (options: StudioOptions = {}) => {
   const [weatherSceneMode, setWeatherSceneMode] = createSignal<'auto' | 'rain'>(
     options.weatherSceneMode ?? 'auto',
   )
+  const [backgroundPreferences, setBackgroundPreferences] = createSignal<BackgroundPreferences>({
+    ...DEFAULT_BACKGROUND,
+    mode: options.backgroundMode ?? DEFAULT_BACKGROUND.mode,
+    websiteUrl: options.websiteUrl ?? DEFAULT_BACKGROUND.websiteUrl,
+  })
   const registerEventActionHandler = vi.fn<(handler: EventActionHandler) => () => void>(() =>
     vi.fn(),
   )
   const registerEventActionExecutor = vi.fn(() => vi.fn())
+  const background: BackgroundController = {
+    add: vi.fn(),
+    busy: () => false,
+    configure: vi.fn(),
+    error: () => null,
+    failedIds: () => [],
+    items: () => [],
+    load: vi.fn(),
+    markFailed: vi.fn(),
+    pick: vi.fn(),
+    preferences: backgroundPreferences,
+    ready: () => true,
+    remove: vi.fn(),
+    retry: vi.fn(),
+  }
+  vi.mocked(useBackground).mockReturnValue(background)
 
   vi.mocked(usePEvents).mockReturnValue({
     activeViseme: () => 'rest',
@@ -225,28 +271,20 @@ export const configureStudio = (options: StudioOptions = {}) => {
   vi.mocked(readFocusRoomEntrySession).mockReturnValue(options.entrySession ?? false)
   vi.mocked(supportsPSceneGyroscope).mockReturnValue(options.gyroscope ?? false)
 
-  return {registerEventActionExecutor, registerEventActionHandler, setDesktopMode, setWeatherReady}
+  return {
+    background,
+    registerEventActionExecutor,
+    registerEventActionHandler,
+    setBackgroundPreferences,
+    setDesktopMode,
+    setWeatherReady,
+  }
 }
 
 export const publish = vi.fn()
 
 export const setupStudio = () => {
   vi.mocked(useDesktopSceneSettingsPublisher).mockReturnValue({publish})
-  vi.mocked(useBackground).mockReturnValue({
-    add: vi.fn(),
-    busy: () => false,
-    configure: vi.fn(),
-    error: () => null,
-    failedIds: () => [],
-    items: () => [],
-    load: vi.fn(),
-    markFailed: vi.fn(),
-    pick: vi.fn(),
-    preferences: () => DEFAULT_BACKGROUND,
-    ready: () => true,
-    remove: vi.fn(),
-    retry: vi.fn(),
-  })
   vi.mocked(FramePlayer).mockImplementation(() => <div>frame player</div>)
 
   vi.useFakeTimers()
@@ -362,11 +400,13 @@ export const studioMocks = {
   PTour,
   readFocusRoomEntrySession,
   SceneToolbar,
+  synchronizeDesktopBackground,
   useBackground,
   useDesktopSafeAreaTop,
   useDesktopSceneSettingsPublisher,
   usePDisplayPreferences,
   usePScenePreferences,
   useStudioScreenSaver,
+  useWebsiteBackgroundInteraction,
   writeFocusRoomEntrySession,
 }

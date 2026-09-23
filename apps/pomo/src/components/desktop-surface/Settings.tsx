@@ -9,7 +9,7 @@ import {useDesktopSettingsState} from './use-settings-state'
 
 export const DesktopSettings = () => {
   const displayPreferences = usePDisplayPreferences()
-  const settings = useDesktopSettingsState()
+  const settings = useDesktopSettingsState({isHandoffOwner: true})
 
   return (
     <DesktopSurfaceFrame

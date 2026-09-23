@@ -1,6 +1,7 @@
 import {readPDisplayPreferences} from 'src/features/focus-room-display-preferences'
+import {getBackgroundRepository} from 'src/features/background'
 
-import type {DesktopMode} from './model'
+import {type DesktopMode, isDesktopBackgroundMode, readDesktopMode} from './model'
 
 const BACKGROUND_LABEL = 'background'
 const DESKTOP_WIDGET_CORNER_RADIUS = 20
@@ -91,6 +92,114 @@ const SETTINGS_SURFACE_LABEL = 'desktop-settings'
 
 const getSurfaceApi = () => import('@winter-love/desktop-surface')
 
+const readWebsiteBackgroundUrl = async (): Promise<string | null> => {
+  try {
+    const {preferences} = await (await getBackgroundRepository()).read()
+    return preferences.mode === 'website' ? preferences.websiteUrl : null
+  } catch {
+    return null
+  }
+}
+
+export const shouldHandoffDesktopModeOwner = async (mode: DesktopMode): Promise<boolean> =>
+  mode === 'desktop' && (await readWebsiteBackgroundUrl()) !== null
+
+interface SynchronizeBackgroundContentOptions {
+  readonly restoreWhenMissing?: boolean
+  readonly url?: string | null
+  readonly useChild?: boolean
+}
+
+interface BackgroundSynchronizationTarget {
+  readonly mode: DesktopMode
+  readonly url: string | null
+}
+
+interface PendingBackgroundSynchronization {
+  readonly promise: Promise<void>
+  readonly revision: number
+  readonly target: BackgroundSynchronizationTarget
+}
+
+let backgroundSynchronizationRevision = 0
+let backgroundSynchronizationRequest = 0
+let lastBackgroundSynchronization: {
+  readonly revision: number
+  readonly target: BackgroundSynchronizationTarget
+} | null = null
+let pendingBackgroundSynchronization: PendingBackgroundSynchronization | null = null
+
+const hasSameSynchronizationTarget = (
+  left: BackgroundSynchronizationTarget,
+  right: BackgroundSynchronizationTarget,
+): boolean => left.mode === right.mode && left.url === right.url
+
+const invalidateBackgroundSynchronization = (): void => {
+  backgroundSynchronizationRevision += 1
+  lastBackgroundSynchronization = null
+}
+
+const synchronizeBackgroundContent = async ({
+  restoreWhenMissing = true,
+  url: configuredUrl,
+  useChild = false,
+}: SynchronizeBackgroundContentOptions = {}): Promise<boolean> => {
+  const {navigateBackgroundSurface, restoreBackgroundContent} = await getSurfaceApi()
+  const url = configuredUrl === undefined ? await readWebsiteBackgroundUrl() : configuredUrl
+
+  if (url === null) {
+    if (restoreWhenMissing) {
+      await restoreBackgroundContent({label: BACKGROUND_LABEL})
+    }
+    return false
+  }
+
+  await navigateBackgroundSurface({
+    label: BACKGROUND_LABEL,
+    url,
+    ...(useChild ? {useChild: true} : {}),
+  })
+  return true
+}
+
+export type DesktopBackgroundPointerEventKind =
+  | 'down'
+  | 'up'
+  | 'dragged'
+  | 'moved'
+  | 'left'
+  | 'cancelled'
+
+export type DesktopBackgroundMouseEventKind = DesktopBackgroundPointerEventKind | 'wheel'
+
+export interface DesktopBackgroundMouseEvent {
+  readonly altKey: boolean
+  readonly button: number
+  readonly buttons: number
+  readonly clickCount: number
+  readonly ctrlKey: boolean
+  readonly kind: DesktopBackgroundMouseEventKind
+  readonly metaKey: boolean
+  readonly shiftKey: boolean
+  readonly x: number
+  readonly y: number
+  readonly deltaMode?: number
+  readonly deltaX?: number
+  readonly deltaY?: number
+  readonly deltaZ?: number
+}
+
+export const forwardDesktopBackgroundMouseEvent = async (
+  event: DesktopBackgroundMouseEvent,
+): Promise<void> => {
+  if (import.meta.env.VITE_POMO_IS_DESKTOP !== 'true') {
+    return
+  }
+
+  const {forwardBackgroundMouseEvent} = await getSurfaceApi()
+  await forwardBackgroundMouseEvent({label: BACKGROUND_LABEL, ...event})
+}
+
 const closeSurfaces = async (labels: ReadonlyArray<string>): Promise<void> => {
   const {closeControlSurface} = await getSurfaceApi()
   const results = await Promise.allSettled(labels.map((label) => closeControlSurface({label})))
@@ -109,8 +218,9 @@ const restoreNormalMode = async (): Promise<void> => {
   await restoreSurface({label: BACKGROUND_LABEL})
 }
 
-const enterDesktopMode = async (): Promise<void> => {
-  const {openControlSurface, restoreSurface, setBackgroundSurface} = await getSurfaceApi()
+const enterDesktopMode = async (): Promise<boolean> => {
+  const {openControlSurface, restoreBackgroundContent, restoreSurface, setBackgroundSurface} =
+    await getSurfaceApi()
 
   const preferences = await readPDisplayPreferences()
   const visibility = {
@@ -121,7 +231,9 @@ const enterDesktopMode = async (): Promise<void> => {
   const surfaces = getControlSurfaceOptions().filter(({label}) => visibility[label])
 
   try {
+    await restoreBackgroundContent({label: BACKGROUND_LABEL})
     await setBackgroundSurface({interaction: 'passThrough', label: BACKGROUND_LABEL})
+    const usesWebsiteBackground = await synchronizeBackgroundContent({restoreWhenMissing: false})
     const results = await Promise.allSettled(surfaces.map((options) => openControlSurface(options)))
     const errors = results.flatMap((result) =>
       result.status === 'rejected' ? [result.reason] : [],
@@ -133,6 +245,8 @@ const enterDesktopMode = async (): Promise<void> => {
     if (errors.length > 1) {
       throw new AggregateError(errors, 'One or more desktop control surfaces could not be opened')
     }
+
+    return usesWebsiteBackground
   } catch (error: unknown) {
     const cleanupResults = await Promise.allSettled([
       closeSurfaces([...CONTENT_SURFACE_LABELS, SETTINGS_SURFACE_LABEL]),
@@ -150,31 +264,96 @@ const enterDesktopMode = async (): Promise<void> => {
   }
 }
 
-export const applyDesktopMode = async (mode: DesktopMode): Promise<void> => {
+export const applyDesktopMode = async (mode: DesktopMode): Promise<boolean> => {
+  invalidateBackgroundSynchronization()
+
   switch (mode) {
     case 'desktop':
-      await enterDesktopMode()
-      return
+      return enterDesktopMode()
     case 'interactiveDesktop':
-      const {setBackgroundSurface} = await getSurfaceApi()
+      const {restoreBackgroundContent, setBackgroundSurface} = await getSurfaceApi()
+      await restoreBackgroundContent({label: BACKGROUND_LABEL})
       await setBackgroundSurface({interaction: 'interactive', label: BACKGROUND_LABEL})
-      return
+      await synchronizeBackgroundContent({
+        restoreWhenMissing: false,
+        useChild: true,
+      })
+      return false
     case 'normal':
       await restoreNormalMode()
-      return
+      return false
     case 'widget':
-      const {setWidgetSurface} = await getSurfaceApi()
+      const {restoreBackgroundContent: restoreWidgetBackgroundContent, setWidgetSurface} =
+        await getSurfaceApi()
+      await restoreWidgetBackgroundContent({label: BACKGROUND_LABEL})
       await setWidgetSurface({
         cornerRadius: DESKTOP_WIDGET_CORNER_RADIUS,
         height: 520,
         label: BACKGROUND_LABEL,
         width: 420,
       })
-      return
+      await synchronizeBackgroundContent({restoreWhenMissing: false, useChild: true})
+      return false
   }
 
   const exhaustiveMode: never = mode
   return exhaustiveMode
+}
+
+export const synchronizeDesktopBackground = async (): Promise<void> => {
+  if (import.meta.env.VITE_POMO_IS_DESKTOP !== 'true') {
+    return
+  }
+
+  const mode = readDesktopMode()
+  const usesWebsiteChild = mode === 'normal' || mode === 'interactiveDesktop' || mode === 'widget'
+  if (mode !== 'desktop' && !usesWebsiteChild && !isDesktopBackgroundMode(mode)) {
+    return
+  }
+
+  const target = {mode, url: await readWebsiteBackgroundUrl()}
+  const revision = backgroundSynchronizationRevision
+  if (
+    lastBackgroundSynchronization?.revision === revision &&
+    hasSameSynchronizationTarget(lastBackgroundSynchronization.target, target)
+  ) {
+    return
+  }
+
+  const pending = pendingBackgroundSynchronization
+  if (
+    pending !== null &&
+    pending.revision === revision &&
+    hasSameSynchronizationTarget(pending.target, target)
+  ) {
+    await pending.promise
+    return
+  }
+
+  const operation = synchronizeBackgroundContent({
+    url: target.url,
+    useChild: usesWebsiteChild,
+  })
+  backgroundSynchronizationRequest += 1
+  const request = backgroundSynchronizationRequest
+  const promise = operation.then(() => {
+    if (
+      backgroundSynchronizationRevision === revision &&
+      backgroundSynchronizationRequest === request
+    ) {
+      lastBackgroundSynchronization = {revision, target}
+    }
+  })
+  const synchronization: PendingBackgroundSynchronization = {promise, revision, target}
+  pendingBackgroundSynchronization = synchronization
+
+  try {
+    await promise
+  } finally {
+    if (pendingBackgroundSynchronization === synchronization) {
+      pendingBackgroundSynchronization = null
+    }
+  }
 }
 
 /** Persists content-owned state by closing player and timer surfaces before mode publication. */
@@ -186,7 +365,9 @@ export const prepareDesktopModeTransition = async (mode: DesktopMode): Promise<v
 
 /** Releases the mode controller after all windows have observed the new mode. */
 export const finishDesktopModeTransition = async (mode: DesktopMode): Promise<void> => {
-  if (mode !== 'desktop') {
-    await closeSurfaces([SETTINGS_SURFACE_LABEL])
+  if (mode === 'desktop') {
+    return
   }
+
+  await closeSurfaces([SETTINGS_SURFACE_LABEL])
 }

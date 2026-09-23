@@ -9,12 +9,15 @@ import {
 export {
   DESKTOP_CLEAN_EXIT_STORAGE_KEY,
   DESKTOP_MODE_STORAGE_KEY,
+  DESKTOP_MODE_OWNER_STORAGE_KEY,
   readCleanExitStorage,
+  readDesktopModeOwnerStorage,
   readDesktopModeStorage,
   writeCleanExitStorage,
+  writeDesktopModeOwnerStorage,
   writeDesktopModeStorage,
 } from './storage'
-export type {DesktopModeStorage} from './storage'
+export type {DesktopModeOwnerState, DesktopModeStorage} from './storage'
 
 export type DesktopMode = 'desktop' | 'interactiveDesktop' | 'normal' | 'widget'
 
