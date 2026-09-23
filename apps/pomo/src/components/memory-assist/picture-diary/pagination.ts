@@ -59,7 +59,11 @@ export const getBookPagination = (options: PaginationOptions): BookPagination =>
   const current = spreadAt(index)
   return {
     current,
-    newer: options.closed ? current : index + step < pages.length ? spreadAt(index + step) : null,
+    newer: options.closed
+      ? spreadAt(index - step)
+      : index + step < pages.length
+        ? spreadAt(index + step)
+        : null,
     older: !options.closed && index > first ? spreadAt(index - step) : null,
   }
 }

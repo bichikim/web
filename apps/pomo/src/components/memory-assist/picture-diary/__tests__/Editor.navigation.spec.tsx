@@ -33,14 +33,18 @@ it('should reveal the ending cover page during the back-cover turn', () => {
 
   const book = screen.getByRole('group', {name: '일기장'})
   fireEvent.click(screen.getByRole('button', {name: '다음 일기 보기'}))
-  const revealedEnding = book.firstElementChild
-
-  expect(revealedEnding).not.toHaveClass('picture-diary-book__spread--closed')
-  // The cover is aria-hidden and textless, so its rendered surface is the observable contract.
-  expect(revealedEnding?.querySelector('.picture-diary-book__page--current')).toHaveClass(
-    'picture-diary-book__back-cover--inside',
+  const coverTurn = book.querySelector('[data-picture-diary-cover-turn]')
+  const revealedEnding = coverTurn?.querySelector(
+    '.picture-diary-book__cover-turn-face--back .picture-diary-book__back-cover',
   )
-  expect(revealedEnding).not.toHaveTextContent('newest')
+  const receivingSpread = book.firstElementChild
+
+  expect(receivingSpread).not.toHaveClass('picture-diary-book__spread--closed')
+  expect(receivingSpread).toHaveTextContent('newest')
+  // The cover is aria-hidden and textless, so its rendered surface is the observable contract.
+  expect(coverTurn).toBeInTheDocument()
+  expect(revealedEnding).toHaveClass('picture-diary-book__back-cover--inside')
+  expect(coverTurn).not.toHaveTextContent('newest')
 
   finishPageTurn()
   expect(onOpenBackCover).toHaveBeenCalledOnce()
