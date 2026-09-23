@@ -33,6 +33,18 @@ const createPhysicsDocument = (outputMaximum = 30): PuppetDocument => ({
 })
 
 describe('evaluatePhysics', () => {
+  test('should settle at the current input without velocity or accumulated time', () => {
+    const document = createPhysicsDocument()
+    const result = evaluatePhysics({
+      deltaTime: 1,
+      document,
+      parameterValues: {input: 5, output: 3},
+      physicsState: new Map([['swing', {accumulator: 0.002, position: -20, velocity: 100}]]),
+      settle: true,
+    })
+    expect(result.parameterValues.output).toBe(13)
+    expect(result.physicsState.get('swing')).toEqual({accumulator: 0, position: 5, velocity: 0})
+  })
   test('should add a pendulum displacement to the output parameter', () => {
     const document = createPhysicsDocument()
 

@@ -96,15 +96,13 @@ export const useTemporaryForm = (options: TemporaryFormOptions) => {
       setEditing(null)
       setPreview(false)
     },
-    targets,
     remove,
-    valueMap,
     reset: () => {
       setForms(new Map())
       setEditing(null)
       setPreview(false)
     },
-    values,
+    targets,
     save: () => {
       const draft = form()
       const bindingId = options.bindingId()
@@ -133,7 +131,9 @@ export const useTemporaryForm = (options: TemporaryFormOptions) => {
       remove()
       return true
     },
+    valueMap,
     selected,
+    values,
     setPreview,
     showing,
     target,

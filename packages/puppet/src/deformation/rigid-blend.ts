@@ -46,10 +46,10 @@ export const blendRigidTransforms = (
   const sine = 2 * real * imaginary
   return {
     xx: cosine,
-    xy: -sine,
-    yx: sine,
     x: 2 * (dualX * real - dualY * imaginary),
-    yy: cosine,
+    xy: -sine,
     y: 2 * (dualX * imaginary + dualY * real),
+    yx: sine,
+    yy: cosine,
   }
 }

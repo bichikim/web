@@ -111,13 +111,11 @@ export const usePinEditor = (props: PinEditorProps) => {
       const HANDLE_DIVISOR = 120
       return Math.min(view().width, view().height) / HANDLE_DIVISOR
     },
-    rest,
     remove: () => {
       if (rest() && editable()) {
         layout('remove')
       }
     },
-    restEditable,
     append: (event: MouseEvent) => {
       if (event.target !== event.currentTarget || !rest() || !editable()) {
         return
@@ -127,14 +125,14 @@ export const usePinEditor = (props: PinEditorProps) => {
         layout('append', point)
       }
     },
-    selected,
+    rest,
     drag: (event: PointerEvent) => {
       const point = eventPoint(event)
       if (dragging && point !== undefined) {
         move(point)
       }
     },
-    stop,
+    restEditable,
     keyDown: createPinKeyboard({
       point: () => local(selected()),
       move,
@@ -144,9 +142,10 @@ export const usePinEditor = (props: PinEditorProps) => {
         }
       },
     }),
-    selectedPin: () => props.node.pins?.[selected()],
+    selected,
     select: setSelected,
-    viewBox: () => `${view().x} ${view().y} ${view().width} ${view().height}`,
+    stop,
+    selectedPin: () => props.node.pins?.[selected()],
     settings: (radius?: number, strength?: number) =>
       layout('settings', undefined, radius, strength),
     start: (event: PointerEvent, index: number) => {
@@ -161,6 +160,7 @@ export const usePinEditor = (props: PinEditorProps) => {
       dragging = true
       props.onEditStart?.()
     },
+    viewBox: () => `${view().x} ${view().y} ${view().width} ${view().height}`,
   }
 }
 

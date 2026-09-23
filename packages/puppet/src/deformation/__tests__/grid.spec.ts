@@ -56,15 +56,15 @@ test('should invert a manually weighted vertex using its part and vertex identit
   const bone: PuppetSceneDeformerNode = {
     id: 'bone',
     kind: 'deformer',
-    name: 'Bone',
     locked: false,
-    bounds: {x: 0, y: 0, width: 100, height: 100},
-    visible: true,
+    bounds: {x: 0, width: 100, y: 0, height: 100},
+    name: 'Bone',
     columns: 1,
     children: [],
-    rows: 1,
+    visible: true,
     boneRestPoints: [0, 0, 50, 0, 100, 0],
     boneWeights: [{partId: 'a', vertexIndex: 0, weights: [1, 0]}],
+    rows: 1,
     controlPoints: [0, 0, 50, 0, 50, 50],
   }
   const reference = {partId: 'a', vertexIndex: 0}
@@ -84,15 +84,15 @@ test('should expose the preserved binding coordinates used for current bone infl
   const bone: PuppetSceneDeformerNode = {
     id: 'bone',
     kind: 'deformer',
-    name: 'Bone',
     locked: false,
-    bounds: {x: 0, y: 0, width: 100, height: 100},
-    visible: true,
+    bounds: {x: 0, width: 100, y: 0, height: 100},
+    name: 'Bone',
     columns: 1,
     children: [],
-    rows: 1,
+    visible: true,
     boneRestPoints: [0, 0, 50, 0],
     controlPoints: [0, 0, 0, 50],
+    rows: 1,
   }
   const rebound = rebindDeformer(bone, {
     ...bone,
@@ -110,9 +110,9 @@ test('should blend grid, curve and pin deformation per vertex and invert the ble
     {...node, controlPoints: [0, 20, 30, 20, 60, 20, 90, 20]},
     {
       ...node,
-      curveAxis: undefined,
       controlPoints: [55, 20],
-      pins: [{x: 45, y: 10, radius: 100, strength: 1}],
+      curveAxis: undefined,
+      pins: [{radius: 100, x: 45, strength: 1, y: 10}],
     },
   ]
   const point = {x: 45, y: 10}

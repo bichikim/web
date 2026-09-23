@@ -1,6 +1,7 @@
 import {clamp} from 'es-toolkit/math'
 
 import type {PuppetParameter} from '../../player/document'
+import {resolveParameterValue} from '../../player/parameter-value'
 
 const PERCENT = 100
 const VALUE_PRECISION = 6
@@ -22,12 +23,15 @@ export const getParameterPointerValue = (
   const progress = clamp((point - start) / size, 0, 1)
   const value = parameter.minimum + progress * (parameter.maximum - parameter.minimum)
   const step = (parameter.maximum - parameter.minimum) / VALUE_STEPS
-  return Number(
-    clamp(
-      parameter.minimum + Math.round((value - parameter.minimum) / step) * step,
-      parameter.minimum,
-      parameter.maximum,
-    ).toFixed(VALUE_PRECISION),
+  return resolveParameterValue(
+    parameter,
+    Number(
+      clamp(
+        parameter.minimum + Math.round((value - parameter.minimum) / step) * step,
+        parameter.minimum,
+        parameter.maximum,
+      ).toFixed(VALUE_PRECISION),
+    ),
   )
 }
 
@@ -36,6 +40,27 @@ export const getParameterKeyboardValue = (
   value: number,
   key: string,
 ) => {
+  if (parameter.options !== undefined) {
+    const values = parameter.options.map((option) => option.value)
+    const currentValue = resolveParameterValue(parameter, value)
+    const currentIndex = values.indexOf(currentValue)
+
+    switch (key) {
+      case 'ArrowLeft':
+      case 'ArrowDown':
+        return values[Math.max(0, currentIndex - 1)]
+      case 'ArrowRight':
+      case 'ArrowUp':
+        return values[Math.min(values.length - 1, currentIndex + 1)]
+      case 'End':
+        return values.at(-1)
+      case 'Home':
+        return values[0]
+      default:
+        return undefined
+    }
+  }
+
   const step = (parameter.maximum - parameter.minimum) / VALUE_STEPS
   let nextValue: number
 
@@ -58,5 +83,8 @@ export const getParameterKeyboardValue = (
       return undefined
   }
 
-  return Number(clamp(nextValue, parameter.minimum, parameter.maximum).toFixed(VALUE_PRECISION))
+  return resolveParameterValue(
+    parameter,
+    Number(clamp(nextValue, parameter.minimum, parameter.maximum).toFixed(VALUE_PRECISION)),
+  )
 }

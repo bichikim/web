@@ -9,28 +9,28 @@ const createDocument = (): PuppetDocument => {
   return {
     ...source,
     motions: [],
-    parameters: [{id: 'angle', minimum: 0, name: 'angle', defaultValue: 0, maximum: 1}],
     parameterBindings: [
       {
         id: 'binding',
-        parameterIds: ['angle'],
         keyforms: [
           {
             values: [1],
             parts: [{partId: 'part', vertices: [0, 0, 200, 0, 200, 100, 0, 100, 100, 50]}],
           },
         ],
+        parameterIds: ['angle'],
         targetPartIds: ['part'],
       },
     ],
+    parameters: [{id: 'angle', minimum: 0, defaultValue: 0, name: 'angle', maximum: 1}],
     parts: [
       {
         ...source.parts[0]!,
         id: 'part',
         mesh: {
-          vertices: [0, 0, 100, 0, 100, 100, 0, 100, 50, 50],
           uvs: [0, 0, 1, 0, 1, 1, 0, 1, 0.5, 0.5],
           indices: [0, 1, 4, 1, 2, 4, 2, 3, 4, 3, 0, 4],
+          vertices: [0, 0, 100, 0, 100, 100, 0, 100, 50, 50],
         },
       },
     ],
@@ -42,10 +42,10 @@ const createDocument = (): PuppetDocument => {
           locked: false,
           name: 'part',
           skinning: {
-            bind: {xx: 1, xy: 0, yx: 0, x: 0, yy: 1, y: 0},
+            bind: {xx: 1, x: 0, xy: 0, y: 0, yx: 0, yy: 1},
             influences: [
               {
-                inverseBind: {xx: 1, xy: 0, yx: 0, yy: 1, x: 0, y: 0},
+                inverseBind: {xx: 1, xy: 0, x: 0, yx: 0, y: 0, yy: 1},
                 nodeId: 'joint',
                 weights: [0, 1, 1, 0, 0.5],
               },
@@ -83,15 +83,15 @@ describe('moveMeshVertex', () => {
   test('should allow a straight boundary vertex to slide without changing the outline', () => {
     const source = createDocument()
     const mesh = {
-      vertices: [0, 0, 50, 0, 100, 0, 100, 100, 0, 100, 50, 50],
       uvs: [0, 0, 0.5, 0, 1, 0, 1, 1, 0, 1, 0.5, 0.5],
       indices: [0, 1, 5, 1, 2, 5, 2, 3, 5, 3, 4, 5, 4, 0, 5],
+      vertices: [0, 0, 50, 0, 100, 0, 100, 100, 0, 100, 50, 50],
     }
     const document = {
       ...source,
       parameterBindings: [],
-      scene: undefined,
       parts: [{...source.parts[0]!, mesh}],
+      scene: undefined,
     }
     const result = moveMeshVertex({document, partId: 'part', vertexIndex: 1, x: 60, y: 0})
     expect(result.ok).toBe(true)

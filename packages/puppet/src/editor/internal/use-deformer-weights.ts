@@ -113,34 +113,34 @@ export const useDeformerWeights = (props: SelectedDeformerProps) => {
     }),
   )
   return {
-    enabled,
     brush,
-    isBone: () => props.node.boneRestPoints !== undefined,
     boneIndex,
-    locked,
+    enabled,
     batchWeight,
-    selected,
+    isBone: () => props.node.boneRestPoints !== undefined,
     change,
-    vertices,
+    locked,
     influence,
-    weights,
+    selected,
     canApply: () => editableSelection().length > 0,
-    isSelected,
+    vertices,
     applySelection,
-    tool,
+    weights,
     clearSelection: () => selection.clear(),
+    isSelected,
     selectAll: () => selection.selectAll(vertices().filter((vertex) => !vertexLocked(vertex))),
-    setBatchWeight,
+    tool,
     manual: () => preview.isManual(selected()),
-    triangles,
     segments,
-    selectionCount: () => selectedVertices().length,
+    setBatchWeight,
     select: (vertex: PuppetVertexReference, additive = false) => {
       if (tool() !== 'select') {
         return
       }
       selection.select(vertex, additive)
     },
+    triangles,
+    selectionCount: () => selectedVertices().length,
     setBoneIndex: (value: number) => {
       brush.stop()
       setBoneIndex(value)

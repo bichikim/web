@@ -88,26 +88,24 @@ export const useWeightPaint = (props: UseWeightPaintProps) => {
     cursor,
     mode,
     radius,
-    setMode: (value: WeightPaintMode) => {
-      stop()
-      setMode(value)
-    },
-    setRadius: (value: number) => {
-      stop()
-      setRadius(value)
-    },
     end: (event: PointerEvent) => {
       if (pointer === event.pointerId) {
         stop()
       }
     },
-    strength,
+    setMode: (value: WeightPaintMode) => {
+      stop()
+      setMode(value)
+    },
     leave: () => {
       if (stroke === null) {
         setCursor(null)
       }
     },
-    stop,
+    setRadius: (value: number) => {
+      stop()
+      setRadius(value)
+    },
     move: (event: PointerEvent) => {
       if (!props.enabled || !props.painting || (stroke !== null && pointer !== event.pointerId)) {
         return
@@ -118,10 +116,12 @@ export const useWeightPaint = (props: UseWeightPaintProps) => {
         paint(position)
       }
     },
+    strength,
     setStrength: (value: number) => {
       stop()
       setStrength(value)
     },
+    stop,
     start: (event: PointerEvent) => {
       if (
         event.button !== 0 ||
@@ -139,8 +139,8 @@ export const useWeightPaint = (props: UseWeightPaintProps) => {
       const next = createWeightPaintStroke({
         boneIndex: props.boneIndex,
         document: props.document,
-        nodeId: props.node.id,
         mode: mode(),
+        nodeId: props.node.id,
         radius: radius(),
         strength: strength(),
         vertices: props.vertices,

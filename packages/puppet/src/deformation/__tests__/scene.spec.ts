@@ -52,30 +52,30 @@ test('should interpolate curve handles through parameter keyforms', () => {
 
 test('should preserve bone lengths in sampled keyforms', () => {
   const node: PuppetSceneDeformerNode = {
-    id: 'bone',
     children: [],
-    kind: 'deformer',
     columns: 1,
-    locked: false,
+    id: 'bone',
     boneRestPoints: [0, 0, 50, 0, 100, 0],
-    name: 'Bone',
+    kind: 'deformer',
     bounds: {x: 0, width: 100, y: 0, height: 100},
-    visible: true,
+    locked: false,
     controlPoints: [0, 0, 50, 0, 100, 0],
+    name: 'Bone',
     rows: 1,
+    visible: true,
   }
   const binding: PuppetParameterBinding1D = {
     id: 'bend',
     keyforms: [
       {
+        deformers: [{kind: 'deformer', controlPoints: node.controlPoints, nodeId: 'bone'}],
         parts: [],
         values: [0],
-        deformers: [{kind: 'deformer', controlPoints: node.controlPoints, nodeId: 'bone'}],
       },
       {
+        deformers: [{kind: 'deformer', controlPoints: [0, 0, 0, 50, 0, 100], nodeId: 'bone'}],
         parts: [],
         values: [1],
-        deformers: [{kind: 'deformer', controlPoints: [0, 0, 0, 50, 0, 100], nodeId: 'bone'}],
       },
     ],
     parameterIds: ['bend'],
@@ -100,30 +100,30 @@ test('should preserve bone lengths in sampled keyforms', () => {
 
 test('should interpolate a half-turn bone pose without collapsing or snapping at the midpoint', () => {
   const node: PuppetSceneDeformerNode = {
-    id: 'bone',
-    kind: 'deformer',
     children: [],
-    locked: false,
+    id: 'bone',
     columns: 1,
-    name: 'Bone',
+    kind: 'deformer',
     boneRestPoints: [0, 0, 100, 0],
-    visible: true,
+    locked: false,
     bounds: {x: 0, width: 100, y: 0, height: 100},
-    rows: 1,
+    name: 'Bone',
     controlPoints: [0, 0, 100, 0],
+    visible: true,
+    rows: 1,
   }
   const binding: PuppetParameterBinding1D = {
     id: 'bend',
     keyforms: [
       {
-        values: [0],
         parts: [],
-        deformers: [{kind: 'deformer', nodeId: 'bone', controlPoints: node.controlPoints}],
+        deformers: [{kind: 'deformer', controlPoints: node.controlPoints, nodeId: 'bone'}],
+        values: [0],
       },
       {
-        values: [1],
         parts: [],
-        deformers: [{kind: 'deformer', nodeId: 'bone', controlPoints: [0, 0, -100, 0]}],
+        deformers: [{kind: 'deformer', controlPoints: [0, 0, -100, 0], nodeId: 'bone'}],
+        values: [1],
       },
     ],
     parameterIds: ['bend'],
@@ -137,11 +137,11 @@ test('should interpolate a half-turn bone pose without collapsing or snapping at
 
 test('should interpolate rotation keyforms on a circular arc around the pivot', () => {
   const node: PuppetSceneDeformerNode = {
-    bounds: {x: 10, y: 20, width: 100, height: 100},
+    bounds: {width: 100, x: 10, height: 100, y: 20},
     children: [],
+    boneRestPoints: [10, 20, 110, 20],
     columns: 1,
     controlPoints: [10, 20, 110, 20],
-    boneRestPoints: [10, 20, 110, 20],
     deformerType: 'rotation',
     id: 'rotation',
     kind: 'deformer',
@@ -153,20 +153,20 @@ test('should interpolate rotation keyforms on a circular arc around the pivot', 
   const binding: PuppetParameterBinding1D = {
     id: 'turn',
     parameterIds: ['turn'],
-    targetPartIds: [],
     targetDeformerIds: ['rotation'],
     keyforms: [
       {
-        values: [0],
         parts: [],
-        deformers: [{nodeId: 'rotation', kind: 'deformer', controlPoints: node.controlPoints}],
+        values: [0],
+        deformers: [{kind: 'deformer', nodeId: 'rotation', controlPoints: node.controlPoints}],
       },
       {
-        values: [1],
         parts: [],
-        deformers: [{nodeId: 'rotation', kind: 'deformer', controlPoints: [10, 20, 10, 120]}],
+        values: [1],
+        deformers: [{kind: 'deformer', nodeId: 'rotation', controlPoints: [10, 20, 10, 120]}],
       },
     ],
+    targetPartIds: [],
   }
   const sampled = sampleParameterDeformer({binding, deformer: node, values: [0.5]})
   const point = transformDeformerPoint(
@@ -181,12 +181,10 @@ test('should drive skinning from sampled rotation keyforms', () => {
   const document = createSkinDocument()
   const animated: PuppetDocument = {
     ...document,
-    parameters: [{id: 'turn', name: 'Turn', defaultValue: 0, minimum: 0, maximum: 1}],
     parameterBindings: [
       {
         id: 'turn-binding',
         parameterIds: ['turn'],
-        targetDeformerIds: ['Shoulder'],
         keyforms: [
           {
             values: [0],
@@ -199,8 +197,10 @@ test('should drive skinning from sampled rotation keyforms', () => {
             deformers: [{kind: 'deformer', nodeId: 'Shoulder', controlPoints: [0, 0, 0, 50]}],
           },
         ],
+        targetDeformerIds: ['Shoulder'],
       },
     ],
+    parameters: [{id: 'turn', defaultValue: 0, name: 'Turn', maximum: 1, minimum: 0}],
   }
   const partId = document.parts[0]!.id
   const scene = composeParameterScene(animated, {turn: 1})

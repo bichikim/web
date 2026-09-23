@@ -10,14 +10,13 @@ import {
   parseDocument,
   type Player,
   type PuppetDocument,
+  type PuppetSceneDeformerNode,
   serializeDocument,
 } from '../../player'
 import {transformDeformerPoint} from '../../deformation'
-import type {PuppetSceneDeformerNode} from '../../player'
-import {getSceneNode} from '../internal/scene-graph'
 import {getDeformerAngle} from '../internal/deformer-transform'
 import {addParameter} from '../internal/parameter-keyforms'
-import {createDeformer} from '../internal/scene-graph'
+import {createDeformer, getSceneNode} from '../internal/scene-graph'
 import {PuppetEditor} from '../PuppetEditor'
 
 const mocks = vi.hoisted(() => ({
@@ -31,10 +30,12 @@ const player: Player = {
   pause: vi.fn(),
   play: vi.fn(),
   playMotion: vi.fn(() => true),
+  resetPhysics: vi.fn(),
   resize: vi.fn(),
   seek: vi.fn(),
   setMotion: vi.fn(() => true),
   setParameterValues: vi.fn(),
+  setPhysicsPreview: vi.fn(),
   updateDocument: vi.fn(() => true),
 }
 
@@ -69,7 +70,7 @@ beforeEach(() => {
 
 describe('PuppetEditor', () => {
   test('should hide selection actions for mixed node kinds', () => {
-    const view = render(() => <PuppetEditor />)
+    const view = render(() => <PuppetEditor initialDocument={createDemoDocument()} />)
 
     fireEvent.click(view.getByRole('button', {name: 'Shapes 레이어 선택'}))
     fireEvent.click(view.getByRole('button', {name: 'mesh-preview 레이어 선택'}), {ctrlKey: true})
@@ -80,7 +81,9 @@ describe('PuppetEditor', () => {
 
   test('should show only group actions and unwrap the selected group', async () => {
     const onDocumentChange = vi.fn<(document: PuppetDocument) => void>()
-    const view = render(() => <PuppetEditor onDocumentChange={onDocumentChange} />)
+    const view = render(() => (
+      <PuppetEditor initialDocument={createDemoDocument()} onDocumentChange={onDocumentChange} />
+    ))
 
     fireEvent.click(view.getByRole('button', {name: 'Shapes 레이어 선택'}))
 
@@ -128,7 +131,9 @@ describe('PuppetEditor', () => {
 
   test('should convert a selected group to a deformer and back', async () => {
     const onDocumentChange = vi.fn<(document: PuppetDocument) => void>()
-    const view = render(() => <PuppetEditor onDocumentChange={onDocumentChange} />)
+    const view = render(() => (
+      <PuppetEditor initialDocument={createDemoDocument()} onDocumentChange={onDocumentChange} />
+    ))
 
     fireEvent.click(view.getByRole('button', {name: 'Shapes 레이어 선택'}))
     fireEvent.keyDown(view.getByRole('button', {name: 'Shapes 종류 변경'}), {key: 'Enter'})
@@ -163,7 +168,9 @@ describe('PuppetEditor', () => {
   test('should connect a clipping mask by picking a layer', async () => {
     const onDocumentChange = vi.fn()
     mocks.createPlayer.mockResolvedValue(player)
-    const view = render(() => <PuppetEditor onDocumentChange={onDocumentChange} />)
+    const view = render(() => (
+      <PuppetEditor initialDocument={createDemoDocument()} onDocumentChange={onDocumentChange} />
+    ))
 
     fireEvent.click(view.getByRole('button', {name: 'shape-circle 레이어 선택'}))
     fireEvent.click(view.getByRole('button', {name: '레이어에서 선택'}))
@@ -189,7 +196,9 @@ describe('PuppetEditor', () => {
   test('should create and interpolate free-transform deformer parameter keyforms', async () => {
     const onDocumentChange = vi.fn()
     mocks.createPlayer.mockResolvedValue(player)
-    const view = render(() => <PuppetEditor onDocumentChange={onDocumentChange} />)
+    const view = render(() => (
+      <PuppetEditor initialDocument={createDemoDocument()} onDocumentChange={onDocumentChange} />
+    ))
 
     fireEvent.click(view.getByRole('button', {name: '그룹'}))
     fireEvent.keyDown(view.getByRole('button', {name: '새 그룹 종류 변경'}), {key: 'Enter'})
@@ -230,7 +239,7 @@ describe('PuppetEditor', () => {
 
   test('should edit a deformer before connecting it to a parameter', async () => {
     mocks.createPlayer.mockResolvedValue(player)
-    const view = render(() => <PuppetEditor />)
+    const view = render(() => <PuppetEditor initialDocument={createDemoDocument()} />)
 
     fireEvent.click(view.getByRole('button', {name: '그룹'}))
     fireEvent.keyDown(view.getByRole('button', {name: '새 그룹 종류 변경'}), {key: 'Enter'})
@@ -267,7 +276,7 @@ describe('PuppetEditor', () => {
   })
 
   test('should undo and redo curve knot insertion and deletion without changing topology from an input', async () => {
-    const view = render(() => <PuppetEditor />)
+    const view = render(() => <PuppetEditor initialDocument={createDemoDocument()} />)
     fireEvent.click(view.getByRole('button', {name: '그룹'}))
     fireEvent.keyDown(view.getByRole('button', {name: '새 그룹 종류 변경'}), {key: 'Enter'})
     fireEvent.keyDown(await screen.findByRole('menuitemradio', {name: '곡선 디포머'}), {
@@ -310,7 +319,7 @@ describe('PuppetEditor', () => {
   })
 
   test('should create a bone deformer with its own controls and include joint edits in history', async () => {
-    const view = render(() => <PuppetEditor />)
+    const view = render(() => <PuppetEditor initialDocument={createDemoDocument()} />)
     fireEvent.click(view.getByRole('button', {name: '그룹'}))
     fireEvent.keyDown(view.getByRole('button', {name: '새 그룹 종류 변경'}), {key: 'Enter'})
     fireEvent.keyDown(await screen.findByRole('menuitemradio', {name: '본 디포머'}), {key: 'Enter'})
@@ -340,7 +349,9 @@ describe('PuppetEditor', () => {
 
   test('should preserve the posed mesh through inspector placement edits and undo redo', async () => {
     const onDocumentChange = vi.fn()
-    const view = render(() => <PuppetEditor onDocumentChange={onDocumentChange} />)
+    const view = render(() => (
+      <PuppetEditor initialDocument={createDemoDocument()} onDocumentChange={onDocumentChange} />
+    ))
     fireEvent.click(view.getByRole('button', {name: '그룹'}))
     fireEvent.keyDown(view.getByRole('button', {name: '새 그룹 종류 변경'}), {key: 'Enter'})
     fireEvent.keyDown(await screen.findByRole('menuitemradio', {name: '자유 변형 디포머'}), {
@@ -393,7 +404,9 @@ describe('PuppetEditor', () => {
   test('should hold a bound deformer edit between keys without changing the document', async () => {
     mocks.createPlayer.mockResolvedValue(player)
     const onDocumentChange = vi.fn()
-    const view = render(() => <PuppetEditor onDocumentChange={onDocumentChange} />)
+    const view = render(() => (
+      <PuppetEditor initialDocument={createDemoDocument()} onDocumentChange={onDocumentChange} />
+    ))
     fireEvent.click(view.getByRole('button', {name: '그룹'}))
     fireEvent.keyDown(view.getByRole('button', {name: '새 그룹 종류 변경'}), {key: 'Enter'})
     fireEvent.keyDown(await screen.findByRole('menuitemradio', {name: '자유 변형 디포머'}), {

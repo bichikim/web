@@ -16,10 +16,12 @@ const player: Player = {
   pause: vi.fn(),
   play: vi.fn(),
   playMotion: vi.fn(() => true),
+  resetPhysics: vi.fn(),
   resize: vi.fn(),
   seek: vi.fn(),
   setMotion: vi.fn(() => true),
   setParameterValues: vi.fn(),
+  setPhysicsPreview: vi.fn(),
   updateDocument: mocks.updateDocument,
 }
 

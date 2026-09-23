@@ -72,7 +72,6 @@ export const useSkinningTools = (props: SkinningToolsProps) => {
         JSON.stringify(props.parameterValueMap),
         props.previewTime,
       ].join(':'),
-    document: () => props.sourceDocument,
     create: () => {
       const skin = binding()
       const mesh = part()?.mesh
@@ -89,17 +88,18 @@ export const useSkinningTools = (props: SkinningToolsProps) => {
       }
       const stroke = createSkinStroke({
         binding: skin,
-        target: target(),
         indices: mesh.indices,
-        vertices: positions(),
+        target: target(),
         radius: radius(),
+        vertices: positions(),
         mode: mode as WeightPaintMode,
-        strength: amount() / PERCENT,
         protect: protect(),
+        strength: amount() / PERCENT,
         selected: selected(),
       })
       return (point) => update(stroke.paint(point))
     },
+    document: () => props.sourceDocument,
     onEnd: () => props.onEditEnd?.(),
     onStart: () => props.onEditStart?.(),
   })
@@ -116,23 +116,23 @@ export const useSkinningTools = (props: SkinningToolsProps) => {
   )
   return {
     binding,
-    locked,
     enabled,
+    locked,
     part,
     positions,
     setEnabled,
-    setTarget,
-    triangles,
     radius,
-    setTool,
+    setTarget,
     amount,
-    tool,
+    triangles,
     protect,
-    target,
+    setTool,
     selected,
+    tool,
     setAmount,
-    setRadius,
+    target,
     setProtect,
+    setRadius,
     setSelected,
     setValue,
     value,

@@ -160,15 +160,15 @@ test('should stop captured dragging when pointer capture is lost', () => {
   ))
   const svg = view.getByLabelText('본 디포머 편집 영역')
   vi.spyOn(svg, 'getBoundingClientRect').mockReturnValue({
-    left: 0,
     bottom: 720,
-    right: 960,
     height: 720,
-    x: 0,
+    left: 0,
+    right: 960,
     toJSON: () => ({}),
-    y: 0,
     top: 0,
+    x: 0,
     width: 960,
+    y: 0,
   })
   fireEvent(
     view.getByRole('button', {name: '본 관절 1'}),
@@ -262,25 +262,25 @@ test('should edit composed bone translation and rotation in binding channels', (
   const channels = getBoneChannels(rest.boneRestPoints!, rest.controlPoints)
   const firstPose = setParameterKeyformDeformerControlPoints({
     bindingId: first.binding.id,
-    document: first.document,
-    nodeId: 'bone',
     controlPoints: poseBoneChannels(rest.boneRestPoints!, [
       channels[0]! + 10,
       channels[1]!,
       Math.PI / 6,
     ]),
+    document: first.document,
+    nodeId: 'bone',
     values: [0],
   })!
   const second = addParameter({document: firstPose, nodeIds: ['bone']})!
   const source = setParameterKeyformDeformerControlPoints({
     bindingId: second.binding.id,
-    document: second.document,
-    nodeId: 'bone',
     controlPoints: poseBoneChannels(rest.boneRestPoints!, [
       channels[0]! + 20,
       channels[1]!,
       Math.PI / 6,
     ]),
+    document: second.document,
+    nodeId: 'bone',
     values: [0],
   })!
   const [document, setDocument] = createSignal(source)

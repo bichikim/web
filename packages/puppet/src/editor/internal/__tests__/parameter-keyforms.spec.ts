@@ -21,6 +21,24 @@ import {
 import {updatePhysics} from '../physics'
 
 describe('parameter keyform editing', () => {
+  test('should remove layer rules when deleting their condition parameters', () => {
+    const source = createDemoDocument()
+    const document = {
+      ...source,
+      layerOrderRules: [
+        {
+          partIds: ['shape-circle'],
+          placement: 'before' as const,
+          referencePartId: 'mesh-preview',
+          when: {comparison: 'greater-than' as const, parameterIds: ['angle-x'], threshold: 20},
+        },
+      ],
+    }
+    expect(
+      deleteParameter({bindingId: source.parameterBindings![0]!.id, document})?.layerOrderRules,
+    ).toEqual([])
+  })
+
   test('should return the union of parameter bindings connected to selected nodes', () => {
     const document = createDemoDocument()
     const added = addParameter({document, nodeIds: ['shape-circle']})!
@@ -353,7 +371,10 @@ describe('createParameterPreview', () => {
     expect(preview.parts[1]?.mesh.vertices).toBe(document.parts[1]?.mesh.vertices)
     expect(preview.motions).toEqual([])
     expect(preview.parameterBindings).toEqual([])
-    expect(preview.parameters).toEqual([])
+    expect(preview.parameters).toEqual([
+      {...document.parameters![0], defaultValue: 15},
+      {...document.parameters![1], defaultValue: -15},
+    ])
   })
 })
 

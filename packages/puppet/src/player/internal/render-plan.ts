@@ -5,6 +5,7 @@ import {
 } from '../../deformation'
 import type {PuppetDocument} from '../document'
 import {getScenePartStates} from '../scene'
+import {resolveParameterValue} from '../parameter-value'
 
 export interface PartMaskSourcePlan {
   readonly invertedMask: boolean
@@ -72,7 +73,34 @@ export const getPartRenderPlans = (
     document.parts.flatMap((part) => part.properties?.clippingMaskIds ?? []),
   )
 
-  return getScenePartStates(document).flatMap((state): ReadonlyArray<PartRenderPlan> => {
+  const states = (document.layerOrderRules ?? []).reduce((orderedStates, rule) => {
+    const total = rule.when.parameterIds.reduce((sum, id) => {
+      const parameter = document.parameters?.find((candidate) => candidate.id === id)
+      return (
+        sum +
+        (parameter === undefined ? 0 : resolveParameterValue(parameter, parameterValues?.[id]))
+      )
+    }, 0)
+    const matches =
+      rule.when.comparison === 'greater-than'
+        ? total > rule.when.threshold
+        : total < rule.when.threshold
+    if (!matches) {
+      return orderedStates
+    }
+
+    const selectedIds = new Set(rule.partIds)
+    const selected = orderedStates.filter((state) => selectedIds.has(state.partId))
+    const remaining = orderedStates.filter((state) => !selectedIds.has(state.partId))
+    return remaining.flatMap((state) => {
+      if (state.partId !== rule.referencePartId) {
+        return [state]
+      }
+      return rule.placement === 'before' ? [...selected, state] : [state, ...selected]
+    })
+  }, getScenePartStates(document))
+
+  return states.flatMap((state): ReadonlyArray<PartRenderPlan> => {
     const part = document.parts.find((candidate) => candidate.id === state.partId)
     if (part === undefined) {
       return []

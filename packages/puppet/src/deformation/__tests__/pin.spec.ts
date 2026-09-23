@@ -3,11 +3,11 @@ import type {PuppetDeformerShape} from '../../player/document'
 import {transformPinPoint} from '../pin'
 
 const node: PuppetDeformerShape = {
-  bounds: {x: 0, width: 100, y: 0, height: 100},
+  bounds: {width: 100, height: 100, x: 0, y: 0},
   columns: 1,
-  pins: [{x: 50, y: 50, radius: 40, strength: 1}],
-  rows: 1,
   controlPoints: [70, 60],
+  pins: [{x: 50, radius: 40, y: 50, strength: 1}],
+  rows: 1,
 }
 
 test('should move the pin center and smoothly fade to zero at the radius', () => {

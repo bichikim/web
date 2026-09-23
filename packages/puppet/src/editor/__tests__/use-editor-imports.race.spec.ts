@@ -10,9 +10,9 @@ test('should supersede a pending open when reimport starts', async () => {
     const history = useDocumentHistory({initialDocument: original})
     const imports = useEditorImports({
       document: history.document,
-      readPsd: () => new Promise(() => {}),
       onDocumentChange: history.setDocument,
       onNotice: vi.fn(),
+      readPsd: () => new Promise(() => {}),
       onReimportDocumentChange: history.setDocument,
     })
     let resolveText!: (value: string) => void

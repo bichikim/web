@@ -26,10 +26,10 @@ test('should pose a pin, preserve the result while placing it, and add and delet
     height: 720,
     left: 0,
     right: 960,
-    top: 0,
     toJSON: () => ({}),
-    x: 0,
+    top: 0,
     width: 960,
+    x: 0,
     y: 0,
   })
   fireEvent.keyDown(view.getByRole('button', {name: '핀 1'}), {key: 'ArrowRight', shiftKey: true})
@@ -103,15 +103,15 @@ test('should stop captured dragging when pointer capture is lost', () => {
   ))
   const svg = view.getByLabelText('핀 디포머 편집 영역')
   vi.spyOn(svg, 'getBoundingClientRect').mockReturnValue({
-    left: 0,
     bottom: 720,
-    right: 960,
     height: 720,
-    x: 0,
+    left: 0,
+    right: 960,
     toJSON: () => ({}),
-    y: 0,
     top: 0,
+    x: 0,
     width: 960,
+    y: 0,
   })
   fireEvent(
     view.getByRole('button', {name: '핀 1'}),

@@ -174,12 +174,10 @@ export const useBoneEditor = (props: UseBoneEditorProps) => {
     editable,
     eventPoint,
     indices,
-    inverse,
-    keyDown: createBoneKeyboard({changeRest, editable, local, mode, move, selected}),
     bind: (element: SVGSVGElement) => {
       svg = element
     },
-    mode,
+    inverse,
     drag: (event: PointerEvent) => {
       const index = selected()
       const position = eventPoint(event)
@@ -187,12 +185,14 @@ export const useBoneEditor = (props: UseBoneEditorProps) => {
         move(index, position)
       }
     },
+    keyDown: createBoneKeyboard({changeRest, editable, local, mode, move, selected}),
+    mode,
+    point,
+    points,
     toggleInverse: () => {
       stop()
       setInverse((value) => !value)
     },
-    point,
-    points,
     radius: () => {
       const HANDLE_DIVISOR = 120
       return Math.min(viewBox().width, viewBox().height) / HANDLE_DIVISOR

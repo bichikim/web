@@ -45,6 +45,67 @@ const createDocument = (): PuppetDocument => ({
 })
 
 describe('getPartRenderPlans', () => {
+  test('should move a cohesive set only beyond the combined parameter threshold and restore scene order', () => {
+    const document = {
+      ...createDocument(),
+      layerOrderRules: [
+        {
+          partIds: ['source', 'middle'],
+          placement: 'before' as const,
+          referencePartId: 'target',
+          when: {comparison: 'greater-than' as const, parameterIds: ['yaw', 'body'], threshold: 20},
+        },
+      ],
+      parameters: ['yaw', 'body'].map((id) => ({
+        defaultValue: 0,
+        id,
+        maximum: 30,
+        minimum: -30,
+        name: id,
+      })),
+    }
+    const order = (values?: Record<string, number>) =>
+      getPartRenderPlans(document, values).map((plan) => plan.partId)
+    expect(order()).toEqual(['target', 'middle', 'source'])
+    expect(order({body: 10, yaw: 10})).toEqual(['target', 'middle', 'source'])
+    expect(order({body: 10, yaw: 11})).toEqual(['middle', 'source', 'target'])
+    expect(order({body: -20, yaw: 100})).toEqual(['target', 'middle', 'source'])
+    expect(order({body: 0, yaw: Number.NaN})).toEqual(['target', 'middle', 'source'])
+    expect(order({body: 0, yaw: 0})).toEqual(['target', 'middle', 'source'])
+    expect(document.scene).toEqual(createDocument().scene)
+  })
+
+  test('should apply matching rules in array order using defaults and preserve unrelated parts', () => {
+    const document = {
+      ...createDocument(),
+      layerOrderRules: [
+        {
+          partIds: ['target'],
+          placement: 'after' as const,
+          referencePartId: 'source',
+          when: {comparison: 'less-than' as const, parameterIds: ['yaw'], threshold: -5},
+        },
+        {
+          partIds: ['source'],
+          placement: 'before' as const,
+          referencePartId: 'middle',
+          when: {comparison: 'less-than' as const, parameterIds: ['yaw'], threshold: -5},
+        },
+      ],
+      parameters: [{defaultValue: -10, id: 'yaw', maximum: 30, minimum: -30, name: 'Yaw'}],
+    }
+    expect(getPartRenderPlans(document).map((plan) => plan.partId)).toEqual([
+      'source',
+      'middle',
+      'target',
+    ])
+    expect(getPartRenderPlans(document, {yaw: -5}).map((plan) => plan.partId)).toEqual([
+      'target',
+      'middle',
+      'source',
+    ])
+  })
+
   test('should resolve scene order, mask visibility, render properties, and chained masks', () => {
     const plans = getPartRenderPlans(createDocument())
 

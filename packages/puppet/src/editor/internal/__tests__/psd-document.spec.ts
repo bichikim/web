@@ -18,12 +18,12 @@ test('should retain layer hierarchy, paint order, names, offsets and visibility'
   const result = createPsdDocument({
     children: [
       {
+        children: [{id: 42, left: -2, name: '뒤', imageData: pixels(), top: 3}],
         hidden: true,
         name: '그룹',
-        children: [{id: 42, left: -2, name: '뒤', imageData: pixels(), top: 3}],
       },
-      {left: 10, name: '기준', imageData: pixels(), top: 18},
-      {left: 12, name: '앞', opacity: 0.5, top: 20, clipping: true, imageData: pixels()},
+      {imageData: pixels(), left: 10, name: '기준', top: 18},
+      {left: 12, name: '앞', clipping: true, opacity: 0.5, imageData: pixels(), top: 20},
     ],
     height: 80,
     width: 100,
@@ -47,10 +47,10 @@ test('should retain layer hierarchy, paint order, names, offsets and visibility'
   expect(result.document.parts[0]?.psdSource).toEqual({
     layerId: 42,
     path: ['그룹', '뒤'],
-    x: -2,
     width: 8,
-    y: 3,
     height: 8,
+    x: -2,
+    y: 3,
   })
   expect(result.warnings).toEqual([])
 })
@@ -79,8 +79,6 @@ test('should connect group clipping bases and preserve nested clipping inside cl
   } as unknown as ReturnType<HTMLCanvasElement['getContext']>)
   vi.spyOn(HTMLCanvasElement.prototype, 'toDataURL').mockReturnValue('data:image/png;base64,test')
   const result = createPsdDocument({
-    height: 100,
-    width: 100,
     children: [
       {
         children: [
@@ -99,6 +97,8 @@ test('should connect group clipping bases and preserve nested clipping inside cl
       },
       {clipping: true, name: 'shadow', imageData: pixels()},
     ],
+    height: 100,
+    width: 100,
   })
   expect(result.ok).toBe(true)
   if (!result.ok) {

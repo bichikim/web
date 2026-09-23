@@ -27,10 +27,12 @@ const player: Player = {
   pause: vi.fn(),
   play: vi.fn(),
   playMotion,
+  resetPhysics: vi.fn(),
   resize: vi.fn(),
   seek: vi.fn(),
   setMotion: vi.fn(() => true),
   setParameterValues: vi.fn(),
+  setPhysicsPreview: vi.fn(),
   updateDocument: vi.fn(() => true),
 }
 
@@ -64,6 +66,32 @@ beforeEach(() => {
 })
 
 describe('PuppetEditor', () => {
+  test('should control live physics without changing the document or playback', async () => {
+    const onDocumentChange = vi.fn()
+    const view = render(() => (
+      <PuppetEditor initialDocument={createDemoDocument()} onDocumentChange={onDocumentChange} />
+    ))
+    await waitFor(() => expect(player.setPhysicsPreview).toHaveBeenLastCalledWith(true))
+    const documentChanges = onDocumentChange.mock.calls.length
+    fireEvent.click(view.getByRole('button', {name: '모든 파라미터 보기'}))
+    fireEvent.click(view.getByRole('button', {name: '물리 0'}))
+    fireEvent.click(view.getByRole('button', {name: '물리 미리보기'}))
+    expect(player.setPhysicsPreview).toHaveBeenLastCalledWith(false)
+    fireEvent.click(view.getByRole('button', {name: '물리 초기화'}))
+    expect(player.resetPhysics).toHaveBeenCalledOnce()
+    expect(player.play).not.toHaveBeenCalled()
+    expect(onDocumentChange).toHaveBeenCalledTimes(documentChanges)
+  })
+  test('should start with an empty layer document by default', async () => {
+    const view = render(() => <PuppetEditor />)
+
+    expect(view.getByText('PNG를 불러오세요.')).toBeVisible()
+    expect(view.getByText('Parameter를 추가하세요.')).toBeVisible()
+    expect(view.queryByRole('tree', {name: '모델 레이어'})).not.toBeInTheDocument()
+    await waitFor(() => expect(mocks.createPlayer).toHaveBeenCalledOnce())
+    expect(mocks.createPlayer.mock.calls[0]?.[0].document.parts).toHaveLength(0)
+  })
+
   test('should leave mesh editing when the part selection is cleared', async () => {
     mocks.createPlayer.mockResolvedValue(player)
     const view = render(() => (
@@ -93,10 +121,10 @@ describe('PuppetEditor', () => {
           id: 'vertex-motion',
           tracks: [
             {
-              kind: 'vertex',
               axis: 'x',
-              partId: 'mesh-preview',
               keyframes: [{time: 0, value: 0}],
+              kind: 'vertex',
+              partId: 'mesh-preview',
               vertexIndex: 0,
             },
           ],
@@ -114,7 +142,7 @@ describe('PuppetEditor', () => {
   test('should render the editor workspace and initialize its player', async () => {
     mocks.createPlayer.mockResolvedValue(player)
 
-    const view = render(() => <PuppetEditor />)
+    const view = render(() => <PuppetEditor initialDocument={createDemoDocument()} />)
 
     expect(view.getByRole('region', {name: 'Parameter 정점 형태 편집'})).toBeVisible()
     expect(
@@ -164,11 +192,37 @@ describe('PuppetEditor', () => {
     fireEvent.focus(view.getByRole('slider', {name: '재생 위치'}))
     fireEvent.keyDown(view.getByRole('slider', {name: '재생 위치'}), {key: 'End'})
     expect(player.seek).toHaveBeenCalledWith(2)
+
+    fireEvent.keyDown(view.getByRole('button', {name: /모션 선택/}), {key: 'Enter'})
+    await waitFor(() => screen.getByRole('option', {name: '모든 타임라인 보기'}))
+    fireEvent.keyDown(screen.getByRole('option', {name: '모든 타임라인 보기'}), {key: 'Enter'})
+    const blinkSeek = view.getByRole('slider', {name: 'blink 재생 위치'})
+    fireEvent.focus(blinkSeek)
+    fireEvent.keyDown(blinkSeek, {key: 'End'})
+
+    expect(player.setMotion).toHaveBeenLastCalledWith('blink')
+    expect(player.seek).toHaveBeenLastCalledWith(0.4)
+  })
+
+  test('should initialize the requested animation workspace and motion', async () => {
+    const view = render(() => (
+      <PuppetEditor
+        initialDocument={createDemoDocument()}
+        initialMotionId="blink"
+        initialWorkspace="animation"
+      />
+    ))
+
+    expect(view.getByRole('button', {name: '애니메이션'})).toHaveAttribute('aria-pressed', 'true')
+    expect(view.getByRole('button', {name: '모션 선택 blink'})).toBeVisible()
+    expect(view.getByRole('region', {name: 'Timeline'})).toBeVisible()
   })
 
   test('should edit mesh topology only from the modeling workspace and include it in history', async () => {
     const onDocumentChange = vi.fn<(document: PuppetDocument) => void>()
-    const view = render(() => <PuppetEditor onDocumentChange={onDocumentChange} />)
+    const view = render(() => (
+      <PuppetEditor initialDocument={createDemoDocument()} onDocumentChange={onDocumentChange} />
+    ))
     const svg = view.container.querySelector<SVGSVGElement>('svg[aria-label="메시 정점 편집 영역"]')
 
     expect(svg).not.toBeNull()
@@ -229,7 +283,7 @@ describe('PuppetEditor', () => {
 
   test('should toggle the left, right, and bottom editor panels from the toolbar', async () => {
     mocks.createPlayer.mockResolvedValue(player)
-    const view = render(() => <PuppetEditor />)
+    const view = render(() => <PuppetEditor initialDocument={createDemoDocument()} />)
     const editor = view.container.querySelector('.puppet-editor')
 
     fireEvent.click(view.getByRole('button', {name: '왼쪽 패널 닫기'}))
@@ -245,7 +299,9 @@ describe('PuppetEditor', () => {
 
   test('should undo and redo document edits from the toolbar', async () => {
     const onDocumentChange = vi.fn<(document: PuppetDocument) => void>()
-    const view = render(() => <PuppetEditor onDocumentChange={onDocumentChange} />)
+    const view = render(() => (
+      <PuppetEditor initialDocument={createDemoDocument()} onDocumentChange={onDocumentChange} />
+    ))
     const undoButton = screen.getByRole('button', {name: '실행 취소'})
     const redoButton = screen.getByRole('button', {name: '다시 실행'})
 
@@ -270,7 +326,9 @@ describe('PuppetEditor', () => {
 
   test('should group a scrubbed number field into one history entry', async () => {
     const onDocumentChange = vi.fn<(document: PuppetDocument) => void>()
-    const view = render(() => <PuppetEditor onDocumentChange={onDocumentChange} />)
+    const view = render(() => (
+      <PuppetEditor initialDocument={createDemoDocument()} onDocumentChange={onDocumentChange} />
+    ))
     const opacityField = view.getByRole('spinbutton', {name: '파트 불투명도'})
     const undoButton = screen.getByRole('button', {name: '실행 취소'})
 
@@ -303,7 +361,9 @@ describe('PuppetEditor', () => {
 
   test('should handle document history keyboard shortcuts outside editable controls', async () => {
     const onDocumentChange = vi.fn<(document: PuppetDocument) => void>()
-    const view = render(() => <PuppetEditor onDocumentChange={onDocumentChange} />)
+    const view = render(() => (
+      <PuppetEditor initialDocument={createDemoDocument()} onDocumentChange={onDocumentChange} />
+    ))
 
     fireEvent.click(view.getByRole('button', {name: '1차원 Parameter 추가'}))
     fireEvent.keyDown(globalThis.window, {ctrlKey: true, key: 'z'})
@@ -406,7 +466,9 @@ describe('PuppetEditor', () => {
     const secondCallback = vi.fn()
     const [listener, setListener] = createSignal({callback: firstCallback})
     mocks.createPlayer.mockResolvedValue(player)
-    const view = render(() => <PuppetEditor onDocumentChange={listener().callback} />)
+    const view = render(() => (
+      <PuppetEditor initialDocument={createDemoDocument()} onDocumentChange={listener().callback} />
+    ))
 
     await waitFor(() => expect(firstCallback).toHaveBeenCalledOnce())
     setListener({callback: secondCallback})
@@ -454,7 +516,9 @@ describe('PuppetEditor', () => {
     mocks.createPlayer.mockResolvedValue(player)
     mocks.importPng.mockReturnValueOnce(firstImport).mockReturnValueOnce(secondImport)
 
-    const view = render(() => <PuppetEditor onDocumentChange={onDocumentChange} />)
+    const view = render(() => (
+      <PuppetEditor initialDocument={createDemoDocument()} onDocumentChange={onDocumentChange} />
+    ))
     const input = screen.getByLabelText('불러오기')
 
     fireEvent.change(input, {
@@ -478,7 +542,7 @@ describe('PuppetEditor', () => {
     mocks.createPlayer.mockResolvedValueOnce(player).mockResolvedValueOnce(replacementPlayer)
     mocks.importPng.mockResolvedValue({document: replacementDocument, ok: true})
     player.updateDocument = vi.fn(() => false)
-    const view = render(() => <PuppetEditor />)
+    const view = render(() => <PuppetEditor initialDocument={createDemoDocument()} />)
 
     await waitFor(() => expect(mocks.createPlayer).toHaveBeenCalledOnce())
     fireEvent.change(screen.getByLabelText('불러오기'), {
@@ -491,7 +555,7 @@ describe('PuppetEditor', () => {
 
   test('should hide editing overlays without resetting the canvas or selection', async () => {
     mocks.createPlayer.mockResolvedValue(player)
-    const view = render(() => <PuppetEditor />)
+    const view = render(() => <PuppetEditor initialDocument={createDemoDocument()} />)
     await waitFor(() => expect(mocks.createPlayer).toHaveBeenCalled())
     const canvas = view.container.querySelector('canvas')
     const overlays = view.container.querySelector('.editing-overlays')

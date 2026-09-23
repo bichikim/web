@@ -16,6 +16,7 @@ import {MeshEditor} from './MeshEditor'
 import {PlayerCanvas, type PlayerCanvasStatus} from './PlayerCanvas'
 
 export interface EditorViewportProps {
+  readonly physicsPreview?: boolean
   readonly meshEditingDisabled?: boolean
   readonly motionId?: string
   readonly onMeshEditingStart?: () => void
@@ -61,6 +62,9 @@ const useViewportMeshIssue = (props: EditorViewportProps) =>
         }),
   )
 
+const getPlaybackDocument = (options: EditorViewportProps) =>
+  options.editMode === 'parameter' ? {...options.document, motions: []} : options.document
+
 export const EditorViewport = (props: EditorViewportProps) => {
   const [meshNotice, setMeshNotice] = createSignal<string | null>(null)
   const [meshEditing, setMeshEditing] = createSignal(false)
@@ -75,28 +79,25 @@ export const EditorViewport = (props: EditorViewportProps) => {
   const editDocument = () =>
     editingMesh() ? (props.sourceDocument ?? props.document) : props.document
   const displayDocument = createMemo(() =>
-    editingMesh() ? getRestPreview(editDocument()) : props.document,
+    editingMesh() ? getRestPreview(editDocument()) : getPlaybackDocument(props),
   )
-
   const [editingVisible, setEditingVisible] = createSignal(true)
   const [displayMount, setDisplayMount] = createSignal<HTMLDivElement>()
   const meshControls = (
-    <>
-      <Show when={props.editMode === 'parameter' && props.activePartId !== undefined}>
-        <MeshModeControl
-          editing={editingMesh()}
-          notice={meshNotice() ?? undefined}
-          disabledReason={meshIssue() ?? undefined}
-          onChange={(editing) => {
-            setMeshNotice(null)
-            if (editing) {
-              props.onMeshEditingStart?.()
-            }
-            setMeshEditing(editing)
-          }}
-        />
-      </Show>
-    </>
+    <Show when={props.editMode === 'parameter' && props.activePartId !== undefined}>
+      <MeshModeControl
+        editing={editingMesh()}
+        notice={meshNotice() ?? undefined}
+        disabledReason={meshIssue() ?? undefined}
+        onChange={(editing) => {
+          setMeshNotice(null)
+          if (editing) {
+            props.onMeshEditingStart?.()
+          }
+          setMeshEditing(editing)
+        }}
+      />
+    </Show>
   )
   return (
     <section
@@ -140,8 +141,9 @@ export const EditorViewport = (props: EditorViewportProps) => {
         }
       >
         <PlayerCanvas
+          physicsPreview={!editingMesh() && (props.physicsPreview ?? true)}
           document={displayDocument()}
-          motionId={props.motionId}
+          motionId={props.editMode === 'parameter' ? undefined : props.motionId}
           onFrame={(frame: PlayerFrame) => props.onTimeChange?.(frame.time)}
           onPlayerChange={props.onPlayerChange}
           onStatusChange={props.onStatusChange}

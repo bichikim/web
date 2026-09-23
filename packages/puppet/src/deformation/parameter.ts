@@ -19,7 +19,10 @@ const getPartVertices = (
   keyform: PuppetParameterKeyform,
   partId: string,
   restVertices: ReadonlyArray<number>,
-) => keyform.parts.find((part) => part.partId === partId)?.vertices ?? restVertices
+) => {
+  const vertices = keyform.parts.find((part) => part.partId === partId)?.vertices
+  return vertices === undefined || vertices.length === 0 ? restVertices : vertices
+}
 
 const interpolateVertices = (
   first: ReadonlyArray<number>,

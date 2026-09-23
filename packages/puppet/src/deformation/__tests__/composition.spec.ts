@@ -132,8 +132,6 @@ test('should combine five independent inputs with authored suppression through a
     motions: [],
     parameterBindings: ids.map((id, index) => ({
       id,
-      parameterIds: [id],
-      targetPartIds: [part.id],
       influences: ids.slice(index + 1).map((parameterId) => ({
         parameterId,
         points: [
@@ -141,10 +139,10 @@ test('should combine five independent inputs with authored suppression through a
           {value: 1, weight: 0},
         ],
       })),
+      parameterIds: [id],
       keyforms: [
-        {values: [0], parts: [{partId: part.id, vertices: part.mesh.vertices}]},
+        {parts: [{partId: part.id, vertices: part.mesh.vertices}], values: [0]},
         {
-          values: [1],
           parts: [
             {
               partId: part.id,
@@ -153,10 +151,12 @@ test('should combine five independent inputs with authored suppression through a
               ),
             },
           ],
+          values: [1],
         },
       ],
+      targetPartIds: [part.id],
     })),
-    parameters: ids.map((id) => ({id, name: id, minimum: 0, maximum: 1, defaultValue: 0})),
+    parameters: ids.map((id) => ({id, minimum: 0, defaultValue: 0, name: id, maximum: 1})),
   }
   const parsed = parseDocument(serializeDocument(document))
   if (!parsed.ok) {
@@ -172,7 +172,7 @@ test('should combine five independent inputs with authored suppression through a
   expect(sample({a: 1})).toBe(330)
   expect(sample({a: 0.5, i: 0.5})).toBe(332.5)
   expect(sample({a: 1, i: 0.5, u: 0.75})).toBe(347.5)
-  expect(sample({a: 1, i: 1, e: 1, u: 1, o: 1})).toBe(370)
+  expect(sample({a: 1, e: 1, i: 1, o: 1, u: 1})).toBe(370)
   expect(sample({a: 0})).toBe(320)
   expect(sample({a: 0.5, i: 0.5})).toBe(332.5)
 })

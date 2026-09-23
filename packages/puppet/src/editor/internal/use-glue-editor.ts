@@ -131,16 +131,16 @@ export const useGlueEditor = (props: UseGlueEditorProps) => {
         props.selectedPartIds?.includes(glue.second.partId),
     )
   return {
-    first,
-    hasParameter,
     canEdit,
-    label,
+    first,
     change,
-    selected,
+    hasParameter,
     connect,
-    setFirst,
+    label,
     connections,
-    selectable,
+    selected,
     sampled,
+    setFirst,
+    selectable,
   }
 }

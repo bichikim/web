@@ -11,20 +11,26 @@ import {parseDocument} from '../parse-document'
 import {serializeDocument} from '../serialize-document'
 
 const mocks = vi.hoisted(() => ({
-  AlphaMask: vi.fn(),
   Application: vi.fn(),
   ColorMatrixFilter: vi.fn(),
   Container: vi.fn(),
+  MaskFilter: vi.fn(),
+  Matrix: vi.fn(),
   MeshSimple: vi.fn(),
+  RenderTextureCreate: vi.fn(),
+  Sprite: vi.fn(),
   TextureFrom: vi.fn(),
 }))
 
 vi.mock('pixi.js', () => ({
-  AlphaMask: mocks.AlphaMask,
   Application: mocks.Application,
   ColorMatrixFilter: mocks.ColorMatrixFilter,
   Container: mocks.Container,
+  MaskFilter: mocks.MaskFilter,
+  Matrix: mocks.Matrix,
   MeshSimple: mocks.MeshSimple,
+  RenderTexture: {create: mocks.RenderTextureCreate},
+  Sprite: mocks.Sprite,
   Texture: {from: mocks.TextureFrom},
 }))
 
@@ -132,6 +138,28 @@ describe('createPlayer', () => {
 
     expect(root.addChild.mock.calls.slice(0, 3).map(([mesh]) => mesh)).toEqual(runtimeMeshes)
 
+    const orderedDocument = prepareDocument({
+      ...document,
+      layerOrderRules: [
+        {
+          partIds: [document.parts[1]!.id, document.parts[2]!.id],
+          placement: 'before',
+          referencePartId: document.parts[0]!.id,
+          when: {comparison: 'greater-than', parameterIds: ['angle-x', 'angle-y'], threshold: 20},
+        },
+      ],
+      motions: [],
+    })
+    player.updateDocument(orderedDocument)
+    player.setParameterValues({'angle-x': 15, 'angle-y': 10})
+    expect(root.addChild.mock.calls.slice(-3).map(([mesh]) => mesh)).toEqual([
+      runtimeMeshes[1],
+      runtimeMeshes[2],
+      runtimeMeshes[0],
+    ])
+    player.setParameterValues({'angle-x': 0, 'angle-y': 0})
+    expect(root.addChild.mock.calls.slice(-3).map(([mesh]) => mesh)).toEqual(runtimeMeshes)
+
     const group = document.scene!.roots[1]!
     const hiddenDocument = prepareDocument({
       ...document,
@@ -147,6 +175,7 @@ describe('createPlayer', () => {
       destroy: vi.fn(),
       init: vi.fn().mockResolvedValue(undefined),
       render: vi.fn(),
+      renderer: {render: vi.fn(), resolution: 1},
       screen: {height: 100, width: 200},
       stage: {addChild: vi.fn()},
       start: vi.fn(),
@@ -193,8 +222,9 @@ describe('createPlayer', () => {
         constructor() {
           const container = {
             addChild: vi.fn(),
+            destroy: vi.fn(),
             position: {set: vi.fn()},
-            scale: {set: vi.fn()},
+            scale: {set: vi.fn(), x: 1},
           }
           containers.push(container)
           Object.assign(this, container)
@@ -231,19 +261,47 @@ describe('createPlayer', () => {
         }
       } as unknown as () => unknown,
     )
-    mocks.AlphaMask.mockImplementation(
+    mocks.MaskFilter.mockImplementation(
       class {
-        channel = 'red'
+        destroy = vi.fn()
         inverse = false
-        mask: unknown
-
-        constructor(options: {readonly mask: unknown}) {
-          this.mask = options.mask
+        constructor(options: {readonly sprite: unknown; readonly channel: string}) {
+          Object.assign(this, options)
         }
       } as unknown as () => unknown,
     )
+    mocks.Matrix.mockImplementation(
+      class {
+        translate = vi.fn().mockReturnThis()
+      } as unknown as () => unknown,
+    )
+    mocks.Sprite.mockImplementation(
+      class {
+        destroy = vi.fn()
+        position = {set: vi.fn()}
+        texture: unknown
+        constructor(texture: unknown) {
+          this.texture = texture
+        }
+      } as unknown as () => unknown,
+    )
+    mocks.RenderTextureCreate.mockImplementation(() => {
+      const texture = {
+        destroy: vi.fn(),
+        height: 1,
+        resize: vi.fn((width: number, height: number, resolution: number) => {
+          texture.width = width
+          texture.height = height
+          texture.source.resolution = resolution
+        }),
+        source: {resolution: 1},
+        width: 1,
+      }
+      return texture
+    })
     mocks.ColorMatrixFilter.mockImplementation(
       class {
+        destroy = vi.fn()
         matrix: ReadonlyArray<number> = []
       } as unknown as () => unknown,
     )
@@ -303,24 +361,37 @@ describe('createPlayer', () => {
     const nestedMask = containers[3]!
 
     expect(styledMesh.alpha).toBe(0.75)
-    expect(styledMesh.blendMode).toBe('multiply')
-    expect(styledMesh.filters).toEqual([mocks.ColorMatrixFilter.mock.results[0]?.value])
+    expect(styledMesh.blendMode).toBe('normal')
+    expect(styledMesh.filters).toEqual([
+      mocks.ColorMatrixFilter.mock.results[0]?.value,
+      mocks.MaskFilter.mock.results[0]?.value,
+    ])
     expect(mocks.ColorMatrixFilter.mock.results[0]?.value.matrix).toEqual([
       0.4, 0, 0, 0, 0.2, 0, 1, 0, 0, 0, 0, 0, 0.15, 0, 0.4, 0, 0, 0, 1, 0,
     ])
     expect(styledMask.addChild).toHaveBeenCalledOnce()
-    expect(clippedMask.addChild).toHaveBeenCalledWith(nestedMask)
-    const styledEffect = mocks.AlphaMask.mock.results[0]?.value
-    const nestedEffect = mocks.AlphaMask.mock.results[1]?.value
-    const clippedMaskEffect = mocks.AlphaMask.mock.results[2]?.value
-    expect(styledEffect).toMatchObject({channel: 'alpha', mask: styledMask})
-    expect(styledMesh.addEffect).toHaveBeenCalledWith(styledEffect)
-    expect(nestedMaskSource.addEffect).toHaveBeenCalledWith(nestedEffect)
-    expect(nestedEffect).toMatchObject({channel: 'alpha', inverse: false, mask: nestedMask})
-    expect(clippedMaskEffect).toMatchObject({channel: 'alpha', inverse: false, mask: clippedMask})
-    expect(clippedMesh.addEffect).toHaveBeenCalledWith(clippedMaskEffect)
-    expect(root.addChild).toHaveBeenCalledWith(clippedMask)
+    expect(clippedMask.addChild).toHaveBeenCalledWith(mocks.Sprite.mock.results[1]?.value)
+    const styledEffect = mocks.MaskFilter.mock.results[0]?.value
+    const nestedEffect = mocks.MaskFilter.mock.results[1]?.value
+    const clippedMaskEffect = mocks.MaskFilter.mock.results[2]?.value
+    expect(styledEffect).toMatchObject({
+      blendMode: 'multiply',
+      channel: 'alpha',
+      sprite: mocks.Sprite.mock.results[0]?.value,
+    })
+    expect(nestedMaskSource.filters).toEqual([nestedEffect])
+    expect(nestedEffect).toMatchObject({channel: 'alpha', inverse: false})
+    expect(clippedMaskEffect).toMatchObject({channel: 'alpha', inverse: false})
+    expect(clippedMesh.filters).toEqual([clippedMaskEffect])
+    expect(root.addChild).toHaveBeenCalledWith(mocks.Sprite.mock.results[2]?.value)
     expect(root.addChild).toHaveBeenCalledWith(styledMesh)
+
+    const textures = mocks.RenderTextureCreate.mock.results.map((result) => result.value)
+    const allocations = textures.map((texture) => texture.resize.mock.calls.length)
+    const passes = application.renderer.render.mock.calls.length
+    player.seek(0)
+    expect(textures.map((texture) => texture.resize.mock.calls.length)).toEqual(allocations)
+    expect(application.renderer.render.mock.calls.length - passes).toBe(3)
 
     player.setParameterValues({'angle-x': -15, 'angle-y': 0})
     expect(styledMesh.alpha).toBe(0.25)
@@ -348,5 +419,19 @@ describe('createPlayer', () => {
       ),
     })
     expect(player.updateDocument(changedMaskUvDocument)).toBe(false)
+    expect(mocks.RenderTextureCreate).toHaveBeenCalledTimes(3)
+    expect(application.renderer.render).toHaveBeenCalled()
+    player.destroy()
+    player.destroy()
+    for (const result of mocks.RenderTextureCreate.mock.results) {
+      expect(result.value.destroy).toHaveBeenCalledExactlyOnceWith(true)
+    }
+    for (const result of mocks.MaskFilter.mock.results) {
+      expect(result.value.destroy).toHaveBeenCalledOnce()
+    }
+    for (const result of mocks.Sprite.mock.results) {
+      expect(result.value.destroy).toHaveBeenCalledOnce()
+    }
+    expect(application.destroy).toHaveBeenCalledOnce()
   })
 })
