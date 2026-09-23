@@ -33,7 +33,7 @@ export const createAiJobOutput = (props: AiJobOutputOptions) => {
     shouldSpeak: boolean,
   ): Promise<boolean> => {
     const speakOnce = shouldSpeak && handledCompletionJobId !== nextJob.id
-    let {result} = nextJob
+    let result: AiJobResult
     try {
       result = await props.client.getJobResult(nextJob.id)
     } catch (error: unknown) {
@@ -41,9 +41,6 @@ export const createAiJobOutput = (props: AiJobOutputOptions) => {
         return false
       }
 
-      if (result?.text !== undefined && speakOnce) {
-        await speakText(result.text, revision)
-      }
       props.onError(
         getClientErrorCode(error) === 'ai_artifact_not_available'
           ? '결과 보관 기간이 지났거나 결과를 더 이상 열 수 없어요.'
