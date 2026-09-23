@@ -207,7 +207,7 @@ const StudioSceneView = (props: StudioSceneViewProps) => (
         }
       >
         <div
-          class="absolute inset-0 bg-transparent"
+          class="pointer-events-auto absolute inset-0 bg-transparent"
           onClick={(event) => props.websiteBackgroundInteraction?.handleClick(event)}
           onContextMenu={(event) => props.websiteBackgroundInteraction?.handleContextMenu(event)}
           onPointerCancel={(event) =>

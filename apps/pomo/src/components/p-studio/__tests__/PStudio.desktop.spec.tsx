@@ -62,6 +62,20 @@ describe('PStudio', () => {
     expect(vi.mocked(studioMocks.synchronizeDesktopBackground)).toHaveBeenCalled()
   })
 
+  it('should keep the website event relay interactive when the desktop background is click-through', () => {
+    vi.stubEnv('VITE_POMO_IS_DESKTOP', 'true')
+    configureStudio({
+      backgroundMode: 'website',
+      desktopMode: 'desktop',
+      entrySession: true,
+      websiteUrl: 'https://example.com/dashboard',
+    })
+
+    renderStudio()
+
+    expect(screen.getByLabelText('Pomo').querySelector('.pointer-events-auto')).toBeInTheDocument()
+  })
+
   it('should keep only the scene visible while the window is the desktop background', () => {
     const {registerEventActionExecutor} = configureStudio({
       desktopMode: 'desktop',

@@ -1,5 +1,6 @@
 use std::{
     collections::HashMap,
+    ffi::c_void,
     ptr::NonNull,
     sync::{
         Arc, Mutex, MutexGuard,
@@ -13,17 +14,17 @@ use block2::RcBlock;
 use objc2::MainThreadMarker;
 use objc2_app_kit::{
     NSApp, NSApplicationActivationPolicy, NSApplicationDidChangeScreenParametersNotification,
-    NSColor, NSEvent, NSEventModifierFlags, NSEventType, NSScreen, NSView, NSWindow,
-    NSWindowCollectionBehavior, NSWindowLevel, NSWindowOrderingMode, NSWorkspace,
-    NSWorkspaceDidWakeNotification, NSWorkspaceScreensDidSleepNotification,
-    NSWorkspaceScreensDidWakeNotification, NSWorkspaceSessionDidBecomeActiveNotification,
-    NSWorkspaceSessionDidResignActiveNotification, NSWorkspaceWillSleepNotification,
+    NSColor, NSScreen, NSView, NSWindow, NSWindowCollectionBehavior, NSWindowLevel,
+    NSWindowOrderingMode, NSWorkspace, NSWorkspaceDidWakeNotification,
+    NSWorkspaceScreensDidSleepNotification, NSWorkspaceScreensDidWakeNotification,
+    NSWorkspaceSessionDidBecomeActiveNotification, NSWorkspaceSessionDidResignActiveNotification,
+    NSWorkspaceWillSleepNotification,
 };
 use objc2_core_graphics::{CGWindowLevelForKey, CGWindowLevelKey};
 use objc2_foundation::{NSNotification, NSNotificationCenter, NSNotificationName, NSRect};
 use tauri::{
     AppHandle, LogicalPosition, LogicalSize, Manager, PhysicalPosition, PhysicalSize, Position,
-    Runtime, Size, Url, Webview, WebviewBuilder, WebviewUrl, WebviewWindow,
+    Runtime, Size, Url, Webview, WebviewBuilder, WebviewUrl, WebviewWindow, Window,
 };
 
 use crate::{
@@ -245,7 +246,7 @@ pub(crate) fn set_control_surface_corner_radius<R: Runtime>(
     Ok(())
 }
 
-fn reset_surface_corner_radius<R: Runtime>(window: &WebviewWindow<R>) -> Result<()> {
+fn reset_surface_corner_radius<W: NativeWindowHandle>(window: &W) -> Result<()> {
     with_native_window(window, |window| -> Result<()> {
         window.setOpaque(true);
         let background = NSColor::windowBackgroundColor();
@@ -280,7 +281,7 @@ fn website_background_webview_label(window_label: &str) -> String {
     format!("{window_label}{WEBSITE_BACKGROUND_WEBVIEW_SUFFIX}")
 }
 
-fn set_surface_transparent<R: Runtime>(window: &WebviewWindow<R>) -> Result<()> {
+fn set_surface_transparent<W: NativeWindowHandle>(window: &W) -> Result<()> {
     with_native_window(window, |window| {
         window.setOpaque(false);
         let clear = NSColor::clearColor();
@@ -290,9 +291,9 @@ fn set_surface_transparent<R: Runtime>(window: &WebviewWindow<R>) -> Result<()> 
     Ok(())
 }
 
-fn close_website_background<R: Runtime>(window: &WebviewWindow<R>) -> Result<()> {
-    let label = website_background_webview_label(window.label());
-    let parent = window.as_ref().window();
+fn close_website_background<R: Runtime>(main_webview: &Webview<R>) -> Result<()> {
+    let label = website_background_webview_label(main_webview.label());
+    let parent = main_webview.window();
 
     if let Some(webview) = parent
         .webviews()
@@ -338,37 +339,103 @@ fn place_website_background_below<R: Runtime>(
     Ok(())
 }
 
-fn background_mouse_event_type(kind: BackgroundMouseEventKind, button: u8) -> NSEventType {
-    match (kind, button) {
-        (BackgroundMouseEventKind::Down, 0) => NSEventType::LeftMouseDown,
-        (BackgroundMouseEventKind::Up, 0) => NSEventType::LeftMouseUp,
-        (BackgroundMouseEventKind::Down, 2) => NSEventType::RightMouseDown,
-        (BackgroundMouseEventKind::Up, 2) => NSEventType::RightMouseUp,
-        (BackgroundMouseEventKind::Down, _) => NSEventType::OtherMouseDown,
-        (BackgroundMouseEventKind::Up, _) => NSEventType::OtherMouseUp,
-        (BackgroundMouseEventKind::Dragged, 1) => NSEventType::OtherMouseDragged,
-        (BackgroundMouseEventKind::Dragged, 2) => NSEventType::RightMouseDragged,
-        (BackgroundMouseEventKind::Dragged, _) => NSEventType::LeftMouseDragged,
-    }
-}
+fn website_mouse_event_script(event: &ValidatedBackgroundMouseEvent) -> String {
+    let kind = match event.kind {
+        BackgroundMouseEventKind::Down => "down",
+        BackgroundMouseEventKind::Up => "up",
+        BackgroundMouseEventKind::Dragged => "dragged",
+    };
 
-fn background_mouse_modifiers(event: &ValidatedBackgroundMouseEvent) -> NSEventModifierFlags {
-    let mut modifiers = NSEventModifierFlags::empty();
+    format!(
+        r#"
+(() => {{
+  const x = {x};
+  const y = {y};
+  const button = {button};
+  const buttons = {buttons};
+  const clickCount = {click_count};
+  const modifiers = {{
+    altKey: {alt_key},
+    ctrlKey: {ctrl_key},
+    metaKey: {meta_key},
+    shiftKey: {shift_key},
+  }};
+  const stateKey = '__pomoDesktopMouseState';
+  const state = window[stateKey] || (window[stateKey] = {{}});
+  const hit = document.elementFromPoint(x, y);
+  const common = {{
+    bubbles: true,
+    cancelable: true,
+    clientX: x,
+    clientY: y,
+    composed: true,
+    detail: clickCount,
+    view: window,
+    ...modifiers,
+  }};
 
-    if event.alt_key {
-        modifiers.insert(NSEventModifierFlags::Option);
-    }
-    if event.ctrl_key {
-        modifiers.insert(NSEventModifierFlags::Control);
-    }
-    if event.meta_key {
-        modifiers.insert(NSEventModifierFlags::Command);
-    }
-    if event.shift_key {
-        modifiers.insert(NSEventModifierFlags::Shift);
-    }
+  const dispatchMouse = (type, target, overrides = {{}}) =>
+    target.dispatchEvent(new MouseEvent(type, {{...common, ...overrides}}));
+  const dispatchPointer = (type, target, overrides = {{}}) => {{
+    if (typeof PointerEvent !== 'function') return;
+    target.dispatchEvent(
+      new PointerEvent(type, {{
+        ...common,
+        ...overrides,
+        isPrimary: true,
+        pointerId: 1,
+        pointerType: 'mouse',
+      }}),
+    );
+  }};
 
-    modifiers
+  if ('{kind}' === 'down') {{
+    if (!hit) return;
+    state.target = hit;
+    state.x = x;
+    state.y = y;
+    state.dragged = false;
+    state.button = button;
+    dispatchPointer('pointerdown', hit, {{button, buttons}});
+    dispatchMouse('mousedown', hit, {{button, buttons}});
+    if (hit instanceof HTMLElement) hit.focus({{preventScroll: true}});
+    return;
+  }}
+
+  const target = hit || state.target;
+  if (!target) return;
+
+  if ('{kind}' === 'dragged') {{
+    if (state.target && Math.hypot(x - state.x, y - state.y) > 4) state.dragged = true;
+    dispatchPointer('pointermove', target, {{button, buttons}});
+    dispatchMouse('mousemove', target, {{button, buttons}});
+    return;
+  }}
+
+  const clickTarget = state.target || target;
+  dispatchPointer('pointerup', target, {{button, buttons: 0}});
+  dispatchMouse('mouseup', target, {{button, buttons: 0}});
+  if (!state.dragged && button === 0) {{
+    dispatchMouse('click', clickTarget, {{button: 0, buttons: 0}});
+  }} else if (button === 1) {{
+    dispatchMouse('auxclick', clickTarget, {{button: 1, buttons: 0}});
+  }} else if (button === 2) {{
+    dispatchMouse('contextmenu', clickTarget, {{button: 2, buttons: 0}});
+  }}
+  delete window[stateKey];
+}})()
+"#,
+        alt_key = event.alt_key,
+        button = event.button,
+        buttons = event.buttons,
+        click_count = event.click_count,
+        ctrl_key = event.ctrl_key,
+        kind = kind,
+        meta_key = event.meta_key,
+        shift_key = event.shift_key,
+        x = event.x,
+        y = event.y,
+    )
 }
 
 pub(crate) fn forward_background_mouse_event<R: Runtime>(
@@ -387,65 +454,38 @@ pub(crate) fn forward_background_mouse_event<R: Runtime>(
         return Ok(());
     };
 
-    let main_webview = main_webview.clone();
-    main_webview.with_webview(move |main_platform_webview| {
-        let main_view = main_platform_webview.inner() as usize;
-        if let Err(error) = child.with_webview(move |child_platform_webview| {
-            let main_view = unsafe { &*(main_view as *const NSView) };
-            let child_view = unsafe { &*(child_platform_webview.inner() as *const NSView) };
-            let main_bounds = main_view.bounds();
-            let y = if main_view.isFlipped() {
-                event.y
-            } else {
-                main_bounds.origin.y + main_bounds.size.height - event.y
-            };
-            let main_point = objc2_foundation::NSPoint::new(event.x, y);
-            let window_point = main_view.convertPoint_toView(main_point, None);
-            let Some(native_window) = child_view.window() else {
-                return;
-            };
-            let event_type = background_mouse_event_type(event.kind, event.button);
-            let Some(native_event) = NSEvent::mouseEventWithType_location_modifierFlags_timestamp_windowNumber_context_eventNumber_clickCount_pressure(
-                event_type,
-                window_point,
-                background_mouse_modifiers(&event),
-                0.0,
-                native_window.windowNumber(),
-                None,
-                0,
-                event.click_count as _,
-                1.0,
-            ) else {
-                return;
-            };
-
-            native_window.makeFirstResponder(Some(child_view));
-            match event.kind {
-                BackgroundMouseEventKind::Down => match event.button {
-                    0 => child_view.mouseDown(&native_event),
-                    2 => child_view.rightMouseDown(&native_event),
-                    _ => child_view.otherMouseDown(&native_event),
-                },
-                BackgroundMouseEventKind::Up => match event.button {
-                    0 => child_view.mouseUp(&native_event),
-                    2 => child_view.rightMouseUp(&native_event),
-                    _ => child_view.otherMouseUp(&native_event),
-                },
-                BackgroundMouseEventKind::Dragged => match event.button {
-                    2 => child_view.rightMouseDragged(&native_event),
-                    _ => child_view.mouseDragged(&native_event),
-                },
-            }
-        }) {
-            eprintln!("failed to forward website background mouse event: {error}");
-        }
-    })?;
+    child.eval(website_mouse_event_script(&event))?;
 
     Ok(())
 }
 
-fn with_native_window<R: Runtime, T>(
-    window: &WebviewWindow<R>,
+trait NativeWindowHandle {
+    fn native_view(&self) -> tauri::Result<*mut c_void>;
+    fn run_on_main_thread<F: FnOnce() + Send + 'static>(&self, operation: F) -> tauri::Result<()>;
+}
+
+impl<R: Runtime> NativeWindowHandle for Window<R> {
+    fn native_view(&self) -> tauri::Result<*mut c_void> {
+        self.ns_view()
+    }
+
+    fn run_on_main_thread<F: FnOnce() + Send + 'static>(&self, operation: F) -> tauri::Result<()> {
+        self.run_on_main_thread(operation)
+    }
+}
+
+impl<R: Runtime> NativeWindowHandle for WebviewWindow<R> {
+    fn native_view(&self) -> tauri::Result<*mut c_void> {
+        self.ns_view()
+    }
+
+    fn run_on_main_thread<F: FnOnce() + Send + 'static>(&self, operation: F) -> tauri::Result<()> {
+        self.run_on_main_thread(operation)
+    }
+}
+
+fn with_native_window<W: NativeWindowHandle, T>(
+    window: &W,
     operation: impl FnOnce(&NSWindow) -> T + Send + 'static,
 ) -> Result<T>
 where
@@ -454,7 +494,7 @@ where
     const INSTALLATION_TIMEOUT: Duration = Duration::from_secs(2);
     const RETRY_DELAY: Duration = Duration::from_millis(10);
 
-    let native_view = window.ns_view()? as usize;
+    let native_view = window.native_view()? as usize;
     let operation = Arc::new(Mutex::new(Some(operation)));
     let deadline = Instant::now() + INSTALLATION_TIMEOUT;
 
@@ -612,7 +652,7 @@ fn restore_background_content_unlocked<R: Runtime>(
     state: &SurfaceState,
     window: &WebviewWindow<R>,
 ) -> Result<()> {
-    close_website_background(window)?;
+    close_website_background(window.as_ref())?;
     reset_surface_corner_radius(window)?;
 
     let original_url = state
@@ -639,7 +679,7 @@ fn navigate_background_unlocked<R: Runtime>(
     window: &WebviewWindow<R>,
     url: Url,
 ) -> Result<()> {
-    close_website_background(window)?;
+    close_website_background(window.as_ref())?;
     let label = window.label().to_owned();
     active_background_interaction(state, &label)?;
     let original_url = window.url()?;
@@ -708,6 +748,28 @@ pub(crate) fn navigate_background_surface<R: Runtime>(
     }
 }
 
+pub(crate) fn navigate_background_webview<R: Runtime>(
+    state: &SurfaceState,
+    main_webview: &Webview<R>,
+    url: Url,
+) -> Result<()> {
+    let _operation = lock_operation(state)?;
+    let label = website_background_webview_label(main_webview.label());
+    let parent = main_webview.window();
+    let child = parent
+        .webviews()
+        .into_iter()
+        .find(|webview| webview.label() == label)
+        .ok_or_else(|| {
+            Error::WindowOperation(format!(
+                "website background webview '{label}' was not found"
+            ))
+        })?;
+
+    child.navigate(url)?;
+    Ok(())
+}
+
 pub(crate) fn restore_background_content<R: Runtime>(
     state: &SurfaceState,
     window: &WebviewWindow<R>,
@@ -716,13 +778,50 @@ pub(crate) fn restore_background_content<R: Runtime>(
     restore_background_content_unlocked(state, window)
 }
 
+pub(crate) fn restore_background_webview<R: Runtime>(
+    state: &SurfaceState,
+    main_webview: &Webview<R>,
+) -> Result<()> {
+    let _operation = lock_operation(state)?;
+    let parent = main_webview.window();
+    let label = website_background_webview_label(main_webview.label());
+
+    if let Some(child) = parent
+        .webviews()
+        .into_iter()
+        .find(|webview| webview.label() == label)
+    {
+        child.close()?;
+    }
+
+    reset_surface_corner_radius(&parent)?;
+
+    let original_url = state
+        .background_urls
+        .lock()
+        .map_err(|error| Error::WindowOperation(error.to_string()))?
+        .get(main_webview.label())
+        .cloned();
+
+    if let Some(original_url) = original_url {
+        main_webview.navigate(original_url)?;
+        state
+            .background_urls
+            .lock()
+            .map_err(|error| Error::WindowOperation(error.to_string()))?
+            .remove(main_webview.label());
+    }
+
+    Ok(())
+}
+
 pub(crate) fn set_background<R: Runtime>(
     state: &SurfaceState,
     window: &WebviewWindow<R>,
     interaction: BackgroundInteraction,
 ) -> Result<()> {
     let _operation = lock_operation(state)?;
-    close_website_background(window)?;
+    close_website_background(window.as_ref())?;
     let snapshot = baseline(state, window)?;
     apply_snapshot(window, snapshot)?;
     apply_background(window, interaction)?;
@@ -867,7 +966,7 @@ pub(crate) fn set_widget<R: Runtime>(
     corner_radius: Option<f64>,
 ) -> Result<()> {
     let _operation = lock_operation(state)?;
-    close_website_background(window)?;
+    close_website_background(window.as_ref())?;
     set_background_state(state, window.label(), None)?;
     let snapshot = baseline(state, window)?;
     apply_snapshot(window, snapshot)?;

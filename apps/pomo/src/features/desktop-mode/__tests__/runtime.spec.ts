@@ -179,6 +179,34 @@ describe('applyDesktopMode', () => {
     expect(restoreBackgroundContent).not.toHaveBeenCalled()
   })
 
+  it('should forward the latest saved website URL on every synchronization', async () => {
+    vi.stubEnv('VITE_POMO_IS_DESKTOP', 'true')
+    localStorage.setItem('pomo:desktop-mode:v1', 'normal')
+    const read = vi
+      .fn()
+      .mockResolvedValueOnce({
+        items: [],
+        preferences: {mode: 'website', websiteUrl: 'https://example.com/first'},
+      })
+      .mockResolvedValueOnce({
+        items: [],
+        preferences: {mode: 'website', websiteUrl: 'https://example.com/second'},
+      })
+    vi.mocked(getBackgroundRepository).mockResolvedValue({read} as never)
+
+    await synchronizeDesktopBackground()
+    await synchronizeDesktopBackground()
+
+    expect(navigateBackgroundSurface).toHaveBeenNthCalledWith(1, {
+      label: 'background',
+      url: 'https://example.com/first',
+    })
+    expect(navigateBackgroundSurface).toHaveBeenNthCalledWith(2, {
+      label: 'background',
+      url: 'https://example.com/second',
+    })
+  })
+
   it('should restore the local background document when a non-website background is selected', async () => {
     vi.stubEnv('VITE_POMO_IS_DESKTOP', 'true')
     localStorage.setItem('pomo:desktop-mode:v1', 'desktop')
