@@ -421,6 +421,67 @@ describe('playback-storage', () => {
     expect(other.state.web).toMatchObject({isPlaying: false, savedAt: 50, trackId: 'other'})
   })
 
+  it('should preserve latest native playback across instances sharing storage', async () => {
+    let native: StoredPlaybackState | null = null
+    let web: StoredPlaybackState | null = null
+    const writeNative = async (value: StoredPlaybackState) => {
+      native = value
+    }
+    const createSharedAdapter = () => {
+      const adapter = {
+        readToss: vi.fn(async () => native),
+        readWeb: vi.fn(() => web),
+        usesTossStorage: vi.fn(() => true),
+        writeToss: vi.fn(writeNative),
+        writeWeb: vi.fn((value) => {
+          web = value
+          return null
+        }),
+      } satisfies PlaybackStorageAdapter
+      return adapter
+    }
+    const firstAdapter = createSharedAdapter()
+    const secondAdapter = createSharedAdapter()
+    const pending = Promise.withResolvers<void>()
+    firstAdapter.writeToss.mockImplementationOnce(async (value) => {
+      await pending.promise
+      await writeNative(value)
+    })
+
+    const firstPlaybackStorage = createPPlaybackStorage({now: () => 100}, firstAdapter, vi.fn())
+    const secondPlaybackStorage = createPPlaybackStorage({now: () => 200}, secondAdapter, vi.fn())
+    const firstWrite = firstPlaybackStorage.write({
+      isPlaying: true,
+      positionSeconds: 1,
+      trackId: 'stale',
+    })
+    await vi.waitFor(() => expect(firstAdapter.writeToss).toHaveBeenCalledOnce())
+
+    const secondWrite = secondPlaybackStorage.write({
+      isPlaying: false,
+      positionSeconds: 9,
+      trackId: 'latest',
+    })
+    await secondWrite
+    expect(native).toMatchObject({savedAt: 200, trackId: 'latest'})
+
+    pending.resolve()
+    await firstWrite
+    expect(native).toEqual({
+      isPlaying: false,
+      positionSeconds: 9,
+      savedAt: 200,
+      trackId: 'latest',
+    })
+
+    web = null
+    await expect(secondPlaybackStorage.read()).resolves.toEqual({
+      isPlaying: false,
+      positionSeconds: 9,
+      trackId: 'latest',
+    })
+  })
+
   it('should let another instance write while one Toss writer is pending', async () => {
     storage.adapter.usesTossStorage.mockReturnValue(true)
     const pending = Promise.withResolvers<void>()
