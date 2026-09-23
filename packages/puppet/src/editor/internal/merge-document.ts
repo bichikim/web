@@ -16,6 +16,7 @@ export const mergeDocument = (document: PuppetDocument, incoming: PuppetDocument
   return parseDocumentValue({
     ...document,
     glue: [...(document.glue ?? []), ...(added.glue ?? [])],
+    layerOrderRules: [...(document.layerOrderRules ?? []), ...(added.layerOrderRules ?? [])],
     motions: [...document.motions, ...added.motions],
     parameterBindings: [...(document.parameterBindings ?? []), ...(added.parameterBindings ?? [])],
     parameters: [...(document.parameters ?? []), ...(added.parameters ?? [])],

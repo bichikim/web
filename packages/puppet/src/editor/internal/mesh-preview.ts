@@ -35,6 +35,7 @@ const getPreviewParameterValues = (props: MeshEditorProps) => {
     ? parameterValueMap
     : sampleMotionParameterValues({
         motion,
+        parameters: props.document.parameters,
         parameterValues: parameterValueMap,
         time: props.previewTime ?? 0,
       })

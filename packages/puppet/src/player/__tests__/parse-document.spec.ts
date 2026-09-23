@@ -31,10 +31,124 @@ const createLegacyDocument = () => {
 }
 
 describe('parseDocument', () => {
+  test('should round-trip conditional layer rules and reject invalid references and conditions', () => {
+    const document = createDemoDocument()
+    const rule = {
+      partIds: [document.parts[0]!.id],
+      placement: 'after',
+      referencePartId: document.parts[1]!.id,
+      when: {
+        comparison: 'greater-than',
+        parameterIds: [document.parameters![0]!.id],
+        threshold: 20,
+      },
+    }
+    const source = {...document, layerOrderRules: [rule]}
+    const parsed = parseDocument(JSON.stringify(source))
+    expect(parsed).toMatchObject({document: {layerOrderRules: [rule]}, ok: true})
+    if (parsed.ok) {
+      expect(parseDocument(serializeDocument(parsed.document))).toEqual(parsed)
+    }
+    const invalidRules = [
+      null,
+      {...rule, partIds: []},
+      {...rule, partIds: ['missing']},
+      {...rule, partIds: [...rule.partIds, ...rule.partIds]},
+      {...rule, referencePartId: rule.partIds[0]},
+      {...rule, referencePartId: 'missing'},
+      {...rule, placement: 'front'},
+      {...rule, when: null},
+      {...rule, when: {...rule.when, parameterIds: []}},
+      {...rule, when: {...rule.when, parameterIds: ['missing']}},
+      {
+        ...rule,
+        when: {...rule.when, parameterIds: [...rule.when.parameterIds, ...rule.when.parameterIds]},
+      },
+      {...rule, when: {...rule.when, comparison: 'equal'}},
+      {...rule, when: {...rule.when, threshold: '20'}},
+      {...rule, when: {...rule.when, threshold: null}},
+    ]
+    for (const invalidRule of invalidRules) {
+      expect(
+        parseDocument(JSON.stringify({...document, layerOrderRules: [invalidRule]})),
+      ).toMatchObject({ok: false})
+    }
+    expect(parseDocument(JSON.stringify({...document, layerOrderRules: {}}))).toMatchObject({
+      ok: false,
+    })
+    expect(parseDocument(JSON.stringify({...document, layerOrderRules: []}))).toMatchObject({
+      ok: true,
+    })
+  })
+
   it('should parse a serialized valid document', () => {
     const document = createDemoDocument()
 
     expect(parseDocument(serializeDocument(document))).toEqual({document, ok: true})
+  })
+
+  it('should accept a positive integer frame rate and retain the legacy default when omitted', () => {
+    const document = createDemoDocument()
+
+    expect(parseDocument(JSON.stringify({...document, framesPerSecond: 30}))).toMatchObject({
+      document: {framesPerSecond: 30},
+      ok: true,
+    })
+    expect(parseDocument(JSON.stringify(document))).toMatchObject({ok: true})
+    expect(parseDocument(JSON.stringify({...document, framesPerSecond: 0}))).toMatchObject({
+      ok: false,
+    })
+    expect(parseDocument(JSON.stringify({...document, framesPerSecond: 23.5}))).toMatchObject({
+      ok: false,
+    })
+    expect(parseDocument(JSON.stringify({...document, framesPerSecond: 241}))).toMatchObject({
+      ok: false,
+    })
+  })
+
+  it('should validate discrete parameter options', () => {
+    const document = createDemoDocument()
+    const options = [
+      {label: '기본', value: 0},
+      {label: '하트', value: 1},
+      {label: '표고버섯', value: 2},
+    ]
+    const discreteParameter = {
+      defaultValue: 0,
+      id: 'eye-symbol',
+      maximum: 2,
+      minimum: 0,
+      name: '눈동자 무늬',
+      options,
+    }
+
+    expect(
+      parseDocument(
+        JSON.stringify({
+          ...document,
+          parameters: [...document.parameters!, discreteParameter],
+        }),
+      ),
+    ).toMatchObject({ok: true})
+    expect(
+      parseDocument(
+        JSON.stringify({
+          ...document,
+          parameters: [
+            {...discreteParameter, options: [...options, {label: '중복', value: 1}]},
+            ...document.parameters!,
+          ],
+        }),
+      ),
+    ).toMatchObject({ok: false})
+    expect(
+      parseDocument(
+        JSON.stringify({
+          ...document,
+          parameters: [{...discreteParameter, defaultValue: 0.5}, ...document.parameters!],
+        }),
+      ),
+    ).toMatchObject({ok: false})
   })
 
   it('should normalize legacy untagged tracks to explicit kinds', () => {

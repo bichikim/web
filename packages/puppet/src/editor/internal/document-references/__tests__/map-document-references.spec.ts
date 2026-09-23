@@ -2,6 +2,49 @@ import {expect, test} from 'vitest'
 import example from '../../../../../examples/rotation-skinning.json'
 import {parseDocumentValue} from '../../../../player/parse-document'
 import {mapDocumentReferences} from '../map-document-references'
+import {createDemoDocument} from '../../../../player/create-demo-document'
+
+test('should rename layer rule references and remove rules with removed anchors or empty selections', () => {
+  const source = createDemoDocument()
+  const partIds = source.parts.map((part) => part.id)
+  const document = {
+    ...source,
+    layerOrderRules: [
+      {
+        partIds: partIds.slice(1),
+        placement: 'before' as const,
+        referencePartId: partIds[0]!,
+        when: {
+          comparison: 'greater-than' as const,
+          parameterIds: [source.parameters![0]!.id],
+          threshold: 20,
+        },
+      },
+    ],
+  }
+  const renamed = mapDocumentReferences({document, rename: (id) => `copy:${id}`})
+  expect(parseDocumentValue(renamed).ok).toBe(true)
+  expect(renamed.layerOrderRules![0]).toMatchObject({
+    partIds: partIds.slice(1).map((id) => `copy:${id}`),
+    referencePartId: `copy:${partIds[0]}`,
+    when: {parameterIds: [`copy:${source.parameters![0]!.id}`]},
+  })
+  const trimmed = mapDocumentReferences({
+    document,
+    keepPart: (id) => id !== partIds[1],
+    rename: (id) => id,
+  })
+  expect(trimmed.layerOrderRules![0]!.partIds).toEqual([partIds[2]])
+  expect(parseDocumentValue(trimmed).ok).toBe(true)
+  expect(
+    mapDocumentReferences({document, keepPart: (id) => id !== partIds[0], rename: (id) => id})
+      .layerOrderRules,
+  ).toEqual([])
+  expect(
+    mapDocumentReferences({document, keepPart: (id) => id === partIds[0], rename: (id) => id})
+      .layerOrderRules,
+  ).toEqual([])
+})
 
 test('should transform references inside deformer bind shapes and preserve unrelated values', () => {
   const parsed = parseDocumentValue(example)

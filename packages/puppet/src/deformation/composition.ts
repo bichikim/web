@@ -1,8 +1,7 @@
 import {getBindingInfluence} from './influence'
 
-import {clamp} from 'es-toolkit/math'
-
 import type {PuppetDocument, PuppetParameter, PuppetParameterBinding} from '../player/document'
+import {resolveParameterValue} from '../player/parameter-value'
 import {
   isTwoDimensionalParameterBinding,
   type PuppetParameterValues,
@@ -28,12 +27,9 @@ const getParameterValue = (
   parameter: PuppetParameter | undefined,
   parameterValues: PuppetParameterValueMap | undefined,
 ) => {
-  const defaultValue = parameter?.defaultValue ?? 0
-  const value = parameter === undefined ? undefined : parameterValues?.[parameter.id]
-
-  return parameter === undefined || value === undefined || !Number.isFinite(value)
-    ? defaultValue
-    : clamp(value, parameter.minimum, parameter.maximum)
+  return parameter === undefined
+    ? 0
+    : resolveParameterValue(parameter, parameterValues?.[parameter.id])
 }
 
 export const getDefaultParameterValueMap = (document: PuppetDocument): PuppetParameterValueMap =>

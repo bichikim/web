@@ -1,5 +1,5 @@
-import {createEffect, createMemo, createSignal, type JSX, on} from 'solid-js'
 import {useSkinSessionControls} from './skin-session'
+import {createEffect, createMemo, createSignal, type JSX, on} from 'solid-js'
 import {useSkinPaintGesture} from './use-skin-paint-gesture'
 import {getDocumentScene, type PuppetDocument} from '../../player'
 import type {MeshEditorProps} from '../mesh-editor-contract'

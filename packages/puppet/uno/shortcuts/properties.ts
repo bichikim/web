@@ -143,6 +143,19 @@ export const propertiesShortcuts = {
     '[.puppet-editor_&_>_span]:whitespace-nowrap [.puppet-editor_&_>_span]:[color:#84918c]',
     '[.puppet-editor_&_>_span]:[font-size:0.5625rem]',
   ],
+  'physics-input-group': [
+    '[.puppet-editor_&]:grid [.puppet-editor_&]:[gap:0.5rem]',
+    '[.puppet-editor_&]:[grid-template-columns:repeat(auto-fit,_minmax(15rem,_1fr))]',
+    '[.puppet-editor_&]:[padding:0.5rem] [.puppet-editor_&]:[border:0.0625rem_solid_#35413d]',
+    '[.puppet-editor_&]:[border-radius:0.4375rem] [.puppet-editor_&]:[background:#111816]',
+  ],
+  'physics-input-header': [
+    '[.puppet-editor_&]:flex [.puppet-editor_&]:items-center [.puppet-editor_&]:justify-between',
+    '[.puppet-editor_&]:[gap:0.5rem]',
+    '[.puppet-editor_&_strong]:[color:#d9eee8] [.puppet-editor_&_strong]:[font-size:0.625rem]',
+    '[.puppet-editor_&_span]:[color:#64e5c4] [.puppet-editor_&_span]:[font-size:0.5625rem]',
+    '[.puppet-editor_&]:[grid-column:1_/_-1]',
+  ],
   'physics-number-fields': ['[.puppet-editor_&]:grid [.puppet-editor_&]:[gap:0.375rem]'],
   'physics-parameter-fields': ['[.puppet-editor_&]:grid [.puppet-editor_&]:[gap:0.375rem]'],
   'physics-pendulum': [
@@ -162,7 +175,10 @@ export const propertiesShortcuts = {
   'physics-pendulum-list': [
     '[.puppet-editor_&]:grid [.puppet-editor_&]:[gap:0.5rem] [.puppet-editor_&]:[margin-top:0.125rem]',
   ],
-  'physics-properties': ['[.puppet-editor_&]:[margin-bottom:0.875rem]'],
+  'physics-properties': [
+    '[.puppet-editor_&]:[margin-top:0.75rem] [.puppet-editor_&]:[margin-bottom:0]',
+    '[.binding-settings-drawer_&]:m-0',
+  ],
   'physics-remove-button': [
     '[.puppet-editor_&]:grid [.puppet-editor_&]:[width:1.5rem] [.puppet-editor_&]:[min-width:1.5rem]',
     '[.puppet-editor_&]:[padding:0] [.puppet-editor_&]:[color:#93a29d]',

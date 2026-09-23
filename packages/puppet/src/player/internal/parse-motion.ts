@@ -1,4 +1,5 @@
 import type {PuppetMotion, PuppetParameter, PuppetPart} from '../document'
+import {resolveParameterValue} from '../parameter-value'
 
 const COORDINATES_PER_VERTEX = 2
 
@@ -23,8 +24,7 @@ export const hasValidTrackTargets = (
           return (
             parameter !== undefined &&
             track.keyframes.every(
-              (keyframe) =>
-                keyframe.value >= parameter.minimum && keyframe.value <= parameter.maximum,
+              (keyframe) => resolveParameterValue(parameter, keyframe.value) === keyframe.value,
             )
           )
         }

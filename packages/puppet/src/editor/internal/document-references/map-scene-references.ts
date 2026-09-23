@@ -47,29 +47,25 @@ export const mapSceneReferences = (
             id: transform.rename(node.id),
           },
         ]
-      case 'deformer': {
-        const mappedNode = {...node, ...mapShape(node, transform)}
-        const children = mapSceneReferences(node.children, transform)
-        const id = transform.rename(node.id)
-        const binding =
-          node.binding === undefined
-            ? undefined
-            : {
-                rest: mapShape(node.binding.rest, transform),
-                steps: node.binding.steps.map((step) => ({
-                  rest: step.rest === undefined ? undefined : mapShape(step.rest, transform),
-                  shape: mapShape(step.shape, transform),
-                })),
-              }
+      case 'deformer':
         return [
           {
-            ...mappedNode,
-            binding,
-            children,
-            id,
+            ...node,
+            ...mapShape(node, transform),
+            binding:
+              node.binding === undefined
+                ? undefined
+                : {
+                    rest: mapShape(node.binding.rest, transform),
+                    steps: node.binding.steps.map((step) => ({
+                      rest: step.rest === undefined ? undefined : mapShape(step.rest, transform),
+                      shape: mapShape(step.shape, transform),
+                    })),
+                  },
+            children: mapSceneReferences(node.children, transform),
+            id: transform.rename(node.id),
           },
         ]
-      }
       default: {
         const exhaustive: never = node
         return exhaustive

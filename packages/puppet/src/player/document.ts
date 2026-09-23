@@ -1,5 +1,8 @@
 export const PUPPET_DOCUMENT_FORMAT = 'winter-love-puppet'
 export const PUPPET_DOCUMENT_VERSION = 1
+export const DEFAULT_PUPPET_FRAMES_PER_SECOND = 24
+export const MAXIMUM_PUPPET_FRAMES_PER_SECOND = 240
+export const MINIMUM_PUPPET_FRAMES_PER_SECOND = 1
 
 export const PUPPET_EASINGS = ['linear', 'ease-in', 'ease-out', 'ease-in-out'] as const
 
@@ -219,6 +222,12 @@ export interface PuppetParameter {
   readonly maximum: number
   readonly minimum: number
   readonly name: string
+  readonly options?: ReadonlyArray<PuppetParameterOption>
+}
+
+export interface PuppetParameterOption {
+  readonly label: string
+  readonly value: number
 }
 
 export interface PuppetParameterKeyform1D extends PuppetParameterKeyformBase {
@@ -244,6 +253,7 @@ export interface PuppetParameterInfluence {
 export interface PuppetParameterBindingBase {
   readonly influences?: ReadonlyArray<PuppetParameterInfluence>
   readonly id: string
+  readonly name?: string
   readonly targetDeformerIds?: ReadonlyArray<string>
   readonly targetPartIds?: ReadonlyArray<string>
 }
@@ -322,8 +332,27 @@ export interface PuppetGlue {
   readonly strength: number
 }
 
+export interface PuppetLayerOrderCondition {
+  /** Compare the sum of resolved parameter values against the strict threshold. */
+  readonly parameterIds: ReadonlyArray<string>
+  readonly comparison: 'greater-than' | 'less-than'
+  readonly threshold: number
+}
+
+export interface PuppetLayerOrderRule {
+  /** Move these parts together, retaining their current relative order. */
+  readonly partIds: ReadonlyArray<string>
+  readonly referencePartId: string
+  /** Earlier parts paint behind later parts. */
+  readonly placement: 'before' | 'after'
+  readonly when: PuppetLayerOrderCondition
+}
+
 export interface PuppetDocument {
+  readonly framesPerSecond?: number
   readonly glue?: ReadonlyArray<PuppetGlue>
+  /** Apply matching rules in array order, starting from scene order on every frame. */
+  readonly layerOrderRules?: ReadonlyArray<PuppetLayerOrderRule>
   readonly format: typeof PUPPET_DOCUMENT_FORMAT
   readonly motions: ReadonlyArray<PuppetMotion>
   readonly parameterBindings?: ReadonlyArray<PuppetParameterBinding>
@@ -334,3 +363,6 @@ export interface PuppetDocument {
   readonly version: typeof PUPPET_DOCUMENT_VERSION
   readonly viewport: PuppetViewport
 }
+
+export const getPuppetFramesPerSecond = (document: PuppetDocument) =>
+  document.framesPerSecond ?? DEFAULT_PUPPET_FRAMES_PER_SECOND
