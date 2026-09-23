@@ -163,6 +163,19 @@ describe('display theme preference repository', () => {
     expect(tossValues.get(STORAGE_KEY)).toBe('bright')
   })
 
+  it('should keep a newer write when a native read completes late', async () => {
+    storage.usesTossStorage.mockReturnValue(true)
+    const nativeRead = Promise.withResolvers<unknown | null>()
+    storage.readToss.mockReturnValueOnce(nativeRead.promise)
+
+    const pendingRead = repository.read()
+    await repository.write('bright')
+    nativeRead.resolve('dark')
+
+    await expect(pendingRead).resolves.toBe('bright')
+    expect(webValues.get(STORAGE_KEY)).not.toBe('dark')
+  })
+
   it('should reject a toss save when toss storage fails', async () => {
     storage.usesTossStorage.mockReturnValue(true)
     storage.writeToss.mockRejectedValue(new Error('Toss storage unavailable'))

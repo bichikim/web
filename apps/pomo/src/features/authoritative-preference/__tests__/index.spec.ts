@@ -28,6 +28,24 @@ it('should restore native values and mirror defaults without reading the web cop
   expect(storage.writeWeb).toHaveBeenLastCalledWith(0)
 })
 
+it('should keep a newer write when a native read completes late', async () => {
+  const {storage, repository} = setup()
+  const nativeRead = Promise.withResolvers<number | null>()
+  let nativeValue = 2
+  storage.readNative.mockReturnValueOnce(nativeRead.promise)
+  storage.readNative.mockImplementation(async () => nativeValue)
+  storage.writeNative.mockImplementation(async (value) => {
+    nativeValue = value
+  })
+
+  const pendingRead = repository.read()
+  await repository.write(3)
+  nativeRead.resolve(2)
+
+  await expect(pendingRead).resolves.toBe(3)
+  expect(storage.writeWeb).toHaveBeenLastCalledWith(3)
+})
+
 it('should ignore mirror failure but preserve native read errors with their cause', async () => {
   const {storage, repository} = setup()
   const failure = new Error('unavailable')
