@@ -4,11 +4,18 @@ import type {
   FileContext,
   NaturalLintRule,
   RuleInspection,
+  RuleInspectionDecision,
+  RuleUnknownInspection,
   UnexpectedErrorBecomesSuccessLikeResultOverride,
 } from '../types'
 
 const STRUCTURED_MARGIN = 0.2
 const STRUCTURED_THRESHOLD = 0.8
+const FUNCTION_CONTEXT_LIMIT = 700
+const FUNCTION_TAIL_LIMIT = 500
+const BLOCK_CONTEXT_LIMIT = 600
+const CALLER_STATEMENT_LIMIT = 360
+const CONTRACT_CONTEXT_LIMIT = 400
 const DEFAULT_PRIMARY_OPERATION_PREFIXES = ['fetch', 'query', 'request'] as const
 
 const descendants = <Node extends ts.Node>(
@@ -74,7 +81,9 @@ const isExplicitFailureExpression = (
         !(ts.isIdentifier(property.initializer) && property.initializer.text === 'undefined')) ||
       (name === 'ok' && value === 'false') ||
       (name === 'success' && value === 'false') ||
-      (name === 'status' && /['"](?:error|failure)['"]/u.test(value))
+      (name === 'status' &&
+        ts.isStringLiteral(property.initializer) &&
+        ['error', 'failed', 'failure'].includes(property.initializer.text))
     )
   })
 }
@@ -95,6 +104,102 @@ const documentedScopeText = (node: ts.Node, sourceFile: ts.SourceFile): string =
   return scope.getFullText(sourceFile)
 }
 
+const compactSource = (node: ts.Node, sourceFile: ts.SourceFile, limit: number): string =>
+  node.getText(sourceFile).slice(0, limit)
+
+const scopeName = (scope: ts.Node): string | undefined => {
+  if (ts.isFunctionDeclaration(scope) || ts.isMethodDeclaration(scope)) {
+    return scope.name?.getText()
+  }
+  if (
+    (ts.isArrowFunction(scope) || ts.isFunctionExpression(scope)) &&
+    ts.isVariableDeclaration(scope.parent)
+  ) {
+    return scope.parent.name.getText()
+  }
+  return undefined
+}
+
+const enclosingFunctionSource = (clause: ts.CatchClause, sourceFile: ts.SourceFile): string => {
+  const scope = enclosingScope(clause)
+  const declaration =
+    scope.parent !== undefined && ts.isVariableDeclaration(scope.parent) ? scope.parent : scope
+  return compactSource(declaration, sourceFile, FUNCTION_CONTEXT_LIMIT)
+}
+
+const scopeTail = (scope: ts.Node, sourceFile: ts.SourceFile): string =>
+  scope.getText(sourceFile).slice(-FUNCTION_TAIL_LIMIT)
+
+const enclosingFunctionTail = (clause: ts.CatchClause, sourceFile: ts.SourceFile): string => {
+  const scope = enclosingScope(clause)
+  return scope.getWidth(sourceFile) > FUNCTION_CONTEXT_LIMIT ? scopeTail(scope, sourceFile) : ''
+}
+
+const outerFunctionTail = (clause: ts.CatchClause, sourceFile: ts.SourceFile): string => {
+  const outer = enclosingScope(enclosingScope(clause))
+  return ts.isSourceFile(outer) ? '' : scopeTail(outer, sourceFile)
+}
+
+const leadingContract = (node: ts.Node, sourceFile: ts.SourceFile): string =>
+  node
+    .getFullText(sourceFile)
+    .slice(0, node.getStart(sourceFile) - node.getFullStart())
+    .trim()
+    .slice(-CONTRACT_CONTEXT_LIMIT)
+
+const enclosingContract = (clause: ts.CatchClause, sourceFile: ts.SourceFile): string => {
+  let scope = enclosingScope(clause)
+  while (!ts.isSourceFile(scope)) {
+    const contract = leadingContract(scope, sourceFile)
+    if (contract.length > 0) {
+      return contract
+    }
+    scope = scope.parent ?? sourceFile
+  }
+  return ''
+}
+
+const callStatement = (call: ts.CallExpression): ts.Statement | undefined => {
+  let current: ts.Node | undefined = call
+  while (current !== undefined && !ts.isSourceFile(current)) {
+    if (ts.isStatement(current)) {
+      return current
+    }
+    current = current.parent
+  }
+  return undefined
+}
+
+const localCaller = (clause: ts.CatchClause, sourceFile: ts.SourceFile): string => {
+  const scope = enclosingScope(clause)
+  const name = scopeName(scope)
+  if (name === undefined) {
+    return ''
+  }
+  const caller = descendants(sourceFile, ts.isCallExpression).find(
+    (call) =>
+      ts.isIdentifier(call.expression) &&
+      call.expression.text === name &&
+      (call.pos < scope.pos || call.end > scope.end),
+  )
+  if (caller === undefined) {
+    return ''
+  }
+  const statement = callStatement(caller)
+  if (statement === undefined) {
+    return ''
+  }
+  const siblings =
+    ts.isBlock(statement.parent) || ts.isSourceFile(statement.parent)
+      ? statement.parent.statements
+      : undefined
+  const next = siblings?.[siblings.indexOf(statement) + 1]
+  return [statement, next]
+    .filter((node): node is ts.Statement => node !== undefined)
+    .map((node) => compactSource(node, sourceFile, CALLER_STATEMENT_LIMIT))
+    .join('\n')
+}
+
 const DOCUMENTED_FALLBACK = new RegExp(
   [
     String.raw`best[- ]effort`,
@@ -105,11 +210,28 @@ const DOCUMENTED_FALLBACK = new RegExp(
   'iu',
 )
 
+const endsWithUnconditionalThrow = (
+  clause: ts.CatchClause,
+  returns: ReadonlyArray<ts.ReturnStatement>,
+): boolean => {
+  const lastStatement = clause.block.statements.at(-1)
+  return returns.length === 0 && lastStatement !== undefined && ts.isThrowStatement(lastStatement)
+}
+
+const endsWithSuccessLikeReturn = (clause: ts.CatchClause): boolean => {
+  const statement = clause.block.statements.at(-1)
+  return (
+    statement !== undefined &&
+    ts.isReturnStatement(statement) &&
+    isSuccessLikeExpression(statement.expression)
+  )
+}
+
 const inspectCatch = (
   clause: ts.CatchClause,
   sourceFile: ts.SourceFile,
   primaryOperationPrefixes: ReadonlyArray<string>,
-): RuleInspection => {
+): RuleInspectionDecision | RuleUnknownInspection => {
   const returns = scopedDescendants(clause.block, ts.isReturnStatement)
   const tryBlock = ts.isTryStatement(clause.parent) ? clause.parent.tryBlock : undefined
   const successfulReturns =
@@ -134,6 +256,9 @@ const inspectCatch = (
     returns.some(({expression}) => expression?.kind === ts.SyntaxKind.FalseKeyword) &&
     successfulReturns.some(({expression}) => expression?.kind === ts.SyntaxKind.TrueKeyword)
   const documentedFallback = DOCUMENTED_FALLBACK.test(documentedScopeText(clause, sourceFile))
+  if (endsWithUnconditionalThrow(clause, returns)) {
+    return {reason: 'unconditional-rethrow', status: 'pass'}
+  }
   if (returnsExplicitFailure || hasBooleanFailurePair) {
     return {reason: 'explicit-failure-result', status: 'pass'}
   }
@@ -144,7 +269,7 @@ const inspectCatch = (
     return {reason: 'documented-fallback-contract', status: 'pass'}
   }
   if (
-    returnsSuccessLike &&
+    endsWithSuccessLikeReturn(clause) &&
     primaryCalls.length > 0 &&
     !hasSpecificGuard &&
     !rethrowsUnmatchedErrors
@@ -154,18 +279,31 @@ const inspectCatch = (
   return {
     reason: 'fallback-contract-needs-semantic-review',
     state: {
+      catchCalls: scopedDescendants(clause.block, ts.isCallExpression).map(callName),
       catchConditions,
+      catchSource: compactSource(clause, sourceFile, BLOCK_CONTEXT_LIMIT),
+      contract: enclosingContract(clause, sourceFile),
       documentedFallback,
+      enclosingFunction: enclosingFunctionSource(clause, sourceFile),
+      enclosingFunctionTail: enclosingFunctionTail(clause, sourceFile),
       hasBooleanFailurePair,
       hasSpecificGuard,
+      localCaller: localCaller(clause, sourceFile),
       nonCatchReturns: successfulReturns.map(
         ({expression}) => expression?.getText(sourceFile) ?? '',
       ),
+      outerFunctionTail: outerFunctionTail(clause, sourceFile),
       primaryCalls,
       rethrowsUnmatchedErrors,
       returnedFallbacks: returns.map(({expression}) => expression?.getText(sourceFile) ?? ''),
       returnsExplicitFailure,
       returnsSuccessLike,
+      tryCalls:
+        tryBlock === undefined
+          ? []
+          : scopedDescendants(tryBlock, ts.isCallExpression).map(callName),
+      trySource:
+        tryBlock === undefined ? '' : compactSource(tryBlock, sourceFile, BLOCK_CONTEXT_LIMIT),
     },
     status: 'unknown',
   }
@@ -220,23 +358,13 @@ const inspectUnexpectedErrors = (
   primaryOperationPrefixes: ReadonlyArray<string>,
 ): RuleInspection => {
   const catches = descendants(sourceFile, ts.isCatchClause)
+  if (catches.length === 0) {
+    return {reason: 'no-catch-clause', status: 'pass'}
+  }
   const inspections = catches.map((clause) =>
     inspectCatch(clause, sourceFile, primaryOperationPrefixes),
   )
-  const failed = inspections.find(({status}) => status === 'fail')
-  if (failed !== undefined) {
-    return failed
-  }
-  if (inspections.length > 0 && inspections.every(({status}) => status === 'pass')) {
-    return inspections[0]!
-  }
-  return {
-    reason: 'fallback-contract-needs-semantic-review',
-    state: inspections.flatMap((inspection) =>
-      inspection.status === 'unknown' ? [inspection.state] : [],
-    ),
-    status: 'unknown',
-  }
+  return inspections.length === 1 ? inspections[0]! : {inspections, status: 'group'}
 }
 
 export const createUnexpectedErrorBecomesSuccessLikeResultRule = (
@@ -245,7 +373,7 @@ export const createUnexpectedErrorBecomesSuccessLikeResultRule = (
   const primaryOperationPrefixes = validatePrefixes(override)
   return {
     cacheKey: [
-      'builtin-v1',
+      'builtin-v7',
       primaryOperationPrefixes.join(','),
       ...(override.cacheKey === undefined ? [] : [override.cacheKey]),
     ].join(':'),
@@ -270,14 +398,19 @@ export const createUnexpectedErrorBecomesSuccessLikeResultRule = (
       resultSemantics: {
         criteria: {
           documentedFallback:
-            'The normal-looking fallback is explicitly part of the function contract.',
+            'The fallback is part of the function contract and consumers cannot mistake failure for completed work.',
           explicitFailure:
-            'The returned value explicitly represents failure and cannot be confused with success.',
-          insufficient: 'The evidence does not establish the meaning of the returned value.',
+            'A returned result, error state, or aggregate outcome explicitly exposes the failure to consumers.',
+          insufficient:
+            'The available contract and consumer evidence do not establish whether failure is hidden.',
           successLike:
-            'The failure becomes a value callers can confuse with absence or ordinary success.',
+            'Consumers can treat the fallback as genuine absence or success, including ' +
+            'overwriting data after a failed read or omitting failures from a summary.',
         },
-        instruction: 'How does the catch communicate the failure to its caller?',
+        instruction:
+          'Use contract, enclosing and outer function tails, and caller evidence. ' +
+          'A null, empty, or bare return alone does not prove hidden success; a fallback ' +
+          'comment alone does not prove consumers preserve data. How is failure communicated?',
         type: 'choice',
       },
     },
@@ -287,16 +420,25 @@ export const createUnexpectedErrorBecomesSuccessLikeResultRule = (
       const broad = caughtScope.probabilities.broad ?? 0
       const specific = caughtScope.probabilities.specific ?? 0
       const successLike = resultSemantics.probabilities.successLike ?? 0
-      const allowed = Math.max(
-        resultSemantics.probabilities.documentedFallback ?? 0,
-        resultSemantics.probabilities.explicitFailure ?? 0,
-      )
+      const explicitFailure = resultSemantics.probabilities.explicitFailure ?? 0
+      const documentedFallback = resultSemantics.probabilities.documentedFallback ?? 0
+      const allowed = Math.max(documentedFallback, explicitFailure)
       const violationProbability = Math.min(broad, successLike)
       if (broad >= STRUCTURED_THRESHOLD && successLike >= STRUCTURED_THRESHOLD) {
         return {
           probability: violationProbability,
           reason: 'broad-success-like-fallback',
           status: 'fail',
+        }
+      }
+      if (
+        explicitFailure >= STRUCTURED_THRESHOLD &&
+        explicitFailure - successLike >= STRUCTURED_MARGIN
+      ) {
+        return {
+          probability: violationProbability,
+          reason: 'explicit-failure-result',
+          status: 'pass',
         }
       }
       const allowedMargin = allowed - successLike
@@ -313,7 +455,10 @@ export const createUnexpectedErrorBecomesSuccessLikeResultRule = (
       }
       return {
         probability: violationProbability,
-        reason: 'insufficient-contract',
+        reason:
+          caughtScope.choice === 'insufficient' || resultSemantics.choice === 'insufficient'
+            ? 'insufficient-evidence'
+            : 'below-decision-threshold',
         status: 'uncertain',
       }
     },

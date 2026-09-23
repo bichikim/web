@@ -1,5 +1,5 @@
 import {expect, it} from 'vitest'
-import type {ReviewCandidate} from '../../review'
+import {reviewAnswerKey, type ReviewCandidate} from '../../review'
 import {createReviewSession, type ReviewTuiCandidate, updateReviewSession} from '../review-session'
 
 const createCandidate = (
@@ -37,8 +37,8 @@ it('should return to the previous candidate and replace its label', () => {
   const replaced = updateReviewSession(previous, candidates, {label: 'pass', type: 'label'})
 
   expect(previous.currentIndex).toBe(0)
-  expect(previous.labels.get('example:src/example.ts')?.label).toBe('fail')
-  expect(replaced.labels.get('example:src/example.ts')).toEqual({
+  expect(previous.labels.get(reviewAnswerKey(candidates[0]!.candidate))?.label).toBe('fail')
+  expect(replaced.labels.get(reviewAnswerKey(candidates[0]!.candidate))).toEqual({
     label: 'pass',
     labelSource: 'human',
   })
@@ -65,22 +65,40 @@ it('should distinguish a human label from an accepted model label', () => {
   })
   const accepted = updateReviewSession(createReviewSession(), [candidate], {type: 'accept-model'})
 
-  expect(human.labels.get('example:src/example.ts')).toEqual({
+  expect(human.labels.get(reviewAnswerKey(candidate.candidate))).toEqual({
     label: 'pass',
     labelSource: 'human',
   })
-  expect(accepted.labels.get('example:src/example.ts')).toEqual({
+  expect(accepted.labels.get(reviewAnswerKey(candidate.candidate))).toEqual({
     label: 'fail',
     labelSource: 'accepted-model',
   })
 })
 
+it('should keep labels for separate catches in the same file', () => {
+  const candidates = [
+    {...createCandidate('pass'), candidate: {...createCandidate('pass').candidate, caseIndex: 0}},
+    {...createCandidate('fail'), candidate: {...createCandidate('fail').candidate, caseIndex: 1}},
+  ]
+  const first = updateReviewSession(createReviewSession(), candidates, {
+    label: 'pass',
+    type: 'label',
+  })
+  const second = updateReviewSession(first, candidates, {label: 'fail', type: 'label'})
+
+  expect([...second.labels]).toEqual([
+    [reviewAnswerKey(candidates[0]!.candidate), {label: 'pass', labelSource: 'human'}],
+    [reviewAnswerKey(candidates[1]!.candidate), {label: 'fail', labelSource: 'human'}],
+  ])
+})
+
 it('should preserve an accepted uncertain model verdict without treating it as a human label', () => {
-  const accepted = updateReviewSession(createReviewSession(), [createCandidate('uncertain')], {
+  const candidate = createCandidate('uncertain')
+  const accepted = updateReviewSession(createReviewSession(), [candidate], {
     type: 'accept-model',
   })
 
-  expect(accepted.labels.get('example:src/example.ts')).toEqual({
+  expect(accepted.labels.get(reviewAnswerKey(candidate.candidate))).toEqual({
     label: 'uncertain',
     labelSource: 'accepted-model',
   })

@@ -8,17 +8,18 @@ import type {
   FileAnalysisReport,
   ProjectAnalysisReport,
   ResolvedNaturalLintOptions,
-  ResolvedNaturalLintRule,
   RuleExperimentReport,
 } from './types'
 
 const createObservation = (
   relativePath: string,
   outcome: DecidedRuleOutcome,
-  rule: ResolvedNaturalLintRule,
 ): ExperimentObservation => {
   return {
     ...(outcome.answers === undefined ? {} : {answers: outcome.answers}),
+    ...(outcome.cases === undefined
+      ? {}
+      : {cases: outcome.cases.map((item) => createObservation(relativePath, item))}),
     ...(outcome.expectedStatus === undefined
       ? {}
       : {
@@ -48,7 +49,7 @@ const createExperimentReports = (
           return []
         }
         const relativePath = path.relative(options.root, report.filePath).split(path.sep).join('/')
-        return [createObservation(relativePath, outcome, rule)]
+        return [createObservation(relativePath, outcome)]
       })
       const decisive = observations.filter((observation) => observation.status !== 'uncertain')
       const expected = observations.filter(
@@ -104,8 +105,7 @@ export const analyzeProject = async (
     onlyFiles: true,
   })
   const reports: ReadonlyArray<FileAnalysisReport> = await Promise.all(
-    files
-      .map((file) => path.resolve(file))
+    [...new Set(files.map((file) => path.resolve(file)))]
       .sort()
       .map(async (filePath) => core.analyzeFile(filePath, await readFile(filePath, 'utf8'))),
   )
@@ -114,7 +114,7 @@ export const analyzeProject = async (
     diagnostics: reports.flatMap((report) => report.diagnostics),
     experiments: createExperimentReports(reports, options),
     filesScanned: reports.length,
-    layaCalls: reports.reduce((total, report) => total + report.layaCalls, 0),
+    modelCalls: reports.reduce((total, report) => total + report.modelCalls, 0),
     outcomes: reports.flatMap((report) => report.outcomes),
   }
 }

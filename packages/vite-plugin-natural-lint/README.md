@@ -1,6 +1,8 @@
 # `@winter-love/vite-plugin-natural-lint`
 
-로컬 Laya 모델로 파일별 자연어 규칙을 판정하는 CLI 및 Vite 플러그인이다. `select` 함수가 검사 후보를 먼저 고르므로 모든 파일을 모델에 보내지 않는다. 파일 내용, 경로, 규칙 fingerprint, backend와 모델 revision이 같으면 영속 캐시를 사용한다.
+> **실험 중:** 자연어 판정의 정확도와 프로젝트 맥락 제공 방식을 검증하고 있다. `fail` 또는 `warn` 결과를 확정된 결함으로 취급하지 말고, 실제 호출 경로와 오류 계약을 코드에서 확인한 뒤 조치한다.
+
+파일별 자연어 규칙을 판정하는 CLI 및 Vite 플러그인이다. 기본 모델은 로컬 Laya이며, `provider: 'jev'`로 TypeSafe의 Jev API를 선택할 수 있다. `select` 함수가 검사 후보를 먼저 고르므로 모든 파일을 모델에 보내지 않는다. 파일 내용, 경로, 규칙 fingerprint, backend와 모델 revision이 같으면 영속 캐시를 사용한다.
 
 ## 요구 사항
 
@@ -47,6 +49,26 @@ hf download receptron/laya-onnx \
 
 프로젝트 루트에 `natural-lint.config.mjs`를 만든다.
 
+Jev를 선택할 때는 설정 파일에 키를 넣지 않는다. CLI와 Vite 플러그인을 실행하는 Node 프로세스의 `TYPESAFE_API_KEY`를 먼저 읽고, 없으면 프로젝트 루트의 `.env.local`에서 같은 이름의 키만 읽는다. 키가 없으면 첫 Jev 판정 전에 오류를 반환한다. Jev 판정 대상의 `state`와 `questions`는 TypeSafe API로 전송되므로, 코드가 포함된 `state`를 사용하는 규칙에서는 전송 범위를 확인한다.
+
+```js
+export default {
+  provider: 'jev',
+  jev: {model: 'jev-latest', concurrency: 4},
+  rules: ['@natural-lint/unexpected-error-becomes-success-like-result'],
+}
+```
+
+`provider`는 `'laya'` 또는 `'jev'`를 선택한다. 기본값은 `'laya'`다. `jev.concurrency`는 동시에 진행할 Jev API 요청의 상한이며 기본값은 4다. 로컬 Laya를 명시적으로 선택하고 병렬 모델 수를 설정하려면 다음처럼 쓴다. `laya.instances`는 Laya에만 적용된다.
+
+```js
+export default {
+  provider: 'laya',
+  laya: {instances: 2},
+  rules: ['@natural-lint/unexpected-error-becomes-success-like-result'],
+}
+```
+
 ```js
 const reduceFilenameAnswer = ({answers}) => {
   const answer = answers.violation
@@ -85,6 +107,29 @@ export default {
 }
 ```
 
+파일 범위마다 다른 규칙을 적용할 때는 `targets`에 `include`와 `rules`를 묶는다.
+
+```js
+import filenameRule from './rules/filename-rule.mjs'
+
+export default {
+  targets: [
+    {
+      include: ['src/server/**/*.{ts,tsx}'],
+      rules: [['@natural-lint/unexpected-error-becomes-success-like-result', {severity: 'warn'}]],
+    },
+    {
+      include: ['src/components/**/*.{ts,tsx}'],
+      rules: [filenameRule],
+    },
+  ],
+}
+```
+
+최상위 `rules`와 `include`를 함께 지정하면 기존처럼 공통 범위를 검사한다. `targets`만
+지정해도 되며, 범위가 겹치는 파일은 한 번 읽고 해당하는 각 규칙을 적용한다. 규칙 ID는 전체
+설정에서 고유해야 한다. 최상위 `exclude`는 모든 범위에 적용된다.
+
 ### 내 규칙을 만드는 순서
 
 자연어부터 길게 쓰지 말고, 먼저 프로젝트에서 실제로 원하는 판정 경계를 정한다.
@@ -112,6 +157,27 @@ inspect: ({fileName, outline}) => ({
 평가를 더해 silent fallback 규칙에서 15개 중 14개를 맞힌 사례다.
 
 `laya`를 생략하면 `backend: 'auto'`를 사용한다. Apple Silicon macOS에서는 별도 Python 설치가 필요 없는 managed CoreML runtime을 `node_modules/.cache/natural-lint/coreml`에 준비하고, 그 외 환경에서는 ONNX를 선택한다. `backend`는 필요할 때 `auto`, `coreml`, `onnx` 중 하나로 명시할 수 있으며 Apple Silicon에서도 `onnx`를 선택해 Linux와 같은 결과 경로를 사용할 수 있다.
+
+모델 인스턴스는 기본 1개다. 여러 파일의 모델 판단을 병렬로 처리하려면 `laya.instances`에 2 이상의 정수를 지정한다. 첫 인스턴스가 모델을 준비한 뒤 나머지 인스턴스를 병렬로 시작하며, 인스턴스마다 모델 메모리를 사용한다.
+
+```js
+laya: {
+  instances: 2
+}
+```
+
+메모리 용량을 잡을 때 참고할 수 있도록, 2026-09-23 Apple Silicon macOS에서 Pomo의 CoreML 모델을 각 인스턴스마다 한 번 판단시킨 뒤 측정한 Python 프로세스의 physical footprint 합계를 적었다.
+
+| 인스턴스 | 측정된 모델 프로세스 메모리 합계 |
+| -------- | -------------------------------: |
+| 1개      |                        약 1.6 GB |
+| 2개      |                        약 3.2 GB |
+| 3개      |                        약 4.8 GB |
+| 4개      |                    약 6.4~6.5 GB |
+
+이는 용량 계획을 위한 대략적인 실측치이며 상한값은 아니다. 모델, 실행 환경, 처리 중인 요청과 macOS의 메모리 관리에 따라 달라질 수 있다. Node 프로세스와 다른 앱의 메모리는 표에 포함되지 않으므로 여유 용량을 별도로 확보한다.
+
+대부분의 로컬 개발 환경에서는 속도와 메모리 사용량의 균형을 위해 인스턴스 2개부터 사용하는 것을 권장한다. Pomo의 캐시 없는 검사에서 2개는 약 25초, 3~4개는 약 20초였지만, 인스턴스를 추가할 때마다 위 표처럼 모델 메모리도 늘었다. 이 시간은 각 설정을 2회씩 측정한 값이며 다른 환경의 성능을 보장하지 않는다.
 
 managed runtime의 저장 위치를 바꿔야 할 때만 `laya.coreml.runtimeDir`을 지정한다. Linux에서 미리 받은 ONNX bundle이나 미세조정 모델만 사용하려면 `laya.onnx.modelDir`과 프로젝트가 관리하는 `laya.onnx.modelRevision`을 함께 지정한다. 같은 폴더의 모델 내용을 교체할 때 revision도 바꿔야 이전 판정 cache가 무효화된다.
 
@@ -178,7 +244,7 @@ export default {
 
 ### 규칙 판정 흐름
 
-모든 규칙은 `inspect → questions → reduce` 흐름을 사용한다. `inspect`가 AST로 확정할 수 있는 사례를 바로 판정하고, 나머지는 JSON `state`와 함께 `unknown`으로 반환한다. `unknown` 사례는 여러 typed question을 한 번에 Laya로 보낸 뒤 `reduce`가 최종 상태를 결정한다.
+모든 규칙은 `inspect → questions → reduce` 흐름을 사용한다. `inspect`가 AST로 확정할 수 있는 사례를 바로 판정한다. 의미 판정이 필요한 사례는 JSON `state`와 함께 `unknown`으로 반환하고, 여러 typed question을 한 번에 선택한 provider로 보낸 뒤 `reduce`가 최종 상태를 결정한다. 따라서 `uncertain`은 모델 답변을 검토한 뒤에도 확정하지 못한 최종 결과다. 내장 silent fallback 규칙은 각 `catch`를 독립적으로 검사한다. 이 규칙은 `try`/`catch`, 함수의 앞뒤, 계약 주석, 같은 파일의 호출부와 바깥 함수 결과를 모델에 전달한다. 다른 파일의 호출부는 아직 포함하지 않으므로, 저장값을 읽은 뒤 다른 모듈에서 덮어쓰는 경로처럼 파일을 넘는 계약은 경고 후 별도로 확인해야 한다. 한 파일에 여러 `catch`가 있으면 최종 파일 결과의 `cases`에 각각의 판정과 모델 답변을 남기며, `unknown`인 `catch`마다 모델을 한 번 호출한다.
 
 ```js
 {
@@ -202,7 +268,9 @@ export default {
 }
 ```
 
-`inspect`는 확정할 수 있으면 `{status: 'pass' | 'fail', reason?}`를 반환하며 내부에서 `pass`는 확률 `0`, `fail`은 확률 `1`로 기록한다. 확정할 수 없으면 `{status: 'unknown', reason?, state}`를 반환하고 이때만 Laya를 호출한다. `reduce`는 모델 답변과 `state`를 `{status, probability, reason?}`로 변환하며 최종 결과로 `uncertain`도 사용할 수 있다. `select`를 생략하면 `include`에 포함된 모든 파일을 검사한다.
+`inspect`가 `{status: 'pass' | 'fail', reason?}`를 반환하면 내부에서 `pass`는 확률 `0`, `fail`은 확률 `1`로 기록한다. `{status: 'unknown', reason?, state}`일 때 선택한 provider를 호출한다. `reduce`는 모델 답변과 `state`를 `{status, probability, reason?}`로 변환하며 최종 결과로 `uncertain`도 사용할 수 있다. `select`를 생략하면 `include`에 포함된 모든 파일을 검사한다.
+
+독립적인 검사 항목이 여럿인 사용자 규칙은 `{status: 'group', inspections: [...]}`를 반환할 수 있다. 각 항목을 별도로 판정하고, 파일 결과는 `fail`이 하나라도 있으면 `fail`, 그렇지 않고 `uncertain`이 있으면 `uncertain`, 나머지는 `pass`가 된다. 이 방식은 항목 수만큼 모델 호출이 늘 수 있다.
 
 ### 규칙 운영 단계
 
@@ -268,7 +336,7 @@ pnpm exec natural-lint check --config ./config/natural-lint.mjs
 pnpm exec natural-lint review
 ```
 
-전체 화면 검토 UI에서 왼쪽에는 줄 번호가 붙은 실제 소스, 오른쪽에는 최종 판정·확률·`state`·질문별 typed answer를 함께 표시한다. 좁은 터미널에서는 두 영역을 위아래로 배치한다. Laya가 자연어 판단 이유를 생성하지는 않으므로 생성하지 않은 설명을 모델의 이유처럼 표시하지 않는다.
+전체 화면 검토 UI에서 왼쪽에는 줄 번호가 붙은 실제 소스, 오른쪽에는 최종 판정·확률·`state`·질문별 typed answer를 함께 표시한다. 좁은 터미널에서는 두 영역을 위아래로 배치한다. 한 파일의 여러 `catch`가 모델 판정을 받았다면 각 판정을 별도 후보로 보여준다. 모델이 제공하지 않은 자연어 판단 이유를 만들어 표시하지 않는다.
 
 키 하나로 판정하고 소스 영역은 방향키와 Page Up/Down으로 스크롤한다.
 
@@ -297,6 +365,8 @@ CI나 대량 검토처럼 대화형 입력을 사용할 수 없는 환경에서�
 {"ruleId":"filename-is-unnecessarily-long","relativePath":"src/user-profile-controller.ts","label":"fail","split":"train"}
 {"ruleId":"filename-is-unnecessarily-long","relativePath":"src/user.ts","label":"pass","split":"holdout"}
 ```
+
+그룹 판정의 각 항목을 JSONL로 검토할 때는 `caseIndex`에 `cases` 배열의 0부터 시작하는 위치를 넣는다. 이를 생략하면 단일 판정 후보를 가리킨다.
 
 ```bash
 pnpm exec natural-lint review --answers ./review-answers.jsonl

@@ -52,7 +52,7 @@ export const formatProjectReport = (report: ProjectAnalysisReport): string => {
   const summary = [
     `Scanned ${report.filesScanned} files;`,
     `${report.cacheHits} cached results,`,
-    `${report.layaCalls} Laya calls,`,
+    `${report.modelCalls} model calls,`,
     `${report.diagnostics.length} diagnostics.`,
   ].join(' ')
   const experimentReport = formatExperimentReports(report.experiments)

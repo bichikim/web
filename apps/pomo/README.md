@@ -18,6 +18,10 @@ pnpm --filter @apps/pomo typecheck
 - `preview:apps-in-toss-ssg`: SSG 빌드 결과를 로컬 서버에서 확인
 - `build:apps-in-toss-package`: 앱인토스 SSG 빌드 후 업로드용 `pomo-app.ait` 생성
 
+### natural-lint (실험 중)
+
+`pnpm --filter @apps/pomo natural-lint`는 자연어 린트의 판정 품질을 확인하기 위한 **실험용 명령**이다. 실험 목적이 아니면 사용하지 않는다. 결과에 오탐이 있을 수 있으므로 경고를 확정된 결함으로 취급하거나 CI·배포의 통과 기준으로 사용하지 않는다. 자세한 판정 방식과 한계는 [`vite-plugin-natural-lint` README](../../packages/vite-plugin-natural-lint/README.md)를 참고한다.
+
 `.ait` 패키징은 AIT CLI 요구사항에 따라 Node.js 24 이상에서 실행한다. 웹과 SSG 빌드는 저장소 공통 Node.js 요구사항을 따른다.
 
 콘솔에 등록한 값이 기본값과 다르면 빌드 전에 환경 변수를 지정한다.

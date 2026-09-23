@@ -62,7 +62,7 @@ it('should scan configured files and return a failing status for a Laya violatio
 
   expect(exitCode).toBe(1)
   expect(output).toHaveBeenCalledWith(expect.stringContaining('authenticated-user-profile-form.ts'))
-  expect(output).toHaveBeenCalledWith(expect.stringContaining('"layaCalls": 1'))
+  expect(output).toHaveBeenCalledWith(expect.stringContaining('"modelCalls": 1'))
 })
 
 it('should report experiment results without failing the command', async () => {

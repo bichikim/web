@@ -4,7 +4,7 @@ import path from 'node:path'
 import {afterEach, describe, expect, it, vi} from 'vitest'
 import {resolveOptions} from '../config'
 import {NaturalLintCore} from '../core'
-import type {DecisionAnswers, NaturalLintRule} from '../types'
+import type {DecisionAnswers, DecisionRequest, NaturalLintRule} from '../types'
 
 const temporaryPaths: string[] = []
 
@@ -20,7 +20,7 @@ const createFixture = async (
   const root = await mkdtemp(path.join(tmpdir(), 'natural-lint-core-'))
   temporaryPaths.push(root)
   const close = vi.fn(async () => {})
-  const decide = vi.fn(async () => answers)
+  const decide = vi.fn(async (_request: DecisionRequest) => answers)
   const create = vi.fn(async () => ({close, decide}))
   return {
     close,
@@ -47,6 +47,39 @@ const createRule = (overrides: Partial<NaturalLintRule> = {}): NaturalLintRule =
 })
 
 describe('NaturalLintCore', () => {
+  it('should evaluate only rules assigned to a matching target', async () => {
+    const fixture = await createFixture()
+    const inspectFirst = vi.fn(() => ({status: 'pass' as const}))
+    const inspectSecond = vi.fn(() => ({status: 'pass' as const}))
+    const options = resolveOptions(
+      {
+        targets: [
+          {
+            include: ['src/first/**/*.ts'],
+            rules: [createRule({inspect: inspectFirst})],
+          },
+          {
+            include: ['src/second/**/*.ts'],
+            rules: [createRule({id: 'second', inspect: inspectSecond})],
+          },
+        ],
+      },
+      fixture.root,
+      {useCache: false},
+    )
+    const core = new NaturalLintCore(options, fixture.providerFactory)
+
+    const report = await core.analyzeFile(
+      path.join(fixture.root, 'src/first/example.ts'),
+      'export const example = true',
+    )
+
+    expect(report.outcomes.map(({status}) => status)).toEqual(['pass', 'skip'])
+    expect(inspectFirst).toHaveBeenCalledOnce()
+    expect(inspectSecond).not.toHaveBeenCalled()
+    expect(fixture.create).not.toHaveBeenCalled()
+  })
+
   it('should reduce one batched provider decision', async () => {
     const answers = {violation: {probability: 0.94, type: 'noul' as const}}
     const fixture = await createFixture(answers)
@@ -75,8 +108,95 @@ describe('NaturalLintCore', () => {
       reason: 'syntax-unknown',
       state: {name: 'fixture'},
     })
-    expect(report.layaCalls).toBe(1)
+    expect(report.modelCalls).toBe(1)
     expect(report.outcomes[0]).toMatchObject({probability: 0.94, status: 'fail'})
+  })
+
+  it('should evaluate grouped inspections independently and retain each decision', async () => {
+    const fixture = await createFixture()
+    fixture.decide.mockImplementation(async ({state}) => ({
+      violation: {probability: state === 'second' ? 0.9 : 0.1, type: 'noul'},
+    }))
+    const rule = createRule({
+      inspect: () => ({
+        inspections: [
+          {reason: 'first', state: 'first', status: 'unknown'},
+          {reason: 'handled', status: 'pass'},
+          {reason: 'second', state: 'second', status: 'unknown'},
+        ],
+        status: 'group',
+      }),
+      reduce: ({answers}) => {
+        const answer = answers.violation
+        if (answer?.type !== 'noul') {
+          throw new TypeError('Expected noul answer.')
+        }
+        return {
+          probability: answer.probability,
+          status: answer.probability >= 0.8 ? 'fail' : 'pass',
+        }
+      },
+    })
+    const core = new NaturalLintCore(
+      resolveOptions({rules: [rule]}, fixture.root, {useCache: false}),
+      fixture.providerFactory,
+    )
+
+    const report = await core.analyzeFile(
+      path.join(fixture.root, 'src/fixture.ts'),
+      'export const fixture = true',
+    )
+
+    expect(fixture.decide.mock.calls.map(([request]) => request.state)).toEqual(['first', 'second'])
+    expect(report.modelCalls).toBe(2)
+    expect(report.outcomes[0]).toMatchObject({
+      cases: [
+        {state: 'first', status: 'pass'},
+        {reason: 'handled', status: 'pass'},
+        {state: 'second', status: 'fail'},
+      ],
+      status: 'fail',
+    })
+  })
+
+  it('should make a grouped result uncertain only after an unknown case reaches the model', async () => {
+    const fixture = await createFixture()
+    const rule = createRule({
+      inspect: () => ({
+        inspections: [{status: 'pass'}, {state: {catchIndex: 1}, status: 'unknown'}],
+        status: 'group',
+      }),
+      reduce: () => ({probability: 0.4, status: 'uncertain'}),
+    })
+    const core = new NaturalLintCore(
+      resolveOptions({rules: [rule]}, fixture.root, {useCache: false}),
+      fixture.providerFactory,
+    )
+
+    const report = await core.analyzeFile(
+      path.join(fixture.root, 'src/fixture.ts'),
+      'export const fixture = true',
+    )
+
+    expect(report.modelCalls).toBe(1)
+    expect(report.outcomes[0]).toMatchObject({
+      cases: [{status: 'pass'}, {state: {catchIndex: 1}, status: 'uncertain'}],
+      status: 'uncertain',
+    })
+  })
+
+  it('should reject an empty inspection group', async () => {
+    const fixture = await createFixture()
+    const rule = createRule({inspect: () => ({inspections: [], status: 'group'})})
+    const core = new NaturalLintCore(
+      resolveOptions({rules: [rule]}, fixture.root, {useCache: false}),
+      fixture.providerFactory,
+    )
+
+    await expect(
+      core.analyzeFile(path.join(fixture.root, 'src/fixture.ts'), 'export const fixture = true'),
+    ).rejects.toThrow('inspect returned an empty group')
+    expect(fixture.create).not.toHaveBeenCalled()
   })
 
   it('should use an inspection decision without starting the provider', async () => {
@@ -97,6 +217,26 @@ describe('NaturalLintCore', () => {
       reason: 'direct-alias',
       status: 'fail',
     })
+    expect(fixture.create).not.toHaveBeenCalled()
+  })
+
+  it('should reject a direct uncertain inspection before starting the provider', async () => {
+    const fixture = await createFixture()
+    const rule = createRule({
+      inspect: (() => ({
+        probability: 0.5,
+        reason: 'insufficient-evidence',
+        status: 'uncertain',
+      })) as never,
+    })
+    const core = new NaturalLintCore(
+      resolveOptions({rules: [rule]}, fixture.root),
+      fixture.providerFactory,
+    )
+
+    await expect(
+      core.analyzeFile(path.join(fixture.root, 'src/fixture.ts'), 'export const fixture = true'),
+    ).rejects.toThrow('inspect returned an invalid status: uncertain')
     expect(fixture.create).not.toHaveBeenCalled()
   })
 

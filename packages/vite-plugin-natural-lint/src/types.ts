@@ -5,6 +5,7 @@ export const SERVE_DIAGNOSTIC_MODES = ['off', 'warn'] as const
 
 export type DiagnosticMode = (typeof DIAGNOSTIC_MODES)[number]
 export type LayaBackend = 'auto' | 'coreml' | 'onnx'
+export type ModelProvider = 'jev' | 'laya'
 export type CoremlRuntime = 'external' | 'managed'
 export type ServeDiagnosticMode = (typeof SERVE_DIAGNOSTIC_MODES)[number]
 export type DiagnosticSeverity = 'error' | 'warn'
@@ -130,7 +131,12 @@ export interface RuleUnknownInspection {
   readonly status: 'unknown'
 }
 
-export type RuleInspection = RuleInspectionDecision | RuleUnknownInspection
+export interface RuleInspectionGroup {
+  readonly inspections: ReadonlyArray<RuleInspectionDecision | RuleUnknownInspection>
+  readonly status: 'group'
+}
+
+export type RuleInspection = RuleInspectionDecision | RuleUnknownInspection | RuleInspectionGroup
 
 export interface RuleReduction {
   readonly answers: DecisionAnswers
@@ -143,10 +149,16 @@ export interface LayaOptions {
   readonly bridgePath?: string
   readonly computeUnits?: 'all' | 'cpu' | 'cpu_gpu' | 'cpu_ne'
   readonly coreml?: CoremlLayaOptions
+  readonly instances?: number
   readonly model?: string
   readonly modelRevision?: string
   readonly onnx?: OnnxLayaOptions
   readonly pythonPath?: string
+}
+
+export interface JevOptions {
+  readonly concurrency?: number
+  readonly model?: string
 }
 
 export interface CoremlLayaOptions {
@@ -167,9 +179,17 @@ export interface NaturalLintOptions {
   readonly cacheDir?: string
   readonly exclude?: ReadonlyArray<string>
   readonly include?: ReadonlyArray<string>
+  readonly jev?: JevOptions
   readonly laya?: LayaOptions
-  readonly rules: ReadonlyArray<NaturalLintRuleInput>
+  readonly provider?: ModelProvider
+  readonly rules?: ReadonlyArray<NaturalLintRuleInput>
   readonly serveMode?: ServeDiagnosticMode
+  readonly targets?: ReadonlyArray<NaturalLintTarget>
+}
+
+export interface NaturalLintTarget {
+  readonly include: ReadonlyArray<string>
+  readonly rules: ReadonlyArray<NaturalLintRuleInput>
 }
 
 export interface ResolvedCoremlLayaOptions {
@@ -188,7 +208,13 @@ export interface ResolvedCoremlRuntimeOptions {
 
 export interface ResolvedLayaOptions extends ResolvedCoremlLayaOptions {
   readonly backend: LayaBackend
+  readonly instances: number
   readonly onnx: ResolvedOnnxLayaOptions
+}
+
+export interface ResolvedJevOptions {
+  readonly concurrency: number
+  readonly model: string
 }
 
 export interface ResolvedOnnxLayaOptions {
@@ -200,6 +226,7 @@ export interface ResolvedOnnxLayaOptions {
 }
 
 export interface ResolvedNaturalLintRule extends NaturalLintRule {
+  readonly matchesFile: (filePath: string) => boolean
   readonly severity: RuleSeverity
   readonly select: (context: FileContext) => boolean
   readonly useCache: boolean
@@ -210,7 +237,9 @@ export interface ResolvedNaturalLintOptions {
   readonly cacheDir: string
   readonly exclude: ReadonlyArray<string>
   readonly include: ReadonlyArray<string>
+  readonly jev: ResolvedJevOptions
   readonly laya: ResolvedLayaOptions
+  readonly provider: ModelProvider
   readonly root: string
   readonly rules: ReadonlyArray<ResolvedNaturalLintRule>
   readonly serveMode: ServeDiagnosticMode
@@ -241,6 +270,7 @@ export interface SkippedRuleOutcome {
 
 export interface DecidedRuleOutcome {
   readonly answers?: DecisionAnswers
+  readonly cases?: ReadonlyArray<DecidedRuleOutcome>
   readonly expectedStatus?: ExpectedRuleStatus
   readonly probability: number
   readonly reason?: string
@@ -262,6 +292,7 @@ export interface NaturalLintDiagnostic {
 
 export interface ExperimentObservation {
   readonly answers?: DecisionAnswers
+  readonly cases?: ReadonlyArray<ExperimentObservation>
   readonly expectedStatus?: ExpectedRuleStatus
   readonly matchesExpected?: boolean
   readonly probability: number
@@ -293,7 +324,7 @@ export interface FileAnalysisReport {
   readonly cacheHits: number
   readonly diagnostics: ReadonlyArray<NaturalLintDiagnostic>
   readonly filePath: string
-  readonly layaCalls: number
+  readonly modelCalls: number
   readonly outcomes: ReadonlyArray<RuleOutcome>
 }
 
@@ -302,6 +333,6 @@ export interface ProjectAnalysisReport {
   readonly diagnostics: ReadonlyArray<NaturalLintDiagnostic>
   readonly experiments: ReadonlyArray<RuleExperimentReport>
   readonly filesScanned: number
-  readonly layaCalls: number
+  readonly modelCalls: number
   readonly outcomes: ReadonlyArray<RuleOutcome>
 }

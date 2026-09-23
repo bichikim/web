@@ -41,7 +41,7 @@ it('should summarize experiment results and list every selected file', () => {
       },
     ],
     filesScanned: 3,
-    layaCalls: 6,
+    modelCalls: 6,
     outcomes: [],
   }
 

@@ -1,4 +1,4 @@
-import {mkdtemp, rm, writeFile} from 'node:fs/promises'
+import {mkdir, mkdtemp, rm, writeFile} from 'node:fs/promises'
 import {tmpdir} from 'node:os'
 import path from 'node:path'
 import {afterEach, expect, it} from 'vitest'
@@ -13,6 +13,79 @@ afterEach(async () => {
   await Promise.all(
     temporaryPaths.splice(0).map((filePath) => rm(filePath, {force: true, recursive: true})),
   )
+})
+
+it('should scan overlapping targets once and apply each matching rule', async () => {
+  const root = await mkdtemp(path.join(tmpdir(), 'natural-lint-project-'))
+  temporaryPaths.push(root)
+  await mkdir(path.join(root, 'src/first'), {recursive: true})
+  await writeFile(path.join(root, 'src/first/example.ts'), 'export const example = true')
+  const rule: NaturalLintRule = {
+    id: 'first',
+    inspect: () => ({status: 'pass'}),
+    message: 'Fixture violation.',
+    questions: {violation: {instruction: 'Is this a violation?', type: 'noul'}},
+    reduce: () => ({probability: 0, status: 'pass'}),
+  }
+  const options = resolveOptions(
+    {
+      targets: [
+        {include: ['src/**/*.ts'], rules: [rule]},
+        {include: ['src/first/*.ts'], rules: [{...rule, id: 'second'}]},
+      ],
+    },
+    root,
+  )
+  const providerFactory: DecisionProviderFactory = {
+    create: async () => {
+      throw new Error('A direct inspection must not create a provider.')
+    },
+    identifier: 'fixture',
+    revision: '1',
+  }
+
+  const report = await analyzeProject(new NaturalLintCore(options, providerFactory), options)
+
+  expect(report.filesScanned).toBe(1)
+  expect(report.outcomes.map(({status}) => status)).toEqual(['pass', 'pass'])
+})
+
+it('should retain each grouped inspection as experiment evidence', async () => {
+  const root = await mkdtemp(path.join(tmpdir(), 'natural-lint-project-'))
+  temporaryPaths.push(root)
+  await mkdir(path.join(root, 'src'), {recursive: true})
+  await writeFile(path.join(root, 'src/example.ts'), 'export const example = true')
+  const rule: NaturalLintRule = {
+    id: 'grouped',
+    inspect: () => ({
+      inspections: [
+        {state: {catchSource: 'first'}, status: 'unknown'},
+        {state: {catchSource: 'second'}, status: 'unknown'},
+      ],
+      status: 'group',
+    }),
+    message: 'Fixture violation.',
+    questions: {violation: {instruction: 'Is this a violation?', type: 'noul'}},
+    reduce: ({state}) => ({probability: state === null ? 0 : 0.9, status: 'fail'}),
+    severity: 'experiment',
+  }
+  const options = resolveOptions({include: ['src/**/*.ts'], rules: [rule]}, root)
+  const report = await analyzeProject(
+    new NaturalLintCore(options, {
+      create: async () => ({
+        close: async () => {},
+        decide: async () => ({violation: {probability: 0.9, type: 'noul'}}),
+      }),
+      identifier: 'fixture',
+      revision: '1',
+    }),
+    options,
+  )
+
+  expect(report.experiments[0]?.observations[0]?.cases?.map(({state}) => state)).toEqual([
+    {catchSource: 'first'},
+    {catchSource: 'second'},
+  ])
 })
 
 it('should report abstentions separately from false negatives', async () => {

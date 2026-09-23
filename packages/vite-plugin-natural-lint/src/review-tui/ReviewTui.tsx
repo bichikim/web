@@ -1,9 +1,14 @@
 import {useKeyboard, useRenderer, useTerminalDimensions} from '@opentui/solid'
 import {createSignal, Show} from 'solid-js/dist/solid.js'
-import {formatReviewCandidate, formatSource, type ReviewAnswer, type ReviewLabel} from '../review'
+import {
+  formatReviewCandidate,
+  formatSource,
+  type ReviewAnswer,
+  reviewAnswerKey,
+  type ReviewLabel,
+} from '../review'
 import {
   createReviewSession,
-  reviewAnswerKey,
   type ReviewSessionAction,
   type ReviewTuiCandidate,
   updateReviewSession,
@@ -157,6 +162,9 @@ export const ReviewTui = (props: ReviewTuiProps) => {
               </text>
               <text fg={palette.text}>
                 {entry().candidate.ruleId} · {entry().candidate.relativePath}
+                {entry().candidate.caseIndex === undefined
+                  ? ''
+                  : ` · catch ${entry().candidate.caseIndex + 1}`}
               </text>
             </box>
             <box flexDirection={isNarrow() ? 'column' : 'row'} flexGrow={1} gap={1} minHeight={0}>
