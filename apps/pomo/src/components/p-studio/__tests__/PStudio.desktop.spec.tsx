@@ -46,6 +46,23 @@ describe('PStudio', () => {
     expect(screen.getByRole('button', {name: '입장'})).toBeInTheDocument()
   })
 
+  it('should render the saved website in the normal desktop window', () => {
+    vi.stubEnv('VITE_POMO_IS_DESKTOP', 'true')
+    configureStudio({
+      backgroundMode: 'website',
+      desktopMode: 'normal',
+      entrySession: true,
+      websiteUrl: 'https://example.com/dashboard',
+    })
+
+    renderStudio()
+
+    expect(screen.getByTitle('웹사이트 주소')).toHaveAttribute(
+      'src',
+      'https://example.com/dashboard',
+    )
+  })
+
   it('should keep only the scene visible while the window is the desktop background', () => {
     const {registerEventActionExecutor} = configureStudio({
       desktopMode: 'desktop',

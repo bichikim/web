@@ -49,7 +49,11 @@ import {
 } from '../../features/focus-room-time'
 import {usePSay} from '../../features/pomo-webmcp'
 import {useWeather, type WeatherSceneCondition} from '../../features/weather'
-import {useDesktopMode, useDesktopSafeAreaTop} from '../../features/desktop-mode'
+import {
+  isDesktopBackgroundMode,
+  useDesktopMode,
+  useDesktopSafeAreaTop,
+} from '../../features/desktop-mode'
 import {PEntry} from './Entry'
 import {resolvePSceneViseme} from '../pomo-scene-options'
 import {PSceneFallback} from './SceneFallback'
@@ -63,6 +67,7 @@ import {useDialogueSceneGaze} from '../use-dialogue-scene-gaze'
 import {StudioOverlay} from './StudioOverlay'
 import {useStudioTour} from './use-tour'
 import {DesktopSurfaceHandle} from '../desktop-surface/DesktopSurfaceHandle'
+import {WebsiteBackground} from './WebsiteBackground'
 
 const AUTOMATIC_PERIOD_REFRESH = 60_000
 
@@ -144,6 +149,7 @@ interface StudioSceneViewProps {
   readonly activity: PActivity
   readonly activeViseme: PViseme
   readonly hasSceneRendered: boolean
+  readonly isDesktopBackground: boolean
   readonly isDesktopWallpaper: boolean
   readonly motionInput: PSceneMotionInput
   readonly motionMode: PSceneMotionMode
@@ -199,7 +205,12 @@ const StudioSceneView = (props: StudioSceneViewProps) => (
           props.background.preferences().mode === 'website'
         }
       >
-        <div class="h-full w-full bg-background" />
+        <Show
+          fallback={<div class="h-full w-full bg-background" />}
+          when={!props.isDesktopBackground && props.background.preferences().websiteUrl}
+        >
+          {(url) => <WebsiteBackground url={url()} />}
+        </Show>
       </Match>
     </Switch>
   </Show>
@@ -454,6 +465,7 @@ export const PStudio = () => {
         activity={scenePreferences.activity()}
         activeViseme={activeViseme()}
         hasSceneRendered={hasSceneRendered()}
+        isDesktopBackground={isDesktopBackgroundMode(desktopMode.mode())}
         isDesktopWallpaper={isDesktopWallpaper()}
         isReady={scenePreferences.isReady() && weather.isReady()}
         motionInput={motionInput()}
