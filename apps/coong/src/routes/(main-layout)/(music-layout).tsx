@@ -6,7 +6,7 @@ import {
   useSearchParams,
 } from '@solidjs/router'
 import {useStorage} from '@winter-love/solid-use'
-import {createEffect, createMemo, createResource, createSignal, onMount} from 'solid-js'
+import {createEffect, createMemo, createResource, createSignal} from 'solid-js'
 import {
   LinkType,
   MusicInfo,
@@ -18,8 +18,8 @@ import {emitAllIds} from 'src/components/real-button/use-global-touch'
 import {useCookieStorage} from 'src/use/storage'
 import {createSplendidGrandPiano, SplendidGrandPianoContext} from 'src/use/instruments'
 import {getStorageKey} from 'src/utils/storage-key'
-import {getPresetEnforceMusics, type Preset} from 'src/server/preset'
-import {MidiPlayerProvider} from 'src/components/midi-player/context'
+import {getPresetEnforceMusics, type Preset} from 'src/features/preset'
+import {MidiPlayerProvider} from 'src/components/midi-player/MidiPlayerProvider'
 
 export const route = {
   info: {
@@ -62,7 +62,7 @@ export default function MusicLayout(props: RouteSectionProps) {
     onEmitInstrument: emitAllIds,
   })
   const [searchParams] = useSearchParams<{preset?: string}>()
-  const [preset] = createResource(() => getPreset(searchParams.preset))
+  const [preset] = createResource(() => searchParams.preset, getPreset)
   const location = useLocation()
   const navigate = useNavigate()
 
@@ -81,7 +81,7 @@ export default function MusicLayout(props: RouteSectionProps) {
     return location.pathname === PIANO_PATH ? 'music' : 'piano'
   })
 
-  const [musics, setMusics] = useStorage<MusicInfo[]>(
+  const [savedMusics, setSavedMusics] = useStorage<MusicInfo[]>(
     'local',
     getStorageKey('piano-musics-default'),
     {
@@ -91,30 +91,14 @@ export default function MusicLayout(props: RouteSectionProps) {
     },
   )
 
-  // useStorage onMount hydrates localStorage after createEffect; wait before enforcing
-  const [storageReady, setStorageReady] = createSignal(false)
+  const [presetMusics, setPresetMusics] = createSignal<MusicInfo[] | null>(null)
+  const musics = createMemo(() => presetMusics() ?? savedMusics())
 
-  onMount(() => {
-    setStorageReady(true)
-  })
-
-  // Presets load asynchronously; only known presets may override the saved playlist.
+  // Keep preset edits separate so leaving or reloading a deep link preserves the user's list.
   createEffect(() => {
-    if (!storageReady()) {
-      return
-    }
-
     const presetId = searchParams.preset
-
-    if (!presetId || preset.state !== 'ready') {
-      return
-    }
-
-    const presetMusics = getPresetEnforceMusics(presetId, preset())
-
-    if (presetMusics !== undefined) {
-      setMusics(presetMusics)
-    }
+    const data = preset.state === 'ready' ? preset() : undefined
+    setPresetMusics(getPresetEnforceMusics(presetId, data) ?? null)
   })
 
   const handleSettingDataChange = (data: SettingData) => {
@@ -122,7 +106,12 @@ export default function MusicLayout(props: RouteSectionProps) {
   }
 
   const handleMusicsChange = (musics: MusicInfo[]) => {
-    setMusics(musics)
+    if (presetMusics() !== null) {
+      setPresetMusics(musics)
+      return
+    }
+
+    setSavedMusics(musics)
   }
 
   const handleLinkTypeChange = (linkType: LinkType) => {

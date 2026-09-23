@@ -1,5 +1,7 @@
 import {Container, type Texture, Ticker} from 'pixi.js'
 
+import {clampUnit} from 'src/utils/clamp-unit'
+
 import {positionLayerContainer, validateTextureSizes} from './layer-layout'
 import {createLayerMaskFilter, detachLayerMasks} from './layer-mask'
 import type {LayerInstance, MotionInstance, MotionState} from './layer-runtime-state'
@@ -38,7 +40,6 @@ export interface PixiLayerSceneOptions {
 
 const MILLISECONDS_PER_SECOND = 1000
 const DEGREES_PER_HALF_TURN = 180
-const clampUnit = (value: number) => Math.min(1, Math.max(0, value))
 
 export const createStaticLayerScene = (
   options: CreateStaticLayerSceneOptions,

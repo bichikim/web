@@ -1,6 +1,12 @@
+/** @vitest-environment node */
 import {describe, expect, it} from 'vitest'
 
-import {resolveTrackEnd, resolveTrackRemoval} from '../playback-policy'
+import {
+  normalizeTrackIndex,
+  resolveManualNavigation,
+  resolveTrackEnd,
+  resolveTrackRemoval,
+} from '../playback-policy'
 
 describe('resolveTrackRemoval', () => {
   it('should preserve the current track when removing a later track', () => {
@@ -36,6 +42,145 @@ describe('resolveTrackRemoval', () => {
       currentTrackChanged: true,
       nextCurrentIndex: 0,
     })
+  })
+})
+
+describe('resolveManualNavigation', () => {
+  it('should resolve an available sequential destination', () => {
+    expect(
+      resolveManualNavigation({
+        currentIndex: 1,
+        direction: 'next',
+        repeatMode: 'none',
+        shuffleEnabled: false,
+        shuffleHistory: [],
+        shuffleQueue: [],
+        trackCount: 3,
+      }),
+    ).toEqual({index: 2, shuffleHistory: [], shuffleQueue: [], type: 'select'})
+  })
+
+  it.each([
+    {currentIndex: 2, direction: 'next'},
+    {currentIndex: 0, direction: 'previous'},
+  ] as const)('should reject repeat-disabled $direction at a playlist boundary', (options) => {
+    expect(
+      resolveManualNavigation({
+        ...options,
+        repeatMode: 'none',
+        shuffleEnabled: false,
+        shuffleHistory: [],
+        shuffleQueue: [],
+        trackCount: 3,
+      }),
+    ).toEqual({type: 'none'})
+  })
+
+  it('should consume the next shuffled destination and append history', () => {
+    expect(
+      resolveManualNavigation({
+        currentIndex: 0,
+        direction: 'next',
+        repeatMode: 'none',
+        shuffleEnabled: true,
+        shuffleHistory: [],
+        shuffleQueue: [2, 1],
+        trackCount: 3,
+      }),
+    ).toEqual({index: 2, shuffleHistory: [0], shuffleQueue: [1], type: 'select'})
+  })
+
+  it('should stop repeat-disabled shuffled navigation after the queue is consumed', () => {
+    expect(
+      resolveManualNavigation({
+        currentIndex: 2,
+        direction: 'next',
+        repeatMode: 'none',
+        shuffleEnabled: true,
+        shuffleHistory: [0, 1],
+        shuffleQueue: [],
+        trackCount: 3,
+      }),
+    ).toEqual({type: 'none'})
+  })
+
+  it('should request a new shuffled queue for repeat-enabled navigation', () => {
+    expect(
+      resolveManualNavigation({
+        currentIndex: 2,
+        direction: 'next',
+        repeatMode: 'repeat-all',
+        shuffleEnabled: true,
+        shuffleHistory: [0, 1],
+        shuffleQueue: [],
+        trackCount: 3,
+      }),
+    ).toEqual({type: 'reset-shuffle-queue'})
+  })
+
+  it('should resolve the previous shuffled history entry and reconcile state', () => {
+    expect(
+      resolveManualNavigation({
+        currentIndex: 0,
+        direction: 'previous',
+        repeatMode: 'none',
+        shuffleEnabled: true,
+        shuffleHistory: [2, 1],
+        shuffleQueue: [2],
+        trackCount: 3,
+      }),
+    ).toEqual({index: 1, shuffleHistory: [2], shuffleQueue: [0, 2], type: 'select'})
+  })
+
+  it('should request a refreshed queue after sequential previous navigation in shuffle mode', () => {
+    expect(
+      resolveManualNavigation({
+        currentIndex: 1,
+        direction: 'previous',
+        repeatMode: 'none',
+        shuffleEnabled: true,
+        shuffleHistory: [],
+        shuffleQueue: [0, 2],
+        trackCount: 3,
+      }),
+    ).toEqual({index: 0, shuffleHistory: [], shuffleQueue: 'reset', type: 'select'})
+  })
+
+  it('should restart a single track only for repeat-enabled next navigation', () => {
+    expect(
+      resolveManualNavigation({
+        currentIndex: 0,
+        direction: 'next',
+        repeatMode: 'repeat-all',
+        shuffleEnabled: false,
+        shuffleHistory: [],
+        shuffleQueue: [],
+        trackCount: 1,
+      }),
+    ).toEqual({type: 'restart'})
+    expect(
+      resolveManualNavigation({
+        currentIndex: 0,
+        direction: 'next',
+        repeatMode: 'none',
+        shuffleEnabled: false,
+        shuffleHistory: [],
+        shuffleQueue: [],
+        trackCount: 1,
+      }),
+    ).toEqual({type: 'none'})
+  })
+})
+
+describe('normalizeTrackIndex', () => {
+  it.each([
+    {expected: 0, index: 0, trackCount: 3},
+    {expected: 0, index: 3, trackCount: 3},
+    {expected: 2, index: -1, trackCount: 3},
+    {expected: undefined, index: 1.5, trackCount: 3},
+    {expected: undefined, index: 0, trackCount: 0},
+  ] as const)('should normalize $index with $trackCount tracks to $expected', (options) => {
+    expect(normalizeTrackIndex(options.index, options.trackCount)).toBe(options.expected)
   })
 })
 

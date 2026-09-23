@@ -13,7 +13,6 @@ export const BlockedDialogueBubble = (props: BlockedDialogueBubbleProps) => (
   <PScribblePanel
     class="pomo-dialogue-bubble-frame flex w-full"
     enabled={props.sceneStyle === 'scribble'}
-    frameClass="pomo-dialogue-bubble__scribble-border"
   >
     <button
       class={cx(

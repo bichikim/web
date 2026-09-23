@@ -53,7 +53,12 @@ export const createDeformerCurveHandle = (
   pointIndex: number,
 ): PuppetDeformerCurveHandle | undefined => {
   const pointCount = (node.columns + 1) * (node.rows + 1)
-  if (!Number.isInteger(pointIndex) || pointIndex < 0 || pointIndex >= pointCount) {
+  if (
+    node.curveAxis !== undefined ||
+    !Number.isInteger(pointIndex) ||
+    pointIndex < 0 ||
+    pointIndex >= pointCount
+  ) {
     return undefined
   }
 

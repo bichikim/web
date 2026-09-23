@@ -1,3 +1,4 @@
+/** @vitest-environment node */
 import {expect, it, vi} from 'vitest'
 
 import type {PDialogue} from '../../focus-room-dialogue'
@@ -75,27 +76,49 @@ const createItem = (
   version: 1,
 })
 
-it('should join metadata only with dialogue records that still exist', async () => {
+it('should dismiss orphaned feed records while joining available dialogues', async () => {
   const availableMetadata = createMetadata(DIALOGUE.id)
   const missingMetadata = createMetadata('missing')
+  const dismissItem = vi.fn(async () => undefined)
+  const removeMetadata = vi.fn(async () => undefined)
   const result = await loadFeedDialogueList({
     dialogueRepository: {
       getDialogue: vi.fn(async (dialogueId) => (dialogueId === DIALOGUE.id ? DIALOGUE : null)),
     },
-    feedRepository: {listMetadata: vi.fn(async () => [availableMetadata, missingMetadata])},
+    feedRepository: {
+      dismissItem,
+      listMetadata: vi.fn(async () => [availableMetadata, missingMetadata]),
+      removeMetadata,
+    },
+    now: new Date('2026-08-17T00:00:00.000Z'),
   })
 
   expect(result).toEqual([{dialogue: DIALOGUE, metadata: availableMetadata}])
+  expect(dismissItem).toHaveBeenCalledWith({
+    fallback: {
+      itemTitle: missingMetadata.itemTitle,
+      publishedAt: missingMetadata.publishedAt,
+      sourceTitle: missingMetadata.sourceTitle,
+      sourceUrl: missingMetadata.sourceUrl,
+    },
+    feedConnectionId: missingMetadata.feedConnectionId,
+    feedItemId: missingMetadata.feedItemId,
+    message: '대화를 찾을 수 없어 피드 항목을 정리했어요.',
+    updatedAt: '2026-08-17T00:00:00.000Z',
+  })
+  expect(removeMetadata).toHaveBeenCalledWith(missingMetadata.dialogueId)
 })
 
 it('should delete expired dialogues except active or queued playback', async () => {
   const active = createMetadata('active')
   const idle = createMetadata('idle')
   const deleteDialogue = vi.fn(async () => undefined)
+  const dismissItem = vi.fn(async () => undefined)
   const removeMetadata = vi.fn(async () => undefined)
   const deletedCount = await deleteExpiredFeedDialogues({
     dialogueRepository: {deleteDialogue},
     feedRepository: {
+      dismissItem,
       listExpiredMetadata: vi.fn(async () => [active, idle]),
       removeMetadata,
     },
@@ -105,6 +128,19 @@ it('should delete expired dialogues except active or queued playback', async () 
 
   expect(deletedCount).toBe(1)
   expect(deleteDialogue).toHaveBeenCalledWith(idle.dialogueId)
+  expect(dismissItem).toHaveBeenCalledWith({
+    fallback: {
+      itemTitle: idle.itemTitle,
+      publishedAt: idle.publishedAt,
+      sourceTitle: idle.sourceTitle,
+      sourceUrl: idle.sourceUrl,
+    },
+    feedConnectionId: idle.feedConnectionId,
+    feedItemId: idle.feedItemId,
+    message: '피드 대화가 만료되어 정리했어요.',
+    updatedAt: '2026-08-17T00:00:00.000Z',
+  })
+  expect(dismissItem).toHaveBeenCalledTimes(1)
   expect(removeMetadata).toHaveBeenCalledWith(idle.dialogueId)
 })
 

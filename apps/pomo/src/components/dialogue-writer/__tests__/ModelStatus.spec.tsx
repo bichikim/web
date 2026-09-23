@@ -1,8 +1,8 @@
 /** @vitest-environment jsdom */
 
 import {render, screen} from '@solidjs/testing-library'
-import type {TextModelDefinition} from '../../../features/text-generation'
 import {describe, expect, it} from 'vitest'
+import type {TextModelDefinition} from '../../../features/text-generation'
 import {ModelStatus} from '../ModelStatus'
 
 const model: TextModelDefinition = {
@@ -14,7 +14,7 @@ const model: TextModelDefinition = {
 
 describe('ModelStatus', () => {
   it('should show loading progress and its active status presentation', () => {
-    const {container} = render(() => (
+    render(() => (
       <ModelStatus
         model={model}
         percentage={42}
@@ -35,11 +35,11 @@ describe('ModelStatus', () => {
     ).toBe('42%')
     expect((progress.firstElementChild as HTMLElement).style.width).toBe('')
     expect(progress.firstElementChild).toHaveClass('[width:var(--pomo-progress-width)]')
-    expect(container.querySelector('.bg-\\#f2a7b8')).not.toBeNull()
+    expect(screen.getByText('Qwen · WebGPU').previousElementSibling).toHaveClass('bg-#f2a7b8')
   })
 
   it('should show ready and complete models with their download size', () => {
-    const {container} = render(() => (
+    render(() => (
       <>
         <ModelStatus model={model} percentage={100} status="ready" statusMessage="준비됐어요." />
         <ModelStatus model={model} percentage={100} status="complete" statusMessage="완료했어요." />
@@ -50,11 +50,16 @@ describe('ModelStatus', () => {
     expect(screen.queryByRole('progressbar')).toBeNull()
     expect(screen.getByText('준비됐어요.')).toHaveClass('text-#9f93a7')
     expect(screen.getByText('완료했어요.')).toHaveClass('text-#9f93a7')
-    expect(container.querySelectorAll('.bg-\\#9ed6bb')).toHaveLength(2)
+    const statusDots = screen
+      .getAllByText('Qwen · WebGPU')
+      .map((label) => label.previousElementSibling)
+    expect(statusDots).toHaveLength(2)
+    expect(statusDots[0]).toHaveClass('bg-#9ed6bb')
+    expect(statusDots[1]).toHaveClass('bg-#9ed6bb')
   })
 
   it('should show error and unsupported models with attention styling', () => {
-    const {container} = render(() => (
+    render(() => (
       <>
         <ModelStatus
           model={model}
@@ -82,6 +87,11 @@ describe('ModelStatus', () => {
     expect(screen.getByText('이 브라우저에서는 지원하지 않아요.')).toHaveClass('text-#ff9aa8')
     expect(screen.getByText('답변 생성 중이에요.')).toHaveClass('text-#9f93a7')
     expect(screen.getByText('시작을 기다려요.')).toHaveClass('text-#9f93a7')
-    expect(container.querySelectorAll('.bg-\\#ff9aa8')).toHaveLength(2)
+    const statusDots = screen
+      .getAllByText('Qwen · WebGPU')
+      .map((label) => label.previousElementSibling)
+    expect(statusDots).toHaveLength(4)
+    expect(statusDots[0]).toHaveClass('bg-#ff9aa8')
+    expect(statusDots[1]).toHaveClass('bg-#ff9aa8')
   })
 })

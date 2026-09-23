@@ -1,3 +1,4 @@
+/** @vitest-environment node */
 import {beforeEach, expect, it, vi} from 'vitest'
 
 const authMocks = vi.hoisted(() => ({authenticateAppRequest: vi.fn(), readBearerToken: vi.fn()}))
@@ -6,9 +7,9 @@ const repositoryMocks = vi.hoisted(() => ({
   revokeAppSession: vi.fn(),
 }))
 
-vi.mock('src/server/user-auth/http', () => authMocks)
-vi.mock('src/server/user-auth/repository', () => repositoryMocks)
-vi.mock('src/server/user-auth/token', () => ({readBearerToken: authMocks.readBearerToken}))
+vi.mock('src/server/auth/authenticate-app-request', () => authMocks)
+vi.mock('src/server/auth/app-session', () => repositoryMocks)
+vi.mock('src/server/auth/token', () => ({readBearerToken: authMocks.readBearerToken}))
 
 import {DELETE, GET, PATCH} from '../session'
 import {invokeApiRoute} from '../../__tests__/invoke'

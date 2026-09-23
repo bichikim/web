@@ -16,6 +16,10 @@ export const PolicyIntro = (props: PPrivacyPolicyProps) => (
       개인사업자 {SERVICE_OPERATOR.businessName}은 Pomofi 이용자의 개인정보를 필요한 범위에서만
       처리하고 안전하게 보호합니다.
     </p>
-    <p class="mb-0 mt-3 text-xs text-#a99cab">시행일 2026년 8월 22일 · 문서 버전 1.1</p>
+    <p class="mb-0 mt-3 text-xs text-#a99cab">시행일 2026년 9월 13일 · 문서 버전 1.2</p>
+    <p class="mb-0 mt-3 text-xs text-#a99cab">
+      개정 내용: Google Calendar 데이터의 처리 목적, 보관·삭제 방법과 제한적 사용 요건 명시 (이전
+      버전 1.1: 2026년 8월 22일)
+    </p>
   </header>
 )

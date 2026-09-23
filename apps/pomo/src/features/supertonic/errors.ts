@@ -1,3 +1,4 @@
+import {getExceptionMessage} from '../error-detail'
 export type SupertonicPhase = 'download' | 'generate' | 'initialize' | 'validate'
 
 interface SupertonicErrorBase {
@@ -68,5 +69,4 @@ export type SupertonicError =
   | ModelNotReadyError
   | WorkerFailedError
 
-export const getErrorDetail = (error: unknown) =>
-  error instanceof Error ? error.message : '알 수 없는 오류'
+export const getErrorDetail = (error: unknown) => getExceptionMessage(error, '알 수 없는 오류')

@@ -3,7 +3,10 @@ import {lazy, Show} from 'solid-js'
 import {NotFoundContent} from '../components/not-found/Content'
 
 const PageDispatcher = import.meta.env.DEV
-  ? lazy(() => import('src/components/dev/PageDispatcher'))
+  ? lazy(async () => {
+      const {PageDispatcher} = await import('src/components/dev/PageDispatcher')
+      return {default: PageDispatcher}
+    })
   : undefined
 
 export default function NotFoundPage() {

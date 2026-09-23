@@ -24,12 +24,11 @@ afterEach(() => {
 describe('createPSceneMouthController', () => {
   it('should crossfade both mouth sprites before settling on the anticipated viseme', () => {
     const frames: Array<FrameRequestCallback> = []
-    vi.spyOn(window.performance, 'now').mockReturnValue(1_000)
-    vi.spyOn(window, 'requestAnimationFrame').mockImplementation((callback) => {
+    vi.spyOn(globalThis, 'requestAnimationFrame').mockImplementation((callback) => {
       frames.push(callback)
       return frames.length
     })
-    vi.spyOn(window, 'cancelAnimationFrame').mockImplementation(() => undefined)
+    vi.spyOn(globalThis, 'cancelAnimationFrame').mockImplementation(() => undefined)
     const update = vi.fn()
     const controller = createPSceneMouthController(() => [createLayerScene(update), null])
 
@@ -39,6 +38,7 @@ describe('createPSceneMouthController', () => {
     expect(initialState.channels?.[FOCUS_ROOM_MOUTH_CHANNELS.rest]?.opacity).toBe(1)
     expect(initialState.channels?.[FOCUS_ROOM_MOUTH_CHANNELS.round]?.opacity).toBe(0)
 
+    frames.shift()?.(1_000)
     frames.shift()?.(1_050)
 
     const halfwayState = update.mock.lastCall?.[0]
@@ -55,17 +55,16 @@ describe('createPSceneMouthController', () => {
 
   it('should reverse from the current bridge frame when returning to the previous viseme', () => {
     const frames: Array<FrameRequestCallback> = []
-    let now = 1_000
-    vi.spyOn(window.performance, 'now').mockImplementation(() => now)
-    vi.spyOn(window, 'requestAnimationFrame').mockImplementation((callback) => {
+    vi.spyOn(globalThis, 'requestAnimationFrame').mockImplementation((callback) => {
       frames.push(callback)
       return frames.length
     })
-    vi.spyOn(window, 'cancelAnimationFrame').mockImplementation(() => undefined)
+    vi.spyOn(globalThis, 'cancelAnimationFrame').mockImplementation(() => undefined)
     const update = vi.fn()
     const controller = createPSceneMouthController(() => [createLayerScene(update), null])
 
     controller.update('narrow', 'wide', false)
+    frames.shift()?.(1_000)
     frames.shift()?.(1_050)
 
     expect(
@@ -74,7 +73,6 @@ describe('createPSceneMouthController', () => {
       ]?.opacity,
     ).toBe(1)
 
-    now = 1_050
     controller.update('wide', 'narrow', false)
 
     expect(
@@ -83,6 +81,7 @@ describe('createPSceneMouthController', () => {
       ]?.opacity,
     ).toBe(1)
 
+    frames.pop()?.(1_050)
     frames.pop()?.(1_075)
 
     expect(
@@ -99,7 +98,7 @@ describe('createPSceneMouthController', () => {
 
   it('should apply the active viseme immediately when the viseme is unchanged', () => {
     const requestAnimationFrame = vi
-      .spyOn(window, 'requestAnimationFrame')
+      .spyOn(globalThis, 'requestAnimationFrame')
       .mockImplementation(() => 1)
     const firstUpdate = vi.fn()
     const secondUpdate = vi.fn()
@@ -119,10 +118,9 @@ describe('createPSceneMouthController', () => {
   })
 
   it('should cancel an active transition when reduced motion is enabled', () => {
-    vi.spyOn(window.performance, 'now').mockReturnValue(1_000)
-    vi.spyOn(window, 'requestAnimationFrame').mockImplementation(() => 7)
+    vi.spyOn(globalThis, 'requestAnimationFrame').mockImplementation(() => 7)
     const cancelAnimationFrame = vi
-      .spyOn(window, 'cancelAnimationFrame')
+      .spyOn(globalThis, 'cancelAnimationFrame')
       .mockImplementation(() => undefined)
     const update = vi.fn()
     const controller = createPSceneMouthController(() => [createLayerScene(update), null])
@@ -146,12 +144,11 @@ describe('createPSceneMouthController', () => {
 
   it('should calculate bridge support independently for current and incoming scenes', () => {
     const frames: Array<FrameRequestCallback> = []
-    vi.spyOn(window.performance, 'now').mockReturnValue(1_000)
-    vi.spyOn(window, 'requestAnimationFrame').mockImplementation((callback) => {
+    vi.spyOn(globalThis, 'requestAnimationFrame').mockImplementation((callback) => {
       frames.push(callback)
       return frames.length
     })
-    vi.spyOn(window, 'cancelAnimationFrame').mockImplementation(() => undefined)
+    vi.spyOn(globalThis, 'cancelAnimationFrame').mockImplementation(() => undefined)
     const currentUpdate = vi.fn()
     const incomingUpdate = vi.fn()
     const controller = createPSceneMouthController(() => [
@@ -160,6 +157,7 @@ describe('createPSceneMouthController', () => {
     ])
 
     controller.update('closed', 'open', false)
+    frames.shift()?.(1_000)
     frames.shift()?.(1_050)
 
     const currentState = currentUpdate.mock.lastCall?.[0]

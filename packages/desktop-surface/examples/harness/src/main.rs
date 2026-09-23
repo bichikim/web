@@ -16,6 +16,8 @@ struct WindowProbe {
     activation_policy: NSApplicationActivationPolicy,
     can_hide: bool,
     collection_behavior: usize,
+    content_corner_radius: f64,
+    content_masks_to_bounds: bool,
     excluded_from_windows_menu: bool,
     frame_height: f64,
     frame_width: f64,
@@ -53,27 +55,37 @@ fn probe_window<R: Runtime>(window: &WebviewWindow<R>) -> Result<WindowProbe, St
             let probe = view
                 .window()
                 .ok_or_else(|| "webview is not installed in its window yet".to_owned())
-                .map(|window| WindowProbe {
-                    activation_policy: NSApp(unsafe { MainThreadMarker::new_unchecked() })
-                        .activationPolicy(),
-                    can_hide: window.canHide(),
-                    collection_behavior: window.collectionBehavior().bits(),
-                    excluded_from_windows_menu: window.isExcludedFromWindowsMenu(),
-                    frame_height: window.frame().size.height,
-                    frame_width: window.frame().size.width,
-                    frame_x: window.frame().origin.x,
-                    frame_y: window.frame().origin.y,
-                    has_shadow: window.hasShadow(),
-                    hides_on_deactivate: window.hidesOnDeactivate(),
-                    ignores_mouse_events: window.ignoresMouseEvents(),
-                    is_opaque: window.isOpaque(),
-                    level: window.level(),
-                    movable: window.isMovable(),
-                    movable_by_window_background: window.isMovableByWindowBackground(),
-                    screen_frame_height: window.screen().map(|screen| screen.frame().size.height),
-                    screen_frame_width: window.screen().map(|screen| screen.frame().size.width),
-                    screen_frame_x: window.screen().map(|screen| screen.frame().origin.x),
-                    screen_frame_y: window.screen().map(|screen| screen.frame().origin.y),
+                .map(|window| {
+                    let (content_corner_radius, content_masks_to_bounds) = window
+                        .contentView()
+                        .and_then(|content_view| content_view.layer())
+                        .map(|layer| (layer.cornerRadius(), layer.masksToBounds()))
+                        .unwrap_or((0.0, false));
+
+                    WindowProbe {
+                        activation_policy: NSApp(unsafe { MainThreadMarker::new_unchecked() })
+                            .activationPolicy(),
+                        can_hide: window.canHide(),
+                        collection_behavior: window.collectionBehavior().bits(),
+                        content_corner_radius,
+                        content_masks_to_bounds,
+                        excluded_from_windows_menu: window.isExcludedFromWindowsMenu(),
+                        frame_height: window.frame().size.height,
+                        frame_width: window.frame().size.width,
+                        frame_x: window.frame().origin.x,
+                        frame_y: window.frame().origin.y,
+                        has_shadow: window.hasShadow(),
+                        hides_on_deactivate: window.hidesOnDeactivate(),
+                        ignores_mouse_events: window.ignoresMouseEvents(),
+                        is_opaque: window.isOpaque(),
+                        level: window.level(),
+                        movable: window.isMovable(),
+                        movable_by_window_background: window.isMovableByWindowBackground(),
+                        screen_frame_height: window.screen().map(|screen| screen.frame().size.height),
+                        screen_frame_width: window.screen().map(|screen| screen.frame().size.width),
+                        screen_frame_x: window.screen().map(|screen| screen.frame().origin.x),
+                        screen_frame_y: window.screen().map(|screen| screen.frame().origin.y),
+                    }
                 });
             let _ = sender.send(probe);
         })
@@ -252,8 +264,8 @@ fn assert_control<R: Runtime>(app: AppHandle<R>) -> Result<(), String> {
         .ok_or_else(|| "control window was not found".to_owned())?;
     let probe = probe_window(&window)?;
 
-    if probe.is_opaque || probe.ignores_mouse_events || probe.has_shadow {
-        return Err("control transparency or input state is incorrect".to_owned());
+    if probe.is_opaque || probe.ignores_mouse_events || !probe.has_shadow {
+        return Err("control transparency, shadow, or input state is incorrect".to_owned());
     }
 
     Ok(())
@@ -262,6 +274,7 @@ fn assert_control<R: Runtime>(app: AppHandle<R>) -> Result<(), String> {
 #[tauri::command]
 fn assert_widget<R: Runtime>(app: AppHandle<R>) -> Result<(), String> {
     let window = background_window(&app)?;
+    let probe = probe_window(&window)?;
     let size = window.inner_size().map_err(|error| error.to_string())?;
     let scale = window.scale_factor().map_err(|error| error.to_string())?;
     let logical_width = f64::from(size.width) / scale;
@@ -277,8 +290,12 @@ fn assert_widget<R: Runtime>(app: AppHandle<R>) -> Result<(), String> {
         .map_err(|error| error.to_string())?
         || window.is_decorated().map_err(|error| error.to_string())?
         || window.is_resizable().map_err(|error| error.to_string())?
+        || (probe.content_corner_radius - 20.0).abs() > 0.1
+        || !probe.content_masks_to_bounds
+        || !probe.has_shadow
     {
-        return Err("widget level, decoration, or resize state is incorrect".to_owned());
+        return Err("widget level, decoration, resize, corner, clipping, or shadow state is incorrect"
+            .to_owned());
     }
 
     Ok(())

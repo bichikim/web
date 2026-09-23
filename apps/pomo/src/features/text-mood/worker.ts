@@ -1,22 +1,20 @@
 /// <reference lib="webworker" />
+import {getMonotonicTime} from 'src/utils/get-monotonic-time'
 
 // oxlint-disable eslint-js/camelcase -- Transformers.js option names are fixed external contracts.
 
-import {
-  env,
-  type FeatureExtractionPipeline,
-  pipeline,
-  type ProgressInfo,
-} from '@huggingface/transformers'
+import {env, type FeatureExtractionPipeline, pipeline} from '@huggingface/transformers'
 
+import {getErrorMessage} from 'src/utils/get-error-message'
+import {isNonBlankString} from 'src/utils/is-non-blank-string'
+import {createPercentProgressReporter} from '../transformers-progress'
 import {classifyTextMood, classifyTextSufficiency} from './classifier'
 import type {TextMoodError, TextMoodPhase} from './errors'
 import type {TextMoodWorkerRequest, TextMoodWorkerResponse} from './messages'
 import {TEXT_MOOD_MODEL} from './model'
 
-const MAXIMUM_PROGRESS = 100
 const MINIMUM_PROGRESS = 0
-const workerScope = self as DedicatedWorkerGlobalScope
+const workerScope = globalThis.self as DedicatedWorkerGlobalScope
 
 // AI_NOTE - 감정 분석 런타임 자산은 외부 Hub fallback 없이 버전 고정된 Pomo R2 미러에서만 읽는다.
 env.allowLocalModels = false
@@ -29,31 +27,20 @@ let preparePromise: Promise<void> | null = null
 
 const sendResponse = (response: TextMoodWorkerResponse) => workerScope.postMessage(response)
 
-const getErrorDetail = (error: unknown) =>
-  error instanceof Error && error.message.length > 0 ? error.message : '알 수 없는 오류'
-
 const createError = (
   error: unknown,
   code: TextMoodError['code'],
   phase: TextMoodPhase,
 ): TextMoodError => ({
   code,
-  detail: getErrorDetail(error),
+  detail: getErrorMessage(error, '알 수 없는 오류'),
   phase,
   retryable: code !== 'invalid-input',
 })
 
-const reportProgress = (progress: ProgressInfo) => {
-  if (progress.status !== 'progress_total') {
-    return
-  }
-
-  const percentage = Math.min(
-    MAXIMUM_PROGRESS,
-    Math.max(MINIMUM_PROGRESS, Math.round(progress.progress)),
-  )
-  sendResponse({progress: percentage, type: 'loading'})
-}
+const reportProgress = createPercentProgressReporter((progress) =>
+  sendResponse({progress, type: 'loading'}),
+)
 
 const prepareModel = async () => {
   if (extractor !== null) {
@@ -96,7 +83,7 @@ const prepare = async (request: Extract<TextMoodWorkerRequest, {readonly type: '
 const getEmbeddingText = (request: Extract<TextMoodWorkerRequest, {readonly type: 'analyze'}>) => {
   const text = request.text.trim()
 
-  if (request.context === undefined || request.context.trim().length === 0) {
+  if (request.context === undefined || !isNonBlankString(request.context)) {
     return text
   }
 
@@ -139,7 +126,7 @@ const analyze = async (request: Extract<TextMoodWorkerRequest, {readonly type: '
     return
   }
 
-  const startedAt = performance.now()
+  const startedAt = getMonotonicTime()
 
   try {
     const output = await extractor(getEmbeddingText(request), {
@@ -151,7 +138,7 @@ const analyze = async (request: Extract<TextMoodWorkerRequest, {readonly type: '
 
     if (sufficiency.insufficient) {
       sendResponse({
-        elapsedMilliseconds: performance.now() - startedAt,
+        elapsedMilliseconds: getMonotonicTime() - startedAt,
         requestId: request.requestId,
         sufficiency,
         type: 'insufficient',
@@ -162,7 +149,7 @@ const analyze = async (request: Extract<TextMoodWorkerRequest, {readonly type: '
     const analysis = classifyTextMood(embedding)
     sendResponse({
       analysis,
-      elapsedMilliseconds: performance.now() - startedAt,
+      elapsedMilliseconds: getMonotonicTime() - startedAt,
       requestId: request.requestId,
       type: 'complete',
     })

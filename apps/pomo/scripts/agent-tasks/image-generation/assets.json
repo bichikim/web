@@ -1,0 +1,182 @@
+{
+  "bucket": "pomofi-audio",
+  "publicBaseUrl": "https://storage.pomofi.io/",
+  "models": [
+    {
+      "variant": "binary",
+      "repositoryId": "prism-ml/bonsai-image-binary-4B-mlx-1bit",
+      "revision": "d1b3ac11a7f1ba61d84b277339daeeed4a98e0e2",
+      "objects": [
+        {
+          "path": "LICENSE",
+          "bytes": 10174
+        },
+        {
+          "path": "NOTICE.md",
+          "bytes": 623
+        },
+        {
+          "path": "README.md",
+          "bytes": 11977
+        },
+        {
+          "path": "manifest.json",
+          "bytes": 4617
+        },
+        {
+          "path": "model_index.json",
+          "bytes": 81
+        },
+        {
+          "path": "scheduler/scheduler_config.json",
+          "bytes": 486
+        },
+        {
+          "path": "tokenizer/tokenizer.json",
+          "bytes": 11422654
+        },
+        {
+          "path": "tokenizer/tokenizer_config.json",
+          "bytes": 5404
+        },
+        {
+          "path": "text_encoder-mlx-4bit/config.json",
+          "bytes": 937
+        },
+        {
+          "path": "text_encoder-mlx-4bit/model.safetensors",
+          "bytes": 2263022529
+        },
+        {
+          "path": "transformer-packed-mflux/config.json",
+          "bytes": 619
+        },
+        {
+          "path": "transformer-packed-mflux/quantization_config.json",
+          "bytes": 5054
+        },
+        {
+          "path": "transformer-packed-mflux/diffusion_pytorch_model.safetensors",
+          "bytes": 965208136
+        },
+        {
+          "path": "vae/config.json",
+          "bytes": 821
+        },
+        {
+          "path": "vae/diffusion_pytorch_model.safetensors",
+          "bytes": 168120878
+        }
+      ]
+    },
+    {
+      "variant": "ternary",
+      "repositoryId": "prism-ml/bonsai-image-ternary-4B-mlx-2bit",
+      "revision": "2c24c81b934a658ba5590cf39088ba929985b4a8",
+      "objects": [
+        {
+          "path": "LICENSE",
+          "bytes": 10174
+        },
+        {
+          "path": "NOTICE.md",
+          "bytes": 623
+        },
+        {
+          "path": "README.md",
+          "bytes": 12424
+        },
+        {
+          "path": "manifest.json",
+          "bytes": 4619
+        },
+        {
+          "path": "model_index.json",
+          "bytes": 81
+        },
+        {
+          "path": "scheduler/scheduler_config.json",
+          "bytes": 486
+        },
+        {
+          "path": "tokenizer/tokenizer.json",
+          "bytes": 11422654
+        },
+        {
+          "path": "tokenizer/tokenizer_config.json",
+          "bytes": 5404
+        },
+        {
+          "path": "text_encoder-mlx-4bit/config.json",
+          "bytes": 937
+        },
+        {
+          "path": "text_encoder-mlx-4bit/model.safetensors",
+          "bytes": 2263022529
+        },
+        {
+          "path": "transformer-packed-mflux/config.json",
+          "bytes": 619
+        },
+        {
+          "path": "transformer-packed-mflux/quantization_config.json",
+          "bytes": 5054
+        },
+        {
+          "path": "transformer-packed-mflux/diffusion_pytorch_model.safetensors",
+          "bytes": 1425271472
+        },
+        {
+          "path": "vae/config.json",
+          "bytes": 821
+        },
+        {
+          "path": "vae/diffusion_pytorch_model.safetensors",
+          "bytes": 168120878
+        }
+      ]
+    }
+  ],
+  "runtimeObjects": [
+    {
+      "key": "runtime/onnxruntime-web/1.27.0/ort-wasm-simd-threaded.asyncify.mjs",
+      "bytes": 47507
+    },
+    {
+      "key": "runtime/onnxruntime-web/1.27.0/ort-wasm-simd-threaded.wasm",
+      "bytes": 13479978
+    },
+    {
+      "key": "runtime/onnxruntime-web/1.27.0/ort-wasm-simd-threaded.jspi.mjs",
+      "bytes": 44523
+    },
+    {
+      "key": "runtime/onnxruntime-web/1.27.0/ort-wasm-simd-threaded.jsep.wasm",
+      "bytes": 26827543
+    },
+    {
+      "key": "runtime/onnxruntime-web/1.27.0/ort-wasm-simd-threaded.jspi.wasm",
+      "bytes": 15046878
+    },
+    {
+      "key": "runtime/onnxruntime-web/1.27.0/ort-wasm-simd-threaded.mjs",
+      "bytes": 24180
+    },
+    {
+      "key": "runtime/onnxruntime-web/1.27.0/ort-wasm-simd-threaded.jsep.mjs",
+      "bytes": 46614
+    },
+    {
+      "key": "runtime/onnxruntime-web/1.27.0/ort-wasm-simd-threaded.asyncify.wasm",
+      "bytes": 24254953
+    },
+    {
+      "key": "runtime/onnxruntime-web/1.27.0/LICENSE",
+      "bytes": 1073
+    },
+    {
+      "key": "runtime/onnxruntime-web/1.27.0/ThirdPartyNotices.txt",
+      "bytes": 325054
+    }
+  ]
+}

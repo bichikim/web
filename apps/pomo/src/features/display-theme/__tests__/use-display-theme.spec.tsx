@@ -3,6 +3,7 @@
 import {render} from '@solidjs/testing-library'
 import {createEffect} from 'solid-js'
 import {afterEach, beforeEach, expect, it, vi} from 'vitest'
+import {PreferenceProvider} from 'src/hooks/use-preference'
 
 import type {DisplayThemeController} from '../model'
 import {useDisplayThemeController} from '../use-display-theme'
@@ -12,10 +13,14 @@ const preferenceMocks = vi.hoisted(() => ({
   write: vi.fn(),
 }))
 
-vi.mock('../storage', () => ({
-  readDisplayThemePreference: preferenceMocks.read,
-  writeDisplayThemePreference: preferenceMocks.write,
-}))
+vi.mock('../storage', async () => {
+  const actual: typeof import('../storage') = await vi.importActual('../storage')
+  return {
+    ...actual,
+    readDisplayThemePreference: preferenceMocks.read,
+    writeDisplayThemePreference: preferenceMocks.write,
+  }
+})
 
 interface HarnessProps {
   readonly onController: (controller: DisplayThemeController) => void
@@ -28,6 +33,12 @@ const Harness = (props: HarnessProps) => {
   createEffect(() => props.onPreferenceChange(controller.preference()))
   return null
 }
+
+const PreferenceHarness = (props: HarnessProps) => (
+  <PreferenceProvider>
+    <Harness {...props} />
+  </PreferenceProvider>
+)
 
 let prefersDark = false
 let mediaListener: ((event: MediaQueryListEvent) => void) | null = null
@@ -64,7 +75,7 @@ it('should restore the preference and apply explicit color schemes', async () =>
   let controller: DisplayThemeController | undefined
 
   render(() => (
-    <Harness
+    <PreferenceHarness
       onController={(nextController) => {
         controller = nextController
       }}
@@ -84,7 +95,7 @@ it('should restore the preference and apply explicit color schemes', async () =>
 it('should follow later operating-system changes only in system mode', async () => {
   let controller: DisplayThemeController | undefined
   render(() => (
-    <Harness
+    <PreferenceHarness
       onController={(nextController) => {
         controller = nextController
       }}
@@ -109,17 +120,19 @@ it('should preserve the bootstrapped color scheme until the saved preference is 
     }),
   )
 
-  render(() => <Harness onController={() => undefined} onPreferenceChange={() => undefined} />)
+  render(() => (
+    <PreferenceHarness onController={() => undefined} onPreferenceChange={() => undefined} />
+  ))
 
   expect(document.documentElement.classList.contains('dark')).toBe(true)
 })
 
-it('should apply the system preference when stored preference restoration fails', async () => {
+it('should apply dark mode when stored preference restoration fails', async () => {
   preferenceMocks.read.mockRejectedValue(new Error('Storage unavailable'))
   let controller: DisplayThemeController | undefined
 
   render(() => (
-    <Harness
+    <PreferenceHarness
       onController={(nextController) => {
         controller = nextController
       }}
@@ -127,8 +140,8 @@ it('should apply the system preference when stored preference restoration fails'
     />
   ))
 
-  await vi.waitFor(() => expect(document.documentElement.classList.contains('dark')).toBe(false))
-  expect(controller?.preference()).toBe('system')
+  await vi.waitFor(() => expect(controller?.preference()).toBe('dark'))
+  expect(document.documentElement.classList.contains('dark')).toBe(true)
 })
 
 it('should not overwrite a newer session choice with a delayed stored preference', async () => {
@@ -140,7 +153,7 @@ it('should not overwrite a newer session choice with a delayed stored preference
   )
   let controller: DisplayThemeController | undefined
   render(() => (
-    <Harness
+    <PreferenceHarness
       onController={(nextController) => {
         controller = nextController
       }}

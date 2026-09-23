@@ -4,11 +4,11 @@ import {cleanup, fireEvent, render, screen, waitFor} from '@solidjs/testing-libr
 import {createSignal, type JSX, Show} from 'solid-js'
 import {afterEach, beforeEach, expect, it, vi} from 'vitest'
 
-import {PModal, type PModalProps} from 'src/components/PModal'
+import {PModal, type PModalProps} from 'src/components/p-modal/PModal'
 import {type ModelDownloadState, useModelDownload} from 'src/features/model-download'
 import type {ModelStorageManager} from 'src/features/model-storage'
 import {failureResult, successResult} from 'src/features/result'
-import StoragePage from '../StoragePage'
+import {StoragePage} from '../StoragePage'
 
 vi.mock('@solidjs/meta', () => ({
   Title: (props: {children?: JSX.Element}) => <>{props.children}</>,
@@ -16,7 +16,7 @@ vi.mock('@solidjs/meta', () => ({
 vi.mock('@solidjs/router', () => ({
   A: (props: {children?: JSX.Element; href: string}) => <a href={props.href}>{props.children}</a>,
 }))
-vi.mock('src/components/PModal', () => ({PModal: vi.fn()}))
+vi.mock('src/components/p-modal/PModal', () => ({PModal: vi.fn()}))
 vi.mock('src/features/model-download', () => ({useModelDownload: vi.fn()}))
 
 let setDownloadState: (value: ModelDownloadState) => ModelDownloadState
@@ -156,4 +156,9 @@ it('should block deletion while a model download is active', async () => {
     '모델 다운로드가 끝나거나 취소된 뒤 저장소를 삭제해 주세요.',
   )
   expect(manager.deleteCacheEntry).not.toHaveBeenCalled()
+})
+
+it('should render its development page content', () => {
+  render(() => <StoragePage />)
+  expect(screen.getAllByText('모델 저장소 관리', {exact: false}).length).toBeGreaterThan(0)
 })

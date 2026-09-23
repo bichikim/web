@@ -10,7 +10,7 @@ interface DialogueLookupRepository extends Pick<PDialogueRepository, 'getDialogu
 
 interface FeedDialogueDeleteRepository extends Pick<
   FeedDialogueRepository,
-  'listExpiredMetadata' | 'removeMetadata'
+  'dismissItem' | 'listExpiredMetadata' | 'removeMetadata'
 > {}
 
 interface FeedDialogueIssueRepository extends Pick<FeedDialogueRepository, 'listItems'> {}
@@ -20,11 +20,18 @@ interface FeedDialogueJobRepository extends Pick<
   'deleteJobs' | 'listJobs'
 > {}
 
-interface FeedDialogueLookupRepository extends Pick<FeedDialogueRepository, 'listMetadata'> {}
+interface FeedDialogueListRepository extends Pick<
+  FeedDialogueRepository,
+  'dismissItem' | 'listMetadata' | 'removeMetadata'
+> {}
+
+const ORPHAN_FEED_ITEM_MESSAGE = '대화를 찾을 수 없어 피드 항목을 정리했어요.'
+const EXPIRED_FEED_ITEM_MESSAGE = '피드 대화가 만료되어 정리했어요.'
 
 export interface LoadFeedDialogueListOptions {
   readonly dialogueRepository: DialogueLookupRepository
-  readonly feedRepository: FeedDialogueLookupRepository
+  readonly feedRepository: FeedDialogueListRepository
+  readonly now: Date
 }
 
 export interface DeleteExpiredFeedDialoguesOptions {
@@ -45,20 +52,37 @@ export interface DiscardFeedJobsOptions {
   readonly updatedAt: string
 }
 
-/** Loads feed metadata joined with every dialogue record that is still available. */
+/** Loads available feed dialogues and removes records whose dialogue was deleted. */
 export const loadFeedDialogueList = async (
   options: LoadFeedDialogueListOptions,
 ): Promise<ReadonlyArray<FeedDialogueListItem>> => {
   const metadata = await options.feedRepository.listMetadata()
   const loaded = await Promise.all(
-    metadata.map(async (item) => ({
-      dialogue: await options.dialogueRepository.getDialogue(item.dialogueId),
-      metadata: item,
-    })),
+    metadata.map(async (item) => {
+      const dialogue = await options.dialogueRepository.getDialogue(item.dialogueId)
+
+      if (dialogue === null) {
+        const updatedAt = options.now.toISOString()
+        await options.feedRepository.dismissItem({
+          fallback: {
+            itemTitle: item.itemTitle,
+            publishedAt: item.publishedAt,
+            sourceTitle: item.sourceTitle,
+            sourceUrl: item.sourceUrl,
+          },
+          feedConnectionId: item.feedConnectionId,
+          feedItemId: item.feedItemId,
+          message: ORPHAN_FEED_ITEM_MESSAGE,
+          updatedAt,
+        })
+        await options.feedRepository.removeMetadata(item.dialogueId)
+        return null
+      }
+
+      return {dialogue, metadata: item}
+    }),
   )
-  return loaded.flatMap((item) =>
-    item.dialogue === null ? [] : [{dialogue: item.dialogue, metadata: item.metadata}],
-  )
+  return loaded.flatMap((item) => (item === null ? [] : [item]))
 }
 
 /** Loads failed or over-limit feed items in newest-first order. */
@@ -99,6 +123,18 @@ export const deleteExpiredFeedDialogues = async (options: DeleteExpiredFeedDialo
   await Promise.all(
     removable.map(async (metadata) => {
       await options.dialogueRepository.deleteDialogue(metadata.dialogueId)
+      await options.feedRepository.dismissItem({
+        fallback: {
+          itemTitle: metadata.itemTitle,
+          publishedAt: metadata.publishedAt,
+          sourceTitle: metadata.sourceTitle,
+          sourceUrl: metadata.sourceUrl,
+        },
+        feedConnectionId: metadata.feedConnectionId,
+        feedItemId: metadata.feedItemId,
+        message: EXPIRED_FEED_ITEM_MESSAGE,
+        updatedAt: options.now.toISOString(),
+      })
       await options.feedRepository.removeMetadata(metadata.dialogueId)
     }),
   )

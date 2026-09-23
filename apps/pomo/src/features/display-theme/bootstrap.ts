@@ -1,7 +1,7 @@
-import {DISPLAY_THEME_STORAGE_KEY} from './model'
+import {DEFAULT_DISPLAY_THEME, DISPLAY_THEME_STORAGE_KEY} from './model'
 
 export const DISPLAY_THEME_BOOTSTRAP_SCRIPT = `(() => {
-  let preference = "system"
+  let preference = ${JSON.stringify(DEFAULT_DISPLAY_THEME)}
   try {
     const storedPreference = JSON.parse(
       globalThis.localStorage.getItem(${JSON.stringify(DISPLAY_THEME_STORAGE_KEY)}) ?? "null",

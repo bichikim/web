@@ -1,9 +1,9 @@
 /** @vitest-environment jsdom */
 
 import {fireEvent, render, screen} from '@solidjs/testing-library'
+import {describe, expect, it, vi} from 'vitest'
 import type {DialogueWriterController, DialogueWriterState} from '../../../features/dialogue-writer'
 import type {TextModelDefinition} from '../../../features/text-generation'
-import {describe, expect, it, vi} from 'vitest'
 import {ModelPanel} from '../ModelPanel'
 
 interface WriterOptions {

@@ -1,10 +1,10 @@
 import type {APIEvent} from '@solidjs/start/server'
 import {z} from 'zod'
 
-import {authorizeAdminRequest} from 'src/server/admin-auth/http'
+import {authorizeAdminRequest} from 'src/server/auth/authorize-admin-request'
 import {readJsonBody} from 'src/server/http/body'
 import {noStoreJson} from 'src/server/http/response'
-import {createAlbum} from 'src/server/music/album-creation-repository'
+import {createAlbum} from 'src/server/repositories/music-album-creation'
 import {isManagedAlbumCoverUrl} from 'src/server/music/cover-upload'
 
 const MAXIMUM_BODY_SIZE = 65_536

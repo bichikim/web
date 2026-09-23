@@ -64,19 +64,19 @@ test('should hold the minimum size while dragging and collapse only after releas
   rightResizer.dispatchEvent(
     new MouseEvent('pointerdown', {bubbles: true, button: 0, clientX: 300}),
   )
-  window.dispatchEvent(new MouseEvent('pointermove', {clientX: 400}))
+  globalThis.dispatchEvent(new MouseEvent('pointermove', {clientX: 460}))
   expect(editor).not.toHaveClass('right-panel-closed')
   expect(rightResizer).toHaveAttribute('aria-valuenow', '220')
-  window.dispatchEvent(new MouseEvent('pointerup'))
+  globalThis.dispatchEvent(new MouseEvent('pointerup'))
   expect(editor).toHaveClass('right-panel-closed')
 
   bottomResizer.dispatchEvent(
     new MouseEvent('pointerdown', {bubbles: true, button: 0, clientY: 300}),
   )
-  window.dispatchEvent(new MouseEvent('pointermove', {clientY: 400}))
+  globalThis.dispatchEvent(new MouseEvent('pointermove', {clientY: 480}))
   expect(editor).not.toHaveClass('bottom-panel-closed')
   expect(bottomResizer).toHaveAttribute('aria-valuenow', '180')
-  window.dispatchEvent(new MouseEvent('pointerup'))
+  globalThis.dispatchEvent(new MouseEvent('pointerup'))
   expect(editor).toHaveClass('bottom-panel-closed')
 })
 
@@ -87,12 +87,12 @@ test('should remain open when dragged back above the minimum before release', ()
 
   leftResizer.dispatchEvent(new MouseEvent('pointerdown', {bubbles: true, button: 0, clientX: 300}))
   expect(leftResizer).toHaveClass('dragging')
-  window.dispatchEvent(new MouseEvent('pointermove', {clientX: 180}))
+  globalThis.dispatchEvent(new MouseEvent('pointermove', {clientX: 180}))
   expect(leftResizer).toHaveAttribute('aria-valuenow', '220')
   expect(leftResizer).toHaveClass('dragging')
-  window.dispatchEvent(new MouseEvent('pointermove', {clientX: 240}))
+  globalThis.dispatchEvent(new MouseEvent('pointermove', {clientX: 240}))
   expect(leftResizer).toHaveAttribute('aria-valuenow', '240')
-  window.dispatchEvent(new MouseEvent('pointerup'))
+  globalThis.dispatchEvent(new MouseEvent('pointerup'))
 
   expect(editor).not.toHaveClass('left-panel-closed')
   expect(leftResizer).toHaveAttribute('aria-valuenow', '240')
@@ -107,7 +107,7 @@ test('should clear the active resizer effect when pointer dragging is cancelled'
     new MouseEvent('pointerdown', {bubbles: true, button: 0, clientY: 300}),
   )
   expect(bottomResizer).toHaveClass('dragging')
-  window.dispatchEvent(new MouseEvent('pointercancel'))
+  globalThis.dispatchEvent(new MouseEvent('pointercancel'))
   expect(bottomResizer).not.toHaveClass('dragging')
 })
 
@@ -214,4 +214,51 @@ test('should clamp valid persisted sizes and replace malformed preferences with 
     'right-panel-closed',
     'bottom-panel-closed',
   )
+})
+
+test.each([
+  {
+    axis: 'clientX',
+    direction: 1,
+    initial: 300,
+    label: '왼쪽 패널 너비 조절',
+    minimum: 220,
+    position: 'left',
+  },
+  {
+    axis: 'clientX',
+    direction: -1,
+    initial: 260,
+    label: '오른쪽 패널 너비 조절',
+    minimum: 220,
+    position: 'right',
+  },
+  {
+    axis: 'clientY',
+    direction: -1,
+    initial: 260,
+    label: '아래 프레임 높이 조절',
+    minimum: 180,
+    position: 'bottom',
+  },
+])('should close $position only at half its minimum size on release', (panel) => {
+  const view = render(() => <EditorPanelLayout />)
+  const editor = view.container.querySelector('.puppet-editor')
+  const resizer = view.getByRole('separator', {name: panel.label})
+  resizer.dispatchEvent(
+    new MouseEvent('pointerdown', {bubbles: true, button: 0, [panel.axis]: 300}),
+  )
+  const near = 300 + (panel.minimum / 2 + 1 - panel.initial) * panel.direction
+  globalThis.dispatchEvent(new MouseEvent('pointermove', {[panel.axis]: near}))
+  globalThis.dispatchEvent(new MouseEvent('pointerup'))
+  expect(editor).not.toHaveClass(`${panel.position}-panel-closed`)
+  expect(resizer).toHaveAttribute('aria-valuenow', String(panel.minimum))
+  resizer.dispatchEvent(
+    new MouseEvent('pointerdown', {bubbles: true, button: 0, [panel.axis]: 300}),
+  )
+  const threshold = 300 - (panel.minimum / 2) * panel.direction
+  globalThis.dispatchEvent(new MouseEvent('pointermove', {[panel.axis]: threshold}))
+  expect(editor).not.toHaveClass(`${panel.position}-panel-closed`)
+  globalThis.dispatchEvent(new MouseEvent('pointerup'))
+  expect(editor).toHaveClass(`${panel.position}-panel-closed`)
 })

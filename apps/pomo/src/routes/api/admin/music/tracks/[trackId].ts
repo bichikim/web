@@ -1,13 +1,13 @@
 import type {APIEvent} from '@solidjs/start/server'
 import {z} from 'zod'
 
-import {authorizeAdminRequest} from 'src/server/admin-auth/http'
+import {authorizeAdminRequest} from 'src/server/auth/authorize-admin-request'
 import {noStoreJson} from 'src/server/http/response'
 import {
   finalizeTrackDeletion,
   markTrackDeletionStorageDeleted,
   prepareTrackDeletion,
-} from 'src/server/music/track-deletion-repository'
+} from 'src/server/repositories/music-track-deletion'
 import {deleteTrackAssetStorage} from 'src/server/music/track-storage-deletion'
 
 const HTTP_BAD_REQUEST = 400

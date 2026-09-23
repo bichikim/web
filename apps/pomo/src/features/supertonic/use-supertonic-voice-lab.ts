@@ -1,4 +1,7 @@
+import {getDownloadPercentage} from 'src/features/download-progress'
+import {replaceObjectUrl} from '../blob-object-url'
 import {type Accessor, createMemo, createSignal, onCleanup, type Setter, untrack} from 'solid-js'
+import {isNonBlankString} from 'src/utils/is-non-blank-string'
 
 import {createSupertonicAudioPlayer, type SupertonicAudioPlayer} from './audio-player'
 import {createSupertonicClient} from './client'
@@ -17,7 +20,7 @@ import {
   type SupertonicModelId,
   type SupertonicVoiceId,
 } from './model'
-import type {Result} from '../result'
+import type {Result} from 'src/features/result'
 import {createWaveBlob} from './wav'
 import type {SupertonicVoiceStyle} from './voice-style'
 
@@ -177,10 +180,7 @@ const reportUnexpectedError = (error: unknown) => {
 }
 
 const getProgressPercentage = (progress: SupertonicProgress) =>
-  Math.min(
-    MAXIMUM_PROGRESS,
-    Math.round((progress.loadedBytes / progress.totalBytes) * MAXIMUM_PROGRESS),
-  )
+  progress.totalBytes > 0 ? getDownloadPercentage(progress.loadedBytes, progress.totalBytes) : 0
 
 const revokeAudioUrls = (
   runtime: SupertonicVoiceLabRuntime,
@@ -211,7 +211,7 @@ const createVoiceLabSelectors = (options: CreateVoiceLabSelectorsOptions): Voice
     )
   })
   const canGenerate = createMemo(
-    () => !isBusy() && isModelReady() && options.text().trim().length > 0,
+    () => !isBusy() && isModelReady() && isNonBlankString(options.text()),
   )
   const canPrepare = createMemo(() => !isBusy() && !isModelReady())
   const errorMessage = createMemo(() => {
@@ -382,6 +382,10 @@ export const useSupertonicVoiceLab = (
   const initialText = untrack(() => props.initialText ?? '')
   const initialVoiceId = untrack(() => props.initialVoiceId ?? DEFAULT_VOICE_ID)
   const runtime = untrack(() => props.runtime ?? DEFAULT_RUNTIME)
+  const audioUrlRuntime = {
+    create: (audio: SupertonicAudio) => runtime.createAudioUrl(audio),
+    revoke: (url: string) => runtime.revokeAudioUrl(url),
+  }
   const [text, setTextSignal] = createSignal(initialText)
   const [selectedModelId, setSelectedModelId] = createSignal(initialModelId)
   const [selectedVoiceId, setSelectedVoiceId] = createSignal(initialVoiceId)
@@ -406,15 +410,10 @@ export const useSupertonicVoiceLab = (
 
   const setAudioResult = (audio: SupertonicAudio, modelId: SupertonicModelId) => {
     const previousUrl = audioUrls.get(modelId)
-
-    if (previousUrl !== undefined) {
-      runtime.revokeAudioUrl(previousUrl)
-    }
-
     const result = {
       generationTime: audio.generationTime,
       modelId,
-      url: runtime.createAudioUrl(audio),
+      url: replaceObjectUrl(previousUrl ?? null, () => audio, audioUrlRuntime),
     }
     audioUrls.set(modelId, result.url)
     setResults((currentResults) => [
@@ -426,17 +425,12 @@ export const useSupertonicVoiceLab = (
   const setAudioChunk = (audio: SupertonicAudioChunk, modelId: SupertonicModelId) => {
     const key = `${modelId}:${audio.index}`
     const previousUrl = chunkAudioUrls.get(key)
-
-    if (previousUrl !== undefined) {
-      runtime.revokeAudioUrl(previousUrl)
-    }
-
     const result = {
       generationTime: audio.generationTime,
       index: audio.index,
       modelId,
       total: audio.total,
-      url: runtime.createAudioUrl(audio),
+      url: replaceObjectUrl(previousUrl ?? null, () => audio, audioUrlRuntime),
     }
     chunkAudioUrls.set(key, result.url)
     setChunks((currentChunks) => [

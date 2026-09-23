@@ -1,3 +1,4 @@
+import {EditorTooltip} from '../../design-system'
 import type {JSX} from 'solid-js'
 
 import {usePanelLayout} from '../use-panel-layout'
@@ -80,6 +81,7 @@ export const EditorPanelLayout = (props: EditorPanelLayoutProps) => {
         onResizeStart={(event) => layout.startResize('bottom', event)}
       />
       {props.bottom}
+      <EditorTooltip />
     </main>
   )
 }

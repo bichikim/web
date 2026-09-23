@@ -1,3 +1,4 @@
+/** @vitest-environment node */
 import {afterEach, beforeEach, expect, it, vi} from 'vitest'
 
 const mocks = vi.hoisted(() => ({
@@ -8,7 +9,7 @@ const mocks = vi.hoisted(() => ({
   startHistoryGeneration: vi.fn(),
 }))
 
-vi.mock('../generation-recovery-repository', () => ({
+vi.mock('../../repositories/history-generation-recovery', () => ({
   expireGenerationSubmission: mocks.expireGenerationSubmission,
   listRecoverableGenerationRuns: mocks.listRecoverableGenerationRuns,
 }))

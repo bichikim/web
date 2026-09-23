@@ -4,7 +4,7 @@ import type {PSceneStyle} from '../../features/focus-room-animation/index'
 import {PScribblePanel} from '../scribble/Panel'
 
 const STATUS_CLASS = cx(
-  'pomo-weather-status inline-flex min-h-8 w-full items-center gap-2',
+  'inline-flex min-h-8 w-full items-center gap-2',
   'bg-surface px-3 py-1 text-sm font-650 leading-5 text-foreground shadow-panel',
   'backdrop-blur-surface',
 )
@@ -20,11 +20,7 @@ const getWeatherStatusShapeClasses = (sceneStyle?: PSceneStyle) =>
     : 'rounded-control border border-solid border-border'
 
 export const WeatherStatusSurface = (props: WeatherStatusSurfaceProps) => (
-  <PScribblePanel
-    class="pomo-weather-status-frame inline-flex"
-    enabled={props.sceneStyle === 'scribble'}
-    frameClass="pomo-weather-status__scribble-border"
-  >
+  <PScribblePanel class="inline-flex" enabled={props.sceneStyle === 'scribble'}>
     <span
       aria-live="polite"
       class={cx(STATUS_CLASS, getWeatherStatusShapeClasses(props.sceneStyle))}

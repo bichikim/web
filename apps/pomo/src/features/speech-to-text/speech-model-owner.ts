@@ -7,7 +7,7 @@ import type {
   SpeechRecognizerReady,
   SpeechTranscript,
 } from './recognizer'
-import type {Result} from '../result'
+import type {Result} from 'src/features/result'
 
 interface IdleModelState {
   readonly status: 'idle'

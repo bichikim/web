@@ -1,13 +1,13 @@
 import {render} from 'solid-js/web'
 
 import {PuppetEditor} from '../editor'
-import {EditorPortalProvider} from '../editor/internal/EditorPortalProvider'
-import {createDemoDocument, type PuppetDocument} from '../player'
+import {EditorPortalProvider} from '../design-system'
+import {createEmptyDocument, type PuppetDocument} from '../player'
 
 export const PUPPET_EDITOR_TAG_NAME = 'puppet-editor'
 
 export class PuppetEditorElement extends HTMLElement {
-  #currentDocument = createDemoDocument()
+  #currentDocument = createEmptyDocument()
   #dispose: (() => void) | null = null
 
   get document(): PuppetDocument {

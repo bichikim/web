@@ -1,6 +1,6 @@
-import {createSignal, Show} from 'solid-js'
+import {createEffect, createSignal, type JSX, Show} from 'solid-js'
 
-import {PAudioPreview} from '../PAudioPreview'
+import {PAudioPreview} from '../p-audio-preview/PAudioPreview'
 import {useAdminTrackPreview} from '../../features/admin-music'
 
 export interface AdminTrackPreviewProps {
@@ -22,8 +22,27 @@ export const AdminTrackPreview = (props: AdminTrackPreviewProps) => {
     preview.startPlayback().catch(() => undefined)
   }
 
-  const handlePlaybackError = () => {
-    preview.onPlaybackError()
+  const handlePlaybackError: JSX.EventHandler<HTMLAudioElement, Event> = (event) => {
+    preview.onPlaybackError(event.currentTarget.currentTime, !event.currentTarget.paused)
+  }
+
+  const handleMetadata: JSX.EventHandler<HTMLAudioElement, Event> = (event) => {
+    preview.restorePlayback(event.currentTarget)
+  }
+
+  createEffect(() => {
+    const playbackActive = props.active
+    const autoplayEnabled = props.autoplay
+    if (playbackActive === false || (playbackActive !== true && autoplayEnabled === false)) {
+      preview.cancelResume()
+    }
+  })
+
+  const handleBeforePlayback = (time: number, playing: boolean, operation: 'play' | 'seek') => {
+    if (operation === 'play') {
+      props.onRequest?.()
+    }
+    return preview.preparePlayback(time, playing, operation)
   }
 
   const handlePlay = () => {
@@ -37,6 +56,9 @@ export const AdminTrackPreview = (props: AdminTrackPreviewProps) => {
         autoplay={props.autoplay !== false}
         class={props.active ? 'border-#e8bc88/45' : undefined}
         loading={preview.loading()}
+        onBeforePlayback={handleBeforePlayback}
+        onPauseRequest={preview.cancelResume}
+        onLoadedMetadata={handleMetadata}
         onCanPlay={() => preview.onPlaybackReady()}
         onError={handlePlaybackError}
         onPlay={handlePlay}
@@ -55,5 +77,3 @@ export const AdminTrackPreview = (props: AdminTrackPreviewProps) => {
     </div>
   )
 }
-
-export default AdminTrackPreview

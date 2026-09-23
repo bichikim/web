@@ -1,3 +1,4 @@
+/** @vitest-environment node */
 import {icons} from '@iconify-json/tabler'
 import {describe, expect, it} from 'vitest'
 

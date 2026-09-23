@@ -1,3 +1,4 @@
+/** @vitest-environment jsdom */
 import {query} from '@solidjs/router'
 import {afterEach, expect, it, vi} from 'vitest'
 

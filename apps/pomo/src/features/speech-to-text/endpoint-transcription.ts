@@ -1,6 +1,7 @@
 import type {SpeechCaptureError} from './errors'
 import type {SpeechRecording} from './recorder'
-import {failureResult, type Result} from '../result'
+import {failureResult, type Result} from 'src/features/result'
+import {createSerialTaskQueue} from 'src/utils/create-serial-task-queue'
 
 const createCancelledResult = (): Result<Float32Array, SpeechCaptureError> =>
   failureResult({code: 'capture-cancelled', retryable: true})
@@ -24,13 +25,17 @@ export const createEndpointTranscription = (
 ): EndpointTranscription => {
   let activeRecording: SpeechRecording | null = null
   let segmentCapture: Promise<void> | null = null
-  let transcriptionTask = Promise.resolve()
+  let transcriptionTasks = createSerialTaskQueue()
   let unsubscribe: (() => void) | null = null
 
   const enqueueTranscription = (audio: Float32Array) => {
-    transcriptionTask = transcriptionTask
-      .then(() => options.transcribeAudio(audio))
-      .catch(options.onUnexpectedError)
+    transcriptionTasks.run(async () => {
+      try {
+        await options.transcribeAudio(audio)
+      } catch (error: unknown) {
+        options.onUnexpectedError(error)
+      }
+    })
   }
 
   const captureSegment = (recording: SpeechRecording) => {
@@ -64,7 +69,7 @@ export const createEndpointTranscription = (
 
   const start = (recording: SpeechRecording) => {
     activeRecording = recording
-    transcriptionTask = Promise.resolve()
+    transcriptionTasks = createSerialTaskQueue()
     unsubscribe = recording.onSpeechEnd(() => captureSegment(recording))
   }
 
@@ -86,7 +91,7 @@ export const createEndpointTranscription = (
 
     if (audioResult.ok) {
       enqueueTranscription(audioResult.value)
-      await transcriptionTask
+      await transcriptionTasks.settle()
     }
 
     return audioResult

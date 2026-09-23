@@ -9,14 +9,17 @@ import {EDITOR_VIEWPORT_PADDING} from './internal/viewport'
 export type PlayerCanvasStatus = 'error' | 'loading' | 'ready'
 
 const RESIZE_DEBOUNCE_MILLISECONDS = 100
+const MAXIMUM_RENDER_DIMENSION = 4096
 
 export interface PlayerCanvasProps {
   /** Editor-owned document. Untrusted input must be parsed before reaching this component. */
   readonly document: PuppetDocument
+  readonly motionId?: string
   readonly onFrame?: (frame: PlayerFrame) => void
   readonly onPlayerChange?: (player: Player | null) => void
   readonly onStatusChange?: (status: PlayerCanvasStatus) => void
   readonly parameterValues?: PuppetParameterValueMap
+  readonly physicsPreview?: boolean
 }
 
 export const PlayerCanvas = (props: PlayerCanvasProps) => {
@@ -51,6 +54,17 @@ export const PlayerCanvas = (props: PlayerCanvasProps) => {
   })
 
   createEffect(() => {
+    const physicsPreview = props.physicsPreview ?? true
+    player()?.setPhysicsPreview(physicsPreview)
+  })
+
+  createEffect(() => {
+    if (props.motionId !== undefined) {
+      player()?.setMotion(props.motionId)
+    }
+  })
+
+  createEffect(() => {
     const hostElement = host()
     const onStatusChange = untrack(() => props.onStatusChange)
 
@@ -80,7 +94,7 @@ export const PlayerCanvas = (props: PlayerCanvasProps) => {
       return
     }
 
-    const canvasElement = window.document.createElement('canvas')
+    const canvasElement = globalThis.document.createElement('canvas')
 
     currentPlayer?.destroy()
     notifyPlayerChange(null)
@@ -91,9 +105,19 @@ export const PlayerCanvas = (props: PlayerCanvasProps) => {
     createPlayer({
       canvas: canvasElement,
       document: preparedDocument,
+      motionId: untrack(() => props.motionId),
       onFrame: notifyFrame,
       parameterValues: untrack(() => props.parameterValues),
+      physicsPreview: untrack(() => props.physicsPreview),
       resizeTo: hostElement,
+      // Bound the backing buffer while retaining the document's editing coordinates.
+      resolution: Math.min(
+        window.devicePixelRatio,
+        2,
+        MAXIMUM_RENDER_DIMENSION /
+          (Math.max(preparedDocument.viewport.width, preparedDocument.viewport.height) *
+            (1 + 2 * EDITOR_VIEWPORT_PADDING)),
+      ),
       viewportPadding: EDITOR_VIEWPORT_PADDING,
     })
       .then((createdPlayer) => {

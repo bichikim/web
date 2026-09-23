@@ -81,8 +81,8 @@ const createHandlerState = (
     previousReportErrorDescriptor,
     registrations: [registration],
     removeListeners: () => {
-      window.removeEventListener('error', handleError)
-      window.removeEventListener('unhandledrejection', handleRejection)
+      globalThis.removeEventListener('error', handleError)
+      globalThis.removeEventListener('unhandledrejection', handleRejection)
     },
     reportError: (error: unknown) => {
       reportSafely(state, error, 'report-error')
@@ -94,8 +94,8 @@ const createHandlerState = (
     },
   } satisfies ClientErrorHandlerState
 
-  window.addEventListener('error', handleError)
-  window.addEventListener('unhandledrejection', handleRejection)
+  globalThis.addEventListener('error', handleError)
+  globalThis.addEventListener('unhandledrejection', handleRejection)
   installReportError(state)
   return state
 }

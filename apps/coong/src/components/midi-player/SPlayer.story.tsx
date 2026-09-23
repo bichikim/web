@@ -1,5 +1,6 @@
 import type {Meta, StoryObj} from 'storybook-solidjs-vite'
-import {MidiPlayerProvider, type MidiPlayerProviderProps} from './context'
+import {MidiPlayerProvider} from './MidiPlayerProvider'
+import {type MidiPlayerProviderProps} from './types'
 import {SPlayer} from './SPlayer'
 
 const SPlayerStory = (props: MidiPlayerProviderProps) => (

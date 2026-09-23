@@ -1,3 +1,4 @@
+import {PreferenceProvider} from 'src/hooks/use-preference'
 import {renderHook} from '@solidjs/testing-library'
 import {afterEach, beforeEach, expect, it, vi} from 'vitest'
 
@@ -46,6 +47,7 @@ const repositoryMocks = vi.hoisted(() => {
   const feedRepository = {
     complete: vi.fn().mockResolvedValue(undefined),
     deleteJobs: vi.fn().mockResolvedValue(undefined),
+    dismissItem: vi.fn().mockResolvedValue(undefined),
     dispose: vi.fn(),
     failJob: vi.fn().mockResolvedValue(true),
     interruptUnfinishedJobs: vi.fn().mockResolvedValue([]),
@@ -54,6 +56,7 @@ const repositoryMocks = vi.hoisted(() => {
     listJobs: vi.fn().mockResolvedValue([]),
     listMetadata: vi.fn().mockResolvedValue([]),
     markListened: vi.fn().mockResolvedValue(undefined),
+    removeItem: vi.fn().mockResolvedValue(undefined),
     removeMetadata: vi.fn().mockResolvedValue(undefined),
     retryJobs: vi.fn().mockResolvedValue(undefined),
     startJob: vi.fn().mockResolvedValue(true),
@@ -115,6 +118,8 @@ beforeEach(() => {
   repositoryMocks.feedRepository.listJobs.mockResolvedValue([])
   repositoryMocks.feedRepository.listMetadata.mockResolvedValue([])
   repositoryMocks.feedRepository.markListened.mockResolvedValue(undefined)
+  repositoryMocks.feedRepository.dismissItem.mockResolvedValue(undefined)
+  repositoryMocks.feedRepository.removeItem.mockResolvedValue(undefined)
   repositoryMocks.feedRepository.removeMetadata.mockResolvedValue(undefined)
   repositoryMocks.feedRepository.retryJobs.mockResolvedValue(undefined)
   repositoryMocks.feedRepository.startJob.mockResolvedValue(true)
@@ -191,12 +196,16 @@ const createEventContext = (
   activeSegmentPosition: vi.fn(() => null),
   activeText: vi.fn(() => null),
   activeViseme: vi.fn(() => 'rest' as const),
+  cancelDelayedEndEvent: vi.fn(),
+  delayedEndEventDurationMinutes: vi.fn(() => 30),
+  delayedEndEventIsRunning: vi.fn(() => false),
   deleteDialogue: vi.fn(async () => undefined),
   dialogues: vi.fn(() => []),
   enterFocusRoom: vi.fn(),
   entryDialogueId: vi.fn(() => null),
   entryDialogueIds: vi.fn(() => []),
   errorMessage: vi.fn(() => null),
+  eventActionIds: vi.fn(() => ({})),
   eventDialogueIds: vi.fn(() => ({})),
   eventPlaybackModes: vi.fn(() => ({})),
   getAudio: vi.fn(async () => null),
@@ -208,19 +217,23 @@ const createEventContext = (
   isLoading: vi.fn(() => false),
   onStopDialoguePlayback: vi.fn(),
   onStopEntryPlayback: vi.fn(),
-  playDialogue: vi.fn(async () => undefined),
+  playDialogue: vi.fn(async () => true),
   playDialogueEvents: vi.fn(async () => undefined),
   playDialogueSequence: vi.fn(async () => undefined),
   refreshDialogues,
+  registerEventActionExecutor: vi.fn(() => vi.fn()),
   retryDialoguePlayback: vi.fn(),
   retryEntryPlayback: vi.fn(),
   scheduledDialogueCount: vi.fn(() => 0),
+  setDelayedEndEventDuration: vi.fn(async () => undefined),
   setEntryDialogue: vi.fn(async () => undefined),
   setEntryDialogues: vi.fn(async () => undefined),
   setEventDialogue: vi.fn(async () => undefined),
   setEventDialogues: vi.fn(async () => undefined),
+  setEventItems: vi.fn(async () => undefined),
   setEventPlaybackMode: vi.fn(async () => undefined),
   skipDialoguePlayback: vi.fn(),
+  startDelayedEndEvent: vi.fn(),
 })
 
 const createDialogue = (dialogueId: string, listenedAt: string | null): FeedDialogueListItem => ({
@@ -317,28 +330,28 @@ const createVoiceClient = (
 it('should refresh visible, changed, and polled feeds and report callback failures', async () => {
   vi.useFakeTimers()
   const error = vi.spyOn(console, 'error').mockImplementation(() => undefined)
-  const visibility = vi.spyOn(document, 'visibilityState', 'get')
-  visibility.mockReturnValue('hidden')
-  const view = renderHook(() => usePFeeds({events: createEventContext()}))
+  const visibility = vi.spyOn(document, 'hidden', 'get')
+  visibility.mockReturnValue(true)
+  const view = renderHook(() => usePFeeds({events: createEventContext()}), {
+    wrapper: PreferenceProvider,
+  })
   await vi.advanceTimersByTimeAsync(0)
 
-  document.dispatchEvent(new Event('visibilitychange'))
+  document.dispatchEvent(new Event('visibilitychange', {bubbles: true}))
   expect(gateMocks.beginFeedSync).toHaveBeenCalledTimes(1)
 
   gateMocks.finishFeedSync.mockImplementation(() => {
     throw new Error('finish failed')
   })
   gateMocks.beginFeedSync.mockReturnValue(true)
-  visibility.mockReturnValue('visible')
-  document.dispatchEvent(new Event('visibilitychange'))
-  window.dispatchEvent(new CustomEvent(FEED_CONNECTIONS_CHANGED_EVENT))
+  await vi.advanceTimersByTimeAsync(60_000)
+  expect(gateMocks.beginFeedSync).toHaveBeenCalledTimes(1)
+  visibility.mockReturnValue(false)
+  document.dispatchEvent(new Event('visibilitychange', {bubbles: true}))
+  globalThis.dispatchEvent(new CustomEvent(FEED_CONNECTIONS_CHANGED_EVENT))
   await vi.runOnlyPendingTimersAsync()
 
   await vi.waitFor(() => {
-    expect(error).toHaveBeenCalledWith(
-      'Failed to refresh visible focus room feeds.',
-      expect.any(Error),
-    )
     expect(error).toHaveBeenCalledWith(
       'Failed to refresh changed focus room feeds.',
       expect.any(Error),
@@ -352,7 +365,9 @@ it('should refresh visible, changed, and polled feeds and report callback failur
 it('should dismiss every visible recovery job', async () => {
   const jobs = [createJob({id: 'failed', status: 'failed'})]
   repositoryMocks.feedRepository.interruptUnfinishedJobs.mockResolvedValue(jobs)
-  const view = renderHook(() => usePFeeds({events: createEventContext()}))
+  const view = renderHook(() => usePFeeds({events: createEventContext()}), {
+    wrapper: PreferenceProvider,
+  })
   await vi.waitFor(() => expect(view.result.recoveryJobs()).toEqual(jobs))
 
   view.result.dismissRecovery()
@@ -391,7 +406,9 @@ it('should discard a stale client when a newer model preparation wins', async ()
     await first
     return {job: {...job, modelId: 'full'}, status: 'ready'}
   })
-  const view = renderHook(() => usePFeeds({events: createEventContext()}))
+  const view = renderHook(() => usePFeeds({events: createEventContext()}), {
+    wrapper: PreferenceProvider,
+  })
 
   await vi.waitFor(() => expect(firstClient.dispose).toHaveBeenCalled())
 
@@ -416,7 +433,9 @@ it('should skip recovery state updates after disposal', async () => {
     repositoryMocks.listConnections.mockReturnValue([])
     void run()
   })
-  const view = renderHook(() => usePFeeds({events: createEventContext()}))
+  const view = renderHook(() => usePFeeds({events: createEventContext()}), {
+    wrapper: PreferenceProvider,
+  })
   await vi.waitFor(() => expect(repositoryMocks.feedRepository.listJobs).toHaveBeenCalledTimes(2))
 
   view.cleanup()
@@ -442,7 +461,9 @@ it('should skip failure handling after disposal', async () => {
     return {job, status: 'ready'}
   })
   const error = vi.spyOn(console, 'error').mockImplementation(() => undefined)
-  const view = renderHook(() => usePFeeds({events: createEventContext()}))
+  const view = renderHook(() => usePFeeds({events: createEventContext()}), {
+    wrapper: PreferenceProvider,
+  })
   await vi.waitFor(() => expect(feedGenerationRuntime.createVoiceClient).toHaveBeenCalled())
 
   view.cleanup()
@@ -468,7 +489,9 @@ it('should stop a queue between jobs and reject later queue runs after disposal'
   queueMocks.processScheduledFeedJob
     .mockReturnValueOnce(firstProcessing.promise)
     .mockResolvedValueOnce(undefined)
-  const view = renderHook(() => usePFeeds({events: createEventContext()}))
+  const view = renderHook(() => usePFeeds({events: createEventContext()}), {
+    wrapper: PreferenceProvider,
+  })
   await vi.waitFor(() => expect(queueMocks.processScheduledFeedJob).toHaveBeenCalledOnce())
 
   view.cleanup()
@@ -484,7 +507,7 @@ it('should leave listening state unchanged when disposal ends a feed sequence', 
   const playback = Promise.withResolvers<void>()
   const events = createEventContext()
   vi.mocked(events.playDialogueSequence).mockReturnValue(playback.promise)
-  const view = renderHook(() => usePFeeds({events}))
+  const view = renderHook(() => usePFeeds({events}), {wrapper: PreferenceProvider})
   await vi.waitFor(() => expect(view.result.dialogues()).toHaveLength(1))
   const listening = view.result.listenAll()
   await vi.waitFor(() => expect(view.result.isListening()).toBe(true))

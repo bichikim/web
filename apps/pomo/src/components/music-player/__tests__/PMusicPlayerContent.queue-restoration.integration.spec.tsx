@@ -1,0 +1,691 @@
+/** @vitest-environment jsdom */
+
+import {PreferenceProvider} from 'src/hooks/use-preference'
+import {cleanup, fireEvent, render, screen, waitFor} from '@solidjs/testing-library'
+import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
+
+import {PAlbumLibrary} from '../../p-album-library/PAlbumLibrary'
+import {PMusicPlayerContent} from '../PMusicPlayerContent'
+import {AlbumLibraryFixture} from './test-support/AlbumLibraryFixture'
+import {
+  ADDED_TRACK,
+  getAudioElement,
+  markAudioMetadataReady,
+  TRACKS,
+} from './test-support/player-fixtures'
+
+const albumPreviewMocks = vi.hoisted(() => ({stop: vi.fn()}))
+const storageMocks = vi.hoisted(() => ({
+  getItem: vi.fn<(key: string) => Promise<string | null>>(),
+  setItem: vi.fn<(key: string, value: string) => Promise<void>>(),
+}))
+
+vi.mock('media-chrome', () => ({}))
+vi.mock('../../p-album-library/PAlbumLibrary', () => ({PAlbumLibrary: vi.fn()}))
+vi.mock('@apps-in-toss/web-framework', () => ({Storage: storageMocks}))
+
+const stubPlaylistFetch = (loadCount: number) => {
+  const fetchMock = vi.fn()
+
+  for (let index = 0; index < loadCount; index += 1) {
+    fetchMock
+      .mockResolvedValueOnce({
+        json: () => Promise.resolve({tracks: [...TRACKS, ADDED_TRACK], version: 1}),
+        ok: true,
+      })
+      .mockResolvedValueOnce({
+        json: () => Promise.resolve({trackIds: TRACKS.map((track) => track.id), version: 1}),
+        ok: true,
+      })
+  }
+
+  vi.stubGlobal('fetch', fetchMock)
+}
+
+describe('PMusicPlayerContent queue restoration integration', () => {
+  beforeEach(() => {
+    localStorage.clear()
+    vi.mocked(PAlbumLibrary).mockImplementation((props) => (
+      <AlbumLibraryFixture {...props} stopPreview={albumPreviewMocks.stop} />
+    ))
+    storageMocks.getItem.mockReset()
+    storageMocks.getItem.mockResolvedValue(null)
+    storageMocks.setItem.mockReset()
+    storageMocks.setItem.mockResolvedValue()
+    albumPreviewMocks.stop.mockReset()
+    vi.spyOn(HTMLMediaElement.prototype, 'play').mockResolvedValue()
+    vi.spyOn(HTMLMediaElement.prototype, 'pause').mockImplementation(() => undefined)
+    vi.spyOn(Math, 'random').mockReturnValue(0)
+  })
+
+  afterEach(() => {
+    cleanup()
+    Reflect.deleteProperty(globalThis, 'ReactNativeWebView')
+    vi.unstubAllGlobals()
+    vi.restoreAllMocks()
+  })
+
+  it('should resume playback when the saved track was playing', async () => {
+    localStorage.setItem(
+      'pomo:focus-room-playback:v1',
+      JSON.stringify({isPlaying: true, positionSeconds: 22, savedAt: 1, trackId: 'three'}),
+    )
+    const result = render(() => <PMusicPlayerContent tracks={TRACKS} />, {
+      wrapper: PreferenceProvider,
+    })
+    const audio = getAudioElement(result.container)
+
+    markAudioMetadataReady(audio)
+    await Promise.resolve()
+    await Promise.resolve()
+    fireEvent(audio, new Event('loadedmetadata'))
+
+    expect(HTMLMediaElement.prototype.play).toHaveBeenCalledOnce()
+  })
+
+  it('should preserve pending auto-resume when lifecycle persistence runs before metadata', async () => {
+    localStorage.setItem(
+      'pomo:focus-room-playback:v1',
+      JSON.stringify({isPlaying: true, positionSeconds: 22, savedAt: 1, trackId: 'three'}),
+    )
+    const result = render(() => <PMusicPlayerContent tracks={TRACKS} />, {
+      wrapper: PreferenceProvider,
+    })
+    const audio = getAudioElement(result.container)
+
+    await Promise.resolve()
+    await Promise.resolve()
+    result.unmount()
+    await Promise.resolve()
+
+    expect(JSON.parse(localStorage.getItem('pomo:focus-room-playback:v1') ?? '')).toMatchObject({
+      isPlaying: true,
+      positionSeconds: 22,
+      trackId: 'three',
+    })
+    expect(audio.pause).toHaveBeenCalled()
+  })
+
+  it('should preserve a user play intent while restoring a pending position', async () => {
+    localStorage.setItem(
+      'pomo:focus-room-playback:v1',
+      JSON.stringify({isPlaying: false, positionSeconds: 22, savedAt: 1, trackId: 'three'}),
+    )
+    const result = render(() => <PMusicPlayerContent tracks={TRACKS} />, {
+      wrapper: PreferenceProvider,
+    })
+    const audio = getAudioElement(result.container)
+
+    await Promise.resolve()
+    await Promise.resolve()
+    fireEvent(audio, new Event('play'))
+    markAudioMetadataReady(audio)
+    fireEvent(audio, new Event('loadedmetadata'))
+
+    expect(audio.currentTime).toBe(22)
+    expect(JSON.parse(localStorage.getItem('pomo:focus-room-playback:v1') ?? '')).toMatchObject({
+      isPlaying: true,
+      positionSeconds: 22,
+      trackId: 'three',
+    })
+
+    result.unmount()
+  })
+
+  it('should persist a media control pause intent while restoring a pending position', async () => {
+    localStorage.setItem(
+      'pomo:focus-room-playback:v1',
+      JSON.stringify({isPlaying: true, positionSeconds: 22, savedAt: 1, trackId: 'three'}),
+    )
+    const result = render(() => <PMusicPlayerContent tracks={TRACKS} />, {
+      wrapper: PreferenceProvider,
+    })
+    const audio = getAudioElement(result.container)
+    const controller = audio.parentElement
+
+    if (controller === null) {
+      throw new Error('Missing media controller')
+    }
+
+    await Promise.resolve()
+    await Promise.resolve()
+    fireEvent(audio, new Event('play'))
+    controller.dispatchEvent(new Event('mediapauserequest', {bubbles: true}))
+    fireEvent(audio, new Event('pause'))
+    markAudioMetadataReady(audio)
+    fireEvent(audio, new Event('loadedmetadata'))
+
+    expect(audio.currentTime).toBe(22)
+    expect(JSON.parse(localStorage.getItem('pomo:focus-room-playback:v1') ?? '')).toMatchObject({
+      isPlaying: false,
+      positionSeconds: 22,
+      trackId: 'three',
+    })
+
+    result.unmount()
+  })
+
+  it('should cancel preview resume when a media pause request arrives during preview', () => {
+    const result = render(() => <PMusicPlayerContent tracks={TRACKS} />, {
+      wrapper: PreferenceProvider,
+    })
+    const audio = getAudioElement(result.container)
+    const controller = audio.parentElement
+
+    if (controller === null) {
+      throw new Error('Missing media controller')
+    }
+
+    fireEvent.play(audio)
+    fireEvent.click(screen.getAllByRole('button', {name: '미리듣기 시작'})[0]!)
+    controller.dispatchEvent(new Event('mediapauserequest', {bubbles: true}))
+    fireEvent.click(screen.getAllByRole('button', {name: '미리듣기 종료'})[0]!)
+
+    expect(HTMLMediaElement.prototype.play).not.toHaveBeenCalled()
+
+    result.unmount()
+  })
+
+  it('should remain paused when the browser blocks restored playback', async () => {
+    vi.mocked(HTMLMediaElement.prototype.play).mockRejectedValueOnce(
+      new DOMException('Playback requires user interaction', 'NotAllowedError'),
+    )
+    localStorage.setItem(
+      'pomo:focus-room-playback:v1',
+      JSON.stringify({isPlaying: true, positionSeconds: 22, savedAt: 1, trackId: 'three'}),
+    )
+    const result = render(() => <PMusicPlayerContent tracks={TRACKS} />, {
+      wrapper: PreferenceProvider,
+    })
+    const audio = getAudioElement(result.container)
+
+    markAudioMetadataReady(audio)
+    await Promise.resolve()
+    await Promise.resolve()
+    fireEvent(audio, new Event('loadedmetadata'))
+    await Promise.resolve()
+    await Promise.resolve()
+
+    expect(JSON.parse(localStorage.getItem('pomo:focus-room-playback:v1') ?? '')).toMatchObject({
+      isPlaying: false,
+      positionSeconds: 22,
+      trackId: 'three',
+    })
+  })
+
+  it('should not overwrite playback changed before native restoration finishes', async () => {
+    Object.defineProperty(globalThis, 'ReactNativeWebView', {configurable: true, value: {}})
+    let completeRead: ((value: string | null) => void) | undefined
+    storageMocks.getItem.mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          completeRead = resolve
+        }),
+    )
+    localStorage.setItem(
+      'pomo:focus-room-playback:v1',
+      JSON.stringify({isPlaying: false, positionSeconds: 22, savedAt: 1, trackId: 'three'}),
+    )
+    const result = render(() => <PMusicPlayerContent tracks={TRACKS} />, {
+      wrapper: PreferenceProvider,
+    })
+    const audio = getAudioElement(result.container)
+
+    fireEvent(audio, new Event('play'))
+    completeRead?.(null)
+    await Promise.resolve()
+    await Promise.resolve()
+
+    expect(audio.getAttribute('src')).toBe('/two.mp3')
+  })
+
+  it('should not overwrite a position sought before native restoration finishes', async () => {
+    Object.defineProperty(globalThis, 'ReactNativeWebView', {configurable: true, value: {}})
+    let completeRead: ((value: string | null) => void) | undefined
+    storageMocks.getItem.mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          completeRead = resolve
+        }),
+    )
+    localStorage.setItem(
+      'pomo:focus-room-playback:v1',
+      JSON.stringify({isPlaying: false, positionSeconds: 22, savedAt: 1, trackId: 'three'}),
+    )
+    const result = render(() => <PMusicPlayerContent tracks={TRACKS} />, {
+      wrapper: PreferenceProvider,
+    })
+    const audio = getAudioElement(result.container)
+
+    audio.currentTime = 9
+    fireEvent(audio, new Event('seeking'))
+    completeRead?.(null)
+    await Promise.resolve()
+    await Promise.resolve()
+
+    expect(audio.getAttribute('src')).toBe('/two.mp3')
+    expect(audio.currentTime).toBe(9)
+  })
+
+  it('should not overwrite a same-track seek when metadata loads after restoration', async () => {
+    localStorage.setItem(
+      'pomo:focus-room-playback:v1',
+      JSON.stringify({isPlaying: false, positionSeconds: 22, savedAt: 1, trackId: 'three'}),
+    )
+    const result = render(() => <PMusicPlayerContent tracks={TRACKS} />, {
+      wrapper: PreferenceProvider,
+    })
+    const audio = getAudioElement(result.container)
+
+    await Promise.resolve()
+    await Promise.resolve()
+    expect(audio.getAttribute('src')).toBe('/three.mp3')
+
+    audio.currentTime = 9
+    fireEvent(audio, new Event('seeking'))
+    fireEvent(audio, new Event('loadedmetadata'))
+
+    expect(audio.currentTime).toBe(9)
+  })
+
+  it('should load the playlist without waiting for native storage', async () => {
+    Object.defineProperty(globalThis, 'ReactNativeWebView', {configurable: true, value: {}})
+    storageMocks.getItem.mockImplementationOnce(
+      () =>
+        new Promise(() => {
+          // Intentionally pending to reproduce an unresponsive native bridge.
+        }),
+    )
+    vi.stubGlobal(
+      'fetch',
+      vi
+        .fn()
+        .mockResolvedValueOnce({
+          json: () => Promise.resolve({tracks: TRACKS, version: 1}),
+          ok: true,
+        })
+        .mockResolvedValueOnce({
+          json: () => Promise.resolve({trackIds: TRACKS.map((track) => track.id), version: 1}),
+          ok: true,
+        }),
+    )
+    const result = render(() => <PMusicPlayerContent />, {wrapper: PreferenceProvider})
+    const audio = getAudioElement(result.container)
+
+    await waitFor(() => expect(audio.getAttribute('src')).toBe('/two.mp3'))
+
+    expect(fetch).toHaveBeenNthCalledWith(
+      1,
+      '/audio/tracks.json',
+      expect.objectContaining({cache: 'no-store', signal: expect.any(AbortSignal)}),
+    )
+    expect(fetch).toHaveBeenNthCalledWith(
+      2,
+      '/audio/playlist.json',
+      expect.objectContaining({cache: 'no-store', signal: expect.any(AbortSignal)}),
+    )
+  })
+
+  it('should preserve album additions when native playback restoration finishes later', async () => {
+    Object.defineProperty(globalThis, 'ReactNativeWebView', {configurable: true, value: {}})
+    let completeRead: ((value: string | null) => void) | undefined
+    storageMocks.getItem.mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          completeRead = resolve
+        }),
+    )
+    localStorage.setItem(
+      'pomo:focus-room-playback:v1',
+      JSON.stringify({isPlaying: false, positionSeconds: 22, savedAt: 1, trackId: 'three'}),
+    )
+    vi.stubGlobal(
+      'fetch',
+      vi
+        .fn()
+        .mockResolvedValueOnce({
+          json: () => Promise.resolve({tracks: TRACKS, version: 1}),
+          ok: true,
+        })
+        .mockResolvedValueOnce({
+          json: () => Promise.resolve({trackIds: TRACKS.map((track) => track.id), version: 1}),
+          ok: true,
+        }),
+    )
+    render(() => <PMusicPlayerContent />, {wrapper: PreferenceProvider})
+
+    await waitFor(() =>
+      expect(
+        screen.getByRole('button', {hidden: true, name: 'Two · Artist · 밀어서 삭제'}),
+      ).toBeTruthy(),
+    )
+    fireEvent.click(screen.getByRole('button', {name: '앨범 추가'}))
+    expect(
+      screen.getByRole('button', {hidden: true, name: 'Added · Artist · 밀어서 삭제'}),
+    ).toBeTruthy()
+
+    completeRead?.(null)
+    await Promise.resolve()
+    await Promise.resolve()
+
+    expect(
+      screen.getByRole('button', {hidden: true, name: 'Added · Artist · 밀어서 삭제'}),
+    ).toBeTruthy()
+  })
+
+  it('should restore album additions after the player remounts', async () => {
+    stubPlaylistFetch(2)
+    const first = render(() => <PMusicPlayerContent />, {wrapper: PreferenceProvider})
+
+    await waitFor(() =>
+      expect(
+        screen.getByRole('button', {hidden: true, name: 'Two · Artist · 밀어서 삭제'}),
+      ).toBeTruthy(),
+    )
+    fireEvent.click(screen.getByRole('button', {name: '앨범 추가'}))
+    expect(
+      screen.getByRole('button', {hidden: true, name: 'Added · Artist · 밀어서 삭제'}),
+    ).toBeTruthy()
+    expect(JSON.parse(localStorage.getItem('pomo:focus-room-playlist:v1') ?? '')).toMatchObject({
+      trackIds: ['one', 'two', 'three', 'added'],
+      version: 1,
+    })
+    first.unmount()
+
+    render(() => <PMusicPlayerContent />, {wrapper: PreferenceProvider})
+
+    await waitFor(() =>
+      expect(
+        screen.getByRole('button', {hidden: true, name: 'Added · Artist · 밀어서 삭제'}),
+      ).toBeTruthy(),
+    )
+  })
+
+  it('should preserve removed tracks after the player remounts', async () => {
+    stubPlaylistFetch(2)
+    const first = render(() => <PMusicPlayerContent />, {wrapper: PreferenceProvider})
+
+    await waitFor(() =>
+      expect(
+        screen.getByRole('button', {hidden: true, name: 'Two · Artist · 밀어서 삭제'}),
+      ).toBeTruthy(),
+    )
+    fireEvent.keyDown(
+      screen.getByRole('button', {hidden: true, name: 'Two · Artist · 밀어서 삭제'}),
+      {
+        key: 'Delete',
+      },
+    )
+    expect(
+      screen.queryByRole('button', {hidden: true, name: 'Two · Artist · 밀어서 삭제'}),
+    ).toBeNull()
+    expect(JSON.parse(localStorage.getItem('pomo:focus-room-playlist:v1') ?? '')).toMatchObject({
+      trackIds: ['one', 'three'],
+      version: 1,
+    })
+    first.unmount()
+
+    render(() => <PMusicPlayerContent />, {wrapper: PreferenceProvider})
+
+    await waitFor(() =>
+      expect(
+        screen.getByRole('button', {hidden: true, name: 'Three · Artist · 밀어서 삭제'}),
+      ).toBeTruthy(),
+    )
+    await waitFor(() =>
+      expect(
+        screen.queryByRole('button', {hidden: true, name: 'Two · Artist · 밀어서 삭제'}),
+      ).toBeNull(),
+    )
+  })
+
+  it('should preserve an empty playlist after the player remounts', async () => {
+    stubPlaylistFetch(2)
+    const first = render(() => <PMusicPlayerContent />, {wrapper: PreferenceProvider})
+
+    await waitFor(() =>
+      expect(
+        screen.getByRole('button', {hidden: true, name: 'Two · Artist · 밀어서 삭제'}),
+      ).toBeTruthy(),
+    )
+    fireEvent.click(screen.getByRole('button', {name: '재생목록 모두 비우기'}))
+    expect(JSON.parse(localStorage.getItem('pomo:focus-room-playlist:v1') ?? '')).toMatchObject({
+      trackIds: [],
+      version: 1,
+    })
+    first.unmount()
+
+    render(() => <PMusicPlayerContent />, {wrapper: PreferenceProvider})
+
+    await waitFor(() => expect(fetch).toHaveBeenCalledTimes(4))
+    await Promise.resolve()
+    await Promise.resolve()
+    await Promise.resolve()
+    await Promise.resolve()
+    expect(screen.getAllByRole('paragraph')[0]).toHaveTextContent('집중 음악을 준비 중이에요')
+    expect(
+      screen.queryByRole('button', {hidden: true, name: 'Two · Artist · 밀어서 삭제'}),
+    ).toBeNull()
+  })
+
+  it('should restore saved playback after an album addition before the catalog loads', async () => {
+    localStorage.setItem(
+      'pomo:focus-room-playback:v1',
+      JSON.stringify({isPlaying: true, positionSeconds: 22, savedAt: 1, trackId: 'two'}),
+    )
+    localStorage.setItem(
+      'pomo:focus-room-playlist:v1',
+      JSON.stringify({savedAt: 1, trackIds: ['two'], version: 1}),
+    )
+    let completeTrackCatalog: ((value: unknown) => void) | undefined
+    vi.stubGlobal(
+      'fetch',
+      vi
+        .fn()
+        .mockImplementationOnce(
+          () =>
+            new Promise((resolve) => {
+              completeTrackCatalog = resolve
+            }),
+        )
+        .mockResolvedValueOnce({
+          json: () => Promise.resolve({trackIds: TRACKS.map((track) => track.id), version: 1}),
+          ok: true,
+        }),
+    )
+    const result = render(() => <PMusicPlayerContent />, {wrapper: PreferenceProvider})
+    const audio = getAudioElement(result.container)
+
+    fireEvent.click(screen.getByRole('button', {name: '앨범 추가'}))
+    expect(
+      screen.getByRole('button', {hidden: true, name: 'Added · Artist · 밀어서 삭제'}),
+    ).toBeTruthy()
+    completeTrackCatalog?.({
+      json: () => Promise.resolve({tracks: [...TRACKS, ADDED_TRACK], version: 1}),
+      ok: true,
+    })
+
+    await waitFor(() => expect(audio.getAttribute('src')).toBe('/two.mp3'))
+    expect(
+      screen.getByRole('button', {hidden: true, name: 'Added · Artist · 밀어서 삭제'}),
+    ).toBeTruthy()
+    markAudioMetadataReady(audio)
+    fireEvent(audio, new Event('loadedmetadata'))
+
+    expect(audio.currentTime).toBe(22)
+    expect(HTMLMediaElement.prototype.play).toHaveBeenCalled()
+    result.unmount()
+  })
+
+  it('should preserve a removal made before the initial playlist finishes loading', async () => {
+    let completeTrackCatalog: ((value: unknown) => void) | undefined
+    vi.stubGlobal(
+      'fetch',
+      vi
+        .fn()
+        .mockImplementationOnce(
+          () =>
+            new Promise((resolve) => {
+              completeTrackCatalog = resolve
+            }),
+        )
+        .mockResolvedValueOnce({
+          json: () =>
+            Promise.resolve({
+              trackIds: [...TRACKS.map((track) => track.id), ADDED_TRACK.id],
+              version: 1,
+            }),
+          ok: true,
+        }),
+    )
+    render(() => <PMusicPlayerContent />, {wrapper: PreferenceProvider})
+
+    fireEvent.click(screen.getByRole('button', {name: '앨범 추가'}))
+    fireEvent.keyDown(
+      screen.getByRole('button', {hidden: true, name: 'Added · Artist · 밀어서 삭제'}),
+      {key: 'Delete'},
+    )
+    completeTrackCatalog?.({
+      json: () => Promise.resolve({tracks: [...TRACKS, ADDED_TRACK], version: 1}),
+      ok: true,
+    })
+
+    await waitFor(() =>
+      expect(
+        screen.getByRole('button', {hidden: true, name: 'Two · Artist · 밀어서 삭제'}),
+      ).toBeTruthy(),
+    )
+    expect(
+      screen.queryByRole('button', {hidden: true, name: 'Added · Artist · 밀어서 삭제'}),
+    ).toBeNull()
+  })
+
+  it('should stop playback and clear every loaded track from the album library', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi
+        .fn()
+        .mockResolvedValueOnce({
+          json: () => Promise.resolve({tracks: TRACKS, version: 1}),
+          ok: true,
+        })
+        .mockResolvedValueOnce({
+          json: () => Promise.resolve({trackIds: TRACKS.map((track) => track.id), version: 1}),
+          ok: true,
+        }),
+    )
+    const result = render(() => <PMusicPlayerContent />, {wrapper: PreferenceProvider})
+    const audio = getAudioElement(result.container)
+
+    await waitFor(() => expect(audio.getAttribute('src')).toBe('/two.mp3'))
+    fireEvent(audio, new Event('play'))
+    vi.mocked(HTMLMediaElement.prototype.pause).mockClear()
+    fireEvent.click(screen.getByRole('button', {name: '재생목록 모두 비우기'}))
+
+    expect(audio.getAttribute('src')).toBeNull()
+    expect(HTMLMediaElement.prototype.pause).toHaveBeenCalledOnce()
+    expect(screen.getAllByRole('paragraph')[0]).toHaveTextContent('집중 음악을 준비 중이에요')
+  })
+
+  it('should stop restored playback before clearing every loaded track', async () => {
+    localStorage.setItem(
+      'pomo:focus-room-playback:v1',
+      JSON.stringify({isPlaying: true, positionSeconds: 22, savedAt: 1, trackId: 'two'}),
+    )
+    vi.stubGlobal(
+      'fetch',
+      vi
+        .fn()
+        .mockResolvedValueOnce({
+          json: () => Promise.resolve({tracks: TRACKS, version: 1}),
+          ok: true,
+        })
+        .mockResolvedValueOnce({
+          json: () => Promise.resolve({trackIds: TRACKS.map((track) => track.id), version: 1}),
+          ok: true,
+        }),
+    )
+    const result = render(() => <PMusicPlayerContent />, {wrapper: PreferenceProvider})
+    const audio = getAudioElement(result.container)
+
+    await waitFor(() => expect(audio.getAttribute('src')).toBe('/two.mp3'))
+    markAudioMetadataReady(audio)
+    fireEvent(audio, new Event('loadedmetadata'))
+    fireEvent.click(screen.getByRole('button', {name: '재생목록 모두 비우기'}))
+    await Promise.resolve()
+
+    expect(JSON.parse(localStorage.getItem('pomo:focus-room-playback:v1') ?? '')).toMatchObject({
+      isPlaying: false,
+      positionSeconds: 22,
+      trackId: 'two',
+    })
+    result.unmount()
+  })
+
+  it('should persist stopped playback when removing the final loaded track', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi
+        .fn()
+        .mockResolvedValueOnce({
+          json: () => Promise.resolve({tracks: [TRACKS[1]], version: 1}),
+          ok: true,
+        })
+        .mockResolvedValueOnce({
+          json: () => Promise.resolve({trackIds: ['two'], version: 1}),
+          ok: true,
+        }),
+    )
+    const result = render(() => <PMusicPlayerContent />, {wrapper: PreferenceProvider})
+    const audio = getAudioElement(result.container)
+
+    await waitFor(() => expect(audio.getAttribute('src')).toBe('/two.mp3'))
+    fireEvent(audio, new Event('play'))
+    expect(JSON.parse(localStorage.getItem('pomo:focus-room-playback:v1') ?? '')).toMatchObject({
+      isPlaying: true,
+      trackId: 'two',
+    })
+    fireEvent.click(screen.getByRole('button', {name: '플레이어 펼치기'}))
+    fireEvent.keyDown(
+      screen.getByRole('button', {hidden: true, name: 'Two · Artist · 밀어서 삭제'}),
+      {key: 'Delete'},
+    )
+    await Promise.resolve()
+
+    expect(JSON.parse(localStorage.getItem('pomo:focus-room-playback:v1') ?? '')).toMatchObject({
+      isPlaying: false,
+      trackId: 'two',
+    })
+    result.unmount()
+  })
+
+  it('should continue with the following track after removing the current loaded track', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi
+        .fn()
+        .mockResolvedValueOnce({
+          json: () => Promise.resolve({tracks: TRACKS, version: 1}),
+          ok: true,
+        })
+        .mockResolvedValueOnce({
+          json: () => Promise.resolve({trackIds: TRACKS.map((track) => track.id), version: 1}),
+          ok: true,
+        }),
+    )
+    const result = render(() => <PMusicPlayerContent />, {wrapper: PreferenceProvider})
+    const audio = getAudioElement(result.container)
+
+    await waitFor(() => expect(audio.getAttribute('src')).toBe('/two.mp3'))
+    fireEvent.click(screen.getByRole('button', {name: '플레이어 펼치기'}))
+    fireEvent.keyDown(
+      screen.getByRole('button', {hidden: true, name: 'Two · Artist · 밀어서 삭제'}),
+      {key: 'Delete'},
+    )
+
+    await waitFor(() => expect(audio.getAttribute('src')).toBe('/three.mp3'))
+    expect(
+      screen.queryByRole('button', {hidden: true, name: 'Two · Artist · 밀어서 삭제'}),
+    ).toBeNull()
+  })
+})

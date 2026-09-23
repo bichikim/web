@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-namespace */
 import {Directive} from 'src/types'
 import {Accessor, createRenderEffect, onCleanup} from 'solid-js'
-import {useTargetElement} from 'src/use/target-element'
+import {useTargetElement} from '@winter-love/solid-use/target-element'
 
 declare module 'solid-js' {
   namespace JSX {

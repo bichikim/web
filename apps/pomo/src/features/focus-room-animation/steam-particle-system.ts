@@ -42,7 +42,7 @@ export class SteamParticleSystem {
   #destroyed = false
   #frame: number | null = null
   #started = false
-  #startedAt = 0
+  #startedAt: number | undefined
   #visible = true
 
   constructor(options: SteamParticleSystemOptions) {
@@ -73,7 +73,7 @@ export class SteamParticleSystem {
     }
 
     this.#started = true
-    this.#startedAt = window.performance.now()
+    this.#startedAt = undefined
 
     if (!this.#visible) {
       return
@@ -100,7 +100,7 @@ export class SteamParticleSystem {
     }
 
     if (this.#frame !== null) {
-      window.cancelAnimationFrame(this.#frame)
+      globalThis.cancelAnimationFrame(this.#frame)
       this.#frame = null
     }
 
@@ -114,7 +114,7 @@ export class SteamParticleSystem {
       return
     }
 
-    this.#startedAt = window.performance.now()
+    this.#startedAt = undefined
     this.#requestFrame()
   }
 
@@ -131,7 +131,7 @@ export class SteamParticleSystem {
     }
 
     if (this.#frame !== null) {
-      window.cancelAnimationFrame(this.#frame)
+      globalThis.cancelAnimationFrame(this.#frame)
       this.#frame = null
     }
 
@@ -140,7 +140,7 @@ export class SteamParticleSystem {
       return
     }
 
-    this.#startedAt = window.performance.now()
+    this.#startedAt = undefined
 
     if (this.#prefersReducedMotion) {
       this.#renderParticles(MINIMUM_LIFETIME * 0.42)
@@ -164,7 +164,7 @@ export class SteamParticleSystem {
     this.#destroyed = true
 
     if (this.#frame !== null) {
-      window.cancelAnimationFrame(this.#frame)
+      globalThis.cancelAnimationFrame(this.#frame)
       this.#frame = null
     }
 
@@ -177,8 +177,9 @@ export class SteamParticleSystem {
       return
     }
 
-    this.#frame = window.requestAnimationFrame((timestamp) => {
+    this.#frame = globalThis.requestAnimationFrame((timestamp) => {
       this.#frame = null
+      this.#startedAt ??= timestamp
       this.#renderParticles(timestamp - this.#startedAt)
       this.#onRender()
       this.#requestFrame()

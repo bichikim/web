@@ -1,4 +1,5 @@
 export * from './animation-loop'
+export * from './client-async'
 export * from './debounce'
 export * from './drag'
 export * from './event'

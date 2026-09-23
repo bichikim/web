@@ -1,114 +1,76 @@
-import {afterEach, describe, expect, it, vi} from 'vitest'
+import {afterEach, expect, it, vi} from 'vitest'
+import {createBrowserSpeechEndDetector} from '../speech-end-detector'
 
-import {createBrowserSpeechEndDetector, createSpeechEndState} from '../speech-end-detector'
+vi.mock('../speech-end-processor.ts?worker&url', () => ({default: '/processor.js'}))
+afterEach(() => vi.unstubAllGlobals())
 
-afterEach(() => {
-  vi.restoreAllMocks()
-  vi.unstubAllGlobals()
+const setup = (loading = Promise.resolve()) => {
+  const source = {connect: vi.fn(), disconnect: vi.fn()}
+  const processor = {
+    disconnect: vi.fn(),
+    port: {close: vi.fn(), onmessage: null as ((event: {data: unknown}) => void) | null},
+  }
+  const context = {
+    audioWorklet: {addModule: vi.fn(() => loading)},
+    close: vi.fn(async () => {}),
+    createMediaStreamSource: vi.fn(() => source),
+    resume: vi.fn(async () => {}),
+  }
+  vi.stubGlobal(
+    'AudioContext',
+    vi.fn(function setup() {
+      return context
+    }),
+  )
+  const node = vi.fn(function node() {
+    return processor
+  })
+  vi.stubGlobal('AudioWorkletNode', node)
+  return {context, node, processor, source}
+}
+
+it('should return null without Web Audio', () => {
+  vi.stubGlobal('AudioContext', undefined)
+  expect(createBrowserSpeechEndDetector({} as MediaStream)).toBeNull()
 })
 
-describe('createSpeechEndState', () => {
-  it('should ignore an isolated noise spike', () => {
-    const state = createSpeechEndState()
-
-    expect(state.push({energy: 0.02, timestamp: 0})).toBe(false)
-    expect(state.push({energy: 0, timestamp: 1_000})).toBe(false)
-  })
-
-  it('should emit once after sustained speech followed by 800ms of silence', () => {
-    const state = createSpeechEndState()
-
-    expect(state.push({energy: 0.02, timestamp: 0})).toBe(false)
-    expect(state.push({energy: 0.02, timestamp: 50})).toBe(false)
-    expect(state.push({energy: 0.02, timestamp: 100})).toBe(false)
-    expect(state.push({energy: 0, timestamp: 899})).toBe(false)
-    expect(state.push({energy: 0, timestamp: 900})).toBe(true)
-    expect(state.push({energy: 0, timestamp: 1_800})).toBe(false)
-  })
-
-  it('should treat low speech energy as activity before declaring an endpoint', () => {
-    const state = createSpeechEndState()
-
-    state.push({energy: 0.02, timestamp: 0})
-    state.push({energy: 0.02, timestamp: 50})
-    state.push({energy: 0.02, timestamp: 100})
-    expect(state.push({energy: 0.012, timestamp: 700})).toBe(false)
-    expect(state.push({energy: 0, timestamp: 1_499})).toBe(false)
-    expect(state.push({energy: 0, timestamp: 1_500})).toBe(true)
-  })
+it('should deliver only speech end messages and dispose audio resources', async () => {
+  const {context, processor, source} = setup()
+  const detector = createBrowserSpeechEndDetector({} as MediaStream)
+  const listener = vi.fn()
+  const unsubscribe = detector?.subscribe(listener)
+  await Promise.resolve()
+  processor.port.onmessage?.({data: 'unrelated'})
+  expect(listener).not.toHaveBeenCalled()
+  processor.port.onmessage?.({data: 'speech-end'})
+  expect(listener).toHaveBeenCalledOnce()
+  unsubscribe?.()
+  processor.port.onmessage?.({data: 'speech-end'})
+  expect(listener).toHaveBeenCalledOnce()
+  detector?.dispose()
+  detector?.dispose()
+  expect(source.disconnect).toHaveBeenCalledOnce()
+  expect(processor.disconnect).toHaveBeenCalledOnce()
+  expect(processor.port.close).toHaveBeenCalledOnce()
+  expect(context.close).toHaveBeenCalledOnce()
+  expect(processor.port.onmessage).toBeNull()
 })
 
-describe('createBrowserSpeechEndDetector', () => {
-  it('should return null when Web Audio is unavailable or cannot initialize', () => {
-    vi.stubGlobal('AudioContext', undefined)
-    expect(createBrowserSpeechEndDetector({} as MediaStream)).toBeNull()
+it('should not connect after disposal during module loading', async () => {
+  const pending = Promise.withResolvers<void>()
+  const {node, context} = setup(pending.promise)
+  const detector = createBrowserSpeechEndDetector({} as MediaStream)
+  detector?.dispose()
+  pending.resolve()
+  await Promise.resolve()
+  expect(node).not.toHaveBeenCalled()
+  expect(context.close).toHaveBeenCalledOnce()
+})
 
-    vi.stubGlobal(
-      'AudioContext',
-      vi.fn(function AudioContextMock() {
-        throw new Error('audio unavailable')
-      }),
-    )
-    expect(createBrowserSpeechEndDetector({} as MediaStream)).toBeNull()
-  })
-
-  it('should notify subscribers after speech ends and release browser audio resources', async () => {
-    const energies = [0.02, 0.02, 0.02, 0]
-    const timestamps = [0, 50, 100, 900]
-    const analyser = {
-      disconnect: vi.fn(),
-      fftSize: 0,
-      getFloatTimeDomainData: vi.fn((samples: Float32Array) => {
-        samples.fill(energies.shift() ?? 0)
-      }),
-    }
-    const source = {connect: vi.fn(), disconnect: vi.fn()}
-    const context = {
-      close: vi.fn().mockRejectedValue(new Error('close failed')),
-      createAnalyser: vi.fn(() => analyser),
-      createMediaStreamSource: vi.fn(() => source),
-      resume: vi.fn().mockRejectedValue(new Error('resume failed')),
-    }
-    vi.stubGlobal(
-      'AudioContext',
-      vi.fn(function AudioContextMock() {
-        return context
-      }),
-    )
-    vi.spyOn(performance, 'now').mockImplementation(() => timestamps.shift() ?? 900)
-    const setInterval = vi.spyOn(window, 'setInterval').mockImplementation((callback) => {
-      const run = callback as () => void
-      run()
-      run()
-      run()
-      run()
-      return 17 as unknown as ReturnType<typeof window.setInterval>
-    })
-    const clearInterval = vi.spyOn(window, 'clearInterval').mockImplementation(() => undefined)
-
-    const detector = createBrowserSpeechEndDetector({} as MediaStream)
-    const listener = vi.fn()
-    const unsubscribe = detector?.subscribe(listener)
-
-    expect(setInterval).toHaveBeenCalledOnce()
-    expect(listener).not.toHaveBeenCalled()
-
-    energies.push(0.02, 0.02, 0.02, 0)
-    timestamps.push(1_000, 1_050, 1_100, 1_900)
-    const intervalCallback = setInterval.mock.calls[0]?.[0] as () => void
-    intervalCallback()
-    intervalCallback()
-    intervalCallback()
-    intervalCallback()
-    expect(listener).toHaveBeenCalledOnce()
-
-    expect(unsubscribe?.()).toBe(true)
-    detector?.dispose()
-    await Promise.resolve()
-
-    expect(clearInterval).toHaveBeenCalledWith(17)
-    expect(source.disconnect).toHaveBeenCalledOnce()
-    expect(analyser.disconnect).toHaveBeenCalledOnce()
-    expect(context.close).toHaveBeenCalledOnce()
-  })
+it('should close the context when loading fails', async () => {
+  const {context} = setup(Promise.reject(new Error('load failed')))
+  createBrowserSpeechEndDetector({} as MediaStream)
+  await Promise.resolve()
+  await Promise.resolve()
+  expect(context.close).toHaveBeenCalledOnce()
 })

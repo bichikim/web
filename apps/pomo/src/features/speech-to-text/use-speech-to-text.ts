@@ -1,3 +1,5 @@
+import {getExceptionMessage} from 'src/features/error-detail'
+import {getMonotonicTime} from 'src/utils/get-monotonic-time'
 import {
   type Accessor,
   createMemo,
@@ -25,7 +27,6 @@ import {appendSpeechTranscript} from './transcript'
 const MAXIMUM_PROGRESS = 100
 const MILLISECONDS_PER_SECOND = 1000
 const MINIMUM_SAMPLE_COUNT = 4_000
-const RECORDING_INTERVAL = 250
 const TRANSCRIPTION_LANGUAGE = 'korean'
 
 export type SpeechActivity = 'checking' | 'idle' | 'processing' | 'recording' | 'requesting'
@@ -80,26 +81,26 @@ const getModelProgress = (state: SpeechModelState) => {
 }
 
 const createRecordingTimer = (setElapsedTime: Setter<number>) => {
-  let intervalId: number | null = null
+  let active = false
   let startedAt = 0
 
   const stop = () => {
-    if (intervalId !== null) {
-      window.clearInterval(intervalId)
-      intervalId = null
-    }
+    active = false
   }
 
   const start = () => {
-    stop()
-    startedAt = performance.now()
+    startedAt = getMonotonicTime()
+    active = true
     setElapsedTime(0)
-    intervalId = window.setInterval(() => {
-      setElapsedTime((performance.now() - startedAt) / MILLISECONDS_PER_SECOND)
-    }, RECORDING_INTERVAL)
   }
 
-  return {start, stop}
+  const refresh = () => {
+    if (active) {
+      setElapsedTime((getMonotonicTime() - startedAt) / MILLISECONDS_PER_SECOND)
+    }
+  }
+
+  return {refresh, start, stop}
 }
 
 interface RecorderReference {
@@ -137,7 +138,7 @@ const createRecordingActions = (options: CreateRecordingActionsOptions) => {
     options.setActivity('requesting')
     options.setErrorMessage(null)
 
-    const result = await options.recorder.current.start()
+    const result = await options.recorder.current.start(options.timer.refresh)
 
     if (options.isDisposed()) {
       if (result.ok) {
@@ -164,7 +165,7 @@ const createRecordingActions = (options: CreateRecordingActionsOptions) => {
     options.modelOwner.prepare().catch((error: unknown) => {
       if (!options.isDisposed()) {
         options.setModelState({status: 'idle'})
-        options.setErrorMessage(error instanceof Error ? error.message : '음성 인식 모델 준비 오류')
+        options.setErrorMessage(getExceptionMessage(error, '음성 인식 모델 준비 오류'))
       }
     })
   }
@@ -216,7 +217,7 @@ const createRecordingActions = (options: CreateRecordingActionsOptions) => {
     if (currentActivity === 'recording') {
       stopRecording().catch((error: unknown) => {
         if (!options.isDisposed()) {
-          options.setErrorMessage(error instanceof Error ? error.message : '음성 처리 오류')
+          options.setErrorMessage(getExceptionMessage(error, '음성 처리 오류'))
           options.setActivity('idle')
         }
       })
@@ -226,7 +227,7 @@ const createRecordingActions = (options: CreateRecordingActionsOptions) => {
     if (currentActivity === 'idle') {
       startRecording().catch((error: unknown) => {
         if (!options.isDisposed()) {
-          options.setErrorMessage(error instanceof Error ? error.message : '마이크 실행 오류')
+          options.setErrorMessage(getExceptionMessage(error, '마이크 실행 오류'))
           options.setActivity('idle')
         }
       })
@@ -300,7 +301,7 @@ export const useSpeechToText = (props: UseSpeechToTextProps = {}): SpeechToTextC
     },
     onUnexpectedError: (error) => {
       if (!disposed) {
-        setErrorMessage(error instanceof Error ? error.message : '음성 처리 오류')
+        setErrorMessage(getExceptionMessage(error, '음성 처리 오류'))
       }
     },
     transcribeAudio,

@@ -1,3 +1,4 @@
+/** @vitest-environment node */
 import {beforeEach, describe, expect, it, vi} from 'vitest'
 
 const repositoryMocks = vi.hoisted(() => ({revokeTossAppSessions: vi.fn()}))
@@ -9,7 +10,7 @@ const environmentMocks = vi.hoisted(() => {
   return {env}
 })
 
-vi.mock('src/server/user-auth/repository', () => repositoryMocks)
+vi.mock('src/server/repositories/auth', () => repositoryMocks)
 vi.mock('src/env', () => ({
   env: environmentMocks.env,
 }))

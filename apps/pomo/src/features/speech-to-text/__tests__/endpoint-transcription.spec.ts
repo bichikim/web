@@ -1,8 +1,9 @@
+/** @vitest-environment node */
 import {describe, expect, it, vi} from 'vitest'
 
 import {createEndpointTranscription} from '../endpoint-transcription'
 import type {SpeechRecording} from '../recorder'
-import {failureResult, successResult} from '../../result'
+import {failureResult, successResult} from 'src/features/result'
 
 const createDeferred = <Value>() => {
   let resolve: (value: Value) => void = () => undefined

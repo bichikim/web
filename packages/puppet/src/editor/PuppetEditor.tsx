@@ -1,28 +1,26 @@
-import {batch, createEffect, createMemo, createSignal, onCleanup, Show, untrack} from 'solid-js'
-
-import {
-  createDemoDocument,
-  type Player,
-  preparePuppetDocument,
-  type PuppetDocument,
-  serializeDocument,
-} from '../player'
-import type {PuppetParameterValues} from '../deformation'
+import {PsdReimportDialog} from './internal/PsdReimportDialog'
+import {useEditorImports} from './use-editor-imports'
+import {EditorModelingKeyformPanel} from './internal/EditorModelingKeyformPanel'
+import {useTemporaryForm} from './internal/use-temporary-form'
+import {TemporaryFormButton} from './internal/TemporaryFormButton'
+import {createSkinSession, SkinSessionContext} from './internal/skin-session'
+import {SkinningEditor} from './internal/SkinningEditor'
+import type {PuppetVertexReference} from '../player/document'
+import {GlueEditor} from './internal/GlueEditor'
+import {useDeformerMode} from './internal/use-deformer-mode'
+import {Portal} from 'solid-js/web'
+import {batch, createEffect, createMemo, createSignal, Show, untrack} from 'solid-js'
+import {createEmptyDocument, type Player, type PuppetDocument, serializeDocument} from '../player'
 import {EditorViewport} from './EditorViewport'
-import {importPng, type ImportPngErrorCode} from './import-png'
 import {createDeformerControlSelection} from './internal/deformer-control-selection'
 import {EditorAutoMeshDialog} from './internal/EditorAutoMeshDialog'
 import {EditorInspector} from './internal/EditorInspector'
-import {EditorKeyformPanel} from './internal/EditorKeyformPanel'
+import {LayerOrderProperties} from './internal/LayerOrderProperties'
 import {EditorLayerPanel} from './internal/EditorLayerPanel'
-import {
-  getDocumentParameterBindings,
-  getDocumentParameters,
-  getParameterBindingsForNodeIds,
-} from './internal/parameter-keyforms'
+import {getParameterBindingsForNodeIds} from './internal/parameter-keyforms'
+import {setMaskTarget} from './internal/mask-targets'
 import {createParameterPreview} from './internal/parameter-sampling'
 import {getParameterSelectionNodeIds} from './internal/parameter-targets'
-import {convertSceneContainers} from './internal/container-conversion'
 import {
   createSceneSelection,
   getSceneSelectionActions,
@@ -41,174 +39,61 @@ import {useAutoMesh} from './use-auto-mesh'
 import {useDocumentHistory} from './use-document-history'
 import {useDocumentHistoryShortcuts} from './use-document-history-shortcuts'
 import type {PlayerCanvasStatus} from './PlayerCanvas'
-import editorStyle from './style.css?inline'
-
+import {EditorStyles} from './internal/EditorStyles'
 export interface PuppetEditorProps {
   readonly initialDocument?: PuppetDocument
+  readonly initialMotionId?: string
+  readonly initialWorkspace?: 'animation' | 'modeling'
   readonly onDocumentChange?: (document: PuppetDocument) => void
 }
-
-interface ImportDocumentOptions {
-  readonly file?: File
-  readonly onFailure: (message: string) => void
-  readonly onSuccess: (document: PuppetDocument, fileName: string) => void
-  readonly signal: AbortSignal
-}
-
 const downloadDocument = (document: PuppetDocument) => {
   const source = serializeDocument(document)
   const url = URL.createObjectURL(new Blob([source], {type: 'application/json'}))
-  const anchor = window.document.createElement('a')
-
+  const anchor = globalThis.document.createElement('a')
   anchor.download = 'puppet-model.json'
   anchor.href = url
-  window.document.body.append(anchor)
+  globalThis.document.body.append(anchor)
   anchor.click()
   anchor.remove()
-  window.setTimeout(() => URL.revokeObjectURL(url), 0)
+  globalThis.setTimeout(() => URL.revokeObjectURL(url), 0)
 }
-
-const importDocument = async (options: ImportDocumentOptions) => {
-  if (options.file === undefined) {
-    return
-  }
-
-  const result = await preparePuppetDocument({
-    signal: options.signal,
-    source: await options.file.text(),
-  })
-
-  if (!result.ok) {
-    options.onFailure('Puppet 문서가 아니거나 JSON 형식이 올바르지 않습니다.')
-    return
-  }
-
-  options.onSuccess(result.document, options.file.name)
-}
-
-const getPngErrorMessage = (code: ImportPngErrorCode) => {
-  switch (code) {
-    case 'decode-failed':
-      return 'PNG 이미지를 해석하지 못했습니다.'
-    case 'invalid-file':
-      return 'PNG 파일만 불러올 수 있습니다.'
-    case 'no-opaque-pixels':
-      return '불투명한 픽셀이 없어 메시를 만들 수 없습니다.'
-    case 'read-failed':
-      return 'PNG 파일을 읽지 못했습니다.'
-    case 'render-failed':
-      return 'PNG 픽셀을 분석할 캔버스를 만들지 못했습니다.'
-    case 'too-large':
-      return '이미지가 너무 큽니다. 1,677만 픽셀 이하 PNG를 사용하세요.'
-    case 'invalid-alpha-threshold':
-    case 'invalid-cell-size':
-    case 'invalid-pixel-data':
-      return 'PNG 메시 생성 설정이 올바르지 않습니다.'
-    default: {
-      const exhaustiveCode: never = code
-      return exhaustiveCode
-    }
-  }
-}
-
 const setPlayerPlayback = (player: Player, isPlaying: boolean) => {
   if (isPlaying) {
     player.play()
     return
   }
-
   player.pause()
 }
-
 const togglePlayerPlayback = (player: Player, isPlaying: boolean) => {
   const nextIsPlaying = !isPlaying
   setPlayerPlayback(player, nextIsPlaying)
   return nextIsPlaying
 }
-
 const syncPlayerPlayback = (player: Player | null, isPlaying: boolean) => {
   if (player !== null && !isPlaying) {
     player.pause()
   }
-
   return player
 }
-
-interface PauseEditorPlaybackOptions {
-  readonly pause: () => void
-  readonly player: Player | null
-  readonly playing: boolean
-}
-
-const pauseEditorPlayback = (options: PauseEditorPlaybackOptions) => {
-  if (options.player !== null && options.playing) {
-    options.player.pause()
-    options.pause()
-  }
-}
-
-interface EditorModelingKeyformPanelProps {
-  readonly document: PuppetDocument
-  readonly editor: ParameterEditorResult
-  readonly selectedNodeIds: ReadonlyArray<string>
-}
-
-const EditorModelingKeyformPanel = (props: EditorModelingKeyformPanelProps) => {
-  const bindings = () =>
-    props.editor.allParametersVisible()
-      ? getDocumentParameterBindings(props.document)
-      : getParameterBindingsForNodeIds(props.document, props.selectedNodeIds)
-
-  return (
-    <EditorKeyformPanel
-      activeBindingId={props.editor.activeBindingId() ?? undefined}
-      activeKeyformValues={props.editor.activeKeyformValues()}
-      allParametersVisible={props.editor.allParametersVisible()}
-      bindings={bindings()}
-      parameters={getDocumentParameters(props.document)}
-      parameterCreationAvailable={props.selectedNodeIds.length > 0}
-      parameterValueMap={props.editor.parameterValueMap()}
-      selectedPartIds={props.selectedNodeIds}
-      targetPartIds={props.editor.activeTargetNodeIds()}
-      values={props.editor.parameterValues()}
-      onKeyformAdd={props.editor.addKeyform}
-      onKeyformDelete={props.editor.deleteKeyform}
-      onKeyformMove={(bindingId, values, nextValues) => {
-        props.editor.selectBinding(bindingId)
-        props.editor.moveKeyform(values, nextValues)
-      }}
-      onKeyformSelect={(bindingId, values) => {
-        props.editor.selectBinding(bindingId)
-        props.editor.selectKeyform(values)
-      }}
-      onBindingDelete={props.editor.deleteParameter}
-      onBindingSelect={props.editor.selectBinding}
-      onParameterAdd={props.editor.addParameter}
-      onParameterNameChange={(bindingId, parameterId, name) => {
-        props.editor.selectBinding(bindingId)
-        props.editor.renameParameter(parameterId, name)
-      }}
-      onSelectionConnect={props.editor.connectSelection}
-      onSelectionDisconnect={props.editor.disconnectSelection}
-      onAllParametersVisibleChange={props.editor.setAllParametersVisible}
-      onTwoDimensionalParameterAdd={props.editor.addTwoDimensionalParameter}
-      onValueChange={props.editor.setParameterValues}
-    />
-  )
-}
-
 interface EditorWorkspacePanelProps {
   readonly currentTime: number
   readonly document: PuppetDocument
   readonly editor: ParameterEditorResult
   readonly isPlaying: boolean
+  readonly motionId: string | null
   readonly onDocumentChange: (document: PuppetDocument) => void
+  readonly onEditEnd?: () => void
+  readonly onEditStart?: () => void
+  readonly onMotionChange?: (motionId: string) => void
+  readonly onMotionSeek?: (motionId: string, time: number) => void
   readonly onPlaybackToggle?: () => void
+  readonly onPhysicsPreviewChange?: (enabled: boolean) => void
+  readonly onPhysicsReset?: () => void
   readonly onSeek?: (time: number) => void
+  readonly physicsPreview?: boolean
   readonly selectedNodeIds: ReadonlyArray<string>
   readonly workspace: 'animation' | 'modeling'
 }
-
 const EditorWorkspacePanel = (props: EditorWorkspacePanelProps) => (
   <Show
     when={props.workspace === 'modeling'}
@@ -217,7 +102,12 @@ const EditorWorkspacePanel = (props: EditorWorkspacePanelProps) => (
         currentTime={props.currentTime}
         document={props.document}
         isPlaying={props.isPlaying}
+        motionId={props.motionId ?? undefined}
         onDocumentChange={props.onDocumentChange}
+        onEditEnd={props.onEditEnd}
+        onEditStart={props.onEditStart}
+        onMotionChange={props.onMotionChange}
+        onMotionSeek={props.onMotionSeek}
         onPlaybackToggle={props.onPlaybackToggle}
         onSeek={props.onSeek}
         parameterValues={props.editor.parameterValueMap()}
@@ -228,105 +118,52 @@ const EditorWorkspacePanel = (props: EditorWorkspacePanelProps) => (
       <EditorModelingKeyformPanel
         document={props.document}
         editor={props.editor}
+        onEditEnd={props.onEditEnd}
+        onEditStart={props.onEditStart}
+        onPhysicsPreviewChange={props.onPhysicsPreviewChange}
+        onPhysicsReset={props.onPhysicsReset}
+        physicsPreview={props.physicsPreview}
         selectedNodeIds={props.selectedNodeIds}
       />
     </section>
   </Show>
 )
 
-interface UseEditorImportsOptions {
-  readonly onDocumentChange: (document: PuppetDocument) => void
-  readonly onNotice: (message: string) => void
-}
+const WORKSPACE_EDIT_MODES = {animation: 'motion', modeling: 'parameter'} as const
 
-const useEditorImports = (options: UseEditorImportsOptions) => {
-  let importGeneration = 0
-  let importAbortController: AbortController | undefined
-
-  onCleanup(() => {
-    importGeneration += 1
-    importAbortController?.abort()
-  })
-
-  const handleImport = (file: File | undefined) => {
-    if (file === undefined) {
-      return
-    }
-
-    importGeneration += 1
-    importAbortController?.abort()
-    const activeGeneration = importGeneration
-    const abortController = new AbortController()
-    importAbortController = abortController
-    importDocument({
-      file,
-      onFailure(message) {
-        if (activeGeneration === importGeneration) {
-          options.onNotice(message)
-        }
-      },
-      onSuccess(document, fileName) {
-        if (activeGeneration === importGeneration) {
-          options.onDocumentChange(document)
-          options.onNotice(`${fileName}을 불러왔습니다.`)
-        }
-      },
-      signal: abortController.signal,
-    }).catch(() => {
-      if (activeGeneration === importGeneration) {
-        options.onNotice('파일을 읽지 못했습니다.')
-      }
-    })
-  }
-
-  const handlePngImport = (file: File | undefined) => {
-    if (file === undefined) {
-      return
-    }
-
-    importGeneration += 1
-    importAbortController?.abort()
-    const activeGeneration = importGeneration
-    importPng(file)
-      .then((result) => {
-        if (activeGeneration !== importGeneration) {
-          return
-        }
-
-        if (!result.ok) {
-          options.onNotice(getPngErrorMessage(result.error.code))
-          return
-        }
-
-        options.onDocumentChange(result.document)
-        options.onNotice(`${file.name}에서 알파 기반 메시를 생성했습니다.`)
-      })
-      .catch(() => {
-        if (activeGeneration === importGeneration) {
-          options.onNotice('PNG를 불러오는 중 예상하지 못한 오류가 발생했습니다.')
-        }
-      })
-  }
-
-  return {handleImport, handlePngImport}
-}
-
-// eslint-disable-next-line max-lines-per-function
+// eslint-disable-next-line complexity, max-lines-per-function, max-statements
 export const PuppetEditor = (props: PuppetEditorProps) => {
-  const initialDocument = untrack(() => props.initialDocument ?? createDemoDocument())
+  const initialDocument = untrack(() => props.initialDocument ?? createEmptyDocument())
+  const requestedMotionId = untrack(() => props.initialMotionId)
+  const initialMotionId = initialDocument.motions.some((motion) => motion.id === requestedMotionId)
+    ? (requestedMotionId ?? null)
+    : (initialDocument.motions[0]?.id ?? null)
   const initialPartId = initialDocument.parts[0]?.id ?? null
   const history = useDocumentHistory({initialDocument})
   const sourceDocument = history.document
+  const skinSession = createSkinSession()
   const [activePartId, setActivePartId] = createSignal<string | null>(initialPartId)
   const [layerSelection, setLayerSelection] = createSignal(createSceneSelection(initialPartId))
+  const [glueVertex, setGlueVertex] = createSignal<PuppetVertexReference | null>(null)
   const [activeVertexIndex, setActiveVertexIndex] = createSignal<number | null>(null)
+  const deformerEditing = useDeformerMode({
+    document: sourceDocument,
+    nodeId: () => layerSelection().activeNodeId ?? undefined,
+    onDocumentChange: history.setDocument,
+  })
   const deformerControlSelection = createDeformerControlSelection()
-  const [workspace, setWorkspace] = createSignal<'animation' | 'modeling'>('modeling')
+  const [workspace, setWorkspace] = createSignal<'animation' | 'modeling'>(
+    untrack(() => props.initialWorkspace ?? 'modeling'),
+  )
   const [playerStatus, setPlayerStatus] = createSignal<PlayerCanvasStatus>('loading')
   const [player, setPlayer] = createSignal<Player | null>(null)
   const [currentTime, setCurrentTime] = createSignal(0)
   const [isPlaying, setIsPlaying] = createSignal(false)
+  const [physicsPreview, setPhysicsPreview] = createSignal(true)
+  const [activeMotionId, setActiveMotionId] = createSignal<string | null>(initialMotionId)
+  const [inspectorMount, setInspectorMount] = createSignal<HTMLDivElement>()
   const [notice, setNotice] = createSignal<string | null>(null)
+  const [maskPickSourcePartId, setMaskPickSourcePartId] = createSignal<string | null>(null)
   const selectedPartIds = createMemo(() =>
     getSceneSelectionPartIds(sourceDocument(), layerSelection()),
   )
@@ -342,29 +179,67 @@ export const PuppetEditor = (props: PuppetEditorProps) => {
     onNotice: setNotice,
     selectedNodeIds,
   })
+  const temporary = useTemporaryForm({
+    bindingId: () => parameterEditor.activeBindingId() ?? undefined,
+    document: parameterEditor.previewDocument,
+    enabled: () =>
+      workspace() === 'modeling' &&
+      (activePartId() !== null ||
+        getParameterBindingsForNodeIds(sourceDocument(), selectedNodeIds()).length > 0),
+    keyformValues: parameterEditor.activeKeyformValues,
+    nodeId: () => layerSelection().activeNodeId ?? undefined,
+    onDocumentChange: history.setDocument,
+    parameterValueMap: parameterEditor.parameterValueMap,
+    parameterValues: parameterEditor.parameterValues,
+  })
   const parameterPreviewDocument = createMemo(() =>
     createParameterPreview({
-      document: sourceDocument(),
-      parameterValues: parameterEditor.parameterValueMap(),
+      document: temporary.document(),
+      editingBindingId: workspace() === 'modeling' ? temporary.bindingId() : undefined,
+      parameterValues: temporary.valueMap(),
     }),
   )
   const resetEditorDocument = (document: PuppetDocument) => {
     const partId = document.parts[0]?.id ?? null
     batch(() => {
-      history.resetDocument(document)
+      temporary.reset()
+      history.setDocument(document)
       setActivePartId(partId)
       setLayerSelection(createSceneSelection(partId))
       setActiveVertexIndex(null)
+      setMaskPickSourcePartId(null)
       deformerControlSelection.clear()
       parameterEditor.reset(document)
     })
   }
   const editorImports = useEditorImports({
+    document: sourceDocument,
     onDocumentChange: resetEditorDocument,
     onNotice: setNotice,
+    onReimportDocumentChange: history.setDocument,
   })
-  const pausePlayback = () =>
-    pauseEditorPlayback({pause: () => setIsPlaying(false), player: player(), playing: isPlaying()})
+  const pausePlayback = () => {
+    const currentPlayer = player()
+    if (currentPlayer !== null && isPlaying()) {
+      currentPlayer.pause()
+      setIsPlaying(false)
+    }
+  }
+
+  createEffect(() => {
+    const {motions} = sourceDocument()
+    const selectedMotionId = activeMotionId()
+
+    if (selectedMotionId !== null && motions.some((motion) => motion.id === selectedMotionId)) {
+      return
+    }
+
+    setActiveMotionId(motions[0]?.id ?? null)
+  })
+  const handleDocumentEditStart = () => {
+    pausePlayback()
+    history.beginTransaction()
+  }
   const handleUndo = () => {
     const changed = history.undo()
     if (changed) {
@@ -398,7 +273,6 @@ export const PuppetEditor = (props: PuppetEditorProps) => {
     const document = sourceDocument()
     untrack(() => props.onDocumentChange)?.(document)
   })
-
   const handlePlayerChange = (nextPlayer: Player | null) => {
     setPlayer(syncPlayerPlayback(nextPlayer, isPlaying()))
   }
@@ -409,6 +283,36 @@ export const PuppetEditor = (props: PuppetEditorProps) => {
     if (currentPlayer !== null) {
       setIsPlaying(togglePlayerPlayback(currentPlayer, isPlaying()))
     }
+  }
+
+  const handleMotionChange = (motionId: string) => {
+    if (!sourceDocument().motions.some((motion) => motion.id === motionId)) {
+      return
+    }
+
+    pausePlayback()
+    setActiveMotionId(motionId)
+    setCurrentTime(0)
+    player()?.setMotion(motionId)
+  }
+
+  const handleMotionSeek = (motionId: string, time: number) => {
+    const currentPlayer = player()
+
+    if (
+      currentPlayer === null ||
+      !sourceDocument().motions.some((motion) => motion.id === motionId)
+    ) {
+      return
+    }
+
+    pausePlayback()
+    batch(() => {
+      setActiveMotionId(motionId)
+      setCurrentTime(time)
+    })
+    currentPlayer.setMotion(motionId)
+    currentPlayer.seek(time)
   }
 
   const handleTimelineDocumentChange = (document: PuppetDocument) => {
@@ -426,23 +330,29 @@ export const PuppetEditor = (props: PuppetEditorProps) => {
       })
     }
   }
-  const handleContainerConvert = () => {
-    const conversion = selectionActions().containerConversion
-    const document =
-      conversion === undefined
-        ? undefined
-        : convertSceneContainers({...conversion, document: sourceDocument()})
-    if (document !== undefined) {
-      batch(() => {
-        history.setDocument(document)
-        setActiveVertexIndex(null)
-      })
+  const handleMaskPick = (targetPartId: string) => {
+    const maskPartId = maskPickSourcePartId()
+    if (maskPartId === null) {
+      return
     }
+    const document = setMaskTarget({
+      checked: true,
+      document: sourceDocument(),
+      maskPartId,
+      targetPartId,
+    })
+    if (document === undefined) {
+      setNotice('잠금 또는 순환 참조 때문에 이 레이어에 마스크를 적용할 수 없습니다.')
+      return
+    }
+    history.setDocument(document)
+    setMaskPickSourcePartId(null)
+    setNotice(`${targetPartId} 레이어에 마스크를 적용했습니다.`)
   }
 
   return (
-    <>
-      <style>{editorStyle}</style>
+    <SkinSessionContext.Provider value={skinSession}>
+      <EditorStyles />
       <EditorPanelLayout
         onActivate={activateHistoryShortcuts}
         bottom={
@@ -451,39 +361,102 @@ export const PuppetEditor = (props: PuppetEditorProps) => {
             document={sourceDocument()}
             editor={parameterEditor}
             isPlaying={isPlaying()}
+            motionId={activeMotionId()}
             onDocumentChange={handleTimelineDocumentChange}
+            onEditEnd={history.endTransaction}
+            onEditStart={handleDocumentEditStart}
+            onMotionChange={handleMotionChange}
+            onMotionSeek={player() === null ? undefined : handleMotionSeek}
             onPlaybackToggle={player() === null ? undefined : handlePlaybackToggle}
+            onPhysicsPreviewChange={setPhysicsPreview}
+            onPhysicsReset={() => player()?.resetPhysics()}
             onSeek={player() === null ? undefined : (time) => player()?.seek(time)}
+            physicsPreview={physicsPreview()}
             selectedNodeIds={selectedNodeIds()}
             workspace={workspace()}
           />
         }
         inspector={
           <EditorInspector
-            activeBindingId={parameterEditor.activeBindingId() ?? undefined}
-            activeKeyformValues={parameterEditor.activeKeyformValues()}
+            activeBindingId={temporary.bindingId()}
+            activeKeyformValues={temporary.values()}
             activeNodeId={selectionActions().singleNodeId}
             autoMeshAvailable={workspace() === 'modeling' && autoMesh.targets().length > 0}
-            containerConversionTarget={selectionActions().containerConversion?.targetKind}
             containerUnwrapAvailable={selectionActions().containerIds.length > 0}
-            document={sourceDocument()}
-            editMode={workspace() === 'modeling' ? 'parameter' : 'motion'}
+            document={temporary.document()}
+            layerOrderProperties={
+              <LayerOrderProperties
+                document={sourceDocument()}
+                selectedPartIds={selectedPartIds()}
+                onDocumentChange={history.setDocument}
+              />
+            }
+            editMode={WORKSPACE_EDIT_MODES[workspace()]}
+            maskPickSourcePartId={maskPickSourcePartId() ?? undefined}
             notice={notice()}
             onAutoMesh={() => autoMesh.onOpenChange(true)}
-            onContainerConvert={handleContainerConvert}
             onContainerUnwrap={handleContainerUnwrap}
-            onDocumentChange={history.setDocument}
+            onDocumentChange={(document) => {
+              if (temporary.target() === undefined) {
+                deformerEditing.updateInspector(document)
+              } else {
+                temporary.update(document)
+              }
+            }}
+            onEditEnd={history.endTransaction}
+            onEditStart={handleDocumentEditStart}
+            onMaskPickCancel={() => setMaskPickSourcePartId(null)}
+            onMaskPickStart={(partId) => {
+              setMaskPickSourcePartId(partId)
+              setNotice('마스크를 적용할 대상 레이어를 왼쪽 패널에서 선택하세요.')
+            }}
             previewDocument={parameterPreviewDocument()}
             selectedControlPointIndices={deformerControlSelection.selectedPointIndices()}
-            targetNodeIds={parameterEditor.activeTargetNodeIds()}
-          />
+            targetNodeIds={temporary.targets()}
+          >
+            <div ref={setInspectorMount} />
+            <SkinningEditor
+              selectedNodeIds={layerSelection().nodeIds}
+              document={sourceDocument()}
+              previewDocument={parameterPreviewDocument()}
+              partId={activePartId() ?? undefined}
+              vertexIndex={activeVertexIndex() ?? undefined}
+              onDocumentChange={history.setDocument}
+              onEditStart={handleDocumentEditStart}
+              onEditEnd={history.endTransaction}
+            />
+            <GlueEditor
+              activeBindingId={temporary.bindingId()}
+              activeKeyformValues={temporary.values()}
+              editingDocument={temporary.document()}
+              editMode={WORKSPACE_EDIT_MODES[workspace()]}
+              onKeyformChange={temporary.update}
+              selectedPartIds={selectedPartIds()}
+              targetPartId={layerSelection().activeNodeId ?? undefined}
+              sourceVertex={glueVertex()}
+              onSourceChange={setGlueVertex}
+              document={sourceDocument()}
+              partId={activePartId() ?? undefined}
+              vertexIndex={activeVertexIndex()}
+              onDocumentChange={history.setDocument}
+              onEditStart={handleDocumentEditStart}
+              onEditEnd={history.endTransaction}
+            />
+          </EditorInspector>
         }
         layers={
           <EditorLayerPanel
             document={sourceDocument()}
+            maskPickSourcePartId={maskPickSourcePartId() ?? undefined}
             selection={layerSelection()}
             onDocumentChange={history.setDocument}
+            onMaskPick={handleMaskPick}
             onSelectionChange={(selection) => {
+              if (skinSession.pick(sourceDocument(), selection.activeNodeId)) {
+                return
+              }
+              temporary.hide()
+              setMaskPickSourcePartId(null)
               setLayerSelection(selection)
               setActivePartId(getSelectedPartId(sourceDocument(), selection))
               setActiveVertexIndex(null)
@@ -502,47 +475,85 @@ export const PuppetEditor = (props: PuppetEditorProps) => {
             playerStatus={playerStatus()}
             onRedo={handleRedo}
             onExport={() => downloadDocument(sourceDocument())}
-            onJsonImport={editorImports.handleImport}
-            onPngImport={editorImports.handlePngImport}
+            onFileImport={editorImports.handleImport}
+            onPsdReimport={editorImports.reimport.load}
+            onFileOpen={editorImports.handleOpen}
             onUndo={handleUndo}
             onWorkspaceChange={(nextWorkspace) => {
               pausePlayback()
+              temporary.hide()
               setWorkspace(nextWorkspace)
             }}
           />
         )}
         viewport={
           <EditorViewport
-            activeBindingId={parameterEditor.activeBindingId() ?? undefined}
-            activeKeyformValues={parameterEditor.activeKeyformValues()}
+            physicsPreview={physicsPreview()}
+            meshEditingDisabled={temporary.form() !== undefined}
+            onMeshEditingStart={() => {
+              pausePlayback()
+              temporary.hide()
+            }}
+            onRestDocumentChange={history.setDocument}
+            fitRevision={editorImports.revision()}
+            overlay={
+              <Show
+                when={
+                  workspace() === 'modeling' &&
+                  temporary.form() !== undefined &&
+                  layerSelection().activeNodeId
+                }
+                keyed
+              >
+                {(nodeId) => (
+                  <TemporaryFormButton
+                    nodeId={nodeId}
+                    selected={temporary.selected()}
+                    showing={temporary.showing()}
+                    onPreview={temporary.setPreview}
+                    onRemove={temporary.remove}
+                    onSave={temporary.save}
+                  />
+                )}
+              </Show>
+            }
+            sourceDocument={sourceDocument()}
+            deformerMode={deformerEditing.mode()}
+            onDeformerModeChange={deformerEditing.setMode}
+            renderEditingControls={(controls) => (
+              <Show when={inspectorMount()}>
+                {(mount) => <Portal mount={mount()}>{controls}</Portal>}
+              </Show>
+            )}
+            activeBindingId={temporary.bindingId()}
+            activeKeyformValues={temporary.values()}
             activeNodeId={layerSelection().activeNodeId ?? undefined}
             activePartId={activePartId() ?? undefined}
             activeVertexIndex={activeVertexIndex()}
             currentTime={currentTime()}
             deformerControlSelection={deformerControlSelection}
-            document={sourceDocument()}
-            editMode={workspace() === 'modeling' ? 'parameter' : 'motion'}
+            document={temporary.document()}
+            editMode={WORKSPACE_EDIT_MODES[workspace()]}
+            motionId={activeMotionId() ?? undefined}
             onDeformerEditEnd={history.endTransaction}
-            onDeformerEditStart={() => {
-              pausePlayback()
-              history.beginTransaction()
-            }}
-            onDocumentChange={workspace() === 'modeling' ? history.setDocument : undefined}
-            onNotice={setNotice}
+            onDeformerEditStart={handleDocumentEditStart}
+            onDocumentChange={temporary.update}
+            onNotice={(message) => setNotice(temporary.target() === undefined ? message : null)}
             onPlayerChange={handlePlayerChange}
             onStatusChange={setPlayerStatus}
             onTimeChange={setCurrentTime}
             onVertexEditStart={pausePlayback}
             onVertexSelect={setActiveVertexIndex}
-            parameterValues={parameterEditor.parameterValues()}
-            parameterValueMap={parameterEditor.parameterValueMap()}
+            parameterValues={temporary.target()?.values ?? parameterEditor.parameterValues()}
+            parameterValueMap={temporary.valueMap()}
             previewDocument={parameterPreviewDocument()}
             selectedPartIds={selectedPartIds()}
-            targetNodeIds={parameterEditor.activeTargetNodeIds()}
+            targetNodeIds={temporary.targets()}
           />
         }
       />
+      <PsdReimportDialog controller={editorImports.reimport} />
       <EditorAutoMeshDialog autoMesh={autoMesh} />
-    </>
+    </SkinSessionContext.Provider>
   )
 }

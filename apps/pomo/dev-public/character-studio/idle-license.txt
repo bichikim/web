@@ -1,0 +1,11 @@
+Archived animation reference — not part of the current runtime model.
+The current pomo.glb contains no animation clips. This notice preserves the
+source and modification history of an earlier local idle-animation study.
+
+Animation: Idle_Loop, Universal Animation Library (Standard)
+Creator: Quaternius
+License: CC0 1.0
+Official: https://quaternius.itch.io/universal-animation-library
+Download mirror: https://github.com/J-Ponzo/gltf-universal-animation-library
+Earlier study: upper-body motion retargeted onto Pomo standing pose; feet fixed;
+3-second loop with endpoint blending.

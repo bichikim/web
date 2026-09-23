@@ -1,3 +1,4 @@
+/** @vitest-environment node */
 import {beforeEach, expect, it, vi} from 'vitest'
 
 const databaseMocks = vi.hoisted(() => ({
@@ -7,8 +8,8 @@ const databaseMocks = vi.hoisted(() => ({
 const providerMocks = vi.hoisted(() => ({fetchOpenWeatherCurrent: vi.fn()}))
 const quotaMocks = vi.hoisted(() => ({reserveOpenWeatherRequest: vi.fn()}))
 const locationMocks = vi.hoisted(() => ({getPublicWeatherLocation: vi.fn()}))
+const currentWeatherMocks = vi.hoisted(() => ({createCurrentWeather: vi.fn()}))
 const repositoryMocks = vi.hoisted(() => ({
-  createCurrentWeather: vi.fn(),
   getLatestWeather: vi.fn(),
   getWeatherCollectionState: vi.fn(),
   lockWeatherCollection: vi.fn(),
@@ -23,7 +24,8 @@ vi.mock('../../database', () => databaseMocks)
 vi.mock('../openweather-client', () => providerMocks)
 vi.mock('../provider-quota', () => quotaMocks)
 vi.mock('../world-locations', () => locationMocks)
-vi.mock('../repository', () => repositoryMocks)
+vi.mock('../create-current-weather', () => currentWeatherMocks)
+vi.mock('../../repositories/weather', () => repositoryMocks)
 
 import {
   getWorldWeatherFeedState,
@@ -84,7 +86,7 @@ beforeEach(() => {
     operation(database),
   )
   locationMocks.getPublicWeatherLocation.mockReturnValue(publicLocation)
-  repositoryMocks.createCurrentWeather.mockReturnValue({
+  currentWeatherMocks.createCurrentWeather.mockReturnValue({
     condition: 'clear',
     humidityPercent: 50,
     precipitationMillimeters: 0,
@@ -236,4 +238,18 @@ it('should record a savepoint failure before releasing the lease', async () => {
     status: 'failed',
   })
   expect(repositoryMocks.resetWeatherCollectionFailure).not.toHaveBeenCalled()
+})
+
+it('should propagate an outer save transaction failure to the feed response', async () => {
+  const error = new Error('transaction connection failed')
+  databaseMocks.withTransactionalDatabase
+    .mockImplementationOnce(async (operation) =>
+      operation({
+        transaction: vi.fn(async (transactionOperation) => transactionOperation({})),
+      } as never),
+    )
+    .mockRejectedValueOnce(error)
+
+  await expect(ingestWorldWeather(location, NOW)).rejects.toBe(error)
+  expect(repositoryMocks.recordWeatherCollectionFailure).not.toHaveBeenCalled()
 })

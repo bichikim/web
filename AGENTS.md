@@ -2,14 +2,15 @@
 
 ## Interaction
 
-- **Examples**: If the user asks to see an example, provide it in the chat response only — do not create or edit files to demonstrate it.
-- **Intent gate**: Before any answer or tool call, state the resulting concrete interpretation.
+- **Examples**: If the user asks only to see an example, provide it in the chat response without creating or editing files. If the user asks to build something from an example and its implementation code is available, study that implementation before implementing it.
+- **Intent gate**: State the concrete interpretation at task start and when the scope or direction changes.
 - **Existing code references**: When discussing existing code, always include its file path.
 
 ## Styling ownership
 
-- CSS and UnoCSS own all visual style values.
-- JavaScript and TypeScript may communicate semantic state through classes or data attributes and inject runtime values through CSS custom properties; CSS and UnoCSS must define how those values affect visual styling.
+- Prefer UnoCSS over standalone `.css` files. Before creating or adding usage of a standalone `.css` file, explain why it is needed and obtain explicit user approval.
+- UnoCSS owns all visual style values.
+- JavaScript and TypeScript may communicate semantic state through classes or data attributes and inject runtime values through CSS custom properties; UnoCSS must define how those values affect visual styling.
 - JavaScript and TypeScript must not otherwise create style values or set them directly on the DOM.
 - If preserving the requested behavior requires other style handling in JavaScript or TypeScript, first present the concrete reason and alternatives and obtain explicit user approval.
 
@@ -21,28 +22,28 @@
 
 ## File naming
 
-- Across source code, tests, documentation, configuration, scripts, and assets, name files by their role within the containing directory without repeating parent-directory context; use meaningful subdirectories for context shared by siblings.
+- Across source code, tests, documentation, configuration, scripts, and assets, name files by their role within the containing directory; use meaningful subdirectories for context shared by siblings.
 - Keep authoring and generation details in archive filenames or metadata, not runtime filenames.
 
 ## Decision quality
 
+- Prefer event-driven work whenever the relevant event or completion signal is available. Use `setTimeout` or `setInterval` only when necessary, after explaining why an event-driven approach is insufficient and obtaining explicit user approval.
+- **Declarative programming (required)**: Write code declaratively by composing reusable operations. Judge readability by how clearly the composition expresses intent, not by code length.
 - When correcting AI behavior, use the lowest-prompt-cost instruction that preserves the outcome.
 - Evaluate changes in repository-wide context, prioritizing compatibility, reusability, and readability over local optimization.
 - Do not treat prevalence as evidence of quality.
 
 ## Evidence
 
-- Do not infer, speculate, or fill gaps. Treat learned knowledge, memory, prior conversation, common patterns, names, and probabilities as false or unverified until current evidence establishes them.
-- Use only directly observed evidence from the actual project's files, configuration, and data; its actual runtime; current official documentation; relevant existing tests executed against the actual code path; or new tests created and executed against that path as sources of truth.
-- Verify every factual or technical conclusion with the source capable of proving it. Source inspection does not prove runtime behavior, an unexecuted test does not prove behavior, and a passing test proves only the assertions and environment it exercised.
-- Verify changeable external information from a current authoritative source in the same turn. Before relying on a term, status, label, or qualifier, establish its exact contextual meaning and separately verify the consequence relevant to the question.
-- When direct evidence is missing, run the smallest relevant test or runtime experiment that can establish the fact. Distinguish product evidence from setup, runner, sandbox, and environment failures.
-- Show the user the decisive evidence. If the permitted sources cannot verify a claim and no viable experiment can establish it, state that it cannot be determined; do not provide a likely answer.
+- Treat assumptions as assumptions, not facts. Establish factual or technical conclusions from the source capable of proving them: the actual project's files, configuration, data, runtime, executed tests, current authoritative documentation, or a focused experiment.
+- Match the evidence to the claim: source inspection does not prove runtime behavior, an unexecuted test does not prove behavior, and a passing test proves only the assertions and environment it exercised. For changeable external information, verify the exact meaning and relevant consequence from a current authoritative source in the same turn.
+- When direct evidence is missing, run the smallest relevant test or runtime experiment and distinguish product defects from setup, runner, sandbox, and environment failures.
+- Show the decisive evidence. If no permitted source or viable experiment can establish the claim, state that it cannot be determined instead of guessing.
 
 ## Architecture authority
 
-- Treat current official documentation as binding for folder structure and code design. If existing or proposed code differs, disclose the difference and reason before implementation; do not deviate unless the user explicitly directs it.
-- If official documentation does not map directly to the code, analyze multiple analogous implementations from authoritative maintainers or projects, show the decisive evidence, and choose the best-supported pattern instead of inventing a familiar local design.
+- Follow explicit requirements in current official documentation. Disclose conflicts with those requirements before implementation; do not deviate unless the user explicitly directs it.
+- Where official documentation leaves design or folder structure open, decide using project contracts and relevant evidence. Consult authoritative implementations when needed to resolve a material uncertainty.
 
 ## Layering without z-index
 
@@ -107,3 +108,18 @@ pnpm + Turborepo (`@winter-love/web`) · Node ≥24 · pnpm 11.x (`package.json`
 **Commands:** `pnpm lint` · `pnpm test` · `turbo prepare-build` · `pnpm typecheck` (`apps/coong`)
 
 **Gotcha:** Without Supabase, auth/DB features error but the app renders. Re-run `turbo prepare-build` after cleaning `node_modules` or `dist/`.
+
+<!-- graft:start -->
+
+## Graft — repo context graph
+
+For indexed code, use Graft before searching or opening source. Choose the tool
+for the question: `graft ask "<question>" --source` to locate and understand,
+`graft grep "<literal>"` for every occurrence, `graft skeleton <file>` for a
+known file's API, and `graft callers <symbol>` before changing a shared symbol.
+Use `graft map` when repository orientation is needed. Open source at a returned
+span only when the graph lacks a necessary detail. Read instruction files and
+unindexed content directly. Refresh the graph with `graft build` after big code
+changes.
+
+<!-- graft:end -->

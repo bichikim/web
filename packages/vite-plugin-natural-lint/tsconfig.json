@@ -1,0 +1,12 @@
+{
+  "compileOnSave": false,
+  "compilerOptions": {
+    "jsx": "preserve",
+    "jsxImportSource": "@opentui/solid",
+    "paths": {
+      "src/*": ["./src/*"]
+    }
+  },
+  "extends": ["../../tsconfig.json"],
+  "include": ["src/**/*.ts", "src/**/*.tsx"]
+}

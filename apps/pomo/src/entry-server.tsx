@@ -3,13 +3,13 @@ import {createHandler, StartServer} from '@solidjs/start/server'
 
 import {getLocale, getTextDirection} from '@paraglide/runtime'
 
+import {InstallationMetadata} from './components/installation-metadata/InstallationMetadata'
+import {ViewportMetadata} from './components/viewport-metadata/ViewportMetadata'
+
 import {DISPLAY_THEME_BOOTSTRAP_SCRIPT} from './features/display-theme/bootstrap'
+import {pretendardFontFaceStyles} from '../scripts/unocss/pretendard'
 
 const isAppsInToss = import.meta.env.VITE_POMO_IS_APPS_IN_TOSS === 'true'
-const viewport = isAppsInToss
-  ? 'width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover'
-  : 'width=device-width, initial-scale=1, viewport-fit=cover'
-
 const documentClass = isAppsInToss ? undefined : 'dark'
 
 export default createHandler(
@@ -19,14 +19,12 @@ export default createHandler(
         <html class={documentClass} dir={getTextDirection()} lang={getLocale()}>
           <head>
             <meta charset="utf-8" />
-            <meta name="viewport" content={viewport} />
+            <ViewportMetadata />
             <script nonce={event.locals.securityNonce}>{DISPLAY_THEME_BOOTSTRAP_SCRIPT}</script>
-            <link
-              rel="stylesheet"
-              href={import.meta.env.VITE_POMO_PRETENDARD_STYLESHEET_PATH}
-              type="text/css"
-            />
-            <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+            {/* Keep font faces in the document so code-split CSS assets do not duplicate them. */}
+            <style nonce={event.locals.securityNonce}>{pretendardFontFaceStyles}</style>
+            <link rel="icon" href="/favicon.png" type="image/png" sizes="64x64" />
+            <InstallationMetadata />
             {props.assets}
           </head>
           <body>

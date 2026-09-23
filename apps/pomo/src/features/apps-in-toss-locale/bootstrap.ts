@@ -9,7 +9,7 @@ import {resolveAppsInTossLocale} from './index'
 
 const readStoredLocale = () => {
   try {
-    return toLocale(window.localStorage.getItem(localStorageKey))
+    return toLocale(globalThis.localStorage.getItem(localStorageKey))
   } catch {
     return undefined
   }

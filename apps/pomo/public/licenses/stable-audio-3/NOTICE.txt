@@ -1,0 +1,12 @@
+This Stability AI Model is licensed under the Stability AI Community License,
+Copyright © Stability AI Ltd. All Rights Reserved.
+
+Gemma is provided under and subject to the Gemma Terms of Use found at
+ai.google.dev/gemma/terms
+
+This application uses Stability AI's published optimized ONNX files without
+modifying their weights:
+https://huggingface.co/stabilityai/stable-audio-3-optimized/tree/da6edc54ddba10bfd79a077102ded687f80e882b
+
+Model: Stable Audio 3 Small SFX; SAME-S decoder; T5Gemma text encoder.
+License copies are included alongside this notice as stability.txt and gemma.txt.

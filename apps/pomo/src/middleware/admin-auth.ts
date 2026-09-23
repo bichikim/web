@@ -1,6 +1,4 @@
-import {getAdminSession} from '../server/admin-auth/session'
-
-export {classifyAdminAccess, hasAdminRole} from '../server/admin-auth/access'
+import {getAuthSession} from '../server/auth/get-auth-session'
 
 const ADMIN_PATH = '/admin'
 const ADMIN_LOGIN_PATH = '/admin/login'
@@ -94,41 +92,41 @@ export const handleAdminAuthRequest = async (input: AdminAuthRequest): Promise<R
 
   applyAdminSecurityHeaders(input.responseHeaders)
 
-  let sessionResult: Awaited<ReturnType<typeof getAdminSession>>
+  let sessionResult: Awaited<ReturnType<typeof getAuthSession>>
 
   try {
-    sessionResult = await getAdminSession(input.request)
+    sessionResult = await getAuthSession(input.request, {provider: 'neon'})
   } catch (error) {
     console.error('Pomo admin authentication is unavailable', error)
     return createUnavailableResponse(input)
   }
 
-  const {access, cookies} = sessionResult
+  const {access, setCookies} = sessionResult
 
   switch (access) {
     case 'admin': {
-      const callbackRedirect = createCallbackRedirect(input, cookies)
+      const callbackRedirect = createCallbackRedirect(input, setCookies)
 
       if (callbackRedirect !== null) {
         return callbackRedirect
       }
 
-      appendCookies(input.responseHeaders, cookies)
+      appendCookies(input.responseHeaders, setCookies)
       return null
     }
     case 'anonymous':
-      return createLoginRedirect(input, cookies)
-    case 'forbidden': {
-      const callbackRedirect = createCallbackRedirect(input, cookies)
+      return createLoginRedirect(input, setCookies)
+    case 'user': {
+      const callbackRedirect = createCallbackRedirect(input, setCookies)
 
       if (callbackRedirect !== null) {
         return callbackRedirect
       }
 
-      return createErrorResponse('Forbidden', HTTP_FORBIDDEN, input.responseHeaders, cookies)
+      return createErrorResponse('Forbidden', HTTP_FORBIDDEN, input.responseHeaders, setCookies)
     }
     case 'invalid':
-      return createUnavailableResponse(input, cookies)
+      return createUnavailableResponse(input, setCookies)
     default: {
       const exhaustiveAccess: never = access
       return exhaustiveAccess

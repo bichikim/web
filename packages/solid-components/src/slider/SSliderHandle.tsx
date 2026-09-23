@@ -1,5 +1,6 @@
+import {callEventHandler} from '../utils/event-handler'
 import {stopPropagation, StyleType, useDrag, useStyles} from '@winter-love/solid-use'
-import {createMemo, createSignal, splitProps, ValidComponent} from 'solid-js'
+import {createMemo, createSignal, type JSX, splitProps, ValidComponent} from 'solid-js'
 import {Dynamic, DynamicProps} from 'solid-js/web'
 import {POSITION_VAR} from '../css-var'
 import {useSliderAriaContext} from './slider-aria-context'
@@ -7,6 +8,7 @@ import {useSliderContext} from './slider-context'
 import {cx} from 'class-variance-authority'
 
 type InnerProps = {
+  onPointerDown?: JSX.EventHandlerUnion<HTMLElement, PointerEvent> | undefined
   style?: StyleType
 }
 
@@ -27,7 +29,7 @@ const toRangeValue = (value: number, min: number, max: number) => {
 export const sSliderHandleClassName = 's-slider-handle'
 
 export const SSliderHandle = <T extends ValidComponent>(props: SSliderHandleProps<T>) => {
-  const [innerProps, restProps] = splitProps(props, ['style']) as unknown as [
+  const [innerProps, restProps] = splitProps(props, ['style', 'onPointerDown']) as unknown as [
     Required<InnerProps>,
     DynamicProps<T>,
   ]
@@ -62,7 +64,7 @@ export const SSliderHandle = <T extends ValidComponent>(props: SSliderHandleProp
     }
   })
 
-  useDrag(handelElement, (type, payload) => {
+  const drag = useDrag((type, payload) => {
     if (type !== 'move') {
       return
     }
@@ -97,6 +99,10 @@ export const SSliderHandle = <T extends ValidComponent>(props: SSliderHandleProp
       tabindex="0"
       ref={setHandelElement}
       style={style()}
+      onPointerDown={(event) => {
+        drag.onPointerDown(event)
+        callEventHandler(innerProps.onPointerDown, event)
+      }}
       onClick={stopPropagation()}
     >
       {props.children}

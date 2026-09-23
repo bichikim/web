@@ -1,6 +1,7 @@
-import 'server-only'
-
-import {createWeatherCacheMaintenanceRepository} from './cache-maintenance-repository'
+import {
+  createWeatherCacheMaintenanceRepository,
+  type WeatherCacheMaintenanceRepository,
+} from '../repositories/weather-cache-maintenance'
 
 const MILLISECONDS_PER_SECOND = 1000
 const SECONDS_PER_MINUTE = 60
@@ -10,22 +11,6 @@ const WEATHER_CACHE_RETENTION =
   HOURS_PER_DAY * MINUTES_PER_HOUR * SECONDS_PER_MINUTE * MILLISECONDS_PER_SECOND
 const DELETE_BATCH_SIZE = 500
 const MAXIMUM_BATCHES = 20
-
-interface DeleteWeatherBatchOptions {
-  readonly batchSize: number
-  readonly cutoff: Date
-}
-
-export interface WeatherCacheMaintenanceBatchResult {
-  readonly deleted: number
-  readonly hasMore: boolean
-}
-
-export interface WeatherCacheMaintenanceRepository {
-  readonly deleteWeatherBatch: (
-    options: DeleteWeatherBatchOptions,
-  ) => Promise<WeatherCacheMaintenanceBatchResult>
-}
 
 interface WeatherCacheMaintenanceDependencies {
   readonly now: () => Date

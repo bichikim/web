@@ -1,5 +1,9 @@
 # AGENTS.md
 
+## Component prefixes
+
+- Styled components normally use the `S` prefix and headless components use `H`; in Pomo, styled components use `P` instead of `S`.
+
 ## SolidStart, not Next.js or React
 
 - Pomo is SolidStart on Solid.js. Do not apply Next.js or React folder layouts, file conventions, APIs, or component patterns.
@@ -11,6 +15,9 @@
 
 ## Apps in Toss
 
+- For Apps in Toss runtime verification, run `toss dev` and inspect the app in the Toss development runtime.
+- For Apps in Toss browser-simulation verification, run `pnpm --filter @apps/pomo dev:apps-in-toss` from the repository root and open the printed local URL; this does not verify Apps in Toss runtime behavior.
+- If either verification cannot be completed, report the blocker, continue other applicable checks, and identify the runtime behavior that remains unverified.
 - Before implementing a Pomo feature, determine whether it targets regular web, Apps in Toss, or both.
 - Check the current official Apps in Toss documentation when selecting platform behavior. If it requires or recommends an approach different from regular web, use that approach for the Apps in Toss build and preserve regular web behavior behind an explicit build-target boundary.
 - Do not replace documented Apps in Toss behavior with general web conventions. Disclose unsupported mappings or conflicts and ask before deviating.

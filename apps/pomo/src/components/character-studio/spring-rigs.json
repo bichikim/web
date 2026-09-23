@@ -1,0 +1,1764 @@
+{
+  "haru": {
+    "colliders": [
+      {
+        "node": "J_Bip_C_Spine",
+        "offset": [0, 0, 0],
+        "radius": 0.103557207
+      },
+      {
+        "node": "J_Bip_C_UpperChest",
+        "offset": [0, 0, 0.008629768],
+        "radius": 0.08629768
+      },
+      {
+        "node": "J_Bip_C_UpperChest",
+        "offset": [0.04314884, 0.0560934879, -0.008629768],
+        "radius": 0.0604083762
+      },
+      {
+        "node": "J_Bip_C_UpperChest",
+        "offset": [-0.04314884, 0.0560934879, -0.008629768],
+        "radius": 0.0604083762
+      },
+      {
+        "node": "J_Bip_C_Neck",
+        "offset": [0, 0.0258893035, 0.0112186987],
+        "radius": 0.04314884
+      },
+      {
+        "node": "J_Bip_C_Head",
+        "offset": [0, 0.107275121, -0.0154476166],
+        "radius": 0.107275121
+      },
+      {
+        "node": "J_Bip_L_UpperArm",
+        "offset": [0, -0.008629769, 0],
+        "radius": 0.0431488454
+      },
+      {
+        "node": "J_Bip_L_UpperArm",
+        "offset": [0.06472327, -0.008629769, 0],
+        "radius": 0.0431488454
+      },
+      {
+        "node": "J_Bip_L_UpperArm",
+        "offset": [0.129446536, -0.008629769, 0],
+        "radius": 0.0431488454
+      },
+      {
+        "node": "J_Bip_L_LowerArm",
+        "offset": [0, 0, 0],
+        "radius": 0.0258893073
+      },
+      {
+        "node": "J_Bip_L_LowerArm",
+        "offset": [0.0431488454, 0, 0],
+        "radius": 0.0302041918
+      },
+      {
+        "node": "J_Bip_L_LowerArm",
+        "offset": [0.08629769, 0, 0],
+        "radius": 0.0258893073
+      },
+      {
+        "node": "J_Bip_L_LowerArm",
+        "offset": [0.129446536, 0, 0],
+        "radius": 0.0258893073
+      },
+      {
+        "node": "J_Bip_L_Hand",
+        "offset": [0.0159171484, 0, 0],
+        "radius": 0.0238757227
+      },
+      {
+        "node": "J_Bip_R_UpperArm",
+        "offset": [0, -0.008629769, 0],
+        "radius": 0.0431488454
+      },
+      {
+        "node": "J_Bip_R_UpperArm",
+        "offset": [-0.06472327, -0.008629769, 0],
+        "radius": 0.0431488454
+      },
+      {
+        "node": "J_Bip_R_UpperArm",
+        "offset": [-0.129446536, -0.008629769, 0],
+        "radius": 0.0431488454
+      },
+      {
+        "node": "J_Bip_R_LowerArm",
+        "offset": [0, 0, 0],
+        "radius": 0.0258893073
+      },
+      {
+        "node": "J_Bip_R_LowerArm",
+        "offset": [-0.0431488454, 0, 0],
+        "radius": 0.0302041918
+      },
+      {
+        "node": "J_Bip_R_LowerArm",
+        "offset": [-0.08629769, 0, 0],
+        "radius": 0.0258893073
+      },
+      {
+        "node": "J_Bip_R_LowerArm",
+        "offset": [-0.129446536, 0, 0],
+        "radius": 0.0258893073
+      },
+      {
+        "node": "J_Bip_R_Hand",
+        "offset": [-0.0159171484, 0, 0],
+        "radius": 0.0238757227
+      }
+    ],
+    "springs": [
+      {
+        "name": "HoodString",
+        "colliders": [],
+        "joints": [
+          {
+            "node": "J_Sec_L_HoodString2_01",
+            "hitRadius": 0.007736551,
+            "stiffness": 0.26,
+            "gravityPower": 0.25,
+            "gravityDir": [0, -1, 0],
+            "dragForce": 0
+          },
+          {
+            "node": "J_Sec_L_HoodString2_end_01",
+            "hitRadius": 0.007736551,
+            "stiffness": 0.26,
+            "gravityPower": 0.25,
+            "gravityDir": [0, -1, 0],
+            "dragForce": 0
+          },
+          {
+            "node": "J_Sec_L_HoodString2_end_01_end"
+          }
+        ]
+      },
+      {
+        "name": "HoodString",
+        "colliders": [],
+        "joints": [
+          {
+            "node": "J_Sec_R_HoodString2_01",
+            "hitRadius": 0.007736551,
+            "stiffness": 0.26,
+            "gravityPower": 0.25,
+            "gravityDir": [0, -1, 0],
+            "dragForce": 0
+          },
+          {
+            "node": "J_Sec_R_HoodString2_end_01",
+            "hitRadius": 0.007736551,
+            "stiffness": 0.26,
+            "gravityPower": 0.25,
+            "gravityDir": [0, -1, 0],
+            "dragForce": 0
+          },
+          {
+            "node": "J_Sec_R_HoodString2_end_01_end"
+          }
+        ]
+      },
+      {
+        "name": "Hood",
+        "colliders": [],
+        "joints": [
+          {
+            "node": "J_Sec_C_Hood_01",
+            "hitRadius": 0.007736629,
+            "stiffness": 0.75,
+            "gravityPower": 0,
+            "gravityDir": [0, -1, 0],
+            "dragForce": 0.05
+          },
+          {
+            "node": "J_Sec_C_Hood_end_01",
+            "hitRadius": 0.007736629,
+            "stiffness": 0.75,
+            "gravityPower": 0,
+            "gravityDir": [0, -1, 0],
+            "dragForce": 0.05
+          },
+          {
+            "node": "J_Sec_C_Hood_end_01_end"
+          }
+        ]
+      },
+      {
+        "name": "Hair",
+        "colliders": [5, 6, 7, 8, 14, 15, 16, 9, 10, 11, 12, 17, 18, 19, 20, 13, 21, 1, 2, 3, 0, 4],
+        "joints": [
+          {
+            "node": "J_Sec_Hair1_01",
+            "hitRadius": 0.0107275,
+            "stiffness": 0.8475211,
+            "gravityPower": 0,
+            "gravityDir": [0, -1, 0],
+            "dragForce": 0.4
+          },
+          {
+            "node": "J_Sec_Hair2_01",
+            "hitRadius": 0.0107275,
+            "stiffness": 0.8475211,
+            "gravityPower": 0,
+            "gravityDir": [0, -1, 0],
+            "dragForce": 0.4
+          },
+          {
+            "node": "J_Sec_Hair2_01_end"
+          }
+        ]
+      },
+      {
+        "name": "Hair",
+        "colliders": [5, 6, 7, 8, 14, 15, 16, 9, 10, 11, 12, 17, 18, 19, 20, 13, 21, 1, 2, 3, 0, 4],
+        "joints": [
+          {
+            "node": "J_Sec_Hair1_02",
+            "hitRadius": 0.0107275,
+            "stiffness": 0.848229468,
+            "gravityPower": 0,
+            "gravityDir": [0, -1, 0],
+            "dragForce": 0.4
+          },
+          {
+            "node": "J_Sec_Hair2_02",
+            "hitRadius": 0.0107275,
+            "stiffness": 0.848229468,
+            "gravityPower": 0,
+            "gravityDir": [0, -1, 0],
+            "dragForce": 0.4
+          },
+          {
+            "node": "J_Sec_Hair3_02",
+            "hitRadius": 0.0107275,
+            "stiffness": 0.848229468,
+            "gravityPower": 0,
+            "gravityDir": [0, -1, 0],
+            "dragForce": 0.4
+          },
+          {
+            "node": "J_Sec_Hair3_02_end"
+          }
+        ]
+      },
+      {
+        "name": "Hair",
+        "colliders": [5, 6, 7, 8, 14, 15, 16, 9, 10, 11, 12, 17, 18, 19, 20, 13, 21, 1, 2, 3, 0, 4],
+        "joints": [
+          {
+            "node": "J_Sec_Hair1_03",
+            "hitRadius": 0.0107275015,
+            "stiffness": 0.8020291,
+            "gravityPower": 0,
+            "gravityDir": [0, -1, 0],
+            "dragForce": 0.4
+          },
+          {
+            "node": "J_Sec_Hair2_03",
+            "hitRadius": 0.0107275015,
+            "stiffness": 0.8020291,
+            "gravityPower": 0,
+            "gravityDir": [0, -1, 0],
+            "dragForce": 0.4
+          },
+          {
+            "node": "J_Sec_Hair3_03",
+            "hitRadius": 0.0107275015,
+            "stiffness": 0.8020291,
+            "gravityPower": 0,
+            "gravityDir": [0, -1, 0],
+            "dragForce": 0.4
+          },
+          {
+            "node": "J_Sec_Hair4_03",
+            "hitRadius": 0.0107275015,
+            "stiffness": 0.8020291,
+            "gravityPower": 0,
+            "gravityDir": [0, -1, 0],
+            "dragForce": 0.4
+          },
+          {
+            "node": "J_Sec_Hair4_03_end"
+          }
+        ]
+      },
+      {
+        "name": "Hair",
+        "colliders": [5, 6, 7, 8, 14, 15, 16, 9, 10, 11, 12, 17, 18, 19, 20, 13, 21, 1, 2, 3, 0, 4],
+        "joints": [
+          {
+            "node": "J_Sec_Hair1_04",
+            "hitRadius": 0.0107275154,
+            "stiffness": 0.8012918,
+            "gravityPower": 0,
+            "gravityDir": [0, -1, 0],
+            "dragForce": 0.4
+          },
+          {
+            "node": "J_Sec_Hair2_04",
+            "hitRadius": 0.0107275154,
+            "stiffness": 0.8012918,
+            "gravityPower": 0,
+            "gravityDir": [0, -1, 0],
+            "dragForce": 0.4
+          },
+          {
+            "node": "J_Sec_Hair3_04",
+            "hitRadius": 0.0107275154,
+            "stiffness": 0.8012918,
+            "gravityPower": 0,
+            "gravityDir": [0, -1, 0],
+            "dragForce": 0.4
+          },
+          {
+            "node": "J_Sec_Hair4_04",
+            "hitRadius": 0.0107275154,
+            "stiffness": 0.8012918,
+            "gravityPower": 0,
+            "gravityDir": [0, -1, 0],
+            "dragForce": 0.4
+          },
+          {
+            "node": "J_Sec_Hair4_04_end"
+          }
+        ]
+      },
+      {
+        "name": "Hair",
+        "colliders": [5, 6, 7, 8, 14, 15, 16, 9, 10, 11, 12, 17, 18, 19, 20, 13, 21, 1, 2, 3, 0, 4],
+        "joints": [
+          {
+            "node": "J_Sec_Hair1_07",
+            "hitRadius": 0.00491677364,
+            "stiffness": 0.7997162,
+            "gravityPower": 0,
+            "gravityDir": [0, -1, 0],
+            "dragForce": 0.4
+          },
+          {
+            "node": "J_Sec_Hair2_07",
+            "hitRadius": 0.00491677364,
+            "stiffness": 0.7997162,
+            "gravityPower": 0,
+            "gravityDir": [0, -1, 0],
+            "dragForce": 0.4
+          },
+          {
+            "node": "J_Sec_Hair3_07",
+            "hitRadius": 0.00491677364,
+            "stiffness": 0.7997162,
+            "gravityPower": 0,
+            "gravityDir": [0, -1, 0],
+            "dragForce": 0.4
+          },
+          {
+            "node": "J_Sec_Hair4_07",
+            "hitRadius": 0.00491677364,
+            "stiffness": 0.7997162,
+            "gravityPower": 0,
+            "gravityDir": [0, -1, 0],
+            "dragForce": 0.4
+          },
+          {
+            "node": "J_Sec_Hair4_07_end"
+          }
+        ]
+      },
+      {
+        "name": "Hair",
+        "colliders": [5, 6, 7, 8, 14, 15, 16, 9, 10, 11, 12, 17, 18, 19, 20, 13, 21, 1, 2, 3, 0, 4],
+        "joints": [
+          {
+            "node": "J_Sec_Hair1_05",
+            "hitRadius": 0.0107275071,
+            "stiffness": 0.854821265,
+            "gravityPower": 0,
+            "gravityDir": [0, -1, 0],
+            "dragForce": 0.4
+          },
+          {
+            "node": "J_Sec_Hair2_05",
+            "hitRadius": 0.0107275071,
+            "stiffness": 0.854821265,
+            "gravityPower": 0,
+            "gravityDir": [0, -1, 0],
+            "dragForce": 0.4
+          },
+          {
+            "node": "J_Sec_Hair3_05",
+            "hitRadius": 0.0107275071,
+            "stiffness": 0.854821265,
+            "gravityPower": 0,
+            "gravityDir": [0, -1, 0],
+            "dragForce": 0.4
+          },
+          {
+            "node": "J_Sec_Hair3_05_end"
+          }
+        ]
+      },
+      {
+        "name": "Hair",
+        "colliders": [5, 6, 7, 8, 14, 15, 16, 9, 10, 11, 12, 17, 18, 19, 20, 13, 21, 1, 2, 3, 0, 4],
+        "joints": [
+          {
+            "node": "J_Sec_Hair1_06",
+            "hitRadius": 0.0107275164,
+            "stiffness": 0.798603058,
+            "gravityPower": 0,
+            "gravityDir": [0, -1, 0],
+            "dragForce": 0.4
+          },
+          {
+            "node": "J_Sec_Hair2_06",
+            "hitRadius": 0.0107275164,
+            "stiffness": 0.798603058,
+            "gravityPower": 0,
+            "gravityDir": [0, -1, 0],
+            "dragForce": 0.4
+          },
+          {
+            "node": "J_Sec_Hair3_06",
+            "hitRadius": 0.0107275164,
+            "stiffness": 0.798603058,
+            "gravityPower": 0,
+            "gravityDir": [0, -1, 0],
+            "dragForce": 0.4
+          },
+          {
+            "node": "J_Sec_Hair4_06",
+            "hitRadius": 0.0107275164,
+            "stiffness": 0.798603058,
+            "gravityPower": 0,
+            "gravityDir": [0, -1, 0],
+            "dragForce": 0.4
+          },
+          {
+            "node": "J_Sec_Hair4_06_end"
+          }
+        ]
+      }
+    ]
+  },
+  "luna": {
+    "colliders": [
+      {
+        "node": "J_Bip_C_Spine",
+        "offset": [0, 0, 0],
+        "radius": 0.104494028
+      },
+      {
+        "node": "J_Bip_C_UpperChest",
+        "offset": [0, 0, 0.008707835],
+        "radius": 0.0870783553
+      },
+      {
+        "node": "J_Bip_C_UpperChest",
+        "offset": [0.0435391776, 0.0566009246, -0.008707835],
+        "radius": 0.0609548464
+      },
+      {
+        "node": "J_Bip_C_UpperChest",
+        "offset": [-0.0435391776, 0.0566009246, -0.008707835],
+        "radius": 0.0609548464
+      },
+      {
+        "node": "J_Bip_C_Neck",
+        "offset": [0, 0.0261235032, 0.0113201849],
+        "radius": 0.0435391739
+      },
+      {
+        "node": "J_Bip_C_Head",
+        "offset": [0, 0.08572409, -0.0123442691],
+        "radius": 0.08572409
+      },
+      {
+        "node": "J_Bip_L_UpperArm",
+        "offset": [0, -0.008707836, 0],
+        "radius": 0.0435391851
+      },
+      {
+        "node": "J_Bip_L_UpperArm",
+        "offset": [0.06530878, -0.008707836, 0],
+        "radius": 0.0435391851
+      },
+      {
+        "node": "J_Bip_L_UpperArm",
+        "offset": [0.130617559, -0.008707836, 0],
+        "radius": 0.0435391851
+      },
+      {
+        "node": "J_Bip_L_LowerArm",
+        "offset": [0, 0, 0],
+        "radius": 0.02612351
+      },
+      {
+        "node": "J_Bip_L_LowerArm",
+        "offset": [0.0435391851, 0, 0],
+        "radius": 0.0304774288
+      },
+      {
+        "node": "J_Bip_L_LowerArm",
+        "offset": [0.08707837, 0, 0],
+        "radius": 0.02612351
+      },
+      {
+        "node": "J_Bip_L_LowerArm",
+        "offset": [0.130617559, 0, 0],
+        "radius": 0.02612351
+      },
+      {
+        "node": "J_Bip_L_Hand",
+        "offset": [0.0158197414, 0, 0],
+        "radius": 0.0237296131
+      },
+      {
+        "node": "J_Bip_R_UpperArm",
+        "offset": [0, -0.008707836, 0],
+        "radius": 0.0435391851
+      },
+      {
+        "node": "J_Bip_R_UpperArm",
+        "offset": [-0.06530878, -0.008707836, 0],
+        "radius": 0.0435391851
+      },
+      {
+        "node": "J_Bip_R_UpperArm",
+        "offset": [-0.130617559, -0.008707836, 0],
+        "radius": 0.0435391851
+      },
+      {
+        "node": "J_Bip_R_LowerArm",
+        "offset": [0, 0, 0],
+        "radius": 0.02612351
+      },
+      {
+        "node": "J_Bip_R_LowerArm",
+        "offset": [-0.0435391851, 0, 0],
+        "radius": 0.0304774288
+      },
+      {
+        "node": "J_Bip_R_LowerArm",
+        "offset": [-0.08707837, 0, 0],
+        "radius": 0.02612351
+      },
+      {
+        "node": "J_Bip_R_LowerArm",
+        "offset": [-0.130617559, 0, 0],
+        "radius": 0.02612351
+      },
+      {
+        "node": "J_Bip_R_Hand",
+        "offset": [-0.0158197414, 0, 0],
+        "radius": 0.0237296131
+      },
+      {
+        "node": "J_Bip_L_UpperLeg",
+        "offset": [0, 0, 0],
+        "radius": 0.0705334544
+      },
+      {
+        "node": "J_Bip_L_UpperLeg",
+        "offset": [0, -0.104494005, 0],
+        "radius": 0.0705334544
+      },
+      {
+        "node": "J_Bip_L_UpperLeg",
+        "offset": [0, -0.191572338, 0],
+        "radius": 0.0705334544
+      },
+      {
+        "node": "J_Bip_R_UpperLeg",
+        "offset": [0, 0, 0],
+        "radius": 0.0705334544
+      },
+      {
+        "node": "J_Bip_R_UpperLeg",
+        "offset": [0, -0.104494005, 0],
+        "radius": 0.0705334544
+      },
+      {
+        "node": "J_Bip_R_UpperLeg",
+        "offset": [0, -0.191572338, 0],
+        "radius": 0.0705334544
+      }
+    ],
+    "springs": [
+      {
+        "name": "Skirt",
+        "colliders": [22, 23, 24, 25, 26, 27],
+        "joints": [
+          {
+            "node": "J_Sec_L_SkirtBack1_01",
+            "hitRadius": 0.008061547,
+            "stiffness": 0.5,
+            "gravityPower": 0,
+            "gravityDir": [0, -1, 0],
+            "dragForce": 0.05
+          },
+          {
+            "node": "J_Sec_L_SkirtBack2_01",
+            "hitRadius": 0.008061547,
+            "stiffness": 0.5,
+            "gravityPower": 0,
+            "gravityDir": [0, -1, 0],
+            "dragForce": 0.05
+          },
+          {
+            "node": "J_Sec_L_SkirtBack2_end_01",
+            "hitRadius": 0.008061547,
+            "stiffness": 0.5,
+            "gravityPower": 0,
+            "gravityDir": [0, -1, 0],
+            "dragForce": 0.05
+          },
+          {
+            "node": "J_Sec_L_SkirtBack2_end_01_end"
+          }
+        ]
+      },
+      {
+        "name": "Skirt",
+        "colliders": [22, 23, 24, 25, 26, 27],
+        "joints": [
+          {
+            "node": "J_Sec_L_SkirtFront1_01",
+            "hitRadius": 0.008061547,
+            "stiffness": 0.5,
+            "gravityPower": 0,
+            "gravityDir": [0, -1, 0],
+            "dragForce": 0.05
+          },
+          {
+            "node": "J_Sec_L_SkirtFront2_01",
+            "hitRadius": 0.008061547,
+            "stiffness": 0.5,
+            "gravityPower": 0,
+            "gravityDir": [0, -1, 0],
+            "dragForce": 0.05
+          },
+          {
+            "node": "J_Sec_L_SkirtFront2_end_01",
+            "hitRadius": 0.008061547,
+            "stiffness": 0.5,
+            "gravityPower": 0,
+            "gravityDir": [0, -1, 0],
+            "dragForce": 0.05
+          },
+          {
+            "node": "J_Sec_L_SkirtFront2_end_01_end"
+          }
+        ]
+      },
+      {
+        "name": "Skirt",
+        "colliders": [22, 23, 24, 25, 26, 27],
+        "joints": [
+          {
+            "node": "J_Sec_L_SkirtSide1_01",
+            "hitRadius": 0.008061547,
+            "stiffness": 0.5,
+            "gravityPower": 0,
+            "gravityDir": [0, -1, 0],
+            "dragForce": 0.05
+          },
+          {
+            "node": "J_Sec_L_SkirtSide2_01",
+            "hitRadius": 0.008061547,
+            "stiffness": 0.5,
+            "gravityPower": 0,
+            "gravityDir": [0, -1, 0],
+            "dragForce": 0.05
+          },
+          {
+            "node": "J_Sec_L_SkirtSide2_end_01",
+            "hitRadius": 0.008061547,
+            "stiffness": 0.5,
+            "gravityPower": 0,
+            "gravityDir": [0, -1, 0],
+            "dragForce": 0.05
+          },
+          {
+            "node": "J_Sec_L_SkirtSide2_end_01_end"
+          }
+        ]
+      },
+      {
+        "name": "Skirt",
+        "colliders": [22, 23, 24, 25, 26, 27],
+        "joints": [
+          {
+            "node": "J_Sec_R_SkirtBack1_01",
+            "hitRadius": 0.008061547,
+            "stiffness": 0.5,
+            "gravityPower": 0,
+            "gravityDir": [0, -1, 0],
+            "dragForce": 0.05
+          },
+          {
+            "node": "J_Sec_R_SkirtBack2_01",
+            "hitRadius": 0.008061547,
+            "stiffness": 0.5,
+            "gravityPower": 0,
+            "gravityDir": [0, -1, 0],
+            "dragForce": 0.05
+          },
+          {
+            "node": "J_Sec_R_SkirtBack2_end_01",
+            "hitRadius": 0.008061547,
+            "stiffness": 0.5,
+            "gravityPower": 0,
+            "gravityDir": [0, -1, 0],
+            "dragForce": 0.05
+          },
+          {
+            "node": "J_Sec_R_SkirtBack2_end_01_end"
+          }
+        ]
+      },
+      {
+        "name": "Skirt",
+        "colliders": [22, 23, 24, 25, 26, 27],
+        "joints": [
+          {
+            "node": "J_Sec_R_SkirtFront1_01",
+            "hitRadius": 0.008061547,
+            "stiffness": 0.5,
+            "gravityPower": 0,
+            "gravityDir": [0, -1, 0],
+            "dragForce": 0.05
+          },
+          {
+            "node": "J_Sec_R_SkirtFront2_01",
+            "hitRadius": 0.008061547,
+            "stiffness": 0.5,
+            "gravityPower": 0,
+            "gravityDir": [0, -1, 0],
+            "dragForce": 0.05
+          },
+          {
+            "node": "J_Sec_R_SkirtFront2_end_01",
+            "hitRadius": 0.008061547,
+            "stiffness": 0.5,
+            "gravityPower": 0,
+            "gravityDir": [0, -1, 0],
+            "dragForce": 0.05
+          },
+          {
+            "node": "J_Sec_R_SkirtFront2_end_01_end"
+          }
+        ]
+      },
+      {
+        "name": "Skirt",
+        "colliders": [22, 23, 24, 25, 26, 27],
+        "joints": [
+          {
+            "node": "J_Sec_R_SkirtSide1_01",
+            "hitRadius": 0.008061547,
+            "stiffness": 0.5,
+            "gravityPower": 0,
+            "gravityDir": [0, -1, 0],
+            "dragForce": 0.05
+          },
+          {
+            "node": "J_Sec_R_SkirtSide2_01",
+            "hitRadius": 0.008061547,
+            "stiffness": 0.5,
+            "gravityPower": 0,
+            "gravityDir": [0, -1, 0],
+            "dragForce": 0.05
+          },
+          {
+            "node": "J_Sec_R_SkirtSide2_end_01",
+            "hitRadius": 0.008061547,
+            "stiffness": 0.5,
+            "gravityPower": 0,
+            "gravityDir": [0, -1, 0],
+            "dragForce": 0.05
+          },
+          {
+            "node": "J_Sec_R_SkirtSide2_end_01_end"
+          }
+        ]
+      },
+      {
+        "name": "Skirt",
+        "colliders": [22, 23, 24, 25, 26, 27],
+        "joints": [
+          {
+            "node": "J_Sec_L_SkirtBack1_02",
+            "hitRadius": 0.008061547,
+            "stiffness": 0.5,
+            "gravityPower": 0,
+            "gravityDir": [0, -1, 0],
+            "dragForce": 0.05
+          },
+          {
+            "node": "J_Sec_L_SkirtBack2_02",
+            "hitRadius": 0.008061547,
+            "stiffness": 0.5,
+            "gravityPower": 0,
+            "gravityDir": [0, -1, 0],
+            "dragForce": 0.05
+          },
+          {
+            "node": "J_Sec_L_SkirtBack2_end_02",
+            "hitRadius": 0.008061547,
+            "stiffness": 0.5,
+            "gravityPower": 0,
+            "gravityDir": [0, -1, 0],
+            "dragForce": 0.05
+          },
+          {
+            "node": "J_Sec_L_SkirtBack2_end_02_end"
+          }
+        ]
+      },
+      {
+        "name": "Skirt",
+        "colliders": [22, 23, 24, 25, 26, 27],
+        "joints": [
+          {
+            "node": "J_Sec_L_SkirtFront1_02",
+            "hitRadius": 0.008061547,
+            "stiffness": 0.5,
+            "gravityPower": 0,
+            "gravityDir": [0, -1, 0],
+            "dragForce": 0.05
+          },
+          {
+            "node": "J_Sec_L_SkirtFront2_02",
+            "hitRadius": 0.008061547,
+            "stiffness": 0.5,
+            "gravityPower": 0,
+            "gravityDir": [0, -1, 0],
+            "dragForce": 0.05
+          },
+          {
+            "node": "J_Sec_L_SkirtFront2_end_02",
+            "hitRadius": 0.008061547,
+            "stiffness": 0.5,
+            "gravityPower": 0,
+            "gravityDir": [0, -1, 0],
+            "dragForce": 0.05
+          },
+          {
+            "node": "J_Sec_L_SkirtFront2_end_02_end"
+          }
+        ]
+      },
+      {
+        "name": "Skirt",
+        "colliders": [22, 23, 24, 25, 26, 27],
+        "joints": [
+          {
+            "node": "J_Sec_L_SkirtSide1_02",
+            "hitRadius": 0.008061547,
+            "stiffness": 0.5,
+            "gravityPower": 0,
+            "gravityDir": [0, -1, 0],
+            "dragForce": 0.05
+          },
+          {
+            "node": "J_Sec_L_SkirtSide2_02",
+            "hitRadius": 0.008061547,
+            "stiffness": 0.5,
+            "gravityPower": 0,
+            "gravityDir": [0, -1, 0],
+            "dragForce": 0.05
+          },
+          {
+            "node": "J_Sec_L_SkirtSide2_end_02",
+            "hitRadius": 0.008061547,
+            "stiffness": 0.5,
+            "gravityPower": 0,
+            "gravityDir": [0, -1, 0],
+            "dragForce": 0.05
+          },
+          {
+            "node": "J_Sec_L_SkirtSide2_end_02_end"
+          }
+        ]
+      },
+      {
+        "name": "Skirt",
+        "colliders": [22, 23, 24, 25, 26, 27],
+        "joints": [
+          {
+            "node": "J_Sec_R_SkirtBack1_02",
+            "hitRadius": 0.008061547,
+            "stiffness": 0.5,
+            "gravityPower": 0,
+            "gravityDir": [0, -1, 0],
+            "dragForce": 0.05
+          },
+          {
+            "node": "J_Sec_R_SkirtBack2_02",
+            "hitRadius": 0.008061547,
+            "stiffness": 0.5,
+            "gravityPower": 0,
+            "gravityDir": [0, -1, 0],
+            "dragForce": 0.05
+          },
+          {
+            "node": "J_Sec_R_SkirtBack2_end_02",
+            "hitRadius": 0.008061547,
+            "stiffness": 0.5,
+            "gravityPower": 0,
+            "gravityDir": [0, -1, 0],
+            "dragForce": 0.05
+          },
+          {
+            "node": "J_Sec_R_SkirtBack2_end_02_end"
+          }
+        ]
+      },
+      {
+        "name": "Skirt",
+        "colliders": [22, 23, 24, 25, 26, 27],
+        "joints": [
+          {
+            "node": "J_Sec_R_SkirtFront1_02",
+            "hitRadius": 0.008061547,
+            "stiffness": 0.5,
+            "gravityPower": 0,
+            "gravityDir": [0, -1, 0],
+            "dragForce": 0.05
+          },
+          {
+            "node": "J_Sec_R_SkirtFront2_02",
+            "hitRadius": 0.008061547,
+            "stiffness": 0.5,
+            "gravityPower": 0,
+            "gravityDir": [0, -1, 0],
+            "dragForce": 0.05
+          },
+          {
+            "node": "J_Sec_R_SkirtFront2_end_02",
+            "hitRadius": 0.008061547,
+            "stiffness": 0.5,
+            "gravityPower": 0,
+            "gravityDir": [0, -1, 0],
+            "dragForce": 0.05
+          },
+          {
+            "node": "J_Sec_R_SkirtFront2_end_02_end"
+          }
+        ]
+      },
+      {
+        "name": "Skirt",
+        "colliders": [22, 23, 24, 25, 26, 27],
+        "joints": [
+          {
+            "node": "J_Sec_R_SkirtSide1_02",
+            "hitRadius": 0.008061547,
+            "stiffness": 0.5,
+            "gravityPower": 0,
+            "gravityDir": [0, -1, 0],
+            "dragForce": 0.05
+          },
+          {
+            "node": "J_Sec_R_SkirtSide2_02",
+            "hitRadius": 0.008061547,
+            "stiffness": 0.5,
+            "gravityPower": 0,
+            "gravityDir": [0, -1, 0],
+            "dragForce": 0.05
+          },
+          {
+            "node": "J_Sec_R_SkirtSide2_end_02",
+            "hitRadius": 0.008061547,
+            "stiffness": 0.5,
+            "gravityPower": 0,
+            "gravityDir": [0, -1, 0],
+            "dragForce": 0.05
+          },
+          {
+            "node": "J_Sec_R_SkirtSide2_end_02_end"
+          }
+        ]
+      },
+      {
+        "name": "Skirt",
+        "colliders": [22, 23, 24, 25, 26, 27],
+        "joints": [
+          {
+            "node": "J_Sec_L_SkirtBack1_03",
+            "hitRadius": 0.008061547,
+            "stiffness": 0.5,
+            "gravityPower": 0,
+            "gravityDir": [0, -1, 0],
+            "dragForce": 0.05
+          },
+          {
+            "node": "J_Sec_L_SkirtBack2_03",
+            "hitRadius": 0.008061547,
+            "stiffness": 0.5,
+            "gravityPower": 0,
+            "gravityDir": [0, -1, 0],
+            "dragForce": 0.05
+          },
+          {
+            "node": "J_Sec_L_SkirtBack2_end_03",
+            "hitRadius": 0.008061547,
+            "stiffness": 0.5,
+            "gravityPower": 0,
+            "gravityDir": [0, -1, 0],
+            "dragForce": 0.05
+          },
+          {
+            "node": "J_Sec_L_SkirtBack2_end_03_end"
+          }
+        ]
+      },
+      {
+        "name": "Skirt",
+        "colliders": [22, 23, 24, 25, 26, 27],
+        "joints": [
+          {
+            "node": "J_Sec_L_SkirtFront1_03",
+            "hitRadius": 0.008061547,
+            "stiffness": 0.5,
+            "gravityPower": 0,
+            "gravityDir": [0, -1, 0],
+            "dragForce": 0.05
+          },
+          {
+            "node": "J_Sec_L_SkirtFront2_03",
+            "hitRadius": 0.008061547,
+            "stiffness": 0.5,
+            "gravityPower": 0,
+            "gravityDir": [0, -1, 0],
+            "dragForce": 0.05
+          },
+          {
+            "node": "J_Sec_L_SkirtFront2_end_03",
+            "hitRadius": 0.008061547,
+            "stiffness": 0.5,
+            "gravityPower": 0,
+            "gravityDir": [0, -1, 0],
+            "dragForce": 0.05
+          },
+          {
+            "node": "J_Sec_L_SkirtFront2_end_03_end"
+          }
+        ]
+      },
+      {
+        "name": "Skirt",
+        "colliders": [22, 23, 24, 25, 26, 27],
+        "joints": [
+          {
+            "node": "J_Sec_L_SkirtSide1_03",
+            "hitRadius": 0.008061547,
+            "stiffness": 0.5,
+            "gravityPower": 0,
+            "gravityDir": [0, -1, 0],
+            "dragForce": 0.05
+          },
+          {
+            "node": "J_Sec_L_SkirtSide2_03",
+            "hitRadius": 0.008061547,
+            "stiffness": 0.5,
+            "gravityPower": 0,
+            "gravityDir": [0, -1, 0],
+            "dragForce": 0.05
+          },
+          {
+            "node": "J_Sec_L_SkirtSide2_end_03",
+            "hitRadius": 0.008061547,
+            "stiffness": 0.5,
+            "gravityPower": 0,
+            "gravityDir": [0, -1, 0],
+            "dragForce": 0.05
+          },
+          {
+            "node": "J_Sec_L_SkirtSide2_end_03_end"
+          }
+        ]
+      },
+      {
+        "name": "Skirt",
+        "colliders": [22, 23, 24, 25, 26, 27],
+        "joints": [
+          {
+            "node": "J_Sec_R_SkirtBack1_03",
+            "hitRadius": 0.008061547,
+            "stiffness": 0.5,
+            "gravityPower": 0,
+            "gravityDir": [0, -1, 0],
+            "dragForce": 0.05
+          },
+          {
+            "node": "J_Sec_R_SkirtBack2_03",
+            "hitRadius": 0.008061547,
+            "stiffness": 0.5,
+            "gravityPower": 0,
+            "gravityDir": [0, -1, 0],
+            "dragForce": 0.05
+          },
+          {
+            "node": "J_Sec_R_SkirtBack2_end_03",
+            "hitRadius": 0.008061547,
+            "stiffness": 0.5,
+            "gravityPower": 0,
+            "gravityDir": [0, -1, 0],
+            "dragForce": 0.05
+          },
+          {
+            "node": "J_Sec_R_SkirtBack2_end_03_end"
+          }
+        ]
+      },
+      {
+        "name": "Skirt",
+        "colliders": [22, 23, 24, 25, 26, 27],
+        "joints": [
+          {
+            "node": "J_Sec_R_SkirtFront1_03",
+            "hitRadius": 0.008061547,
+            "stiffness": 0.5,
+            "gravityPower": 0,
+            "gravityDir": [0, -1, 0],
+            "dragForce": 0.05
+          },
+          {
+            "node": "J_Sec_R_SkirtFront2_03",
+            "hitRadius": 0.008061547,
+            "stiffness": 0.5,
+            "gravityPower": 0,
+            "gravityDir": [0, -1, 0],
+            "dragForce": 0.05
+          },
+          {
+            "node": "J_Sec_R_SkirtFront2_end_03",
+            "hitRadius": 0.008061547,
+            "stiffness": 0.5,
+            "gravityPower": 0,
+            "gravityDir": [0, -1, 0],
+            "dragForce": 0.05
+          },
+          {
+            "node": "J_Sec_R_SkirtFront2_end_03_end"
+          }
+        ]
+      },
+      {
+        "name": "Skirt",
+        "colliders": [22, 23, 24, 25, 26, 27],
+        "joints": [
+          {
+            "node": "J_Sec_R_SkirtSide1_03",
+            "hitRadius": 0.008061547,
+            "stiffness": 0.5,
+            "gravityPower": 0,
+            "gravityDir": [0, -1, 0],
+            "dragForce": 0.05
+          },
+          {
+            "node": "J_Sec_R_SkirtSide2_03",
+            "hitRadius": 0.008061547,
+            "stiffness": 0.5,
+            "gravityPower": 0,
+            "gravityDir": [0, -1, 0],
+            "dragForce": 0.05
+          },
+          {
+            "node": "J_Sec_R_SkirtSide2_end_03",
+            "hitRadius": 0.008061547,
+            "stiffness": 0.5,
+            "gravityPower": 0,
+            "gravityDir": [0, -1, 0],
+            "dragForce": 0.05
+          },
+          {
+            "node": "J_Sec_R_SkirtSide2_end_03_end"
+          }
+        ]
+      },
+      {
+        "name": "Skirt",
+        "colliders": [22, 23, 24, 25, 26, 27],
+        "joints": [
+          {
+            "node": "J_Sec_L_SkirtBack1_04",
+            "hitRadius": 0.008061547,
+            "stiffness": 0.5,
+            "gravityPower": 0,
+            "gravityDir": [0, -1, 0],
+            "dragForce": 0.05
+          },
+          {
+            "node": "J_Sec_L_SkirtBack2_04",
+            "hitRadius": 0.008061547,
+            "stiffness": 0.5,
+            "gravityPower": 0,
+            "gravityDir": [0, -1, 0],
+            "dragForce": 0.05
+          },
+          {
+            "node": "J_Sec_L_SkirtBack2_end_04",
+            "hitRadius": 0.008061547,
+            "stiffness": 0.5,
+            "gravityPower": 0,
+            "gravityDir": [0, -1, 0],
+            "dragForce": 0.05
+          },
+          {
+            "node": "J_Sec_L_SkirtBack2_end_04_end"
+          }
+        ]
+      },
+      {
+        "name": "Skirt",
+        "colliders": [22, 23, 24, 25, 26, 27],
+        "joints": [
+          {
+            "node": "J_Sec_L_SkirtFront1_04",
+            "hitRadius": 0.008061547,
+            "stiffness": 0.5,
+            "gravityPower": 0,
+            "gravityDir": [0, -1, 0],
+            "dragForce": 0.05
+          },
+          {
+            "node": "J_Sec_L_SkirtFront2_04",
+            "hitRadius": 0.008061547,
+            "stiffness": 0.5,
+            "gravityPower": 0,
+            "gravityDir": [0, -1, 0],
+            "dragForce": 0.05
+          },
+          {
+            "node": "J_Sec_L_SkirtFront2_end_04",
+            "hitRadius": 0.008061547,
+            "stiffness": 0.5,
+            "gravityPower": 0,
+            "gravityDir": [0, -1, 0],
+            "dragForce": 0.05
+          },
+          {
+            "node": "J_Sec_L_SkirtFront2_end_04_end"
+          }
+        ]
+      },
+      {
+        "name": "Skirt",
+        "colliders": [22, 23, 24, 25, 26, 27],
+        "joints": [
+          {
+            "node": "J_Sec_L_SkirtSide1_04",
+            "hitRadius": 0.008061547,
+            "stiffness": 0.5,
+            "gravityPower": 0,
+            "gravityDir": [0, -1, 0],
+            "dragForce": 0.05
+          },
+          {
+            "node": "J_Sec_L_SkirtSide2_04",
+            "hitRadius": 0.008061547,
+            "stiffness": 0.5,
+            "gravityPower": 0,
+            "gravityDir": [0, -1, 0],
+            "dragForce": 0.05
+          },
+          {
+            "node": "J_Sec_L_SkirtSide2_end_04",
+            "hitRadius": 0.008061547,
+            "stiffness": 0.5,
+            "gravityPower": 0,
+            "gravityDir": [0, -1, 0],
+            "dragForce": 0.05
+          },
+          {
+            "node": "J_Sec_L_SkirtSide2_end_04_end"
+          }
+        ]
+      },
+      {
+        "name": "Skirt",
+        "colliders": [22, 23, 24, 25, 26, 27],
+        "joints": [
+          {
+            "node": "J_Sec_R_SkirtBack1_04",
+            "hitRadius": 0.008061547,
+            "stiffness": 0.5,
+            "gravityPower": 0,
+            "gravityDir": [0, -1, 0],
+            "dragForce": 0.05
+          },
+          {
+            "node": "J_Sec_R_SkirtBack2_04",
+            "hitRadius": 0.008061547,
+            "stiffness": 0.5,
+            "gravityPower": 0,
+            "gravityDir": [0, -1, 0],
+            "dragForce": 0.05
+          },
+          {
+            "node": "J_Sec_R_SkirtBack2_end_04",
+            "hitRadius": 0.008061547,
+            "stiffness": 0.5,
+            "gravityPower": 0,
+            "gravityDir": [0, -1, 0],
+            "dragForce": 0.05
+          },
+          {
+            "node": "J_Sec_R_SkirtBack2_end_04_end"
+          }
+        ]
+      },
+      {
+        "name": "Skirt",
+        "colliders": [22, 23, 24, 25, 26, 27],
+        "joints": [
+          {
+            "node": "J_Sec_R_SkirtFront1_04",
+            "hitRadius": 0.008061547,
+            "stiffness": 0.5,
+            "gravityPower": 0,
+            "gravityDir": [0, -1, 0],
+            "dragForce": 0.05
+          },
+          {
+            "node": "J_Sec_R_SkirtFront2_04",
+            "hitRadius": 0.008061547,
+            "stiffness": 0.5,
+            "gravityPower": 0,
+            "gravityDir": [0, -1, 0],
+            "dragForce": 0.05
+          },
+          {
+            "node": "J_Sec_R_SkirtFront2_end_04",
+            "hitRadius": 0.008061547,
+            "stiffness": 0.5,
+            "gravityPower": 0,
+            "gravityDir": [0, -1, 0],
+            "dragForce": 0.05
+          },
+          {
+            "node": "J_Sec_R_SkirtFront2_end_04_end"
+          }
+        ]
+      },
+      {
+        "name": "Skirt",
+        "colliders": [22, 23, 24, 25, 26, 27],
+        "joints": [
+          {
+            "node": "J_Sec_R_SkirtSide1_04",
+            "hitRadius": 0.008061547,
+            "stiffness": 0.5,
+            "gravityPower": 0,
+            "gravityDir": [0, -1, 0],
+            "dragForce": 0.05
+          },
+          {
+            "node": "J_Sec_R_SkirtSide2_04",
+            "hitRadius": 0.008061547,
+            "stiffness": 0.5,
+            "gravityPower": 0,
+            "gravityDir": [0, -1, 0],
+            "dragForce": 0.05
+          },
+          {
+            "node": "J_Sec_R_SkirtSide2_end_04",
+            "hitRadius": 0.008061547,
+            "stiffness": 0.5,
+            "gravityPower": 0,
+            "gravityDir": [0, -1, 0],
+            "dragForce": 0.05
+          },
+          {
+            "node": "J_Sec_R_SkirtSide2_end_04_end"
+          }
+        ]
+      },
+      {
+        "name": "Hair",
+        "colliders": [5, 6, 7, 8, 14, 15, 16, 9, 10, 11, 12, 17, 18, 19, 20, 13, 21, 1, 2, 3, 0, 4],
+        "joints": [
+          {
+            "node": "J_Sec_Hair1_04",
+            "hitRadius": 0.00371750677,
+            "stiffness": 0.825,
+            "gravityPower": 0,
+            "gravityDir": [0, -1, 0],
+            "dragForce": 0.4
+          },
+          {
+            "node": "J_Sec_Hair2_04",
+            "hitRadius": 0.00371750677,
+            "stiffness": 0.825,
+            "gravityPower": 0,
+            "gravityDir": [0, -1, 0],
+            "dragForce": 0.4
+          },
+          {
+            "node": "J_Sec_Hair3_04",
+            "hitRadius": 0.00371750677,
+            "stiffness": 0.825,
+            "gravityPower": 0,
+            "gravityDir": [0, -1, 0],
+            "dragForce": 0.4
+          },
+          {
+            "node": "J_Sec_Hair3_04_end"
+          }
+        ]
+      },
+      {
+        "name": "Hair",
+        "colliders": [5, 6, 7, 8, 14, 15, 16, 9, 10, 11, 12, 17, 18, 19, 20, 13, 21, 1, 2, 3, 0, 4],
+        "joints": [
+          {
+            "node": "J_Sec_Hair1_03",
+            "hitRadius": 0.00371751,
+            "stiffness": 0.8208333,
+            "gravityPower": 0,
+            "gravityDir": [0, -1, 0],
+            "dragForce": 0.4
+          },
+          {
+            "node": "J_Sec_Hair2_03",
+            "hitRadius": 0.00371751,
+            "stiffness": 0.8208333,
+            "gravityPower": 0,
+            "gravityDir": [0, -1, 0],
+            "dragForce": 0.4
+          },
+          {
+            "node": "J_Sec_Hair3_03",
+            "hitRadius": 0.00371751,
+            "stiffness": 0.8208333,
+            "gravityPower": 0,
+            "gravityDir": [0, -1, 0],
+            "dragForce": 0.4
+          },
+          {
+            "node": "J_Sec_Hair3_03_end"
+          }
+        ]
+      },
+      {
+        "name": "Hair",
+        "colliders": [5, 6, 7, 8, 14, 15, 16, 9, 10, 11, 12, 17, 18, 19, 20, 13, 21, 1, 2, 3, 0, 4],
+        "joints": [
+          {
+            "node": "J_Sec_Hair1_02",
+            "hitRadius": 0.0037175098,
+            "stiffness": 0.825,
+            "gravityPower": 0,
+            "gravityDir": [0, -1, 0],
+            "dragForce": 0.4
+          },
+          {
+            "node": "J_Sec_Hair2_02",
+            "hitRadius": 0.0037175098,
+            "stiffness": 0.825,
+            "gravityPower": 0,
+            "gravityDir": [0, -1, 0],
+            "dragForce": 0.4
+          },
+          {
+            "node": "J_Sec_Hair3_02",
+            "hitRadius": 0.0037175098,
+            "stiffness": 0.825,
+            "gravityPower": 0,
+            "gravityDir": [0, -1, 0],
+            "dragForce": 0.4
+          },
+          {
+            "node": "J_Sec_Hair3_02_end"
+          }
+        ]
+      },
+      {
+        "name": "Hair",
+        "colliders": [5, 6, 7, 8, 14, 15, 16, 9, 10, 11, 12, 17, 18, 19, 20, 13, 21, 1, 2, 3, 0, 4],
+        "joints": [
+          {
+            "node": "J_Sec_Hair1_01",
+            "hitRadius": 0.00371751,
+            "stiffness": 0.7083333,
+            "gravityPower": 0,
+            "gravityDir": [0, -1, 0],
+            "dragForce": 0.4
+          },
+          {
+            "node": "J_Sec_Hair2_01",
+            "hitRadius": 0.00371751,
+            "stiffness": 0.7083333,
+            "gravityPower": 0,
+            "gravityDir": [0, -1, 0],
+            "dragForce": 0.4
+          },
+          {
+            "node": "J_Sec_Hair3_01",
+            "hitRadius": 0.00371751,
+            "stiffness": 0.7083333,
+            "gravityPower": 0,
+            "gravityDir": [0, -1, 0],
+            "dragForce": 0.4
+          },
+          {
+            "node": "J_Sec_Hair3_01_end"
+          }
+        ]
+      },
+      {
+        "name": "Hair",
+        "colliders": [5, 6, 7, 8, 14, 15, 16, 9, 10, 11, 12, 17, 18, 19, 20, 13, 21, 1, 2, 3, 0, 4],
+        "joints": [
+          {
+            "node": "J_Sec_Hair1_05",
+            "hitRadius": 0.00371751026,
+            "stiffness": 0.7416667,
+            "gravityPower": 0,
+            "gravityDir": [0, -1, 0],
+            "dragForce": 0.4
+          },
+          {
+            "node": "J_Sec_Hair2_05",
+            "hitRadius": 0.00371751026,
+            "stiffness": 0.7416667,
+            "gravityPower": 0,
+            "gravityDir": [0, -1, 0],
+            "dragForce": 0.4
+          },
+          {
+            "node": "J_Sec_Hair3_05",
+            "hitRadius": 0.00371751026,
+            "stiffness": 0.7416667,
+            "gravityPower": 0,
+            "gravityDir": [0, -1, 0],
+            "dragForce": 0.4
+          },
+          {
+            "node": "J_Sec_Hair3_05_end"
+          }
+        ]
+      },
+      {
+        "name": "Hair",
+        "colliders": [5, 6, 7, 8, 14, 15, 16, 9, 10, 11, 12, 17, 18, 19, 20, 13, 21, 1, 2, 3, 0, 4],
+        "joints": [
+          {
+            "node": "J_Sec_Hair1_06",
+            "hitRadius": 0.0148700308,
+            "stiffness": 0.6041667,
+            "gravityPower": 0,
+            "gravityDir": [0, -1, 0],
+            "dragForce": 0.4
+          },
+          {
+            "node": "J_Sec_Hair2_06",
+            "hitRadius": 0.0148700308,
+            "stiffness": 0.6041667,
+            "gravityPower": 0,
+            "gravityDir": [0, -1, 0],
+            "dragForce": 0.4
+          },
+          {
+            "node": "J_Sec_Hair3_06",
+            "hitRadius": 0.0148700308,
+            "stiffness": 0.6041667,
+            "gravityPower": 0,
+            "gravityDir": [0, -1, 0],
+            "dragForce": 0.4
+          },
+          {
+            "node": "J_Sec_Hair4_06",
+            "hitRadius": 0.0148700308,
+            "stiffness": 0.6041667,
+            "gravityPower": 0,
+            "gravityDir": [0, -1, 0],
+            "dragForce": 0.4
+          },
+          {
+            "node": "J_Sec_Hair5_06",
+            "hitRadius": 0.0148700308,
+            "stiffness": 0.6041667,
+            "gravityPower": 0,
+            "gravityDir": [0, -1, 0],
+            "dragForce": 0.4
+          },
+          {
+            "node": "J_Sec_Hair5_06_end"
+          }
+        ]
+      },
+      {
+        "name": "Hair",
+        "colliders": [5, 6, 7, 8, 14, 15, 16, 9, 10, 11, 12, 17, 18, 19, 20, 13, 21, 1, 2, 3, 0, 4],
+        "joints": [
+          {
+            "node": "J_Sec_Hair1_07",
+            "hitRadius": 0.0148700448,
+            "stiffness": 0.6,
+            "gravityPower": 0,
+            "gravityDir": [0, -1, 0],
+            "dragForce": 0.4
+          },
+          {
+            "node": "J_Sec_Hair2_07",
+            "hitRadius": 0.0148700448,
+            "stiffness": 0.6,
+            "gravityPower": 0,
+            "gravityDir": [0, -1, 0],
+            "dragForce": 0.4
+          },
+          {
+            "node": "J_Sec_Hair3_07",
+            "hitRadius": 0.0148700448,
+            "stiffness": 0.6,
+            "gravityPower": 0,
+            "gravityDir": [0, -1, 0],
+            "dragForce": 0.4
+          },
+          {
+            "node": "J_Sec_Hair4_07",
+            "hitRadius": 0.0148700448,
+            "stiffness": 0.6,
+            "gravityPower": 0,
+            "gravityDir": [0, -1, 0],
+            "dragForce": 0.4
+          },
+          {
+            "node": "J_Sec_Hair5_07",
+            "hitRadius": 0.0148700448,
+            "stiffness": 0.6,
+            "gravityPower": 0,
+            "gravityDir": [0, -1, 0],
+            "dragForce": 0.4
+          },
+          {
+            "node": "J_Sec_Hair5_07_end"
+          }
+        ]
+      },
+      {
+        "name": "Hair",
+        "colliders": [5, 6, 7, 8, 14, 15, 16, 9, 10, 11, 12, 17, 18, 19, 20, 13, 21, 1, 2, 3, 0, 4],
+        "joints": [
+          {
+            "node": "J_Sec_Hair1_08",
+            "hitRadius": 0.0148700308,
+            "stiffness": 0.608333349,
+            "gravityPower": 0,
+            "gravityDir": [0, -1, 0],
+            "dragForce": 0.4
+          },
+          {
+            "node": "J_Sec_Hair2_08",
+            "hitRadius": 0.0148700308,
+            "stiffness": 0.608333349,
+            "gravityPower": 0,
+            "gravityDir": [0, -1, 0],
+            "dragForce": 0.4
+          },
+          {
+            "node": "J_Sec_Hair3_08",
+            "hitRadius": 0.0148700308,
+            "stiffness": 0.608333349,
+            "gravityPower": 0,
+            "gravityDir": [0, -1, 0],
+            "dragForce": 0.4
+          },
+          {
+            "node": "J_Sec_Hair4_08",
+            "hitRadius": 0.0148700308,
+            "stiffness": 0.608333349,
+            "gravityPower": 0,
+            "gravityDir": [0, -1, 0],
+            "dragForce": 0.4
+          },
+          {
+            "node": "J_Sec_Hair5_08",
+            "hitRadius": 0.0148700308,
+            "stiffness": 0.608333349,
+            "gravityPower": 0,
+            "gravityDir": [0, -1, 0],
+            "dragForce": 0.4
+          },
+          {
+            "node": "J_Sec_Hair5_08_end"
+          }
+        ]
+      },
+      {
+        "name": "Hair",
+        "colliders": [5, 6, 7, 8, 14, 15, 16, 9, 10, 11, 12, 17, 18, 19, 20, 13, 21, 1, 2, 3, 0, 4],
+        "joints": [
+          {
+            "node": "J_Sec_Hair1_09",
+            "hitRadius": 0.00371750724,
+            "stiffness": 0.858333349,
+            "gravityPower": 0,
+            "gravityDir": [0, -1, 0],
+            "dragForce": 0.4
+          },
+          {
+            "node": "J_Sec_Hair2_09",
+            "hitRadius": 0.00371750724,
+            "stiffness": 0.858333349,
+            "gravityPower": 0,
+            "gravityDir": [0, -1, 0],
+            "dragForce": 0.4
+          },
+          {
+            "node": "J_Sec_Hair3_09",
+            "hitRadius": 0.00371750724,
+            "stiffness": 0.858333349,
+            "gravityPower": 0,
+            "gravityDir": [0, -1, 0],
+            "dragForce": 0.4
+          },
+          {
+            "node": "J_Sec_Hair3_09_end"
+          }
+        ]
+      },
+      {
+        "name": "Hair",
+        "colliders": [5, 6, 7, 8, 14, 15, 16, 9, 10, 11, 12, 17, 18, 19, 20, 13, 21, 1, 2, 3, 0, 4],
+        "joints": [
+          {
+            "node": "J_Sec_Hair1_10",
+            "hitRadius": 0.00371750677,
+            "stiffness": 0.8375,
+            "gravityPower": 0,
+            "gravityDir": [0, -1, 0],
+            "dragForce": 0.4
+          },
+          {
+            "node": "J_Sec_Hair2_10",
+            "hitRadius": 0.00371750677,
+            "stiffness": 0.8375,
+            "gravityPower": 0,
+            "gravityDir": [0, -1, 0],
+            "dragForce": 0.4
+          },
+          {
+            "node": "J_Sec_Hair3_10",
+            "hitRadius": 0.00371750677,
+            "stiffness": 0.8375,
+            "gravityPower": 0,
+            "gravityDir": [0, -1, 0],
+            "dragForce": 0.4
+          },
+          {
+            "node": "J_Sec_Hair3_10_end"
+          }
+        ]
+      }
+    ]
+  }
+}

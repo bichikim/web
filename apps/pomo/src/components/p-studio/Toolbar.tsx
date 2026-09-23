@@ -1,5 +1,8 @@
+import type {useUiAutoHide} from 'src/features/ui-auto-hide'
+import type {BackgroundController} from 'src/features/background'
 import {cx} from 'class-variance-authority'
-import {Show} from 'solid-js'
+import {createSignal, Show} from 'solid-js'
+import {useToolbarWrap} from './use-toolbar-wrap'
 import {getPomoIconClass} from '../icon-style'
 import {
   type PSceneMotionInput,
@@ -15,22 +18,37 @@ import {
   type WeatherState,
 } from '../../features/weather/index'
 import * as m from '@paraglide/message'
-import {PLoadingStatus} from '../PLoadingStatus'
-import {PModelDownloadStatus} from '../PModelDownloadStatus'
+import {PLoadingStatus} from '../p-loading-status/PLoadingStatus'
+import {PModelDownloadStatus} from '../p-model-download-status/PModelDownloadStatus'
 import {PScribbleCircleControl} from '../scribble/CircleControl'
 import {SceneSettingsPanel} from './SettingsPanel'
 import {CLASSES} from './shared'
-import {PWeatherStatus} from '../PWeatherStatus'
-import {PDesktopModeControl} from '../PDesktopModeControl'
+import {PWeatherStatus} from '../p-weather-status/PWeatherStatus'
+import {PDesktopModeControl} from '../p-desktop-mode-control/PDesktopModeControl'
 import type {DesktopMode} from '../../features/desktop-mode/index'
 import {MemoryAssistPanel} from './MemoryAssistPanel'
 import {VersionNoticePanel} from './VersionNoticePanel'
-import {MEMORY_ASSIST_ICON} from '../memory-assist/icon'
-import {PIconButton} from '../PIconButton'
+import {GLASS_ICON_BUTTON} from '../button-presets'
+import {PButton} from '../p-button/PButton'
+import {PTools} from '../p-tools/PTools'
 
 interface SceneToolbarProps {
+  readonly uiAutoHide?: ReturnType<typeof useUiAutoHide>
+  readonly pomodoroVisible?: boolean
+  readonly onPomodoroVisibleChange?: (visible: boolean) => void
+  readonly playerVisible?: boolean
+  readonly onPlayerVisibleChange?: (visible: boolean) => void
+  readonly background?: BackgroundController
   readonly activity: PActivity
   readonly canUseGyroscope?: boolean
+  readonly featureRequestVisible?: boolean
+  readonly onFeatureRequestVisibleChange?: (visible: boolean) => void
+  readonly toolsButtonVisible?: boolean
+  readonly onToolsButtonVisibleChange?: (visible: boolean) => void
+  readonly memoryAssistVisible?: boolean
+  readonly onMemoryAssistVisibleChange?: (visible: boolean) => void
+  readonly tourButtonVisible?: boolean
+  readonly onTourButtonVisibleChange?: (visible: boolean) => void
   readonly dialogueComposerVisible?: boolean
   readonly gaze: PGaze
   readonly isSceneTransitioning: boolean
@@ -63,52 +81,57 @@ interface SceneToolbarProps {
 }
 
 export const SceneToolbar = (props: SceneToolbarProps) => {
+  const [actions, setActions] = createSignal<HTMLDivElement | null>(null)
+  const wrap = useToolbarWrap(actions)
   return (
     <div
       class={cx(
-        props.layout === 'surface' ? 'flex w-full flex-col items-end gap-2' : CLASSES.sceneToolbar,
+        props.layout === 'surface' ? 'flex w-fit flex-col items-end gap-2' : CLASSES.sceneToolbar,
       )}
     >
-      <div class="flex flex-wrap justify-end gap-2" role="group" aria-label={m.scene_group_label()}>
-        <VersionNoticePanel sceneStyle={props.sceneStyle} />
-        <Show when={props.onTourOpen !== undefined}>
-          <PScribbleCircleControl enabled={props.sceneStyle === 'scribble'}>
-            <PIconButton
-              accessibleLabel={m.tour_open()}
-              class={CLASSES.sceneControl}
-              feedback={m.tour_feedback()}
-              icon={getPomoIconClass('i-tabler-route', props.sceneStyle)}
-              onPress={() => props.onTourOpen?.()}
-            />
-          </PScribbleCircleControl>
+      <div
+        ref={setActions}
+        data-wrap={wrap() ? '' : undefined}
+        class={cx(
+          'pomo-toolbar-actions flex flex-wrap justify-end gap-2',
+          '[&:not([data-wrap])>.pomo-toolbar-secondary]:order-first [&_button[data-icon-only]]:rounded-full',
+        )}
+        role="group"
+        aria-label={m.scene_group_label()}
+      >
+        <Show when={props.toolsButtonVisible ?? true}>
+          <div class="inline-flex" data-tour-step="tools">
+            <PTools desktopSurface={props.layout === 'surface'} sceneStyle={props.sceneStyle} />
+          </div>
         </Show>
-        <div class="inline-flex" data-tour-step="memory-assist">
-          <MemoryAssistPanel
-            fallback={
-              <PScribbleCircleControl enabled={props.sceneStyle === 'scribble'}>
-                <span
-                  aria-hidden="true"
-                  class={cx(
-                    'inline-flex h-control-md min-w-control-md items-center justify-center rounded-control',
-                    'border border-solid border-border bg-surface text-foreground shadow-panel',
-                  )}
-                >
-                  <span
-                    class={cx(
-                      getPomoIconClass(MEMORY_ASSIST_ICON, props.sceneStyle),
-                      'size-6 text-highlight',
-                    )}
-                  />
-                </span>
-              </PScribbleCircleControl>
-            }
-            sceneStyle={props.sceneStyle}
-          />
-        </div>
+        <Show when={props.memoryAssistVisible ?? true}>
+          <div class="inline-flex" data-tour-step="memory-assist">
+            <MemoryAssistPanel
+              desktopSurface={props.layout === 'surface'}
+              sceneStyle={props.sceneStyle}
+              weatherState={props.weatherState}
+            />
+          </div>
+        </Show>
         <div class="inline-flex" data-tour-step="settings">
           <SceneSettingsPanel
+            desktopSurface={props.layout === 'surface'}
+            uiAutoHide={props.uiAutoHide}
+            playerVisible={props.playerVisible}
+            onPlayerVisibleChange={props.onPlayerVisibleChange}
+            pomodoroVisible={props.pomodoroVisible}
+            onPomodoroVisibleChange={props.onPomodoroVisibleChange}
+            background={props.background}
             activity={props.activity}
             canUseGyroscope={props.canUseGyroscope}
+            featureRequestVisible={props.featureRequestVisible}
+            toolsButtonVisible={props.toolsButtonVisible}
+            onToolsButtonVisibleChange={props.onToolsButtonVisibleChange}
+            memoryAssistVisible={props.memoryAssistVisible}
+            onMemoryAssistVisibleChange={props.onMemoryAssistVisibleChange}
+            onFeatureRequestVisibleChange={props.onFeatureRequestVisibleChange}
+            tourButtonVisible={props.tourButtonVisible}
+            onTourButtonVisibleChange={props.onTourButtonVisibleChange}
             dialogueComposerVisible={props.dialogueComposerVisible}
             gaze={props.gaze}
             onActivityChange={props.onActivityChange}
@@ -130,44 +153,49 @@ export const SceneToolbar = (props: SceneToolbarProps) => {
             weatherEnabled={props.weatherEnabled}
             weatherLocation={props.weatherLocation}
             weatherSceneMode={props.weatherSceneMode}
-            fallback={
-              <PScribbleCircleControl enabled={props.sceneStyle === 'scribble'}>
-                <span
-                  aria-hidden="true"
-                  class={cx(
-                    'inline-flex h-control-md min-w-control-md items-center justify-center rounded-control',
-                    'border border-solid border-border bg-surface text-foreground shadow-panel',
-                  )}
-                >
-                  <span
-                    class={cx(
-                      getPomoIconClass('i-tabler-settings', props.sceneStyle),
-                      'size-6 text-highlight',
-                    )}
-                  />
-                </span>
-              </PScribbleCircleControl>
-            }
           />
         </div>
+        <div class="pomo-toolbar-secondary flex flex-none gap-2">
+          <VersionNoticePanel
+            desktopSurface={props.layout === 'surface'}
+            featureRequestVisible={props.featureRequestVisible}
+            sceneStyle={props.sceneStyle}
+          />
+          <Show when={props.onTourOpen !== undefined && (props.tourButtonVisible ?? true)}>
+            <PScribbleCircleControl enabled={props.sceneStyle === 'scribble'}>
+              <div class="inline-flex" data-tour-step="tour">
+                <PButton
+                  {...GLASS_ICON_BUTTON}
+                  accessibleLabel={m.tour_open()}
+                  tooltip={m.tour_open()}
+                  class={GLASS_ICON_BUTTON.class}
+                  icon={getPomoIconClass('i-tabler-route', props.sceneStyle)}
+                  onPress={() => props.onTourOpen?.()}
+                />
+              </div>
+            </PScribbleCircleControl>
+          </Show>
+        </div>
       </div>
-      <PWeatherStatus sceneStyle={props.sceneStyle} state={props.weatherState} />
-      <PDesktopModeControl
-        error={props.desktopModeError}
-        isChanging={props.isDesktopModeChanging}
-        mode={props.desktopMode ?? 'normal'}
-        onModeChange={(mode) => props.onDesktopModeChange?.(mode) ?? Promise.resolve()}
-      />
-      <PModelDownloadStatus />
-      <Show when={props.isSceneTransitioning}>
-        <span
-          aria-live="polite"
-          class="border border-solid border-border rounded-control backdrop-blur-surface"
-          role="status"
-        >
-          <PLoadingStatus message={m.scene_transitioning()} />
-        </span>
-      </Show>
+      <div class="clear-both flex flex-col items-end gap-2">
+        <PWeatherStatus sceneStyle={props.sceneStyle} state={props.weatherState} />
+        <PDesktopModeControl
+          error={props.desktopModeError}
+          isChanging={props.isDesktopModeChanging}
+          mode={props.desktopMode ?? 'normal'}
+          onModeChange={(mode) => props.onDesktopModeChange?.(mode) ?? Promise.resolve()}
+        />
+        <PModelDownloadStatus />
+        <Show when={props.isSceneTransitioning}>
+          <span
+            aria-live="polite"
+            class="border border-solid border-border rounded-control backdrop-blur-surface"
+            role="status"
+          >
+            <PLoadingStatus message={m.scene_transitioning()} />
+          </span>
+        </Show>
+      </div>
     </div>
   )
 }

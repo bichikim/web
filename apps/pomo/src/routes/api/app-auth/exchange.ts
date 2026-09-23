@@ -1,18 +1,18 @@
+import {invalidJsonBodyResponse} from 'src/server/http/invalid-json-body-response'
 import type {APIEvent} from '@solidjs/start/server'
 import {z} from 'zod'
 
 import {readJsonBody} from 'src/server/http/body'
 import {noStoreJson} from 'src/server/http/response'
-import {exchangeTossAuthorization} from 'src/server/toss-auth/client'
+import {exchangeTossAuthorization} from 'src/server/auth/exchange-toss-authorization'
 import {
   type AppSession,
   createPendingTossAppSession,
   createTossAppSession,
-} from 'src/server/user-auth/repository'
+} from 'src/server/auth/app-session'
 
 const MAXIMUM_BODY_SIZE = 8192
 const MAX_AUTHORIZATION_CODE_LENGTH = 2048
-const HTTP_BAD_REQUEST = 400
 const HTTP_BAD_GATEWAY = 502
 const exchangeRequestSchema = z.object({
   authorizationCode: z.string().min(1).max(MAX_AUTHORIZATION_CODE_LENGTH),
@@ -27,10 +27,7 @@ const handleExchange = async (
   const parsedRequest = exchangeRequestSchema.safeParse(bodyResult.success ? bodyResult.body : null)
 
   if (!parsedRequest.success) {
-    return noStoreJson(
-      {error: 'invalid_request'},
-      {status: bodyResult.success ? HTTP_BAD_REQUEST : bodyResult.status},
-    )
+    return invalidJsonBodyResponse(bodyResult, {error: 'invalid_request'})
   }
 
   try {

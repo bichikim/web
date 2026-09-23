@@ -1,3 +1,4 @@
+/** @vitest-environment node */
 import {Container, Sprite, Ticker} from 'pixi.js'
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 

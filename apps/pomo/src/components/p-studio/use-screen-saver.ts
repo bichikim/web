@@ -3,8 +3,8 @@ import {type Accessor, createMemo, createSignal} from 'solid-js'
 import type {PTrack} from '../../features/focus-room-audio'
 import {type ScreenSaverController, useScreenSaver} from '../../features/screen-saver'
 import * as m from '@paraglide/message'
-import type {PPomodoroPresentation} from '../PPomodoro'
-import type {PScreenSaverTimer} from '../PScreenSaver'
+import type {PPomodoroPresentation} from '../p-pomodoro/PPomodoro'
+import type {PScreenSaverTimer} from '../p-screen-saver/PScreenSaver'
 
 interface StudioScreenSaverController extends ScreenSaverController {
   readonly currentTrack: Accessor<PTrack | null>

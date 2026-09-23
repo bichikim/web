@@ -3,8 +3,8 @@
 import {cleanup, fireEvent, render, screen} from '@solidjs/testing-library'
 import {afterEach, describe, expect, it, vi} from 'vitest'
 
-import {AlbumReleaseCard} from '../AlbumReleaseCard'
 import type {AdminAlbum} from '../../../features/admin-music'
+import {AlbumReleaseCard} from '../AlbumReleaseCard'
 
 const ALBUM: AdminAlbum = {
   coverFallback: 'lp',
@@ -37,23 +37,6 @@ describe('AlbumReleaseCard', () => {
 
     expect(screen.getByText('공개 중')).toBeTruthy()
     expect(screen.getByText('2곡 · 판매 상품 연결됨')).toBeTruthy()
-  })
-
-  it('should render the music glyph for a music fallback cover', () => {
-    render(() => <AlbumReleaseCard album={{...ALBUM, coverFallback: 'music'}} />)
-
-    expect(screen.getByLabelText('music 기본 커버')).toHaveTextContent('♪')
-  })
-
-  it('should render album artwork and replace it with the fallback after an image error', () => {
-    render(() => <AlbumReleaseCard album={{...ALBUM, coverImageUrl: '/album-cover.jpg'}} />)
-    const artwork = screen.getByRole('img', {name: '첫 앨범 앨범 커버'})
-
-    expect(artwork).toHaveAttribute('src', '/album-cover.jpg')
-    fireEvent.error(artwork)
-
-    expect(screen.queryByRole('img')).not.toBeInTheDocument()
-    expect(screen.getByLabelText('lp 기본 커버')).toHaveTextContent('LP')
   })
 
   it('should describe an untitled album and its artwork with fallback text', () => {

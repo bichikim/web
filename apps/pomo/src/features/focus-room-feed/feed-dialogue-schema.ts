@@ -48,7 +48,7 @@ export const feedDialogueMetadataSchema: z.ZodType<FeedDialogueMetadata> = z.obj
   version: z.literal(1),
 })
 
-export type FeedDialogueJobStatus = 'failed' | 'generating' | 'interrupted' | 'queued'
+export type FeedDialogueJobStatus = 'failed' | 'generating' | 'interrupted' | 'pending' | 'queued'
 
 export interface FeedDialogueJob {
   readonly createdAt: string
@@ -80,7 +80,7 @@ export const feedDialogueJobSchema: z.ZodType<FeedDialogueJob> = z.object({
   script: z.string().min(1).max(MAXIMUM_FEED_SCRIPT_LENGTH),
   sourceTitle: z.string().min(1),
   sourceUrl: z.url(),
-  status: z.enum(['failed', 'generating', 'interrupted', 'queued']),
+  status: z.enum(['failed', 'generating', 'interrupted', 'pending', 'queued']),
   updatedAt: z.iso.datetime(),
   version: z.literal(1),
   voiceId: supertonicVoiceIdSchema,
@@ -122,3 +122,16 @@ export const feedItemRecordSchema: z.ZodType<FeedItemRecord> = z.object({
 
 export const getFeedItemRecordId = (feedConnectionId: string, feedItemId: string) =>
   `${feedConnectionId}\u0000${feedItemId}`
+
+/** Reports whether a persisted job is waiting for a user preparation or retry action. */
+export const isFeedJobAwaitingAction = (job: FeedDialogueJob): boolean => {
+  switch (job.status) {
+    case 'pending':
+    case 'failed':
+    case 'interrupted':
+      return true
+    case 'queued':
+    case 'generating':
+      return false
+  }
+}

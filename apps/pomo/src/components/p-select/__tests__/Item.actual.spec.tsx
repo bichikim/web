@@ -1,7 +1,7 @@
 /** @vitest-environment jsdom */
 
-import {render, screen} from '@solidjs/testing-library'
 import {Select} from '@kobalte/core/select'
+import {render, screen} from '@solidjs/testing-library'
 import {expect, it, vi} from 'vitest'
 import {PSelectItem} from '../Item'
 
@@ -38,8 +38,12 @@ it('should resolve icon item classes through actual Kobalte item primitives', ()
   expect(screen.getAllByText('밤')).toHaveLength(2)
   expect(getIconClass).toHaveBeenCalledWith('i-tabler-check')
   expect(getIconClass).toHaveBeenCalledWith('i-tabler-moon')
-  expect(document.querySelector('.resolved-i-tabler-check')).not.toBeNull()
-  expect(document.querySelector('.resolved-i-tabler-moon')).not.toBeNull()
-  expect(document.querySelector('.i-tabler-check.size-4')).not.toBeNull()
-  expect(document.querySelector('.i-tabler-moon')).not.toBeNull()
+  const items = screen.getAllByRole('option', {name: '밤'})
+  const [customItemIcon, customIndicator, fallbackItemIcon, fallbackIndicator] = items.flatMap(
+    (item) => [...item.querySelectorAll('span[aria-hidden="true"]')],
+  )
+  expect(customItemIcon).toHaveClass('resolved-i-tabler-moon')
+  expect(customIndicator).toHaveClass('resolved-i-tabler-check', 'size-4')
+  expect(fallbackItemIcon).toHaveClass('i-tabler-moon')
+  expect(fallbackIndicator).toHaveClass('i-tabler-check', 'size-4')
 })

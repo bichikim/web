@@ -1,5 +1,6 @@
 import {action} from '@solidjs/router'
 
+import {clearCalendarMonthCache} from '../calendar'
 import {
   createTossLoginSession,
   readStoredAppSession,
@@ -52,10 +53,12 @@ const runTossLogout = async (): Promise<TossLogoutActionResult> => {
   try {
     const token = await readStoredAppSession()
     if (token === null) {
+      clearCalendarMonthCache()
       return {status: 'signed-out'}
     }
 
     const result = await revokeTossLoginSession(token)
+    clearCalendarMonthCache()
     return {
       status: result.storageStatus === 'cleared' ? 'signed-out' : 'cleanup-pending',
     }

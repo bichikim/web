@@ -193,6 +193,8 @@ it('should sign out the active Toss session and show confirmation', async () => 
 
   render(() => <TossAccount />)
 
+  const activeAccount = await screen.findByText('토스 계정으로 사용 중')
+  expect(activeAccount.closest('div')).toHaveClass('border-border', 'bg-content-surface')
   const logoutButton = await screen.findByRole('button', {name: '로그아웃'})
   fireEvent.click(logoutButton)
 

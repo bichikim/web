@@ -14,7 +14,13 @@ const uploadMocks = vi.hoisted(() => ({
 }))
 const playbackMocks = vi.hoisted(() => ({requestAdminTrackPlaybackAccess: vi.fn()}))
 
-vi.mock('@solidjs/router', () => ({action: vi.fn((clientAction) => clientAction)}))
+vi.mock('@solidjs/router', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@solidjs/router')>()),
+  action: vi.fn((clientAction: (...args: unknown[]) => unknown) => async (...args: unknown[]) => {
+    const result = await clientAction(...args)
+    return result instanceof Response ? result.json() : result
+  }),
+}))
 vi.mock('../album-creation-adapter', () => ({albumCreationServices: albumMocks}))
 vi.mock('../commands', () => commandMocks)
 vi.mock('../track-creation', () => creationMocks)
@@ -192,6 +198,7 @@ describe('row and access actions', () => {
     await expect(removeAdminTrackAction('track-one')).resolves.toEqual({status: 'succeeded'})
     await expect(confirmAdminTrackAction('asset-one')).resolves.toEqual({status: 'active'})
     await expect(requestAdminTrackPlaybackAction('track-one')).resolves.toEqual({
+      expiresAt: '2026-09-02T12:00:00.000Z',
       status: 'granted',
       url: 'https://audio.example/track.mp3',
     })

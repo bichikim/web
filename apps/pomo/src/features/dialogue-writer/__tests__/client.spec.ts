@@ -1,4 +1,9 @@
+/** @vitest-environment node */
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
+
+const reportClientError = vi.hoisted(() => vi.fn())
+
+vi.mock('../../client-error-reporter/reporter', () => ({reportClientError}))
 
 import {createDialogueClient} from '../client'
 import type {DialogueWorkerResponse} from '../messages'
@@ -101,6 +106,10 @@ describe('createDialogueClient', () => {
       restartRequired: true,
       type: 'error',
     })
+    expect(reportClientError).toHaveBeenCalledWith(
+      {message: 'Worker execution failed', name: 'WorkerError'},
+      {feature: 'dialogue-model', source: 'worker'},
+    )
   })
 
   it('should terminate the owned worker on disposal', () => {

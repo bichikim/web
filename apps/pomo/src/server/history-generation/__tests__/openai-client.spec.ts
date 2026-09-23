@@ -1,3 +1,4 @@
+/** @vitest-environment node */
 import {afterEach, expect, it, vi} from 'vitest'
 import OpenAI from 'openai'
 
@@ -148,4 +149,12 @@ it('should classify a preflight configuration error as a confirmed rejection', a
   expect(result).toMatchObject({acceptance: 'rejected', name: HistorySubmissionError.name})
   expect(result.cause).toBe(error)
   expect(create).not.toHaveBeenCalled()
+})
+
+it('should research a civil date without assigning users a Korean location', async () => {
+  const create = vi.fn().mockResolvedValue({id: 'resp-1'})
+  const client = {responses: {create}} as unknown as OpenAI
+  await submitHistoryResponse(OPTIONS, client)
+  expect(create.mock.calls[0][0].tools[0]).not.toHaveProperty('user_location')
+  expect(create.mock.calls[0][0].input).not.toContain('Asia/Seoul')
 })

@@ -1,4 +1,4 @@
-import {createEffect, For} from 'solid-js'
+import {createEffect, For, type JSX, Show} from 'solid-js'
 
 import type {PuppetPoint, PuppetSceneDeformerNode} from '../../player'
 import {createGridPaths, createTranslationPath} from './deformer-paths'
@@ -13,6 +13,7 @@ import {
 export interface DeformerControlsProps {
   readonly controlSelection: DeformerControlSelection
   readonly deformer: PuppetSceneDeformerNode
+  readonly onCurveSplit?: (event: MouseEvent) => void
   readonly editable: boolean
   readonly handle: PuppetPoint
   readonly moveCurveHandle: (
@@ -29,6 +30,8 @@ export interface DeformerControlsProps {
 }
 
 interface GridControlsProps {
+  readonly children?: JSX.Element
+  readonly onCurveSplit?: (event: MouseEvent) => void
   readonly editable: boolean
   readonly deformer: PuppetSceneDeformerNode
   readonly isSelected: (target: DeformerDragTarget) => boolean
@@ -50,6 +53,7 @@ interface RotationControlsProps {
   readonly startDrag: (event: PointerEvent, target: DeformerDragTarget) => void
 }
 
+const CUBIC_DEGREE = 3
 const GRID_COORDINATES_PER_POINT = 2
 const KEYBOARD_LARGE_MOVE_DISTANCE = 10
 const ROTATION_ORIGIN_HIT_RADIUS_MULTIPLIER = 2.5
@@ -110,8 +114,21 @@ const GridControls = (props: GridControlsProps) => {
         onPointerDown={(event) => props.startTranslationDrag(event)}
       />
       <For each={createGridPaths(props.deformer, props.transform)}>
-        {(path) => <path d={path.data} />}
+        {(path) => (
+          <>
+            <path d={path.data} data-tangent={path.tangent} />
+            <Show when={props.deformer.curveAxis !== undefined && !path.tangent}>
+              <path
+                class="curve-hit"
+                aria-label="곡선 연결점 추가 영역"
+                d={path.data}
+                onDblClick={(event) => props.onCurveSplit?.(event)}
+              />
+            </Show>
+          </>
+        )}
       </For>
+      {props.children}
       <For each={pointIndices()}>
         {(pointIndex) => {
           const target = {kind: 'controlPoint', pointIndex} satisfies DeformerDragTarget
@@ -125,9 +142,16 @@ const GridControls = (props: GridControlsProps) => {
             <circle
               aria-disabled={!props.editable}
               aria-keyshortcuts="Enter Space ArrowUp ArrowDown ArrowLeft ArrowRight"
-              aria-label={`격자 제어점 ${pointIndex + 1}`}
+              aria-label={
+                props.deformer.curveAxis === undefined
+                  ? `격자 제어점 ${pointIndex + 1}`
+                  : `곡선 ${pointIndex % CUBIC_DEGREE === 0 ? '제어점' : '핸들'} ${pointIndex + 1}`
+              }
               aria-pressed={selected()}
               classList={{selected: selected()}}
+              data-tangent={
+                props.deformer.curveAxis !== undefined && pointIndex % CUBIC_DEGREE !== 0
+              }
               cx={point().x}
               cy={point().y}
               r={props.radius}
@@ -230,13 +254,26 @@ export const DeformerControls = (props: DeformerControlsProps) => {
         deformer={props.deformer}
         editable={props.editable}
         isSelected={isSelected}
+        onCurveSplit={props.onCurveSplit}
         movePoint={props.movePoint}
         radius={props.radius}
         selectTarget={selectTarget}
         startDrag={startDrag}
         startTranslationDrag={startTranslationDrag}
         transform={props.transform}
-      />
+      >
+        <Show when={props.deformer.curveAxis === undefined}>
+          <RotationControls
+            editable={props.editable}
+            handle={props.handle}
+            isSelected={isSelected}
+            origin={props.origin}
+            radius={props.radius}
+            selectTarget={selectTarget}
+            startDrag={startDrag}
+          />
+        </Show>
+      </GridControls>
       <DeformerCurveControls
         deformer={props.deformer}
         editable={props.editable}
@@ -247,15 +284,6 @@ export const DeformerControls = (props: DeformerControlsProps) => {
         radius={props.radius}
         selectedPointIndices={props.controlSelection.selectedPointIndices()}
         transform={props.transform}
-      />
-      <RotationControls
-        editable={props.editable}
-        handle={props.handle}
-        isSelected={isSelected}
-        origin={props.origin}
-        radius={props.radius}
-        selectTarget={selectTarget}
-        startDrag={startDrag}
       />
     </>
   )

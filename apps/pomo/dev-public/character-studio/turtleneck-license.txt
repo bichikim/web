@@ -1,0 +1,8 @@
+Women Turtleneck by Juan Ledezma (@ldzma)
+Source: https://sketchfab.com/3d-models/women-turtleneck-7b64968695b24ba49d23ee73c200214c
+License: Creative Commons Attribution 4.0 International
+https://creativecommons.org/licenses/by/4.0/
+
+Modified for Pomo: garment geometry fitted to the character, subdivision,
+surface clearance adjustments, and material metallic/roughness adjustments.
+This attribution covers the turtleneck component of pomo.glb.

@@ -1,11 +1,14 @@
+import {formatDuration} from 'src/utils/format-duration'
 import {cx} from 'class-variance-authority'
 import {Tabs} from '@kobalte/core/tabs'
 import {createMemo, createSignal, For, Show} from 'solid-js'
 
 import {
   DEFAULT_DIALOGUE_EVENT_PLAYBACK_MODE,
+  DELAYED_END_EVENT,
   type DialogueEventId,
   type DialogueEventPlaybackMode,
+  type EventBindingItem,
   type PDialogue,
   RANDOM_DIALOGUE_EVENT,
   usePEvents,
@@ -19,9 +22,9 @@ import {excludeMemoryMemoDialogues} from '../../features/memory-assist'
 import {SUPERTONIC_VOICES} from '../../features/supertonic'
 import * as m from '@paraglide/message'
 import {AutomaticDialogueSettings} from './AutomaticSettings'
-import {getDialogueEvents} from './event-definitions'
+import {getDialogueEventActions, getDialogueEvents} from './event-definitions'
 import {DialogueConnectionMenu} from './ConnectionMenu'
-import {DialogueEventSettingRow} from './EventSettingRow'
+import {DelayedEndEventSettings} from './DelayedEndEventSettings'
 import {DialogueLibrary} from './Library'
 import {DialoguePlaybackModeSelect} from './PlaybackModeSelect'
 import {RandomEventSettings} from './RandomEventSettings'
@@ -31,27 +34,27 @@ import {PSettingsEmptyState} from '../settings/EmptyState'
 import {PSettingsSectionHeading} from '../settings/SectionHeading'
 
 const CLASSES = {
-  dialogueSettings: 'pomo-dialogue-settings grid gap-4.5 settings-compact:gap-4',
+  dialogueSettings: 'grid gap-4.5 settings-compact:gap-4',
   dialogueSettingsEventHeading: cx(
-    'pomo-dialogue-settings__event-heading grid min-w-0 grid-cols-[auto_minmax(0,_1fr)]',
+    'grid min-w-0 grid-cols-[auto_minmax(0,_1fr)]',
     'items-center gap-[0.7rem] settings-compact:gap-2 [&_>_div:nth-child(2)]:min-w-0',
     '[&_>_div:nth-child(2)_>_div]:min-w-0 [&_>_div:nth-child(2)_>_div]:flex',
     '[&_>_div:nth-child(2)_>_div]:items-center [&_>_div:nth-child(2)_>_div]:gap-[0.45rem]',
-    '[&_h5]:m-0 [&_h5]:text-foreground [&_h5]:text-[0.8125rem] [&_h5]:font-[750]',
+    '[&_h5]:m-0 [&_h5]:text-foreground [&_h5]:text-base [&_h5]:leading-6 [&_h5]:font-[750]',
     '[&_>_div:nth-child(2)_>_div_>_span]:rounded-full',
     '[&_>_div:nth-child(2)_>_div_>_span]:bg-content-surface',
     '[&_>_div:nth-child(2)_>_div_>_span]:px-2 [&_>_div:nth-child(2)_>_div_>_span]:py-1',
     '[&_>_div:nth-child(2)_>_div_>_span]:text-muted-foreground',
-    '[&_>_div:nth-child(2)_>_div_>_span]:text-[0.5625rem]',
+    '[&_>_div:nth-child(2)_>_div_>_span]:text-sm [&_>_div:nth-child(2)_>_div_>_span]:leading-5',
     '[&_>_div:nth-child(2)_>_div_>_span]:font-bold [&_p]:m-[0.2rem_0_0]',
-    '[&_p]:text-muted-foreground [&_p]:text-[0.65rem] [&_p]:leading-[1.4]',
+    '[&_p]:text-muted-foreground [&_p]:text-sm [&_p]:leading-[1.4]',
   ),
   dialogueSettingsEventSymbol: cx(
-    'pomo-dialogue-settings__event-symbol grid w-9 h-9 place-items-center rounded-full',
+    'grid w-9 h-9 place-items-center rounded-full',
     'bg-secondary-soft text-highlight',
   ),
   dialogueSettingsList: cx(
-    'pomo-dialogue-settings__list grid gap-3 m-0 p-0 list-none [&_>_li]:grid [&_>_li]:gap-3',
+    'grid gap-3 m-0 p-0 list-none [&_>_li]:grid [&_>_li]:gap-3',
     'settings-compact:gap-2 settings-compact:[&_>_li]:gap-2',
     '[&_>_li]:border [&_>_li]:border-solid [&_>_li]:border-content-border',
     '[&_>_li]:rounded-panel [&_>_li]:bg-content-surface',
@@ -60,28 +63,18 @@ const CLASSES = {
     '[&_>_li[data-disabled]]:bg-content-surface-disabled',
   ),
   dialogueSettingsLoading: cx(
-    'pomo-dialogue-settings__loading m-0 rounded-panel',
-    'bg-content-surface p-5 text-muted-foreground text-xs settings-compact:p-4',
+    'm-0 rounded-panel',
+    'bg-content-surface p-5 text-muted-foreground text-sm settings-compact:p-4',
     'leading-[1.5] text-center flex items-center justify-center gap-2',
     '[&_>_span]:animate-dialogue-settings-spin',
     'motion-reduce:[&_>_span]:animate-[none]',
   ),
   dialogueSettingsMessage: cx(
-    'pomo-dialogue-settings__message m-0 rounded-panel',
-    'bg-content-surface p-5 text-muted-foreground text-xs settings-compact:p-4',
+    'm-0 rounded-panel',
+    'bg-content-surface p-5 text-muted-foreground text-sm settings-compact:p-4',
     'leading-[1.5] text-center',
   ),
 } as const
-
-const MILLISECONDS_PER_SECOND = 1000
-const SECONDS_PER_MINUTE = 60
-
-const formatDuration = (durationMs: number) => {
-  const totalSeconds = Math.round(durationMs / MILLISECONDS_PER_SECOND)
-  const minutes = Math.floor(totalSeconds / SECONDS_PER_MINUTE)
-  const seconds = totalSeconds % SECONDS_PER_MINUTE
-  return `${minutes}:${seconds.toString().padStart(2, '0')}`
-}
 
 const getVoiceLabel = (voiceId: PDialogue['voiceId']) =>
   SUPERTONIC_VOICES.find((voice) => voice.id === voiceId)?.label ?? voiceId
@@ -101,9 +94,10 @@ export interface PDialogueSettingsContentProps {
 }
 
 // oxlint-disable-next-line eslint/max-lines-per-function -- Both tabs share one repository and audio playback lifecycle.
-export default function PDialogueSettingsContent(props: PDialogueSettingsContentProps) {
+export function PDialogueSettingsContent(props: PDialogueSettingsContentProps) {
   const events = usePEvents()
   const dialogueEvents = getDialogueEvents()
+  const dialogueEventActions = getDialogueEventActions()
   const feeds = usePFeedContext()
   const eventDialogues = createMemo(() =>
     excludeFeedDialogues(events.dialogues(), feeds.dialogues()),
@@ -120,14 +114,15 @@ export default function PDialogueSettingsContent(props: PDialogueSettingsContent
       metadata: getDialogueMetadata(dialogue),
     })),
   )
+  const handleLibraryDelete = (dialogue: PDialogue) => feeds.onDeleteDialogue(dialogue.id)
   const [message, setMessage] = createSignal<string | null>(null)
 
   const handleEventBinding = async (
     eventId: DialogueEventId,
-    dialogueIds: ReadonlyArray<string>,
+    items: ReadonlyArray<EventBindingItem>,
   ): Promise<void> => {
     try {
-      await events.setEventDialogues(eventId, dialogueIds)
+      await events.setEventItems(eventId, items)
       setMessage(null)
     } catch (error: unknown) {
       console.error('Failed to bind focus room event dialogue.', error)
@@ -153,8 +148,8 @@ export default function PDialogueSettingsContent(props: PDialogueSettingsContent
       <Tabs.Content value="events">
         <section class={CLASSES.dialogueSettings}>
           <PSettingsSectionHeading
-            class="pomo-dialogue-settings__library-heading"
             count={m.settings_count({count: dialogueEvents.length})}
+            divider="none"
             title={m.settings_events_title()}
             titleId="pomo-dialogue-events-title"
           />
@@ -171,6 +166,13 @@ export default function PDialogueSettingsContent(props: PDialogueSettingsContent
               <For each={dialogueEvents}>
                 {(event) => {
                   const selectedDialogueIds = () => events.eventDialogueIds()[event.id] ?? []
+                  const selectedActionIds = () => events.eventActionIds()[event.id] ?? []
+                  const selectedItems = (): ReadonlyArray<EventBindingItem> => [
+                    ...selectedDialogueIds().map(
+                      (id): EventBindingItem => ({id, type: 'dialogue'}),
+                    ),
+                    ...selectedActionIds().map((id): EventBindingItem => ({id, type: 'action'})),
+                  ]
                   const playbackMode = () =>
                     events.eventPlaybackModes()[event.id] ?? DEFAULT_DIALOGUE_EVENT_PLAYBACK_MODE
                   const selectedDialogues = () =>
@@ -180,7 +182,7 @@ export default function PDialogueSettingsContent(props: PDialogueSettingsContent
                     })
 
                   return (
-                    <li data-connected={selectedDialogues().length === 0 ? undefined : ''}>
+                    <li data-connected={selectedItems().length === 0 ? undefined : ''}>
                       <div class={CLASSES.dialogueSettingsEventHeading}>
                         <span aria-hidden="true" class={CLASSES.dialogueSettingsEventSymbol}>
                           <span class={`${event.icon} size-5`} />
@@ -189,35 +191,41 @@ export default function PDialogueSettingsContent(props: PDialogueSettingsContent
                           <div>
                             <h5>{event.label}</h5>
                           </div>
-                          <p>{event.description}</p>
+                          <Show when={event.description}>
+                            {(description) => <p>{description()}</p>}
+                          </Show>
                         </div>
                       </div>
 
                       <Show when={event.id === RANDOM_DIALOGUE_EVENT}>
                         <RandomEventSettings />
                       </Show>
+                      <Show when={event.id === DELAYED_END_EVENT}>
+                        <DelayedEndEventSettings />
+                      </Show>
 
-                      <DialogueEventSettingRow
-                        description={
-                          eventDialogues().length === 0
-                            ? m.settings_event_dialogue_create_first()
-                            : m.settings_event_dialogue_select_description()
-                        }
-                        label={m.settings_event_dialogue_connection()}
-                      >
+                      <div class="grid min-w-0 gap-2 border-t border-solid border-border pt-3">
+                        <Show when={eventDialogues().length === 0}>
+                          <p class="m-0 text-muted-foreground text-sm leading-5">
+                            {m.settings_event_binding_create_first()}
+                          </p>
+                        </Show>
                         <DialogueConnectionMenu
-                          accessibleLabel={m.settings_event_dialogue_connection_label({
+                          accessibleLabel={m.settings_event_binding_connection_label({
                             event: event.label,
                           })}
+                          actions={dialogueEventActions}
                           getMetadata={getDialogueMetadata}
                           dialogues={eventDialogues()}
-                          disabled={eventDialogues().length === 0}
-                          onChange={(dialogueIds) => {
-                            handleEventBinding(event.id, dialogueIds)
+                          disabled={
+                            eventDialogues().length === 0 && dialogueEventActions.length === 0
+                          }
+                          onChange={(items) => {
+                            handleEventBinding(event.id, items)
                           }}
-                          selectedDialogueIds={selectedDialogueIds()}
+                          selectedItems={selectedItems()}
                         />
-                      </DialogueEventSettingRow>
+                      </div>
 
                       <Show when={selectedDialogues().length > 1}>
                         <DialoguePlaybackModeSelect
@@ -253,15 +261,10 @@ export default function PDialogueSettingsContent(props: PDialogueSettingsContent
 
           <PSettingsSectionHeading
             actions={
-              <PSettingsActionLink
-                class="pomo-dialogue-settings__create ml-auto"
-                href="/dialogue"
-                icon="i-tabler-plus"
-              >
+              <PSettingsActionLink class="ml-auto" href="/dialogue" icon="i-tabler-plus">
                 {m.settings_dialogue_new()}
               </PSettingsActionLink>
             }
-            class="pomo-dialogue-settings__library-heading"
             count={m.settings_count({count: libraryDialogues().length})}
             title={m.settings_dialogue_saved_title()}
             titleId="pomo-dialogue-library-list-title"
@@ -277,13 +280,13 @@ export default function PDialogueSettingsContent(props: PDialogueSettingsContent
           <Show when={!events.isLoading()}>
             <Show
               when={libraryDialogues().length > 0}
-              fallback={
-                <PSettingsEmptyState class="pomo-dialogue-settings__empty">
-                  {m.settings_dialogue_empty()}
-                </PSettingsEmptyState>
-              }
+              fallback={<PSettingsEmptyState>{m.settings_dialogue_empty()}</PSettingsEmptyState>}
             >
-              <DialogueLibrary entries={libraryEntries()} onRequestClose={props.onRequestClose} />
+              <DialogueLibrary
+                entries={libraryEntries()}
+                onDelete={handleLibraryDelete}
+                onRequestClose={props.onRequestClose}
+              />
             </Show>
           </Show>
 

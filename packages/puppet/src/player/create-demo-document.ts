@@ -3,6 +3,7 @@ import {
   PUPPET_DOCUMENT_VERSION,
   type PuppetDocument,
   type PuppetMesh,
+  type PuppetMotion,
   type PuppetParameter,
   type PuppetParameterBinding2D,
 } from './document'
@@ -67,8 +68,6 @@ const createPreviewTexture = () => {
       </defs>
       <rect width="100%" height="100%" fill="url(#color)"/>
       <rect width="100%" height="100%" fill="url(#grid)"/>
-      <text x="50%" y="52%" text-anchor="middle" font-family="system-ui" font-size="46"
-        font-weight="600" fill="#07110f" fill-opacity="0.78">PUPPET</text>
   `
 
   return createSvgSource(TEXTURE_WIDTH, TEXTURE_HEIGHT, svg)
@@ -158,25 +157,57 @@ const createDemoParameterBindings = (): ReadonlyArray<PuppetParameterBinding2D> 
   },
 ]
 
+const createDemoMotions = (): ReadonlyArray<PuppetMotion> => [
+  {
+    duration: 2,
+    id: 'idle-deform',
+    tracks: [
+      {
+        keyframes: [
+          {time: 0, value: 0},
+          {time: 1, value: -DEMO_PARAMETER_MAXIMUM},
+          {time: 2, value: 0},
+        ],
+        kind: 'parameter',
+        parameterId: 'angle-y',
+      },
+    ],
+  },
+  {
+    duration: 0.4,
+    id: 'blink',
+    tracks: [
+      {
+        keyframes: [
+          {time: 0, value: 0},
+          {time: 0.2, value: DEMO_PARAMETER_MAXIMUM},
+          {time: 0.4, value: 0},
+        ],
+        kind: 'parameter',
+        parameterId: 'angle-x',
+      },
+    ],
+  },
+  {
+    duration: 0.8,
+    id: 'nod',
+    tracks: [
+      {
+        keyframes: [
+          {time: 0, value: 0},
+          {time: 0.4, value: DEMO_PARAMETER_MAXIMUM},
+          {time: 0.8, value: 0},
+        ],
+        kind: 'parameter',
+        parameterId: 'angle-y',
+      },
+    ],
+  },
+]
+
 export const createDemoDocument = (): PuppetDocument => ({
   format: PUPPET_DOCUMENT_FORMAT,
-  motions: [
-    {
-      duration: 2,
-      id: 'idle-deform',
-      tracks: [
-        {
-          keyframes: [
-            {time: 0, value: 0},
-            {time: 1, value: -DEMO_PARAMETER_MAXIMUM},
-            {time: 2, value: 0},
-          ],
-          kind: 'parameter',
-          parameterId: 'angle-y',
-        },
-      ],
-    },
-  ],
+  motions: createDemoMotions(),
   parameterBindings: createDemoParameterBindings(),
   parameters: createDemoParameters(),
   parts: [

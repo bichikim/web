@@ -113,6 +113,12 @@ describe('entry-server', () => {
     expect(documentElement.dir).toBe('rtl')
     expect(documentElement.classList.contains('dark')).toBe(true)
     expect(documentElement.querySelector('meta[name="theme-color"]')).toBeNull()
+    expect(documentElement.querySelector('link[rel="icon"]')?.getAttribute('href')).toBe(
+      '/favicon.png',
+    )
+    expect(documentElement.querySelector('link[rel="icon"]')?.getAttribute('type')).toBe(
+      'image/png',
+    )
     expect(documentElement.querySelector('script')).not.toBeNull()
     expect(readChildren).toHaveBeenCalledOnce()
     expect(readScripts).toHaveBeenCalledOnce()

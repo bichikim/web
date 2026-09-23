@@ -2,13 +2,14 @@ import {render} from '@solidjs/testing-library'
 import {afterEach, beforeEach, vi} from 'vitest'
 
 import {type PEventContextValue, usePEvents} from '../../features/focus-room-dialogue/event-context'
-import {PEventProvider} from '../PEventProvider'
+import {PEventProvider} from '../p-event-provider/PEventProvider'
 
 vi.mock('../../features/focus-room-dialogue/repository', () => ({
   createPDialogueRepository: vi.fn(),
 }))
 
 beforeEach(() => {
+  sessionStorage.clear()
   vi.clearAllMocks()
   vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob:focus-room-dialogue')
   vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => undefined)

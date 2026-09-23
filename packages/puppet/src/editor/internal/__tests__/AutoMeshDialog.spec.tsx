@@ -24,12 +24,16 @@ describe('AutoMeshDialog', () => {
     expect(screen.getByRole('dialog', {name: '자동 메시 생성'})).toBeVisible()
     expect(screen.getByText(/Parameter 변형과 모션 정점 키프레임/)).toBeVisible()
     expect(screen.getByRole('button', {name: '취소'})).toBeVisible()
-    expect(screen.getByLabelText(/정점 간격/)).toHaveValue(20)
+    expect(screen.getByRole('spinbutton', {name: '정점 간격'})).toHaveValue(20)
 
     fireEvent.click(screen.getByRole('radio', {name: /큰 변형/}))
-    expect(screen.getByLabelText(/정점 간격/)).toHaveValue(10)
-    fireEvent.input(screen.getByLabelText(/정점 간격/), {target: {value: '8'}})
-    fireEvent.input(screen.getByLabelText(/투명 판정값/), {target: {value: '24'}})
+    expect(screen.getByRole('spinbutton', {name: '정점 간격'})).toHaveValue(10)
+    fireEvent.input(screen.getByRole('spinbutton', {name: '정점 간격'}), {
+      target: {value: '8'},
+    })
+    fireEvent.input(screen.getByRole('spinbutton', {name: '투명 판정값'}), {
+      target: {value: '24'},
+    })
     fireEvent.click(screen.getByRole('button', {name: '자동 메시 생성'}))
 
     await waitFor(() => expect(onGenerate).toHaveBeenCalledWith({alphaThreshold: 24, cellSize: 8}))

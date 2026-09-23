@@ -5,7 +5,7 @@ on:
       - freeze
 env:
   PNPM_VERSION: 7.1.0
-  NODE_VERSION: 24
+  NODE_VERSION: 26.4.0
 jobs:
   # Test Job
   test:
@@ -45,7 +45,7 @@ jobs:
         run: pnpm install
 
       - name: Test
-        run: pnpm run test
+        run: pnpm test:vitest
 
   # Build Client
   build-client:

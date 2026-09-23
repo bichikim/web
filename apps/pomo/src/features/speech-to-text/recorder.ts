@@ -1,5 +1,5 @@
 import type {SpeechCaptureError} from './errors'
-import type {Result} from '../result'
+import type {Result} from 'src/features/result'
 
 export interface SpeechRecording {
   readonly cancel: () => void
@@ -10,5 +10,7 @@ export interface SpeechRecording {
 
 export interface SpeechRecorder {
   readonly isSupported: () => boolean
-  readonly start: () => Promise<Result<SpeechRecording, SpeechCaptureError>>
+  readonly start: (
+    onDataAvailable?: () => void,
+  ) => Promise<Result<SpeechRecording, SpeechCaptureError>>
 }

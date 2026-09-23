@@ -1,3 +1,4 @@
+/** @vitest-environment node */
 import {describe, expect, it} from 'vitest'
 
 import {createTextGenerationProgress} from '../progress'
@@ -42,5 +43,15 @@ describe('createTextGenerationProgress', () => {
       percentage: 0,
       totalBytes: 0,
     })
+  })
+
+  it('should preserve an observed byte ratio above the announced total', () => {
+    expect(
+      createTextGenerationProgress({
+        files: {'weights.bin': {loaded: 120, total: 100}},
+        loadedBytes: 120,
+        totalBytes: 100,
+      }),
+    ).toMatchObject({files: [{percentage: 120}], percentage: 120})
   })
 })

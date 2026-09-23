@@ -1,14 +1,25 @@
+import {getDownloadPercentage} from 'src/features/download-progress'
+import {getFeedRequestUrl} from './feed-request-url'
 import {httpFetch} from '../http-client'
 import type {FeedDialogueMetadata} from './feed-dialogue-schema'
 
 const FEED_REQUEST_TIMEOUT_MS = 15_000
-const MAXIMUM_PROGRESS = 100
 
 export const FEED_POLLING_INTERVAL_MS = 60_000
 export const getFeedGenerationProgress = (loadedBytes: number, totalBytes: number) =>
-  Math.min(MAXIMUM_PROGRESS, Math.round((loadedBytes / totalBytes) * MAXIMUM_PROGRESS))
+  totalBytes > 0 ? getDownloadPercentage(loadedBytes, totalBytes) : 0
 export const createFeedFetcher = () => (url: string) =>
-  httpFetch(url, {cache: 'no-store', signal: AbortSignal.timeout(FEED_REQUEST_TIMEOUT_MS)})
+  httpFetch(
+    getFeedRequestUrl(url, {
+      localOrigin: globalThis.location?.origin,
+      publicOrigin: import.meta.env.VITE_POMO_PUBLIC_ORIGIN,
+      timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+    }),
+    {
+      cache: 'no-store',
+      signal: AbortSignal.timeout(FEED_REQUEST_TIMEOUT_MS),
+    },
+  )
 
 export interface FindRemovableExpiredDialoguesOptions {
   readonly expired: ReadonlyArray<FeedDialogueMetadata>

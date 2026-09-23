@@ -1,6 +1,7 @@
-import {clamp} from 'es-toolkit/math'
+import {getBindingInfluence} from './influence'
 
 import type {PuppetDocument, PuppetParameter, PuppetParameterBinding} from '../player/document'
+import {resolveParameterValue} from '../player/parameter-value'
 import {
   isTwoDimensionalParameterBinding,
   type PuppetParameterValues,
@@ -26,12 +27,9 @@ const getParameterValue = (
   parameter: PuppetParameter | undefined,
   parameterValues: PuppetParameterValueMap | undefined,
 ) => {
-  const defaultValue = parameter?.defaultValue ?? 0
-  const value = parameter === undefined ? undefined : parameterValues?.[parameter.id]
-
-  return parameter === undefined || value === undefined || !Number.isFinite(value)
-    ? defaultValue
-    : clamp(value, parameter.minimum, parameter.maximum)
+  return parameter === undefined
+    ? 0
+    : resolveParameterValue(parameter, parameterValues?.[parameter.id])
 }
 
 export const getDefaultParameterValueMap = (document: PuppetDocument): PuppetParameterValueMap =>
@@ -64,11 +62,12 @@ const addParameterDelta = (
   currentVertices: ReadonlyArray<number>,
   sampledVertices: ReadonlyArray<number>,
   restVertices: ReadonlyArray<number>,
+  weight: number,
 ) =>
   restVertices.map((restCoordinate, index) => {
     const currentCoordinate = currentVertices[index] ?? restCoordinate
     const sampledCoordinate = sampledVertices[index] ?? restCoordinate
-    return currentCoordinate + sampledCoordinate - restCoordinate
+    return currentCoordinate + (sampledCoordinate - restCoordinate) * weight
   })
 
 export const composeParameterVertices = (
@@ -89,7 +88,16 @@ export const composeParameterVertices = (
     })
 
     if (sampledVertices !== options.restVertices) {
-      composedVertices = addParameterDelta(composedVertices, sampledVertices, options.restVertices)
+      composedVertices = addParameterDelta(
+        composedVertices,
+        sampledVertices,
+        options.restVertices,
+        getBindingInfluence({
+          binding,
+          document: options.document,
+          parameterValues: options.parameterValues,
+        }),
+      )
     }
   }
 

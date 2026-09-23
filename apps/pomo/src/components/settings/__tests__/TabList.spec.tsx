@@ -36,6 +36,7 @@ it('should show scroll hints, scroll in both directions, and react to layout cha
       <PSettingsTabList />
     </Tabs>
   ))
+  expect(screen.getByRole('tab', {name: /배경/})).toBeInTheDocument()
   const tabList = screen.getByRole('tablist')
   const scrollBy = vi.fn()
   Object.defineProperties(tabList, {

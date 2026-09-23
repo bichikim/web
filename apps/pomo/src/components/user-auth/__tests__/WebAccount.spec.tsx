@@ -84,7 +84,7 @@ const completeLink = vi.fn((token: string) =>
 
 beforeEach(() => {
   vi.clearAllMocks()
-  window.history.replaceState(null, '', '/account')
+  globalThis.history.replaceState(null, '', '/account')
   setMagicLinkPending(false)
   setMagicLinkResult(undefined)
   setSignOutPending(false)
@@ -104,7 +104,7 @@ beforeEach(() => {
 })
 
 it('should explain an email account-link callback failure and consume the query', async () => {
-  window.history.replaceState(null, '', '/account?link_error=email')
+  globalThis.history.replaceState(null, '', '/account?link_error=email')
 
   render(() => <WebAccount />)
 
@@ -112,11 +112,11 @@ it('should explain an email account-link callback failure and consume the query'
   expect(screen.getByRole('alert').textContent).toContain('계정 연결 이메일을 확인하지 못했습니다.')
   expect(screen.getByRole('alert').textContent).toContain('새 연결 이메일을 요청해 주세요.')
   expect(completeAccountLink).not.toHaveBeenCalled()
-  expect(new URL(window.location.href).searchParams.has('link_error')).toBe(false)
+  expect(new URL(globalThis.location.href).searchParams.has('link_error')).toBe(false)
 })
 
 it('should prefer a valid account-link token over a conflicting callback error', async () => {
-  window.history.replaceState(null, '', '/account?link_token=challenge&link_error=email')
+  globalThis.history.replaceState(null, '', '/account?link_token=challenge&link_error=email')
   vi.mocked(completeAccountLink).mockResolvedValue('linked')
 
   render(() => <WebAccount />)
@@ -124,11 +124,11 @@ it('should prefer a valid account-link token over a conflicting callback error',
   await waitFor(() => expect(screen.queryByRole('status')).not.toBeNull())
   expect(screen.getByRole('status').textContent).toContain('계정과 이메일 연결을 완료했습니다.')
   expect(screen.queryByRole('alert')).toBeNull()
-  expect(window.location.search).toBe('')
+  expect(globalThis.location.search).toBe('')
 })
 
 it('should preserve account-link failure guidance when session loading also fails', async () => {
-  window.history.replaceState(null, '', '/account?link_error=email')
+  globalThis.history.replaceState(null, '', '/account?link_error=email')
   setAuthenticationState({kind: 'unavailable'})
 
   render(() => <WebAccount />)
@@ -138,7 +138,7 @@ it('should preserve account-link failure guidance when session loading also fail
 })
 
 it('should show account-link failure guidance without waiting for session loading', async () => {
-  window.history.replaceState(null, '', '/account?link_error=email')
+  globalThis.history.replaceState(null, '', '/account?link_error=email')
   setAuthenticationState({kind: 'checking'})
 
   render(() => <WebAccount />)
@@ -149,7 +149,7 @@ it('should show account-link failure guidance without waiting for session loadin
 })
 
 it('should not show account-link success when the linked session cannot be loaded', async () => {
-  window.history.replaceState(null, '', '/account?link_token=challenge')
+  globalThis.history.replaceState(null, '', '/account?link_token=challenge')
   vi.mocked(completeAccountLink).mockResolvedValue('linked')
   setAuthenticationState({kind: 'checking'})
 
@@ -163,7 +163,7 @@ it('should not show account-link success when the linked session cannot be loade
 })
 
 it('should explain an expired account-link token and consume it', async () => {
-  window.history.replaceState(null, '', '/account?link_token=expired')
+  globalThis.history.replaceState(null, '', '/account?link_token=expired')
   vi.mocked(completeAccountLink).mockResolvedValueOnce('invalid')
 
   render(() => <WebAccount />)
@@ -174,7 +174,7 @@ it('should explain an expired account-link token and consume it', async () => {
     )
   })
   expect(completeAccountLink).toHaveBeenCalledWith('expired')
-  expect(new URL(window.location.href).searchParams.has('link_token')).toBe(false)
+  expect(new URL(globalThis.location.href).searchParams.has('link_token')).toBe(false)
 })
 
 it('should render email authentication as an action form', async () => {
@@ -221,7 +221,16 @@ it('should render an authenticated email session with a pending-aware sign-out a
 
   render(() => <WebAccount />)
 
-  expect(await screen.findByText('user@example.com')).toBeVisible()
+  const email = await screen.findByText('user@example.com')
+  const emailLabel = screen.getByText('로그인된 이메일')
+
+  expect(email).toBeVisible()
+  expect(screen.getByRole('link', {name: '앱으로 돌아가기'})).toHaveAttribute('href', '/')
+  expect(screen.getByRole('link', {name: '앱으로 돌아가기'})).not.toHaveClass(
+    'hover:translate-y-[-0.0625rem]',
+  )
+  expect(emailLabel).toHaveClass('text-muted-foreground')
+  expect(email.closest('div')).toHaveClass('border-border', 'bg-content-surface')
   const form = screen.getByRole('button', {name: '로그아웃'}).closest('form')
 
   expect(form).toHaveAttribute('method', 'post')

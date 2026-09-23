@@ -1,8 +1,9 @@
+/** @vitest-environment node */
 import {describe, expect, it} from 'vitest'
 
 import {getSupertonicErrorMessage} from '../error-message'
 import {getErrorDetail, type SupertonicError} from '../errors'
-import {failureResult, successResult} from '../../result'
+import {failureResult, successResult} from 'src/features/result'
 
 describe('Supertonic Result', () => {
   it('should represent success and failure without throwing', () => {

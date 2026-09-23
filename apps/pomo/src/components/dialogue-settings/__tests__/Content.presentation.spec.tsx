@@ -5,12 +5,13 @@ import {fireEvent, render, screen, within} from '@solidjs/testing-library'
 import {For, type JSX} from 'solid-js'
 import {afterEach, beforeEach, expect, it, vi} from 'vitest'
 
-import {PSelect} from 'src/components/PSelect'
+import {getLocale, overwriteGetLocale} from '@paraglide/runtime'
+import {PSelect} from 'src/components/p-select/PSelect'
+import {PreferenceProvider} from 'src/hooks/use-preference'
 import {type PDialogue, type PEventContextValue, usePEvents} from 'src/features/focus-room-dialogue'
 import {type PFeedController, usePFeedContext} from 'src/features/focus-room-feed'
 import {writeLanguageLearningSentences} from 'src/features/language-learning'
-import {getLocale, overwriteGetLocale} from '@paraglide/runtime'
-import PDialogueSettingsContent from '../Content'
+import {PDialogueSettingsContent} from '../Content'
 
 vi.mock('@kobalte/core/tabs', () => ({Tabs: {Content: vi.fn()}}))
 vi.mock('@kobalte/core/dropdown-menu', () => {
@@ -35,7 +36,7 @@ vi.mock('@solidjs/router', () => ({
     </a>
   ),
 }))
-vi.mock('src/components/PSelect', () => ({PSelect: vi.fn()}))
+vi.mock('src/components/p-select/PSelect', () => ({PSelect: vi.fn()}))
 vi.mock('src/features/focus-room-dialogue', async () => {
   const actual: typeof import('src/features/focus-room-dialogue') = await vi.importActual(
     'src/features/focus-room-dialogue',
@@ -69,12 +70,16 @@ const createEvents = (overrides: Partial<PEventContextValue> = {}): PEventContex
   activeSegmentPosition: () => null,
   activeText: () => null,
   activeViseme: () => 'rest',
+  cancelDelayedEndEvent: vi.fn(),
+  delayedEndEventDurationMinutes: () => 30,
+  delayedEndEventIsRunning: () => false,
   deleteDialogue: vi.fn(async () => undefined),
   dialogues: () => [DIALOGUE],
   enterFocusRoom: vi.fn(),
   entryDialogueId: () => null,
   entryDialogueIds: () => [],
   errorMessage: () => null,
+  eventActionIds: () => ({}),
   eventDialogueIds: () => ({}),
   eventPlaybackModes: () => ({}),
   getAudio: vi.fn(async () => null),
@@ -86,19 +91,23 @@ const createEvents = (overrides: Partial<PEventContextValue> = {}): PEventContex
   isLoading: () => false,
   onStopDialoguePlayback: vi.fn(),
   onStopEntryPlayback: vi.fn(),
-  playDialogue: vi.fn(async () => undefined),
+  playDialogue: vi.fn(async () => true),
   playDialogueEvents: vi.fn(async () => undefined),
   playDialogueSequence: vi.fn(async () => undefined),
   refreshDialogues: vi.fn(async () => undefined),
+  registerEventActionExecutor: vi.fn(() => vi.fn()),
   retryDialoguePlayback: vi.fn(),
   retryEntryPlayback: vi.fn(),
   scheduledDialogueCount: () => 0,
+  setDelayedEndEventDuration: vi.fn(async () => undefined),
   setEntryDialogue: vi.fn(async () => undefined),
   setEntryDialogues: vi.fn(async () => undefined),
   setEventDialogue: vi.fn(async () => undefined),
   setEventDialogues: vi.fn(async () => undefined),
+  setEventItems: vi.fn(async () => undefined),
   setEventPlaybackMode: vi.fn(async () => undefined),
   skipDialoguePlayback: vi.fn(),
+  startDelayedEndEvent: vi.fn(),
   ...overrides,
 })
 
@@ -139,7 +148,7 @@ it('should render event and dialogue settings in English', () => {
   overwriteGetLocale(() => 'en')
   vi.mocked(usePEvents).mockReturnValue(createEvents())
 
-  render(() => <PDialogueSettingsContent />)
+  render(() => <PDialogueSettingsContent />, {wrapper: PreferenceProvider})
 
   expect(screen.getByRole('heading', {name: 'Events'})).toBeDefined()
   expect(screen.getByRole('heading', {name: 'Enter Pomofi'})).toBeDefined()
@@ -153,7 +162,7 @@ it('should render event and dialogue settings in English', () => {
 it('should keep saved dialogue content full-width with bounded text and actions', () => {
   vi.mocked(usePEvents).mockReturnValue(createEvents())
 
-  render(() => <PDialogueSettingsContent />)
+  render(() => <PDialogueSettingsContent />, {wrapper: PreferenceProvider})
 
   expect(screen.queryByRole('heading', {name: '이벤트별 대화'})).toBeNull()
   expect(
@@ -163,7 +172,7 @@ it('should keep saved dialogue content full-width with bounded text and actions'
   expect(screen.queryByText('저장된 대화를 듣거나 관리할 수 있어요.')).toBeNull()
   const library = screen.getByRole('list', {name: '저장된 대화'})
   const summary = within(library).getByText(DIALOGUE.text)
-  const row = summary.closest('.pomo-dialogue-settings__selected-dialogue--library')
+  const row = summary.parentElement?.parentElement
   const listenButton = within(library).getByRole('button', {name: '듣기'})
   const createLink = screen.getByRole('link', {name: '새 대화'})
 
@@ -172,7 +181,6 @@ it('should keep saved dialogue content full-width with bounded text and actions'
   expect(summary.className).toContain('[-webkit-line-clamp:3]')
   expect(listenButton.textContent).toBe('듣기')
   expect(createLink.getAttribute('href')).toBe('/dialogue')
-  expect(createLink.closest('.pomo-dialogue-settings__library-heading')).not.toBeNull()
   const inactiveEvent = screen.getByRole('heading', {name: '포모도르 집중 시작'}).closest('li')
   const eventList = inactiveEvent?.parentElement
   expect(inactiveEvent).not.toHaveAttribute('data-connected')
@@ -208,24 +216,48 @@ it('should hide learning dialogues only from the saved dialogue library', () => 
   ])
   vi.mocked(usePEvents).mockReturnValue(createEvents({dialogues: () => [DIALOGUE, manualDialogue]}))
 
-  render(() => <PDialogueSettingsContent />)
+  render(() => <PDialogueSettingsContent />, {wrapper: PreferenceProvider})
 
   const library = screen.getByRole('list', {name: '저장된 대화'})
   expect(within(library).queryByText(DIALOGUE.text)).toBeNull()
   expect(within(library).getByText(manualDialogue.text)).toBeDefined()
   expect(PSelect).toHaveBeenCalledWith(
     expect.objectContaining({
-      accessibleLabel: '입장 대화 연결',
+      accessibleLabel: '입장 대화 및 행동 연결',
       options: [
         {
           description: 'Yuna · 0:01 · 1개 말풍선',
           label: DIALOGUE.text,
-          value: DIALOGUE.id,
+          value: `dialogue:${DIALOGUE.id}`,
         },
         {
           description: 'Yuna · 0:01 · 1개 말풍선',
           label: manualDialogue.text,
-          value: manualDialogue.id,
+          value: `dialogue:${manualDialogue.id}`,
+        },
+        {
+          description: '현재 음악을 일시 정지해요.',
+          icon: 'i-tabler-player-stop',
+          label: '음악 종료',
+          value: 'action:music-stop',
+        },
+        {
+          description: '현재 음악을 재생해요.',
+          icon: 'i-tabler-player-play',
+          label: '음악 시작',
+          value: 'action:music-start',
+        },
+        {
+          description: '모든 효과음을 멈춰요.',
+          icon: 'i-tabler-volume-off',
+          label: '효과음 모두 끄기',
+          value: 'action:sound-effects-stop',
+        },
+        {
+          description: '모든 효과음을 다시 재생해요.',
+          icon: 'i-tabler-volume-2',
+          label: '효과음 모두 켜기',
+          value: 'action:sound-effects-start',
         },
       ],
     }),
@@ -235,23 +267,20 @@ it('should hide learning dialogues only from the saved dialogue library', () => 
 it('should apply compact spacing to dialogue settings groups', () => {
   vi.mocked(usePEvents).mockReturnValue(createEvents())
 
-  const result = render(() => <PDialogueSettingsContent />)
-  const section = result.container.querySelector('.pomo-dialogue-settings') as HTMLElement
-  const list = result.container.querySelector('.pomo-dialogue-settings__list') as HTMLElement
-  const automatic = result.container.querySelector(
-    '.pomo-dialogue-settings__automatic',
-  ) as HTMLElement
+  render(() => <PDialogueSettingsContent />, {wrapper: PreferenceProvider})
+  const [list] = screen.getAllByRole('list')
+  const section = list?.parentElement
+  const automatic = screen.getByRole('region', {name: '자동 음성 생성'})
 
-  expect(section.classList.contains('settings-compact:gap-4')).toBe(true)
-  expect(list.classList.contains('settings-compact:gap-2')).toBe(true)
-  expect(list.classList.contains('settings-compact:[&_>_li]:gap-2')).toBe(true)
+  expect(section).toHaveClass('settings-compact:gap-4')
+  expect(list).toHaveClass('settings-compact:gap-2', 'settings-compact:[&_>_li]:gap-2')
   expect(automatic.classList.contains('settings-compact:gap-3')).toBe(true)
 })
 
 it('should use the theme surface for an empty dialogue library', () => {
   vi.mocked(usePEvents).mockReturnValue(createEvents({dialogues: () => []}))
 
-  render(() => <PDialogueSettingsContent />)
+  render(() => <PDialogueSettingsContent />, {wrapper: PreferenceProvider})
 
   expect(screen.getByText('아직 저장된 대화가 없어요. 새 대화를 만들어 보세요.')).toHaveClass(
     'bg-content-surface',
@@ -304,29 +333,38 @@ it('should offer and save a playback mode when an event has multiple dialogues',
   vi.spyOn(HTMLMediaElement.prototype, 'load').mockImplementation(() => undefined)
   vi.mocked(usePEvents).mockReturnValue(events)
 
-  const result = render(() => <PDialogueSettingsContent />)
+  render(() => <PDialogueSettingsContent />, {wrapper: PreferenceProvider})
 
   const modeSelect = screen.getByRole('combobox', {name: '포모도르 집중 시작 재생 방식'})
-  const settingRows = result.container.querySelectorAll(
-    '.pomo-dialogue-settings__event-setting-row',
-  )
-  const modeLayout = modeSelect.closest('.pomo-dialogue-settings__event-setting-row')
+  const modeLayout = modeSelect.parentElement?.parentElement?.parentElement
   const modeControlLayout = modeLayout?.lastElementChild
   expect((modeSelect as HTMLSelectElement).value).toBe('random-all')
-  expect(settingRows).toHaveLength(10)
+  expect(screen.getByText('발생 간격')).toBeInTheDocument()
+  expect(modeLayout?.firstElementChild).toHaveTextContent('재생 방식')
+  expect(screen.queryByText('대화 연결')).toBeNull()
+  expect(screen.queryByText('이 이벤트에서 재생할 대화를 선택해요.')).toBeNull()
   expect(modeLayout?.classList).toContain('grid-cols-[minmax(12rem,_2fr)_minmax(16rem,_5fr)]')
   expect(modeLayout?.classList).toContain('settings-compact:grid-cols-[1fr]')
   expect(modeControlLayout?.classList).toContain('w-full')
-  expect(screen.getByText('2개 대화 연결됨')).toBeDefined()
-  expect(screen.getAllByText('대화 선택')).toHaveLength(7)
-  expect(screen.getByRole('button', {name: '포모도르 집중 시작 대화 연결'})).toBeDefined()
-  expect(screen.getByRole('button', {name: '포모도르 휴식 시작 대화 연결'})).toBeDefined()
-  expect(screen.getByRole('button', {name: '포모도르 휴식 종료 대화 연결'})).toBeDefined()
-  expect(screen.getByRole('button', {name: '포모도르 긴 휴식 시작 대화 연결'})).toBeDefined()
-  expect(screen.getByRole('button', {name: '포모도르 긴 휴식 종료 대화 연결'})).toBeDefined()
-  expect(screen.getByRole('button', {name: '랜덤 이벤트 대화 연결'})).toBeDefined()
+  expect(screen.getByText('2개 대화/행동 연결됨')).toBeDefined()
+  expect(screen.getAllByText('대화 또는 행동 선택')).toHaveLength(8)
+  expect(screen.getByRole('button', {name: '포모도르 집중 시작 대화 및 행동 연결'})).toBeDefined()
+  expect(screen.getByRole('button', {name: '포모도르 집중 종료 대화 및 행동 연결'})).toBeDefined()
+  expect(screen.getByRole('button', {name: '포모도르 휴식 시작 대화 및 행동 연결'})).toBeDefined()
+  expect(screen.getByRole('button', {name: '포모도르 휴식 종료 대화 및 행동 연결'})).toBeDefined()
+  expect(
+    screen.getByRole('button', {name: '포모도르 긴 휴식 시작 대화 및 행동 연결'}),
+  ).toBeDefined()
+  expect(
+    screen.getByRole('button', {name: '포모도르 긴 휴식 종료 대화 및 행동 연결'}),
+  ).toBeDefined()
+  expect(screen.getByRole('button', {name: '지정 시간 후 종료 대화 및 행동 연결'})).toBeDefined()
+  expect(screen.getByRole('button', {name: '랜덤 이벤트 대화 및 행동 연결'})).toBeDefined()
+  expect(
+    screen.queryByText('시작 버튼을 누른 뒤 지정한 시간이 지나면 연결한 대화와 행동을 실행'),
+  ).toBeNull()
   expect(screen.queryByRole('switch', {name: '랜덤 이벤트 사용'})).toBeNull()
-  expect(screen.getByRole('button', {name: '입장 대화 연결'})).toBeDefined()
+  expect(screen.getByRole('button', {name: '입장 대화 및 행동 연결'})).toBeDefined()
   expect(screen.getByText('이벤트가 발생할 때마다 모든 대화의 순서를 섞어요.')).toBeDefined()
   expect(screen.queryByRole('list', {name: '포모도르 집중 시작 대화 재생 대상'})).toBeNull()
 
@@ -334,22 +372,24 @@ it('should offer and save a playback mode when an event has multiple dialogues',
   expect(events.setEventPlaybackMode).toHaveBeenCalledWith('focus-start', 'random-one')
 })
 
-it('should queue a saved dialogue through the character without stopping existing playback', () => {
+it('should queue a saved dialogue through the character without stopping existing playback', async () => {
   const onRequestClose = vi.fn()
-  const events = createEvents()
+  const events = createEvents({getAudio: vi.fn(async () => new Blob(['audio']))})
   const pauseAudio = vi
     .spyOn(HTMLMediaElement.prototype, 'pause')
     .mockImplementation(() => undefined)
   const loadAudio = vi.spyOn(HTMLMediaElement.prototype, 'load').mockImplementation(() => undefined)
   vi.mocked(usePEvents).mockReturnValue(events)
 
-  render(() => <PDialogueSettingsContent onRequestClose={onRequestClose} />)
+  render(() => <PDialogueSettingsContent onRequestClose={onRequestClose} />, {
+    wrapper: PreferenceProvider,
+  })
   fireEvent.click(screen.getByRole('button', {name: '캐릭터로 듣기'}))
 
   expect(pauseAudio).toHaveBeenCalledOnce()
   expect(loadAudio).toHaveBeenCalledOnce()
   expect(events.onStopDialoguePlayback).not.toHaveBeenCalled()
-  expect(events.playDialogue).toHaveBeenCalledWith(DIALOGUE.id)
-  expect(events.setEventDialogues).not.toHaveBeenCalled()
+  await vi.waitFor(() => expect(events.playDialogue).toHaveBeenCalledWith(DIALOGUE.id))
+  expect(events.setEventItems).not.toHaveBeenCalled()
   expect(onRequestClose).toHaveBeenCalledOnce()
 })

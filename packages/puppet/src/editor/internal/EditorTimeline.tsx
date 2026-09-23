@@ -1,299 +1,293 @@
-import {sortBy} from 'es-toolkit/array'
 import {clamp} from 'es-toolkit/math'
-import {createMemo, createSignal, createUniqueId, For, Show} from 'solid-js'
+import {createEffect, createMemo, createSignal, createUniqueId, on, Show} from 'solid-js'
 
 import {getDefaultParameterValueMap, type PuppetParameterValueMap} from '../../deformation'
 import {
-  PUPPET_EASINGS,
+  getPuppetFramesPerSecond,
+  MAXIMUM_PUPPET_FRAMES_PER_SECOND,
+  MINIMUM_PUPPET_FRAMES_PER_SECOND,
   type PuppetDocument,
   type PuppetEasing,
   type PuppetMotion,
-  type PuppetParameter,
 } from '../../player/document'
 import {sampleMotionParameterValues} from '../../player/internal/motion'
+import {ALL_MOTIONS_OPTION, AllMotionTimeline} from './AllMotionTimeline'
+import {createTimelineMotionActions} from './create-timeline-motion-actions'
+import {editMotion} from './edit-motion'
 import {
-  deleteParameterKeyframe,
+  deleteParameterKeyframes,
+  moveParameterKeyframes,
+  type MoveParameterKeyframesTarget,
   setParameterKeyframe,
-  setParameterKeyframeEasing,
+  setParameterKeyframesEasing,
 } from './motion-keyframes'
+import {
+  deleteSelectedKeyframes,
+  easeSelectedKeyframes,
+  getFrame,
+  getKeyframeSelectionAtTime,
+  getParameterTracks,
+  getSelectedKeyframe,
+  isKeyframeSelected,
+  type KeyframeSelection,
+  type ParameterTimelineKeyframe,
+  type ParameterTimelineTrack,
+  retainKeyframeSelectionAtTime,
+  type SelectedKeyframe,
+  snapToFrame,
+  updateKeyframeSelection,
+} from './timeline-keyframe-selection'
+import {TimelineDopesheet} from './TimelineDopesheet'
+import {TimelineSettingsControls} from './TimelineSettingsControls'
+import {TimelineMotionName} from './TimelineMotionName'
+import {TimelineToolbar} from './TimelineToolbar'
 
-const PERCENT = 100
-const RULER_INTERVAL_COUNT = 8
-const FRAMES_PER_SECOND = 24
-
-interface KeyframeSelection {
-  readonly parameterId: string
-  readonly time: number
-}
-
-interface SelectedKeyframe {
-  readonly easing: PuppetEasing
-  readonly hasNext: boolean
-}
-
-interface ParameterTimelineKeyframe {
-  readonly easing: PuppetEasing
-  readonly time: number
-}
-
-interface ParameterTimelineTrack {
-  readonly keyframes: ReadonlyArray<ParameterTimelineKeyframe>
-  readonly parameter: PuppetParameter
+function getEditableAction<Action>(
+  onDocumentChange: EditorTimelineProps['onDocumentChange'],
+  action: Action,
+): Action | undefined {
+  return onDocumentChange === undefined ? undefined : action
 }
 
 export interface EditorTimelineProps {
   readonly currentTime?: number
   readonly document: PuppetDocument
   readonly isPlaying?: boolean
+  readonly motionId?: string
   readonly onDocumentChange?: (document: PuppetDocument) => void
+  readonly onEditEnd?: () => void
+  readonly onEditStart?: () => void
+  readonly onMotionChange?: (motionId: string) => void
+  readonly onMotionSeek?: (motionId: string, time: number) => void
   readonly onPlaybackToggle?: () => void
   readonly onSeek?: (time: number) => void
   readonly parameterValues?: PuppetParameterValueMap
 }
 
-const isSameSelection = (selection: KeyframeSelection | null, target: KeyframeSelection) =>
-  selection?.parameterId === target.parameterId && selection.time === target.time
+const getActiveMotion = (document: PuppetDocument, motionId: string | undefined) =>
+  document.motions.find((motion) => motion.id === motionId) ?? document.motions[0]
 
-const getParameterTracks = (
-  document: PuppetDocument,
-  motion: PuppetMotion | undefined,
-): ReadonlyArray<ParameterTimelineTrack> =>
-  (document.parameters ?? []).map((parameter) => {
-    const track = motion?.tracks.find(
-      (candidate) => candidate.kind === 'parameter' && candidate.parameterId === parameter.id,
-    )
-
-    return {
-      keyframes: sortBy(track?.keyframes ?? [], ['time']).map((keyframe) => ({
-        easing: keyframe.easing ?? 'linear',
-        time: keyframe.time,
-      })),
-      parameter,
-    }
-  })
-
-const getFrame = (time: number) => Math.round(time * FRAMES_PER_SECOND)
-
-const snapToFrame = (time: number, duration: number) =>
-  Math.min(getFrame(time) / FRAMES_PER_SECOND, duration)
-
-const getSelectedKeyframe = (
-  selection: KeyframeSelection | null,
-  tracks: ReadonlyArray<ParameterTimelineTrack>,
-): SelectedKeyframe | null => {
-  if (selection === null) {
-    return null
+const applyDocumentChange = (
+  onDocumentChange: EditorTimelineProps['onDocumentChange'],
+  document: PuppetDocument | undefined,
+) => {
+  if (onDocumentChange === undefined || document === undefined) {
+    return false
   }
-
-  const track = tracks.find((candidate) => candidate.parameter.id === selection.parameterId)
-  const keyframeIndex = track?.keyframes.findIndex((keyframe) => keyframe.time === selection.time)
-  const keyframe = keyframeIndex === undefined ? undefined : track?.keyframes[keyframeIndex]
-
-  return track === undefined || keyframe === undefined || keyframeIndex === undefined
-    ? null
-    : {easing: keyframe.easing, hasNext: keyframeIndex < track.keyframes.length - 1}
+  onDocumentChange(document)
+  return true
 }
 
-interface TimelineToolbarProps {
-  readonly canAddKeyframe: boolean
-  readonly canDeleteKeyframe: boolean
-  readonly currentTime: number
-  readonly duration: number
-  readonly easing: PuppetEasing
-  readonly hasEditableSelection: boolean
-  readonly isPlaying?: boolean
-  readonly motionId?: string
-  readonly onEasingChange?: (event: Event & {readonly currentTarget: HTMLSelectElement}) => void
-  readonly onKeyframeAdd?: () => void
-  readonly onKeyframeDelete?: () => void
-  readonly onPlaybackToggle?: () => void
-  readonly titleId: string
-}
+const hasEditableSelection = (
+  selection: SelectedKeyframe | null,
+  onDocumentChange: EditorTimelineProps['onDocumentChange'],
+) => selection !== null && selection.editableTimes.length > 0 && onDocumentChange !== undefined
 
-const TimelineToolbar = (props: TimelineToolbarProps) => (
-  <header class="timeline-toolbar">
-    <div class="timeline-label">
-      <span>Timeline</span>
-      <strong id={props.titleId}>{props.motionId ?? 'Static mesh'}</strong>
-    </div>
-    <div class="timeline-actions">
-      <button
-        class="timeline-playback"
-        disabled={props.motionId === undefined || props.onPlaybackToggle === undefined}
-        type="button"
-        onClick={() => props.onPlaybackToggle?.()}
-      >
-        {props.isPlaying === false ? '재생' : '정지'}
-      </button>
-      <button
-        class="timeline-keyframe-add"
-        disabled={!props.canAddKeyframe || props.onKeyframeAdd === undefined}
-        type="button"
-        onClick={() => props.onKeyframeAdd?.()}
-      >
-        + 현재 위치에 키프레임
-      </button>
-      <button
-        class="timeline-keyframe-delete"
-        disabled={!props.canDeleteKeyframe || props.onKeyframeDelete === undefined}
-        type="button"
-        onClick={() => props.onKeyframeDelete?.()}
-      >
-        선택 키프레임 삭제
-      </button>
-      <label class="timeline-easing">
-        <span>다음 키프레임까지</span>
-        <select
-          aria-label="키프레임 이징"
-          disabled={!props.hasEditableSelection || props.onEasingChange === undefined}
-          value={props.easing}
-          onChange={(event) => props.onEasingChange?.(event)}
-        >
-          <option value="linear">Linear</option>
-          <option value="ease-in">Ease in</option>
-          <option value="ease-out">Ease out</option>
-          <option value="ease-in-out">Ease in out</option>
-        </select>
-      </label>
-    </div>
-    <span class="timeline-time">
-      {getFrame(props.currentTime)}f / {getFrame(props.duration)}f · {props.currentTime.toFixed(2)}s
-    </span>
-  </header>
-)
-
-interface TimelineDopesheetProps {
-  readonly currentTime: number
-  readonly duration: number
-  readonly motion?: PuppetMotion
-  readonly onKeyframeSelect?: (
-    track: ParameterTimelineTrack,
-    keyframe: ParameterTimelineKeyframe,
-  ) => void
-  readonly onParameterValueChange?: (track: ParameterTimelineTrack, value: number) => void
-  readonly onParameterSelect?: (parameterId: string) => void
-  readonly onSeek?: (time: number) => void
-  readonly selection: KeyframeSelection | null
-  readonly tracks: ReadonlyArray<ParameterTimelineTrack>
-  readonly values: Readonly<Record<string, number>>
-}
-
-const TimelineDopesheet = (props: TimelineDopesheetProps) => {
-  const progress = () => (props.duration === 0 ? 0 : (props.currentTime / props.duration) * PERCENT)
-  const rulerTimes = createMemo(() => {
-    const timelineDuration = props.duration
-    return Array.from(
-      {length: RULER_INTERVAL_COUNT + 1},
-      (_, index) => (timelineDuration * index) / RULER_INTERVAL_COUNT,
-    )
-  })
-  const handleSeek = (event: InputEvent & {readonly currentTarget: HTMLInputElement}) => {
-    props.onSeek?.(event.currentTarget.valueAsNumber)
-  }
-
-  return (
-    <div
-      class="timeline-dopesheet"
-      style={{'--timeline-frame-count': Math.max(1, getFrame(props.duration))}}
-    >
-      <div class="timeline-ruler-label">Parameter / 값</div>
-      <div class="timeline-ruler">
-        <For each={rulerTimes()}>
-          {(time) => (
-            <span
-              style={{left: `${props.duration === 0 ? 0 : (time / props.duration) * PERCENT}%`}}
-            >
-              {getFrame(time)}f
-            </span>
-          )}
-        </For>
-        <span aria-hidden="true" class="timeline-ruler-playhead" style={{left: `${progress()}%`}} />
-        <input
-          aria-label="재생 위치"
-          disabled={props.motion === undefined || props.onSeek === undefined}
-          max={props.duration}
-          min="0"
-          step={1 / FRAMES_PER_SECOND}
-          type="range"
-          value={props.currentTime}
-          onInput={handleSeek}
-        />
-      </div>
-
-      <Show
-        when={props.tracks.length > 0}
-        fallback={<p class="timeline-empty">Parameter가 없습니다.</p>}
-      >
-        <For each={props.tracks}>
-          {(track) => (
-            <>
-              <label class="timeline-row-label">
-                <strong>{track.parameter.name}</strong>
-                <input
-                  aria-label={`${track.parameter.name} 현재 값`}
-                  disabled={
-                    props.motion === undefined || props.onParameterValueChange === undefined
-                  }
-                  max={track.parameter.maximum}
-                  min={track.parameter.minimum}
-                  step="any"
-                  type="number"
-                  value={props.values[track.parameter.id] ?? track.parameter.defaultValue}
-                  onFocus={() => props.onParameterSelect?.(track.parameter.id)}
-                  onInput={(event) =>
-                    props.onParameterValueChange?.(track, event.currentTarget.valueAsNumber)
-                  }
-                />
-              </label>
-              <div class="timeline-row" aria-label={`${track.parameter.name} 트랙`}>
-                <For each={track.keyframes}>
-                  {(keyframe) => {
-                    const target = {parameterId: track.parameter.id, time: keyframe.time}
-
-                    return (
-                      <button
-                        aria-label={`${track.parameter.name} ${keyframe.time.toFixed(2)}초 키프레임`}
-                        aria-pressed={isSameSelection(props.selection, target)}
-                        class="timeline-keyframe"
-                        style={{
-                          left: `${props.duration === 0 ? 0 : (keyframe.time / props.duration) * PERCENT}%`,
-                        }}
-                        type="button"
-                        onClick={() => props.onKeyframeSelect?.(track, keyframe)}
-                      />
-                    )
-                  }}
-                </For>
-                <span
-                  aria-hidden="true"
-                  class="timeline-row-playhead"
-                  style={{left: `${progress()}%`}}
-                />
-              </div>
-            </>
-          )}
-        </For>
-      </Show>
-    </div>
-  )
-}
-
+// eslint-disable-next-line max-lines-per-function
 export const EditorTimeline = (props: EditorTimelineProps) => {
   const titleId = createUniqueId()
   const [selection, setSelection] = createSignal<KeyframeSelection | null>(null)
   const [activeParameterId, setActiveParameterId] = createSignal<string | null>(null)
-  const motion = () => props.document.motions[0]
+  const [allMotionsVisible, setAllMotionsVisible] = createSignal(false)
+  const [motionTimes, setMotionTimes] = createSignal<Readonly<Record<string, number>>>({})
+  const motion = () => getActiveMotion(props.document, props.motionId)
+  const framesPerSecond = () => getPuppetFramesPerSecond(props.document)
   const duration = () => motion()?.duration ?? 0
   const currentTime = () => clamp(props.currentTime ?? 0, 0, duration())
   const parameterTracks = createMemo(() => getParameterTracks(props.document, motion()))
   const parameterValues = createMemo(() =>
     sampleMotionParameterValues({
       motion: motion(),
+      parameters: props.document.parameters,
       parameterValues: props.parameterValues ?? getDefaultParameterValueMap(props.document),
       time: currentTime(),
     }),
   )
   const selectedKeyframe = createMemo(() => getSelectedKeyframe(selection(), parameterTracks()))
+  const motionIds = () => props.document.motions.map((candidate) => candidate.id)
+  const motionOptions = () => (motionIds().length === 0 ? [] : [ALL_MOTIONS_OPTION, ...motionIds()])
+  const canSeekAllMotions = () =>
+    props.onMotionSeek !== undefined ||
+    (props.onMotionChange !== undefined && props.onSeek !== undefined)
+  const minimumDuration = (targetMotion: PuppetMotion) =>
+    Math.max(
+      1 / framesPerSecond(),
+      ...targetMotion.tracks.flatMap((track) => track.keyframes.map((keyframe) => keyframe.time)),
+    )
+  const activeMinimumDuration = () => {
+    const activeMotion = motion()
+    return activeMotion === undefined ? 0 : minimumDuration(activeMotion)
+  }
+
+  const getMotionTime = (targetMotion: PuppetMotion) =>
+    clamp(
+      motionTimes()[targetMotion.id] ?? (targetMotion.id === motion()?.id ? currentTime() : 0),
+      0,
+      targetMotion.duration,
+    )
+
+  const handleViewChange = (value: string) => {
+    if (value === ALL_MOTIONS_OPTION) {
+      setAllMotionsVisible(true)
+      return
+    }
+
+    if (!props.document.motions.some((candidate) => candidate.id === value)) {
+      return
+    }
+
+    setAllMotionsVisible(false)
+    if (props.onMotionChange !== undefined) {
+      props.onMotionChange(value)
+      return
+    }
+    props.onMotionSeek?.(value, motionTimes()[value] ?? 0)
+  }
+
+  const handleMotionSeek = (motionId: string, time: number) => {
+    setMotionTimes((current) => ({...current, [motionId]: time}))
+
+    if (props.onMotionSeek !== undefined) {
+      props.onMotionSeek(motionId, time)
+      return
+    }
+
+    if (motion()?.id !== motionId) {
+      props.onMotionChange?.(motionId)
+    }
+    props.onSeek?.(time)
+  }
+
+  const applyMotionEdit = (
+    result: ReturnType<typeof editMotion>,
+    timelineView: 'all' | 'single',
+  ) => {
+    if (result === undefined || props.onDocumentChange === undefined) {
+      return
+    }
+
+    props.onDocumentChange(result.document)
+    setAllMotionsVisible(timelineView === 'all')
+    setSelection(null)
+    setActiveParameterId(null)
+    if (result.selectedMotionId !== null) {
+      props.onMotionChange?.(result.selectedMotionId)
+    }
+  }
+
+  const motionActions = createTimelineMotionActions({
+    activeMotion: motion,
+    applyEdit: applyMotionEdit,
+    document: () => props.document,
+    motionTimes,
+    setMotionTimes,
+  })
+
+  const handleDurationChange = (motionId: string, nextDuration: number) => {
+    const targetMotion = props.document.motions.find((candidate) => candidate.id === motionId)
+
+    if (
+      props.onDocumentChange === undefined ||
+      targetMotion === undefined ||
+      !Number.isFinite(nextDuration) ||
+      nextDuration < minimumDuration(targetMotion)
+    ) {
+      return
+    }
+
+    props.onDocumentChange({
+      ...props.document,
+      motions: props.document.motions.map((candidate) =>
+        candidate.id === motionId ? {...candidate, duration: nextDuration} : candidate,
+      ),
+    })
+  }
+
+  const handleFramesPerSecondChange = (nextFramesPerSecond: number) => {
+    if (
+      props.onDocumentChange === undefined ||
+      !Number.isInteger(nextFramesPerSecond) ||
+      nextFramesPerSecond < MINIMUM_PUPPET_FRAMES_PER_SECOND ||
+      nextFramesPerSecond > MAXIMUM_PUPPET_FRAMES_PER_SECOND
+    ) {
+      return
+    }
+
+    props.onDocumentChange({...props.document, framesPerSecond: nextFramesPerSecond})
+  }
+
+  const handleActiveDurationChange = (nextDuration: number) => {
+    const activeMotion = motion()
+
+    if (activeMotion !== undefined) {
+      handleDurationChange(activeMotion.id, nextDuration)
+    }
+  }
+
+  const handleParameterSelect = (parameterId: string) => {
+    setActiveParameterId(parameterId)
+    setSelection(
+      getKeyframeSelectionAtTime(parameterTracks(), currentTime(), parameterId, framesPerSecond()),
+    )
+  }
+
+  const handleSeek = (time: number, parameterId?: string) => {
+    const selectedParameterId = parameterId ?? activeParameterId()
+    const nextSelection = getKeyframeSelectionAtTime(
+      parameterTracks(),
+      time,
+      selectedParameterId,
+      framesPerSecond(),
+    )
+
+    if (parameterId !== undefined) {
+      setActiveParameterId(parameterId)
+    }
+    setSelection(nextSelection)
+
+    props.onSeek?.(time)
+  }
+
+  createEffect(
+    on(
+      () => props.currentTime,
+      (time) => {
+        setSelection((current) =>
+          retainKeyframeSelectionAtTime({
+            framesPerSecond: framesPerSecond(),
+            parameterId: activeParameterId(),
+            selection: current,
+            time: clamp(time ?? 0, 0, duration()),
+            tracks: parameterTracks(),
+          }),
+        )
+      },
+    ),
+  )
+
+  createEffect(() => {
+    const activeMotion = motion()
+    const time = props.currentTime
+
+    if (activeMotion === undefined || time === undefined) {
+      return
+    }
+
+    const nextTime = clamp(time, 0, activeMotion.duration)
+    setMotionTimes((current) =>
+      current[activeMotion.id] === nextTime ? current : {...current, [activeMotion.id]: nextTime},
+    )
+  })
+
+  createEffect(
+    on(
+      () => props.motionId,
+      () => {
+        setSelection(null)
+      },
+      {defer: true},
+    ),
+  )
 
   const updateParameterKeyframe = (parameterId: string, value: number) => {
     const activeMotion = motion()
@@ -306,7 +300,7 @@ export const EditorTimeline = (props: EditorTimelineProps) => {
       return
     }
 
-    const time = snapToFrame(currentTime(), activeMotion.duration)
+    const time = snapToFrame(currentTime(), activeMotion.duration, framesPerSecond())
     const document = setParameterKeyframe({
       document: props.document,
       motionId: activeMotion.id,
@@ -318,18 +312,61 @@ export const EditorTimeline = (props: EditorTimelineProps) => {
     if (document !== undefined) {
       props.onDocumentChange(document)
       setActiveParameterId(parameterId)
-      setSelection({parameterId, time})
+      setSelection({parameterId, time, times: [time]})
     }
   }
 
   const handleKeyframeSelect = (
     track: ParameterTimelineTrack,
     keyframe: ParameterTimelineKeyframe,
+    extend: boolean,
   ) => {
     const parameterId = track.parameter.id
     setActiveParameterId(parameterId)
-    setSelection({parameterId, time: keyframe.time})
+    setSelection((current) => updateKeyframeSelection(current, parameterId, keyframe.time, extend))
     props.onSeek?.(keyframe.time)
+  }
+
+  const updateKeyframeTimes = (move: MoveParameterKeyframesTarget) => {
+    return applyDocumentChange(
+      props.onDocumentChange,
+      moveParameterKeyframes({document: props.document, ...move}),
+    )
+  }
+
+  const handleKeyframeMove = (
+    track: ParameterTimelineTrack,
+    keyframe: ParameterTimelineKeyframe,
+    time: number,
+  ) => {
+    const activeMotion = motion()
+    const parameterId = track.parameter.id
+    const currentSelection = selection()
+    const selectedTimes = isKeyframeSelected(currentSelection, parameterId, keyframe.time)
+      ? currentSelection!.times
+      : [keyframe.time]
+
+    if (
+      activeMotion === undefined ||
+      !updateKeyframeTimes({
+        motionId: activeMotion.id,
+        nextTime: time,
+        parameterId,
+        time: keyframe.time,
+        times: selectedTimes,
+      })
+    ) {
+      return
+    }
+
+    const timeOffset = time - keyframe.time
+    setActiveParameterId(parameterId)
+    setSelection({
+      parameterId,
+      time,
+      times: selectedTimes.map((selectedTime) => selectedTime + timeOffset),
+    })
+    props.onSeek?.(time)
   }
 
   const handleKeyframeAdd = () => {
@@ -342,21 +379,14 @@ export const EditorTimeline = (props: EditorTimelineProps) => {
   }
 
   const handleKeyframeDelete = () => {
-    const activeMotion = motion()
-    const activeSelection = selection()
-
-    if (
-      activeMotion === undefined ||
-      activeSelection === null ||
-      props.onDocumentChange === undefined
-    ) {
+    if (props.onDocumentChange === undefined) {
       return
     }
 
-    const document = deleteParameterKeyframe({
-      ...activeSelection,
+    const document = deleteSelectedKeyframes({
       document: props.document,
-      motionId: activeMotion.id,
+      motion: motion(),
+      selection: selection(),
     })
 
     if (document !== undefined) {
@@ -365,69 +395,169 @@ export const EditorTimeline = (props: EditorTimelineProps) => {
     }
   }
 
-  const handleEasingChange = (event: Event & {readonly currentTarget: HTMLSelectElement}) => {
-    const activeMotion = motion()
-    const activeSelection = selection()
-    const easing = PUPPET_EASINGS.find((candidate) => candidate === event.currentTarget.value)
+  const deleteKeyframes = (motionId: string, parameterId: string, times: ReadonlyArray<number>) => {
+    return applyDocumentChange(
+      props.onDocumentChange,
+      deleteParameterKeyframes({document: props.document, motionId, parameterId, times}),
+    )
+  }
 
-    if (
-      activeMotion === undefined ||
-      activeSelection === null ||
-      easing === undefined ||
-      props.onDocumentChange === undefined
-    ) {
-      return
-    }
+  const updateKeyframesEasing = (
+    motionId: string,
+    parameterId: string,
+    times: ReadonlyArray<number>,
+    easing: PuppetEasing,
+  ) => {
+    return applyDocumentChange(
+      props.onDocumentChange,
+      setParameterKeyframesEasing({
+        document: props.document,
+        easing,
+        motionId,
+        parameterId,
+        times,
+      }),
+    )
+  }
 
-    const document = setParameterKeyframeEasing({
-      ...activeSelection,
+  const handleEasingChange = (value: string) => {
+    const document = easeSelectedKeyframes({
       document: props.document,
-      easing,
-      motionId: activeMotion.id,
+      motion: motion(),
+      selection: selection(),
+      value,
     })
-
     if (document !== undefined) {
-      props.onDocumentChange(document)
+      props.onDocumentChange?.(document)
     }
   }
 
   return (
     <section class="timeline" aria-labelledby={titleId}>
-      <TimelineToolbar
-        canAddKeyframe={
-          motion() !== undefined &&
-          parameterTracks().length > 0 &&
-          props.onDocumentChange !== undefined
+      <Show
+        when={allMotionsVisible()}
+        fallback={
+          <>
+            <TimelineToolbar
+              canAddKeyframe={
+                motion() !== undefined &&
+                parameterTracks().length > 0 &&
+                props.onDocumentChange !== undefined
+              }
+              canDeleteKeyframe={
+                selectedKeyframe() !== null && props.onDocumentChange !== undefined
+              }
+              easing={(selectedKeyframe()?.easing ?? 'linear') satisfies PuppetEasing}
+              framesPerSecond={framesPerSecond()}
+              hasEditableSelection={hasEditableSelection(
+                selectedKeyframe(),
+                props.onDocumentChange,
+              )}
+              isPlaying={props.isPlaying}
+              motionIds={motionOptions()}
+              motionId={motion()?.id}
+              onEditEnd={props.onEditEnd}
+              onEditStart={props.onEditStart}
+              onFramesPerSecondChange={
+                props.onDocumentChange === undefined ? undefined : handleFramesPerSecondChange
+              }
+              onMotionAdd={props.onDocumentChange === undefined ? undefined : motionActions.add}
+              onMotionChange={handleViewChange}
+              onMotionDelete={
+                props.onDocumentChange === undefined ? undefined : motionActions.delete
+              }
+              onMotionDuplicate={
+                props.onDocumentChange === undefined ? undefined : motionActions.duplicate
+              }
+              onMotionRename={
+                props.onDocumentChange === undefined ? undefined : motionActions.rename
+              }
+              onEasingChange={handleEasingChange}
+              onKeyframeAdd={handleKeyframeAdd}
+              onKeyframeDelete={handleKeyframeDelete}
+              onPlaybackToggle={props.onPlaybackToggle}
+              selectedKeyframeCount={selection()?.times.length ?? 0}
+              titleId={titleId}
+            />
+            <TimelineDopesheet
+              currentTime={currentTime()}
+              duration={duration()}
+              framesPerSecond={framesPerSecond()}
+              motion={motion()}
+              onEditEnd={props.onEditEnd}
+              onEditStart={props.onEditStart}
+              onKeyframeSelect={handleKeyframeSelect}
+              onKeyframeMove={getEditableAction(props.onDocumentChange, handleKeyframeMove)}
+              onParameterValueChange={(track, value) =>
+                updateParameterKeyframe(track.parameter.id, value)
+              }
+              onParameterSelect={handleParameterSelect}
+              onSeek={handleSeek}
+              rulerLabel={
+                <Show when={motion()} fallback="Parameter">
+                  {(activeMotion) => (
+                    <div class="timeline-motion-group-heading">
+                      <TimelineMotionName
+                        motionId={activeMotion().id}
+                        motionIds={motionIds()}
+                        onDelete={getEditableAction(props.onDocumentChange, motionActions.delete)}
+                        onRename={getEditableAction(props.onDocumentChange, motionActions.rename)}
+                      >
+                        <TimelineSettingsControls
+                          duration={activeMotion().duration}
+                          durationMinimum={activeMinimumDuration()}
+                          framesPerSecond={framesPerSecond()}
+                          onDurationChange={
+                            props.onDocumentChange === undefined
+                              ? undefined
+                              : handleActiveDurationChange
+                          }
+                          onEditEnd={props.onEditEnd}
+                          onEditStart={props.onEditStart}
+                          showDurationLabel={false}
+                          showFramesPerSecond={false}
+                        />
+                      </TimelineMotionName>
+                    </div>
+                  )}
+                </Show>
+              }
+              rulerStatus={
+                <>
+                  {getFrame(currentTime(), framesPerSecond())}f /{' '}
+                  {getFrame(duration(), framesPerSecond())}f · {currentTime().toFixed(2)}s
+                </>
+              }
+              selectedParameterId={activeParameterId()}
+              selection={selection()}
+              tracks={parameterTracks()}
+              values={parameterValues()}
+            />
+          </>
         }
-        canDeleteKeyframe={selection() !== null && props.onDocumentChange !== undefined}
-        currentTime={currentTime()}
-        duration={duration()}
-        easing={(selectedKeyframe()?.easing ?? 'linear') satisfies PuppetEasing}
-        hasEditableSelection={
-          selectedKeyframe()?.hasNext === true && props.onDocumentChange !== undefined
-        }
-        isPlaying={props.isPlaying}
-        motionId={motion()?.id}
-        onEasingChange={handleEasingChange}
-        onKeyframeAdd={handleKeyframeAdd}
-        onKeyframeDelete={handleKeyframeDelete}
-        onPlaybackToggle={props.onPlaybackToggle}
-        titleId={titleId}
-      />
-      <TimelineDopesheet
-        currentTime={currentTime()}
-        duration={duration()}
-        motion={motion()}
-        onKeyframeSelect={handleKeyframeSelect}
-        onParameterValueChange={(track, value) =>
-          updateParameterKeyframe(track.parameter.id, value)
-        }
-        onParameterSelect={setActiveParameterId}
-        onSeek={props.onSeek}
-        selection={selection()}
-        tracks={parameterTracks()}
-        values={parameterValues()}
-      />
+      >
+        <AllMotionTimeline
+          document={props.document}
+          framesPerSecond={framesPerSecond()}
+          getCurrentTime={getMotionTime}
+          onDurationChange={props.onDocumentChange === undefined ? undefined : handleDurationChange}
+          onEditEnd={props.onEditEnd}
+          onEditStart={props.onEditStart}
+          onFramesPerSecondChange={
+            props.onDocumentChange === undefined ? undefined : handleFramesPerSecondChange
+          }
+          onKeyframesDelete={getEditableAction(props.onDocumentChange, deleteKeyframes)}
+          onKeyframesEasingChange={getEditableAction(props.onDocumentChange, updateKeyframesEasing)}
+          onMotionAdd={props.onDocumentChange === undefined ? undefined : motionActions.add}
+          onMotionDelete={getEditableAction(props.onDocumentChange, motionActions.deleteById)}
+          onKeyframeMove={getEditableAction(props.onDocumentChange, updateKeyframeTimes)}
+          onMotionSeek={canSeekAllMotions() ? handleMotionSeek : undefined}
+          onMotionRename={getEditableAction(props.onDocumentChange, motionActions.renameById)}
+          onViewChange={handleViewChange}
+          parameterValues={props.parameterValues}
+          titleId={titleId}
+        />
+      </Show>
     </section>
   )
 }

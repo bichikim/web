@@ -12,6 +12,7 @@ import {reportClientError} from '../../features/client-error-reporter'
 import {applyWeatherSceneLayer, type WeatherSceneCondition} from '../../features/weather'
 
 export interface PSceneCanvasProps extends Omit<PSceneState, 'layerScene'> {
+  readonly interactive?: boolean
   readonly onLoadingChange?: (isLoading: boolean) => void
   readonly onMotionInputChange?: (motionInput: PSceneMotionInput) => void
   readonly sceneId: PSceneId
@@ -19,7 +20,7 @@ export interface PSceneCanvasProps extends Omit<PSceneState, 'layerScene'> {
   readonly weatherCondition?: WeatherSceneCondition
 }
 
-export default function PSceneCanvas(props: PSceneCanvasProps) {
+export function PSceneCanvas(props: PSceneCanvasProps) {
   const [canvasHost, setCanvasHost] = createSignal<HTMLDivElement>()
   let renderer: PSceneRenderer | null = null
 
@@ -89,7 +90,30 @@ export default function PSceneCanvas(props: PSceneCanvasProps) {
   return (
     <div
       class="absolute inset-0 cursor-grab touch-none select-none active:cursor-grabbing"
+      classList={{
+        'pointer-events-none': props.interactive === false,
+      }}
       ref={setCanvasHost}
+      onPointerDown={(event) => {
+        if (props.interactive !== false) {
+          renderer?.onPointerDown(event)
+        }
+      }}
+      onPointerMove={(event) => {
+        if (props.interactive !== false) {
+          renderer?.onPointerMove(event)
+        }
+      }}
+      onPointerUp={(event) => {
+        if (props.interactive !== false) {
+          renderer?.onPointerUp(event)
+        }
+      }}
+      onPointerCancel={(event) => {
+        if (props.interactive !== false) {
+          renderer?.onPointerCancel(event)
+        }
+      }}
     />
   )
 }

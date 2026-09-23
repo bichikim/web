@@ -13,6 +13,7 @@ export interface ScrollState {
 }
 
 export interface SScrollContextProps {
+  onScroll: () => void
   /**
    * move the scroll by a set amount and direction
    * @param type direction to be changed

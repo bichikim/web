@@ -1,9 +1,13 @@
 /** @vitest-environment jsdom */
 
+import {getMonotonicTime} from 'src/utils/get-monotonic-time'
+
+vi.mock('src/utils/get-monotonic-time', () => ({getMonotonicTime: vi.fn()}))
+
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 
 import type {ModelResource} from '../../model-storage'
-import type {Result} from '../../result'
+import type {Result} from 'src/features/result'
 import type {SupertonicSessions, SupertonicVoice} from '../engine'
 import type {SupertonicError} from '../errors'
 import type {SupertonicWorkerInput, SupertonicWorkerOutput} from '../messages'
@@ -221,7 +225,7 @@ beforeEach(() => {
   sessionMocks.load.mockResolvedValue(success(sessions))
   sessionMocks.release.mockResolvedValue(undefined)
   textMocks.split.mockImplementation((text: string) => [text])
-  vi.spyOn(performance, 'now').mockReturnValue(100)
+  vi.mocked(getMonotonicTime).mockReturnValue(100)
 })
 
 afterEach(() => {
@@ -285,6 +289,61 @@ describe('generation', () => {
         type: 'result',
       },
       [joined.buffer],
+    )
+  })
+
+  it('should normalize each chunk only at the speech-engine boundary', async () => {
+    textMocks.split.mockReturnValue([
+      '사과 3개가 있어요.',
+      '2026년 계획이에요.',
+      '인증번호는 4821입니다.',
+    ])
+    const worker = await loadWorker()
+    await initialize(worker)
+
+    await worker.dispatch(generateMessage())
+
+    expect(textMocks.split).toHaveBeenCalledWith('안녕하세요.', fullModel.speechPolicy)
+    expect(currentEngine.generate).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining({text: '사과 세 개가 있어요.'}),
+    )
+    expect(currentEngine.generate).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining({text: '이천이십육 년 계획이에요.'}),
+    )
+    expect(currentEngine.generate).toHaveBeenNthCalledWith(
+      3,
+      expect.objectContaining({text: '인증번호는 사 팔 이 일입니다.'}),
+    )
+  })
+
+  it('should pronounce leading-zero English verification codes as individual digits', async () => {
+    const worker = await loadWorker()
+    await initialize(worker)
+
+    await worker.dispatch(
+      generateMessage({language: 'en', text: 'Verification code 004 is ready.'}),
+    )
+
+    expect(currentEngine.generate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        language: 'en',
+        text: 'Verification code zero zero four is ready.',
+      }),
+    )
+  })
+
+  it('should preserve a chunk when number pronunciation would exceed the model limit', async () => {
+    const text = `Verification code ${'0'.repeat(100)} is ready.`
+    textMocks.split.mockReturnValue([text])
+    const worker = await loadWorker()
+    await initialize(worker)
+
+    await worker.dispatch(generateMessage({language: 'en', text}))
+
+    expect(currentEngine.generate).toHaveBeenCalledWith(
+      expect.objectContaining({language: 'en', text}),
     )
   })
 

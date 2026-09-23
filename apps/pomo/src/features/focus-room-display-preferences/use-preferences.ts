@@ -1,61 +1,77 @@
-import {createSignal, onCleanup, onMount} from 'solid-js'
+import {usePreference} from 'src/hooks/use-preference'
+import {createParsedPreferenceStorage} from '../parsed-preference-storage'
 
-import {DEFAULT_P_DISPLAY_PREFERENCES, type PDisplayPreferencesController} from './model'
-import {readPDisplayPreferences, writePDisplayPreferences} from './storage'
+import {
+  DEFAULT_P_DISPLAY_PREFERENCES,
+  type PDisplayPreferences,
+  type PDisplayPreferencesController,
+} from './model'
+import {
+  DISPLAY_PREFERENCES_STORAGE_KEY,
+  parsePDisplayPreferences,
+  readPDisplayPreferences,
+  writePDisplayPreferences,
+} from './storage'
 
-const persist = (dialogueComposerVisible: boolean) => {
-  writePDisplayPreferences({dialogueComposerVisible}).catch(globalThis.reportError)
-}
+const pDisplayPreferencesStorage = createParsedPreferenceStorage({
+  invalidMessage: 'Invalid focus-room display preferences.',
+  parse: parsePDisplayPreferences,
+  read: () => readPDisplayPreferences(),
+  write: (value) => writePDisplayPreferences(value),
+})
 
-/** Owns the browser lifecycle for persisted focus-room display preferences. */
+const updatePreference = (
+  preference: PDisplayPreferences,
+  changes: Partial<PDisplayPreferences>,
+): PDisplayPreferences => ({...preference, ...changes})
+
+/** Shares the persisted focus-room display preferences across mounted consumers. */
 export const usePDisplayPreferences = (): PDisplayPreferencesController => {
-  const [dialogueComposerVisible, setDialogueComposerVisible] = createSignal<boolean>(
-    DEFAULT_P_DISPLAY_PREFERENCES.dialogueComposerVisible,
-  )
-  const [isReady, setIsReady] = createSignal(false)
-  let visibilityRevision = 0
+  const [storedPreference, setStoredPreference] = usePreference({
+    defaultValue: DEFAULT_P_DISPLAY_PREFERENCES,
+    key: DISPLAY_PREFERENCES_STORAGE_KEY,
+    parse: parsePDisplayPreferences,
+    storage: pDisplayPreferencesStorage,
+  })
+  const preference = () => storedPreference() ?? DEFAULT_P_DISPLAY_PREFERENCES
 
   const onDialogueComposerVisibleChange = (visible: boolean) => {
-    visibilityRevision += 1
-    setDialogueComposerVisible(visible)
-
-    if (isReady()) {
-      persist(visible)
-    }
+    setStoredPreference(updatePreference(preference(), {dialogueComposerVisible: visible}))
+  }
+  const onMemoryAssistVisibleChange = (visible: boolean) => {
+    setStoredPreference(updatePreference(preference(), {memoryAssistVisible: visible}))
+  }
+  const onFeatureRequestVisibleChange = (visible: boolean) => {
+    setStoredPreference(updatePreference(preference(), {featureRequestVisible: visible}))
+  }
+  const onPlayerVisibleChange = (visible: boolean) => {
+    setStoredPreference(updatePreference(preference(), {playerVisible: visible}))
+  }
+  const onPomodoroVisibleChange = (visible: boolean) => {
+    setStoredPreference(updatePreference(preference(), {pomodoroVisible: visible}))
+  }
+  const onToolsButtonVisibleChange = (visible: boolean) => {
+    setStoredPreference(updatePreference(preference(), {toolsButtonVisible: visible}))
+  }
+  const onTourButtonVisibleChange = (visible: boolean) => {
+    setStoredPreference(updatePreference(preference(), {tourButtonVisible: visible}))
   }
 
-  onMount(() => {
-    let active = true
-    const initialVisibilityRevision = visibilityRevision
-
-    readPDisplayPreferences()
-      .then((storedPreferences) => {
-        if (active && visibilityRevision === initialVisibilityRevision) {
-          setDialogueComposerVisible(storedPreferences.dialogueComposerVisible)
-        }
-      })
-      .catch(globalThis.reportError)
-      .finally(() => {
-        if (!active) {
-          return
-        }
-
-        const changedDuringRestore = visibilityRevision !== initialVisibilityRevision
-        setIsReady(true)
-
-        if (changedDuringRestore) {
-          persist(dialogueComposerVisible())
-        }
-      })
-
-    onCleanup(() => {
-      active = false
-    })
-  })
-
   return {
-    dialogueComposerVisible,
-    isReady,
+    dialogueComposerVisible: () => preference().dialogueComposerVisible,
+    featureRequestVisible: () => preference().featureRequestVisible,
+    isReady: () => storedPreference() !== null,
+    memoryAssistVisible: () => preference().memoryAssistVisible,
     onDialogueComposerVisibleChange,
+    onFeatureRequestVisibleChange,
+    onMemoryAssistVisibleChange,
+    onPlayerVisibleChange,
+    onPomodoroVisibleChange,
+    onToolsButtonVisibleChange,
+    onTourButtonVisibleChange,
+    playerVisible: () => preference().playerVisible,
+    pomodoroVisible: () => preference().pomodoroVisible,
+    toolsButtonVisible: () => preference().toolsButtonVisible,
+    tourButtonVisible: () => preference().tourButtonVisible,
   }
 }

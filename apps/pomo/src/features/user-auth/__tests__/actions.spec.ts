@@ -9,10 +9,12 @@ const sessionMocks = vi.hoisted(() => ({
   revokeTossLoginSession: vi.fn(),
 }))
 const webMocks = vi.hoisted(() => ({completeAccountLink: vi.fn()}))
+const calendarMocks = vi.hoisted(() => ({clearCalendarMonthCache: vi.fn()}))
 
 vi.mock('@solidjs/router', () => ({action: vi.fn((clientAction) => clientAction)}))
 vi.mock('../app-session', () => sessionMocks)
 vi.mock('../web-session', () => webMocks)
+vi.mock('../../calendar', () => calendarMocks)
 
 import {
   completeAccountLinkAction,
@@ -41,6 +43,7 @@ describe('session command actions', () => {
     await expect(completeAccountLinkAction('challenge')).resolves.toEqual({status: 'linked'})
 
     expect(sessionMocks.revokeTossLoginSession).toHaveBeenCalledWith('app-token')
+    expect(calendarMocks.clearCalendarMonthCache).toHaveBeenCalledOnce()
     expect(webMocks.completeAccountLink).toHaveBeenCalledWith('challenge')
   })
 
@@ -51,6 +54,7 @@ describe('session command actions', () => {
     await expect(revokeTossLoginSessionAction()).resolves.toEqual({
       status: 'cleanup-pending',
     })
+    expect(calendarMocks.clearCalendarMonthCache).toHaveBeenCalledOnce()
     await expect(completeAccountLinkAction('challenge')).resolves.toEqual({
       status: 'unavailable',
     })
@@ -64,6 +68,7 @@ describe('session command actions', () => {
     await expect(revokeTossLoginSessionAction()).resolves.toEqual({
       status: 'unavailable',
     })
+    expect(calendarMocks.clearCalendarMonthCache).not.toHaveBeenCalled()
   })
 
   it('should finish an already absent session without retaining a token input', async () => {
@@ -71,6 +76,7 @@ describe('session command actions', () => {
 
     await expect(revokeTossLoginSessionAction()).resolves.toEqual({status: 'signed-out'})
     expect(sessionMocks.revokeTossLoginSession).not.toHaveBeenCalled()
+    expect(calendarMocks.clearCalendarMonthCache).toHaveBeenCalledOnce()
   })
 })
 

@@ -1,4 +1,10 @@
+import {EditorSegmentedField, useEditorPortalMount} from '../../design-system'
+import {FileAction} from './FileAction'
+import {Popover} from '@kobalte/core/popover'
+import {Button} from '@kobalte/core/button'
+import {EditorHelp} from './EditorHelp'
 import {ToggleButton} from '@kobalte/core/toggle-button'
+import {createSignal, createUniqueId} from 'solid-js'
 
 import type {PlayerCanvasStatus} from '../PlayerCanvas'
 import type {EditorPanelVisibility} from './EditorPanelLayout'
@@ -21,8 +27,9 @@ export interface EditorToolbarProps {
   readonly panelVisibility?: EditorPanelVisibility
   readonly playerStatus: PlayerCanvasStatus
   readonly onExport: () => void
-  readonly onJsonImport: (file: File | undefined) => void
-  readonly onPngImport: (file: File | undefined) => void
+  readonly onFileImport: (file: File | undefined) => void
+  readonly onPsdReimport?: (file: File | undefined) => void
+  readonly onFileOpen: (file: File | undefined) => void
 }
 
 interface PanelVisibilityControlsProps {
@@ -36,113 +43,141 @@ const PanelVisibilityControls = (props: PanelVisibilityControlsProps) => (
       pressed={props.visibility?.leftOpen !== false}
       onClick={() => props.visibility?.onLeftToggle()}
     >
-      <svg aria-hidden="true" viewBox="0 0 16 16">
-        <rect height="12" rx="1.5" width="14" x="1" y="2" />
-        <path d="M5 2v12" />
-      </svg>
+      <span aria-hidden="true" class="puppet-icon puppet-icon-layout-sidebar" />
     </ToggleButton>
     <ToggleButton
       aria-label={props.visibility?.rightOpen === false ? '오른쪽 패널 열기' : '오른쪽 패널 닫기'}
       pressed={props.visibility?.rightOpen !== false}
       onClick={() => props.visibility?.onRightToggle()}
     >
-      <svg aria-hidden="true" viewBox="0 0 16 16">
-        <rect height="12" rx="1.5" width="14" x="1" y="2" />
-        <path d="M11 2v12" />
-      </svg>
+      <span aria-hidden="true" class="puppet-icon puppet-icon-layout-sidebar-right" />
     </ToggleButton>
     <ToggleButton
       aria-label={props.visibility?.bottomOpen === false ? '아래 프레임 열기' : '아래 프레임 닫기'}
       pressed={props.visibility?.bottomOpen !== false}
       onClick={() => props.visibility?.onBottomToggle()}
     >
-      <svg aria-hidden="true" viewBox="0 0 16 16">
-        <rect height="12" rx="1.5" width="14" x="1" y="2" />
-        <path d="M1 10h14" />
-      </svg>
+      <span aria-hidden="true" class="puppet-icon puppet-icon-layout-bottombar" />
     </ToggleButton>
   </div>
 )
 
+interface ToolbarMenuProps {
+  readonly canUndo?: boolean
+  readonly canRedo?: boolean
+  readonly historyUndoCount?: number
+  readonly historyRedoCount?: number
+  readonly onUndo?: () => void
+  readonly onRedo?: () => void
+  readonly onExport: () => void
+  readonly onFileImport: (file: File | undefined) => void
+  readonly onPsdReimport?: (file: File | undefined) => void
+  readonly onFileOpen: (file: File | undefined) => void
+}
+
+const ToolbarMenu = (props: ToolbarMenuProps) => {
+  const [menuOpen, setMenuOpen] = createSignal(false)
+  const portalMount = useEditorPortalMount()
+
+  return (
+    <Popover forceMount open={menuOpen()} onOpenChange={setMenuOpen}>
+      <Popover.Trigger aria-label="메인 메뉴" class="toolbar-menu-trigger" type="button">
+        <span aria-hidden="true" class="puppet-icon puppet-icon-menu-2" />
+      </Popover.Trigger>
+      <Popover.Portal mount={portalMount}>
+        <Popover.Content aria-label="파일 및 편집 작업" class="toolbar-menu-content">
+          <FileAction
+            label="가져오기"
+            description="기존 문서에 추가 · PNG, PSD, JSON"
+            onClose={() => setMenuOpen(false)}
+            onImport={props.onFileImport}
+          />
+          <FileAction
+            label="불러오기"
+            description="현재 문서 교체 · 실행 취소 가능"
+            onClose={() => setMenuOpen(false)}
+            onImport={props.onFileOpen}
+          />
+          <FileAction
+            label="PSD 재가져오기"
+            description="기존 리깅 유지 · 변경 내용 확인"
+            accept=".psd,image/vnd.adobe.photoshop"
+            onClose={() => setMenuOpen(false)}
+            onImport={props.onPsdReimport}
+          />
+          <hr />
+          <Button
+            type="button"
+            onClick={() => {
+              setMenuOpen(false)
+              props.onExport()
+            }}
+          >
+            JSON 내보내기
+          </Button>
+          <hr />
+          <Button
+            aria-description={`${props.historyUndoCount ?? 0}단계 되돌릴 수 있음 · ⌘Z / Ctrl+Z`}
+            aria-label="실행 취소"
+            disabled={props.canUndo !== true || props.onUndo === undefined}
+            type="button"
+            onClick={() => {
+              setMenuOpen(false)
+              props.onUndo?.()
+            }}
+          >
+            Undo
+          </Button>
+          <Button
+            aria-description={`${props.historyRedoCount ?? 0}단계 다시 실행할 수 있음 · ⇧⌘Z / Ctrl+Y`}
+            aria-label="다시 실행"
+            disabled={props.canRedo !== true || props.onRedo === undefined}
+            type="button"
+            onClick={() => {
+              setMenuOpen(false)
+              props.onRedo?.()
+            }}
+          >
+            Redo
+          </Button>
+          <hr />
+          <EditorHelp onOpen={() => setMenuOpen(false)} />
+        </Popover.Content>
+      </Popover.Portal>
+    </Popover>
+  )
+}
+
 export const EditorToolbar = (props: EditorToolbarProps) => (
   <header class="toolbar">
-    <div class="brand">
-      <span class="brand-mark" aria-hidden="true">
-        P
-      </span>
-      <div>
-        <strong>Puppet</strong>
-        <span>2D mesh editor</span>
-      </div>
-    </div>
-    <nav class="workspace-switcher" aria-label="편집 작업 공간">
-      <button
-        aria-pressed={props.activeWorkspace !== 'animation'}
-        type="button"
-        onClick={() => props.onWorkspaceChange?.('modeling')}
-      >
-        모델링
-      </button>
-      <button
-        aria-pressed={props.activeWorkspace === 'animation'}
-        type="button"
-        onClick={() => props.onWorkspaceChange?.('animation')}
-      >
-        애니메이션
-      </button>
-    </nav>
+    <ToolbarMenu
+      canUndo={props.canUndo}
+      canRedo={props.canRedo}
+      historyUndoCount={props.historyUndoCount}
+      historyRedoCount={props.historyRedoCount}
+      onUndo={props.onUndo}
+      onRedo={props.onRedo}
+      onExport={props.onExport}
+      onFileImport={props.onFileImport}
+      onPsdReimport={props.onPsdReimport}
+      onFileOpen={props.onFileOpen}
+    />
     <div class="toolbar-actions">
-      <div class="history-controls" aria-label="편집 이력">
-        <button
-          aria-description={`${props.historyUndoCount ?? 0}단계 되돌릴 수 있음 · ⌘Z / Ctrl+Z`}
-          aria-label="실행 취소"
-          disabled={props.canUndo !== true || props.onUndo === undefined}
-          type="button"
-          onClick={() => props.onUndo?.()}
-        >
-          Undo
-        </button>
-        <button
-          aria-description={`${props.historyRedoCount ?? 0}단계 다시 실행할 수 있음 · ⇧⌘Z / Ctrl+Y`}
-          aria-label="다시 실행"
-          disabled={props.canRedo !== true || props.onRedo === undefined}
-          type="button"
-          onClick={() => props.onRedo?.()}
-        >
-          Redo
-        </button>
-      </div>
-      <label class="toolbar-button primary">
-        PNG 불러오기
-        <input
-          accept="image/png,.png"
-          type="file"
-          onChange={(event) => {
-            const file = event.currentTarget.files?.[0]
-            event.currentTarget.value = ''
-            props.onPngImport(file)
-          }}
-        />
-      </label>
-      <label class="toolbar-button">
-        JSON 가져오기
-        <input
-          accept="application/json,.json"
-          type="file"
-          onChange={(event) => {
-            const file = event.currentTarget.files?.[0]
-            event.currentTarget.value = ''
-            props.onJsonImport(file)
-          }}
-        />
-      </label>
-      <button class="toolbar-button primary" type="button" onClick={() => props.onExport()}>
-        JSON 내보내기
-      </button>
       <div class="renderer-status" data-status={props.playerStatus}>
         <span class="status-dot" aria-hidden="true" />
         {STATUS_LABEL[props.playerStatus]}
       </div>
+
+      <EditorSegmentedField<'modeling' | 'animation'>
+        label="편집 작업 공간"
+        size="md"
+        value={props.activeWorkspace ?? 'modeling'}
+        options={[
+          {label: '모델링', value: 'modeling'},
+          {label: '애니메이션', value: 'animation'},
+        ]}
+        onChange={props.onWorkspaceChange}
+      />
       <PanelVisibilityControls visibility={props.panelVisibility} />
     </div>
   </header>

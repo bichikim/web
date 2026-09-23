@@ -1,20 +1,22 @@
+import {createSerialTaskQueue} from 'src/utils/create-serial-task-queue'
 import {
-  createSerialNativeStorageWriter,
+  createLatestStorageWriter,
   hasNativeStorageBridge,
-  readNativeStorageJson,
-  readWebStorageJson,
+  parseStorageJson,
+  readTossStorageJson,
+  writeTossStorageJson,
   writeWebStorageJson,
-} from '../runtime-storage'
+} from 'src/utils/runtime-storage'
 import {type MemoryMemo, parseMemoryMemos} from './schema'
 
 const STORAGE_KEY = 'pomo:memory-memos:v1'
 export const MEMORY_MEMOS_CHANGED_EVENT = 'pomo:memory-memos-changed'
 
 export interface MemoryMemoStorage {
-  readonly hasNative: () => boolean
-  readonly readNative: () => Promise<ReadonlyArray<MemoryMemo> | null>
+  readonly usesTossStorage: () => boolean
+  readonly readToss: () => Promise<ReadonlyArray<MemoryMemo> | null>
   readonly readWeb: () => ReadonlyArray<MemoryMemo> | null
-  readonly writeNative: (memos: ReadonlyArray<MemoryMemo>) => Promise<unknown | null>
+  readonly writeToss: (memos: ReadonlyArray<MemoryMemo>) => Promise<void>
   readonly writeWeb: (memos: ReadonlyArray<MemoryMemo>) => unknown | null
 }
 
@@ -23,36 +25,52 @@ export interface MemoryMemoRepository {
   readonly write: (memos: ReadonlyArray<MemoryMemo>) => Promise<void>
 }
 
-const runtimeNativeWriter = createSerialNativeStorageWriter()
+export interface MemoryMemosChangedEventDetail {
+  readonly memos: ReadonlyArray<MemoryMemo>
+  readonly revision: number
+}
 
-const runtimeStorage = {
-  hasNative: hasNativeStorageBridge,
-  readNative: () => readNativeStorageJson(STORAGE_KEY, parseMemoryMemos),
-  readWeb: () => readWebStorageJson(STORAGE_KEY, parseMemoryMemos),
-  writeNative: (memos) => runtimeNativeWriter.write(STORAGE_KEY, memos),
+const createRuntimeStorage = (): MemoryMemoStorage => ({
+  readToss: () => readTossStorageJson(STORAGE_KEY, parseMemoryMemos),
+  readWeb: () => parseStorageJson(localStorage.getItem(STORAGE_KEY), parseMemoryMemos),
+  usesTossStorage: hasNativeStorageBridge,
+  writeToss: createLatestStorageWriter(STORAGE_KEY, writeTossStorageJson),
   writeWeb: (memos) => writeWebStorageJson(STORAGE_KEY, memos),
-} satisfies MemoryMemoStorage
+})
 
 export const createMemoryMemoRepository = (
-  storage: MemoryMemoStorage = runtimeStorage,
+  storage: MemoryMemoStorage = createRuntimeStorage(),
 ): MemoryMemoRepository => ({
   async read() {
-    if (!storage.hasNative()) {
+    if (!storage.usesTossStorage()) {
       return storage.readWeb() ?? []
     }
 
     try {
-      const nativeMemos = await storage.readNative()
+      const tossMemos = await storage.readToss()
 
-      if (nativeMemos !== null) {
-        storage.writeWeb(nativeMemos)
-        return nativeMemos
+      if (tossMemos !== null) {
+        const webError = storage.writeWeb(tossMemos)
+        if (webError !== null) {
+          throw webError
+        }
+
+        return tossMemos
       }
+
+      const webMemos = storage.readWeb()
+      if (webMemos !== null) {
+        await storage.writeToss(webMemos).catch((error: unknown) => {
+          globalThis.reportError?.(error)
+        })
+        return webMemos
+      }
+
+      storage.writeWeb([])
     } catch (error) {
       throw new Error('Failed to read memory memos.', {cause: error})
     }
 
-    storage.writeWeb([])
     return []
   },
   async write(memos) {
@@ -63,44 +81,59 @@ export const createMemoryMemoRepository = (
     }
 
     const webError = storage.writeWeb(snapshot)
+    if (webError !== null) {
+      throw new Error('Failed to persist memory memos.', {cause: webError})
+    }
 
-    if (!storage.hasNative()) {
-      if (webError !== null) {
-        throw new Error('Failed to persist memory memos.', {cause: webError})
-      }
-
+    if (!storage.usesTossStorage()) {
       return
     }
 
-    const nativeError = await storage.writeNative(snapshot)
-
-    if (nativeError !== null) {
-      throw new Error('Failed to persist memory memos.', {cause: nativeError})
+    try {
+      await storage.writeToss(snapshot)
+    } catch (error) {
+      throw new Error('Failed to persist memory memos.', {cause: error})
     }
   },
 })
 
-const runtimeRepository = createMemoryMemoRepository()
-let updateQueue = Promise.resolve<ReadonlyArray<MemoryMemo>>([])
-
-export const readMemoryMemos = () => runtimeRepository.read()
-
-export const writeMemoryMemos = async (memos: ReadonlyArray<MemoryMemo>) => {
-  await runtimeRepository.write(memos)
-  window.dispatchEvent(new CustomEvent(MEMORY_MEMOS_CHANGED_EVENT, {detail: memos}))
+export interface MemoryMemoStore extends MemoryMemoRepository {
+  readonly update: (
+    update: (memos: ReadonlyArray<MemoryMemo>) => ReadonlyArray<MemoryMemo>,
+  ) => Promise<ReadonlyArray<MemoryMemo>>
 }
 
+/** Owns serialized memo updates and successful-write notifications for one persistence boundary. */
+export const createMemoryMemoStore = (
+  storage: MemoryMemoStorage,
+  notify: (detail: MemoryMemosChangedEventDetail) => void,
+): MemoryMemoStore => {
+  const repository = createMemoryMemoRepository(storage)
+  const queue = createSerialTaskQueue()
+  let revision = 0
+  const persist = async (memos: ReadonlyArray<MemoryMemo>) => {
+    await repository.write(memos)
+    revision += 1
+    notify({memos, revision})
+  }
+  return {
+    read: () => queue.run(repository.read),
+    update: (update) =>
+      queue.run(async () => {
+        const memos = update(await repository.read())
+        await persist(memos)
+        return memos
+      }),
+    write: (memos) => queue.run(() => persist(memos)),
+  }
+}
+
+const runtimeStore = createMemoryMemoStore(createRuntimeStorage(), (detail) => {
+  globalThis.dispatchEvent(new CustomEvent(MEMORY_MEMOS_CHANGED_EVENT, {detail}))
+})
+
+export const readMemoryMemos = () => runtimeStore.read()
+export const writeMemoryMemos = (memos: ReadonlyArray<MemoryMemo>) => runtimeStore.write(memos)
 export const updateMemoryMemos = (
   update: (memos: ReadonlyArray<MemoryMemo>) => ReadonlyArray<MemoryMemo>,
-) => {
-  const pendingUpdate = updateQueue
-    .catch(() => [])
-    .then(async () => {
-      const currentMemos = await runtimeRepository.read()
-      const nextMemos = update(currentMemos)
-      await writeMemoryMemos(nextMemos)
-      return nextMemos
-    })
-  updateQueue = pendingUpdate
-  return pendingUpdate
-}
+) => runtimeStore.update(update)

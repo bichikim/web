@@ -1,10 +1,13 @@
 import type {
   markGenerationSubmissionUnknown,
   markGenerationSubmitted,
-} from './generation-repository'
+} from '../repositories/history-generation'
+import {getSubmissionRecoveryDeadline} from './submission-recovery-policy'
 
 type MarkGenerationSubmitted = typeof markGenerationSubmitted
 type MarkGenerationSubmissionUnknown = typeof markGenerationSubmissionUnknown
+
+const ACCEPTED_SUBMISSION_PERSISTENCE_ERROR = 'Failed to persist the accepted OpenAI response ID'
 
 interface PersistUnknownGenerationSubmissionOptions {
   readonly errorMessage: string
@@ -43,8 +46,48 @@ export const persistGenerationSubmission = async (
 ): Promise<void> => {
   await persistWithRetry(
     () => markSubmitted(runId, submissionKey, responseId),
-    'Failed to persist the accepted OpenAI response ID',
+    ACCEPTED_SUBMISSION_PERSISTENCE_ERROR,
   )
+}
+
+interface PersistAcceptedGenerationSubmissionOptions {
+  readonly markSubmitted: MarkGenerationSubmitted
+  readonly markUnknown: MarkGenerationSubmissionUnknown
+  readonly now: () => Date
+  readonly responseId: string
+  readonly runId: string
+  readonly submissionKey: string
+}
+
+/** Records an accepted response as ambiguous when its response ID cannot be persisted. */
+export const persistAcceptedGenerationSubmission = async (
+  options: PersistAcceptedGenerationSubmissionOptions,
+): Promise<void> => {
+  try {
+    await persistGenerationSubmission(
+      options.runId,
+      options.submissionKey,
+      options.responseId,
+      options.markSubmitted,
+    )
+  } catch (persistenceError) {
+    try {
+      await persistUnknownGenerationSubmission({
+        errorMessage: ACCEPTED_SUBMISSION_PERSISTENCE_ERROR,
+        markUnknown: options.markUnknown,
+        runId: options.runId,
+        submissionExpiresAt: getSubmissionRecoveryDeadline(options.now()),
+        submissionKey: options.submissionKey,
+      })
+    } catch (ambiguityError) {
+      throw new AggregateError(
+        [persistenceError, ambiguityError],
+        'Failed to persist the accepted OpenAI response ID and its recovery state',
+      )
+    }
+
+    throw persistenceError
+  }
 }
 
 /** Persists an ambiguous submission deadline, retrying one transient database failure. */

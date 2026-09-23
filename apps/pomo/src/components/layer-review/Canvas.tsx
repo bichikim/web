@@ -1,9 +1,6 @@
 import {createEffect, createSignal, on, onCleanup, onMount, untrack} from 'solid-js'
 
-import {
-  PLayerReviewRenderer,
-  type PLayerReviewState,
-} from '../../features/focus-room-layer-review/scene-renderer'
+import {PLayerReviewRenderer, type PLayerReviewState} from 'src/features/focus-room-layer-review'
 import {getPSceneReviewLayer} from '../../features/focus-room-animation/scene-layer-catalog'
 import type {PSceneId} from '../../features/focus-room-animation/scene-catalog'
 
@@ -11,7 +8,7 @@ export interface PLayerReviewCanvasProps extends PLayerReviewState {
   readonly sceneId: PSceneId
 }
 
-export default function PLayerReviewCanvas(props: PLayerReviewCanvasProps) {
+export function PLayerReviewCanvas(props: PLayerReviewCanvasProps) {
   const [canvasHost, setCanvasHost] = createSignal<HTMLDivElement>()
   let renderer: PLayerReviewRenderer | null = null
 

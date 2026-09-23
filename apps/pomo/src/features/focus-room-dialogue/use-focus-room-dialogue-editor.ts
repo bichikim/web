@@ -1,4 +1,7 @@
-import {createMemo, createSignal, onCleanup, onMount, untrack} from 'solid-js'
+import * as m from '@paraglide/message'
+import {createEffect, createMemo, createSignal, on, onCleanup, untrack} from 'solid-js'
+import {isNonBlankString} from 'src/utils/is-non-blank-string'
+import {replaceBlobObjectUrl} from '../blob-object-url'
 
 import {
   createOpusBlob,
@@ -24,6 +27,7 @@ import {
   generateDialogueAudio,
   regenerateDialogueSegmentAudio,
 } from './dialogue-audio-runtime'
+import type {GeneratedDialogueAudio} from './generate-dialogue-audio'
 import {createPDialogueRepository} from './repository'
 import {DEFAULT_FOCUS_ROOM_DIALOGUE_LANGUAGE, type PDialogue} from './schema'
 import {analyzeDialogueSegmentMoods} from './segment-mood'
@@ -59,18 +63,13 @@ const getGenerationKey = (
   text: string,
 ) => `${language}\u0000${modelId}\u0000${voiceId}\u0000${text.trim()}`
 
-const revokeUrl = (url: string | null) => {
-  if (url !== null) {
-    URL.revokeObjectURL(url)
-  }
-}
-
 /** Owns the browser-only lifecycle for editing, generating and persisting a dialogue. */
 // oxlint-disable-next-line eslint/max-lines-per-function -- The editor hook owns one disposable model, audio URL and persistence lifecycle.
 export const usePDialogueEditor = (props: UsePDialogueEditorProps): PDialogueEditorController => {
   const initialDialogueId = untrack(props.dialogueId)
   const moodRuntime = untrack(() => props.moodRuntime ?? {createAnalyzer: createTextMoodAnalyzer})
-  const draftKey = getDialogueDraftKey(initialDialogueId)
+  let draftKey = getDialogueDraftKey(initialDialogueId)
+  let routeRevision = 0
   const repository = createPDialogueRepository()
   const [dialogueId, setDialogueId] = createSignal<string | null>(initialDialogueId)
   const [text, setText] = createSignal('')
@@ -97,10 +96,7 @@ export const usePDialogueEditor = (props: UsePDialogueEditorProps): PDialogueEdi
     setSegments,
   } = createDialogueEditorAudioState()
   const [state, setState] = createSignal<DialogueEditorState>({
-    message:
-      initialDialogueId === null
-        ? '대사를 입력한 뒤 음성 만들기를 눌러 주세요.'
-        : '대화를 불러오고 있어요.',
+    message: initialDialogueId === null ? m.dialogue_status_initial() : m.dialogue_status_loading(),
     status: initialDialogueId === null ? 'idle' : 'loading',
   })
   let audioBlob: Blob | null = null
@@ -124,7 +120,7 @@ export const usePDialogueEditor = (props: UsePDialogueEditorProps): PDialogueEdi
   const isBusy = createMemo(() => isDialogueEditorBusy(state()))
   const currentGenerationKey = () => getGenerationKey(language(), modelId(), voiceId(), text())
   const hasCurrentAudio = () => audioBlob !== null && generatedKey === currentGenerationKey()
-  const canGenerate = createMemo(() => !isBusy() && text().trim().length > 0)
+  const canGenerate = createMemo(() => !isBusy() && isNonBlankString(text()))
   const canRegenerateSegments = createMemo(
     () => !isBusy() && editableAudio() !== null && hasCurrentAudio(),
   )
@@ -143,9 +139,12 @@ export const usePDialogueEditor = (props: UsePDialogueEditorProps): PDialogueEdi
       return
     }
 
-    revokeUrl(audioUrl())
-    audioBlob = blob
-    setAudioUrl(blob === null ? null : URL.createObjectURL(blob))
+    setAudioUrl(
+      replaceBlobObjectUrl(audioUrl(), () => {
+        audioBlob = blob
+        return blob
+      }),
+    )
   }
   const clearGeneratedAudio = (message: string | null = null) => {
     replaceAudio(null)
@@ -160,29 +159,29 @@ export const usePDialogueEditor = (props: UsePDialogueEditorProps): PDialogueEdi
       setEditorState({message, status: 'idle'})
     }
   }
-  const loadDialogue = async (id: string) => {
+  const loadDialogue = async (id: string, isCurrent: () => boolean) => {
     try {
       const dialogue = await repository.getDialogue(id)
 
-      if (isDisposed) {
+      if (!isCurrent()) {
         return
       }
 
       if (dialogue === null) {
-        setEditorState({message: '저장된 대화를 찾을 수 없어요.', status: 'error'})
+        setEditorState({message: m.dialogue_status_not_found(), status: 'error'})
         return
       }
 
       const {audioKey: storedAudioKey, createdAt: storedCreatedAt} = dialogue
       const storedAudio = await repository.getAudio(storedAudioKey)
 
-      if (isDisposed) {
+      if (!isCurrent()) {
         return
       }
 
       if (storedAudio === null) {
         setEditorState({
-          message: '저장된 음성 파일을 찾을 수 없어요. 음성을 다시 만들어 주세요.',
+          message: m.dialogue_status_audio_missing(),
           status: 'error',
         })
         setText(dialogue.text)
@@ -207,43 +206,63 @@ export const usePDialogueEditor = (props: UsePDialogueEditorProps): PDialogueEdi
         dialogue.voiceId,
         dialogue.text,
       )
-      setEditorState({message: '저장된 대화를 불러왔어요.', status: 'idle'})
+      setEditorState({message: m.dialogue_status_loaded(), status: 'idle'})
     } catch (error: unknown) {
-      if (isDisposed) {
+      if (!isCurrent()) {
         return
       }
 
       console.error('Failed to load focus room dialogue.', error)
-      setEditorState({message: '대화를 불러오지 못했어요.', status: 'error'})
+      setEditorState({message: m.dialogue_status_load_failed(), status: 'error'})
     }
   }
 
-  onMount(() => {
-    const draft = readDialogueDraft(draftKey)
+  createEffect(
+    on(props.dialogueId, (selectedId) => {
+      routeRevision += 1
+      const revision = routeRevision
+      const isCurrent = () => !isDisposed && revision === routeRevision
+      onCleanup(() => {
+        routeRevision += 1
+        modelSession.invalidate()
+        moodAnalyzer?.dispose()
+        moodAnalyzer = null
+      })
+      draftKey = getDialogueDraftKey(selectedId)
+      const draft = selectedId === null ? readDialogueDraft(draftKey) : null
+      setDialogueId(selectedId)
+      createdAt = null
+      clearGeneratedAudio()
+      setRegeneratingSegmentIndex(null)
+      setText('')
+      setLanguageSignal(DEFAULT_FOCUS_ROOM_DIALOGUE_LANGUAGE)
+      setModelIdSignal(DEFAULT_MODEL_ID)
+      setVoiceIdSignal(DEFAULT_VOICE_ID)
+      setEditorState({
+        message: selectedId === null ? m.dialogue_status_initial() : m.dialogue_status_loading(),
+        status: selectedId === null ? 'idle' : 'loading',
+      })
 
-    if (initialDialogueId === null) {
-      if (draft !== null) {
-        setText(draft)
+      if (selectedId === null) {
+        setText(draft ?? '')
+        return
       }
 
-      return
-    }
-
-    loadDialogue(initialDialogueId)
-      .then(() => {
-        if (isDisposed) {
-          return
-        }
-
-        if (draft !== null && draft !== text()) {
-          setText(draft)
-          clearGeneratedAudio()
-        }
-      })
-      .catch((error: unknown) => {
-        console.error('Unexpected dialogue loading failure.', error)
-      })
-  })
+      loadDialogue(selectedId, isCurrent)
+        .then(() => {
+          const latestDraft = isCurrent() ? readDialogueDraft(draftKey) : null
+          if (latestDraft !== null && latestDraft !== text()) {
+            setText(latestDraft)
+            clearGeneratedAudio()
+          }
+        })
+        .catch((error: unknown) => {
+          if (isCurrent()) {
+            console.error('Unexpected dialogue loading failure.', error)
+          }
+        })
+    }),
+  )
 
   onCleanup(() => {
     isDisposed = true
@@ -252,17 +271,17 @@ export const usePDialogueEditor = (props: UsePDialogueEditorProps): PDialogueEdi
     moodAnalyzer?.dispose()
     moodAnalyzer = null
     repository.dispose()
-    revokeUrl(audioUrl())
+    replaceBlobObjectUrl(audioUrl(), () => null)
   })
 
   const requestDialogueAudio = async (request: DialogueAudioRequest) => {
-    setEditorState({message: '첫 번째 음성 구간을 만들고 있어요.', status: 'generating'})
+    setEditorState({message: m.dialogue_status_generating_first(), status: 'generating'})
     const generated = await generateDialogueAudio({
       ...request,
       onChunk: (completed, total) => {
         if (modelSession.isCurrent(request.client)) {
           setEditorState({
-            message: `${completed}/${total} 음성 구간을 만들었어요.`,
+            message: m.dialogue_status_generated_chunk({completed, total}),
             status: 'generating',
           })
         }
@@ -281,11 +300,33 @@ export const usePDialogueEditor = (props: UsePDialogueEditorProps): PDialogueEdi
     return generated.value
   }
 
+  const commitGeneratedDialogueAudio = async (
+    audio: GeneratedDialogueAudio,
+    selectedModelId: SupertonicModelId,
+    getKey: () => string,
+    revision: number,
+  ): Promise<boolean> => {
+    const preview = await createDialogueAudioPreview(audio, selectedModelId)
+    if (isDisposed || revision !== routeRevision) {
+      return false
+    }
+    replaceAudio(preview)
+    setEditableAudio(audio)
+    setSegments(audio.segments)
+    setDurationMs(audio.durationMs)
+    audioKey = crypto.randomUUID()
+    audioNeedsWrite = true
+    generatedKey = getKey()
+    return true
+  }
+
+  // oxlint-disable-next-line eslint/max-statements -- Each async stage must reject results from a previous route.
   const generate = async () => {
     if (!canGenerate()) {
       return
     }
 
+    const revision = routeRevision
     const selectedModelId = modelId()
     const selectedLanguage = language()
     const sourceText = text().trim()
@@ -313,30 +354,34 @@ export const usePDialogueEditor = (props: UsePDialogueEditorProps): PDialogueEdi
     }
 
     try {
-      replaceAudio(await createDialogueAudioPreview(generatedAudio, selectedModelId))
-      setEditableAudio(generatedAudio)
-      setSegments(generatedAudio.segments)
-      setDurationMs(generatedAudio.durationMs)
-      audioKey = crypto.randomUUID()
-      audioNeedsWrite = true
-      generatedKey = getGenerationKey(
-        selectedLanguage,
-        selectedModelId,
-        selectedVoiceId,
-        sourceText,
-      )
+      if (
+        !(await commitGeneratedDialogueAudio(
+          generatedAudio,
+          selectedModelId,
+          () => getGenerationKey(selectedLanguage, selectedModelId, selectedVoiceId, sourceText),
+          revision,
+        ))
+      ) {
+        return
+      }
     } catch (error: unknown) {
+      if (isDisposed || revision !== routeRevision) {
+        return
+      }
       console.error('Failed to prepare generated focus room dialogue audio.', error)
       clearGeneratedAudio()
-      setEditorState({message: '생성된 음성을 준비하지 못했어요.', status: 'error'})
+      setEditorState({message: m.dialogue_status_prepare_audio_failed(), status: 'error'})
       return
     }
 
     try {
       moodAnalyzer ??= moodRuntime.createAnalyzer({
         onProgress: (nextProgress) => {
+          if (isDisposed || revision !== routeRevision) {
+            return
+          }
           setEditorState({
-            message: `감정 분석 모델 준비 중 · ${nextProgress}%`,
+            message: m.dialogue_status_mood_preparing({progress: nextProgress}),
             status: 'analyzing',
           })
         },
@@ -347,8 +392,11 @@ export const usePDialogueEditor = (props: UsePDialogueEditorProps): PDialogueEdi
           console.warn(`Failed to analyze dialogue segment ${segment.index}.`, error)
         },
         onProgress: (current, total) => {
+          if (isDisposed || revision !== routeRevision) {
+            return
+          }
           setEditorState({
-            message: `${current}/${total} 문장의 감정을 분석하고 있어요.`,
+            message: m.dialogue_status_mood_analyzing({current, total}),
             status: 'analyzing',
           })
         },
@@ -361,17 +409,21 @@ export const usePDialogueEditor = (props: UsePDialogueEditorProps): PDialogueEdi
 
       setSegments(analyzedSegments)
       setEditableAudio({...generatedAudio, segments: analyzedSegments})
-      setEditorState({message: '음성과 문장별 감정 분석을 마쳤어요.', status: 'ready'})
+      setEditorState({message: m.dialogue_status_mood_complete(), status: 'ready'})
     } catch (error: unknown) {
+      if (isDisposed || revision !== routeRevision) {
+        return
+      }
       console.warn('Failed to analyze focus room dialogue mood.', error)
       setEditorState({
-        message: '음성은 만들었지만 일부 감정은 분석하지 못했어요.',
+        message: m.dialogue_status_mood_partial(),
         status: 'ready',
       })
     }
   }
 
   const regenerateSegment = async (position: number) => {
+    const revision = routeRevision
     const currentAudio = editableAudio()
     const currentClient = modelSession.getClient()
 
@@ -381,7 +433,7 @@ export const usePDialogueEditor = (props: UsePDialogueEditorProps): PDialogueEdi
 
     setRegeneratingSegmentIndex(position)
     setEditorState({
-      message: `${position + 1}번 말풍선 음성을 다시 만들고 있어요.`,
+      message: m.dialogue_status_regenerating_segment({number: position + 1}),
       status: 'generating',
     })
     const regenerated = await regenerateDialogueSegmentAudio({
@@ -406,17 +458,21 @@ export const usePDialogueEditor = (props: UsePDialogueEditorProps): PDialogueEdi
 
     try {
       const nextAudio = regenerated.value
-      replaceAudio(await createDialogueAudioPreview(nextAudio, modelId()))
-      setEditableAudio(nextAudio)
-      setSegments(nextAudio.segments)
-      setDurationMs(nextAudio.durationMs)
-      audioKey = crypto.randomUUID()
-      audioNeedsWrite = true
-      generatedKey = currentGenerationKey()
-      setEditorState({message: `${position + 1}번 말풍선 음성을 다시 만들었어요.`, status: 'ready'})
+      if (
+        !(await commitGeneratedDialogueAudio(nextAudio, modelId(), currentGenerationKey, revision))
+      ) {
+        return
+      }
+      setEditorState({
+        message: m.dialogue_status_regenerated_segment({number: position + 1}),
+        status: 'ready',
+      })
     } catch (error: unknown) {
+      if (isDisposed || revision !== routeRevision) {
+        return
+      }
       console.error('Failed to prepare regenerated dialogue audio.', error)
-      setEditorState({message: '다시 만든 음성을 준비하지 못했어요.', status: 'error'})
+      setEditorState({message: m.dialogue_status_regenerate_audio_failed(), status: 'error'})
     }
   }
 
@@ -425,7 +481,9 @@ export const usePDialogueEditor = (props: UsePDialogueEditorProps): PDialogueEdi
       return null
     }
 
-    setEditorState({message: '대화를 기기에 저장하고 있어요.', status: 'saving'})
+    const revision = routeRevision
+    const savedDraftKey = draftKey
+    setEditorState({message: m.dialogue_status_saving(), status: 'saving'})
     const now = new Date().toISOString()
     const id = dialogueId() ?? crypto.randomUUID()
     const dialogueCreatedAt = createdAt ?? now
@@ -455,23 +513,23 @@ export const usePDialogueEditor = (props: UsePDialogueEditorProps): PDialogueEdi
           : undefined
       await repository.saveDialogue({audio: storedAudio, dialogue})
 
-      if (isDisposed) {
+      if (isDisposed || revision !== routeRevision) {
         return null
       }
 
       audioNeedsWrite = false
       createdAt = dialogueCreatedAt
       setDialogueId(id)
-      deleteDialogueDraft(draftKey)
-      setEditorState({message: '대화를 저장했어요.', status: 'ready'})
+      deleteDialogueDraft(savedDraftKey)
+      setEditorState({message: m.dialogue_status_saved(), status: 'ready'})
       return id
     } catch (error: unknown) {
-      if (isDisposed) {
+      if (isDisposed || revision !== routeRevision) {
         return null
       }
 
       console.error('Failed to save focus room dialogue.', error)
-      setEditorState({message: '대화를 저장하지 못했어요.', status: 'error'})
+      setEditorState({message: m.dialogue_status_save_failed(), status: 'error'})
       return null
     }
   }
@@ -483,18 +541,18 @@ export const usePDialogueEditor = (props: UsePDialogueEditorProps): PDialogueEdi
 
     modelSession.invalidate()
     setModelIdSignal(nextModelId)
-    clearGeneratedAudio('음성 만들기를 누르면 선택한 모델을 자동으로 준비해요.')
+    clearGeneratedAudio(m.dialogue_status_prepare_selected_model())
   }
   const setVoiceId = (nextVoiceId: SupertonicVoiceId) => {
     if (nextVoiceId !== voiceId()) {
       setVoiceIdSignal(nextVoiceId)
-      clearGeneratedAudio('선택한 목소리로 음성을 만들어 주세요.')
+      clearGeneratedAudio(m.dialogue_status_select_voice())
     }
   }
   const setLanguage = (nextLanguage: SupertonicLanguage) => {
     if (nextLanguage !== language()) {
       setLanguageSignal(nextLanguage)
-      clearGeneratedAudio('선택한 언어로 음성을 만들어 주세요.')
+      clearGeneratedAudio(m.dialogue_status_select_language())
     }
   }
 
@@ -518,7 +576,7 @@ export const usePDialogueEditor = (props: UsePDialogueEditorProps): PDialogueEdi
     setText: (nextText) => {
       setText(nextText)
       writeDialogueDraft(draftKey, nextText)
-      clearGeneratedAudio('입력한 대사로 음성을 만들어 주세요.')
+      clearGeneratedAudio(m.dialogue_status_enter_script())
     },
     setVoiceId,
     state,

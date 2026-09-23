@@ -1,10 +1,11 @@
+import {PTooltipProvider} from '../tooltip'
 import {render} from '@solidjs/testing-library'
 import {vi} from 'vitest'
 
 import type {PSceneStyle} from '../../features/focus-room-animation'
 import type {PTrack} from '../../features/focus-room-audio'
-import type {PAlbumLibraryProps} from '../PAlbumLibrary'
-import {MusicPlayerView} from '../MusicPlayerView'
+import {MusicPlayerView} from '../music-player-view/MusicPlayerView'
+import type {PAlbumLibraryProps} from '../p-album-library/PAlbumLibrary'
 
 vi.mock('media-chrome', () => ({}))
 
@@ -24,18 +25,23 @@ const albumLibraryMocks = vi.hoisted(() => ({
 export const getAddedAlbumTracks = () => albumLibraryMocks.addedTracks
 export const getStopAlbumPreview = () => albumLibraryMocks.stopPreview
 
-vi.mock('../PAlbumLibrary', () => ({
+vi.mock('../p-album-library/PAlbumLibrary', () => ({
   PAlbumLibrary: (props: PAlbumLibraryProps) => (
     <>
       <button
         aria-label="앨범 추가"
+        class="relative grid size-10 shrink-0 place-items-center rounded-full"
         data-player-utility="album"
         onClick={() => props.onAddTracks(albumLibraryMocks.addedTracks)}
         type="button"
       >
         <span
           aria-hidden="true"
-          class={props.sceneStyle === 'scribble' ? 'i-pomo-scribble:album' : 'i-tabler-album'}
+          class={
+            props.sceneStyle === 'scribble'
+              ? 'i-pomo-scribble:album size-6 flex-none'
+              : 'i-tabler-album size-6 flex-none'
+          }
         />
       </button>
       <button data-testid="album-clear" onClick={() => props.onClearTracks?.()} type="button">
@@ -69,37 +75,47 @@ const TRACKS = [
 ] as const
 
 interface RenderMusicPlayerViewOptions {
+  readonly backdropBlur?: boolean
+  readonly canNavigateNextTrack?: boolean
+  readonly canNavigatePreviousTrack?: boolean
   readonly currentTrack?: PTrack | null
   readonly expanded?: boolean
   readonly isPlaying?: boolean
+  readonly isPlaylistLoading?: boolean
   readonly levels?: readonly number[]
   readonly onAlbumAdd?: (tracks: readonly PTrack[]) => void
   readonly onAlbumClear?: () => void
-  readonly onAudioElement?: (element: HTMLAudioElement) => void
   readonly onExpandedChange?: () => void
   readonly onNextTrack?: () => void
+  readonly onPause?: () => void
   readonly onPreviewEnd?: () => void
   readonly onPreviewStart?: (stopPreview: () => void) => void
   readonly onPreviousTrack?: () => void
   readonly onRepeatModeChange?: (mode: 'repeat-all' | 'repeat-one') => void
   readonly onShuffleChange?: () => void
   readonly onTrackSelect?: (index: number) => void
+  readonly isPreparing?: boolean
   readonly sceneStyle?: PSceneStyle
 }
 
-export const renderMusicPlayerView = (options: RenderMusicPlayerViewOptions = {}) =>
-  render(() => (
+export const renderMusicPlayerView = (options: RenderMusicPlayerViewOptions = {}) => {
+  const PlayerView = () => (
     <MusicPlayerView
+      canNavigateNextTrack={options.canNavigateNextTrack ?? true}
+      canNavigatePreviousTrack={options.canNavigatePreviousTrack ?? true}
       currentIndex={0}
       currentTrack={options.currentTrack === null ? undefined : (options.currentTrack ?? TRACKS[0])}
+      backdropBlur={options.backdropBlur}
       expanded={options.expanded ?? true}
+      isPreparing={options.isPreparing ?? false}
       isPlaying={options.isPlaying ?? false}
+      isPlaylistLoading={options.isPlaylistLoading ?? false}
       levels={options.levels ?? []}
-      onAudioElement={options.onAudioElement ?? vi.fn()}
       onAlbumAdd={options.onAlbumAdd}
       onAlbumClear={options.onAlbumClear}
       onExpandedChange={options.onExpandedChange ?? vi.fn()}
       onNextTrack={options.onNextTrack ?? vi.fn()}
+      onPause={options.onPause}
       onPreviewEnd={options.onPreviewEnd}
       onPreviewStart={options.onPreviewStart}
       onPreviousTrack={options.onPreviousTrack ?? vi.fn()}
@@ -111,11 +127,38 @@ export const renderMusicPlayerView = (options: RenderMusicPlayerViewOptions = {}
       shuffleEnabled={true}
       tracks={TRACKS}
     />
+  )
+
+  return render(() => (
+    <PTooltipProvider>
+      <PlayerView />
+    </PTooltipProvider>
   ))
+}
+
+export const getPlayerShell = (container: HTMLElement) => {
+  const shell = getPlayerFrame(container).firstElementChild
+
+  if (!(shell instanceof HTMLElement)) {
+    throw new TypeError('Expected the Pomo media controller to be rendered')
+  }
+
+  return shell
+}
+
+export const getPlayerFrame = (container: HTMLElement) => {
+  const frame = container.firstElementChild?.firstElementChild
+
+  if (!(frame instanceof HTMLElement)) {
+    throw new TypeError('Expected the Pomo player frame to be rendered')
+  }
+
+  return frame
+}
 
 export const getProgressRanges = (container: HTMLElement) => {
-  const collapsedRange = container.querySelector('.pomo-player__progress--collapsed')
-  const expandedRange = container.querySelector('.pomo-player__progress--expanded')
+  const ranges = container.querySelectorAll<HTMLElement>('media-time-range')
+  const [collapsedRange, expandedRange] = ranges
 
   if (!(collapsedRange instanceof HTMLElement) || !(expandedRange instanceof HTMLElement)) {
     throw new TypeError('Expected both Pomo progress ranges to be rendered')

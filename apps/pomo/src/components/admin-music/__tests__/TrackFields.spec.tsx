@@ -8,9 +8,10 @@ const metadataMocks = vi.hoisted(() => ({readTrackMetadata: vi.fn()}))
 
 vi.mock('../../../features/admin-music/track-metadata', () => metadataMocks)
 
-import TrackFields from '../TrackFields'
+import {TrackFields} from '../TrackFields'
 
 const renderFields = () => {
+  const [resetVersion, setResetVersion] = createSignal(0)
   const [artist, setArtist] = createSignal('직접 입력한 아티스트')
   const [title, setTitle] = createSignal('직접 입력한 제목')
   render(() => (
@@ -19,11 +20,12 @@ const renderFields = () => {
         artist={artist()}
         onArtistChange={setArtist}
         onTitleChange={setTitle}
-        resetVersion={0}
+        resetVersion={resetVersion()}
         title={title()}
       />
     </form>
   ))
+  return () => setResetVersion((value) => value + 1)
 }
 
 const getInput = (label: string | RegExp): HTMLInputElement =>
@@ -35,6 +37,36 @@ afterEach(() => {
 })
 
 describe('TrackFields', () => {
+  it('should keep the checkbox and metadata behavior aligned after a form reset', async () => {
+    metadataMocks.readTrackMetadata.mockResolvedValue({artist: '태그 아티스트', title: '태그 제목'})
+    renderFields()
+    const form = screen.getByRole('form', {name: '곡 폼'}) as HTMLFormElement
+    form.reset()
+    expect(screen.getByRole('checkbox')).toBeChecked()
+    fireEvent.click(screen.getByRole('checkbox'))
+    fireEvent.change(screen.getByLabelText(/^MP3 파일/u), {
+      target: {files: [new File(['mp3'], 'track.mp3', {type: 'audio/mpeg'})]},
+    })
+    expect(getInput('곡명')).toBeEnabled()
+    expect(metadataMocks.readTrackMetadata).not.toHaveBeenCalled()
+  })
+
+  it('should restore metadata behavior when a manually edited form is reset', async () => {
+    metadataMocks.readTrackMetadata.mockResolvedValue({artist: '태그 아티스트', title: '태그 제목'})
+    const reset = renderFields()
+    fireEvent.click(screen.getByRole('checkbox'))
+    expect(getInput('곡명')).toBeEnabled()
+    const form = screen.getByRole('form', {name: '곡 폼'}) as HTMLFormElement
+    form.reset()
+    reset()
+    expect(screen.getByRole('checkbox')).toBeChecked()
+    expect(getInput('곡명')).toBeDisabled()
+    fireEvent.change(screen.getByLabelText(/^MP3 파일/u), {
+      target: {files: [new File(['mp3'], 'track.mp3', {type: 'audio/mpeg'})]},
+    })
+    await waitFor(() => expect(getInput('곡명').value).toBe('태그 제목'))
+  })
+
   it('should update manually entered title and artist values', () => {
     renderFields()
     fireEvent.click(screen.getByLabelText('MP3 정보로 제목·아티스트 채우기'))
@@ -44,6 +76,9 @@ describe('TrackFields', () => {
 
     expect(getInput('곡명').value).toBe('새 제목')
     expect(getInput('아티스트').value).toBe('새 아티스트')
+    const form = new FormData(screen.getByRole('form', {name: '곡 폼'}) as HTMLFormElement)
+    expect(form.getAll('title')).toEqual(['새 제목'])
+    expect(form.getAll('artist')).toEqual(['새 아티스트'])
   })
 
   it('should fill the title and artist from selected MP3 metadata by default', async () => {

@@ -4,7 +4,7 @@ import path from 'node:path'
 import {fileURLToPath, pathToFileURL} from 'node:url'
 import {loadEnv} from 'vite'
 
-import {resolvePublicOrigin} from '../../../vite/public-origin.ts'
+import {resolvePublicOrigin} from '../../vite/public-origin.ts'
 
 export const createDesktopBuildConfig = ({configuration, publicOrigin}) => {
   const connectSource = configuration?.app?.security?.csp?.['connect-src']

@@ -1,3 +1,4 @@
+/** @vitest-environment node */
 import {beforeEach, describe, expect, it, vi} from 'vitest'
 
 import type {
@@ -119,6 +120,18 @@ describe('text model download worker', () => {
     expect(runtimeMocks.create).toHaveBeenCalledTimes(2)
     expect(worker.postMessage).toHaveBeenNthCalledWith(1, {type: 'ready'})
     expect(worker.postMessage).toHaveBeenNthCalledWith(2, {type: 'ready'})
+  })
+
+  it('should reuse one executor when the same model is prepared again', async () => {
+    const worker = await loadWorker()
+
+    worker.dispatch({modelId: 'qwen-4b', type: 'prepare'})
+    await waitForResponse(worker, 'ready')
+    worker.dispatch({modelId: 'qwen-4b', type: 'prepare'})
+    await vi.waitFor(() => expect(worker.postMessage).toHaveBeenCalledTimes(2))
+
+    expect(runtimeMocks.create).toHaveBeenCalledOnce()
+    expect(runtimeMocks.prepare).toHaveBeenCalledTimes(2)
   })
 
   it.each([

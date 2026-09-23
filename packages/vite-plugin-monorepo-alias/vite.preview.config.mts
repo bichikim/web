@@ -1,5 +1,5 @@
 import {defineConfig} from 'vite'
-import {createAlias} from './src/resolve-id'
+import {createAlias} from './src/alias'
 import {fileURLToPath} from 'node:url'
 
 export default defineConfig({
@@ -8,6 +8,10 @@ export default defineConfig({
       entry: './src/index.ts',
       formats: ['es', 'cjs'],
       name: 'vite-plugin-monorepo-alias',
+    },
+    outDir: '.cache/preview',
+    rolldownOptions: {
+      external: ['node:path'],
     },
   },
   plugins: [

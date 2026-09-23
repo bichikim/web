@@ -3,7 +3,7 @@ import {type BackendFailedError, getErrorDetail, type SupertonicError} from './e
 import {getSupertonicModelFileUrl, type SupertonicModel, type SupertonicModelFile} from './model'
 import type {SupertonicBackend, SupertonicRuntime} from './runtime'
 import type {SupertonicSessions} from './engine'
-import {failureResult, type Result, successResult} from '../result'
+import {failureResult, type Result, successResult} from 'src/features/result'
 
 export interface LoadBufferOptions {
   readonly expectedSize: number

@@ -1,4 +1,5 @@
 import {type Accessor, createMemo, createSignal, onCleanup, untrack} from 'solid-js'
+import {isNonBlankString} from 'src/utils/is-non-blank-string'
 
 import {type ChatClient, createChatClient, type CreateChatClientOptions} from './client'
 import type {ChatAnswerDraft, ChatContext, ChatMessage, ChatWorkerResponse} from './messages'
@@ -76,6 +77,12 @@ export interface ChatController {
 
 export interface SendChatOptions {
   readonly refineAnswer?: boolean
+  readonly supplementaryContext?: string
+}
+
+interface PendingUser {
+  readonly draftRevision: number
+  readonly message: ChatMessage
 }
 
 const EMPTY_CONTEXT: ChatContext = {messages: [], summary: ''}
@@ -160,7 +167,13 @@ export const useChat = (props: UseChatProps): ChatController => {
   const [state, setState] = createSignal<ChatState>(
     runtime.supportsWebGpu() ? {status: 'idle'} : {status: 'unsupported'},
   )
-  let pendingUser: ChatMessage | null = null
+  let draftRevision = 0
+  let pendingUser: PendingUser | null = null
+
+  const updateDraft = (value: string) => {
+    draftRevision += 1
+    setDraft(value)
+  }
 
   const isBusy = createMemo(() => isChatBusy(state()))
   const isModelReady = createMemo(() => isChatModelReady(state()))
@@ -171,9 +184,26 @@ export const useChat = (props: UseChatProps): ChatController => {
       (currentState.status === 'error' && !currentState.modelReady)
     )
   })
-  const canSend = createMemo(() => isModelReady() && !isBusy() && draft().trim().length > 0)
+  const canSend = createMemo(() => isModelReady() && !isBusy() && isNonBlankString(draft()))
   const canClear = createMemo(() => !isBusy() && messages().length > 0)
   const statusMessage = createMemo(() => getStatusMessage(state(), modelId()))
+
+  const restorePendingUser = () => {
+    if (pendingUser === null) {
+      return
+    }
+
+    const failedUser = pendingUser
+    if (draftRevision === failedUser.draftRevision) {
+      setDraft(failedUser.message.content)
+    }
+    setMessages((value) => value.filter((message) => message.id !== failedUser.message.id))
+    setContext((value) => ({
+      ...value,
+      messages: value.messages.filter((message) => message.id !== failedUser.message.id),
+    }))
+    pendingUser = null
+  }
 
   const handleResponse = (response: ChatWorkerResponse) => {
     switch (response.type) {
@@ -185,6 +215,7 @@ export const useChat = (props: UseChatProps): ChatController => {
         setContextTokens(response.contextTokens)
         setMessages((value) => [...value, response.message])
         setStreamingText('')
+        setAnswerDraft(null)
         setSummaryCount((value) => value + (response.wasCompacted ? 1 : 0))
         pendingUser = null
         setState({status: 'ready'})
@@ -195,16 +226,7 @@ export const useChat = (props: UseChatProps): ChatController => {
       case 'error': {
         const modelReady = !response.restartRequired && isModelReady()
 
-        if (pendingUser !== null) {
-          const failedUser = pendingUser
-          setDraft(failedUser.content)
-          setMessages((value) => value.filter((message) => message.id !== failedUser.id))
-          setContext((value) => ({
-            ...value,
-            messages: value.messages.filter((message) => message.id !== failedUser.id),
-          }))
-          pendingUser = null
-        }
+        restorePendingUser()
         if (response.restartRequired) {
           clientOwner.dispose()
         }
@@ -259,7 +281,11 @@ export const useChat = (props: UseChatProps): ChatController => {
     }
 
     setState({percentage: 0, status: 'loading'})
-    clientOwner.get().prepare()
+    try {
+      clientOwner.get().prepare()
+    } catch {
+      setState({status: 'idle'})
+    }
   }
 
   const send = (options: SendChatOptions = {}) => {
@@ -273,16 +299,24 @@ export const useChat = (props: UseChatProps): ChatController => {
       role: 'user',
     }
     const nextContext = {...context(), messages: [...context().messages, userMessage]}
-    pendingUser = userMessage
+    pendingUser = {draftRevision, message: userMessage}
     setMessages((value) => [...value, userMessage])
     setContext(nextContext)
     setDraft('')
     setAnswerDraft(null)
     setStreamingText('')
     setState({status: 'generating'})
-    clientOwner.get().generate(nextContext, runtime.createId(), {
-      refineAnswer: options.refineAnswer ?? true,
-    })
+    try {
+      clientOwner.get().generate(nextContext, runtime.createId(), {
+        refineAnswer: options.refineAnswer ?? true,
+        ...(options.supplementaryContext === undefined
+          ? {}
+          : {supplementaryContext: options.supplementaryContext}),
+      })
+    } catch {
+      restorePendingUser()
+      setState({status: 'ready'})
+    }
   }
 
   const clear = () => {
@@ -315,7 +349,7 @@ export const useChat = (props: UseChatProps): ChatController => {
     prepare,
     selectModel,
     send,
-    setDraft,
+    setDraft: updateDraft,
     state,
     statusMessage,
     streamingText,

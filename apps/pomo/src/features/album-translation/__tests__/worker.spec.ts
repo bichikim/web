@@ -1,3 +1,4 @@
+/** @vitest-environment node */
 import {beforeEach, describe, expect, it, vi} from 'vitest'
 
 import type {AlbumTranslationWorkerRequest, AlbumTranslationWorkerResponse} from '../messages'
@@ -22,6 +23,9 @@ vi.mock('@huggingface/transformers', () => ({
   AutoProcessor: {from_pretrained: transformers.processorFromPretrained},
   env: {},
   Gemma4ForCausalLM: {from_pretrained: transformers.gemmaModelFromPretrained},
+  InterruptableStoppingCriteria: class {
+    interrupt() {}
+  },
   Qwen3_5ForCausalLM: {from_pretrained: vi.fn()},
   TextStreamer: class {
     readonly emit: (text: string) => void
@@ -91,6 +95,54 @@ beforeEach(() => {
 })
 
 describe('album translation worker', () => {
+  it('should ignore a concurrent translate request while one is in flight', async () => {
+    const firstGeneration = Promise.withResolvers<void>()
+    transformers.generate.mockImplementationOnce(async (options: MockGenerateOptions) => {
+      await firstGeneration.promise
+      options.streamer.emit(
+        '{"en":{"title":"First","description":"A"},' +
+          '"ja":{"title":"一","description":"あ"},' +
+          '"zh-Hans":{"title":"一","description":"一"}}',
+      )
+    })
+    const worker = await loadWorker()
+
+    worker.dispatch({description: '첫 번째', title: '첫 번째', type: 'translate'})
+    await vi.waitFor(() => expect(transformers.generate).toHaveBeenCalledOnce())
+
+    worker.dispatch({description: '두 번째', title: '두 번째', type: 'translate'})
+    firstGeneration.resolve()
+
+    await vi.waitFor(() => {
+      expect(
+        worker.postMessage.mock.calls.filter(([response]) => response.type === 'complete'),
+      ).toHaveLength(1)
+    })
+    expect(transformers.generate).toHaveBeenCalledOnce()
+  })
+
+  it('should release the translation guard after a generation failure', async () => {
+    transformers.generate.mockRejectedValueOnce(new Error('첫 번역 실패'))
+    const worker = await loadWorker()
+
+    worker.dispatch({description: '첫 번째', title: '첫 번째', type: 'translate'})
+    await vi.waitFor(() => {
+      expect(worker.postMessage).toHaveBeenCalledWith({
+        message: '첫 번역 실패',
+        restartRequired: false,
+        type: 'error',
+      })
+    })
+
+    worker.dispatch({description: '두 번째', title: '두 번째', type: 'translate'})
+    await vi.waitFor(() => {
+      expect(
+        worker.postMessage.mock.calls.filter(([response]) => response.type === 'complete'),
+      ).toHaveLength(1)
+    })
+    expect(transformers.generate).toHaveBeenCalledTimes(2)
+  })
+
   it('should translate with the existing Gemma 4 model and return structured locales', async () => {
     const worker = await loadWorker()
 

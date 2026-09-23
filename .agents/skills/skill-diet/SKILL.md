@@ -14,6 +14,7 @@ Repeat until the next cut would change behavior:
 1. Name the skill's real job in one sentence.
 2. Keep in `SKILL.md` only: trigger wording, safety constraints, project-specific rules, resource routing, output contract, and one boundary example if needed.
 3. Delete the rest, or extract situational context behind a when-to-open link:
+   - Cross-skill duplication: read the skills this skill invokes and compare responsibilities and instructions for semantic overlap, including paraphrases and summaries. Remove instructions already owned by an invoked skill; keep only its invocation condition, a resolvable reference, and caller-specific constraints. Verify that the invoked skill is available and covers the removed behavior under that condition.
    - Delete: history, rationale, duplicated/non-decisive examples, long reference summaries, generic or aspirational advice.
    - Extract: long examples, pattern catalogs, deep references, edge-case tables.
 4. Re-read as a first-time reader. Linked files open only when their condition matches.
@@ -27,7 +28,7 @@ Repeat until the next cut would change behavior:
 
 ## Extract
 
-When content helps only some invocations, move it beside the skill (`rules/`, `examples/`, `references/`, or a named `.md`). In `SKILL.md`, leave only a one-line conditional link — e.g. `See ./rules/foo.md when …`. Do not summarize the extracted body. Links stay one level deep from `SKILL.md`.
+When content helps only some invocations, move it beside the skill (`rules/`, `examples/`, `references/`, or a named `.md`). In `SKILL.md`, leave only a one-line conditional link. Do not summarize the extracted body. Links stay one level deep from `SKILL.md`.
 
 ## Delete the skill
 

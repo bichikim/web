@@ -1,6 +1,12 @@
+import dayjs from 'dayjs'
+import utc from 'dayjs/plugin/utc'
+import timezone from 'dayjs/plugin/timezone'
 import type {IncomingMessage, ServerResponse} from 'node:http'
 
 import {DEV_FEED_QUOTES} from './quotes'
+
+dayjs.extend(utc)
+dayjs.extend(timezone)
 
 const FEED_INTERVAL_MINUTES = 5
 const FEED_HISTORY_SIZE = 12
@@ -9,7 +15,6 @@ const FEED_INTERVAL_MILLISECONDS = FEED_INTERVAL_MINUTES * MILLISECONDS_PER_MINU
 const RSS_PATH = '/__dev/feeds/rss.xml'
 const ATOM_PATH = '/__dev/feeds/atom.xml'
 const FEED_TITLE = 'Pomofi 개발 테스트 피드'
-const KOREA_TIME_ZONE = 'Asia/Seoul'
 
 interface DevFeedItem {
   readonly id: string
@@ -21,6 +26,7 @@ interface DevFeedDocumentOptions {
   readonly format: 'atom' | 'rss'
   readonly now: Date
   readonly origin: string
+  readonly timeZone?: string
 }
 
 interface MiddlewareCollection {
@@ -45,29 +51,18 @@ const escapeXml = (value: string) =>
     .replaceAll('"', '&quot;')
     .replaceAll("'", '&apos;')
 
-const getKoreaTimeLabel = (date: Date) => {
-  const parts = new Intl.DateTimeFormat('en-CA', {
-    day: 'numeric',
-    hour: '2-digit',
-    hourCycle: 'h23',
-    minute: '2-digit',
-    month: 'numeric',
-    timeZone: KOREA_TIME_ZONE,
-    year: 'numeric',
-  }).formatToParts(date)
-  const values = new Map(parts.map((part) => [part.type, part.value]))
-  const month = Number(values.get('month'))
-  const day = Number(values.get('day'))
-  const hour = Number(values.get('hour'))
-  const minute = Number(values.get('minute'))
+const getTimeLabel = (date: Date, timeZone: string) => {
+  const local = dayjs(date).tz(timeZone)
+  const hour = local.hour()
+  const minute = local.minute()
   const timeParts = [hour === 0 ? null : `${hour}시`, minute === 0 ? null : `${minute}분`]
     .filter((part) => part !== null)
     .join(' ')
-  const dateLabel = `${values.get('year')}년 ${month}월 ${day}일`
+  const dateLabel = local.format('YYYY[년] M[월] D[일]')
   return timeParts.length === 0 ? dateLabel : `${dateLabel} ${timeParts}`
 }
 
-const getFeedMessage = (publishedAt: Date) => {
+const getFeedMessage = (publishedAt: Date, timeZone: string) => {
   const sequence = Math.floor(publishedAt.getTime() / FEED_INTERVAL_MILLISECONDS)
   const quote = DEV_FEED_QUOTES.at(sequence % DEV_FEED_QUOTES.length)
 
@@ -75,22 +70,21 @@ const getFeedMessage = (publishedAt: Date) => {
     throw new Error('개발 피드 명언을 고르지 못했어요.')
   }
 
-  return `“${quote.text}” — ${quote.source} · ${getKoreaTimeLabel(publishedAt)}`
+  return `“${quote.text}” — ${quote.source} · ${getTimeLabel(publishedAt, timeZone)}`
 }
 
-const createFeedItems = (now: Date): ReadonlyArray<DevFeedItem> => {
+const createFeedItems = (now: Date, timeZone: string): ReadonlyArray<DevFeedItem> => {
   const latestTimestamp =
     Math.floor(now.getTime() / FEED_INTERVAL_MILLISECONDS) * FEED_INTERVAL_MILLISECONDS
 
   return Array.from({length: FEED_HISTORY_SIZE}, (_, index) => {
     const publishedAt = new Date(latestTimestamp - index * FEED_INTERVAL_MILLISECONDS)
     const id = publishedAt.toISOString()
-    return {id, message: getFeedMessage(publishedAt), publishedAt}
+    return {id, message: getFeedMessage(publishedAt, timeZone), publishedAt}
   })
 }
 
-const createRssDocument = (origin: string, items: ReadonlyArray<DevFeedItem>) => {
-  const feedUrl = `${origin}${RSS_PATH}`
+const createRssDocument = (origin: string, items: ReadonlyArray<DevFeedItem>, feedUrl: string) => {
   const itemXml = items
     .map(
       (item) => `    <item>
@@ -119,8 +113,7 @@ ${itemXml}
 `
 }
 
-const createAtomDocument = (origin: string, items: ReadonlyArray<DevFeedItem>) => {
-  const feedUrl = `${origin}${ATOM_PATH}`
+const createAtomDocument = (origin: string, items: ReadonlyArray<DevFeedItem>, feedUrl: string) => {
   const [latestItem] = items
 
   if (latestItem === undefined) {
@@ -154,10 +147,14 @@ ${entryXml}
 
 /** Creates a deterministic RSS or Atom snapshot whose newest item changes every five minutes. */
 export const createDevFeedDocument = (options: DevFeedDocumentOptions) => {
-  const items = createFeedItems(options.now)
+  const items = createFeedItems(options.now, options.timeZone ?? 'UTC')
+  const pathname = options.format === 'rss' ? RSS_PATH : ATOM_PATH
+  const search =
+    options.timeZone === undefined ? '' : `?${new URLSearchParams({timeZone: options.timeZone})}`
+  const feedUrl = `${options.origin}${pathname}${search}`
   return options.format === 'rss'
-    ? createRssDocument(options.origin, items)
-    : createAtomDocument(options.origin, items)
+    ? createRssDocument(options.origin, items, feedUrl)
+    : createAtomDocument(options.origin, items, feedUrl)
 }
 
 const getHeaderValue = (value: string | ReadonlyArray<string> | undefined) =>
@@ -182,10 +179,21 @@ const writeFeedResponse = (
     return
   }
 
+  const timeZone =
+    new URL(request.url ?? '/', getRequestOrigin(request)).searchParams.get('timeZone') ?? 'UTC'
+  try {
+    new Intl.DateTimeFormat('en', {timeZone}).resolvedOptions()
+  } catch {
+    response.statusCode = 400
+    response.setHeader('Cache-Control', 'no-store')
+    response.end()
+    return
+  }
   const document = createDevFeedDocument({
     format,
     now: new Date(),
     origin: getRequestOrigin(request),
+    timeZone,
   })
   response.statusCode = 200
   response.setHeader(

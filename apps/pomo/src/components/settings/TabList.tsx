@@ -1,5 +1,5 @@
 import * as m from '@paraglide/message'
-import {type PModalTabItem, PModalTabList} from '../PModalTabList'
+import {type PModalTabItem, PModalTabList} from '../p-modal-tab-list/PModalTabList'
 
 const getItems = () =>
   [
@@ -8,6 +8,7 @@ const getItems = () =>
       label: m.settings_tab_general(),
       value: 'general',
     },
+    {icon: 'i-tabler-photo', label: m.settings_tab_background(), value: 'background'},
     {icon: 'i-tabler-bolt', label: m.settings_tab_events(), value: 'events'},
     {icon: 'i-tabler-rss', label: m.settings_tab_feeds(), value: 'feeds'},
     {
@@ -23,7 +24,6 @@ const getItems = () =>
 export const PSettingsTabList = () => (
   <PModalTabList
     accessibleLabel={m.settings_category_label()}
-    class="pomo-settings__tabs"
     items={getItems()}
     scrollControls={{
       nextLabel: m.settings_next_tab(),

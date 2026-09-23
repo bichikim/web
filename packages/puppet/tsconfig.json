@@ -15,5 +15,5 @@
     "noEmit": true,
     "types": ["vite/client"]
   },
-  "include": ["src", "visual", "vite.config.ts", "vitest.browser.config.ts"]
+  "include": ["src", "visual", "uno.config.ts", "vite.config.ts", "vitest.browser.config.ts"]
 }

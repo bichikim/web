@@ -1,9 +1,10 @@
+import {FIELD_DESCRIPTION, FIELD_LABEL, FIELD_VALUE} from 'src/components/field-classes'
 import {Select} from '@kobalte/core/select'
 import {cva, cx} from 'class-variance-authority'
 import {Show} from 'solid-js'
 import {PSelectAppearance, PSelectOption} from './shared'
 
-const selectContentClasses = cva(
+const SELECT_CONTENT_CLASSES = cva(
   'max-h-[min(18rem,var(--kb-popper-available-height))] border border-solid border-border ' +
     'backdrop-blur-surface overflow-hidden rounded-4 bg-surface-strong p-2 text-foreground ' +
     'shadow-panel [transform-origin:var(--kb-select-content-transform-origin)] ' +
@@ -20,7 +21,7 @@ const selectContentClasses = cva(
   },
 )
 
-const selectTriggerClasses = cva(
+const SELECT_TRIGGER_CLASSES = cva(
   'border border-solid border-border backdrop-blur-surface group overflow-hidden rounded-control ' +
     'bg-surface text-foreground outline-none ' +
     'transition-[border-color_160ms_ease,background-color_160ms_ease] ' +
@@ -31,11 +32,11 @@ const selectTriggerClasses = cva(
     variants: {
       appearance: {
         default:
-          'flex h-control-md w-full min-w-0 max-w-full items-center justify-between gap-3 ' +
-          'px-4 text-sm font-650 leading-5',
+          'flex min-h-control-md box-border w-full min-w-0 max-w-full items-center justify-between gap-3 ' +
+          `px-4 py-2 ${FIELD_VALUE}`,
         detailed:
-          'flex h-control-md w-full min-w-0 max-w-full items-center justify-between gap-3 ' +
-          'px-4 text-sm font-650 leading-5',
+          'flex min-h-control-md box-border w-full min-w-0 max-w-full items-center justify-between gap-3 ' +
+          `px-4 py-2 ${FIELD_VALUE}`,
         icon:
           'grid size-control-md place-items-center text-highlight shadow-panel ' +
           'hover:bg-surface-interactive focus-visible:bg-surface-interactive ' +
@@ -64,7 +65,7 @@ export const PSelectParts = <TValue extends string>(props: PSelectPartsProps<TVa
   <>
     <Show when={!props.hideLabel || props.accessibleLabel === undefined}>
       <Select.Label
-        class={props.hideLabel ? 'sr-only' : 'text-xs font-650 leading-4 text-muted-foreground'}
+        class={props.hideLabel ? 'sr-only' : FIELD_LABEL}
         data-visually-hidden={props.hideLabel ? '' : undefined}
       >
         {props.label}
@@ -72,21 +73,23 @@ export const PSelectParts = <TValue extends string>(props: PSelectPartsProps<TVa
     </Show>
     <Show when={props.description}>
       {(description) => (
-        <Select.Description class="text-xs leading-5 text-muted-foreground">
-          {description()}
-        </Select.Description>
+        <Select.Description class={FIELD_DESCRIPTION}>{description()}</Select.Description>
       )}
     </Show>
     <Select.Trigger
       aria-label={props.accessibleLabel}
-      class={selectTriggerClasses({appearance: props.appearance})}
+      class={SELECT_TRIGGER_CLASSES({appearance: props.appearance})}
     >
       <Show
         when={props.appearance === 'icon' ? props.selectedIcon : undefined}
         fallback={
-          <Select.Value<
-            PSelectOption<TValue>
-          > class="min-w-0 overflow-hidden text-ellipsis whitespace-nowrap">
+          <Select.Value<PSelectOption<TValue>>
+            class={
+              props.appearance === 'detailed'
+                ? 'min-w-0 flex-1 truncate text-left'
+                : 'min-w-0 break-words whitespace-normal'
+            }
+          >
             {(state) =>
               props.multiple
                 ? (props.selectionLabel?.(state.selectedOptions()) ??
@@ -110,12 +113,15 @@ export const PSelectParts = <TValue extends string>(props: PSelectPartsProps<TVa
             'transition-transform duration-160 ui-group-expanded:rotate-180 motion-reduce:transition-none'
           }
         >
-          <span aria-hidden="true" class="i-tabler-chevron-down size-4" />
+          <span aria-hidden="true" class="i-tabler-chevron-down size-5 flex-none" />
         </Select.Icon>
       </Show>
     </Select.Trigger>
     <Select.Portal>
-      <Select.Content class={selectContentClasses({appearance: props.appearance})}>
+      <Select.Content
+        data-kb-top-layer=""
+        class={SELECT_CONTENT_CLASSES({appearance: props.appearance})}
+      >
         <Show when={props.multiple ? props.clearLabel : undefined}>
           {(clearLabel) => (
             <button

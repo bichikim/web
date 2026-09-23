@@ -1,3 +1,4 @@
+/** @vitest-environment jsdom */
 import {query} from '@solidjs/router'
 import {afterEach, expect, it, vi} from 'vitest'
 
@@ -22,7 +23,7 @@ it('should load and validate the administrator catalog through the existing endp
 
   await expect(adminCatalogQuery()).resolves.toEqual({catalog: emptyCatalog, status: 'ready'})
   expect(fetchMock).toHaveBeenCalledOnce()
-  expect(fetchMock).toHaveBeenCalledWith('/api/admin/music')
+  expect(fetchMock).toHaveBeenCalledWith('/api/admin/music', expect.any(Object))
 })
 
 it('should deduplicate simultaneous catalog requests', async () => {
@@ -52,4 +53,28 @@ it('should reject invalid catalog data without exposing it to the component', as
   vi.stubGlobal('fetch', vi.fn<typeof fetch>().mockResolvedValue(Response.json({albums: null})))
 
   await expect(adminCatalogQuery()).resolves.toMatchObject({status: 'failed'})
+})
+
+it('should retain the saved artwork URL for each track asset', async () => {
+  const catalog = {
+    ...emptyCatalog,
+    assets: [
+      {
+        artworkUrl: 'https://storage.pomofi.io/track-artwork/first/cover',
+
+        id: 'first',
+        status: 'active',
+        trackId: 'track-one',
+      },
+      {
+        artworkUrl: 'https://storage.pomofi.io/track-artwork/second/cover',
+
+        id: 'second',
+        status: 'active',
+        trackId: 'track-two',
+      },
+    ],
+  }
+  vi.stubGlobal('fetch', vi.fn<typeof fetch>().mockResolvedValue(Response.json(catalog)))
+  await expect(adminCatalogQuery()).resolves.toEqual({catalog, status: 'ready'})
 })

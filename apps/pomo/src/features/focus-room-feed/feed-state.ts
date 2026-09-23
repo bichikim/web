@@ -7,7 +7,11 @@ import {
   type PFeedState,
 } from './feed-controller'
 import type {FeedDialogueRepository} from './feed-dialogue-repository'
-import type {FeedDialogueJob, FeedItemRecord} from './feed-dialogue-schema'
+import {
+  type FeedDialogueJob,
+  type FeedItemRecord,
+  isFeedJobAwaitingAction,
+} from './feed-dialogue-schema'
 import {
   deleteExpiredFeedDialogues,
   loadFeedDialogueList,
@@ -25,6 +29,29 @@ interface FeedStateEvents extends Pick<
 interface FeedStateRepositories {
   readonly dialogueRepository: PDialogueRepository
   readonly feedRepository: FeedDialogueRepository
+}
+
+const mergeListenedAt = (
+  available: ReadonlyArray<FeedDialogueListItem>,
+  current: ReadonlyArray<FeedDialogueListItem>,
+): ReadonlyArray<FeedDialogueListItem> => {
+  const currentListenedAtById = new Map(
+    current.map((item) => [item.metadata.dialogueId, item.metadata.listenedAt]),
+  )
+
+  return available.map((item) => {
+    const currentListenedAt = currentListenedAtById.get(item.metadata.dialogueId)
+
+    if (currentListenedAt === undefined || currentListenedAt === null) {
+      return item
+    }
+
+    if (item.metadata.listenedAt === currentListenedAt) {
+      return item
+    }
+
+    return {...item, metadata: {...item.metadata, listenedAt: currentListenedAt}}
+  })
 }
 
 export interface CreateFeedStateControllerOptions {
@@ -74,10 +101,13 @@ export const createFeedStateController = (
   const dismissedRecoveryIds = new Set<string>()
   let isDisposed = false
   const reloadDialogues = async () => {
-    const available = await loadFeedDialogueList(options.getRepositories())
+    const available = await loadFeedDialogueList({
+      ...options.getRepositories(),
+      now: options.now(),
+    })
 
     if (!isDisposed) {
-      setDialogues(available)
+      setDialogues((current) => mergeListenedAt(available, current))
     }
   }
   const reloadRecovery = async () => {
@@ -85,11 +115,7 @@ export const createFeedStateController = (
 
     if (!isDisposed) {
       setRecoveryJobs(
-        jobs.filter(
-          (job) =>
-            (job.status === 'failed' || job.status === 'interrupted') &&
-            !dismissedRecoveryIds.has(job.id),
-        ),
+        jobs.filter((job) => isFeedJobAwaitingAction(job) && !dismissedRecoveryIds.has(job.id)),
       )
     }
   }
@@ -118,10 +144,38 @@ export const createFeedStateController = (
       }
     },
     async deleteDialogue(dialogueId) {
-      const repository = options.getRepositories().feedRepository
+      const feedDialogue = dialogues().find((item) => item.metadata.dialogueId === dialogueId)
       await options.events.deleteDialogue(dialogueId)
 
+      let repository: FeedDialogueRepository
+
       try {
+        repository = options.getRepositories().feedRepository
+      } catch {
+        // The event deletion remains valid while feed storage is initializing. Initialization
+        // reloads feed metadata and repairs the orphaned records afterward.
+        return
+      }
+
+      try {
+        const metadata =
+          feedDialogue?.metadata ??
+          (await repository.listMetadata()).find((item) => item.dialogueId === dialogueId)
+
+        if (metadata !== undefined) {
+          await repository.dismissItem({
+            fallback: {
+              itemTitle: metadata.itemTitle,
+              publishedAt: metadata.publishedAt,
+              sourceTitle: metadata.sourceTitle,
+              sourceUrl: metadata.sourceUrl,
+            },
+            feedConnectionId: metadata.feedConnectionId,
+            feedItemId: metadata.feedItemId,
+            message: '사용자가 피드 대화를 삭제했어요.',
+            updatedAt: options.now().toISOString(),
+          })
+        }
         await repository.removeMetadata(dialogueId)
       } finally {
         await reloadDialogues()

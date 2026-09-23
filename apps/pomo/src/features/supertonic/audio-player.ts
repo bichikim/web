@@ -86,7 +86,7 @@ export const createSupertonicAudioPlayer = (
     }
 
     if (!finished || sources.size > 0) {
-      animationFrame = window.requestAnimationFrame(updateViseme)
+      animationFrame = globalThis.requestAnimationFrame(updateViseme)
     } else {
       animationFrame = null
     }
@@ -94,7 +94,7 @@ export const createSupertonicAudioPlayer = (
 
   const startVisemeClock = () => {
     if (animationFrame === null && options.onVisemeChange !== undefined) {
-      animationFrame = window.requestAnimationFrame(updateViseme)
+      animationFrame = globalThis.requestAnimationFrame(updateViseme)
     }
   }
 
@@ -161,7 +161,7 @@ export const createSupertonicAudioPlayer = (
     silentMouthReturn.cancel()
 
     if (animationFrame !== null) {
-      window.cancelAnimationFrame(animationFrame)
+      globalThis.cancelAnimationFrame(animationFrame)
       animationFrame = null
     }
 

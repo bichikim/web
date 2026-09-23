@@ -1,3 +1,4 @@
+/** @vitest-environment node */
 import {expect, it, vi} from 'vitest'
 
 const mocks = vi.hoisted(() => ({httpFetch: vi.fn()}))
@@ -13,6 +14,10 @@ import {
 it('should calculate bounded generation progress', () => {
   expect(getFeedGenerationProgress(1, 3)).toBe(33)
   expect(getFeedGenerationProgress(4, 3)).toBe(100)
+})
+
+it('should return zero when the total size is unknown', () => {
+  expect(getFeedGenerationProgress(0, 0)).toBe(0)
 })
 
 it('should create a no-store feed request with a bounded timeout', () => {

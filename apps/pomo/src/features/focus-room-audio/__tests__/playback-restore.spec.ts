@@ -1,3 +1,4 @@
+/** @vitest-environment node */
 import {describe, expect, it} from 'vitest'
 
 import {resolvePlaybackRestore} from '../playback-restore'
@@ -6,6 +7,8 @@ const TRACKS = [
   {artist: 'Artist', durationSeconds: 10, id: 'one', source: '/one.mp3', title: 'One'},
   {artist: 'Artist', durationSeconds: 10, id: 'two', source: '/two.mp3', title: 'Two'},
 ] as const
+
+const DUPLICATE_TRACKS = [TRACKS[0], TRACKS[0], TRACKS[1]] as const
 
 describe('resolvePlaybackRestore', () => {
   it('should return an empty restore when no tracks are available', () => {
@@ -50,6 +53,35 @@ describe('resolvePlaybackRestore', () => {
     })
   })
 
+  it('should restore the saved playlist occurrence when track IDs repeat', () => {
+    const storedPlayback = {
+      isPlaying: true,
+      positionSeconds: 8,
+      trackId: 'one',
+      trackIndex: 1,
+    }
+
+    expect(
+      resolvePlaybackRestore({fallbackIndex: 0, storedPlayback, tracks: DUPLICATE_TRACKS}),
+    ).toEqual({
+      currentIndex: 1,
+      playback: storedPlayback,
+      shouldPersist: false,
+    })
+  })
+
+  it('should fall back to the first matching occurrence for legacy playback', () => {
+    const storedPlayback = {isPlaying: true, positionSeconds: 8, trackId: 'one'}
+
+    expect(
+      resolvePlaybackRestore({fallbackIndex: 0, storedPlayback, tracks: DUPLICATE_TRACKS}),
+    ).toEqual({
+      currentIndex: 0,
+      playback: storedPlayback,
+      shouldPersist: false,
+    })
+  })
+
   it('should reset missing playback to the first track', () => {
     expect(
       resolvePlaybackRestore({
@@ -59,7 +91,7 @@ describe('resolvePlaybackRestore', () => {
       }),
     ).toEqual({
       currentIndex: 0,
-      playback: {isPlaying: false, positionSeconds: 0, trackId: 'one'},
+      playback: {isPlaying: false, positionSeconds: 0, trackId: 'one', trackIndex: 0},
       shouldPersist: true,
     })
   })

@@ -1,20 +1,21 @@
+import {createAuthoritativePreferenceRepository} from '../authoritative-preference'
 import {z} from 'zod'
 
 import {
   hasNativeStorageBridge,
-  readNativeStorageJson,
+  readTossStorageJson,
   readWebStorageJson,
-  writeNativeStorageJson,
+  writeTossStorageJson,
   writeWebStorageJson,
-} from 'src/features/runtime-storage'
+} from 'src/utils/runtime-storage'
 
 import {DEFAULT_P_DISPLAY_PREFERENCES, type PDisplayPreferences} from './model'
 
 export interface PDisplayPreferencesStorage {
-  readonly isNative: () => boolean
-  readonly readNative: (key: string) => Promise<unknown | null>
+  readonly usesTossStorage: () => boolean
+  readonly readToss: (key: string) => Promise<unknown | null>
   readonly readWeb: (key: string) => unknown | null
-  readonly writeNative: (key: string, value: unknown) => Promise<void>
+  readonly writeToss: (key: string, value: unknown) => Promise<void>
   readonly writeWeb: (key: string, value: unknown) => void
 }
 
@@ -27,10 +28,18 @@ export interface CreatePDisplayPreferencesRepositoryOptions {
   readonly storage: PDisplayPreferencesStorage
 }
 
-const DISPLAY_PREFERENCES_STORAGE_KEY = 'pomo:focus-room-display-preferences:v1'
-const displayPreferencesSchema = z.object({dialogueComposerVisible: z.boolean()})
+export const DISPLAY_PREFERENCES_STORAGE_KEY = 'pomo:focus-room-display-preferences:v1'
+const displayPreferencesSchema = z.object({
+  dialogueComposerVisible: z.boolean(),
+  featureRequestVisible: z.boolean().default(true),
+  memoryAssistVisible: z.boolean().default(true),
+  playerVisible: z.boolean().default(true),
+  pomodoroVisible: z.boolean().default(true),
+  toolsButtonVisible: z.boolean().default(true),
+  tourButtonVisible: z.boolean().default(true),
+})
 
-const parseDisplayPreferences = (value: unknown): PDisplayPreferences | null => {
+export const parsePDisplayPreferences = (value: unknown): PDisplayPreferences | null => {
   const result = displayPreferencesSchema.safeParse(value)
   return result.success ? result.data : null
 }
@@ -40,11 +49,9 @@ export const createPDisplayPreferencesRepository = (
   options: CreatePDisplayPreferencesRepositoryOptions,
 ): PDisplayPreferencesRepository => {
   const {storage} = options
-  let preferenceWriteRevision = 0
-  let nativeWriteQueue = Promise.resolve()
 
   const readWebPreferences = () =>
-    parseDisplayPreferences(storage.readWeb(DISPLAY_PREFERENCES_STORAGE_KEY))
+    parsePDisplayPreferences(storage.readWeb(DISPLAY_PREFERENCES_STORAGE_KEY))
 
   const writeWebPreferences = (preferences: PDisplayPreferences) => {
     try {
@@ -55,79 +62,42 @@ export const createPDisplayPreferencesRepository = (
     }
   }
 
-  const enqueueNativeWrite = (preferences: PDisplayPreferences) => {
-    const nativeWrite = nativeWriteQueue.then(() =>
-      storage.writeNative(DISPLAY_PREFERENCES_STORAGE_KEY, preferences),
-    )
-    nativeWriteQueue = nativeWrite.catch(() => undefined)
-    return nativeWrite
-  }
-
-  const read = async (): Promise<PDisplayPreferences> => {
-    const initialWriteRevision = preferenceWriteRevision
-
-    if (!storage.isNative()) {
-      return readWebPreferences() ?? DEFAULT_P_DISPLAY_PREFERENCES
-    }
-
-    try {
-      await nativeWriteQueue
-      const nativePreferences = parseDisplayPreferences(
-        await storage.readNative(DISPLAY_PREFERENCES_STORAGE_KEY),
-      )
-
-      if (preferenceWriteRevision !== initialWriteRevision) {
-        return read()
-      }
-
-      const restoredPreferences = nativePreferences ?? DEFAULT_P_DISPLAY_PREFERENCES
-      writeWebPreferences(restoredPreferences)
-      return restoredPreferences
-    } catch (error: unknown) {
-      throw new Error('Failed to read focus-room display preferences.', {cause: error})
-    }
-  }
-
-  const write = async (preferences: PDisplayPreferences): Promise<void> => {
-    preferenceWriteRevision += 1
-    const snapshot = displayPreferencesSchema.parse(preferences)
-    const webWriteError = writeWebPreferences(snapshot)
-
-    if (!storage.isNative()) {
-      if (webWriteError !== null) {
-        throw new Error('Failed to persist focus-room display preferences.', {
-          cause: webWriteError,
-        })
-      }
-
-      return
-    }
-
-    try {
-      await enqueueNativeWrite(snapshot)
-    } catch (error: unknown) {
-      throw new Error('Failed to persist focus-room display preferences.', {cause: error})
-    }
+  const repository = createAuthoritativePreferenceRepository({
+    defaultValue: DEFAULT_P_DISPLAY_PREFERENCES,
+    readFailureMessage: 'Failed to read focus-room display preferences.',
+    storage: {
+      isNative: () => storage.usesTossStorage(),
+      readNative: async () =>
+        parsePDisplayPreferences(await storage.readToss(DISPLAY_PREFERENCES_STORAGE_KEY)),
+      readWeb: readWebPreferences,
+      writeNative: (value) => storage.writeToss(DISPLAY_PREFERENCES_STORAGE_KEY, value),
+      writeWeb: writeWebPreferences,
+    },
+    writeFailureMessage: 'Failed to persist focus-room display preferences.',
+  })
+  const read = () => repository.read()
+  const write = async (value: PDisplayPreferences): Promise<void> => {
+    const snapshot = displayPreferencesSchema.parse(value)
+    await repository.write(snapshot)
   }
 
   return {read, write}
 }
 
-const preserveStoredValue = (value: unknown) => value
-const runtimeStorage = {
-  isNative: hasNativeStorageBridge,
-  readNative: (key: string) => readNativeStorageJson(key, preserveStoredValue),
-  readWeb: (key: string) => readWebStorageJson(key, preserveStoredValue),
-  writeNative: writeNativeStorageJson,
-  writeWeb(key: string, value: unknown) {
-    const error = writeWebStorageJson(key, value)
-
-    if (error !== null) {
-      throw error
-    }
+const runtimeRepository = createPDisplayPreferencesRepository({
+  storage: {
+    readToss: (key) => readTossStorageJson(key, (value) => value),
+    readWeb: (key) => readWebStorageJson(key, (value) => value),
+    usesTossStorage: hasNativeStorageBridge,
+    writeToss: writeTossStorageJson,
+    writeWeb(key, value) {
+      const error = writeWebStorageJson(key, value)
+      if (error !== null) {
+        throw error
+      }
+    },
   },
-} satisfies PDisplayPreferencesStorage
-const runtimeRepository = createPDisplayPreferencesRepository({storage: runtimeStorage})
+})
 
 /** Reads focus-room display preferences from storage for the current runtime. */
 export const readPDisplayPreferences = () => runtimeRepository.read()

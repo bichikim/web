@@ -54,3 +54,11 @@ export {createFeedSyncController} from './sync-controller'
 export type {CreateFeedSyncControllerOptions, FeedSyncController} from './sync-controller'
 export {useFeedRefreshEvents} from './use-feed-refresh-events'
 export type {UseFeedRefreshEventsProps} from './use-feed-refresh-events'
+
+export {
+  useAutoPreparePreference,
+  readFeedAutoPreparePreference,
+} from './use-auto-prepare-preference'
+
+export * from './settings-runtime'
+export {getFeedRequestUrl, type FeedUrlEnvironment} from './feed-request-url'

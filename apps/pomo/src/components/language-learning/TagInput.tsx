@@ -1,3 +1,4 @@
+import {PInput} from 'src/components/p-input/PInput'
 import {cx} from 'class-variance-authority'
 import {TextField} from '@kobalte/core/text-field'
 import {createSignal, For} from 'solid-js'
@@ -79,7 +80,7 @@ export const LanguageLearningTagInput = (props: LanguageLearningTagInputProps) =
       onChange={handleInputChange}
       value={props.inputValue}
     >
-      <TextField.Label class="text-xs font-650 leading-4 text-muted-foreground">
+      <TextField.Label class="text-sm leading-5 font-650 text-muted-foreground">
         {props.label ?? m.learning_editor_tags()}
       </TextField.Label>
       <div
@@ -104,6 +105,8 @@ export const LanguageLearningTagInput = (props: LanguageLearningTagInputProps) =
           )}
         </For>
         <TextField.Input
+          as={PInput}
+          unstyled
           class={INPUT_CLASS}
           disabled={props.disabled || props.tags.length >= maximumTags()}
           maxlength="300"
@@ -131,7 +134,7 @@ export const LanguageLearningTagInput = (props: LanguageLearningTagInputProps) =
           ref={setInputElement}
         />
       </div>
-      <TextField.Description class="text-xs font-400 leading-5 text-muted-foreground">
+      <TextField.Description class="text-sm leading-5 font-400 text-muted-foreground">
         {props.description ?? m.learning_editor_tags_hint()}
       </TextField.Description>
     </TextField>

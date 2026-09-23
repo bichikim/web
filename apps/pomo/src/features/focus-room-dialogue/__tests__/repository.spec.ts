@@ -158,6 +158,21 @@ it('should persist an event playback mode with its dialogue sequence', async () 
   })
 })
 
+it('should persist actions without requiring a dialogue', async () => {
+  const repository = createPDialogueRepository()
+
+  await repository.setEventBinding('delayed-end', [], 'sequential-all', ['music-stop'])
+
+  expect(databaseMocks.dialogues.get).not.toHaveBeenCalled()
+  expect(databaseMocks.eventBindings.put).toHaveBeenCalledWith({
+    actionIds: ['music-stop'],
+    dialogueIds: [],
+    event: 'delayed-end',
+    playbackMode: 'sequential-all',
+    version: 3,
+  })
+})
+
 it('should preserve remaining event dialogues when deleting one dialogue', async () => {
   databaseMocks.dialogues.get.mockResolvedValue({
     audioKey: 'first-audio',
@@ -190,6 +205,44 @@ it('should preserve remaining event dialogues when deleting one dialogue', async
     dialogueIds: ['second'],
     event: 'room-enter',
     playbackMode: 'random-all',
+    version: 3,
+  })
+  expect(databaseMocks.eventBindings.delete).not.toHaveBeenCalled()
+})
+
+it('should preserve an action binding when its last dialogue is deleted', async () => {
+  databaseMocks.dialogues.get.mockResolvedValue({
+    audioKey: 'dialogue-audio',
+    createdAt: '2026-08-13T00:00:00.000Z',
+    durationMs: 1000,
+    id: 'dialogue-id',
+    modelId: 'full' as const,
+    segments: [{durationMs: 1000, index: 0, startMs: 0, text: '행동과 함께 삭제할 대화'}],
+    text: '행동과 함께 삭제할 대화',
+    updatedAt: '2026-08-13T00:00:00.000Z',
+    version: 1 as const,
+    voiceId: 'Yuna',
+  })
+  databaseMocks.eventBindings.get.mockImplementation(async (event: string) =>
+    event === 'delayed-end'
+      ? {
+          actionIds: ['music-stop'],
+          dialogueIds: ['dialogue-id'],
+          event,
+          playbackMode: 'sequential-all',
+          version: 3,
+        }
+      : undefined,
+  )
+  const repository = createPDialogueRepository()
+
+  await repository.deleteDialogue('dialogue-id')
+
+  expect(databaseMocks.eventBindings.put).toHaveBeenCalledWith({
+    actionIds: ['music-stop'],
+    dialogueIds: [],
+    event: 'delayed-end',
+    playbackMode: 'sequential-all',
     version: 3,
   })
   expect(databaseMocks.eventBindings.delete).not.toHaveBeenCalled()
@@ -520,4 +573,14 @@ it('should preserve existing audio when metadata persistence fails without repla
   await expect(repository.saveDialogue({dialogue})).rejects.toThrow('database unavailable')
 
   expect(storageMocks.delete).not.toHaveBeenCalled()
+})
+
+it('should reject audio cleanup failure when the caller needs durable retries', async () => {
+  const error = {cause: new Error('cache unavailable'), operation: 'delete' as const}
+  storageMocks.delete.mockResolvedValueOnce({error, ok: false})
+  await expect(deleteDialogueAudio('memo-key', {failureMode: 'throw'})).rejects.toMatchObject({
+    cause: error,
+  })
+  expect(storageMocks.delete).toHaveBeenCalledTimes(2)
+  await expect(deleteDialogueAudio('memo-key', {failureMode: 'throw'})).resolves.toBeUndefined()
 })

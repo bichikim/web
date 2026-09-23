@@ -27,7 +27,7 @@ interface CreatePartViewsOptions {
 
 export const createPartViews = (options: CreatePartViewsOptions): ReadonlyArray<MeshPartView> => {
   const verticesByPartId = new Map(
-    options.candidates.map((candidate) => [
+    options.props.document.parts.map((candidate) => [
       candidate.id,
       new Float32Array(getPartPreviewVertices(options.props, candidate)),
     ]),

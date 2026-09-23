@@ -1,3 +1,5 @@
+import {isNonBlankString} from 'src/utils/is-non-blank-string'
+
 export type ClientErrorSource =
   | 'direct'
   | 'error-boundary'
@@ -13,7 +15,7 @@ export interface ClientErrorRoute {
 
 export interface ClientErrorContext {
   readonly environment: string
-  readonly platform: 'apps-in-toss' | 'web'
+  readonly platform: 'android' | 'apps-in-toss' | 'ios' | 'web'
   readonly release: string
   readonly route: ClientErrorRoute
 }
@@ -171,12 +173,12 @@ const normalizeStack = (value: string | undefined): string | undefined => {
 
 const getErrorName = (value: object): string => {
   const name = readSafeString(value, 'name')
-  return name === undefined || name.trim().length === 0 ? 'Error' : redactText(name)
+  return name === undefined || !isNonBlankString(name) ? 'Error' : redactText(name)
 }
 
 const getErrorMessage = (value: object): string => {
   const message = readSafeString(value, 'message')
-  return message === undefined || message.trim().length === 0
+  return message === undefined || !isNonBlankString(message)
     ? 'No error message'
     : truncate(redactText(message), MAXIMUM_MESSAGE_LENGTH)
 }
@@ -250,9 +252,22 @@ const getCurrentRoute = (): ClientErrorRoute => {
   return {origin: location.origin, template: getRouteTemplate(location.pathname)}
 }
 
+const getClientPlatform = (): ClientErrorContext['platform'] => {
+  switch (import.meta.env.VITE_POMO_RUNTIME_TARGET) {
+    case 'android':
+      return 'android'
+    case 'apps-in-toss':
+      return 'apps-in-toss'
+    case 'ios':
+      return 'ios'
+    default:
+      return import.meta.env.VITE_POMO_IS_APPS_IN_TOSS === 'true' ? 'apps-in-toss' : 'web'
+  }
+}
+
 const getClientErrorContext = (): ClientErrorContext => ({
   environment: import.meta.env.VITE_POMO_ENVIRONMENT ?? import.meta.env.MODE ?? 'unknown',
-  platform: import.meta.env.VITE_POMO_IS_APPS_IN_TOSS === 'true' ? 'apps-in-toss' : 'web',
+  platform: getClientPlatform(),
   release: import.meta.env.VITE_POMO_RELEASE ?? 'local',
   route: getCurrentRoute(),
 })
@@ -349,7 +364,7 @@ export const createClientErrorReporter = (
 }
 
 const sendLocalDiagnostic = (event: ClientErrorEvent) => {
-  if (typeof window !== 'undefined' && import.meta.env.DEV) {
+  if (typeof globalThis.window !== 'undefined' && import.meta.env.DEV) {
     console.error('[Pomofi client error]', event)
   }
 }

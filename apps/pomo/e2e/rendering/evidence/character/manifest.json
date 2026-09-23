@@ -1,0 +1,1236 @@
+{
+  "run_id": "a2edd204-9091-446b-944a-fb3347cd82eb",
+  "base_sha": "cc5705d9775eef94788213d89d6b32e88430dd95",
+  "current_product_sha": "cc5705d9775eef94788213d89d6b32e88430dd95",
+  "current_test_sha": "pre-commit; exact commit execution is recorded in the PR and permanent run evidence",
+  "captured_at": "2026-09-11T00:16:13Z",
+  "os": "ProductName:\t\tmacOS\nProductVersion:\t\t26.5.2\nBuildVersion:\t\t25F84\n",
+  "arch": "arm64",
+  "playwright": "1.59.1",
+  "video": "off",
+  "trace": "off",
+  "scope": "Regular web actual SolidStart home, scene choices and localStorage. Empty playlist and controlled clock. No API mocking; test-only loopback DB/auth endpoints. No native Storage, desktop-window sync, dialogue/real audio or deployed service validation.",
+  "screenshots": [
+    {
+      "screen": "character-dark",
+      "test": "should restore character choices after reload and render the selected scene in both themes",
+      "test_status": "expected",
+      "result": "최초 기준 생성",
+      "comparison": "passed default toHaveScreenshot comparator",
+      "baseline_code_sha": null,
+      "current_code_sha": "cc5705d9775eef94788213d89d6b32e88430dd95",
+      "baseline_path": "apps/pomo/e2e/rendering/character.spec.ts-snapshots/character-dark-web-darwin.png",
+      "baseline_sha256": "68ad9f47fa44ffdec889dad3af21eabf9792e302e075a157e6920bc5b6a9d603",
+      "current_path": "apps/pomo/e2e/rendering/evidence/character/character-dark-current.png",
+      "current_sha256": "68ad9f47fa44ffdec889dad3af21eabf9792e302e075a157e6920bc5b6a9d603",
+      "raw_different_pixels": 0,
+      "maximum_channel_delta": 0,
+      "environment": {
+        "devicePixelRatio": 1,
+        "fonts": [
+          {
+            "family": "Pretendard Variable",
+            "status": "unloaded"
+          },
+          {
+            "family": "Pretendard Variable",
+            "status": "unloaded"
+          },
+          {
+            "family": "Pretendard Variable",
+            "status": "unloaded"
+          },
+          {
+            "family": "Pretendard Variable",
+            "status": "unloaded"
+          },
+          {
+            "family": "Pretendard Variable",
+            "status": "unloaded"
+          },
+          {
+            "family": "Pretendard Variable",
+            "status": "unloaded"
+          },
+          {
+            "family": "Pretendard Variable",
+            "status": "unloaded"
+          },
+          {
+            "family": "Pretendard Variable",
+            "status": "unloaded"
+          },
+          {
+            "family": "Pretendard Variable",
+            "status": "unloaded"
+          },
+          {
+            "family": "Pretendard Variable",
+            "status": "unloaded"
+          },
+          {
+            "family": "Pretendard Variable",
+            "status": "unloaded"
+          },
+          {
+            "family": "Pretendard Variable",
+            "status": "unloaded"
+          },
+          {
+            "family": "Pretendard Variable",
+            "status": "unloaded"
+          },
+          {
+            "family": "Pretendard Variable",
+            "status": "unloaded"
+          },
+          {
+            "family": "Pretendard Variable",
+            "status": "unloaded"
+          },
+          {
+            "family": "Pretendard Variable",
+            "status": "unloaded"
+          },
+          {
+            "family": "Pretendard Variable",
+            "status": "unloaded"
+          },
+          {
+            "family": "Pretendard Variable",
+            "status": "unloaded"
+          },
+          {
+            "family": "Pretendard Variable",
+            "status": "unloaded"
+          },
+          {
+            "family": "Pretendard Variable",
+            "status": "unloaded"
+          },
+          {
+            "family": "Pretendard Variable",
+            "status": "unloaded"
+          },
+          {
+            "family": "Pretendard Variable",
+            "status": "unloaded"
+          },
+          {
+            "family": "Pretendard Variable",
+            "status": "unloaded"
+          },
+          {
+            "family": "Pretendard Variable",
+            "status": "unloaded"
+          },
+          {
+            "family": "Pretendard Variable",
+            "status": "unloaded"
+          },
+          {
+            "family": "Pretendard Variable",
+            "status": "unloaded"
+          },
+          {
+            "family": "Pretendard Variable",
+            "status": "unloaded"
+          },
+          {
+            "family": "Pretendard Variable",
+            "status": "unloaded"
+          },
+          {
+            "family": "Pretendard Variable",
+            "status": "unloaded"
+          },
+          {
+            "family": "Pretendard Variable",
+            "status": "unloaded"
+          },
+          {
+            "family": "Pretendard Variable",
+            "status": "unloaded"
+          },
+          {
+            "family": "Pretendard Variable",
+            "status": "unloaded"
+          },
+          {
+            "family": "Pretendard Variable",
+            "status": "unloaded"
+          },
+          {
+            "family": "Pretendard Variable",
+            "status": "unloaded"
+          },
+          {
+            "family": "Pretendard Variable",
+            "status": "unloaded"
+          },
+          {
+            "family": "Pretendard Variable",
+            "status": "unloaded"
+          },
+          {
+            "family": "Pretendard Variable",
+            "status": "unloaded"
+          },
+          {
+            "family": "Pretendard Variable",
+            "status": "unloaded"
+          },
+          {
+            "family": "Pretendard Variable",
+            "status": "unloaded"
+          },
+          {
+            "family": "Pretendard Variable",
+            "status": "unloaded"
+          },
+          {
+            "family": "Pretendard Variable",
+            "status": "unloaded"
+          },
+          {
+            "family": "Pretendard Variable",
+            "status": "unloaded"
+          },
+          {
+            "family": "Pretendard Variable",
+            "status": "unloaded"
+          },
+          {
+            "family": "Pretendard Variable",
+            "status": "unloaded"
+          },
+          {
+            "family": "Pretendard Variable",
+            "status": "unloaded"
+          },
+          {
+            "family": "Pretendard Variable",
+            "status": "unloaded"
+          },
+          {
+            "family": "Pretendard Variable",
+            "status": "unloaded"
+          },
+          {
+            "family": "Pretendard Variable",
+            "status": "unloaded"
+          },
+          {
+            "family": "Pretendard Variable",
+            "status": "unloaded"
+          },
+          {
+            "family": "Pretendard Variable",
+            "status": "unloaded"
+          },
+          {
+            "family": "Pretendard Variable",
+            "status": "unloaded"
+          },
+          {
+            "family": "Pretendard Variable",
+            "status": "unloaded"
+          },
+          {
+            "family": "Pretendard Variable",
+            "status": "unloaded"
+          },
+          {
+            "family": "Pretendard Variable",
+            "status": "unloaded"
+          },
+          {
+            "family": "Pretendard Variable",
+            "status": "unloaded"
+          },
+          {
+            "family": "Pretendard Variable",
+            "status": "unloaded"
+          },
+          {
+            "family": "Pretendard Variable",
+            "status": "unloaded"
+          },
+          {
+            "family": "Pretendard Variable",
+            "status": "unloaded"
+          },
+          {
+            "family": "Pretendard Variable",
+            "status": "unloaded"
+          },
+          {
+            "family": "Pretendard Variable",
+            "status": "unloaded"
+          },
+          {
+            "family": "Pretendard Variable",
+            "status": "unloaded"
+          },
+          {
+            "family": "Pretendard Variable",
+            "status": "unloaded"
+          },
+          {
+            "family": "Pretendard Variable",
+            "status": "unloaded"
+          },
+          {
+            "family": "Pretendard Variable",
+            "status": "unloaded"
+          },
+          {
+            "family": "Pretendard Variable",
+            "status": "unloaded"
+          },
+          {
+            "family": "Pretendard Variable",
+            "status": "unloaded"
+          },
+          {
+            "family": "Pretendard Variable",
+            "status": "unloaded"
+          },
+          {
+            "family": "Pretendard Variable",
+            "status": "unloaded"
+          },
+          {
+            "family": "Pretendard Variable",
+            "status": "unloaded"
+          },
+          {
+            "family": "Pretendard Variable",
+            "status": "unloaded"
+          },
+          {
+            "family": "Pretendard Variable",
+            "status": "unloaded"
+          },
+          {
+            "family": "Pretendard Variable",
+            "status": "unloaded"
+          },
+          {
+            "family": "Pretendard Variable",
+            "status": "unloaded"
+          },
+          {
+            "family": "Pretendard Variable",
+            "status": "unloaded"
+          },
+          {
+            "family": "Pretendard Variable",
+            "status": "unloaded"
+          },
+          {
+            "family": "Pretendard Variable",
+            "status": "unloaded"
+          },
+          {
+            "family": "Pretendard Variable",
+            "status": "unloaded"
+          },
+          {
+            "family": "Pretendard Variable",
+            "status": "unloaded"
+          },
+          {
+            "family": "Pretendard Variable",
+            "status": "unloaded"
+          },
+          {
+            "family": "Pretendard Variable",
+            "status": "loaded"
+          },
+          {
+            "family": "Pretendard Variable",
+            "status": "loaded"
+          },
+          {
+            "family": "Pretendard Variable",
+            "status": "loaded"
+          },
+          {
+            "family": "Pretendard Variable",
+            "status": "loaded"
+          },
+          {
+            "family": "Pretendard Variable",
+            "status": "loaded"
+          },
+          {
+            "family": "Pretendard Variable",
+            "status": "loaded"
+          },
+          {
+            "family": "Pretendard Variable",
+            "status": "loaded"
+          },
+          {
+            "family": "Pretendard Variable",
+            "status": "loaded"
+          },
+          {
+            "family": "Pretendard Variable",
+            "status": "loaded"
+          },
+          {
+            "family": "Pretendard Variable",
+            "status": "loaded"
+          },
+          {
+            "family": "Pretendard Variable",
+            "status": "loaded"
+          },
+          {
+            "family": "Pretendard Variable",
+            "status": "loaded"
+          },
+          {
+            "family": "Pretendard Variable",
+            "status": "loaded"
+          }
+        ],
+        "locale": "ko-KR",
+        "theme": "dark",
+        "time": "2026-09-09T00:01:01.200Z",
+        "timezone": "Asia/Seoul",
+        "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.7727.15 Safari/537.36",
+        "viewport": {
+          "height": 960,
+          "width": 1280
+        }
+      },
+      "command": "pnpm exec playwright test --config=playwright.rendering.config.ts e2e/rendering/character.spec.ts --reporter=list,json",
+      "published_current_path": "apps/pomo/e2e/rendering/evidence/character/character-dark-current.png"
+    },
+    {
+      "screen": "character-light",
+      "test": "should restore character choices after reload and render the selected scene in both themes",
+      "test_status": "expected",
+      "result": "최초 기준 생성",
+      "comparison": "passed default toHaveScreenshot comparator",
+      "baseline_code_sha": null,
+      "current_code_sha": "cc5705d9775eef94788213d89d6b32e88430dd95",
+      "baseline_path": "apps/pomo/e2e/rendering/character.spec.ts-snapshots/character-light-web-darwin.png",
+      "baseline_sha256": "bfd5c2c5613f2e182347bfc916d4d98085da9446a6a2399ac0027f8d9314af67",
+      "current_path": "apps/pomo/e2e/rendering/evidence/character/character-light-current.png",
+      "current_sha256": "bfd5c2c5613f2e182347bfc916d4d98085da9446a6a2399ac0027f8d9314af67",
+      "raw_different_pixels": 0,
+      "maximum_channel_delta": 0,
+      "environment": {
+        "devicePixelRatio": 1,
+        "fonts": [
+          {
+            "family": "Pretendard Variable",
+            "status": "unloaded"
+          },
+          {
+            "family": "Pretendard Variable",
+            "status": "unloaded"
+          },
+          {
+            "family": "Pretendard Variable",
+            "status": "unloaded"
+          },
+          {
+            "family": "Pretendard Variable",
+            "status": "unloaded"
+          },
+          {
+            "family": "Pretendard Variable",
+            "status": "unloaded"
+          },
+          {
+            "family": "Pretendard Variable",
+            "status": "unloaded"
+          },
+          {
+            "family": "Pretendard Variable",
+            "status": "unloaded"
+          },
+          {
+            "family": "Pretendard Variable",
+            "status": "unloaded"
+          },
+          {
+            "family": "Pretendard Variable",
+            "status": "unloaded"
+          },
+          {
+            "family": "Pretendard Variable",
+            "status": "unloaded"
+          },
+          {
+            "family": "Pretendard Variable",
+            "status": "unloaded"
+          },
+          {
+            "family": "Pretendard Variable",
+            "status": "unloaded"
+          },
+          {
+            "family": "Pretendard Variable",
+            "status": "unloaded"
+          },
+          {
+            "family": "Pretendard Variable",
+            "status": "unloaded"
+          },
+          {
+            "family": "Pretendard Variable",
+            "status": "unloaded"
+          },
+          {
+            "family": "Pretendard Variable",
+            "status": "unloaded"
+          },
+          {
+            "family": "Pretendard Variable",
+            "status": "unloaded"
+          },
+          {
+            "family": "Pretendard Variable",
+            "status": "unloaded"
+          },
+          {
+            "family": "Pretendard Variable",
+            "status": "unloaded"
+          },
+          {
+            "family": "Pretendard Variable",
+            "status": "unloaded"
+          },
+          {
+            "family": "Pretendard Variable",
+            "status": "unloaded"
+          },
+          {
+            "family": "Pretendard Variable",
+            "status": "unloaded"
+          },
+          {
+            "family": "Pretendard Variable",
+            "status": "unloaded"
+          },
+          {
+            "family": "Pretendard Variable",
+            "status": "unloaded"
+          },
+          {
+            "family": "Pretendard Variable",
+            "status": "unloaded"
+          },
+          {
+            "family": "Pretendard Variable",
+            "status": "unloaded"
+          },
+          {
+            "family": "Pretendard Variable",
+            "status": "unloaded"
+          },
+          {
+            "family": "Pretendard Variable",
+            "status": "unloaded"
+          },
+          {
+            "family": "Pretendard Variable",
+            "status": "unloaded"
+          },
+          {
+            "family": "Pretendard Variable",
+            "status": "unloaded"
+          },
+          {
+            "family": "Pretendard Variable",
+            "status": "unloaded"
+          },
+          {
+            "family": "Pretendard Variable",
+            "status": "unloaded"
+          },
+          {
+            "family": "Pretendard Variable",
+            "status": "unloaded"
+          },
+          {
+            "family": "Pretendard Variable",
+            "status": "unloaded"
+          },
+          {
+            "family": "Pretendard Variable",
+            "status": "unloaded"
+          },
+          {
+            "family": "Pretendard Variable",
+            "status": "unloaded"
+          },
+          {
+            "family": "Pretendard Variable",
+            "status": "unloaded"
+          },
+          {
+            "family": "Pretendard Variable",
+            "status": "unloaded"
+          },
+          {
+            "family": "Pretendard Variable",
+            "status": "unloaded"
+          },
+          {
+            "family": "Pretendard Variable",
+            "status": "unloaded"
+          },
+          {
+            "family": "Pretendard Variable",
+            "status": "unloaded"
+          },
+          {
+            "family": "Pretendard Variable",
+            "status": "unloaded"
+          },
+          {
+            "family": "Pretendard Variable",
+            "status": "unloaded"
+          },
+          {
+            "family": "Pretendard Variable",
+            "status": "unloaded"
+          },
+          {
+            "family": "Pretendard Variable",
+            "status": "unloaded"
+          },
+          {
+            "family": "Pretendard Variable",
+            "status": "unloaded"
+          },
+          {
+            "family": "Pretendard Variable",
+            "status": "unloaded"
+          },
+          {
+            "family": "Pretendard Variable",
+            "status": "unloaded"
+          },
+          {
+            "family": "Pretendard Variable",
+            "status": "unloaded"
+          },
+          {
+            "family": "Pretendard Variable",
+            "status": "unloaded"
+          },
+          {
+            "family": "Pretendard Variable",
+            "status": "unloaded"
+          },
+          {
+            "family": "Pretendard Variable",
+            "status": "unloaded"
+          },
+          {
+            "family": "Pretendard Variable",
+            "status": "unloaded"
+          },
+          {
+            "family": "Pretendard Variable",
+            "status": "unloaded"
+          },
+          {
+            "family": "Pretendard Variable",
+            "status": "unloaded"
+          },
+          {
+            "family": "Pretendard Variable",
+            "status": "unloaded"
+          },
+          {
+            "family": "Pretendard Variable",
+            "status": "unloaded"
+          },
+          {
+            "family": "Pretendard Variable",
+            "status": "unloaded"
+          },
+          {
+            "family": "Pretendard Variable",
+            "status": "unloaded"
+          },
+          {
+            "family": "Pretendard Variable",
+            "status": "unloaded"
+          },
+          {
+            "family": "Pretendard Variable",
+            "status": "unloaded"
+          },
+          {
+            "family": "Pretendard Variable",
+            "status": "unloaded"
+          },
+          {
+            "family": "Pretendard Variable",
+            "status": "unloaded"
+          },
+          {
+            "family": "Pretendard Variable",
+            "status": "unloaded"
+          },
+          {
+            "family": "Pretendard Variable",
+            "status": "unloaded"
+          },
+          {
+            "family": "Pretendard Variable",
+            "status": "unloaded"
+          },
+          {
+            "family": "Pretendard Variable",
+            "status": "unloaded"
+          },
+          {
+            "family": "Pretendard Variable",
+            "status": "unloaded"
+          },
+          {
+            "family": "Pretendard Variable",
+            "status": "unloaded"
+          },
+          {
+            "family": "Pretendard Variable",
+            "status": "unloaded"
+          },
+          {
+            "family": "Pretendard Variable",
+            "status": "unloaded"
+          },
+          {
+            "family": "Pretendard Variable",
+            "status": "unloaded"
+          },
+          {
+            "family": "Pretendard Variable",
+            "status": "unloaded"
+          },
+          {
+            "family": "Pretendard Variable",
+            "status": "unloaded"
+          },
+          {
+            "family": "Pretendard Variable",
+            "status": "unloaded"
+          },
+          {
+            "family": "Pretendard Variable",
+            "status": "unloaded"
+          },
+          {
+            "family": "Pretendard Variable",
+            "status": "unloaded"
+          },
+          {
+            "family": "Pretendard Variable",
+            "status": "unloaded"
+          },
+          {
+            "family": "Pretendard Variable",
+            "status": "unloaded"
+          },
+          {
+            "family": "Pretendard Variable",
+            "status": "loaded"
+          },
+          {
+            "family": "Pretendard Variable",
+            "status": "loaded"
+          },
+          {
+            "family": "Pretendard Variable",
+            "status": "loaded"
+          },
+          {
+            "family": "Pretendard Variable",
+            "status": "loaded"
+          },
+          {
+            "family": "Pretendard Variable",
+            "status": "loaded"
+          },
+          {
+            "family": "Pretendard Variable",
+            "status": "loaded"
+          },
+          {
+            "family": "Pretendard Variable",
+            "status": "loaded"
+          },
+          {
+            "family": "Pretendard Variable",
+            "status": "loaded"
+          },
+          {
+            "family": "Pretendard Variable",
+            "status": "loaded"
+          },
+          {
+            "family": "Pretendard Variable",
+            "status": "loaded"
+          },
+          {
+            "family": "Pretendard Variable",
+            "status": "loaded"
+          },
+          {
+            "family": "Pretendard Variable",
+            "status": "loaded"
+          },
+          {
+            "family": "Pretendard Variable",
+            "status": "loaded"
+          }
+        ],
+        "locale": "ko-KR",
+        "theme": "",
+        "time": "2026-09-09T00:01:01.600Z",
+        "timezone": "Asia/Seoul",
+        "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.7727.15 Safari/537.36",
+        "viewport": {
+          "height": 960,
+          "width": 1280
+        }
+      },
+      "command": "pnpm exec playwright test --config=playwright.rendering.config.ts e2e/rendering/character.spec.ts --reporter=list,json",
+      "published_current_path": "apps/pomo/e2e/rendering/evidence/character/character-light-current.png"
+    }
+  ],
+  "runs": {
+    "rendering-existing": {
+      "startTime": "2026-09-11T00:10:36.988Z",
+      "duration": 47490.687000000005,
+      "expected": 5,
+      "skipped": 0,
+      "unexpected": 1,
+      "flaky": 0
+    },
+    "character-compare": {
+      "startTime": "2026-09-11T00:14:00.320Z",
+      "duration": 16886.947,
+      "expected": 1,
+      "skipped": 0,
+      "unexpected": 0,
+      "flaky": 0
+    }
+  },
+  "font_verification": {
+    "tracked_files": 93,
+    "all_match_base_sha": true
+  },
+  "existing_checkpoint": {
+    "screen": "general-dark",
+    "test": "should render general settings and the theme menu in dark and light modes",
+    "test_status": "expected",
+    "result": "변경 있음",
+    "comparison": "passed default toHaveScreenshot comparator",
+    "baseline_code_sha": "cc5705d9775eef94788213d89d6b32e88430dd95",
+    "current_code_sha": "cc5705d9775eef94788213d89d6b32e88430dd95",
+    "baseline_path": "apps/pomo/e2e/rendering/settings.spec.ts-snapshots/general-dark-web-darwin.png",
+    "baseline_sha256": "b63c09d51745918dbce83ef4a17f5e34fe61cc61aa528abcca74f5c0f3eb01bd",
+    "current_path": "apps/pomo/e2e/rendering/evidence/character/general-dark-current.png",
+    "current_sha256": "e16e50054cfb9ccc873cddf920d9e48009157b5d9e47dab072fc2cc8a1325afb",
+    "raw_different_pixels": 9083,
+    "maximum_channel_delta": 8,
+    "environment": {
+      "devicePixelRatio": 1,
+      "fonts": [
+        {
+          "family": "Pretendard Variable",
+          "status": "unloaded"
+        },
+        {
+          "family": "Pretendard Variable",
+          "status": "unloaded"
+        },
+        {
+          "family": "Pretendard Variable",
+          "status": "unloaded"
+        },
+        {
+          "family": "Pretendard Variable",
+          "status": "unloaded"
+        },
+        {
+          "family": "Pretendard Variable",
+          "status": "unloaded"
+        },
+        {
+          "family": "Pretendard Variable",
+          "status": "unloaded"
+        },
+        {
+          "family": "Pretendard Variable",
+          "status": "unloaded"
+        },
+        {
+          "family": "Pretendard Variable",
+          "status": "unloaded"
+        },
+        {
+          "family": "Pretendard Variable",
+          "status": "unloaded"
+        },
+        {
+          "family": "Pretendard Variable",
+          "status": "unloaded"
+        },
+        {
+          "family": "Pretendard Variable",
+          "status": "unloaded"
+        },
+        {
+          "family": "Pretendard Variable",
+          "status": "unloaded"
+        },
+        {
+          "family": "Pretendard Variable",
+          "status": "unloaded"
+        },
+        {
+          "family": "Pretendard Variable",
+          "status": "unloaded"
+        },
+        {
+          "family": "Pretendard Variable",
+          "status": "unloaded"
+        },
+        {
+          "family": "Pretendard Variable",
+          "status": "unloaded"
+        },
+        {
+          "family": "Pretendard Variable",
+          "status": "unloaded"
+        },
+        {
+          "family": "Pretendard Variable",
+          "status": "unloaded"
+        },
+        {
+          "family": "Pretendard Variable",
+          "status": "unloaded"
+        },
+        {
+          "family": "Pretendard Variable",
+          "status": "unloaded"
+        },
+        {
+          "family": "Pretendard Variable",
+          "status": "unloaded"
+        },
+        {
+          "family": "Pretendard Variable",
+          "status": "unloaded"
+        },
+        {
+          "family": "Pretendard Variable",
+          "status": "unloaded"
+        },
+        {
+          "family": "Pretendard Variable",
+          "status": "unloaded"
+        },
+        {
+          "family": "Pretendard Variable",
+          "status": "unloaded"
+        },
+        {
+          "family": "Pretendard Variable",
+          "status": "unloaded"
+        },
+        {
+          "family": "Pretendard Variable",
+          "status": "unloaded"
+        },
+        {
+          "family": "Pretendard Variable",
+          "status": "unloaded"
+        },
+        {
+          "family": "Pretendard Variable",
+          "status": "unloaded"
+        },
+        {
+          "family": "Pretendard Variable",
+          "status": "unloaded"
+        },
+        {
+          "family": "Pretendard Variable",
+          "status": "unloaded"
+        },
+        {
+          "family": "Pretendard Variable",
+          "status": "unloaded"
+        },
+        {
+          "family": "Pretendard Variable",
+          "status": "unloaded"
+        },
+        {
+          "family": "Pretendard Variable",
+          "status": "unloaded"
+        },
+        {
+          "family": "Pretendard Variable",
+          "status": "unloaded"
+        },
+        {
+          "family": "Pretendard Variable",
+          "status": "unloaded"
+        },
+        {
+          "family": "Pretendard Variable",
+          "status": "unloaded"
+        },
+        {
+          "family": "Pretendard Variable",
+          "status": "unloaded"
+        },
+        {
+          "family": "Pretendard Variable",
+          "status": "unloaded"
+        },
+        {
+          "family": "Pretendard Variable",
+          "status": "unloaded"
+        },
+        {
+          "family": "Pretendard Variable",
+          "status": "unloaded"
+        },
+        {
+          "family": "Pretendard Variable",
+          "status": "unloaded"
+        },
+        {
+          "family": "Pretendard Variable",
+          "status": "unloaded"
+        },
+        {
+          "family": "Pretendard Variable",
+          "status": "unloaded"
+        },
+        {
+          "family": "Pretendard Variable",
+          "status": "unloaded"
+        },
+        {
+          "family": "Pretendard Variable",
+          "status": "unloaded"
+        },
+        {
+          "family": "Pretendard Variable",
+          "status": "unloaded"
+        },
+        {
+          "family": "Pretendard Variable",
+          "status": "unloaded"
+        },
+        {
+          "family": "Pretendard Variable",
+          "status": "unloaded"
+        },
+        {
+          "family": "Pretendard Variable",
+          "status": "unloaded"
+        },
+        {
+          "family": "Pretendard Variable",
+          "status": "unloaded"
+        },
+        {
+          "family": "Pretendard Variable",
+          "status": "unloaded"
+        },
+        {
+          "family": "Pretendard Variable",
+          "status": "unloaded"
+        },
+        {
+          "family": "Pretendard Variable",
+          "status": "unloaded"
+        },
+        {
+          "family": "Pretendard Variable",
+          "status": "unloaded"
+        },
+        {
+          "family": "Pretendard Variable",
+          "status": "unloaded"
+        },
+        {
+          "family": "Pretendard Variable",
+          "status": "unloaded"
+        },
+        {
+          "family": "Pretendard Variable",
+          "status": "unloaded"
+        },
+        {
+          "family": "Pretendard Variable",
+          "status": "unloaded"
+        },
+        {
+          "family": "Pretendard Variable",
+          "status": "unloaded"
+        },
+        {
+          "family": "Pretendard Variable",
+          "status": "unloaded"
+        },
+        {
+          "family": "Pretendard Variable",
+          "status": "unloaded"
+        },
+        {
+          "family": "Pretendard Variable",
+          "status": "unloaded"
+        },
+        {
+          "family": "Pretendard Variable",
+          "status": "unloaded"
+        },
+        {
+          "family": "Pretendard Variable",
+          "status": "unloaded"
+        },
+        {
+          "family": "Pretendard Variable",
+          "status": "unloaded"
+        },
+        {
+          "family": "Pretendard Variable",
+          "status": "unloaded"
+        },
+        {
+          "family": "Pretendard Variable",
+          "status": "unloaded"
+        },
+        {
+          "family": "Pretendard Variable",
+          "status": "unloaded"
+        },
+        {
+          "family": "Pretendard Variable",
+          "status": "unloaded"
+        },
+        {
+          "family": "Pretendard Variable",
+          "status": "unloaded"
+        },
+        {
+          "family": "Pretendard Variable",
+          "status": "loaded"
+        },
+        {
+          "family": "Pretendard Variable",
+          "status": "unloaded"
+        },
+        {
+          "family": "Pretendard Variable",
+          "status": "unloaded"
+        },
+        {
+          "family": "Pretendard Variable",
+          "status": "unloaded"
+        },
+        {
+          "family": "Pretendard Variable",
+          "status": "unloaded"
+        },
+        {
+          "family": "Pretendard Variable",
+          "status": "unloaded"
+        },
+        {
+          "family": "Pretendard Variable",
+          "status": "unloaded"
+        },
+        {
+          "family": "Pretendard Variable",
+          "status": "unloaded"
+        },
+        {
+          "family": "Pretendard Variable",
+          "status": "loaded"
+        },
+        {
+          "family": "Pretendard Variable",
+          "status": "unloaded"
+        },
+        {
+          "family": "Pretendard Variable",
+          "status": "loaded"
+        },
+        {
+          "family": "Pretendard Variable",
+          "status": "loaded"
+        },
+        {
+          "family": "Pretendard Variable",
+          "status": "loaded"
+        },
+        {
+          "family": "Pretendard Variable",
+          "status": "loaded"
+        },
+        {
+          "family": "Pretendard Variable",
+          "status": "loaded"
+        },
+        {
+          "family": "Pretendard Variable",
+          "status": "loaded"
+        },
+        {
+          "family": "Pretendard Variable",
+          "status": "loaded"
+        },
+        {
+          "family": "Pretendard Variable",
+          "status": "loaded"
+        },
+        {
+          "family": "Pretendard Variable",
+          "status": "loaded"
+        },
+        {
+          "family": "Pretendard Variable",
+          "status": "loaded"
+        },
+        {
+          "family": "Pretendard Variable",
+          "status": "loaded"
+        }
+      ],
+      "locale": "ko-KR",
+      "theme": "dark",
+      "time": "2026-09-09T00:01:01.200Z",
+      "timezone": "Asia/Seoul",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.7727.15 Safari/537.36",
+      "viewport": {
+        "height": 960,
+        "width": 1280
+      }
+    },
+    "command": "pnpm exec playwright test --config=playwright.rendering.config.ts --reporter=list,json",
+    "difference_path": "apps/pomo/e2e/rendering/evidence/character/general-dark-diff.png",
+    "difference_sha256": "63aac071a8aea870085e3cf7731929eda47783fc80ebf741cead7b1b8f0c1727",
+    "classification": "Unconfirmed low-intensity pixel difference; baseline not updated"
+  }
+}

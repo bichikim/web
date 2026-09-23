@@ -1,5 +1,13 @@
+import {getMonotonicTime} from 'src/utils/get-monotonic-time'
+
+vi.mock('src/utils/get-monotonic-time', () => ({getMonotonicTime: vi.fn()}))
+
+beforeEach(() => {
+  vi.mocked(getMonotonicTime).mockImplementation(() => Date.now())
+})
+
 import {createRoot} from 'solid-js'
-import {afterEach, describe, expect, it, vi} from 'vitest'
+import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 
 const dependencyMocks = vi.hoisted(() => ({
   createBrowserSpeechRecorder: vi.fn(),
@@ -23,7 +31,7 @@ import {
   useSpeechToText,
   type UseSpeechToTextProps,
 } from '../index'
-import {failureResult, successResult} from '../../result'
+import {failureResult, successResult} from 'src/features/result'
 
 interface SpeechTestRoot {
   readonly controller: SpeechToTextController
@@ -102,13 +110,39 @@ describe('recording lifecycle', () => {
     await root.controller.startRecording()
     await vi.advanceTimersByTimeAsync(500)
 
+    vi.mocked(recorder.start).mock.calls[0][0]?.()
     expect(root.controller.elapsedTime()).toBe(0.5)
     await root.controller.stopRecording()
     const stoppedAt = root.controller.elapsedTime()
     await vi.advanceTimersByTimeAsync(500)
+    vi.mocked(recorder.start).mock.calls[0][0]?.()
     expect(root.controller.elapsedTime()).toBe(stoppedAt)
     root.dispose()
   })
+
+  it.each([-60_000, 60_000])(
+    'should keep recording time independent of a %i ms clock adjustment',
+    async (adjustment) => {
+      vi.useFakeTimers()
+      vi.setSystemTime(100_000)
+      vi.mocked(getMonotonicTime).mockReturnValue(0)
+      const recorder: SpeechRecorder = {
+        isSupported: () => true,
+        start: vi.fn(async () => successResult(createRecording())),
+      }
+      const root = createSpeechRoot(createRuntime(recorder, createRecognizer()))
+
+      await root.controller.startRecording()
+      await vi.advanceTimersByTimeAsync(500)
+      vi.setSystemTime(100_500 + adjustment)
+      vi.mocked(getMonotonicTime).mockReturnValue(1_000)
+      await vi.advanceTimersByTimeAsync(500)
+
+      vi.mocked(recorder.start).mock.calls[0][0]?.()
+      expect(root.controller.elapsedTime()).toBe(1)
+      root.dispose()
+    },
+  )
 
   it('should ignore a stop request when recording is inactive', async () => {
     const recorder: SpeechRecorder = {isSupported: () => true, start: vi.fn()}

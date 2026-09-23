@@ -4,7 +4,7 @@ import {fireEvent, render, screen} from '@solidjs/testing-library'
 import type {JSX} from 'solid-js'
 import {expect, it, vi} from 'vitest'
 
-vi.mock('../../PRadioSwitch', () => ({
+vi.mock('../../p-radio-switch/PRadioSwitch', () => ({
   PRadioSwitch: (props: {
     readonly disabled?: boolean
     readonly label: string
@@ -69,7 +69,7 @@ it('should summarize saved-word selection and preserve disabled interaction', ()
   expect(screen.queryByRole('textbox', {name: '프롬프트 단어'})).toBeNull()
   expect(screen.getByText(/학습 단어 7개 중 3~7개/u)).toBeInTheDocument()
   expect(screen.getByText('이번 프롬프트 단어: home, wave, perspective')).toBeInTheDocument()
-  expect(screen.getByText(/학습 단어 7개 중 3~7개/u).closest('div.rounded-panel')).toHaveClass(
+  expect(screen.getByText(/학습 단어 7개 중 3~7개/u).parentElement).toHaveClass(
     'bg-content-surface',
   )
   expect(screen.getByRole('button', {name: '직접 입력'})).toBeDisabled()

@@ -190,6 +190,110 @@
       "artist": "rainymonday",
       "durationSeconds": 159.4135,
       "source": "https://storage.pomofi.io/tracks/sunlit-brass-bounce.mp3?v=20260830"
+    },
+    {
+      "id": "same-seat-tomorrow",
+      "title": "Same Seat Tomorrow",
+      "artist": "rainymonday",
+      "artworkUrl": "/audio/artwork/same-seat-tomorrow.jpg",
+      "durationSeconds": 152.7335,
+      "source": "https://storage.pomofi.io/tracks/same-seat-tomorrow.mp3?v=20260906"
+    },
+    {
+      "id": "the-temperature-of-the-first-sip",
+      "title": "The Temperature of the First Sip",
+      "artist": "rainymonday",
+      "artworkUrl": "/audio/artwork/the-temperature-of-the-first-sip.jpg",
+      "durationSeconds": 132.7735,
+      "source": "https://storage.pomofi.io/tracks/the-temperature-of-the-first-sip.mp3?v=20260906"
+    },
+    {
+      "id": "morning-saffron",
+      "title": "Morning Saffron",
+      "artist": "rainymonday",
+      "artworkUrl": "/audio/artwork/morning-saffron.jpg",
+      "durationSeconds": 107.8535,
+      "source": "https://storage.pomofi.io/tracks/morning-saffron.mp3?v=20260906"
+    },
+    {
+      "id": "coffee-scented-streets",
+      "title": "Coffee-Scented Streets",
+      "artist": "rainymonday",
+      "artworkUrl": "/audio/artwork/coffee-scented-streets.jpg",
+      "durationSeconds": 121.2135,
+      "source": "https://storage.pomofi.io/tracks/coffee-scented-streets.mp3?v=20260906"
+    },
+    {
+      "id": "cafe-umbrella-drift",
+      "title": "Cafe Umbrella Drift",
+      "artist": "rainymonday",
+      "artworkUrl": "/audio/artwork/cafe-umbrella-drift.jpg",
+      "durationSeconds": 101.8535,
+      "source": "https://storage.pomofi.io/tracks/cafe-umbrella-drift.mp3?v=20260906"
+    },
+    {
+      "id": "bicycle-beyond-the-window",
+      "title": "Bicycle Beyond the Window",
+      "artist": "rainymonday",
+      "artworkUrl": "/audio/artwork/bicycle-beyond-the-window.jpg",
+      "durationSeconds": 107.5735,
+      "source": "https://storage.pomofi.io/tracks/bicycle-beyond-the-window.mp3?v=20260906"
+    },
+    {
+      "id": "paper-cup-rain",
+      "title": "Paper Cup Rain",
+      "artist": "rainymonday",
+      "artworkUrl": "/audio/artwork/paper-cup-rain.jpg",
+      "durationSeconds": 108.8935,
+      "source": "https://storage.pomofi.io/tracks/paper-cup-rain.mp3?v=20260906"
+    },
+    {
+      "id": "holding-a-warm-cup",
+      "title": "Holding a Warm Cup",
+      "artist": "rainymonday",
+      "artworkUrl": "/audio/artwork/holding-a-warm-cup.jpg",
+      "durationSeconds": 120.8535,
+      "source": "https://storage.pomofi.io/tracks/holding-a-warm-cup.mp3?v=20260906"
+    },
+    {
+      "id": "cafe-groove",
+      "title": "Cafe Groove",
+      "artist": "rainymonday",
+      "artworkUrl": "/audio/artwork/cafe-groove.jpg",
+      "durationSeconds": 118.6535,
+      "source": "https://storage.pomofi.io/tracks/cafe-groove.mp3?v=20260906"
+    },
+    {
+      "id": "a-cloudless-monday",
+      "title": "A Cloudless Monday",
+      "artist": "rainymonday",
+      "artworkUrl": "/audio/artwork/a-cloudless-monday.jpg",
+      "durationSeconds": 95.0135,
+      "source": "https://storage.pomofi.io/tracks/a-cloudless-monday.mp3?v=20260906"
+    },
+    {
+      "id": "last-cup-dawn",
+      "title": "Last Cup Dawn",
+      "artist": "rainymonday",
+      "artworkUrl": "/audio/artwork/last-cup-dawn.jpg",
+      "durationSeconds": 148.6535,
+      "source": "https://storage.pomofi.io/tracks/last-cup-dawn.mp3?v=20260906"
+    },
+    {
+      "id": "morning-toast-loop",
+      "title": "Morning Toast Loop",
+      "artist": "rainymonday",
+      "artworkUrl": "/audio/artwork/morning-toast-loop.jpg",
+      "durationSeconds": 111.4535,
+      "source": "https://storage.pomofi.io/tracks/morning-toast-loop.mp3?v=20260906"
+    },
+    {
+      "id": "toast-and-an-old-radio",
+      "title": "Toast and an Old Radio",
+      "artist": "rainymonday",
+      "artworkUrl": "/audio/artwork/toast-and-an-old-radio.jpg",
+      "durationSeconds": 132.3335,
+      "source": "https://storage.pomofi.io/tracks/toast-and-an-old-radio.mp3?v=20260906"
     }
   ]
 }

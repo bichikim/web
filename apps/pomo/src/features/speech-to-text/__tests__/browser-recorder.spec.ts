@@ -59,11 +59,14 @@ class FakeMediaRecorder {
     }
   }
 
-  emitStop() {
+  emitData() {
     for (const listener of this.#listeners.get('dataavailable') ?? []) {
       listener({data: FakeMediaRecorder.data} as BlobEvent)
     }
+  }
 
+  emitStop() {
+    this.emitData()
     for (const listener of this.#listeners.get('stop') ?? []) {
       listener(new Event('stop'))
     }
@@ -425,4 +428,23 @@ describe('speech end detector lifecycle', () => {
     expect(createSpeechEndDetector).toHaveBeenCalledOnce()
     result.value.cancel()
   })
+})
+
+it('should notify data updates across segments and ignore them after cancel', async () => {
+  const onData = vi.fn()
+  const recorder = createBrowserSpeechRecorder({decodeRecording: async () => new Float32Array(10)})
+  const result = await recorder.start(onData)
+  expect(result.ok).toBe(true)
+  if (!result.ok) {
+    throw new Error('recording failed')
+  }
+  getMediaRecorder().emitData()
+  expect(onData).toHaveBeenCalledOnce()
+  await result.value.takeSegment()
+  onData.mockClear()
+  getMediaRecorder().emitData()
+  expect(onData).toHaveBeenCalledOnce()
+  result.value.cancel()
+  getMediaRecorder().emitData()
+  expect(onData).toHaveBeenCalledOnce()
 })

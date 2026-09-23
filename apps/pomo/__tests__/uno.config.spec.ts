@@ -1,10 +1,20 @@
+/** @vitest-environment node */
+// Vite provides the default string export for raw source imports.
+// oxlint-disable-next-line import/default
+import progressSource from '../src/components/memory-assist/picture-diary/Generation.tsx?raw'
+// oxlint-disable-next-line import/default
+import loadingSource from '../src/components/p-loading-status/PLoadingStatus.tsx?raw'
+// oxlint-disable-next-line import/default
+import sceneFallbackSource from '../src/components/p-studio/SceneFallback.tsx?raw'
+// oxlint-disable-next-line import/default
+import typographySource from '../src/components/typography-classes.ts?raw'
 import {createGenerator} from 'unocss'
 import {expect, it} from 'vitest'
 
 import unoConfig from '../uno.config'
 
 const getRuleBody = (css: string, selector: string) => {
-  const match = new RegExp(`\\.${selector}\\{([^}]*)\\}`).exec(css)
+  const match = new RegExp(`\\.${selector}\\s*\\{([^}]*)\\}`).exec(css)
 
   expect(match).not.toBeNull()
 
@@ -23,9 +33,20 @@ const getColorSchemeBody = (css: string, scheme: 'dark' | 'light') => {
   return match?.[1] ?? ''
 }
 
-it('should generate initial scene fallback shortcuts without extracted source', async () => {
+it('should extract loading and scene fallback utilities from component constants', async () => {
   const uno = await createGenerator(unoConfig)
-  const {css, matched} = await uno.generate('', {safelist: true})
+  const {css, matched} = await uno.generate(`${loadingSource}\n${sceneFallbackSource}`, {
+    safelist: false,
+  })
+
+  for (const utility of [
+    'min-h-control-sm',
+    'animate-spin',
+    'pointer-events-none',
+    'backdrop-blur-surface',
+  ]) {
+    expect(matched).toContain(utility)
+  }
 
   for (const shortcut of [
     'pomo-loading',
@@ -33,30 +54,22 @@ it('should generate initial scene fallback shortcuts without extracted source', 
     'pomo-scene-fallback',
     'pomo-scene-fallback__panel',
   ]) {
-    expect(matched).toContain(shortcut)
+    expect(matched).not.toContain(shortcut)
+    expect(css).not.toContain(`.${shortcut}`)
   }
+})
 
-  const loadingRule = getRuleBody(css, 'pomo-loading')
-  const spinnerRule = getRuleBody(css, 'pomo-loading__spinner')
-  const sceneFallbackRule = getRuleBody(css, 'pomo-scene-fallback')
-  const panelRule = getRuleBody(css, 'pomo-scene-fallback__panel')
+it('should generate CSS for typography constants', async () => {
+  const uno = await createGenerator(unoConfig)
+  const {css, matched} = await uno.generate(typographySource, {safelist: false})
 
-  expect(loadingRule).toContain('padding-top:0;')
-  expect(loadingRule).toContain('padding-bottom:0;')
-  expect(loadingRule).toContain('padding-left:0.75rem;')
-  expect(loadingRule).toContain('padding-right:0.75rem;')
-  expect(loadingRule).toContain('font-size:0.875rem;')
-  expect(loadingRule).toContain('line-height:1.25rem;')
-  expect(loadingRule).toContain('font-weight:650;')
-  expect(spinnerRule).toContain('width:1.125rem;')
-  expect(spinnerRule).toContain('height:1.125rem;')
-  expect(spinnerRule).toContain('animation:spin 1s linear infinite;')
-  expect(sceneFallbackRule).toContain('position:absolute;')
-  expect(sceneFallbackRule).toContain('inset:0;')
-  expect(sceneFallbackRule).toContain('display:grid;')
-  expect(sceneFallbackRule).toContain('place-items:center;')
-  expect(panelRule).toContain('border-style:solid;')
-  expect(panelRule).toContain('backdrop-filter:')
+  for (const utility of ['text-base', 'leading-6', 'text-sm', 'leading-5']) {
+    expect(matched).toContain(utility)
+  }
+  expect(css).toContain('font-size:1rem')
+  expect(css).toContain('line-height:1.5rem')
+  expect(css).toContain('font-size:0.875rem')
+  expect(css).toContain('line-height:1.25rem')
 })
 
 it('should generate the narrow player container variant', async () => {
@@ -106,6 +119,35 @@ it('should generate reusable CSS for static runtime surfaces', async () => {
   expect(css).toContain('width:max(0px,var(--pomo-swipe-offset))')
   expect(css).toContain('width:max(0px,calc(-1 * var(--pomo-swipe-offset)))')
   expect(css).toContain('transform:translateX(var(--pomo-swipe-offset))')
+})
+
+it('should keep the default vertical spacing and quarter it beside a safe-area inset', async () => {
+  const uno = await createGenerator(unoConfig)
+  const {css, matched} = await uno.generate(
+    'top-safe-top top-safe-top-mobile bottom-safe-bottom bottom-safe-bottom-mobile',
+  )
+
+  for (const utility of [
+    'top-safe-top',
+    'top-safe-top-mobile',
+    'bottom-safe-bottom',
+    'bottom-safe-bottom-mobile',
+  ]) {
+    expect(matched).toContain(utility)
+  }
+
+  for (const [selector, property, inset, baseUnits] of [
+    ['top-safe-top', 'top', 'top', 6],
+    ['top-safe-top-mobile', 'top', 'top', 4],
+    ['bottom-safe-bottom', 'bottom', 'bottom', 6],
+    ['bottom-safe-bottom-mobile', 'bottom', 'bottom', 4],
+  ] as const) {
+    const expectedRule = [
+      `${property}:calc(var(--pomo-safe-area-inset-${inset}) + calc(1rem / 4 * ${baseUnits}) * `,
+      `(1 - 0.75 * sin(atan2(var(--pomo-safe-area-inset-${inset}), 0px))));`,
+    ].join('')
+    expect(getRuleBody(css, selector)).toContain(expectedRule)
+  }
 })
 
 it('should generate CSS for Tabler icons used by settings, weather, and modal close', async () => {
@@ -167,4 +209,44 @@ it('should keep light glass surfaces as translucent as their dark equivalents', 
 
     expect(lightValue).toBe(darkValue)
   }
+})
+
+it('should theme the orbit border with the foreground color', async () => {
+  const uno = await createGenerator(unoConfig)
+  const {css} = await uno.generate('', {preflights: true})
+  const orbitBorderRule = getRuleBody(css, 'pomo-orbit-border')
+
+  expect(orbitBorderRule).toContain('rgb(var(--pomo-color-foreground-channels) / 96%)')
+  expect(orbitBorderRule).not.toContain('rgb(255 255 255')
+})
+
+it('should extract diary progress selectors from component constants', async () => {
+  const uno = await createGenerator(unoConfig)
+  const {css} = await uno.generate(progressSource, {safelist: false})
+
+  expect(css).toContain(
+    '--progress-fill:linear-gradient(90deg,transparent,currentColor,transparent);',
+  )
+  expect(css).toContain(
+    'background:var(--progress-fill) -50% 0/40% 100% no-repeat,var(--progress-track);',
+  )
+  expect(css).toContain('::-webkit-progress-value')
+  expect(css).toContain('::-moz-progress-bar')
+  expect(css).toContain('@media (prefers-reduced-motion: reduce)')
+})
+
+it('should isolate icon defaults from sizing utilities across independent CSS chunks', async () => {
+  const uno = await createGenerator(unoConfig)
+  const options = {preflights: false, safelist: false}
+  const icons = await uno.generate('i-tabler-player-play i-pomo-scribble:play', options)
+  const sizing = await uno.generate('size-6 w-8 h-5', options)
+
+  expect(icons.css).toContain('@layer pomo-icons{')
+  expect(getRuleBody(icons.css, 'i-tabler-player-play')).toContain('width:1em;')
+  expect(icons.matched).toContain('i-pomo-scribble:play')
+  expect(sizing.css).toContain('@layer pomo-icons;')
+  expect(sizing.css).not.toMatch(/@layer[^;{]*\{/u)
+  expect(getRuleBody(sizing.css, 'size-6')).toContain('width:1.5rem;')
+  expect(getRuleBody(sizing.css, 'w-8')).toContain('width:2rem;')
+  expect(getRuleBody(sizing.css, 'h-5')).toContain('height:1.25rem;')
 })

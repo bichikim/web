@@ -1,29 +1,45 @@
+import {selectMaximumBy} from 'src/utils/select-maximum-by'
 import {z} from 'zod'
 
+import {createLatestAsyncTask} from 'src/utils/create-latest-async-task'
+
 import {
-  createLatestNativeStorageWriter,
   hasNativeStorageBridge,
-  readNativeStorageJson,
+  readTossStorageJson,
   readWebStorageJson,
+  writeTossStorageJson,
   writeWebStorageJson,
-} from 'src/features/runtime-storage'
+} from 'src/utils/runtime-storage'
 
 const PLAYLIST_STORAGE_KEY = 'pomo:focus-room-playlist:v1'
-const nativeWriter = createLatestNativeStorageWriter(PLAYLIST_STORAGE_KEY)
-let playlistWriteRevision = 0
 
 const storedPlaylistSchema = z.object({
   savedAt: z.number().finite().nonnegative(),
-  trackIds: z
-    .array(z.string().min(1))
-    .refine((trackIds) => new Set(trackIds).size === trackIds.length),
+  trackIds: z.array(z.string().min(1)),
   version: z.literal(1),
 })
 
-interface StoredPlaylist {
+export interface StoredPlaylist {
   readonly savedAt: number
   readonly trackIds: readonly string[]
   readonly version: 1
+}
+
+export interface PlaylistStorageAdapter {
+  readonly readToss: () => Promise<StoredPlaylist | null>
+  readonly readWeb: () => StoredPlaylist | null
+  readonly usesTossStorage: () => boolean
+  readonly writeToss: (playlist: StoredPlaylist) => Promise<void>
+  readonly writeWeb: (playlist: StoredPlaylist) => unknown | null
+}
+
+export interface PlaylistClock {
+  readonly now: () => number
+}
+
+export interface PPlaylistStorage {
+  readonly read: () => Promise<readonly string[] | null>
+  readonly write: (trackIds: readonly string[]) => Promise<void>
 }
 
 const parseStoredPlaylist = (value: unknown): StoredPlaylist | null => {
@@ -31,70 +47,125 @@ const parseStoredPlaylist = (value: unknown): StoredPlaylist | null => {
   return result.success ? result.data : null
 }
 
-const readWebPlaylist = () => {
-  return readWebStorageJson(PLAYLIST_STORAGE_KEY, parseStoredPlaylist)
+const runtimeStorage = {
+  readToss: () => readTossStorageJson(PLAYLIST_STORAGE_KEY, parseStoredPlaylist),
+  readWeb: () => readWebStorageJson(PLAYLIST_STORAGE_KEY, parseStoredPlaylist),
+  usesTossStorage: hasNativeStorageBridge,
+  writeToss: (playlist) => writeTossStorageJson(PLAYLIST_STORAGE_KEY, playlist),
+  writeWeb: (playlist) => writeWebStorageJson(PLAYLIST_STORAGE_KEY, playlist),
+} satisfies PlaylistStorageAdapter
+
+const systemClock = {
+  now: Date.now,
+} satisfies PlaylistClock
+
+interface PlaylistTossWrite {
+  readonly playlist: StoredPlaylist
+  readonly write: PlaylistStorageAdapter['writeToss']
 }
 
-const selectLatestPlaylist = (
-  webPlaylist: StoredPlaylist | null,
-  nativePlaylist: StoredPlaylist | null,
-) => {
-  if (webPlaylist === null) {
-    return nativePlaylist
-  }
+const writeLatestToss = createLatestAsyncTask<PlaylistTossWrite>(({playlist, write}) =>
+  write(playlist),
+)
 
-  if (nativePlaylist === null || webPlaylist.savedAt >= nativePlaylist.savedAt) {
-    return webPlaylist
-  }
+/** Reads and writes playlists using their persisted timestamps. */
+export const createPPlaylistStorage = (
+  storage: PlaylistStorageAdapter = runtimeStorage,
+  clock: PlaylistClock = systemClock,
+  reportError: (error: unknown) => void = globalThis.reportError,
+): PPlaylistStorage => {
+  let playlistRevision = 0
 
-  return nativePlaylist
+  return {
+    async read() {
+      const initialPlaylistRevision = playlistRevision
+      const webPlaylist = storage.readWeb()
+
+      if (!storage.usesTossStorage()) {
+        return webPlaylist?.trackIds ?? null
+      }
+
+      try {
+        const tossPlaylist = await storage.readToss()
+
+        if (playlistRevision !== initialPlaylistRevision) {
+          return storage.readWeb()?.trackIds ?? null
+        }
+
+        const latestPlaylist = selectMaximumBy(webPlaylist, tossPlaylist, (value) => value.savedAt)
+
+        if (latestPlaylist !== null) {
+          storage.writeWeb(latestPlaylist)
+
+          if (latestPlaylist === webPlaylist) {
+            await writeLatestToss({playlist: latestPlaylist, write: storage.writeToss}).catch(
+              reportError,
+            )
+          }
+        }
+
+        if (playlistRevision !== initialPlaylistRevision) {
+          return storage.readWeb()?.trackIds ?? null
+        }
+
+        return latestPlaylist?.trackIds ?? null
+      } catch {
+        if (playlistRevision !== initialPlaylistRevision) {
+          return storage.readWeb()?.trackIds ?? null
+        }
+
+        return webPlaylist?.trackIds ?? null
+      }
+    },
+    async write(trackIds) {
+      const storedPlaylist = {
+        savedAt: clock.now(),
+        trackIds,
+        version: 1,
+      } satisfies StoredPlaylist
+      playlistRevision += 1
+      storage.writeWeb(storedPlaylist)
+
+      if (!storage.usesTossStorage()) {
+        return
+      }
+
+      await writeLatestToss({playlist: storedPlaylist, write: storage.writeToss}).catch(
+        () => undefined,
+      )
+    },
+  }
 }
+
+const runtimePlaylistStorage = createPPlaylistStorage()
 
 /** Reads the latest user-edited playlist saved by either the app or browser runtime. */
-export const readPPlaylist = async (): Promise<readonly string[] | null> => {
-  const initialWriteRevision = playlistWriteRevision
-  const webPlaylist = readWebPlaylist()
-
-  if (!hasNativeStorageBridge()) {
-    return webPlaylist?.trackIds ?? null
-  }
-
-  try {
-    const nativePlaylist = await readNativeStorageJson(PLAYLIST_STORAGE_KEY, parseStoredPlaylist)
-
-    if (playlistWriteRevision !== initialWriteRevision) {
-      return readWebPlaylist()?.trackIds ?? null
-    }
-
-    const latestPlaylist = selectLatestPlaylist(webPlaylist, nativePlaylist)
-
-    if (latestPlaylist !== null) {
-      writeWebStorageJson(PLAYLIST_STORAGE_KEY, latestPlaylist)
-
-      if (latestPlaylist === webPlaylist) {
-        nativeWriter.write(latestPlaylist).catch(globalThis.reportError)
-      }
-    }
-
-    return latestPlaylist?.trackIds ?? null
-  } catch {
-    return webPlaylist?.trackIds ?? null
-  }
-}
+export const readPPlaylist = () => runtimePlaylistStorage.read()
 
 /** Persists the user-edited playlist until the host app or browser data is removed. */
-export const writePPlaylist = async (trackIds: readonly string[]): Promise<void> => {
-  playlistWriteRevision += 1
-  const storedPlaylist = {
-    savedAt: Date.now(),
-    trackIds,
-    version: 1,
-  } satisfies StoredPlaylist
-  writeWebStorageJson(PLAYLIST_STORAGE_KEY, storedPlaylist)
+export const writePPlaylist = (trackIds: readonly string[]) =>
+  runtimePlaylistStorage.write(trackIds)
 
-  if (!hasNativeStorageBridge()) {
-    return
-  }
+export interface PlaylistPreference {
+  readonly trackIds: readonly string[] | null
+}
 
-  await nativeWriter.write(storedPlaylist)
+const playlistPreferenceSchema = z.object({trackIds: z.array(z.string().min(1)).nullable()})
+
+export const playlistPreference = {
+  defaultValue: {trackIds: null} satisfies PlaylistPreference,
+  key: PLAYLIST_STORAGE_KEY,
+  parse: (value: unknown): PlaylistPreference | null => {
+    const result = playlistPreferenceSchema.safeParse(value)
+    return result.success ? result.data : null
+  },
+  storage: {
+    read: async () => ({trackIds: await readPPlaylist()}),
+    write: (_key: string, value: unknown) => {
+      const result = playlistPreferenceSchema.safeParse(value)
+      return result.success && result.data.trackIds !== null
+        ? writePPlaylist(result.data.trackIds)
+        : null
+    },
+  },
 }

@@ -1,14 +1,15 @@
+import {createParsedPreferenceStorage} from '../parsed-preference-storage'
 import {z} from 'zod'
 
+import {webLocalStorage} from 'src/utils/preference-storage'
 import {
-  createSerialNativeStorageWriter,
+  createVersionedPreferenceRepository,
   hasNativeStorageBridge,
-  readNativeStorageJson,
+  readTossStorageJson,
   readWebStorageJson,
+  writeTossStorageJson,
   writeWebStorageJson,
-} from 'src/features/runtime-storage'
-
-export const RANDOM_EVENT_SETTINGS_CHANGED_EVENT = 'pomo:random-event-settings-changed'
+} from 'src/utils/runtime-storage'
 
 export interface RandomEventSettings {
   readonly maximumMinutes: number
@@ -32,69 +33,77 @@ const randomEventSettingsSchema: z.ZodType<RandomEventSettings> = z
     version: z.literal(1),
   })
   .refine((settings) => settings.minimumMinutes <= settings.maximumMinutes)
-let preferenceWriteRevision = 0
-const nativeWriter = createSerialNativeStorageWriter()
 
 export const parseRandomEventSettings = (value: unknown): RandomEventSettings | null => {
   const result = randomEventSettingsSchema.safeParse(value)
   return result.success ? result.data : null
 }
 
-const readWebSettings = () => {
-  return readWebStorageJson(STORAGE_KEY, parseRandomEventSettings)
+export interface RandomEventSettingsStorage {
+  readonly isNative: () => boolean
+  readonly readWeb: () => RandomEventSettings | null
+  readonly readToss: () => Promise<RandomEventSettings | null>
+  /** Returns null on success, or the storage error on failure. */
+  readonly writeWeb: (settings: RandomEventSettings) => unknown | null
+  readonly writeToss: (settings: RandomEventSettings) => Promise<void>
 }
 
-const writeWebSettings = (settings: RandomEventSettings) => {
-  return writeWebStorageJson(STORAGE_KEY, settings)
+export interface RandomEventSettingsRepository {
+  readonly read: () => Promise<RandomEventSettings>
+  readonly write: (settings: RandomEventSettings) => Promise<void>
 }
 
-/** Reads the random event settings from storage whose lifetime matches the current runtime. */
-export const readRandomEventSettings = async (): Promise<RandomEventSettings> => {
-  const initialWriteRevision = preferenceWriteRevision
-  const webSettings = readWebSettings()
+/** Reads and writes random event settings using the selected runtime storage. */
+export const createRandomEventSettingsRepository = (
+  storage: RandomEventSettingsStorage,
+): RandomEventSettingsRepository =>
+  createVersionedPreferenceRepository({
+    defaultValue: DEFAULT_RANDOM_EVENT_SETTINGS,
+    parse: (settings) => randomEventSettingsSchema.parse(settings),
+    storage: {
+      isNative: storage.isNative,
+      readNative: storage.readToss,
+      readWeb: storage.readWeb,
+      writeNative: storage.writeToss,
+      writeWeb: storage.writeWeb,
+    },
+    writeFailureMessage: 'Failed to persist random event settings.',
+  })
 
-  if (webSettings !== null) {
-    return webSettings
-  }
+const runtimeRepository = createRandomEventSettingsRepository({
+  isNative: hasNativeStorageBridge,
+  readToss: () => readTossStorageJson(STORAGE_KEY, parseRandomEventSettings),
+  readWeb: () => readWebStorageJson(STORAGE_KEY, parseRandomEventSettings),
+  writeToss: (settings) => writeTossStorageJson(STORAGE_KEY, settings),
+  writeWeb: (settings) => writeWebStorageJson(STORAGE_KEY, settings),
+})
 
-  if (!hasNativeStorageBridge()) {
-    return DEFAULT_RANDOM_EVENT_SETTINGS
-  }
+const preferenceStorage = createParsedPreferenceStorage({
+  invalidMessage: 'Invalid random event settings.',
+  parse: parseRandomEventSettings,
+  read: () => runtimeRepository.read(),
+  subscribe: webLocalStorage.subscribe,
+  write: (settings) => runtimeRepository.write(settings).then(() => undefined),
+})
 
-  try {
-    const nativeSettings = await readNativeStorageJson(STORAGE_KEY, parseRandomEventSettings)
-
-    if (nativeSettings === null) {
-      return DEFAULT_RANDOM_EVENT_SETTINGS
-    }
-
-    if (preferenceWriteRevision === initialWriteRevision) {
-      writeWebSettings(nativeSettings)
-    }
-
-    return nativeSettings
-  } catch {
-    return readWebSettings() ?? DEFAULT_RANDOM_EVENT_SETTINGS
-  }
+export interface RandomEventPreferenceOptions {
+  readonly onError?: (error: unknown) => void
+  readonly onSaved?: () => void
 }
 
-/** Persists random event settings until the host app or browser data is removed. */
-export const writeRandomEventSettings = async (settings: RandomEventSettings): Promise<void> => {
-  const snapshot = randomEventSettingsSchema.parse(settings)
-  preferenceWriteRevision += 1
-  const webWriteError = writeWebSettings(snapshot)
+/** Creates the shared preference definition for random event settings. */
+export const createRandomEventPreferenceOptions = (options: RandomEventPreferenceOptions = {}) => ({
+  defaultValue: DEFAULT_RANDOM_EVENT_SETTINGS,
+  key: STORAGE_KEY,
+  onError: options.onError,
+  onSaved: options.onSaved,
+  parse: parseRandomEventSettings,
+  storage: preferenceStorage,
+})
 
-  if (!hasNativeStorageBridge()) {
-    if (webWriteError !== null) {
-      throw new Error('Failed to persist random event settings.', {cause: webWriteError})
-    }
+/** Reads random event settings for the current runtime. */
+export const readRandomEventSettings = (): Promise<RandomEventSettings> => runtimeRepository.read()
 
-    return
-  }
-
-  const nativeWriteError = await nativeWriter.write(STORAGE_KEY, snapshot)
-
-  if (webWriteError !== null && nativeWriteError !== null) {
-    throw new Error('Failed to persist random event settings.', {cause: nativeWriteError})
-  }
-}
+/** Persists random event settings for the current runtime. */
+export const writeRandomEventSettings = (settings: RandomEventSettings): Promise<void> =>
+  runtimeRepository.write(settings)

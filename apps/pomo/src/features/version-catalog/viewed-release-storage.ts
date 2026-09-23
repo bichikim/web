@@ -1,12 +1,13 @@
+import {createSerialTaskQueue} from 'src/utils/create-serial-task-queue'
 import {z} from 'zod'
 
 import {
   hasNativeStorageBridge,
-  readNativeStorageJson,
+  readTossStorageJson,
   readWebStorageJson,
-  writeNativeStorageJson,
+  writeTossStorageJson,
   writeWebStorageJson,
-} from 'src/features/runtime-storage'
+} from 'src/utils/runtime-storage'
 
 const STORAGE_KEY = 'pomo:viewed-version-release:v1'
 const VERSION_PATTERN = /^\d{4}\. \d{2}\. \d{2} \d{2}:\d{2}$/u
@@ -24,10 +25,10 @@ export interface ViewedRelease {
 }
 
 export interface VersionNoticeStorage {
-  readonly isNative: () => boolean
-  readonly readNative: () => Promise<unknown | null>
+  readonly usesTossStorage: () => boolean
+  readonly readToss: () => Promise<unknown | null>
   readonly readWeb: () => unknown | null
-  readonly writeNative: (value: ViewedRelease) => Promise<void>
+  readonly writeToss: (value: ViewedRelease) => Promise<void>
   readonly writeWeb: (value: ViewedRelease) => unknown | null
 }
 
@@ -47,66 +48,96 @@ const parseViewedRelease = (value: unknown): ViewedRelease | null => {
 
 export const createViewedReleaseRepository = (
   options: CreateViewedReleaseRepositoryOptions,
-): ViewedReleaseRepository => ({
-  async read() {
-    if (!options.storage.isNative()) {
-      return parseViewedRelease(options.storage.readWeb())
-    }
-
-    let value: ViewedRelease | null
-
-    try {
-      value = parseViewedRelease(await options.storage.readNative())
-    } catch (error) {
-      throw new Error('Failed to read viewed version release.', {cause: error})
-    }
-
-    if (value !== null) {
-      try {
-        options.storage.writeWeb(value)
-      } catch {
-        // Browser storage is only a cache when native storage is authoritative.
-      }
-    }
-
-    return value
-  },
-  async write(value) {
-    const parsedValue = VIEWED_RELEASE_SCHEMA.parse(value)
-
-    if (options.storage.isNative()) {
-      try {
-        await options.storage.writeNative(parsedValue)
-      } catch (error) {
-        throw new Error('Failed to persist viewed version release.', {cause: error})
-      }
-
-      try {
-        options.storage.writeWeb(parsedValue)
-      } catch {
-        // Browser storage is only a cache when native storage is authoritative.
-      }
+): ViewedReleaseRepository => {
+  const writeQueue = createSerialTaskQueue()
+  let nativeSnapshot: ViewedRelease | null = null
+  const cacheNativeSnapshot = (value: ViewedRelease | null): void => {
+    nativeSnapshot = value
+    if (value === null) {
       return
     }
 
-    let writeError: unknown | null
-
     try {
-      writeError = options.storage.writeWeb(parsedValue)
-    } catch (error) {
-      writeError = error
+      if (options.storage.writeWeb(value) === null) {
+        nativeSnapshot = null
+      }
+    } catch {
+      // Browser storage is only a cache when native storage is authoritative.
     }
-    if (writeError !== null) {
-      throw new Error('Failed to persist viewed version release.', {cause: writeError})
-    }
-  },
-})
+  }
+
+  return {
+    async read() {
+      if (!options.storage.usesTossStorage()) {
+        return nativeSnapshot ?? parseViewedRelease(options.storage.readWeb())
+      }
+
+      let value: ViewedRelease | null
+
+      try {
+        value = parseViewedRelease(await options.storage.readToss())
+      } catch (error) {
+        throw new Error('Failed to read viewed version release.', {cause: error})
+      }
+
+      cacheNativeSnapshot(value)
+
+      return value
+    },
+    async write(value) {
+      const parsedValue = VIEWED_RELEASE_SCHEMA.parse(value)
+      const usesTossStorage = options.storage.usesTossStorage()
+
+      return writeQueue.run(async () => {
+        if (usesTossStorage) {
+          let storedValue: ViewedRelease
+          try {
+            const currentValue = parseViewedRelease(await options.storage.readToss())
+            storedValue =
+              currentValue !== null &&
+              Date.parse(currentValue.releasedAt) >= Date.parse(parsedValue.releasedAt)
+                ? currentValue
+                : parsedValue
+            if (storedValue === parsedValue) {
+              await options.storage.writeToss(storedValue)
+            }
+          } catch (error) {
+            throw new Error('Failed to persist viewed version release.', {cause: error})
+          }
+
+          cacheNativeSnapshot(storedValue)
+          return
+        }
+
+        let writeError: unknown | null
+
+        try {
+          const currentValue = parseViewedRelease(options.storage.readWeb())
+          if (
+            currentValue !== null &&
+            Date.parse(currentValue.releasedAt) >= Date.parse(parsedValue.releasedAt)
+          ) {
+            return
+          }
+
+          writeError = options.storage.writeWeb(parsedValue)
+        } catch (error) {
+          writeError = error
+        }
+        if (writeError !== null) {
+          throw new Error('Failed to persist viewed version release.', {cause: writeError})
+        }
+        nativeSnapshot = null
+      })
+    },
+  }
+}
 
 const runtimeStorage: VersionNoticeStorage = {
-  isNative: hasNativeStorageBridge,
-  readNative: () => readNativeStorageJson(STORAGE_KEY, parseViewedRelease),
+  readToss: () => readTossStorageJson(STORAGE_KEY, parseViewedRelease),
   readWeb: () => readWebStorageJson(STORAGE_KEY, parseViewedRelease),
-  writeNative: (value) => writeNativeStorageJson(STORAGE_KEY, value),
+  usesTossStorage: hasNativeStorageBridge,
+  writeToss: (value) => writeTossStorageJson(STORAGE_KEY, value),
   writeWeb: (value) => writeWebStorageJson(STORAGE_KEY, value),
 }
 

@@ -1,9 +1,10 @@
 /** @vitest-environment jsdom */
 
 import {A, useNavigate} from '@solidjs/router'
-import {fireEvent, render, screen, waitFor} from '@solidjs/testing-library'
-import {createSignal, type JSX, Show} from 'solid-js'
+import {fireEvent, render, screen, waitFor, within} from '@solidjs/testing-library'
+import {createSignal, Show} from 'solid-js'
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
+import {getLocale, overwriteGetLocale} from '@paraglide/runtime'
 
 import {usePSceneStyle} from '../../../features/focus-room-animation'
 import {
@@ -21,11 +22,11 @@ import {
 import {formatModelDownloadSize} from '../../../features/model-storage'
 import {getSupertonicModel, isSupertonicModelDownloaded} from '../../../features/supertonic'
 import {getPrimaryMood} from '../../../features/text-mood'
-import {PFaceIcon} from '../../PFaceIcon'
-import {PGenerationStatus} from '../../PGenerationStatus'
-import {PModelDownloadConsent} from '../../PModelDownloadConsent'
-import PDialogueDraftGenerator from '../DraftGenerator'
-import PDialogueEditor from '../Editor'
+import {PFaceIcon} from '../../p-face-icon/PFaceIcon'
+import {PGenerationStatus} from '../../p-generation-status/PGenerationStatus'
+import {PModelDownloadConsent} from '../../p-model-download-consent/PModelDownloadConsent'
+import {PDialogueDraftGenerator} from '../DraftGenerator'
+import {PDialogueEditor} from '../Editor'
 
 vi.mock('@solidjs/router', () => ({A: vi.fn(), useNavigate: vi.fn()}))
 vi.mock('../../../features/focus-room-animation', () => ({usePSceneStyle: vi.fn()}))
@@ -47,10 +48,12 @@ vi.mock('../../../features/supertonic', async () => {
   }
 })
 vi.mock('../../../features/text-mood', () => ({getPrimaryMood: vi.fn()}))
-vi.mock('../DraftGenerator', () => ({default: vi.fn()}))
-vi.mock('../../PFaceIcon', () => ({PFaceIcon: vi.fn()}))
-vi.mock('../../PGenerationStatus', () => ({PGenerationStatus: vi.fn()}))
-vi.mock('../../PModelDownloadConsent', () => ({PModelDownloadConsent: vi.fn()}))
+vi.mock('../DraftGenerator', () => ({PDialogueDraftGenerator: vi.fn()}))
+vi.mock('../../p-face-icon/PFaceIcon', () => ({PFaceIcon: vi.fn()}))
+vi.mock('../../p-generation-status/PGenerationStatus', () => ({PGenerationStatus: vi.fn()}))
+vi.mock('../../p-model-download-consent/PModelDownloadConsent', () => ({
+  PModelDownloadConsent: vi.fn(),
+}))
 
 interface DraftGeneratorProps {
   readonly disabled?: boolean
@@ -89,11 +92,14 @@ interface EditorHarness {
 
 const navigate = vi.fn()
 const refreshDialogues = vi.fn().mockResolvedValue(undefined)
+const originalGetLocale = getLocale
 
 const createModelDownload = (): ModelDownloadController => ({
   cancel: vi.fn(),
   dismissError: vi.fn(),
   dispose: vi.fn(),
+  downloads: () => [],
+  startImageModel: vi.fn(),
   startTextModel: vi.fn(async (): Promise<ModelDownloadResult> => ({status: 'complete'})),
   startVoiceModel: vi.fn(async (): Promise<ModelDownloadResult> => ({status: 'complete'})),
   state: () => ({status: 'idle'}),
@@ -165,9 +171,9 @@ const renderEditor = (harness: EditorHarness, dialogueId: string | null = null) 
   return render(() => <PDialogueEditor dialogueId={dialogueId} />)
 }
 
-const getVoiceSelect = () => screen.getByRole('combobox', {name: '목소리'})
-const getLanguageSelect = () => screen.getByRole('combobox', {name: '언어'})
-const getModelSelect = () => screen.getByRole('combobox', {name: '모델'})
+const getVoiceSelect = () => screen.getByRole('button', {name: /목소리/})
+const getLanguageSelect = () => screen.getByRole('button', {name: /언어/})
+const getModelSelect = () => screen.getByRole('button', {name: /모델/})
 const getGenerateButton = () => screen.getByRole('button', {name: '음성 만들기'})
 const getSaveButton = () => screen.getByRole('button', {name: '대화 저장'})
 
@@ -235,10 +241,24 @@ beforeEach(() => {
 })
 
 afterEach(() => {
+  overwriteGetLocale(originalGetLocale)
   vi.restoreAllMocks()
 })
 
 describe('PDialogueEditor fields', () => {
+  it('should render editor copy in English', () => {
+    overwriteGetLocale(() => 'en')
+    const harness = createEditorHarness()
+    harness.setState({message: 'Ready', status: 'idle'})
+    renderEditor(harness)
+
+    expect(screen.getByRole('heading', {name: 'Create new dialogue'})).toBeInTheDocument()
+    expect(screen.getByRole('region', {name: 'Script input'})).toBeInTheDocument()
+    expect(screen.getByRole('textbox', {name: /Script/u})).toBeInTheDocument()
+    expect(screen.getByRole('button', {name: 'Create voice'})).toBeInTheDocument()
+    expect(screen.getByRole('heading', {name: 'Review speech bubbles'})).toBeInTheDocument()
+  })
+
   it('should render a new dialogue and update text, voice, language, model, and draft state', async () => {
     const harness = createEditorHarness()
     const result = renderEditor(harness)
@@ -256,7 +276,7 @@ describe('PDialogueEditor fields', () => {
       '[&_textarea]:bg-surface-strong',
       '[&_textarea]:text-foreground',
     )
-    expect(screen.getByRole('link', {name: 'Pomofi로'})).toHaveAttribute('href', '/')
+    expect(screen.getByRole('link', {name: '앱으로 돌아가기'})).toHaveAttribute('href', '/')
     expect(screen.getByText('음성을 만들면 구간별 텍스트와 시작 시간이 표시돼요.')).toBeVisible()
     expect(screen.getByText('13 / 3000')).toBeInTheDocument()
     expect(screen.getByTestId('download-consent')).toHaveAttribute('data-download-size', '123 MB')
@@ -266,16 +286,16 @@ describe('PDialogueEditor fields', () => {
     })
     expect(harness.controller.setText).toHaveBeenCalledWith('직접 입력')
 
-    fireEvent.change(getVoiceSelect(), {target: {value: 'F1'}})
-    fireEvent.change(getLanguageSelect(), {target: {value: 'en'}})
-    fireEvent.change(getModelSelect(), {target: {value: 'int8'}})
-    expect(harness.controller.voiceId()).toBe('F1')
-    expect(harness.controller.language()).toBe('en')
-    expect(harness.controller.modelId()).toBe('int8')
-
-    fireEvent.change(getVoiceSelect(), {target: {value: 'missing'}})
-    fireEvent.change(getLanguageSelect(), {target: {value: 'missing'}})
-    fireEvent.change(getModelSelect(), {target: {value: 'missing'}})
+    for (const [select, value] of [
+      [getVoiceSelect(), 'F1'],
+      [getLanguageSelect(), 'en'],
+      [getModelSelect(), 'int8'],
+    ] as const) {
+      fireEvent.keyDown(select, {key: 'ArrowDown'})
+      const option = document.querySelector(`[role="option"][data-key="${value}"]`)
+      expect(option).not.toBeNull()
+      fireEvent.click(option!)
+    }
     expect(harness.controller.voiceId()).toBe('F1')
     expect(harness.controller.language()).toBe('en')
     expect(harness.controller.modelId()).toBe('int8')
@@ -565,12 +585,14 @@ describe('PDialogueEditor saving and timeline', () => {
       '전체 음성을 새로 만든 뒤 사용할 수 있어요.',
     )
     expect(regenerateButton).not.toHaveAttribute('title')
-    expect(screen.getByText('둘째 문장').parentElement).toHaveClass(
-      'pomo-dialogue-editor__segment-content',
-    )
-    expect(screen.getByTestId('face-icon').parentElement?.parentElement).toHaveClass(
-      'pomo-dialogue-editor__segment-meta',
-    )
+    const segment = screen.getByText('둘째 문장').closest('li')
+    if (!(segment instanceof HTMLLIElement)) {
+      throw new TypeError('Expected the dialogue segment to be rendered as a list item')
+    }
+    expect(
+      within(segment).getByRole('button', {name: '2번 말풍선 음성 다시 만들기'}),
+    ).toHaveTextContent('만드는 중…')
+    expect(within(segment).getByTestId('face-icon')).toBeInTheDocument()
 
     fireEvent.click(regenerateButton)
     fireEvent.click(screen.getByRole('button', {name: '2번 말풍선 음성 다시 만들기'}))

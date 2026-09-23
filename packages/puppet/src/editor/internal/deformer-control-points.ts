@@ -1,3 +1,4 @@
+import {moveCurveHandles} from './curve-control-points'
 import {
   getDocumentScene,
   type PuppetDeformerCurveHandle,
@@ -86,11 +87,19 @@ export const setDeformerControlPoint = (
     return undefined
   }
 
-  const controlPoints = [...node.controlPoints]
+  let controlPoints = [...node.controlPoints]
   const previousX = controlPoints[options.pointIndex * 2] ?? 0
   const previousY = controlPoints[options.pointIndex * 2 + 1] ?? 0
   controlPoints[options.pointIndex * 2] = options.x
   controlPoints[options.pointIndex * 2 + 1] = options.y
+  if (node.curveAxis !== undefined) {
+    controlPoints = moveCurveHandles({
+      controlPoints,
+      offsetX: options.x - previousX,
+      offsetY: options.y - previousY,
+      pointIndex: options.pointIndex,
+    })
+  }
   const curveHandles = node.curveHandles?.map((handle) =>
     handle.pointIndex === options.pointIndex
       ? {

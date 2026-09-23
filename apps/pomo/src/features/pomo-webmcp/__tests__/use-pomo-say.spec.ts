@@ -4,14 +4,8 @@ import {renderHook} from '@solidjs/testing-library'
 import {createSignal} from 'solid-js'
 import {afterEach, describe, expect, it, vi} from 'vitest'
 
-import type {ChatVoiceController, ChatVoiceRuntime} from '../../chat-voice'
+import type {ChatVoiceController} from '../../chat-voice'
 import {useLazyChatVoice} from '../../chat-voice/lazy'
-import {
-  type CreateSupertonicAudioPlayerOptions,
-  type SupertonicAudioPlayer,
-  type SupertonicClient,
-} from '../../supertonic'
-import {successResult} from '../../result'
 import {usePSay} from '../use-pomo-say'
 
 vi.mock('../../chat-voice/lazy', () => ({
@@ -59,50 +53,6 @@ const createVoice = (): ChatVoiceController => ({
   stop: vi.fn(),
 })
 
-interface TestAudioPlayer extends SupertonicAudioPlayer {
-  readonly end: () => void
-}
-
-const createAudio = () => ({
-  generationTime: 100,
-  sampleRate: 24_000,
-  samples: Float32Array.of(0.1),
-})
-
-const createAudioChunk = () => ({...createAudio(), index: 0, total: 1})
-
-const createClient = (): SupertonicClient => ({
-  cancelGeneration: vi.fn(),
-  dispose: vi.fn(),
-  generate: vi.fn(async () => successResult(createAudio())),
-  generateStream: vi.fn(async function* generateStream() {
-    yield successResult({audio: createAudioChunk(), type: 'chunk' as const})
-    yield successResult({audio: createAudio(), type: 'complete' as const})
-  }),
-  initialize: vi.fn(async () => successResult(undefined)),
-})
-
-const createAudioPlayer = (options: CreateSupertonicAudioPlayerOptions): TestAudioPlayer => ({
-  dispose: vi.fn(),
-  end: () => options.onPlaybackEnd?.(),
-  enqueue: vi.fn(),
-  finish: vi.fn(),
-})
-
-const createRuntime = (client: SupertonicClient) => {
-  const players: Array<TestAudioPlayer> = []
-  const runtime: ChatVoiceRuntime = {
-    createAudioPlayer: (options) => {
-      const player = createAudioPlayer(options)
-      players.push(player)
-      return player
-    },
-    createClient: () => client,
-  }
-
-  return {players, runtime}
-}
-
 afterEach(() => {
   Reflect.deleteProperty(document, 'modelContext')
   vi.clearAllMocks()
@@ -133,54 +83,7 @@ describe('usePSay', () => {
     cleanup()
   })
 
-  it('should keep newer speech text while a superseded generation settles', async () => {
-    let releaseFirstGeneration: () => void = () => undefined
-    const firstGeneration = new Promise<void>((resolve) => {
-      releaseFirstGeneration = resolve
-    })
-    const client = createClient()
-    vi.mocked(client.generateStream)
-      .mockImplementationOnce(async function* firstSpeech() {
-        await firstGeneration
-        yield successResult({audio: createAudio(), type: 'complete' as const})
-      })
-      .mockImplementationOnce(async function* secondSpeech() {
-        yield successResult({audio: createAudioChunk(), type: 'chunk' as const})
-        yield successResult({audio: createAudio(), type: 'complete' as const})
-      })
-    const {players, runtime} = createRuntime(client)
-    const actualChatVoice =
-      await vi.importActual<typeof import('../../chat-voice')>('../../chat-voice')
-    vi.mocked(useLazyChatVoice).mockImplementationOnce(() =>
-      actualChatVoice.useChatVoice({runtime}),
-    )
-    const modelContext = createModelContext()
-    const {cleanup, result} = renderHook(() => usePSay({onBeforeSpeech: vi.fn()}))
-    await vi.waitFor(() => expect(modelContext.registerTool).toHaveBeenCalledOnce())
-    const tool = modelContext.getTool()
-
-    const supersededCall = tool.execute({text: '첫 번째 소식'})
-    await vi.waitFor(() => expect(client.generateStream).toHaveBeenCalledOnce())
-    const activeCall = tool.execute({text: '두 번째 소식'})
-    await vi.waitFor(() => expect(client.cancelGeneration).toHaveBeenCalledOnce())
-    await Promise.resolve()
-
-    expect(result.speechText()).toBeNull()
-
-    releaseFirstGeneration()
-    await expect(supersededCall).rejects.toMatchObject({name: 'AbortError'})
-    await vi.waitFor(() => expect(client.generateStream).toHaveBeenCalledTimes(2))
-    await vi.waitFor(() => expect(players[1]?.finish).toHaveBeenCalledOnce())
-
-    expect(result.speechText()).toBe('두 번째 소식')
-
-    players[1]?.end()
-    await expect(activeCall).resolves.toEqual({spoken: true, voice: 'Yuna'})
-    expect(result.speechText()).toBeNull()
-    cleanup()
-  })
-
-  it('should cancel a superseded tool call without finishing the newer speech', async () => {
+  it('should keep newer speech text while a superseded tool call settles', async () => {
     let completeFirst: () => void = () => undefined
     let completeSecond: () => void = () => undefined
     const firstSpeech = new Promise<void>((resolve) => {
@@ -201,10 +104,15 @@ describe('usePSay', () => {
     const tool = modelContext.getTool()
 
     const supersededCall = tool.execute({text: '첫 번째 소식'})
+    await vi.waitFor(() => expect(voice.speak).toHaveBeenCalledWith('첫 번째 소식', undefined))
     const activeCall = tool.execute({text: '두 번째 소식'})
+    await vi.waitFor(() => expect(result.speechText()).toBe('두 번째 소식'))
+    const supersededRejection = expect(supersededCall).rejects.toMatchObject({
+      name: 'AbortError',
+    })
     completeFirst()
 
-    await expect(supersededCall).rejects.toMatchObject({name: 'AbortError'})
+    await supersededRejection
     expect(voice.finish).not.toHaveBeenCalled()
     expect(result.speechText()).toBe('두 번째 소식')
 

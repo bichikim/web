@@ -1,22 +1,11 @@
 import {icons as tablerIcons} from '@iconify-json/tabler'
 import baseConfig from '@winter-love/unocss-config'
 import {defineConfig, mergeConfigs, presetIcons, type PresetWind3Theme, type Variant} from 'unocss'
-
 import scribbleIcons from './scripts/unocss/scribble.json'
 import albumData from './public/audio/albums.json'
-
-const sansFontFamily = [
-  "'Pretendard Variable'",
-  'Pretendard',
-  'system-ui',
-  '-apple-system',
-  'BlinkMacSystemFont',
-  "'Segoe UI'",
-  "'Apple SD Gothic Neo'",
-  "'Noto Sans KR'",
-  "'Malgun Gothic'",
-  'sans-serif',
-].join(', ')
+import {pomoComponentStylePreflight} from './scripts/unocss/component-styles'
+import {sansFontFamily} from './scripts/unocss/typography'
+import {createSafeAreaMaxHeight, createSafeAreaSpacing} from './scripts/unocss/safe-area-spacing'
 
 const colors = {
   backdrop: 'rgb(var(--pomo-color-backdrop-channels) / var(--pomo-color-backdrop-opacity))',
@@ -64,19 +53,6 @@ const colors = {
     'rgb(var(--pomo-color-switch-track-channels) / var(--pomo-color-switch-track-opacity))',
 } as const
 
-const INITIAL_SCENE_FALLBACK_SHORTCUTS = {
-  'pomo-loading':
-    'flex min-h-control-sm box-border items-center gap-2 rounded-control bg-surface py-0 px-3 ' +
-    'text-foreground text-sm font-650 leading-5 shadow-panel',
-  'pomo-loading__spinner':
-    'w-4.5 h-4.5 box-border flex-none animate-spin [border:0.125rem_solid_rgb(255_255_255_/_28%)] ' +
-    'border-t-highlight rounded-control motion-reduce:animate-[none]',
-  'pomo-scene-fallback':
-    'pointer-events-none absolute inset-0 grid place-items-center text-foreground',
-  'pomo-scene-fallback__panel':
-    'border border-solid border-border rounded-control backdrop-blur-surface',
-} as const
-
 const createParentVariant = (name: string, parent: string): Variant => {
   return (matcher) => {
     const prefix = `${name}:`
@@ -91,7 +67,6 @@ const createParentVariant = (name: string, parent: string): Variant => {
     }
   }
 }
-
 const isPresetNamed = (preset: unknown, name: string) =>
   typeof preset === 'object' && preset !== null && 'name' in preset && preset.name === name
 const config = mergeConfigs([
@@ -104,7 +79,8 @@ const config = mergeConfigs([
       },
     },
     extendTheme: (theme) => {
-      const spacing = (units: string) => `calc(${theme.spacing?.DEFAULT ?? '1rem'} / 4 * ${units})`
+      const defaultSpacing = theme.spacing?.DEFAULT ?? '1rem'
+      const spacing = (units: string) => `calc(${defaultSpacing} / 4 * ${units})`
       const controlMedium = spacing('11')
       const controlSmall = spacing('8')
       const layoutSpacing = spacing('6')
@@ -149,9 +125,9 @@ const config = mergeConfigs([
       }
       theme.maxHeight = {
         ...theme.maxHeight,
-        modal: `calc(100dvh - (${layoutSpacing} * 2) - ${safeAreaTop} - ${safeAreaBottom})`,
-        'modal-top': `calc(100dvh - ${safeAreaTop} - ${safeAreaBottom} - (${modalSpacing} * 2))`,
-        'modal-top-compact': `calc(100dvh - ${safeAreaTop} - ${safeAreaBottom} - (${modalSpacingCompact} * 2))`,
+        modal: createSafeAreaMaxHeight(layoutSpacing),
+        'modal-top': createSafeAreaMaxHeight(modalSpacing),
+        'modal-top-compact': createSafeAreaMaxHeight(modalSpacingCompact),
       }
       theme.minHeight = {
         ...theme.minHeight,
@@ -165,18 +141,24 @@ const config = mergeConfigs([
       }
       theme.spacing = {
         ...theme.spacing,
+        'entry-bottom': createSafeAreaSpacing(spacing('10'), safeAreaBottom),
+        'entry-top': createSafeAreaSpacing(spacing('10'), safeAreaTop),
         layout: layoutSpacing,
         'layout-mobile': mobileLayoutSpacing,
-        'modal-top': `calc(${safeAreaTop} + ${modalSpacing})`,
-        'modal-top-compact': `calc(${safeAreaTop} + ${modalSpacingCompact})`,
-        'player-bottom': `calc(${layoutSpacing} + ${safeAreaBottom})`,
-        'player-bottom-mobile': `calc(${mobileLayoutSpacing} + ${safeAreaBottom})`,
-        'safe-bottom': `max(${layoutSpacing}, calc(${layoutSpacing} + ${safeAreaBottom}))`,
-        'safe-bottom-mobile': `max(${mobileLayoutSpacing}, calc(${mobileLayoutSpacing} + ${safeAreaBottom}))`,
+        'modal-top': createSafeAreaSpacing(modalSpacing, safeAreaTop),
+        'modal-top-compact': createSafeAreaSpacing(modalSpacingCompact, safeAreaTop),
+        'player-bottom': createSafeAreaSpacing(layoutSpacing, safeAreaBottom),
+        'player-bottom-mobile': createSafeAreaSpacing(mobileLayoutSpacing, safeAreaBottom),
+        'safe-bottom': createSafeAreaSpacing(layoutSpacing, safeAreaBottom),
+        'safe-bottom-compact': createSafeAreaSpacing(modalSpacingCompact, safeAreaBottom),
+        'safe-bottom-mobile': createSafeAreaSpacing(mobileLayoutSpacing, safeAreaBottom),
         'safe-left': `max(${layoutSpacing}, ${safeAreaLeft})`,
         'safe-left-mobile': `max(${mobileLayoutSpacing}, ${safeAreaLeft})`,
         'safe-right': `max(${layoutSpacing}, ${safeAreaRight})`,
         'safe-right-mobile': `max(${mobileLayoutSpacing}, ${safeAreaRight})`,
+        'safe-top': createSafeAreaSpacing(layoutSpacing, safeAreaTop),
+        'safe-top-compact': createSafeAreaSpacing(modalSpacingCompact, safeAreaTop),
+        'safe-top-mobile': createSafeAreaSpacing(mobileLayoutSpacing, safeAreaTop),
       }
       theme.width = {
         ...theme.width,
@@ -184,9 +166,18 @@ const config = mergeConfigs([
         'control-sm': controlSmall,
       }
     },
+    outputToCssLayers: {
+      allLayers: true,
+      cssLayerName: (layer) => (layer === 'icons' ? 'pomo-icons' : null),
+    },
     preflights: [
+      pomoComponentStylePreflight,
       {
         getCSS: ({theme}) => `
+[data-pomo-tooltip-trigger] {
+  anchor-name: var(--pomo-tooltip-anchor);
+}
+
 :root {
   --pomo-safe-area-inset-bottom: env(safe-area-inset-bottom, 0rem);
   --pomo-safe-area-inset-left: env(safe-area-inset-left, 0rem);
@@ -364,12 +355,14 @@ body {
 }
 
 :root:has(.pomo-desktop-surface),
-:root:has(.pomo-desktop-surface) body {
+:root:has(.pomo-desktop-surface) body,
+:root:has(.pomo-desktop-dialog),
+:root:has(.pomo-desktop-dialog) body {
   background: transparent !important;
 }
 
 .pomo-entry {
-  background: radial-gradient(
+  background: linear-gradient(155deg, rgb(7 5 4 / 65%) 0%, transparent 38%), radial-gradient(
     ellipse 125% 105% at 0% 108%,
     rgb(7 5 4 / 94%) 0%,
     rgb(7 5 4 / 82%) 28%,
@@ -397,10 +390,10 @@ body {
     from -90deg,
     transparent 0deg,
     transparent 210deg,
-    rgb(255 255 255 / 8%) 235deg,
-    rgb(255 255 255 / 32%) 275deg,
-    rgb(255 255 255 / 68%) 320deg,
-    rgb(255 255 255 / 96%) 350deg,
+    rgb(var(--pomo-color-foreground-channels) / 8%) 235deg,
+    rgb(var(--pomo-color-foreground-channels) / 32%) 275deg,
+    rgb(var(--pomo-color-foreground-channels) / 68%) 320deg,
+    rgb(var(--pomo-color-foreground-channels) / 96%) 350deg,
     transparent 360deg
   );
   -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
@@ -433,16 +426,12 @@ body {
         },
       ],
     ],
-    // The SSR fallback must be styled before lazy client modules extend the generated CSS.
-    safelist: [
-      ...Object.keys(INITIAL_SCENE_FALLBACK_SHORTCUTS),
-      ...albumData.albums.map((album) => album.icon),
-    ],
-    shortcuts: INITIAL_SCENE_FALLBACK_SHORTCUTS,
+    safelist: albumData.albums.map((album) => album.icon),
     theme: {
       animation: {
         counts: {
           'dialogue-settings-spin': 'infinite',
+          'diary-progress-pending': 'infinite',
           'focus-glow': 'infinite',
           'orbit-border': 'infinite',
           'overflow-marquee': 'infinite',
@@ -452,6 +441,7 @@ body {
         durations: {
           'dialogue-menu-in': '140ms',
           'dialogue-settings-spin': '800ms',
+          'diary-progress-pending': '1.8s',
           'entry-reveal-room': '700ms',
           'focus-glow': '19s',
           'modal-content-in': '180ms',
@@ -469,6 +459,7 @@ body {
             to { opacity: 1; transform: scale(1) translateY(0); }
           }`,
           'dialogue-settings-spin': '{ to { transform: rotate(1turn); } }',
+          'diary-progress-pending': '{ to { background-position: 150% 0; } }',
           'entry-reveal-room': '{ from { opacity: 1; } to { opacity: 0; } }',
           'focus-glow': `{
             0% { transform: scale(0); }
@@ -530,6 +521,7 @@ body {
         timingFns: {
           'dialogue-menu-in': 'ease-out',
           'dialogue-settings-spin': 'linear',
+          'diary-progress-pending': 'ease-in-out',
           'entry-reveal-room': 'cubic-bezier(0.22, 1, 0.36, 1)',
           'focus-glow': 'ease-in-out',
           'modal-content-in': 'cubic-bezier(0.2, 0.8, 0.2, 1)',
@@ -547,7 +539,7 @@ body {
         surface: '0.5rem',
       },
       borderRadius: {
-        control: '999rem',
+        control: '0.875rem',
         panel: '1.25rem',
       },
       boxShadow: {
@@ -596,5 +588,4 @@ config.presets = [
     },
   }),
 ]
-
 export default config

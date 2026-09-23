@@ -1,5 +1,7 @@
 import {AlphaFilter, type Container, type Filter} from 'pixi.js'
 
+import {clampUnit} from 'src/utils/clamp-unit'
+
 export const SCENE_HEIGHT = 941
 export const SCENE_WIDTH = 1672
 
@@ -30,7 +32,7 @@ export class SceneCompositeTransitions {
 
   setProgress(progress: number) {
     if (this.#active !== null) {
-      this.#alphaFilter.alpha = Math.min(1, Math.max(0, progress))
+      this.#alphaFilter.alpha = clampUnit(progress)
     }
   }
 

@@ -1,3 +1,4 @@
+/** @vitest-environment node */
 import {beforeEach, describe, expect, it, vi} from 'vitest'
 
 const tossAuthMocks = vi.hoisted(() => ({exchangeTossAuthorization: vi.fn()}))
@@ -6,8 +7,8 @@ const repositoryMocks = vi.hoisted(() => ({
   createTossAppSession: vi.fn(),
 }))
 
-vi.mock('src/server/toss-auth/client', () => tossAuthMocks)
-vi.mock('src/server/user-auth/repository', () => repositoryMocks)
+vi.mock('src/server/auth/exchange-toss-authorization', () => tossAuthMocks)
+vi.mock('src/server/auth/app-session', () => repositoryMocks)
 
 import {POST, PUT} from '../exchange'
 import {invokeApiRoute} from '../../__tests__/invoke'

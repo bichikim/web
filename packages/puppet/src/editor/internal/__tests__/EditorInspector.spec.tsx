@@ -1,13 +1,17 @@
 /** @vitest-environment jsdom */
 
-import {fireEvent, render} from '@solidjs/testing-library'
+import {fireEvent, render, screen} from '@solidjs/testing-library'
 import {createSignal} from 'solid-js'
 import {describe, expect, test, vi} from 'vitest'
 
 import {isTwoDimensionalParameterBinding} from '../../../deformation'
 import {createDemoDocument, getDocumentScene, type PuppetDocument} from '../../../player'
 import {getDeformerAngle} from '../deformer-transform'
-import {addParameter, insertParameterKeyform} from '../parameter-keyforms'
+import {
+  addParameter,
+  insertParameterKeyform,
+  setParameterKeyformDeformerControlPoints,
+} from '../parameter-keyforms'
 import {createParameterPreview} from '../parameter-sampling'
 import {createDeformer, setSceneNodeState} from '../scene-graph'
 import {EditorInspector} from '../EditorInspector'
@@ -24,7 +28,8 @@ describe('EditorInspector', () => {
     expect(view.queryByText('Part')).toBeNull()
     expect(view.queryByText('Triangles')).toBeNull()
     expect(view.queryByText('PNG 메시 정점을 편집한 뒤 JSON으로 저장할 수 있습니다.')).toBeNull()
-    expect(view.getByRole('heading', {name: '선택 작업'})).toBeDefined()
+    expect(view.queryByRole('heading', {name: '선택 작업'})).toBeNull()
+    expect(view.getByRole('complementary', {name: '선택 작업'})).toBeDefined()
     expect(view.getByText('편집 결과')).toBeDefined()
   })
 
@@ -71,46 +76,77 @@ describe('EditorInspector', () => {
       />
     ))
 
-    expect(view.getByRole('combobox', {name: '파트 블렌드 모드'})).toBeEnabled()
+    expect(view.getByRole('button', {name: /^파트 블렌드 모드/})).toBeEnabled()
     expect(view.getByRole('spinbutton', {name: '파트 불투명도'})).toBeEnabled()
-    expect(view.getByRole('checkbox', {name: 'shape-circle로 자르기'})).toBeEnabled()
+    fireEvent.click(view.getByRole('button', {name: '대상 추가'}))
+    expect(view.getByRole('checkbox', {name: 'shape-circle에 마스크 적용'})).toBeEnabled()
     expect(view.queryByRole('spinbutton', {name: '파트 그리기 순서'})).toBeNull()
     fireEvent.input(view.getByRole('spinbutton', {name: '파트 불투명도'}), {
       target: {value: '0.4'},
     })
-    fireEvent.change(view.getByRole('combobox', {name: '파트 블렌드 모드'}), {
-      target: {value: 'screen'},
-    })
-    fireEvent.click(view.getByRole('checkbox', {name: 'shape-circle로 자르기'}))
+    fireEvent.keyDown(view.getByRole('button', {name: /^파트 블렌드 모드/}), {key: 'Enter'})
+    fireEvent.keyDown(screen.getByRole('option', {name: 'screen'}), {key: 'Enter'})
+    fireEvent.click(view.getByRole('button', {name: '대상 추가'}))
+    fireEvent.click(view.getByRole('checkbox', {name: 'shape-circle에 마스크 적용'}))
     fireEvent.click(view.getByRole('checkbox', {name: '마스크 반전'}))
-    fireEvent.click(view.getByRole('checkbox', {name: '파츠도 계속 표시'}))
+    expect(view.getByRole('checkbox', {name: '이 파트도 표시'})).toBeChecked()
+    fireEvent.click(view.getByRole('checkbox', {name: '이 파트도 표시'}))
 
+    expect(
+      document().parts.find((part) => part.id === 'shape-circle')?.properties?.clippingMaskIds,
+    ).toEqual(['mesh-preview'])
     expect(document().parts[0]?.properties).toEqual({
       blendMode: 'screen',
-      clippingMaskIds: ['shape-circle'],
       invertedMask: true,
       opacity: 0.4,
-      renderWhenUsedAsMask: true,
+      renderWhenUsedAsMask: false,
     })
   })
 
   test('should disable mask candidates that would close a cycle', () => {
     const view = render(() => (
       <EditorInspector
-        activeNodeId="mesh-preview"
+        activeNodeId="shape-circle"
         document={createDemoDocument()}
         editMode="parameter"
       />
     ))
 
-    const circleMask = view.getByRole('checkbox', {name: 'shape-circle로 자르기'})
+    fireEvent.click(view.getByRole('button', {name: '대상 추가'}))
+    const circleMask = view.getByRole('checkbox', {name: 'mesh-preview에 마스크 적용'})
 
     expect(circleMask).toBeDisabled()
-    expect(circleMask.closest('label')).toHaveAttribute(
-      'title',
-      '이 파트를 마스크로 지정하면 순환 참조가 생깁니다.',
-    )
-    expect(view.getByRole('checkbox', {name: 'shape-diamond로 자르기'})).toBeDisabled()
+    expect(circleMask.closest('label')).toHaveAttribute('title', '순환 참조')
+    expect(view.getByRole('checkbox', {name: 'shape-diamond에 마스크 적용'})).toBeEnabled()
+  })
+
+  test('should keep the mask picker open while adding multiple masks', () => {
+    const source = createDemoDocument()
+    const [document, setDocument] = createSignal({
+      ...source,
+      parts: source.parts.map((part) =>
+        part.id === 'mesh-preview' ? part : {...part, properties: undefined},
+      ),
+    })
+    const view = render(() => (
+      <EditorInspector
+        activeNodeId="mesh-preview"
+        document={document()}
+        editMode="parameter"
+        onDocumentChange={setDocument}
+      />
+    ))
+
+    fireEvent.click(view.getByRole('button', {name: '대상 추가'}))
+    fireEvent.click(view.getByRole('checkbox', {name: 'shape-circle에 마스크 적용'}))
+    expect(view.getByRole('dialog', {name: '대상 추가'})).toBeVisible()
+    fireEvent.click(view.getByRole('checkbox', {name: 'shape-diamond에 마스크 적용'}))
+
+    for (const id of ['shape-circle', 'shape-diamond']) {
+      expect(document().parts.find((part) => part.id === id)?.properties?.clippingMaskIds).toEqual([
+        'mesh-preview',
+      ])
+    }
   })
 
   test('should edit render values on an active part keyform while keeping model controls enabled', () => {
@@ -137,7 +173,7 @@ describe('EditorInspector', () => {
       target: {value: '0.3'},
     })
 
-    expect(view.getByRole('combobox', {name: '파트 블렌드 모드'})).toBeEnabled()
+    expect(view.getByRole('button', {name: /^파트 블렌드 모드/})).toBeEnabled()
     expect(document().parts[0]?.properties).toBeUndefined()
     const properties = document().parameterBindings?.[0]?.keyforms[5]?.parts[0]?.properties
     expect(Object.keys(properties ?? {})).toEqual(['opacity'])
@@ -200,29 +236,11 @@ describe('EditorInspector', () => {
       />
     ))
 
-    expect(view.getByRole('combobox', {name: '파트 블렌드 모드'})).toBeDisabled()
-    expect(view.getByRole('checkbox', {name: 'shape-circle로 자르기'})).toBeDisabled()
+    expect(view.getByRole('button', {name: /^파트 블렌드 모드/})).toBeDisabled()
+    expect(view.getByRole('button', {name: '대상 추가'})).toBeDisabled()
+    expect(view.queryByRole('checkbox', {name: 'shape-circle에 마스크 적용'})).toBeNull()
     expect(view.getByRole('checkbox', {name: '마스크 반전'})).toBeDisabled()
-    expect(view.getByRole('checkbox', {name: '파츠도 계속 표시'})).toBeDisabled()
-  })
-
-  test('should show the selected container conversion action in both directions', () => {
-    const [targetKind, setTargetKind] = createSignal<'deformer' | 'group'>('deformer')
-    const onContainerConvert = vi.fn()
-    const view = render(() => (
-      <EditorInspector
-        containerConversionTarget={targetKind()}
-        document={createDemoDocument()}
-        onContainerConvert={onContainerConvert}
-      />
-    ))
-
-    fireEvent.click(view.getByRole('button', {name: '자유 변형 디포머로 변경'}))
-    expect(onContainerConvert).toHaveBeenCalledOnce()
-
-    setTargetKind('group')
-    fireEvent.click(view.getByRole('button', {name: '그룹으로 변경'}))
-    expect(onContainerConvert).toHaveBeenCalledTimes(2)
+    expect(view.getByRole('checkbox', {name: '이 파트도 표시'})).toBeDisabled()
   })
 
   test('should separate grid settings and render only the selected control points', () => {
@@ -393,6 +411,67 @@ describe('EditorInspector', () => {
     expect(rest?.kind === 'deformer' ? getDeformerAngle(rest) : undefined).toBeCloseTo(0)
   })
 
+  test('should retain other parameter contributions through inspector point, origin and angle input', () => {
+    const source = {...createDemoDocument(), motions: [], parameterBindings: [], parameters: []}
+    const deformerDocument = createDeformer(source, ['mesh-preview'])!
+    const rest = getDocumentScene(deformerDocument).roots[0]!
+    if (rest.kind !== 'deformer') {
+      throw new Error('Expected a deformer')
+    }
+    const first = addParameter({document: deformerDocument, nodeIds: [rest.id]})!
+    const second = addParameter({document: first.document, nodeIds: [rest.id]})!
+    const posed = setParameterKeyformDeformerControlPoints({
+      bindingId: second.binding.id,
+      controlPoints: rest.controlPoints.map((value, index) => value + (index % 2 === 0 ? 20 : 5)),
+      document: second.document,
+      nodeId: rest.id,
+      rotationOrigin: {x: 200, y: 200},
+      values: [0],
+    })!
+    const [document, setDocument] = createSignal(posed)
+    const preview = () =>
+      createParameterPreview({document: document(), editingBindingId: first.binding.id})
+    const view = render(() => (
+      <EditorInspector
+        activeBindingId={first.binding.id}
+        activeKeyformValues={[0]}
+        activeNodeId={rest.id}
+        document={document()}
+        editMode="parameter"
+        previewDocument={preview()}
+        onDocumentChange={setDocument}
+        targetNodeIds={[rest.id]}
+        selectedControlPointIndices={[0]}
+      />
+    ))
+    const firstX = rest.controlPoints[0]! + 20
+    const firstY = rest.controlPoints[1]! + 5
+    fireEvent.input(view.getByRole('spinbutton', {name: '격자 제어점 1 X'}), {
+      target: {value: String(firstX + 1)},
+    })
+    const pointNode = getDocumentScene(preview()).roots[0]!
+    expect(pointNode.kind === 'deformer' ? pointNode.controlPoints.slice(0, 2) : []).toEqual([
+      firstX + 1,
+      firstY,
+    ])
+    fireEvent.input(view.getByRole('spinbutton', {name: '자유 변형 회전 중심 X'}), {
+      target: {value: '201'},
+    })
+    const originNode = getDocumentScene(preview()).roots[0]!
+    expect(originNode.kind === 'deformer' ? originNode.rotationOrigin : undefined).toEqual({
+      x: 201,
+      y: 200,
+    })
+    expect(originNode.kind === 'deformer' ? originNode.controlPoints : []).toEqual(
+      pointNode.kind === 'deformer' ? pointNode.controlPoints : [],
+    )
+    fireEvent.input(view.getByRole('spinbutton', {name: '자유 변형 각도'}), {target: {value: '45'}})
+    const rotated = getDocumentScene(preview()).roots[0]!
+    expect(rotated.kind === 'deformer' ? getDeformerAngle(rotated) : undefined).toBeCloseTo(45)
+    expect(document().parameterBindings?.[1]).toEqual(posed.parameterBindings?.[1])
+    expect(document().scene).toEqual(posed.scene)
+  })
+
   test('should edit the rest deformer outside the active parameter', () => {
     const source = createDemoDocument()
     const deformerDocument = createDeformer(source, ['mesh-preview'])!
@@ -452,4 +531,50 @@ describe('EditorInspector', () => {
     expect(view.getByRole('spinbutton', {name: '격자 가로 칸'})).toBeDisabled()
     expect(view.getByRole('spinbutton', {name: '격자 제어점 1 X'})).toBeDisabled()
   })
+
+  test('should leave document Physics controls out of the selection inspector', () => {
+    const sourceDocument = createDemoDocument()
+    const [temporaryDocument, setTemporaryDocument] = createSignal(sourceDocument)
+    const view = render(() => (
+      <EditorInspector document={temporaryDocument()} onDocumentChange={setTemporaryDocument} />
+    ))
+
+    expect(view.queryByRole('group', {name: '물리'})).not.toBeInTheDocument()
+  })
+})
+
+test('should restrict visual edits while allowing static settings below full influence', () => {
+  const onDocumentChange = vi.fn()
+  const view = render(() => (
+    <EditorInspector
+      activeNodeId="mesh-preview"
+      document={createDemoDocument()}
+      editMode="parameter"
+      editingDisabled
+      onDocumentChange={onDocumentChange}
+    />
+  ))
+  expect(view.getByRole('spinbutton', {name: '파트 불투명도'})).toBeDisabled()
+  expect(view.getByRole('button', {name: '대상 추가'})).toBeEnabled()
+  expect(onDocumentChange).not.toHaveBeenCalled()
+})
+
+test('should keep static and visual controls disabled for a locked part', () => {
+  const document = setSceneNodeState({
+    document: createDemoDocument(),
+    locked: true,
+    nodeId: 'mesh-preview',
+  })!
+  const view = render(() => (
+    <EditorInspector
+      activeNodeId="mesh-preview"
+      document={document}
+      editMode="parameter"
+      editingDisabled
+    />
+  ))
+  expect(view.getByRole('button', {name: /^파트 블렌드 모드/})).toBeDisabled()
+  expect(view.getByRole('checkbox', {name: '마스크 반전'})).toBeDisabled()
+  expect(view.getByRole('button', {name: '대상 추가'})).toBeDisabled()
+  expect(view.getByRole('spinbutton', {name: '파트 불투명도'})).toBeDisabled()
 })

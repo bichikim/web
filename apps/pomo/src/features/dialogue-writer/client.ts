@@ -1,6 +1,7 @@
 import type {DialogueWorkerRequest, DialogueWorkerResponse} from './messages'
+import {createWorkerFailureHandler} from '../worker-failure'
 import type {TextModelId} from '../text-generation/model'
-import {createWorkerTransport} from '../text-generation/worker-transport'
+import {createWorkerTransport} from 'src/utils/worker-transport'
 import type {DialogueOutputLanguage} from './prompt'
 
 export interface CreateDialogueClientOptions {
@@ -21,12 +22,11 @@ export const createDialogueClient = (options: CreateDialogueClientOptions): Dial
     type: 'module',
   })
   const transport = createWorkerTransport<DialogueWorkerRequest, DialogueWorkerResponse>({
-    createErrorResponse: (event) => ({
-      message: event.message || '대화문 모델 Worker 실행 오류',
-      restartRequired: true,
-      type: 'error',
+    onFailure: createWorkerFailureHandler({
+      fallbackDetail: '대화문 모델 Worker 실행 오류',
+      feature: 'dialogue-model',
+      onResponse: options.onResponse,
     }),
-    feature: 'dialogue-model',
     onResponse: options.onResponse,
     worker,
   })

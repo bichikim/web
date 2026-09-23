@@ -1,0 +1,153 @@
+/** @vitest-environment jsdom */
+import {beforeEach, describe, expect, it, vi} from 'vitest'
+import {
+  hasNativeStorageBridge,
+  readTossStorageJson,
+  writeTossStorageJson,
+} from 'src/utils/runtime-storage'
+import {
+  createEntryHistoryRepository,
+  readFocusRoomEntryHistory,
+  settleEntryHistoryWrites,
+  writeFocusRoomEntryHistory,
+} from '..'
+
+vi.mock('src/utils/runtime-storage', async () => {
+  const actual = await vi.importActual<typeof import('src/utils/runtime-storage')>(
+    'src/utils/runtime-storage',
+  )
+  return {
+    ...actual,
+    hasNativeStorageBridge: vi.fn(),
+    readTossStorageJson: vi.fn(),
+    writeTossStorageJson: vi.fn(),
+  }
+})
+
+beforeEach(() => {
+  vi.restoreAllMocks()
+  vi.clearAllMocks()
+  localStorage.clear()
+  sessionStorage.clear()
+  vi.mocked(hasNativeStorageBridge).mockReturnValue(false)
+})
+
+describe('focus room entry history', () => {
+  it('should persist entry across browser sessions', async () => {
+    expect(await readFocusRoomEntryHistory()).toBe(false)
+    await writeFocusRoomEntryHistory()
+    sessionStorage.clear()
+    expect(await readFocusRoomEntryHistory()).toBe(true)
+    expect(readTossStorageJson).not.toHaveBeenCalled()
+  })
+
+  it('should ignore malformed and false records', async () => {
+    localStorage.setItem('pomo:focus-room-entry-history:v1', 'broken')
+    expect(await readFocusRoomEntryHistory()).toBe(false)
+    localStorage.setItem('pomo:focus-room-entry-history:v1', 'false')
+    expect(await readFocusRoomEntryHistory()).toBe(false)
+  })
+
+  it('should treat missing native history as a first entry', async () => {
+    vi.mocked(hasNativeStorageBridge).mockReturnValue(true)
+    vi.mocked(readTossStorageJson).mockResolvedValue(null)
+    expect(await readFocusRoomEntryHistory()).toBe(false)
+  })
+
+  it('should repair native history after a failed write and retain entry when web storage clears', async () => {
+    vi.mocked(hasNativeStorageBridge).mockReturnValue(true)
+    let nativeHistory: true | null = null
+    vi.mocked(readTossStorageJson).mockImplementation(async () => nativeHistory)
+    vi.mocked(writeTossStorageJson)
+      .mockRejectedValueOnce(new Error('native unavailable'))
+      .mockImplementation(async () => {
+        nativeHistory = true
+      })
+    await writeFocusRoomEntryHistory()
+    expect(nativeHistory).toBeNull()
+    expect(await readFocusRoomEntryHistory()).toBe(true)
+    localStorage.clear()
+    expect(await readFocusRoomEntryHistory()).toBe(true)
+  })
+
+  it('should include native repair in writes settled before reset', async () => {
+    vi.mocked(hasNativeStorageBridge).mockReturnValue(true)
+    localStorage.setItem('pomo:focus-room-entry-history:v1', 'true')
+    const pending = Promise.withResolvers<void>()
+    vi.mocked(writeTossStorageJson).mockReturnValue(pending.promise)
+    const reading = readFocusRoomEntryHistory()
+    const settled = vi.fn()
+    const settling = settleEntryHistoryWrites().then(settled)
+    await vi.waitFor(() => expect(writeTossStorageJson).toHaveBeenCalledOnce())
+    expect(settled).not.toHaveBeenCalled()
+    pending.resolve()
+    await settling
+    expect(await reading).toBe(true)
+  })
+
+  it('should read native entry history without writing a stale web copy', async () => {
+    vi.mocked(hasNativeStorageBridge).mockReturnValue(true)
+    vi.mocked(readTossStorageJson).mockResolvedValue(true)
+    expect(await readFocusRoomEntryHistory()).toBe(true)
+    expect(localStorage.getItem('pomo:focus-room-entry-history:v1')).toBeNull()
+  })
+
+  it('should persist to native storage even when web storage fails', async () => {
+    vi.mocked(hasNativeStorageBridge).mockReturnValue(true)
+    vi.mocked(writeTossStorageJson).mockResolvedValue()
+    vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
+      throw new Error('blocked')
+    })
+    await expect(writeFocusRoomEntryHistory()).resolves.toBeUndefined()
+    expect(writeTossStorageJson).toHaveBeenCalledWith('pomo:focus-room-entry-history:v1', true)
+  })
+
+  it('should retain the web record when native writing fails', async () => {
+    vi.mocked(hasNativeStorageBridge).mockReturnValue(true)
+    vi.mocked(writeTossStorageJson).mockRejectedValue(new Error('native unavailable'))
+    await expect(writeFocusRoomEntryHistory()).resolves.toBeUndefined()
+    expect(await readFocusRoomEntryHistory()).toBe(true)
+  })
+
+  it('should report unreadable native history and complete persistence failure', async () => {
+    vi.mocked(hasNativeStorageBridge).mockReturnValue(true)
+    vi.mocked(readTossStorageJson).mockRejectedValue(new Error('native unavailable'))
+    await expect(readFocusRoomEntryHistory()).rejects.toThrow('native unavailable')
+    vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
+      throw new Error('blocked')
+    })
+    vi.mocked(writeTossStorageJson).mockRejectedValue(new Error('native unavailable'))
+    await expect(writeFocusRoomEntryHistory()).rejects.toThrow('Failed to persist')
+    vi.mocked(hasNativeStorageBridge).mockReturnValue(false)
+    await expect(writeFocusRoomEntryHistory()).rejects.toThrow('Failed to persist')
+  })
+})
+
+it('should settle writes independently for separate entry-history stores', async () => {
+  const blocked = Promise.withResolvers<void>()
+  const first = createEntryHistoryRepository({
+    readToss: async () => null,
+    readWeb: () => null,
+    usesNative: () => true,
+    writeToss: () => blocked.promise,
+    writeWeb: () => null,
+  })
+  let entered: true | null = null
+  const second = createEntryHistoryRepository({
+    readToss: async () => null,
+    readWeb: () => entered,
+    usesNative: () => false,
+    writeToss: async () => undefined,
+    writeWeb: () => {
+      entered = true
+      return null
+    },
+  })
+  const pending = first.write()
+  await second.write()
+  await second.settle()
+  await expect(second.read()).resolves.toBe(true)
+  blocked.resolve()
+  await pending
+  await first.settle()
+})

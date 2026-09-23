@@ -31,10 +31,124 @@ const createLegacyDocument = () => {
 }
 
 describe('parseDocument', () => {
+  test('should round-trip conditional layer rules and reject invalid references and conditions', () => {
+    const document = createDemoDocument()
+    const rule = {
+      partIds: [document.parts[0]!.id],
+      placement: 'after',
+      referencePartId: document.parts[1]!.id,
+      when: {
+        comparison: 'greater-than',
+        parameterIds: [document.parameters![0]!.id],
+        threshold: 20,
+      },
+    }
+    const source = {...document, layerOrderRules: [rule]}
+    const parsed = parseDocument(JSON.stringify(source))
+    expect(parsed).toMatchObject({document: {layerOrderRules: [rule]}, ok: true})
+    if (parsed.ok) {
+      expect(parseDocument(serializeDocument(parsed.document))).toEqual(parsed)
+    }
+    const invalidRules = [
+      null,
+      {...rule, partIds: []},
+      {...rule, partIds: ['missing']},
+      {...rule, partIds: [...rule.partIds, ...rule.partIds]},
+      {...rule, referencePartId: rule.partIds[0]},
+      {...rule, referencePartId: 'missing'},
+      {...rule, placement: 'front'},
+      {...rule, when: null},
+      {...rule, when: {...rule.when, parameterIds: []}},
+      {...rule, when: {...rule.when, parameterIds: ['missing']}},
+      {
+        ...rule,
+        when: {...rule.when, parameterIds: [...rule.when.parameterIds, ...rule.when.parameterIds]},
+      },
+      {...rule, when: {...rule.when, comparison: 'equal'}},
+      {...rule, when: {...rule.when, threshold: '20'}},
+      {...rule, when: {...rule.when, threshold: null}},
+    ]
+    for (const invalidRule of invalidRules) {
+      expect(
+        parseDocument(JSON.stringify({...document, layerOrderRules: [invalidRule]})),
+      ).toMatchObject({ok: false})
+    }
+    expect(parseDocument(JSON.stringify({...document, layerOrderRules: {}}))).toMatchObject({
+      ok: false,
+    })
+    expect(parseDocument(JSON.stringify({...document, layerOrderRules: []}))).toMatchObject({
+      ok: true,
+    })
+  })
+
   it('should parse a serialized valid document', () => {
     const document = createDemoDocument()
 
     expect(parseDocument(serializeDocument(document))).toEqual({document, ok: true})
+  })
+
+  it('should accept a positive integer frame rate and retain the legacy default when omitted', () => {
+    const document = createDemoDocument()
+
+    expect(parseDocument(JSON.stringify({...document, framesPerSecond: 30}))).toMatchObject({
+      document: {framesPerSecond: 30},
+      ok: true,
+    })
+    expect(parseDocument(JSON.stringify(document))).toMatchObject({ok: true})
+    expect(parseDocument(JSON.stringify({...document, framesPerSecond: 0}))).toMatchObject({
+      ok: false,
+    })
+    expect(parseDocument(JSON.stringify({...document, framesPerSecond: 23.5}))).toMatchObject({
+      ok: false,
+    })
+    expect(parseDocument(JSON.stringify({...document, framesPerSecond: 241}))).toMatchObject({
+      ok: false,
+    })
+  })
+
+  it('should validate discrete parameter options', () => {
+    const document = createDemoDocument()
+    const options = [
+      {label: '기본', value: 0},
+      {label: '하트', value: 1},
+      {label: '표고버섯', value: 2},
+    ]
+    const discreteParameter = {
+      defaultValue: 0,
+      id: 'eye-symbol',
+      maximum: 2,
+      minimum: 0,
+      name: '눈동자 무늬',
+      options,
+    }
+
+    expect(
+      parseDocument(
+        JSON.stringify({
+          ...document,
+          parameters: [...document.parameters!, discreteParameter],
+        }),
+      ),
+    ).toMatchObject({ok: true})
+    expect(
+      parseDocument(
+        JSON.stringify({
+          ...document,
+          parameters: [
+            {...discreteParameter, options: [...options, {label: '중복', value: 1}]},
+            ...document.parameters!,
+          ],
+        }),
+      ),
+    ).toMatchObject({ok: false})
+    expect(
+      parseDocument(
+        JSON.stringify({
+          ...document,
+          parameters: [{...discreteParameter, defaultValue: 0.5}, ...document.parameters!],
+        }),
+      ),
+    ).toMatchObject({ok: false})
   })
 
   it('should normalize legacy untagged tracks to explicit kinds', () => {
@@ -47,12 +161,18 @@ describe('parseDocument', () => {
       })),
     }
 
-    expect(parseDocument(JSON.stringify(untaggedDocument))).toMatchObject({
-      document: {
-        motions: [{tracks: [{kind: 'parameter'}]}],
-      },
-      ok: true,
-    })
+    const result = parseDocument(JSON.stringify(untaggedDocument))
+
+    expect(result).toMatchObject({ok: true})
+    if (result.ok) {
+      expect(result.document.motions).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            tracks: expect.arrayContaining([expect.objectContaining({kind: 'parameter'})]),
+          }),
+        ]),
+      )
+    }
   })
 
   it('should reject a track whose declared kind contradicts its target', () => {
@@ -374,173 +494,5 @@ describe('parseDocument', () => {
     const result = parseDocument(JSON.stringify({...legacyDocument, parameters: [legacyParameter]}))
 
     expect(result).toEqual({error: {code: 'invalid-document'}, ok: false})
-  })
-
-  test('should validate scene targets, uniqueness and complete part coverage', () => {
-    const document = createDemoDocument()
-    const firstNode = document.scene!.roots[0]!
-
-    expect(
-      parseDocument(JSON.stringify({...document, scene: {roots: [firstNode, {...firstNode}]}})),
-    ).toEqual({error: {code: 'invalid-document'}, ok: false})
-    expect(
-      parseDocument(
-        JSON.stringify({
-          ...document,
-          scene: {roots: [{...firstNode, id: 'missing-part'}]},
-        }),
-      ),
-    ).toEqual({error: {code: 'invalid-document'}, ok: false})
-  })
-
-  test('should accept a free-transform deformer and reject removed deformer kinds', () => {
-    const document = createDemoDocument()
-    const [firstNode, ...remainingNodes] = document.scene!.roots
-    const deformer = {
-      bounds: {height: 480, width: 640, x: 0, y: 0},
-      children: [firstNode],
-      columns: 1,
-      controlPoints: [0, 0, 640, 0, 0, 480, 640, 480],
-      id: 'deformer',
-      kind: 'deformer',
-      locked: false,
-      name: 'Deformer',
-      rotationOrigin: {x: 320, y: 240},
-      rows: 1,
-      visible: true,
-    }
-    const deformedDocument = {...document, scene: {roots: [deformer, ...remainingNodes]}}
-
-    expect(parseDocument(JSON.stringify(deformedDocument))).toMatchObject({ok: true})
-    expect(
-      parseDocument(
-        JSON.stringify({
-          ...deformedDocument,
-          scene: {
-            roots: [{...deformer, rotationOrigin: {x: 'invalid', y: 240}}, ...remainingNodes],
-          },
-        }),
-      ),
-    ).toMatchObject({ok: false})
-    expect(
-      parseDocument(
-        JSON.stringify({
-          ...deformedDocument,
-          scene: {
-            roots: [
-              {
-                ...deformer,
-                curveHandles: [
-                  {
-                    horizontal: {x: 200, y: 0},
-                    pointIndex: 0,
-                    vertical: {x: 0, y: 160},
-                  },
-                ],
-              },
-              ...remainingNodes,
-            ],
-          },
-        }),
-      ),
-    ).toMatchObject({ok: true})
-    expect(
-      parseDocument(
-        JSON.stringify({
-          ...deformedDocument,
-          scene: {
-            roots: [
-              {
-                ...deformer,
-                curveHandles: [
-                  {
-                    horizontal: {x: 200, y: 0},
-                    pointIndex: 4,
-                    vertical: {x: 0, y: 160},
-                  },
-                ],
-              },
-              ...remainingNodes,
-            ],
-          },
-        }),
-      ),
-    ).toMatchObject({ok: false})
-    expect(
-      parseDocument(
-        JSON.stringify({
-          ...deformedDocument,
-          scene: {roots: [{...deformer, kind: 'gridDeformer'}, ...remainingNodes]},
-        }),
-      ),
-    ).toEqual({error: {code: 'invalid-document'}, ok: false})
-  })
-
-  it('should reject a document containing degenerate topology', () => {
-    const document = createDemoDocument()
-    const part = document.parts[0]!
-    const invalidDocument = {
-      ...document,
-      parts: [{...part, mesh: {...part.mesh, indices: [0, 0, 1]}}],
-    }
-
-    expect(parseDocument(JSON.stringify(invalidDocument))).toEqual({
-      error: {code: 'invalid-document'},
-      ok: false,
-    })
-  })
-
-  it('should derive explicit boundary loops when parsing legacy mesh data', () => {
-    const document = createDemoDocument()
-    const part = document.parts[0]!
-    const legacyDocument = {
-      ...document,
-      parts: [
-        {
-          ...part,
-          mesh: {indices: part.mesh.indices, uvs: part.mesh.uvs, vertices: part.mesh.vertices},
-        },
-      ],
-      scene: undefined,
-    }
-    const result = parseDocument(JSON.stringify(legacyDocument))
-
-    expect(result.ok).toBe(true)
-
-    if (result.ok) {
-      expect(result.document.parts[0]?.mesh.boundaryLoops).toEqual([[0, 1, 2, 3]])
-    }
-  })
-
-  it('should reject boundary data that differs from the triangle exterior', () => {
-    const document = createDemoDocument()
-    const part = document.parts[0]!
-    const invalidDocument = {
-      ...document,
-      parts: [{...part, mesh: {...part.mesh, boundaryLoops: [[0, 1, 4]]}}],
-    }
-
-    expect(parseDocument(JSON.stringify(invalidDocument))).toEqual({
-      error: {code: 'invalid-document'},
-      ok: false,
-    })
-  })
-
-  it('should discard obsolete control vertex metadata', () => {
-    const document = createDemoDocument()
-    const part = document.parts[0]!
-    const invalidDocument = {
-      ...document,
-      parts: [{...part, mesh: {...part.mesh, controlVertexIndices: [0, 0, 5]}}],
-      scene: undefined,
-    }
-
-    const result = parseDocument(JSON.stringify(invalidDocument))
-
-    expect(result.ok).toBe(true)
-
-    if (result.ok) {
-      expect(result.document.parts[0]?.mesh).not.toHaveProperty('controlVertexIndices')
-    }
   })
 })

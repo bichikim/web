@@ -1,15 +1,14 @@
+/** @vitest-environment node */
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 
 const repositoryMocks = vi.hoisted(() => ({
   createWeatherCacheMaintenanceRepository: vi.fn(),
 }))
 
-vi.mock('../cache-maintenance-repository', () => repositoryMocks)
+vi.mock('../../repositories/weather-cache-maintenance', () => repositoryMocks)
 
-import {
-  runWeatherCacheMaintenance,
-  type WeatherCacheMaintenanceRepository,
-} from '../cache-maintenance'
+import {type WeatherCacheMaintenanceRepository} from '../../repositories/weather-cache-maintenance'
+import {runWeatherCacheMaintenance} from '../cache-maintenance'
 
 const NOW = new Date('2026-08-30T18:57:00.000Z')
 const CUTOFF = new Date('2026-08-29T18:57:00.000Z')

@@ -50,12 +50,12 @@ export const useDocumentHistoryShortcuts = (props: UseDocumentHistoryShortcutsPr
       }
     }
 
-    window.addEventListener('keydown', handleKeyDown)
+    globalThis.addEventListener('keydown', handleKeyDown)
     onCleanup(() => {
       if (activeOwner === owner) {
         activeOwner = null
       }
-      window.removeEventListener('keydown', handleKeyDown)
+      globalThis.removeEventListener('keydown', handleKeyDown)
     })
   })
 

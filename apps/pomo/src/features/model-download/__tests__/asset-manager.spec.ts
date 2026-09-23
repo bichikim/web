@@ -1,3 +1,4 @@
+/** @vitest-environment node */
 import {expect, it, vi} from 'vitest'
 
 import {isSupertonicModelDownloaded} from '../../supertonic'
@@ -12,6 +13,8 @@ const createController = (): ModelDownloadController => ({
   cancel: vi.fn(),
   dismissError: vi.fn(),
   dispose: vi.fn(),
+  downloads: () => [],
+  startImageModel: vi.fn(),
   startTextModel: vi.fn(),
   startVoiceModel: vi.fn(),
   state: () => ({status: 'idle'}),

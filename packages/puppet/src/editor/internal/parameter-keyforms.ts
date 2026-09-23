@@ -1,3 +1,4 @@
+import {removeInfluenceSources} from './parameter-influences'
 import {difference, union, uniq} from 'es-toolkit/array'
 
 import {
@@ -22,6 +23,7 @@ import {
   createDeformerKeyform,
   createParameterPreview,
   sampleParameterDeformer,
+  samplePartKeyform,
 } from './parameter-sampling'
 
 const COORDINATES_PER_VERTEX = 2
@@ -58,10 +60,8 @@ export interface AddParameterResult {
 }
 
 export const getDocumentParameters = (document: PuppetDocument) => document.parameters ?? []
-
 export const getDocumentParameterBindings = (document: PuppetDocument) =>
   document.parameterBindings ?? []
-
 export const getParameterBinding = (document: PuppetDocument, bindingId: string) =>
   getDocumentParameterBindings(document).find((binding) => binding.id === bindingId)
 
@@ -288,18 +288,27 @@ export const deleteParameter = (options: ParameterBindingTarget): PuppetDocument
   const removedParameterIds = new Set(
     binding.parameterIds.filter((parameterId) => !retainedParameterIds.has(parameterId)),
   )
+  const pendulums = options.document.physics?.pendulums.filter(
+    (pendulum) =>
+      !removedParameterIds.has(pendulum.inputParameterId) &&
+      !removedParameterIds.has(pendulum.outputParameterId),
+  )
   return {
     ...options.document,
+    layerOrderRules: options.document.layerOrderRules?.filter((rule) =>
+      rule.when.parameterIds.every((id) => !removedParameterIds.has(id)),
+    ),
     motions: options.document.motions.map((motion) => ({
       ...motion,
       tracks: motion.tracks.filter(
         (track) => track.kind !== 'parameter' || !removedParameterIds.has(track.parameterId),
       ),
     })),
-    parameterBindings: remainingBindings,
+    parameterBindings: removeInfluenceSources(remainingBindings, removedParameterIds),
     parameters: getDocumentParameters(options.document).filter(
       (parameter) => !removedParameterIds.has(parameter.id),
     ),
+    physics: pendulums === undefined || pendulums.length === 0 ? undefined : {pendulums},
   }
 }
 
@@ -329,15 +338,7 @@ export const insertParameterKeyform = (options: ParameterValuesTarget) => {
     return undefined
   }
 
-  const partsKeyforms = parts.map((part) => ({
-    partId: part.id,
-    vertices: sampleParameterVertices({
-      binding,
-      partId: part.id,
-      restVertices: part.mesh.vertices,
-      values: options.values,
-    }),
-  }))
+  const partsKeyforms = parts.map((part) => samplePartKeyform({...options, binding, part}))
   const deformerKeyforms = deformers.map((deformer) =>
     sampleParameterDeformer({binding, deformer, values: options.values}),
   )

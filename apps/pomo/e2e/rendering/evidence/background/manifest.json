@@ -1,0 +1,156 @@
+{
+  "run_id": "13a8699b-c452-4a83-b27c-752d28f2af4b",
+  "base_sha": "7469a9df0e264ec6d58ec50b0898e994634a58a7",
+  "current_product_sha": "7469a9df0e264ec6d58ec50b0898e994634a58a7",
+  "current_test_revision": "pre-commit; exact-commit execution recorded separately in PR and permanent evidence",
+  "os": "ProductName:\t\tmacOS\nProductVersion:\t\t26.5.2\nBuildVersion:\t\t25F84\n",
+  "arch": "arm64",
+  "playwright": "1.59.1",
+  "video": "off",
+  "trace": "off",
+  "scope": "Local web SolidStart home, actual IndexedDB preferences and UI. Empty music playlist test data. No photo/video playback, native bridge, real DB/auth/provider verification.",
+  "baseline_run": {
+    "startTime": "2026-09-10T16:10:19.853Z",
+    "duration": 43101.153,
+    "expected": 4,
+    "skipped": 0,
+    "unexpected": 1,
+    "flaky": 0
+  },
+  "new_test_run": {
+    "startTime": "2026-09-10T16:16:02.581Z",
+    "duration": 15318.685000000001,
+    "expected": 1,
+    "skipped": 0,
+    "unexpected": 0,
+    "flaky": 0
+  },
+  "screenshots": [
+    {
+      "name": "frame-dark",
+      "test": "should restore frame settings after reload and render the background tab in both themes",
+      "status": "최초 기준 생성",
+      "comparison": "passed default toHaveScreenshot comparator",
+      "baseline_sha": null,
+      "current_code_sha": "7469a9df0e264ec6d58ec50b0898e994634a58a7",
+      "baseline_path": "apps/pomo/e2e/rendering/background.spec.ts-snapshots/frame-dark-web-darwin.png",
+      "current_path": "apps/pomo/e2e/rendering/evidence/background/frame-dark-current.png",
+      "baseline_sha256": "a20f3aa50c3f0b599adfe5a4f29f0a2bd06f8df1056a6576f97bc3313964ee97",
+      "current_sha256": "a20f3aa50c3f0b599adfe5a4f29f0a2bd06f8df1056a6576f97bc3313964ee97",
+      "raw_different_pixels": 0,
+      "max_channel_delta": 0,
+      "environment": {
+        "devicePixelRatio": 1,
+        "fonts": [
+          {
+            "family": "Pretendard Variable",
+            "status": "unloaded",
+            "faces": 81
+          },
+          {
+            "family": "Pretendard Variable",
+            "status": "loaded",
+            "faces": 11
+          }
+        ],
+        "locale": "ko-KR",
+        "theme": "dark",
+        "time": "2026-09-09T00:01:01.200Z",
+        "timezone": "Asia/Seoul",
+        "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.7727.15 Safari/537.36",
+        "viewport": {
+          "height": 960,
+          "width": 1280
+        }
+      },
+      "command": "pnpm exec playwright test --config=playwright.rendering.config.ts e2e/rendering/background.spec.ts --reporter=line,json",
+      "published_current_path": "apps/pomo/e2e/rendering/evidence/background/frame-dark-current.png"
+    },
+    {
+      "name": "frame-light",
+      "test": "should restore frame settings after reload and render the background tab in both themes",
+      "status": "최초 기준 생성",
+      "comparison": "passed default toHaveScreenshot comparator",
+      "baseline_sha": null,
+      "current_code_sha": "7469a9df0e264ec6d58ec50b0898e994634a58a7",
+      "baseline_path": "apps/pomo/e2e/rendering/background.spec.ts-snapshots/frame-light-web-darwin.png",
+      "current_path": "apps/pomo/e2e/rendering/evidence/background/frame-light-current.png",
+      "baseline_sha256": "2354917415e8ac4ebec5ab8b574bf4ed9b1d6ef782c9fd22f2e55cfe611e5ad1",
+      "current_sha256": "2354917415e8ac4ebec5ab8b574bf4ed9b1d6ef782c9fd22f2e55cfe611e5ad1",
+      "raw_different_pixels": 0,
+      "max_channel_delta": 0,
+      "environment": {
+        "devicePixelRatio": 1,
+        "fonts": [
+          {
+            "family": "Pretendard Variable",
+            "status": "unloaded",
+            "faces": 81
+          },
+          {
+            "family": "Pretendard Variable",
+            "status": "loaded",
+            "faces": 11
+          }
+        ],
+        "locale": "ko-KR",
+        "theme": "",
+        "time": "2026-09-09T00:01:01.600Z",
+        "timezone": "Asia/Seoul",
+        "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.7727.15 Safari/537.36",
+        "viewport": {
+          "height": 960,
+          "width": 1280
+        }
+      },
+      "command": "pnpm exec playwright test --config=playwright.rendering.config.ts e2e/rendering/background.spec.ts --reporter=line,json",
+      "published_current_path": "apps/pomo/e2e/rendering/evidence/background/frame-light-current.png"
+    },
+    {
+      "name": "general-dark",
+      "test": "should render general settings and the theme menu in dark and light modes",
+      "status": "변경 있음",
+      "comparison": "passed default toHaveScreenshot comparator",
+      "baseline_sha": "7469a9df0e264ec6d58ec50b0898e994634a58a7",
+      "current_code_sha": "7469a9df0e264ec6d58ec50b0898e994634a58a7",
+      "baseline_path": "apps/pomo/e2e/rendering/settings.spec.ts-snapshots/general-dark-web-darwin.png",
+      "current_path": "apps/pomo/e2e/rendering/evidence/background/general-dark-current.png",
+      "baseline_sha256": "b63c09d51745918dbce83ef4a17f5e34fe61cc61aa528abcca74f5c0f3eb01bd",
+      "current_sha256": "10f27fa7bad9a23f87d326c662ce764aeb6e410ec7ad40cc949b2bf24a7eef09",
+      "raw_different_pixels": 8838,
+      "max_channel_delta": 8,
+      "environment": {
+        "devicePixelRatio": 1,
+        "fonts": [
+          {
+            "family": "Pretendard Variable",
+            "status": "unloaded",
+            "faces": 79
+          },
+          {
+            "family": "Pretendard Variable",
+            "status": "loaded",
+            "faces": 13
+          }
+        ],
+        "locale": "ko-KR",
+        "theme": "dark",
+        "time": "2026-09-09T00:01:01.200Z",
+        "timezone": "Asia/Seoul",
+        "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.7727.15 Safari/537.36",
+        "viewport": {
+          "height": 960,
+          "width": 1280
+        }
+      },
+      "command": "pnpm exec playwright test --config=playwright.rendering.config.ts --reporter=line,json",
+      "difference_path": "apps/pomo/e2e/rendering/evidence/background/general-dark-diff.png",
+      "reason": "Default Playwright comparator passes. Raw pixels differ in blurred background at top right; maximum8/255. All baseline/current/diff images inspected. Cause and intent unconfirmed; baseline unchanged."
+    }
+  ],
+  "rendering_summary": "Frame2 first baselines; previous6 checkpoints raw differences with default comparator passing; cause unconfirmed, no baseline updates.",
+  "font_files": {
+    "count": 93,
+    "match_pinned_git": true
+  }
+}

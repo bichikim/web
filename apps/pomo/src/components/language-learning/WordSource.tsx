@@ -7,7 +7,7 @@ import {
   MAXIMUM_RANDOM_LANGUAGE_LEARNING_WORDS,
   MINIMUM_RANDOM_LANGUAGE_LEARNING_WORDS,
 } from '../../features/language-learning'
-import {PRadioSwitch} from '../PRadioSwitch'
+import {PRadioSwitch} from '../p-radio-switch/PRadioSwitch'
 import {LanguageLearningTagInput} from './TagInput'
 
 const getWordSourceOptions = (savedWordsAvailable: boolean) =>
@@ -75,7 +75,7 @@ export const LanguageLearningWordSourceControl = (
               </p>
             </Show>
             <Show when={props.words.length > 0}>
-              <p class="m-0 text-xs leading-5 text-muted-foreground">
+              <p class="m-0 text-sm leading-5 text-muted-foreground">
                 {m.learning_editor_selected_words({words: props.words.join(', ')})}
               </p>
             </Show>

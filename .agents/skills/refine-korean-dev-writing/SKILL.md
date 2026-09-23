@@ -3,29 +3,16 @@ name: refine-korean-dev-writing
 description: Write or refine Korean engineering prose so it is natural and grammatical rather than literal or awkward; use for comments, commits, PRs, reviews, docs, and notes.
 ---
 
-# Refine Korean Dev Writing
+# 한국어 개발 문장 다듬기
 
-개발 맥락 한국어를 한국인 개발자가 쓸 법한 자연·문법적 문장으로 만든다. 출력 전 self-review에 반드시 통과시킨다.
+- 원뜻과 기술적 의미를 보존하고, 어색한 부분만 국소 수정한다.
+- 한국어 어순과 조사로 쓰고, 한 문장에 개념 하나를 담는다.
+- 서술어를 완성한다. 생략할 때는 명사형으로 끝낸다.
+- 번역투, 이중 피동, 불필요한 표현과 무생물 주어의 직역 표현을 줄인다.
+- 통용되는 개발 외래어와 영문 식별자·코드는 유지한다.
+- 한 문서의 어투와 동등한 목록 항목의 종결을 통일한다.
+- 주석은 비직관적인 이유를 간결하게 설명하되 프로젝트의 주석 규칙을 따른다.
+- 커밋 제목·타입은 git 스킬을 따르고 한국어 본문을 다듬는다.
+- PR·리뷰는 설명체를 통일하고, 주장과 근거를 구분한다.
 
-## Core Rules
-
-1. 자문: "한국인 시니어 개발자가 코드리뷰에 쓸까?" 어색하면 고친다.
-2. 영어 구조를 옮기지 말고 한국어 어순·조사로 다시 쓴다. 뜻 먼저, 수사는 그다음. 한 문장에 개념 하나.
-3. 서술어를 완성한다. `못 통과`(X) → `통과하지 못한다`(O). 생략 시 명사형으로 끝낸다(`…통과 실패`).
-4. 번역투·이중 피동(`되어진다`)·불필요한 `~에 대해`·무생물 `가지다(has)`를 제거한다.
-5. 굳은 외래어(헤더, 캐시, 훅 등)와 영문 식별자는 그대로 두고, 서술어만 한국어로 연결한다.
-6. 한 문서 안 어투·문장 끝을 섞지 않는다.
-7. 걸린 문장만 국소 수정한다. 전체를 갈아엎지 않는다.
-
-See ./rules/grammar.md when fixing word-order, particles, or incomplete predicates.
-See ./rules/translationese.md when hunting translationese or over-translated loanwords.
-See ./rules/register-by-context.md for comment/commit/PR/review register and endings.
-
-## Self-review checklist
-
-출력 전:
-
-1. 소리 내어 읽어 걸리는 데가 없는가?
-2. 모든 서술어가 완성돼 있는가?
-3. 번역투가 없는가?
-4. 문체·문장 끝이 일관적인가?
+출력 전에 문장의 자연스러움, 서술어 완결성, 번역투, 문체 일관성을 점검한다.

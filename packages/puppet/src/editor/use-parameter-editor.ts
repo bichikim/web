@@ -1,4 +1,5 @@
-import {clamp} from 'es-toolkit/math'
+import {useInfluencePreview} from './internal/use-influence-preview'
+import {setParameterInfluences} from './internal/parameter-influences'
 import {type Accessor, createEffect, createMemo, createSignal, type Setter} from 'solid-js'
 
 import {
@@ -8,7 +9,12 @@ import {
   type PuppetParameterValueMap,
   type PuppetParameterValues,
 } from '../deformation'
-import type {PuppetDocument, PuppetParameterBinding} from '../player/document'
+import type {
+  PuppetDocument,
+  PuppetParameterBinding,
+  PuppetParameterInfluence,
+} from '../player/document'
+import {resolveParameterValue} from '../player/parameter-value'
 import {
   addParameter,
   addTwoDimensionalParameter,
@@ -34,6 +40,10 @@ interface UseParameterEditorProps {
 }
 
 export interface ParameterEditorResult {
+  readonly previewDocument: Accessor<PuppetDocument>
+  readonly previewInfluences: (influences: ReadonlyArray<PuppetParameterInfluence> | null) => void
+  readonly influence: Accessor<number>
+  readonly setInfluences: (influences: ReadonlyArray<PuppetParameterInfluence>) => boolean
   readonly activeBinding: Accessor<PuppetParameterBinding | undefined>
   readonly activeBindingId: Accessor<string | null>
   readonly activeKeyformValues: Accessor<PuppetParameterValues | null>
@@ -208,9 +218,7 @@ const createParameterValueHandler = (options: CreateParameterValueHandlerOptions
     const parameters = getBindingParameters(options.props.document(), binding)
     const nextValues = values.map((value, index) => {
       const parameter = parameters[index]
-      return parameter === undefined || !Number.isFinite(value)
-        ? (parameter?.defaultValue ?? 0)
-        : clamp(value, parameter.minimum, parameter.maximum)
+      return parameter === undefined ? 0 : resolveParameterValue(parameter, value)
     }) as unknown as PuppetParameterValues
     options.setParameterValueMap((currentValues) => ({
       ...currentValues,
@@ -297,6 +305,42 @@ const createKeyformInsertionHandler = (options: CreateKeyformInsertionHandlerOpt
   }
 }
 
+const applyInfluences = (
+  props: UseParameterEditorProps,
+  binding: PuppetParameterBinding | undefined,
+  influences: ReadonlyArray<PuppetParameterInfluence>,
+): boolean => {
+  if (binding === undefined) {
+    return false
+  }
+  const document = setParameterInfluences({
+    bindingId: binding.id,
+    document: props.document(),
+    influences,
+  })
+  if (document === undefined) {
+    return false
+  }
+  props.onDocumentChange(document)
+  props.onNotice('Parameter 영향도 관계를 변경했습니다.')
+  return true
+}
+
+const applyParameterName = (
+  props: UseParameterEditorProps,
+  bindingId: string | null,
+  parameterId: string,
+  name: string,
+) => {
+  if (bindingId === null) {
+    return
+  }
+  const document = renameParameter({bindingId, document: props.document(), name, parameterId})
+  if (document !== undefined) {
+    props.onDocumentChange(document)
+  }
+}
+
 export const useParameterEditor = (props: UseParameterEditorProps): ParameterEditorResult => {
   const [initialBinding] = getDocumentParameterBindings(props.document())
   const [activeBindingId, setActiveBindingId] = createSignal<string | null>(
@@ -315,6 +359,11 @@ export const useParameterEditor = (props: UseParameterEditorProps): ParameterEdi
       (binding) => binding.id === activeBindingId(),
     ),
   )
+  const {previewDocument, previewInfluences, influence} = useInfluencePreview({
+    binding: activeBinding,
+    document: props.document,
+    parameterValues: parameterValueMap,
+  })
   const activeTargetNodeIds = createMemo(() => {
     const binding = activeBinding()
     return binding === undefined ? [] : getParameterTargetNodeIds(binding)
@@ -392,7 +441,6 @@ export const useParameterEditor = (props: UseParameterEditorProps): ParameterEdi
       if (document === undefined) {
         return
       }
-
       props.onDocumentChange(document)
       if (bindingId === activeBindingId()) {
         const [nextBinding] = getDocumentParameterBindings(document)
@@ -406,20 +454,14 @@ export const useParameterEditor = (props: UseParameterEditorProps): ParameterEdi
         updateParameterConnection(props, binding, 'disconnect')
       }
     },
+    influence,
     moveKeyform,
     parameterValueMap,
     parameterValues,
-    renameParameter(parameterId, name) {
-      const bindingId = activeBindingId()
-      if (bindingId === null) {
-        return
-      }
-
-      const document = renameParameter({bindingId, document: props.document(), name, parameterId})
-      if (document !== undefined) {
-        props.onDocumentChange(document)
-      }
-    },
+    previewDocument,
+    previewInfluences,
+    renameParameter: (parameterId, name) =>
+      applyParameterName(props, activeBindingId(), parameterId, name),
     reset(document) {
       const nextParameterValues = getDefaultParameterValueMap(document)
       setParameterValueMap(nextParameterValues)
@@ -435,6 +477,7 @@ export const useParameterEditor = (props: UseParameterEditorProps): ParameterEdi
       updateValues(values)
     },
     setAllParametersVisible,
+    setInfluences: (influences) => applyInfluences(props, activeBinding(), influences),
     setParameterValues: updateValues,
   }
 }

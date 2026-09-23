@@ -1,3 +1,4 @@
+/** @vitest-environment node */
 import {beforeEach, describe, expect, it, vi} from 'vitest'
 
 import type {SpeechWorkerRequest, SpeechWorkerResponse} from '../messages'
@@ -17,6 +18,10 @@ interface MockPipelineOptions {
 type WorkerMessageListener = (event: MessageEvent<SpeechWorkerRequest>) => void
 
 const transformers = vi.hoisted(() => ({pipeline: vi.fn(), transcribe: vi.fn()}))
+
+type SpeechTranscriber = typeof transformers.transcribe
+type PipelineResolver = (transcriber: SpeechTranscriber) => void
+type PipelineRejector = (reason: unknown) => void
 
 vi.mock('@huggingface/transformers', () => ({pipeline: transformers.pipeline}))
 
@@ -278,6 +283,144 @@ describe('speech recognition worker', () => {
         expect.objectContaining({requestId: 56, type: 'ready'}),
       )
     })
+  })
+
+  it('should prepare a different model after an in-flight preparation', async () => {
+    const pipelineResolvers = new Map<string, PipelineResolver>()
+    transformers.pipeline.mockImplementation((_task: string, model: string) => {
+      return new Promise<SpeechTranscriber>((resolve) => {
+        pipelineResolvers.set(model, resolve)
+      })
+    })
+    const worker = await loadWorker()
+    const firstRequest = {
+      modelId: 'whisper-base',
+      preferredBackend: 'wasm',
+      requestId: 57,
+      type: 'prepare',
+    } as const
+    const secondRequest = {
+      modelId: 'moonshine-tiny-ko',
+      preferredBackend: 'wasm',
+      requestId: 58,
+      type: 'prepare',
+    } as const
+
+    worker.dispatch(firstRequest)
+    worker.dispatch(secondRequest)
+    await vi.waitFor(() => expect(transformers.pipeline).toHaveBeenCalledOnce())
+    pipelineResolvers.get('onnx-community/whisper-base')?.(transformers.transcribe)
+    await vi.waitFor(() => expect(transformers.pipeline).toHaveBeenCalledTimes(2))
+    pipelineResolvers.get('onnx-community/moonshine-tiny-ko-ONNX')?.(transformers.transcribe)
+
+    await vi.waitFor(() => {
+      expect(worker.postMessage).toHaveBeenCalledWith(
+        expect.objectContaining({requestId: 57, type: 'ready'}),
+      )
+      expect(worker.postMessage).toHaveBeenCalledWith(
+        expect.objectContaining({requestId: 58, type: 'ready'}),
+      )
+    })
+    expect(transformers.pipeline).toHaveBeenNthCalledWith(
+      1,
+      'automatic-speech-recognition',
+      'onnx-community/whisper-base',
+      expect.objectContaining({device: 'wasm'}),
+    )
+    expect(transformers.pipeline).toHaveBeenNthCalledWith(
+      2,
+      'automatic-speech-recognition',
+      'onnx-community/moonshine-tiny-ko-ONNX',
+      expect.objectContaining({device: 'wasm'}),
+    )
+  })
+
+  it('should continue preparing a different model after a failed preparation', async () => {
+    const pipelineResolvers = new Map<string, PipelineResolver>()
+    const pipelineRejectors = new Map<string, PipelineRejector>()
+    transformers.pipeline.mockImplementation((_task: string, model: string) => {
+      return new Promise<SpeechTranscriber>((resolve, reject) => {
+        pipelineResolvers.set(model, resolve)
+        pipelineRejectors.set(model, (reason) => reject(reason))
+      })
+    })
+    const worker = await loadWorker()
+
+    worker.dispatch({
+      modelId: 'whisper-base',
+      preferredBackend: 'wasm',
+      requestId: 63,
+      type: 'prepare',
+    })
+    worker.dispatch({
+      modelId: 'moonshine-tiny-ko',
+      preferredBackend: 'wasm',
+      requestId: 64,
+      type: 'prepare',
+    })
+    await vi.waitFor(() => expect(transformers.pipeline).toHaveBeenCalledOnce())
+    pipelineRejectors.get('onnx-community/whisper-base')?.(new Error('첫 모델 준비 실패'))
+
+    await vi.waitFor(() => {
+      expect(worker.postMessage).toHaveBeenCalledWith({
+        error: {
+          code: 'model-failed',
+          detail: '첫 모델 준비 실패',
+          phase: 'prepare',
+          retryable: true,
+        },
+        requestId: 63,
+        type: 'error',
+      })
+    })
+    await vi.waitFor(() => expect(transformers.pipeline).toHaveBeenCalledTimes(2))
+    pipelineResolvers.get('onnx-community/moonshine-tiny-ko-ONNX')?.(transformers.transcribe)
+
+    await vi.waitFor(() => {
+      expect(worker.postMessage).toHaveBeenCalledWith(
+        expect.objectContaining({requestId: 64, type: 'ready'}),
+      )
+    })
+  })
+
+  it('should load the requested model before transcribing after a model switch', async () => {
+    const baseTranscriber = vi.fn().mockResolvedValue({text: '기본 모델'})
+    const moonshineTranscriber = vi.fn().mockResolvedValue({text: '전환 모델'})
+    const pipelineResolvers = new Map<string, PipelineResolver>()
+    transformers.pipeline.mockImplementation((_task: string, model: string) => {
+      return new Promise<SpeechTranscriber>((resolve) => {
+        pipelineResolvers.set(model, resolve)
+      })
+    })
+    const worker = await loadWorker()
+    const audio = Float32Array.of(0.1, 0.2)
+
+    worker.dispatch({
+      modelId: 'whisper-base',
+      preferredBackend: 'wasm',
+      requestId: 59,
+      type: 'prepare',
+    })
+    worker.dispatch({
+      audio,
+      language: 'korean',
+      modelId: 'moonshine-tiny-ko',
+      preferredBackend: 'wasm',
+      requestId: 60,
+      type: 'transcribe',
+    })
+    await vi.waitFor(() => expect(transformers.pipeline).toHaveBeenCalledOnce())
+    pipelineResolvers.get('onnx-community/whisper-base')?.(baseTranscriber)
+    await vi.waitFor(() => expect(transformers.pipeline).toHaveBeenCalledTimes(2))
+    pipelineResolvers.get('onnx-community/moonshine-tiny-ko-ONNX')?.(moonshineTranscriber)
+
+    await vi.waitFor(() => {
+      expect(worker.postMessage).toHaveBeenCalledWith(
+        expect.objectContaining({requestId: 60, text: '전환 모델', type: 'complete'}),
+      )
+    })
+    expect(baseTranscriber).not.toHaveBeenCalled()
+    expect(moonshineTranscriber).toHaveBeenCalledWith(audio)
   })
 
   it('should report a preparation failure from a transcription request', async () => {

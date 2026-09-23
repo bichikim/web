@@ -1,10 +1,11 @@
+/** @vitest-environment node */
 import {beforeEach, describe, expect, it, vi} from 'vitest'
 
 const authMocks = vi.hoisted(() => ({authorizeAdminRequest: vi.fn()}))
 const repositoryMocks = vi.hoisted(() => ({connectAlbumOffer: vi.fn()}))
 
-vi.mock('src/server/admin-auth/http', () => authMocks)
-vi.mock('src/server/music/admin-repository', () => repositoryMocks)
+vi.mock('src/server/auth/authorize-admin-request', () => authMocks)
+vi.mock('src/server/repositories/music-admin', () => repositoryMocks)
 
 import {POST} from '../offers'
 import {invokeApiRoute} from '../../../__tests__/invoke'

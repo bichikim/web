@@ -33,8 +33,9 @@
     },
     "./*": "./*",
     "./plugin": {
-      "import": "./dist/plugin.mjs",
-      "require": "./dist/plugin.js"
+      "types": "./dist/alias.d.ts",
+      "import": "./dist/alias.mjs",
+      "require": "./dist/alias.js"
     }
   },
   "publishConfig": {
@@ -55,20 +56,5 @@
     "@types/node": "catalog:",
     "@winter-love/vite-lib-config": "workspace:*"
   },
-  "stage": "alpha",
-  "tsup": {
-    "entry": [
-      "src/index.ts",
-      "src/plugin.ts"
-    ],
-    "clean": true,
-    "format": [
-      "cjs",
-      "esm",
-      "iife"
-    ],
-    "outDir": "dist",
-    "sourcemap": true,
-    "splitting": false
-  }
+  "stage": "alpha"
 }

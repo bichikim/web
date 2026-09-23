@@ -7,11 +7,14 @@ import {signOutAdminSession} from '../../admin-auth/session'
 import {requestUserMagicLink} from '../../user-auth/magic-link'
 import {signOutWebSession} from '../../user-auth/web-session'
 
+const calendarMocks = vi.hoisted(() => ({clearCalendarMonthCache: vi.fn()}))
+
 vi.mock('@solidjs/router', () => ({action: vi.fn((callback) => callback)}))
 vi.mock('../../admin-auth/magic-link', () => ({requestAdminMagicLink: vi.fn()}))
 vi.mock('../../admin-auth/session', () => ({signOutAdminSession: vi.fn()}))
 vi.mock('../../user-auth/magic-link', () => ({requestUserMagicLink: vi.fn()}))
 vi.mock('../../user-auth/web-session', () => ({signOutWebSession: vi.fn()}))
+vi.mock('../../calendar', () => calendarMocks)
 
 import {
   requestAccountMagicLinkAction,
@@ -26,7 +29,7 @@ afterEach(() => {
 
 describe('magic-link actions', () => {
   it('should adapt account form values to the existing browser request', async () => {
-    window.history.replaceState(null, '', '/account')
+    globalThis.history.replaceState(null, '', '/account')
     vi.mocked(requestUserMagicLink).mockResolvedValue(true)
 
     await expect(
@@ -34,7 +37,7 @@ describe('magic-link actions', () => {
     ).resolves.toEqual({status: 'sent'})
     expect(requestUserMagicLink).toHaveBeenCalledWith({
       email: 'user@example.com',
-      origin: window.location.origin,
+      origin: globalThis.location.origin,
     })
   })
 
@@ -65,6 +68,7 @@ describe('sign-out actions', () => {
     await expect(signOutAccountSessionAction(new URLSearchParams())).resolves.toEqual({
       status: 'signed-out',
     })
+    expect(calendarMocks.clearCalendarMonthCache).toHaveBeenCalledOnce()
     await expect(signOutAdminSessionAction(new URLSearchParams())).resolves.toEqual({
       status: 'rejected',
     })
@@ -76,5 +80,6 @@ describe('sign-out actions', () => {
     await expect(signOutAccountSessionAction(new URLSearchParams())).resolves.toEqual({
       status: 'unavailable',
     })
+    expect(calendarMocks.clearCalendarMonthCache).not.toHaveBeenCalled()
   })
 })

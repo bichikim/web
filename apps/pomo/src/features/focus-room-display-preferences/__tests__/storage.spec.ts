@@ -17,20 +17,28 @@ const storageMocks = vi.hoisted(() => ({
 
 vi.mock('@apps-in-toss/web-framework', () => ({Storage: storageMocks}))
 
-const visiblePreferences = {dialogueComposerVisible: true} as const
+const visiblePreferences = {
+  dialogueComposerVisible: true,
+  featureRequestVisible: true,
+  memoryAssistVisible: true,
+  playerVisible: true,
+  pomodoroVisible: true,
+  toolsButtonVisible: true,
+  tourButtonVisible: true,
+} as const
 const STORAGE_KEY = 'pomo:focus-room-display-preferences:v1'
 
 const createStorageHarness = () => {
-  const nativeValues = new Map<string, unknown>()
+  const tossValues = new Map<string, unknown>()
   const webValues = new Map<string, unknown>()
   const storage = {
-    isNative: vi.fn(() => false),
-    readNative: vi.fn<(key: string) => Promise<unknown | null>>(async (key) => {
-      return nativeValues.get(key) ?? null
+    readToss: vi.fn<(key: string) => Promise<unknown | null>>(async (key) => {
+      return tossValues.get(key) ?? null
     }),
     readWeb: vi.fn<(key: string) => unknown | null>((key) => webValues.get(key) ?? null),
-    writeNative: vi.fn(async (key: string, value: unknown) => {
-      nativeValues.set(key, value)
+    usesTossStorage: vi.fn(() => false),
+    writeToss: vi.fn(async (key: string, value: unknown) => {
+      tossValues.set(key, value)
     }),
     writeWeb: vi.fn((key: string, value: unknown) => {
       webValues.set(key, value)
@@ -38,9 +46,9 @@ const createStorageHarness = () => {
   } satisfies PDisplayPreferencesStorage
 
   return {
-    nativeValues,
     repository: createPDisplayPreferencesRepository({storage}),
     storage,
+    tossValues,
     webValues,
   }
 }
@@ -52,7 +60,7 @@ beforeEach(() => {
 })
 
 afterEach(() => {
-  Reflect.deleteProperty(window, 'ReactNativeWebView')
+  Reflect.deleteProperty(globalThis, 'ReactNativeWebView')
   vi.unstubAllGlobals()
 })
 
@@ -68,56 +76,31 @@ describe('focus-room display preference repository', () => {
     )
   })
 
-  it('should persist through native storage when the browser cache is unavailable', async () => {
-    const {nativeValues, repository, storage} = createStorageHarness()
-    storage.isNative.mockReturnValue(true)
+  it('should persist through toss storage when the browser cache is unavailable', async () => {
+    const {tossValues, repository, storage} = createStorageHarness()
+    storage.usesTossStorage.mockReturnValue(true)
     storage.writeWeb.mockImplementation(() => {
       throw new Error('browser unavailable')
     })
 
     await expect(repository.write(visiblePreferences)).resolves.toBeUndefined()
-    expect(nativeValues.get(STORAGE_KEY)).toEqual(visiblePreferences)
+    expect(tossValues.get(STORAGE_KEY)).toEqual(visiblePreferences)
   })
 
-  it('should continue native writes after an earlier write fails', async () => {
-    const {nativeValues, repository, storage} = createStorageHarness()
-    storage.isNative.mockReturnValue(true)
-    storage.writeNative
-      .mockRejectedValueOnce(new Error('native unavailable'))
+  it('should continue toss writes after an earlier write fails', async () => {
+    const {tossValues, repository, storage} = createStorageHarness()
+    storage.usesTossStorage.mockReturnValue(true)
+    storage.writeToss
+      .mockRejectedValueOnce(new Error('toss unavailable'))
       .mockImplementationOnce(async (key, value) => {
-        nativeValues.set(key, value)
+        tossValues.set(key, value)
       })
 
     await expect(repository.write(DEFAULT_P_DISPLAY_PREFERENCES)).rejects.toThrow(
       'Failed to persist focus-room display preferences.',
     )
     await expect(repository.write(visiblePreferences)).resolves.toBeUndefined()
-    expect(nativeValues.get(STORAGE_KEY)).toEqual(visiblePreferences)
-  })
-
-  it('should wait for an active native write before reading the preferences', async () => {
-    const {nativeValues, repository, storage} = createStorageHarness()
-    storage.isNative.mockReturnValue(true)
-    nativeValues.set(STORAGE_KEY, DEFAULT_P_DISPLAY_PREFERENCES)
-    let completeWrite: () => void = () => undefined
-    storage.writeNative.mockImplementation(
-      (key, value) =>
-        new Promise((resolve) => {
-          completeWrite = () => {
-            nativeValues.set(key, value)
-            resolve()
-          }
-        }),
-    )
-
-    const pendingWrite = repository.write(visiblePreferences)
-    await vi.waitFor(() => expect(storage.writeNative).toHaveBeenCalledOnce())
-    const pendingRead = repository.read()
-    completeWrite()
-
-    await expect(pendingWrite).resolves.toBeUndefined()
-    await expect(pendingRead).resolves.toEqual(visiblePreferences)
-    expect(storage.readNative).toHaveBeenCalledOnce()
+    expect(tossValues.get(STORAGE_KEY)).toEqual(visiblePreferences)
   })
 })
 
@@ -137,8 +120,8 @@ it('should persist and restore dialogue composer visibility on the web', async (
   )
 })
 
-it('should restore native preferences and rebuild the browser copy', async () => {
-  Object.defineProperty(window, 'ReactNativeWebView', {configurable: true, value: {}})
+it('should restore toss preferences and rebuild the browser copy', async () => {
+  Object.defineProperty(globalThis, 'ReactNativeWebView', {configurable: true, value: {}})
   storageMocks.getItem.mockResolvedValue(JSON.stringify(visiblePreferences))
 
   await expect(readPDisplayPreferences()).resolves.toEqual(visiblePreferences)
@@ -147,26 +130,34 @@ it('should restore native preferences and rebuild the browser copy', async () =>
   )
 })
 
-it('should use the default when native preferences are empty', async () => {
-  Object.defineProperty(window, 'ReactNativeWebView', {configurable: true, value: {}})
+it('should use the default when toss preferences are empty', async () => {
+  Object.defineProperty(globalThis, 'ReactNativeWebView', {configurable: true, value: {}})
   storageMocks.getItem.mockResolvedValue(null)
 
   await expect(readPDisplayPreferences()).resolves.toEqual(DEFAULT_P_DISPLAY_PREFERENCES)
 })
 
-it('should reject a native read failure instead of using the browser copy', async () => {
-  Object.defineProperty(window, 'ReactNativeWebView', {configurable: true, value: {}})
+it('should reject a toss read failure instead of using the browser copy', async () => {
+  Object.defineProperty(globalThis, 'ReactNativeWebView', {configurable: true, value: {}})
   localStorage.setItem('pomo:focus-room-display-preferences:v1', JSON.stringify(visiblePreferences))
-  storageMocks.getItem.mockRejectedValue(new Error('native unavailable'))
+  storageMocks.getItem.mockRejectedValue(new Error('toss unavailable'))
 
   await expect(readPDisplayPreferences()).rejects.toThrow(
     'Failed to read focus-room display preferences.',
   )
 })
 
-it('should replace a stale browser copy with the native preferences', async () => {
-  Object.defineProperty(window, 'ReactNativeWebView', {configurable: true, value: {}})
-  const hiddenPreferences = {dialogueComposerVisible: false} as const
+it('should replace a stale browser copy with the toss preferences', async () => {
+  Object.defineProperty(globalThis, 'ReactNativeWebView', {configurable: true, value: {}})
+  const hiddenPreferences = {
+    dialogueComposerVisible: false,
+    featureRequestVisible: true,
+    memoryAssistVisible: true,
+    playerVisible: true,
+    pomodoroVisible: true,
+    toolsButtonVisible: true,
+    tourButtonVisible: true,
+  } as const
   localStorage.setItem('pomo:focus-room-display-preferences:v1', JSON.stringify(hiddenPreferences))
   storageMocks.getItem.mockResolvedValue(JSON.stringify(visiblePreferences))
 
@@ -177,20 +168,28 @@ it('should replace a stale browser copy with the native preferences', async () =
   )
 })
 
-it('should reject a native save when native storage fails', async () => {
-  Object.defineProperty(window, 'ReactNativeWebView', {configurable: true, value: {}})
-  storageMocks.setItem.mockRejectedValue(new Error('native unavailable'))
+it('should reject a toss save when toss storage fails', async () => {
+  Object.defineProperty(globalThis, 'ReactNativeWebView', {configurable: true, value: {}})
+  storageMocks.setItem.mockRejectedValue(new Error('toss unavailable'))
 
   await expect(writePDisplayPreferences(visiblePreferences)).rejects.toThrow(
     'Failed to persist focus-room display preferences.',
   )
 })
 
-it('should restore native state after a failed native save', async () => {
-  Object.defineProperty(window, 'ReactNativeWebView', {configurable: true, value: {}})
-  const hiddenPreferences = {dialogueComposerVisible: false} as const
+it('should restore toss state after a failed toss save', async () => {
+  Object.defineProperty(globalThis, 'ReactNativeWebView', {configurable: true, value: {}})
+  const hiddenPreferences = {
+    dialogueComposerVisible: false,
+    featureRequestVisible: true,
+    memoryAssistVisible: true,
+    playerVisible: true,
+    pomodoroVisible: true,
+    toolsButtonVisible: true,
+    tourButtonVisible: true,
+  } as const
   storageMocks.getItem.mockResolvedValue(JSON.stringify(hiddenPreferences))
-  storageMocks.setItem.mockRejectedValueOnce(new Error('native unavailable'))
+  storageMocks.setItem.mockRejectedValueOnce(new Error('toss unavailable'))
 
   await expect(writePDisplayPreferences(visiblePreferences)).rejects.toThrow(
     'Failed to persist focus-room display preferences.',
@@ -201,49 +200,35 @@ it('should restore native state after a failed native save', async () => {
   )
 })
 
-it('should preserve a newer choice while native preferences are loading', async () => {
-  Object.defineProperty(window, 'ReactNativeWebView', {configurable: true, value: {}})
-  let nativePreferences = JSON.stringify({dialogueComposerVisible: false})
-  let completeRead: (value: string) => void = () => undefined
-  storageMocks.getItem
-    .mockReturnValueOnce(
-      new Promise((resolve) => {
-        completeRead = resolve
-      }),
-    )
-    .mockImplementation(async () => nativePreferences)
+it('should preserve toss write order during rapid preference changes', async () => {
+  Object.defineProperty(globalThis, 'ReactNativeWebView', {configurable: true, value: {}})
+  const tossWrites: string[] = []
   storageMocks.setItem.mockImplementation(async (_key, value) => {
-    nativePreferences = value
+    tossWrites.push(value)
   })
-
-  const pendingRead = readPDisplayPreferences()
-  await writePDisplayPreferences(visiblePreferences)
-  completeRead(JSON.stringify({dialogueComposerVisible: false}))
-
-  await expect(pendingRead).resolves.toEqual(visiblePreferences)
-})
-
-it('should preserve native write order during rapid preference changes', async () => {
-  Object.defineProperty(window, 'ReactNativeWebView', {configurable: true, value: {}})
-  const nativeWrites: string[] = []
-  storageMocks.setItem.mockImplementation(async (_key, value) => {
-    nativeWrites.push(value)
-  })
-  const hiddenPreferences = {dialogueComposerVisible: false} as const
+  const hiddenPreferences = {
+    dialogueComposerVisible: false,
+    featureRequestVisible: true,
+    memoryAssistVisible: true,
+    playerVisible: true,
+    pomodoroVisible: true,
+    toolsButtonVisible: true,
+    tourButtonVisible: true,
+  } as const
 
   await Promise.all([
     writePDisplayPreferences(visiblePreferences),
     writePDisplayPreferences(hiddenPreferences),
   ])
 
-  expect(nativeWrites).toEqual([
+  expect(tossWrites).toEqual([
     JSON.stringify(visiblePreferences),
     JSON.stringify(hiddenPreferences),
   ])
 })
 
-it('should persist dialogue composer visibility to native storage', async () => {
-  Object.defineProperty(window, 'ReactNativeWebView', {configurable: true, value: {}})
+it('should persist dialogue composer visibility to toss storage', async () => {
+  Object.defineProperty(globalThis, 'ReactNativeWebView', {configurable: true, value: {}})
   storageMocks.setItem.mockResolvedValue()
 
   await writePDisplayPreferences(visiblePreferences)
@@ -251,5 +236,99 @@ it('should persist dialogue composer visibility to native storage', async () => 
   expect(storageMocks.setItem).toHaveBeenCalledWith(
     'pomo:focus-room-display-preferences:v1',
     JSON.stringify(visiblePreferences),
+  )
+})
+
+it('should keep the tour visible for preferences saved before the tour setting existed', async () => {
+  const harness = createStorageHarness()
+  harness.webValues.set(STORAGE_KEY, {dialogueComposerVisible: true})
+  await expect(harness.repository.read()).resolves.toEqual({
+    dialogueComposerVisible: true,
+    featureRequestVisible: true,
+    memoryAssistVisible: true,
+    playerVisible: true,
+    pomodoroVisible: true,
+    toolsButtonVisible: true,
+    tourButtonVisible: true,
+  })
+})
+
+it('should persist and restore a hidden tour button', async () => {
+  const harness = createStorageHarness()
+  await harness.repository.write({
+    dialogueComposerVisible: false,
+    featureRequestVisible: true,
+    memoryAssistVisible: true,
+    playerVisible: true,
+    pomodoroVisible: true,
+    toolsButtonVisible: true,
+    tourButtonVisible: false,
+  })
+  await expect(harness.repository.read()).resolves.toEqual({
+    dialogueComposerVisible: false,
+    featureRequestVisible: true,
+    memoryAssistVisible: true,
+    playerVisible: true,
+    pomodoroVisible: true,
+    toolsButtonVisible: true,
+    tourButtonVisible: false,
+  })
+})
+
+it('should persist and restore a hidden feature request button', async () => {
+  const harness = createStorageHarness()
+  const hiddenPreferences = {...visiblePreferences, featureRequestVisible: false}
+
+  await harness.repository.write(hiddenPreferences)
+
+  await expect(harness.repository.read()).resolves.toEqual(hiddenPreferences)
+})
+
+it.each([false, true])(
+  'should default legacy toolbar preferences and restore hidden choices (toss=%s)',
+  async (toss) => {
+    const harness = createStorageHarness()
+    harness.storage.usesTossStorage.mockReturnValue(toss)
+    const values = toss ? harness.tossValues : harness.webValues
+    values.set('pomo:focus-room-display-preferences:v1', {
+      dialogueComposerVisible: false,
+      tourButtonVisible: true,
+    })
+    const legacy = await harness.repository.read()
+    expect(legacy.playerVisible).toBe(true)
+    expect(legacy.pomodoroVisible).toBe(true)
+    expect(legacy.toolsButtonVisible).toBe(true)
+    expect(legacy.memoryAssistVisible).toBe(true)
+    await harness.repository.write({
+      ...legacy,
+      memoryAssistVisible: false,
+      playerVisible: true,
+      pomodoroVisible: true,
+      toolsButtonVisible: false,
+    })
+    expect(await harness.repository.read()).toEqual({
+      ...legacy,
+      memoryAssistVisible: false,
+      playerVisible: true,
+      pomodoroVisible: true,
+      toolsButtonVisible: false,
+    })
+  },
+)
+
+it.each([false, true])('should persist hidden widgets (toss=%s)', async (toss) => {
+  const harness = createStorageHarness()
+  harness.storage.usesTossStorage.mockReturnValue(toss)
+  await harness.repository.write({
+    dialogueComposerVisible: false,
+    featureRequestVisible: true,
+    memoryAssistVisible: true,
+    playerVisible: false,
+    pomodoroVisible: false,
+    toolsButtonVisible: true,
+    tourButtonVisible: true,
+  })
+  await expect(harness.repository.read()).resolves.toEqual(
+    expect.objectContaining({playerVisible: false, pomodoroVisible: false}),
   )
 })

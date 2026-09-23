@@ -1,3 +1,4 @@
+/** @vitest-environment node */
 import {describe, expect, it} from 'vitest'
 
 import {
@@ -17,6 +18,12 @@ describe('createPVisemeTrack', () => {
     expect(cues.map((cue) => cue.viseme)).toEqual(['closed', 'open', 'closed', 'round', 'wide'])
     expect(cues[0]?.startMs).toBe(0)
     expect(cues.at(-1)?.endMs).toBe(1_000)
+  })
+
+  it('should map the Korean tense bilabial onset to a closed mouth shape', () => {
+    const cues = createPVisemeTrack({durationMs: 1_000, text: '빠'})
+
+    expect(cues.map((cue) => cue.viseme)).toEqual(['closed', 'open'])
   })
 
   it('should preserve pauses and fit every cue to the rendered duration', () => {

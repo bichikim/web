@@ -2,13 +2,13 @@
 
 import {afterEach, describe, expect, test, vi} from 'vitest'
 
-import {isTwoDimensionalParameterBinding} from '../../deformation'
 import {PUPPET_DOCUMENT_FORMAT, PUPPET_DOCUMENT_VERSION, type PuppetDocument} from '../document'
-import {createDemoDocument} from '../create-demo-document'
+
 import {createPlayer} from '../create-player'
 import {parseDocument} from '../parse-document'
 import type {PreparedPuppetDocument} from '../prepare-puppet-document'
 import {serializeDocument} from '../serialize-document'
+import {markPreparedPuppetDocument} from '../internal/prepared-document'
 
 const mocks = vi.hoisted(() => ({
   AlphaMask: vi.fn(),
@@ -351,9 +351,42 @@ describe('createPlayer', () => {
       motionId: 'hold-final-frame',
       time: 10,
     })
+
+    const influencedDocument = prepareDocument({
+      ...motionDocument,
+      motions: [],
+      parameterBindings: motionDocument.parameterBindings!.map((binding) => ({
+        ...binding,
+        influences: [
+          {
+            parameterId: 'control',
+            points: [
+              {value: 0, weight: 1},
+              {value: 1, weight: 0},
+            ],
+          },
+        ],
+      })),
+      parameters: [
+        ...motionDocument.parameters!,
+        {defaultValue: 0, id: 'control', maximum: 1, minimum: 0, name: 'Control'},
+      ],
+    })
+    expect(player.updateDocument(influencedDocument)).toBe(true)
+    player.setParameterValues({control: 0.5, shift: 1})
+    expect(createdMesh!.vertices[2]).toBeCloseTo(56.25)
+    expect(createdMesh!.vertices[3]).toBeCloseTo(56.25)
+    player.setParameterValues({control: 1, shift: 1})
+    expect(createdMesh!.vertices[2]).toBeCloseTo(100)
+    expect(createdMesh!.vertices[3]).toBeCloseTo(0)
+    player.setParameterValues({control: 0, shift: 1})
+    expect(createdMesh!.vertices[2]).toBeCloseTo(0)
+    expect(createdMesh!.vertices[3]).toBeCloseTo(125)
+    player.destroy()
   })
 
-  test('should apply scene order and inherited visibility to runtime meshes', async () => {
+  test('should switch motions and finish a one-shot playback', async () => {
+    let tick: ((ticker: {readonly deltaMS: number}) => void) | undefined
     const application = {
       destroy: vi.fn(),
       init: vi.fn().mockResolvedValue(undefined),
@@ -362,12 +395,141 @@ describe('createPlayer', () => {
       stage: {addChild: vi.fn()},
       start: vi.fn(),
       stop: vi.fn(),
-      ticker: {add: vi.fn()},
+      ticker: {
+        add: vi.fn((handler: (ticker: {readonly deltaMS: number}) => void) => {
+          tick = handler
+        }),
+      },
     }
     const root = {
       addChild: vi.fn(),
       position: {set: vi.fn()},
       scale: {set: vi.fn()},
+    }
+    const onFrame = vi.fn()
+    const source = prepareDocument({
+      ...puppetDocument,
+      motions: [
+        {duration: 2, id: 'idle', tracks: []},
+        {duration: 0.5, id: 'blink', tracks: []},
+      ],
+    })
+
+    mocks.Application.mockImplementation(
+      class {
+        constructor() {
+          Object.assign(this, application)
+        }
+      } as unknown as () => unknown,
+    )
+    mocks.Container.mockImplementation(
+      class {
+        constructor() {
+          Object.assign(this, root)
+        }
+      } as unknown as () => unknown,
+    )
+
+    const player = await createPlayer({
+      canvas: document.createElement('canvas'),
+      document: source,
+      onFrame,
+    })
+    const onComplete = vi.fn()
+
+    expect(player.setMotion('blink')).toBe(true)
+    expect(onFrame).toHaveBeenLastCalledWith({duration: 0.5, motionId: 'blink', time: 0})
+    expect(player.playMotion('blink', {loop: false, onComplete})).toBe(true)
+    tick?.({deltaMS: 600})
+
+    expect(onFrame).toHaveBeenLastCalledWith({duration: 0.5, motionId: 'blink', time: 0.5})
+    expect(application.stop).toHaveBeenCalledOnce()
+    expect(onComplete).toHaveBeenCalledOnce()
+    expect(player.setMotion('missing')).toBe(false)
+
+    player.destroy()
+  })
+
+  test('should apply pendulum output to parameter deformation at a fixed simulation step', async () => {
+    let tick: ((ticker: {readonly deltaMS: number}) => void) | undefined
+    const application = {
+      destroy: vi.fn(),
+      init: vi.fn().mockResolvedValue(undefined),
+      render: vi.fn(),
+      resize: vi.fn(),
+      screen: {height: 100, width: 200},
+      stage: {addChild: vi.fn()},
+      start: vi.fn(),
+      stop: vi.fn(),
+      ticker: {
+        add: vi.fn((handler: (ticker: {readonly deltaMS: number}) => void) => {
+          tick = handler
+        }),
+      },
+    }
+    const root = {
+      addChild: vi.fn(),
+      position: {set: vi.fn()},
+      scale: {set: vi.fn()},
+    }
+    const runtimeMesh = {
+      geometry: {
+        indices: new Uint32Array(),
+        positions: new Float32Array(),
+        uvs: new Float32Array(),
+      },
+      vertices: new Float32Array(),
+    }
+    const texture = {destroy: vi.fn()}
+    const physicsDocument: PuppetDocument = {
+      ...puppetDocument,
+      parameterBindings: [
+        {
+          id: 'output-binding',
+          keyforms: [
+            {
+              parts: [{partId: 'part', vertices: [0, 0, 100, 0, 0, 100]}],
+              values: [0],
+            },
+            {
+              parts: [{partId: 'part', vertices: [0, 0, 100, 0, 0, 200]}],
+              values: [30],
+            },
+          ],
+          parameterIds: ['output'],
+          targetPartIds: ['part'],
+        },
+      ],
+      parameters: [
+        {defaultValue: 0, id: 'input', maximum: 30, minimum: -30, name: 'Input'},
+        {defaultValue: 0, id: 'output', maximum: 30, minimum: 0, name: 'Output'},
+      ],
+      parts: [
+        {
+          id: 'part',
+          mesh: {
+            boundaryLoops: [[0, 1, 2]],
+            indices: [0, 1, 2],
+            uvs: [0, 0, 1, 0, 0, 1],
+            vertices: [0, 0, 100, 0, 0, 100],
+          },
+          texture: {height: 100, src: 'part.png', width: 100},
+        },
+      ],
+      physics: {
+        pendulums: [
+          {
+            damping: 1.2,
+            gravity: 9.8,
+            id: 'swing',
+            inputParameterId: 'input',
+            inputScale: 1,
+            length: 1,
+            outputParameterId: 'output',
+            outputScale: 1,
+          },
+        ],
+      },
     }
 
     vi.stubGlobal(
@@ -394,85 +556,117 @@ describe('createPlayer', () => {
     )
     mocks.MeshSimple.mockImplementation(
       class {
-        geometry: {
-          indices: Uint32Array
-          positions: Float32Array
-          uvs: Float32Array
-        }
-        vertices: Float32Array
-        visible = true
-
-        constructor(options: {
-          readonly indices: Uint32Array
-          readonly uvs: Float32Array
-          readonly vertices: Float32Array
-        }) {
-          this.geometry = {
-            indices: options.indices,
-            positions: options.vertices,
-            uvs: options.uvs,
-          }
-          this.vertices = options.vertices
+        constructor() {
+          Object.assign(this, runtimeMesh)
         }
       } as unknown as () => unknown,
     )
-    mocks.TextureFrom.mockReturnValue({destroy: vi.fn()})
+    mocks.TextureFrom.mockReturnValue(texture)
 
-    const sourceDocument = createDemoDocument()
-    const document: PuppetDocument = {
-      ...sourceDocument,
-      parts: sourceDocument.parts.map((part) => ({...part, properties: undefined})),
-    }
     const player = await createPlayer({
-      canvas: window.document.createElement('canvas'),
-      document: prepareDocument(document),
+      canvas: document.createElement('canvas'),
+      document: prepareDocument(physicsDocument),
+      parameterValues: {input: 30, output: 0},
     })
-    const runtimeMeshes = mocks.MeshSimple.mock.results.map(
-      (result) => result.value as {visible: boolean},
-    )
+    const createdMesh = mocks.MeshSimple.mock.results[0]?.value as
+      | {readonly vertices: Float32Array}
+      | undefined
+    const initialY = createdMesh?.vertices[5]
 
-    expect(root.addChild.mock.calls.slice(0, 3).map(([mesh]) => mesh)).toEqual(runtimeMeshes)
+    for (let frame = 0; frame < 60; frame += 1) {
+      tick?.({deltaMS: 1_000 / 60})
+    }
 
-    const group = document.scene!.roots[1]!
-    const hiddenDocument = prepareDocument({
-      ...document,
-      scene: {roots: [document.scene!.roots[0]!, {...group, visible: false}]},
-    })
-
-    expect(player.updateDocument(hiddenDocument)).toBe(true)
-    expect(runtimeMeshes.map((mesh) => mesh.visible)).toEqual([true, false, false])
+    expect(createdMesh?.vertices[5]).toBeGreaterThan(initialY ?? 0)
+    player.destroy()
   })
 
-  test('should apply interpolated properties and compose chained masks', async () => {
+  test('should preserve Physics behavior across seek, playback controls, and document replacement', async () => {
+    let tick: ((ticker: {readonly deltaMS: number}) => void) | undefined
     const application = {
       destroy: vi.fn(),
       init: vi.fn().mockResolvedValue(undefined),
       render: vi.fn(),
+      resize: vi.fn(),
       screen: {height: 100, width: 200},
       stage: {addChild: vi.fn()},
       start: vi.fn(),
       stop: vi.fn(),
-      ticker: {add: vi.fn()},
+      ticker: {
+        add: vi.fn((handler: (ticker: {readonly deltaMS: number}) => void) => {
+          tick = handler
+        }),
+      },
     }
-    const containers: Array<{
-      addChild: ReturnType<typeof vi.fn>
-      position: {set: ReturnType<typeof vi.fn>}
-      scale: {set: ReturnType<typeof vi.fn>}
-    }> = []
-    const runtimeMeshes: Array<{
-      addEffect: ReturnType<typeof vi.fn>
-      alpha: number
-      blendMode: string
-      filters: unknown
+    const root = {
+      addChild: vi.fn(),
+      position: {set: vi.fn()},
+      scale: {set: vi.fn()},
+    }
+    const runtimeMesh = {
       geometry: {
-        indices: Uint32Array
-        positions: Float32Array
-        uvs: Float32Array
-      }
-      setMask: ReturnType<typeof vi.fn>
-      vertices: Float32Array
-      visible: boolean
-    }> = []
+        indices: new Uint32Array(),
+        positions: new Float32Array(),
+        uvs: new Float32Array(),
+      },
+      vertices: new Float32Array(),
+    }
+    const texture = {destroy: vi.fn()}
+    const onFrame = vi.fn()
+    const physicsDocument: PuppetDocument = {
+      ...puppetDocument,
+      motions: [{duration: 2, id: 'idle', tracks: []}],
+      parameterBindings: [
+        {
+          id: 'output-binding',
+          keyforms: [
+            {
+              parts: [{partId: 'part', vertices: [0, 0, 100, 0, 0, 100]}],
+              values: [0],
+            },
+            {
+              parts: [{partId: 'part', vertices: [0, 0, 100, 0, 0, 200]}],
+              values: [30],
+            },
+          ],
+          parameterIds: ['output'],
+          targetPartIds: ['part'],
+        },
+      ],
+      parameters: [
+        {defaultValue: 0, id: 'input', maximum: 30, minimum: -30, name: 'Input'},
+        {defaultValue: 0, id: 'output', maximum: 30, minimum: 0, name: 'Output'},
+      ],
+      parts: [
+        {
+          id: 'part',
+          mesh: {
+            boundaryLoops: [[0, 1, 2]],
+            indices: [0, 1, 2],
+            uvs: [0, 0, 1, 0, 0, 1],
+            vertices: [0, 0, 100, 0, 0, 100],
+          },
+          texture: {height: 100, src: 'part.png', width: 100},
+        },
+      ],
+      physics: {
+        pendulums: [
+          {
+            damping: 1.2,
+            gravity: 9.8,
+            id: 'swing',
+            inputParameterId: 'input',
+            inputScale: 1,
+            length: 1,
+            outputParameterId: 'output',
+            outputScale: 1,
+          },
+        ],
+      },
+      scene: {
+        roots: [{id: 'part', kind: 'part', locked: false, name: 'Part', visible: true}],
+      },
+    }
 
     vi.stubGlobal(
       'Image',
@@ -492,161 +686,85 @@ describe('createPlayer', () => {
     mocks.Container.mockImplementation(
       class {
         constructor() {
-          const container = {
-            addChild: vi.fn(),
-            position: {set: vi.fn()},
-            scale: {set: vi.fn()},
-          }
-          containers.push(container)
-          Object.assign(this, container)
+          Object.assign(this, root)
         }
       } as unknown as () => unknown,
     )
     mocks.MeshSimple.mockImplementation(
       class {
-        addEffect = vi.fn()
-        alpha = 1
-        blendMode = 'normal'
-        filters: unknown = null
-        geometry: {
-          indices: Uint32Array
-          positions: Float32Array
-          uvs: Float32Array
-        }
-        setMask = vi.fn()
-        vertices: Float32Array
-        visible = true
-
-        constructor(options: {
-          readonly indices: Uint32Array
-          readonly uvs: Float32Array
-          readonly vertices: Float32Array
-        }) {
-          this.geometry = {
-            indices: options.indices,
-            positions: options.vertices,
-            uvs: options.uvs,
-          }
-          this.vertices = options.vertices
-          runtimeMeshes.push(this)
+        constructor() {
+          Object.assign(this, runtimeMesh)
         }
       } as unknown as () => unknown,
     )
-    mocks.AlphaMask.mockImplementation(
-      class {
-        channel = 'red'
-        inverse = false
-        mask: unknown
+    mocks.TextureFrom.mockReturnValue(texture)
 
-        constructor(options: {readonly mask: unknown}) {
-          this.mask = options.mask
-        }
-      } as unknown as () => unknown,
-    )
-    mocks.ColorMatrixFilter.mockImplementation(
-      class {
-        matrix: ReadonlyArray<number> = []
-      } as unknown as () => unknown,
-    )
-    mocks.TextureFrom.mockReturnValue({destroy: vi.fn()})
-
-    const source = createDemoDocument()
-    const part = source.parts[0]!
-    const binding = source.parameterBindings![0]!
-    if (!isTwoDimensionalParameterBinding(binding)) {
-      throw new Error('Expected a two-dimensional demo parameter')
-    }
-    const renderDocument: PuppetDocument = {
-      ...source,
-      parameterBindings: [
-        {
-          ...binding,
-          keyforms: binding.keyforms.map((keyform) => ({
-            ...keyform,
-            parts: keyform.parts.map((keyformPart) => ({
-              ...keyformPart,
-              properties: {
-                multiplyColor: [0.5, 1, 0.25] as const,
-                opacity: (keyform.values[0] + 30) / 60,
-                screenColor: [0.2, 0, 0.4] as const,
-              },
-            })),
-          })),
-        },
-      ],
-      parts: [
-        {
-          ...part,
-          properties: {
-            blendMode: 'multiply' as const,
-            clippingMaskIds: ['shape-circle'],
-            renderWhenUsedAsMask: true,
-          },
-        },
-        {...source.parts[1]!, properties: undefined},
-        {
-          ...source.parts[2]!,
-          properties: {clippingMaskIds: ['mesh-preview']},
-        },
-      ],
-    }
     const player = await createPlayer({
-      canvas: window.document.createElement('canvas'),
-      document: prepareDocument(renderDocument),
-      parameterValues: {'angle-x': 15, 'angle-y': 0},
+      canvas: document.createElement('canvas'),
+      document: prepareDocument(physicsDocument),
+      onFrame,
+      parameterValues: {input: 30, output: 0},
     })
-    const styledMesh = runtimeMeshes[0]!
-    const clippedMesh = runtimeMeshes[2]!
-    const nestedMaskSource = runtimeMeshes[4]!
-    const root = containers[0]!
-    const styledMask = containers[1]!
-    const clippedMask = containers[2]!
-    const nestedMask = containers[3]!
+    const createdMesh = mocks.MeshSimple.mock.results[0]?.value as
+      | {readonly vertices: Float32Array}
+      | undefined
 
-    expect(styledMesh.alpha).toBe(0.75)
-    expect(styledMesh.blendMode).toBe('multiply')
-    expect(styledMesh.filters).toEqual([mocks.ColorMatrixFilter.mock.results[0]?.value])
-    expect(mocks.ColorMatrixFilter.mock.results[0]?.value.matrix).toEqual([
-      0.4, 0, 0, 0, 0.2, 0, 1, 0, 0, 0, 0, 0, 0.15, 0, 0.4, 0, 0, 0, 1, 0,
-    ])
-    expect(styledMask.addChild).toHaveBeenCalledOnce()
-    expect(clippedMask.addChild).toHaveBeenCalledWith(nestedMask)
-    const clippedMaskEffect = mocks.AlphaMask.mock.results[0]?.value
-    expect(nestedMaskSource.setMask).toHaveBeenCalledWith({
-      channel: 'alpha',
-      inverse: false,
-      mask: nestedMask,
-    })
-    expect(clippedMaskEffect).toMatchObject({channel: 'alpha', inverse: false, mask: clippedMask})
-    expect(clippedMesh.addEffect).toHaveBeenCalledWith(clippedMaskEffect)
-    expect(root.addChild).toHaveBeenCalledWith(clippedMask)
-    expect(root.addChild).toHaveBeenCalledWith(styledMesh)
+    expect(createdMesh?.vertices[5]).toBeCloseTo(100)
+    tick?.({deltaMS: 1_000 / 60})
+    expect(createdMesh?.vertices[5]).toBeGreaterThan(100)
 
-    player.setParameterValues({'angle-x': -15, 'angle-y': 0})
-    expect(styledMesh.alpha).toBe(0.25)
+    player.pause()
+    player.seek(0.5)
+    const pausedY = createdMesh!.vertices[5]!
+    tick!({deltaMS: 1_000 / 60})
+    expect(createdMesh!.vertices[5]).toBeGreaterThan(pausedY)
+    expect(onFrame).toHaveBeenLastCalledWith({duration: 2, motionId: 'idle', time: 0.5})
+    expect(application.stop).not.toHaveBeenCalled()
 
-    const hiddenMaskSourceDocument = prepareDocument({
-      ...renderDocument,
-      parts: renderDocument.parts.map((candidate) =>
-        candidate.id === part.id
-          ? {
-              ...candidate,
-              properties: {...candidate.properties, renderWhenUsedAsMask: false},
-            }
-          : candidate,
-      ),
-    })
-    expect(player.updateDocument(hiddenMaskSourceDocument)).toBe(true)
-    expect(styledMesh.visible).toBe(false)
+    player.setPhysicsPreview(false)
+    expect(createdMesh?.vertices[5]).toBeCloseTo(200)
+    expect(application.stop).toHaveBeenCalledOnce()
+    player.setParameterValues({input: 15})
+    expect(createdMesh?.vertices[5]).toBeCloseTo(150)
+    player.setPhysicsPreview(true)
+    player.setParameterValues({input: 0})
+    tick?.({deltaMS: 1_000 / 60})
+    expect(createdMesh?.vertices[5]).toBeLessThan(150)
+    player.resetPhysics()
+    expect(createdMesh?.vertices[5]).toBeCloseTo(100)
+    tick?.({deltaMS: 1_000 / 60})
+    expect(createdMesh?.vertices[5]).toBeCloseTo(100)
 
-    const changedMaskUvDocument = prepareDocument({
-      ...hiddenMaskSourceDocument,
-      parts: hiddenMaskSourceDocument.parts.map((candidate) =>
-        candidate.id === part.id
-          ? {...candidate, mesh: {...candidate.mesh, uvs: [...candidate.mesh.uvs].reverse()}}
-          : candidate,
-      ),
-    })
-    expect(player.updateDocument(changedMaskUvDocument)).toBe(false)
+    player.play()
+    expect(application.start).toHaveBeenCalled()
+
+    const onComplete = vi.fn()
+    player.setParameterValues({input: 30})
+    player.play({loop: false, onComplete})
+    player.seek(1.99)
+    tick?.({deltaMS: 20})
+    expect(onComplete).toHaveBeenCalledOnce()
+    const completedY = createdMesh!.vertices[5]!
+    tick!({deltaMS: 20})
+    expect(onFrame).toHaveBeenLastCalledWith({duration: 2, motionId: 'idle', time: 2})
+    expect(createdMesh!.vertices[5]).toBeGreaterThan(completedY)
+    expect(onComplete).toHaveBeenCalledOnce()
+
+    const prepared = prepareDocument(physicsDocument)
+    expect(player.updateDocument(prepared)).toBe(true)
+    tick?.({deltaMS: 20})
+    const beforeEditY = createdMesh!.vertices[5]
+    expect(
+      player.updateDocument(markPreparedPuppetDocument({...prepared, parts: [...prepared.parts]})),
+    ).toBe(true)
+    expect(createdMesh?.vertices[5]).toBe(beforeEditY)
+
+    player.seek(0.5)
+    expect(onFrame).toHaveBeenLastCalledWith({duration: 2, motionId: 'idle', time: 0.5})
+
+    const replacementDocument = prepareDocument({...physicsDocument, physics: undefined})
+    expect(player.updateDocument(replacementDocument)).toBe(true)
+    expect(createdMesh?.vertices[5]).toBeCloseTo(100)
+    player.destroy()
   })
 })

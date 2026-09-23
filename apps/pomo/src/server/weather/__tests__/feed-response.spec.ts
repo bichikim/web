@@ -1,3 +1,4 @@
+/** @vitest-environment jsdom */
 import {afterEach, beforeEach, expect, it, vi} from 'vitest'
 
 import type {LegacyWeatherFeed} from 'src/features/weather'
@@ -5,7 +6,7 @@ import {createWeatherFeedResponse} from '../feed-response'
 
 const mocks = vi.hoisted(() => ({getWeatherFeedState: vi.fn(), ingestWeatherCity: vi.fn()}))
 
-vi.mock('../repository', () => ({getWeatherFeedState: mocks.getWeatherFeedState}))
+vi.mock('../get-weather-feed-state', () => ({getWeatherFeedState: mocks.getWeatherFeedState}))
 vi.mock('../ingest-weather', () => ({ingestWeatherCity: mocks.ingestWeatherCity}))
 
 const feed = {

@@ -1,20 +1,27 @@
+import {createAuthoritativeWriter, restorePreferredValue} from '../preference-persistence'
 import {z} from 'zod'
 
 import {
   hasNativeStorageBridge,
-  readNativeStorageJson,
+  readTossStorageJson,
   readWebStorageJson,
-  writeNativeStorageJson,
+  removeWebStorageItem,
+  writeTossStorageJson,
   writeWebStorageJson,
-} from 'src/features/runtime-storage'
+} from 'src/utils/runtime-storage'
 
-import {DISPLAY_THEME_STORAGE_KEY, type DisplayThemePreference} from './model'
+import {
+  DEFAULT_DISPLAY_THEME,
+  DISPLAY_THEME_STORAGE_KEY,
+  type DisplayThemePreference,
+} from './model'
 
 export interface DisplayThemePreferenceStorage {
-  readonly isNative: () => boolean
-  readonly readNative: (key: string) => Promise<unknown | null>
+  readonly usesTossStorage: () => boolean
+  readonly readToss: (key: string) => Promise<unknown | null>
   readonly readWeb: (key: string) => unknown | null
-  readonly writeNative: (key: string, value: unknown) => Promise<void>
+  readonly removeWeb: (key: string) => unknown | null
+  readonly writeToss: (key: string, value: unknown) => Promise<void>
   readonly writeWeb: (key: string, value: unknown) => void
 }
 
@@ -27,10 +34,9 @@ export interface CreateDisplayThemePreferenceRepositoryOptions {
   readonly storage: DisplayThemePreferenceStorage
 }
 
-const DEFAULT_DISPLAY_THEME: DisplayThemePreference = 'system'
 const displayThemeSchema = z.enum(['bright', 'dark', 'system'])
 
-const parseDisplayThemePreference = (value: unknown): DisplayThemePreference | null => {
+export const parseDisplayThemePreference = (value: unknown): DisplayThemePreference | null => {
   const result = displayThemeSchema.safeParse(value)
   return result.success ? result.data : null
 }
@@ -40,8 +46,8 @@ export const createDisplayThemePreferenceRepository = (
   options: CreateDisplayThemePreferenceRepositoryOptions,
 ): DisplayThemePreferenceRepository => {
   const {storage} = options
-  let preferenceWriteRevision = 0
-  let nativeWriteQueue = Promise.resolve()
+  let writeRevision = 0
+  const pendingWrites = new Set<Promise<void>>()
 
   const readWebPreference = () =>
     parseDisplayThemePreference(storage.readWeb(DISPLAY_THEME_STORAGE_KEY))
@@ -55,76 +61,100 @@ export const createDisplayThemePreferenceRepository = (
     }
   }
 
-  const enqueueNativeWrite = (preference: DisplayThemePreference) => {
-    const nativeWrite = nativeWriteQueue.then(() =>
-      storage.writeNative(DISPLAY_THEME_STORAGE_KEY, preference),
+  const waitForPendingWrites = async () => {
+    await Promise.all(
+      Array.from(pendingWrites, (pendingWrite) => pendingWrite.catch(() => undefined)),
     )
-    nativeWriteQueue = nativeWrite.catch(() => undefined)
-    return nativeWrite
+  }
+
+  const persistPreference = createAuthoritativeWriter({
+    failureMessage: 'Failed to persist display theme preference.',
+    isNative: () => storage.usesTossStorage(),
+    removeWeb: () => storage.removeWeb(DISPLAY_THEME_STORAGE_KEY),
+    writeNative: (value) => storage.writeToss(DISPLAY_THEME_STORAGE_KEY, value),
+    writeWeb: writeWebPreference,
+  })
+
+  const write = (preference: DisplayThemePreference): Promise<void> => {
+    writeRevision += 1
+    const pendingWrite = persistPreference(preference)
+    pendingWrites.add(pendingWrite)
+    pendingWrite.finally(() => pendingWrites.delete(pendingWrite)).catch(() => undefined)
+    return pendingWrite
   }
 
   const read = async (): Promise<DisplayThemePreference> => {
-    const initialWriteRevision = preferenceWriteRevision
+    const initialWriteRevision = writeRevision
+    const usesTossStorage = storage.usesTossStorage()
 
-    if (!storage.isNative()) {
+    if (!usesTossStorage) {
       return readWebPreference() ?? DEFAULT_DISPLAY_THEME
     }
 
     try {
-      await nativeWriteQueue
-      const nativePreference = parseDisplayThemePreference(
-        await storage.readNative(DISPLAY_THEME_STORAGE_KEY),
-      )
+      const preferred = readWebPreference()
+      if (preferred === null && pendingWrites.size > 0) {
+        await waitForPendingWrites()
+        if (writeRevision !== initialWriteRevision) {
+          return read()
+        }
+      }
 
-      if (preferenceWriteRevision !== initialWriteRevision) {
+      const restored = await restorePreferredValue({
+        preferred,
+        repair: async (value) => {
+          if (initialWriteRevision !== writeRevision) {
+            return
+          }
+          await storage.writeToss(DISPLAY_THEME_STORAGE_KEY, value).catch(() => undefined)
+        },
+        restore: async () => {
+          const storedPreference = await storage.readToss(DISPLAY_THEME_STORAGE_KEY)
+          if (writeRevision !== initialWriteRevision) {
+            return readWebPreference() ?? DEFAULT_DISPLAY_THEME
+          }
+
+          const tossPreference = parseDisplayThemePreference(storedPreference)
+          const restored = tossPreference ?? DEFAULT_DISPLAY_THEME
+          writeWebPreference(restored)
+          return restored
+        },
+      })
+
+      if (writeRevision !== initialWriteRevision) {
+        await waitForPendingWrites()
         return read()
       }
 
-      const restoredPreference = nativePreference ?? DEFAULT_DISPLAY_THEME
-      writeWebPreference(restoredPreference)
-      return restoredPreference
+      return restored
     } catch (error: unknown) {
-      throw new Error('Failed to read display theme preference.', {cause: error})
-    }
-  }
-
-  const write = async (preference: DisplayThemePreference): Promise<void> => {
-    preferenceWriteRevision += 1
-    const webWriteError = writeWebPreference(preference)
-
-    if (!storage.isNative()) {
-      if (webWriteError !== null) {
-        throw new Error('Failed to persist display theme preference.', {cause: webWriteError})
+      if (writeRevision !== initialWriteRevision) {
+        await waitForPendingWrites()
+        return read()
       }
 
-      return
-    }
-
-    try {
-      await enqueueNativeWrite(preference)
-    } catch (error: unknown) {
-      throw new Error('Failed to persist display theme preference.', {cause: error})
+      throw new Error('Failed to read display theme preference.', {cause: error})
     }
   }
 
   return {read, write}
 }
 
-const preserveStoredValue = (value: unknown) => value
-const runtimeStorage = {
-  isNative: hasNativeStorageBridge,
-  readNative: (key: string) => readNativeStorageJson(key, preserveStoredValue),
-  readWeb: (key: string) => readWebStorageJson(key, preserveStoredValue),
-  writeNative: writeNativeStorageJson,
-  writeWeb(key: string, value: unknown) {
-    const error = writeWebStorageJson(key, value)
-
-    if (error !== null) {
-      throw error
-    }
+const runtimeRepository = createDisplayThemePreferenceRepository({
+  storage: {
+    readToss: (key) => readTossStorageJson(key, (value) => value),
+    readWeb: (key) => readWebStorageJson(key, (value) => value),
+    removeWeb: removeWebStorageItem,
+    usesTossStorage: hasNativeStorageBridge,
+    writeToss: writeTossStorageJson,
+    writeWeb(key, value) {
+      const error = writeWebStorageJson(key, value)
+      if (error !== null) {
+        throw error
+      }
+    },
   },
-} satisfies DisplayThemePreferenceStorage
-const runtimeRepository = createDisplayThemePreferenceRepository({storage: runtimeStorage})
+})
 
 /** Reads the display theme preference persisted for the current runtime. */
 export const readDisplayThemePreference = () => runtimeRepository.read()

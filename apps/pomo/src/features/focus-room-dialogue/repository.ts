@@ -13,6 +13,7 @@ import {
   dialogueEventBindingSchema,
   type DialogueEventId,
   type DialogueEventPlaybackMode,
+  type EventActionId,
   FOCUS_ROOM_DIALOGUE_EVENTS,
   FOCUS_ROOM_ENTRY_EVENT,
   focusRoomDialogueSchema,
@@ -42,6 +43,7 @@ export interface PDialogueRepository {
     event: DialogueEventId,
     dialogueIds: ReadonlyArray<string> | string | null,
     playbackMode?: DialogueEventPlaybackMode,
+    actionIds?: ReadonlyArray<EventActionId>,
   ) => Promise<void>
 }
 
@@ -54,21 +56,35 @@ const getAudioPath = (audioKey: string, format: AudioFormat) =>
 const getAudioMediaType = (audio: Blob, format: AudioFormat) =>
   audio.type.length > 0 ? audio.type : format === 'opus' ? 'audio/ogg; codecs=opus' : 'audio/wav'
 
-const deleteAudioFromStorage = async (audioStorage: ModelStorage, audioKey: string) => {
+export interface DeleteDialogueAudioOptions {
+  readonly failureMode?: 'report' | 'throw'
+}
+
+const deleteAudioFromStorage = async (
+  audioStorage: ModelStorage,
+  audioKey: string,
+  options: DeleteDialogueAudioOptions = {},
+) => {
   const deletions = await Promise.all(
     AUDIO_FORMATS.map((format) => audioStorage.delete(getAudioPath(audioKey, format))),
   )
 
   for (const deletion of deletions) {
     if (!deletion.ok) {
+      if (options.failureMode === 'throw') {
+        throw new Error('Failed to delete dialogue audio.', {cause: deletion.error})
+      }
       reportModelStorageError(deletion.error)
     }
   }
 }
 
-/** Deletes every cached audio representation for a dialogue key. */
-export const deleteDialogueAudio = (audioKey: string): Promise<void> =>
-  deleteAudioFromStorage(createModelStorage({cacheName: AUDIO_CACHE_NAME}), audioKey)
+/** Deletes all audio formats; reports failures by default and rejects in throw mode. */
+export const deleteDialogueAudio = (
+  audioKey: string,
+  options: DeleteDialogueAudioOptions = {},
+): Promise<void> =>
+  deleteAudioFromStorage(createModelStorage({cacheName: AUDIO_CACHE_NAME}), audioKey, options)
 
 interface MigrateLegacyAudioOptions {
   readonly audioKey: string
@@ -132,12 +148,14 @@ export const createPDialogueRepository = (): PDialogueRepository => {
     event: DialogueEventId,
     dialogueIds: ReadonlyArray<string> | string | null,
     playbackMode: DialogueEventPlaybackMode = DEFAULT_DIALOGUE_EVENT_PLAYBACK_MODE,
+    actionIds: ReadonlyArray<EventActionId> = [],
   ) => {
     const requestedIds =
       typeof dialogueIds === 'string' ? [dialogueIds] : dialogueIds === null ? [] : dialogueIds
     const uniqueDialogueIds = [...new Set(requestedIds)]
+    const uniqueActionIds = [...new Set(actionIds)]
 
-    if (uniqueDialogueIds.length === 0) {
+    if (uniqueDialogueIds.length === 0 && uniqueActionIds.length === 0) {
       await database.eventBindings.delete(event)
       return
     }
@@ -151,6 +169,7 @@ export const createPDialogueRepository = (): PDialogueRepository => {
     }
 
     await database.eventBindings.put({
+      ...(uniqueActionIds.length > 0 ? {actionIds: uniqueActionIds} : {}),
       dialogueIds: uniqueDialogueIds,
       event,
       playbackMode,

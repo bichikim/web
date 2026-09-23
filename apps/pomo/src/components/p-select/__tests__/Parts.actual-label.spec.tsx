@@ -2,7 +2,7 @@
 
 import {render, screen} from '@solidjs/testing-library'
 import {expect, it, vi} from 'vitest'
-import {PSelect} from '../../PSelect'
+import {PSelect} from '../PSelect'
 
 it('should render a hidden label through the actual Kobalte Select boundary', () => {
   render(() => (

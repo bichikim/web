@@ -89,6 +89,7 @@ describe('AlbumCard', () => {
     expect(screen.getByRole('heading', {name: album.title})).toBeTruthy()
     expect(screen.getByRole('list')).toHaveTextContent(TRACK.title)
 
+    expect(screen.getAllByRole('button').at(-1)).not.toHaveClass('hover:translate-y-[-0.0625rem]')
     const buttons = screen.getAllByRole('button')
     buttons[0]?.click()
     buttons[1]?.click()
@@ -122,6 +123,9 @@ describe('AlbumCard', () => {
     renderCard(createAlbum({id: '추가된 앨범', tracks: [TRACK]}), true)
 
     expect(screen.getAllByRole('button').at(-1)).toBeDisabled()
+    expect(screen.getAllByRole('button').at(-1)).not.not.toHaveClass(
+      'hover:translate-y-[-0.0625rem]',
+    )
   })
 
   it('should render sale listings and both price-label states without free-album actions', () => {

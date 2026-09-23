@@ -1,6 +1,11 @@
 import {query} from '@solidjs/router'
 
-import {clearStoredAppSession, readStoredAppSession, validateAppSession} from './app-session'
+import {
+  activateStoredSession,
+  clearStoredAppSession,
+  readStoredAppSession,
+  validateAppSession,
+} from './app-session'
 import {readAccountSession} from './web-session'
 
 export const accountSessionQuery = query(readAccountSession, 'user-account-session')
@@ -12,12 +17,12 @@ const readTossSession = async (): Promise<boolean> => {
     return false
   }
 
-  if (await validateAppSession(token)) {
+  if ((await validateAppSession(token)) || (await activateStoredSession(token))) {
     return true
   }
 
   try {
-    await clearStoredAppSession()
+    await clearStoredAppSession(token)
   } catch (error: unknown) {
     console.error('Failed to clear invalid Toss session from storage', error)
   }

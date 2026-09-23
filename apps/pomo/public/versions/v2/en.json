@@ -1,0 +1,215 @@
+{
+  "releases": [
+    {
+      "title": "Pomo update",
+      "summary": "Keep timers and music playing more reliably, manage memo reminders and calendars with more confidence, and suggest features directly.",
+      "changes": [
+        {
+          "title": "Feature requests and voting",
+          "description": "Suggest new features, vote on other requests, and check each request's progress and goal status."
+        },
+        {
+          "title": "More reliable timer progress",
+          "description": "Running and paused time now continues more naturally when you move between surfaces or reopen the timer. Phase transitions, auto-start, overtime, and configuration changes are handled more reliably."
+        },
+        {
+          "title": "Music playback and playlist improvements",
+          "description": "Playback state and position are better preserved when changing tracks, editing the queue, previewing, or seeking. You can also see when a playlist or the next track is being prepared."
+        },
+        {
+          "title": "Memo reminder reliability",
+          "description": "Reminder settings and scheduled state are preserved while memos are edited or deleted. Reduced repeated reminders and reminders for deleted memos, with clearer retry and failure notices."
+        },
+        {
+          "title": "Calendar time zones and partial failures",
+          "description": "Today and tomorrow queries and feed dates now use the browser time zone. If one connected calendar is unavailable, events from calendars that still respond remain visible."
+        },
+        {
+          "title": "Feed and chat recovery",
+          "description": "Feed voice generation and chat responses now preserve drafts, sync state, and retry flows more reliably after errors. Orphaned feed records are also removed from the list."
+        },
+        {
+          "title": "Mobile runtime support",
+          "description": "Added the runtime foundation for using Pomo as an Android or iOS app, including mobile layout insets."
+        },
+        {
+          "title": "Dialogue audio and character improvements",
+          "description": "Dialogue playback completion and retry states are clearer, and character lip sync now better matches Korean pronunciation."
+        }
+      ],
+      "version": "2026. 09. 18 03:03",
+      "releasedAt": "2026-09-18T03:03:00+09:00"
+    },
+    {
+      "title": "Pomo update",
+      "summary": "Customize your focus screen and enjoy more control over feed audio, memos, and drawing.",
+      "changes": [
+        {
+          "title": "Player and timer visibility",
+          "description": "Choose whether to show the music player and Pomodoro timer separately in settings. Hiding either one also stops its music playback or timer."
+        },
+        {
+          "title": "Automatically hide controls",
+          "description": "Keep just the background visible after a period of inactivity. Choose how long to wait, then move the mouse or touch the screen to bring the controls back."
+        },
+        {
+          "title": "Feed audio preparation and progress settings",
+          "description": "Choose whether to prepare audio for new feeds automatically or start it with the Prepare button. You can also hide reading progress while keeping error and retry notices visible."
+        },
+        {
+          "title": "Picture diary drawing controls",
+          "description": "The pen, eraser, colors, and Done button now adapt to the screen size. Choosing a color while using the eraser switches back to the pen."
+        },
+        {
+          "title": "Memo and event alarm improvements",
+          "description": "Text and reminder settings edited while a memo is saving are now preserved. Alarms for events in different Google calendars are kept separate, with a notice when an older alarm needs review."
+        },
+        {
+          "title": "Stopped chat speech stays stopped",
+          "description": "Sending a new message no longer makes a previously stopped reply start reading aloud again."
+        },
+        {
+          "title": "Desktop background and screen saver improvements",
+          "description": "Character, weather, and scene settings now sync in both directions between the desktop background and settings window. Dismissing the screen saver restores focus to the control you were using."
+        },
+        {
+          "title": "First-visit guidance and dialogue controls",
+          "description": "Pomo remembers when you have seen the first-entry hint so it does not repeat on later visits. Guidance now includes button icons, and dialogue skip and stop controls fit better on narrow screens."
+        },
+        {
+          "title": "Toss login persistence",
+          "description": "Fixed an issue where cleaning up an older login could also remove a newer login."
+        }
+      ],
+      "version": "2026. 09. 13 10:43",
+      "releasedAt": "2026-09-13T10:43:00+09:00"
+    },
+    {
+      "title": "Pomo update",
+      "summary": "Make your focus space your own with photos and videos, and try new everyday tools.",
+      "changes": [
+        {
+          "title": "Photo and video backgrounds",
+          "description": "Add your own photos and videos to a background album. Show two photos together and choose transition effects and video playback options. Yuna photo and video sets are also available."
+        },
+        {
+          "title": "Background settings in one place",
+          "description": "Manage your character, visual style, weather, and albums together in the Background settings tab."
+        },
+        {
+          "title": "Everyday tools",
+          "description": "Convert units and count characters with the new tools. You can show or hide the tools button in settings. The Korean interface also includes military discharge date calculation, lunar and solar date conversion, and traditional moving-day lookup."
+        },
+        {
+          "title": "Picture diary generation progress",
+          "description": "Preparation, download, and generation status and progress are now easier to follow while creating an AI picture in your diary."
+        },
+        {
+          "title": "A more detailed tour",
+          "description": "Expanded feature guidance and added English voice narration. The opening sequence no longer repeats when you return in the same tab."
+        },
+        {
+          "title": "Weather search and navigation improvements",
+          "description": "Weather search now offers clearer city and region labels, including Korean and English city names in the Korean interface. Improved the toolbar layout on narrow screens, long event labels, and keyboard navigation in select menus."
+        }
+      ],
+      "version": "2026. 09. 09 18:40",
+      "releasedAt": "2026-09-09T18:40:00+09:00"
+    },
+    {
+      "version": "2026. 09. 08 11:44",
+      "releasedAt": "2026-09-08T11:44:00+09:00",
+      "title": "Pomo update",
+      "summary": "From reminders to daily memories, there is more you can do with Pomo.",
+      "changes": [
+        {
+          "description": "Save things you want to remember and choose when to be notified. You can also set advance and repeat reminders.",
+          "title": "Memos and reminders"
+        },
+        {
+          "description": "View events from Google Calendar and Microsoft Outlook and set individual event alarms.",
+          "title": "Calendar connections"
+        },
+        {
+          "description": "Record your day with words and drawings, and browse past diary entries like turning the pages of a book. On supported devices, you can also generate AI images and draw over them. Diaries are saved on your current device.",
+          "title": "Picture diary"
+        },
+        {
+          "description": "Added English B1 and B2 word sets. Listen to individual word pronunciations and manage saved words in bulk.",
+          "title": "Language learning improvements"
+        },
+        {
+          "description": "Added 13 tracks to the morning cafe album.",
+          "title": "New music"
+        },
+        {
+          "description": "Added light mode and improved text and button readability. Added feature tooltips and a guided tour.",
+          "title": "Display and controls"
+        },
+        {
+          "description": "Install Pomo from supported browsers and open it like an app.",
+          "title": "Add to your home screen"
+        },
+        {
+          "description": "Fixed issues with chat retries, editing and deleting memo reminders and event alarms, saving settings, and collapsing playlists.",
+          "title": "Bug fixes"
+        }
+      ],
+      "notes": [
+        "Memo reminders and event alarms notify you through chat and voice while Pomo is open."
+      ]
+    },
+    {
+      "version": "2026. 09. 03 00:57",
+      "releasedAt": "2026-09-03T00:57:00+09:00",
+      "title": "Update",
+      "changes": [
+        {
+          "description": "Character movement and expressions in the focus space now feel more natural."
+        },
+        {
+          "description": "Added focus-space ambience that changes with the time and weather."
+        },
+        {
+          "description": "In Weather settings, you can now select major cities or search for cities worldwide."
+        },
+        {
+          "description": "Added language learning features and new voices."
+        },
+        {
+          "description": "Audio and music previews now let you seek and mute playback directly."
+        },
+        {
+          "description": "AI model downloads continue as you navigate, with options to view progress or stop them."
+        },
+        {
+          "description": "Feed generation status is now clearer, and in-progress tasks can be stopped directly."
+        },
+        {
+          "description": "Background music volume now adjusts naturally when a conversation begins."
+        },
+        {
+          "description": "Improved usability in fullscreen, screensaver, and desktop modes."
+        },
+        {
+          "description": "Improved reliability when saving settings and playlists."
+        },
+        {
+          "description": "Reduced errors during sign-in and session recovery."
+        },
+        {
+          "description": "Fixed duplicate and playback issues when recovering or retrying feed conversations, albums, and music."
+        },
+        {
+          "description": "Improved initial loading and the reliability of weather and music data refreshes."
+        }
+      ]
+    },
+    {
+      "version": "2026. 08. 25 05:26",
+      "releasedAt": "2026-08-25T05:26:00+09:00",
+      "title": "Initial release",
+      "changes": []
+    }
+  ]
+}

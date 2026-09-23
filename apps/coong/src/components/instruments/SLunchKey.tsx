@@ -8,7 +8,7 @@ export type SLunchKeyProps = HKeyProps & {
 
 const contentStyle = `:uno:
 absolute top--4px bottom-0 box-border p-20px w-full rd-20% duration-130 ease-in-out
-shadow-lunch-content border-color-var-border-color
+shadow-lunch-content border-color-var-border-color bg-[var(--lunch-key-bg,#eee)]
 `
 
 // https://codepen.io/vladracoare/pen/jOPmMap
@@ -17,7 +17,7 @@ export const SLunchKey = (_props: SLunchKeyProps) => {
 
   return (
     <HKey {...rest} class={cx('key-lunch', props.class)}>
-      <div class={contentStyle} style={{'background-color': props.bgColor ?? '#eee'}}>
+      <div class={contentStyle} style={{'--lunch-key-bg': props.bgColor}}>
         {props.children}
       </div>
     </HKey>

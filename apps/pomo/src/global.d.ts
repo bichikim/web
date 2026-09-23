@@ -2,6 +2,7 @@
 /// <reference types="vite/client" />
 
 import type {JSX} from 'solid-js'
+import type {RequestAuthentication} from './server/auth/types'
 
 interface ImportMetaEnv {
   readonly CRON_SECRET?: string
@@ -16,6 +17,18 @@ interface ImportMetaEnv {
   readonly OPENAI_SERVICE_TIER?: string
   readonly OPENAI_WEBHOOK_SECRET?: string
   readonly OPENWEATHER_API_KEY?: string
+  readonly POMO_AI_ARTIFACT_R2_ACCESS_KEY_ID?: string
+  readonly POMO_AI_ARTIFACT_R2_BUCKET?: string
+  readonly POMO_AI_ARTIFACT_R2_PREFIX?: string
+  readonly POMO_AI_ARTIFACT_R2_SECRET_ACCESS_KEY?: string
+  readonly POMO_AI_CREDIT_PROFILE_JSON?: string
+  readonly POMO_AI_MONTHLY_CREDIT_CAP?: string
+  readonly POMO_AI_QUEUE_LIMIT?: string
+  readonly POMO_AI_RUNNER_TIMEOUT_MS?: string
+  readonly POMO_AI_RUNNER_TOKEN?: string
+  readonly POMO_AI_RUNNER_URL?: string
+  readonly POMO_AI_STORAGE_QUOTA_BYTES?: string
+  readonly POMO_AI_SUBSCRIPTION_PRODUCT_CODE?: string
   readonly POMO_ALLOW_LOCAL_ASSET_ORIGIN: string
   readonly POMO_CONNECT_SOURCES: string
   readonly POMO_CONTENT_SECURITY_POLICY_TEMPLATE: string
@@ -30,22 +43,25 @@ interface ImportMetaEnv {
   readonly VERCEL_ENV?: string
   readonly VITE_POMO_APPS_IN_TOSS_PRIVACY_PATH: string
   readonly VITE_POMO_APPS_IN_TOSS_TERMS_PATH: string
+  readonly VITE_POMO_DISTRIBUTION_TARGET: string
   readonly VITE_POMO_ENVIRONMENT: string
   readonly VITE_POMO_IS_APPS_IN_TOSS: string
   readonly VITE_POMO_IS_DESKTOP: string
+  readonly VITE_POMO_IS_MOBILE: string
   readonly VITE_POMO_LEGACY_PRIVACY_PATH: string
   readonly VITE_POMO_LEGACY_TERMS_PATH: string
   readonly VITE_POMO_PRETENDARD_BASE_PATH: string
-  readonly VITE_POMO_PRETENDARD_STYLESHEET_PATH: string
   readonly VITE_POMO_PUBLIC_ORIGIN: string
   readonly VITE_POMO_REFUND_PATH: string
   readonly VITE_POMO_RELEASE: string
+  readonly VITE_POMO_RUNTIME_TARGET: string
   readonly VITE_POMO_WEB_PRIVACY_PATH: string
   readonly VITE_POMO_WEB_TERMS_PATH: string
 }
 
 declare namespace App {
   interface RequestEventLocals {
+    authentication?: RequestAuthentication
     securityNonce: string
   }
 }
@@ -59,6 +75,12 @@ type MediaChromeAttributes = JSX.HTMLAttributes<HTMLElement> & {
 
 declare module 'solid-js' {
   namespace JSX {
+    interface ExplicitAttributes {
+      autofocus: string
+      checked: string
+      notooltip: string
+    }
+
     interface ExplicitBoolAttributes {
       disabled: boolean
     }
@@ -68,6 +90,7 @@ declare module 'solid-js' {
       'media-controller': MediaChromeAttributes
       'media-mute-button': MediaChromeAttributes
       'media-play-button': MediaChromeAttributes
+      'media-preview-time-display': MediaChromeAttributes
       'media-time-display': MediaChromeAttributes
       'media-time-range': MediaChromeAttributes
       'media-volume-range': MediaChromeAttributes

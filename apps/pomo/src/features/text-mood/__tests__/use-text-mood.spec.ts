@@ -10,7 +10,7 @@ import {
   type TextMoodRuntime,
   useTextMood,
 } from '../index'
-import {failureResult, successResult} from '../../result'
+import {failureResult, successResult} from 'src/features/result'
 
 const clientMocks = vi.hoisted(() => ({createAnalyzer: vi.fn()}))
 
@@ -128,6 +128,18 @@ describe('useTextMood', () => {
       successResult({repositoryId: 'Xenova/paraphrase-multilingual-MiniLM-L12-v2'}),
     )
     await firstPreparation
+    expect(root.controller.state()).toEqual({status: 'ready'})
+    root.dispose()
+  })
+
+  it('should ignore another prepare request when the model is ready', async () => {
+    const runtime = createRuntime()
+    const root = createTextMoodRoot(runtime)
+
+    await root.controller.prepare()
+    await root.controller.prepare()
+
+    expect(runtime.analyzer.prepare).toHaveBeenCalledOnce()
     expect(root.controller.state()).toEqual({status: 'ready'})
     root.dispose()
   })

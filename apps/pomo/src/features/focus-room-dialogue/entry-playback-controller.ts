@@ -18,8 +18,8 @@ import type {DialogueSegmentMood, PDialogue} from './schema'
 import {getDialoguePositionAtTime, getDialogueVisemeAtTime} from './timeline'
 import {
   createDialoguePlaybackQueue,
+  type DialoguePlaybackRequest,
   type PlaybackCompletion,
-  type PlaybackQueueRequest,
   type PlayPDialogueSequenceOptions,
 } from './entry-playback-controller/queue'
 
@@ -65,11 +65,11 @@ export interface EntryPlaybackController {
   readonly isBlocked: Accessor<boolean>
   readonly isDialogueScheduled: (dialogueId: string) => boolean
   readonly isPlaying: Accessor<boolean>
-  readonly prepare: (repository: PDialogueRepository, dialogueId: string) => Promise<void>
+  readonly prepare: (repository: PDialogueRepository, dialogueId: string) => Promise<boolean>
   readonly playSequence: (
     repository: PDialogueRepository,
     options: PlayPDialogueSequenceOptions,
-  ) => Promise<void>
+  ) => Promise<PlaybackCompletion>
   readonly retry: () => void
   readonly scheduledDialogueCount: Accessor<number>
   readonly skip: () => void
@@ -100,6 +100,7 @@ export const createEntryPlaybackController = (): EntryPlaybackController => {
   let audio: HTMLAudioElement | null = null
   let audioContext: AudioContext | null = null
   let audioContextSuspension: Promise<void> | null = null
+  let resumingAudio: HTMLAudioElement | null = null
   let audioEnvelope: PAudioEnvelope | null = null
   let audioSource: MediaElementAudioSourceNode | null = null
   let audioUrl: string | null = null
@@ -107,6 +108,7 @@ export const createEntryPlaybackController = (): EntryPlaybackController => {
   let dialogue: PDialogue | null = null
   let isAwaitingSceneInteraction = false
   let isDisposed = false
+  let onPlaybackStarted: (() => Promise<void> | void) | null = null
   let playbackGeneration = 0
   let resolveCompletion: ((completion: PlaybackCompletion) => void) | null = null
   const reportPlaybackFailure = console.error.bind(
@@ -115,7 +117,7 @@ export const createEntryPlaybackController = (): EntryPlaybackController => {
   )
   const cancelFrame = () => {
     if (animationFrame !== null) {
-      window.cancelAnimationFrame(animationFrame)
+      globalThis.cancelAnimationFrame(animationFrame)
       animationFrame = null
     }
   }
@@ -160,7 +162,7 @@ export const createEntryPlaybackController = (): EntryPlaybackController => {
       silentMouthReturn.cancel()
       setActiveViseme(nextViseme)
     }
-    animationFrame = window.requestAnimationFrame(updateSubtitle)
+    animationFrame = globalThis.requestAnimationFrame(updateSubtitle)
   }
 
   const settleCompletion = (completion: PlaybackCompletion) => {
@@ -188,6 +190,8 @@ export const createEntryPlaybackController = (): EntryPlaybackController => {
     }
 
     audioSource = null
+    resumingAudio = null
+    onPlaybackStarted = null
     suspendAudioContext()
     audio = null
     audioEnvelope = null
@@ -213,6 +217,12 @@ export const createEntryPlaybackController = (): EntryPlaybackController => {
     clearPlayback(completion === 'ended' ? 'delayed' : 'immediate')
   }
 
+  const notifyPlaybackStarted = async () => {
+    const callback = onPlaybackStarted
+    onPlaybackStarted = null
+    await callback?.()
+  }
+
   const start = async (currentAudio: HTMLAudioElement) => {
     try {
       const suspension = audioContextSuspension
@@ -225,19 +235,22 @@ export const createEntryPlaybackController = (): EntryPlaybackController => {
         return
       }
 
-      await audioContext?.resume()
-      await currentAudio.play()
-
+      resumingAudio = currentAudio
+      if (audioContext?.state === 'suspended') {
+        isAwaitingSceneInteraction = true
+        setIsBlocked(true)
+      }
+      try {
+        await audioContext?.resume()
+      } finally {
+        if (resumingAudio === currentAudio) {
+          resumingAudio = null
+        }
+      }
       if (audio !== currentAudio || isDisposed) {
         return
       }
-
-      isAwaitingSceneInteraction = false
-      setIsBlocked(false)
-      setIsPlaying(true)
-      silentMouthReturn.cancel()
-      cancelFrame()
-      updateSubtitle()
+      await currentAudio.play()
     } catch (error: unknown) {
       if (audio !== currentAudio || isDisposed) {
         return
@@ -251,7 +264,30 @@ export const createEntryPlaybackController = (): EntryPlaybackController => {
 
       console.error('Failed to play focus room entry dialogue.', error)
       finishPlayback('failed')
+      return
     }
+
+    if (audio !== currentAudio || isDisposed) {
+      return
+    }
+
+    isAwaitingSceneInteraction = false
+    setIsBlocked(false)
+    setIsPlaying(true)
+    try {
+      await notifyPlaybackStarted()
+    } catch (error: unknown) {
+      finishPlayback('failed')
+      throw error
+    }
+
+    if (audio !== currentAudio || isDisposed) {
+      return
+    }
+
+    silentMouthReturn.cancel()
+    cancelFrame()
+    updateSubtitle()
   }
 
   const loadDialogue = async (
@@ -312,18 +348,6 @@ export const createEntryPlaybackController = (): EntryPlaybackController => {
       return 'missing'
     }
 
-    try {
-      await options.onDialogueStart(options.dialogueId)
-    } catch (error: unknown) {
-      clearPlayback()
-      throw error
-    }
-
-    if (isDisposed || options.generation !== playbackGeneration) {
-      clearPlayback()
-      return 'cancelled'
-    }
-
     const completion = new Promise<PlaybackCompletion>((resolve) => {
       resolveCompletion = resolve
     })
@@ -351,21 +375,35 @@ export const createEntryPlaybackController = (): EntryPlaybackController => {
       },
       {once: true},
     )
-    await start(currentAudio)
+    onPlaybackStarted = () => options.onDialogueStart(options.dialogueId)
+    try {
+      await start(currentAudio)
+    } catch (error: unknown) {
+      clearPlayback()
+      throw error
+    }
     return completion
   }
 
   const playRequest = async (
-    request: PlaybackQueueRequest,
+    request: DialoguePlaybackRequest,
     generation: number,
     onProgress: () => void,
   ): Promise<PlaybackCompletion> => {
-    for (const [position, dialogueId] of request.dialogueIds.entries()) {
+    while (true) {
+      if (request.applyPendingReplacement()) {
+        onProgress()
+      }
+
+      const dialogueId = request.getCurrentDialogueId()
+      if (dialogueId === undefined) {
+        return 'ended'
+      }
+
       if (isDisposed || generation !== playbackGeneration) {
         return 'cancelled'
       }
 
-      request.nextDialoguePosition = position
       onProgress()
       const completion = await playSequenceItem({
         dialogueId,
@@ -378,7 +416,7 @@ export const createEntryPlaybackController = (): EntryPlaybackController => {
       switch (completion) {
         case 'ended':
         case 'missing':
-          request.nextDialoguePosition = position + 1
+          request.advanceDialogue()
           onProgress()
           break
         case 'cancelled':
@@ -387,8 +425,6 @@ export const createEntryPlaybackController = (): EntryPlaybackController => {
           return completion
       }
     }
-
-    return 'ended'
   }
 
   const queue = createDialoguePlaybackQueue({
@@ -415,6 +451,19 @@ export const createEntryPlaybackController = (): EntryPlaybackController => {
     finishPlayback('ended')
   }
   const stop = () => queue.finish(true)
+  const retry = () => {
+    if (!isAwaitingSceneInteraction || isDisposed) {
+      return
+    }
+
+    if (resumingAudio !== null) {
+      // Resume within the click stack without starting the waiting audio a second time.
+      audioContext?.resume().catch(reportPlaybackFailure)
+      return
+    }
+
+    start(audio!).catch(reportPlaybackFailure)
+  }
 
   return {
     activeDialogueId: () => dialogue?.id ?? null,
@@ -441,20 +490,27 @@ export const createEntryPlaybackController = (): EntryPlaybackController => {
     isDialogueScheduled: (dialogueId) =>
       dialogue?.id === dialogueId || queue.isScheduled(dialogueId),
     isPlaying,
-    playSequence: queue.enqueue,
-    prepare: (repository, dialogueId) =>
-      queue.enqueue(repository, {
-        dialogueIds: [dialogueId],
-        onDialogueStart: () => undefined,
-        onSequenceStop: () => undefined,
-      }),
-    retry() {
-      if (!isAwaitingSceneInteraction) {
-        return
+    async playSequence(repository, options) {
+      return queue.enqueue(repository, options)
+    },
+    async prepare(repository, dialogueId) {
+      if (isDisposed) {
+        return false
       }
 
-      start(audio!).catch(reportPlaybackFailure)
+      retry()
+      let isUnavailable = false
+      const completion = await queue.enqueue(repository, {
+        dialogueIds: [dialogueId],
+        onDialogueStart: () => undefined,
+        onDialogueUnavailable: () => {
+          isUnavailable = true
+        },
+        onSequenceStop: () => undefined,
+      })
+      return completion === 'ended' && !isUnavailable
     },
+    retry,
     scheduledDialogueCount: queue.scheduledDialogueCount,
     skip,
     stop,

@@ -1,106 +1,23 @@
 /** @vitest-environment jsdom */
 
-import {renderHook, waitFor} from '@solidjs/testing-library'
-import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
+import {waitFor} from '@solidjs/testing-library'
+import {describe, expect, it, vi} from 'vitest'
 
-vi.mock('@solidjs/router', () => ({
-  action: vi.fn((clientAction) => clientAction),
-  useAction: vi.fn((clientAction) => clientAction),
-  useSubmission: vi.fn(() => ({clear: vi.fn(), pending: false})),
-}))
+import {
+  COVER_DRAFT_ID,
+  coverMocks,
+  createCoverEvent,
+  createDraft,
+  createTranslations,
+  flushPromises,
+  PREPARED_COVER,
+  renderAlbumDraft,
+  storageMocks,
+  VALID_COVER,
+  waitForRestoration,
+} from './fixtures/draft'
 
-import {type AlbumDraftData, type AlbumDraftTranslations} from '../album-draft'
-import {useAlbumDraft} from '../use-album-draft'
-
-const storageMocks = vi.hoisted(() => ({
-  deleteAlbumDraft: vi.fn(),
-  deleteAlbumDraftCover: vi.fn(),
-  deleteExpiredAlbumDraftCovers: vi.fn(),
-  readAlbumDraftCover: vi.fn(),
-  readAlbumDraftData: vi.fn(),
-  writeAlbumDraftCover: vi.fn(),
-  writeAlbumDraftData: vi.fn(),
-}))
-const coverMocks = vi.hoisted(() => ({
-  prepareAlbumCover: vi.fn(),
-  uploadAlbumCover: vi.fn(),
-  validateAlbumCover: vi.fn(),
-}))
-
-vi.mock('../album-draft-storage', () => storageMocks)
-vi.mock('../cover-image', () => ({prepareAlbumCover: coverMocks.prepareAlbumCover}))
-vi.mock('../cover-upload', () => ({
-  uploadAlbumCover: coverMocks.uploadAlbumCover,
-  validateAlbumCover: coverMocks.validateAlbumCover,
-}))
-
-const VALID_COVER = new File(['source'], 'source.png', {type: 'image/png'})
-const PREPARED_COVER = new File(['prepared'], 'cover.webp', {type: 'image/webp'})
-const COVER_DRAFT_ID = '00000000-0000-4000-8000-000000000001'
-
-const createTranslations = (): AlbumDraftTranslations => ({
-  en: {description: '', title: ''},
-  ja: {description: '', title: ''},
-  ko: {description: ' 한국어 설명 ', title: ' 한국어 제목 '},
-  'zh-Hans': {description: '', title: ''},
-})
-
-const createDraft = (overrides: Partial<AlbumDraftData> = {}): AlbumDraftData => ({
-  albumId: COVER_DRAFT_ID,
-  coverDraftId: null,
-  coverFallback: 'lp',
-  coverImageUrl: '',
-  hasCoverFile: false,
-  translations: createTranslations(),
-  ...overrides,
-})
-
-const createCoverEvent = (file: File | null) => {
-  const input = document.createElement('input')
-  input.value = file === null ? '' : 'selected-cover'
-  Object.defineProperty(input, 'files', {configurable: true, value: {item: () => file}})
-  return {
-    event: {currentTarget: input, target: input} as unknown as Event & {
-      currentTarget: HTMLInputElement
-      target: Element
-    },
-    input,
-  }
-}
-
-const flushPromises = async () => {
-  await Promise.resolve()
-  await Promise.resolve()
-}
-
-beforeEach(() => {
-  vi.resetAllMocks()
-  storageMocks.deleteAlbumDraft.mockResolvedValue({success: true})
-  storageMocks.deleteAlbumDraftCover.mockResolvedValue({success: true})
-  storageMocks.deleteExpiredAlbumDraftCovers.mockResolvedValue({success: true})
-  storageMocks.readAlbumDraftCover.mockResolvedValue(null)
-  storageMocks.readAlbumDraftData.mockReturnValue(null)
-  storageMocks.writeAlbumDraftCover.mockResolvedValue({success: true})
-  storageMocks.writeAlbumDraftData.mockReturnValue({success: true})
-  coverMocks.prepareAlbumCover.mockResolvedValue(PREPARED_COVER)
-  vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob:album-cover')
-  vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => undefined)
-  vi.spyOn(crypto, 'randomUUID').mockReturnValue(COVER_DRAFT_ID)
-})
-
-afterEach(() => vi.restoreAllMocks())
-
-const renderAlbumDraft = () => {
-  const setMessage = vi.fn()
-  const hook = renderHook(() =>
-    useAlbumDraft({refreshCatalog: vi.fn().mockResolvedValue(undefined), setMessage}),
-  )
-  return {...hook, setMessage}
-}
-
-const waitForRestoration = async (result: ReturnType<typeof renderAlbumDraft>['result']) => {
-  await waitFor(() => expect(result.isRestoringDraft()).toBe(false))
-}
+const ALBUM_DRAFT_STORAGE_KEY = 'pomo:admin-music:album-draft:v1'
 
 describe('useAlbumDraft cover preparation', () => {
   it('should ignore a deferred clear superseded by a new cover selection', async () => {
@@ -196,6 +113,105 @@ describe('useAlbumDraft cover preparation', () => {
     expect(setMessage).toHaveBeenLastCalledWith(
       '커버를 중앙 정사각형으로 자르고 1200×1200 WebP로 준비했습니다.',
     )
+    cleanup()
+  })
+
+  it('should preserve a cover when queued field persistence finishes later', async () => {
+    const {cleanup, result} = renderAlbumDraft()
+    await waitForRestoration(result)
+    sessionStorage.removeItem(ALBUM_DRAFT_STORAGE_KEY)
+    storageMocks.writeAlbumDraftData.mockClear()
+    storageMocks.writeAlbumDraftReference.mockClear()
+    storageMocks.writeAlbumDraftData.mockImplementation((draft) => {
+      sessionStorage.setItem(ALBUM_DRAFT_STORAGE_KEY, JSON.stringify(draft))
+      return {success: true}
+    })
+
+    let releaseReference: (result: {success: true}) => void = () => undefined
+    const blockedReference = new Promise<{success: true}>((resolve) => {
+      releaseReference = resolve
+    })
+    storageMocks.writeAlbumDraftReference.mockImplementation(async () => {
+      if (storageMocks.writeAlbumDraftReference.mock.calls.length === 1) {
+        return blockedReference
+      }
+      return {success: true}
+    })
+
+    const firstEdit = {...createTranslations(), ko: {description: '', title: '첫 번째 제목'}}
+    result.handleTranslationsChange(firstEdit)
+    await waitFor(() => expect(storageMocks.writeAlbumDraftData).toHaveBeenCalledOnce())
+
+    const secondEdit = {...createTranslations(), ko: {description: '', title: '두 번째 제목'}}
+    result.handleTranslationsChange(secondEdit)
+    const pendingCover = result.handleCoverChange(createCoverEvent(VALID_COVER).event)
+    await waitFor(() => expect(coverMocks.prepareAlbumCover).toHaveBeenCalledOnce())
+    await vi.dynamicImportSettled()
+    await flushPromises()
+
+    releaseReference({success: true})
+    await vi.dynamicImportSettled()
+    await pendingCover
+    await flushPromises()
+    const storedDraft = JSON.parse(sessionStorage.getItem(ALBUM_DRAFT_STORAGE_KEY) ?? 'null')
+
+    expect(storedDraft).toMatchObject({
+      coverDraftId: COVER_DRAFT_ID,
+      hasCoverFile: true,
+      translations: secondEdit,
+    })
+    sessionStorage.removeItem(ALBUM_DRAFT_STORAGE_KEY)
+    cleanup()
+  })
+
+  it('should preserve a cleared cover state when queued field persistence finishes later', async () => {
+    storageMocks.readAlbumDraftData.mockReturnValue(
+      createDraft({coverDraftId: COVER_DRAFT_ID, hasCoverFile: true}),
+    )
+    storageMocks.readAlbumDraftCover.mockResolvedValue(PREPARED_COVER)
+    const {cleanup, result} = renderAlbumDraft()
+    await waitForRestoration(result)
+    sessionStorage.removeItem(ALBUM_DRAFT_STORAGE_KEY)
+    storageMocks.writeAlbumDraftData.mockClear()
+    storageMocks.writeAlbumDraftReference.mockClear()
+    storageMocks.writeAlbumDraftData.mockImplementation((draft) => {
+      sessionStorage.setItem(ALBUM_DRAFT_STORAGE_KEY, JSON.stringify(draft))
+      return {success: true}
+    })
+
+    let releaseReference: (result: {success: true}) => void = () => undefined
+    const blockedReference = new Promise<{success: true}>((resolve) => {
+      releaseReference = resolve
+    })
+    storageMocks.writeAlbumDraftReference.mockImplementation(async () => {
+      if (storageMocks.writeAlbumDraftReference.mock.calls.length === 1) {
+        return blockedReference
+      }
+      return {success: true}
+    })
+
+    const firstEdit = {...createTranslations(), ko: {description: '', title: '첫 번째 제목'}}
+    result.handleTranslationsChange(firstEdit)
+    await waitFor(() => expect(storageMocks.writeAlbumDraftData).toHaveBeenCalledOnce())
+
+    const secondEdit = {...createTranslations(), ko: {description: '', title: '두 번째 제목'}}
+    result.handleTranslationsChange(secondEdit)
+    const pendingClear = result.handleCoverChange(createCoverEvent(null).event)
+    await vi.dynamicImportSettled()
+    await flushPromises()
+
+    releaseReference({success: true})
+    await vi.dynamicImportSettled()
+    await pendingClear
+    await flushPromises()
+    const storedDraft = JSON.parse(sessionStorage.getItem(ALBUM_DRAFT_STORAGE_KEY) ?? 'null')
+
+    expect(storedDraft).toMatchObject({
+      coverDraftId: null,
+      hasCoverFile: false,
+      translations: secondEdit,
+    })
+    sessionStorage.removeItem(ALBUM_DRAFT_STORAGE_KEY)
     cleanup()
   })
 

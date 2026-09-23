@@ -44,14 +44,14 @@ describe('useDocumentHistoryShortcuts', () => {
       return <button onPointerDown={activate}>두 번째 편집기</button>
     }, secondHost)
 
-    window.dispatchEvent(new KeyboardEvent('keydown', {ctrlKey: true, key: 'z'}))
+    globalThis.dispatchEvent(new KeyboardEvent('keydown', {ctrlKey: true, key: 'z'}))
     expect(firstUndo).toHaveBeenCalledOnce()
     expect(secondUndo).not.toHaveBeenCalled()
 
     secondHost
       .querySelector('button')!
       .dispatchEvent(new MouseEvent('pointerdown', {bubbles: true}))
-    window.dispatchEvent(new KeyboardEvent('keydown', {ctrlKey: true, key: 'z'}))
+    globalThis.dispatchEvent(new KeyboardEvent('keydown', {ctrlKey: true, key: 'z'}))
     expect(firstUndo).toHaveBeenCalledOnce()
     expect(secondUndo).toHaveBeenCalledOnce()
 

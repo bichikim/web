@@ -1,4 +1,5 @@
-import {action} from '@solidjs/router'
+import {getExceptionMessage} from '../error-detail'
+import {action, json} from '@solidjs/router'
 
 import {ALBUM_LOCALES, type AlbumDraftData} from './album-draft'
 import {albumCreationServices} from './album-creation-adapter'
@@ -6,7 +7,10 @@ import type {AlbumStatusAction} from './catalog'
 import {changeAlbumStatus, connectAlbumOffer} from './commands'
 import {createTrackWithAudio, removeTrack} from './track-creation'
 import {confirmTrackAudioRegistration, validateTrackAudio} from './track-upload'
-import {requestAdminTrackPlaybackAccess} from './track-playback-access'
+import {
+  type AdminTrackPlaybackAccess,
+  requestAdminTrackPlaybackAccess,
+} from './track-playback-access'
 
 type FormValues = FormData | URLSearchParams
 
@@ -59,15 +63,18 @@ export type ConfirmTrackActionResult =
   | {readonly detail: string; readonly status: 'rejected'}
   | {readonly status: 'unconfirmed'}
 
-export type AdminTrackPlaybackActionResult =
-  | {readonly status: 'granted'; readonly url: string}
-  | {readonly status: 'unavailable'}
+interface TrackPlaybackGranted extends AdminTrackPlaybackAccess {
+  readonly status: 'granted'
+}
+
+interface TrackPlaybackUnavailable {
+  readonly status: 'unavailable'
+}
+
+export type AdminTrackPlaybackActionResult = TrackPlaybackGranted | TrackPlaybackUnavailable
 
 const getString = (values: FormValues, name: string): string =>
   values.get(name)?.toString().trim() ?? ''
-
-const getErrorDetail = (error: unknown, fallback: string): string =>
-  error instanceof Error ? error.message : fallback
 
 const createAlbumDraft = (values: FormValues): AlbumDraftData => ({
   albumId: getString(values, 'albumId') || undefined,
@@ -95,7 +102,7 @@ const runCreateAlbum = async (values: FormValues): Promise<CreateAlbumActionResu
 
     return result.success ? {albumId: result.albumId, status: 'created'} : {status: 'conflicted'}
   } catch (error: unknown) {
-    return {detail: getErrorDetail(error, '앨범을 저장하지 못했습니다.'), status: 'rejected'}
+    return {detail: getExceptionMessage(error, '앨범을 저장하지 못했습니다.'), status: 'rejected'}
   }
 }
 
@@ -119,11 +126,11 @@ const runCreateTrack = async (values: FormValues): Promise<CreateTrackActionResu
       ? {status: 'created'}
       : {
           cleanupStatus: result.cleanupStatus,
-          detail: getErrorDetail(result.error, '곡을 저장하지 못했습니다.'),
+          detail: getExceptionMessage(result.error, '곡을 저장하지 못했습니다.'),
           status: 'failed',
         }
   } catch (error: unknown) {
-    return {detail: getErrorDetail(error, '곡을 저장하지 못했습니다.'), status: 'rejected'}
+    return {detail: getExceptionMessage(error, '곡을 저장하지 못했습니다.'), status: 'rejected'}
   }
 }
 
@@ -132,7 +139,10 @@ const runConnectOffer = async (values: FormValues): Promise<AdminCommandResult> 
     await connectAlbumOffer(getString(values, 'albumId'), getString(values, 'externalProductId'))
     return {status: 'succeeded'}
   } catch (error: unknown) {
-    return {detail: getErrorDetail(error, '판매 상품을 연결하지 못했습니다.'), status: 'failed'}
+    return {
+      detail: getExceptionMessage(error, '판매 상품을 연결하지 못했습니다.'),
+      status: 'failed',
+    }
   }
 }
 
@@ -144,7 +154,10 @@ const runChangeAlbumStatus = async (
     await changeAlbumStatus(albumId, statusAction)
     return {status: 'succeeded'}
   } catch (error: unknown) {
-    return {detail: getErrorDetail(error, '앨범 상태를 변경하지 못했습니다.'), status: 'failed'}
+    return {
+      detail: getExceptionMessage(error, '앨범 상태를 변경하지 못했습니다.'),
+      status: 'failed',
+    }
   }
 }
 
@@ -153,7 +166,7 @@ const runRemoveTrack = async (trackId: string): Promise<AdminCommandResult> => {
     await removeTrack(trackId)
     return {status: 'succeeded'}
   } catch (error: unknown) {
-    return {detail: getErrorDetail(error, '수록곡을 삭제하지 못했습니다.'), status: 'failed'}
+    return {detail: getExceptionMessage(error, '수록곡을 삭제하지 못했습니다.'), status: 'failed'}
   }
 }
 
@@ -162,7 +175,10 @@ const runConfirmTrack = async (assetId: string): Promise<ConfirmTrackActionResul
     const result = await confirmTrackAudioRegistration(assetId)
     return result.status === 'active' ? result : {status: 'unconfirmed'}
   } catch (error: unknown) {
-    return {detail: getErrorDetail(error, 'MP3 등록을 확인하지 못했습니다.'), status: 'rejected'}
+    return {
+      detail: getExceptionMessage(error, 'MP3 등록을 확인하지 못했습니다.'),
+      status: 'rejected',
+    }
   }
 }
 
@@ -171,14 +187,17 @@ const runRequestTrackPlayback = async (
 ): Promise<AdminTrackPlaybackActionResult> => {
   try {
     const access = await requestAdminTrackPlaybackAccess(trackId)
-    return {status: 'granted', url: access.url}
+    return {expiresAt: access.expiresAt, status: 'granted', url: access.url}
   } catch {
     return {status: 'unavailable'}
   }
 }
 
 export const createAdminAlbumAction = action(runCreateAlbum, 'create-admin-music-album')
-export const createAdminTrackAction = action(runCreateTrack, 'create-admin-music-track')
+export const createAdminTrackAction = action(async (values: FormValues) => {
+  // Refresh the catalog once after the import batch has settled.
+  return json(await runCreateTrack(values), {revalidate: []})
+}, 'create-admin-music-track')
 export const connectAdminAlbumOfferAction = action(
   runConnectOffer,
   'connect-admin-music-album-offer',

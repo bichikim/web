@@ -1,8 +1,9 @@
+import {RadioGroup} from '@kobalte/core/radio-group'
+import {EditorButton, EditorNumberField, useEditorPortalMount} from '../../design-system'
 import {Dialog} from '@kobalte/core/dialog'
 import {createEffect, createSignal, For, Show} from 'solid-js'
 
 import {type AutoMeshSettings, getMinimumAutoMeshCellSize} from '../auto-mesh-part'
-import {useEditorPortalMount} from './EditorPortalProvider'
 
 type AutoMeshPreset = 'balanced' | 'custom' | 'detailed' | 'flexible'
 
@@ -61,9 +62,9 @@ const AutoMeshDialogFooter = (props: AutoMeshDialogFooterProps) => (
     <Dialog.CloseButton aria-label="취소" class="secondary">
       취소
     </Dialog.CloseButton>
-    <button disabled={props.isGenerating || !props.canGenerate} type="submit">
+    <EditorButton disabled={props.isGenerating || !props.canGenerate} type="submit">
       {props.isGenerating ? '생성 중…' : '자동 메시 생성'}
-    </button>
+    </EditorButton>
   </footer>
 )
 
@@ -133,44 +134,45 @@ export const AutoMeshDialog = (props: AutoMeshDialogProps) => {
                   {props.partName ?? '선택한 파트'}의 텍스처 알파를 기준으로 메시를 다시 만듭니다.
                 </Dialog.Description>
               </div>
-              <Dialog.CloseButton aria-label="자동 메시 설정 닫기">×</Dialog.CloseButton>
+              <Dialog.CloseButton aria-label="자동 메시 설정 닫기">
+                <span aria-hidden="true" class="puppet-icon puppet-icon-x" />
+              </Dialog.CloseButton>
             </header>
 
-            <fieldset class="auto-mesh-presets">
-              <legend>프리셋</legend>
+            <RadioGroup
+              as="fieldset"
+              class="auto-mesh-presets"
+              value={preset()}
+              onChange={handlePresetChange}
+            >
+              <RadioGroup.Label as="legend">프리셋</RadioGroup.Label>
               <For each={PRESET_OPTIONS}>
                 {(option) => (
-                  <label>
-                    <input
-                      checked={preset() === option.value}
-                      name="auto-mesh-preset"
-                      type="radio"
-                      value={option.value}
-                      onChange={(event) => handlePresetChange(event.currentTarget.value)}
-                    />
-                    <span>
+                  <RadioGroup.Item as="label" value={option.value}>
+                    <RadioGroup.ItemInput aria-label={option.label} />
+                    <RadioGroup.ItemControl as="span">
                       <strong>{option.label}</strong>
                       <small>{option.description}</small>
-                    </span>
-                  </label>
+                    </RadioGroup.ItemControl>
+                  </RadioGroup.Item>
                 )}
               </For>
-            </fieldset>
+            </RadioGroup>
 
             <div class="auto-mesh-settings">
               <label>
                 <span>정점 간격</span>
                 <span class="auto-mesh-number-field">
-                  <input
-                    aria-describedby="auto-mesh-cell-size-help"
-                    min={minimumCellSize()}
+                  <EditorNumberField
+                    describedBy="auto-mesh-cell-size-help"
+                    label="정점 간격"
+                    minimum={minimumCellSize()}
                     required
-                    step="1"
-                    type="number"
+                    step={1}
                     value={cellSize()}
-                    onInput={(event) => {
+                    onValueChange={(value) => {
                       setPreset('custom')
-                      setCellSize(event.currentTarget.valueAsNumber)
+                      setCellSize(value)
                     }}
                   />
                   px
@@ -182,15 +184,15 @@ export const AutoMeshDialog = (props: AutoMeshDialogProps) => {
               <label>
                 <span>투명 판정값</span>
                 <span class="auto-mesh-number-field">
-                  <input
-                    aria-describedby="auto-mesh-alpha-help"
-                    max="255"
-                    min="0"
+                  <EditorNumberField
+                    describedBy="auto-mesh-alpha-help"
+                    label="투명 판정값"
+                    maximum={255}
+                    minimum={0}
                     required
-                    step="1"
-                    type="number"
+                    step={1}
                     value={alphaThreshold()}
-                    onInput={(event) => setAlphaThreshold(event.currentTarget.valueAsNumber)}
+                    onValueChange={setAlphaThreshold}
                   />
                   / 255
                 </span>

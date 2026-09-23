@@ -1,6 +1,8 @@
+import {PTextarea} from 'src/components/p-textarea/PTextarea'
 import {cx} from 'class-variance-authority'
 import {type JSX, Match, Show, Switch, untrack} from 'solid-js'
 import {type SpeechModelDefinition, useSpeechToText} from '../../features/speech-to-text/index'
+import {isSpeechBusyActivity} from '../../features/speech-to-text/is-speech-busy-activity'
 import {MicrophoneIcon} from './MicrophoneIcon'
 import {SPEECH_BUTTON_CLASSES, SPEECH_TEXTAREA_CLASSES} from './style'
 
@@ -10,10 +12,7 @@ interface SpeechModelWorkspaceProps {
 
 export const SpeechModelWorkspace = (props: SpeechModelWorkspaceProps) => {
   const speech = useSpeechToText({modelId: untrack(() => props.model.id)})
-  const isBusy = () => {
-    const activity = speech.activity()
-    return activity === 'checking' || activity === 'processing' || activity === 'requesting'
-  }
+  const isBusy = () => isSpeechBusyActivity(speech.activity())
   const isRecording = () => speech.activity() === 'recording'
   const buttonLabel = () => {
     if (isRecording()) {
@@ -77,7 +76,8 @@ export const SpeechModelWorkspace = (props: SpeechModelWorkspaceProps) => {
         받아쓰기 결과
       </label>
       <div class="relative">
-        <textarea
+        <PTextarea
+          unstyled
           class={SPEECH_TEXTAREA_CLASSES}
           id="speech-transcript"
           onInput={handleTextInput}

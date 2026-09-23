@@ -337,6 +337,25 @@ describe('createClientErrorReporter', () => {
 })
 
 describe('reportClientError', () => {
+  it.each(['android', 'ios'] as const)(
+    'should report the native mobile platform as %s',
+    (target) => {
+      const consoleError = vi.spyOn(console, 'error').mockImplementation(() => undefined)
+      vi.stubEnv('DEV', true)
+      vi.stubEnv('VITE_POMO_RUNTIME_TARGET', target)
+
+      reportClientError(new Error('mobile failure'), {
+        feature: 'application',
+        source: 'direct',
+      })
+
+      expect(consoleError).toHaveBeenCalledWith(
+        '[Pomofi client error]',
+        expect.objectContaining({platform: target}),
+      )
+    },
+  )
+
   it('should use browser build context and log local development diagnostics only', () => {
     const consoleError = vi.spyOn(console, 'error').mockImplementation(() => undefined)
     vi.stubEnv('DEV', true)
@@ -358,7 +377,7 @@ describe('reportClientError', () => {
         platform: 'apps-in-toss',
         release: 'local',
         route: {
-          origin: window.location.origin,
+          origin: globalThis.location.origin,
           template: '/',
         },
       }),

@@ -1,10 +1,11 @@
+/** @vitest-environment node */
 import {beforeEach, describe, expect, it, vi} from 'vitest'
 
 const repositoryMocks = vi.hoisted(() => ({findPublishedTrackPreviewAsset: vi.fn()}))
 const storageMocks = vi.hoisted(() => ({ensureTrackPreviewObject: vi.fn()}))
 const previewMocks = vi.hoisted(() => ({verifyPreviewAccess: vi.fn()}))
 
-vi.mock('src/server/music/catalog-repository', () => repositoryMocks)
+vi.mock('src/server/repositories/music-catalog', () => repositoryMocks)
 vi.mock('src/server/music/track-upload', () => storageMocks)
 vi.mock('src/server/music/preview-access', () => previewMocks)
 

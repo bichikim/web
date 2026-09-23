@@ -1,3 +1,4 @@
+import {storybookBackground} from './unocss'
 import unoCss from '@unocss/vite'
 import {fileURLToPath} from 'node:url'
 import {defineConfig} from 'vite'
@@ -9,6 +10,7 @@ export default defineConfig({
       content: {
         filesystem: [fileURLToPath(new URL('../packages/*/src/**/*.{ts,tsx}', import.meta.url))],
       },
+      preflights: [storybookBackground],
     }),
   ],
   resolve: {

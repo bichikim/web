@@ -158,7 +158,7 @@ interface FeedProvider {
 ### 2. Feed registry와 첫 provider
 
 1. `feed-registry.ts`에 `slug → FeedProvider` 명시적 registry를 만든다.
-2. 첫 공개 피드 provider는 `historical_moments`에서 한국 날짜의 발행 항목을 최대 50개 읽는다.
+2. 첫 공개 피드 provider는 `historical_moments`에서 요청의 `timeZone`에 해당하는 오늘 날짜의 발행 항목을 최대 50개 읽는다. 앱은 브라우저의 IANA 시간대를 전달하고, 시간대가 없는 외부 구독은 UTC를 사용한다.
 3. registry 초기화 시 잘못된 slug, 중복 slug와 필수 메타데이터 누락을 실패시킨다.
 4. provider 결과에서 중복 항목 id, 잘못된 절대 URL·날짜와 크기 초과를 거부한다.
 5. 새로운 피드는 route를 추가하지 않고 provider 등록만으로 RSS·Atom 두 포맷을 제공하게 한다.
@@ -197,7 +197,7 @@ interface FeedProvider {
 
 ### 6. 역사 피드의 AI 출처 검색
 
-서버는 외부 페이지를 내려받거나 HTML을 파싱하지 않는다. 한국 시각 기준 발행일과 신뢰할 만한
+서버는 외부 페이지를 내려받거나 HTML을 파싱하지 않는다. 발행 대상 달력 날짜와 신뢰할 만한
 출처의 도메인·시작 URL만 OpenAI에 전달한다. OpenAI의 `web_search`가 사건 탐색, 출처 확인, 사건
 선정과 다음 단계의 한국어 가공을 한 번의 백그라운드 요청에서 수행한다.
 
@@ -316,8 +316,7 @@ AI는 Markdown이나 HTML을 반환하지 않는다. 서버가 검증된 문자�
 
 ### 8. Cron 등록과 OpenAI 백그라운드 생성
 
-Vercel Cron은 AI 완료를 기다리지 않고 OpenAI 백그라운드 작업 등록까지만 수행한다. 운영 schedule은
-UTC 기준이며 1차 실행은 매일 `09:00`(18:00 KST), 복구 실행은 `12:00`(21:00 KST)로 둔다.
+Vercel Cron은 AI 완료를 기다리지 않고 OpenAI 백그라운드 작업 등록까지만 수행한다. 브라우저가 없는 정기 생성 작업은 UTC의 다음 날짜를 준비한다. 1차 실행은 매일 `09:00 UTC`, 복구 실행은 `12:00 UTC`로 둔다. 조회 시에는 각 사용자의 현지 날짜로 항목을 선택한다.
 
 ```json
 {

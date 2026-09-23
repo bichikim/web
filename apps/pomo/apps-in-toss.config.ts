@@ -5,6 +5,6 @@ export default defineConfig({
   brand: {
     primaryColor: '#d86845',
   },
-  permissions: [],
+  permissions: [{access: 'write', name: 'clipboard'}],
   webBundleDir: '.output/public',
 })

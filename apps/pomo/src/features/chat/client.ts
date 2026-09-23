@@ -1,6 +1,7 @@
 import type {ChatContext, ChatWorkerRequest, ChatWorkerResponse} from './messages'
+import {createWorkerFailureHandler} from '../worker-failure'
 import type {TextModelId} from '../text-generation/model'
-import {createWorkerTransport} from '../text-generation/worker-transport'
+import {createWorkerTransport} from 'src/utils/worker-transport'
 
 export interface CreateChatClientOptions {
   readonly modelId: TextModelId
@@ -15,6 +16,7 @@ export interface ChatClient {
 
 export interface GenerateChatOptions {
   readonly refineAnswer?: boolean
+  readonly supplementaryContext?: string
 }
 
 /** Owns the browser model Worker for one chat session. */
@@ -24,12 +26,11 @@ export const createChatClient = (options: CreateChatClientOptions): ChatClient =
     type: 'module',
   })
   const transport = createWorkerTransport<ChatWorkerRequest, ChatWorkerResponse>({
-    createErrorResponse: (event) => ({
-      message: event.message || '채팅 모델 Worker 실행 오류',
-      restartRequired: true,
-      type: 'error',
+    onFailure: createWorkerFailureHandler({
+      fallbackDetail: '채팅 모델 Worker 실행 오류',
+      feature: 'chat-model',
+      onResponse: options.onResponse,
     }),
-    feature: 'chat-model',
     onResponse: options.onResponse,
     worker,
   })
@@ -42,6 +43,9 @@ export const createChatClient = (options: CreateChatClientOptions): ChatClient =
         modelId: options.modelId,
         refineAnswer: generateOptions.refineAnswer ?? true,
         replyId,
+        ...(generateOptions.supplementaryContext === undefined
+          ? {}
+          : {supplementaryContext: generateOptions.supplementaryContext}),
         type: 'generate',
       }),
     prepare: () => transport.send({modelId: options.modelId, type: 'prepare'}),

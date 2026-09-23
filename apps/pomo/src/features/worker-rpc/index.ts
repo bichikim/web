@@ -1,6 +1,9 @@
+import {getErrorMessage} from 'src/utils/get-error-message'
+
 export type WorkerRpcFailureCode = 'disposed' | 'message-error' | 'send-error' | 'worker-error'
 
 export interface WorkerRpcFailure {
+  readonly cause?: unknown
   readonly code: WorkerRpcFailureCode
   readonly detail: string
 }
@@ -40,6 +43,8 @@ export interface WorkerRpcTransport<Request, Response> {
 }
 
 export interface CreateWorkerRpcTransportOptions<Response> {
+  readonly workerFailureMessage?: string
+  readonly messageFailureMessage?: string
   readonly getRequestId: (response: Response) => number | null
   readonly onFailure?: (failure: WorkerRpcFailure) => void
   readonly onEvent: (response: WorkerRpcEvent<Response>) => void
@@ -61,20 +66,6 @@ class WorkerRpcError extends Error implements WorkerRpcFailure {
     this.code = code
     this.detail = detail
   }
-}
-
-const getErrorDetail = (error: unknown, fallback: string) => {
-  if (
-    typeof error === 'object' &&
-    error !== null &&
-    'message' in error &&
-    typeof error.message === 'string' &&
-    error.message.length > 0
-  ) {
-    return error.message
-  }
-
-  return fallback
 }
 
 /** Owns request correlation and the fatal lifecycle of one Worker. */
@@ -136,15 +127,27 @@ export const createWorkerRpcTransport = <Request, Response>(
       handleResponse(event.data)
     } catch (error) {
       fail(
-        new WorkerRpcError('message-error', getErrorDetail(error, 'Worker 응답 처리 오류'), error),
+        new WorkerRpcError('message-error', getErrorMessage(error, 'Worker 응답 처리 오류'), error),
       )
     }
   })
   options.worker.addEventListener('error', (event) => {
-    fail(new WorkerRpcError('worker-error', event.message || 'Worker 실행 오류'))
+    fail(
+      new WorkerRpcError(
+        'worker-error',
+        event.message || options.workerFailureMessage || 'Worker 실행 오류',
+        event.error ?? {message: 'Worker execution failed', name: 'WorkerError'},
+      ),
+    )
   })
   options.worker.addEventListener('messageerror', () => {
-    fail(new WorkerRpcError('message-error', 'Worker 응답을 읽지 못했습니다.'))
+    fail(
+      new WorkerRpcError(
+        'message-error',
+        options.messageFailureMessage ?? 'Worker 응답을 읽지 못했습니다.',
+        {message: 'Worker response deserialization failed', name: 'WorkerError'},
+      ),
+    )
   })
 
   const request: WorkerRpcTransport<Request, Response>['request'] = (requestOptions) => {
@@ -166,7 +169,7 @@ export const createWorkerRpcTransport = <Request, Response>(
       } catch (error) {
         pendingRequests.delete(requestId)
         reject(
-          new WorkerRpcError('send-error', getErrorDetail(error, 'Worker 요청 전송 오류'), error),
+          new WorkerRpcError('send-error', getErrorMessage(error, 'Worker 요청 전송 오류'), error),
         )
       }
     })

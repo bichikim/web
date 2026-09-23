@@ -1,10 +1,11 @@
 import {SERVICE_POLICY_PATHS} from '../features/service-terms/policy-paths'
 
 const HTTP_PERMANENT_REDIRECT = 308
+const LEGACY_FOCUS_ROOM_PATH = '/focus-room'
 const LEGACY_DIALOGUE_PATH = '/focus-room-dialogue'
 const LEGACY_REDIRECT_PATHS: Readonly<Record<string, string>> = {
-  '/focus-room': '/',
   [LEGACY_DIALOGUE_PATH]: '/dialogue',
+  [LEGACY_FOCUS_ROOM_PATH]: '/',
   [SERVICE_POLICY_PATHS.legacy.privacy]: SERVICE_POLICY_PATHS.web.privacy,
   [SERVICE_POLICY_PATHS.legacy.terms]: SERVICE_POLICY_PATHS.web.terms,
 }
@@ -20,7 +21,9 @@ export const handleLegacyRedirectRequest = (request: Request): Response | null =
   }
 
   const location =
-    legacyPathname === LEGACY_DIALOGUE_PATH ? `${destination}${url.search}` : destination
+    legacyPathname === LEGACY_FOCUS_ROOM_PATH || legacyPathname === LEGACY_DIALOGUE_PATH
+      ? `${destination}${url.search}`
+      : destination
 
   return new Response(null, {
     headers: {Location: location},

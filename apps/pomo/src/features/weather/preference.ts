@@ -1,15 +1,17 @@
+import {createAuthoritativePreferenceRepository} from '../authoritative-preference'
 import {
   hasNativeStorageBridge,
-  readNativeStorageJson,
+  readTossStorageJson,
   readWebStorageJson,
-  writeNativeStorageJson,
+  writeTossStorageJson,
   writeWebStorageJson,
-} from 'src/features/runtime-storage'
+} from 'src/utils/runtime-storage'
 import {parseWeatherCitySlug, parseWeatherLocation, type WeatherLocation} from './contract'
 import {DEFAULT_WEATHER_LOCATION, LEGACY_WEATHER_LOCATIONS} from './locations'
 import {isWeatherSceneMode, type WeatherSceneMode} from './scene-mode'
+import {restoreWeatherLocationNames} from './location-names'
 
-const WEATHER_PREFERENCE_STORAGE_KEY = 'pomo:weather-preference:v2'
+export const WEATHER_PREFERENCE_STORAGE_KEY = 'pomo:weather-preference:v2'
 const LEGACY_WEATHER_PREFERENCE_STORAGE_KEY = 'pomo:weather-preference:v1'
 
 export interface WeatherPreference {
@@ -19,10 +21,10 @@ export interface WeatherPreference {
 }
 
 export interface WeatherPreferenceStorage {
-  readonly isNative: () => boolean
-  readonly readNative: (key: string) => Promise<unknown | null>
+  readonly usesTossStorage: () => boolean
+  readonly readToss: (key: string) => Promise<unknown | null>
   readonly readWeb: (key: string) => unknown | null
-  readonly writeNative: (key: string, value: unknown) => Promise<void>
+  readonly writeToss: (key: string, value: unknown) => Promise<void>
   readonly writeWeb: (key: string, value: unknown) => void
 }
 
@@ -33,6 +35,7 @@ export interface WeatherPreferenceRepository {
 
 export interface CreateWeatherPreferenceRepositoryOptions {
   readonly storage: WeatherPreferenceStorage
+  readonly restoreLocation?: (location: WeatherLocation) => Promise<WeatherLocation>
 }
 
 export const DEFAULT_WEATHER_PREFERENCE = {
@@ -41,7 +44,7 @@ export const DEFAULT_WEATHER_PREFERENCE = {
   sceneMode: 'auto',
 } satisfies WeatherPreference
 
-const parseWeatherPreference = (value: unknown): WeatherPreference | null => {
+export const parseWeatherPreference = (value: unknown): WeatherPreference | null => {
   try {
     if (typeof value !== 'object' || value === null || !('location' in value)) {
       return null
@@ -88,8 +91,6 @@ export const createWeatherPreferenceRepository = (
   options: CreateWeatherPreferenceRepositoryOptions,
 ): WeatherPreferenceRepository => {
   const {storage} = options
-  let preferenceWriteRevision = 0
-  let nativeWriteQueue = Promise.resolve()
 
   const writeWebPreference = (preference: WeatherPreference) => {
     try {
@@ -118,9 +119,9 @@ export const createWeatherPreferenceRepository = (
     return legacyPreference
   }
 
-  const readNativePreference = async (): Promise<WeatherPreference | null> => {
+  const readTossPreference = async (): Promise<WeatherPreference | null> => {
     const preference = parseWeatherPreference(
-      await storage.readNative(WEATHER_PREFERENCE_STORAGE_KEY),
+      await storage.readToss(WEATHER_PREFERENCE_STORAGE_KEY),
     )
 
     if (preference !== null) {
@@ -128,82 +129,63 @@ export const createWeatherPreferenceRepository = (
     }
 
     return parseLegacyWeatherPreference(
-      await storage.readNative(LEGACY_WEATHER_PREFERENCE_STORAGE_KEY),
+      await storage.readToss(LEGACY_WEATHER_PREFERENCE_STORAGE_KEY),
     )
   }
 
-  const enqueueNativeWrite = (preference: WeatherPreference) => {
-    const nativeWrite = nativeWriteQueue.then(() =>
-      storage.writeNative(WEATHER_PREFERENCE_STORAGE_KEY, preference),
-    )
-    nativeWriteQueue = nativeWrite.catch(() => undefined)
-    return nativeWrite
-  }
+  const repository = createAuthoritativePreferenceRepository({
+    defaultValue: DEFAULT_WEATHER_PREFERENCE,
+    readFailureMessage: 'Failed to read weather preference.',
+    storage: {
+      isNative: () => storage.usesTossStorage(),
+      readNative: readTossPreference,
+      readWeb: readWebPreference,
+      writeNative: (value) => storage.writeToss(WEATHER_PREFERENCE_STORAGE_KEY, value),
+      writeWeb: writeWebPreference,
+    },
+    writeFailureMessage: 'Failed to persist weather preference.',
+  })
+  const read = () => repository.read()
+  const write = (value: WeatherPreference) => repository.write(value)
 
-  const read = async (): Promise<WeatherPreference> => {
-    const initialWriteRevision = preferenceWriteRevision
-
-    if (!storage.isNative()) {
-      return readWebPreference() ?? DEFAULT_WEATHER_PREFERENCE
+  const readWithNames = async (): Promise<WeatherPreference> => {
+    const saved = await read()
+    const {restoreLocation} = options
+    if (restoreLocation === undefined) {
+      return saved
     }
-
     try {
-      await nativeWriteQueue
-      const restoredPreference = await readNativePreference()
-
-      if (preferenceWriteRevision !== initialWriteRevision) {
-        return read()
+      const location = await restoreLocation(saved.location)
+      if (location === saved.location) {
+        return saved
       }
-
-      if (restoredPreference === null) {
-        writeWebPreference(DEFAULT_WEATHER_PREFERENCE)
-        return DEFAULT_WEATHER_PREFERENCE
-      }
-
-      writeWebPreference(restoredPreference)
-      return restoredPreference
+      const restored = {...saved, location: {...saved.location, names: location.names}}
+      await write(restored)
+      return restored
     } catch (error: unknown) {
-      throw new Error('Failed to read weather preference.', {cause: error})
+      console.warn('Failed to restore localized weather location names.', error)
+      return saved
     }
   }
 
-  const write = async (preference: WeatherPreference): Promise<void> => {
-    preferenceWriteRevision += 1
-    const webWriteError = writeWebPreference(preference)
-
-    if (!storage.isNative()) {
-      if (webWriteError !== null) {
-        throw new Error('Failed to persist weather preference.', {cause: webWriteError})
-      }
-
-      return
-    }
-
-    try {
-      await enqueueNativeWrite(preference)
-    } catch (error: unknown) {
-      throw new Error('Failed to persist weather preference.', {cause: error})
-    }
-  }
-
-  return {read, write}
+  return {read: readWithNames, write}
 }
 
-const preserveStoredValue = (value: unknown) => value
-const runtimeStorage = {
-  isNative: hasNativeStorageBridge,
-  readNative: (key: string) => readNativeStorageJson(key, preserveStoredValue),
-  readWeb: (key: string) => readWebStorageJson(key, preserveStoredValue),
-  writeNative: writeNativeStorageJson,
-  writeWeb(key: string, value: unknown) {
-    const error = writeWebStorageJson(key, value)
-
-    if (error !== null) {
-      throw error
-    }
+const runtimeRepository = createWeatherPreferenceRepository({
+  restoreLocation: (location) => restoreWeatherLocationNames({location}),
+  storage: {
+    readToss: (key) => readTossStorageJson(key, (value) => value),
+    readWeb: (key) => readWebStorageJson(key, (value) => value),
+    usesTossStorage: hasNativeStorageBridge,
+    writeToss: writeTossStorageJson,
+    writeWeb(key, value) {
+      const error = writeWebStorageJson(key, value)
+      if (error !== null) {
+        throw error
+      }
+    },
   },
-} satisfies WeatherPreferenceStorage
-const runtimeRepository = createWeatherPreferenceRepository({storage: runtimeStorage})
+})
 
 /** Reads the weather preference from the active browser or app runtime. */
 export const readWeatherPreference = () => runtimeRepository.read()

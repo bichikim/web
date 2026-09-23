@@ -70,7 +70,7 @@ it('should recover normal mode after an unclean exit and mark a clean unload', a
 
   expect(view.result.mode()).toBe('normal')
   expect(localStorage.getItem('pomo:desktop-clean-exit:v1')).toBe('false')
-  window.dispatchEvent(new Event('beforeunload'))
+  globalThis.dispatchEvent(new Event('beforeunload'))
   expect(localStorage.getItem('pomo:desktop-clean-exit:v1')).toBe('true')
 
   view.cleanup()
@@ -110,6 +110,19 @@ it('should process the latest native request received during a transition', asyn
 
   await vi.waitFor(() => expect(view.result.mode()).toBe('widget'))
   expect(applyDesktopMode).toHaveBeenNthCalledWith(2, 'widget')
+})
+
+it('should persist desktop mode before opening surface windows', async () => {
+  let modeDuringNativeTransition: string | null = null
+  vi.mocked(applyDesktopMode).mockImplementationOnce(async () => {
+    modeDuringNativeTransition = localStorage.getItem('pomo:desktop-mode:v1')
+  })
+  const view = renderHook(() => useDesktopMode({isSurfaceOwner: true}))
+
+  await view.result.onModeChange('desktop')
+
+  expect(modeDuringNativeTransition).toBe('desktop')
+  expect(localStorage.getItem('pomo:desktop-mode:v1')).toBe('desktop')
 })
 
 it('should expose native request failures without rejecting the event listener', async () => {

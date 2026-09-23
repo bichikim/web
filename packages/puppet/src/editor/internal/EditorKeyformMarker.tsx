@@ -1,3 +1,4 @@
+import {EditorDiamondButton} from '../../design-system'
 import {createSignal, onCleanup} from 'solid-js'
 
 import type {PuppetParameter} from '../../player/document'
@@ -67,14 +68,14 @@ export const EditorKeyformMarker = (props: EditorKeyformMarkerProps) => {
     // The stored callback only removes native gesture listeners during completion or cleanup.
     // eslint-disable-next-line solid/reactivity
     removePointerListeners = () => {
-      window.removeEventListener('pointercancel', handlePointerCancel)
-      window.removeEventListener('pointermove', handlePointerMove)
-      window.removeEventListener('pointerup', handlePointerUp)
+      globalThis.removeEventListener('pointercancel', handlePointerCancel)
+      globalThis.removeEventListener('pointermove', handlePointerMove)
+      globalThis.removeEventListener('pointerup', handlePointerUp)
       removePointerListeners = undefined
     }
-    window.addEventListener('pointercancel', handlePointerCancel)
-    window.addEventListener('pointermove', handlePointerMove)
-    window.addEventListener('pointerup', handlePointerUp)
+    globalThis.addEventListener('pointercancel', handlePointerCancel)
+    globalThis.addEventListener('pointermove', handlePointerMove)
+    globalThis.addEventListener('pointerup', handlePointerUp)
   }
   const handleKeyDown = (event: KeyboardEvent) => {
     if (props.onMove === undefined) {
@@ -94,7 +95,7 @@ export const EditorKeyformMarker = (props: EditorKeyformMarkerProps) => {
   onCleanup(() => removePointerListeners?.())
 
   return (
-    <button
+    <EditorDiamondButton
       aria-keyshortcuts="ArrowLeft ArrowRight ArrowUp ArrowDown Home End"
       aria-label={`${props.parameter.name} ${displayValue()} 키폼`}
       aria-pressed={props.active}
@@ -111,6 +112,6 @@ export const EditorKeyformMarker = (props: EditorKeyformMarkerProps) => {
       onPointerDown={handlePointerDown}
     >
       <span>{displayValue()}</span>
-    </button>
+    </EditorDiamondButton>
   )
 }

@@ -15,4 +15,4 @@ Open and apply the reference files for the relevant section before working.
 4. Add a body only when it clarifies what changed and why; wrap body lines at 72 characters.
 5. For changes too broad for one short subject, use a short subject plus bullet list body.
 6. Use blank lines to separate the subject from the body.
-7. See ./examples/commit-message.md for short and multi-change examples.
+7. See ./examples/commit-message.md for the commit-message format.

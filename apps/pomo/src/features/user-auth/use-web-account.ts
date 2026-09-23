@@ -66,20 +66,25 @@ export const useWebAccount = (): WebAccountController => {
 
   onMount(() => {
     const loadAccount = async () => {
-      const url = new URL(window.location.href)
+      const url = new URL(globalThis.location.href)
       const linkError = url.searchParams.get('link_error')
       const linkToken = url.searchParams.get('link_token')
 
       if (linkToken !== null) {
         const linkResult = await completeLink(linkToken)
         completeLinkSubmission.clear()
+
+        if (linkResult.status === 'unavailable') {
+          throw new Error('Account link completion is unavailable')
+        }
+
         url.searchParams.delete('link_token')
 
         if (linkError === 'email') {
           url.searchParams.delete('link_error')
         }
 
-        window.history.replaceState(null, '', url)
+        globalThis.history.replaceState(null, '', url)
 
         if (linkResult.status === 'linked') {
           if (authentication.state().kind === 'unavailable') {
@@ -87,11 +92,9 @@ export const useWebAccount = (): WebAccountController => {
           }
 
           setLocalSuccessMessage(m.web_account_linked())
-        } else if (linkResult.status === 'invalid') {
+        } else {
           accountCallbackErrorMessage = m.web_account_link_expired()
           setLocalErrorMessage(accountCallbackErrorMessage)
-        } else {
-          throw new Error('Account link completion is unavailable')
         }
       } else if (linkError === 'email') {
         url.searchParams.delete('link_error')
@@ -99,7 +102,7 @@ export const useWebAccount = (): WebAccountController => {
         setLocalErrorMessage(accountCallbackErrorMessage)
       }
 
-      window.history.replaceState(null, '', url)
+      globalThis.history.replaceState(null, '', url)
     }
 
     loadAccount().catch(() => {

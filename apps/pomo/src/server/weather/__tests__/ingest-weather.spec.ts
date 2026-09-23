@@ -1,3 +1,4 @@
+/** @vitest-environment node */
 import {beforeEach, expect, it, vi} from 'vitest'
 
 import {ingestWeatherCity} from '../ingest-weather'
@@ -21,7 +22,7 @@ vi.mock('../kma-client', () => ({
   fetchKmaObservation: mocks.fetchKmaObservation,
   fetchKmaSky: mocks.fetchKmaSky,
 }))
-vi.mock('../repository', () => ({
+vi.mock('../../repositories/weather', () => ({
   getWeatherCollectionState: mocks.getWeatherCollectionState,
   hasCurrentWeather: mocks.hasCurrentWeather,
   lockWeatherCollection: mocks.lockWeatherCollection,

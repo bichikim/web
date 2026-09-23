@@ -1,3 +1,5 @@
+import {clampUnit} from 'src/utils/clamp-unit'
+
 import type {PViseme} from '../lip-sync'
 import type {PVisemeTransition} from './scene-layer-state'
 
@@ -10,9 +12,19 @@ export interface PMouthTransitionController {
   readonly start: (from: PViseme, to: PViseme, prefersReducedMotion: boolean) => void
 }
 
+/** Supplies asynchronous animation frames and cancellation. */
+export interface PMouthTransitionScheduler {
+  readonly cancelAnimationFrame: (frame: number) => void
+  readonly requestAnimationFrame: (callback: (timestamp: number) => void) => number
+}
+
+const DEFAULT_SCHEDULER: PMouthTransitionScheduler = {
+  cancelAnimationFrame: (frame) => globalThis.cancelAnimationFrame(frame),
+  requestAnimationFrame: (callback) => globalThis.requestAnimationFrame(callback),
+}
+
 const SMOOTHSTEP_SCALE = 3
 const SMOOTHSTEP_CURVE = 2
-const clampUnit = (value: number) => Math.min(1, Math.max(0, value))
 const getSmoothedUnitProgress = (progress: number) => {
   const linearProgress = clampUnit(progress)
   return linearProgress * linearProgress * (SMOOTHSTEP_SCALE - SMOOTHSTEP_CURVE * linearProgress)
@@ -24,6 +36,7 @@ export const getPVisemeTransitionProgress = (elapsedMs: number) =>
 /** Owns the short requestAnimationFrame loop used to crossfade mouth sprites. */
 export const createPMouthTransitionController = (
   onTransitionChange: () => void,
+  scheduler: PMouthTransitionScheduler = DEFAULT_SCHEDULER,
 ): PMouthTransitionController => {
   let current: PVisemeTransition | null = null
   let frame: number | null = null
@@ -31,7 +44,7 @@ export const createPMouthTransitionController = (
 
   const cancel = () => {
     if (frame !== null) {
-      window.cancelAnimationFrame(frame)
+      scheduler.cancelAnimationFrame(frame)
       frame = null
     }
 
@@ -60,7 +73,7 @@ export const createPMouthTransitionController = (
       return
     }
 
-    const startedAt = window.performance.now()
+    let startedAt: number | undefined
     current = {from: transitionFrom, progress: startProgress, to: transitionTo}
     onTransitionChange()
 
@@ -69,13 +82,15 @@ export const createPMouthTransitionController = (
         return
       }
 
+      startedAt ??= timestamp
+
       const phase = getSmoothedUnitProgress((timestamp - startedAt) / durationMs)
       const progress = startProgress + (endProgress - startProgress) * phase
       current = {from: transitionFrom, progress, to: transitionTo}
       onTransitionChange()
 
       if (phase < 1) {
-        frame = window.requestAnimationFrame(renderFrame)
+        frame = scheduler.requestAnimationFrame(renderFrame)
         return
       }
 
@@ -84,7 +99,7 @@ export const createPMouthTransitionController = (
       onTransitionChange()
     }
 
-    frame = window.requestAnimationFrame(renderFrame)
+    frame = scheduler.requestAnimationFrame(renderFrame)
   }
 
   const destroy = () => {

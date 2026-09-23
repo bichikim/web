@@ -1,4 +1,6 @@
 /// <reference lib="webworker" />
+import {getMonotonicTime} from 'src/utils/get-monotonic-time'
+import {isAbortError as hasAbortErrorName} from 'src/utils/is-cancellation-reason'
 
 // oxlint-disable no-await-in-loop -- Model streams and sessions are loaded sequentially to cap peak browser memory.
 
@@ -39,11 +41,12 @@ import {
 } from './model'
 import {loadSupertonicRuntime, type SupertonicBackend, type SupertonicRuntime} from './runtime'
 import {type LoadBufferOptions, loadSessions, releaseSessions} from './sessions'
-import {failureResult, type Result, successResult} from '../result'
+import {failureResult, type Result, successResult} from 'src/features/result'
 import {splitSpeechText} from './text-chunking'
+import {normalizeSpeechText} from './number-speech'
 import {createSupertonicWorkerDispatch} from './worker/dispatch'
 
-const workerScope = self as DedicatedWorkerGlobalScope
+const workerScope = globalThis.self as DedicatedWorkerGlobalScope
 const modelStorage = createModelStorage()
 const voiceCache = new Map<SupertonicVoiceId, SupertonicVoice>()
 const REQUEST_TIMEOUT_STATUS = 408
@@ -91,8 +94,7 @@ const createCancelledError = (phase: CancelledError['phase']): CancelledError =>
   retryable: false,
 })
 
-const isAbortError = (error: unknown) =>
-  error instanceof DOMException && error.name === 'AbortError'
+const isAbortError = (error: unknown) => error instanceof DOMException && hasAbortErrorName(error)
 
 const createDownloadError = (
   options: Pick<LoadBufferOptions, 'fileName'> | Pick<FetchJsonOptions, 'fileName'>,
@@ -409,7 +411,7 @@ const generate = async (
   const abortController = new AbortController()
   activeAbortController = abortController
   activeGenerationAbortController = abortController
-  const startedAt = performance.now()
+  const startedAt = getMonotonicTime()
 
   try {
     const voiceResult = await getVoice(message.voice, abortController.signal)
@@ -423,7 +425,12 @@ const generate = async (
 
     for (const [chunkIndex, text] of textChunks.entries()) {
       const chunkNumber = chunkIndex + 1
-      const chunkStartedAt = performance.now()
+      const chunkStartedAt = getMonotonicTime()
+      const normalizedText = normalizeSpeechText({language: message.language, text})
+      const engineText =
+        Array.from(normalizedText).length <= currentModel.speechPolicy.maximumLength
+          ? normalizedText
+          : text
       const samples = await currentEngine.generate({
         language: message.language,
         onProgress: (step, total) => {
@@ -433,12 +440,12 @@ const generate = async (
           })
         },
         speed: message.speed,
-        text,
+        text: engineText,
         voice: voiceResult.value,
       })
       audioChunks.push(samples)
       postMessage({
-        generationTime: Math.round(performance.now() - chunkStartedAt),
+        generationTime: Math.round(getMonotonicTime() - chunkStartedAt),
         index: chunkIndex,
         requestId: message.requestId,
         sampleRate: currentEngine.sampleRate,
@@ -463,7 +470,7 @@ const generate = async (
     }
 
     return successResult({
-      generationTime: Math.round(performance.now() - startedAt),
+      generationTime: Math.round(getMonotonicTime() - startedAt),
       sampleRate: currentEngine.sampleRate,
       samples,
     })

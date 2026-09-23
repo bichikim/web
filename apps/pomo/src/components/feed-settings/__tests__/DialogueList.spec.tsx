@@ -3,8 +3,8 @@
 import {fireEvent, render, screen, waitFor, within} from '@solidjs/testing-library'
 import {afterEach, beforeEach, expect, it, vi} from 'vitest'
 
-import type {FeedDialogueListItem, PFeedController} from 'src/features/focus-room-feed'
 import {getLocale, overwriteGetLocale} from '@paraglide/runtime'
+import type {FeedDialogueListItem, PFeedController} from 'src/features/focus-room-feed'
 import {PFeedDialogueList} from '../DialogueList'
 
 const FEED_DIALOGUE: FeedDialogueListItem = {
@@ -108,14 +108,11 @@ it('should localize persisted feed issues for the current language', () => {
 
 it('should omit source links from saved feed dialogue items', () => {
   const {controller} = createController()
-  const result = render(() => <PFeedDialogueList controller={controller} />)
+  render(() => <PFeedDialogueList controller={controller} />)
 
   const dialogueList = screen.getByRole('list', {name: '피드 대화'})
   expect(within(dialogueList).queryByRole('link')).toBeNull()
-  expect(result.container.querySelector('.pomo-feed-settings__dialogue-list')).toHaveClass(
-    '[&_>_li]:border-content-border',
-    '[&_>_li]:bg-content-surface',
-  )
+  expect(dialogueList).toHaveClass('[&_>_li]:border-content-border', '[&_>_li]:bg-content-surface')
 })
 
 it('should require confirmation before deleting a feed dialogue', async () => {
@@ -203,8 +200,8 @@ it('should use singular English copy for one remaining dialogue and one cleanup 
 
 it('should apply compact spacing to feed dialogue rows', () => {
   const {controller} = createController()
-  const result = render(() => <PFeedDialogueList controller={controller} />)
-  const list = result.container.querySelector('.pomo-feed-settings__dialogue-list') as HTMLElement
+  render(() => <PFeedDialogueList controller={controller} />)
+  const list = screen.getByRole('list', {name: '피드 대화'})
 
   expect(list.classList.contains('settings-compact:gap-2')).toBe(true)
   expect(list.classList.contains('settings-compact:[&_>_li]:gap-2')).toBe(true)

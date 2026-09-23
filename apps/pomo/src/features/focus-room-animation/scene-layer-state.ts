@@ -1,3 +1,5 @@
+import {clampUnit} from 'src/utils/clamp-unit'
+
 import {P_VISEMES, type PViseme} from '../lip-sync'
 import type {PixiLayerSceneState} from './layer-scene-definition'
 import {
@@ -18,7 +20,6 @@ export interface PVisemeTransition {
 
 type SupportsMouthTransitionStage = (stage: PMouthTransitionStage) => boolean
 
-const clampUnit = (value: number) => Math.min(1, Math.max(0, value))
 const getEqualPowerOpacity = (linearOpacity: number) => Math.sqrt(clampUnit(linearOpacity))
 const VISEME_JAW_PROGRESS = {
   closed: 0,

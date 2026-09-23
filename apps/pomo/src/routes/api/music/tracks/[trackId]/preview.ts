@@ -1,7 +1,7 @@
 import type {APIEvent} from '@solidjs/start/server'
 import {z} from 'zod'
 
-import {findPublishedTrackPreviewAsset} from 'src/server/music/catalog-repository'
+import {findPublishedTrackPreviewAsset} from 'src/server/repositories/music-catalog'
 import {verifyPreviewAccess} from 'src/server/music/preview-access'
 import {ensureTrackPreviewObject} from 'src/server/music/track-upload'
 

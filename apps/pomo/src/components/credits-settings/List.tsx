@@ -2,7 +2,7 @@ import {cx} from 'class-variance-authority'
 import {For} from 'solid-js'
 import type {LicenseEntry} from 'src/features/licenses'
 import * as m from '@paraglide/message'
-import {PTag} from '../PTag'
+import {PTag} from '../p-tag/PTag'
 
 const CREDIT_ITEM_CLASS = cx(
   'rounded-panel border border-solid border-content-border',
@@ -35,7 +35,7 @@ export const CreditList = (props: {readonly entries: ReadonlyArray<LicenseEntry>
             <h4 class="m-0 text-sm font-750 text-foreground">{entry.summaryName ?? entry.name}</h4>
             <PTag tone="highlight">{entry.license}</PTag>
           </div>
-          <div class="mt-3 flex flex-wrap gap-x-4 gap-y-2 text-xs">
+          <div class="mt-3 flex flex-wrap gap-x-4 gap-y-2 text-sm leading-5">
             <For each={entry.links}>
               {(link) => (
                 <a

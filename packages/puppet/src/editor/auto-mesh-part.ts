@@ -1,11 +1,6 @@
 import {generateMesh, type GenerateMeshErrorCode, type PixelData} from '../mesh'
-import {isTwoDimensionalParameterBinding} from '../deformation'
-import type {
-  PuppetDocument,
-  PuppetParameterBinding,
-  PuppetParameterKeyform,
-  PuppetPart,
-} from '../player/document'
+import type {PuppetDocument, PuppetPart} from '../player/document'
+import {resetPartDeformations} from './internal/reset-part-deformations'
 import {MAXIMUM_TEXTURE_PIXELS} from './internal/texture-limits'
 
 export interface AutoMeshSettings {
@@ -52,62 +47,6 @@ const MAXIMUM_ALPHA_THRESHOLD = 255
 
 export const getMinimumAutoMeshCellSize = (width: number, height: number) =>
   Math.max(1, Math.ceil(Math.max(width, height) / MAXIMUM_AUTO_MESH_DIVISIONS_PER_AXIS))
-
-interface ResetParameterKeyformOptions<Keyform extends PuppetParameterKeyform> {
-  readonly keyform: Keyform
-  readonly partId: string
-  readonly targetsPart: boolean
-  readonly vertices: ReadonlyArray<number>
-}
-
-const resetParameterKeyform = <Keyform extends PuppetParameterKeyform>(
-  options: ResetParameterKeyformOptions<Keyform>,
-): Keyform => {
-  if (!options.targetsPart) {
-    return options.keyform
-  }
-
-  const hasPart = options.keyform.parts.some((part) => part.partId === options.partId)
-  const resetPart = {partId: options.partId, vertices: options.vertices}
-
-  return {
-    ...options.keyform,
-    parts: hasPart
-      ? options.keyform.parts.map((part) => (part.partId === options.partId ? resetPart : part))
-      : [...options.keyform.parts, resetPart],
-  } as Keyform
-}
-
-const resetParameterBinding = (
-  binding: PuppetParameterBinding,
-  partId: string,
-  vertices: ReadonlyArray<number>,
-): PuppetParameterBinding => {
-  const targetsPart =
-    binding.targetPartIds?.includes(partId) ??
-    binding.keyforms.some((keyform) => keyform.parts.some((part) => part.partId === partId))
-  const resetKeyform = <Keyform extends PuppetParameterKeyform>(keyform: Keyform) =>
-    resetParameterKeyform({keyform, partId, targetsPart, vertices})
-
-  return isTwoDimensionalParameterBinding(binding)
-    ? {...binding, keyforms: binding.keyforms.map(resetKeyform)}
-    : {...binding, keyforms: binding.keyforms.map(resetKeyform)}
-}
-
-const resetPartDeformations = (
-  document: PuppetDocument,
-  partId: string,
-  vertices: ReadonlyArray<number>,
-): PuppetDocument => ({
-  ...document,
-  motions: document.motions.map((motion) => ({
-    ...motion,
-    tracks: motion.tracks.filter((track) => track.kind === 'parameter' || track.partId !== partId),
-  })),
-  parameterBindings: document.parameterBindings?.map((binding) =>
-    resetParameterBinding(binding, partId, vertices),
-  ),
-})
 
 export const validateAutoMeshPart = (
   options: ValidateAutoMeshPartOptions,

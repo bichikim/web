@@ -1,5 +1,3 @@
-import 'server-only'
-
 import {and, sql} from 'drizzle-orm'
 
 import {type Database, getDatabase, weatherProviderUsage} from '../database'

@@ -3,11 +3,15 @@
 import {cleanup, fireEvent, render, screen} from '@solidjs/testing-library'
 import {createSignal} from 'solid-js'
 import {afterEach, beforeEach, expect, it, vi} from 'vitest'
+import {PAlbumTrackList} from '../TrackList'
 
 const audioMocks = vi.hoisted(() => ({
   requestTrackAccessAction: vi.fn(),
   resolveTrackPreviewAccess: vi.fn(),
 }))
+
+const getOverflowIndicator = () =>
+  screen.getByRole('list').parentElement?.querySelector('[aria-hidden="true"] > span') ?? null
 const routerMocks = vi.hoisted(() => ({
   submissions: [] as Array<{
     readonly clear: () => void
@@ -21,7 +25,6 @@ vi.mock('@solidjs/router', () => ({
   useAction: vi.fn((clientAction) => clientAction),
   useSubmissions: vi.fn(() => routerMocks.submissions),
 }))
-import {PAlbumTrackList} from '../TrackList'
 
 class TestResizeObserver {
   static instances: TestResizeObserver[] = []
@@ -143,7 +146,11 @@ it('should visibly identify a limited preview only while it is playing', () => {
   expect(screen.queryByText('30초 미리듣기')).toBeNull()
 
   setPlayingTrackId('limited-track')
-  expect(screen.getByText('30초 미리듣기').getAttribute('data-pomo-tag')).toBe('')
+  expect(screen.getByText('30초 미리듣기')).toHaveClass(
+    'border-highlight/30',
+    'bg-highlight/12',
+    'text-highlight',
+  )
 
   setPlayingTrackId('playable-track')
   expect(screen.queryByText('30초 미리듣기')).toBeNull()
@@ -155,7 +162,7 @@ it('should indicate that more tracks remain below until the list reaches the bot
     id: `track-${index}`,
     title: `Track ${index + 1}`,
   }))
-  const result = render(() => (
+  render(() => (
     <PAlbumTrackList
       albumTitle="Album"
       onAddTrack={vi.fn()}
@@ -186,11 +193,11 @@ it('should indicate that more tracks remain below until the list reaches the bot
   })
 
   fireEvent.scroll(list)
-  expect(result.container.querySelector('.i-tabler-chevron-down')).toBeTruthy()
+  expect(getOverflowIndicator()).toHaveClass('i-tabler-chevron-down')
 
   list.scrollTop = 42
   fireEvent.scroll(list)
-  expect(result.container.querySelector('.i-tabler-chevron-down')).toBeNull()
+  expect(getOverflowIndicator()).toBeNull()
 })
 
 it('should show loading state, add available tracks, and disable tracks already in the player', () => {
@@ -215,7 +222,11 @@ it('should show loading state, add available tracks, and disable tracks already 
     />
   ))
 
-  expect(firstView.container.querySelector('.i-tabler-loader-2')).toBeTruthy()
+  expect(
+    screen
+      .getByRole('button', {name: 'Playable Track 미리듣기'})
+      .querySelector('span[aria-hidden="true"]'),
+  ).toHaveClass('i-tabler-loader-2')
   fireEvent.click(screen.getAllByRole('button')[1]!)
   expect(onAddTrack).toHaveBeenCalledWith(playableTrack)
   firstView.unmount()
@@ -241,7 +252,7 @@ it('should show loading state, add available tracks, and disable tracks already 
 
 it('should hide the limited preview marker while its preview is pending', () => {
   const limitedTrack = {artist: 'Artist', id: 'limited-track', title: 'Limited Track'}
-  const result = render(() => (
+  render(() => (
     <PAlbumTrackList
       albumTitle="Album"
       onAddTrack={vi.fn()}
@@ -254,7 +265,11 @@ it('should hide the limited preview marker while its preview is pending', () => 
     />
   ))
 
-  expect(result.container.querySelector('.i-tabler-loader-2')).toBeTruthy()
+  expect(
+    screen
+      .getByRole('button', {name: 'Limited Track 30초 미리듣기 정지'})
+      .querySelector('span[aria-hidden="true"]'),
+  ).toHaveClass('i-tabler-loader-2')
   expect(screen.queryByText('30초 미리듣기')).toBeNull()
 })
 
@@ -286,7 +301,7 @@ it('should update overflow through ResizeObserver and disconnect it during clean
 
   expect(observer?.observe).toHaveBeenCalledWith(list)
   observer?.trigger()
-  expect(view.container.querySelector('.i-tabler-chevron-down')).toBeTruthy()
+  expect(getOverflowIndicator()).toHaveClass('i-tabler-chevron-down')
 
   view.unmount()
   expect(observer?.disconnect).toHaveBeenCalledOnce()
@@ -294,8 +309,8 @@ it('should update overflow through ResizeObserver and disconnect it during clean
 
 it('should update overflow from window resize when ResizeObserver is unavailable', () => {
   vi.stubGlobal('ResizeObserver', undefined)
-  const addEventListener = vi.spyOn(window, 'addEventListener')
-  const removeEventListener = vi.spyOn(window, 'removeEventListener')
+  const addEventListener = vi.spyOn(globalThis, 'addEventListener')
+  const removeEventListener = vi.spyOn(globalThis, 'removeEventListener')
   const view = render(() => (
     <PAlbumTrackList
       albumTitle="Album"
@@ -314,9 +329,9 @@ it('should update overflow from window resize when ResizeObserver is unavailable
     scrollHeight: {configurable: true, value: 126},
   })
 
-  window.dispatchEvent(new Event('resize'))
+  globalThis.dispatchEvent(new Event('resize'))
   expect(addEventListener).toHaveBeenCalledWith('resize', expect.any(Function))
-  expect(view.container.querySelector('.i-tabler-chevron-down')).toBeTruthy()
+  expect(getOverflowIndicator()).toHaveClass('i-tabler-chevron-down')
 
   view.unmount()
   expect(removeEventListener).toHaveBeenCalledWith('resize', expect.any(Function))

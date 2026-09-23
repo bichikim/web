@@ -1,10 +1,11 @@
+/** @vitest-environment node */
 import {describe, expect, it, vi} from 'vitest'
 
 import {formatModelDownloadSize, type ModelStorage} from '../../model-storage'
 import * as modelStorage from '../../model-storage'
 import {isSupertonicModelDownloaded} from '../download'
 import {getSupertonicModel} from '../model'
-import {successResult} from '../../result'
+import {successResult} from 'src/features/result'
 
 const createStorage = (): ModelStorage => ({
   delete: vi.fn(async () => successResult(false)),

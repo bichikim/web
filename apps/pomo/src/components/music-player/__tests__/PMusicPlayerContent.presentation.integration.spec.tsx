@@ -1,0 +1,95 @@
+/** @vitest-environment jsdom */
+
+import {PreferenceProvider} from 'src/hooks/use-preference'
+import {cleanup, fireEvent, render, screen} from '@solidjs/testing-library'
+import {createSignal} from 'solid-js'
+import {afterEach, describe, expect, it, vi} from 'vitest'
+
+import {PMusicPlayerContent} from '../PMusicPlayerContent'
+import {TRACKS} from './test-support/player-fixtures'
+
+vi.mock('media-chrome', () => ({}))
+
+afterEach(() => {
+  cleanup()
+  vi.restoreAllMocks()
+})
+
+describe('PMusicPlayerContent presentation integration', () => {
+  it('should notify a controlled owner when the player expansion changes', () => {
+    const [expanded, setExpanded] = createSignal(false)
+    const handleExpandedChange = vi.fn((nextExpanded: boolean) => setExpanded(nextExpanded))
+
+    render(
+      () => (
+        <PMusicPlayerContent
+          expanded={expanded()}
+          onExpandedChange={handleExpandedChange}
+          tracks={TRACKS}
+        />
+      ),
+      {wrapper: PreferenceProvider},
+    )
+    fireEvent.click(screen.getByRole('button', {name: '플레이어 펼치기'}))
+
+    expect(handleExpandedChange).toHaveBeenCalledWith(true)
+    expect(screen.getByRole('button', {name: '플레이어 접기'})).toBeTruthy()
+  })
+
+  it('should render expanded and compact play controls when expanded', () => {
+    const result = render(() => <PMusicPlayerContent tracks={TRACKS} />, {
+      wrapper: PreferenceProvider,
+    })
+
+    fireEvent.click(screen.getByRole('button', {name: '플레이어 펼치기'}))
+
+    expect(result.container.querySelector('media-time-display')).toBeNull()
+    const expandedPlayButton = screen
+      .getByRole('button', {name: '이전 곡'})
+      .parentElement?.querySelector('media-play-button')
+    const compactPlayButton = result.container
+      .querySelector('[data-player-summary]')
+      ?.querySelector('media-play-button')
+
+    for (const playButton of [expandedPlayButton, compactPlayButton]) {
+      expect(playButton).toBeInstanceOf(HTMLElement)
+      expect(playButton?.hasAttribute('notooltip')).toBe(true)
+      expect(playButton?.getAttribute('aria-label')).toBe('재생')
+    }
+  })
+
+  it('should keep the native desktop presentation free of backdrop blur', () => {
+    const result = render(() => <PMusicPlayerContent backdropBlur={false} tracks={TRACKS} />, {
+      wrapper: PreferenceProvider,
+    })
+
+    expect(result.getByTestId('player-background')).not.toHaveClass('backdrop-blur-surface')
+  })
+
+  it('should replace the summary play button without a collapse animation when expanded', () => {
+    const result = render(() => <PMusicPlayerContent tracks={TRACKS} />, {
+      wrapper: PreferenceProvider,
+    })
+    const summary = result.container.querySelector('[data-player-summary]')
+    const summaryPlayFrame = summary?.querySelector('[data-player-play-summary-frame]')
+
+    if (!(summaryPlayFrame instanceof HTMLElement)) {
+      throw new TypeError('Expected the Pomo summary play button frame to be rendered')
+    }
+
+    expect(summaryPlayFrame.classList.contains('w-11')).toBe(true)
+    expect(
+      summaryPlayFrame.classList.contains(
+        '[transition:width_260ms_ease,_margin-right_260ms_ease,_opacity_180ms_ease]',
+      ),
+    ).toBe(false)
+
+    fireEvent.click(screen.getByRole('button', {name: '플레이어 펼치기'}))
+
+    const directSummaryPlayFrame = [...(summary?.children ?? [])].find(
+      (child) => child.getAttribute('data-player-play-summary-frame') !== null,
+    )
+    expect(directSummaryPlayFrame).toBeUndefined()
+    expect(summary?.querySelectorAll('[data-player-play-summary-frame]')).toHaveLength(1)
+  })
+})

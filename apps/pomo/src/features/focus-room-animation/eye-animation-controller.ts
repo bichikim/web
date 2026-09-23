@@ -105,7 +105,7 @@ const [CENTERED_PUPIL_OFFSET] = EYE_TARGET_OFFSETS
 
 const wait = (duration: number) =>
   new Promise<void>((resolve) => {
-    window.setTimeout(resolve, duration)
+    globalThis.setTimeout(resolve, duration)
   })
 
 const reportError = (error: unknown) => {
@@ -142,7 +142,7 @@ export class PEyeController {
   #mode: PEyeMode = 'auto'
   #pupilOffset: PixiScenePoint = CENTERED_PUPIL_OFFSET
   #pupilSprite: Sprite | null = null
-  #pupilTimer: number | null = null
+  #pupilTimer: ReturnType<typeof globalThis.setTimeout> | null = null
   #sceneReady = false
   #scheduler: BlinkScheduler | null = null
   #sequence = 0
@@ -411,7 +411,7 @@ export class PEyeController {
     }
 
     const delay = PUPIL_MINIMUM_DELAY + Math.random() * (PUPIL_MAXIMUM_DELAY - PUPIL_MINIMUM_DELAY)
-    this.#pupilTimer = window.setTimeout(() => {
+    this.#pupilTimer = globalThis.setTimeout(() => {
       this.#pupilTimer = null
 
       if (!this.#sceneReady || !this.#pupilSprite?.visible) {
@@ -432,7 +432,7 @@ export class PEyeController {
       return
     }
 
-    window.clearTimeout(this.#pupilTimer)
+    globalThis.clearTimeout(this.#pupilTimer)
     this.#pupilTimer = null
   }
 

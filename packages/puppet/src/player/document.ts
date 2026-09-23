@@ -1,5 +1,8 @@
 export const PUPPET_DOCUMENT_FORMAT = 'winter-love-puppet'
 export const PUPPET_DOCUMENT_VERSION = 1
+export const DEFAULT_PUPPET_FRAMES_PER_SECOND = 24
+export const MAXIMUM_PUPPET_FRAMES_PER_SECOND = 240
+export const MINIMUM_PUPPET_FRAMES_PER_SECOND = 1
 
 export const PUPPET_EASINGS = ['linear', 'ease-in', 'ease-out', 'ease-in-out'] as const
 
@@ -39,7 +42,19 @@ export interface PuppetPartRenderProperties {
   readonly screenColor?: PuppetColor
 }
 
+export interface PuppetPsdSource {
+  readonly documentId?: string
+  readonly fileName?: string
+  readonly layerId?: number
+  readonly path: ReadonlyArray<string>
+  readonly x: number
+  readonly y: number
+  readonly width: number
+  readonly height: number
+}
+
 export interface PuppetPart {
+  readonly psdSource?: PuppetPsdSource
   readonly id: string
   readonly mesh: PuppetMesh
   readonly properties?: PuppetPartRenderProperties
@@ -72,7 +87,37 @@ export interface PuppetSceneGroupNode extends PuppetSceneContainerNodeBase {
   readonly kind: 'group'
 }
 
-export interface PuppetSceneDeformerNode extends PuppetSceneContainerNodeBase {
+export interface PuppetDeformerPin extends PuppetPoint {
+  readonly radius: number
+  readonly strength: number
+}
+
+export interface PuppetVertexReference {
+  readonly partId: string
+  readonly vertexIndex: number
+}
+
+export interface PuppetBoneWeights extends PuppetVertexReference {
+  /** Weights for consecutive segments, normalized for multiple bones. A single bone blends with the input position; omission uses distance-based weights. */
+  readonly weights: ReadonlyArray<number>
+}
+
+export interface PuppetVertexInfluence extends PuppetVertexReference {
+  readonly weight: number
+}
+
+export interface PuppetDeformerShape {
+  /** A rigid pivot and direction handle represented by exactly one bone segment. */
+  readonly deformerType?: 'rotation'
+  /** Per-vertex deformation amount; omission applies the full deformation. */
+  readonly vertexInfluences?: ReadonlyArray<PuppetVertexInfluence>
+  readonly boneWeights?: ReadonlyArray<PuppetBoneWeights>
+  readonly pins?: ReadonlyArray<PuppetDeformerPin>
+  /** Bind joints of a connected bone chain, packed as XY pairs. Control points store posed joints. */
+  readonly boneRestPoints?: ReadonlyArray<number>
+  /** Cubic centerline with shared endpoints: start, outgoing handle, incoming handle, end, then successive handle pairs and endpoints. */
+  readonly curveBreaks?: ReadonlyArray<number>
+  readonly curveAxis?: 'x' | 'y'
   readonly bounds: {
     readonly height: number
     readonly width: number
@@ -82,12 +127,55 @@ export interface PuppetSceneDeformerNode extends PuppetSceneContainerNodeBase {
   readonly columns: number
   readonly controlPoints: ReadonlyArray<number>
   readonly curveHandles?: ReadonlyArray<PuppetDeformerCurveHandle>
-  readonly kind: 'deformer'
   readonly rotationOrigin?: PuppetPoint
   readonly rows: number
 }
 
+export interface PuppetDeformerBindingStep {
+  readonly shape: PuppetDeformerShape
+  readonly rest?: PuppetDeformerShape
+}
+
+export interface PuppetDeformerBinding {
+  readonly rest: PuppetDeformerShape
+  readonly steps: ReadonlyArray<PuppetDeformerBindingStep>
+}
+
+export interface PuppetSceneDeformerNode extends PuppetSceneContainerNodeBase, PuppetDeformerShape {
+  readonly kind: 'deformer'
+  /** Preserved deformation followed by the current control layout's bind mapping. */
+  readonly binding?: PuppetDeformerBinding
+}
+
+export interface PuppetSkinMatrix {
+  readonly xx: number
+  readonly yx: number
+  readonly xy: number
+  readonly yy: number
+  readonly x: number
+  readonly y: number
+}
+
+export interface PuppetSkinInfluence {
+  readonly strength?: number
+  readonly nodeId: string
+  readonly inverseBind: PuppetSkinMatrix
+  readonly weights: ReadonlyArray<number>
+}
+
+export interface PuppetSkinOptions {
+  readonly mode?: 'joint' | 'smooth'
+  readonly range?: number
+}
+
+export interface PuppetSkinBinding extends PuppetSkinOptions {
+  readonly syncSeams?: boolean
+  readonly bind: PuppetSkinMatrix
+  readonly influences: ReadonlyArray<PuppetSkinInfluence>
+}
+
 export interface PuppetScenePartNode extends PuppetSceneNodeBase {
+  readonly skinning?: PuppetSkinBinding
   readonly kind: 'part'
 }
 
@@ -99,7 +187,14 @@ export interface PuppetScene {
   readonly roots: ReadonlyArray<PuppetSceneNode>
 }
 
+export interface PuppetGlueKeyform {
+  readonly id: string
+  readonly strength: number
+  readonly weight: number
+}
+
 export interface PuppetParameterPartKeyform {
+  readonly glue?: ReadonlyArray<PuppetGlueKeyform>
   readonly partId: string
   readonly properties?: Pick<
     PuppetPartRenderProperties,
@@ -127,6 +222,12 @@ export interface PuppetParameter {
   readonly maximum: number
   readonly minimum: number
   readonly name: string
+  readonly options?: ReadonlyArray<PuppetParameterOption>
+}
+
+export interface PuppetParameterOption {
+  readonly label: string
+  readonly value: number
 }
 
 export interface PuppetParameterKeyform1D extends PuppetParameterKeyformBase {
@@ -139,8 +240,20 @@ export interface PuppetParameterKeyform2D extends PuppetParameterKeyformBase {
 
 export type PuppetParameterKeyform = PuppetParameterKeyform1D | PuppetParameterKeyform2D
 
+export interface PuppetInfluencePoint {
+  readonly value: number
+  readonly weight: number
+}
+
+export interface PuppetParameterInfluence {
+  readonly parameterId: string
+  readonly points: ReadonlyArray<PuppetInfluencePoint>
+}
+
 export interface PuppetParameterBindingBase {
+  readonly influences?: ReadonlyArray<PuppetParameterInfluence>
   readonly id: string
+  readonly name?: string
   readonly targetDeformerIds?: ReadonlyArray<string>
   readonly targetPartIds?: ReadonlyArray<string>
 }
@@ -186,13 +299,70 @@ export interface PuppetMotion {
   readonly tracks: ReadonlyArray<PuppetTrack>
 }
 
+export interface PuppetPendulum {
+  /** Velocity damping coefficient per second. */
+  readonly damping: number
+  /** Downward acceleration used by the pendulum solver. */
+  readonly gravity: number
+  readonly id: string
+  readonly inputParameterId: string
+  /** Converts input parameter units into the pendulum's target position. */
+  readonly inputScale: number
+  /** Pendulum length in solver units. */
+  readonly length: number
+  readonly outputParameterId: string
+  /** Converts pendulum position into output parameter units. */
+  readonly outputScale: number
+}
+
+export interface PuppetPhysics {
+  readonly pendulums: ReadonlyArray<PuppetPendulum>
+}
+
+export interface PuppetEdgeReference extends PuppetVertexReference {
+  readonly edge: {readonly endIndex: number; readonly position: number}
+}
+
+export interface PuppetGlue {
+  readonly id: string
+  readonly first: PuppetVertexReference
+  readonly second: PuppetVertexReference | PuppetEdgeReference
+  /** B's share of the joined position, from zero to one. */
+  readonly weight: number
+  readonly strength: number
+}
+
+export interface PuppetLayerOrderCondition {
+  /** Compare the sum of resolved parameter values against the strict threshold. */
+  readonly parameterIds: ReadonlyArray<string>
+  readonly comparison: 'greater-than' | 'less-than'
+  readonly threshold: number
+}
+
+export interface PuppetLayerOrderRule {
+  /** Move these parts together, retaining their current relative order. */
+  readonly partIds: ReadonlyArray<string>
+  readonly referencePartId: string
+  /** Earlier parts paint behind later parts. */
+  readonly placement: 'before' | 'after'
+  readonly when: PuppetLayerOrderCondition
+}
+
 export interface PuppetDocument {
+  readonly framesPerSecond?: number
+  readonly glue?: ReadonlyArray<PuppetGlue>
+  /** Apply matching rules in array order, starting from scene order on every frame. */
+  readonly layerOrderRules?: ReadonlyArray<PuppetLayerOrderRule>
   readonly format: typeof PUPPET_DOCUMENT_FORMAT
   readonly motions: ReadonlyArray<PuppetMotion>
   readonly parameterBindings?: ReadonlyArray<PuppetParameterBinding>
   readonly parameters?: ReadonlyArray<PuppetParameter>
   readonly parts: ReadonlyArray<PuppetPart>
+  readonly physics?: PuppetPhysics
   readonly scene?: PuppetScene
   readonly version: typeof PUPPET_DOCUMENT_VERSION
   readonly viewport: PuppetViewport
 }
+
+export const getPuppetFramesPerSecond = (document: PuppetDocument) =>
+  document.framesPerSecond ?? DEFAULT_PUPPET_FRAMES_PER_SECOND

@@ -1,3 +1,5 @@
+import {PInput} from 'src/components/p-input/PInput'
+import {isNonBlankString} from 'src/utils/is-non-blank-string'
 import {cx} from 'class-variance-authority'
 
 const INPUT_CLASSES = cx(
@@ -38,7 +40,7 @@ export const CharacterControls = (props: CharacterControlsProps) => (
   <aside class={ASIDE_CLASSES}>
     <header>
       <p class="m-0 text-xs font-750 tracking-[0.22em] text-#8bd8c0 uppercase">3D character lab</p>
-      <h1 class="mb-0 mt-3 text-2xl font-800 tracking--0.03em">Blender 캐릭터 연결</h1>
+      <h1 class="mb-0 mt-3 text-2xl font-800 tracking--0.03em">3D 캐릭터 연결</h1>
       <p class="mb-0 mt-3 text-sm leading-6 text-#9ba8b1">
         Babylon.js로 표준 GLB를 렌더링해요. Blender에서 내보낸 파일을 선택하면 즉시 교체됩니다.
       </p>
@@ -66,7 +68,8 @@ export const CharacterControls = (props: CharacterControlsProps) => (
       <label class="text-sm font-650 text-#d9e1e6" for="character-model-url">
         GLB URL
       </label>
-      <input
+      <PInput
+        unstyled
         class={INPUT_CLASSES}
         id="character-model-url"
         onInput={(event) => props.onUrlInput(event)}
@@ -74,7 +77,7 @@ export const CharacterControls = (props: CharacterControlsProps) => (
         type="url"
         value={props.urlInput}
       />
-      <button class={BUTTON_CLASSES} disabled={props.urlInput.trim().length === 0} type="submit">
+      <button class={BUTTON_CLASSES} disabled={!isNonBlankString(props.urlInput)} type="submit">
         URL 모델 불러오기
       </button>
     </form>

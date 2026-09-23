@@ -1,0 +1,142 @@
+import {getExceptionMessage} from 'src/features/error-detail'
+import {createSignal, onCleanup} from 'solid-js'
+import {DEFAULT_CONNECTION_SECONDS} from '../sound-generation/connection'
+import {createLoopPlayer, type LoopPlayback} from './player'
+
+export function useLoopPlayer() {
+  const [position, setPosition] = createSignal(0)
+  const [scrubbing, setScrubbing] = createSignal(false)
+  const [connectionSeconds, setConnectionSeconds] = createSignal(DEFAULT_CONNECTION_SECONDS)
+  const [duration, setDuration] = createSignal(0)
+  const [playing, setPlaying] = createSignal(false)
+  const [status, setStatus] = createSignal('반복할 오디오 파일을 선택해 주세요.')
+  let player: LoopPlayback | undefined
+  let url: string | undefined
+  let positionBeforeScrubbing = 0
+  let seekRevision = 0
+  const clear = () => {
+    seekRevision += 1
+    const previous = player
+    const previousUrl = url
+    player = undefined
+    url = undefined
+    if (previous !== undefined) {
+      previous
+        .close()
+        .catch((cause) => console.warn('Audio cleanup failed', cause))
+        .finally(() => {
+          if (previousUrl !== undefined) {
+            URL.revokeObjectURL(previousUrl)
+          }
+        })
+    } else if (previousUrl !== undefined) {
+      URL.revokeObjectURL(previousUrl)
+    }
+    setPlaying(false)
+    setDuration(0)
+    setPosition(0)
+    setScrubbing(false)
+    positionBeforeScrubbing = 0
+  }
+  onCleanup(clear)
+  const select = (file: File | null) => {
+    clear()
+    if (file === null) {
+      setStatus('오디오 파일을 선택해 주세요.')
+      return
+    }
+    setStatus('오디오를 읽고 있어요…')
+    const source = URL.createObjectURL(file)
+    url = source
+    try {
+      player = createLoopPlayer(
+        source,
+        (message, active) => {
+          if (url === source) {
+            setStatus(message)
+            setPlaying(active)
+          }
+        },
+        (seconds) => {
+          if (url === source) {
+            setDuration(seconds)
+            setStatus('재생 준비 완료')
+          }
+        },
+        (seconds) => {
+          if (url === source && !scrubbing()) {
+            setPosition(seconds)
+          }
+        },
+      )
+    } catch (cause) {
+      clear()
+      setStatus(getExceptionMessage(cause, '플레이어를 준비하지 못했습니다.'))
+    }
+  }
+  const play = async (preview: boolean) => {
+    seekRevision += 1
+    const current = player
+    if (current === undefined) {
+      return
+    }
+    setPlaying(true)
+    try {
+      await current.play(connectionSeconds(), preview, position())
+    } catch (cause) {
+      if (current === player) {
+        setPlaying(false)
+        setStatus(getExceptionMessage(cause, '재생 실패'))
+      }
+    }
+  }
+  const stop = () => {
+    seekRevision += 1
+    player?.stop()
+    setPlaying(false)
+    setStatus('정지했습니다.')
+  }
+  const previewPosition = (seconds: number) => {
+    seekRevision += 1
+    if (!scrubbing()) {
+      positionBeforeScrubbing = position()
+    }
+    setScrubbing(true)
+    setPosition(seconds)
+  }
+  const seek = async () => {
+    const current = player
+    const target = position()
+    const previousPosition = positionBeforeScrubbing
+    const revision = (seekRevision += 1)
+    setScrubbing(false)
+    if (current === undefined) {
+      return
+    }
+    try {
+      await current.seek(target)
+      if (revision === seekRevision && current === player) {
+        positionBeforeScrubbing = position()
+      }
+    } catch (cause) {
+      if (revision === seekRevision && current === player) {
+        setPlaying(false)
+        setPosition(previousPosition)
+        setStatus(getExceptionMessage(cause, '위치 이동 실패'))
+      }
+    }
+  }
+  return {
+    connectionSeconds,
+    duration,
+    play,
+    playing,
+    position,
+    previewPosition,
+    seek,
+    select,
+    setConnectionSeconds,
+    status,
+    stop,
+  }
+}

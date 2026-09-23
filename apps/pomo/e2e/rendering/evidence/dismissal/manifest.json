@@ -1,0 +1,697 @@
+{
+  "run_id": "08ba8f9e-306e-412a-9267-d04478668d90",
+  "base_sha": "b716c2adb520a9478d7aa67e93c1df9f1ad9da94",
+  "current_product_sha": "b716c2adb520a9478d7aa67e93c1df9f1ad9da94",
+  "current_test_sha": "See PR body for the exact tested commit; this manifest was captured before commit.",
+  "os": "ProductName:\t\tmacOS\nProductVersion:\t\t26.5.2\nBuildVersion:\t\t25F84\n",
+  "arch": "arm64",
+  "playwright": "1.59.1",
+  "command": "pnpm exec playwright test --config=playwright.bugbot.config.ts --reporter=line,json (temporary config combined rendering and shared settings in web project; same rendering use settings)",
+  "stats": {
+    "startTime": "2026-09-10T08:12:04.056Z",
+    "duration": 41416.651000000005,
+    "expected": 9,
+    "skipped": 0,
+    "unexpected": 0,
+    "flaky": 0
+  },
+  "video": "off",
+  "trace": "off",
+  "scope": "Real local SolidStart UI/web localStorage. Empty playlist and fixed clock; placeholder loopback DB/auth. No live native/provider/active music verification.",
+  "screenshots": [
+    {
+      "name": "timer-dark",
+      "test": "should render timer settings and preserve saved durations and automatic playback",
+      "test_result": "passed",
+      "result": "변경 없음",
+      "comparison": "Unchanged default Playwright screenshot comparator; no baseline updates",
+      "baseline_code_sha": "b716c2adb520a9478d7aa67e93c1df9f1ad9da94",
+      "current_product_sha": "b716c2adb520a9478d7aa67e93c1df9f1ad9da94",
+      "baseline": "apps/pomo/e2e/rendering/pomodoro.spec.ts-snapshots/timer-dark-web-darwin.png",
+      "current": null,
+      "difference": null,
+      "baseline_sha256": "50ac351c2fe55521a5604b4a86ed38b8d6905e369b6cf161352f70b74fa8e7fd",
+      "current_sha256": "50ac351c2fe55521a5604b4a86ed38b8d6905e369b6cf161352f70b74fa8e7fd",
+      "raw_difference": {
+        "pixels": 0,
+        "max_channel_delta": 0
+      },
+      "environment": {
+        "devicePixelRatio": 1,
+        "locale": "ko-KR",
+        "theme": "dark",
+        "time": "2026-09-09T00:01:01.200Z",
+        "timezone": "Asia/Seoul",
+        "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.7727.15 Safari/537.36",
+        "viewport": {
+          "height": 960,
+          "width": 1280
+        },
+        "fonts": ["Pretendard Variable|loaded", "Pretendard Variable|unloaded"]
+      },
+      "environment_matches_previous": true,
+      "baseline_matches_git": true,
+      "raw_difference_cause": null
+    },
+    {
+      "name": "duration-editor-dark",
+      "test": "should render timer settings and preserve saved durations and automatic playback",
+      "test_result": "passed",
+      "result": "변경 없음",
+      "comparison": "Unchanged default Playwright screenshot comparator; no baseline updates",
+      "baseline_code_sha": "b716c2adb520a9478d7aa67e93c1df9f1ad9da94",
+      "current_product_sha": "b716c2adb520a9478d7aa67e93c1df9f1ad9da94",
+      "baseline": "apps/pomo/e2e/rendering/pomodoro.spec.ts-snapshots/duration-editor-dark-web-darwin.png",
+      "current": null,
+      "difference": null,
+      "baseline_sha256": "3f79e85d2f22d3ed903cb9dcf1b747cb1d4c5b0c20e59777575e673fbe8b5726",
+      "current_sha256": "3f79e85d2f22d3ed903cb9dcf1b747cb1d4c5b0c20e59777575e673fbe8b5726",
+      "raw_difference": {
+        "pixels": 0,
+        "max_channel_delta": 0
+      },
+      "environment": {
+        "devicePixelRatio": 1,
+        "locale": "ko-KR",
+        "theme": "dark",
+        "time": "2026-09-09T00:01:01.400Z",
+        "timezone": "Asia/Seoul",
+        "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.7727.15 Safari/537.36",
+        "viewport": {
+          "height": 960,
+          "width": 1280
+        },
+        "fonts": ["Pretendard Variable|loaded", "Pretendard Variable|unloaded"]
+      },
+      "environment_matches_previous": true,
+      "baseline_matches_git": true,
+      "raw_difference_cause": null
+    },
+    {
+      "name": "general-dark",
+      "test": "should render general settings and the theme menu in dark and light modes",
+      "test_result": "passed",
+      "result": "변경 없음",
+      "comparison": "Unchanged default Playwright screenshot comparator; no baseline updates",
+      "baseline_code_sha": "b716c2adb520a9478d7aa67e93c1df9f1ad9da94",
+      "current_product_sha": "b716c2adb520a9478d7aa67e93c1df9f1ad9da94",
+      "baseline": "apps/pomo/e2e/rendering/settings.spec.ts-snapshots/general-dark-web-darwin.png",
+      "current": "apps/pomo/e2e/rendering/evidence/dismissal/general-dark-current.png",
+      "difference": null,
+      "baseline_sha256": "b63c09d51745918dbce83ef4a17f5e34fe61cc61aa528abcca74f5c0f3eb01bd",
+      "current_sha256": "b63c09d51745918dbce83ef4a17f5e34fe61cc61aa528abcca74f5c0f3eb01bd",
+      "raw_difference": {
+        "pixels": 0,
+        "max_channel_delta": 0
+      },
+      "environment": {
+        "devicePixelRatio": 1,
+        "locale": "ko-KR",
+        "theme": "dark",
+        "time": "2026-09-09T00:01:01.200Z",
+        "timezone": "Asia/Seoul",
+        "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.7727.15 Safari/537.36",
+        "viewport": {
+          "height": 960,
+          "width": 1280
+        },
+        "fonts": ["Pretendard Variable|loaded", "Pretendard Variable|unloaded"]
+      },
+      "environment_matches_previous": true,
+      "baseline_matches_git": true,
+      "raw_difference_cause": null
+    },
+    {
+      "name": "general-light",
+      "test": "should render general settings and the theme menu in dark and light modes",
+      "test_result": "passed",
+      "result": "변경 없음",
+      "comparison": "Unchanged default Playwright screenshot comparator; no baseline updates",
+      "baseline_code_sha": "b716c2adb520a9478d7aa67e93c1df9f1ad9da94",
+      "current_product_sha": "b716c2adb520a9478d7aa67e93c1df9f1ad9da94",
+      "baseline": "apps/pomo/e2e/rendering/settings.spec.ts-snapshots/general-light-web-darwin.png",
+      "current": null,
+      "difference": null,
+      "baseline_sha256": "077e8914b05a0553d31bfec8d61cd41211d14ec0109a5efd5b3e613dcb97121c",
+      "current_sha256": "077e8914b05a0553d31bfec8d61cd41211d14ec0109a5efd5b3e613dcb97121c",
+      "raw_difference": {
+        "pixels": 0,
+        "max_channel_delta": 0
+      },
+      "environment": {
+        "devicePixelRatio": 1,
+        "locale": "ko-KR",
+        "theme": "",
+        "time": "2026-09-09T00:01:01.600Z",
+        "timezone": "Asia/Seoul",
+        "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.7727.15 Safari/537.36",
+        "viewport": {
+          "height": 960,
+          "width": 1280
+        },
+        "fonts": ["Pretendard Variable|loaded", "Pretendard Variable|unloaded"]
+      },
+      "environment_matches_previous": true,
+      "baseline_matches_git": true,
+      "raw_difference_cause": null
+    },
+    {
+      "name": "theme-menu-light",
+      "test": "should render general settings and the theme menu in dark and light modes",
+      "test_result": "passed",
+      "result": "변경 없음",
+      "comparison": "Unchanged default Playwright screenshot comparator; no baseline updates",
+      "baseline_code_sha": "b716c2adb520a9478d7aa67e93c1df9f1ad9da94",
+      "current_product_sha": "b716c2adb520a9478d7aa67e93c1df9f1ad9da94",
+      "baseline": "apps/pomo/e2e/rendering/settings.spec.ts-snapshots/theme-menu-light-web-darwin.png",
+      "current": "apps/pomo/e2e/rendering/evidence/dismissal/theme-menu-light-current.png",
+      "difference": null,
+      "baseline_sha256": "92b50102b04e80f01287a39559bbe1cd787167cc11b78cc86210c58770f03f5b",
+      "current_sha256": "92b50102b04e80f01287a39559bbe1cd787167cc11b78cc86210c58770f03f5b",
+      "raw_difference": {
+        "pixels": 0,
+        "max_channel_delta": 0
+      },
+      "environment": {
+        "devicePixelRatio": 1,
+        "locale": "ko-KR",
+        "theme": "",
+        "time": "2026-09-09T00:01:02.000Z",
+        "timezone": "Asia/Seoul",
+        "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.7727.15 Safari/537.36",
+        "viewport": {
+          "height": 960,
+          "width": 1280
+        },
+        "fonts": ["Pretendard Variable|loaded", "Pretendard Variable|unloaded"]
+      },
+      "environment_matches_previous": true,
+      "baseline_matches_git": true,
+      "raw_difference_cause": null
+    },
+    {
+      "name": "widgets-hidden-dark",
+      "test": "should stop a hidden timer and restore widget visibility preferences after reload",
+      "test_result": "passed",
+      "result": "변경 없음",
+      "comparison": "Unchanged default Playwright screenshot comparator; no baseline updates",
+      "baseline_code_sha": "b716c2adb520a9478d7aa67e93c1df9f1ad9da94",
+      "current_product_sha": "b716c2adb520a9478d7aa67e93c1df9f1ad9da94",
+      "baseline": "apps/pomo/e2e/rendering/settings.spec.ts-snapshots/widgets-hidden-dark-web-darwin.png",
+      "current": null,
+      "difference": null,
+      "baseline_sha256": "fb472fe4e8925c3c52f24d06435dcfe8694aa5bb5a30f1978802f7570ef61ce9",
+      "current_sha256": "fb472fe4e8925c3c52f24d06435dcfe8694aa5bb5a30f1978802f7570ef61ce9",
+      "raw_difference": {
+        "pixels": 0,
+        "max_channel_delta": 0
+      },
+      "environment": {
+        "devicePixelRatio": 1,
+        "locale": "ko-KR",
+        "theme": "dark",
+        "time": "2026-09-09T00:01:11.400Z",
+        "timezone": "Asia/Seoul",
+        "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.7727.15 Safari/537.36",
+        "viewport": {
+          "height": 960,
+          "width": 1280
+        },
+        "fonts": ["Pretendard Variable|loaded", "Pretendard Variable|unloaded"]
+      },
+      "environment_matches_previous": true,
+      "baseline_matches_git": true,
+      "raw_difference_cause": null
+    }
+  ],
+  "fonts": [
+    {
+      "path": "apps/pomo/public/fonts/pretendard/1.3.9/LICENSE.txt",
+      "sha256": "85fce85e25260b03777bf10373d3bd9363b9da96d9e0ca86a280dd37ed7667a0",
+      "matchesPinned": true
+    },
+    {
+      "path": "apps/pomo/public/fonts/pretendard/1.3.9/woff2-dynamic-subset/PretendardVariable.subset.0.woff2",
+      "sha256": "8713e83342c3f5ed316bf22bf50a3d991a5b5dd16c0c45c54a6ad81f62be7df3",
+      "matchesPinned": true
+    },
+    {
+      "path": "apps/pomo/public/fonts/pretendard/1.3.9/woff2-dynamic-subset/PretendardVariable.subset.1.woff2",
+      "sha256": "b1c51b35964614cf67d44166752af0c6cf3a2a4a50daf304af2a7327611242ae",
+      "matchesPinned": true
+    },
+    {
+      "path": "apps/pomo/public/fonts/pretendard/1.3.9/woff2-dynamic-subset/PretendardVariable.subset.10.woff2",
+      "sha256": "544f73152519f43c01aeda9489554a82e907019010795aab2fabc990a4e91f5a",
+      "matchesPinned": true
+    },
+    {
+      "path": "apps/pomo/public/fonts/pretendard/1.3.9/woff2-dynamic-subset/PretendardVariable.subset.11.woff2",
+      "sha256": "52f3cb7bf5d9feeadbe77902217113ea49b89a9bc0f135748e5ad599f322549f",
+      "matchesPinned": true
+    },
+    {
+      "path": "apps/pomo/public/fonts/pretendard/1.3.9/woff2-dynamic-subset/PretendardVariable.subset.12.woff2",
+      "sha256": "ba87086a06c38a8eba037034c54756415b5eee8bd386866adf79ccae5e63213d",
+      "matchesPinned": true
+    },
+    {
+      "path": "apps/pomo/public/fonts/pretendard/1.3.9/woff2-dynamic-subset/PretendardVariable.subset.13.woff2",
+      "sha256": "f9473c59d65080b75327d6b5f8ea53a3e2c417542d609fd1f12b0e084079e0b2",
+      "matchesPinned": true
+    },
+    {
+      "path": "apps/pomo/public/fonts/pretendard/1.3.9/woff2-dynamic-subset/PretendardVariable.subset.14.woff2",
+      "sha256": "dbf5fc513294d1942090faa226a53e882c8a72bebc1c701399b47cf7566c11ec",
+      "matchesPinned": true
+    },
+    {
+      "path": "apps/pomo/public/fonts/pretendard/1.3.9/woff2-dynamic-subset/PretendardVariable.subset.15.woff2",
+      "sha256": "d043fdd0fb1d707a57ddec602d3c9c5dd230fe1e8921ae1a6a3d0f6f5c504d6a",
+      "matchesPinned": true
+    },
+    {
+      "path": "apps/pomo/public/fonts/pretendard/1.3.9/woff2-dynamic-subset/PretendardVariable.subset.16.woff2",
+      "sha256": "f9da3e1e2f6ab97babdaaaf67f74308a3c4cb75a7c0e70efab295aaa62ecde67",
+      "matchesPinned": true
+    },
+    {
+      "path": "apps/pomo/public/fonts/pretendard/1.3.9/woff2-dynamic-subset/PretendardVariable.subset.17.woff2",
+      "sha256": "62a20965ab703ba906359c01e56ac49cb28651e5e23efc4777412ef775e949dd",
+      "matchesPinned": true
+    },
+    {
+      "path": "apps/pomo/public/fonts/pretendard/1.3.9/woff2-dynamic-subset/PretendardVariable.subset.18.woff2",
+      "sha256": "253726dfde6320f522bd7e7895df56e02312b677abb609c17ecbbb7952ce68cf",
+      "matchesPinned": true
+    },
+    {
+      "path": "apps/pomo/public/fonts/pretendard/1.3.9/woff2-dynamic-subset/PretendardVariable.subset.19.woff2",
+      "sha256": "0c005e3239d3f44ede30e7464171c93d8f4063b1279bb4805508c256ebe83929",
+      "matchesPinned": true
+    },
+    {
+      "path": "apps/pomo/public/fonts/pretendard/1.3.9/woff2-dynamic-subset/PretendardVariable.subset.2.woff2",
+      "sha256": "ddc9557de55b6534fb6802da96e03ca334449474eae71ec1a1eefa9b3fa40fd3",
+      "matchesPinned": true
+    },
+    {
+      "path": "apps/pomo/public/fonts/pretendard/1.3.9/woff2-dynamic-subset/PretendardVariable.subset.20.woff2",
+      "sha256": "06a4d6ce1c3e1c277239f490df8f17002cd6524b33a2d1e105b0ed16b2e061a1",
+      "matchesPinned": true
+    },
+    {
+      "path": "apps/pomo/public/fonts/pretendard/1.3.9/woff2-dynamic-subset/PretendardVariable.subset.21.woff2",
+      "sha256": "30d4f324dc4e480890682086d9873e4e6ea53617d5cc1526509ac4322b0abcc7",
+      "matchesPinned": true
+    },
+    {
+      "path": "apps/pomo/public/fonts/pretendard/1.3.9/woff2-dynamic-subset/PretendardVariable.subset.22.woff2",
+      "sha256": "5712a4ee03e83532b8c3efeeefcbf2dd105beea873f735a6373dab370c9d38e2",
+      "matchesPinned": true
+    },
+    {
+      "path": "apps/pomo/public/fonts/pretendard/1.3.9/woff2-dynamic-subset/PretendardVariable.subset.23.woff2",
+      "sha256": "bf5e603a72bcbd65ef80522c722caca2df7399dbc6dbd14c3b428f2c4571abdb",
+      "matchesPinned": true
+    },
+    {
+      "path": "apps/pomo/public/fonts/pretendard/1.3.9/woff2-dynamic-subset/PretendardVariable.subset.24.woff2",
+      "sha256": "d0cecc926613d63ef9e82b990f5a7dc721f87360bb5047fb53623b9a24e4be01",
+      "matchesPinned": true
+    },
+    {
+      "path": "apps/pomo/public/fonts/pretendard/1.3.9/woff2-dynamic-subset/PretendardVariable.subset.25.woff2",
+      "sha256": "4b520857cb0e6272a3582a504f7706e530f0f9718a82fec1c7b9cd13fd57f261",
+      "matchesPinned": true
+    },
+    {
+      "path": "apps/pomo/public/fonts/pretendard/1.3.9/woff2-dynamic-subset/PretendardVariable.subset.26.woff2",
+      "sha256": "608a2c01bc4ebe327b68fadf6b78dd842a912582950d16d56c2696594bd4242d",
+      "matchesPinned": true
+    },
+    {
+      "path": "apps/pomo/public/fonts/pretendard/1.3.9/woff2-dynamic-subset/PretendardVariable.subset.27.woff2",
+      "sha256": "8dcc8a46af7069935ab1209094bb8e1c890f854bfce377711bdcc99516e228ef",
+      "matchesPinned": true
+    },
+    {
+      "path": "apps/pomo/public/fonts/pretendard/1.3.9/woff2-dynamic-subset/PretendardVariable.subset.28.woff2",
+      "sha256": "484aaea385bf22d20a06a50c74202275a7a245446451c80ea1da7a96111f494e",
+      "matchesPinned": true
+    },
+    {
+      "path": "apps/pomo/public/fonts/pretendard/1.3.9/woff2-dynamic-subset/PretendardVariable.subset.29.woff2",
+      "sha256": "5481a19ad6067630f96a54432fa76a77943c1234bbd37537fba9aeea54710c9f",
+      "matchesPinned": true
+    },
+    {
+      "path": "apps/pomo/public/fonts/pretendard/1.3.9/woff2-dynamic-subset/PretendardVariable.subset.3.woff2",
+      "sha256": "3af919db7b7432ae34a0ea725f5dbbe4b80f6b351a349437339a07760ae02a62",
+      "matchesPinned": true
+    },
+    {
+      "path": "apps/pomo/public/fonts/pretendard/1.3.9/woff2-dynamic-subset/PretendardVariable.subset.30.woff2",
+      "sha256": "c1ed2a2f2927a3ccef124b6763147e12feb497157edc26752cba38646085d888",
+      "matchesPinned": true
+    },
+    {
+      "path": "apps/pomo/public/fonts/pretendard/1.3.9/woff2-dynamic-subset/PretendardVariable.subset.31.woff2",
+      "sha256": "95bd711a06b3a13b23b44d1b9aa49dc36e759a5ff1989a239fd6af3d750f8fef",
+      "matchesPinned": true
+    },
+    {
+      "path": "apps/pomo/public/fonts/pretendard/1.3.9/woff2-dynamic-subset/PretendardVariable.subset.32.woff2",
+      "sha256": "a2fb59661363e8f3ce21e344f6cd0c85fe7901b9e910d10a6f805a13c0c2d261",
+      "matchesPinned": true
+    },
+    {
+      "path": "apps/pomo/public/fonts/pretendard/1.3.9/woff2-dynamic-subset/PretendardVariable.subset.33.woff2",
+      "sha256": "ec28ff655691820931a57f7b6960922a0f3b7f655fe062c2fd11de86d6893269",
+      "matchesPinned": true
+    },
+    {
+      "path": "apps/pomo/public/fonts/pretendard/1.3.9/woff2-dynamic-subset/PretendardVariable.subset.34.woff2",
+      "sha256": "bdaffbd5c9fed912fb2d92866f2476953c6075a1c396817011b158fa146ef29f",
+      "matchesPinned": true
+    },
+    {
+      "path": "apps/pomo/public/fonts/pretendard/1.3.9/woff2-dynamic-subset/PretendardVariable.subset.35.woff2",
+      "sha256": "2f3c1deae8147772bf706b561701ee9a3ba7459436e9fad45c8102066e90f802",
+      "matchesPinned": true
+    },
+    {
+      "path": "apps/pomo/public/fonts/pretendard/1.3.9/woff2-dynamic-subset/PretendardVariable.subset.36.woff2",
+      "sha256": "d4e7580fb6bd8db8ac2daf2df3a41082b608476b9e4d8867756b28fb941bc6f8",
+      "matchesPinned": true
+    },
+    {
+      "path": "apps/pomo/public/fonts/pretendard/1.3.9/woff2-dynamic-subset/PretendardVariable.subset.37.woff2",
+      "sha256": "e5e19247f5eb141d5ee84994518a3f2fe7f2e4d2978e7451988b8fae73ac52a5",
+      "matchesPinned": true
+    },
+    {
+      "path": "apps/pomo/public/fonts/pretendard/1.3.9/woff2-dynamic-subset/PretendardVariable.subset.38.woff2",
+      "sha256": "17226de7caa3a041d9deb369db637a8480afa5ee9eeb8e5f8169a28ff54f57bd",
+      "matchesPinned": true
+    },
+    {
+      "path": "apps/pomo/public/fonts/pretendard/1.3.9/woff2-dynamic-subset/PretendardVariable.subset.39.woff2",
+      "sha256": "647e3532e8e5b2f5271c85eca2d909f32ae4791a17911cf66a635e8f6f4726c0",
+      "matchesPinned": true
+    },
+    {
+      "path": "apps/pomo/public/fonts/pretendard/1.3.9/woff2-dynamic-subset/PretendardVariable.subset.4.woff2",
+      "sha256": "993fcd2747f4d21f17b4a60bf5528d1c31825ca6a29ed942280bfba47825bedc",
+      "matchesPinned": true
+    },
+    {
+      "path": "apps/pomo/public/fonts/pretendard/1.3.9/woff2-dynamic-subset/PretendardVariable.subset.40.woff2",
+      "sha256": "12fb5a30e92ed1397b25125c9b75449f24b3b164ed28455968e8eefefd0cae0a",
+      "matchesPinned": true
+    },
+    {
+      "path": "apps/pomo/public/fonts/pretendard/1.3.9/woff2-dynamic-subset/PretendardVariable.subset.41.woff2",
+      "sha256": "41d390d3f3201a3714fb37f968f132ee78892d382655b64eb94688046fa97e35",
+      "matchesPinned": true
+    },
+    {
+      "path": "apps/pomo/public/fonts/pretendard/1.3.9/woff2-dynamic-subset/PretendardVariable.subset.42.woff2",
+      "sha256": "3e347fc722ea29c4c3347b204a139c4e76fe68884bde24159b25b8e0988bd8b5",
+      "matchesPinned": true
+    },
+    {
+      "path": "apps/pomo/public/fonts/pretendard/1.3.9/woff2-dynamic-subset/PretendardVariable.subset.43.woff2",
+      "sha256": "97a8be68deee3f724890b64cea61a4f59b2886a1d9f39604e24adec371c457a3",
+      "matchesPinned": true
+    },
+    {
+      "path": "apps/pomo/public/fonts/pretendard/1.3.9/woff2-dynamic-subset/PretendardVariable.subset.44.woff2",
+      "sha256": "8bd3bdcc7481b9a61bb570ab14ad1801b5f8a13df3f61d9bf2625bdad28e2a3b",
+      "matchesPinned": true
+    },
+    {
+      "path": "apps/pomo/public/fonts/pretendard/1.3.9/woff2-dynamic-subset/PretendardVariable.subset.45.woff2",
+      "sha256": "dff46d20074b8f3d9eeb05f7bea4ba0746d7d9887f8ec2dcb2280cadd2889ff7",
+      "matchesPinned": true
+    },
+    {
+      "path": "apps/pomo/public/fonts/pretendard/1.3.9/woff2-dynamic-subset/PretendardVariable.subset.46.woff2",
+      "sha256": "c443e627e1bc68e004d028eeeef57fad78e6b996ff03adfccc4ab05d551b82e4",
+      "matchesPinned": true
+    },
+    {
+      "path": "apps/pomo/public/fonts/pretendard/1.3.9/woff2-dynamic-subset/PretendardVariable.subset.47.woff2",
+      "sha256": "f242e40d23d0aac4583574da52d460b2a804f31d5f7aa435e5dc58ceaab35ac2",
+      "matchesPinned": true
+    },
+    {
+      "path": "apps/pomo/public/fonts/pretendard/1.3.9/woff2-dynamic-subset/PretendardVariable.subset.48.woff2",
+      "sha256": "e3dde5ed049d0a2a07050aca649ce4a1a1d7659b30b7871fa1d1bef1fec4da16",
+      "matchesPinned": true
+    },
+    {
+      "path": "apps/pomo/public/fonts/pretendard/1.3.9/woff2-dynamic-subset/PretendardVariable.subset.49.woff2",
+      "sha256": "5bbf61d013a4a9362841671cc56096a356377773d8b92dcb7ce71c89e3ce23da",
+      "matchesPinned": true
+    },
+    {
+      "path": "apps/pomo/public/fonts/pretendard/1.3.9/woff2-dynamic-subset/PretendardVariable.subset.5.woff2",
+      "sha256": "a4ad435d7abd68580606a20397920be734d9d49f1c420829a6493084e855912f",
+      "matchesPinned": true
+    },
+    {
+      "path": "apps/pomo/public/fonts/pretendard/1.3.9/woff2-dynamic-subset/PretendardVariable.subset.50.woff2",
+      "sha256": "f3bb8007d522f3d67cf6930ed417b0b911189eaaff08a5ab41eed790d18b6bb0",
+      "matchesPinned": true
+    },
+    {
+      "path": "apps/pomo/public/fonts/pretendard/1.3.9/woff2-dynamic-subset/PretendardVariable.subset.51.woff2",
+      "sha256": "530c8e2d2a5e01cc5bfacc40a947f2b3162ee084a718f3f938e5f084b3458462",
+      "matchesPinned": true
+    },
+    {
+      "path": "apps/pomo/public/fonts/pretendard/1.3.9/woff2-dynamic-subset/PretendardVariable.subset.52.woff2",
+      "sha256": "93f30e304a97b867e21f8e8a6dbc86df6047e7d1f2d34818261c381e859e1ded",
+      "matchesPinned": true
+    },
+    {
+      "path": "apps/pomo/public/fonts/pretendard/1.3.9/woff2-dynamic-subset/PretendardVariable.subset.53.woff2",
+      "sha256": "d0fe78c3e77b3f2b9ad3ceae3cfcd539b5f39a948af850b7912942cfbf7feefc",
+      "matchesPinned": true
+    },
+    {
+      "path": "apps/pomo/public/fonts/pretendard/1.3.9/woff2-dynamic-subset/PretendardVariable.subset.54.woff2",
+      "sha256": "37ed0b796e61205cabe4e20590d8800106a9a646d8a6f9e1da38581e637c3b80",
+      "matchesPinned": true
+    },
+    {
+      "path": "apps/pomo/public/fonts/pretendard/1.3.9/woff2-dynamic-subset/PretendardVariable.subset.55.woff2",
+      "sha256": "4b170f37c7be9dfa2ca332ce97e35dc02da7cb43531d7e2907d733f291b09222",
+      "matchesPinned": true
+    },
+    {
+      "path": "apps/pomo/public/fonts/pretendard/1.3.9/woff2-dynamic-subset/PretendardVariable.subset.56.woff2",
+      "sha256": "0f3624847670e49b273c0d638d0c1385a7178c8e38c70f9cd4afc1971880d279",
+      "matchesPinned": true
+    },
+    {
+      "path": "apps/pomo/public/fonts/pretendard/1.3.9/woff2-dynamic-subset/PretendardVariable.subset.57.woff2",
+      "sha256": "7c6aa4751ceb44a9a4af9c0ed80a7e95bc89d334a89231996ed84634093e128b",
+      "matchesPinned": true
+    },
+    {
+      "path": "apps/pomo/public/fonts/pretendard/1.3.9/woff2-dynamic-subset/PretendardVariable.subset.58.woff2",
+      "sha256": "cff4a57ea5e9c11218c9a0ca1380a5d6fb8fa7e9d13499038a7b4df12d0e4331",
+      "matchesPinned": true
+    },
+    {
+      "path": "apps/pomo/public/fonts/pretendard/1.3.9/woff2-dynamic-subset/PretendardVariable.subset.59.woff2",
+      "sha256": "4ae337e8895ac35b02a749e19d2b49ccb46ecdfabd09c51433c5eed206221579",
+      "matchesPinned": true
+    },
+    {
+      "path": "apps/pomo/public/fonts/pretendard/1.3.9/woff2-dynamic-subset/PretendardVariable.subset.6.woff2",
+      "sha256": "48b5ad9306b00b620b6d4acb3b8ba697cac7b271ee20da2f6351ba7c1406afa3",
+      "matchesPinned": true
+    },
+    {
+      "path": "apps/pomo/public/fonts/pretendard/1.3.9/woff2-dynamic-subset/PretendardVariable.subset.60.woff2",
+      "sha256": "4f6724848817f8a893c21686fd3c666492176cc453a82f2a1c7fad3170bbd13c",
+      "matchesPinned": true
+    },
+    {
+      "path": "apps/pomo/public/fonts/pretendard/1.3.9/woff2-dynamic-subset/PretendardVariable.subset.61.woff2",
+      "sha256": "0f36628cfb62fb7c6e4c26c0cac303d07578640c0328cd8cce9dbeaa2290af23",
+      "matchesPinned": true
+    },
+    {
+      "path": "apps/pomo/public/fonts/pretendard/1.3.9/woff2-dynamic-subset/PretendardVariable.subset.62.woff2",
+      "sha256": "1a2f8d760e6bfeb7f8611db8df550260145a7d48e8a4336016b21d699502c90f",
+      "matchesPinned": true
+    },
+    {
+      "path": "apps/pomo/public/fonts/pretendard/1.3.9/woff2-dynamic-subset/PretendardVariable.subset.63.woff2",
+      "sha256": "cced20f4434401b2088f1b6e414eaa193779e1575afb51ea43301066e9fec95a",
+      "matchesPinned": true
+    },
+    {
+      "path": "apps/pomo/public/fonts/pretendard/1.3.9/woff2-dynamic-subset/PretendardVariable.subset.64.woff2",
+      "sha256": "4d73796ddeaf1d1584f701f3d3761d091160cd78fd2ef05255f605c747e63ad7",
+      "matchesPinned": true
+    },
+    {
+      "path": "apps/pomo/public/fonts/pretendard/1.3.9/woff2-dynamic-subset/PretendardVariable.subset.65.woff2",
+      "sha256": "3bea94ae7ab0adfe697bcbf7a4366da48ae4518ff9ec9bc798ba2e0a271376fa",
+      "matchesPinned": true
+    },
+    {
+      "path": "apps/pomo/public/fonts/pretendard/1.3.9/woff2-dynamic-subset/PretendardVariable.subset.66.woff2",
+      "sha256": "73d60e9ad890a3b2674fe1fe7daf869708d7af6f4e93e364b19bb0a8bffde8d5",
+      "matchesPinned": true
+    },
+    {
+      "path": "apps/pomo/public/fonts/pretendard/1.3.9/woff2-dynamic-subset/PretendardVariable.subset.67.woff2",
+      "sha256": "24e38abacceaba8979f58c6b06bf0b56e915c32921b08be439befa016268abf5",
+      "matchesPinned": true
+    },
+    {
+      "path": "apps/pomo/public/fonts/pretendard/1.3.9/woff2-dynamic-subset/PretendardVariable.subset.68.woff2",
+      "sha256": "a0f33cbfd1a49928487778b69574191ea9f636581860aa8d299156c470a6d0f5",
+      "matchesPinned": true
+    },
+    {
+      "path": "apps/pomo/public/fonts/pretendard/1.3.9/woff2-dynamic-subset/PretendardVariable.subset.69.woff2",
+      "sha256": "c9aa76582f8ffb946f59639a265ca988a6a794e6d6e2582e9aedad18e6bc4adb",
+      "matchesPinned": true
+    },
+    {
+      "path": "apps/pomo/public/fonts/pretendard/1.3.9/woff2-dynamic-subset/PretendardVariable.subset.7.woff2",
+      "sha256": "0edd124bf5f5fee66118c25ce0f7257c701169603817b0ea385707043151bd9c",
+      "matchesPinned": true
+    },
+    {
+      "path": "apps/pomo/public/fonts/pretendard/1.3.9/woff2-dynamic-subset/PretendardVariable.subset.70.woff2",
+      "sha256": "8bccc361d2d7ad5c3891a7914505ffd0ed89cf0bd9a5f1f6c320f85af54cb041",
+      "matchesPinned": true
+    },
+    {
+      "path": "apps/pomo/public/fonts/pretendard/1.3.9/woff2-dynamic-subset/PretendardVariable.subset.71.woff2",
+      "sha256": "78ca0ca3a02fb86ff29c68e80c50555c29aa522f37f286e7ab5b3cd8fb0b2a51",
+      "matchesPinned": true
+    },
+    {
+      "path": "apps/pomo/public/fonts/pretendard/1.3.9/woff2-dynamic-subset/PretendardVariable.subset.72.woff2",
+      "sha256": "a2df48a0029fb84736c5570930e1e0f33af665bd1ec18b5930c7ee1077317e22",
+      "matchesPinned": true
+    },
+    {
+      "path": "apps/pomo/public/fonts/pretendard/1.3.9/woff2-dynamic-subset/PretendardVariable.subset.73.woff2",
+      "sha256": "fe4874885e6450739e9067af520b94cc5f60e56c36538b6db3df3aa7a37baf42",
+      "matchesPinned": true
+    },
+    {
+      "path": "apps/pomo/public/fonts/pretendard/1.3.9/woff2-dynamic-subset/PretendardVariable.subset.74.woff2",
+      "sha256": "b935b4839e30b68835341cb7c195ec2653d5df502281a14574af1593f03e63ff",
+      "matchesPinned": true
+    },
+    {
+      "path": "apps/pomo/public/fonts/pretendard/1.3.9/woff2-dynamic-subset/PretendardVariable.subset.75.woff2",
+      "sha256": "07f0ddae65c844dfe5d294087749e19b05e95cfd904b20df3501b040f1a5f61e",
+      "matchesPinned": true
+    },
+    {
+      "path": "apps/pomo/public/fonts/pretendard/1.3.9/woff2-dynamic-subset/PretendardVariable.subset.76.woff2",
+      "sha256": "20ccaae02a27753fe5f5b2cc0e6bb7ee3f4c5b61b6bf91cccc515334e97213ac",
+      "matchesPinned": true
+    },
+    {
+      "path": "apps/pomo/public/fonts/pretendard/1.3.9/woff2-dynamic-subset/PretendardVariable.subset.77.woff2",
+      "sha256": "9ab92ab7b4e3770a6f3a17ed34b0a26df5a0faf2c4f8e2d2685b36cf248ff751",
+      "matchesPinned": true
+    },
+    {
+      "path": "apps/pomo/public/fonts/pretendard/1.3.9/woff2-dynamic-subset/PretendardVariable.subset.78.woff2",
+      "sha256": "67f065415552e8c66da5e60fc67a891ec1ba74bfb9370078261bbf9a718a182f",
+      "matchesPinned": true
+    },
+    {
+      "path": "apps/pomo/public/fonts/pretendard/1.3.9/woff2-dynamic-subset/PretendardVariable.subset.79.woff2",
+      "sha256": "0bbdf492d859723843e118154b24573abdd62e781cb3827378e5dc65eeb8e0e9",
+      "matchesPinned": true
+    },
+    {
+      "path": "apps/pomo/public/fonts/pretendard/1.3.9/woff2-dynamic-subset/PretendardVariable.subset.8.woff2",
+      "sha256": "0fcc3858ccf1bfae9d1a13852583f7273e8a9bcb32b6f42fa47fe19d3041905c",
+      "matchesPinned": true
+    },
+    {
+      "path": "apps/pomo/public/fonts/pretendard/1.3.9/woff2-dynamic-subset/PretendardVariable.subset.80.woff2",
+      "sha256": "3802ad32c6c1bfa889c1019bd22d265c19392a6d52bbbd38e3a6fb99fdb0cf8f",
+      "matchesPinned": true
+    },
+    {
+      "path": "apps/pomo/public/fonts/pretendard/1.3.9/woff2-dynamic-subset/PretendardVariable.subset.81.woff2",
+      "sha256": "f0ae631ec332bbaf686a493d126ff56a8ac0c6284bdbb7542cef8fedd946fa66",
+      "matchesPinned": true
+    },
+    {
+      "path": "apps/pomo/public/fonts/pretendard/1.3.9/woff2-dynamic-subset/PretendardVariable.subset.82.woff2",
+      "sha256": "493e29967aa59d0f5326ae95fe163ca6e0ce9d95610838cc07a1f543a4a2e289",
+      "matchesPinned": true
+    },
+    {
+      "path": "apps/pomo/public/fonts/pretendard/1.3.9/woff2-dynamic-subset/PretendardVariable.subset.83.woff2",
+      "sha256": "f8f1fe652aaf3c759d78f37e48afe1c58c1d335e9261c5be2a2d90ff5bbfb9cc",
+      "matchesPinned": true
+    },
+    {
+      "path": "apps/pomo/public/fonts/pretendard/1.3.9/woff2-dynamic-subset/PretendardVariable.subset.84.woff2",
+      "sha256": "d28ace2d199ca5c6304a6191f4233e28ddb225d341d6e0b41db040e9447c2cc9",
+      "matchesPinned": true
+    },
+    {
+      "path": "apps/pomo/public/fonts/pretendard/1.3.9/woff2-dynamic-subset/PretendardVariable.subset.85.woff2",
+      "sha256": "757b9fc85ad85a1024fcacc04a9b688ace2db7af393e9ddc3b5dd2ba605b5a9b",
+      "matchesPinned": true
+    },
+    {
+      "path": "apps/pomo/public/fonts/pretendard/1.3.9/woff2-dynamic-subset/PretendardVariable.subset.86.woff2",
+      "sha256": "3e680901e55f16848b58d16d25870596495a6a073d9e3127fe481583ac4439b6",
+      "matchesPinned": true
+    },
+    {
+      "path": "apps/pomo/public/fonts/pretendard/1.3.9/woff2-dynamic-subset/PretendardVariable.subset.87.woff2",
+      "sha256": "04ca8277cfe3d27235573956255b0211575504cb695cdeab644c583df774e257",
+      "matchesPinned": true
+    },
+    {
+      "path": "apps/pomo/public/fonts/pretendard/1.3.9/woff2-dynamic-subset/PretendardVariable.subset.88.woff2",
+      "sha256": "192abc4c6ad933f53d809d8a46ee6237ae71e766bf66199fdce4678841fe12d7",
+      "matchesPinned": true
+    },
+    {
+      "path": "apps/pomo/public/fonts/pretendard/1.3.9/woff2-dynamic-subset/PretendardVariable.subset.89.woff2",
+      "sha256": "44634e793e0d50fcdf803a2ad513d8bf0482d9adccbbd4ef534325cae9b2ee01",
+      "matchesPinned": true
+    },
+    {
+      "path": "apps/pomo/public/fonts/pretendard/1.3.9/woff2-dynamic-subset/PretendardVariable.subset.9.woff2",
+      "sha256": "523e91cb7665f4a87767e3b0b5099753decba1bd33e3ce7733b92f71001da9a5",
+      "matchesPinned": true
+    },
+    {
+      "path": "apps/pomo/public/fonts/pretendard/1.3.9/woff2-dynamic-subset/PretendardVariable.subset.90.woff2",
+      "sha256": "ed2d605d80cbe4f2c1df801852f7a1d8ad5e1a4972b26d8fee93427317f32f09",
+      "matchesPinned": true
+    },
+    {
+      "path": "apps/pomo/public/fonts/pretendard/1.3.9/woff2-dynamic-subset/PretendardVariable.subset.91.woff2",
+      "sha256": "fc9fcd1bea9c8f43f97136a1e89bfa6e34db85f820f86538288647b4c24c5b06",
+      "matchesPinned": true
+    }
+  ],
+  "verification": "9 passed, 0 failed/skipped/flaky; all 6 PNGs pixel-identical to committed origin/dev baselines.",
+  "reason": "Merged PR1098 disabled settings Escape dismissal; replace obsolete close actions and verify nested menu, tabs, close button and restored focus.",
+  "limits": "Existing DB/auth placeholders; no real native device or remote provider. Exact-commit standard-config results are recorded in the PR."
+}

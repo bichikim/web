@@ -30,9 +30,9 @@ describe('toQueryString', () => {
     const result = toQueryString(
       {
         john: '_john',
-        // eslint-disable-next-line sort-keys-fix/sort-keys-fix
+        // eslint-disable-next-line project/sort-keys-fix
         foo: '_foo',
-        // eslint-disable-next-line sort-keys-fix/sort-keys-fix
+        // eslint-disable-next-line project/sort-keys-fix
         bar: '_bar',
       },
       {

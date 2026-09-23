@@ -118,11 +118,11 @@ beforeEach(() => {
   vi.stubGlobal('AudioContext', undefined)
   vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob:dialogue')
   vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => undefined)
-  vi.spyOn(window, 'requestAnimationFrame').mockImplementation((callback) => {
+  vi.spyOn(globalThis, 'requestAnimationFrame').mockImplementation((callback) => {
     animationFrames.push(callback)
     return 17
   })
-  vi.spyOn(window, 'cancelAnimationFrame').mockImplementation(() => undefined)
+  vi.spyOn(globalThis, 'cancelAnimationFrame').mockImplementation(() => undefined)
 })
 
 afterEach(() => {
@@ -160,6 +160,34 @@ describe('createEntryPlaybackController', () => {
     latestAudio().dispatchEvent(new Event('ended'))
     await queued
     expect(started).toEqual(['first', 'second'])
+  })
+
+  it('should replace active latest playback with the latest sequence', async () => {
+    const controller = createEntryPlaybackController()
+    const first = controller.playSequence(createRepository(), {
+      dialogueIds: ['first', 'stale'],
+      onDialogueStart: vi.fn(),
+      onSequenceStop: vi.fn(),
+      replacementPolicy: 'latest',
+    })
+
+    await flush()
+    const second = controller.playSequence(createRepository(), {
+      dialogueIds: ['latest'],
+      onDialogueStart: vi.fn(),
+      onSequenceStop: vi.fn(),
+      replacementPolicy: 'latest',
+    })
+    await second
+
+    latestAudio().dispatchEvent(new Event('ended'))
+    await flush()
+    await flush()
+    expect(TestAudio.instances).toHaveLength(2)
+
+    latestAudio().dispatchEvent(new Event('ended'))
+    await flush()
+    await first
   })
 
   it('should cancel loading and a pending play without reviving stale playback', async () => {

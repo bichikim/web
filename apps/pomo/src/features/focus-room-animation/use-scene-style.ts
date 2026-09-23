@@ -1,41 +1,33 @@
-import {createSignal, onCleanup, onMount} from 'solid-js'
-
+import {usePreference} from 'src/hooks/use-preference'
+import type {PreferenceStorage} from 'src/utils/preference-storage'
 import {getDefaultPSceneStyle, type PSceneStyle, type PSceneStyleController} from './scene-style'
 import {readPSceneStyle, writePSceneStyle} from './style-storage'
 
-/** Owns the browser-only lifecycle for the persisted focus-room scene style. */
+const SCENE_STYLE_STORAGE_KEY = 'pomo:focus-room-scene-style:v1'
+
+const parsePSceneStyle = (value: unknown): PSceneStyle | null => {
+  return value === 'original' || value === 'scribble' ? value : null
+}
+
+/** Adapts the scene-style repository to the shared preference provider. */
+const sceneStylePreferenceStorage: PreferenceStorage = {
+  read: () => readPSceneStyle().then(parsePSceneStyle),
+  write: (_key, value) => {
+    const sceneStyle = parsePSceneStyle(value)
+    return sceneStyle === null ? null : writePSceneStyle(sceneStyle).then(() => null)
+  },
+}
+
+/** Owns the provider-backed persisted focus-room scene style. */
 export const usePSceneStyle = (): PSceneStyleController => {
-  const [sceneStyle, setSceneStyle] = createSignal<PSceneStyle>(getDefaultPSceneStyle())
-  const [isReady, setIsReady] = createSignal(false)
-  let changeRevision = 0
-  const onSceneStyleChange = (nextSceneStyle: PSceneStyle) => {
-    changeRevision += 1
-    setSceneStyle(nextSceneStyle)
-    setIsReady(true)
-    writePSceneStyle(nextSceneStyle).catch(globalThis.reportError)
-  }
-
-  onMount(() => {
-    let active = true
-    const initialChangeRevision = changeRevision
-
-    readPSceneStyle()
-      .then((storedSceneStyle) => {
-        if (active && changeRevision === initialChangeRevision) {
-          setSceneStyle(storedSceneStyle)
-        }
-      })
-      .catch(globalThis.reportError)
-      .finally(() => {
-        if (active) {
-          setIsReady(true)
-        }
-      })
-
-    onCleanup(() => {
-      active = false
-    })
+  const [storedSceneStyle, setStoredSceneStyle] = usePreference<PSceneStyle>({
+    defaultValue: getDefaultPSceneStyle(),
+    key: SCENE_STYLE_STORAGE_KEY,
+    parse: parsePSceneStyle,
+    storage: sceneStylePreferenceStorage,
   })
+  const sceneStyle = () => storedSceneStyle() ?? getDefaultPSceneStyle()
+  const isReady = () => storedSceneStyle() !== null
 
-  return {isReady, onSceneStyleChange, sceneStyle}
+  return {isReady, onSceneStyleChange: setStoredSceneStyle, sceneStyle}
 }

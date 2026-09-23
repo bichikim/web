@@ -1,0 +1,337 @@
+/** @vitest-environment jsdom */
+
+import {fireEvent, render, screen} from '@solidjs/testing-library'
+import {createSignal} from 'solid-js'
+import {afterEach, beforeEach, expect, it, vi} from 'vitest'
+
+import {
+  useDesktopMode,
+  useDesktopSceneSettingsListener,
+  useDesktopSceneSettingsPublisher,
+} from '../../../features/desktop-mode'
+import {supportsPSceneGyroscope, usePSceneStyle} from '../../../features/focus-room-animation'
+import {usePScenePreferences} from '../../../features/focus-room-scene-preferences'
+import {useScreenSaver} from '../../../features/screen-saver'
+import {useWeather, type WeatherLocation} from '../../../features/weather'
+import {usePDisplayPreferences} from '../../../features/focus-room-display-preferences'
+import {PMusicPlayer} from '../../p-music-player/PMusicPlayer'
+import {DesktopPlayer} from '../Player'
+
+const playerActions = vi.hoisted(() => ({pause: vi.fn(), play: vi.fn()}))
+const playerActionsReady = vi.hoisted(() => ({value: true}))
+
+vi.mock('../../../features/focus-room-display-preferences', () => ({
+  usePDisplayPreferences: vi.fn(),
+}))
+
+vi.mock('@solidjs/meta', () => ({Title: (props: {readonly children?: unknown}) => props.children}))
+vi.mock('../../../features/focus-room-animation', () => ({
+  supportsPSceneGyroscope: vi.fn(),
+  usePSceneStyle: vi.fn(),
+}))
+vi.mock('../../../features/focus-room-scene-preferences', () => ({
+  usePScenePreferences: vi.fn(),
+}))
+vi.mock('../../../features/screen-saver', () => ({useScreenSaver: vi.fn()}))
+vi.mock('../../../features/desktop-mode', () => ({
+  useDesktopMode: vi.fn(),
+  useDesktopSceneSettingsListener: vi.fn(),
+  useDesktopSceneSettingsPublisher: vi.fn(),
+  useDesktopSurfaceSize: vi.fn(),
+}))
+vi.mock('../../../features/weather', () => ({useWeather: vi.fn()}))
+vi.mock('../../p-music-player/PMusicPlayer', () => ({
+  PMusicPlayer: vi.fn((props) => {
+    if (playerActionsReady.value) {
+      props.onPlaybackActionsReady?.(playerActions)
+    }
+    return (
+      <div data-expanded={String(props.expanded)} data-style={props.sceneStyle}>
+        <button onClick={() => props.onExpandedChange?.(!props.expanded)} type="button">
+          {props.expanded ? '플레이어 접기' : '플레이어 펼치기'}
+        </button>
+        플레이어
+      </div>
+    )
+  }),
+}))
+vi.mock('../../p-pomodoro/PPomodoro', () => ({
+  PPomodoro: vi.fn((props) => <div data-style={props.sceneStyle}>포모도로</div>),
+}))
+vi.mock('../../p-studio/Toolbar', () => ({
+  SceneToolbar: vi.fn((props) => {
+    Object.values(props)
+    return (
+      <div>
+        <span data-layout={props.layout}>설정</span>
+        <button onClick={() => props.onActivityChange('writing')} type="button">
+          활동
+        </button>
+        <button onClick={() => props.onGazeChange('user')} type="button">
+          시선
+        </button>
+        <button onClick={() => props.onMotionInputChange('drag')} type="button">
+          입력
+        </button>
+        <button onClick={() => props.onMotionModeChange('pan')} type="button">
+          움직임
+        </button>
+        <button onClick={() => props.onSceneStyleChange('scribble')} type="button">
+          스타일
+        </button>
+        <button onClick={() => props.onScreenSaverDelayChange('1h')} type="button">
+          화면 보호기
+        </button>
+        <button onClick={() => props.onTimeModeChange('auto')} type="button">
+          시간
+        </button>
+        <button onClick={() => props.onWeatherLocationChange(jejuLocation)} type="button">
+          도시
+        </button>
+        <button onClick={() => props.onWeatherEnabledChange(true)} type="button">
+          날씨
+        </button>
+        <button onClick={() => props.onWeatherSceneModeChange('rain')} type="button">
+          날씨 장면
+        </button>
+        <button onClick={() => props.onDesktopModeChange('interactiveDesktop')} type="button">
+          모드
+        </button>
+      </div>
+    )
+  }),
+}))
+
+const seoulLocation = {
+  country: '대한민국',
+  id: 'openweather:legacy:seoul',
+  legacyCitySlug: 'seoul',
+  name: '서울',
+  region: '서울특별시',
+} as const satisfies WeatherLocation
+
+const jejuLocation = {
+  country: '대한민국',
+  id: 'openweather:legacy:jeju',
+  legacyCitySlug: 'jeju',
+  name: '제주',
+  region: '제주특별자치도',
+} as const satisfies WeatherLocation
+
+const publish = vi.fn()
+const onModeChange = vi.fn().mockResolvedValue(undefined)
+let mode: 'desktop' | 'normal' = 'desktop'
+
+class TestBroadcastChannel {
+  static instances: TestBroadcastChannel[] = []
+  readonly close = vi.fn()
+  readonly listeners: Array<(event: MessageEvent) => void> = []
+  readonly postMessage = vi.fn()
+
+  constructor(readonly name: string) {
+    TestBroadcastChannel.instances.push(this)
+  }
+
+  addEventListener(_type: string, listener: (event: MessageEvent) => void) {
+    this.listeners.push(listener)
+  }
+
+  removeEventListener(_type: string, listener: (event: MessageEvent) => void) {
+    const index = this.listeners.indexOf(listener)
+    if (index >= 0) {
+      this.listeners.splice(index, 1)
+    }
+  }
+
+  dispatch(data: unknown) {
+    for (const listener of this.listeners) {
+      listener(new MessageEvent('message', {data}))
+    }
+  }
+}
+
+beforeEach(() => {
+  vi.useFakeTimers()
+  vi.clearAllMocks()
+  playerActionsReady.value = true
+  TestBroadcastChannel.instances = []
+  vi.stubGlobal('BroadcastChannel', TestBroadcastChannel)
+  vi.mocked(usePDisplayPreferences).mockReturnValue({
+    dialogueComposerVisible: () => false,
+    featureRequestVisible: () => true,
+    isReady: () => true,
+    memoryAssistVisible: () => true,
+    onDialogueComposerVisibleChange: vi.fn(),
+    onFeatureRequestVisibleChange: vi.fn(),
+    onMemoryAssistVisibleChange: vi.fn(),
+    onPlayerVisibleChange: vi.fn(),
+    onPomodoroVisibleChange: vi.fn(),
+    onToolsButtonVisibleChange: vi.fn(),
+    onTourButtonVisibleChange: vi.fn(),
+    playerVisible: () => true,
+    pomodoroVisible: () => true,
+    toolsButtonVisible: () => true,
+    tourButtonVisible: () => true,
+  })
+  mode = 'desktop'
+  vi.mocked(useDesktopMode).mockImplementation(() => ({
+    error: () => null,
+    isChanging: () => false,
+    mode: () => mode,
+    onModeChange,
+  }))
+  vi.mocked(usePSceneStyle).mockImplementation(() => {
+    const [sceneStyle, onSceneStyleChange] = createSignal<'original' | 'scribble'>('original')
+    return {isReady: () => true, onSceneStyleChange, sceneStyle}
+  })
+  vi.mocked(usePScenePreferences).mockImplementation(() => {
+    const [activity, onActivityChange] = createSignal<'reading' | 'writing'>('reading')
+    const [gaze, onGazeChange] = createSignal<'focused' | 'user'>('focused')
+    const [timeMode, onTimeModeChange] = createSignal<'auto' | 'day'>('day')
+    return {
+      activity,
+      gaze,
+      isReady: () => true,
+      onActivityChange,
+      onGazeChange,
+      onTimeModeChange,
+      timeMode,
+    }
+  })
+  vi.mocked(useScreenSaver).mockReturnValue({
+    delay: () => '10m',
+    isActive: () => false,
+    onDelayChange: vi.fn(),
+    onDismiss: vi.fn(),
+  })
+  vi.mocked(useWeather).mockReturnValue({
+    enabled: () => false,
+    isReady: () => true,
+    location: () => seoulLocation,
+    onEnabledChange: vi.fn(),
+    onLocationChange: vi.fn(),
+    onSceneModeChange: vi.fn(),
+    sceneCondition: () => 'clear',
+    sceneMode: () => 'auto',
+    state: () => ({status: 'disabled'}),
+  })
+  vi.mocked(useDesktopSceneSettingsPublisher).mockReturnValue({publish})
+  vi.mocked(supportsPSceneGyroscope).mockReturnValue(true)
+})
+
+afterEach(() => {
+  vi.useRealTimers()
+  vi.unstubAllGlobals()
+  document.documentElement.style.removeProperty('background')
+  document.body.style.removeProperty('background')
+})
+it('should synchronize scene style and hide a non-desktop surface', () => {
+  const view = render(() => <DesktopPlayer />)
+  expect(screen.getByText('플레이어')).toHaveAttribute('data-style', 'original')
+  expect(PMusicPlayer).toHaveBeenCalledOnce()
+  expect(vi.mocked(PMusicPlayer).mock.calls[0]?.[0].backdropBlur).toBe(false)
+  expect(useDesktopSceneSettingsListener).toHaveBeenCalledOnce()
+  view.unmount()
+  mode = 'normal'
+  render(() => <DesktopPlayer />)
+  expect(screen.queryByText('플레이어')).not.toBeInTheDocument()
+})
+
+it.each([
+  {actionId: 'music-start', method: 'play'},
+  {actionId: 'music-stop', method: 'pause'},
+] as const)(
+  'should apply the $actionId received from the desktop wallpaper',
+  ({actionId, method}) => {
+    render(() => <DesktopPlayer />)
+
+    TestBroadcastChannel.instances[0]?.dispatch({actionId})
+
+    expect(playerActions[method]).toHaveBeenCalledTimes(1)
+  },
+)
+
+it('should apply a desktop wallpaper action after playback controls become ready', () => {
+  playerActionsReady.value = false
+  render(() => <DesktopPlayer />)
+
+  TestBroadcastChannel.instances[0]?.dispatch({actionId: 'music-stop'})
+  expect(playerActions.pause).not.toHaveBeenCalled()
+
+  const props = vi.mocked(PMusicPlayer).mock.calls[0]?.[0]
+  if (props === undefined) {
+    throw new Error('Expected the desktop player to render.')
+  }
+  props.onPlaybackActionsReady?.(playerActions)
+
+  expect(playerActions.pause).toHaveBeenCalledTimes(1)
+})
+
+it('should announce when the desktop player subscribes to music actions', () => {
+  const view = render(() => <DesktopPlayer />)
+  const channel = TestBroadcastChannel.instances[0]
+
+  expect(channel?.postMessage).toHaveBeenCalledExactlyOnceWith({type: 'player-ready'})
+
+  channel?.dispatch({type: 'request-player-ready'})
+  expect(channel?.postMessage).toHaveBeenNthCalledWith(2, {type: 'player-ready'})
+
+  view.unmount()
+  expect(channel?.postMessage).toHaveBeenLastCalledWith({type: 'player-unavailable'})
+})
+
+it.each([
+  {actionId: 'music-start', method: 'play'},
+  {actionId: 'music-stop', method: 'pause'},
+] as const)(
+  'should apply the $actionId received while hidden once playback controls become ready',
+  ({actionId, method}) => {
+    const [visible, setVisible] = createSignal(false)
+    const preferences = usePDisplayPreferences()
+    vi.mocked(usePDisplayPreferences).mockReturnValue({...preferences, playerVisible: visible})
+    playerActionsReady.value = false
+
+    render(() => <DesktopPlayer />)
+
+    expect(screen.queryByText('플레이어')).not.toBeInTheDocument()
+    TestBroadcastChannel.instances[0]?.dispatch({actionId})
+    expect(playerActions[method]).not.toHaveBeenCalled()
+
+    playerActionsReady.value = true
+    setVisible(true)
+
+    expect(playerActions[method]).toHaveBeenCalledTimes(1)
+  },
+)
+
+it('should allow the desktop player to switch from expanded to compact mode', () => {
+  render(() => <DesktopPlayer />)
+
+  expect(screen.getByText('플레이어').parentElement).toHaveClass('h-[19.875rem]')
+  expect(screen.getByRole('button', {name: '플레이어 접기'})).toBeInTheDocument()
+
+  fireEvent.click(screen.getByRole('button', {name: '플레이어 접기'}))
+
+  expect(screen.getByText('플레이어').parentElement).toHaveClass('h-fit')
+  expect(screen.getByRole('button', {name: '플레이어 펼치기'})).toBeInTheDocument()
+})
+
+it('should wait for preferences and honor restored visibility', () => {
+  const [ready, setReady] = createSignal(false)
+  const [visible, setVisible] = createSignal(true)
+  const preferences = usePDisplayPreferences()
+  vi.mocked(usePDisplayPreferences).mockReturnValue({
+    ...preferences,
+    isReady: ready,
+    playerVisible: visible,
+  })
+  render(() => <DesktopPlayer />)
+  expect(screen.queryByText('플레이어')).not.toBeInTheDocument()
+  setVisible(false)
+  setReady(true)
+  expect(screen.queryByText('플레이어')).not.toBeInTheDocument()
+  setVisible(true)
+  expect(screen.getByText('플레이어')).toBeInTheDocument()
+  setVisible(false)
+  expect(screen.queryByText('플레이어')).not.toBeInTheDocument()
+})

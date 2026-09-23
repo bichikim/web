@@ -1,19 +1,3 @@
-# Git Commit Message Examples
+# Commit Message Format
 
-## Short Format
-
-```text
-update - add authentication component
-```
-
-## List Format For Multiple Changes
-
-```text
-update - implement user authentication and profile features
-
-- Add OAuth2 login flow with Google and GitHub
-- Create user profile management dashboard
-- Implement session handling and token refresh
-- Add protected route wrapper for authenticated pages
-- Set up user preferences storage and sync
-```
+Use `{type} - {subject}`. For multiple changes, separate the subject from the bullet-list body with a blank line.

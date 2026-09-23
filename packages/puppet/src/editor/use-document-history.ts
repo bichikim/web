@@ -1,3 +1,4 @@
+import {reconcileSkinning} from './internal/skinning'
 import {type Accessor, createSignal} from 'solid-js'
 
 import type {PuppetDocument} from '../player/document'
@@ -57,7 +58,7 @@ export const useDocumentHistory = (props: UseDocumentHistoryProps): DocumentHist
       appendPast(currentDocument)
     }
     setFuture([])
-    setCurrentDocument(nextDocument)
+    setCurrentDocument(reconcileSkinning(currentDocument, nextDocument))
   }
   const undo = () => {
     endTransaction()

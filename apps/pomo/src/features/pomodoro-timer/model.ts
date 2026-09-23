@@ -1,3 +1,5 @@
+import {clampUnit} from 'src/utils/clamp-unit'
+import {formatDuration} from 'src/utils/format-duration'
 export interface PomodoroTimerConfig {
   readonly focusSeconds: number
   readonly focusSessionsPerCycle: number
@@ -44,6 +46,11 @@ export type PomodoroTimerState = PomodoroIdleState | PomodoroPausedState | Pomod
 
 export interface PomodoroSynchronizationOptions {
   readonly autoStartNextPhase?: boolean
+}
+
+export interface PomodoroStopOptions {
+  readonly now?: number
+  readonly preserveRemainingProgress?: boolean
 }
 
 export const getPomodoroPhaseDuration = (
@@ -199,7 +206,23 @@ export const pausePomodoroTimer = (
 export const stopPomodoroTimer = (
   state: PomodoroTimerState,
   config: PomodoroTimerConfig = POMODORO_TIMER_CONFIG,
-): PomodoroTimerState => createIdleState(state.phase, state.completedFocusSessions, config)
+  options: PomodoroStopOptions = {},
+): PomodoroTimerState => {
+  const now = options.now ?? Date.now()
+  const synchronizedState =
+    state.status === 'running' ? synchronizePomodoroTimer(state, now, config) : state
+
+  if (options.preserveRemainingProgress) {
+    return {
+      completedFocusSessions: synchronizedState.completedFocusSessions,
+      phase: synchronizedState.phase,
+      remainingSeconds: getPomodoroRemainingSeconds(synchronizedState, now),
+      status: 'idle',
+    }
+  }
+
+  return createIdleState(synchronizedState.phase, synchronizedState.completedFocusSessions, config)
+}
 
 export const getPomodoroProgress = (
   state: PomodoroTimerState,
@@ -209,13 +232,13 @@ export const getPomodoroProgress = (
   const duration = getPomodoroPhaseDuration(state.phase, config)
   const remaining = getPomodoroRemainingSeconds(state, now)
 
-  return Math.min(1, Math.max(0, (duration - remaining) / duration))
+  return clampUnit((duration - remaining) / duration)
 }
 
-export const formatPomodoroTime = (seconds: number) => {
-  const clampedSeconds = Math.max(0, Math.floor(seconds))
-  const minutes = Math.floor(clampedSeconds / SECONDS_PER_MINUTE)
-  const remainder = clampedSeconds % SECONDS_PER_MINUTE
+const TIMER_DIGITS = 5
 
-  return `${String(minutes).padStart(2, '0')}:${String(remainder).padStart(2, '0')}`
-}
+export const formatPomodoroTime = (seconds: number) =>
+  formatDuration(Math.max(0, Math.floor(seconds)) * MILLISECONDS_PER_SECOND).padStart(
+    TIMER_DIGITS,
+    '0',
+  )

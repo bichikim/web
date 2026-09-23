@@ -9,7 +9,7 @@ import {
   useSupertonicVoiceLab,
 } from '../index'
 import type {SupertonicAudioPlayer} from '../audio-player'
-import {failureResult, successResult} from '../../result'
+import {failureResult, successResult} from 'src/features/result'
 
 const defaultRuntimeMocks = vi.hoisted(() => ({
   createAudioPlayer: vi.fn(),
@@ -237,6 +237,28 @@ describe('useSupertonicVoiceLab', () => {
     expect(voiceLab.controller.state().status).toBe('error')
     expect(voiceLab.controller.errorMessage()).toBe('WASM 음성 엔진을 준비하지 못했어요.')
     expect(voiceLab.controller.isModelReady()).toBe(false)
+    voiceLab.dispose()
+  })
+
+  it('should expose zero progress when the model download total is unknown', async () => {
+    const client = createClient()
+    let progressDuringPreparation = Number.NaN
+    const voiceLab = createVoiceLabRoot(createRuntime([client]))
+    vi.mocked(client.initialize).mockImplementationOnce(async (options) => {
+      options.onProgress({fileName: '모델', loadedBytes: 0, totalBytes: 0})
+      progressDuringPreparation = voiceLab.controller.progress()
+      return failureResult({
+        code: 'worker-failed',
+        detail: '다운로드 실패',
+        phase: 'initialize',
+        retryable: true,
+      })
+    })
+
+    await voiceLab.controller.prepare()
+
+    expect(progressDuringPreparation).toBe(0)
+    expect(Number.isNaN(progressDuringPreparation)).toBe(false)
     voiceLab.dispose()
   })
 

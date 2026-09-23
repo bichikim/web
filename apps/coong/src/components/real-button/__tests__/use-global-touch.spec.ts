@@ -25,13 +25,13 @@ describe('useGlobalTouchEmitter', () => {
     })
     const states: boolean[] = []
 
-    window.addEventListener(generateGlobalTouchEventName('C4'), ((event: CustomEvent) => {
+    globalThis.addEventListener(generateGlobalTouchEventName('C4'), ((event: CustomEvent) => {
       states.push(event.detail.down)
     }) as EventListener)
     const {cleanup} = renderHook(() => useGlobalTouchEmitter())
 
-    window.dispatchEvent(new MouseEvent('pointerdown', {clientX: 12, clientY: 34}))
-    window.dispatchEvent(new Event('pointercancel'))
+    globalThis.dispatchEvent(new MouseEvent('pointerdown', {clientX: 12, clientY: 34}))
+    globalThis.dispatchEvent(new Event('pointercancel'))
 
     expect(elementsFromPoint).toHaveBeenCalledWith(12, 34)
     expect(states).toEqual([true, false])

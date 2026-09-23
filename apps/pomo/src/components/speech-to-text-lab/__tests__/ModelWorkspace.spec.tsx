@@ -2,6 +2,7 @@
 
 import {fireEvent, render, screen} from '@solidjs/testing-library'
 import {createSignal} from 'solid-js'
+import {beforeEach, describe, expect, it, vi} from 'vitest'
 import {
   type SpeechActivity,
   type SpeechModelDefinition,
@@ -9,7 +10,6 @@ import {
   type SpeechToTextController,
   useSpeechToText,
 } from '../../../features/speech-to-text/index'
-import {beforeEach, describe, expect, it, vi} from 'vitest'
 
 import {SpeechModelWorkspace} from '../ModelWorkspace'
 

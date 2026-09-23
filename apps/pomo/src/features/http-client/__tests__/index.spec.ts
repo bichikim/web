@@ -1,3 +1,4 @@
+/** @vitest-environment node */
 import {afterEach, expect, it, vi} from 'vitest'
 
 import {apiFetch, httpFetch} from '..'
@@ -112,4 +113,49 @@ it('should resolve API, audio, and other relative assets from the public origin 
     'https://pomo.example/models/manifest.json',
     expect.any(Object),
   )
+})
+
+it('should keep Steam product audio catalogs local while keeping the API remote', async () => {
+  vi.stubEnv('VITE_POMO_IS_DESKTOP', 'true')
+  vi.stubEnv('VITE_POMO_DISTRIBUTION_TARGET', 'steam')
+  vi.stubEnv('VITE_POMO_PUBLIC_ORIGIN', 'https://pomo.example')
+  vi.resetModules()
+  const fetchMock = vi.fn<typeof fetch>().mockResolvedValue(new Response(null, {status: 200}))
+  vi.stubGlobal('fetch', fetchMock)
+  const steamClient = await import('..')
+
+  await steamClient.apiFetch('account')
+  await steamClient.audioFetch('playlist.json')
+
+  expect(fetchMock).toHaveBeenNthCalledWith(
+    1,
+    'https://pomo.example/api/account',
+    expect.any(Object),
+  )
+  expect(fetchMock).toHaveBeenNthCalledWith(2, '/audio/playlist.json', expect.any(Object))
+})
+
+it.each([
+  {development: false, expected: 'https://pomo.example/api/account'},
+  {development: true, expected: '/api/account'},
+])('should resolve mobile API requests with development=$development', async (scenario) => {
+  vi.stubEnv('DEV', scenario.development)
+  vi.stubEnv('VITE_POMO_IS_MOBILE', 'true')
+  vi.stubEnv('VITE_POMO_PUBLIC_ORIGIN', 'https://pomo.example')
+  vi.resetModules()
+  const fetchMock = vi.fn<typeof fetch>().mockResolvedValue(new Response(null, {status: 200}))
+  vi.stubGlobal('fetch', fetchMock)
+  const mobileClient = await import('..')
+
+  await mobileClient.apiFetch('account')
+
+  expect(fetchMock).toHaveBeenCalledWith(scenario.expected, expect.any(Object))
+})
+
+it('should preserve a caller-requested single GET attempt', async () => {
+  const fetchMock = vi.fn<typeof fetch>().mockResolvedValue(new Response(null, {status: 503}))
+  vi.stubGlobal('fetch', fetchMock)
+  const response = await apiFetch('admin/music', {retry: false})
+  expect(response.status).toBe(503)
+  expect(fetchMock).toHaveBeenCalledOnce()
 })

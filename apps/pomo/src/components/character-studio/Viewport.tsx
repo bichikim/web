@@ -1,5 +1,9 @@
+import type {FaceSettings} from './face-deformation'
+import type {ExpressionSettings} from './expressions'
 import {cx} from 'class-variance-authority'
-import {Show} from 'solid-js'
+import {createSignal, Show} from 'solid-js'
+import {CameraControls} from './CameraControls'
+import type {CameraCommand} from './camera-control'
 import {type CharacterRendererStatus} from '../../features/character-renderer/index'
 import {CharacterViewportCanvas} from './ViewportCanvas'
 
@@ -19,6 +23,9 @@ const HELP_CLASSES = cx(
 )
 
 interface CharacterViewportProps {
+  readonly expressions?: ExpressionSettings
+  readonly faceSettings?: FaceSettings
+  readonly eyeNarrowing?: number
   readonly modelUrl: string
   readonly onLoadError: () => void
   readonly onLoadProgress: (progress: number) => void
@@ -40,44 +47,64 @@ const getStatusLabel = (status: CharacterRendererStatus, progress: number) => {
   return '렌더링 중'
 }
 
-export const CharacterViewport = (props: CharacterViewportProps) => (
-  <div class={VIEWER_CLASSES}>
-    <CharacterViewportCanvas
-      modelUrl={props.modelUrl}
-      onLoadError={props.onLoadError}
-      onLoadProgress={props.onLoadProgress}
-      onLoadStart={props.onLoadStart}
-      onLoadSuccess={props.onLoadSuccess}
-    />
-    <Show when={props.status !== 'ready'}>
-      <div
-        class={cx(
-          'pointer-events-none absolute inset-0 grid min-h-105 place-items-center',
-          'bg-#111820/72 p-8 text-center backdrop-blur-sm 2xl:min-h-155',
-        )}
-      >
-        <div>
+export const CharacterViewport = (props: CharacterViewportProps) => {
+  const [cameraCommand, setCameraCommand] = createSignal<CameraCommand | null>(null)
+  const handleLoadStart = () => {
+    setCameraCommand(null)
+    props.onLoadStart()
+  }
+  return (
+    <div class="grid min-w-0 content-start gap-3">
+      <div class={VIEWER_CLASSES}>
+        <CharacterViewportCanvas
+          cameraCommand={cameraCommand()}
+          faceSettings={props.faceSettings}
+          expressions={props.expressions}
+          eyeNarrowing={props.eyeNarrowing}
+          modelUrl={props.modelUrl}
+          onLoadError={props.onLoadError}
+          onLoadProgress={props.onLoadProgress}
+          onLoadStart={handleLoadStart}
+          onLoadSuccess={props.onLoadSuccess}
+        />
+        <Show when={props.status !== 'ready'}>
           <div
-            class="mx-auto h-10 w-10 rounded-full border-2 border-white/15 border-t-#a9e5d2"
-            classList={{'animate-spin': props.status === 'loading'}}
+            class={cx(
+              'pointer-events-none absolute inset-0 grid min-h-105 place-items-center',
+              'bg-#111820/72 p-8 text-center backdrop-blur-sm 2xl:min-h-155',
+            )}
+          >
+            <div>
+              <div
+                class="mx-auto h-10 w-10 rounded-full border-2 border-white/15 border-t-#a9e5d2"
+                classList={{'animate-spin': props.status === 'loading'}}
+              />
+              <p class="mb-0 mt-4 text-sm text-#aab5bd">
+                {props.status === 'error'
+                  ? '이 브라우저에서 3D 모델을 불러오지 못했어요.'
+                  : 'Babylon.js 렌더러를 준비하고 있어요.'}
+              </p>
+            </div>
+          </div>
+        </Show>
+
+        <div class={STATUS_CLASSES}>
+          <span
+            class="h-2 w-2 shrink-0 rounded-full"
+            classList={{
+              'bg-#78d7b7': props.status === 'ready',
+              'bg-#efb18f': props.status !== 'ready',
+            }}
           />
-          <p class="mb-0 mt-4 text-sm text-#aab5bd">
-            {props.status === 'error'
-              ? '이 브라우저에서 3D 모델을 불러오지 못했어요.'
-              : 'Babylon.js 렌더러를 준비하고 있어요.'}
-          </p>
+          <span class="truncate text-#d9e1e6">{getStatusLabel(props.status, props.progress)}</span>
         </div>
+
+        <div class={HELP_CLASSES}>드래그해서 회전 · 휠로 확대</div>
       </div>
-    </Show>
-
-    <div class={STATUS_CLASSES}>
-      <span
-        class="h-2 w-2 shrink-0 rounded-full"
-        classList={{'bg-#78d7b7': props.status === 'ready', 'bg-#efb18f': props.status !== 'ready'}}
+      <CameraControls
+        disabled={props.status !== 'ready'}
+        onAction={(action) => setCameraCommand({action})}
       />
-      <span class="truncate text-#d9e1e6">{getStatusLabel(props.status, props.progress)}</span>
     </div>
-
-    <div class={HELP_CLASSES}>드래그해서 회전 · 휠로 확대</div>
-  </div>
-)
+  )
+}

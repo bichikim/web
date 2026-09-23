@@ -1,18 +1,14 @@
 import {HUNDRED} from '@winter-love/utils'
 import {cva, cx} from 'class-variance-authority'
 import {createMemo, Show, splitProps} from 'solid-js'
-import {PlayOptions} from 'src/use/instruments'
+import type {MusicData} from 'src/features/music'
 import {SProgress} from './SProgress'
 import {STypeIcon} from './STypeIcon'
-import type {Header} from '@winter-love/tonejs-midi'
 import {DragButton, DragButtonBodyProps} from '@winter-love/solid-components'
 import {SFlowDisplay} from 'src/components/flow-display'
 
-export interface MusicInfo extends PlayOptions {
+export interface MusicInfo extends MusicData {
   dragEndSize?: number
-  ext?: string
-  generated?: boolean
-  header?: Header
   /**
    * Currently generating AI MIDI
    */
@@ -21,7 +17,6 @@ export interface MusicInfo extends PlayOptions {
    * Currently suspended
    */
   isSuspend?: boolean
-  name: string
   /**
    * Currently playing target
    */

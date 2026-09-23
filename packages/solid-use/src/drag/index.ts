@@ -32,7 +32,6 @@ export interface DragPayload {
  * @experimental
  */
 export const useDrag = (
-  handleElement: MaybeAccessor<HTMLElement | null>,
   callback: (type: DragType, payload: DragPayload) => void,
   parentElement?: MaybeAccessor<HTMLElement | null | undefined>,
 ) => {
@@ -47,7 +46,7 @@ export const useDrag = (
 
   let currentPoint: {x: number; y: number} = {x: 0, y: 0}
 
-  useEvent(handleElement, 'pointerdown', (event) => {
+  const onPointerDown = (event: PointerEvent) => {
     const parentPosition = parentElementAccessor()?.getBoundingClientRect() ?? {x: 0, y: 0}
 
     const points: StartPoints = {
@@ -65,7 +64,7 @@ export const useDrag = (
       relativePoint: points.relativePoint,
       startPoint: points.point,
     })
-  })
+  }
 
   const onMoveEnd = () => {
     if (!pointDown()) {
@@ -110,4 +109,6 @@ export const useDrag = (
   useEvent(toggleValue(getWindow, pointDown, null), 'pointermove', (event) => {
     onMove(event.clientX, event.clientY)
   })
+
+  return {onPointerDown}
 }

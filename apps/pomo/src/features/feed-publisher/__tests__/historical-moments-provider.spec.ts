@@ -1,3 +1,4 @@
+/** @vitest-environment node */
 import {describe, expect, it, vi} from 'vitest'
 
 import {
@@ -6,7 +7,7 @@ import {
 } from '../historical-moments-provider'
 
 describe('createHistoricalMomentsProvider', () => {
-  it('should request the Korean calendar date and map stable public entries', async () => {
+  it('should request the requested calendar date and map stable public entries', async () => {
     const listPublished = vi.fn<HistoricalMomentSource['listPublished']>().mockResolvedValue([
       {
         contentHtml: '<p>광복을 맞았습니다.</p>',
@@ -21,6 +22,7 @@ describe('createHistoricalMomentsProvider', () => {
       now: () => new Date('2026-08-14T15:30:00.000Z'),
       origin: 'https://preview.pomo.example/some/path',
       source: {listPublished},
+      timeZone: 'Asia/Seoul',
     })
 
     await expect(provider.listEntries()).resolves.toEqual([
@@ -58,6 +60,7 @@ describe('createHistoricalMomentsProvider', () => {
       },
       origin: 'http://localhost:3000',
       source: {listPublished},
+      timeZone: 'Asia/Seoul',
     })
 
     await provider.listEntries()
@@ -74,6 +77,7 @@ describe('createHistoricalMomentsProvider', () => {
     const provider = createHistoricalMomentsProvider({
       origin: 'http://localhost:3000',
       source: {listPublished},
+      timeZone: 'Asia/Seoul',
     })
 
     try {
@@ -83,4 +87,21 @@ describe('createHistoricalMomentsProvider', () => {
       vi.useRealTimers()
     }
   })
+})
+
+it.each([
+  ['UTC', 31, 12],
+  ['Asia/Seoul', 1, 1],
+  ['America/Los_Angeles', 31, 12],
+  ['Pacific/Kiritimati', 1, 1],
+])('should select the viewer date in %s', async (timeZone, day, month) => {
+  const listPublished = vi.fn().mockResolvedValue([])
+  const provider = createHistoricalMomentsProvider({
+    now: () => new Date('2026-12-31T18:00:00Z'),
+    origin: 'https://pomo.example',
+    source: {listPublished},
+    timeZone,
+  })
+  await provider.listEntries()
+  expect(listPublished).toHaveBeenCalledWith({day, limit: 50, month})
 })

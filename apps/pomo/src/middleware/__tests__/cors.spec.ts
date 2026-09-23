@@ -1,3 +1,4 @@
+/** @vitest-environment node */
 import {H3, HTTPError, mockEvent} from 'h3'
 import {afterEach, describe, expect, it, vi} from 'vitest'
 

@@ -1,3 +1,4 @@
+import {PreferenceProvider} from 'src/hooks/use-preference'
 import {
   createConnection,
   createEventContext,
@@ -46,7 +47,9 @@ it('should cancel active generation, clear queued jobs, and preserve them for re
     await options.prepareModel(options.job.modelId)
     return {job: options.job, status: 'ready'}
   })
-  const view = renderHook(() => usePFeeds({events: createEventContext()}))
+  const view = renderHook(() => usePFeeds({events: createEventContext()}), {
+    wrapper: PreferenceProvider,
+  })
 
   await vi.waitFor(() => expect(feedGenerationRuntime.generateDialogueAudio).toHaveBeenCalledOnce())
   await view.result.cancelProcessing()
@@ -82,7 +85,9 @@ it('should stop a queued job before model preparation starts', async () => {
     successfulConnections: 1,
   })
   const generate = vi.spyOn(feedGenerationRuntime, 'generateDialogueAudio')
-  const view = renderHook(() => usePFeeds({events: createEventContext()}))
+  const view = renderHook(() => usePFeeds({events: createEventContext()}), {
+    wrapper: PreferenceProvider,
+  })
   cancelProcessing = view.result.cancelProcessing
 
   await vi.waitFor(() => expect(cancellation).not.toBeNull())
@@ -115,7 +120,9 @@ it('should ignore model preparation that finishes after cancellation', async () 
   })
   vi.spyOn(feedGenerationRuntime, 'createVoiceClient').mockResolvedValue(voiceClient)
   const generate = vi.spyOn(feedGenerationRuntime, 'generateDialogueAudio')
-  const view = renderHook(() => usePFeeds({events: createEventContext()}))
+  const view = renderHook(() => usePFeeds({events: createEventContext()}), {
+    wrapper: PreferenceProvider,
+  })
 
   await vi.waitFor(() => expect(preparationMocks.prepareFeedGeneration).toHaveBeenCalledOnce())
   await view.result.cancelProcessing()
@@ -142,7 +149,9 @@ it('should dispose a voice client that arrives after cancellation without restor
   })
   vi.spyOn(feedGenerationRuntime, 'createVoiceClient').mockReturnValue(clientCreation.promise)
   const generate = vi.spyOn(feedGenerationRuntime, 'generateDialogueAudio')
-  const view = renderHook(() => usePFeeds({events: createEventContext()}))
+  const view = renderHook(() => usePFeeds({events: createEventContext()}), {
+    wrapper: PreferenceProvider,
+  })
 
   await vi.waitFor(() => expect(feedGenerationRuntime.createVoiceClient).toHaveBeenCalledOnce())
   await view.result.cancelProcessing()
@@ -181,7 +190,9 @@ it('should ignore late initialization updates after cancellation', async () => {
   })
   vi.spyOn(feedGenerationRuntime, 'createVoiceClient').mockResolvedValue(voiceClient)
   const generate = vi.spyOn(feedGenerationRuntime, 'generateDialogueAudio')
-  const view = renderHook(() => usePFeeds({events: createEventContext()}))
+  const view = renderHook(() => usePFeeds({events: createEventContext()}), {
+    wrapper: PreferenceProvider,
+  })
 
   await vi.waitFor(() => expect(voiceClient.initialize).toHaveBeenCalledOnce())
   await view.result.cancelProcessing()
@@ -233,7 +244,9 @@ it('should ignore a generated result when cancellation happens while its item lo
       segments: [{durationMs: 1000, index: 0, startMs: 0, text: job.script}],
     },
   })
-  const view = renderHook(() => usePFeeds({events: createEventContext()}))
+  const view = renderHook(() => usePFeeds({events: createEventContext()}), {
+    wrapper: PreferenceProvider,
+  })
 
   await vi.waitFor(() => expect(repositoryMocks.feedRepository.listItems).toHaveBeenCalledOnce())
   await view.result.cancelProcessing()
@@ -281,7 +294,9 @@ it('should remove generated audio when cancellation happens while it saves', asy
   vi.spyOn(crypto, 'randomUUID')
     .mockReturnValueOnce('00000000-0000-4000-8000-000000000021')
     .mockReturnValueOnce('00000000-0000-4000-8000-000000000022')
-  const view = renderHook(() => usePFeeds({events: createEventContext()}))
+  const view = renderHook(() => usePFeeds({events: createEventContext()}), {
+    wrapper: PreferenceProvider,
+  })
 
   await vi.waitFor(() => expect(repositoryMocks.dialogueRepository.saveDialogue).toHaveBeenCalled())
   await view.result.cancelProcessing()

@@ -1,5 +1,6 @@
 export * from './breathing-motion'
 export * from './hair-motion'
+export * from './motion-environment'
 export * from './scene-catalog'
 export {P_MOUTH_TRANSITION_PATHS} from './scene-catalog-channels'
 export * from './scene-layout'

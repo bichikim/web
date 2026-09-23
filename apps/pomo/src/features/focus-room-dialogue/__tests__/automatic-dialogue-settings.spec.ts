@@ -1,8 +1,11 @@
+/** @vitest-environment node */
 import {expect, it, vi} from 'vitest'
 
 import {
+  AUTOMATIC_DIALOGUE_SETTINGS_STORAGE_KEY,
   createAutomaticDialogueSettingsRepository,
   DEFAULT_AUTOMATIC_DIALOGUE_SETTINGS,
+  parseAutomaticDialogueSettings,
 } from '../automatic-dialogue-settings'
 
 const createStorage = (storedValue: string | null = null) => ({
@@ -17,6 +20,13 @@ it('should use the compatible automatic generation defaults when no setting exis
   expect(repository.load()).toEqual(DEFAULT_AUTOMATIC_DIALOGUE_SETTINGS)
 })
 
+it('should parse only supported automatic generation settings', () => {
+  const settings = {modelId: 'int8', version: 1, voiceId: 'Yuna'} as const
+
+  expect(parseAutomaticDialogueSettings(settings)).toEqual(settings)
+  expect(parseAutomaticDialogueSettings({...settings, modelId: 'unknown'})).toBeNull()
+})
+
 it('should persist and restore the selected model and voice', () => {
   const storage = createStorage()
   const repository = createAutomaticDialogueSettingsRepository(storage)
@@ -24,7 +34,7 @@ it('should persist and restore the selected model and voice', () => {
 
   repository.save(settings)
   expect(storage.setItem).toHaveBeenCalledWith(
-    'pomo:automatic-dialogue-settings:v1',
+    AUTOMATIC_DIALOGUE_SETTINGS_STORAGE_KEY,
     JSON.stringify(settings),
   )
 

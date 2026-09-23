@@ -19,6 +19,7 @@
         "label": "background",
         "minHeight": 520,
         "minWidth": 420,
+        "devtools": false,
         "title": "Pomofi",
         "url": "/",
         "width": 1280

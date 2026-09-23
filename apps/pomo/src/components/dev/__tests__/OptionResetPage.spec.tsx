@@ -4,9 +4,9 @@ import {cleanup, fireEvent, render, screen, waitFor} from '@solidjs/testing-libr
 import {type JSX, Show} from 'solid-js'
 import {afterEach, beforeEach, expect, it, vi} from 'vitest'
 
-import {PModal, type PModalProps} from 'src/components/PModal'
+import {PModal, type PModalProps} from 'src/components/p-modal/PModal'
 import type {OptionResetManager} from 'src/features/dev-option-reset'
-import OptionResetPage from '../OptionResetPage'
+import {OptionResetPage} from '../OptionResetPage'
 
 vi.mock('@solidjs/meta', () => ({
   Title: (props: {children?: JSX.Element}) => <>{props.children}</>,
@@ -14,7 +14,7 @@ vi.mock('@solidjs/meta', () => ({
 vi.mock('@solidjs/router', () => ({
   A: (props: {children?: JSX.Element; href: string}) => <a href={props.href}>{props.children}</a>,
 }))
-vi.mock('src/components/PModal', () => ({PModal: vi.fn()}))
+vi.mock('src/components/p-modal/PModal', () => ({PModal: vi.fn()}))
 
 const createManager = (): OptionResetManager => ({
   reset: vi.fn(async () => ({status: 'complete'}) as const),
@@ -134,4 +134,19 @@ it('should distinguish unresolved storage items in a partial reset', async () =>
   expect(await screen.findByRole('alert')).toHaveTextContent(
     '저장 항목 1개는 초기화됐고 0개는 유지됐으며 1개는 상태를 확인하지 못했습니다.',
   )
+})
+
+it('should render its development page content', () => {
+  render(() => <OptionResetPage />)
+  expect(screen.getAllByText('각종 옵션 초기화', {exact: false}).length).toBeGreaterThan(0)
+})
+
+it('should offer and confirm the first-entry reset', async () => {
+  const manager = createManager()
+  render(() => <OptionResetPage manager={manager} />)
+  fireEvent.click(screen.getByRole('button', {name: '첫 입장 안내 옵션 초기화'}))
+  expect(screen.getByRole('dialog')).toHaveTextContent('첫 입장 안내 옵션을 초기화할까요?')
+  fireEvent.click(screen.getByRole('button', {name: '초기화'}))
+  await waitFor(() => expect(manager.reset).toHaveBeenCalledWith('entry'))
+  expect(await screen.findByRole('status')).toHaveTextContent('첫 입장 안내 옵션을 초기화했습니다.')
 })

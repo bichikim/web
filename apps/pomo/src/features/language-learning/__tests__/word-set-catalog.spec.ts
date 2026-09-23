@@ -1,4 +1,6 @@
-import {afterEach, describe, expect, it, vi} from 'vitest'
+/** @vitest-environment node */
+import {getRequestEvent} from 'solid-js/web'
+import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 
 import wordSetIndex from '../../../../public/word-sets/index.json'
 import englishB1 from '../../../../public/word-sets/english-b1.json'
@@ -10,8 +12,19 @@ import {
   parseLanguageLearningWordSetIndex,
 } from '../word-set-catalog'
 
+vi.mock('solid-js/web', () => ({getRequestEvent: vi.fn()}))
+
+beforeEach(() => {
+  vi.stubGlobal('fetch', vi.fn())
+  vi.stubEnv('POMO_ALLOW_LOCAL_ASSET_ORIGIN', 'false')
+  vi.stubEnv('POMO_PUBLIC_ASSET_ORIGIN', 'https://www.pomofi.io')
+  vi.mocked(getRequestEvent).mockReturnValue(undefined)
+})
+
 afterEach(() => {
+  vi.clearAllMocks()
   vi.unstubAllGlobals()
+  vi.unstubAllEnvs()
 })
 
 describe('word set catalog', () => {
@@ -57,6 +70,65 @@ describe('word set catalog', () => {
       '/word-sets/english-b1.json',
       '/word-sets/english-b2.json',
     ])
+  })
+
+  it('should use the trusted public origin during SSR', async () => {
+    vi.mocked(getRequestEvent).mockReturnValue({
+      request: new Request('https://example.invalid/language-learning/word-sets'),
+    } as ReturnType<typeof getRequestEvent>)
+    const fetchMock = vi.mocked(fetch)
+    fetchMock
+      .mockResolvedValueOnce(Response.json({sets: ['english-b1.json'], version: 1}))
+      .mockResolvedValueOnce(Response.json(englishB1))
+
+    await expect(loadLanguageLearningWordSets()).resolves.toEqual([englishB1])
+
+    expect(fetchMock.mock.calls.map(([input]) => String(input))).toEqual([
+      'https://www.pomofi.io/word-sets/index.json',
+      'https://www.pomofi.io/word-sets/english-b1.json',
+    ])
+  })
+
+  it('should preserve the word set asset network failure message', async () => {
+    vi.mocked(fetch).mockRejectedValue(new Error('offline'))
+
+    await expect(loadLanguageLearningWordSets()).rejects.toThrow(
+      'Failed to fetch language learning word set asset: /word-sets/index.json',
+    )
+  })
+
+  it('should preserve the word set asset HTTP failure message', async () => {
+    vi.mocked(fetch).mockResolvedValue(new Response(null, {status: 503}))
+
+    await expect(loadLanguageLearningWordSets()).rejects.toThrow(
+      'Failed to fetch language learning word set asset: 503',
+    )
+  })
+
+  it('should preserve the word set asset JSON parse failure message', async () => {
+    vi.mocked(fetch).mockResolvedValue(new Response('{'))
+
+    await expect(loadLanguageLearningWordSets()).rejects.toThrow(
+      'Failed to parse language learning word set asset: /word-sets/index.json',
+    )
+  })
+
+  it('should preserve the word set contract failure message for an invalid index', async () => {
+    vi.mocked(fetch).mockResolvedValue(Response.json({sets: [], version: 2}))
+
+    await expect(loadLanguageLearningWordSets()).rejects.toThrow(
+      'Invalid language learning word set index.',
+    )
+  })
+
+  it('should preserve the word set contract failure message for an invalid asset', async () => {
+    vi.mocked(fetch)
+      .mockResolvedValueOnce(Response.json({sets: ['english-b1.json'], version: 1}))
+      .mockResolvedValueOnce(Response.json({...englishB1, words: []}))
+
+    await expect(loadLanguageLearningWordSets()).rejects.toThrow(
+      'Invalid language learning word set.',
+    )
   })
 
   it('should reject an invalid word set', () => {

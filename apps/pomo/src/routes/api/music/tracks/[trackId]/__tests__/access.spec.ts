@@ -1,4 +1,5 @@
-import {beforeEach, describe, expect, it, vi} from 'vitest'
+/** @vitest-environment node */
+import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 
 const authMocks = vi.hoisted(() => ({authenticateAppRequest: vi.fn()}))
 const neonMocks = vi.hoisted(() => ({getNeonSession: vi.fn()}))
@@ -10,12 +11,12 @@ const repositoryMocks = vi.hoisted(() => ({
 }))
 const userMocks = vi.hoisted(() => ({findOrCreateNeonUser: vi.fn()}))
 
-vi.mock('src/server/music/catalog-repository', () => repositoryMocks)
+vi.mock('src/server/repositories/music-catalog', () => repositoryMocks)
 vi.mock('src/server/music/playback-access', () => playbackMocks)
 vi.mock('src/server/music/preview-access', () => previewMocks)
-vi.mock('src/server/user-auth/http', () => authMocks)
-vi.mock('src/server/user-auth/neon-session', () => neonMocks)
-vi.mock('src/server/user-auth/repository', () => userMocks)
+vi.mock('src/server/auth/authenticate-app-request', () => authMocks)
+vi.mock('src/server/auth/get-neon-session', () => neonMocks)
+vi.mock('src/server/repositories/auth', () => userMocks)
 
 import {GET} from '../access'
 import {invokeApiRoute} from '../../../../__tests__/invoke'
@@ -35,7 +36,9 @@ const createRequest = (authorization?: string): Request =>
 describe('track access route', () => {
   beforeEach(() => {
     authMocks.authenticateAppRequest.mockReset().mockResolvedValue(null)
-    neonMocks.getNeonSession.mockReset().mockResolvedValue({cookies: [], identity: null})
+    neonMocks.getNeonSession
+      .mockReset()
+      .mockResolvedValue({access: 'anonymous', identity: null, setCookies: []})
     playbackMocks.createPlaybackAccess.mockReset().mockResolvedValue({
       expiresAt: new Date('2026-08-23T01:15:00.000Z'),
       url: 'https://audio.pomofi.io/tracks/asset/source.mp3?token=signed',
@@ -49,6 +52,10 @@ describe('track access route', () => {
     userMocks.findOrCreateNeonUser.mockReset().mockResolvedValue('web-user-id')
   })
 
+  afterEach(() => {
+    vi.restoreAllMocks()
+  })
+
   it('should reject an anonymous preview request before catalog access', async () => {
     const response = await invokeApiRoute(GET, createRequest(), {trackId: TRACK_ID})
 
@@ -60,8 +67,9 @@ describe('track access route', () => {
 
   it('should issue a bounded preview URL for an authenticated web user without entitlement', async () => {
     neonMocks.getNeonSession.mockResolvedValue({
-      cookies: ['neon-session=refreshed'],
+      access: 'user',
       identity: {id: 'neon-user-id'},
+      setCookies: ['neon-session=refreshed'],
     })
 
     const response = await invokeApiRoute(GET, createRequest(), {trackId: TRACK_ID})
@@ -108,6 +116,21 @@ describe('track access route', () => {
     expect(playbackMocks.createPlaybackAccess).not.toHaveBeenCalled()
   })
 
+  it('should report when the Neon session is invalid', async () => {
+    neonMocks.getNeonSession.mockResolvedValue({
+      access: 'invalid',
+      identity: null,
+      setCookies: ['neon-session=refreshed'],
+    })
+
+    const response = await invokeApiRoute(GET, createRequest(), {trackId: TRACK_ID})
+
+    expect(response.status).toBe(503)
+    await expect(response.json()).resolves.toEqual({error: 'authentication_unavailable'})
+    expect(response.headers.getSetCookie()).toEqual(['neon-session=refreshed'])
+    expect(repositoryMocks.findPublishedTrackPreviewAsset).not.toHaveBeenCalled()
+  })
+
   it('should reject an invalid track identifier before authentication', async () => {
     const response = await invokeApiRoute(GET, createRequest(), {trackId: 'invalid'})
 
@@ -118,8 +141,8 @@ describe('track access route', () => {
 
   it('should report a missing published preview asset', async () => {
     neonMocks.getNeonSession.mockResolvedValue({
-      cookies: [],
       identity: {id: 'neon-user-id'},
+      setCookies: [],
     })
     repositoryMocks.findPublishedTrackPreviewAsset.mockResolvedValue(null)
 
@@ -128,6 +151,41 @@ describe('track access route', () => {
     expect(response.status).toBe(404)
     await expect(response.json()).resolves.toEqual({error: 'track_not_found'})
     expect(previewMocks.createPreviewAccess).not.toHaveBeenCalled()
+  })
+
+  it('should preserve refreshed session cookies when access resolution fails', async () => {
+    const error = new Error('catalog down')
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => undefined)
+    neonMocks.getNeonSession.mockResolvedValue({
+      identity: {id: 'neon-user-id'},
+      setCookies: ['neon-session=refreshed'],
+    })
+    repositoryMocks.findEntitledTrackPlaybackAsset.mockRejectedValue(error)
+
+    const response = await invokeApiRoute(GET, createRequest(), {trackId: TRACK_ID})
+
+    expect(response.status).toBe(503)
+    await expect(response.json()).resolves.toEqual({error: 'track_access_unavailable'})
+    expect(response.headers.getSetCookie()).toEqual(['neon-session=refreshed'])
+    expect(consoleError).toHaveBeenCalledWith('Failed to resolve music track access', error)
+  })
+
+  it('should preserve refreshed session cookies when user resolution fails', async () => {
+    const error = new Error('user mapping down')
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => undefined)
+    neonMocks.getNeonSession.mockResolvedValue({
+      identity: {id: 'neon-user-id'},
+      setCookies: ['neon-session=refreshed'],
+    })
+    userMocks.findOrCreateNeonUser.mockRejectedValue(error)
+
+    const response = await invokeApiRoute(GET, createRequest(), {trackId: TRACK_ID})
+
+    expect(response.status).toBe(503)
+    await expect(response.json()).resolves.toEqual({error: 'track_access_unavailable'})
+    expect(response.headers.getSetCookie()).toEqual(['neon-session=refreshed'])
+    expect(consoleError).toHaveBeenCalledTimes(1)
+    expect(consoleError).toHaveBeenCalledWith('Failed to resolve music track access', error)
   })
 
   it('should hide access resolution failures behind a stable service error', async () => {

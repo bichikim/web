@@ -13,7 +13,7 @@ import {ToastContext} from '@winter-love/solid-components'
 import {useStorage} from '@winter-love/solid-use'
 
 vi.mock('@winter-love/solid-use', () => ({useStorage: vi.fn()}))
-vi.mock('src/use/restore-scroll', () => ({useRestoreScroll: vi.fn()}))
+vi.mock('src/use/restore-scroll', () => ({useRestoreScroll: vi.fn(() => ({onScroll: vi.fn()}))}))
 vi.mock('src/components/instruments', () => ({
   SPiano: (props: {showKeyName?: boolean}) => (
     <div data-testid="piano" data-show-key-name={String(props.showKeyName)} />

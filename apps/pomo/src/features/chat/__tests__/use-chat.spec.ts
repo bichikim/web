@@ -26,7 +26,12 @@ interface ClientRecord {
   readonly respond: (response: ChatWorkerResponse) => void
 }
 
-const createRuntime = () => {
+interface ClientOverrides {
+  readonly generate?: ChatClient['generate']
+  readonly prepare?: ChatClient['prepare']
+}
+
+const createRuntime = (clientOverrides: ClientOverrides = {}) => {
   const clients: Array<ClientRecord> = []
   let nextId = 0
   const supportsWebGpu = vi.fn(() => true)
@@ -34,8 +39,8 @@ const createRuntime = () => {
     createClient: (options) => {
       const client: ChatClient = {
         dispose: vi.fn(),
-        generate: vi.fn(),
-        prepare: vi.fn(),
+        generate: clientOverrides.generate ?? vi.fn(),
+        prepare: clientOverrides.prepare ?? vi.fn(),
       }
       clients.push({client, modelId: options.modelId, respond: options.onResponse})
       return client
@@ -91,6 +96,28 @@ describe('useChat', () => {
 
     result.prepare()
     expect(clients[1]?.modelId).toBe('gemma-4-e2b-mobile')
+    cleanup()
+  })
+
+  it('should forward transient supplementary context without storing it in conversation history', () => {
+    const {clients, runtime} = createRuntime()
+    const {cleanup, result} = renderHook(() => useChat({modelId: 'qwen-4b', runtime}))
+    result.prepare()
+    const clientRecord = clients[0]
+    clientRecord?.respond({type: 'ready'})
+    result.setDraft('오늘 일정 알려줘')
+
+    result.send({supplementaryContext: '캘린더 조회 결과'})
+
+    expect(clientRecord?.client.generate).toHaveBeenCalledWith(
+      {
+        messages: [{content: '오늘 일정 알려줘', id: 'id-1', role: 'user'}],
+        summary: '',
+      },
+      'id-2',
+      {refineAnswer: true, supplementaryContext: '캘린더 조회 결과'},
+    )
+    expect(result.messages()).toEqual([{content: '오늘 일정 알려줘', id: 'id-1', role: 'user'}])
     cleanup()
   })
 
@@ -218,6 +245,7 @@ describe('useChat', () => {
       assistantMessage,
     ])
     expect(result.streamingText()).toBe('')
+    expect(result.answerDraft()).toBeNull()
     expect(result.contextTokens()).toBe(8)
     expect(result.summaryCount()).toBe(1)
     expect(result.canClear()).toBe(true)
@@ -230,6 +258,62 @@ describe('useChat', () => {
     expect(result.summaryCount()).toBe(0)
     expect(result.canClear()).toBe(false)
     result.clear()
+    cleanup()
+  })
+
+  it('should return to idle after synchronous preparation failure', () => {
+    const error = new DOMException('Unable to clone request', 'DataCloneError')
+    const prepare = vi.fn().mockImplementationOnce(() => {
+      throw error
+    })
+    const {clients, runtime} = createRuntime({prepare})
+    const {cleanup, result} = renderHook(() => useChat({modelId: 'qwen-4b', runtime}))
+
+    expect(() => result.prepare()).not.toThrow()
+
+    expect(clients[0]?.client.prepare).toHaveBeenCalledOnce()
+    expect(result.state()).toEqual({status: 'idle'})
+    expect(result.isBusy()).toBe(false)
+    expect(result.canPrepare()).toBe(true)
+
+    result.prepare()
+
+    expect(prepare).toHaveBeenCalledTimes(2)
+    expect(result.state()).toEqual({percentage: 0, status: 'loading'})
+    cleanup()
+  })
+
+  it('should restore a question after synchronous generation failure', () => {
+    const error = new DOMException('Unable to clone request', 'DataCloneError')
+    const generate = vi.fn().mockImplementationOnce(() => {
+      throw error
+    })
+    const {clients, runtime} = createRuntime({generate})
+    const {cleanup, result} = renderHook(() => useChat({modelId: 'qwen-4b', runtime}))
+    result.prepare()
+    const clientRecord = clients[0]
+    clientRecord?.respond({type: 'ready'})
+    result.setDraft('  다시 시도할 질문  ')
+
+    expect(() => result.send()).not.toThrow()
+
+    expect(result.state()).toEqual({status: 'ready'})
+    expect(result.draft()).toBe('다시 시도할 질문')
+    expect(result.messages()).toEqual([])
+    expect(result.canSend()).toBe(true)
+
+    result.send()
+    expect(generate).toHaveBeenCalledTimes(2)
+    expect(clientRecord?.client.generate).toHaveBeenLastCalledWith(
+      {
+        messages: [{content: '다시 시도할 질문', id: 'id-3', role: 'user'}],
+        summary: '',
+      },
+      'id-4',
+      {refineAnswer: true},
+    )
+    expect(result.state()).toEqual({status: 'generating'})
+    expect(result.draft()).toBe('')
     cleanup()
   })
 
@@ -277,6 +361,40 @@ describe('useChat', () => {
       'id-4',
       {refineAnswer: false},
     )
+    cleanup()
+  })
+
+  it('should preserve a newer draft after a recoverable generation error', () => {
+    const {clients, runtime} = createRuntime()
+    const {cleanup, result} = renderHook(() => useChat({modelId: 'qwen-4b', runtime}))
+    result.prepare()
+    const clientRecord = clients[0]
+    clientRecord?.respond({type: 'ready'})
+    result.setDraft('첫 질문')
+
+    result.send({refineAnswer: false})
+    result.setDraft('다음 질문')
+    clientRecord?.respond({message: '생성에 실패했어요.', restartRequired: false, type: 'error'})
+
+    expect(result.draft()).toBe('다음 질문')
+    expect(result.messages()).toEqual([])
+    cleanup()
+  })
+
+  it('should preserve an intentionally cleared draft after a recoverable generation error', () => {
+    const {clients, runtime} = createRuntime()
+    const {cleanup, result} = renderHook(() => useChat({modelId: 'qwen-4b', runtime}))
+    result.prepare()
+    const clientRecord = clients[0]
+    clientRecord?.respond({type: 'ready'})
+    result.setDraft('첫 질문')
+
+    result.send({refineAnswer: false})
+    result.setDraft('')
+    clientRecord?.respond({message: '생성에 실패했어요.', restartRequired: false, type: 'error'})
+
+    expect(result.draft()).toBe('')
+    expect(result.messages()).toEqual([])
     cleanup()
   })
 

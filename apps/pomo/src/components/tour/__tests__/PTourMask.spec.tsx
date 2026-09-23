@@ -19,30 +19,19 @@ const BOUNDS = {
 describe('PTourMask', () => {
   it('should leave a control-rounded target area uncovered without a highlight border', () => {
     const {container} = render(() => <PTourMask targetBounds={BOUNDS} />)
+    const maskElement = container.querySelector<HTMLElement>('[data-part="mask"]')
 
-    expect(container.querySelector('[data-part="top"]')).toHaveClass('backdrop-blur-[8px]')
-    expect(container.querySelector('[data-part="top"]')).toHaveStyle({height: '52px'})
-    expect(container.querySelector('[data-part="left"]')).toHaveStyle({
-      height: '64px',
-      top: '52px',
-      width: '32px',
-    })
-    expect(container.querySelector('[data-part="right"]')).toHaveStyle({
-      height: '64px',
-      left: '168px',
-      top: '52px',
-    })
-    expect(container.querySelector('[data-part="bottom"]')).toHaveStyle({top: '116px'})
-    expect(container.querySelectorAll('[data-corner]')).toHaveLength(4)
-    expect(container.querySelector('[data-corner="top-left"]')).toHaveStyle({
-      height: '32px',
-      left: '32px',
-      top: '52px',
-      width: '32px',
-    })
-    expect(container.querySelector('[data-corner="top-left"]')).toHaveStyle({
-      maskImage: 'radial-gradient(circle at 100% 100%, transparent 32px, black 32px)',
-    })
+    expect(maskElement).toHaveClass('backdrop-blur-[8px]', 'pomo-tour-mask')
+    expect(maskElement?.style.getPropertyValue('--target-bottom')).toBe('116px')
+    expect(maskElement?.style.getPropertyValue('--target-height')).toBe('64px')
+    expect(maskElement?.style.getPropertyValue('--target-left')).toBe('32px')
+    expect(maskElement?.style.getPropertyValue('--target-right')).toBe('168px')
+    expect(maskElement?.style.getPropertyValue('--target-top')).toBe('52px')
+    expect(maskElement?.style.getPropertyValue('--target-width')).toBe('136px')
+    expect(container.querySelectorAll('[data-part="mask"]')).toHaveLength(1)
+    expect(container.querySelector('[data-part="top"]')).not.toBeInTheDocument()
+    expect(container.querySelector('[data-part="left"]')).not.toBeInTheDocument()
+    expect(container.querySelectorAll('[data-corner]')).toHaveLength(0)
     expect(container.querySelector('[data-part="highlight"]')).not.toBeInTheDocument()
   })
 

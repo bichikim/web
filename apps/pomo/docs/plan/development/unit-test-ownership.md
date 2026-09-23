@@ -12,6 +12,14 @@ Give every executable Pomo source file one dedicated unit-test target. A test fi
 - Imports used only as mocked dependencies, fixtures, or helpers do not become additional targets.
 - Verify with Wallaby first, then run Pomo lint, typecheck, format, and diff checks.
 
+## Player ownership
+
+Playback belongs to `components/media-player`; playlist presentation belongs to `components/music-player` and `components/music-player-view`.
+
+- Playback order and restoration are separated into `use-playback-order.ts` and `use-playlist-restoration.ts`; `use-player-controller.ts` coordinates them.
+- `PMusicPlayerContent` integration coverage is split by device, transport, preview, presentation, and queue-restoration responsibilities in `components/music-player/__tests__/`. Each file still has `PMusicPlayerContent.tsx` as its only production target; `test-support/player-fixtures.ts` provides only typed fixtures and DOM helpers, while `test-support/AlbumLibraryFixture.tsx` owns the album-library fixture component. The default component test and the persistence-specific test retain their separate scopes in that directory.
+- Shared type declarations live in each player directory’s `types.ts`.
+
 ## Execution order
 
 1. `server/**` — isolate schema, persistence, storage, HTTP, authentication, and weather boundaries.
@@ -20,7 +28,7 @@ Give every executable Pomo source file one dedicated unit-test target. A test fi
 4. `features/**` — separate barrel, hook, worker, storage, and animation ownership.
 5. `components/**` — split aggregate component tests and add leaf-component ownership.
 
-## Current inventory
+## Baseline inventory
 
 - Executable source targets: 781
 - Unit-test files: 580
@@ -51,7 +59,7 @@ Give every executable Pomo source file one dedicated unit-test target. A test fi
 - [x] `apps/pomo/src/server/music/track-upload/storage.ts`
 - [x] `apps/pomo/src/server/music/track-upload.ts`
 - [x] `apps/pomo/src/server/weather/locations.ts`
-- [x] `apps/pomo/src/server/weather/repository.ts`
+- [x] `apps/pomo/src/server/repositories/weather/index.ts`
 
 ## middleware/\*\* (1)
 
@@ -204,7 +212,6 @@ Give every executable Pomo source file one dedicated unit-test target. A test fi
 - [ ] `apps/pomo/src/features/text-generation/messages.ts`
 - [ ] `apps/pomo/src/features/text-generation/qwen-model.ts`
 - [ ] `apps/pomo/src/features/text-generation/runtime.ts`
-- [ ] `apps/pomo/src/features/text-generation/worker-transport.ts`
 - [ ] `apps/pomo/src/features/text-mood/analysis.ts`
 - [ ] `apps/pomo/src/features/text-mood/classifier-info.ts`
 - [ ] `apps/pomo/src/features/text-mood/index.ts`
@@ -218,13 +225,13 @@ Give every executable Pomo source file one dedicated unit-test target. A test fi
 
 ## components/\*\* (133)
 
-- [ ] `apps/pomo/src/components/AdminDashboard.tsx`
-- [ ] `apps/pomo/src/components/AdminLogin.tsx`
-- [ ] `apps/pomo/src/components/PDialogueSettings.tsx`
-- [ ] `apps/pomo/src/components/PLoadingStatus.tsx`
-- [ ] `apps/pomo/src/components/PModalTabList.tsx`
-- [ ] `apps/pomo/src/components/PPanel.tsx`
-- [ ] `apps/pomo/src/components/PPlayerUtilityButton.tsx`
+- [ ] `apps/pomo/src/components/admin-dashboard/AdminDashboard.tsx`
+- [ ] `apps/pomo/src/components/admin-login/AdminLogin.tsx`
+- [ ] `apps/pomo/src/components/p-dialogue-settings/PDialogueSettings.tsx`
+- [ ] `apps/pomo/src/components/p-loading-status/PLoadingStatus.tsx`
+- [ ] `apps/pomo/src/components/p-modal-tab-list/PModalTabList.tsx`
+- [ ] `apps/pomo/src/components/p-panel/PPanel.tsx`
+- [ ] `apps/pomo/src/components/p-player-utility-button/PPlayerUtilityButton.tsx`
 - [ ] `apps/pomo/src/components/admin-auth/styles.ts`
 - [ ] `apps/pomo/src/components/admin-music/AlbumWorkspace.tsx`
 - [ ] `apps/pomo/src/components/admin-music/PendingTrackList.tsx`
@@ -287,16 +294,16 @@ Give every executable Pomo source file one dedicated unit-test target. A test fi
 - [ ] `apps/pomo/src/components/layer-review/shared.ts`
 - [ ] `apps/pomo/src/components/memory-assist/TabList.tsx`
 - [ ] `apps/pomo/src/components/memory-assist/icon.ts`
-- [ ] `apps/pomo/src/components/music-player/Panel.tsx`
-- [ ] `apps/pomo/src/components/music-player/model.ts`
-- [ ] `apps/pomo/src/components/music-player/use-music-player-controller.ts`
-- [ ] `apps/pomo/src/components/music-player-view/ExpandedControls.tsx`
-- [ ] `apps/pomo/src/components/music-player-view/ExpandedProgress.tsx`
-- [ ] `apps/pomo/src/components/music-player-view/Icon.tsx`
-- [ ] `apps/pomo/src/components/music-player-view/PlaybackModes.tsx`
+- [ ] `apps/pomo/src/components/music-player/PMusicPlayerPanel.tsx`
+- [ ] `apps/pomo/src/components/music-player/types.ts`
+- [ ] `apps/pomo/src/components/media-player/use-player-controller.ts`
+- [ ] `apps/pomo/src/components/music-player-view/ExpandedPlayerControls.tsx`
+- [ ] `apps/pomo/src/components/music-player-view/ExpandedPlayerProgress.tsx`
+- [ ] `apps/pomo/src/components/music-player-view/PlayerIcon.tsx`
+- [ ] `apps/pomo/src/components/music-player-view/PPlaybackModes.tsx`
 - [ ] `apps/pomo/src/components/music-player-view/SummaryPlayButton.tsx`
-- [ ] `apps/pomo/src/components/music-player-view/TrackList.tsx`
-- [ ] `apps/pomo/src/components/music-player-view/shared.ts`
+- [ ] `apps/pomo/src/components/music-player-view/PTrackList.tsx`
+- [ ] `apps/pomo/src/components/music-player-view/styles.ts`
 - [ ] `apps/pomo/src/components/not-found/Content.tsx`
 - [ ] `apps/pomo/src/components/p-select/shared.ts`
 - [ ] `apps/pomo/src/components/p-studio/MemoryAssistPanel.tsx`

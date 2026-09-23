@@ -1,8 +1,8 @@
 import path from 'node:path'
-import type {ConfigEnv, UserConfig} from 'vite'
+import type {ConfigEnv} from 'vite'
 import {describe, expect, it} from 'vitest'
 
-import {createConfig, targets} from '../index.mjs'
+import {createConfig, targets} from '@winter-love/vite-lib-config'
 
 const configEnvironment: ConfigEnv = {
   command: 'build',
@@ -20,7 +20,7 @@ describe('createConfig', () => {
       packageJson: {name: '@scope/example-library'},
       root,
     })
-    const config = configFactory(configEnvironment) as UserConfig
+    const config = configFactory(configEnvironment)
 
     expect(config.build?.lib).toMatchObject({
       entry: {
@@ -42,7 +42,7 @@ describe('createConfig', () => {
       },
       root: '/workspace/library',
     })
-    const config = configFactory(configEnvironment) as UserConfig
+    const config = configFactory(configEnvironment)
     const external = config.build?.rollupOptions?.external
 
     expect(external).toEqual(expect.any(Function))
@@ -50,11 +50,11 @@ describe('createConfig', () => {
       throw new TypeError('Expected external to be a function')
     }
 
-    expect(external('dependency')).toBe(true)
-    expect(external('dependency/subpath')).toBe(true)
-    expect(external('peer')).toBe(true)
-    expect(external('manual-external/subpath')).toBe(true)
-    expect(external('bundled-module')).toBe(false)
+    expect(external('dependency', undefined, false)).toBe(true)
+    expect(external('dependency/subpath', undefined, false)).toBe(true)
+    expect(external('peer', undefined, false)).toBe(true)
+    expect(external('manual-external/subpath', undefined, false)).toBe(true)
+    expect(external('bundled-module', undefined, false)).toBe(false)
   })
 })
 

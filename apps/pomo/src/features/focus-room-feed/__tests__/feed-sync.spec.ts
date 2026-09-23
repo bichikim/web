@@ -1,10 +1,17 @@
 /** @vitest-environment jsdom */
+import {
+  CONNECTION,
+  createRepository,
+  createRss,
+  createSettingsResolver,
+  DEFAULT_CONNECTION,
+} from './feed-sync.fixture'
 
 import {expect, it, vi} from 'vitest'
 
-import type {FeedDialogueRepository} from '../feed-dialogue-repository'
-import type {FeedDialogueJob, FeedItemRecord} from '../feed-dialogue-schema'
 import {createFeedScript, type ParsedFeedItem, parseFeedXml} from '../feed-parser'
+import {deleteExpiredFeedDialogues} from '../feed-dialogue-lifecycle'
+import type {FeedDialogueMetadata} from '../feed-dialogue-schema'
 import {synchronizeFeeds} from '../feed-sync'
 import type {FeedConnection} from '../schema'
 
@@ -17,69 +24,6 @@ vi.mock('../feed-parser', async () => {
     parseFeedXml: vi.fn(actual.parseFeedXml),
   }
 })
-
-const CONNECTION: FeedConnection = {
-  createdAt: '2026-08-14T00:03:00.000Z',
-  id: 'feed-1',
-  updatedAt: '2026-08-14T00:00:00.000Z',
-  url: 'https://example.com/feed.xml',
-  version: 1,
-  voiceId: 'M2',
-}
-const DEFAULT_CONNECTION: FeedConnection = {...CONNECTION, id: 'feed-default', voiceId: 'default'}
-const createSettingsResolver = (connection: FeedConnection = CONNECTION) =>
-  vi.fn(async (connectionId: string) =>
-    connectionId === connection.id
-      ? {
-          modelId: 'int8' as const,
-          voiceId: connection.voiceId === 'default' ? ('Yuna' as const) : connection.voiceId,
-        }
-      : null,
-  )
-
-const createRepository = () => {
-  const items: Array<FeedItemRecord> = []
-  const jobs: Array<FeedDialogueJob> = []
-  const repository: FeedDialogueRepository = {
-    complete: vi.fn(),
-    deleteJobs: vi.fn(),
-    dispose: vi.fn(),
-    failJob: vi.fn(async () => true),
-    interruptUnfinishedJobs: vi.fn(async () => []),
-    listExpiredMetadata: vi.fn(async () => []),
-    listItems: vi.fn(async (connectionId) =>
-      items.filter((item) => item.feedConnectionId === connectionId),
-    ),
-    listJobs: vi.fn(async () => jobs),
-    listMetadata: vi.fn(async () => []),
-    markListened: vi.fn(),
-    queue: vi.fn(async (job, item) => {
-      jobs.push(job)
-      items.push(item)
-    }),
-    recoverMissingDialogue: vi.fn(),
-    removeItem: vi.fn(),
-    removeMetadata: vi.fn(),
-    retryJobs: vi.fn(),
-    saveItems: vi.fn(async (nextItems) => {
-      items.push(...nextItems)
-    }),
-    startJob: vi.fn(),
-  }
-  return {items, jobs, repository}
-}
-
-const createRss = (items: ReadonlyArray<{readonly id: string; readonly minute: string}>) => `
-  <rss version="2.0" xmlns:content="http://purl.org/rss/1.0/modules/content/"><channel><title>Pomo 테스트</title>
-    ${items
-      .map(
-        (item) => `<item><title>안녕하세요 ${item.minute}</title><guid>${item.id}</guid>
-          <link>https://example.com/${item.id}</link>
-          <pubDate>Fri, 14 Aug 2026 00:${item.minute}:00 GMT</pubDate>
-          <content:encoded>안녕하세요 ${item.minute}</content:encoded></item>`,
-      )
-      .join('')}
-  </channel></rss>`
 
 const createBodylessResponse = (text: string): Response =>
   ({
@@ -160,20 +104,32 @@ it('should queue with generation settings resolved after fetching the feed item'
   expect(jobs[0]).toMatchObject({modelId: 'full', voiceId: 'Yuna'})
 })
 
-it('should not queue an item whose connection was removed during synchronization', async () => {
-  const {jobs, repository} = createRepository()
-
-  const summary = await synchronizeFeeds({
+it('should persist a failed item when generation settings are unavailable', async () => {
+  const {items, jobs, repository} = createRepository()
+  const resolveGenerationSettings = vi.fn(async () => null)
+  const fetcher = vi.fn(async () => new Response(createRss([{id: 'new', minute: '05'}])))
+  const options = {
     connections: [CONNECTION],
     createId: () => 'removed-connection-job',
-    fetcher: vi.fn(async () => new Response(createRss([{id: 'new', minute: '05'}]))),
+    fetcher,
     now: new Date('2026-08-14T00:06:00.000Z'),
     repository,
-    resolveGenerationSettings: vi.fn(async () => null),
-  })
+    resolveGenerationSettings,
+  }
+  const firstSummary = await synchronizeFeeds(options)
+  const secondSummary = await synchronizeFeeds(options)
 
-  expect(summary.queuedJobIds).toEqual([])
+  expect(firstSummary.queuedJobIds).toEqual([])
+  expect(secondSummary.queuedJobIds).toEqual([])
   expect(jobs).toHaveLength(0)
+  expect(fetcher).toHaveBeenCalledTimes(2)
+  expect(resolveGenerationSettings).toHaveBeenCalledOnce()
+  expect(items).toHaveLength(1)
+  expect(items[0]).toMatchObject({
+    feedItemId: 'new',
+    message: '음성 생성 설정을 찾지 못했어요.',
+    status: 'failed',
+  })
 })
 
 it('should ignore feed items published more than three days ago', async () => {
@@ -558,6 +514,98 @@ it('should normalize defensive defaults while ignoring a stale parser item', asy
     sourceUrl: CONNECTION.url,
     status: 'ignored',
   })
+})
+
+it('should skip dismissed feed items during sync', async () => {
+  const {items, jobs, repository} = createRepository()
+  items.push({
+    contentLength: 10,
+    discoveredAt: '2026-08-14T00:00:00.000Z',
+    feedConnectionId: CONNECTION.id,
+    feedItemId: 'deleted',
+    id: `${CONNECTION.id}\u0000deleted`,
+    itemTitle: '삭제한 피드',
+    message: '사용자가 피드 대화를 삭제했어요.',
+    publishedAt: '2026-08-14T00:05:00.000Z',
+    sourceTitle: 'Pomo 테스트',
+    sourceUrl: 'https://example.com/deleted',
+    status: 'dismissed',
+    updatedAt: '2026-08-14T00:10:00.000Z',
+    version: 1,
+  })
+
+  const summary = await synchronizeFeeds({
+    connections: [CONNECTION],
+    createId: () => 'job-1',
+    fetcher: vi.fn(
+      async () =>
+        new Response(
+          createRss([
+            {id: 'deleted', minute: '05'},
+            {id: 'new', minute: '06'},
+          ]),
+        ),
+    ),
+    now: new Date('2026-08-14T00:07:00.000Z'),
+    repository,
+    resolveGenerationSettings: createSettingsResolver(),
+  })
+
+  expect(summary).toEqual({failures: [], queuedJobIds: ['job-1'], successfulConnections: 1})
+  expect(jobs).toHaveLength(1)
+  expect(jobs[0]).toMatchObject({feedItemId: 'new'})
+  expect(items.filter((item) => item.feedItemId === 'deleted')).toHaveLength(1)
+})
+
+it('should preserve the dedupe tombstone when an expired dialogue is cleaned up', async () => {
+  const {items, jobs, repository} = createRepository()
+  const rss = createRss([{id: 'expired', minute: '05'}])
+  const fetcher = vi.fn(async () => new Response(rss))
+
+  await synchronizeFeeds({
+    connections: [CONNECTION],
+    createId: () => 'job-1',
+    fetcher,
+    now: new Date('2026-08-14T00:06:00.000Z'),
+    repository,
+    resolveGenerationSettings: createSettingsResolver(),
+  })
+
+  expect(jobs).toHaveLength(1)
+  const metadata: FeedDialogueMetadata = {
+    createdAt: '2026-08-14T00:06:00.000Z',
+    dialogueId: 'dialogue-expired',
+    expiresAt: '2026-08-16T00:06:00.000Z',
+    feedConnectionId: CONNECTION.id,
+    feedItemId: 'expired',
+    itemTitle: '안녕하세요 05',
+    listenedAt: null,
+    publishedAt: '2026-08-14T00:05:00.000Z',
+    sourceTitle: 'Pomo 테스트',
+    sourceUrl: 'https://example.com/expired',
+    version: 1,
+  }
+  vi.mocked(repository.listExpiredMetadata).mockResolvedValue([metadata])
+
+  await deleteExpiredFeedDialogues({
+    dialogueRepository: {deleteDialogue: vi.fn(async () => undefined)},
+    feedRepository: repository,
+    isDialogueScheduled: () => false,
+    now: new Date('2026-08-16T00:07:00.000Z'),
+  })
+
+  jobs.length = 0
+  await synchronizeFeeds({
+    connections: [CONNECTION],
+    createId: () => 'job-2',
+    fetcher,
+    now: new Date('2026-08-16T00:08:00.000Z'),
+    repository,
+    resolveGenerationSettings: createSettingsResolver(),
+  })
+
+  expect(jobs).toHaveLength(0)
+  expect(items).toEqual([expect.objectContaining({feedItemId: 'expired', status: 'dismissed'})])
 })
 
 it('should queue multiple undated feed items without inventing a sort timestamp', async () => {

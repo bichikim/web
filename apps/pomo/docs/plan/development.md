@@ -42,6 +42,8 @@
 
 ## 세부 계획
 
+새 도구 버튼과 1~3차 유틸리티 범위는 [도구 개발 계획](./development/tools.md)에서 관리한다.
+
 | 문서                                                                 | 읽는 경우                                                                  |
 | -------------------------------------------------------------------- | -------------------------------------------------------------------------- |
 | [아키텍처와 데이터](./development/architecture.md)                   | 플랫폼 호환 계층, 상태 관리, 영속 저장, 서버 함수와 Query·Action을 다룰 때 |
@@ -58,6 +60,7 @@
 | [2D 입모양과 턱 전환](./development/2d-mouth-animation.md)           | 대사 립싱크용 입모양, 중간 프레임과 턱 움직임을 제작·연결할 때             |
 | [빌드·플랫폼·검증](./development/delivery-testing.md)                | SSG·SSR, Vercel, 앱인토스 생명주기, CI와 테스트를 다룰 때                  |
 | [데스크톱 앱](./development/desktop.md)                              | 일반 창·미니 위젯·바탕화면 모드와 Tauri 패키징을 다룰 때                   |
+| [모바일 앱](./development/mobile.md)                                 | Tauri 2 Android·iOS 개발, 생명주기, 기기 검증과 스토어 빌드를 다룰 때      |
 | [앱인토스 원격 함수](./development/remote-functions.md)              | 앱인토스에서 SolidStart 서버 함수를 사용하기 위한 추후 작업을 진행할 때    |
 
 ## 공통 원칙

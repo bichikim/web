@@ -18,6 +18,7 @@ import {
   resampleDeformerGrid,
   resampleGridControlPoints,
   resampleGridCurveHandles,
+  SURFACE_RESAMPLE_ERROR_RATIO,
 } from './grid-control-points'
 import {
   collectNodeIds,
@@ -28,57 +29,47 @@ import {
   updateChildren,
   updateNode,
 } from './scene-tree'
-
 export interface SceneSelection {
   readonly activeNodeId: string | null
   readonly nodeIds: ReadonlyArray<string>
 }
-
 interface MoveSceneNodeOptions {
   readonly beforeNodeId?: string
   readonly document: PuppetDocument
   readonly nodeId: string
   readonly parentId: string | null
 }
-
 export type SceneNodeDropPosition = 'after' | 'before' | 'inside'
-
 export interface MoveSceneNodeRelativeOptions {
   readonly document: PuppetDocument
   readonly nodeId: string
   readonly position: SceneNodeDropPosition
   readonly targetNodeId: string | null
 }
-
 interface SetSceneNodeStateOptions {
   readonly document: PuppetDocument
   readonly locked?: boolean
   readonly nodeId: string
   readonly visible?: boolean
 }
-
 interface ResizeDeformerOptions {
   readonly columns: number
   readonly document: PuppetDocument
   readonly nodeId: string
   readonly rows: number
 }
-
+const CUBIC_SEGMENT_DIVISOR = 3
 const createNodeId = (scene: PuppetScene, prefix: string) => {
   const ids = new Set<string>()
   collectNodeIds(scene.roots, ids)
-
   let suffix = 1
   let id = prefix
-
   while (ids.has(id)) {
     suffix += 1
     id = `${prefix}-${suffix}`
   }
-
   return id
 }
-
 const createGroupNode = (id: string, children: ReadonlyArray<PuppetSceneNode>) =>
   ({
     children,
@@ -88,7 +79,6 @@ const createGroupNode = (id: string, children: ReadonlyArray<PuppetSceneNode>) =
     name: '새 그룹',
     visible: true,
   }) satisfies PuppetSceneGroupNode
-
 interface CreateSceneContainerOptions {
   readonly create: (
     id: string,
@@ -226,27 +216,61 @@ export const createDeformer = (
     selectedNodeIds,
   })
 
+export const createCurveDeformer = (
+  document: PuppetDocument,
+  selectedNodeIds: ReadonlyArray<string>,
+): PuppetDocument | undefined =>
+  createSceneContainer({
+    create: (id, children, partIds) => {
+      const bounds = getDeformerBounds(document, partIds)
+      if (bounds === undefined) {
+        return undefined
+      }
+      const curveAxis = bounds.height > bounds.width ? 'y' : 'x'
+      return {
+        bounds,
+        children,
+        columns: 1,
+        controlPoints: Array.from({length: 4}, (_, index) =>
+          curveAxis === 'x'
+            ? [
+                bounds.x + (bounds.width * index) / CUBIC_SEGMENT_DIVISOR,
+                bounds.y + bounds.height / 2,
+              ]
+            : [
+                bounds.x + bounds.width / 2,
+                bounds.y + (bounds.height * index) / CUBIC_SEGMENT_DIVISOR,
+              ],
+        ).flat(),
+        curveAxis,
+        id,
+        kind: 'deformer',
+        locked: false,
+        name: '새 곡선 디포머',
+        rows: 1,
+        visible: true,
+      }
+    },
+    document,
+    prefix: 'curve',
+    selectedNodeIds,
+  })
 export const renameSceneNode = (
   document: PuppetDocument,
-  groupId: string,
+  nodeId: string,
   name: string,
 ): PuppetDocument | undefined => {
   const normalizedName = name.trim()
   const scene = getDocumentScene(document)
-  const node = findNode(scene.roots, groupId)
+  const node = findNode(scene.roots, nodeId)
 
-  if (
-    node === undefined ||
-    node.kind === 'part' ||
-    isSceneNodeLocked(document, groupId) ||
-    normalizedName.length === 0
-  ) {
+  if (node === undefined || isSceneNodeLocked(document, nodeId) || normalizedName.length === 0) {
     return undefined
   }
 
   return withScene(document, {
     ...scene,
-    roots: updateNode(scene.roots, groupId, (candidate) => ({
+    roots: updateNode(scene.roots, nodeId, (candidate) => ({
       ...candidate,
       name: normalizedName,
     })),
@@ -272,13 +296,14 @@ export const setSceneNodeState = (
     })),
   })
 }
-
 export const resizeDeformer = (options: ResizeDeformerOptions): PuppetDocument | undefined => {
   const scene = getDocumentScene(options.document)
   const node = findNode(scene.roots, options.nodeId)
 
   if (
     node?.kind !== 'deformer' ||
+    node.curveAxis !== undefined ||
+    (node.boneRestPoints ?? node.pins) !== undefined ||
     isSceneNodeLocked(options.document, options.nodeId) ||
     !isGridDivisionCount(options.columns) ||
     !isGridDivisionCount(options.rows) ||
@@ -321,6 +346,8 @@ export const resizeDeformer = (options: ResizeDeformerOptions): PuppetDocument |
                 columns: node.columns,
                 controlPoints: deformer.controlPoints,
                 curveHandles: deformer.curveHandles,
+                maximumError:
+                  Math.max(node.bounds.width, node.bounds.height) * SURFACE_RESAMPLE_ERROR_RATIO,
                 nextColumns: options.columns,
                 nextRows: options.rows,
                 rows: node.rows,

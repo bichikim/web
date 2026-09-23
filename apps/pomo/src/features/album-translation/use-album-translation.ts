@@ -1,4 +1,5 @@
 import {type Accessor, createMemo, createSignal, onCleanup, untrack} from 'solid-js'
+import {isNonBlankString} from 'src/utils/is-non-blank-string'
 
 import {supportsWebGpu} from '../text-generation/environment'
 import {createLazyClient} from '../text-generation/lazy-client'
@@ -44,7 +45,7 @@ export interface UseAlbumTranslationProps {
     readonly en: AlbumTranslationText
     readonly ja: AlbumTranslationText
     readonly 'zh-Hans': AlbumTranslationText
-  }) => void
+  }) => boolean | void
   readonly runtime?: AlbumTranslationRuntime
 }
 
@@ -74,8 +75,10 @@ export const useAlbumTranslation = (
   const handleResponse = (response: AlbumTranslationWorkerResponse) => {
     switch (response.type) {
       case 'complete':
-        props.onComplete(response.translations)
-        setState({status: 'complete'})
+        {
+          const didApply = props.onComplete(response.translations)
+          setState(didApply === false ? {status: 'idle'} : {status: 'complete'})
+        }
         return
       case 'error':
         if (response.restartRequired) {
@@ -105,7 +108,7 @@ export const useAlbumTranslation = (
   const clientOwner = createLazyClient(() => runtime.createClient({onResponse: handleResponse}))
 
   const translate = (input: {readonly description: string; readonly title: string}) => {
-    if (isBusy() || input.title.trim().length === 0 || !runtime.supportsWebGpu()) {
+    if (isBusy() || !isNonBlankString(input.title) || !runtime.supportsWebGpu()) {
       return
     }
 

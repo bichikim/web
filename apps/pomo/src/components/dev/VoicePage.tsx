@@ -2,7 +2,7 @@ import {Title} from '@solidjs/meta'
 import {A} from '@solidjs/router'
 import {cx} from 'class-variance-authority'
 
-import {VoiceGenerator} from 'src/components/VoiceGenerator'
+import {VoiceGenerator} from 'src/components/voice-generator/VoiceGenerator'
 import {SERVICE_POLICY_PATHS} from 'src/features/service-terms/policy-paths'
 
 const MAIN_CLASSES = cx(
@@ -18,7 +18,7 @@ const GLOW_CLASSES = cx(
   'bg-#f2a7b8/60 shadow-[0_0_1.875rem_0.5rem_rgba(242,167,184,0.22)]',
 )
 
-function VoicePage() {
+export function VoicePage() {
   return (
     <main class={MAIN_CLASSES}>
       <Title>Pomofi — Voice Lab</Title>
@@ -41,5 +41,3 @@ function VoicePage() {
     </main>
   )
 }
-
-export default VoicePage

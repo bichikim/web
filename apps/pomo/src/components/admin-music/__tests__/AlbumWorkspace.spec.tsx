@@ -1,10 +1,9 @@
 /** @vitest-environment jsdom */
 
 import {cleanup, fireEvent, render, screen, waitFor} from '@solidjs/testing-library'
-import {createSignal} from 'solid-js'
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 
-import type {AdminAlbum, AdminCatalog, AdminMusicModel} from 'src/features/admin-music'
+import type {AdminAlbum} from 'src/features/admin-music'
 import {AlbumWorkspace} from '../AlbumWorkspace'
 
 vi.mock('solid-js/web', async (importOriginal) => {
@@ -26,7 +25,7 @@ vi.mock('solid-js/web', async (importOriginal) => {
 })
 vi.mock('@solidjs/start', () => ({
   clientOnly:
-    (loader: () => Promise<unknown>) =>
+    () =>
     (props: {
       readonly active: boolean
       readonly autoplay: boolean
@@ -36,7 +35,6 @@ vi.mock('@solidjs/start', () => ({
       readonly title: string
       readonly trackId: string
     }) => {
-      void loader()
       void props.fallback
       return (
         <button
@@ -69,7 +67,7 @@ vi.mock('../AlbumReleaseCard', () => ({
   },
 }))
 vi.mock('../TrackFields', () => ({
-  default: (props: {
+  TrackFields: (props: {
     readonly artist: string
     readonly onArtistChange: (value: string) => void
     readonly onTitleChange: (value: string) => void
@@ -89,123 +87,7 @@ vi.mock('../TrackFields', () => ({
   ),
 }))
 
-const createAlbum = (
-  status: AdminAlbum['status'] = 'draft',
-  translations: AdminAlbum['translations'] = [
-    {albumId: 'album', description: '한국어 설명', locale: 'ko', title: '한국어 앨범'},
-    {albumId: 'album', description: 'English description', locale: 'en', title: 'English album'},
-    {albumId: 'album', description: '日本語の説明', locale: 'ja', title: '日本語アルバム'},
-    {albumId: 'album', description: '中文说明', locale: 'zh-Hans', title: '中文专辑'},
-  ],
-  ready = true,
-): AdminAlbum => ({
-  coverFallback: 'music',
-  coverImageUrl: null,
-  id: 'album',
-  release: {blockers: ready ? [] : ['tracks_missing_active_asset'], ready},
-  status,
-  translations,
-})
-
-const BASE_CATALOG: AdminCatalog = {
-  albums: [createAlbum()],
-  assets: [
-    {id: 'asset-two', status: 'active', trackId: 'two'},
-    {id: 'asset-one', status: 'active', trackId: 'one'},
-    {id: 'asset-hidden', status: 'pending', trackId: 'hidden'},
-    {id: 'asset-pending', status: 'pending', trackId: 'pending'},
-    {id: 'asset-other', status: 'active', trackId: 'other'},
-  ],
-  offers: [
-    {
-      albumId: 'album',
-      billingType: 'one_time',
-      externalProductId: 'sku-active',
-      productCode: 'active',
-      productStatus: 'active',
-      provider: 'apps-in-toss',
-      status: 'active',
-    },
-    {
-      albumId: 'album',
-      billingType: 'subscription',
-      externalProductId: 'sku-subscription',
-      productCode: 'subscription',
-      productStatus: 'active',
-      provider: 'apps-in-toss',
-      status: 'active',
-    },
-    {
-      albumId: 'other',
-      billingType: 'one_time',
-      externalProductId: 'sku-other',
-      productCode: 'other',
-      productStatus: 'active',
-      provider: 'apps-in-toss',
-      status: 'active',
-    },
-  ],
-  pendingTracks: [
-    {albumId: 'album', artist: 'Pending Artist', id: 'pending', title: 'Pending track'},
-    {albumId: 'other', artist: 'Other Pending', id: 'other-pending', title: 'Other pending'},
-  ],
-  tracks: [
-    {albumId: 'album', artist: 'Artist two', id: 'two', position: 2, title: 'Track two'},
-    {albumId: 'album', artist: 'Artist one', id: 'one', position: 1, title: 'Track one'},
-    {albumId: 'album', artist: 'Hidden', id: 'hidden', position: 3, title: 'Hidden track'},
-    {albumId: 'other', artist: 'Other', id: 'other', position: 1, title: 'Other track'},
-  ],
-}
-
-interface ModelHarness {
-  readonly model: AdminMusicModel
-  readonly setCatalog: (catalog: AdminCatalog) => void
-  readonly setConfirmingAssetId: (id: string | null) => void
-  readonly setRemovingTrackId: (id: string | null) => void
-  readonly setSavingOffer: (saving: boolean) => void
-  readonly setSavingTrack: (saving: boolean) => void
-  readonly setUpdatingAlbumId: (id: string | null) => void
-}
-
-const createModelHarness = (initialCatalog: AdminCatalog = BASE_CATALOG): ModelHarness => {
-  const [catalog, setCatalog] = createSignal(initialCatalog)
-  const [confirmingAssetId, setConfirmingAssetId] = createSignal<string | null>(null)
-  const [removingTrackId, setRemovingTrackId] = createSignal<string | null>(null)
-  const [savingOffer, setSavingOffer] = createSignal(false)
-  const [savingTrack, setSavingTrack] = createSignal(false)
-  const [updatingAlbumId, setUpdatingAlbumId] = createSignal<string | null>(null)
-  const model = {
-    catalog,
-    confirmingAssetId,
-    handleAlbumStatusChange: vi.fn().mockResolvedValue(undefined),
-    handleOfferSubmit: vi.fn(),
-    handleTrackConfirmation: vi.fn().mockResolvedValue(undefined),
-    handleTrackRemove: vi.fn().mockResolvedValue(undefined),
-    handleTrackSubmit: vi.fn(),
-    isConfirmingAsset: (assetId: string) => confirmingAssetId() === assetId,
-    isRemovingTrack: (trackId: string) => removingTrackId() === trackId,
-    isSavingOffer: savingOffer,
-    isSavingTrack: savingTrack,
-    isUpdatingAlbum: (albumId: string) => updatingAlbumId() === albumId,
-    removingTrackId,
-    setTrackArtist: vi.fn(),
-    setTrackTitle: vi.fn(),
-    trackArtist: () => '기존 가수',
-    trackResetVersion: () => 3,
-    trackTitle: () => '기존 제목',
-    updatingAlbumId,
-  } as unknown as AdminMusicModel
-
-  return {
-    model,
-    setCatalog,
-    setConfirmingAssetId,
-    setRemovingTrackId,
-    setSavingOffer,
-    setSavingTrack,
-    setUpdatingAlbumId,
-  }
-}
+import {BASE_CATALOG, createAlbum, createModelHarness} from './fixtures/model'
 
 afterEach(() => {
   cleanup()
@@ -213,7 +95,7 @@ afterEach(() => {
 })
 
 beforeEach(() => {
-  vi.spyOn(window, 'confirm').mockReturnValue(false)
+  vi.spyOn(globalThis, 'confirm').mockReturnValue(false)
 })
 
 describe('AlbumWorkspace', () => {
@@ -241,24 +123,26 @@ describe('AlbumWorkspace', () => {
 
     fireEvent.click(screen.getByRole('button', {name: '+ 곡 추가'}))
     expect(screen.getByText('새 곡 추가')).toBeInTheDocument()
+    fireEvent.change(screen.getByLabelText(/^MP3 파일 여러/u), {
+      target: {files: [new File(['mp3'], 'track.mp3')]},
+    })
     fireEvent.click(screen.getByRole('button', {name: '가수 변경'}))
     fireEvent.click(screen.getByRole('button', {name: '제목 변경'}))
-    expect(harness.model.setTrackArtist).toHaveBeenCalledWith('새 가수')
-    expect(harness.model.setTrackTitle).toHaveBeenCalledWith('새 제목')
-    fireEvent.submit(screen.getByText('새 곡 추가').closest('form')!)
-    expect(harness.model.handleTrackSubmit).toHaveBeenCalledOnce()
-
-    harness.setSavingTrack(true)
-    expect(screen.getByRole('button', {name: '곡 저장·MP3 검증 중…'})).toBeDisabled()
+    expect(screen.getByText('새 가수')).toBeInTheDocument()
+    expect(screen.getByText('새 제목')).toBeInTheDocument()
+    fireEvent.submit(screen.getByRole('form', {name: '곡 추가'}))
+    expect(harness.model.submitTrack).toHaveBeenCalledOnce()
+    await waitFor(() => expect(screen.getByRole('button', {name: '닫기'})).toBeEnabled())
+    expect(screen.getByText('등록 완료')).toBeInTheDocument()
     fireEvent.click(screen.getByRole('button', {name: '닫기'}))
     expect(screen.queryByText('새 곡 추가')).not.toBeInTheDocument()
 
     fireEvent.click(screen.getByRole('button', {name: 'Track one 수록곡 삭제'}))
     expect(harness.model.handleTrackRemove).not.toHaveBeenCalled()
-    vi.mocked(window.confirm).mockReturnValueOnce(true)
+    vi.mocked(globalThis.confirm).mockReturnValueOnce(true)
     fireEvent.click(screen.getByRole('button', {name: 'Track two 수록곡 삭제'}))
     await waitFor(() => expect(harness.model.handleTrackRemove).toHaveBeenCalledWith('two'))
-    expect(window.confirm).toHaveBeenLastCalledWith(
+    expect(globalThis.confirm).toHaveBeenLastCalledWith(
       expect.stringContaining('현재 공개 중인 앨범에서도 즉시 사라지며'),
     )
 
@@ -287,10 +171,10 @@ describe('AlbumWorkspace', () => {
     harness.setConfirmingAssetId(null)
     fireEvent.click(screen.getByRole('button', {name: 'Pending track 대기 등록 삭제'}))
     expect(harness.model.handleTrackRemove).not.toHaveBeenCalled()
-    vi.mocked(window.confirm).mockReturnValueOnce(true)
+    vi.mocked(globalThis.confirm).mockReturnValueOnce(true)
     fireEvent.click(screen.getByRole('button', {name: 'Pending track 대기 등록 삭제'}))
     await waitFor(() => expect(harness.model.handleTrackRemove).toHaveBeenCalledWith('pending'))
-    expect(window.confirm).toHaveBeenLastCalledWith(expect.stringContaining('대기 등록을 삭제'))
+    expect(globalThis.confirm).toHaveBeenLastCalledWith(expect.stringContaining('대기 등록을 삭제'))
   })
 
   it('should describe a failed pending asset without offering a futile confirmation', () => {
@@ -325,7 +209,9 @@ describe('AlbumWorkspace', () => {
     render(() => <AlbumWorkspace album={createAlbum('draft')} model={harness.model} />)
 
     fireEvent.click(screen.getByRole('button', {name: 'Track one 수록곡 삭제'}))
-    expect(window.confirm).toHaveBeenCalledWith(expect.not.stringContaining('현재 공개 중인 앨범'))
+    expect(globalThis.confirm).toHaveBeenCalledWith(
+      expect.not.stringContaining('현재 공개 중인 앨범'),
+    )
   })
 
   it('should display translated details and the no-translation fallback', () => {
@@ -341,7 +227,7 @@ describe('AlbumWorkspace', () => {
 
     render(() => <AlbumWorkspace album={createAlbum('draft', [])} model={harness.model} />)
     fireEvent.click(screen.getByRole('button', {name: '+ 곡 추가'}))
-    expect(screen.getByText(/MP3 하나가 ‘제목 없음’/)).toBeInTheDocument()
+    expect(screen.getByText(/파일마다 ‘제목 없음’/)).toBeInTheDocument()
     fireEvent.click(screen.getByRole('tab', {name: '기본 정보'}))
     expect(screen.getByText('등록된 선택 언어가 없습니다.')).toBeInTheDocument()
   })
@@ -364,7 +250,7 @@ describe('AlbumWorkspace', () => {
     )
     expect(screen.queryByRole('region', {name: '앨범 상태 변경 확인'})).not.toBeInTheDocument()
 
-    fireEvent.submit(screen.getByText('일회성 상품 연결').closest('form')!)
+    fireEvent.submit(screen.getByRole('form', {name: '일회성 상품 연결'}))
     expect(harness.model.handleOfferSubmit).toHaveBeenCalledOnce()
     harness.setSavingOffer(true)
     expect(screen.getByRole('button', {name: '연결 중…'})).toBeDisabled()

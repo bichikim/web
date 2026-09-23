@@ -2,6 +2,7 @@
  * e2e mode will use.env.e2e file automatically
  */
 import {solidStart} from '@solidjs/start/config'
+import {createServerBoundaryPlugin} from '@winter-love/server-boundary'
 import {generateSwPlugin} from '@winter-love/sw'
 import {createUnoCssInlineResolver} from '@winter-love/unocss-config'
 import {targets} from '@winter-love/vite-lib-config'
@@ -47,6 +48,7 @@ export default defineConfig({
     },
   },
   plugins: [
+    createServerBoundaryPlugin({directories: ['src/server']}),
     createUnoCssInlineResolver(),
     UnoCSS(),
     solidStart({

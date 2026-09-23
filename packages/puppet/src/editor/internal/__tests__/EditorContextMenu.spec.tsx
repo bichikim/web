@@ -4,7 +4,7 @@ import {fireEvent, render, screen, waitFor} from '@solidjs/testing-library'
 import {describe, expect, test, vi} from 'vitest'
 
 import {EditorContextMenu, type EditorContextMenuEntry} from '../EditorContextMenu'
-import {EditorPortalProvider} from '../EditorPortalProvider'
+import {EditorPortalProvider} from '../../../design-system'
 
 describe('EditorContextMenu', () => {
   test('should open at a context-menu request and run the selected action', async () => {

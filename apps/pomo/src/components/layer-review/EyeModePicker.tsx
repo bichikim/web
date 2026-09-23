@@ -1,5 +1,5 @@
 import {type PEyeMode} from '../../features/focus-room-animation/index'
-import {PSelect} from '../PSelect'
+import {PSelect} from '../p-select/PSelect'
 
 const EYE_MODES = ['auto', 'open', 'half', 'closed'] as const satisfies ReadonlyArray<PEyeMode>
 

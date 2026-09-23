@@ -7,7 +7,7 @@ import {describe, expect, expectTypeOf, it, vi} from 'vitest'
 
 describe('useEvent', () => {
   it.each([
-    {target: window, type: 'click'},
+    {target: globalThis.window, type: 'click'},
     {target: document, type: 'visibilitychange'},
     {target: document.createElement('div'), type: 'click'},
   ])('should register once and remove once for $type', ({target, type}) => {
@@ -166,7 +166,7 @@ describe('useEvent', () => {
 
     expectTypeOf<LegacyEmitter>().toMatchTypeOf<Emitter>()
     const dispose = createRoot((dispose) => {
-      useEvent(window, 'resize', (event) => {
+      useEvent(globalThis.window, 'resize', (event) => {
         expectTypeOf(event).toEqualTypeOf<UIEvent>()
       })
       useEvent(document, 'visibilitychange', (event) => {
@@ -178,7 +178,7 @@ describe('useEvent', () => {
       useEvent(new EventTarget(), 'change', (event) => {
         expectTypeOf(event).toEqualTypeOf<Event>()
       })
-      useEvent(window, 'pomo:change', (event) => {
+      useEvent(globalThis.window, 'pomo:change', (event) => {
         expectTypeOf(event).toEqualTypeOf<CustomEvent<unknown>>()
       })
 

@@ -4,11 +4,11 @@ import {fireEvent, render, screen} from '@solidjs/testing-library'
 import type {JSX} from 'solid-js'
 import {afterEach, expect, it, vi} from 'vitest'
 
-import {PButton} from '../../PButton'
-import {PServicePolicyLinks} from '../../PServicePolicyLinks'
+import {PButton} from '../../p-button/PButton'
+import {PServicePolicyLinks} from '../../p-service-policy-links/PServicePolicyLinks'
 import {PEntry} from '../Entry'
 
-vi.mock('../../PButton', () => ({
+vi.mock('../../p-button/PButton', () => ({
   PButton: vi.fn((props: {children?: JSX.Element; disabled?: boolean; onPress?: () => void}) => {
     Object.values(props)
     return (
@@ -18,8 +18,16 @@ vi.mock('../../PButton', () => ({
     )
   }),
 }))
-vi.mock('../../PServicePolicyLinks', () => ({PServicePolicyLinks: vi.fn(() => null)}))
-
+vi.mock('../../p-service-policy-links/PServicePolicyLinks', () => ({
+  PServicePolicyLinks: vi.fn(() => null),
+}))
+vi.mock('@solidjs/router', () => ({
+  A: (props: {readonly children?: JSX.Element; readonly class?: string; readonly href: string}) => (
+    <a class={props.class} href={props.href}>
+      {props.children}
+    </a>
+  ),
+}))
 afterEach(() => {
   vi.clearAllMocks()
 })
@@ -32,9 +40,14 @@ it('should enter and finish its own exit animation', () => {
   ))
   const section = screen.getByRole('region')
 
+  expect(PButton).toHaveBeenCalledWith(expect.objectContaining({leadingOverflow: true, pill: true}))
   expect(section).not.toHaveAttribute('data-exiting')
   expect(section).not.toHaveAttribute('style')
-  fireEvent.click(screen.getByRole('button'))
+  expect(screen.queryByText(/Pomo와 함께 포모도로 타이머/u)).not.toBeInTheDocument()
+  const newLink = screen.getByRole('link', {name: '새로운 소식'})
+  expect(newLink).toHaveAttribute('href', '/whats-new')
+  expect(newLink.parentElement).toHaveClass('text-sm', 'leading-5')
+  fireEvent.click(screen.getByRole('button', {name: '시작하기'}))
   expect(onEnter).toHaveBeenCalledOnce()
   fireEvent.animationEnd(section)
   expect(onExitComplete).toHaveBeenCalledOnce()

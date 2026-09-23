@@ -1,6 +1,6 @@
 const {
   core: {invoke},
-} = window.__TAURI__
+} = globalThis.__TAURI__
 const status = document.querySelector('#status')
 const backgroundClickButton = document.querySelector('#background-click')
 const ASSERTION_RETRY_DELAY_MILLISECONDS = 50
@@ -55,10 +55,10 @@ const openWidget = async () => {
   status.value = 'Applying widget surface…'
   await captureBaseline()
   await invoke('plugin:desktop-surface|set_widget_surface', {
-    options: {height: 520, label: 'background', width: 420},
+    options: {cornerRadius: 20, height: 520, label: 'background', width: 420},
   })
   await invoke('assert_widget')
-  status.value = 'Widget verified: 420×520, always on top, borderless'
+  status.value = 'Widget verified: 420×520, always on top, borderless, rounded, native shadow'
 }
 
 const restoreWindow = async () => {

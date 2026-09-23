@@ -1,3 +1,4 @@
+/** @vitest-environment node */
 // oxlint-disable no-magic-numbers -- Binary metadata fixtures use fixed signatures and sizes.
 import {AwsClient} from 'aws4fetch'
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'

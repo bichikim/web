@@ -1,12 +1,13 @@
+/** @vitest-environment node */
 import {expect, it} from 'vitest'
 
 import type {VersionCatalog} from '../index'
-import {selectRecentUnseenReleases} from '../recent-releases'
+import {selectNoticeReleases} from '../recent-releases'
 
 const catalog = {
   releases: [
     {
-      changes: ['최신 변경'],
+      changes: [{description: '최신 변경'}],
       releasedAt: '2026-09-03T00:57:00+09:00',
       title: '업데이트',
       version: '2026. 09. 03 00:57',
@@ -21,7 +22,7 @@ const catalog = {
 } as const satisfies VersionCatalog
 
 it('should select every unseen release from the last five client-clock days', () => {
-  const releases = selectRecentUnseenReleases({
+  const releases = selectNoticeReleases({
     catalog,
     now: new Date('2026-09-07T15:56:59.999Z'),
     viewedRelease: null,
@@ -31,7 +32,7 @@ it('should select every unseen release from the last five client-clock days', ()
 })
 
 it('should exclude a release when exactly five days have passed across timezones', () => {
-  const releases = selectRecentUnseenReleases({
+  const releases = selectNoticeReleases({
     catalog,
     now: new Date('2026-09-07T15:57:00.000Z'),
     viewedRelease: null,
@@ -40,12 +41,12 @@ it('should exclude a release when exactly five days have passed across timezones
   expect(releases).toEqual([])
 })
 
-it('should exclude future releases and releases at or before the viewed marker', () => {
-  const releases = selectRecentUnseenReleases({
+it('should include viewed recent releases when a newer release exists and exclude future releases', () => {
+  const releases = selectNoticeReleases({
     catalog: {
       releases: [
         {
-          changes: ['미래 변경'],
+          changes: [{description: '미래 변경'}],
           releasedAt: '2026-09-03T01:00:00+09:00',
           title: '미래 업데이트',
           version: '2026. 09. 03 01:00',
@@ -61,11 +62,14 @@ it('should exclude future releases and releases at or before the viewed marker',
     },
   })
 
-  expect(releases.map((release) => release.version)).toEqual(['2026. 09. 03 00:57'])
+  expect(releases.map((release) => release.version)).toEqual([
+    '2026. 09. 03 00:57',
+    '2026. 09. 03 00:52',
+  ])
 })
 
 it('should order catalog entries by their absolute release time', () => {
-  const releases = selectRecentUnseenReleases({
+  const releases = selectNoticeReleases({
     catalog: {releases: [...catalog.releases].reverse()},
     now: new Date('2026-09-02T16:00:00.000Z'),
     viewedRelease: null,

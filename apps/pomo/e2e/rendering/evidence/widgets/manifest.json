@@ -1,0 +1,106 @@
+{
+  "run_id": "0e4094eb-6f13-454b-903a-df3503a04738",
+  "baseline_code_sha": "da98addbfb65fe1081baf6eb94b9245136d8f208",
+  "current_product_sha": "da98addbfb65fe1081baf6eb94b9245136d8f208",
+  "os": "ProductName:\t\tmacOS\nProductVersion:\t\t26.5.2\nBuildVersion:\t\t25F84\n",
+  "arch": "arm64",
+  "playwright": "1.59.1",
+  "command": "pnpm exec playwright test --config=playwright.rendering.config.ts --reporter=line,json",
+  "stats": {
+    "startTime": "2026-09-10T00:16:51.519Z",
+    "duration": 35147.401,
+    "expected": 5,
+    "skipped": 0,
+    "unexpected": 0,
+    "flaky": 0
+  },
+  "video": "off",
+  "trace": "off",
+  "scope": "Actual local SolidStart UI and web localStorage; empty playlist and fixed browser clock. Placeholder loopback auth/DB. No native device, live DB/provider or active music playback verification.",
+  "screenshots": [
+    {
+      "name": "widgets-hidden-dark",
+      "test": "should stop a hidden timer and restore widget visibility preferences after reload",
+      "result": "최초 기준 생성",
+      "comparison": "passed with unchanged Playwright comparator",
+      "baseline_code_sha": "new baseline on pending PR",
+      "current_product_sha": "da98addbfb65fe1081baf6eb94b9245136d8f208",
+      "baseline": "apps/pomo/e2e/rendering/settings.spec.ts-snapshots/widgets-hidden-dark-web-darwin.png",
+      "current": "apps/pomo/e2e/rendering/evidence/widgets/current.png",
+      "baseline_sha256": "fb472fe4e8925c3c52f24d06435dcfe8694aa5bb5a30f1978802f7570ef61ce9",
+      "current_sha256": "fb472fe4e8925c3c52f24d06435dcfe8694aa5bb5a30f1978802f7570ef61ce9",
+      "raw_difference": {
+        "pixels": 0,
+        "max_channel_delta": 0
+      },
+      "difference": null,
+      "environment": {
+        "devicePixelRatio": 1,
+        "fonts": [
+          {
+            "family": "Pretendard Variable",
+            "status": "unloaded",
+            "faces": 79
+          },
+          {
+            "family": "Pretendard Variable",
+            "status": "loaded",
+            "faces": 13
+          }
+        ],
+        "locale": "ko-KR",
+        "theme": "dark",
+        "time": "2026-09-09T00:01:11.400Z",
+        "timezone": "Asia/Seoul",
+        "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.7727.15 Safari/537.36",
+        "viewport": {
+          "height": 960,
+          "width": 1280
+        }
+      }
+    },
+    {
+      "name": "general-dark",
+      "test": "should render general settings and the theme menu in dark and light modes",
+      "result": "변경 없음",
+      "comparison": "passed with unchanged Playwright comparator",
+      "baseline_code_sha": "da98addbfb65fe1081baf6eb94b9245136d8f208",
+      "current_product_sha": "da98addbfb65fe1081baf6eb94b9245136d8f208",
+      "baseline": "apps/pomo/e2e/rendering/settings.spec.ts-snapshots/general-dark-web-darwin.png",
+      "current": "apps/pomo/e2e/rendering/evidence/widgets/general-current.png",
+      "baseline_sha256": "b63c09d51745918dbce83ef4a17f5e34fe61cc61aa528abcca74f5c0f3eb01bd",
+      "current_sha256": "ae75b8287059486f67be064e7a0cd7b7af9994dd1114a06c9684a3898e32d0b2",
+      "raw_difference": {
+        "pixels": 354,
+        "max_channel_delta": 1
+      },
+      "difference": "apps/pomo/e2e/rendering/evidence/widgets/general-diff.png",
+      "environment": {
+        "devicePixelRatio": 1,
+        "fonts": [
+          {
+            "family": "Pretendard Variable",
+            "status": "unloaded",
+            "faces": 79
+          },
+          {
+            "family": "Pretendard Variable",
+            "status": "loaded",
+            "faces": 13
+          }
+        ],
+        "locale": "ko-KR",
+        "theme": "dark",
+        "time": "2026-09-09T00:01:01.200Z",
+        "timezone": "Asia/Seoul",
+        "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.7727.15 Safari/537.36",
+        "viewport": {
+          "height": 960,
+          "width": 1280
+        }
+      },
+      "note": "354 raw pixels differ by at most 1/255 in the blurred background. Visually inspected baseline/current/raw-difference; underlying cause unconfirmed. The unchanged default Playwright comparator passed."
+    }
+  ],
+  "note": "No prior widgets-hidden baseline exists in origin/dev. Initial missing-baseline run failed only for missing PNG; normal comparison then passed all 5 tests. PNG baselines for the other 5 checkpoints remain unchanged."
+}

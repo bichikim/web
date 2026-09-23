@@ -1,7 +1,7 @@
+import {dayjs} from 'src/utils/zoned-dayjs'
 const KOREA_OFFSET_HOURS = 9
 const MINUTES_PER_HOUR = 60
 const MILLISECONDS_PER_MINUTE = 60_000
-const KOREA_OFFSET_MS = KOREA_OFFSET_HOURS * MINUTES_PER_HOUR * MILLISECONDS_PER_MINUTE
 const OBSERVATION_AVAILABLE_MINUTE = 10
 const SKY_AVAILABLE_MINUTE = 45
 const YEAR_END_INDEX = 4
@@ -17,16 +17,12 @@ export interface KmaBaseTime {
   readonly time: string
 }
 
-const pad = (value: number): string => value.toString().padStart(2, '0')
-
-const toKoreaClock = (date: Date): Date => new Date(date.getTime() + KOREA_OFFSET_MS)
-
 const createBaseTime = (date: Date, minute: string): KmaBaseTime => {
-  const koreaClock = toKoreaClock(date)
+  const koreaClock = dayjs(date).utcOffset(KOREA_OFFSET_HOURS)
 
   return {
-    date: `${koreaClock.getUTCFullYear()}${pad(koreaClock.getUTCMonth() + 1)}${pad(koreaClock.getUTCDate())}`,
-    time: `${pad(koreaClock.getUTCHours())}${minute}`,
+    date: koreaClock.format('YYYYMMDD'),
+    time: koreaClock.format(`HH[${minute}]`),
   }
 }
 

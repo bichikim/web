@@ -15,9 +15,13 @@ const player: Player = {
   destroy: vi.fn(),
   pause: vi.fn(),
   play: vi.fn(),
+  playMotion: vi.fn(() => true),
+  resetPhysics: vi.fn(),
   resize: vi.fn(),
   seek: vi.fn(),
+  setMotion: vi.fn(() => true),
   setParameterValues: vi.fn(),
+  setPhysicsPreview: vi.fn(),
   updateDocument: mocks.updateDocument,
 }
 
@@ -197,4 +201,14 @@ describe('PlayerCanvas', () => {
     expect(currentPlayer.destroy).not.toHaveBeenCalled()
     expect(onStatusChange).toHaveBeenLastCalledWith('ready')
   })
+})
+
+test('should bound a large document backing buffer on a Retina display', async () => {
+  vi.stubGlobal('devicePixelRatio', 2)
+  const document = {...createDemoDocument(), viewport: {height: 7100, width: 4000}}
+  render(() => <PlayerCanvas document={document} />)
+  await waitFor(() => expect(mocks.createPlayer).toHaveBeenCalledOnce())
+  const options = mocks.createPlayer.mock.calls[0]?.[0]
+  expect(options.resolution * 7100 * 1.5).toBeCloseTo(4096)
+  expect(options.document.viewport).toEqual({height: 7100, width: 4000})
 })

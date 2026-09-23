@@ -4,7 +4,7 @@ import {fireEvent, render, screen, waitFor} from '@solidjs/testing-library'
 import {createSignal, Show} from 'solid-js'
 import {afterEach, beforeEach, expect, it, vi} from 'vitest'
 
-import {PModal, type PModalProps} from 'src/components/PModal'
+import {PModal, type PModalProps} from 'src/components/p-modal/PModal'
 import {
   type DialogueWriterController,
   type DialogueWriterState,
@@ -17,7 +17,7 @@ import {
   useModelDownload,
 } from '../../../features/model-download'
 import {isTextModelDownloaded} from '../../../features/text-generation'
-import PDialogueDraftGenerator from '../DraftGenerator'
+import {PDialogueDraftGenerator} from '../DraftGenerator'
 
 vi.mock('../../../features/dialogue-writer', () => ({
   useDialogueWriter: vi.fn(),
@@ -35,7 +35,7 @@ vi.mock('../../../features/text-generation', async () => {
   return {...actual, isTextModelDownloaded: vi.fn()}
 })
 
-vi.mock('src/components/PModal', () => ({PModal: vi.fn()}))
+vi.mock('src/components/p-modal/PModal', () => ({PModal: vi.fn()}))
 
 const createWriter = (): DialogueWriterController => ({
   canCopy: () => false,
@@ -60,6 +60,8 @@ const createModelDownload = (): ModelDownloadController => ({
   cancel: vi.fn(),
   dismissError: vi.fn(),
   dispose: vi.fn(),
+  downloads: () => [],
+  startImageModel: vi.fn(),
   startTextModel: vi.fn(async (): Promise<ModelDownloadResult> => ({status: 'complete'})),
   startVoiceModel: vi.fn(async (): Promise<ModelDownloadResult> => ({status: 'complete'})),
   state: () => ({status: 'idle'}),

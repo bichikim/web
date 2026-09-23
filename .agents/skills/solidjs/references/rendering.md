@@ -1,5 +1,9 @@
 # Rendering
 
+## Repeated UI
+
+Declare items sharing a UI structure as data and render them through a shared component with Solid list control flow, rather than repeating component declarations. Express item-specific differences in that data as well. For roughly one to three items, use judgment to choose data-driven rendering or individual declarations based on clarity and reuse. Preserve reactive values as accessors when storing them in the item data.
+
 ## Control flow
 
 Prefer Solid built-ins over ad-hoc `&&`, nested ternaries, or `.map()` for reactive branching and lists:

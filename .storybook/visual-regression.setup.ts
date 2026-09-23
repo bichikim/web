@@ -1,12 +1,12 @@
 import {afterEach, expect} from 'vitest'
 import {page} from 'vitest/browser'
 
-const focusRoomButtonStoryPath = '/apps/pomo/src/components/PButton.story.tsx'
-const sharedControlsStoryPath = '/apps/pomo/src/components/SharedControls.story.tsx'
+const focusRoomButtonStoryPath = '/apps/pomo/src/components/p-button/PButton.story.tsx'
+const sharedControlsStoryPath = '/apps/pomo/src/components/shared-controls/SharedControls.story.tsx'
 
 afterEach(async ({task}) => {
   const isPrimaryFocusRoomButtonStory =
-    task.file.filepath.endsWith(focusRoomButtonStoryPath) && task.name === 'Primary'
+    task.file.filepath.endsWith(focusRoomButtonStoryPath) && task.name === 'Default'
 
   const isSharedControlsStory =
     task.file.filepath.endsWith(sharedControlsStoryPath) && task.name === 'Default'

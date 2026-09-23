@@ -1,5 +1,5 @@
-import {Accessor, onMount} from 'solid-js'
-import {useEvent, useStorage} from '@winter-love/solid-use'
+import {Accessor, type JSX, onMount} from 'solid-js'
+import {useStorage} from '@winter-love/solid-use'
 import {getStorageKey} from 'src/utils/storage-key'
 // restore scroll
 
@@ -25,13 +25,13 @@ export const useRestoreScroll = (element: Accessor<HTMLElement | null>) => {
     }
   })
 
-  const handleScroll = (event: Event) => {
-    const element = event.target as HTMLElement
+  const handleScroll: JSX.EventHandler<HTMLElement, Event> = (event) => {
+    const element = event.currentTarget
     const {scrollLeft} = element
     const scrollLeftPercent = scrollLeft / (element.scrollWidth - element.clientWidth)
 
     setSavedScrollLeft(scrollLeftPercent)
   }
 
-  useEvent(element, 'scroll', handleScroll, {passive: true})
+  return {onScroll: handleScroll}
 }

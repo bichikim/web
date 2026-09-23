@@ -1,4 +1,5 @@
-import {onCleanup, onMount} from 'solid-js'
+import {visibilityInterval} from 'src/utils/visibility-interval'
+import {type Accessor, createEffect, on, onCleanup, onMount} from 'solid-js'
 import {useEvent} from '@winter-love/solid-use/event'
 
 export interface UseFeedRefreshEventsProps {
@@ -7,38 +8,32 @@ export interface UseFeedRefreshEventsProps {
   readonly onInitializationFailure: () => void
   readonly pollingIntervalMs: number
   readonly refresh: () => Promise<void>
-  readonly settingsChangedEvent: string
+  readonly settings: Accessor<unknown>
 }
 
 export const useFeedRefreshEvents = (props: UseFeedRefreshEventsProps) => {
   onMount(() => {
-    const refreshVisibleFeeds = () => {
-      if (document.visibilityState === 'visible') {
-        props.refresh().catch((error: unknown) => {
-          console.error('Failed to refresh visible focus room feeds.', error)
-        })
-      }
-    }
     const refreshChangedFeeds = () => {
       props.refresh().catch((error: unknown) => {
         console.error('Failed to refresh changed focus room feeds.', error)
       })
     }
-    const interval = window.setInterval(() => {
-      props.refresh().catch((error: unknown) => {
-        console.error('Failed to poll focus room feeds.', error)
-      })
-    }, props.pollingIntervalMs)
+    const stopPolling = visibilityInterval({
+      callback: () => {
+        props.refresh().catch((error: unknown) => {
+          console.error('Failed to poll focus room feeds.', error)
+        })
+      },
+      interval: props.pollingIntervalMs,
+      runOverdueOnVisible: true,
+    })
 
-    useEvent(document, 'visibilitychange', refreshVisibleFeeds)
-    useEvent(window, props.connectionChangedEvent, refreshChangedFeeds)
-    useEvent(window, props.settingsChangedEvent, refreshChangedFeeds)
+    useEvent(globalThis, props.connectionChangedEvent, refreshChangedFeeds)
+    createEffect(on(props.settings, refreshChangedFeeds, {defer: true}))
     props.initialize().catch((error: unknown) => {
       console.error('Failed to initialize focus room feeds.', error)
       props.onInitializationFailure()
     })
-    onCleanup(() => {
-      window.clearInterval(interval)
-    })
+    onCleanup(stopPolling)
   })
 }

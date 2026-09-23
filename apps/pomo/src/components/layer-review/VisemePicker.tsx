@@ -1,5 +1,5 @@
 import {P_VISEMES, type PViseme} from '../../features/lip-sync/index'
-import {PSelect} from '../PSelect'
+import {PSelect} from '../p-select/PSelect'
 import {VISEME_LABELS} from './shared'
 
 const VISEME_OPTIONS = P_VISEMES.map((viseme) => ({

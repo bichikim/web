@@ -1,18 +1,19 @@
 import {Tabs} from '@kobalte/core/tabs'
-import {A} from '@solidjs/router'
 import {cx} from 'class-variance-authority'
 import {createMemo, createSignal, For, Show} from 'solid-js'
 
 import type {AppendLanguageLearningWordsResult} from 'src/features/language-learning'
 import * as m from '@paraglide/message'
+import {PAppReturnLink} from '../p-app-return-link/PAppReturnLink'
 import {PSettingsEmptyState} from '../settings/EmptyState'
 
 const CLASSES = {
-  back: cx(
-    'min-h-11 inline-flex items-center rounded-full border border-solid border-border',
-    'px-4 text-foreground no-underline',
-  ),
-  page: 'min-h-dvh box-border bg-background p-[max(1.25rem,var(--pomo-safe-area-inset-top))] text-foreground',
+  page:
+    'min-h-dvh box-border bg-background ' +
+    'pt-safe-top-compact ' +
+    'pr-[max(1.25rem,var(--pomo-safe-area-inset-right))] ' +
+    'pb-safe-bottom-compact ' +
+    'pl-[max(1.25rem,var(--pomo-safe-area-inset-left))] text-foreground',
   panel: 'grid gap-4 rounded-5 border border-solid border-border bg-surface p-5',
   set: cx(
     'flex min-h-16 items-center justify-between gap-3 rounded-control border',
@@ -26,7 +27,7 @@ const CLASSES = {
   setActions: 'flex shrink-0 items-center gap-2',
   setLanguage: cx(
     'shrink-0 rounded-full bg-secondary-soft px-2.5 py-1',
-    'text-xs font-700 text-muted-foreground',
+    'text-sm leading-5 font-700 text-muted-foreground',
   ),
   tab: cx(
     'inline-flex min-h-10 cursor-pointer items-center justify-center rounded-control',
@@ -147,9 +148,7 @@ export const LanguageLearningWordSets = (props: LanguageLearningWordSetsProps) =
       <div class="mx-auto grid w-full max-w-4xl gap-5">
         <header class="flex flex-wrap items-center justify-between gap-4">
           <h1 class="m-0 text-3xl">{m.learning_word_sets_title()}</h1>
-          <A class={CLASSES.back} href="/">
-            {m.learning_word_sets_back()}
-          </A>
+          <PAppReturnLink />
         </header>
 
         <section aria-labelledby="language-learning-word-sets-title" class={CLASSES.panel}>

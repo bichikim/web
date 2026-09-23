@@ -1,4 +1,5 @@
-import {createWorkerTransport} from '../text-generation/worker-transport'
+import {createWorkerFailureHandler} from '../worker-failure'
+import {createWorkerTransport} from 'src/utils/worker-transport'
 import type {
   AlbumTranslationWorkerRequest,
   AlbumTranslationWorkerResponse,
@@ -25,12 +26,11 @@ export const createAlbumTranslationClient = (
     AlbumTranslationWorkerRequest,
     AlbumTranslationWorkerResponse
   >({
-    createErrorResponse: (event) => ({
-      message: event.message || 'Gemma 4 번역 Worker 실행 오류',
-      restartRequired: true,
-      type: 'error',
+    onFailure: createWorkerFailureHandler({
+      fallbackDetail: 'Gemma 4 번역 Worker 실행 오류',
+      feature: 'album-translation',
+      onResponse: options.onResponse,
     }),
-    feature: 'album-translation',
     onResponse: options.onResponse,
     worker,
   })

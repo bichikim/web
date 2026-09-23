@@ -31,6 +31,7 @@ objc2-app-kit = { version = "0.3.2", features = [
   "NSView",
   "NSWindow",
   "NSWorkspace",
+  "objc2-quartz-core",
 ] }
 objc2-core-graphics = { version = "0.3.2", features = ["CGWindowLevel"] }
 objc2-foundation = { version = "0.3.2", features = [
@@ -39,6 +40,7 @@ objc2-foundation = { version = "0.3.2", features = [
   "NSOperation",
   "NSString",
 ] }
+objc2-quartz-core = { version = "0.3.2", features = ["CALayer", "objc2-core-foundation"] }
 
 [build-dependencies]
 tauri-plugin = { version = "2", features = ["build"] }

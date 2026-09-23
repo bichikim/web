@@ -9,14 +9,14 @@ import {
   type PEventContextValue,
   usePEvents,
 } from '../../../features/focus-room-dialogue'
-import {PSelect} from '../../PSelect'
 import {
   readLanguageLearningSentences,
   writeLanguageLearningSentences,
 } from '../../../features/language-learning'
+import {PSelect} from '../../p-select/PSelect'
 import {LanguageLearningLibrary} from '../Library'
 
-vi.mock('../../PSelect', () => ({PSelect: vi.fn()}))
+vi.mock('../../p-select/PSelect', () => ({PSelect: vi.fn()}))
 vi.mock('../../../features/focus-room-dialogue', async () => {
   const actual: typeof import('../../../features/focus-room-dialogue') = await vi.importActual(
     '../../../features/focus-room-dialogue',
@@ -55,12 +55,16 @@ const createEvents = (): PEventContextValue => ({
   activeSegmentPosition: () => null,
   activeText: () => null,
   activeViseme: () => 'rest',
+  cancelDelayedEndEvent: vi.fn(),
+  delayedEndEventDurationMinutes: () => 30,
+  delayedEndEventIsRunning: () => false,
   deleteDialogue: vi.fn(async () => undefined),
   dialogues: () => [ENGLISH_DIALOGUE, JAPANESE_DIALOGUE],
   enterFocusRoom: vi.fn(),
   entryDialogueId: () => null,
   entryDialogueIds: () => [],
   errorMessage: () => null,
+  eventActionIds: () => ({}),
   eventDialogueIds: () => ({}),
   eventPlaybackModes: () => ({}),
   getAudio: vi.fn(async () => null),
@@ -72,19 +76,23 @@ const createEvents = (): PEventContextValue => ({
   isLoading: () => false,
   onStopDialoguePlayback: vi.fn(),
   onStopEntryPlayback: vi.fn(),
-  playDialogue: vi.fn(async () => undefined),
+  playDialogue: vi.fn(async () => true),
   playDialogueEvents: vi.fn(async () => undefined),
   playDialogueSequence: vi.fn(async () => undefined),
   refreshDialogues: vi.fn(async () => undefined),
+  registerEventActionExecutor: vi.fn(() => vi.fn()),
   retryDialoguePlayback: vi.fn(),
   retryEntryPlayback: vi.fn(),
   scheduledDialogueCount: () => 0,
+  setDelayedEndEventDuration: vi.fn(async () => undefined),
   setEntryDialogue: vi.fn(async () => undefined),
   setEntryDialogues: vi.fn(async () => undefined),
   setEventDialogue: vi.fn(async () => undefined),
   setEventDialogues: vi.fn(async () => undefined),
+  setEventItems: vi.fn(async () => undefined),
   setEventPlaybackMode: vi.fn(async () => undefined),
   skipDialoguePlayback: vi.fn(),
+  startDelayedEndEvent: vi.fn(),
 })
 
 beforeEach(() => {
@@ -111,8 +119,9 @@ beforeEach(() => {
   })
 })
 
-it('should use the shared language select and filter saved sentences', () => {
+it('should use the shared language select and filter saved sentences', async () => {
   const events = createEvents()
+  vi.mocked(events.getAudio).mockResolvedValue(new Blob(['audio']))
   const onRequestClose = vi.fn()
   vi.mocked(usePEvents).mockReturnValue(events)
   writeLanguageLearningSentences([
@@ -174,7 +183,7 @@ it('should use the shared language select and filter saved sentences', () => {
   expect(screen.getByRole('button', {name: '삭제'})).toBeDefined()
 
   fireEvent.click(screen.getByRole('button', {name: '캐릭터로 듣기'}))
-  expect(events.playDialogue).toHaveBeenCalledWith('dialogue-ja')
+  await vi.waitFor(() => expect(events.playDialogue).toHaveBeenCalledWith('dialogue-ja'))
   expect(onRequestClose).toHaveBeenCalledOnce()
 
   fireEvent.click(screen.getByRole('button', {name: '삭제'}))

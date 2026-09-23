@@ -4,7 +4,8 @@ import type {
   TextGenerationLoadingResponse,
   TextGenerationReadyResponse,
 } from '../text-generation/messages'
-import {createWorkerTransport} from '../text-generation/worker-transport'
+import {createWorkerFailureHandler} from '../worker-failure'
+import {createWorkerTransport} from 'src/utils/worker-transport'
 
 export type TextModelDownloadResponse =
   | TextGenerationErrorResponse
@@ -29,12 +30,11 @@ export const createTextModelDownloadClient = (
     type: 'module',
   })
   const transport = createWorkerTransport<PrepareTextModelRequest, TextModelDownloadResponse>({
-    createErrorResponse: (event) => ({
-      message: event.message || '모델 다운로드 Worker 실행 오류',
-      restartRequired: true,
-      type: 'error',
+    onFailure: createWorkerFailureHandler({
+      fallbackDetail: '모델 다운로드 Worker 실행 오류',
+      feature: 'text-model-download',
+      onResponse: options.onResponse,
     }),
-    feature: 'text-model-download',
     onResponse: options.onResponse,
     worker,
   })

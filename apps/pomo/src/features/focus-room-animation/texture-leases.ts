@@ -6,6 +6,7 @@ interface TextureEntry {
   source: string
   status: 'failed' | 'loaded' | 'loading'
   unload: Promise<void> | null
+  url: string
 }
 
 export interface TextureLease {
@@ -25,7 +26,7 @@ const beginUnload = (entry: TextureEntry) => {
     return
   }
 
-  entry.unload = Assets.unload(entry.source)
+  entry.unload = Assets.unload(entry.url)
     .catch(reportError)
     .finally(() => {
       entries.delete(entry.source)
@@ -33,12 +34,15 @@ const beginUnload = (entry: TextureEntry) => {
 }
 
 const createEntry = (source: string): TextureEntry => {
+  const baseUrl = globalThis.document?.baseURI
+  const url = baseUrl === undefined ? source : new URL(source, baseUrl).href
   const entry: TextureEntry = {
     consumers: 0,
-    load: Assets.load<Texture>(source),
+    load: Assets.load<Texture>(url),
     source,
     status: 'loading',
     unload: null,
+    url,
   }
   entry.load = entry.load.then(
     (texture) => {

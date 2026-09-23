@@ -1,3 +1,4 @@
+/** @vitest-environment node */
 import {expect, it} from 'vitest'
 
 import {
@@ -24,6 +25,16 @@ it.each([
   ['/', true],
   ['/dialogue', true],
   ['/dialogue/', true],
+  ['/desktop/dialog/memory-assist', true],
+  ['/desktop/dialog/memory-assist/', true],
+  ['/desktop/dialog/settings', true],
+  ['/desktop/dialog/settings/', true],
+  ['/desktop/player', true],
+  ['/desktop/player/', true],
+  ['/desktop/pomodoro', true],
+  ['/desktop/pomodoro/', true],
+  ['/desktop/settings', true],
+  ['/desktop/settings/', true],
   ['/en', false],
   ['/ko/', false],
   ['/en/dialogue', false],

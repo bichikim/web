@@ -1,8 +1,9 @@
+/** @vitest-environment node */
 import {beforeEach, describe, expect, it, vi} from 'vitest'
 
 const repositoryMocks = vi.hoisted(() => ({listPublishedAlbums: vi.fn()}))
 
-vi.mock('src/server/music/catalog-repository', () => repositoryMocks)
+vi.mock('src/server/repositories/music-catalog', () => repositoryMocks)
 
 import {GET} from '../albums'
 

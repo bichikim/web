@@ -1,4 +1,6 @@
 import {type Accessor, createSignal, onCleanup} from 'solid-js'
+import {clamp} from 'es-toolkit/math'
+import {replaceObjectUrl} from '../blob-object-url'
 
 const MAXIMUM_PROGRESS = 100
 
@@ -38,7 +40,7 @@ export const useCharacterRenderer = (
   props: UseCharacterRendererProps,
 ): CharacterRendererController => {
   const runtime = props.runtime ?? DEFAULT_RUNTIME
-  const [modelUrl, setModelUrl] = createSignal(props.defaultModelUrl)
+  const [modelUrl, setModelUrl] = createSignal(props.defaultModelUrl, {equals: false})
   const [modelName, setModelName] = createSignal(props.defaultModelName)
   const [progress, setProgress] = createSignal(0)
   const [status, setStatus] = createSignal<CharacterRendererStatus>('loading')
@@ -53,17 +55,26 @@ export const useCharacterRenderer = (
     activeObjectUrl = null
   }
 
-  const replaceModel = (url: string, name: string) => {
-    releaseObjectUrl()
+  const setModel = (url: string, name: string) => {
     setModelName(name)
     setModelUrl(url)
     setProgress(0)
     setStatus('loading')
   }
 
+  const replaceModel = (url: string, name: string) => {
+    releaseObjectUrl()
+    setModel(url, name)
+  }
+
   const loadFile = (file: File) => {
-    const objectUrl = runtime.createObjectUrl(file)
-    replaceModel(objectUrl, file.name)
+    const objectUrl = replaceObjectUrl(activeObjectUrl, () => file, {
+      create: (nextFile) => runtime.createObjectUrl(nextFile),
+      order: 'create-first',
+      revoke: (url) => runtime.revokeObjectUrl(url),
+    })
+    activeObjectUrl = null
+    setModel(objectUrl, file.name)
     activeObjectUrl = objectUrl
   }
 
@@ -81,7 +92,7 @@ export const useCharacterRenderer = (
   const loadDefaultModel = () => replaceModel(props.defaultModelUrl, props.defaultModelName)
 
   const handleLoadProgress = (nextProgress: number) => {
-    setProgress(Math.round(Math.min(MAXIMUM_PROGRESS, Math.max(0, nextProgress))))
+    setProgress(Math.round(clamp(nextProgress, 0, MAXIMUM_PROGRESS)))
   }
 
   const handleLoadStart = () => {

@@ -1,12 +1,13 @@
+import {PTextarea} from 'src/components/p-textarea/PTextarea'
 import {cx} from 'class-variance-authority'
 import {createSignal, Show} from 'solid-js'
 
 import * as m from '@paraglide/message'
 import {MAXIMUM_MEMORY_MEMO_LENGTH} from '../../features/memory-assist'
-import {PButton} from '../PButton'
-import {PModal} from '../PModal'
+import {PButton} from '../p-button/PButton'
+import {PModal} from '../p-modal/PModal'
 import {type ReminderDraft, ReminderFields} from './ReminderFields'
-import {getDateInputValue} from './reminder-draft'
+import {formatLocalDate} from 'src/utils/format-local-date'
 
 const TEXTAREA_CLASSES = cx(
   'box-border min-h-24 w-full resize-y rounded-5 border border-solid border-border',
@@ -61,7 +62,8 @@ export const MemoryMemoModal = (props: MemoryMemoModalProps) => {
       <div class="grid gap-4">
         <label class="grid gap-2 text-sm font-650 text-foreground">
           <span>{m.memory_memo_input()}</span>
-          <textarea
+          <PTextarea
+            unstyled
             class={TEXTAREA_CLASSES}
             maxlength={MAXIMUM_MEMORY_MEMO_LENGTH}
             onInput={(event) => props.onTextInput(event.currentTarget.value)}
@@ -73,7 +75,7 @@ export const MemoryMemoModal = (props: MemoryMemoModalProps) => {
 
         <ReminderFields
           draft={props.reminderDraft}
-          minimumDate={getDateInputValue(new Date())}
+          minimumDate={formatLocalDate(new Date())}
           onChange={props.onReminderChange}
         />
 
@@ -85,7 +87,12 @@ export const MemoryMemoModal = (props: MemoryMemoModalProps) => {
           )}
         </Show>
 
-        <PButton class="w-full" disabled={!props.canSave || isPending()} onPress={handleSave}>
+        <PButton
+          raised
+          class="w-full"
+          disabled={!props.canSave || isPending()}
+          onPress={handleSave}
+        >
           {props.saveLabel}
         </PButton>
       </div>

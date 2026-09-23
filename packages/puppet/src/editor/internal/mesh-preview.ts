@@ -1,3 +1,6 @@
+import {composeParameterGlue} from '../../deformation/parameter-glue'
+import {getRestPreview} from './rest-preview'
+import {getParameterEditingDocument} from './parameter-sampling'
 import {
   composeParameterScene,
   composeParameterVertices,
@@ -32,15 +35,22 @@ const getPreviewParameterValues = (props: MeshEditorProps) => {
     ? parameterValueMap
     : sampleMotionParameterValues({
         motion,
+        parameters: props.document.parameters,
         parameterValues: parameterValueMap,
         time: props.previewTime ?? 0,
       })
 }
 
 export const getPartPreviewVertices = (props: MeshEditorProps, part: PuppetPart) => {
+  if (props.meshEditing) {
+    return part.mesh.vertices
+  }
   const [motion] = props.document.motions
   const parameterVertices = composeParameterVertices({
-    document: props.document,
+    document: getParameterEditingDocument(
+      props.document,
+      props.editMode === 'parameter' ? props.activeBindingId : undefined,
+    ),
     parameterValues: getPreviewParameterValues(props),
     partId: part.id,
     restVertices: part.mesh.vertices,
@@ -56,7 +66,23 @@ export const getPartPreviewVertices = (props: MeshEditorProps, part: PuppetPart)
       })
 }
 
-export const getDeformerPreviewDocument = (props: MeshEditorProps): PuppetDocument => ({
-  ...props.document,
-  scene: composeParameterScene(props.document, getPreviewParameterValues(props)),
-})
+export const getDeformerPreviewDocument = (props: MeshEditorProps): PuppetDocument =>
+  props.meshEditing
+    ? getRestPreview(props.document)
+    : {
+        ...props.document,
+        glue: composeParameterGlue({
+          document: getParameterEditingDocument(
+            props.document,
+            props.editMode === 'parameter' ? props.activeBindingId : undefined,
+          ),
+          parameterValues: getPreviewParameterValues(props),
+        }),
+        scene: composeParameterScene(
+          getParameterEditingDocument(
+            props.document,
+            props.editMode === 'parameter' ? props.activeBindingId : undefined,
+          ),
+          getPreviewParameterValues(props),
+        ),
+      }

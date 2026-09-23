@@ -1,3 +1,4 @@
+/** @vitest-environment node */
 import {describe, expect, it} from 'vitest'
 
 import {applyCorsHeaders, getAllowedOrigin} from '../cors'
@@ -16,6 +17,18 @@ describe('getAllowedOrigin', () => {
       expect(getAllowedOrigin(request, POLICY)).toBe(origin)
     },
   )
+
+  it('should allow an exact origin when the configured list has surrounding spaces', () => {
+    const origin = 'https://pomofi.io'
+    const request = new Request('https://audio.pomofi.io', {headers: {Origin: origin}})
+
+    expect(
+      getAllowedOrigin(request, {
+        allowedOrigins: ' https://pomofi.io , https://example.com ',
+        allowedOriginSuffixes: '',
+      }),
+    ).toBe(origin)
+  })
 
   it('should allow a secure subdomain of a configured suffix', () => {
     const origin = 'https://pomo-git-feature-team.vercel.app'

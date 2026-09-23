@@ -10,20 +10,27 @@ export const CLASSES = {
     'motion-reduce:[&[data-exiting]]:[animation-duration:1ms]',
   ),
   entryAction: cx(
-    'pomo-entry__action [button&]:min-w-[min(17rem,_100%)] [button&]:min-h-14',
+    '[button&]:min-w-[min(17rem,_100%)] [button&]:min-h-14',
     '[button&]:[padding-inline:1.5rem] [button&]:text-[0.9375rem]',
   ),
   entryContent: cx(
-    'pomo-entry__content flex w-[min(calc(100%_-_2rem_-_var(--pomo-safe-area-inset-left)),_22rem)]',
+    'flex w-[min(calc(100%_-_2rem_-_var(--pomo-safe-area-inset-left)),_22rem)]',
     'box-border flex-col items-start gap-4',
     '[margin-block-end:calc(9rem_+_var(--pomo-safe-area-inset-bottom))]',
     '[margin-inline-start:calc(1rem_+_var(--pomo-safe-area-inset-left))]',
-    'lg:[margin-block-end:calc(2.5rem_+_var(--pomo-safe-area-inset-bottom))]',
+    'lg:mbe-entry-bottom',
     'lg:[margin-inline-start:calc(2.5rem_+_var(--pomo-safe-area-inset-left))]',
   ),
-  entryLeadingImage: cx(
-    'size-16 [margin-block:-1.25rem] [margin-inline-start:-0.75rem]',
-    '[filter:drop-shadow(0_0.125rem_0.1875rem_rgb(0_0_0_/_32%))]',
+  entryFooterLinks: cx(
+    'flex flex-wrap items-center gap-x-2 gap-y-1 text-sm leading-5',
+    'text-[#fff9f1]/80 [text-shadow:0_0.0625rem_0.1875rem_rgb(0_0_0_/_55%)]',
+  ),
+  entryTitle: cx(
+    'absolute left-safe-left-mobile top-safe-top-mobile',
+    'm-0 text-[1.75rem] font-semibold tracking-[-0.055em] leading-none text-[#fff9f1]',
+    '[text-shadow:0_2px_16px_rgb(0_0_0_/_25%)] lg:text-[2rem]',
+    'lg:left-[calc(2.5rem_+_var(--pomo-safe-area-inset-left))]',
+    'lg:top-entry-top',
   ),
   mediaControls: cx(
     'pomo-media-controls flex w-full min-h-0 max-h-full [flex:0_1_auto]',
@@ -51,8 +58,7 @@ export const CLASSES = {
     // oxlint-disable-next-line eslint-js/max-len -- UnoCSS must extract the complete arbitrary-variant utility.
     '[&:has(.pomo-media-messages:not(:empty)):has(.pomo-dialogue-composer:not([data-expanded]))_.pomo-media-messages]:w-[min(36rem,_calc(100%_-_4rem))]',
     '[&[data-dialogue-active]:not([data-player-expanded])_.pomo-player-stage]:w-[var(--pomo-player-compact-width)]',
-    '[&[data-dialogue-active]:not([data-player-expanded])_.pomo-player__summary]:justify-center',
-    '[&[data-dialogue-active]:not([data-player-expanded])_.pomo-player__play-summary-frame]:hidden',
+    '[&[data-dialogue-active]:not([data-player-expanded])_[data-player-summary]]:justify-center',
     '[&[data-dialogue-active]:not([data-player-expanded])_[data-pomo-player-title]]:hidden',
     '[&[data-dialogue-active]:not([data-player-expanded])_[data-player-utility=album]]:hidden',
     '[&[data-player-expanded]_.pomo-player-stage]:[container-type:size]',
@@ -68,16 +74,26 @@ export const CLASSES = {
     'pomo-media-messages flex w-[min(36rem,_100%)] min-h-0 max-h-full [flex:0_1_auto] flex-col self-start',
     'gap-3 overflow-hidden pointer-events-none [&_>_*]:pointer-events-auto',
   ),
-  sceneControl: cx(
-    'pomo-scene-control max-lg:[&.pomo-icon-button]:hidden',
-    'max-lg:[&.pomo-icon-select]:hidden',
-  ),
   sceneToolbar: cx(
-    'pointer-events-auto absolute right-4 top-[calc(1rem+var(--pomo-safe-area-inset-top))]',
+    'pomo-scene-toolbar pointer-events-auto absolute right-4 top-safe-top-mobile',
     'flex flex-col items-end gap-2 xs:right-7',
-    'lg:top-[calc(1.5rem+var(--pomo-safe-area-inset-top))]',
+    'lg:top-safe-top',
   ),
-  ui: 'pomo-ui pointer-events-none absolute inset-0',
+  ui: cx(
+    'pointer-events-none absolute inset-0',
+    'max-lg:pt-safe-top-mobile',
+    'max-lg:pl-[calc(1rem_+_var(--pomo-safe-area-inset-left))]',
+    'max-lg:pr-4 xs:max-lg:pr-7',
+    'max-lg:[&>.pomo-pomodoro]:static max-lg:[&>.pomo-pomodoro]:float-left',
+    'max-lg:[&>.pomo-pomodoro]:mr-2',
+    'max-lg:[&>.pomo-scene-toolbar]:static max-lg:[&>.pomo-scene-toolbar]:block',
+    'max-lg:[&>.pomo-scene-toolbar>.pomo-toolbar-actions[data-wrap]]:block',
+    'max-lg:[&>.pomo-scene-toolbar>.pomo-toolbar-actions[data-wrap]]:text-right',
+    'max-lg:[&>.pomo-scene-toolbar>.pomo-toolbar-actions[data-wrap]]:leading-[3.75rem]',
+    'max-lg:[&>.pomo-scene-toolbar>.pomo-toolbar-actions[data-wrap]>div]:inline-flex',
+    'max-lg:[&>.pomo-scene-toolbar>.pomo-toolbar-actions[data-wrap]>div]:align-top',
+    'max-lg:[&>.pomo-scene-toolbar>.pomo-toolbar-actions[data-wrap]>div]:ml-2',
+  ),
 } as const
 
 export type SceneTime = ScenePeriod

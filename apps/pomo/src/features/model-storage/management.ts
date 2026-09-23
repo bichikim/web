@@ -1,4 +1,4 @@
-import {failureResult, type Result, successResult} from '../result'
+import {failureResult, type Result, successResult} from 'src/features/result'
 import {MODEL_CACHE_NAME, MODEL_PARTIAL_DIRECTORY_NAME} from './storage'
 
 export type ModelStorageManagementOperation =

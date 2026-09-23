@@ -6,7 +6,7 @@ import {z} from 'zod'
 import type {InvalidModelDataError} from './errors'
 import type {SupertonicLanguage} from './language'
 import type {SupertonicRuntime} from './runtime'
-import {failureResult, type Result, successResult} from '../result'
+import {failureResult, type Result, successResult} from 'src/features/result'
 import {parseSupertonicVoiceStyle, type SupertonicVoiceStyle} from './voice-style'
 
 const configSchema = z.object({
