@@ -59,13 +59,21 @@ const systemClock = {
   now: Date.now,
 } satisfies PlaylistClock
 
+interface PlaylistTossWrite {
+  readonly playlist: StoredPlaylist
+  readonly write: PlaylistStorageAdapter['writeToss']
+}
+
+const writeLatestToss = createLatestAsyncTask<PlaylistTossWrite>(({playlist, write}) =>
+  write(playlist),
+)
+
 /** Reads and writes playlists using their persisted timestamps. */
 export const createPPlaylistStorage = (
   storage: PlaylistStorageAdapter = runtimeStorage,
   clock: PlaylistClock = systemClock,
   reportError: (error: unknown) => void = globalThis.reportError,
 ): PPlaylistStorage => {
-  const writeLatestToss = createLatestAsyncTask(storage.writeToss)
   let playlistRevision = 0
 
   return {
@@ -90,7 +98,9 @@ export const createPPlaylistStorage = (
           storage.writeWeb(latestPlaylist)
 
           if (latestPlaylist === webPlaylist) {
-            await writeLatestToss(latestPlaylist).catch(reportError)
+            await writeLatestToss({playlist: latestPlaylist, write: storage.writeToss}).catch(
+              reportError,
+            )
           }
         }
 
@@ -120,7 +130,9 @@ export const createPPlaylistStorage = (
         return
       }
 
-      await writeLatestToss(storedPlaylist).catch(() => undefined)
+      await writeLatestToss({playlist: storedPlaylist, write: storage.writeToss}).catch(
+        () => undefined,
+      )
     },
   }
 }
