@@ -1,5 +1,5 @@
 import {beforeEach, expect, it, vi} from 'vitest'
-import {createServiceSettingsStorage} from '../service-storage'
+import {createServiceSettingsStorage, DEFAULT_SERVICE_SETTINGS} from '../service-storage'
 import {createStorageFixture} from './helpers/storage'
 
 let reportRepairError: ReturnType<typeof vi.fn<(error: unknown) => void>>
@@ -57,6 +57,18 @@ it('should restore the legacy web date when native values are missing', async ()
   fixture.getItem.mockResolvedValue(null)
   fixture.web.set('pomo:service-start:v1', '"2026-09-01"')
   await expect(repository.read()).resolves.toMatchObject({start: '2026-09-01'})
+})
+it('should cache a native legacy date for a later bridge-free read', async () => {
+  fixture.usesTossStorage.mockReturnValue(true)
+  fixture.getItem.mockResolvedValueOnce(null).mockResolvedValueOnce('"2026-09-01"')
+  const settings = {...DEFAULT_SERVICE_SETTINGS, start: '2026-09-01'}
+
+  await expect(repository.read()).resolves.toEqual(settings)
+  expect(fixture.web.get('pomo:service-settings:v1')).toBe(JSON.stringify(settings))
+
+  fixture.usesTossStorage.mockReturnValue(false)
+
+  await expect(repository.read()).resolves.toEqual(settings)
 })
 it('should restore current native settings before a legacy web date', async () => {
   fixture.usesTossStorage.mockReturnValue(true)
