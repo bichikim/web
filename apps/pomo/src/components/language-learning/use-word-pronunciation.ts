@@ -251,6 +251,14 @@ export const useLanguageLearningWordPronunciation = (): LanguageLearningWordPron
     activeGeneration = null
   }
 
+  const cancelActiveRequest = () => {
+    activeRequest = null
+    abortActiveGeneration()
+    setPendingRequest(null)
+    setPendingSettingsRequest(null)
+    setLoadingKey(null)
+  }
+
   const generate = (request: PendingPronunciation, downloadIfMissing: boolean) => {
     abortActiveGeneration()
     const controller = new AbortController()
@@ -313,6 +321,7 @@ export const useLanguageLearningWordPronunciation = (): LanguageLearningWordPron
     const key = getWordKey(word)
     const currentUrls = audioUrls()
     if (currentUrls[key] !== undefined) {
+      cancelActiveRequest()
       publisher.replay(word)
       return
     }

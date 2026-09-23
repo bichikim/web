@@ -194,6 +194,53 @@ it('should resume pronunciation when settings hydrate after a cache miss', async
   expect(screen.getByTestId('loading')).toHaveTextContent('false')
 })
 
+it('should cancel pending settings pronunciation when another cached word is replayed', async () => {
+  let settingsRead: Promise<unknown> | undefined
+  let resolveSettings: ((settings: unknown) => void) | undefined
+  let missingAudioRead: Promise<Blob | null> | undefined
+  let resolveMissingAudio: ((audio: Blob | null) => void) | undefined
+  vi.spyOn(
+    automaticDialogueSettings.createAutomaticDialoguePreferenceOptions().storage,
+    'read',
+  ).mockImplementation(
+    () =>
+      (settingsRead = new Promise((resolve) => {
+        resolveSettings = resolve
+      })),
+  )
+  audioRepository.get.mockResolvedValueOnce(new Blob(['cached audio'])).mockImplementationOnce(
+    () =>
+      (missingAudioRead = new Promise((resolve) => {
+        resolveMissingAudio = resolve
+      })),
+  )
+  renderPronunciation()
+
+  await vi.waitFor(() => expect(resolveSettings).toBeDefined())
+  requestWord(secondWord)
+  await vi.waitFor(() =>
+    expect(screen.getByTestId('audio-second')).toHaveTextContent('blob:pronunciation'),
+  )
+
+  requestWord(word)
+  await vi.waitFor(() => expect(audioRepository.get).toHaveBeenCalledTimes(2))
+  resolveMissingAudio?.(null)
+  await missingAudioRead
+
+  expect(screen.getByTestId('loading')).toHaveTextContent('true')
+  expect(isSupertonicModelDownloaded).not.toHaveBeenCalled()
+
+  requestWord(secondWord)
+
+  expect(screen.getByTestId('loading')).toHaveTextContent('false')
+  resolveSettings?.({modelId: 'int8', version: 1, voiceId: 'Hana'})
+  await settingsRead
+  await Promise.resolve()
+
+  expect(isSupertonicModelDownloaded).not.toHaveBeenCalled()
+  expect(generateLanguageLearningWordPronunciation).not.toHaveBeenCalled()
+})
+
 it('should replace an active pronunciation when another word is requested', async () => {
   let firstSignal: AbortSignal | undefined
   let resolveSecond: (() => void) | undefined
