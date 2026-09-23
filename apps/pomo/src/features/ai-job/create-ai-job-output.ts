@@ -15,9 +15,16 @@ export interface AiJobOutputOptions {
 
 export const createAiJobOutput = (props: AiJobOutputOptions) => {
   let handledCompletionJobId: string | null = null
-  const speakText = async (text: string, revision: number): Promise<boolean> => {
+  const speakText = async (
+    text: string,
+    revision: number,
+    completionJobId?: string,
+  ): Promise<boolean> => {
     try {
       await props.onComplete(text)
+      if (completionJobId !== undefined) {
+        handledCompletionJobId = completionJobId
+      }
       return props.session.isCurrent(revision)
     } catch (error: unknown) {
       if (props.session.isCurrent(revision)) {
@@ -55,8 +62,7 @@ export const createAiJobOutput = (props: AiJobOutputOptions) => {
 
     props.onResult(result)
     if (speakOnce && result.text !== undefined) {
-      handledCompletionJobId = nextJob.id
-      return speakText(result.text, revision)
+      return speakText(result.text, revision, nextJob.id)
     }
     return true
   }
