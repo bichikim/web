@@ -80,6 +80,7 @@ export const unitTestProject = {
       'packages/*/__tests__/**/*.spec.?(c|m)[jt]s?(x)',
       'packages/*/rules/**/*.spec.?(c|m)[jt]s?(x)',
       'packages/*/src/**/*.spec.?(c|m)[jt]s?(x)',
+      'packages/knowledge/evaluation/**/*.spec.?(c|m)[jt]s?(x)',
       'packages/*/guest-js/**/*.spec.?(c|m)[jt]s?(x)',
       'apps/*/__tests__/**/*.spec.?(c|m)[jt]s?(x)',
       'apps/*/scripts/**/*.spec.?(c|m)[jt]s?(x)',

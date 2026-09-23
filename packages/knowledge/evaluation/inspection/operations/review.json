@@ -1,0 +1,132 @@
+{
+  "status": "draft",
+  "selectedBeforeModelRun": true,
+  "cases": [
+    {
+      "number": 1,
+      "id": "storage-backend",
+      "left": "storage",
+      "right": "playlist",
+      "expected": "conflict",
+      "reason": "공통 표는 웹 구조화 데이터에 Dexie·IndexedDB를 지정하지만 사용자 재생목록은 localStorage를 지정한다. 재생목록이 공통 계약의 예외라는 설명은 없다.",
+      "question": "재생목록을 공통 구조화 데이터 저장 규칙의 예외로 보아야 하나요?"
+    },
+    {
+      "number": 2,
+      "id": "cleanup-scope",
+      "left": "policy",
+      "right": "expiry",
+      "expected": "uncertain",
+      "reason": "저장소의 자동 정리 금지와 피드 기능의 만료 정리는 적용 계층이 다를 수 있다. 저장소 정책이 기능별 삭제까지 금지하는지 두 발췌에는 정의돼 있지 않다.",
+      "question": "자동 정리 금지는 저장소 계층에만 적용되나요, 피드 기능에도 적용되나요?"
+    },
+    {
+      "number": 3,
+      "id": "persist-request",
+      "left": "policy",
+      "right": "connections",
+      "expected": "uncertain",
+      "reason": "한쪽은 navigator.storage.persist를 금지하고 다른 쪽은 영속 저장 요청을 요구한다. 후자가 같은 API를 뜻하는지 명시돼 있지 않다.",
+      "question": "영속 저장 요청은 navigator.storage.persist 호출을 뜻하나요?"
+    },
+    {
+      "number": 4,
+      "id": "remote-client-scope",
+      "left": "remote",
+      "right": "clients",
+      "expected": "conflict",
+      "reason": "상태 문단은 앱인토스와 데스크톱 모두 POMO_PUBLIC_ORIGIN을 사용한다고 하지만 완료 조건은 토스 번들의 서버 함수만 사용한다고 제한한다.",
+      "question": "완료 조건의 “만”은 데스크톱도 배제하는 표현인가요, 웹과 토스 비교에만 한정한 표현인가요?"
+    },
+    {
+      "number": 5,
+      "id": "persistence-definition",
+      "left": "persistence",
+      "right": "lifecycle",
+      "expected": "duplicate",
+      "reason": "앱 재실행 후 유지하지만 사용자의 앱·사이트 데이터 삭제 뒤까지 보장하지 않는다는 핵심 의미가 같다. 음악 문서는 기기 간 동기화 미제공도 부연한다.",
+      "question": "추가 동기화 설명이 있어도 핵심 지속 저장 정의가 같다고 볼까요?"
+    },
+    {
+      "number": 6,
+      "id": "deployment-recovery",
+      "left": "rollback",
+      "right": "deployment",
+      "expected": "duplicate",
+      "reason": "Pomo 배포 실패 시 운영 도메인을 이전 상태로 유지·복구하고 먼저 배포한 Gateway도 기록된 이전 버전으로 되돌리는 핵심 복구 요구가 같다.",
+      "question": "더 긴 배포 절차를 포함해도 동일 복구 규칙으로 볼까요?"
+    },
+    {
+      "number": 7,
+      "id": "storage-and-connections",
+      "left": "storage",
+      "right": "connections",
+      "expected": "unrelated",
+      "reason": "플랫폼별 저장 수단과 피드 연결의 주소 검증·유지 요구는 별도 요구이며 함께 지킬 수 있다. 연결 문단은 웹 설정의 구체적인 저장 API를 지정하지 않는다.",
+      "question": "저장 수단과 피드 설정 유지 규칙을 독립적인 요구로 볼까요?"
+    },
+    {
+      "number": 8,
+      "id": "connection-and-audio-expiry",
+      "left": "connections",
+      "right": "expiry",
+      "expected": "unrelated",
+      "reason": "연결 설정과 생성된 피드 음성은 다른 데이터다. 음성의 48시간 만료가 연결 설정을 삭제하지 않는다고 명시돼 있다.",
+      "question": "서로 다른 데이터의 보관 규칙으로 볼까요?"
+    },
+    {
+      "number": 9,
+      "id": "persistence-and-policy",
+      "left": "persistence",
+      "right": "policy",
+      "expected": "unrelated",
+      "reason": "재시작 후 유지·사용자 삭제 허용이라는 정의와 자동 정리 금지는 함께 지킬 수 있는 별도 규칙이다.",
+      "question": "사용자 삭제와 자동 정리를 구분하는 데 동의하나요?"
+    },
+    {
+      "number": 10,
+      "id": "playlist-and-lifecycle",
+      "left": "playlist",
+      "right": "lifecycle",
+      "expected": "unrelated",
+      "reason": "재생목록의 저장 수단·playback 상태 분리와 재실행·사용자 삭제 후 수명은 별도의 요구다.",
+      "question": "저장 구현과 데이터 수명은 중복이 아닌 독립 요구로 볼까요?"
+    },
+    {
+      "number": 11,
+      "id": "remote-and-rollback",
+      "left": "remote",
+      "right": "rollback",
+      "expected": "unrelated",
+      "reason": "클라이언트별 서버 호출 주소와 운영 배포 실패 복구는 별개 대상이다.",
+      "question": "서버 호출 주소와 배포 복구를 독립 요구로 볼까요?"
+    },
+    {
+      "number": 12,
+      "id": "storage-and-persistence",
+      "left": "storage",
+      "right": "persistence",
+      "expected": "unrelated",
+      "reason": "플랫폼별 저장소 선택과 영속성의 정의는 함께 지킬 수 있다. 같은 저장 주제라는 이유만으로 중복은 아니다.",
+      "question": "저장 수단과 영속성 정의를 구분할까요?"
+    },
+    {
+      "number": 13,
+      "id": "playlist-and-feed-expiry",
+      "left": "lifecycle",
+      "right": "expiry",
+      "expected": "unrelated",
+      "reason": "음악 라이브러리의 지속 저장과 생성된 피드 음성의 만료는 적용 대상이 다르다.",
+      "question": "라이브러리와 피드 음성의 서로 다른 보관 정책으로 볼까요?"
+    },
+    {
+      "number": 14,
+      "id": "playlist-and-cleanup-policy",
+      "left": "lifecycle",
+      "right": "policy",
+      "expected": "unrelated",
+      "reason": "앱 삭제·사이트 데이터 삭제 뒤 미보존은 사용자 삭제에 관한 설명이다. 자동 정리 금지와 양립할 수 있다.",
+      "question": "사용자 삭제 후 미보존을 자동 정리와 구분할까요?"
+    }
+  ]
+}
