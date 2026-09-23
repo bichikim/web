@@ -1,4 +1,3 @@
-import {restorePreferredValue} from '../preference-persistence'
 import {withPromiseNull} from 'src/utils/with-promise-null'
 import {
   hasNativeStorageBridge,
@@ -43,43 +42,26 @@ export const createPSceneStyleRepository = (storage: PSceneStyleStorage): PScene
   /** Reads the scene style from storage whose lifetime matches the current runtime. */
   const read = async (): Promise<PSceneStyle> => {
     const initialWriteRevision = writeRevision
-    const restored = await restorePreferredValue({
-      preferred: readWebPreference(),
-      repair: async (value) => {
-        if (initialWriteRevision !== writeRevision) {
-          return
-        }
-        if (storage.usesTossStorage()) {
-          await withPromiseNull(storage.writeToss(SCENE_STYLE_STORAGE_KEY, value))
-        }
-      },
-      restore: async () => {
-        if (!storage.usesTossStorage()) {
-          return storage.getDefault()
-        }
+    if (!storage.usesTossStorage()) {
+      return readWebPreference() ?? storage.getDefault()
+    }
 
-        try {
-          const storedPreference = await storage.readToss(SCENE_STYLE_STORAGE_KEY)
-          if (initialWriteRevision !== writeRevision) {
-            return readWebPreference() ?? storage.getDefault()
-          }
+    try {
+      const storedPreference = await storage.readToss(SCENE_STYLE_STORAGE_KEY)
+      if (initialWriteRevision !== writeRevision) {
+        return readWebPreference() ?? storage.getDefault()
+      }
 
-          const tossPreference = parseSceneStyle(storedPreference)
-          if (tossPreference === null) {
-            return storage.getDefault()
-          }
+      const tossPreference = parseSceneStyle(storedPreference)
+      if (tossPreference === null) {
+        return readWebPreference() ?? storage.getDefault()
+      }
 
-          writeWebPreference(tossPreference)
-          return tossPreference
-        } catch {
-          return readWebPreference() ?? storage.getDefault()
-        }
-      },
-    })
-
-    return initialWriteRevision === writeRevision
-      ? restored
-      : (readWebPreference() ?? storage.getDefault())
+      writeWebPreference(tossPreference)
+      return tossPreference
+    } catch {
+      return readWebPreference() ?? storage.getDefault()
+    }
   }
 
   /** Persists the scene style until the host app or browser data is removed. */
