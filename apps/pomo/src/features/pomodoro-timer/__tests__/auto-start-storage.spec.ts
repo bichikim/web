@@ -4,6 +4,7 @@ import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 
 import {
   type AutoStartStorage,
+  type AutoStartStorageAdapter,
   createAutoStartStorage,
   readAutoStartPreference as readRuntimePreference,
   writeAutoStartPreference as writeRuntimePreference,
@@ -141,6 +142,50 @@ describe('auto-start-storage', () => {
     const [storageKey, storedValue] = storageMocks.setItem.mock.calls[0] ?? []
     expect(storageKey).toBe('pomo:timer-auto-start:v2')
     expect(JSON.parse(storedValue ?? '')).toEqual({isEnabled: true, savedAt: 20})
+  })
+
+  it('should preserve the latest native preference after browser storage eviction', async () => {
+    const customNow = vi.fn<() => number>()
+    customNow.mockReturnValueOnce(100).mockReturnValueOnce(200)
+    let web: string | null = null
+    let native: string | null = null
+    const pendingFirst = Promise.withResolvers<void>()
+    const storage = {
+      readToss: vi.fn(async (_key, parse) => {
+        if (native === null) {
+          return null
+        }
+        return parse(JSON.parse(native))
+      }),
+      readWeb: vi.fn((_key, parse) => {
+        if (web === null) {
+          return null
+        }
+        return parse(JSON.parse(web))
+      }),
+      usesTossStorage: () => true,
+      writeToss: vi.fn(async (_key, value) => {
+        const serialized = JSON.stringify(value)
+        if (serialized.includes('"savedAt":100')) {
+          await pendingFirst.promise
+        }
+        native = serialized
+      }),
+      writeWeb: vi.fn((_key, value) => {
+        web = JSON.stringify(value)
+        return null
+      }),
+    } satisfies AutoStartStorageAdapter
+    const customRepository = createAutoStartStorage({now: customNow, storage})
+
+    const first = customRepository.write(true)
+    expect(storage.writeToss).toHaveBeenCalledOnce()
+    const second = customRepository.write(false)
+    pendingFirst.resolve()
+    await Promise.all([first, second])
+
+    web = null
+    await expect(customRepository.read()).resolves.toBe(false)
   })
 
   it('should fall back to browser storage when native storage is empty', async () => {

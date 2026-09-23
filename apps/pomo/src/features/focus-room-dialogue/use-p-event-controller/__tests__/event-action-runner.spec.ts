@@ -68,6 +68,29 @@ describe('createEventActionRunner', () => {
     runner.dispose()
   })
 
+  it.each(['focus-start', 'break-start', 'long-break-start', 'long-break-end'] as const)(
+    'should retain %s actions after an active executor is unregistered',
+    async (eventId) => {
+      const actionIds: EventActionIds = {[eventId]: ['music-start']}
+      const [getActionIds] = createSignal(actionIds)
+      const runner = createEventActionRunner(getActionIds)
+      const unregister = runner.register(vi.fn())
+      unregister()
+
+      const pendingPlayback = runner.run([eventId])
+      if (pendingPlayback === undefined) {
+        throw new Error(`Expected ${eventId} actions to wait for an executor.`)
+      }
+
+      const nextExecutor = vi.fn()
+      runner.register(nextExecutor)
+      await pendingPlayback
+
+      expect(nextExecutor).toHaveBeenCalledExactlyOnceWith('music-start')
+      runner.dispose()
+    },
+  )
+
   it('should retain actions until an active executor is registered', async () => {
     const actionIds: EventActionIds = {'focus-start': ['music-start']}
     const [getActionIds] = createSignal(actionIds)

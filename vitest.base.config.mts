@@ -18,6 +18,11 @@ const pomoPublicTestEnvironment = {
   VITE_POMO_WEB_PRIVACY_PATH: '/web/privacy',
   VITE_POMO_WEB_TERMS_PATH: '/web/terms',
 } as const
+// Vitest bypasses SolidStart's config plugin, so its eagerly evaluated manifest needs these markers here.
+const solidStartTestEnvironment = {
+  START_CLIENT_ENTRY: './src/entry-client.tsx',
+  START_CLIENT_ENTRY_URL: './src/entry-client.tsx',
+} as const
 const virtualUnoCssPlugin = {
   load(id) {
     return id === virtualUnoCssId ? '' : null
@@ -116,14 +121,13 @@ export const createVitestConfig = (projects: readonly TestProjectConfiguration[]
       target: 'esnext',
     },
     define: Object.fromEntries(
-      Object.entries(pomoPublicTestEnvironment).map(([name, value]) => [
-        `import.meta.env.${name}`,
-        JSON.stringify(value),
-      ]),
+      Object.entries({...pomoPublicTestEnvironment, ...solidStartTestEnvironment}).map(
+        ([name, value]) => [`import.meta.env.${name}`, JSON.stringify(value)],
+      ),
     ),
     // Vite/Vitest 플러그인 목록
     plugins: [
-      // Vitest does not load SolidStart, which normally stubs this marker for server modules.
+      // Vitest does not load SolidStart, so server-only imports need a local stub.
       virtualServerOnlyPlugin,
       // HMR is inactive in tests; disabling its transform prevents synthetic refresh branches from lowering source coverage.
       solid({hot: false}) as any,
