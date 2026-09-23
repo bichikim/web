@@ -37,7 +37,6 @@ export const createPScenePreferencesRepository = (
   const {storage} = options
   let writeRevision = 0
   let pendingNativeWriteCount = 0
-  let nativeWriteFailed = false
   const readWebPreferences = () =>
     parsePScenePreferences(storage.readWeb(SCENE_PREFERENCES_STORAGE_KEY))
   const writeWebPreferences = (preferences: PScenePreferences) => {
@@ -75,7 +74,7 @@ export const createPScenePreferencesRepository = (
     }
 
     const webPreferences = readWebPreferencesSafely()
-    if (!nativeWriteFailed && webPreferences !== null && readNativeWriteFailure()) {
+    if (webPreferences !== null && readNativeWriteFailure()) {
       return webPreferences
     }
 
@@ -87,8 +86,13 @@ export const createPScenePreferencesRepository = (
 
       const tossPreferences = parsePScenePreferences(storedPreferences)
 
+      const latestWebPreferences = readWebPreferencesSafely()
+      if (latestWebPreferences !== null && readNativeWriteFailure()) {
+        return latestWebPreferences
+      }
+
       const restoredPreferences =
-        tossPreferences ?? readWebPreferences() ?? DEFAULT_P_SCENE_PREFERENCES
+        tossPreferences ?? latestWebPreferences ?? DEFAULT_P_SCENE_PREFERENCES
       if (tossPreferences !== null) {
         setNativeWriteFailure(false)
       }
@@ -108,7 +112,6 @@ export const createPScenePreferencesRepository = (
     writeRevision += 1
     const currentWriteRevision = writeRevision
     if (!storage.usesTossStorage()) {
-      nativeWriteFailed = false
       setNativeWriteFailure(false)
       return
     }
@@ -117,12 +120,10 @@ export const createPScenePreferencesRepository = (
     try {
       await storage.writeToss(SCENE_PREFERENCES_STORAGE_KEY, preferences)
       if (writeRevision === currentWriteRevision) {
-        nativeWriteFailed = false
         setNativeWriteFailure(false)
       }
     } catch {
       if (writeRevision === currentWriteRevision) {
-        nativeWriteFailed = true
         setNativeWriteFailure(true)
       }
     } finally {
