@@ -1,6 +1,7 @@
 import {cva, cx} from 'class-variance-authority'
 import {createEffect, createSignal, type JSX, Show, splitProps, untrack} from 'solid-js'
 import {CONTROL_HEIGHT_CLASSES, CONTROL_PADDING_CLASSES} from '../control-size-classes'
+import {clampOptionalBounds} from './clamp-optional-bounds'
 import {type NumberInputRange, useNumberInputGesture} from './use-number-input-gesture'
 
 const DEFAULT_STEP = 1
@@ -85,11 +86,6 @@ const parseValue = (value: number | string | undefined): number | undefined => {
   return Number.isFinite(parsed) ? parsed : undefined
 }
 
-const clamp = (value: number, min: number | undefined, max: number | undefined): number => {
-  const lowerBoundedValue = min === undefined ? value : Math.max(value, min)
-  return max === undefined ? lowerBoundedValue : Math.min(lowerBoundedValue, max)
-}
-
 const decimalPlaces = (value: number): number => {
   const [, decimalPart] = value.toString().split('.')
   return decimalPart?.length ?? 0
@@ -110,7 +106,7 @@ const normalizeValue = (
   max: number | undefined,
 ): number => {
   const snapped = snapToStep(value, step, min)
-  const bounded = clamp(snapped, min, max)
+  const bounded = clampOptionalBounds(snapped, min, max)
   return Object.is(bounded, -0) ? 0 : bounded
 }
 

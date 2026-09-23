@@ -23,8 +23,12 @@ interface EventActionRunner {
     executor: EventActionExecutor,
     options?: EventActionExecutorRegistrationOptions,
   ) => () => void
-  readonly run: (eventIds: ReadonlyArray<DialogueEventId>) => Promise<void> | undefined
+  readonly run: (eventIds: ReadonlyArray<DialogueEventId>) => EventActionRunResult
 }
+
+type EventActionRunResult =
+  | {readonly kind: 'completed'}
+  | {readonly kind: 'queued'; readonly completion: Promise<void>}
 
 interface PendingEventAction {
   readonly actionId: EventActionId
@@ -155,7 +159,7 @@ export const createEventActionRunner = (
     }
 
     if (queuedActionEventIds.size === 0) {
-      return undefined
+      return {kind: 'completed'} as const
     }
 
     const actionExecutions = [...queuedActionEventIds].map((eventId) => {
@@ -163,7 +167,10 @@ export const createEventActionRunner = (
       pendingActionWaiters.push({eventId, resolve: actionExecution.resolve})
       return actionExecution.promise
     })
-    return Promise.all(actionExecutions).then(() => undefined)
+    return {
+      completion: Promise.all(actionExecutions).then(() => undefined),
+      kind: 'queued',
+    } as const
   }
 
   return {

@@ -1,4 +1,5 @@
 import {type Accessor, createSignal, type JSX, onCleanup} from 'solid-js'
+import {releaseCapturedPointer} from 'src/utils/release-captured-pointer'
 
 export interface UseSwipeTrackGestureProps {
   readonly enabled: Accessor<boolean>
@@ -20,12 +21,6 @@ export interface SwipeTrackGesture {
 const DELETE_COMMIT_DISTANCE = 64
 const DRAG_INTENT_DISTANCE = 8
 const MAX_SWIPE_DISTANCE = 80
-
-const releasePointer = (element: HTMLButtonElement, pointerId: number) => {
-  if (element.hasPointerCapture?.(pointerId)) {
-    element.releasePointerCapture(pointerId)
-  }
-}
 
 export const useSwipeTrackGesture = (props: UseSwipeTrackGestureProps): SwipeTrackGesture => {
   let activePointerId: number | undefined
@@ -77,7 +72,7 @@ export const useSwipeTrackGesture = (props: UseSwipeTrackGestureProps): SwipeTra
 
       if (gestureAxis === 'vertical') {
         activePointerId = undefined
-        releasePointer(event.currentTarget, event.pointerId)
+        releaseCapturedPointer(event.currentTarget, event.pointerId)
         return
       }
     }
@@ -97,7 +92,7 @@ export const useSwipeTrackGesture = (props: UseSwipeTrackGestureProps): SwipeTra
 
     const shouldRemove = gestureAxis === 'horizontal' && deleteReady()
     resetSwipe()
-    releasePointer(event.currentTarget, event.pointerId)
+    releaseCapturedPointer(event.currentTarget, event.pointerId)
     if (shouldRemove) {
       props.onRemove()
     }
@@ -110,7 +105,7 @@ export const useSwipeTrackGesture = (props: UseSwipeTrackGestureProps): SwipeTra
 
     suppressClick = gestureAxis === 'horizontal'
     resetSwipe()
-    releasePointer(event.currentTarget, event.pointerId)
+    releaseCapturedPointer(event.currentTarget, event.pointerId)
   }
 
   const handleLostPointerCapture: JSX.EventHandler<HTMLButtonElement, PointerEvent> = (event) => {

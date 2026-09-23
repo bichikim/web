@@ -34,7 +34,7 @@
     "test:storybook:ui": "vitest --ui --watch --project='storybook*'",
     "test:storybook:watch": "vitest --project='storybook*'",
     "test:ui": "vitest --ui --watch",
-    "test:vitest": "NODE_OPTIONS=--no-experimental-webstorage vitest run --project=unit --reporter=default",
+    "test:vitest": "NODE_OPTIONS=--no-experimental-webstorage vitest run --project=unit --project=integration-runtime --reporter=default",
     "test:vitest:watch": "NODE_OPTIONS=--no-experimental-webstorage vitest watch --project=unit"
   },
   "devDependencies": {

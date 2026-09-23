@@ -2,6 +2,7 @@ import {cx} from 'class-variance-authority'
 import {A} from '@solidjs/router'
 import {createSignal, For, onCleanup, Show} from 'solid-js'
 
+import {replaceBlobObjectUrl} from '../../features/blob-object-url'
 import {type PDialogue, usePEvents} from '../../features/focus-room-dialogue'
 import * as m from '@paraglide/message'
 import {DialogueLibraryItem, type DialogueLibraryItemProps} from './LibraryItem'
@@ -52,7 +53,7 @@ export const DialogueLibrary = (props: DialogueLibraryProps) => {
     }
 
     if (playbackUrl !== null) {
-      URL.revokeObjectURL(playbackUrl)
+      replaceBlobObjectUrl(playbackUrl, () => null)
       playbackUrl = null
     }
 
@@ -62,6 +63,19 @@ export const DialogueLibrary = (props: DialogueLibraryProps) => {
 
   onCleanup(stopPlayback)
 
+  const resolveLibraryAudio = async (dialogue: PDialogue, requestId: number) => {
+    const audio = await events.getAudio(dialogue.audioKey)
+    if (requestId !== playbackRequestId) {
+      return null
+    }
+    if (audio === null) {
+      setMessage(null)
+      setMissingDialogueId(dialogue.id)
+      return null
+    }
+    return audio
+  }
+
   const handlePlayback = async (dialogue: PDialogue) => {
     if (playingDialogueId() === dialogue.id) {
       stopPlayback()
@@ -70,17 +84,9 @@ export const DialogueLibrary = (props: DialogueLibraryProps) => {
 
     stopPlayback()
     const currentRequestId = playbackRequestId
-
     try {
-      const audio = await events.getAudio(dialogue.audioKey)
-
-      if (currentRequestId !== playbackRequestId) {
-        return
-      }
-
+      const audio = await resolveLibraryAudio(dialogue, currentRequestId)
       if (audio === null) {
-        setMessage(null)
-        setMissingDialogueId(dialogue.id)
         return
       }
 
@@ -91,10 +97,14 @@ export const DialogueLibrary = (props: DialogueLibraryProps) => {
         return
       }
 
-      const nextPlaybackUrl = URL.createObjectURL(audio)
+      const nextPlaybackUrl = replaceBlobObjectUrl(null, () => audio)
+
+      if (nextPlaybackUrl === null) {
+        return
+      }
 
       if (currentRequestId !== playbackRequestId) {
-        URL.revokeObjectURL(nextPlaybackUrl)
+        replaceBlobObjectUrl(nextPlaybackUrl, () => null)
         return
       }
 
@@ -122,17 +132,9 @@ export const DialogueLibrary = (props: DialogueLibraryProps) => {
   const handleCharacterPlayback = async (dialogue: PDialogue) => {
     stopPlayback()
     const currentRequestId = playbackRequestId
-
     try {
-      const audio = await events.getAudio(dialogue.audioKey)
-
-      if (currentRequestId !== playbackRequestId) {
-        return
-      }
-
+      const audio = await resolveLibraryAudio(dialogue, currentRequestId)
       if (audio === null) {
-        setMessage(null)
-        setMissingDialogueId(dialogue.id)
         return
       }
 

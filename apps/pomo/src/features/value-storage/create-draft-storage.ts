@@ -10,6 +10,7 @@ export interface DraftFailureMessages {
 export interface CreateDraftStorageOptions<Value> extends CreateValueStorageOptions<Value> {
   readonly storage: () => RemovableStringStorage
   readonly messages: DraftFailureMessages
+  readonly reportError?: (message: string, error: unknown) => void
 }
 
 export interface DraftStorage<Value> extends ValueStorage<Value> {
@@ -21,19 +22,20 @@ export const createDraftStorage = <Value>(
   options: CreateDraftStorageOptions<Value>,
 ): DraftStorage<Value> => {
   const value = createValueStorage(options)
+  const reportError = options.reportError ?? console.warn
   return {
     delete() {
       try {
         options.storage().removeItem(options.key)
       } catch (error: unknown) {
-        console.warn(options.messages.delete, error)
+        reportError(options.messages.delete, error)
       }
     },
     read() {
       try {
         return value.read()
       } catch (error: unknown) {
-        console.warn(options.messages.read, error)
+        reportError(options.messages.read, error)
         return null
       }
     },
@@ -41,7 +43,7 @@ export const createDraftStorage = <Value>(
       try {
         value.write(draft)
       } catch (error: unknown) {
-        console.warn(options.messages.write, error)
+        reportError(options.messages.write, error)
       }
     },
   }

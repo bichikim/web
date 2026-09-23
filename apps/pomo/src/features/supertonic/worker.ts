@@ -1,5 +1,6 @@
 /// <reference lib="webworker" />
 import {getMonotonicTime} from 'src/utils/get-monotonic-time'
+import {isAbortError as hasAbortErrorName} from 'src/utils/is-cancellation-reason'
 
 // oxlint-disable no-await-in-loop -- Model streams and sessions are loaded sequentially to cap peak browser memory.
 
@@ -93,8 +94,7 @@ const createCancelledError = (phase: CancelledError['phase']): CancelledError =>
   retryable: false,
 })
 
-const isAbortError = (error: unknown) =>
-  error instanceof DOMException && error.name === 'AbortError'
+const isAbortError = (error: unknown) => error instanceof DOMException && hasAbortErrorName(error)
 
 const createDownloadError = (
   options: Pick<LoadBufferOptions, 'fileName'> | Pick<FetchJsonOptions, 'fileName'>,

@@ -8,6 +8,24 @@ import {RANDOM_DIALOGUE_EVENT} from '../../schema'
 import {createEventActionRunner} from '../event-action-runner'
 
 describe('createEventActionRunner', () => {
+  it('should resolve multiple queued requests on disposal without executing them', async () => {
+    const [getActionIds] = createSignal<EventActionIds>({'focus-end': ['music-stop']})
+    const runner = createEventActionRunner(getActionIds)
+    const first = runner.run(['focus-end'])
+    const second = runner.run(['focus-end'])
+    if (first.kind !== 'queued' || second.kind !== 'queued') {
+      throw new Error('Expected both requests to wait for an executor.')
+    }
+    runner.dispose()
+    await expect(Promise.all([first.completion, second.completion])).resolves.toEqual([
+      undefined,
+      undefined,
+    ])
+    const executor = vi.fn()
+    runner.register(executor)
+    expect(executor).not.toHaveBeenCalled()
+  })
+
   it('should retain focus-end and break-end actions before active registration', async () => {
     const actionIds: EventActionIds = {
       'break-end': ['music-start'],
@@ -16,13 +34,13 @@ describe('createEventActionRunner', () => {
     const [getActionIds] = createSignal(actionIds)
     const runner = createEventActionRunner(getActionIds)
     const pendingPlayback = runner.run(['break-end', 'focus-end'])
-    if (pendingPlayback === undefined) {
+    if (pendingPlayback.kind !== 'queued') {
       throw new Error('Expected lifecycle playback to wait for an executor.')
     }
 
     const activeExecutor = vi.fn()
     runner.register(activeExecutor)
-    await pendingPlayback
+    await pendingPlayback.completion
 
     expect(activeExecutor).toHaveBeenCalledTimes(2)
     expect(activeExecutor).toHaveBeenNthCalledWith(1, 'music-start')
@@ -39,11 +57,13 @@ describe('createEventActionRunner', () => {
     unregister()
 
     const pendingPlayback = runner.run(['focus-end'])
-    expect(pendingPlayback).toBeDefined()
+    expect(pendingPlayback.kind).toBe('queued')
 
     const secondExecutor = vi.fn()
     runner.register(secondExecutor)
-    await pendingPlayback
+    if (pendingPlayback.kind === 'queued') {
+      await pendingPlayback.completion
+    }
 
     expect(secondExecutor).toHaveBeenCalledExactlyOnceWith('music-stop')
     runner.dispose()
@@ -84,13 +104,13 @@ describe('createEventActionRunner', () => {
       unregister()
 
       const pendingPlayback = runner.run([eventId])
-      if (pendingPlayback === undefined) {
+      if (pendingPlayback.kind !== 'queued') {
         throw new Error(`Expected ${eventId} actions to wait for an executor.`)
       }
 
       const nextExecutor = vi.fn()
       runner.register(nextExecutor)
-      await pendingPlayback
+      await pendingPlayback.completion
 
       expect(nextExecutor).toHaveBeenCalledExactlyOnceWith(actionId)
       runner.dispose()
@@ -103,13 +123,13 @@ describe('createEventActionRunner', () => {
     const runner = createEventActionRunner(getActionIds)
     const pendingActions = runner.run(['focus-start'])
 
-    if (pendingActions === undefined) {
+    if (pendingActions.kind !== 'queued') {
       throw new Error('Expected focus-start actions to wait for an executor.')
     }
 
     const executor = vi.fn()
     runner.register(executor)
-    await pendingActions
+    await pendingActions.completion
 
     expect(executor).toHaveBeenCalledExactlyOnceWith('music-start')
     runner.dispose()
@@ -120,7 +140,7 @@ describe('createEventActionRunner', () => {
     const [getActionIds] = createSignal(actionIds)
     const runner = createEventActionRunner(getActionIds)
     const pendingPlayback = runner.run(['room-enter'])
-    if (pendingPlayback === undefined) {
+    if (pendingPlayback.kind !== 'queued') {
       throw new Error('Expected room-enter playback to wait for an executor.')
     }
 
@@ -136,7 +156,7 @@ describe('createEventActionRunner', () => {
     unregisterHandler()
     const activeExecutor = vi.fn()
     runner.register(activeExecutor)
-    await expect(pendingPlayback).resolves.toBeUndefined()
+    await expect(pendingPlayback.completion).resolves.toBeUndefined()
     expect(activeExecutor).not.toHaveBeenCalled()
     runner.dispose()
   })
@@ -185,15 +205,15 @@ describe('createEventActionRunner', () => {
     const [getActionIds] = createSignal(actionIds)
     const runner = createEventActionRunner(getActionIds)
     const pendingRoomEntry = runner.run(['room-enter'])
-    if (pendingRoomEntry === undefined) {
+    if (pendingRoomEntry.kind !== 'queued') {
       throw new Error('Expected room-enter playback to wait for an executor.')
     }
 
     const deferredExecutor = vi.fn()
     const unregisterDeferredExecutor = runner.register(deferredExecutor, {mode: 'deferred'})
-    await pendingRoomEntry
+    await pendingRoomEntry.completion
 
-    expect(runner.run(['delayed-end'])).toBeUndefined()
+    expect(runner.run(['delayed-end'])).toEqual({kind: 'completed'})
     expect(deferredExecutor).not.toHaveBeenCalled()
 
     unregisterDeferredExecutor()

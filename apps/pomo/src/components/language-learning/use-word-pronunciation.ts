@@ -1,5 +1,6 @@
 import {createEffect, createSignal, onCleanup} from 'solid-js'
 import {usePreference} from 'src/hooks/use-preference'
+import {replaceBlobObjectUrl, replaceObjectUrl} from '../../features/blob-object-url'
 
 import * as m from '@paraglide/message'
 import {
@@ -85,12 +86,12 @@ const createAudioPublisher = (options: AudioPublisherOptions) => {
     }
 
     const key = getWordKey(word)
-    const url = URL.createObjectURL(audio)
     const currentUrls = options.getAudioUrls()
-    const previousUrl = currentUrls[key]
-    if (previousUrl !== undefined) {
-      URL.revokeObjectURL(previousUrl)
-    }
+    const url = replaceObjectUrl(currentUrls[key] ?? null, () => audio, {
+      create: (blob) => URL.createObjectURL(blob),
+      order: 'create-first',
+      revoke: (previous) => URL.revokeObjectURL(previous),
+    })
     options.setAudioUrls({...currentUrls, [key]: url})
     requestAutoplay(key)
   }
@@ -400,7 +401,7 @@ export const useLanguageLearningWordPronunciation = (): LanguageLearningWordPron
     const currentUrls = audioUrls()
     const url = currentUrls[key]
     if (url !== undefined) {
-      URL.revokeObjectURL(url)
+      replaceBlobObjectUrl(url, () => null)
       const nextUrls = {...currentUrls}
       delete nextUrls[key]
       setAudioUrls(nextUrls)
@@ -426,7 +427,7 @@ export const useLanguageLearningWordPronunciation = (): LanguageLearningWordPron
     disposed = true
     abortActiveGeneration()
     for (const url of Object.values(audioUrls())) {
-      URL.revokeObjectURL(url)
+      replaceBlobObjectUrl(url, () => null)
     }
   })
 

@@ -1,5 +1,6 @@
 import {z} from 'zod'
 
+import {createDraftStorage, createJsonCodec} from '../value-storage'
 import {type AiTextJobInput, aiTextJobInputSchema} from './contracts'
 
 const STORAGE_KEY = 'pomo:ai-text-job:v1'
@@ -23,36 +24,23 @@ export interface AiJobStorage {
   readonly write: (job: StoredAiTextJob) => void
 }
 
-const getSessionStorage = (): Storage | null => {
-  try {
-    return globalThis.sessionStorage
-  } catch {
-    return null
-  }
-}
+const draft = createDraftStorage({
+  ...createJsonCodec((value) => {
+    const parsed = storedJobSchema.safeParse(value)
+    return parsed.success ? parsed.data : null
+  }),
+  key: STORAGE_KEY,
+  messages: {
+    delete: 'Failed to clear the AI text job.',
+    read: 'Failed to read the AI text job.',
+    write: 'Failed to store the AI text job.',
+  },
+  reportError: () => undefined,
+  storage: () => globalThis.sessionStorage,
+})
 
 export const browserAiJobStorage: AiJobStorage = {
-  clear: () => {
-    try {
-      getSessionStorage()?.removeItem(STORAGE_KEY)
-    } catch {}
-  },
-  read: () => {
-    try {
-      const value = getSessionStorage()?.getItem(STORAGE_KEY)
-      if (value === null || value === undefined) {
-        return null
-      }
-
-      const parsed = storedJobSchema.safeParse(JSON.parse(value))
-      return parsed.success ? parsed.data : null
-    } catch {
-      return null
-    }
-  },
-  write: (job) => {
-    try {
-      getSessionStorage()?.setItem(STORAGE_KEY, JSON.stringify(job))
-    } catch {}
-  },
+  clear: draft.delete,
+  read: draft.read,
+  write: draft.write,
 }

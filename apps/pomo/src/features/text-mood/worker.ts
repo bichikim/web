@@ -1,24 +1,18 @@
-import {clamp} from 'es-toolkit/math'
 /// <reference lib="webworker" />
 import {getMonotonicTime} from 'src/utils/get-monotonic-time'
 
 // oxlint-disable eslint-js/camelcase -- Transformers.js option names are fixed external contracts.
 
-import {
-  env,
-  type FeatureExtractionPipeline,
-  pipeline,
-  type ProgressInfo,
-} from '@huggingface/transformers'
+import {env, type FeatureExtractionPipeline, pipeline} from '@huggingface/transformers'
 
 import {getErrorMessage} from 'src/utils/get-error-message'
 import {isNonBlankString} from 'src/utils/is-non-blank-string'
+import {createPercentProgressReporter} from '../transformers-progress'
 import {classifyTextMood, classifyTextSufficiency} from './classifier'
 import type {TextMoodError, TextMoodPhase} from './errors'
 import type {TextMoodWorkerRequest, TextMoodWorkerResponse} from './messages'
 import {TEXT_MOOD_MODEL} from './model'
 
-const MAXIMUM_PROGRESS = 100
 const MINIMUM_PROGRESS = 0
 const workerScope = globalThis.self as DedicatedWorkerGlobalScope
 
@@ -44,14 +38,9 @@ const createError = (
   retryable: code !== 'invalid-input',
 })
 
-const reportProgress = (progress: ProgressInfo) => {
-  if (progress.status !== 'progress_total') {
-    return
-  }
-
-  const percentage = clamp(Math.round(progress.progress), MINIMUM_PROGRESS, MAXIMUM_PROGRESS)
-  sendResponse({progress: percentage, type: 'loading'})
-}
+const reportProgress = createPercentProgressReporter((progress) =>
+  sendResponse({progress, type: 'loading'}),
+)
 
 const prepareModel = async () => {
   if (extractor !== null) {

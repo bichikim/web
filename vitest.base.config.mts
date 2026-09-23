@@ -55,6 +55,14 @@ const buildIntegrationTestFiles = [
   'packages/vite-plugin-monorepo-alias/__tests__/*.spec.ts',
 ]
 
+const runtimeIntegrationTestFiles = [
+  'apps/pomo/src/server/database/schema/__tests__/ai-jobs.migration.spec.ts',
+  'apps/pomo/src/server/repositories/ai-jobs/__tests__/artifacts.spec.ts',
+  'apps/pomo/src/server/ai-runner/__tests__/service.spec.ts',
+  'apps/pomo/src/server/ai-runner/__tests__/store.spec.ts',
+  'apps/pomo/src/server/ai/__tests__/runner-client.integration.spec.ts',
+] as const
+
 export const unitTestProject = {
   extends: true,
   plugins: [virtualUnoCssPlugin],
@@ -65,6 +73,7 @@ export const unitTestProject = {
     exclude: [
       ...stressTestFiles,
       ...buildIntegrationTestFiles,
+      ...runtimeIntegrationTestFiles,
       'packages/server-boundary/src/__tests__/plugin.e2e.spec.ts',
     ],
     include: [
@@ -99,6 +108,18 @@ export const unitTestProject = {
     },
     // 각 테스트 파일 실행 전 로드할 셋업 파일
     setupFiles: ['./vitest.setup.ts'],
+  },
+} satisfies TestProjectInlineConfiguration
+
+export const runtimeIntegrationTestProject = {
+  extends: true,
+  test: {
+    environment: 'node',
+    fileParallelism: false,
+    include: [...runtimeIntegrationTestFiles],
+    maxWorkers: 1,
+    name: 'integration-runtime',
+    testTimeout: 20_000,
   },
 } satisfies TestProjectInlineConfiguration
 

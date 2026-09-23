@@ -1,10 +1,11 @@
-import {classifySpeechNumber} from './classify-speech-number'
+import {hasNumberKind} from './has-number-kind'
+import {parseInteger} from './parse-integer'
+import {DECIMAL_PERCENT_PATTERN, INTEGER_PERCENT_PATTERN} from './percent-patterns'
 import {
   INTEGER_PATTERN_SOURCE,
   NUMBER_TOKEN_START_PATTERN_SOURCE,
   UNSIGNED_INTEGER_PATTERN_SOURCE,
 } from './number-patterns'
-import type {SpeechNumberKind} from './types'
 
 const SMALL_CARDINALS = [
   'zero',
@@ -83,14 +84,6 @@ const SCALES = [
   {size: 1_000n, word: 'thousand'},
 ] as const
 const MAXIMUM_SUPPORTED_INTEGER = 999_999_999_999_999n
-const DECIMAL_PERCENT_PATTERN = new RegExp(
-  `${NUMBER_TOKEN_START_PATTERN_SOURCE}(${INTEGER_PATTERN_SOURCE}\\.\\d+)\\s*%`,
-  'gu',
-)
-const INTEGER_PERCENT_PATTERN = new RegExp(
-  `${NUMBER_TOKEN_START_PATTERN_SOURCE}(${INTEGER_PATTERN_SOURCE})\\s*%`,
-  'gu',
-)
 const ORDINAL_PATTERN = new RegExp(
   `${NUMBER_TOKEN_START_PATTERN_SOURCE}(${UNSIGNED_INTEGER_PATTERN_SOURCE})(st|nd|rd|th)(?![A-Za-z])`,
   'gu',
@@ -111,23 +104,6 @@ const DIGIT_CODE_PATTERN = new RegExp(
     `(${UNSIGNED_INTEGER_PATTERN_SOURCE})(?![\\p{L}\\p{N}_.,+\\-/:~–—])`,
   'giu',
 )
-const hasNumberKind = (text: string, start: number, value: string, kind: SpeechNumberKind) =>
-  classifySpeechNumber({end: start + value.length, language: 'en', start, text}).kind === kind
-
-const parseInteger = (value: string): bigint | null => {
-  const digits = value.replace(/^[+-]/u, '').replaceAll(',', '')
-
-  if (digits.length > 1 && digits.startsWith('0')) {
-    return null
-  }
-
-  try {
-    return BigInt(digits)
-  } catch {
-    return null
-  }
-}
-
 const pronounceUnderThousand = (value: number): string => {
   if (value < SMALL_CARDINALS.length) {
     return SMALL_CARDINALS[value]!
@@ -290,13 +266,13 @@ export const normalizeEnglishSpeechText = (text: string): string =>
       DIGIT_CODE_PATTERN,
       (...[match, prefix, value, start, input]: [string, string, string, number, string]) => {
         const valueStart = start + prefix.length
-        return hasNumberKind(input, valueStart, value, 'digits')
+        return hasNumberKind('en', input, valueStart, value, 'digits')
           ? `${prefix}${pronounceDigits(value)}`
           : match
       },
     )
     .replace(DECIMAL_PERCENT_PATTERN, (match, value: string, start: number, input: string) => {
-      if (!hasNumberKind(input, start, value, 'cardinal')) {
+      if (!hasNumberKind('en', input, start, value, 'cardinal')) {
         return match
       }
 
@@ -304,7 +280,7 @@ export const normalizeEnglishSpeechText = (text: string): string =>
       return pronunciation === null ? match : `${pronunciation} percent`
     })
     .replace(INTEGER_PERCENT_PATTERN, (match, value: string, start: number, input: string) => {
-      if (!hasNumberKind(input, start, value, 'cardinal')) {
+      if (!hasNumberKind('en', input, start, value, 'cardinal')) {
         return match
       }
 
@@ -312,15 +288,19 @@ export const normalizeEnglishSpeechText = (text: string): string =>
       return pronunciation === null ? match : `${pronunciation} percent`
     })
     .replace(YEAR_PATTERN, (match, value: string, start: number, input: string) =>
-      hasNumberKind(input, start, value, 'year-date-time')
+      hasNumberKind('en', input, start, value, 'year-date-time')
         ? (pronounceYear(value) ?? match)
         : match,
     )
     .replace(
       ORDINAL_PATTERN,
       (...[match, value, , start, input]: [string, string, string, number, string]) =>
-        hasNumberKind(input, start, match, 'ordinal') ? (pronounceOrdinal(value) ?? match) : match,
+        hasNumberKind('en', input, start, match, 'ordinal')
+          ? (pronounceOrdinal(value) ?? match)
+          : match,
     )
     .replace(COUNT_PATTERN, (match, value: string, start: number, input: string) =>
-      hasNumberKind(input, start, value, 'count') ? (pronounceCardinal(value) ?? match) : match,
+      hasNumberKind('en', input, start, value, 'count')
+        ? (pronounceCardinal(value) ?? match)
+        : match,
     )
