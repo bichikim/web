@@ -12,6 +12,7 @@ import {
   type DialogueEventId,
   type EventActionId,
   FOCUS_ROOM_ENTRY_EVENT,
+  RANDOM_DIALOGUE_EVENT,
 } from '../schema'
 
 interface EventActionRunner {
@@ -111,7 +112,8 @@ export const createEventActionRunner = (
           eventId === DELAYED_END_EVENT ||
           eventId === FOCUS_ROOM_ENTRY_EVENT ||
           eventId === 'break-end' ||
-          eventId === 'focus-end'))
+          eventId === 'focus-end' ||
+          eventId === RANDOM_DIALOGUE_EVENT))
 
     if (isHandledByHandler) {
       return
