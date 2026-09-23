@@ -104,16 +104,30 @@ const readWebsiteBackgroundUrl = async (): Promise<string | null> => {
 export const shouldHandoffDesktopModeOwner = async (mode: DesktopMode): Promise<boolean> =>
   isDesktopBackgroundMode(mode) && (await readWebsiteBackgroundUrl()) !== null
 
-const synchronizeBackgroundContent = async (): Promise<boolean> => {
+interface SynchronizeBackgroundContentOptions {
+  readonly restoreWhenMissing?: boolean
+  readonly useChild?: boolean
+}
+
+const synchronizeBackgroundContent = async ({
+  restoreWhenMissing = true,
+  useChild = false,
+}: SynchronizeBackgroundContentOptions = {}): Promise<boolean> => {
   const {navigateBackgroundSurface, restoreBackgroundContent} = await getSurfaceApi()
   const url = await readWebsiteBackgroundUrl()
 
   if (url === null) {
-    await restoreBackgroundContent({label: BACKGROUND_LABEL})
+    if (restoreWhenMissing) {
+      await restoreBackgroundContent({label: BACKGROUND_LABEL})
+    }
     return false
   }
 
-  await navigateBackgroundSurface({label: BACKGROUND_LABEL, url})
+  await navigateBackgroundSurface({
+    label: BACKGROUND_LABEL,
+    url,
+    ...(useChild ? {useChild: true} : {}),
+  })
   return true
 }
 
@@ -157,12 +171,14 @@ const closeSurfaces = async (labels: ReadonlyArray<string>): Promise<void> => {
 }
 
 const restoreNormalMode = async (): Promise<void> => {
-  const {restoreSurface} = await getSurfaceApi()
+  const {restoreBackgroundContent, restoreSurface} = await getSurfaceApi()
+  await restoreBackgroundContent({label: BACKGROUND_LABEL})
   await restoreSurface({label: BACKGROUND_LABEL})
 }
 
 const enterDesktopMode = async (): Promise<boolean> => {
-  const {openControlSurface, restoreSurface, setBackgroundSurface} = await getSurfaceApi()
+  const {openControlSurface, restoreBackgroundContent, restoreSurface, setBackgroundSurface} =
+    await getSurfaceApi()
 
   const preferences = await readPDisplayPreferences()
   const visibility = {
@@ -173,8 +189,9 @@ const enterDesktopMode = async (): Promise<boolean> => {
   const surfaces = getControlSurfaceOptions().filter(({label}) => visibility[label])
 
   try {
+    await restoreBackgroundContent({label: BACKGROUND_LABEL})
     await setBackgroundSurface({interaction: 'passThrough', label: BACKGROUND_LABEL})
-    const usesWebsiteBackground = await synchronizeBackgroundContent()
+    const usesWebsiteBackground = await synchronizeBackgroundContent({restoreWhenMissing: false})
     const results = await Promise.allSettled(surfaces.map((options) => openControlSurface(options)))
     const errors = results.flatMap((result) =>
       result.status === 'rejected' ? [result.reason] : [],
@@ -210,9 +227,14 @@ export const applyDesktopMode = async (mode: DesktopMode): Promise<boolean> => {
     case 'desktop':
       return enterDesktopMode()
     case 'interactiveDesktop':
-      const {openControlSurface, setBackgroundSurface} = await getSurfaceApi()
+      const {openControlSurface, restoreBackgroundContent, setBackgroundSurface} =
+        await getSurfaceApi()
+      await restoreBackgroundContent({label: BACKGROUND_LABEL})
       await setBackgroundSurface({interaction: 'interactive', label: BACKGROUND_LABEL})
-      const usesWebsiteBackground = await synchronizeBackgroundContent()
+      const usesWebsiteBackground = await synchronizeBackgroundContent({
+        restoreWhenMissing: false,
+        useChild: true,
+      })
       if (usesWebsiteBackground) {
         const settingsSurface = getControlSurfaceOptions().find(
           ({label}) => label === SETTINGS_SURFACE_LABEL,
@@ -226,14 +248,16 @@ export const applyDesktopMode = async (mode: DesktopMode): Promise<boolean> => {
       await restoreNormalMode()
       return false
     case 'widget':
-      const {restoreBackgroundContent, setWidgetSurface} = await getSurfaceApi()
-      await restoreBackgroundContent({label: BACKGROUND_LABEL})
+      const {restoreBackgroundContent: restoreWidgetBackgroundContent, setWidgetSurface} =
+        await getSurfaceApi()
+      await restoreWidgetBackgroundContent({label: BACKGROUND_LABEL})
       await setWidgetSurface({
         cornerRadius: DESKTOP_WIDGET_CORNER_RADIUS,
         height: 520,
         label: BACKGROUND_LABEL,
         width: 420,
       })
+      await synchronizeBackgroundContent({restoreWhenMissing: false, useChild: true})
       return false
   }
 
@@ -247,11 +271,12 @@ export const synchronizeDesktopBackground = async (): Promise<void> => {
   }
 
   const mode = readDesktopMode()
-  if (mode !== 'normal' && !isDesktopBackgroundMode(mode)) {
+  const usesWebsiteChild = mode === 'normal' || mode === 'interactiveDesktop' || mode === 'widget'
+  if (mode !== 'desktop' && !usesWebsiteChild && !isDesktopBackgroundMode(mode)) {
     return
   }
 
-  await synchronizeBackgroundContent()
+  await synchronizeBackgroundContent({useChild: usesWebsiteChild})
 }
 
 /** Persists content-owned state by closing player and timer surfaces before mode publication. */

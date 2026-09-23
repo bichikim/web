@@ -71,6 +71,11 @@ describe('desktop surface guest API', () => {
     vi.mocked(invoke).mockResolvedValue(undefined)
 
     await navigateBackgroundSurface({label: 'background', url: 'https://example.com'})
+    await navigateBackgroundSurface({
+      label: 'background',
+      url: 'https://example.com/dashboard',
+      useChild: true,
+    })
     await restoreBackgroundContent({label: 'background'})
 
     expect(invoke).toHaveBeenNthCalledWith(
@@ -78,7 +83,12 @@ describe('desktop surface guest API', () => {
       'plugin:desktop-surface|navigate_background_surface',
       {options: {label: 'background', url: 'https://example.com'}},
     )
-    expect(invoke).toHaveBeenNthCalledWith(2, 'plugin:desktop-surface|restore_background_content', {
+    expect(invoke).toHaveBeenNthCalledWith(
+      2,
+      'plugin:desktop-surface|navigate_background_surface',
+      {options: {label: 'background', url: 'https://example.com/dashboard', useChild: true}},
+    )
+    expect(invoke).toHaveBeenNthCalledWith(3, 'plugin:desktop-surface|restore_background_content', {
       label: 'background',
     })
   })

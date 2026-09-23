@@ -714,38 +714,48 @@ pub(crate) fn navigate_background_surface<R: Runtime>(
     state: &SurfaceState,
     window: &WebviewWindow<R>,
     url: Url,
+    use_child: bool,
 ) -> Result<()> {
     let _operation = lock_operation(state)?;
 
+    if use_child {
+        return navigate_website_background_unlocked(window, url);
+    }
+
     match active_background_interaction(state, window.label()) {
         Ok(_) => navigate_background_unlocked(state, window, url),
-        Err(Error::NotBackgroundSurface(_)) => {
-            let parent = window.as_ref().window();
-            let label = website_background_webview_label(window.label());
-            let child = if let Some(child) = parent
-                .webviews()
-                .into_iter()
-                .find(|webview| webview.label() == label)
-            {
-                child.navigate(url.clone())?;
-                child
-            } else {
-                parent.add_child(
-                    WebviewBuilder::new(&label, WebviewUrl::External(url))
-                        .auto_resize()
-                        .focused(false),
-                    LogicalPosition::new(0, 0),
-                    parent.inner_size()?,
-                )?
-            };
-
-            place_website_background_below(window, &child)?;
-            set_surface_transparent(window)?;
-            child.show()?;
-            Ok(())
-        }
+        Err(Error::NotBackgroundSurface(_)) => navigate_website_background_unlocked(window, url),
         Err(error) => Err(error),
     }
+}
+
+fn navigate_website_background_unlocked<R: Runtime>(
+    window: &WebviewWindow<R>,
+    url: Url,
+) -> Result<()> {
+    let parent = window.as_ref().window();
+    let label = website_background_webview_label(window.label());
+    let child = if let Some(child) = parent
+        .webviews()
+        .into_iter()
+        .find(|webview| webview.label() == label)
+    {
+        child.navigate(url)?;
+        child
+    } else {
+        parent.add_child(
+            WebviewBuilder::new(&label, WebviewUrl::External(url))
+                .auto_resize()
+                .focused(false),
+            LogicalPosition::new(0, 0),
+            parent.inner_size()?,
+        )?
+    };
+
+    place_website_background_below(window, &child)?;
+    set_surface_transparent(window)?;
+    child.show()?;
+    Ok(())
 }
 
 pub(crate) fn navigate_background_webview<R: Runtime>(

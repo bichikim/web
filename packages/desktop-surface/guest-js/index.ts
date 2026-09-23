@@ -18,6 +18,7 @@ export interface BackgroundSurfaceOptions extends SurfaceTarget {
 
 export interface BackgroundNavigationOptions extends SurfaceTarget {
   readonly url: string
+  readonly useChild?: boolean
 }
 
 export type BackgroundMouseEventKind = 'down' | 'up' | 'dragged'

@@ -91,8 +91,13 @@ pub(crate) async fn navigate_background_surface<R: Runtime>(
         let options = ValidatedBackgroundNavigation::try_from(options)?;
         let webview = find_webview(&app, options.label)?;
         if let Some(window) = app.get_webview_window(webview.label()) {
-            crate::macos::navigate_background_surface(&state, &window, options.url)
-                .map_err(Into::into)
+            crate::macos::navigate_background_surface(
+                &state,
+                &window,
+                options.url,
+                options.use_child,
+            )
+            .map_err(Into::into)
         } else {
             crate::macos::navigate_background_webview(&state, &webview, options.url)
                 .map_err(Into::into)

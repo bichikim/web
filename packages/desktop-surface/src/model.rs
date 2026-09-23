@@ -36,6 +36,8 @@ pub(crate) struct BackgroundSurfaceOptions {
 pub(crate) struct BackgroundNavigationOptions {
     pub(crate) label: String,
     pub(crate) url: String,
+    #[serde(default)]
+    pub(crate) use_child: bool,
 }
 
 #[derive(Clone, Copy, Debug, Deserialize, PartialEq)]
@@ -81,6 +83,7 @@ pub(crate) struct ValidatedBackgroundMouseEvent {
 pub(crate) struct ValidatedBackgroundNavigation {
     pub(crate) label: String,
     pub(crate) url: Url,
+    pub(crate) use_child: bool,
 }
 
 #[derive(Clone, Debug, Deserialize)]
@@ -142,14 +145,23 @@ impl TryFrom<BackgroundNavigationOptions> for ValidatedBackgroundNavigation {
     type Error = Error;
 
     fn try_from(options: BackgroundNavigationOptions) -> Result<Self> {
-        let label = validate_label(options.label)?;
-        let url = Url::parse(options.url.trim()).map_err(|_| Error::InvalidUrl)?;
+        let BackgroundNavigationOptions {
+            label,
+            url,
+            use_child,
+        } = options;
+        let label = validate_label(label)?;
+        let url = Url::parse(url.trim()).map_err(|_| Error::InvalidUrl)?;
 
         if url.scheme() != "https" || url.host().is_none() {
             return Err(Error::InvalidUrl);
         }
 
-        Ok(Self { label, url })
+        Ok(Self {
+            label,
+            url,
+            use_child,
+        })
     }
 }
 
@@ -408,11 +420,13 @@ mod tests {
         let navigation = ValidatedBackgroundNavigation::try_from(BackgroundNavigationOptions {
             label: " background ".to_owned(),
             url: " https://example.com/path ".to_owned(),
+            use_child: true,
         })
         .expect("valid background URL");
 
         assert_eq!(navigation.label, "background");
         assert_eq!(navigation.url.as_str(), "https://example.com/path");
+        assert!(navigation.use_child);
     }
 
     #[test]
@@ -427,6 +441,7 @@ mod tests {
                 ValidatedBackgroundNavigation::try_from(BackgroundNavigationOptions {
                     label: "background".to_owned(),
                     url: url.to_owned(),
+                    use_child: false,
                 })
                 .is_err()
             );

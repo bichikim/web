@@ -60,6 +60,7 @@ afterEach(() => {
 describe('applyDesktopMode', () => {
   it('should restore the normal window before controller cleanup', async () => {
     await expect(applyDesktopMode('normal')).resolves.toBe(false)
+    expect(restoreBackgroundContent).toHaveBeenCalledWith({label: 'background'})
     expect(restoreSurface).toHaveBeenCalledWith({label: 'background'})
     expect(closeControlSurface).not.toHaveBeenCalled()
   })
@@ -160,6 +161,59 @@ describe('applyDesktopMode', () => {
     })
   })
 
+  it('should keep the app WebView above the website in interactive desktop mode', async () => {
+    vi.mocked(getBackgroundRepository).mockResolvedValue({
+      read: vi.fn(async () => ({
+        items: [],
+        preferences: {mode: 'website', websiteUrl: 'https://example.com/dashboard'},
+      })),
+    } as never)
+
+    await expect(applyDesktopMode('interactiveDesktop')).resolves.toBe(true)
+
+    expect(navigateBackgroundSurface).toHaveBeenCalledWith({
+      label: 'background',
+      url: 'https://example.com/dashboard',
+      useChild: true,
+    })
+  })
+
+  it('should keep the app WebView above the website in widget mode', async () => {
+    vi.mocked(getBackgroundRepository).mockResolvedValue({
+      read: vi.fn(async () => ({
+        items: [],
+        preferences: {mode: 'website', websiteUrl: 'https://example.com/widget'},
+      })),
+    } as never)
+
+    await expect(applyDesktopMode('widget')).resolves.toBe(false)
+
+    expect(navigateBackgroundSurface).toHaveBeenCalledWith({
+      label: 'background',
+      url: 'https://example.com/widget',
+      useChild: true,
+    })
+  })
+
+  it('should synchronize a changed website URL while widget mode is active', async () => {
+    vi.stubEnv('VITE_POMO_IS_DESKTOP', 'true')
+    localStorage.setItem('pomo:desktop-mode:v1', 'widget')
+    vi.mocked(getBackgroundRepository).mockResolvedValue({
+      read: vi.fn(async () => ({
+        items: [],
+        preferences: {mode: 'website', websiteUrl: 'https://example.com/updated-widget'},
+      })),
+    } as never)
+
+    await synchronizeDesktopBackground()
+
+    expect(navigateBackgroundSurface).toHaveBeenCalledWith({
+      label: 'background',
+      url: 'https://example.com/updated-widget',
+      useChild: true,
+    })
+  })
+
   it('should synchronize the native website layer in normal desktop mode', async () => {
     vi.stubEnv('VITE_POMO_IS_DESKTOP', 'true')
     localStorage.setItem('pomo:desktop-mode:v1', 'normal')
@@ -175,6 +229,7 @@ describe('applyDesktopMode', () => {
     expect(navigateBackgroundSurface).toHaveBeenCalledWith({
       label: 'background',
       url: 'https://example.com/dashboard',
+      useChild: true,
     })
     expect(restoreBackgroundContent).not.toHaveBeenCalled()
   })
@@ -200,10 +255,12 @@ describe('applyDesktopMode', () => {
     expect(navigateBackgroundSurface).toHaveBeenNthCalledWith(1, {
       label: 'background',
       url: 'https://example.com/first',
+      useChild: true,
     })
     expect(navigateBackgroundSurface).toHaveBeenNthCalledWith(2, {
       label: 'background',
       url: 'https://example.com/second',
+      useChild: true,
     })
   })
 
