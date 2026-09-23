@@ -26,12 +26,15 @@ export interface CreatePluginsOptions {
 export const resolveParaglideOutdir = (
   command: ConfigEnv['command'],
   runtimeTarget: PomoTarget,
-): string =>
-  command !== 'serve'
-    ? PARAGLIDE_CONFIG.common.outdir
-    : runtimeTarget === 'apps-in-toss'
+): string => {
+  if (command === 'serve') {
+    return runtimeTarget === 'apps-in-toss'
       ? PARAGLIDE_CONFIG.development.appsInTossOutdir
       : PARAGLIDE_CONFIG.development.webOutdir
+  }
+
+  return PARAGLIDE_CONFIG.common.outdir
+}
 
 export const createPlugins = (options: CreatePluginsOptions): Array<PluginOption> => {
   const isStaticBuild = options.buildTarget !== 'web'
