@@ -25,6 +25,7 @@ export type EventBindingItem =
   | {readonly type: 'dialogue'; readonly id: string}
   | {readonly type: 'action'; readonly id: EventActionId}
 export type EventActionExecutor = (actionId: EventActionId) => void
+export type EventActionHandler = (actionId: EventActionId) => boolean
 export type EventActionExecutorMode = 'active' | 'deferred'
 
 export interface EventActionExecutorRegistrationOptions {
@@ -92,6 +93,7 @@ export interface PEventContextValue {
     executor: EventActionExecutor,
     options?: EventActionExecutorRegistrationOptions,
   ) => () => void
+  readonly registerEventActionHandler?: (handler: EventActionHandler) => () => void
   readonly delayedEndEventDurationMinutes: Accessor<number>
   readonly delayedEndEventIsRunning: Accessor<boolean>
   readonly setDelayedEndEventDuration: (durationMinutes: number) => Promise<void>

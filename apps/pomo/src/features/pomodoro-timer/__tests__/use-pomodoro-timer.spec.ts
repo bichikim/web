@@ -109,6 +109,34 @@ it('should not emit lifecycle events when resetting a running phase', async () =
   view.cleanup()
 })
 
+it.each([
+  {completedFocusSessions: 0, phase: 'focus'},
+  {completedFocusSessions: 1, phase: 'shortBreak'},
+  {completedFocusSessions: 2, phase: 'longBreak'},
+] as const)('should not emit lifecycle events when changing a paused $phase', async (scenario) => {
+  localStorage.setItem(CONFIG_STORAGE_KEY, JSON.stringify(CONFIG))
+  localStorage.setItem(
+    STATE_STORAGE_KEY,
+    JSON.stringify({
+      completedFocusSessions: scenario.completedFocusSessions,
+      phase: scenario.phase,
+      remainingSeconds: 5,
+      status: 'paused',
+    }),
+  )
+  const onEvents = vi.fn()
+  const view = renderHook(() => usePomodoroTimer({onEvents}), {wrapper: PreferenceProvider})
+  await finishInitialization(view)
+
+  const nextConfig = {...CONFIG, focusSeconds: 20}
+  view.result.onConfigChange(nextConfig)
+
+  expect(view.result.config()).toEqual(nextConfig)
+  expect(view.result.state()).toMatchObject({phase: scenario.phase, status: 'idle'})
+  expect(onEvents).not.toHaveBeenCalled()
+  view.cleanup()
+})
+
 it('should refresh on visibility changes and stop after owner cleanup', async () => {
   const add = vi.spyOn(document, 'addEventListener')
   const remove = vi.spyOn(document, 'removeEventListener')

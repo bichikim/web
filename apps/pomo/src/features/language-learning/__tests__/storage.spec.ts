@@ -35,6 +35,27 @@ const createEvents = (): LanguageLearningEventTarget => {
 }
 
 describe('language learning sentence storage boundary', () => {
+  it('should deduplicate directly written sentences by dialogue ID', () => {
+    const storage = createStorage()
+    const options = {storage}
+    const replacement = {...SENTENCE, text: 'I feel right at home here.'}
+
+    writeLanguageLearningSentences([SENTENCE, replacement], options)
+
+    expect(readLanguageLearningSentences(options)).toEqual([SENTENCE])
+  })
+
+  it('should deduplicate appended sentences by dialogue ID', () => {
+    const storage = createStorage()
+    const options = {storage}
+    const replacement = {...SENTENCE, text: 'I feel right at home here.'}
+
+    appendLanguageLearningSentences([SENTENCE], options)
+    appendLanguageLearningSentences([replacement], options)
+
+    expect(readLanguageLearningSentences(options)).toEqual([SENTENCE])
+  })
+
   it('should persist and announce sentences through the injected boundaries', () => {
     const storage = createStorage()
     const events = createEvents()

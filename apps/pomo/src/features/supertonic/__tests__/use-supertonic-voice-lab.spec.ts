@@ -240,6 +240,28 @@ describe('useSupertonicVoiceLab', () => {
     voiceLab.dispose()
   })
 
+  it('should expose zero progress when the model download total is unknown', async () => {
+    const client = createClient()
+    let progressDuringPreparation = Number.NaN
+    const voiceLab = createVoiceLabRoot(createRuntime([client]))
+    vi.mocked(client.initialize).mockImplementationOnce(async (options) => {
+      options.onProgress({fileName: '모델', loadedBytes: 0, totalBytes: 0})
+      progressDuringPreparation = voiceLab.controller.progress()
+      return failureResult({
+        code: 'worker-failed',
+        detail: '다운로드 실패',
+        phase: 'initialize',
+        retryable: true,
+      })
+    })
+
+    await voiceLab.controller.prepare()
+
+    expect(progressDuringPreparation).toBe(0)
+    expect(Number.isNaN(progressDuringPreparation)).toBe(false)
+    voiceLab.dispose()
+  })
+
   it('should ignore generation before preparation and expose generation failures after preparation', async () => {
     const client = createClient()
     vi.mocked(client.generateStream).mockImplementationOnce(async function* failedGeneration() {

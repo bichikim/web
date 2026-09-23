@@ -235,6 +235,28 @@ it('should preserve changes made while the auto-start preference is loading', as
   view.cleanup()
 })
 
+it('should persist a running timer when unmounted before auto-start initialization', async () => {
+  const preference = createDeferred<boolean>()
+  autoStartMocks.read.mockReturnValue(preference.promise)
+
+  const view = renderHook(usePomodoroTimer, {wrapper: PreferenceProvider})
+  view.result.onConfigChange(CONFIG)
+  view.result.onStart()
+
+  view.cleanup()
+
+  expect(JSON.parse(localStorage.getItem(STATE_STORAGE_KEY) ?? '')).toEqual({
+    completedFocusSessions: 0,
+    endsAt: 10_000,
+    phase: 'focus',
+    status: 'running',
+  })
+  expect(JSON.parse(localStorage.getItem(CONFIG_STORAGE_KEY) ?? '')).toEqual(CONFIG)
+
+  preference.resolve(false)
+  await preference.promise
+})
+
 it('should recover auto-start catch-up after pausing an expired restore while loading', async () => {
   const preference = createDeferred<boolean>()
   const onEvents = vi.fn()

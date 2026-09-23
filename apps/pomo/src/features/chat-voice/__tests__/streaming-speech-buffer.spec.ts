@@ -31,6 +31,13 @@ describe('createStreamingSpeechBuffer', () => {
     expect(buffer.flush('짧음')).toBeNull()
   })
 
+  it('should not repeat a completed sentence when the stream shrinks to it', () => {
+    const buffer = createStreamingSpeechBuffer({locale: 'ko'})
+
+    expect(buffer.update('첫 문장입니다. 두 번째')).toEqual(['첫 문장입니다.'])
+    expect(buffer.update('첫 문장입니다.')).toEqual([])
+  })
+
   it('should omit an empty completed segment and an empty remaining tail', () => {
     const buffer = createStreamingSpeechBuffer({locale: 'ko'})
 

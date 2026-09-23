@@ -93,3 +93,42 @@ describe('removeTrackFromQueue', () => {
     expect(persistCurrentPlayback).toHaveBeenCalledOnce()
   })
 })
+
+describe('onLoad', () => {
+  it('should remove only one duplicate occurrence before the initial playlist loads', () => {
+    const defaultTracks = [createTrack('track-1'), createTrack('track-1'), createTrack('track-2')]
+    const {controller, currentIndex, tracks} = createHarness(defaultTracks)
+
+    controller.removeTrackFromQueue(0)
+    controller.onLoad({defaultTracks, queueChanged: true})
+
+    expect(tracks().map((track) => track.id)).toEqual(['track-1', 'track-2'])
+    expect(currentIndex()).toBe(0)
+  })
+
+  it('should preserve the active duplicate occurrence when merging a changed queue', () => {
+    const defaultTracks = [
+      createTrack('track-1'),
+      createTrack('track-2'),
+      createTrack('track-3'),
+      createTrack('track-1'),
+    ]
+    const currentTracks = [...defaultTracks, createTrack('track-4')]
+    const {controller, currentIndex, tracks} = createHarness(currentTracks, 3)
+
+    controller.onLoad({defaultTracks, queueChanged: true})
+
+    expect(currentIndex()).toBe(3)
+    expect(tracks()).toEqual(currentTracks)
+  })
+
+  it('should fall back to the matching track when merging moves it before the old index', () => {
+    const defaultTracks = [createTrack('track-2'), createTrack('track-1'), createTrack('track-3')]
+    const currentTracks = [createTrack('track-4'), createTrack('track-5'), createTrack('track-1')]
+    const {controller, currentIndex} = createHarness(currentTracks, 2)
+
+    controller.onLoad({defaultTracks, queueChanged: true})
+
+    expect(currentIndex()).toBe(1)
+  })
+})

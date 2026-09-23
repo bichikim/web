@@ -75,6 +75,37 @@ const persistShiftedCurrentPlayback = (
   }
 }
 
+const findActiveTrackIndex = (
+  currentTracks: readonly PTrack[],
+  mergedTracks: readonly PTrack[],
+  currentIndex: number,
+) => {
+  const activeTrackId = currentTracks[currentIndex]?.id
+  const activeIndex = mergedTracks.findIndex(
+    (track, index) => index >= currentIndex && track.id === activeTrackId,
+  )
+
+  return activeIndex < 0
+    ? mergedTracks.findIndex((track) => track.id === activeTrackId)
+    : activeIndex
+}
+
+const filterRemovedTrackOccurrences = (
+  tracks: readonly PTrack[],
+  removedTrackCounts: ReadonlyMap<string, number>,
+) => {
+  const remainingCounts = new Map(removedTrackCounts)
+  return tracks.filter((track) => {
+    const removedTrackCount = remainingCounts.get(track.id) ?? 0
+    if (removedTrackCount === 0) {
+      return true
+    }
+
+    remainingCounts.set(track.id, removedTrackCount - 1)
+    return false
+  })
+}
+
 /** Coordinates playlist state changes without owning transport or navigation policy. */
 export const createPlayerQueueController = (
   options: CreatePlayerQueueControllerOptions,
@@ -82,7 +113,7 @@ export const createPlayerQueueController = (
   let queueRevision = 0
   let initialPlaylistResolved = options.isQueueControlled()
   let clearedBeforeLoad = false
-  const removedBeforeLoad = new Set<string>()
+  const removedBeforeLoad = new Map<string, number>()
 
   const initializePlayback = (
     nextTracks: readonly PTrack[],
@@ -154,7 +185,7 @@ export const createPlayerQueueController = (
     const shouldResume = options.isPlaying()
 
     if (!initialPlaylistResolved && removedTrack !== undefined) {
-      removedBeforeLoad.add(removedTrack.id)
+      removedBeforeLoad.set(removedTrack.id, (removedBeforeLoad.get(removedTrack.id) ?? 0) + 1)
     }
 
     if (resolution.currentTrackChanged) {
@@ -224,16 +255,17 @@ export const createPlayerQueueController = (
     initialPlaylistResolved = true
     const availableTracks = clearedBeforeLoad
       ? []
-      : loaded.defaultTracks.filter((track) => !removedBeforeLoad.has(track.id))
+      : filterRemovedTrackOccurrences(loaded.defaultTracks, removedBeforeLoad)
 
     if (!loaded.queueChanged) {
       initializePlayback(availableTracks, null)
       return availableTracks
     }
 
-    const activeTrackId = options.readTracks()[options.readCurrentIndex()]?.id
-    const mergedTracks = appendUniqueTracks(availableTracks, options.readTracks())
-    const activeIndex = mergedTracks.findIndex((track) => track.id === activeTrackId)
+    const currentTracks = options.readTracks()
+    const currentIndex = options.readCurrentIndex()
+    const mergedTracks = appendUniqueTracks(availableTracks, currentTracks)
+    const activeIndex = findActiveTrackIndex(currentTracks, mergedTracks, currentIndex)
     batch(() => {
       options.setLoadedTracks(mergedTracks)
       options.setCurrentIndex(activeIndex < 0 ? 0 : activeIndex)

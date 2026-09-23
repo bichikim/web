@@ -7,6 +7,18 @@ const STORAGE_KEY = 'pomo:language-learning:sentences:v1'
 export const LANGUAGE_LEARNING_SENTENCES_CHANGED_EVENT = 'pomo:language-learning:sentences-changed'
 const storedSentencesSchema = z.array(languageLearningSentenceSchema).readonly()
 
+const deduplicateLanguageLearningSentences = (
+  values: ReadonlyArray<LanguageLearningSentence>,
+): ReadonlyArray<LanguageLearningSentence> => {
+  const dialogueIds = new Set<string>()
+
+  return values.filter((sentence) => {
+    const isUnique = !dialogueIds.has(sentence.dialogueId)
+    dialogueIds.add(sentence.dialogueId)
+    return isUnique
+  })
+}
+
 export interface LanguageLearningStorage {
   readonly getItem: (key: string) => string | null
   readonly setItem: (key: string, value: string) => void
@@ -41,7 +53,7 @@ export const readLanguageLearningSentences = (
 export const writeLanguageLearningSentences = (
   values: ReadonlyArray<LanguageLearningSentence>,
   options?: LanguageLearningStorageOptions,
-): void => getCollectionStorage(options).write(values)
+): void => getCollectionStorage(options).write(deduplicateLanguageLearningSentences(values))
 
 export const appendLanguageLearningSentences = (
   sentences: ReadonlyArray<LanguageLearningSentence>,

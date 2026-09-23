@@ -4,6 +4,7 @@ import type {
   EventActionExecutor,
   EventActionExecutorMode,
   EventActionExecutorRegistrationOptions,
+  EventActionHandler,
   EventActionIds,
 } from '../event-context'
 import {
@@ -16,6 +17,7 @@ import {
 interface EventActionRunner {
   readonly clearDelayedEndActions: () => void
   readonly dispose: () => void
+  readonly registerHandler: (handler: EventActionHandler) => () => void
   readonly register: (
     executor: EventActionExecutor,
     options?: EventActionExecutorRegistrationOptions,
@@ -50,10 +52,21 @@ const executeEventAction = (actionId: EventActionId, executor: EventActionExecut
   }
 }
 
+const executeEventActionHandler = (actionId: EventActionId, handler: EventActionHandler) => {
+  try {
+    return handler(actionId)
+  } catch (error: unknown) {
+    console.error('Failed to handle a focus room event action.', error)
+    return false
+  }
+}
+
 export const createEventActionRunner = (
   eventActionIds: Accessor<EventActionIds>,
 ): EventActionRunner => {
   let eventActionRegistration: RegisteredEventActionExecutor | null = null
+  const eventActionHandlers = new Set<EventActionHandler>()
+  let hasRegisteredActiveEventActionExecutor = false
   let pendingEventActions: PendingEventAction[] = []
   let pendingActionWaiters: PendingActionWaiter[] = []
 
@@ -72,26 +85,66 @@ export const createEventActionRunner = (
     }
   }
 
+  const notifyEventActionHandlers = (actionId: EventActionId) => {
+    let isHandled = false
+    for (const handler of eventActionHandlers) {
+      if (executeEventActionHandler(actionId, handler)) {
+        isHandled = true
+      }
+    }
+    return isHandled
+  }
+
+  const handleEventAction = (
+    eventId: DialogueEventId,
+    actionId: EventActionId,
+    queuedActionEventIds: Set<DialogueEventId>,
+  ) => {
+    const registration = eventActionRegistration
+    const isDeferredExecutor = registration?.mode === 'deferred'
+    const isHandledByHandler = isDeferredExecutor && notifyEventActionHandlers(actionId)
+    const executor = isDeferredExecutor ? null : (registration?.executor ?? null)
+    const shouldQueueAction =
+      isDeferredExecutor ||
+      (executor === null &&
+        (!hasRegisteredActiveEventActionExecutor ||
+          eventId === DELAYED_END_EVENT ||
+          eventId === FOCUS_ROOM_ENTRY_EVENT ||
+          eventId === 'break-end' ||
+          eventId === 'focus-end'))
+
+    if (isHandledByHandler) {
+      return
+    }
+
+    if (!shouldQueueAction) {
+      executeEventAction(actionId, executor)
+      return
+    }
+
+    queueEventAction(eventId, actionId)
+    if (!isDeferredExecutor) {
+      queuedActionEventIds.add(eventId)
+    }
+  }
+
+  const handlePendingEventActions = (handler: EventActionHandler) => {
+    const pendingActions = pendingEventActions
+    pendingEventActions = []
+    for (const pendingAction of pendingActions) {
+      const isHandled = executeEventActionHandler(pendingAction.actionId, handler)
+      if (!isHandled) {
+        pendingEventActions.push(pendingAction)
+      }
+    }
+  }
+
   const run = (eventIds: ReadonlyArray<DialogueEventId>) => {
     const actionBindings = eventActionIds()
     const queuedActionEventIds = new Set<DialogueEventId>()
     for (const eventId of eventIds) {
       for (const actionId of actionBindings[eventId] ?? []) {
-        const registration = eventActionRegistration
-        const isDeferredExecutor = registration?.mode === 'deferred'
-        const executor = isDeferredExecutor ? null : (registration?.executor ?? null)
-        const shouldQueueAction =
-          (executor === null || isDeferredExecutor) &&
-          (eventId === DELAYED_END_EVENT || eventId === FOCUS_ROOM_ENTRY_EVENT)
-
-        if (shouldQueueAction) {
-          queueEventAction(eventId, actionId)
-          if (!isDeferredExecutor) {
-            queuedActionEventIds.add(eventId)
-          }
-        } else {
-          executeEventAction(actionId, executor)
-        }
+        handleEventAction(eventId, actionId, queuedActionEventIds)
       }
     }
 
@@ -109,10 +162,15 @@ export const createEventActionRunner = (
 
   return {
     clearDelayedEndActions() {
+      if (eventActionRegistration?.mode === 'deferred') {
+        return
+      }
+
       pendingEventActions = pendingEventActions.filter(({eventId}) => eventId !== DELAYED_END_EVENT)
       resolvePendingActionWaiters(DELAYED_END_EVENT)
     },
     dispose() {
+      eventActionHandlers.clear()
       pendingEventActions = []
       resolvePendingActionWaiters()
     },
@@ -121,6 +179,7 @@ export const createEventActionRunner = (
         executor,
         mode: options?.mode ?? 'active',
       } satisfies RegisteredEventActionExecutor
+      hasRegisteredActiveEventActionExecutor ||= registration.mode === 'active'
       eventActionRegistration = registration
       if (registration.mode === 'deferred') {
         resolvePendingActionWaiters()
@@ -141,6 +200,13 @@ export const createEventActionRunner = (
         if (eventActionRegistration?.executor === executor) {
           eventActionRegistration = null
         }
+      }
+    },
+    registerHandler(handler) {
+      eventActionHandlers.add(handler)
+      handlePendingEventActions(handler)
+      return () => {
+        eventActionHandlers.delete(handler)
       }
     },
     run,

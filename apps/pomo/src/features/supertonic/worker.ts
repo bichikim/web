@@ -42,6 +42,7 @@ import {loadSupertonicRuntime, type SupertonicBackend, type SupertonicRuntime} f
 import {type LoadBufferOptions, loadSessions, releaseSessions} from './sessions'
 import {failureResult, type Result, successResult} from 'src/features/result'
 import {splitSpeechText} from './text-chunking'
+import {normalizeSpeechText} from './number-speech'
 import {createSupertonicWorkerDispatch} from './worker/dispatch'
 
 const workerScope = globalThis.self as DedicatedWorkerGlobalScope
@@ -425,6 +426,11 @@ const generate = async (
     for (const [chunkIndex, text] of textChunks.entries()) {
       const chunkNumber = chunkIndex + 1
       const chunkStartedAt = getMonotonicTime()
+      const normalizedText = normalizeSpeechText({language: message.language, text})
+      const engineText =
+        Array.from(normalizedText).length <= currentModel.speechPolicy.maximumLength
+          ? normalizedText
+          : text
       const samples = await currentEngine.generate({
         language: message.language,
         onProgress: (step, total) => {
@@ -434,7 +440,7 @@ const generate = async (
           })
         },
         speed: message.speed,
-        text,
+        text: engineText,
         voice: voiceResult.value,
       })
       audioChunks.push(samples)

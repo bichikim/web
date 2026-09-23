@@ -5,11 +5,14 @@ vi.mock('src/features/model-download', () => ({useModelDownload: vi.fn()}))
 
 import {createSignal} from 'solid-js'
 import {cleanup, renderHook} from '@solidjs/testing-library'
+import {getLocale, overwriteGetLocale} from '@paraglide/runtime'
 import {afterEach, beforeEach, expect, it, vi} from 'vitest'
 import {runImageGeneration} from '../client'
 import {useImageGeneration} from '../use-image-generation'
 
 vi.mock('../client', () => ({runImageGeneration: vi.fn()}))
+
+const originalGetLocale = getLocale
 
 beforeEach(() => {
   vi.mocked(useModelDownload).mockReturnValue(createModelDownloadController())
@@ -21,6 +24,7 @@ beforeEach(() => {
 })
 afterEach(() => {
   cleanup()
+  overwriteGetLocale(originalGetLocale)
   vi.unstubAllGlobals()
   vi.clearAllMocks()
 })
@@ -84,6 +88,36 @@ it('should surface a failure and allow another generation', async () => {
   expect(result.error()).toBe(null)
   expect(result.result()?.prompt).toBe('A hamburger')
   expect(result.busy()).toBe(false)
+})
+
+it('should keep generation progress and failures in English', async () => {
+  overwriteGetLocale(() => 'en')
+  let finish: ((image: {blob: Blob; prompt: string}) => void) | undefined
+  const pending = new Promise<{blob: Blob; prompt: string}>((resolve) => {
+    finish = resolve
+  })
+  vi.mocked(runImageGeneration)
+    .mockReturnValueOnce(pending)
+    .mockRejectedValueOnce(new Error('이미지 생성 실패'))
+
+  const {result} = renderHook(useImageGeneration)
+  await vi.waitFor(() => expect(result.supported()).toBe(true))
+  result.setIdea('A walk')
+  const firstGeneration = result.generate()
+  vi.mocked(runImageGeneration).mock.lastCall![0].onUpdate({
+    label: '이미지 생성 중 · 1/4',
+    percentage: 25,
+    type: 'progress',
+  })
+  expect(result.status()).toBe('Creating image · 1/4')
+  result.stop()
+  expect(result.status()).toBe('Generation stopped.')
+  finish?.({blob: new Blob(['png']), prompt: 'A walk'})
+  await firstGeneration
+
+  await result.generate()
+  expect(result.error()).toBe("Couldn't create the image.")
+  expect(result.status()).toBe('Check the settings and try again.')
 })
 
 it('should report its model download progress and restore inference status afterward', async () => {

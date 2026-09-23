@@ -7,7 +7,7 @@ import {createImportMetaEnvDefinitions} from './scripts/vite/create-import-meta-
 import {resolveContentSecurityPolicyTemplates} from './scripts/vite/content-security-policy-template'
 import {getOptimizeDepsInclude} from './scripts/vite/optimize-deps'
 import {createNitroConfig} from './scripts/vite/create-nitro-config'
-import {createPlugins} from './scripts/vite/create-plugins'
+import {createPlugins, resolveParaglideOutdir} from './scripts/vite/create-plugins'
 import {resolveDistributionTarget} from './scripts/vite/distribution-target'
 import {resolveRuntimeTarget} from './scripts/vite/runtime-target'
 import {loadBuildEnvironment} from './scripts/vite/load-build-environment'
@@ -211,6 +211,9 @@ const createConfig = ({command, mode}: ConfigEnv): UserConfig => {
       CONNECT_SOURCES: connectSourceList,
     }),
   } as const
+  const paraglideOutdir = resolveParaglideOutdir(command, POMO_RUNTIME_TARGET)
+  const resolveParaglideFile = (fileName: string) =>
+    fileURLToPath(new URL(`${paraglideOutdir}/${fileName}`, import.meta.url))
 
   return {
     // Pixi fetches textures; native WebViews require bundled files instead of data URLs.
@@ -272,6 +275,11 @@ const createConfig = ({command, mode}: ConfigEnv): UserConfig => {
       usesAppsInTossDevtools: USES_APPS_IN_TOSS_DEVTOOLS,
     }),
     resolve: {
+      alias: {
+        '@paraglide/message': resolveParaglideFile('messages.js'),
+        '@paraglide/runtime': resolveParaglideFile('runtime.js'),
+        '@paraglide/server': resolveParaglideFile('server.js'),
+      },
       tsconfigPaths: true,
     },
     server: {

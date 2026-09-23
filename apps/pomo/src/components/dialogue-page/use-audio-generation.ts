@@ -1,6 +1,8 @@
+import * as m from '@paraglide/message'
 import {type Accessor, createSignal, onCleanup} from 'solid-js'
 import {isDialogueEditorBusy} from 'src/features/focus-room-dialogue/dialogue-editor-state'
 import type {PDialogueEditorController} from 'src/features/focus-room-dialogue'
+import {localizeErrorMessage} from 'src/features/localization/localized-messages'
 import {useModelDownload} from 'src/features/model-download'
 import {isSupertonicModelDownloaded} from 'src/features/supertonic'
 
@@ -54,11 +56,17 @@ export const useAudioGeneration = (props: UseAudioGenerationProps): AudioGenerat
         : null
       : download.percentage
   }
-  const audioMessage = () =>
-    audioDownloadError() ??
-    (audioDownload() === null
+  const audioMessage = () => {
+    const downloadError = audioDownloadError()
+
+    if (downloadError !== null) {
+      return localizeErrorMessage(downloadError, m.dialogue_voice_download_error())
+    }
+
+    return audioDownload() === null
       ? props.editor.state().message
-      : '음성 모델 파일을 백그라운드에서 내려받고 있어요.')
+      : m.dialogue_status_downloading_voice()
+  }
   const handleAudioGenerate = async () => {
     if (isBusy() || !props.editor.canGenerate()) {
       return

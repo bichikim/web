@@ -5,6 +5,7 @@ import {PButton} from '../p-button/PButton'
 import {PTag} from '../p-tag/PTag'
 import type {PSceneStyle} from '../../features/focus-room-animation'
 import {type DialogueSegmentMood, usePEvents} from '../../features/focus-room-dialogue'
+import {getLocalizedPrimaryMoodLabel} from '../../features/localization/localized-messages'
 import {getPrimaryMood} from '../../features/text-mood'
 import * as m from '@paraglide/message'
 import {BlockedDialogueBubble} from '../dialogue-player/BlockedBubble'
@@ -28,7 +29,7 @@ export interface PDialoguePlayerProps {
 
 const getMoodPresentation = (mood: DialogueSegmentMood | null) => {
   const definition = getPrimaryMood(mood?.primary.id ?? 'neutral')
-  return {definition}
+  return {definition, label: getLocalizedPrimaryMoodLabel(definition.id)}
 }
 
 export const PDialoguePlayer = (props: PDialoguePlayerProps) => {
@@ -97,7 +98,7 @@ export const PDialoguePlayer = (props: PDialoguePlayerProps) => {
               <div class={CLASSES.dialogueBubbleHeader}>
                 <div class={CLASSES.dialogueBubbleSpeakerGroup}>
                   <PFaceIcon
-                    alt={m.dialogue_mood_alt({mood: moodPresentation().definition.label})}
+                    alt={m.dialogue_mood_alt({mood: moodPresentation().label})}
                     class={CLASSES.dialogueBubbleMood}
                     mood={moodPresentation().definition.id}
                     sceneStyle={props.sceneStyle}

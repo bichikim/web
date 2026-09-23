@@ -4,6 +4,8 @@ import type {FeedDialogueRepository} from './feed-dialogue-repository'
 import type {FeedDialogueJob} from './feed-dialogue-schema'
 import type {FeedGenerationSettings} from './generation-settings'
 
+const MAX_MODEL_PREPARATION_ATTEMPTS = 8
+
 export interface PrepareFeedGenerationOptions {
   readonly allowModelDownload: boolean
   readonly isModelDownloaded: (modelId: SupertonicModelId) => Promise<boolean>
@@ -61,9 +63,15 @@ export const prepareFeedGeneration = async (
   }
 
   let settings = await options.resolveGenerationSettings(options.job.feedConnectionId)
+  let currentJob = options.job
 
-  while (settings !== null) {
+  for (
+    let attempt = 0;
+    settings !== null && attempt < MAX_MODEL_PREPARATION_ATTEMPTS;
+    attempt += 1
+  ) {
     const job = {...options.job, modelId: settings.modelId, voiceId: settings.voiceId}
+    currentJob = job
 
     if (!options.allowModelDownload && !(await options.isModelDownloaded(settings.modelId))) {
       return {job, status: 'model-download-required'}
@@ -93,5 +101,9 @@ export const prepareFeedGeneration = async (
     settings = latestSettings
   }
 
-  return {status: 'connection-missing'}
+  if (settings === null) {
+    return {status: 'connection-missing'}
+  }
+
+  return {job: currentJob, status: 'model-preparation-failed'}
 }

@@ -46,6 +46,63 @@ it('should load and append administrator request pages', async () => {
   cleanup()
 })
 
+it('should keep loaded pages visible after refreshing the first page', async () => {
+  const refreshedRequest = {...REQUEST, title: '새로 고침된 기능'}
+  apiMocks.listAdminFeatureRequests
+    .mockResolvedValueOnce({hasMore: true, requests: [REQUEST]})
+    .mockResolvedValueOnce({hasMore: false, requests: [NEXT_REQUEST]})
+    .mockResolvedValueOnce({hasMore: true, requests: [refreshedRequest]})
+
+  const {cleanup, result} = renderHook(() => useAdminFeatureRequests())
+  await waitFor(() => expect(result.isLoading()).toBe(false))
+
+  await result.loadMore()
+  expect(result.requests()).toEqual([REQUEST, NEXT_REQUEST])
+
+  await result.refresh()
+
+  expect(result.requests()).toEqual([refreshedRequest, NEXT_REQUEST])
+  cleanup()
+})
+
+it('should use the refreshed server page length for the next offset', async () => {
+  const ghostRequest = {...REQUEST, id: '019d1990-1dc9-7255-a7b5-f9459dfaf784'}
+  apiMocks.listAdminFeatureRequests
+    .mockResolvedValueOnce({hasMore: true, requests: [REQUEST]})
+    .mockResolvedValueOnce({hasMore: true, requests: [ghostRequest]})
+    .mockResolvedValueOnce({hasMore: true, requests: [REQUEST]})
+    .mockResolvedValueOnce({hasMore: false, requests: [NEXT_REQUEST]})
+
+  const {cleanup, result} = renderHook(() => useAdminFeatureRequests())
+  await waitFor(() => expect(result.isLoading()).toBe(false))
+
+  await result.loadMore()
+  await result.refresh()
+  await result.loadMore()
+
+  expect(apiMocks.listAdminFeatureRequests).toHaveBeenNthCalledWith(4, {offset: 1})
+  expect(result.requests()).toEqual([REQUEST, ghostRequest, NEXT_REQUEST])
+  cleanup()
+})
+
+it('should preserve loaded pages and pagination when refreshing fails', async () => {
+  apiMocks.listAdminFeatureRequests
+    .mockResolvedValueOnce({hasMore: true, requests: [REQUEST]})
+    .mockResolvedValueOnce({hasMore: true, requests: [NEXT_REQUEST]})
+    .mockRejectedValueOnce(new Error('refresh failed'))
+
+  const {cleanup, result} = renderHook(() => useAdminFeatureRequests())
+  await waitFor(() => expect(result.isLoading()).toBe(false))
+
+  await result.loadMore()
+  await result.refresh()
+
+  expect(result.loadFailed()).toBe(true)
+  expect(result.requests()).toEqual([REQUEST, NEXT_REQUEST])
+  expect(result.hasMore()).toBe(true)
+  cleanup()
+})
+
 it('should ignore a load more response that started before refresh', async () => {
   const loadMoreResponse = Promise.withResolvers<FeatureRequestPage>()
   const refreshResponse = Promise.withResolvers<FeatureRequestPage>()
