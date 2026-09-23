@@ -1,6 +1,7 @@
 import {describe, expect, it, vi} from 'vitest'
 
 import {executeKnowledgeIndex} from '../execute'
+import {createKnowledgePointId} from '../../domain/point-id'
 import type {KnowledgeIndexWriter, KnowledgePointPayload} from '../store'
 import type {DenseEmbeddingProvider} from '../../embedding/provider'
 
@@ -37,6 +38,37 @@ const createEmbedding = (): DenseEmbeddingProvider => ({
 })
 
 describe('executeKnowledgeIndex', () => {
+  it('should replace legacy UUIDv5 points and reuse UUIDv8 points on the next run', async () => {
+    const index = createIndex()
+    const legacy = '8b3731d3-d29b-54bd-a44c-0c344f6caea4'
+    const pointId = createKnowledgePointId({...scope, docId: 'a', schemaVersion: 1, unitId: 'a'})
+    expect(pointId).toBe('ed068ff3-fd20-81e5-8e88-1c2f172d14d9')
+    index.readState.mockResolvedValue({ok: true, value: [{payload, pointId: legacy}]})
+    const options = {
+      embedding: createEmbedding(),
+      identity,
+      index,
+      points: [{payload, pointId}],
+      scope,
+    }
+    expect(await executeKnowledgeIndex(options)).toMatchObject({
+      ok: true,
+      value: {deleted: 1, embedded: 1, unchanged: 0},
+    })
+    expect(index.deleteScoped).toHaveBeenCalledWith([legacy], scope)
+    expect(index.upsert.mock.invocationCallOrder[0]).toBeLessThan(
+      index.deleteScoped.mock.invocationCallOrder[0],
+    )
+    index.readState.mockResolvedValue({ok: true, value: [{payload, pointId}]})
+    index.upsert.mockClear()
+    index.deleteScoped.mockClear()
+    expect(await executeKnowledgeIndex(options)).toMatchObject({
+      ok: true,
+      value: {deleted: 0, embedded: 0, unchanged: 1},
+    })
+    expect(index.upsert).not.toHaveBeenCalled()
+    expect(index.deleteScoped).not.toHaveBeenCalled()
+  })
   it('should re-embed unchanged points in rebuild mode without deleting them first', async () => {
     const index = createIndex()
     const embedding = createEmbedding()

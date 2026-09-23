@@ -11,13 +11,14 @@ const POINT_ID_INPUT = {
 } as const
 
 describe('createKnowledgePointId', () => {
-  it('should return the same RFC 4122 version 5 UUID for the same logical unit', () => {
+  it('should return the same SHA-256 version 8 UUID for the same logical unit', () => {
     const firstPointId = createKnowledgePointId(POINT_ID_INPUT)
     const secondPointId = createKnowledgePointId({...POINT_ID_INPUT})
 
     expect(firstPointId).toBe(secondPointId)
+    expect(firstPointId).toBe('b7617fc0-f49a-81ab-8255-9217c85f3e13')
     expect(firstPointId).toMatch(
-      /^[0-9a-f]{8}-[0-9a-f]{4}-5[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/,
+      /^[0-9a-f]{8}-[0-9a-f]{4}-8[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/,
     )
   })
 

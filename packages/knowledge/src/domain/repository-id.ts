@@ -31,8 +31,17 @@ const failure = (remote: string): RepositoryIdFailure => ({
   ok: false,
 })
 
-const normalizePath = (path: string): string =>
-  path.replace(/^\/+|\/+$/gu, '').replace(/\.git$/u, '')
+const normalizePath = (path: string): string => {
+  let start = 0
+  let end = path.length
+  while (start < end && path[start] === '/') {
+    start += 1
+  }
+  while (end > start && path[end - 1] === '/') {
+    end -= 1
+  }
+  return path.slice(start, end).replace(/\.git$/u, '')
+}
 
 const parseUrlRemote = (remote: string): RemoteParts | undefined => {
   try {

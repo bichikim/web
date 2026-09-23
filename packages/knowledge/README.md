@@ -67,6 +67,14 @@ collection: knowledge-v1
 
 정상 종료는 exit code 0, 실행 실패는 1, 잘못된 CLI 인자는 2다. 결과는 stdout, 오류와 관계 진단은 stderr로 출력한다.
 
+### 기존 UUIDv5 색인의 갱신
+
+point ID는 SHA-256 기반 UUIDv8로 생성한다. [RFC 9562](https://www.rfc-editor.org/rfc/rfc9562.html#section-5.5)에 따라 SHA-256 결과에 UUIDv5 버전 표지를 사용하지 않는다. 문서·구간의 논리 ID는 유지하지만 기존 SHA-1 기반 point ID와는 달라진다.
+
+기존 색인이 있으면 저장소·브랜치별로 `know index`를 실행한다. 첫 갱신은 모든 구간을 재임베딩하고, 쓰기가 모두 성공한 뒤 해당 범위의 이전 point를 삭제한다. 중간 실패 시 이전 point와 일부 새 point가 함께 남을 수 있으므로 갱신이 완료되기 전에는 검색·진단 결과를 평가하지 않는다. 실패 원인을 해결한 뒤 같은 명령을 다시 실행한다. 다른 저장소·브랜치도 각각 갱신하며 구버전과 신버전 색인기를 번갈아 실행하지 않는다.
+
+point ID를 포함한 진단·근거 연결·평가 기록은 그대로 새 실행에 섞지 않고 다시 생성한다. 원본 문서와 승인 정답을 모델 결과에 맞춰 변경하지 않는다. collection의 payload schema는 동일하므로 이 변경만을 이유로 collection을 삭제하지 않는다.
+
 ### 저장된 지식 조회와 현황
 
 `know get "문서ID"`는 해당 문서의 모든 unit을 원문 순서로 반환하고, `know get "문서ID#unitID"`는 특정 unit을 반환한다. ID는 검색 결과에 표시된 값을 사용한다. 본문은 Qdrant에 저장된 색인 내용이며 현재 작업 파일을 다시 읽은 결과가 아니다. 없는 ID는 `knowledge-not-found` 오류와 exit code 1로 반환한다.

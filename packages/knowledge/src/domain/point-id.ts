@@ -15,8 +15,8 @@ const UUID_VARIANT_MODULUS = 64
 const UUID_VARIANT_PREFIX = 128
 const UUID_VERSION_BYTE_INDEX = 6
 const UUID_VERSION_MODULUS = 16
-const UUID_VERSION_PREFIX = 80
-// oxlint-disable-next-line no-magic-numbers -- RFC 4122 UUID text group boundaries.
+const UUID_VERSION_PREFIX = 128
+// oxlint-disable-next-line no-magic-numbers -- RFC 9562 UUID text group boundaries.
 const UUID_SECTION_BOUNDARIES = [0, 8, 12, 16, 20, 32] as const
 
 const formatUuid = (bytes: Uint8Array): string => {
@@ -35,7 +35,7 @@ export const createKnowledgePointId = (options: CreateKnowledgePointIdOptions): 
     options.docId,
     options.unitId,
   ])
-  const bytes = createHash('sha1')
+  const bytes = createHash('sha256')
     .update(UUID_NAMESPACE)
     .update(name, 'utf8')
     .digest()
