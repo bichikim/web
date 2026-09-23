@@ -217,11 +217,30 @@ const disposePlayer = (reference: PlayerReference) => {
   reference.current = null
 }
 
+const disposeClient = (reference: ClientReference) => {
+  const client = reference.current
+  reference.current = null
+  client?.dispose()
+  return client !== null
+}
+
+const updateStateAfterStop = (options: CreateSpeechQueueOptions) => {
+  const modelReady = options.isModelReady()
+  if (modelReady) {
+    options.setState({message: '답변 음성 재생을 중지했어요.', status: 'ready'})
+    return
+  }
+
+  if (disposeClient(options.clientReference)) {
+    options.setState({status: 'unprepared'})
+  }
+}
+
 const createPrepare = (options: CreatePrepareOptions) => {
   let preparation: Promise<void> | null = null
 
   const run = async () => {
-    options.clientReference.current?.dispose()
+    disposeClient(options.clientReference)
     const client = options.runtime.createClient()
     options.clientReference.current = client
     options.setState({progress: 0, status: 'preparing'})
@@ -413,10 +432,7 @@ const createSpeechQueue = (options: CreateSpeechQueueOptions): SpeechQueueContro
     disposePlayer(activePlayer)
     playbackCompletion.complete()
     options.setViseme('rest')
-
-    if (options.isModelReady()) {
-      options.setState({message: '답변 음성 재생을 중지했어요.', status: 'ready'})
-    }
+    updateStateAfterStop(options)
   }
 
   const arm = () => {
@@ -510,8 +526,7 @@ export const useChatVoice = (props: UseChatVoiceProps = {}): ChatVoiceController
   })
 
   onCleanup(() => {
-    clientReference.current?.dispose()
-    clientReference.current = null
+    disposeClient(clientReference)
     speechQueue.dispose()
   })
 
