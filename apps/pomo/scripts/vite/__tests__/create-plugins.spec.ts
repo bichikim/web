@@ -95,6 +95,28 @@ it.each([
   },
 )
 
+it('should let SolidStart own desktop development server requests without Nitro', async () => {
+  const plugins = createPlugins({...options, command: 'serve', runtimeTarget: 'desktop'})
+
+  expect(createRemoteServerFunctionsPlugin).not.toHaveBeenCalled()
+  expect(solidStart).toHaveBeenCalledWith({
+    devOverlay: false,
+    middleware: './src/middleware/index.ts',
+    ssr: true,
+  })
+  expect(nitro).not.toHaveBeenCalled()
+  expect((await Promise.all(plugins.flat())).flat()).toEqual([
+    {name: 'mobile'},
+    {name: 'polyfills'},
+    {name: 'boundary'},
+    {name: 'paraglide'},
+    {name: 'uno'},
+    {name: 'solid-start'},
+    expect.objectContaining({name: 'feeds'}),
+    {name: 'icons'},
+  ])
+})
+
 it.each(['android', 'ios'] as const)(
   'should keep %s runtime development separate from a static build',
   (runtimeTarget) => {
