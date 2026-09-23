@@ -17,6 +17,7 @@ export default createConfig({
     'node:path',
     'node:readline',
     'node:url',
+    'node:util',
     'solid-js',
     'tinyglobby',
     'vite',

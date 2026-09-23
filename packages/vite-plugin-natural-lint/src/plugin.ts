@@ -5,7 +5,7 @@ import {resolveOptions} from './config'
 import {NaturalLintCore} from './core'
 import {formatDiagnostic, formatExperimentReports} from './diagnostics'
 import {analyzeProject} from './project'
-import {createPlatformProviderFactory} from './provider'
+import {createDecisionProviderFactory} from './provider'
 import type {
   DecisionProviderFactory,
   DiagnosticMode,
@@ -190,7 +190,7 @@ export const naturalLint = (
       if (mode === 'off') {
         return
       }
-      const providerFactory = sourceProviderFactory ?? createPlatformProviderFactory(options.laya)
+      const providerFactory = sourceProviderFactory ?? createDecisionProviderFactory(options)
       session = new NaturalLintSession(new NaturalLintCore(options, providerFactory), options)
       if (config.command === 'serve') {
         enqueueServeTask(async () => {

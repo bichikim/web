@@ -26,6 +26,7 @@ export interface ReviewAnswer {
 
 export interface ReviewCandidate {
   readonly answers: DecisionAnswers
+  readonly caseIndex?: number
   readonly modelProbability: number
   readonly observedStatus: 'fail' | 'pass' | 'uncertain'
   readonly providerIdentifier: string
@@ -59,6 +60,7 @@ const rejectAcceptedModelSkip = (
 
 const answerSchema = z
   .object({
+    caseIndex: z.number().int().min(0).optional(),
     label: z.enum(REVIEW_LABELS),
     labelSource: z.enum(REVIEW_LABEL_SOURCES).optional(),
     relativePath: z.string(),
@@ -112,6 +114,7 @@ const decisionAnswerSchema = z.discriminatedUnion('type', [
 const reviewRecordSchema: z.ZodType<ReviewRecord> = z
   .object({
     answers: z.record(z.string(), decisionAnswerSchema),
+    caseIndex: z.number().int().min(0).optional(),
     label: z.enum(REVIEW_LABELS),
     labelSource: z.enum(REVIEW_LABEL_SOURCES).optional(),
     modelProbability: probabilitySchema,
@@ -163,7 +166,7 @@ export const formatReviewCandidate = (candidate: ReviewCandidate): string => {
     `${candidate.ruleId} · ${candidate.relativePath}`,
     `Final verdict: ${candidate.observedStatus}`,
     `Final probability: ${percentage(candidate.modelProbability)}`,
-    'Laya answers:',
+    'Model answers:',
     ...answers,
     `State: ${JSON.stringify(candidate.state)}`,
   ].join('\n')
@@ -199,13 +202,28 @@ const isMissingFile = (error: unknown): boolean =>
   error instanceof Error && 'code' in error && error.code === 'ENOENT'
 
 export const createReviewCaseKey = (
-  value: Pick<ReviewCandidate, 'relativePath' | 'ruleFingerprint' | 'state'>,
-): string => JSON.stringify([value.ruleFingerprint, value.relativePath, value.state])
+  value: Pick<ReviewCandidate, 'caseIndex' | 'relativePath' | 'ruleFingerprint' | 'state'>,
+): string =>
+  JSON.stringify([
+    value.ruleFingerprint,
+    value.relativePath,
+    value.state,
+    ...(value.caseIndex === undefined ? [] : [value.caseIndex]),
+  ])
+
+export const reviewAnswerKey = (
+  candidate: Pick<ReviewCandidate, 'caseIndex' | 'relativePath' | 'ruleId'>,
+): string => JSON.stringify([candidate.ruleId, candidate.relativePath, candidate.caseIndex ?? null])
 
 const recordKey = (
   value: Pick<
     ReviewCandidate,
-    'providerIdentifier' | 'providerRevision' | 'relativePath' | 'ruleFingerprint' | 'state'
+    | 'caseIndex'
+    | 'providerIdentifier'
+    | 'providerRevision'
+    | 'relativePath'
+    | 'ruleFingerprint'
+    | 'state'
   >,
 ): string =>
   JSON.stringify([createReviewCaseKey(value), value.providerIdentifier, value.providerRevision])
@@ -230,22 +248,25 @@ export const createReviewCandidates = (
     }
     const ruleFingerprint = createRuleFingerprint(rule)
     return experiment.observations.flatMap((observation) =>
-      observation.answers === undefined || observation.state === undefined
-        ? []
-        : [
-            {
-              answers: observation.answers,
-              modelProbability: observation.probability,
-              observedStatus: observation.status,
-              providerIdentifier: provider.identifier,
-              providerRevision: provider.revision,
-              questions: rule.questions,
-              relativePath: observation.relativePath,
-              ruleFingerprint,
-              ruleId: rule.id,
-              state: observation.state,
-            },
-          ],
+      (observation.cases ?? [observation]).flatMap((item, caseIndex) =>
+        item.answers === undefined || item.state === undefined
+          ? []
+          : [
+              {
+                answers: item.answers,
+                ...(observation.cases === undefined ? {} : {caseIndex}),
+                modelProbability: item.probability,
+                observedStatus: item.status,
+                providerIdentifier: provider.identifier,
+                providerRevision: provider.revision,
+                questions: rule.questions,
+                relativePath: item.relativePath,
+                ruleFingerprint,
+                ruleId: rule.id,
+                state: item.state,
+              },
+            ],
+      ),
     )
   })
 }
@@ -271,7 +292,7 @@ export const readReviewAnswers = async (
   )
   return new Map(
     answers.map((answer) => [
-      `${answer.ruleId}:${answer.relativePath}`,
+      reviewAnswerKey(answer),
       {
         label: answer.label,
         ...(answer.labelSource === undefined ? {} : {labelSource: answer.labelSource}),
@@ -288,7 +309,11 @@ export const mergeReviewRecords = (
 ): ReadonlyArray<ReviewRecord> => {
   const records = new Map(existing.map((record) => [recordKey(record), record]))
   for (const candidate of candidates) {
-    const answer = labels.get(`${candidate.ruleId}:${candidate.relativePath}`)
+    const answer =
+      labels.get(reviewAnswerKey(candidate)) ??
+      (candidate.caseIndex === undefined
+        ? labels.get(`${candidate.ruleId}:${candidate.relativePath}`)
+        : undefined)
     if (answer !== undefined) {
       const normalized =
         typeof answer === 'string'

@@ -12,6 +12,7 @@ import {
   mergeReviewRecords,
   readReviewAnswers,
   readReviewRecords,
+  reviewAnswerKey,
   writeReviewArtifacts,
 } from '../review'
 import type {ProjectAnalysisReport} from '../types'
@@ -71,7 +72,7 @@ const createFixture = (root: string) => {
       },
     ],
     filesScanned: 1,
-    layaCalls: 1,
+    modelCalls: 1,
     outcomes: [],
   }
   return {options, report}
@@ -111,6 +112,74 @@ it('should preserve review evidence and export only decisive human labels', asyn
     state: {filename: 'long-name'},
   })
   expect(training).not.toContain('src/holdout.ts')
+})
+
+it('should review and label every model decision in a grouped file independently', async () => {
+  const {options, report} = createFixture('/project')
+  const observation = report.experiments[0]!.observations[0]!
+  const grouped: ProjectAnalysisReport = {
+    ...report,
+    experiments: [
+      {
+        ...report.experiments[0]!,
+        observations: [
+          {
+            ...observation,
+            cases: [
+              {...observation, state: {catchSource: 'first'}, status: 'pass'},
+              {...observation, state: {catchSource: 'second'}, status: 'fail'},
+            ],
+          },
+        ],
+      },
+    ],
+  }
+  const candidates = createReviewCandidates(grouped, options, {
+    identifier: 'laya:test',
+    revision: 'revision-1',
+  })
+
+  expect(candidates.map(({caseIndex, state}) => ({caseIndex, state}))).toEqual([
+    {caseIndex: 0, state: {catchSource: 'first'}},
+    {caseIndex: 1, state: {catchSource: 'second'}},
+  ])
+  const directory = await mkdtemp(path.join(tmpdir(), 'natural-lint-review-'))
+  temporaryPaths.push(directory)
+  const answersPath = path.join(directory, 'answers.jsonl')
+  await writeFile(
+    answersPath,
+    [
+      JSON.stringify({
+        caseIndex: 0,
+        label: 'pass',
+        relativePath: 'src/long-name.ts',
+        ruleId: 'filename',
+      }),
+      JSON.stringify({
+        caseIndex: 1,
+        label: 'fail',
+        relativePath: 'src/long-name.ts',
+        ruleId: 'filename',
+      }),
+    ].join('\n'),
+  )
+  const records = mergeReviewRecords(candidates, [], await readReviewAnswers(answersPath))
+  expect(records.map(({caseIndex, label}) => ({caseIndex, label}))).toEqual([
+    {caseIndex: 0, label: 'pass'},
+    {caseIndex: 1, label: 'fail'},
+  ])
+  const reviewsPath = path.join(directory, 'reviews.jsonl')
+  const trainingPath = path.join(directory, 'training.jsonl')
+  await writeReviewArtifacts(reviewsPath, trainingPath, records)
+  expect((await readReviewRecords(reviewsPath)).map(({caseIndex}) => caseIndex)).toEqual([0, 1])
+  expect(createTrainingRecords(records)).toHaveLength(2)
+})
+
+it('should not confuse a filename suffix with a grouped case index', () => {
+  const ordinary = {caseIndex: undefined, relativePath: 'src/example.ts#0', ruleId: 'fixture'}
+  const grouped = {caseIndex: 0, relativePath: 'src/example.ts', ruleId: 'fixture'}
+
+  expect(reviewAnswerKey(ordinary)).not.toBe(reviewAnswerKey(grouped))
 })
 
 it('should show the actual typed Laya answers without inventing a reason', () => {
@@ -284,7 +353,7 @@ it('should load an accepted uncertain model verdict from an answers file', async
   await writeFile(answersPath, `${JSON.stringify(answer)}\n`)
 
   const labels = await readReviewAnswers(answersPath)
-  expect(labels.get('filename:src/file.ts')).toEqual({
+  expect(labels.get(reviewAnswerKey(answer))).toEqual({
     label: 'uncertain',
     labelSource: 'accepted-model',
   })

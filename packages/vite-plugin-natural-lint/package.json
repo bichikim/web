@@ -65,6 +65,7 @@
   "dependencies": {
     "@opentui/core": "0.5.11",
     "@receptron/laya": "0.1.1",
+    "@typesafe-ai/sdk": "^0.6.0",
     "@typescript/typescript6": "catalog:",
     "solid-js": "1.9.12",
     "tinyglobby": "^0.2.17",

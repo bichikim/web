@@ -5,7 +5,7 @@ import {NaturalLintCore} from './core'
 import {formatProjectReport} from './diagnostics'
 import {evaluateReviews, formatEvaluationReport} from './evaluate'
 import {analyzeProject} from './project'
-import {createPlatformProviderFactory} from './provider'
+import {createDecisionProviderFactory} from './provider'
 import {
   createPendingReviewCandidates,
   createReviewCandidates,
@@ -98,7 +98,7 @@ export const runCliWithOptions = async (
     return runEvaluationCli(argumentsValue, root)
   }
   const options = resolveOptions(sourceOptions, root, {useCache: argumentsValue.useCache})
-  const providerFactory = sourceProviderFactory ?? createPlatformProviderFactory(options.laya)
+  const providerFactory = sourceProviderFactory ?? createDecisionProviderFactory(options)
   const core = new NaturalLintCore(options, providerFactory)
   try {
     const report = await analyzeProject(core, options)

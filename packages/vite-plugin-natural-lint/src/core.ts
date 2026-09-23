@@ -13,7 +13,9 @@ import type {
   ResolvedNaturalLintOptions,
   ResolvedNaturalLintRule,
   RuleDecision,
+  RuleInspectionDecision,
   RuleOutcome,
+  RuleUnknownInspection,
 } from './types'
 
 const RULE_FORMAT_VERSION = 1
@@ -22,12 +24,12 @@ const PROBABILITY_PRECISION = 4
 interface RuleEvaluation {
   readonly cacheHit: boolean
   readonly diagnostic: NaturalLintDiagnostic | undefined
-  readonly layaCalls: number
+  readonly modelCalls: number
   readonly outcome: RuleOutcome
 }
 
 interface RuleDecisionEvaluation {
-  readonly layaCalls: number
+  readonly modelCalls: number
   readonly outcome: DecidedRuleOutcome
 }
 
@@ -154,15 +156,14 @@ const inspectionProbability = (status: 'fail' | 'pass'): number => {
   throw new TypeError(`Rule inspection returned an invalid status: ${String(status)}.`)
 }
 
-const evaluateRuleDecision = async (
+const evaluateInspection = async (
   getProvider: () => Promise<DecisionProvider>,
   rule: ResolvedNaturalLintRule,
-  context: ReturnType<typeof createFileContext>,
+  inspection: RuleInspectionDecision | RuleUnknownInspection,
 ): Promise<RuleDecisionEvaluation> => {
-  const inspection = rule.inspect(context)
   if (inspection.status === 'fail' || inspection.status === 'pass') {
     const decision = {...inspection, probability: inspectionProbability(inspection.status)}
-    return {layaCalls: 0, outcome: createRuleOutcome(rule, decision)}
+    return {modelCalls: 0, outcome: createRuleOutcome(rule, decision)}
   }
   if (inspection.status !== 'unknown') {
     throw new TypeError(
@@ -178,7 +179,33 @@ const evaluateRuleDecision = async (
     ...(inspection.reason === undefined ? {} : {reason: inspection.reason}),
     state,
   })
-  return {layaCalls: 1, outcome: createRuleOutcome(rule, decision, answers, state)}
+  return {modelCalls: 1, outcome: createRuleOutcome(rule, decision, answers, state)}
+}
+
+const evaluateRuleDecision = async (
+  getProvider: () => Promise<DecisionProvider>,
+  rule: ResolvedNaturalLintRule,
+  context: ReturnType<typeof createFileContext>,
+): Promise<RuleDecisionEvaluation> => {
+  const inspection = rule.inspect(context)
+  if (inspection.status !== 'group') {
+    return evaluateInspection(getProvider, rule, inspection)
+  }
+  if (inspection.inspections.length === 0) {
+    throw new TypeError(`Natural lint rule ${rule.id} inspect returned an empty group.`)
+  }
+  const evaluations = await Promise.all(
+    inspection.inspections.map((item) => evaluateInspection(getProvider, rule, item)),
+  )
+  const cases = evaluations.map(({outcome}) => outcome)
+  const selected =
+    cases.find(({status}) => status === 'fail') ??
+    cases.find(({status}) => status === 'uncertain') ??
+    cases[0]!
+  return {
+    modelCalls: evaluations.reduce((total, {modelCalls}) => total + modelCalls, 0),
+    outcome: {...selected, cases},
+  }
 }
 
 export class NaturalLintCore {
@@ -213,7 +240,7 @@ export class NaturalLintCore {
         evaluation.diagnostic === undefined ? [] : [evaluation.diagnostic],
       ),
       filePath: absolutePath,
-      layaCalls: evaluations.reduce((total, evaluation) => total + evaluation.layaCalls, 0),
+      modelCalls: evaluations.reduce((total, evaluation) => total + evaluation.modelCalls, 0),
       outcomes: evaluations.map((evaluation) => evaluation.outcome),
     }
   }
@@ -233,6 +260,14 @@ export class NaturalLintCore {
     readonly relativePath: string
     readonly rule: ResolvedNaturalLintRule
   }): Promise<RuleEvaluation> {
+    if (!options.rule.matchesFile(options.absolutePath)) {
+      return {
+        cacheHit: false,
+        diagnostic: undefined,
+        modelCalls: 0,
+        outcome: {ruleId: options.rule.id, status: 'skip'},
+      }
+    }
     const cacheKey = createCacheKey({
       fileHash: options.fileHash,
       provider: this.providerFactory,
@@ -250,7 +285,7 @@ export class NaturalLintCore {
           options.rule,
           cached,
         ),
-        layaCalls: 0,
+        modelCalls: 0,
         outcome: cached,
       }
     }
@@ -280,7 +315,7 @@ export class NaturalLintCore {
         options.rule,
         outcome,
       ),
-      layaCalls: evaluation?.layaCalls ?? 0,
+      modelCalls: evaluation?.modelCalls ?? 0,
       outcome,
     }
   }

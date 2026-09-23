@@ -1,4 +1,4 @@
-import type {ReviewAnswer, ReviewCandidate, ReviewLabel} from '../review'
+import {type ReviewAnswer, reviewAnswerKey, type ReviewCandidate, type ReviewLabel} from '../review'
 
 export interface ReviewTuiCandidate {
   readonly candidate: ReviewCandidate
@@ -15,9 +15,6 @@ export type ReviewSessionAction =
   | {readonly label: ReviewLabel; readonly type: 'label'}
   | {readonly type: 'next'}
   | {readonly type: 'previous'}
-
-export const reviewAnswerKey = (candidate: ReviewCandidate): string =>
-  `${candidate.ruleId}:${candidate.relativePath}`
 
 export const createReviewSession = (): ReviewSession => ({
   currentIndex: 0,

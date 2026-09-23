@@ -61,4 +61,30 @@ describe('DecisionCache', () => {
 
     await expect(new DecisionCache(directory).read('structured')).resolves.toEqual(outcome)
   })
+
+  it('should preserve each case of a grouped decision after a cache read', async () => {
+    const directory = await mkdtemp(path.join(tmpdir(), 'natural-lint-cache-'))
+    temporaryPaths.push(directory)
+    const outcome = {
+      cases: [
+        {probability: 0, reason: 'rethrow', ruleId: 'catch-rule', status: 'pass' as const},
+        {
+          answers: {violation: {probability: 0.93, type: 'noul' as const}},
+          probability: 0.93,
+          reason: 'hidden-failure',
+          ruleId: 'catch-rule',
+          state: {catchSource: 'catch { return null }'},
+          status: 'fail' as const,
+        },
+      ],
+      probability: 0.93,
+      reason: 'hidden-failure',
+      ruleId: 'catch-rule',
+      status: 'fail' as const,
+    }
+
+    await new DecisionCache(directory).write('grouped', outcome)
+
+    await expect(new DecisionCache(directory).read('grouped')).resolves.toEqual(outcome)
+  })
 })
