@@ -15,6 +15,17 @@ interface EntryEditingOptions {
   readonly onSaved: (entry: PictureDiaryEntry) => void
 }
 
+const restorePictureDiaryEntry = async (
+  repository: PictureDiaryRepository,
+  entry: PictureDiaryEntry,
+): Promise<void> => {
+  try {
+    await repository.save(entry)
+  } catch (error: unknown) {
+    console.error('Failed to restore a picture diary entry after disposal.', error)
+  }
+}
+
 export const useEntryEditing = (options: EntryEditingOptions) => {
   const [entry, setEntry] = createSignal<PictureDiaryEntry>()
   const [saving, setSaving] = createSignal(false)
@@ -48,6 +59,7 @@ export const useEntryEditing = (options: EntryEditingOptions) => {
       const updated = createPictureDiaryEntry({...draft, now: options.environment.now()})
       await options.repository.save(updated)
       if (isDisposed) {
+        await restorePictureDiaryEntry(options.repository, draft)
         return
       }
       options.onSaved(updated)
