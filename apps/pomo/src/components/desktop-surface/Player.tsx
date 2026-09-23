@@ -10,6 +10,7 @@ import * as m from '@paraglide/message'
 import {
   createDesktopMusicActionChannel,
   type DesktopMusicAction,
+  isDesktopMusicActionConnectionMessage,
   isDesktopMusicActionMessage,
 } from '../../features/desktop-mode/desktop-music-actions'
 
@@ -63,6 +64,13 @@ export const DesktopPlayer = () => {
 
     const handleMessage = (event: MessageEvent<unknown>) => {
       const message = event.data
+      if (isDesktopMusicActionConnectionMessage(message)) {
+        if (message.type === 'request-player-ready') {
+          channel.postMessage({type: 'player-ready'})
+        }
+        return
+      }
+
       const actions = playbackActions()
       if (!isDesktopMusicActionMessage(message)) {
         return
@@ -76,8 +84,10 @@ export const DesktopPlayer = () => {
       runMusicAction(actions, message.actionId)
     }
     channel.addEventListener('message', handleMessage)
+    channel.postMessage({type: 'player-ready'})
     onCleanup(() => {
       channel.removeEventListener('message', handleMessage)
+      channel.postMessage({type: 'player-unavailable'})
       channel.close()
     })
   })
