@@ -49,24 +49,34 @@ describe('createEventActionRunner', () => {
     runner.dispose()
   })
 
-  it('should retain random actions after an active executor is unregistered', async () => {
-    const actionIds: EventActionIds = {[RANDOM_DIALOGUE_EVENT]: ['music-start']}
-    const [getActionIds] = createSignal(actionIds)
-    const runner = createEventActionRunner(getActionIds)
-    const firstExecutor = vi.fn()
-    const unregister = runner.register(firstExecutor)
-    unregister()
+  it.each([
+    'focus-start',
+    'break-start',
+    'long-break-start',
+    'long-break-end',
+    RANDOM_DIALOGUE_EVENT,
+  ] as const)(
+    'should retain %s actions after an active executor is unregistered',
+    async (eventId) => {
+      const actionIds: EventActionIds = {[eventId]: ['music-start']}
+      const [getActionIds] = createSignal(actionIds)
+      const runner = createEventActionRunner(getActionIds)
+      const unregister = runner.register(vi.fn())
+      unregister()
 
-    const pendingPlayback = runner.run([RANDOM_DIALOGUE_EVENT])
-    expect(pendingPlayback).toBeDefined()
+      const pendingPlayback = runner.run([eventId])
+      if (pendingPlayback === undefined) {
+        throw new Error(`Expected ${eventId} actions to wait for an executor.`)
+      }
 
-    const secondExecutor = vi.fn()
-    runner.register(secondExecutor)
-    await pendingPlayback
+      const nextExecutor = vi.fn()
+      runner.register(nextExecutor)
+      await pendingPlayback
 
-    expect(secondExecutor).toHaveBeenCalledExactlyOnceWith('music-start')
-    runner.dispose()
-  })
+      expect(nextExecutor).toHaveBeenCalledExactlyOnceWith('music-start')
+      runner.dispose()
+    },
+  )
 
   it('should retain actions until an active executor is registered', async () => {
     const actionIds: EventActionIds = {'focus-start': ['music-start']}

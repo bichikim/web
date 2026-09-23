@@ -34,8 +34,8 @@
     "test:storybook:ui": "vitest --ui --watch --project='storybook*'",
     "test:storybook:watch": "vitest --project='storybook*'",
     "test:ui": "vitest --ui --watch",
-    "test:vitest": "vitest run --project=unit --reporter=dot",
-    "test:vitest:watch": "vitest watch --project=unit"
+    "test:vitest": "NODE_OPTIONS=--no-experimental-webstorage vitest run --project=unit --reporter=default",
+    "test:vitest:watch": "NODE_OPTIONS=--no-experimental-webstorage vitest watch --project=unit"
   },
   "devDependencies": {
     "@chromatic-com/storybook": "4.1.2",
@@ -54,10 +54,10 @@
     "@types/node": "catalog:",
     "@typescript/typescript6": "catalog:",
     "@unocss/vite": "catalog:",
-    "@vitest/browser": "4.1.10",
-    "@vitest/browser-playwright": "4.1.10",
-    "@vitest/coverage-v8": "4.1.10",
-    "@vitest/ui": "4.1.10",
+    "@vitest/browser": "4.1.11",
+    "@vitest/browser-playwright": "4.1.11",
+    "@vitest/coverage-v8": "4.1.11",
+    "@vitest/ui": "4.1.11",
     "@winter-love/oxlint-plugins": "workspace:*",
     "@winter-love/solid-test": "workspace:*",
     "@winter-love/unocss-config": "workspace:*",
@@ -91,7 +91,7 @@
     "vite-plugin-dts": "^5.0.3",
     "vite-plugin-solid": "^2.11.12",
     "vite-plugin-static-copy": "^3.4.0",
-    "vitest": "4.1.10",
+    "vitest": "4.1.11",
     "wrangler": "^4.125.0"
   },
   "browserslist": [
@@ -106,7 +106,7 @@
     "last 5 Opera versions"
   ],
   "engines": {
-    "node": ">=24",
+    "node": ">=26.4.0",
     "pnpm": ">=11 <12"
   },
   "packageManager": "pnpm@11.8.0+sha512.c1f5e7c4cb241c8f174b743851d82f42b802324afc8b0f116b96adb15aa06664948dde36960a3ba1079ba5b4b29dd0140135b94b5b5f5263592249d68e555f26"
