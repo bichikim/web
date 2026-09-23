@@ -91,7 +91,10 @@ export const PictureDiaryDrawing = (props: PictureDiaryDrawingProps) => {
             />
           }
           isOpen={isOpen()}
-          onOpenChange={setIsOpen}
+          onOpenChange={(open) => {
+            setPreview((current) => (open ? current : undefined))
+            setIsOpen(open)
+          }}
           onCloseAutoFocus={() => trigger()?.focus()}
           size="wide"
           title={m.picture_diary_edit_drawing()}

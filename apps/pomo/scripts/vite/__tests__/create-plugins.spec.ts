@@ -116,6 +116,10 @@ it.each(['web', 'apps-in-toss', 'desktop', 'android', 'ios'] as const)(
     expect(aitDevtools.vite).toHaveBeenCalledTimes(runtimeTarget === 'apps-in-toss' ? 1 : 0)
     expect(paraglideVitePlugin).toHaveBeenCalledWith(
       expect.objectContaining({
+        outdir:
+          runtimeTarget === 'apps-in-toss'
+            ? './.i18n/paraglide/apps-in-toss'
+            : './.i18n/paraglide/web',
         outputStructure: 'locale-modules',
         strategy:
           runtimeTarget === 'apps-in-toss'
@@ -130,6 +134,9 @@ it('should use production message modules and leave optional devtools disabled',
   createPlugins({...options, command: 'build', runtimeTarget: 'apps-in-toss'})
   expect(aitDevtools.vite).not.toHaveBeenCalled()
   expect(paraglideVitePlugin).toHaveBeenCalledWith(
-    expect.objectContaining({outputStructure: 'message-modules'}),
+    expect.objectContaining({
+      outdir: './.i18n/paraglide',
+      outputStructure: 'message-modules',
+    }),
   )
 })
