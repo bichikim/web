@@ -10,10 +10,10 @@ test('should supersede a pending open when reimport starts', async () => {
     const history = useDocumentHistory({initialDocument: original})
     const imports = useEditorImports({
       document: history.document,
-      readPsd: () => new Promise(() => {}),
       onDocumentChange: history.setDocument,
       onNotice: vi.fn(),
       onReimportDocumentChange: history.setDocument,
+      readPsd: () => new Promise(() => {}),
     })
     let resolveText!: (value: string) => void
     const file = new File([], 'old.json')

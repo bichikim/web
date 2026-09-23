@@ -158,16 +158,16 @@ test('should preserve nested deformer output when rebinding either parent or chi
 })
 
 test('should glue vertices after their different parent transforms', () => {
-  const root = createDeformer({id: 'parent', controlPoints: [10, 0, 110, 0, 10, 100, 110, 100]})
+  const root = createDeformer({controlPoints: [10, 0, 110, 0, 10, 100, 110, 100], id: 'parent'})
   const document = {
     ...createDocument(root),
     glue: [
       {
-        id: 'seam',
         first: {partId: 'mesh-preview', vertexIndex: 0},
+        id: 'seam',
         second: {partId: 'other', vertexIndex: 0},
-        weight: 0.5,
         strength: 1,
+        weight: 0.5,
       },
     ],
   }

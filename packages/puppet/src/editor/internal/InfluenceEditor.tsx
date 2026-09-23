@@ -3,6 +3,7 @@ import {EditorButton} from '../../design-system'
 import {createEffect, createSignal, Index, type JSX, untrack} from 'solid-js'
 import type {PuppetParameterValueMap} from '../../deformation'
 import type {PuppetParameter, PuppetParameterInfluence} from '../../player/document'
+import {InfluenceEditorTrigger} from './InfluenceEditorTrigger'
 import {InfluenceRelation} from './InfluenceRelation'
 import {useInfluenceDraft} from './use-influence-draft'
 
@@ -37,18 +38,7 @@ export const InfluenceEditor = (props: InfluenceEditorProps) => {
         props.onExpandedChange?.(open)
       }}
     >
-      {(() => {
-        const trigger = (
-          <Collapsible.Trigger class="influence-toggle" aria-label={props.title ?? '영향도'}>
-            <span>영향도</span>
-            <span
-              class="influence-chevron puppet-icon puppet-icon-chevron-down"
-              aria-hidden="true"
-            />
-          </Collapsible.Trigger>
-        )
-        return props.renderTrigger?.(trigger) ?? trigger
-      })()}
+      <InfluenceEditorTrigger renderTrigger={props.renderTrigger} title={props.title} />
 
       <Collapsible.Content class="influence-drawer" inert={!expanded()}>
         <div class="influence-inline">

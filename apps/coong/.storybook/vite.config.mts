@@ -7,10 +7,10 @@ export default defineConfig({
   plugins: [
     unoCss({
       configFile: fileURLToPath(new URL('../uno.config.ts', import.meta.url)),
-      preflights: [storybookBackground],
       content: {
         filesystem: [fileURLToPath(new URL('../src/**/*.{ts,tsx}', import.meta.url))],
       },
+      preflights: [storybookBackground],
     }),
   ],
   resolve: {

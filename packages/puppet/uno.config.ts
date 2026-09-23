@@ -49,16 +49,16 @@ export default defineConfig({
         'influence-close': '180ms',
         'influence-open': '220ms',
         'layer-name': '7s',
-        'temporary-alert': '450ms',
         'mask-march': '0.8s',
+        'temporary-alert': '450ms',
       },
       keyframes: {
         'influence-close': '{from{height:var(--kb-collapsible-content-height)}to{height:0}}',
         'influence-open': '{from{height:0}to{height:var(--kb-collapsible-content-height)}}',
         'layer-name': '{from{transform:translateX(0)}to{transform:translateX(-50%)}}',
+        'mask-march': '{from{stroke-dashoffset:0}to{stroke-dashoffset:-12}}',
         'temporary-alert':
           '{0%,100%{transform:translateX(0)}25%,75%{transform:translateX(-3px)}50%{transform:translateX(3px)}}',
-        'mask-march': '{from{stroke-dashoffset:0}to{stroke-dashoffset:-12}}',
       },
       timingFns: {'layer-name': 'linear', 'mask-march': 'linear'},
     },

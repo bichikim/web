@@ -52,8 +52,8 @@ test('should respect source locks and inherited target locks', () => {
     }
     expect(
       setMaskTarget({
-        document,
         checked: false,
+        document,
         maskPartId: 'mesh-preview',
         targetPartId: 'shape-diamond',
       }),

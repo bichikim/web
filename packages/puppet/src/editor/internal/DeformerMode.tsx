@@ -13,7 +13,7 @@ export const DeformerMode = (props: DeformerModeProps) => (
     label="디포머 편집 방식"
     value={props.mode}
     options={[
-      {label: '기준 배치', value: 'rest', disabled: props.restEditable === false},
+      {disabled: props.restEditable === false, label: '기준 배치', value: 'rest'},
       {label: '변형 편집', value: 'pose'},
     ]}
     onChange={props.onChange}

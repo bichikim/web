@@ -188,17 +188,13 @@ export const parametersShortcuts = {
     "[.puppet-editor_&_small]:[font-family:'SFMono-Regular',_Consolas,_monospace]",
     '[.puppet-editor_&_small]:[font-size:0.5625rem]',
   ],
-  'timeline-seek': 'absolute inset-0 touch-none',
   'parameter-item-details': [
     '[.puppet-editor_&]:absolute [.puppet-editor_&]:[right:1.875rem] [.puppet-editor_&]:[bottom:0.5625rem]',
     '[.puppet-editor_&]:[left:0.625rem] [.puppet-editor_&]:[color:#a7b3af]',
 
     '[.puppet-editor_&]:[transition:transform_160ms_ease-out]',
   ],
-  'timeline-seek-thumb':
-    'absolute top-0 h-full w-2 opacity-0 focus-visible:opacity-100 outline outline-[#79d7b1]',
   'parameter-item-main': 'relative',
-  'timeline-seek-track': 'relative w-full h-full',
   'parameter-item-surface': [
     "[&:has(.parameter-item[aria-pressed='true'])]:bg-[#17211e]",
     'relative bg-[#121916] [transform:translateX(calc(var(--parameter-swipe-offset)_*_-1))]',
@@ -348,17 +344,17 @@ export const parametersShortcuts = {
     '[.puppet-editor_&]:[background:#241817]',
     '[.puppet-editor_&:disabled]:[opacity:0.42] [.puppet-editor_&:disabled]:cursor-not-allowed',
   ],
-  'timeline-motion-controls': [
-    '[.puppet-editor_&]:min-w-0 [.puppet-editor_&]:[max-width:10rem]',
-    '[.puppet-editor_&]:[flex:0_1_10rem]',
-    '[.puppet-editor_&_button]:[font-size:0.625rem] [.puppet-editor_&_button]:[line-height:1rem]',
-  ],
   'timeline-label': [
     '[.puppet-editor_&_span]:[color:#74817d] [.puppet-editor_&_span]:[font-size:0.5625rem]',
     '[.puppet-editor_&_span]:font-bold [.puppet-editor_&_span]:[letter-spacing:0.12rem]',
     '[.puppet-editor_&_span]:[text-transform:uppercase]',
     '[.puppet-editor_&]:grid [.puppet-editor_&]:[gap:0.1875rem]',
     '[.puppet-editor_&_strong]:[font-size:0.75rem]',
+  ],
+  'timeline-motion-controls': [
+    '[.puppet-editor_&]:min-w-0 [.puppet-editor_&]:[max-width:10rem]',
+    '[.puppet-editor_&]:[flex:0_1_10rem]',
+    '[.puppet-editor_&_button]:[font-size:0.625rem] [.puppet-editor_&_button]:[line-height:1rem]',
   ],
   'timeline-playback': [
     '[.puppet-editor_&]:[padding:0.3125rem_0.5625rem] [.puppet-editor_&]:[border:0.0625rem_solid_#3d5f56]',
@@ -444,6 +440,10 @@ export const parametersShortcuts = {
     "[.puppet-editor_&::before]:[background:#ffbd59] [.puppet-editor_&::before]:[content:'']",
     '[.puppet-editor_&::before]:[transform:translateX(-50%)]',
   ],
+  'timeline-seek': 'absolute inset-0 touch-none',
+  'timeline-seek-thumb':
+    'absolute top-0 h-full w-2 opacity-0 focus-visible:opacity-100 outline outline-[#79d7b1]',
+  'timeline-seek-track': 'relative w-full h-full',
   'timeline-time': [
     '[.puppet-editor_&]:[justify-self:end] [.puppet-editor_&]:[color:#7f8d88]',
     "[.puppet-editor_&]:[font-family:'SFMono-Regular',_Consolas,_monospace]",

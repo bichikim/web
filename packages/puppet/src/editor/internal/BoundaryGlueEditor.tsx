@@ -1,4 +1,4 @@
-import {EditorButton, EditorSegmentedField, EditorNumberField} from '../../design-system'
+import {EditorButton, EditorNumberField, EditorSegmentedField} from '../../design-system'
 import {createMemo, createSignal, Show} from 'solid-js'
 import type {PuppetDocument} from '../../player'
 import {addBoundaryGlue} from './boundary-glue'

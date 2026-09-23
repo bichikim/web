@@ -12,8 +12,8 @@ export const getRestPreview = (document: PuppetDocument): PuppetDocument => ({
     roots: getScenePartStates(document).map((state) => ({
       id: state.partId,
       kind: 'part',
-      name: state.partId,
       locked: state.locked,
+      name: state.partId,
       visible: state.visible,
     })),
   },
