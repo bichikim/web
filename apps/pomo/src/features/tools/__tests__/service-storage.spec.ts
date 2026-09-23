@@ -32,6 +32,27 @@ it('should preserve the previously saved enlistment date and reject malformed da
   fixture.web.set('pomo:service-settings:v1', '{"manual":"true"}')
   await expect(repository.read()).resolves.toMatchObject({manual: false, start: ''})
 })
+it.each([false, true])(
+  'should restore the legacy date when valid web settings have an empty start (native: %s)',
+  async (usesTossStorage) => {
+    const settings = {...DEFAULT_SERVICE_SETTINGS, branch: 'navy', days: '300', manual: true}
+    const restoredSettings = {...settings, start: '2026-09-01'}
+    fixture.usesTossStorage.mockReturnValue(usesTossStorage)
+    fixture.web.set('pomo:service-settings:v1', JSON.stringify(settings))
+    fixture.web.set('pomo:service-start:v1', '"2026-09-01"')
+
+    await expect(repository.read()).resolves.toEqual(restoredSettings)
+
+    if (usesTossStorage) {
+      expect(fixture.setItem).toHaveBeenCalledWith(
+        'pomo:service-settings:v1',
+        JSON.stringify(restoredSettings),
+      )
+    } else {
+      expect(fixture.setItem).not.toHaveBeenCalled()
+    }
+  },
+)
 it.each([
   null,
   '{invalid',
