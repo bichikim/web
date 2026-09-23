@@ -135,7 +135,7 @@ export interface DesktopBackgroundMouseEvent {
 export const forwardDesktopBackgroundMouseEvent = async (
   event: DesktopBackgroundMouseEvent,
 ): Promise<void> => {
-  if (import.meta.env.VITE_POMO_IS_DESKTOP !== 'true' || readDesktopMode() !== 'normal') {
+  if (import.meta.env.VITE_POMO_IS_DESKTOP !== 'true') {
     return
   }
 

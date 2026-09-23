@@ -35,7 +35,11 @@ export const useWebsiteBackgroundInteraction = () => {
     eventQueue = eventQueue
       .catch(() => undefined)
       .then(() => forwardDesktopBackgroundMouseEvent(event))
-      .catch(() => undefined)
+      .catch((error: unknown) => {
+        if (import.meta.env.DEV) {
+          console.error('Failed to forward website background pointer event', error)
+        }
+      })
   }
 
   const handlePointerDown = (event: PointerEvent): void => {

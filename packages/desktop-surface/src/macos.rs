@@ -373,12 +373,12 @@ fn background_mouse_modifiers(event: &ValidatedBackgroundMouseEvent) -> NSEventM
 
 pub(crate) fn forward_background_mouse_event<R: Runtime>(
     state: &SurfaceState,
-    window: &WebviewWindow<R>,
+    main_webview: &Webview<R>,
     event: ValidatedBackgroundMouseEvent,
 ) -> Result<()> {
     let _operation = lock_operation(state)?;
-    let parent = window.as_ref().window();
-    let label = website_background_webview_label(window.label());
+    let parent = main_webview.window();
+    let label = website_background_webview_label(main_webview.label());
     let Some(child) = parent
         .webviews()
         .into_iter()
@@ -387,53 +387,57 @@ pub(crate) fn forward_background_mouse_event<R: Runtime>(
         return Ok(());
     };
 
-    let main_view = window.ns_view()? as usize;
-    child.with_webview(move |child_platform_webview| {
-        let main_view = unsafe { &*(main_view as *const NSView) };
-        let child_view = unsafe { &*(child_platform_webview.inner() as *const NSView) };
-        let main_bounds = main_view.bounds();
-        let y = if main_view.isFlipped() {
-            event.y
-        } else {
-            main_bounds.origin.y + main_bounds.size.height - event.y
-        };
-        let main_point = objc2_foundation::NSPoint::new(event.x, y);
-        let child_point = child_view.convertPoint_fromView(main_point, Some(main_view));
-        let window_point = child_view.convertPoint_fromView(child_point, None);
-        let Some(native_window) = child_view.window() else {
-            return;
-        };
-        let event_type = background_mouse_event_type(event.kind, event.button);
-        let Some(native_event) = NSEvent::mouseEventWithType_location_modifierFlags_timestamp_windowNumber_context_eventNumber_clickCount_pressure(
-            event_type,
-            window_point,
-            background_mouse_modifiers(&event),
-            0.0,
-            native_window.windowNumber(),
-            None,
-            0,
-            event.click_count as _,
-            1.0,
-        ) else {
-            return;
-        };
+    let main_webview = main_webview.clone();
+    main_webview.with_webview(move |main_platform_webview| {
+        let main_view = main_platform_webview.inner() as usize;
+        if let Err(error) = child.with_webview(move |child_platform_webview| {
+            let main_view = unsafe { &*(main_view as *const NSView) };
+            let child_view = unsafe { &*(child_platform_webview.inner() as *const NSView) };
+            let main_bounds = main_view.bounds();
+            let y = if main_view.isFlipped() {
+                event.y
+            } else {
+                main_bounds.origin.y + main_bounds.size.height - event.y
+            };
+            let main_point = objc2_foundation::NSPoint::new(event.x, y);
+            let window_point = main_view.convertPoint_toView(main_point, None);
+            let Some(native_window) = child_view.window() else {
+                return;
+            };
+            let event_type = background_mouse_event_type(event.kind, event.button);
+            let Some(native_event) = NSEvent::mouseEventWithType_location_modifierFlags_timestamp_windowNumber_context_eventNumber_clickCount_pressure(
+                event_type,
+                window_point,
+                background_mouse_modifiers(&event),
+                0.0,
+                native_window.windowNumber(),
+                None,
+                0,
+                event.click_count as _,
+                1.0,
+            ) else {
+                return;
+            };
 
-        native_window.makeFirstResponder(Some(child_view));
-        match event.kind {
-            BackgroundMouseEventKind::Down => match event.button {
-                0 => child_view.mouseDown(&native_event),
-                2 => child_view.rightMouseDown(&native_event),
-                _ => child_view.otherMouseDown(&native_event),
-            },
-            BackgroundMouseEventKind::Up => match event.button {
-                0 => child_view.mouseUp(&native_event),
-                2 => child_view.rightMouseUp(&native_event),
-                _ => child_view.otherMouseUp(&native_event),
-            },
-            BackgroundMouseEventKind::Dragged => match event.button {
-                2 => child_view.rightMouseDragged(&native_event),
-                _ => child_view.mouseDragged(&native_event),
-            },
+            native_window.makeFirstResponder(Some(child_view));
+            match event.kind {
+                BackgroundMouseEventKind::Down => match event.button {
+                    0 => child_view.mouseDown(&native_event),
+                    2 => child_view.rightMouseDown(&native_event),
+                    _ => child_view.otherMouseDown(&native_event),
+                },
+                BackgroundMouseEventKind::Up => match event.button {
+                    0 => child_view.mouseUp(&native_event),
+                    2 => child_view.rightMouseUp(&native_event),
+                    _ => child_view.otherMouseUp(&native_event),
+                },
+                BackgroundMouseEventKind::Dragged => match event.button {
+                    2 => child_view.rightMouseDragged(&native_event),
+                    _ => child_view.mouseDragged(&native_event),
+                },
+            }
+        }) {
+            eprintln!("failed to forward website background mouse event: {error}");
         }
     })?;
 

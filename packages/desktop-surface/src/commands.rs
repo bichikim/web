@@ -1,4 +1,4 @@
-use tauri::{AppHandle, Manager, Runtime, WebviewUrl, WebviewWindowBuilder};
+use tauri::{AppHandle, Manager, Runtime, Webview, WebviewUrl, WebviewWindowBuilder};
 
 use crate::{
     SurfaceState,
@@ -18,6 +18,13 @@ fn find_window<R: Runtime>(
     let label = validate_label(label)?;
 
     app.get_webview_window(&label)
+        .ok_or_else(|| Error::WindowNotFound(label).into())
+}
+
+fn find_webview<R: Runtime>(app: &AppHandle<R>, label: String) -> Result<Webview<R>, CommandError> {
+    let label = validate_label(label)?;
+
+    app.get_webview(&label)
         .ok_or_else(|| Error::WindowNotFound(label).into())
 }
 
@@ -99,8 +106,8 @@ pub(crate) async fn forward_background_mouse_event<R: Runtime>(
     #[cfg(target_os = "macos")]
     {
         let options = ValidatedBackgroundMouseEvent::try_from(options)?;
-        let window = find_window(&app, options.label.clone())?;
-        crate::macos::forward_background_mouse_event(&state, &window, options).map_err(Into::into)
+        let webview = find_webview(&app, options.label.clone())?;
+        crate::macos::forward_background_mouse_event(&state, &webview, options).map_err(Into::into)
     }
 }
 
