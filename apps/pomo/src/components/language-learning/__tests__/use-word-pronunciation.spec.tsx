@@ -11,6 +11,7 @@ import {
   type LanguageLearningWordAudioRepository,
   LanguageLearningWordAudioStorageError,
 } from '../../../features/language-learning'
+import * as automaticDialogueSettings from '../../../features/focus-room-dialogue/automatic-dialogue-settings'
 import {type ModelAssetManager, useModelAssetManager} from '../../../features/model-download'
 import {isSupertonicModelDownloaded} from '../../../features/supertonic'
 import {useLanguageLearningWordPronunciation} from '../use-word-pronunciation'
@@ -100,6 +101,7 @@ beforeEach(() => {
 })
 
 afterEach(() => {
+  vi.restoreAllMocks()
   overwriteGetLocale(originalGetLocale)
 })
 
@@ -148,6 +150,47 @@ it('should generate a pronunciation with a ready model and expose the audio URL'
       task: expect.any(Function),
     }),
   )
+  expect(screen.getByTestId('loading')).toHaveTextContent('false')
+})
+
+it('should resume pronunciation when settings hydrate after a cache miss', async () => {
+  let resolveSettings: ((settings: unknown) => void) | undefined
+  let resolveCachedAudio: ((audio: Blob | null) => void) | undefined
+  vi.spyOn(
+    automaticDialogueSettings.createAutomaticDialoguePreferenceOptions().storage,
+    'read',
+  ).mockImplementation(
+    () =>
+      new Promise((resolve) => {
+        resolveSettings = resolve
+      }),
+  )
+  audioRepository.get.mockImplementationOnce(
+    () =>
+      new Promise((resolve) => {
+        resolveCachedAudio = resolve
+      }),
+  )
+  vi.mocked(manager.runAfterVoiceModel).mockImplementation(async ({task}) => ({
+    status: 'complete',
+    value: await task(),
+  }))
+  renderPronunciation()
+
+  requestWord(word)
+  await vi.waitFor(() => expect(audioRepository.get).toHaveBeenCalledOnce())
+  resolveCachedAudio?.(null)
+  await Promise.resolve()
+
+  expect(screen.getByTestId('error')).toHaveTextContent('')
+  expect(screen.getByTestId('loading')).toHaveTextContent('true')
+  expect(isSupertonicModelDownloaded).not.toHaveBeenCalled()
+
+  resolveSettings?.({modelId: 'int8', version: 1, voiceId: 'Hana'})
+  await vi.waitFor(() =>
+    expect(screen.getByTestId('audio')).toHaveTextContent('blob:pronunciation'),
+  )
+  expect(generateLanguageLearningWordPronunciation).toHaveBeenCalledOnce()
   expect(screen.getByTestId('loading')).toHaveTextContent('false')
 })
 
