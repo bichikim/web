@@ -69,9 +69,7 @@ export const DesktopPlayer = () => {
       }
 
       if (actions === null) {
-        if (isPlayerVisible()) {
-          pendingMusicActions.push(message.actionId)
-        }
+        pendingMusicActions.push(message.actionId)
         return
       }
 

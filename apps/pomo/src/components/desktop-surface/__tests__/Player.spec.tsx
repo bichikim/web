@@ -266,6 +266,30 @@ it('should apply a desktop wallpaper action after playback controls become ready
   expect(playerActions.pause).toHaveBeenCalledTimes(1)
 })
 
+it.each([
+  {actionId: 'music-start', method: 'play'},
+  {actionId: 'music-stop', method: 'pause'},
+] as const)(
+  'should apply the $actionId received while hidden once playback controls become ready',
+  ({actionId, method}) => {
+    const [visible, setVisible] = createSignal(false)
+    const preferences = usePDisplayPreferences()
+    vi.mocked(usePDisplayPreferences).mockReturnValue({...preferences, playerVisible: visible})
+    playerActionsReady.value = false
+
+    render(() => <DesktopPlayer />)
+
+    expect(screen.queryByText('플레이어')).not.toBeInTheDocument()
+    TestBroadcastChannel.instances[0]?.dispatch({actionId})
+    expect(playerActions[method]).not.toHaveBeenCalled()
+
+    playerActionsReady.value = true
+    setVisible(true)
+
+    expect(playerActions[method]).toHaveBeenCalledTimes(1)
+  },
+)
+
 it('should allow the desktop player to switch from expanded to compact mode', () => {
   render(() => <DesktopPlayer />)
 
