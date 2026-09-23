@@ -69,6 +69,24 @@ it('should flush a pending change when the settings unmount', async () => {
   })
 })
 
+it('should flush only the latest pending edit once when unmounted before the debounce', async () => {
+  const view = renderHook(useVolumeDucking, {wrapper: PreferenceProvider})
+  await vi.advanceTimersByTimeAsync(0)
+
+  view.result.changeVolume(35)
+  await vi.advanceTimersByTimeAsync(299)
+  view.result.changeVolume(72)
+  expect(settingsMocks.write).not.toHaveBeenCalled()
+
+  view.cleanup()
+  await vi.advanceTimersByTimeAsync(300)
+
+  expect(settingsMocks.write).toHaveBeenCalledExactlyOnceWith({
+    ...DEFAULT_DIALOGUE_VOLUME_DUCKING_SETTINGS,
+    playerVolumePercent: 72,
+  })
+})
+
 it('should restore the saved settings after a save failure', async () => {
   const loadFailure = new Error('load failed')
   const consoleError = vi.spyOn(console, 'error').mockImplementation(() => undefined)

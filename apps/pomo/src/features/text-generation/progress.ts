@@ -1,4 +1,4 @@
-import {getUnboundedPercentage} from '../download-progress'
+import {getUnboundedPercentage} from '../progress'
 
 export interface FileLoadingProgress {
   readonly loaded: number

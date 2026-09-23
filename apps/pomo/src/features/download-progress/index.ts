@@ -1,5 +1,4 @@
-import {getUnboundedPercentage} from './get-unbounded-percentage'
-export * from './get-unbounded-percentage'
+import {getUnboundedPercentage} from '../progress'
 
 const MAXIMUM_PERCENTAGE = 100
 

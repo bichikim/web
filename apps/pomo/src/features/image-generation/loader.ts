@@ -1,4 +1,4 @@
-import {getUnboundedPercentage} from '../download-progress'
+import {getUnboundedPercentage} from '../progress'
 import {getImageModelRoot} from './model'
 import type {GenerationProgress} from './messages'
 import type {ImageVariant} from './settings'

@@ -6,6 +6,7 @@ import {
   DEFAULT_DIALOGUE_VOLUME_DUCKING_SETTINGS,
   type DialogueVolumeDuckingSettings as DialogueVolumeDuckingSettingsValue,
 } from 'src/features/focus-room-dialogue'
+import {createPendingSave} from 'src/features/pending-save'
 import * as m from '@paraglide/message'
 
 interface VolumeDuckingState {
@@ -39,7 +40,6 @@ export const useVolumeDucking = (): VolumeDuckingState => {
   let committedSettings: DialogueVolumeDuckingSettingsValue =
     DEFAULT_DIALOGUE_VOLUME_DUCKING_SETTINGS
   let failedStoredSettings: DialogueVolumeDuckingSettingsValue | null = null
-  let saveTimeout: ReturnType<typeof globalThis.setTimeout> | null = null
 
   const settleSave = (didSave: boolean): DialogueVolumeDuckingSettingsValue | null => {
     const settledSettings = pendingSaves.shift() ?? null
@@ -101,6 +101,14 @@ export const useVolumeDucking = (): VolumeDuckingState => {
     setStoredSettings(nextSettings)
   }
 
+  const pendingSave = createPendingSave<DialogueVolumeDuckingSettingsValue>({
+    delayMilliseconds: SAVE_DEBOUNCE_MILLISECONDS,
+    save: (nextSettings) => {
+      pendingSettings = null
+      persistSettings(nextSettings)
+    },
+  })
+
   const publishSettings = (nextSettings: DialogueVolumeDuckingSettingsValue) => {
     if (storedSettings() !== null) {
       setStoredSettings(nextSettings, {persist: false})
@@ -115,15 +123,7 @@ export const useVolumeDucking = (): VolumeDuckingState => {
     pendingSettings = nextSettings
     publishSettings(nextSettings)
 
-    if (saveTimeout !== null) {
-      globalThis.clearTimeout(saveTimeout)
-    }
-
-    saveTimeout = globalThis.setTimeout(() => {
-      saveTimeout = null
-      pendingSettings = null
-      persistSettings(nextSettings)
-    }, SAVE_DEBOUNCE_MILLISECONDS)
+    pendingSave.schedule(nextSettings)
   }
 
   createEffect(() => {
@@ -147,16 +147,7 @@ export const useVolumeDucking = (): VolumeDuckingState => {
 
   onCleanup(() => {
     isDisposed = true
-
-    if (saveTimeout !== null) {
-      globalThis.clearTimeout(saveTimeout)
-    }
-
-    const nextSettings = pendingSettings
-    pendingSettings = null
-    if (nextSettings !== null) {
-      persistSettings(nextSettings)
-    }
+    pendingSave.flush()
   })
 
   const changeEnabled = (enabled: boolean) => scheduleSave({...settings(), enabled})
