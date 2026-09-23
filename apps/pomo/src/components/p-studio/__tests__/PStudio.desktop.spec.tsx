@@ -12,7 +12,6 @@ import {
 
 const {
   PStudioScene,
-  isDesktopBackgroundMode,
   SceneToolbar,
   useDesktopSafeAreaTop,
   useDesktopSceneSettingsPublisher,
@@ -94,15 +93,15 @@ describe('PStudio', () => {
     expect(registerEventActionExecutor).toHaveBeenCalledOnce()
   })
 
-  it('should keep the studio controls on the interactive desktop background', () => {
+  it('should hide the studio controls on the interactive desktop background', () => {
     configureStudio({desktopMode: 'interactiveDesktop', entrySession: true})
 
     renderStudio()
 
     expect(screen.getByLabelText('Pomo')).not.toHaveClass('pointer-events-none')
     expect(vi.mocked(PStudioScene).mock.calls[0]?.[0].interactive).toBe(true)
-    expect(screen.getByText('이벤트')).toBeInTheDocument()
-    expect(SceneToolbar).toHaveBeenCalled()
+    expect(screen.queryByText('이벤트')).not.toBeInTheDocument()
+    expect(SceneToolbar).not.toHaveBeenCalled()
     expect(useDesktopSceneSettingsPublisher).toHaveBeenCalledOnce()
   })
 
@@ -150,15 +149,14 @@ describe('PStudio', () => {
     expect(screen.queryByText('화면 보호기')).not.toBeInTheDocument()
 
     setDesktopMode('interactiveDesktop')
-    expect(screen.getByText('화면 보호기')).toHaveAttribute('data-active', 'false')
+    expect(screen.queryByText('화면 보호기')).not.toBeInTheDocument()
 
     setDesktopMode('normal')
     expect(screen.getByText('화면 보호기')).toHaveAttribute('data-active', 'true')
-    expect(isDesktopBackgroundMode).toHaveBeenCalledWith('interactiveDesktop')
   })
 })
 
-it.each(['interactiveDesktop', 'widget'] as const)(
+it.each(['widget'] as const)(
   'should synchronize scene edits without echoing in %s mode',
   (desktopMode) => {
     configureStudio({desktopMode, entrySession: true})
@@ -251,5 +249,5 @@ it('should connect renderer input fallback to desktop publishing', () => {
   renderStudio()
   vi.mocked(PStudioScene).mock.calls[0]?.[0].onMotionInputChange?.('drag')
   expect(publish).toHaveBeenCalledExactlyOnceWith({name: 'motionInput', value: 'drag'})
-  expect(vi.mocked(SceneToolbar).mock.calls[0]?.[0].motionInput).toBe('drag')
+  expect(SceneToolbar).not.toHaveBeenCalled()
 })
