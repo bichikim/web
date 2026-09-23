@@ -41,7 +41,7 @@ const createStorageHarness = () => {
   } satisfies DisplayThemePreferenceStorage
 
   return {
-    repository: createDisplayThemePreferenceRepository({storage}),
+    repository: createDisplayThemePreferenceRepository({now: () => 100, storage}),
     storage,
     tossValues,
     webValues,
@@ -76,7 +76,10 @@ describe('display theme preference repository', () => {
     await repository.write('bright')
 
     await expect(repository.read()).resolves.toBe('bright')
-    expect(webValues.get(STORAGE_KEY)).toBe('bright')
+    expect(webValues.get(STORAGE_KEY)).toMatchObject({
+      preference: 'bright',
+      savedAt: expect.any(Number),
+    })
     expect(storage.writeToss).not.toHaveBeenCalled()
   })
 
@@ -92,10 +95,10 @@ describe('display theme preference repository', () => {
 
   it('should restore a toss preference and rebuild the browser copy', async () => {
     storage.usesTossStorage.mockReturnValue(true)
-    tossValues.set(STORAGE_KEY, 'dark')
+    tossValues.set(STORAGE_KEY, {preference: 'dark', savedAt: 10})
 
     await expect(repository.read()).resolves.toBe('dark')
-    expect(webValues.get(STORAGE_KEY)).toBe('dark')
+    expect(webValues.get(STORAGE_KEY)).toEqual({preference: 'dark', savedAt: 10})
   })
 
   it('should preserve and repair a browser preference when toss storage is empty', async () => {
@@ -103,31 +106,61 @@ describe('display theme preference repository', () => {
     webValues.set(STORAGE_KEY, 'bright')
 
     await expect(repository.read()).resolves.toBe('bright')
-    await vi.waitFor(() => expect(storage.writeToss).toHaveBeenCalledWith(STORAGE_KEY, 'bright'))
+    await vi.waitFor(() =>
+      expect(storage.writeToss).toHaveBeenCalledWith(STORAGE_KEY, {
+        preference: 'bright',
+        savedAt: 0,
+      }),
+    )
     expect(webValues.get(STORAGE_KEY)).toBe('bright')
   })
 
-  it('should prefer and repair a browser copy over the toss preference', async () => {
+  it('should prefer and repair a newer browser copy over a stale toss preference', async () => {
+    storage.usesTossStorage.mockReturnValue(true)
+    webValues.set(STORAGE_KEY, {preference: 'bright', savedAt: 20})
+    tossValues.set(STORAGE_KEY, {preference: 'dark', savedAt: 10})
+
+    await expect(repository.read()).resolves.toBe('bright')
+    await vi.waitFor(() =>
+      expect(storage.writeToss).toHaveBeenCalledWith(STORAGE_KEY, {
+        preference: 'bright',
+        savedAt: 20,
+      }),
+    )
+    expect(storage.readToss).toHaveBeenCalledOnce()
+    expect(webValues.get(STORAGE_KEY)).toEqual({preference: 'bright', savedAt: 20})
+  })
+
+  it('should prefer a newer toss preference over a stale browser cache', async () => {
+    storage.usesTossStorage.mockReturnValue(true)
+    webValues.set(STORAGE_KEY, {preference: 'bright', savedAt: 10})
+    tossValues.set(STORAGE_KEY, {preference: 'dark', savedAt: 20})
+
+    await expect(repository.read()).resolves.toBe('dark')
+
+    expect(webValues.get(STORAGE_KEY)).toEqual({preference: 'dark', savedAt: 20})
+    expect(storage.writeToss).not.toHaveBeenCalled()
+  })
+
+  it('should prefer the toss preference when legacy copies have no timestamps', async () => {
     storage.usesTossStorage.mockReturnValue(true)
     webValues.set(STORAGE_KEY, 'bright')
     tossValues.set(STORAGE_KEY, 'dark')
 
-    await expect(repository.read()).resolves.toBe('bright')
-    await vi.waitFor(() => expect(storage.writeToss).toHaveBeenCalledWith(STORAGE_KEY, 'bright'))
-    expect(storage.readToss).not.toHaveBeenCalled()
-    expect(webValues.get(STORAGE_KEY)).toBe('bright')
+    await expect(repository.read()).resolves.toBe('dark')
+    expect(webValues.get(STORAGE_KEY)).toEqual({preference: 'dark', savedAt: 0})
   })
 
   it('should replace invalid or missing preferences with the default', async () => {
     storage.usesTossStorage.mockReturnValue(true)
 
     await expect(repository.read()).resolves.toBe('dark')
-    expect(webValues.get(STORAGE_KEY)).toBe('dark')
+    expect(webValues.get(STORAGE_KEY)).toEqual({preference: 'dark', savedAt: 0})
 
     webValues.clear()
     tossValues.set(STORAGE_KEY, 'unknown')
     await expect(repository.read()).resolves.toBe('dark')
-    expect(webValues.get(STORAGE_KEY)).toBe('dark')
+    expect(webValues.get(STORAGE_KEY)).toEqual({preference: 'dark', savedAt: 0})
   })
 
   it('should reject a toss read failure when the browser copy is unavailable', async () => {
@@ -144,7 +177,10 @@ describe('display theme preference repository', () => {
     })
 
     await expect(repository.write('dark')).resolves.toBeUndefined()
-    expect(tossValues.get(STORAGE_KEY)).toBe('dark')
+    expect(tossValues.get(STORAGE_KEY)).toMatchObject({
+      preference: 'dark',
+      savedAt: expect.any(Number),
+    })
   })
 
   it('should remove a stale browser copy after native persistence succeeds', async () => {
@@ -156,11 +192,14 @@ describe('display theme preference repository', () => {
 
     await expect(repository.write('bright')).resolves.toBeUndefined()
 
-    expect(tossValues.get(STORAGE_KEY)).toBe('bright')
+    expect(tossValues.get(STORAGE_KEY)).toMatchObject({
+      preference: 'bright',
+      savedAt: expect.any(Number),
+    })
     expect(storage.removeWeb).toHaveBeenCalledWith(STORAGE_KEY)
     expect(webValues.get(STORAGE_KEY)).toBeUndefined()
     await expect(repository.read()).resolves.toBe('bright')
-    expect(tossValues.get(STORAGE_KEY)).toBe('bright')
+    expect(tossValues.get(STORAGE_KEY)).toMatchObject({preference: 'bright'})
   })
 
   it('should keep a newer write when a native read completes late', async () => {
@@ -173,7 +212,7 @@ describe('display theme preference repository', () => {
     nativeRead.resolve('dark')
 
     await expect(pendingRead).resolves.toBe('bright')
-    expect(webValues.get(STORAGE_KEY)).not.toBe('dark')
+    expect(webValues.get(STORAGE_KEY)).not.toMatchObject({preference: 'dark'})
   })
 
   it('should reject a toss save when toss storage fails', async () => {
@@ -183,7 +222,7 @@ describe('display theme preference repository', () => {
     await expect(repository.write('bright')).rejects.toThrow(
       'Failed to persist display theme preference.',
     )
-    expect(webValues.get(STORAGE_KEY)).toBe('bright')
+    expect(webValues.get(STORAGE_KEY)).toMatchObject({preference: 'bright'})
   })
 
   it('should retain browser state after a failed toss save', async () => {
@@ -196,8 +235,8 @@ describe('display theme preference repository', () => {
     )
     await expect(repository.read()).resolves.toBe('bright')
     await vi.waitFor(() => expect(storage.writeToss).toHaveBeenCalledTimes(2))
-    expect(tossValues.get(STORAGE_KEY)).toBe('bright')
-    expect(webValues.get(STORAGE_KEY)).toBe('bright')
+    expect(tossValues.get(STORAGE_KEY)).toMatchObject({preference: 'bright'})
+    expect(webValues.get(STORAGE_KEY)).toMatchObject({preference: 'bright'})
   })
 
   it('should continue toss writes after an earlier write fails', async () => {
@@ -212,7 +251,7 @@ describe('display theme preference repository', () => {
       'Failed to persist display theme preference.',
     )
     await expect(repository.write('bright')).resolves.toBeUndefined()
-    expect(tossValues.get(STORAGE_KEY)).toBe('bright')
+    expect(tossValues.get(STORAGE_KEY)).toMatchObject({preference: 'bright'})
   })
 
   it('should wait for an active toss write before reading the preference', async () => {
@@ -237,22 +276,22 @@ describe('display theme preference repository', () => {
     await expect(pendingWrite).resolves.toBeUndefined()
     await expect(pendingRead).resolves.toBe('bright')
     await vi.waitFor(() => expect(storage.writeToss).toHaveBeenCalledTimes(2))
-    expect(storage.readToss).not.toHaveBeenCalled()
+    expect(storage.readToss).toHaveBeenCalledOnce()
   })
 })
 
 describe('display theme runtime storage adapter', () => {
-  it('should prefer and repair a browser cache over toss storage', async () => {
+  it('should prefer native storage over a stale browser cache', async () => {
     Object.defineProperty(globalThis, 'ReactNativeWebView', {configurable: true, value: {}})
-    localStorage.setItem(STORAGE_KEY, '"bright"')
-    storageMocks.getItem.mockResolvedValue('"dark"')
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({preference: 'bright', savedAt: 10}))
+    storageMocks.getItem.mockResolvedValue(JSON.stringify({preference: 'dark', savedAt: 20}))
 
-    await expect(readDisplayThemePreference()).resolves.toBe('bright')
-    await vi.waitFor(() =>
-      expect(storageMocks.setItem).toHaveBeenCalledWith(STORAGE_KEY, '"bright"'),
+    await expect(readDisplayThemePreference()).resolves.toBe('dark')
+    expect(storageMocks.getItem).toHaveBeenCalledWith(STORAGE_KEY)
+    expect(storageMocks.setItem).not.toHaveBeenCalled()
+    expect(localStorage.getItem(STORAGE_KEY)).toBe(
+      JSON.stringify({preference: 'dark', savedAt: 20}),
     )
-    expect(storageMocks.getItem).not.toHaveBeenCalled()
-    expect(localStorage.getItem(STORAGE_KEY)).toBe('"bright"')
   })
 
   it('should propagate a toss storage error as a rejected save', async () => {
