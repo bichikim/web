@@ -1,9 +1,13 @@
-import {type DesktopBackgroundMouseEvent, forwardDesktopBackgroundMouseEvent} from './runtime'
+import {
+  type DesktopBackgroundMouseEvent,
+  type DesktopBackgroundPointerEventKind,
+  forwardDesktopBackgroundMouseEvent,
+} from './runtime'
 
 const FORWARDED_BUTTONS = new Set([0, 1, 2])
 
 const getMouseEvent = (
-  kind: DesktopBackgroundMouseEvent['kind'],
+  kind: DesktopBackgroundPointerEventKind,
   event: PointerEvent,
   fallbackButton = 0,
 ): DesktopBackgroundMouseEvent => ({
@@ -13,6 +17,23 @@ const getMouseEvent = (
   clickCount: Math.max(1, event.detail),
   ctrlKey: event.ctrlKey,
   kind,
+  metaKey: event.metaKey,
+  shiftKey: event.shiftKey,
+  x: event.clientX,
+  y: event.clientY,
+})
+
+const getWheelEvent = (event: WheelEvent): DesktopBackgroundMouseEvent => ({
+  altKey: event.altKey,
+  button: Math.max(0, event.button),
+  buttons: event.buttons,
+  clickCount: 1,
+  ctrlKey: event.ctrlKey,
+  deltaMode: event.deltaMode,
+  deltaX: event.deltaX,
+  deltaY: event.deltaY,
+  deltaZ: event.deltaZ,
+  kind: 'wheel',
   metaKey: event.metaKey,
   shiftKey: event.shiftKey,
   x: event.clientX,
@@ -37,7 +58,7 @@ export const useWebsiteBackgroundInteraction = () => {
       .then(() => forwardDesktopBackgroundMouseEvent(event))
       .catch((error: unknown) => {
         if (import.meta.env.DEV) {
-          console.error('Failed to forward website background pointer event', error)
+          console.error('Failed to forward website background input event', error)
         }
       })
   }
@@ -61,23 +82,42 @@ export const useWebsiteBackgroundInteraction = () => {
   }
 
   const handlePointerMove = (event: PointerEvent): void => {
-    if (forwardedPointerId !== event.pointerId || event.buttons === 0) {
+    if (forwardedPointerId !== null && forwardedPointerId !== event.pointerId) {
+      return
+    }
+    if (forwardedPointerId === null && event.buttons !== 0) {
       return
     }
 
     event.preventDefault()
     event.stopPropagation()
-    enqueue(getMouseEvent('dragged', event, forwardedButton))
+    enqueue(getMouseEvent(event.buttons === 0 ? 'moved' : 'dragged', event, forwardedButton))
   }
 
-  const finishPointer = (event: PointerEvent, useEventButton: boolean): void => {
+  const handlePointerLeave = (event: PointerEvent): void => {
+    if (forwardedPointerId !== null) {
+      return
+    }
+
+    event.preventDefault()
+    event.stopPropagation()
+    enqueue(getMouseEvent('left', event))
+  }
+
+  const handleWheel = (event: WheelEvent): void => {
+    event.preventDefault()
+    event.stopPropagation()
+    enqueue(getWheelEvent(event))
+  }
+
+  const finishPointer = (event: PointerEvent, kind: 'up' | 'cancelled'): void => {
     if (forwardedPointerId !== event.pointerId) {
       return
     }
 
     event.preventDefault()
     event.stopPropagation()
-    const button = useEventButton && event.button >= 0 ? event.button : forwardedButton
+    const button = kind === 'up' && event.button >= 0 ? event.button : forwardedButton
     if (
       event.currentTarget instanceof HTMLElement &&
       typeof event.currentTarget.releasePointerCapture === 'function'
@@ -86,15 +126,17 @@ export const useWebsiteBackgroundInteraction = () => {
     }
     forwardedPointerId = null
     forwardedButton = 0
-    enqueue(getMouseEvent('up', event, button))
+    enqueue(getMouseEvent(kind, event, button))
   }
 
   return {
     handleClick,
     handleContextMenu: handleClick,
-    handlePointerCancel: (event: PointerEvent) => finishPointer(event, false),
+    handlePointerCancel: (event: PointerEvent) => finishPointer(event, 'cancelled'),
     handlePointerDown,
+    handlePointerLeave,
     handlePointerMove,
-    handlePointerUp: (event: PointerEvent) => finishPointer(event, true),
+    handlePointerUp: (event: PointerEvent) => finishPointer(event, 'up'),
+    handleWheel,
   }
 }

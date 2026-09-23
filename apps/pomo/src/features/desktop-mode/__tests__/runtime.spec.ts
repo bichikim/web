@@ -61,7 +61,7 @@ afterEach(() => {
 describe('applyDesktopMode', () => {
   it('should restore the normal window before controller cleanup', async () => {
     await expect(applyDesktopMode('normal')).resolves.toBe(false)
-    expect(restoreBackgroundContent).toHaveBeenCalledWith({label: 'background'})
+    expect(restoreBackgroundContent).not.toHaveBeenCalled()
     expect(restoreSurface).toHaveBeenCalledWith({label: 'background'})
     expect(closeControlSurface).not.toHaveBeenCalled()
   })
@@ -233,6 +233,67 @@ describe('applyDesktopMode', () => {
       useChild: true,
     })
     expect(restoreBackgroundContent).not.toHaveBeenCalled()
+  })
+
+  it('should avoid duplicate native navigation for the same saved website URL', async () => {
+    vi.stubEnv('VITE_POMO_IS_DESKTOP', 'true')
+    localStorage.setItem('pomo:desktop-mode:v1', 'normal')
+    vi.mocked(getBackgroundRepository).mockResolvedValue({
+      read: vi.fn(async () => ({
+        items: [],
+        preferences: {mode: 'website', websiteUrl: 'https://example.com/deduplicated'},
+      })),
+    } as never)
+
+    await synchronizeDesktopBackground()
+    await synchronizeDesktopBackground()
+
+    expect(navigateBackgroundSurface).toHaveBeenCalledOnce()
+  })
+
+  it('should not let an older synchronization overwrite a newer URL', async () => {
+    vi.stubEnv('VITE_POMO_IS_DESKTOP', 'true')
+    localStorage.setItem('pomo:desktop-mode:v1', 'normal')
+    const firstNavigation = Promise.withResolvers<void>()
+    const secondNavigation = Promise.withResolvers<void>()
+    const read = vi
+      .fn()
+      .mockResolvedValueOnce({
+        items: [],
+        preferences: {mode: 'website', websiteUrl: 'https://example.com/first-request'},
+      })
+      .mockResolvedValueOnce({
+        items: [],
+        preferences: {mode: 'website', websiteUrl: 'https://example.com/latest-request'},
+      })
+    vi.mocked(getBackgroundRepository).mockResolvedValue({read} as never)
+    vi.mocked(navigateBackgroundSurface).mockImplementation(async ({url}) => {
+      if (url.endsWith('/first-request')) {
+        await firstNavigation.promise
+      } else {
+        await secondNavigation.promise
+      }
+    })
+
+    const firstSynchronization = synchronizeDesktopBackground()
+    await vi.waitFor(() => expect(navigateBackgroundSurface).toHaveBeenCalledOnce())
+    const secondSynchronization = synchronizeDesktopBackground()
+    await vi.waitFor(() => expect(navigateBackgroundSurface).toHaveBeenCalledTimes(2))
+
+    secondNavigation.resolve()
+    await secondSynchronization
+    firstNavigation.resolve()
+    await firstSynchronization
+
+    vi.mocked(getBackgroundRepository).mockResolvedValue({
+      read: vi.fn(async () => ({
+        items: [],
+        preferences: {mode: 'website', websiteUrl: 'https://example.com/latest-request'},
+      })),
+    } as never)
+    await synchronizeDesktopBackground()
+
+    expect(navigateBackgroundSurface).toHaveBeenCalledTimes(2)
   })
 
   it('should forward the latest saved website URL on every synchronization', async () => {

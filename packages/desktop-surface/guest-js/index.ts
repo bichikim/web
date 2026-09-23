@@ -21,7 +21,14 @@ export interface BackgroundNavigationOptions extends SurfaceTarget {
   readonly useChild?: boolean
 }
 
-export type BackgroundMouseEventKind = 'down' | 'up' | 'dragged'
+export type BackgroundMouseEventKind =
+  | 'down'
+  | 'up'
+  | 'dragged'
+  | 'moved'
+  | 'left'
+  | 'cancelled'
+  | 'wheel'
 
 export interface BackgroundMouseEventOptions extends SurfaceTarget {
   readonly altKey: boolean
@@ -34,6 +41,10 @@ export interface BackgroundMouseEventOptions extends SurfaceTarget {
   readonly shiftKey: boolean
   readonly x: number
   readonly y: number
+  readonly deltaMode?: number
+  readonly deltaX?: number
+  readonly deltaY?: number
+  readonly deltaZ?: number
 }
 
 export interface OpenControlSurfaceOptions extends SurfaceTarget {

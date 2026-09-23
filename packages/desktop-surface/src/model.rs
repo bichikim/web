@@ -46,6 +46,10 @@ pub(crate) enum BackgroundMouseEventKind {
     Down,
     Up,
     Dragged,
+    Moved,
+    Left,
+    Cancelled,
+    Wheel,
 }
 
 #[derive(Clone, Debug, Deserialize)]
@@ -62,6 +66,14 @@ pub(crate) struct BackgroundMouseEventOptions {
     pub(crate) shift_key: bool,
     pub(crate) x: f64,
     pub(crate) y: f64,
+    #[serde(default)]
+    pub(crate) delta_mode: Option<u8>,
+    #[serde(default)]
+    pub(crate) delta_x: Option<f64>,
+    #[serde(default)]
+    pub(crate) delta_y: Option<f64>,
+    #[serde(default)]
+    pub(crate) delta_z: Option<f64>,
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -77,6 +89,10 @@ pub(crate) struct ValidatedBackgroundMouseEvent {
     pub(crate) shift_key: bool,
     pub(crate) x: f64,
     pub(crate) y: f64,
+    pub(crate) delta_mode: Option<u8>,
+    pub(crate) delta_x: Option<f64>,
+    pub(crate) delta_y: Option<f64>,
+    pub(crate) delta_z: Option<f64>,
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -179,6 +195,26 @@ impl TryFrom<BackgroundMouseEventOptions> for ValidatedBackgroundMouseEvent {
             return Err(Error::InvalidMouseEvent);
         }
 
+        let wheel_values = (
+            options.delta_mode,
+            options.delta_x,
+            options.delta_y,
+            options.delta_z,
+        );
+        if options.kind == BackgroundMouseEventKind::Wheel {
+            let (Some(delta_mode), Some(delta_x), Some(delta_y), Some(delta_z)) = wheel_values
+            else {
+                return Err(Error::InvalidMouseEvent);
+            };
+            if delta_mode > 2
+                || !delta_x.is_finite()
+                || !delta_y.is_finite()
+                || !delta_z.is_finite()
+            {
+                return Err(Error::InvalidMouseEvent);
+            }
+        }
+
         Ok(Self {
             alt_key: options.alt_key,
             button: options.button,
@@ -191,6 +227,10 @@ impl TryFrom<BackgroundMouseEventOptions> for ValidatedBackgroundMouseEvent {
             shift_key: options.shift_key,
             x: options.x,
             y: options.y,
+            delta_mode: options.delta_mode,
+            delta_x: options.delta_x,
+            delta_y: options.delta_y,
+            delta_z: options.delta_z,
         })
     }
 }
@@ -306,6 +346,10 @@ mod tests {
             shift_key: false,
             x: 120.0,
             y: 80.0,
+            delta_mode: None,
+            delta_x: None,
+            delta_y: None,
+            delta_z: None,
         }
     }
 
@@ -461,6 +505,32 @@ mod tests {
             let mut invalid = background_mouse_event_options();
             invalid.x = x;
             invalid.y = y;
+
+            assert!(ValidatedBackgroundMouseEvent::try_from(invalid).is_err());
+        }
+    }
+
+    #[test]
+    fn should_validate_background_wheel_event_deltas() {
+        let mut valid_options = background_mouse_event_options();
+        valid_options.kind = BackgroundMouseEventKind::Wheel;
+        valid_options.buttons = 0;
+        valid_options.delta_mode = Some(0);
+        valid_options.delta_x = Some(0.0);
+        valid_options.delta_y = Some(120.0);
+        valid_options.delta_z = Some(0.0);
+
+        let event = ValidatedBackgroundMouseEvent::try_from(valid_options)
+            .expect("valid background wheel event");
+        assert_eq!(event.delta_y, Some(120.0));
+
+        for (delta_mode, delta_x) in [(Some(3), Some(0.0)), (Some(0), Some(f64::NAN))] {
+            let mut invalid = background_mouse_event_options();
+            invalid.kind = BackgroundMouseEventKind::Wheel;
+            invalid.delta_mode = delta_mode;
+            invalid.delta_x = delta_x;
+            invalid.delta_y = Some(120.0);
+            invalid.delta_z = Some(0.0);
 
             assert!(ValidatedBackgroundMouseEvent::try_from(invalid).is_err());
         }

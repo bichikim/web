@@ -106,15 +106,46 @@ export const shouldHandoffDesktopModeOwner = async (mode: DesktopMode): Promise<
 
 interface SynchronizeBackgroundContentOptions {
   readonly restoreWhenMissing?: boolean
+  readonly url?: string | null
   readonly useChild?: boolean
+}
+
+interface BackgroundSynchronizationTarget {
+  readonly mode: DesktopMode
+  readonly url: string | null
+}
+
+interface PendingBackgroundSynchronization {
+  readonly promise: Promise<void>
+  readonly revision: number
+  readonly target: BackgroundSynchronizationTarget
+}
+
+let backgroundSynchronizationRevision = 0
+let backgroundSynchronizationRequest = 0
+let lastBackgroundSynchronization: {
+  readonly revision: number
+  readonly target: BackgroundSynchronizationTarget
+} | null = null
+let pendingBackgroundSynchronization: PendingBackgroundSynchronization | null = null
+
+const hasSameSynchronizationTarget = (
+  left: BackgroundSynchronizationTarget,
+  right: BackgroundSynchronizationTarget,
+): boolean => left.mode === right.mode && left.url === right.url
+
+const invalidateBackgroundSynchronization = (): void => {
+  backgroundSynchronizationRevision += 1
+  lastBackgroundSynchronization = null
 }
 
 const synchronizeBackgroundContent = async ({
   restoreWhenMissing = true,
+  url: configuredUrl,
   useChild = false,
 }: SynchronizeBackgroundContentOptions = {}): Promise<boolean> => {
   const {navigateBackgroundSurface, restoreBackgroundContent} = await getSurfaceApi()
-  const url = await readWebsiteBackgroundUrl()
+  const url = configuredUrl === undefined ? await readWebsiteBackgroundUrl() : configuredUrl
 
   if (url === null) {
     if (restoreWhenMissing) {
@@ -131,7 +162,15 @@ const synchronizeBackgroundContent = async ({
   return true
 }
 
-export type DesktopBackgroundMouseEventKind = 'down' | 'up' | 'dragged'
+export type DesktopBackgroundPointerEventKind =
+  | 'down'
+  | 'up'
+  | 'dragged'
+  | 'moved'
+  | 'left'
+  | 'cancelled'
+
+export type DesktopBackgroundMouseEventKind = DesktopBackgroundPointerEventKind | 'wheel'
 
 export interface DesktopBackgroundMouseEvent {
   readonly altKey: boolean
@@ -144,6 +183,10 @@ export interface DesktopBackgroundMouseEvent {
   readonly shiftKey: boolean
   readonly x: number
   readonly y: number
+  readonly deltaMode?: number
+  readonly deltaX?: number
+  readonly deltaY?: number
+  readonly deltaZ?: number
 }
 
 export const forwardDesktopBackgroundMouseEvent = async (
@@ -171,8 +214,7 @@ const closeSurfaces = async (labels: ReadonlyArray<string>): Promise<void> => {
 }
 
 const restoreNormalMode = async (): Promise<void> => {
-  const {restoreBackgroundContent, restoreSurface} = await getSurfaceApi()
-  await restoreBackgroundContent({label: BACKGROUND_LABEL})
+  const {restoreSurface} = await getSurfaceApi()
   await restoreSurface({label: BACKGROUND_LABEL})
 }
 
@@ -223,6 +265,8 @@ const enterDesktopMode = async (): Promise<boolean> => {
 }
 
 export const applyDesktopMode = async (mode: DesktopMode): Promise<boolean> => {
+  invalidateBackgroundSynchronization()
+
   switch (mode) {
     case 'desktop':
       return enterDesktopMode()
@@ -267,7 +311,49 @@ export const synchronizeDesktopBackground = async (): Promise<void> => {
     return
   }
 
-  await synchronizeBackgroundContent({useChild: usesWebsiteChild})
+  const target = {mode, url: await readWebsiteBackgroundUrl()}
+  const revision = backgroundSynchronizationRevision
+  if (
+    lastBackgroundSynchronization?.revision === revision &&
+    hasSameSynchronizationTarget(lastBackgroundSynchronization.target, target)
+  ) {
+    return
+  }
+
+  const pending = pendingBackgroundSynchronization
+  if (
+    pending !== null &&
+    pending.revision === revision &&
+    hasSameSynchronizationTarget(pending.target, target)
+  ) {
+    await pending.promise
+    return
+  }
+
+  const operation = synchronizeBackgroundContent({
+    url: target.url,
+    useChild: usesWebsiteChild,
+  })
+  backgroundSynchronizationRequest += 1
+  const request = backgroundSynchronizationRequest
+  const promise = operation.then(() => {
+    if (
+      backgroundSynchronizationRevision === revision &&
+      backgroundSynchronizationRequest === request
+    ) {
+      lastBackgroundSynchronization = {revision, target}
+    }
+  })
+  const synchronization: PendingBackgroundSynchronization = {promise, revision, target}
+  pendingBackgroundSynchronization = synchronization
+
+  try {
+    await promise
+  } finally {
+    if (pendingBackgroundSynchronization === synchronization) {
+      pendingBackgroundSynchronization = null
+    }
+  }
 }
 
 /** Persists content-owned state by closing player and timer surfaces before mode publication. */

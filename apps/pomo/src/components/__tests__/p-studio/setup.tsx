@@ -33,7 +33,12 @@ import {PStudioTourHint} from 'src/components/p-studio/TourHint'
 import {useStudioScreenSaver} from 'src/components/p-studio/use-screen-saver'
 import {PScreenSaver} from 'src/components/p-screen-saver/PScreenSaver'
 import {PStudio} from 'src/components/p-studio/PStudio'
-import {type BackgroundController, DEFAULT_BACKGROUND, useBackground} from 'src/features/background'
+import {
+  type BackgroundController,
+  type BackgroundPreferences,
+  DEFAULT_BACKGROUND,
+  useBackground,
+} from 'src/features/background'
 import {Player as FramePlayer} from 'src/components/frame/Player'
 import {PTour} from 'src/components/tour/PTour'
 import {useDialogueSceneGaze} from 'src/components/use-dialogue-scene-gaze'
@@ -70,8 +75,10 @@ vi.mock('src/features/desktop-mode', () => ({
     handleContextMenu: vi.fn(),
     handlePointerCancel: vi.fn(),
     handlePointerDown: vi.fn(),
+    handlePointerLeave: vi.fn(),
     handlePointerMove: vi.fn(),
     handlePointerUp: vi.fn(),
+    handleWheel: vi.fn(),
   })),
 }))
 vi.mock('src/features/background', () => ({
@@ -148,6 +155,11 @@ export const configureStudio = (options: StudioOptions = {}) => {
   const [weatherSceneMode, setWeatherSceneMode] = createSignal<'auto' | 'rain'>(
     options.weatherSceneMode ?? 'auto',
   )
+  const [backgroundPreferences, setBackgroundPreferences] = createSignal<BackgroundPreferences>({
+    ...DEFAULT_BACKGROUND,
+    mode: options.backgroundMode ?? DEFAULT_BACKGROUND.mode,
+    websiteUrl: options.websiteUrl ?? DEFAULT_BACKGROUND.websiteUrl,
+  })
   const registerEventActionExecutor = vi.fn(() => vi.fn())
   const background: BackgroundController = {
     add: vi.fn(),
@@ -159,11 +171,7 @@ export const configureStudio = (options: StudioOptions = {}) => {
     load: vi.fn(),
     markFailed: vi.fn(),
     pick: vi.fn(),
-    preferences: () => ({
-      ...DEFAULT_BACKGROUND,
-      mode: options.backgroundMode ?? DEFAULT_BACKGROUND.mode,
-      websiteUrl: options.websiteUrl ?? DEFAULT_BACKGROUND.websiteUrl,
-    }),
+    preferences: backgroundPreferences,
     ready: () => true,
     remove: vi.fn(),
     retry: vi.fn(),
@@ -259,7 +267,13 @@ export const configureStudio = (options: StudioOptions = {}) => {
   vi.mocked(readFocusRoomEntrySession).mockReturnValue(options.entrySession ?? false)
   vi.mocked(supportsPSceneGyroscope).mockReturnValue(options.gyroscope ?? false)
 
-  return {registerEventActionExecutor, setDesktopMode, setWeatherReady}
+  return {
+    background,
+    registerEventActionExecutor,
+    setBackgroundPreferences,
+    setDesktopMode,
+    setWeatherReady,
+  }
 }
 
 export const publish = vi.fn()

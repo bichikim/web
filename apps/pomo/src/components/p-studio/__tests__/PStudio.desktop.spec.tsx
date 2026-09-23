@@ -62,6 +62,43 @@ describe('PStudio', () => {
     expect(vi.mocked(studioMocks.synchronizeDesktopBackground)).toHaveBeenCalled()
   })
 
+  it('should keep the character scene visible until a desktop website URL is saved', () => {
+    vi.stubEnv('VITE_POMO_IS_DESKTOP', 'true')
+    configureStudio({
+      backgroundMode: 'website',
+      desktopMode: 'normal',
+      entrySession: true,
+    })
+
+    renderStudio()
+
+    expect(screen.getByRole('img', {name: 'day-reading-focused'})).toBeInTheDocument()
+    expect(screen.queryByText('frame player')).not.toBeInTheDocument()
+  })
+
+  it('should not reload the website background for unrelated background preference changes', () => {
+    vi.stubEnv('VITE_POMO_IS_DESKTOP', 'true')
+    const {setBackgroundPreferences} = configureStudio({
+      backgroundMode: 'website',
+      desktopMode: 'normal',
+      entrySession: true,
+      websiteUrl: 'https://example.com/dashboard',
+    })
+
+    renderStudio()
+
+    expect(vi.mocked(studioMocks.synchronizeDesktopBackground)).toHaveBeenCalledOnce()
+
+    setBackgroundPreferences((preferences) => ({...preferences, photoSeconds: 30}))
+    expect(vi.mocked(studioMocks.synchronizeDesktopBackground)).toHaveBeenCalledOnce()
+
+    setBackgroundPreferences((preferences) => ({
+      ...preferences,
+      websiteUrl: 'https://example.com/updated',
+    }))
+    expect(vi.mocked(studioMocks.synchronizeDesktopBackground)).toHaveBeenCalledTimes(2)
+  })
+
   it('should keep the website event relay interactive when the desktop background is click-through', () => {
     vi.stubEnv('VITE_POMO_IS_DESKTOP', 'true')
     configureStudio({

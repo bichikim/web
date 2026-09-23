@@ -3,7 +3,11 @@ import * as m from '@paraglide/message'
 import {useStudioTourHint} from './use-studio-tour-hint'
 import {useUiAutoHide} from 'src/features/ui-auto-hide'
 import {useStudioDesktopSceneSettings} from './use-studio-desktop-scene-settings'
-import {type BackgroundController, useBackground} from '../../features/background'
+import {
+  type BackgroundController,
+  type BackgroundPreferences,
+  useBackground,
+} from '../../features/background'
 import {Player as FramePlayer} from '../frame/Player'
 import {
   createEffect,
@@ -165,10 +169,15 @@ interface StudioSceneViewProps {
   readonly websiteBackgroundInteraction?: ReturnType<typeof useWebsiteBackgroundInteraction>
 }
 
+const shouldRenderCharacterScene = (preferences: BackgroundPreferences): boolean =>
+  preferences.mode === 'character' ||
+  (preferences.mode === 'website' &&
+    (import.meta.env.VITE_POMO_IS_DESKTOP !== 'true' || preferences.websiteUrl === null))
+
 const StudioSceneView = (props: StudioSceneViewProps) => (
   <Show when={props.background.ready() || props.background.error() !== null}>
     <Switch fallback={<FramePlayer background={props.background} />}>
-      <Match when={props.background.preferences().mode === 'character'}>
+      <Match when={shouldRenderCharacterScene(props.background.preferences())}>
         <figure
           aria-label={props.scene.label}
           class="pomo-scene relative m-0 h-full w-full overflow-hidden bg-background"
@@ -203,7 +212,8 @@ const StudioSceneView = (props: StudioSceneViewProps) => (
       <Match
         when={
           import.meta.env.VITE_POMO_IS_DESKTOP === 'true' &&
-          props.background.preferences().mode === 'website'
+          props.background.preferences().mode === 'website' &&
+          props.background.preferences().websiteUrl !== null
         }
       >
         <div
@@ -214,8 +224,10 @@ const StudioSceneView = (props: StudioSceneViewProps) => (
             props.websiteBackgroundInteraction?.handlePointerCancel(event)
           }
           onPointerDown={(event) => props.websiteBackgroundInteraction?.handlePointerDown(event)}
+          onPointerLeave={(event) => props.websiteBackgroundInteraction?.handlePointerLeave(event)}
           onPointerMove={(event) => props.websiteBackgroundInteraction?.handlePointerMove(event)}
           onPointerUp={(event) => props.websiteBackgroundInteraction?.handlePointerUp(event)}
+          onWheel={(event) => props.websiteBackgroundInteraction?.handleWheel(event)}
         />
       </Match>
     </Switch>
@@ -455,9 +467,13 @@ export const PStudio = () => {
   )
   const activeViseme = useStudioViseme(events, pomoSay)
   const tourHint = useStudioTourHint(entry.enter, () => tour.setIsOpen(true))
+  const backgroundContent = createMemo(() => {
+    const preferences = background.preferences()
+    return preferences.mode === 'website' ? preferences.websiteUrl : preferences.mode
+  })
   createEffect(() => {
     background.ready()
-    background.preferences()
+    backgroundContent()
     if (import.meta.env.VITE_POMO_IS_DESKTOP === 'true' && desktopMode.mode() === 'normal') {
       synchronizeDesktopBackground().catch(() => undefined)
     }

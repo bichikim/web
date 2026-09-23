@@ -1,4 +1,4 @@
-use tauri::{AppHandle, Manager, Runtime, Webview, WebviewUrl, WebviewWindowBuilder};
+use tauri::{AppHandle, Manager, Runtime, Webview, WebviewUrl, WebviewWindowBuilder, Window};
 
 use crate::{
     SurfaceState,
@@ -11,13 +11,11 @@ use crate::{
     },
 };
 
-fn find_window<R: Runtime>(
-    app: &AppHandle<R>,
-    label: String,
-) -> Result<tauri::WebviewWindow<R>, CommandError> {
+fn find_window<R: Runtime>(app: &AppHandle<R>, label: String) -> Result<Window<R>, CommandError> {
     let label = validate_label(label)?;
 
-    app.get_webview_window(&label)
+    app.get_webview(&label)
+        .map(|webview| webview.window())
         .ok_or_else(|| Error::WindowNotFound(label).into())
 }
 
@@ -90,18 +88,15 @@ pub(crate) async fn navigate_background_surface<R: Runtime>(
     {
         let options = ValidatedBackgroundNavigation::try_from(options)?;
         let webview = find_webview(&app, options.label)?;
-        if let Some(window) = app.get_webview_window(webview.label()) {
-            crate::macos::navigate_background_surface(
-                &state,
-                &window,
-                options.url,
-                options.use_child,
-            )
-            .map_err(Into::into)
-        } else {
-            crate::macos::navigate_background_webview(&state, &webview, options.url)
-                .map_err(Into::into)
-        }
+        let window = webview.window();
+        crate::macos::navigate_background_surface(
+            &state,
+            &window,
+            &webview,
+            options.url,
+            options.use_child,
+        )
+        .map_err(Into::into)
     }
 }
 
@@ -131,11 +126,8 @@ pub(crate) async fn restore_background_content<R: Runtime>(
     #[cfg(target_os = "macos")]
     {
         let webview = find_webview(&app, label)?;
-        if let Some(window) = app.get_webview_window(webview.label()) {
-            crate::macos::restore_background_content(&state, &window).map_err(Into::into)
-        } else {
-            crate::macos::restore_background_webview(&state, &webview).map_err(Into::into)
-        }
+        let window = webview.window();
+        crate::macos::restore_background_content(&state, &window, &webview).map_err(Into::into)
     }
 
     #[cfg(not(target_os = "macos"))]
@@ -151,10 +143,11 @@ pub(crate) async fn restore_surface<R: Runtime>(
     state: tauri::State<'_, SurfaceState>,
     label: String,
 ) -> Result<(), CommandError> {
-    let window = find_window(&app, label)?;
+    let webview = find_webview(&app, label)?;
+    let window = webview.window();
 
     #[cfg(target_os = "macos")]
-    return crate::macos::restore(&state, &window).map_err(Into::into);
+    return crate::macos::restore(&state, &window, &webview).map_err(Into::into);
 
     #[cfg(not(target_os = "macos"))]
     Err(Error::UnsupportedPlatform(std::env::consts::OS).into())
