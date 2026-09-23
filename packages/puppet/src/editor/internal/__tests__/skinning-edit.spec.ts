@@ -44,12 +44,12 @@ test('should paint across a fast stroke only once per vertex and preserve protec
   const stroke = createSkinStroke({
     binding: skin(),
     indices: [0, 1, 2],
-    target: 0,
-    radius: 5,
-    vertices: [0, 0, 10, 0, 20, 0],
     mode: 'add',
     protect: true,
+    radius: 5,
     strength: 0.5,
+    target: 0,
+    vertices: [0, 0, 10, 0, 20, 0],
   })
   stroke.paint({x: 0, y: 0})
   const result = stroke.paint({x: 20, y: 0})
@@ -69,13 +69,13 @@ test('should smooth from mesh neighbors and restrict painting to selected vertic
   const stroke = createSkinStroke({
     binding: source,
     indices: [0, 1, 2],
-    target: 0,
-    radius: 30,
-    vertices: [0, 0, 10, 0, 20, 0],
     mode: 'smooth',
     protect: false,
-    strength: 1,
+    radius: 30,
     selected: [1],
+    strength: 1,
+    target: 0,
+    vertices: [0, 0, 10, 0, 20, 0],
   })
   expect(stroke.paint({x: 10, y: 0}).influences[0]!.weights).toEqual([0, 0.5, 1])
 })

@@ -93,9 +93,9 @@ test('should interpolate one-dimensional Glue samples and use rest values for mi
           {
             parts: [
               {
+                glue: [{id: 'glue-1', strength: 0, weight: 0}],
                 partId: part.id,
                 vertices: part.mesh.vertices,
-                glue: [{id: 'glue-1', weight: 0, strength: 0}],
               },
             ],
             values: [-30] as const,

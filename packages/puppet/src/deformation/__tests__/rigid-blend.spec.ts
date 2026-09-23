@@ -6,12 +6,12 @@ const rotation = (angle: number, pivot = {x: 0, y: 0}) => {
   const cosine = Math.cos(angle)
   const sine = Math.sin(angle)
   return {
+    x: pivot.x - cosine * pivot.x + sine * pivot.y,
     xx: cosine,
     xy: -sine,
-    yx: sine,
-    x: pivot.x - cosine * pivot.x + sine * pivot.y,
-    yy: cosine,
     y: pivot.y - sine * pivot.x - cosine * pivot.y,
+    yx: sine,
+    yy: cosine,
   }
 }
 

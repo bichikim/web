@@ -1,5 +1,5 @@
 import {WeightPaintControls} from './WeightPaintControls'
-import {EditorButton, EditorToggleButton, EditorNumberField} from '../../design-system'
+import {EditorButton, EditorNumberField, EditorToggleButton} from '../../design-system'
 import {For, Index, Show} from 'solid-js'
 import type {SelectedDeformerProps} from './DeformerEditor'
 import {useDeformerWeights} from './use-deformer-weights'

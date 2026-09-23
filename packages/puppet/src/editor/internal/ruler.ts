@@ -24,6 +24,6 @@ export const getRulerTicks = (
   return Array.from({length: Math.max(0, end - start + 1)}, (_, index) => {
     const tick = start + index
     const value = tick * step
-    return {position: (value - offset) * zoom, value, major: tick % SUBDIVISIONS === 0}
+    return {major: tick % SUBDIVISIONS === 0, position: (value - offset) * zoom, value}
   })
 }

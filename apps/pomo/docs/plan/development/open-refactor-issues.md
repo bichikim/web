@@ -47,6 +47,6 @@
 
 ## 검증
 
-- `pnpm test:vitest`: 1,794개 파일, 10,600개 테스트 통과. PGlite·SQLite 등을 쓰는 런타임 통합 프로젝트 5개 스펙도 포함한다. 최초 전체 실행에서 채팅 워커 스펙 5개가 느린 모듈 로딩으로 기본 5초 제한에 걸려, 해당 스펙에만 30초 제한을 적용한 뒤 기본 명령으로 재검증했다.
+- `pnpm test:vitest`: 최신 `origin/dev` 병합 후 1,795개 파일, 10,611개 테스트 통과. PGlite·SQLite 등을 쓰는 런타임 통합 프로젝트 5개 스펙도 포함한다. 최초 전체 실행에서 채팅 워커 스펙 5개가 느린 모듈 로딩으로 기본 5초 제한에 걸려, 해당 스펙에만 30초 제한을 적용한 뒤 기본 명령으로 재검증했다.
 - `pnpm --filter @apps/pomo typecheck`, `pnpm exec oxlint --quiet`, `pnpm format`, `git diff --check` 통과. `graft build`로 변경 후 그래프를 갱신했다.
 - Wallaby의 일부 jsdom 스펙은 `localStorage`가 없는 편집기 실행 환경에서 setup hook이 실패했다. 같은 스펙은 저장소 Vitest 실행에서 통과했다.

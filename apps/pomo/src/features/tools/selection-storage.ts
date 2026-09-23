@@ -35,7 +35,14 @@ const createSelectionStorage = <T>(
     return restorePreferredValue({
       preferred: webValue,
       repair: (value) => storage.writeToss(key, value).catch(reportRepairError),
-      restore: () => storage.readToss(key, parse),
+      restore: async () => {
+        const tossValue = await storage.readToss(key, parse)
+        if (tossValue !== null) {
+          // Keep the selection available when the Toss bridge disappears before the next read.
+          storage.writeWeb(key, tossValue)
+        }
+        return tossValue
+      },
     })
   }
   const write = createAuthoritativeWriter<T>({

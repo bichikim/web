@@ -24,10 +24,10 @@ export const LayerContainerIcon = (props: LayerContainerIconProps) => (
       class="puppet-icon layer-container-icon puppet-layer-container-icon deformer"
       classList={{
         'puppet-icon-bone': props.bone && !props.rotation,
-        'puppet-icon-pin': props.pin,
         'puppet-icon-curve': props.curve,
-        'puppet-icon-rotation': props.rotation,
         'puppet-icon-mesh': !props.curve && !props.bone && !props.pin && !props.rotation,
+        'puppet-icon-pin': props.pin,
+        'puppet-icon-rotation': props.rotation,
       }}
       data-layer-icon="deformer"
     />

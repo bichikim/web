@@ -287,16 +287,16 @@ const createMeshEditorState = (props: MeshEditorProps): MeshEditorState => {
   })
 
   createEffect(() => {
-    const {document} = props
+    const {activePartId: nextActivePartId, document, meshEditing} = props
 
     if (
       document !== activeDocument ||
-      props.meshEditing !== activeEditing ||
-      props.activePartId !== activePartId
+      meshEditing !== activeEditing ||
+      nextActivePartId !== activePartId
     ) {
       activeDocument = document
-      activeEditing = props.meshEditing
-      activePartId = props.activePartId
+      activeEditing = meshEditing
+      activePartId = nextActivePartId
       setDraggingVertex(null)
       setDraggingTime(null)
       setDraggingValues(null)
