@@ -387,19 +387,38 @@ export const deleteAlbumDraft = async (
   options: DeleteAlbumDraftOptions = {},
 ): Promise<AlbumDraftStorageResult> => {
   const storage = options.storage ?? BROWSER_STORAGE
-  let deletionResult = storageSuccess()
+
+  if (coverDraftId !== null) {
+    let draftData: string | null
+
+    try {
+      draftData = storage.readData()
+    } catch (error: unknown) {
+      console.warn('Failed to read the admin album draft before deletion.', error)
+      return storageFailure(error)
+    }
+
+    const coverDeletionResult = await deleteAlbumDraftCover(coverDraftId, options)
+
+    if (!coverDeletionResult.success) {
+      return coverDeletionResult
+    }
+
+    try {
+      if (storage.readData() !== draftData) {
+        return storageSuccess()
+      }
+    } catch (error: unknown) {
+      console.warn('Failed to confirm the admin album draft before deletion.', error)
+      return storageFailure(error)
+    }
+  }
 
   try {
     storage.deleteData()
+    return storageSuccess()
   } catch (error: unknown) {
     console.warn('Failed to delete the admin album draft.', error)
-    deletionResult = storageFailure(error)
+    return storageFailure(error)
   }
-
-  if (coverDraftId === null) {
-    return deletionResult
-  }
-
-  const coverDeletionResult = await deleteAlbumDraftCover(coverDraftId, options)
-  return coverDeletionResult.success ? deletionResult : coverDeletionResult
 }
