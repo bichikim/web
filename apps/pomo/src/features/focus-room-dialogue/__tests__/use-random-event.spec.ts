@@ -107,7 +107,7 @@ it('should wait for visibility before starting when initially hidden', async () 
   result.view.unmount()
 })
 
-it('should reschedule when a random event timer fires while hidden without a visibility change', async () => {
+it('should reschedule after a hidden timer when no visibilitychange event fires', async () => {
   settingsMocks.read.mockResolvedValue({maximumMinutes: 1, minimumMinutes: 1, version: 1})
   const onEvent = vi.fn()
   const result = renderRandomEvent({onEvent, random: () => 0})
