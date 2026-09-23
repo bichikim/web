@@ -49,7 +49,7 @@ test('should attach multiple vertices to a moving edge without moving its endpoi
   const connections = [0, 0.5, 1].map((position, vertexIndex) => ({
     first: {partId: 'a', vertexIndex},
     id: `edge-${vertexIndex}`,
-    second: {partId: 'b', edge: {endIndex: 1, position}, vertexIndex: 0},
+    second: {edge: {endIndex: 1, position}, partId: 'b', vertexIndex: 0},
     strength: 1,
     weight: 1,
   }))

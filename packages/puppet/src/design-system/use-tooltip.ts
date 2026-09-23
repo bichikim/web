@@ -62,7 +62,7 @@ export const useTooltip = () => {
       }
       target = element
       const value = readTooltipLabel(element)
-      restore = connectTooltipTarget({element, anchor, id, supported})
+      restore = connectTooltipTarget({anchor, element, id, supported})
       if (!supported) {
         return
       }
@@ -144,5 +144,5 @@ export const useTooltip = () => {
       document.defaultView?.removeEventListener('blur', close)
     })
   })
-  return {id, anchor, text, side, arrow, setSurface}
+  return {anchor, arrow, id, setSurface, side, text}
 }

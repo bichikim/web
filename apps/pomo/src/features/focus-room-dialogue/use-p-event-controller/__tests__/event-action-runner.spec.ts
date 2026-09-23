@@ -4,6 +4,7 @@ import {createSignal} from 'solid-js'
 import {describe, expect, it, vi} from 'vitest'
 
 import type {EventActionIds} from '../../event-context'
+import {RANDOM_DIALOGUE_EVENT} from '../../schema'
 import {createEventActionRunner} from '../event-action-runner'
 
 describe('createEventActionRunner', () => {
@@ -48,13 +49,33 @@ describe('createEventActionRunner', () => {
     runner.dispose()
   })
 
+  it('should retain random actions after an active executor is unregistered', async () => {
+    const actionIds: EventActionIds = {[RANDOM_DIALOGUE_EVENT]: ['music-start']}
+    const [getActionIds] = createSignal(actionIds)
+    const runner = createEventActionRunner(getActionIds)
+    const firstExecutor = vi.fn()
+    const unregister = runner.register(firstExecutor)
+    unregister()
+
+    const pendingPlayback = runner.run([RANDOM_DIALOGUE_EVENT])
+    expect(pendingPlayback).toBeDefined()
+
+    const secondExecutor = vi.fn()
+    runner.register(secondExecutor)
+    await pendingPlayback
+
+    expect(secondExecutor).toHaveBeenCalledExactlyOnceWith('music-start')
+    runner.dispose()
+  })
+
   it.each([
     ['focus-start', 'music-start'],
     ['break-start', 'music-start'],
     ['long-break-start', 'music-start'],
+    ['long-break-end', 'music-start'],
     ['long-break-end', 'music-stop'],
   ] as const)(
-    'should retain %s actions after an active executor is unregistered',
+    'should retain actions for %s with %s after an active executor is unregistered',
     async (eventId, actionId) => {
       const actionIds: EventActionIds = {[eventId]: [actionId]}
       const [getActionIds] = createSignal(actionIds)

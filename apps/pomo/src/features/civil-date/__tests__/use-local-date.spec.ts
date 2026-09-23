@@ -64,11 +64,11 @@ it('should use one time zone snapshot for each refresh', () => {
     let reads = 0
     const runtime = createRuntime(() => now)
     const props = {
+      runtime,
       get timeZone() {
         reads += 1
         return reads === 1 ? 'Asia/Seoul' : 'America/New_York'
       },
-      runtime,
     }
     const view = renderHook(() => useLocalDate(props))
 

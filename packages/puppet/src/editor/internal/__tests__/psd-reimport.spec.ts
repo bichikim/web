@@ -14,9 +14,9 @@ const source = () => {
     parts: document.parts.map((part, index) => ({
       ...part,
       psdSource: {
+        height: part.texture.height,
         layerId: index + 10,
         path: [part.id],
-        height: part.texture.height,
         width: part.texture.width,
         x: 0,
         y: 0,

@@ -45,6 +45,10 @@ export interface AuthProviderProps {
 
 export const useUserQuery = withHandyQuery(userQuery)
 
+const revalidateUser = async () => {
+  await revalidate(userQuery.key)
+}
+
 export function AuthProvider(props: AuthProviderProps) {
   const user = createAsync(() => userQuery(), {deferStream: true})
   const changePassword = useAction(changePasswordAction)
@@ -53,10 +57,6 @@ export function AuthProvider(props: AuthProviderProps) {
   const runSignInWithPassword = useAction(signInAction)
   const runSignOut = useAction(signOutAction)
   const runDeleteAccount = useAction(deleteAccountAction)
-
-  const revalidateUser = async () => {
-    await revalidate(userQuery.key)
-  }
 
   const verifyOtp: AuthContext['verifyOtp'] = async (payload) => {
     const user = await runVerifyOtp(payload)

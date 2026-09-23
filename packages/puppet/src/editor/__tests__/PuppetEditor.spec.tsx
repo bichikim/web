@@ -93,10 +93,10 @@ describe('PuppetEditor', () => {
           id: 'vertex-motion',
           tracks: [
             {
-              kind: 'vertex',
               axis: 'x',
-              partId: 'mesh-preview',
               keyframes: [{time: 0, value: 0}],
+              kind: 'vertex',
+              partId: 'mesh-preview',
               vertexIndex: 0,
             },
           ],

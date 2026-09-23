@@ -272,15 +272,15 @@ export const moveMeshVertex = (options: MovePartVertexOptions): MoveMeshVertexRe
                     : remapShape({
                         part,
                         sample,
-                        shape: step.rest,
                         sampleValues,
+                        shape: step.rest,
                         vertexIndex: options.vertexIndex,
                       }),
                 shape: remapShape({
                   part,
                   sample,
-                  shape: step.shape,
                   sampleValues,
+                  shape: step.shape,
                   vertexIndex: options.vertexIndex,
                 }),
               })),

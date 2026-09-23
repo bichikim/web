@@ -14,27 +14,27 @@ test('should transform references inside deformer bind shapes and preserve unrel
     throw new Error('Expected deformer fixture')
   }
   const shape = {
-    bounds: root.bounds,
-    deformerType: undefined,
     boneRestPoints: root.boneRestPoints,
+    boneWeights: [{partId: 'upper', vertexIndex: 0, weights: [1]}],
+    bounds: root.bounds,
     columns: root.columns,
     controlPoints: root.controlPoints,
+    deformerType: undefined,
     rows: root.rows,
-    boneWeights: [{partId: 'upper', vertexIndex: 0, weights: [1]}],
     vertexInfluences: [{partId: 'upper', vertexIndex: 0, weight: 0.5}],
   }
   const document = {
     ...parsed.document,
-    parameters: [],
-    parts: [parsed.document.parts[0]!],
     motions: [],
     parameterBindings: [],
+    parameters: [],
+    parts: [parsed.document.parts[0]!],
     scene: {
       roots: [
         {
           ...root,
           ...shape,
-          binding: {rest: shape, steps: [{shape, rest: shape}]},
+          binding: {rest: shape, steps: [{rest: shape, shape}]},
           children: [root.children[0]!],
         },
       ],

@@ -1,7 +1,7 @@
 import {JointControls} from './JointControls'
 import {DeformerWeights} from './DeformerWeights'
 import {DeformerMode} from './DeformerMode'
-import {EditorToggleButton, EditorButton} from '../../design-system'
+import {EditorButton, EditorToggleButton} from '../../design-system'
 import {For, Show} from 'solid-js'
 import {useBoneEditor, type UseBoneEditorProps} from './use-bone-editor'
 
