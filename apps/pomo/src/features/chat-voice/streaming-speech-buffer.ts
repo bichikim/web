@@ -19,13 +19,15 @@ export const createStreamingSpeechBuffer = (
 ): StreamingSpeechBuffer => {
   const segmenter = new Intl.Segmenter(options.locale, {granularity: 'sentence'})
   let consumedLength = 0
+  let consumedText = ''
 
   const reset = () => {
     consumedLength = 0
+    consumedText = ''
   }
 
   const update = (text: string) => {
-    if (text.length < consumedLength) {
+    if (!text.startsWith(consumedText)) {
       reset()
     }
 
@@ -36,7 +38,8 @@ export const createStreamingSpeechBuffer = (
     const lastSegment = completedSegments.at(-1)
 
     if (lastSegment !== undefined) {
-      consumedLength += lastSegment.index + lastSegment.segment.length
+      consumedLength += lastSegment.index + lastSegment.segment.trimEnd().length
+      consumedText = text.slice(0, consumedLength)
     }
 
     return completedSegments
@@ -51,6 +54,7 @@ export const createStreamingSpeechBuffer = (
 
     const remainingText = text.slice(consumedLength).trim()
     consumedLength = text.length
+    consumedText = text
     return remainingText.length > 0 ? remainingText : null
   }
 

@@ -2,6 +2,7 @@ import {selectMaximumBy} from 'src/utils/select-maximum-by'
 import {z} from 'zod'
 
 import {
+  createLatestStorageWriter,
   hasNativeStorageBridge,
   readTossStorageJson,
   readWebStorageJson,
@@ -56,6 +57,8 @@ export const createAutoStartStorage = ({
   storage,
   now,
 }: AutoStartStorageOptions): AutoStartStorage => {
+  const writeLatestToss = createLatestStorageWriter(AUTO_START_STORAGE_KEY, storage.writeToss)
+
   const readWebPreference = () => {
     return (
       storage.readWeb(AUTO_START_STORAGE_KEY, parsePreference) ??
@@ -96,7 +99,7 @@ export const createAutoStartStorage = ({
       )
 
       if (latestPreference !== null && latestPreference === currentWebPreference) {
-        await storage.writeToss(AUTO_START_STORAGE_KEY, latestPreference).catch(() => undefined)
+        await writeLatestToss(latestPreference).catch(() => undefined)
       }
 
       return latestPreference?.isEnabled ?? false
@@ -119,7 +122,7 @@ export const createAutoStartStorage = ({
     }
 
     try {
-      await storage.writeToss(AUTO_START_STORAGE_KEY, preference)
+      await writeLatestToss(preference)
     } catch (error: unknown) {
       if (webWriteError !== null) {
         throw new Error('Failed to persist auto-start preference.', {cause: error})

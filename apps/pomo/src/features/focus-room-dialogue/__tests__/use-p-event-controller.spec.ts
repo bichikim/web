@@ -161,7 +161,7 @@ it('should retain an entry action until event bindings finish loading', async ()
   view.cleanup()
 })
 
-it('should not replay a non-entry action that happened before executor registration', async () => {
+it('should replay an action that happened before executor registration', async () => {
   repositoryMocks.listEventBindings.mockResolvedValue([
     {
       actionIds: ['music-stop'],
@@ -175,16 +175,17 @@ it('should not replay a non-entry action that happened before executor registrat
   const view = renderHook(() => usePEventController({}))
   await vi.waitFor(() => expect(view.result.isLoading()).toBe(false))
 
-  await view.result.playDialogueEvents(['focus-start'])
+  const pendingPlayback = view.result.playDialogueEvents(['focus-start'])
 
   const executor = vi.fn()
   view.result.registerEventActionExecutor?.(executor)
+  await pendingPlayback
 
-  expect(executor).not.toHaveBeenCalled()
+  expect(executor).toHaveBeenCalledExactlyOnceWith('music-stop')
   view.cleanup()
 })
 
-it('should not replay an event action after its executor has been unregistered', async () => {
+it('should replay a focus-start action after its executor has been unregistered', async () => {
   repositoryMocks.listEventBindings.mockResolvedValue([
     {
       actionIds: ['music-start'],
@@ -202,13 +203,14 @@ it('should not replay an event action after its executor has been unregistered',
   const unregister = view.result.registerEventActionExecutor?.(firstExecutor)
   unregister?.()
 
-  await view.result.playDialogueEvents(['focus-start'])
+  const pendingPlayback = view.result.playDialogueEvents(['focus-start'])
 
   const nextExecutor = vi.fn()
   view.result.registerEventActionExecutor?.(nextExecutor)
+  await pendingPlayback
 
   expect(firstExecutor).not.toHaveBeenCalled()
-  expect(nextExecutor).not.toHaveBeenCalled()
+  expect(nextExecutor).toHaveBeenCalledExactlyOnceWith('music-start')
   view.cleanup()
 })
 

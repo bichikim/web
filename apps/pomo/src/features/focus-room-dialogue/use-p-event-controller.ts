@@ -450,6 +450,7 @@ export const usePEventController = (props: UsePEventControllerProps): PEventCont
       }
     },
     registerEventActionExecutor: eventActionRunner.register,
+    registerEventActionHandler: eventActionRunner.registerHandler,
     retryDialoguePlayback: () => {
       if (isPlaybackEnabled()) {
         playback.retry()

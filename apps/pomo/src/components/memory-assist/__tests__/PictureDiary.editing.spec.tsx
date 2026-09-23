@@ -67,7 +67,7 @@ it('should edit an existing entry, retry a failed save, and preserve the new dia
   expect(screen.getByLabelText('그림일기 내용')).toHaveValue('작성 중인 새 일기')
 })
 
-it('should ignore an edit save completed after disposal', async () => {
+it('should restore an edit save completed after disposal', async () => {
   const pending = Promise.withResolvers<void>()
   const entry: PictureDiaryEntry = {
     createdAt: '2026-09-04T03:00:00.000Z',
@@ -97,5 +97,7 @@ it('should ignore an edit save completed after disposal', async () => {
   pending.resolve()
 
   await expect(saving).resolves.toBeUndefined()
+  expect(repository.save).toHaveBeenCalledTimes(2)
+  expect(repository.save).toHaveBeenNthCalledWith(2, entry)
   expect(onSaved).not.toHaveBeenCalled()
 })
