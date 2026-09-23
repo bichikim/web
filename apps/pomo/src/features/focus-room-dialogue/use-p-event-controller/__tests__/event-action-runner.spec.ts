@@ -68,10 +68,16 @@ describe('createEventActionRunner', () => {
     runner.dispose()
   })
 
-  it.each(['focus-start', 'break-start', 'long-break-start', 'long-break-end'] as const)(
-    'should retain %s actions after an active executor is unregistered',
-    async (eventId) => {
-      const actionIds: EventActionIds = {[eventId]: ['music-start']}
+  it.each([
+    ['focus-start', 'music-start'],
+    ['break-start', 'music-start'],
+    ['long-break-start', 'music-start'],
+    ['long-break-end', 'music-start'],
+    ['long-break-end', 'music-stop'],
+  ] as const)(
+    'should retain actions for %s with %s after an active executor is unregistered',
+    async (eventId, actionId) => {
+      const actionIds: EventActionIds = {[eventId]: [actionId]}
       const [getActionIds] = createSignal(actionIds)
       const runner = createEventActionRunner(getActionIds)
       const unregister = runner.register(vi.fn())
@@ -86,7 +92,7 @@ describe('createEventActionRunner', () => {
       runner.register(nextExecutor)
       await pendingPlayback
 
-      expect(nextExecutor).toHaveBeenCalledExactlyOnceWith('music-start')
+      expect(nextExecutor).toHaveBeenCalledExactlyOnceWith(actionId)
       runner.dispose()
     },
   )
