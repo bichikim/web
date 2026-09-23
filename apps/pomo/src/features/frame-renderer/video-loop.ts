@@ -1,4 +1,5 @@
 import {type Application, Sprite, Texture, type Ticker} from 'pixi.js'
+import {cosineEaseOutAlpha} from './cosine-ease-out-alpha'
 
 const CENTER_ANCHOR = 0.5
 const FADE_DURATION = 700
@@ -62,7 +63,7 @@ export class VideoLoop {
     this.#elapsed += ticker.elapsedMS
     const progress = Math.min(1, this.#elapsed / FADE_DURATION)
     if (this.#overlay !== null) {
-      this.#overlay.alpha = (1 + Math.cos(Math.PI * progress)) / 2
+      this.#overlay.alpha = cosineEaseOutAlpha(this.#elapsed, FADE_DURATION)
     }
     if (progress >= 1) {
       this.destroy()

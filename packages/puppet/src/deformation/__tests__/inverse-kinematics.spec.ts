@@ -4,15 +4,15 @@ import {solveBoneIk} from '../inverse-kinematics'
 
 const node: PuppetSceneDeformerNode = {
   boneRestPoints: [0, 0, 50, 0, 100, 0],
-  bounds: {width: 100, x: 0, height: 100, y: 0},
+  bounds: {height: 100, width: 100, x: 0, y: 0},
   children: [],
   columns: 1,
   controlPoints: [0, 0, 50, 0, 100, 0],
   id: 'bone',
   kind: 'deformer',
   locked: false,
-  rows: 1,
   name: 'Bone',
+  rows: 1,
   visible: true,
 }
 test.each([

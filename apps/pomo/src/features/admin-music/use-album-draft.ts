@@ -3,6 +3,9 @@ import {useAction, useSubmission} from '@solidjs/router'
 import {createSignal, type JSX, onCleanup, type Setter} from 'solid-js'
 import {z} from 'zod'
 
+import {createSerialTaskQueue} from 'src/utils/create-serial-task-queue'
+
+import {replaceBlobObjectUrl} from '../blob-object-url'
 import {
   type AlbumCreationCallbacks,
   type AlbumCreationServices,
@@ -34,8 +37,7 @@ const clearCoverPreview = (
   setCoverPreviewUrl: Setter<string | null>,
 ): void => {
   if (currentUrl !== null) {
-    URL.revokeObjectURL(currentUrl)
-    setCoverPreviewUrl(null)
+    setCoverPreviewUrl(replaceBlobObjectUrl(currentUrl, () => null))
   }
 }
 
@@ -188,15 +190,8 @@ const createDraftPersistence = (
   setMessage: Setter<string | null>,
   updateDraftReference: DraftReferenceUpdater,
 ): DraftPersistence => {
-  let persistence = Promise.resolve()
-  const enqueue = <Value>(operation: () => Promise<Value>): Promise<Value> => {
-    const queuedOperation = persistence.then(operation)
-    persistence = queuedOperation.then(
-      () => undefined,
-      () => undefined,
-    )
-    return queuedOperation
-  }
+  const queue = createSerialTaskQueue()
+  const enqueue = queue.run
 
   return {
     enqueue,
@@ -204,7 +199,7 @@ const createDraftPersistence = (
       const draft = getDraftData()
       enqueue(() => persistDraftData(draft, setMessage, updateDraftReference))
     },
-    wait: () => persistence,
+    wait: queue.settle,
   }
 }
 
@@ -301,7 +296,7 @@ const applyRestoredDraft = (
     options.setCoverDraftId(draft.coverDraftId)
     if (coverFile !== null) {
       options.setPreparedCoverFile(coverFile)
-      options.setCoverPreviewUrl(URL.createObjectURL(coverFile))
+      options.setCoverPreviewUrl(replaceBlobObjectUrl(null, () => coverFile))
     }
   }
 }
@@ -346,18 +341,12 @@ const createActionAlbumCreationServices = (
   updateDraftReference: DraftReferenceUpdater,
 ): AlbumCreationServices => ({
   clearDraft: async (coverDraftId) => {
-    const didClearDraft = await albumCreationServices.clearDraft(null)
+    const didClearReference = (await updateDraftReference(null)).success
+    const didClearDraft = await albumCreationServices.clearDraft(
+      didClearReference ? coverDraftId : null,
+    )
 
-    if (!didClearDraft || !(await updateDraftReference(null)).success) {
-      return false
-    }
-
-    if (coverDraftId === null) {
-      return true
-    }
-
-    const {deleteAlbumDraftCover} = await getAlbumDraftStorage()
-    return (await deleteAlbumDraftCover(coverDraftId)).success
+    return didClearReference && didClearDraft
   },
   createAlbum: (draft, coverFile) =>
     createAlbumThroughAction(
@@ -444,7 +433,7 @@ const createCoverChangeHandler =
       options.markCoverEdited()
       options.setPreparedCoverFile(preparedFile)
       options.setCoverDraftId(nextCoverDraftId)
-      options.setCoverPreviewUrl(URL.createObjectURL(preparedFile))
+      options.setCoverPreviewUrl(replaceBlobObjectUrl(null, () => preparedFile))
       await options.restorationBarrier.wait()
 
       if (options.getIsDisposed() || preparationId !== options.coverPreparation.id) {

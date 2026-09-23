@@ -16,17 +16,27 @@ interface PhysicsNumberFieldDefinition {
 }
 
 const PHYSICS_PARAMETER_FIELDS: ReadonlyArray<PhysicsParameterFieldDefinition> = [
-  {label: '입력 parameter', property: 'inputParameterId'},
-  {label: '출력 parameter', property: 'outputParameterId'},
+  {label: '입력 파라미터', property: 'inputParameterId'},
+  {label: '출력 파라미터', property: 'outputParameterId'},
 ]
 
 const PHYSICS_NUMBER_FIELDS: ReadonlyArray<PhysicsNumberFieldDefinition> = [
   {label: '중력', minimum: 0.01, property: 'gravity', step: 0.1},
   {label: '길이', minimum: 0.01, property: 'length', step: 0.1},
   {label: '감쇠', minimum: 0, property: 'damping', step: 0.1},
-  {label: '입력 배율', property: 'inputScale', step: 0.1},
-  {label: '출력 배율', property: 'outputScale', step: 0.1},
 ]
+
+const INPUT_DIRECTIONS = ['forward', 'reverse'] as const
+const MINIMUM_INPUT_RANGE = 0.01
+type PhysicsInputDirection = (typeof INPUT_DIRECTIONS)[number]
+
+const getInputDirection = (scale: number): PhysicsInputDirection =>
+  scale < 0 ? 'reverse' : 'forward'
+
+const getInputRange = (scale: number) => (scale === 0 ? 1 : 1 / Math.abs(scale))
+
+const getInputScale = (direction: PhysicsInputDirection, range: number) =>
+  (direction === 'reverse' ? -1 : 1) / Math.max(MINIMUM_INPUT_RANGE, range)
 
 export interface PhysicsPendulumEditorProps {
   readonly disabled: boolean
@@ -79,8 +89,21 @@ const getParameterOptions = (
 }
 
 export const PhysicsPendulumEditor = (props: PhysicsPendulumEditorProps) => {
-  const title = () => `Pendulum ${props.index() + 1}`
+  const title = () => `물리 연결 ${props.index() + 1}`
   const parameterLabel = (parameterId: string) => getParameterLabel(props.document, parameterId)
+  const inputDirection = () => getInputDirection(props.pendulum.inputScale)
+  const handleDirectionChange = (value: string) => {
+    if (value !== 'forward' && value !== 'reverse') {
+      return
+    }
+    props.onNumberChange(
+      props.pendulum.id,
+      'inputScale',
+      getInputScale(value, getInputRange(props.pendulum.inputScale)),
+    )
+  }
+  const handleInputRangeChange = (range: number) =>
+    props.onNumberChange(props.pendulum.id, 'inputScale', getInputScale(inputDirection(), range))
 
   return (
     <article class="physics-pendulum">
@@ -123,6 +146,44 @@ export const PhysicsPendulumEditor = (props: PhysicsPendulumEditorProps) => {
         </For>
       </div>
       <div class="physics-number-fields">
+        <label>
+          입력 방향
+          <EditorSelect
+            disabled={props.disabled}
+            label={`${title()} 입력 방향`}
+            options={[...INPUT_DIRECTIONS]}
+            optionLabel={(value) => (value === 'reverse' ? '반대 방향' : '같은 방향')}
+            value={inputDirection()}
+            onChange={handleDirectionChange}
+          />
+        </label>
+        <label>
+          입력 범위
+          <EditorNumberField
+            disabled={props.disabled}
+            label={`${title()} 입력 범위`}
+            minimum={MINIMUM_INPUT_RANGE}
+            name={`${props.pendulum.id}-input-range`}
+            step={0.1}
+            value={getInputRange(props.pendulum.inputScale)}
+            onEditEnd={props.onEditEnd}
+            onEditStart={props.onEditStart}
+            onValueChange={handleInputRangeChange}
+          />
+        </label>
+        <label>
+          물리 강도
+          <EditorNumberField
+            disabled={props.disabled}
+            label={`${title()} 물리 강도`}
+            name={`${props.pendulum.id}-output-strength`}
+            step={0.1}
+            value={props.pendulum.outputScale}
+            onEditEnd={props.onEditEnd}
+            onEditStart={props.onEditStart}
+            onValueChange={(value) => props.onNumberChange(props.pendulum.id, 'outputScale', value)}
+          />
+        </label>
         <For each={PHYSICS_NUMBER_FIELDS}>
           {(field) => (
             <label>

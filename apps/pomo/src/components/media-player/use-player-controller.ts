@@ -1,6 +1,7 @@
 import {type Preference, usePreference} from 'src/hooks/use-preference'
 import {type Accessor, createEffect, createMemo, createSignal, onCleanup, untrack} from 'solid-js'
 import {useEvent} from '@winter-love/solid-use/event'
+import {clamp} from 'es-toolkit/math'
 
 import {
   createInitialPlaybackState,
@@ -49,7 +50,7 @@ export interface PlayerController extends PlayerState {
 }
 
 const clampTrackIndex = (index: number, trackCount: number) =>
-  Math.min(Math.max(index, 0), Math.max(trackCount - 1, 0))
+  clamp(index, 0, Math.max(trackCount - 1, 0))
 
 /** 음악 목록, 곡 선택·반복·셔플 정책, 저장된 재생 위치 복원과 미리듣기를 조율한다. */
 // oxlint-disable-next-line eslint/max-lines-per-function, eslint/max-statements -- Transport, persistence, and lifecycle callbacks remain coordinated here; playlist queue mutations are extracted to create-player-queue-controller.

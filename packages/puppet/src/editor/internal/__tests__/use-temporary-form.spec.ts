@@ -104,8 +104,8 @@ test('should retain Glue as a temporary form until explicitly saved to a selecte
     const session = useTemporaryForm({
       bindingId: () => source.parameterBindings![0]!.id,
       document: () => source,
-      keyformValues: key,
       enabled: () => true,
+      keyformValues: key,
       nodeId: () => 'mesh-preview',
       onDocumentChange: onChange,
       parameterValues: () => [15, 0],

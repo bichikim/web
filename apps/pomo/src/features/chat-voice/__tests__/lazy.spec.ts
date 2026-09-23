@@ -78,6 +78,68 @@ describe('useLazyChatVoice', () => {
     expect(voice.stop).toHaveBeenCalledTimes(2)
   })
 
+  it('should not start preparation when stopped while the voice runtime is loading', async () => {
+    const voice = createVoice()
+    chatVoice.useChatVoice.mockReturnValueOnce(voice)
+    const {cleanup, result} = renderHook(() => useLazyChatVoice())
+
+    const preparation = result.prepare()
+    result.stop()
+    const error = await preparation.then(
+      () => null,
+      (reason: unknown) => reason,
+    )
+
+    expect(error).toBeInstanceOf(DOMException)
+    expect(error).toMatchObject({name: 'AbortError'})
+    expect(voice.prepare).not.toHaveBeenCalled()
+    cleanup()
+  })
+
+  it('should not start speech when stopped while the voice runtime is loading', async () => {
+    const voice = createVoice()
+    chatVoice.useChatVoice.mockReturnValueOnce(voice)
+    const {cleanup, result} = renderHook(() => useLazyChatVoice())
+
+    const speech = result.speak('안녕하세요.', 'M1')
+    result.stop()
+    const error = await speech.then(
+      () => null,
+      (reason: unknown) => reason,
+    )
+
+    expect(error).toBeInstanceOf(DOMException)
+    expect(error).toMatchObject({name: 'AbortError'})
+    expect(voice.speak).not.toHaveBeenCalled()
+    cleanup()
+  })
+
+  it('should not start preparation after its owner is disposed', async () => {
+    const voice = createVoice()
+    chatVoice.useChatVoice.mockReturnValueOnce(voice)
+    const {cleanup, result} = renderHook(() => useLazyChatVoice())
+
+    await result.prepare()
+    vi.mocked(voice.prepare).mockClear()
+    const preparation = result.prepare()
+    cleanup()
+    const error = await preparation.then(
+      () => null,
+      (reason: unknown) => reason,
+    )
+    const preparationAfterDisposal = result.prepare()
+    const laterError = await preparationAfterDisposal.then(
+      () => null,
+      (reason: unknown) => reason,
+    )
+
+    expect(error).toBeInstanceOf(DOMException)
+    expect(error).toMatchObject({name: 'AbortError'})
+    expect(laterError).toBeInstanceOf(DOMException)
+    expect(laterError).toMatchObject({name: 'AbortError'})
+    expect(voice.prepare).not.toHaveBeenCalled()
+  })
+
   it('should reject a pending lazy load when its reactive owner is disposed', async () => {
     const voice = createVoice()
     chatVoice.useChatVoice.mockReturnValueOnce(voice)

@@ -1,4 +1,5 @@
 import {Vector3} from '@babylonjs/core/Maths/math.vector'
+import {clamp} from 'es-toolkit/math'
 
 export interface SpringCollider {
   readonly center: Vector3
@@ -39,7 +40,7 @@ export const advanceSpring = (step: SpringStep) => {
   if (limit !== undefined) {
     const rest = step.rest.subtract(step.origin).normalize()
     const direction = next.subtract(step.origin).normalize()
-    const dot = Math.min(1, Math.max(-1, Vector3.Dot(rest, direction)))
+    const dot = clamp(Vector3.Dot(rest, direction), -1, 1)
     if (Math.acos(dot) > limit) {
       const tangent = direction.subtract(rest.scale(dot)).normalize()
       next.copyFrom(
@@ -79,13 +80,11 @@ export const advanceSpring = (step: SpringStep) => {
     for (const collider of step.colliders) {
       const segment = next.subtract(step.origin)
       const weight = step.segmentCollision
-        ? Math.max(
+        ? clamp(
+            Vector3.Dot(collider.center.subtract(step.origin), segment) /
+              Math.max(segment.lengthSquared(), SOLVER.epsilon),
             SOLVER.minimumWeight,
-            Math.min(
-              1,
-              Vector3.Dot(collider.center.subtract(step.origin), segment) /
-                Math.max(segment.lengthSquared(), SOLVER.epsilon),
-            ),
+            1,
           )
         : 1
       const contact = step.origin.add(segment.scale(weight))

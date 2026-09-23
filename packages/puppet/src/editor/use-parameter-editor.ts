@@ -1,6 +1,5 @@
 import {useInfluencePreview} from './internal/use-influence-preview'
 import {setParameterInfluences} from './internal/parameter-influences'
-import {clamp} from 'es-toolkit/math'
 import {type Accessor, createEffect, createMemo, createSignal, type Setter} from 'solid-js'
 
 import {
@@ -15,6 +14,7 @@ import type {
   PuppetParameterBinding,
   PuppetParameterInfluence,
 } from '../player/document'
+import {resolveParameterValue} from '../player/parameter-value'
 import {
   addParameter,
   addTwoDimensionalParameter,
@@ -218,9 +218,7 @@ const createParameterValueHandler = (options: CreateParameterValueHandlerOptions
     const parameters = getBindingParameters(options.props.document(), binding)
     const nextValues = values.map((value, index) => {
       const parameter = parameters[index]
-      return parameter === undefined || !Number.isFinite(value)
-        ? (parameter?.defaultValue ?? 0)
-        : clamp(value, parameter.minimum, parameter.maximum)
+      return parameter === undefined ? 0 : resolveParameterValue(parameter, value)
     }) as unknown as PuppetParameterValues
     options.setParameterValueMap((currentValues) => ({
       ...currentValues,
@@ -450,19 +448,18 @@ export const useParameterEditor = (props: UseParameterEditorProps): ParameterEdi
       }
       props.onNotice('Parameter를 삭제했습니다.')
     },
-    influence,
     disconnectSelection: () => {
       const binding = activeBinding()
       if (binding !== undefined) {
         updateParameterConnection(props, binding, 'disconnect')
       }
     },
-    previewDocument,
+    influence,
     moveKeyform,
-    previewInfluences,
     parameterValueMap,
-    setInfluences: (influences) => applyInfluences(props, activeBinding(), influences),
     parameterValues,
+    previewDocument,
+    previewInfluences,
     renameParameter: (parameterId, name) =>
       applyParameterName(props, activeBindingId(), parameterId, name),
     reset(document) {
@@ -480,6 +477,7 @@ export const useParameterEditor = (props: UseParameterEditorProps): ParameterEdi
       updateValues(values)
     },
     setAllParametersVisible,
+    setInfluences: (influences) => applyInfluences(props, activeBinding(), influences),
     setParameterValues: updateValues,
   }
 }

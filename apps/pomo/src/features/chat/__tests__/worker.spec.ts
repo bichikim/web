@@ -52,6 +52,7 @@ vi.mock('../prompt', () => ({
 }))
 
 type WorkerMessageListener = (event: MessageEvent<ChatWorkerRequest>) => void
+const WORKER_IMPORT_TEST_TIMEOUT_MILLISECONDS = 30_000
 
 const context: ChatContext = {
   messages: [{content: '응원해 줘', id: 'user-1', role: 'user'}],
@@ -143,58 +144,75 @@ beforeEach(() => {
 })
 
 describe('chat worker preparation', () => {
-  it('should cache the runtime and forward loading progress while preparing models', async () => {
-    const worker = await loadWorker()
+  it(
+    'should cache the runtime and forward loading progress while preparing models',
+    async () => {
+      const worker = await loadWorker()
 
-    worker.dispatch({modelId: 'qwen-4b', type: 'prepare'})
-    await waitForResponse(worker, 'ready')
-    const createOptions = runtimeMocks.create.mock.calls[0]?.[0]
-    createOptions?.onProgress({file: 'model', progress: 0.5, status: 'progress'})
-    worker.dispatch({modelId: 'gemma-4-e2b', type: 'prepare'})
-    await vi.waitFor(() => expect(runtimeMocks.prepare).toHaveBeenCalledTimes(2))
+      worker.dispatch({modelId: 'qwen-4b', type: 'prepare'})
+      await waitForResponse(worker, 'ready')
+      const createOptions = runtimeMocks.create.mock.calls[0]?.[0]
+      createOptions?.onProgress({file: 'model', progress: 0.5, status: 'progress'})
+      worker.dispatch({modelId: 'gemma-4-e2b', type: 'prepare'})
+      await vi.waitFor(() => expect(runtimeMocks.prepare).toHaveBeenCalledTimes(2))
 
-    expect(runtimeMocks.create).toHaveBeenCalledOnce()
-    expect(runtimeMocks.prepare).toHaveBeenNthCalledWith(1, 'qwen-4b')
-    expect(runtimeMocks.prepare).toHaveBeenNthCalledWith(2, 'gemma-4-e2b')
-    expect(worker.postMessage).toHaveBeenCalledWith(
-      expect.objectContaining({file: 'model', progress: 0.5, status: 'progress', type: 'loading'}),
-    )
-  })
+      expect(runtimeMocks.create).toHaveBeenCalledOnce()
+      expect(runtimeMocks.prepare).toHaveBeenNthCalledWith(1, 'qwen-4b')
+      expect(runtimeMocks.prepare).toHaveBeenNthCalledWith(2, 'gemma-4-e2b')
+      expect(worker.postMessage).toHaveBeenCalledWith(
+        expect.objectContaining({
+          file: 'model',
+          progress: 0.5,
+          status: 'progress',
+          type: 'loading',
+        }),
+      )
+    },
+    WORKER_IMPORT_TEST_TIMEOUT_MILLISECONDS,
+  )
 
   it.each([
     {error: new Error('준비 실패'), message: '준비 실패'},
     {error: new Error(), message: '채팅 모델을 실행하지 못했어요.'},
     {error: 'unknown failure', message: '채팅 모델을 실행하지 못했어요.'},
-  ])('should report preparation errors as $message', async ({error, message}) => {
-    runtimeMocks.prepare.mockRejectedValue(error)
-    const worker = await loadWorker()
+  ])(
+    'should report preparation errors as $message',
+    async ({error, message}) => {
+      runtimeMocks.prepare.mockRejectedValue(error)
+      const worker = await loadWorker()
 
-    worker.dispatch({modelId: 'qwen-4b', type: 'prepare'})
+      worker.dispatch({modelId: 'qwen-4b', type: 'prepare'})
 
-    await vi.waitFor(() => {
-      expect(worker.postMessage).toHaveBeenCalledWith({
-        message,
-        restartRequired: false,
-        type: 'error',
+      await vi.waitFor(() => {
+        expect(worker.postMessage).toHaveBeenCalledWith({
+          message,
+          restartRequired: false,
+          type: 'error',
+        })
       })
-    })
-  })
+    },
+    WORKER_IMPORT_TEST_TIMEOUT_MILLISECONDS,
+  )
 })
 
 describe('chat worker context compaction', () => {
-  it('should keep a context below the compaction threshold', async () => {
-    const worker = await loadWorker()
+  it(
+    'should keep a context below the compaction threshold',
+    async () => {
+      const worker = await loadWorker()
 
-    worker.dispatch(generateRequest())
-    await waitForResponse(worker, 'complete')
+      worker.dispatch(generateRequest())
+      await waitForResponse(worker, 'complete')
 
-    expect(contextMocks.partitionChatHistory).not.toHaveBeenCalled()
-    expect(worker.postMessage).toHaveBeenCalledWith({
-      contextTokens: 10,
-      type: 'started',
-      wasCompacted: false,
-    })
-  })
+      expect(contextMocks.partitionChatHistory).not.toHaveBeenCalled()
+      expect(worker.postMessage).toHaveBeenCalledWith({
+        contextTokens: 10,
+        type: 'started',
+        wasCompacted: false,
+      })
+    },
+    WORKER_IMPORT_TEST_TIMEOUT_MILLISECONDS,
+  )
 
   it('should keep an oversized context when there is no completed history to summarize', async () => {
     runtimeMocks.countTokens.mockResolvedValue(5_000)

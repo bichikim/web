@@ -1,5 +1,6 @@
 import {z} from 'zod'
 
+import {restorePreferredValue} from '../preference-persistence'
 import {
   hasNativeStorageBridge,
   readTossStorageJson,
@@ -51,32 +52,29 @@ export const createScreenSaverRepository = (storage: ScreenSaverStorage): Screen
   /** Reads the screen saver delay from storage whose lifetime matches the current runtime. */
   const read = async (): Promise<ScreenSaverDelay> => {
     const webPreference = readWebPreference()
-
-    if (webPreference !== null) {
-      if (storage.usesTossStorage()) {
-        // Complete repair before usePreference can persist a newer edit.
-        await storage.writeToss(SCREEN_SAVER_STORAGE_KEY, webPreference).catch(() => undefined)
-      }
-      return webPreference
-    }
-
     if (!storage.usesTossStorage()) {
-      return DEFAULT_SCREEN_SAVER_DELAY
+      return webPreference ?? DEFAULT_SCREEN_SAVER_DELAY
     }
-
-    try {
-      const tossPreference = parseScreenSaverDelay(await storage.readToss(SCREEN_SAVER_STORAGE_KEY))
-
-      if (tossPreference === null) {
-        return DEFAULT_SCREEN_SAVER_DELAY
-      }
-
-      // Rebuild the authoritative web copy after an app update or browser-data eviction.
-      writeWebPreference(tossPreference)
-      return tossPreference
-    } catch {
-      return DEFAULT_SCREEN_SAVER_DELAY
-    }
+    return restorePreferredValue({
+      preferred: webPreference,
+      // Complete repair before usePreference can persist a newer edit.
+      repair: (value) => storage.writeToss(SCREEN_SAVER_STORAGE_KEY, value).catch(() => undefined),
+      restore: async () => {
+        try {
+          const tossPreference = parseScreenSaverDelay(
+            await storage.readToss(SCREEN_SAVER_STORAGE_KEY),
+          )
+          if (tossPreference === null) {
+            return DEFAULT_SCREEN_SAVER_DELAY
+          }
+          // Rebuild the web copy after an app update or browser-data eviction.
+          writeWebPreference(tossPreference)
+          return tossPreference
+        } catch {
+          return DEFAULT_SCREEN_SAVER_DELAY
+        }
+      },
+    })
   }
 
   const persistScreenSaverDelay = async (delay: ScreenSaverDelay): Promise<void> => {

@@ -12,6 +12,7 @@ import {
   type DialogueEventId,
   type EventActionId,
   FOCUS_ROOM_ENTRY_EVENT,
+  RANDOM_DIALOGUE_EVENT,
 } from '../schema'
 
 interface EventActionRunner {
@@ -22,8 +23,12 @@ interface EventActionRunner {
     executor: EventActionExecutor,
     options?: EventActionExecutorRegistrationOptions,
   ) => () => void
-  readonly run: (eventIds: ReadonlyArray<DialogueEventId>) => Promise<void> | undefined
+  readonly run: (eventIds: ReadonlyArray<DialogueEventId>) => EventActionRunResult
 }
+
+type EventActionRunResult =
+  | {readonly kind: 'completed'}
+  | {readonly kind: 'queued'; readonly completion: Promise<void>}
 
 interface PendingEventAction {
   readonly actionId: EventActionId
@@ -111,7 +116,12 @@ export const createEventActionRunner = (
           eventId === DELAYED_END_EVENT ||
           eventId === FOCUS_ROOM_ENTRY_EVENT ||
           eventId === 'break-end' ||
-          eventId === 'focus-end'))
+          eventId === 'break-start' ||
+          eventId === 'focus-end' ||
+          eventId === 'focus-start' ||
+          eventId === 'long-break-end' ||
+          eventId === 'long-break-start' ||
+          eventId === RANDOM_DIALOGUE_EVENT))
 
     if (isHandledByHandler) {
       return
@@ -149,7 +159,7 @@ export const createEventActionRunner = (
     }
 
     if (queuedActionEventIds.size === 0) {
-      return undefined
+      return {kind: 'completed'} as const
     }
 
     const actionExecutions = [...queuedActionEventIds].map((eventId) => {
@@ -157,7 +167,10 @@ export const createEventActionRunner = (
       pendingActionWaiters.push({eventId, resolve: actionExecution.resolve})
       return actionExecution.promise
     })
-    return Promise.all(actionExecutions).then(() => undefined)
+    return {
+      completion: Promise.all(actionExecutions).then(() => undefined),
+      kind: 'queued',
+    } as const
   }
 
   return {

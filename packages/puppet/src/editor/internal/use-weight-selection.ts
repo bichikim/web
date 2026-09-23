@@ -12,9 +12,8 @@ export const useWeightSelection = (props: UseWeightSelectionProps) => {
   const isSelected = (vertex: PuppetVertexReference) => keys().has(key(vertex))
   const selectedVertices = createMemo(() => props.vertices.filter(isSelected))
   return {
-    isSelected,
     clear: () => setSelection([]),
-    selected: () => selectedVertices().at(-1),
+    isSelected,
     select: (vertex: PuppetVertexReference, additive = false) =>
       setSelection((previous) =>
         additive
@@ -23,7 +22,8 @@ export const useWeightSelection = (props: UseWeightSelectionProps) => {
             : [...previous, vertex]
           : [vertex],
       ),
-    selectedVertices,
     selectAll: (vertices: readonly PuppetVertexReference[]) => setSelection(vertices),
+    selected: () => selectedVertices().at(-1),
+    selectedVertices,
   }
 }

@@ -100,24 +100,6 @@ export const usePinEditor = (props: PinEditorProps) => {
   onCleanup(stop)
 
   return {
-    bind: (element: SVGSVGElement) => {
-      svg = element
-    },
-    editable,
-    indices: () => props.node.pins!.map((_, index) => index),
-    influence: () => getPinInfluence(props.node, selected(), transform),
-    point: (index: number) => transform(local(index)),
-    radius: () => {
-      const HANDLE_DIVISOR = 120
-      return Math.min(view().width, view().height) / HANDLE_DIVISOR
-    },
-    rest,
-    remove: () => {
-      if (rest() && editable()) {
-        layout('remove')
-      }
-    },
-    restEditable,
     append: (event: MouseEvent) => {
       if (event.target !== event.currentTarget || !rest() || !editable()) {
         return
@@ -127,26 +109,42 @@ export const usePinEditor = (props: PinEditorProps) => {
         layout('append', point)
       }
     },
-    selected,
+    bind: (element: SVGSVGElement) => {
+      svg = element
+    },
     drag: (event: PointerEvent) => {
       const point = eventPoint(event)
       if (dragging && point !== undefined) {
         move(point)
       }
     },
-    stop,
+    editable,
+    indices: () => props.node.pins!.map((_, index) => index),
+    influence: () => getPinInfluence(props.node, selected(), transform),
     keyDown: createPinKeyboard({
-      point: () => local(selected()),
       move,
+      point: () => local(selected()),
       remove: () => {
         if (rest() && editable()) {
           layout('remove')
         }
       },
     }),
-    selectedPin: () => props.node.pins?.[selected()],
+    point: (index: number) => transform(local(index)),
+    radius: () => {
+      const HANDLE_DIVISOR = 120
+      return Math.min(view().width, view().height) / HANDLE_DIVISOR
+    },
+    remove: () => {
+      if (rest() && editable()) {
+        layout('remove')
+      }
+    },
+    rest,
+    restEditable,
     select: setSelected,
-    viewBox: () => `${view().x} ${view().y} ${view().width} ${view().height}`,
+    selected,
+    selectedPin: () => props.node.pins?.[selected()],
     settings: (radius?: number, strength?: number) =>
       layout('settings', undefined, radius, strength),
     start: (event: PointerEvent, index: number) => {
@@ -161,6 +159,8 @@ export const usePinEditor = (props: PinEditorProps) => {
       dragging = true
       props.onEditStart?.()
     },
+    stop,
+    viewBox: () => `${view().x} ${view().y} ${view().width} ${view().height}`,
   }
 }
 

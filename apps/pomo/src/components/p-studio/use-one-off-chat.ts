@@ -1,4 +1,5 @@
 import {type Accessor, createEffect, createSignal, onCleanup, untrack} from 'solid-js'
+import {getErrorMessage} from 'src/utils/get-error-message'
 
 import {useChat} from '../../features/chat'
 import {useModelDownload} from '../../features/model-download'
@@ -6,6 +7,9 @@ import {getTextModel, isTextModelDownloaded} from '../../features/text-generatio
 import {type AiTextJobController, useAiTextJob} from '../../features/ai-job/use-ai-text-job'
 
 const CHAT_MODEL_ID = 'gemma-4-e2b'
+
+const getChatErrorMessage = (error: unknown, fallback: string): string =>
+  error instanceof Error ? getErrorMessage(error, fallback) : fallback
 
 export const ONE_OFF_CHAT_MODEL = getTextModel(CHAT_MODEL_ID)
 
@@ -155,11 +159,7 @@ export const useOneOffChat = (props: UseOneOffChatProps): OneOffChatController =
       }
       return false
     } catch (error: unknown) {
-      setDownloadError(
-        error instanceof Error && error.message.length > 0
-          ? error.message
-          : '모델 준비 상태를 확인하지 못했어요.',
-      )
+      setDownloadError(getChatErrorMessage(error, '모델 준비 상태를 확인하지 못했어요.'))
       restorePendingDraft()
       console.error('Failed to check the one-off chat model.', error)
       return false
@@ -196,11 +196,7 @@ export const useOneOffChat = (props: UseOneOffChatProps): OneOffChatController =
         return
       }
 
-      setDownloadError(
-        error instanceof Error && error.message.length > 0
-          ? error.message
-          : '모델을 내려받지 못했어요.',
-      )
+      setDownloadError(getChatErrorMessage(error, '모델을 내려받지 못했어요.'))
       restorePendingDraft()
       console.error('Failed to download the one-off chat model.', error)
     }
@@ -279,11 +275,7 @@ export const useOneOffChat = (props: UseOneOffChatProps): OneOffChatController =
         return
       }
       if (!disposed && speechRevision === replyRevision) {
-        setReplyError(
-          error instanceof Error && error.message.length > 0
-            ? error.message
-            : '음성을 재생하지 못했어요.',
-        )
+        setReplyError(getChatErrorMessage(error, '음성을 재생하지 못했어요.'))
       }
       console.error('Failed to speak the one-off chat reply.', error)
     })

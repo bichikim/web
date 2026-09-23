@@ -119,4 +119,43 @@ describe('sampleMotionParameterValues', () => {
       sampleMotionParameterValues({motion: undefined, parameterValues: values, time: 1}),
     ).toEqual(values)
   })
+
+  test('should hold a discrete parameter state until the next keyframe', () => {
+    const parameterMotion: PuppetMotion = {
+      duration: 2,
+      id: 'expression',
+      tracks: [
+        {
+          keyframes: [
+            {time: 0, value: 0},
+            {time: 1, value: 1},
+            {time: 2, value: 2},
+          ],
+          kind: 'parameter',
+          parameterId: 'eye-symbol',
+        },
+      ],
+    }
+
+    const values = sampleMotionParameterValues({
+      motion: parameterMotion,
+      parameters: [
+        {
+          defaultValue: 0,
+          id: 'eye-symbol',
+          maximum: 2,
+          minimum: 0,
+          name: '눈동자 무늬',
+          options: [
+            {label: '기본', value: 0},
+            {label: '하트', value: 1},
+            {label: '표고버섯', value: 2},
+          ],
+        },
+      ],
+      time: 0.75,
+    })
+
+    expect(values).toEqual({'eye-symbol': 0})
+  })
 })

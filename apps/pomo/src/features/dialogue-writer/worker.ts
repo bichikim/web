@@ -9,6 +9,7 @@ import {
 } from '../text-generation'
 
 import {getErrorMessage} from 'src/utils/get-error-message'
+import {createExclusiveAsyncTask} from 'src/utils/create-exclusive-async-task'
 
 import {createTextGenerationExecutor} from '../text-generation/execution'
 import {normalizeKoreanSpeechStyle} from './answer'
@@ -24,7 +25,7 @@ const textExecutor = createTextGenerationExecutor({
   onProgress: (progress) => sendResponse({...progress, type: 'loading'}),
 })
 let suppressedTokenIds: Array<number> | undefined
-let generationInFlight = false
+const generation = createExclusiveAsyncTask()
 const createRequestId = createRequestSequence('dialogue')
 
 const prepareModel = async (modelId: TextModelId) => {
@@ -92,18 +93,9 @@ const generateDirectAnswer = async (
 const handleRequest = (request: DialogueWorkerRequest): Promise<void> => {
   switch (request.type) {
     case 'generate': {
-      if (generationInFlight) {
-        return Promise.resolve()
-      }
-
-      generationInFlight = true
-      return generateDirectAnswer(
-        request.modelId,
-        request.outputLanguage ?? 'ko',
-        request.request,
-      ).finally(() => {
-        generationInFlight = false
-      })
+      return generation.run(() =>
+        generateDirectAnswer(request.modelId, request.outputLanguage ?? 'ko', request.request),
+      )
     }
     case 'prepare':
       return prepareModel(request.modelId)

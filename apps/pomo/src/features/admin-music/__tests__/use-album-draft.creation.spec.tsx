@@ -7,6 +7,7 @@ import {
   COVER_DRAFT_ID,
   createDraft,
   createSubmitEvent,
+  PREPARED_COVER,
   renderAlbumDraft,
   RENEWED_ALBUM_ID,
   storageMocks,
@@ -39,6 +40,39 @@ describe('album creation', () => {
     expect(operations).toEqual(['write', 'write', 'created'])
     cleanup()
   })
+
+  it('should clear the cover reference before deleting the album draft', async () => {
+    const operations: string[] = []
+    storageMocks.readAlbumDraftData.mockReturnValue(
+      createDraft({coverDraftId: COVER_DRAFT_ID, hasCoverFile: true}),
+    )
+    storageMocks.readAlbumDraftCover.mockResolvedValue(PREPARED_COVER)
+    storageMocks.writeAlbumDraftReference.mockImplementation(async ({coverDraftId}) => {
+      operations.push(`reference:${coverDraftId ?? 'null'}`)
+      return {success: true}
+    })
+    storageMocks.deleteAlbumDraft.mockImplementation(async (coverDraftId) => {
+      operations.push(`draft:${coverDraftId ?? 'null'}`)
+      return {error: new Error('cover delete failed'), success: false}
+    })
+    const {cleanup, result} = renderAlbumDraft()
+    try {
+      await waitForRestoration(result)
+      operations.length = 0
+
+      await result.handleAlbumSubmit(createSubmitEvent().event)
+
+      const referenceClearIndex = operations.indexOf('reference:null')
+      expect(operations.slice(referenceClearIndex)).toEqual([
+        'reference:null',
+        `draft:${COVER_DRAFT_ID}`,
+      ])
+      expect(storageMocks.deleteAlbumDraftCover).not.toHaveBeenCalled()
+    } finally {
+      cleanup()
+    }
+  })
+
   it('should reuse the album ID after a lost creation response', async () => {
     vi.mocked(fetch)
       .mockRejectedValueOnce(new Error('response lost'))
@@ -92,14 +126,17 @@ describe('album creation', () => {
   })
 })
 
-it.each(['metadata', 'reference'] as const)(
-  'should retain the cover when %s clearing fails after album creation',
+it.each(['draft', 'reference'] as const)(
+  'should skip separate cover deletion after %s cleanup fails after album creation',
   async (failure) => {
-    storageMocks.readAlbumDraftData.mockReturnValue(createDraft({coverDraftId: COVER_DRAFT_ID}))
+    storageMocks.readAlbumDraftData.mockReturnValue(
+      createDraft({coverDraftId: COVER_DRAFT_ID, hasCoverFile: true}),
+    )
+    storageMocks.readAlbumDraftCover.mockResolvedValue(PREPARED_COVER)
     const {cleanup, result} = renderAlbumDraft()
     try {
       await waitForRestoration(result)
-      if (failure === 'metadata') {
+      if (failure === 'draft') {
         storageMocks.deleteAlbumDraft.mockResolvedValueOnce({
           error: new Error('delete failed'),
           success: false,
@@ -112,7 +149,9 @@ it.each(['metadata', 'reference'] as const)(
         )
       }
       await result.handleAlbumSubmit(createSubmitEvent().event)
-      expect(storageMocks.deleteAlbumDraft).toHaveBeenCalledWith(null)
+      expect(storageMocks.deleteAlbumDraft).toHaveBeenCalledWith(
+        failure === 'draft' ? COVER_DRAFT_ID : null,
+      )
       expect(storageMocks.deleteAlbumDraftCover).not.toHaveBeenCalled()
     } finally {
       cleanup()

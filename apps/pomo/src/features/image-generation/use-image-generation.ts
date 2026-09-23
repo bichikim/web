@@ -1,4 +1,5 @@
 import * as m from '@paraglide/message'
+import {isAbortError} from 'src/utils/is-cancellation-reason'
 import {getExceptionMessage} from '../error-detail'
 import {type ModelDownloadItem, useModelDownload} from '../model-download'
 import {createMemo, createSignal, onCleanup, type Setter} from 'solid-js'
@@ -159,7 +160,7 @@ export const useImageGeneration = () => {
       }
       setStatus(m.picture_diary_generation_complete())
     } catch (failure) {
-      if (failure instanceof DOMException && failure.name === 'AbortError') {
+      if (failure instanceof DOMException && isAbortError(failure)) {
         if (!disposed && controller === abort) {
           stop()
         }

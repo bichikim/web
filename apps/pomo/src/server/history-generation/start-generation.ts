@@ -9,15 +9,10 @@ import {
   markGenerationSubmitted,
   prepareGenerationRun,
 } from '../repositories/history-generation'
-import {HistorySubmissionError, submitHistoryResponse} from './openai-client'
-import {
-  persistAcceptedGenerationSubmission,
-  persistUnknownGenerationSubmission,
-} from './submission-persistence'
-import {getSubmissionRecoveryDeadline} from './submission-recovery-policy'
+import {submitHistoryResponse} from './openai-client'
+import {persistAcceptedGenerationSubmission} from './submission-persistence'
+import {handleHistorySubmissionFailure} from './handle-submission-failure'
 import {withHistoryGenerationLock} from './submission-lock'
-
-const MAX_ERROR_LENGTH = 2000
 
 export interface StartGenerationResult {
   readonly responseId: string | null
@@ -45,9 +40,6 @@ const DEFAULT_DEPENDENCIES: StartGenerationDependencies = {
   submit: submitHistoryResponse,
   withLock: withHistoryGenerationLock,
 }
-
-const getErrorMessage = (error: HistorySubmissionError): string =>
-  error.message.slice(0, MAX_ERROR_LENGTH)
 
 const startHistoryGenerationForDate = async (
   targetDate: ReturnType<typeof getNextPublicationDate>,
@@ -85,27 +77,14 @@ const startHistoryGenerationForDate = async (
       targetDate,
     })
   } catch (error) {
-    if (error instanceof HistorySubmissionError) {
-      const errorMessage = getErrorMessage(error)
-
-      if (error.acceptance === 'rejected') {
-        await dependencies.markFailed(
-          prepared.run.id,
-          prepared.run.openAiSubmissionKey,
-          errorMessage,
-        )
-      } else {
-        const submissionExpiresAt = getSubmissionRecoveryDeadline(dependencies.now())
-        await persistUnknownGenerationSubmission({
-          errorMessage,
-          markUnknown: dependencies.markUnknown,
-          runId: prepared.run.id,
-          submissionExpiresAt,
-          submissionKey: prepared.run.openAiSubmissionKey,
-        })
-      }
-    }
-
+    await handleHistorySubmissionFailure({
+      error,
+      markFailed: dependencies.markFailed,
+      markUnknown: dependencies.markUnknown,
+      now: dependencies.now,
+      runId: prepared.run.id,
+      submissionKey: prepared.run.openAiSubmissionKey,
+    })
     throw error
   }
 

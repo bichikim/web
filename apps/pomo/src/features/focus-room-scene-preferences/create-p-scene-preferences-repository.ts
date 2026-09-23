@@ -35,6 +35,8 @@ export const createPScenePreferencesRepository = (
   options: CreatePScenePreferencesRepositoryOptions,
 ): PScenePreferencesRepository => {
   const {storage} = options
+  let writeRevision = 0
+  let pendingNativeWriteCount = 0
   let nativeWriteFailed = false
   const readWebPreferences = () =>
     parsePScenePreferences(storage.readWeb(SCENE_PREFERENCES_STORAGE_KEY))
@@ -62,8 +64,14 @@ export const createPScenePreferencesRepository = (
   }
 
   const read = async (): Promise<PScenePreferences> => {
+    const initialWriteRevision = writeRevision
+
     if (!storage.usesTossStorage()) {
       return readWebPreferences() ?? DEFAULT_P_SCENE_PREFERENCES
+    }
+
+    if (pendingNativeWriteCount > 0) {
+      return readWebPreferencesSafely() ?? DEFAULT_P_SCENE_PREFERENCES
     }
 
     const webPreferences = readWebPreferencesSafely()
@@ -72,9 +80,12 @@ export const createPScenePreferencesRepository = (
     }
 
     try {
-      const tossPreferences = parsePScenePreferences(
-        await storage.readToss(SCENE_PREFERENCES_STORAGE_KEY),
-      )
+      const storedPreferences = await storage.readToss(SCENE_PREFERENCES_STORAGE_KEY)
+      if (writeRevision !== initialWriteRevision) {
+        return readWebPreferencesSafely() ?? DEFAULT_P_SCENE_PREFERENCES
+      }
+
+      const tossPreferences = parsePScenePreferences(storedPreferences)
 
       const restoredPreferences =
         tossPreferences ?? readWebPreferences() ?? DEFAULT_P_SCENE_PREFERENCES
@@ -84,24 +95,38 @@ export const createPScenePreferencesRepository = (
       writeWebPreferences(restoredPreferences)
       return restoredPreferences
     } catch {
+      if (writeRevision !== initialWriteRevision) {
+        return readWebPreferencesSafely() ?? DEFAULT_P_SCENE_PREFERENCES
+      }
+
       return readWebPreferences() ?? DEFAULT_P_SCENE_PREFERENCES
     }
   }
 
   const write = async (preferences: PScenePreferences): Promise<void> => {
     writeWebPreferences(preferences)
+    writeRevision += 1
+    const currentWriteRevision = writeRevision
     if (!storage.usesTossStorage()) {
       nativeWriteFailed = false
       setNativeWriteFailure(false)
       return
     }
+
+    pendingNativeWriteCount += 1
     try {
       await storage.writeToss(SCENE_PREFERENCES_STORAGE_KEY, preferences)
-      nativeWriteFailed = false
-      setNativeWriteFailure(false)
+      if (writeRevision === currentWriteRevision) {
+        nativeWriteFailed = false
+        setNativeWriteFailure(false)
+      }
     } catch {
-      nativeWriteFailed = true
-      setNativeWriteFailure(true)
+      if (writeRevision === currentWriteRevision) {
+        nativeWriteFailed = true
+        setNativeWriteFailure(true)
+      }
+    } finally {
+      pendingNativeWriteCount -= 1
     }
   }
 

@@ -25,10 +25,10 @@ export const JointControls = (props: JointControlsProps) => (
           cx={props.editor.point(index).x}
           cy={props.editor.point(index).y}
           classList={{
-            'rotation-origin-hit': props.rotation && index === 0,
-            selected: props.editor.selected() === index && !(props.rotation && index === 0),
             'angle-handle': props.rotation && index === 1,
             'joint-origin-hit': props.rotation && index === 0,
+            'rotation-origin-hit': props.rotation && index === 0,
+            selected: props.editor.selected() === index && !(props.rotation && index === 0),
           }}
           r={props.editor.radius()}
           onFocus={() => props.editor.setSelected(index)}

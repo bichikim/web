@@ -1,4 +1,7 @@
 import {classifySpeechNumber} from './classify-speech-number'
+import {hasNumberKind} from './has-number-kind'
+import {parseInteger} from './parse-integer'
+import {DECIMAL_PERCENT_PATTERN, INTEGER_PERCENT_PATTERN} from './percent-patterns'
 import {
   INTEGER_PATTERN_SOURCE,
   KOREAN_PARTICLE_PATTERN_SOURCE,
@@ -6,7 +9,6 @@ import {
   NUMBER_TOKEN_START_PATTERN_SOURCE,
   UNSIGNED_INTEGER_PATTERN_SOURCE,
 } from './number-patterns'
-import type {SpeechNumberKind} from './types'
 
 const DIGIT_WORDS = ['영', '일', '이', '삼', '사', '오', '육', '칠', '팔', '구'] as const
 const DECIMAL_RADIX = 10
@@ -46,14 +48,6 @@ const KOREAN_PARTICLE_PATTERN = KOREAN_PARTICLE_PATTERN_SOURCE
 const KOREAN_UNIT_END_PATTERN = KOREAN_UNIT_END_PATTERN_SOURCE
 const LEVEL_FOLLOWING_PATTERN = '[\\p{L}\\p{N}_]|[.,]\\d|[+\\-/:~–—#@$€£¥₩<>≤≥≈]'
 const LEVEL_NUMBER_END = `(?:(?=${KOREAN_PARTICLE_PATTERN})|(?!${LEVEL_FOLLOWING_PATTERN})${KOREAN_UNIT_END_PATTERN})`
-const DECIMAL_PERCENT_PATTERN = new RegExp(
-  `${TOKEN_START_PATTERN}(${INTEGER_PATTERN_SOURCE}\\.\\d+)\\s*%`,
-  'gu',
-)
-const INTEGER_PERCENT_PATTERN = new RegExp(
-  `${TOKEN_START_PATTERN}(${INTEGER_PATTERN_SOURCE})\\s*%`,
-  'gu',
-)
 const WON_PATTERN = new RegExp(
   `${TOKEN_START_PATTERN}(${INTEGER_PATTERN_SOURCE})\\s*원${KOREAN_UNIT_END_PATTERN}`,
   'gu',
@@ -90,23 +84,6 @@ const LEVEL_SUFFIX_PATTERN = new RegExp(
   `${TOKEN_START_PATTERN}(${UNSIGNED_INTEGER_PATTERN})\\s*(렙)${KOREAN_UNIT_END_PATTERN}`,
   'gu',
 )
-
-const hasNumberKind = (text: string, start: number, value: string, kind: SpeechNumberKind) =>
-  classifySpeechNumber({end: start + value.length, language: 'ko', start, text}).kind === kind
-
-const parseInteger = (value: string): bigint | null => {
-  const digits = value.replace(/^[+-]/u, '').replaceAll(',', '')
-
-  if (digits.length > 1 && digits.startsWith('0')) {
-    return null
-  }
-
-  try {
-    return BigInt(digits)
-  } catch {
-    return null
-  }
-}
 
 const pronounceSection = (section: number) => {
   const words: Array<string> = []
@@ -236,13 +213,13 @@ export const normalizeKoreanSpeechText = (text: string): string =>
       DIGIT_CODE_PATTERN,
       (...[match, prefix, value, start, input]: [string, string, string, number, string]) => {
         const valueStart = start + prefix.length
-        return hasNumberKind(input, valueStart, value, 'digits')
+        return hasNumberKind('ko', input, valueStart, value, 'digits')
           ? `${prefix}${pronounceDigits(value)}`
           : match
       },
     )
     .replace(DECIMAL_PERCENT_PATTERN, (match, value: string, start: number, input: string) => {
-      if (!hasNumberKind(input, start, value, 'cardinal')) {
+      if (!hasNumberKind('ko', input, start, value, 'cardinal')) {
         return match
       }
 
@@ -250,7 +227,7 @@ export const normalizeKoreanSpeechText = (text: string): string =>
       return pronunciation === null ? match : `${pronunciation} 퍼센트`
     })
     .replace(INTEGER_PERCENT_PATTERN, (match, value: string, start: number, input: string) => {
-      if (!hasNumberKind(input, start, value, 'cardinal')) {
+      if (!hasNumberKind('ko', input, start, value, 'cardinal')) {
         return match
       }
 
@@ -258,24 +235,24 @@ export const normalizeKoreanSpeechText = (text: string): string =>
       return pronunciation === null ? match : `${pronunciation} 퍼센트`
     })
     .replace(WON_PATTERN, (match, value: string, start: number, input: string) =>
-      hasNumberKind(input, start, value, 'cardinal')
+      hasNumberKind('ko', input, start, value, 'cardinal')
         ? replaceWhenPronounceable(match, value, '원', pronounceSinoInteger)
         : match,
     )
     .replace(DURATION_MINUTE_PATTERN, (match, value: string, start: number, input: string) =>
-      hasNumberKind(input, start, value, 'cardinal')
+      hasNumberKind('ko', input, start, value, 'cardinal')
         ? replaceWhenPronounceable(match, value, '분', pronounceSinoInteger)
         : match,
     )
     .replace(
       NATIVE_COUNTER_PATTERN,
       (...[match, value, counter, start, input]: [string, string, string, number, string]) =>
-        hasNumberKind(input, start, value, 'count')
+        hasNumberKind('ko', input, start, value, 'count')
           ? replaceWhenPronounceable(match, value, counter, pronounceNativeCounter)
           : match,
     )
     .replace(CLOCK_HOUR_PATTERN, (match, value: string, start: number, input: string) =>
-      hasNumberKind(input, start, value, 'year-date-time')
+      hasNumberKind('ko', input, start, value, 'year-date-time')
         ? replaceWhenPronounceable(match, value, '시', pronounceClockHour)
         : match,
     )

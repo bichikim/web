@@ -126,6 +126,7 @@ class TestBroadcastChannel {
   static instances: TestBroadcastChannel[] = []
   readonly close = vi.fn()
   readonly listeners: Array<(event: MessageEvent) => void> = []
+  readonly postMessage = vi.fn()
 
   constructor(readonly name: string) {
     TestBroadcastChannel.instances.push(this)
@@ -265,6 +266,43 @@ it('should apply a desktop wallpaper action after playback controls become ready
 
   expect(playerActions.pause).toHaveBeenCalledTimes(1)
 })
+
+it('should announce when the desktop player subscribes to music actions', () => {
+  const view = render(() => <DesktopPlayer />)
+  const channel = TestBroadcastChannel.instances[0]
+
+  expect(channel?.postMessage).toHaveBeenCalledExactlyOnceWith({type: 'player-ready'})
+
+  channel?.dispatch({type: 'request-player-ready'})
+  expect(channel?.postMessage).toHaveBeenNthCalledWith(2, {type: 'player-ready'})
+
+  view.unmount()
+  expect(channel?.postMessage).toHaveBeenLastCalledWith({type: 'player-unavailable'})
+})
+
+it.each([
+  {actionId: 'music-start', method: 'play'},
+  {actionId: 'music-stop', method: 'pause'},
+] as const)(
+  'should apply the $actionId received while hidden once playback controls become ready',
+  ({actionId, method}) => {
+    const [visible, setVisible] = createSignal(false)
+    const preferences = usePDisplayPreferences()
+    vi.mocked(usePDisplayPreferences).mockReturnValue({...preferences, playerVisible: visible})
+    playerActionsReady.value = false
+
+    render(() => <DesktopPlayer />)
+
+    expect(screen.queryByText('플레이어')).not.toBeInTheDocument()
+    TestBroadcastChannel.instances[0]?.dispatch({actionId})
+    expect(playerActions[method]).not.toHaveBeenCalled()
+
+    playerActionsReady.value = true
+    setVisible(true)
+
+    expect(playerActions[method]).toHaveBeenCalledTimes(1)
+  },
+)
 
 it('should allow the desktop player to switch from expanded to compact mode', () => {
   render(() => <DesktopPlayer />)

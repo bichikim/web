@@ -36,6 +36,20 @@ describe('createPScenePreferencesRepository', () => {
     expect(storage.readWeb('pomo:focus-room-scene-preferences:v1')).toEqual(preferences)
   })
 
+  it('should keep a newer write when a native read completes late', async () => {
+    const {repository, storage} = createRepository()
+    const nativeRead = Promise.withResolvers<unknown>()
+    const stalePreferences = {activity: 'reading', gaze: 'focused', timeMode: 'day'} as const
+    storage.readToss.mockReturnValue(nativeRead.promise)
+
+    const pendingRead = repository.read()
+    await repository.write(preferences)
+    nativeRead.resolve(stalePreferences)
+
+    await expect(pendingRead).resolves.toEqual(preferences)
+    expect(storage.readWeb('pomo:focus-room-scene-preferences:v1')).toEqual(preferences)
+  })
+
   it('should keep write revisions independent across repositories', async () => {
     const first = createRepository()
     const second = createRepository()

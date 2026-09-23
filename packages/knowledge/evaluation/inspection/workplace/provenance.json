@@ -1,0 +1,87 @@
+{
+  "version": 1,
+  "sourceCommit": "43b47bd13273cddc8bc24531eb7c9050d478f102",
+  "selection": "verbatim line excerpts; contextual titles added; no model evaluation",
+  "entries": [
+    {
+      "id": "patch-plan",
+      "path": "docs/package-release.md",
+      "startLine": 73,
+      "endLine": 73,
+      "sourceHash": "fd59b7bfa46d4f61d577677d27c8bb5e1e5fbdcf308b8ca046bbb5c0384fcba7",
+      "excerpt": "- 더 높은 patch는 소스 변경 없이도 배포된다.",
+      "excerptHash": "48bce6f92d9c2a76a85fa606b1037e55a07cb732b3be1f23dfb58b48441271ba",
+      "title": "npm 패키지 릴리스 완료 기준"
+    },
+    {
+      "id": "patch-guide",
+      "path": "RELEASE.md",
+      "startLine": 130,
+      "endLine": 130,
+      "sourceHash": "e3946ef840f6d4f59d73819a63037f7627911db6a74749d6d20d60bf28a4e4f7",
+      "excerpt": "더 높은 patch는 `src` 변경 여부와 관계없이 배포한다. 소스 외 빌드 설정이나 metadata 변경을 배포해야 할 때도 사람이 patch를 올린다.",
+      "excerptHash": "1e4f51a791ed4d6ac69ef78e8822d72440cb77dfdd38773cf61bb0fb6ef0a840",
+      "title": "npm 패키지 릴리스 Patch"
+    },
+    {
+      "id": "unchanged-plan",
+      "path": "docs/package-release.md",
+      "startLine": 72,
+      "endLine": 72,
+      "sourceHash": "fd59b7bfa46d4f61d577677d27c8bb5e1e5fbdcf308b8ca046bbb5c0384fcba7",
+      "excerpt": "- package version을 올리지 않은 소스 또는 dependency 변경은 배포되지 않는다.",
+      "excerptHash": "d5fbab1895b2509737691af2297b811d79aff656171db8abc4702aee6702816d",
+      "title": "npm 패키지 릴리스 완료 기준"
+    },
+    {
+      "id": "unchanged-guide",
+      "path": "RELEASE.md",
+      "startLine": 168,
+      "endLine": 168,
+      "sourceHash": "e3946ef840f6d4f59d73819a63037f7627911db6a74749d6d20d60bf28a4e4f7",
+      "excerpt": "소스, dependency, 빌드 설정 또는 README가 바뀌어도 저장소와 npm 버전이 같으면 배포하지 않는다.",
+      "excerptHash": "23bcf636c58bc29fdd55f9b9fcd40762df096222bc975fa78006525a31dd7089",
+      "title": "npm 패키지 릴리스 버전 변경 없음"
+    },
+    {
+      "id": "tags-plan",
+      "path": "docs/package-release.md",
+      "startLine": 40,
+      "endLine": 40,
+      "sourceHash": "fd59b7bfa46d4f61d577677d27c8bb5e1e5fbdcf308b8ca046bbb5c0384fcba7",
+      "excerpt": "버전 태그는 배포 트리거가 아니라 성공한 배포의 소스 기준점이다. 한번 만든 버전 태그는 이동하거나 덮어쓰지 않는다.",
+      "excerptHash": "4901f779ee8be408067dfba08117d5b648cef9c08acc01cd510e4d12a1018803",
+      "title": "npm 패키지 릴리스 자동화 흐름"
+    },
+    {
+      "id": "tags-guide",
+      "path": "RELEASE.md",
+      "startLine": 178,
+      "endLine": 178,
+      "sourceHash": "e3946ef840f6d4f59d73819a63037f7627911db6a74749d6d20d60bf28a4e4f7",
+      "excerpt": "태그는 배포 트리거가 아니라 해당 npm 버전의 소스를 보존하는 기록이다. GitHub Release는 같은 태그에 사람이 읽을 수 있는 배포 기록을 붙인다. 태그는 이동, 재사용 또는 강제 push하지 않는다.",
+      "excerptHash": "bda022b21ade596cbac7b90ff3b5abf7e11839b5a0aca33db21686d0e9414f5e",
+      "title": "npm 패키지 릴리스 태그와 GitHub Release"
+    },
+    {
+      "id": "web-origin",
+      "path": "apps/pomo/docs/plan/development/remote-functions.md",
+      "startLine": 33,
+      "endLine": 33,
+      "sourceHash": "e376f9b956087ca3af15f53131152d6a5fe64abcce58cbb1e92d49b12c9ce552",
+      "excerpt": "- 일반 웹의 서버 함수가 기존 self Origin `/_server`를 사용한다.",
+      "excerptHash": "085bb430bc5e8e9e6a956b95b7f27d7d08afa343dd0bef10083fb599cb4971b9",
+      "title": "원격 함수 공유 함수별 완료 조건"
+    },
+    {
+      "id": "toss-origin",
+      "path": "apps/pomo/docs/plan/development/remote-functions.md",
+      "startLine": 34,
+      "endLine": 34,
+      "sourceHash": "e376f9b956087ca3af15f53131152d6a5fe64abcce58cbb1e92d49b12c9ce552",
+      "excerpt": "- 토스 클라이언트 번들의 서버 함수만 `POMO_PUBLIC_ORIGIN/_server`를 사용한다.",
+      "excerptHash": "7757ed5662e9cc6d03c5b9b4419adb912a16c99536b7126c94f59aabfc30ada0",
+      "title": "원격 함수 공유 함수별 완료 조건"
+    }
+  ]
+}

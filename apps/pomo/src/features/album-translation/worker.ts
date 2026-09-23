@@ -8,6 +8,7 @@ import {
 } from '../text-generation'
 
 import {getErrorMessage} from 'src/utils/get-error-message'
+import {createExclusiveAsyncTask} from 'src/utils/create-exclusive-async-task'
 
 import {createTextGenerationExecutor} from '../text-generation/execution'
 import type {AlbumTranslationWorkerRequest, AlbumTranslationWorkerResponse} from './messages'
@@ -21,7 +22,7 @@ const sendResponse = (response: AlbumTranslationWorkerResponse) => workerScope.p
 const textExecutor = createTextGenerationExecutor({
   onProgress: (progress) => sendResponse({...progress, type: 'loading'}),
 })
-let translationInFlight = false
+const translation = createExclusiveAsyncTask()
 const createRequestId = createRequestSequence('album-translation')
 
 const translateAlbum = async (request: AlbumTranslationWorkerRequest) => {
@@ -56,14 +57,7 @@ const translateAlbum = async (request: AlbumTranslationWorkerRequest) => {
 }
 
 const handleRequest = (request: AlbumTranslationWorkerRequest): Promise<void> => {
-  if (translationInFlight) {
-    return Promise.resolve()
-  }
-
-  translationInFlight = true
-  return translateAlbum(request).finally(() => {
-    translationInFlight = false
-  })
+  return translation.run(() => translateAlbum(request))
 }
 
 workerScope.addEventListener('message', (event: MessageEvent<AlbumTranslationWorkerRequest>) => {

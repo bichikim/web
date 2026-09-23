@@ -34,7 +34,7 @@ export const useUiAutoHide = () => {
       }
     })
     dialogObserver.observe(document.body, {
-      attributeFilter: ['aria-hidden', 'hidden', 'open'],
+      attributeFilter: ['aria-hidden', 'hidden', 'open', 'role'],
       attributes: true,
       childList: true,
       subtree: true,

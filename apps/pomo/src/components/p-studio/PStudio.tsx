@@ -43,7 +43,9 @@ import {useWeather, type WeatherSceneCondition} from '../../features/weather'
 import {useDesktopMode, useDesktopSafeAreaTop} from '../../features/desktop-mode'
 import {
   createDesktopMusicActionChannel,
+  type DesktopMusicAction,
   isDesktopMusicAction,
+  isDesktopMusicActionConnectionMessage,
 } from '../../features/desktop-mode/desktop-music-actions'
 import {PEntry} from './Entry'
 import {resolvePSceneViseme} from '../pomo-scene-options'
@@ -122,6 +124,38 @@ const DesktopWallpaperEventActionBridge = () => {
 
   onMount(() => {
     const channel = createDesktopMusicActionChannel()
+    const pendingMusicActions: DesktopMusicAction[] = []
+    let isPlayerReady = false
+    const flushPendingMusicActions = () => {
+      const queuedActions = pendingMusicActions.splice(0)
+      for (const actionId of queuedActions) {
+        channel?.postMessage({actionId})
+      }
+    }
+    const handleChannelMessage = (event: MessageEvent<unknown>) => {
+      const message = event.data
+      if (!isDesktopMusicActionConnectionMessage(message)) {
+        return
+      }
+
+      switch (message.type) {
+        case 'player-ready':
+          isPlayerReady = true
+          flushPendingMusicActions()
+          return
+        case 'player-unavailable':
+          isPlayerReady = false
+          break
+        case 'request-player-ready':
+          break
+        default: {
+          const exhaustiveMessage: never = message
+          return exhaustiveMessage
+        }
+      }
+    }
+    channel?.addEventListener('message', handleChannelMessage)
+    channel?.postMessage({type: 'request-player-ready'})
     const unregisterHandler =
       channel === null
         ? undefined
@@ -130,7 +164,11 @@ const DesktopWallpaperEventActionBridge = () => {
               return false
             }
 
-            channel.postMessage({actionId})
+            if (isPlayerReady) {
+              channel.postMessage({actionId})
+            } else {
+              pendingMusicActions.push(actionId)
+            }
             return true
           })
     const unregisterExecutor = events.registerEventActionExecutor(() => undefined, {
@@ -139,6 +177,7 @@ const DesktopWallpaperEventActionBridge = () => {
     onCleanup(() => {
       unregisterHandler?.()
       unregisterExecutor()
+      channel?.removeEventListener('message', handleChannelMessage)
       channel?.close()
     })
   })

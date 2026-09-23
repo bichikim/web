@@ -1,4 +1,5 @@
 import {type Accessor, createMemo, createSignal, onCleanup, onMount} from 'solid-js'
+import {createSerialTaskQueue} from 'src/utils/create-serial-task-queue'
 import {reportClientError} from '../client-error-reporter'
 import {
   type BackgroundMedia,
@@ -104,7 +105,7 @@ export const useBackground = (): BackgroundController => {
     disposed = true
     unsubscribe?.()
   })
-  let operations = Promise.resolve()
+  const operations = createSerialTaskQueue()
   let pendingMedia = 0
   const run = (
     operation: (storage: BackgroundRepository) => Promise<void>,
@@ -119,7 +120,7 @@ export const useBackground = (): BackgroundController => {
       pendingMedia += 1
       setBusy(true)
     }
-    const result = operations.then(async () => {
+    const result = operations.run(async () => {
       setError(null)
       try {
         await operation(storage)
@@ -128,7 +129,6 @@ export const useBackground = (): BackgroundController => {
         report(cause, code)
       }
     })
-    operations = result
     return result.finally(() => {
       if (activity === 'media') {
         pendingMedia -= 1

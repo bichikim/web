@@ -4,6 +4,11 @@ export interface DesktopMusicActionMessage {
   readonly actionId: DesktopMusicAction
 }
 
+export type DesktopMusicActionConnectionMessage =
+  | {readonly type: 'player-ready'}
+  | {readonly type: 'request-player-ready'}
+  | {readonly type: 'player-unavailable'}
+
 const DESKTOP_MUSIC_ACTION_CHANNEL = 'pomo:desktop-music-action'
 
 export const createDesktopMusicActionChannel = (): BroadcastChannel | null => {
@@ -23,4 +28,21 @@ export const isDesktopMusicActionMessage = (value: unknown): value is DesktopMus
   }
 
   return isDesktopMusicAction(value.actionId)
+}
+
+export const isDesktopMusicActionConnectionMessage = (
+  value: unknown,
+): value is DesktopMusicActionConnectionMessage => {
+  if (typeof value !== 'object' || value === null || !('type' in value)) {
+    return false
+  }
+
+  switch (value.type) {
+    case 'player-ready':
+    case 'request-player-ready':
+    case 'player-unavailable':
+      return true
+    default:
+      return false
+  }
 }

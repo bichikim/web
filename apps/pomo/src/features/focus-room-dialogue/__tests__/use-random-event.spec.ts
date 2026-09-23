@@ -107,7 +107,7 @@ it('should wait for visibility before starting when initially hidden', async () 
   result.view.unmount()
 })
 
-it('should not queue an event when a pending timer fires while hidden', async () => {
+it('should reschedule after a hidden timer when no visibilitychange event fires', async () => {
   settingsMocks.read.mockResolvedValue({maximumMinutes: 1, minimumMinutes: 1, version: 1})
   const onEvent = vi.fn()
   const result = renderRandomEvent({onEvent, random: () => 0})
@@ -117,8 +117,7 @@ it('should not queue an event when a pending timer fires while hidden', async ()
   await vi.advanceTimersByTimeAsync(60_000)
   expect(onEvent).not.toHaveBeenCalled()
 
-  changeVisibility(true)
-  changeVisibility(false)
+  documentHidden = false
   await vi.advanceTimersByTimeAsync(60_000)
   expect(onEvent).toHaveBeenCalledOnce()
   result.view.unmount()

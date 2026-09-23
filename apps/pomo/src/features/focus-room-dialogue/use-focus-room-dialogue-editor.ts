@@ -1,6 +1,7 @@
 import * as m from '@paraglide/message'
 import {createEffect, createMemo, createSignal, on, onCleanup, untrack} from 'solid-js'
 import {isNonBlankString} from 'src/utils/is-non-blank-string'
+import {replaceBlobObjectUrl} from '../blob-object-url'
 
 import {
   createOpusBlob,
@@ -26,6 +27,7 @@ import {
   generateDialogueAudio,
   regenerateDialogueSegmentAudio,
 } from './dialogue-audio-runtime'
+import type {GeneratedDialogueAudio} from './generate-dialogue-audio'
 import {createPDialogueRepository} from './repository'
 import {DEFAULT_FOCUS_ROOM_DIALOGUE_LANGUAGE, type PDialogue} from './schema'
 import {analyzeDialogueSegmentMoods} from './segment-mood'
@@ -60,12 +62,6 @@ const getGenerationKey = (
   voiceId: SupertonicVoiceId,
   text: string,
 ) => `${language}\u0000${modelId}\u0000${voiceId}\u0000${text.trim()}`
-
-const revokeUrl = (url: string | null) => {
-  if (url !== null) {
-    URL.revokeObjectURL(url)
-  }
-}
 
 /** Owns the browser-only lifecycle for editing, generating and persisting a dialogue. */
 // oxlint-disable-next-line eslint/max-lines-per-function -- The editor hook owns one disposable model, audio URL and persistence lifecycle.
@@ -143,9 +139,12 @@ export const usePDialogueEditor = (props: UsePDialogueEditorProps): PDialogueEdi
       return
     }
 
-    revokeUrl(audioUrl())
-    audioBlob = blob
-    setAudioUrl(blob === null ? null : URL.createObjectURL(blob))
+    setAudioUrl(
+      replaceBlobObjectUrl(audioUrl(), () => {
+        audioBlob = blob
+        return blob
+      }),
+    )
   }
   const clearGeneratedAudio = (message: string | null = null) => {
     replaceAudio(null)
@@ -272,7 +271,7 @@ export const usePDialogueEditor = (props: UsePDialogueEditorProps): PDialogueEdi
     moodAnalyzer?.dispose()
     moodAnalyzer = null
     repository.dispose()
-    revokeUrl(audioUrl())
+    replaceBlobObjectUrl(audioUrl(), () => null)
   })
 
   const requestDialogueAudio = async (request: DialogueAudioRequest) => {
@@ -299,6 +298,26 @@ export const usePDialogueEditor = (props: UsePDialogueEditorProps): PDialogueEdi
     }
 
     return generated.value
+  }
+
+  const commitGeneratedDialogueAudio = async (
+    audio: GeneratedDialogueAudio,
+    selectedModelId: SupertonicModelId,
+    getKey: () => string,
+    revision: number,
+  ): Promise<boolean> => {
+    const preview = await createDialogueAudioPreview(audio, selectedModelId)
+    if (isDisposed || revision !== routeRevision) {
+      return false
+    }
+    replaceAudio(preview)
+    setEditableAudio(audio)
+    setSegments(audio.segments)
+    setDurationMs(audio.durationMs)
+    audioKey = crypto.randomUUID()
+    audioNeedsWrite = true
+    generatedKey = getKey()
+    return true
   }
 
   // oxlint-disable-next-line eslint/max-statements -- Each async stage must reject results from a previous route.
@@ -335,22 +354,16 @@ export const usePDialogueEditor = (props: UsePDialogueEditorProps): PDialogueEdi
     }
 
     try {
-      const preview = await createDialogueAudioPreview(generatedAudio, selectedModelId)
-      if (isDisposed || revision !== routeRevision) {
+      if (
+        !(await commitGeneratedDialogueAudio(
+          generatedAudio,
+          selectedModelId,
+          () => getGenerationKey(selectedLanguage, selectedModelId, selectedVoiceId, sourceText),
+          revision,
+        ))
+      ) {
         return
       }
-      replaceAudio(preview)
-      setEditableAudio(generatedAudio)
-      setSegments(generatedAudio.segments)
-      setDurationMs(generatedAudio.durationMs)
-      audioKey = crypto.randomUUID()
-      audioNeedsWrite = true
-      generatedKey = getGenerationKey(
-        selectedLanguage,
-        selectedModelId,
-        selectedVoiceId,
-        sourceText,
-      )
     } catch (error: unknown) {
       if (isDisposed || revision !== routeRevision) {
         return
@@ -445,17 +458,11 @@ export const usePDialogueEditor = (props: UsePDialogueEditorProps): PDialogueEdi
 
     try {
       const nextAudio = regenerated.value
-      const preview = await createDialogueAudioPreview(nextAudio, modelId())
-      if (isDisposed || revision !== routeRevision) {
+      if (
+        !(await commitGeneratedDialogueAudio(nextAudio, modelId(), currentGenerationKey, revision))
+      ) {
         return
       }
-      replaceAudio(preview)
-      setEditableAudio(nextAudio)
-      setSegments(nextAudio.segments)
-      setDurationMs(nextAudio.durationMs)
-      audioKey = crypto.randomUUID()
-      audioNeedsWrite = true
-      generatedKey = currentGenerationKey()
       setEditorState({
         message: m.dialogue_status_regenerated_segment({number: position + 1}),
         status: 'ready',

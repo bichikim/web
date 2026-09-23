@@ -1,5 +1,6 @@
 import {z} from 'zod'
 
+import {createJsonCodec, createValueStorage} from '../value-storage'
 import {type FeedConnection, feedConnectionSchema} from './schema'
 
 const STORAGE_KEY = 'pomo:focus-room-feed-connections:v1'
@@ -21,22 +22,24 @@ export interface FeedConnectionRepository {
 /** Persists the complete feed connection collection as one versioned setting. */
 export const createFeedConnectionRepository = (
   storage: FeedConnectionStorage,
-): FeedConnectionRepository => ({
-  list() {
-    const storedValue = storage.getItem(STORAGE_KEY)
-
-    if (storedValue === null) {
-      return []
-    }
-
-    try {
-      return feedConnectionCollectionSchema.parse(JSON.parse(storedValue) as unknown).connections
-    } catch (error: unknown) {
-      throw new Error('저장된 피드 연결 정보가 올바르지 않아요.', {cause: error})
-    }
-  },
-  save(connections) {
-    const snapshot = feedConnectionCollectionSchema.parse({connections, version: 1})
-    storage.setItem(STORAGE_KEY, JSON.stringify(snapshot))
-  },
-})
+): FeedConnectionRepository => {
+  const codec = createJsonCodec((value) => feedConnectionCollectionSchema.parse(value))
+  const value = createValueStorage({
+    ...codec,
+    decode: (stored) => {
+      try {
+        return codec.decode(stored)
+      } catch (error: unknown) {
+        throw new Error('저장된 피드 연결 정보가 올바르지 않아요.', {cause: error})
+      }
+    },
+    key: STORAGE_KEY,
+    storage: () => storage,
+  })
+  return {
+    list: () => value.read()?.connections ?? [],
+    save: (connections) => {
+      value.write(feedConnectionCollectionSchema.parse({connections, version: 1}))
+    },
+  }
+}

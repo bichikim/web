@@ -38,6 +38,36 @@ const createStorage = ({
   return storage
 }
 
+const createSharedNativeStorage = () => {
+  let nativePlaylist: StoredPlaylist | null = null
+  let webPlaylist: StoredPlaylist | null = null
+
+  const writeNative = async (playlist: StoredPlaylist) => {
+    nativePlaylist = playlist
+  }
+
+  const createAdapter = () =>
+    ({
+      readToss: vi.fn(async () => nativePlaylist),
+      readWeb: vi.fn(() => webPlaylist),
+      usesTossStorage: () => true,
+      writeToss: vi.fn(writeNative),
+      writeWeb: vi.fn((playlist: StoredPlaylist) => {
+        webPlaylist = playlist
+        return null
+      }),
+    }) satisfies PlaylistStorageAdapter
+
+  return {
+    clearWeb: () => {
+      webPlaylist = null
+    },
+    createAdapter,
+    getNative: () => nativePlaylist,
+    writeNative,
+  }
+}
+
 it('should persist and restore a browser playlist in order', async () => {
   const storage = createStorage()
   const playlistStorage = createPPlaylistStorage(storage, {now: () => 20})
@@ -256,26 +286,30 @@ it('should isolate a pending read from writes made through another storage insta
   await expect(playlistRequest).resolves.toEqual(['toss'])
 })
 
-it('should keep latest Toss writers independent for each storage instance', async () => {
-  let completeFirstWrite: (() => void) | undefined
-  const firstStorage = createStorage({usesTossStorage: true})
-  firstStorage.writeToss.mockImplementationOnce(
-    () =>
-      new Promise((resolve) => {
-        completeFirstWrite = resolve
-      }),
-  )
-  const secondStorage = createStorage({usesTossStorage: true})
-  const firstPlaylistStorage = createPPlaylistStorage(firstStorage, {now: () => 20})
-  const secondPlaylistStorage = createPPlaylistStorage(secondStorage, {now: () => 20})
-  const firstWrite = firstPlaylistStorage.write(['first'])
+it('should serialize native writes across playlist storage instances sharing a key', async () => {
+  const shared = createSharedNativeStorage()
+  const firstStorage = shared.createAdapter()
+  const secondStorage = shared.createAdapter()
+  const firstPending = Promise.withResolvers<void>()
+  firstStorage.writeToss.mockImplementationOnce(async (playlist) => {
+    await firstPending.promise
+    await shared.writeNative(playlist)
+  })
+  const firstPlaylistStorage = createPPlaylistStorage(firstStorage, {now: () => 100})
+  const secondPlaylistStorage = createPPlaylistStorage(secondStorage, {now: () => 200})
 
+  const firstWrite = firstPlaylistStorage.write(['stale'])
   await vi.waitFor(() => expect(firstStorage.writeToss).toHaveBeenCalledOnce())
-  const secondWrite = secondPlaylistStorage.write(['second'])
+  const secondWrite = secondPlaylistStorage.write(['latest'])
 
-  await vi.waitFor(() => expect(secondStorage.writeToss).toHaveBeenCalledOnce())
-  completeFirstWrite?.()
+  expect(secondStorage.writeToss).not.toHaveBeenCalled()
+  firstPending.resolve()
+
   await Promise.all([firstWrite, secondWrite])
+  expect(shared.getNative()).toEqual(createStoredPlaylist(['latest'], 200))
+
+  shared.clearWeb()
+  await expect(secondPlaylistStorage.read()).resolves.toEqual(['latest'])
 })
 
 it('should persist a playlist to Toss storage when the bridge is available', async () => {

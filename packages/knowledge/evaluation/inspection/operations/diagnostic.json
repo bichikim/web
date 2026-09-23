@@ -1,0 +1,1230 @@
+{
+  "command": "doctor",
+  "checks": [
+    {
+      "counts": {
+        "units": 11
+      },
+      "name": "source",
+      "status": "pass"
+    },
+    {
+      "counts": {},
+      "name": "relations",
+      "status": "pass"
+    },
+    {
+      "counts": {
+        "units": 0
+      },
+      "name": "conflicts",
+      "status": "pass"
+    },
+    {
+      "name": "embedding",
+      "status": "pass"
+    },
+    {
+      "name": "schema",
+      "status": "pass"
+    },
+    {
+      "name": "storage",
+      "status": "pass"
+    },
+    {
+      "counts": {
+        "changed": 0,
+        "metadata": 0,
+        "missing": 0,
+        "stale": 0
+      },
+      "name": "snapshot",
+      "status": "pass"
+    }
+  ],
+  "healthy": true,
+  "semantic": {
+    "assessments": [
+      {
+        "assessment": {
+          "confidence": 0.9,
+          "kind": "uncertain",
+          "leftQuote": "# 음악 라이브러리 지속 저장의 의미 {#policy}\n\n이 문서에서 지속 저장은 앱이나 브라우저를 다시 실행해도 유지된다는 뜻이다. 앱 삭제 또는\n브라우저 사이트 데이터 삭제 이후까지 보존하지 않으며 기기 간 동기화도 제공하지 않는다.",
+          "reason": "Both policies define a form of data persistence, but the specific conditions for '지속 저장' (left) and '영속 저장' (right) are different enough (e.g., '앱이나 브라우저를 다시 실행해도 유지' vs '앱 재시작과 정상 업데이트 후에도 유지') that a direct comparison requires clarification on the scope of '지속' vs '영속' in relation to app/browser state changes.",
+          "rightQuote": "# 영속 저장의 의미 {#policy}\n\n영속 저장은 앱 재시작과 정상 업데이트 후에도 데이터를 유지한다는 뜻이다. 사용자가 저장소를 직접 지우거나 앱을 삭제하면 데이터가 함께 삭제되는 것은 허용한다."
+        },
+        "cacheKey": "a42521c814b18039882215d105fc2a8207b61f77f14c68029cc9d007b319d7ea",
+        "left": {
+          "contentHash": "sha256:875781eb2e24d6346f9d4bd25bd24c9fe5e55d39d1a5629bce7e4f454a11f9ad",
+          "docId": "operations/lifecycle",
+          "unitId": "policy"
+        },
+        "right": {
+          "contentHash": "sha256:73ea5eafe8bcafdb4d6388fdaef0a4ed8e21a15d4be9c5535df4b7c898db8e08",
+          "docId": "operations/persistence",
+          "unitId": "policy"
+        }
+      },
+      {
+        "assessment": {
+          "confidence": 0.95,
+          "kind": "duplicate",
+          "leftQuote": "# Pomo 배포 실패 복구 {#policy}\n\nPomo 배포가 실패하면 운영 도메인을 이전 Vercel deployment로 유지하거나 복구한다. 오디오 게이트웨이 배포 후 Pomo 배포가 실패하면 게이트웨이도 실행 전에 기록한 production version으로 되돌린다.",
+          "reason": "Both policies discuss recovery procedures after a Pomo deployment failure. The left mentions keeping the operational domain on the previous Vercel deployment, and the right mentions rolling back the Gateway version if Pomo fails after Gateway deployment.",
+          "rightQuote": "# Pomo 운영 배포와 복구 {#policy}\n\n`main`의 운영 배포는 GitHub Actions에서 `.github/workflows/pomo-production-deploy.yml`을 수동으로\n실행한다. `main` push만으로는 배포하지 않는다. 먼저 운영 환경 설정으로 빌드한다. Vercel\nProduction 환경의 Neon 직접 연결 URL인\n`DATABASE_URL_UNPOOLED`로 Drizzle migration을 적용하고, 같은 빌드 산출물을 운영 후보로\n배포한다. 후보의 `/`와 DB를 읽는 RSS 경로가 스모크 테스트를 통과할 때만 운영 도메인으로\n승격한다. 빌드, migration 또는 스모크 테스트가 실패하면 운영 도메인을 변경하지 않는다. 중복\n배포를 막기 위해 모든 브랜치의 Vercel Git 자동 배포를 끄고 GitHub Actions만 배포한다. GitHub에는\n`VERCEL_TOKEN` secret을 설정한다. Gateway가 먼저 배포된 뒤 Pomo 배포가 실패하거나 취소되면\nworkflow가 배포 직전에 기록한 Gateway version으로 되돌린다."
+        },
+        "cacheKey": "407ddf88645d887ce5b9c5e051bdea20542988ad98dfd007c5f49a12959d4d7a",
+        "left": {
+          "contentHash": "sha256:4358f8990c4a9ac3b3bfb17b39dbd5eb26b53586e2a7aeb88783a06de8004548",
+          "docId": "operations/rollback",
+          "unitId": "policy"
+        },
+        "right": {
+          "contentHash": "sha256:554e86bbe40cb8bd8b7f8c7bdb661c22d29982fa249fefd19e1c2fedfb12a9c7",
+          "docId": "operations/deployment",
+          "unitId": "policy"
+        }
+      },
+      {
+        "assessment": {
+          "confidence": 0.9,
+          "kind": "conflict",
+          "leftQuote": "# 원격 함수 상태와 계약 {#policy}\n\n원격 함수 연결 기반은 구현되었다. 앱인토스와 데스크톱 정적 클라이언트의 SolidStart 서버 함수는\n`POMO_PUBLIC_ORIGIN`에 배포된 SSR 서버를 호출한다. 일반 웹은 현재 페이지의 self Origin을 계속\n사용한다.",
+          "reason": "The left states that general web uses the current page's self Origin, while the right states that general web's server function uses the existing self Origin `/_server`.",
+          "rightQuote": "# 원격 함수 공유 함수별 완료 조건 {#policy}\n\n- 일반 웹의 서버 함수가 기존 self Origin `/_server`를 사용한다.\n- 토스 클라이언트 번들의 서버 함수만 `POMO_PUBLIC_ORIGIN/_server`를 사용한다.\n- 토스 번들의 JS, CSS, Worker, 이미지 주소는 패키지 내부 경로를 유지한다."
+        },
+        "cacheKey": "af800c5422459fd211c45365c5df08e8ce878ca695777b2cfff0b18b352747ef",
+        "left": {
+          "contentHash": "sha256:6677386e64c874a53c74fb2c489240477576280130db60f1481c364350c9a772",
+          "docId": "operations/remote",
+          "unitId": "policy"
+        },
+        "right": {
+          "contentHash": "sha256:1c6069a7476dba3dbcb6529e3d0494c93b95daffa4a29e1baf9d56080cbf4c62",
+          "docId": "operations/clients",
+          "unitId": "policy"
+        }
+      },
+      {
+        "assessment": {
+          "confidence": 0.9,
+          "kind": "unrelated",
+          "leftQuote": "# 영속 저장 정책 {#policy}\n\n저장소에는 자동 만료나 자동 정리 정책을 두지 않는다. `navigator.storage.persist()`는 사용하지 않는다.",
+          "reason": "The left policy discusses general persistence storage policies (no auto-expiration/cleanup, no navigator.storage.persist()). The right policy defines 'persistent storage' specifically for a music library context (retains across app/browser restarts, but not after app deletion or site data clearing, and no device sync). They address different scopes/contexts.",
+          "rightQuote": "# 음악 라이브러리 지속 저장의 의미 {#policy}\n\n이 문서에서 지속 저장은 앱이나 브라우저를 다시 실행해도 유지된다는 뜻이다. 앱 삭제 또는\n브라우저 사이트 데이터 삭제 이후까지 보존하지 않으며 기기 간 동기화도 제공하지 않는다."
+        },
+        "cacheKey": "09581f1d73636aa608758718ab7c91e6823816a6a9642fb9f8ef5ef9c7967fa7",
+        "left": {
+          "contentHash": "sha256:20b8fbe13762fcfaf5c9e91c45f93e2b7c1180e4e5982f2565ff4577cca32dc9",
+          "docId": "operations/policy",
+          "unitId": "policy"
+        },
+        "right": {
+          "contentHash": "sha256:875781eb2e24d6346f9d4bd25bd24c9fe5e55d39d1a5629bce7e4f454a11f9ad",
+          "docId": "operations/lifecycle",
+          "unitId": "policy"
+        }
+      },
+      {
+        "assessment": {
+          "confidence": 0.9,
+          "kind": "unrelated",
+          "leftQuote": "# 영속 저장 정책 {#policy}\n\n저장소에는 자동 만료나 자동 정리 정책을 두지 않는다. `navigator.storage.persist()`는 사용하지 않는다.",
+          "reason": "The left text states not to use automatic expiration or cleanup policies and not to use `navigator.storage.persist()`. The right text defines persistent storage as data remaining after app restart and normal updates, allowing deletion only when the user clears storage or deletes the app.",
+          "rightQuote": "# 영속 저장의 의미 {#policy}\n\n영속 저장은 앱 재시작과 정상 업데이트 후에도 데이터를 유지한다는 뜻이다. 사용자가 저장소를 직접 지우거나 앱을 삭제하면 데이터가 함께 삭제되는 것은 허용한다."
+        },
+        "cacheKey": "d4ef1d0288f03bb7ba877121a7c485d0ab7f94d33456dd37606ee4c080d76ba5",
+        "left": {
+          "contentHash": "sha256:20b8fbe13762fcfaf5c9e91c45f93e2b7c1180e4e5982f2565ff4577cca32dc9",
+          "docId": "operations/policy",
+          "unitId": "policy"
+        },
+        "right": {
+          "contentHash": "sha256:73ea5eafe8bcafdb4d6388fdaef0a4ed8e21a15d4be9c5535df4b7c898db8e08",
+          "docId": "operations/persistence",
+          "unitId": "policy"
+        }
+      },
+      {
+        "assessment": {
+          "confidence": 0.9,
+          "kind": "unrelated",
+          "leftQuote": "# 영속 저장 정책 {#policy}\n\n저장소에는 자동 만료나 자동 정리 정책을 두지 않는다. `navigator.storage.persist()`는 사용하지 않는다.",
+          "reason": "The left text discusses not having automatic expiration or cleanup policies for storage. The right text describes a persistent storage compatibility layer detailing how different platforms implement storage using common contracts.",
+          "rightQuote": "# 영속 저장 호환 계층 {#policy}\n\n기능 코드는 특정 저장소 API를 직접 호출하지 않고 구조화 데이터 저장소와 바이너리 파일 저장소의 공통 계약만 사용한다. 플랫폼별 어댑터가 같은 계약을 구현한다.\n\n| 플랫폼                          | 구조화 데이터              | 바이너리 파일           |\n| ------------------------------- | -------------------------- | ----------------------- |\n| 앱인토스                        | 앱인토스 SDK `Storage`     | Cache API               |\n| 웹 브라우저·PWA                 | Dexie.js와 IndexedDB       | Cache API               |\n| 향후 iOS·Android·Steam·데스크톱 | 플랫폼 데이터베이스 어댑터 | 플랫폼 파일 저장 어댑터 |"
+        },
+        "cacheKey": "568b586d10e29748ee73c063541ef0f08f3b928ade78ba6c440261d07b36a32a",
+        "left": {
+          "contentHash": "sha256:20b8fbe13762fcfaf5c9e91c45f93e2b7c1180e4e5982f2565ff4577cca32dc9",
+          "docId": "operations/policy",
+          "unitId": "policy"
+        },
+        "right": {
+          "contentHash": "sha256:8d6b6b6c6d2e0ec20f1a5dbf6e322412a248a81b4c6ff0d76aab8f795417eef9",
+          "docId": "operations/storage",
+          "unitId": "policy"
+        }
+      },
+      {
+        "assessment": {
+          "confidence": 1,
+          "kind": "unrelated",
+          "leftQuote": "# 음악 라이브러리 지속 저장의 의미 {#policy}\n\n이 문서에서 지속 저장은 앱이나 브라우저를 다시 실행해도 유지된다는 뜻이다. 앱 삭제 또는\n브라우저 사이트 데이터 삭제 이후까지 보존하지 않으며 기기 간 동기화도 제공하지 않는다.",
+          "reason": "The left text describes the meaning of 'persistent storage' for a music library, while the right text describes the storage mechanism for user playlists.",
+          "rightQuote": "# 사용자 재생목록 저장 {#policy}\n\n저장 키는 `pomo:focus-room-playlist:v1`을 사용한다. 웹에서는 `localStorage`, 앱인토스에서는\n`Storage`를 사용한다. 재생목록은 현재 곡과 재생 위치를 저장하는 playback 상태와 분리한다."
+        },
+        "cacheKey": "976ad763bb61bbd8eacdc0bb45d31e74b338f4892f47b166ce7010109a2be6c7",
+        "left": {
+          "contentHash": "sha256:875781eb2e24d6346f9d4bd25bd24c9fe5e55d39d1a5629bce7e4f454a11f9ad",
+          "docId": "operations/lifecycle",
+          "unitId": "policy"
+        },
+        "right": {
+          "contentHash": "sha256:2f40922b13f86329a7816cc05ba63a23ebda3b2950dd4d17b45dc21e38c02707",
+          "docId": "operations/playlist",
+          "unitId": "policy"
+        }
+      },
+      {
+        "assessment": {
+          "confidence": 1,
+          "kind": "unrelated",
+          "leftQuote": "# 영속 저장 호환 계층 {#policy}\n\n기능 코드는 특정 저장소 API를 직접 호출하지 않고 구조화 데이터 저장소와 바이너리 파일 저장소의 공통 계약만 사용한다. 플랫폼별 어댑터가 같은 계약을 구현한다.\n\n| 플랫폼                          | 구조화 데이터              | 바이너리 파일           |\n| ------------------------------- | -------------------------- | ----------------------- |\n| 앱인토스                        | 앱인토스 SDK `Storage`     | Cache API               |\n| 웹 브라우저·PWA                 | Dexie.js와 IndexedDB       | Cache API               |\n| 향후 iOS·Android·Steam·데스크톱 | 플랫폼 데이터베이스 어댑터 | 플랫폼 파일 저장 어댑터 |",
+          "reason": "The left source discusses a persistent storage compatibility layer for structured and binary data, while the right source discusses settings for feed connection, focusing on URL validation and local storage for connection details.",
+          "rightQuote": "# 피드 연결 설정 {#policy}\n\n- HTTP와 HTTPS 주소만 허용하고 정규화된 같은 주소의 중복 추가를 막는다.\n- 실제 피드 형식 확인은 피드 동기화가 구현될 때 연결한다. 현재 설정은 주소 형식만 검증한다.\n- 연결 목록은 버전된 로컬 설정으로 저장해 Pomo 이탈, 새로고침과 앱 업데이트 후에도 복원한다.\n- 첫 연결을 저장할 때 지원 브라우저에는 영속 저장을 요청한다.\n- 사용자가 연결을 삭제하거나 앱 데이터를 제거하기 전까지 주소와 선택 음성을 유지한다.\n- 피드 음성의 48시간 만료는 연결 설정을 삭제하지 않는다.\n- 피드 연결은 작은 사용자 설정으로 보관하고, 향후 늘어나는 피드 항목·생성 작업·음성 메타데이터는\n  Dexie와 바이너리 저장소에 분리한다."
+        },
+        "cacheKey": "e31723e8c90827ff5b4d76b31db419910e14356f2d916fb1d5030a6f0b279cc3",
+        "left": {
+          "contentHash": "sha256:8d6b6b6c6d2e0ec20f1a5dbf6e322412a248a81b4c6ff0d76aab8f795417eef9",
+          "docId": "operations/storage",
+          "unitId": "policy"
+        },
+        "right": {
+          "contentHash": "sha256:47acf24e08995c5eb959a367f6311212dc768a54d0a0a405e8abb3c3f397ca56",
+          "docId": "operations/connections",
+          "unitId": "policy"
+        }
+      },
+      {
+        "assessment": {
+          "confidence": 1,
+          "kind": "unrelated",
+          "leftQuote": "# 영속 저장 호환 계층 {#policy}\n\n기능 코드는 특정 저장소 API를 직접 호출하지 않고 구조화 데이터 저장소와 바이너리 파일 저장소의 공통 계약만 사용한다. 플랫폼별 어댑터가 같은 계약을 구현한다.\n\n| 플랫폼                          | 구조화 데이터              | 바이너리 파일           |\n| ------------------------------- | -------------------------- | ----------------------- |\n| 앱인토스                        | 앱인토스 SDK `Storage`     | Cache API               |\n| 웹 브라우저·PWA                 | Dexie.js와 IndexedDB       | Cache API               |\n| 향후 iOS·Android·Steam·데스크톱 | 플랫폼 데이터베이스 어댑터 | 플랫폼 파일 저장 어댑터 |",
+          "reason": "The left text describes a persistent storage compatibility layer for structured and binary data, while the right text defines the meaning of persistent storage in the context of a music library.",
+          "rightQuote": "# 음악 라이브러리 지속 저장의 의미 {#policy}\n\n이 문서에서 지속 저장은 앱이나 브라우저를 다시 실행해도 유지된다는 뜻이다. 앱 삭제 또는\n브라우저 사이트 데이터 삭제 이후까지 보존하지 않으며 기기 간 동기화도 제공하지 않는다."
+        },
+        "cacheKey": "4bb71540b6db4e0a5c352cee4628a611733228279f5c0a070db85d892268c63d",
+        "left": {
+          "contentHash": "sha256:8d6b6b6c6d2e0ec20f1a5dbf6e322412a248a81b4c6ff0d76aab8f795417eef9",
+          "docId": "operations/storage",
+          "unitId": "policy"
+        },
+        "right": {
+          "contentHash": "sha256:875781eb2e24d6346f9d4bd25bd24c9fe5e55d39d1a5629bce7e4f454a11f9ad",
+          "docId": "operations/lifecycle",
+          "unitId": "policy"
+        }
+      },
+      {
+        "assessment": {
+          "confidence": 0.9,
+          "kind": "unrelated",
+          "leftQuote": "# 영속 저장 호환 계층 {#policy}\n\n기능 코드는 특정 저장소 API를 직접 호출하지 않고 구조화 데이터 저장소와 바이너리 파일 저장소의 공통 계약만 사용한다. 플랫폼별 어댑터가 같은 계약을 구현한다.\n\n| 플랫폼                          | 구조화 데이터              | 바이너리 파일           |\n| ------------------------------- | -------------------------- | ----------------------- |\n| 앱인토스                        | 앱인토스 SDK `Storage`     | Cache API               |\n| 웹 브라우저·PWA                 | Dexie.js와 IndexedDB       | Cache API               |\n| 향후 iOS·Android·Steam·데스크톱 | 플랫폼 데이터베이스 어댑터 | 플랫폼 파일 저장 어댑터 |",
+          "reason": "The left text describes a 'Persistent Storage Compatibility Layer' detailing how functional code interacts with different storage types (structured data and binary files) across various platforms. The right text defines 'Persistent Storage' as data retained after app restart or update, excluding data deleted by the user or app deletion.",
+          "rightQuote": "# 영속 저장의 의미 {#policy}\n\n영속 저장은 앱 재시작과 정상 업데이트 후에도 데이터를 유지한다는 뜻이다. 사용자가 저장소를 직접 지우거나 앱을 삭제하면 데이터가 함께 삭제되는 것은 허용한다."
+        },
+        "cacheKey": "be0feaabac72c6e424e8c074e2fdef885c96fb6fbc13aa364135461b0ec32d34",
+        "left": {
+          "contentHash": "sha256:8d6b6b6c6d2e0ec20f1a5dbf6e322412a248a81b4c6ff0d76aab8f795417eef9",
+          "docId": "operations/storage",
+          "unitId": "policy"
+        },
+        "right": {
+          "contentHash": "sha256:73ea5eafe8bcafdb4d6388fdaef0a4ed8e21a15d4be9c5535df4b7c898db8e08",
+          "docId": "operations/persistence",
+          "unitId": "policy"
+        }
+      },
+      {
+        "assessment": {
+          "confidence": 0.9,
+          "kind": "unrelated",
+          "leftQuote": "# 영속 저장 호환 계층 {#policy}\n\n기능 코드는 특정 저장소 API를 직접 호출하지 않고 구조화 데이터 저장소와 바이너리 파일 저장소의 공통 계약만 사용한다. 플랫폼별 어댑터가 같은 계약을 구현한다.\n\n| 플랫폼                          | 구조화 데이터              | 바이너리 파일           |\n| ------------------------------- | -------------------------- | ----------------------- |\n| 앱인토스                        | 앱인토스 SDK `Storage`     | Cache API               |\n| 웹 브라우저·PWA                 | Dexie.js와 IndexedDB       | Cache API               |\n| 향후 iOS·Android·Steam·데스크톱 | 플랫폼 데이터베이스 어댑터 | 플랫폼 파일 저장 어댑터 |",
+          "reason": "The left text describes a persistent storage compatibility layer for different platforms, while the right text specifies the storage key and mechanism for user playlists.",
+          "rightQuote": "# 사용자 재생목록 저장 {#policy}\n\n저장 키는 `pomo:focus-room-playlist:v1`을 사용한다. 웹에서는 `localStorage`, 앱인토스에서는\n`Storage`를 사용한다. 재생목록은 현재 곡과 재생 위치를 저장하는 playback 상태와 분리한다."
+        },
+        "cacheKey": "1c1316c8bf0f60b469000d77eee21781db849c37476fa844b9016157615fe79f",
+        "left": {
+          "contentHash": "sha256:8d6b6b6c6d2e0ec20f1a5dbf6e322412a248a81b4c6ff0d76aab8f795417eef9",
+          "docId": "operations/storage",
+          "unitId": "policy"
+        },
+        "right": {
+          "contentHash": "sha256:2f40922b13f86329a7816cc05ba63a23ebda3b2950dd4d17b45dc21e38c02707",
+          "docId": "operations/playlist",
+          "unitId": "policy"
+        }
+      },
+      {
+        "assessment": {
+          "confidence": 1,
+          "kind": "unrelated",
+          "leftQuote": "# 영속 저장 호환 계층 {#policy}\n\n기능 코드는 특정 저장소 API를 직접 호출하지 않고 구조화 데이터 저장소와 바이너리 파일 저장소의 공통 계약만 사용한다. 플랫폼별 어댑터가 같은 계약을 구현한다.\n\n| 플랫폼                          | 구조화 데이터              | 바이너리 파일           |\n| ------------------------------- | -------------------------- | ----------------------- |\n| 앱인토스                        | 앱인토스 SDK `Storage`     | Cache API               |\n| 웹 브라우저·PWA                 | Dexie.js와 IndexedDB       | Cache API               |\n| 향후 iOS·Android·Steam·데스크톱 | 플랫폼 데이터베이스 어댑터 | 플랫폼 파일 저장 어댑터 |",
+          "reason": "The left source discusses a persistent storage compatibility layer for different platforms, while the right source discusses completion conditions for remote function sharing based on the origin.",
+          "rightQuote": "# 원격 함수 공유 함수별 완료 조건 {#policy}\n\n- 일반 웹의 서버 함수가 기존 self Origin `/_server`를 사용한다.\n- 토스 클라이언트 번들의 서버 함수만 `POMO_PUBLIC_ORIGIN/_server`를 사용한다.\n- 토스 번들의 JS, CSS, Worker, 이미지 주소는 패키지 내부 경로를 유지한다."
+        },
+        "cacheKey": "151dbff57c3f89418a8af16328d8494a0efebd2714be1ca3e66c0e4f00090359",
+        "left": {
+          "contentHash": "sha256:8d6b6b6c6d2e0ec20f1a5dbf6e322412a248a81b4c6ff0d76aab8f795417eef9",
+          "docId": "operations/storage",
+          "unitId": "policy"
+        },
+        "right": {
+          "contentHash": "sha256:1c6069a7476dba3dbcb6529e3d0494c93b95daffa4a29e1baf9d56080cbf4c62",
+          "docId": "operations/clients",
+          "unitId": "policy"
+        }
+      },
+      {
+        "assessment": {
+          "confidence": 0.9,
+          "kind": "unrelated",
+          "leftQuote": "# 영속 저장 정책 {#policy}\n\n저장소에는 자동 만료나 자동 정리 정책을 두지 않는다. `navigator.storage.persist()`는 사용하지 않는다.",
+          "reason": "The left policy discusses general persistence settings (no auto-expiration/cleanup), while the right policy specifies how to store a user playlist using specific keys and storage mechanisms.",
+          "rightQuote": "# 사용자 재생목록 저장 {#policy}\n\n저장 키는 `pomo:focus-room-playlist:v1`을 사용한다. 웹에서는 `localStorage`, 앱인토스에서는\n`Storage`를 사용한다. 재생목록은 현재 곡과 재생 위치를 저장하는 playback 상태와 분리한다."
+        },
+        "cacheKey": "332e3e3e7ff51ecfd9efd16e1038660f214f16374585ba0d8ff9eb870e72e9f2",
+        "left": {
+          "contentHash": "sha256:20b8fbe13762fcfaf5c9e91c45f93e2b7c1180e4e5982f2565ff4577cca32dc9",
+          "docId": "operations/policy",
+          "unitId": "policy"
+        },
+        "right": {
+          "contentHash": "sha256:2f40922b13f86329a7816cc05ba63a23ebda3b2950dd4d17b45dc21e38c02707",
+          "docId": "operations/playlist",
+          "unitId": "policy"
+        }
+      },
+      {
+        "assessment": {
+          "confidence": 0.95,
+          "kind": "unrelated",
+          "leftQuote": "# 피드 대화 만료와 정리 {#policy}\n\n- 피드 대화의 `expiresAt`은 음성 생성 완료 시각부터 48시간으로 계산한다.\n- 피드 동기화가 성공해 다음 항목을 확인할 때 만료된 피드 대화를 정리한다.\n- 브라우저가 닫혀 있으면 정확한 만료 시각의 삭제를 보장하지 않는다. 48시간이 지나면 삭제 대상이\n  되고 다음 동기화가 실제 정리 트리거가 된다.\n- 현재 재생 중인 대화는 해당 동기화의 정리에서 제외하고 재생 종료 후 다시 정리한다.\n- 정리는 기존 대화 삭제 계약을 사용해 대화 레코드와 WAV를 제거한 뒤 피드 메타데이터를 제거한다.\n- 미완성 작업은 완성 대화와 별도의 보존 기간을 사용하며, 오래된 작업을 정리할 때 사용자에게 알린다.\n- 음성이 만료되어도 피드 항목의 발견 기록은 유지해 같은 항목을 새 피드로 다시 만들지 않는다.",
+          "reason": "The left policy discusses the expiration and cleanup of feed conversations, while the right policy discusses feed connection settings and address validation.",
+          "rightQuote": "# 피드 연결 설정 {#policy}\n\n- HTTP와 HTTPS 주소만 허용하고 정규화된 같은 주소의 중복 추가를 막는다.\n- 실제 피드 형식 확인은 피드 동기화가 구현될 때 연결한다. 현재 설정은 주소 형식만 검증한다.\n- 연결 목록은 버전된 로컬 설정으로 저장해 Pomo 이탈, 새로고침과 앱 업데이트 후에도 복원한다.\n- 첫 연결을 저장할 때 지원 브라우저에는 영속 저장을 요청한다.\n- 사용자가 연결을 삭제하거나 앱 데이터를 제거하기 전까지 주소와 선택 음성을 유지한다.\n- 피드 음성의 48시간 만료는 연결 설정을 삭제하지 않는다.\n- 피드 연결은 작은 사용자 설정으로 보관하고, 향후 늘어나는 피드 항목·생성 작업·음성 메타데이터는\n  Dexie와 바이너리 저장소에 분리한다."
+        },
+        "cacheKey": "ea8c441fe792feee4155969e4fce8080c343786b67b804ac9b488ceaf1727698",
+        "left": {
+          "contentHash": "sha256:297d7bb8eaa6339a6cc5dee99e15846b39a2381a3f6498ce4e9403b46aafb5f7",
+          "docId": "operations/expiry",
+          "unitId": "policy"
+        },
+        "right": {
+          "contentHash": "sha256:47acf24e08995c5eb959a367f6311212dc768a54d0a0a405e8abb3c3f397ca56",
+          "docId": "operations/connections",
+          "unitId": "policy"
+        }
+      },
+      {
+        "assessment": {
+          "confidence": 1,
+          "kind": "unrelated",
+          "leftQuote": "# 원격 함수 공유 함수별 완료 조건 {#policy}\n\n- 일반 웹의 서버 함수가 기존 self Origin `/_server`를 사용한다.\n- 토스 클라이언트 번들의 서버 함수만 `POMO_PUBLIC_ORIGIN/_server`를 사용한다.\n- 토스 번들의 JS, CSS, Worker, 이미지 주소는 패키지 내부 경로를 유지한다.",
+          "reason": "The left text discusses conditions for shared remote functions, while the right text discusses feed connection settings.",
+          "rightQuote": "# 피드 연결 설정 {#policy}\n\n- HTTP와 HTTPS 주소만 허용하고 정규화된 같은 주소의 중복 추가를 막는다.\n- 실제 피드 형식 확인은 피드 동기화가 구현될 때 연결한다. 현재 설정은 주소 형식만 검증한다.\n- 연결 목록은 버전된 로컬 설정으로 저장해 Pomo 이탈, 새로고침과 앱 업데이트 후에도 복원한다.\n- 첫 연결을 저장할 때 지원 브라우저에는 영속 저장을 요청한다.\n- 사용자가 연결을 삭제하거나 앱 데이터를 제거하기 전까지 주소와 선택 음성을 유지한다.\n- 피드 음성의 48시간 만료는 연결 설정을 삭제하지 않는다.\n- 피드 연결은 작은 사용자 설정으로 보관하고, 향후 늘어나는 피드 항목·생성 작업·음성 메타데이터는\n  Dexie와 바이너리 저장소에 분리한다."
+        },
+        "cacheKey": "cdba1a5caf9a1d1a259c165c099843c73ff2b8334525cc009c2d1e182b1dac67",
+        "left": {
+          "contentHash": "sha256:1c6069a7476dba3dbcb6529e3d0494c93b95daffa4a29e1baf9d56080cbf4c62",
+          "docId": "operations/clients",
+          "unitId": "policy"
+        },
+        "right": {
+          "contentHash": "sha256:47acf24e08995c5eb959a367f6311212dc768a54d0a0a405e8abb3c3f397ca56",
+          "docId": "operations/connections",
+          "unitId": "policy"
+        }
+      },
+      {
+        "assessment": {
+          "confidence": 1,
+          "kind": "unrelated",
+          "leftQuote": "# 사용자 재생목록 저장 {#policy}\n\n저장 키는 `pomo:focus-room-playlist:v1`을 사용한다. 웹에서는 `localStorage`, 앱인토스에서는\n`Storage`를 사용한다. 재생목록은 현재 곡과 재생 위치를 저장하는 playback 상태와 분리한다.",
+          "reason": "The left policy describes saving user playlists, while the right policy describes setting up feed connections. They cover different subjects.",
+          "rightQuote": "# 피드 연결 설정 {#policy}\n\n- HTTP와 HTTPS 주소만 허용하고 정규화된 같은 주소의 중복 추가를 막는다.\n- 실제 피드 형식 확인은 피드 동기화가 구현될 때 연결한다. 현재 설정은 주소 형식만 검증한다.\n- 연결 목록은 버전된 로컬 설정으로 저장해 Pomo 이탈, 새로고침과 앱 업데이트 후에도 복원한다.\n- 첫 연결을 저장할 때 지원 브라우저에는 영속 저장을 요청한다.\n- 사용자가 연결을 삭제하거나 앱 데이터를 제거하기 전까지 주소와 선택 음성을 유지한다.\n- 피드 음성의 48시간 만료는 연결 설정을 삭제하지 않는다.\n- 피드 연결은 작은 사용자 설정으로 보관하고, 향후 늘어나는 피드 항목·생성 작업·음성 메타데이터는\n  Dexie와 바이너리 저장소에 분리한다."
+        },
+        "cacheKey": "7dd8bb9233d351cbc03d6d8255c53a2b45f20f7139525eade8ca41e8d47ce3b0",
+        "left": {
+          "contentHash": "sha256:2f40922b13f86329a7816cc05ba63a23ebda3b2950dd4d17b45dc21e38c02707",
+          "docId": "operations/playlist",
+          "unitId": "policy"
+        },
+        "right": {
+          "contentHash": "sha256:47acf24e08995c5eb959a367f6311212dc768a54d0a0a405e8abb3c3f397ca56",
+          "docId": "operations/connections",
+          "unitId": "policy"
+        }
+      },
+      {
+        "assessment": {
+          "confidence": 0.9,
+          "kind": "unrelated",
+          "leftQuote": "# 원격 함수 상태와 계약 {#policy}\n\n원격 함수 연결 기반은 구현되었다. 앱인토스와 데스크톱 정적 클라이언트의 SolidStart 서버 함수는\n`POMO_PUBLIC_ORIGIN`에 배포된 SSR 서버를 호출한다. 일반 웹은 현재 페이지의 self Origin을 계속\n사용한다.",
+          "reason": "The left text discusses remote function state and contract related to SSR server calls, while the right text discusses a persistent storage compatibility layer using common contracts for structured and binary data storage.",
+          "rightQuote": "# 영속 저장 호환 계층 {#policy}\n\n기능 코드는 특정 저장소 API를 직접 호출하지 않고 구조화 데이터 저장소와 바이너리 파일 저장소의 공통 계약만 사용한다. 플랫폼별 어댑터가 같은 계약을 구현한다.\n\n| 플랫폼                          | 구조화 데이터              | 바이너리 파일           |\n| ------------------------------- | -------------------------- | ----------------------- |\n| 앱인토스                        | 앱인토스 SDK `Storage`     | Cache API               |\n| 웹 브라우저·PWA                 | Dexie.js와 IndexedDB       | Cache API               |\n| 향후 iOS·Android·Steam·데스크톱 | 플랫폼 데이터베이스 어댑터 | 플랫폼 파일 저장 어댑터 |"
+        },
+        "cacheKey": "b4e4c61de0a7e9f1895900450370768b2695ba06192e55bc5877c19aa489f094",
+        "left": {
+          "contentHash": "sha256:6677386e64c874a53c74fb2c489240477576280130db60f1481c364350c9a772",
+          "docId": "operations/remote",
+          "unitId": "policy"
+        },
+        "right": {
+          "contentHash": "sha256:8d6b6b6c6d2e0ec20f1a5dbf6e322412a248a81b4c6ff0d76aab8f795417eef9",
+          "docId": "operations/storage",
+          "unitId": "policy"
+        }
+      },
+      {
+        "assessment": {
+          "confidence": 1,
+          "kind": "unrelated",
+          "leftQuote": "# 원격 함수 공유 함수별 완료 조건 {#policy}\n\n- 일반 웹의 서버 함수가 기존 self Origin `/_server`를 사용한다.\n- 토스 클라이언트 번들의 서버 함수만 `POMO_PUBLIC_ORIGIN/_server`를 사용한다.\n- 토스 번들의 JS, CSS, Worker, 이미지 주소는 패키지 내부 경로를 유지한다.",
+          "reason": "The left text discusses server function completion conditions for remote functions, while the right text discusses user playlist storage keys and mechanisms.",
+          "rightQuote": "# 사용자 재생목록 저장 {#policy}\n\n저장 키는 `pomo:focus-room-playlist:v1`을 사용한다. 웹에서는 `localStorage`, 앱인토스에서는\n`Storage`를 사용한다. 재생목록은 현재 곡과 재생 위치를 저장하는 playback 상태와 분리한다."
+        },
+        "cacheKey": "4f1809181c106f842c013fc6e661d8880a7fb22b9050b9216ca23532ba3c9bab",
+        "left": {
+          "contentHash": "sha256:1c6069a7476dba3dbcb6529e3d0494c93b95daffa4a29e1baf9d56080cbf4c62",
+          "docId": "operations/clients",
+          "unitId": "policy"
+        },
+        "right": {
+          "contentHash": "sha256:2f40922b13f86329a7816cc05ba63a23ebda3b2950dd4d17b45dc21e38c02707",
+          "docId": "operations/playlist",
+          "unitId": "policy"
+        }
+      },
+      {
+        "assessment": {
+          "confidence": 1,
+          "kind": "unrelated",
+          "leftQuote": "# Pomo 배포 실패 복구 {#policy}\n\nPomo 배포가 실패하면 운영 도메인을 이전 Vercel deployment로 유지하거나 복구한다. 오디오 게이트웨이 배포 후 Pomo 배포가 실패하면 게이트웨이도 실행 전에 기록한 production version으로 되돌린다.",
+          "reason": "The left policy discusses recovery from Pomo deployment failure, while the right policy details feed connection settings.",
+          "rightQuote": "# 피드 연결 설정 {#policy}\n\n- HTTP와 HTTPS 주소만 허용하고 정규화된 같은 주소의 중복 추가를 막는다.\n- 실제 피드 형식 확인은 피드 동기화가 구현될 때 연결한다. 현재 설정은 주소 형식만 검증한다.\n- 연결 목록은 버전된 로컬 설정으로 저장해 Pomo 이탈, 새로고침과 앱 업데이트 후에도 복원한다.\n- 첫 연결을 저장할 때 지원 브라우저에는 영속 저장을 요청한다.\n- 사용자가 연결을 삭제하거나 앱 데이터를 제거하기 전까지 주소와 선택 음성을 유지한다.\n- 피드 음성의 48시간 만료는 연결 설정을 삭제하지 않는다.\n- 피드 연결은 작은 사용자 설정으로 보관하고, 향후 늘어나는 피드 항목·생성 작업·음성 메타데이터는\n  Dexie와 바이너리 저장소에 분리한다."
+        },
+        "cacheKey": "165e2be3e21791604cb87e652a3626178ac20b7abdf76e6acadc92089e9af615",
+        "left": {
+          "contentHash": "sha256:4358f8990c4a9ac3b3bfb17b39dbd5eb26b53586e2a7aeb88783a06de8004548",
+          "docId": "operations/rollback",
+          "unitId": "policy"
+        },
+        "right": {
+          "contentHash": "sha256:47acf24e08995c5eb959a367f6311212dc768a54d0a0a405e8abb3c3f397ca56",
+          "docId": "operations/connections",
+          "unitId": "policy"
+        }
+      },
+      {
+        "assessment": {
+          "confidence": 1,
+          "kind": "unrelated",
+          "leftQuote": "# 원격 함수 공유 함수별 완료 조건 {#policy}\n\n- 일반 웹의 서버 함수가 기존 self Origin `/_server`를 사용한다.\n- 토스 클라이언트 번들의 서버 함수만 `POMO_PUBLIC_ORIGIN/_server`를 사용한다.\n- 토스 번들의 JS, CSS, Worker, 이미지 주소는 패키지 내부 경로를 유지한다.",
+          "reason": "The left text discusses conditions for shared remote functions, while the right text discusses recovery procedures after a Pomo deployment failure.",
+          "rightQuote": "# Pomo 배포 실패 복구 {#policy}\n\nPomo 배포가 실패하면 운영 도메인을 이전 Vercel deployment로 유지하거나 복구한다. 오디오 게이트웨이 배포 후 Pomo 배포가 실패하면 게이트웨이도 실행 전에 기록한 production version으로 되돌린다."
+        },
+        "cacheKey": "c935658d5e8e10caa97840b5151046cec9f307ee899febdf811122fc4a7a1a16",
+        "left": {
+          "contentHash": "sha256:1c6069a7476dba3dbcb6529e3d0494c93b95daffa4a29e1baf9d56080cbf4c62",
+          "docId": "operations/clients",
+          "unitId": "policy"
+        },
+        "right": {
+          "contentHash": "sha256:4358f8990c4a9ac3b3bfb17b39dbd5eb26b53586e2a7aeb88783a06de8004548",
+          "docId": "operations/rollback",
+          "unitId": "policy"
+        }
+      },
+      {
+        "assessment": {
+          "confidence": 0.95,
+          "kind": "unrelated",
+          "leftQuote": "# Pomo 운영 배포와 복구 {#policy}\n\n`main`의 운영 배포는 GitHub Actions에서 `.github/workflows/pomo-production-deploy.yml`을 수동으로\n실행한다. `main` push만으로는 배포하지 않는다. 먼저 운영 환경 설정으로 빌드한다. Vercel\nProduction 환경의 Neon 직접 연결 URL인\n`DATABASE_URL_UNPOOLED`로 Drizzle migration을 적용하고, 같은 빌드 산출물을 운영 후보로\n배포한다. 후보의 `/`와 DB를 읽는 RSS 경로가 스모크 테스트를 통과할 때만 운영 도메인으로\n승격한다. 빌드, migration 또는 스모크 테스트가 실패하면 운영 도메인을 변경하지 않는다. 중복\n배포를 막기 위해 모든 브랜치의 Vercel Git 자동 배포를 끄고 GitHub Actions만 배포한다. GitHub에는\n`VERCEL_TOKEN` secret을 설정한다. Gateway가 먼저 배포된 뒤 Pomo 배포가 실패하거나 취소되면\nworkflow가 배포 직전에 기록한 Gateway version으로 되돌린다.",
+          "reason": "The left source discusses the deployment and recovery process for Pomo, while the right source discusses feed connection settings.",
+          "rightQuote": ""
+        },
+        "cacheKey": "ad5a963dd33f91fa75fe49b2bf8a12d757a6928f5359820c9e09fd321458fca9",
+        "left": {
+          "contentHash": "sha256:554e86bbe40cb8bd8b7f8c7bdb661c22d29982fa249fefd19e1c2fedfb12a9c7",
+          "docId": "operations/deployment",
+          "unitId": "policy"
+        },
+        "right": {
+          "contentHash": "sha256:47acf24e08995c5eb959a367f6311212dc768a54d0a0a405e8abb3c3f397ca56",
+          "docId": "operations/connections",
+          "unitId": "policy"
+        }
+      },
+      {
+        "assessment": {
+          "confidence": 0.9,
+          "kind": "unrelated",
+          "leftQuote": "# 사용자 재생목록 저장 {#policy}\n\n저장 키는 `pomo:focus-room-playlist:v1`을 사용한다. 웹에서는 `localStorage`, 앱인토스에서는\n`Storage`를 사용한다. 재생목록은 현재 곡과 재생 위치를 저장하는 playback 상태와 분리한다.",
+          "reason": "The left text describes how to save a user playlist using specific keys and storage mechanisms, while the right text defines what 'persistent storage' means in the context of app restarts and updates.",
+          "rightQuote": "# 영속 저장의 의미 {#policy}\n\n영속 저장은 앱 재시작과 정상 업데이트 후에도 데이터를 유지한다는 뜻이다. 사용자가 저장소를 직접 지우거나 앱을 삭제하면 데이터가 함께 삭제되는 것은 허용한다."
+        },
+        "cacheKey": "d6a4a6e839c384851244bd9c3f7f75cede4d81586837258ccbcdfca4a00b73cf",
+        "left": {
+          "contentHash": "sha256:2f40922b13f86329a7816cc05ba63a23ebda3b2950dd4d17b45dc21e38c02707",
+          "docId": "operations/playlist",
+          "unitId": "policy"
+        },
+        "right": {
+          "contentHash": "sha256:73ea5eafe8bcafdb4d6388fdaef0a4ed8e21a15d4be9c5535df4b7c898db8e08",
+          "docId": "operations/persistence",
+          "unitId": "policy"
+        }
+      },
+      {
+        "assessment": {
+          "confidence": 1,
+          "kind": "unrelated",
+          "leftQuote": "# 원격 함수 공유 함수별 완료 조건 {#policy}\n\n- 일반 웹의 서버 함수가 기존 self Origin `/_server`를 사용한다.\n- 토스 클라이언트 번들의 서버 함수만 `POMO_PUBLIC_ORIGIN/_server`를 사용한다.\n- 토스 번들의 JS, CSS, Worker, 이미지 주소는 패키지 내부 경로를 유지한다.",
+          "reason": "The left text discusses completion conditions for shared remote functions, while the right text describes the deployment and recovery process for Pomo operations.",
+          "rightQuote": "# Pomo 운영 배포와 복구 {#policy}\n\n`main`의 운영 배포는 GitHub Actions에서 `.github/workflows/pomo-production-deploy.yml`을 수동으로\n실행한다. `main` push만으로는 배포하지 않는다. 먼저 운영 환경 설정으로 빌드한다. Vercel\nProduction 환경의 Neon 직접 연결 URL인\n`DATABASE_URL_UNPOOLED`로 Drizzle migration을 적용하고, 같은 빌드 산출물을 운영 후보로\n배포한다. 후보의 `/`와 DB를 읽는 RSS 경로가 스모크 테스트를 통과할 때만 운영 도메인으로\n승격한다. 빌드, migration 또는 스모크 테스트가 실패하면 운영 도메인을 변경하지 않는다. 중복\n배포를 막기 위해 모든 브랜치의 Vercel Git 자동 배포를 끄고 GitHub Actions만 배포한다. GitHub에는\n`VERCEL_TOKEN` secret을 설정한다. Gateway가 먼저 배포된 뒤 Pomo 배포가 실패하거나 취소되면\nworkflow가 배포 직전에 기록한 Gateway version으로 되돌린다."
+        },
+        "cacheKey": "335e446c06e1502ba006666bf1da845a1fc3f6e215e1d8514407cefc742f3915",
+        "left": {
+          "contentHash": "sha256:1c6069a7476dba3dbcb6529e3d0494c93b95daffa4a29e1baf9d56080cbf4c62",
+          "docId": "operations/clients",
+          "unitId": "policy"
+        },
+        "right": {
+          "contentHash": "sha256:554e86bbe40cb8bd8b7f8c7bdb661c22d29982fa249fefd19e1c2fedfb12a9c7",
+          "docId": "operations/deployment",
+          "unitId": "policy"
+        }
+      },
+      {
+        "assessment": {
+          "confidence": 0.9,
+          "kind": "unrelated",
+          "leftQuote": "# 음악 라이브러리 지속 저장의 의미 {#policy}\n\n이 문서에서 지속 저장은 앱이나 브라우저를 다시 실행해도 유지된다는 뜻이다. 앱 삭제 또는\n브라우저 사이트 데이터 삭제 이후까지 보존하지 않으며 기기 간 동기화도 제공하지 않는다.",
+          "reason": "The left text discusses the meaning of persistent storage for a music library, while the right text discusses settings for feed connection.",
+          "rightQuote": "# 피드 연결 설정 {#policy}\n\n- HTTP와 HTTPS 주소만 허용하고 정규화된 같은 주소의 중복 추가를 막는다.\n- 실제 피드 형식 확인은 피드 동기화가 구현될 때 연결한다. 현재 설정은 주소 형식만 검증한다.\n- 연결 목록은 버전된 로컬 설정으로 저장해 Pomo 이탈, 새로고침과 앱 업데이트 후에도 복원한다.\n- 첫 연결을 저장할 때 지원 브라우저에는 영속 저장을 요청한다.\n- 사용자가 연결을 삭제하거나 앱 데이터를 제거하기 전까지 주소와 선택 음성을 유지한다.\n- 피드 음성의 48시간 만료는 연결 설정을 삭제하지 않는다.\n- 피드 연결은 작은 사용자 설정으로 보관하고, 향후 늘어나는 피드 항목·생성 작업·음성 메타데이터는\n  Dexie와 바이너리 저장소에 분리한다."
+        },
+        "cacheKey": "13afc7f1e8080555f2e40b5989b0a4b621d0f523eeb0f0f4cbbc1e62cb931208",
+        "left": {
+          "contentHash": "sha256:875781eb2e24d6346f9d4bd25bd24c9fe5e55d39d1a5629bce7e4f454a11f9ad",
+          "docId": "operations/lifecycle",
+          "unitId": "policy"
+        },
+        "right": {
+          "contentHash": "sha256:47acf24e08995c5eb959a367f6311212dc768a54d0a0a405e8abb3c3f397ca56",
+          "docId": "operations/connections",
+          "unitId": "policy"
+        }
+      },
+      {
+        "assessment": {
+          "confidence": 0.9,
+          "kind": "unrelated",
+          "leftQuote": "# 원격 함수 상태와 계약 {#policy}\n\n원격 함수 연결 기반은 구현되었다. 앱인토스와 데스크톱 정적 클라이언트의 SolidStart 서버 함수는\n`POMO_PUBLIC_ORIGIN`에 배포된 SSR 서버를 호출한다. 일반 웹은 현재 페이지의 self Origin을 계속\n사용한다.",
+          "reason": "The left text discusses remote function state and contracts for SolidStart server functions, while the right text discusses feed connection settings, such as allowed protocols and data storage.",
+          "rightQuote": "# 피드 연결 설정 {#policy}\n\n- HTTP와 HTTPS 주소만 허용하고 정규화된 같은 주소의 중복 추가를 막는다.\n- 실제 피드 형식 확인은 피드 동기화가 구현될 때 연결한다. 현재 설정은 주소 형식만 검증한다.\n- 연결 목록은 버전된 로컬 설정으로 저장해 Pomo 이탈, 새로고침과 앱 업데이트 후에도 복원한다.\n- 첫 연결을 저장할 때 지원 브라우저에는 영속 저장을 요청한다.\n- 사용자가 연결을 삭제하거나 앱 데이터를 제거하기 전까지 주소와 선택 음성을 유지한다.\n- 피드 음성의 48시간 만료는 연결 설정을 삭제하지 않는다.\n- 피드 연결은 작은 사용자 설정으로 보관하고, 향후 늘어나는 피드 항목·생성 작업·음성 메타데이터는\n  Dexie와 바이너리 저장소에 분리한다."
+        },
+        "cacheKey": "fbfbe3967c8748b957a1c3c8e06f7dae81db39ec61537ed54738a2120cac4e14",
+        "left": {
+          "contentHash": "sha256:6677386e64c874a53c74fb2c489240477576280130db60f1481c364350c9a772",
+          "docId": "operations/remote",
+          "unitId": "policy"
+        },
+        "right": {
+          "contentHash": "sha256:47acf24e08995c5eb959a367f6311212dc768a54d0a0a405e8abb3c3f397ca56",
+          "docId": "operations/connections",
+          "unitId": "policy"
+        }
+      },
+      {
+        "assessment": {
+          "confidence": 1,
+          "kind": "unrelated",
+          "leftQuote": "# Pomo 운영 배포와 복구 {#policy}\n\n`main`의 운영 배포는 GitHub Actions에서 `.github/workflows/pomo-production-deploy.yml`을 수동으로\n실행한다. `main` push만으로는 배포하지 않는다. 먼저 운영 환경 설정으로 빌드한다. Vercel\nProduction 환경의 Neon 직접 연결 URL인\n`DATABASE_URL_UNPOOLED`로 Drizzle migration을 적용하고, 같은 빌드 산출물을 운영 후보로\n배포한다. 후보의 `/`와 DB를 읽는 RSS 경로가 스모크 테스트를 통과할 때만 운영 도메인으로\n승격한다. 빌드, migration 또는 스모크 테스트가 실패하면 운영 도메인을 변경하지 않는다. 중복\n배포를 막기 위해 모든 브랜치의 Vercel Git 자동 배포를 끄고 GitHub Actions만 배포한다. GitHub에는\n`VERCEL_TOKEN` secret을 설정한다. Gateway가 먼저 배포된 뒤 Pomo 배포가 실패하거나 취소되면\nworkflow가 배포 직전에 기록한 Gateway version으로 되돌린다.",
+          "reason": "The left text describes the deployment and recovery process for Pomo, while the right text describes how to store user playlists.",
+          "rightQuote": "# 사용자 재생목록 저장 {#policy}\n\n저장 키는 `pomo:focus-room-playlist:v1`을 사용한다. 웹에서는 `localStorage`, 앱인토스에서는\n`Storage`를 사용한다. 재생목록은 현재 곡과 재생 위치를 저장하는 playback 상태와 분리한다."
+        },
+        "cacheKey": "859ba487efa3f0e03e1ce9b8ba040c77a36c42ad43fe7201b03d46328e3872ec",
+        "left": {
+          "contentHash": "sha256:554e86bbe40cb8bd8b7f8c7bdb661c22d29982fa249fefd19e1c2fedfb12a9c7",
+          "docId": "operations/deployment",
+          "unitId": "policy"
+        },
+        "right": {
+          "contentHash": "sha256:2f40922b13f86329a7816cc05ba63a23ebda3b2950dd4d17b45dc21e38c02707",
+          "docId": "operations/playlist",
+          "unitId": "policy"
+        }
+      },
+      {
+        "assessment": {
+          "confidence": 1,
+          "kind": "unrelated",
+          "leftQuote": "# 영속 저장 정책 {#policy}\n\n저장소에는 자동 만료나 자동 정리 정책을 두지 않는다. `navigator.storage.persist()`는 사용하지 않는다.",
+          "reason": "The left policy discusses persistent storage, while the right policy discusses server function origins and asset paths.",
+          "rightQuote": "# 원격 함수 공유 함수별 완료 조건 {#policy}\n\n- 일반 웹의 서버 함수가 기존 self Origin `/_server`를 사용한다.\n- 토스 클라이언트 번들의 서버 함수만 `POMO_PUBLIC_ORIGIN/_server`를 사용한다.\n- 토스 번들의 JS, CSS, Worker, 이미지 주소는 패키지 내부 경로를 유지한다."
+        },
+        "cacheKey": "e0bec296f506b4e088b156352118019cd0949fc1d6ab1b8eb77b6d5eec3fd7e4",
+        "left": {
+          "contentHash": "sha256:20b8fbe13762fcfaf5c9e91c45f93e2b7c1180e4e5982f2565ff4577cca32dc9",
+          "docId": "operations/policy",
+          "unitId": "policy"
+        },
+        "right": {
+          "contentHash": "sha256:1c6069a7476dba3dbcb6529e3d0494c93b95daffa4a29e1baf9d56080cbf4c62",
+          "docId": "operations/clients",
+          "unitId": "policy"
+        }
+      },
+      {
+        "assessment": {
+          "confidence": 1,
+          "kind": "unrelated",
+          "leftQuote": "# 음악 라이브러리 지속 저장의 의미 {#policy}\n\n이 문서에서 지속 저장은 앱이나 브라우저를 다시 실행해도 유지된다는 뜻이다. 앱 삭제 또는\n브라우저 사이트 데이터 삭제 이후까지 보존하지 않으며 기기 간 동기화도 제공하지 않는다.",
+          "reason": "The left text discusses the meaning of persistent storage for a music library, while the right text discusses completion conditions for remote function sharing based on server origins.",
+          "rightQuote": "# 원격 함수 공유 함수별 완료 조건 {#policy}\n\n- 일반 웹의 서버 함수가 기존 self Origin `/_server`를 사용한다.\n- 토스 클라이언트 번들의 서버 함수만 `POMO_PUBLIC_ORIGIN/_server`를 사용한다.\n- 토스 번들의 JS, CSS, Worker, 이미지 주소는 패키지 내부 경로를 유지한다."
+        },
+        "cacheKey": "22ba396bb6b29bfdde26a20a4105c90a3514b7edea6926b7b2de3dfae573813d",
+        "left": {
+          "contentHash": "sha256:875781eb2e24d6346f9d4bd25bd24c9fe5e55d39d1a5629bce7e4f454a11f9ad",
+          "docId": "operations/lifecycle",
+          "unitId": "policy"
+        },
+        "right": {
+          "contentHash": "sha256:1c6069a7476dba3dbcb6529e3d0494c93b95daffa4a29e1baf9d56080cbf4c62",
+          "docId": "operations/clients",
+          "unitId": "policy"
+        }
+      },
+      {
+        "assessment": {
+          "confidence": 0.9,
+          "kind": "unrelated",
+          "leftQuote": "# 영속 저장 정책 {#policy}\n\n저장소에는 자동 만료나 자동 정리 정책을 두지 않는다. `navigator.storage.persist()`는 사용하지 않는다.",
+          "reason": "The left policy discusses persistent storage settings, while the right policy discusses feed connection settings.",
+          "rightQuote": "# 피드 연결 설정 {#policy}\n\n- HTTP와 HTTPS 주소만 허용하고 정규화된 같은 주소의 중복 추가를 막는다.\n- 실제 피드 형식 확인은 피드 동기화가 구현될 때 연결한다. 현재 설정은 주소 형식만 검증한다.\n- 연결 목록은 버전된 로컬 설정으로 저장해 Pomo 이탈, 새로고침과 앱 업데이트 후에도 복원한다.\n- 첫 연결을 저장할 때 지원 브라우저에는 영속 저장을 요청한다.\n- 사용자가 연결을 삭제하거나 앱 데이터를 제거하기 전까지 주소와 선택 음성을 유지한다.\n- 피드 음성의 48시간 만료는 연결 설정을 삭제하지 않는다.\n- 피드 연결은 작은 사용자 설정으로 보관하고, 향후 늘어나는 피드 항목·생성 작업·음성 메타데이터는\n  Dexie와 바이너리 저장소에 분리한다."
+        },
+        "cacheKey": "ec9dad29510979ac6d899e57fe26d6542b99c4be4fca6aa19bcf5b5d321f6a2e",
+        "left": {
+          "contentHash": "sha256:20b8fbe13762fcfaf5c9e91c45f93e2b7c1180e4e5982f2565ff4577cca32dc9",
+          "docId": "operations/policy",
+          "unitId": "policy"
+        },
+        "right": {
+          "contentHash": "sha256:47acf24e08995c5eb959a367f6311212dc768a54d0a0a405e8abb3c3f397ca56",
+          "docId": "operations/connections",
+          "unitId": "policy"
+        }
+      },
+      {
+        "assessment": {
+          "confidence": 0.9,
+          "kind": "unrelated",
+          "leftQuote": "# 원격 함수 상태와 계약 {#policy}\n\n원격 함수 연결 기반은 구현되었다. 앱인토스와 데스크톱 정적 클라이언트의 SolidStart 서버 함수는\n`POMO_PUBLIC_ORIGIN`에 배포된 SSR 서버를 호출한다. 일반 웹은 현재 페이지의 self Origin을 계속\n사용한다.",
+          "reason": "The left text discusses remote function state and contract regarding SSR server calls, while the right text details the manual deployment and rollback process for Pomo production.",
+          "rightQuote": "# Pomo 운영 배포와 복구 {#policy}\n\n`main`의 운영 배포는 GitHub Actions에서 `.github/workflows/pomo-production-deploy.yml`을 수동으로\n실행한다. `main` push만으로는 배포하지 않는다. 먼저 운영 환경 설정으로 빌드한다. Vercel\nProduction 환경의 Neon 직접 연결 URL인\n`DATABASE_URL_UNPOOLED`로 Drizzle migration을 적용하고, 같은 빌드 산출물을 운영 후보로\n배포한다. 후보의 `/`와 DB를 읽는 RSS 경로가 스모크 테스트를 통과할 때만 운영 도메인으로\n승격한다. 빌드, migration 또는 스모크 테스트가 실패하면 운영 도메인을 변경하지 않는다. 중복\n배포를 막기 위해 모든 브랜치의 Vercel Git 자동 배포를 끄고 GitHub Actions만 배포한다. GitHub에는\n`VERCEL_TOKEN` secret을 설정한다. Gateway가 먼저 배포된 뒤 Pomo 배포가 실패하거나 취소되면\nworkflow가 배포 직전에 기록한 Gateway version으로 되돌린다."
+        },
+        "cacheKey": "3994f633a6df49cecbf5a1c4f31a946bbf999c055433d038756a9c5cb89b351a",
+        "left": {
+          "contentHash": "sha256:6677386e64c874a53c74fb2c489240477576280130db60f1481c364350c9a772",
+          "docId": "operations/remote",
+          "unitId": "policy"
+        },
+        "right": {
+          "contentHash": "sha256:554e86bbe40cb8bd8b7f8c7bdb661c22d29982fa249fefd19e1c2fedfb12a9c7",
+          "docId": "operations/deployment",
+          "unitId": "policy"
+        }
+      },
+      {
+        "assessment": {
+          "confidence": 1,
+          "kind": "unrelated",
+          "leftQuote": "# Pomo 배포 실패 복구 {#policy}\n\nPomo 배포가 실패하면 운영 도메인을 이전 Vercel deployment로 유지하거나 복구한다. 오디오 게이트웨이 배포 후 Pomo 배포가 실패하면 게이트웨이도 실행 전에 기록한 production version으로 되돌린다.",
+          "reason": "The left text discusses recovery procedures for Pomo deployment failures, while the right text describes how to save user playlists.",
+          "rightQuote": "# 사용자 재생목록 저장 {#policy}\n\n저장 키는 `pomo:focus-room-playlist:v1`을 사용한다. 웹에서는 `localStorage`, 앱인토스에서는\n`Storage`를 사용한다. 재생목록은 현재 곡과 재생 위치를 저장하는 playback 상태와 분리한다."
+        },
+        "cacheKey": "353442887a28c36a9d862dd6f9b215b25270bbcf830dd8a67c5f992a3b654916",
+        "left": {
+          "contentHash": "sha256:4358f8990c4a9ac3b3bfb17b39dbd5eb26b53586e2a7aeb88783a06de8004548",
+          "docId": "operations/rollback",
+          "unitId": "policy"
+        },
+        "right": {
+          "contentHash": "sha256:2f40922b13f86329a7816cc05ba63a23ebda3b2950dd4d17b45dc21e38c02707",
+          "docId": "operations/playlist",
+          "unitId": "policy"
+        }
+      },
+      {
+        "assessment": {
+          "confidence": 0.9,
+          "kind": "unrelated",
+          "leftQuote": "# 영속 저장의 의미 {#policy}\n\n영속 저장은 앱 재시작과 정상 업데이트 후에도 데이터를 유지한다는 뜻이다. 사용자가 저장소를 직접 지우거나 앱을 삭제하면 데이터가 함께 삭제되는 것은 허용한다.",
+          "reason": "The left policy defines 'persistent storage' (data retention after app restart/update, but deletion upon user action/app removal). The right policy details 'Feed Connection Settings' (URL validation, local storage for connection list, persistence for connection details, etc.). They discuss different aspects of data persistence and settings.",
+          "rightQuote": "# 피드 연결 설정 {#policy}\n\n- HTTP와 HTTPS 주소만 허용하고 정규화된 같은 주소의 중복 추가를 막는다.\n- 실제 피드 형식 확인은 피드 동기화가 구현될 때 연결한다. 현재 설정은 주소 형식만 검증한다.\n- 연결 목록은 버전된 로컬 설정으로 저장해 Pomo 이탈, 새로고침과 앱 업데이트 후에도 복원한다.\n- 첫 연결을 저장할 때 지원 브라우저에는 영속 저장을 요청한다.\n- 사용자가 연결을 삭제하거나 앱 데이터를 제거하기 전까지 주소와 선택 음성을 유지한다.\n- 피드 음성의 48시간 만료는 연결 설정을 삭제하지 않는다.\n- 피드 연결은 작은 사용자 설정으로 보관하고, 향후 늘어나는 피드 항목·생성 작업·음성 메타데이터는\n  Dexie와 바이너리 저장소에 분리한다."
+        },
+        "cacheKey": "56e8cea7877465d871fd9e2ab8c691953399c864a14ad4e580bafdce17fad4c2",
+        "left": {
+          "contentHash": "sha256:73ea5eafe8bcafdb4d6388fdaef0a4ed8e21a15d4be9c5535df4b7c898db8e08",
+          "docId": "operations/persistence",
+          "unitId": "policy"
+        },
+        "right": {
+          "contentHash": "sha256:47acf24e08995c5eb959a367f6311212dc768a54d0a0a405e8abb3c3f397ca56",
+          "docId": "operations/connections",
+          "unitId": "policy"
+        }
+      },
+      {
+        "assessment": {
+          "confidence": 1,
+          "kind": "unrelated",
+          "leftQuote": "# 음악 라이브러리 지속 저장의 의미 {#policy}\n\n이 문서에서 지속 저장은 앱이나 브라우저를 다시 실행해도 유지된다는 뜻이다. 앱 삭제 또는\n브라우저 사이트 데이터 삭제 이후까지 보존하지 않으며 기기 간 동기화도 제공하지 않는다.",
+          "reason": "The left text discusses the meaning of persistent storage for a music library, while the right text discusses recovery procedures for Pomo deployment failures.",
+          "rightQuote": "# Pomo 배포 실패 복구 {#policy}\n\nPomo 배포가 실패하면 운영 도메인을 이전 Vercel deployment로 유지하거나 복구한다. 오디오 게이트웨이 배포 후 Pomo 배포가 실패하면 게이트웨이도 실행 전에 기록한 production version으로 되돌린다."
+        },
+        "cacheKey": "8004fb27613621a6e1ff517a4d898f5ad3d197a6c0c8ccb2f667e3cc04097f9f",
+        "left": {
+          "contentHash": "sha256:875781eb2e24d6346f9d4bd25bd24c9fe5e55d39d1a5629bce7e4f454a11f9ad",
+          "docId": "operations/lifecycle",
+          "unitId": "policy"
+        },
+        "right": {
+          "contentHash": "sha256:4358f8990c4a9ac3b3bfb17b39dbd5eb26b53586e2a7aeb88783a06de8004548",
+          "docId": "operations/rollback",
+          "unitId": "policy"
+        }
+      },
+      {
+        "assessment": {
+          "confidence": 0.9,
+          "kind": "unrelated",
+          "leftQuote": "# 원격 함수 상태와 계약 {#policy}\n\n원격 함수 연결 기반은 구현되었다. 앱인토스와 데스크톱 정적 클라이언트의 SolidStart 서버 함수는\n`POMO_PUBLIC_ORIGIN`에 배포된 SSR 서버를 호출한다. 일반 웹은 현재 페이지의 self Origin을 계속\n사용한다.",
+          "reason": "The left text discusses remote function state and contract related to SolidStart server functions, while the right text discusses recovery from Pomo deployment failure.",
+          "rightQuote": "# Pomo 배포 실패 복구 {#policy}\n\nPomo 배포가 실패하면 운영 도메인을 이전 Vercel deployment로 유지하거나 복구한다. 오디오 게이트웨이 배포 후 Pomo 배포가 실패하면 게이트웨이도 실행 전에 기록한 production version으로 되돌린다."
+        },
+        "cacheKey": "82cb2355db357fb26cead789a3e3ff9aabdab51ff7db72c6bcb098cf3bccffc2",
+        "left": {
+          "contentHash": "sha256:6677386e64c874a53c74fb2c489240477576280130db60f1481c364350c9a772",
+          "docId": "operations/remote",
+          "unitId": "policy"
+        },
+        "right": {
+          "contentHash": "sha256:4358f8990c4a9ac3b3bfb17b39dbd5eb26b53586e2a7aeb88783a06de8004548",
+          "docId": "operations/rollback",
+          "unitId": "policy"
+        }
+      },
+      {
+        "assessment": {
+          "confidence": 1,
+          "kind": "unrelated",
+          "leftQuote": "# 원격 함수 상태와 계약 {#policy}\n\n원격 함수 연결 기반은 구현되었다. 앱인토스와 데스크톱 정적 클라이언트의 SolidStart 서버 함수는\n`POMO_PUBLIC_ORIGIN`에 배포된 SSR 서버를 호출한다. 일반 웹은 현재 페이지의 self Origin을 계속\n사용한다.",
+          "reason": "The left text discusses remote function state and contract for server functions, while the right text discusses user playlist storage mechanisms.",
+          "rightQuote": "# 사용자 재생목록 저장 {#policy}\n\n저장 키는 `pomo:focus-room-playlist:v1`을 사용한다. 웹에서는 `localStorage`, 앱인토스에서는\n`Storage`를 사용한다. 재생목록은 현재 곡과 재생 위치를 저장하는 playback 상태와 분리한다."
+        },
+        "cacheKey": "bab7f0116025d804a7c3f41b6fa0748a97e076f02fcb836bf495344a9fde32ba",
+        "left": {
+          "contentHash": "sha256:6677386e64c874a53c74fb2c489240477576280130db60f1481c364350c9a772",
+          "docId": "operations/remote",
+          "unitId": "policy"
+        },
+        "right": {
+          "contentHash": "sha256:2f40922b13f86329a7816cc05ba63a23ebda3b2950dd4d17b45dc21e38c02707",
+          "docId": "operations/playlist",
+          "unitId": "policy"
+        }
+      },
+      {
+        "assessment": {
+          "confidence": 1,
+          "kind": "unrelated",
+          "leftQuote": "# 영속 저장 호환 계층 {#policy}\n\n기능 코드는 특정 저장소 API를 직접 호출하지 않고 구조화 데이터 저장소와 바이너리 파일 저장소의 공통 계약만 사용한다. 플랫폼별 어댑터가 같은 계약을 구현한다.\n\n| 플랫폼                          | 구조화 데이터              | 바이너리 파일           |\n| ------------------------------- | -------------------------- | ----------------------- |\n| 앱인토스                        | 앱인토스 SDK `Storage`     | Cache API               |\n| 웹 브라우저·PWA                 | Dexie.js와 IndexedDB       | Cache API               |\n| 향후 iOS·Android·Steam·데스크톱 | 플랫폼 데이터베이스 어댑터 | 플랫폼 파일 저장 어댑터 |",
+          "reason": "The left source describes a persistent storage compatibility layer, while the right source describes the deployment and recovery process for Pomo.",
+          "rightQuote": "# Pomo 운영 배포와 복구 {#policy}\n\n`main`의 운영 배포는 GitHub Actions에서 `.github/workflows/pomo-production-deploy.yml`을 수동으로\n실행한다. `main` push만으로는 배포하지 않는다. 먼저 운영 환경 설정으로 빌드한다. Vercel\nProduction 환경의 Neon 직접 연결 URL인\n`DATABASE_URL_UNPOOLED`로 Drizzle migration을 적용하고, 같은 빌드 산출물을 운영 후보로\n배포한다. 후보의 `/`와 DB를 읽는 RSS 경로가 스모크 테스트를 통과할 때만 운영 도메인으로\n승격한다. 빌드, migration 또는 스모크 테스트가 실패하면 운영 도메인을 변경하지 않는다. 중복\n배포를 막기 위해 모든 브랜치의 Vercel Git 자동 배포를 끄고 GitHub Actions만 배포한다. GitHub에는\n`VERCEL_TOKEN` secret을 설정한다. Gateway가 먼저 배포된 뒤 Pomo 배포가 실패하거나 취소되면\nworkflow가 배포 직전에 기록한 Gateway version으로 되돌린다."
+        },
+        "cacheKey": "f339a538ed989701c6c1d20823b4fb2241758dceeda9fdd49a5fd34d39c2f126",
+        "left": {
+          "contentHash": "sha256:8d6b6b6c6d2e0ec20f1a5dbf6e322412a248a81b4c6ff0d76aab8f795417eef9",
+          "docId": "operations/storage",
+          "unitId": "policy"
+        },
+        "right": {
+          "contentHash": "sha256:554e86bbe40cb8bd8b7f8c7bdb661c22d29982fa249fefd19e1c2fedfb12a9c7",
+          "docId": "operations/deployment",
+          "unitId": "policy"
+        }
+      },
+      {
+        "assessment": {
+          "confidence": 1,
+          "kind": "unrelated",
+          "leftQuote": "# 피드 대화 만료와 정리 {#policy}\n\n- 피드 대화의 `expiresAt`은 음성 생성 완료 시각부터 48시간으로 계산한다.\n- 피드 동기화가 성공해 다음 항목을 확인할 때 만료된 피드 대화를 정리한다.\n- 브라우저가 닫혀 있으면 정확한 만료 시각의 삭제를 보장하지 않는다. 48시간이 지나면 삭제 대상이\n  되고 다음 동기화가 실제 정리 트리거가 된다.\n- 현재 재생 중인 대화는 해당 동기화의 정리에서 제외하고 재생 종료 후 다시 정리한다.\n- 정리는 기존 대화 삭제 계약을 사용해 대화 레코드와 WAV를 제거한 뒤 피드 메타데이터를 제거한다.\n- 미완성 작업은 완성 대화와 별도의 보존 기간을 사용하며, 오래된 작업을 정리할 때 사용자에게 알린다.\n- 음성이 만료되어도 피드 항목의 발견 기록은 유지해 같은 항목을 새 피드로 다시 만들지 않는다.",
+          "reason": "The left text discusses the expiration and cleanup of feed conversations, while the right text defines 'persistent storage' for the music library.",
+          "rightQuote": "# 음악 라이브러리 지속 저장의 의미 {#policy}\n\n이 문서에서 지속 저장은 앱이나 브라우저를 다시 실행해도 유지된다는 뜻이다. 앱 삭제 또는\n브라우저 사이트 데이터 삭제 이후까지 보존하지 않으며 기기 간 동기화도 제공하지 않는다."
+        },
+        "cacheKey": "0c4688cb5ba7f0282c939ce3024b153f6a882541a8d7f398429fcfef4c6f5ddf",
+        "left": {
+          "contentHash": "sha256:297d7bb8eaa6339a6cc5dee99e15846b39a2381a3f6498ce4e9403b46aafb5f7",
+          "docId": "operations/expiry",
+          "unitId": "policy"
+        },
+        "right": {
+          "contentHash": "sha256:875781eb2e24d6346f9d4bd25bd24c9fe5e55d39d1a5629bce7e4f454a11f9ad",
+          "docId": "operations/lifecycle",
+          "unitId": "policy"
+        }
+      },
+      {
+        "assessment": {
+          "confidence": 1,
+          "kind": "unrelated",
+          "leftQuote": "# 영속 저장 호환 계층 {#policy}\n\n기능 코드는 특정 저장소 API를 직접 호출하지 않고 구조화 데이터 저장소와 바이너리 파일 저장소의 공통 계약만 사용한다. 플랫폼별 어댑터가 같은 계약을 구현한다.\n\n| 플랫폼                          | 구조화 데이터              | 바이너리 파일           |\n| ------------------------------- | -------------------------- | ----------------------- |\n| 앱인토스                        | 앱인토스 SDK `Storage`     | Cache API               |\n| 웹 브라우저·PWA                 | Dexie.js와 IndexedDB       | Cache API               |\n| 향후 iOS·Android·Steam·데스크톱 | 플랫폼 데이터베이스 어댑터 | 플랫폼 파일 저장 어댑터 |",
+          "reason": "The left source discusses a persistent storage compatibility layer, while the right source discusses recovery from Pomo deployment failures.",
+          "rightQuote": "# Pomo 배포 실패 복구 {#policy}\n\nPomo 배포가 실패하면 운영 도메인을 이전 Vercel deployment로 유지하거나 복구한다. 오디오 게이트웨이 배포 후 Pomo 배포가 실패하면 게이트웨이도 실행 전에 기록한 production version으로 되돌린다."
+        },
+        "cacheKey": "e577edd32923bf624ee1d4ff05cffcf7b14baa9e164a7206ae517450562efcc1",
+        "left": {
+          "contentHash": "sha256:8d6b6b6c6d2e0ec20f1a5dbf6e322412a248a81b4c6ff0d76aab8f795417eef9",
+          "docId": "operations/storage",
+          "unitId": "policy"
+        },
+        "right": {
+          "contentHash": "sha256:4358f8990c4a9ac3b3bfb17b39dbd5eb26b53586e2a7aeb88783a06de8004548",
+          "docId": "operations/rollback",
+          "unitId": "policy"
+        }
+      },
+      {
+        "assessment": {
+          "confidence": 1,
+          "kind": "unrelated",
+          "leftQuote": "# 피드 대화 만료와 정리 {#policy}\n\n- 피드 대화의 `expiresAt`은 음성 생성 완료 시각부터 48시간으로 계산한다.\n- 피드 동기화가 성공해 다음 항목을 확인할 때 만료된 피드 대화를 정리한다.\n- 브라우저가 닫혀 있으면 정확한 만료 시각의 삭제를 보장하지 않는다. 48시간이 지나면 삭제 대상이\n  되고 다음 동기화가 실제 정리 트리거가 된다.\n- 현재 재생 중인 대화는 해당 동기화의 정리에서 제외하고 재생 종료 후 다시 정리한다.\n- 정리는 기존 대화 삭제 계약을 사용해 대화 레코드와 WAV를 제거한 뒤 피드 메타데이터를 제거한다.\n- 미완성 작업은 완성 대화와 별도의 보존 기간을 사용하며, 오래된 작업을 정리할 때 사용자에게 알린다.\n- 음성이 만료되어도 피드 항목의 발견 기록은 유지해 같은 항목을 새 피드로 다시 만들지 않는다.",
+          "reason": "The left policy discusses the expiration and cleanup of feed conversations (48 hours), while the right policy states that there are no automatic expiration or cleanup policies for storage.",
+          "rightQuote": "# 영속 저장 정책 {#policy}\n\n저장소에는 자동 만료나 자동 정리 정책을 두지 않는다. `navigator.storage.persist()`는 사용하지 않는다."
+        },
+        "cacheKey": "a4e14c742ae2066e4570389576d87f24dcebbc79ba346a0629143e60fb97600e",
+        "left": {
+          "contentHash": "sha256:297d7bb8eaa6339a6cc5dee99e15846b39a2381a3f6498ce4e9403b46aafb5f7",
+          "docId": "operations/expiry",
+          "unitId": "policy"
+        },
+        "right": {
+          "contentHash": "sha256:20b8fbe13762fcfaf5c9e91c45f93e2b7c1180e4e5982f2565ff4577cca32dc9",
+          "docId": "operations/policy",
+          "unitId": "policy"
+        }
+      },
+      {
+        "assessment": {
+          "confidence": 1,
+          "kind": "unrelated",
+          "leftQuote": "# 원격 함수 상태와 계약 {#policy}\n\n원격 함수 연결 기반은 구현되었다. 앱인토스와 데스크톱 정적 클라이언트의 SolidStart 서버 함수는\n`POMO_PUBLIC_ORIGIN`에 배포된 SSR 서버를 호출한다. 일반 웹은 현재 페이지의 self Origin을 계속\n사용한다.",
+          "reason": "The left text discusses remote function state and contracts for web/desktop clients, while the right text defines persistent storage for a music library.",
+          "rightQuote": "# 음악 라이브러리 지속 저장의 의미 {#policy}\n\n이 문서에서 지속 저장은 앱이나 브라우저를 다시 실행해도 유지된다는 뜻이다. 앱 삭제 또는\n브라우저 사이트 데이터 삭제 이후까지 보존하지 않으며 기기 간 동기화도 제공하지 않는다."
+        },
+        "cacheKey": "286aee39b1805039d3739f55f83617b17465de2cb45af3d0a694fdde5fca8eb0",
+        "left": {
+          "contentHash": "sha256:6677386e64c874a53c74fb2c489240477576280130db60f1481c364350c9a772",
+          "docId": "operations/remote",
+          "unitId": "policy"
+        },
+        "right": {
+          "contentHash": "sha256:875781eb2e24d6346f9d4bd25bd24c9fe5e55d39d1a5629bce7e4f454a11f9ad",
+          "docId": "operations/lifecycle",
+          "unitId": "policy"
+        }
+      },
+      {
+        "assessment": {
+          "confidence": 1,
+          "kind": "unrelated",
+          "leftQuote": "# 피드 대화 만료와 정리 {#policy}\n\n- 피드 대화의 `expiresAt`은 음성 생성 완료 시각부터 48시간으로 계산한다.\n- 피드 동기화가 성공해 다음 항목을 확인할 때 만료된 피드 대화를 정리한다.\n- 브라우저가 닫혀 있으면 정확한 만료 시각의 삭제를 보장하지 않는다. 48시간이 지나면 삭제 대상이\n  되고 다음 동기화가 실제 정리 트리거가 된다.\n- 현재 재생 중인 대화는 해당 동기화의 정리에서 제외하고 재생 종료 후 다시 정리한다.\n- 정리는 기존 대화 삭제 계약을 사용해 대화 레코드와 WAV를 제거한 뒤 피드 메타데이터를 제거한다.\n- 미완성 작업은 완성 대화와 별도의 보존 기간을 사용하며, 오래된 작업을 정리할 때 사용자에게 알린다.\n- 음성이 만료되어도 피드 항목의 발견 기록은 유지해 같은 항목을 새 피드로 다시 만들지 않는다.",
+          "reason": "The left text discusses the expiration and cleanup of feed conversations, while the right text defines the meaning of persistent storage.",
+          "rightQuote": "# 영속 저장의 의미 {#policy}\n\n영속 저장은 앱 재시작과 정상 업데이트 후에도 데이터를 유지한다는 뜻이다. 사용자가 저장소를 직접 지우거나 앱을 삭제하면 데이터가 함께 삭제되는 것은 허용한다."
+        },
+        "cacheKey": "a79538abfa7b0c77278d5bb7fc6014371247ac40ff86d38814998aaad8dd062e",
+        "left": {
+          "contentHash": "sha256:297d7bb8eaa6339a6cc5dee99e15846b39a2381a3f6498ce4e9403b46aafb5f7",
+          "docId": "operations/expiry",
+          "unitId": "policy"
+        },
+        "right": {
+          "contentHash": "sha256:73ea5eafe8bcafdb4d6388fdaef0a4ed8e21a15d4be9c5535df4b7c898db8e08",
+          "docId": "operations/persistence",
+          "unitId": "policy"
+        }
+      },
+      {
+        "assessment": {
+          "confidence": 1,
+          "kind": "unrelated",
+          "leftQuote": "# 음악 라이브러리 지속 저장의 의미 {#policy}\n\n이 문서에서 지속 저장은 앱이나 브라우저를 다시 실행해도 유지된다는 뜻이다. 앱 삭제 또는\n브라우저 사이트 데이터 삭제 이후까지 보존하지 않으며 기기 간 동기화도 제공하지 않는다.",
+          "reason": "The left text discusses the meaning of persistent storage for a music library, while the right text describes the deployment and recovery process for Pomo.",
+          "rightQuote": "# Pomo 운영 배포와 복구 {#policy}\n\n`main`의 운영 배포는 GitHub Actions에서 `.github/workflows/pomo-production-deploy.yml`을 수동으로\n실행한다. `main` push만으로는 배포하지 않는다. 먼저 운영 환경 설정으로 빌드한다. Vercel\nProduction 환경의 Neon 직접 연결 URL인\n`DATABASE_URL_UNPOOLED`로 Drizzle migration을 적용하고, 같은 빌드 산출물을 운영 후보로\n배포한다. 후보의 `/`와 DB를 읽는 RSS 경로가 스모크 테스트를 통과할 때만 운영 도메인으로\n승격한다. 빌드, migration 또는 스모크 테스트가 실패하면 운영 도메인을 변경하지 않는다. 중복\n배포를 막기 위해 모든 브랜치의 Vercel Git 자동 배포를 끄고 GitHub Actions만 배포한다. GitHub에는\n`VERCEL_TOKEN` secret을 설정한다. Gateway가 먼저 배포된 뒤 Pomo 배포가 실패하거나 취소되면\nworkflow가 배포 직전에 기록한 Gateway version으로 되돌린다."
+        },
+        "cacheKey": "50c8b17768e99c6505032df62e3b41d227527ec1f9e3f29fd5155a592e5f1335",
+        "left": {
+          "contentHash": "sha256:875781eb2e24d6346f9d4bd25bd24c9fe5e55d39d1a5629bce7e4f454a11f9ad",
+          "docId": "operations/lifecycle",
+          "unitId": "policy"
+        },
+        "right": {
+          "contentHash": "sha256:554e86bbe40cb8bd8b7f8c7bdb661c22d29982fa249fefd19e1c2fedfb12a9c7",
+          "docId": "operations/deployment",
+          "unitId": "policy"
+        }
+      },
+      {
+        "assessment": {
+          "confidence": 1,
+          "kind": "unrelated",
+          "leftQuote": "# 원격 함수 공유 함수별 완료 조건 {#policy}\n\n- 일반 웹의 서버 함수가 기존 self Origin `/_server`를 사용한다.\n- 토스 클라이언트 번들의 서버 함수만 `POMO_PUBLIC_ORIGIN/_server`를 사용한다.\n- 토스 번들의 JS, CSS, Worker, 이미지 주소는 패키지 내부 경로를 유지한다.",
+          "reason": "The left text discusses conditions for shared remote functions, while the right text defines persistent storage.",
+          "rightQuote": "# 영속 저장의 의미 {#policy}\n\n영속 저장은 앱 재시작과 정상 업데이트 후에도 데이터를 유지한다는 뜻이다. 사용자가 저장소를 직접 지우거나 앱을 삭제하면 데이터가 함께 삭제되는 것은 허용한다."
+        },
+        "cacheKey": "802236e9eb9bbdba6c2f8f0130518e67e454f6c4c2fd0fb483f5d378eafe0a05",
+        "left": {
+          "contentHash": "sha256:1c6069a7476dba3dbcb6529e3d0494c93b95daffa4a29e1baf9d56080cbf4c62",
+          "docId": "operations/clients",
+          "unitId": "policy"
+        },
+        "right": {
+          "contentHash": "sha256:73ea5eafe8bcafdb4d6388fdaef0a4ed8e21a15d4be9c5535df4b7c898db8e08",
+          "docId": "operations/persistence",
+          "unitId": "policy"
+        }
+      },
+      {
+        "assessment": {
+          "confidence": 1,
+          "kind": "unrelated",
+          "leftQuote": "# 영속 저장 정책 {#policy}\n\n저장소에는 자동 만료나 자동 정리 정책을 두지 않는다. `navigator.storage.persist()`는 사용하지 않는다.",
+          "reason": "The left text discusses persistent storage policies, while the right text describes the deployment and recovery process for Pomo.",
+          "rightQuote": "# Pomo 운영 배포와 복구 {#policy}\n\n`main`의 운영 배포는 GitHub Actions에서 `.github/workflows/pomo-production-deploy.yml`을 수동으로\n실행한다. `main` push만으로는 배포하지 않는다. 먼저 운영 환경 설정으로 빌드한다. Vercel\nProduction 환경의 Neon 직접 연결 URL인\n`DATABASE_URL_UNPOOLED`로 Drizzle migration을 적용하고, 같은 빌드 산출물을 운영 후보로\n배포한다. 후보의 `/`와 DB를 읽는 RSS 경로가 스모크 테스트를 통과할 때만 운영 도메인으로\n승격한다. 빌드, migration 또는 스모크 테스트가 실패하면 운영 도메인을 변경하지 않는다. 중복\n배포를 막기 위해 모든 브랜치의 Vercel Git 자동 배포를 끄고 GitHub Actions만 배포한다. GitHub에는\n`VERCEL_TOKEN` secret을 설정한다. Gateway가 먼저 배포된 뒤 Pomo 배포가 실패하거나 취소되면\nworkflow가 배포 직전에 기록한 Gateway version으로 되돌린다."
+        },
+        "cacheKey": "905b5cf3bdb76ca1189036cebc238eba7c5d80bbd3e8d8f1d37a66430c6ce104",
+        "left": {
+          "contentHash": "sha256:20b8fbe13762fcfaf5c9e91c45f93e2b7c1180e4e5982f2565ff4577cca32dc9",
+          "docId": "operations/policy",
+          "unitId": "policy"
+        },
+        "right": {
+          "contentHash": "sha256:554e86bbe40cb8bd8b7f8c7bdb661c22d29982fa249fefd19e1c2fedfb12a9c7",
+          "docId": "operations/deployment",
+          "unitId": "policy"
+        }
+      },
+      {
+        "assessment": {
+          "confidence": 1,
+          "kind": "unrelated",
+          "leftQuote": "# 원격 함수 상태와 계약 {#policy}\n\n원격 함수 연결 기반은 구현되었다. 앱인토스와 데스크톱 정적 클라이언트의 SolidStart 서버 함수는\n`POMO_PUBLIC_ORIGIN`에 배포된 SSR 서버를 호출한다. 일반 웹은 현재 페이지의 self Origin을 계속\n사용한다.",
+          "reason": "The left text discusses remote function state and contracts, while the right text discusses persistent storage policies.",
+          "rightQuote": "# 영속 저장 정책 {#policy}\n\n저장소에는 자동 만료나 자동 정리 정책을 두지 않는다. `navigator.storage.persist()`는 사용하지 않는다."
+        },
+        "cacheKey": "bbb2646377522ec5bcea912c7decddfdfe6bbafe43de89a5bf7598aa1b0757de",
+        "left": {
+          "contentHash": "sha256:6677386e64c874a53c74fb2c489240477576280130db60f1481c364350c9a772",
+          "docId": "operations/remote",
+          "unitId": "policy"
+        },
+        "right": {
+          "contentHash": "sha256:20b8fbe13762fcfaf5c9e91c45f93e2b7c1180e4e5982f2565ff4577cca32dc9",
+          "docId": "operations/policy",
+          "unitId": "policy"
+        }
+      },
+      {
+        "assessment": {
+          "confidence": 1,
+          "kind": "unrelated",
+          "leftQuote": "# 피드 대화 만료와 정리 {#policy}\n\n- 피드 대화의 `expiresAt`은 음성 생성 완료 시각부터 48시간으로 계산한다.\n- 피드 동기화가 성공해 다음 항목을 확인할 때 만료된 피드 대화를 정리한다.\n- 브라우저가 닫혀 있으면 정확한 만료 시각의 삭제를 보장하지 않는다. 48시간이 지나면 삭제 대상이\n  되고 다음 동기화가 실제 정리 트리거가 된다.\n- 현재 재생 중인 대화는 해당 동기화의 정리에서 제외하고 재생 종료 후 다시 정리한다.\n- 정리는 기존 대화 삭제 계약을 사용해 대화 레코드와 WAV를 제거한 뒤 피드 메타데이터를 제거한다.\n- 미완성 작업은 완성 대화와 별도의 보존 기간을 사용하며, 오래된 작업을 정리할 때 사용자에게 알린다.\n- 음성이 만료되어도 피드 항목의 발견 기록은 유지해 같은 항목을 새 피드로 다시 만들지 않는다.",
+          "reason": "The left text discusses the expiration and cleanup of feed conversations, while the right text describes a persistent storage compatibility layer for different platforms.",
+          "rightQuote": "# 영속 저장 호환 계층 {#policy}\n\n기능 코드는 특정 저장소 API를 직접 호출하지 않고 구조화 데이터 저장소와 바이너리 파일 저장소의 공통 계약만 사용한다. 플랫폼별 어댑터가 같은 계약을 구현한다.\n\n| 플랫폼                          | 구조화 데이터              | 바이너리 파일           |\n| ------------------------------- | -------------------------- | ----------------------- |\n| 앱인토스                        | 앱인토스 SDK `Storage`     | Cache API               |\n| 웹 브라우저·PWA                 | Dexie.js와 IndexedDB       | Cache API               |\n| 향후 iOS·Android·Steam·데스크톱 | 플랫폼 데이터베이스 어댑터 | 플랫폼 파일 저장 어댑터 |"
+        },
+        "cacheKey": "5c26371e12df29d4ec6d877399361a6914f8d45707a249e084d6830fc45f7994",
+        "left": {
+          "contentHash": "sha256:297d7bb8eaa6339a6cc5dee99e15846b39a2381a3f6498ce4e9403b46aafb5f7",
+          "docId": "operations/expiry",
+          "unitId": "policy"
+        },
+        "right": {
+          "contentHash": "sha256:8d6b6b6c6d2e0ec20f1a5dbf6e322412a248a81b4c6ff0d76aab8f795417eef9",
+          "docId": "operations/storage",
+          "unitId": "policy"
+        }
+      },
+      {
+        "assessment": {
+          "confidence": 1,
+          "kind": "unrelated",
+          "leftQuote": "# 피드 대화 만료와 정리 {#policy}\n\n- 피드 대화의 `expiresAt`은 음성 생성 완료 시각부터 48시간으로 계산한다.\n- 피드 동기화가 성공해 다음 항목을 확인할 때 만료된 피드 대화를 정리한다.\n- 브라우저가 닫혀 있으면 정확한 만료 시각의 삭제를 보장하지 않는다. 48시간이 지나면 삭제 대상이\n  되고 다음 동기화가 실제 정리 트리거가 된다.\n- 현재 재생 중인 대화는 해당 동기화의 정리에서 제외하고 재생 종료 후 다시 정리한다.\n- 정리는 기존 대화 삭제 계약을 사용해 대화 레코드와 WAV를 제거한 뒤 피드 메타데이터를 제거한다.\n- 미완성 작업은 완성 대화와 별도의 보존 기간을 사용하며, 오래된 작업을 정리할 때 사용자에게 알린다.\n- 음성이 만료되어도 피드 항목의 발견 기록은 유지해 같은 항목을 새 피드로 다시 만들지 않는다.",
+          "reason": "The left text discusses the expiration and cleanup of feed conversations, while the right text discusses the completion conditions for shared remote functions.",
+          "rightQuote": "# 원격 함수 공유 함수별 완료 조건 {#policy}\n\n- 일반 웹의 서버 함수가 기존 self Origin `/_server`를 사용한다.\n- 토스 클라이언트 번들의 서버 함수만 `POMO_PUBLIC_ORIGIN/_server`를 사용한다.\n- 토스 번들의 JS, CSS, Worker, 이미지 주소는 패키지 내부 경로를 유지한다."
+        },
+        "cacheKey": "17d9affdba1025dbe260e716c83839084b62fef76bc13fe362e93509bf3aee38",
+        "left": {
+          "contentHash": "sha256:297d7bb8eaa6339a6cc5dee99e15846b39a2381a3f6498ce4e9403b46aafb5f7",
+          "docId": "operations/expiry",
+          "unitId": "policy"
+        },
+        "right": {
+          "contentHash": "sha256:1c6069a7476dba3dbcb6529e3d0494c93b95daffa4a29e1baf9d56080cbf4c62",
+          "docId": "operations/clients",
+          "unitId": "policy"
+        }
+      },
+      {
+        "assessment": {
+          "confidence": 1,
+          "kind": "unrelated",
+          "leftQuote": "# 피드 대화 만료와 정리 {#policy}\n\n- 피드 대화의 `expiresAt`은 음성 생성 완료 시각부터 48시간으로 계산한다.\n- 피드 동기화가 성공해 다음 항목을 확인할 때 만료된 피드 대화를 정리한다.\n- 브라우저가 닫혀 있으면 정확한 만료 시각의 삭제를 보장하지 않는다. 48시간이 지나면 삭제 대상이\n  되고 다음 동기화가 실제 정리 트리거가 된다.\n- 현재 재생 중인 대화는 해당 동기화의 정리에서 제외하고 재생 종료 후 다시 정리한다.\n- 정리는 기존 대화 삭제 계약을 사용해 대화 레코드와 WAV를 제거한 뒤 피드 메타데이터를 제거한다.\n- 미완성 작업은 완성 대화와 별도의 보존 기간을 사용하며, 오래된 작업을 정리할 때 사용자에게 알린다.\n- 음성이 만료되어도 피드 항목의 발견 기록은 유지해 같은 항목을 새 피드로 다시 만들지 않는다.",
+          "reason": "The left text discusses the expiration and cleanup of feed conversations, while the right text describes how to save a user's playlist.",
+          "rightQuote": "# 사용자 재생목록 저장 {#policy}\n\n저장 키는 `pomo:focus-room-playlist:v1`을 사용한다. 웹에서는 `localStorage`, 앱인토스에서는\n`Storage`를 사용한다. 재생목록은 현재 곡과 재생 위치를 저장하는 playback 상태와 분리한다."
+        },
+        "cacheKey": "8457848dd34cc821056976970c9731a18e962fe4fe7db949b00c9dc46e726b65",
+        "left": {
+          "contentHash": "sha256:297d7bb8eaa6339a6cc5dee99e15846b39a2381a3f6498ce4e9403b46aafb5f7",
+          "docId": "operations/expiry",
+          "unitId": "policy"
+        },
+        "right": {
+          "contentHash": "sha256:2f40922b13f86329a7816cc05ba63a23ebda3b2950dd4d17b45dc21e38c02707",
+          "docId": "operations/playlist",
+          "unitId": "policy"
+        }
+      },
+      {
+        "assessment": {
+          "confidence": 1,
+          "kind": "unrelated",
+          "leftQuote": "# Pomo 배포 실패 복구 {#policy}\n\nPomo 배포가 실패하면 운영 도메인을 이전 Vercel deployment로 유지하거나 복구한다. 오디오 게이트웨이 배포 후 Pomo 배포가 실패하면 게이트웨이도 실행 전에 기록한 production version으로 되돌린다.",
+          "reason": "The left text discusses recovery procedures for Pomo deployment failures, while the right text defines the meaning of persistent storage.",
+          "rightQuote": "# 영속 저장의 의미 {#policy}\n\n영속 저장은 앱 재시작과 정상 업데이트 후에도 데이터를 유지한다는 뜻이다. 사용자가 저장소를 직접 지우거나 앱을 삭제하면 데이터가 함께 삭제되는 것은 허용한다."
+        },
+        "cacheKey": "415376013b98abb01ef1a070a76da17cfe901ce433d521ef6e42882916b37b05",
+        "left": {
+          "contentHash": "sha256:4358f8990c4a9ac3b3bfb17b39dbd5eb26b53586e2a7aeb88783a06de8004548",
+          "docId": "operations/rollback",
+          "unitId": "policy"
+        },
+        "right": {
+          "contentHash": "sha256:73ea5eafe8bcafdb4d6388fdaef0a4ed8e21a15d4be9c5535df4b7c898db8e08",
+          "docId": "operations/persistence",
+          "unitId": "policy"
+        }
+      },
+      {
+        "assessment": {
+          "confidence": 1,
+          "kind": "unrelated",
+          "leftQuote": "# 원격 함수 상태와 계약 {#policy}\n\n원격 함수 연결 기반은 구현되었다. 앱인토스와 데스크톱 정적 클라이언트의 SolidStart 서버 함수는\n`POMO_PUBLIC_ORIGIN`에 배포된 SSR 서버를 호출한다. 일반 웹은 현재 페이지의 self Origin을 계속\n사용한다.",
+          "reason": "The left text discusses remote function state and contracts related to server calls, while the right text defines persistent storage.",
+          "rightQuote": "# 영속 저장의 의미 {#policy}\n\n영속 저장은 앱 재시작과 정상 업데이트 후에도 데이터를 유지한다는 뜻이다. 사용자가 저장소를 직접 지우거나 앱을 삭제하면 데이터가 함께 삭제되는 것은 허용한다."
+        },
+        "cacheKey": "816d917e34caf4f81a3ecc705bd739d1b2191eec19198f00ec8af93e49e71ed2",
+        "left": {
+          "contentHash": "sha256:6677386e64c874a53c74fb2c489240477576280130db60f1481c364350c9a772",
+          "docId": "operations/remote",
+          "unitId": "policy"
+        },
+        "right": {
+          "contentHash": "sha256:73ea5eafe8bcafdb4d6388fdaef0a4ed8e21a15d4be9c5535df4b7c898db8e08",
+          "docId": "operations/persistence",
+          "unitId": "policy"
+        }
+      },
+      {
+        "assessment": {
+          "confidence": 1,
+          "kind": "unrelated",
+          "leftQuote": "# 영속 저장 정책 {#policy}\n\n저장소에는 자동 만료나 자동 정리 정책을 두지 않는다. `navigator.storage.persist()`는 사용하지 않는다.",
+          "reason": "The left text discusses persistent storage policies, while the right text discusses recovery from Pomo deployment failures.",
+          "rightQuote": "# Pomo 배포 실패 복구 {#policy}\n\nPomo 배포가 실패하면 운영 도메인을 이전 Vercel deployment로 유지하거나 복구한다. 오디오 게이트웨이 배포 후 Pomo 배포가 실패하면 게이트웨이도 실행 전에 기록한 production version으로 되돌린다."
+        },
+        "cacheKey": "0d8e608c161eef9454777a167b2ce6516c28229bbaf94145b75c454a9a44a706",
+        "left": {
+          "contentHash": "sha256:20b8fbe13762fcfaf5c9e91c45f93e2b7c1180e4e5982f2565ff4577cca32dc9",
+          "docId": "operations/policy",
+          "unitId": "policy"
+        },
+        "right": {
+          "contentHash": "sha256:4358f8990c4a9ac3b3bfb17b39dbd5eb26b53586e2a7aeb88783a06de8004548",
+          "docId": "operations/rollback",
+          "unitId": "policy"
+        }
+      },
+      {
+        "assessment": {
+          "confidence": 1,
+          "kind": "unrelated",
+          "leftQuote": "# 피드 대화 만료와 정리 {#policy}\n\n- 피드 대화의 `expiresAt`은 음성 생성 완료 시각부터 48시간으로 계산한다.\n- 피드 동기화가 성공해 다음 항목을 확인할 때 만료된 피드 대화를 정리한다.\n- 브라우저가 닫혀 있으면 정확한 만료 시각의 삭제를 보장하지 않는다. 48시간이 지나면 삭제 대상이\n  되고 다음 동기화가 실제 정리 트리거가 된다.\n- 현재 재생 중인 대화는 해당 동기화의 정리에서 제외하고 재생 종료 후 다시 정리한다.\n- 정리는 기존 대화 삭제 계약을 사용해 대화 레코드와 WAV를 제거한 뒤 피드 메타데이터를 제거한다.\n- 미완성 작업은 완성 대화와 별도의 보존 기간을 사용하며, 오래된 작업을 정리할 때 사용자에게 알린다.\n- 음성이 만료되어도 피드 항목의 발견 기록은 유지해 같은 항목을 새 피드로 다시 만들지 않는다.",
+          "reason": "The left text discusses the expiration and cleanup of feed conversations, while the right text discusses recovery from Pomo deployment failures.",
+          "rightQuote": "# Pomo 배포 실패 복구 {#policy}\n\nPomo 배포가 실패하면 운영 도메인을 이전 Vercel deployment로 유지하거나 복구한다. 오디오 게이트웨이 배포 후 Pomo 배포가 실패하면 게이트웨이도 실행 전에 기록한 production version으로 되돌린다."
+        },
+        "cacheKey": "31ea0fa073c9a28ee36d36168ff75d89dd071286650038b4fbc0969968d5332b",
+        "left": {
+          "contentHash": "sha256:297d7bb8eaa6339a6cc5dee99e15846b39a2381a3f6498ce4e9403b46aafb5f7",
+          "docId": "operations/expiry",
+          "unitId": "policy"
+        },
+        "right": {
+          "contentHash": "sha256:4358f8990c4a9ac3b3bfb17b39dbd5eb26b53586e2a7aeb88783a06de8004548",
+          "docId": "operations/rollback",
+          "unitId": "policy"
+        }
+      },
+      {
+        "assessment": {
+          "confidence": 1,
+          "kind": "unrelated",
+          "leftQuote": "# Pomo 운영 배포와 복구 {#policy}\n\n`main`의 운영 배포는 GitHub Actions에서 `.github/workflows/pomo-production-deploy.yml`을 수동으로\n실행한다. `main` push만으로는 배포하지 않는다. 먼저 운영 환경 설정으로 빌드한다. Vercel\nProduction 환경의 Neon 직접 연결 URL인\n`DATABASE_URL_UNPOOLED`로 Drizzle migration을 적용하고, 같은 빌드 산출물을 운영 후보로\n배포한다. 후보의 `/`와 DB를 읽는 RSS 경로가 스모크 테스트를 통과할 때만 운영 도메인으로\n승격한다. 빌드, migration 또는 스모크 테스트가 실패하면 운영 도메인을 변경하지 않는다. 중복\n배포를 막기 위해 모든 브랜치의 Vercel Git 자동 배포를 끄고 GitHub Actions만 배포한다. GitHub에는\n`VERCEL_TOKEN` secret을 설정한다. Gateway가 먼저 배포된 뒤 Pomo 배포가 실패하거나 취소되면\nworkflow가 배포 직전에 기록한 Gateway version으로 되돌린다.",
+          "reason": "The left text discusses the deployment and recovery process for Pomo, while the right text defines the meaning of persistent storage.",
+          "rightQuote": "# 영속 저장의 의미 {#policy}\n\n영속 저장은 앱 재시작과 정상 업데이트 후에도 데이터를 유지한다는 뜻이다. 사용자가 저장소를 직접 지우거나 앱을 삭제하면 데이터가 함께 삭제되는 것은 허용한다."
+        },
+        "cacheKey": "802a3d5c82a344fef179e645b752a2225604001d541b09a1551772d7badc46d3",
+        "left": {
+          "contentHash": "sha256:554e86bbe40cb8bd8b7f8c7bdb661c22d29982fa249fefd19e1c2fedfb12a9c7",
+          "docId": "operations/deployment",
+          "unitId": "policy"
+        },
+        "right": {
+          "contentHash": "sha256:73ea5eafe8bcafdb4d6388fdaef0a4ed8e21a15d4be9c5535df4b7c898db8e08",
+          "docId": "operations/persistence",
+          "unitId": "policy"
+        }
+      },
+      {
+        "assessment": {
+          "confidence": 1,
+          "kind": "unrelated",
+          "leftQuote": "# 원격 함수 상태와 계약 {#policy}\n\n원격 함수 연결 기반은 구현되었다. 앱인토스와 데스크톱 정적 클라이언트의 SolidStart 서버 함수는\n`POMO_PUBLIC_ORIGIN`에 배포된 SSR 서버를 호출한다. 일반 웹은 현재 페이지의 self Origin을 계속\n사용한다.",
+          "reason": "The left text discusses remote function state and contracts for server functions, while the right text discusses the expiration and cleanup of feed conversations.",
+          "rightQuote": "# 피드 대화 만료와 정리 {#policy}\n\n- 피드 대화의 `expiresAt`은 음성 생성 완료 시각부터 48시간으로 계산한다.\n- 피드 동기화가 성공해 다음 항목을 확인할 때 만료된 피드 대화를 정리한다.\n- 브라우저가 닫혀 있으면 정확한 만료 시각의 삭제를 보장하지 않는다. 48시간이 지나면 삭제 대상이\n  되고 다음 동기화가 실제 정리 트리거가 된다.\n- 현재 재생 중인 대화는 해당 동기화의 정리에서 제외하고 재생 종료 후 다시 정리한다.\n- 정리는 기존 대화 삭제 계약을 사용해 대화 레코드와 WAV를 제거한 뒤 피드 메타데이터를 제거한다.\n- 미완성 작업은 완성 대화와 별도의 보존 기간을 사용하며, 오래된 작업을 정리할 때 사용자에게 알린다.\n- 음성이 만료되어도 피드 항목의 발견 기록은 유지해 같은 항목을 새 피드로 다시 만들지 않는다."
+        },
+        "cacheKey": "edbdfa493b58506dd4b4397fa457c9d667728b62c3deb3ad93d81eed3cf0a76b",
+        "left": {
+          "contentHash": "sha256:6677386e64c874a53c74fb2c489240477576280130db60f1481c364350c9a772",
+          "docId": "operations/remote",
+          "unitId": "policy"
+        },
+        "right": {
+          "contentHash": "sha256:297d7bb8eaa6339a6cc5dee99e15846b39a2381a3f6498ce4e9403b46aafb5f7",
+          "docId": "operations/expiry",
+          "unitId": "policy"
+        }
+      },
+      {
+        "assessment": {
+          "confidence": 1,
+          "kind": "unrelated",
+          "leftQuote": "# 피드 대화 만료와 정리 {#policy}\n\n- 피드 대화의 `expiresAt`은 음성 생성 완료 시각부터 48시간으로 계산한다.\n- 피드 동기화가 성공해 다음 항목을 확인할 때 만료된 피드 대화를 정리한다.\n- 브라우저가 닫혀 있으면 정확한 만료 시각의 삭제를 보장하지 않는다. 48시간이 지나면 삭제 대상이\n  되고 다음 동기화가 실제 정리 트리거가 된다.\n- 현재 재생 중인 대화는 해당 동기화의 정리에서 제외하고 재생 종료 후 다시 정리한다.\n- 정리는 기존 대화 삭제 계약을 사용해 대화 레코드와 WAV를 제거한 뒤 피드 메타데이터를 제거한다.\n- 미완성 작업은 완성 대화와 별도의 보존 기간을 사용하며, 오래된 작업을 정리할 때 사용자에게 알린다.\n- 음성이 만료되어도 피드 항목의 발견 기록은 유지해 같은 항목을 새 피드로 다시 만들지 않는다.",
+          "reason": "The left text discusses the expiration and cleanup of feed conversations, while the right text describes the deployment and recovery process for Pomo operations.",
+          "rightQuote": "# Pomo 운영 배포와 복구 {#policy}\n\n`main`의 운영 배포는 GitHub Actions에서 `.github/workflows/pomo-production-deploy.yml`을 수동으로\n실행한다. `main` push만으로는 배포하지 않는다. 먼저 운영 환경 설정으로 빌드한다. Vercel\nProduction 환경의 Neon 직접 연결 URL인\n`DATABASE_URL_UNPOOLED`로 Drizzle migration을 적용하고, 같은 빌드 산출물을 운영 후보로\n배포한다. 후보의 `/`와 DB를 읽는 RSS 경로가 스모크 테스트를 통과할 때만 운영 도메인으로\n승격한다. 빌드, migration 또는 스모크 테스트가 실패하면 운영 도메인을 변경하지 않는다. 중복\n배포를 막기 위해 모든 브랜치의 Vercel Git 자동 배포를 끄고 GitHub Actions만 배포한다. GitHub에는\n`VERCEL_TOKEN` secret을 설정한다. Gateway가 먼저 배포된 뒤 Pomo 배포가 실패하거나 취소되면\nworkflow가 배포 직전에 기록한 Gateway version으로 되돌린다."
+        },
+        "cacheKey": "adbe9c7f61e34342846e71f42486d34c0d4e0c7b658a7371c596a579de9c2742",
+        "left": {
+          "contentHash": "sha256:297d7bb8eaa6339a6cc5dee99e15846b39a2381a3f6498ce4e9403b46aafb5f7",
+          "docId": "operations/expiry",
+          "unitId": "policy"
+        },
+        "right": {
+          "contentHash": "sha256:554e86bbe40cb8bd8b7f8c7bdb661c22d29982fa249fefd19e1c2fedfb12a9c7",
+          "docId": "operations/deployment",
+          "unitId": "policy"
+        }
+      }
+    ],
+    "cached": 0,
+    "consideredUnits": 11,
+    "eligibleUnits": 11,
+    "retrieval": {
+      "candidatePairs": 55,
+      "errors": [],
+      "neighborsPerUnit": 10,
+      "seedLimit": 20
+    },
+    "totalPairs": 55,
+    "truncated": false,
+    "errors": [],
+    "limit": 100,
+    "promptVersion": 7,
+    "repoId": "demo/inspection-operations",
+    "selectedPairs": 55,
+    "sourceUnits": [
+      {
+        "contentHash": "sha256:6677386e64c874a53c74fb2c489240477576280130db60f1481c364350c9a772",
+        "docId": "operations/remote",
+        "unitId": "policy"
+      },
+      {
+        "contentHash": "sha256:297d7bb8eaa6339a6cc5dee99e15846b39a2381a3f6498ce4e9403b46aafb5f7",
+        "docId": "operations/expiry",
+        "unitId": "policy"
+      },
+      {
+        "contentHash": "sha256:20b8fbe13762fcfaf5c9e91c45f93e2b7c1180e4e5982f2565ff4577cca32dc9",
+        "docId": "operations/policy",
+        "unitId": "policy"
+      },
+      {
+        "contentHash": "sha256:8d6b6b6c6d2e0ec20f1a5dbf6e322412a248a81b4c6ff0d76aab8f795417eef9",
+        "docId": "operations/storage",
+        "unitId": "policy"
+      },
+      {
+        "contentHash": "sha256:875781eb2e24d6346f9d4bd25bd24c9fe5e55d39d1a5629bce7e4f454a11f9ad",
+        "docId": "operations/lifecycle",
+        "unitId": "policy"
+      },
+      {
+        "contentHash": "sha256:1c6069a7476dba3dbcb6529e3d0494c93b95daffa4a29e1baf9d56080cbf4c62",
+        "docId": "operations/clients",
+        "unitId": "policy"
+      },
+      {
+        "contentHash": "sha256:4358f8990c4a9ac3b3bfb17b39dbd5eb26b53586e2a7aeb88783a06de8004548",
+        "docId": "operations/rollback",
+        "unitId": "policy"
+      },
+      {
+        "contentHash": "sha256:554e86bbe40cb8bd8b7f8c7bdb661c22d29982fa249fefd19e1c2fedfb12a9c7",
+        "docId": "operations/deployment",
+        "unitId": "policy"
+      },
+      {
+        "contentHash": "sha256:2f40922b13f86329a7816cc05ba63a23ebda3b2950dd4d17b45dc21e38c02707",
+        "docId": "operations/playlist",
+        "unitId": "policy"
+      },
+      {
+        "contentHash": "sha256:73ea5eafe8bcafdb4d6388fdaef0a4ed8e21a15d4be9c5535df4b7c898db8e08",
+        "docId": "operations/persistence",
+        "unitId": "policy"
+      },
+      {
+        "contentHash": "sha256:47acf24e08995c5eb959a367f6311212dc768a54d0a0a405e8abb3c3f397ca56",
+        "docId": "operations/connections",
+        "unitId": "policy"
+      }
+    ],
+    "status": "complete",
+    "workspaceId": "refs/heads/main",
+    "model": {
+      "digest": "c6eb396dbd5992bbe3f5cdb947e8bbc0ee413d7c17e2beaae69f5d569cf982eb",
+      "name": "gemma4:latest"
+    }
+  }
+}

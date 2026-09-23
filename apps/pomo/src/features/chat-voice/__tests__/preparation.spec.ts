@@ -176,6 +176,74 @@ describe('useChatVoice preparation', () => {
     expect(client.dispose).toHaveBeenCalledOnce()
   })
 
+  it.each([
+    {cancel: (controller: ChatVoiceController) => controller.arm(), name: 'arm'},
+    {cancel: (controller: ChatVoiceController) => controller.stop(), name: 'stop'},
+  ])('should cancel in-flight preparation when $name is called', async ({cancel}) => {
+    let releaseInitialization: () => void = () => undefined
+    const initialization = new Promise<void>((resolve) => {
+      releaseInitialization = resolve
+    })
+    const client = createClient()
+    vi.mocked(client.initialize).mockImplementationOnce(async () => {
+      await initialization
+      return successResult(undefined)
+    })
+    const {runtime} = createRuntime(client)
+    const chatVoice = createTestRoot(runtime)
+
+    const preparation = chatVoice.controller.prepare()
+    expect(chatVoice.controller.state()).toEqual({progress: 0, status: 'preparing'})
+
+    cancel(chatVoice.controller)
+
+    expect(client.dispose).toHaveBeenCalledOnce()
+    expect(chatVoice.controller.state()).toEqual({status: 'unprepared'})
+
+    releaseInitialization()
+    await preparation
+
+    expect(chatVoice.controller.state()).toEqual({status: 'unprepared'})
+    chatVoice.dispose()
+  })
+
+  it('should start a fresh preparation when stop settles a pending initialization', async () => {
+    let releaseInitialization: () => void = () => undefined
+    const initialization = new Promise<void>((resolve) => {
+      releaseInitialization = resolve
+    })
+    const cancelledClient = createClient()
+    vi.mocked(cancelledClient.initialize).mockImplementationOnce(async () => {
+      await initialization
+      return successResult(undefined)
+    })
+    vi.mocked(cancelledClient.dispose).mockImplementationOnce(releaseInitialization)
+    const readyClient = createClient()
+    const {runtime} = createRuntime(cancelledClient)
+    vi.spyOn(runtime, 'createClient')
+      .mockReturnValueOnce(cancelledClient)
+      .mockReturnValueOnce(readyClient)
+    const chatVoice = createTestRoot(runtime)
+
+    try {
+      const cancelledPreparation = chatVoice.controller.prepare()
+      chatVoice.controller.stop()
+      const nextPreparation = chatVoice.controller.prepare()
+
+      expect(nextPreparation).not.toBe(cancelledPreparation)
+      expect(cancelledClient.initialize).toHaveBeenCalledOnce()
+      expect(readyClient.initialize).toHaveBeenCalledOnce()
+
+      await nextPreparation
+      expect(chatVoice.controller.state().status).toBe('ready')
+      await cancelledPreparation
+      expect(chatVoice.controller.state().status).toBe('ready')
+    } finally {
+      releaseInitialization()
+      chatVoice.dispose()
+    }
+  })
+
   it('should expose initialization failures and allow a successful retry', async () => {
     const client = createClient()
     vi.mocked(client.initialize)

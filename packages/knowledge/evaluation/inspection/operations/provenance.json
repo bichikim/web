@@ -1,0 +1,116 @@
+{
+  "commit": "43b47bd13273cddc8bc24531eb7c9050d478f102",
+  "scope": "Repository documentation excerpts, not verified deployed behavior.",
+  "units": [
+    {
+      "id": "storage",
+      "path": "apps/pomo/docs/plan/development/architecture.md",
+      "startLine": 27,
+      "endLine": 33,
+      "title": "영속 저장 호환 계층",
+      "text": "기능 코드는 특정 저장소 API를 직접 호출하지 않고 구조화 데이터 저장소와 바이너리 파일 저장소의 공통 계약만 사용한다. 플랫폼별 어댑터가 같은 계약을 구현한다.\n\n| 플랫폼                          | 구조화 데이터              | 바이너리 파일           |\n| ------------------------------- | -------------------------- | ----------------------- |\n| 앱인토스                        | 앱인토스 SDK `Storage`     | Cache API               |\n| 웹 브라우저·PWA                 | Dexie.js와 IndexedDB       | Cache API               |\n| 향후 iOS·Android·Steam·데스크톱 | 플랫폼 데이터베이스 어댑터 | 플랫폼 파일 저장 어댑터 |",
+      "sourceSha256": "c5d6dda3001beb652420ff8462ceeac3c071112161cd3d6f559b0feaf8b0a9a1",
+      "excerptSha256": "19171abe9b151a48b6e53012ad130cf70d3737430004b643eb394fcd03ca242f"
+    },
+    {
+      "id": "playlist",
+      "path": "apps/pomo/docs/plan/development/audio-library.md",
+      "startLine": 35,
+      "endLine": 36,
+      "title": "사용자 재생목록 저장",
+      "text": "저장 키는 `pomo:focus-room-playlist:v1`을 사용한다. 웹에서는 `localStorage`, 앱인토스에서는\n`Storage`를 사용한다. 재생목록은 현재 곡과 재생 위치를 저장하는 playback 상태와 분리한다.",
+      "sourceSha256": "c5f65da5d44133188f0fa171105036e416c923f50da7e22cfd1b671250997553",
+      "excerptSha256": "68d6a19371bc077c30b22e90743f9b5d2706a49a2efbc6c7cf9c2a01bce55b56"
+    },
+    {
+      "id": "policy",
+      "path": "apps/pomo/docs/plan/development/architecture.md",
+      "startLine": 35,
+      "endLine": 35,
+      "title": "영속 저장 정책",
+      "text": "저장소에는 자동 만료나 자동 정리 정책을 두지 않는다. `navigator.storage.persist()`는 사용하지 않는다.",
+      "sourceSha256": "c5d6dda3001beb652420ff8462ceeac3c071112161cd3d6f559b0feaf8b0a9a1",
+      "excerptSha256": "4c2d3a32dfce53a63736c17c6289648f930bd19c58ba11e3a349863c8cd0b47b"
+    },
+    {
+      "id": "connections",
+      "path": "apps/pomo/docs/plan/development/feed-dialogues.md",
+      "startLine": 43,
+      "endLine": 50,
+      "title": "피드 연결 설정",
+      "text": "- HTTP와 HTTPS 주소만 허용하고 정규화된 같은 주소의 중복 추가를 막는다.\n- 실제 피드 형식 확인은 피드 동기화가 구현될 때 연결한다. 현재 설정은 주소 형식만 검증한다.\n- 연결 목록은 버전된 로컬 설정으로 저장해 Pomo 이탈, 새로고침과 앱 업데이트 후에도 복원한다.\n- 첫 연결을 저장할 때 지원 브라우저에는 영속 저장을 요청한다.\n- 사용자가 연결을 삭제하거나 앱 데이터를 제거하기 전까지 주소와 선택 음성을 유지한다.\n- 피드 음성의 48시간 만료는 연결 설정을 삭제하지 않는다.\n- 피드 연결은 작은 사용자 설정으로 보관하고, 향후 늘어나는 피드 항목·생성 작업·음성 메타데이터는\n  Dexie와 바이너리 저장소에 분리한다.",
+      "sourceSha256": "9bc1703695d0e5f5b31cf5d0cd137f930f5acec3f54d4b81432fb676fb5d9bd8",
+      "excerptSha256": "61e14a5ab756ce0100b6848e95cb4883300e907979793b778800259c32ba915f"
+    },
+    {
+      "id": "expiry",
+      "path": "apps/pomo/docs/plan/development/feed-dialogues.md",
+      "startLine": 162,
+      "endLine": 169,
+      "title": "피드 대화 만료와 정리",
+      "text": "- 피드 대화의 `expiresAt`은 음성 생성 완료 시각부터 48시간으로 계산한다.\n- 피드 동기화가 성공해 다음 항목을 확인할 때 만료된 피드 대화를 정리한다.\n- 브라우저가 닫혀 있으면 정확한 만료 시각의 삭제를 보장하지 않는다. 48시간이 지나면 삭제 대상이\n  되고 다음 동기화가 실제 정리 트리거가 된다.\n- 현재 재생 중인 대화는 해당 동기화의 정리에서 제외하고 재생 종료 후 다시 정리한다.\n- 정리는 기존 대화 삭제 계약을 사용해 대화 레코드와 WAV를 제거한 뒤 피드 메타데이터를 제거한다.\n- 미완성 작업은 완성 대화와 별도의 보존 기간을 사용하며, 오래된 작업을 정리할 때 사용자에게 알린다.\n- 음성이 만료되어도 피드 항목의 발견 기록은 유지해 같은 항목을 새 피드로 다시 만들지 않는다.",
+      "sourceSha256": "9bc1703695d0e5f5b31cf5d0cd137f930f5acec3f54d4b81432fb676fb5d9bd8",
+      "excerptSha256": "d2a8ef5e71c16b7d0ec7a3f8c5b0b9415e295f813357f1c639bdeb1aa21e02e4"
+    },
+    {
+      "id": "persistence",
+      "path": "apps/pomo/docs/plan/development/architecture.md",
+      "startLine": 37,
+      "endLine": 37,
+      "title": "영속 저장의 의미",
+      "text": "영속 저장은 앱 재시작과 정상 업데이트 후에도 데이터를 유지한다는 뜻이다. 사용자가 저장소를 직접 지우거나 앱을 삭제하면 데이터가 함께 삭제되는 것은 허용한다.",
+      "sourceSha256": "c5d6dda3001beb652420ff8462ceeac3c071112161cd3d6f559b0feaf8b0a9a1",
+      "excerptSha256": "a7bb8205d16181c3c473d3527a4533daa565bd2551c1af845d5c133ac9f11b0a"
+    },
+    {
+      "id": "lifecycle",
+      "path": "apps/pomo/docs/plan/development/audio-library.md",
+      "startLine": 10,
+      "endLine": 11,
+      "title": "음악 라이브러리 지속 저장의 의미",
+      "text": "이 문서에서 지속 저장은 앱이나 브라우저를 다시 실행해도 유지된다는 뜻이다. 앱 삭제 또는\n브라우저 사이트 데이터 삭제 이후까지 보존하지 않으며 기기 간 동기화도 제공하지 않는다.",
+      "sourceSha256": "c5f65da5d44133188f0fa171105036e416c923f50da7e22cfd1b671250997553",
+      "excerptSha256": "cc91e5638e0281db6f8a4474a15fc52baa2bbf1bc09ab7bae381add6ad80275d"
+    },
+    {
+      "id": "remote",
+      "path": "apps/pomo/docs/plan/development/remote-functions.md",
+      "startLine": 7,
+      "endLine": 9,
+      "title": "원격 함수 상태와 계약",
+      "text": "원격 함수 연결 기반은 구현되었다. 앱인토스와 데스크톱 정적 클라이언트의 SolidStart 서버 함수는\n`POMO_PUBLIC_ORIGIN`에 배포된 SSR 서버를 호출한다. 일반 웹은 현재 페이지의 self Origin을 계속\n사용한다.",
+      "sourceSha256": "e376f9b956087ca3af15f53131152d6a5fe64abcce58cbb1e92d49b12c9ce552",
+      "excerptSha256": "fff87216463fad44b21fed425d550caccf015d28981a793a6951d342529a5a3b"
+    },
+    {
+      "id": "clients",
+      "path": "apps/pomo/docs/plan/development/remote-functions.md",
+      "startLine": 33,
+      "endLine": 35,
+      "title": "원격 함수 공유 함수별 완료 조건",
+      "text": "- 일반 웹의 서버 함수가 기존 self Origin `/_server`를 사용한다.\n- 토스 클라이언트 번들의 서버 함수만 `POMO_PUBLIC_ORIGIN/_server`를 사용한다.\n- 토스 번들의 JS, CSS, Worker, 이미지 주소는 패키지 내부 경로를 유지한다.",
+      "sourceSha256": "e376f9b956087ca3af15f53131152d6a5fe64abcce58cbb1e92d49b12c9ce552",
+      "excerptSha256": "6131afa2be6e90f7262cacd1e38b51d71673abb0401ceed6fac030eb1d2a58a8"
+    },
+    {
+      "id": "rollback",
+      "path": "RELEASE.md",
+      "startLine": 43,
+      "endLine": 43,
+      "title": "Pomo 배포 실패 복구",
+      "text": "Pomo 배포가 실패하면 운영 도메인을 이전 Vercel deployment로 유지하거나 복구한다. 오디오 게이트웨이 배포 후 Pomo 배포가 실패하면 게이트웨이도 실행 전에 기록한 production version으로 되돌린다.",
+      "sourceSha256": "e3946ef840f6d4f59d73819a63037f7627911db6a74749d6d20d60bf28a4e4f7",
+      "excerptSha256": "ce0b621247c14b72cef52fe5adf1c4889b420f0baef7633d6b32b1114949461a"
+    },
+    {
+      "id": "deployment",
+      "path": "apps/pomo/docs/plan/development/delivery-testing.md",
+      "startLine": 67,
+      "endLine": 75,
+      "title": "Pomo 운영 배포와 복구",
+      "text": "`main`의 운영 배포는 GitHub Actions에서 `.github/workflows/pomo-production-deploy.yml`을 수동으로\n실행한다. `main` push만으로는 배포하지 않는다. 먼저 운영 환경 설정으로 빌드한다. Vercel\nProduction 환경의 Neon 직접 연결 URL인\n`DATABASE_URL_UNPOOLED`로 Drizzle migration을 적용하고, 같은 빌드 산출물을 운영 후보로\n배포한다. 후보의 `/`와 DB를 읽는 RSS 경로가 스모크 테스트를 통과할 때만 운영 도메인으로\n승격한다. 빌드, migration 또는 스모크 테스트가 실패하면 운영 도메인을 변경하지 않는다. 중복\n배포를 막기 위해 모든 브랜치의 Vercel Git 자동 배포를 끄고 GitHub Actions만 배포한다. GitHub에는\n`VERCEL_TOKEN` secret을 설정한다. Gateway가 먼저 배포된 뒤 Pomo 배포가 실패하거나 취소되면\nworkflow가 배포 직전에 기록한 Gateway version으로 되돌린다.",
+      "sourceSha256": "f440fdce4ce04429174744385d8d7eb02d3e9fdb75eadca2f74aaa5b3d51bf0b",
+      "excerptSha256": "416f9fa43266eccbbf9ebb36aaa0e48e3a2cfe0c2b183ac96cbdd86a24870861"
+    }
+  ]
+}

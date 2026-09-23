@@ -434,6 +434,22 @@ describe('useOneOffChat', () => {
     cleanup()
   })
 
+  it('should use the fallback when a download rejects with a non-Error message object', async () => {
+    const {chat} = createChat()
+    vi.mocked(useChat).mockReturnValue(chat)
+    vi.mocked(isTextModelDownloaded).mockResolvedValue(false)
+    vi.mocked(download.startTextModel).mockRejectedValue({message: 'unexpected object'})
+    const report = vi.spyOn(console, 'error').mockImplementation(() => undefined)
+    const {cleanup, result} = renderHook(() => useOneOffChat({onReply: vi.fn()}))
+
+    await result.submit('질문')
+    await result.startDownload()
+
+    expect(result.errorMessage()).toBe('모델을 내려받지 못했어요.')
+    cleanup()
+    report.mockRestore()
+  })
+
   it('should expose a generation failure after the pending question was sent', async () => {
     const {chat, setState} = createChat()
     vi.mocked(useChat).mockReturnValue(chat)

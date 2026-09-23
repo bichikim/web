@@ -8,7 +8,6 @@ export const createSkinSession = () => {
   return {
     jointId,
     partId,
-    setJointId,
     pick: (document: PuppetDocument, id?: string | null) => {
       if (partId() === null) {
         return false
@@ -19,6 +18,7 @@ export const createSkinSession = () => {
       }
       return true
     },
+    setJointId,
     start: (id: string) => {
       setPartId(id)
       setJointId(null)
@@ -53,12 +53,12 @@ export const useSkinSessionControls = (
         session?.stop()
       }
     },
+    setTarget,
     target: () => {
       const id = session?.jointId()
       return id === undefined || id === null
         ? localTarget()
         : (binding()?.influences.findIndex((item) => item.nodeId === id) ?? -1)
     },
-    setTarget,
   }
 }
