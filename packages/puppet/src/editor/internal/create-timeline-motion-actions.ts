@@ -9,12 +9,11 @@ interface CreateTimelineMotionActionsOptions {
   readonly activeMotion: Accessor<PuppetMotion | undefined>
   readonly applyEdit: (result: ReturnType<typeof editMotion>, view: TimelineView) => void
   readonly document: Accessor<PuppetDocument>
-  readonly motionTimes: Accessor<Readonly<Record<string, number>>>
   readonly setMotionTimes: Setter<Readonly<Record<string, number>>>
 }
 
 export const createTimelineMotionActions = (options: CreateTimelineMotionActionsOptions) => {
-  const applyActiveMotionEdit = (edit: 'delete' | 'duplicate' | {readonly name: string}) => {
+  const applyActiveMotionEdit = (edit: 'delete' | 'duplicate') => {
     const activeMotion = options.activeMotion()
     if (activeMotion === undefined) {
       return
@@ -23,15 +22,12 @@ export const createTimelineMotionActions = (options: CreateTimelineMotionActions
     options.applyEdit(
       editMotion({
         document: options.document(),
-        edit:
-          typeof edit === 'string'
-            ? {motionId: activeMotion.id, type: edit}
-            : {motionId: activeMotion.id, name: edit.name, type: 'rename'},
+        edit: {motionId: activeMotion.id, type: edit},
       }),
       'single',
     )
   }
-  const renameById = (motionId: string, name: string) => {
+  const renameMotion = (motionId: string, name: string, view: TimelineView) => {
     const result = editMotion({
       document: options.document(),
       edit: {motionId, name, type: 'rename'},
@@ -47,7 +43,7 @@ export const createTimelineMotionActions = (options: CreateTimelineMotionActions
         ? current
         : {...remainingTimes, [result.selectedMotionId ?? name]: renamedTime}
     })
-    options.applyEdit(result, 'all')
+    options.applyEdit(result, view)
   }
 
   return {
@@ -60,7 +56,12 @@ export const createTimelineMotionActions = (options: CreateTimelineMotionActions
         'all',
       ),
     duplicate: () => applyActiveMotionEdit('duplicate'),
-    rename: (name: string) => applyActiveMotionEdit({name}),
-    renameById,
+    rename: (name: string) => {
+      const activeMotion = options.activeMotion()
+      if (activeMotion !== undefined) {
+        renameMotion(activeMotion.id, name, 'single')
+      }
+    },
+    renameById: (motionId: string, name: string) => renameMotion(motionId, name, 'all'),
   }
 }

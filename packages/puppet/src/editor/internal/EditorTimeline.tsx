@@ -179,7 +179,6 @@ export const EditorTimeline = (props: EditorTimelineProps) => {
     activeMotion: motion,
     applyEdit: applyMotionEdit,
     document: () => props.document,
-    motionTimes,
     setMotionTimes,
   })
 
