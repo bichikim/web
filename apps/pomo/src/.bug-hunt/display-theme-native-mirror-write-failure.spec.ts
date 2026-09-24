@@ -6,7 +6,6 @@ import {
   type DisplayThemePreferenceStorage,
 } from '../features/display-theme/storage'
 
-const STORAGE_KEY = 'pomo:display-theme-preference:v1'
 const stored = (preference: 'dark' | 'bright', savedAt: number) => ({preference, savedAt})
 
 describe('display theme native mirror write failure on read', () => {
