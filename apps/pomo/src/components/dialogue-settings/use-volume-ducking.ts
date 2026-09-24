@@ -34,7 +34,6 @@ export const useVolumeDucking = (): VolumeDuckingState => {
   const [isLoading, setIsLoading] = createSignal(true)
   const [message, setMessage] = createSignal<string | null>(null)
   const pendingSaves: Array<DialogueVolumeDuckingSettingsValue> = []
-  let edited = false
   let isDisposed = false
   let pendingSettings: DialogueVolumeDuckingSettingsValue | null = null
   let committedSettings: DialogueVolumeDuckingSettingsValue =
@@ -46,14 +45,11 @@ export const useVolumeDucking = (): VolumeDuckingState => {
     if (didSave && settledSettings !== null) {
       committedSettings = settledSettings
     }
-    if (pendingSaves.length === 0 && pendingSettings === null) {
-      edited = false
-    }
     return settledSettings
   }
 
   const handlePreferenceError = (error: unknown) => {
-    const isSaveError = edited
+    const isSaveError = pendingSaves.length > 0
     console.error(
       isSaveError
         ? 'Failed to save dialogue volume ducking settings.'
@@ -110,14 +106,11 @@ export const useVolumeDucking = (): VolumeDuckingState => {
   })
 
   const publishSettings = (nextSettings: DialogueVolumeDuckingSettingsValue) => {
-    if (storedSettings() !== null) {
-      setStoredSettings(nextSettings, {persist: false})
-    }
+    setStoredSettings(nextSettings, {persist: false})
   }
 
   const scheduleSave = (nextSettings: DialogueVolumeDuckingSettingsValue) => {
     failedStoredSettings = null
-    edited = true
     setSettings(nextSettings)
     setMessage(null)
     pendingSettings = nextSettings
@@ -129,7 +122,11 @@ export const useVolumeDucking = (): VolumeDuckingState => {
   createEffect(() => {
     const nextSettings = storedSettings()
 
-    if (nextSettings === null || pendingSettings !== null || pendingSaves.length > 0) {
+    if (nextSettings === null) {
+      return
+    }
+    setIsLoading(false)
+    if (pendingSettings !== null || pendingSaves.length > 0) {
       return
     }
 
@@ -142,7 +139,6 @@ export const useVolumeDucking = (): VolumeDuckingState => {
 
     committedSettings = nextSettings
     setSettings(nextSettings)
-    setIsLoading(false)
   })
 
   onCleanup(() => {
