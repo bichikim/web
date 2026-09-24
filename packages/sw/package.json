@@ -46,6 +46,6 @@
     "@winter-love/vite-lib-config": "workspace:*",
     "vite": "catalog:",
     "vite-plugin-dts": "catalog:",
-    "vitest": "^4.1.5"
+    "vitest": "^4.1.11"
   }
 }
