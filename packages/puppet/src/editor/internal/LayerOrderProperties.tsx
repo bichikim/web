@@ -15,11 +15,15 @@ const getRuleSummary = (document: PuppetDocument, rule: PuppetLayerOrderRule) =>
   const firstName = getSceneNode(document, rule.partIds[0]!)?.name ?? rule.partIds[0]!
   const targetName =
     rule.partIds.length === 1 ? firstName : `${firstName} 외 ${rule.partIds.length - 1}개`
-  const comparison = rule.when.comparison === 'greater-than' ? '>' : '<'
+  const comparison = rule.when.comparison === 'greater-than' ? '초과' : '미만'
   const position = rule.placement === 'before' ? '뒤' : '앞'
   const referenceName = getSceneNode(document, rule.referencePartId)?.name ?? rule.referencePartId
-  const conditionLabel = `${rule.when.parameterIds.length}개 값 ${comparison} ${rule.when.threshold}`
-  return `${targetName} · ${conditionLabel} → ${referenceName} ${position}`
+  const parameterNames = rule.when.parameterIds.map(
+    (id) => document.parameters?.find((parameter) => parameter.id === id)?.name ?? id,
+  )
+  const parameterLabel = parameterNames.join(' + ') + (parameterNames.length > 1 ? ' 합계' : '')
+  const conditionLabel = `${parameterLabel} ${rule.when.threshold} ${comparison}`
+  return {conditionLabel, placementLabel: `${referenceName} ${position}로`, targetName}
 }
 
 const getSelectedTargets = (document: PuppetDocument, selectedPartIds: ReadonlyArray<string>) => {
@@ -73,50 +77,59 @@ export const LayerOrderProperties = (props: LayerOrderPropertiesProps) => {
   }
 
   return (
-    <details class="deformer-properties text-[#cbd7d3]">
-      <summary class="cursor-pointer text-xs font-semibold text-[#bfeee1]">
+    <details class="deformer-properties order-rule-panel">
+      <summary
+        class="order-rule-heading"
+        title="기본은 레이어 목록 순서입니다. 조건을 만족한 규칙을 위에서 아래로 적용합니다."
+      >
         레이어 순서 규칙 · {props.document.layerOrderRules?.length ?? 0}개
       </summary>
-      <p class="m-0 text-[0.6875rem] leading-relaxed text-[#9caca6]">
-        기본은 왼쪽 목록 순서입니다. 조건이 맞을 때만 지정한 파츠를 앞이나 뒤로 옮깁니다. 규칙은
-        위에서 아래 순서로 적용됩니다.
-      </p>
       <For each={props.document.layerOrderRules ?? []}>
-        {(rule, index) => (
-          <details class="rounded border border-[#35413d] px-3 py-2">
-            <summary class="cursor-pointer break-words text-xs font-medium text-[#dfe8e4]">
-              {getRuleSummary(props.document, rule)}
-            </summary>
-            <LayerOrderRuleEditor
-              document={props.document}
-              initialRule={rule}
-              selectedPartIds={props.selectedPartIds}
-              onCancel={() => undefined}
-              onSave={(updated) => saveRule(index(), updated)}
-            />
-            <div class="mt-2 flex flex-wrap gap-1">
-              <EditorButton
-                aria-label="규칙 위로"
-                disabled={index() === 0}
-                onClick={() => moveRule(index(), index() - 1)}
+        {(rule, index) => {
+          const summary = () => getRuleSummary(props.document, rule)
+          return (
+            <details class="order-rule-rule">
+              <summary
+                class="order-rule-summary"
+                aria-label={`${summary().targetName} · ${summary().placementLabel}. ${summary().conditionLabel}`}
               >
-                ↑
-              </EditorButton>
-              <EditorButton
-                aria-label="규칙 아래로"
-                disabled={index() === (props.document.layerOrderRules?.length ?? 0) - 1}
-                onClick={() => moveRule(index(), index() + 1)}
-              >
-                ↓
-              </EditorButton>
-              <EditorButton onClick={() => deleteRule(index())}>규칙 삭제</EditorButton>
-            </div>
-          </details>
-        )}
+                <span class="order-rule-summary-content">
+                  <span>{summary().targetName}</span>
+                  <span>{summary().placementLabel}</span>
+                  <span class="order-rule-condition">{summary().conditionLabel}</span>
+                </span>
+              </summary>
+              <LayerOrderRuleEditor
+                document={props.document}
+                initialRule={rule}
+                selectedPartIds={props.selectedPartIds}
+                onCancel={() => undefined}
+                onSave={(updated) => saveRule(index(), updated)}
+              />
+              <div class="order-rule-actions">
+                <EditorButton
+                  aria-label="규칙 위로"
+                  disabled={index() === 0}
+                  onClick={() => moveRule(index(), index() - 1)}
+                >
+                  ↑
+                </EditorButton>
+                <EditorButton
+                  aria-label="규칙 아래로"
+                  disabled={index() === (props.document.layerOrderRules?.length ?? 0) - 1}
+                  onClick={() => moveRule(index(), index() + 1)}
+                >
+                  ↓
+                </EditorButton>
+                <EditorButton onClick={() => deleteRule(index())}>규칙 삭제</EditorButton>
+              </div>
+            </details>
+          )
+        }}
       </For>
       <Show when={adding() && canAdd()}>
-        <div class="rounded border border-[#3d5f56] px-3 pb-3">
-          <h3 class="mb-0 text-xs">새 레이어 순서 규칙</h3>
+        <div class="order-rule-rule">
+          <h3 class="order-rule-heading">새 레이어 순서 규칙</h3>
           <LayerOrderRuleEditor
             document={props.document}
             initialRule={initialRule()}
@@ -132,9 +145,7 @@ export const LayerOrderProperties = (props: LayerOrderPropertiesProps) => {
         </EditorButton>
       </Show>
       <Show when={selectedTargets().length === 0}>
-        <p class="m-0 text-[0.6875rem] text-[#9caca6]">
-          왼쪽 레이어 목록에서 이동할 파츠를 선택하세요.
-        </p>
+        <p class="order-rule-hint">왼쪽 레이어 목록에서 이동할 파츠를 선택하세요.</p>
       </Show>
     </details>
   )

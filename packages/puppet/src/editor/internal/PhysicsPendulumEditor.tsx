@@ -27,6 +27,7 @@ const PHYSICS_NUMBER_FIELDS: ReadonlyArray<PhysicsNumberFieldDefinition> = [
 ]
 
 const INPUT_DIRECTIONS = ['forward', 'reverse'] as const
+const OUTPUT_MODES = ['position', 'lag'] as const
 const MINIMUM_INPUT_RANGE = 0.01
 type PhysicsInputDirection = (typeof INPUT_DIRECTIONS)[number]
 
@@ -55,6 +56,10 @@ export interface PhysicsPendulumEditorProps {
     pendulumId: string,
     property: PhysicsParameterProperty,
     value: string,
+  ) => void
+  readonly onOutputModeChange: (
+    pendulumId: string,
+    mode: NonNullable<PuppetPendulum['outputMode']>,
   ) => void
   readonly onRemove: (pendulumId: string) => void
 }
@@ -104,6 +109,11 @@ export const PhysicsPendulumEditor = (props: PhysicsPendulumEditorProps) => {
   }
   const handleInputRangeChange = (range: number) =>
     props.onNumberChange(props.pendulum.id, 'inputScale', getInputScale(inputDirection(), range))
+  const handleOutputModeChange = (mode: string) => {
+    if (mode === 'position' || mode === 'lag') {
+      props.onOutputModeChange(props.pendulum.id, mode)
+    }
+  }
 
   return (
     <article class="physics-pendulum">
@@ -146,6 +156,17 @@ export const PhysicsPendulumEditor = (props: PhysicsPendulumEditorProps) => {
         </For>
       </div>
       <div class="physics-number-fields">
+        <label>
+          출력 방식
+          <EditorSelect
+            disabled={props.disabled}
+            label={`${title()} 출력 방식`}
+            options={[...OUTPUT_MODES]}
+            optionLabel={(mode) => (mode === 'lag' ? '지연·반동' : '위치')}
+            value={props.pendulum.outputMode ?? 'position'}
+            onChange={handleOutputModeChange}
+          />
+        </label>
         <label>
           입력 방향
           <EditorSelect

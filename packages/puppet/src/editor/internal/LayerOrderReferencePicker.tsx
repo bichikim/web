@@ -29,19 +29,19 @@ export const LayerOrderReferencePicker = (props: LayerOrderReferencePickerProps)
   }
 
   return (
-    <div class="grid gap-1">
-      <span class="text-[#84918c]">기준 파츠</span>
+    <div class="order-rule-field">
+      <span class="order-rule-label">기준 파츠</span>
       <input
         aria-label="기준 파츠 검색"
         placeholder="이름으로 검색"
         type="search"
         value={query()}
-        class="w-full min-w-0 rounded border border-[#35413d] bg-[#121816] p-2 text-[#dfe8e4]"
+        class="order-rule-input"
         onInput={(event) => setQuery(event.currentTarget.value)}
       />
       <select
         aria-label="기준 파츠"
-        class="w-full min-w-0 rounded border border-[#35413d] bg-[#121816] p-2 text-[#dfe8e4]"
+        class="order-rule-input"
         value={props.value}
         onChange={(event) => props.onChange(event.currentTarget.value)}
       >

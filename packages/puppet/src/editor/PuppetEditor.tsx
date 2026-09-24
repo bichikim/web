@@ -10,7 +10,8 @@ import {GlueEditor} from './internal/GlueEditor'
 import {useDeformerMode} from './internal/use-deformer-mode'
 import {Portal} from 'solid-js/web'
 import {batch, createEffect, createMemo, createSignal, Show, untrack} from 'solid-js'
-import {createEmptyDocument, type Player, type PuppetDocument, serializeDocument} from '../player'
+import {createEmptyDocument, type Player, type PuppetDocument} from '../player'
+import {useDocumentExport} from './use-document-export'
 import {EditorViewport} from './EditorViewport'
 import {createDeformerControlSelection} from './internal/deformer-control-selection'
 import {EditorAutoMeshDialog} from './internal/EditorAutoMeshDialog'
@@ -45,17 +46,6 @@ export interface PuppetEditorProps {
   readonly initialMotionId?: string
   readonly initialWorkspace?: 'animation' | 'modeling'
   readonly onDocumentChange?: (document: PuppetDocument) => void
-}
-const downloadDocument = (document: PuppetDocument) => {
-  const source = serializeDocument(document)
-  const url = URL.createObjectURL(new Blob([source], {type: 'application/json'}))
-  const anchor = globalThis.document.createElement('a')
-  anchor.download = 'puppet-model.json'
-  anchor.href = url
-  globalThis.document.body.append(anchor)
-  anchor.click()
-  anchor.remove()
-  globalThis.setTimeout(() => URL.revokeObjectURL(url), 0)
 }
 const setPlayerPlayback = (player: Player, isPlaying: boolean) => {
   if (isPlaying) {
@@ -141,6 +131,7 @@ export const PuppetEditor = (props: PuppetEditorProps) => {
   const initialPartId = initialDocument.parts[0]?.id ?? null
   const history = useDocumentHistory({initialDocument})
   const sourceDocument = history.document
+  const documentExport = useDocumentExport(sourceDocument)
   const skinSession = createSkinSession()
   const [activePartId, setActivePartId] = createSignal<string | null>(initialPartId)
   const [layerSelection, setLayerSelection] = createSignal(createSceneSelection(initialPartId))
@@ -478,7 +469,8 @@ export const PuppetEditor = (props: PuppetEditorProps) => {
             panelVisibility={visibility}
             playerStatus={playerStatus()}
             onRedo={handleRedo}
-            onExport={() => downloadDocument(sourceDocument())}
+            exportUrl={documentExport.url()}
+            onExport={documentExport.exportDocument}
             onFileImport={editorImports.handleImport}
             onPsdReimport={editorImports.reimport.load}
             onFileOpen={editorImports.handleOpen}

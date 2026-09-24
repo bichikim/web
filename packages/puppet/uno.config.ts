@@ -5,6 +5,7 @@ import {iconShortcuts} from './uno/shortcuts/icons'
 import {rules} from './uno/rules'
 import {layoutShortcuts} from './uno/shortcuts/layout'
 import {layersShortcuts} from './uno/shortcuts/layers'
+import {layerOrderShortcuts} from './uno/shortcuts/layer-order'
 import {propertiesShortcuts} from './uno/shortcuts/properties'
 import {canvasShortcuts} from './uno/shortcuts/canvas'
 import {parametersShortcuts} from './uno/shortcuts/parameters'
@@ -19,6 +20,7 @@ const shortcuts = {
   ...controlShortcuts,
   ...layoutShortcuts,
   ...layersShortcuts,
+  ...layerOrderShortcuts,
   ...propertiesShortcuts,
   ...canvasShortcuts,
   ...parametersShortcuts,

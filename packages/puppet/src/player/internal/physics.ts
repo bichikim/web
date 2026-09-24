@@ -65,7 +65,9 @@ export const evaluatePhysics = (options: EvaluatePhysicsOptions): PhysicsEvaluat
               state,
             })
       const baseOutputValue = getParameterValue(outputParameter, baseParameterValues)
-      const displacement = nextState.position * pendulum.outputScale
+      const position =
+        pendulum.outputMode === 'lag' ? nextState.position - target : nextState.position
+      const displacement = position * pendulum.outputScale
       const outputCandidate = baseOutputValue + displacement
       const outputValue = Number.isFinite(outputCandidate)
         ? clamp(outputCandidate, outputParameter.minimum, outputParameter.maximum)

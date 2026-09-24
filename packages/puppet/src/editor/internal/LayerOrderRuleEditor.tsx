@@ -44,16 +44,16 @@ export const LayerOrderRuleEditor = (props: LayerOrderRuleEditorProps) => {
   }
 
   return (
-    <div class="grid gap-3 pt-3 text-[0.6875rem] text-[#cbd7d3]">
-      <div class="grid gap-1">
-        <span class="text-[#84918c]">이동할 파츠</span>
-        <p class="m-0 break-words leading-relaxed">
+    <div class="order-rule-form">
+      <div class="order-rule-field">
+        <span class="order-rule-label">이동할 파츠</span>
+        <p class="order-rule-targets">
           {draft()
             .partIds.map((id) => getSceneNode(props.document, id)?.name ?? id)
             .join(', ')}
         </p>
         <EditorButton
-          class="justify-self-start"
+          class="order-rule-action"
           disabled={!canUseSelection()}
           onClick={() => setDraft((rule) => ({...rule, partIds: selectedTargets()}))}
         >
@@ -71,12 +71,12 @@ export const LayerOrderRuleEditor = (props: LayerOrderRuleEditorProps) => {
         parameters={props.document.parameters ?? []}
         onChange={(parameterIds) => updateCondition({parameterIds})}
       />
-      <div class="grid gap-2">
-        <label class="grid gap-1">
-          <span class="text-[#84918c]">조건</span>
+      <div class="order-rule-fields">
+        <label class="order-rule-field">
+          <span class="order-rule-label">조건</span>
           <select
             aria-label="전환 조건"
-            class="w-full min-w-0 rounded border border-[#35413d] bg-[#121816] p-2 text-[#dfe8e4]"
+            class="order-rule-input"
             value={draft().when.comparison}
             onChange={(event) =>
               updateCondition({
@@ -88,8 +88,8 @@ export const LayerOrderRuleEditor = (props: LayerOrderRuleEditorProps) => {
             <option value="less-than">미만이면</option>
           </select>
         </label>
-        <label class="grid gap-1">
-          <span class="text-[#84918c]">전환 기준값</span>
+        <label class="order-rule-field">
+          <span class="order-rule-label">전환 기준값</span>
           <EditorNumberField
             label="전환 기준값"
             step={1}
@@ -98,11 +98,11 @@ export const LayerOrderRuleEditor = (props: LayerOrderRuleEditorProps) => {
           />
         </label>
       </div>
-      <label class="grid gap-1">
-        <span class="text-[#84918c]">기준 파츠보다</span>
+      <label class="order-rule-field">
+        <span class="order-rule-label">기준 파츠보다</span>
         <select
           aria-label="전환 후 위치"
-          class="w-full min-w-0 rounded border border-[#35413d] bg-[#121816] p-2 text-[#dfe8e4]"
+          class="order-rule-input"
           value={draft().placement}
           onChange={(event) =>
             setDraft((rule) => ({
@@ -115,7 +115,7 @@ export const LayerOrderRuleEditor = (props: LayerOrderRuleEditorProps) => {
           <option value="after">앞에 표시</option>
         </select>
       </label>
-      <div class="flex flex-wrap gap-2">
+      <div class="order-rule-actions">
         <EditorButton disabled={!canSave()} onClick={handleSave}>
           규칙 저장
         </EditorButton>

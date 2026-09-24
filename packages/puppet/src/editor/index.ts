@@ -9,6 +9,7 @@ export * from './import-png'
 export * from './mesh-editor-contract'
 export * from './move-mesh-vertex'
 export * from './use-auto-mesh'
+export * from './use-document-export'
 export * from './use-mesh-editor'
 
 export * from './use-parameter-editor'

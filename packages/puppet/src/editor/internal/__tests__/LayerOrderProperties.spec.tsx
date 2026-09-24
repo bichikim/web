@@ -34,7 +34,7 @@ describe('LayerOrderProperties', () => {
     ))
 
     fireEvent.click(view.getByText(/레이어 순서 규칙/))
-    fireEvent.click(view.getByText(/shape-circle.*mesh-preview/))
+    fireEvent.click(view.getByLabelText(/shape-circle.*mesh-preview/))
     expect(view.getByRole('button', {name: 'angle-x 제거'})).toBeDefined()
     expect(view.getByRole('button', {name: 'angle-y 제거'})).toBeDefined()
     fireEvent.input(view.getByRole('spinbutton', {name: '전환 기준값'}), {
@@ -150,8 +150,8 @@ describe('LayerOrderProperties', () => {
     ))
 
     fireEvent.click(view.getByText(/레이어 순서 규칙/))
-    const firstRule = view.getByText(/shape-circle.*mesh-preview/).closest('details')!
-    fireEvent.click(view.getByText(/shape-circle.*mesh-preview/))
+    const firstRule = view.getByLabelText(/shape-circle.*mesh-preview/).closest('details')!
+    fireEvent.click(view.getByLabelText(/shape-circle.*mesh-preview/))
     expect(within(firstRule).getByRole('button', {name: '규칙 위로'})).toBeDisabled()
     fireEvent.click(within(firstRule).getByRole('button', {name: '규칙 아래로'}))
 
