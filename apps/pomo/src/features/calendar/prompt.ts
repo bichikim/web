@@ -1,4 +1,7 @@
+import {z} from 'zod'
+
 import {dayjs} from 'src/utils/zoned-dayjs'
+import {parseDate} from '../civil-date'
 import 'dayjs/locale/ko'
 import type {CalendarEvent} from './types'
 
@@ -12,6 +15,13 @@ const PROVIDER_LABELS = {
   google: 'Google',
   microsoft: 'Microsoft',
 } as const
+
+const dateTimeSchema = z.iso.datetime({offset: true})
+
+const hasValidEventTimes = (event: CalendarEvent) =>
+  event.allDay
+    ? parseDate(event.start) !== null && parseDate(event.end) !== null
+    : dateTimeSchema.safeParse(event.start).success && dateTimeSchema.safeParse(event.end).success
 
 const formatEventTime = (event: CalendarEvent, timeZone: string) => {
   if (event.allDay) {
@@ -32,21 +42,21 @@ const formatEvent = (event: CalendarEvent, timeZone: string) =>
 export const createCalendarPromptContext = (
   options: CreateCalendarPromptContextOptions,
 ): string => {
+  const events = options.events.filter(hasValidEventTimes)
+  const incomplete = options.incomplete === true || events.length < options.events.length
   const header = [
-    options.incomplete
+    incomplete
       ? '일부 일정만 확인했습니다. 누락 가능성을 알리고, 전체 일정이나 일정이 없다고 단정하지 마세요.'
       : '캘린더 조회 결과입니다. 이 정보에만 근거해 답하고, 일정이 없으면 없다고 말하세요.',
     `표시 시간대: ${options.timeZone}`,
   ]
 
-  if (options.events.length === 0) {
+  if (events.length === 0) {
     return [
       ...header,
-      options.incomplete ? '확인된 일정이 없습니다.' : '조회 기간에 등록된 일정이 없습니다.',
+      incomplete ? '확인된 일정이 없습니다.' : '조회 기간에 등록된 일정이 없습니다.',
     ].join('\n')
   }
 
-  return [...header, ...options.events.map((event) => formatEvent(event, options.timeZone))].join(
-    '\n',
-  )
+  return [...header, ...events.map((event) => formatEvent(event, options.timeZone))].join('\n')
 }
