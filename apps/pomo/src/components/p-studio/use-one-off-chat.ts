@@ -179,11 +179,7 @@ export const useOneOffChat = (props: UseOneOffChatProps): OneOffChatController =
       }
 
       if (result.status === 'complete') {
-        if (isEnabled()) {
-          prepare()
-        } else {
-          restorePendingDraft()
-        }
+        prepare()
         return
       }
 
@@ -219,8 +215,6 @@ export const useOneOffChat = (props: UseOneOffChatProps): OneOffChatController =
 
     wasEnabled = false
     replyRevision += 1
-    setDownloadConsentOpen(false)
-    setPendingText(null)
     setReplyError(null)
   })
 
