@@ -190,6 +190,18 @@ it('should accept normalized required titles and reject a different title count'
   )
 })
 
+it('should reject required titles assigned to different event-year slots', () => {
+  const output = createOutput()
+  const requiredTitles = output.moments.map((moment) => moment.title)
+  const firstTitle = output.moments[0]!.title
+  output.moments[0]!.title = output.moments[1]!.title
+  output.moments[1]!.title = firstTitle
+
+  expect(() => validate(output, {requiredTitles})).toThrow(
+    'Generated moments do not match the required titles',
+  )
+})
+
 it('should reject duplicate moments after title normalization', () => {
   const output = createOutput()
   output.moments[1]!.eventYear = output.moments[0]!.eventYear
