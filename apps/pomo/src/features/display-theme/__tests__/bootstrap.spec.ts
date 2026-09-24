@@ -17,6 +17,7 @@ describe('DISPLAY_THEME_BOOTSTRAP_SCRIPT', () => {
 it.each([
   {dark: true, stored: null},
   {dark: false, stored: '"bright"'},
+  {dark: false, stored: '{"preference":"bright","savedAt":10}'},
   {dark: false, stored: '"system"'},
   {dark: true, stored: 'invalid'},
 ])('should bootstrap the expected theme for $stored on a light OS', ({stored, dark}) => {
