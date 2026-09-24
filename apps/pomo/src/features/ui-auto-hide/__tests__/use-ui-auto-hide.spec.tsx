@@ -122,3 +122,20 @@ it('should ignore closed dialog elements when hiding UI', () => {
   expect(result.hidden()).toBe(true)
   dialog.remove()
 })
+
+it('should keep the UI visible while a manual tooltip popover is open', () => {
+  const tooltip = document.createElement('div')
+  tooltip.setAttribute('popover', 'manual')
+  tooltip.setAttribute('role', 'tooltip')
+  vi.spyOn(tooltip, 'getClientRects').mockReturnValue({length: 1} as DOMRectList)
+  document.body.append(tooltip)
+
+  try {
+    const {result} = renderHook(useUiAutoHide, {wrapper: PreferenceProvider})
+    result.onEnabledChange(true)
+    vi.advanceTimersByTime(30_000)
+    expect(result.hidden()).toBe(false)
+  } finally {
+    tooltip.remove()
+  }
+})
