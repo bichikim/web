@@ -19,7 +19,11 @@ import {type EventActionHandler, usePEvents} from 'src/features/focus-room-dialo
 import {usePDisplayPreferences} from 'src/features/focus-room-display-preferences'
 import {readFocusRoomEntrySession, writeFocusRoomEntrySession} from 'src/features/focus-room-entry'
 import {usePScenePreferences} from 'src/features/focus-room-scene-preferences'
-import {getAutomaticScenePeriod, resolveScenePeriod} from 'src/features/focus-room-time'
+import {
+  getAutomaticScenePeriod,
+  getNextScenePeriodChange,
+  resolveScenePeriod,
+} from 'src/features/focus-room-time'
 import {getLocalizedSceneLabel} from 'src/features/localization'
 import {type ModelDownloadRuntime, PModelDownloadProvider} from 'src/features/model-download'
 import {usePSay} from 'src/features/pomo-webmcp'
@@ -58,6 +62,7 @@ vi.mock('src/features/focus-room-scene-preferences', () => ({usePScenePreference
 vi.mock('src/features/localization', () => ({getLocalizedSceneLabel: vi.fn()}))
 vi.mock('src/features/focus-room-time', () => ({
   getAutomaticScenePeriod: vi.fn(),
+  getNextScenePeriodChange: vi.fn(),
   resolveScenePeriod: vi.fn(),
 }))
 vi.mock('src/features/pomo-webmcp', () => ({usePSay: vi.fn()}))
@@ -265,6 +270,11 @@ export const configureStudio = (options: StudioOptions = {}) => {
     [time, nextActivity, nextGaze].join('-'),
   )
   vi.mocked(getAutomaticScenePeriod).mockReturnValue('night')
+  vi.mocked(getNextScenePeriodChange).mockImplementation((date) => {
+    const nextChange = new Date(date)
+    nextChange.setDate(nextChange.getDate() + 1)
+    return nextChange
+  })
   vi.mocked(resolveScenePeriod).mockImplementation((mode, automaticPeriod) =>
     mode === 'auto' ? automaticPeriod : mode,
   )
@@ -394,6 +404,7 @@ export const setupStudio = () => {
 export const studioMocks = {
   DEFAULT_BACKGROUND,
   getAutomaticScenePeriod,
+  getNextScenePeriodChange,
   isDesktopBackgroundMode,
   PStudioEvents,
   PStudioScene,
