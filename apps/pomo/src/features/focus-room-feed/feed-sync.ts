@@ -286,9 +286,13 @@ const createIgnoredItem = (options: CreateIgnoredItemOptions): FeedItemRecord =>
 })
 
 const getSubscriptionTimestamp = (connection: FeedConnection) => Date.parse(connection.createdAt)
-const isHistoricalItem = (connection: FeedConnection, item: ParsedFeedItem) => {
+const isHistoricalItem = (
+  connection: FeedConnection,
+  item: ParsedFeedItem,
+  isFirstSync: boolean,
+) => {
   if (item.publishedAt === null) {
-    return false
+    return isFirstSync
   }
 
   return Date.parse(item.publishedAt) < getSubscriptionTimestamp(connection)
@@ -317,11 +321,14 @@ const synchronizeConnection = async (
   const staleItems = unseenItems.filter((item) => isStaleItem(item, oldestAcceptedTimestamp))
   const staleIds = new Set(staleItems.map((item) => item.id))
   const eligibleItems = unseenItems.filter((item) => !staleIds.has(item.id))
-  const historicalItems = eligibleItems.filter((item) => isHistoricalItem(connection, item))
+  const isFirstSync = storedItems.length === 0
+  const historicalItems = eligibleItems.filter((item) =>
+    isHistoricalItem(connection, item, isFirstSync),
+  )
   const historicalIds = new Set(historicalItems.map((item) => item.id))
   const currentItems = eligibleItems.filter((item) => !historicalIds.has(item.id))
   const itemsToProcess =
-    storedItems.length === 0 && currentItems.length === 0 ? eligibleItems.slice(-1) : currentItems
+    isFirstSync && currentItems.length === 0 ? eligibleItems.slice(-1) : currentItems
   const processedIds = new Set(itemsToProcess.map((item) => item.id))
   const ignoredItems = unseenItems.filter((item) => !processedIds.has(item.id))
 
