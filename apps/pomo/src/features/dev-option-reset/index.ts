@@ -136,10 +136,15 @@ const GROUP_DEFINITIONS: ReadonlyArray<OptionResetGroupDefinition> = [
     ],
   },
   {
-    description: '집중·휴식 시간과 자동 시작 설정',
+    description: '집중·휴식 시간, 자동 시작 설정과 타이머 진행 상태',
     id: 'timer',
     label: '타이머',
-    storageKeys: ['pomo:timer-config:v1', 'pomo:timer-auto-start:v2', 'pomo:timer-auto-start:v1'],
+    storageKeys: [
+      'pomo:timer:v1',
+      'pomo:timer-config:v1',
+      'pomo:timer-auto-start:v2',
+      'pomo:timer-auto-start:v1',
+    ],
   },
   {
     description:
