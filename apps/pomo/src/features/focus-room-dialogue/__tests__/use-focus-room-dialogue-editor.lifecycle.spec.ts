@@ -274,15 +274,28 @@ describe('usePDialogueEditor', () => {
       const editor = createEditorRoot()
       editor.controller.setText('재생성 중 모델을 바꿀 대사')
       await editor.controller.generate()
-      vi.mocked(client.generate).mockImplementationOnce(async () => {
+      const pendingGeneration = Promise.withResolvers<Awaited<ReturnType<typeof client.generate>>>()
+      vi.mocked(client.generate).mockImplementationOnce(() => {
         change === 'model' ? editor.controller.setModelId('int8') : editor.navigate('next')
-        return successResult(createAudio())
+        return pendingGeneration.promise
       })
 
-      await editor.controller.regenerateSegment(0)
+      const regeneration = editor.controller.regenerateSegment(0)
 
-      expect(editor.controller.regeneratingSegmentIndex()).toBe(change === 'model' ? 0 : null)
+      if (change === 'model') {
+        await vi.waitFor(() => expect(editor.controller.modelId()).toBe('int8'))
+        expect(editor.controller.regeneratingSegmentIndex()).toBeNull()
+      }
+
+      pendingGeneration.resolve(successResult(createAudio()))
+      await regeneration
+
+      expect(editor.controller.regeneratingSegmentIndex()).toBeNull()
       expect(editor.controller.modelId()).toBe(change === 'model' ? 'int8' : 'full')
+      expect(editor.controller.audioUrl()).toBeNull()
+      expect(editor.controller.durationMs()).toBe(0)
+      expect(editor.controller.segments()).toEqual([])
+      expect(editor.controller.state().status).toBe(change === 'model' ? 'idle' : 'loading')
       editor.dispose()
     },
   )
