@@ -141,6 +141,8 @@ it('should use session storage and initialize the browser cover database once', 
   await expect(writeAlbumDraftCover('cover', cover)).resolves.toEqual({success: true})
   await expect(readAlbumDraftCoverOrNull('cover')).resolves.toMatchObject({type: 'image/webp'})
   await expect(readAlbumDraftCoverOrNull('missing')).resolves.toBeNull()
+  const activeDraft = {...DRAFT, coverDraftId: 'cover', hasCoverFile: true}
+  expect(writeAlbumDraftData(activeDraft)).toEqual({success: true})
   await expect(deleteAlbumDraft('cover')).resolves.toEqual({success: true})
   expect(readAlbumDraftDataOrNull()).toBeNull()
 

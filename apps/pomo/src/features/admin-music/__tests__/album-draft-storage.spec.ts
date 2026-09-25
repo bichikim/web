@@ -252,6 +252,24 @@ describe('album draft cover storage', () => {
     await expect(readAlbumDraftCoverOrNull('second-tab', storage)).resolves.toBeNull()
   })
 
+  it('should preserve a coverless session while deleting a stale cover blob', async () => {
+    const storage = createStorage()
+    const draft: AlbumDraftData = {
+      ...createDraft(),
+      coverDraftId: null,
+      hasCoverFile: false,
+    }
+    const staleCover = new File(['stale'], 'cover.webp', {type: 'image/webp'})
+    writeAlbumDraftData(draft, storage)
+    await writeAlbumDraftCover('stale-cover', staleCover, storage)
+
+    await expect(deleteAlbumDraft('stale-cover', {storage})).resolves.toEqual({success: true})
+
+    expect(readAlbumDraftDataOrNull(storage)).toEqual(draft)
+    await expect(readAlbumDraftCoverOrNull('stale-cover', storage)).resolves.toBeNull()
+    expect(storage.deleteData).not.toHaveBeenCalled()
+  })
+
   it('should report a cover persistence failure to the caller', async () => {
     const storage = createStorage()
     const error = new Error('quota exceeded')
