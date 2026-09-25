@@ -3,7 +3,8 @@ import type {CalendarEventRange} from './types'
 
 const CALENDAR_INTENT_PATTERN = /(?:일정|미팅|회의|약속|스케줄)/u
 const THIS_WEEK_PATTERN = /이번 ?주/u
-const IMPLICIT_SCHEDULE_PATTERN = /(?:오늘|내일|이번 ?주).*(?:뭐|무엇).*(?:있|하)/u
+const NEXT_WEEK_PATTERN = /다음 ?주/u
+const IMPLICIT_SCHEDULE_PATTERN = /(?:오늘|내일|이번 ?주|다음 ?주).*(?:뭐|무엇).*(?:있|하)/u
 const MILLISECONDS_PER_DAY = 86_400_000
 const NEXT_EVENT_WINDOW_DAYS = 30
 const DAYS_PER_WEEK = 7
@@ -48,9 +49,13 @@ export const createCalendarQuery = (
   if (options.text.includes('오늘')) {
     return toRange(now, boundary(1))
   }
+  const weekday = local.day()
+  const daysUntilNextMonday = weekday === 0 ? 1 : DAYS_PER_WEEK + 1 - weekday
   if (THIS_WEEK_PATTERN.test(options.text)) {
-    const weekday = local.day()
-    return toRange(now, boundary(weekday === 0 ? 1 : DAYS_PER_WEEK + 1 - weekday))
+    return toRange(now, boundary(daysUntilNextMonday))
+  }
+  if (NEXT_WEEK_PATTERN.test(options.text)) {
+    return toRange(boundary(daysUntilNextMonday), boundary(daysUntilNextMonday + DAYS_PER_WEEK))
   }
   return toRange(now, new Date(now.getTime() + NEXT_EVENT_WINDOW_DAYS * MILLISECONDS_PER_DAY))
 }

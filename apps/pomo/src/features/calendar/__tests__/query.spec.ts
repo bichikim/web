@@ -59,6 +59,61 @@ describe('createCalendarQuery', () => {
     })
   })
 
+  it('should query next week from Monday through the following Monday', () => {
+    expect(createCalendarQuery({now, text: '다음 주 일정 알려줘', timeZone: 'Asia/Seoul'})).toEqual(
+      {
+        end: '2026-09-13T15:00:00.000Z',
+        start: '2026-09-06T15:00:00.000Z',
+      },
+    )
+  })
+
+  it('should recognize next week without a space as an implicit schedule query', () => {
+    expect(createCalendarQuery({now, text: '다음주 뭐 있어?', timeZone: 'Asia/Seoul'})).toEqual({
+      end: '2026-09-13T15:00:00.000Z',
+      start: '2026-09-06T15:00:00.000Z',
+    })
+  })
+
+  it('should start next week on Monday when queried on Sunday', () => {
+    expect(
+      createCalendarQuery({
+        now: new Date('2026-09-06T14:30:00.000Z'),
+        text: '다음 주 일정',
+        timeZone: 'Asia/Seoul',
+      }),
+    ).toEqual({
+      end: '2026-09-13T15:00:00.000Z',
+      start: '2026-09-06T15:00:00.000Z',
+    })
+  })
+
+  it('should query the following week when queried on Monday', () => {
+    expect(
+      createCalendarQuery({
+        now: new Date('2026-09-07T02:30:00.000Z'),
+        text: '다음 주 일정',
+        timeZone: 'Asia/Seoul',
+      }),
+    ).toEqual({
+      end: '2026-09-20T15:00:00.000Z',
+      start: '2026-09-13T15:00:00.000Z',
+    })
+  })
+
+  it('should use each date offset when next week crosses daylight saving time', () => {
+    expect(
+      createCalendarQuery({
+        now: new Date('2026-10-19T14:30:00.000Z'),
+        text: '다음 주 일정',
+        timeZone: 'America/New_York',
+      }),
+    ).toEqual({
+      end: '2026-11-02T05:00:00.000Z',
+      start: '2026-10-26T04:00:00.000Z',
+    })
+  })
+
   it('should use a bounded future window for the next meeting', () => {
     expect(createCalendarQuery({now, text: '다음 미팅 언제야?', timeZone: 'Asia/Seoul'})).toEqual({
       end: '2026-10-04T10:30:00.000Z',
