@@ -230,10 +230,20 @@ const completeJob = async (
       item: completion.readyItem,
       jobId: job.id,
       metadata: completion.metadata,
+      signal: context.abortController.signal,
     })
   } catch (error: unknown) {
     await context.options.dialogueRepository.deleteDialogue(completion.dialogue.id)
+    if (!isCurrentProcessing(context, revision)) {
+      return
+    }
+
     throw error
+  }
+
+  if (!isCurrentProcessing(context, revision)) {
+    await context.options.dialogueRepository.deleteDialogue(completion.dialogue.id)
+    return
   }
 
   await context.options.onCompleted()
