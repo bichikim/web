@@ -1,5 +1,5 @@
 import {createDraftStorage} from '../value-storage'
-const DIALOGUE_DRAFT_KEY_PREFIX = 'pomo:focus-room-dialogue:draft:'
+export const DIALOGUE_DRAFT_KEY_PREFIX = 'pomo:focus-room-dialogue:draft:'
 
 export const getDialogueDraftKey = (dialogueId: string | null) =>
   `${DIALOGUE_DRAFT_KEY_PREFIX}${dialogueId ?? 'new'}`

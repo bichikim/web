@@ -31,6 +31,7 @@ afterEach(() => {
 
 const createStorage = (): OptionResetStorage => ({
   getToss: vi.fn(async () => null),
+  removeSessionStorageByPrefix: vi.fn(),
   removeToss: vi.fn(async () => undefined),
   removeWeb: vi.fn(),
   setToss: vi.fn(async () => undefined),
@@ -60,6 +61,12 @@ it('should reset only the storage keys owned by one option group', async () => {
     'pomo:screen-saver-delay:v1',
   ])
   expect(storage.removeToss).not.toHaveBeenCalled()
+})
+
+it('should describe dialogue draft removal in the dialogue option group', () => {
+  const dialogueGroup = OPTION_RESET_GROUPS.find((group) => group.id === 'dialogue')
+
+  expect(dialogueGroup?.description).toContain('저장하지 않은 대화 초안')
 })
 
 it('should reset every option without deleting account or user-created data', async () => {
@@ -446,6 +453,55 @@ it.each(['entry', 'all'] as const)(
     expect(localStorage.getItem('pomo:focus-room-playlist:v1')).toBe('preserve')
   },
 )
+
+it.each(['dialogue', 'all'] as const)(
+  'should clear dialogue drafts and preserve other session data during %s reset',
+  async (group) => {
+    const newDraftKey = 'pomo:focus-room-dialogue:draft:new'
+    const existingDraftKey = 'pomo:focus-room-dialogue:draft:dialogue-id'
+    const preservedSessionKey = 'pomo:focus-room-dialogue:selection:v1'
+    const settingKey = 'pomo:automatic-dialogue-settings:v1'
+    sessionStorage.setItem(newDraftKey, 'unsaved new dialogue')
+    sessionStorage.setItem(existingDraftKey, 'unsaved edited dialogue')
+    sessionStorage.setItem(preservedSessionKey, 'preserve')
+    localStorage.setItem(settingKey, 'custom')
+
+    const manager = createRuntimeOptionResetManager()
+    if (group === 'all') {
+      await manager.resetAll()
+    } else {
+      await manager.reset(group)
+    }
+
+    expect(sessionStorage.getItem(newDraftKey)).toBeNull()
+    expect(sessionStorage.getItem(existingDraftKey)).toBeNull()
+    expect(sessionStorage.getItem(preservedSessionKey)).toBe('preserve')
+    expect(localStorage.getItem(settingKey)).toBeNull()
+  },
+)
+
+it('should keep dialogue settings when dialogue draft cleanup fails', async () => {
+  const draftKey = 'pomo:focus-room-dialogue:draft:new'
+  const settingKey = 'pomo:automatic-dialogue-settings:v1'
+  sessionStorage.setItem(draftKey, 'unsaved dialogue')
+  localStorage.setItem(settingKey, 'custom')
+  const removeItem = Storage.prototype.removeItem
+  vi.spyOn(Storage.prototype, 'removeItem').mockImplementation(function removeStorageItem(
+    this: Storage,
+    key: string,
+  ) {
+    if (this === sessionStorage) {
+      throw new Error('session storage unavailable')
+    }
+
+    removeItem.call(this, key)
+  })
+
+  await expect(createRuntimeOptionResetManager().reset('dialogue')).rejects.toThrow(
+    'Failed to reset Pomo options.',
+  )
+  expect(localStorage.getItem(settingKey)).toBe('custom')
+})
 
 it('should remove native entry history as part of the entry reset', async () => {
   Object.defineProperty(globalThis, 'ReactNativeWebView', {configurable: true, value: {}})
