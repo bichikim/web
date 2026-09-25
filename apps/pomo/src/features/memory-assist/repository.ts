@@ -9,7 +9,7 @@ import {
 } from 'src/utils/runtime-storage'
 import {type MemoryMemo, parseMemoryMemos} from './schema'
 
-const STORAGE_KEY = 'pomo:memory-memos:v1'
+export const MEMORY_MEMOS_STORAGE_KEY = 'pomo:memory-memos:v1'
 export const MEMORY_MEMOS_CHANGED_EVENT = 'pomo:memory-memos-changed'
 
 export interface MemoryMemoStorage {
@@ -31,11 +31,11 @@ export interface MemoryMemosChangedEventDetail {
 }
 
 const createRuntimeStorage = (): MemoryMemoStorage => ({
-  readToss: () => readTossStorageJson(STORAGE_KEY, parseMemoryMemos),
-  readWeb: () => parseStorageJson(localStorage.getItem(STORAGE_KEY), parseMemoryMemos),
+  readToss: () => readTossStorageJson(MEMORY_MEMOS_STORAGE_KEY, parseMemoryMemos),
+  readWeb: () => parseStorageJson(localStorage.getItem(MEMORY_MEMOS_STORAGE_KEY), parseMemoryMemos),
   usesTossStorage: hasNativeStorageBridge,
-  writeToss: createLatestStorageWriter(STORAGE_KEY, writeTossStorageJson),
-  writeWeb: (memos) => writeWebStorageJson(STORAGE_KEY, memos),
+  writeToss: createLatestStorageWriter(MEMORY_MEMOS_STORAGE_KEY, writeTossStorageJson),
+  writeWeb: (memos) => writeWebStorageJson(MEMORY_MEMOS_STORAGE_KEY, memos),
 })
 
 export const createMemoryMemoRepository = (

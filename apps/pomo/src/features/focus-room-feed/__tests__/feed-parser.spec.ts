@@ -31,6 +31,22 @@ it('should parse RSS content and preserve all readable text', () => {
   )
 })
 
+it('should prefer encoded content over an earlier empty media content', () => {
+  const feed = parseFeedXml(
+    `<rss version="2.0" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:media="http://search.yahoo.com/mrss/"><channel><title>테스트 RSS</title><item>
+      <title>새 소식</title><guid>rss-1</guid><link>/articles/1</link>
+      <media:content /><description>짧은 요약</description>
+      <content:encoded><![CDATA[<p>전체 본문</p>]]></content:encoded>
+    </item></channel></rss>`,
+    'https://example.com/feed.xml',
+  )
+
+  expect(feed.items[0]).toMatchObject({
+    content: '<p>전체 본문</p>',
+    contentKind: 'full',
+  })
+})
+
 it('should parse Atom links and content', () => {
   const feed = parseFeedXml(
     `<?xml version="1.0"?>

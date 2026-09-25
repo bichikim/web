@@ -23,7 +23,7 @@ const findPreferredChild = (element: Element, names: ReadonlyArray<string>) => {
   return (
     names
       .map((name) => children.find((child) => child.localName.toLowerCase() === name))
-      .find((child) => child !== undefined) ?? null
+      .find((child): child is Element => child !== undefined) ?? null
   )
 }
 const getChildText = (element: Element, names: ReadonlyArray<string>) =>
