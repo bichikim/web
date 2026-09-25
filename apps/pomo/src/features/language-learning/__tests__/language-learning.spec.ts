@@ -69,6 +69,17 @@ describe('language learning sentences', () => {
     expect(isValidLanguageLearningSentence('ただいま。', 'ja')).toBe(true)
   })
 
+  it('should accept ASCII ellipses while rejecting multiple Korean and Japanese sentences', () => {
+    expect(isValidLanguageLearningSentence('오늘은 여기까지...', 'ko')).toBe(true)
+    expect(isValidLanguageLearningSentence('今日はここまで...', 'ja')).toBe(true)
+    expect(isValidLanguageLearningSentence('오늘은 여기까지. 내일 다시 만나요.', 'ko')).toBe(false)
+    expect(isValidLanguageLearningSentence('今日はここまで. また明日。', 'ja')).toBe(false)
+    expect(isValidLanguageLearningSentence('오늘은 여기까지... 내일 다시 만나요.', 'ko')).toBe(
+      false,
+    )
+    expect(isValidLanguageLearningSentence('今日はここまで... また明日。', 'ja')).toBe(false)
+  })
+
   it('should accept English title abbreviations without accepting multiple sentences', () => {
     expect(isValidLanguageLearningSentence('Dr. Smith went home.', 'en')).toBe(true)
     expect(isValidLanguageLearningSentence('I met Dr. Smith yesterday.', 'en')).toBe(true)
