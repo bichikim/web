@@ -74,6 +74,27 @@ it('should fetch only the resolved range and create grounded prompt context', as
   expect(requestUrl.searchParams.get('timeZone')).toBe('Asia/Seoul')
 })
 
+it('should send the resolved next-week range to calendar events', async () => {
+  vi.mocked(apiJson).mockResolvedValue({
+    connectedConnections: 1,
+    events: [],
+    timeZone: 'Asia/Seoul',
+    truncated: false,
+    unavailableConnections: 0,
+  })
+
+  await loadCalendarPromptContext({
+    now: new Date('2026-09-04T10:30:00.000Z'),
+    text: '다음 주 일정 알려줘',
+    timeZone: 'Asia/Seoul',
+  })
+
+  const requestUrl = new URL(String(vi.mocked(apiJson).mock.calls[0]?.[0]), 'https://pomofi.io')
+  expect(requestUrl.searchParams.get('start')).toBe('2026-09-06T15:00:00.000Z')
+  expect(requestUrl.searchParams.get('end')).toBe('2026-09-13T15:00:00.000Z')
+  expect(requestUrl.searchParams.get('timeZone')).toBe('Asia/Seoul')
+})
+
 it('should tell the model when no calendar is connected', async () => {
   vi.mocked(apiJson).mockResolvedValue({
     connectedConnections: 0,
