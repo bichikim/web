@@ -28,6 +28,7 @@ export type {PlayPDialogueSequenceOptions} from './entry-playback-controller/que
 const MILLISECONDS_PER_SECOND = 1000
 
 type VisemeResetTiming = 'delayed' | 'immediate'
+type PlaybackItemCompletion = PlaybackCompletion | 'skipped'
 
 const readAudioEnvelope = async (audioBlob: Blob) => {
   try {
@@ -110,7 +111,7 @@ export const createEntryPlaybackController = (): EntryPlaybackController => {
   let isDisposed = false
   let onPlaybackStarted: (() => Promise<void> | void) | null = null
   let playbackGeneration = 0
-  let resolveCompletion: ((completion: PlaybackCompletion) => void) | null = null
+  let resolveCompletion: ((completion: PlaybackItemCompletion) => void) | null = null
   const reportPlaybackFailure = console.error.bind(
     console,
     'Unexpected focus room dialogue playback failure.',
@@ -165,7 +166,7 @@ export const createEntryPlaybackController = (): EntryPlaybackController => {
     animationFrame = globalThis.requestAnimationFrame(updateSubtitle)
   }
 
-  const settleCompletion = (completion: PlaybackCompletion) => {
+  const settleCompletion = (completion: PlaybackItemCompletion) => {
     const resolve = resolveCompletion
     resolveCompletion = null
     resolve?.(completion)
@@ -212,9 +213,9 @@ export const createEntryPlaybackController = (): EntryPlaybackController => {
     }
   }
 
-  const finishPlayback = (completion: PlaybackCompletion) => {
+  const finishPlayback = (completion: PlaybackItemCompletion) => {
     settleCompletion(completion)
-    clearPlayback(completion === 'ended' ? 'delayed' : 'immediate')
+    clearPlayback(completion === 'ended' || completion === 'skipped' ? 'delayed' : 'immediate')
   }
 
   const notifyPlaybackStarted = async () => {
@@ -332,7 +333,7 @@ export const createEntryPlaybackController = (): EntryPlaybackController => {
 
   const playSequenceItem = async (
     options: PlaySequenceItemOptions,
-  ): Promise<PlaybackCompletion> => {
+  ): Promise<PlaybackItemCompletion> => {
     const currentAudio = await loadDialogue(
       options.repository,
       options.dialogueId,
@@ -348,7 +349,7 @@ export const createEntryPlaybackController = (): EntryPlaybackController => {
       return 'missing'
     }
 
-    const completion = new Promise<PlaybackCompletion>((resolve) => {
+    const completion = new Promise<PlaybackItemCompletion>((resolve) => {
       resolveCompletion = resolve
     })
     currentAudio.addEventListener(
@@ -419,6 +420,11 @@ export const createEntryPlaybackController = (): EntryPlaybackController => {
           request.advanceDialogue()
           onProgress()
           break
+        case 'skipped':
+          await request.onDialogueSkipped?.(dialogueId)
+          request.advanceDialogue()
+          onProgress()
+          break
         case 'cancelled':
         case 'failed':
         case 'stopped':
@@ -448,7 +454,7 @@ export const createEntryPlaybackController = (): EntryPlaybackController => {
       return
     }
 
-    finishPlayback('ended')
+    finishPlayback('skipped')
   }
   const stop = () => queue.finish(true)
   const retry = () => {
@@ -500,15 +506,19 @@ export const createEntryPlaybackController = (): EntryPlaybackController => {
 
       retry()
       let isUnavailable = false
+      let wasSkipped = false
       const completion = await queue.enqueue(repository, {
         dialogueIds: [dialogueId],
+        onDialogueSkipped: () => {
+          wasSkipped = true
+        },
         onDialogueStart: () => undefined,
         onDialogueUnavailable: () => {
           isUnavailable = true
         },
         onSequenceStop: () => undefined,
       })
-      return completion === 'ended' && !isUnavailable
+      return completion === 'ended' && !isUnavailable && !wasSkipped
     },
     retry,
     scheduledDialogueCount: queue.scheduledDialogueCount,
