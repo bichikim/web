@@ -77,13 +77,13 @@ export const createReminderDraft = (options: CreateReminderDraftOptions): Remind
   }
 }
 
-export const createStoredReminderDraft = (memo: MemoryMemo) =>
+export const createStoredReminderDraft = (memo: MemoryMemo, now: Date = new Date()) =>
   createReminderDraft({
     exactReminderAdvanceMinutes: memo.exactReminderAdvanceMinutes,
     exactReminderAt: memo.exactReminderAt,
     exactReminderRepeatIntervalMinutes: memo.exactReminderRepeatIntervalMinutes,
     exactReminderRepeatUntilMinutes: memo.exactReminderRepeatUntilMinutes,
-    now: new Date(),
+    now,
     recallMode: memo.recallMode,
   })
 

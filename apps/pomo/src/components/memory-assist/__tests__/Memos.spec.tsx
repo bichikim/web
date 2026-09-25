@@ -404,6 +404,42 @@ it('should keep editing and preserve existing audio when saving fails', async ()
   expect(mocks.deleteDialogue).not.toHaveBeenCalled()
 })
 
+it('should keep today fixed across midnight and rebase after a reminder change', async () => {
+  vi.useFakeTimers()
+  const exactReminderAt = new Date(2026, 0, 31, 23, 45).toISOString()
+  vi.setSystemTime(new Date(2026, 0, 31, 23))
+  mocks.memos = [
+    {
+      ...createStoredMemo(),
+      exactReminderAt,
+      nextExactReminderAt: exactReminderAt,
+      nextRecallAt: null,
+      recallMode: 'none',
+      reinforcementIndex: 0,
+    },
+  ]
+  render(() => <MemoryMemoList />)
+
+  fireEvent.click(screen.getByRole('button', {name: '여권 갱신하기 메모 편집'}))
+  fireEvent.input(screen.getByLabelText('기억할 메모'), {
+    target: {value: '여권과 사진 갱신하기'},
+  })
+  vi.setSystemTime(new Date(2026, 1, 1, 0, 30))
+  fireEvent.click(screen.getByRole('button', {name: '변경 저장'}))
+
+  await vi.runAllTimersAsync()
+  expect(screen.getByRole('status')).toBeVisible()
+  expect(mocks.updateMemos).not.toHaveBeenCalled()
+  expect(mocks.memos[0]?.exactReminderAt).toBe(exactReminderAt)
+
+  fireEvent.change(screen.getByLabelText('알림 날짜'), {target: {value: 'tomorrow'}})
+  fireEvent.click(screen.getByRole('button', {name: '변경 저장'}))
+
+  await vi.runAllTimersAsync()
+  expect(mocks.updateMemos).toHaveBeenCalledTimes(1)
+  expect(mocks.memos[0]?.exactReminderAt).toBe(new Date(2026, 1, 2, 23, 45).toISOString())
+})
+
 it('should stop ongoing recall when an exact reminder is enabled while editing', async () => {
   vi.useFakeTimers()
   vi.setSystemTime(new Date('2026-09-04T03:30:00.000Z'))

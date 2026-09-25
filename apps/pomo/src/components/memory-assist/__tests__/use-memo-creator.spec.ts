@@ -57,7 +57,10 @@ beforeEach(() => {
   vi.mocked(updateMemoryMemos).mockImplementation(async (update) => update([]))
 })
 
-afterEach(cleanup)
+afterEach(() => {
+  cleanup()
+  vi.useRealTimers()
+})
 
 it.each(scenarios)(
   'should preserve $name after late success and allow another save',
@@ -138,6 +141,38 @@ it('should retain the draft and report a failure in the original session', async
   expect(creator.text()).toBe('저장할 메모')
   expect(creator.isOpen()).toBe(true)
   expect(sessionStorage.getItem('pomo:memory-memo:draft:v1')).toContain('저장할 메모')
+})
+
+it('should keep today fixed across midnight and rebase after a reminder change', async () => {
+  vi.useFakeTimers()
+  vi.setSystemTime(new Date(2026, 0, 31, 23))
+  const savedMemos: ReadonlyArray<MemoryMemo>[] = []
+  vi.mocked(updateMemoryMemos).mockImplementation(async (update) => {
+    const nextMemos = update([])
+    savedMemos.push(nextMemos)
+    return nextMemos
+  })
+  const {result: creator} = renderHook(useMemoCreator)
+  creator.changeOpen(true)
+  creator.changeText('여권 갱신하기')
+  creator.changeReminder({
+    ...creator.reminderDraft(),
+    exactEnabled: true,
+    reminderDay: 'today',
+    reminderTime: '23:45',
+  })
+
+  vi.setSystemTime(new Date(2026, 1, 1, 0, 30))
+  await creator.save()
+
+  expect(creator.message()).toBeTruthy()
+  expect(updateMemoryMemos).not.toHaveBeenCalled()
+
+  creator.changeReminder({...creator.reminderDraft(), reminderDay: 'tomorrow'})
+  await creator.save()
+
+  expect(updateMemoryMemos).toHaveBeenCalledOnce()
+  expect(savedMemos[0]?.[0]?.exactReminderAt).toBe(new Date(2026, 1, 2, 23, 45).toISOString())
 })
 
 it('should preserve a restored draft after the disposed creator saves', async () => {
