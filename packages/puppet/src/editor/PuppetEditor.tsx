@@ -28,6 +28,7 @@ import {
   getSelectedPartId,
 } from './internal/selection-actions'
 import {
+  getSceneNode,
   getSceneSelectionPartIds,
   type SceneSelection,
   unwrapSceneNodes,
@@ -159,6 +160,16 @@ export const PuppetEditor = (props: PuppetEditorProps) => {
   const selectedPartIds = createMemo(() =>
     getSceneSelectionPartIds(sourceDocument(), layerSelection()),
   )
+  const meshPartIds = createMemo(() => {
+    const document = sourceDocument()
+    const selection = layerSelection()
+    return getSceneSelectionPartIds(document, {
+      ...selection,
+      nodeIds: selection.nodeIds.filter(
+        (nodeId) => getSceneNode(document, nodeId)?.kind !== 'deformer',
+      ),
+    })
+  })
   const selectedNodeIds = createMemo(() =>
     getParameterSelectionNodeIds({document: sourceDocument(), selection: layerSelection()}),
   )
@@ -544,7 +555,7 @@ export const PuppetEditor = (props: PuppetEditorProps) => {
             parameterValues={temporary.target()?.values ?? parameterEditor.parameterValues()}
             parameterValueMap={temporary.valueMap()}
             previewDocument={parameterPreviewDocument()}
-            selectedPartIds={selectedPartIds()}
+            selectedPartIds={meshPartIds()}
             targetNodeIds={temporary.targets()}
           />
         }

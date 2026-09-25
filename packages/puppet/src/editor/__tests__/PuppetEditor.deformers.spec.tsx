@@ -69,6 +69,24 @@ beforeEach(() => {
 })
 
 describe('PuppetEditor', () => {
+  test('should show mesh vertices for a part but hide them when its deformer is selected', () => {
+    const document = createDeformer(createDemoDocument(), ['mesh-preview'])!
+    const view = render(() => <PuppetEditor initialDocument={document} />)
+    const mesh = () => view.queryByLabelText('메시 정점 편집 영역')
+
+    fireEvent.click(view.getByRole('button', {name: 'mesh-preview 레이어 선택'}))
+    expect(mesh()).toBeInTheDocument()
+
+    fireEvent.click(view.getByRole('button', {name: '새 자유 변형 디포머 레이어 선택'}))
+    expect(mesh()).not.toBeInTheDocument()
+    fireEvent.click(view.getByRole('button', {name: '영향도 편집'}))
+    expect(view.getByLabelText('디포머 영향도 정점 선택')).toBeInTheDocument()
+    expect(mesh()).not.toBeInTheDocument()
+
+    fireEvent.click(view.getByRole('button', {name: 'mesh-preview 레이어 선택'}))
+    expect(mesh()).toBeInTheDocument()
+  })
+
   test('should hide portaled deformer controls during playback and restore them on pause', async () => {
     const document = createDeformer(createDemoDocument(), ['mesh-preview'])!
     const view = render(() => (
