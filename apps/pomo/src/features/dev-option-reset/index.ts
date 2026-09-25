@@ -6,6 +6,7 @@ export {
 import {DISPLAY_PREFERENCES_STORAGE_KEY} from '../focus-room-display-preferences/storage'
 import {settleEntryHistoryWrites} from '../focus-room-entry-history'
 import {DIALOGUE_DRAFT_KEY_PREFIX} from '../focus-room-dialogue'
+import {clearEntryEventPlaybackSession} from '../focus-room-dialogue/use-p-event-controller/entry-playback'
 import {LOCALE_RESET_STORAGE_COUNT, resetLocale as resetLocaleStorage} from '../locale'
 import {hasNativeStorageBridge} from 'src/utils/runtime-storage'
 
@@ -477,6 +478,7 @@ export const createRuntimeOptionResetManager = (): OptionResetManager =>
     resetEntrySession: async () => {
       await settleEntryHistoryWrites()
       sessionStorage.removeItem('pomo:focus-room-entry:v1')
+      clearEntryEventPlaybackSession()
     },
     resetLocale: () => resetLocaleStorage(runtimeLocaleStorage),
     storage: runtimeStorage,

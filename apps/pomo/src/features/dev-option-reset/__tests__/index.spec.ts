@@ -2,6 +2,13 @@
 
 import {cookieName, getLocale, localStorageKey, setLocale} from '@paraglide/runtime'
 import {afterEach, expect, it, vi} from 'vitest'
+import type {EntryPlaybackController} from 'src/features/focus-room-dialogue/entry-playback-controller'
+import type {
+  EventDialogueIds,
+  EventPlaybackModes,
+} from 'src/features/focus-room-dialogue/event-context'
+import {createEntryEventPlayback} from 'src/features/focus-room-dialogue/use-p-event-controller/entry-playback'
+import type {PDialogueRepository} from 'src/features/focus-room-dialogue/repository'
 
 import {DISPLAY_PREFERENCES_STORAGE_KEY} from '../../focus-room-display-preferences/storage'
 import {
@@ -16,6 +23,10 @@ const storageMocks = vi.hoisted(() => ({
   removeItem: vi.fn<(key: string) => Promise<void>>(),
   setItem: vi.fn<(key: string, value: string) => Promise<void>>(),
 }))
+
+const ENTRY_DIALOGUE_IDS: EventDialogueIds = {'room-enter': ['dialogue']}
+const ENTRY_PLAYBACK_MODES: EventPlaybackModes = {'room-enter': 'sequential-all'}
+const ENTRY_PLAYBACK_SESSION_KEY = 'pomo:focus-room-entry-playback:v1'
 
 vi.mock('@apps-in-toss/web-framework', () => ({Storage: storageMocks}))
 
@@ -463,17 +474,89 @@ it('should remove delayed end event settings when dialogue options are reset', a
   expect(localStorage.getItem(key)).toBeNull()
 })
 
+it('should replay the entry dialogue after resetting the entry options', async () => {
+  sessionStorage.setItem(ENTRY_PLAYBACK_SESSION_KEY, 'true')
+  const playSequence = vi.fn<EntryPlaybackController['playSequence']>().mockResolvedValue('ended')
+  const enterFocusRoom = () =>
+    createEntryEventPlayback({
+      eventDialogueIds: () => ENTRY_DIALOGUE_IDS,
+      eventPlaybackModes: () => ENTRY_PLAYBACK_MODES,
+      getRepository: () => ({}) as PDialogueRepository,
+      isPlaybackEnabled: () => true,
+      playback: {playSequence} as unknown as EntryPlaybackController,
+    }).enterFocusRoom()
+
+  enterFocusRoom()
+  expect(playSequence).not.toHaveBeenCalled()
+
+  await createRuntimeOptionResetManager().reset('entry')
+  enterFocusRoom()
+
+  expect(playSequence).toHaveBeenCalledOnce()
+})
+
+it('should replay after resetting a failed entry playback session write', async () => {
+  const storedEntries = new Map<string, string>()
+  const entrySessionStorage = {
+    getItem: vi.fn((key: string) => storedEntries.get(key) ?? null),
+    removeItem: vi.fn((key: string) => {
+      storedEntries.delete(key)
+    }),
+    setItem: vi.fn((key: string, value: string) => {
+      if (key === ENTRY_PLAYBACK_SESSION_KEY) {
+        throw new Error('blocked')
+      }
+
+      storedEntries.set(key, value)
+    }),
+  }
+  vi.stubGlobal('sessionStorage', entrySessionStorage)
+  try {
+    const playSequence = vi.fn<EntryPlaybackController['playSequence']>()
+    playSequence.mockImplementation((_repository, options) => {
+      void options.onDialogueStart('dialogue')
+      return Promise.resolve('ended')
+    })
+    const enterFocusRoom = () =>
+      createEntryEventPlayback({
+        eventDialogueIds: () => ENTRY_DIALOGUE_IDS,
+        eventPlaybackModes: () => ENTRY_PLAYBACK_MODES,
+        getRepository: () => ({}) as PDialogueRepository,
+        isPlaybackEnabled: () => true,
+        playback: {playSequence} as unknown as EntryPlaybackController,
+        sessionStorage: entrySessionStorage,
+      }).enterFocusRoom()
+
+    enterFocusRoom()
+    await Promise.resolve()
+    expect(playSequence).toHaveBeenCalledOnce()
+    expect(entrySessionStorage.setItem).toHaveBeenCalledWith(ENTRY_PLAYBACK_SESSION_KEY, 'true')
+    expect(entrySessionStorage.getItem(ENTRY_PLAYBACK_SESSION_KEY)).toBeNull()
+    enterFocusRoom()
+    expect(playSequence).toHaveBeenCalledOnce()
+
+    await createRuntimeOptionResetManager().reset('entry')
+    enterFocusRoom()
+
+    expect(playSequence).toHaveBeenCalledTimes(2)
+  } finally {
+    vi.unstubAllGlobals()
+  }
+})
+
 it.each(['entry', 'all'] as const)(
   'should clear durable and session entry records for %s reset',
   async (group) => {
     localStorage.setItem('pomo:focus-room-entry-history:v1', 'true')
     sessionStorage.setItem('pomo:focus-room-entry:v1', 'true')
+    sessionStorage.setItem(ENTRY_PLAYBACK_SESSION_KEY, 'true')
     localStorage.setItem('pomo:focus-room-playlist:v1', 'preserve')
     const manager = createRuntimeOptionResetManager()
     const result = await (group === 'all' ? manager.resetAll() : manager.reset(group))
     expect(result.status).toBe('complete')
     expect(localStorage.getItem('pomo:focus-room-entry-history:v1')).toBeNull()
     expect(sessionStorage.getItem('pomo:focus-room-entry:v1')).toBeNull()
+    expect(sessionStorage.getItem(ENTRY_PLAYBACK_SESSION_KEY)).toBeNull()
     expect(localStorage.getItem('pomo:focus-room-playlist:v1')).toBe('preserve')
   },
 )
