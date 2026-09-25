@@ -541,6 +541,7 @@ export const usePDialogueEditor = (props: UsePDialogueEditorProps): PDialogueEdi
 
     modelSession.invalidate()
     setModelIdSignal(nextModelId)
+    setRegeneratingSegmentIndex(null)
     clearGeneratedAudio(m.dialogue_status_prepare_selected_model())
   }
   const setVoiceId = (nextVoiceId: SupertonicVoiceId) => {
