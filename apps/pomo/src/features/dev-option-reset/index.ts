@@ -143,13 +143,14 @@ const GROUP_DEFINITIONS: ReadonlyArray<OptionResetGroupDefinition> = [
   },
   {
     description:
-      '자동 대화·랜덤 이벤트와 대화 중 음악 음량 설정, 저장하지 않은 대화 초안을 초기화합니다.',
+      '자동 대화·랜덤 이벤트·지연 종료 시간과 대화 중 음악 음량 설정, 저장하지 않은 대화 초안을 초기화합니다.',
     id: 'dialogue',
     label: '대화',
     sessionStoragePrefixes: [DIALOGUE_DRAFT_KEY_PREFIX],
     storageKeys: [
       'pomo:automatic-dialogue-settings:v1',
       'pomo:random-event-settings:v1',
+      'pomo:delayed-end-event-settings:v1',
       'pomo:dialogue-volume-ducking-settings:v2',
       'pomo:dialogue-volume-ducking-settings:v1',
     ],
