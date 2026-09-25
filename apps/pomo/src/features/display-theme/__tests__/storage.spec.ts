@@ -62,6 +62,7 @@ beforeEach(() => {
 
 afterEach(() => {
   Reflect.deleteProperty(globalThis, 'ReactNativeWebView')
+  vi.restoreAllMocks()
 })
 
 describe('display theme preference repository', () => {
@@ -140,6 +141,26 @@ describe('display theme preference repository', () => {
 
     expect(webValues.get(STORAGE_KEY)).toEqual({preference: 'dark', savedAt: 20})
     expect(storage.writeToss).not.toHaveBeenCalled()
+  })
+
+  it('should refresh its fallback when a native value wins a timestamp tie', async () => {
+    storage.usesTossStorage.mockReturnValue(true)
+    webValues.set(STORAGE_KEY, {preference: 'bright', savedAt: 10})
+    tossValues.set(STORAGE_KEY, {preference: 'dark', savedAt: 20})
+    storage.writeWeb.mockImplementationOnce(() => {
+      throw new Error('Browser storage unavailable')
+    })
+
+    await expect(repository.read()).resolves.toBe('dark')
+
+    tossValues.set(STORAGE_KEY, {preference: 'system', savedAt: 20})
+
+    await expect(repository.read()).resolves.toBe('system')
+    expect(webValues.get(STORAGE_KEY)).toEqual({preference: 'system', savedAt: 20})
+
+    storage.usesTossStorage.mockReturnValue(false)
+
+    await expect(repository.read()).resolves.toBe('system')
   })
 
   it('should prefer the toss preference when legacy copies have no timestamps', async () => {
@@ -292,6 +313,28 @@ describe('display theme runtime storage adapter', () => {
     expect(localStorage.getItem(STORAGE_KEY)).toBe(
       JSON.stringify({preference: 'dark', savedAt: 20}),
     )
+  })
+
+  it('should restore a native preference after its web mirror fails and the bridge disappears', async () => {
+    Object.defineProperty(globalThis, 'ReactNativeWebView', {configurable: true, value: {}})
+    const staleBrowserPreference = JSON.stringify({preference: 'bright', savedAt: 10})
+    localStorage.setItem(STORAGE_KEY, staleBrowserPreference)
+    storageMocks.getItem.mockResolvedValueOnce(JSON.stringify({preference: 'dark', savedAt: 20}))
+    vi.spyOn(Storage.prototype, 'setItem').mockImplementationOnce(() => {
+      throw new Error('Browser storage unavailable')
+    })
+
+    await expect(readDisplayThemePreference()).resolves.toBe('dark')
+    expect(localStorage.getItem(STORAGE_KEY)).toBe(staleBrowserPreference)
+
+    Reflect.deleteProperty(globalThis, 'ReactNativeWebView')
+
+    await expect(readDisplayThemePreference()).resolves.toBe('dark')
+    expect(storageMocks.getItem).toHaveBeenCalledOnce()
+
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({preference: 'system', savedAt: 30}))
+
+    await expect(readDisplayThemePreference()).resolves.toBe('system')
   })
 
   it('should propagate a toss storage error as a rejected save', async () => {

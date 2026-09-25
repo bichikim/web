@@ -47,6 +47,11 @@ interface StoredDisplayThemePreference {
   readonly savedAt: number
 }
 
+const selectLatestStoredPreference = (
+  first: StoredDisplayThemePreference | null,
+  second: StoredDisplayThemePreference | null,
+) => selectMaximumBy(first, second, (value) => value.savedAt)
+
 export const parseDisplayThemePreference = (value: unknown): DisplayThemePreference | null => {
   const result = displayThemeSchema.safeParse(value)
   return result.success ? result.data : null
@@ -70,6 +75,7 @@ export const createDisplayThemePreferenceRepository = (
   const now = options.now ?? Date.now
   let writeRevision = 0
   let latestSavedAt = 0
+  let latestKnownPreference: StoredDisplayThemePreference | null = null
   const pendingWrites = new Set<Promise<void>>()
   const writeLatestToss = createLatestStorageWriter(DISPLAY_THEME_STORAGE_KEY, storage.writeToss)
 
@@ -161,8 +167,10 @@ export const createDisplayThemePreferenceRepository = (
 
     if (!usesTossStorage) {
       const webPreference = readWebPreference()
-      latestSavedAt = Math.max(latestSavedAt, webPreference?.savedAt ?? 0)
-      return webPreference?.preference ?? DEFAULT_DISPLAY_THEME
+      const latestPreference = selectLatestStoredPreference(latestKnownPreference, webPreference)
+      latestKnownPreference = latestPreference
+      latestSavedAt = Math.max(latestSavedAt, latestPreference?.savedAt ?? 0)
+      return latestPreference?.preference ?? DEFAULT_DISPLAY_THEME
     }
 
     try {
@@ -184,16 +192,14 @@ export const createDisplayThemePreferenceRepository = (
       }
 
       // Legacy string preferences have no timestamp, so preserve the native copy on a tie.
-      const latestPreference = selectMaximumBy(
-        tossPreference,
-        webPreference,
-        (value) => value.savedAt,
-      )
+      const latestPreference = selectLatestStoredPreference(tossPreference, webPreference)
 
       if (latestPreference === null) {
         writeWebPreference({preference: DEFAULT_DISPLAY_THEME, savedAt: 0})
         return DEFAULT_DISPLAY_THEME
       }
+
+      latestKnownPreference = selectLatestStoredPreference(latestPreference, latestKnownPreference)
 
       latestSavedAt = Math.max(
         latestSavedAt,
