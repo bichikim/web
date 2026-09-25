@@ -4,6 +4,7 @@ export {
   type DialogueAudioStorage,
 } from './delete-stored-dialogue-audio'
 import {settleEntryHistoryWrites} from '../focus-room-entry-history'
+import {clearEntryEventPlaybackSession} from '../focus-room-dialogue/use-p-event-controller/entry-playback'
 import {LOCALE_RESET_STORAGE_COUNT, resetLocale as resetLocaleStorage} from '../locale'
 import {hasNativeStorageBridge} from 'src/utils/runtime-storage'
 
@@ -446,6 +447,7 @@ export const createRuntimeOptionResetManager = (): OptionResetManager =>
     resetEntrySession: async () => {
       await settleEntryHistoryWrites()
       sessionStorage.removeItem('pomo:focus-room-entry:v1')
+      clearEntryEventPlaybackSession()
     },
     resetLocale: () => resetLocaleStorage(runtimeLocaleStorage),
     storage: runtimeStorage,
