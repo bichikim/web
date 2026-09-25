@@ -57,6 +57,16 @@ const event: CalendarEvent = {
   start: '2026-09-05',
   title: '팀 회의',
 }
+const HOST_DEFAULT_ALARM_AT = new Date(2026, 8, 6, 9)
+const HOST_SAVED_ALARM_AT = new Date(2026, 8, 6, 8, 30)
+const CALENDAR_TIME_ZONE =
+  HOST_SAVED_ALARM_AT.toISOString() === '2026-09-06T15:30:00.000Z'
+    ? 'Asia/Seoul'
+    : 'America/Los_Angeles'
+const EXPECTED_DEFAULT_ALARM_AT =
+  CALENDAR_TIME_ZONE === 'Asia/Seoul' ? '2026-09-06T00:00:00.000Z' : '2026-09-06T16:00:00.000Z'
+const EXPECTED_SAVED_ALARM_AT =
+  CALENDAR_TIME_ZONE === 'Asia/Seoul' ? '2026-09-05T23:30:00.000Z' : '2026-09-06T15:30:00.000Z'
 let currentTime = new Date('2026-09-04T03:00:00.000Z')
 const now = () => new Date(currentTime)
 const matches = HTMLElement.prototype.matches
@@ -103,14 +113,21 @@ afterEach(() => {
 })
 
 it('should preserve the all-day event date when no selected date is provided', () => {
-  render(() => <CalendarAlarmControl now={now} event={event} memos={() => mocks.memos} />)
+  render(() => (
+    <CalendarAlarmControl
+      now={now}
+      event={event}
+      memos={() => mocks.memos}
+      timeZone={CALENDAR_TIME_ZONE}
+    />
+  ))
 
   fireEvent.click(screen.getByRole('button', {name: '팀 회의 알람 설정'}))
   expect(screen.getByLabelText('날짜')).toHaveValue('2026-09-05')
   expect(screen.getByLabelText('시간')).toHaveValue('09:00')
 })
 
-it('should default a spanning all-day alarm to the selected calendar day', () => {
+it('should default a spanning all-day alarm to the selected calendar day', async () => {
   const spanningEvent: CalendarEvent = {
     ...event,
     end: '2026-09-07',
@@ -122,12 +139,38 @@ it('should default a spanning all-day alarm to the selected calendar day', () =>
       defaultAlarmDate={new Date(2026, 8, 6)}
       event={spanningEvent}
       memos={() => mocks.memos}
+      timeZone={CALENDAR_TIME_ZONE}
     />
   ))
 
   fireEvent.click(screen.getByRole('button', {name: '팀 회의 알람 설정'}))
   expect(screen.getByLabelText('날짜')).toHaveValue('2026-09-06')
   expect(screen.getByLabelText('시간')).toHaveValue('09:00')
+  expect(EXPECTED_DEFAULT_ALARM_AT).not.toBe(HOST_DEFAULT_ALARM_AT.toISOString())
+  fireEvent.click(screen.getByRole('button', {name: '알람 저장'}))
+
+  await waitFor(() => expect(mocks.updateMemos).toHaveBeenCalledOnce())
+  expect(mocks.memos[0]?.exactReminderAt).toBe(EXPECTED_DEFAULT_ALARM_AT)
+})
+
+it('should save an all-day alarm time in the calendar time zone', async () => {
+  render(() => (
+    <CalendarAlarmControl
+      now={now}
+      event={event}
+      memos={() => mocks.memos}
+      timeZone={CALENDAR_TIME_ZONE}
+    />
+  ))
+
+  fireEvent.click(screen.getByRole('button', {name: '팀 회의 알람 설정'}))
+  fireEvent.input(screen.getByLabelText('날짜'), {target: {value: '2026-09-06'}})
+  fireEvent.input(screen.getByLabelText('시간'), {target: {value: '08:30'}})
+  fireEvent.click(screen.getByRole('button', {name: '알람 저장'}))
+
+  await waitFor(() => expect(mocks.updateMemos).toHaveBeenCalledOnce())
+  expect(mocks.memos[0]?.exactReminderAt).toBe(EXPECTED_SAVED_ALARM_AT)
+  expect(EXPECTED_SAVED_ALARM_AT).not.toBe(HOST_SAVED_ALARM_AT.toISOString())
 })
 
 it('should save an exact Pomo reminder for a calendar event', async () => {
