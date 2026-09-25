@@ -106,6 +106,10 @@ export const PhysicsProperties = (props: PhysicsPropertiesProps) => {
       kind: 'update',
       pendulumId,
     })
+  const handleOutputModeChange = (
+    pendulumId: string,
+    outputMode: NonNullable<PuppetPendulum['outputMode']>,
+  ) => applyOperation({changes: {outputMode}, kind: 'update', pendulumId})
 
   return (
     <fieldset class="deformer-properties physics-properties">
@@ -159,6 +163,7 @@ export const PhysicsProperties = (props: PhysicsPropertiesProps) => {
                 onEditStart={props.onEditStart}
                 onNumberChange={handleNumberChange}
                 onParameterChange={handleParameterChange}
+                onOutputModeChange={handleOutputModeChange}
                 onRemove={handleRemove}
               />
             )}

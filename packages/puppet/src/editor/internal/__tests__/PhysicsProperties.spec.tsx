@@ -101,6 +101,13 @@ test('should group connections by input and expose direction, range, and output 
   fireEvent.click(screen.getByRole('option', {name: '반대 방향'}))
   expect(document().physics?.pendulums[0]?.inputScale).toBe(-1)
 
+  fireEvent.keyDown(view.getByRole('button', {name: /물리 연결 1 출력 방식/}), {
+    key: 'ArrowDown',
+  })
+  await waitFor(() => expect(screen.getByRole('option', {name: '지연·반동'})).toBeVisible())
+  fireEvent.click(screen.getByRole('option', {name: '지연·반동'}))
+  expect(document().physics?.pendulums[0]?.outputMode).toBe('lag')
+
   fireEvent.input(view.getByRole('spinbutton', {name: '물리 연결 1 입력 범위'}), {
     target: {value: '2'},
   })

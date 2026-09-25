@@ -94,4 +94,19 @@ describe('parseDocument physics validation', () => {
       ),
     ).toMatchObject({ok: false})
   })
+
+  test('should accept lag output mode and reject an unknown mode', () => {
+    const document = createDemoDocument()
+    const physics = {pendulums: [createPendulum({outputMode: 'lag'})]}
+
+    expect(parseDocument(JSON.stringify({...document, physics}))).toMatchObject({ok: true})
+    expect(
+      parseDocument(
+        JSON.stringify({
+          ...document,
+          physics: {pendulums: [{...physics.pendulums[0], outputMode: 'unknown'}]},
+        }),
+      ),
+    ).toMatchObject({ok: false})
+  })
 })

@@ -311,6 +311,8 @@ export interface PuppetPendulum {
   /** Pendulum length in solver units. */
   readonly length: number
   readonly outputParameterId: string
+  /** Lag outputs the difference between the simulated and current target positions. */
+  readonly outputMode?: 'position' | 'lag'
   /** Converts pendulum position into output parameter units. */
   readonly outputScale: number
 }

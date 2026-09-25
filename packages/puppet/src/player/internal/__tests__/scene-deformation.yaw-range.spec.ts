@@ -13,7 +13,7 @@ if (!parsed.ok) {
 const model = parsed.document
 
 describe('development model full-body yaw limit', () => {
-  // Keep the original model's reachable geometry instead of compressing its former ±30 poses.
+  // Preserve authored yaw poses, including directional arm volume, when clamping out-of-range input.
   test.each(
     geometry.flatMap((pose) =>
       Math.abs(pose.values['full-body-x']) === 22
@@ -26,7 +26,7 @@ describe('development model full-body yaw limit', () => {
           ]
         : [pose],
     ),
-  )('should retain original geometry and clamp the limit at $values', ({parts, values}) => {
+  )('should retain authored geometry and clamp the limit at $values', ({parts, values}) => {
     const verticesByPartId = new Map(
       parts.map(({partId}) => {
         const part = model.parts.find((candidate) => candidate.id === partId)!

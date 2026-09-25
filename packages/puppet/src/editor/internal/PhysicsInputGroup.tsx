@@ -22,6 +22,10 @@ interface PhysicsInputGroupProps {
     property: PhysicsParameterProperty,
     value: string,
   ) => void
+  readonly onOutputModeChange: (
+    pendulumId: string,
+    mode: NonNullable<PuppetPendulum['outputMode']>,
+  ) => void
   readonly onRemove: (pendulumId: string) => void
 }
 
@@ -42,6 +46,7 @@ export const PhysicsInputGroup = (props: PhysicsInputGroupProps) => (
           onEditEnd={props.onEditEnd}
           onEditStart={props.onEditStart}
           onNumberChange={props.onNumberChange}
+          onOutputModeChange={props.onOutputModeChange}
           onParameterChange={props.onParameterChange}
           onRemove={props.onRemove}
         />

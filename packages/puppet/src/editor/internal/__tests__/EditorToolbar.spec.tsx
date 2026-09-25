@@ -57,3 +57,18 @@ test('should invoke available undo and redo actions from the menu', () => {
   expect(onUndo).toHaveBeenCalledOnce()
   expect(onRedo).toHaveBeenCalledOnce()
 })
+
+test('should expose the retained JSON file for retrying a download', () => {
+  render(() => (
+    <EditorToolbar
+      exportUrl="blob:retained-model"
+      playerStatus="ready"
+      onExport={vi.fn()}
+      onFileImport={vi.fn()}
+      onFileOpen={vi.fn()}
+    />
+  ))
+  const link = screen.getByRole('link', {name: 'JSON 파일 다시 다운로드'})
+  expect(link).toHaveAttribute('href', 'blob:retained-model')
+  expect(link).toHaveAttribute('download', 'puppet-model.json')
+})

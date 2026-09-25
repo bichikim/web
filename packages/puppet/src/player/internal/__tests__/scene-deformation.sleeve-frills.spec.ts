@@ -57,6 +57,52 @@ const triangleArea = (vertices: ReadonlyArray<number>, indices: ReadonlyArray<nu
 }
 
 describe('development model lower sleeve frill depth', () => {
+  test.each(
+    ['left', 'right'].flatMap((side) => ['depth', 'swing'].map((movement) => ({movement, side}))),
+  )(
+    'should curve the $side sleeve and frill across its width during $movement',
+    ({side, movement}) => {
+      const flat = {
+        ...model,
+        parameterBindings: model.parameterBindings?.filter(
+          (binding) => !binding.id.startsWith('sleeve-curvature-'),
+        ),
+      }
+      for (const id of side === 'left'
+        ? ['psd-30', 'psd-31', 'psd-32']
+        : ['psd-35', 'psd-36', 'psd-37']) {
+        const part = model.parts.find((candidate) => candidate.id === id)!
+        const values =
+          movement === 'depth'
+            ? {[`arm-${side}-depth`]: 0.6, [`arm-${side}-lift`]: 0.8}
+            : {[`arm-${side}-x`]: 1, [`arm-${side}-bend`]: 0.6}
+        const original = renderFrill(flat, part, values)
+        const curved = renderFrill(model, part, values)
+        const points = part.mesh.vertices.flatMap((_, index) => (index % 2 === 0 ? [index] : []))
+        const rows = [...new Set(points.map((index) => part.mesh.vertices[index + 1]!))].map((y) =>
+          points.filter((index) => part.mesh.vertices[index + 1] === y),
+        )
+        const bows = rows
+          .filter((row) => row.length >= 3)
+          .map((row) => {
+            const ordered = row.toSorted((a, b) => part.mesh.vertices[a]! - part.mesh.vertices[b]!)
+            const first = ordered[0]!
+            const last = ordered.at(-1)!
+            return Math.max(
+              ...ordered.map((index) => {
+                const ratio =
+                  (part.mesh.vertices[index]! - part.mesh.vertices[first]!) /
+                  (part.mesh.vertices[last]! - part.mesh.vertices[first]!)
+                const shift = (point: number) => curved[point + 1]! - original[point + 1]!
+                return Math.abs(shift(index) - (shift(first) * (1 - ratio) + shift(last) * ratio))
+              }),
+            )
+          })
+        expect(Math.max(...bows), id).toBeGreaterThan(5)
+      }
+    },
+  )
+
   test('should keep full-body yaw and all its keys within 22 while retaining body yaw at 30', () => {
     expect(model.parameters?.find((parameter) => parameter.id === 'full-body-x')).toMatchObject({
       defaultValue: 0,
@@ -70,7 +116,15 @@ describe('development model lower sleeve frill depth', () => {
     const bindings = model.parameterBindings?.filter((binding) =>
       binding.parameterIds.includes('full-body-x'),
     )
-    expect(bindings).toHaveLength(5)
+    expect(bindings?.map((binding) => binding.id)).toEqual(
+      expect.arrayContaining([
+        'sleeve-frill-full-body-x',
+        'skirt-flutter-left-drive-x',
+        'skirt-flutter-right-drive-x',
+        'full-body-x',
+        'full-body-face-x',
+      ]),
+    )
     for (const binding of bindings ?? []) {
       const axis = binding.parameterIds.indexOf('full-body-x')
       const values = binding.keyforms.map((keyform) => keyform.values[axis]!)
