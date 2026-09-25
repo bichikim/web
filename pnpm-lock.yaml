@@ -1007,6 +1007,9 @@ importers:
       '@kobalte/core':
         specifier: ^0.13.13
         version: 0.13.13(solid-js@1.9.14)
+      '@xmldom/xmldom':
+        specifier: ^0.9.12
+        version: 0.9.12
       ag-psd:
         specifier: ^31.0.2
         version: 31.0.2
@@ -1016,6 +1019,9 @@ importers:
       es-toolkit:
         specifier: 'catalog:'
         version: 1.52.0
+      fflate:
+        specifier: ^0.8.3
+        version: 0.8.3
       pixi.js:
         specifier: ^8.21.0
         version: 8.21.0
@@ -7554,6 +7560,10 @@ packages:
   '@xmldom/xmldom@0.8.15':
     resolution: {integrity: sha512-/5NV/vDALVFDXgLmfsy9TRCBlKwO2LNBFzpzvb9iIj+jR+eSc6DLYYvVOdivT/jm7MtU6TebYuRmzEOI7w40UA==}
     engines: {node: '>=10.0.0'}
+
+  '@xmldom/xmldom@0.9.12':
+    resolution: {integrity: sha512-5AXjrcMClTryPe9LgZrygpB1lj7s0S9E0+W+AHaVKAVyHanafK86iPSvG5xHVSp/jC+VH1UXu0TAEmY279xH7A==}
+    engines: {node: '>=14.6'}
 
   abbrev@3.0.1:
     resolution: {integrity: sha512-AO2ac6pjRB3SJmGJo+v5/aK6Omggp6fsLrs6wN9bd35ulu4cCwaAU9+7ZhXjeqHVkaHThLuzH0nZr0YpCDhygg==}
@@ -19270,6 +19280,8 @@ snapshots:
       '@types/react': 19.2.7
 
   '@xmldom/xmldom@0.8.15': {}
+
+  '@xmldom/xmldom@0.9.12': {}
 
   abbrev@3.0.1: {}
 
