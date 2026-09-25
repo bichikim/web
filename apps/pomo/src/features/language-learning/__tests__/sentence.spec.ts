@@ -8,6 +8,14 @@ describe('isValidLanguageLearningSentence', () => {
     expect(isValidLanguageLearningSentence('円周率は3.14として計算します。', 'ja')).toBe(true)
   })
 
+  it('should accept a Korean sentence with a question mark inside quoted dialogue', () => {
+    expect(isValidLanguageLearningSentence('그는 "왜요?"라고 물었습니다.', 'ko')).toBe(true)
+  })
+
+  it('should accept a Japanese sentence with a question mark inside quoted dialogue', () => {
+    expect(isValidLanguageLearningSentence('彼は「なぜ？」と聞きました。', 'ja')).toBe(true)
+  })
+
   it('should reject multiple Korean and Japanese sentences', () => {
     expect(isValidLanguageLearningSentence('원주율은 3.14예요. 오늘은 날씨가 좋아요.', 'ko')).toBe(
       false,
