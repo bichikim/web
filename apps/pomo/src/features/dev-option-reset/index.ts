@@ -123,6 +123,7 @@ const GROUP_DEFINITIONS: ReadonlyArray<OptionResetGroupDefinition> = [
     label: '집중 공간',
     storageKeys: [
       'pomo:focus-room-scene-preferences:v1',
+      'pomo:focus-room-scene-preferences:native-write-failure:v1',
       'pomo:focus-room-scene-style:v1',
       'pomo:weather-preference:v2',
       'pomo:weather-preference:v1',
