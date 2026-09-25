@@ -1,7 +1,9 @@
+import {getExceptionMessage} from 'src/features/error-detail'
 import {DEFAULT_CONNECTION_SECONDS} from '../sound-generation/connection'
 
 export interface LoopPlayback {
   seek: (seconds: number) => Promise<void>
+  setVolume: (volume: number) => void
   stop: () => void
   close: () => Promise<void>
   play: (connectionSeconds?: number, preview?: boolean, position?: number) => Promise<void>
@@ -15,8 +17,8 @@ export function createLoopPlayer(
   onPosition?: (seconds: number) => void,
 ): LoopPlayback {
   const context = new AudioContext()
-  const audio = [new Audio(url), new Audio(url)]
-  const gains = connectPlayers(context, audio)
+  const audio = [createLoopAudio(url), createLoopAudio(url)]
+  const {gains, masterGain} = connectPlayers(context, audio)
   let playing = false
   let revision = 0
   let current = 0
@@ -37,7 +39,7 @@ export function createLoopPlayer(
   }
   const fail = (cause: unknown) => {
     stop()
-    onStatus(cause instanceof Error ? cause.message : '재생하지 못했습니다.', false)
+    onStatus(getExceptionMessage(cause, '재생하지 못했습니다.'), false)
   }
   const transition = async () => {
     const active = audio[current]
@@ -112,15 +114,13 @@ export function createLoopPlayer(
     connectionSeconds = requestedConnectionSeconds
     current = 0
     const token = revision
-    await context.resume()
-    if (token !== revision) {
-      return
-    }
+    const resumeRequest = context.resume()
     audio[0].currentTime = getStartPosition(duration, connectionSeconds, preview, position)
     onPosition?.(audio[0].currentTime)
     gains[0].gain.setValueAtTime(1, context.currentTime)
     try {
-      await audio[0].play()
+      const playRequest = audio[0].play()
+      await Promise.all([resumeRequest, playRequest])
       if (token !== revision) {
         return
       }
@@ -144,16 +144,17 @@ export function createLoopPlayer(
     audio[0].currentTime = seconds === audio[0].duration ? 0 : seconds
     onPosition?.(audio[0].currentTime)
   }
+  const setVolume = (volume: number) => setMasterVolume(context, masterGain, volume, closed)
   const close = async () => {
     if (closed) {
       return
     }
     stop()
     closed = true
-    disconnectPlayers(audio, gains)
+    disconnectPlayers(audio, gains, masterGain)
     await context.close()
   }
-  return {close, play, seek, stop}
+  return {close, play, seek, setVolume, stop}
 }
 
 interface PlaybackEventHandlers {
@@ -181,17 +182,27 @@ function bindPlaybackEvents(audio: HTMLAudioElement[], handlers: PlaybackEventHa
   })
 }
 
+function createLoopAudio(url: string): HTMLAudioElement {
+  const element = new Audio()
+  element.crossOrigin = 'anonymous'
+  element.src = url
+  return element
+}
+
 function connectPlayers(context: AudioContext, audio: HTMLAudioElement[]) {
-  return audio.map((element) => {
+  const gains = audio.map((element) => {
     element.preload = 'auto'
     const gain = context.createGain()
     context.createMediaElementSource(element).connect(gain)
-    gain.connect(context.destination)
     return gain
   })
+  const masterGain = context.createGain()
+  gains.forEach((gain) => gain.connect(masterGain))
+  masterGain.connect(context.destination)
+  return {gains, masterGain}
 }
 
-function disconnectPlayers(audio: HTMLAudioElement[], gains: GainNode[]) {
+function disconnectPlayers(audio: HTMLAudioElement[], gains: GainNode[], masterGain: GainNode) {
   for (const element of audio) {
     element.ontimeupdate = null
     element.onended = null
@@ -201,6 +212,7 @@ function disconnectPlayers(audio: HTMLAudioElement[], gains: GainNode[]) {
     element.load()
   }
   gains.forEach((gain) => gain.disconnect())
+  masterGain.disconnect()
 }
 
 function validatePlayback(
@@ -230,6 +242,24 @@ function validatePosition(position: number, duration: number, closed: boolean) {
   ) {
     throw new Error('재생 위치가 올바르지 않습니다.')
   }
+}
+
+function validateVolume(volume: number, closed: boolean) {
+  if (closed || !Number.isFinite(volume) || volume < 0 || volume > 1) {
+    throw new Error('음량은 0에서 1 사이여야 합니다.')
+  }
+}
+
+function setMasterVolume(
+  context: AudioContext,
+  masterGain: GainNode,
+  volume: number,
+  closed: boolean,
+) {
+  validateVolume(volume, closed)
+  const now = context.currentTime
+  masterGain.gain.cancelScheduledValues(now)
+  masterGain.gain.setValueAtTime(volume, now)
 }
 
 function crossfade(context: AudioContext, active: GainNode, next: GainNode, remaining: number) {

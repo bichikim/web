@@ -1,3 +1,4 @@
+import {PreferenceProvider} from 'src/hooks/use-preference'
 import {
   createConnection,
   createEventContext,
@@ -48,7 +49,9 @@ it('should prepare a model, report generation progress, and persist a failed job
     expect(await options.prepareModel('int8')).toBe(true)
     return {job, status: 'ready'}
   })
-  const view = renderHook(() => usePFeeds({events: createEventContext()}))
+  const view = renderHook(() => usePFeeds({events: createEventContext()}), {
+    wrapper: PreferenceProvider,
+  })
 
   await vi.waitFor(() => expect(repositoryMocks.feedRepository.failJob).toHaveBeenCalled())
 
@@ -89,7 +92,9 @@ it.each([
     successfulConnections: 1,
   })
   preparationMocks.prepareFeedGeneration.mockResolvedValueOnce({job, status})
-  const view = renderHook(() => usePFeeds({events: createEventContext()}))
+  const view = renderHook(() => usePFeeds({events: createEventContext()}), {
+    wrapper: PreferenceProvider,
+  })
 
   await vi.waitFor(() => expect(repositoryMocks.feedRepository.failJob).toHaveBeenCalled())
 
@@ -114,7 +119,9 @@ it('should discard a queued job after its feed is unsubscribed', async () => {
     repositoryMocks.listConnections.mockReturnValue([])
     void run()
   })
-  const view = renderHook(() => usePFeeds({events: createEventContext()}))
+  const view = renderHook(() => usePFeeds({events: createEventContext()}), {
+    wrapper: PreferenceProvider,
+  })
 
   await vi.waitFor(() => expect(repositoryMocks.feedRepository.deleteJobs).toHaveBeenCalled())
 
@@ -133,7 +140,9 @@ it('should fail a ready job when preparation did not provide a client', async ()
     successfulConnections: 1,
   })
   preparationMocks.prepareFeedGeneration.mockResolvedValueOnce({job, status: 'ready'})
-  const view = renderHook(() => usePFeeds({events: createEventContext()}))
+  const view = renderHook(() => usePFeeds({events: createEventContext()}), {
+    wrapper: PreferenceProvider,
+  })
 
   await vi.waitFor(() => expect(repositoryMocks.feedRepository.failJob).toHaveBeenCalled())
 
@@ -173,7 +182,7 @@ it('should complete a generated feed dialogue and roll it back on metadata failu
     return {job, status: 'ready'}
   })
   const events = createEventContext()
-  const view = renderHook(() => usePFeeds({events}))
+  const view = renderHook(() => usePFeeds({events}), {wrapper: PreferenceProvider})
 
   await vi.waitFor(() => expect(repositoryMocks.feedRepository.complete).toHaveBeenCalledOnce())
 
@@ -211,7 +220,9 @@ it('should complete a generated feed dialogue and roll it back on metadata failu
   vi.spyOn(crypto, 'randomUUID')
     .mockReturnValueOnce('00000000-0000-4000-8000-000000000003')
     .mockReturnValueOnce('00000000-0000-4000-8000-000000000004')
-  const rollbackView = renderHook(() => usePFeeds({events: createEventContext()}))
+  const rollbackView = renderHook(() => usePFeeds({events: createEventContext()}), {
+    wrapper: PreferenceProvider,
+  })
   await vi.waitFor(() =>
     expect(repositoryMocks.dialogueRepository.deleteDialogue).toHaveBeenCalledWith(
       '00000000-0000-4000-8000-000000000003',
@@ -267,7 +278,9 @@ it('should keep generation active while moving to the next queued feed dialogue'
     await options.prepareModel(options.job.modelId)
     return {job: options.job, status: 'ready'}
   })
-  const view = renderHook(() => usePFeeds({events: createEventContext()}))
+  const view = renderHook(() => usePFeeds({events: createEventContext()}), {
+    wrapper: PreferenceProvider,
+  })
 
   await vi.waitFor(() =>
     expect(feedGenerationRuntime.generateDialogueAudio).toHaveBeenCalledTimes(2),
@@ -316,7 +329,9 @@ it('should preserve syncing state when generation finishes during a refresh', as
     await options.prepareModel(job.modelId)
     return {job, status: 'ready'}
   })
-  const view = renderHook(() => usePFeeds({events: createEventContext()}))
+  const view = renderHook(() => usePFeeds({events: createEventContext()}), {
+    wrapper: PreferenceProvider,
+  })
   await vi.waitFor(() => expect(feedGenerationRuntime.generateDialogueAudio).toHaveBeenCalledOnce())
 
   syncMocks.synchronizeFeeds.mockReturnValueOnce(refreshCompletion.promise)

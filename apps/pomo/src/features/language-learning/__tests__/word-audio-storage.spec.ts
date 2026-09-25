@@ -142,3 +142,59 @@ it('should order writes across repository instances sharing the audio cache', as
   }
   expect(storedResult.value?.headers.get('X-Pomo-Word-Audio-Owner')).toBe('request-2')
 })
+
+it('should keep injected storage backends independently writable', async () => {
+  let resolveFirstWrite: (() => void) | undefined
+  const firstStorage = createStorage()
+  const secondStorage = createStorage()
+  vi.mocked(firstStorage.set).mockImplementationOnce(
+    () =>
+      new Promise((resolve) => {
+        resolveFirstWrite = () => resolve({ok: true as const, value: undefined})
+      }),
+  )
+  const firstRepository = createLanguageLearningWordAudioRepository(firstStorage)
+  const secondRepository = createLanguageLearningWordAudioRepository(secondStorage)
+
+  const firstSave = firstRepository.save(word, new Blob(['first']), 'request-1')
+  await vi.waitFor(() => expect(firstStorage.set).toHaveBeenCalledOnce())
+  const secondSave = secondRepository.save(word, new Blob(['second']), 'request-2')
+
+  await expect(secondSave).resolves.toBeUndefined()
+  expect(secondStorage.set).toHaveBeenCalledOnce()
+  resolveFirstWrite?.()
+  await expect(firstSave).resolves.toBeUndefined()
+})
+
+it('should share coordination across default repositories for the same cache namespace', async () => {
+  let resolveFirstWrite: (() => void) | undefined
+  let writeCount = 0
+  const cache = {
+    delete: vi.fn(async () => true),
+    match: vi.fn(async () => undefined),
+    put: vi.fn(async () => {
+      writeCount += 1
+      if (writeCount === 1) {
+        await new Promise<void>((resolve) => {
+          resolveFirstWrite = resolve
+        })
+      }
+    }),
+  }
+  vi.stubGlobal('caches', {open: vi.fn(async () => cache)})
+
+  try {
+    const firstRepository = createLanguageLearningWordAudioRepository()
+    const secondRepository = createLanguageLearningWordAudioRepository()
+    const firstSave = firstRepository.save(word, new Blob(['first']), 'request-1')
+    await vi.waitFor(() => expect(cache.put).toHaveBeenCalledOnce())
+    const secondSave = secondRepository.save(word, new Blob(['second']), 'request-2')
+
+    expect(cache.put).toHaveBeenCalledOnce()
+    resolveFirstWrite?.()
+    await Promise.all([firstSave, secondSave])
+    expect(cache.put).toHaveBeenCalledTimes(2)
+  } finally {
+    vi.unstubAllGlobals()
+  }
+})

@@ -1,14 +1,25 @@
 /** @vitest-environment jsdom */
 
 import {render, screen} from '@solidjs/testing-library'
-import {expect, it} from 'vitest'
+import {afterEach, expect, it} from 'vitest'
+
+import {getLocale, overwriteGetLocale} from '@paraglide/runtime'
 
 import {PPrivacyPolicy} from '../PPrivacyPolicy'
+
+const originalGetLocale = getLocale
+
+afterEach(() => {
+  overwriteGetLocale(originalGetLocale)
+})
 
 it('should describe web account data and shared processing details', () => {
   render(() => <PPrivacyPolicy platform="web" />)
 
   expect(screen.getByRole('heading', {name: 'Pomofi 개인정보처리방침'})).toBeTruthy()
+  const returnLink = screen.getByRole('link', {name: '앱으로 돌아가기'})
+  expect(returnLink).toHaveClass('min-h-11', 'rounded-full', 'text-base', 'text-foreground')
+  expect(returnLink.parentElement?.lastElementChild).toBe(returnLink)
   expect(screen.queryByRole('link', {name: '개인정보처리방침'})).toBeNull()
   expect(screen.getByText('개인정보처리방침').getAttribute('aria-current')).toBe('page')
   expect(screen.getByRole('link', {name: '서비스 이용약관'}).getAttribute('href')).toBe(
@@ -44,4 +55,16 @@ it('should default policy navigation to the web platform', () => {
   render(() => <PPrivacyPolicy />)
 
   expect(screen.getByRole('link', {name: '서비스 이용약관'})).toHaveAttribute('href', '/web/terms')
+})
+
+it('should render the web privacy policy in English', () => {
+  overwriteGetLocale(() => 'en')
+  render(() => <PPrivacyPolicy platform="web" />)
+
+  expect(screen.getByRole('heading', {name: 'Pomofi privacy policy'})).toBeInTheDocument()
+  expect(screen.getByRole('heading', {name: 'Web account'})).toBeInTheDocument()
+  expect(
+    screen.getByRole('heading', {name: 'Rights of users and legal representatives'}),
+  ).toBeInTheDocument()
+  expect(screen.queryByText(/[가-힣]/u)).toBeNull()
 })

@@ -4,13 +4,16 @@ import {afterEach, beforeEach, expect, it, vi} from 'vitest'
 
 import {
   DESKTOP_CLEAN_EXIT_STORAGE_KEY,
+  DESKTOP_MODE_OWNER_STORAGE_KEY,
   DESKTOP_MODE_STORAGE_KEY,
   isDesktopBackgroundMode,
   isDesktopMode,
   readCleanExit,
   readDesktopMode,
+  readDesktopModeOwnerStorage,
   writeCleanExit,
   writeDesktopMode,
+  writeDesktopModeOwnerStorage,
 } from '../model'
 
 beforeEach(() => localStorage.clear())
@@ -38,10 +41,16 @@ it('should persist and restore desktop mode and clean-exit state', () => {
   expect(localStorage.getItem(DESKTOP_MODE_STORAGE_KEY)).toBe('widget')
   expect(localStorage.getItem(DESKTOP_CLEAN_EXIT_STORAGE_KEY)).toBe('true')
 
+  writeDesktopModeOwnerStorage('released')
+  expect(readDesktopModeOwnerStorage()).toBe('released')
+  expect(localStorage.getItem(DESKTOP_MODE_OWNER_STORAGE_KEY)).toBe('released')
+
   localStorage.setItem(DESKTOP_MODE_STORAGE_KEY, 'invalid')
   writeCleanExit(false)
+  writeDesktopModeOwnerStorage('primary')
   expect(readDesktopMode()).toBe('normal')
   expect(readCleanExit()).toBe(false)
+  expect(readDesktopModeOwnerStorage()).toBe('primary')
 })
 
 it('should fall back to normal recovery when storage is unavailable', () => {
@@ -54,6 +63,8 @@ it('should fall back to normal recovery when storage is unavailable', () => {
 
   expect(readDesktopMode()).toBe('normal')
   expect(readCleanExit()).toBe(false)
+  expect(readDesktopModeOwnerStorage()).toBe('primary')
   expect(() => writeDesktopMode('desktop')).not.toThrow()
   expect(() => writeCleanExit(true)).not.toThrow()
+  expect(() => writeDesktopModeOwnerStorage('released')).not.toThrow()
 })

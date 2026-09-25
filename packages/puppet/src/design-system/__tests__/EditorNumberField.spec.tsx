@@ -54,13 +54,13 @@ describe('EditorNumberField', () => {
     vi.spyOn(input, 'getBoundingClientRect').mockReturnValue(DOMRect.fromRect({width: 100, x: 0}))
 
     fireEvent(input, new MouseEvent('pointerdown', {bubbles: true, button: 0, clientX: 50}))
-    fireEvent(window, new MouseEvent('pointermove', {bubbles: true, clientX: 70}))
+    fireEvent(globalThis.window, new MouseEvent('pointermove', {bubbles: true, clientX: 70}))
     expect(onEditStart).toHaveBeenCalledOnce()
     expect(onValueChange).toHaveBeenLastCalledWith(0.7)
 
-    fireEvent(window, new MouseEvent('pointermove', {bubbles: true, clientX: 300}))
+    fireEvent(globalThis.window, new MouseEvent('pointermove', {bubbles: true, clientX: 300}))
     expect(onValueChange).toHaveBeenLastCalledWith(1)
-    fireEvent(window, new MouseEvent('pointerup', {bubbles: true, clientX: 300}))
+    fireEvent(globalThis.window, new MouseEvent('pointerup', {bubbles: true, clientX: 300}))
     expect(onEditEnd).toHaveBeenCalledOnce()
   })
 
@@ -79,12 +79,12 @@ describe('EditorNumberField', () => {
     vi.spyOn(input, 'getBoundingClientRect').mockReturnValue(DOMRect.fromRect({width: 46, x: 100}))
 
     fireEvent(input, new MouseEvent('pointerdown', {bubbles: true, button: 0, clientX: 123}))
-    fireEvent(window, new MouseEvent('pointermove', {bubbles: true, clientX: 146}))
+    fireEvent(globalThis.window, new MouseEvent('pointermove', {bubbles: true, clientX: 146}))
     expect(onValueChange).toHaveBeenLastCalledWith(30)
 
-    fireEvent(window, new MouseEvent('pointerup', {bubbles: true, clientX: 146}))
+    fireEvent(globalThis.window, new MouseEvent('pointerup', {bubbles: true, clientX: 146}))
     fireEvent(input, new MouseEvent('pointerdown', {bubbles: true, button: 0, clientX: 123}))
-    fireEvent(window, new MouseEvent('pointermove', {bubbles: true, clientX: 100}))
+    fireEvent(globalThis.window, new MouseEvent('pointermove', {bubbles: true, clientX: 100}))
 
     expect(onValueChange).toHaveBeenLastCalledWith(-30)
   })
@@ -97,8 +97,11 @@ describe('EditorNumberField', () => {
     const input = view.getByRole('spinbutton', {name: 'X'})
 
     fireEvent(input, new MouseEvent('pointerdown', {bubbles: true, button: 0, clientX: 100}))
-    fireEvent(window, new MouseEvent('pointermove', {bubbles: true, clientX: 120, shiftKey: true}))
-    fireEvent(window, new MouseEvent('pointerup', {bubbles: true, clientX: 120}))
+    fireEvent(
+      globalThis.window,
+      new MouseEvent('pointermove', {bubbles: true, clientX: 120, shiftKey: true}),
+    )
+    fireEvent(globalThis.window, new MouseEvent('pointerup', {bubbles: true, clientX: 120}))
 
     expect(onValueChange).toHaveBeenLastCalledWith(12)
   })
@@ -119,14 +122,14 @@ describe('EditorNumberField', () => {
     const input = view.getByRole('spinbutton', {name: '값'})
 
     fireEvent(input, new MouseEvent('pointerdown', {bubbles: true, button: 0, clientX: 100}))
-    fireEvent(window, new MouseEvent('pointermove', {bubbles: true, clientX: 120}))
+    fireEvent(globalThis.window, new MouseEvent('pointermove', {bubbles: true, clientX: 120}))
     expect(onEditStart).toHaveBeenCalledOnce()
 
     view.unmount()
 
     expect(onEditEnd).toHaveBeenCalledOnce()
     const changeCount = onValueChange.mock.calls.length
-    fireEvent(window, new MouseEvent('pointermove', {bubbles: true, clientX: 140}))
+    fireEvent(globalThis.window, new MouseEvent('pointermove', {bubbles: true, clientX: 140}))
     expect(onValueChange).toHaveBeenCalledTimes(changeCount)
   })
 
@@ -202,7 +205,7 @@ test('should allow scrubbing after focusing without preventing text editing clic
   })
   fireEvent(input, down)
   expect(down.defaultPrevented).toBe(true)
-  fireEvent(window, new MouseEvent('pointerup', {bubbles: true}))
+  fireEvent(globalThis.window, new MouseEvent('pointerup', {bubbles: true}))
   fireEvent.click(input)
   expect(input).toHaveFocus()
   const focused = new MouseEvent('pointerdown', {
@@ -213,6 +216,6 @@ test('should allow scrubbing after focusing without preventing text editing clic
   })
   fireEvent(input, focused)
   expect(focused.defaultPrevented).toBe(false)
-  fireEvent(window, new MouseEvent('pointermove', {bubbles: true, clientX: 130}))
+  fireEvent(globalThis.window, new MouseEvent('pointermove', {bubbles: true, clientX: 130}))
   expect(onValueChange).toHaveBeenLastCalledWith(40)
 })

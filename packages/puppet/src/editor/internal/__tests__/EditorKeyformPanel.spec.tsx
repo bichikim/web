@@ -76,6 +76,20 @@ describe('EditorKeyformPanel', () => {
     expect(onKeyformSelect).toHaveBeenCalledWith('angle-xy', [30, 30])
   })
 
+  test('should show the binding purpose separately from its parameter axis names', () => {
+    const document = createDemoDocument()
+    const bindings = (document.parameterBindings ?? []).map((binding) =>
+      binding.id === 'angle-xy' ? {...binding, name: 'Face direction 2D'} : binding,
+    )
+    const view = render(() => (
+      <EditorKeyformPanel bindings={bindings} parameters={document.parameters ?? []} />
+    ))
+
+    expect(view.getByText('Face direction 2D')).toBeVisible()
+    expect(view.getByRole('button', {name: 'Angle X'})).toBeVisible()
+    expect(view.getByRole('button', {name: 'Angle Y'})).toBeVisible()
+  })
+
   test('should expose independent numeric inputs for both axes', () => {
     const document = createDemoDocument()
     const onValueChange = vi.fn()
@@ -99,6 +113,26 @@ describe('EditorKeyformPanel', () => {
     expect(view.queryByText('-30 · 0 · 30 · 9 keyforms')).not.toBeInTheDocument()
     expect(onValueChange).toHaveBeenNthCalledWith(1, [15, 0])
     expect(onValueChange).toHaveBeenNthCalledWith(2, [0, -10])
+  })
+
+  test('should rename the selected axis of a two-dimensional parameter', () => {
+    const document = createDemoDocument()
+    const onParameterNameChange = vi.fn()
+    const view = render(() => (
+      <EditorKeyformPanel
+        activeBindingId="angle-xy"
+        bindings={document.parameterBindings ?? []}
+        parameters={document.parameters ?? []}
+        onParameterNameChange={onParameterNameChange}
+      />
+    ))
+
+    fireEvent.dblClick(view.getByRole('button', {name: 'Angle Y'}))
+    const nameInput = view.getByRole('textbox', {name: 'Parameter 이름'})
+    fireEvent.input(nameInput, {target: {value: 'Head Y'}})
+    fireEvent.keyDown(nameInput, {key: 'Enter'})
+
+    expect(onParameterNameChange).toHaveBeenCalledWith('angle-xy', 'angle-y', 'Head Y')
   })
 
   test('should enable add and delete actions for two-dimensional keyforms', () => {
@@ -276,8 +310,8 @@ describe('EditorKeyformPanel', () => {
       grid,
       new MouseEvent('pointerdown', {bubbles: true, button: 0, clientX: 166, clientY: 166}),
     )
-    fireEvent(window, new MouseEvent('pointermove', {clientX: 232, clientY: 100}))
-    fireEvent(window, new MouseEvent('pointerup'))
+    fireEvent(globalThis.window, new MouseEvent('pointermove', {clientX: 232, clientY: 100}))
+    fireEvent(globalThis.window, new MouseEvent('pointerup'))
 
     expect(onValueChange).toHaveBeenNthCalledWith(1, [0, 0])
     expect(onValueChange).toHaveBeenLastCalledWith([30, 30])
@@ -309,13 +343,13 @@ describe('EditorKeyformPanel', () => {
       y: 100,
     })
     dispatchPointerEvent(grid, 'pointerdown', 1, 166, 166)
-    dispatchPointerEvent(window, 'pointermove', 2, 232, 100)
-    dispatchPointerEvent(window, 'pointerup', 2, 232, 100)
+    dispatchPointerEvent(globalThis.window, 'pointermove', 2, 232, 100)
+    dispatchPointerEvent(globalThis.window, 'pointerup', 2, 232, 100)
 
     expect(onValueChange).toHaveBeenCalledOnce()
-    dispatchPointerEvent(window, 'pointermove', 1, 232, 100)
+    dispatchPointerEvent(globalThis.window, 'pointermove', 1, 232, 100)
     expect(onValueChange).toHaveBeenLastCalledWith([30, 30])
-    dispatchPointerEvent(window, 'pointerup', 1, 232, 100)
+    dispatchPointerEvent(globalThis.window, 'pointerup', 1, 232, 100)
   })
 
   test('should ignore another pointer during a one-dimensional value drag', () => {
@@ -345,13 +379,13 @@ describe('EditorKeyformPanel', () => {
     })
     const scrubber = view.getByRole('slider', {name: 'Parameter 3 현재 값'})
     dispatchPointerEvent(scrubber, 'pointerdown', 1, 400)
-    dispatchPointerEvent(window, 'pointermove', 2, 550)
-    dispatchPointerEvent(window, 'pointerup', 2, 550)
+    dispatchPointerEvent(globalThis.window, 'pointermove', 2, 550)
+    dispatchPointerEvent(globalThis.window, 'pointerup', 2, 550)
 
     expect(onValueChange).toHaveBeenCalledOnce()
-    dispatchPointerEvent(window, 'pointermove', 1, 550)
+    dispatchPointerEvent(globalThis.window, 'pointermove', 1, 550)
     expect(onValueChange).toHaveBeenLastCalledWith([15])
-    dispatchPointerEvent(window, 'pointerup', 1, 550)
+    dispatchPointerEvent(globalThis.window, 'pointerup', 1, 550)
   })
 
   test('should offer separate one-dimensional and two-dimensional creation actions', () => {
@@ -402,24 +436,24 @@ describe('EditorKeyformPanel', () => {
     const marker = view.getByRole('button', {name: 'Parameter 3 0 키폼'})
 
     marker.dispatchEvent(new MouseEvent('pointerdown', {bubbles: true, button: 0, clientX: 400}))
-    window.dispatchEvent(new MouseEvent('pointermove', {clientX: 550}))
+    globalThis.dispatchEvent(new MouseEvent('pointermove', {clientX: 550}))
     expect(view.getByRole('button', {name: 'Parameter 3 15 키폼'})).toHaveClass('dragging')
     expect(onKeyformMove).not.toHaveBeenCalled()
-    window.dispatchEvent(new MouseEvent('pointerup'))
+    globalThis.dispatchEvent(new MouseEvent('pointerup'))
 
     expect(onKeyformSelect).toHaveBeenCalledWith(fixture.bindingId, [0])
     expect(onKeyformMove).toHaveBeenCalledOnce()
     expect(onKeyformMove).toHaveBeenCalledWith(fixture.bindingId, [0], [15])
-    window.dispatchEvent(new MouseEvent('pointermove', {clientX: 650}))
+    globalThis.dispatchEvent(new MouseEvent('pointermove', {clientX: 650}))
     expect(onKeyformMove).toHaveBeenCalledOnce()
 
     const cancelMarker = view.getByRole('button', {name: 'Parameter 3 -30 키폼'})
     cancelMarker.dispatchEvent(
       new MouseEvent('pointerdown', {bubbles: true, button: 0, clientX: 100}),
     )
-    window.dispatchEvent(new MouseEvent('pointermove', {clientX: 250}))
+    globalThis.dispatchEvent(new MouseEvent('pointermove', {clientX: 250}))
     expect(view.getByRole('button', {name: 'Parameter 3 -15 키폼'})).toHaveClass('dragging')
-    window.dispatchEvent(new MouseEvent('pointercancel'))
+    globalThis.dispatchEvent(new MouseEvent('pointercancel'))
     expect(view.getByRole('button', {name: 'Parameter 3 -30 키폼'})).not.toHaveClass('dragging')
     expect(onKeyformMove).toHaveBeenCalledOnce()
   })
@@ -470,15 +504,15 @@ describe('EditorKeyformPanel', () => {
     })
     const marker = view.getByRole('button', {name: 'Parameter 3 0 키폼'})
     dispatchPointerEvent(marker, 'pointerdown', 1, 400)
-    dispatchPointerEvent(window, 'pointermove', 2, 550)
-    dispatchPointerEvent(window, 'pointerup', 2, 550)
+    dispatchPointerEvent(globalThis.window, 'pointermove', 2, 550)
+    dispatchPointerEvent(globalThis.window, 'pointerup', 2, 550)
 
     expect(onKeyformMove).not.toHaveBeenCalled()
     expect(marker).not.toHaveClass('dragging')
 
-    dispatchPointerEvent(window, 'pointermove', 1, 550)
+    dispatchPointerEvent(globalThis.window, 'pointermove', 1, 550)
     expect(view.getByRole('button', {name: 'Parameter 3 15 키폼'})).toHaveClass('dragging')
-    dispatchPointerEvent(window, 'pointerup', 1, 550)
+    dispatchPointerEvent(globalThis.window, 'pointerup', 1, 550)
     expect(onKeyformMove).toHaveBeenCalledWith(fixture.bindingId, [0], [15])
   })
 })
@@ -555,8 +589,8 @@ test('should swipe the influence tab together with the parameter values', () => 
   expect(surface).toContainElement(view.getByRole('spinbutton', {name: 'Angle X 값'}))
   expect(surface).toContainElement(view.getByRole('button', {name: 'Angle X'}))
   dispatchPointerEvent(toggle, 'pointerdown', 1, 160)
-  dispatchPointerEvent(window, 'pointermove', 1, 80)
+  dispatchPointerEvent(globalThis.window, 'pointermove', 1, 80)
   expect(surface.closest('.parameter-swipe-row')).toHaveClass('armed')
-  dispatchPointerEvent(window, 'pointerup', 1, 80)
+  dispatchPointerEvent(globalThis.window, 'pointerup', 1, 80)
   expect(remove).toHaveBeenCalledWith('angle-xy')
 })

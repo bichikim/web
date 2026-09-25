@@ -1,3 +1,5 @@
+import {getExceptionMessage} from '../error-detail'
+import {getDownloadPercentage} from 'src/features/download-progress'
 import {type Accessor} from 'solid-js'
 import {createDownloadQueue} from './queue'
 import {createImageModelDownloadClient, type CreateImageModelDownloadOptions} from './image-client'
@@ -114,7 +116,6 @@ const DEFAULT_RUNTIME: ModelDownloadRuntime = {
   createTextClient: createTextModelDownloadClient,
   createVoiceClient: createSupertonicClient,
 }
-const MAXIMUM_PERCENTAGE = 100
 
 export interface ModelDownloadCallbacks {
   readonly onError: (message: string) => void
@@ -134,17 +135,10 @@ export interface StartModelDownloadOptions {
 }
 
 const getPercentage = (progress: SupertonicProgress) =>
-  progress.totalBytes > 0
-    ? Math.min(
-        MAXIMUM_PERCENTAGE,
-        Math.round((progress.loadedBytes / progress.totalBytes) * MAXIMUM_PERCENTAGE),
-      )
-    : 0
+  progress.totalBytes > 0 ? getDownloadPercentage(progress.loadedBytes, progress.totalBytes) : 0
 
 const getUnknownErrorMessage = (error: unknown) =>
-  error instanceof Error && error.message.length > 0
-    ? error.message
-    : '모델 파일을 내려받지 못했어요.'
+  getExceptionMessage(error, '') || '모델 파일을 내려받지 못했어요.'
 
 const createTextDownloadOptions = (
   runtime: ModelDownloadRuntime,

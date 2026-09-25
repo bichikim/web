@@ -41,15 +41,38 @@ test('should edit its single visible name after a double click', () => {
   expect(view.queryByRole('textbox', {name: 'Parameter 이름'})).not.toBeInTheDocument()
 })
 
+test('should edit the independently selected name of a two-dimensional parameter', () => {
+  const onNameChange = vi.fn()
+  const onSecondaryNameChange = vi.fn()
+  const view = render(() => (
+    <EditorParameterItem
+      name="Angle X"
+      secondaryName="Angle Y"
+      onNameChange={onNameChange}
+      onSecondaryNameChange={onSecondaryNameChange}
+    />
+  ))
+
+  fireEvent.dblClick(view.getByRole('button', {name: 'Angle Y'}))
+  const nameInput = view.getByRole('textbox', {name: 'Parameter 이름'})
+  expect(nameInput).toHaveValue('Angle Y')
+
+  fireEvent.input(nameInput, {target: {value: 'Head Y'}})
+  fireEvent.keyDown(nameInput, {key: 'Enter'})
+
+  expect(onNameChange).not.toHaveBeenCalled()
+  expect(onSecondaryNameChange).toHaveBeenCalledWith('Head Y')
+})
+
 test('should return to its origin when released before the delete threshold', () => {
   const {item, onDelete, view} = renderItem()
 
   item.dispatchEvent(new MouseEvent('pointerdown', {bubbles: true, button: 0, clientX: 200}))
-  window.dispatchEvent(new MouseEvent('pointermove', {clientX: 150}))
+  globalThis.dispatchEvent(new MouseEvent('pointermove', {clientX: 150}))
   expect(view.getByText('삭제')).toBeVisible()
   expect(onDelete).not.toHaveBeenCalled()
 
-  window.dispatchEvent(new MouseEvent('pointerup'))
+  globalThis.dispatchEvent(new MouseEvent('pointerup'))
   expect(view.container.querySelector('.parameter-swipe-row')?.getAttribute('style')).toContain(
     '--parameter-swipe-offset: 0px',
   )
@@ -60,11 +83,11 @@ test('should delete only after it is dragged beyond the threshold and released',
   const {item, onDelete, view} = renderItem()
 
   item.dispatchEvent(new MouseEvent('pointerdown', {bubbles: true, button: 0, clientX: 200}))
-  window.dispatchEvent(new MouseEvent('pointermove', {clientX: 120}))
+  globalThis.dispatchEvent(new MouseEvent('pointermove', {clientX: 120}))
   expect(view.getByText('놓아 삭제')).toBeVisible()
   expect(onDelete).not.toHaveBeenCalled()
 
-  window.dispatchEvent(new MouseEvent('pointerup'))
+  globalThis.dispatchEvent(new MouseEvent('pointerup'))
   expect(onDelete).toHaveBeenCalledOnce()
 })
 
@@ -88,8 +111,8 @@ test('should suppress only the first footer click after a cancelled swipe', () =
   ))
   const footer = view.getByRole('button', {name: '영향도'})
   footer.dispatchEvent(new MouseEvent('pointerdown', {bubbles: true, button: 0, clientX: 200}))
-  window.dispatchEvent(new MouseEvent('pointermove', {clientX: 180}))
-  window.dispatchEvent(new MouseEvent('pointerup'))
+  globalThis.dispatchEvent(new MouseEvent('pointermove', {clientX: 180}))
+  globalThis.dispatchEvent(new MouseEvent('pointerup'))
   fireEvent.click(footer)
   expect(toggle).not.toHaveBeenCalled()
   fireEvent.click(footer, {detail: 0})

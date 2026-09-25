@@ -83,11 +83,38 @@ describe('useCharacterRenderer', () => {
     expect(renderer.controller.status()).toBe('ready')
 
     renderer.controller.handleLoadError()
+    expect(renderer.controller.progress()).toBe(0)
     expect(renderer.controller.status()).toBe('error')
 
     renderer.controller.handleLoadStart()
     expect(renderer.controller.progress()).toBe(0)
     expect(renderer.controller.status()).toBe('loading')
+    renderer.dispose()
+  })
+
+  it('should ignore late progress after loading succeeds', () => {
+    const renderer = createRendererRoot(createRuntime())
+
+    renderer.controller.handleLoadProgress(42)
+    expect(renderer.controller.progress()).toBe(42)
+    expect(renderer.controller.status()).toBe('loading')
+
+    renderer.controller.handleLoadSuccess()
+    renderer.controller.handleLoadProgress(12)
+
+    expect(renderer.controller.progress()).toBe(100)
+    expect(renderer.controller.status()).toBe('ready')
+    renderer.dispose()
+  })
+
+  it('should reset partial progress when loading fails', () => {
+    const renderer = createRendererRoot(createRuntime())
+
+    renderer.controller.handleLoadProgress(42)
+    renderer.controller.handleLoadError()
+
+    expect(renderer.controller.progress()).toBe(0)
+    expect(renderer.controller.status()).toBe('error')
     renderer.dispose()
   })
 
@@ -105,6 +132,25 @@ describe('useCharacterRenderer', () => {
     expect(runtime.revokeObjectUrl).toHaveBeenCalledTimes(1)
     renderer.dispose()
     expect(runtime.revokeObjectUrl).toHaveBeenCalledTimes(2)
+  })
+
+  it('should keep the current model URL when creating its replacement fails', () => {
+    const runtime = createRuntime()
+    runtime.createObjectUrl.mockReturnValueOnce('blob:first').mockImplementationOnce(() => {
+      throw new Error('creation failed')
+    })
+    const renderer = createRendererRoot(runtime)
+    const firstFile = new File(['first'], 'first.glb')
+
+    renderer.controller.loadFile(firstFile)
+    expect(() => renderer.controller.loadFile(new File(['second'], 'second.glb'))).toThrow(
+      'creation failed',
+    )
+
+    expect(renderer.controller.modelUrl()).toBe('blob:first')
+    expect(runtime.revokeObjectUrl).not.toHaveBeenCalled()
+    renderer.dispose()
+    expect(runtime.revokeObjectUrl).toHaveBeenCalledExactlyOnceWith('blob:first')
   })
 
   it('should normalize external URLs and restore the default model', () => {

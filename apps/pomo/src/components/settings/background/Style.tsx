@@ -7,7 +7,8 @@ import {
 } from '../../../features/localization'
 import * as m from '@paraglide/message'
 import {P_SCENE_MOTION_INPUT_OPTIONS, P_SCENE_MOTION_OPTIONS} from '../../pomo-scene-options'
-import {CLASSES, type PSettingsProps} from '../general/shared'
+import {CLASSES} from '../classes'
+import type {PSettingsProps} from '../types'
 
 export const Style = (props: PSettingsProps) => (
   <section aria-label={m.settings_section_style()} class={CLASSES.settingsSection}>

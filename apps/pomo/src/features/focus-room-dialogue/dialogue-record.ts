@@ -21,7 +21,7 @@ export const deleteDialogueRecord = async (database: PDatabase, dialogueId: stri
         return
       }
 
-      if (remainingIds.length === 0) {
+      if (remainingIds.length === 0 && (binding.actionIds?.length ?? 0) === 0) {
         await database.eventBindings.delete(binding.event)
         return
       }

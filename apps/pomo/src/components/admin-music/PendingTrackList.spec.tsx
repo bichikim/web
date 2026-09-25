@@ -20,7 +20,7 @@ const createAsset = (trackId: string, status: AdminAsset['status']): AdminAsset 
 })
 
 beforeEach(() => {
-  vi.spyOn(window, 'confirm').mockReturnValue(false)
+  vi.spyOn(globalThis, 'confirm').mockReturnValue(false)
 })
 
 afterEach(() => {
@@ -65,7 +65,7 @@ describe('PendingTrackList', () => {
 
     fireEvent.click(screen.getByRole('button', {name: 'failed title 대기 등록 삭제'}))
     expect(onRemove).not.toHaveBeenCalled()
-    vi.mocked(window.confirm).mockReturnValueOnce(true)
+    vi.mocked(globalThis.confirm).mockReturnValueOnce(true)
     fireEvent.click(screen.getByRole('button', {name: 'failed title 대기 등록 삭제'}))
     await waitFor(() => expect(onRemove).toHaveBeenCalledWith('failed'))
   })

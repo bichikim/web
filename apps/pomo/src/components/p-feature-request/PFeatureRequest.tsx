@@ -42,6 +42,7 @@ export const PFeatureRequest = (props: PFeatureRequestProps) => {
           <PScribbleCircleControl enabled={props.sceneStyle === 'scribble'}>
             <PButton
               {...GLASS_ICON_BUTTON}
+              pill
               accessibleLabel={m.feature_request_open()}
               icon={getPomoIconClass('i-tabler-message-plus', props.sceneStyle)}
               onPress={handleOpen}

@@ -1,3 +1,4 @@
+import {deleteLockedBatch} from '../../database/delete-locked-batch'
 import {and, isNotNull, isNull, lte, or, sql} from 'drizzle-orm'
 
 import {
@@ -6,9 +7,6 @@ import {
   pomoAccountLinkChallenges,
   pomoAppSessions,
 } from '../../database'
-import type {AuthMaintenanceBatchResult, AuthMaintenanceRepository} from '../../auth/maintenance'
-
-const BATCH_LOOKAHEAD = 1
 
 interface DeleteBatchOptions {
   readonly batchSize: number
@@ -22,83 +20,52 @@ interface DeleteAppSessionBatchOptions {
   readonly revokedAtCutoff: Date
 }
 
-interface BatchResultRow extends Record<string, unknown> {
+export interface AuthMaintenanceBatchResult {
   readonly deleted: number
   readonly hasMore: boolean
 }
 
-const getBatchResult = (rows: ReadonlyArray<BatchResultRow>): AuthMaintenanceBatchResult => {
-  const [result] = rows
-
-  if (result === undefined) {
-    throw new Error('Auth maintenance deletion did not return a batch result')
-  }
-
-  return result
+export interface AuthMaintenanceRepository {
+  readonly deleteAccountLinkChallengeBatch: (
+    options: DeleteBatchOptions,
+  ) => Promise<AuthMaintenanceBatchResult>
+  readonly deleteAppSessionBatch: (
+    options: DeleteAppSessionBatchOptions,
+  ) => Promise<AuthMaintenanceBatchResult>
 }
 
 /** Creates the PostgreSQL adapter used by authentication maintenance. */
 export const createAuthMaintenanceRepository = (
   database: Database = getDatabase(),
 ): AuthMaintenanceRepository => ({
-  async deleteAccountLinkChallengeBatch(options: DeleteBatchOptions) {
-    const result = await database.execute<BatchResultRow>(sql`
-      with candidates as (
-        select ${pomoAccountLinkChallenges.id}
-        from ${pomoAccountLinkChallenges}
-        where ${lte(pomoAccountLinkChallenges.expiresAt, options.cutoff)}
-        limit ${options.batchSize + BATCH_LOOKAHEAD}
-        for update skip locked
-      ), deletion_candidates as (
-        select id from candidates limit ${options.batchSize}
-      ), deleted as (
-        delete from ${pomoAccountLinkChallenges}
-        using deletion_candidates
-        where ${pomoAccountLinkChallenges.id} = deletion_candidates.id
-        returning ${pomoAccountLinkChallenges.id}
-      )
-      select
-        count(*)::integer as "deleted",
-        (select count(*) from candidates) > ${options.batchSize} as "hasMore"
-      from deleted
-    `)
-
-    return getBatchResult(result.rows)
+  deleteAccountLinkChallengeBatch(options: DeleteBatchOptions) {
+    return deleteLockedBatch(database, {
+      batchSize: options.batchSize,
+      emptyResultMessage: 'Auth maintenance deletion did not return a batch result',
+      id: pomoAccountLinkChallenges.id,
+      table: pomoAccountLinkChallenges,
+      where: lte(pomoAccountLinkChallenges.expiresAt, options.cutoff),
+    })
   },
-  async deleteAppSessionBatch(options: DeleteAppSessionBatchOptions) {
-    const result = await database.execute<BatchResultRow>(sql`
-      with candidates as (
-        select ${pomoAppSessions.id}
-        from ${pomoAppSessions}
-        where ${or(
-          and(
-            isNull(pomoAppSessions.revokedAt),
-            isNotNull(pomoAppSessions.activatedAt),
-            lte(pomoAppSessions.expiresAt, options.expiresAtCutoff),
-          ),
-          and(
-            isNull(pomoAppSessions.revokedAt),
-            isNull(pomoAppSessions.activatedAt),
-            lte(pomoAppSessions.expiresAt, options.pendingExpiresAtCutoff),
-          ),
-          lte(pomoAppSessions.revokedAt, options.revokedAtCutoff),
-        )}
-        limit ${options.batchSize + BATCH_LOOKAHEAD}
-        for update skip locked
-      ), deletion_candidates as (
-        select id from candidates limit ${options.batchSize}
-      ), deleted as (
-        delete from ${pomoAppSessions}
-        using deletion_candidates
-        where ${pomoAppSessions.id} = deletion_candidates.id
-        returning ${pomoAppSessions.id}
-      )
-      select
-        count(*)::integer as "deleted",
-        (select count(*) from candidates) > ${options.batchSize} as "hasMore"
-      from deleted
-    `)
-
-    return getBatchResult(result.rows)
+  deleteAppSessionBatch(options: DeleteAppSessionBatchOptions) {
+    return deleteLockedBatch(database, {
+      batchSize: options.batchSize,
+      emptyResultMessage: 'Auth maintenance deletion did not return a batch result',
+      id: pomoAppSessions.id,
+      table: pomoAppSessions,
+      where: sql`${or(
+        and(
+          isNull(pomoAppSessions.revokedAt),
+          isNotNull(pomoAppSessions.activatedAt),
+          lte(pomoAppSessions.expiresAt, options.expiresAtCutoff),
+        ),
+        and(
+          isNull(pomoAppSessions.revokedAt),
+          isNull(pomoAppSessions.activatedAt),
+          lte(pomoAppSessions.expiresAt, options.pendingExpiresAtCutoff),
+        ),
+        lte(pomoAppSessions.revokedAt, options.revokedAtCutoff),
+      )}`,
+    })
   },
 })

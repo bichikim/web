@@ -401,6 +401,42 @@ describe('manual navigation', () => {
 })
 
 describe('ended playback', () => {
+  it('should reset the shuffle queue when the track count shrinks', async () => {
+    await new Promise<void>((resolve) => {
+      createRoot((dispose) => {
+        const [index, setIndex] = createSignal(0)
+        const [trackCount, setTrackCount] = createSignal(3)
+        const selections: Array<{index: number; shouldResume?: boolean}> = []
+        const order = createOrder(
+          {
+            currentIndex: index,
+            initialQueue: [2, 1],
+            onRestart: () => undefined,
+            onSelect: (selection) => {
+              selections.push(selection)
+              setIndex(selection.index)
+            },
+            onStop: () => undefined,
+            trackCount,
+          },
+          ({currentIndex, trackCount: nextTrackCount}) =>
+            Array.from({length: nextTrackCount}, (_value, nextIndex) => nextIndex).filter(
+              (nextIndex) => nextIndex !== currentIndex,
+            ),
+        )
+
+        setTrackCount(2)
+        queueMicrotask(() => {
+          order.handleEnded()
+
+          expect(selections).toEqual([{index: 1, shouldResume: true}])
+          dispose()
+          resolve()
+        })
+      })
+    })
+  })
+
   it('should request resume when natural ending selects the next track', () => {
     createRoot((dispose) => {
       const [index, setIndex] = createSignal(0)

@@ -5,7 +5,7 @@ beforeEach(() => {
   localStorage.clear()
 })
 afterEach(() => {
-  Reflect.deleteProperty(window, 'ReactNativeWebView')
+  Reflect.deleteProperty(globalThis.window, 'ReactNativeWebView')
   vi.restoreAllMocks()
 })
 it('should normalize browser storage failures', () => {
@@ -14,4 +14,9 @@ it('should normalize browser storage failures', () => {
   })
 
   expect(writeWebStorageJson('key', 3)).toBeInstanceOf(Error)
+})
+
+it('should synchronously write the existing JSON format and key', () => {
+  expect(writeWebStorageJson('pomo:setting:v1', {enabled: true})).toBeNull()
+  expect(localStorage.getItem('pomo:setting:v1')).toBe('{"enabled":true}')
 })

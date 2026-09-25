@@ -18,12 +18,12 @@ test('should retain layer hierarchy, paint order, names, offsets and visibility'
   const result = createPsdDocument({
     children: [
       {
+        children: [{id: 42, imageData: pixels(), left: -2, name: '뒤', top: 3}],
         hidden: true,
         name: '그룹',
-        children: [{id: 42, left: -2, name: '뒤', imageData: pixels(), top: 3}],
       },
-      {left: 10, name: '기준', imageData: pixels(), top: 18},
-      {left: 12, name: '앞', opacity: 0.5, top: 20, clipping: true, imageData: pixels()},
+      {imageData: pixels(), left: 10, name: '기준', top: 18},
+      {clipping: true, imageData: pixels(), left: 12, name: '앞', opacity: 0.5, top: 20},
     ],
     height: 80,
     width: 100,
@@ -45,12 +45,12 @@ test('should retain layer hierarchy, paint order, names, offsets and visibility'
   })
   expect(result.document.parts[0]?.mesh.vertices.slice(0, 2)).toEqual([-2, 3])
   expect(result.document.parts[0]?.psdSource).toEqual({
+    height: 8,
     layerId: 42,
     path: ['그룹', '뒤'],
-    x: -2,
     width: 8,
+    x: -2,
     y: 3,
-    height: 8,
   })
   expect(result.warnings).toEqual([])
 })
@@ -79,26 +79,26 @@ test('should connect group clipping bases and preserve nested clipping inside cl
   } as unknown as ReturnType<HTMLCanvasElement['getContext']>)
   vi.spyOn(HTMLCanvasElement.prototype, 'toDataURL').mockReturnValue('data:image/png;base64,test')
   const result = createPsdDocument({
-    height: 100,
-    width: 100,
     children: [
       {
         children: [
-          {name: 'left', imageData: pixels()},
-          {name: 'right', imageData: pixels()},
+          {imageData: pixels(), name: 'left'},
+          {imageData: pixels(), name: 'right'},
         ],
         name: 'base group',
       },
       {
-        clipping: true,
-        name: 'clipped group',
         children: [
           {imageData: pixels(), name: 'eye'},
-          {clipping: true, name: 'shine', imageData: pixels()},
+          {clipping: true, imageData: pixels(), name: 'shine'},
         ],
+        clipping: true,
+        name: 'clipped group',
       },
-      {clipping: true, name: 'shadow', imageData: pixels()},
+      {clipping: true, imageData: pixels(), name: 'shadow'},
     ],
+    height: 100,
+    width: 100,
   })
   expect(result.ok).toBe(true)
   if (!result.ok) {

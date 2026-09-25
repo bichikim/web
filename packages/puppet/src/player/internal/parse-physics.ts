@@ -47,6 +47,9 @@ const isPendulum = (
   value.inputParameterId !== value.outputParameterId &&
   isFiniteNumber(value.inputScale) &&
   isFiniteNumber(value.outputScale) &&
+  (value.outputMode === undefined ||
+    value.outputMode === 'position' ||
+    value.outputMode === 'lag') &&
   isFiniteNumber(value.gravity) &&
   value.gravity > 0 &&
   isFiniteNumber(value.length) &&

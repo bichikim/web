@@ -11,64 +11,56 @@ import {
   withTransactionalDatabase,
 } from '../../database'
 import {getAccountLinkAttemptDecision} from './account-link-attempt-limit'
-import {createOpaqueToken, hashOpaqueToken} from '../../auth/token'
 
 const MILLISECONDS_PER_SECOND = 1000
-const SECONDS_PER_MINUTE = 60
-const MINUTES_PER_HOUR = 60
-const HOURS_PER_DAY = 24
-const APP_SESSION_DAYS = 30
-const PENDING_SESSION_MINUTES = 10
-const LINK_CHALLENGE_MINUTES = 30
 const LINK_CHALLENGE_COOLDOWN_SECONDS = 60
-const APP_SESSION_LIFETIME =
-  APP_SESSION_DAYS * HOURS_PER_DAY * MINUTES_PER_HOUR * SECONDS_PER_MINUTE * MILLISECONDS_PER_SECOND
-const PENDING_SESSION_LIFETIME =
-  PENDING_SESSION_MINUTES * SECONDS_PER_MINUTE * MILLISECONDS_PER_SECOND
-const LINK_CHALLENGE_LIFETIME =
-  LINK_CHALLENGE_MINUTES * SECONDS_PER_MINUTE * MILLISECONDS_PER_SECOND
 
-export interface AppSession {
+export type CompleteAccountLinkResult =
+  | {readonly status: 'identity-conflict'}
+  | {readonly status: 'invalid-challenge'}
+  | {readonly status: 'linked'; readonly userId: string}
+
+type AppSessionActivation = 'active' | 'pending'
+
+export interface SaveTossAppSessionInput {
+  readonly activation: AppSessionActivation
   readonly expiresAt: Date
-  readonly token: string
+  readonly now: Date
+  readonly providerSubject: string
+  readonly tokenHash: string
+}
+
+export interface ActivatePendingAppSessionInput {
+  readonly expiresAt: Date
+  readonly now: Date
+  readonly tokenHash: string
+}
+
+export interface SaveAccountLinkChallengeInput {
+  readonly emailHash: string
+  readonly expiresAt: Date
+  readonly now: Date
+  readonly tokenHash: string
   readonly userId: string
 }
 
-interface CreatedAccountLinkChallenge {
-  readonly expiresAt: Date
-  readonly status: 'created'
-  readonly token: string
+export type SaveAccountLinkChallengeResult =
+  | {readonly status: 'created'}
+  | {readonly retryAfterSeconds: number; readonly status: 'rate-limited'}
+
+export interface ConsumeAccountLinkChallengeInput {
+  readonly emailHash: string
+  readonly neonSubject: string
+  readonly now: Date
+  readonly tokenHash: string
 }
+
+type UserAuthTransaction = Parameters<Parameters<TransactionalDatabase['transaction']>[0]>[0]
 
 interface RateLimitedAccountLinkChallenge {
   readonly retryAfterSeconds: number
   readonly status: 'rate-limited'
 }
-
-export type CreateAccountLinkChallengeResult =
-  | CreatedAccountLinkChallenge
-  | RateLimitedAccountLinkChallenge
-
-export type CompleteAccountLinkResult =
-  | {readonly status: 'linked'; readonly userId: string}
-  | {readonly status: 'invalid-challenge'}
-  | {readonly status: 'identity-conflict'}
-
-interface ClockAndToken {
-  readonly createToken: () => string
-  readonly now: () => Date
-}
-
-type AppSessionActivation = 'active' | 'pending'
-
-type UserAuthTransaction = Parameters<Parameters<TransactionalDatabase['transaction']>[0]>[0]
-
-const DEFAULT_CLOCK_AND_TOKEN: ClockAndToken = {
-  createToken: createOpaqueToken,
-  now: () => new Date(),
-}
-
-const normalizeEmailAddress = (email: string): string => email.trim().toLowerCase()
 
 const lockTransactionKey = async (database: UserAuthTransaction, key: string): Promise<void> => {
   await database.execute(sql`select pg_advisory_xact_lock(hashtext(${key}))`)
@@ -156,48 +148,28 @@ const findOrCreateUser = async (
   return user.id
 }
 
-const createTossAppSessionRecord = async (
-  providerSubject: string,
-  activation: AppSessionActivation,
-  dependencies: ClockAndToken,
-): Promise<AppSession> => {
-  const token = dependencies.createToken()
-  const now = dependencies.now()
-  const lifetime = activation === 'active' ? APP_SESSION_LIFETIME : PENDING_SESSION_LIFETIME
-  const expiresAt = new Date(now.getTime() + lifetime)
-
-  return withTransactionalDatabase((database) =>
+export const saveTossAppSession = async (
+  input: SaveTossAppSessionInput,
+): Promise<{readonly userId: string}> =>
+  withTransactionalDatabase((database) =>
     database.transaction(async (transaction) => {
-      const userId = await findOrCreateUser(transaction, 'toss', providerSubject)
+      const userId = await findOrCreateUser(transaction, 'toss', input.providerSubject)
 
       await transaction.insert(pomoAppSessions).values({
-        activatedAt: activation === 'active' ? now : null,
-        expiresAt,
-        tokenHash: hashOpaqueToken(token),
+        activatedAt: input.activation === 'active' ? input.now : null,
+        expiresAt: input.expiresAt,
+        tokenHash: input.tokenHash,
         userId,
       })
 
-      return {expiresAt, token, userId}
+      return {userId}
     }),
   )
-}
 
-export const createTossAppSession = async (
-  providerSubject: string,
-  dependencies: ClockAndToken = DEFAULT_CLOCK_AND_TOKEN,
-): Promise<AppSession> => createTossAppSessionRecord(providerSubject, 'active', dependencies)
-
-export const createPendingTossAppSession = async (
-  providerSubject: string,
-  dependencies: ClockAndToken = DEFAULT_CLOCK_AND_TOKEN,
-): Promise<AppSession> => createTossAppSessionRecord(providerSubject, 'pending', dependencies)
-
-export const getAppSessionUserId = async (
-  token: string,
+export const findAppSessionUserId = async (
+  tokenHash: string,
   now: Date = new Date(),
 ): Promise<string | null> => {
-  const tokenHash = hashOpaqueToken(token)
-
   const [session] = await getDatabase()
     .select({userId: pomoAppSessions.userId})
     .from(pomoAppSessions)
@@ -214,17 +186,18 @@ export const getAppSessionUserId = async (
   return session?.userId ?? null
 }
 
-const activatePendingAppSession = async (token: string, now: Date): Promise<string | null> => {
-  const expiresAt = new Date(now.getTime() + APP_SESSION_LIFETIME)
+export const activatePendingAppSession = async (
+  input: ActivatePendingAppSessionInput,
+): Promise<string | null> => {
   const [activatedSession] = await getDatabase()
     .update(pomoAppSessions)
-    .set({activatedAt: now, expiresAt})
+    .set({activatedAt: input.now, expiresAt: input.expiresAt})
     .where(
       and(
-        eq(pomoAppSessions.tokenHash, hashOpaqueToken(token)),
+        eq(pomoAppSessions.tokenHash, input.tokenHash),
         isNull(pomoAppSessions.activatedAt),
         isNull(pomoAppSessions.revokedAt),
-        gt(pomoAppSessions.expiresAt, now),
+        gt(pomoAppSessions.expiresAt, input.now),
       ),
     )
     .returning({userId: pomoAppSessions.userId})
@@ -232,30 +205,15 @@ const activatePendingAppSession = async (token: string, now: Date): Promise<stri
   return activatedSession?.userId ?? null
 }
 
-export const resolveAppSessionUserId = async (
-  token: string,
+export const revokeAppSessionRecord = async (
+  tokenHash: string,
   now: Date = new Date(),
-): Promise<string | null> => {
-  const activeUserId = await getAppSessionUserId(token, now)
-
-  if (activeUserId !== null) {
-    return activeUserId
-  }
-
-  return (await activatePendingAppSession(token, now)) ?? getAppSessionUserId(token, now)
-}
-
-export const revokeAppSession = async (token: string, now: Date = new Date()): Promise<void> => {
+): Promise<void> => {
   await withTransactionalDatabase((database) =>
     database
       .update(pomoAppSessions)
       .set({revokedAt: now})
-      .where(
-        and(
-          eq(pomoAppSessions.tokenHash, hashOpaqueToken(token)),
-          isNull(pomoAppSessions.revokedAt),
-        ),
-      ),
+      .where(and(eq(pomoAppSessions.tokenHash, tokenHash), isNull(pomoAppSessions.revokedAt))),
   )
 }
 
@@ -290,28 +248,23 @@ export const revokeTossAppSessions = async (
   )
 }
 
-export const createAccountLinkChallenge = async (
-  userId: string,
-  email: string,
-  dependencies: ClockAndToken = DEFAULT_CLOCK_AND_TOKEN,
-): Promise<CreateAccountLinkChallengeResult> => {
-  const token = dependencies.createToken()
-  const now = dependencies.now()
-  const expiresAt = new Date(now.getTime() + LINK_CHALLENGE_LIFETIME)
+export const saveAccountLinkChallenge = async (
+  input: SaveAccountLinkChallengeInput,
+): Promise<SaveAccountLinkChallengeResult> => {
   const cooldownStart = new Date(
-    now.getTime() - LINK_CHALLENGE_COOLDOWN_SECONDS * MILLISECONDS_PER_SECOND,
+    input.now.getTime() - LINK_CHALLENGE_COOLDOWN_SECONDS * MILLISECONDS_PER_SECOND,
   )
 
   return withTransactionalDatabase((database) =>
     database.transaction(async (transaction) => {
-      await lockTransactionKey(transaction, `account-link:${userId}`)
+      await lockTransactionKey(transaction, `account-link:${input.userId}`)
 
       const [recentChallenge] = await transaction
         .select({createdAt: pomoAccountLinkChallenges.createdAt})
         .from(pomoAccountLinkChallenges)
         .where(
           and(
-            eq(pomoAccountLinkChallenges.userId, userId),
+            eq(pomoAccountLinkChallenges.userId, input.userId),
             gt(pomoAccountLinkChallenges.createdAt, cooldownStart),
           ),
         )
@@ -326,13 +279,13 @@ export const createAccountLinkChallenge = async (
         return {
           retryAfterSeconds: Math.max(
             1,
-            Math.ceil((retryAt - now.getTime()) / MILLISECONDS_PER_SECOND),
+            Math.ceil((retryAt - input.now.getTime()) / MILLISECONDS_PER_SECOND),
           ),
           status: 'rate-limited',
         }
       }
 
-      const attemptLimit = await recordAccountLinkAttempt(transaction, userId, now)
+      const attemptLimit = await recordAccountLinkAttempt(transaction, input.userId, input.now)
 
       if (attemptLimit !== null) {
         return attemptLimit
@@ -340,50 +293,43 @@ export const createAccountLinkChallenge = async (
 
       await transaction
         .delete(pomoAccountLinkChallenges)
-        .where(eq(pomoAccountLinkChallenges.userId, userId))
+        .where(eq(pomoAccountLinkChallenges.userId, input.userId))
       await transaction.insert(pomoAccountLinkChallenges).values({
-        emailHash: hashOpaqueToken(normalizeEmailAddress(email)),
-        expiresAt,
-        tokenHash: hashOpaqueToken(token),
-        userId,
+        emailHash: input.emailHash,
+        expiresAt: input.expiresAt,
+        tokenHash: input.tokenHash,
+        userId: input.userId,
       })
 
-      return {expiresAt, status: 'created', token}
+      return {status: 'created'}
     }),
   )
 }
 
-export const invalidateAccountLinkChallenge = async (token: string): Promise<void> => {
+export const deleteAccountLinkChallenge = async (tokenHash: string): Promise<void> => {
   await withTransactionalDatabase((database) =>
     database
       .delete(pomoAccountLinkChallenges)
-      .where(eq(pomoAccountLinkChallenges.tokenHash, hashOpaqueToken(token))),
+      .where(eq(pomoAccountLinkChallenges.tokenHash, tokenHash)),
   )
 }
 
-export const completeAccountLink = async (
-  token: string,
-  neonSubject: string,
-  neonEmail: string,
-  now: Date = new Date(),
+export const consumeAccountLinkChallenge = async (
+  input: ConsumeAccountLinkChallengeInput,
 ): Promise<CompleteAccountLinkResult> =>
   withTransactionalDatabase((database) =>
     database.transaction(async (transaction) => {
-      const tokenHash = hashOpaqueToken(token)
-      await lockIdentity(transaction, 'neon', neonSubject)
+      await lockIdentity(transaction, 'neon', input.neonSubject)
 
       const [challenge] = await transaction
         .select({id: pomoAccountLinkChallenges.id, userId: pomoAccountLinkChallenges.userId})
         .from(pomoAccountLinkChallenges)
         .where(
           and(
-            eq(pomoAccountLinkChallenges.tokenHash, tokenHash),
-            eq(
-              pomoAccountLinkChallenges.emailHash,
-              hashOpaqueToken(normalizeEmailAddress(neonEmail)),
-            ),
+            eq(pomoAccountLinkChallenges.tokenHash, input.tokenHash),
+            eq(pomoAccountLinkChallenges.emailHash, input.emailHash),
             isNull(pomoAccountLinkChallenges.consumedAt),
-            gt(pomoAccountLinkChallenges.expiresAt, now),
+            gt(pomoAccountLinkChallenges.expiresAt, input.now),
           ),
         )
         .limit(1)
@@ -396,7 +342,10 @@ export const completeAccountLink = async (
         .select({userId: pomoIdentities.userId})
         .from(pomoIdentities)
         .where(
-          and(eq(pomoIdentities.provider, 'neon'), eq(pomoIdentities.providerSubject, neonSubject)),
+          and(
+            eq(pomoIdentities.provider, 'neon'),
+            eq(pomoIdentities.providerSubject, input.neonSubject),
+          ),
         )
         .limit(1)
 
@@ -419,14 +368,14 @@ export const completeAccountLink = async (
 
         await transaction.insert(pomoIdentities).values({
           provider: 'neon',
-          providerSubject: neonSubject,
+          providerSubject: input.neonSubject,
           userId: challenge.userId,
         })
       }
 
       await transaction
         .update(pomoAccountLinkChallenges)
-        .set({consumedAt: now})
+        .set({consumedAt: input.now})
         .where(eq(pomoAccountLinkChallenges.id, challenge.id))
 
       return {status: 'linked', userId: challenge.userId}

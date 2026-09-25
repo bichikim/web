@@ -5,7 +5,6 @@ import {afterEach, expect, it, vi} from 'vitest'
 
 import {LEGACY_WEATHER_LOCATIONS, type WeatherSceneMode} from '../../../features/weather'
 import {PSelect} from '../../p-select/PSelect'
-import {PSwitch} from '../../p-switch/PSwitch'
 import {PWeatherLocationSearch} from '../../p-weather-location-search/PWeatherLocationSearch'
 import {PWeatherSettings} from '../PWeatherSettings'
 
@@ -35,32 +34,20 @@ vi.mock('../../p-weather-location-search/PWeatherLocationSearch', () => ({
     </button>
   )),
 }))
-vi.mock('../../p-switch/PSwitch', () => ({
-  PSwitch: vi.fn((props: Parameters<typeof PSwitch>[0]) => {
-    Object.values(props)
-    return (
-      <button onClick={() => props.onChange?.(!props.checked)} type="button">
-        {String(props.checked)}
-      </button>
-    )
-  }),
-}))
-
 afterEach(() => {
   vi.clearAllMocks()
 })
 
-it('should use enabled Seoul weather defaults without requiring handlers', () => {
+it('should use default weather scene and city search without requiring handlers', () => {
   const view = render(() => <PWeatherSettings />)
 
   expect(view.container.firstElementChild).toHaveClass('items-start')
+  expect(screen.queryByRole('switch', {name: '날씨 표시'})).not.toBeInTheDocument()
   const attribution = screen.getByRole('link', {name: 'Weather data © OpenWeather'})
   expect(attribution).toHaveAttribute('href', 'https://openweathermap.org/')
   expect(attribution.parentElement).toHaveClass('col-span-full')
-  fireEvent.click(screen.getByRole('button', {name: 'true'}))
   fireEvent.click(screen.getByRole('button', {name: LEGACY_WEATHER_LOCATIONS.seoul.id}))
   expect(PSelect).toHaveBeenCalledWith(expect.objectContaining({value: 'auto'}))
-  expect(PSwitch).toHaveBeenCalledWith(expect.objectContaining({checked: true}))
   expect(PWeatherLocationSearch).toHaveBeenCalledWith(
     expect.objectContaining({location: undefined}),
   )
@@ -68,19 +55,14 @@ it('should use enabled Seoul weather defaults without requiring handlers', () =>
 
 it('should keep city selection enabled and forward explicit setting changes', () => {
   const onLocationChange = vi.fn()
-  const onEnabledChange = vi.fn()
   render(() => (
     <PWeatherSettings
-      enabled={false}
       location={LEGACY_WEATHER_LOCATIONS.incheon}
-      onEnabledChange={onEnabledChange}
       onLocationChange={onLocationChange}
     />
   ))
 
-  fireEvent.click(screen.getByRole('button', {name: 'false'}))
   fireEvent.click(screen.getByRole('button', {name: LEGACY_WEATHER_LOCATIONS.incheon.id}))
-  expect(onEnabledChange).toHaveBeenCalledWith(true)
   expect(onLocationChange).toHaveBeenCalledWith(LEGACY_WEATHER_LOCATIONS.busan)
 })
 

@@ -1,5 +1,6 @@
 /** @vitest-environment jsdom */
 
+import {PreferenceProvider} from 'src/hooks/use-preference'
 import {renderHook} from '@solidjs/testing-library'
 import {afterEach, beforeEach, expect, it, vi} from 'vitest'
 
@@ -66,7 +67,7 @@ it('should restore valid configuration and paused state before persisting them',
   localStorage.setItem(STATE_STORAGE_KEY, JSON.stringify(pausedState))
   autoStartMocks.read.mockResolvedValue(true)
 
-  const view = renderHook(usePomodoroTimer)
+  const view = renderHook(usePomodoroTimer, {wrapper: PreferenceProvider})
   await finishInitialization(view)
 
   expect(view.result.config()).toEqual(CONFIG)
@@ -84,7 +85,7 @@ it('should replace malformed and schema-invalid stored values with defaults', as
   localStorage.setItem(CONFIG_STORAGE_KEY, JSON.stringify({...CONFIG, focusSeconds: 0}))
   localStorage.setItem(STATE_STORAGE_KEY, JSON.stringify({phase: 'invalid', status: 'idle'}))
 
-  const invalidSchemaView = renderHook(usePomodoroTimer)
+  const invalidSchemaView = renderHook(usePomodoroTimer, {wrapper: PreferenceProvider})
   await finishInitialization(invalidSchemaView)
 
   expect(invalidSchemaView.result.config().focusSeconds).toBe(1_500)
@@ -94,7 +95,7 @@ it('should replace malformed and schema-invalid stored values with defaults', as
   localStorage.setItem(CONFIG_STORAGE_KEY, '{invalid')
   localStorage.setItem(STATE_STORAGE_KEY, '{invalid')
 
-  const malformedView = renderHook(usePomodoroTimer)
+  const malformedView = renderHook(usePomodoroTimer, {wrapper: PreferenceProvider})
   await finishInitialization(malformedView)
 
   expect(malformedView.result.config().focusSeconds).toBe(1_500)
@@ -107,7 +108,7 @@ it('should use defaults when reading storage throws', async () => {
     throw new DOMException('storage denied')
   })
 
-  const view = renderHook(usePomodoroTimer)
+  const view = renderHook(usePomodoroTimer, {wrapper: PreferenceProvider})
   await finishInitialization(view)
 
   expect(view.result.config().focusSeconds).toBe(1_500)
@@ -120,7 +121,7 @@ it('should continue operating when storage writes throw', async () => {
     throw new DOMException('storage full')
   })
 
-  const view = renderHook(usePomodoroTimer)
+  const view = renderHook(usePomodoroTimer, {wrapper: PreferenceProvider})
   await finishInitialization(view)
 
   expect(() => view.result.onConfigChange(CONFIG)).not.toThrow()
@@ -141,7 +142,7 @@ it('should synchronize a running stored timer and publish mount events', async (
   localStorage.setItem(STATE_STORAGE_KEY, JSON.stringify(runningState))
   autoStartMocks.read.mockResolvedValue(true)
 
-  const view = renderHook(() => usePomodoroTimer({onEvents}))
+  const view = renderHook(() => usePomodoroTimer({onEvents}), {wrapper: PreferenceProvider})
   await finishInitialization(view)
 
   expect(view.result.state()).toEqual(runningState)
@@ -160,7 +161,8 @@ it('should synchronize a running stored timer and publish mount events', async (
   view.cleanup()
 })
 
-it('should restore an already expired running timer as an inactive next phase', async () => {
+it('should restore an already expired running timer as an inactive next phase without events', async () => {
+  const onEvents = vi.fn()
   const runningState = {
     completedFocusSessions: 0,
     endsAt: 1,
@@ -171,7 +173,7 @@ it('should restore an already expired running timer as an inactive next phase', 
   localStorage.setItem(STATE_STORAGE_KEY, JSON.stringify(runningState))
   vi.setSystemTime(1_000)
 
-  const view = renderHook(usePomodoroTimer)
+  const view = renderHook(() => usePomodoroTimer({onEvents}), {wrapper: PreferenceProvider})
   await finishInitialization(view)
 
   expect(view.result.state()).toEqual({
@@ -180,6 +182,7 @@ it('should restore an already expired running timer as an inactive next phase', 
     remainingSeconds: 4,
     status: 'idle',
   })
+  expect(onEvents).not.toHaveBeenCalled()
   view.cleanup()
 })
 
@@ -196,7 +199,7 @@ it('should publish transitions when restoring an expired timer with auto-start e
   autoStartMocks.read.mockResolvedValue(true)
   vi.setSystemTime(1_000)
 
-  const view = renderHook(() => usePomodoroTimer({onEvents}))
+  const view = renderHook(() => usePomodoroTimer({onEvents}), {wrapper: PreferenceProvider})
   await finishInitialization(view)
 
   expect(view.result.state()).toEqual({
@@ -215,14 +218,14 @@ it('should preserve changes made while the auto-start preference is loading', as
   const preference = createDeferred<boolean>()
   autoStartMocks.read.mockReturnValue(preference.promise)
 
-  const view = renderHook(usePomodoroTimer)
+  const view = renderHook(usePomodoroTimer, {wrapper: PreferenceProvider})
   view.result.onConfigChange(CONFIG)
   view.result.onAutoStartChange(true)
   view.result.onStart()
   await vi.advanceTimersByTimeAsync(250)
 
   expect(view.result.state().status).toBe('running')
-  expect(autoStartMocks.write).toHaveBeenCalledWith(true)
+  expect(autoStartMocks.write).not.toHaveBeenCalled()
 
   preference.resolve(false)
   await finishInitialization(view)
@@ -230,6 +233,28 @@ it('should preserve changes made while the auto-start preference is loading', as
   expect(view.result.isAutoStartEnabled()).toBe(true)
   expect(view.result.state().status).toBe('running')
   view.cleanup()
+})
+
+it('should persist a running timer when unmounted before auto-start initialization', async () => {
+  const preference = createDeferred<boolean>()
+  autoStartMocks.read.mockReturnValue(preference.promise)
+
+  const view = renderHook(usePomodoroTimer, {wrapper: PreferenceProvider})
+  view.result.onConfigChange(CONFIG)
+  view.result.onStart()
+
+  view.cleanup()
+
+  expect(JSON.parse(localStorage.getItem(STATE_STORAGE_KEY) ?? '')).toEqual({
+    completedFocusSessions: 0,
+    endsAt: 10_000,
+    phase: 'focus',
+    status: 'running',
+  })
+  expect(JSON.parse(localStorage.getItem(CONFIG_STORAGE_KEY) ?? '')).toEqual(CONFIG)
+
+  preference.resolve(false)
+  await preference.promise
 })
 
 it('should recover auto-start catch-up after pausing an expired restore while loading', async () => {
@@ -246,7 +271,7 @@ it('should recover auto-start catch-up after pausing an expired restore while lo
   autoStartMocks.read.mockReturnValue(preference.promise)
   vi.setSystemTime(40_000)
 
-  const view = renderHook(() => usePomodoroTimer({onEvents}))
+  const view = renderHook(() => usePomodoroTimer({onEvents}), {wrapper: PreferenceProvider})
   view.result.onPause()
 
   expect(view.result.state()).toEqual({
@@ -300,8 +325,8 @@ it('should recover auto-start catch-up after a cross-tab update while loading', 
   autoStartMocks.read.mockReturnValue(preference.promise)
   vi.setSystemTime(40_000)
 
-  const source = renderHook(usePomodoroTimer)
-  const receiver = renderHook(usePomodoroTimer)
+  const source = renderHook(usePomodoroTimer, {wrapper: PreferenceProvider})
+  const receiver = renderHook(usePomodoroTimer, {wrapper: PreferenceProvider})
   source.result.onAutoStartChange(true)
 
   await vi.waitFor(() => expect(receiver.result.isAutoStartEnabled()).toBe(true))
@@ -331,8 +356,8 @@ it('should preserve a cross-tab reset while the auto-start preference is loading
   autoStartMocks.read.mockReturnValue(preference.promise)
   vi.setSystemTime(40_000)
 
-  const source = renderHook(usePomodoroTimer)
-  const receiver = renderHook(usePomodoroTimer)
+  const source = renderHook(usePomodoroTimer, {wrapper: PreferenceProvider})
+  const receiver = renderHook(usePomodoroTimer, {wrapper: PreferenceProvider})
   source.result.onReset()
 
   await vi.waitFor(() => {
@@ -370,8 +395,8 @@ it('should preserve the latest cross-tab start after resetting while loading', a
   autoStartMocks.read.mockReturnValue(preference.promise)
   vi.setSystemTime(5_000)
 
-  const source = renderHook(usePomodoroTimer)
-  const receiver = renderHook(usePomodoroTimer)
+  const source = renderHook(usePomodoroTimer, {wrapper: PreferenceProvider})
+  const receiver = renderHook(usePomodoroTimer, {wrapper: PreferenceProvider})
   source.result.onReset()
   source.result.onStart()
 
@@ -410,7 +435,7 @@ it('should preserve a configuration change after pausing an expired restore whil
   autoStartMocks.read.mockReturnValue(preference.promise)
   vi.setSystemTime(40_000)
 
-  const view = renderHook(usePomodoroTimer)
+  const view = renderHook(usePomodoroTimer, {wrapper: PreferenceProvider})
   view.result.onPause()
   const nextConfig = {...CONFIG, focusSeconds: 20}
   view.result.onConfigChange(nextConfig)
@@ -429,8 +454,8 @@ it('should preserve a configuration change after pausing an expired restore whil
 })
 
 it('should synchronize timer actions between mounted controllers', async () => {
-  const first = renderHook(() => usePomodoroTimer())
-  const second = renderHook(() => usePomodoroTimer())
+  const first = renderHook(() => usePomodoroTimer(), {wrapper: PreferenceProvider})
+  const second = renderHook(() => usePomodoroTimer(), {wrapper: PreferenceProvider})
   await Promise.all([finishInitialization(first), finishInitialization(second)])
 
   first.result.onConfigChange(CONFIG)
@@ -456,10 +481,129 @@ it('should synchronize timer actions between mounted controllers', async () => {
   second.cleanup()
 })
 
+it('should deliver lifecycle events for a cross-tab phase transition', async () => {
+  const sourceEvents = vi.fn()
+  const receiverEvents = vi.fn()
+  const source = renderHook(() => usePomodoroTimer({onEvents: sourceEvents}), {
+    wrapper: PreferenceProvider,
+  })
+  const receiver = renderHook(() => usePomodoroTimer({onEvents: receiverEvents}), {
+    wrapper: PreferenceProvider,
+  })
+  await Promise.all([finishInitialization(source), finishInitialization(receiver)])
+
+  source.result.onConfigChange(CONFIG)
+  source.result.onAutoStartChange(true)
+  source.result.onStart()
+
+  await vi.waitFor(() => {
+    expect(receiver.result.state()).toEqual({
+      completedFocusSessions: 0,
+      endsAt: 10_000,
+      phase: 'focus',
+      status: 'running',
+    })
+  })
+  receiverEvents.mockClear()
+
+  vi.setSystemTime(10_000)
+  source.result.onNextPhase()
+
+  await vi.waitFor(() => {
+    expect(receiverEvents).toHaveBeenCalledExactlyOnceWith(['focus-end', 'break-start'], {
+      isCatchUp: true,
+    })
+  })
+
+  source.cleanup()
+  receiver.cleanup()
+})
+
+it('should not deliver lifecycle events when resetting a cross-tab running phase', async () => {
+  const sourceEvents = vi.fn()
+  const receiverEvents = vi.fn()
+  const source = renderHook(() => usePomodoroTimer({onEvents: sourceEvents}), {
+    wrapper: PreferenceProvider,
+  })
+  const receiver = renderHook(() => usePomodoroTimer({onEvents: receiverEvents}), {
+    wrapper: PreferenceProvider,
+  })
+  await Promise.all([finishInitialization(source), finishInitialization(receiver)])
+
+  source.result.onConfigChange(CONFIG)
+  source.result.onStart()
+
+  await vi.waitFor(() => {
+    expect(receiver.result.state()).toEqual({
+      completedFocusSessions: 0,
+      endsAt: 10_000,
+      phase: 'focus',
+      status: 'running',
+    })
+  })
+  sourceEvents.mockClear()
+  receiverEvents.mockClear()
+
+  source.result.onReset()
+
+  await vi.waitFor(() => {
+    expect(receiver.result.state()).toEqual({
+      completedFocusSessions: 0,
+      phase: 'focus',
+      remainingSeconds: 10,
+      status: 'idle',
+    })
+  })
+
+  expect(sourceEvents).not.toHaveBeenCalled()
+  expect(receiverEvents).not.toHaveBeenCalled()
+  source.cleanup()
+  receiver.cleanup()
+})
+
+it('should catch up an expired cross-tab running state before persisting it', async () => {
+  vi.spyOn(globalThis, 'requestAnimationFrame').mockReturnValue(0)
+  const source = renderHook(() => usePomodoroTimer(), {wrapper: PreferenceProvider})
+  const receiver = renderHook(() => usePomodoroTimer(), {wrapper: PreferenceProvider})
+  await Promise.all([finishInitialization(source), finishInitialization(receiver)])
+
+  source.result.onConfigChange(CONFIG)
+  source.result.onStart()
+  await vi.waitFor(() => {
+    expect(receiver.result.state()).toEqual({
+      completedFocusSessions: 0,
+      endsAt: 10_000,
+      phase: 'focus',
+      status: 'running',
+    })
+  })
+
+  vi.setSystemTime(20_000)
+  source.result.onAutoStartChange(false)
+
+  await vi.waitFor(() => {
+    expect(receiver.result.state()).toEqual({
+      completedFocusSessions: 1,
+      phase: 'shortBreak',
+      remainingSeconds: 4,
+      status: 'idle',
+    })
+  })
+
+  expect(JSON.parse(localStorage.getItem(STATE_STORAGE_KEY) ?? '')).toEqual({
+    completedFocusSessions: 1,
+    phase: 'shortBreak',
+    remainingSeconds: 4,
+    status: 'idle',
+  })
+  source.cleanup()
+  receiver.cleanup()
+})
+
 it('should abandon pending preference restoration after cleanup', async () => {
   const preference = createDeferred<boolean>()
   autoStartMocks.read.mockReturnValue(preference.promise)
-  const view = renderHook(usePomodoroTimer)
+  const view = renderHook(usePomodoroTimer, {wrapper: PreferenceProvider})
 
   view.cleanup()
   preference.resolve(true)

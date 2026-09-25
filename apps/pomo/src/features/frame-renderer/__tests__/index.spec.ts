@@ -3,7 +3,7 @@ import {createMedia} from '../media'
 vi.mock('../media', () => ({createMedia: vi.fn()}))
 import {VideoLoop} from '../video-loop'
 vi.mock('../video-loop', () => ({VideoLoop: vi.fn()}))
-import {Application, Sprite, Texture, VideoSource} from 'pixi.js'
+import {Application, Sprite, Texture, VideoSource, type Ticker} from 'pixi.js'
 import {afterEach, beforeEach, expect, it, vi} from 'vitest'
 import {FrameRenderer} from '..'
 import {PhotoEdges} from '../edges'
@@ -48,7 +48,12 @@ const application = {
   stop: vi.fn(),
   ticker: {add: vi.fn(), remove: vi.fn()},
 }
-const texture = {destroy: vi.fn(), height: 200, width: 400}
+const texture = {
+  destroy: vi.fn(),
+  height: 200,
+  source: {update: vi.fn()},
+  width: 400,
+}
 const sprite = {
   anchor: {set: vi.fn()},
   destroy: vi.fn(),
@@ -170,6 +175,76 @@ it('should initialize video frame updates and advance only on ended', async () =
   expect(disposeMedia).toHaveBeenCalledOnce()
 })
 
+it('should render video through a canvas texture when requested', async () => {
+  const drawImage = vi.fn()
+  vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue({drawImage} as never)
+  Object.defineProperties(video, {
+    readyState: {configurable: true, value: HTMLMediaElement.HAVE_CURRENT_DATA},
+    videoHeight: {configurable: true, value: 480},
+    videoWidth: {configurable: true, value: 640},
+  })
+  const renderer = new FrameRenderer({
+    canvas: document.createElement('canvas'),
+    onEnded: vi.fn(),
+    onError: vi.fn(),
+    videoTextureMode: 'canvas',
+  })
+  await renderer.initialize()
+  const showing = renderer.show(new Blob(['video']), 'video')
+  finishMedia(true)
+  await expect(showing).resolves.toBe(true)
+  expect(VideoSource).not.toHaveBeenCalled()
+  expect(Texture.from).toHaveBeenCalledWith(expect.any(HTMLCanvasElement))
+  expect(drawImage).toHaveBeenCalledWith(video, 0, 0, 640, 480)
+  expect(texture.source.update).toHaveBeenCalledOnce()
+  const update = vi.mocked(application.ticker.add).mock.calls.at(-1)?.[0] as
+    | ((ticker: Ticker) => void)
+    | undefined
+  expect(update).toEqual(expect.any(Function))
+  drawImage.mockClear()
+  texture.source.update.mockClear()
+  update?.({elapsedMS: 16} as Ticker)
+  expect(drawImage).toHaveBeenCalledWith(video, 0, 0, 640, 480)
+  expect(texture.source.update).toHaveBeenCalledOnce()
+  renderer.destroy()
+})
+
+it('should release media when canvas video texture creation fails', async () => {
+  const renderer = new FrameRenderer({
+    canvas: document.createElement('canvas'),
+    onEnded: vi.fn(),
+    onError: vi.fn(),
+    videoTextureMode: 'canvas',
+  })
+  await renderer.initialize()
+  const showing = renderer.show(new Blob(['video']), 'video')
+  finishMedia(true)
+
+  await expect(showing).rejects.toThrow('dimensions')
+  expect(disposeMedia).toHaveBeenCalledOnce()
+
+  renderer.destroy()
+})
+
+it('should release media when photo texture creation fails', async () => {
+  vi.mocked(Texture.from).mockImplementationOnce(() => {
+    throw new Error('texture')
+  })
+  const renderer = new FrameRenderer({
+    canvas: document.createElement('canvas'),
+    onEnded: vi.fn(),
+    onError: vi.fn(),
+  })
+  await renderer.initialize()
+  const showing = renderer.show(new Blob(['image']), 'photo')
+  finishMedia(true)
+
+  await expect(showing).rejects.toThrow('texture')
+  expect(disposeMedia).toHaveBeenCalledOnce()
+
+  renderer.destroy()
+})
+
 it('should cancel pending media and destroy an application that finishes initializing after disposal', async () => {
   const renderer = new FrameRenderer({
     canvas: document.createElement('canvas'),
@@ -211,9 +286,9 @@ it('should reject failed media readiness without mounting a sprite', async () =>
   const showing = renderer.show(new Blob(['invalid']), 'photo')
   finishMedia(false)
   await expect(showing).rejects.toThrow('decode')
+  expect(disposeMedia).toHaveBeenCalledOnce()
   expect(application.stage.addChild).not.toHaveBeenCalled()
   renderer.destroy()
-  expect(disposeMedia).toHaveBeenCalledOnce()
 })
 
 it('should preserve the outgoing photo before releasing media and cancel a pending replacement', async () => {

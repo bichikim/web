@@ -36,7 +36,7 @@ describe('slider components', () => {
 
     fireEvent.pointerDown(view.getByRole('slider'))
     expect(onPointerDown).toHaveBeenCalledWith('caller', expect.any(Event))
-    fireEvent.mouseUp(window)
+    fireEvent.mouseUp(globalThis.window)
 
     await fireEvent.click(bar, {offsetX: 100})
 

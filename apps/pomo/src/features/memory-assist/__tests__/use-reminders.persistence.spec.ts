@@ -1,6 +1,7 @@
 /** @vitest-environment jsdom */
 
 import {renderHook} from '@solidjs/testing-library'
+import {PreferenceProvider} from 'src/hooks/use-preference'
 import flushPromises from 'flush-promises'
 import {afterEach, beforeEach, expect, it, vi} from 'vitest'
 
@@ -33,6 +34,9 @@ vi.mock('../../supertonic', () => ({
   createSupertonicClient: mocks.createClient,
   getSupertonicErrorMessage: () => 'voice failed',
 }))
+
+const renderReminders = <Value>(callback: () => Value) =>
+  renderHook(callback, {wrapper: PreferenceProvider})
 
 beforeEach(() => {
   vi.useFakeTimers()
@@ -82,7 +86,7 @@ it('should preserve an edit made while reminder persistence is waiting', async (
     playDialogue: vi.fn().mockResolvedValue(true),
     refreshDialogues: vi.fn().mockResolvedValue(undefined),
   } as unknown as PEventContextValue
-  const view = renderHook(() =>
+  const view = renderReminders(() =>
     useMemoryReminders({events, loadSettings: mocks.loadSettings, random: () => 0}),
   )
 
@@ -127,7 +131,7 @@ it('should not replay a reminder when its edit is persisted after playback', asy
     playDialogue,
     refreshDialogues: vi.fn().mockResolvedValue(undefined),
   } as unknown as PEventContextValue
-  const view = renderHook(() => useMemoryReminders({events}))
+  const view = renderReminders(() => useMemoryReminders({events}))
 
   try {
     await vi.advanceTimersToNextTimerAsync()
@@ -173,7 +177,7 @@ it('should preserve a same-timestamp memo edit when reminder persistence is queu
     playDialogue: vi.fn().mockResolvedValue(true),
     refreshDialogues: vi.fn().mockResolvedValue(undefined),
   } as unknown as PEventContextValue
-  const view = renderHook(() => useMemoryReminders({events}))
+  const view = renderReminders(() => useMemoryReminders({events}))
 
   try {
     await vi.advanceTimersToNextTimerAsync()
@@ -211,7 +215,7 @@ it('should not resurrect a deleted memo when reminder persistence was already qu
     playDialogue: vi.fn().mockResolvedValue(true),
     refreshDialogues: vi.fn().mockResolvedValue(undefined),
   } as unknown as PEventContextValue
-  const view = renderHook(() => useMemoryReminders({events}))
+  const view = renderReminders(() => useMemoryReminders({events}))
   await vi.advanceTimersToNextTimerAsync()
   await flushPromises()
   expect(mocks.memos).toEqual([{...memo, deletionPending: true}])

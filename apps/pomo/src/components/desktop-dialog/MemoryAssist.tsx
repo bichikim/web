@@ -11,15 +11,16 @@ const Content = lazy(() =>
   import('../memory-assist/Content').then((module) => ({default: module.PMemoryAssistContent})),
 )
 
+const close = () => {
+  closeDesktopDialog('memoryAssist').catch((error: unknown) => {
+    console.error('Failed to close the desktop memory assist dialog.', error)
+  })
+}
+
 export const DesktopMemoryAssistDialog = () => {
   const [activeTab, setActiveTab] = createSignal('sentences')
   const [calendarRevision, setCalendarRevision] = createSignal(0)
   const refreshCalendar = () => setCalendarRevision((revision) => revision + 1)
-  const close = () => {
-    closeDesktopDialog('memoryAssist').catch((error: unknown) => {
-      console.error('Failed to close the desktop memory assist dialog.', error)
-    })
-  }
 
   return (
     <Tabs class="contents" value={activeTab()} onChange={setActiveTab}>

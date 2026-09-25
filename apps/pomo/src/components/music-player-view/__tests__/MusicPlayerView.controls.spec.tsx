@@ -70,7 +70,7 @@ describe('MusicPlayerView controls', () => {
     const utilityButtons =
       result.container.querySelectorAll<HTMLButtonElement>('[data-player-utility]')
 
-    expect(utilityButtons).toHaveLength(3)
+    expect(utilityButtons).toHaveLength(2)
     for (const utilityButton of utilityButtons) {
       expect(utilityButton).toHaveClass('size-10')
     }

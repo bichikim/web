@@ -6,7 +6,6 @@ const repository = vi.hoisted(() => ({
   completeTrackRegistration: vi.fn(),
   failTrackAsset: vi.fn(),
   findTrackAsset: vi.fn(),
-  reserveTrackAsset: vi.fn(),
 }))
 vi.mock('src/server/auth/authorize-admin-request', () => ({
   authorizeAdminRequest: async () => ({authorized: true, cookies: []}),

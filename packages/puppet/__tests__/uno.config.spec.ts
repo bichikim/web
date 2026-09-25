@@ -5,6 +5,14 @@ import {describe, expect, it} from 'vitest'
 import unoConfig from '../uno.config'
 
 describe('unoConfig', () => {
+  it('should include compact layer-order summaries in the embedded stylesheet', async () => {
+    const generator = await createGenerator(unoConfig)
+    const result = await generator.generate('', {safelist: true})
+    expect(result.matched.has('order-rule-heading')).toBe(true)
+    expect(result.css).toContain('.order-rule-summary-content')
+    expect(result.css).toMatch(/\.order-rule-heading[^{}]*\{[^}]*font-size:0\.6875rem/)
+  })
+
   it('should generate local Iconify masks for every editor icon in the embedded stylesheet', async () => {
     const generator = await createGenerator(unoConfig)
     const result = await generator.generate('', {safelist: true})

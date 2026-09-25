@@ -8,6 +8,7 @@ export {
   type CreateDisplayThemePreferenceRepositoryOptions,
   type DisplayThemePreferenceRepository,
   type DisplayThemePreferenceStorage,
+  parseDisplayThemePreference,
   readDisplayThemePreference,
   writeDisplayThemePreference,
 } from './storage'

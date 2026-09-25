@@ -1,22 +1,28 @@
-use tauri::{AppHandle, Manager, Runtime, WebviewUrl, WebviewWindowBuilder};
+use tauri::{AppHandle, Manager, Runtime, Webview, WebviewUrl, WebviewWindowBuilder, Window};
 
 use crate::{
     SurfaceState,
     error::{CommandError, Error},
     model::{
-        BackgroundInteraction, BackgroundInteractionOptions, BackgroundSurfaceOptions,
-        ControlSurfaceOptions, ControlSurfaceStatus, ValidatedControlSurface,
-        ValidatedWidgetSurface, WidgetSurfaceOptions, validate_label,
+        BackgroundInteraction, BackgroundInteractionOptions, BackgroundMouseEventOptions,
+        BackgroundNavigationOptions, BackgroundSurfaceOptions, ControlSurfaceOptions,
+        ControlSurfaceStatus, ValidatedBackgroundMouseEvent, ValidatedBackgroundNavigation,
+        ValidatedControlSurface, ValidatedWidgetSurface, WidgetSurfaceOptions, validate_label,
     },
 };
 
-fn find_window<R: Runtime>(
-    app: &AppHandle<R>,
-    label: String,
-) -> Result<tauri::WebviewWindow<R>, CommandError> {
+fn find_window<R: Runtime>(app: &AppHandle<R>, label: String) -> Result<Window<R>, CommandError> {
     let label = validate_label(label)?;
 
-    app.get_webview_window(&label)
+    app.get_webview(&label)
+        .map(|webview| webview.window())
+        .ok_or_else(|| Error::WindowNotFound(label).into())
+}
+
+fn find_webview<R: Runtime>(app: &AppHandle<R>, label: String) -> Result<Webview<R>, CommandError> {
+    let label = validate_label(label)?;
+
+    app.get_webview(&label)
         .ok_or_else(|| Error::WindowNotFound(label).into())
 }
 
@@ -70,15 +76,78 @@ pub(crate) async fn set_background_surface<R: Runtime>(
 }
 
 #[tauri::command]
+pub(crate) async fn navigate_background_surface<R: Runtime>(
+    app: AppHandle<R>,
+    state: tauri::State<'_, SurfaceState>,
+    options: BackgroundNavigationOptions,
+) -> Result<(), CommandError> {
+    #[cfg(not(target_os = "macos"))]
+    return Err(Error::UnsupportedPlatform(std::env::consts::OS).into());
+
+    #[cfg(target_os = "macos")]
+    {
+        let options = ValidatedBackgroundNavigation::try_from(options)?;
+        let webview = find_webview(&app, options.label)?;
+        let window = webview.window();
+        crate::macos::navigate_background_surface(
+            &state,
+            &window,
+            &webview,
+            options.url,
+            options.use_child,
+        )
+        .map_err(Into::into)
+    }
+}
+
+#[tauri::command]
+pub(crate) async fn forward_background_mouse_event<R: Runtime>(
+    app: AppHandle<R>,
+    state: tauri::State<'_, SurfaceState>,
+    options: BackgroundMouseEventOptions,
+) -> Result<(), CommandError> {
+    #[cfg(not(target_os = "macos"))]
+    return Err(Error::UnsupportedPlatform(std::env::consts::OS).into());
+
+    #[cfg(target_os = "macos")]
+    {
+        let options = ValidatedBackgroundMouseEvent::try_from(options)?;
+        let webview = find_webview(&app, options.label.clone())?;
+        crate::macos::forward_background_mouse_event(&state, &webview, options).map_err(Into::into)
+    }
+}
+
+#[tauri::command]
+pub(crate) async fn restore_background_content<R: Runtime>(
+    app: AppHandle<R>,
+    state: tauri::State<'_, SurfaceState>,
+    label: String,
+) -> Result<(), CommandError> {
+    #[cfg(target_os = "macos")]
+    {
+        let webview = find_webview(&app, label)?;
+        let window = webview.window();
+        crate::macos::restore_background_content(&state, &window, &webview).map_err(Into::into)
+    }
+
+    #[cfg(not(target_os = "macos"))]
+    {
+        let _ = find_window(&app, label)?;
+        Err(Error::UnsupportedPlatform(std::env::consts::OS).into())
+    }
+}
+
+#[tauri::command]
 pub(crate) async fn restore_surface<R: Runtime>(
     app: AppHandle<R>,
     state: tauri::State<'_, SurfaceState>,
     label: String,
 ) -> Result<(), CommandError> {
-    let window = find_window(&app, label)?;
+    let webview = find_webview(&app, label)?;
+    let window = webview.window();
 
     #[cfg(target_os = "macos")]
-    return crate::macos::restore(&state, &window).map_err(Into::into);
+    return crate::macos::restore(&state, &window, &webview).map_err(Into::into);
 
     #[cfg(not(target_os = "macos"))]
     Err(Error::UnsupportedPlatform(std::env::consts::OS).into())

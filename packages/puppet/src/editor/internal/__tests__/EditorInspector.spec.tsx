@@ -7,7 +7,6 @@ import {describe, expect, test, vi} from 'vitest'
 import {isTwoDimensionalParameterBinding} from '../../../deformation'
 import {createDemoDocument, getDocumentScene, type PuppetDocument} from '../../../player'
 import {getDeformerAngle} from '../deformer-transform'
-import {useDocumentHistory} from '../../use-document-history'
 import {
   addParameter,
   insertParameterKeyform,
@@ -533,31 +532,14 @@ describe('EditorInspector', () => {
     expect(view.getByRole('spinbutton', {name: '격자 제어점 1 X'})).toBeDisabled()
   })
 
-  test('should keep Physics edits in source history while viewing a temporary document', () => {
+  test('should leave document Physics controls out of the selection inspector', () => {
     const sourceDocument = createDemoDocument()
-    const history = useDocumentHistory({initialDocument: sourceDocument})
-    const [temporaryDocument, setTemporaryDocument] = createSignal({
-      ...sourceDocument,
-      parts: sourceDocument.parts.map((part) => ({
-        ...part,
-        properties: {...part.properties, opacity: 0.5},
-      })),
-    })
+    const [temporaryDocument, setTemporaryDocument] = createSignal(sourceDocument)
     const view = render(() => (
-      <EditorInspector
-        document={temporaryDocument()}
-        onDocumentChange={setTemporaryDocument}
-        onPhysicsDocumentChange={history.setDocument}
-        physicsDocument={history.document()}
-      />
+      <EditorInspector document={temporaryDocument()} onDocumentChange={setTemporaryDocument} />
     ))
 
-    fireEvent.click(view.getByRole('button', {name: 'Pendulum 추가'}))
-
-    expect(history.document().physics?.pendulums).toHaveLength(1)
-    expect(temporaryDocument().physics).toBeUndefined()
-    expect(history.undo()).toBe(true)
-    expect(history.document().physics).toBeUndefined()
+    expect(view.queryByRole('group', {name: '물리'})).not.toBeInTheDocument()
   })
 })
 

@@ -1,6 +1,6 @@
-import * as m from '@paraglide/message'
-
+import {getLocale} from '@paraglide/runtime'
 import {cx} from 'class-variance-authority'
+import {Show} from 'solid-js'
 
 import {SERVICE_OPERATOR} from 'src/features/service-operator'
 
@@ -12,6 +12,8 @@ import {CONTENT_LINK_CLASSES, type PServiceTermsProps} from '../service-terms/sh
 import {PServicePolicyLinks} from '../p-service-policy-links/PServicePolicyLinks'
 import {TermsIntro} from '../service-terms/TermsIntro'
 import {TermsNavigation} from '../service-terms/TermsNavigation'
+import {PAppReturnLink} from '../p-app-return-link/PAppReturnLink'
+import {EnglishServiceTermsContent} from './EnglishServiceTermsContent'
 export type {PServiceTermsProps, ServiceTermsPlatform} from '../service-terms/shared'
 
 const MAIN_CLASSES = cx(
@@ -26,26 +28,22 @@ const ARTICLE_CLASSES = cx(
   'rounded-8 border border-white/10 bg-#211a2b/88 p-5',
   'shadow-[0_1.75rem_6.25rem_rgba(5,2,10,0.38)] backdrop-blur-xl xs:p-8 lg:p-10',
 )
-const BACK_LINK_CLASSES =
-  'w-fit text-sm font-700 text-#d8cbd9 no-underline hover:text-white focus-visible:text-white'
 const FOOTER_CLASSES = cx(
   'grid gap-2 border-t border-white/8 pt-6 text-xs leading-6 text-#8f8297',
   'sm:flex sm:items-end sm:justify-between',
 )
 
-export const PServiceTerms = (props: PServiceTermsProps) => (
+const renderKoreanServiceTerms = (props: PServiceTermsProps) => (
   <main class={MAIN_CLASSES}>
     <div class={BACKGROUND_CLASSES} />
     <div class="relative mx-auto grid w-full max-w-6xl gap-8">
       <div class="flex flex-wrap items-center justify-between gap-4">
-        <a class={BACK_LINK_CLASSES} href={props.backHref ?? '/'}>
-          <span aria-hidden="true">←</span> {props.backLabel ?? m.app_return()}
-        </a>
         <PServicePolicyLinks
           currentPolicy="terms"
           platform={props.platform ?? 'web'}
           tone="overlay"
         />
+        <PAppReturnLink href={props.backHref} label={props.backLabel} />
       </div>
       <TermsIntro platform={props.platform} />
       <aside class="rounded-5 border border-#f2a7b8/20 bg-#f2a7b8/7 p-5" role="note">
@@ -77,4 +75,10 @@ export const PServiceTerms = (props: PServiceTermsProps) => (
       </footer>
     </div>
   </main>
+)
+
+export const PServiceTerms = (props: PServiceTermsProps) => (
+  <Show fallback={renderKoreanServiceTerms(props)} when={getLocale() === 'en'}>
+    <EnglishServiceTermsContent {...props} />
+  </Show>
 )

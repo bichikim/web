@@ -3,7 +3,7 @@
 import {render} from '@solidjs/testing-library'
 import {afterEach, describe, expect, it, vi} from 'vitest'
 
-import type {PDialogue} from '../../../features/focus-room-dialogue/schema'
+import type {EventBindingItem, PDialogue} from '../../../features/focus-room-dialogue'
 import {PSelect, type PSelectOption} from '../../p-select/PSelect'
 import {DialogueConnectionMenu} from '../ConnectionMenu'
 
@@ -68,24 +68,24 @@ describe('DialogueConnectionMenu', () => {
         disabled
         getMetadata={getMetadata}
         onChange={onChange}
-        selectedDialogueIds={[]}
+        selectedItems={[]}
       />
     ))
     const props = latestSelectProps()
 
     expect(props).toMatchObject({
-      accessibleLabel: '대화 연결',
+      accessibleLabel: '대화 및 행동 연결',
       appearance: 'detailed',
       clearLabel: '모두 연결 해제',
       disabled: true,
       hideLabel: true,
-      label: '대화 연결',
+      label: '대화 및 행동 연결',
       multiple: true,
       options: [],
-      placeholder: '대화 없음',
+      placeholder: '연결할 대화 또는 행동 없음',
       value: [],
     })
-    expect(props.selectionLabel?.([])).toBe('0개 대화 연결됨')
+    expect(props.selectionLabel?.([])).toBe('0개 대화/행동 연결됨')
     expect(getMetadata).not.toHaveBeenCalled()
   })
 
@@ -102,7 +102,7 @@ describe('DialogueConnectionMenu', () => {
         disabled={false}
         getMetadata={getMetadata}
         onChange={onChange}
-        selectedDialogueIds={[DIALOGUES[0].id]}
+        selectedItems={[{id: DIALOGUES[0].id, type: 'dialogue'}]}
       />
     ))
     const props = latestSelectProps()
@@ -114,27 +114,73 @@ describe('DialogueConnectionMenu', () => {
         {
           description: 'Yuna · 61200',
           label: '첫 번째 대화',
-          value: 'dialogue-one',
+          value: 'dialogue:dialogue-one',
         },
         {
           description: 'Hana · 32400',
           label: '두 번째 대화',
-          value: 'dialogue-two',
+          value: 'dialogue:dialogue-two',
         },
       ],
-      placeholder: '대화 선택',
-      value: ['dialogue-one'],
+      placeholder: '대화 또는 행동 선택',
+      value: ['dialogue:dialogue-one'],
     })
     expect(getMetadata).toHaveBeenNthCalledWith(1, DIALOGUES[0])
     expect(getMetadata).toHaveBeenNthCalledWith(2, DIALOGUES[1])
     expect(props.selectionLabel?.([props.options[0]!])).toBe('첫 번째 대화')
     expect(props.selectionLabel?.([undefined as unknown as PSelectOption<string>])).toBe(
-      '대화 선택',
+      '대화 또는 행동 선택',
     )
-    expect(props.selectionLabel?.(props.options)).toBe('2개 대화 연결됨')
+    expect(props.selectionLabel?.(props.options)).toBe('2개 대화/행동 연결됨')
 
-    props.onChange(['dialogue-two'])
+    props.onChange(['dialogue:dialogue-two'])
 
-    expect(onChange).toHaveBeenCalledWith(['dialogue-two'])
+    expect(onChange).toHaveBeenCalledWith([{id: 'dialogue-two', type: 'dialogue'}])
+  })
+
+  it('should include music and sound-effect actions in the same selection as dialogues', () => {
+    const onChange = vi.fn<(items: ReadonlyArray<EventBindingItem>) => void>()
+
+    render(() => (
+      <DialogueConnectionMenu
+        actions={[
+          {
+            description: '현재 음악을 일시 정지해요.',
+            icon: 'i-tabler-player-stop',
+            id: 'music-stop',
+            label: '음악 종료',
+          },
+          {
+            description: '모든 효과음을 멈춰요.',
+            icon: 'i-tabler-volume-off',
+            id: 'sound-effects-stop',
+            label: '효과음 모두 끄기',
+          },
+        ]}
+        dialogues={DIALOGUES}
+        disabled={false}
+        getMetadata={() => 'metadata'}
+        onChange={onChange}
+        selectedItems={[{id: 'music-stop', type: 'action'}]}
+      />
+    ))
+
+    const props = latestSelectProps()
+    expect(props.options).toContainEqual({
+      description: '현재 음악을 일시 정지해요.',
+      icon: 'i-tabler-player-stop',
+      label: '음악 종료',
+      value: 'action:music-stop',
+    })
+    expect(props.options).toContainEqual({
+      description: '모든 효과음을 멈춰요.',
+      icon: 'i-tabler-volume-off',
+      label: '효과음 모두 끄기',
+      value: 'action:sound-effects-stop',
+    })
+    expect(props.value).toContain('action:music-stop')
+
+    props.onChange(['action:music-stop'])
+    expect(onChange).toHaveBeenCalledWith([{id: 'music-stop', type: 'action'}])
   })
 })

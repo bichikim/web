@@ -55,9 +55,9 @@ test('should apply keyed Glue after parameter deformation and restore it after s
   )!
   const document = setGlueKeyform({
     bindingId: joined.parameterBindings![0]!.id,
+    changes: {strength: 0, weight: 0.5},
     document: joined,
     glueId: 'glue-1',
-    changes: {strength: 0, weight: 0.5},
     values: [0, 0],
   })!
   const parsed = parseDocument(serializeDocument(document))
@@ -65,7 +65,7 @@ test('should apply keyed Glue after parameter deformation and restore it after s
     throw new Error('Expected valid Glue model')
   }
   const player = await createPlayer({
-    canvas: window.document.createElement('canvas'),
+    canvas: globalThis.document.createElement('canvas'),
     document: parsed.document,
   })
   const first = meshes[0]!

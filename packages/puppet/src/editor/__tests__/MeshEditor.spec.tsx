@@ -9,6 +9,200 @@ import {MeshEditor} from '../MeshEditor'
 import {createDeformer, getSceneNode} from '../internal/scene-graph'
 
 describe('MeshEditor', () => {
+  test('should select exactly one mouse editing tool', () => {
+    const view = render(() => <MeshEditor document={createDemoDocument()} />)
+    const mouse = view.getByRole('button', {name: '일반 마우스'})
+    const brush = view.getByRole('button', {name: '변형 브러시'})
+
+    expect(mouse.getAttribute('aria-pressed')).toBe('true')
+    expect(brush.getAttribute('aria-pressed')).toBe('false')
+
+    fireEvent.click(brush)
+    fireEvent.click(brush)
+    expect(mouse.getAttribute('aria-pressed')).toBe('false')
+    expect(brush.getAttribute('aria-pressed')).toBe('true')
+
+    fireEvent.click(mouse)
+    expect(mouse.getAttribute('aria-pressed')).toBe('true')
+    expect(brush.getAttribute('aria-pressed')).toBe('false')
+  })
+
+  test('should commit a deform brush stroke as one document change', () => {
+    const initial = {...createDemoDocument(), motions: []}
+    const onDocumentChange = vi.fn()
+    const onNotice = vi.fn()
+    const view = render(() => (
+      <MeshEditor
+        activePartId="mesh-preview"
+        document={initial}
+        onDocumentChange={onDocumentChange}
+        onNotice={onNotice}
+      />
+    ))
+    const svg = view.container.querySelector('svg')!
+    vi.spyOn(svg, 'getBoundingClientRect').mockReturnValue({
+      bottom: 720,
+      height: 720,
+      left: 0,
+      right: 960,
+      toJSON: () => ({}),
+      top: 0,
+      width: 960,
+      x: 0,
+      y: 0,
+    })
+    fireEvent.click(view.getByRole('button', {name: '변형 브러시'}))
+    fireEvent(
+      svg,
+      new MouseEvent('pointerdown', {bubbles: true, button: 0, clientX: 480, clientY: 360}),
+    )
+    fireEvent(svg, new MouseEvent('pointermove', {bubbles: true, clientX: 490, clientY: 360}))
+    fireEvent.pointerUp(svg)
+    expect(onDocumentChange, JSON.stringify(onNotice.mock.calls)).toHaveBeenCalledOnce()
+    expect(onDocumentChange.mock.calls[0]![0].parts[0].mesh.vertices).not.toEqual(
+      initial.parts[0]?.mesh.vertices,
+    )
+  })
+
+  test('should preview the boundary with the displaced brush vertices', () => {
+    const initial = {...createDemoDocument(), motions: []}
+    const view = render(() => (
+      <MeshEditor activePartId="mesh-preview" document={initial} onDocumentChange={vi.fn()} />
+    ))
+    const svg = view.container.querySelector('svg')!
+    vi.spyOn(svg, 'getBoundingClientRect').mockReturnValue({
+      bottom: 720,
+      height: 720,
+      left: 0,
+      right: 960,
+      toJSON: () => ({}),
+      top: 0,
+      width: 960,
+      x: 0,
+      y: 0,
+    })
+    const boundary = view.container.querySelector('clipPath path')!
+    const original = boundary.getAttribute('d')
+
+    fireEvent.click(view.getByRole('button', {name: '변형 브러시'}))
+    fireEvent(
+      svg,
+      new MouseEvent('pointerdown', {bubbles: true, button: 0, clientX: 160, clientY: 120}),
+    )
+    fireEvent(svg, new MouseEvent('pointermove', {bubbles: true, clientX: 170, clientY: 120}))
+
+    expect(boundary.getAttribute('d')).not.toBe(original)
+    expect(boundary.getAttribute('d')).toContain('M 10 0')
+  })
+
+  test('should discard an unfinished brush stroke when the document changes', () => {
+    const initial = {...createDemoDocument(), motions: []}
+    const [document, setDocument] = createSignal<PuppetDocument>(initial)
+    const onDocumentChange = vi.fn()
+    const view = render(() => (
+      <MeshEditor
+        activePartId="mesh-preview"
+        document={document()}
+        onDocumentChange={onDocumentChange}
+      />
+    ))
+    const svg = view.container.querySelector('svg')!
+    vi.spyOn(svg, 'getBoundingClientRect').mockReturnValue({
+      bottom: 720,
+      height: 720,
+      left: 0,
+      right: 960,
+      toJSON: () => ({}),
+      top: 0,
+      width: 960,
+      x: 0,
+      y: 0,
+    })
+    fireEvent.click(view.getByRole('button', {name: '변형 브러시'}))
+    fireEvent(
+      svg,
+      new MouseEvent('pointerdown', {bubbles: true, button: 0, clientX: 480, clientY: 360}),
+    )
+    fireEvent(svg, new MouseEvent('pointermove', {bubbles: true, clientX: 490, clientY: 360}))
+    setDocument({...initial})
+    fireEvent.pointerUp(svg)
+    expect(onDocumentChange).not.toHaveBeenCalled()
+  })
+
+  test('should apply the brush to the selected parameter keyform', () => {
+    const initial = createDemoDocument()
+    const onDocumentChange = vi.fn()
+    const view = render(() => (
+      <MeshEditor
+        activePartId="mesh-preview"
+        activeBindingId="angle-xy"
+        activeKeyformValues={[30, 0]}
+        document={initial}
+        editMode="parameter"
+        parameterValues={[30, 0]}
+        onDocumentChange={onDocumentChange}
+      />
+    ))
+    const svg = view.container.querySelector('svg')!
+    vi.spyOn(svg, 'getBoundingClientRect').mockReturnValue({
+      bottom: 720,
+      height: 720,
+      left: 0,
+      right: 960,
+      toJSON: () => ({}),
+      top: 0,
+      width: 960,
+      x: 0,
+      y: 0,
+    })
+    fireEvent.click(view.getByRole('button', {name: '변형 브러시'}))
+    fireEvent(
+      svg,
+      new MouseEvent('pointerdown', {bubbles: true, button: 0, clientX: 576, clientY: 360}),
+    )
+    fireEvent(svg, new MouseEvent('pointermove', {bubbles: true, clientX: 586, clientY: 360}))
+    fireEvent.pointerUp(svg)
+    expect(onDocumentChange).toHaveBeenCalledOnce()
+    const updated: PuppetDocument = onDocumentChange.mock.calls[0]![0]
+    expect(updated.parts[0]?.mesh.vertices).toEqual(initial.parts[0]?.mesh.vertices)
+    expect(updated.parameterBindings?.[0]?.keyforms).not.toEqual(
+      initial.parameterBindings?.[0]?.keyforms,
+    )
+  })
+
+  test('should apply the brush in rest mesh editing with one history change', () => {
+    const initial = {...createDemoDocument(), motions: []}
+    const onDocumentChange = vi.fn()
+    const view = render(() => (
+      <MeshEditor
+        activePartId="mesh-preview"
+        document={initial}
+        meshEditing
+        editMode="parameter"
+        onDocumentChange={onDocumentChange}
+      />
+    ))
+    const svg = view.container.querySelector('svg')!
+    vi.spyOn(svg, 'getBoundingClientRect').mockReturnValue({
+      bottom: 720,
+      height: 720,
+      left: 0,
+      right: 960,
+      toJSON: () => ({}),
+      top: 0,
+      width: 960,
+      x: 0,
+      y: 0,
+    })
+    fireEvent.click(view.getByRole('button', {name: '변형 브러시'}))
+    fireEvent(
+      svg,
+      new MouseEvent('pointerdown', {bubbles: true, button: 0, clientX: 480, clientY: 360}),
+    )
+    fireEvent(svg, new MouseEvent('pointermove', {bubbles: true, clientX: 490, clientY: 360}))
+    fireEvent.pointerUp(svg)
+    expect(onDocumentChange).toHaveBeenCalledOnce()
+  })
   test('should edit rest topology without selecting a keyform or creating one', () => {
     const initial = {...createDemoDocument(), motions: []}
     const onDocumentChange = vi.fn()

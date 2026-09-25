@@ -28,7 +28,6 @@ import {getParameterEditTarget} from './parameter-edit-target'
 import {setParameterKeyformPartProperties, setPartRenderProperties} from './part-properties'
 import {setMaskTarget} from './mask-targets'
 import {PartProperties} from './PartProperties'
-import {EditorPhysicsProperties} from './EditorPhysicsProperties'
 const getMaskTargetOptions = (document: PuppetDocument, partId: string) =>
   document.parts.flatMap((part) => {
     if (part.id === partId) {
@@ -50,6 +49,7 @@ const getMaskTargetOptions = (document: PuppetDocument, partId: string) =>
 export interface EditorInspectorProps {
   readonly editingDisabled?: boolean
   readonly children?: JSX.Element
+  readonly layerOrderProperties?: JSX.Element
   readonly activeBindingId?: string
   readonly activeKeyformValues?: PuppetParameterValues | null
   readonly activeNodeId?: string
@@ -62,12 +62,10 @@ export interface EditorInspectorProps {
   readonly onAutoMesh?: () => void
   readonly onContainerUnwrap?: () => void
   readonly onDocumentChange?: (document: PuppetDocument) => void
-  readonly onPhysicsDocumentChange?: (document: PuppetDocument) => void
   readonly onEditEnd?: () => void
   readonly onEditStart?: () => void
   readonly onMaskPickCancel?: () => void
   readonly onMaskPickStart?: (partId: string) => void
-  readonly physicsDocument?: PuppetDocument
   readonly previewDocument?: PuppetDocument
   readonly selectedControlPointIndices?: ReadonlyArray<number>
   readonly targetNodeIds?: ReadonlyArray<string>
@@ -524,6 +522,7 @@ export const EditorInspector = (props: EditorInspectorProps) => {
           />
         )}
       </Show>
+      {props.layerOrderProperties}
       <Show keyed when={deformerNode()}>
         {(node) => (
           <>
@@ -565,7 +564,6 @@ export const EditorInspector = (props: EditorInspectorProps) => {
           />
         )}
       </For>
-      <EditorPhysicsProperties source={props} />
       <Show when={props.notice}>{(message) => <p class="notice">{message()}</p>}</Show>
       {props.children}
     </aside>

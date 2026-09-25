@@ -1,10 +1,10 @@
-import {type Accessor, onCleanup, onMount} from 'solid-js'
+import {type Accessor, createEffect, onCleanup, onMount} from 'solid-js'
 import {
   loadPTrackQueueSource,
+  type PlaylistPreference,
   type PPlaybackState,
   type PTrack,
   readPPlayback,
-  readPPlaylist,
 } from '../../features/focus-room-audio'
 import {restorePPlayerState} from './restoration'
 
@@ -14,6 +14,7 @@ export interface PlaylistLoad {
 }
 
 export interface UsePlaylistRestorationProps {
+  readonly savedPlaylist: Accessor<PlaylistPreference | null>
   readonly tracks: Accessor<readonly PTrack[]>
   readonly isQueueControlled: Accessor<boolean>
   readonly playbackRevision: Accessor<number>
@@ -26,17 +27,63 @@ export interface UsePlaylistRestorationProps {
 
 /** 목록과 저장된 재생 상태를 불러오고, 사용자 조작 이후의 오래된 복원과 종료 후 적용을 막는다. */
 export const usePlaylistRestoration = (props: UsePlaylistRestorationProps): void => {
+  const playlist = Promise.withResolvers<readonly string[] | null>()
+  createEffect(() => {
+    const saved = props.savedPlaylist()
+    if (saved !== null) {
+      playlist.resolve(saved.trackIds)
+    }
+  })
   const request = new AbortController()
   let disposed = false
+  let controlledRestoreRevision: number | undefined
+  let controlledPlayback: PPlaybackState | null | undefined
+  let controlledPlaybackRestored = false
+  let controlledRestoreWaitingForTracks = false
   const handleError = (error: unknown) => {
     if (!disposed) {
       props.onError(error)
     }
   }
+  const restoreControlledPlayback = (tracks: readonly PTrack[]) => {
+    if (
+      disposed ||
+      controlledRestoreRevision === undefined ||
+      controlledPlayback === undefined ||
+      controlledPlayback === null ||
+      controlledPlaybackRestored
+    ) {
+      return
+    }
+
+    const playbackRevision = props.playbackRevision()
+    if (tracks.length === 0) {
+      controlledRestoreWaitingForTracks = true
+      return
+    }
+
+    if (!controlledRestoreWaitingForTracks && playbackRevision !== controlledRestoreRevision) {
+      return
+    }
+
+    // 트랙 대기 중에는 복원을 무효화할 재생 대상이 없으므로 도착 시점의 revision을 기준으로 삼는다.
+    controlledRestoreRevision = playbackRevision
+    controlledPlaybackRestored = true
+    props.onRestore(tracks, controlledPlayback)
+  }
+  createEffect(() => {
+    if (!props.isQueueControlled()) {
+      return
+    }
+
+    const tracks = props.tracks()
+    restoreControlledPlayback(tracks)
+  })
 
   // 복원 콜백이 오디오 요소를 사용하므로 ref가 연결된 뒤 복원을 시작한다.
   onMount(() => {
     const restoreRevision = props.playbackRevision()
+    controlledRestoreRevision = restoreRevision
     const initialQueueRevision = props.queueRevision()
     let resolvedQueueRevision = initialQueueRevision
     const playbackRequest = readPPlayback().catch((error: unknown) => {
@@ -46,19 +93,14 @@ export const usePlaylistRestoration = (props: UsePlaylistRestorationProps): void
     if (props.isQueueControlled()) {
       playbackRequest
         .then((playback) => {
-          if (disposed || props.playbackRevision() !== restoreRevision || playback === null) {
-            return
-          }
-          props.onRestore(props.tracks(), playback)
+          controlledPlayback = playback
+          restoreControlledPlayback(props.tracks())
         })
         .catch(handleError)
       return
     }
 
-    const playlistRequest = readPPlaylist().catch((error: unknown) => {
-      handleError(error)
-      return null
-    })
+    const playlistRequest = playlist.promise
 
     loadPTrackQueueSource({signal: request.signal})
       .then((source) => {
@@ -96,6 +138,7 @@ export const usePlaylistRestoration = (props: UsePlaylistRestorationProps): void
 
   onCleanup(() => {
     disposed = true
+    playlist.resolve(null)
     request.abort()
   })
 }

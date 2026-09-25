@@ -13,6 +13,8 @@ import {
 const {
   DEFAULT_BACKGROUND,
   getAutomaticScenePeriod,
+  getNextScenePeriodChange,
+  PStudioEvents,
   PTour,
   SceneToolbar,
   readFocusRoomEntrySession,
@@ -35,6 +37,7 @@ beforeEach(setupStudio)
 let restoreDocumentHidden: (() => void) | undefined
 
 afterEach(() => {
+  vi.unstubAllEnvs()
   vi.useRealTimers()
   restoreDocumentHidden?.()
   restoreDocumentHidden = undefined
@@ -47,6 +50,9 @@ describe('PStudio', () => {
     vi.mocked(getAutomaticScenePeriod).mockImplementation((date) =>
       date.getHours() >= 19 ? 'night' : 'day',
     )
+    vi.mocked(getNextScenePeriodChange).mockImplementation(
+      (date) => new Date(date.getTime() + 1_000),
+    )
 
     renderStudio()
     fireEvent.click(screen.getByRole('button', {name: '자동 시간'}))
@@ -54,15 +60,71 @@ describe('PStudio', () => {
     const scene = screen.getByRole('button', {name: '장면 로드 완료'}).parentElement
     expect(scene).toHaveAttribute('data-time', 'day')
 
-    const documentHidden = vi.spyOn(document, 'hidden', 'get')
+    let documentIsHidden = false
+    const documentHidden = vi
+      .spyOn(document, 'hidden', 'get')
+      .mockImplementation(() => documentIsHidden)
     restoreDocumentHidden = () => documentHidden.mockRestore()
-    documentHidden.mockReturnValueOnce(true).mockReturnValueOnce(false)
+    documentIsHidden = true
     document.dispatchEvent(new Event('visibilitychange', {bubbles: true}))
     vi.setSystemTime(new Date(2026, 8, 16, 19, 0, 10))
+    vi.advanceTimersByTime(1_000)
     expect(scene).toHaveAttribute('data-time', 'day')
 
+    documentIsHidden = false
     document.dispatchEvent(new Event('visibilitychange', {bubbles: true}))
     expect(scene).toHaveAttribute('data-time', 'night')
+  })
+
+  it.each([
+    {
+      initialPeriod: 'night',
+      nextPeriod: 'day',
+      startTime: new Date(2026, 8, 16, 6, 59, 59),
+      transition: '07:00',
+    },
+    {
+      initialPeriod: 'day',
+      nextPeriod: 'night',
+      startTime: new Date(2026, 8, 16, 18, 59, 59),
+      transition: '19:00',
+    },
+  ])(
+    'should update the automatic scene period at $transition',
+    ({initialPeriod, nextPeriod, startTime}) => {
+      vi.setSystemTime(startTime)
+      configureStudio({entrySession: true})
+      vi.mocked(getAutomaticScenePeriod).mockImplementation((date) =>
+        date.getHours() >= 7 && date.getHours() < 19 ? 'day' : 'night',
+      )
+      vi.mocked(getNextScenePeriodChange).mockImplementation(
+        (date) => new Date(date.getTime() + 1_000),
+      )
+
+      renderStudio()
+      fireEvent.click(screen.getByRole('button', {name: '자동 시간'}))
+
+      const scene = screen.getByRole('button', {name: '장면 로드 완료'}).parentElement
+      expect(scene).toHaveAttribute('data-time', initialPeriod)
+      vi.advanceTimersByTime(999)
+      expect(scene).toHaveAttribute('data-time', initialPeriod)
+      vi.advanceTimersByTime(1)
+      expect(scene).toHaveAttribute('data-time', nextPeriod)
+    },
+  )
+
+  it('should clear the scheduled scene period change on cleanup', () => {
+    vi.setSystemTime(new Date(2026, 8, 16, 6, 59, 59))
+    configureStudio({entrySession: true})
+    vi.mocked(getNextScenePeriodChange).mockImplementation(
+      (date) => new Date(date.getTime() + 1_000),
+    )
+
+    const studio = renderStudio()
+    studio.unmount()
+    vi.advanceTimersByTime(1_000)
+
+    expect(getAutomaticScenePeriod).toHaveBeenCalledOnce()
   })
 
   it.each([false, true])(
@@ -74,6 +136,7 @@ describe('PStudio', () => {
       const [visibility, setVisibility] = createSignal(true)
       vi.mocked(usePDisplayPreferences).mockReturnValue({
         ...preferences,
+        featureRequestVisible: visibility,
         isReady,
         memoryAssistVisible: visibility,
         toolsButtonVisible: visibility,
@@ -90,15 +153,40 @@ describe('PStudio', () => {
       expect(SceneToolbar).toHaveBeenCalledOnce()
       const toolbar = vi.mocked(SceneToolbar).mock.calls[0][0]
       expect(toolbar.memoryAssistVisible).toBe(visible)
+      expect(toolbar.featureRequestVisible).toBe(visible)
       expect(toolbar.toolsButtonVisible).toBe(visible)
       expect(toolbar.tourButtonVisible).toBe(visible)
 
       setVisibility(!visible)
       expect(toolbar.memoryAssistVisible).toBe(!visible)
+      expect(toolbar.featureRequestVisible).toBe(!visible)
       expect(toolbar.toolsButtonVisible).toBe(!visible)
       expect(toolbar.tourButtonVisible).toBe(!visible)
     },
   )
+
+  it('should keep player visibility unknown until display restoration completes', () => {
+    configureStudio({entrySession: true})
+    const preferences = vi.mocked(usePDisplayPreferences)()
+    const [isReady, setIsReady] = createSignal(false)
+    const [playerVisible, setPlayerVisible] = createSignal(true)
+    vi.mocked(usePDisplayPreferences).mockReturnValue({
+      ...preferences,
+      isReady,
+      playerVisible,
+    })
+
+    renderStudio()
+
+    const events = vi.mocked(PStudioEvents).mock.calls[0]?.[0]
+    expect(events?.playerVisible).toBeUndefined()
+
+    setIsReady(true)
+    expect(events?.playerVisible).toBe(true)
+
+    setPlayerVisible(false)
+    expect(events?.playerVisible).toBe(false)
+  })
 
   it('should enter the focus room and pass toolbar changes to the scene', () => {
     configureStudio({gyroscope: true, isScreenSaverActive: true})
@@ -277,6 +365,35 @@ describe('PStudio', () => {
     expect(screen.queryByText('입장')).not.toBeInTheDocument()
     expect(screen.queryByRole('button', {name: '장면 로드 완료'})).not.toBeInTheDocument()
     expect(SceneToolbar).not.toHaveBeenCalled()
+  })
+
+  it('should wait for weather restoration before mounting the scene', () => {
+    const {setWeatherReady} = configureStudio({
+      entrySession: true,
+      weatherReady: false,
+      weatherSceneMode: 'rain',
+    })
+
+    renderStudio()
+
+    expect(screen.queryByRole('button', {name: '장면 로드 완료'})).not.toBeInTheDocument()
+
+    setWeatherReady(true)
+
+    expect(screen.getByRole('button', {name: '장면 로드 완료'}).parentElement).toHaveAttribute(
+      'data-weather',
+      'rain',
+    )
+  })
+
+  it('should render the character scene for a persisted website mode in the web app', () => {
+    vi.stubEnv('VITE_POMO_IS_DESKTOP', '')
+    configureStudio({backgroundMode: 'website', entrySession: true})
+
+    renderStudio()
+
+    expect(screen.getByRole('img', {name: 'day-reading-focused'})).toBeInTheDocument()
+    expect(screen.queryByText('frame player')).not.toBeInTheDocument()
   })
 })
 

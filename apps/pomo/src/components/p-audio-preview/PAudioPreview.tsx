@@ -1,3 +1,4 @@
+import * as m from '@paraglide/message'
 import {AudioPlayer} from '../audio-player'
 import {cx} from 'class-variance-authority'
 import {type JSX, Show} from 'solid-js'
@@ -15,7 +16,10 @@ const CONTROL_BUTTON_CLASSES = cx(
 )
 
 const formatAudioPosition = (currentTime: number, duration: number) =>
-  `${currentTime.toFixed(1)}초 / ${duration.toFixed(1)}초`
+  m.audio_preview_time({
+    current: currentTime.toFixed(1),
+    duration: duration.toFixed(1),
+  })
 
 export interface PAudioPreviewProps {
   readonly autoplay?: boolean
@@ -41,13 +45,13 @@ export interface PAudioPreviewProps {
 }
 
 export const PAudioPreview = (props: PAudioPreviewProps) => {
-  const title = () => props.title ?? '오디오'
+  const title = () => props.title ?? m.audio_preview_default_title()
 
   return (
     <Show
       fallback={
         <button
-          aria-label={`${title()} 미리 듣기`}
+          aria-label={`${title()} ${m.audio_preview_listen()}`}
           class={cx(
             PREVIEW_CLASSES,
             'flex h-10 w-full items-center gap-2 px-3 text-left text-sm',
@@ -59,7 +63,7 @@ export const PAudioPreview = (props: PAudioPreviewProps) => {
           type="button"
         >
           <span aria-hidden="true" class="i-tabler-player-play size-4 text-highlight" />
-          {props.loading ? '음원 불러오는 중…' : '미리 듣기'}
+          {props.loading ? m.audio_preview_loading() : m.audio_preview_listen()}
         </button>
       }
       when={props.src}
@@ -91,8 +95,8 @@ export const PAudioPreview = (props: PAudioPreviewProps) => {
             />
             <AudioPlayer.PlayButton
               class={CONTROL_BUTTON_CLASSES}
-              pauseLabel={`${title()} 일시정지`}
-              playLabel={`${title()} 재생`}
+              pauseLabel={m.audio_preview_pause({title: title()})}
+              playLabel={m.audio_preview_play({title: title()})}
             >
               <PlaybackIcon />
             </AudioPlayer.PlayButton>
@@ -100,14 +104,14 @@ export const PAudioPreview = (props: PAudioPreviewProps) => {
               <AudioPlayer.Time /> / <AudioPlayer.Time kind="duration" />
             </span>
             <AudioPlayer.TimeRange
-              aria-label={`${title()} 재생 위치`}
+              aria-label={m.audio_preview_position({title: title()})}
               class="min-w-0 w-full cursor-pointer accent-highlight disabled:cursor-not-allowed"
               formatValueText={formatAudioPosition}
             />
             <AudioPlayer.MuteButton
               class={cx(CONTROL_BUTTON_CLASSES, 'text-muted-foreground')}
-              muteLabel={`${title()} 음소거`}
-              unmuteLabel={`${title()} 음소거 해제`}
+              muteLabel={m.audio_preview_mute({title: title()})}
+              unmuteLabel={m.audio_preview_unmute({title: title()})}
             >
               <MuteIcon />
             </AudioPlayer.MuteButton>

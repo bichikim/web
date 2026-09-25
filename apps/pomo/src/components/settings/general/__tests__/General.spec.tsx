@@ -5,6 +5,7 @@ import {PSelect, type PSelectSingleProps} from 'src/components/p-select/PSelect'
 import {type DisplayThemePreference, useDisplayTheme} from 'src/features/display-theme'
 import {useScreenWakeLock} from 'src/features/screen-wake-lock'
 import {beforeEach, expect, it, vi} from 'vitest'
+import {PGeneralDisplaySettings} from '../Display'
 import {PGeneralSettings} from '../General'
 vi.mock('src/components/p-select/PSelect', () => ({PSelect: vi.fn()}))
 vi.mock('src/features/display-theme', () => ({useDisplayTheme: vi.fn()}))
@@ -101,8 +102,18 @@ it('should show health checks in the production web runtime', () => {
   vi.unstubAllEnvs()
 })
 
-it('should keep character and weather controls out of the general tab', () => {
-  render(() => <PGeneralSettings wakeLock={useScreenWakeLock()} />)
-  expect(screen.queryByText('시간')).not.toBeInTheDocument()
-  expect(screen.queryByText('창문 날씨 표시')).not.toBeInTheDocument()
+it('should pass the weather display preference to the general display settings', () => {
+  const onWeatherEnabledChange = vi.fn()
+  render(() => (
+    <PGeneralSettings
+      onWeatherEnabledChange={onWeatherEnabledChange}
+      wakeLock={useScreenWakeLock()}
+      weatherEnabled={false}
+    />
+  ))
+
+  const displayProps = vi.mocked(PGeneralDisplaySettings).mock.calls[0]?.[0]
+  expect(displayProps?.weatherEnabled).toBe(false)
+  displayProps?.onWeatherEnabledChange?.(true)
+  expect(onWeatherEnabledChange).toHaveBeenCalledWith(true)
 })

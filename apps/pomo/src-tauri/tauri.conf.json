@@ -21,6 +21,7 @@
         "minWidth": 420,
         "devtools": false,
         "title": "Pomofi",
+        "transparent": true,
         "url": "/",
         "width": 1280
       }

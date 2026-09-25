@@ -1,3 +1,4 @@
+import {apiJsonRequest, parseJsonResponse} from '../api-json'
 import {z} from 'zod'
 
 // Keep client validation aligned with the server-side paid source limit.
@@ -131,14 +132,13 @@ export const uploadTrackAudio = async (
 ): Promise<TrackAudioUploadResult> => {
   validateTrackAudio(options.file)
   const reservationResponse = await requireSuccess(
-    await fetch('/api/admin/music/assets', {
-      body: JSON.stringify({trackId: options.trackId}),
-      headers: {'Content-Type': 'application/json'},
+    await apiJsonRequest('admin/music/assets', {
+      body: {trackId: options.trackId},
       method: 'POST',
     }),
     'MP3 업로드를 준비하지 못했습니다.',
   )
-  const reservation = uploadSchema.parse(await reservationResponse.json())
+  const reservation = await parseJsonResponse(reservationResponse, uploadSchema)
   await requireSuccess(
     await fetch(reservation.uploadUrl, {
       body: options.file,

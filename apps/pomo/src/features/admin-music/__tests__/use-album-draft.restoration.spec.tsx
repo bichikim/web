@@ -29,7 +29,7 @@ describe('album draft restoration', () => {
     const {cleanup, result} = renderAlbumDraft()
     await waitForRestoration(result)
     storageMocks.writeAlbumDraftReference.mockClear()
-    window.dispatchEvent(new Event('pageshow'))
+    globalThis.dispatchEvent(new Event('pageshow'))
     await waitFor(() => expect(storageMocks.writeAlbumDraftReference).toHaveBeenCalledOnce())
     const heartbeat = intervals.mock.calls.find(([, delay]) => delay === 3_600_000)?.[0]
     if (typeof heartbeat !== 'function') {
@@ -43,7 +43,7 @@ describe('album draft restoration', () => {
     })
     cleanup()
     storageMocks.writeAlbumDraftReference.mockClear()
-    window.dispatchEvent(new Event('pageshow'))
+    globalThis.dispatchEvent(new Event('pageshow'))
     heartbeat()
     await flushPromises()
     expect(storageMocks.writeAlbumDraftReference).not.toHaveBeenCalled()
@@ -57,7 +57,7 @@ describe('album draft restoration', () => {
       createDraft({coverDraftId: 'stored-cover', hasCoverFile: true}),
     )
     storageMocks.readAlbumDraftCover.mockResolvedValue(PREPARED_COVER)
-    const addEventListener = vi.spyOn(window, 'addEventListener')
+    const addEventListener = vi.spyOn(globalThis, 'addEventListener')
     const {cleanup, result} = renderAlbumDraft()
 
     await waitForRestoration(result)
@@ -68,11 +68,11 @@ describe('album draft restoration', () => {
     })
     const persistedPageHide = new Event('pagehide')
     Object.defineProperty(persistedPageHide, 'persisted', {value: true})
-    window.dispatchEvent(persistedPageHide)
+    globalThis.dispatchEvent(persistedPageHide)
     await flushPromises()
     expect(storageMocks.deleteAlbumDraftReference).not.toHaveBeenCalled()
 
-    window.dispatchEvent(new Event('pagehide'))
+    globalThis.dispatchEvent(new Event('pagehide'))
     expect(addEventListener).toHaveBeenCalledWith('pagehide', expect.any(Function))
     await waitFor(() =>
       expect(storageMocks.deleteAlbumDraftReference).toHaveBeenCalledWith(

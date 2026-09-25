@@ -28,6 +28,18 @@ export interface AdminFeatureRequestsController {
   readonly updatingRequestId: () => string | null
 }
 
+const appendNewRequests = (
+  currentRequests: ReadonlyArray<FeatureRequest>,
+  nextRequests: ReadonlyArray<FeatureRequest>,
+): ReadonlyArray<FeatureRequest> => {
+  const currentRequestIds = new Set(currentRequests.map((request) => request.id))
+
+  return [
+    ...currentRequests,
+    ...nextRequests.filter((request) => !currentRequestIds.has(request.id)),
+  ]
+}
+
 export const useAdminFeatureRequests = (): AdminFeatureRequestsController => {
   const [requests, setRequests] = createSignal<ReadonlyArray<FeatureRequest>>([])
   const [hasMore, setHasMore] = createSignal(false)
@@ -36,8 +48,15 @@ export const useAdminFeatureRequests = (): AdminFeatureRequestsController => {
   const [loadFailed, setLoadFailed] = createSignal(false)
   const [loadMoreFailed, setLoadMoreFailed] = createSignal(false)
   const [updatingRequestId, setUpdatingRequestId] = createSignal<string | null>(null)
+  let listGeneration = 0
+  let hasLoadedMore = false
+  let nextOffset = 0
 
   const refresh = async (): Promise<void> => {
+    const previousHasMore = hasMore()
+    const preserveLoadedPages = hasLoadedMore
+    listGeneration += 1
+    const generation = listGeneration
     setIsLoading(true)
     setLoadFailed(false)
     setLoadMoreFailed(false)
@@ -45,12 +64,35 @@ export const useAdminFeatureRequests = (): AdminFeatureRequestsController => {
 
     try {
       const page = await listAdminFeatureRequests()
-      setHasMore(page.hasMore)
-      setRequests(page.requests)
+      if (generation !== listGeneration) {
+        return
+      }
+
+      nextOffset = page.requests.length
+      setHasMore(preserveLoadedPages ? previousHasMore : page.hasMore)
+      if (preserveLoadedPages) {
+        setRequests((currentRequests) => {
+          const refreshedRequestIds = new Set(page.requests.map((request) => request.id))
+          const refreshedRequests = [
+            ...page.requests,
+            ...currentRequests.filter((request) => !refreshedRequestIds.has(request.id)),
+          ]
+          return refreshedRequests
+        })
+      } else {
+        setRequests(page.requests)
+      }
     } catch {
+      if (generation !== listGeneration) {
+        return
+      }
+
+      setHasMore(previousHasMore)
       setLoadFailed(true)
     } finally {
-      setIsLoading(false)
+      if (generation === listGeneration) {
+        setIsLoading(false)
+      }
     }
   }
 
@@ -59,15 +101,26 @@ export const useAdminFeatureRequests = (): AdminFeatureRequestsController => {
       return
     }
 
-    const offset = requests().length
+    const offset = nextOffset
+    const generation = listGeneration
     setIsLoadingMore(true)
     setLoadMoreFailed(false)
 
     try {
       const page = await listAdminFeatureRequests({offset})
-      setRequests((currentRequests) => [...currentRequests, ...page.requests])
+      if (generation !== listGeneration) {
+        return
+      }
+
+      nextOffset += page.requests.length
+      setRequests((currentRequests) => appendNewRequests(currentRequests, page.requests))
       setHasMore(page.hasMore)
+      hasLoadedMore = true
     } catch {
+      if (generation !== listGeneration) {
+        return
+      }
+
       setLoadMoreFailed(true)
     } finally {
       setIsLoadingMore(false)
@@ -82,7 +135,13 @@ export const useAdminFeatureRequests = (): AdminFeatureRequestsController => {
     try {
       const result = await updateAdminFeatureRequest(input)
       if (result.status === 'updated') {
-        await refresh()
+        setRequests((currentRequests) =>
+          currentRequests.map((request) =>
+            request.id === input.requestId
+              ? {...request, status: input.status, targetVoteCount: input.targetVoteCount}
+              : request,
+          ),
+        )
       }
       return result
     } catch {

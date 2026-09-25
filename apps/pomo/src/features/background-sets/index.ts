@@ -1,3 +1,4 @@
+import {loadPublicJson} from '../public-assets'
 import {z} from 'zod'
 import {MAX_PHOTO_BYTES, MAX_VIDEO_BYTES} from '../background'
 const HEX_RADIX = 16
@@ -22,11 +23,11 @@ const catalogSchema = z.object({sets: z.array(backgroundSetSchema), version: z.l
 
 /** Loads the public set catalog; invalid data and HTTP failures reject. */
 export const loadBackgroundSets = async (signal: AbortSignal): Promise<BackgroundSet[]> => {
-  const response = await fetch('/background-sets/index.json', {signal})
-  if (!response.ok) {
-    throw new Error('Unable to load background sets.')
-  }
-  return catalogSchema.parse(await response.json()).sets
+  const catalog = await loadPublicJson('/background-sets/index.json', catalogSchema, {
+    formatFetchFailure: () => 'Unable to load background sets.',
+    signal,
+  })
+  return catalog.sets
 }
 
 /** Downloads and checks each catalog asset before returning files for local import. */

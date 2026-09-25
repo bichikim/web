@@ -4,7 +4,7 @@ import {Popover} from '@kobalte/core/popover'
 import {Button} from '@kobalte/core/button'
 import {EditorHelp} from './EditorHelp'
 import {ToggleButton} from '@kobalte/core/toggle-button'
-import {createSignal, createUniqueId} from 'solid-js'
+import {createSignal, createUniqueId, onCleanup, Show} from 'solid-js'
 
 import type {PlayerCanvasStatus} from '../PlayerCanvas'
 import type {EditorPanelVisibility} from './EditorPanelLayout'
@@ -16,6 +16,8 @@ const STATUS_LABEL: Readonly<Record<PlayerCanvasStatus, string>> = {
 }
 
 export interface EditorToolbarProps {
+  readonly setBrushSettingsMount?: (element: HTMLDivElement | undefined) => void
+  readonly exportUrl?: string | null
   readonly activeWorkspace?: 'animation' | 'modeling'
   readonly canRedo?: boolean
   readonly canUndo?: boolean
@@ -30,6 +32,13 @@ export interface EditorToolbarProps {
   readonly onFileImport: (file: File | undefined) => void
   readonly onPsdReimport?: (file: File | undefined) => void
   readonly onFileOpen: (file: File | undefined) => void
+}
+
+const BrushSettingsMount = (props: {
+  readonly setMount: (element: HTMLDivElement | undefined) => void
+}) => {
+  onCleanup(() => props.setMount(undefined))
+  return <div class="toolbar-brush-settings-mount" ref={props.setMount} />
 }
 
 interface PanelVisibilityControlsProps {
@@ -63,6 +72,7 @@ const PanelVisibilityControls = (props: PanelVisibilityControlsProps) => (
 )
 
 interface ToolbarMenuProps {
+  readonly exportUrl?: string | null
   readonly canUndo?: boolean
   readonly canRedo?: boolean
   readonly historyUndoCount?: number
@@ -115,6 +125,13 @@ const ToolbarMenu = (props: ToolbarMenuProps) => {
           >
             JSON 내보내기
           </Button>
+          <Show when={props.exportUrl}>
+            {(url) => (
+              <a href={url()} download="puppet-model.json">
+                JSON 파일 다시 다운로드
+              </a>
+            )}
+          </Show>
           <hr />
           <Button
             aria-description={`${props.historyUndoCount ?? 0}단계 되돌릴 수 있음 · ⌘Z / Ctrl+Z`}
@@ -151,6 +168,7 @@ const ToolbarMenu = (props: ToolbarMenuProps) => {
 export const EditorToolbar = (props: EditorToolbarProps) => (
   <header class="toolbar">
     <ToolbarMenu
+      exportUrl={props.exportUrl}
       canUndo={props.canUndo}
       canRedo={props.canRedo}
       historyUndoCount={props.historyUndoCount}
@@ -162,6 +180,9 @@ export const EditorToolbar = (props: EditorToolbarProps) => (
       onPsdReimport={props.onPsdReimport}
       onFileOpen={props.onFileOpen}
     />
+    <Show when={props.setBrushSettingsMount}>
+      {(setMount) => <BrushSettingsMount setMount={setMount()} />}
+    </Show>
     <div class="toolbar-actions">
       <div class="renderer-status" data-status={props.playerStatus}>
         <span class="status-dot" aria-hidden="true" />

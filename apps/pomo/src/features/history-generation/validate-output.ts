@@ -25,13 +25,16 @@ const requireSelectedTitles = (
     return
   }
 
-  const actualTitles = moments.map((moment) => normalizeTitle(moment.title)).sort()
-  const expectedTitles = requiredTitles.map(normalizeTitle).sort()
+  const hasRequiredTitleCount = moments.length === requiredTitles.length
+  const matchesRequiredTitleSlots = moments.every((moment, index) => {
+    const requiredTitle = requiredTitles[index]
 
-  if (
-    actualTitles.length !== expectedTitles.length ||
-    actualTitles.some((title, index) => title !== expectedTitles[index])
-  ) {
+    return (
+      requiredTitle !== undefined && normalizeTitle(moment.title) === normalizeTitle(requiredTitle)
+    )
+  })
+
+  if (!hasRequiredTitleCount || !matchesRequiredTitleSlots) {
     throw new TypeError('Generated moments do not match the required titles')
   }
 }

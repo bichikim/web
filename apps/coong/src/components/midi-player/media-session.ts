@@ -104,7 +104,7 @@ const useActionHandler = (
   handler: MediaSessionActionHandler | null,
 ) => {
   onMount(() => {
-    const prevInfo: ActionHandlerInfo = (window as any)[ACTION_HANDLER_KEY] ?? {}
+    const prevInfo: ActionHandlerInfo = (globalThis.window as any)[ACTION_HANDLER_KEY] ?? {}
 
     if (prevInfo[action]) {
       console.warn(`Action ${action} is already handled`)
@@ -113,7 +113,7 @@ const useActionHandler = (
     }
 
     prevInfo[action] = true
-    ;(window as any)[ACTION_HANDLER_KEY] = prevInfo
+    ;(globalThis.window as any)[ACTION_HANDLER_KEY] = prevInfo
 
     try {
       navigator.mediaSession.setActionHandler(action, handler)
@@ -123,10 +123,10 @@ const useActionHandler = (
   })
 
   onCleanup(() => {
-    const prevInfo: ActionHandlerInfo = (window as any)[ACTION_HANDLER_KEY] ?? {}
+    const prevInfo: ActionHandlerInfo = (globalThis.window as any)[ACTION_HANDLER_KEY] ?? {}
 
     prevInfo[action] = false
-    ;(window as any)[ACTION_HANDLER_KEY] = prevInfo
+    ;(globalThis.window as any)[ACTION_HANDLER_KEY] = prevInfo
 
     try {
       navigator.mediaSession.setActionHandler(action, null)

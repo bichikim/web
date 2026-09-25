@@ -75,6 +75,7 @@ export const CalendarAgenda = (props: CalendarAgendaProps) => (
                         defaultAlarmDate={props.selectedDate}
                         event={event}
                         memos={props.memos}
+                        timeZone={props.calendar?.timeZone ?? 'UTC'}
                       />
                     </li>
                   )}

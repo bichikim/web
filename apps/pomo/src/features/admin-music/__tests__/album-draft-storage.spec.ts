@@ -94,6 +94,22 @@ const createDraft = (): AlbumDraftData => ({
   },
 })
 
+const delayCoverDeletion = (storage: AlbumDraftStorage) => {
+  const deletionGate = Promise.withResolvers<void>()
+  const deleteCover = vi.mocked(storage.deleteCover).getMockImplementation()
+
+  if (deleteCover === undefined) {
+    throw new Error('The storage fixture must provide its default cover deletion.')
+  }
+
+  vi.mocked(storage.deleteCover).mockImplementationOnce(async (options) => {
+    await deletionGate.promise
+    await deleteCover(options)
+  })
+
+  return deletionGate
+}
+
 describe('album draft data storage', () => {
   it('should restore album metadata saved in the current session', () => {
     const storage = createStorage()
@@ -236,6 +252,24 @@ describe('album draft cover storage', () => {
     await expect(readAlbumDraftCoverOrNull('second-tab', storage)).resolves.toBeNull()
   })
 
+  it('should preserve a coverless session while deleting a stale cover blob', async () => {
+    const storage = createStorage()
+    const draft: AlbumDraftData = {
+      ...createDraft(),
+      coverDraftId: null,
+      hasCoverFile: false,
+    }
+    const staleCover = new File(['stale'], 'cover.webp', {type: 'image/webp'})
+    writeAlbumDraftData(draft, storage)
+    await writeAlbumDraftCover('stale-cover', staleCover, storage)
+
+    await expect(deleteAlbumDraft('stale-cover', {storage})).resolves.toEqual({success: true})
+
+    expect(readAlbumDraftDataOrNull(storage)).toEqual(draft)
+    await expect(readAlbumDraftCoverOrNull('stale-cover', storage)).resolves.toBeNull()
+    expect(storage.deleteData).not.toHaveBeenCalled()
+  })
+
   it('should report a cover persistence failure to the caller', async () => {
     const storage = createStorage()
     const error = new Error('quota exceeded')
@@ -267,6 +301,22 @@ describe('album draft cover storage', () => {
     })
   })
 
+  it('should keep the draft when its cover cannot be read before deletion', async () => {
+    const storage = createStorage()
+    const draft = createDraft()
+    const error = new Error('cover read failed')
+    writeAlbumDraftData(draft, storage)
+    vi.mocked(storage.readCover).mockRejectedValueOnce(error)
+    vi.spyOn(console, 'warn').mockImplementation(() => undefined)
+
+    const result = await deleteAlbumDraft(draft.coverDraftId, {storage})
+
+    expect(result).toEqual({error, success: false})
+    expect(readAlbumDraftDataOrNull(storage)).toEqual(draft)
+    expect(storage.deleteCover).not.toHaveBeenCalled()
+    expect(storage.deleteData).not.toHaveBeenCalled()
+  })
+
   it('should preserve the most relevant failure while deleting a draft', async () => {
     const storage = createStorage()
     const dataError = new Error('data delete failed')
@@ -286,5 +336,115 @@ describe('album draft cover storage', () => {
       error: coverError,
       success: false,
     })
+  })
+
+  it('should preserve the album metadata when cover deletion fails', async () => {
+    const storage = createStorage()
+    const draft = createDraft()
+    const error = new Error('cover delete failed')
+    writeAlbumDraftData(draft, storage)
+    vi.mocked(storage.deleteCover).mockRejectedValueOnce(error)
+    vi.spyOn(console, 'warn').mockImplementation(() => undefined)
+
+    await expect(deleteAlbumDraft(draft.coverDraftId, {storage})).resolves.toEqual({
+      error,
+      success: false,
+    })
+    expect(readAlbumDraftDataOrNull(storage)).toEqual(draft)
+    expect(storage.deleteData).not.toHaveBeenCalled()
+  })
+
+  it('should preserve a newer album draft written while cover deletion is pending', async () => {
+    const storage = createStorage()
+    const draft = createDraft()
+    const newerDraft: AlbumDraftData = {
+      ...draft,
+      albumId: '00000000-0000-4000-8000-000000000003',
+      coverDraftId: null,
+      hasCoverFile: false,
+      translations: {
+        ...draft.translations,
+        ko: {...draft.translations.ko, title: '새 앨범'},
+      },
+    }
+    writeAlbumDraftData(draft, storage)
+    vi.mocked(storage.deleteCover).mockImplementationOnce(async () => {
+      writeAlbumDraftData(newerDraft, storage)
+    })
+
+    await expect(deleteAlbumDraft(draft.coverDraftId, {storage})).resolves.toEqual({success: true})
+    expect(readAlbumDraftDataOrNull(storage)).toEqual(newerDraft)
+    expect(storage.deleteData).not.toHaveBeenCalled()
+  })
+
+  it('should restore the cover when newer album metadata retains its ID during deletion', async () => {
+    const storage = createStorage()
+    const draft = createDraft()
+    const coverDraftId = draft.coverDraftId!
+    const newerDraft: AlbumDraftData = {
+      ...draft,
+      translations: {
+        ...draft.translations,
+        ko: {...draft.translations.ko, title: '수정된 앨범 제목'},
+      },
+    }
+    const cover = new File(['webp'], 'cover.webp', {type: 'image/webp'})
+    writeAlbumDraftData(draft, storage)
+    await writeAlbumDraftCover(coverDraftId, cover, storage)
+    vi.mocked(storage.writeCover).mockClear()
+    const deletionGate = delayCoverDeletion(storage)
+
+    const pendingDeletion = deleteAlbumDraft(coverDraftId, {storage})
+    writeAlbumDraftData(newerDraft, storage)
+    deletionGate.resolve()
+
+    const result = await pendingDeletion
+    const restoredCover = await readAlbumDraftCoverOrNull(coverDraftId, storage)
+
+    expect(result).toEqual({success: true})
+    expect(readAlbumDraftDataOrNull(storage)).toEqual(newerDraft)
+    expect(restoredCover).not.toBeNull()
+    expect(restoredCover).toMatchObject({name: 'cover.webp', size: 4, type: 'image/webp'})
+    expect(storage.writeCover).toHaveBeenCalledExactlyOnceWith(coverDraftId, cover)
+    expect(storage.deleteData).not.toHaveBeenCalled()
+  })
+
+  it('should clear a missing cover reference when restoration fails', async () => {
+    const storage = createStorage()
+    const draft = createDraft()
+    const coverDraftId = draft.coverDraftId!
+    const newerDraft: AlbumDraftData = {
+      ...draft,
+      translations: {
+        ...draft.translations,
+        ko: {...draft.translations.ko, title: '수정된 앨범 제목'},
+      },
+    }
+    const normalizedDraft: AlbumDraftData = {
+      ...newerDraft,
+      coverDraftId: null,
+      hasCoverFile: false,
+    }
+    const error = new Error('cover restore failed')
+    writeAlbumDraftData(draft, storage)
+    await writeAlbumDraftCover(
+      coverDraftId,
+      new File(['webp'], 'cover.webp', {type: 'image/webp'}),
+      storage,
+    )
+    const deletionGate = delayCoverDeletion(storage)
+    vi.mocked(storage.writeCover).mockRejectedValueOnce(error)
+    vi.spyOn(console, 'warn').mockImplementation(() => undefined)
+
+    const pendingDeletion = deleteAlbumDraft(coverDraftId, {storage})
+    writeAlbumDraftData(newerDraft, storage)
+    deletionGate.resolve()
+
+    const result = await pendingDeletion
+
+    expect(result).toEqual({error, success: false})
+    expect(readAlbumDraftDataOrNull(storage)).toEqual(normalizedDraft)
+    expect(await readAlbumDraftCoverOrNull(coverDraftId, storage)).toBeNull()
+    expect(storage.deleteData).not.toHaveBeenCalled()
   })
 })

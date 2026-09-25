@@ -1,3 +1,4 @@
+import * as m from '@paraglide/message'
 import type {ModelDownloadController} from '../model-download'
 import {prepareImageModels} from './prepare'
 import {ART_STYLES, type ArtStyle} from './styles'
@@ -41,7 +42,7 @@ const runWorker = (options: RunWorkerOptions): Promise<GenerationResponse> =>
     }
     worker.onerror = (event) => {
       cleanup()
-      reject(new Error(event.message || '모델 Worker를 실행하지 못했어요.'))
+      reject(new Error(event.message || m.picture_diary_generation_error()))
     }
     worker.onmessage = (event: MessageEvent<GenerationResponse>) => {
       const response = event.data
@@ -78,36 +79,36 @@ export const runImageGeneration = async (
   const settings = parseSettings(options.settings)
   const idea = options.idea.trim()
   if (idea.length === 0 || idea.length > MAXIMUM_IDEA_LENGTH) {
-    throw new Error('만들고 싶은 장면을 1–2,000자로 입력해 주세요.')
+    throw new Error(m.picture_diary_generation_invalid_idea())
   }
-  options.onUpdate({label: '모델 다운로드를 준비하고 있어요', type: 'progress'})
+  options.onUpdate({label: m.picture_diary_generation_prepare_download(), type: 'progress'})
   await prepareImageModels({
     downloads: options.downloads,
     modelId: options.modelId,
     signal: options.signal,
     variant: settings.variant,
   })
-  options.onUpdate({label: '이미지 생성을 위한 프롬프트를 준비하고 있어요', type: 'progress'})
+  options.onUpdate({label: m.picture_diary_generation_prepare_prompt(), type: 'progress'})
   const prompt = await runWorker({
     onUpdate: options.onUpdate,
     request: {idea, modelId: options.modelId, type: 'prompt'},
     signal: options.signal,
   })
   if (prompt.type !== 'prompt') {
-    throw new Error('영어 프롬프트 응답을 받지 못했어요.')
+    throw new Error(m.picture_diary_generation_missing_prompt())
   }
   options.signal.throwIfAborted()
   const context = ART_STYLES[options.style ?? 'none']
   const styledPrompt = context === '' ? prompt.prompt : `${prompt.prompt}\nArt style: ${context}`
   options.onUpdate({prompt: styledPrompt, type: 'prompt'})
-  options.onUpdate({label: 'Bonsai Image 4B를 준비하고 있어요…', type: 'progress'})
+  options.onUpdate({label: m.picture_diary_generation_prepare_image_model(), type: 'progress'})
   const image = await runWorker({
     onUpdate: options.onUpdate,
     request: {prompt: styledPrompt, settings, type: 'image'},
     signal: options.signal,
   })
   if (image.type !== 'image') {
-    throw new Error('이미지 응답을 받지 못했어요.')
+    throw new Error(m.picture_diary_generation_missing_image())
   }
   return {blob: image.blob, prompt: styledPrompt}
 }

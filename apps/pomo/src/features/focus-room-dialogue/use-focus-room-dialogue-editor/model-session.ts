@@ -1,3 +1,6 @@
+import * as m from '@paraglide/message'
+import {getLocale} from '@paraglide/runtime'
+import {getDownloadPercentage} from 'src/features/download-progress'
 import type {Accessor} from 'solid-js'
 
 import {
@@ -7,8 +10,6 @@ import {
   type SupertonicModelId,
 } from '../../supertonic'
 import type {DialogueEditorState} from '../dialogue-editor-state'
-
-const MAXIMUM_PROGRESS = 100
 
 export interface CreateDialogueModelSessionOptions {
   readonly isDisposed: () => boolean
@@ -26,7 +27,7 @@ export interface DialogueModelSession {
 }
 
 const getProgress = (loadedBytes: number, totalBytes: number) =>
-  Math.min(MAXIMUM_PROGRESS, Math.round((loadedBytes / totalBytes) * MAXIMUM_PROGRESS))
+  totalBytes > 0 ? getDownloadPercentage(loadedBytes, totalBytes) : 0
 
 /** Owns the disposable Supertonic client used by one dialogue editor. */
 export const createDialogueModelSession = (
@@ -34,8 +35,10 @@ export const createDialogueModelSession = (
 ): DialogueModelSession => {
   let client: SupertonicClient | null = null
   let preparedModelId: SupertonicModelId | null = null
+  let isPreparing = false
 
   const invalidate = () => {
+    isPreparing = false
     client?.dispose()
     client = null
     preparedModelId = null
@@ -55,28 +58,38 @@ export const createDialogueModelSession = (
         nextClient = createSupertonicClient()
       } catch (error: unknown) {
         console.error('Failed to create focus room dialogue model client.', error)
-        options.setState({message: '음성 모델을 시작하지 못했어요.', status: 'error'})
+        options.setState({message: m.dialogue_status_model_start_failed(), status: 'error'})
         return null
       }
 
       client = nextClient
-      options.setState({message: '음성 모델을 확인하고 있어요.', progress: 0, status: 'preparing'})
+      isPreparing = true
+      options.setState({
+        message: m.dialogue_status_model_checking(),
+        progress: 0,
+        status: 'preparing',
+      })
 
       try {
         const result = await nextClient.initialize({
           modelId,
           onProgress: (progress) => {
-            if (client === nextClient && !options.isDisposed()) {
+            if (isPreparing && client === nextClient && !options.isDisposed()) {
               options.setState({
-                message: `${progress.fileName} 준비 중…`,
+                message: m.dialogue_status_model_file_preparing({
+                  fileName: getLocale() === 'en' ? 'voice model file' : progress.fileName,
+                }),
                 progress: getProgress(progress.loadedBytes, progress.totalBytes),
                 status: 'preparing',
               })
             }
           },
           onStatus: (message) => {
-            if (client === nextClient && !options.isDisposed()) {
-              options.setState({...options.state(), message})
+            if (isPreparing && client === nextClient && !options.isDisposed()) {
+              options.setState({
+                ...options.state(),
+                message: getLocale() === 'en' ? m.dialogue_status_model_status() : message,
+              })
             }
           },
         })
@@ -84,6 +97,8 @@ export const createDialogueModelSession = (
         if (client !== nextClient || options.isDisposed()) {
           return null
         }
+
+        isPreparing = false
 
         if (!result.ok) {
           options.setState({message: getSupertonicErrorMessage(result.error), status: 'error'})
@@ -94,8 +109,9 @@ export const createDialogueModelSession = (
           return null
         }
 
+        isPreparing = false
         console.error('Failed to prepare focus room dialogue model.', error)
-        options.setState({message: '음성 모델을 준비하지 못했어요.', status: 'error'})
+        options.setState({message: m.dialogue_status_model_prepare_failed(), status: 'error'})
         return null
       }
 

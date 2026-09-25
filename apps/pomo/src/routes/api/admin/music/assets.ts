@@ -4,13 +4,8 @@ import {z} from 'zod'
 import {authorizeAdminRequest} from 'src/server/auth/authorize-admin-request'
 import {readJsonBody} from 'src/server/http/body'
 import {noStoreJson} from 'src/server/http/response'
-import {
-  completeTrackRegistration,
-  failTrackAsset,
-  findTrackAsset,
-  reserveTrackAsset,
-} from 'src/server/repositories/music-track-registration'
 import {storeTrackArtwork} from 'src/server/music/cover-upload'
+import {reserveTrackAsset} from 'src/server/music/reserve-track-asset'
 import {deleteTrackAssetStorage} from 'src/server/music/track-storage-deletion'
 import {
   createTrackPreviewObject,
@@ -18,6 +13,11 @@ import {
   inspectTrackUpload,
   isTrackValidationError,
 } from 'src/server/music/track-upload'
+import {
+  completeTrackRegistration,
+  failTrackAsset,
+  findTrackAsset,
+} from 'src/server/repositories/music-track-registration'
 
 const MAXIMUM_BODY_SIZE = 1024
 const HTTP_BAD_REQUEST = 400

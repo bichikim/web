@@ -4,6 +4,7 @@ import {
   candidate,
   createDeferred,
   flush,
+  LanguageLearningEditorWithPreferences,
   renderGeneratedReview,
   setWriterState,
   startTextModel,
@@ -13,14 +14,13 @@ import {expect, it, vi} from 'vitest'
 import type {ModelDownloadController} from '../../../features/model-download/controller'
 import {isSupertonicModelDownloaded} from '../../../features/supertonic'
 import {isTextModelDownloaded} from '../../../features/text-generation'
-import {LanguageLearningEditor} from '../Editor'
 import {saveLanguageLearningCandidates} from '../save'
 import {generateVoiceCandidates, regenerateCandidateVoice} from '../voice-generation'
 
 it('should stop every pending workflow after the editor is disposed', async () => {
   const textCheck = createDeferred<boolean>()
   vi.mocked(isTextModelDownloaded).mockReturnValueOnce(textCheck.promise)
-  let view = render(() => <LanguageLearningEditor />)
+  let view = render(() => <LanguageLearningEditorWithPreferences />)
   fireEvent.click(screen.getByRole('button', {name: 'generate'}))
   await waitFor(() => expect(isTextModelDownloaded).toHaveBeenCalled())
   view.unmount()
@@ -32,7 +32,7 @@ it('should stop every pending workflow after the editor is disposed', async () =
   setWriterState({status: 'idle'})
   vi.mocked(isTextModelDownloaded).mockResolvedValueOnce(false)
   startTextModel.mockReturnValueOnce(textDownload.promise)
-  view = render(() => <LanguageLearningEditor />)
+  view = render(() => <LanguageLearningEditorWithPreferences />)
   fireEvent.click(screen.getByRole('button', {name: 'generate'}))
   await flush()
   fireEvent.click(screen.getByRole('button', {name: 'confirm download'}))
@@ -44,7 +44,7 @@ it('should stop every pending workflow after the editor is disposed', async () =
   const voiceCheck = createDeferred<boolean>()
   setWriterState({status: 'idle'})
   vi.mocked(isSupertonicModelDownloaded).mockReturnValueOnce(voiceCheck.promise)
-  view = render(() => <LanguageLearningEditor />)
+  view = render(() => <LanguageLearningEditorWithPreferences />)
   fireEvent.click(screen.getByRole('button', {name: 'generate'}))
   await flush()
   setWriterState({status: 'complete'})
@@ -56,7 +56,7 @@ it('should stop every pending workflow after the editor is disposed', async () =
   const voiceGeneration = createDeferred<Awaited<ReturnType<typeof generateVoiceCandidates>>>()
   vi.mocked(generateVoiceCandidates).mockReturnValueOnce(voiceGeneration.promise)
   setWriterState({status: 'idle'})
-  view = render(() => <LanguageLearningEditor />)
+  view = render(() => <LanguageLearningEditorWithPreferences />)
   fireEvent.click(screen.getByRole('button', {name: 'generate'}))
   await flush()
   setWriterState({status: 'complete'})

@@ -81,7 +81,7 @@ export const importPng = async (file: File): Promise<ImportPngResult> => {
     return {error: {code: 'too-large'}, ok: false}
   }
 
-  const canvas = window.document.createElement('canvas')
+  const canvas = globalThis.document.createElement('canvas')
   canvas.width = image.naturalWidth
   canvas.height = image.naturalHeight
   const context = canvas.getContext('2d', {willReadFrequently: true})

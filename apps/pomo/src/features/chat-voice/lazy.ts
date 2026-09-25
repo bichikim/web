@@ -11,12 +11,17 @@ export const useLazyChatVoice = (props: UseChatVoiceProps = {}): ChatVoiceContro
   let controller: ChatVoiceController | null = null
   let loading: Promise<ChatVoiceController> | null = null
   let disposed = false
+  let stopVersion = 0
 
   const current = () => {
     version()
     return controller
   }
   const load = () => {
+    if (disposed) {
+      return Promise.reject(new DOMException('Voice runtime was disposed.', 'AbortError'))
+    }
+
     if (loading === null) {
       loading = import('./index')
         .then(({useChatVoice}) => {
@@ -42,10 +47,25 @@ export const useLazyChatVoice = (props: UseChatVoiceProps = {}): ChatVoiceContro
 
     return loading
   }
+  const loadForOperation = (operation: (voice: ChatVoiceController) => Promise<void>) => {
+    const operationVersion = stopVersion
+
+    return load().then((voice) => {
+      if (operationVersion !== stopVersion) {
+        throw new DOMException('Voice operation was stopped.', 'AbortError')
+      }
+
+      return operation(voice)
+    })
+  }
+  const stop = () => {
+    stopVersion += 1
+    current()?.stop()
+  }
 
   onCleanup(() => {
     disposed = true
-    controller?.stop()
+    stop()
   })
 
   return {
@@ -55,11 +75,11 @@ export const useLazyChatVoice = (props: UseChatVoiceProps = {}): ChatVoiceContro
     finish: () => current()?.finish() ?? Promise.resolve(),
     isGenerating: () => current()?.isGenerating() ?? false,
     isPlaying: () => current()?.isPlaying() ?? false,
-    prepare: async () => (await load()).prepare(),
-    speak: async (text, voiceId) => (await load()).speak(text, voiceId),
+    prepare: () => loadForOperation((voice) => voice.prepare()),
+    speak: (text, voiceId) => loadForOperation((voice) => voice.speak(text, voiceId)),
     state: () => current()?.state() ?? UNPREPARED_STATE,
     statusMessage: () =>
       current()?.statusMessage() ?? '채팅 모델과 함께 답변 음성 모델을 준비해 주세요.',
-    stop: () => current()?.stop(),
+    stop,
   }
 }

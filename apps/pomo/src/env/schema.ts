@@ -86,10 +86,58 @@ export const OPENAI_SERVICE_TIERS = ['auto', 'default', 'flex', 'priority'] as c
 
 const BASIC_AUTH_PREFIX = 'Basic '
 const DEFAULT_OPENAI_MODEL = 'gpt-5.6-luna'
+const DEFAULT_AI_QUEUE_LIMIT = 100
+const DEFAULT_AI_RUNNER_TIMEOUT_MS = 120_000
 const MINIMUM_COOKIE_SECRET_LENGTH = 32
 const MINIMUM_CRON_SECRET_LENGTH = 16
+const MAXIMUM_AI_MONTHLY_CREDIT_CAP = 1_000_000
+const MAXIMUM_AI_RUNNER_TIMEOUT_MS = 3_600_000
+const MINIMUM_AI_RUNNER_TIMEOUT_MS = 5_000
 const NODE_ENVIRONMENTS = ['development', 'production', 'test'] as const
 const VERCEL_ENVIRONMENTS = ['development', 'preview', 'production'] as const
+
+const defaultedIntegerSchema = (defaultValue: number, minimum: number, maximum: number) =>
+  z.preprocess(
+    (value) =>
+      value === undefined || (typeof value === 'string' && value.trim() === '')
+        ? defaultValue
+        : value,
+    z.coerce.number().int().min(minimum).max(maximum),
+  )
+
+const optionalPositiveIntegerSchema = z.preprocess(
+  (value) =>
+    value === undefined || (typeof value === 'string' && value.trim() === '') ? undefined : value,
+  z.coerce.number().int().positive().optional(),
+)
+
+const optionalMonthlyCreditCapSchema = z.preprocess(
+  (value) =>
+    value === undefined || (typeof value === 'string' && value.trim() === '') ? undefined : value,
+  z.coerce.number().int().positive().max(MAXIMUM_AI_MONTHLY_CREDIT_CAP).optional(),
+)
+
+const optionalUrlSchema = (name: string, protocols: ReadonlyArray<string>) =>
+  optionalStringSchema.superRefine((value, context) => {
+    if (value === undefined) {
+      return
+    }
+
+    let url: URL
+    try {
+      url = new URL(value)
+    } catch {
+      context.addIssue({code: 'custom', message: `${name} must be a valid URL`})
+      return
+    }
+
+    if (!protocols.includes(url.protocol)) {
+      context.addIssue({
+        code: 'custom',
+        message: `${name} must use ${protocols.join(' or ')}`,
+      })
+    }
+  })
 
 export const envSchema = {
   CRON_SECRET: requiredStringSchema('CRON_SECRET').min(
@@ -118,6 +166,26 @@ export const envSchema = {
   OPENAI_SERVICE_TIER: allowedStringSchema('OPENAI_SERVICE_TIER', OPENAI_SERVICE_TIERS, 'default'),
   OPENAI_WEBHOOK_SECRET: requiredStringSchema('OPENAI_WEBHOOK_SECRET'),
   OPENWEATHER_API_KEY: requiredStringSchema('OPENWEATHER_API_KEY'),
+  POMO_AI_ARTIFACT_R2_ACCESS_KEY_ID: optionalStringSchema,
+  POMO_AI_ARTIFACT_R2_BUCKET: optionalStringSchema,
+  POMO_AI_ARTIFACT_R2_PREFIX: optionalStringSchema,
+  POMO_AI_ARTIFACT_R2_SECRET_ACCESS_KEY: optionalStringSchema,
+  POMO_AI_CREDIT_PROFILE_JSON: optionalStringSchema,
+  POMO_AI_MONTHLY_CREDIT_CAP: optionalMonthlyCreditCapSchema,
+  POMO_AI_QUEUE_LIMIT: defaultedIntegerSchema(
+    DEFAULT_AI_QUEUE_LIMIT,
+    1,
+    MAXIMUM_AI_MONTHLY_CREDIT_CAP,
+  ),
+  POMO_AI_RUNNER_TIMEOUT_MS: defaultedIntegerSchema(
+    DEFAULT_AI_RUNNER_TIMEOUT_MS,
+    MINIMUM_AI_RUNNER_TIMEOUT_MS,
+    MAXIMUM_AI_RUNNER_TIMEOUT_MS,
+  ),
+  POMO_AI_RUNNER_TOKEN: optionalStringSchema,
+  POMO_AI_RUNNER_URL: optionalUrlSchema('POMO_AI_RUNNER_URL', ['https:']),
+  POMO_AI_STORAGE_QUOTA_BYTES: optionalPositiveIntegerSchema,
+  POMO_AI_SUBSCRIPTION_PRODUCT_CODE: defaultedStringSchema('pomo-ai-service'),
   POMO_CALENDAR_TOKEN_ENCRYPTION_KEY: optionalStringSchema,
   POMO_TOSS_CALLBACK_AUTHORIZATION: optionalStringSchema.superRefine((authorization, context) => {
     if (authorization === undefined) {

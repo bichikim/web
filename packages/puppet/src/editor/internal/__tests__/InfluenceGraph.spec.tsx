@@ -8,7 +8,7 @@ test('should show the sampled input and follow input updates without normalizing
   const [value, setValue] = createSignal(5)
   render(() => (
     <InfluenceGraph
-      parameter={{id: 'control', defaultValue: 0, minimum: -10, maximum: 10, name: 'Control'}}
+      parameter={{defaultValue: 0, id: 'control', maximum: 10, minimum: -10, name: 'Control'}}
       relation={{
         parameterId: 'control',
         points: [
@@ -32,7 +32,7 @@ test('should show the sampled input and follow input updates without normalizing
 test('should extend a custom curve to the full input range with constant endpoints', () => {
   render(() => (
     <InfluenceGraph
-      parameter={{id: 'control', defaultValue: 0, minimum: -10, maximum: 10, name: 'Control'}}
+      parameter={{defaultValue: 0, id: 'control', maximum: 10, minimum: -10, name: 'Control'}}
       relation={{parameterId: 'control', points: [{value: 0, weight: 0.25}]}}
     />
   ))

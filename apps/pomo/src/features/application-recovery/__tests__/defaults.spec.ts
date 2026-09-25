@@ -21,7 +21,7 @@ afterEach(() => {
 
 it('should use the default browser reporter and reload behavior', () => {
   const reload = vi.fn()
-  vi.stubGlobal('window', {location: {reload}})
+  vi.stubGlobal('location', {reload})
   const recovery = useApplicationRecovery()
   const error = new Error('render failure')
 

@@ -6,10 +6,13 @@ const mocks = vi.hoisted(() => ({
   deletePartial: vi.fn(),
   env: {} as Record<string, unknown>,
   gemmaFromPretrained: vi.fn(),
+  interrupt: vi.fn(),
   loadQwenModel: vi.fn(),
   onProgress: vi.fn(),
   processorFromPretrained: vi.fn(),
   reportStorageError: vi.fn(),
+  resumableOptions: null as null | {readonly fetcher?: typeof fetch},
+  stoppingCriteria: null as null | {readonly interrupt: () => void},
   streamerOptions: null as null | {callback_function: (text: string) => void},
 }))
 
@@ -17,6 +20,15 @@ vi.mock('@huggingface/transformers', () => ({
   AutoProcessor: {from_pretrained: mocks.processorFromPretrained},
   env: mocks.env,
   Gemma4ForCausalLM: {from_pretrained: mocks.gemmaFromPretrained},
+  InterruptableStoppingCriteria: class InterruptableStoppingCriteriaMock {
+    constructor() {
+      mocks.stoppingCriteria = this
+    }
+
+    interrupt() {
+      mocks.interrupt()
+    }
+  },
   TextStreamer: class TextStreamerMock {
     constructor(_tokenizer: unknown, options: {callback_function: (text: string) => void}) {
       mocks.streamerOptions = options
@@ -39,10 +51,13 @@ vi.mock('../model', () => ({
 vi.mock('../qwen-model', () => ({loadQwenModel: mocks.loadQwenModel}))
 vi.mock('../../model-storage', () => ({
   createModelStorage: vi.fn(() => ({storage: true})),
-  createResumableModelFetch: vi.fn(() => ({
-    deletePartial: mocks.deletePartial,
-    fetch: vi.fn(),
-  })),
+  createResumableModelFetch: vi.fn((options: {readonly fetcher?: typeof fetch} = {}) => {
+    mocks.resumableOptions = options
+    return {
+      deletePartial: mocks.deletePartial,
+      fetch: vi.fn(),
+    }
+  }),
   createTransformersModelCache: vi.fn((options: Record<string, (...args: never[]) => unknown>) => {
     mocks.cacheOptions = options
     return {cache: true}
@@ -82,6 +97,8 @@ beforeEach(() => {
     },
   }
   mocks.cacheOptions = null
+  mocks.resumableOptions = null
+  mocks.stoppingCriteria = null
   mocks.streamerOptions = null
 })
 
@@ -130,6 +147,26 @@ it('should prepare Gemma once, report byte progress, and configure versioned cac
   })
 })
 
+it('should fetch Steam model assets from the local bundle', async () => {
+  vi.stubEnv('VITE_POMO_DISTRIBUTION_TARGET', 'steam')
+  const nativeFetch = vi.fn<typeof fetch>().mockResolvedValue(new Response(null, {status: 200}))
+  vi.stubGlobal('fetch', nativeFetch)
+
+  createTransformersRuntime({onProgress: vi.fn()})
+  const fetcher = mocks.resumableOptions?.fetcher
+
+  if (fetcher === undefined) {
+    throw new Error('The model fetcher was not configured')
+  }
+
+  await fetcher('https://storage.pomofi.io/models/text-generation/model/revision/weights.onnx')
+
+  expect(nativeFetch).toHaveBeenCalledWith(
+    '/assets-steam/models/text-generation/model/revision/weights.onnx',
+    undefined,
+  )
+})
+
 it('should count and generate tokens through the prepared processor', async () => {
   const processor = createProcessor()
   const model = {
@@ -172,6 +209,47 @@ it('should count and generate tokens through the prepared processor', async () =
     topK: 0,
     topP: 1,
   })
+})
+
+it('should interrupt Transformers generation when its signal is aborted', async () => {
+  const processor = createProcessor()
+  let resolveGeneration: (() => void) | undefined
+  const model = {
+    generate: vi.fn(
+      () =>
+        new Promise<void>((resolve) => {
+          resolveGeneration = resolve
+        }),
+    ),
+  }
+  mocks.processorFromPretrained.mockResolvedValue(processor)
+  mocks.gemmaFromPretrained.mockResolvedValue(model)
+  const runtime = createTransformersRuntime({onProgress: vi.fn()})
+  await runtime.prepare('gemma-4-e2b-mobile')
+
+  const controller = new AbortController()
+  const generation = runtime.generate({
+    maximumTokens: 12,
+    messages,
+    noRepeatNgramSize: 2,
+    repetitionPenalty: 1.1,
+    signal: controller.signal,
+    suppressedTokenIds: [3],
+    temperature: 0.7,
+    topK: 5,
+    topP: 0.9,
+  })
+
+  await vi.waitFor(() => expect(model.generate).toHaveBeenCalledOnce())
+  expect(model.generate).toHaveBeenCalledWith(
+    expect.objectContaining({stopping_criteria: mocks.stoppingCriteria}),
+  )
+
+  controller.abort()
+  expect(mocks.interrupt).toHaveBeenCalledOnce()
+
+  resolveGeneration?.()
+  await expect(generation).resolves.toBe('')
 })
 
 it('should enforce preparation and prompt contracts', async () => {

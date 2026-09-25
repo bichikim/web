@@ -1,4 +1,9 @@
-import type {DialogueEventPlaybackMode} from './schema'
+import type {EventDialogueIds, EventPlaybackModes} from './event-context'
+import {
+  DEFAULT_DIALOGUE_EVENT_PLAYBACK_MODE,
+  type DialogueEventId,
+  type DialogueEventPlaybackMode,
+} from './schema'
 
 export interface SelectEventDialoguesOptions {
   readonly dialogueIds: ReadonlyArray<string>
@@ -29,6 +34,23 @@ const shuffleDialogues = (dialogueIds: ReadonlyArray<string>, random: () => numb
   }
 
   return shuffledIds
+}
+
+const appendDialogueIdsWithinLimit = (
+  dialogueIds: ReadonlyArray<string>,
+  selectedDialogueIds: ReadonlyArray<string>,
+  maxLatestDialogueIds?: number,
+): ReadonlyArray<string> => {
+  if (maxLatestDialogueIds === undefined) {
+    return [...dialogueIds, ...selectedDialogueIds]
+  }
+
+  const remainingDialogueCount = maxLatestDialogueIds - dialogueIds.length
+  if (remainingDialogueCount <= 0) {
+    return [...dialogueIds]
+  }
+
+  return [...dialogueIds, ...selectedDialogueIds.slice(-remainingDialogueCount)]
 }
 
 /** Selects and orders the dialogues for one event occurrence. */
@@ -63,3 +85,20 @@ export const selectEventDialogues = (
     }
   }
 }
+
+/** Selects dialogue ids for each event occurrence while applying an optional catch-up cap. */
+export const selectDialogueIdsForEvents = (
+  eventIds: ReadonlyArray<DialogueEventId>,
+  bindings: EventDialogueIds,
+  playbackModes: EventPlaybackModes,
+  maxLatestDialogueIds?: number,
+): ReadonlyArray<string> =>
+  eventIds.reduce<ReadonlyArray<string>>((dialogueIds, eventId) => {
+    const selectedDialogueIds = selectEventDialogues({
+      dialogueIds: bindings[eventId] ?? [],
+      maxLatestDialogueIds,
+      playbackMode: playbackModes[eventId] ?? DEFAULT_DIALOGUE_EVENT_PLAYBACK_MODE,
+    })
+
+    return appendDialogueIdsWithinLimit(dialogueIds, selectedDialogueIds, maxLatestDialogueIds)
+  }, [])

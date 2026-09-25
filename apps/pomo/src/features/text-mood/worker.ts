@@ -3,23 +3,18 @@ import {getMonotonicTime} from 'src/utils/get-monotonic-time'
 
 // oxlint-disable eslint-js/camelcase -- Transformers.js option names are fixed external contracts.
 
-import {
-  env,
-  type FeatureExtractionPipeline,
-  pipeline,
-  type ProgressInfo,
-} from '@huggingface/transformers'
+import {env, type FeatureExtractionPipeline, pipeline} from '@huggingface/transformers'
 
 import {getErrorMessage} from 'src/utils/get-error-message'
 import {isNonBlankString} from 'src/utils/is-non-blank-string'
+import {createPercentProgressReporter} from '../transformers-progress'
 import {classifyTextMood, classifyTextSufficiency} from './classifier'
 import type {TextMoodError, TextMoodPhase} from './errors'
 import type {TextMoodWorkerRequest, TextMoodWorkerResponse} from './messages'
 import {TEXT_MOOD_MODEL} from './model'
 
-const MAXIMUM_PROGRESS = 100
 const MINIMUM_PROGRESS = 0
-const workerScope = self as DedicatedWorkerGlobalScope
+const workerScope = globalThis.self as DedicatedWorkerGlobalScope
 
 // AI_NOTE - 감정 분석 런타임 자산은 외부 Hub fallback 없이 버전 고정된 Pomo R2 미러에서만 읽는다.
 env.allowLocalModels = false
@@ -43,17 +38,9 @@ const createError = (
   retryable: code !== 'invalid-input',
 })
 
-const reportProgress = (progress: ProgressInfo) => {
-  if (progress.status !== 'progress_total') {
-    return
-  }
-
-  const percentage = Math.min(
-    MAXIMUM_PROGRESS,
-    Math.max(MINIMUM_PROGRESS, Math.round(progress.progress)),
-  )
-  sendResponse({progress: percentage, type: 'loading'})
-}
+const reportProgress = createPercentProgressReporter((progress) =>
+  sendResponse({progress, type: 'loading'}),
+)
 
 const prepareModel = async () => {
   if (extractor !== null) {

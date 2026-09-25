@@ -12,8 +12,10 @@ export const RANDOM_TRANSITIONS = [
   'rgb-kinetic',
 ] as const
 
+export const backgroundWebsiteUrlSchema = z.string().url().startsWith('https://')
+
 export const backgroundPreferencesSchema = z.object({
-  mode: z.enum(['character', 'frame']),
+  mode: z.enum(['character', 'frame', 'website']),
   order: z.enum(['sequential', 'random']),
   pairPhotos: z.boolean().default(false),
   photoSeconds: z.number().int().min(1).max(MAX_PHOTO_SECONDS),
@@ -36,9 +38,10 @@ export const backgroundPreferencesSchema = z.object({
       .default([...RANDOM_TRANSITIONS]),
   ),
   videoMode: z.enum(['end', 'hold', 'loop']).default('end'),
+  websiteUrl: backgroundWebsiteUrlSchema.nullable().default(null),
 })
 
-export type BackgroundMode = 'character' | 'frame'
+export type BackgroundMode = 'character' | 'frame' | 'website'
 export type PlaybackOrder = 'sequential' | 'random'
 export type TransitionEffect = 'none' | (typeof RANDOM_TRANSITIONS)[number]
 export type MediaKind = 'photo' | 'video'
@@ -52,6 +55,7 @@ export interface BackgroundPreferences {
   readonly mode: BackgroundMode
   readonly order: PlaybackOrder
   readonly photoSeconds: number
+  readonly websiteUrl: string | null
 }
 export interface BackgroundMedia {
   readonly contentHash?: string
@@ -73,6 +77,7 @@ export const DEFAULT_BACKGROUND: BackgroundPreferences = {
   transition: 'fade',
   transitionPool: [...RANDOM_TRANSITIONS],
   videoMode: 'end',
+  websiteUrl: null,
 }
 export const backgroundSnapshotSchema = z.object({
   items: z.array(

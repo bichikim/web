@@ -1,7 +1,7 @@
 import {render} from 'solid-js/web'
 import {createSignal} from 'solid-js'
 import {afterEach, expect, test} from 'vitest'
-import {page, userEvent} from 'vitest/browser'
+import {page} from 'vitest/browser'
 
 import {EditorLayerPanel} from '../../src/editor/internal/EditorLayerPanel'
 import {createDemoDocument, type PuppetDocument} from '../../src/player'
@@ -11,17 +11,18 @@ let disposeView: (() => void) | undefined
 afterEach(() => {
   disposeView?.()
   disposeView = undefined
-  window.document.body.replaceChildren()
+  globalThis.document.body.replaceChildren()
 })
 
-test('should drag a root part into a group in Chromium', async () => {
-  const root = window.document.createElement('div')
+test('should move a root part into a group on drag and drop', async () => {
+  const root = globalThis.document.createElement('div')
   const [document, setDocument] = createSignal<PuppetDocument>(createDemoDocument())
-  window.document.body.replaceChildren(root)
+  globalThis.document.body.replaceChildren(root)
   disposeView = render(
     () => <EditorLayerPanel document={document()} onDocumentChange={setDocument} />,
     root,
   )
+  await Promise.all([...root.querySelectorAll('img')].map((image) => image.decode()))
   const source = page
     .getByRole('button', {name: 'mesh-preview 레이어 선택'})
     .element()
@@ -34,7 +35,13 @@ test('should drag a root part into a group in Chromium', async () => {
 
   expect(source).not.toBeNull()
   expect(target).not.toBeNull()
-  await userEvent.dragAndDrop(source!, target!)
+  const dataTransfer = new DataTransfer()
+  source!.dispatchEvent(new DragEvent('dragstart', {bubbles: true, dataTransfer}))
+  const bounds = target!.getBoundingClientRect()
+  const clientY = bounds.top + bounds.height / 2
+  target!.dispatchEvent(new DragEvent('dragover', {bubbles: true, clientY, dataTransfer}))
+  target!.dispatchEvent(new DragEvent('drop', {bubbles: true, clientY, dataTransfer}))
+  source!.dispatchEvent(new DragEvent('dragend', {bubbles: true, dataTransfer}))
 
   expect(document().scene?.roots).toHaveLength(1)
   expect(document().scene?.roots[0]).toMatchObject({

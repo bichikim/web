@@ -18,7 +18,7 @@ interface FeedGenerationStatusProps {
 export const FeedGenerationStatus = (props: FeedGenerationStatusProps) => {
   const preference = useReadingStatusPreference()
   return (
-    <Show when={props.respectVisibilityPreference === false || preference.visible()}>
+    <Show when={props.respectVisibilityPreference === false || preference.visible() !== false}>
       <FeedStatusSurface sceneStyle={props.sceneStyle} state={props.state}>
         <span aria-hidden="true" class={CLASSES.feedStatusSpinner} />
         <span class={CLASSES.feedStatusCopy}>

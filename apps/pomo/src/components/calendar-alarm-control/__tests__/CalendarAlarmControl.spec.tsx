@@ -57,6 +57,16 @@ const event: CalendarEvent = {
   start: '2026-09-05',
   title: '팀 회의',
 }
+const HOST_DEFAULT_ALARM_AT = new Date(2026, 8, 6, 9)
+const HOST_SAVED_ALARM_AT = new Date(2026, 8, 6, 8, 30)
+const CALENDAR_TIME_ZONE =
+  HOST_SAVED_ALARM_AT.toISOString() === '2026-09-06T15:30:00.000Z'
+    ? 'Asia/Seoul'
+    : 'America/Los_Angeles'
+const EXPECTED_DEFAULT_ALARM_AT =
+  CALENDAR_TIME_ZONE === 'Asia/Seoul' ? '2026-09-06T00:00:00.000Z' : '2026-09-06T16:00:00.000Z'
+const EXPECTED_SAVED_ALARM_AT =
+  CALENDAR_TIME_ZONE === 'Asia/Seoul' ? '2026-09-05T23:30:00.000Z' : '2026-09-06T15:30:00.000Z'
 let currentTime = new Date('2026-09-04T03:00:00.000Z')
 const now = () => new Date(currentTime)
 const matches = HTMLElement.prototype.matches
@@ -103,14 +113,21 @@ afterEach(() => {
 })
 
 it('should preserve the all-day event date when no selected date is provided', () => {
-  render(() => <CalendarAlarmControl now={now} event={event} memos={() => mocks.memos} />)
+  render(() => (
+    <CalendarAlarmControl
+      now={now}
+      event={event}
+      memos={() => mocks.memos}
+      timeZone={CALENDAR_TIME_ZONE}
+    />
+  ))
 
   fireEvent.click(screen.getByRole('button', {name: '팀 회의 알람 설정'}))
   expect(screen.getByLabelText('날짜')).toHaveValue('2026-09-05')
   expect(screen.getByLabelText('시간')).toHaveValue('09:00')
 })
 
-it('should default a spanning all-day alarm to the selected calendar day', () => {
+it('should default a spanning all-day alarm to the selected calendar day', async () => {
   const spanningEvent: CalendarEvent = {
     ...event,
     end: '2026-09-07',
@@ -122,12 +139,38 @@ it('should default a spanning all-day alarm to the selected calendar day', () =>
       defaultAlarmDate={new Date(2026, 8, 6)}
       event={spanningEvent}
       memos={() => mocks.memos}
+      timeZone={CALENDAR_TIME_ZONE}
     />
   ))
 
   fireEvent.click(screen.getByRole('button', {name: '팀 회의 알람 설정'}))
   expect(screen.getByLabelText('날짜')).toHaveValue('2026-09-06')
   expect(screen.getByLabelText('시간')).toHaveValue('09:00')
+  expect(EXPECTED_DEFAULT_ALARM_AT).not.toBe(HOST_DEFAULT_ALARM_AT.toISOString())
+  fireEvent.click(screen.getByRole('button', {name: '알람 저장'}))
+
+  await waitFor(() => expect(mocks.updateMemos).toHaveBeenCalledOnce())
+  expect(mocks.memos[0]?.exactReminderAt).toBe(EXPECTED_DEFAULT_ALARM_AT)
+})
+
+it('should save an all-day alarm time in the calendar time zone', async () => {
+  render(() => (
+    <CalendarAlarmControl
+      now={now}
+      event={event}
+      memos={() => mocks.memos}
+      timeZone={CALENDAR_TIME_ZONE}
+    />
+  ))
+
+  fireEvent.click(screen.getByRole('button', {name: '팀 회의 알람 설정'}))
+  fireEvent.input(screen.getByLabelText('날짜'), {target: {value: '2026-09-06'}})
+  fireEvent.input(screen.getByLabelText('시간'), {target: {value: '08:30'}})
+  fireEvent.click(screen.getByRole('button', {name: '알람 저장'}))
+
+  await waitFor(() => expect(mocks.updateMemos).toHaveBeenCalledOnce())
+  expect(mocks.memos[0]?.exactReminderAt).toBe(EXPECTED_SAVED_ALARM_AT)
+  expect(EXPECTED_SAVED_ALARM_AT).not.toBe(HOST_SAVED_ALARM_AT.toISOString())
 })
 
 it('should save an exact Pomo reminder for a calendar event', async () => {
@@ -210,12 +253,12 @@ it('should keep a deleted calendar alarm inactive after a newer storage event', 
     return <CalendarAlarmControl now={now} event={event} memos={memos} />
   })
 
-  window.dispatchEvent(
+  globalThis.dispatchEvent(
     new CustomEvent(MEMORY_MEMOS_CHANGED_EVENT, {
       detail: {memos: [{...memo, deletionPending: true as const}], revision: 2},
     }),
   )
-  window.dispatchEvent(
+  globalThis.dispatchEvent(
     new CustomEvent(MEMORY_MEMOS_CHANGED_EVENT, {
       detail: {memos: [memo], revision: 3},
     }),
@@ -403,15 +446,18 @@ it('should use the current injected clock when saving after the editor opens', a
   expect(mocks.memos[0]?.createdAt).toBe(currentTime.toISOString())
 })
 
-it('should save, edit and remove scoped alarms independently while preserving a legacy alarm', async () => {
-  const legacy = createMemoryMemo({
-    exactReminderAt: new Date('2026-09-05T09:00').toISOString(),
-    id: 'calendar-alarm:connection-1:abcde12345',
-    now: now(),
-    random: () => 0,
-    recallMode: 'none',
-    text: '기존 일정 알람',
-  })
+it('should save, edit and remove scoped alarms independently while replacing a legacy alarm', async () => {
+  const legacy = {
+    ...createMemoryMemo({
+      exactReminderAt: new Date('2026-09-05T09:00').toISOString(),
+      id: 'calendar-alarm:connection-1:abcde12345',
+      now: now(),
+      random: () => 0,
+      recallMode: 'none',
+      text: '기존 일정 알람',
+    }),
+    dialogueId: 'memory-memo-calendar-alarm:connection-1:abcde12345',
+  }
   const [memos, setMemos] = createSignal<ReadonlyArray<MemoryMemo>>([legacy])
   mocks.memos = memos()
   mocks.updateMemos.mockImplementation(async (update) => {
@@ -434,11 +480,14 @@ it('should save, edit and remove scoped alarms independently while preserving a 
   ).toBeInTheDocument()
   fireEvent.click(workControl.getByRole('button', {name: 'Work 알람 설정'}))
   fireEvent.click(workControl.getByRole('button', {name: '알람 저장'}))
-  await waitFor(() => expect(memos()).toHaveLength(2))
+  await waitFor(() => expect(memos()).toHaveLength(1))
+  expect(mocks.deleteDialogue).toHaveBeenCalledExactlyOnceWith(legacy.dialogueId)
+  expect(workControl.queryByRole('status')).not.toBeInTheDocument()
+  expect(personalControl.queryByRole('status')).not.toBeInTheDocument()
   expect(personalControl.getByRole('button', {name: 'Personal 알람 설정'})).toBeInTheDocument()
   fireEvent.click(personalControl.getByRole('button', {name: 'Personal 알람 설정'}))
   fireEvent.click(personalControl.getByRole('button', {name: '알람 저장'}))
-  await waitFor(() => expect(memos()).toHaveLength(3))
+  await waitFor(() => expect(memos()).toHaveLength(2))
   const personalMemo = memos().find((memo) => memo.id === `calendar-alarm:${personal.id}`)
   expect(personalMemo).toBeDefined()
 
@@ -454,17 +503,9 @@ it('should save, edit and remove scoped alarms independently while preserving a 
   expect(memos()).toContainEqual(personalMemo)
   await waitFor(() => expect(workControl.getByRole('button', {name: '알람 해제'})).toBeEnabled())
   fireEvent.click(workControl.getByRole('button', {name: '알람 해제'}))
-  await waitFor(() => expect(memos()).toEqual([personalMemo, legacy]))
+  await waitFor(() => expect(memos()).toEqual([personalMemo]))
   expect(workControl.getByRole('button', {name: 'Work 알람 설정'})).toBeInTheDocument()
   expect(personalControl.getByRole('button', {name: 'Personal 알람 수정'})).toBeInTheDocument()
-  expect(workControl.getByRole('status')).toHaveTextContent('이전 일정 알람')
-  setMemos(
-    memos().map((memo) => (memo.id === legacy.id ? {...memo, nextExactReminderAt: null} : memo)),
-  )
-  expect(workControl.queryByRole('status')).not.toBeInTheDocument()
-  setMemos(memos().map((memo) => (memo.id === legacy.id ? legacy : memo)))
-  expect(workControl.getByRole('status')).toHaveTextContent('이전 일정 알람')
-  setMemos(memos().filter((memo) => memo.id !== legacy.id))
   expect(workControl.queryByRole('status')).not.toBeInTheDocument()
   expect(personalControl.queryByRole('status')).not.toBeInTheDocument()
 })

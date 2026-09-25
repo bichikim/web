@@ -45,7 +45,7 @@ export interface UseAlbumTranslationProps {
     readonly en: AlbumTranslationText
     readonly ja: AlbumTranslationText
     readonly 'zh-Hans': AlbumTranslationText
-  }) => void
+  }) => boolean | void
   readonly runtime?: AlbumTranslationRuntime
 }
 
@@ -75,8 +75,10 @@ export const useAlbumTranslation = (
   const handleResponse = (response: AlbumTranslationWorkerResponse) => {
     switch (response.type) {
       case 'complete':
-        props.onComplete(response.translations)
-        setState({status: 'complete'})
+        {
+          const didApply = props.onComplete(response.translations)
+          setState(didApply === false ? {status: 'idle'} : {status: 'complete'})
+        }
         return
       case 'error':
         if (response.restartRequired) {

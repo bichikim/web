@@ -93,7 +93,7 @@ export const applySceneDeformers = (options: ApplySceneDeformersOptions) => {
 export const unapplySceneDeformersPoint = (
   options: UnapplySceneDeformersPointOptions,
 ): PuppetPoint => {
-  const roots = getDocumentScene(options.document).roots
+  const {roots} = getDocumentScene(options.document)
   const node = findNode(roots, options.partId)
   if (node?.kind === 'part' && node.skinning !== undefined && options.vertexIndex !== undefined) {
     const matrix = getSkinMatrix(roots, node.skinning, options.vertexIndex)

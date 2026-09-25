@@ -36,6 +36,7 @@ export const Canvas = (props: CanvasProps) => {
       onEnded: playback.onEnded,
       onError: playback.onError,
       onVideoStart: playback.onVideoStart,
+      videoTextureMode: import.meta.env.VITE_POMO_IS_APPS_IN_TOSS === 'true' ? 'canvas' : 'webgl',
     })
     let disposed = false
     renderer
@@ -89,13 +90,18 @@ export const Canvas = (props: CanvasProps) => {
       transition: untrack(() => selectTransition(props.background.preferences())),
     })
       .then((shown) => {
-        if (!disposed && shown !== null) {
-          setCompanionId(shown.companionId)
-          if (shown.companionId !== null) {
-            playback.consume(shown.companionId)
-          }
-          playback.onReady()
+        if (disposed) {
+          return
         }
+        if (shown === null) {
+          playback.onError()
+          return
+        }
+        setCompanionId(shown.companionId)
+        if (shown.companionId !== null) {
+          playback.consume(shown.companionId)
+        }
+        playback.onReady()
       })
       .catch((error: unknown) => {
         if (!disposed) {

@@ -1,62 +1,22 @@
 import type {CalendarEvent, CalendarEventRange, CalendarProviderId} from 'src/features/calendar'
+import {createOpaqueToken, hashOpaqueToken} from 'src/server/utils/token'
 
+import type {CalendarConnectionRecord, CalendarRepository} from '../repositories/calendar'
+import {createCodeChallenge} from './create-code-challenge'
 import type {CalendarProvider, CalendarProviderTokens} from './providers/types'
 import type {TokenVault} from './token-vault'
 
 const TOKEN_REFRESH_LEEWAY_MILLISECONDS = 60_000
-
-export interface CalendarConnectionRecord {
-  readonly accountLabel: string
-  readonly encryptedTokens: string
-  readonly id: string
-  readonly provider: CalendarProviderId
-}
+const MILLISECONDS_PER_SECOND = 1000
+const SECONDS_PER_MINUTE = 60
+const OAUTH_STATE_LIFETIME_MINUTES = 10
+const OAUTH_STATE_LIFETIME_MILLISECONDS =
+  OAUTH_STATE_LIFETIME_MINUTES * SECONDS_PER_MINUTE * MILLISECONDS_PER_SECOND
 
 export interface CalendarConnectionSummary {
   readonly accountLabel: string
   readonly id: string
   readonly provider: CalendarProviderId
-}
-
-interface CalendarOauthState {
-  readonly codeVerifier: string
-  readonly redirectUri: string
-  readonly userId: string
-}
-
-interface CreateOauthStateOptions {
-  readonly provider: CalendarProviderId
-  readonly redirectUri: string
-  readonly userId: string
-}
-
-interface CreatedOauthState {
-  readonly codeChallenge: string
-  readonly state: string
-}
-
-interface SaveCalendarConnectionOptions {
-  readonly accountLabel: string
-  readonly encryptedTokens: string
-  readonly provider: CalendarProviderId
-  readonly providerSubject: string
-  readonly userId: string
-}
-
-export interface CalendarRepository {
-  readonly consumeOauthState: (
-    provider: CalendarProviderId,
-    state: string,
-    now: Date,
-  ) => Promise<CalendarOauthState | null>
-  readonly createOauthState: (options: CreateOauthStateOptions) => Promise<CreatedOauthState>
-  readonly deleteConnection: (userId: string, connectionId: string) => Promise<boolean>
-  readonly listConnections: (userId: string) => Promise<ReadonlyArray<CalendarConnectionRecord>>
-  readonly saveConnection: (options: SaveCalendarConnectionOptions) => Promise<void>
-  readonly withLockedTokens: (
-    connectionId: string,
-    operation: (encryptedTokens: string) => Promise<string>,
-  ) => Promise<string>
 }
 
 interface CreateCalendarServiceOptions {
@@ -156,16 +116,27 @@ export const createCalendarService = (options: CreateCalendarServiceOptions): Ca
 
   return {
     beginConnection: async (beginOptions) => {
-      const challenge = await options.repository.createOauthState(beginOptions)
-      return options.providerFor(beginOptions.provider).createAuthorizationUrl({
-        ...challenge,
+      const state = createOpaqueToken()
+      const codeVerifier = createOpaqueToken()
+      const codeChallenge = createCodeChallenge(codeVerifier)
+      await options.repository.createOauthState({
+        codeVerifier,
+        expiresAt: new Date(now().getTime() + OAUTH_STATE_LIFETIME_MILLISECONDS),
+        provider: beginOptions.provider,
         redirectUri: beginOptions.redirectUri,
+        stateHash: hashOpaqueToken(state),
+        userId: beginOptions.userId,
+      })
+      return options.providerFor(beginOptions.provider).createAuthorizationUrl({
+        codeChallenge,
+        redirectUri: beginOptions.redirectUri,
+        state,
       })
     },
     completeConnection: async (completeOptions) => {
       const oauthState = await options.repository.consumeOauthState(
         completeOptions.provider,
-        completeOptions.state,
+        hashOpaqueToken(completeOptions.state),
         now(),
       )
 

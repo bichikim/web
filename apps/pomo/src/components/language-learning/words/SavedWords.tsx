@@ -28,7 +28,6 @@ interface LanguageLearningSavedWordsProps {
   readonly getAudioUrl: (word: LanguageLearningWord) => string | null
   readonly isPronunciationLoading: (word: LanguageLearningWord) => boolean
   readonly memorizedWords: ReadonlyArray<LanguageLearningWord>
-  readonly pronunciationBusy: boolean
   readonly onDelete: (words: ReadonlyArray<LanguageLearningWord>) => void
   readonly onFilterChange: (value: string) => void
   readonly onPronounce: (word: LanguageLearningWord) => void
@@ -79,7 +78,6 @@ export const LanguageLearningSavedWords = (props: LanguageLearningSavedWordsProp
           onPronounce={props.onPronounce}
           onSelect={props.onSelect}
           onToggleMemorized={props.onToggleMemorized}
-          pronunciationBusy={props.pronunciationBusy}
           selectedWords={props.selectedWords}
           words={props.filterView.words}
         />

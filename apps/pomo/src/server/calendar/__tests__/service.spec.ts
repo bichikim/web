@@ -1,9 +1,19 @@
 /** @vitest-environment node */
 import {beforeEach, expect, it, vi} from 'vitest'
 
+const tokenMocks = vi.hoisted(() => ({
+  createOpaqueToken: vi.fn(),
+  hashOpaqueToken: vi.fn(),
+}))
+const challengeMocks = vi.hoisted(() => ({createCodeChallenge: vi.fn()}))
+
+vi.mock('src/server/utils/token', () => tokenMocks)
+vi.mock('../create-code-challenge', () => challengeMocks)
+
+import {type CalendarRepository} from '../../repositories/calendar'
 import {createGoogleCalendarProvider} from '../providers/google'
 import type {CalendarProvider} from '../providers/types'
-import {type CalendarRepository, createCalendarService} from '../service'
+import {createCalendarService} from '../service'
 import type {TokenVault} from '../token-vault'
 
 const googleProvider: CalendarProvider = {
@@ -39,13 +49,16 @@ const providerFor = (provider: 'google' | 'microsoft') =>
 
 beforeEach(() => {
   vi.clearAllMocks()
+  tokenMocks.createOpaqueToken.mockReset()
+  tokenMocks.hashOpaqueToken.mockReset()
+  challengeMocks.createCodeChallenge.mockReset()
+  tokenMocks.createOpaqueToken.mockReturnValueOnce('state-token').mockReturnValueOnce('verifier')
+  tokenMocks.hashOpaqueToken.mockImplementation((token: string) => `hash:${token}`)
+  challengeMocks.createCodeChallenge.mockReturnValue('challenge')
 })
 
 it('should persist an OAuth challenge before returning the provider authorization URL', async () => {
-  vi.mocked(repository.createOauthState).mockResolvedValue({
-    codeChallenge: 'challenge',
-    state: 'state-token',
-  })
+  vi.mocked(repository.createOauthState).mockResolvedValue(undefined)
   const service = createCalendarService({
     now: () => new Date('2026-09-04T10:00:00.000Z'),
     providerFor,
@@ -60,6 +73,15 @@ it('should persist an OAuth challenge before returning the provider authorizatio
       userId: 'user-1',
     }),
   ).resolves.toBe('https://accounts.google.com/authorize')
+  expect(challengeMocks.createCodeChallenge).toHaveBeenCalledWith('verifier')
+  expect(repository.createOauthState).toHaveBeenCalledWith({
+    codeVerifier: 'verifier',
+    expiresAt: new Date('2026-09-04T10:10:00.000Z'),
+    provider: 'google',
+    redirectUri: 'https://pomofi.io/api/calendar/callback/google',
+    stateHash: 'hash:state-token',
+    userId: 'user-1',
+  })
   expect(googleProvider.createAuthorizationUrl).toHaveBeenCalledWith({
     codeChallenge: 'challenge',
     redirectUri: 'https://pomofi.io/api/calendar/callback/google',
@@ -92,6 +114,11 @@ it('should exchange one consumed OAuth state and store encrypted account tokens'
   await expect(
     service.completeConnection({code: 'code', provider: 'google', state: 'state-token'}),
   ).resolves.toBe(true)
+  expect(repository.consumeOauthState).toHaveBeenCalledWith(
+    'google',
+    'hash:state-token',
+    new Date('2026-09-04T10:00:00.000Z'),
+  )
   expect(repository.saveConnection).toHaveBeenCalledWith({
     accountLabel: 'person@example.com',
     encryptedTokens: 'sealed-tokens',

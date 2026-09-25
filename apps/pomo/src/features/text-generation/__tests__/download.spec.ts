@@ -1,10 +1,14 @@
 /** @vitest-environment node */
-import {describe, expect, it, vi} from 'vitest'
+import {afterEach, describe, expect, it, vi} from 'vitest'
 
 import type {ModelStorage} from '../../model-storage'
 import * as modelStorage from '../../model-storage'
 import {successResult} from 'src/features/result'
 import {isTextModelDownloaded} from '../download'
+
+afterEach(() => {
+  vi.unstubAllEnvs()
+})
 
 const createStorage = (): ModelStorage => ({
   delete: vi.fn(async () => successResult(false)),
@@ -49,5 +53,13 @@ describe('isTextModelDownloaded', () => {
     vi.spyOn(modelStorage, 'createModelStorage').mockReturnValue(storage)
 
     await expect(isTextModelDownloaded({modelId: 'gemma-4-e2b'})).resolves.toBe(true)
+  })
+
+  it('should treat the R2-backed product model as packaged on Steam', async () => {
+    vi.stubEnv('VITE_POMO_DISTRIBUTION_TARGET', 'steam')
+    const storage = createStorage()
+
+    await expect(isTextModelDownloaded({modelId: 'gemma-4-e2b', storage})).resolves.toBe(true)
+    expect(storage.get).not.toHaveBeenCalled()
   })
 })

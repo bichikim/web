@@ -4,6 +4,9 @@ import type {PuppetParameterValueMap, PuppetParameterValues} from '../deformatio
 import type {PuppetDocument} from '../player/document'
 
 export interface MeshEditorProps {
+  readonly brushControlsExternal?: boolean
+  readonly brushControlsMount?: HTMLDivElement
+  readonly brushSettingsMount?: HTMLDivElement
   readonly meshEditing?: boolean
   readonly activeBindingId?: string
   readonly activeKeyformValues?: PuppetParameterValues | null

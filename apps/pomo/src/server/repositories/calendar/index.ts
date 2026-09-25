@@ -1,33 +1,69 @@
-import {createHash} from 'node:crypto'
 import {and, eq, gt, sql} from 'drizzle-orm'
 
 import {
   calendarConnections,
   calendarOauthStates,
+  calendarProviderEnum,
   getDatabase,
   withTransactionalDatabase,
 } from 'src/server/database'
-import {createOpaqueToken, hashOpaqueToken} from 'src/server/auth/token'
 
-import type {CalendarRepository} from '../../calendar/service'
+export type CalendarProviderId = (typeof calendarProviderEnum.enumValues)[number]
 
-const MILLISECONDS_PER_SECOND = 1000
-const SECONDS_PER_MINUTE = 60
-const OAUTH_STATE_LIFETIME_MINUTES = 10
-const OAUTH_STATE_LIFETIME_MILLISECONDS =
-  OAUTH_STATE_LIFETIME_MINUTES * SECONDS_PER_MINUTE * MILLISECONDS_PER_SECOND
+export interface CalendarConnectionRecord {
+  readonly accountLabel: string
+  readonly encryptedTokens: string
+  readonly id: string
+  readonly provider: CalendarProviderId
+}
 
-const createCodeChallenge = (codeVerifier: string) =>
-  createHash('sha256').update(codeVerifier).digest('base64url')
+interface CalendarOauthState {
+  readonly codeVerifier: string
+  readonly redirectUri: string
+  readonly userId: string
+}
+
+interface CreateOauthStateOptions {
+  readonly codeVerifier: string
+  readonly expiresAt: Date
+  readonly provider: CalendarProviderId
+  readonly redirectUri: string
+  readonly stateHash: string
+  readonly userId: string
+}
+
+interface SaveCalendarConnectionOptions {
+  readonly accountLabel: string
+  readonly encryptedTokens: string
+  readonly provider: CalendarProviderId
+  readonly providerSubject: string
+  readonly userId: string
+}
+
+export interface CalendarRepository {
+  readonly consumeOauthState: (
+    provider: CalendarProviderId,
+    stateHash: string,
+    now: Date,
+  ) => Promise<CalendarOauthState | null>
+  readonly createOauthState: (options: CreateOauthStateOptions) => Promise<void>
+  readonly deleteConnection: (userId: string, connectionId: string) => Promise<boolean>
+  readonly listConnections: (userId: string) => Promise<ReadonlyArray<CalendarConnectionRecord>>
+  readonly saveConnection: (options: SaveCalendarConnectionOptions) => Promise<void>
+  readonly withLockedTokens: (
+    connectionId: string,
+    operation: (encryptedTokens: string) => Promise<string>,
+  ) => Promise<string>
+}
 
 export const calendarRepository: CalendarRepository = {
-  consumeOauthState: async (provider, state, now) => {
+  consumeOauthState: async (provider, stateHash, now) => {
     const [oauthState] = await getDatabase()
       .delete(calendarOauthStates)
       .where(
         and(
           eq(calendarOauthStates.provider, provider),
-          eq(calendarOauthStates.stateHash, hashOpaqueToken(state)),
+          eq(calendarOauthStates.stateHash, stateHash),
           gt(calendarOauthStates.expiresAt, now),
         ),
       )
@@ -40,20 +76,7 @@ export const calendarRepository: CalendarRepository = {
     return oauthState ?? null
   },
   createOauthState: async (options) => {
-    const state = createOpaqueToken()
-    const codeVerifier = createOpaqueToken()
-    const expiresAt = new Date(Date.now() + OAUTH_STATE_LIFETIME_MILLISECONDS)
-    await getDatabase()
-      .insert(calendarOauthStates)
-      .values({
-        codeVerifier,
-        expiresAt,
-        provider: options.provider,
-        redirectUri: options.redirectUri,
-        stateHash: hashOpaqueToken(state),
-        userId: options.userId,
-      })
-    return {codeChallenge: createCodeChallenge(codeVerifier), state}
+    await getDatabase().insert(calendarOauthStates).values(options)
   },
   deleteConnection: async (userId, connectionId) => {
     const deleted = await getDatabase()

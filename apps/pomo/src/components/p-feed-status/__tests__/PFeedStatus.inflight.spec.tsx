@@ -1,3 +1,4 @@
+import {PreferenceProvider} from 'src/hooks/use-preference'
 /** @vitest-environment jsdom */
 
 import {render} from '@solidjs/testing-library'
@@ -93,11 +94,14 @@ it('should ignore a duplicated retry request while model availability is still c
     },
   }
 
-  render(() => (
-    <PModelDownloadProvider runtime={runtime}>
-      <PFeedStatus />
-    </PModelDownloadProvider>
-  ))
+  render(
+    () => (
+      <PModelDownloadProvider runtime={runtime}>
+        <PFeedStatus />
+      </PModelDownloadProvider>
+    ),
+    {wrapper: PreferenceProvider},
+  )
   const retry = mocks.onPresses[0]!
   const button = document.createElement('button')
 
@@ -130,11 +134,14 @@ it('should preserve a disabled stop handler while cancellation is pending', asyn
       throw new Error('음성 모델 client를 만들면 안 됩니다.')
     },
   }
-  render(() => (
-    <PModelDownloadProvider runtime={runtime}>
-      <PFeedStatus />
-    </PModelDownloadProvider>
-  ))
+  render(
+    () => (
+      <PModelDownloadProvider runtime={runtime}>
+        <PFeedStatus />
+      </PModelDownloadProvider>
+    ),
+    {wrapper: PreferenceProvider},
+  )
 
   mocks.onPresses[0]?.(document.createElement('button'))
 

@@ -5,6 +5,7 @@ import {
   flush,
   generateWithPreparation,
   getLatestProps,
+  LanguageLearningEditorWithPreferences,
   setModelDownloadState,
   setWriterOutput,
   setWriterState,
@@ -20,7 +21,6 @@ import {
 import {isTextModelDownloaded} from '../../../features/text-generation'
 import {PGenerationStatus} from '../../p-generation-status/PGenerationStatus'
 import {PModelDownloadConsent} from '../../p-model-download-consent/PModelDownloadConsent'
-import {LanguageLearningEditor} from '../Editor'
 import {LanguageLearningGenerateButton} from '../GenerateButton'
 import {LanguageLearningReview} from '../Review'
 import {LanguageLearningSettings} from '../Settings'
@@ -29,7 +29,7 @@ import {LanguageLearningWordSourceControl} from '../WordSource'
 
 it('should retry invalid text twice and then report the validation failure', async () => {
   vi.mocked(isValidLanguageLearningSentence).mockReturnValue(false)
-  render(() => <LanguageLearningEditor />)
+  render(() => <LanguageLearningEditorWithPreferences />)
 
   fireEvent.click(screen.getByRole('button', {name: 'generate'}))
   await flush()
@@ -47,7 +47,7 @@ it('should retry invalid text twice and then report the validation failure', asy
 
 it('should report writer errors and reject empty direct or saved prompts', async () => {
   vi.mocked(selectLanguageLearningPromptWords).mockReturnValue([])
-  render(() => <LanguageLearningEditor />)
+  render(() => <LanguageLearningEditorWithPreferences />)
 
   fireEvent.click(screen.getByRole('button', {name: 'generate'}))
   expect(screen.getByText('프롬프트 단어를 하나 이상 입력해 주세요.')).toBeDefined()
@@ -68,7 +68,7 @@ it('should report writer errors and reject empty direct or saved prompts', async
 
 it('should download a missing text model and handle failed or cancelled downloads', async () => {
   vi.mocked(isTextModelDownloaded).mockResolvedValue(false)
-  render(() => <LanguageLearningEditor />)
+  render(() => <LanguageLearningEditorWithPreferences />)
 
   fireEvent.click(screen.getByRole('button', {name: 'generate'}))
   await flush()
@@ -100,7 +100,7 @@ it('should download a missing text model and handle failed or cancelled download
   cleanup()
   setWriterState({status: 'idle'})
   startTextModel.mockResolvedValue({message: 'download failed', status: 'error'})
-  render(() => <LanguageLearningEditor />)
+  render(() => <LanguageLearningEditorWithPreferences />)
   fireEvent.click(screen.getByRole('button', {name: 'generate'}))
   await flush()
   fireEvent.click(screen.getByRole('button', {name: 'confirm download'}))
@@ -110,7 +110,7 @@ it('should download a missing text model and handle failed or cancelled download
   cleanup()
   setWriterState({status: 'idle'})
   startTextModel.mockResolvedValue({status: 'cancelled'})
-  render(() => <LanguageLearningEditor />)
+  render(() => <LanguageLearningEditorWithPreferences />)
   fireEvent.click(screen.getByRole('button', {name: 'generate'}))
   await flush()
   fireEvent.click(screen.getByRole('button', {name: 'confirm download'}))
@@ -121,7 +121,7 @@ it('should download a missing text model and handle failed or cancelled download
 it('should start one text workflow while the installed-model check is pending', async () => {
   const modelCheck = createDeferred<boolean>()
   vi.mocked(isTextModelDownloaded).mockReturnValue(modelCheck.promise)
-  render(() => <LanguageLearningEditor />)
+  render(() => <LanguageLearningEditorWithPreferences />)
   const generateButton = screen.getByRole('button', {name: 'generate'})
 
   fireEvent.click(generateButton)
@@ -143,7 +143,7 @@ it('should start one text workflow while the installed-model check is pending', 
 
 it('should report a text model check failure and unlock the editor', async () => {
   vi.mocked(isTextModelDownloaded).mockRejectedValue(new Error('model storage failed'))
-  render(() => <LanguageLearningEditor />)
+  render(() => <LanguageLearningEditorWithPreferences />)
 
   fireEvent.click(screen.getByRole('button', {name: 'generate'}))
   await flush()
@@ -154,7 +154,7 @@ it('should report a text model check failure and unlock the editor', async () =>
 })
 
 it('should generate every requested sentence before starting voice generation', async () => {
-  render(() => <LanguageLearningEditor />)
+  render(() => <LanguageLearningEditorWithPreferences />)
   const settingsProps = getLatestProps<ComponentProps<typeof LanguageLearningSettings>>(
     vi.mocked(LanguageLearningSettings),
   )

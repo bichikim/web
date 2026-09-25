@@ -4,6 +4,7 @@ import {fileURLToPath} from 'node:url'
 
 import {getRequestEvent} from 'solid-js/web'
 import {afterEach, beforeEach, expect, it, vi} from 'vitest'
+import {getLocale, overwriteGetLocale} from '@paraglide/runtime'
 
 import {findLicenseGroup, loadLicenseData} from '../index'
 
@@ -16,6 +17,9 @@ vi.mock('solid-js/web', async (importOriginal) => {
 const appDirectory = resolve(dirname(fileURLToPath(import.meta.url)), '../../../..')
 const licenseDataPath = resolve(appDirectory, 'public/licenses.json')
 const licenseDataJson = readFileSync(licenseDataPath, 'utf8')
+const englishLicenseDataPath = resolve(appDirectory, 'public/licenses.en.json')
+const englishLicenseDataJson = readFileSync(englishLicenseDataPath, 'utf8')
+const originalGetLocale = getLocale
 
 beforeEach(() => {
   vi.stubGlobal('fetch', vi.fn())
@@ -25,8 +29,19 @@ beforeEach(() => {
 })
 
 afterEach(() => {
+  overwriteGetLocale(originalGetLocale)
   vi.unstubAllGlobals()
   vi.unstubAllEnvs()
+})
+
+it('should fetch the English license manifest for the English locale', async () => {
+  overwriteGetLocale(() => 'en')
+  vi.mocked(fetch).mockResolvedValue(new Response(englishLicenseDataJson))
+
+  const licenseData = await loadLicenseData()
+
+  expect(fetch).toHaveBeenCalledWith('/licenses.en.json')
+  expect(findLicenseGroup(licenseData, 'core-software').title).toBe('Core software')
 })
 
 it('should fetch and validate the public license manifest', async () => {

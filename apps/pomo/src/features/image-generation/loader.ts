@@ -1,8 +1,7 @@
+import {getUnboundedPercentage} from '../progress'
 import {getImageModelRoot} from './model'
 import type {GenerationProgress} from './messages'
 import type {ImageVariant} from './settings'
-
-const PERCENTAGE_SCALE = 100
 
 export interface LoadImageModelOptions {
   readonly variant: ImageVariant
@@ -17,7 +16,7 @@ export const loadImageModel = async (options: LoadImageModelOptions) => {
         label: '이미지 모델을 준비하고 있어요',
         ...(progress.total === undefined || progress.loaded === undefined || progress.total === 0
           ? {}
-          : {percentage: Math.round((progress.loaded / progress.total) * PERCENTAGE_SCALE)}),
+          : {percentage: getUnboundedPercentage(progress.loaded, progress.total)}),
         type: 'progress',
       }),
   })

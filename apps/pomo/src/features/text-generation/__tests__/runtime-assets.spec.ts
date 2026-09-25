@@ -1,6 +1,10 @@
 /** @vitest-environment node */
-import {expect, it} from 'vitest'
+import {afterEach, expect, it, vi} from 'vitest'
 import {getTextRuntimeAssetUrl} from '../runtime-assets'
+
+afterEach(() => {
+  vi.unstubAllEnvs()
+})
 
 it.each([
   'ort-wasm-simd-threaded.mjs',
@@ -16,4 +20,14 @@ it.each([
 it('should retain an initialized cached module URL', () => {
   expect(getTextRuntimeAssetUrl('blob:cached-runtime')).toBe('blob:cached-runtime')
   expect(getTextRuntimeAssetUrl(undefined)).toBeUndefined()
+})
+
+it('should resolve the R2 runtime files into the Steam bundle', () => {
+  vi.stubEnv('VITE_POMO_DISTRIBUTION_TARGET', 'steam')
+
+  expect(
+    getTextRuntimeAssetUrl(
+      'https://cdn.jsdelivr.net/npm/onnxruntime-web@1.27.0/dist/ort-wasm-simd-threaded.asyncify.wasm',
+    ),
+  ).toBe('/assets-steam/runtime/onnxruntime-web/1.27.0/ort-wasm-simd-threaded.asyncify.wasm')
 })

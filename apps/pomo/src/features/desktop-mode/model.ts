@@ -1,5 +1,23 @@
-export const DESKTOP_MODE_STORAGE_KEY = 'pomo:desktop-mode:v1'
-export const DESKTOP_CLEAN_EXIT_STORAGE_KEY = 'pomo:desktop-clean-exit:v1'
+import {
+  type DesktopModeStorage,
+  readCleanExitStorage,
+  readDesktopModeStorage,
+  writeCleanExitStorage,
+  writeDesktopModeStorage,
+} from './storage'
+
+export {
+  DESKTOP_CLEAN_EXIT_STORAGE_KEY,
+  DESKTOP_MODE_STORAGE_KEY,
+  DESKTOP_MODE_OWNER_STORAGE_KEY,
+  readCleanExitStorage,
+  readDesktopModeOwnerStorage,
+  readDesktopModeStorage,
+  writeCleanExitStorage,
+  writeDesktopModeOwnerStorage,
+  writeDesktopModeStorage,
+} from './storage'
+export type {DesktopModeOwnerState, DesktopModeStorage} from './storage'
 
 export type DesktopMode = 'desktop' | 'interactiveDesktop' | 'normal' | 'widget'
 
@@ -9,35 +27,14 @@ export const isDesktopMode = (value: unknown): value is DesktopMode =>
 export const isDesktopBackgroundMode = (mode: DesktopMode): boolean =>
   mode === 'desktop' || mode === 'interactiveDesktop'
 
-export const readDesktopMode = (): DesktopMode => {
-  try {
-    const value = localStorage.getItem(DESKTOP_MODE_STORAGE_KEY)
-    return isDesktopMode(value) ? value : 'normal'
-  } catch {
-    return 'normal'
-  }
-}
+export const readDesktopMode = (storage?: DesktopModeStorage): DesktopMode =>
+  readDesktopModeStorage(storage)
 
-export const writeDesktopMode = (mode: DesktopMode): void => {
-  try {
-    localStorage.setItem(DESKTOP_MODE_STORAGE_KEY, mode)
-  } catch {
-    // The native mode still works when WebView storage is unavailable.
-  }
-}
+export const writeDesktopMode = (mode: DesktopMode, storage?: DesktopModeStorage): void =>
+  writeDesktopModeStorage(mode, storage)
 
-export const readCleanExit = (): boolean => {
-  try {
-    return localStorage.getItem(DESKTOP_CLEAN_EXIT_STORAGE_KEY) === 'true'
-  } catch {
-    return false
-  }
-}
+export const readCleanExit = (storage?: DesktopModeStorage): boolean =>
+  readCleanExitStorage(storage)
 
-export const writeCleanExit = (isClean: boolean): void => {
-  try {
-    localStorage.setItem(DESKTOP_CLEAN_EXIT_STORAGE_KEY, String(isClean))
-  } catch {
-    // Crash recovery falls back to normal mode when persistence is unavailable.
-  }
-}
+export const writeCleanExit = (isClean: boolean, storage?: DesktopModeStorage): void =>
+  writeCleanExitStorage(isClean, storage)

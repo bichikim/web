@@ -1,4 +1,4 @@
-import {EditorSelect, EditorColorField, EditorNumberField} from '../../design-system'
+import {EditorColorField, EditorNumberField, EditorSelect} from '../../design-system'
 import {For} from 'solid-js'
 
 import {getPartRenderProperties} from '../../deformation'

@@ -114,3 +114,14 @@ describe('HTourContent', () => {
     expect(80 + content.getBoundingClientRect().width).toBeLessThanOrEqual(784)
   })
 })
+
+it('should preserve the left inset when the viewport is narrower than both insets', () => {
+  render(() => (
+    <Dialog open>
+      <HTourContent targetBounds={{...createBounds(60, 108), viewportWidth: 20}}>
+        Content
+      </HTourContent>
+    </Dialog>
+  ))
+  expect(screen.getByRole('dialog').style.getPropertyValue('--tour-left')).toBe('16px')
+})

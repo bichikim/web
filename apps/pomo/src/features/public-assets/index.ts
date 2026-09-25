@@ -1,8 +1,13 @@
 import {getRequestEvent} from 'solid-js/web'
 import type {z} from 'zod'
+import {isAbortError} from 'src/utils/is-cancellation-reason'
 
 const TRUSTED_LOCAL_HOSTNAMES = new Set(['127.0.0.1', 'localhost'])
 const PUBLIC_ASSET_VALIDATION_ORIGIN = 'https://public-assets.invalid'
+
+const isPublicAssetCancellation = (cause: unknown, signal?: AbortSignal): boolean =>
+  (signal?.aborted === true && cause === signal.reason) ||
+  (cause instanceof Error && isAbortError(cause))
 
 export type PublicAssetPath = `/${string}`
 
@@ -16,6 +21,7 @@ export type PublicJsonErrorFormatter = (context: PublicJsonErrorContext) => stri
 export type PublicJsonParser<Output> = (value: unknown) => Output | PromiseLike<Output>
 
 export interface LoadPublicJsonOptions {
+  readonly signal?: AbortSignal
   readonly formatFetchFailure?: PublicJsonErrorFormatter
   readonly formatInvalid?: PublicJsonErrorFormatter
   readonly formatParseFailure?: PublicJsonErrorFormatter
@@ -114,8 +120,14 @@ export const loadPublicJson = async <Output>(
   let response: Response
 
   try {
-    response = await fetch(assetUrl)
+    response =
+      options.signal === undefined
+        ? await fetch(assetUrl)
+        : await fetch(assetUrl, {signal: options.signal})
   } catch (cause: unknown) {
+    if (isPublicAssetCancellation(cause, options.signal)) {
+      throw cause
+    }
     throw createPublicJsonError(
       options.formatFetchFailure,
       {path: pathname},
@@ -137,6 +149,9 @@ export const loadPublicJson = async <Output>(
   try {
     value = await response.json()
   } catch (cause: unknown) {
+    if (isPublicAssetCancellation(cause, options.signal)) {
+      throw cause
+    }
     throw createPublicJsonError(
       options.formatParseFailure,
       {path: pathname},

@@ -77,7 +77,7 @@ describe('VolumeControl', () => {
   it('should keep an open popover during resize', () => {
     const triggerStyle = document.createElement('div').style
     triggerStyle.display = 'grid'
-    vi.spyOn(window, 'getComputedStyle').mockReturnValue(triggerStyle)
+    vi.spyOn(globalThis, 'getComputedStyle').mockReturnValue(triggerStyle)
 
     const view = render(() => <VolumeControl />)
     const popover = view.getByRole('dialog', {hidden: true, name: '음량 조절'})
@@ -86,7 +86,7 @@ describe('VolumeControl', () => {
     Object.defineProperty(popover, 'hidePopover', {value: hidePopover})
     vi.spyOn(popover, 'matches').mockReturnValue(true)
 
-    fireEvent(window, new Event('resize'))
+    fireEvent(globalThis.window, new Event('resize'))
 
     expect(hidePopover).not.toHaveBeenCalled()
   })

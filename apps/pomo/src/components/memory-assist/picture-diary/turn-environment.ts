@@ -36,7 +36,7 @@ export const createBrowserTurnEnvironment = (options: BrowserTurnOptions): PageT
     if (bounds === undefined || bounds.width <= 0 || bounds.height <= 0) {
       return null
     }
-    const compact = window.matchMedia?.('(width < 48rem)').matches ?? false
+    const compact = globalThis.matchMedia?.('(width < 48rem)').matches ?? false
     return {
       compact,
       height: bounds.height,
@@ -46,17 +46,17 @@ export const createBrowserTurnEnvironment = (options: BrowserTurnOptions): PageT
     }
   },
   listenPointers: (handlers) => {
-    window.addEventListener('pointermove', handlers.move, {passive: false})
-    window.addEventListener('pointerup', handlers.up)
-    window.addEventListener('pointercancel', handlers.cancel)
+    globalThis.addEventListener('pointermove', handlers.move, {passive: false})
+    globalThis.addEventListener('pointerup', handlers.up)
+    globalThis.addEventListener('pointercancel', handlers.cancel)
     return () => {
-      window.removeEventListener('pointermove', handlers.move)
-      window.removeEventListener('pointerup', handlers.up)
-      window.removeEventListener('pointercancel', handlers.cancel)
+      globalThis.removeEventListener('pointermove', handlers.move)
+      globalThis.removeEventListener('pointerup', handlers.up)
+      globalThis.removeEventListener('pointercancel', handlers.cancel)
     }
   },
   now: () => getMonotonicTime(),
   prefersReducedMotion: () =>
-    window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false,
+    globalThis.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false,
   requestFrame: (callback) => requestAnimationFrame(callback),
 })

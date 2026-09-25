@@ -2,6 +2,7 @@ import {A} from '@solidjs/router'
 import {cx} from 'class-variance-authority'
 import {For} from 'solid-js'
 import * as m from '@paraglide/message'
+import {PAppReturnLink} from '../p-app-return-link/PAppReturnLink'
 import {ReleaseBody} from '../version-notice/ReleaseBody'
 import {type VersionCatalog} from 'src/features/version-catalog'
 
@@ -25,9 +26,9 @@ export const VersionCatalogDocument = (props: {readonly catalog: VersionCatalog}
     <div class={BACKGROUND_CLASSES} />
 
     <div class="relative mx-auto grid w-full max-w-4xl gap-8">
-      <A class="w-fit text-sm font-700 text-#d8cbd9 no-underline hover:text-white" href="/">
-        <span aria-hidden="true">←</span> {m.app_return()}
-      </A>
+      <div class="flex w-full justify-end">
+        <PAppReturnLink />
+      </div>
 
       <header>
         <p class="m-0 text-xs font-750 tracking-[0.24em] text-#f2a7b8 uppercase">Pomofi</p>

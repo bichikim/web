@@ -4,15 +4,15 @@ import {rebindDeformer} from '../binding'
 import {transformDeformerPoint} from '../grid'
 
 const grid: PuppetSceneDeformerNode = {
-  bounds: {width: 100, x: 0, height: 100, y: 0},
+  bounds: {height: 100, width: 100, x: 0, y: 0},
   children: [],
   columns: 1,
+  controlPoints: [10, 20, 110, 20, 10, 120, 110, 120],
   id: 'grid',
   kind: 'deformer',
-  rows: 1,
   locked: false,
   name: 'Grid',
-  controlPoints: [10, 20, 110, 20, 10, 120, 110, 120],
+  rows: 1,
   visible: true,
 }
 const curve: PuppetSceneDeformerNode = {

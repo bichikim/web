@@ -161,8 +161,12 @@ describe('ParallaxController', () => {
     })
 
     controller.start()
-    window.dispatchEvent(new TestDeviceOrientationEvent('deviceorientation', {beta: 0, gamma: 0}))
-    window.dispatchEvent(new TestDeviceOrientationEvent('deviceorientation', {beta: 7, gamma: 9}))
+    globalThis.dispatchEvent(
+      new TestDeviceOrientationEvent('deviceorientation', {beta: 0, gamma: 0}),
+    )
+    globalThis.dispatchEvent(
+      new TestDeviceOrientationEvent('deviceorientation', {beta: 7, gamma: 9}),
+    )
     animationFrames.shift()?.(0)
     animationFrames.shift()?.(1_000 / 60)
 
@@ -247,8 +251,12 @@ describe('ParallaxController', () => {
     expect(animationFrames).toHaveLength(1)
 
     animationFrames.shift()?.(16)
-    window.dispatchEvent(new TestDeviceOrientationEvent('deviceorientation', {beta: 0, gamma: 0}))
-    window.dispatchEvent(new TestDeviceOrientationEvent('deviceorientation', {beta: 7, gamma: 9}))
+    globalThis.dispatchEvent(
+      new TestDeviceOrientationEvent('deviceorientation', {beta: 0, gamma: 0}),
+    )
+    globalThis.dispatchEvent(
+      new TestDeviceOrientationEvent('deviceorientation', {beta: 7, gamma: 9}),
+    )
     animationFrames.shift()?.(32)
     expect(renderOffset.mock.lastCall?.[0]).toBe(0)
     animationFrames.shift()?.(48)
@@ -334,7 +342,7 @@ describe('ParallaxController', () => {
     startDrag(host)
     moveDrag(host, -500, 500)
     animationFrames.shift()?.(64)
-    window.dispatchEvent(new Event('blur'))
+    globalThis.dispatchEvent(new Event('blur'))
 
     expect(setPointerCapture).toHaveBeenCalledWith(1)
     expect(releasePointerCapture).toHaveBeenCalledWith(1)
@@ -357,7 +365,7 @@ describe('ParallaxController', () => {
 
   it('should fall back immediately when device orientation is unavailable', () => {
     const onInputModeChange = vi.fn()
-    Reflect.deleteProperty(window, 'DeviceOrientationEvent')
+    Reflect.deleteProperty(globalThis.window, 'DeviceOrientationEvent')
     const controller = createController(document.createElement('div'), vi.fn(), {
       inputMode: 'gyroscope',
       onInputModeChange,
@@ -373,7 +381,7 @@ describe('ParallaxController', () => {
     vi.useFakeTimers()
     const browserWindow = {
       addEventListener: vi.fn(),
-      matchMedia: window.matchMedia,
+      matchMedia: globalThis.matchMedia,
       removeEventListener: vi.fn(),
     }
     const onInputModeChange = vi.fn()
@@ -410,7 +418,7 @@ describe('ParallaxController', () => {
   })
 
   it('should exercise default fallback callbacks without custom options', () => {
-    Reflect.deleteProperty(window, 'DeviceOrientationEvent')
+    Reflect.deleteProperty(globalThis.window, 'DeviceOrientationEvent')
     const controller = createController(document.createElement('div'), vi.fn(), {
       inputMode: 'gyroscope',
     })
@@ -431,7 +439,7 @@ describe('ParallaxController', () => {
       })
       controller.start()
 
-      window.dispatchEvent(createPointerEvent('pointerdown'))
+      globalThis.dispatchEvent(createPointerEvent('pointerdown'))
       await vi.waitFor(() => expect(onInputModeChange).toHaveBeenCalledWith('drag'))
       controller.destroy()
       Reflect.deleteProperty(TestDeviceOrientationEvent, 'requestPermission')
@@ -446,7 +454,7 @@ describe('ParallaxController', () => {
     })
     controller.start()
 
-    window.dispatchEvent(createPointerEvent('pointerup'))
+    globalThis.dispatchEvent(createPointerEvent('pointerup'))
     await vi.waitFor(() =>
       expect(
         (TestDeviceOrientationEvent as unknown as {requestPermission: ReturnType<typeof vi.fn>})
@@ -469,7 +477,7 @@ describe('ParallaxController', () => {
     })
     controller.start()
 
-    window.dispatchEvent(createPointerEvent('pointerdown'))
+    globalThis.dispatchEvent(createPointerEvent('pointerdown'))
     await vi.waitFor(() => expect(onInputModeChange).toHaveBeenCalledWith('drag'))
     controller.destroy()
     Reflect.deleteProperty(TestDeviceOrientationEvent, 'requestPermission')
@@ -484,17 +492,23 @@ describe('ParallaxController', () => {
     controller.start()
 
     motionPreference.setMatches(true)
-    window.dispatchEvent(new TestDeviceOrientationEvent('deviceorientation', {beta: 1, gamma: 1}))
+    globalThis.dispatchEvent(
+      new TestDeviceOrientationEvent('deviceorientation', {beta: 1, gamma: 1}),
+    )
     motionPreference.setMatches(false)
     vi.spyOn(document, 'hidden', 'get').mockReturnValueOnce(true).mockReturnValue(false)
-    window.dispatchEvent(new TestDeviceOrientationEvent('deviceorientation', {beta: 1, gamma: 1}))
-    window.dispatchEvent(new TestDeviceOrientationEvent('deviceorientation'))
-    window.dispatchEvent(new Event('orientationchange'))
+    globalThis.dispatchEvent(
+      new TestDeviceOrientationEvent('deviceorientation', {beta: 1, gamma: 1}),
+    )
+    globalThis.dispatchEvent(new TestDeviceOrientationEvent('deviceorientation'))
+    globalThis.dispatchEvent(new Event('orientationchange'))
     document.dispatchEvent(new Event('visibilitychange'))
-    window.dispatchEvent(new Event('blur'))
+    globalThis.dispatchEvent(new Event('blur'))
 
     controller.setInputMode('drag')
-    window.dispatchEvent(new TestDeviceOrientationEvent('deviceorientation', {beta: 1, gamma: 1}))
+    globalThis.dispatchEvent(
+      new TestDeviceOrientationEvent('deviceorientation', {beta: 1, gamma: 1}),
+    )
     controller.destroy()
   })
 
@@ -513,7 +527,7 @@ describe('ParallaxController', () => {
       inputMode: 'gyroscope',
     })
     first.start()
-    window.dispatchEvent(createPointerEvent('pointerdown'))
+    globalThis.dispatchEvent(createPointerEvent('pointerdown'))
     first.setInputMode('drag')
     resolvePermission('granted')
     await Promise.resolve()
@@ -532,7 +546,7 @@ describe('ParallaxController', () => {
       inputMode: 'gyroscope',
     })
     second.start()
-    window.dispatchEvent(createPointerEvent('pointerdown'))
+    globalThis.dispatchEvent(createPointerEvent('pointerdown'))
     second.destroy()
     resolveDestroyed('granted')
     await Promise.resolve()
@@ -544,7 +558,7 @@ describe('ParallaxController', () => {
       inputMode: 'gyroscope',
     })
     third.start()
-    window.dispatchEvent(createPointerEvent('pointerdown'))
+    globalThis.dispatchEvent(createPointerEvent('pointerdown'))
     third.destroy()
     await vi.waitFor(() =>
       expect(
@@ -564,8 +578,8 @@ describe('ParallaxController', () => {
     const host = createPointerHost()
     const controller = createController(host, vi.fn(), {inputMode: 'gyroscope'})
     controller.start()
-    window.dispatchEvent(createPointerEvent('pointerdown'))
-    window.dispatchEvent(createPointerEvent('pointerup'))
+    globalThis.dispatchEvent(createPointerEvent('pointerdown'))
+    globalThis.dispatchEvent(createPointerEvent('pointerup'))
     await vi.runAllTimersAsync()
 
     startDrag(host)

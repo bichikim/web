@@ -14,6 +14,7 @@ vi.mock('@apps-in-toss/web-framework', () => ({
 }))
 
 import {
+  createStoredAppSession,
   activateStoredSession,
   clearStoredAppSession,
   createTossLoginSession,
@@ -395,7 +396,7 @@ describe('app session lifecycle', () => {
     })
   })
 
-  it.each(['invalid', '1.5', '0'])(
+  it.each(['invalid', '1.5', '0', '-1', 'Infinity', 'Wed, 21 Oct 2015 07:28:00 GMT'])(
     'should reject the invalid retry delay %s',
     async (retryAfter) => {
       vi.stubGlobal(
@@ -440,4 +441,29 @@ describe('activateStoredSession', () => {
       vi.unstubAllGlobals()
     }
   })
+})
+
+it('should let an independent session store finish while another store is blocked', async () => {
+  const blocked = Promise.withResolvers<void>()
+  const first = createStoredAppSession({
+    getItem: async () => null,
+    removeItem: async () => undefined,
+    setItem: () => blocked.promise,
+  })
+  let token: string | null = null
+  const second = createStoredAppSession({
+    getItem: async () => token,
+    removeItem: async () => {
+      token = null
+    },
+    setItem: async (_key, value) => {
+      token = value
+    },
+  })
+  const pending = first.write('first')
+  await second.write('second')
+  await second.clear('first')
+  await expect(second.read()).resolves.toBe('second')
+  blocked.resolve()
+  await pending
 })

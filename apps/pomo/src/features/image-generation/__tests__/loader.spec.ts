@@ -14,6 +14,7 @@ it.each([
   [{loaded: 1, total: 3}, 33],
   [{loaded: 0, total: 3}, 0],
   [{loaded: 3, total: 3}, 100],
+  [{loaded: 4, total: 3}, 133],
 ] satisfies Array<[LoadingProgress, number | undefined]>)(
   'should report loading progress %j as %s percent',
   async (progress, percentage) => {

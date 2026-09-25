@@ -1,3 +1,4 @@
+import {getRuntimePublicOrigin} from '../../features/http-client/runtime-origin'
 import {PFeedProgress} from './Progress'
 import {useReadingStatusPreference} from 'src/features/feed-display-preferences'
 import {PSwitch} from '../p-switch/PSwitch'
@@ -10,6 +11,7 @@ import {PSettingsActionButton} from '../settings/ActionButton'
 import {
   DEFAULT_FEED_VOICE_ID,
   type FeedVoiceId,
+  getFeedRequestUrl,
   useAutoPreparePreference,
   useFeedConnections,
   useOptionalPFeeds,
@@ -54,27 +56,31 @@ export function PFeedSettingsContent() {
   const automatic = runtime?.automaticPreparation ?? useAutoPreparePreference()
   const preference = useReadingStatusPreference()
   const feeds = useFeedConnections()
-  const usesRemotePublicOrigin =
-    import.meta.env.VITE_POMO_IS_APPS_IN_TOSS === 'true' ||
-    import.meta.env.VITE_POMO_IS_DESKTOP === 'true' ||
-    (import.meta.env.VITE_POMO_IS_MOBILE === 'true' && !import.meta.env.DEV)
-  const publicOrigin = usesRemotePublicOrigin
-    ? import.meta.env.VITE_POMO_PUBLIC_ORIGIN
-    : window.location.origin
+  const publicOrigin = getRuntimePublicOrigin()
+  const {origin: localOrigin} = globalThis.location
+  const {timeZone} = Intl.DateTimeFormat().resolvedOptions()
+  const feedUrlEnvironment = {localOrigin, publicOrigin, timeZone}
   const recommendedFeeds: ReadonlyArray<RecommendedFeed> = [
     ...getRecommendedPublicFeeds().map((feed) => ({
       ...feed,
-      url: new URL(feed.path, publicOrigin).href,
+      url: getFeedRequestUrl(feed.path, {publicOrigin, timeZone}),
     })),
     ...(import.meta.env.DEV
       ? getRecommendedDevFeeds().map((feed) => ({
           ...feed,
-          url: new URL(feed.path, window.location.origin).href,
+          url: getFeedRequestUrl(feed.path, {
+            localOrigin,
+            timeZone,
+          }),
         }))
       : []),
   ]
   const availableRecommendations = createMemo(() => {
-    const storedUrls = new Set(feeds.connections().map((connection) => connection.url))
+    const storedUrls = new Set(
+      feeds
+        .connections()
+        .map((connection) => getFeedRequestUrl(connection.url, feedUrlEnvironment)),
+    )
     return recommendedFeeds.filter((feed) => !storedUrls.has(feed.url))
   })
 
@@ -86,15 +92,15 @@ export function PFeedSettingsContent() {
   return (
     <Tabs.Content value="feeds">
       <section class={CLASSES.feedSettings}>
-        <Show when={automatic.isReady() && preference.isReady()}>
+        <Show when={automatic.enabled() !== null && preference.visible() !== null}>
           <PSwitch
-            checked={automatic.enabled()}
+            checked={automatic.enabled() === true}
             onChange={automatic.onEnabledChange}
             label={m.settings_feed_auto_prepare()}
             description={m.settings_feed_auto_prepare_description()}
           />
           <PSwitch
-            checked={preference.visible()}
+            checked={preference.visible() === true}
             onChange={preference.onVisibleChange}
             label={m.settings_feed_reading_visible()}
             description={m.settings_feed_reading_visible_description()}

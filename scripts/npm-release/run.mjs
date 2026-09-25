@@ -4,6 +4,7 @@ import {tmpdir} from 'node:os'
 import path from 'node:path'
 import {fileURLToPath} from 'node:url'
 
+import {assertPublishableDependencies} from './archive.mjs'
 import {decideRelease, findHighestVersion} from './decision.mjs'
 
 const repositoryDirectory = fileURLToPath(new URL('../..', import.meta.url))
@@ -209,20 +210,7 @@ const validateArchive = (item, archive) => {
     throw new Error(`${expectedManifest.name} archive has an unexpected package identity.`)
   }
 
-  const dependencySections = [
-    packedManifest.dependencies,
-    packedManifest.optionalDependencies,
-    packedManifest.peerDependencies,
-  ].filter((section) => section && typeof section === 'object')
-  const workspaceDependencies = dependencySections.flatMap((section) =>
-    Object.entries(section).filter(
-      ([, version]) => typeof version === 'string' && version.startsWith('workspace:'),
-    ),
-  )
-
-  if (workspaceDependencies.length > 0) {
-    throw new Error(`${expectedManifest.name} archive still contains workspace dependencies.`)
-  }
+  assertPublishableDependencies(packedManifest)
 }
 
 const packReleases = (releases, temporaryDirectory) =>

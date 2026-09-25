@@ -30,9 +30,9 @@ it('should animate a short fold back without changing the page', () => {
     pointerId: 1,
   })
   expect(pager).not.toBeVisible()
-  fireEvent.pointerMove(window, {clientX: 20, clientY: 200, pointerId: 1})
+  fireEvent.pointerMove(globalThis.window, {clientX: 20, clientY: 200, pointerId: 1})
   expect(pager).not.toBeVisible()
-  fireEvent.pointerUp(window, {clientX: 20, clientY: 200, pointerId: 1})
+  fireEvent.pointerUp(globalThis.window, {clientX: 20, clientY: 200, pointerId: 1})
   expect(book).toHaveAttribute('data-turn-phase', 'settle')
   expect(pager).not.toBeVisible()
   finishPageTurn()
@@ -52,9 +52,9 @@ it('should not fling after holding a partially folded page still', () => {
     pointerId: 1,
   })
   turns.advance(16)
-  fireEvent.pointerMove(window, {clientX: 100, clientY: 200, pointerId: 1})
+  fireEvent.pointerMove(globalThis.window, {clientX: 100, clientY: 200, pointerId: 1})
   turns.advance(1000)
-  fireEvent.pointerUp(window, {clientX: 100, clientY: 200, pointerId: 1})
+  fireEvent.pointerUp(globalThis.window, {clientX: 100, clientY: 200, pointerId: 1})
   finishPageTurn()
   expect(onGoOlder).not.toHaveBeenCalled()
 })
@@ -100,13 +100,13 @@ it('should turn pages by dragging and releasing the outer page edges', () => {
   const newerEdge = book.querySelector('[data-picture-diary-edge="newer"]')!
 
   fireEvent.pointerDown(olderEdge, {button: 0, clientX: 8, clientY: 180, pointerId: 1})
-  fireEvent.pointerMove(window, {clientX: 600, clientY: 182, pointerId: 1})
+  fireEvent.pointerMove(globalThis.window, {clientX: 600, clientY: 182, pointerId: 1})
   expect(onGoOlder).not.toHaveBeenCalled()
   expect(book).toHaveAttribute('data-turn-phase', 'move')
   const liveFold = book.querySelector('[data-picture-diary-turn-sheet]')
   expect(liveFold?.getAttribute('style')).toContain('--picture-diary-flat-clip')
   expect(liveFold?.getAttribute('style')).toContain('--picture-diary-flap-transform')
-  fireEvent.pointerUp(window, {clientX: 600, clientY: 182, pointerId: 1})
+  fireEvent.pointerUp(globalThis.window, {clientX: 600, clientY: 182, pointerId: 1})
 
   expect(onGoOlder).not.toHaveBeenCalled()
   expect(book).toHaveAttribute('data-turn-direction', 'older')
@@ -115,8 +115,8 @@ it('should turn pages by dragging and releasing the outer page edges', () => {
   expect(onGoOlder).toHaveBeenCalledOnce()
 
   fireEvent.pointerDown(newerEdge, {button: 0, clientX: 792, clientY: 180, pointerId: 2})
-  fireEvent.pointerMove(window, {clientX: 200, clientY: 178, pointerId: 2})
-  fireEvent.pointerUp(window, {clientX: 200, clientY: 178, pointerId: 2})
+  fireEvent.pointerMove(globalThis.window, {clientX: 200, clientY: 178, pointerId: 2})
+  fireEvent.pointerUp(globalThis.window, {clientX: 200, clientY: 178, pointerId: 2})
 
   expect(onGoNewer).not.toHaveBeenCalled()
   expect(book).toHaveAttribute('data-turn-direction', 'newer')
@@ -150,8 +150,8 @@ it('should ignore short, vertical, reversed, and cancelled edge drags', () => {
   const newerEdge = book.querySelector('[data-picture-diary-edge="newer"]')!
 
   fireEvent.pointerDown(olderEdge, {button: 0, clientX: 8, clientY: 100, pointerId: 1})
-  fireEvent.pointerMove(window, {clientX: 28, clientY: 101, pointerId: 1})
-  fireEvent.pointerUp(window, {clientX: 28, clientY: 101, pointerId: 1})
+  fireEvent.pointerMove(globalThis.window, {clientX: 28, clientY: 101, pointerId: 1})
+  fireEvent.pointerUp(globalThis.window, {clientX: 28, clientY: 101, pointerId: 1})
   finishPageTurn()
 
   fireEvent.pointerDown(olderEdge, {
@@ -161,22 +161,27 @@ it('should ignore short, vertical, reversed, and cancelled edge drags', () => {
     pointerId: 2,
     pointerType: 'touch',
   })
-  fireEvent.pointerMove(window, {
+  fireEvent.pointerMove(globalThis.window, {
     clientX: 13,
     clientY: 190,
     pointerId: 2,
     pointerType: 'touch',
   })
-  fireEvent.pointerUp(window, {clientX: 13, clientY: 190, pointerId: 2, pointerType: 'touch'})
+  fireEvent.pointerUp(globalThis.window, {
+    clientX: 13,
+    clientY: 190,
+    pointerId: 2,
+    pointerType: 'touch',
+  })
 
   fireEvent.pointerDown(newerEdge, {button: 0, clientX: 792, clientY: 100, pointerId: 3})
-  fireEvent.pointerMove(window, {clientX: 850, clientY: 100, pointerId: 3})
-  fireEvent.pointerUp(window, {clientX: 850, clientY: 100, pointerId: 3})
+  fireEvent.pointerMove(globalThis.window, {clientX: 850, clientY: 100, pointerId: 3})
+  fireEvent.pointerUp(globalThis.window, {clientX: 850, clientY: 100, pointerId: 3})
   finishPageTurn()
 
   fireEvent.pointerDown(newerEdge, {button: 0, clientX: 792, clientY: 100, pointerId: 4})
-  fireEvent.pointerMove(window, {clientX: 200, clientY: 100, pointerId: 4})
-  fireEvent.pointerCancel(window, {clientX: 200, clientY: 100, pointerId: 4})
+  fireEvent.pointerMove(globalThis.window, {clientX: 200, clientY: 100, pointerId: 4})
+  fireEvent.pointerCancel(globalThis.window, {clientX: 200, clientY: 100, pointerId: 4})
   finishPageTurn()
 
   expect(onGoOlder).not.toHaveBeenCalled()

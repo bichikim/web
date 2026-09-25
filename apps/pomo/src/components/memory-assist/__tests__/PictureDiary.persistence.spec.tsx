@@ -36,6 +36,55 @@ it('should save writing to local diary storage without a separate new-entry cont
   )
 })
 
+it('should save an untouched draft with the current date after midnight', async () => {
+  const repository = createRepository()
+  const initialTime = new Date(2026, 8, 4, 23, 55)
+  const saveTime = new Date(2026, 8, 5, 0, 5)
+  vi.spyOn(environment, 'now').mockReturnValueOnce(initialTime).mockReturnValue(saveTime)
+  render(() => (
+    <PictureDiary
+      environment={environment}
+      turnEnvironment={turns.environment}
+      repository={repository}
+    />
+  ))
+
+  await waitFor(() => expect(repository.list).toHaveBeenCalledOnce())
+  expect(screen.getByLabelText('날짜')).toHaveValue('2026-09-04')
+  fireEvent.input(screen.getByLabelText('그림일기 내용'), {target: {value: '자정 넘겨 저장'}})
+  fireEvent.click(screen.getByRole('button', {name: '일기 저장'}))
+
+  await waitFor(() => expect(repository.save).toHaveBeenCalledOnce())
+  expect(repository.save).toHaveBeenCalledWith(
+    expect.objectContaining({
+      createdAt: saveTime.toISOString(),
+      date: '2026-09-05',
+    }),
+  )
+})
+
+it('should preserve a date explicitly selected for a draft after midnight', async () => {
+  const repository = createRepository()
+  const initialTime = new Date(2026, 8, 4, 23, 55)
+  const saveTime = new Date(2026, 8, 5, 0, 5)
+  vi.spyOn(environment, 'now').mockReturnValueOnce(initialTime).mockReturnValue(saveTime)
+  render(() => (
+    <PictureDiary
+      environment={environment}
+      turnEnvironment={turns.environment}
+      repository={repository}
+    />
+  ))
+
+  await waitFor(() => expect(repository.list).toHaveBeenCalledOnce())
+  fireEvent.input(screen.getByLabelText('날짜'), {target: {value: '2026-09-03'}})
+  fireEvent.input(screen.getByLabelText('그림일기 내용'), {target: {value: '지정한 날짜'}})
+  fireEvent.click(screen.getByRole('button', {name: '일기 저장'}))
+
+  await waitFor(() => expect(repository.save).toHaveBeenCalledOnce())
+  expect(repository.save).toHaveBeenCalledWith(expect.objectContaining({date: '2026-09-03'}))
+})
+
 it('should save normally without weather while the current weather is unavailable', async () => {
   const repository = createRepository()
   render(() => (

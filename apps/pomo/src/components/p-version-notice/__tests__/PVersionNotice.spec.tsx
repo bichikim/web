@@ -179,6 +179,43 @@ it('should show the feature request trigger when the newest release was already 
   })
 })
 
+it('should show feature requests while checking for releases and replace them with a new notice', async () => {
+  let resolveCatalog: (value: typeof catalog) => void = () => undefined
+  versionMocks.load.mockImplementationOnce(
+    () =>
+      new Promise((resolve) => {
+        resolveCatalog = resolve
+      }),
+  )
+
+  render(() => <PVersionNotice />)
+
+  expect(screen.getByRole('button', {name: '기능 요청'})).toBeVisible()
+
+  resolveCatalog(catalog)
+
+  await waitFor(() => expect(screen.getByRole('button', {name: '새 업데이트 보기'})).toBeVisible())
+})
+
+it('should hide only the feature request trigger when its setting is disabled', async () => {
+  versionMocks.read.mockResolvedValue({
+    formatVersion: 1,
+    releasedAt: '2026-09-03T00:57:00+09:00',
+    version: '2026. 09. 03 00:57',
+  })
+
+  render(() => <PVersionNotice featureRequestVisible={false} />)
+
+  await waitFor(() => expect(screen.queryByRole('button', {name: '기능 요청'})).toBeNull())
+})
+
+it('should keep a new release notice visible when feature requests are hidden', async () => {
+  render(() => <PVersionNotice featureRequestVisible={false} />)
+
+  await waitFor(() => expect(screen.getByRole('button', {name: '새 업데이트 보기'})).toBeVisible())
+  expect(screen.queryByRole('button', {name: '기능 요청'})).toBeNull()
+})
+
 it('should show feature requests in the desktop dialog when no release is available', async () => {
   versionMocks.read.mockResolvedValue({
     formatVersion: 1,
@@ -239,6 +276,7 @@ it('should hide the trigger and report catalog or storage failures', async () =>
     expect(consoleError).toHaveBeenCalledWith('Failed to prepare version notice.', error),
   )
   expect(screen.queryByRole('button', {name: '새 업데이트 보기'})).toBeNull()
+  expect(screen.getByRole('button', {name: '기능 요청'})).toBeVisible()
 })
 
 it('should remain dismissed when persisting the viewed marker fails', async () => {

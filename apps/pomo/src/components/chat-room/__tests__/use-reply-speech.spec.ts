@@ -73,6 +73,26 @@ describe('useReplySpeech', () => {
     expect(voice.finish).toHaveBeenCalledOnce()
   })
 
+  it('should keep a title abbreviation attached to its completed streaming sentence', () => {
+    const {result, voice, setStreamingText} = setup()
+    result.start()
+
+    setStreamingText('Please ask Dr.')
+    expect(voice.speak).not.toHaveBeenCalled()
+    setStreamingText('Please ask Dr. Smith to call. Continue')
+    expect(voice.speak).toHaveBeenCalledExactlyOnceWith('Please ask Dr. Smith to call.')
+  })
+
+  it('should not repeat a completed sentence when streaming text shrinks', async () => {
+    const {result, voice, setStreamingText} = setup()
+    result.start()
+    setStreamingText('첫 문장입니다. 두 번째')
+    await vi.waitFor(() => expect(voice.speak).toHaveBeenCalledExactlyOnceWith('첫 문장입니다.'))
+
+    setStreamingText('첫 문장입니다.')
+    await vi.waitFor(() => expect(voice.speak).toHaveBeenCalledTimes(1))
+  })
+
   it.each(['최종 답변', ''])('should flush a final draft without streamed text: %s', (content) => {
     const {result, voice, setAnswerDraft} = setup()
     result.start()

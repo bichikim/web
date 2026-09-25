@@ -10,7 +10,7 @@ concurrency:
   cancel-in-progress: false
 
 env:
-  NODE_VERSION: 24
+  NODE_VERSION: '24.x'
   PNPM_VERSION: 11.8.0
 
 jobs:

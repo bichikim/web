@@ -69,6 +69,21 @@ describe('language learning sentences', () => {
     expect(isValidLanguageLearningSentence('ただいま。', 'ja')).toBe(true)
   })
 
+  it('should accept Unicode ellipses as sentence endings for each language', () => {
+    expect(isValidLanguageLearningSentence('I understand…', 'en')).toBe(true)
+    expect(isValidLanguageLearningSentence('다시 생각해 볼게…', 'ko')).toBe(true)
+    expect(isValidLanguageLearningSentence('また明日…', 'ja')).toBe(true)
+  })
+
+  it('should accept English title abbreviations without accepting multiple sentences', () => {
+    expect(isValidLanguageLearningSentence('Dr. Smith went home.', 'en')).toBe(true)
+    expect(isValidLanguageLearningSentence('I met Dr. Smith yesterday.', 'en')).toBe(true)
+    expect(isValidLanguageLearningSentence('I met J. Smith yesterday.', 'en')).toBe(true)
+    expect(isValidLanguageLearningSentence('I live in the U.S. today.', 'en')).toBe(true)
+    expect(isValidLanguageLearningSentence('Dr. Smith went home. He waited.', 'en')).toBe(false)
+    expect(isValidLanguageLearningSentence('I live in the U.S. She stayed.', 'en')).toBe(false)
+  })
+
   it('should create a constrained multilingual prompt with prior results', () => {
     expect(
       createLanguageLearningPrompt({
@@ -224,7 +239,7 @@ describe('language learning word source preference', () => {
 describe('language learning storage', () => {
   it('should write, append, read, and announce stored sentences', () => {
     const listener = vi.fn()
-    window.addEventListener('pomo:language-learning:sentences-changed', listener)
+    globalThis.addEventListener('pomo:language-learning:sentences-changed', listener)
     writeLanguageLearningSentences([STORED_SENTENCE])
     appendLanguageLearningSentences([
       {...STORED_SENTENCE, dialogueId: 'dialogue-2', text: 'Welcome home.'},
@@ -268,7 +283,7 @@ describe('language learning word storage', () => {
   it('should append each new word and report individually skipped duplicates', () => {
     appendLanguageLearningWords('en', ['Home', 'wave'])
     const listener = vi.fn()
-    window.addEventListener('pomo:language-learning:words-changed', listener, {once: true})
+    globalThis.addEventListener('pomo:language-learning:words-changed', listener, {once: true})
 
     const result = appendLanguageLearningWords('en', ['home', 'asset', 'ASSET', 'perspective'])
     const duplicateResult = appendLanguageLearningWords('en', ['HOME', 'wave'])
@@ -286,7 +301,7 @@ describe('language learning word storage', () => {
 
   it('should store language-specific words without duplicates and announce changes', () => {
     const listener = vi.fn()
-    window.addEventListener('pomo:language-learning:words-changed', listener)
+    globalThis.addEventListener('pomo:language-learning:words-changed', listener)
 
     appendLanguageLearningWords('en', ['Home', 'wave', 'home'])
     appendLanguageLearningWords('ja', ['家'])
@@ -314,7 +329,7 @@ describe('language learning word storage', () => {
     appendLanguageLearningWords('en', ['Home', 'wave', 'asset'])
     appendLanguageLearningWords('ja', ['家'])
     const listener = vi.fn()
-    window.addEventListener('pomo:language-learning:words-changed', listener)
+    globalThis.addEventListener('pomo:language-learning:words-changed', listener)
 
     setLanguageLearningWordsMemorized({
       language: 'en',

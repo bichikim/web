@@ -25,6 +25,24 @@ it.each([0, 2, 4])('should turn past writing to a blank and cover with %i entrie
 })
 
 it.each([0, 1, 2, 3, 4, 5])(
+  'should open a closed back cover onto the interior spread with %i entries',
+  (count) => {
+    const entries = entriesFor(count)
+    const ending = getBookPagination({ending: true, entries})
+    const closed = getBookPagination({closed: true, entries})
+    const compactEnding = getBookPagination({compact: true, ending: true, entries})
+    const compactClosed = getBookPagination({closed: true, compact: true, entries})
+
+    expect(closed.current).toEqual(ending.current)
+    expect(closed.newer).toEqual(ending.older)
+    expect(closed.older).toBeNull()
+    expect(compactClosed.current).toEqual(compactEnding.current)
+    expect(compactClosed.newer).toEqual(compactEnding.older)
+    expect(compactClosed.older).toBeNull()
+  },
+)
+
+it.each([0, 1, 2, 3, 4, 5])(
   'should place every entry exactly once across spreads with %i entries',
   (count) => {
     const entries = entriesFor(count)

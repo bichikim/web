@@ -19,6 +19,7 @@ export interface PlayerCanvasProps {
   readonly onPlayerChange?: (player: Player | null) => void
   readonly onStatusChange?: (status: PlayerCanvasStatus) => void
   readonly parameterValues?: PuppetParameterValueMap
+  readonly physicsPreview?: boolean
 }
 
 export const PlayerCanvas = (props: PlayerCanvasProps) => {
@@ -53,9 +54,13 @@ export const PlayerCanvas = (props: PlayerCanvasProps) => {
   })
 
   createEffect(() => {
-    const {motionId} = props
-    if (motionId !== undefined) {
-      player()?.setMotion(motionId)
+    const physicsPreview = props.physicsPreview ?? true
+    player()?.setPhysicsPreview(physicsPreview)
+  })
+
+  createEffect(() => {
+    if (props.motionId !== undefined) {
+      player()?.setMotion(props.motionId)
     }
   })
 
@@ -89,7 +94,7 @@ export const PlayerCanvas = (props: PlayerCanvasProps) => {
       return
     }
 
-    const canvasElement = window.document.createElement('canvas')
+    const canvasElement = globalThis.document.createElement('canvas')
 
     currentPlayer?.destroy()
     notifyPlayerChange(null)
@@ -103,6 +108,7 @@ export const PlayerCanvas = (props: PlayerCanvasProps) => {
       motionId: untrack(() => props.motionId),
       onFrame: notifyFrame,
       parameterValues: untrack(() => props.parameterValues),
+      physicsPreview: untrack(() => props.physicsPreview),
       resizeTo: hostElement,
       // Bound the backing buffer while retaining the document's editing coordinates.
       resolution: Math.min(

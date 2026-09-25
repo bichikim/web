@@ -96,15 +96,12 @@ export const useTemporaryForm = (options: TemporaryFormOptions) => {
       setEditing(null)
       setPreview(false)
     },
-    targets,
     remove,
-    valueMap,
     reset: () => {
       setForms(new Map())
       setEditing(null)
       setPreview(false)
     },
-    values,
     save: () => {
       const draft = form()
       const bindingId = options.bindingId()
@@ -137,6 +134,7 @@ export const useTemporaryForm = (options: TemporaryFormOptions) => {
     setPreview,
     showing,
     target,
+    targets,
     update: (document: PuppetDocument) => {
       const current = target()
       const nodeId = options.nodeId()
@@ -160,5 +158,7 @@ export const useTemporaryForm = (options: TemporaryFormOptions) => {
         setEditing(context())
       }
     },
+    valueMap,
+    values,
   }
 }

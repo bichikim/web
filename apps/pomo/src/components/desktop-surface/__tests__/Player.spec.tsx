@@ -17,6 +17,9 @@ import {usePDisplayPreferences} from '../../../features/focus-room-display-prefe
 import {PMusicPlayer} from '../../p-music-player/PMusicPlayer'
 import {DesktopPlayer} from '../Player'
 
+const playerActions = vi.hoisted(() => ({pause: vi.fn(), play: vi.fn()}))
+const playerActionsReady = vi.hoisted(() => ({value: true}))
+
 vi.mock('../../../features/focus-room-display-preferences', () => ({
   usePDisplayPreferences: vi.fn(),
 }))
@@ -38,14 +41,19 @@ vi.mock('../../../features/desktop-mode', () => ({
 }))
 vi.mock('../../../features/weather', () => ({useWeather: vi.fn()}))
 vi.mock('../../p-music-player/PMusicPlayer', () => ({
-  PMusicPlayer: vi.fn((props) => (
-    <div data-expanded={String(props.expanded)} data-style={props.sceneStyle}>
-      <button onClick={() => props.onExpandedChange?.(!props.expanded)} type="button">
-        {props.expanded ? '플레이어 접기' : '플레이어 펼치기'}
-      </button>
-      플레이어
-    </div>
-  )),
+  PMusicPlayer: vi.fn((props) => {
+    if (playerActionsReady.value) {
+      props.onPlaybackActionsReady?.(playerActions)
+    }
+    return (
+      <div data-expanded={String(props.expanded)} data-style={props.sceneStyle}>
+        <button onClick={() => props.onExpandedChange?.(!props.expanded)} type="button">
+          {props.expanded ? '플레이어 접기' : '플레이어 펼치기'}
+        </button>
+        플레이어
+      </div>
+    )
+  }),
 }))
 vi.mock('../../p-pomodoro/PPomodoro', () => ({
   PPomodoro: vi.fn((props) => <div data-style={props.sceneStyle}>포모도로</div>),
@@ -114,14 +122,47 @@ const publish = vi.fn()
 const onModeChange = vi.fn().mockResolvedValue(undefined)
 let mode: 'desktop' | 'normal' = 'desktop'
 
+class TestBroadcastChannel {
+  static instances: TestBroadcastChannel[] = []
+  readonly close = vi.fn()
+  readonly listeners: Array<(event: MessageEvent) => void> = []
+  readonly postMessage = vi.fn()
+
+  constructor(readonly name: string) {
+    TestBroadcastChannel.instances.push(this)
+  }
+
+  addEventListener(_type: string, listener: (event: MessageEvent) => void) {
+    this.listeners.push(listener)
+  }
+
+  removeEventListener(_type: string, listener: (event: MessageEvent) => void) {
+    const index = this.listeners.indexOf(listener)
+    if (index >= 0) {
+      this.listeners.splice(index, 1)
+    }
+  }
+
+  dispatch(data: unknown) {
+    for (const listener of this.listeners) {
+      listener(new MessageEvent('message', {data}))
+    }
+  }
+}
+
 beforeEach(() => {
   vi.useFakeTimers()
   vi.clearAllMocks()
+  playerActionsReady.value = true
+  TestBroadcastChannel.instances = []
+  vi.stubGlobal('BroadcastChannel', TestBroadcastChannel)
   vi.mocked(usePDisplayPreferences).mockReturnValue({
     dialogueComposerVisible: () => false,
+    featureRequestVisible: () => true,
     isReady: () => true,
     memoryAssistVisible: () => true,
     onDialogueComposerVisibleChange: vi.fn(),
+    onFeatureRequestVisibleChange: vi.fn(),
     onMemoryAssistVisibleChange: vi.fn(),
     onPlayerVisibleChange: vi.fn(),
     onPomodoroVisibleChange: vi.fn(),
@@ -165,6 +206,7 @@ beforeEach(() => {
   })
   vi.mocked(useWeather).mockReturnValue({
     enabled: () => false,
+    isReady: () => true,
     location: () => seoulLocation,
     onEnabledChange: vi.fn(),
     onLocationChange: vi.fn(),
@@ -179,6 +221,7 @@ beforeEach(() => {
 
 afterEach(() => {
   vi.useRealTimers()
+  vi.unstubAllGlobals()
   document.documentElement.style.removeProperty('background')
   document.body.style.removeProperty('background')
 })
@@ -193,6 +236,73 @@ it('should synchronize scene style and hide a non-desktop surface', () => {
   render(() => <DesktopPlayer />)
   expect(screen.queryByText('플레이어')).not.toBeInTheDocument()
 })
+
+it.each([
+  {actionId: 'music-start', method: 'play'},
+  {actionId: 'music-stop', method: 'pause'},
+] as const)(
+  'should apply the $actionId received from the desktop wallpaper',
+  ({actionId, method}) => {
+    render(() => <DesktopPlayer />)
+
+    TestBroadcastChannel.instances[0]?.dispatch({actionId})
+
+    expect(playerActions[method]).toHaveBeenCalledTimes(1)
+  },
+)
+
+it('should apply a desktop wallpaper action after playback controls become ready', () => {
+  playerActionsReady.value = false
+  render(() => <DesktopPlayer />)
+
+  TestBroadcastChannel.instances[0]?.dispatch({actionId: 'music-stop'})
+  expect(playerActions.pause).not.toHaveBeenCalled()
+
+  const props = vi.mocked(PMusicPlayer).mock.calls[0]?.[0]
+  if (props === undefined) {
+    throw new Error('Expected the desktop player to render.')
+  }
+  props.onPlaybackActionsReady?.(playerActions)
+
+  expect(playerActions.pause).toHaveBeenCalledTimes(1)
+})
+
+it('should announce when the desktop player subscribes to music actions', () => {
+  const view = render(() => <DesktopPlayer />)
+  const channel = TestBroadcastChannel.instances[0]
+
+  expect(channel?.postMessage).toHaveBeenCalledExactlyOnceWith({type: 'player-ready'})
+
+  channel?.dispatch({type: 'request-player-ready'})
+  expect(channel?.postMessage).toHaveBeenNthCalledWith(2, {type: 'player-ready'})
+
+  view.unmount()
+  expect(channel?.postMessage).toHaveBeenLastCalledWith({type: 'player-unavailable'})
+})
+
+it.each([
+  {actionId: 'music-start', method: 'play'},
+  {actionId: 'music-stop', method: 'pause'},
+] as const)(
+  'should apply the $actionId received while hidden once playback controls become ready',
+  ({actionId, method}) => {
+    const [visible, setVisible] = createSignal(false)
+    const preferences = usePDisplayPreferences()
+    vi.mocked(usePDisplayPreferences).mockReturnValue({...preferences, playerVisible: visible})
+    playerActionsReady.value = false
+
+    render(() => <DesktopPlayer />)
+
+    expect(screen.queryByText('플레이어')).not.toBeInTheDocument()
+    TestBroadcastChannel.instances[0]?.dispatch({actionId})
+    expect(playerActions[method]).not.toHaveBeenCalled()
+
+    playerActionsReady.value = true
+    setVisible(true)
+
+    expect(playerActions[method]).toHaveBeenCalledTimes(1)
+  },
+)
 
 it('should allow the desktop player to switch from expanded to compact mode', () => {
   render(() => <DesktopPlayer />)

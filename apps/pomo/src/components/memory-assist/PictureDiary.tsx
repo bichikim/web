@@ -88,6 +88,56 @@ const getWeatherSnapshot = (state?: WeatherState): PictureDiaryWeather | undefin
   }
 }
 
+interface PictureDiarySaveOptions {
+  readonly dateEdited: boolean
+  readonly environment: PictureDiaryEnvironment
+  readonly isDisposed: () => boolean
+  readonly repository: PictureDiaryRepository
+  readonly snapshot: {
+    readonly date: string
+    readonly image: PictureDiaryImage | undefined
+    readonly strokes: ReadonlyArray<PictureDiaryStroke>
+    readonly text: string
+  }
+  readonly weatherState?: WeatherState
+}
+
+const discardPictureDiaryEntry = async (
+  repository: PictureDiaryRepository,
+  entryId: string,
+): Promise<void> => {
+  try {
+    await repository.delete(entryId)
+  } catch (error: unknown) {
+    console.error('Failed to discard a picture diary entry after disposal.', error)
+  }
+}
+
+const savePictureDiaryEntry = async (
+  options: PictureDiarySaveOptions,
+): Promise<PictureDiaryEntry | null> => {
+  const now = options.environment.now()
+  const entry = createPictureDiaryEntry({
+    createdAt: now.toISOString(),
+    date: options.dateEdited ? options.snapshot.date : formatLocalDate(now),
+    id: options.environment.createId(),
+    image: options.snapshot.image,
+    now,
+    strokes: options.snapshot.strokes,
+    text: options.snapshot.text,
+    weather: getWeatherSnapshot(options.weatherState),
+  })
+  await options.repository.save(entry)
+
+  if (!options.isDisposed()) {
+    return entry
+  }
+
+  await discardPictureDiaryEntry(options.repository, entry.id)
+  return null
+}
+
+// oxlint-disable-next-line eslint/max-lines-per-function -- The diary editor and its persistence lifecycle share one disposable owner.
 export const PictureDiary = (props: PictureDiaryProps) => {
   const environment = untrack(() => props.environment ?? createBrowserDiaryEnvironment())
   const repository = untrack(() => props.repository ?? createPictureDiaryRepository())
@@ -99,6 +149,7 @@ export const PictureDiary = (props: PictureDiaryProps) => {
   })
   const [view, setView] = createSignal<PictureDiaryView>({kind: 'writing'})
   const [date, setDate] = createSignal(formatLocalDate(environment.now()))
+  const [dateEdited, setDateEdited] = createSignal(false)
   const [strokes, setStrokes] = createSignal<ReadonlyArray<PictureDiaryStroke>>([])
   const [image, setImage] = createSignal<PictureDiaryImage>()
   const [text, setText] = createSignal('')
@@ -115,7 +166,11 @@ export const PictureDiary = (props: PictureDiaryProps) => {
   const pagination = createMemo(() =>
     getViewPagination({compact: compact(), entries: entries(), view: view()}),
   )
-  const canCloseBackCover = createMemo(() => !backCoverClosed() && pagination().older === null)
+  let isDisposed = false
+
+  onCleanup(() => {
+    isDisposed = true
+  })
 
   const handleOpenSpread = (spread: BookSpread | null) => {
     if (spread === null) {
@@ -127,6 +182,7 @@ export const PictureDiary = (props: PictureDiaryProps) => {
 
   const handleDateChange = (nextDate: string) => {
     setDate(nextDate)
+    setDateEdited(true)
     setMessage(null)
   }
 
@@ -150,18 +206,21 @@ export const PictureDiary = (props: PictureDiaryProps) => {
     const snapshot = {date: date(), image: image(), strokes: strokes(), text: text(), view: view()}
     setSaving(true)
     try {
-      const now = environment.now()
-      const entry = createPictureDiaryEntry({
-        createdAt: now.toISOString(),
-        date: snapshot.date,
-        id: environment.createId(),
-        image: snapshot.image,
-        now,
-        strokes: snapshot.strokes,
-        text: snapshot.text,
-        weather: getWeatherSnapshot(props.weatherState),
+      const entry = await savePictureDiaryEntry({
+        dateEdited: dateEdited(),
+        environment,
+        isDisposed: () => isDisposed,
+        repository,
+        snapshot,
+        weatherState: props.weatherState,
       })
-      await repository.save(entry)
+      if (entry === null) {
+        return
+      }
+      if (isDisposed) {
+        await discardPictureDiaryEntry(repository, entry.id)
+        return
+      }
       setEntries((currentEntries) => mergeLoadedEntries(currentEntries, [entry]))
       if (
         image() === snapshot.image &&
@@ -170,6 +229,7 @@ export const PictureDiary = (props: PictureDiaryProps) => {
         text() === snapshot.text
       ) {
         setDate(formatLocalDate(environment.now()))
+        setDateEdited(false)
         setStrokes([])
         setImage(undefined)
         setText('')
@@ -179,24 +239,33 @@ export const PictureDiary = (props: PictureDiaryProps) => {
       }
       setMessage(m.picture_diary_saved_message())
     } catch (error: unknown) {
-      console.error('Failed to save a picture diary entry.', error)
-      setMessage(m.picture_diary_save_failed())
+      if (!isDisposed) {
+        console.error('Failed to save a picture diary entry.', error)
+        setMessage(m.picture_diary_save_failed())
+      }
     } finally {
-      setSaving(false)
+      if (!isDisposed) {
+        setSaving(false)
+      }
     }
   }
 
   const handleDelete = async (entryId: string) => {
     try {
       await repository.delete(entryId)
+      if (isDisposed) {
+        return
+      }
       setEntries((currentEntries) => currentEntries.filter((entry) => entry.id !== entryId))
       const currentView = view()
       if (currentView.kind === 'entry' && currentView.id === entryId) {
         setView({kind: 'writing'})
       }
     } catch (error: unknown) {
-      console.error('Failed to delete a picture diary entry.', error)
-      setMessage(m.picture_diary_delete_failed())
+      if (!isDisposed) {
+        console.error('Failed to delete a picture diary entry.', error)
+        setMessage(m.picture_diary_delete_failed())
+      }
     }
   }
 
@@ -204,10 +273,16 @@ export const PictureDiary = (props: PictureDiaryProps) => {
     onCleanup(environment.observeCompact(setCompact))
     repository
       .list()
-      .then((loaded) => setEntries((current) => mergeLoadedEntries(loaded, current)))
+      .then((loaded) => {
+        if (!isDisposed) {
+          setEntries((current) => mergeLoadedEntries(loaded, current))
+        }
+      })
       .catch((error: unknown) => {
-        console.error('Failed to load picture diary entries.', error)
-        setMessage(m.picture_diary_load_failed())
+        if (!isDisposed) {
+          console.error('Failed to load picture diary entries.', error)
+          setMessage(m.picture_diary_load_failed())
+        }
       })
   })
 
@@ -218,7 +293,7 @@ export const PictureDiary = (props: PictureDiaryProps) => {
         frontCoverClosed={view().kind === 'front-cover'}
         onFrontCoverChange={(closed) => setView({kind: closed ? 'front-cover' : 'ending'})}
         backCoverClosed={backCoverClosed()}
-        canCloseBackCover={canCloseBackCover()}
+        canCloseBackCover={!backCoverClosed() && pagination().older === null}
         canGoNewer={pagination().newer !== null}
         canGoOlder={pagination().older !== null}
         canSave={canSave()}

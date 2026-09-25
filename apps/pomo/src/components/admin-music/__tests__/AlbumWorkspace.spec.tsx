@@ -95,7 +95,7 @@ afterEach(() => {
 })
 
 beforeEach(() => {
-  vi.spyOn(window, 'confirm').mockReturnValue(false)
+  vi.spyOn(globalThis, 'confirm').mockReturnValue(false)
 })
 
 describe('AlbumWorkspace', () => {
@@ -139,10 +139,10 @@ describe('AlbumWorkspace', () => {
 
     fireEvent.click(screen.getByRole('button', {name: 'Track one 수록곡 삭제'}))
     expect(harness.model.handleTrackRemove).not.toHaveBeenCalled()
-    vi.mocked(window.confirm).mockReturnValueOnce(true)
+    vi.mocked(globalThis.confirm).mockReturnValueOnce(true)
     fireEvent.click(screen.getByRole('button', {name: 'Track two 수록곡 삭제'}))
     await waitFor(() => expect(harness.model.handleTrackRemove).toHaveBeenCalledWith('two'))
-    expect(window.confirm).toHaveBeenLastCalledWith(
+    expect(globalThis.confirm).toHaveBeenLastCalledWith(
       expect.stringContaining('현재 공개 중인 앨범에서도 즉시 사라지며'),
     )
 
@@ -171,10 +171,10 @@ describe('AlbumWorkspace', () => {
     harness.setConfirmingAssetId(null)
     fireEvent.click(screen.getByRole('button', {name: 'Pending track 대기 등록 삭제'}))
     expect(harness.model.handleTrackRemove).not.toHaveBeenCalled()
-    vi.mocked(window.confirm).mockReturnValueOnce(true)
+    vi.mocked(globalThis.confirm).mockReturnValueOnce(true)
     fireEvent.click(screen.getByRole('button', {name: 'Pending track 대기 등록 삭제'}))
     await waitFor(() => expect(harness.model.handleTrackRemove).toHaveBeenCalledWith('pending'))
-    expect(window.confirm).toHaveBeenLastCalledWith(expect.stringContaining('대기 등록을 삭제'))
+    expect(globalThis.confirm).toHaveBeenLastCalledWith(expect.stringContaining('대기 등록을 삭제'))
   })
 
   it('should describe a failed pending asset without offering a futile confirmation', () => {
@@ -209,7 +209,9 @@ describe('AlbumWorkspace', () => {
     render(() => <AlbumWorkspace album={createAlbum('draft')} model={harness.model} />)
 
     fireEvent.click(screen.getByRole('button', {name: 'Track one 수록곡 삭제'}))
-    expect(window.confirm).toHaveBeenCalledWith(expect.not.stringContaining('현재 공개 중인 앨범'))
+    expect(globalThis.confirm).toHaveBeenCalledWith(
+      expect.not.stringContaining('현재 공개 중인 앨범'),
+    )
   })
 
   it('should display translated details and the no-translation fallback', () => {

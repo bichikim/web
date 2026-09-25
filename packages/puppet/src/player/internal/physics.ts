@@ -7,6 +7,7 @@ export interface EvaluatePhysicsOptions {
   readonly document: PuppetDocument
   readonly parameterValues: PuppetParameterValueMap
   readonly physicsState: ReadonlyMap<string, PendulumState>
+  readonly settle?: boolean
 }
 
 export interface PhysicsEvaluationResult {
@@ -48,14 +49,25 @@ export const evaluatePhysics = (options: EvaluatePhysicsOptions): PhysicsEvaluat
 
     if (inputParameter !== undefined && outputParameter !== undefined) {
       const state = options.physicsState.get(pendulum.id) ?? createPendulumState()
-      const nextState = advancePendulum({
-        deltaTime: options.deltaTime,
-        input: getParameterValue(inputParameter, parameterValues) - inputParameter.defaultValue,
-        pendulum,
-        state,
-      })
+      const input = getParameterValue(inputParameter, parameterValues) - inputParameter.defaultValue
+      const target = input * pendulum.inputScale
+      const nextState =
+        options.settle === true
+          ? {
+              accumulator: 0,
+              position: Number.isFinite(target) ? target : state.position,
+              velocity: 0,
+            }
+          : advancePendulum({
+              deltaTime: options.deltaTime,
+              input,
+              pendulum,
+              state,
+            })
       const baseOutputValue = getParameterValue(outputParameter, baseParameterValues)
-      const displacement = nextState.position * pendulum.outputScale
+      const position =
+        pendulum.outputMode === 'lag' ? nextState.position - target : nextState.position
+      const displacement = position * pendulum.outputScale
       const outputCandidate = baseOutputValue + displacement
       const outputValue = Number.isFinite(outputCandidate)
         ? clamp(outputCandidate, outputParameter.minimum, outputParameter.maximum)

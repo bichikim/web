@@ -60,51 +60,6 @@ export const numberFieldDescendants = [
 ]
 
 export const controlShortcuts = {
-  'editor-tooltip': [
-    'fixed inset-auto m-2 w-max max-w-[min(20rem,calc(100vw_-_1rem))] box-border overflow-visible',
-    'rounded-md border border-solid border-[#35413d] bg-[#121816] px-2 py-1 text-xs leading-5 text-[#edf4f0]',
-    'shadow-[0_2px_4px_#0007,0_8px_18px_#0006] [overflow-wrap:anywhere] [&[hidden]]:hidden',
-    '[position-anchor:var(--editor-tooltip-anchor)] [position-area:top]',
-    '[position-try-fallbacks:flip-block,top_span-right,top_span-left,bottom_span-right,bottom_span-left]',
-    '[position-visibility:anchors-visible]',
-  ],
-  'editor-tooltip-arrow': [
-    'pointer-events-none absolute w-2.5 h-1.5 bg-[#35413d] [translate:-50%_0]',
-    '[left:clamp(0.5rem,var(--editor-tooltip-arrow-x),calc(100%_-_0.5rem))]',
-    "after:[content:''] after:absolute after:bg-[#121816] after:[clip-path:inherit]",
-    'data-[side=top]:bottom-[-6px] data-[side=top]:[clip-path:polygon(0_0,100%_0,50%_100%)]',
-    'data-[side=top]:after:[inset:0_1px_1px]',
-    'data-[side=bottom]:top-[-6px] data-[side=bottom]:[clip-path:polygon(50%_0,100%_100%,0_100%)]',
-    'data-[side=bottom]:after:[inset:1px_1px_0]',
-  ],
-  'editor-control': [
-    '[--editor-control-height:1.40625rem]',
-    "[&[data-control-size='md']]:[--editor-control-height:1.75rem]",
-  ],
-  'editor-range-input': '[height:var(--editor-control-height,_1.40625rem)] box-border',
-  'editor-segmented-field': [
-    'box-border inline-flex w-fit max-w-full items-stretch gap-0.5 p-0.5',
-    'rounded-md border border-solid border-[#313b37]',
-    '[height:var(--editor-control-height,_1.40625rem)] bg-[#0d1210]',
-    "[&[data-size='md']_button]:text-[0.6875rem] [&[data-size='md']_button]:px-3",
-    '[&_button]:border-0 [&_button]:rounded [&_button]:px-2 [&_button]:py-0',
-    '[&_button]:text-[0.5625rem] [&_button]:leading-none [&_button]:bg-transparent [&_button]:text-[#7f8d88]',
-    '[&_button]:cursor-pointer [&_button:disabled]:opacity-40',
-    "[&_button[aria-pressed='true']]:bg-[#26332f] [&_button[aria-pressed='true']]:text-[#e9f3ef]",
-    '[&_button:focus-visible]:outline [&_button:focus-visible]:outline-[#64e5c4]',
-  ],
-  'editor-text-input': [
-    'box-border [height:var(--editor-control-height,_1.40625rem)]',
-    '[min-height:var(--editor-control-height,_1.40625rem)]',
-  ],
-  'editor-checkbox':
-    'relative inline-flex shrink-0 align-middle items-center [height:var(--editor-control-height,_1.40625rem)]',
-  'editor-checkbox-control': [
-    'inline-grid w-3.5 h-3.5 place-items-center rounded border border-solid border-[#60776a] text-[#11231a]',
-    '[&[data-checked]]:bg-[#79d7b1] [&[data-checked]]:border-[#79d7b1]',
-    '[&[data-disabled]]:opacity-40 [&[data-focus-visible]]:outline [&[data-focus-visible]]:outline-[#a4f3d9]',
-  ],
-
   'editor-button': [
     '[.puppet-editor_&.editor-button]:[height:var(--editor-control-height,_1.40625rem)]',
     '[.puppet-editor_&.editor-button]:[min-height:var(--editor-control-height,_1.40625rem)]',
@@ -119,14 +74,19 @@ export const controlShortcuts = {
     "[&[aria-pressed='true']]:bg-[#24443b] [&[aria-pressed='true']]:border-[#64e5c4]",
     '[&[data-selected]]:bg-[#24443b] [&[data-selected]]:border-[#64e5c4] [&[data-selected]]:text-[#e8f0ed]',
   ],
-  'editor-select-list': 'm-0 p-0 list-none',
+  'editor-checkbox':
+    'relative inline-flex shrink-0 align-middle items-center [height:var(--editor-control-height,_1.40625rem)]',
+  'editor-checkbox-control': [
+    'inline-grid w-3.5 h-3.5 place-items-center rounded border border-solid border-[#60776a] text-[#11231a]',
+    '[&[data-checked]]:bg-[#79d7b1] [&[data-checked]]:border-[#79d7b1]',
+    '[&[data-disabled]]:opacity-40 [&[data-focus-visible]]:outline [&[data-focus-visible]]:outline-[#a4f3d9]',
+  ],
   'editor-color-area': [
     '[.puppet-editor_&]:relative',
     '[.puppet-editor_&]:[height:8.5rem]',
     '[.puppet-editor_&]:[border-radius:0.25rem]',
     '[.puppet-editor_&]:touch-none',
   ],
-
   'editor-color-field': [
     '[.puppet-editor_&_input]:box-border [.puppet-editor_&_input]:[height:var(--editor-control-height)]',
     '[.puppet-editor_&]:grid',
@@ -137,7 +97,6 @@ export const controlShortcuts = {
     '[.puppet-editor_&_input]:[font-family:monospace]',
     '[.puppet-editor_&_input]:[font-size:0.6875rem]',
   ],
-  'editor-select-trigger': 'editor-button w-full justify-between min-w-0 [&_span]:truncate',
   'editor-color-picker': [
     '[.puppet-editor_&]:[width:14rem]',
     '[.puppet-editor_&]:grid',
@@ -161,6 +120,7 @@ export const controlShortcuts = {
     '[.puppet-editor_&]:[border-radius:0.1875rem]',
     '[.puppet-editor_&]:[box-shadow:inset_0_0_0_1px_rgb(255_255_255_/_20%)]',
   ],
+
   'editor-color-thumb': [
     '[.puppet-editor_&]:block',
     '[.puppet-editor_&]:[width:0.875rem]',
@@ -189,6 +149,34 @@ export const controlShortcuts = {
     '[.puppet-editor_&:focus-visible]:[outline:2px_solid_#64e5c4]',
     '[.puppet-editor_&:disabled]:[opacity:0.42]',
   ],
+
+  'editor-context-menu-content': [
+    '[min-width:11.25rem] [padding:0.3125rem] [border:0.0625rem_solid_#35413d] [border-radius:0.4375rem]',
+    '[outline:none] [color:#dbe5e1] [background:#121816] [box-shadow:0_0.625rem_1.75rem_rgb(0_0_0_/_36%)]',
+    '[&[data-closed]]:hidden',
+  ],
+  'editor-context-menu-item': [
+    'flex [min-height:1.875rem] [gap:1.125rem] items-center [padding:0.3125rem_0.5rem]',
+    '[border-radius:0.3125rem] [outline:none] [font-size:0.625rem] cursor-default select-none',
+    '[&[data-highlighted]]:[color:#effffb] [&[data-highlighted]]:[background:#28594c]',
+    '[&.danger]:[color:#f3aaa5]',
+    '[&.danger[data-highlighted]]:[color:#fff1ef] [&.danger[data-highlighted]]:[background:#873b37]',
+    '[&[data-disabled]]:[opacity:0.42] [&[data-disabled]]:pointer-events-none',
+    '[&[data-highlighted]_.editor-context-menu-shortcut]:[color:currentcolor]',
+  ],
+  'editor-context-menu-separator': [
+    '[height:0.0625rem] [margin:0.25rem_0.375rem] [border:0] [background:#2d3834]',
+  ],
+  'editor-context-menu-shortcut': [
+    "[margin-left:auto] [color:#788681] [font-family:'SFMono-Regular',_Consolas,_monospace]",
+    '[font-size:0.5625rem]',
+  ],
+  'editor-control': [
+    '[--editor-control-height:1.40625rem]',
+    "[&[data-control-size='md']]:[--editor-control-height:1.75rem]",
+  ],
+  'editor-diamond-button':
+    '[.puppet-editor_&]:box-border [.puppet-editor_&]:min-h-0 [.puppet-editor_&]:min-w-0 [.puppet-editor_&]:p-0',
   'editor-number-field': [
     '[.puppet-editor_&]:[height:var(--editor-control-height)]',
     '[.puppet-editor_&]:relative [.puppet-editor_&]:flex [.puppet-editor_&]:box-border',
@@ -233,8 +221,6 @@ export const controlShortcuts = {
     "[.puppet-editor_&_>_span]:[font-family:'SFMono-Regular',_Consolas,_monospace]",
     '[.puppet-editor_&_>_span]:[font-size:0.5625rem] [.puppet-editor_&_>_span]:pointer-events-none',
   ],
-  'editor-diamond-button':
-    '[.puppet-editor_&]:box-border [.puppet-editor_&]:min-h-0 [.puppet-editor_&]:min-w-0 [.puppet-editor_&]:p-0',
   'editor-number-step': [
     '[.puppet-editor_&]:relative [.puppet-editor_&]:grid [.puppet-editor_&]:[width:1.25rem]',
     '[.puppet-editor_&]:[align-self:stretch] [.puppet-editor_&]:[flex:0_0_1.25rem]',
@@ -251,25 +237,39 @@ export const controlShortcuts = {
     '[.puppet-editor_&:disabled]:[color:#4b5752] [.puppet-editor_&:disabled]:cursor-default',
     '[.puppet-editor_&_>_.puppet-icon]:[width:0.75rem] [.puppet-editor_&_>_.puppet-icon]:[height:0.75rem]',
   ],
-  'editor-context-menu-content': [
-    '[min-width:11.25rem] [padding:0.3125rem] [border:0.0625rem_solid_#35413d] [border-radius:0.4375rem]',
-    '[outline:none] [color:#dbe5e1] [background:#121816] [box-shadow:0_0.625rem_1.75rem_rgb(0_0_0_/_36%)]',
-    '[&[data-closed]]:hidden',
+  'editor-range-input': '[height:var(--editor-control-height,_1.40625rem)] box-border',
+  'editor-segmented-field': [
+    'box-border inline-flex w-fit max-w-full items-stretch gap-0.5 p-0.5',
+    'rounded-md border border-solid border-[#313b37]',
+    '[height:var(--editor-control-height,_1.40625rem)] bg-[#0d1210]',
+    "[&[data-size='md']_button]:text-[0.6875rem] [&[data-size='md']_button]:px-3",
+    '[&_button]:border-0 [&_button]:rounded [&_button]:px-2 [&_button]:py-0',
+    '[&_button]:text-[0.5625rem] [&_button]:leading-none [&_button]:bg-transparent [&_button]:text-[#7f8d88]',
+    '[&_button]:cursor-pointer [&_button:disabled]:opacity-40',
+    "[&_button[aria-pressed='true']]:bg-[#26332f] [&_button[aria-pressed='true']]:text-[#e9f3ef]",
+    '[&_button:focus-visible]:outline [&_button:focus-visible]:outline-[#64e5c4]',
   ],
-  'editor-context-menu-item': [
-    'flex [min-height:1.875rem] [gap:1.125rem] items-center [padding:0.3125rem_0.5rem]',
-    '[border-radius:0.3125rem] [outline:none] [font-size:0.625rem] cursor-default select-none',
-    '[&[data-highlighted]]:[color:#effffb] [&[data-highlighted]]:[background:#28594c]',
-    '[&.danger]:[color:#f3aaa5]',
-    '[&.danger[data-highlighted]]:[color:#fff1ef] [&.danger[data-highlighted]]:[background:#873b37]',
-    '[&[data-disabled]]:[opacity:0.42] [&[data-disabled]]:pointer-events-none',
-    '[&[data-highlighted]_.editor-context-menu-shortcut]:[color:currentcolor]',
+  'editor-select-list': 'm-0 p-0 list-none',
+  'editor-select-trigger': 'editor-button w-full justify-between min-w-0 [&_span]:truncate',
+  'editor-text-input': [
+    'box-border [height:var(--editor-control-height,_1.40625rem)]',
+    '[min-height:var(--editor-control-height,_1.40625rem)]',
   ],
-  'editor-context-menu-separator': [
-    '[height:0.0625rem] [margin:0.25rem_0.375rem] [border:0] [background:#2d3834]',
+  'editor-tooltip': [
+    'fixed inset-auto m-2 w-max max-w-[min(20rem,calc(100vw_-_1rem))] box-border overflow-visible',
+    'rounded-md border border-solid border-[#35413d] bg-[#121816] px-2 py-1 text-xs leading-5 text-[#edf4f0]',
+    'shadow-[0_2px_4px_#0007,0_8px_18px_#0006] [overflow-wrap:anywhere] [&[hidden]]:hidden',
+    '[position-anchor:var(--editor-tooltip-anchor)] [position-area:top]',
+    '[position-try-fallbacks:flip-block,top_span-right,top_span-left,bottom_span-right,bottom_span-left]',
+    '[position-visibility:anchors-visible]',
   ],
-  'editor-context-menu-shortcut': [
-    "[margin-left:auto] [color:#788681] [font-family:'SFMono-Regular',_Consolas,_monospace]",
-    '[font-size:0.5625rem]',
+  'editor-tooltip-arrow': [
+    'pointer-events-none absolute w-2.5 h-1.5 bg-[#35413d] [translate:-50%_0]',
+    '[left:clamp(0.5rem,var(--editor-tooltip-arrow-x),calc(100%_-_0.5rem))]',
+    "after:[content:''] after:absolute after:bg-[#121816] after:[clip-path:inherit]",
+    'data-[side=top]:bottom-[-6px] data-[side=top]:[clip-path:polygon(0_0,100%_0,50%_100%)]',
+    'data-[side=top]:after:[inset:0_1px_1px]',
+    'data-[side=bottom]:top-[-6px] data-[side=bottom]:[clip-path:polygon(50%_0,100%_100%,0_100%)]',
+    'data-[side=bottom]:after:[inset:1px_1px_0]',
   ],
 }

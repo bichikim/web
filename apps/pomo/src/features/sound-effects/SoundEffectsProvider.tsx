@@ -1,0 +1,161 @@
+import {createSignal, For, type JSX, onCleanup, onMount} from 'solid-js'
+
+import {readWebStorageJson, writeWebStorageJson} from 'src/utils/runtime-storage'
+
+import {SoundEffectsContext, type SoundEffectsController} from './context'
+import {loadSoundEffects} from './load-sound-effects'
+import type {SoundEffect} from './types'
+import {type SoundEffectPlayback, useSoundEffectPlayback} from './use-sound-effect'
+
+const SOUND_EFFECTS_STOPPED_STORAGE_KEY = 'pomo:sound-effects-stopped:v1'
+
+const parseStoredStopped = (value: unknown): boolean | null =>
+  typeof value === 'boolean' ? value : null
+
+const readStoredStopped = (): boolean =>
+  readWebStorageJson(SOUND_EFFECTS_STOPPED_STORAGE_KEY, parseStoredStopped) ?? false
+
+const writeStoredStopped = (isStopped: boolean): void => {
+  const error = writeWebStorageJson(SOUND_EFFECTS_STOPPED_STORAGE_KEY, isStopped)
+  if (error !== null) {
+    console.warn('Sound-effect stop state could not be persisted', error)
+  }
+}
+
+export interface SoundEffectsProviderProps {
+  readonly children: JSX.Element
+}
+
+interface SoundEffectRuntimeProps {
+  readonly effect: SoundEffect
+  readonly onRegister: (effectId: string, playback: SoundEffectPlayback) => void
+  readonly onUnregister: (effectId: string, playback: SoundEffectPlayback) => void
+}
+
+const SoundEffectRuntime = (props: SoundEffectRuntimeProps) => {
+  const playback = useSoundEffectPlayback(() => props.effect)
+
+  onMount(() => props.onRegister(props.effect.id, playback))
+  onCleanup(() => props.onUnregister(props.effect.id, playback))
+
+  return null
+}
+
+export const SoundEffectsProvider = (props: SoundEffectsProviderProps) => {
+  const [effects, setEffects] = createSignal<readonly SoundEffect[]>([])
+  const [playbacks, setPlaybacks] = createSignal<ReadonlyMap<string, SoundEffectPlayback>>(
+    new Map(),
+  )
+  const [status, setStatus] = createSignal<'loading' | 'ready' | 'failed'>('loading')
+  const [isStopped, setIsStopped] = createSignal(false)
+  const controller = new AbortController()
+  let hasUserActivation = false
+
+  const registerPlayback = (effectId: string, playback: SoundEffectPlayback) => {
+    const stopped = isStopped()
+    if (stopped) {
+      playback.stop()
+    }
+    setPlaybacks((current) => {
+      const next = new Map(current)
+      next.set(effectId, playback)
+      return next
+    })
+    if (!stopped && hasUserActivation) {
+      playback.activate()
+    }
+  }
+
+  const unregisterPlayback = (effectId: string, playback: SoundEffectPlayback) => {
+    setPlaybacks((current) => {
+      if (current.get(effectId) !== playback) {
+        return current
+      }
+
+      const next = new Map(current)
+      next.delete(effectId)
+      return next
+    })
+  }
+
+  const activate = () => {
+    setIsStopped(false)
+    writeStoredStopped(false)
+    const currentPlaybacks = playbacks()
+    for (const playback of currentPlaybacks.values()) {
+      playback.activate()
+    }
+  }
+
+  const stop = () => {
+    setIsStopped(true)
+    writeStoredStopped(true)
+    const currentPlaybacks = playbacks()
+    for (const playback of currentPlaybacks.values()) {
+      playback.stop()
+    }
+  }
+
+  const handleUserActivation = () => {
+    if (isStopped()) {
+      return
+    }
+
+    hasUserActivation = true
+    if (playbacks().size > 0) {
+      activate()
+    }
+    globalThis.document.removeEventListener('keydown', handleUserActivation)
+    globalThis.document.removeEventListener('pointerdown', handleUserActivation)
+  }
+
+  onMount(() => {
+    setIsStopped(readStoredStopped())
+    loadSoundEffects({signal: controller.signal})
+      .then((loadedEffects) => {
+        setEffects(loadedEffects)
+        setStatus('ready')
+      })
+      .catch((cause: unknown) => {
+        if (!controller.signal.aborted) {
+          console.warn('Sound-effect catalog failed to load', cause)
+          setStatus('failed')
+        }
+      })
+  })
+
+  onMount(() => {
+    globalThis.document.addEventListener('keydown', handleUserActivation)
+    globalThis.document.addEventListener('pointerdown', handleUserActivation)
+    onCleanup(() => {
+      globalThis.document.removeEventListener('keydown', handleUserActivation)
+      globalThis.document.removeEventListener('pointerdown', handleUserActivation)
+    })
+  })
+
+  onCleanup(() => controller.abort())
+
+  const value: SoundEffectsController = {
+    activate,
+    effects,
+    getPlayback: (effectId) => playbacks().get(effectId),
+    isStopped,
+    status,
+    stop,
+  }
+
+  return (
+    <SoundEffectsContext.Provider value={value}>
+      <For each={effects()}>
+        {(effect) => (
+          <SoundEffectRuntime
+            effect={effect}
+            onRegister={registerPlayback}
+            onUnregister={unregisterPlayback}
+          />
+        )}
+      </For>
+      {props.children}
+    </SoundEffectsContext.Provider>
+  )
+}

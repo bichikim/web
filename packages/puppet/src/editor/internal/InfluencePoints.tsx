@@ -21,11 +21,10 @@ export const InfluencePoints = (props: InfluencePointsProps) => (
               value={point().value}
               minimum={props.draft.parameter(props.index)?.minimum}
               maximum={props.draft.parameter(props.index)?.maximum}
-              onValueChange={(value) =>
-                props.settings.editCurve(() =>
-                  props.draft.changePoint(props.index, pointIndex, {value}),
-                )
-              }
+              onValueChange={(value) => {
+                props.settings.startCurveEdit()
+                props.draft.changePoint(props.index, pointIndex, {value})
+              }}
             />
           </label>
           <label>
@@ -36,21 +35,21 @@ export const InfluencePoints = (props: InfluencePointsProps) => (
               minimum={0}
               maximum={100}
               unit="%"
-              onValueChange={(value) =>
-                props.settings.editCurve(() =>
-                  props.draft.changePoint(props.index, pointIndex, {
-                    weight: value / WHOLE_PERCENT,
-                  }),
-                )
-              }
+              onValueChange={(value) => {
+                props.settings.startCurveEdit()
+                props.draft.changePoint(props.index, pointIndex, {
+                  weight: value / WHOLE_PERCENT,
+                })
+              }}
             />
           </label>
           <EditorButton
             aria-label={`관계 ${props.index + 1} 점 ${pointIndex + 1} 삭제`}
             disabled={props.settings.relation().points.length <= 1}
-            onClick={() =>
-              props.settings.editCurve(() => props.draft.removePoint(props.index, pointIndex))
-            }
+            onClick={() => {
+              props.settings.startCurveEdit()
+              props.draft.removePoint(props.index, pointIndex)
+            }}
           >
             점 삭제
           </EditorButton>
@@ -59,7 +58,10 @@ export const InfluencePoints = (props: InfluencePointsProps) => (
     </Index>
     <EditorButton
       disabled={!props.draft.canAddPoint(props.index)}
-      onClick={() => props.settings.editCurve(() => props.draft.addPoint(props.index))}
+      onClick={() => {
+        props.settings.startCurveEdit()
+        props.draft.addPoint(props.index)
+      }}
     >
       중간점 추가
     </EditorButton>

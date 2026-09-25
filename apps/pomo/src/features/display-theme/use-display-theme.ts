@@ -1,40 +1,51 @@
-import {batch, createEffect, createSignal, onCleanup, onMount} from 'solid-js'
+import {createEffect, createSignal, onCleanup, onMount} from 'solid-js'
+
+import {usePreference} from 'src/hooks/use-preference'
+import {createParsedPreferenceStorage} from '../parsed-preference-storage'
 
 import {
   DEFAULT_DISPLAY_THEME,
+  DISPLAY_THEME_STORAGE_KEY,
   type DisplayThemeController,
   type DisplayThemePreference,
   resolveDisplayColorScheme,
 } from './model'
-import {readDisplayThemePreference, writeDisplayThemePreference} from './storage'
+import {
+  parseDisplayThemePreference,
+  readDisplayThemePreference,
+  writeDisplayThemePreference,
+} from './storage'
+
+const displayThemeStorage = createParsedPreferenceStorage({
+  invalidMessage: 'Invalid display theme preference.',
+  parse: parseDisplayThemePreference,
+  read: () => readDisplayThemePreference(),
+  write: (value) => writeDisplayThemePreference(value),
+})
 
 const applyDocumentTheme = (preference: DisplayThemePreference, prefersDark: boolean) => {
   const isDark = resolveDisplayColorScheme(preference, prefersDark) === 'dark'
-  document.documentElement.classList.toggle('dark', isDark)
+  globalThis.document.documentElement.classList.toggle('dark', isDark)
 }
 
-/** Owns the saved theme preference and applies it to the browser document. */
+/** Shares the saved theme preference and applies it to the browser document. */
 export const useDisplayThemeController = (): DisplayThemeController => {
-  const [preference, setPreference] = createSignal<DisplayThemePreference>(DEFAULT_DISPLAY_THEME)
+  const [storedPreference, setStoredPreference] = usePreference({
+    defaultValue: DEFAULT_DISPLAY_THEME,
+    key: DISPLAY_THEME_STORAGE_KEY,
+    onError: () => undefined,
+    parse: parseDisplayThemePreference,
+    storage: displayThemeStorage,
+  })
   const [prefersDark, setPrefersDark] = createSignal(false)
-  const [isPreferenceReady, setIsPreferenceReady] = createSignal(false)
-  let preferenceRevision = 0
-  let isDisposed = false
+  const preference = () => storedPreference() ?? DEFAULT_DISPLAY_THEME
 
   const onPreferenceChange = (nextPreference: DisplayThemePreference) => {
-    preferenceRevision += 1
-    batch(() => {
-      setPreference(nextPreference)
-      setIsPreferenceReady(true)
-    })
-    writeDisplayThemePreference(nextPreference).catch(() => {
-      // The current session keeps the selected theme when persistence is unavailable.
-    })
+    setStoredPreference(nextPreference)
   }
 
   onMount(() => {
     const mediaQuery = globalThis.matchMedia('(prefers-color-scheme: dark)')
-    const initialPreferenceRevision = preferenceRevision
     setPrefersDark(mediaQuery.matches)
 
     const handleSystemThemeChange = (event: MediaQueryListEvent) => {
@@ -43,33 +54,13 @@ export const useDisplayThemeController = (): DisplayThemeController => {
     mediaQuery.addEventListener('change', handleSystemThemeChange)
 
     createEffect(() => {
-      if (isPreferenceReady()) {
-        applyDocumentTheme(preference(), prefersDark())
+      const currentPreference = storedPreference()
+      if (currentPreference !== null) {
+        applyDocumentTheme(currentPreference, prefersDark())
       }
     })
 
-    readDisplayThemePreference()
-      .then((storedPreference) => {
-        if (!isDisposed && preferenceRevision === initialPreferenceRevision) {
-          batch(() => {
-            setPreference(storedPreference)
-            setIsPreferenceReady(true)
-          })
-        }
-      })
-      .catch(() => {
-        if (!isDisposed && preferenceRevision === initialPreferenceRevision) {
-          batch(() => {
-            setPreference(DEFAULT_DISPLAY_THEME)
-            setIsPreferenceReady(true)
-          })
-        }
-      })
-
-    onCleanup(() => {
-      isDisposed = true
-      mediaQuery.removeEventListener('change', handleSystemThemeChange)
-    })
+    onCleanup(() => mediaQuery.removeEventListener('change', handleSystemThemeChange))
   })
 
   return {onPreferenceChange, preference}

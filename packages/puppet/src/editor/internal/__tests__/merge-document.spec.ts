@@ -5,6 +5,34 @@ import {addGlue, setGlueKeyform} from '../glue'
 import {mergeDocument} from '../merge-document'
 import {updatePhysics} from '../physics'
 
+test('should retain existing and imported conditional layer rules with renamed references', () => {
+  const document = {
+    ...createDemoDocument(),
+    layerOrderRules: [
+      {
+        partIds: ['shape-circle'],
+        placement: 'before' as const,
+        referencePartId: 'mesh-preview',
+        when: {comparison: 'greater-than' as const, parameterIds: ['angle-x'], threshold: 20},
+      },
+    ],
+  }
+  const result = mergeDocument(document, document)
+  expect(result.ok).toBe(true)
+  if (!result.ok) {
+    return
+  }
+  expect(result.document.layerOrderRules).toEqual([
+    document.layerOrderRules[0],
+    {
+      ...document.layerOrderRules[0],
+      partIds: ['import-1:shape-circle'],
+      referencePartId: 'import-1:mesh-preview',
+      when: {...document.layerOrderRules[0]!.when, parameterIds: ['import-1:angle-x']},
+    },
+  ])
+})
+
 test('should append a complete model without joining colliding identifiers', () => {
   const joined = addGlue(
     createDemoDocument(),

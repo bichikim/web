@@ -1,3 +1,4 @@
+import {apiJsonRequest, parseJsonResponse} from '../api-json'
 import {z} from 'zod'
 
 import {type AlbumCreationResult, type AlbumCreationServices} from './album-creation'
@@ -16,8 +17,8 @@ const createAlbum = async (
   const uploadedCover =
     coverFile === null ? null : await uploadAlbumCover(coverFile, draft.coverDraftId)
   const coverImageUrl = uploadedCover?.coverImageUrl ?? configuredCoverImageUrl
-  const response = await fetch('/api/admin/music/albums', {
-    body: JSON.stringify({
+  const response = await apiJsonRequest('admin/music/albums', {
+    body: {
       coverDraftId: uploadedCover === null ? null : draft.coverDraftId,
       coverFallback: draft.coverFallback,
       coverImageUrl: coverImageUrl === '' ? null : coverImageUrl,
@@ -33,8 +34,7 @@ const createAlbum = async (
           translation.title.length > 0 ||
           translation.description.length > 0,
       ),
-    }),
-    headers: {'Content-Type': 'application/json'},
+    },
     method: 'POST',
   })
 
@@ -50,7 +50,10 @@ const createAlbum = async (
     throw new Error('저장하지 못했습니다. 입력값과 로그인 상태를 확인해 주세요.')
   }
 
-  return {albumId: z.object({id: z.string()}).parse(await response.json()).id, success: true}
+  return {
+    albumId: (await parseJsonResponse(response, z.object({id: z.string()}))).id,
+    success: true,
+  }
 }
 
 const clearDraft = async (coverDraftId: string | null): Promise<boolean> => {

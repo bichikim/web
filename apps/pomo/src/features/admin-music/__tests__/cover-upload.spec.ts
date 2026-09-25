@@ -55,13 +55,13 @@ describe('uploadAlbumCover', () => {
       '/api/admin/music/covers',
       expect.objectContaining({
         body: file,
-        headers: {
-          'Content-Type': 'image/webp',
-          'X-Pomo-Cover-Id': '019d1990-1dc9-7255-a7b5-f9459dfaf782',
-        },
+        headers: expect.any(Headers),
         method: 'POST',
       }),
     )
+    const headers = new Headers(fetcher.mock.calls[0]?.[1]?.headers)
+    expect(headers.get('Content-Type')).toBe('image/webp')
+    expect(headers.get('X-Pomo-Cover-Id')).toBe('019d1990-1dc9-7255-a7b5-f9459dfaf782')
   })
 
   it.each([

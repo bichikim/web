@@ -15,6 +15,58 @@ describe('createStreamingSpeechBuffer', () => {
     expect(buffer.flush('첫 문장입니다. 다음 문장이 이어집니다. 마지막')).toBe('마지막')
   })
 
+  it.each([
+    ['Dr.', 'Please ask', 'Smith', 'to call.'],
+    ['“Dr.”', 'Please ask', 'Smith', 'to call.'],
+    ['Prof.', 'Please ask', 'Smith', 'to call.'],
+    ['e.g.', 'Examples include', 'Apples', 'and pears.'],
+    ['U.S.', 'This is', 'Army', 'work.'],
+    ['vs.', 'Category A', 'Category', 'B.'],
+  ] as const)(
+    'should keep abbreviation %s with its sentence until completion',
+    (abbreviation, lead, nextWord, ending) => {
+      const buffer = createStreamingSpeechBuffer({locale: 'ko'})
+      const abbreviationText = `${lead} ${abbreviation}`
+      const partialText = `${abbreviationText} ${nextWord}`
+      const completedSentence = `${partialText} ${ending}`
+
+      expect(buffer.update(abbreviationText)).toEqual([])
+      expect(buffer.update(partialText)).toEqual([])
+      expect(buffer.update(`${completedSentence} Continue`)).toEqual([completedSentence])
+      expect(buffer.update(`${completedSentence} Continue waiting.`)).toEqual(['Continue waiting.'])
+    },
+  )
+
+  it.each([
+    ['Choose category B. Next', 'Choose category B.'],
+    ['Pick option A. Continue', 'Pick option A.'],
+  ] as const)(
+    'should emit a completed sentence ending with a single-letter label (%s)',
+    (text, expectedSentence) => {
+      const buffer = createStreamingSpeechBuffer({locale: 'ko'})
+
+      expect(buffer.update(text)).toEqual([expectedSentence])
+    },
+  )
+
+  it('should keep sentence-leading initials attached to the following name', () => {
+    const buffer = createStreamingSpeechBuffer({locale: 'ko'})
+
+    expect(buffer.update('J.')).toEqual([])
+    expect(buffer.update('J. R.')).toEqual([])
+    expect(buffer.update('J. R. R. Tolkien arrived. Next')).toEqual(['J. R. R. Tolkien arrived.'])
+  })
+
+  it('should keep an embedded initial attached to the following name', () => {
+    const buffer = createStreamingSpeechBuffer({locale: 'ko'})
+
+    expect(buffer.update('Please contact J.')).toEqual([])
+    expect(buffer.update('Please contact J. Smith')).toEqual([])
+    expect(buffer.update('Please contact J. Smith today. Next')).toEqual([
+      'Please contact J. Smith today.',
+    ])
+  })
+
   it('should treat a completed line as a speech boundary and reset for the next answer', () => {
     const buffer = createStreamingSpeechBuffer({locale: 'ko'})
 
@@ -29,6 +81,13 @@ describe('createStreamingSpeechBuffer', () => {
     expect(buffer.update('기존 답변입니다.')).toEqual(['기존 답변입니다.'])
     expect(buffer.update('새 답변입니다.')).toEqual(['새 답변입니다.'])
     expect(buffer.flush('짧음')).toBeNull()
+  })
+
+  it('should not repeat a completed sentence when the stream shrinks to it', () => {
+    const buffer = createStreamingSpeechBuffer({locale: 'ko'})
+
+    expect(buffer.update('첫 문장입니다. 두 번째')).toEqual(['첫 문장입니다.'])
+    expect(buffer.update('첫 문장입니다.')).toEqual([])
   })
 
   it('should omit an empty completed segment and an empty remaining tail', () => {

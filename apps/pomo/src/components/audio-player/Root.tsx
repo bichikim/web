@@ -1,3 +1,4 @@
+import {clamp} from 'es-toolkit/math'
 import {createEffect, createSignal, type JSX, onCleanup, type ParentProps, untrack} from 'solid-js'
 
 import {
@@ -83,7 +84,7 @@ export const AudioPlayerRoot = (props: AudioPlayerRootProps) => {
       return
     }
 
-    const position = Math.min(Math.max(time, 0), getDuration(audioElement))
+    const position = clamp(time, 0, getDuration(audioElement))
     if (props.onBeforePlayback?.(position, !audioElement.paused, 'seek') === false) {
       return
     }

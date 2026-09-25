@@ -1,16 +1,21 @@
 /** @vitest-environment jsdom */
 
-import {createRoot, createSignal} from 'solid-js'
+import {renderHook} from '@solidjs/testing-library'
+import {PreferenceProvider, usePreference} from 'src/hooks/use-preference'
+import {createSignal} from 'solid-js'
 import {afterEach, beforeEach, expect, it, vi} from 'vitest'
 
 import {
+  createDialogueVolumeDuckingPreferenceOptions,
   DEFAULT_DIALOGUE_VOLUME_DUCKING_SETTINGS,
-  DIALOGUE_VOLUME_DUCKING_SETTINGS_CHANGED_EVENT,
+  type DialogueVolumeDuckingSettings,
 } from '../volume-ducking-settings'
+import {useVolumeDucking} from 'src/components/dialogue-settings/use-volume-ducking'
 import {resolveDialoguePlayerGain, usePlayerVolumeDucking} from '../use-player-volume-ducking'
 
 const settingsMocks = vi.hoisted(() => ({
   read: vi.fn(),
+  write: vi.fn(),
 }))
 
 vi.mock('../volume-ducking-settings', async () => {
@@ -18,15 +23,24 @@ vi.mock('../volume-ducking-settings', async () => {
     '../volume-ducking-settings',
   )
 
-  return {...actual, readDialogueVolumeDuckingSettings: settingsMocks.read}
+  return {
+    ...actual,
+    createDialogueVolumeDuckingPreferenceOptions: (options = {}) => ({
+      ...actual.createDialogueVolumeDuckingPreferenceOptions(options),
+      storage: {
+        read: () => settingsMocks.read(),
+        write: () => settingsMocks.write(),
+      },
+    }),
+  }
 })
 
 beforeEach(() => {
   settingsMocks.read.mockResolvedValue(DEFAULT_DIALOGUE_VOLUME_DUCKING_SETTINGS)
+  settingsMocks.write.mockResolvedValue(undefined)
 })
 
 afterEach(() => {
-  localStorage.clear()
   vi.restoreAllMocks()
 })
 
@@ -47,14 +61,18 @@ it('should resolve full, configured, and muted player gains', () => {
 it('should react to dialogue playback and live setting changes', async () => {
   const onGainChange = vi.fn()
   let setDialogueActive: (active: boolean) => void = () => undefined
-  let dispose: () => void = () => undefined
+  let setSettings: (settings: DialogueVolumeDuckingSettings) => void = () => undefined
 
-  createRoot((rootDispose) => {
-    dispose = rootDispose
-    const [isDialogueActive, setActive] = createSignal(false)
-    setDialogueActive = setActive
-    usePlayerVolumeDucking({isDialogueActive, onGainChange})
-  })
+  const view = renderHook(
+    () => {
+      const [isDialogueActive, setActive] = createSignal(false)
+      setDialogueActive = setActive
+      const [, setPreference] = usePreference(createDialogueVolumeDuckingPreferenceOptions())
+      setSettings = setPreference
+      usePlayerVolumeDucking({isDialogueActive, onGainChange})
+    },
+    {wrapper: PreferenceProvider},
+  )
   await Promise.resolve()
 
   expect(onGainChange).toHaveBeenLastCalledWith(1)
@@ -62,20 +80,66 @@ it('should react to dialogue playback and live setting changes', async () => {
   setDialogueActive(true)
   expect(onGainChange).toHaveBeenLastCalledWith(0.5)
 
-  window.dispatchEvent(
-    new CustomEvent(DIALOGUE_VOLUME_DUCKING_SETTINGS_CHANGED_EVENT, {
-      detail: {enabled: true, playerVolumePercent: 35, version: 2},
-    }),
-  )
+  setSettings({enabled: true, playerVolumePercent: 35, version: 2})
   expect(onGainChange).toHaveBeenLastCalledWith(0.35)
 
-  window.dispatchEvent(
-    new CustomEvent(DIALOGUE_VOLUME_DUCKING_SETTINGS_CHANGED_EVENT, {
-      detail: {enabled: false, playerVolumePercent: 35, version: 2},
-    }),
-  )
+  setSettings({enabled: false, playerVolumePercent: 35, version: 2})
   expect(onGainChange).toHaveBeenLastCalledWith(1)
-  dispose()
+  view.cleanup()
+})
+
+it('should apply a settings edit before its debounced save completes', async () => {
+  vi.useFakeTimers()
+  let changeVolume: (playerVolumePercent: number) => void = () => undefined
+  const onGainChange = vi.fn()
+  const view = renderHook(
+    () => {
+      const settings = useVolumeDucking()
+      changeVolume = settings.changeVolume
+      usePlayerVolumeDucking({isDialogueActive: () => true, onGainChange})
+    },
+    {wrapper: PreferenceProvider},
+  )
+  try {
+    await vi.advanceTimersByTimeAsync(0)
+    settingsMocks.write.mockClear()
+
+    changeVolume(10)
+
+    expect(onGainChange).toHaveBeenLastCalledWith(0.1)
+    expect(settingsMocks.write).not.toHaveBeenCalled()
+  } finally {
+    view.cleanup()
+    vi.useRealTimers()
+  }
+})
+
+it('should not track signals read by the gain callback', async () => {
+  const onGainChange = vi.fn()
+  let setCallbackState: (value: number) => void = () => undefined
+  const view = renderHook(
+    () => {
+      const [callbackState, setState] = createSignal(0)
+      setCallbackState = setState
+      usePlayerVolumeDucking({
+        isDialogueActive: () => true,
+        onGainChange: (gain) => {
+          callbackState()
+          onGainChange(gain)
+        },
+      })
+    },
+    {wrapper: PreferenceProvider},
+  )
+  await Promise.resolve()
+
+  const callCountAfterRestore = onGainChange.mock.calls.length
+  expect(callCountAfterRestore).toBeGreaterThan(0)
+  setCallbackState(1)
+  await Promise.resolve()
+
+  expect(onGainChange).toHaveBeenCalledTimes(callCountAfterRestore)
+  view.cleanup()
 })
 
 it('should not let a late settings read replace a newer live change', async () => {
@@ -87,40 +151,33 @@ it('should not let a late settings read replace a newer live change', async () =
     }),
   )
   const onGainChange = vi.fn()
-  let dispose: () => void = () => undefined
-
-  createRoot((rootDispose) => {
-    dispose = rootDispose
-    usePlayerVolumeDucking({isDialogueActive: () => true, onGainChange})
-  })
+  let setSettings: (settings: DialogueVolumeDuckingSettings) => void = () => undefined
+  const view = renderHook(
+    () => {
+      const [, setPreference] = usePreference(createDialogueVolumeDuckingPreferenceOptions())
+      setSettings = setPreference
+      usePlayerVolumeDucking({isDialogueActive: () => true, onGainChange})
+    },
+    {wrapper: PreferenceProvider},
+  )
   await Promise.resolve()
 
-  window.dispatchEvent(
-    new CustomEvent(DIALOGUE_VOLUME_DUCKING_SETTINGS_CHANGED_EVENT, {
-      detail: {enabled: true, playerVolumePercent: 20, version: 2},
-    }),
-  )
+  setSettings({enabled: true, playerVolumePercent: 20, version: 2})
   resolveRead(DEFAULT_DIALOGUE_VOLUME_DUCKING_SETTINGS)
   await Promise.resolve()
 
   expect(onGainChange).toHaveBeenLastCalledWith(0.2)
-  dispose()
+  view.cleanup()
 })
 
-it('should ignore unrelated events and report settings read failures', async () => {
+it('should report settings read failures', async () => {
   const failure = new Error('read failed')
   const consoleError = vi.spyOn(console, 'error').mockImplementation(() => undefined)
   settingsMocks.read.mockRejectedValueOnce(failure)
   const onGainChange = vi.fn()
-  let dispose: () => void = () => undefined
-
-  createRoot((rootDispose) => {
-    dispose = rootDispose
-    usePlayerVolumeDucking({isDialogueActive: () => true, onGainChange})
-  })
-  window.dispatchEvent(new Event(DIALOGUE_VOLUME_DUCKING_SETTINGS_CHANGED_EVENT))
-  window.dispatchEvent(
-    new CustomEvent(DIALOGUE_VOLUME_DUCKING_SETTINGS_CHANGED_EVENT, {detail: {version: 9}}),
+  const view = renderHook(
+    () => usePlayerVolumeDucking({isDialogueActive: () => true, onGainChange}),
+    {wrapper: PreferenceProvider},
   )
   await Promise.resolve()
   await Promise.resolve()
@@ -130,7 +187,7 @@ it('should ignore unrelated events and report settings read failures', async () 
     'Failed to load dialogue volume ducking settings.',
     failure,
   )
-  dispose()
+  view.cleanup()
 })
 
 it('should ignore a settings read completed after disposal', async () => {
@@ -142,13 +199,11 @@ it('should ignore a settings read completed after disposal', async () => {
     }),
   )
   const onGainChange = vi.fn()
-  let dispose: () => void = () => undefined
-
-  createRoot((rootDispose) => {
-    dispose = rootDispose
-    usePlayerVolumeDucking({isDialogueActive: () => true, onGainChange})
-  })
-  dispose()
+  const view = renderHook(
+    () => usePlayerVolumeDucking({isDialogueActive: () => true, onGainChange}),
+    {wrapper: PreferenceProvider},
+  )
+  view.cleanup()
   resolveRead(DEFAULT_DIALOGUE_VOLUME_DUCKING_SETTINGS)
   await Promise.resolve()
 

@@ -8,15 +8,9 @@ const repositoryMocks = vi.hoisted(() => ({
 const authMocks = vi.hoisted(() => ({authenticateAppRequest: vi.fn()}))
 const emailMocks = vi.hoisted(() => ({sendAccountLinkEmail: vi.fn()}))
 
-vi.mock('src/server/auth/authenticate-app-request', async () => {
-  const actual = await vi.importActual<typeof import('src/server/auth/authenticate-app-request')>(
-    'src/server/auth/authenticate-app-request',
-  )
-
-  return {...actual, authenticateAppRequest: authMocks.authenticateAppRequest}
-})
+vi.mock('src/server/auth/authenticate-app-request', () => authMocks)
 vi.mock('src/server/auth/magic-link', () => emailMocks)
-vi.mock('src/server/repositories/auth', () => repositoryMocks)
+vi.mock('src/server/auth/account-link', () => repositoryMocks)
 
 import {POST} from '../link-email'
 import {invokeApiRoute} from '../../__tests__/invoke'

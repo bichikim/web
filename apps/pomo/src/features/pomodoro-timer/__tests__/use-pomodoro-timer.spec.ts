@@ -1,5 +1,6 @@
 /** @vitest-environment jsdom */
 
+import {PreferenceProvider} from 'src/hooks/use-preference'
 import {renderHook} from '@solidjs/testing-library'
 import {afterEach, beforeEach, expect, it, vi} from 'vitest'
 
@@ -50,7 +51,7 @@ afterEach(() => {
 
 it('should expose every timer action and derived value', async () => {
   const onEvents = vi.fn()
-  const view = renderHook(() => usePomodoroTimer({onEvents}))
+  const view = renderHook(() => usePomodoroTimer({onEvents}), {wrapper: PreferenceProvider})
   await finishInitialization(view)
 
   view.result.onConfigChange(CONFIG)
@@ -87,10 +88,59 @@ it('should expose every timer action and derived value', async () => {
   view.cleanup()
 })
 
+it('should not emit lifecycle events when resetting a running phase', async () => {
+  const onEvents = vi.fn()
+  const view = renderHook(() => usePomodoroTimer({onEvents}), {wrapper: PreferenceProvider})
+  await finishInitialization(view)
+
+  view.result.onConfigChange(CONFIG)
+  view.result.onStart()
+  onEvents.mockClear()
+
+  view.result.onReset()
+
+  expect(view.result.state()).toEqual({
+    completedFocusSessions: 0,
+    phase: 'focus',
+    remainingSeconds: 10,
+    status: 'idle',
+  })
+  expect(onEvents).not.toHaveBeenCalled()
+  view.cleanup()
+})
+
+it.each([
+  {completedFocusSessions: 0, phase: 'focus'},
+  {completedFocusSessions: 1, phase: 'shortBreak'},
+  {completedFocusSessions: 2, phase: 'longBreak'},
+] as const)('should not emit lifecycle events when changing a paused $phase', async (scenario) => {
+  localStorage.setItem(CONFIG_STORAGE_KEY, JSON.stringify(CONFIG))
+  localStorage.setItem(
+    STATE_STORAGE_KEY,
+    JSON.stringify({
+      completedFocusSessions: scenario.completedFocusSessions,
+      phase: scenario.phase,
+      remainingSeconds: 5,
+      status: 'paused',
+    }),
+  )
+  const onEvents = vi.fn()
+  const view = renderHook(() => usePomodoroTimer({onEvents}), {wrapper: PreferenceProvider})
+  await finishInitialization(view)
+
+  const nextConfig = {...CONFIG, focusSeconds: 20}
+  view.result.onConfigChange(nextConfig)
+
+  expect(view.result.config()).toEqual(nextConfig)
+  expect(view.result.state()).toMatchObject({phase: scenario.phase, status: 'idle'})
+  expect(onEvents).not.toHaveBeenCalled()
+  view.cleanup()
+})
+
 it('should refresh on visibility changes and stop after owner cleanup', async () => {
   const add = vi.spyOn(document, 'addEventListener')
   const remove = vi.spyOn(document, 'removeEventListener')
-  const view = renderHook(usePomodoroTimer)
+  const view = renderHook(usePomodoroTimer, {wrapper: PreferenceProvider})
   await finishInitialization(view)
 
   document.dispatchEvent(new Event('visibilitychange'))
@@ -112,21 +162,25 @@ it('should refresh on visibility changes and stop after owner cleanup', async ()
 
 it('should persist a stopped timer when disabled on unmount', async () => {
   const cancelFrame = vi.spyOn(globalThis, 'cancelAnimationFrame')
-  const timer = renderHook(() => usePomodoroTimer({stopOnUnmount: true}))
+  const timer = renderHook(() => usePomodoroTimer({stopOnUnmount: true}), {
+    wrapper: PreferenceProvider,
+  })
   await finishInitialization(timer)
   timer.result.onStart()
   expect(timer.result.state().status).toBe('running')
   timer.cleanup()
   expect(JSON.parse(localStorage.getItem(STATE_STORAGE_KEY) ?? '{}').status).toBe('idle')
   expect(cancelFrame).toHaveBeenCalledTimes(1)
-  const restored = renderHook(() => usePomodoroTimer())
+  const restored = renderHook(() => usePomodoroTimer(), {wrapper: PreferenceProvider})
   await finishInitialization(restored)
   expect(restored.result.state().status).toBe('idle')
   restored.cleanup()
 })
 
 it('should preserve paused progress when disabled on unmount', async () => {
-  const timer = renderHook(() => usePomodoroTimer({stopOnUnmount: true}))
+  const timer = renderHook(() => usePomodoroTimer({stopOnUnmount: true}), {
+    wrapper: PreferenceProvider,
+  })
   await finishInitialization(timer)
   timer.result.onConfigChange(CONFIG)
   timer.result.onStart()
@@ -142,7 +196,9 @@ it('should preserve paused progress when disabled on unmount', async () => {
 
   timer.cleanup()
 
-  const restored = renderHook(() => usePomodoroTimer({stopOnUnmount: true}))
+  const restored = renderHook(() => usePomodoroTimer({stopOnUnmount: true}), {
+    wrapper: PreferenceProvider,
+  })
   await finishInitialization(restored)
 
   expect(restored.result.state()).toEqual({
@@ -163,7 +219,9 @@ it('should preserve paused progress when disabled on unmount', async () => {
 })
 
 it('should preserve running progress when disabled on unmount', async () => {
-  const timer = renderHook(() => usePomodoroTimer({stopOnUnmount: true}))
+  const timer = renderHook(() => usePomodoroTimer({stopOnUnmount: true}), {
+    wrapper: PreferenceProvider,
+  })
   await finishInitialization(timer)
   timer.result.onConfigChange(CONFIG)
   timer.result.onStart()
@@ -190,7 +248,9 @@ it('should preserve paused progress after auto-start catch-up on unmount', async
   localStorage.setItem(STATE_STORAGE_KEY, JSON.stringify(runningBreak))
   autoStartMocks.read.mockResolvedValue(true)
 
-  const timer = renderHook(() => usePomodoroTimer({stopOnUnmount: true}))
+  const timer = renderHook(() => usePomodoroTimer({stopOnUnmount: true}), {
+    wrapper: PreferenceProvider,
+  })
   await finishInitialization(timer)
   vi.setSystemTime(5_000)
   timer.result.onPause()
@@ -224,7 +284,9 @@ it('should synchronize an expired timer before stopping it on unmount', async ()
     }),
   )
 
-  const timer = renderHook(() => usePomodoroTimer({stopOnUnmount: true}))
+  const timer = renderHook(() => usePomodoroTimer({stopOnUnmount: true}), {
+    wrapper: PreferenceProvider,
+  })
   await finishInitialization(timer)
   vi.setSystemTime(11_000)
 
@@ -238,9 +300,29 @@ it('should synchronize an expired timer before stopping it on unmount', async ()
   })
 })
 
+it('should catch up every expired phase before stopping on unmount with auto-start enabled', async () => {
+  const timer = renderHook(() => usePomodoroTimer({stopOnUnmount: true}), {
+    wrapper: PreferenceProvider,
+  })
+  await finishInitialization(timer)
+  timer.result.onConfigChange(CONFIG)
+  timer.result.onAutoStartChange(true)
+  timer.result.onStart()
+
+  vi.setSystemTime(14_000)
+  timer.cleanup()
+
+  expect(JSON.parse(localStorage.getItem(STATE_STORAGE_KEY) ?? '{}')).toEqual({
+    completedFocusSessions: 1,
+    phase: 'focus',
+    remainingSeconds: 10,
+    status: 'idle',
+  })
+})
+
 it('should synchronize an expired phase on the next frame without duplicate events', async () => {
   const onEvents = vi.fn()
-  const view = renderHook(() => usePomodoroTimer({onEvents}))
+  const view = renderHook(() => usePomodoroTimer({onEvents}), {wrapper: PreferenceProvider})
   await finishInitialization(view)
   view.result.onConfigChange(CONFIG)
   view.result.onStart()
@@ -255,7 +337,7 @@ it('should synchronize an expired phase on the next frame without duplicate even
 })
 
 it('should synchronize an expired phase before applying a new configuration', async () => {
-  const view = renderHook(usePomodoroTimer)
+  const view = renderHook(usePomodoroTimer, {wrapper: PreferenceProvider})
   await finishInitialization(view)
   view.result.onConfigChange(CONFIG)
   view.result.onStart()
@@ -276,7 +358,7 @@ it('should synchronize an expired phase before applying a new configuration', as
 
 it('should synchronize an expired break before advancing with auto-start enabled', async () => {
   const onEvents = vi.fn()
-  const view = renderHook(() => usePomodoroTimer({onEvents}))
+  const view = renderHook(() => usePomodoroTimer({onEvents}), {wrapper: PreferenceProvider})
   await finishInitialization(view)
   view.result.onConfigChange(CONFIG)
   view.result.onAutoStartChange(true)
@@ -329,7 +411,7 @@ it.each([
     )
     autoStartMocks.read.mockResolvedValue(true)
 
-    const view = renderHook(() => usePomodoroTimer({onEvents}))
+    const view = renderHook(() => usePomodoroTimer({onEvents}), {wrapper: PreferenceProvider})
     await finishInitialization(view)
     vi.setSystemTime(scenario.currentTime)
     view.result.onNextPhase()
@@ -348,7 +430,7 @@ it.each([
 
 it('should preserve manual advancement for an unfinished running phase with auto-start enabled', async () => {
   const onEvents = vi.fn()
-  const view = renderHook(() => usePomodoroTimer({onEvents}))
+  const view = renderHook(() => usePomodoroTimer({onEvents}), {wrapper: PreferenceProvider})
   await finishInitialization(view)
   view.result.onConfigChange(CONFIG)
   view.result.onAutoStartChange(true)
@@ -380,7 +462,7 @@ it('should synchronize an expired running break before applying configuration ch
   localStorage.setItem(STATE_STORAGE_KEY, JSON.stringify(runningBreak))
   autoStartMocks.read.mockResolvedValue(true)
 
-  const view = renderHook(usePomodoroTimer)
+  const view = renderHook(usePomodoroTimer, {wrapper: PreferenceProvider})
   await finishInitialization(view)
   vi.setSystemTime(5_000)
 
@@ -396,8 +478,41 @@ it('should synchronize an expired running break before applying configuration ch
   view.cleanup()
 })
 
+it.each([
+  {completedFocusSessions: 1, endsAt: 10_000, phase: 'shortBreak'},
+  {completedFocusSessions: 2, endsAt: 12_000, phase: 'longBreak'},
+] as const)(
+  'should reset an unfinished running $phase to focus before applying configuration changes',
+  async (scenario) => {
+    const runningBreak = {
+      completedFocusSessions: scenario.completedFocusSessions,
+      endsAt: scenario.endsAt,
+      phase: scenario.phase,
+      status: 'running',
+    } satisfies PomodoroTimerState
+    const nextConfig = {...CONFIG, longBreakSeconds: 9, shortBreakSeconds: 8}
+    localStorage.setItem(CONFIG_STORAGE_KEY, JSON.stringify(CONFIG))
+    localStorage.setItem(STATE_STORAGE_KEY, JSON.stringify(runningBreak))
+
+    const view = renderHook(usePomodoroTimer, {wrapper: PreferenceProvider})
+    await finishInitialization(view)
+    vi.setSystemTime(5_000)
+
+    view.result.onConfigChange(nextConfig)
+
+    expect(view.result.config()).toEqual(nextConfig)
+    expect(view.result.state()).toEqual({
+      completedFocusSessions: scenario.completedFocusSessions,
+      phase: 'focus',
+      remainingSeconds: 10,
+      status: 'idle',
+    })
+    view.cleanup()
+  },
+)
+
 it('should stop after the first expired phase when applying configuration changes', async () => {
-  const view = renderHook(usePomodoroTimer)
+  const view = renderHook(usePomodoroTimer, {wrapper: PreferenceProvider})
   await finishInitialization(view)
   view.result.onConfigChange(CONFIG)
   view.result.onAutoStartChange(true)
@@ -416,6 +531,25 @@ it('should stop after the first expired phase when applying configuration change
   view.cleanup()
 })
 
+it('should catch up every expired phase before stopping with auto-start enabled', async () => {
+  const view = renderHook(usePomodoroTimer, {wrapper: PreferenceProvider})
+  await finishInitialization(view)
+  view.result.onConfigChange(CONFIG)
+  view.result.onAutoStartChange(true)
+  view.result.onStart()
+
+  vi.setSystemTime(15_000)
+  view.result.onStop()
+
+  expect(view.result.state()).toEqual({
+    completedFocusSessions: 1,
+    phase: 'focus',
+    remainingSeconds: 10,
+    status: 'idle',
+  })
+  view.cleanup()
+})
+
 it('should synchronize an expired running break before stopping', async () => {
   const runningBreak = {
     completedFocusSessions: 1,
@@ -427,7 +561,7 @@ it('should synchronize an expired running break before stopping', async () => {
   localStorage.setItem(CONFIG_STORAGE_KEY, JSON.stringify(CONFIG))
   localStorage.setItem(STATE_STORAGE_KEY, JSON.stringify(runningBreak))
 
-  const view = renderHook(() => usePomodoroTimer({onEvents}))
+  const view = renderHook(() => usePomodoroTimer({onEvents}), {wrapper: PreferenceProvider})
   await finishInitialization(view)
   vi.setSystemTime(5_000)
 
@@ -444,7 +578,7 @@ it('should synchronize an expired running break before stopping', async () => {
 })
 
 it('should stop frame updates after cleanup', async () => {
-  const view = renderHook(usePomodoroTimer)
+  const view = renderHook(usePomodoroTimer, {wrapper: PreferenceProvider})
   await finishInitialization(view)
   view.result.onStart()
   vi.setSystemTime(1_000)
@@ -459,7 +593,7 @@ it.each(['refresh', 'pause'] as const)(
   'should publish every elapsed phase once when a delayed %s lands on focus',
   async (action) => {
     const onEvents = vi.fn()
-    const view = renderHook(() => usePomodoroTimer({onEvents}))
+    const view = renderHook(() => usePomodoroTimer({onEvents}), {wrapper: PreferenceProvider})
     await finishInitialization(view)
     view.result.onConfigChange(CONFIG)
     view.result.onAutoStartChange(true)
@@ -504,7 +638,7 @@ it.each([
   )
   autoStartMocks.read.mockResolvedValue(true)
   const onEvents = vi.fn()
-  const view = renderHook(() => usePomodoroTimer({onEvents}))
+  const view = renderHook(() => usePomodoroTimer({onEvents}), {wrapper: PreferenceProvider})
   await finishInitialization(view)
   vi.setSystemTime(5_000)
   view.result.onPause()

@@ -1,6 +1,8 @@
 import {VideoLoop} from './video-loop'
 import {createMedia} from './media'
 import {calculateLayout} from './layout'
+import {createCanvasVideoTexture} from './video-texture'
+export * from './cosine-ease-out-alpha'
 export * from './edges'
 export * from './effect'
 export * from './layout'
@@ -28,6 +30,7 @@ export interface FrameRendererOptions {
   readonly onVideoStart?: () => void
   readonly onEnded: () => void
   readonly onError: () => void
+  readonly videoTextureMode?: 'canvas' | 'webgl'
 }
 
 /** Owns one Pixi application and releases each media source when replaced or destroyed. */
@@ -49,6 +52,7 @@ export class FrameRenderer {
   #kind: MediaKind | null = null
   #transition: PhotoTransition | null = null
   #cancelLoad: (() => void) | null = null
+  #updateVideoTexture: (() => void) | null = null
 
   constructor(options: FrameRendererOptions) {
     this.#options = options
@@ -220,6 +224,7 @@ export class FrameRenderer {
     this.#release?.()
     this.#release = null
     this.#cancelLoad = null
+    this.#updateVideoTexture = null
     this.#sprite = null
     this.#video = null
     if (this.#initialized) {
@@ -275,25 +280,37 @@ export class FrameRenderer {
       texture?.destroy(true)
       media.dispose()
     }
-    const result = await media.ready
-    if (!active()) {
-      return false
-    }
-    if (!result) {
-      throw new Error('Unable to decode background media.')
-    }
-    if (video === null) {
-      texture = Texture.from(source)
-    } else {
-      const videoSource = new VideoSource({autoLoad: false, autoPlay: false, resource: video})
-      texture = new Texture({source: videoSource})
-      await videoSource.load()
+    try {
+      const result = await media.ready
       if (!active()) {
         return false
       }
+      if (!result) {
+        throw new Error('Unable to decode background media.')
+      }
+      if (video === null) {
+        texture = Texture.from(source)
+      } else if (this.#options.videoTextureMode === 'canvas') {
+        const {texture: canvasTexture, update} = createCanvasVideoTexture(video)
+        texture = canvasTexture
+        this.#updateVideoTexture = update
+      } else {
+        const videoSource = new VideoSource({autoLoad: false, autoPlay: false, resource: video})
+        texture = new Texture({source: videoSource})
+        await videoSource.load()
+        if (!active()) {
+          return false
+        }
+      }
+      sprite = this.#mount(texture, kind)
+      return video === null ? true : this.#playVideo(video, blob, id, active)
+    } catch (error) {
+      if (active()) {
+        this.#clearMedia()
+        this.#kind = null
+      }
+      throw error
     }
-    sprite = this.#mount(texture, kind)
-    return video === null ? true : this.#playVideo(video, blob, id, active)
   }
 
   async #playVideo(
@@ -325,7 +342,10 @@ export class FrameRenderer {
     this.#edges = edges
     this.#application.stage.addChildAt(edges.view, 0)
     this.#resize()
-    const update = (ticker: Ticker) => edges.update(video.currentTime, ticker.elapsedMS)
+    const update = (ticker: Ticker) => {
+      this.#updateVideoTexture?.()
+      edges.update(video.currentTime, ticker.elapsedMS)
+    }
     this.#application.ticker.add(update)
     const release = this.#release
     this.#release = () => {

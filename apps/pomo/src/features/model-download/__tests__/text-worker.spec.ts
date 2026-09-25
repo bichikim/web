@@ -122,6 +122,18 @@ describe('text model download worker', () => {
     expect(worker.postMessage).toHaveBeenNthCalledWith(2, {type: 'ready'})
   })
 
+  it('should reuse one executor when the same model is prepared again', async () => {
+    const worker = await loadWorker()
+
+    worker.dispatch({modelId: 'qwen-4b', type: 'prepare'})
+    await waitForResponse(worker, 'ready')
+    worker.dispatch({modelId: 'qwen-4b', type: 'prepare'})
+    await vi.waitFor(() => expect(worker.postMessage).toHaveBeenCalledTimes(2))
+
+    expect(runtimeMocks.create).toHaveBeenCalledOnce()
+    expect(runtimeMocks.prepare).toHaveBeenCalledTimes(2)
+  })
+
   it.each([
     {error: new Error('저장 공간 부족'), message: '저장 공간 부족'},
     {error: new Error(), message: '모델 파일을 내려받지 못했어요.'},

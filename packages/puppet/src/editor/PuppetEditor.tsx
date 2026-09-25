@@ -10,11 +10,13 @@ import {GlueEditor} from './internal/GlueEditor'
 import {useDeformerMode} from './internal/use-deformer-mode'
 import {Portal} from 'solid-js/web'
 import {batch, createEffect, createMemo, createSignal, Show, untrack} from 'solid-js'
-import {createDemoDocument, type Player, type PuppetDocument, serializeDocument} from '../player'
+import {createEmptyDocument, type Player, type PuppetDocument} from '../player'
+import {useDocumentExport} from './use-document-export'
 import {EditorViewport} from './EditorViewport'
 import {createDeformerControlSelection} from './internal/deformer-control-selection'
 import {EditorAutoMeshDialog} from './internal/EditorAutoMeshDialog'
 import {EditorInspector} from './internal/EditorInspector'
+import {LayerOrderProperties} from './internal/LayerOrderProperties'
 import {EditorLayerPanel} from './internal/EditorLayerPanel'
 import {getParameterBindingsForNodeIds} from './internal/parameter-keyforms'
 import {setMaskTarget} from './internal/mask-targets'
@@ -26,6 +28,7 @@ import {
   getSelectedPartId,
 } from './internal/selection-actions'
 import {
+  getSceneNode,
   getSceneSelectionPartIds,
   type SceneSelection,
   unwrapSceneNodes,
@@ -41,18 +44,9 @@ import type {PlayerCanvasStatus} from './PlayerCanvas'
 import {EditorStyles} from './internal/EditorStyles'
 export interface PuppetEditorProps {
   readonly initialDocument?: PuppetDocument
+  readonly initialMotionId?: string
+  readonly initialWorkspace?: 'animation' | 'modeling'
   readonly onDocumentChange?: (document: PuppetDocument) => void
-}
-const downloadDocument = (document: PuppetDocument) => {
-  const source = serializeDocument(document)
-  const url = URL.createObjectURL(new Blob([source], {type: 'application/json'}))
-  const anchor = window.document.createElement('a')
-  anchor.download = 'puppet-model.json'
-  anchor.href = url
-  window.document.body.append(anchor)
-  anchor.click()
-  anchor.remove()
-  window.setTimeout(() => URL.revokeObjectURL(url), 0)
 }
 const setPlayerPlayback = (player: Player, isPlaying: boolean) => {
   if (isPlaying) {
@@ -82,9 +76,14 @@ interface EditorWorkspacePanelProps {
   readonly onEditEnd?: () => void
   readonly onEditStart?: () => void
   readonly onMotionChange?: (motionId: string) => void
+  readonly onMotionSeek?: (motionId: string, time: number) => void
   readonly onPlaybackToggle?: () => void
+  readonly onPhysicsPreviewChange?: (enabled: boolean) => void
+  readonly onPhysicsReset?: () => void
   readonly onSeek?: (time: number) => void
+  readonly physicsPreview?: boolean
   readonly selectedNodeIds: ReadonlyArray<string>
+  readonly setBrushControlsMount?: (element: HTMLDivElement | undefined) => void
   readonly workspace: 'animation' | 'modeling'
 }
 const EditorWorkspacePanel = (props: EditorWorkspacePanelProps) => (
@@ -100,6 +99,7 @@ const EditorWorkspacePanel = (props: EditorWorkspacePanelProps) => (
         onEditEnd={props.onEditEnd}
         onEditStart={props.onEditStart}
         onMotionChange={props.onMotionChange}
+        onMotionSeek={props.onMotionSeek}
         onPlaybackToggle={props.onPlaybackToggle}
         onSeek={props.onSeek}
         parameterValues={props.editor.parameterValueMap()}
@@ -112,7 +112,11 @@ const EditorWorkspacePanel = (props: EditorWorkspacePanelProps) => (
         editor={props.editor}
         onEditEnd={props.onEditEnd}
         onEditStart={props.onEditStart}
+        onPhysicsPreviewChange={props.onPhysicsPreviewChange}
+        onPhysicsReset={props.onPhysicsReset}
+        physicsPreview={props.physicsPreview}
         selectedNodeIds={props.selectedNodeIds}
+        setBrushControlsMount={props.setBrushControlsMount}
       />
     </section>
   </Show>
@@ -122,35 +126,54 @@ const WORKSPACE_EDIT_MODES = {animation: 'motion', modeling: 'parameter'} as con
 
 // eslint-disable-next-line complexity, max-lines-per-function, max-statements
 export const PuppetEditor = (props: PuppetEditorProps) => {
-  const initialDocument = untrack(() => props.initialDocument ?? createDemoDocument())
+  const initialDocument = untrack(() => props.initialDocument ?? createEmptyDocument())
+  const requestedMotionId = untrack(() => props.initialMotionId)
+  const initialMotionId = initialDocument.motions.some((motion) => motion.id === requestedMotionId)
+    ? (requestedMotionId ?? null)
+    : (initialDocument.motions[0]?.id ?? null)
   const initialPartId = initialDocument.parts[0]?.id ?? null
   const history = useDocumentHistory({initialDocument})
   const sourceDocument = history.document
+  const documentExport = useDocumentExport(sourceDocument)
   const skinSession = createSkinSession()
   const [activePartId, setActivePartId] = createSignal<string | null>(initialPartId)
   const [layerSelection, setLayerSelection] = createSignal(createSceneSelection(initialPartId))
   const [glueVertex, setGlueVertex] = createSignal<PuppetVertexReference | null>(null)
   const [activeVertexIndex, setActiveVertexIndex] = createSignal<number | null>(null)
+  const [brushControlsMount, setBrushControlsMount] = createSignal<HTMLDivElement>()
+  const [brushSettingsMount, setBrushSettingsMount] = createSignal<HTMLDivElement>()
   const deformerEditing = useDeformerMode({
     document: sourceDocument,
     nodeId: () => layerSelection().activeNodeId ?? undefined,
     onDocumentChange: history.setDocument,
   })
   const deformerControlSelection = createDeformerControlSelection()
-  const [workspace, setWorkspace] = createSignal<'animation' | 'modeling'>('modeling')
+  const [workspace, setWorkspace] = createSignal<'animation' | 'modeling'>(
+    untrack(() => props.initialWorkspace ?? 'modeling'),
+  )
   const [playerStatus, setPlayerStatus] = createSignal<PlayerCanvasStatus>('loading')
   const [player, setPlayer] = createSignal<Player | null>(null)
   const [currentTime, setCurrentTime] = createSignal(0)
+  const [playbackPreviewTime, setPlaybackPreviewTime] = createSignal(0)
   const [isPlaying, setIsPlaying] = createSignal(false)
-  const [activeMotionId, setActiveMotionId] = createSignal<string | null>(
-    initialDocument.motions[0]?.id ?? null,
-  )
+  const [physicsPreview, setPhysicsPreview] = createSignal(true)
+  const [activeMotionId, setActiveMotionId] = createSignal<string | null>(initialMotionId)
   const [inspectorMount, setInspectorMount] = createSignal<HTMLDivElement>()
   const [notice, setNotice] = createSignal<string | null>(null)
   const [maskPickSourcePartId, setMaskPickSourcePartId] = createSignal<string | null>(null)
   const selectedPartIds = createMemo(() =>
     getSceneSelectionPartIds(sourceDocument(), layerSelection()),
   )
+  const meshPartIds = createMemo(() => {
+    const document = sourceDocument()
+    const selection = layerSelection()
+    return getSceneSelectionPartIds(document, {
+      ...selection,
+      nodeIds: selection.nodeIds.filter(
+        (nodeId) => getSceneNode(document, nodeId)?.kind !== 'deformer',
+      ),
+    })
+  })
   const selectedNodeIds = createMemo(() =>
     getParameterSelectionNodeIds({document: sourceDocument(), selection: layerSelection()}),
   )
@@ -265,6 +288,9 @@ export const PuppetEditor = (props: PuppetEditorProps) => {
     const currentPlayer = player()
 
     if (currentPlayer !== null) {
+      if (!isPlaying()) {
+        setPlaybackPreviewTime(currentTime())
+      }
       setIsPlaying(togglePlayerPlayback(currentPlayer, isPlaying()))
     }
   }
@@ -278,6 +304,25 @@ export const PuppetEditor = (props: PuppetEditorProps) => {
     setActiveMotionId(motionId)
     setCurrentTime(0)
     player()?.setMotion(motionId)
+  }
+
+  const handleMotionSeek = (motionId: string, time: number) => {
+    const currentPlayer = player()
+
+    if (
+      currentPlayer === null ||
+      !sourceDocument().motions.some((motion) => motion.id === motionId)
+    ) {
+      return
+    }
+
+    pausePlayback()
+    batch(() => {
+      setActiveMotionId(motionId)
+      setCurrentTime(time)
+    })
+    currentPlayer.setMotion(motionId)
+    currentPlayer.seek(time)
   }
 
   const handleTimelineDocumentChange = (document: PuppetDocument) => {
@@ -322,6 +367,7 @@ export const PuppetEditor = (props: PuppetEditorProps) => {
         onActivate={activateHistoryShortcuts}
         bottom={
           <EditorWorkspacePanel
+            setBrushControlsMount={setBrushControlsMount}
             currentTime={currentTime()}
             document={sourceDocument()}
             editor={parameterEditor}
@@ -331,8 +377,12 @@ export const PuppetEditor = (props: PuppetEditorProps) => {
             onEditEnd={history.endTransaction}
             onEditStart={handleDocumentEditStart}
             onMotionChange={handleMotionChange}
+            onMotionSeek={player() === null ? undefined : handleMotionSeek}
             onPlaybackToggle={player() === null ? undefined : handlePlaybackToggle}
+            onPhysicsPreviewChange={setPhysicsPreview}
+            onPhysicsReset={() => player()?.resetPhysics()}
             onSeek={player() === null ? undefined : (time) => player()?.seek(time)}
+            physicsPreview={physicsPreview()}
             selectedNodeIds={selectedNodeIds()}
             workspace={workspace()}
           />
@@ -345,6 +395,13 @@ export const PuppetEditor = (props: PuppetEditorProps) => {
             autoMeshAvailable={workspace() === 'modeling' && autoMesh.targets().length > 0}
             containerUnwrapAvailable={selectionActions().containerIds.length > 0}
             document={temporary.document()}
+            layerOrderProperties={
+              <LayerOrderProperties
+                document={sourceDocument()}
+                selectedPartIds={selectedPartIds()}
+                onDocumentChange={history.setDocument}
+              />
+            }
             editMode={WORKSPACE_EDIT_MODES[workspace()]}
             maskPickSourcePartId={maskPickSourcePartId() ?? undefined}
             notice={notice()}
@@ -357,7 +414,6 @@ export const PuppetEditor = (props: PuppetEditorProps) => {
                 temporary.update(document)
               }
             }}
-            onPhysicsDocumentChange={history.setDocument}
             onEditEnd={history.endTransaction}
             onEditStart={handleDocumentEditStart}
             onMaskPickCancel={() => setMaskPickSourcePartId(null)}
@@ -365,7 +421,6 @@ export const PuppetEditor = (props: PuppetEditorProps) => {
               setMaskPickSourcePartId(partId)
               setNotice('마스크를 적용할 대상 레이어를 왼쪽 패널에서 선택하세요.')
             }}
-            physicsDocument={sourceDocument()}
             previewDocument={parameterPreviewDocument()}
             selectedControlPointIndices={deformerControlSelection.selectedPointIndices()}
             targetNodeIds={temporary.targets()}
@@ -422,6 +477,7 @@ export const PuppetEditor = (props: PuppetEditorProps) => {
         }
         toolbar={(visibility) => (
           <EditorToolbar
+            setBrushSettingsMount={setBrushSettingsMount}
             activeWorkspace={workspace()}
             canRedo={history.canRedo()}
             canUndo={history.canUndo()}
@@ -430,7 +486,8 @@ export const PuppetEditor = (props: PuppetEditorProps) => {
             panelVisibility={visibility}
             playerStatus={playerStatus()}
             onRedo={handleRedo}
-            onExport={() => downloadDocument(sourceDocument())}
+            exportUrl={documentExport.url()}
+            onExport={documentExport.exportDocument}
             onFileImport={editorImports.handleImport}
             onPsdReimport={editorImports.reimport.load}
             onFileOpen={editorImports.handleOpen}
@@ -444,6 +501,9 @@ export const PuppetEditor = (props: PuppetEditorProps) => {
         )}
         viewport={
           <EditorViewport
+            brushControlsMount={brushControlsMount()}
+            brushSettingsMount={brushSettingsMount()}
+            physicsPreview={physicsPreview()}
             meshEditingDisabled={temporary.form() !== undefined}
             onMeshEditingStart={() => {
               pausePlayback()
@@ -485,7 +545,7 @@ export const PuppetEditor = (props: PuppetEditorProps) => {
             activeNodeId={layerSelection().activeNodeId ?? undefined}
             activePartId={activePartId() ?? undefined}
             activeVertexIndex={activeVertexIndex()}
-            currentTime={currentTime()}
+            currentTime={isPlaying() ? playbackPreviewTime() : currentTime()}
             deformerControlSelection={deformerControlSelection}
             document={temporary.document()}
             editMode={WORKSPACE_EDIT_MODES[workspace()]}
@@ -499,10 +559,11 @@ export const PuppetEditor = (props: PuppetEditorProps) => {
             onTimeChange={setCurrentTime}
             onVertexEditStart={pausePlayback}
             onVertexSelect={setActiveVertexIndex}
+            playbackActive={isPlaying()}
             parameterValues={temporary.target()?.values ?? parameterEditor.parameterValues()}
             parameterValueMap={temporary.valueMap()}
             previewDocument={parameterPreviewDocument()}
-            selectedPartIds={selectedPartIds()}
+            selectedPartIds={meshPartIds()}
             targetNodeIds={temporary.targets()}
           />
         }

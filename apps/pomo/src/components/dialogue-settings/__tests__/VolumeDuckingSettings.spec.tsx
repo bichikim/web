@@ -1,6 +1,7 @@
 /** @vitest-environment jsdom */
 
 import {fireEvent, render, screen} from '@solidjs/testing-library'
+import {PreferenceProvider} from 'src/hooks/use-preference'
 import {afterEach, beforeEach, expect, it, vi} from 'vitest'
 
 import {
@@ -21,8 +22,18 @@ vi.mock('src/features/focus-room-dialogue', async () => {
 
   return {
     ...actual,
-    readDialogueVolumeDuckingSettings: settingsMocks.read,
-    writeDialogueVolumeDuckingSettings: settingsMocks.write,
+    createDialogueVolumeDuckingPreferenceOptions: (options = {}) => ({
+      ...actual.createDialogueVolumeDuckingPreferenceOptions(options),
+      storage: {
+        read: () => settingsMocks.read(),
+        write: (_key: string, value: unknown) => {
+          const settings = actual.parseDialogueVolumeDuckingSettings(value)
+          return settings === null
+            ? new Error('Invalid test settings.')
+            : settingsMocks.write(settings)
+        },
+      },
+    }),
   }
 })
 
@@ -38,7 +49,7 @@ afterEach(() => {
 })
 
 it('should show the dialogue option and save the selected player volume percentage', async () => {
-  render(() => <DialogueVolumeDuckingSettings />)
+  render(() => <DialogueVolumeDuckingSettings />, {wrapper: PreferenceProvider})
   await vi.advanceTimersByTimeAsync(0)
 
   expect(screen.getByRole('heading', {name: '대화 옵션'})).toBeDefined()
@@ -63,7 +74,7 @@ it('should show the dialogue option and save the selected player volume percenta
 })
 
 it('should disable percentage changes when volume lowering is turned off', async () => {
-  render(() => <DialogueVolumeDuckingSettings />)
+  render(() => <DialogueVolumeDuckingSettings />, {wrapper: PreferenceProvider})
   await vi.advanceTimersByTimeAsync(0)
 
   fireEvent.click(screen.getByRole('switch', {name: '대화 중 플레이어 음량 낮춤'}))
@@ -81,7 +92,7 @@ it('should report loading and saving failures', async () => {
   const loadFailure = new Error('load failed')
   const consoleError = vi.spyOn(console, 'error').mockImplementation(() => undefined)
   settingsMocks.read.mockRejectedValueOnce(loadFailure)
-  render(() => <DialogueVolumeDuckingSettings />)
+  render(() => <DialogueVolumeDuckingSettings />, {wrapper: PreferenceProvider})
   await vi.advanceTimersByTimeAsync(0)
 
   expect(screen.getByText('플레이어 음량 설정을 불러오지 못했어요.')).toBeDefined()
