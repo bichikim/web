@@ -3,6 +3,10 @@ import type {CalendarEventRange} from './types'
 
 const CALENDAR_INTENT_PATTERN = /(?:일정|미팅|회의|약속|스케줄)/u
 const THIS_WEEK_PATTERN = /이번 ?주/u
+const TODAY_EXCLUSION_PATTERN =
+  /오늘(?:(?!내일).)*(?:말고|빼고|제외(?:하고)?|아니|아닌|안\s*(?:되|돼))/u
+const TOMORROW_EXCLUSION_PATTERN =
+  /내일(?:(?!오늘).)*(?:말고|빼고|제외(?:하고)?|아니|아닌|안\s*(?:되|돼))/u
 const IMPLICIT_SCHEDULE_PATTERN = /(?:오늘|내일|이번 ?주).*(?:뭐|무엇).*(?:있|하)/u
 const MILLISECONDS_PER_DAY = 86_400_000
 const NEXT_EVENT_WINDOW_DAYS = 30
@@ -39,13 +43,16 @@ export const createCalendarQuery = (
     return dayjs.tz(`${date}T${time}`, timeZone).toDate()
   }
 
-  if (options.text.includes('내일')) {
+  const includesToday = options.text.includes('오늘') && !TODAY_EXCLUSION_PATTERN.test(options.text)
+  const includesTomorrow =
+    options.text.includes('내일') && !TOMORROW_EXCLUSION_PATTERN.test(options.text)
+  if (includesTomorrow) {
     return toRange(
-      boundary(1),
+      includesToday ? now : boundary(1),
       options.text.includes('오전') ? boundary(1, '12:00:00') : boundary(2),
     )
   }
-  if (options.text.includes('오늘')) {
+  if (includesToday) {
     return toRange(now, boundary(1))
   }
   if (THIS_WEEK_PATTERN.test(options.text)) {

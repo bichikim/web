@@ -25,6 +25,57 @@ describe('createCalendarQuery', () => {
     })
   })
 
+  it('should include the remaining local day when querying today and tomorrow', () => {
+    expect(
+      createCalendarQuery({now, text: '오늘 내일 일정 알려줘', timeZone: 'Asia/Seoul'}),
+    ).toEqual({
+      end: '2026-09-05T15:00:00.000Z',
+      start: '2026-09-04T10:30:00.000Z',
+    })
+  })
+
+  it.each([
+    '오늘 말고',
+    '오늘 일정 말고',
+    '오늘 빼고',
+    '오늘 제외하고',
+    '오늘 일정은 제외하고',
+    '오늘은 아니고',
+    '오늘이 아니라',
+    '오늘이 아닌',
+    '오늘은 아니다',
+    '오늘은 안 되고',
+    '오늘 안 돼',
+  ])('should query only tomorrow when the question excludes today with %s', (exclusion) => {
+    expect(
+      createCalendarQuery({now, text: `${exclusion} 내일 일정 알려줘`, timeZone: 'Asia/Seoul'}),
+    ).toEqual({
+      end: '2026-09-05T15:00:00.000Z',
+      start: '2026-09-04T15:00:00.000Z',
+    })
+  })
+
+  it.each([
+    '내일 말고',
+    '내일 일정 말고',
+    '내일 빼고',
+    '내일 제외하고',
+    '내일 일정은 제외하고',
+    '내일은 아니고',
+    '내일이 아니라',
+    '내일이 아닌',
+    '내일은 아니다',
+    '내일은 안 되고',
+    '내일 안 돼',
+  ])('should query only today when the question excludes tomorrow with %s', (exclusion) => {
+    expect(
+      createCalendarQuery({now, text: `${exclusion} 오늘 일정 알려줘`, timeZone: 'Asia/Seoul'}),
+    ).toEqual({
+      end: '2026-09-04T15:00:00.000Z',
+      start: '2026-09-04T10:30:00.000Z',
+    })
+  })
+
   it('should query tomorrow in the local timezone', () => {
     expect(
       createCalendarQuery({now, text: '내일 오전에 뭐 있어?', timeZone: 'Asia/Seoul'}),
