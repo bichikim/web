@@ -25,6 +25,30 @@ describe('createCalendarQuery', () => {
     })
   })
 
+  it('should query the previous local day for yesterday', () => {
+    expect(createCalendarQuery({now, text: '어제 일정 알려줘', timeZone: 'Asia/Seoul'})).toEqual({
+      end: '2026-09-03T15:00:00.000Z',
+      start: '2026-09-02T15:00:00.000Z',
+    })
+  })
+
+  it('should recognize an implicit schedule question about yesterday', () => {
+    expect(createCalendarQuery({now, text: '어제 뭐 있었어?', timeZone: 'Asia/Seoul'})).toEqual({
+      end: '2026-09-03T15:00:00.000Z',
+      start: '2026-09-02T15:00:00.000Z',
+    })
+  })
+
+  it('should query yesterday across a daylight-saving transition', () => {
+    expect(
+      createCalendarQuery({
+        now: new Date('2026-03-09T18:00:00.000Z'),
+        text: '어제 일정 알려줘',
+        timeZone: 'America/New_York',
+      }),
+    ).toEqual({end: '2026-03-09T04:00:00.000Z', start: '2026-03-08T05:00:00.000Z'})
+  })
+
   it('should query tomorrow in the local timezone', () => {
     expect(
       createCalendarQuery({now, text: '내일 오전에 뭐 있어?', timeZone: 'Asia/Seoul'}),
