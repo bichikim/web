@@ -1,5 +1,6 @@
 import {type Accessor, createEffect, createSignal, onCleanup, untrack} from 'solid-js'
 import {getErrorMessage} from 'src/utils/get-error-message'
+import {isCancellationReason} from 'src/utils/is-cancellation-reason'
 
 import {useChat} from '../../features/chat'
 import {useModelDownload} from '../../features/model-download'
@@ -40,7 +41,17 @@ interface PendingText {
 export const useOneOffChat = (props: UseOneOffChatProps): OneOffChatController => {
   const chat = useChat({modelId: CHAT_MODEL_ID})
   const modelDownload = useModelDownload()
-  const serverJob = useAiTextJob({onComplete: props.onReply})
+  const speakReply = async (text: string) => {
+    try {
+      await props.onReply(text)
+    } catch (error: unknown) {
+      if (isCancellationReason(error)) {
+        return
+      }
+      throw error
+    }
+  }
+  const serverJob = useAiTextJob({onComplete: speakReply})
   const [downloadConsentOpen, setDownloadConsentOpen] = createSignal(false)
   const [downloadError, setDownloadError] = createSignal<string | null>(null)
   const [replyError, setReplyError] = createSignal<string | null>(null)
@@ -262,12 +273,9 @@ export const useOneOffChat = (props: UseOneOffChatProps): OneOffChatController =
 
     handledReplyId = reply.id
     const speechRevision = replyRevision
-    const speech = untrack(() => props.onReply(reply.content))
+    const speech = untrack(() => speakReply(reply.content))
     chat.clear()
     speech.catch((error: unknown) => {
-      if (!isEnabled() && error instanceof DOMException && error.name === 'AbortError') {
-        return
-      }
       if (!disposed && speechRevision === replyRevision) {
         setReplyError(getChatErrorMessage(error, '음성을 재생하지 못했어요.'))
       }

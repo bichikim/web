@@ -291,6 +291,48 @@ describe('useOneOffChat', () => {
     cleanup()
   })
 
+  it('should ignore an aborted reply after clearing a completed reply', async () => {
+    const onReply = vi.fn().mockRejectedValue(new DOMException('Speech stopped.', 'AbortError'))
+    const {chat, setMessages, setState} = createChat()
+    vi.mocked(useChat).mockReturnValue(chat)
+    vi.mocked(isTextModelDownloaded).mockResolvedValue(true)
+    const {cleanup, result} = renderHook(() => useOneOffChat({onReply}))
+
+    await result.submit('짧게 인사해 줘')
+    setState({status: 'ready'})
+    await vi.waitFor(() => expect(chat.send).toHaveBeenCalledOnce())
+    setMessages([
+      {content: '짧게 인사해 줘', id: 'user-1', role: 'user'},
+      {content: '반가워요.', id: 'reply-1', role: 'assistant'},
+    ])
+    setState({status: 'ready'})
+
+    await vi.waitFor(() => expect(onReply).toHaveBeenCalledWith('반가워요.'))
+    await vi.waitFor(() => expect(chat.messages()).toEqual([]))
+    expect(result.errorMessage()).toBeNull()
+    cleanup()
+  })
+
+  it('should ignore an aborted server reply', async () => {
+    const onReply = vi.fn().mockRejectedValue(new DOMException('Speech stopped.', 'AbortError'))
+    const serverJob = createServerJob('server')
+    const {chat} = createChat()
+    vi.mocked(useAiTextJob).mockReturnValue(serverJob)
+    vi.mocked(useChat).mockReturnValue(chat)
+    const {cleanup, result} = renderHook(() => useOneOffChat({onReply}))
+    const serverJobOptions = vi.mocked(useAiTextJob).mock.calls.at(-1)?.[0]
+
+    if (serverJobOptions === undefined) {
+      throw new Error('Expected useOneOffChat to configure the server speech callback.')
+    }
+
+    await serverJobOptions.onComplete('서버 답변')
+
+    expect(onReply).toHaveBeenCalledWith('서버 답변')
+    expect(result.errorMessage()).toBeNull()
+    cleanup()
+  })
+
   it('should ignore a stale speech failure after a new question is submitted', async () => {
     let rejectFirstReply: (error: unknown) => void = () => undefined
     const report = vi.spyOn(console, 'error').mockImplementation(() => undefined)

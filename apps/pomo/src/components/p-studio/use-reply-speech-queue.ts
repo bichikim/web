@@ -10,6 +10,7 @@ interface ReplySpeechRequest {
 interface UseReplySpeechQueueOptions {
   readonly isEnabled?: Accessor<boolean>
   readonly isOccupied: Accessor<boolean>
+  readonly isDialogueOccupied: Accessor<boolean>
   readonly speak: (text: string) => Promise<void>
   readonly stop: () => void
 }
@@ -78,6 +79,8 @@ export const useReplySpeechQueue = (options: UseReplySpeechQueueOptions) => {
   createEffect(() => {
     const enabled = isEnabled()
     const [request] = requests()
+    const occupied = options.isOccupied()
+    const isDialogueOccupied = options.isDialogueOccupied()
 
     if (disposed) {
       cancelPendingRequests()
@@ -94,7 +97,10 @@ export const useReplySpeechQueue = (options: UseReplySpeechQueueOptions) => {
     }
 
     wasEnabled = true
-    if (request === undefined || isSpeaking() || options.isOccupied()) {
+    if (isDialogueOccupied) {
+      cancelActiveRequest()
+    }
+    if (request === undefined || isSpeaking() || occupied) {
       return
     }
 

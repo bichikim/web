@@ -95,15 +95,20 @@ export const PStudioEvents = (props: PStudioEventsProps) => {
   const [mediaMessages, setMediaMessages] = createSignal<HTMLDivElement>()
   const hasMediaMessages = useChildPresence(mediaMessages)
   const isMobileLayout = useMobileLayout()
-  const replySpeechQueue = useReplySpeechQueue({
-    isEnabled: () => props.dialogueComposerVisible,
-    isOccupied: () =>
+  const isDialogueOccupied = createMemo(
+    () =>
       events.activeText() !== null ||
       events.isDialoguePlaying() ||
       events.isDialoguePlaybackBlocked() ||
-      events.scheduledDialogueCount() > 0 ||
-      props.pomoSay.isPreparing() ||
-      props.pomoSay.isPlaying(),
+      events.scheduledDialogueCount() > 0,
+  )
+  const isOccupied = createMemo(
+    () => isDialogueOccupied() || props.pomoSay.isPreparing() || props.pomoSay.isPlaying(),
+  )
+  const replySpeechQueue = useReplySpeechQueue({
+    isDialogueOccupied,
+    isEnabled: () => props.dialogueComposerVisible,
+    isOccupied,
     speak: (text) => props.pomoSay.speak({text}),
     stop: () => props.pomoSay.stop(),
   })
