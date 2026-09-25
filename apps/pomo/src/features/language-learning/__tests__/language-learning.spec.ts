@@ -69,6 +69,15 @@ describe('language learning sentences', () => {
     expect(isValidLanguageLearningSentence('ただいま。', 'ja')).toBe(true)
   })
 
+  it('should accept English title abbreviations without accepting multiple sentences', () => {
+    expect(isValidLanguageLearningSentence('Dr. Smith went home.', 'en')).toBe(true)
+    expect(isValidLanguageLearningSentence('I met Dr. Smith yesterday.', 'en')).toBe(true)
+    expect(isValidLanguageLearningSentence('I met J. Smith yesterday.', 'en')).toBe(true)
+    expect(isValidLanguageLearningSentence('I live in the U.S. today.', 'en')).toBe(true)
+    expect(isValidLanguageLearningSentence('Dr. Smith went home. He waited.', 'en')).toBe(false)
+    expect(isValidLanguageLearningSentence('I live in the U.S. She stayed.', 'en')).toBe(false)
+  })
+
   it('should create a constrained multilingual prompt with prior results', () => {
     expect(
       createLanguageLearningPrompt({
