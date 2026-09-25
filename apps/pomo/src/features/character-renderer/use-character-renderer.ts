@@ -92,6 +92,10 @@ export const useCharacterRenderer = (
   const loadDefaultModel = () => replaceModel(props.defaultModelUrl, props.defaultModelName)
 
   const handleLoadProgress = (nextProgress: number) => {
+    if (status() !== 'loading') {
+      return
+    }
+
     setProgress(Math.round(clamp(nextProgress, 0, MAXIMUM_PROGRESS)))
   }
 
