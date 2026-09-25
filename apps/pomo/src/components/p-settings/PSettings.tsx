@@ -11,7 +11,7 @@ import {DesktopDialogFrame} from '../desktop-dialog/Frame'
 import * as m from '@paraglide/message'
 import {PScribbleCircleControl} from '../scribble/CircleControl'
 import {PSettingsTabList} from '../settings/TabList'
-import {type PSettingsProps} from '../settings/general/shared'
+import type {PSettingsProps} from '../settings/types'
 
 const PSettingsContent = lazy(async () => {
   try {
@@ -122,4 +122,4 @@ export const PSettings = (props: PSettingsProps & PSettingsPresentationProps) =>
   )
 }
 
-export type {PSettingsProps} from '../settings/general/shared'
+export type {PSettingsProps} from '../settings/types'

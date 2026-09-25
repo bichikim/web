@@ -1,22 +1,19 @@
 import type {useUiAutoHide} from 'src/features/ui-auto-hide'
 import type {BackgroundController} from 'src/features/background'
-import type {PSceneMotionInput, PSceneMotionMode} from '../../../features/focus-room-animation'
-import type {PSceneStyle} from '../../../features/focus-room-animation/scene-style'
-import type {PActivity, PGaze} from '../../../features/focus-room-scene-preferences'
-import type {SceneTimeMode} from '../../../features/focus-room-time'
-import type {ScreenSaverDelay} from '../../../features/screen-saver'
-import type {WeatherLocation, WeatherSceneMode} from '../../../features/weather'
-
-export const CLASSES = {
-  settingsContent: 'grid gap-5',
-  settingsGrid: 'grid gap-4 min-[60rem]:grid-cols-2',
-  settingsScreenSaver: 'grid gap-2 [&_>_div]:w-full',
-  settingsSection: 'grid gap-4 border-t border-solid border-border pt-5',
-  settingsToggle: 'min-h-12',
-} as const
+import type {PSceneMotionInput, PSceneMotionMode} from '../../features/focus-room-animation'
+import type {PSceneStyle} from '../../features/focus-room-animation/scene-style'
+import type {PActivity, PGaze} from '../../features/focus-room-scene-preferences'
+import type {SceneTimeMode} from '../../features/focus-room-time'
+import type {ScreenSaverDelay} from '../../features/screen-saver'
+import type {WeatherLocation, WeatherSceneMode} from '../../features/weather'
+import type {DesktopMode} from '../../features/desktop-mode'
 
 export interface PSettingsProps {
   readonly desktopSurface?: boolean
+  readonly desktopMode?: DesktopMode
+  readonly desktopModeError?: string | null
+  readonly isDesktopModeChanging?: boolean
+  readonly onDesktopModeChange?: (mode: DesktopMode) => Promise<void>
   readonly uiAutoHide?: ReturnType<typeof useUiAutoHide>
   readonly pomodoroVisible?: boolean
   readonly onPomodoroVisibleChange?: (visible: boolean) => void

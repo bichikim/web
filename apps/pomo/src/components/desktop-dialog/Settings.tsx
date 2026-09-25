@@ -16,6 +16,10 @@ export const DesktopSettingsDialog = () => {
       background={settings.background}
       canUseGyroscope={settings.canUseGyroscope()}
       dialogueComposerVisible={displayPreferences.dialogueComposerVisible()}
+      desktopMode={settings.desktopMode.mode()}
+      desktopModeError={settings.desktopMode.error()}
+      isDesktopModeChanging={settings.desktopMode.isChanging()}
+      onDesktopModeChange={settings.desktopMode.onModeChange}
       featureRequestVisible={displayPreferences.featureRequestVisible()}
       gaze={settings.gaze()}
       memoryAssistVisible={displayPreferences.memoryAssistVisible()}

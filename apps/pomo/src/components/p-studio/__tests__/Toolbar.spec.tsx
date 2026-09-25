@@ -15,14 +15,7 @@ import {VersionNoticePanel} from '../VersionNoticePanel'
 vi.mock('../../icon-style', () => ({getPomoIconClass: vi.fn()}))
 vi.mock('../../p-weather-status/PWeatherStatus', () => ({PWeatherStatus: vi.fn()}))
 vi.mock('../../p-desktop-mode-control/PDesktopModeControl', () => ({
-  PDesktopModeControl: (props: {
-    readonly mode: string
-    readonly onModeChange: (mode: 'widget') => Promise<void>
-  }) => {
-    Object.values(props)
-    void props.onModeChange('widget')
-    return null
-  },
+  PDesktopModeControl: vi.fn(),
 }))
 vi.mock('../../scribble/CircleControl', () => ({PScribbleCircleControl: vi.fn()}))
 vi.mock('../../p-model-download-status/PModelDownloadStatus', () => ({
@@ -169,7 +162,15 @@ describe('SceneToolbar', () => {
       expect.objectContaining({sceneStyle: 'scribble'}),
     )
     expect(getPomoIconClass).toHaveBeenCalledWith(expect.any(String), 'scribble')
-    expect(onDesktopModeChange).toHaveBeenCalledWith('widget')
+    expect(onDesktopModeChange).not.toHaveBeenCalled()
+    expect(SceneSettingsPanel).toHaveBeenCalledWith(
+      expect.objectContaining({
+        desktopMode: 'widget',
+        desktopModeError: 'native failed',
+        isDesktopModeChanging: true,
+        onDesktopModeChange,
+      }),
+    )
   })
 
   it('should use flow layout inside a transparent desktop surface', () => {
