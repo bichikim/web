@@ -37,6 +37,7 @@ describe('PStudioEvents', () => {
     musicPlaybackMocks.pause.mockReset()
     musicPlaybackMocks.play.mockReset()
     musicPlayerLifecycleMocks.actionsReady = true
+    musicPlayerLifecycleMocks.onPlaybackActionsReady = null
   })
 
   afterEach(() => {
@@ -87,6 +88,23 @@ describe('PStudioEvents', () => {
 
     expect(soundEffectsMocks.stop).toHaveBeenCalledOnce()
     expect(soundEffectsMocks.activate).toHaveBeenCalledOnce()
+  })
+
+  it('should ignore sound-effect actions when the controller is absent', () => {
+    let runAction: ((actionId: 'sound-effects-start' | 'sound-effects-stop') => void) | undefined
+    const events = createEvents({
+      registerEventActionExecutor: (executor) => {
+        runAction = executor
+        return vi.fn()
+      },
+    })
+    renderEvents({events})
+
+    runAction?.('sound-effects-start')
+    runAction?.('sound-effects-stop')
+
+    expect(soundEffectsMocks.activate).not.toHaveBeenCalled()
+    expect(soundEffectsMocks.stop).not.toHaveBeenCalled()
   })
 
   it('should not activate sound effects from events when all effects are stopped', () => {
@@ -305,6 +323,25 @@ describe('PStudioEvents', () => {
     musicPlayerLifecycleMocks.actionsReady = true
     setPlayerVisible(true)
 
+    expect(musicPlaybackMocks.pause).toHaveBeenCalledOnce()
+    result.unmount()
+  })
+
+  it('should queue music actions when the default-visible player is waiting for controls', () => {
+    let runAction: ((actionId: 'music-start' | 'music-stop') => void) | undefined
+    const events = createEvents({
+      registerEventActionExecutor: (executor) => {
+        runAction = executor
+        return vi.fn()
+      },
+    })
+    musicPlayerLifecycleMocks.actionsReady = false
+    const result = renderEvents({events})
+
+    runAction?.('music-stop')
+    expect(musicPlaybackMocks.pause).not.toHaveBeenCalled()
+
+    musicPlayerLifecycleMocks.onPlaybackActionsReady?.(musicPlaybackMocks)
     expect(musicPlaybackMocks.pause).toHaveBeenCalledOnce()
     result.unmount()
   })
