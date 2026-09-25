@@ -53,6 +53,23 @@ it('should describe normalized timed and all-day events without leaking provider
   )
 })
 
+it('should include the end date when a timed event crosses a local day', () => {
+  expect(
+    createCalendarPromptContext({
+      events: [
+        createEvent({
+          end: '2026-09-05T16:15:00.000Z',
+          start: '2026-09-05T14:30:00.000Z',
+          title: '심야 작업',
+        }),
+      ],
+      timeZone: 'Asia/Seoul',
+    }),
+  ).toContain(
+    '- [Google · work@example.com · 업무] 2026. 9. 5. 오후 11:30–2026. 9. 6. 오전 1:15 · 심야 작업',
+  )
+})
+
 it('should explicitly represent an empty result', () => {
   expect(createCalendarPromptContext({events: [], timeZone: 'Asia/Seoul'})).toContain(
     '조회 기간에 등록된 일정이 없습니다.',
