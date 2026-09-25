@@ -92,6 +92,7 @@ export type {
   PDialogueEditorController,
   UsePDialogueEditorProps,
 } from './use-focus-room-dialogue-editor'
+export {DIALOGUE_DRAFT_KEY_PREFIX} from './dialogue-draft'
 export {
   AUTOMATIC_DIALOGUE_SETTINGS_STORAGE_KEY,
   createAutomaticDialoguePreferenceOptions,
