@@ -195,17 +195,36 @@ const getNextExactReminderAtAfterEdit = (
     return options.exactSchedule.nextExactReminderAt
   }
 
+  if (options.exactReminderAt === null) {
+    return null
+  }
+
   const firstExactReminderAt = getFirstExactReminderAt(
     options.memo.exactReminderAt,
     options.memo.exactReminderAdvanceMinutes,
   )
 
-  if (currentNextExactReminderAt === firstExactReminderAt) {
-    return options.exactSchedule.nextExactReminderAt
-  }
+  if (firstExactReminderAt !== null && currentNextExactReminderAt === firstExactReminderAt) {
+    const nextFirstExactReminderAt = options.exactSchedule.nextExactReminderAt
+    if (nextFirstExactReminderAt !== firstExactReminderAt) {
+      return nextFirstExactReminderAt
+    }
 
-  if (options.exactReminderAt === null) {
-    return null
+    const repeatIntervalMinutes = options.exactSchedule.exactReminderRepeatIntervalMinutes
+    if (
+      repeatIntervalMinutes === null ||
+      Date.parse(currentNextExactReminderAt) > options.now.getTime()
+    ) {
+      return currentNextExactReminderAt
+    }
+
+    return getNextRepeatedExactReminderAt({
+      exactReminderAt: options.exactReminderAt,
+      intervalMinutes: repeatIntervalMinutes,
+      now: options.now,
+      repeatUntilMinutes: options.exactSchedule.exactReminderRepeatUntilMinutes,
+      scheduledAt: firstExactReminderAt,
+    })
   }
 
   const repeatIntervalMinutes = options.exactSchedule.exactReminderRepeatIntervalMinutes
