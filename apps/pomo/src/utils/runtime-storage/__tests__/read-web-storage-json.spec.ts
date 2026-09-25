@@ -16,3 +16,9 @@ it('should normalize browser storage failures', () => {
 
   expect(readWebStorageJson('key', parseNumber)).toBeNull()
 })
+
+it('should synchronously restore a value stored under an existing browser key', () => {
+  localStorage.setItem('pomo:setting:v1', '3')
+
+  expect(readWebStorageJson('pomo:setting:v1', parseNumber)).toBe(3)
+})

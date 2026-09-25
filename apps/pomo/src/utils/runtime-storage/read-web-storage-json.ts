@@ -1,3 +1,4 @@
+import {createWebStorageDriver} from './create-web-storage-driver'
 import {parseStorageJson} from './parse-storage-json'
 import type {ParseStoredValue} from './types'
 
@@ -7,7 +8,7 @@ export const readWebStorageJson = <Value>(
   parseValue: ParseStoredValue<Value>,
 ): Value | null => {
   try {
-    return parseStorageJson(localStorage.getItem(key), parseValue)
+    return parseStorageJson(createWebStorageDriver().getItem(key), parseValue)
   } catch {
     return null
   }
