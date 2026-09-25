@@ -21,6 +21,8 @@ export const iconShortcuts = {
   'puppet-icon-layout-sidebar-right': 'i-tabler-layout-sidebar-right',
   'puppet-icon-lock': 'i-tabler-lock',
   'puppet-icon-lock-open': 'i-tabler-lock-open',
+  'puppet-icon-brush': 'i-tabler-brush',
+  'puppet-icon-pointer': 'i-tabler-pointer',
   'puppet-icon-maximize': 'i-tabler-maximize',
   'puppet-icon-menu-2': 'i-tabler-menu-2',
   'puppet-icon-mesh': 'i-tabler-mesh',

@@ -200,6 +200,13 @@ export const canvasShortcuts = {
     '[.puppet-editor_&_svg:focus-visible]:[outline:1px_solid_#64e5c4]',
     '[.puppet-editor_&_svg:focus-visible]:[outline-offset:-1px]',
   ],
+  'deform-brush-ring': [
+    '[.puppet-editor_&.deform-brush-ring]:pointer-events-none',
+    '[.puppet-editor_&.deform-brush-ring]:fill-none',
+    '[.puppet-editor_&.deform-brush-ring]:[stroke:#ffffff]',
+    '[.puppet-editor_&.deform-brush-ring]:[stroke-width:1.5px]',
+    '[.puppet-editor_&.deform-brush-ring]:[r:calc(var(--brush-radius)*1px)]',
+  ],
   'mesh-mode-controls': 'pointer-events-auto',
   'player-canvas': ['[.puppet-editor_&]:w-full [.puppet-editor_&]:h-full'],
 

@@ -1,3 +1,5 @@
+import {numberFieldDescendants} from './controls'
+
 export const parametersShortcuts = {
   'binding-settings-chevron': '[.puppet-editor_&]:[transition:transform_160ms_ease-out]',
   'binding-settings-drawer': [
@@ -19,7 +21,7 @@ export const parametersShortcuts = {
     "[.puppet-editor_&[aria-expanded='true']_.binding-settings-chevron]:rotate-180",
   ],
   'keyform-actions': [
-    '[.puppet-editor_&]:flex [.puppet-editor_&]:[gap:0.5rem]',
+    '[.puppet-editor_&]:flex [.puppet-editor_&]:min-w-0 [.puppet-editor_&]:items-center [.puppet-editor_&]:[gap:0.5rem]',
     '[.puppet-editor_&_button]:[padding:0.375rem_0.625rem]',
     '[.puppet-editor_&_button]:[border:0.0625rem_solid_#3d5f56]',
     '[.puppet-editor_&_button]:[border-radius:0.375rem] [.puppet-editor_&_button]:[color:#bfeee1]',
@@ -28,6 +30,20 @@ export const parametersShortcuts = {
     '[.puppet-editor_&_button.danger]:[border-color:#66403e] [.puppet-editor_&_button.danger]:[color:#ffc5c0]',
     '[.puppet-editor_&_button.danger]:[background:#241817]',
     '[.puppet-editor_&_button:disabled]:[opacity:0.42] [.puppet-editor_&_button:disabled]:cursor-not-allowed',
+  ],
+  'keyform-brush-mount':
+    '[.puppet-editor_&]:ml-auto [.puppet-editor_&]:flex [.puppet-editor_&]:items-center',
+  'deform-brush-toolbar':
+    '[.puppet-editor_&]:flex [.puppet-editor_&]:items-center [.puppet-editor_&]:gap-1',
+  'deform-brush-settings': [
+    '[.puppet-editor_&]:flex [.puppet-editor_&]:w-max [.puppet-editor_&]:min-w-max',
+    '[.puppet-editor_&]:items-center [.puppet-editor_&]:gap-4',
+    '[.puppet-editor_&]:m-0 [.puppet-editor_&]:border-0 [.puppet-editor_&]:p-0',
+    '[.puppet-editor_&]:text-[#e4eee9]',
+    ...numberFieldDescendants,
+    '[.puppet-editor_&_label]:flex [.puppet-editor_&_label]:w-40',
+    '[.puppet-editor_&_label]:shrink-0 [.puppet-editor_&_label]:items-center',
+    '[.puppet-editor_&_label]:gap-2 [.puppet-editor_&_label]:whitespace-nowrap',
   ],
   'keyform-binding-row':
     'grid min-w-0 [grid-template-columns:13.75rem_minmax(0,_1fr)] [border-top:0.0625rem_solid_#35413d]',

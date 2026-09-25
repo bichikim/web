@@ -16,6 +16,7 @@ interface EditorModelingKeyformPanelProps {
   readonly onPhysicsReset?: () => void
   readonly physicsPreview?: boolean
   readonly selectedNodeIds: ReadonlyArray<string>
+  readonly setBrushControlsMount?: (element: HTMLDivElement | undefined) => void
 }
 export const EditorModelingKeyformPanel = (props: EditorModelingKeyformPanelProps) => {
   const bindings = () =>
@@ -48,6 +49,7 @@ export const EditorModelingKeyformPanel = (props: EditorModelingKeyformPanelProp
     ).length
   return (
     <EditorKeyformPanel
+      setBrushControlsMount={props.setBrushControlsMount}
       influence={props.editor.influence()}
       onInfluencesChange={props.editor.setInfluences}
       activeBindingId={props.editor.activeBindingId() ?? undefined}
