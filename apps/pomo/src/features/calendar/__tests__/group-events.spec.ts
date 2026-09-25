@@ -109,3 +109,25 @@ it('should leave days empty without events or overlap', () => {
   expect(groupCalendarEvents([event], ['2026-10-01'], 'UTC').size).toBe(0)
   expect(groupCalendarEvents([event], [], 'UTC').size).toBe(0)
 })
+
+it.each([
+  {
+    allDay: false,
+    end: 'not-a-date',
+    eventType: 'timed',
+    start: '2026-09-03T14:00:00Z',
+  },
+  {
+    allDay: true,
+    end: 'bad-end',
+    eventType: 'all-day',
+    start: '2026-09-03',
+  },
+])('should omit $eventType events with an unparsable end value', ({allDay, end, start}) => {
+  const source = {...event, allDay, end, start}
+
+  expect(
+    groupCalendarEvents([source], ['2026-09-02', '2026-09-03', '2026-09-04', '2026-09-05'], 'UTC')
+      .size,
+  ).toBe(0)
+})
