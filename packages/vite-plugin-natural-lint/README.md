@@ -6,7 +6,8 @@
 
 ## 요구 사항
 
-- Node.js 26.4 이상
+- Node.js 24 이상
+- 대화형 `natural-lint review` TUI는 Node.js 26.4 이상이 필요하다. CLI가 실행할 때 `--experimental-ffi`를 자동으로 전달한다.
 
 ## 설치
 
