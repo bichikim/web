@@ -83,11 +83,23 @@ describe('useCharacterRenderer', () => {
     expect(renderer.controller.status()).toBe('ready')
 
     renderer.controller.handleLoadError()
+    expect(renderer.controller.progress()).toBe(0)
     expect(renderer.controller.status()).toBe('error')
 
     renderer.controller.handleLoadStart()
     expect(renderer.controller.progress()).toBe(0)
     expect(renderer.controller.status()).toBe('loading')
+    renderer.dispose()
+  })
+
+  it('should reset partial progress when loading fails', () => {
+    const renderer = createRendererRoot(createRuntime())
+
+    renderer.controller.handleLoadProgress(42)
+    renderer.controller.handleLoadError()
+
+    expect(renderer.controller.progress()).toBe(0)
+    expect(renderer.controller.status()).toBe('error')
     renderer.dispose()
   })
 

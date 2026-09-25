@@ -105,7 +105,10 @@ export const useCharacterRenderer = (
     setStatus('ready')
   }
 
-  const handleLoadError = () => setStatus('error')
+  const handleLoadError = () => {
+    setProgress(0)
+    setStatus('error')
+  }
 
   onCleanup(releaseObjectUrl)
 
