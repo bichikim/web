@@ -72,6 +72,16 @@ it('should reload memory memos after another tab changes local storage', async (
   globalThis.dispatchEvent(
     new StorageEvent('storage', {
       key: MEMORY_MEMOS_STORAGE_KEY,
+      newValue: 'ignored',
+      storageArea: globalThis.sessionStorage,
+    }),
+  )
+  await flushPromises()
+  expect(mocks.readMemos).toHaveBeenCalledTimes(1)
+
+  globalThis.dispatchEvent(
+    new StorageEvent('storage', {
+      key: MEMORY_MEMOS_STORAGE_KEY,
       newValue: JSON.stringify([memo]),
       storageArea: globalThis.localStorage,
     }),
@@ -80,6 +90,35 @@ it('should reload memory memos after another tab changes local storage', async (
 
   expect(mocks.readMemos).toHaveBeenCalledTimes(2)
   expect(view.result()).toEqual([memo])
+  view.cleanup()
+})
+
+it('should reload memory memos after local storage is cleared', async () => {
+  const memo = createMemoryMemo({
+    exactReminderAt: null,
+    id: 'cleared',
+    now: new Date('2026-09-04T02:00:00.000Z'),
+    random: () => 0,
+    recallMode: 'none',
+    text: '삭제한 메모',
+  })
+  mocks.readMemos.mockReset().mockResolvedValueOnce([memo]).mockResolvedValueOnce([])
+  const view = renderHook(useMemoryMemos)
+
+  await flushPromises()
+  expect(view.result()).toEqual([memo])
+
+  globalThis.dispatchEvent(
+    new StorageEvent('storage', {
+      key: null,
+      newValue: null,
+      storageArea: globalThis.localStorage,
+    }),
+  )
+  await flushPromises()
+
+  expect(mocks.readMemos).toHaveBeenCalledTimes(2)
+  expect(view.result()).toEqual([])
   view.cleanup()
 })
 
