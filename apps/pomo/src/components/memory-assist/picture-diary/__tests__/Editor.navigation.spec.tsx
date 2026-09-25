@@ -1,9 +1,54 @@
 /** @vitest-environment jsdom */
 
-import {fireEvent, screen} from '@solidjs/testing-library'
+import {fireEvent, render, screen} from '@solidjs/testing-library'
 import {expect, it, vi} from 'vitest'
 import type {PictureDiaryEntry} from '../../../../features/picture-diary'
+import {getBookPagination} from '../pagination'
+import {PictureDiaryEditor} from '../Editor'
 import {finishPageTurn, renderEditor, sampleEntry, turns} from './fixtures/editor'
+
+it('should reveal the ending cover page during the back-cover turn', () => {
+  const entries = [sampleEntry('newest'), sampleEntry('oldest')]
+  const pagination = getBookPagination({closed: true, entries})
+  const onOpenBackCover = vi.fn()
+
+  render(() => (
+    <PictureDiaryEditor
+      backCoverClosed
+      canGoNewer={pagination.newer !== null}
+      canSave={false}
+      date="2026-09-04"
+      newerSpread={pagination.newer}
+      onDateChange={vi.fn()}
+      onOpenBackCover={onOpenBackCover}
+      onSave={vi.fn()}
+      onStrokesChange={vi.fn()}
+      onTextChange={vi.fn()}
+      spread={pagination.current}
+      strokes={[]}
+      text=""
+      turnEnvironment={turns.environment}
+    />
+  ))
+
+  const book = screen.getByRole('group', {name: '일기장'})
+  fireEvent.click(screen.getByRole('button', {name: '다음 일기 보기'}))
+  const coverTurn = book.querySelector('[data-picture-diary-cover-turn]')
+  const revealedEnding = coverTurn?.querySelector(
+    '.picture-diary-book__cover-turn-face--back .picture-diary-book__back-cover',
+  )
+  const receivingSpread = book.firstElementChild
+
+  expect(receivingSpread).not.toHaveClass('picture-diary-book__spread--closed')
+  expect(receivingSpread).toHaveTextContent('newest')
+  // The cover is aria-hidden and textless, so its rendered surface is the observable contract.
+  expect(coverTurn).toBeInTheDocument()
+  expect(revealedEnding).toHaveClass('picture-diary-book__back-cover--inside')
+  expect(coverTurn).not.toHaveTextContent('newest')
+
+  finishPageTurn()
+  expect(onOpenBackCover).toHaveBeenCalledOnce()
+})
 
 it('should show the receiving visible page on the reverse of a compact newer turn', () => {
   turns.setCompact(true)

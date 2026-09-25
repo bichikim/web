@@ -43,9 +43,8 @@ export const getBookPagination = (options: PaginationOptions): BookPagination =>
   const found = pages.findIndex(
     (page) => page.kind === 'entry' && page.entry.id === options.selectedId,
   )
-  const selected = options.closed
-    ? 1
-    : options.ending
+  const selected =
+    options.closed || options.ending
       ? pages.length - 1
       : found < 0
         ? options.entries.length + 1
@@ -60,7 +59,11 @@ export const getBookPagination = (options: PaginationOptions): BookPagination =>
   const current = spreadAt(index)
   return {
     current,
-    newer: options.closed ? current : index + step < pages.length ? spreadAt(index + step) : null,
+    newer: options.closed
+      ? spreadAt(index - step)
+      : index + step < pages.length
+        ? spreadAt(index + step)
+        : null,
     older: !options.closed && index > first ? spreadAt(index - step) : null,
   }
 }
