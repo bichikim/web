@@ -69,6 +69,12 @@ describe('language learning sentences', () => {
     expect(isValidLanguageLearningSentence('ただいま。', 'ja')).toBe(true)
   })
 
+  it('should accept Unicode ellipses as sentence endings for each language', () => {
+    expect(isValidLanguageLearningSentence('I understand…', 'en')).toBe(true)
+    expect(isValidLanguageLearningSentence('다시 생각해 볼게…', 'ko')).toBe(true)
+    expect(isValidLanguageLearningSentence('また明日…', 'ja')).toBe(true)
+  })
+
   it('should accept English title abbreviations without accepting multiple sentences', () => {
     expect(isValidLanguageLearningSentence('Dr. Smith went home.', 'en')).toBe(true)
     expect(isValidLanguageLearningSentence('I met Dr. Smith yesterday.', 'en')).toBe(true)

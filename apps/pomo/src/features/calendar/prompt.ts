@@ -20,7 +20,7 @@ const dateTimeSchema = z.iso.datetime({offset: true})
 
 const hasValidEventTimes = (event: CalendarEvent) =>
   event.allDay
-    ? parseDate(event.start) !== null && parseDate(event.end) !== null
+    ? parseDate(event.start) !== null && parseDate(event.end) !== null && event.start < event.end
     : dateTimeSchema.safeParse(event.start).success && dateTimeSchema.safeParse(event.end).success
 
 const formatEventTime = (event: CalendarEvent, timeZone: string) => {
@@ -31,7 +31,9 @@ const formatEventTime = (event: CalendarEvent, timeZone: string) => {
 
   const start = dayjs(new Date(event.start)).tz(timeZone).locale('ko')
   const end = dayjs(new Date(event.end)).tz(timeZone).locale('ko')
-  return `${start.format('YYYY. M. D. A h:mm')}–${end.format('A h:mm')}`
+  const endFormat =
+    start.format('YYYY-MM-DD') === end.format('YYYY-MM-DD') ? 'A h:mm' : 'YYYY. M. D. A h:mm'
+  return `${start.format('YYYY. M. D. A h:mm')}–${end.format(endFormat)}`
 }
 
 const formatEvent = (event: CalendarEvent, timeZone: string) =>

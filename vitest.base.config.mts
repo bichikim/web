@@ -77,6 +77,7 @@ export const unitTestProject = {
       'packages/server-boundary/src/__tests__/plugin.e2e.spec.ts',
     ],
     include: [
+      'packages/*/bin/__tests__/**/*.spec.?(c|m)[jt]s?(x)',
       'packages/*/__tests__/**/*.spec.?(c|m)[jt]s?(x)',
       'packages/*/rules/**/*.spec.?(c|m)[jt]s?(x)',
       'packages/*/src/**/*.spec.?(c|m)[jt]s?(x)',
