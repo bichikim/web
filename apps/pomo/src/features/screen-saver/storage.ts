@@ -66,6 +66,7 @@ export const createScreenSaverRepository = (
 ): ScreenSaverRepository => {
   let writeRevision = 0
   let latestSavedAt = 0
+  let latestKnownPreference: StoredScreenSaverPreference | null = null
   const pendingWrites = new Set<Promise<void>>()
   const writeLatestToss = createLatestStorageWriter(SCREEN_SAVER_STORAGE_KEY, storage.writeToss)
 
@@ -95,10 +96,15 @@ export const createScreenSaverRepository = (
     )
   }
 
-  const readWebFallback = () => {
-    const webPreference = readWebPreference()
-    latestSavedAt = Math.max(latestSavedAt, webPreference?.savedAt ?? 0)
-    return webPreference?.delay ?? DEFAULT_SCREEN_SAVER_DELAY
+  const readWebFallback = (webPreference = readWebPreference()) => {
+    const latestPreference = selectMaximumBy(
+      latestKnownPreference,
+      webPreference,
+      (value) => value.savedAt,
+    )
+    latestKnownPreference = latestPreference
+    latestSavedAt = Math.max(latestSavedAt, latestPreference?.savedAt ?? 0)
+    return latestPreference?.delay ?? DEFAULT_SCREEN_SAVER_DELAY
   }
 
   const read = async (): Promise<ScreenSaverDelay> => {
@@ -112,8 +118,7 @@ export const createScreenSaverRepository = (
 
     const webPreference = readWebPreference()
     if (!storage.usesTossStorage()) {
-      latestSavedAt = Math.max(latestSavedAt, webPreference?.savedAt ?? 0)
-      return webPreference?.delay ?? DEFAULT_SCREEN_SAVER_DELAY
+      return readWebFallback(webPreference)
     }
 
     try {
@@ -133,7 +138,7 @@ export const createScreenSaverRepository = (
         (value) => value.savedAt,
       )
       if (latestPreference === null) {
-        return DEFAULT_SCREEN_SAVER_DELAY
+        return readWebFallback()
       }
 
       latestSavedAt = Math.max(
@@ -141,6 +146,12 @@ export const createScreenSaverRepository = (
         webPreference?.savedAt ?? 0,
         tossPreference?.savedAt ?? 0,
       )
+      if (
+        latestKnownPreference === null ||
+        latestPreference.savedAt >= latestKnownPreference.savedAt
+      ) {
+        latestKnownPreference = latestPreference
+      }
 
       if (latestPreference === webPreference) {
         await writeNativePreference(latestPreference).catch(() => undefined)
@@ -171,6 +182,7 @@ export const createScreenSaverRepository = (
       if (webWriteError !== null) {
         throw new Error('Failed to persist screen saver delay.', {cause: webWriteError})
       }
+      latestKnownPreference = preference
       return
     }
 
@@ -180,12 +192,15 @@ export const createScreenSaverRepository = (
       if (webWriteError !== null) {
         throw new Error('Failed to persist screen saver delay.', {cause: error})
       }
+      latestKnownPreference = preference
       return
     }
 
+    latestKnownPreference = preference
     if (webWriteError !== null) {
       const currentWebPreference = readWebPreference()
       if (currentWebPreference !== null && currentWebPreference.savedAt > preference.savedAt) {
+        latestKnownPreference = currentWebPreference
         return
       }
 
