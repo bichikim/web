@@ -444,6 +444,15 @@ it('should use the preferred browser locale on the next web bootstrap after rese
   expect(getLocale()).toBe('en')
 })
 
+it('should remove delayed end event settings when dialogue options are reset', async () => {
+  const key = 'pomo:delayed-end-event-settings:v1'
+  localStorage.setItem(key, JSON.stringify({durationMinutes: 45, version: 1}))
+
+  await createRuntimeOptionResetManager().reset('dialogue')
+
+  expect(localStorage.getItem(key)).toBeNull()
+})
+
 it.each(['entry', 'all'] as const)(
   'should clear durable and session entry records for %s reset',
   async (group) => {
