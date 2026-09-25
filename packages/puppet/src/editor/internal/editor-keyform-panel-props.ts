@@ -45,6 +45,7 @@ export interface EditorKeyformPanelProps {
     binding: PuppetParameterBinding,
     parameters: ReadonlyArray<PuppetParameter>,
   ) => JSX.Element
+  readonly setBrushControlsMount?: (element: HTMLDivElement | undefined) => void
   readonly selectedPartIds?: ReadonlyArray<string>
   readonly targetPartIds?: ReadonlyArray<string>
   readonly values?: PuppetParameterValues

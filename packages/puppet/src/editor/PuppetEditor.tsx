@@ -83,6 +83,7 @@ interface EditorWorkspacePanelProps {
   readonly onSeek?: (time: number) => void
   readonly physicsPreview?: boolean
   readonly selectedNodeIds: ReadonlyArray<string>
+  readonly setBrushControlsMount?: (element: HTMLDivElement | undefined) => void
   readonly workspace: 'animation' | 'modeling'
 }
 const EditorWorkspacePanel = (props: EditorWorkspacePanelProps) => (
@@ -115,6 +116,7 @@ const EditorWorkspacePanel = (props: EditorWorkspacePanelProps) => (
         onPhysicsReset={props.onPhysicsReset}
         physicsPreview={props.physicsPreview}
         selectedNodeIds={props.selectedNodeIds}
+        setBrushControlsMount={props.setBrushControlsMount}
       />
     </section>
   </Show>
@@ -138,6 +140,8 @@ export const PuppetEditor = (props: PuppetEditorProps) => {
   const [layerSelection, setLayerSelection] = createSignal(createSceneSelection(initialPartId))
   const [glueVertex, setGlueVertex] = createSignal<PuppetVertexReference | null>(null)
   const [activeVertexIndex, setActiveVertexIndex] = createSignal<number | null>(null)
+  const [brushControlsMount, setBrushControlsMount] = createSignal<HTMLDivElement>()
+  const [brushSettingsMount, setBrushSettingsMount] = createSignal<HTMLDivElement>()
   const deformerEditing = useDeformerMode({
     document: sourceDocument,
     nodeId: () => layerSelection().activeNodeId ?? undefined,
@@ -363,6 +367,7 @@ export const PuppetEditor = (props: PuppetEditorProps) => {
         onActivate={activateHistoryShortcuts}
         bottom={
           <EditorWorkspacePanel
+            setBrushControlsMount={setBrushControlsMount}
             currentTime={currentTime()}
             document={sourceDocument()}
             editor={parameterEditor}
@@ -472,6 +477,7 @@ export const PuppetEditor = (props: PuppetEditorProps) => {
         }
         toolbar={(visibility) => (
           <EditorToolbar
+            setBrushSettingsMount={setBrushSettingsMount}
             activeWorkspace={workspace()}
             canRedo={history.canRedo()}
             canUndo={history.canUndo()}
@@ -495,6 +501,8 @@ export const PuppetEditor = (props: PuppetEditorProps) => {
         )}
         viewport={
           <EditorViewport
+            brushControlsMount={brushControlsMount()}
+            brushSettingsMount={brushSettingsMount()}
             physicsPreview={physicsPreview()}
             meshEditingDisabled={temporary.form() !== undefined}
             onMeshEditingStart={() => {
