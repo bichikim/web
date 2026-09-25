@@ -13,10 +13,14 @@ use tauri::{
 use windows::{
     Win32::{
         Foundation::{
-            COLORREF, ERROR_SUCCESS, GetLastError, HWND, LPARAM, POINT, SetLastError, WPARAM,
+            COLORREF, ERROR_SUCCESS, GetLastError, HWND, LPARAM, LRESULT, POINT, SetLastError,
+            WPARAM,
         },
         Graphics::Gdi::{CreateRoundRectRgn, DeleteObject, ScreenToClient, SetWindowRgn},
-        UI::WindowsAndMessaging::*,
+        UI::{
+            Shell::{DefSubclassProc, RemoveWindowSubclass, SetWindowSubclass},
+            WindowsAndMessaging::*,
+        },
     },
     core::w,
 };
@@ -359,14 +363,77 @@ pub(crate) fn set_control_surface_corner_radius<R: Runtime, W: NativeWindowHandl
     })
 }
 
+const CONTROL_FRAME: WINDOW_STYLE = WINDOW_STYLE(
+    WS_CAPTION.0 | WS_THICKFRAME.0 | WS_SYSMENU.0 | WS_MINIMIZEBOX.0 | WS_MAXIMIZEBOX.0,
+);
+const CONTROL_EDGES: WINDOW_EX_STYLE =
+    WINDOW_EX_STYLE(WS_EX_WINDOWEDGE.0 | WS_EX_CLIENTEDGE.0 | WS_EX_DLGMODALFRAME.0);
+
+unsafe extern "system" fn control_frame_proc(
+    hwnd: HWND,
+    message: u32,
+    wparam: WPARAM,
+    lparam: LPARAM,
+    subclass_id: usize,
+    _data: usize,
+) -> LRESULT {
+    unsafe {
+        if message == WM_NCPAINT {
+            return LRESULT(0);
+        }
+        if message == WM_NCACTIVATE {
+            // Preserve Tao's focus bookkeeping, but tell DefWindowProc not to
+            // paint a cached caption into the transparent client surface.
+            return DefSubclassProc(hwnd, message, wparam, LPARAM(-1));
+        }
+        if message == WM_STYLECHANGING && lparam.0 != 0 {
+            // Tao rebuilds styles on show/hide and other flag changes. Keep these
+            // dedicated transparent controls frameless throughout their lifetime.
+            let styles = &mut *(lparam.0 as *mut STYLESTRUCT);
+            if wparam.0 as i32 == GWL_STYLE.0 {
+                styles.styleNew &= !CONTROL_FRAME.0;
+            } else if wparam.0 as i32 == GWL_EXSTYLE.0 {
+                styles.styleNew &= !CONTROL_EDGES.0;
+            }
+        } else if message == WM_NCDESTROY {
+            let _ = RemoveWindowSubclass(hwnd, Some(control_frame_proc), subclass_id);
+        }
+        DefSubclassProc(hwnd, message, wparam, lparam)
+    }
+}
 pub(crate) fn set_control_surface_shadow<R: Runtime, W: NativeWindowHandle<R>>(
     window: &W,
 ) -> Result<()> {
+    let window = window.surface_window();
     // Tauri's undecorated shadow adds a visible non-client border to transparent WebViews.
-    window
-        .surface_window()
-        .set_shadow(false)
-        .map_err(Into::into)
+    window.set_shadow(false)?;
+    // Tao retains caption styles on undecorated top-level windows. Explorer mode
+    // transitions can repaint that dormant frame on a persistent control window.
+    native(&window, |hwnd| unsafe {
+        SetWindowSubclass(hwnd, Some(control_frame_proc), 1, 0)
+            .ok()
+            .map_err(failure)?;
+        SetWindowLongPtrW(
+            hwnd,
+            GWL_STYLE,
+            GetWindowLongPtrW(hwnd, GWL_STYLE) & !(CONTROL_FRAME.0 as isize),
+        );
+        SetWindowLongPtrW(
+            hwnd,
+            GWL_EXSTYLE,
+            GetWindowLongPtrW(hwnd, GWL_EXSTYLE) & !(CONTROL_EDGES.0 as isize),
+        );
+        SetWindowPos(
+            hwnd,
+            None,
+            0,
+            0,
+            0,
+            0,
+            SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE | SWP_FRAMECHANGED,
+        )
+        .map_err(failure)
+    })
 }
 
 pub(crate) fn set_widget<R: Runtime>(

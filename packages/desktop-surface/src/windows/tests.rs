@@ -8,6 +8,11 @@ fn verify(window: &Window<tauri::Wry>) -> Result<()> {
         .app_handle()
         .get_webview("probe")
         .ok_or_else(|| failure("probe webview missing"))?;
+    let control = window
+        .app_handle()
+        .get_webview_window("control-probe")
+        .unwrap();
+    set_control_surface_shadow(&control)?;
     let original = baseline(&state, window)?;
     for _ in 0..2 {
         set_widget(&state, window, 420.0, 520.0, Some(20.0))?;
@@ -33,6 +38,21 @@ fn verify(window: &Window<tauri::Wry>) -> Result<()> {
                 .current_monitor()?
                 .ok_or_else(|| failure("monitor missing"))?;
             assert_eq!(window.inner_size()?, *monitor.size());
+            control.hide()?;
+            control.show()?;
+            control.set_always_on_top(true)?;
+            control.set_always_on_top(false)?;
+            control.set_focus()?;
+            let control_window = control.surface_window();
+            let frame = native(&control_window, |hwnd| unsafe {
+                Ok(GetWindowLongPtrW(hwnd, GWL_STYLE)
+                    & (WS_CAPTION | WS_THICKFRAME | WS_SYSMENU | WS_MINIMIZEBOX | WS_MAXIMIZEBOX).0
+                        as isize)
+            })?;
+            assert_eq!(
+                frame, 0,
+                "persistent control window must not regain a native caption"
+            );
             native(window, move |hwnd| unsafe {
                 assert!(GetParent(hwnd).is_ok());
                 assert_ne!(GetWindowLongPtrW(hwnd, GWL_STYLE) & WS_CHILD.0 as isize, 0);
@@ -87,6 +107,19 @@ fn native_modes_restore_original_window() {
             .title("Pomofi Windows surface test")
             .inner_size(800.0, 600.0)
             .position(120.0, 100.0)
+            .build()?;
+            WebviewWindowBuilder::new(
+                app,
+                "control-probe",
+                WebviewUrl::External(Url::parse("about:blank").unwrap()),
+            )
+            .title("Pomofi persistent control test")
+            .decorations(false)
+            .shadow(true)
+            .transparent(true)
+            .resizable(false)
+            .skip_taskbar(true)
+            .inner_size(420.0, 300.0)
             .build()?;
             let app = app.handle().clone();
             std::thread::spawn(move || {
