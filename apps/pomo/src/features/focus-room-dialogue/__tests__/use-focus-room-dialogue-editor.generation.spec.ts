@@ -1,6 +1,6 @@
 // oxlint-disable require-yield -- Rejection coverage needs an async generator that fails before its first value.
 import {describe, expect, it, vi} from 'vitest'
-import {successResult} from 'src/features/result'
+import {failureResult, successResult} from 'src/features/result'
 import {type CreateOpusBlobOptions} from '../../supertonic'
 
 import type {PDialogue} from '../schema'
@@ -230,6 +230,46 @@ describe('usePDialogueEditor', () => {
     })
     expect(editor.controller.canGenerate()).toBe(true)
     expect(errorSpy).toHaveBeenCalledOnce()
+    editor.dispose()
+  })
+
+  it('should ignore late model callbacks after preparation fails and allow retry', async () => {
+    const client = createClient([])
+    let reportLateProgress: () => void = () => undefined
+    let reportLateStatus: () => void = () => undefined
+    vi.mocked(client.initialize).mockImplementationOnce(async ({onProgress, onStatus}) => {
+      reportLateProgress = () => {
+        onProgress({fileName: 'voice.onnx', loadedBytes: 10, totalBytes: 100})
+      }
+      reportLateStatus = () => {
+        onStatus('늦게 도착한 상태')
+      }
+      return failureResult({
+        code: 'worker-failed',
+        detail: 'worker failed',
+        phase: 'initialize',
+        retryable: true,
+      })
+    })
+    supertonicMocks.createClient.mockReturnValue(client)
+    const editor = createEditorRoot()
+    editor.controller.setText('늦은 진행률 뒤에도 재시도할 수 있어야 하는 대사')
+
+    await editor.controller.generate()
+
+    const errorState = editor.controller.state()
+    expect(errorState.status).toBe('error')
+
+    reportLateProgress()
+    reportLateStatus()
+
+    expect(editor.controller.state()).toEqual(errorState)
+    expect(editor.controller.canGenerate()).toBe(true)
+
+    await editor.controller.generate()
+
+    expect(client.initialize).toHaveBeenCalledTimes(2)
+    expect(client.generateStream).toHaveBeenCalledOnce()
     editor.dispose()
   })
 

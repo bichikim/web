@@ -35,8 +35,10 @@ export const createDialogueModelSession = (
 ): DialogueModelSession => {
   let client: SupertonicClient | null = null
   let preparedModelId: SupertonicModelId | null = null
+  let isPreparing = false
 
   const invalidate = () => {
+    isPreparing = false
     client?.dispose()
     client = null
     preparedModelId = null
@@ -61,6 +63,7 @@ export const createDialogueModelSession = (
       }
 
       client = nextClient
+      isPreparing = true
       options.setState({
         message: m.dialogue_status_model_checking(),
         progress: 0,
@@ -71,7 +74,7 @@ export const createDialogueModelSession = (
         const result = await nextClient.initialize({
           modelId,
           onProgress: (progress) => {
-            if (client === nextClient && !options.isDisposed()) {
+            if (isPreparing && client === nextClient && !options.isDisposed()) {
               options.setState({
                 message: m.dialogue_status_model_file_preparing({
                   fileName: getLocale() === 'en' ? 'voice model file' : progress.fileName,
@@ -82,7 +85,7 @@ export const createDialogueModelSession = (
             }
           },
           onStatus: (message) => {
-            if (client === nextClient && !options.isDisposed()) {
+            if (isPreparing && client === nextClient && !options.isDisposed()) {
               options.setState({
                 ...options.state(),
                 message: getLocale() === 'en' ? m.dialogue_status_model_status() : message,
@@ -95,6 +98,8 @@ export const createDialogueModelSession = (
           return null
         }
 
+        isPreparing = false
+
         if (!result.ok) {
           options.setState({message: getSupertonicErrorMessage(result.error), status: 'error'})
           return null
@@ -104,6 +109,7 @@ export const createDialogueModelSession = (
           return null
         }
 
+        isPreparing = false
         console.error('Failed to prepare focus room dialogue model.', error)
         options.setState({message: m.dialogue_status_model_prepare_failed(), status: 'error'})
         return null
