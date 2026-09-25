@@ -178,7 +178,7 @@ export const createPsdReimportPlan = (
     const source = part.psdSource
     const name = source?.path.join(' / ') ?? part.id
     const targets = matches.get(part.id) ?? []
-    const target = targets[0]
+    const [target] = targets
     if (targets.length === 0) {
       rows.push({
         detail: '새 레이어 · 선택하면 추가',
