@@ -110,13 +110,42 @@ pub(crate) fn website_mouse_event_script(event: &ValidatedBackgroundMouseEvent) 
   if ('{kind}' === 'wheel') {{
     dispatchHoverChange(hit);
     if (!hit || typeof WheelEvent !== 'function') return;
-    hit.dispatchEvent(new WheelEvent('wheel', {{
+    const allowDefault = hit.dispatchEvent(new WheelEvent('wheel', {{
       ...common,
       deltaMode: {delta_mode},
       deltaX: {delta_x},
       deltaY: {delta_y},
       deltaZ: {delta_z},
     }}));
+    // Synthetic wheel events do not perform the browser's default scrolling.
+    if (allowDefault && !modifiers.ctrlKey && !modifiers.metaKey) {{
+      const mode = {delta_mode};
+      const line = parseFloat(getComputedStyle(hit).lineHeight) || 16;
+      const scrollAxis = (axis, delta) => {{
+        if (!delta) return;
+        const vertical = axis === 'y';
+        const position = vertical ? 'scrollTop' : 'scrollLeft';
+        const extent = vertical ? 'scrollHeight' : 'scrollWidth';
+        const viewport = vertical ? 'clientHeight' : 'clientWidth';
+        for (let node = hit; node; node = node.parentElement) {{
+          const style = getComputedStyle(node);
+          const root = node === document.scrollingElement;
+          const overflow = vertical ? style.overflowY : style.overflowX;
+          if (!(root || /^(auto|scroll|overlay)$/.test(overflow))) continue;
+          const amount = delta * (mode === 1 ? line : mode === 2 ? node[viewport] : 1);
+          const before = node[position];
+          const maximum = node[extent] - node[viewport];
+          if (maximum > 0 && ((amount > 0 && before < maximum) || (amount < 0 && before > 0))) {{
+            node.scrollBy({{left: vertical ? 0 : amount, top: vertical ? amount : 0, behavior: 'instant'}});
+            return;
+          }}
+          const chaining = vertical ? style.overscrollBehaviorY : style.overscrollBehaviorX;
+          if (chaining === 'contain' || chaining === 'none') return;
+        }}
+      }};
+      scrollAxis('x', {delta_x});
+      scrollAxis('y', {delta_y});
+    }}
     return;
   }}
 
