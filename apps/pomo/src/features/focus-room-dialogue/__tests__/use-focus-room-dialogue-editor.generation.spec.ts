@@ -12,6 +12,7 @@ import {
   createEditorRoot,
   createStoredDialogue,
   moodAnalyzerMocks,
+  moodRuntime,
   repositoryMocks,
   supertonicMocks,
 } from './support/editor'
@@ -181,6 +182,106 @@ describe('usePDialogueEditor', () => {
         }),
       }),
     )
+    editor.dispose()
+  })
+
+  it('should discard pending mood analysis after the dialogue text changes', async () => {
+    let resolveMoodAnalysis: (
+      result: Awaited<ReturnType<typeof moodAnalyzerMocks.analyze>>,
+    ) => void = () => undefined
+    const moodProgress: {callback: ((progress: number) => void) | null} = {callback: null}
+    moodAnalyzerMocks.analyze.mockReturnValueOnce(
+      new Promise((resolve) => {
+        resolveMoodAnalysis = resolve
+      }),
+    )
+    vi.mocked(moodRuntime.createAnalyzer).mockImplementationOnce(({onProgress}) => {
+      moodProgress.callback = onProgress ?? null
+      return moodAnalyzerMocks
+    })
+    const client = createClient([])
+    supertonicMocks.createClient.mockReturnValue(client)
+    const editor = createEditorRoot()
+    editor.controller.setText('분석 중 수정할 대사입니다.')
+
+    const generation = editor.controller.generate()
+    await vi.waitFor(() => expect(moodAnalyzerMocks.analyze).toHaveBeenCalledOnce())
+    expect(moodProgress.callback).not.toBeNull()
+    moodProgress.callback?.(20)
+    expect(editor.controller.state().status).toBe('analyzing')
+    expect(editor.controller.audioUrl()).toBe('blob:dialogue')
+    expect(editor.controller.segments()).toHaveLength(1)
+
+    editor.controller.setText('수정한 대사입니다.')
+    expect(editor.controller.audioUrl()).toBeNull()
+    expect(editor.controller.segments()).toEqual([])
+    moodProgress.callback?.(40)
+    expect(editor.controller.state().status).toBe('idle')
+
+    resolveMoodAnalysis(
+      successResult({analysis: cheerfulAnalysis, elapsedMilliseconds: 12, status: 'complete'}),
+    )
+    await generation
+
+    expect(editor.controller.audioUrl()).toBeNull()
+    expect(editor.controller.segments()).toEqual([])
+    expect(editor.controller.canSave()).toBe(false)
+    expect(editor.controller.state().status).toBe('idle')
+    editor.dispose()
+  })
+
+  it('should wait for stale mood analysis before analyzing the revised dialogue', async () => {
+    let resolveMoodAnalysis: (
+      result: Awaited<ReturnType<typeof moodAnalyzerMocks.analyze>>,
+    ) => void = () => undefined
+    const moodProgress: {callback: ((progress: number) => void) | null} = {callback: null}
+    moodAnalyzerMocks.analyze
+      .mockReturnValueOnce(
+        new Promise((resolve) => {
+          resolveMoodAnalysis = resolve
+        }),
+      )
+      .mockResolvedValueOnce(
+        successResult({analysis: cheerfulAnalysis, elapsedMilliseconds: 12, status: 'complete'}),
+      )
+    vi.mocked(moodRuntime.createAnalyzer).mockImplementationOnce(({onProgress}) => {
+      moodProgress.callback = onProgress ?? null
+      return moodAnalyzerMocks
+    })
+    const client = createClient([])
+    supertonicMocks.createClient.mockReturnValue(client)
+    const editor = createEditorRoot()
+    editor.controller.setText('첫 번째 대사입니다.')
+
+    const staleGeneration = editor.controller.generate()
+    await vi.waitFor(() => expect(moodAnalyzerMocks.analyze).toHaveBeenCalledOnce())
+    editor.controller.setText('수정한 대사입니다.')
+
+    const revisedGeneration = editor.controller.generate()
+    await vi.waitFor(() =>
+      expect(editor.controller.segments()).toEqual([
+        expect.objectContaining({text: '수정한 대사입니다.'}),
+      ]),
+    )
+    expect(moodAnalyzerMocks.analyze).toHaveBeenCalledOnce()
+    expect(editor.controller.state().status).toBe('generating')
+
+    moodProgress.callback?.(40)
+    expect(editor.controller.state().status).toBe('generating')
+    expect(editor.controller.segments()).toEqual([
+      expect.objectContaining({text: '수정한 대사입니다.'}),
+    ])
+    resolveMoodAnalysis(
+      successResult({analysis: cheerfulAnalysis, elapsedMilliseconds: 12, status: 'complete'}),
+    )
+    await Promise.all([staleGeneration, revisedGeneration])
+
+    expect(editor.controller.segments()).toEqual([
+      expect.objectContaining({mood: cheerfulAnalysis, text: '수정한 대사입니다.'}),
+    ])
+    expect(moodAnalyzerMocks.analyze).toHaveBeenCalledTimes(2)
+    expect(editor.controller.canSave()).toBe(true)
+    expect(editor.controller.state().status).toBe('ready')
     editor.dispose()
   })
 
