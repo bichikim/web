@@ -20,7 +20,7 @@ const dateTimeSchema = z.iso.datetime({offset: true})
 
 const hasValidEventTimes = (event: CalendarEvent) =>
   event.allDay
-    ? parseDate(event.start) !== null && parseDate(event.end) !== null
+    ? parseDate(event.start) !== null && parseDate(event.end) !== null && event.start < event.end
     : dateTimeSchema.safeParse(event.start).success && dateTimeSchema.safeParse(event.end).success
 
 const formatEventTime = (event: CalendarEvent, timeZone: string) => {
