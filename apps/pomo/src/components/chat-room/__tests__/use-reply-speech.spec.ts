@@ -73,6 +73,47 @@ describe('useReplySpeech', () => {
     expect(voice.finish).toHaveBeenCalledOnce()
   })
 
+  it.each(['draft', 'assistant'])(
+    'should speak a refined assistant reply when its message id is %s',
+    (messageId) => {
+      const {result, voice, setAnswerDraft, setMessages, setStreamingText} = setup()
+      const userMessage = {content: '질문', id: 'user', role: 'user'} as const
+      result.start()
+      setMessages([userMessage])
+      setStreamingText('초안입니다.')
+      setAnswerDraft({content: '초안입니다.', id: 'draft'})
+
+      setMessages([
+        userMessage,
+        {content: '다듬어진 최종 답변입니다.', id: messageId, role: 'assistant'},
+      ])
+      setStreamingText('')
+      setAnswerDraft(null)
+
+      expect(voice.arm).toHaveBeenCalledTimes(2)
+      expect(voice.speak).toHaveBeenCalledTimes(2)
+      expect(voice.speak).toHaveBeenLastCalledWith('다듬어진 최종 답변입니다.')
+      expect(voice.finish).toHaveBeenCalledTimes(2)
+    },
+  )
+
+  it('should not repeat a streamed reply when refinement leaves its text unchanged', () => {
+    const {result, voice, setAnswerDraft, setMessages, setStreamingText} = setup()
+    const userMessage = {content: '질문', id: 'user', role: 'user'} as const
+    result.start()
+    setMessages([userMessage])
+    setStreamingText('초안입니다.')
+    setAnswerDraft({content: '초안입니다.', id: 'reply'})
+
+    setMessages([userMessage, {content: '초안입니다.', id: 'reply', role: 'assistant'}])
+    setStreamingText('')
+    setAnswerDraft(null)
+
+    expect(voice.arm).toHaveBeenCalledOnce()
+    expect(voice.speak).toHaveBeenCalledExactlyOnceWith('초안입니다.')
+    expect(voice.finish).toHaveBeenCalledOnce()
+  })
+
   it('should keep a title abbreviation attached to its completed streaming sentence', () => {
     const {result, voice, setStreamingText} = setup()
     result.start()
