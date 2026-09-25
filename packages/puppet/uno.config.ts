@@ -1,4 +1,5 @@
 import {controlShortcuts} from './uno/shortcuts/controls'
+import {brushShortcuts} from './uno/shortcuts/brush'
 import {icons as tablerIcons} from '@iconify-json/tabler'
 import {defineConfig, presetIcons, presetWind3} from 'unocss'
 import {iconShortcuts} from './uno/shortcuts/icons'
@@ -23,6 +24,7 @@ const shortcuts = {
   ...layerOrderShortcuts,
   ...propertiesShortcuts,
   ...canvasShortcuts,
+  ...brushShortcuts,
   ...parametersShortcuts,
   ...dialogsShortcuts,
 }

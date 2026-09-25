@@ -140,16 +140,16 @@ export const layoutShortcuts = {
     '[.puppet-editor_&]:[border-bottom:0.0625rem_solid_#27302d] [.puppet-editor_&]:[background:#111614]',
     '[@media(max-width:67.5rem)]:[.puppet-editor_&]:[padding:0_0.75rem]',
   ],
-  'toolbar-brush-settings-mount': [
-    '[.puppet-editor_&]:flex [.puppet-editor_&]:min-w-0 [.puppet-editor_&]:flex-1',
-    '[.puppet-editor_&]:[margin-left:1.5rem] [.puppet-editor_&]:overflow-x-auto',
-    '[.puppet-editor_&]:[scrollbar-width:thin]',
-  ],
   'toolbar-actions': [
     '[.puppet-editor_&]:flex [.puppet-editor_&]:items-center',
     '[.puppet-editor_&]:[gap:0.625rem]',
     '[.puppet-editor_&]:shrink-0 [.puppet-editor_&]:[margin-left:0.75rem]',
     '[@media(max-width:67.5rem)]:[.puppet-editor_&]:[gap:0.375rem]',
+  ],
+  'toolbar-brush-settings-mount': [
+    '[.puppet-editor_&]:flex [.puppet-editor_&]:min-w-0 [.puppet-editor_&]:flex-1',
+    '[.puppet-editor_&]:[margin-left:1.5rem] [.puppet-editor_&]:overflow-x-auto',
+    '[.puppet-editor_&]:[scrollbar-width:thin]',
   ],
   'toolbar-button': [
     '[.puppet-editor_&]:[padding:0.4375rem_0.625rem] [.puppet-editor_&]:[border:0.0625rem_solid_#35413d]',
