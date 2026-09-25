@@ -1,5 +1,6 @@
 /* istanbul ignore next -- Wallaby inconsistently counts module initialization across workers. */
 const SENTENCE_END = /(?:[.!?…。！？]["'”’)}\]]*|\n)\s*$/u
+const TERMINAL_PUNCTUATION = /(?<punctuation>[.!?…。！？])(?<closingCharacters>["'”’)}\]]*)$/u
 const KNOWN_ABBREVIATION =
   /^(?:Dr|Mr|Mrs|Ms|Prof|Rev|Hon|Gov|Pres|Sen|Rep|Gen|Lt|Col|Capt|Sgt|St|Mt|Jr|Sr|vs)\.$/iu
 const DOTTED_ABBREVIATION = /^(?:[A-Z]\.){2,}$/iu
@@ -36,6 +37,28 @@ const endsWithAbbreviation = (segment: string) => {
 const isCompletedSentence = (segment: string) =>
   SENTENCE_END.test(segment) && !endsWithAbbreviation(segment)
 
+const isOnlyTerminalPunctuationChanged = (previousText: string, nextText: string) => {
+  const previousEnding = TERMINAL_PUNCTUATION.exec(previousText)
+  const nextEnding = TERMINAL_PUNCTUATION.exec(nextText)
+  const previousPunctuation = previousEnding?.groups?.punctuation
+  const nextPunctuation = nextEnding?.groups?.punctuation
+  const previousClosingCharacters = previousEnding?.groups?.closingCharacters
+  const nextClosingCharacters = nextEnding?.groups?.closingCharacters
+
+  return (
+    previousEnding !== null &&
+    nextEnding !== null &&
+    previousPunctuation !== undefined &&
+    nextPunctuation !== undefined &&
+    previousClosingCharacters !== undefined &&
+    nextClosingCharacters !== undefined &&
+    previousEnding.index === nextEnding.index &&
+    previousText.slice(0, previousEnding.index) === nextText.slice(0, nextEnding.index) &&
+    previousPunctuation !== nextPunctuation &&
+    previousClosingCharacters === nextClosingCharacters
+  )
+}
+
 /** Holds the unstable streaming tail and emits only completed sentences once. */
 export const createStreamingSpeechBuffer = (
   options: CreateStreamingSpeechBufferOptions,
@@ -51,7 +74,13 @@ export const createStreamingSpeechBuffer = (
 
   const update = (text: string) => {
     if (!text.startsWith(consumedText)) {
-      reset()
+      const currentConsumedText = text.slice(0, consumedText.length)
+
+      if (isOnlyTerminalPunctuationChanged(consumedText, currentConsumedText)) {
+        consumedText = currentConsumedText
+      } else {
+        reset()
+      }
     }
 
     const remainingText = text.slice(consumedLength)

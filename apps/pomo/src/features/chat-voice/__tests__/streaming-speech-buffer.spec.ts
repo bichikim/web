@@ -90,6 +90,20 @@ describe('createStreamingSpeechBuffer', () => {
     expect(buffer.update('첫 문장입니다.')).toEqual([])
   })
 
+  it.each([
+    ['en', 'Hello world.', 'Hello world!'],
+    ['ko', 'Hello world.”', 'Hello world!”'],
+  ] as const)(
+    'should keep a consumed sentence from being reemitted after a terminal punctuation change (%s: %s → %s)',
+    (locale, originalText, revisedText) => {
+      const buffer = createStreamingSpeechBuffer({locale})
+
+      expect(buffer.update(originalText)).toEqual([originalText])
+      expect(buffer.update(revisedText)).toEqual([])
+      expect(buffer.update(`${revisedText} Next sentence.`)).toEqual(['Next sentence.'])
+    },
+  )
+
   it('should omit an empty completed segment and an empty remaining tail', () => {
     const buffer = createStreamingSpeechBuffer({locale: 'ko'})
 
