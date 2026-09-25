@@ -31,7 +31,9 @@ const formatEventTime = (event: CalendarEvent, timeZone: string) => {
 
   const start = dayjs(new Date(event.start)).tz(timeZone).locale('ko')
   const end = dayjs(new Date(event.end)).tz(timeZone).locale('ko')
-  return `${start.format('YYYY. M. D. A h:mm')}–${end.format('A h:mm')}`
+  const endFormat =
+    start.format('YYYY-MM-DD') === end.format('YYYY-MM-DD') ? 'A h:mm' : 'YYYY. M. D. A h:mm'
+  return `${start.format('YYYY. M. D. A h:mm')}–${end.format(endFormat)}`
 }
 
 const formatEvent = (event: CalendarEvent, timeZone: string) =>
