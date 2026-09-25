@@ -10,7 +10,7 @@ import {
   type SupertonicModelId,
   type SupertonicVoiceId,
 } from '../supertonic'
-import {createTextMoodAnalyzer, type TextMoodAnalyzer} from '../text-mood'
+import {createTextMoodAnalyzer} from '../text-mood'
 import {
   deleteDialogueDraft,
   getDialogueDraftKey,
@@ -18,6 +18,14 @@ import {
   writeDialogueDraft,
 } from './dialogue-draft'
 import {createDialogueEditorAudioState} from './dialogue-editor-audio-state'
+import {
+  analyzeWithMoodSession,
+  createMoodAnalysisSession,
+  disposeMoodAnalysisSession,
+  finishMoodAnalysis,
+  getOrCreateMoodAnalyzer,
+  waitForPendingMoodAnalysis,
+} from './use-focus-room-dialogue-editor/mood-analysis-session'
 import {createDialogueModelSession} from './use-focus-room-dialogue-editor/model-session'
 import type {PDialogueEditorController, UsePDialogueEditorProps} from './dialogue-editor-contract'
 import {type DialogueEditorState, isDialogueEditorBusy} from './dialogue-editor-state'
@@ -30,7 +38,6 @@ import {
 import type {GeneratedDialogueAudio} from './generate-dialogue-audio'
 import {createPDialogueRepository} from './repository'
 import {DEFAULT_FOCUS_ROOM_DIALOGUE_LANGUAGE, type PDialogue} from './schema'
-import {analyzeDialogueSegmentMoods} from './segment-mood'
 
 const MAXIMUM_PROGRESS = 100
 const DEFAULT_MODEL_ID: SupertonicModelId = 'full'
@@ -105,7 +112,7 @@ export const usePDialogueEditor = (props: UsePDialogueEditorProps): PDialogueEdi
   let createdAt: string | null = null
   let generatedKey: string | null = null
   let isDisposed = false
-  let moodAnalyzer: TextMoodAnalyzer | null = null
+  const moodAnalysis = createMoodAnalysisSession()
 
   const setEditorState = (nextState: DialogueEditorState) => {
     if (!isDisposed) {
@@ -225,8 +232,7 @@ export const usePDialogueEditor = (props: UsePDialogueEditorProps): PDialogueEdi
       onCleanup(() => {
         routeRevision += 1
         modelSession.invalidate()
-        moodAnalyzer?.dispose()
-        moodAnalyzer = null
+        disposeMoodAnalysisSession(moodAnalysis)
       })
       draftKey = getDialogueDraftKey(selectedId)
       const draft = selectedId === null ? readDialogueDraft(draftKey) : null
@@ -268,8 +274,7 @@ export const usePDialogueEditor = (props: UsePDialogueEditorProps): PDialogueEdi
     isDisposed = true
     abortOpusEncoding()
     modelSession.dispose()
-    moodAnalyzer?.dispose()
-    moodAnalyzer = null
+    disposeMoodAnalysisSession(moodAnalysis)
     repository.dispose()
     replaceBlobObjectUrl(audioUrl(), () => null)
   })
@@ -374,25 +379,30 @@ export const usePDialogueEditor = (props: UsePDialogueEditorProps): PDialogueEdi
       return
     }
 
+    const isCurrentMoodGeneration = (audio: GeneratedDialogueAudio | null) =>
+      !isDisposed && revision === routeRevision && audio !== null && editableAudio() === audio
+    const isCurrentMoodAnalysis = () => isCurrentMoodGeneration(generatedAudio)
     try {
-      moodAnalyzer ??= moodRuntime.createAnalyzer({
-        onProgress: (nextProgress) => {
-          if (isDisposed || revision !== routeRevision) {
-            return
-          }
-          setEditorState({
-            message: m.dialogue_status_mood_preparing({progress: nextProgress}),
-            status: 'analyzing',
-          })
-        },
+      if (!(await waitForPendingMoodAnalysis(moodAnalysis, isCurrentMoodAnalysis))) {
+        return
+      }
+
+      moodAnalysis.pendingAudio = generatedAudio
+      const analyzer = getOrCreateMoodAnalyzer(moodAnalysis, moodRuntime, (nextProgress) => {
+        if (!isCurrentMoodGeneration(moodAnalysis.pendingAudio)) {
+          return
+        }
+        setEditorState({
+          message: m.dialogue_status_mood_preparing({progress: nextProgress}),
+          status: 'analyzing',
+        })
       })
-      const analyzedSegments = await analyzeDialogueSegmentMoods({
-        analyzer: moodAnalyzer,
+      const analyzedSegments = await analyzeWithMoodSession(moodAnalysis, analyzer, {
         onError: (error, segment) => {
           console.warn(`Failed to analyze dialogue segment ${segment.index}.`, error)
         },
         onProgress: (current, total) => {
-          if (isDisposed || revision !== routeRevision) {
+          if (!isCurrentMoodAnalysis()) {
             return
           }
           setEditorState({
@@ -403,7 +413,7 @@ export const usePDialogueEditor = (props: UsePDialogueEditorProps): PDialogueEdi
         segments: generatedAudio.segments,
       })
 
-      if (!modelSession.isCurrent(currentClient)) {
+      if (!isCurrentMoodAnalysis()) {
         return
       }
 
@@ -411,7 +421,7 @@ export const usePDialogueEditor = (props: UsePDialogueEditorProps): PDialogueEdi
       setEditableAudio({...generatedAudio, segments: analyzedSegments})
       setEditorState({message: m.dialogue_status_mood_complete(), status: 'ready'})
     } catch (error: unknown) {
-      if (isDisposed || revision !== routeRevision) {
+      if (!isCurrentMoodAnalysis()) {
         return
       }
       console.warn('Failed to analyze focus room dialogue mood.', error)
@@ -419,6 +429,8 @@ export const usePDialogueEditor = (props: UsePDialogueEditorProps): PDialogueEdi
         message: m.dialogue_status_mood_partial(),
         status: 'ready',
       })
+    } finally {
+      finishMoodAnalysis(moodAnalysis, generatedAudio)
     }
   }
 

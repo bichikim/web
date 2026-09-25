@@ -255,11 +255,7 @@ const hasDifferentCoverDraftId = (data: string | null, coverDraftId: string): bo
   }
 
   const parsedDraft = albumDraftSchema.safeParse(parsedData)
-  return (
-    parsedDraft.success &&
-    parsedDraft.data.coverDraftId !== null &&
-    parsedDraft.data.coverDraftId !== coverDraftId
-  )
+  return parsedDraft.success && parsedDraft.data.coverDraftId !== coverDraftId
 }
 
 export const writeAlbumDraftReference = async (

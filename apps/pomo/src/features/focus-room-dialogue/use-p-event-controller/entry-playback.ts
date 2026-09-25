@@ -16,6 +16,12 @@ export interface EntryPlaybackSessionStorage {
 
 const failedSessionWrites = new WeakSet<EntryPlaybackSessionStorage>()
 
+export const clearEntryEventPlaybackSession = (): void => {
+  const storage = globalThis.sessionStorage
+  storage.removeItem(ENTRY_PLAYBACK_SESSION_KEY)
+  failedSessionWrites.delete(storage)
+}
+
 export interface CreateEntryEventPlaybackOptions {
   readonly eventDialogueIds: Accessor<EventDialogueIds>
   readonly eventPlaybackModes: Accessor<EventPlaybackModes>

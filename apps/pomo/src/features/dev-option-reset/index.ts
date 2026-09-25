@@ -6,6 +6,7 @@ export {
 import {DISPLAY_PREFERENCES_STORAGE_KEY} from '../focus-room-display-preferences/storage'
 import {settleEntryHistoryWrites} from '../focus-room-entry-history'
 import {DIALOGUE_DRAFT_KEY_PREFIX} from '../focus-room-dialogue'
+import {clearEntryEventPlaybackSession} from '../focus-room-dialogue/use-p-event-controller/entry-playback'
 import {LOCALE_RESET_STORAGE_COUNT, resetLocale as resetLocaleStorage} from '../locale'
 import {hasNativeStorageBridge} from 'src/utils/runtime-storage'
 
@@ -136,20 +137,26 @@ const GROUP_DEFINITIONS: ReadonlyArray<OptionResetGroupDefinition> = [
     ],
   },
   {
-    description: '집중·휴식 시간과 자동 시작 설정',
+    description: '집중·휴식 시간, 자동 시작 설정과 타이머 진행 상태',
     id: 'timer',
     label: '타이머',
-    storageKeys: ['pomo:timer-config:v1', 'pomo:timer-auto-start:v2', 'pomo:timer-auto-start:v1'],
+    storageKeys: [
+      'pomo:timer:v1',
+      'pomo:timer-config:v1',
+      'pomo:timer-auto-start:v2',
+      'pomo:timer-auto-start:v1',
+    ],
   },
   {
     description:
-      '자동 대화·랜덤 이벤트와 대화 중 음악 음량 설정, 저장하지 않은 대화 초안을 초기화합니다.',
+      '자동 대화·랜덤 이벤트·지연 종료 시간과 대화 중 음악 음량 설정, 저장하지 않은 대화 초안을 초기화합니다.',
     id: 'dialogue',
     label: '대화',
     sessionStoragePrefixes: [DIALOGUE_DRAFT_KEY_PREFIX],
     storageKeys: [
       'pomo:automatic-dialogue-settings:v1',
       'pomo:random-event-settings:v1',
+      'pomo:delayed-end-event-settings:v1',
       'pomo:dialogue-volume-ducking-settings:v2',
       'pomo:dialogue-volume-ducking-settings:v1',
     ],
@@ -476,6 +483,7 @@ export const createRuntimeOptionResetManager = (): OptionResetManager =>
     resetEntrySession: async () => {
       await settleEntryHistoryWrites()
       sessionStorage.removeItem('pomo:focus-room-entry:v1')
+      clearEntryEventPlaybackSession()
     },
     resetLocale: () => resetLocaleStorage(runtimeLocaleStorage),
     storage: runtimeStorage,
