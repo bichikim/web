@@ -13,7 +13,7 @@ permissions:
   contents: read
 
 env:
-  NODE_VERSION: 26.4.0
+  NODE_VERSION: '24.x'
   PNPM_VERSION: 11.8.0
 
 jobs:
@@ -34,7 +34,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
         with:
-          node-version: 26.4.0
+          node-version: '24.x'
 
       - name: Delete Neon Preview branch
         env:

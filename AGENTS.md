@@ -20,6 +20,12 @@
 - Treat code under `scripts` as standalone; it must not import or use code from `src`.
 - If reusing `src` from a script appears necessary, obtain explicit user approval before adding the dependency.
 
+## React dependencies
+
+- Do not introduce React or React-specific libraries, whether directly or through a new transitive dependency. Prefer Solid-compatible or framework-agnostic alternatives.
+- If a task appears to require React or a dependency that brings in React-specific packages, explain why and ask the user before adding it. Do not proceed without explicit approval.
+- Existing React dependencies for Storybook and current integrations are exceptions, not permission to expand React usage.
+
 ## File naming
 
 - Across source code, tests, documentation, configuration, scripts, and assets, name files by their role within the containing directory; use meaningful subdirectories for context shared by siblings.
