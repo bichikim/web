@@ -45,11 +45,9 @@ export const useReplySpeechQueue = (options: UseReplySpeechQueueOptions) => {
     } catch (error: unknown) {
       request.reject(error)
     } finally {
-      if (activeRequest === request) {
-        activeRequest = null
-        if (!disposed) {
-          setIsSpeaking(false)
-        }
+      activeRequest = null
+      if (!disposed) {
+        setIsSpeaking(false)
       }
     }
   }
@@ -82,10 +80,6 @@ export const useReplySpeechQueue = (options: UseReplySpeechQueueOptions) => {
     const occupied = options.isOccupied()
     const isDialogueOccupied = options.isDialogueOccupied()
 
-    if (disposed) {
-      cancelPendingRequests()
-      return
-    }
     if (!enabled) {
       const shouldCancelActiveRequest = wasEnabled
       wasEnabled = false
@@ -107,9 +101,7 @@ export const useReplySpeechQueue = (options: UseReplySpeechQueueOptions) => {
     setRequests((current) => current.slice(1))
     setIsSpeaking(true)
     activeRequest = request
-    runRequest(request).catch((error: unknown) => {
-      console.error('Unexpected reply speech queue failure.', error)
-    })
+    runRequest(request)
   })
 
   onCleanup(() => {

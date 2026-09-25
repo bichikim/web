@@ -124,7 +124,7 @@ it('should reject replies enqueued after disposal', async () => {
 
 it('should reject pending replies when disabled', async () => {
   const [isEnabled, setIsEnabled] = createSignal(true)
-  const [isOccupied] = createSignal(true)
+  const [isOccupied, setIsOccupied] = createSignal(true)
   const speak = vi.fn(async () => undefined)
   const {cleanup, result} = renderHook(() =>
     useReplySpeechQueue({
@@ -140,6 +140,9 @@ it('should reject pending replies when disabled', async () => {
   setIsEnabled(false)
 
   await expect(reply).rejects.toMatchObject({name: 'AbortError'})
+  setIsOccupied(false)
+  await Promise.resolve()
+
   expect(speak).not.toHaveBeenCalled()
   cleanup()
 })

@@ -60,11 +60,17 @@ const musicPlaybackMocks = vi.hoisted(() => ({
   pause: vi.fn(),
   play: vi.fn(),
 }))
-const musicPlayerLifecycleMocks = vi.hoisted(() => ({actionsReady: true}))
+const musicPlayerLifecycleMocks = vi.hoisted(() => ({
+  actionsReady: true,
+  onPlaybackActionsReady: null as
+    | null
+    | ((actions: {readonly pause: () => void; readonly play: () => void} | null) => void),
+}))
 const soundEffectsMocks = vi.hoisted(() => ({
   activate: vi.fn(),
   stop: vi.fn(),
 }))
+const releaseMocks = vi.hoisted(() => ({serverAiReleased: true}))
 
 vi.mock('../../../../features/focus-room-dialogue', () => ({
   RANDOM_DIALOGUE_EVENT: 'random-event',
@@ -89,16 +95,31 @@ vi.mock('../../../p-dialogue-composer/PDialogueComposer', () => ({
   PDialogueComposer: (props: {
     readonly autoExpand?: boolean
     readonly draft?: () => string
+    readonly executionMode?: string
     readonly loading?: boolean
     readonly onDraftChange?: (text: string) => void
+    readonly onExecutionModeChange?: (mode: 'local' | 'server') => void
     readonly onSubmit?: (text: string) => void
+    readonly serverAccessStatus?: string
+    readonly serverAvailable?: boolean
   }) => (
-    <form class="pomo-dialogue-composer" data-auto-expand={props.autoExpand ? '' : undefined}>
+    <form
+      class="pomo-dialogue-composer"
+      data-auto-expand={props.autoExpand ? '' : undefined}
+      data-execution-mode={props.executionMode}
+      data-server-access-status={props.serverAccessStatus}
+      data-server-available={props.serverAvailable}
+    >
       <input
         aria-label="대화 입력"
         onInput={(event) => props.onDraftChange?.(event.currentTarget.value)}
         value={props.draft?.() ?? ''}
       />
+      {props.onExecutionModeChange !== undefined && (
+        <button onClick={() => props.onExecutionModeChange?.('server')} type="button">
+          서버 모드 선택
+        </button>
+      )}
       <button disabled={props.loading} onClick={() => props.onSubmit?.('집중 방법')} type="button">
         대화 보내기
       </button>
@@ -106,7 +127,27 @@ vi.mock('../../../p-dialogue-composer/PDialogueComposer', () => ({
   ),
 }))
 vi.mock('../../../p-model-download-consent/PModelDownloadConsent', () => ({
-  PModelDownloadConsent: () => null,
+  PModelDownloadConsent: (props: {
+    readonly actionLabel: string
+    readonly downloadSize: string
+    readonly isOpen: boolean
+    readonly onCancel: () => void
+    readonly onConfirm: () => void
+  }) => (
+    <div data-download-open={props.isOpen} data-download-size={props.downloadSize}>
+      {props.isOpen && (
+        <>
+          <span>{props.actionLabel}</span>
+          <button onClick={() => props.onCancel()} type="button">
+            취소 동의
+          </button>
+          <button onClick={() => props.onConfirm()} type="button">
+            다운로드 동의
+          </button>
+        </>
+      )}
+    </div>
+  ),
 }))
 vi.mock('../../../p-dialogue-player/PDialoguePlayer', () => ({
   PDialoguePlayer: (props: {
@@ -128,6 +169,7 @@ vi.mock('../../../p-music-player/PMusicPlayer', () => ({
   PMusicPlayer: (props: {
     readonly expanded: boolean
     readonly isDialogueActive: boolean
+    readonly stopOnUnmount?: boolean
     readonly onExpandedChange: (expanded: boolean) => void
     readonly onPlaybackActionsReady?: (
       actions: {
@@ -140,6 +182,7 @@ vi.mock('../../../p-music-player/PMusicPlayer', () => ({
     readonly sceneStyle: string
   }) => {
     onMount(() => {
+      musicPlayerLifecycleMocks.onPlaybackActionsReady = props.onPlaybackActionsReady ?? null
       if (musicPlayerLifecycleMocks.actionsReady) {
         props.onPlaybackActionsReady?.(musicPlaybackMocks)
       }
@@ -149,6 +192,7 @@ vi.mock('../../../p-music-player/PMusicPlayer', () => ({
       <div
         data-music-dialogue-active={props.isDialogueActive}
         data-expanded={props.expanded}
+        data-stop-on-unmount={props.stopOnUnmount}
         data-music-scene={props.sceneStyle}
       >
         <button onClick={() => props.onPlayingChange(true)} type="button">
@@ -166,6 +210,7 @@ vi.mock('../../../p-music-player/PMusicPlayer', () => ({
 }))
 vi.mock('../../../p-pomodoro/PPomodoro', () => ({
   PPomodoro: (props: {
+    readonly stopOnUnmount?: boolean
     readonly onEvents: (
       eventIds: ReadonlyArray<string>,
       options?: {readonly isCatchUp: true},
@@ -177,7 +222,7 @@ vi.mock('../../../p-pomodoro/PPomodoro', () => ({
     }) => void
     readonly sceneStyle: string
   }) => (
-    <div data-pomodoro-scene={props.sceneStyle}>
+    <div data-pomodoro-scene={props.sceneStyle} data-stop-on-unmount={props.stopOnUnmount}>
       <button onClick={() => props.onEvents(['focus-start'])} type="button">
         집중 시작 이벤트
       </button>
@@ -275,6 +320,11 @@ export {
   soundEffectsMocks,
 }
 
-vi.mock('src/features/ai-job/release', () => ({SERVER_AI_RELEASED: true}))
+vi.mock('src/features/ai-job/release', () => ({
+  get SERVER_AI_RELEASED() {
+    return releaseMocks.serverAiReleased
+  },
+}))
 
 export {musicPlayerLifecycleMocks}
+export {releaseMocks}
