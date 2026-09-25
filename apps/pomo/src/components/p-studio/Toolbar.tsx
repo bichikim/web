@@ -24,7 +24,6 @@ import {PScribbleCircleControl} from '../scribble/CircleControl'
 import {SceneSettingsPanel} from './SettingsPanel'
 import {CLASSES} from './shared'
 import {PWeatherStatus} from '../p-weather-status/PWeatherStatus'
-import {PDesktopModeControl} from '../p-desktop-mode-control/PDesktopModeControl'
 import type {DesktopMode} from '../../features/desktop-mode/index'
 import {MemoryAssistPanel} from './MemoryAssistPanel'
 import {VersionNoticePanel} from './VersionNoticePanel'
@@ -153,6 +152,10 @@ export const SceneToolbar = (props: SceneToolbarProps) => {
             weatherEnabled={props.weatherEnabled}
             weatherLocation={props.weatherLocation}
             weatherSceneMode={props.weatherSceneMode}
+            desktopMode={props.desktopMode}
+            desktopModeError={props.desktopModeError}
+            isDesktopModeChanging={props.isDesktopModeChanging}
+            onDesktopModeChange={props.onDesktopModeChange}
           />
         </div>
         <div class="pomo-toolbar-secondary flex flex-none gap-2">
@@ -179,12 +182,6 @@ export const SceneToolbar = (props: SceneToolbarProps) => {
       </div>
       <div class="clear-both flex flex-col items-end gap-2">
         <PWeatherStatus sceneStyle={props.sceneStyle} state={props.weatherState} />
-        <PDesktopModeControl
-          error={props.desktopModeError}
-          isChanging={props.isDesktopModeChanging}
-          mode={props.desktopMode ?? 'normal'}
-          onModeChange={(mode) => props.onDesktopModeChange?.(mode) ?? Promise.resolve()}
-        />
         <PModelDownloadStatus />
         <Show when={props.isSceneTransitioning}>
           <span

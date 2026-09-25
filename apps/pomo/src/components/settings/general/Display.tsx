@@ -8,7 +8,8 @@ import {useFullscreen} from '../../../features/fullscreen'
 import type {ScreenSaverDelay} from '../../../features/screen-saver'
 import {type ScreenWakeLockController} from '../../../features/screen-wake-lock'
 import * as m from '@paraglide/message'
-import {CLASSES, type PSettingsProps} from './shared'
+import {CLASSES} from '../classes'
+import type {PSettingsProps} from '../types'
 
 const getScreenSaverDelayOptions = () =>
   [
