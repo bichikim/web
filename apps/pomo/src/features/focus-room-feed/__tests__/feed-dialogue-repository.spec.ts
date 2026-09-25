@@ -36,6 +36,7 @@ const itemEquals = vi.fn(() => ({toArray: itemRangeToArray}))
 const itemWhere = vi.fn(() => ({equals: itemEquals}))
 const orderedJobsToArray = vi.fn()
 const jobOrderBy = vi.fn(() => ({toArray: orderedJobsToArray}))
+const databaseTransactionContext = {abort: vi.fn(), active: true}
 
 const feedDialogueJobs = {
   bulkDelete: vi.fn(),
@@ -72,8 +73,10 @@ const feedItems = {
   where: itemWhere,
 }
 const databaseTransaction = vi.fn(async (...arguments_: ReadonlyArray<unknown>) => {
-  const callback = arguments_.at(-1) as () => Promise<unknown>
-  return callback()
+  const callback = arguments_.at(-1) as (
+    transaction: typeof databaseTransactionContext,
+  ) => Promise<unknown>
+  return callback(databaseTransactionContext)
 })
 const database = {
   close: vi.fn(),
@@ -159,6 +162,11 @@ beforeEach(() => {
   databaseModuleMocks.createPDatabase.mockReturnValue(database)
   dialogueAudioMocks.delete.mockResolvedValue(undefined)
   dialogues.get.mockResolvedValue(undefined)
+  feedDialogueMetadata.put.mockResolvedValue(undefined)
+  databaseTransactionContext.active = true
+  databaseTransactionContext.abort.mockImplementation(() => {
+    databaseTransactionContext.active = false
+  })
 })
 
 describe('feed dialogue repository writes', () => {
@@ -173,6 +181,32 @@ describe('feed dialogue repository writes', () => {
     expect(feedItems.put).toHaveBeenCalledWith(item)
     expect(feedDialogueJobs.delete).toHaveBeenCalledWith('job-1')
     expect(databaseTransaction).toHaveBeenCalledOnce()
+  })
+
+  it('should abort a pending completion transaction when cancelled', async () => {
+    const repository = createFeedDialogueRepository()
+    const metadataWrite = Promise.withResolvers<void>()
+    const abortError = new Error('The completion transaction was cancelled.')
+    const abortController = new AbortController()
+    feedDialogueMetadata.put.mockReturnValue(metadataWrite.promise)
+    databaseTransactionContext.abort.mockImplementation(() => {
+      databaseTransactionContext.active = false
+      metadataWrite.reject(abortError)
+    })
+
+    const completion = repository.complete({
+      item: createItem({status: 'ready'}),
+      jobId: 'job-1',
+      metadata: createMetadata(),
+      signal: abortController.signal,
+    })
+    await vi.waitFor(() => expect(feedDialogueMetadata.put).toHaveBeenCalledOnce())
+    abortController.abort()
+
+    await expect(completion).rejects.toBe(abortError)
+    expect(databaseTransactionContext.abort).toHaveBeenCalledOnce()
+    expect(feedItems.put).not.toHaveBeenCalled()
+    expect(feedDialogueJobs.delete).not.toHaveBeenCalled()
   })
 
   it('should queue a job together with its item transactionally', async () => {

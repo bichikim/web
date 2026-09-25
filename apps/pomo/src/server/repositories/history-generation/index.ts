@@ -1,9 +1,10 @@
 import {createHash, randomUUID} from 'node:crypto'
-import {and, eq, inArray, isNull} from 'drizzle-orm'
+import {and, eq, isNull} from 'drizzle-orm'
 
 import {
   type HistoryGenerationOutput,
   type HistoryTargetDate,
+  normalizeHistoryTitle,
   renderHistoryContentHtml,
 } from 'src/features/history-generation'
 import {
@@ -71,7 +72,7 @@ export interface MarkGenerationSubmissionUnknownOptions {
 }
 
 const createStableKey = (moment: HistoryGenerationOutput['moments'][number]): string => {
-  const normalizedTitle = moment.title.normalize('NFKC').trim().toLocaleLowerCase('ko-KR')
+  const normalizedTitle = normalizeHistoryTitle(moment.title)
   const identity = `${moment.historicalEra}:${moment.eventYear}:${normalizedTitle}`
 
   return `history:${createHash('sha256').update(identity).digest('hex')}`
@@ -205,7 +206,7 @@ export const prepareGenerationRerun = async (
   database: Database = getDatabase(),
 ): Promise<GenerationRun> => {
   const channelId = await getChannelId(database)
-  const selectedMoments = await database
+  const publishedMoments = await database
     .select({title: historicalMoments.title})
     .from(historicalMoments)
     .where(
@@ -214,12 +215,13 @@ export const prepareGenerationRerun = async (
         eq(historicalMoments.eventMonth, options.targetDate.month),
         eq(historicalMoments.eventDay, options.targetDate.day),
         eq(historicalMoments.status, 'published'),
-        inArray(historicalMoments.title, [...options.requiredTitles]),
       ),
     )
-  const selectedTitles = new Set(selectedMoments.map((moment) => moment.title))
+  const publishedTitles = new Set(
+    publishedMoments.map((moment) => normalizeHistoryTitle(moment.title)),
+  )
 
-  if (options.requiredTitles.some((title) => !selectedTitles.has(title))) {
+  if (options.requiredTitles.some((title) => !publishedTitles.has(normalizeHistoryTitle(title)))) {
     throw new Error('Every regeneration title must match an existing published moment')
   }
 

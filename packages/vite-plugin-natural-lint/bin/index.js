@@ -2,7 +2,11 @@
 import {spawnSync} from 'node:child_process'
 import {fileURLToPath} from 'node:url'
 
-const needsFfi = process.argv[2] === 'review' && !process.execArgv.includes('--experimental-ffi')
+const hasAnswersFile = process.argv.includes('--answers')
+const needsFfi =
+  process.argv[2] === 'review' &&
+  !hasAnswersFile &&
+  !process.execArgv.includes('--experimental-ffi')
 
 if (needsFfi) {
   const result = spawnSync(

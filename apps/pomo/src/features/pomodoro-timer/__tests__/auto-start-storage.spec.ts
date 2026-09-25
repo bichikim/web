@@ -248,13 +248,21 @@ describe('auto-start-storage', () => {
     },
   )
 
-  it('should select a newer native value', async () => {
+  it('should mirror a newer native preference to web storage', async () => {
     Object.defineProperty(globalThis, 'ReactNativeWebView', {configurable: true, value: {}})
+    const nativePreference = {isEnabled: true, savedAt: 15}
     localStorage.setItem(
       'pomo:timer-auto-start:v2',
       JSON.stringify({isEnabled: false, savedAt: 10}),
     )
-    storageMocks.getItem.mockResolvedValue(JSON.stringify({isEnabled: true, savedAt: 15}))
+    storageMocks.getItem.mockResolvedValue(JSON.stringify(nativePreference))
+
+    expect(await readAutoStartPreference()).toBe(true)
+    expect(JSON.parse(localStorage.getItem('pomo:timer-auto-start:v2') ?? '')).toEqual(
+      nativePreference,
+    )
+
+    Reflect.deleteProperty(globalThis, 'ReactNativeWebView')
 
     expect(await readAutoStartPreference()).toBe(true)
   })

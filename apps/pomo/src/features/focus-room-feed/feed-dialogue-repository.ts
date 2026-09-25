@@ -15,6 +15,7 @@ export interface CompleteFeedDialogueOptions {
   readonly item: FeedItemRecord
   readonly jobId: string
   readonly metadata: FeedDialogueMetadata
+  readonly signal?: AbortSignal
 }
 
 export interface RecoverMissingDialogueOptions {
@@ -204,6 +205,53 @@ const startQueuedJob = async (database: PDatabase, job: GeneratingFeedDialogueJo
   })
 }
 
+const persistFeedDialogueCompletion = async (
+  database: PDatabase,
+  options: CompleteFeedDialogueOptions,
+) => {
+  const metadata = feedDialogueMetadataSchema.parse(options.metadata)
+  const item = feedItemRecordSchema.parse(options.item)
+  let abortCompletion: (() => void) | undefined
+  let isTransactionAborted = false
+
+  const completion = database.transaction(
+    'rw',
+    database.feedDialogueJobs,
+    database.feedDialogueMetadata,
+    database.feedItems,
+    async (transaction) => {
+      if (options.signal !== undefined) {
+        abortCompletion = () => {
+          if (isTransactionAborted || !transaction.active) {
+            return
+          }
+
+          isTransactionAborted = true
+          transaction.abort()
+        }
+        options.signal.addEventListener('abort', abortCompletion, {once: true})
+
+        if (options.signal.aborted) {
+          abortCompletion()
+          return
+        }
+      }
+
+      await database.feedDialogueMetadata.put(metadata)
+      await database.feedItems.put(item)
+      await database.feedDialogueJobs.delete(options.jobId)
+    },
+  )
+
+  try {
+    await completion
+  } finally {
+    if (abortCompletion !== undefined) {
+      options.signal?.removeEventListener('abort', abortCompletion)
+    }
+  }
+}
+
 /** Persists feed discovery and generation state beside compatible dialogue records. */
 export const createFeedDialogueRepository = (
   options: CreateFeedDialogueRepositoryOptions,
@@ -212,22 +260,7 @@ export const createFeedDialogueRepository = (
   const {deleteDialogueAudio} = options
 
   return {
-    async complete(options) {
-      const metadata = feedDialogueMetadataSchema.parse(options.metadata)
-      const item = feedItemRecordSchema.parse(options.item)
-
-      return database.transaction(
-        'rw',
-        database.feedDialogueJobs,
-        database.feedDialogueMetadata,
-        database.feedItems,
-        async () => {
-          await database.feedDialogueMetadata.put(metadata)
-          await database.feedItems.put(item)
-          await database.feedDialogueJobs.delete(options.jobId)
-        },
-      )
-    },
+    complete: (completeOptions) => persistFeedDialogueCompletion(database, completeOptions),
     deleteJobs: (jobIds, updatedAt) =>
       updateRecoverableJobs(database, jobIds, updatedAt, 'dismissed'),
     dismissItem: (options) => dismissFeedItem(database, options),
