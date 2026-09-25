@@ -3,6 +3,7 @@
 import {cookieName, getLocale, localStorageKey, setLocale} from '@paraglide/runtime'
 import {afterEach, expect, it, vi} from 'vitest'
 
+import {DISPLAY_PREFERENCES_STORAGE_KEY} from '../../focus-room-display-preferences/storage'
 import {
   createOptionResetManager,
   createRuntimeOptionResetManager,
@@ -47,6 +48,28 @@ const createManager = (
   resetLocale,
 })
 
+const FOCUS_ROOM_STORAGE_KEYS = [
+  'pomo:focus-room-scene-preferences:v1',
+  'pomo:focus-room-scene-preferences:native-write-failure:v1',
+  'pomo:focus-room-scene-style:v1',
+  'pomo:weather-preference:v2',
+  'pomo:weather-preference:v1',
+  DISPLAY_PREFERENCES_STORAGE_KEY,
+  'pomo:screen-saver-delay:v1',
+]
+
+it('should reset only the storage keys owned by one option group', async () => {
+  const storage = createStorage()
+  const {manager} = createManager(storage)
+
+  await manager.reset('focus-room')
+
+  expect(vi.mocked(storage.removeWeb).mock.calls.map(([key]) => key)).toEqual(
+    FOCUS_ROOM_STORAGE_KEYS,
+  )
+  expect(storage.removeToss).not.toHaveBeenCalled()
+})
+
 it('should clear the focus-room native write failure marker during Toss reset', async () => {
   const storage = createStorage()
   const failureMarkerKey = 'pomo:focus-room-scene-preferences:native-write-failure:v1'
@@ -57,14 +80,9 @@ it('should clear the focus-room native write failure marker during Toss reset', 
 
   await manager.reset('focus-room')
 
-  expect(vi.mocked(storage.removeWeb).mock.calls.map(([key]) => key)).toEqual([
-    'pomo:focus-room-scene-preferences:v1',
-    failureMarkerKey,
-    'pomo:focus-room-scene-style:v1',
-    'pomo:weather-preference:v2',
-    'pomo:weather-preference:v1',
-    'pomo:screen-saver-delay:v1',
-  ])
+  expect(vi.mocked(storage.removeWeb).mock.calls.map(([key]) => key)).toEqual(
+    FOCUS_ROOM_STORAGE_KEYS,
+  )
   expect(localStorage.getItem(failureMarkerKey)).toBeNull()
 })
 
@@ -72,6 +90,25 @@ it('should describe dialogue draft removal in the dialogue option group', () => 
   const dialogueGroup = OPTION_RESET_GROUPS.find((group) => group.id === 'dialogue')
 
   expect(dialogueGroup?.description).toContain('저장하지 않은 대화 초안')
+})
+
+it('should remove persisted display preferences when resetting focus-room options', async () => {
+  localStorage.setItem(
+    DISPLAY_PREFERENCES_STORAGE_KEY,
+    JSON.stringify({
+      dialogueComposerVisible: false,
+      featureRequestVisible: false,
+      memoryAssistVisible: false,
+      playerVisible: false,
+      pomodoroVisible: false,
+      toolsButtonVisible: false,
+      tourButtonVisible: false,
+    }),
+  )
+
+  await createRuntimeOptionResetManager().reset('focus-room')
+
+  expect(localStorage.getItem(DISPLAY_PREFERENCES_STORAGE_KEY)).toBeNull()
 })
 
 it('should reset every option without deleting account or user-created data', async () => {
@@ -82,6 +119,7 @@ it('should reset every option without deleting account or user-created data', as
 
   const removedKeys = vi.mocked(storage.removeWeb).mock.calls.map(([key]) => key)
   expect(new Set(removedKeys).size).toBe(removedKeys.length)
+  expect(removedKeys).toContain(DISPLAY_PREFERENCES_STORAGE_KEY)
   expect(removedKeys).toHaveLength(
     OPTION_RESET_GROUPS.filter((group) => group.id !== 'language').reduce(
       (total, group) => total + group.storageKeyCount,
@@ -134,13 +172,7 @@ it('should restore toss values when a middle deletion fails', async () => {
   vi.mocked(storage.setToss).mockImplementation(async (key, value) => {
     tossValues.set(key, value)
   })
-  for (const groupKey of [
-    'pomo:focus-room-scene-preferences:v1',
-    'pomo:focus-room-scene-style:v1',
-    'pomo:weather-preference:v2',
-    'pomo:weather-preference:v1',
-    'pomo:screen-saver-delay:v1',
-  ]) {
+  for (const groupKey of FOCUS_ROOM_STORAGE_KEYS) {
     tossValues.set(groupKey, `${groupKey}:value`)
   }
   const originalValues = new Map(tossValues)
@@ -149,7 +181,9 @@ it('should restore toss values when a middle deletion fails', async () => {
   await expect(manager.reset('focus-room')).rejects.toThrow('Failed to reset Pomo options.')
 
   expect(tossValues).toEqual(originalValues)
-  expect(storage.setToss).toHaveBeenCalledTimes(3)
+  expect(storage.setToss).toHaveBeenCalledTimes(
+    FOCUS_ROOM_STORAGE_KEYS.indexOf('pomo:weather-preference:v2') + 1,
+  )
   expect(storage.removeWeb).not.toHaveBeenCalled()
   expect(storage.setWeb).not.toHaveBeenCalled()
 })
@@ -168,13 +202,7 @@ it('should restore toss values when the last deletion fails', async () => {
   vi.mocked(storage.setToss).mockImplementation(async (key, value) => {
     tossValues.set(key, value)
   })
-  for (const groupKey of [
-    'pomo:focus-room-scene-preferences:v1',
-    'pomo:focus-room-scene-style:v1',
-    'pomo:weather-preference:v2',
-    'pomo:weather-preference:v1',
-    'pomo:screen-saver-delay:v1',
-  ]) {
+  for (const groupKey of FOCUS_ROOM_STORAGE_KEYS) {
     tossValues.set(groupKey, `${groupKey}:value`)
   }
   const originalValues = new Map(tossValues)
@@ -183,7 +211,7 @@ it('should restore toss values when the last deletion fails', async () => {
   await expect(manager.reset('focus-room')).rejects.toThrow('Failed to reset Pomo options.')
 
   expect(tossValues).toEqual(originalValues)
-  expect(storage.setToss).toHaveBeenCalledTimes(5)
+  expect(storage.setToss).toHaveBeenCalledTimes(FOCUS_ROOM_STORAGE_KEYS.length)
   expect(storage.removeWeb).not.toHaveBeenCalled()
   expect(storage.setWeb).not.toHaveBeenCalled()
 })
@@ -208,25 +236,19 @@ it('should converge web values and report a partial reset when restoration fails
 
     tossValues.set(key, value)
   })
-  for (const groupKey of [
-    firstKey,
-    'pomo:focus-room-scene-style:v1',
-    failedKey,
-    'pomo:weather-preference:v1',
-    'pomo:screen-saver-delay:v1',
-  ]) {
+  for (const groupKey of FOCUS_ROOM_STORAGE_KEYS) {
     tossValues.set(groupKey, `${groupKey}:value`)
   }
   const {manager} = createManager(storage)
 
   await expect(manager.reset('focus-room')).resolves.toEqual({
-    preservedCount: 4,
-    resetCount: 2,
+    preservedCount: FOCUS_ROOM_STORAGE_KEYS.length - 1,
+    resetCount: 1,
     status: 'partial',
     unresolvedCount: 0,
   })
   expect(storage.removeWeb).toHaveBeenCalledWith(firstKey)
-  expect(storage.setWeb).toHaveBeenCalledTimes(4)
+  expect(storage.setWeb).toHaveBeenCalledTimes(FOCUS_ROOM_STORAGE_KEYS.length - 1)
   expect(storage.setWeb).toHaveBeenCalledWith(failedKey, `${failedKey}:value`)
 })
 
@@ -243,7 +265,7 @@ it('should report an unresolved web value without hiding completed toss deletion
 
   await expect(manager.reset('focus-room')).resolves.toEqual({
     preservedCount: 0,
-    resetCount: 5,
+    resetCount: FOCUS_ROOM_STORAGE_KEYS.length - 1,
     status: 'partial',
     unresolvedCount: 1,
   })
@@ -277,25 +299,19 @@ it('should preserve readable recovery results when one toss verification fails',
 
     tossValues.set(key, value)
   })
-  for (const groupKey of [
-    firstKey,
-    'pomo:focus-room-scene-style:v1',
-    unreadableKey,
-    'pomo:weather-preference:v1',
-    'pomo:screen-saver-delay:v1',
-  ]) {
+  for (const groupKey of FOCUS_ROOM_STORAGE_KEYS) {
     tossValues.set(groupKey, `${groupKey}:value`)
   }
   const {manager} = createManager(storage)
 
   await expect(manager.reset('focus-room')).resolves.toEqual({
-    preservedCount: 3,
-    resetCount: 2,
+    preservedCount: FOCUS_ROOM_STORAGE_KEYS.length - 2,
+    resetCount: 1,
     status: 'partial',
     unresolvedCount: 1,
   })
   expect(storage.removeWeb).toHaveBeenCalledWith(firstKey)
-  expect(storage.setWeb).toHaveBeenCalledTimes(3)
+  expect(storage.setWeb).toHaveBeenCalledTimes(FOCUS_ROOM_STORAGE_KEYS.length - 2)
 })
 
 it('should report a partial reset when locale cleanup fails after other options reset', async () => {
@@ -381,13 +397,7 @@ it('should converge runtime web storage with toss values after restoration fails
   const tossValues = new Map<string, string>()
   const firstKey = 'pomo:focus-room-scene-preferences:v1'
   const failedKey = 'pomo:weather-preference:v2'
-  const groupKeys = [
-    firstKey,
-    'pomo:focus-room-scene-style:v1',
-    failedKey,
-    'pomo:weather-preference:v1',
-    'pomo:screen-saver-delay:v1',
-  ]
+  const groupKeys = FOCUS_ROOM_STORAGE_KEYS
   Object.defineProperty(globalThis, 'ReactNativeWebView', {configurable: true, value: {}})
   for (const groupKey of groupKeys) {
     tossValues.set(groupKey, `${groupKey}:toss`)
@@ -410,7 +420,7 @@ it('should converge runtime web storage with toss values after restoration fails
 
   await expect(createRuntimeOptionResetManager().reset('focus-room')).resolves.toEqual({
     preservedCount: groupKeys.length - 1,
-    resetCount: 2,
+    resetCount: 1,
     status: 'partial',
     unresolvedCount: 0,
   })
@@ -486,25 +496,16 @@ it.each(['dialogue', 'all'] as const)(
 )
 
 it('should keep dialogue settings when dialogue draft cleanup fails', async () => {
-  const draftKey = 'pomo:focus-room-dialogue:draft:new'
   const settingKey = 'pomo:automatic-dialogue-settings:v1'
-  sessionStorage.setItem(draftKey, 'unsaved dialogue')
-  localStorage.setItem(settingKey, 'custom')
-  const removeItem = Storage.prototype.removeItem
-  vi.spyOn(Storage.prototype, 'removeItem').mockImplementation(function removeStorageItem(
-    this: Storage,
-    key: string,
-  ) {
-    if (this === sessionStorage) {
-      throw new Error('session storage unavailable')
-    }
-
-    removeItem.call(this, key)
+  const storage = createStorage()
+  vi.mocked(storage.removeSessionStorageByPrefix).mockImplementation(() => {
+    throw new Error('session storage unavailable')
   })
+  vi.mocked(storage.removeWeb).mockImplementation((key) => localStorage.removeItem(key))
+  localStorage.setItem(settingKey, 'custom')
 
-  await expect(createRuntimeOptionResetManager().reset('dialogue')).rejects.toThrow(
-    'Failed to reset Pomo options.',
-  )
+  const {manager} = createManager(storage)
+  await expect(manager.reset('dialogue')).rejects.toThrow('Failed to reset Pomo options.')
   expect(localStorage.getItem(settingKey)).toBe('custom')
 })
 
