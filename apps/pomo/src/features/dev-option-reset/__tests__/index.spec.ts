@@ -17,6 +17,12 @@ import {
   OPTION_RESET_GROUPS,
   type OptionResetStorage,
 } from '../index'
+import type {PomodoroTimerState} from '../../pomodoro-timer/model'
+import {
+  POMODORO_TIMER_STORAGE_KEY,
+  readPomodoroTimerState,
+  writePomodoroTimerState,
+} from '../../pomodoro-timer/storage'
 
 const storageMocks = vi.hoisted(() => ({
   getItem: vi.fn<(key: string) => Promise<string | null>>(),
@@ -120,6 +126,26 @@ it('should remove persisted display preferences when resetting focus-room option
   await createRuntimeOptionResetManager().reset('focus-room')
 
   expect(localStorage.getItem(DISPLAY_PREFERENCES_STORAGE_KEY)).toBeNull()
+})
+
+it('should clear persisted timer progress when resetting timer options', async () => {
+  const storage = createStorage()
+  const timerState = {
+    completedFocusSessions: 1,
+    endsAt: 60_000,
+    phase: 'focus',
+    status: 'running',
+  } satisfies PomodoroTimerState
+  vi.mocked(storage.removeWeb).mockImplementation((key) => localStorage.removeItem(key))
+  writePomodoroTimerState(timerState)
+  const {manager} = createManager(storage)
+
+  expect(readPomodoroTimerState()).toEqual(timerState)
+
+  await manager.reset('timer')
+
+  expect(storage.removeWeb).toHaveBeenCalledWith(POMODORO_TIMER_STORAGE_KEY)
+  expect(readPomodoroTimerState()).toBeNull()
 })
 
 it('should reset every option without deleting account or user-created data', async () => {
