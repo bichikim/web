@@ -32,15 +32,19 @@ if (!(rootElement instanceof HTMLElement)) {
   throw new Error('Puppet root element was not found')
 }
 
-const initialDocument = await loadInitialDocument()
-
-render(
-  () => (
-    <PuppetEditor
-      initialDocument={initialDocument}
-      initialMotionId={import.meta.env.DEV ? DEVELOPMENT_INITIAL_MOTION_ID : undefined}
-      initialWorkspace={import.meta.env.DEV ? 'animation' : 'modeling'}
-    />
-  ),
-  rootElement,
-)
+if (import.meta.env.DEV && /^\/converter\/?$/u.test(location.pathname)) {
+  const {ConverterPage} = await import('./converter/ConverterPage')
+  render(() => <ConverterPage />, rootElement)
+} else {
+  const initialDocument = await loadInitialDocument()
+  render(
+    () => (
+      <PuppetEditor
+        initialDocument={initialDocument}
+        initialMotionId={import.meta.env.DEV ? DEVELOPMENT_INITIAL_MOTION_ID : undefined}
+        initialWorkspace={import.meta.env.DEV ? 'animation' : 'modeling'}
+      />
+    ),
+    rootElement,
+  )
+}
