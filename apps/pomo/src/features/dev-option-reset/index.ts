@@ -3,6 +3,7 @@ export {
   type DialogueAudioDeletionResult,
   type DialogueAudioStorage,
 } from './delete-stored-dialogue-audio'
+import {DISPLAY_PREFERENCES_STORAGE_KEY} from '../focus-room-display-preferences/storage'
 import {settleEntryHistoryWrites} from '../focus-room-entry-history'
 import {LOCALE_RESET_STORAGE_COUNT, resetLocale as resetLocaleStorage} from '../locale'
 import {hasNativeStorageBridge} from 'src/utils/runtime-storage'
@@ -126,6 +127,7 @@ const GROUP_DEFINITIONS: ReadonlyArray<OptionResetGroupDefinition> = [
       'pomo:focus-room-scene-style:v1',
       'pomo:weather-preference:v2',
       'pomo:weather-preference:v1',
+      DISPLAY_PREFERENCES_STORAGE_KEY,
       'pomo:screen-saver-delay:v1',
     ],
   },
