@@ -107,6 +107,20 @@ it('should omit events with invalid times and mark the context incomplete', () =
   expect(context).not.toContain('2026. 13. 45.')
 })
 
+it.each([
+  {description: 'reversed', end: '2026-09-05', start: '2026-09-07'},
+  {description: 'empty', end: '2026-09-07', start: '2026-09-07'},
+])('should omit $description all-day ranges from the prompt context', ({end, start}) => {
+  const context = createCalendarPromptContext({
+    events: [createEvent({allDay: true, end, start, title: '잘못된 종일 일정'})],
+    timeZone: 'Asia/Seoul',
+  })
+
+  expect(context).toContain('일부 일정만 확인했습니다.')
+  expect(context).toContain('확인된 일정이 없습니다.')
+  expect(context).not.toContain('잘못된 종일 일정')
+})
+
 it('should keep an incomplete empty result when all events have invalid times', () => {
   const context = createCalendarPromptContext({
     events: [createEvent({start: 'not-a-date'})],
