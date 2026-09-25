@@ -46,20 +46,25 @@ const createManager = (
   resetLocale,
 })
 
-it('should reset only the storage keys owned by one option group', async () => {
+it('should clear the focus-room native write failure marker during Toss reset', async () => {
   const storage = createStorage()
+  const failureMarkerKey = 'pomo:focus-room-scene-preferences:native-write-failure:v1'
+  vi.mocked(storage.usesTossStorage).mockReturnValue(true)
+  vi.mocked(storage.removeWeb).mockImplementation((key) => localStorage.removeItem(key))
+  localStorage.setItem(failureMarkerKey, 'true')
   const {manager} = createManager(storage)
 
   await manager.reset('focus-room')
 
   expect(vi.mocked(storage.removeWeb).mock.calls.map(([key]) => key)).toEqual([
     'pomo:focus-room-scene-preferences:v1',
+    failureMarkerKey,
     'pomo:focus-room-scene-style:v1',
     'pomo:weather-preference:v2',
     'pomo:weather-preference:v1',
     'pomo:screen-saver-delay:v1',
   ])
-  expect(storage.removeToss).not.toHaveBeenCalled()
+  expect(localStorage.getItem(failureMarkerKey)).toBeNull()
 })
 
 it('should reset every option without deleting account or user-created data', async () => {
@@ -209,7 +214,7 @@ it('should converge web values and report a partial reset when restoration fails
 
   await expect(manager.reset('focus-room')).resolves.toEqual({
     preservedCount: 4,
-    resetCount: 1,
+    resetCount: 2,
     status: 'partial',
     unresolvedCount: 0,
   })
@@ -231,7 +236,7 @@ it('should report an unresolved web value without hiding completed toss deletion
 
   await expect(manager.reset('focus-room')).resolves.toEqual({
     preservedCount: 0,
-    resetCount: 4,
+    resetCount: 5,
     status: 'partial',
     unresolvedCount: 1,
   })
@@ -278,7 +283,7 @@ it('should preserve readable recovery results when one toss verification fails',
 
   await expect(manager.reset('focus-room')).resolves.toEqual({
     preservedCount: 3,
-    resetCount: 1,
+    resetCount: 2,
     status: 'partial',
     unresolvedCount: 1,
   })
@@ -398,7 +403,7 @@ it('should converge runtime web storage with toss values after restoration fails
 
   await expect(createRuntimeOptionResetManager().reset('focus-room')).resolves.toEqual({
     preservedCount: groupKeys.length - 1,
-    resetCount: 1,
+    resetCount: 2,
     status: 'partial',
     unresolvedCount: 0,
   })
