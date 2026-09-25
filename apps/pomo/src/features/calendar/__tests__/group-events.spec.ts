@@ -131,3 +131,14 @@ it.each([
       .size,
   ).toBe(0)
 })
+
+it.each(['', ' ', 'not-a-date', '2026-02-31'])(
+  'should omit all-day events with an invalid start value %j',
+  (start) => {
+    const source = {...event, allDay: true, end: '2026-09-05', start}
+
+    expect(
+      groupCalendarEvents([source], ['2026-09-02', '2026-09-03', '2026-09-04'], 'UTC').size,
+    ).toBe(0)
+  },
+)

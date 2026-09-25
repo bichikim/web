@@ -1,7 +1,13 @@
 import {dayjs} from 'src/utils/zoned-dayjs'
+import {z} from 'zod'
 import type {CalendarEvent} from './types'
 
-/** Groups events with parseable end values by covered visible dates, excluding each end instant. */
+const calendarDateSchema = z.iso.date()
+
+/**
+ * Groups events with parseable end values and valid all-day start dates by covered visible dates,
+ * excluding each end instant.
+ */
 export const groupCalendarEvents = (
   events: ReadonlyArray<CalendarEvent>,
   visibleDates: ReadonlyArray<string>,
@@ -15,7 +21,13 @@ export const groupCalendarEvents = (
       return
     }
 
-    const start = event.allDay ? event.start : createDateKey(Date.parse(event.start))
+    const start = event.allDay
+      ? calendarDateSchema.safeParse(event.start).data
+      : createDateKey(Date.parse(event.start))
+    if (start === undefined) {
+      return
+    }
+
     // The last included instant keeps midnight and DST boundaries in the display time zone.
     const end = event.allDay ? event.end : createDateKey(endTimestamp - 1)
     for (const date of visibleDates) {
