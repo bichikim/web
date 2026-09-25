@@ -20,7 +20,11 @@ export type {
   PFeedState,
   UsePFeedsProps,
 } from './feed-controller'
-export {findFeedNotificationDialogue} from './feed-controller'
+export {
+  findFeedNotificationDialogue,
+  isNoFeedConnectionGuidance,
+  NO_FEED_CONNECTIONS_STATE,
+} from './feed-controller'
 export {createFeedStateController} from './feed-state'
 export type {CreateFeedStateControllerOptions, FeedStateController} from './feed-state'
 export {createFeedPlaybackController} from './feed-playback'

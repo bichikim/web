@@ -4,6 +4,8 @@ import type {PEventContextValue} from '../focus-room-dialogue'
 import {
   type FeedDialogueListItem,
   findFeedNotificationDialogue,
+  isNoFeedConnectionGuidance,
+  NO_FEED_CONNECTIONS_STATE,
   type PFeedState,
 } from './feed-controller'
 import type {FeedDialogueRepository} from './feed-dialogue-repository'
@@ -29,6 +31,40 @@ interface FeedStateEvents extends Pick<
 interface FeedStateRepositories {
   readonly dialogueRepository: PDialogueRepository
   readonly feedRepository: FeedDialogueRepository
+}
+
+interface CreateFeedStateWriterOptions {
+  readonly isDisposed: () => boolean
+  readonly setState: (state: PFeedState) => void
+}
+
+const createFeedStateWriter = (options: CreateFeedStateWriterOptions) => {
+  let shouldKeepNoConnectionGuidance = false
+
+  return (nextState: PFeedState) => {
+    if (options.isDisposed()) {
+      return
+    }
+
+    if (nextState.status === 'syncing') {
+      shouldKeepNoConnectionGuidance = false
+      options.setState(nextState)
+      return
+    }
+
+    if (isNoFeedConnectionGuidance(nextState)) {
+      shouldKeepNoConnectionGuidance = true
+      options.setState(NO_FEED_CONNECTIONS_STATE)
+      return
+    }
+
+    if (shouldKeepNoConnectionGuidance && nextState.status !== 'error') {
+      options.setState(NO_FEED_CONNECTIONS_STATE)
+      return
+    }
+
+    options.setState(nextState)
+  }
 }
 
 const mergeListenedAt = (
@@ -94,12 +130,16 @@ export const createFeedStateController = (
   const latestReady = createMemo(() => findFeedNotificationDialogue(unlistenedDialogues()))
   const [issues, setIssues] = createSignal<ReadonlyArray<FeedItemRecord>>([])
   const [recoveryJobs, setRecoveryJobs] = createSignal<ReadonlyArray<FeedDialogueJob>>([])
-  const [state, setState] = createSignal<PFeedState>({
+  const [state, setStateSignal] = createSignal<PFeedState>({
     message: '구독 피드를 기다리고 있어요.',
     status: 'idle',
   })
   const dismissedRecoveryIds = new Set<string>()
   let isDisposed = false
+  const setFeedState = createFeedStateWriter({
+    isDisposed: () => isDisposed,
+    setState: setStateSignal,
+  })
   const reloadDialogues = async () => {
     const available = await loadFeedDialogueList({
       ...options.getRepositories(),
@@ -224,7 +264,7 @@ export const createFeedStateController = (
       const jobIds = jobs.map((job) => job.id)
       await options.getRepositories().feedRepository.retryJobs(jobIds, options.now().toISOString())
       setRecoveryJobs([])
-      setState({
+      setFeedState({
         message: '피드 대화를 다시 만들 준비 중…',
         progress: 0,
         status: 'preparing',
@@ -233,11 +273,7 @@ export const createFeedStateController = (
     },
     setDialogues,
     setRecoveryJobs,
-    setState(nextState) {
-      if (!isDisposed) {
-        setState(nextState)
-      }
-    },
+    setState: setFeedState,
     state,
     unlistenedDialogues,
   }

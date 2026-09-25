@@ -23,6 +23,14 @@ interface FeedErrorState {
 
 export type PFeedState = FeedActivityState | FeedErrorState | FeedIdleState
 
+export const NO_FEED_CONNECTIONS_STATE = {
+  message: '설정에서 구독 피드를 추가해 주세요.',
+  status: 'idle',
+} as const satisfies PFeedState
+
+export const isNoFeedConnectionGuidance = (state: PFeedState): boolean =>
+  state.status === 'idle' && state.message === NO_FEED_CONNECTIONS_STATE.message
+
 export interface FeedDialogueListItem {
   readonly dialogue: PDialogue
   readonly metadata: FeedDialogueMetadata
