@@ -28,6 +28,13 @@ type DesktopSceneSetting =
   | {readonly name: 'weatherLocation'; readonly value: WeatherLocation}
   | {readonly name: 'weatherSceneMode'; readonly value: WeatherSceneMode}
 
+interface LegacyDesktopSceneTimeModeSetting {
+  readonly name: 'timeMode'
+  readonly value: 'evening'
+}
+
+type DesktopSceneSettingMessage = DesktopSceneSetting | LegacyDesktopSceneTimeModeSetting
+
 export interface DesktopSceneSettingsHandlers {
   readonly onActivityChange?: (value: PActivity) => void
   readonly onGazeChange?: (value: PGaze) => void
@@ -61,7 +68,7 @@ const isOneOf = <TValue extends string>(
   options: ReadonlyArray<TValue>,
 ): value is TValue => typeof value === 'string' && options.includes(value as TValue)
 
-const isDesktopSceneSetting = (value: unknown): value is DesktopSceneSetting => {
+const isDesktopSceneSetting = (value: unknown): value is DesktopSceneSettingMessage => {
   if (typeof value !== 'object' || value === null || !('name' in value) || !('value' in value)) {
     return false
   }
@@ -106,7 +113,7 @@ const isDesktopSceneSetting = (value: unknown): value is DesktopSceneSetting => 
 
 interface DesktopSceneSnapshot {
   readonly type: 'snapshot'
-  readonly settings: ReadonlyArray<DesktopSceneSetting>
+  readonly settings: ReadonlyArray<DesktopSceneSettingMessage>
 }
 
 const isDesktopSceneSnapshot = (value: unknown): value is DesktopSceneSnapshot =>
@@ -139,7 +146,7 @@ const applyDesktopWeatherSceneSetting = (
 
 const applyDesktopSceneSetting = (
   handlers: DesktopSceneSettingsHandlers,
-  setting: DesktopSceneSetting,
+  setting: DesktopSceneSettingMessage,
 ) => {
   switch (setting.name) {
     case 'activity':
@@ -161,7 +168,7 @@ const applyDesktopSceneSetting = (
       handlers.onScreenSaverDelayChange?.(setting.value)
       return
     case 'timeMode':
-      handlers.onTimeModeChange?.(setting.value)
+      handlers.onTimeModeChange?.(setting.value === 'evening' ? 'night' : setting.value)
       return
     case 'weatherCity':
     case 'weatherEnabled':
