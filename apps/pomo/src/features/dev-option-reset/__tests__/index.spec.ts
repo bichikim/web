@@ -68,6 +68,25 @@ it('should reset only the storage keys owned by one option group', async () => {
   expect(storage.removeToss).not.toHaveBeenCalled()
 })
 
+it('should remove persisted display preferences when resetting focus-room options', async () => {
+  localStorage.setItem(
+    DISPLAY_PREFERENCES_STORAGE_KEY,
+    JSON.stringify({
+      dialogueComposerVisible: false,
+      featureRequestVisible: false,
+      memoryAssistVisible: false,
+      playerVisible: false,
+      pomodoroVisible: false,
+      toolsButtonVisible: false,
+      tourButtonVisible: false,
+    }),
+  )
+
+  await createRuntimeOptionResetManager().reset('focus-room')
+
+  expect(localStorage.getItem(DISPLAY_PREFERENCES_STORAGE_KEY)).toBeNull()
+})
+
 it('should reset every option without deleting account or user-created data', async () => {
   const storage = createStorage()
   const {manager, resetLocale} = createManager(storage)
