@@ -123,6 +123,20 @@ describe('resolveContentSecurityPolicyTemplates', () => {
     expect(templates.page.match(/https:\/\/vercel\.live/gu)).toHaveLength(1)
   })
 
+  it('should not treat a lookalike frame source as the Vercel Live origin', () => {
+    const templates = resolveContentSecurityPolicyTemplates(
+      {
+        POMO_CONTENT_SECURITY_POLICY_TEMPLATE:
+          "default-src 'self'; frame-src https://vercel.live.attacker.example https://attacker.example/https://vercel.live",
+      },
+      {...PRODUCTION_DEPLOYMENT, publicOrigin: 'https://dev.pomofi.io'},
+    )
+
+    expect(templates.page).toContain(
+      'frame-src https://vercel.live.attacker.example https://attacker.example/https://vercel.live https://vercel.live',
+    )
+  })
+
   it('should leave a custom frame-src directive unchanged on the production origin', () => {
     const template = "default-src 'self'; frame-src https://calendar.example"
 

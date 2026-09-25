@@ -15,6 +15,7 @@ export interface ContentSecurityPolicyDeploymentContext {
 }
 
 const addVercelLiveFrameSource = (template: string): string => {
+  const vercelLiveFrameSource = 'https://vercel.live'
   const directives = template
     .split(';')
     .map((directive) => directive.trim())
@@ -29,12 +30,12 @@ const addVercelLiveFrameSource = (template: string): string => {
   }
 
   const frameDirective = directives[frameDirectiveIndex]
-  const frameSources = frameDirective.split(/\s+/u)
-  if (frameSources.includes('https://vercel.live')) {
+  const frameSourceTokens = frameDirective.split(/\s+/u)
+  if (frameSourceTokens.some((frameSourceToken) => frameSourceToken === vercelLiveFrameSource)) {
     return directives.join('; ')
   }
 
-  directives[frameDirectiveIndex] = `${frameDirective} https://vercel.live`
+  directives[frameDirectiveIndex] = `${frameDirective} ${vercelLiveFrameSource}`
   return directives.join('; ')
 }
 
