@@ -1,6 +1,11 @@
 /* istanbul ignore next -- Wallaby inconsistently counts module initialization across workers. */
 const BLOCKED_CONTENT_SELECTOR =
   'script, style, noscript, nav, aside, form, button, iframe, svg, canvas, template, [data-pomo-speech="exclude"]'
+const ITEM_FINGERPRINT_PRIMARY_BASE = 31
+const ITEM_FINGERPRINT_PRIMARY_MODULUS = 2_147_483_647
+const ITEM_FINGERPRINT_RADIX = 36
+const ITEM_FINGERPRINT_SECONDARY_BASE = 37
+const ITEM_FINGERPRINT_SECONDARY_MODULUS = 2_147_483_629
 
 export interface ParsedFeedItem {
   readonly content: string
@@ -69,6 +74,22 @@ const getPublishedAt = (element: Element) => {
   const timestamp = Date.parse(value)
   return Number.isNaN(timestamp) ? null : new Date(timestamp).toISOString()
 }
+const getItemFingerprint = (element: Element) => {
+  const serializedItem = new XMLSerializer().serializeToString(element).replace(/>\s+</gu, '><')
+  let primaryHash = 0
+  let secondaryHash = 0
+
+  for (const character of serializedItem) {
+    const codePoint = character.codePointAt(0) ?? 0
+    primaryHash =
+      (primaryHash * ITEM_FINGERPRINT_PRIMARY_BASE + codePoint) % ITEM_FINGERPRINT_PRIMARY_MODULUS
+    secondaryHash =
+      (secondaryHash * ITEM_FINGERPRINT_SECONDARY_BASE + codePoint) %
+      ITEM_FINGERPRINT_SECONDARY_MODULUS
+  }
+
+  return `${primaryHash.toString(ITEM_FINGERPRINT_RADIX)}-${secondaryHash.toString(ITEM_FINGERPRINT_RADIX)}`
+}
 const getItemId = (element: Element, link: string, title: string, publishedAt: string | null) => {
   const explicitId = getChildText(element, ['guid', 'id'])
 
@@ -80,7 +101,8 @@ const getItemId = (element: Element, link: string, title: string, publishedAt: s
     return link
   }
 
-  return `${title}\u0000${publishedAt ?? ''}`
+  const fallbackId = `${title}\u0000${publishedAt ?? ''}`
+  return publishedAt === null ? `${fallbackId}\u0000${getItemFingerprint(element)}` : fallbackId
 }
 
 /** Removes markup and page chrome while preserving all readable text. */
