@@ -17,10 +17,17 @@ export interface ParsedFeed {
 }
 
 const getChildren = (element: Element) => Array.from(element.children)
-const findChild = (element: Element, names: ReadonlyArray<string>) =>
-  getChildren(element).find((child) => names.includes(child.localName.toLowerCase())) ?? null
+const findPreferredChild = (element: Element, names: ReadonlyArray<string>) => {
+  const children = getChildren(element)
+
+  return (
+    names
+      .map((name) => children.find((child) => child.localName.toLowerCase() === name))
+      .find((child) => child !== undefined) ?? null
+  )
+}
 const getChildText = (element: Element, names: ReadonlyArray<string>) =>
-  findChild(element, names)?.textContent?.trim() ?? ''
+  findPreferredChild(element, names)?.textContent?.trim() ?? ''
 const resolveUrl = (value: string, baseUrl: string) => {
   if (value.length === 0) {
     return ''
@@ -103,7 +110,7 @@ export const parseFeedXml = (xml: string, feedUrl: string): ParsedFeed => {
 
   const root = document.documentElement
   const isAtom = root.localName.toLowerCase() === 'feed'
-  const container = isAtom ? root : (findChild(root, ['channel']) ?? root)
+  const container = isAtom ? root : (findPreferredChild(root, ['channel']) ?? root)
   const itemName = isAtom ? 'entry' : 'item'
   const itemScope = isAtom ? container : root
   const itemElements = Array.from(itemScope.getElementsByTagNameNS('*', itemName))
