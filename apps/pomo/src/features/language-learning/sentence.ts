@@ -9,8 +9,10 @@ export const LANGUAGE_LEARNING_SENTENCE_LIMITS = {
   {readonly characters: number; readonly words: number | null}
 >
 
-const ENDING_PATTERN = /[.!?。！？]$/u
-const INTERNAL_ENDING_PATTERN = /(?:[!?。！？]|(?<=\d)\.(?![\d.])|(?<!\d)\.(?!\.)).+/u
+const ENDING_PATTERN = /[.!?。！？…]$/u
+const INTERNAL_ENDING_PATTERN =
+  /(?:[!?。！？]+(?![!?。！？])|(?<=\d)\.(?![\d.])|(?<!\d)\.(?!\.)).+/u
+const QUOTED_TEXT_PATTERN = /"[^"]*"|“[^”]*”|‘[^’]*’|「[^」]*」|『[^』]*』/gu
 const ENGLISH_ABBREVIATION_PATTERN =
   /(?:^|\s)(?:Dr|Mr|Mrs|Ms|Prof|Rev|Hon|Gov|Pres|Sen|Rep|Gen|Lt|Col|Capt|Sgt|St|Mt|Jr|Sr|vs|[A-Z])\.\s*$/iu
 const WRAPPING_QUOTES_PATTERN = /^["'“”‘’「」『』].*["'“”‘’「」『』]$/u
@@ -44,7 +46,7 @@ export const isValidLanguageLearningSentence = (
   const hasMultipleSentences =
     language === 'en'
       ? hasMultipleEnglishSentences(sentence)
-      : INTERNAL_ENDING_PATTERN.test(sentence)
+      : INTERNAL_ENDING_PATTERN.test(sentence.replace(QUOTED_TEXT_PATTERN, ''))
 
   if (
     sentence.length === 0 ||

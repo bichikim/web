@@ -5,7 +5,7 @@ on:
       - freeze
 env:
   PNPM_VERSION: 7.1.0
-  NODE_VERSION: 26.4.0
+  NODE_VERSION: '24.x'
 jobs:
   # Test Job
   test:

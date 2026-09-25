@@ -17,8 +17,14 @@ export interface ParsedFeed {
 }
 
 const getChildren = (element: Element) => Array.from(element.children)
-const findChild = (element: Element, names: ReadonlyArray<string>) =>
-  getChildren(element).find((child) => names.includes(child.localName.toLowerCase())) ?? null
+const findChild = (element: Element, names: ReadonlyArray<string>) => {
+  const children = getChildren(element)
+  return (
+    names
+      .map((name) => children.find((child) => child.localName.toLowerCase() === name))
+      .find((child): child is Element => child !== undefined) ?? null
+  )
+}
 const getChildText = (element: Element, names: ReadonlyArray<string>) =>
   findChild(element, names)?.textContent?.trim() ?? ''
 const resolveUrl = (value: string, baseUrl: string) => {

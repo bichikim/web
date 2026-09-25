@@ -69,6 +69,12 @@ describe('language learning sentences', () => {
     expect(isValidLanguageLearningSentence('ただいま。', 'ja')).toBe(true)
   })
 
+  it('should accept Unicode ellipses as sentence endings for each language', () => {
+    expect(isValidLanguageLearningSentence('I understand…', 'en')).toBe(true)
+    expect(isValidLanguageLearningSentence('다시 생각해 볼게…', 'ko')).toBe(true)
+    expect(isValidLanguageLearningSentence('また明日…', 'ja')).toBe(true)
+  })
+
   it('should accept ASCII ellipses while rejecting multiple Korean and Japanese sentences', () => {
     expect(isValidLanguageLearningSentence('오늘은 여기까지...', 'ko')).toBe(true)
     expect(isValidLanguageLearningSentence('今日はここまで...', 'ja')).toBe(true)
