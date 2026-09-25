@@ -168,6 +168,12 @@ it('should keep today fixed across midnight and rebase after a reminder change',
   expect(creator.message()).toBeTruthy()
   expect(updateMemoryMemos).not.toHaveBeenCalled()
 
+  creator.changeReminder({...creator.reminderDraft(), exactReminderAdvanceMinutes: 5})
+  await creator.save()
+
+  expect(creator.message()).toBeTruthy()
+  expect(updateMemoryMemos).not.toHaveBeenCalled()
+
   creator.changeReminder({...creator.reminderDraft(), reminderDay: 'tomorrow'})
   await creator.save()
 

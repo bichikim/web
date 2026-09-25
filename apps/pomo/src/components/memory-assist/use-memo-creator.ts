@@ -50,7 +50,9 @@ export const useMemoCreator = (): MemoCreator => {
 
   const changeReminder = (nextReminderDraft: ReminderDraft) => {
     draftRevision += 1
-    setReminderDateReference(new Date())
+    if (nextReminderDraft.reminderDay !== reminderDraft().reminderDay) {
+      setReminderDateReference(new Date())
+    }
     setReminderDraft(nextReminderDraft)
     persistCreationDraft(text(), nextReminderDraft)
   }

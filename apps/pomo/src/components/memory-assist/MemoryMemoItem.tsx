@@ -73,7 +73,9 @@ export const MemoryMemoItem = (props: MemoryMemoItemProps) => {
   }
 
   const handleReminderChange = (nextReminderDraft: ReminderDraft) => {
-    setReminderDateReference(new Date())
+    if (nextReminderDraft.reminderDay !== reminderDraft().reminderDay) {
+      setReminderDateReference(new Date())
+    }
     setReminderDraft(nextReminderDraft)
   }
 
