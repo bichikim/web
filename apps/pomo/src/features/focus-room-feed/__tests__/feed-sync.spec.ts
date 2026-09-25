@@ -34,6 +34,20 @@ const createBodylessResponse = (text: string): Response =>
     text: vi.fn(async () => text),
   }) as unknown as Response
 
+const createUndatedFeedXml = (format: 'rss' | 'atom', itemIds: ReadonlyArray<string>) => {
+  const entries = itemIds
+    .map((itemId) =>
+      format === 'rss'
+        ? `<item><title>${itemId}</title><guid>${itemId}</guid><link>https://example.com/${itemId}</link><content:encoded>${itemId} 본문</content:encoded></item>`
+        : `<entry><title>${itemId}</title><id>${itemId}</id><link href="https://example.com/${itemId}"/><content>${itemId} 본문</content></entry>`,
+    )
+    .join('')
+
+  return format === 'rss'
+    ? `<rss version="2.0" xmlns:content="http://purl.org/rss/1.0/modules/content/"><channel><title>발행일 없는 피드</title>${entries}</channel></rss>`
+    : `<feed xmlns="http://www.w3.org/2005/Atom"><title>발행일 없는 피드</title>${entries}</feed>`
+}
+
 it('should queue only the newest item on the first subscription sync', async () => {
   const {items, jobs, repository} = createRepository()
   const summary = await synchronizeFeeds({
@@ -68,6 +82,47 @@ it('should queue only the newest item on the first subscription sync', async () 
     ]),
   )
 })
+
+it.each(['rss', 'atom'] as const)(
+  'should limit undated items to one on the first %s subscription sync and process later arrivals',
+  async (format) => {
+    const {items, jobs, repository} = createRepository()
+    let nextId = 0
+    const fetcher = vi
+      .fn()
+      .mockResolvedValueOnce(new Response(createUndatedFeedXml(format, ['oldest', 'newest'])))
+      .mockResolvedValueOnce(
+        new Response(createUndatedFeedXml(format, ['oldest', 'newest', 'later'])),
+      )
+    const options = {
+      connections: [CONNECTION],
+      createId: () => {
+        nextId += 1
+        return `job-${nextId}`
+      },
+      fetcher,
+      now: new Date('2026-08-14T00:06:00.000Z'),
+      repository,
+      resolveGenerationSettings: createSettingsResolver(),
+    }
+
+    const firstSummary = await synchronizeFeeds(options)
+
+    expect(firstSummary.queuedJobIds).toEqual(['job-1'])
+    expect(jobs.map((job) => job.feedItemId)).toEqual(['newest'])
+    expect(items).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({feedItemId: 'oldest', status: 'ignored'}),
+        expect.objectContaining({feedItemId: 'newest', status: 'queued'}),
+      ]),
+    )
+
+    const secondSummary = await synchronizeFeeds(options)
+
+    expect(secondSummary.queuedJobIds).toEqual(['job-2'])
+    expect(jobs.map((job) => job.feedItemId)).toEqual(['newest', 'later'])
+  },
+)
 
 it('should resolve a default feed voice from the automatic dialogue settings', async () => {
   const {jobs, repository} = createRepository()
@@ -608,30 +663,35 @@ it('should preserve the dedupe tombstone when an expired dialogue is cleaned up'
   expect(items).toEqual([expect.objectContaining({feedItemId: 'expired', status: 'dismissed'})])
 })
 
-it('should queue multiple undated feed items without inventing a sort timestamp', async () => {
+it('should queue multiple undated feed items after the subscription bootstrap', async () => {
   const {jobs, repository} = createRepository()
   let nextId = 0
-
-  await synchronizeFeeds({
-    connections: [CONNECTION],
-    createId: () => {
-      nextId += 1
-      return `undated-job-${nextId}`
-    },
-    fetcher: vi.fn(
-      async () =>
-        new Response(`<rss xmlns:content="http://purl.org/rss/1.0/modules/content/">
+  const fetcher = vi
+    .fn()
+    .mockResolvedValueOnce(new Response(createRss([{id: 'bootstrap-anchor', minute: '05'}])))
+    .mockResolvedValueOnce(
+      new Response(`<rss xmlns:content="http://purl.org/rss/1.0/modules/content/">
           <channel><title>날짜 없는 피드</title>
             <item><title>첫 항목</title><guid>undated-1</guid>
               <content:encoded>첫 본문</content:encoded></item>
             <item><title>둘째 항목</title><guid>undated-2</guid>
               <content:encoded>둘째 본문</content:encoded></item>
           </channel></rss>`),
-    ),
+    )
+  const options = {
+    connections: [CONNECTION],
+    createId: () => {
+      nextId += 1
+      return `undated-job-${nextId}`
+    },
+    fetcher,
     now: new Date('2026-08-14T00:06:00.000Z'),
     repository,
     resolveGenerationSettings: createSettingsResolver(),
-  })
+  }
 
-  expect(jobs.map((job) => job.feedItemId)).toEqual(['undated-1', 'undated-2'])
+  await synchronizeFeeds(options)
+  await synchronizeFeeds(options)
+
+  expect(jobs.map((job) => job.feedItemId)).toEqual(['bootstrap-anchor', 'undated-1', 'undated-2'])
 })

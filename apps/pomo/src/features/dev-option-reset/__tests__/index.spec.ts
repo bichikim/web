@@ -32,6 +32,7 @@ afterEach(() => {
 
 const createStorage = (): OptionResetStorage => ({
   getToss: vi.fn(async () => null),
+  removeSessionStorageByPrefix: vi.fn(),
   removeToss: vi.fn(async () => undefined),
   removeWeb: vi.fn(),
   setToss: vi.fn(async () => undefined),
@@ -49,6 +50,7 @@ const createManager = (
 
 const FOCUS_ROOM_STORAGE_KEYS = [
   'pomo:focus-room-scene-preferences:v1',
+  'pomo:focus-room-scene-preferences:native-write-failure:v1',
   'pomo:focus-room-scene-style:v1',
   'pomo:weather-preference:v2',
   'pomo:weather-preference:v1',
@@ -66,6 +68,28 @@ it('should reset only the storage keys owned by one option group', async () => {
     FOCUS_ROOM_STORAGE_KEYS,
   )
   expect(storage.removeToss).not.toHaveBeenCalled()
+})
+
+it('should clear the focus-room native write failure marker during Toss reset', async () => {
+  const storage = createStorage()
+  const failureMarkerKey = 'pomo:focus-room-scene-preferences:native-write-failure:v1'
+  vi.mocked(storage.usesTossStorage).mockReturnValue(true)
+  vi.mocked(storage.removeWeb).mockImplementation((key) => localStorage.removeItem(key))
+  localStorage.setItem(failureMarkerKey, 'true')
+  const {manager} = createManager(storage)
+
+  await manager.reset('focus-room')
+
+  expect(vi.mocked(storage.removeWeb).mock.calls.map(([key]) => key)).toEqual(
+    FOCUS_ROOM_STORAGE_KEYS,
+  )
+  expect(localStorage.getItem(failureMarkerKey)).toBeNull()
+})
+
+it('should describe dialogue draft removal in the dialogue option group', () => {
+  const dialogueGroup = OPTION_RESET_GROUPS.find((group) => group.id === 'dialogue')
+
+  expect(dialogueGroup?.description).toContain('저장하지 않은 대화 초안')
 })
 
 it('should remove persisted display preferences when resetting focus-room options', async () => {
@@ -157,7 +181,9 @@ it('should restore toss values when a middle deletion fails', async () => {
   await expect(manager.reset('focus-room')).rejects.toThrow('Failed to reset Pomo options.')
 
   expect(tossValues).toEqual(originalValues)
-  expect(storage.setToss).toHaveBeenCalledTimes(3)
+  expect(storage.setToss).toHaveBeenCalledTimes(
+    FOCUS_ROOM_STORAGE_KEYS.indexOf('pomo:weather-preference:v2') + 1,
+  )
   expect(storage.removeWeb).not.toHaveBeenCalled()
   expect(storage.setWeb).not.toHaveBeenCalled()
 })
@@ -442,6 +468,46 @@ it.each(['entry', 'all'] as const)(
     expect(localStorage.getItem('pomo:focus-room-playlist:v1')).toBe('preserve')
   },
 )
+
+it.each(['dialogue', 'all'] as const)(
+  'should clear dialogue drafts and preserve other session data during %s reset',
+  async (group) => {
+    const newDraftKey = 'pomo:focus-room-dialogue:draft:new'
+    const existingDraftKey = 'pomo:focus-room-dialogue:draft:dialogue-id'
+    const preservedSessionKey = 'pomo:focus-room-dialogue:selection:v1'
+    const settingKey = 'pomo:automatic-dialogue-settings:v1'
+    sessionStorage.setItem(newDraftKey, 'unsaved new dialogue')
+    sessionStorage.setItem(existingDraftKey, 'unsaved edited dialogue')
+    sessionStorage.setItem(preservedSessionKey, 'preserve')
+    localStorage.setItem(settingKey, 'custom')
+
+    const manager = createRuntimeOptionResetManager()
+    if (group === 'all') {
+      await manager.resetAll()
+    } else {
+      await manager.reset(group)
+    }
+
+    expect(sessionStorage.getItem(newDraftKey)).toBeNull()
+    expect(sessionStorage.getItem(existingDraftKey)).toBeNull()
+    expect(sessionStorage.getItem(preservedSessionKey)).toBe('preserve')
+    expect(localStorage.getItem(settingKey)).toBeNull()
+  },
+)
+
+it('should keep dialogue settings when dialogue draft cleanup fails', async () => {
+  const settingKey = 'pomo:automatic-dialogue-settings:v1'
+  const storage = createStorage()
+  vi.mocked(storage.removeSessionStorageByPrefix).mockImplementation(() => {
+    throw new Error('session storage unavailable')
+  })
+  vi.mocked(storage.removeWeb).mockImplementation((key) => localStorage.removeItem(key))
+  localStorage.setItem(settingKey, 'custom')
+
+  const {manager} = createManager(storage)
+  await expect(manager.reset('dialogue')).rejects.toThrow('Failed to reset Pomo options.')
+  expect(localStorage.getItem(settingKey)).toBe('custom')
+})
 
 it('should remove native entry history as part of the entry reset', async () => {
   Object.defineProperty(globalThis, 'ReactNativeWebView', {configurable: true, value: {}})

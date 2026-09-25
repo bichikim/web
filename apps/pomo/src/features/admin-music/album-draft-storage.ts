@@ -241,6 +241,27 @@ export type AlbumDraftReadResult<T> =
 const storageSuccess = (): AlbumDraftStorageResult => ({success: true})
 const storageFailure = (error: unknown): AlbumDraftStorageResult => ({error, success: false})
 
+const hasDifferentCoverDraftId = (data: string | null, coverDraftId: string): boolean => {
+  if (data === null) {
+    return false
+  }
+
+  let parsedData: unknown
+
+  try {
+    parsedData = JSON.parse(data)
+  } catch {
+    return false
+  }
+
+  const parsedDraft = albumDraftSchema.safeParse(parsedData)
+  return (
+    parsedDraft.success &&
+    parsedDraft.data.coverDraftId !== null &&
+    parsedDraft.data.coverDraftId !== coverDraftId
+  )
+}
+
 export const writeAlbumDraftReference = async (
   options: WriteAlbumDraftReferenceOptions,
 ): Promise<AlbumDraftStorageResult> => {
@@ -478,6 +499,10 @@ export const deleteAlbumDraft = async (
 
     if (currentDraftData !== draftData) {
       return restoreCoverIfDraftRetainsIt(currentDraftData, coverDraftId, cover, storage)
+    }
+
+    if (hasDifferentCoverDraftId(currentDraftData, coverDraftId)) {
+      return storageSuccess()
     }
   }
 

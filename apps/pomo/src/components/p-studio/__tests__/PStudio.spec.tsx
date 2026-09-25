@@ -13,6 +13,7 @@ import {
 const {
   DEFAULT_BACKGROUND,
   getAutomaticScenePeriod,
+  getNextScenePeriodChange,
   PStudioEvents,
   PTour,
   SceneToolbar,
@@ -49,6 +50,9 @@ describe('PStudio', () => {
     vi.mocked(getAutomaticScenePeriod).mockImplementation((date) =>
       date.getHours() >= 19 ? 'night' : 'day',
     )
+    vi.mocked(getNextScenePeriodChange).mockImplementation(
+      (date) => new Date(date.getTime() + 1_000),
+    )
 
     renderStudio()
     fireEvent.click(screen.getByRole('button', {name: '자동 시간'}))
@@ -56,15 +60,71 @@ describe('PStudio', () => {
     const scene = screen.getByRole('button', {name: '장면 로드 완료'}).parentElement
     expect(scene).toHaveAttribute('data-time', 'day')
 
-    const documentHidden = vi.spyOn(document, 'hidden', 'get')
+    let documentIsHidden = false
+    const documentHidden = vi
+      .spyOn(document, 'hidden', 'get')
+      .mockImplementation(() => documentIsHidden)
     restoreDocumentHidden = () => documentHidden.mockRestore()
-    documentHidden.mockReturnValueOnce(true).mockReturnValueOnce(false)
+    documentIsHidden = true
     document.dispatchEvent(new Event('visibilitychange', {bubbles: true}))
     vi.setSystemTime(new Date(2026, 8, 16, 19, 0, 10))
+    vi.advanceTimersByTime(1_000)
     expect(scene).toHaveAttribute('data-time', 'day')
 
+    documentIsHidden = false
     document.dispatchEvent(new Event('visibilitychange', {bubbles: true}))
     expect(scene).toHaveAttribute('data-time', 'night')
+  })
+
+  it.each([
+    {
+      initialPeriod: 'night',
+      nextPeriod: 'day',
+      startTime: new Date(2026, 8, 16, 6, 59, 59),
+      transition: '07:00',
+    },
+    {
+      initialPeriod: 'day',
+      nextPeriod: 'night',
+      startTime: new Date(2026, 8, 16, 18, 59, 59),
+      transition: '19:00',
+    },
+  ])(
+    'should update the automatic scene period at $transition',
+    ({initialPeriod, nextPeriod, startTime}) => {
+      vi.setSystemTime(startTime)
+      configureStudio({entrySession: true})
+      vi.mocked(getAutomaticScenePeriod).mockImplementation((date) =>
+        date.getHours() >= 7 && date.getHours() < 19 ? 'day' : 'night',
+      )
+      vi.mocked(getNextScenePeriodChange).mockImplementation(
+        (date) => new Date(date.getTime() + 1_000),
+      )
+
+      renderStudio()
+      fireEvent.click(screen.getByRole('button', {name: '자동 시간'}))
+
+      const scene = screen.getByRole('button', {name: '장면 로드 완료'}).parentElement
+      expect(scene).toHaveAttribute('data-time', initialPeriod)
+      vi.advanceTimersByTime(999)
+      expect(scene).toHaveAttribute('data-time', initialPeriod)
+      vi.advanceTimersByTime(1)
+      expect(scene).toHaveAttribute('data-time', nextPeriod)
+    },
+  )
+
+  it('should clear the scheduled scene period change on cleanup', () => {
+    vi.setSystemTime(new Date(2026, 8, 16, 6, 59, 59))
+    configureStudio({entrySession: true})
+    vi.mocked(getNextScenePeriodChange).mockImplementation(
+      (date) => new Date(date.getTime() + 1_000),
+    )
+
+    const studio = renderStudio()
+    studio.unmount()
+    vi.advanceTimersByTime(1_000)
+
+    expect(getAutomaticScenePeriod).toHaveBeenCalledOnce()
   })
 
   it.each([false, true])(

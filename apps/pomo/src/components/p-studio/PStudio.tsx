@@ -1,4 +1,6 @@
+import {getDocument} from '@winter-love/utils'
 import {visibilityInterval} from 'src/utils/visibility-interval'
+import {visibility} from 'src/utils/visibility'
 import * as m from '@paraglide/message'
 import {useStudioTourHint} from './use-studio-tour-hint'
 import {useUiAutoHide} from 'src/features/ui-auto-hide'
@@ -48,6 +50,7 @@ import {
 import {getLocalizedSceneLabel} from '../../features/localization'
 import {
   getAutomaticScenePeriod,
+  getNextScenePeriodChange,
   resolveScenePeriod,
   type ScenePeriod,
   type SceneTimeMode,
@@ -231,24 +234,62 @@ interface StudioRuntimeOptions {
   readonly setMotionInput: Setter<PSceneMotionInput>
 }
 
+const useAutomaticScenePeriodRefresh = (setAutomaticPeriod: Setter<ScenePeriod>) => {
+  let periodChangeTimeout: ReturnType<typeof globalThis.setTimeout> | null = null
+  const clearPeriodChangeTimeout = () => {
+    if (periodChangeTimeout === null) {
+      return
+    }
+
+    globalThis.clearTimeout(periodChangeTimeout)
+    periodChangeTimeout = null
+  }
+  const refreshAutomaticPeriod = () => {
+    const now = new Date()
+    setAutomaticPeriod(getAutomaticScenePeriod(now))
+    clearPeriodChangeTimeout()
+
+    if (getDocument()?.hidden !== false) {
+      return
+    }
+
+    const nextPeriodChange = getNextScenePeriodChange(now)
+
+    periodChangeTimeout = globalThis.setTimeout(() => {
+      periodChangeTimeout = null
+      refreshAutomaticPeriod()
+    }, nextPeriodChange.getTime() - now.getTime())
+  }
+  const stopPeriodRefresh = visibilityInterval({
+    callback: refreshAutomaticPeriod,
+    interval: AUTOMATIC_PERIOD_REFRESH,
+    runOnVisible: true,
+  })
+  const stopBoundaryVisibilityWatch = visibility((isHidden) => {
+    if (isHidden) {
+      clearPeriodChangeTimeout()
+    }
+  })
+
+  onCleanup(() => {
+    stopPeriodRefresh()
+    stopBoundaryVisibilityWatch()
+    clearPeriodChangeTimeout()
+  })
+
+  refreshAutomaticPeriod()
+}
+
 const useStudioRuntime = (options: StudioRuntimeOptions) => {
   onMount(() => {
     const gyroscopeAvailable = supportsPSceneGyroscope()
-    const updateAutomaticPeriod = () =>
-      options.setAutomaticPeriod(getAutomaticScenePeriod(new Date()))
-    const stopPeriodRefresh = visibilityInterval({
-      callback: updateAutomaticPeriod,
-      interval: AUTOMATIC_PERIOD_REFRESH,
-      runOnVisible: true,
-    })
     options.entry.restore()
     options.setCanUseGyroscope(gyroscopeAvailable)
     if (gyroscopeAvailable) {
       options.setMotionInput('gyroscope')
     }
 
-    updateAutomaticPeriod()
-    onCleanup(stopPeriodRefresh)
+    useAutomaticScenePeriodRefresh(options.setAutomaticPeriod)
   })
 }
 
