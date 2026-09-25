@@ -1,5 +1,6 @@
 /** @vitest-environment jsdom */
 import {renderHook} from '@solidjs/testing-library'
+import {createSignal} from 'solid-js'
 import {expect, it, vi} from 'vitest'
 import {useLocalDate} from '../use-local-date'
 
@@ -52,6 +53,32 @@ it('should format and schedule at midnight in a configured time zone', () => {
     expect(view.result()).toBe('2026-09-03')
     expect(runtime.schedule).toHaveBeenLastCalledWith(expect.any(Function), 86_400_000)
     view.cleanup()
+  } finally {
+    vi.unstubAllEnvs()
+  }
+})
+
+it('should refresh and reschedule when the time zone changes', () => {
+  vi.stubEnv('TZ', 'UTC')
+  try {
+    const now = new Date('2026-09-01T20:00:00.000Z')
+    const [timeZone, setTimeZone] = createSignal('Asia/Seoul')
+    const runtime = createRuntime(() => now)
+    const props = {
+      runtime,
+      get timeZone() {
+        return timeZone()
+      },
+    }
+    const view = renderHook(() => useLocalDate(props))
+
+    expect(view.result()).toBe('2026-09-02')
+    setTimeZone('America/New_York')
+    expect(view.result()).toBe('2026-09-01')
+    expect(runtime.schedule.mock.results[0].value).toHaveBeenCalledOnce()
+    expect(runtime.schedule).toHaveBeenLastCalledWith(expect.any(Function), 28_800_000)
+    view.cleanup()
+    expect(runtime.schedule.mock.results[1].value).toHaveBeenCalledOnce()
   } finally {
     vi.unstubAllEnvs()
   }

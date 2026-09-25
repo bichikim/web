@@ -104,6 +104,26 @@ it('should use the calendar time zone for today, grid, and month boundaries', as
   }
 })
 
+it('should update today when the calendar time zone changes', () => {
+  vi.stubEnv('TZ', 'UTC')
+  try {
+    const [timeZone, setTimeZone] = createSignal('Asia/Seoul')
+    const environment = {
+      ...createEnvironment(),
+      now: () => new Date('2026-09-01T20:00:00.000Z'),
+      timeZone,
+    }
+    const view = renderHook(() => useMonth({authentication, environment}))
+
+    expect(view.result.todayKey()).toBe('2026-09-02')
+    setTimeZone('America/New_York')
+    expect(view.result.todayKey()).toBe('2026-09-01')
+    view.cleanup()
+  } finally {
+    vi.unstubAllEnvs()
+  }
+})
+
 it('should preserve cached data and report refresh failure through the supplied boundary', async () => {
   const environment = createEnvironment()
   const failure = new Error('offline')
