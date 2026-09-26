@@ -48,14 +48,37 @@ afterEach(() => {
 })
 
 const createStorage = (): OptionResetStorage => ({
+  getSessionStorageEntriesByPrefix: vi.fn(() => []),
   getToss: vi.fn(async () => null),
   removeSessionStorageByPrefix: vi.fn(),
   removeToss: vi.fn(async () => undefined),
   removeWeb: vi.fn(),
+  setSessionStorageItem: vi.fn(),
   setToss: vi.fn(async () => undefined),
   setWeb: vi.fn(),
   usesTossStorage: vi.fn(() => false),
 })
+
+const createSessionAwareStorage = (): OptionResetStorage => {
+  const storage = createStorage()
+  vi.mocked(storage.getSessionStorageEntriesByPrefix).mockImplementation((prefix) =>
+    Object.keys(sessionStorage).flatMap((key) => {
+      const value = sessionStorage.getItem(key)
+      return key.startsWith(prefix) && value !== null ? [{key, value}] : []
+    }),
+  )
+  vi.mocked(storage.removeSessionStorageByPrefix).mockImplementation((prefix) => {
+    for (const key of Object.keys(sessionStorage)) {
+      if (key.startsWith(prefix)) {
+        sessionStorage.removeItem(key)
+      }
+    }
+  })
+  vi.mocked(storage.setSessionStorageItem).mockImplementation((key, value) => {
+    sessionStorage.setItem(key, value)
+  })
+  return storage
+}
 
 const createManager = (
   storage: OptionResetStorage,
@@ -626,6 +649,51 @@ it('should keep dialogue settings when dialogue draft cleanup fails', async () =
   await expect(manager.reset('dialogue')).rejects.toThrow('Failed to reset Pomo options.')
   expect(localStorage.getItem(settingKey)).toBe('custom')
 })
+
+it.each(['dialogue', 'all'] as const)(
+  'should preserve dialogue drafts when the %s durable reset fails',
+  async (group) => {
+    const draftKey = 'pomo:focus-room-dialogue:draft:dialogue-id'
+    const draftValue = 'unsaved dialogue draft'
+    const settingKey = 'pomo:automatic-dialogue-settings:v1'
+    const storage = createSessionAwareStorage()
+    vi.mocked(storage.usesTossStorage).mockReturnValue(true)
+    vi.mocked(storage.getToss).mockImplementation(async (key) =>
+      key === settingKey ? 'custom' : null,
+    )
+    vi.mocked(storage.removeToss).mockRejectedValue(new Error('durable reset failed'))
+    sessionStorage.setItem(draftKey, draftValue)
+
+    const {manager} = createManager(storage)
+    const reset = group === 'all' ? manager.resetAll() : manager.reset(group)
+    await expect(reset).rejects.toThrow('Failed to reset Pomo options.')
+    expect(sessionStorage.getItem(draftKey)).toBe(draftValue)
+  },
+)
+
+it.each(['dialogue', 'all'] as const)(
+  'should preserve dialogue drafts when the %s durable reset returns a partial result',
+  async (group) => {
+    const draftKey = 'pomo:focus-room-dialogue:draft:dialogue-id'
+    const draftValue = 'unsaved dialogue draft'
+    const storage = createSessionAwareStorage()
+    const readCounts = new Map<string, number>()
+    vi.mocked(storage.usesTossStorage).mockReturnValue(true)
+    vi.mocked(storage.getToss).mockImplementation(async (key) => {
+      const readCount = readCounts.get(key) ?? 0
+      readCounts.set(key, readCount + 1)
+      return readCount === 0 ? 'custom' : 'changed'
+    })
+    vi.mocked(storage.removeToss).mockRejectedValue(new Error('durable reset failed'))
+    vi.mocked(storage.setToss).mockRejectedValue(new Error('durable rollback failed'))
+    sessionStorage.setItem(draftKey, draftValue)
+
+    const {manager} = createManager(storage)
+    const reset = group === 'all' ? manager.resetAll() : manager.reset(group)
+    await expect(reset).resolves.toMatchObject({status: 'partial'})
+    expect(sessionStorage.getItem(draftKey)).toBe(draftValue)
+  },
+)
 
 it('should remove native entry history as part of the entry reset', async () => {
   Object.defineProperty(globalThis, 'ReactNativeWebView', {configurable: true, value: {}})
