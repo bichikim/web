@@ -152,11 +152,14 @@ export const createPPlaybackStorage = (
       const latestPlayback = selectMaximumBy(webPlayback, nativePlayback, (value) => value.savedAt)
       if (
         latestPlayback !== null &&
-        latestPlayback === webPlayback &&
         !hadPendingWrite &&
         playbackRevision === initialPlaybackRevision
       ) {
-        writeLatestToss(latestPlayback)
+        if (latestPlayback === webPlayback) {
+          writeLatestToss(latestPlayback)
+        } else {
+          storage.writeWeb(latestPlayback)
+        }
       }
       return toPlaybackState(latestPlayback)
     } catch {
