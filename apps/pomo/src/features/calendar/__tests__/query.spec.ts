@@ -85,6 +85,27 @@ describe('createCalendarQuery', () => {
     })
   })
 
+  it('should query the day after tomorrow in the local timezone', () => {
+    expect(createCalendarQuery({now, text: '모레 일정 알려줘', timeZone: 'Asia/Seoul'})).toEqual({
+      end: '2026-09-06T15:00:00.000Z',
+      start: '2026-09-05T15:00:00.000Z',
+    })
+  })
+
+  it('should query only the morning of the day after tomorrow', () => {
+    expect(createCalendarQuery({now, text: '모레 오전 일정', timeZone: 'Asia/Seoul'})).toEqual({
+      end: '2026-09-06T03:00:00.000Z',
+      start: '2026-09-05T15:00:00.000Z',
+    })
+  })
+
+  it('should recognize the day after tomorrow as an implicit schedule query', () => {
+    expect(createCalendarQuery({now, text: '모레 뭐 있어?', timeZone: 'Asia/Seoul'})).toEqual({
+      end: '2026-09-06T15:00:00.000Z',
+      start: '2026-09-05T15:00:00.000Z',
+    })
+  })
+
   it('should query through Sunday for this week', () => {
     expect(
       createCalendarQuery({now, text: '이번 주 중요한 일정 알려줘', timeZone: 'Asia/Seoul'}),

@@ -113,17 +113,26 @@ it('should follow later operating-system changes only in system mode', async () 
   expect(document.documentElement.classList.contains('dark')).toBe(false)
 })
 
-it('should preserve the bootstrapped color scheme until the saved preference is restored', () => {
+it('should apply the default color scheme while the saved preference is loading', () => {
   preferenceMocks.read.mockReturnValue(
     new Promise(() => {
-      // Keep restoration pending while the bootstrapped document state is asserted.
+      // Keep restoration pending while the default theme is asserted.
     }),
   )
+  document.documentElement.classList.remove('dark')
+
+  let controller: DisplayThemeController | undefined
 
   render(() => (
-    <PreferenceHarness onController={() => undefined} onPreferenceChange={() => undefined} />
+    <PreferenceHarness
+      onController={(nextController) => {
+        controller = nextController
+      }}
+      onPreferenceChange={() => undefined}
+    />
   ))
 
+  expect(controller?.preference()).toBe('dark')
   expect(document.documentElement.classList.contains('dark')).toBe(true)
 })
 

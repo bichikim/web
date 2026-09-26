@@ -53,6 +53,22 @@ it('should describe normalized timed and all-day events without leaking provider
   )
 })
 
+it('should include the exclusive end date for a multi-day all-day event', () => {
+  const context = createCalendarPromptContext({
+    events: [
+      createEvent({
+        allDay: true,
+        end: '2026-09-07',
+        start: '2026-09-05',
+        title: '연휴',
+      }),
+    ],
+    timeZone: 'Asia/Seoul',
+  })
+
+  expect(context).toContain('2026. 9. 5.–2026. 9. 7. (종일, 종료일 미포함)')
+})
+
 it('should include the end date when a timed event crosses a local day', () => {
   expect(
     createCalendarPromptContext({

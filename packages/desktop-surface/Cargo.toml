@@ -8,7 +8,7 @@ license = "MIT"
 
 [package.metadata.platforms.support]
 macos = { level = "full", notes = "Background placement uses public AppKit and Core Graphics APIs. Transparent WebViews require Tauri's macOS private API feature." }
-windows = { level = "none", notes = "A Windows adapter is planned after the macOS implementation is validated." }
+windows = { level = "partial", notes = "Native widgets and Explorer-hosted desktop surfaces are supported. Explorer hosting uses its version-dependent WorkerW protocol; shell restart and display-change recovery are not implemented." }
 linux = { level = "none" }
 android = { level = "none" }
 ios = { level = "none" }
@@ -48,3 +48,13 @@ objc2-quartz-core = { version = "0.3.2", features = ["CALayer", "objc2-core-foun
 
 [build-dependencies]
 tauri-plugin = { version = "2", features = ["build"] }
+
+[target.'cfg(target_os = "windows")'.dependencies]
+windows = { version = "0.61.3", features = [
+  "Win32_Foundation",
+  "Win32_UI_WindowsAndMessaging",
+  "Win32_UI_Shell",
+  "Win32_Graphics_Gdi",
+] }
+[dev-dependencies]
+tauri = { version = "2", features = ["test"] }

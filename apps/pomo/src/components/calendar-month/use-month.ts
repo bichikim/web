@@ -108,9 +108,10 @@ export const useMonth = (props: UseMonthProps): MonthController => {
     props.authentication.session()
     return revision + 1
   }, 0)
-  const timeZone = props.environment.timeZone()
+  const timeZone = () => props.environment.timeZone()
+  const initialTimeZone = timeZone()
   const today = props.environment.now()
-  const zonedToday = dayjs(today).tz(timeZone)
+  const zonedToday = dayjs(today).tz(initialTimeZone)
   const todayKey = useLocalDate({
     initialDate: today,
     runtime: {...localDateRuntime, now: () => props.environment.now()},
@@ -122,13 +123,14 @@ export const useMonth = (props: UseMonthProps): MonthController => {
   )
   const monthRange = createMemo(() => {
     const currentMonth = month()
-    const start = dayjs.tz(formatLocalDate(currentMonth), timeZone).startOf('month')
+    const currentTimeZone = timeZone()
+    const start = dayjs.tz(formatLocalDate(currentMonth), currentTimeZone).startOf('month')
     const nextMonth = start.add(1, 'month').format('YYYY-MM-01')
-    const end = dayjs.tz(nextMonth, timeZone).startOf('month')
+    const end = dayjs.tz(nextMonth, currentTimeZone).startOf('month')
     const range = {
       end: end.toISOString(),
       start: start.toISOString(),
-      timeZone,
+      timeZone: currentTimeZone,
     }
     const revision = props.revision ?? 0
     return {
@@ -187,7 +189,7 @@ export const useMonth = (props: UseMonthProps): MonthController => {
       ? result.value
       : cachedCalendar()
   })
-  const days = createMemo(() => createMonthDays(month(), timeZone))
+  const days = createMemo(() => createMonthDays(month(), timeZone()))
   const eventsByDay = createMemo(() => {
     const result = calendar()
     const grouped = new Map<string, ReadonlyArray<CalendarEvent>>()

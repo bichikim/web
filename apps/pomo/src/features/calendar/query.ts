@@ -7,8 +7,10 @@ const TODAY_EXCLUSION_PATTERN =
   /오늘(?:(?!내일).)*(?:말고|빼고|제외(?:하고)?|아니|아닌|안\s*(?:되|돼))/u
 const TOMORROW_EXCLUSION_PATTERN =
   /내일(?:(?!오늘).)*(?:말고|빼고|제외(?:하고)?|아니|아닌|안\s*(?:되|돼))/u
-const IMPLICIT_SCHEDULE_PATTERN = /(?:오늘|내일|이번 ?주).*(?:뭐|무엇).*(?:있|하)/u
+const IMPLICIT_SCHEDULE_PATTERN = /(?:오늘|내일|모레|이번 ?주).*(?:뭐|무엇).*(?:있|하)/u
 const MILLISECONDS_PER_DAY = 86_400_000
+const DAY_AFTER_TOMORROW_START_DAYS = 2
+const DAY_AFTER_TOMORROW_END_DAYS = 3
 const NEXT_EVENT_WINDOW_DAYS = 30
 const DAYS_PER_WEEK = 7
 
@@ -46,6 +48,14 @@ export const createCalendarQuery = (
   const includesToday = options.text.includes('오늘') && !TODAY_EXCLUSION_PATTERN.test(options.text)
   const includesTomorrow =
     options.text.includes('내일') && !TOMORROW_EXCLUSION_PATTERN.test(options.text)
+  if (options.text.includes('모레')) {
+    return toRange(
+      boundary(DAY_AFTER_TOMORROW_START_DAYS),
+      options.text.includes('오전')
+        ? boundary(DAY_AFTER_TOMORROW_START_DAYS, '12:00:00')
+        : boundary(DAY_AFTER_TOMORROW_END_DAYS),
+    )
+  }
   if (includesTomorrow) {
     return toRange(
       includesToday ? now : boundary(1),

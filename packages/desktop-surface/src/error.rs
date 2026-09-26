@@ -19,7 +19,7 @@ pub(crate) enum Error {
     InvalidMouseEvent,
     #[error("window '{0}' is not an active background surface")]
     NotBackgroundSurface(String),
-    #[cfg(not(target_os = "macos"))]
+    #[cfg(not(any(target_os = "macos", target_os = "windows")))]
     #[error("desktop surfaces are not supported on {0}")]
     UnsupportedPlatform(&'static str),
     #[error("webview window '{0}' was not found")]
@@ -46,7 +46,7 @@ impl From<Error> for CommandError {
             | Error::InvalidUrl
             | Error::InvalidMouseEvent => "invalid-configuration",
             Error::NotBackgroundSurface(_) => "invalid-surface-state",
-            #[cfg(not(target_os = "macos"))]
+            #[cfg(not(any(target_os = "macos", target_os = "windows")))]
             Error::UnsupportedPlatform(_) => "unsupported-platform",
             Error::WindowNotFound(_) => "window-not-found",
             Error::WindowOperation(_) => "window-operation-failed",

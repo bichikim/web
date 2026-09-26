@@ -54,10 +54,7 @@ export const useDisplayThemeController = (): DisplayThemeController => {
     mediaQuery.addEventListener('change', handleSystemThemeChange)
 
     createEffect(() => {
-      const currentPreference = storedPreference()
-      if (currentPreference !== null) {
-        applyDocumentTheme(currentPreference, prefersDark())
-      }
+      applyDocumentTheme(preference(), prefersDark())
     })
 
     onCleanup(() => mediaQuery.removeEventListener('change', handleSystemThemeChange))

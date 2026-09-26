@@ -7,7 +7,7 @@ import {afterEach, beforeEach, expect, it, vi} from 'vitest'
 
 import type {PEventContextValue} from '../../focus-room-dialogue'
 import {createMemoryMemo, editMemoryMemo} from '../schedule'
-import {updateMemoryMemos} from '../repository'
+import {MEMORY_MEMOS_STORAGE_KEY, updateMemoryMemos} from '../repository'
 import {useMemoryReminders} from '../use-reminders'
 
 const mocks = vi.hoisted(() => ({
@@ -152,6 +152,45 @@ it('should replay a persisted replacement with the same ID without the old retry
     await flushPromises()
 
     expect(events.playDialogue).toHaveBeenCalledTimes(2)
+  } finally {
+    view.cleanup()
+  }
+})
+
+it('should schedule a reminder stored by another tab', async () => {
+  const memo = createMemoryMemo({
+    exactReminderAt: '2026-09-04T03:00:01.000Z',
+    id: 'cross-tab',
+    now: new Date('2026-09-04T02:00:00.000Z'),
+    random: () => 0,
+    recallMode: 'none',
+    text: '다른 탭에서 추가한 메모',
+  })
+  const events = {
+    deleteDialogue: vi.fn(),
+    playDialogue: vi.fn().mockResolvedValue(true),
+    refreshDialogues: vi.fn().mockResolvedValue(undefined),
+  } as unknown as PEventContextValue
+  const view = renderReminders(() => useMemoryReminders({events, random: () => 0}))
+
+  try {
+    await flushPromises()
+    expect(events.playDialogue).not.toHaveBeenCalled()
+
+    const serializedMemos = JSON.stringify([memo])
+    localStorage.setItem(MEMORY_MEMOS_STORAGE_KEY, serializedMemos)
+    globalThis.dispatchEvent(
+      new StorageEvent('storage', {
+        key: MEMORY_MEMOS_STORAGE_KEY,
+        newValue: serializedMemos,
+        storageArea: globalThis.localStorage,
+      }),
+    )
+    await flushPromises()
+    await vi.advanceTimersByTimeAsync(1_000)
+    await flushPromises()
+
+    expect(events.playDialogue).toHaveBeenCalledOnce()
   } finally {
     view.cleanup()
   }

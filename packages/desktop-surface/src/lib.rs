@@ -3,15 +3,24 @@ mod error;
 #[cfg(target_os = "macos")]
 mod macos;
 mod model;
+#[cfg(any(target_os = "macos", target_os = "windows"))]
+mod pointer;
+#[cfg(target_os = "windows")]
+mod windows;
 
 use tauri::{Manager, Runtime, plugin::TauriPlugin};
 
 #[cfg(target_os = "macos")]
-use macos::SurfaceState;
+use macos as platform;
 
-#[cfg(not(target_os = "macos"))]
+#[cfg(not(any(target_os = "macos", target_os = "windows")))]
 #[derive(Default)]
 struct SurfaceState;
+
+#[cfg(any(target_os = "macos", target_os = "windows"))]
+use platform::SurfaceState;
+#[cfg(target_os = "windows")]
+use windows as platform;
 
 pub fn init<R: Runtime>() -> TauriPlugin<R> {
     tauri::plugin::Builder::new("desktop-surface")

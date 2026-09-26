@@ -34,10 +34,10 @@ pub(crate) async fn get_background_interaction<R: Runtime>(
 ) -> Result<BackgroundInteraction, CommandError> {
     let window = find_window(&app, label)?;
 
-    #[cfg(target_os = "macos")]
-    return crate::macos::get_background_interaction(&state, window.label()).map_err(Into::into);
+    #[cfg(any(target_os = "macos", target_os = "windows"))]
+    return crate::platform::get_background_interaction(&state, window.label()).map_err(Into::into);
 
-    #[cfg(not(target_os = "macos"))]
+    #[cfg(not(any(target_os = "macos", target_os = "windows")))]
     Err(Error::UnsupportedPlatform(std::env::consts::OS).into())
 }
 
@@ -49,11 +49,11 @@ pub(crate) async fn set_background_interaction<R: Runtime>(
 ) -> Result<(), CommandError> {
     let window = find_window(&app, options.label)?;
 
-    #[cfg(target_os = "macos")]
-    return crate::macos::set_background_interaction(&state, &window, options.interaction)
+    #[cfg(any(target_os = "macos", target_os = "windows"))]
+    return crate::platform::set_background_interaction(&state, &window, options.interaction)
         .map_err(Into::into);
 
-    #[cfg(not(target_os = "macos"))]
+    #[cfg(not(any(target_os = "macos", target_os = "windows")))]
     Err(Error::UnsupportedPlatform(std::env::consts::OS).into())
 }
 
@@ -68,10 +68,10 @@ pub(crate) async fn set_background_surface<R: Runtime>(
         .interaction
         .unwrap_or(BackgroundInteraction::Interactive);
 
-    #[cfg(target_os = "macos")]
-    return crate::macos::set_background(&state, &window, interaction).map_err(Into::into);
+    #[cfg(any(target_os = "macos", target_os = "windows"))]
+    return crate::platform::set_background(&state, &window, interaction).map_err(Into::into);
 
-    #[cfg(not(target_os = "macos"))]
+    #[cfg(not(any(target_os = "macos", target_os = "windows")))]
     Err(Error::UnsupportedPlatform(std::env::consts::OS).into())
 }
 
@@ -81,15 +81,15 @@ pub(crate) async fn navigate_background_surface<R: Runtime>(
     state: tauri::State<'_, SurfaceState>,
     options: BackgroundNavigationOptions,
 ) -> Result<(), CommandError> {
-    #[cfg(not(target_os = "macos"))]
+    #[cfg(not(any(target_os = "macos", target_os = "windows")))]
     return Err(Error::UnsupportedPlatform(std::env::consts::OS).into());
 
-    #[cfg(target_os = "macos")]
+    #[cfg(any(target_os = "macos", target_os = "windows"))]
     {
         let options = ValidatedBackgroundNavigation::try_from(options)?;
         let webview = find_webview(&app, options.label)?;
         let window = webview.window();
-        crate::macos::navigate_background_surface(
+        crate::platform::navigate_background_surface(
             &state,
             &window,
             &webview,
@@ -106,14 +106,15 @@ pub(crate) async fn forward_background_mouse_event<R: Runtime>(
     state: tauri::State<'_, SurfaceState>,
     options: BackgroundMouseEventOptions,
 ) -> Result<(), CommandError> {
-    #[cfg(not(target_os = "macos"))]
+    #[cfg(not(any(target_os = "macos", target_os = "windows")))]
     return Err(Error::UnsupportedPlatform(std::env::consts::OS).into());
 
-    #[cfg(target_os = "macos")]
+    #[cfg(any(target_os = "macos", target_os = "windows"))]
     {
         let options = ValidatedBackgroundMouseEvent::try_from(options)?;
         let webview = find_webview(&app, options.label.clone())?;
-        crate::macos::forward_background_mouse_event(&state, &webview, options).map_err(Into::into)
+        crate::platform::forward_background_mouse_event(&state, &webview, options)
+            .map_err(Into::into)
     }
 }
 
@@ -123,14 +124,14 @@ pub(crate) async fn restore_background_content<R: Runtime>(
     state: tauri::State<'_, SurfaceState>,
     label: String,
 ) -> Result<(), CommandError> {
-    #[cfg(target_os = "macos")]
+    #[cfg(any(target_os = "macos", target_os = "windows"))]
     {
         let webview = find_webview(&app, label)?;
         let window = webview.window();
-        crate::macos::restore_background_content(&state, &window, &webview).map_err(Into::into)
+        crate::platform::restore_background_content(&state, &window, &webview).map_err(Into::into)
     }
 
-    #[cfg(not(target_os = "macos"))]
+    #[cfg(not(any(target_os = "macos", target_os = "windows")))]
     {
         let _ = find_window(&app, label)?;
         Err(Error::UnsupportedPlatform(std::env::consts::OS).into())
@@ -146,10 +147,10 @@ pub(crate) async fn restore_surface<R: Runtime>(
     let webview = find_webview(&app, label)?;
     let window = webview.window();
 
-    #[cfg(target_os = "macos")]
-    return crate::macos::restore(&state, &window, &webview).map_err(Into::into);
+    #[cfg(any(target_os = "macos", target_os = "windows"))]
+    return crate::platform::restore(&state, &window, &webview).map_err(Into::into);
 
-    #[cfg(not(target_os = "macos"))]
+    #[cfg(not(any(target_os = "macos", target_os = "windows")))]
     Err(Error::UnsupportedPlatform(std::env::consts::OS).into())
 }
 
@@ -159,14 +160,14 @@ pub(crate) async fn set_widget_surface<R: Runtime>(
     state: tauri::State<'_, SurfaceState>,
     options: WidgetSurfaceOptions,
 ) -> Result<(), CommandError> {
-    #[cfg(not(target_os = "macos"))]
+    #[cfg(not(any(target_os = "macos", target_os = "windows")))]
     return Err(Error::UnsupportedPlatform(std::env::consts::OS).into());
 
-    #[cfg(target_os = "macos")]
+    #[cfg(any(target_os = "macos", target_os = "windows"))]
     {
         let options = ValidatedWidgetSurface::try_from(options)?;
         let window = find_window(&app, options.label.clone())?;
-        crate::macos::set_widget(
+        crate::platform::set_widget(
             &state,
             &window,
             options.width,
@@ -182,19 +183,19 @@ pub(crate) async fn open_control_surface<R: Runtime>(
     app: AppHandle<R>,
     options: ControlSurfaceOptions,
 ) -> Result<ControlSurfaceStatus, CommandError> {
-    #[cfg(not(target_os = "macos"))]
+    #[cfg(not(any(target_os = "macos", target_os = "windows")))]
     return Err(Error::UnsupportedPlatform(std::env::consts::OS).into());
 
-    #[cfg(target_os = "macos")]
+    #[cfg(any(target_os = "macos", target_os = "windows"))]
     {
         let options = ValidatedControlSurface::try_from(options)?;
 
         if let Some(window) = app.get_webview_window(&options.label) {
             window.set_visible_on_all_workspaces(false)?;
             if let Some(corner_radius) = options.corner_radius {
-                crate::macos::set_control_surface_corner_radius(&window, corner_radius)?;
+                crate::platform::set_control_surface_corner_radius(&window, corner_radius)?;
             }
-            crate::macos::set_control_surface_shadow(&window)?;
+            crate::platform::set_control_surface_shadow(&window)?;
             window.show()?;
             window.set_focus()?;
             return Ok(ControlSurfaceStatus { created: false });
@@ -220,9 +221,9 @@ pub(crate) async fn open_control_surface<R: Runtime>(
 
         let window = builder.build()?;
         if let Some(corner_radius) = options.corner_radius {
-            crate::macos::set_control_surface_corner_radius(&window, corner_radius)?;
+            crate::platform::set_control_surface_corner_radius(&window, corner_radius)?;
         }
-        crate::macos::set_control_surface_shadow(&window)?;
+        crate::platform::set_control_surface_shadow(&window)?;
         window.show()?;
         window.set_focus()?;
 
