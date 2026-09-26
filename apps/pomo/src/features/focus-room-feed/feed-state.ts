@@ -41,7 +41,7 @@ interface CreateFeedStateWriterOptions {
 const createFeedStateWriter = (options: CreateFeedStateWriterOptions) => {
   let shouldKeepNoConnectionGuidance = false
 
-  return (nextState: PFeedState) => {
+  const setState = (nextState: PFeedState) => {
     if (options.isDisposed()) {
       return
     }
@@ -64,6 +64,13 @@ const createFeedStateWriter = (options: CreateFeedStateWriterOptions) => {
     }
 
     options.setState(nextState)
+  }
+
+  return {
+    releaseNoConnectionGuidance() {
+      shouldKeepNoConnectionGuidance = false
+    },
+    setState,
   }
 }
 
@@ -136,7 +143,7 @@ export const createFeedStateController = (
   })
   const dismissedRecoveryIds = new Set<string>()
   let isDisposed = false
-  const setFeedState = createFeedStateWriter({
+  const feedStateWriter = createFeedStateWriter({
     isDisposed: () => isDisposed,
     setState: setStateSignal,
   })
@@ -264,7 +271,8 @@ export const createFeedStateController = (
       const jobIds = jobs.map((job) => job.id)
       await options.getRepositories().feedRepository.retryJobs(jobIds, options.now().toISOString())
       setRecoveryJobs([])
-      setFeedState({
+      feedStateWriter.releaseNoConnectionGuidance()
+      feedStateWriter.setState({
         message: '피드 대화를 다시 만들 준비 중…',
         progress: 0,
         status: 'preparing',
@@ -273,7 +281,7 @@ export const createFeedStateController = (
     },
     setDialogues,
     setRecoveryJobs,
-    setState: setFeedState,
+    setState: feedStateWriter.setState,
     state,
     unlistenedDialogues,
   }
