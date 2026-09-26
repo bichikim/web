@@ -64,6 +64,7 @@
     "cross-env": "catalog:",
     "dayjs": "^1.11.23",
     "dexie": "^4.4.4",
+    "dompurify": "^3.4.16",
     "drizzle-orm": "^0.45.2",
     "es-toolkit": "catalog:",
     "h3": "catalog:",
