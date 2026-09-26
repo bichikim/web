@@ -1,11 +1,24 @@
-/** Registers an event listener and returns a function that removes that registration. */
+export interface EventSubscriptionOptions extends AddEventListenerOptions {
+  /** Called once after the returned unsubscribe function removes the listener. */
+  readonly onUnsubscribe?: () => void
+}
+
+/** Registers a listener and returns an idempotent unsubscribe function with an optional notification. */
 export const subscribeEvent = (
   target: EventTarget,
   eventType: string,
   handler: EventListenerOrEventListenerObject,
-  options?: AddEventListenerOptions,
+  options?: EventSubscriptionOptions,
 ): (() => void) => {
-  const capture = options?.capture ?? false
-  target.addEventListener(eventType, handler, {...options, capture})
-  return () => target.removeEventListener(eventType, handler, capture)
+  const {onUnsubscribe, capture = false, ...listenerOptions} = options ?? {}
+  let subscribed = true
+  target.addEventListener(eventType, handler, {...listenerOptions, capture})
+  return () => {
+    if (!subscribed) {
+      return
+    }
+    target.removeEventListener(eventType, handler, capture)
+    subscribed = false
+    onUnsubscribe?.()
+  }
 }

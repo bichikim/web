@@ -51,4 +51,34 @@ describe('subscribeEvent', () => {
     unsubscribeOnce()
     unsubscribeAborted()
   })
+
+  it('should notify once after removing the listener even when cleanup is reentered', () => {
+    const target = new EventTarget()
+    const handler = vi.fn()
+    const onUnsubscribe = vi.fn(() => {
+      target.dispatchEvent(new Event('change'))
+      unsubscribe()
+    })
+    const unsubscribe = subscribeEvent(target, 'change', handler, {onUnsubscribe})
+    expect(onUnsubscribe).not.toHaveBeenCalled()
+    unsubscribe()
+    unsubscribe()
+    expect(handler).not.toHaveBeenCalled()
+    expect(onUnsubscribe).toHaveBeenCalledOnce()
+  })
+
+  it('should keep the listener removed when the unsubscribe callback throws', () => {
+    const target = new EventTarget()
+    const handler = vi.fn()
+    const error = new Error('notification failed')
+    const onUnsubscribe = vi.fn(() => {
+      throw error
+    })
+    const unsubscribe = subscribeEvent(target, 'change', handler, {onUnsubscribe})
+    expect(unsubscribe).toThrow(error)
+    expect(unsubscribe).not.toThrow()
+    target.dispatchEvent(new Event('change'))
+    expect(handler).not.toHaveBeenCalled()
+    expect(onUnsubscribe).toHaveBeenCalledOnce()
+  })
 })
