@@ -246,13 +246,20 @@ const generateAnswer = async (options: GenerateAnswerOptions) => {
     : generatedText
   const text = limitChatAnswer(refinedText)
   const message: ChatMessage = {content: text, id: options.replyId, role: 'assistant'}
+  const completedContext: ChatContext = {
+    messages: [...compacted.context.messages, message],
+    summary: compacted.context.summary,
+  }
+  // Keep a completed reply when its display-only token count cannot be refreshed.
+  const completedContextTokens = await countPromptTokens(
+    completedContext,
+    options.modelId,
+    options.supplementaryContext,
+  ).catch(() => contextTokens)
 
   sendResponse({
-    context: {
-      messages: [...compacted.context.messages, message],
-      summary: compacted.context.summary,
-    },
-    contextTokens,
+    context: completedContext,
+    contextTokens: completedContextTokens,
     message,
     type: 'complete',
     wasCompacted: compacted.wasCompacted,
