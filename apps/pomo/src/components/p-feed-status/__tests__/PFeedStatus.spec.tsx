@@ -1,7 +1,8 @@
+/** @vitest-environment jsdom */
+
 import {PreferenceProvider} from 'src/hooks/use-preference'
 import {createSignal} from 'solid-js'
 import {isSupertonicModelDownloaded} from 'src/features/supertonic'
-/** @vitest-environment jsdom */
 
 import {fireEvent, render, screen} from '@solidjs/testing-library'
 import {afterEach, beforeEach, expect, it, vi} from 'vitest'
@@ -107,7 +108,7 @@ it('should render no feed notice while the feed state is idle', () => {
   expect(screen.queryByRole('status')).toBeNull()
 })
 
-it('should replace generating status with add-subscription guidance after an empty feed sync', async () => {
+it('should hide idle status after an empty feed sync', async () => {
   const message = '설정에서 구독 피드를 추가해 주세요.'
   const generationMessage = '새 피드 음성을 만들고 있어요.'
   const [state, setState] = createSignal<PFeedState>({
@@ -123,9 +124,9 @@ it('should replace generating status with add-subscription guidance after an emp
 
   setState({message, status: 'idle'})
 
-  await vi.waitFor(() => expect(screen.getByRole('status')).toHaveAttribute('data-state', 'idle'))
+  await vi.waitFor(() => expect(screen.queryByRole('status')).toBeNull())
   expect(screen.queryByText(generationMessage)).toBeNull()
-  expect(screen.getByText(message)).toBeInTheDocument()
+  expect(screen.queryByText(message)).toBeNull()
 })
 
 it('should hide feed syncing activity', () => {
