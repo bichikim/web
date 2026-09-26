@@ -56,7 +56,7 @@ export const persistRestoredPlayback = (options: PersistRestoredPlaybackOptions)
     return true
   }
 
-  if (!transition.playback.isPlaying || positionSeconds === null) {
+  if (positionSeconds === null) {
     return false
   }
 
