@@ -1,3 +1,4 @@
+import {parseDate} from 'src/features/civil-date'
 import {isNonBlankString} from 'src/utils/is-non-blank-string'
 
 export interface ExpenseItem {
@@ -30,7 +31,7 @@ export type ExpenseParseResult =
 const MAXIMUM_ITEMS = 20
 const EXPENSE_LINE_PATTERN =
   /^\s*(?<name>.+?)\s+(?<unitPrice>[\d,]+)\s*원(?:\s+(?<quantity>[\d,]+)\s*개)?\s*$/u
-const DATE_LINE_PATTERN = /^\s*(?<date>\d{4}-\d{1,2}-\d{1,2})\s*$/u
+const DATE_LINE_PATTERN = /^\s*(?<year>\d{4})-(?<month>\d{1,2})-(?<day>\d{1,2})\s*$/u
 
 const invalid = (code: ExpenseParseError['code']): ExpenseParseResult => ({
   error: {code},
@@ -62,7 +63,25 @@ const readDate = (value: unknown) => {
     return null
   }
 
-  return typeof value === 'string' && isNonBlankString(value) ? value.trim() : null
+  if (typeof value !== 'string' || !isNonBlankString(value)) {
+    return null
+  }
+
+  const date = value.trim()
+  return parseDate(date) === null ? null : date
+}
+
+const readTextDate = (line: string) => {
+  const dateMatch = DATE_LINE_PATTERN.exec(line)
+  const year = dateMatch?.groups?.year
+  const month = dateMatch?.groups?.month
+  const day = dateMatch?.groups?.day
+  if (year === undefined || month === undefined || day === undefined) {
+    return null
+  }
+
+  const normalizedDate = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`
+  return parseDate(normalizedDate) === null ? null : `${year}-${month}-${day}`
 }
 
 const readQuestions = (value: unknown) => {
@@ -169,9 +188,8 @@ export const parseExpenseText = (text: string): ExpenseParseResult => {
   const items: Array<ExpenseItem> = []
 
   for (const line of lines) {
-    const dateMatch = DATE_LINE_PATTERN.exec(line)
-    const dateValue = dateMatch?.groups?.date
-    if (dateValue !== undefined && date === null) {
+    const dateValue = readTextDate(line)
+    if (dateValue !== null && date === null) {
       date = dateValue
     } else {
       const expenseMatch = EXPENSE_LINE_PATTERN.exec(line)
