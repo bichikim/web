@@ -220,6 +220,52 @@ it('should preserve a sync state written before generation completes', async () 
   })
 })
 
+it('should preserve a sync error after queued generation completes', async () => {
+  const fixture = createFixture()
+  const syncError = {
+    message: '1개 피드를 가져오지 못했어요. 주소나 CORS 설정을 확인해 주세요.',
+    status: 'error',
+  } as const
+  fixture.setState(syncError)
+  fixture.controller.schedule({jobIds: ['job-1']})
+
+  await vi.waitFor(() => expect(fixture.onCompleted).toHaveBeenCalledOnce())
+  await vi.waitFor(() => expect(fixture.setState).toHaveBeenLastCalledWith(syncError))
+})
+
+it('should not restore a sync error cleared by a later successful sync', async () => {
+  const fixture = createFixture()
+  const generation =
+    Promise.withResolvers<Awaited<ReturnType<FeedGenerationRuntime['generateDialogueAudio']>>>()
+  let reportProgress: () => void = () => undefined
+  fixture.runtime.generateDialogueAudio.mockImplementation(async ({onChunk}) => {
+    reportProgress = () => onChunk(1, 2)
+    return generation.promise
+  })
+  fixture.setState({message: '피드 동기화 실패', status: 'error'})
+  fixture.controller.schedule({jobIds: ['job-1']})
+
+  await vi.waitFor(() => expect(fixture.runtime.generateDialogueAudio).toHaveBeenCalledOnce())
+  fixture.setState({message: '새 피드가 없어요.', status: 'idle'})
+  reportProgress()
+  generation.resolve({
+    ok: true,
+    value: {
+      audio: new Blob(['audio']),
+      durationMs: 1000,
+      segments: [{durationMs: 1000, index: 0, startMs: 0, text: '새 소식'}],
+    },
+  })
+
+  await vi.waitFor(() => expect(fixture.onCompleted).toHaveBeenCalledOnce())
+  await vi.waitFor(() =>
+    expect(fixture.setState).toHaveBeenLastCalledWith({
+      message: '다음 피드 확인을 기다리고 있어요.',
+      status: 'idle',
+    }),
+  )
+})
+
 it('should preserve an interrupted job when cancel races generation start', async () => {
   const fixture = createFixture()
   const generationStart = Promise.withResolvers<boolean>()

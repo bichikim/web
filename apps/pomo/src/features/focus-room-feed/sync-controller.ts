@@ -1,4 +1,4 @@
-import type {PFeedState} from './feed-controller'
+import {NO_FEED_CONNECTIONS_STATE, type PFeedState} from './feed-controller'
 import type {FeedDialogueRepository} from './feed-dialogue-repository'
 import type {FeedFetcher, FeedSyncSummary, SynchronizeFeedsOptions} from './feed-sync'
 import type {FeedGenerationSettings} from './generation-settings'
@@ -65,10 +65,7 @@ const runFeedSync = async (context: FeedSyncContext): Promise<void> => {
     await context.options.reloadIssues()
 
     if (connections.length === 0) {
-      setSyncState(context, {
-        message: '설정에서 구독 피드를 추가해 주세요.',
-        status: 'idle',
-      })
+      context.options.setState(NO_FEED_CONNECTIONS_STATE)
       return
     }
 

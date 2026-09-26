@@ -20,9 +20,13 @@ import {
   renderModal,
 } from '../../__tests__/feed-status/fixtures'
 
-vi.mock('src/features/focus-room-feed', () => ({
-  usePFeedContext: vi.fn(),
-}))
+vi.mock('src/features/focus-room-feed', async () => {
+  const {isNoFeedConnectionGuidance} = await vi.importActual<
+    typeof import('src/features/focus-room-feed/feed-controller')
+  >('src/features/focus-room-feed/feed-controller')
+
+  return {isNoFeedConnectionGuidance, usePFeedContext: vi.fn()}
+})
 
 vi.mock('src/features/model-download', () => ({
   useModelDownload: vi.fn(),
