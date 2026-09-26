@@ -20,6 +20,7 @@ interface ChatComposerProps {
 export const ChatComposer = (props: ChatComposerProps) => {
   const isSpeechBusy = () => isSpeechBusyActivity(props.speech.activity())
   const isRecording = () => props.speech.activity() === 'recording'
+  const isSendDisabled = () => !isRecording() && (!props.chat.canSend() || isSpeechBusy())
   const microphoneLabel = () => {
     if (isRecording()) {
       return '마이크 끄기'
@@ -38,7 +39,10 @@ export const ChatComposer = (props: ChatComposerProps) => {
   const handleDraftKeyDown = (event: KeyboardEvent & {currentTarget: HTMLTextAreaElement}) => {
     if (event.key === 'Enter' && !event.shiftKey && !event.isComposing) {
       event.preventDefault()
-      props.onSend()
+
+      if (!isSendDisabled()) {
+        props.onSend()
+      }
     }
   }
 
@@ -100,7 +104,7 @@ export const ChatComposer = (props: ChatComposerProps) => {
           </button>
           <button
             class={cx(BUTTON_CLASSES, 'bg-#9ed6bb text-#14251d hover:bg-#b8e8d0')}
-            disabled={!isRecording() && (!props.chat.canSend() || isSpeechBusy())}
+            disabled={isSendDisabled()}
             type="submit"
           >
             {sendButtonLabel()}
