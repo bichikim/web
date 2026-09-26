@@ -355,7 +355,7 @@ describe('MusicPlayerView', () => {
     ).toBe(true)
     expect(
       expandedRange.classList.contains(
-        '[--media-time-range-buffered-color:var(--pomo-color-muted-foreground)]',
+        '[--media-time-range-buffered-color:rgb(var(--pomo-color-foreground-channels)_/_30%)]',
       ),
     ).toBe(true)
     expect(
