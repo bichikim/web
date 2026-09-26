@@ -81,7 +81,7 @@ interface SceneToolbarProps {
 
 export const SceneToolbar = (props: SceneToolbarProps) => {
   const [actions, setActions] = createSignal<HTMLDivElement | null>(null)
-  const wrap = useToolbarWrap(actions)
+  const wrap = useToolbarWrap(actions, () => props.layout !== 'surface')
   return (
     <div
       class={cx(
