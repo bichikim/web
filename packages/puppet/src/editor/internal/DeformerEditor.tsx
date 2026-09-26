@@ -5,6 +5,7 @@ import {DeformerTools} from './DeformerTools'
 import type {DeformerEditMode} from './DeformerMode'
 import {isDeformerRestEditable, preserveDeformerPlacement} from './deformer-placement'
 import {BoneEditor} from './BoneEditor'
+import {SpatialDeformerEditor} from './SpatialDeformerEditor'
 import {editCurveTopology} from './curve-topology'
 import {findCurveSplit} from './deformer-paths'
 import {
@@ -449,15 +450,27 @@ export const DeformerEditor = (props: DeformerEditorProps) => {
     getSelectedDeformer(props.previewDocument ?? props.document, props.activeNodeId)
   return (
     <Show
-      when={node()?.pins !== undefined}
+      when={node()?.deformerType === 'spatial'}
       fallback={
         <Show
-          when={node()?.boneRestPoints !== undefined}
+          when={node()?.pins !== undefined}
           fallback={
-            <SurfaceEditor {...props} deformerMode={mode()} onDeformerModeChange={changeMode} />
+            <Show
+              when={node()?.boneRestPoints !== undefined}
+              fallback={
+                <SurfaceEditor {...props} deformerMode={mode()} onDeformerModeChange={changeMode} />
+              }
+            >
+              <BoneEditor
+                {...props}
+                node={node()!}
+                deformerMode={mode()}
+                onDeformerModeChange={changeMode}
+              />
+            </Show>
           }
         >
-          <BoneEditor
+          <PinEditor
             {...props}
             node={node()!}
             deformerMode={mode()}
@@ -466,12 +479,7 @@ export const DeformerEditor = (props: DeformerEditorProps) => {
         </Show>
       }
     >
-      <PinEditor
-        {...props}
-        node={node()!}
-        deformerMode={mode()}
-        onDeformerModeChange={changeMode}
-      />
+      <SpatialDeformerEditor {...props} node={node()!} />
     </Show>
   )
 }

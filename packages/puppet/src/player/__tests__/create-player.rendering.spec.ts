@@ -32,6 +32,7 @@ vi.mock('pixi.js', () => ({
   RenderTexture: {create: mocks.RenderTextureCreate},
   Sprite: mocks.Sprite,
   Texture: {from: mocks.TextureFrom},
+  UPDATE_PRIORITY: {LOW: -50},
 }))
 
 const puppetDocument: PuppetDocument = {
@@ -175,7 +176,7 @@ describe('createPlayer', () => {
       destroy: vi.fn(),
       init: vi.fn().mockResolvedValue(undefined),
       render: vi.fn(),
-      renderer: {render: vi.fn(), resolution: 1},
+      renderer: {render: vi.fn(), resetState: vi.fn(), resolution: 1},
       screen: {height: 100, width: 200},
       stage: {addChild: vi.fn()},
       start: vi.fn(),
@@ -347,11 +348,20 @@ describe('createPlayer', () => {
         },
       ],
     }
+    const onFrame = vi.fn()
     const player = await createPlayer({
       canvas: globalThis.document.createElement('canvas'),
       document: prepareDocument(renderDocument),
+      onAfterRender: vi.fn(),
+      onFrame,
       parameterValues: {'angle-x': 15, 'angle-y': 0},
     })
+    expect(application.renderer.resetState.mock.invocationCallOrder[0]).toBeLessThan(
+      application.renderer.render.mock.invocationCallOrder[0]!,
+    )
+    expect(application.renderer.render.mock.invocationCallOrder.at(-1)).toBeLessThan(
+      onFrame.mock.invocationCallOrder[0]!,
+    )
     const styledMesh = runtimeMeshes[0]!
     const clippedMesh = runtimeMeshes[2]!
     const nestedMaskSource = runtimeMeshes[4]!

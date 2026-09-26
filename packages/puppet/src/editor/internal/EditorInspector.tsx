@@ -5,7 +5,6 @@ import {For, type JSX, Show} from 'solid-js'
 
 import {getPartRenderProperties, type PuppetParameterValues} from '../../deformation'
 import {
-  canUsePartAsMask,
   type PuppetDocument,
   type PuppetPart,
   type PuppetSceneDeformerNode,
@@ -28,23 +27,8 @@ import {getParameterEditTarget} from './parameter-edit-target'
 import {setParameterKeyformPartProperties, setPartRenderProperties} from './part-properties'
 import {setMaskTarget} from './mask-targets'
 import {PartProperties} from './PartProperties'
-const getMaskTargetOptions = (document: PuppetDocument, partId: string) =>
-  document.parts.flatMap((part) => {
-    if (part.id === partId) {
-      return []
-    }
-
-    return [
-      {
-        disabled:
-          isSceneNodeLocked(document, part.id) ||
-          !canUsePartAsMask({maskPartId: partId, partId: part.id, parts: document.parts}),
-        label: getSceneNode(document, part.id)?.name ?? part.id,
-        part,
-        reason: isSceneNodeLocked(document, part.id) ? '잠긴 레이어' : '순환 참조',
-      },
-    ]
-  })
+import {SpatialDeformerProperties} from './SpatialDeformerProperties'
+import {getMaskTargetOptions} from './mask-target-options'
 
 export interface EditorInspectorProps {
   readonly editingDisabled?: boolean
@@ -344,19 +328,14 @@ const ControlPointProperties = (props: ControlPointPropertiesProps) => {
   )
 }
 
-interface SelectedControlPoint {
-  readonly node: PuppetSceneDeformerNode
-  readonly pointIndex: number
-}
-
-const getSelectedControlPoints = (
+const getSelectedControlPointIndices = (
   node: PuppetSceneDeformerNode | undefined,
   indices: ReadonlyArray<number> | undefined,
-): ReadonlyArray<SelectedControlPoint> =>
+): ReadonlyArray<number> =>
   node === undefined || node.boneRestPoints !== undefined || node.pins !== undefined
     ? []
-    : [...new Set(indices ?? [])].flatMap((pointIndex) =>
-        pointIndex >= 0 && pointIndex < node.controlPoints.length / 2 ? [{node, pointIndex}] : [],
+    : [...new Set(indices ?? [])].filter(
+        (pointIndex) => pointIndex >= 0 && pointIndex < node.controlPoints.length / 2,
       )
 
 const getActiveNode = (document: PuppetDocument, nodeId: string | undefined) =>
@@ -413,19 +392,72 @@ const createPartPropertiesController = (props: EditorInspectorProps) => {
   return {activePart, canEditRest, canEditStatic, canEditVisual, update}
 }
 
+interface DeformerFieldsProps {
+  readonly activeBindingId?: string
+  readonly activeKeyformValues?: PuppetParameterValues | null
+  readonly document: PuppetDocument
+  readonly node: PuppetSceneDeformerNode
+  readonly disabled: boolean
+  readonly editMode?: 'motion' | 'parameter'
+  readonly selectedPoints?: ReadonlyArray<number>
+  readonly onChange: (property: TransformProperty, value: number) => void
+  readonly onDivisionChange: (axis: 'columns' | 'rows', divisions: number) => void
+  readonly onDocumentChange?: (document: PuppetDocument) => void
+  readonly onEditEnd?: () => void
+  readonly onEditStart?: () => void
+  readonly targetNodeIds?: ReadonlyArray<string>
+}
+
+const DeformerFields = (props: DeformerFieldsProps) => (
+  <Show
+    when={props.node.deformerType === 'spatial'}
+    fallback={
+      <>
+        <TransformProperties
+          disabled={props.disabled}
+          node={props.node}
+          onChange={props.onChange}
+          onEditEnd={props.onEditEnd}
+          onEditStart={props.onEditStart}
+        />
+        <CurveProperties
+          document={props.document}
+          node={props.node}
+          disabled={props.disabled}
+          selectedPoints={props.selectedPoints}
+          onDocumentChange={props.onDocumentChange}
+        />
+        <GridProperties
+          node={props.node}
+          resolutionEditingDisabled={props.disabled}
+          onDivisionChange={props.onDivisionChange}
+          onEditEnd={props.onEditEnd}
+          onEditStart={props.onEditStart}
+        />
+      </>
+    }
+  >
+    <SpatialDeformerProperties {...props} />
+  </Show>
+)
+
 export const EditorInspector = (props: EditorInspectorProps) => {
   const activeNode = () =>
     getActiveNode(props.previewDocument ?? props.document, props.activeNodeId)
   const deformerNode = () => getDeformerNode(activeNode())
+  const selectedControlPointIndices = () => {
+    const node = deformerNode()
+    return node?.deformerType === 'spatial'
+      ? []
+      : getSelectedControlPointIndices(node, props.selectedControlPointIndices)
+  }
   const partProperties = createPartPropertiesController(props)
   const handleTransformChange = (property: TransformProperty, value: number) => {
     const node = activeNode()
     if (node?.kind !== 'deformer') {
       return
     }
-
     const document = updateInspectorTransform(props, node, property, value)
-
     if (document !== undefined) {
       props.onDocumentChange?.(document)
     }
@@ -435,7 +467,6 @@ export const EditorInspector = (props: EditorInspectorProps) => {
     if (node?.kind !== 'deformer') {
       return
     }
-
     const document = updateInspectorGrid({axis, node, pointIndex, props, value})
 
     if (document !== undefined) {
@@ -462,13 +493,12 @@ export const EditorInspector = (props: EditorInspectorProps) => {
   }
   const handleCurveToggle = (pointIndex: number, hasHandle: boolean) => {
     const node = deformerNode()
-    if (node === undefined) {
-      return
-    }
-
-    const document = hasHandle
-      ? removeDeformerCurveHandle(props.document, node.id, pointIndex)
-      : addDeformerCurveHandle(props.document, node.id, pointIndex)
+    const document =
+      node === undefined
+        ? undefined
+        : hasHandle
+          ? removeDeformerCurveHandle(props.document, node.id, pointIndex)
+          : addDeformerCurveHandle(props.document, node.id, pointIndex)
 
     if (document !== undefined) {
       props.onDocumentChange?.(document)
@@ -485,20 +515,20 @@ export const EditorInspector = (props: EditorInspectorProps) => {
       </Show>
       <Show when={props.containerUnwrapAvailable && props.onContainerUnwrap !== undefined}>
         <section aria-label="컨테이너 작업" class="selection-actions puppet-selection-actions">
-          <Show when={props.containerUnwrapAvailable && props.onContainerUnwrap !== undefined}>
-            <EditorButton type="button" onClick={() => props.onContainerUnwrap?.()}>
-              컨테이너 해제
-            </EditorButton>
-          </Show>
+          <EditorButton type="button" onClick={() => props.onContainerUnwrap?.()}>
+            컨테이너 해제
+          </EditorButton>
         </section>
       </Show>
       <Show when={partProperties.activePart()}>
         {(part) => (
           <PartProperties
+            document={props.document}
             maskTargetOptions={getMaskTargetOptions(props.document, part().id)}
             maskPicking={props.maskPickSourcePartId === part().id}
             part={part()}
             staticDisabled={!partProperties.canEditStatic() || props.editMode !== 'parameter'}
+            spatialDisabled={!partProperties.canEditRest() || props.editMode !== 'parameter'}
             visualDisabled={!partProperties.canEditVisual()}
             onEditEnd={props.onEditEnd}
             onEditStart={props.onEditStart}
@@ -519,51 +549,48 @@ export const EditorInspector = (props: EditorInspectorProps) => {
             onMaskPickCancel={props.onMaskPickCancel}
             onMaskPickStart={props.onMaskPickStart}
             onStaticChange={(properties) => partProperties.update(part(), properties, false)}
+            onDocumentChange={props.onDocumentChange}
           />
         )}
       </Show>
       {props.layerOrderProperties}
-      <Show keyed when={deformerNode()}>
+      <Show when={deformerNode()}>
         {(node) => (
-          <>
-            <TransformProperties
-              disabled={!partProperties.canEditRest()}
-              node={node}
-              onChange={handleTransformChange}
-              onEditEnd={props.onEditEnd}
-              onEditStart={props.onEditStart}
-            />
-            <CurveProperties
-              document={props.document}
-              node={node}
-              disabled={!partProperties.canEditRest()}
-              selectedPoints={props.selectedControlPointIndices}
-              onDocumentChange={props.onDocumentChange}
-            />
-            <GridProperties
-              node={node}
-              resolutionEditingDisabled={!partProperties.canEditRest()}
-              onDivisionChange={handleGridDivisionChange}
-              onEditEnd={props.onEditEnd}
-              onEditStart={props.onEditStart}
-            />
-          </>
-        )}
-      </Show>
-      <For each={getSelectedControlPoints(deformerNode(), props.selectedControlPointIndices)}>
-        {(selection) => (
-          <ControlPointProperties
-            curveEditingDisabled={!partProperties.canEditRest()}
-            node={selection.node}
-            pointEditingDisabled={!partProperties.canEditRest()}
-            pointIndex={selection.pointIndex}
-            onCurveToggle={handleCurveToggle}
+          <DeformerFields
+            activeBindingId={props.activeBindingId}
+            activeKeyformValues={props.activeKeyformValues}
+            disabled={!partProperties.canEditRest()}
+            document={props.document}
+            editMode={props.editMode}
+            node={node()}
+            onChange={handleTransformChange}
+            onDivisionChange={handleGridDivisionChange}
+            onDocumentChange={props.onDocumentChange}
             onEditEnd={props.onEditEnd}
             onEditStart={props.onEditStart}
-            onPointChange={handleGridPointChange}
+            selectedPoints={props.selectedControlPointIndices}
+            targetNodeIds={props.targetNodeIds}
           />
         )}
-      </For>
+      </Show>
+      <Show when={deformerNode()}>
+        {(node) => (
+          <For each={selectedControlPointIndices()}>
+            {(pointIndex) => (
+              <ControlPointProperties
+                curveEditingDisabled={!partProperties.canEditRest()}
+                node={node()}
+                pointEditingDisabled={!partProperties.canEditRest()}
+                pointIndex={pointIndex}
+                onCurveToggle={handleCurveToggle}
+                onEditEnd={props.onEditEnd}
+                onEditStart={props.onEditStart}
+                onPointChange={handleGridPointChange}
+              />
+            )}
+          </For>
+        )}
+      </Show>
       <Show when={props.notice}>{(message) => <p class="notice">{message()}</p>}</Show>
       {props.children}
     </aside>

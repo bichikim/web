@@ -6,6 +6,31 @@ import {createDeformer, createSceneGroup, setSceneNodeState} from '../scene-grap
 import {convertSceneContainers, getContainerKind} from '../container-conversion'
 
 describe('convertSceneContainers', () => {
+  test('should create a 3D deformer and attach its child image surfaces', () => {
+    const source = createDemoDocument()
+    const converted = convertSceneContainers({
+      document: source,
+      nodeIds: ['shapes'],
+      targetKind: 'spatial',
+    })!
+    const node = getDocumentScene(converted).roots.find((candidate) => candidate.id === 'shapes')!
+    expect(getContainerKind(node)).toBe('spatial')
+    expect(node).toMatchObject({
+      deformerType: 'spatial',
+      spatialRotationParameterIds: [null, null, null],
+    })
+    expect(converted.parts.find((part) => part.id === 'shape-circle')?.spatial?.groupId).toBe(
+      'shapes',
+    )
+    expect(parseDocument(JSON.stringify(converted)).ok).toBe(true)
+
+    const restored = convertSceneContainers({
+      document: converted,
+      nodeIds: ['shapes'],
+      targetKind: 'group',
+    })!
+    expect(restored.parts.find((part) => part.id === 'shape-circle')?.spatial).toBeUndefined()
+  })
   test('should convert groups to deformers while preserving container identity and children', () => {
     const grouped = createSceneGroup(createDemoDocument(), [])!
     const converted = convertSceneContainers({

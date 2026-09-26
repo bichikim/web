@@ -26,6 +26,13 @@ export const createDeformerKeyform = (
   kind: node.kind,
   nodeId: node.id,
   ...(node.rotationOrigin === undefined ? {} : {rotationOrigin: node.rotationOrigin}),
+  ...(node.spatialOrigin === undefined ? {} : {spatialOrigin: node.spatialOrigin}),
+  ...(node.spatialMeshPosition === undefined
+    ? {}
+    : {spatialMeshPosition: node.spatialMeshPosition}),
+  ...(node.spatialRotation === undefined ? {} : {spatialRotation: node.spatialRotation}),
+  ...(node.spatialScale === undefined ? {} : {spatialScale: node.spatialScale}),
+  ...(node.spatialTranslation === undefined ? {} : {spatialTranslation: node.spatialTranslation}),
 })
 
 const getDeformerCoordinates = (
@@ -64,6 +71,45 @@ const getControlPointCenter = (controlPoints: ReadonlyArray<number>) => {
 
 const getRestRotationOrigin = (deformer: PuppetSceneDeformerNode) =>
   deformer.rotationOrigin ?? getControlPointCenter(deformer.controlPoints)
+
+type SpatialProperty =
+  | 'spatialMeshPosition'
+  | 'spatialOrigin'
+  | 'spatialRotation'
+  | 'spatialScale'
+  | 'spatialTranslation'
+
+const getRestSpatialCoordinates = (deformer: PuppetSceneDeformerNode, key: SpatialProperty) =>
+  deformer[key] ?? (key === 'spatialScale' ? ([1, 1, 1] as const) : ([0, 0, 0] as const))
+
+const toSpatialCoordinates = (
+  values: ReadonlyArray<number>,
+  fallback = 0,
+): readonly [number, number, number] => [
+  values[0] ?? fallback,
+  values[1] ?? fallback,
+  values[2] ?? fallback,
+]
+
+const sampleSpatialCoordinates = (
+  options: SampleParameterDeformerOptions,
+  key: SpatialProperty,
+) => {
+  const rest = getRestSpatialCoordinates(options.deformer, key)
+  return toSpatialCoordinates(
+    sampleParameterCoordinates({
+      binding: options.binding,
+      keyformCoordinates: options.binding.keyforms.map(
+        (keyform) =>
+          keyform.deformers?.find((candidate) => candidate.nodeId === options.deformer.id)?.[key] ??
+          rest,
+      ),
+      restCoordinates: rest,
+      values: options.values,
+    }),
+    key === 'spatialScale' ? 1 : 0,
+  )
+}
 
 const getKeyformRotationOrigin = (
   keyform: PuppetParameterKeyform,
@@ -148,8 +194,8 @@ export interface SampleParameterDeformerOptions {
 
 export const sampleParameterDeformer = (
   options: SampleParameterDeformerOptions,
-): PuppetParameterDeformerKeyform =>
-  createSampledDeformer(
+): PuppetParameterDeformerKeyform => {
+  const sampled = createSampledDeformer(
     options.deformer,
     sampleParameterCoordinates({
       binding: options.binding,
@@ -180,8 +226,19 @@ export const sampleParameterDeformer = (
       values: options.values,
     }),
   )
+  return options.deformer.deformerType === 'spatial'
+    ? {
+        ...sampled,
+        spatialMeshPosition: sampleSpatialCoordinates(options, 'spatialMeshPosition'),
+        spatialOrigin: sampleSpatialCoordinates(options, 'spatialOrigin'),
+        spatialRotation: sampleSpatialCoordinates(options, 'spatialRotation'),
+        spatialScale: sampleSpatialCoordinates(options, 'spatialScale'),
+        spatialTranslation: sampleSpatialCoordinates(options, 'spatialTranslation'),
+      }
+    : sampled
+}
 
-const composeDeformer = (
+export const composeParameterDeformer = (
   document: PuppetDocument,
   deformer: PuppetSceneDeformerNode,
   parameterValues: PuppetParameterValueMap | undefined,
@@ -189,9 +246,19 @@ const composeDeformer = (
   const restCoordinates = getRestCoordinates(deformer)
   const restCurveHandleCoordinates = getCurveHandleCoordinates(deformer.curveHandles, deformer)
   const restRotationOrigin = Object.values(getRestRotationOrigin(deformer))
+  const restSpatialOrigin = getRestSpatialCoordinates(deformer, 'spatialOrigin')
+  const restSpatialMeshPosition = getRestSpatialCoordinates(deformer, 'spatialMeshPosition')
+  const restSpatialRotation = getRestSpatialCoordinates(deformer, 'spatialRotation')
+  const restSpatialScale = getRestSpatialCoordinates(deformer, 'spatialScale')
+  const restSpatialTranslation = getRestSpatialCoordinates(deformer, 'spatialTranslation')
   let coordinates = restCoordinates
   let curveHandleCoordinates = restCurveHandleCoordinates
   let rotationOriginCoordinates = restRotationOrigin
+  let spatialOriginCoordinates: ReadonlyArray<number> = restSpatialOrigin
+  let spatialMeshPositionCoordinates: ReadonlyArray<number> = restSpatialMeshPosition
+  let spatialRotationCoordinates: ReadonlyArray<number> = restSpatialRotation
+  let spatialScaleCoordinates: ReadonlyArray<number> = restSpatialScale
+  let spatialTranslationCoordinates: ReadonlyArray<number> = restSpatialTranslation
 
   for (const binding of document.parameterBindings ?? []) {
     if (binding.targetDeformerIds?.includes(deformer.id) === true) {
@@ -219,6 +286,38 @@ const composeDeformer = (
         restRotationOrigin,
         weight,
       )
+      if (deformer.deformerType === 'spatial') {
+        spatialMeshPositionCoordinates = addDeformerDelta(
+          spatialMeshPositionCoordinates,
+          sampled.spatialMeshPosition ?? restSpatialMeshPosition,
+          restSpatialMeshPosition,
+          weight,
+        )
+        spatialOriginCoordinates = addDeformerDelta(
+          spatialOriginCoordinates,
+          sampled.spatialOrigin ?? restSpatialOrigin,
+          restSpatialOrigin,
+          weight,
+        )
+        spatialRotationCoordinates = addDeformerDelta(
+          spatialRotationCoordinates,
+          sampled.spatialRotation ?? restSpatialRotation,
+          restSpatialRotation,
+          weight,
+        )
+        spatialScaleCoordinates = addDeformerDelta(
+          spatialScaleCoordinates,
+          sampled.spatialScale ?? restSpatialScale,
+          restSpatialScale,
+          weight,
+        )
+        spatialTranslationCoordinates = addDeformerDelta(
+          spatialTranslationCoordinates,
+          sampled.spatialTranslation ?? restSpatialTranslation,
+          restSpatialTranslation,
+          weight,
+        )
+      }
     }
   }
 
@@ -233,6 +332,15 @@ const composeDeformer = (
     controlPoints: sampled.controlPoints,
     curveHandles: sampled.curveHandles,
     rotationOrigin: sampled.rotationOrigin,
+    ...(deformer.deformerType === 'spatial'
+      ? {
+          spatialMeshPosition: toSpatialCoordinates(spatialMeshPositionCoordinates),
+          spatialOrigin: toSpatialCoordinates(spatialOriginCoordinates),
+          spatialRotation: toSpatialCoordinates(spatialRotationCoordinates),
+          spatialScale: toSpatialCoordinates(spatialScaleCoordinates, 1),
+          spatialTranslation: toSpatialCoordinates(spatialTranslationCoordinates),
+        }
+      : {}),
   }
 }
 
@@ -248,7 +356,7 @@ const composeSceneNodes = (
     const children = composeSceneNodes(document, node.children, parameterValues)
     return node.kind === 'group'
       ? {...node, children}
-      : {...composeDeformer(document, node, parameterValues), children}
+      : {...composeParameterDeformer(document, node, parameterValues), children}
   })
 
 export const composeParameterScene = (
