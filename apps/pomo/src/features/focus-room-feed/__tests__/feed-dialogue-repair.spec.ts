@@ -55,24 +55,37 @@ it('should detect only leaked identifiers in development feed dialogues', () => 
       metadata: metadata('clean', 'https://example.test/__dev/feeds/rss.xml'),
     }),
   ).toBe(false)
+  expect(
+    isMalformedDevFeedDialogue({
+      dialogue: dialogue('invalid-source', 'pomo-dev-feed: leaked'),
+      metadata: metadata('invalid-source', 'not-a-url'),
+    }),
+  ).toBe(false)
 })
 
 it('should detect only the exact legacy development failure', () => {
   expect(isLegacyDevFeedFailure(failure())).toBe(true)
   expect(isLegacyDevFeedFailure(failure({sourceUrl: 'https://example.test/article'}))).toBe(false)
+  expect(isLegacyDevFeedFailure(failure({sourceUrl: 'not-a-url'}))).toBe(false)
   expect(isLegacyDevFeedFailure(failure({status: 'queued'}))).toBe(false)
   expect(isLegacyDevFeedFailure(failure({message: 'different'}))).toBe(false)
 })
 
 it('should remove malformed dialogues, metadata, and legacy failed items', async () => {
+  const invalidMetadata = metadata('invalid-source', 'not-a-url')
   const malformedMetadata = metadata('malformed', 'https://example.test/__dev/feeds/rss.xml')
   const cleanMetadata = metadata('clean', 'https://example.test/article')
   const deleteDialogue = vi.fn(async () => undefined)
   const removeMetadata = vi.fn(async () => undefined)
   const removeItem = vi.fn(async () => undefined)
   const feedRepository = {
-    listItems: vi.fn(async () => [failure(), failure({feedItemId: 'current', message: 'current'})]),
+    listItems: vi.fn(async () => [
+      failure(),
+      failure({feedItemId: 'invalid-source', sourceUrl: 'not-a-url'}),
+      failure({feedItemId: 'current', message: 'current'}),
+    ]),
     listMetadata: vi.fn(async () => [
+      invalidMetadata,
       malformedMetadata,
       cleanMetadata,
       metadata('missing', 'https://example.test/article'),
@@ -83,6 +96,10 @@ it('should remove malformed dialogues, metadata, and legacy failed items', async
   const dialogueRepository = {
     deleteDialogue,
     getDialogue: vi.fn(async (id: string) => {
+      if (id === 'invalid-source') {
+        return dialogue(id, 'pomo-dev-feed: leaked')
+      }
+
       if (id === 'malformed') {
         return dialogue(id, 'pomo-dev-feed: leaked')
       }
@@ -106,4 +123,6 @@ it('should remove malformed dialogues, metadata, and legacy failed items', async
   expect(removeMetadata).toHaveBeenCalledWith('malformed')
   expect(removeItem).toHaveBeenCalledWith('feed', 'item-malformed')
   expect(removeItem).toHaveBeenCalledWith('feed', 'item')
+  expect(deleteDialogue).not.toHaveBeenCalledWith('invalid-source')
+  expect(removeItem).not.toHaveBeenCalledWith('feed', 'invalid-source')
 })
