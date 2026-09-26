@@ -1,3 +1,4 @@
+import {createTokenIdsMatching} from '../text-generation/create-token-ids-matching'
 // oxlint-disable eslint-js/camelcase -- Transformers.js tokenizer options are fixed external contracts.
 
 import type {TextTokenVocabulary} from '../text-generation/runtime'
@@ -42,18 +43,8 @@ export const createKoreanRefinementMessages = (text: string): Array<KoreanRefine
 ]
 
 /** Finds tokenizer entries that could reintroduce CJK characters during refinement. */
-export const createForeignCjkTokenIds = (tokenizer: TextTokenVocabulary): Array<number> => {
-  const specialTokenIds = new Set(tokenizer.all_special_ids)
-
-  return [...tokenizer.get_vocab().values()].filter((tokenId) => {
-    if (specialTokenIds.has(tokenId)) {
-      return false
-    }
-
-    const text = tokenizer.decode([tokenId], {skip_special_tokens: false})
-    return containsForeignCjk(text)
-  })
-}
+export const createForeignCjkTokenIds = (tokenizer: TextTokenVocabulary): Array<number> =>
+  createTokenIdsMatching(tokenizer, containsForeignCjk)
 
 /** Replaces unresolved foreign-script sentences with a safe Korean fallback. */
 export const replaceUnrefinedSentences = (text: string): string =>

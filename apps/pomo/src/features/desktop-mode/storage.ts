@@ -62,26 +62,19 @@ export const writeCleanExitStorage = (isClean: boolean, storage?: DesktopModeSto
   createDesktopStorage(DESKTOP_CLEAN_EXIT_STORAGE_KEY, cleanExitCodec, storage).write(isClean)
 }
 
-/** Reads whether the primary mode controller has handed ownership to a control surface. */
-export const readDesktopModeOwnerStorage = (
-  storage?: DesktopModeStorage,
-): DesktopModeOwnerState => {
-  try {
-    const value = getStorage(storage).getItem(DESKTOP_MODE_OWNER_STORAGE_KEY)
-    return isSupportedDesktopModeOwnerState(value) ? value : 'primary'
-  } catch {
-    return 'primary'
-  }
+const ownerCodec: ValueCodec<DesktopModeOwnerState> = {
+  decode: (stored) => (isSupportedDesktopModeOwnerState(stored) ? stored : null),
+  encode: (state) => state,
 }
+
+/** Reads the persisted controller ownership, defaulting to the primary controller. */
+export const readDesktopModeOwnerStorage = (storage?: DesktopModeStorage): DesktopModeOwnerState =>
+  createDesktopStorage(DESKTOP_MODE_OWNER_STORAGE_KEY, ownerCodec, storage).read() ?? 'primary'
 
 /** Persists the current desktop mode controller ownership state. */
 export const writeDesktopModeOwnerStorage = (
   state: DesktopModeOwnerState,
   storage?: DesktopModeStorage,
 ): void => {
-  try {
-    getStorage(storage).setItem(DESKTOP_MODE_OWNER_STORAGE_KEY, state)
-  } catch {
-    // Mode ownership still converges through BroadcastChannel when storage is unavailable.
-  }
+  createDesktopStorage(DESKTOP_MODE_OWNER_STORAGE_KEY, ownerCodec, storage).write(state)
 }

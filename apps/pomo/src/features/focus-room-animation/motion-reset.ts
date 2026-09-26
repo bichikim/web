@@ -1,3 +1,4 @@
+import {cosineEaseInOut} from 'src/utils/cosine-ease-in-out'
 import type {Container} from 'pixi.js'
 
 import {applyLoopingTranslation} from './looping-translation'
@@ -30,7 +31,7 @@ export const resetMotionPresentation = (options: ResetMotionPresentationOptions)
   }
 
   if (motion.kind === 'opacity-pulse') {
-    const easedPhase = (1 - Math.cos(phase * Math.PI)) / 2
+    const easedPhase = cosineEaseInOut(phase)
     applyOpacityPulse(sprite, motion, easedPhase)
   }
 

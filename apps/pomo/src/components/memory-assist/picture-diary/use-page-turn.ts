@@ -1,3 +1,4 @@
+import {clampUnit} from 'src/utils/clamp-unit'
 import {
   type Accessor,
   batch,
@@ -387,7 +388,7 @@ class PictureDiaryPageTurnMachine {
         return
       }
       startTime ??= time
-      const linearProgress = Math.min(1, (time - startTime) / PAGE_TURN_DURATION)
+      const linearProgress = clampUnit((time - startTime) / PAGE_TURN_DURATION)
       const progress = easeOutCubic(linearProgress)
       this.setFoldView(
         animation.currentGesture,

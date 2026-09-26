@@ -1,4 +1,4 @@
-import {selectMaximumBy} from 'src/utils/select-maximum-by'
+import {createTimestampedDualRuntimeStorage} from 'src/utils/runtime-storage/create-timestamped-dual-runtime-storage'
 import {z} from 'zod'
 
 import {
@@ -47,11 +47,6 @@ interface StoredDisplayThemePreference {
   readonly savedAt: number
 }
 
-const selectLatestStoredPreference = (
-  first: StoredDisplayThemePreference | null,
-  second: StoredDisplayThemePreference | null,
-) => selectMaximumBy(first, second, (value) => value.savedAt)
-
 export const parseDisplayThemePreference = (value: unknown): DisplayThemePreference | null => {
   const result = displayThemeSchema.safeParse(value)
   return result.success ? result.data : null
@@ -73,10 +68,11 @@ export const createDisplayThemePreferenceRepository = (
 ): DisplayThemePreferenceRepository => {
   const {storage} = options
   const now = options.now ?? Date.now
-  let writeRevision = 0
-  let latestSavedAt = 0
+  const coordinator = createTimestampedDualRuntimeStorage<StoredDisplayThemePreference>({
+    now,
+    timestamp: 'monotonic',
+  })
   let latestKnownPreference: StoredDisplayThemePreference | null = null
-  const pendingWrites = new Set<Promise<void>>()
   const writeLatestToss = createLatestStorageWriter(DISPLAY_THEME_STORAGE_KEY, storage.writeToss)
 
   const readWebPreference = () =>
@@ -91,25 +87,8 @@ export const createDisplayThemePreferenceRepository = (
     }
   }
 
-  const createStoredPreference = (
-    preference: DisplayThemePreference,
-  ): StoredDisplayThemePreference => {
-    latestSavedAt = Math.max(now(), latestSavedAt + 1)
-    return {preference, savedAt: latestSavedAt}
-  }
-
-  const writeNativePreference = (preference: StoredDisplayThemePreference) => {
-    const pendingWrite = writeLatestToss(preference)
-    pendingWrites.add(pendingWrite)
-    pendingWrite.finally(() => pendingWrites.delete(pendingWrite)).catch(() => undefined)
-    return pendingWrite
-  }
-
-  const waitForPendingWrites = async () => {
-    await Promise.all(
-      Array.from(pendingWrites, (pendingWrite) => pendingWrite.catch(() => undefined)),
-    )
-  }
+  const writeNativePreference = (preference: StoredDisplayThemePreference) =>
+    coordinator.trackWrite(writeLatestToss(preference))
 
   const persistPreference = async (preference: StoredDisplayThemePreference): Promise<void> => {
     const webWriteError = writeWebPreference(preference)
@@ -139,13 +118,8 @@ export const createDisplayThemePreferenceRepository = (
     }
   }
 
-  const write = (preference: DisplayThemePreference): Promise<void> => {
-    writeRevision += 1
-    const pendingWrite = persistPreference(createStoredPreference(preference))
-    pendingWrites.add(pendingWrite)
-    pendingWrite.finally(() => pendingWrites.delete(pendingWrite)).catch(() => undefined)
-    return pendingWrite
-  }
+  const write = (preference: DisplayThemePreference): Promise<void> =>
+    coordinator.writeStored((savedAt) => ({preference, savedAt}), persistPreference)
 
   const readWebFallback = (error: unknown): DisplayThemePreference => {
     let webPreference: StoredDisplayThemePreference | null = null
@@ -155,29 +129,29 @@ export const createDisplayThemePreferenceRepository = (
       webPreference = null
     }
     if (webPreference !== null) {
-      latestSavedAt = Math.max(latestSavedAt, webPreference.savedAt)
+      coordinator.observeSavedAt(webPreference.savedAt)
       return webPreference.preference
     }
     throw new Error('Failed to read display theme preference.', {cause: error})
   }
 
   const read = async (): Promise<DisplayThemePreference> => {
-    const initialWriteRevision = writeRevision
+    const initialWriteRevision = coordinator.revision()
     const usesTossStorage = storage.usesTossStorage()
 
     if (!usesTossStorage) {
       const webPreference = readWebPreference()
-      const latestPreference = selectLatestStoredPreference(latestKnownPreference, webPreference)
+      const latestPreference = coordinator.selectLatest(latestKnownPreference, webPreference)
       latestKnownPreference = latestPreference
-      latestSavedAt = Math.max(latestSavedAt, latestPreference?.savedAt ?? 0)
+      coordinator.observeSavedAt(latestPreference?.savedAt ?? 0)
       return latestPreference?.preference ?? DEFAULT_DISPLAY_THEME
     }
 
     try {
       const webPreference = readWebPreference()
-      if (webPreference === null && pendingWrites.size > 0) {
-        await waitForPendingWrites()
-        if (writeRevision !== initialWriteRevision) {
+      if (webPreference === null && coordinator.hasPendingWrites()) {
+        await coordinator.settleWrites()
+        if (coordinator.revision() !== initialWriteRevision) {
           return read()
         }
       }
@@ -186,26 +160,22 @@ export const createDisplayThemePreferenceRepository = (
         await storage.readToss(DISPLAY_THEME_STORAGE_KEY),
       )
 
-      if (writeRevision !== initialWriteRevision) {
-        await waitForPendingWrites()
+      if (coordinator.revision() !== initialWriteRevision) {
+        await coordinator.settleWrites()
         return read()
       }
 
       // Legacy string preferences have no timestamp, so preserve the native copy on a tie.
-      const latestPreference = selectLatestStoredPreference(tossPreference, webPreference)
+      const latestPreference = coordinator.selectLatest(tossPreference, webPreference)
 
       if (latestPreference === null) {
         writeWebPreference({preference: DEFAULT_DISPLAY_THEME, savedAt: 0})
         return DEFAULT_DISPLAY_THEME
       }
 
-      latestKnownPreference = selectLatestStoredPreference(latestPreference, latestKnownPreference)
+      latestKnownPreference = coordinator.selectLatest(latestPreference, latestKnownPreference)
 
-      latestSavedAt = Math.max(
-        latestSavedAt,
-        webPreference?.savedAt ?? 0,
-        tossPreference?.savedAt ?? 0,
-      )
+      coordinator.observeSavedAt(webPreference?.savedAt ?? 0, tossPreference?.savedAt ?? 0)
 
       if (latestPreference === webPreference) {
         await writeNativePreference(latestPreference).catch(() => undefined)
@@ -213,15 +183,15 @@ export const createDisplayThemePreferenceRepository = (
         writeWebPreference(latestPreference)
       }
 
-      if (writeRevision !== initialWriteRevision) {
-        await waitForPendingWrites()
+      if (coordinator.revision() !== initialWriteRevision) {
+        await coordinator.settleWrites()
         return read()
       }
 
       return latestPreference.preference
     } catch (error: unknown) {
-      if (writeRevision !== initialWriteRevision) {
-        await waitForPendingWrites()
+      if (coordinator.revision() !== initialWriteRevision) {
+        await coordinator.settleWrites()
         return read()
       }
       return readWebFallback(error)

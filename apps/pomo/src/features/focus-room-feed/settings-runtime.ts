@@ -1,3 +1,4 @@
+import {getWebRuntimeStorage} from 'src/utils/runtime-storage'
 import type {AutomaticDialogueSettings} from '../focus-room-dialogue/automatic-dialogue-settings-contract'
 import {feedGenerationRuntime} from './generation-runtime'
 import {type FeedGenerationSettings, resolveGenerationSettings} from './generation-settings'
@@ -33,6 +34,6 @@ export const createFeedSettingsRuntime = (storage: FeedConnectionStorage): FeedS
 })
 
 export const feedSettingsRuntime = createFeedSettingsRuntime({
-  getItem: (key) => localStorage.getItem(key),
-  setItem: (key, value) => localStorage.setItem(key, value),
+  getItem: (key) => getWebRuntimeStorage().getItem(key),
+  setItem: (key, value) => getWebRuntimeStorage().setItem(key, value),
 })

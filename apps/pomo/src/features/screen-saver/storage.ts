@@ -1,4 +1,4 @@
-import {selectMaximumBy} from 'src/utils/select-maximum-by'
+import {createTimestampedDualRuntimeStorage} from 'src/utils/runtime-storage/create-timestamped-dual-runtime-storage'
 import {z} from 'zod'
 
 import {
@@ -64,10 +64,11 @@ export const createScreenSaverRepository = (
   storage: ScreenSaverStorage,
   now: () => number = Date.now,
 ): ScreenSaverRepository => {
-  let writeRevision = 0
-  let latestSavedAt = 0
+  const coordinator = createTimestampedDualRuntimeStorage<StoredScreenSaverPreference>({
+    now,
+    timestamp: 'monotonic',
+  })
   let latestKnownPreference: StoredScreenSaverPreference | null = null
-  const pendingWrites = new Set<Promise<void>>()
   const writeLatestToss = createLatestStorageWriter(SCREEN_SAVER_STORAGE_KEY, storage.writeToss)
 
   const readWebPreference = (): StoredScreenSaverPreference | null => {
@@ -78,40 +79,21 @@ export const createScreenSaverRepository = (
     return storage.writeWeb(SCREEN_SAVER_STORAGE_KEY, preference)
   }
 
-  const createStoredPreference = (delay: ScreenSaverDelay): StoredScreenSaverPreference => {
-    latestSavedAt = Math.max(now(), latestSavedAt + 1)
-    return {delay, savedAt: latestSavedAt}
-  }
-
-  const writeNativePreference = (preference: StoredScreenSaverPreference) => {
-    const pendingWrite = writeLatestToss(preference)
-    pendingWrites.add(pendingWrite)
-    pendingWrite.finally(() => pendingWrites.delete(pendingWrite)).catch(() => undefined)
-    return pendingWrite
-  }
-
-  const waitForPendingWrites = async () => {
-    await Promise.all(
-      Array.from(pendingWrites, (pendingWrite) => pendingWrite.catch(() => undefined)),
-    )
-  }
+  const writeNativePreference = (preference: StoredScreenSaverPreference) =>
+    coordinator.trackWrite(writeLatestToss(preference))
 
   const readWebFallback = (webPreference = readWebPreference()) => {
-    const latestPreference = selectMaximumBy(
-      latestKnownPreference,
-      webPreference,
-      (value) => value.savedAt,
-    )
+    const latestPreference = coordinator.selectLatest(latestKnownPreference, webPreference)
     latestKnownPreference = latestPreference
-    latestSavedAt = Math.max(latestSavedAt, latestPreference?.savedAt ?? 0)
+    coordinator.observeSavedAt(latestPreference?.savedAt ?? 0)
     return latestPreference?.delay ?? DEFAULT_SCREEN_SAVER_DELAY
   }
 
   const read = async (): Promise<ScreenSaverDelay> => {
-    const initialWriteRevision = writeRevision
-    if (pendingWrites.size > 0) {
-      await waitForPendingWrites()
-      if (writeRevision !== initialWriteRevision) {
+    const initialWriteRevision = coordinator.revision()
+    if (coordinator.hasPendingWrites()) {
+      await coordinator.settleWrites()
+      if (coordinator.revision() !== initialWriteRevision) {
         return read()
       }
     }
@@ -126,26 +108,18 @@ export const createScreenSaverRepository = (
         await storage.readToss(SCREEN_SAVER_STORAGE_KEY),
       )
 
-      if (writeRevision !== initialWriteRevision) {
-        await waitForPendingWrites()
+      if (coordinator.revision() !== initialWriteRevision) {
+        await coordinator.settleWrites()
         return read()
       }
 
       // Legacy string preferences have no timestamp, so preserve the native copy on a tie.
-      const latestPreference = selectMaximumBy(
-        tossPreference,
-        webPreference,
-        (value) => value.savedAt,
-      )
+      const latestPreference = coordinator.selectLatest(tossPreference, webPreference)
       if (latestPreference === null) {
         return readWebFallback()
       }
 
-      latestSavedAt = Math.max(
-        latestSavedAt,
-        webPreference?.savedAt ?? 0,
-        tossPreference?.savedAt ?? 0,
-      )
+      coordinator.observeSavedAt(webPreference?.savedAt ?? 0, tossPreference?.savedAt ?? 0)
       if (
         latestKnownPreference === null ||
         latestPreference.savedAt >= latestKnownPreference.savedAt
@@ -159,23 +133,24 @@ export const createScreenSaverRepository = (
         writeWebPreference(latestPreference)
       }
 
-      if (writeRevision !== initialWriteRevision) {
-        await waitForPendingWrites()
+      if (coordinator.revision() !== initialWriteRevision) {
+        await coordinator.settleWrites()
         return read()
       }
 
       return latestPreference.delay
     } catch {
-      if (writeRevision !== initialWriteRevision) {
-        await waitForPendingWrites()
+      if (coordinator.revision() !== initialWriteRevision) {
+        await coordinator.settleWrites()
         return read()
       }
       return readWebFallback()
     }
   }
 
-  const persistScreenSaverDelay = async (delay: ScreenSaverDelay): Promise<void> => {
-    const preference = createStoredPreference(delay)
+  const persistScreenSaverDelay = async (
+    preference: StoredScreenSaverPreference,
+  ): Promise<void> => {
     const webWriteError = writeWebPreference(preference)
 
     if (!storage.usesTossStorage()) {
@@ -211,13 +186,8 @@ export const createScreenSaverRepository = (
     }
   }
 
-  const write = (delay: ScreenSaverDelay): Promise<void> => {
-    writeRevision += 1
-    const pendingWrite = persistScreenSaverDelay(delay)
-    pendingWrites.add(pendingWrite)
-    pendingWrite.finally(() => pendingWrites.delete(pendingWrite)).catch(() => undefined)
-    return pendingWrite
-  }
+  const write = (delay: ScreenSaverDelay): Promise<void> =>
+    coordinator.writeStored((savedAt) => ({delay, savedAt}), persistScreenSaverDelay)
 
   return {read, write}
 }

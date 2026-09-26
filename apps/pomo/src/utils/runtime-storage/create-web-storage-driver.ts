@@ -13,8 +13,10 @@ const expectSynchronousCompletion = (result: void | Promise<void>): void => {
 }
 
 /** Uses unstorage's localStorage driver while preserving synchronous browser reads and writes. */
-export const createWebStorageDriver = (): SynchronousWebStorageDriver => {
-  const driver = localStorageDriver({storage: localStorage})
+export const createWebStorageDriver = (
+  storage: Storage = globalThis.localStorage,
+): SynchronousWebStorageDriver => {
+  const driver = localStorageDriver({storage})
   const {removeItem, setItem} = driver
   if (removeItem === undefined || setItem === undefined) {
     throw new TypeError('Web storage driver must support writing and removal.')

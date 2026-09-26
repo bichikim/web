@@ -10,7 +10,7 @@ export const Source = (props: SourceProps) => {
   onCleanup(() => {
     const value = url()
     if (value !== null) {
-      URL.revokeObjectURL(value)
+      replaceBlobObjectUrl(value, () => null)
     }
   })
   const handleFileChange = (event: Event & {currentTarget: HTMLInputElement}) => {

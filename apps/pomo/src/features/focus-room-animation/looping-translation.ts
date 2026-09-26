@@ -1,6 +1,5 @@
+import {cosineEaseInOut} from 'src/utils/cosine-ease-in-out'
 import type {Container} from 'pixi.js'
-
-import {clampUnit} from 'src/utils/clamp-unit'
 
 import type {PixiSceneLoopingTranslation} from './layer-scene-definition'
 
@@ -23,6 +22,6 @@ export const applyLoopingTranslation = (
     progress / motion.fade.edgeFraction,
     (1 - progress) / motion.fade.edgeFraction,
   )
-  const easedVisibility = (1 - Math.cos(clampUnit(edgeVisibility) * Math.PI)) / 2
+  const easedVisibility = cosineEaseInOut(edgeVisibility)
   sprite.alpha = motion.fade.minimumOpacity + (1 - motion.fade.minimumOpacity) * easedVisibility
 }

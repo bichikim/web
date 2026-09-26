@@ -1,3 +1,4 @@
+import {clampUnit} from '../../utils/clamp-unit/index.ts'
 // oxlint-disable eslint-js/camelcase -- Supertonic ONNX tensor names are an external model contract.
 // oxlint-disable no-await-in-loop -- Each denoising step consumes the previous step.
 // oxlint-disable no-magic-numbers -- Model tensor dimensions and progress phases are fixed execution values.
@@ -453,7 +454,7 @@ export const createSupertonicExecutor = () => {
     for (const [index, chunk] of chunks.entries()) {
       const chunkContext: RunnerExecutionContext = {
         onProgress: (progress) => {
-          const chunkProgress = Math.max(0, Math.min(1, (progress - 50) / 40))
+          const chunkProgress = clampUnit((progress - 50) / 40)
           context.onProgress(48 + Math.floor(((index + chunkProgress) / chunks.length) * 48))
         },
         signal: context.signal,

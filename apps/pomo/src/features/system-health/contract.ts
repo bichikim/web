@@ -1,3 +1,4 @@
+import {isPlainObject} from 'es-toolkit/predicate'
 export const HEALTH_PROBE_STATUS = 'ok'
 
 export interface HealthProbe {
@@ -12,7 +13,7 @@ export interface SystemHealthResult {
 }
 
 export const isHealthProbe = (value: unknown): value is HealthProbe => {
-  if (typeof value !== 'object' || value === null) {
+  if (!isPlainObject(value)) {
     return false
   }
 

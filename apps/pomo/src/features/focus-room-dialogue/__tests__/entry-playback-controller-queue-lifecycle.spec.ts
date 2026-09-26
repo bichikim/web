@@ -149,14 +149,15 @@ describe('createEntryPlaybackController', () => {
     expect(controller.isDialogueScheduled('third')).toBe(true)
     expect(controller.isDialogueScheduled('absent')).toBe(false)
 
-    await flush()
+    await vi.waitFor(() => expect(started).toEqual(['first']))
     latestAudio().dispatchEvent(new Event('ended'))
-    await flush()
-    await flush()
+    await vi.waitFor(() => expect(started).toEqual(['first', 'second']))
     latestAudio().dispatchEvent(new Event('ended'))
     await playback
-    await flush()
-    await flush()
+    await vi.waitFor(() => {
+      expect(TestAudio.instances).toHaveLength(3)
+      expect(controller.isPlaying()).toBe(true)
+    })
     latestAudio().dispatchEvent(new Event('ended'))
     await queued
     expect(started).toEqual(['first', 'second'])

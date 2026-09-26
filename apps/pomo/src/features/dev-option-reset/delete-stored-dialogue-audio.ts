@@ -1,3 +1,4 @@
+import {uniq} from 'es-toolkit/array'
 import {createPDialogueRepository, deleteDialogueAudio} from 'src/features/focus-room-dialogue'
 
 export interface DialogueAudioReference {
@@ -31,7 +32,7 @@ export const deleteStoredDialogueAudio = async (
   const storage = createStorage()
   try {
     const dialogues = await storage.listDialogues()
-    const audioKeys = [...new Set(dialogues.map((dialogue) => dialogue.audioKey))]
+    const audioKeys = uniq(dialogues.map((dialogue) => dialogue.audioKey))
     const results = await Promise.allSettled(
       audioKeys.map((audioKey) => storage.deleteAudio(audioKey)),
     )

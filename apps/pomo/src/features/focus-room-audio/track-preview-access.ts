@@ -1,3 +1,5 @@
+import {isPlainObject} from 'es-toolkit/predicate'
+import {replaceBlobObjectUrl} from 'src/features/blob-object-url'
 import {getRuntimePublicOrigin, usesRemotePublicOrigin} from '../http-client/runtime-origin'
 import {readStoredAppSession} from '../user-auth/app-session'
 
@@ -31,11 +33,11 @@ const UUID_REGEXP = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}
 // oxlint-disable-next-line eslint/no-magic-numbers -- Preview response limit is two MiB.
 const MAXIMUM_PREVIEW_BYTES = 2 * 1024 * 1024
 const isTrackAccess = (value: unknown, trackId: string): value is TrackAccess => {
-  if (typeof value !== 'object' || value === null) {
+  if (!isPlainObject(value)) {
     return false
   }
 
-  const access = value as Readonly<Record<string, unknown>>
+  const access = value
 
   if (access.mode === 'preview') {
     if (typeof access.url !== 'string') {
@@ -103,8 +105,8 @@ const loadPreviewBlob = async (source: string): Promise<TrackPreviewSource> => {
     throw new TypeError('Track preview audio length is invalid')
   }
 
-  const objectUrl = URL.createObjectURL(blob)
-  return {ok: true, release: () => URL.revokeObjectURL(objectUrl), source: objectUrl}
+  const objectUrl = replaceBlobObjectUrl(null, () => blob)
+  return {ok: true, release: () => replaceBlobObjectUrl(objectUrl, () => null), source: objectUrl}
 }
 
 export const requestTrackAccess = async (trackId: string): Promise<TrackAccess | null> => {

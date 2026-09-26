@@ -1,3 +1,4 @@
+import {clamp} from 'es-toolkit/math'
 import {readPDisplayPreferences} from 'src/features/focus-room-display-preferences'
 import {getBackgroundRepository} from 'src/features/background'
 
@@ -29,7 +30,7 @@ const getDesktopWorkArea = (): DesktopWorkArea => {
 }
 
 const fitCoordinate = (start: number, length: number, size: number, preferred: number): number =>
-  Math.max(start, Math.min(preferred, start + Math.max(0, length - size)))
+  clamp(preferred, start, start + Math.max(0, length - size))
 
 const getControlSurfaceOptions = () => {
   const workArea = getDesktopWorkArea()

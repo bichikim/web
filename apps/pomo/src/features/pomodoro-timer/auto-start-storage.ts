@@ -1,4 +1,4 @@
-import {selectMaximumBy} from 'src/utils/select-maximum-by'
+import {createTimestampedDualRuntimeStorage} from 'src/utils/runtime-storage/create-timestamped-dual-runtime-storage'
 import {z} from 'zod'
 
 import {
@@ -57,6 +57,7 @@ export const createAutoStartStorage = ({
   storage,
   now,
 }: AutoStartStorageOptions): AutoStartStorage => {
+  const coordinator = createTimestampedDualRuntimeStorage<StoredPreference>({now})
   const writeLatestToss = createLatestStorageWriter(AUTO_START_STORAGE_KEY, storage.writeToss)
 
   const readWebPreference = () => {
@@ -92,11 +93,7 @@ export const createAutoStartStorage = ({
       const tossPreference = await readTossPreference()
 
       const currentWebPreference = readWebPreference()
-      const latestPreference = selectMaximumBy(
-        currentWebPreference,
-        tossPreference,
-        (value) => value.savedAt,
-      )
+      const latestPreference = coordinator.selectLatest(currentWebPreference, tossPreference)
 
       if (latestPreference !== null) {
         if (latestPreference === currentWebPreference) {
@@ -113,8 +110,7 @@ export const createAutoStartStorage = ({
   }
 
   /** Persists the auto-start preference until the host app or browser data is removed. */
-  const write = async (isEnabled: boolean) => {
-    const preference = {isEnabled, savedAt: now()} satisfies StoredPreference
+  const persistPreference = async (preference: StoredPreference) => {
     const webWriteError = writeWebPreference(preference)
 
     if (!storage.usesTossStorage()) {
@@ -133,6 +129,9 @@ export const createAutoStartStorage = ({
       }
     }
   }
+
+  const write = (isEnabled: boolean) =>
+    coordinator.writeStored((savedAt) => ({isEnabled, savedAt}), persistPreference)
 
   return {read, write}
 }

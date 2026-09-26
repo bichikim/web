@@ -1,4 +1,5 @@
 import {describe, expect, it} from 'vitest'
+import {encodeMonoPcm16Wav} from 'src/utils/encode-mono-pcm16-wav'
 
 import {
   createPAudioEnvelope,
@@ -66,6 +67,17 @@ describe('getPAudioEnvelopeLevel', () => {
 })
 
 describe('createPWaveEnvelope', () => {
+  it('should create an audible envelope from mono PCM samples and reject stereo input', () => {
+    const mono = encodeMonoPcm16Wav(Float32Array.of(-1, 1, 0.5, 0.5), 16000)
+    expect(createPWaveEnvelope(mono)?.levels).toEqual([1])
+    const stereo = mono.slice(0)
+    const view = new DataView(stereo)
+    view.setUint16(22, 2, true)
+    view.setUint32(28, 64000, true)
+    view.setUint16(32, 4, true)
+    expect(createPWaveEnvelope(stereo)).toBeNull()
+  })
+
   it('should reject short and invalid RIFF headers', () => {
     expect(createPWaveEnvelope(new ArrayBuffer(11))).toBeNull()
     expect(createPWaveEnvelope(new ArrayBuffer(12))).toBeNull()

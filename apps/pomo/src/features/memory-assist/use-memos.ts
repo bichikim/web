@@ -1,3 +1,4 @@
+import {subscribeWebStorageChange} from 'src/utils/subscribe-web-storage-change'
 import {type Accessor, createSignal, onCleanup, onMount} from 'solid-js'
 import {useEvent} from '@winter-love/solid-use/event'
 
@@ -76,21 +77,14 @@ export const useMemoryMemos = (): Accessor<ReadonlyArray<MemoryMemo>> => {
           console.error('Failed to load memory memos.', error)
         })
     }
-    const handleStorageChange = (event: Event) => {
-      if (
-        !(event instanceof StorageEvent) ||
-        event.storageArea === null ||
-        event.storageArea !== globalThis.window.localStorage ||
-        (event.key !== MEMORY_MEMOS_STORAGE_KEY && event.key !== null)
-      ) {
-        return
-      }
-
-      readStoredMemos(applyMemos)
-    }
-
     useEvent(globalThis.window, MEMORY_MEMOS_CHANGED_EVENT, handleChange)
-    useEvent(globalThis.window, 'storage', handleStorageChange)
+    onCleanup(
+      subscribeWebStorageChange({
+        includeUnknownArea: false,
+        key: MEMORY_MEMOS_STORAGE_KEY,
+        onChange: () => readStoredMemos(applyMemos),
+      }),
+    )
     readStoredMemos(setMemos)
 
     onCleanup(() => {

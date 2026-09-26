@@ -1,3 +1,5 @@
+import {createSerialTaskQueue} from 'src/utils/create-serial-task-queue'
+import {releaseCapturedPointer} from 'src/utils/release-captured-pointer'
 import {
   type DesktopBackgroundMouseEvent,
   type DesktopBackgroundPointerEventKind,
@@ -50,12 +52,11 @@ const handleClick = (event: MouseEvent): void => {
 export const useWebsiteBackgroundInteraction = () => {
   let forwardedPointerId: number | null = null
   let forwardedButton = 0
-  let eventQueue = Promise.resolve()
+  const eventQueue = createSerialTaskQueue()
 
   const enqueue = (event: DesktopBackgroundMouseEvent): void => {
-    eventQueue = eventQueue
-      .catch(() => undefined)
-      .then(() => forwardDesktopBackgroundMouseEvent(event))
+    eventQueue
+      .run(() => forwardDesktopBackgroundMouseEvent(event))
       .catch((error: unknown) => {
         if (import.meta.env.DEV) {
           console.error('Failed to forward website background input event', error)
@@ -118,11 +119,8 @@ export const useWebsiteBackgroundInteraction = () => {
     event.preventDefault()
     event.stopPropagation()
     const button = kind === 'up' && event.button >= 0 ? event.button : forwardedButton
-    if (
-      event.currentTarget instanceof HTMLElement &&
-      typeof event.currentTarget.releasePointerCapture === 'function'
-    ) {
-      event.currentTarget.releasePointerCapture(event.pointerId)
+    if (event.currentTarget instanceof HTMLElement) {
+      releaseCapturedPointer(event.currentTarget, event.pointerId)
     }
     forwardedPointerId = null
     forwardedButton = 0
