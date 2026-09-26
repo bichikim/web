@@ -79,14 +79,11 @@ const getContent = (element: Element) => {
     : {content: '', contentKind: 'none' as const}
 }
 const getPublishedAt = (element: Element) => {
-  const value = getChildText(element, ['published', 'pubdate', 'updated', 'date'])
+  const timestamp = ['published', 'pubdate', 'updated', 'date']
+    .map((name) => Date.parse(getChildText(element, [name])))
+    .find((value) => !Number.isNaN(value))
 
-  if (value.length === 0) {
-    return null
-  }
-
-  const timestamp = Date.parse(value)
-  return Number.isNaN(timestamp) ? null : new Date(timestamp).toISOString()
+  return timestamp === undefined ? null : new Date(timestamp).toISOString()
 }
 const getItemFingerprint = (element: Element) => {
   const serializedItem = new XMLSerializer().serializeToString(element).replace(/>\s+</gu, '><')

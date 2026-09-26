@@ -95,6 +95,17 @@ it('should prefer the Atom published date when updated appears first', () => {
   expect(feed.items[0]?.publishedAt).toBe('2024-01-01T00:00:00.000Z')
 })
 
+it('should use a valid Atom updated date when published date is invalid', () => {
+  const feed = parseFeedXml(
+    `<feed xmlns="http://www.w3.org/2005/Atom"><title>테스트 Atom</title><entry>
+      <published>not-a-date</published><updated>2026-08-14T01:00:00Z</updated>
+    </entry></feed>`,
+    'https://example.com/atom.xml',
+  )
+
+  expect(feed.items[0]?.publishedAt).toBe('2026-08-14T01:00:00.000Z')
+})
+
 it('should parse RDF-style RSS items outside the channel element', () => {
   const feed = parseFeedXml(
     `<?xml version="1.0"?>
