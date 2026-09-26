@@ -227,7 +227,50 @@ describe('useTextMood', () => {
     root.dispose()
   })
 
-  it('should discard an analysis result when the input changes before it completes', async () => {
+  it('should preserve prepared model state when discarding a stale analysis result', async () => {
+    const runtime = createRuntime()
+    const analysisResult = createDeferred<Awaited<ReturnType<TextMoodAnalyzer['analyze']>>>()
+    vi.mocked(runtime.analyzer.analyze).mockReturnValueOnce(analysisResult.promise)
+    const root = createTextMoodRoot(runtime)
+
+    await root.controller.prepare()
+    const analysis = root.controller.analyze()
+    root.controller.setText('입력을 바꿨어요.')
+    analysisResult.resolve(
+      successResult({analysis: ANALYSIS, elapsedMilliseconds: 18, status: 'complete'}),
+    )
+    await analysis
+
+    expect(root.controller.state()).toEqual({status: 'ready'})
+    expect(root.controller.statusMessage()).toBe('모델이 준비됐어요. 문장을 입력해 분석해 보세요.')
+    expect(runtime.analyzer.prepare).toHaveBeenCalledOnce()
+    root.dispose()
+  })
+
+  it('should preserve model readiness when a stale analysis fails after preparation', async () => {
+    const runtime = createRuntime()
+    const analysisResult = createDeferred<Awaited<ReturnType<TextMoodAnalyzer['analyze']>>>()
+    vi.mocked(runtime.analyzer.analyze).mockReturnValueOnce(analysisResult.promise)
+    const root = createTextMoodRoot(runtime)
+    const analysis = root.controller.analyze()
+
+    root.controller.setText('입력을 바꿨어요.')
+    analysisResult.resolve(
+      failureResult({
+        code: 'classification-failed',
+        detail: '분석 실패',
+        phase: 'analyze',
+        retryable: true,
+      }),
+    )
+    await analysis
+
+    expect(root.controller.state()).toEqual({status: 'ready'})
+    expect(root.controller.statusMessage()).toBe('모델이 준비됐어요. 문장을 입력해 분석해 보세요.')
+    root.dispose()
+  })
+
+  it('should expose readiness after discarding an analysis result for changed input', async () => {
     const runtime = createRuntime()
     let resolveAnalysis: (result: Awaited<ReturnType<TextMoodAnalyzer['analyze']>>) => void = () =>
       undefined
@@ -246,7 +289,8 @@ describe('useTextMood', () => {
     )
     await analysis
 
-    expect(root.controller.state()).toEqual({status: 'idle'})
+    expect(root.controller.state()).toEqual({status: 'ready'})
+    expect(root.controller.statusMessage()).toBe('모델이 준비됐어요. 문장을 입력해 분석해 보세요.')
     expect(root.controller.text()).toBe('입력을 바꿨어요.')
     root.dispose()
   })

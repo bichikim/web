@@ -22,14 +22,19 @@ export const resolveWeatherRevalidationSchedule = (
   }
 
   switch (result.status) {
-    case 'available':
+    case 'available': {
+      const expiresAtMilliseconds = Date.parse(result.feed.expiresAt)
+
       return {
         kind: 'after-delay',
-        milliseconds: Math.max(
-          MINIMUM_REFRESH_DELAY_MILLISECONDS,
-          Date.parse(result.feed.expiresAt) - Date.now() + REFRESH_SAFETY_DELAY_MILLISECONDS,
-        ),
+        milliseconds: Number.isFinite(expiresAtMilliseconds)
+          ? Math.max(
+              MINIMUM_REFRESH_DELAY_MILLISECONDS,
+              expiresAtMilliseconds - Date.now() + REFRESH_SAFETY_DELAY_MILLISECONDS,
+            )
+          : MINIMUM_REFRESH_DELAY_MILLISECONDS,
       }
+    }
     case 'collecting':
     case 'unavailable':
       return {

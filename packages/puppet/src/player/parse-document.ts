@@ -41,6 +41,7 @@ import {hasValidTrackTargets} from './internal/parse-motion'
 import {hasValidParameterOptions} from './internal/parse-parameter'
 import {hasValidPhysics} from './internal/parse-physics'
 import {hasValidLayerOrderRules} from './internal/parse-layer-order'
+import {expandDocumentTextureAssets} from './texture-assets'
 
 export type ParseDocumentErrorCode = 'invalid-document' | 'invalid-json'
 
@@ -557,7 +558,7 @@ const isDocument = (value: unknown): value is PuppetDocument => {
 }
 
 export const parseDocumentValue = (value: unknown): ParseDocumentResult => {
-  const normalizedValue = normalizeLegacyTrackKinds(value)
+  const normalizedValue = normalizeLegacyTrackKinds(expandDocumentTextureAssets(value))
   if (!isDocument(normalizedValue)) {
     return {error: {code: 'invalid-document'}, ok: false}
   }

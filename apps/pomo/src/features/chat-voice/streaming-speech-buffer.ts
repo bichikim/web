@@ -49,13 +49,8 @@ export const createStreamingSpeechBuffer = (
     consumedText = ''
   }
 
-  const update = (text: string) => {
-    if (!text.startsWith(consumedText)) {
-      reset()
-    }
-
-    const remainingText = text.slice(consumedLength)
-    const segments = Array.from(segmenter.segment(remainingText))
+  const getCompletedSegments = (text: string) => {
+    const segments = Array.from(segmenter.segment(text))
     const combinedSegments = segments.reduce(
       (mergedSegments, segment) => {
         const previousSegment = mergedSegments.at(-1)
@@ -73,7 +68,31 @@ export const createStreamingSpeechBuffer = (
       },
       [] as typeof segments,
     )
-    const completedSegments = combinedSegments.filter(({segment}) => isCompletedSentence(segment))
+
+    return combinedSegments.filter(({segment}) => isCompletedSentence(segment))
+  }
+
+  const update = (text: string) => {
+    if (!text.startsWith(consumedText)) {
+      let commonPrefixLength = 0
+
+      while (
+        commonPrefixLength < consumedText.length &&
+        consumedText[commonPrefixLength] === text[commonPrefixLength]
+      ) {
+        commonPrefixLength += 1
+      }
+
+      const lastUnchangedSegment = getCompletedSegments(text.slice(0, commonPrefixLength)).at(-1)
+      consumedLength =
+        lastUnchangedSegment === undefined
+          ? 0
+          : lastUnchangedSegment.index + lastUnchangedSegment.segment.trimEnd().length
+      consumedText = text.slice(0, consumedLength)
+    }
+
+    const remainingText = text.slice(consumedLength)
+    const completedSegments = getCompletedSegments(remainingText)
     const lastSegment = completedSegments.at(-1)
 
     if (lastSegment !== undefined) {

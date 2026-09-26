@@ -305,6 +305,22 @@ it('should hide an automatic scene when revalidation returns an expired availabl
   root.dispose()
 })
 
+it('should hide an automatic scene when an available feed has an invalid expiry', async () => {
+  const invalidExpiryFeed = {...feed, expiresAt: 'not-an-iso-timestamp'}
+  queryMocks.weatherFeedQuery.mockResolvedValueOnce({...availableResult, feed: invalidExpiryFeed})
+  const root = createWeatherRoot()
+
+  await flushPromises()
+
+  expect(root.controller.state()).toEqual({
+    feed: {...invalidExpiryFeed, stale: true},
+    status: 'ready',
+  })
+  expect(root.controller.isReady()).toBe(false)
+  expect(root.controller.sceneCondition()).toBeUndefined()
+  root.dispose()
+})
+
 it('should hide an automatic scene when revalidation retains an expired feed', async () => {
   queryMocks.weatherFeedQuery
     .mockResolvedValueOnce(availableResult)

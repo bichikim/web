@@ -5,6 +5,7 @@ import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 import type {PDialogueRepository} from '../repository'
 import type {PDialogue} from '../schema'
 import {createEntryPlaybackController} from '../entry-playback-controller'
+import {P_SILENT_MOUTH_RETURN_DELAY_MS} from '../../lip-sync/silent-mouth-return'
 
 type FileReaderListener = () => void
 
@@ -181,13 +182,13 @@ describe('createEntryPlaybackController', () => {
     expect(URL.revokeObjectURL).toHaveBeenCalledWith('blob:dialogue')
   })
 
-  it('should finish on an audio error and ignore stale audio events', async () => {
+  it('should report a skipped preparation as incomplete and ignore stale audio events', async () => {
     const controller = createEntryPlaybackController()
     const first = controller.prepare(createRepository(), 'first')
     await flush()
     const firstAudio = latestAudio()
     controller.skip()
-    await first
+    await expect(first).resolves.toBe(false)
     await flush()
 
     const second = controller.prepare(createRepository({...DIALOGUE, id: 'second'}), 'second')
@@ -196,6 +197,54 @@ describe('createEntryPlaybackController', () => {
     firstAudio.dispatchEvent(new Event('error'))
     latestAudio().dispatchEvent(new Event('error'))
     await expect(second).resolves.toBe(false)
+  })
+
+  it('should delay the viseme reset after skipping playback', async () => {
+    const controller = createEntryPlaybackController()
+    const playback = controller.prepare(createRepository(), DIALOGUE.id)
+    await flush()
+    await flush()
+    animationFrames.at(-1)?.(0)
+    expect(controller.activeViseme()).toBe('open')
+
+    controller.skip()
+    expect(controller.activeViseme()).toBe('open')
+    vi.advanceTimersByTime(P_SILENT_MOUTH_RETURN_DELAY_MS)
+    expect(controller.activeViseme()).toBe('closed')
+    await expect(playback).resolves.toBe(false)
+  })
+
+  it('should advance a sequence after skipping a dialogue', async () => {
+    const controller = createEntryPlaybackController()
+    const onDialogueSkipped = vi.fn()
+    let resolveSecondStart!: () => void
+    const secondStarted = new Promise<void>((resolve) => {
+      resolveSecondStart = resolve
+    })
+    const onDialogueStart = vi.fn((dialogueId: string) => {
+      if (dialogueId === 'second') {
+        resolveSecondStart()
+      }
+    })
+    const playback = controller.playSequence(createRepository(), {
+      dialogueIds: ['first', 'second'],
+      onDialogueSkipped,
+      onDialogueStart,
+      onSequenceStop: vi.fn(),
+    })
+    await flush()
+    const firstAudio = latestAudio()
+
+    controller.skip()
+    await secondStarted
+    const secondAudio = latestAudio()
+
+    expect(secondAudio).not.toBe(firstAudio)
+    expect(onDialogueSkipped).toHaveBeenCalledWith('first')
+    expect(onDialogueStart).toHaveBeenNthCalledWith(1, 'first')
+    expect(onDialogueStart).toHaveBeenNthCalledWith(2, 'second')
+    secondAudio.dispatchEvent(new Event('ended'))
+    await expect(playback).resolves.toBe('ended')
   })
 
   it('should block autoplay, retry after interaction, and ignore retry otherwise', async () => {
