@@ -28,10 +28,12 @@ const getEventAlarmAt = (
   timeZone: string,
 ) => {
   if (event.allDay) {
+    const alarmDateValue =
+      defaultAlarmDate === undefined ? event.start : formatLocalDate(defaultAlarmDate)
     const alarmDate =
-      defaultAlarmDate === undefined
-        ? event.start.slice(0, DATE_KEY_LENGTH)
-        : formatLocalDate(defaultAlarmDate)
+      alarmDateValue.length === DATE_KEY_LENGTH
+        ? alarmDateValue
+        : getDateInputValue(new Date(alarmDateValue), timeZone)
     return dayjs.tz(`${alarmDate}T${ALL_DAY_ALARM_TIME}`, timeZone).toDate()
   }
 
