@@ -6,7 +6,7 @@ const calendarDateSchema = z.iso.date()
 
 /**
  * Groups events with parseable end values and valid all-day start dates by covered visible dates,
- * excluding each end instant.
+ * excluding each exclusive end boundary.
  */
 export const groupCalendarEvents = (
   events: ReadonlyArray<CalendarEvent>,
@@ -28,8 +28,14 @@ export const groupCalendarEvents = (
       return
     }
 
-    // The last included instant keeps midnight and DST boundaries in the display time zone.
-    const end = event.allDay ? event.end : createDateKey(endTimestamp - 1)
+    // All-day ends retain their date key; timed events use the last instant for local-day boundaries.
+    const end = event.allDay
+      ? calendarDateSchema.safeParse(event.end.slice(0, 'YYYY-MM-DD'.length)).data
+      : createDateKey(endTimestamp - 1)
+    if (end === undefined) {
+      return
+    }
+
     for (const date of visibleDates) {
       if (date >= start && (event.allDay ? date < end : date <= end)) {
         const entries = grouped.get(date)
