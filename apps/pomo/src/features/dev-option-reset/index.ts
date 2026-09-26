@@ -1,3 +1,4 @@
+import {uniq} from 'es-toolkit/array'
 export {
   deleteStoredDialogueAudio,
   type DialogueAudioDeletionResult,
@@ -202,18 +203,16 @@ export const OPTION_RESET_GROUPS: ReadonlyArray<OptionResetGroup> = GROUP_DEFINI
   }),
 )
 
-const getAllKeys = (): ReadonlyArray<string> => [
-  ...new Set(
+const getAllKeys = (): ReadonlyArray<string> =>
+  uniq(
     GROUP_DEFINITIONS.flatMap((group) => (group.resetKind === 'locale' ? [] : group.storageKeys)),
-  ),
-]
+  )
 
 const getSessionStoragePrefixes = (group: OptionResetGroupDefinition): ReadonlyArray<string> =>
   group.resetKind === 'locale' ? [] : (group.sessionStoragePrefixes ?? [])
 
-const getAllSessionStoragePrefixes = (): ReadonlyArray<string> => [
-  ...new Set(GROUP_DEFINITIONS.flatMap((group) => getSessionStoragePrefixes(group))),
-]
+const getAllSessionStoragePrefixes = (): ReadonlyArray<string> =>
+  uniq(GROUP_DEFINITIONS.flatMap((group) => getSessionStoragePrefixes(group)))
 
 const removeSessionStoragePrefixes = (
   storage: OptionResetStorage,

@@ -1,3 +1,4 @@
+import {uniq} from 'es-toolkit/array'
 import {onCleanup, onMount, type Setter} from 'solid-js'
 
 import type {AlbumDraftData} from './album-draft'
@@ -84,7 +85,7 @@ const combineRestorationIssues = (
       failures.map(({error}) => error),
       'Failed to restore the admin album draft.',
     ),
-    messages: [...new Set(failures.flatMap(({messages}) => messages))],
+    messages: uniq(failures.flatMap(({messages}) => messages)),
   }
 }
 

@@ -1,14 +1,12 @@
+import {isPlainObject} from 'es-toolkit/predicate'
 import {handleAuthProxyRequest} from '@neondatabase/auth/server'
 
 import {readNeonAuthProxyConfig} from 'src/server/auth/neon-config'
 import {classifyAuthAccess} from './classify-auth-access'
 import type {NeonIdentity, NeonSession} from './types'
 
-const isRecord = (value: unknown): value is Readonly<Record<string, unknown>> =>
-  typeof value === 'object' && value !== null
-
 const parseIdentity = (value: unknown): NeonIdentity | null => {
-  if (!isRecord(value) || !isRecord(value.user)) {
+  if (!isPlainObject(value) || !isPlainObject(value.user)) {
     return null
   }
 

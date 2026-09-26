@@ -1,26 +1,10 @@
+import {readBlobAsArrayBuffer} from 'src/utils/read-blob-as-array-buffer'
+import {sha256Hex} from 'src/utils/sha256-hex'
 import type {BackgroundMedia} from './model'
 
-const HEX_RADIX = 16
-
 /** Computes a content identity independently of the file name and MIME label. */
-export const hashMedia = async (blob: Blob): Promise<string> => {
-  const bytes = await new Promise<ArrayBuffer>((resolve, reject) => {
-    const reader = new FileReader()
-    reader.onerror = () => reject(reader.error)
-    reader.onload = () => {
-      if (reader.result instanceof ArrayBuffer) {
-        resolve(reader.result)
-      } else {
-        reject(new Error('Unable to read media bytes.'))
-      }
-    }
-    reader.readAsArrayBuffer(blob)
-  })
-  const digest = await crypto.subtle.digest('SHA-256', bytes)
-  return Array.from(new Uint8Array(digest), (value) =>
-    value.toString(HEX_RADIX).padStart(2, '0'),
-  ).join('')
-}
+export const hashMedia = async (blob: Blob): Promise<string> =>
+  sha256Hex(await readBlobAsArrayBuffer(blob))
 
 export interface DuplicateOptions {
   readonly hash: string

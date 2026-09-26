@@ -1,3 +1,4 @@
+import {replaceBlobObjectUrl} from 'src/features/blob-object-url'
 import type {MediaKind} from '../background'
 
 const LOAD_TIMEOUT = 30_000
@@ -21,7 +22,7 @@ export interface MediaResource {
 export const createMedia = (options: MediaOptions): MediaResource => {
   const source = options.kind === 'photo' ? new Image() : document.createElement('video')
   const video = source instanceof HTMLVideoElement ? source : null
-  const url = URL.createObjectURL(options.blob)
+  const url = replaceBlobObjectUrl(null, () => options.blob)
   let disposed = false
   let cancelled = false
   let loaded = false
@@ -72,7 +73,7 @@ export const createMedia = (options: MediaOptions): MediaResource => {
     video?.pause()
     source.removeAttribute('src')
     video?.load()
-    URL.revokeObjectURL(url)
+    replaceBlobObjectUrl(url, () => null)
   }
   source.addEventListener(options.kind === 'photo' ? 'load' : 'loadeddata', onReady, {once: true})
   source.addEventListener('error', onError)

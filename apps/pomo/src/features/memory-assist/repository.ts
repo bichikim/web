@@ -2,8 +2,8 @@ import {createSerialTaskQueue} from 'src/utils/create-serial-task-queue'
 import {
   createLatestStorageWriter,
   hasNativeStorageBridge,
-  parseStorageJson,
   readTossStorageJson,
+  readWebStorageJson,
   writeTossStorageJson,
   writeWebStorageJson,
 } from 'src/utils/runtime-storage'
@@ -32,7 +32,7 @@ export interface MemoryMemosChangedEventDetail {
 
 const createRuntimeStorage = (): MemoryMemoStorage => ({
   readToss: () => readTossStorageJson(MEMORY_MEMOS_STORAGE_KEY, parseMemoryMemos),
-  readWeb: () => parseStorageJson(localStorage.getItem(MEMORY_MEMOS_STORAGE_KEY), parseMemoryMemos),
+  readWeb: () => readWebStorageJson(MEMORY_MEMOS_STORAGE_KEY, parseMemoryMemos),
   usesTossStorage: hasNativeStorageBridge,
   writeToss: createLatestStorageWriter(MEMORY_MEMOS_STORAGE_KEY, writeTossStorageJson),
   writeWeb: (memos) => writeWebStorageJson(MEMORY_MEMOS_STORAGE_KEY, memos),

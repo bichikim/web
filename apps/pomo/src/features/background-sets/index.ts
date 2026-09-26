@@ -1,7 +1,7 @@
+import {sha256Hex} from 'src/utils/sha256-hex'
 import {loadPublicJson} from '../public-assets'
 import {z} from 'zod'
 import {MAX_PHOTO_BYTES, MAX_VIDEO_BYTES} from '../background'
-const HEX_RADIX = 16
 
 const entrySchema = z.object({
   bytes: z.number().int().positive().max(MAX_VIDEO_BYTES),
@@ -49,10 +49,7 @@ export const downloadBackgroundSet = async (
       throw new Error('Background set size does not match its catalog.')
     }
     // eslint-disable-next-line no-await-in-loop
-    const digest = await crypto.subtle.digest('SHA-256', bytes)
-    const hash = Array.from(new Uint8Array(digest), (value) =>
-      value.toString(HEX_RADIX).padStart(2, '0'),
-    ).join('')
+    const hash = await sha256Hex(bytes)
     if (hash !== item.sha256) {
       throw new Error('Background set checksum does not match its catalog.')
     }

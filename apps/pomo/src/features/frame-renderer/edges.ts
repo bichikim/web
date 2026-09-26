@@ -1,3 +1,4 @@
+import {textureResolutionForMaxSide} from './texture-resolution-for-max-side'
 import {BlurFilter, Container, Rectangle, type Renderer, Sprite, Texture} from 'pixi.js'
 
 const SAMPLE_LENGTH = 256
@@ -127,7 +128,7 @@ export class PhotoEdges {
           composite.addChild(sprite)
         }
       }
-      const resolution = Math.min(1, SAMPLE_LENGTH / Math.max(width, height))
+      const resolution = textureResolutionForMaxSide(Math.max(width, height), SAMPLE_LENGTH)
       // Rasterize the extended photo before blurring so the blur uses viewport proportions.
       const stretched = renderer.generateTexture({
         frame: new Rectangle(0, 0, width, height),

@@ -1,3 +1,5 @@
+import {replaceBlobObjectUrl} from 'src/features/blob-object-url'
+import {readBlobAsArrayBuffer} from 'src/utils/read-blob-as-array-buffer'
 // oxlint-disable eslint/no-await-in-loop -- Dialogue audio must finish before the next queued item starts.
 import {type Accessor, createSignal} from 'solid-js'
 
@@ -32,23 +34,7 @@ type PlaybackItemCompletion = PlaybackCompletion | 'skipped'
 
 const readAudioEnvelope = async (audioBlob: Blob) => {
   try {
-    if (typeof audioBlob.arrayBuffer === 'function') {
-      return createPWaveEnvelope(await audioBlob.arrayBuffer())
-    }
-
-    const buffer = await new Promise<ArrayBuffer>((resolve, reject) => {
-      const reader = new FileReader()
-      reader.addEventListener('load', () => {
-        if (reader.result instanceof ArrayBuffer) {
-          resolve(reader.result)
-        } else {
-          reject(new Error('Dialogue audio could not be read as an ArrayBuffer.'))
-        }
-      })
-      reader.addEventListener('error', () => reject(reader.error))
-      reader.readAsArrayBuffer(audioBlob)
-    })
-    return createPWaveEnvelope(buffer)
+    return createPWaveEnvelope(await readBlobAsArrayBuffer(audioBlob))
   } catch {
     return null
   }
@@ -208,7 +194,7 @@ export const createEntryPlaybackController = (): EntryPlaybackController => {
     resetViseme(visemeResetTiming)
 
     if (audioUrl !== null) {
-      URL.revokeObjectURL(audioUrl)
+      replaceBlobObjectUrl(audioUrl, () => null)
       audioUrl = null
     }
   }
@@ -317,7 +303,7 @@ export const createEntryPlaybackController = (): EntryPlaybackController => {
     dialogue = storedDialogue
     audioEnvelope = storedAudioEnvelope
     setActiveSegmentCount(storedDialogue.segments.length)
-    audioUrl = URL.createObjectURL(storedAudio)
+    audioUrl = replaceBlobObjectUrl(null, () => storedAudio)
     audio = new Audio(audioUrl)
 
     if (typeof AudioContext !== 'undefined') {

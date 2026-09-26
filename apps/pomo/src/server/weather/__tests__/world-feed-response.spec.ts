@@ -170,3 +170,13 @@ it('should preserve an outdated feed during a provider cooldown', async () => {
   expect(response.headers.get('Cache-Control')).toBe('public, max-age=60, s-maxage=60')
   expect(body).toMatchObject({stale: true})
 })
+
+it('should return a stale feed with a finite retry when a current expiry is invalid', async () => {
+  weatherMocks.getWorldWeatherFeedState.mockResolvedValue({
+    feed: {...feed, expiresAt: 'invalid'},
+    status: 'current',
+  })
+  const response = await createWorldWeatherFeedResponse(location.id, NOW)
+  expect(response.headers.get('Cache-Control')).toBe('public, max-age=1, s-maxage=1')
+  await expect(response.json()).resolves.toMatchObject({stale: true})
+})

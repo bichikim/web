@@ -1,3 +1,4 @@
+import {replaceBlobObjectUrl} from 'src/features/blob-object-url'
 import type {BackgroundMedia} from './model'
 import {getPairDirection, type PhotoSize} from './pairing'
 
@@ -25,10 +26,10 @@ export const loadPhoto = (blob: Blob, signal: AbortSignal): Promise<LoadedPhoto 
     return Promise.resolve(null)
   }
   const image = new Image()
-  const url = URL.createObjectURL(blob)
+  const url = replaceBlobObjectUrl(null, () => blob)
   const release = () => {
     image.removeAttribute('src')
-    URL.revokeObjectURL(url)
+    replaceBlobObjectUrl(url, () => null)
   }
   return new Promise((resolve, reject) => {
     const cleanup = () => {

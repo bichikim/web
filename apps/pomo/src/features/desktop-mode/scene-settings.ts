@@ -1,3 +1,4 @@
+import {isPlainObject} from 'es-toolkit/predicate'
 import {type Accessor, onCleanup, onMount} from 'solid-js'
 
 import type {PSceneMotionInput, PSceneMotionMode, PSceneStyle} from '../focus-room-animation'
@@ -69,7 +70,7 @@ const isOneOf = <TValue extends string>(
 ): value is TValue => typeof value === 'string' && options.includes(value as TValue)
 
 const isDesktopSceneSetting = (value: unknown): value is DesktopSceneSettingMessage => {
-  if (typeof value !== 'object' || value === null || !('name' in value) || !('value' in value)) {
+  if (!isPlainObject(value) || !('name' in value) || !('value' in value)) {
     return false
   }
 
@@ -117,8 +118,7 @@ interface DesktopSceneSnapshot {
 }
 
 const isDesktopSceneSnapshot = (value: unknown): value is DesktopSceneSnapshot =>
-  typeof value === 'object' &&
-  value !== null &&
+  isPlainObject(value) &&
   'type' in value &&
   value.type === 'snapshot' &&
   'settings' in value &&

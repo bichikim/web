@@ -1,3 +1,4 @@
+import {uniq} from 'es-toolkit/array'
 import {isMemoryMemoDeletionPending} from '../memory-assist'
 import {createMemoryMemo, editMemoryMemo} from '../memory-assist/schedule'
 import {isMemoryMemoOwnedDialogue} from '../memory-assist/dialogue-id'
@@ -67,9 +68,10 @@ export const createCalendarAlarmSaver =
         return [
           {
             ...alarm,
-            retiredDialogueIds: [
-              ...new Set([...(existingMemo.retiredDialogueIds ?? []), existingMemo.dialogueId]),
-            ],
+            retiredDialogueIds: uniq([
+              ...(existingMemo.retiredDialogueIds ?? []),
+              existingMemo.dialogueId,
+            ]),
           },
           ...(pendingLegacyMemo === undefined ? [] : [pendingLegacyMemo]),
           ...currentMemos.filter(

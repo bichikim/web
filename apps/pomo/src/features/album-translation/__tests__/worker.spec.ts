@@ -19,6 +19,9 @@ const transformers = vi.hoisted(() => ({
   processorFromPretrained: vi.fn(),
 }))
 
+// Worker protocol assertions do not depend on the UI translation catalog loaded by storage imports.
+vi.mock('@paraglide/message', () => ({}))
+
 vi.mock('@huggingface/transformers', () => ({
   AutoProcessor: {from_pretrained: transformers.processorFromPretrained},
   env: {},
@@ -80,7 +83,7 @@ const loadWorker = async () => {
 
 beforeEach(() => {
   vi.resetModules()
-  vi.clearAllMocks()
+  vi.resetAllMocks()
   vi.unstubAllGlobals()
 
   transformers.processorFromPretrained.mockResolvedValue(createProcessor())

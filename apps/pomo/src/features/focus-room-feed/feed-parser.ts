@@ -119,21 +119,23 @@ const getItemId = (element: Element, link: string, title: string, publishedAt: s
   return publishedAt === null ? `${fallbackId}\u0000${getItemFingerprint(element)}` : fallbackId
 }
 
-/** Removes markup and page chrome while preserving all readable text. */
-export const cleanFeedText = (value: string) => {
-  const document = new DOMParser().parseFromString(value, 'text/html')
-  document.querySelectorAll(BLOCKED_CONTENT_SELECTOR).forEach((element) => element.remove())
-  return (document.body.textContent ?? '').replace(/\s+/gu, ' ').trim()
-}
-
-/** Extracts the main readable text from an article document without summarizing it. */
-export const extractArticleText = (html: string) => {
+const extractReadableHtmlText = (html: string, resolveRoot: (document: Document) => Element) => {
   const document = new DOMParser().parseFromString(html, 'text/html')
   document.querySelectorAll(BLOCKED_CONTENT_SELECTOR).forEach((element) => element.remove())
-  const content =
-    document.querySelector('article') ?? document.querySelector('main') ?? document.body
-  return (content.textContent ?? '').replace(/\s+/gu, ' ').trim()
+  return (resolveRoot(document).textContent ?? '').replace(/\s+/gu, ' ').trim()
 }
+
+/** Removes markup and page chrome while preserving all readable text. */
+export const cleanFeedText = (value: string) =>
+  extractReadableHtmlText(value, (document) => document.body)
+
+/** Extracts the main readable text from an article document without summarizing it. */
+export const extractArticleText = (html: string) =>
+  extractReadableHtmlText(
+    html,
+    (document) =>
+      document.querySelector('article') ?? document.querySelector('main') ?? document.body,
+  )
 
 /** Parses RSS 2.x, RDF-style RSS, or Atom XML into one feed-owned shape. */
 export const parseFeedXml = (xml: string, feedUrl: string): ParsedFeed => {
