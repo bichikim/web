@@ -130,6 +130,35 @@ it('should keep linkless feed items distinct with their title and publication ti
   ])
 })
 
+it('should keep undated items without an id or link distinct by their XML content', () => {
+  const xml = `<rss><channel><title>링크 없는 피드</title>
+    <item><title>같은 제목</title><description>첫 번째 항목</description></item>
+    <item><title>같은 제목</title><description>두 번째 항목</description></item>
+  </channel></rss>`
+  const feed = parseFeedXml(xml, 'https://example.com/feed.xml')
+  const repeatedFeed = parseFeedXml(xml, 'https://example.com/feed.xml')
+
+  expect(feed.items.map((item) => item.id)).toHaveLength(2)
+  expect(new Set(feed.items.map((item) => item.id)).size).toBe(2)
+  expect(feed.items.map((item) => item.id)).toEqual(repeatedFeed.items.map((item) => item.id))
+})
+
+it('should keep an undated item id stable when XML indentation changes', () => {
+  const compactFeed = parseFeedXml(
+    '<rss><channel><title>피드</title><item><title>같은 제목</title><description>본문</description></item></channel></rss>',
+    'https://example.com/feed.xml',
+  )
+  const indentedFeed = parseFeedXml(
+    `<rss><channel><title>피드</title><item>
+      <title>같은 제목</title>
+      <description>본문</description>
+    </item></channel></rss>`,
+    'https://example.com/feed.xml',
+  )
+
+  expect(indentedFeed.items[0]?.id).toBe(compactFeed.items[0]?.id)
+})
+
 it('should extract article text without navigation or scripts', () => {
   expect(
     extractArticleText(
@@ -156,12 +185,11 @@ it('should use safe fallbacks for incomplete feed metadata', () => {
     'https://example.com/feed.xml',
   )
 
-  expect(feed).toEqual({
+  expect(feed).toMatchObject({
     items: [
       {
         content: '',
         contentKind: 'none',
-        id: '제목 없는 피드\u0000',
         link: '',
         publishedAt: null,
         title: '제목 없는 피드',
@@ -169,6 +197,7 @@ it('should use safe fallbacks for incomplete feed metadata', () => {
     ],
     title: 'example.com',
   })
+  expect(feed.items[0]?.id).toMatch(/^제목 없는 피드\u0000\u0000[0-9a-z]+-[0-9a-z]+$/u)
 })
 
 it('should discard links that cannot be resolved against the feed URL', () => {
