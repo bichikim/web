@@ -158,7 +158,7 @@ describe('createPScenePreferencesRepository', () => {
       })
   })
 
-  it('should retry native reads after a failed native write', async () => {
+  it('should keep browser preferences while native write recovery is pending', async () => {
     const {repository, storage} = createRepository()
     const initialNativePreferences = {
       activity: 'reading',
@@ -177,8 +177,66 @@ describe('createPScenePreferencesRepository', () => {
     await repository.write(preferences)
     storage.readToss.mockResolvedValueOnce(recoveredNativePreferences)
 
-    await expect(repository.read()).resolves.toEqual(recoveredNativePreferences)
-    expect(storage.readToss).toHaveBeenCalledTimes(2)
+    await expect(repository.read()).resolves.toEqual(preferences)
+    expect(storage.readToss).toHaveBeenCalledTimes(1)
+  })
+
+  it('should not restore stale native preferences after a failed write in the same session', async () => {
+    const values = new Map<string, unknown>()
+    const stalePreferences = {
+      activity: 'reading',
+      gaze: 'focused',
+      timeMode: 'day',
+    } as const
+    const storage = {
+      readToss: vi.fn(async () => stalePreferences),
+      readWeb: (key: string) => values.get(key) ?? null,
+      usesTossStorage: () => true,
+      writeToss: vi.fn(async () => {
+        throw new Error('unavailable')
+      }),
+      writeWeb: (key: string, value: unknown) => {
+        values.set(key, value)
+      },
+    } satisfies PScenePreferencesStorage
+    const repository = createPScenePreferencesRepository({storage})
+
+    await repository.write(preferences)
+    await expect(repository.read()).resolves.toEqual(preferences)
+    expect(values.get('pomo:focus-room-scene-preferences:native-write-failure:v1')).toBe(true)
+  })
+
+  it('should preserve browser preferences when a native read races with a failed native write', async () => {
+    const values = new Map<string, unknown>()
+    const stalePreferences = {
+      activity: 'reading',
+      gaze: 'focused',
+      timeMode: 'day',
+    } as const
+    const nativeRead = Promise.withResolvers<unknown>()
+    const readToss = vi.fn(() => nativeRead.promise)
+    const writeToss = vi.fn(async () => {
+      throw new Error('unavailable')
+    })
+    const repository = createPScenePreferencesRepository({
+      storage: {
+        readToss,
+        readWeb: (key: string) => values.get(key) ?? null,
+        usesTossStorage: () => true,
+        writeToss,
+        writeWeb: (key: string, value: unknown) => {
+          values.set(key, value)
+        },
+      },
+    })
+
+    const pendingRead = repository.read()
+    await repository.write(preferences)
+    nativeRead.resolve(stalePreferences)
+
+    await expect(pendingRead).resolves.toEqual(preferences)
+    expect(values.get('pomo:focus-room-scene-preferences:v1')).toEqual(preferences)
+    expect(values.get('pomo:focus-room-scene-preferences:native-write-failure:v1')).toBe(true)
   })
 
   it('should recover the native queue after a failed explicit write', async () => {
