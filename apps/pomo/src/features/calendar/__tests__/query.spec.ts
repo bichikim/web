@@ -126,6 +126,32 @@ describe('createCalendarQuery', () => {
     })
   })
 
+  it('should query only today when the question excludes the day after tomorrow', () => {
+    expect(
+      createCalendarQuery({
+        now,
+        text: '모레 말고 오늘 일정 알려줘',
+        timeZone: 'Asia/Seoul',
+      }),
+    ).toEqual({
+      end: '2026-09-04T15:00:00.000Z',
+      start: '2026-09-04T10:30:00.000Z',
+    })
+  })
+
+  it('should query only tomorrow when the question excludes the day after tomorrow', () => {
+    expect(
+      createCalendarQuery({
+        now,
+        text: '모레 말고 내일 일정 알려줘',
+        timeZone: 'Asia/Seoul',
+      }),
+    ).toEqual({
+      end: '2026-09-05T15:00:00.000Z',
+      start: '2026-09-04T15:00:00.000Z',
+    })
+  })
+
   it('should query tomorrow in the local timezone', () => {
     expect(
       createCalendarQuery({now, text: '내일 오전에 뭐 있어?', timeZone: 'Asia/Seoul'}),

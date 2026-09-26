@@ -7,6 +7,8 @@ const TODAY_EXCLUSION_PATTERN =
   /오늘(?:(?!내일).)*(?:말고|빼고|제외(?:하고)?|아니|아닌|안\s*(?:되|돼))/u
 const TOMORROW_EXCLUSION_PATTERN =
   /내일(?:(?!오늘).)*(?:말고|빼고|제외(?:하고)?|아니|아닌|안\s*(?:되|돼))/u
+const DAY_AFTER_TOMORROW_EXCLUSION_PATTERN =
+  /모레(?:(?!오늘|내일).)*(?:말고|빼고|제외(?:하고)?|아니|아닌|안\s*(?:되|돼))/u
 const NEXT_WEEK_PATTERN = /다음 ?주/u
 const IMPLICIT_SCHEDULE_PATTERN =
   /(?:오늘|내일|모레|어제|이번 ?주|다음 ?주).*(?:뭐|무엇).*(?:있|하)/u
@@ -78,7 +80,9 @@ export const createCalendarQuery = (
   const includesToday = options.text.includes('오늘') && !TODAY_EXCLUSION_PATTERN.test(options.text)
   const includesTomorrow =
     options.text.includes('내일') && !TOMORROW_EXCLUSION_PATTERN.test(options.text)
-  if (options.text.includes('모레')) {
+  const includesDayAfterTomorrow =
+    options.text.includes('모레') && !DAY_AFTER_TOMORROW_EXCLUSION_PATTERN.test(options.text)
+  if (includesDayAfterTomorrow) {
     const start = boundary(DAY_AFTER_TOMORROW_START_DAYS)
     const noon = boundary(DAY_AFTER_TOMORROW_START_DAYS, '12:00:00')
     return createCalendarDateRange({
