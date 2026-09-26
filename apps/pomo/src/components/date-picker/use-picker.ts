@@ -72,9 +72,9 @@ export const usePicker = (props: UsePickerProps) => {
     setView(
       clamp(
         parseDate(value()) ?? {
-          day: now.getDate(),
-          month: now.getMonth() + 1,
-          year: now.getFullYear(),
+          day: now.getUTCDate(),
+          month: now.getUTCMonth() + 1,
+          year: now.getUTCFullYear(),
         },
       ),
     )
