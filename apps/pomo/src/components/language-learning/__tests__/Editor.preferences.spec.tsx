@@ -51,6 +51,15 @@ it('should cancel generation and clear generated state when changing the word so
   view.cleanup()
 })
 
+it('should release dialogue generation when changing the learning language', () => {
+  const view = renderHook(() => useLanguageLearningEditorState(), {wrapper: PreferenceProvider})
+
+  view.result.handleLanguageChange('ko')
+
+  expect(view.result.writer.release).toHaveBeenCalledOnce()
+  view.cleanup()
+})
+
 it('should keep the editor busy while the writer is generating after changing the word source', () => {
   render(() => <LanguageLearningEditorWithPreferences />)
   setWriterState({status: 'generating'})

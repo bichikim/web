@@ -472,6 +472,31 @@ it('should keep today fixed across midnight and rebase after a reminder change',
   expect(mocks.memos[0]?.exactReminderAt).toBe(tomorrowReminderAt)
 })
 
+it('should resolve tomorrow from the save time after midnight while editing', async () => {
+  vi.useFakeTimers()
+  vi.setSystemTime(new Date(2025, 11, 31, 10))
+  mocks.memos = [createStoredMemo()]
+  render(() => <MemoryMemoList />)
+
+  fireEvent.click(screen.getByRole('button', {name: '여권 갱신하기 메모 편집'}))
+  fireEvent.click(screen.getByLabelText('날짜와 시간에 알려주기'))
+  fireEvent.change(screen.getByLabelText('알림 날짜'), {target: {value: 'tomorrow'}})
+  fireEvent.input(screen.getByLabelText('시간'), {target: {value: '23:00'}})
+  vi.setSystemTime(new Date(2026, 0, 1, 20))
+  fireEvent.click(screen.getByRole('button', {name: '변경 저장'}))
+
+  await vi.runAllTimersAsync()
+
+  const tomorrowReminderAt = new Date(2026, 0, 2, 23).toISOString()
+  expect(mocks.isFirstReminderInFuture).toHaveBeenCalledOnce()
+  expect(mocks.isFirstReminderInFuture).toHaveBeenCalledWith(
+    tomorrowReminderAt,
+    0,
+    expect.any(Date),
+  )
+  expect(mocks.memos[0]?.exactReminderAt).toBe(tomorrowReminderAt)
+})
+
 it('should stop ongoing recall when an exact reminder is enabled while editing', async () => {
   vi.useFakeTimers()
   vi.setSystemTime(new Date('2026-09-04T03:30:00.000Z'))

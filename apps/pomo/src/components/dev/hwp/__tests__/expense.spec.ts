@@ -1,7 +1,7 @@
 /** @vitest-environment node */
 import {describe, expect, it} from 'vitest'
 
-import {parseExpenseText} from '../expense'
+import {parseExpenseAssistantResponse, parseExpenseText} from '../expense'
 
 describe('parseExpenseText', () => {
   it('should parse clear Korean expense lines with quantities', () => {
@@ -30,6 +30,20 @@ describe('parseExpenseText', () => {
     })
   })
 
+  it('should preserve support for unpadded date parts', () => {
+    expect(parseExpenseText('2026-9-5\n두부 1,500원')).toMatchObject({
+      ok: true,
+      value: {date: '2026-9-5'},
+    })
+  })
+
+  it('should reject a civil date that does not exist', () => {
+    expect(parseExpenseText('2026-02-30\n두부 1,500원')).toEqual({
+      error: {code: 'invalid-input'},
+      ok: false,
+    })
+  })
+
   it('should reject a line without an explicit price', () => {
     expect(parseExpenseText('고구마 많이 샀음')).toEqual({
       error: {code: 'invalid-input'},
@@ -40,6 +54,22 @@ describe('parseExpenseText', () => {
   it('should reject an amount that exceeds safe integer precision', () => {
     expect(parseExpenseText('상품 9,007,199,254,740,991원 2개')).toEqual({
       error: {code: 'invalid-input'},
+      ok: false,
+    })
+  })
+})
+
+describe('parseExpenseAssistantResponse', () => {
+  it('should reject a civil date that does not exist', () => {
+    expect(
+      parseExpenseAssistantResponse(
+        JSON.stringify({
+          date: '2026-02-30',
+          items: [{name: '두부', quantity: 1, unitPrice: 1500}],
+        }),
+      ),
+    ).toEqual({
+      error: {code: 'invalid-shape'},
       ok: false,
     })
   })
