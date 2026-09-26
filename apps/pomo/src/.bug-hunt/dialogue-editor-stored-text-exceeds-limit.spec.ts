@@ -20,9 +20,7 @@ describe('focus room dialogue editor text limit', () => {
       expect(editor.controller.text().length).toBe(MAXIMUM_DIALOGUE_EDITOR_TEXT_LENGTH + 1),
     )
 
-    expect(editor.controller.text().length).toBeLessThanOrEqual(
-      MAXIMUM_DIALOGUE_EDITOR_TEXT_LENGTH,
-    )
+    expect(editor.controller.text().length).toBeLessThanOrEqual(MAXIMUM_DIALOGUE_EDITOR_TEXT_LENGTH)
     editor.dispose()
   })
 })
