@@ -26,6 +26,19 @@ const findPreferredChild = (element: Element, names: ReadonlyArray<string>) => {
       .find((child): child is Element => child !== undefined) ?? null
   )
 }
+const hasItemAncestor = (element: Element, itemScope: Element, itemName: string) => {
+  let ancestor = element.parentElement
+
+  while (ancestor !== null && ancestor !== itemScope) {
+    if (ancestor.localName.toLowerCase() === itemName) {
+      return true
+    }
+
+    ancestor = ancestor.parentElement
+  }
+
+  return false
+}
 const getChildText = (element: Element, names: ReadonlyArray<string>) =>
   findPreferredChild(element, names)?.textContent?.trim() ?? ''
 const resolveUrl = (value: string, baseUrl: string) => {
@@ -113,7 +126,9 @@ export const parseFeedXml = (xml: string, feedUrl: string): ParsedFeed => {
   const container = isAtom ? root : (findPreferredChild(root, ['channel']) ?? root)
   const itemName = isAtom ? 'entry' : 'item'
   const itemScope = isAtom ? container : root
-  const itemElements = Array.from(itemScope.getElementsByTagNameNS('*', itemName))
+  const itemElements = Array.from(itemScope.getElementsByTagNameNS('*', itemName)).filter(
+    (element) => !hasItemAncestor(element, itemScope, itemName),
+  )
   const title = getChildText(container, ['title']) || new URL(feedUrl).hostname
   const items = itemElements.map((element) => {
     const itemTitle = getChildText(element, ['title']) || '제목 없는 피드'

@@ -31,6 +31,23 @@ it('should parse RSS content and preserve all readable text', () => {
   )
 })
 
+it('should ignore RSS items nested inside another item', () => {
+  const feed = parseFeedXml(
+    `<rss><channel><title>중첩 item</title>
+      <item><title>바깥 항목</title><guid>outer</guid>
+        <item><title>안쪽 항목</title><guid>inner</guid></item>
+      </item>
+      <item><title>다른 항목</title><guid>sibling</guid></item>
+    </channel></rss>`,
+    'https://example.com/feed.xml',
+  )
+
+  expect(feed.items.map(({id, title}) => ({id, title}))).toEqual([
+    {id: 'outer', title: '바깥 항목'},
+    {id: 'sibling', title: '다른 항목'},
+  ])
+})
+
 it('should prefer encoded content over an earlier empty media content', () => {
   const feed = parseFeedXml(
     `<rss version="2.0" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:media="http://search.yahoo.com/mrss/"><channel><title>테스트 RSS</title><item>
