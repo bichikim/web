@@ -1,4 +1,4 @@
-import {loadTossStorage} from './load-toss-storage'
+import {getTossRuntimeStorage} from './get-toss-runtime-storage'
 import {parseStorageJson} from './parse-storage-json'
 import type {ParseStoredValue} from './types'
 
@@ -7,6 +7,6 @@ export const readTossStorageJson = async <Value>(
   key: string,
   parseValue: ParseStoredValue<Value>,
 ): Promise<Value | null> => {
-  const storage = await loadTossStorage()
-  return parseStorageJson(await storage.getItem(key), parseValue)
+  const storedValue = await getTossRuntimeStorage().read(key)
+  return parseStorageJson(storedValue, parseValue)
 }

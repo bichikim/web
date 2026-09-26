@@ -8,6 +8,6 @@
     "outDir": "dist/types",
     "rootDir": "src"
   },
-  "include": ["src/player", "src/mesh", "src/editor", "src/editor-element"],
+  "include": ["src/player", "src/mesh", "src/editor", "src/editor-element", "src/converter"],
   "exclude": ["src/**/__tests__/**"]
 }

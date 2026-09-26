@@ -1,6 +1,37 @@
 import {describe, expect, test} from 'vitest'
 
+import {PUPPET_SPATIAL_OBJECT_MAX_DEPTH, type PuppetSpatialObject} from '../../player/document'
+import {isSpatialMesh} from '../../player/internal/parse-spatial-mesh'
 import {generateSpatialMesh} from '../generate-spatial-mesh'
+
+const createNestedObject = (depth: number): PuppetSpatialObject => {
+  const primitive = {
+    center: [0, 0, 0],
+    id: 'leaf',
+    kind: 'primitive',
+    mode: 'add',
+    name: '상자',
+    rotation: [0, 0, 0],
+    shape: 'box',
+    size: [10, 10, 10],
+    visible: true,
+  } as const
+  let object: PuppetSpatialObject = primitive
+  for (let index = 0; index < depth; index += 1) {
+    object = {
+      children: [
+        {...object, mode: 'add'},
+        {...primitive, id: `sibling-${index}`},
+      ],
+      id: `group-${index}`,
+      kind: 'group',
+      mode: 'add',
+      name: '그룹',
+      visible: true,
+    }
+  }
+  return object
+}
 
 describe('generateSpatialMesh', () => {
   test('should keep a rounded control surface compact and consistently outward facing', () => {
@@ -81,6 +112,24 @@ describe('generateSpatialMesh', () => {
     })
     expect(combined.vertices.length).toBeGreaterThan(0)
     expect(combined.indices.length / 3).toBeLessThan(1000)
+  })
+
+  test('should reject authored groups beyond the document depth limit', () => {
+    expect(() =>
+      generateSpatialMesh({
+        objects: [createNestedObject(PUPPET_SPATIAL_OBJECT_MAX_DEPTH + 1)],
+        resolution: 4,
+      }),
+    ).toThrow(RangeError)
+  })
+
+  test('should generate a parser-compatible authored group at the depth limit', () => {
+    const mesh = generateSpatialMesh({
+      objects: [createNestedObject(PUPPET_SPATIAL_OBJECT_MAX_DEPTH)],
+      resolution: 4,
+    })
+
+    expect(isSpatialMesh(mesh)).toBe(true)
   })
 
   test('should generate a rotated triangular prism', () => {

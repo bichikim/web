@@ -75,6 +75,15 @@ describe('auto-start-storage', () => {
     expect(storageMocks.setItem).not.toHaveBeenCalled()
   })
 
+  it('should forget a browser-only preference after browser storage is cleared', async () => {
+    await writeAutoStartPreference(true)
+    expect(await readAutoStartPreference()).toBe(true)
+
+    localStorage.clear()
+
+    expect(await readAutoStartPreference()).toBe(false)
+  })
+
   it('should reject when browser storage cannot persist the preference', async () => {
     const storageError = new Error('browser storage unavailable')
     vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
@@ -248,15 +257,89 @@ describe('auto-start-storage', () => {
     },
   )
 
-  it('should select a newer native value', async () => {
+  it('should mirror a newer native preference to web storage', async () => {
     Object.defineProperty(globalThis, 'ReactNativeWebView', {configurable: true, value: {}})
+    const nativePreference = {isEnabled: true, savedAt: 15}
     localStorage.setItem(
       'pomo:timer-auto-start:v2',
       JSON.stringify({isEnabled: false, savedAt: 10}),
     )
-    storageMocks.getItem.mockResolvedValue(JSON.stringify({isEnabled: true, savedAt: 15}))
+    storageMocks.getItem.mockResolvedValue(JSON.stringify(nativePreference))
 
     expect(await readAutoStartPreference()).toBe(true)
+    expect(JSON.parse(localStorage.getItem('pomo:timer-auto-start:v2') ?? '')).toEqual(
+      nativePreference,
+    )
+
+    Reflect.deleteProperty(globalThis, 'ReactNativeWebView')
+
+    expect(await readAutoStartPreference()).toBe(true)
+  })
+
+  it('should retain the latest native preference when mirroring to web storage fails', async () => {
+    const webPreference = {isEnabled: false, savedAt: 10}
+    const nativePreference = {isEnabled: true, savedAt: 20}
+    let usesTossStorage = true
+    const storage = {
+      readToss: async (_key, parse) => parse(nativePreference),
+      readWeb: (_key, parse) => parse(webPreference),
+      usesTossStorage: () => usesTossStorage,
+      writeToss: async () => {},
+      writeWeb: vi.fn(() => new Error('browser storage unavailable')),
+    } satisfies AutoStartStorageAdapter
+    const customRepository = createAutoStartStorage({now, storage})
+
+    expect(await customRepository.read()).toBe(true)
+    expect(storage.writeWeb).toHaveBeenCalledWith('pomo:timer-auto-start:v2', nativePreference)
+
+    usesTossStorage = false
+
+    expect(await customRepository.read()).toBe(true)
+  })
+
+  it('should retain a persisted native preference when its web mirror fails', async () => {
+    const webPreference = {isEnabled: false, savedAt: 10}
+    let usesTossStorage = true
+    let tossPreference: unknown = null
+    const storage = {
+      readToss: async (_key, parse) => (tossPreference === null ? null : parse(tossPreference)),
+      readWeb: (_key, parse) => parse(webPreference),
+      usesTossStorage: () => usesTossStorage,
+      writeToss: vi.fn(async (_key, preference) => {
+        tossPreference = preference
+      }),
+      writeWeb: vi.fn(() => new Error('browser storage unavailable')),
+    } satisfies AutoStartStorageAdapter
+    const customRepository = createAutoStartStorage({now, storage})
+
+    await customRepository.write(true)
+    expect(tossPreference).toEqual({isEnabled: true, savedAt: 20})
+    usesTossStorage = false
+
+    expect(await customRepository.read()).toBe(true)
+  })
+
+  it('should prefer a successful write over a cached preference with the same timestamp', async () => {
+    const webPreference = {isEnabled: true, savedAt: 10}
+    let usesTossStorage = true
+    let tossPreference: unknown = {isEnabled: true, savedAt: 20}
+    const storage = {
+      readToss: async (_key, parse) => parse(tossPreference),
+      readWeb: (_key, parse) => parse(webPreference),
+      usesTossStorage: () => usesTossStorage,
+      writeToss: async (_key, preference) => {
+        tossPreference = preference
+      },
+      writeWeb: () => new Error('browser storage unavailable'),
+    } satisfies AutoStartStorageAdapter
+    const customRepository = createAutoStartStorage({now, storage})
+
+    expect(await customRepository.read()).toBe(true)
+    await customRepository.write(false)
+    expect(tossPreference).toEqual({isEnabled: false, savedAt: 20})
+    usesTossStorage = false
+
+    expect(await customRepository.read()).toBe(false)
   })
 
   it.each([false, true])(

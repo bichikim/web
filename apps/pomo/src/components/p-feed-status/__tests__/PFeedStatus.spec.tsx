@@ -5,7 +5,7 @@ import {isSupertonicModelDownloaded} from 'src/features/supertonic'
 
 import {fireEvent, render, screen} from '@solidjs/testing-library'
 import {afterEach, beforeEach, expect, it, vi} from 'vitest'
-import {usePFeedContext} from 'src/features/focus-room-feed'
+import {type PFeedState, usePFeedContext} from 'src/features/focus-room-feed'
 import {useModelDownload} from 'src/features/model-download'
 import {PFeedStatus} from '../PFeedStatus'
 import {
@@ -15,9 +15,13 @@ import {
   RECOVERY_JOB,
 } from '../../__tests__/feed-status/fixtures'
 
-vi.mock('src/features/focus-room-feed', () => ({
-  usePFeedContext: vi.fn(),
-}))
+vi.mock('src/features/focus-room-feed', async () => {
+  const {isNoFeedConnectionGuidance} = await vi.importActual<
+    typeof import('src/features/focus-room-feed/feed-controller')
+  >('src/features/focus-room-feed/feed-controller')
+
+  return {isNoFeedConnectionGuidance, usePFeedContext: vi.fn()}
+})
 
 vi.mock('src/features/model-download', () => ({
   useModelDownload: vi.fn(),
@@ -101,6 +105,27 @@ it('should render no feed notice while the feed state is idle', () => {
   render(() => <PFeedStatus />, {wrapper: PreferenceProvider})
 
   expect(screen.queryByRole('status')).toBeNull()
+})
+
+it('should replace generating status with add-subscription guidance after an empty feed sync', async () => {
+  const message = '설정에서 구독 피드를 추가해 주세요.'
+  const generationMessage = '새 피드 음성을 만들고 있어요.'
+  const [state, setState] = createSignal<PFeedState>({
+    message: generationMessage,
+    progress: 42,
+    status: 'generating',
+  })
+  vi.mocked(usePFeedContext).mockReturnValue(createFeeds([], false, [], {state}))
+
+  render(() => <PFeedStatus />, {wrapper: PreferenceProvider})
+  expect(screen.getByRole('status')).toHaveAttribute('data-state', 'generating')
+  expect(screen.getByText(generationMessage)).toBeInTheDocument()
+
+  setState({message, status: 'idle'})
+
+  await vi.waitFor(() => expect(screen.getByRole('status')).toHaveAttribute('data-state', 'idle'))
+  expect(screen.queryByText(generationMessage)).toBeNull()
+  expect(screen.getByText(message)).toBeInTheDocument()
 })
 
 it('should hide feed syncing activity', () => {

@@ -1,3 +1,4 @@
+import {clamp} from 'es-toolkit/math'
 import {revalidate} from '@solidjs/router'
 import {type Accessor, createEffect, onCleanup} from 'solid-js'
 
@@ -70,7 +71,7 @@ export const createQueryRevalidationScheduler = (
 
           revalidateQuery()
         },
-        Math.min(remainingDelay, MAXIMUM_TIMEOUT_DELAY_MILLISECONDS),
+        clamp(remainingDelay, 0, MAXIMUM_TIMEOUT_DELAY_MILLISECONDS),
       )
     }
 

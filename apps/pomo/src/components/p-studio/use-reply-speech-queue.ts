@@ -10,6 +10,7 @@ interface ReplySpeechRequest {
 interface UseReplySpeechQueueOptions {
   readonly isEnabled?: Accessor<boolean>
   readonly isOccupied: Accessor<boolean>
+  readonly isDialogueOccupied?: Accessor<boolean>
   readonly speak: (text: string) => Promise<void>
   readonly stop: () => void
 }
@@ -37,6 +38,17 @@ export const useReplySpeechQueue = (options: UseReplySpeechQueueOptions) => {
       setRequests((current) => [...current, {cancelled: false, reject, resolve, text}])
     })
 
+  const releaseActiveRequest = (request: ReplySpeechRequest) => {
+    if (activeRequest !== request) {
+      return
+    }
+
+    activeRequest = null
+    if (!disposed) {
+      setIsSpeaking(false)
+    }
+  }
+
   const runRequest = async (request: ReplySpeechRequest) => {
     try {
       await untrack(() => options.speak(request.text))
@@ -44,12 +56,7 @@ export const useReplySpeechQueue = (options: UseReplySpeechQueueOptions) => {
     } catch (error: unknown) {
       request.reject(error)
     } finally {
-      if (activeRequest === request) {
-        activeRequest = null
-        if (!disposed) {
-          setIsSpeaking(false)
-        }
-      }
+      releaseActiveRequest(request)
     }
   }
 
@@ -66,7 +73,11 @@ export const useReplySpeechQueue = (options: UseReplySpeechQueueOptions) => {
   const cancelActiveRequest = () => {
     const request = activeRequest
 
-    if (request === null || request.cancelled) {
+    if (request === null) {
+      return
+    }
+
+    if (request.cancelled) {
       return
     }
 
@@ -78,11 +89,9 @@ export const useReplySpeechQueue = (options: UseReplySpeechQueueOptions) => {
   createEffect(() => {
     const enabled = isEnabled()
     const [request] = requests()
+    const occupied = options.isOccupied()
+    const isDialogueOccupied = options.isDialogueOccupied?.() ?? false
 
-    if (disposed) {
-      cancelPendingRequests()
-      return
-    }
     if (!enabled) {
       const shouldCancelActiveRequest = wasEnabled
       wasEnabled = false
@@ -94,16 +103,17 @@ export const useReplySpeechQueue = (options: UseReplySpeechQueueOptions) => {
     }
 
     wasEnabled = true
-    if (request === undefined || isSpeaking() || options.isOccupied()) {
+    if (isDialogueOccupied) {
+      cancelActiveRequest()
+    }
+    if (request === undefined || isSpeaking() || occupied) {
       return
     }
 
     setRequests((current) => current.slice(1))
     setIsSpeaking(true)
     activeRequest = request
-    runRequest(request).catch((error: unknown) => {
-      console.error('Unexpected reply speech queue failure.', error)
-    })
+    runRequest(request)
   })
 
   onCleanup(() => {

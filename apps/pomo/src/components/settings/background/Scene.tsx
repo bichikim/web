@@ -5,7 +5,8 @@ import {
   getLocalizedTimeOptions,
 } from '../../../features/localization'
 import * as m from '@paraglide/message'
-import {CLASSES, type PSettingsProps} from '../general/shared'
+import {CLASSES} from '../classes'
+import type {PSettingsProps} from '../types'
 
 export const Scene = (props: PSettingsProps) => (
   <section aria-label={m.settings_section_scene()} class={CLASSES.settingsSection}>

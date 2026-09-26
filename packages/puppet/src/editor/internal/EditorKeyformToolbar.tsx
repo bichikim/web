@@ -1,4 +1,5 @@
 import {EditorButton} from '../../design-system'
+import {onCleanup, Show} from 'solid-js'
 
 import type {PuppetParameterValues} from '../../deformation'
 import type {PuppetParameterBinding} from '../../player/document'
@@ -11,7 +12,15 @@ export interface EditorKeyformToolbarProps {
   readonly onParameterAdd?: () => void
   readonly onTwoDimensionalParameterAdd?: () => void
   readonly parameterCreationAvailable?: boolean
+  readonly setBrushControlsMount?: (element: HTMLDivElement | undefined) => void
   readonly titleId: string
+}
+
+const BrushControlsMount = (props: {
+  readonly setMount: (element: HTMLDivElement | undefined) => void
+}) => {
+  onCleanup(() => props.setMount(undefined))
+  return <div class="keyform-brush-mount" ref={props.setMount} />
 }
 
 export const EditorKeyformToolbar = (props: EditorKeyformToolbarProps) => {
@@ -20,8 +29,7 @@ export const EditorKeyformToolbar = (props: EditorKeyformToolbarProps) => {
 
   return (
     <header class="keyform-toolbar">
-      <div class="keyform-parameter-heading">
-        <span id={props.titleId}>Parameters</span>
+      <div class="keyform-parameter-heading" id={props.titleId} aria-label="Parameters">
         <EditorButton
           aria-label="1차원 Parameter 추가"
           class="panel-add-button"
@@ -62,6 +70,9 @@ export const EditorKeyformToolbar = (props: EditorKeyformToolbarProps) => {
         >
           선택 키폼 삭제
         </EditorButton>
+        <Show when={props.setBrushControlsMount}>
+          {(setMount) => <BrushControlsMount setMount={setMount()} />}
+        </Show>
       </div>
     </header>
   )

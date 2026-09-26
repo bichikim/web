@@ -17,6 +17,8 @@ import {MeshEditor} from './MeshEditor'
 import {PlayerCanvas, type PlayerCanvasStatus} from './PlayerCanvas'
 
 export interface EditorViewportProps {
+  readonly brushControlsMount?: HTMLDivElement
+  readonly brushSettingsMount?: HTMLDivElement
   readonly physicsPreview?: boolean
   readonly meshEditingDisabled?: boolean
   readonly motionId?: string
@@ -94,6 +96,9 @@ const EditingOverlays = (props: EditingOverlaysProps) => {
       aria-hidden={!props.visible}
     >
       <MeshEditor
+        brushControlsMount={props.viewport.brushControlsMount}
+        brushSettingsMount={props.viewport.brushSettingsMount}
+        brushControlsExternal
         meshEditing={props.editingMesh}
         renderDisplayControls={(controls) => (
           <Show when={props.visible}>

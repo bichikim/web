@@ -1,7 +1,10 @@
 import {describe, expect, test} from 'vitest'
 
 import type {PuppetDocument, PuppetPart} from '../../../player'
-import {createSpatialMeshAttachmentSampler} from '../../../deformation/bind-spatial-mesh'
+import {
+  createSpatialMeshAttachmentSampler,
+  resolveSpatialMeshAttachment,
+} from '../../../deformation/bind-spatial-mesh'
 import {reconcileSpatialSurface} from '../reconcile-spatial-surface'
 
 const part: PuppetPart = {
@@ -78,6 +81,69 @@ describe('reconcileSpatialSurface', () => {
     expect(reconcileSpatialSurface({mesh, part})?.controlPoints).toEqual([
       0, 0, 1, 12, 2, 2, 0, 10, 3,
     ])
+  })
+
+  test('should attach added vertices in the translated spatial mesh coordinate system', () => {
+    const spatialMesh = {
+      indices: [0, 1, 2],
+      source: {kind: 'imported' as const, name: 'front.glb'},
+      vertices: [0, 0, 0, 10, 0, 10, 0, 10, 0],
+    }
+    const sample = createSpatialMeshAttachmentSampler(spatialMesh)
+    const attachments = [
+      [0, 0],
+      [10, 0],
+      [0, 10],
+    ].map(([x, y]) => sample(x!, y!)!.attachment)
+    const attached: PuppetPart = {
+      ...part,
+      mesh: {...part.mesh, vertices: [2, 3, 12, 3, 2, 13]},
+      spatial: {
+        ...part.spatial!,
+        attachments,
+        controlPoints: [2, 3, 4, 12, 3, 14, 2, 13, 4],
+        groupId: 'spatial',
+      },
+    }
+    const document: PuppetDocument = {
+      format: 'winter-love-puppet',
+      motions: [],
+      parts: [attached],
+      scene: {
+        roots: [
+          {
+            bounds: {height: 10, width: 10, x: 0, y: 0},
+            children: [{id: 'face', kind: 'part', locked: false, name: 'Face', visible: true}],
+            columns: 2,
+            controlPoints: [0, 0, 10, 0, 0, 10, 10, 10],
+            deformerType: 'spatial',
+            id: 'spatial',
+            kind: 'deformer',
+            locked: false,
+            name: '3D',
+            rows: 2,
+            spatialMesh,
+            spatialMeshPosition: [2, 3, 4],
+            spatialOrigin: [0, 0, 0],
+            spatialRotationParameterIds: [null, null, null],
+            visible: true,
+          },
+        ],
+      },
+      version: 1,
+      viewport: {height: 10, width: 10},
+    }
+    const reconciled = reconcileSpatialSurface({
+      addedVertexIndex: 1,
+      document,
+      mesh: {...attached.mesh, vertices: [2, 3, 6, 8, 12, 3, 2, 13]},
+      part: attached,
+    })!
+    const addedAttachment = reconciled.attachments?.[1]
+
+    expect(reconciled.controlPoints.slice(3, 6)).toEqual([6, 8, 8])
+    expect(addedAttachment).toBeDefined()
+    expect(resolveSpatialMeshAttachment(spatialMesh, addedAttachment!)).toEqual([4, 5, 4])
   })
 
   test('should append and remove the corresponding 3D point as topology changes', () => {

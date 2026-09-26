@@ -1,3 +1,4 @@
+import {decodePcm16Wav} from 'src/utils/decode-pcm16-wav'
 import {clampUnit} from 'src/utils/clamp-unit'
 
 import type {PViseme} from './index'
@@ -37,13 +38,6 @@ const FULL_SHAPE_EXIT_THRESHOLD = 0.32
 const PEAK_REFERENCE_PERCENTILE = 0.9
 const REFERENCE_FLOOR = 0.000_1
 const SILENCE_FLOOR_RATIO = 0.08
-const PCM_16_SCALE = 32_768
-const RIFF_HEADER_SIZE = 12
-const CHUNK_HEADER_SIZE = 8
-const FORMAT_CHUNK_MINIMUM_SIZE = 16
-const PCM_FORMAT = 1
-const MONO_CHANNEL_COUNT = 1
-const PCM_16_BITS = 16
 
 const getRootMeanSquare = (samples: Float32Array, start: number, end: number) => {
   let squareTotal = 0
@@ -115,82 +109,11 @@ export const getPAudioEnvelopeLevel = (envelope: PAudioEnvelope, currentTimeMs: 
   return firstLevel + (nextLevel - firstLevel) * progress
 }
 
-const readText = (view: DataView, offset: number, length: number) => {
-  let text = ''
-
-  for (let index = 0; index < length; index += 1) {
-    text += String.fromCharCode(view.getUint8(offset + index))
-  }
-
-  return text
-}
-
-/** Reads the mono PCM WAV files emitted by Pomo without involving a second audio decoder. */
-// oxlint-disable no-magic-numbers -- Byte offsets are defined by the PCM WAV specification.
+/** Reads mono PCM16 WAV files without involving another audio decoder. */
 export const createPWaveEnvelope = (buffer: ArrayBuffer): PAudioEnvelope | null => {
-  if (buffer.byteLength < RIFF_HEADER_SIZE) {
-    return null
-  }
-
-  const view = new DataView(buffer)
-
-  if (readText(view, 0, 4) !== 'RIFF' || readText(view, 8, 4) !== 'WAVE') {
-    return null
-  }
-
-  let format: {readonly sampleRate: number} | null = null
-  let dataOffset = 0
-  let dataSize = 0
-  let offset = RIFF_HEADER_SIZE
-
-  while (offset + CHUNK_HEADER_SIZE <= buffer.byteLength) {
-    const chunkId = readText(view, offset, 4)
-    const chunkSize = view.getUint32(offset + 4, true)
-    const chunkDataOffset = offset + CHUNK_HEADER_SIZE
-    const chunkEnd = chunkDataOffset + chunkSize
-
-    if (chunkEnd > buffer.byteLength) {
-      return null
-    }
-
-    if (chunkId === 'fmt ' && chunkSize >= FORMAT_CHUNK_MINIMUM_SIZE) {
-      const audioFormat = view.getUint16(chunkDataOffset, true)
-      const channelCount = view.getUint16(chunkDataOffset + 2, true)
-      const sampleRate = view.getUint32(chunkDataOffset + 4, true)
-      const bitsPerSample = view.getUint16(chunkDataOffset + 14, true)
-
-      if (
-        audioFormat !== PCM_FORMAT ||
-        channelCount !== MONO_CHANNEL_COUNT ||
-        bitsPerSample !== PCM_16_BITS
-      ) {
-        return null
-      }
-
-      format = {sampleRate}
-    }
-
-    if (chunkId === 'data') {
-      dataOffset = chunkDataOffset
-      dataSize = chunkSize
-    }
-
-    offset = chunkEnd + (chunkSize % 2)
-  }
-
-  if (format === null || dataSize === 0) {
-    return null
-  }
-
-  const samples = new Float32Array(Math.floor(dataSize / 2))
-
-  for (let index = 0; index < samples.length; index += 1) {
-    samples[index] = view.getInt16(dataOffset + index * 2, true) / PCM_16_SCALE
-  }
-
-  return createPAudioEnvelope({sampleRate: format.sampleRate, samples})
+  const decoded = decodePcm16Wav(buffer)
+  return decoded === null || decoded.channels !== 1 ? null : createPAudioEnvelope(decoded)
 }
-// oxlint-enable no-magic-numbers
 
 const smoothIntensity = (current: number, target: number, elapsedMs: number) => {
   const durationMs = target > current ? ATTACK_DURATION_MS : RELEASE_DURATION_MS

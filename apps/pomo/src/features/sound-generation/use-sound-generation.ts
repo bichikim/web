@@ -31,7 +31,7 @@ export function useSoundGeneration() {
     terminate()
     const previous = url()
     if (previous !== null) {
-      URL.revokeObjectURL(previous)
+      replaceBlobObjectUrl(previous, () => null)
     }
   })
   const generate = (request: SoundRequest | LoopRequest) => {

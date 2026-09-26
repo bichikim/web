@@ -176,6 +176,7 @@ it('should regenerate one candidate with the selected voice configuration', asyn
     },
     status: 'complete',
   })
+  expect(URL.revokeObjectURL).toHaveBeenCalledExactlyOnceWith('blob:old')
   expect(disposeClient).toHaveBeenCalledOnce()
 })
 
@@ -238,4 +239,15 @@ it('should retain cancellation precedence when initialization fails after dispos
     status: 'cancelled',
   })
   expect(generateCompressedDialogueAudio).not.toHaveBeenCalled()
+})
+
+it('should retain the previous candidate URL when replacement creation fails', async () => {
+  vi.mocked(URL.createObjectURL)
+    .mockReset()
+    .mockImplementation(() => {
+      throw new Error('URL failed')
+    })
+  const result = await regenerateCandidateVoice({...createOptions(), candidate: candidate()})
+  expect(result.status).toBe('error')
+  expect(URL.revokeObjectURL).not.toHaveBeenCalled()
 })

@@ -1,3 +1,4 @@
+import {clamp} from 'es-toolkit/math'
 import {readPDisplayPreferences} from 'src/features/focus-room-display-preferences'
 import {getBackgroundRepository} from 'src/features/background'
 
@@ -29,13 +30,13 @@ const getDesktopWorkArea = (): DesktopWorkArea => {
 }
 
 const fitCoordinate = (start: number, length: number, size: number, preferred: number): number =>
-  Math.max(start, Math.min(preferred, start + Math.max(0, length - size)))
+  clamp(preferred, start, start + Math.max(0, length - size))
 
 const getControlSurfaceOptions = () => {
   const workArea = getDesktopWorkArea()
   const player = {height: 340, width: 520}
   const pomodoro = {height: 520, width: 360}
-  const settings = {height: 620, width: 420}
+  const settings = {height: 620, width: 480}
 
   return [
     {
@@ -105,7 +106,9 @@ export const shouldHandoffDesktopModeOwner = async (mode: DesktopMode): Promise<
   mode === 'desktop' && (await readWebsiteBackgroundUrl()) !== null
 
 interface SynchronizeBackgroundContentOptions {
+  readonly onApply?: () => void
   readonly restoreWhenMissing?: boolean
+  readonly shouldApply?: () => boolean
   readonly url?: string | null
   readonly useChild?: boolean
 }
@@ -116,6 +119,7 @@ interface BackgroundSynchronizationTarget {
 }
 
 interface PendingBackgroundSynchronization {
+  readonly hasStarted: () => boolean
   readonly promise: Promise<void>
   readonly revision: number
   readonly target: BackgroundSynchronizationTarget
@@ -140,20 +144,28 @@ const invalidateBackgroundSynchronization = (): void => {
 }
 
 const synchronizeBackgroundContent = async ({
+  onApply,
   restoreWhenMissing = true,
+  shouldApply = () => true,
   url: configuredUrl,
   useChild = false,
 }: SynchronizeBackgroundContentOptions = {}): Promise<boolean> => {
   const {navigateBackgroundSurface, restoreBackgroundContent} = await getSurfaceApi()
   const url = configuredUrl === undefined ? await readWebsiteBackgroundUrl() : configuredUrl
 
+  if (!shouldApply()) {
+    return false
+  }
+
   if (url === null) {
     if (restoreWhenMissing) {
+      onApply?.()
       await restoreBackgroundContent({label: BACKGROUND_LABEL})
     }
     return false
   }
 
+  onApply?.()
   await navigateBackgroundSurface({
     label: BACKGROUND_LABEL,
     url,
@@ -305,6 +317,11 @@ export const synchronizeDesktopBackground = async (): Promise<void> => {
     return
   }
 
+  const revision = backgroundSynchronizationRevision
+  backgroundSynchronizationRequest += 1
+  const request = backgroundSynchronizationRequest
+  const shouldApply = () =>
+    backgroundSynchronizationRevision === revision && backgroundSynchronizationRequest === request
   const mode = readDesktopMode()
   const usesWebsiteChild = mode === 'normal' || mode === 'interactiveDesktop' || mode === 'widget'
   if (mode !== 'desktop' && !usesWebsiteChild && !isDesktopBackgroundMode(mode)) {
@@ -312,39 +329,57 @@ export const synchronizeDesktopBackground = async (): Promise<void> => {
   }
 
   const target = {mode, url: await readWebsiteBackgroundUrl()}
-  const revision = backgroundSynchronizationRevision
-  if (
-    lastBackgroundSynchronization?.revision === revision &&
-    hasSameSynchronizationTarget(lastBackgroundSynchronization.target, target)
-  ) {
+  if (!shouldApply()) {
     return
   }
 
   const pending = pendingBackgroundSynchronization
+  const hasPendingDifferentTarget =
+    pending !== null &&
+    pending.revision === revision &&
+    !hasSameSynchronizationTarget(pending.target, target)
+  if (
+    lastBackgroundSynchronization?.revision === revision &&
+    hasSameSynchronizationTarget(lastBackgroundSynchronization.target, target) &&
+    !hasPendingDifferentTarget
+  ) {
+    return
+  }
+
   if (
     pending !== null &&
     pending.revision === revision &&
     hasSameSynchronizationTarget(pending.target, target)
   ) {
-    await pending.promise
-    return
+    if (pending.hasStarted()) {
+      await pending.promise
+      if (shouldApply()) {
+        lastBackgroundSynchronization = {revision, target}
+      }
+      return
+    }
   }
 
+  let hasStarted = false
   const operation = synchronizeBackgroundContent({
+    onApply: () => {
+      hasStarted = true
+    },
+    shouldApply,
     url: target.url,
     useChild: usesWebsiteChild,
   })
-  backgroundSynchronizationRequest += 1
-  const request = backgroundSynchronizationRequest
   const promise = operation.then(() => {
-    if (
-      backgroundSynchronizationRevision === revision &&
-      backgroundSynchronizationRequest === request
-    ) {
+    if (shouldApply()) {
       lastBackgroundSynchronization = {revision, target}
     }
   })
-  const synchronization: PendingBackgroundSynchronization = {promise, revision, target}
+  const synchronization: PendingBackgroundSynchronization = {
+    hasStarted: () => hasStarted,
+    promise,
+    revision,
+    target,
+  }
   pendingBackgroundSynchronization = synchronization
 
   try {

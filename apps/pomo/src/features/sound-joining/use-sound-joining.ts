@@ -57,7 +57,7 @@ export function useSoundJoining() {
     stop()
     const value = url()
     if (value !== null) {
-      URL.revokeObjectURL(value)
+      replaceBlobObjectUrl(value, () => null)
     }
   })
   const generate = async (request: JoinRequest) => {

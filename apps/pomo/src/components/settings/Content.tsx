@@ -7,7 +7,8 @@ import {PDialogueSettings} from '../p-dialogue-settings/PDialogueSettings'
 import {PFeedSettings} from '../p-feed-settings/PFeedSettings'
 import {PGuideSettings} from '../p-guide-settings/PGuideSettings'
 import {PGeneralSettings} from './general/General'
-import type {PSettingsProps} from './general/shared'
+import type {PSettingsProps} from './types'
+import {App} from './app/App'
 
 interface PSettingsContentProps extends PSettingsProps {
   readonly wakeLock: ScreenWakeLockController
@@ -19,6 +20,9 @@ export const PSettingsContent = (props: PSettingsContentProps) => {
     <>
       <Tabs.Content value="general">
         <PGeneralSettings {...props} wakeLock={props.wakeLock} />
+      </Tabs.Content>
+      <Tabs.Content value="app">
+        <App {...props} />
       </Tabs.Content>
       <Tabs.Content value="background">
         <Background {...props} />

@@ -250,21 +250,22 @@ export const useDialogueWriter = (props: UseDialogueWriterProps): DialogueWriter
   })
 
   const updateRequest = (nextRequest: string) => {
-    const currentRequest = request()
-    if (currentRequest === nextRequest) {
+    if (request() === nextRequest) {
       return
     }
 
-    const isGenerating = generationInFlight
     setRequest(nextRequest)
+    setOutput('')
 
-    if (!isGenerating) {
+    if (generationInFlight) {
+      clientSession.dispose()
+      setState({status: 'idle'})
       return
     }
 
-    setOutput('')
-    clientSession.dispose()
-    setState({status: 'idle'})
+    if (state().status === 'complete') {
+      setState({status: 'ready'})
+    }
   }
 
   const prepare = () => {

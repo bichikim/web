@@ -56,6 +56,8 @@ const buildIntegrationTestFiles = [
 ]
 
 const runtimeIntegrationTestFiles = [
+  'apps/pomo/src/server/ai-runner/__tests__/storage.integration.spec.ts',
+  'apps/pomo/src/server/ai-runner/__tests__/http.integration.spec.ts',
   'apps/pomo/src/server/database/schema/__tests__/ai-jobs.migration.spec.ts',
   'apps/pomo/src/server/repositories/ai-jobs/__tests__/artifacts.spec.ts',
   'apps/pomo/src/server/ai-runner/__tests__/service.spec.ts',
@@ -77,6 +79,7 @@ export const unitTestProject = {
       'packages/server-boundary/src/__tests__/plugin.e2e.spec.ts',
     ],
     include: [
+      'packages/*/bin/__tests__/**/*.spec.?(c|m)[jt]s?(x)',
       'packages/*/__tests__/**/*.spec.?(c|m)[jt]s?(x)',
       'packages/*/rules/**/*.spec.?(c|m)[jt]s?(x)',
       'packages/*/src/**/*.spec.?(c|m)[jt]s?(x)',

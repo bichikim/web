@@ -17,6 +17,15 @@ it.each([
   expect(url.searchParams.getAll('timeZone')).toEqual(['America/New_York'])
 })
 it.each([
+  '/api/feeds/today-in-history/rss.xml/',
+  'https://www.pomofi.io/api/feeds/today-in-history/atom.xml/',
+  '/__dev/feeds/rss.xml/',
+  '/__dev/feeds/atom.xml/?timeZone=Asia%2FSeoul',
+])('should apply the supplied viewer zone to owned feeds with a trailing slash: %s', (value) => {
+  const url = new URL(getFeedRequestUrl(value, environment))
+  expect(url.searchParams.getAll('timeZone')).toEqual(['America/New_York'])
+})
+it.each([
   'https://example.com/api/feeds/today-in-history/rss.xml',
   '/api/other',
   'https://example.com/rss.xml',

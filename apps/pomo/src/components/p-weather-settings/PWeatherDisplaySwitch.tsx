@@ -1,7 +1,7 @@
 import * as m from '@paraglide/message'
 import {Show} from 'solid-js'
 import {PSwitch} from '../p-switch/PSwitch'
-import {CLASSES} from '../settings/general/shared'
+import {CLASSES} from '../settings/classes'
 
 export interface PWeatherDisplaySwitchProps {
   readonly weatherEnabled?: boolean

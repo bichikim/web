@@ -47,41 +47,28 @@ type SoundEffectsEventActionId = Extract<
   'sound-effects-start' | 'sound-effects-stop'
 >
 
-const runMusicAction = (actions: MusicPlaybackActions, actionId: MusicEventActionId) => {
-  switch (actionId) {
-    case 'music-start':
-      actions.play()
-      return
-    case 'music-stop':
-      actions.pause()
-      return
-    default: {
-      const exhaustiveAction: never = actionId
-      return exhaustiveAction
+const musicActionHandlers = {
+  'music-start': (actions: MusicPlaybackActions) => actions.play(),
+  'music-stop': (actions: MusicPlaybackActions) => actions.pause(),
+} satisfies Readonly<Record<MusicEventActionId, (actions: MusicPlaybackActions) => void>>
+
+const runMusicAction = (actions: MusicPlaybackActions, actionId: MusicEventActionId) =>
+  musicActionHandlers[actionId](actions)
+
+const soundEffectsActionHandlers = {
+  'sound-effects-start': (actions: SoundEffectsController) => {
+    if (!actions.isStopped()) {
+      actions.activate()
     }
-  }
-}
+  },
+  'sound-effects-stop': (actions: SoundEffectsController) => actions.stop(),
+} satisfies Readonly<Record<SoundEffectsEventActionId, (actions: SoundEffectsController) => void>>
 
 const runSoundEffectsAction = (
   actions: SoundEffectsController,
   actionId: SoundEffectsEventActionId,
 ) => {
-  switch (actionId) {
-    case 'sound-effects-start':
-      if (actions.isStopped()) {
-        return
-      }
-
-      actions.activate()
-      return
-    case 'sound-effects-stop':
-      actions.stop()
-      return
-    default: {
-      const exhaustiveAction: never = actionId
-      return exhaustiveAction
-    }
-  }
+  soundEffectsActionHandlers[actionId](actions)
 }
 
 // oxlint-disable-next-line eslint/max-lines-per-function -- Event and media lifecycles share one owner.
@@ -95,15 +82,20 @@ export const PStudioEvents = (props: PStudioEventsProps) => {
   const [mediaMessages, setMediaMessages] = createSignal<HTMLDivElement>()
   const hasMediaMessages = useChildPresence(mediaMessages)
   const isMobileLayout = useMobileLayout()
-  const replySpeechQueue = useReplySpeechQueue({
-    isEnabled: () => props.dialogueComposerVisible,
-    isOccupied: () =>
+  const isDialogueOccupied = createMemo(
+    () =>
       events.activeText() !== null ||
       events.isDialoguePlaying() ||
       events.isDialoguePlaybackBlocked() ||
-      events.scheduledDialogueCount() > 0 ||
-      props.pomoSay.isPreparing() ||
-      props.pomoSay.isPlaying(),
+      events.scheduledDialogueCount() > 0,
+  )
+  const isOccupied = createMemo(
+    () => isDialogueOccupied() || props.pomoSay.isPreparing() || props.pomoSay.isPlaying(),
+  )
+  const replySpeechQueue = useReplySpeechQueue({
+    isDialogueOccupied,
+    isEnabled: () => props.dialogueComposerVisible,
+    isOccupied,
     speak: (text) => props.pomoSay.speak({text}),
     stop: () => props.pomoSay.stop(),
   })

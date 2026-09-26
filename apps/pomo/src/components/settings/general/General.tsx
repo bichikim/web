@@ -4,7 +4,8 @@ import {type ScreenWakeLockController} from '../../../features/screen-wake-lock'
 import * as m from '@paraglide/message'
 import {getLocale, type Locale, setLocale} from '@paraglide/runtime'
 import {PHealthCheck} from '../../p-health-check/PHealthCheck'
-import {CLASSES, type PSettingsProps} from './shared'
+import {CLASSES} from '../classes'
+import type {PSettingsProps} from '../types'
 import {PGeneralDisplaySettings} from './Display'
 
 const LANGUAGE_OPTIONS = [

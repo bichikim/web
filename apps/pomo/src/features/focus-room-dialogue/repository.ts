@@ -1,3 +1,4 @@
+import {uniq} from 'es-toolkit/array'
 import {
   createModelStorage,
   type ModelStorage,
@@ -152,8 +153,8 @@ export const createPDialogueRepository = (): PDialogueRepository => {
   ) => {
     const requestedIds =
       typeof dialogueIds === 'string' ? [dialogueIds] : dialogueIds === null ? [] : dialogueIds
-    const uniqueDialogueIds = [...new Set(requestedIds)]
-    const uniqueActionIds = [...new Set(actionIds)]
+    const uniqueDialogueIds = uniq(requestedIds)
+    const uniqueActionIds = uniq(actionIds)
 
     if (uniqueDialogueIds.length === 0 && uniqueActionIds.length === 0) {
       await database.eventBindings.delete(event)

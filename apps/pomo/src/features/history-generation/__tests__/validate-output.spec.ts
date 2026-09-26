@@ -182,7 +182,9 @@ it('should reject a selected regeneration that changes a required title', () => 
 
 it('should accept normalized required titles and reject a different title count', () => {
   const output = createOutput()
-  const requiredTitles = output.moments.map((moment) => `  ${moment.title.toUpperCase()}  `)
+  const requiredTitles = output.moments.map((moment, index) =>
+    index === 0 ? `　１９４５년, 역사적 사건　` : `  ${moment.title.toUpperCase()}  `,
+  )
 
   expect(() => validate(output, {requiredTitles})).not.toThrow()
   expect(() => validate(output, {requiredTitles: requiredTitles.slice(1)})).toThrow(

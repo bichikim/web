@@ -301,11 +301,15 @@ export const usePomodoroTimer = (props: UsePomodoroTimerProps = {}): PomodoroTim
       if (props.stopOnUnmount) {
         const currentTime = Date.now()
         const currentConfig = config()
-        const synchronizedState = synchronizePomodoroTimer(state(), currentTime, currentConfig, {
-          autoStartNextPhase: isAutoStartEnabled(),
-        })
+        const currentState = state()
+        const autoStartNextPhase = isAutoStartEnabled()
+        const stateToStop = autoStartNextPhase
+          ? synchronizePomodoroTimer(currentState, currentTime, currentConfig, {
+              autoStartNextPhase: true,
+            })
+          : currentState
         writePomodoroTimerState(
-          stopPomodoroTimer(synchronizedState, currentConfig, {
+          stopPomodoroTimer(stateToStop, currentConfig, {
             now: currentTime,
             preserveRemainingProgress: true,
           }),

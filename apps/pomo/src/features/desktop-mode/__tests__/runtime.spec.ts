@@ -132,8 +132,8 @@ describe('applyDesktopMode', () => {
       height: 620,
       label: 'desktop-settings',
       path: '/desktop/settings/',
-      width: 420,
-      x: 996,
+      width: 480,
+      x: 936,
       y: 24,
     })
     expect(setBackgroundSurface).toHaveBeenCalledWith({
@@ -233,6 +233,121 @@ describe('applyDesktopMode', () => {
       useChild: true,
     })
     expect(restoreBackgroundContent).not.toHaveBeenCalled()
+  })
+
+  it('should skip a website child sync invalidated while reading its URL', async () => {
+    vi.stubEnv('VITE_POMO_IS_DESKTOP', 'true')
+    localStorage.setItem('pomo:desktop-mode:v1', 'normal')
+    const snapshot = {
+      items: [],
+      preferences: {mode: 'website' as const, websiteUrl: 'https://example.com/dashboard'},
+    }
+    const pendingRead = Promise.withResolvers<typeof snapshot>()
+    const read = vi.fn().mockReturnValueOnce(pendingRead.promise).mockResolvedValue(snapshot)
+    vi.mocked(getBackgroundRepository).mockResolvedValue({read} as never)
+
+    const synchronization = synchronizeDesktopBackground()
+    await vi.waitFor(() => expect(read).toHaveBeenCalledOnce())
+    await expect(applyDesktopMode('desktop')).resolves.toBe(true)
+    pendingRead.resolve(snapshot)
+    await synchronization
+
+    expect(navigateBackgroundSurface).toHaveBeenCalledOnce()
+    expect(navigateBackgroundSurface).toHaveBeenCalledWith({
+      label: 'background',
+      url: 'https://example.com/dashboard',
+    })
+  })
+
+  it('should let the latest sync win when URL reads finish out of order', async () => {
+    vi.stubEnv('VITE_POMO_IS_DESKTOP', 'true')
+    localStorage.setItem('pomo:desktop-mode:v1', 'normal')
+    const firstSnapshot = {
+      items: [],
+      preferences: {mode: 'website' as const, websiteUrl: 'https://example.com/first-request'},
+    }
+    const latestSnapshot = {
+      items: [],
+      preferences: {mode: 'website' as const, websiteUrl: 'https://example.com/latest-request'},
+    }
+    const firstRead = Promise.withResolvers<typeof firstSnapshot>()
+    const read = vi.fn().mockReturnValueOnce(firstRead.promise).mockResolvedValue(latestSnapshot)
+    vi.mocked(getBackgroundRepository).mockResolvedValue({read} as never)
+
+    const firstSynchronization = synchronizeDesktopBackground()
+    await vi.waitFor(() => expect(read).toHaveBeenCalledOnce())
+    const latestSynchronization = synchronizeDesktopBackground()
+    await vi.waitFor(() => expect(read).toHaveBeenCalledTimes(2))
+    await latestSynchronization
+    firstRead.resolve(firstSnapshot)
+    await firstSynchronization
+
+    expect(navigateBackgroundSurface).toHaveBeenCalledOnce()
+    expect(navigateBackgroundSurface).toHaveBeenCalledWith({
+      label: 'background',
+      url: 'https://example.com/latest-request',
+      useChild: true,
+    })
+  })
+
+  it('should apply a cached URL again after a different URL starts navigating', async () => {
+    vi.stubEnv('VITE_POMO_IS_DESKTOP', 'true')
+    localStorage.setItem('pomo:desktop-mode:v1', 'normal')
+    const cachedSnapshot = {
+      items: [],
+      preferences: {mode: 'website' as const, websiteUrl: 'https://example.com/cached'},
+    }
+    const pendingSnapshot = {
+      items: [],
+      preferences: {mode: 'website' as const, websiteUrl: 'https://example.com/pending'},
+    }
+    const read = vi
+      .fn()
+      .mockResolvedValueOnce(cachedSnapshot)
+      .mockResolvedValueOnce(pendingSnapshot)
+      .mockResolvedValue(cachedSnapshot)
+    vi.mocked(getBackgroundRepository).mockResolvedValue({read} as never)
+
+    await synchronizeDesktopBackground()
+    const pendingNavigation = Promise.withResolvers<void>()
+    vi.mocked(navigateBackgroundSurface).mockImplementation(async ({url}) => {
+      if (url.endsWith('/pending')) {
+        await pendingNavigation.promise
+      }
+    })
+    const pendingSynchronization = synchronizeDesktopBackground()
+    await vi.waitFor(() => expect(navigateBackgroundSurface).toHaveBeenCalledTimes(2))
+    const latestSynchronization = synchronizeDesktopBackground()
+    await latestSynchronization
+    pendingNavigation.resolve()
+    await pendingSynchronization
+
+    expect(navigateBackgroundSurface).toHaveBeenCalledTimes(3)
+    expect(navigateBackgroundSurface).toHaveBeenNthCalledWith(3, {
+      label: 'background',
+      url: 'https://example.com/cached',
+      useChild: true,
+    })
+  })
+
+  it('should skip restoring a background when its sync is invalidated while reading its URL', async () => {
+    vi.stubEnv('VITE_POMO_IS_DESKTOP', 'true')
+    localStorage.setItem('pomo:desktop-mode:v1', 'normal')
+    const snapshot = {
+      items: [],
+      preferences: {mode: 'character' as const, websiteUrl: null},
+    }
+    const pendingRead = Promise.withResolvers<typeof snapshot>()
+    const read = vi.fn().mockReturnValueOnce(pendingRead.promise).mockResolvedValue(snapshot)
+    vi.mocked(getBackgroundRepository).mockResolvedValue({read} as never)
+
+    const synchronization = synchronizeDesktopBackground()
+    await vi.waitFor(() => expect(read).toHaveBeenCalledOnce())
+    await expect(applyDesktopMode('desktop')).resolves.toBe(false)
+    pendingRead.resolve(snapshot)
+    await synchronization
+
+    expect(restoreBackgroundContent).toHaveBeenCalledOnce()
   })
 
   it('should avoid duplicate native navigation for the same saved website URL', async () => {

@@ -1,6 +1,6 @@
+import {isPlainObject} from 'es-toolkit/predicate'
+import {sha256Hex} from 'src/utils/sha256-hex'
 import {MODEL_PARTIAL_DIRECTORY_NAME} from '../storage'
-
-const HEXADECIMAL_RADIX = 16
 
 export interface PartialDownloadMetadata {
   readonly contentType: string | null
@@ -29,10 +29,7 @@ interface PartialFileNames {
 
 const createFileNames = async (url: string): Promise<PartialFileNames> => {
   const data = new TextEncoder().encode(url)
-  const digest = await crypto.subtle.digest('SHA-256', data)
-  const key = Array.from(new Uint8Array(digest), (value) =>
-    value.toString(HEXADECIMAL_RADIX).padStart(2, '0'),
-  ).join('')
+  const key = await sha256Hex(data)
 
   return {data: `${key}.part`, metadata: `${key}.json`}
 }
@@ -53,11 +50,11 @@ const removeFile = async (directory: FileSystemDirectoryHandle, fileName: string
 }
 
 const isPartialDownloadMetadata = (value: unknown): value is PartialDownloadMetadata => {
-  if (typeof value !== 'object' || value === null) {
+  if (!isPlainObject(value)) {
     return false
   }
 
-  const metadata = value as Record<string, unknown>
+  const metadata = value
   return (
     (typeof metadata.contentType === 'string' || metadata.contentType === null) &&
     (typeof metadata.etag === 'string' || metadata.etag === null) &&

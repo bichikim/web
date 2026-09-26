@@ -1,4 +1,4 @@
-import {selectMaximumBy} from 'src/utils/select-maximum-by'
+import {createTimestampedDualRuntimeStorage} from 'src/utils/runtime-storage/create-timestamped-dual-runtime-storage'
 import {z} from 'zod'
 
 import {
@@ -57,7 +57,9 @@ export const createAutoStartStorage = ({
   storage,
   now,
 }: AutoStartStorageOptions): AutoStartStorage => {
+  const coordinator = createTimestampedDualRuntimeStorage<StoredPreference>({now})
   const writeLatestToss = createLatestStorageWriter(AUTO_START_STORAGE_KEY, storage.writeToss)
+  let latestKnownPreference: StoredPreference | null = null
 
   const readWebPreference = () => {
     return (
@@ -80,37 +82,50 @@ export const createAutoStartStorage = ({
     return storage.writeWeb(AUTO_START_STORAGE_KEY, preference)
   }
 
+  const rememberPreference = (preference: StoredPreference) => {
+    latestKnownPreference = coordinator.selectLatest(preference, latestKnownPreference)
+  }
+
+  const readWebFallback = (webPreference = readWebPreference()) => {
+    const latestPreference = coordinator.selectLatest(webPreference, latestKnownPreference)
+    return latestPreference?.isEnabled ?? false
+  }
+
   /** Reads the latest auto-start preference saved by the app or browser runtime. */
   const read = async () => {
     const webPreference = readWebPreference()
 
     if (!storage.usesTossStorage()) {
-      return webPreference?.isEnabled ?? false
+      return readWebFallback(webPreference)
     }
 
     try {
       const tossPreference = await readTossPreference()
 
       const currentWebPreference = readWebPreference()
-      const latestPreference = selectMaximumBy(
-        currentWebPreference,
-        tossPreference,
-        (value) => value.savedAt,
+      const latestStoredPreference = coordinator.selectLatest(currentWebPreference, tossPreference)
+      const latestPreference = coordinator.selectLatest(
+        latestStoredPreference,
+        latestKnownPreference,
       )
 
-      if (latestPreference !== null && latestPreference === currentWebPreference) {
-        await writeLatestToss(latestPreference).catch(() => undefined)
+      if (latestPreference !== null) {
+        latestKnownPreference = latestPreference
+        if (latestPreference === currentWebPreference) {
+          await writeLatestToss(latestPreference).catch(() => undefined)
+        } else {
+          writeWebPreference(latestPreference)
+        }
       }
 
       return latestPreference?.isEnabled ?? false
     } catch {
-      return readWebPreference()?.isEnabled ?? false
+      return readWebFallback()
     }
   }
 
   /** Persists the auto-start preference until the host app or browser data is removed. */
-  const write = async (isEnabled: boolean) => {
-    const preference = {isEnabled, savedAt: now()} satisfies StoredPreference
+  const persistPreference = async (preference: StoredPreference) => {
     const webWriteError = writeWebPreference(preference)
 
     if (!storage.usesTossStorage()) {
@@ -127,8 +142,16 @@ export const createAutoStartStorage = ({
       if (webWriteError !== null) {
         throw new Error('Failed to persist auto-start preference.', {cause: error})
       }
+
+      rememberPreference(preference)
+      return
     }
+
+    rememberPreference(preference)
   }
+
+  const write = (isEnabled: boolean) =>
+    coordinator.writeStored((savedAt) => ({isEnabled, savedAt}), persistPreference)
 
   return {read, write}
 }

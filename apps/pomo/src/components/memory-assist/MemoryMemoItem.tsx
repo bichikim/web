@@ -10,6 +10,7 @@ import {
   createStoredReminderDraft,
   resolveReminderAt,
 } from './reminder-draft'
+import type {ReminderDraft} from './ReminderFields'
 
 export interface MemoryMemoEdit {
   readonly exactEnabled: boolean
@@ -43,6 +44,7 @@ const formatReminderTime = (value: string) =>
 export const MemoryMemoItem = (props: MemoryMemoItemProps) => {
   const initialReminderDraft = untrack(() => createStoredReminderDraft(props.memo))
   const [isEditing, setIsEditing] = createSignal(false)
+  const [reminderDateReference, setReminderDateReference] = createSignal(new Date())
   const [message, setMessage] = createSignal<string | null>(null)
   const [draft, setDraft] = createSignal(untrack(() => props.memo.text))
   const [reminderDraft, setReminderDraft] = createSignal(initialReminderDraft)
@@ -58,7 +60,9 @@ export const MemoryMemoItem = (props: MemoryMemoItemProps) => {
   })
 
   const handleStartEdit = (source: HTMLButtonElement) => {
-    const nextReminderDraft = createStoredReminderDraft(props.memo)
+    const now = new Date()
+    const nextReminderDraft = createStoredReminderDraft(props.memo, now)
+    setReminderDateReference(now)
     props.onEditStart()
     setMessage(null)
     setTriggerElement(source)
@@ -66,6 +70,13 @@ export const MemoryMemoItem = (props: MemoryMemoItemProps) => {
     setOriginalReminderDraft(nextReminderDraft)
     setReminderDraft(nextReminderDraft)
     setIsEditing(true)
+  }
+
+  const handleReminderChange = (nextReminderDraft: ReminderDraft) => {
+    if (nextReminderDraft.reminderDay !== reminderDraft().reminderDay) {
+      setReminderDateReference(new Date())
+    }
+    setReminderDraft(nextReminderDraft)
   }
 
   const handleOpenChange = (isOpen: boolean) => {
@@ -82,14 +93,13 @@ export const MemoryMemoItem = (props: MemoryMemoItemProps) => {
       return
     }
 
-    const now = new Date()
     const currentReminderDraft = reminderDraft()
     const exactReminderAt = currentReminderDraft.exactEnabled
       ? resolveReminderAt(
           currentReminderDraft.reminderDay,
           currentReminderDraft.customDate,
           currentReminderDraft.reminderTime,
-          now,
+          reminderDateReference(),
         )
       : null
     const errorMessage = await props.onSave(props.memo, {
@@ -143,7 +153,7 @@ export const MemoryMemoItem = (props: MemoryMemoItemProps) => {
         isOpen={isEditing()}
         message={message}
         onOpenChange={handleOpenChange}
-        onReminderChange={setReminderDraft}
+        onReminderChange={handleReminderChange}
         onSave={handleSave}
         onTextInput={setDraft}
         reminderDraft={reminderDraft}

@@ -1,12 +1,30 @@
 import {expect, test} from 'vitest'
 
+import {PUPPET_SPATIAL_OBJECT_MAX_DEPTH, type PuppetSpatialObject} from '../../../player'
 import {
+  canCombineSpatialEditorObjects,
   combineSpatialEditorObjects,
   createSpatialEditorObject,
   duplicateSpatialEditorObject,
   removeSpatialEditorObject,
   splitSpatialEditorObject,
 } from '../spatial-editor-objects'
+
+const createNestedGroup = (depth: number): PuppetSpatialObject => {
+  const bounds = {height: 100, width: 100, x: 0, y: 0}
+  let object: PuppetSpatialObject = createSpatialEditorObject(bounds, 'box')
+  for (let index = 0; index < depth; index += 1) {
+    object = {
+      children: [object, createSpatialEditorObject(bounds, 'sphere')],
+      id: `group-${index}`,
+      kind: 'group',
+      mode: 'add',
+      name: '합친 메시',
+      visible: true,
+    }
+  }
+  return object
+}
 
 test('should keep three primitives separate until two selected objects are combined and preserve the third', () => {
   const bounds = {height: 100, width: 100, x: 0, y: 0}
@@ -46,6 +64,15 @@ test('should remove a child from a combined mesh and promote the next shape to i
   const group = combineSpatialEditorObjects([box, sphere], [box.id, sphere.id], 'subtract')[0]!
   const remaining = removeSpatialEditorObject([group], box.id)
 
-  expect(remaining).toMatchObject([{children: [{id: sphere.id, mode: 'add'}], kind: 'group'}])
+  expect(remaining).toMatchObject([{id: sphere.id, kind: 'primitive', mode: 'add'}])
   expect(removeSpatialEditorObject(remaining, sphere.id)).toEqual([])
+})
+
+test('should prevent combining objects beyond the persisted nesting limit', () => {
+  const deepGroup = createNestedGroup(PUPPET_SPATIAL_OBJECT_MAX_DEPTH)
+  const shape = createSpatialEditorObject({height: 100, width: 100, x: 0, y: 0}, 'box')
+  const objects = [deepGroup, shape]
+
+  expect(canCombineSpatialEditorObjects(objects, [deepGroup.id, shape.id])).toBe(false)
+  expect(combineSpatialEditorObjects(objects, [deepGroup.id, shape.id], 'add')).toBe(objects)
 })

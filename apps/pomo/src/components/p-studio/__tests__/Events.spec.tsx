@@ -3,15 +3,21 @@ import {
   createEvents,
   createPomoSay,
   musicPlaybackMocks,
+  musicPlayerLifecycleMocks,
   oneOffChatMocks,
+  releaseMocks,
   renderEvents,
 } from './fixtures/events'
 
-import {render, screen} from '@solidjs/testing-library'
+import {fireEvent, render, screen} from '@solidjs/testing-library'
 import {createSignal} from 'solid-js'
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 
-import {RANDOM_DIALOGUE_EVENT, useRandomEvent} from '../../../features/focus-room-dialogue'
+import {
+  type EventActionId,
+  RANDOM_DIALOGUE_EVENT,
+  useRandomEvent,
+} from '../../../features/focus-room-dialogue'
 import {useOptionalSoundEffects} from '../../../features/sound-effects'
 import * as m from '@paraglide/message'
 import {createMemoryMemo} from '../../../features/memory-assist/schedule'
@@ -34,6 +40,8 @@ describe('PStudioEvents', () => {
     oneOffChatMocks.draft.mockReturnValue('')
     oneOffChatMocks.errorMessage.mockReturnValue(null)
     oneOffChatMocks.isBusy.mockReturnValue(false)
+    releaseMocks.serverAiReleased = true
+    musicPlayerLifecycleMocks.onPlaybackActionsReady = null
     musicPlaybackMocks.pause.mockReset()
     musicPlaybackMocks.play.mockReset()
   })
@@ -120,9 +128,84 @@ describe('PStudioEvents', () => {
   it('should connect the one-off chat draft to the dialogue composer', () => {
     oneOffChatMocks.draft.mockReturnValue('복구된 대화')
 
-    renderEvents()
+    const {container} = renderEvents()
 
     expect(screen.getByRole('textbox', {name: '대화 입력'})).toHaveValue('복구된 대화')
+    expect(container.querySelector('.pomo-dialogue-composer')).toHaveAttribute(
+      'data-execution-mode',
+      'local',
+    )
+    expect(container.querySelector('.pomo-dialogue-composer')).toHaveAttribute(
+      'data-server-access-status',
+      'unavailable',
+    )
+    expect(container.querySelector('.pomo-dialogue-composer')).toHaveAttribute(
+      'data-server-available',
+      'false',
+    )
+
+    fireEvent.input(screen.getByRole('textbox', {name: '대화 입력'}), {
+      target: {value: '수정한 질문'},
+    })
+    expect(oneOffChatMocks.setDraft).toHaveBeenCalledWith('수정한 질문')
+    const oneOffChatOptions = vi.mocked(useOneOffChat).mock.calls.at(-1)?.[0]
+    expect(oneOffChatOptions?.isEnabled?.()).toBe(true)
+
+    screen.getByRole('button', {name: '서버 모드 선택'}).click()
+    expect(oneOffChatMocks.serverJob.setExecutionMode).toHaveBeenCalledWith('server')
+  })
+
+  it('should connect download consent actions to the one-off chat', () => {
+    oneOffChatMocks.downloadConsentOpen.mockReturnValue(true)
+    const {container} = renderEvents()
+
+    expect(container.querySelector('[data-download-size]')).toHaveAttribute(
+      'data-download-size',
+      '3.7GB',
+    )
+    screen.getByRole('button', {name: '취소 동의'}).click()
+    screen.getByRole('button', {name: '다운로드 동의'}).click()
+
+    expect(oneOffChatMocks.cancelDownloadConsent).toHaveBeenCalledOnce()
+    expect(oneOffChatMocks.startDownload).toHaveBeenCalledOnce()
+  })
+
+  it('should omit server job controls when server execution is unreleased', () => {
+    releaseMocks.serverAiReleased = false
+    const {container, unmount} = renderEvents()
+
+    expect(container.querySelector('[data-ai-job-status]')).toBeNull()
+    expect(screen.queryByRole('button', {name: '서버 모드 선택'})).toBeNull()
+    expect(oneOffChatMocks.serverJob.setExecutionMode).not.toHaveBeenCalled()
+    unmount()
+  })
+
+  it('should handle an invalid registered event action without throwing', () => {
+    let runAction: ((actionId: EventActionId) => void) | undefined
+    const events = createEvents({
+      registerEventActionExecutor: (executor) => {
+        runAction = executor
+        return vi.fn()
+      },
+    })
+    renderEvents({events})
+
+    expect(() => runAction?.('unexpected-action' as unknown as EventActionId)).not.toThrow()
+  })
+
+  it('should report failed timer dialogue playback', async () => {
+    const failure = new Error('timer dialogue failed')
+    const events = createEvents({playDialogueEvents: vi.fn().mockRejectedValue(failure)})
+    const report = vi.spyOn(console, 'error').mockImplementation(() => undefined)
+    renderEvents({events})
+
+    screen.getByRole('button', {name: '집중 시작 이벤트'}).click()
+    await vi.waitFor(() =>
+      expect(report).toHaveBeenCalledWith(
+        'Unexpected pomodoro dialogue playback failure.',
+        failure,
+      ),
+    )
   })
 
   it('should queue an input reply after the existing dialogue stack', async () => {

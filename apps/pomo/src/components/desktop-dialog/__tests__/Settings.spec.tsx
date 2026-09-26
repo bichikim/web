@@ -44,6 +44,7 @@ const displayPreferences = {
   toolsButtonVisible: () => true,
   tourButtonVisible: () => true,
 } satisfies PDisplayPreferencesController
+const onDesktopModeChange = vi.fn().mockResolvedValue(undefined)
 
 beforeEach(() => {
   vi.clearAllMocks()
@@ -60,9 +61,12 @@ beforeEach(() => {
     activity: () => 'reading',
     background: {} as ReturnType<typeof useDesktopSettingsState>['background'],
     canUseGyroscope: () => true,
-    desktopMode: {mode: () => 'interactiveDesktop'} as ReturnType<
-      typeof useDesktopSettingsState
-    >['desktopMode'],
+    desktopMode: {
+      error: () => 'native failed',
+      isChanging: () => true,
+      mode: () => 'interactiveDesktop',
+      onModeChange: onDesktopModeChange,
+    } as ReturnType<typeof useDesktopSettingsState>['desktopMode'],
     gaze: () => 'focused',
     motionInput: () => 'drag',
     motionMode: () => 'depth',
@@ -102,9 +106,13 @@ it('should pass desktop settings state to the window presentation', () => {
 
   expect(props).toMatchObject({
     activity: 'reading',
+    desktopMode: 'interactiveDesktop',
+    desktopModeError: 'native failed',
     gaze: 'focused',
+    isDesktopModeChanging: true,
     motionInput: 'drag',
     motionMode: 'depth',
+    onDesktopModeChange,
     playerVisible: true,
     pomodoroVisible: true,
     presentation: 'window',

@@ -1,3 +1,4 @@
+import {replaceBlobObjectUrl} from 'src/features/blob-object-url'
 import {useNavigate} from '@solidjs/router'
 
 import * as m from '@paraglide/message'
@@ -36,7 +37,7 @@ export const useCandidateReview = (props: UseCandidateReviewProps) => {
 
     if (props.state.workflow.isDisposed) {
       if (result.status === 'complete') {
-        URL.revokeObjectURL(result.candidate.audioUrl)
+        replaceBlobObjectUrl(result.candidate.audioUrl, () => null)
       }
       return
     }
@@ -52,7 +53,6 @@ export const useCandidateReview = (props: UseCandidateReviewProps) => {
         props.state.setCandidates((current) =>
           current.map((item) => (item.id === candidateId ? result.candidate : item)),
         )
-        URL.revokeObjectURL(candidate.audioUrl)
         props.state.setMessage(m.learning_editor_voice_regenerated())
     }
   }

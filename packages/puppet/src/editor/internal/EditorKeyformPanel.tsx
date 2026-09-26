@@ -414,6 +414,7 @@ const KeyformPanelToolbar = (props: KeyformPanelSectionProps) => (
     onParameterAdd={props.source.onParameterAdd}
     onTwoDimensionalParameterAdd={props.source.onTwoDimensionalParameterAdd}
     parameterCreationAvailable={props.source.parameterCreationAvailable}
+    setBrushControlsMount={props.source.setBrushControlsMount}
     titleId={props.titleId}
   />
 )

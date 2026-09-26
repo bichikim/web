@@ -1,7 +1,7 @@
 import {z} from 'zod'
 
 import {dayjs} from 'src/utils/zoned-dayjs'
-import {parseDate} from '../civil-date'
+import {addDays, formatDate, parseDate} from '../civil-date'
 import 'dayjs/locale/ko'
 import type {CalendarEvent} from './types'
 
@@ -20,18 +20,34 @@ const dateTimeSchema = z.iso.datetime({offset: true})
 
 const hasValidEventTimes = (event: CalendarEvent) =>
   event.allDay
-    ? parseDate(event.start) !== null && parseDate(event.end) !== null
+    ? parseDate(event.start) !== null && parseDate(event.end) !== null && event.start < event.end
     : dateTimeSchema.safeParse(event.start).success && dateTimeSchema.safeParse(event.end).success
+
+const formatAllDayDate = (value: string) => {
+  const [year, month, day] = value.split('-').map(Number)
+  return `${year}. ${month}. ${day}.`
+}
 
 const formatEventTime = (event: CalendarEvent, timeZone: string) => {
   if (event.allDay) {
-    const [year, month, day] = event.start.split('-').map(Number)
-    return `${year}. ${month}. ${day}. 종일`
+    const startDate = parseDate(event.start)
+    const start = formatAllDayDate(event.start)
+    if (
+      startDate === null ||
+      event.end <= event.start ||
+      event.end === formatDate(addDays(startDate, 1))
+    ) {
+      return `${start} 종일`
+    }
+
+    return `${start}–${formatAllDayDate(event.end)} (종일, 종료일 미포함)`
   }
 
   const start = dayjs(new Date(event.start)).tz(timeZone).locale('ko')
   const end = dayjs(new Date(event.end)).tz(timeZone).locale('ko')
-  return `${start.format('YYYY. M. D. A h:mm')}–${end.format('A h:mm')}`
+  const endFormat =
+    start.format('YYYY-MM-DD') === end.format('YYYY-MM-DD') ? 'A h:mm' : 'YYYY. M. D. A h:mm'
+  return `${start.format('YYYY. M. D. A h:mm')}–${end.format(endFormat)}`
 }
 
 const formatEvent = (event: CalendarEvent, timeZone: string) =>

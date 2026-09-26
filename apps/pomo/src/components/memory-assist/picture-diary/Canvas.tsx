@@ -1,3 +1,5 @@
+import {releaseCapturedPointer} from 'src/utils/release-captured-pointer'
+import {replaceBlobObjectUrl} from 'src/features/blob-object-url'
 import {type Accessor, createEffect, createSignal, For, type JSX, onCleanup, Show} from 'solid-js'
 
 import {clampUnit} from 'src/utils/clamp-unit'
@@ -52,9 +54,9 @@ const useImageUrl = (image: Accessor<PictureDiaryImage | undefined>) => {
       setImageUrl(undefined)
       return
     }
-    const url = URL.createObjectURL(storedImage.blob)
+    const url = replaceBlobObjectUrl(null, () => storedImage.blob)
     setImageUrl(url)
-    onCleanup(() => URL.revokeObjectURL(url))
+    onCleanup(() => replaceBlobObjectUrl(url, () => null))
   })
   return imageUrl
 }
@@ -68,8 +70,8 @@ export const PictureDiaryCanvas = (props: PictureDiaryCanvasProps) => {
   let erased = false
   let previousPoint = {x: 0, y: 0}
   const cancelActiveGesture = () => {
-    if (activePointerId !== null) {
-      svgElement?.releasePointerCapture?.(activePointerId)
+    if (activePointerId !== null && svgElement !== undefined) {
+      releaseCapturedPointer(svgElement, activePointerId)
     }
 
     activePointerId = null
@@ -163,7 +165,7 @@ export const PictureDiaryCanvas = (props: PictureDiaryCanvasProps) => {
     }
 
     activePointerId = null
-    event.currentTarget.releasePointerCapture?.(event.pointerId)
+    releaseCapturedPointer(event.currentTarget, event.pointerId)
   }
 
   return (

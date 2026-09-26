@@ -85,6 +85,7 @@ interface EditorWorkspacePanelProps {
   readonly onSeek?: (time: number) => void
   readonly physicsPreview?: boolean
   readonly selectedNodeIds: ReadonlyArray<string>
+  readonly setBrushControlsMount?: (element: HTMLDivElement | undefined) => void
   readonly workspace: 'animation' | 'modeling'
 }
 const EditorWorkspacePanel = (props: EditorWorkspacePanelProps) => (
@@ -117,6 +118,7 @@ const EditorWorkspacePanel = (props: EditorWorkspacePanelProps) => (
         onPhysicsReset={props.onPhysicsReset}
         physicsPreview={props.physicsPreview}
         selectedNodeIds={props.selectedNodeIds}
+        setBrushControlsMount={props.setBrushControlsMount}
       />
     </section>
   </Show>
@@ -140,6 +142,8 @@ export const PuppetEditor = (props: PuppetEditorProps) => {
   const [layerSelection, setLayerSelection] = createSignal(createSceneSelection(initialPartId))
   const [glueVertex, setGlueVertex] = createSignal<PuppetVertexReference | null>(null)
   const [activeVertexIndex, setActiveVertexIndex] = createSignal<number | null>(null)
+  const [brushControlsMount, setBrushControlsMount] = createSignal<HTMLDivElement>()
+  const [brushSettingsMount, setBrushSettingsMount] = createSignal<HTMLDivElement>()
   const deformerEditing = useDeformerMode({
     document: sourceDocument,
     nodeId: () => layerSelection().activeNodeId ?? undefined,
@@ -167,6 +171,16 @@ export const PuppetEditor = (props: PuppetEditorProps) => {
       (nodeId) => getSceneNode(sourceDocument(), nodeId)?.kind === 'part',
     ),
   )
+  const meshPartIds = createMemo(() => {
+    const document = sourceDocument()
+    const selection = layerSelection()
+    return getSceneSelectionPartIds(document, {
+      ...selection,
+      nodeIds: selection.nodeIds.filter(
+        (nodeId) => getSceneNode(document, nodeId)?.kind !== 'deformer',
+      ),
+    })
+  })
   const selectedNodeIds = createMemo(() =>
     getParameterSelectionNodeIds({document: sourceDocument(), selection: layerSelection()}),
   )
@@ -360,6 +374,7 @@ export const PuppetEditor = (props: PuppetEditorProps) => {
         onActivate={activateHistoryShortcuts}
         bottom={
           <EditorWorkspacePanel
+            setBrushControlsMount={setBrushControlsMount}
             currentTime={currentTime()}
             document={sourceDocument()}
             editor={parameterEditor}
@@ -469,6 +484,7 @@ export const PuppetEditor = (props: PuppetEditorProps) => {
         }
         toolbar={(visibility) => (
           <EditorToolbar
+            setBrushSettingsMount={setBrushSettingsMount}
             activeWorkspace={workspace()}
             examples={props.examples}
             canRedo={history.canRedo()}
@@ -494,6 +510,8 @@ export const PuppetEditor = (props: PuppetEditorProps) => {
         )}
         viewport={
           <EditorViewport
+            brushControlsMount={brushControlsMount()}
+            brushSettingsMount={brushSettingsMount()}
             physicsPreview={physicsPreview()}
             meshEditingDisabled={temporary.form() !== undefined}
             onMeshEditingStart={() => {
@@ -554,7 +572,7 @@ export const PuppetEditor = (props: PuppetEditorProps) => {
             parameterValues={temporary.target()?.values ?? parameterEditor.parameterValues()}
             parameterValueMap={temporary.valueMap()}
             previewDocument={parameterPreviewDocument()}
-            selectedPartIds={selectedPartIds()}
+            selectedPartIds={meshPartIds()}
             targetNodeIds={temporary.targets()}
           />
         }

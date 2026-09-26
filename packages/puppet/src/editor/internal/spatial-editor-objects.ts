@@ -1,7 +1,8 @@
-import type {
-  PuppetSpatialObject,
-  PuppetSpatialPrimitive,
-  PuppetSpatialPrimitiveObject,
+import {
+  PUPPET_SPATIAL_OBJECT_MAX_DEPTH,
+  type PuppetSpatialObject,
+  type PuppetSpatialPrimitive,
+  type PuppetSpatialPrimitiveObject,
 } from '../../player'
 
 interface Bounds {
@@ -106,6 +107,9 @@ export const removeSpatialEditorObject = (
     if (children.length === 0) {
       return []
     }
+    if (children.length === 1) {
+      return [{...children[0]!, mode: object.mode}]
+    }
     return [
       {
         ...object,
@@ -122,7 +126,10 @@ export const combineSpatialEditorObjects = (
   mode: PuppetSpatialPrimitive['mode'],
 ): ReadonlyArray<PuppetSpatialObject> => {
   const selected = objects.filter((object) => ids.includes(object.id))
-  if (selected.length < 2) {
+  if (
+    selected.length < 2 ||
+    selected.some((object) => getSpatialObjectDepth(object) >= PUPPET_SPATIAL_OBJECT_MAX_DEPTH)
+  ) {
     return objects
   }
   const first = objects.findIndex((object) => object.id === selected[0]!.id)
@@ -140,6 +147,20 @@ export const combineSpatialEditorObjects = (
   }
   return objects.flatMap((object, index) =>
     index === first ? [group] : selected.includes(object) ? [] : [object],
+  )
+}
+
+const getSpatialObjectDepth = (object: PuppetSpatialObject): number =>
+  object.kind === 'group' ? 1 + Math.max(...object.children.map(getSpatialObjectDepth)) : 0
+
+export const canCombineSpatialEditorObjects = (
+  objects: ReadonlyArray<PuppetSpatialObject>,
+  ids: ReadonlyArray<string>,
+): boolean => {
+  const selected = objects.filter((object) => ids.includes(object.id))
+  return (
+    selected.length >= 2 &&
+    selected.every((object) => getSpatialObjectDepth(object) < PUPPET_SPATIAL_OBJECT_MAX_DEPTH)
   )
 }
 

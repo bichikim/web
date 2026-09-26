@@ -1,8 +1,9 @@
-import type {
-  PuppetSpatialMesh,
-  PuppetSpatialObject,
-  PuppetSpatialPrimitive,
-  PuppetSpatialPrimitiveObject,
+import {
+  PUPPET_SPATIAL_OBJECT_MAX_DEPTH,
+  type PuppetSpatialMesh,
+  type PuppetSpatialObject,
+  type PuppetSpatialPrimitive,
+  type PuppetSpatialPrimitiveObject,
 } from '../player/document'
 
 type Point3 = readonly [number, number, number]
@@ -21,6 +22,18 @@ const DEFAULT_RESOLUTION = 16
 const MIN_RESOLUTION = 4
 const MAX_RESOLUTION = 32
 const DEGREES_PER_HALF_ROTATION = 180
+const SPATIAL_OBJECT_MODES: ReadonlyArray<PuppetSpatialPrimitive['mode']> = [
+  'add',
+  'subtract',
+  'intersect',
+  'smooth-add',
+]
+const SPATIAL_SHAPES: ReadonlyArray<PuppetSpatialPrimitive['shape']> = [
+  'box',
+  'cylinder',
+  'prism',
+  'sphere',
+]
 /* eslint-disable no-magic-numbers -- Cube corner and edge lookup indices. */
 const CUBE_CORNERS = [
   [0, 0, 0],
@@ -219,6 +232,39 @@ const collectPrimitives = (objects: ReadonlyArray<PuppetSpatialObject>): PuppetS
       },
     ]
   })
+
+const hasValidSpatialObjectMetadata = (object: PuppetSpatialObject) =>
+  typeof object.id === 'string' &&
+  object.id.length > 0 &&
+  typeof object.name === 'string' &&
+  typeof object.visible === 'boolean' &&
+  SPATIAL_OBJECT_MODES.includes(object.mode) &&
+  (object.smoothness === undefined ||
+    (Number.isFinite(object.smoothness) && object.smoothness >= 0))
+
+const hasValidSpatialPrimitive = (object: PuppetSpatialPrimitiveObject) =>
+  SPATIAL_SHAPES.includes(object.shape) &&
+  object.center.length === COORDINATES &&
+  object.center.every(Number.isFinite) &&
+  object.rotation.length === COORDINATES &&
+  object.rotation.every(Number.isFinite) &&
+  object.size.length === COORDINATES &&
+  object.size.every((value) => Number.isFinite(value) && value > 0)
+
+function hasValidSpatialObject(object: PuppetSpatialObject, depth = 0): boolean {
+  if (depth > PUPPET_SPATIAL_OBJECT_MAX_DEPTH || !hasValidSpatialObjectMetadata(object)) {
+    return false
+  }
+  if (object.kind === 'primitive') {
+    return hasValidSpatialPrimitive(object)
+  }
+  return (
+    object.kind === 'group' &&
+    object.children.length >= 2 &&
+    object.children[0]?.mode === 'add' &&
+    object.children.every((child) => hasValidSpatialObject(child, depth + 1))
+  )
+}
 
 const getBounds = (operations: ReadonlyArray<PuppetSpatialPrimitive>) => {
   const solids = operations.filter(
@@ -466,6 +512,13 @@ const hasValidSpatialInput = (
 /** Generates a triangle control mesh from editable primitive volume operations. */
 export const generateSpatialMesh = (options: GenerateSpatialMeshOptions): PuppetSpatialMesh => {
   const resolution = options.resolution ?? DEFAULT_RESOLUTION
+  if (
+    options.objects !== undefined &&
+    (options.objects.length !== 1 ||
+      options.objects.some((object) => !hasValidSpatialObject(object)))
+  ) {
+    throw new RangeError('Invalid spatial mesh operations or resolution')
+  }
   const operations =
     options.operations ?? (options.objects === undefined ? [] : collectPrimitives(options.objects))
   if (!hasValidSpatialInput(options, operations, resolution)) {

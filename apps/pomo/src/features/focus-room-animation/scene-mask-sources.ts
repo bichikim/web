@@ -1,8 +1,9 @@
+import {uniq} from 'es-toolkit/array'
 import type {PixiLayerSceneDefinition} from './layer-scene-definition'
 import {getLayerMotions, getMotionEffects} from './motion-definition'
 
-export const getSceneMaskSources = (definition: PixiLayerSceneDefinition): readonly string[] => [
-  ...new Set([
+export const getSceneMaskSources = (definition: PixiLayerSceneDefinition): readonly string[] =>
+  uniq([
     ...definition.layers.flatMap((layer) => [
       ...(layer.maskSource === undefined ? [] : [layer.maskSource]),
       ...(layer.statePixelPush?.effect.kind === 'masked-pixel-push'
@@ -15,5 +16,4 @@ export const getSceneMaskSources = (definition: PixiLayerSceneDefinition): reado
       ),
     ]),
     ...(definition.effects ?? []).map((effect) => effect.maskSource),
-  ]),
-]
+  ])

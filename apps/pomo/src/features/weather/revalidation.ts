@@ -1,3 +1,4 @@
+import {parseWeatherExpiryMs} from './parse-weather-expiry-ms'
 import type {QueryRevalidationSchedule} from '../query-revalidation'
 import type {WeatherLocationId} from './contract'
 import type {WeatherFeedQueryResult} from './query'
@@ -22,14 +23,20 @@ export const resolveWeatherRevalidationSchedule = (
   }
 
   switch (result.status) {
-    case 'available':
+    case 'available': {
+      const expiresAtMilliseconds = parseWeatherExpiryMs(result.feed.expiresAt)
+
       return {
         kind: 'after-delay',
-        milliseconds: Math.max(
-          MINIMUM_REFRESH_DELAY_MILLISECONDS,
-          Date.parse(result.feed.expiresAt) - Date.now() + REFRESH_SAFETY_DELAY_MILLISECONDS,
-        ),
+        milliseconds:
+          expiresAtMilliseconds === null
+            ? MINIMUM_REFRESH_DELAY_MILLISECONDS
+            : Math.max(
+                MINIMUM_REFRESH_DELAY_MILLISECONDS,
+                expiresAtMilliseconds - Date.now() + REFRESH_SAFETY_DELAY_MILLISECONDS,
+              ),
       }
+    }
     case 'collecting':
     case 'unavailable':
       return {

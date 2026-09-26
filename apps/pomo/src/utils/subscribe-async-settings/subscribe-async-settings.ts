@@ -1,3 +1,5 @@
+import {subscribeEvent} from 'src/utils/subscribe-event'
+
 interface AsyncSettingsSubscriptionOptions<Value> {
   readonly target: EventTarget
   readonly eventName: string
@@ -23,7 +25,7 @@ export const subscribeAsyncSettings = <Value>(
       options.onChange(value)
     }
   }
-  options.target.addEventListener(options.eventName, handleChange)
+  const unsubscribe = subscribeEvent(options.target, options.eventName, handleChange)
   const initialRevision = revision
   options
     .read()
@@ -35,6 +37,6 @@ export const subscribeAsyncSettings = <Value>(
     .catch(options.onError)
   return () => {
     disposed = true
-    options.target.removeEventListener(options.eventName, handleChange)
+    unsubscribe()
   }
 }

@@ -1,9 +1,14 @@
 import {Dialog} from '@kobalte/core/dialog'
 import {createEffect, createMemo, createSignal, For, Show} from 'solid-js'
 import {EditorButton, EditorNumberField, useEditorPortalMount} from '../../design-system'
-import type {PuppetSpatialObject, PuppetSpatialPrimitive} from '../../player'
+import {
+  PUPPET_SPATIAL_OBJECT_MAX_DEPTH,
+  type PuppetSpatialObject,
+  type PuppetSpatialPrimitive,
+} from '../../player'
 import {SpatialMeshPreview, type SpatialPreviewTool} from './SpatialMeshPreview'
 import {
+  canCombineSpatialEditorObjects,
   combineSpatialEditorObjects,
   createSpatialEditorObject,
   duplicateSpatialEditorObject,
@@ -305,9 +310,22 @@ export const SpatialMeshDialog = (props: SpatialMeshDialogProps) => {
                       </For>
                     </select>
                   </label>
-                  <EditorButton type="button" disabled={rootIds().length < 2} onClick={combine}>
+                  <EditorButton
+                    type="button"
+                    disabled={!canCombineSpatialEditorObjects(objects(), rootIds())}
+                    onClick={combine}
+                  >
                     선택한 도형 합치기
                   </EditorButton>
+                  <Show
+                    when={
+                      rootIds().length >= 2 && !canCombineSpatialEditorObjects(objects(), rootIds())
+                    }
+                  >
+                    <p role="status">
+                      메시 그룹은 최대 {PUPPET_SPATIAL_OBJECT_MAX_DEPTH}단계까지 만들 수 있습니다.
+                    </p>
+                  </Show>
                 </div>
                 <Show when={selected()}>
                   {(object) => (

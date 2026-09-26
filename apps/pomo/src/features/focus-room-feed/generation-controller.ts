@@ -79,6 +79,12 @@ interface FeedGenerationContext {
   readonly scheduledJobs: Array<ScheduledFeedJob>
 }
 
+const setFeedActivityState = (context: FeedGenerationContext, state: PFeedState) => {
+  if (context.options.getState().status !== 'error') {
+    context.options.setState(state)
+  }
+}
+
 const isCurrentProcessing = (context: FeedGenerationContext, revision: number) =>
   context.processingRevision === revision && !context.isDisposed
 
@@ -124,7 +130,7 @@ const prepareModel = async (
 
   context.client = nextClient
   context.preparedModelId = null
-  context.options.setState({
+  setFeedActivityState(context, {
     message: '피드 음성 모델을 확인하고 있어요.',
     progress: 0,
     status: 'preparing',
@@ -133,7 +139,7 @@ const prepareModel = async (
     modelId,
     onProgress: (progress) => {
       if (context.client === nextClient && isCurrentProcessing(context, revision)) {
-        context.options.setState({
+        setFeedActivityState(context, {
           message: `${progress.fileName} 준비 중…`,
           progress: getFeedGenerationProgress(progress.loadedBytes, progress.totalBytes),
           status: 'preparing',
@@ -143,11 +149,13 @@ const prepareModel = async (
     onStatus: (message) => {
       if (context.client === nextClient && isCurrentProcessing(context, revision)) {
         const currentState = context.options.getState()
-        context.options.setState({
-          message,
-          progress: currentState.status === 'preparing' ? currentState.progress : null,
-          status: 'preparing',
-        })
+        if (currentState.status !== 'error') {
+          context.options.setState({
+            message,
+            progress: currentState.status === 'preparing' ? currentState.progress : null,
+            status: 'preparing',
+          })
+        }
       }
     },
   })
@@ -230,10 +238,20 @@ const completeJob = async (
       item: completion.readyItem,
       jobId: job.id,
       metadata: completion.metadata,
+      signal: context.abortController.signal,
     })
   } catch (error: unknown) {
     await context.options.dialogueRepository.deleteDialogue(completion.dialogue.id)
+    if (!isCurrentProcessing(context, revision)) {
+      return
+    }
+
     throw error
+  }
+
+  if (!isCurrentProcessing(context, revision)) {
+    await context.options.dialogueRepository.deleteDialogue(completion.dialogue.id)
+    return
   }
 
   await context.options.onCompleted()
@@ -296,7 +314,7 @@ const generateJob = async (
     return
   }
 
-  context.options.setState({
+  setFeedActivityState(context, {
     message: `${currentJob.itemTitle} 음성을 만들고 있어요.`,
     progress: null,
     status: 'generating',
@@ -307,7 +325,7 @@ const generateJob = async (
     modelId: currentJob.modelId,
     onChunk: (completed, total) => {
       if (context.client === currentClient && isCurrentProcessing(context, revision)) {
-        context.options.setState({
+        setFeedActivityState(context, {
           message: `${currentJob.itemTitle} · ${completed}/${total} 구간 생성 중`,
           progress: getFeedGenerationProgress(completed, total),
           status: 'generating',
@@ -392,7 +410,7 @@ const runScheduledJobs = async (context: FeedGenerationContext) => {
             progress: null,
             status: 'syncing',
           })
-        } else if (!isSyncing) {
+        } else if (!isSyncing && currentState.status !== 'error') {
           context.options.setState({
             message: '다음 피드 확인을 기다리고 있어요.',
             status: 'idle',

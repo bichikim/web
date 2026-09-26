@@ -25,6 +25,7 @@ vi.mock('../use-deletion-recovery', () => ({useDeletionRecovery: vi.fn()}))
 vi.mock('../deletion-runtime', () => ({memoryMemoDeletion: {retry: mocks.retryDeletions}}))
 vi.mock('../repository', () => ({
   MEMORY_MEMOS_CHANGED_EVENT: 'pomo:memory-memos-changed',
+  MEMORY_MEMOS_STORAGE_KEY: 'pomo:memory-memos:v1',
   readMemoryMemos: mocks.readMemos,
   updateMemoryMemos: mocks.updateMemos,
 }))

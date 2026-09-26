@@ -1,3 +1,4 @@
+import {replaceBlobObjectUrl, replaceObjectUrl} from 'src/features/blob-object-url'
 import * as m from '@paraglide/message'
 import {isAbortError} from 'src/utils/is-cancellation-reason'
 import {getExceptionMessage} from '../error-detail'
@@ -72,6 +73,12 @@ const handleGenerationUpdate = (update: GenerationUpdate, handlers: GenerationUp
 
 export type ImageGenerationController = ReturnType<typeof useImageGeneration>
 
+const imageUrlRuntime = {
+  create: (blob: Blob) => URL.createObjectURL(blob),
+  order: 'create-first' as const,
+  revoke: (url: string) => URL.revokeObjectURL(url),
+}
+
 export const useImageGeneration = () => {
   const downloads = useModelDownload()
   const [idea, setIdea] = createSignal('')
@@ -112,7 +119,7 @@ export const useImageGeneration = () => {
     controller?.abort()
     const image = result()
     if (image !== null) {
-      URL.revokeObjectURL(image.url)
+      replaceBlobObjectUrl(image.url, () => null)
     }
   })
 
@@ -153,11 +160,8 @@ export const useImageGeneration = () => {
         return
       }
       const previous = result()
-      const url = URL.createObjectURL(image.blob)
+      const url = replaceObjectUrl(previous?.url ?? null, () => image.blob, imageUrlRuntime)
       setResult({...settings, blob: image.blob, prompt: image.prompt, url})
-      if (previous !== null) {
-        URL.revokeObjectURL(previous.url)
-      }
       setStatus(m.picture_diary_generation_complete())
     } catch (failure) {
       if (failure instanceof DOMException && isAbortError(failure)) {

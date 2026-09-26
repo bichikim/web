@@ -1,7 +1,8 @@
+import {PUPPET_SPATIAL_OBJECT_MAX_DEPTH} from '../document'
+
 const COORDINATES = 3
 const MIN_RESOLUTION = 4
 const MAX_RESOLUTION = 32
-const MAX_OBJECT_DEPTH = 12
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null
@@ -29,7 +30,7 @@ const isPrimitive = (value: unknown) =>
 const isObject = (value: unknown, depth = 0): boolean => {
   if (
     !isRecord(value) ||
-    depth > MAX_OBJECT_DEPTH ||
+    depth > PUPPET_SPATIAL_OBJECT_MAX_DEPTH ||
     typeof value.id !== 'string' ||
     !value.id ||
     typeof value.name !== 'string' ||

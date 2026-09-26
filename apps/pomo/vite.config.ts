@@ -191,11 +191,18 @@ const createConfig = ({command, mode}: ConfigEnv): UserConfig => {
     mode,
     vercelUrl: process.env.VERCEL_URL,
   })
-  const templates = resolveContentSecurityPolicyTemplates({
-    POMO_CONTENT_SECURITY_POLICY_TEMPLATE: environment.POMO_CONTENT_SECURITY_POLICY_TEMPLATE,
-    POMO_WORKER_CONTENT_SECURITY_POLICY_TEMPLATE:
-      environment.POMO_WORKER_CONTENT_SECURITY_POLICY_TEMPLATE,
-  })
+  const templates = resolveContentSecurityPolicyTemplates(
+    {
+      POMO_CONTENT_SECURITY_POLICY_TEMPLATE: environment.POMO_CONTENT_SECURITY_POLICY_TEMPLATE,
+      POMO_WORKER_CONTENT_SECURITY_POLICY_TEMPLATE:
+        environment.POMO_WORKER_CONTENT_SECURITY_POLICY_TEMPLATE,
+    },
+    {
+      command,
+      publicOrigin,
+      vercelEnvironment: process.env.VERCEL_ENV,
+    },
+  )
   const createContentSecurityPolicy = createContentSecurityPolicyRenderer(
     templates.page,
     connectSourceList,
