@@ -35,7 +35,7 @@ const getControlSurfaceOptions = () => {
   const workArea = getDesktopWorkArea()
   const player = {height: 340, width: 520}
   const pomodoro = {height: 520, width: 360}
-  const settings = {height: 620, width: 420}
+  const settings = {height: 620, width: 480}
 
   return [
     {
