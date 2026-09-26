@@ -2,16 +2,34 @@ import {PInput} from 'src/components/p-input/PInput'
 import {isNonBlankString} from 'src/utils/is-non-blank-string'
 import {useEvent} from '@winter-love/solid-use'
 import {cx} from 'class-variance-authority'
-import {type Accessor, createEffect, createSignal, type Setter, Show} from 'solid-js'
+import {type Accessor, createEffect, createSignal, type Setter, Show, untrack} from 'solid-js'
 import * as m from '@paraglide/message'
 import {DialogueTrigger} from '../dialogue-composer/DialogueTrigger'
+import type {AiTextAccessStatus, AiTextExecutionMode} from '../../features/ai-job/use-ai-text-job'
 
-export interface PDialogueComposerProps {
+interface PDialogueComposerCommonProps {
+  readonly executionMode?: AiTextExecutionMode
   readonly autoExpand?: boolean
   readonly disabled?: boolean
   readonly loading?: boolean
   readonly onSubmit?: (text: string) => boolean | Promise<boolean> | Promise<void> | void
+  readonly onExecutionModeChange?: (mode: AiTextExecutionMode) => void
+  readonly serverAccessStatus?: AiTextAccessStatus
+  readonly serverAvailable?: boolean
 }
+
+interface LocalDraftProps {
+  readonly draft?: undefined
+  readonly onDraftChange?: undefined
+}
+
+interface ControlledDraftProps {
+  readonly draft: Accessor<string>
+  readonly onDraftChange: (text: string) => void
+}
+
+export type PDialogueComposerProps = PDialogueComposerCommonProps &
+  (ControlledDraftProps | LocalDraftProps)
 
 const focusMountedInput = (element: HTMLInputElement | undefined) => {
   queueMicrotask(() => element?.focus())
@@ -72,11 +90,105 @@ const SUBMIT_CLASSES = cx(
   'disabled:opacity-45 disabled:transform-none motion-reduce:transition-none',
 )
 
+interface DraftController {
+  readonly draft: Accessor<string>
+  readonly setDraft: (text: string) => void
+}
+
+type DraftProps = ControlledDraftProps | LocalDraftProps
+
+const createDraftController = (props: DraftProps): DraftController => {
+  const [localDraft, setLocalDraft] = createSignal('')
+  const draft = () => {
+    const controlledDraft = props.draft
+    return controlledDraft === undefined ? localDraft() : controlledDraft()
+  }
+  const setDraft = (text: string) => {
+    if (props.draft === undefined) {
+      setLocalDraft(text)
+      return
+    }
+
+    untrack(() => props.onDraftChange)(text)
+  }
+
+  return {draft, setDraft}
+}
+
+interface ExecutionModeSelectProps {
+  readonly disabled: boolean
+  readonly executionMode?: AiTextExecutionMode
+  readonly onChange: (mode: AiTextExecutionMode) => void
+  readonly serverAccessStatus?: AiTextAccessStatus
+  readonly serverAvailable?: boolean
+}
+
+const ExecutionModeSelect = (props: ExecutionModeSelectProps) => (
+  <label class="col-span-full flex items-center justify-between gap-2 px-4 pb-2 text-xs text-muted-foreground">
+    <span>AI 실행 위치</span>
+    <select
+      aria-label="AI 실행 위치"
+      class={cx(
+        'min-w-0 rounded border border-border bg-surface px-2 py-1 text-xs text-foreground',
+        'outline-none focus-visible:shadow-focus',
+      )}
+      disabled={props.disabled}
+      onChange={(event) => {
+        const mode = event.currentTarget.value
+        if (mode === 'local' || mode === 'server') {
+          props.onChange(mode)
+        }
+      }}
+      value={props.executionMode ?? 'local'}
+    >
+      <option value="local">기기 Gemma</option>
+      <option disabled={!props.serverAvailable} value="server">
+        {props.serverAvailable
+          ? '서버 Luna (구독)'
+          : props.serverAccessStatus === 'checking'
+            ? '서버 Luna (확인 중)'
+            : '서버 Luna (구독 필요)'}
+      </option>
+    </select>
+  </label>
+)
+
+interface SubmitHandlerOptions {
+  readonly draft: Accessor<string>
+  readonly input: Accessor<HTMLInputElement | undefined>
+  readonly isDisabled: Accessor<boolean>
+  readonly onSubmit: Accessor<PDialogueComposerCommonProps['onSubmit']>
+  readonly setDraft: (text: string) => void
+}
+
+const createSubmitHandler = (options: SubmitHandlerOptions) => async (event: SubmitEvent) => {
+  event.preventDefault()
+  const submittedDraft = options.draft()
+  const text = submittedDraft.trim()
+
+  const submit = options.onSubmit()
+  if (text.length === 0 || options.isDisabled() || submit === undefined) {
+    return
+  }
+
+  const result = await submit(text)
+
+  if (result === false) {
+    focusMountedInput(options.input())
+    return
+  }
+
+  if (options.draft() === submittedDraft) {
+    options.setDraft('')
+  }
+  focusMountedInput(options.input())
+}
+
 export const PDialogueComposer = (props: PDialogueComposerProps) => {
-  const [draft, setDraft] = createSignal('')
   const [isExpanded, setIsExpanded] = createSignal(false)
   const [composer, setComposer] = createSignal<HTMLFormElement>()
   const [input, setInput] = createSignal<HTMLInputElement>()
+  const {draft, setDraft} = createDraftController(props)
   let focusInputAfterMount = false
   let restoreTriggerFocus = false
   useAutoExpand({
@@ -146,25 +258,13 @@ export const PDialogueComposer = (props: PDialogueComposerProps) => {
       collapse()
     }
   }
-  const handleSubmit = async (event: SubmitEvent) => {
-    event.preventDefault()
-    const submittedDraft = draft()
-    const text = draft().trim()
-
-    if (text.length === 0 || isDisabled() || props.onSubmit === undefined) {
-      return
-    }
-
-    const result = await props.onSubmit(text)
-
-    if (result === false) {
-      focusMountedInput(input())
-      return
-    }
-
-    setDraft((currentDraft) => (currentDraft === submittedDraft ? '' : currentDraft))
-    focusMountedInput(input())
-  }
+  const handleSubmit = createSubmitHandler({
+    draft,
+    input,
+    isDisabled,
+    onSubmit: () => props.onSubmit,
+    setDraft,
+  })
 
   useEvent(() => composer()?.ownerDocument, 'pointerdown', handleOutsidePointer)
 
@@ -206,6 +306,15 @@ export const PDialogueComposer = (props: PDialogueComposerProps) => {
             value={draft()}
           />
         </label>
+        <Show when={props.onExecutionModeChange !== undefined}>
+          <ExecutionModeSelect
+            disabled={isDisabled()}
+            executionMode={props.executionMode}
+            onChange={(mode) => props.onExecutionModeChange?.(mode)}
+            serverAccessStatus={props.serverAccessStatus}
+            serverAvailable={props.serverAvailable}
+          />
+        </Show>
         <button
           aria-label={
             props.loading ? m.dialogue_composer_preparing_label() : m.dialogue_composer_send_label()

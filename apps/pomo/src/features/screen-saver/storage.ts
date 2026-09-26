@@ -1,6 +1,8 @@
+import {createTimestampedDualRuntimeStorage} from 'src/utils/runtime-storage/create-timestamped-dual-runtime-storage'
 import {z} from 'zod'
 
 import {
+  createLatestStorageWriter,
   hasNativeStorageBridge,
   readTossStorageJson,
   readWebStorageJson,
@@ -11,15 +13,34 @@ import {
 
 import type {ScreenSaverDelay} from './model'
 
-const SCREEN_SAVER_STORAGE_KEY = 'pomo:screen-saver-delay:v1'
-const DEFAULT_SCREEN_SAVER_DELAY: ScreenSaverDelay = '10m'
+export const SCREEN_SAVER_STORAGE_KEY = 'pomo:screen-saver-delay:v1'
+export const DEFAULT_SCREEN_SAVER_DELAY: ScreenSaverDelay = '10m'
 const screenSaverDelaySchema = import.meta.env.DEV
   ? z.enum(['off', '5s', '1m', '10m', '20m', '1h'])
   : z.enum(['off', '1m', '10m', '20m', '1h'])
+const storedScreenSaverPreferenceSchema = z.object({
+  delay: screenSaverDelaySchema,
+  savedAt: z.number().finite().nonnegative(),
+})
 
-const parseScreenSaverDelay = (value: unknown): ScreenSaverDelay | null => {
+interface StoredScreenSaverPreference {
+  readonly delay: ScreenSaverDelay
+  readonly savedAt: number
+}
+
+export const parseScreenSaverDelay = (value: unknown): ScreenSaverDelay | null => {
   const result = screenSaverDelaySchema.safeParse(value)
   return result.success ? result.data : null
+}
+
+const parseStoredScreenSaverPreference = (value: unknown): StoredScreenSaverPreference | null => {
+  const result = storedScreenSaverPreferenceSchema.safeParse(value)
+  if (result.success) {
+    return result.data
+  }
+
+  const delay = parseScreenSaverDelay(value)
+  return delay === null ? null : {delay, savedAt: 0}
 }
 
 export interface ScreenSaverStorage {
@@ -38,85 +59,126 @@ export interface ScreenSaverRepository {
   readonly write: (delay: ScreenSaverDelay) => Promise<void>
 }
 
-/** Creates screen saver persistence with one independent write queue and storage boundary. */
-export const createScreenSaverRepository = (storage: ScreenSaverStorage): ScreenSaverRepository => {
-  let preferenceWriteRevision = 0
-  let writeQueue = Promise.resolve()
-  const readWebPreference = (): ScreenSaverDelay | null => {
-    return parseScreenSaverDelay(storage.readWeb(SCREEN_SAVER_STORAGE_KEY))
+/** Reads and writes screen saver settings using the supplied runtime storage. */
+export const createScreenSaverRepository = (
+  storage: ScreenSaverStorage,
+  now: () => number = Date.now,
+): ScreenSaverRepository => {
+  const coordinator = createTimestampedDualRuntimeStorage<StoredScreenSaverPreference>({
+    now,
+    timestamp: 'monotonic',
+  })
+  let latestKnownPreference: StoredScreenSaverPreference | null = null
+  const writeLatestToss = createLatestStorageWriter(SCREEN_SAVER_STORAGE_KEY, storage.writeToss)
+
+  const readWebPreference = (): StoredScreenSaverPreference | null => {
+    return parseStoredScreenSaverPreference(storage.readWeb(SCREEN_SAVER_STORAGE_KEY))
   }
 
-  const writeWebPreference = (delay: ScreenSaverDelay) => {
-    return storage.writeWeb(SCREEN_SAVER_STORAGE_KEY, delay)
+  const writeWebPreference = (preference: StoredScreenSaverPreference) => {
+    return storage.writeWeb(SCREEN_SAVER_STORAGE_KEY, preference)
   }
 
-  /** Reads the screen saver delay from storage whose lifetime matches the current runtime. */
+  const writeNativePreference = (preference: StoredScreenSaverPreference) =>
+    coordinator.trackWrite(writeLatestToss(preference))
+
+  const readWebFallback = (webPreference = readWebPreference()) => {
+    const latestPreference = coordinator.selectLatest(latestKnownPreference, webPreference)
+    latestKnownPreference = latestPreference
+    coordinator.observeSavedAt(latestPreference?.savedAt ?? 0)
+    return latestPreference?.delay ?? DEFAULT_SCREEN_SAVER_DELAY
+  }
+
   const read = async (): Promise<ScreenSaverDelay> => {
-    const initialWriteRevision = preferenceWriteRevision
-    await writeQueue
-    if (preferenceWriteRevision !== initialWriteRevision) {
-      return read()
-    }
-    const webPreference = readWebPreference()
-
-    if (webPreference !== null) {
-      if (storage.usesTossStorage()) {
-        // Share the write queue so a repair cannot overwrite a newer user choice.
-        writeQueue = writeQueue
-          .then(() => storage.writeToss(SCREEN_SAVER_STORAGE_KEY, webPreference))
-          // Keep the authoritative web choice available and retry repair on the next read.
-          .catch(() => undefined)
+    const initialWriteRevision = coordinator.revision()
+    if (coordinator.hasPendingWrites()) {
+      await coordinator.settleWrites()
+      if (coordinator.revision() !== initialWriteRevision) {
+        return read()
       }
-      return webPreference
     }
 
+    const webPreference = readWebPreference()
     if (!storage.usesTossStorage()) {
-      return DEFAULT_SCREEN_SAVER_DELAY
+      return readWebFallback(webPreference)
     }
 
     try {
-      const tossPreference = parseScreenSaverDelay(await storage.readToss(SCREEN_SAVER_STORAGE_KEY))
+      const tossPreference = parseStoredScreenSaverPreference(
+        await storage.readToss(SCREEN_SAVER_STORAGE_KEY),
+      )
 
-      if (preferenceWriteRevision !== initialWriteRevision) {
+      if (coordinator.revision() !== initialWriteRevision) {
+        await coordinator.settleWrites()
         return read()
       }
 
-      if (tossPreference === null) {
-        return DEFAULT_SCREEN_SAVER_DELAY
+      // Legacy string preferences have no timestamp, so preserve the native copy on a tie.
+      const latestPreference = coordinator.selectLatest(tossPreference, webPreference)
+      if (latestPreference === null) {
+        return readWebFallback()
       }
 
-      // Rebuild the authoritative web copy after an app update or browser-data eviction.
-      writeWebPreference(tossPreference)
-      return tossPreference
+      coordinator.observeSavedAt(webPreference?.savedAt ?? 0, tossPreference?.savedAt ?? 0)
+      if (
+        latestKnownPreference === null ||
+        latestPreference.savedAt >= latestKnownPreference.savedAt
+      ) {
+        latestKnownPreference = latestPreference
+      }
+
+      if (latestPreference === webPreference) {
+        await writeNativePreference(latestPreference).catch(() => undefined)
+      } else {
+        writeWebPreference(latestPreference)
+      }
+
+      if (coordinator.revision() !== initialWriteRevision) {
+        await coordinator.settleWrites()
+        return read()
+      }
+
+      return latestPreference.delay
     } catch {
-      if (preferenceWriteRevision !== initialWriteRevision) {
+      if (coordinator.revision() !== initialWriteRevision) {
+        await coordinator.settleWrites()
         return read()
       }
-      return DEFAULT_SCREEN_SAVER_DELAY
+      return readWebFallback()
     }
   }
 
-  const persistScreenSaverDelay = async (delay: ScreenSaverDelay): Promise<void> => {
-    const webWriteError = writeWebPreference(delay)
+  const persistScreenSaverDelay = async (
+    preference: StoredScreenSaverPreference,
+  ): Promise<void> => {
+    const webWriteError = writeWebPreference(preference)
 
     if (!storage.usesTossStorage()) {
       if (webWriteError !== null) {
         throw new Error('Failed to persist screen saver delay.', {cause: webWriteError})
       }
+      latestKnownPreference = preference
       return
     }
 
     try {
-      await storage.writeToss(SCREEN_SAVER_STORAGE_KEY, delay)
+      await writeNativePreference(preference)
     } catch (error: unknown) {
       if (webWriteError !== null) {
         throw new Error('Failed to persist screen saver delay.', {cause: error})
       }
+      latestKnownPreference = preference
       return
     }
 
+    latestKnownPreference = preference
     if (webWriteError !== null) {
-      // Preserve the previous web preference unless its native replacement has persisted.
+      const currentWebPreference = readWebPreference()
+      if (currentWebPreference !== null && currentWebPreference.savedAt > preference.savedAt) {
+        latestKnownPreference = currentWebPreference
+        return
+      }
+
       const removalError = storage.removeWeb(SCREEN_SAVER_STORAGE_KEY)
       if (removalError !== null) {
         throw new Error('Failed to persist screen saver delay.', {cause: removalError})
@@ -124,26 +186,23 @@ export const createScreenSaverRepository = (storage: ScreenSaverStorage): Screen
     }
   }
 
-  /** Persists the screen saver delay until the host app or browser data is removed. */
-  const write = (delay: ScreenSaverDelay): Promise<void> => {
-    preferenceWriteRevision += 1
-    const write = writeQueue.then(() => persistScreenSaverDelay(delay))
-    writeQueue = write.catch(() => undefined)
-    return write
-  }
+  const write = (delay: ScreenSaverDelay): Promise<void> =>
+    coordinator.writeStored((savedAt) => ({delay, savedAt}), persistScreenSaverDelay)
 
   return {read, write}
 }
 
-const preserveStoredValue = (value: unknown) => value
-const runtimeRepository = createScreenSaverRepository({
-  readToss: (key) => readTossStorageJson(key, preserveStoredValue),
-  readWeb: (key) => readWebStorageJson(key, preserveStoredValue),
-  removeWeb: removeWebStorageItem,
-  usesTossStorage: hasNativeStorageBridge,
-  writeToss: writeTossStorageJson,
-  writeWeb: writeWebStorageJson,
-})
+const runtimeRepository = createScreenSaverRepository(
+  {
+    readToss: (key) => readTossStorageJson(key, (value) => value),
+    readWeb: (key) => readWebStorageJson(key, (value) => value),
+    removeWeb: removeWebStorageItem,
+    usesTossStorage: hasNativeStorageBridge,
+    writeToss: writeTossStorageJson,
+    writeWeb: writeWebStorageJson,
+  },
+  Date.now,
+)
 
 /** Reads the screen saver delay persisted for the current runtime. */
 export const readScreenSaverDelay = (): Promise<ScreenSaverDelay> => runtimeRepository.read()

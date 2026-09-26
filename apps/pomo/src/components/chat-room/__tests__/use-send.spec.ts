@@ -131,9 +131,10 @@ describe('useSend', () => {
       const deferred = Promise.withResolvers<string | null>()
       vi.mocked(loadCalendarPromptContext).mockReturnValueOnce(deferred.promise)
       const consoleError = vi.spyOn(console, 'error').mockImplementation(() => undefined)
-      const {result, clients, cleanup} = setup()
+      const {result, clients, onSendStarted, cleanup} = setup()
       const sending = result.sending.send()
       result.sending.invalidate()
+      expect(onSendStarted).not.toHaveBeenCalled()
 
       if (outcome === 'success') {
         deferred.resolve('obsolete context')
@@ -142,10 +143,12 @@ describe('useSend', () => {
       }
       await sending
       expect(clients[0]?.generate).not.toHaveBeenCalled()
+      expect(onSendStarted).not.toHaveBeenCalled()
       expect(consoleError).not.toHaveBeenCalled()
 
       await result.sending.send()
       expect(clients[0]?.generate).toHaveBeenCalledOnce()
+      expect(onSendStarted).toHaveBeenCalledOnce()
       cleanup()
     },
   )
@@ -156,11 +159,12 @@ describe('useSend', () => {
     const {result, clients, onSendStarted, setRefineAnswer, cleanup} = setup()
     const sending = result.sending.send()
     await result.sending.send()
-    expect(onSendStarted).toHaveBeenCalledOnce()
+    expect(onSendStarted).not.toHaveBeenCalled()
     expect(loadCalendarPromptContext).toHaveBeenCalledOnce()
     setRefineAnswer(false)
     deferred.resolve(null)
     await sending
+    expect(onSendStarted).toHaveBeenCalledOnce()
     expect(clients[0]?.generate).toHaveBeenCalledWith(expect.any(Object), '2', {
       refineAnswer: false,
     })
@@ -172,12 +176,14 @@ describe('useSend', () => {
     async (draft) => {
       const deferred = Promise.withResolvers<string | null>()
       vi.mocked(loadCalendarPromptContext).mockReturnValue(deferred.promise)
-      const {result, clients, cleanup} = setup()
+      const {result, clients, onSendStarted, cleanup} = setup()
       const sending = result.sending.send()
       result.chat.setDraft(draft)
+      expect(onSendStarted).not.toHaveBeenCalled()
       deferred.resolve('obsolete context')
       await sending
       expect(clients[0]?.generate).not.toHaveBeenCalled()
+      expect(onSendStarted).not.toHaveBeenCalled()
       cleanup()
     },
   )

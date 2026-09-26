@@ -1,3 +1,6 @@
+import {isPlainObject} from 'es-toolkit/predicate'
+import {replaceBlobObjectUrl} from 'src/features/blob-object-url'
+import {getRuntimePublicOrigin, usesRemotePublicOrigin} from '../http-client/runtime-origin'
 import {readStoredAppSession} from '../user-auth/app-session'
 
 export interface PreviewTrackAccess {
@@ -29,21 +32,12 @@ const UUID_REGEXP = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}
 // Keep client buffering aligned with the server's bounded preview object limit.
 // oxlint-disable-next-line eslint/no-magic-numbers -- Preview response limit is two MiB.
 const MAXIMUM_PREVIEW_BYTES = 2 * 1024 * 1024
-const usesRemotePublicOrigin = (): boolean =>
-  import.meta.env.VITE_POMO_IS_APPS_IN_TOSS === 'true' ||
-  import.meta.env.VITE_POMO_IS_DESKTOP === 'true' ||
-  (import.meta.env.VITE_POMO_IS_MOBILE === 'true' && !import.meta.env.DEV)
-const getApiOrigin = (): string =>
-  usesRemotePublicOrigin() || typeof window === 'undefined'
-    ? import.meta.env.VITE_POMO_PUBLIC_ORIGIN
-    : window.location.origin
-
 const isTrackAccess = (value: unknown, trackId: string): value is TrackAccess => {
-  if (typeof value !== 'object' || value === null) {
+  if (!isPlainObject(value)) {
     return false
   }
 
-  const access = value as Readonly<Record<string, unknown>>
+  const access = value
 
   if (access.mode === 'preview') {
     if (typeof access.url !== 'string') {
@@ -51,7 +45,7 @@ const isTrackAccess = (value: unknown, trackId: string): value is TrackAccess =>
     }
 
     try {
-      const apiOrigin = new URL(getApiOrigin()).origin
+      const apiOrigin = new URL(getRuntimePublicOrigin()).origin
       const previewUrl = new URL(access.url, apiOrigin)
       const assetId = previewUrl.searchParams.get('asset')
       return (
@@ -111,14 +105,14 @@ const loadPreviewBlob = async (source: string): Promise<TrackPreviewSource> => {
     throw new TypeError('Track preview audio length is invalid')
   }
 
-  const objectUrl = URL.createObjectURL(blob)
-  return {ok: true, release: () => URL.revokeObjectURL(objectUrl), source: objectUrl}
+  const objectUrl = replaceBlobObjectUrl(null, () => blob)
+  return {ok: true, release: () => replaceBlobObjectUrl(objectUrl, () => null), source: objectUrl}
 }
 
 export const requestTrackAccess = async (trackId: string): Promise<TrackAccess | null> => {
   const accessPath = `/api/music/tracks/${encodeURIComponent(trackId)}/access`
   const endpoint = usesRemotePublicOrigin()
-    ? new URL(accessPath, getApiOrigin()).toString()
+    ? new URL(accessPath, getRuntimePublicOrigin()).toString()
     : accessPath
   const response = await fetch(endpoint, {
     cache: 'no-store',
@@ -153,7 +147,7 @@ export const resolveTrackPreviewAccess = (
 
   const source =
     access.mode === 'preview' && usesRemotePublicOrigin()
-      ? new URL(access.url, getApiOrigin()).toString()
+      ? new URL(access.url, getRuntimePublicOrigin()).toString()
       : access.url
 
   return access.mode === 'preview' ? loadPreviewBlob(source) : {ok: true, source}

@@ -34,6 +34,7 @@ vi.mock('../SoundPlayerPage', () => ({SoundPlayerPage: createPage('sound-player'
 vi.mock('../TermsPage', () => ({TermsPage: createPage('terms')}))
 vi.mock('../TextMoodPage', () => ({TextMoodPage: createPage('text-mood')}))
 vi.mock('../VoicePage', () => ({VoicePage: createPage('voice')}))
+vi.mock('../WorldPage', () => ({WorldPage: createPage('world')}))
 
 afterEach(() => {
   cleanup()
@@ -59,6 +60,7 @@ it.each([
   ['/dev/terms', 'terms'],
   ['/dev/text-mood', 'text-mood'],
   ['/dev/voice', 'voice'],
+  ['/dev/3d-world', 'world'],
 ])('should dispatch %s to the %s development page', async (pathname, expectedPage) => {
   render(() => <PageDispatcher fallback={<output>404</output>} pathname={pathname} />)
 

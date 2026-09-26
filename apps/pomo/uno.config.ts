@@ -230,7 +230,7 @@ const config = mergeConfigs([
   --pomo-color-primary-strong-opacity: 100%;
   --pomo-color-primary-strong-hover-channels: 184 79 50;
   --pomo-color-primary-strong-hover-opacity: 100%;
-  --pomo-color-range-track: rgb(255 250 241 / 22%);
+  --pomo-color-range-track: rgb(255 250 241 / 10%);
   --pomo-color-secondary-channels: 114 123 96;
   --pomo-color-secondary-opacity: 100%;
   --pomo-color-secondary-soft-channels: 114 123 96;
@@ -306,7 +306,7 @@ const config = mergeConfigs([
   --pomo-color-primary-strong-opacity: 100%;
   --pomo-color-primary-strong-hover-channels: 143 47 24;
   --pomo-color-primary-strong-hover-opacity: 100%;
-  --pomo-color-range-track: rgb(25 31 40 / 22%);
+  --pomo-color-range-track: rgb(25 31 40 / 10%);
   --pomo-color-secondary-channels: 102 112 82;
   --pomo-color-secondary-opacity: 100%;
   --pomo-color-secondary-soft-channels: 102 112 82;
@@ -357,7 +357,9 @@ body {
 :root:has(.pomo-desktop-surface),
 :root:has(.pomo-desktop-surface) body,
 :root:has(.pomo-desktop-dialog),
-:root:has(.pomo-desktop-dialog) body {
+:root:has(.pomo-desktop-dialog) body,
+:root:has(.pomo-desktop-background),
+:root:has(.pomo-desktop-background) body {
   background: transparent !important;
 }
 

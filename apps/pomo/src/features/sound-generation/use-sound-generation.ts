@@ -1,6 +1,9 @@
+import {getExceptionMessage} from 'src/features/error-detail'
+import {replaceBlobObjectUrl} from 'src/features/blob-object-url'
 import {createSignal, onCleanup} from 'solid-js'
 import type {LoopRequest, SoundMessage, SoundRequest} from './worker'
 
+const BUSY_ERROR_MESSAGE = '이미 생성 중인 작업이 있습니다. 완료 후 다시 시도해 주세요.'
 export const MAX_REQUEST_SECONDS = 3600
 
 export function useSoundGeneration() {
@@ -18,17 +21,23 @@ export function useSoundGeneration() {
   }
   const stop = () => {
     terminate()
+    const currentError = error()
+    if (currentError === BUSY_ERROR_MESSAGE) {
+      setError(null)
+    }
     setStatus('생성을 중지했습니다.')
   }
   onCleanup(() => {
     terminate()
     const previous = url()
     if (previous !== null) {
-      URL.revokeObjectURL(previous)
+      replaceBlobObjectUrl(previous, () => null)
     }
   })
   const generate = (request: SoundRequest | LoopRequest) => {
     if (busy()) {
+      setError(BUSY_ERROR_MESSAGE)
+      setStatus('생성이 진행 중입니다. 완료 후 다시 시도해 주세요.')
       return
     }
     if (
@@ -62,11 +71,12 @@ export function useSoundGeneration() {
             terminate()
             return
           case 'result': {
-            const previous = url()
-            if (previous !== null) {
-              URL.revokeObjectURL(previous)
-            }
-            setUrl(URL.createObjectURL(message.blob))
+            setUrl(
+              replaceBlobObjectUrl(url(), () => {
+                setError(null)
+                return message.blob
+              }),
+            )
             setStatus('환경음 생성 완료')
             terminate()
             return
@@ -84,7 +94,7 @@ export function useSoundGeneration() {
       }
       current.postMessage(request)
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : String(cause))
+      setError(getExceptionMessage(cause, () => String(cause)))
       setStatus('생성에 실패했습니다.')
       terminate()
     }

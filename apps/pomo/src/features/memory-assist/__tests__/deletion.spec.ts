@@ -66,6 +66,44 @@ it('should persist deletion intent before deleting owned resources', async () =>
   expect(mocks.audio).toHaveBeenCalledWith(memo.dialogueId)
 })
 
+it('should preserve audio when a memo is recreated with the same id during deletion', async () => {
+  const recreatedMemo = createMemoryMemo({
+    exactReminderAt: null,
+    id: memo.id,
+    now: new Date('2026-09-04T04:00:00.000Z'),
+    random: () => 0,
+    recallMode: 'random',
+    text: '새 메모',
+  })
+  mocks.deleteDialogue.mockImplementation(async () => {
+    mocks.memos = [recreatedMemo]
+  })
+
+  await expect(remove()).resolves.toBe('deleted')
+  expect(mocks.memos).toEqual([recreatedMemo])
+  expect(mocks.audio).not.toHaveBeenCalledWith(memo.dialogueId)
+})
+
+it('should preserve a pending memo recreation with the same id during deletion', async () => {
+  const recreatedMemo = {
+    ...createMemoryMemo({
+      exactReminderAt: null,
+      id: memo.id,
+      now: new Date('2026-09-04T04:00:00.000Z'),
+      random: () => 0,
+      recallMode: 'random',
+      text: '새 메모',
+    }),
+    deletionPending: true as const,
+  }
+  mocks.deleteDialogue.mockImplementation(async () => {
+    mocks.memos = [recreatedMemo]
+  })
+
+  await expect(remove()).resolves.toBe('deleted')
+  expect(mocks.memos).toEqual([recreatedMemo])
+})
+
 it.each(['dialogue', 'audio', 'final persistence'])(
   'should retry %s failure from a persisted tombstone',
   async (failure) => {
@@ -192,6 +230,33 @@ it('should preserve active and unowned dialogue IDs during retired cleanup', asy
   await deletion.retry(mocks.deleteDialogue)
   expect(mocks.deleteDialogue).not.toHaveBeenCalled()
   expect(mocks.audio).not.toHaveBeenCalled()
+})
+
+it('should preserve recreated memo audio during retired dialogue cleanup', async () => {
+  const retiredDialogueId = memo.dialogueId
+  const activeDialogueId = `${retiredDialogueId}:61f5d718-00b9-4187-a01e-c4a9792d7c31`
+  const recreatedMemo = {
+    ...createMemoryMemo({
+      exactReminderAt: null,
+      id: memo.id,
+      now: new Date('2026-09-04T04:00:00.000Z'),
+      random: () => 0,
+      recallMode: 'random',
+      text: '새 메모',
+    }),
+    dialogueId: retiredDialogueId,
+  }
+  mocks.memos = [{...memo, dialogueId: activeDialogueId, retiredDialogueIds: [retiredDialogueId]}]
+  mocks.deleteDialogue.mockImplementation(async (dialogueId) => {
+    if (dialogueId === retiredDialogueId) {
+      mocks.memos = [recreatedMemo]
+    }
+  })
+
+  await deletion.cleanup({deleteDialogue: mocks.deleteDialogue, memoId: memo.id})
+
+  expect(mocks.audio).not.toHaveBeenCalledWith(retiredDialogueId)
+  expect(mocks.memos).toEqual([recreatedMemo])
 })
 
 it('should finish retired cleanup before removing its owning memo', async () => {

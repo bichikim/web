@@ -2,27 +2,29 @@
 
 // oxlint-disable eslint-js/camelcase -- Transformers.js option names are fixed external contracts.
 
-import {
-  type AutomaticSpeechRecognitionPipeline,
-  pipeline,
-  type ProgressInfo,
-} from '@huggingface/transformers'
+import {type AutomaticSpeechRecognitionPipeline, pipeline} from '@huggingface/transformers'
 
 import {getErrorMessage} from 'src/utils/get-error-message'
+import {createPercentProgressReporter} from '../transformers-progress'
 
 import type {SpeechRecognitionError, SpeechRecognitionPhase} from './errors'
 import type {SpeechWorkerRequest, SpeechWorkerResponse} from './messages'
 import {getSpeechModel, type SpeechModelDefinition, type SpeechModelId} from './models'
 import type {SpeechBackend} from './recognizer'
 
-const MAXIMUM_PROGRESS = 100
 const MINIMUM_PROGRESS = 0
-const workerScope = self as DedicatedWorkerGlobalScope
+const workerScope = globalThis.self as DedicatedWorkerGlobalScope
 
 let transcriber: AutomaticSpeechRecognitionPipeline | null = null
 let activeBackend: SpeechBackend | null = null
 let activeModelId: SpeechModelId | null = null
-let preparePromise: Promise<SpeechBackend> | null = null
+
+interface PendingPreparation {
+  readonly modelId: SpeechModelId
+  readonly promise: Promise<SpeechBackend>
+}
+
+let pendingPreparation: PendingPreparation | null = null
 
 const sendResponse = (response: SpeechWorkerResponse) => workerScope.postMessage(response)
 
@@ -36,17 +38,9 @@ const createModelError = (
   retryable: true,
 })
 
-const reportProgress = (progress: ProgressInfo) => {
-  if (progress.status !== 'progress_total') {
-    return
-  }
-
-  const percentage = Math.min(
-    MAXIMUM_PROGRESS,
-    Math.max(MINIMUM_PROGRESS, Math.round(progress.progress)),
-  )
-  sendResponse({progress: percentage, type: 'loading'})
-}
+const reportProgress = createPercentProgressReporter((progress) =>
+  sendResponse({progress, type: 'loading'}),
+)
 
 const loadTranscriber = async (backend: SpeechBackend, model: SpeechModelDefinition) => {
   const loadedTranscriber = await pipeline('automatic-speech-recognition', model.repositoryId, {
@@ -60,34 +54,51 @@ const loadTranscriber = async (backend: SpeechBackend, model: SpeechModelDefinit
 }
 
 const prepareModel = async (preferredBackend: SpeechBackend, modelId: SpeechModelId) => {
+  const existingPreparation = pendingPreparation
+
+  if (existingPreparation !== null && existingPreparation.modelId !== modelId) {
+    await existingPreparation.promise.catch(() => undefined)
+
+    if (pendingPreparation === existingPreparation) {
+      pendingPreparation = null
+    }
+
+    return prepareModel(preferredBackend, modelId)
+  }
+
   if (transcriber !== null && activeBackend !== null && activeModelId === modelId) {
     return activeBackend
   }
 
-  if (preparePromise === null) {
-    const model = getSpeechModel(modelId)
-    sendResponse({progress: MINIMUM_PROGRESS, type: 'loading'})
-    preparePromise = (async () => {
-      if (preferredBackend === 'webgpu') {
-        try {
-          return await loadTranscriber('webgpu', model)
-        } catch {
-          transcriber = null
-          activeBackend = null
-          activeModelId = null
-          sendResponse({backend: 'wasm', type: 'backend-changed'})
-        }
-      }
-
-      return loadTranscriber('wasm', model)
-    })()
+  if (existingPreparation !== null) {
+    return existingPreparation.promise
   }
 
+  const model = getSpeechModel(modelId)
+  sendResponse({progress: MINIMUM_PROGRESS, type: 'loading'})
+  const currentPreparation = (async () => {
+    if (preferredBackend === 'webgpu') {
+      try {
+        return await loadTranscriber('webgpu', model)
+      } catch {
+        transcriber = null
+        activeBackend = null
+        activeModelId = null
+        sendResponse({backend: 'wasm', type: 'backend-changed'})
+      }
+    }
+
+    return loadTranscriber('wasm', model)
+  })()
+  const nextPreparation = {modelId, promise: currentPreparation}
+  pendingPreparation = nextPreparation
+
   try {
-    return await preparePromise
-  } catch (error) {
-    preparePromise = null
-    throw error
+    return await currentPreparation
+  } finally {
+    if (pendingPreparation === nextPreparation) {
+      pendingPreparation = null
+    }
   }
 }
 

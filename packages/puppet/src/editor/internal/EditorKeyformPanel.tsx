@@ -1,7 +1,9 @@
 import {InfluenceEditor} from './InfluenceEditor'
-import {EditorDiamondButton, EditorNumberField} from '../../design-system'
+import {EditorDiamondButton} from '../../design-system'
+import {ParameterValueFields} from './ParameterValueFields'
 import {EditorParameterFooter} from './EditorParameterFooter'
 import {
+  type Accessor,
   createSignal,
   createUniqueId,
   For,
@@ -14,17 +16,15 @@ import {
 import {
   isTwoDimensionalParameterBinding,
   parameterValuesEqual,
-  type PuppetParameterValueMap,
   type PuppetParameterValues,
 } from '../../deformation'
-import type {
-  PuppetParameter,
-  PuppetParameterBinding,
-  PuppetParameterInfluence,
-} from '../../player/document'
+import type {PuppetParameter, PuppetParameterBinding} from '../../player/document'
 import {EditorKeyformMarker} from './EditorKeyformMarker'
 import {EditorKeyformToolbar} from './EditorKeyformToolbar'
 import {EditorParameterItem} from './EditorParameterItem'
+import {EditorBindingSettingsDrawer, EditorBindingSettingsToggle} from './EditorBindingSettings'
+import type {EditorKeyformPanelProps} from './editor-keyform-panel-props'
+import {createKeyformPanelModel} from './keyform-panel-model'
 import {
   getParameterKeyboardValue,
   getParameterPointerValue,
@@ -84,14 +84,14 @@ const ParameterValueScrubber = (props: ParameterValueScrubberProps) => {
     // The stored callback only removes native drag listeners during completion or cleanup.
     // eslint-disable-next-line solid/reactivity
     removePointerListeners = () => {
-      window.removeEventListener('pointercancel', finishPointerDrag)
-      window.removeEventListener('pointermove', handlePointerMove)
-      window.removeEventListener('pointerup', finishPointerDrag)
+      globalThis.removeEventListener('pointercancel', finishPointerDrag)
+      globalThis.removeEventListener('pointermove', handlePointerMove)
+      globalThis.removeEventListener('pointerup', finishPointerDrag)
       removePointerListeners = undefined
     }
-    window.addEventListener('pointercancel', finishPointerDrag)
-    window.addEventListener('pointermove', handlePointerMove)
-    window.addEventListener('pointerup', finishPointerDrag)
+    globalThis.addEventListener('pointercancel', finishPointerDrag)
+    globalThis.addEventListener('pointermove', handlePointerMove)
+    globalThis.addEventListener('pointerup', finishPointerDrag)
   }
   onCleanup(() => removePointerListeners?.())
   return (
@@ -178,14 +178,14 @@ const TwoDimensionalGrid = (props: TwoDimensionalGridProps) => {
     // The stored callback only removes native drag listeners during completion or cleanup.
     // eslint-disable-next-line solid/reactivity
     removePointerListeners = () => {
-      window.removeEventListener('pointercancel', finishPointerDrag)
-      window.removeEventListener('pointermove', handlePointerMove)
-      window.removeEventListener('pointerup', finishPointerDrag)
+      globalThis.removeEventListener('pointercancel', finishPointerDrag)
+      globalThis.removeEventListener('pointermove', handlePointerMove)
+      globalThis.removeEventListener('pointerup', finishPointerDrag)
       removePointerListeners = undefined
     }
-    window.addEventListener('pointercancel', finishPointerDrag)
-    window.addEventListener('pointermove', handlePointerMove)
-    window.addEventListener('pointerup', finishPointerDrag)
+    globalThis.addEventListener('pointercancel', finishPointerDrag)
+    globalThis.addEventListener('pointermove', handlePointerMove)
+    globalThis.addEventListener('pointerup', finishPointerDrag)
   }
 
   onCleanup(() => removePointerListeners?.())
@@ -259,45 +259,6 @@ interface KeyformTrackProps {
   readonly values?: PuppetParameterValues
 }
 
-interface ParameterValueFieldsProps {
-  readonly onEditEnd?: () => void
-  readonly onEditStart?: () => void
-  readonly onValueChange?: (values: PuppetParameterValues) => void
-  readonly parameters: ReadonlyArray<PuppetParameter>
-  readonly values?: PuppetParameterValues
-}
-
-const ParameterValueFields = (props: ParameterValueFieldsProps) => {
-  const updateAxisValue = (axis: number, value: number) => {
-    const values = [
-      ...(props.values ?? props.parameters.map((parameter) => parameter.defaultValue)),
-    ]
-    values[axis] = value
-    props.onValueChange?.(values as unknown as PuppetParameterValues)
-  }
-
-  return (
-    <div class="keyform-row-values">
-      <For each={props.parameters}>
-        {(parameter, index) => (
-          <label class="keyform-row-value">
-            <span>{parameter.name}</span>
-            <EditorNumberField
-              label={`${parameter.name} 값`}
-              maximum={parameter.maximum}
-              minimum={parameter.minimum}
-              value={props.values?.[index()] ?? parameter.defaultValue}
-              onEditEnd={props.onEditEnd}
-              onEditStart={props.onEditStart}
-              onValueChange={(value) => updateAxisValue(index(), value)}
-            />
-          </label>
-        )}
-      </For>
-    </div>
-  )
-}
-
 const KeyformTrackLabel = (props: KeyformTrackProps) => {
   const firstParameter = () => props.parameters[0]
   const secondParameter = () => props.parameters[1]
@@ -317,6 +278,7 @@ const KeyformTrackLabel = (props: KeyformTrackProps) => {
         {(parameter) => (
           <EditorParameterItem
             footer={props.footer}
+            groupName={props.binding.name}
             name={parameter().name}
             pressed={props.active}
             secondaryName={secondParameter()?.name}
@@ -328,7 +290,9 @@ const KeyformTrackLabel = (props: KeyformTrackProps) => {
             onNameChange={(name) =>
               props.onParameterNameChange?.(props.binding.id, parameter().id, name)
             }
-            onNameEdit={() => props.onBindingSelect?.(props.binding.id)}
+            onSecondaryNameChange={(name) =>
+              props.onParameterNameChange?.(props.binding.id, secondParameter()!.id, name)
+            }
             onSelect={() => props.onBindingSelect?.(props.binding.id)}
           >
             <ParameterValueFields
@@ -434,68 +398,53 @@ const KeyformTrack = (props: KeyformTrackProps) => {
   )
 }
 
-export interface EditorKeyformPanelProps {
-  readonly influence?: number
-  readonly onInfluencesChange?: (influences: ReadonlyArray<PuppetParameterInfluence>) => boolean
-  readonly activeBindingId?: string
-  readonly activeKeyformValues?: PuppetParameterValues | null
-  readonly allParametersVisible?: boolean
-  readonly bindings: ReadonlyArray<PuppetParameterBinding>
-  readonly onBindingDelete?: (bindingId: string) => void
-  readonly onBindingSelect?: (bindingId: string) => void
-  readonly onEditEnd?: () => void
-  readonly onEditStart?: () => void
-  readonly onKeyformAdd?: () => void
-  readonly onKeyformDelete?: () => void
-  readonly onKeyformMove?: (
-    bindingId: string,
-    values: PuppetParameterValues,
-    nextValues: PuppetParameterValues,
-  ) => void
-  readonly onKeyformSelect?: (bindingId: string, values: PuppetParameterValues) => void
-  readonly onParameterAdd?: () => void
-  readonly onParameterNameChange?: (bindingId: string, parameterId: string, name: string) => void
-  readonly onSelectionConnect?: () => void
-  readonly onSelectionDisconnect?: () => void
-  readonly onAllParametersVisibleChange?: (visible: boolean) => void
-  readonly onTwoDimensionalParameterAdd?: () => void
-  readonly onValueChange?: (values: PuppetParameterValues) => void
-  readonly parameterCreationAvailable?: boolean
-  readonly parameters: ReadonlyArray<PuppetParameter>
-  readonly parameterValueMap?: PuppetParameterValueMap
-  readonly selectedPartIds?: ReadonlyArray<string>
-  readonly targetPartIds?: ReadonlyArray<string>
-  readonly values?: PuppetParameterValues
+interface KeyformPanelSectionProps {
+  readonly activeBinding: Accessor<PuppetParameterBinding | undefined>
+  readonly activePreview: Accessor<boolean>
+  readonly source: EditorKeyformPanelProps
+  readonly titleId: string
 }
+
+const KeyformPanelToolbar = (props: KeyformPanelSectionProps) => (
+  <EditorKeyformToolbar
+    activeBinding={props.activeBinding()}
+    activeKeyformValues={props.source.activeKeyformValues}
+    onKeyformAdd={props.activePreview() ? undefined : props.source.onKeyformAdd}
+    onKeyformDelete={props.activePreview() ? undefined : props.source.onKeyformDelete}
+    onParameterAdd={props.source.onParameterAdd}
+    onTwoDimensionalParameterAdd={props.source.onTwoDimensionalParameterAdd}
+    parameterCreationAvailable={props.source.parameterCreationAvailable}
+    setBrushControlsMount={props.source.setBrushControlsMount}
+    titleId={props.titleId}
+  />
+)
+
+const KeyformPanelFooter = (props: Omit<KeyformPanelSectionProps, 'titleId'>) => (
+  <EditorParameterFooter
+    activeBinding={props.activeBinding()}
+    allParametersVisible={props.source.allParametersVisible}
+    influence={props.source.influence}
+    previewOnly={props.activePreview()}
+    selectedPartIds={props.source.selectedPartIds}
+    targetPartIds={props.source.targetPartIds}
+    onAllParametersVisibleChange={props.source.onAllParametersVisibleChange}
+    onSelectionConnect={props.source.onSelectionConnect}
+    onSelectionDisconnect={props.source.onSelectionDisconnect}
+  />
+)
 
 export const EditorKeyformPanel = (props: EditorKeyformPanelProps) => {
   const titleId = createUniqueId()
   const [expandedBinding, setExpandedBinding] = createSignal<string>()
-  const activeBinding = () => props.bindings.find((binding) => binding.id === props.activeBindingId)
-  const parameterById = () =>
-    new Map(props.parameters.map((parameter) => [parameter.id, parameter]))
-  const bindingParameters = (binding: PuppetParameterBinding) =>
-    binding.parameterIds.flatMap((parameterId) => {
-      const parameter = parameterById().get(parameterId)
-      return parameter === undefined ? [] : [parameter]
-    })
-  const bindingValues = (binding: PuppetParameterBinding): PuppetParameterValues => {
-    return binding.id === props.activeBindingId && props.values !== undefined
-      ? props.values
-      : (bindingParameters(binding).map(
-          (parameter) => props.parameterValueMap?.[parameter.id] ?? parameter.defaultValue,
-        ) as unknown as PuppetParameterValues)
-  }
+  const [expandedSettingsBinding, setExpandedSettingsBinding] = createSignal<string>()
+  const {activeBinding, activePreview, bindingParameters, bindingValues} =
+    createKeyformPanelModel(props)
   return (
     <section class="keyform-panel" aria-labelledby={titleId}>
-      <EditorKeyformToolbar
-        activeBinding={activeBinding()}
-        activeKeyformValues={props.activeKeyformValues}
-        onKeyformAdd={props.onKeyformAdd}
-        onKeyformDelete={props.onKeyformDelete}
-        onParameterAdd={props.onParameterAdd}
-        onTwoDimensionalParameterAdd={props.onTwoDimensionalParameterAdd}
-        parameterCreationAvailable={props.parameterCreationAvailable}
+      <KeyformPanelToolbar
+        activeBinding={activeBinding}
+        activePreview={activePreview}
+        source={props}
         titleId={titleId}
       />
       <Show
@@ -506,6 +455,9 @@ export const EditorKeyformPanel = (props: EditorKeyformPanelProps) => {
           <For each={props.bindings.map((binding) => binding.id)}>
             {(bindingId) => {
               const binding = () => props.bindings.find((item) => item.id === bindingId)!
+              const parameters = () => bindingParameters(binding())
+              const settingsLabel = () => props.getBindingSettingsLabel?.(binding(), parameters())
+              const settingsId = `${titleId}-${bindingId}-settings`
               return (
                 <div class="keyform-binding-row" data-binding-id={bindingId}>
                   <div
@@ -528,7 +480,7 @@ export const EditorKeyformPanel = (props: EditorKeyformPanelProps) => {
                         active={bindingId === props.activeBindingId}
                         activeKeyformValues={props.activeKeyformValues}
                         binding={binding()}
-                        parameters={bindingParameters(binding())}
+                        parameters={parameters()}
                         values={bindingValues(binding())}
                         onBindingSelect={props.onBindingSelect}
                         onKeyformMove={props.onKeyformMove}
@@ -542,13 +494,33 @@ export const EditorKeyformPanel = (props: EditorKeyformPanelProps) => {
                       renderTrigger={(trigger) => (
                         <div class="keyform-track-labels">
                           <KeyformTrackLabel
-                            footer={trigger}
+                            footer={
+                              <div class="parameter-settings-toggles">
+                                {trigger}
+                                <EditorBindingSettingsToggle
+                                  controlsId={settingsId}
+                                  expanded={expandedSettingsBinding() === bindingId}
+                                  label={settingsLabel()}
+                                  onToggle={() => {
+                                    props.onBindingSelect?.(bindingId)
+                                    setExpandedBinding(undefined)
+                                    setExpandedSettingsBinding((current) =>
+                                      current === bindingId ? undefined : bindingId,
+                                    )
+                                  }}
+                                />
+                              </div>
+                            }
                             active={bindingId === props.activeBindingId}
                             activeKeyformValues={props.activeKeyformValues}
                             binding={binding()}
-                            parameters={bindingParameters(binding())}
+                            parameters={parameters()}
                             values={bindingValues(binding())}
-                            onBindingDelete={props.onBindingDelete}
+                            onBindingDelete={
+                              props.previewBindingIds?.has(bindingId)
+                                ? undefined
+                                : props.onBindingDelete
+                            }
                             onBindingSelect={props.onBindingSelect}
                             onEditEnd={props.onEditEnd}
                             onEditStart={props.onEditStart}
@@ -566,6 +538,7 @@ export const EditorKeyformPanel = (props: EditorKeyformPanelProps) => {
                       onExpandedChange={(open) => {
                         if (open) {
                           props.onBindingSelect?.(bindingId)
+                          setExpandedSettingsBinding(undefined)
                         }
                         setExpandedBinding(open ? bindingId : undefined)
                       }}
@@ -577,21 +550,25 @@ export const EditorKeyformPanel = (props: EditorKeyformPanelProps) => {
                       onEditEnd={props.onEditEnd}
                     />
                   </section>
+                  <EditorBindingSettingsDrawer
+                    expanded={expandedSettingsBinding() === bindingId}
+                    id={settingsId}
+                    label={`${parameters()
+                      .map((parameter) => parameter.name)
+                      .join(' / ')} 설정`}
+                  >
+                    {props.renderBindingSettings?.(binding(), parameters())}
+                  </EditorBindingSettingsDrawer>
                 </div>
               )
             }}
           </For>
         </div>
       </Show>
-      <EditorParameterFooter
-        activeBinding={activeBinding()}
-        selectedPartIds={props.selectedPartIds}
-        targetPartIds={props.targetPartIds}
-        influence={props.influence}
-        allParametersVisible={props.allParametersVisible}
-        onAllParametersVisibleChange={props.onAllParametersVisibleChange}
-        onSelectionConnect={props.onSelectionConnect}
-        onSelectionDisconnect={props.onSelectionDisconnect}
+      <KeyformPanelFooter
+        activeBinding={activeBinding}
+        activePreview={activePreview}
+        source={props}
       />
     </section>
   )

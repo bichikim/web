@@ -13,7 +13,7 @@ export {
   type ModelStorageError,
 } from './storage'
 export {createTransformersModelCache, type TransformersModelCache} from './transformers'
-export {formatModelDownloadSize} from './size'
+export {formatModelDownloadSize, localizeModelDownloadSize} from './size'
 export {
   createModelStorageManager,
   type ModelStorageManagementError,

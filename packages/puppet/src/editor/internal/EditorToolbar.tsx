@@ -4,9 +4,10 @@ import {Popover} from '@kobalte/core/popover'
 import {Button} from '@kobalte/core/button'
 import {EditorHelp} from './EditorHelp'
 import {ToggleButton} from '@kobalte/core/toggle-button'
-import {createSignal, createUniqueId} from 'solid-js'
+import {createSignal, createUniqueId, For, onCleanup, Show} from 'solid-js'
 
 import type {PlayerCanvasStatus} from '../PlayerCanvas'
+import type {PuppetExampleDocument} from '../example-document'
 import type {EditorPanelVisibility} from './EditorPanelLayout'
 
 const STATUS_LABEL: Readonly<Record<PlayerCanvasStatus, string>> = {
@@ -16,6 +17,9 @@ const STATUS_LABEL: Readonly<Record<PlayerCanvasStatus, string>> = {
 }
 
 export interface EditorToolbarProps {
+  readonly examples?: ReadonlyArray<PuppetExampleDocument>
+  readonly setBrushSettingsMount?: (element: HTMLDivElement | undefined) => void
+  readonly exportUrl?: string | null
   readonly activeWorkspace?: 'animation' | 'modeling'
   readonly canRedo?: boolean
   readonly canUndo?: boolean
@@ -27,9 +31,17 @@ export interface EditorToolbarProps {
   readonly panelVisibility?: EditorPanelVisibility
   readonly playerStatus: PlayerCanvasStatus
   readonly onExport: () => void
+  readonly onExampleOpen?: (example: PuppetExampleDocument) => void
   readonly onFileImport: (file: File | undefined) => void
   readonly onPsdReimport?: (file: File | undefined) => void
   readonly onFileOpen: (file: File | undefined) => void
+}
+
+const BrushSettingsMount = (props: {
+  readonly setMount: (element: HTMLDivElement | undefined) => void
+}) => {
+  onCleanup(() => props.setMount(undefined))
+  return <div class="toolbar-brush-settings-mount" ref={props.setMount} />
 }
 
 interface PanelVisibilityControlsProps {
@@ -63,6 +75,8 @@ const PanelVisibilityControls = (props: PanelVisibilityControlsProps) => (
 )
 
 interface ToolbarMenuProps {
+  readonly examples?: ReadonlyArray<PuppetExampleDocument>
+  readonly exportUrl?: string | null
   readonly canUndo?: boolean
   readonly canRedo?: boolean
   readonly historyUndoCount?: number
@@ -70,6 +84,7 @@ interface ToolbarMenuProps {
   readonly onUndo?: () => void
   readonly onRedo?: () => void
   readonly onExport: () => void
+  readonly onExampleOpen?: (example: PuppetExampleDocument) => void
   readonly onFileImport: (file: File | undefined) => void
   readonly onPsdReimport?: (file: File | undefined) => void
   readonly onFileOpen: (file: File | undefined) => void
@@ -78,6 +93,10 @@ interface ToolbarMenuProps {
 const ToolbarMenu = (props: ToolbarMenuProps) => {
   const [menuOpen, setMenuOpen] = createSignal(false)
   const portalMount = useEditorPortalMount()
+  const handleExampleOpen = (example: PuppetExampleDocument) => {
+    setMenuOpen(false)
+    props.onExampleOpen?.(example)
+  }
 
   return (
     <Popover forceMount open={menuOpen()} onOpenChange={setMenuOpen}>
@@ -105,6 +124,20 @@ const ToolbarMenu = (props: ToolbarMenuProps) => {
             onClose={() => setMenuOpen(false)}
             onImport={props.onPsdReimport}
           />
+          <Show when={props.examples?.length}>
+            <details>
+              <summary class="toolbar-menu-examples-trigger">예제</summary>
+              <div aria-label="예제 문서" class="grid pl-3" role="group">
+                <For each={props.examples}>
+                  {(example) => (
+                    <Button type="button" onClick={() => handleExampleOpen(example)}>
+                      {example.label}
+                    </Button>
+                  )}
+                </For>
+              </div>
+            </details>
+          </Show>
           <hr />
           <Button
             type="button"
@@ -115,6 +148,13 @@ const ToolbarMenu = (props: ToolbarMenuProps) => {
           >
             JSON 내보내기
           </Button>
+          <Show when={props.exportUrl}>
+            {(url) => (
+              <a href={url()} download="puppet-model.json">
+                JSON 파일 다시 다운로드
+              </a>
+            )}
+          </Show>
           <hr />
           <Button
             aria-description={`${props.historyUndoCount ?? 0}단계 되돌릴 수 있음 · ⌘Z / Ctrl+Z`}
@@ -151,6 +191,8 @@ const ToolbarMenu = (props: ToolbarMenuProps) => {
 export const EditorToolbar = (props: EditorToolbarProps) => (
   <header class="toolbar">
     <ToolbarMenu
+      examples={props.examples}
+      exportUrl={props.exportUrl}
       canUndo={props.canUndo}
       canRedo={props.canRedo}
       historyUndoCount={props.historyUndoCount}
@@ -158,10 +200,14 @@ export const EditorToolbar = (props: EditorToolbarProps) => (
       onUndo={props.onUndo}
       onRedo={props.onRedo}
       onExport={props.onExport}
+      onExampleOpen={props.onExampleOpen}
       onFileImport={props.onFileImport}
       onPsdReimport={props.onPsdReimport}
       onFileOpen={props.onFileOpen}
     />
+    <Show when={props.setBrushSettingsMount}>
+      {(setMount) => <BrushSettingsMount setMount={setMount()} />}
+    </Show>
     <div class="toolbar-actions">
       <div class="renderer-status" data-status={props.playerStatus}>
         <span class="status-dot" aria-hidden="true" />

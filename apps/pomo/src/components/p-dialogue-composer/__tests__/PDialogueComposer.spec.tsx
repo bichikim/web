@@ -49,6 +49,41 @@ it('should localize the dialogue placeholder in English', () => {
   expect(screen.getByRole('button', {name: 'Send dialogue'})).toBeDisabled()
 })
 
+it('should expose the device and entitled server execution choices', () => {
+  const onExecutionModeChange = vi.fn()
+  render(() => (
+    <PDialogueComposer
+      executionMode="local"
+      onExecutionModeChange={onExecutionModeChange}
+      serverAccessStatus="available"
+      serverAvailable
+    />
+  ))
+
+  fireEvent.click(screen.getByRole('button', {name: '대화 시작하기'}))
+  const selector = screen.getByRole('combobox', {name: 'AI 실행 위치'})
+  expect(selector).toHaveValue('local')
+  expect(screen.getByRole('option', {name: '서버 Luna (구독)'})).toBeEnabled()
+
+  fireEvent.change(selector, {target: {value: 'server'}})
+
+  expect(onExecutionModeChange).toHaveBeenCalledWith('server')
+})
+
+it('should update and restore a draft owned by the caller', () => {
+  const [draft, setDraft] = createSignal('')
+  render(() => <PDialogueComposer draft={draft} onDraftChange={setDraft} />)
+
+  fireEvent.click(screen.getByRole('button', {name: '대화 시작하기'}))
+  const input = screen.getByRole('textbox', {name: '대화 입력'})
+
+  fireEvent.input(input, {target: {value: '입력 중인 대화'}})
+  expect(draft()).toBe('입력 중인 대화')
+
+  setDraft('복구된 대화')
+  expect(input).toHaveValue('복구된 대화')
+})
+
 it('should auto-expand once without moving focus', async () => {
   const [autoExpand, setAutoExpand] = createSignal(false)
   render(() => <PDialogueComposer autoExpand={autoExpand()} />)

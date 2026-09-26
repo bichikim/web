@@ -351,6 +351,13 @@ const resumePartialDownload = async (
     }
   }
 
+  if (response.status === HTTP_PARTIAL_CONTENT_STATUS) {
+    try {
+      await response.body?.cancel()
+    } catch (error: unknown) {
+      console.warn('Invalid partial model response could not be canceled.', error)
+    }
+  }
   await deletePartial(options.storage, options.url)
   return response.status === HTTP_PARTIAL_CONTENT_STATUS
     ? null

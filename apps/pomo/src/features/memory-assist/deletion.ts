@@ -1,4 +1,5 @@
 import {isMemoryMemoOwnedDialogue} from './dialogue-id'
+import {isMemoryMemoDeletionPending} from './is-memory-memo-deletion-pending'
 import type {MemoryMemo} from './schema'
 
 export interface DeleteMemoryMemoOptions {
@@ -43,7 +44,11 @@ export const createMemoryMemoDeletion = (
       .reduce(async (previous, dialogueId) => {
         await previous
         await options.deleteDialogue(dialogueId)
-        await dependencies.deleteAudio(dialogueId)
+        const currentMemos = await dependencies.read()
+        const currentMemo = currentMemos.find((current) => current.id === options.memoId)
+        if (currentMemo !== undefined && currentMemo.createdAt === memo?.createdAt) {
+          await dependencies.deleteAudio(dialogueId)
+        }
         const removeRetired = (current: MemoryMemo): MemoryMemo =>
           current.id === options.memoId
             ? {
@@ -84,11 +89,24 @@ export const createMemoryMemoDeletion = (
       if (memo.dialogueId !== null && isMemoryMemoOwnedDialogue(memo.dialogueId, memo.id)) {
         await options.deleteDialogue(memo.dialogueId)
         // Metadata may already be gone after an earlier attempt; retain the owned audio key until both formats are removed.
-        await dependencies.deleteAudio(memo.dialogueId)
+        const currentMemos = await dependencies.read()
+        const currentMemo = currentMemos.find((current) => current.id === memo.id)
+        if (
+          currentMemo !== undefined &&
+          currentMemo.createdAt === memo.createdAt &&
+          isMemoryMemoDeletionPending(currentMemo)
+        ) {
+          await dependencies.deleteAudio(memo.dialogueId)
+        }
       }
 
       await dependencies.update((memos) =>
-        memos.filter((current) => current.id !== memo.id || current.deletionPending !== true),
+        memos.filter(
+          (current) =>
+            current.id !== memo.id ||
+            current.createdAt !== memo.createdAt ||
+            !isMemoryMemoDeletionPending(current),
+        ),
       )
       return 'deleted'
     } catch (error: unknown) {
@@ -121,10 +139,10 @@ export const createMemoryMemoDeletion = (
     const results = await Promise.allSettled(
       memos
         .filter(
-          (memo) => memo.deletionPending === true || (memo.retiredDialogueIds?.length ?? 0) > 0,
+          (memo) => isMemoryMemoDeletionPending(memo) || (memo.retiredDialogueIds?.length ?? 0) > 0,
         )
         .map((memo) =>
-          memo.deletionPending === true
+          isMemoryMemoDeletionPending(memo)
             ? deleteMemoryMemo({deleteDialogue, memoId: memo.id})
             : cleanup({deleteDialogue, memoId: memo.id}),
         ),

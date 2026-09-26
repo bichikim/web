@@ -119,6 +119,24 @@ it('should render and close the default modal content', async () => {
   await waitFor(() => expect(onOpenChange).toHaveBeenCalledWith(false))
 })
 
+it('should render header actions beside the close control', () => {
+  render(() => (
+    <PModal
+      headerActions={<button type="button">Header action</button>}
+      isOpen
+      onOpenChange={vi.fn()}
+      title="Modal title"
+    >
+      <p>Modal body</p>
+    </PModal>
+  ))
+
+  const header = screen.getByRole('heading', {name: 'Modal title'}).closest('header')
+  expect(header).not.toBeNull()
+  expect(header).toContainElement(screen.getByRole('button', {name: 'Header action'}))
+  expect(header).toContainElement(screen.getByRole('button', {name: m.common_close()}))
+})
+
 it('should render visually hidden navigation with compact close controls', () => {
   render(() => (
     <PModal
@@ -215,8 +233,8 @@ it('should apply custom open and close focus behavior', async () => {
 })
 
 it('should preserve the tabs context through navigation, portal, and reopening', async () => {
-  const readStyles = window.getComputedStyle.bind(window)
-  vi.spyOn(window, 'getComputedStyle').mockImplementation((element) => {
+  const readStyles = globalThis.getComputedStyle.bind(globalThis)
+  vi.spyOn(globalThis, 'getComputedStyle').mockImplementation((element) => {
     const styles = readStyles(element)
     Object.defineProperty(styles, 'animationName', {configurable: true, value: 'none'})
     return styles

@@ -1,74 +1,21 @@
-import {EditorTextInput} from '../../design-system'
-import {TextField} from '@kobalte/core/text-field'
-import {ToggleButton} from '@kobalte/core/toggle-button'
 import {clamp} from 'es-toolkit/math'
-import {createSignal, createUniqueId, type JSX, onCleanup, onMount, Show} from 'solid-js'
+import {createSignal, createUniqueId, type JSX, onCleanup} from 'solid-js'
+
+import {EditorParameterNames} from './EditorParameterNames'
 
 const DELETE_THRESHOLD = 64
-const DOUBLE_CLICK_INTERVAL = 400
 const MAXIMUM_OFFSET = 80
 const SWIPE_ACTIVATION_DISTANCE = 4
-
-interface ParameterNameEditorProps {
-  readonly name: string
-  readonly onCancel: () => void
-  readonly onCommit: (name: string) => void
-}
-
-const ParameterNameEditor = (props: ParameterNameEditorProps) => {
-  const [input, setInput] = createSignal<HTMLInputElement | undefined>()
-  const [name, setName] = createSignal<string>()
-  let finished = false
-  const commit = () => {
-    if (finished) {
-      return
-    }
-
-    finished = true
-    const nextName = (name() ?? props.name).trim()
-    props.onCommit(nextName.length > 0 ? nextName : props.name)
-  }
-  const cancel = () => {
-    finished = true
-    props.onCancel()
-  }
-
-  onMount(() => {
-    input()?.focus()
-    input()?.select()
-  })
-
-  return (
-    <TextField
-      class="parameter-item parameter-name-editor"
-      value={name() ?? props.name}
-      onChange={setName}
-    >
-      <EditorTextInput
-        ref={setInput}
-        aria-label="Parameter 이름"
-        onBlur={commit}
-        onKeyDown={(event) => {
-          if (event.key === 'Enter') {
-            event.preventDefault()
-            commit()
-          } else if (event.key === 'Escape') {
-            event.preventDefault()
-            cancel()
-          }
-        }}
-      />
-    </TextField>
-  )
-}
 
 export interface EditorParameterItemProps {
   readonly footer?: JSX.Element
   readonly children?: JSX.Element
+  readonly groupName?: string
   readonly name: string
   readonly onDelete?: () => void
   readonly onNameChange?: (name: string) => void
   readonly onNameEdit?: () => void
+  readonly onSecondaryNameChange?: (name: string) => void
   readonly onSelect?: () => void
   readonly pressed?: boolean
   readonly secondaryName?: string
@@ -101,10 +48,8 @@ const ParameterFooter = (props: ParameterFooterProps) => (
 export const EditorParameterItem = (props: EditorParameterItemProps) => {
   const descriptionId = createUniqueId()
   const [dragging, setDragging] = createSignal(false)
-  const [editing, setEditing] = createSignal(false)
   const [offset, setOffset] = createSignal(0)
   const clickState = {ignore: false}
-  let lastClickTime = Number.NEGATIVE_INFINITY
   let removeGestureListeners: (() => void) | undefined
   const finishGesture = (deleteWhenArmed: boolean, moved: boolean) => {
     const armed = offset() >= DELETE_THRESHOLD
@@ -139,39 +84,15 @@ export const EditorParameterItem = (props: EditorParameterItemProps) => {
     // The stored callback only removes native gesture listeners during completion or cleanup.
     // eslint-disable-next-line solid/reactivity
     removeGestureListeners = () => {
-      window.removeEventListener('pointercancel', handlePointerCancel)
-      window.removeEventListener('pointermove', handlePointerMove)
-      window.removeEventListener('pointerup', handlePointerUp)
+      globalThis.removeEventListener('pointercancel', handlePointerCancel)
+      globalThis.removeEventListener('pointermove', handlePointerMove)
+      globalThis.removeEventListener('pointerup', handlePointerUp)
       removeGestureListeners = undefined
     }
-    window.addEventListener('pointercancel', handlePointerCancel)
-    window.addEventListener('pointermove', handlePointerMove)
-    window.addEventListener('pointerup', handlePointerUp)
+    globalThis.addEventListener('pointercancel', handlePointerCancel)
+    globalThis.addEventListener('pointermove', handlePointerMove)
+    globalThis.addEventListener('pointerup', handlePointerUp)
   }
-  const startNameEdit = () => {
-    if (props.onNameChange === undefined) {
-      return
-    }
-    props.onNameEdit?.()
-    setOffset(0)
-    setEditing(true)
-  }
-  const handleClick = (event: MouseEvent) => {
-    if (clickState.ignore) {
-      event.preventDefault()
-      clickState.ignore = false
-      return
-    }
-    if (event.timeStamp - lastClickTime <= DOUBLE_CLICK_INTERVAL) {
-      event.preventDefault()
-      lastClickTime = Number.NEGATIVE_INFINITY
-      startNameEdit()
-      return
-    }
-    lastClickTime = event.timeStamp
-    props.onSelect?.()
-  }
-
   const handleKeyDown = (event: KeyboardEvent) => {
     if (event.key === 'Escape' && offset() > 0) {
       event.preventDefault()
@@ -191,6 +112,13 @@ export const EditorParameterItem = (props: EditorParameterItemProps) => {
 
     setOffset(MAXIMUM_OFFSET)
   }
+  const handleSelect = () => {
+    if (clickState.ignore) {
+      clickState.ignore = false
+      return
+    }
+    props.onSelect?.()
+  }
 
   onCleanup(() => removeGestureListeners?.())
 
@@ -205,47 +133,24 @@ export const EditorParameterItem = (props: EditorParameterItemProps) => {
         <span>{offset() >= DELETE_THRESHOLD ? '놓아 삭제' : '삭제'}</span>
       </div>
       <div class="parameter-item-surface">
-        <div class="parameter-item-main">
-          <Show
-            when={editing()}
-            fallback={
-              <ToggleButton
-                aria-describedby={descriptionId}
-                aria-keyshortcuts="Delete"
-                aria-label={props.name}
-                class="parameter-item"
-                pressed={props.pressed}
-                title="더블클릭하여 Parameter 이름 수정"
-                onClick={handleClick}
-                onDblClick={(event: MouseEvent) => {
-                  event.preventDefault()
-                  startNameEdit()
-                }}
-                onKeyDown={handleKeyDown}
-                onPointerDown={handlePointerDown}
-              >
-                <strong>{props.name}</strong>
-                <Show when={props.secondaryName}>{(name) => <strong>{name()}</strong>}</Show>
-                <span
-                  aria-hidden="true"
-                  class="puppet-icon puppet-icon-arrow-left parameter-swipe-hint"
-                />
-              </ToggleButton>
-            }
-          >
-            <ParameterNameEditor
-              name={props.name}
-              onCancel={() => setEditing(false)}
-              onCommit={(name) => {
-                props.onNameChange?.(name)
-                setEditing(false)
-              }}
-            />
-          </Show>
-          <Show when={!editing() && props.children !== undefined}>
-            <div class="parameter-item-details">{props.children}</div>
-          </Show>
-        </div>
+        <EditorParameterNames
+          descriptionId={descriptionId}
+          groupName={props.groupName}
+          name={props.name}
+          onKeyDown={handleKeyDown}
+          onNameChange={props.onNameChange}
+          onNameEdit={() => {
+            props.onNameEdit?.()
+            setOffset(0)
+          }}
+          onPointerDown={handlePointerDown}
+          onSecondaryNameChange={props.onSecondaryNameChange}
+          onSelect={handleSelect}
+          pressed={props.pressed}
+          secondaryName={props.secondaryName}
+        >
+          {props.children}
+        </EditorParameterNames>
         <ParameterFooter onPointerDown={handlePointerDown} clickState={clickState}>
           {props.footer}
         </ParameterFooter>

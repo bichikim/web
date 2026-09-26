@@ -1,5 +1,15 @@
 /// <reference lib="webworker" />
 
+import {createExclusiveAsyncTask} from 'src/utils/create-exclusive-async-task'
+import {
+  createDeviceTarget,
+  createGenerationFailure,
+  createRequestSequence,
+  type TextGenerationMessage,
+  type TextModelId,
+  trimRepetitiveTail,
+} from '../text-generation'
+
 // oxlint-disable no-await-in-loop -- Contaminated sentences share one WebGPU model and must be refined sequentially.
 
 import {getErrorMessage} from 'src/utils/get-error-message'
@@ -12,12 +22,7 @@ import {
   type KoreanTextSegment,
   replaceUnrefinedSentences,
 } from '../korean-text-postprocessor'
-import {
-  createTextGenerationExecutor,
-  type DeviceTextGenerationTarget,
-  type TextGenerationError,
-} from '../text-generation/execution'
-import {type TextGenerationMessage, type TextModelId, trimRepetitiveTail} from '../text-generation'
+import {createTextGenerationExecutor} from '../text-generation/execution'
 import {partitionChatHistory} from './context'
 import type {ChatContext, ChatMessage, ChatWorkerRequest, ChatWorkerResponse} from './messages'
 import {
@@ -31,28 +36,15 @@ import {
 const CONTEXT_COMPACTION_TOKENS = 4608
 const MAXIMUM_ANSWER_TOKENS = 256
 const MAXIMUM_SUMMARY_TOKENS = 384
-const workerScope = self as DedicatedWorkerGlobalScope
+const workerScope = globalThis.self as DedicatedWorkerGlobalScope
 
 const sendResponse = (response: ChatWorkerResponse) => workerScope.postMessage(response)
 const textExecutor = createTextGenerationExecutor({
   onProgress: (progress) => sendResponse({...progress, type: 'loading'}),
 })
+const generation = createExclusiveAsyncTask()
 let suppressedCjkTokenIds: Array<number> | null = null
-let nextRequestId = 0
-
-const createDeviceTarget = (modelId: TextModelId): DeviceTextGenerationTarget => ({
-  kind: 'device',
-  modelId,
-})
-
-const createGenerationFailure = (error: TextGenerationError, fallback: string) =>
-  new Error(error.detail ?? fallback)
-
-const createRequestId = () => {
-  const requestId = `chat-${nextRequestId}`
-  nextRequestId += 1
-  return requestId
-}
+const createRequestId = createRequestSequence('chat')
 
 const prepareModel = async (modelId: TextModelId) => {
   const result = await textExecutor.prepare(createDeviceTarget(modelId))
@@ -254,13 +246,20 @@ const generateAnswer = async (options: GenerateAnswerOptions) => {
     : generatedText
   const text = limitChatAnswer(refinedText)
   const message: ChatMessage = {content: text, id: options.replyId, role: 'assistant'}
+  const completedContext: ChatContext = {
+    messages: [...compacted.context.messages, message],
+    summary: compacted.context.summary,
+  }
+  // Keep a completed reply when its display-only token count cannot be refreshed.
+  const completedContextTokens = await countPromptTokens(
+    completedContext,
+    options.modelId,
+    options.supplementaryContext,
+  ).catch(() => contextTokens)
 
   sendResponse({
-    context: {
-      messages: [...compacted.context.messages, message],
-      summary: compacted.context.summary,
-    },
-    contextTokens,
+    context: completedContext,
+    contextTokens: completedContextTokens,
     message,
     type: 'complete',
     wasCompacted: compacted.wasCompacted,
@@ -270,7 +269,7 @@ const generateAnswer = async (options: GenerateAnswerOptions) => {
 const handleRequest = (request: ChatWorkerRequest): Promise<void> => {
   switch (request.type) {
     case 'generate':
-      return generateAnswer(request)
+      return generation.run(() => generateAnswer(request))
     case 'prepare':
       return prepareModel(request.modelId)
   }

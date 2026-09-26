@@ -99,14 +99,6 @@ const convertPart = (options: PartOptions): PuppetPart | undefined => {
   }
   return {
     id,
-    psdSource: {
-      layerId: layer.id,
-      path: options.path,
-      x: layer.left ?? 0,
-      y: layer.top ?? 0,
-      width: pixels.width,
-      height: pixels.height,
-    },
     mesh: {
       ...mesh.mesh,
       vertices: mesh.mesh.vertices.map(
@@ -119,10 +111,18 @@ const convertPart = (options: PartOptions): PuppetPart | undefined => {
       opacity: clippingBase?.length === 0 ? 0 : opacity * (layer.fillOpacity ?? 1),
       renderWhenUsedAsMask: true,
     },
+    psdSource: {
+      height: pixels.height,
+      layerId: layer.id,
+      path: options.path,
+      width: pixels.width,
+      x: layer.left ?? 0,
+      y: layer.top ?? 0,
+    },
     texture: {
       height: pixels.height,
-      width: pixels.width,
       src: canvas.toDataURL('image/png'),
+      width: pixels.width,
     },
   }
 }
@@ -169,10 +169,10 @@ const convertLayers = (
     warnLayer(layer, context.warnings)
     if (layer.children === undefined) {
       const part = convertPart({
+        clippingBase: appliedMask,
         context,
         id,
         layer,
-        clippingBase: appliedMask,
         masks,
         opacity,
         path: [...(parent.path ?? []), name],
@@ -192,10 +192,10 @@ const convertLayers = (
         context.warnings.add('그룹 합성은 파츠별 불투명도로 근사합니다.')
       }
       const children = convertLayers(layer.children, context, {
-        path: [...(parent.path ?? []), name],
         clippingBase: appliedMask,
         masks,
         opacity,
+        path: [...(parent.path ?? []), name],
       })
       nodes.push({
         ...base,
@@ -224,9 +224,9 @@ export const createPsdDocument = (psd: Psd): ImportPsdResult => {
       format: PUPPET_DOCUMENT_FORMAT,
       motions: [],
       parts: context.parts,
-      version: PUPPET_DOCUMENT_VERSION,
       scene: {roots},
-      viewport: {width: psd.width, height: psd.height},
+      version: PUPPET_DOCUMENT_VERSION,
+      viewport: {height: psd.height, width: psd.width},
     },
     ok: true,
     warnings: [...context.warnings],

@@ -13,7 +13,7 @@
     "storybook:build": "storybook build",
     "storybook:build:coong": "storybook build --config-dir apps/coong/.storybook --output-dir dist/storybook/coong",
     "storybook:build:pomo": "storybook build --config-dir apps/pomo/.storybook --output-dir dist/storybook/pomo",
-    "typecheck": "turbo typecheck",
+    "typecheck": "turbo typecheck --cache-dir=.turbo/cache",
     "chromatic": "pnpm dlx chromatic --project-token=chpt_b4b4c6198bbdeda",
     "clean": "pnpm dlx rimraf --glob node_modules apps/*/node_modules packages/*/node_modules",
     "storybook:dev": "storybook dev -p 6006",
@@ -34,8 +34,8 @@
     "test:storybook:ui": "vitest --ui --watch --project='storybook*'",
     "test:storybook:watch": "vitest --project='storybook*'",
     "test:ui": "vitest --ui --watch",
-    "test:vitest": "vitest run --project=unit --reporter=dot",
-    "test:vitest:watch": "vitest watch --project=unit"
+    "test:vitest": "NODE_OPTIONS=--no-experimental-webstorage vitest run --project=unit --project=integration-runtime --reporter=default",
+    "test:vitest:watch": "NODE_OPTIONS=--no-experimental-webstorage vitest watch --project=unit"
   },
   "devDependencies": {
     "@chromatic-com/storybook": "4.1.2",
@@ -54,10 +54,10 @@
     "@types/node": "catalog:",
     "@typescript/typescript6": "catalog:",
     "@unocss/vite": "catalog:",
-    "@vitest/browser": "4.1.10",
-    "@vitest/browser-playwright": "4.1.10",
-    "@vitest/coverage-v8": "4.1.10",
-    "@vitest/ui": "4.1.10",
+    "@vitest/browser": "4.1.11",
+    "@vitest/browser-playwright": "4.1.11",
+    "@vitest/coverage-v8": "4.1.11",
+    "@vitest/ui": "4.1.11",
     "@winter-love/oxlint-plugins": "workspace:*",
     "@winter-love/solid-test": "workspace:*",
     "@winter-love/unocss-config": "workspace:*",
@@ -91,7 +91,7 @@
     "vite-plugin-dts": "^5.0.3",
     "vite-plugin-solid": "^2.11.12",
     "vite-plugin-static-copy": "^3.4.0",
-    "vitest": "4.1.10",
+    "vitest": "4.1.11",
     "wrangler": "^4.125.0"
   },
   "browserslist": [

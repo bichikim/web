@@ -6,13 +6,8 @@ disable-model-invocation: true
 
 # Critical Review Fix Loop
 
-## Ownership
-
-- The `critical-review` subagents only inspect, verify, and propose fixes. They never modify files or resolve findings.
-- The parent model that invoked this skill is the sole owner of authorization, fixes, integration, and verification. Keep its selected model and reasoning setting for the resolution phase.
-
 1. Use the user's target, otherwise the current task's diff; ask once if neither is reliable.
-2. Read `$critical-review`, record a full P0–P4 review, then have the parent model fix every authorized P0–P2 while preserving unrelated changes and verify each fix.
+2. Read `$critical-review`, record a full P0–P4 review, then fix every authorized P0–P2 while preserving unrelated changes and verify each fix.
 3. Re-run a fresh full review over the relevance cone until no P0–P2 remains and relevant unit tests, `typecheck`, lint, and formatting pass. Lint or build cannot replace tests or `typecheck`.
 4. Diagnose the root cause before retrying a surviving finding; never omit or downgrade one to finish.
 5. Keep P3/P4 evidence and fixes. After correctness closure, group structural P3s into an unimplemented refactor proposal requiring user authorization.
@@ -20,3 +15,5 @@ disable-model-invocation: true
 Mark absent applicable test or `typecheck` scripts as not applicable with a reason. Stop as blocked when a required check cannot run or a fix needs product direction, new authority, destructive action, or external change.
 
 Follow `$critical-review`'s output order. Summarize P0–P2 findings discovered across all passes, fixed, and remaining; retain each fixed finding's cause and before/after verification. Report pass count, exact test and `typecheck` commands/results, other checks, and final status (`no remaining P0/P1/P2 findings` or `blocked`). Then report verification gaps and remaining P3/P4 proposals. Give each remaining P3/P4 one unique number in a single consecutive list across severities so the user can authorize by number; write `none` when empty.
+
+Explicitly state whether this workflow updated an existing PR. If it did, say so clearly and identify the PR; if it did not, state that no PR was updated. Never describe a merged PR as updated; if subsequent changes require a new PR, identify the new PR and state that the previous PR was already merged.

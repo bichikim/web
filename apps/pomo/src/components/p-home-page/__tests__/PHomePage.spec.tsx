@@ -25,3 +25,15 @@ it.each([false, true])('should render the home studio for Toss=%s', async (isApp
   const main = screen.getByRole('main')
   expect(main.className.includes('radial-gradient')).toBe(!isAppsInToss)
 })
+
+it('should keep the desktop app canvas transparent for native website backgrounds', async () => {
+  vi.stubEnv('VITE_POMO_IS_DESKTOP', 'true')
+  vi.stubEnv('VITE_POMO_IS_APPS_IN_TOSS', '')
+  const {PHomePage} = await import('../PHomePage')
+
+  render(() => <PHomePage />)
+
+  const main = screen.getByRole('main')
+  expect(main).toHaveClass('bg-transparent', 'pomo-desktop-background')
+  expect(main.className.includes('radial-gradient')).toBe(false)
+})

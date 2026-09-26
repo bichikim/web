@@ -1,12 +1,19 @@
+/* eslint-disable max-lines -- Rendering and playback lifecycle share one player boundary. */
+
 import {composeParameterGlue} from '../deformation/parameter-glue'
 import {
-  AlphaMask,
   Application,
   type ColorMatrix,
   ColorMatrixFilter,
   Container,
+  MaskFilter,
+  Matrix,
   MeshSimple,
+  type Renderer,
+  RenderTexture,
+  Sprite,
   Texture,
+  UPDATE_PRIORITY,
 } from 'pixi.js'
 
 import {
@@ -16,27 +23,44 @@ import {
   type ResolvedPartRenderProperties,
 } from '../deformation'
 import type {PuppetDocument, PuppetMotion} from './document'
+import type {PendulumState} from './physics'
 import {
   assertPreparedPuppetDocument,
   type PreparedPuppetDocument,
 } from './internal/prepared-document'
 import {applyMotionVertices, sampleMotionParameterValues} from './internal/motion'
+import {createPhysicsState, evaluatePhysics} from './internal/physics'
 import {
   canReusePartResources,
+  getPartRenderFrame,
   getPartRenderPlans,
   type PartMaskRenderPlan,
   type PartRenderPlan,
 } from './internal/render-plan'
 import {applySceneDeformers} from './internal/scene-deformation'
+import {layoutPlayerRoot} from './internal/layout-player-root'
+import type {SpatialPartPose} from './internal/spatial-part'
 
 export interface Player {
   destroy(): void
   pause(): void
-  play(): void
+  play(options?: PlayerPlaybackOptions): void
+  playMotion(motionId: string, options?: PlayerPlaybackOptions): boolean
+  redraw(): void
   resize(): void
+  /** Removes inertia at the current input pose without changing timeline time. */
+  resetPhysics(): void
   seek(time: number): void
+  setMotion(motionId: string): boolean
   setParameterValues(values: PuppetParameterValueMap): void
+  /** Enables inertia; when disabled, physics outputs follow their static input equilibrium. */
+  setPhysicsPreview(enabled: boolean): void
   updateDocument(document: PreparedPuppetDocument): boolean
+}
+
+export interface PlayerPlaybackOptions {
+  readonly loop?: boolean
+  readonly onComplete?: () => void
 }
 
 export interface PlayerFrame {
@@ -49,8 +73,11 @@ export interface CreatePlayerOptions {
   readonly canvas: HTMLCanvasElement
   readonly document: PreparedPuppetDocument
   readonly motionId?: string
+  readonly onAfterRender?: () => void
+  readonly onBeforeRender?: () => void
   readonly onFrame?: (frame: PlayerFrame) => void
   readonly parameterValues?: PuppetParameterValueMap
+  readonly physicsPreview?: boolean
   readonly resolution?: number
   readonly resizeTo?: HTMLElement
   readonly viewportPadding?: number
@@ -73,17 +100,10 @@ interface RuntimePartMaskMesh {
 
 interface RuntimePartMask {
   readonly container: Container
-  readonly effect?: AlphaMask
+  readonly filter: MaskFilter
   readonly meshes: ReadonlyArray<RuntimePartMaskMesh>
-}
-
-const updateMeshMask = (mesh: MeshSimple, mask: RuntimePartMask, inverse: boolean) => {
-  if (mask.effect !== undefined) {
-    mask.effect.inverse = inverse
-    return
-  }
-
-  mesh.setMask({channel: 'alpha', inverse, mask: mask.container})
+  readonly sprite: Sprite
+  readonly texture: RenderTexture
 }
 
 interface ApplyFrameVerticesOptions {
@@ -92,6 +112,7 @@ interface ApplyFrameVerticesOptions {
   readonly parameterValues: PuppetParameterValueMap | undefined
   readonly partId: string
   readonly runtimePart: RuntimePart
+  readonly spatialPose?: SpatialPartPose
   readonly time: number
 }
 
@@ -110,6 +131,12 @@ const applyFrameVertices = (options: ApplyFrameVerticesOptions) => {
     time: options.time,
     vertices: options.runtimePart.vertices,
   })
+  if (options.spatialPose !== undefined) {
+    for (let index = 0; index < options.spatialPose.vertices.length; index += 1) {
+      options.runtimePart.vertices[index] +=
+        options.spatialPose.vertices[index]! - options.runtimePart.restVertices[index]!
+    }
+  }
 }
 
 const applyDocumentScene = (
@@ -124,8 +151,8 @@ const applyDocumentScene = (
       runtimePart.mesh.visible = plan.visible
       if (plan.render) {
         if (runtimePart.mask !== undefined) {
-          root.addChild(runtimePart.mask.container)
-          updateMeshMask(runtimePart.mesh, runtimePart.mask, plan.properties.invertedMask)
+          root.addChild(runtimePart.mask.sprite)
+          runtimePart.mask.filter.inverse = plan.properties.invertedMask
         }
         root.addChild(runtimePart.mesh)
       }
@@ -172,19 +199,29 @@ const applyPartRenderProperties = (
   const hasColorEffect =
     !colorsEqual(properties.multiplyColor, [1, 1, 1]) ||
     !colorsEqual(properties.screenColor, [0, 0, 0])
-  if (!hasColorEffect) {
-    runtimePart.mesh.filters = null
-    return
+  const filters: Array<ColorMatrixFilter | MaskFilter> = []
+  if (hasColorEffect) {
+    const colorFilter = runtimePart.colorFilter ?? new ColorMatrixFilter()
+    runtimePart.colorFilter = colorFilter
+    colorFilter.matrix = createColorMatrix(properties.multiplyColor, properties.screenColor)
+    colorFilter.blendMode = 'normal'
+    filters.push(colorFilter)
   }
-
-  const colorFilter = runtimePart.colorFilter ?? new ColorMatrixFilter()
-  runtimePart.colorFilter = colorFilter
-  colorFilter.matrix = createColorMatrix(properties.multiplyColor, properties.screenColor)
-  runtimePart.mesh.filters = [colorFilter]
+  if (runtimePart.mask !== undefined) {
+    filters.push(runtimePart.mask.filter)
+  }
+  const composite = filters.at(-1)
+  if (composite !== undefined) {
+    // Blend the completed layer against the scene, never its transparent intermediate.
+    runtimePart.mesh.blendMode = 'normal'
+    composite.blendMode = properties.blendMode
+  }
+  runtimePart.mesh.filters = filters.length > 0 ? filters : null
 }
 
 const MILLISECONDS_PER_SECOND = 1000
-const VIEWPORT_PADDING = 1
+const MINIMUM_MASK_RESOLUTION = 0.01
+const MASK_TEXTURE_BLOCK_SIZE = 64
 const APPLICATION_DESTROY_OPTIONS = {
   children: true,
   context: false,
@@ -200,9 +237,12 @@ const createPlayerFrame = (motion: PuppetMotion | undefined, time: number): Play
 
 const getSeekTime = (motion: PuppetMotion | undefined, time: number) => {
   const clampedTime = Math.max(0, time)
-  return motion === undefined || clampedTime <= motion.duration
-    ? clampedTime
-    : clampedTime % motion.duration
+
+  if (motion === undefined || motion.duration <= 0) {
+    return clampedTime
+  }
+
+  return clampedTime <= motion.duration ? clampedTime : clampedTime % motion.duration
 }
 
 const loadTexture = async (source: string) => {
@@ -252,21 +292,73 @@ const createRuntimePartMask = (options: CreateRuntimePartMaskOptions): RuntimePa
           })
 
     if (mask !== undefined) {
-      container.addChild(mask.container)
-      if (mask.effect === undefined) {
-        updateMeshMask(mesh, mask, sourcePlan.invertedMask)
-      } else {
-        mask.effect.inverse = sourcePlan.invertedMask
-        mesh.addEffect(mask.effect)
-      }
+      container.addChild(mask.sprite)
+      mask.filter.inverse = sourcePlan.invertedMask
+      mesh.filters = [mask.filter]
     }
     container.addChild(mesh)
     return [{mask, mesh, sourcePartId: sourcePlan.partId}]
   })
 
-  const effect = new AlphaMask({mask: container})
-  effect.channel = 'alpha'
-  return {container, effect, meshes}
+  const texture = RenderTexture.create({antialias: true, dynamic: true, height: 1, width: 1})
+  const sprite = new Sprite(texture)
+  sprite.renderable = false
+  const filter = new MaskFilter({channel: 'alpha', sprite})
+  return {container, filter, meshes, sprite, texture}
+}
+
+const renderRuntimeMask = (
+  mask: RuntimePartMask,
+  renderer: Renderer,
+  resolution: number,
+  vertices: MeshSimple['vertices'],
+) => {
+  for (const source of mask.meshes) {
+    if (source.mask !== undefined) {
+      renderRuntimeMask(source.mask, renderer, resolution, source.mesh.vertices)
+    }
+  }
+  // Only the receiving mesh can display this mask; retain capacity while its bounds animate.
+  const horizontal = vertices.filter((_, index) => index % 2 === 0)
+  const vertical = vertices.filter((_, index) => index % 2 === 1)
+  const left = Math.floor(horizontal.length > 0 ? Math.min(...horizontal) : 0)
+  const top = Math.floor(vertical.length > 0 ? Math.min(...vertical) : 0)
+  const width = Math.max(
+    mask.texture.width,
+    Math.ceil((Math.max(left + 1, ...horizontal) - left) / MASK_TEXTURE_BLOCK_SIZE) *
+      MASK_TEXTURE_BLOCK_SIZE,
+  )
+  const height = Math.max(
+    mask.texture.height,
+    Math.ceil((Math.max(top + 1, ...vertical) - top) / MASK_TEXTURE_BLOCK_SIZE) *
+      MASK_TEXTURE_BLOCK_SIZE,
+  )
+  if (
+    mask.texture.width !== width ||
+    mask.texture.height !== height ||
+    mask.texture.source.resolution !== resolution
+  ) {
+    mask.texture.resize(width, height, resolution)
+  }
+  mask.sprite.position.set(left, top)
+  renderer.render({
+    clear: true,
+    container: mask.container,
+    target: mask.texture,
+    transform: new Matrix().translate(-left, -top),
+  })
+}
+
+const destroyRuntimeMask = (mask: RuntimePartMask) => {
+  for (const source of mask.meshes) {
+    if (source.mask !== undefined) {
+      destroyRuntimeMask(source.mask)
+    }
+  }
+  mask.sprite.destroy()
+  mask.texture.destroy(true)
+  mask.filter.destroy()
+  mask.container.destroy({children: true})
 }
 
 const initializeRuntimeParts = async (options: InitializeRuntimePartsOptions) => {
@@ -320,11 +412,7 @@ const initializeRuntimeParts = async (options: InitializeRuntimePartsOptions) =>
             plan: plan.mask,
           })
     if (runtimePart.mask !== undefined) {
-      if (runtimePart.mask.effect === undefined) {
-        updateMeshMask(runtimePart.mesh, runtimePart.mask, plan?.properties.invertedMask ?? false)
-      } else {
-        runtimePart.mesh.addEffect(runtimePart.mask.effect)
-      }
+      runtimePart.mask.filter.inverse = plan?.properties.invertedMask ?? false
     }
   }
 
@@ -345,11 +433,8 @@ const updateRuntimeMask = (options: UpdateRuntimeMaskOptions) => {
     }
     if (maskMesh.mask !== undefined) {
       updateRuntimeMask({...options, mask: maskMesh.mask})
-      updateMeshMask(
-        maskMesh.mesh,
-        maskMesh.mask,
-        options.planById.get(maskMesh.sourcePartId)?.properties.invertedMask ?? false,
-      )
+      maskMesh.mask.filter.inverse =
+        options.planById.get(maskMesh.sourcePartId)?.properties.invertedMask ?? false
     }
   }
 }
@@ -359,31 +444,94 @@ const getMotion = (document: PuppetDocument, motionId: string | undefined) =>
     ? document.motions[0]
     : document.motions.find((motion) => motion.id === motionId)
 
-interface LayoutPlayerRootOptions {
+interface ApplyRuntimeFrameOptions {
+  readonly activeMotion: PuppetMotion | undefined
+  readonly deltaTime: number
   readonly document: PuppetDocument
+  readonly layoutRoot: () => void
+  readonly parameterValues?: PuppetParameterValueMap
+  readonly partById: ReadonlyMap<string, RuntimePart>
+  readonly physicsState: ReadonlyMap<string, PendulumState>
+  readonly settlePhysics: boolean
   readonly root: Container
-  readonly screen: {
-    readonly height: number
-    readonly width: number
-  }
-  readonly viewportPadding?: number
+  readonly time: number
 }
 
-const layoutPlayerRoot = (options: LayoutPlayerRootOptions) => {
-  const viewportPadding = Math.max(0, options.viewportPadding ?? 0)
-  const viewportWidth = options.document.viewport.width * (1 + viewportPadding * 2)
-  const viewportHeight = options.document.viewport.height * (1 + viewportPadding * 2)
-  const scale =
-    Math.min(options.screen.width / viewportWidth, options.screen.height / viewportHeight) *
-    VIEWPORT_PADDING
-
-  options.root.scale.set(scale)
-  options.root.position.set(
-    (options.screen.width - options.document.viewport.width * scale) / 2,
-    (options.screen.height - options.document.viewport.height * scale) / 2,
+const applyRuntimeFrame = (
+  options: ApplyRuntimeFrameOptions,
+): ReadonlyMap<string, PendulumState> => {
+  const motionParameterValues = sampleMotionParameterValues({
+    motion: options.activeMotion,
+    parameters: options.document.parameters,
+    parameterValues: options.parameterValues,
+    time: options.time,
+  })
+  const physicsResult = evaluatePhysics({
+    deltaTime: options.deltaTime,
+    document: options.document,
+    parameterValues: motionParameterValues,
+    physicsState: options.physicsState,
+    settle: options.settlePhysics,
+  })
+  const frameParameterValues = physicsResult.parameterValues
+  const posedScene = composeParameterScene(options.document, frameParameterValues)
+  const {plans: renderPlans, spatialPoses} = getPartRenderFrame(
+    options.document,
+    frameParameterValues,
+    posedScene,
   )
+  const planById = new Map(renderPlans.map((plan) => [plan.partId, plan]))
+
+  for (const [partId, runtimePart] of options.partById) {
+    applyFrameVertices({
+      document: options.document,
+      motion: options.activeMotion,
+      parameterValues: frameParameterValues,
+      partId,
+      runtimePart,
+      spatialPose: spatialPoses.get(partId),
+      time: options.time,
+    })
+  }
+
+  applySceneDeformers({
+    document: {
+      ...options.document,
+      glue: composeParameterGlue({
+        document: options.document,
+        parameterValues: frameParameterValues,
+      }),
+      scene: posedScene,
+    },
+    verticesByPartId: new Map(
+      [...options.partById].map(([partId, runtimePart]) => [partId, runtimePart.vertices]),
+    ),
+  })
+
+  for (const runtimePart of options.partById.values()) {
+    runtimePart.mesh.vertices = runtimePart.vertices
+    const plan = planById.get(runtimePart.partId)
+    if (plan !== undefined) {
+      applyPartRenderProperties(plan.properties, runtimePart)
+    }
+  }
+
+  for (const runtimePart of options.partById.values()) {
+    if (runtimePart.mask !== undefined) {
+      updateRuntimeMask({
+        mask: runtimePart.mask,
+        partById: options.partById,
+        planById,
+      })
+    }
+  }
+
+  applyDocumentScene(renderPlans, options.partById, options.root)
+  options.layoutRoot()
+  return physicsResult.physicsState
 }
 
+// eslint-disable-next-line max-lines-per-function
 export const createPlayer = async (options: CreatePlayerOptions): Promise<Player> => {
   assertPreparedPuppetDocument(options.document)
 
@@ -396,6 +544,7 @@ export const createPlayer = async (options: CreatePlayerOptions): Promise<Player
     backgroundAlpha: 0,
     canvas: options.canvas,
     height: options.document.viewport.height,
+    ...(options.onAfterRender === undefined ? {} : {preference: 'webgl' as const}),
     resolution: options.resolution ?? Math.min(window.devicePixelRatio, 2),
     width: options.document.viewport.width,
     ...(resizeTarget === null ? {} : {resizeTo: resizeTarget}),
@@ -406,7 +555,12 @@ export const createPlayer = async (options: CreatePlayerOptions): Promise<Player
   let {document} = options
   let motion = getMotion(document, options.motionId)
   let {parameterValues} = options
+  let physicsState = createPhysicsState(document)
+  let physicsPreview = options.physicsPreview ?? true
+  let isPlaying = true
   let elapsedTime = 0
+  let isLooping = true
+  let onMotionComplete: (() => void) | undefined
   let destroyed = false
 
   const destroy = () => {
@@ -415,6 +569,12 @@ export const createPlayer = async (options: CreatePlayerOptions): Promise<Player
     }
 
     destroyed = true
+    for (const part of partById.values()) {
+      if (part.mask !== undefined) {
+        destroyRuntimeMask(part.mask)
+      }
+      part.colorFilter?.destroy()
+    }
     application.destroy({removeView: false}, APPLICATION_DESTROY_OPTIONS)
   }
 
@@ -435,70 +595,101 @@ export const createPlayer = async (options: CreatePlayerOptions): Promise<Player
     })
   }
 
-  const applyFrame = (activeMotion: PuppetMotion | undefined, time: number) => {
-    const frameParameterValues = sampleMotionParameterValues({
-      motion: activeMotion,
+  const applyFrame = (
+    activeMotion: PuppetMotion | undefined,
+    time: number,
+    deltaTime = 0,
+    settlePhysics = !physicsPreview,
+  ) => {
+    physicsState = applyRuntimeFrame({
+      activeMotion,
+      deltaTime,
+      document,
+      layoutRoot,
       parameterValues,
+      partById,
+      physicsState,
+      root,
+      settlePhysics,
       time,
     })
-    const renderPlans = getPartRenderPlans(document, frameParameterValues)
-    const planById = new Map(renderPlans.map((plan) => [plan.partId, plan]))
-
-    for (const [partId, runtimePart] of partById) {
-      applyFrameVertices({
-        document,
-        motion: activeMotion,
-        parameterValues: frameParameterValues,
-        partId,
-        runtimePart,
-        time,
-      })
-    }
-
-    applySceneDeformers({
-      document: {
-        ...document,
-        glue: composeParameterGlue({document, parameterValues: frameParameterValues}),
-        scene: composeParameterScene(document, frameParameterValues),
-      },
-      verticesByPartId: new Map(
-        [...partById].map(([partId, runtimePart]) => [partId, runtimePart.vertices]),
-      ),
-    })
-
-    for (const runtimePart of partById.values()) {
-      runtimePart.mesh.vertices = runtimePart.vertices
-      const plan = planById.get(runtimePart.partId)
-      if (plan !== undefined) {
-        applyPartRenderProperties(plan.properties, runtimePart)
+    let maskStateReset = false
+    for (const part of partById.values()) {
+      if (part.mask !== undefined && part.mesh.visible) {
+        if (!maskStateReset && options.onAfterRender !== undefined) {
+          // External drawing may have changed the shared WebGL state before this mask pass.
+          application.renderer.resetState()
+          maskStateReset = true
+        }
+        const resolution = Math.max(
+          MINIMUM_MASK_RESOLUTION,
+          application.renderer.resolution * root.scale.x,
+        )
+        renderRuntimeMask(part.mask, application.renderer, resolution, part.vertices)
       }
     }
-
-    for (const runtimePart of partById.values()) {
-      if (runtimePart.mask !== undefined) {
-        updateRuntimeMask({
-          mask: runtimePart.mask,
-          partById,
-          planById,
-        })
-      }
-    }
-
-    applyDocumentScene(renderPlans, partById, root)
-    layoutRoot()
+    // A frame listener can redraw synchronously, so publish after the masks are current.
     options.onFrame?.(createPlayerFrame(activeMotion, time))
   }
 
+  const syncTicker = () => {
+    if (isPlaying || (physicsPreview && (document.physics?.pendulums.length ?? 0) > 0)) {
+      application.start()
+    } else {
+      application.stop()
+    }
+  }
+
+  const finishRender = () => {
+    options.onAfterRender?.()
+    application.renderer.resetState()
+  }
+
+  const redraw = () => {
+    if (options.onAfterRender !== undefined) {
+      options.onBeforeRender?.()
+      application.renderer.resetState()
+    }
+    application.render()
+    if (options.onAfterRender !== undefined) {
+      finishRender()
+    }
+  }
+
+  if (options.onAfterRender !== undefined) {
+    application.ticker.add(
+      () => {
+        options.onBeforeRender?.()
+        application.renderer.resetState()
+      },
+      undefined,
+      UPDATE_PRIORITY.LOW + 1,
+    )
+    application.ticker.add(finishRender, undefined, UPDATE_PRIORITY.LOW - 1)
+  }
+
   application.ticker.add((ticker) => {
-    if (motion !== undefined) {
-      elapsedTime = (elapsedTime + ticker.deltaMS / MILLISECONDS_PER_SECOND) % motion.duration
+    let completed = false
+
+    if (isPlaying && motion !== undefined && motion.duration > 0) {
+      const nextTime = elapsedTime + ticker.deltaMS / MILLISECONDS_PER_SECOND
+      completed = !isLooping && nextTime >= motion.duration
+      elapsedTime = isLooping ? nextTime % motion.duration : Math.min(nextTime, motion.duration)
     }
 
-    applyFrame(motion, elapsedTime)
+    applyFrame(motion, elapsedTime, ticker.deltaMS / MILLISECONDS_PER_SECOND)
+
+    if (completed) {
+      isPlaying = false
+      syncTicker()
+      const complete = onMotionComplete
+      onMotionComplete = undefined
+      complete?.()
+    }
   })
 
   applyFrame(motion, elapsedTime)
-  application.render()
+  redraw()
 
   const updateDocument = (nextDocument: PreparedPuppetDocument) => {
     assertPreparedPuppetDocument(nextDocument)
@@ -509,8 +700,15 @@ export const createPlayer = async (options: CreatePlayerOptions): Promise<Player
       return false
     }
 
+    const physicsChanged = document.physics !== nextDocument.physics
     document = nextDocument
-    motion = getMotion(document, options.motionId)
+    motion = getMotion(document, motion?.id ?? options.motionId) ?? document.motions[0]
+    isLooping = true
+    onMotionComplete = undefined
+    if (physicsChanged) {
+      physicsState = createPhysicsState(document)
+      syncTicker()
+    }
 
     for (const part of document.parts) {
       const runtimePart = partById.get(part.id)
@@ -526,33 +724,97 @@ export const createPlayer = async (options: CreatePlayerOptions): Promise<Player
 
     elapsedTime = getSeekTime(motion, elapsedTime)
     applyFrame(motion, elapsedTime)
-    application.render()
+    redraw()
 
+    return true
+  }
+
+  const setMotion = (motionId: string) => {
+    const nextMotion = getMotion(document, motionId)
+
+    if (nextMotion === undefined) {
+      return false
+    }
+
+    if (motion?.id === nextMotion.id) {
+      return true
+    }
+
+    motion = nextMotion
+    elapsedTime = 0
+    isLooping = true
+    onMotionComplete = undefined
+    applyFrame(motion, elapsedTime)
+    redraw()
+    return true
+  }
+
+  const playMotion = (motionId: string, playbackOptions: PlayerPlaybackOptions = {}) => {
+    const nextMotion = getMotion(document, motionId)
+
+    if (nextMotion === undefined) {
+      return false
+    }
+
+    if (motion?.id === nextMotion.id) {
+      elapsedTime = 0
+      applyFrame(motion, elapsedTime)
+      redraw()
+    } else {
+      setMotion(motionId)
+    }
+
+    isLooping = playbackOptions.loop ?? true
+    isPlaying = true
+    onMotionComplete = playbackOptions.onComplete
+    application.start()
     return true
   }
 
   return {
     destroy,
     pause() {
-      application.stop()
+      isPlaying = false
+      syncTicker()
+      isLooping = true
+      onMotionComplete = undefined
     },
-    play() {
+    play(playbackOptions) {
+      isPlaying = true
+      isLooping = playbackOptions?.loop ?? true
+      onMotionComplete = playbackOptions?.onComplete
       application.start()
+    },
+    playMotion,
+    redraw,
+    resetPhysics() {
+      applyFrame(motion, elapsedTime, 0, true)
+      redraw()
     },
     resize() {
       application.resize()
       layoutRoot()
-      application.render()
+      redraw()
     },
     seek(time: number) {
       elapsedTime = getSeekTime(motion, time)
       applyFrame(motion, elapsedTime)
-      application.render()
+      redraw()
     },
+    setMotion,
     setParameterValues(values) {
       parameterValues = values
       applyFrame(motion, elapsedTime)
-      application.render()
+      redraw()
+    },
+    setPhysicsPreview(enabled) {
+      if (physicsPreview === enabled) {
+        return
+      }
+      physicsPreview = enabled
+      applyFrame(motion, elapsedTime, 0, true)
+      redraw()
+      syncTicker()
     },
     updateDocument,
   }

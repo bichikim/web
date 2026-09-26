@@ -1,3 +1,4 @@
+import {cosineEaseInOut} from 'src/utils/cosine-ease-in-out'
 import {Container, type Texture, Ticker} from 'pixi.js'
 
 import {clampUnit} from 'src/utils/clamp-unit'
@@ -338,7 +339,7 @@ export class PixiLayerScene {
       return
     }
 
-    const travelProgress = Math.min(1, state.elapsedSeconds / state.travelSeconds)
+    const travelProgress = clampUnit(state.elapsedSeconds / state.travelSeconds)
     const transitionSeconds =
       motion.definition.kind === 'translation' || motion.definition.kind === 'opacity-pulse'
         ? motion.definition.transitionSeconds
@@ -349,7 +350,7 @@ export class PixiLayerScene {
       transitionSeconds === undefined
         ? travelProgress
         : clampUnit((state.elapsedSeconds - transitionStart) / transitionSeconds)
-    const easedProgress = (1 - Math.cos(activeProgress * Math.PI)) / 2
+    const easedProgress = cosineEaseInOut(activeProgress)
     const motionProgress = state.direction === 1 ? easedProgress : 1 - easedProgress
 
     if (motion.definition.kind === 'pivot-rotation') {
@@ -398,7 +399,7 @@ export class PixiLayerScene {
       return
     }
 
-    const progress = Math.min(1, state.elapsedSeconds / state.travelSeconds)
+    const progress = clampUnit(state.elapsedSeconds / state.travelSeconds)
     applyLoopingTranslation(layer.container, layer.sprite, motion.definition, progress)
 
     if (progress === 1) {

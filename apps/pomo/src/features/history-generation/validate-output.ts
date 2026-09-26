@@ -14,7 +14,8 @@ interface ValidateHistoryOutputOptions {
   readonly targetMonth: number
 }
 
-const normalizeTitle = (value: string): string =>
+/** Normalizes a history title for comparisons between generated and stored moments. */
+export const normalizeHistoryTitle = (value: string): string =>
   value.normalize('NFKC').trim().toLocaleLowerCase('ko-KR')
 
 const requireSelectedTitles = (
@@ -25,13 +26,17 @@ const requireSelectedTitles = (
     return
   }
 
-  const actualTitles = moments.map((moment) => normalizeTitle(moment.title)).sort()
-  const expectedTitles = requiredTitles.map(normalizeTitle).sort()
+  const hasRequiredTitleCount = moments.length === requiredTitles.length
+  const matchesRequiredTitleSlots = moments.every((moment, index) => {
+    const requiredTitle = requiredTitles[index]
 
-  if (
-    actualTitles.length !== expectedTitles.length ||
-    actualTitles.some((title, index) => title !== expectedTitles[index])
-  ) {
+    return (
+      requiredTitle !== undefined &&
+      normalizeHistoryTitle(moment.title) === normalizeHistoryTitle(requiredTitle)
+    )
+  })
+
+  if (!hasRequiredTitleCount || !matchesRequiredTitleSlots) {
     throw new TypeError('Generated moments do not match the required titles')
   }
 }
@@ -130,7 +135,7 @@ export const validateHistoryOutput = (
       throw new TypeError('A generated moment does not match the target month and day')
     }
 
-    const normalizedTitle = normalizeTitle(moment.title)
+    const normalizedTitle = normalizeHistoryTitle(moment.title)
     const momentKey = `${moment.historicalEra}:${moment.eventYear}:${normalizedTitle}`
 
     if (momentKeys.has(momentKey)) {

@@ -223,17 +223,20 @@ it('should omit the guide-button preference without a change callback', () => {
   expect(screen.queryByRole('button', {name: '투어 버튼 표시'})).not.toBeInTheDocument()
 })
 
-it('should show both toolbar toggles enabled by default and emit hidden choices', () => {
+it('should show toolbar toggles enabled by default and emit hidden choices', () => {
   const tools = vi.fn()
   const memory = vi.fn()
+  const featureRequest = vi.fn()
   render(() => (
     <PGeneralDisplaySettings
       wakeLock={useScreenWakeLock()}
+      onFeatureRequestVisibleChange={featureRequest}
       onToolsButtonVisibleChange={tools}
       onMemoryAssistVisibleChange={memory}
     />
   ))
   for (const [label, change] of [
+    ['기능 요청 표시', featureRequest],
     ['도구 표시', tools],
     ['기억보조 표시', memory],
   ] as const) {
@@ -241,6 +244,52 @@ it('should show both toolbar toggles enabled by default and emit hidden choices'
     expect(control).toHaveAttribute('aria-pressed', 'true')
     fireEvent.click(control)
     expect(change).toHaveBeenCalledWith(false)
+  }
+})
+
+it('should show the weather display switch in general settings and forward its change', () => {
+  const onWeatherEnabledChange = vi.fn()
+  render(() => (
+    <PGeneralDisplaySettings
+      wakeLock={useScreenWakeLock()}
+      onWeatherEnabledChange={onWeatherEnabledChange}
+      weatherEnabled={false}
+    />
+  ))
+
+  const weatherSwitch = screen.getByRole('button', {name: '날씨 표시'})
+  expect(weatherSwitch).toHaveAttribute('aria-pressed', 'false')
+  fireEvent.click(weatherSwitch)
+  expect(onWeatherEnabledChange).toHaveBeenCalledWith(true)
+})
+
+it('should describe every display switch', () => {
+  render(() => (
+    <PGeneralDisplaySettings
+      wakeLock={useScreenWakeLock()}
+      onDialogueComposerVisibleChange={vi.fn()}
+      onFeatureRequestVisibleChange={vi.fn()}
+      onMemoryAssistVisibleChange={vi.fn()}
+      onPlayerVisibleChange={vi.fn()}
+      onPomodoroVisibleChange={vi.fn()}
+      onToolsButtonVisibleChange={vi.fn()}
+      onTourButtonVisibleChange={vi.fn()}
+    />
+  ))
+
+  for (const [label, description] of [
+    ['대화 입력 버튼 표시', '집중 화면에 대화 입력 버튼을 표시해요.'],
+    ['기억보조 표시', '집중 화면에 기억보조 버튼을 표시해요.'],
+    ['기능 요청 표시', '집중 화면에 기능 요청 버튼을 표시해요.'],
+    ['플레이어 표시', '끄면 음악 재생이 중지돼요.'],
+    ['뽀모도로 표시', '표시를 끄면 타이머도 멈춰요.'],
+    ['도구 표시', '집중 화면에 도구 버튼을 표시해요.'],
+    ['투어 버튼 표시', '집중 화면에 기능을 둘러볼 수 있는 투어 버튼을 표시해요.'],
+  ] as const) {
+    expect(screen.getByRole('button', {name: label})).toHaveAttribute(
+      'data-description',
+      description,
+    )
   }
 })
 

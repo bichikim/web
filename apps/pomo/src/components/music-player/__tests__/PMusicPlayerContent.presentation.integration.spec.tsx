@@ -1,5 +1,6 @@
 /** @vitest-environment jsdom */
 
+import {PreferenceProvider} from 'src/hooks/use-preference'
 import {cleanup, fireEvent, render, screen} from '@solidjs/testing-library'
 import {createSignal} from 'solid-js'
 import {afterEach, describe, expect, it, vi} from 'vitest'
@@ -19,13 +20,16 @@ describe('PMusicPlayerContent presentation integration', () => {
     const [expanded, setExpanded] = createSignal(false)
     const handleExpandedChange = vi.fn((nextExpanded: boolean) => setExpanded(nextExpanded))
 
-    render(() => (
-      <PMusicPlayerContent
-        expanded={expanded()}
-        onExpandedChange={handleExpandedChange}
-        tracks={TRACKS}
-      />
-    ))
+    render(
+      () => (
+        <PMusicPlayerContent
+          expanded={expanded()}
+          onExpandedChange={handleExpandedChange}
+          tracks={TRACKS}
+        />
+      ),
+      {wrapper: PreferenceProvider},
+    )
     fireEvent.click(screen.getByRole('button', {name: '플레이어 펼치기'}))
 
     expect(handleExpandedChange).toHaveBeenCalledWith(true)
@@ -33,7 +37,9 @@ describe('PMusicPlayerContent presentation integration', () => {
   })
 
   it('should render expanded and compact play controls when expanded', () => {
-    const result = render(() => <PMusicPlayerContent tracks={TRACKS} />)
+    const result = render(() => <PMusicPlayerContent tracks={TRACKS} />, {
+      wrapper: PreferenceProvider,
+    })
 
     fireEvent.click(screen.getByRole('button', {name: '플레이어 펼치기'}))
 
@@ -53,13 +59,17 @@ describe('PMusicPlayerContent presentation integration', () => {
   })
 
   it('should keep the native desktop presentation free of backdrop blur', () => {
-    const result = render(() => <PMusicPlayerContent backdropBlur={false} tracks={TRACKS} />)
+    const result = render(() => <PMusicPlayerContent backdropBlur={false} tracks={TRACKS} />, {
+      wrapper: PreferenceProvider,
+    })
 
     expect(result.getByTestId('player-background')).not.toHaveClass('backdrop-blur-surface')
   })
 
   it('should replace the summary play button without a collapse animation when expanded', () => {
-    const result = render(() => <PMusicPlayerContent tracks={TRACKS} />)
+    const result = render(() => <PMusicPlayerContent tracks={TRACKS} />, {
+      wrapper: PreferenceProvider,
+    })
     const summary = result.container.querySelector('[data-player-summary]')
     const summaryPlayFrame = summary?.querySelector('[data-player-play-summary-frame]')
 

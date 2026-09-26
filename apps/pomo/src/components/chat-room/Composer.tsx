@@ -2,7 +2,10 @@ import {PTextarea} from 'src/components/p-textarea/PTextarea'
 import {cx} from 'class-variance-authority'
 import {Show} from 'solid-js'
 import {type ChatController} from '../../features/chat/index'
-import {type SpeechToTextController} from '../../features/speech-to-text/index'
+import {
+  isSpeechBusyActivity,
+  type SpeechToTextController,
+} from '../../features/speech-to-text/index'
 import {BUTTON_CLASSES, MAXIMUM_DRAFT_LENGTH} from './shared'
 
 interface ChatComposerProps {
@@ -15,11 +18,9 @@ interface ChatComposerProps {
 }
 
 export const ChatComposer = (props: ChatComposerProps) => {
-  const isSpeechBusy = () => {
-    const activity = props.speech.activity()
-    return activity === 'checking' || activity === 'processing' || activity === 'requesting'
-  }
+  const isSpeechBusy = () => isSpeechBusyActivity(props.speech.activity())
   const isRecording = () => props.speech.activity() === 'recording'
+  const isSendDisabled = () => !isRecording() && (!props.chat.canSend() || isSpeechBusy())
   const microphoneLabel = () => {
     if (isRecording()) {
       return '마이크 끄기'
@@ -38,7 +39,10 @@ export const ChatComposer = (props: ChatComposerProps) => {
   const handleDraftKeyDown = (event: KeyboardEvent & {currentTarget: HTMLTextAreaElement}) => {
     if (event.key === 'Enter' && !event.shiftKey && !event.isComposing) {
       event.preventDefault()
-      props.onSend()
+
+      if (!isSendDisabled()) {
+        props.onSend()
+      }
     }
   }
 
@@ -100,7 +104,7 @@ export const ChatComposer = (props: ChatComposerProps) => {
           </button>
           <button
             class={cx(BUTTON_CLASSES, 'bg-#9ed6bb text-#14251d hover:bg-#b8e8d0')}
-            disabled={!isRecording() && (!props.chat.canSend() || isSpeechBusy())}
+            disabled={isSendDisabled()}
             type="submit"
           >
             {sendButtonLabel()}

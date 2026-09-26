@@ -1,3 +1,4 @@
+import {clamp} from 'es-toolkit/math'
 import {revalidate} from '@solidjs/router'
 import {type Accessor, createEffect, onCleanup} from 'solid-js'
 
@@ -10,6 +11,8 @@ interface QueryRevalidationAtTime {
   readonly kind: 'at-time'
   readonly timestamp: number
 }
+
+const MAXIMUM_TIMEOUT_DELAY_MILLISECONDS = 2_147_483_647
 
 export type QueryRevalidationSchedule = QueryRevalidationAfterDelay | QueryRevalidationAtTime | null
 
@@ -43,9 +46,36 @@ export const createQueryRevalidationScheduler = (
       return
     }
 
-    const timer = setTimeout(() => {
+    const delay = getScheduleDelay(schedule)
+    const revalidateQuery = (): void => {
       revalidate(key).catch(() => undefined)
-    }, getScheduleDelay(schedule))
+    }
+
+    if (delay <= MAXIMUM_TIMEOUT_DELAY_MILLISECONDS) {
+      const timer = setTimeout(revalidateQuery, delay)
+      onCleanup(() => clearTimeout(timer))
+      return
+    }
+
+    const deadline = Date.now() + delay
+    let timer: ReturnType<typeof setTimeout>
+
+    const scheduleTimer = (): void => {
+      const remainingDelay = Math.max(0, deadline - Date.now())
+      timer = setTimeout(
+        () => {
+          if (Date.now() < deadline) {
+            scheduleTimer()
+            return
+          }
+
+          revalidateQuery()
+        },
+        clamp(remainingDelay, 0, MAXIMUM_TIMEOUT_DELAY_MILLISECONDS),
+      )
+    }
+
+    scheduleTimer()
 
     onCleanup(() => clearTimeout(timer))
   })

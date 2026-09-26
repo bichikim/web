@@ -60,10 +60,8 @@ export interface AddParameterResult {
 }
 
 export const getDocumentParameters = (document: PuppetDocument) => document.parameters ?? []
-
 export const getDocumentParameterBindings = (document: PuppetDocument) =>
   document.parameterBindings ?? []
-
 export const getParameterBinding = (document: PuppetDocument, bindingId: string) =>
   getDocumentParameterBindings(document).find((binding) => binding.id === bindingId)
 
@@ -290,8 +288,16 @@ export const deleteParameter = (options: ParameterBindingTarget): PuppetDocument
   const removedParameterIds = new Set(
     binding.parameterIds.filter((parameterId) => !retainedParameterIds.has(parameterId)),
   )
+  const pendulums = options.document.physics?.pendulums.filter(
+    (pendulum) =>
+      !removedParameterIds.has(pendulum.inputParameterId) &&
+      !removedParameterIds.has(pendulum.outputParameterId),
+  )
   return {
     ...options.document,
+    layerOrderRules: options.document.layerOrderRules?.filter((rule) =>
+      rule.when.parameterIds.every((id) => !removedParameterIds.has(id)),
+    ),
     motions: options.document.motions.map((motion) => ({
       ...motion,
       tracks: motion.tracks.filter(
@@ -302,6 +308,7 @@ export const deleteParameter = (options: ParameterBindingTarget): PuppetDocument
     parameters: getDocumentParameters(options.document).filter(
       (parameter) => !removedParameterIds.has(parameter.id),
     ),
+    physics: pendulums === undefined || pendulums.length === 0 ? undefined : {pendulums},
   }
 }
 

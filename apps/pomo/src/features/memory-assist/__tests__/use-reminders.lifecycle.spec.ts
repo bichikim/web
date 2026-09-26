@@ -1,6 +1,7 @@
 /** @vitest-environment jsdom */
 
 import {renderHook} from '@solidjs/testing-library'
+import {PreferenceProvider} from 'src/hooks/use-preference'
 import flushPromises from 'flush-promises'
 import {afterEach, beforeEach, expect, it, vi} from 'vitest'
 
@@ -34,6 +35,9 @@ vi.mock('../../supertonic', () => ({
   createSupertonicClient: mocks.createClient,
   getSupertonicErrorMessage: () => 'voice failed',
 }))
+
+const renderReminders = <Value>(callback: () => Value) =>
+  renderHook(callback, {wrapper: PreferenceProvider})
 
 beforeEach(() => {
   vi.useFakeTimers()
@@ -79,7 +83,7 @@ it('should discard generated audio when its memo is deleted during generation', 
     playDialogue: vi.fn().mockResolvedValue(true),
     refreshDialogues: vi.fn().mockResolvedValue(undefined),
   } as unknown as PEventContextValue
-  const view = renderHook(() =>
+  const view = renderReminders(() =>
     useMemoryReminders({events, loadSettings: mocks.loadSettings, random: () => 0}),
   )
 
@@ -114,7 +118,7 @@ it('should discard generated audio when its memo is edited during generation', a
     playDialogue: vi.fn().mockResolvedValue(true),
     refreshDialogues: vi.fn().mockResolvedValue(undefined),
   } as unknown as PEventContextValue
-  const view = renderHook(() =>
+  const view = renderReminders(() =>
     useMemoryReminders({events, loadSettings: mocks.loadSettings, random: () => 0}),
   )
 
@@ -155,7 +159,7 @@ it('should discard generated audio when the reminder owner is disposed during ge
     playDialogue: vi.fn().mockResolvedValue(true),
     refreshDialogues: vi.fn().mockResolvedValue(undefined),
   } as unknown as PEventContextValue
-  const view = renderHook(() =>
+  const view = renderReminders(() =>
     useMemoryReminders({events, loadSettings: mocks.loadSettings, random: () => 0}),
   )
 
@@ -177,7 +181,7 @@ it('should discard generated audio when the reminder owner is disposed during ge
 it('should bind recovery to the shared runtime controller and current dialogue events', async () => {
   mocks.memos = []
   const events = {deleteDialogue: vi.fn()} as unknown as PEventContextValue
-  const view = renderHook(() => useMemoryReminders({events}))
+  const view = renderReminders(() => useMemoryReminders({events}))
   const retry = vi.mocked(useDeletionRecovery).mock.calls[0]![0]
   await retry()
   expect(mocks.retryDeletions).toHaveBeenCalledExactlyOnceWith(events.deleteDialogue)
@@ -201,7 +205,7 @@ it('should dispose a client initialized after owner cleanup without generating a
     playDialogue: vi.fn().mockResolvedValue(true),
     refreshDialogues: vi.fn(),
   } as unknown as PEventContextValue
-  const view = renderHook(() => useMemoryReminders({events, loadSettings: mocks.loadSettings}))
+  const view = renderReminders(() => useMemoryReminders({events, loadSettings: mocks.loadSettings}))
   await vi.advanceTimersToNextTimerAsync()
   expect(mocks.initializeClient).toHaveBeenCalledOnce()
   const client = mocks.createClient.mock.results[0].value
@@ -233,7 +237,7 @@ it.each(['edited', 'deleted', 'pending deletion'] as const)(
       playDialogue: vi.fn().mockResolvedValue(false),
       refreshDialogues: vi.fn(),
     } as unknown as PEventContextValue
-    const view = renderHook(() => useMemoryReminders({events}))
+    const view = renderReminders(() => useMemoryReminders({events}))
     try {
       await vi.advanceTimersToNextTimerAsync()
       expect(view.result.skippedReminders()).toEqual([memo])
@@ -269,11 +273,86 @@ it('should not publish a skipped reminder after owner cleanup', async () => {
     playDialogue: vi.fn().mockReturnValue(playback.promise),
     refreshDialogues: vi.fn(),
   } as unknown as PEventContextValue
-  const view = renderHook(() => useMemoryReminders({events}))
+  const view = renderReminders(() => useMemoryReminders({events}))
   await vi.advanceTimersToNextTimerAsync()
   expect(events.playDialogue).toHaveBeenCalledOnce()
   view.cleanup()
   playback.resolve(false)
   await flushPromises()
   expect(view.result.skippedReminders()).toEqual([])
+})
+
+it('should not replay a reminder when its memo is edited during playback', async () => {
+  const memo = {
+    ...createMemoryMemo({
+      exactReminderAt: '2026-09-04T03:00:00.000Z',
+      id: 'memo-1',
+      now: new Date('2026-09-04T02:00:00.000Z'),
+      random: () => 0,
+      recallMode: 'none',
+      text: '메모',
+    }),
+    dialogueId: 'existing-dialogue',
+  }
+  mocks.memos = [memo]
+  const playback = Promise.withResolvers<boolean>()
+  const events = {
+    playDialogue: vi.fn().mockReturnValue(playback.promise),
+    refreshDialogues: vi.fn().mockResolvedValue(undefined),
+  } as unknown as PEventContextValue
+  const view = renderReminders(() => useMemoryReminders({events}))
+
+  try {
+    await vi.advanceTimersToNextTimerAsync()
+    expect(events.playDialogue).toHaveBeenCalledOnce()
+
+    mocks.memos = [{...memo, updatedAt: '2026-09-04T03:00:01.000Z'}]
+    playback.resolve(true)
+    await flushPromises()
+    await vi.advanceTimersByTimeAsync(0)
+
+    expect(events.playDialogue).toHaveBeenCalledOnce()
+    expect(mocks.updateMemos).not.toHaveBeenCalled()
+    expect(vi.getTimerCount()).toBe(0)
+  } finally {
+    view.cleanup()
+  }
+})
+
+it('should detect a memo edit when its updated timestamp is unchanged', async () => {
+  const memo = {
+    ...createMemoryMemo({
+      exactReminderAt: '2026-09-04T03:00:00.000Z',
+      id: 'memo-1',
+      now: new Date('2026-09-04T02:00:00.000Z'),
+      random: () => 0,
+      recallMode: 'none',
+      text: '메모',
+    }),
+    dialogueId: 'existing-dialogue',
+  }
+  mocks.memos = [memo]
+  const playback = Promise.withResolvers<boolean>()
+  const events = {
+    playDialogue: vi.fn().mockReturnValue(playback.promise),
+    refreshDialogues: vi.fn().mockResolvedValue(undefined),
+  } as unknown as PEventContextValue
+  const view = renderReminders(() => useMemoryReminders({events}))
+
+  try {
+    await vi.advanceTimersToNextTimerAsync()
+    expect(events.playDialogue).toHaveBeenCalledOnce()
+
+    const editedMemo = {...memo, dialogueId: null, text: '같은 시각에 수정된 메모'}
+    mocks.memos = [editedMemo]
+    playback.resolve(true)
+    await flushPromises()
+    await vi.advanceTimersByTimeAsync(0)
+
+    expect(events.playDialogue).toHaveBeenCalledOnce()
+    expect(mocks.updateMemos).not.toHaveBeenCalled()
+    expect(mocks.memos).toEqual([editedMemo])
+  } finally {
+    view.cleanup()
+  }
 })

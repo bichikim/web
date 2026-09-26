@@ -1,6 +1,7 @@
+import {sha256Hex} from 'src/utils/sha256-hex'
+import {loadPublicJson} from '../public-assets'
 import {z} from 'zod'
 import {MAX_PHOTO_BYTES, MAX_VIDEO_BYTES} from '../background'
-const HEX_RADIX = 16
 
 const entrySchema = z.object({
   bytes: z.number().int().positive().max(MAX_VIDEO_BYTES),
@@ -22,11 +23,11 @@ const catalogSchema = z.object({sets: z.array(backgroundSetSchema), version: z.l
 
 /** Loads the public set catalog; invalid data and HTTP failures reject. */
 export const loadBackgroundSets = async (signal: AbortSignal): Promise<BackgroundSet[]> => {
-  const response = await fetch('/background-sets/index.json', {signal})
-  if (!response.ok) {
-    throw new Error('Unable to load background sets.')
-  }
-  return catalogSchema.parse(await response.json()).sets
+  const catalog = await loadPublicJson('/background-sets/index.json', catalogSchema, {
+    formatFetchFailure: () => 'Unable to load background sets.',
+    signal,
+  })
+  return catalog.sets
 }
 
 /** Downloads and checks each catalog asset before returning files for local import. */
@@ -48,10 +49,7 @@ export const downloadBackgroundSet = async (
       throw new Error('Background set size does not match its catalog.')
     }
     // eslint-disable-next-line no-await-in-loop
-    const digest = await crypto.subtle.digest('SHA-256', bytes)
-    const hash = Array.from(new Uint8Array(digest), (value) =>
-      value.toString(HEX_RADIX).padStart(2, '0'),
-    ).join('')
+    const hash = await sha256Hex(bytes)
     if (hash !== item.sha256) {
       throw new Error('Background set checksum does not match its catalog.')
     }

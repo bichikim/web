@@ -5,8 +5,10 @@ import {createMemo, createSignal, For, Show} from 'solid-js'
 
 import {
   DEFAULT_DIALOGUE_EVENT_PLAYBACK_MODE,
+  DELAYED_END_EVENT,
   type DialogueEventId,
   type DialogueEventPlaybackMode,
+  type EventBindingItem,
   type PDialogue,
   RANDOM_DIALOGUE_EVENT,
   usePEvents,
@@ -20,8 +22,9 @@ import {excludeMemoryMemoDialogues} from '../../features/memory-assist'
 import {SUPERTONIC_VOICES} from '../../features/supertonic'
 import * as m from '@paraglide/message'
 import {AutomaticDialogueSettings} from './AutomaticSettings'
-import {getDialogueEvents} from './event-definitions'
+import {getDialogueEventActions, getDialogueEvents} from './event-definitions'
 import {DialogueConnectionMenu} from './ConnectionMenu'
+import {DelayedEndEventSettings} from './DelayedEndEventSettings'
 import {DialogueLibrary} from './Library'
 import {DialoguePlaybackModeSelect} from './PlaybackModeSelect'
 import {RandomEventSettings} from './RandomEventSettings'
@@ -94,6 +97,7 @@ export interface PDialogueSettingsContentProps {
 export function PDialogueSettingsContent(props: PDialogueSettingsContentProps) {
   const events = usePEvents()
   const dialogueEvents = getDialogueEvents()
+  const dialogueEventActions = getDialogueEventActions()
   const feeds = usePFeedContext()
   const eventDialogues = createMemo(() =>
     excludeFeedDialogues(events.dialogues(), feeds.dialogues()),
@@ -110,14 +114,15 @@ export function PDialogueSettingsContent(props: PDialogueSettingsContentProps) {
       metadata: getDialogueMetadata(dialogue),
     })),
   )
+  const handleLibraryDelete = (dialogue: PDialogue) => feeds.onDeleteDialogue(dialogue.id)
   const [message, setMessage] = createSignal<string | null>(null)
 
   const handleEventBinding = async (
     eventId: DialogueEventId,
-    dialogueIds: ReadonlyArray<string>,
+    items: ReadonlyArray<EventBindingItem>,
   ): Promise<void> => {
     try {
-      await events.setEventDialogues(eventId, dialogueIds)
+      await events.setEventItems(eventId, items)
       setMessage(null)
     } catch (error: unknown) {
       console.error('Failed to bind focus room event dialogue.', error)
@@ -161,6 +166,13 @@ export function PDialogueSettingsContent(props: PDialogueSettingsContentProps) {
               <For each={dialogueEvents}>
                 {(event) => {
                   const selectedDialogueIds = () => events.eventDialogueIds()[event.id] ?? []
+                  const selectedActionIds = () => events.eventActionIds()[event.id] ?? []
+                  const selectedItems = (): ReadonlyArray<EventBindingItem> => [
+                    ...selectedDialogueIds().map(
+                      (id): EventBindingItem => ({id, type: 'dialogue'}),
+                    ),
+                    ...selectedActionIds().map((id): EventBindingItem => ({id, type: 'action'})),
+                  ]
                   const playbackMode = () =>
                     events.eventPlaybackModes()[event.id] ?? DEFAULT_DIALOGUE_EVENT_PLAYBACK_MODE
                   const selectedDialogues = () =>
@@ -170,7 +182,7 @@ export function PDialogueSettingsContent(props: PDialogueSettingsContentProps) {
                     })
 
                   return (
-                    <li data-connected={selectedDialogues().length === 0 ? undefined : ''}>
+                    <li data-connected={selectedItems().length === 0 ? undefined : ''}>
                       <div class={CLASSES.dialogueSettingsEventHeading}>
                         <span aria-hidden="true" class={CLASSES.dialogueSettingsEventSymbol}>
                           <span class={`${event.icon} size-5`} />
@@ -179,31 +191,39 @@ export function PDialogueSettingsContent(props: PDialogueSettingsContentProps) {
                           <div>
                             <h5>{event.label}</h5>
                           </div>
-                          <p>{event.description}</p>
+                          <Show when={event.description}>
+                            {(description) => <p>{description()}</p>}
+                          </Show>
                         </div>
                       </div>
 
                       <Show when={event.id === RANDOM_DIALOGUE_EVENT}>
                         <RandomEventSettings />
                       </Show>
+                      <Show when={event.id === DELAYED_END_EVENT}>
+                        <DelayedEndEventSettings />
+                      </Show>
 
                       <div class="grid min-w-0 gap-2 border-t border-solid border-border pt-3">
                         <Show when={eventDialogues().length === 0}>
                           <p class="m-0 text-muted-foreground text-sm leading-5">
-                            {m.settings_event_dialogue_create_first()}
+                            {m.settings_event_binding_create_first()}
                           </p>
                         </Show>
                         <DialogueConnectionMenu
-                          accessibleLabel={m.settings_event_dialogue_connection_label({
+                          accessibleLabel={m.settings_event_binding_connection_label({
                             event: event.label,
                           })}
+                          actions={dialogueEventActions}
                           getMetadata={getDialogueMetadata}
                           dialogues={eventDialogues()}
-                          disabled={eventDialogues().length === 0}
-                          onChange={(dialogueIds) => {
-                            handleEventBinding(event.id, dialogueIds)
+                          disabled={
+                            eventDialogues().length === 0 && dialogueEventActions.length === 0
+                          }
+                          onChange={(items) => {
+                            handleEventBinding(event.id, items)
                           }}
-                          selectedDialogueIds={selectedDialogueIds()}
+                          selectedItems={selectedItems()}
                         />
                       </div>
 
@@ -262,7 +282,11 @@ export function PDialogueSettingsContent(props: PDialogueSettingsContentProps) {
               when={libraryDialogues().length > 0}
               fallback={<PSettingsEmptyState>{m.settings_dialogue_empty()}</PSettingsEmptyState>}
             >
-              <DialogueLibrary entries={libraryEntries()} onRequestClose={props.onRequestClose} />
+              <DialogueLibrary
+                entries={libraryEntries()}
+                onDelete={handleLibraryDelete}
+                onRequestClose={props.onRequestClose}
+              />
             </Show>
           </Show>
 

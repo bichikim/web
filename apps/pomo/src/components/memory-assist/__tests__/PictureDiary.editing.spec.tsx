@@ -1,9 +1,11 @@
 /** @vitest-environment jsdom */
+import {createRoot} from 'solid-js'
 import {fireEvent, render, screen, waitFor, within} from '@solidjs/testing-library'
 import {expect, it, vi} from 'vitest'
 import type {PictureDiaryEntry} from '../../../features/picture-diary'
 import {PictureDiary} from '../PictureDiary'
 import {setupDiary} from './fixtures/diary'
+import {useEntryEditing} from '../picture-diary/use-entry-editing'
 
 vi.mock('src/features/model-download', () => ({useModelDownload: vi.fn()}))
 vi.mock('src/features/image-generation/client', () => ({runImageGeneration: vi.fn()}))
@@ -63,4 +65,41 @@ it('should edit an existing entry, retry a failed save, and preserve the new dia
   fireEvent.click(screen.getByRole('button', {name: '다음 일기 보기'}))
   await finishPageTurn()
   expect(screen.getByLabelText('그림일기 내용')).toHaveValue('작성 중인 새 일기')
+})
+
+it('should keep an edit save completed after disposal', async () => {
+  const pending = Promise.withResolvers<void>()
+  const updatedAt = '2026-09-26T00:00:00.000Z'
+  const entry: PictureDiaryEntry = {
+    createdAt: '2026-09-04T03:00:00.000Z',
+    date: '2026-09-04',
+    id: 'edit-entry',
+    strokes: [],
+    text: '기존 일기',
+    updatedAt: '2026-09-04T03:00:00.000Z',
+    version: 1,
+  }
+  const repository = createRepository([entry])
+  repository.save.mockReturnValue(pending.promise)
+  const onSaved = vi.fn()
+  const fixedEnvironment = {...environment, now: () => new Date(updatedAt)}
+  let dispose!: () => void
+  let save!: () => Promise<void>
+
+  createRoot((disposeRoot) => {
+    dispose = disposeRoot
+    const editing = useEntryEditing({environment: fixedEnvironment, onSaved, repository})
+    editing.open(entry)
+    save = editing.editor()!.onSave
+  })
+
+  const saving = save()
+  await waitFor(() => expect(repository.save).toHaveBeenCalledOnce())
+  dispose()
+  pending.resolve()
+
+  await expect(saving).resolves.toBeUndefined()
+  expect(repository.save).toHaveBeenCalledOnce()
+  expect(repository.save).toHaveBeenCalledWith({...entry, updatedAt})
+  expect(onSaved).not.toHaveBeenCalled()
 })

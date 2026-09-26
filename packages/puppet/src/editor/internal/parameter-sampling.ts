@@ -10,6 +10,7 @@ import {
   sampleParameterVertices,
 } from '../../deformation'
 import type {PuppetDocument, PuppetParameterBinding, PuppetPart} from '../../player'
+import {resolveParameterValue} from '../../player/parameter-value'
 
 export interface CreateParameterPreviewOptions {
   readonly editingBindingId?: string
@@ -22,7 +23,10 @@ const sampleParameterPreview = (options: CreateParameterPreviewOptions): PuppetD
   glue: composeParameterGlue(options),
   motions: [],
   parameterBindings: [],
-  parameters: [],
+  parameters: options.document.parameters?.map((parameter) => ({
+    ...parameter,
+    defaultValue: resolveParameterValue(parameter, options.parameterValues?.[parameter.id]),
+  })),
   parts: options.document.parts.map((part) => ({
     ...part,
     mesh: {
@@ -78,9 +82,33 @@ export const samplePartKeyform = (options: SamplePartKeyformOptions) => ({
     ?.filter((glue) => glue.first.partId === options.part.id)
     .map((glue) => sampleParameterGlue({...options, glue})),
   partId: options.part.id,
+  properties: samplePartProperties(options),
   vertices: sampleParameterVertices({
     ...options,
     partId: options.part.id,
     restVertices: options.part.mesh.vertices,
   }),
 })
+
+const samplePartProperties = (options: SamplePartKeyformOptions) => {
+  if (
+    !options.binding.keyforms.some((keyform) =>
+      keyform.parts.some(
+        (part) => part.partId === options.part.id && part.properties !== undefined,
+      ),
+    )
+  ) {
+    return undefined
+  }
+  const {multiplyColor, opacity, screenColor} = composeParameterPartProperties({
+    document: {
+      ...options.document,
+      parameterBindings: [{...options.binding, influences: undefined}],
+    },
+    parameterValues: Object.fromEntries(
+      options.binding.parameterIds.map((id, index) => [id, options.values[index]!]),
+    ),
+    partId: options.part.id,
+  })
+  return {multiplyColor, opacity, screenColor}
+}

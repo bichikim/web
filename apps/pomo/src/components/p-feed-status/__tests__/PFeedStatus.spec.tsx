@@ -1,10 +1,12 @@
+/** @vitest-environment jsdom */
+
+import {PreferenceProvider} from 'src/hooks/use-preference'
 import {createSignal} from 'solid-js'
 import {isSupertonicModelDownloaded} from 'src/features/supertonic'
-/** @vitest-environment jsdom */
 
 import {fireEvent, render, screen} from '@solidjs/testing-library'
 import {afterEach, beforeEach, expect, it, vi} from 'vitest'
-import {usePFeedContext} from 'src/features/focus-room-feed'
+import {type PFeedState, usePFeedContext} from 'src/features/focus-room-feed'
 import {useModelDownload} from 'src/features/model-download'
 import {PFeedStatus} from '../PFeedStatus'
 import {
@@ -14,9 +16,13 @@ import {
   RECOVERY_JOB,
 } from '../../__tests__/feed-status/fixtures'
 
-vi.mock('src/features/focus-room-feed', () => ({
-  usePFeedContext: vi.fn(),
-}))
+vi.mock('src/features/focus-room-feed', async () => {
+  const {isNoFeedConnectionGuidance} = await vi.importActual<
+    typeof import('src/features/focus-room-feed/feed-controller')
+  >('src/features/focus-room-feed/feed-controller')
+
+  return {isNoFeedConnectionGuidance, usePFeedContext: vi.fn()}
+})
 
 vi.mock('src/features/model-download', () => ({
   useModelDownload: vi.fn(),
@@ -42,7 +48,7 @@ it('should show a ready feed notice', () => {
   const feeds = createFeeds()
   vi.mocked(usePFeedContext).mockReturnValue(feeds)
 
-  const originalResult = render(() => <PFeedStatus />)
+  const originalResult = render(() => <PFeedStatus />, {wrapper: PreferenceProvider})
 
   expect(screen.getByText('새 피드 대화가 준비됐어요')).toBeDefined()
   expect(feeds.listen).not.toHaveBeenCalled()
@@ -50,7 +56,7 @@ it('should show a ready feed notice', () => {
   expect(screen.getByRole('status').parentElement?.parentElement?.querySelector('svg')).toBeNull()
 
   originalResult.unmount()
-  render(() => <PFeedStatus sceneStyle="scribble" />)
+  render(() => <PFeedStatus sceneStyle="scribble" />, {wrapper: PreferenceProvider})
   const scribbleStatus = screen.getByRole('status')
   const scribbleSurface = scribbleStatus.parentElement as HTMLElement
   const scribbleFrame = scribbleSurface.parentElement as HTMLElement
@@ -79,7 +85,7 @@ it('should play all accumulated feed dialogues with one action', () => {
   const feeds = createFeeds([READY_DIALOGUE, olderDialogue])
   vi.mocked(usePFeedContext).mockReturnValue(feeds)
 
-  render(() => <PFeedStatus />)
+  render(() => <PFeedStatus />, {wrapper: PreferenceProvider})
 
   expect(screen.getByText('새 피드 대화 2개가 준비됐어요')).toBeDefined()
   fireEvent.click(screen.getByRole('button', {name: '연속 듣기'}))
@@ -89,7 +95,7 @@ it('should play all accumulated feed dialogues with one action', () => {
 it('should hide the ready notice while queued dialogues are playing', () => {
   vi.mocked(usePFeedContext).mockReturnValue(createFeeds([READY_DIALOGUE], true))
 
-  render(() => <PFeedStatus />)
+  render(() => <PFeedStatus />, {wrapper: PreferenceProvider})
 
   expect(screen.queryByText('새 피드 대화가 준비됐어요')).toBeNull()
 })
@@ -97,9 +103,30 @@ it('should hide the ready notice while queued dialogues are playing', () => {
 it('should render no feed notice while the feed state is idle', () => {
   vi.mocked(usePFeedContext).mockReturnValue(createFeeds([]))
 
-  render(() => <PFeedStatus />)
+  render(() => <PFeedStatus />, {wrapper: PreferenceProvider})
 
   expect(screen.queryByRole('status')).toBeNull()
+})
+
+it('should hide idle status after an empty feed sync', async () => {
+  const message = '설정에서 구독 피드를 추가해 주세요.'
+  const generationMessage = '새 피드 음성을 만들고 있어요.'
+  const [state, setState] = createSignal<PFeedState>({
+    message: generationMessage,
+    progress: 42,
+    status: 'generating',
+  })
+  vi.mocked(usePFeedContext).mockReturnValue(createFeeds([], false, [], {state}))
+
+  render(() => <PFeedStatus />, {wrapper: PreferenceProvider})
+  expect(screen.getByRole('status')).toHaveAttribute('data-state', 'generating')
+  expect(screen.getByText(generationMessage)).toBeInTheDocument()
+
+  setState({message, status: 'idle'})
+
+  await vi.waitFor(() => expect(screen.queryByRole('status')).toBeNull())
+  expect(screen.queryByText(generationMessage)).toBeNull()
+  expect(screen.queryByText(message)).toBeNull()
 })
 
 it('should hide feed syncing activity', () => {
@@ -107,7 +134,7 @@ it('should hide feed syncing activity', () => {
   vi.mocked(usePFeedContext).mockReturnValue(
     createFeeds([], false, [], {state: () => ({message, progress: 50, status: 'syncing'})}),
   )
-  render(() => <PFeedStatus />)
+  render(() => <PFeedStatus />, {wrapper: PreferenceProvider})
 
   expect(screen.queryByRole('status')).toBeNull()
   expect(screen.queryByText(message)).toBeNull()
@@ -118,7 +145,7 @@ it('should render an error and let users retry a failed feed check', () => {
     state: () => ({message: '피드를 확인하지 못했어요.', status: 'error'}),
   })
   vi.mocked(usePFeedContext).mockReturnValue(errorFeeds)
-  const errorResult = render(() => <PFeedStatus />)
+  const errorResult = render(() => <PFeedStatus />, {wrapper: PreferenceProvider})
 
   expect(screen.getByRole('status')).toHaveAttribute('data-state', 'error')
   fireEvent.click(errorResult.container.querySelector('button')!)
@@ -129,7 +156,7 @@ it('should offer preparation for a pending feed without calling it incomplete', 
   vi.mocked(isSupertonicModelDownloaded).mockResolvedValue(true)
   const feeds = createFeeds([], false, [{...RECOVERY_JOB, status: 'pending'}])
   vi.mocked(usePFeedContext).mockReturnValue(feeds)
-  render(() => <PFeedStatus />)
+  render(() => <PFeedStatus />, {wrapper: PreferenceProvider})
   expect(screen.getByText('준비할 피드 대화 1개')).toBeInTheDocument()
   expect(screen.queryByText('미완성 피드 대화 1개')).toBeNull()
   fireEvent.click(screen.getByRole('button', {name: '준비하기'}))
@@ -148,7 +175,7 @@ it('should replace preparation with listening after the feed audio is ready', as
     unlistenedDialogues: () => (ready() ? [READY_DIALOGUE] : []),
   })
   vi.mocked(usePFeedContext).mockReturnValue(feeds)
-  render(() => <PFeedStatus />)
+  render(() => <PFeedStatus />, {wrapper: PreferenceProvider})
   fireEvent.click(screen.getByRole('button', {name: '준비하기'}))
   await vi.waitFor(() => expect(screen.getByRole('button', {name: '듣기'})).toBeInTheDocument())
   expect(screen.queryByRole('button', {name: '준비하기'})).toBeNull()

@@ -1,10 +1,15 @@
 /** @vitest-environment jsdom */
+import {PreferenceProvider} from 'src/hooks/use-preference'
 import {fireEvent, render, screen, waitFor} from '@solidjs/testing-library'
 import {expect, it} from 'vitest'
 import {Units} from '../Units'
 
 it('should update conversion, swap units and reject malformed input', async () => {
-  render(() => <Units />)
+  render(() => (
+    <PreferenceProvider>
+      <Units />
+    </PreferenceProvider>
+  ))
   await waitFor(() => expect(screen.getByRole('button', {name: '초기화'})).toBeEnabled())
   const input = screen.getByRole('textbox', {name: '변환할 값'})
   fireEvent.input(input, {target: {value: '3'}})

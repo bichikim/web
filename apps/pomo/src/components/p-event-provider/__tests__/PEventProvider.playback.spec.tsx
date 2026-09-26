@@ -63,10 +63,17 @@ it('should remember entry playback across provider remounts until the session is
     ],
   )
   repositoryMocks.create.mockReturnValue(repository)
-  vi.spyOn(HTMLMediaElement.prototype, 'play').mockResolvedValue()
+  const audioElements = [document.createElement('audio'), document.createElement('audio')]
+  stubAudioElements(audioElements)
+  const playAudio = vi.spyOn(HTMLMediaElement.prototype, 'play').mockResolvedValue()
 
   const first = await renderContext()
   await waitFor(() => expect(repository.getDialogue).toHaveBeenCalledOnce())
+  await waitFor(() => expect(playAudio).toHaveBeenCalledOnce())
+  audioElements[0]?.dispatchEvent(new Event('ended'))
+  await waitFor(() =>
+    expect(sessionStorage.getItem('pomo:focus-room-entry-playback:v1')).toBe('true'),
+  )
   first.result.unmount()
 
   const returning = await renderContext()
@@ -109,10 +116,10 @@ it('should play entry once when session storage is unavailable', async () => {
   result.unmount()
 })
 
-it('should cancel playback on the editor route and not replay entry after returning', async () => {
+it('should cancel playback on the editor route and replay entry after returning', async () => {
   const [isPlaybackEnabled, setIsPlaybackEnabled] = createSignal(true)
   const dialogue = createDialogue('entry')
-  const audio = document.createElement('audio')
+  const audioElements = [document.createElement('audio'), document.createElement('audio')]
   const repository = createRepository(
     [dialogue],
     [
@@ -125,7 +132,7 @@ it('should cancel playback on the editor route and not replay entry after return
     ],
   )
   repositoryMocks.create.mockReturnValue(repository)
-  stubAudioElements([audio])
+  stubAudioElements(audioElements)
   stubAnimationFrame()
   const playAudio = vi.spyOn(HTMLMediaElement.prototype, 'play').mockResolvedValue()
   const pauseAudio = vi.spyOn(HTMLMediaElement.prototype, 'pause')
@@ -149,8 +156,7 @@ it('should cancel playback on the editor route and not replay entry after return
   expect(onBeforePlayback).not.toHaveBeenCalled()
 
   setIsPlaybackEnabled(true)
-  await Promise.resolve()
-  expect(playAudio).toHaveBeenCalledOnce()
+  await waitFor(() => expect(playAudio).toHaveBeenCalledTimes(2))
   expect(events.hasEnteredFocusRoom()).toBe(true)
   result.unmount()
 })

@@ -1,9 +1,19 @@
 /** @vitest-environment node */
 import {beforeEach, expect, it, vi} from 'vitest'
 
+const tokenMocks = vi.hoisted(() => ({
+  createOpaqueToken: vi.fn(),
+  hashOpaqueToken: vi.fn(),
+}))
+const challengeMocks = vi.hoisted(() => ({createCodeChallenge: vi.fn()}))
+
+vi.mock('src/server/utils/token', () => tokenMocks)
+vi.mock('../create-code-challenge', () => challengeMocks)
+
+import {type CalendarRepository} from '../../repositories/calendar'
 import {createGoogleCalendarProvider} from '../providers/google'
 import type {CalendarProvider} from '../providers/types'
-import {type CalendarRepository, createCalendarService} from '../service'
+import {createCalendarService} from '../service'
 import type {TokenVault} from '../token-vault'
 
 const googleProvider: CalendarProvider = {
@@ -39,13 +49,16 @@ const providerFor = (provider: 'google' | 'microsoft') =>
 
 beforeEach(() => {
   vi.clearAllMocks()
+  tokenMocks.createOpaqueToken.mockReset()
+  tokenMocks.hashOpaqueToken.mockReset()
+  challengeMocks.createCodeChallenge.mockReset()
+  tokenMocks.createOpaqueToken.mockReturnValueOnce('state-token').mockReturnValueOnce('verifier')
+  tokenMocks.hashOpaqueToken.mockImplementation((token: string) => `hash:${token}`)
+  challengeMocks.createCodeChallenge.mockReturnValue('challenge')
 })
 
 it('should persist an OAuth challenge before returning the provider authorization URL', async () => {
-  vi.mocked(repository.createOauthState).mockResolvedValue({
-    codeChallenge: 'challenge',
-    state: 'state-token',
-  })
+  vi.mocked(repository.createOauthState).mockResolvedValue(undefined)
   const service = createCalendarService({
     now: () => new Date('2026-09-04T10:00:00.000Z'),
     providerFor,
@@ -60,6 +73,15 @@ it('should persist an OAuth challenge before returning the provider authorizatio
       userId: 'user-1',
     }),
   ).resolves.toBe('https://accounts.google.com/authorize')
+  expect(challengeMocks.createCodeChallenge).toHaveBeenCalledWith('verifier')
+  expect(repository.createOauthState).toHaveBeenCalledWith({
+    codeVerifier: 'verifier',
+    expiresAt: new Date('2026-09-04T10:10:00.000Z'),
+    provider: 'google',
+    redirectUri: 'https://pomofi.io/api/calendar/callback/google',
+    stateHash: 'hash:state-token',
+    userId: 'user-1',
+  })
   expect(googleProvider.createAuthorizationUrl).toHaveBeenCalledWith({
     codeChallenge: 'challenge',
     redirectUri: 'https://pomofi.io/api/calendar/callback/google',
@@ -92,6 +114,11 @@ it('should exchange one consumed OAuth state and store encrypted account tokens'
   await expect(
     service.completeConnection({code: 'code', provider: 'google', state: 'state-token'}),
   ).resolves.toBe(true)
+  expect(repository.consumeOauthState).toHaveBeenCalledWith(
+    'google',
+    'hash:state-token',
+    new Date('2026-09-04T10:00:00.000Z'),
+  )
   expect(repository.saveConnection).toHaveBeenCalledWith({
     accountLabel: 'person@example.com',
     encryptedTokens: 'sealed-tokens',
@@ -155,6 +182,7 @@ it('should refresh expired tokens and preserve events from another provider fail
       },
     ],
     truncated: true,
+    unavailableCalendars: 0,
   })
   vi.mocked(microsoftProvider.listEvents).mockRejectedValue(new Error('Graph unavailable'))
   const service = createCalendarService({
@@ -224,6 +252,7 @@ it('should preserve more than forty events for the calendar view', async () => {
       title: `일정 ${index}`,
     })),
     truncated: false,
+    unavailableCalendars: 0,
   })
   const service = createCalendarService({providerFor, repository, vault})
 
@@ -235,6 +264,62 @@ it('should preserve more than forty events for the calendar view', async () => {
   })
 
   expect(result.events).toHaveLength(41)
+})
+
+it('should preserve events when one connected calendar is unavailable', async () => {
+  vi.mocked(repository.listConnections).mockResolvedValue([
+    {
+      accountLabel: 'work@example.com',
+      encryptedTokens: 'google-sealed',
+      id: 'google-connection',
+      provider: 'google',
+    },
+  ])
+  vi.mocked(vault.open).mockReturnValue({
+    accessToken: 'access',
+    expiresAt: null,
+    refreshToken: null,
+  })
+  vi.mocked(googleProvider.listEvents).mockResolvedValue({
+    events: [
+      {
+        allDay: true,
+        calendarLabel: '업무',
+        end: '2026-09-05',
+        id: 'event-1',
+        start: '2026-09-04',
+        title: '회의',
+      },
+    ],
+    truncated: false,
+    unavailableCalendars: 1,
+  })
+  const service = createCalendarService({providerFor, repository, vault})
+
+  await expect(
+    service.listEvents({
+      displayTimeZone: 'UTC',
+      end: '2026-09-06T00:00:00.000Z',
+      start: '2026-09-03T00:00:00.000Z',
+      userId: 'user-1',
+    }),
+  ).resolves.toEqual({
+    connectedConnections: 1,
+    events: [
+      {
+        accountLabel: 'work@example.com',
+        allDay: true,
+        calendarLabel: '업무',
+        end: '2026-09-05',
+        id: 'google-connection:event-1',
+        provider: 'google',
+        start: '2026-09-04',
+        title: '회의',
+      },
+    ],
+    truncated: false,
+    unavailableConnections: 1,
+  })
 })
 
 it('should keep the same Google event independent across calendars and connections', async () => {

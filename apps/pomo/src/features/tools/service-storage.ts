@@ -1,7 +1,10 @@
 import {z} from 'zod'
+
 import {type ServiceBranch} from './calculate-service'
+import {normalizeServiceDays} from './service-days'
 import {toolStorageAdapter, type ToolStorageAdapter} from './storage-adapter'
 import {parseDate} from '../civil-date'
+import {createAuthoritativeWriter} from '../preference-persistence'
 
 const STORAGE_KEY = 'pomo:service-settings:v1'
 const LEGACY_KEY = 'pomo:service-start:v1'
@@ -19,7 +22,7 @@ export const DEFAULT_SERVICE_SETTINGS: ServiceSettings = {
 }
 const settingsSchema = z.object({
   branch: z.enum(['army', 'marines', 'navy', 'air']),
-  days: z.string(),
+  days: z.string().transform(normalizeServiceDays),
   manual: z.boolean(),
   start: z.string().refine((value) => value === '' || parseDate(value) !== null),
 })
@@ -39,30 +42,22 @@ export interface CreateServiceSettingsStorageOptions {
   readonly reportRepairError: (error: unknown) => void
 }
 
-/** Creates service settings persistence with an isolated write queue and revision. */
+/** Reads and writes service settings, including legacy start dates. */
 export const createServiceSettingsStorage = (
   options: CreateServiceSettingsStorageOptions,
 ): ServiceSettingsStorage => {
   const {storage, reportRepairError} = options
-  let pendingWrite = Promise.resolve()
-  let writeRevision = 0
   const read = async (): Promise<ServiceSettings> => {
-    const revision = writeRevision
     const usesTossStorage = storage.usesTossStorage()
-    if (usesTossStorage) {
-      await pendingWrite
-      if (revision !== writeRevision) {
-        return read()
-      }
-    }
     const webSettings = storage.readWeb(STORAGE_KEY, parseSettings)
     if (webSettings !== null) {
+      const legacyStart = webSettings.start === '' ? storage.readWeb(LEGACY_KEY, parseStart) : null
+      const restoredSettings =
+        legacyStart === null ? webSettings : {...webSettings, start: legacyStart}
       if (usesTossStorage) {
-        pendingWrite = pendingWrite
-          .then(() => storage.writeToss(STORAGE_KEY, webSettings))
-          .catch(reportRepairError)
+        await storage.writeToss(STORAGE_KEY, restoredSettings).catch(reportRepairError)
       }
-      return webSettings
+      return restoredSettings
     }
     const legacySettings = () => ({
       ...DEFAULT_SERVICE_SETTINGS,
@@ -71,54 +66,37 @@ export const createServiceSettingsStorage = (
     if (!usesTossStorage) {
       return legacySettings()
     }
-    try {
-      const tossSettings = await storage.readToss(STORAGE_KEY, parseSettings)
-      if (revision !== writeRevision) {
-        return read()
-      }
-      if (tossSettings !== null) {
-        return tossSettings
-      }
-      const webLegacy = legacySettings()
-      if (webLegacy.start !== '') {
-        return webLegacy
-      }
-      const nativeStart = await storage.readToss(LEGACY_KEY, parseStart)
-      if (revision !== writeRevision) {
-        return read()
-      }
-      return {...DEFAULT_SERVICE_SETTINGS, start: nativeStart ?? ''}
-    } catch (error: unknown) {
-      if (revision !== writeRevision) {
-        return read()
-      }
-      throw error
+    const tossSettings = await storage.readToss(STORAGE_KEY, parseSettings)
+    if (tossSettings !== null) {
+      // Keep the settings available when the Toss bridge disappears before the next read.
+      storage.writeWeb(STORAGE_KEY, tossSettings)
+      return tossSettings
     }
+    const webLegacy = legacySettings()
+    if (webLegacy.start !== '') {
+      return webLegacy
+    }
+    const nativeStart = await storage.readToss(LEGACY_KEY, parseStart)
+    const nativeLegacySettings = {...DEFAULT_SERVICE_SETTINGS, start: nativeStart ?? ''}
+    if (nativeStart !== null) {
+      storage.writeWeb(STORAGE_KEY, nativeLegacySettings)
+    }
+    return nativeLegacySettings
   }
 
-  const write = async (value: ServiceSettings): Promise<void> => {
-    writeRevision += 1
-    const revision = writeRevision
-    const webError = storage.writeWeb(STORAGE_KEY, value)
-    if (!storage.usesTossStorage()) {
-      if (webError !== null) {
-        throw new Error('Failed to persist service settings.', {cause: webError})
-      }
-      return
-    }
-    const write = pendingWrite.then(async () => {
-      await storage.writeToss(STORAGE_KEY, value)
-      // A failed web replacement must not shadow the newly persisted native value.
-      if (webError !== null && revision === writeRevision) {
-        const error = storage.removeWeb(STORAGE_KEY)
-        if (error !== null && storage.readWeb(STORAGE_KEY, parseSettings) !== null) {
-          throw new Error('Failed to discard stale service settings.', {cause: error})
-        }
-      }
-    })
-    pendingWrite = write.catch(() => undefined)
-    await write
-  }
+  const write = createAuthoritativeWriter<ServiceSettings>({
+    failureMessage: 'Failed to persist service settings.',
+    isNative: storage.usesTossStorage,
+    mapNativeFailure: (error) => error,
+    mapRemovalFailure: (error) =>
+      new Error('Failed to discard stale service settings.', {cause: error}),
+    removeWeb: () => {
+      const error = storage.removeWeb(STORAGE_KEY)
+      return error !== null && storage.readWeb(STORAGE_KEY, parseSettings) !== null ? error : null
+    },
+    writeNative: (value) => storage.writeToss(STORAGE_KEY, value),
+    writeWeb: (value) => storage.writeWeb(STORAGE_KEY, value),
+  })
   return {read, write}
 }
 
@@ -130,3 +108,21 @@ const runtimeStorage = createServiceSettingsStorage({
 })
 export const readServiceSettings = runtimeStorage.read
 export const writeServiceSettings = runtimeStorage.write
+
+const draftSchema = settingsSchema.extend({days: z.string()})
+const parseDraft = (value: unknown): ServiceSettings | null => {
+  const result = draftSchema.safeParse(value)
+  return result.success ? result.data : null
+}
+export const servicePreference = {
+  defaultValue: DEFAULT_SERVICE_SETTINGS,
+  key: STORAGE_KEY,
+  parse: parseDraft,
+  storage: {
+    read: readServiceSettings,
+    write: (_key: string, value: unknown) => {
+      const parsed = parseDraft(value)
+      return parsed === null ? null : writeServiceSettings(parsed)
+    },
+  },
+}

@@ -1,13 +1,9 @@
-import {createEffect, createSignal, onCleanup, onMount} from 'solid-js'
-import {useEvent} from '@winter-love/solid-use/event'
+import {usePreference} from 'src/hooks/use-preference'
+import {visibility} from 'src/utils/visibility'
+import {getDocument} from '@winter-love/utils'
+import {createEffect, createSignal, on, onCleanup, onMount} from 'solid-js'
 
-import {
-  DEFAULT_RANDOM_EVENT_SETTINGS,
-  parseRandomEventSettings,
-  RANDOM_EVENT_SETTINGS_CHANGED_EVENT,
-  type RandomEventSettings,
-  readRandomEventSettings,
-} from './random-event-settings'
+import {createRandomEventPreferenceOptions, type RandomEventSettings} from './random-event-settings'
 
 const MILLISECONDS_PER_MINUTE = 60_000
 
@@ -27,75 +23,64 @@ export const getRandomEventDelay = (
 
 /** Repeats an event at a newly randomized interval after the focus room starts. */
 export const useRandomEvent = (props: UseRandomEventProps) => {
-  const [settings, setSettings] = createSignal<RandomEventSettings>(DEFAULT_RANDOM_EVENT_SETTINGS)
   const [isEventPending, setIsEventPending] = createSignal(false)
-  const [isReady, setIsReady] = createSignal(false)
+  const [isDocumentVisible, setIsDocumentVisible] = createSignal(false)
+  const [scheduleRevision, setScheduleRevision] = createSignal(0)
+  const [settings] = usePreference(
+    createRandomEventPreferenceOptions({
+      onError: (error) => console.error('Failed to load random event settings.', error),
+    }),
+  )
   let isDisposed = false
-  let settingsRevision = 0
+  let clearVisibilityWatch: (() => void) | undefined
 
   onMount(() => {
-    const initialRevision = settingsRevision
-    const handleSettingsChange = (event: Event) => {
-      if (!(event instanceof CustomEvent)) {
-        return
-      }
-
-      const nextSettings = parseRandomEventSettings(event.detail)
-
-      if (nextSettings !== null) {
-        settingsRevision += 1
-        setSettings(nextSettings)
-        setIsReady(true)
-      }
-    }
-
-    useEvent(window, RANDOM_EVENT_SETTINGS_CHANGED_EVENT, handleSettingsChange)
-    readRandomEventSettings()
-      .then((storedSettings) => {
-        if (!isDisposed && settingsRevision === initialRevision) {
-          setSettings(storedSettings)
-          setIsReady(true)
-        }
-      })
-      .catch((error: unknown) => {
-        console.error('Failed to load random event settings.', error)
-
-        if (!isDisposed) {
-          setIsReady(true)
-        }
-      })
-
-    onCleanup(() => {
-      isDisposed = true
+    setIsDocumentVisible(getDocument()?.hidden === false)
+    clearVisibilityWatch = visibility((isHidden) => {
+      setIsDocumentVisible(!isHidden)
     })
   })
 
-  createEffect(() => {
-    const currentSettings = settings()
+  onCleanup(() => clearVisibilityWatch?.())
 
-    if (!isReady() || isEventPending()) {
-      return
-    }
+  createEffect(
+    on(
+      [settings, isEventPending, isDocumentVisible, scheduleRevision],
+      ([currentSettings, eventPending, documentVisible]) => {
+        if (currentSettings === null || eventPending || !documentVisible) {
+          return
+        }
 
-    const timerId = globalThis.setTimeout(
-      () => {
-        setIsEventPending(true)
-        Promise.resolve()
-          .then(() => props.onEvent())
-          .catch((error: unknown) => {
-            console.error('Failed to queue a random dialogue event.', error)
-          })
-          .finally(() => {
-            if (!isDisposed) {
-              setIsEventPending(false)
+        const timerId = globalThis.setTimeout(
+          () => {
+            if (getDocument()?.hidden !== false) {
+              setScheduleRevision((revision) => revision + 1)
+              return
             }
-          })
-      },
-      getRandomEventDelay(currentSettings, props.random ?? Math.random),
-    )
 
-    onCleanup(() => {
-      globalThis.clearTimeout(timerId)
-    })
+            setIsEventPending(true)
+            Promise.resolve()
+              .then(() => props.onEvent())
+              .catch((error: unknown) => {
+                console.error('Failed to queue a random dialogue event.', error)
+              })
+              .finally(() => {
+                if (!isDisposed) {
+                  setIsEventPending(false)
+                }
+              })
+          },
+          getRandomEventDelay(currentSettings, props.random ?? Math.random),
+        )
+
+        onCleanup(() => {
+          globalThis.clearTimeout(timerId)
+        })
+      },
+    ),
+  )
+
+  onCleanup(() => {
+    isDisposed = true
   })
 }

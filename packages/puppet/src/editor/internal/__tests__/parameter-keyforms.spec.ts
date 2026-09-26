@@ -18,8 +18,27 @@ import {
   renameParameter,
   setParameterKeyformVertex,
 } from '../parameter-keyforms'
+import {updatePhysics} from '../physics'
 
 describe('parameter keyform editing', () => {
+  test('should remove layer rules when deleting their condition parameters', () => {
+    const source = createDemoDocument()
+    const document = {
+      ...source,
+      layerOrderRules: [
+        {
+          partIds: ['shape-circle'],
+          placement: 'before' as const,
+          referencePartId: 'mesh-preview',
+          when: {comparison: 'greater-than' as const, parameterIds: ['angle-x'], threshold: 20},
+        },
+      ],
+    }
+    expect(
+      deleteParameter({bindingId: source.parameterBindings![0]!.id, document})?.layerOrderRules,
+    ).toEqual([])
+  })
+
   test('should return the union of parameter bindings connected to selected nodes', () => {
     const document = createDemoDocument()
     const added = addParameter({document, nodeIds: ['shape-circle']})!
@@ -156,12 +175,14 @@ describe('parameter keyform editing', () => {
 
   test('should delete a binding together with its scalar parameter definitions', () => {
     const document = createDemoDocument()
-    const deleted = deleteParameter({bindingId: 'angle-xy', document})
+    const withPhysics = updatePhysics({document, operation: {kind: 'add'}})!
+    const deleted = deleteParameter({bindingId: 'angle-xy', document: withPhysics})
 
     expect(document.parameterBindings?.[0]?.keyforms).toHaveLength(9)
     expect(deleted?.parameterBindings).toEqual([])
     expect(deleted?.parameters).toEqual([])
     expect(deleted?.motions[0]?.tracks).toEqual([])
+    expect(deleted?.physics).toBeUndefined()
     expect(deleteParameter({bindingId: 'missing', document})).toBeUndefined()
   })
 
@@ -350,7 +371,10 @@ describe('createParameterPreview', () => {
     expect(preview.parts[1]?.mesh.vertices).toBe(document.parts[1]?.mesh.vertices)
     expect(preview.motions).toEqual([])
     expect(preview.parameterBindings).toEqual([])
-    expect(preview.parameters).toEqual([])
+    expect(preview.parameters).toEqual([
+      {...document.parameters![0], defaultValue: 15},
+      {...document.parameters![1], defaultValue: -15},
+    ])
   })
 })
 
@@ -369,7 +393,7 @@ test('should remove influence references when their source parameter is deleted'
     parameterBindings: [...base.parameterBindings!, target],
     parameters: [
       ...base.parameters!,
-      {id: 'other', defaultValue: 0, minimum: 0, maximum: 1, name: 'Other'},
+      {defaultValue: 0, id: 'other', maximum: 1, minimum: 0, name: 'Other'},
     ],
   }
   const result = deleteParameter({bindingId: source.id, document})!

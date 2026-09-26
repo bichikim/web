@@ -1,9 +1,13 @@
+import {uniq} from 'es-toolkit/array'
 export {
   deleteStoredDialogueAudio,
   type DialogueAudioDeletionResult,
   type DialogueAudioStorage,
 } from './delete-stored-dialogue-audio'
+import {DISPLAY_PREFERENCES_STORAGE_KEY} from '../focus-room-display-preferences/storage'
 import {settleEntryHistoryWrites} from '../focus-room-entry-history'
+import {DIALOGUE_DRAFT_KEY_PREFIX} from '../focus-room-dialogue'
+import {clearEntryEventPlaybackSession} from '../focus-room-dialogue/use-p-event-controller/entry-playback'
 import {LOCALE_RESET_STORAGE_COUNT, resetLocale as resetLocaleStorage} from '../locale'
 import {hasNativeStorageBridge} from 'src/utils/runtime-storage'
 
@@ -14,6 +18,7 @@ interface OptionResetGroupDefinitionBase {
 }
 
 interface StorageOptionResetGroupDefinition extends OptionResetGroupDefinitionBase {
+  readonly sessionStoragePrefixes?: ReadonlyArray<string>
   readonly resetKind?: undefined
   readonly storageKeys: ReadonlyArray<string>
 }
@@ -62,11 +67,21 @@ export interface OptionResetManager {
   readonly resetAll: () => Promise<OptionResetResult>
 }
 
+export interface OptionResetSessionStorageEntry {
+  readonly key: string
+  readonly value: string
+}
+
 export interface OptionResetStorage {
   readonly getToss: (key: string) => Promise<string | null>
+  readonly getSessionStorageEntriesByPrefix: (
+    prefix: string,
+  ) => ReadonlyArray<OptionResetSessionStorageEntry>
   readonly usesTossStorage: () => boolean
   readonly removeToss: (key: string) => Promise<void>
   readonly removeWeb: (key: string) => void
+  readonly removeSessionStorageByPrefix: (prefix: string) => void
+  readonly setSessionStorageItem: (key: string, value: string) => void
   readonly setToss: (key: string, value: string) => Promise<void>
   readonly setWeb: (key: string, value: string) => void
 }
@@ -123,25 +138,35 @@ const GROUP_DEFINITIONS: ReadonlyArray<OptionResetGroupDefinition> = [
     label: '집중 공간',
     storageKeys: [
       'pomo:focus-room-scene-preferences:v1',
+      'pomo:focus-room-scene-preferences:native-write-failure:v1',
       'pomo:focus-room-scene-style:v1',
       'pomo:weather-preference:v2',
       'pomo:weather-preference:v1',
+      DISPLAY_PREFERENCES_STORAGE_KEY,
       'pomo:screen-saver-delay:v1',
     ],
   },
   {
-    description: '집중·휴식 시간과 자동 시작 설정',
+    description: '집중·휴식 시간, 자동 시작 설정과 타이머 진행 상태',
     id: 'timer',
     label: '타이머',
-    storageKeys: ['pomo:timer-config:v1', 'pomo:timer-auto-start:v2', 'pomo:timer-auto-start:v1'],
+    storageKeys: [
+      'pomo:timer:v1',
+      'pomo:timer-config:v1',
+      'pomo:timer-auto-start:v2',
+      'pomo:timer-auto-start:v1',
+    ],
   },
   {
-    description: '자동 대화·랜덤 이벤트와 대화 중 음악 음량 설정',
+    description:
+      '자동 대화·랜덤 이벤트·지연 종료 시간과 대화 중 음악 음량 설정, 저장하지 않은 대화 초안을 초기화합니다.',
     id: 'dialogue',
     label: '대화',
+    sessionStoragePrefixes: [DIALOGUE_DRAFT_KEY_PREFIX],
     storageKeys: [
       'pomo:automatic-dialogue-settings:v1',
       'pomo:random-event-settings:v1',
+      'pomo:delayed-end-event-settings:v1',
       'pomo:dialogue-volume-ducking-settings:v2',
       'pomo:dialogue-volume-ducking-settings:v1',
     ],
@@ -156,7 +181,11 @@ const GROUP_DEFINITIONS: ReadonlyArray<OptionResetGroupDefinition> = [
     description: '데스크톱 표시 모드와 종료 상태',
     id: 'desktop',
     label: '데스크톱 모드',
-    storageKeys: ['pomo:desktop-mode:v1', 'pomo:desktop-clean-exit:v1'],
+    storageKeys: [
+      'pomo:desktop-mode:v1',
+      'pomo:desktop-clean-exit:v1',
+      'pomo:desktop-mode-owner:v1',
+    ],
   },
   {
     description: '선택한 화면 언어',
@@ -183,11 +212,67 @@ export const OPTION_RESET_GROUPS: ReadonlyArray<OptionResetGroup> = GROUP_DEFINI
   }),
 )
 
-const getAllKeys = (): ReadonlyArray<string> => [
-  ...new Set(
+const getAllKeys = (): ReadonlyArray<string> =>
+  uniq(
     GROUP_DEFINITIONS.flatMap((group) => (group.resetKind === 'locale' ? [] : group.storageKeys)),
-  ),
-]
+  )
+
+const getSessionStoragePrefixes = (group: OptionResetGroupDefinition): ReadonlyArray<string> =>
+  group.resetKind === 'locale' ? [] : (group.sessionStoragePrefixes ?? [])
+
+const getAllSessionStoragePrefixes = (): ReadonlyArray<string> =>
+  uniq(GROUP_DEFINITIONS.flatMap((group) => getSessionStoragePrefixes(group)))
+
+const removeSessionStoragePrefixes = (
+  storage: OptionResetStorage,
+  prefixes: ReadonlyArray<string>,
+): void => {
+  prefixes.forEach((prefix) => storage.removeSessionStorageByPrefix(prefix))
+}
+
+const getSessionStorageEntries = (
+  storage: OptionResetStorage,
+  prefixes: ReadonlyArray<string>,
+): ReadonlyArray<OptionResetSessionStorageEntry> =>
+  prefixes.flatMap((prefix) => storage.getSessionStorageEntriesByPrefix(prefix))
+
+const restoreSessionStorageEntries = (
+  storage: OptionResetStorage,
+  entries: ReadonlyArray<OptionResetSessionStorageEntry>,
+): void => {
+  entries.forEach(({key, value}) => storage.setSessionStorageItem(key, value))
+}
+
+const resetWithSessionStorageRollback = async (
+  storage: OptionResetStorage,
+  prefixes: ReadonlyArray<string>,
+  reset: () => Promise<OptionResetResult>,
+): Promise<OptionResetResult> => {
+  const entries = getSessionStorageEntries(storage, prefixes)
+  let resetResult: OptionResetResult
+
+  try {
+    removeSessionStoragePrefixes(storage, prefixes)
+    resetResult = await reset()
+  } catch (error: unknown) {
+    try {
+      restoreSessionStorageEntries(storage, entries)
+    } catch (restoreError: unknown) {
+      throw new AggregateError(
+        [error, restoreError],
+        'Failed to restore session storage after option reset failure.',
+      )
+    }
+
+    throw error
+  }
+
+  if (resetResult.status === 'partial') {
+    restoreSessionStorageEntries(storage, entries)
+  }
+
+  return resetResult
+}
 
 const readTossSnapshots = (
   storage: OptionResetStorage,
@@ -369,7 +454,11 @@ export const createOptionResetManager = (
       if (group.id === 'entry') {
         await options.resetEntrySession()
       }
-      return resetKeys(group.storageKeys)
+      return resetWithSessionStorageRollback(
+        options.storage,
+        getSessionStoragePrefixes(group),
+        () => resetKeys(group.storageKeys),
+      )
     })
   }
 
@@ -388,40 +477,62 @@ export const createOptionResetManager = (
     resetAll: () =>
       withResetError(async () => {
         await options.resetEntrySession()
-        const storageResult = await removeKeys(options.storage, getAllKeys())
-        if (storageResult.status === 'partial') {
-          return {
-            ...storageResult,
-            preservedCount: storageResult.preservedCount + LOCALE_RESET_STORAGE_COUNT,
-          }
-        }
+        return resetWithSessionStorageRollback(
+          options.storage,
+          getAllSessionStoragePrefixes(),
+          async () => {
+            const storageResult = await removeKeys(options.storage, getAllKeys())
+            if (storageResult.status === 'partial') {
+              return {
+                ...storageResult,
+                preservedCount: storageResult.preservedCount + LOCALE_RESET_STORAGE_COUNT,
+              }
+            }
 
-        try {
-          await options.resetLocale()
-        } catch {
-          return {
-            preservedCount: 0,
-            resetCount: getAllKeys().length,
-            status: 'partial',
-            unresolvedCount: LOCALE_RESET_STORAGE_COUNT,
-          }
-        }
+            try {
+              await options.resetLocale()
+            } catch {
+              return {
+                preservedCount: 0,
+                resetCount: getAllKeys().length,
+                status: 'partial',
+                unresolvedCount: LOCALE_RESET_STORAGE_COUNT,
+              }
+            }
 
-        return COMPLETE_RESET_RESULT
+            return COMPLETE_RESET_RESULT
+          },
+        )
       }),
   }
 }
 
 const runtimeStorage: OptionResetStorage = {
+  getSessionStorageEntriesByPrefix: (prefix) => {
+    const matchingKeys = Array.from({length: sessionStorage.length}, (_, index) =>
+      sessionStorage.key(index),
+    ).filter((key): key is string => key !== null && key.startsWith(prefix))
+    return matchingKeys.flatMap((key) => {
+      const value = sessionStorage.getItem(key)
+      return value === null ? [] : [{key, value}]
+    })
+  },
   async getToss(key) {
     const storage = await loadTossStorage()
     return storage.getItem(key)
+  },
+  removeSessionStorageByPrefix: (prefix) => {
+    const matchingKeys = Array.from({length: sessionStorage.length}, (_, index) =>
+      sessionStorage.key(index),
+    ).filter((key): key is string => key !== null && key.startsWith(prefix))
+    matchingKeys.forEach((key) => sessionStorage.removeItem(key))
   },
   async removeToss(key) {
     const storage = await loadTossStorage()
     await storage.removeItem(key)
   },
   removeWeb: (key) => localStorage.removeItem(key),
+  setSessionStorageItem: (key, value) => sessionStorage.setItem(key, value),
   async setToss(key, value) {
     const storage = await loadTossStorage()
     await storage.setItem(key, value)
@@ -442,6 +553,7 @@ export const createRuntimeOptionResetManager = (): OptionResetManager =>
     resetEntrySession: async () => {
       await settleEntryHistoryWrites()
       sessionStorage.removeItem('pomo:focus-room-entry:v1')
+      clearEntryEventPlaybackSession()
     },
     resetLocale: () => resetLocaleStorage(runtimeLocaleStorage),
     storage: runtimeStorage,

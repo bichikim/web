@@ -309,8 +309,8 @@ it('should update overflow through ResizeObserver and disconnect it during clean
 
 it('should update overflow from window resize when ResizeObserver is unavailable', () => {
   vi.stubGlobal('ResizeObserver', undefined)
-  const addEventListener = vi.spyOn(window, 'addEventListener')
-  const removeEventListener = vi.spyOn(window, 'removeEventListener')
+  const addEventListener = vi.spyOn(globalThis, 'addEventListener')
+  const removeEventListener = vi.spyOn(globalThis, 'removeEventListener')
   const view = render(() => (
     <PAlbumTrackList
       albumTitle="Album"
@@ -329,7 +329,7 @@ it('should update overflow from window resize when ResizeObserver is unavailable
     scrollHeight: {configurable: true, value: 126},
   })
 
-  window.dispatchEvent(new Event('resize'))
+  globalThis.dispatchEvent(new Event('resize'))
   expect(addEventListener).toHaveBeenCalledWith('resize', expect.any(Function))
   expect(getOverflowIndicator()).toHaveClass('i-tabler-chevron-down')
 

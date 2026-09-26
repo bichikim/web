@@ -6,8 +6,8 @@ import {afterEach, beforeEach, expect, it, vi} from 'vitest'
 import {useDesktopSettingsState} from '../../desktop-surface/use-settings-state'
 import {closeDesktopDialog} from '../../../features/desktop-mode/dialogs'
 import {
-  usePDisplayPreferences,
   type PDisplayPreferencesController,
+  usePDisplayPreferences,
 } from 'src/features/focus-room-display-preferences'
 import {useUiAutoHide} from 'src/features/ui-auto-hide'
 import {PSettings} from '../../p-settings/PSettings'
@@ -29,9 +29,11 @@ const seoulLocation = {
 
 const displayPreferences = {
   dialogueComposerVisible: () => true,
+  featureRequestVisible: () => true,
   isReady: () => true,
   memoryAssistVisible: () => true,
   onDialogueComposerVisibleChange: vi.fn(),
+  onFeatureRequestVisibleChange: vi.fn(),
   onMemoryAssistVisibleChange: vi.fn(),
   onPlayerVisibleChange: vi.fn(),
   onPomodoroVisibleChange: vi.fn(),
@@ -42,6 +44,7 @@ const displayPreferences = {
   toolsButtonVisible: () => true,
   tourButtonVisible: () => true,
 } satisfies PDisplayPreferencesController
+const onDesktopModeChange = vi.fn().mockResolvedValue(undefined)
 
 beforeEach(() => {
   vi.clearAllMocks()
@@ -58,9 +61,12 @@ beforeEach(() => {
     activity: () => 'reading',
     background: {} as ReturnType<typeof useDesktopSettingsState>['background'],
     canUseGyroscope: () => true,
-    desktopMode: {mode: () => 'interactiveDesktop'} as ReturnType<
-      typeof useDesktopSettingsState
-    >['desktopMode'],
+    desktopMode: {
+      error: () => 'native failed',
+      isChanging: () => true,
+      mode: () => 'interactiveDesktop',
+      onModeChange: onDesktopModeChange,
+    } as ReturnType<typeof useDesktopSettingsState>['desktopMode'],
     gaze: () => 'focused',
     motionInput: () => 'drag',
     motionMode: () => 'depth',
@@ -100,9 +106,13 @@ it('should pass desktop settings state to the window presentation', () => {
 
   expect(props).toMatchObject({
     activity: 'reading',
+    desktopMode: 'interactiveDesktop',
+    desktopModeError: 'native failed',
     gaze: 'focused',
+    isDesktopModeChanging: true,
     motionInput: 'drag',
     motionMode: 'depth',
+    onDesktopModeChange,
     playerVisible: true,
     pomodoroVisible: true,
     presentation: 'window',

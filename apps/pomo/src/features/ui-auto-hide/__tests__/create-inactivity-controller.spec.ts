@@ -12,11 +12,11 @@ it('should reset the deadline, defer while blocked, and cancel on disposal', () 
   const onHiddenChange = vi.fn()
   const controller = createInactivityController({
     enabled: () => true,
-    isSuspended: () => false,
     isBlocked: () => blocked,
-    seconds: () => 15,
+    isSuspended: () => false,
     onHiddenChange,
     schedule,
+    seconds: () => 15,
   })
   controller.wake()
   expect(schedule).toHaveBeenLastCalledWith(expect.any(Function), 15_000)
@@ -42,11 +42,11 @@ it.each([
   const onHiddenChange = vi.fn()
   const controller = createInactivityController({
     enabled: () => enabled,
-    isSuspended: () => suspended,
     isBlocked: () => false,
-    seconds: () => 30,
+    isSuspended: () => suspended,
     onHiddenChange,
     schedule,
+    seconds: () => 30,
   })
   controller.wake()
   expect(onHiddenChange).toHaveBeenCalledWith(false)

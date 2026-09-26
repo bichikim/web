@@ -15,10 +15,8 @@ const createRepository = () => {
       values.set(key, value)
     },
   } satisfies PScenePreferencesStorage
-  const reportError = vi.fn()
   return {
-    reportError,
-    repository: createPScenePreferencesRepository({reportError, storage}),
+    repository: createPScenePreferencesRepository({storage}),
     storage,
   }
 }
@@ -26,6 +24,32 @@ const createRepository = () => {
 const preferences = {activity: 'typing', gaze: 'user', timeMode: 'night'} as const
 
 describe('createPScenePreferencesRepository', () => {
+  it('should prefer native preferences over a stale browser copy', async () => {
+    const {repository, storage} = createRepository()
+    const stalePreferences = {activity: 'reading', gaze: 'focused', timeMode: 'day'} as const
+    storage.writeWeb('pomo:focus-room-scene-preferences:v1', stalePreferences)
+    storage.readToss.mockResolvedValue(preferences)
+
+    await expect(repository.read()).resolves.toEqual(preferences)
+    expect(storage.readToss).toHaveBeenCalledWith('pomo:focus-room-scene-preferences:v1')
+    expect(storage.writeToss).not.toHaveBeenCalled()
+    expect(storage.readWeb('pomo:focus-room-scene-preferences:v1')).toEqual(preferences)
+  })
+
+  it('should keep a newer write when a native read completes late', async () => {
+    const {repository, storage} = createRepository()
+    const nativeRead = Promise.withResolvers<unknown>()
+    const stalePreferences = {activity: 'reading', gaze: 'focused', timeMode: 'day'} as const
+    storage.readToss.mockReturnValue(nativeRead.promise)
+
+    const pendingRead = repository.read()
+    await repository.write(preferences)
+    nativeRead.resolve(stalePreferences)
+
+    await expect(pendingRead).resolves.toEqual(preferences)
+    expect(storage.readWeb('pomo:focus-room-scene-preferences:v1')).toEqual(preferences)
+  })
+
   it('should keep write revisions independent across repositories', async () => {
     const first = createRepository()
     const second = createRepository()
@@ -56,14 +80,105 @@ describe('createPScenePreferencesRepository', () => {
     await pendingWrite
   })
 
-  it('should report a failed native repair through the supplied boundary', async () => {
-    const {repository, storage, reportError} = createRepository()
+  it('should fall back to browser preferences when native reads fail', async () => {
+    const {repository, storage} = createRepository()
     const error = new Error('unavailable')
     storage.writeWeb('pomo:focus-room-scene-preferences:v1', preferences)
-    storage.writeToss.mockRejectedValue(error)
+    storage.readToss.mockRejectedValue(error)
 
     await expect(repository.read()).resolves.toEqual(preferences)
-    await vi.waitFor(() => expect(reportError).toHaveBeenCalledWith(error))
+    expect(storage.writeToss).not.toHaveBeenCalled()
+  })
+
+  it('should restore native preferences when browser marker reads fail', async () => {
+    const writeWeb = vi.fn()
+    const repository = createPScenePreferencesRepository({
+      storage: {
+        readToss: vi.fn(async () => preferences),
+        readWeb: () => {
+          throw new Error('browser unavailable')
+        },
+        usesTossStorage: () => true,
+        writeToss: vi.fn(async () => undefined),
+        writeWeb,
+      },
+    })
+
+    await expect(repository.read()).resolves.toEqual(preferences)
+    expect(writeWeb).toHaveBeenCalledWith('pomo:focus-room-scene-preferences:v1', preferences)
+  })
+
+  it('should preserve browser preferences after a native write fails', async () => {
+    const {repository, storage} = createRepository()
+    storage.writeToss.mockRejectedValueOnce(new Error('unavailable'))
+
+    await expect(repository.write(preferences)).resolves.toBeUndefined()
+    await expect(repository.read()).resolves.toEqual(preferences)
+  })
+
+  it('should preserve browser preferences after a native write fails and the repository reloads', async () => {
+    const values = new Map<string, unknown>()
+    const stalePreferences = {
+      activity: 'reading',
+      gaze: 'focused',
+      timeMode: 'day',
+    } as const
+    let nativePreferences: unknown = stalePreferences
+    let shouldFailNativeWrite = true
+    const readToss = vi.fn(async () => nativePreferences)
+    const writeToss = vi.fn(async (_key: string, value: unknown) => {
+      if (shouldFailNativeWrite) {
+        shouldFailNativeWrite = false
+        throw new Error('unavailable')
+      }
+      nativePreferences = value
+    })
+    const createRepositoryFromStorage = () =>
+      createPScenePreferencesRepository({
+        storage: {
+          readToss,
+          readWeb: (key: string) => values.get(key) ?? null,
+          usesTossStorage: () => true,
+          writeToss,
+          writeWeb: (key: string, value: unknown) => {
+            values.set(key, value)
+          },
+        },
+      })
+    const repository = createRepositoryFromStorage()
+
+    await expect(repository.read()).resolves.toEqual(stalePreferences)
+    await repository.write(preferences)
+
+    return expect(createRepositoryFromStorage().read())
+      .resolves.toEqual(preferences)
+      .then(() => {
+        expect(nativePreferences).toEqual(stalePreferences)
+        expect(readToss).toHaveBeenCalledOnce()
+      })
+  })
+
+  it('should retry native reads after a failed native write', async () => {
+    const {repository, storage} = createRepository()
+    const initialNativePreferences = {
+      activity: 'reading',
+      gaze: 'focused',
+      timeMode: 'day',
+    } as const
+    const recoveredNativePreferences = {
+      activity: 'writing',
+      gaze: 'user',
+      timeMode: 'auto',
+    } as const
+    storage.readToss.mockResolvedValueOnce(initialNativePreferences)
+
+    await expect(repository.read()).resolves.toEqual(initialNativePreferences)
+    storage.writeToss.mockRejectedValueOnce(new Error('unavailable'))
+    await repository.write(preferences)
+    storage.readToss.mockResolvedValueOnce(recoveredNativePreferences)
+
+    await expect(repository.read()).resolves.toEqual(recoveredNativePreferences)
+    expect(storage.readToss).toHaveBeenCalledTimes(2)
   })
 
   it('should recover the native queue after a failed explicit write', async () => {

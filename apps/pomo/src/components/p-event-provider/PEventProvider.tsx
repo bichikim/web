@@ -5,6 +5,7 @@ import {usePEventController} from '../../features/focus-room-dialogue/use-p-even
 
 export interface PEventProviderProps {
   readonly children: JSX.Element
+  readonly isDelayedEndEventEnabled?: boolean
   readonly isPlaybackEnabled?: boolean
 }
 

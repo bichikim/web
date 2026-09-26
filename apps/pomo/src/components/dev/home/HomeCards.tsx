@@ -9,6 +9,7 @@ import {StorageCard} from './StorageCard'
 import {CARD_CLASSES} from './shared'
 import {SoundGenerationCard} from './SoundGenerationCard'
 import {TextMoodCard} from './TextMoodCard'
+import {WorldCard} from './WorldCard'
 
 export function HomeCards() {
   return (
@@ -66,6 +67,7 @@ export function HomeCards() {
         </div>
         <span class="mt-8 text-sm font-700 text-#b8e8d0">3D 실험실 열기 →</span>
       </A>
+      <WorldCard />
       <AiConversationCard />
 
       <A class={CARD_CLASSES} href="/dev/voice">

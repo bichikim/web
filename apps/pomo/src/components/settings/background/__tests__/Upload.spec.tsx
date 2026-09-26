@@ -41,7 +41,7 @@ it('should prevent file navigation outside the target only while mounted', () =>
   const drop = () => {
     const event = new Event('drop', {cancelable: true})
     Object.defineProperty(event, 'dataTransfer', {value: {types: ['Files']}})
-    window.dispatchEvent(event)
+    globalThis.dispatchEvent(event)
     return event.defaultPrevented
   }
   expect(drop()).toBe(true)

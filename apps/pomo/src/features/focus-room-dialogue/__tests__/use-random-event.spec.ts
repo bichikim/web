@@ -1,21 +1,32 @@
 /** @vitest-environment jsdom */
 
 import {render} from '@solidjs/testing-library'
+import {PreferenceProvider, usePreference} from 'src/hooks/use-preference'
 import {afterEach, beforeEach, expect, it, vi} from 'vitest'
 
 import {
-  RANDOM_EVENT_SETTINGS_CHANGED_EVENT,
-  readRandomEventSettings,
-  writeRandomEventSettings,
+  createRandomEventPreferenceOptions,
+  type RandomEventSettings,
 } from '../random-event-settings'
 import {getRandomEventDelay, useRandomEvent, type UseRandomEventProps} from '../use-random-event'
+
+const settingsMocks = vi.hoisted(() => ({
+  read: vi.fn(),
+  write: vi.fn(),
+}))
 
 vi.mock('../random-event-settings', async (importOriginal) => {
   const actual = await importOriginal<typeof import('../random-event-settings')>()
 
   return {
     ...actual,
-    readRandomEventSettings: vi.fn(actual.readRandomEventSettings),
+    createRandomEventPreferenceOptions: (options = {}) => ({
+      ...actual.createRandomEventPreferenceOptions(options),
+      storage: {
+        read: () => settingsMocks.read(),
+        write: (_key: string, value: unknown) => settingsMocks.write(value),
+      },
+    }),
   }
 })
 
@@ -23,14 +34,33 @@ vi.mock('@apps-in-toss/web-framework', () => ({
   Storage: {getItem: vi.fn(), setItem: vi.fn()},
 }))
 
-const renderRandomEvent = (props: UseRandomEventProps) =>
-  render(() => {
-    useRandomEvent(props)
-    return null
-  })
+let documentHidden = false
+
+const changeVisibility = (hidden: boolean) => {
+  documentHidden = hidden
+  document.dispatchEvent(new Event('visibilitychange'))
+}
+
+const renderRandomEvent = (props: UseRandomEventProps) => {
+  let setSettings: (settings: RandomEventSettings) => void = () => undefined
+  const view = render(
+    () => {
+      const [, setPreference] = usePreference(createRandomEventPreferenceOptions())
+      setSettings = setPreference
+      useRandomEvent(props)
+      return null
+    },
+    {wrapper: PreferenceProvider},
+  )
+  return {setSettings, view}
+}
 
 beforeEach(() => {
   localStorage.clear()
+  settingsMocks.read.mockResolvedValue({maximumMinutes: 20, minimumMinutes: 10, version: 1})
+  settingsMocks.write.mockResolvedValue(undefined)
+  documentHidden = false
+  vi.spyOn(document, 'hidden', 'get').mockImplementation(() => documentHidden)
   vi.useFakeTimers()
 })
 
@@ -45,9 +75,57 @@ it('should calculate a delay within the configured interval', () => {
   )
 })
 
+it('should pause scheduling while the document is hidden', async () => {
+  settingsMocks.read.mockResolvedValue({maximumMinutes: 1, minimumMinutes: 1, version: 1})
+  const onEvent = vi.fn()
+  const result = renderRandomEvent({onEvent, random: () => 0})
+  await vi.advanceTimersByTimeAsync(0)
+
+  changeVisibility(true)
+  await vi.advanceTimersByTimeAsync(60_000)
+  expect(onEvent).not.toHaveBeenCalled()
+
+  changeVisibility(false)
+  await vi.advanceTimersByTimeAsync(60_000)
+  expect(onEvent).toHaveBeenCalledOnce()
+  result.view.unmount()
+})
+
+it('should wait for visibility before starting when initially hidden', async () => {
+  documentHidden = true
+  settingsMocks.read.mockResolvedValue({maximumMinutes: 1, minimumMinutes: 1, version: 1})
+  const onEvent = vi.fn()
+  const result = renderRandomEvent({onEvent, random: () => 0})
+  await vi.advanceTimersByTimeAsync(0)
+
+  await vi.advanceTimersByTimeAsync(60_000)
+  expect(onEvent).not.toHaveBeenCalled()
+
+  changeVisibility(false)
+  await vi.advanceTimersByTimeAsync(60_000)
+  expect(onEvent).toHaveBeenCalledOnce()
+  result.view.unmount()
+})
+
+it('should reschedule after a hidden timer when no visibilitychange event fires', async () => {
+  settingsMocks.read.mockResolvedValue({maximumMinutes: 1, minimumMinutes: 1, version: 1})
+  const onEvent = vi.fn()
+  const result = renderRandomEvent({onEvent, random: () => 0})
+  await vi.advanceTimersByTimeAsync(0)
+
+  documentHidden = true
+  await vi.advanceTimersByTimeAsync(60_000)
+  expect(onEvent).not.toHaveBeenCalled()
+
+  documentHidden = false
+  await vi.advanceTimersByTimeAsync(60_000)
+  expect(onEvent).toHaveBeenCalledOnce()
+  result.view.unmount()
+})
+
 it('should wait for earlier playback before scheduling another random event', async () => {
   const settings = {maximumMinutes: 2, minimumMinutes: 2, version: 1} as const
-  await writeRandomEventSettings(settings)
+  settingsMocks.read.mockResolvedValue(settings)
   const playbackResolvers: Array<() => void> = []
   const onEvent = vi.fn(
     () =>
@@ -66,14 +144,11 @@ it('should wait for earlier playback before scheduling another random event', as
   await vi.advanceTimersByTimeAsync(2 * 60_000)
   expect(onEvent).toHaveBeenCalledTimes(2)
   playbackResolvers[1]?.()
-  result.unmount()
+  result.view.unmount()
 })
 
 it('should keep scheduling without playback and stop after unmount', async () => {
-  localStorage.setItem(
-    'pomo:random-event-settings:v1',
-    JSON.stringify({isEnabled: false, maximumMinutes: 1, minimumMinutes: 1, version: 1}),
-  )
+  settingsMocks.read.mockResolvedValue({maximumMinutes: 1, minimumMinutes: 1, version: 1})
   const onEvent = vi.fn()
   const result = renderRandomEvent({onEvent, random: () => 0})
   await vi.advanceTimersByTimeAsync(0)
@@ -82,7 +157,7 @@ it('should keep scheduling without playback and stop after unmount', async () =>
   expect(onEvent).toHaveBeenCalledOnce()
   await vi.advanceTimersByTimeAsync(60_000)
   expect(onEvent).toHaveBeenCalledTimes(2)
-  result.unmount()
+  result.view.unmount()
   await vi.advanceTimersByTimeAsync(60_000)
   expect(onEvent).toHaveBeenCalledTimes(2)
 })
@@ -91,25 +166,15 @@ it('should apply changed interval settings while running', async () => {
   const onEvent = vi.fn()
   const result = renderRandomEvent({onEvent, random: () => 0})
   await vi.advanceTimersByTimeAsync(0)
-  window.dispatchEvent(new Event(RANDOM_EVENT_SETTINGS_CHANGED_EVENT))
-  window.dispatchEvent(
-    new CustomEvent(RANDOM_EVENT_SETTINGS_CHANGED_EVENT, {
-      detail: {maximumMinutes: 0, minimumMinutes: 2, version: 1},
-    }),
-  )
-  window.dispatchEvent(
-    new CustomEvent(RANDOM_EVENT_SETTINGS_CHANGED_EVENT, {
-      detail: {maximumMinutes: 1, minimumMinutes: 1, version: 1},
-    }),
-  )
+  result.setSettings({maximumMinutes: 1, minimumMinutes: 1, version: 1})
 
   await vi.advanceTimersByTimeAsync(60_000)
   expect(onEvent).toHaveBeenCalledOnce()
-  result.unmount()
+  result.view.unmount()
 })
 
 it('should apply a changed interval after earlier playback completes', async () => {
-  await writeRandomEventSettings({maximumMinutes: 1, minimumMinutes: 1, version: 1})
+  settingsMocks.read.mockResolvedValue({maximumMinutes: 1, minimumMinutes: 1, version: 1})
   const playbackResolvers: Array<() => void> = []
   const onEvent = vi.fn(
     () =>
@@ -120,11 +185,7 @@ it('should apply a changed interval after earlier playback completes', async () 
   const result = renderRandomEvent({onEvent, random: () => 0})
   await vi.advanceTimersByTimeAsync(0)
   await vi.advanceTimersByTimeAsync(60_000)
-  window.dispatchEvent(
-    new CustomEvent(RANDOM_EVENT_SETTINGS_CHANGED_EVENT, {
-      detail: {maximumMinutes: 2, minimumMinutes: 2, version: 1},
-    }),
-  )
+  result.setSettings({maximumMinutes: 2, minimumMinutes: 2, version: 1})
 
   await vi.advanceTimersByTimeAsync(2 * 60_000)
   expect(onEvent).toHaveBeenCalledOnce()
@@ -132,7 +193,7 @@ it('should apply a changed interval after earlier playback completes', async () 
   await vi.advanceTimersByTimeAsync(2 * 60_000)
   expect(onEvent).toHaveBeenCalledTimes(2)
   playbackResolvers[1]?.()
-  result.unmount()
+  result.view.unmount()
 })
 
 it('should preserve newer event settings when an older storage read completes', async () => {
@@ -148,26 +209,22 @@ it('should preserve newer event settings when an older storage read completes', 
   }>((resolve) => {
     resolveSettings = resolve
   })
-  vi.mocked(readRandomEventSettings).mockReturnValueOnce(settingsPromise)
+  settingsMocks.read.mockReturnValueOnce(settingsPromise)
   const onEvent = vi.fn()
   const result = renderRandomEvent({onEvent, random: () => 0})
 
-  window.dispatchEvent(
-    new CustomEvent(RANDOM_EVENT_SETTINGS_CHANGED_EVENT, {
-      detail: {maximumMinutes: 1, minimumMinutes: 1, version: 1},
-    }),
-  )
+  result.setSettings({maximumMinutes: 1, minimumMinutes: 1, version: 1})
   resolveSettings({maximumMinutes: 20, minimumMinutes: 20, version: 1})
   await vi.advanceTimersByTimeAsync(0)
 
   await vi.advanceTimersByTimeAsync(60_000)
   expect(onEvent).toHaveBeenCalledOnce()
-  result.unmount()
+  result.view.unmount()
 })
 
 it('should become ready with defaults when loading settings rejects', async () => {
   const error = new Error('settings unavailable')
-  vi.mocked(readRandomEventSettings).mockRejectedValueOnce(error)
+  settingsMocks.read.mockRejectedValueOnce(error)
   const consoleError = vi.spyOn(console, 'error').mockImplementation(() => undefined)
   const onEvent = vi.fn()
   const result = renderRandomEvent({onEvent, random: () => 0})
@@ -176,7 +233,7 @@ it('should become ready with defaults when loading settings rejects', async () =
 
   expect(consoleError).toHaveBeenCalledWith('Failed to load random event settings.', error)
   expect(onEvent).toHaveBeenCalledOnce()
-  result.unmount()
+  result.view.unmount()
 })
 
 it('should not become ready when loading settings rejects after unmount', async () => {
@@ -184,17 +241,17 @@ it('should not become ready when loading settings rejects after unmount', async 
   const settingsPromise = new Promise<never>((_resolve, reject) => {
     rejectSettings = reject
   })
-  vi.mocked(readRandomEventSettings).mockReturnValueOnce(settingsPromise)
+  settingsMocks.read.mockReturnValueOnce(settingsPromise)
   const consoleError = vi.spyOn(console, 'error').mockImplementation(() => undefined)
   const onEvent = vi.fn()
   const result = renderRandomEvent({onEvent, random: () => 0})
   const error = new Error('late settings failure')
 
-  result.unmount()
+  result.view.unmount()
   rejectSettings(error)
   await vi.advanceTimersByTimeAsync(0)
 
-  expect(consoleError).toHaveBeenCalledWith('Failed to load random event settings.', error)
+  expect(consoleError).not.toHaveBeenCalled()
   expect(onEvent).not.toHaveBeenCalled()
 })
 
@@ -212,5 +269,5 @@ it('should report a rejected event and continue scheduling', async () => {
 
   await vi.advanceTimersByTimeAsync(10 * 60_000)
   expect(onEvent).toHaveBeenCalledTimes(2)
-  result.unmount()
+  result.view.unmount()
 })

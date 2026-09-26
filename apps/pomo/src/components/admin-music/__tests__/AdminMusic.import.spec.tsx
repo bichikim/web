@@ -1,4 +1,7 @@
 /** @vitest-environment jsdom */
+
+import 'fake-indexeddb/auto'
+
 import {createMemoryHistory, MemoryRouter, Route} from '@solidjs/router'
 import {fireEvent, render, screen, waitFor} from '@solidjs/testing-library'
 import {expect, it, vi} from 'vitest'

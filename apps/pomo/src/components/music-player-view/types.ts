@@ -8,6 +8,7 @@ export interface MusicPlayerViewProps {
   readonly currentIndex: number
   readonly currentTrack?: PTrack
   readonly expanded: boolean
+  readonly isPreparing: boolean
   readonly isPlaying: boolean
   readonly isPlaylistLoading: boolean
   readonly levels: readonly number[]
@@ -15,6 +16,7 @@ export interface MusicPlayerViewProps {
   readonly onAlbumClear?: () => void
   readonly onExpandedChange: () => void
   readonly onNextTrack: () => void
+  readonly onPause?: () => void
   readonly onPreviousTrack: () => void
   readonly onPreviewEnd?: () => void
   readonly onPreviewStart?: (stopPreview: () => void) => void

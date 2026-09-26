@@ -4,6 +4,7 @@ import * as m from '@paraglide/message'
 import {usePEvents} from '../../features/focus-room-dialogue'
 import {
   editMemoryMemo,
+  isMemoryMemoDeletionPending,
   type MemoryMemo,
   memoryMemoDeletion,
   updateMemoryMemos,
@@ -32,10 +33,16 @@ export const MemoryMemoList = () => {
 
   const handleEdit = async (memo: MemoryMemo, edit: MemoryMemoEdit) => {
     const now = new Date()
+    const hasPendingExactReminder =
+      edit.exactReminderAt === memo.exactReminderAt &&
+      edit.exactReminderAdvanceMinutes === memo.exactReminderAdvanceMinutes &&
+      memo.nextExactReminderAt !== null &&
+      Date.parse(memo.nextExactReminderAt) > now.getTime()
 
     if (
       edit.exactEnabled &&
-      !isFirstReminderInFuture(edit.exactReminderAt, edit.exactReminderAdvanceMinutes, now)
+      !isFirstReminderInFuture(edit.exactReminderAt, edit.exactReminderAdvanceMinutes, now) &&
+      !hasPendingExactReminder
     ) {
       return m.memory_memo_invalid_time()
     }
@@ -45,7 +52,7 @@ export const MemoryMemoList = () => {
     try {
       await updateMemoryMemos((currentMemos) =>
         currentMemos.map((currentMemo) => {
-          if (currentMemo.id !== memo.id || currentMemo.deletionPending === true) {
+          if (currentMemo.id !== memo.id || isMemoryMemoDeletionPending(currentMemo)) {
             return currentMemo
           }
 

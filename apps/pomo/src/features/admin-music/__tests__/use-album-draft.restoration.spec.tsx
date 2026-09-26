@@ -29,7 +29,7 @@ describe('album draft restoration', () => {
     const {cleanup, result} = renderAlbumDraft()
     await waitForRestoration(result)
     storageMocks.writeAlbumDraftReference.mockClear()
-    window.dispatchEvent(new Event('pageshow'))
+    globalThis.dispatchEvent(new Event('pageshow'))
     await waitFor(() => expect(storageMocks.writeAlbumDraftReference).toHaveBeenCalledOnce())
     const heartbeat = intervals.mock.calls.find(([, delay]) => delay === 3_600_000)?.[0]
     if (typeof heartbeat !== 'function') {
@@ -43,7 +43,7 @@ describe('album draft restoration', () => {
     })
     cleanup()
     storageMocks.writeAlbumDraftReference.mockClear()
-    window.dispatchEvent(new Event('pageshow'))
+    globalThis.dispatchEvent(new Event('pageshow'))
     heartbeat()
     await flushPromises()
     expect(storageMocks.writeAlbumDraftReference).not.toHaveBeenCalled()
@@ -57,7 +57,7 @@ describe('album draft restoration', () => {
       createDraft({coverDraftId: 'stored-cover', hasCoverFile: true}),
     )
     storageMocks.readAlbumDraftCover.mockResolvedValue(PREPARED_COVER)
-    const addEventListener = vi.spyOn(window, 'addEventListener')
+    const addEventListener = vi.spyOn(globalThis, 'addEventListener')
     const {cleanup, result} = renderAlbumDraft()
 
     await waitForRestoration(result)
@@ -68,11 +68,11 @@ describe('album draft restoration', () => {
     })
     const persistedPageHide = new Event('pagehide')
     Object.defineProperty(persistedPageHide, 'persisted', {value: true})
-    window.dispatchEvent(persistedPageHide)
+    globalThis.dispatchEvent(persistedPageHide)
     await flushPromises()
     expect(storageMocks.deleteAlbumDraftReference).not.toHaveBeenCalled()
 
-    window.dispatchEvent(new Event('pagehide'))
+    globalThis.dispatchEvent(new Event('pagehide'))
     expect(addEventListener).toHaveBeenCalledWith('pagehide', expect.any(Function))
     await waitFor(() =>
       expect(storageMocks.deleteAlbumDraftReference).toHaveBeenCalledWith(
@@ -272,6 +272,179 @@ describe('album draft restoration', () => {
     cleanup()
   })
 
+  it('should report when cover flag normalization cannot be persisted', async () => {
+    const draft = createDraft({hasCoverFile: true})
+    const error = new Error('quota exceeded')
+    const warning = vi.spyOn(console, 'warn').mockImplementation(() => undefined)
+    storageMocks.readAlbumDraftData.mockReturnValue(draft)
+    storageMocks.writeAlbumDraftData.mockReturnValue({error, success: false})
+    const {cleanup, result, setMessage} = renderAlbumDraft()
+
+    await waitForRestoration(result)
+
+    expect(warning).toHaveBeenCalledWith(
+      'Failed to restore the admin album draft.',
+      expect.objectContaining({cause: error}),
+    )
+    expect(setMessage).toHaveBeenCalledWith(
+      '브라우저 초안을 복원했지만 저장하지 못했습니다. 이 탭을 닫기 전에 다시 시도해 주세요.',
+    )
+    expect(result.coverPreviewUrl()).toBeNull()
+    expect(storageMocks.deleteExpiredAlbumDraftCovers).not.toHaveBeenCalled()
+    expect(storageMocks.writeAlbumDraftReference).toHaveBeenLastCalledWith({
+      coverDraftId: null,
+      referenceId: COVER_DRAFT_ID,
+    })
+    cleanup()
+  })
+
+  it('should normalize an orphan cover identifier without a cover file', async () => {
+    const draft = createDraft({coverDraftId: 'orphan-cover'})
+    storageMocks.readAlbumDraftData.mockReturnValue(draft)
+    const {cleanup, result} = renderAlbumDraft()
+
+    await waitForRestoration(result)
+
+    expect(storageMocks.writeAlbumDraftData).toHaveBeenCalledWith({
+      ...draft,
+      coverDraftId: null,
+    })
+    expect(storageMocks.deleteExpiredAlbumDraftCovers).toHaveBeenCalledWith({
+      activeCoverDraftId: null,
+    })
+    expect(storageMocks.writeAlbumDraftReference).toHaveBeenCalledOnce()
+    expect(storageMocks.writeAlbumDraftReference).toHaveBeenLastCalledWith({
+      coverDraftId: null,
+      referenceId: COVER_DRAFT_ID,
+    })
+    expect(storageMocks.writeAlbumDraftData.mock.invocationCallOrder[0]).toBeLessThan(
+      storageMocks.writeAlbumDraftReference.mock.invocationCallOrder[0],
+    )
+    expect(storageMocks.writeAlbumDraftReference.mock.invocationCallOrder[0]).toBeLessThan(
+      storageMocks.deleteExpiredAlbumDraftCovers.mock.invocationCallOrder[0],
+    )
+    expect(result.coverPreviewUrl()).toBeNull()
+
+    await result.handleAlbumSubmit(createSubmitEvent().event)
+    expect(JSON.parse(String(vi.mocked(fetch).mock.calls[0]?.[1]?.body))).toMatchObject({
+      coverDraftId: null,
+    })
+    cleanup()
+  })
+
+  it('should report when orphan cover normalization cannot be persisted', async () => {
+    const draft = createDraft({
+      coverDraftId: 'orphan-cover',
+      coverFallback: 'cd',
+      coverImageUrl: 'https://example.com/orphan.webp',
+    })
+    const error = new Error('quota exceeded')
+    const warning = vi.spyOn(console, 'warn').mockImplementation(() => undefined)
+    storageMocks.readAlbumDraftData.mockReturnValue(draft)
+    storageMocks.writeAlbumDraftData.mockReturnValue({error, success: false})
+    const {cleanup, result, setMessage} = renderAlbumDraft()
+
+    await waitForRestoration(result)
+
+    expect(warning).toHaveBeenCalledWith(
+      'Failed to restore the admin album draft.',
+      expect.objectContaining({cause: error}),
+    )
+    expect(setMessage).toHaveBeenCalledWith(
+      '브라우저 초안을 복원했지만 저장하지 못했습니다. 이 탭을 닫기 전에 다시 시도해 주세요.',
+    )
+    expect(result.albumTranslations()).toEqual(createTranslations())
+    expect(result.coverFallback()).toBe('cd')
+    expect(result.coverImageUrl()).toBe('https://example.com/orphan.webp')
+    expect(storageMocks.deleteExpiredAlbumDraftCovers).not.toHaveBeenCalled()
+    expect(storageMocks.writeAlbumDraftReference).toHaveBeenLastCalledWith({
+      coverDraftId: 'orphan-cover',
+      referenceId: COVER_DRAFT_ID,
+    })
+    await result.handleAlbumSubmit(createSubmitEvent().event)
+    expect(storageMocks.writeAlbumDraftData).toHaveBeenLastCalledWith(
+      expect.objectContaining({coverDraftId: null, hasCoverFile: false}),
+    )
+    expect(JSON.parse(String(vi.mocked(fetch).mock.calls[0]?.[1]?.body))).toMatchObject({
+      coverDraftId: null,
+    })
+    cleanup()
+    await waitFor(() =>
+      expect(storageMocks.deleteAlbumDraftReference).toHaveBeenCalledWith(COVER_DRAFT_ID),
+    )
+  })
+
+  it('should report when orphan cover reference update cannot be persisted', async () => {
+    const draft = createDraft({
+      coverDraftId: 'orphan-cover',
+      coverFallback: 'cd',
+      coverImageUrl: 'https://example.com/orphan.webp',
+    })
+    const error = new Error('reference unavailable')
+    const warning = vi.spyOn(console, 'warn').mockImplementation(() => undefined)
+    storageMocks.readAlbumDraftData.mockReturnValue(draft)
+    storageMocks.writeAlbumDraftReference.mockResolvedValueOnce({error, success: false})
+    const {cleanup, result, setMessage} = renderAlbumDraft()
+
+    await waitForRestoration(result)
+
+    expect(warning).toHaveBeenCalledWith(
+      'Failed to restore the admin album draft.',
+      expect.objectContaining({cause: error}),
+    )
+    expect(setMessage).toHaveBeenCalledWith(
+      '브라우저 초안을 복원했지만 저장하지 못했습니다. 이 탭을 닫기 전에 다시 시도해 주세요.',
+    )
+    expect(result.albumTranslations()).toEqual(createTranslations())
+    expect(result.coverFallback()).toBe('cd')
+    expect(result.coverImageUrl()).toBe('https://example.com/orphan.webp')
+    expect(storageMocks.deleteExpiredAlbumDraftCovers).not.toHaveBeenCalled()
+    expect(storageMocks.writeAlbumDraftReference).toHaveBeenCalledTimes(2)
+    expect(storageMocks.writeAlbumDraftReference).toHaveBeenNthCalledWith(1, {
+      coverDraftId: null,
+      referenceId: COVER_DRAFT_ID,
+    })
+    expect(storageMocks.writeAlbumDraftReference).toHaveBeenLastCalledWith({
+      coverDraftId: 'orphan-cover',
+      referenceId: COVER_DRAFT_ID,
+    })
+    await result.handleAlbumSubmit(createSubmitEvent().event)
+    expect(JSON.parse(String(vi.mocked(fetch).mock.calls[0]?.[1]?.body))).toMatchObject({
+      coverDraftId: null,
+    })
+    cleanup()
+  })
+
+  it('should preserve every failure when restoring an orphan reference also fails', async () => {
+    const draft = createDraft({coverDraftId: 'orphan-cover'})
+    const referenceError = new Error('reference unavailable')
+    const compensationError = new Error('reference recovery unavailable')
+    const warning = vi.spyOn(console, 'warn').mockImplementation(() => undefined)
+    storageMocks.readAlbumDraftData.mockReturnValue(draft)
+    storageMocks.writeAlbumDraftReference
+      .mockResolvedValueOnce({error: referenceError, success: false})
+      .mockResolvedValueOnce({error: compensationError, success: false})
+    const {cleanup, result, setMessage} = renderAlbumDraft()
+
+    await waitForRestoration(result)
+
+    const restorationError = warning.mock.calls[0]?.[1]
+    expect(restorationError).toBeInstanceOf(AggregateError)
+    expect(restorationError).toMatchObject({
+      errors: [
+        expect.objectContaining({cause: referenceError}),
+        expect.objectContaining({cause: compensationError}),
+      ],
+    })
+    expect(setMessage).toHaveBeenCalledWith(
+      '브라우저 초안을 복원했지만 저장하지 못했습니다. 이 탭을 닫기 전에 다시 시도해 주세요.',
+    )
+    expect(storageMocks.writeAlbumDraftReference).toHaveBeenCalledTimes(2)
+    expect(storageMocks.deleteExpiredAlbumDraftCovers).not.toHaveBeenCalled()
+    expect(result.coverPreviewUrl()).toBeNull()
+    cleanup()
+  })
+
   it('should restore a persisted cover and revoke its preview during cleanup', async () => {
     storageMocks.readAlbumDraftData.mockReturnValue(
       createDraft({coverDraftId: 'stored-cover', hasCoverFile: true}),
@@ -285,6 +458,38 @@ describe('album draft restoration', () => {
     expect(URL.createObjectURL).toHaveBeenCalledWith(PREPARED_COVER)
     cleanup()
     expect(URL.revokeObjectURL).toHaveBeenCalledWith('blob:album-cover')
+  })
+
+  it('should preserve cover metadata when reading its persisted cover fails', async () => {
+    const draft = createDraft({coverDraftId: 'stored-cover', hasCoverFile: true})
+    const error = new Error('indexed db unavailable')
+    const warning = vi.spyOn(console, 'warn').mockImplementation(() => undefined)
+    storageMocks.readAlbumDraftData.mockReturnValue(draft)
+    storageMocks.readAlbumDraftCover.mockRejectedValue(error)
+    const {cleanup, result, setMessage} = renderAlbumDraft()
+
+    await waitForRestoration(result)
+
+    expect(warning).toHaveBeenCalledWith(
+      'Failed to restore the admin album draft.',
+      expect.objectContaining({cause: error}),
+    )
+    expect(setMessage).toHaveBeenCalledWith(
+      '브라우저 초안을 읽지 못했습니다. 저장된 내용은 변경하지 않고 이 탭에 유지합니다.',
+    )
+    expect(storageMocks.writeAlbumDraftData).not.toHaveBeenCalled()
+    expect(storageMocks.writeAlbumDraftReference).toHaveBeenLastCalledWith({
+      coverDraftId: 'stored-cover',
+      referenceId: COVER_DRAFT_ID,
+    })
+    await result.handleAlbumSubmit(createSubmitEvent().event)
+    expect(storageMocks.writeAlbumDraftData).toHaveBeenLastCalledWith(
+      expect.objectContaining({coverDraftId: 'stored-cover', hasCoverFile: false}),
+    )
+    expect(JSON.parse(String(vi.mocked(fetch).mock.calls[0]?.[1]?.body))).toMatchObject({
+      coverDraftId: null,
+    })
+    cleanup()
   })
 
   it('should normalize draft data when its persisted cover is missing', async () => {
@@ -302,6 +507,119 @@ describe('album draft restoration', () => {
     cleanup()
   })
 
+  it('should report when missing cover normalization cannot be persisted', async () => {
+    const draft = createDraft({coverDraftId: 'missing-cover', hasCoverFile: true})
+    const error = new Error('quota exceeded')
+    const warning = vi.spyOn(console, 'warn').mockImplementation(() => undefined)
+    storageMocks.readAlbumDraftData.mockReturnValue(draft)
+    storageMocks.writeAlbumDraftData.mockReturnValue({error, success: false})
+    const {cleanup, result, setMessage} = renderAlbumDraft()
+
+    await waitForRestoration(result)
+
+    expect(warning).toHaveBeenCalledWith(
+      'Failed to restore the admin album draft.',
+      expect.objectContaining({cause: error}),
+    )
+    expect(setMessage).toHaveBeenCalledWith(
+      '브라우저 초안을 복원했지만 저장하지 못했습니다. 이 탭을 닫기 전에 다시 시도해 주세요.',
+    )
+    expect(result.coverPreviewUrl()).toBeNull()
+    expect(storageMocks.writeAlbumDraftReference).toHaveBeenLastCalledWith({
+      coverDraftId: 'missing-cover',
+      referenceId: COVER_DRAFT_ID,
+    })
+    await result.handleAlbumSubmit(createSubmitEvent().event)
+    expect(JSON.parse(String(vi.mocked(fetch).mock.calls[0]?.[1]?.body))).toMatchObject({
+      coverDraftId: null,
+    })
+    cleanup()
+  })
+
+  it('should report when missing cover reference update cannot be persisted', async () => {
+    const draft = createDraft({coverDraftId: 'missing-cover', hasCoverFile: true})
+    const error = new Error('reference unavailable')
+    const warning = vi.spyOn(console, 'warn').mockImplementation(() => undefined)
+    storageMocks.readAlbumDraftData.mockReturnValue(draft)
+    storageMocks.writeAlbumDraftReference
+      .mockResolvedValueOnce({success: true})
+      .mockResolvedValueOnce({error, success: false})
+    const {cleanup, result, setMessage} = renderAlbumDraft()
+
+    await waitForRestoration(result)
+
+    expect(warning).toHaveBeenCalledWith(
+      'Failed to restore the admin album draft.',
+      expect.objectContaining({cause: error}),
+    )
+    expect(setMessage).toHaveBeenCalledWith(
+      '브라우저 초안을 복원했지만 저장하지 못했습니다. 이 탭을 닫기 전에 다시 시도해 주세요.',
+    )
+    expect(result.coverPreviewUrl()).toBeNull()
+    expect(storageMocks.writeAlbumDraftReference).toHaveBeenCalledTimes(3)
+    expect(storageMocks.writeAlbumDraftReference).toHaveBeenLastCalledWith({
+      coverDraftId: 'missing-cover',
+      referenceId: COVER_DRAFT_ID,
+    })
+    await result.handleAlbumSubmit(createSubmitEvent().event)
+    expect(JSON.parse(String(vi.mocked(fetch).mock.calls[0]?.[1]?.body))).toMatchObject({
+      coverDraftId: null,
+    })
+    cleanup()
+  })
+
+  it('should report when expired cover cleanup cannot be persisted', async () => {
+    const error = new Error('cleanup unavailable')
+    const warning = vi.spyOn(console, 'warn').mockImplementation(() => undefined)
+    storageMocks.readAlbumDraftData.mockReturnValue(
+      createDraft({coverFallback: 'cd', coverImageUrl: 'https://example.com/cover.webp'}),
+    )
+    storageMocks.deleteExpiredAlbumDraftCovers.mockResolvedValue({error, success: false})
+    const {cleanup, result, setMessage} = renderAlbumDraft()
+
+    await waitForRestoration(result)
+
+    expect(warning).toHaveBeenCalledWith(
+      'Failed to restore the admin album draft.',
+      expect.objectContaining({cause: error}),
+    )
+    expect(setMessage).toHaveBeenCalledWith(
+      '브라우저 초안은 복원했지만 오래된 커버를 정리하지 못했습니다. 이 탭을 닫기 전에 다시 시도해 주세요.',
+    )
+    expect(result.coverFallback()).toBe('cd')
+    expect(result.coverImageUrl()).toBe('https://example.com/cover.webp')
+    cleanup()
+  })
+
+  it('should show every user-facing message when restoration has multiple failures', async () => {
+    const coverReadError = new Error('cover read unavailable')
+    const cleanupError = new Error('cleanup unavailable')
+    const warning = vi.spyOn(console, 'warn').mockImplementation(() => undefined)
+    storageMocks.readAlbumDraftData.mockReturnValue(
+      createDraft({coverDraftId: 'stored-cover', hasCoverFile: true}),
+    )
+    storageMocks.readAlbumDraftCover.mockRejectedValue(coverReadError)
+    storageMocks.deleteExpiredAlbumDraftCovers.mockResolvedValue({
+      error: cleanupError,
+      success: false,
+    })
+    const {cleanup, result, setMessage} = renderAlbumDraft()
+
+    await waitForRestoration(result)
+
+    expect(warning).toHaveBeenCalledWith(
+      'Failed to restore the admin album draft.',
+      expect.any(AggregateError),
+    )
+    expect(setMessage).toHaveBeenCalledWith(
+      [
+        '브라우저 초안은 복원했지만 오래된 커버를 정리하지 못했습니다. 이 탭을 닫기 전에 다시 시도해 주세요.',
+        '브라우저 초안을 읽지 못했습니다. 저장된 내용은 변경하지 않고 이 탭에 유지합니다.',
+      ].join('\n'),
+    )
+    cleanup()
+  })
+
   it('should report restoration failures while the hook remains mounted', async () => {
     const warning = vi.spyOn(console, 'warn').mockImplementation(() => undefined)
     storageMocks.readAlbumDraftData.mockImplementation(() => {
@@ -316,7 +634,7 @@ describe('album draft restoration', () => {
       expect.any(Error),
     )
     expect(setMessage).toHaveBeenCalledWith(
-      '브라우저 초안을 복원하지 못했습니다. 새로 입력한 내용은 이 탭에 유지됩니다.',
+      '브라우저 초안을 읽지 못했습니다. 저장된 내용은 변경하지 않고 이 탭에 유지합니다.',
     )
     cleanup()
   })

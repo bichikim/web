@@ -6,11 +6,17 @@ import {createSignal, type JSX} from 'solid-js'
 import {beforeEach, describe, expect, it, vi} from 'vitest'
 
 import {
+  type EventBindingItem,
   type PDialogue,
   type PEventContextValue,
   usePEvents,
 } from '../../../features/focus-room-dialogue'
-import {type PFeedController, usePFeedContext} from '../../../features/focus-room-feed'
+import {
+  type FeedDialogueListItem,
+  type PFeedController,
+  usePFeedContext,
+} from '../../../features/focus-room-feed'
+import {PreferenceProvider} from '../../../hooks/use-preference'
 
 vi.mock('@kobalte/core/tabs', () => ({Tabs: {Content: vi.fn()}}))
 vi.mock('solid-js', async () => {
@@ -52,18 +58,38 @@ vi.mock('../EventSettingRow', () => ({
 vi.mock('../ConnectionMenu', () => ({
   DialogueConnectionMenu: (props: {
     readonly accessibleLabel: string
+    readonly actions?: ReadonlyArray<{readonly id: string; readonly label: string}>
     readonly dialogues: ReadonlyArray<PDialogue>
     readonly disabled: boolean
     readonly getMetadata: (dialogue: PDialogue) => string
-    readonly onChange: (dialogueIds: ReadonlyArray<string>) => void
-    readonly selectedDialogueIds: ReadonlyArray<string>
+    readonly onChange: (items: ReadonlyArray<EventBindingItem>) => void
+    readonly selectedItems?: ReadonlyArray<EventBindingItem>
   }) => (
     <button
       aria-label={props.accessibleLabel}
       data-metadata={props.dialogues.map((dialogue) => props.getMetadata(dialogue)).join('|')}
-      data-selected-dialogues={props.selectedDialogueIds.join(',')}
+      data-selected-dialogues={props.selectedItems
+        ?.filter((item) => item.type === 'dialogue')
+        .map((item) => item.id)
+        .join(',')}
       disabled={props.disabled}
-      onClick={() => props.onChange(props.dialogues.map((dialogue) => dialogue.id))}
+      onClick={() =>
+        props.onChange([
+          ...props.dialogues.map(
+            (dialogue): EventBindingItem => ({id: dialogue.id, type: 'dialogue'}),
+          ),
+          ...(props.actions ?? []).map(
+            (action): EventBindingItem => ({
+              id: action.id as
+                | 'music-start'
+                | 'music-stop'
+                | 'sound-effects-start'
+                | 'sound-effects-stop',
+              type: 'action',
+            }),
+          ),
+        ])
+      }
       type="button"
     >
       연결
@@ -112,12 +138,16 @@ const createEvents = (overrides: Partial<PEventContextValue> = {}): PEventContex
   activeSegmentPosition: () => null,
   activeText: () => null,
   activeViseme: () => 'rest',
+  cancelDelayedEndEvent: vi.fn(),
+  delayedEndEventDurationMinutes: () => 30,
+  delayedEndEventIsRunning: () => false,
   deleteDialogue: vi.fn(async () => undefined),
   dialogues: () => [DIALOGUE],
   enterFocusRoom: vi.fn(),
   entryDialogueId: () => null,
   entryDialogueIds: () => [],
   errorMessage: () => null,
+  eventActionIds: () => ({}),
   eventDialogueIds: () => ({}),
   eventPlaybackModes: () => ({}),
   getAudio: vi.fn(async () => null),
@@ -133,15 +163,19 @@ const createEvents = (overrides: Partial<PEventContextValue> = {}): PEventContex
   playDialogueEvents: vi.fn(async () => undefined),
   playDialogueSequence: vi.fn(async () => undefined),
   refreshDialogues: vi.fn(async () => undefined),
+  registerEventActionExecutor: vi.fn(() => vi.fn()),
   retryDialoguePlayback: vi.fn(),
   retryEntryPlayback: vi.fn(),
   scheduledDialogueCount: () => 0,
+  setDelayedEndEventDuration: vi.fn(async () => undefined),
   setEntryDialogue: vi.fn(async () => undefined),
   setEntryDialogues: vi.fn(async () => undefined),
   setEventDialogue: vi.fn(async () => undefined),
   setEventDialogues: vi.fn(async () => undefined),
+  setEventItems: vi.fn(async () => undefined),
   setEventPlaybackMode: vi.fn(async () => undefined),
   skipDialoguePlayback: vi.fn(),
+  startDelayedEndEvent: vi.fn(),
   ...overrides,
 })
 
@@ -188,23 +222,71 @@ describe('PDialogueSettingsContent', () => {
       eventPlaybackModes: () => ({'focus-start': 'random-all'}),
     })
     vi.mocked(usePEvents).mockReturnValue(events)
-    render(() => <PDialogueSettingsContent onRequestClose={vi.fn()} />)
+    render(() => <PDialogueSettingsContent onRequestClose={vi.fn()} />, {
+      wrapper: PreferenceProvider,
+    })
 
     expect(screen.getAllByText('Yuna · 1:01 · 1개 말풍선')).toHaveLength(1)
-    expect(screen.getByRole('button', {name: '입장 대화 연결'})).toHaveAttribute(
+    expect(screen.getByRole('button', {name: '입장 대화 및 행동 연결'})).toHaveAttribute(
       'data-metadata',
       'Yuna · 1:01 · 1개 말풍선|retired-voice · 1:01 · 1개 말풍선',
     )
-    fireEvent.click(screen.getByRole('button', {name: '포모도르 집중 시작 대화 연결'}))
+    fireEvent.click(screen.getByRole('button', {name: '포모도르 집중 시작 대화 및 행동 연결'}))
     fireEvent.click(screen.getByRole('button', {name: '포모도르 집중 시작 재생 방식'}))
     fireEvent.click(screen.getAllByRole('button', {name: '삭제'})[0]!)
     fireEvent.click(screen.getByRole('button', {name: '취소'}))
     fireEvent.click(screen.getAllByRole('button', {name: '삭제'})[0]!)
     fireEvent.click(screen.getByRole('button', {name: '삭제 확인'}))
 
-    expect(events.setEventDialogues).toHaveBeenCalledWith('focus-start', [DIALOGUE.id, second.id])
+    expect(events.setEventItems).toHaveBeenCalledWith('focus-start', [
+      {id: DIALOGUE.id, type: 'dialogue'},
+      {id: second.id, type: 'dialogue'},
+      {id: 'music-stop', type: 'action'},
+      {id: 'music-start', type: 'action'},
+      {id: 'sound-effects-stop', type: 'action'},
+      {id: 'sound-effects-start', type: 'action'},
+    ])
     expect(events.setEventPlaybackMode).toHaveBeenCalledWith('focus-start', 'random-one')
-    expect(events.deleteDialogue).toHaveBeenCalledWith(DIALOGUE.id)
+    expect(FEEDS.onDeleteDialogue).toHaveBeenCalledWith(DIALOGUE.id)
+    expect(events.deleteDialogue).not.toHaveBeenCalled()
+  })
+
+  it('should use feed deletion lifecycle for a feed dialogue in the library', async () => {
+    const feedDialogue: FeedDialogueListItem = {
+      dialogue: DIALOGUE,
+      metadata: {
+        createdAt: '2026-08-15T00:00:00.000Z',
+        dialogueId: DIALOGUE.id,
+        expiresAt: '2026-08-17T00:00:00.000Z',
+        feedConnectionId: 'feed-1',
+        feedItemId: 'item-1',
+        itemTitle: '피드 대화',
+        listenedAt: null,
+        publishedAt: '2026-08-15T00:00:00.000Z',
+        sourceTitle: '테스트 피드',
+        sourceUrl: 'https://example.com/article',
+        version: 1,
+      },
+    }
+    const events = createEvents()
+    const onDeleteDialogue = vi.fn(async () => undefined)
+    vi.mocked(usePEvents).mockReturnValue(events)
+    vi.mocked(usePFeedContext).mockReturnValue({
+      ...FEEDS,
+      dialogues: () => [feedDialogue],
+      onDeleteDialogue,
+    })
+    render(() => (
+      <PreferenceProvider>
+        <PDialogueSettingsContent />
+      </PreferenceProvider>
+    ))
+
+    fireEvent.click(screen.getByRole('button', {name: '삭제'}))
+    fireEvent.click(screen.getByRole('button', {name: '삭제 확인'}))
+
+    await vi.waitFor(() => expect(onDeleteDialogue).toHaveBeenCalledWith(DIALOGUE.id))
+    expect(events.deleteDialogue).not.toHaveBeenCalled()
   })
 
   it('should report loading, empty, and failed event updates', async () => {
@@ -212,12 +294,12 @@ describe('PDialogueSettingsContent', () => {
       dialogues: () => [],
       errorMessage: () => '저장소 오류',
       isLoading: () => true,
-      setEventDialogues: vi.fn(async () => {
+      setEventItems: vi.fn(async () => {
         throw new Error('failed')
       }),
     })
     vi.mocked(usePEvents).mockReturnValue(events)
-    render(() => <PDialogueSettingsContent />)
+    render(() => <PDialogueSettingsContent />, {wrapper: PreferenceProvider})
 
     expect(screen.getByText('이벤트와 대화를 불러오는 중')).toBeInTheDocument()
     expect(screen.getByText('대화를 불러오는 중')).toBeInTheDocument()
@@ -228,7 +310,9 @@ describe('PDialogueSettingsContent', () => {
     const onRequestClose = vi.fn()
     const missingAudioEvents = createEvents()
     vi.mocked(usePEvents).mockReturnValue(missingAudioEvents)
-    render(() => <PDialogueSettingsContent onRequestClose={onRequestClose} />)
+    render(() => <PDialogueSettingsContent onRequestClose={onRequestClose} />, {
+      wrapper: PreferenceProvider,
+    })
 
     fireEvent.click(screen.getByRole('button', {name: '듣기'}))
     await vi.waitFor(() =>
@@ -254,7 +338,7 @@ describe('PDialogueSettingsContent', () => {
       dialogues: () => [DIALOGUE, {...DIALOGUE, id: 'second', text: '다른 대화'}],
     })
     vi.mocked(usePEvents).mockReturnValue(events)
-    render(() => <PDialogueSettingsContent />)
+    render(() => <PDialogueSettingsContent />, {wrapper: PreferenceProvider})
     const rows = within(screen.getByRole('list', {name: '저장된 대화'})).getAllByRole('listitem')
     fireEvent.click(within(rows[0]!).getByRole('button', {name: '캐릭터로 듣기'}))
     expect(await within(rows[0]!).findByRole('status')).toHaveTextContent(
@@ -276,7 +360,9 @@ describe('PDialogueSettingsContent', () => {
       }),
     })
     vi.mocked(usePEvents).mockReturnValue(events)
-    render(() => <PDialogueSettingsContent onRequestClose={onRequestClose} />)
+    render(() => <PDialogueSettingsContent onRequestClose={onRequestClose} />, {
+      wrapper: PreferenceProvider,
+    })
 
     fireEvent.click(screen.getByRole('button', {name: '캐릭터로 듣기'}))
 
@@ -292,7 +378,9 @@ describe('PDialogueSettingsContent', () => {
     const audio = Promise.withResolvers<Blob>()
     const events = createEvents({getAudio: vi.fn(() => audio.promise)})
     vi.mocked(usePEvents).mockReturnValue(events)
-    const view = render(() => <PDialogueSettingsContent onRequestClose={onRequestClose} />)
+    const view = render(() => <PDialogueSettingsContent onRequestClose={onRequestClose} />, {
+      wrapper: PreferenceProvider,
+    })
 
     fireEvent.click(screen.getByRole('button', {name: '캐릭터로 듣기'}))
     view.unmount()
@@ -311,7 +399,7 @@ describe('PDialogueSettingsContent', () => {
         : actual.createSignal(initialValue)) as typeof createSignal)
     const events = createEvents({getAudio: vi.fn(async () => new Blob(['audio']))})
     vi.mocked(usePEvents).mockReturnValue(events)
-    render(() => <PDialogueSettingsContent />)
+    render(() => <PDialogueSettingsContent />, {wrapper: PreferenceProvider})
 
     fireEvent.click(screen.getByRole('button', {name: '듣기'}))
 
@@ -327,7 +415,7 @@ describe('PDialogueSettingsContent', () => {
     const play = vi.spyOn(HTMLMediaElement.prototype, 'play').mockResolvedValue(undefined)
     const events = createEvents({getAudio: vi.fn(async () => new Blob(['audio']))})
     vi.mocked(usePEvents).mockReturnValue(events)
-    render(() => <PDialogueSettingsContent />)
+    render(() => <PDialogueSettingsContent />, {wrapper: PreferenceProvider})
 
     fireEvent.click(screen.getByRole('button', {name: '듣기'}))
     await vi.waitFor(() => expect(play).toHaveBeenCalledOnce())
@@ -347,7 +435,7 @@ describe('PDialogueSettingsContent', () => {
       }),
     })
     vi.mocked(usePEvents).mockReturnValue(events)
-    render(() => <PDialogueSettingsContent />)
+    render(() => <PDialogueSettingsContent />, {wrapper: PreferenceProvider})
 
     fireEvent.click(screen.getByRole('button', {name: '듣기'}))
     await vi.waitFor(() => expect(screen.getAllByText('음성을 재생하지 못했어요.')).toHaveLength(1))
@@ -372,7 +460,7 @@ describe('PDialogueSettingsContent', () => {
         .mockResolvedValueOnce(null),
     })
     vi.mocked(usePEvents).mockReturnValue(events)
-    render(() => <PDialogueSettingsContent />)
+    render(() => <PDialogueSettingsContent />, {wrapper: PreferenceProvider})
 
     fireEvent.click(screen.getByRole('button', {name: '듣기'}))
     fireEvent.click(screen.getByRole('button', {name: '듣기'}))
@@ -392,7 +480,7 @@ describe('PDialogueSettingsContent', () => {
         .mockResolvedValueOnce(null),
     })
     vi.mocked(usePEvents).mockReturnValue(events)
-    render(() => <PDialogueSettingsContent />)
+    render(() => <PDialogueSettingsContent />, {wrapper: PreferenceProvider})
 
     fireEvent.click(screen.getByRole('button', {name: '듣기'}))
     fireEvent.click(screen.getByRole('button', {name: '듣기'}))
@@ -402,13 +490,11 @@ describe('PDialogueSettingsContent', () => {
 
   it('should report failed event changes and dialogue deletion', async () => {
     const second = {...DIALOGUE, id: 'second-dialogue'} satisfies PDialogue
+    vi.mocked(FEEDS.onDeleteDialogue).mockRejectedValueOnce(new Error('delete'))
     const events = createEvents({
-      deleteDialogue: vi.fn(async () => {
-        throw new Error('delete')
-      }),
       dialogues: () => [DIALOGUE, second],
       eventDialogueIds: () => ({'focus-start': [DIALOGUE.id, second.id]}),
-      setEventDialogues: vi.fn(async () => {
+      setEventItems: vi.fn(async () => {
         throw new Error('binding')
       }),
       setEventPlaybackMode: vi.fn(async () => {
@@ -416,10 +502,10 @@ describe('PDialogueSettingsContent', () => {
       }),
     })
     vi.mocked(usePEvents).mockReturnValue(events)
-    render(() => <PDialogueSettingsContent />)
+    render(() => <PDialogueSettingsContent />, {wrapper: PreferenceProvider})
 
-    fireEvent.click(screen.getByRole('button', {name: '입장 대화 연결'}))
-    await vi.waitFor(() => expect(events.setEventDialogues).toHaveBeenCalledOnce())
+    fireEvent.click(screen.getByRole('button', {name: '입장 대화 및 행동 연결'}))
+    await vi.waitFor(() => expect(events.setEventItems).toHaveBeenCalledOnce())
     fireEvent.click(screen.getByRole('button', {name: '포모도르 집중 시작 재생 방식'}))
     await vi.waitFor(() => expect(events.setEventPlaybackMode).toHaveBeenCalledOnce())
     fireEvent.click(screen.getAllByRole('button', {name: '삭제'})[0]!)
@@ -429,11 +515,11 @@ describe('PDialogueSettingsContent', () => {
 
   it('should render an empty dialogue library after loading finishes', () => {
     vi.mocked(usePEvents).mockReturnValue(createEvents({dialogues: () => []}))
-    render(() => <PDialogueSettingsContent />)
+    render(() => <PDialogueSettingsContent />, {wrapper: PreferenceProvider})
 
     expect(
       screen.getByText('아직 저장된 대화가 없어요. 새 대화를 만들어 보세요.'),
     ).toBeInTheDocument()
-    expect(screen.getByRole('button', {name: '입장 대화 연결'})).toBeDisabled()
+    expect(screen.getByRole('button', {name: '입장 대화 및 행동 연결'})).not.toBeDisabled()
   })
 })

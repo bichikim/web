@@ -1,7 +1,7 @@
 import {createMemo, createSignal, Show, untrack} from 'solid-js'
 
 import {PButton} from '../p-button/PButton'
-import type {PomodoroTimerConfig} from '../../features/pomodoro-timer'
+import {POMODORO_TIMER_LIMITS, type PomodoroTimerConfig} from '../../features/pomodoro-timer'
 import * as m from '@paraglide/message'
 import {DurationField} from '../pomodoro-duration-editor/Field'
 import {CLASSES} from '../pomodoro-duration-editor/shared'
@@ -13,8 +13,6 @@ interface DurationDraft {
   readonly shortBreak: string
 }
 
-const MAX_DURATION_MINUTES = 120
-const MAX_FOCUS_SESSIONS = 12
 const MIN_DURATION_MINUTES = 1
 const MIN_FOCUS_SESSIONS = 1
 const SECONDS_PER_MINUTE = 60
@@ -39,7 +37,7 @@ const parseDurationMinutes = (value: string) => {
   if (
     !Number.isInteger(minutes) ||
     minutes < MIN_DURATION_MINUTES ||
-    minutes > MAX_DURATION_MINUTES
+    minutes > POMODORO_TIMER_LIMITS.maxDurationMinutes
   ) {
     return null
   }
@@ -71,7 +69,7 @@ export const PPomodoroDurationEditor = (props: PPomodoroDurationEditorProps) => 
       shortBreakMinutes === null ||
       !Number.isInteger(sessionCount) ||
       sessionCount < MIN_FOCUS_SESSIONS ||
-      sessionCount > MAX_FOCUS_SESSIONS
+      sessionCount > POMODORO_TIMER_LIMITS.maxFocusSessions
     ) {
       return null
     }
@@ -120,8 +118,10 @@ export const PPomodoroDurationEditor = (props: PPomodoroDurationEditorProps) => 
           <div class={CLASSES.pomodoroPanelDurationFields}>
             <DurationField
               accessibleLabel={m.pomodoro_focus_count_accessible()}
+              decrementLabel={m.pomodoro_decrease({label: m.pomodoro_focus_count_accessible()})}
+              incrementLabel={m.pomodoro_increase({label: m.pomodoro_focus_count_accessible()})}
               label={m.pomodoro_focus_count_label()}
-              max={MAX_FOCUS_SESSIONS}
+              max={POMODORO_TIMER_LIMITS.maxFocusSessions}
               min={MIN_FOCUS_SESSIONS}
               onInput={(value) => setDraft((current) => ({...current, sessions: value}))}
               suffix={m.pomodoro_count_suffix()}
@@ -129,8 +129,10 @@ export const PPomodoroDurationEditor = (props: PPomodoroDurationEditorProps) => 
             />
             <DurationField
               accessibleLabel={m.pomodoro_focus_duration_accessible()}
+              decrementLabel={m.pomodoro_decrease({label: m.pomodoro_focus_duration_accessible()})}
+              incrementLabel={m.pomodoro_increase({label: m.pomodoro_focus_duration_accessible()})}
               label={m.pomodoro_focus_duration()}
-              max={MAX_DURATION_MINUTES}
+              max={POMODORO_TIMER_LIMITS.maxDurationMinutes}
               min={MIN_DURATION_MINUTES}
               onInput={(value) => setDraft((current) => ({...current, focus: value}))}
               suffix={m.pomodoro_minute_suffix()}
@@ -138,8 +140,10 @@ export const PPomodoroDurationEditor = (props: PPomodoroDurationEditorProps) => 
             />
             <DurationField
               accessibleLabel={m.pomodoro_short_break_accessible()}
+              decrementLabel={m.pomodoro_decrease({label: m.pomodoro_short_break_accessible()})}
+              incrementLabel={m.pomodoro_increase({label: m.pomodoro_short_break_accessible()})}
               label={m.pomodoro_short_break()}
-              max={MAX_DURATION_MINUTES}
+              max={POMODORO_TIMER_LIMITS.maxDurationMinutes}
               min={MIN_DURATION_MINUTES}
               onInput={(value) => setDraft((current) => ({...current, shortBreak: value}))}
               suffix={m.pomodoro_minute_suffix()}
@@ -147,8 +151,10 @@ export const PPomodoroDurationEditor = (props: PPomodoroDurationEditorProps) => 
             />
             <DurationField
               accessibleLabel={m.pomodoro_long_break_accessible()}
+              decrementLabel={m.pomodoro_decrease({label: m.pomodoro_long_break_accessible()})}
+              incrementLabel={m.pomodoro_increase({label: m.pomodoro_long_break_accessible()})}
               label={m.pomodoro_long_break_duration()}
-              max={MAX_DURATION_MINUTES}
+              max={POMODORO_TIMER_LIMITS.maxDurationMinutes}
               min={MIN_DURATION_MINUTES}
               onInput={(value) => setDraft((current) => ({...current, longBreak: value}))}
               suffix={m.pomodoro_minute_suffix()}

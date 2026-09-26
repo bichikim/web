@@ -3,8 +3,11 @@ import {afterEach, describe, expect, it, vi} from 'vitest'
 
 import {
   closeControlSurface,
+  forwardBackgroundMouseEvent,
   getBackgroundInteraction,
+  navigateBackgroundSurface,
   openControlSurface,
+  restoreBackgroundContent,
   restoreSurface,
   setBackgroundInteraction,
   setBackgroundSurface,
@@ -62,5 +65,54 @@ describe('desktop surface guest API', () => {
 
     await expect(openControlSurface(options)).resolves.toEqual({created: true})
     expect(invoke).toHaveBeenCalledWith('plugin:desktop-surface|open_control_surface', {options})
+  })
+
+  it('should navigate and restore the background document by window label', async () => {
+    vi.mocked(invoke).mockResolvedValue(undefined)
+
+    await navigateBackgroundSurface({label: 'background', url: 'https://example.com'})
+    await navigateBackgroundSurface({
+      label: 'background',
+      url: 'https://example.com/dashboard',
+      useChild: true,
+    })
+    await restoreBackgroundContent({label: 'background'})
+
+    expect(invoke).toHaveBeenNthCalledWith(
+      1,
+      'plugin:desktop-surface|navigate_background_surface',
+      {options: {label: 'background', url: 'https://example.com'}},
+    )
+    expect(invoke).toHaveBeenNthCalledWith(
+      2,
+      'plugin:desktop-surface|navigate_background_surface',
+      {options: {label: 'background', url: 'https://example.com/dashboard', useChild: true}},
+    )
+    expect(invoke).toHaveBeenNthCalledWith(3, 'plugin:desktop-surface|restore_background_content', {
+      label: 'background',
+    })
+  })
+
+  it('should forward a background mouse event as one command object', async () => {
+    vi.mocked(invoke).mockResolvedValue(undefined)
+    const options = {
+      altKey: false,
+      button: 0,
+      buttons: 1,
+      clickCount: 1,
+      ctrlKey: false,
+      kind: 'down' as const,
+      label: 'background',
+      metaKey: false,
+      shiftKey: false,
+      x: 120,
+      y: 80,
+    }
+
+    await forwardBackgroundMouseEvent(options)
+
+    expect(invoke).toHaveBeenCalledWith('plugin:desktop-surface|forward_background_mouse_event', {
+      options,
+    })
   })
 })

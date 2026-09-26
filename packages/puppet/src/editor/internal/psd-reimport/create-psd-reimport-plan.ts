@@ -97,11 +97,11 @@ const describeUpdate = (
     old.width !== source?.width ||
     old.height !== source?.height
   return {
-    id: target.id,
-    incomingId: part.id,
     detail: moved
       ? '크기·위치 변경 · 메시 위치를 유지하며 이미지 좌표 갱신'
       : '그림 갱신 · 기존 리깅 유지',
+    id: target.id,
+    incomingId: part.id,
     kind: 'update',
     name,
     part: updated,
@@ -150,10 +150,10 @@ export const createPsdReimportPlan = (
     return {
       document,
       incoming,
-      sourceId,
       mapping: new Map(),
-      sources,
       rows: [],
+      sourceId,
+      sources,
       viewportChanged: false,
     }
   }
@@ -178,7 +178,7 @@ export const createPsdReimportPlan = (
     const source = part.psdSource
     const name = source?.path.join(' / ') ?? part.id
     const targets = matches.get(part.id) ?? []
-    const target = targets[0]
+    const [target] = targets
     if (targets.length === 0) {
       rows.push({
         detail: '새 레이어 · 선택하면 추가',
@@ -210,8 +210,8 @@ export const createPsdReimportPlan = (
         detail: '원본에서 찾을 수 없음 · 기존 레이어 유지',
         id: `keep:${part.id}`,
         kind: 'keep',
-        removablePartId: isSceneNodeLocked(document, part.id) ? undefined : part.id,
         name: (part.psdSource?.path ?? paths.get(part.id) ?? [part.id]).join(' / '),
+        removablePartId: isSceneNodeLocked(document, part.id) ? undefined : part.id,
       })
     }
   }
@@ -228,10 +228,10 @@ export const createPsdReimportPlan = (
   return {
     document,
     incoming,
-    sourceId,
     mapping,
-    sources,
     rows: resolvedRows,
+    sourceId,
+    sources,
     viewportChanged:
       document.viewport.width !== incoming.viewport.width ||
       document.viewport.height !== incoming.viewport.height,

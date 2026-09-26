@@ -218,7 +218,7 @@ describe('HSelectRoot', () => {
       y: 0,
     })
 
-    Object.defineProperty(window, 'innerWidth', {
+    Object.defineProperty(globalThis, 'innerWidth', {
       configurable: true,
       value: 1280,
     })

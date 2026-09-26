@@ -1,14 +1,12 @@
+import {isPlainObject} from 'es-toolkit/predicate'
 import {handleAuthProxyRequest} from '@neondatabase/auth/server'
 
 import {readNeonAuthProxyConfig} from 'src/server/auth/neon-config'
 import {classifyAuthAccess} from './classify-auth-access'
 import type {NeonIdentity, NeonSession} from './types'
 
-const isRecord = (value: unknown): value is Readonly<Record<string, unknown>> =>
-  typeof value === 'object' && value !== null
-
 const parseIdentity = (value: unknown): NeonIdentity | null => {
-  if (!isRecord(value) || !isRecord(value.user)) {
+  if (!isPlainObject(value) || !isPlainObject(value.user)) {
     return null
   }
 
@@ -47,9 +45,11 @@ export const getNeonSession = async (request: Request): Promise<NeonSession> => 
   }
 
   const data: unknown = await response.json().catch(() => undefined)
+  const access = classifyAuthAccess(data)
+  const identity = parseIdentity(data)
   return {
-    access: classifyAuthAccess(data),
-    identity: parseIdentity(data),
+    access: identity === null && access !== 'anonymous' ? 'invalid' : access,
+    identity,
     provider: 'neon',
     setCookies,
   }

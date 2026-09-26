@@ -1,3 +1,4 @@
+import {createSerialTaskQueue} from 'src/utils/create-serial-task-queue'
 import type {AlbumDraftStorageResult} from './album-draft-storage'
 
 export type DraftReferenceUpdater = (
@@ -30,46 +31,49 @@ export const createDraftReferenceLifecycle = (
   let isReleased = false
   let referenceId: string | null = null
   let releasePromise: Promise<void> | null = null
+  const queue = createSerialTaskQueue()
 
   const setId = (id: string): void => {
     referenceId = id
   }
-  const update: DraftReferenceUpdater = async (nextCoverDraftId) => {
+  const update: DraftReferenceUpdater = (nextCoverDraftId) => {
     if (isReleased) {
-      return {
+      return Promise.resolve({
         error: new Error('The admin album draft reference has been released.'),
         success: false,
-      }
+      })
     }
 
     coverDraftId = nextCoverDraftId
     const currentReferenceId = referenceId
 
     if (currentReferenceId === null) {
-      return {
+      return Promise.resolve({
         error: new Error('The admin album draft reference has not been initialized.'),
         success: false,
-      }
-    }
-
-    try {
-      const {writeAlbumDraftReference} = await options.loadStorage()
-
-      if (isReleased) {
-        return {
-          error: new Error('The admin album draft reference has been released.'),
-          success: false,
-        }
-      }
-
-      return await writeAlbumDraftReference({
-        coverDraftId: nextCoverDraftId,
-        referenceId: currentReferenceId,
       })
-    } catch (error: unknown) {
-      console.warn('Failed to update the admin album draft reference.', error)
-      return {error, success: false}
     }
+
+    return queue.run(async () => {
+      try {
+        const {writeAlbumDraftReference} = await options.loadStorage()
+
+        if (isReleased) {
+          return {
+            error: new Error('The admin album draft reference has been released.'),
+            success: false,
+          }
+        }
+
+        return await writeAlbumDraftReference({
+          coverDraftId: nextCoverDraftId,
+          referenceId: currentReferenceId,
+        })
+      } catch (error: unknown) {
+        console.warn('Failed to update the admin album draft reference.', error)
+        return {error, success: false}
+      }
+    })
   }
   const release = (): Promise<void> => {
     if (releasePromise !== null) {
@@ -78,18 +82,24 @@ export const createDraftReferenceLifecycle = (
 
     isReleased = true
     const currentReferenceId = referenceId
-    releasePromise = (async () => {
+    releasePromise = queue.run(async () => {
       if (currentReferenceId === null) {
         return
       }
 
       try {
         const {deleteAlbumDraftReference} = await options.loadStorage()
-        await deleteAlbumDraftReference(currentReferenceId)
+        const result = await deleteAlbumDraftReference(currentReferenceId)
+        if (!result.success) {
+          console.warn(
+            'Failed to delete the admin album draft reference during release.',
+            result.error,
+          )
+        }
       } catch (error: unknown) {
         console.warn('Failed to delete the admin album draft reference.', error)
       }
-    })()
+    })
     return releasePromise
   }
 

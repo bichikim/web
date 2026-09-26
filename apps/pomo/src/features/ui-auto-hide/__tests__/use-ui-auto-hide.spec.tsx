@@ -1,6 +1,7 @@
 /** @vitest-environment jsdom */
 import {cleanup, renderHook} from '@solidjs/testing-library'
 import {afterEach, beforeEach, expect, it, vi} from 'vitest'
+import {PreferenceProvider} from 'src/hooks/use-preference'
 import {useUiAutoHide} from '../use-ui-auto-hide'
 
 beforeEach(() => {
@@ -12,7 +13,7 @@ afterEach(() => {
   vi.useRealTimers()
 })
 it('should remain visible by default and hide only after the selected inactivity delay', () => {
-  const {result} = renderHook(useUiAutoHide)
+  const {result} = renderHook(useUiAutoHide, {wrapper: PreferenceProvider})
   vi.advanceTimersByTime(300_000)
   expect(result.hidden()).toBe(false)
   result.onEnabledChange(true)
@@ -21,7 +22,7 @@ it('should remain visible by default and hide only after the selected inactivity
   expect(result.hidden()).toBe(false)
   vi.advanceTimersByTime(1)
   expect(result.hidden()).toBe(true)
-  window.dispatchEvent(new Event('pointermove'))
+  globalThis.dispatchEvent(new Event('pointermove'))
   expect(result.hidden()).toBe(false)
   vi.advanceTimersByTime(15_000)
   expect(result.hidden()).toBe(true)
@@ -29,12 +30,12 @@ it('should remain visible by default and hide only after the selected inactivity
   expect(result.hidden()).toBe(false)
 })
 it('should restore both preferences without losing the duration when disabled', () => {
-  const first = renderHook(useUiAutoHide)
+  const first = renderHook(useUiAutoHide, {wrapper: PreferenceProvider})
   first.result.onSecondsChange(60)
   first.result.onEnabledChange(true)
   first.result.onEnabledChange(false)
   first.cleanup()
-  const {result} = renderHook(useUiAutoHide)
+  const {result} = renderHook(useUiAutoHide, {wrapper: PreferenceProvider})
   expect(result.enabled()).toBe(false)
   expect(result.seconds()).toBe(60)
 })
@@ -43,19 +44,55 @@ it('should keep dialogs visible and cancel timers on disposal', () => {
   dialog.setAttribute('role', 'dialog')
   vi.spyOn(dialog, 'getClientRects').mockReturnValue({length: 1} as DOMRectList)
   document.body.append(dialog)
-  const view = renderHook(useUiAutoHide)
+  const view = renderHook(useUiAutoHide, {wrapper: PreferenceProvider})
   view.result.onEnabledChange(true)
   vi.advanceTimersByTime(30_000)
   expect(view.result.hidden()).toBe(false)
   dialog.remove()
-  window.dispatchEvent(new Event('keydown'))
+  globalThis.dispatchEvent(new Event('keydown'))
   vi.advanceTimersByTime(30_000)
   expect(view.result.hidden()).toBe(true)
   view.cleanup()
   expect(vi.getTimerCount()).toBe(0)
 })
+it('should restore visibility when a dialog opens after the UI is hidden', async () => {
+  const {result} = renderHook(useUiAutoHide, {wrapper: PreferenceProvider})
+  result.onEnabledChange(true)
+  vi.advanceTimersByTime(30_000)
+  expect(result.hidden()).toBe(true)
+
+  const dialog = document.createElement('div')
+  dialog.setAttribute('role', 'dialog')
+  vi.spyOn(dialog, 'getClientRects').mockReturnValue({length: 1} as DOMRectList)
+  document.body.append(dialog)
+
+  try {
+    await Promise.resolve()
+    expect(result.hidden()).toBe(false)
+  } finally {
+    dialog.remove()
+  }
+})
+it('should restore visibility when an existing visible element becomes a dialog', async () => {
+  const dialog = document.createElement('div')
+  vi.spyOn(dialog, 'getClientRects').mockReturnValue({length: 1} as DOMRectList)
+  document.body.append(dialog)
+
+  try {
+    const {result} = renderHook(useUiAutoHide, {wrapper: PreferenceProvider})
+    result.onEnabledChange(true)
+    vi.advanceTimersByTime(30_000)
+    expect(result.hidden()).toBe(true)
+
+    dialog.setAttribute('role', 'dialog')
+    await Promise.resolve()
+    expect(result.hidden()).toBe(false)
+  } finally {
+    dialog.remove()
+  }
+})
 it('should restart the countdown when the duration changes and ignore invalid durations', () => {
-  const {result} = renderHook(useUiAutoHide)
+  const {result} = renderHook(useUiAutoHide, {wrapper: PreferenceProvider})
   result.onEnabledChange(true)
   vi.advanceTimersByTime(20_000)
   result.onSecondsChange(5)
@@ -67,7 +104,7 @@ it('should restart the countdown when the duration changes and ignore invalid du
   expect(result.seconds()).toBe(5)
 })
 it('should restore visibility and restart the delay when returning to the document', () => {
-  const {result} = renderHook(useUiAutoHide)
+  const {result} = renderHook(useUiAutoHide, {wrapper: PreferenceProvider})
   result.onEnabledChange(true)
   vi.advanceTimersByTime(30_000)
   expect(result.hidden()).toBe(true)
@@ -79,9 +116,26 @@ it('should ignore closed dialog elements when hiding UI', () => {
   const dialog = document.createElement('div')
   dialog.setAttribute('role', 'dialog')
   document.body.append(dialog)
-  const {result} = renderHook(useUiAutoHide)
+  const {result} = renderHook(useUiAutoHide, {wrapper: PreferenceProvider})
   result.onEnabledChange(true)
   vi.advanceTimersByTime(30_000)
   expect(result.hidden()).toBe(true)
   dialog.remove()
+})
+
+it('should keep the UI visible while a manual tooltip popover is open', () => {
+  const tooltip = document.createElement('div')
+  tooltip.setAttribute('popover', 'manual')
+  tooltip.setAttribute('role', 'tooltip')
+  vi.spyOn(tooltip, 'getClientRects').mockReturnValue({length: 1} as DOMRectList)
+  document.body.append(tooltip)
+
+  try {
+    const {result} = renderHook(useUiAutoHide, {wrapper: PreferenceProvider})
+    result.onEnabledChange(true)
+    vi.advanceTimersByTime(30_000)
+    expect(result.hidden()).toBe(false)
+  } finally {
+    tooltip.remove()
+  }
 })

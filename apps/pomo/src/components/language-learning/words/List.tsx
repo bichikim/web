@@ -1,5 +1,5 @@
 import {cva, cx} from 'class-variance-authority'
-import {For, Show} from 'solid-js'
+import {createMemo, For, Show} from 'solid-js'
 import {type LanguageLearningWord} from '../../../features/language-learning'
 import {PSettingsEmptyState} from '../../settings/EmptyState'
 import {LanguageLearningWordPronunciationButton} from './PronunciationButton'
@@ -25,7 +25,6 @@ const WORD_SELECT_BUTTON_CLASS = cx(
 
 interface LanguageLearningWordListProps {
   readonly autoplayKey: () => string | null
-  readonly pronunciationBusy: boolean
   readonly getAudioUrl: (word: LanguageLearningWord) => string | null
   readonly emptyMessage: string
   readonly isPronunciationLoading: (word: LanguageLearningWord) => boolean
@@ -53,6 +52,7 @@ export const LanguageLearningWordList = (props: LanguageLearningWordListProps) =
         <For each={props.words}>
           {(word) => {
             const audioUrl = () => props.getAudioUrl(word)
+            const pronunciationLoading = createMemo(() => props.isPronunciationLoading(word))
             const selected = () =>
               props.selectedWords().some((selectedWord) => selectedWord.value === word.value)
 
@@ -69,8 +69,8 @@ export const LanguageLearningWordList = (props: LanguageLearningWordListProps) =
                 </button>
                 <LanguageLearningWordPronunciationButton
                   autoplay={props.autoplayKey() === `${word.language}:${word.value}`}
-                  disabled={props.pronunciationBusy && audioUrl() === null}
-                  loading={props.isPronunciationLoading(word)}
+                  disabled={pronunciationLoading()}
+                  loading={pronunciationLoading()}
                   onPress={() => props.onPronounce(word)}
                   src={audioUrl()}
                   word={word.value}

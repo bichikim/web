@@ -1,3 +1,5 @@
+import {getExceptionMessage} from '../error-detail'
+import {apiJsonRequest, parseJsonResponse} from '../api-json'
 import {query} from '@solidjs/router'
 
 import {type AdminCatalog, catalogSchema} from './catalog'
@@ -16,16 +18,16 @@ export type AdminCatalogQueryResult = AdminCatalogFailed | AdminCatalogReady
 
 const requestAdminCatalog = async (): Promise<AdminCatalogQueryResult> => {
   try {
-    const response = await fetch('/api/admin/music')
+    const response = await apiJsonRequest('admin/music', {retry: false})
 
     if (!response.ok) {
       throw new Error('음악 목록을 불러오지 못했습니다.')
     }
 
-    return {catalog: catalogSchema.parse(await response.json()), status: 'ready'}
+    return {catalog: await parseJsonResponse(response, catalogSchema), status: 'ready'}
   } catch (error: unknown) {
     return {
-      message: error instanceof Error ? error.message : '음악 목록을 불러오지 못했습니다.',
+      message: getExceptionMessage(error, '음악 목록을 불러오지 못했습니다.'),
       status: 'failed',
     }
   }

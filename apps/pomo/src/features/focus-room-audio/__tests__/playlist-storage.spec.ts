@@ -38,6 +38,36 @@ const createStorage = ({
   return storage
 }
 
+const createSharedNativeStorage = () => {
+  let nativePlaylist: StoredPlaylist | null = null
+  let webPlaylist: StoredPlaylist | null = null
+
+  const writeNative = async (playlist: StoredPlaylist) => {
+    nativePlaylist = playlist
+  }
+
+  const createAdapter = () =>
+    ({
+      readToss: vi.fn(async () => nativePlaylist),
+      readWeb: vi.fn(() => webPlaylist),
+      usesTossStorage: () => true,
+      writeToss: vi.fn(writeNative),
+      writeWeb: vi.fn((playlist: StoredPlaylist) => {
+        webPlaylist = playlist
+        return null
+      }),
+    }) satisfies PlaylistStorageAdapter
+
+  return {
+    clearWeb: () => {
+      webPlaylist = null
+    },
+    createAdapter,
+    getNative: () => nativePlaylist,
+    writeNative,
+  }
+}
+
 it('should persist and restore a browser playlist in order', async () => {
   const storage = createStorage()
   const playlistStorage = createPPlaylistStorage(storage, {now: () => 20})
@@ -127,52 +157,109 @@ it('should fall back to the browser playlist when Toss storage cannot be read', 
   await expect(playlistStorage.read()).resolves.toEqual(['web'])
 })
 
+it('should preserve a browser playlist written while native storage is read', async () => {
+  const storage = createStorage({
+    usesTossStorage: true,
+    webPlaylist: createStoredPlaylist(['stale'], 10),
+  })
+  const pendingRead = Promise.withResolvers<StoredPlaylist | null>()
+  storage.readToss.mockReturnValueOnce(pendingRead.promise)
+  const playlistStorage = createPPlaylistStorage(storage, {now: () => 20})
+
+  const reading = playlistStorage.read()
+  await vi.waitFor(() => expect(storage.readToss).toHaveBeenCalledOnce())
+  await playlistStorage.write(['fresh'])
+  pendingRead.resolve(createStoredPlaylist(['native-stale'], 15))
+
+  await expect(reading).resolves.toEqual(['fresh'])
+  expect(storage.readWeb()).toEqual(createStoredPlaylist(['fresh'], 20))
+})
+
+it('should return the current browser playlist when native storage fails after a browser write', async () => {
+  const storage = createStorage({
+    usesTossStorage: true,
+    webPlaylist: createStoredPlaylist(['stale'], 10),
+  })
+  const pendingRead = Promise.withResolvers<StoredPlaylist | null>()
+  storage.readToss.mockReturnValueOnce(pendingRead.promise)
+  const playlistStorage = createPPlaylistStorage(storage, {now: () => 20})
+
+  const reading = playlistStorage.read()
+  await vi.waitFor(() => expect(storage.readToss).toHaveBeenCalledOnce())
+  await playlistStorage.write(['fresh'])
+  pendingRead.reject(new Error('Toss storage is unavailable'))
+
+  await expect(reading).resolves.toEqual(['fresh'])
+})
+
+it('should ignore a native playlist read after a browser write fails', async () => {
+  const storage = createStorage({usesTossStorage: true})
+  const pendingRead = Promise.withResolvers<StoredPlaylist | null>()
+  storage.readToss.mockReturnValueOnce(pendingRead.promise)
+  storage.writeWeb.mockReturnValueOnce(new DOMException('Storage is unavailable', 'SecurityError'))
+  const playlistStorage = createPPlaylistStorage(storage, {now: () => 20})
+
+  const reading = playlistStorage.read()
+  await vi.waitFor(() => expect(storage.readToss).toHaveBeenCalledOnce())
+  await playlistStorage.write(['fresh'])
+  pendingRead.resolve(createStoredPlaylist(['stale'], 10))
+
+  await expect(reading).resolves.toBeNull()
+})
+
+it('should preserve a browser playlist written while native repair is pending', async () => {
+  const webPlaylist = createStoredPlaylist(['stale'], 10)
+  const storage = createStorage({
+    tossPlaylist: createStoredPlaylist(['native'], 10),
+    usesTossStorage: true,
+    webPlaylist,
+  })
+  const pendingRepair = Promise.withResolvers<void>()
+  storage.writeToss.mockReturnValueOnce(pendingRepair.promise)
+  const playlistStorage = createPPlaylistStorage(storage, {now: () => 20})
+
+  const reading = playlistStorage.read()
+  await vi.waitFor(() => expect(storage.writeToss).toHaveBeenCalledOnce())
+  const writing = playlistStorage.write(['fresh'])
+  pendingRepair.resolve()
+
+  await expect(Promise.all([reading, writing])).resolves.toEqual([['fresh'], undefined])
+  expect(storage.readWeb()).toEqual(createStoredPlaylist(['fresh'], 20))
+})
+
+it('should serialize a native repair before a newer playlist write', async () => {
+  const webPlaylist = createStoredPlaylist(['stale'], 10)
+  const storage = createStorage({
+    tossPlaylist: createStoredPlaylist(['native'], 10),
+    usesTossStorage: true,
+    webPlaylist,
+  })
+  const pendingRepair = Promise.withResolvers<void>()
+  const pendingWrite = Promise.withResolvers<void>()
+  storage.writeToss
+    .mockImplementationOnce(() => pendingRepair.promise)
+    .mockImplementationOnce(() => pendingWrite.promise)
+  const playlistStorage = createPPlaylistStorage(storage, {now: () => 20})
+
+  const reading = playlistStorage.read()
+  await vi.waitFor(() => expect(storage.writeToss).toHaveBeenCalledOnce())
+  const writing = playlistStorage.write(['fresh'])
+  expect(storage.writeToss).toHaveBeenCalledOnce()
+
+  pendingRepair.resolve()
+  await vi.waitFor(() => expect(storage.writeToss).toHaveBeenCalledTimes(2))
+  expect(storage.writeToss).toHaveBeenLastCalledWith(createStoredPlaylist(['fresh'], 20))
+  pendingWrite.resolve()
+
+  await Promise.all([reading, writing])
+})
+
 it('should return no playlist when both storage reads are unavailable', async () => {
   const storage = createStorage({usesTossStorage: true})
   storage.readToss.mockRejectedValue(new Error('Toss storage is unavailable'))
   const playlistStorage = createPPlaylistStorage(storage, {now: () => 20})
 
   await expect(playlistStorage.read()).resolves.toBeNull()
-})
-
-it('should not overwrite a playlist changed while Toss storage is being read', async () => {
-  let completeRead: ((playlist: StoredPlaylist | null) => void) | undefined
-  const storage = createStorage({
-    usesTossStorage: true,
-    webPlaylist: createStoredPlaylist(['web'], 15),
-  })
-  storage.readToss.mockImplementationOnce(
-    () =>
-      new Promise((resolve) => {
-        completeRead = resolve
-      }),
-  )
-  const playlistStorage = createPPlaylistStorage(storage, {now: () => 20})
-  const playlistRequest = playlistStorage.read()
-
-  await playlistStorage.write(['latest'])
-  completeRead?.(createStoredPlaylist(['stale'], 10))
-
-  await expect(playlistRequest).resolves.toEqual(['latest'])
-})
-
-it('should ignore a Toss read after a web write failure', async () => {
-  let completeRead: ((playlist: StoredPlaylist | null) => void) | undefined
-  const storage = createStorage({usesTossStorage: true})
-  storage.readToss.mockImplementationOnce(
-    () =>
-      new Promise((resolve) => {
-        completeRead = resolve
-      }),
-  )
-  storage.writeWeb.mockReturnValueOnce(new DOMException('Storage is unavailable', 'SecurityError'))
-  const playlistStorage = createPPlaylistStorage(storage, {now: () => 20})
-  const playlistRequest = playlistStorage.read()
-
-  await playlistStorage.write(['latest'])
-  completeRead?.(createStoredPlaylist(['stale'], 10))
-
-  await expect(playlistRequest).resolves.toBeNull()
 })
 
 it('should isolate a pending read from writes made through another storage instance', async () => {
@@ -199,26 +286,30 @@ it('should isolate a pending read from writes made through another storage insta
   await expect(playlistRequest).resolves.toEqual(['toss'])
 })
 
-it('should keep latest Toss writers independent for each storage instance', async () => {
-  let completeFirstWrite: (() => void) | undefined
-  const firstStorage = createStorage({usesTossStorage: true})
-  firstStorage.writeToss.mockImplementationOnce(
-    () =>
-      new Promise((resolve) => {
-        completeFirstWrite = resolve
-      }),
-  )
-  const secondStorage = createStorage({usesTossStorage: true})
-  const firstPlaylistStorage = createPPlaylistStorage(firstStorage, {now: () => 20})
-  const secondPlaylistStorage = createPPlaylistStorage(secondStorage, {now: () => 20})
-  const firstWrite = firstPlaylistStorage.write(['first'])
+it('should serialize native writes across playlist storage instances sharing a key', async () => {
+  const shared = createSharedNativeStorage()
+  const firstStorage = shared.createAdapter()
+  const secondStorage = shared.createAdapter()
+  const firstPending = Promise.withResolvers<void>()
+  firstStorage.writeToss.mockImplementationOnce(async (playlist) => {
+    await firstPending.promise
+    await shared.writeNative(playlist)
+  })
+  const firstPlaylistStorage = createPPlaylistStorage(firstStorage, {now: () => 100})
+  const secondPlaylistStorage = createPPlaylistStorage(secondStorage, {now: () => 200})
 
+  const firstWrite = firstPlaylistStorage.write(['stale'])
   await vi.waitFor(() => expect(firstStorage.writeToss).toHaveBeenCalledOnce())
-  const secondWrite = secondPlaylistStorage.write(['second'])
+  const secondWrite = secondPlaylistStorage.write(['latest'])
 
-  await vi.waitFor(() => expect(secondStorage.writeToss).toHaveBeenCalledOnce())
-  completeFirstWrite?.()
+  expect(secondStorage.writeToss).not.toHaveBeenCalled()
+  firstPending.resolve()
+
   await Promise.all([firstWrite, secondWrite])
+  expect(shared.getNative()).toEqual(createStoredPlaylist(['latest'], 200))
+
+  shared.clearWeb()
+  await expect(secondPlaylistStorage.read()).resolves.toEqual(['latest'])
 })
 
 it('should persist a playlist to Toss storage when the bridge is available', async () => {

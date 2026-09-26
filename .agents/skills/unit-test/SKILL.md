@@ -7,7 +7,7 @@ description: Apply Vitest and @solidjs/testing-library conventions when adding o
 
 Open and apply the reference files for the relevant section before working.
 
-For test and coverage checks, use Wallaby MCP → Wallaby CLI → Vitest. Move to the next tool only when the preceding tool is unavailable or insufficient for the required verification.
+For test execution, status, coverage, and debugging, apply the `wallaby-testing` skill.
 
 ## Test Authoring Workflow
 

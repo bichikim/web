@@ -79,9 +79,9 @@ describe('prepareAudioContext', () => {
   it('should activate once, notify subscribed listeners, and reuse the context', async () => {
     const fixture = createAudioContextFixture()
     mockAudioContextConstructor(fixture.audioContext)
-    vi.mocked(getWindow).mockReturnValue(window)
-    const addEventListener = vi.spyOn(window, 'addEventListener')
-    const removeEventListener = vi.spyOn(window, 'removeEventListener')
+    vi.mocked(getWindow).mockReturnValue(globalThis.window)
+    const addEventListener = vi.spyOn(globalThis, 'addEventListener')
+    const removeEventListener = vi.spyOn(globalThis, 'removeEventListener')
     const {getAudioContext, prepareAudioContext} = await import('../prepare-audio-context')
     const retainedListener = vi.fn()
     const removedListener = vi.fn()
@@ -96,7 +96,7 @@ describe('prepareAudioContext', () => {
       passive: true,
     })
 
-    window.dispatchEvent(new Event('pointerdown'))
+    globalThis.dispatchEvent(new Event('pointerdown'))
 
     expect(StandardizedAudioContext).toHaveBeenCalledOnce()
     expect(fixture.resume).toHaveBeenCalledOnce()
@@ -121,12 +121,12 @@ describe('prepareAudioContext', () => {
     const fixture = createAudioContextFixture()
     fixture.resume.mockRejectedValue(new Error('blocked'))
     mockAudioContextConstructor(fixture.audioContext)
-    vi.mocked(getWindow).mockReturnValue(window)
+    vi.mocked(getWindow).mockReturnValue(globalThis.window)
     const {prepareAudioContext} = await import('../prepare-audio-context')
     const listener = vi.fn()
 
     prepareAudioContext(listener)
-    window.dispatchEvent(new KeyboardEvent('keydown'))
+    globalThis.dispatchEvent(new KeyboardEvent('keydown'))
     await Promise.resolve()
 
     expect(listener).toHaveBeenCalledWith(fixture.audioContext)

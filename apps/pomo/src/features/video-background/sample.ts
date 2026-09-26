@@ -1,3 +1,4 @@
+import {replaceBlobObjectUrl} from 'src/features/blob-object-url'
 import {sampleTimes} from './timeline'
 
 const SAMPLE_LENGTH = 32
@@ -66,7 +67,7 @@ const waitForMedia = (
 /** Samples a separate muted decoder and releases it on completion, failure, or cancellation. */
 export const sampleVideo = async (blob: Blob, signal: AbortSignal): Promise<VideoSample[]> => {
   const video = document.createElement('video')
-  const url = URL.createObjectURL(blob)
+  const url = replaceBlobObjectUrl(null, () => blob)
   video.muted = true
   video.playsInline = true
   video.preload = 'auto'
@@ -92,6 +93,6 @@ export const sampleVideo = async (blob: Blob, signal: AbortSignal): Promise<Vide
     video.pause()
     video.removeAttribute('src')
     video.load()
-    URL.revokeObjectURL(url)
+    replaceBlobObjectUrl(url, () => null)
   }
 }

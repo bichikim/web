@@ -1,3 +1,4 @@
+import {clampUnit} from 'src/utils/clamp-unit'
 import {type Application, Rectangle, Sprite, type Texture, type Ticker} from 'pixi.js'
 import {ScreenEffect} from './effect'
 import type {TransitionEffect} from '../background'
@@ -66,7 +67,7 @@ export class PhotoTransition {
       let elapsed = 0
       const update = (ticker: Ticker) => {
         elapsed += ticker.elapsedMS
-        const progress = Math.min(1, elapsed / FADE_DURATION)
+        const progress = clampUnit(elapsed / FADE_DURATION)
         if (this.#effect === null) {
           overlay.alpha = 1 - progress
         } else {

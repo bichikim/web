@@ -7,7 +7,7 @@ const repositoryMocks = vi.hoisted(() => ({
   deleteAppSessionBatch: vi.fn(),
 }))
 
-vi.mock('../maintenance-repository', () => ({
+vi.mock('../../repositories/auth-maintenance', () => ({
   createAuthMaintenanceRepository: repositoryMocks.createAuthMaintenanceRepository,
 }))
 

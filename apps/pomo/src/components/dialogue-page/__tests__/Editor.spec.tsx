@@ -4,6 +4,7 @@ import {A, useNavigate} from '@solidjs/router'
 import {fireEvent, render, screen, waitFor, within} from '@solidjs/testing-library'
 import {createSignal, Show} from 'solid-js'
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
+import {getLocale, overwriteGetLocale} from '@paraglide/runtime'
 
 import {usePSceneStyle} from '../../../features/focus-room-animation'
 import {
@@ -91,6 +92,7 @@ interface EditorHarness {
 
 const navigate = vi.fn()
 const refreshDialogues = vi.fn().mockResolvedValue(undefined)
+const originalGetLocale = getLocale
 
 const createModelDownload = (): ModelDownloadController => ({
   cancel: vi.fn(),
@@ -239,10 +241,24 @@ beforeEach(() => {
 })
 
 afterEach(() => {
+  overwriteGetLocale(originalGetLocale)
   vi.restoreAllMocks()
 })
 
 describe('PDialogueEditor fields', () => {
+  it('should render editor copy in English', () => {
+    overwriteGetLocale(() => 'en')
+    const harness = createEditorHarness()
+    harness.setState({message: 'Ready', status: 'idle'})
+    renderEditor(harness)
+
+    expect(screen.getByRole('heading', {name: 'Create new dialogue'})).toBeInTheDocument()
+    expect(screen.getByRole('region', {name: 'Script input'})).toBeInTheDocument()
+    expect(screen.getByRole('textbox', {name: /Script/u})).toBeInTheDocument()
+    expect(screen.getByRole('button', {name: 'Create voice'})).toBeInTheDocument()
+    expect(screen.getByRole('heading', {name: 'Review speech bubbles'})).toBeInTheDocument()
+  })
+
   it('should render a new dialogue and update text, voice, language, model, and draft state', async () => {
     const harness = createEditorHarness()
     const result = renderEditor(harness)
@@ -262,7 +278,7 @@ describe('PDialogueEditor fields', () => {
     )
     expect(screen.getByRole('link', {name: '앱으로 돌아가기'})).toHaveAttribute('href', '/')
     expect(screen.getByText('음성을 만들면 구간별 텍스트와 시작 시간이 표시돼요.')).toBeVisible()
-    expect(screen.getByText('13 / 3000')).toBeInTheDocument()
+    expect(screen.getByText('13 / 10000')).toBeInTheDocument()
     expect(screen.getByTestId('download-consent')).toHaveAttribute('data-download-size', '123 MB')
 
     fireEvent.input(screen.getByRole('textbox', {name: /대사/}), {

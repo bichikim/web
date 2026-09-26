@@ -24,7 +24,10 @@ it('should request and validate administrator playback access', async () => {
     expiresAt: '2026-09-03T12:00:00.000Z',
     url: 'https://audio.example/private.mp3',
   })
-  expect(fetch).toHaveBeenCalledWith('/api/admin/music/tracks/track%2Fid/playback')
+  expect(fetch).toHaveBeenCalledWith(
+    '/api/admin/music/tracks/track%2Fid/playback',
+    expect.any(Object),
+  )
 })
 
 it('should reject an unsuccessful or malformed playback response', async () => {

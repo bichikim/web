@@ -1,4 +1,4 @@
-import {getAppSessionUserId} from './repository'
+import {getAppSessionUserId} from './app-session'
 import {readBearerToken} from './token'
 
 export interface AppRequestIdentity {

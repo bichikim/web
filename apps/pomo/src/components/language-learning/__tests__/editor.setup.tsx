@@ -2,6 +2,7 @@ import {useNavigate} from '@solidjs/router'
 import {cleanup, fireEvent, render, screen, waitFor} from '@solidjs/testing-library'
 import {type ComponentProps, createSignal} from 'solid-js'
 import {afterEach, beforeEach, expect, type Mock, vi} from 'vitest'
+import {PreferenceProvider} from '../../../hooks/use-preference'
 import {type DialogueWriterState, useDialogueWriter} from '../../../features/dialogue-writer'
 import {createPDialogueRepository} from '../../../features/focus-room-dialogue'
 import {
@@ -69,9 +70,29 @@ vi.mock('../voice-generation', () => ({
 }))
 vi.mock('../WordSource', () => ({LanguageLearningWordSourceControl: vi.fn()}))
 
+export const LanguageLearningEditorWithPreferences = () => (
+  <PreferenceProvider>
+    <LanguageLearningEditor />
+  </PreferenceProvider>
+)
+
 export const flush = async () => {
   await Promise.resolve()
   await Promise.resolve()
+}
+
+const isWriterBusy = (state: DialogueWriterState) => {
+  switch (state.status) {
+    case 'generating':
+    case 'loading':
+      return true
+    case 'complete':
+    case 'error':
+    case 'idle':
+    case 'ready':
+    case 'unsupported':
+      return false
+  }
 }
 
 export function createDeferred<T>() {
@@ -142,7 +163,7 @@ beforeEach(() => {
     copyOutput: vi.fn(),
     generate: vi.fn(),
     generateWithPreparation,
-    isBusy: () => false,
+    isBusy: () => isWriterBusy(writerState()),
     isModelReady: () => true,
     output: writerOutput,
     prepare: vi.fn(),
@@ -281,7 +302,7 @@ export const expectStatusMessage = async (pattern: RegExp) => {
 export const renderGeneratedReview = async () => {
   setWriterState({status: 'idle'})
   vi.mocked(LanguageLearningReview).mockClear()
-  const view = render(() => <LanguageLearningEditor />)
+  const view = render(() => <LanguageLearningEditorWithPreferences />)
   fireEvent.click(screen.getByRole('button', {name: 'generate'}))
   await flush()
   await completeTextGeneration()

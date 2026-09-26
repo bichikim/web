@@ -13,6 +13,13 @@ export {getSupertonicErrorMessage} from './error-message'
 export type {SupertonicError, SupertonicPhase} from './errors'
 export {SUPERTONIC_LANGUAGES, SUPERTONIC_LANGUAGE_OPTIONS} from './language'
 export type {SupertonicLanguage, SupertonicLanguageOption} from './language'
+export {classifySpeechNumber, normalizeSpeechText} from './number-speech'
+export type {
+  ClassifySpeechNumberOptions,
+  NormalizeSpeechTextOptions,
+  SpeechNumberDecision,
+  SpeechNumberKind,
+} from './number-speech'
 export type {
   SupertonicAudio,
   SupertonicAudioChunk,

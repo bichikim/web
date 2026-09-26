@@ -1,4 +1,4 @@
-const MAXIMUM_PERCENTAGE = 100
+import {getUnboundedPercentage} from '../progress'
 
 export interface FileLoadingProgress {
   readonly loaded: number
@@ -26,7 +26,7 @@ export interface CreateTextGenerationProgressOptions {
 }
 
 const calculatePercentage = (loadedBytes: number, totalBytes: number) =>
-  totalBytes > 0 ? Math.round((loadedBytes / totalBytes) * MAXIMUM_PERCENTAGE) : 0
+  totalBytes > 0 ? getUnboundedPercentage(loadedBytes, totalBytes) : 0
 
 export const createTextGenerationProgress = (
   options: CreateTextGenerationProgressOptions,

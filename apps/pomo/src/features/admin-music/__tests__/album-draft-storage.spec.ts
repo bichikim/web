@@ -9,7 +9,9 @@ import {
   deleteAlbumDraftCover,
   deleteExpiredAlbumDraftCovers,
   readAlbumDraftCover,
+  readAlbumDraftCoverOrNull,
   readAlbumDraftData,
+  readAlbumDraftDataOrNull,
   writeAlbumDraftCover,
   writeAlbumDraftData,
   writeAlbumDraftReference,
@@ -92,6 +94,22 @@ const createDraft = (): AlbumDraftData => ({
   },
 })
 
+const delayCoverDeletion = (storage: AlbumDraftStorage) => {
+  const deletionGate = Promise.withResolvers<void>()
+  const deleteCover = vi.mocked(storage.deleteCover).getMockImplementation()
+
+  if (deleteCover === undefined) {
+    throw new Error('The storage fixture must provide its default cover deletion.')
+  }
+
+  vi.mocked(storage.deleteCover).mockImplementationOnce(async (options) => {
+    await deletionGate.promise
+    await deleteCover(options)
+  })
+
+  return deletionGate
+}
+
 describe('album draft data storage', () => {
   it('should restore album metadata saved in the current session', () => {
     const storage = createStorage()
@@ -99,7 +117,7 @@ describe('album draft data storage', () => {
 
     writeAlbumDraftData(draft, storage)
 
-    expect(readAlbumDraftData(storage)).toEqual(draft)
+    expect(readAlbumDraftDataOrNull(storage)).toEqual(draft)
   })
 
   it('should ignore malformed stored metadata', () => {
@@ -107,7 +125,12 @@ describe('album draft data storage', () => {
     storage.writeData('{invalid')
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined)
 
-    expect(readAlbumDraftData(storage)).toBeNull()
+    expect(readAlbumDraftData(storage)).toEqual({
+      error: expect.any(Error),
+      success: false,
+    })
+    warn.mockClear()
+    expect(readAlbumDraftDataOrNull(storage)).toBeNull()
     expect(warn).toHaveBeenCalledOnce()
   })
 
@@ -124,6 +147,19 @@ describe('album draft data storage', () => {
 })
 
 describe('album draft cover storage', () => {
+  it('should report cover read failures without treating them as missing covers', async () => {
+    const storage = createStorage()
+    const error = new Error('indexed db unavailable')
+    vi.mocked(storage.readCover).mockRejectedValueOnce(error)
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined)
+
+    await expect(readAlbumDraftCover('broken', storage)).resolves.toEqual({
+      error,
+      success: false,
+    })
+    expect(warn).toHaveBeenCalledOnce()
+  })
+
   it('should delete covers older than 30 days while preserving the active draft', async () => {
     vi.useFakeTimers()
     const storage = createStorage()
@@ -143,9 +179,9 @@ describe('album draft cover storage', () => {
       storage,
     })
 
-    await expect(readAlbumDraftCover('expired', storage)).resolves.toBeNull()
-    await expect(readAlbumDraftCover('active', storage)).resolves.not.toBeNull()
-    await expect(readAlbumDraftCover('boundary', storage)).resolves.not.toBeNull()
+    await expect(readAlbumDraftCoverOrNull('expired', storage)).resolves.toBeNull()
+    await expect(readAlbumDraftCoverOrNull('active', storage)).resolves.not.toBeNull()
+    await expect(readAlbumDraftCoverOrNull('boundary', storage)).resolves.not.toBeNull()
   })
 
   it('should report an expired cover cleanup failure without throwing', async () => {
@@ -182,7 +218,7 @@ describe('album draft cover storage', () => {
       storage,
     })
 
-    await expect(readAlbumDraftCover('other-tab-cover', storage)).resolves.not.toBeNull()
+    await expect(readAlbumDraftCoverOrNull('other-tab-cover', storage)).resolves.not.toBeNull()
   })
 
   it('should restore the prepared WebP file and delete the full draft after creation', async () => {
@@ -192,15 +228,15 @@ describe('album draft cover storage', () => {
     writeAlbumDraftData(draft, storage)
     await writeAlbumDraftCover(draft.coverDraftId!, cover, storage)
 
-    const restoredCover = await readAlbumDraftCover(draft.coverDraftId!, storage)
+    const restoredCover = await readAlbumDraftCoverOrNull(draft.coverDraftId!, storage)
 
     expect(restoredCover?.name).toBe('cover.webp')
     expect(restoredCover?.type).toBe('image/webp')
 
     await deleteAlbumDraft(draft.coverDraftId, {storage})
 
-    expect(readAlbumDraftData(storage)).toBeNull()
-    await expect(readAlbumDraftCover(draft.coverDraftId!, storage)).resolves.toBeNull()
+    expect(readAlbumDraftDataOrNull(storage)).toBeNull()
+    await expect(readAlbumDraftCoverOrNull(draft.coverDraftId!, storage)).resolves.toBeNull()
   })
 
   it('should isolate cover files belonging to separate browser tabs', async () => {
@@ -212,8 +248,26 @@ describe('album draft cover storage', () => {
     await writeAlbumDraftCover('second-tab', secondCover, storage)
     await deleteAlbumDraft('second-tab', {storage})
 
-    await expect(readAlbumDraftCover('first-tab', storage)).resolves.not.toBeNull()
-    await expect(readAlbumDraftCover('second-tab', storage)).resolves.toBeNull()
+    await expect(readAlbumDraftCoverOrNull('first-tab', storage)).resolves.not.toBeNull()
+    await expect(readAlbumDraftCoverOrNull('second-tab', storage)).resolves.toBeNull()
+  })
+
+  it('should preserve a coverless session while deleting a stale cover blob', async () => {
+    const storage = createStorage()
+    const draft: AlbumDraftData = {
+      ...createDraft(),
+      coverDraftId: null,
+      hasCoverFile: false,
+    }
+    const staleCover = new File(['stale'], 'cover.webp', {type: 'image/webp'})
+    writeAlbumDraftData(draft, storage)
+    await writeAlbumDraftCover('stale-cover', staleCover, storage)
+
+    await expect(deleteAlbumDraft('stale-cover', {storage})).resolves.toEqual({success: true})
+
+    expect(readAlbumDraftDataOrNull(storage)).toEqual(draft)
+    await expect(readAlbumDraftCoverOrNull('stale-cover', storage)).resolves.toBeNull()
+    expect(storage.deleteData).not.toHaveBeenCalled()
   })
 
   it('should report a cover persistence failure to the caller', async () => {
@@ -240,11 +294,27 @@ describe('album draft cover storage', () => {
     vi.mocked(storage.deleteCover).mockRejectedValueOnce(deleteError)
     vi.spyOn(console, 'warn').mockImplementation(() => undefined)
 
-    await expect(readAlbumDraftCover('cover', storage)).resolves.toBeNull()
+    await expect(readAlbumDraftCoverOrNull('cover', storage)).resolves.toBeNull()
     await expect(deleteAlbumDraftCover('cover', {storage})).resolves.toEqual({
       error: deleteError,
       success: false,
     })
+  })
+
+  it('should keep the draft when its cover cannot be read before deletion', async () => {
+    const storage = createStorage()
+    const draft = createDraft()
+    const error = new Error('cover read failed')
+    writeAlbumDraftData(draft, storage)
+    vi.mocked(storage.readCover).mockRejectedValueOnce(error)
+    vi.spyOn(console, 'warn').mockImplementation(() => undefined)
+
+    const result = await deleteAlbumDraft(draft.coverDraftId, {storage})
+
+    expect(result).toEqual({error, success: false})
+    expect(readAlbumDraftDataOrNull(storage)).toEqual(draft)
+    expect(storage.deleteCover).not.toHaveBeenCalled()
+    expect(storage.deleteData).not.toHaveBeenCalled()
   })
 
   it('should preserve the most relevant failure while deleting a draft', async () => {
@@ -266,5 +336,115 @@ describe('album draft cover storage', () => {
       error: coverError,
       success: false,
     })
+  })
+
+  it('should preserve the album metadata when cover deletion fails', async () => {
+    const storage = createStorage()
+    const draft = createDraft()
+    const error = new Error('cover delete failed')
+    writeAlbumDraftData(draft, storage)
+    vi.mocked(storage.deleteCover).mockRejectedValueOnce(error)
+    vi.spyOn(console, 'warn').mockImplementation(() => undefined)
+
+    await expect(deleteAlbumDraft(draft.coverDraftId, {storage})).resolves.toEqual({
+      error,
+      success: false,
+    })
+    expect(readAlbumDraftDataOrNull(storage)).toEqual(draft)
+    expect(storage.deleteData).not.toHaveBeenCalled()
+  })
+
+  it('should preserve a newer album draft written while cover deletion is pending', async () => {
+    const storage = createStorage()
+    const draft = createDraft()
+    const newerDraft: AlbumDraftData = {
+      ...draft,
+      albumId: '00000000-0000-4000-8000-000000000003',
+      coverDraftId: null,
+      hasCoverFile: false,
+      translations: {
+        ...draft.translations,
+        ko: {...draft.translations.ko, title: '새 앨범'},
+      },
+    }
+    writeAlbumDraftData(draft, storage)
+    vi.mocked(storage.deleteCover).mockImplementationOnce(async () => {
+      writeAlbumDraftData(newerDraft, storage)
+    })
+
+    await expect(deleteAlbumDraft(draft.coverDraftId, {storage})).resolves.toEqual({success: true})
+    expect(readAlbumDraftDataOrNull(storage)).toEqual(newerDraft)
+    expect(storage.deleteData).not.toHaveBeenCalled()
+  })
+
+  it('should restore the cover when newer album metadata retains its ID during deletion', async () => {
+    const storage = createStorage()
+    const draft = createDraft()
+    const coverDraftId = draft.coverDraftId!
+    const newerDraft: AlbumDraftData = {
+      ...draft,
+      translations: {
+        ...draft.translations,
+        ko: {...draft.translations.ko, title: '수정된 앨범 제목'},
+      },
+    }
+    const cover = new File(['webp'], 'cover.webp', {type: 'image/webp'})
+    writeAlbumDraftData(draft, storage)
+    await writeAlbumDraftCover(coverDraftId, cover, storage)
+    vi.mocked(storage.writeCover).mockClear()
+    const deletionGate = delayCoverDeletion(storage)
+
+    const pendingDeletion = deleteAlbumDraft(coverDraftId, {storage})
+    writeAlbumDraftData(newerDraft, storage)
+    deletionGate.resolve()
+
+    const result = await pendingDeletion
+    const restoredCover = await readAlbumDraftCoverOrNull(coverDraftId, storage)
+
+    expect(result).toEqual({success: true})
+    expect(readAlbumDraftDataOrNull(storage)).toEqual(newerDraft)
+    expect(restoredCover).not.toBeNull()
+    expect(restoredCover).toMatchObject({name: 'cover.webp', size: 4, type: 'image/webp'})
+    expect(storage.writeCover).toHaveBeenCalledExactlyOnceWith(coverDraftId, cover)
+    expect(storage.deleteData).not.toHaveBeenCalled()
+  })
+
+  it('should clear a missing cover reference when restoration fails', async () => {
+    const storage = createStorage()
+    const draft = createDraft()
+    const coverDraftId = draft.coverDraftId!
+    const newerDraft: AlbumDraftData = {
+      ...draft,
+      translations: {
+        ...draft.translations,
+        ko: {...draft.translations.ko, title: '수정된 앨범 제목'},
+      },
+    }
+    const normalizedDraft: AlbumDraftData = {
+      ...newerDraft,
+      coverDraftId: null,
+      hasCoverFile: false,
+    }
+    const error = new Error('cover restore failed')
+    writeAlbumDraftData(draft, storage)
+    await writeAlbumDraftCover(
+      coverDraftId,
+      new File(['webp'], 'cover.webp', {type: 'image/webp'}),
+      storage,
+    )
+    const deletionGate = delayCoverDeletion(storage)
+    vi.mocked(storage.writeCover).mockRejectedValueOnce(error)
+    vi.spyOn(console, 'warn').mockImplementation(() => undefined)
+
+    const pendingDeletion = deleteAlbumDraft(coverDraftId, {storage})
+    writeAlbumDraftData(newerDraft, storage)
+    deletionGate.resolve()
+
+    const result = await pendingDeletion
+
+    expect(result).toEqual({error, success: false})
+    expect(readAlbumDraftDataOrNull(storage)).toEqual(normalizedDraft)
+    expect(await readAlbumDraftCoverOrNull(coverDraftId, storage)).toBeNull()
+    expect(storage.deleteData).not.toHaveBeenCalled()
   })
 })

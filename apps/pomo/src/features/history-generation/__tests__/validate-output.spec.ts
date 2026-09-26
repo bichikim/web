@@ -182,10 +182,24 @@ it('should reject a selected regeneration that changes a required title', () => 
 
 it('should accept normalized required titles and reject a different title count', () => {
   const output = createOutput()
-  const requiredTitles = output.moments.map((moment) => `  ${moment.title.toUpperCase()}  `)
+  const requiredTitles = output.moments.map((moment, index) =>
+    index === 0 ? `　１９４５년, 역사적 사건　` : `  ${moment.title.toUpperCase()}  `,
+  )
 
   expect(() => validate(output, {requiredTitles})).not.toThrow()
   expect(() => validate(output, {requiredTitles: requiredTitles.slice(1)})).toThrow(
+    'Generated moments do not match the required titles',
+  )
+})
+
+it('should reject required titles assigned to different event-year slots', () => {
+  const output = createOutput()
+  const requiredTitles = output.moments.map((moment) => moment.title)
+  const firstTitle = output.moments[0]!.title
+  output.moments[0]!.title = output.moments[1]!.title
+  output.moments[1]!.title = firstTitle
+
+  expect(() => validate(output, {requiredTitles})).toThrow(
     'Generated moments do not match the required titles',
   )
 })

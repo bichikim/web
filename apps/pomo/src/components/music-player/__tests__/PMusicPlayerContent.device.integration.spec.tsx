@@ -1,5 +1,6 @@
 /** @vitest-environment jsdom */
 
+import {PreferenceProvider} from 'src/hooks/use-preference'
 import {cleanup, fireEvent, render, screen} from '@solidjs/testing-library'
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 
@@ -50,7 +51,9 @@ describe('PMusicPlayerContent device integration', () => {
     )
     Object.defineProperty(navigator, 'mediaSession', {configurable: true, value: mediaSession})
 
-    const result = render(() => <PMusicPlayerContent tracks={[track]} />)
+    const result = render(() => <PMusicPlayerContent tracks={[track]} />, {
+      wrapper: PreferenceProvider,
+    })
     const audio = result.container.querySelector('audio')
 
     if (!(audio instanceof HTMLAudioElement)) {
@@ -85,7 +88,9 @@ describe('PMusicPlayerContent device integration', () => {
     }
     Object.defineProperty(navigator, 'mediaSession', {configurable: true, value: mediaSession})
 
-    const result = render(() => <PMusicPlayerContent tracks={TRACKS} />)
+    const result = render(() => <PMusicPlayerContent tracks={TRACKS} />, {
+      wrapper: PreferenceProvider,
+    })
     const audio = result.container.querySelector('audio')
 
     if (!(audio instanceof HTMLAudioElement)) {
@@ -134,7 +139,9 @@ describe('PMusicPlayerContent device integration', () => {
     }
     Object.defineProperty(navigator, 'mediaSession', {configurable: true, value: mediaSession})
 
-    const result = render(() => <PMusicPlayerContent tracks={TRACKS} />)
+    const result = render(() => <PMusicPlayerContent tracks={TRACKS} />, {
+      wrapper: PreferenceProvider,
+    })
     const audio = result.container.querySelector('audio')
 
     if (!(audio instanceof HTMLAudioElement)) {

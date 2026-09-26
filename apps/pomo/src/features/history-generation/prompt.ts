@@ -1,6 +1,6 @@
 import type {HistorySourcePolicy, HistoryTargetDate} from './contract'
 
-export const HISTORY_PROMPT_VERSION = 'today-in-history-v2-radio'
+export const HISTORY_PROMPT_VERSION = 'today-in-history-v4-required-title-order'
 
 interface BuildHistoryPromptOptions {
   readonly policy: HistorySourcePolicy
@@ -14,7 +14,7 @@ const buildSelectionRequirements = (requiredTitles: ReadonlyArray<string> | unde
   }
 
   return `- 아래 ${requiredTitles.length}개 사건만 작성하고 다른 사건은 추가하지 않는다.
-- title은 아래 표기를 글자까지 정확히 유지한다.
+- title은 아래 표기를 글자까지 정확히 유지하고, moments 배열도 아래 목록 순서대로 작성한다.
 ${requiredTitles.map((title) => `  - ${title}`).join('\n')}`
 }
 
@@ -23,7 +23,8 @@ export const buildHistoryPrompt = (
   options: BuildHistoryPromptOptions,
 ): string => `당신은 정확한 역사 자료를 듣기 편한 원고로 바꾸는 한국어 라디오 작가다.
 
-발행 대상 날짜는 ${options.targetDate.isoDate}, 시간대는 Asia/Seoul이다.
+발행 대상 달력 날짜는 ${options.targetDate.isoDate}이다.
+사용자의 현지 날짜에 맞춰 제공되는 콘텐츠이며 특정 시간대로 날짜를 변환하지 않는다.
 연도와 관계없이 ${options.targetDate.month}월 ${options.targetDate.day}일에 실제로 일어난 역사적 사건을 검색하라.
 
 검색 출발점:

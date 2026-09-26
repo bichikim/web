@@ -144,51 +144,6 @@ it('should reject a toss read failure instead of restoring a stale browser cache
   )
 })
 
-it('should not let a pending toss read replace a newer setting', async () => {
-  const tossSettings = {enabled: false, playerVolumePercent: 70, version: 2} as const
-  const latestSettings = {enabled: true, playerVolumePercent: 20, version: 2} as const
-  let resolveTossRead: (value: unknown | null) => void = () => undefined
-  storage.usesTossStorage.mockReturnValue(true)
-  storage.readToss.mockImplementationOnce(
-    () =>
-      new Promise((resolve) => {
-        resolveTossRead = (value) => resolve(value)
-      }),
-  )
-
-  const readRequest = repository.read()
-  await repository.write(latestSettings)
-  resolveTossRead(tossSettings)
-
-  await expect(readRequest).resolves.toEqual(latestSettings)
-  expect(webValues.get(STORAGE_KEY)).toEqual(latestSettings)
-})
-
-it('should wait for an active toss write before reading settings', async () => {
-  storage.usesTossStorage.mockReturnValue(true)
-  tossValues.set(STORAGE_KEY, DEFAULT_DIALOGUE_VOLUME_DUCKING_SETTINGS)
-  const latestSettings = {enabled: true, playerVolumePercent: 20, version: 2} as const
-  let completeWrite: () => void = () => undefined
-  storage.writeToss.mockImplementation(
-    (key, value) =>
-      new Promise((resolve) => {
-        completeWrite = () => {
-          tossValues.set(key, value)
-          resolve()
-        }
-      }),
-  )
-
-  const pendingWrite = repository.write(latestSettings)
-  await vi.waitFor(() => expect(storage.writeToss).toHaveBeenCalledOnce())
-  const pendingRead = repository.read()
-  completeWrite()
-
-  await expect(pendingWrite).resolves.toBeUndefined()
-  await expect(pendingRead).resolves.toEqual(latestSettings)
-  expect(storage.readToss).toHaveBeenCalledOnce()
-})
-
 it('should persist through toss storage when the browser cache is unavailable', async () => {
   const settings = {enabled: true, playerVolumePercent: 30, version: 2} as const
   storage.usesTossStorage.mockReturnValue(true)

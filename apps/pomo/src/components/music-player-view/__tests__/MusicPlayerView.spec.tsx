@@ -198,6 +198,34 @@ describe('MusicPlayerView', () => {
     expect(playingLevel?.getAttribute('style')).not.toContain('opacity')
   })
 
+  it('should show next-track preparation without presenting a paused player', () => {
+    const onPause = vi.fn()
+    const result = renderMusicPlayerView({
+      isPlaying: true,
+      isPreparing: true,
+      levels: [50],
+      onPause,
+    })
+
+    const status = result.getByRole('status')
+    const playbackControls = result.getAllByRole('button', {name: m.player_pause()})
+    const level = result.getByLabelText(m.player_audio_levels()).querySelector('span')
+
+    expect(status).toHaveTextContent(m.player_next_track_preparing())
+    expect(status).toHaveAttribute('aria-busy', 'true')
+    expect(playbackControls).toHaveLength(2)
+    expect(playbackControls[0]).toHaveAttribute('aria-busy', 'true')
+    for (const control of playbackControls) {
+      expect(control.querySelector('.i-tabler-loader-2')).toBeNull()
+    }
+    expect(level).toHaveClass('opacity-76')
+    expect(getPlayerShell(result.container)).toHaveAttribute('data-preparing', 'true')
+
+    fireEvent.click(playbackControls[0]!)
+
+    expect(onPause).toHaveBeenCalledOnce()
+  })
+
   it('should keep the collapsed player layers visually present but inactive', () => {
     const result = renderMusicPlayerView({expanded: false})
     const controller = getPlayerShell(result.container)
@@ -327,7 +355,7 @@ describe('MusicPlayerView', () => {
     ).toBe(true)
     expect(
       expandedRange.classList.contains(
-        '[--media-time-range-buffered-color:var(--pomo-color-muted-foreground)]',
+        '[--media-time-range-buffered-color:rgb(var(--pomo-color-foreground-channels)_/_30%)]',
       ),
     ).toBe(true)
     expect(

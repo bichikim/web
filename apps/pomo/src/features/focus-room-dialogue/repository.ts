@@ -1,3 +1,4 @@
+import {uniq} from 'es-toolkit/array'
 import {
   createModelStorage,
   type ModelStorage,
@@ -13,6 +14,7 @@ import {
   dialogueEventBindingSchema,
   type DialogueEventId,
   type DialogueEventPlaybackMode,
+  type EventActionId,
   FOCUS_ROOM_DIALOGUE_EVENTS,
   FOCUS_ROOM_ENTRY_EVENT,
   focusRoomDialogueSchema,
@@ -42,6 +44,7 @@ export interface PDialogueRepository {
     event: DialogueEventId,
     dialogueIds: ReadonlyArray<string> | string | null,
     playbackMode?: DialogueEventPlaybackMode,
+    actionIds?: ReadonlyArray<EventActionId>,
   ) => Promise<void>
 }
 
@@ -146,12 +149,14 @@ export const createPDialogueRepository = (): PDialogueRepository => {
     event: DialogueEventId,
     dialogueIds: ReadonlyArray<string> | string | null,
     playbackMode: DialogueEventPlaybackMode = DEFAULT_DIALOGUE_EVENT_PLAYBACK_MODE,
+    actionIds: ReadonlyArray<EventActionId> = [],
   ) => {
     const requestedIds =
       typeof dialogueIds === 'string' ? [dialogueIds] : dialogueIds === null ? [] : dialogueIds
-    const uniqueDialogueIds = [...new Set(requestedIds)]
+    const uniqueDialogueIds = uniq(requestedIds)
+    const uniqueActionIds = uniq(actionIds)
 
-    if (uniqueDialogueIds.length === 0) {
+    if (uniqueDialogueIds.length === 0 && uniqueActionIds.length === 0) {
       await database.eventBindings.delete(event)
       return
     }
@@ -165,6 +170,7 @@ export const createPDialogueRepository = (): PDialogueRepository => {
     }
 
     await database.eventBindings.put({
+      ...(uniqueActionIds.length > 0 ? {actionIds: uniqueActionIds} : {}),
       dialogueIds: uniqueDialogueIds,
       event,
       playbackMode,

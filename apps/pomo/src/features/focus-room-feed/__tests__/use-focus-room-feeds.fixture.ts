@@ -5,6 +5,8 @@ import type {SupertonicClient} from '../../supertonic'
 import type {FeedDialogueJob, FeedItemRecord} from '../feed-dialogue-schema'
 import type {FeedConnection} from '../schema'
 
+const DEFAULT_DELAYED_END_EVENT_DURATION_MINUTES = 30
+
 const syncMocks = vi.hoisted(() => ({
   synchronizeFeeds: vi.fn(),
 }))
@@ -36,6 +38,7 @@ const repositoryMocks = vi.hoisted(() => {
   const feedRepository = {
     complete: vi.fn().mockResolvedValue(undefined),
     deleteJobs: vi.fn().mockResolvedValue(undefined),
+    dismissItem: vi.fn().mockResolvedValue(undefined),
     dispose: vi.fn(),
     failJob: vi.fn().mockResolvedValue(true),
     interruptUnfinishedJobs: vi.fn().mockResolvedValue([]),
@@ -44,6 +47,7 @@ const repositoryMocks = vi.hoisted(() => {
     listJobs: vi.fn().mockResolvedValue([]),
     listMetadata: vi.fn().mockResolvedValue([]),
     markListened: vi.fn().mockResolvedValue(undefined),
+    removeItem: vi.fn().mockResolvedValue(undefined),
     removeMetadata: vi.fn().mockResolvedValue(undefined),
     retryJobs: vi.fn().mockResolvedValue(undefined),
     startJob: vi.fn().mockResolvedValue(true),
@@ -109,6 +113,8 @@ beforeEach(() => {
   repositoryMocks.feedRepository.listJobs.mockResolvedValue([])
   repositoryMocks.feedRepository.listMetadata.mockResolvedValue([])
   repositoryMocks.feedRepository.markListened.mockResolvedValue(undefined)
+  repositoryMocks.feedRepository.dismissItem.mockResolvedValue(undefined)
+  repositoryMocks.feedRepository.removeItem.mockResolvedValue(undefined)
   repositoryMocks.feedRepository.removeMetadata.mockResolvedValue(undefined)
   repositoryMocks.feedRepository.retryJobs.mockResolvedValue(undefined)
   repositoryMocks.feedRepository.startJob.mockResolvedValue(true)
@@ -185,12 +191,16 @@ export const createEventContext = (
   activeSegmentPosition: vi.fn(() => null),
   activeText: vi.fn(() => null),
   activeViseme: vi.fn(() => 'rest' as const),
+  cancelDelayedEndEvent: vi.fn(),
+  delayedEndEventDurationMinutes: vi.fn(() => DEFAULT_DELAYED_END_EVENT_DURATION_MINUTES),
+  delayedEndEventIsRunning: vi.fn(() => false),
   deleteDialogue: vi.fn(async () => undefined),
   dialogues: vi.fn(() => []),
   enterFocusRoom: vi.fn(),
   entryDialogueId: vi.fn(() => null),
   entryDialogueIds: vi.fn(() => []),
   errorMessage: vi.fn(() => null),
+  eventActionIds: vi.fn(() => ({})),
   eventDialogueIds: vi.fn(() => ({})),
   eventPlaybackModes: vi.fn(() => ({})),
   getAudio: vi.fn(async () => null),
@@ -206,15 +216,19 @@ export const createEventContext = (
   playDialogueEvents: vi.fn(async () => undefined),
   playDialogueSequence: vi.fn(async () => undefined),
   refreshDialogues,
+  registerEventActionExecutor: vi.fn(() => vi.fn()),
   retryDialoguePlayback: vi.fn(),
   retryEntryPlayback: vi.fn(),
   scheduledDialogueCount: vi.fn(() => 0),
+  setDelayedEndEventDuration: vi.fn(async () => undefined),
   setEntryDialogue: vi.fn(async () => undefined),
   setEntryDialogues: vi.fn(async () => undefined),
   setEventDialogue: vi.fn(async () => undefined),
   setEventDialogues: vi.fn(async () => undefined),
+  setEventItems: vi.fn(async () => undefined),
   setEventPlaybackMode: vi.fn(async () => undefined),
   skipDialoguePlayback: vi.fn(),
+  startDelayedEndEvent: vi.fn(),
 })
 
 export const createConnection = (overrides: Partial<FeedConnection> = {}): FeedConnection => ({

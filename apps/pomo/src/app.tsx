@@ -6,6 +6,8 @@ import {MetaProvider} from '@solidjs/meta'
 import {Router} from '@solidjs/router'
 import {FileRoutes} from '@solidjs/start/router'
 import {Suspense} from 'solid-js'
+import {PreferenceProvider} from './hooks/use-preference'
+import {webLocalStorage} from './utils/preference-storage'
 
 import {PDocumentMetadata} from './components/p-document-metadata/PDocumentMetadata'
 import {PFocusRoomLayout} from './components/p-focus-room-layout/PFocusRoomLayout'
@@ -28,26 +30,28 @@ export default function App() {
           <MetaProvider>
             <Analytics />
             <PDocumentMetadata />
-            <DisplayThemeProvider>
-              <PTooltipProvider>
-                <AuthProvider>
-                  <PModelDownloadProvider>
-                    <PRecoveryBoundary
-                      canRetry={applicationRecovery.canRetry}
-                      onError={applicationRecovery.onError}
-                      onReady={applicationRecovery.onReady}
-                      onReload={applicationRecovery.onReload}
-                      onRetry={applicationRecovery.onRetry}
-                    >
-                      <Suspense>
-                        <PFocusRoomLayout>{props.children}</PFocusRoomLayout>
-                      </Suspense>
-                    </PRecoveryBoundary>
-                  </PModelDownloadProvider>
-                </AuthProvider>
-                <PTooltipContent />
-              </PTooltipProvider>
-            </DisplayThemeProvider>
+            <PreferenceProvider storage={webLocalStorage}>
+              <DisplayThemeProvider>
+                <PTooltipProvider>
+                  <AuthProvider>
+                    <PModelDownloadProvider>
+                      <PRecoveryBoundary
+                        canRetry={applicationRecovery.canRetry}
+                        onError={applicationRecovery.onError}
+                        onReady={applicationRecovery.onReady}
+                        onReload={applicationRecovery.onReload}
+                        onRetry={applicationRecovery.onRetry}
+                      >
+                        <Suspense>
+                          <PFocusRoomLayout>{props.children}</PFocusRoomLayout>
+                        </Suspense>
+                      </PRecoveryBoundary>
+                    </PModelDownloadProvider>
+                  </AuthProvider>
+                  <PTooltipContent />
+                </PTooltipProvider>
+              </DisplayThemeProvider>
+            </PreferenceProvider>
           </MetaProvider>
         )}
       >

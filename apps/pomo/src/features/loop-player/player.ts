@@ -1,13 +1,15 @@
-const DEFAULT_OVERLAP = 4
+import {getExceptionMessage} from 'src/features/error-detail'
+import {DEFAULT_CONNECTION_SECONDS} from '../sound-generation/connection'
 
 export interface LoopPlayback {
   seek: (seconds: number) => Promise<void>
+  setVolume: (volume: number) => void
   stop: () => void
   close: () => Promise<void>
-  play: (overlap?: number, preview?: boolean, position?: number) => Promise<void>
+  play: (connectionSeconds?: number, preview?: boolean, position?: number) => Promise<void>
 }
 
-/** Streams one URL through two alternating players; overlap defaults to four seconds. */
+/** Streams one URL through two alternating players; the connection duration defaults to four seconds. */
 export function createLoopPlayer(
   url: string,
   onStatus: (message: string, playing: boolean) => void,
@@ -15,14 +17,14 @@ export function createLoopPlayer(
   onPosition?: (seconds: number) => void,
 ): LoopPlayback {
   const context = new AudioContext()
-  const audio = [new Audio(url), new Audio(url)]
-  const gains = connectPlayers(context, audio)
+  const audio = [createLoopAudio(url), createLoopAudio(url)]
+  const {gains, masterGain} = connectPlayers(context, audio)
   let playing = false
   let revision = 0
   let current = 0
   let transitioning = false
   let nextPlayback: Promise<void> | null = null
-  let overlap = DEFAULT_OVERLAP
+  let connectionSeconds = DEFAULT_CONNECTION_SECONDS
   let closed = false
   const stop = () => {
     revision += 1
@@ -37,7 +39,7 @@ export function createLoopPlayer(
   }
   const fail = (cause: unknown) => {
     stop()
-    onStatus(cause instanceof Error ? cause.message : '재생하지 못했습니다.', false)
+    onStatus(getExceptionMessage(cause, '재생하지 못했습니다.'), false)
   }
   const transition = async () => {
     const active = audio[current]
@@ -45,7 +47,7 @@ export function createLoopPlayer(
       !playing ||
       transitioning ||
       active.paused ||
-      active.duration - active.currentTime > overlap
+      active.duration - active.currentTime > connectionSeconds
     ) {
       return
     }
@@ -63,7 +65,7 @@ export function createLoopPlayer(
       }
       const remaining = Math.max(0, active.duration - active.currentTime)
       crossfade(context, gains[current], gains[next], remaining)
-      onStatus(`${overlap}초 크로스페이드 중`, true)
+      onStatus(`${connectionSeconds}초 크로스페이드 중`, true)
     } catch (cause) {
       if (token === revision) {
         fail(cause)
@@ -71,21 +73,13 @@ export function createLoopPlayer(
     }
   }
   observeAudio(audio, onReady, fail, () => closed)
-  audio.forEach((element, index) => {
-    element.ontimeupdate = () => {
-      if (index === current) {
-        onPosition?.(element.currentTime)
-        transition().catch(fail)
-      }
-    }
-    element.onended = () => {
-      if (!playing || index !== current) {
-        return
-      }
+  bindPlaybackEvents(audio, {
+    current: () => current,
+    ended: () => {
       const token = revision
       const finish = async () => {
         if (nextPlayback === null) {
-          await play(overlap).catch(fail)
+          await play(connectionSeconds).catch(fail)
           return
         }
         await nextPlayback
@@ -103,24 +97,30 @@ export function createLoopPlayer(
           fail(cause)
         }
       })
-    }
+    },
+    onError: fail,
+    onPosition,
+    playing: () => playing,
+    transition,
   })
-  const play = async (seconds = DEFAULT_OVERLAP, preview = false, position = 0) => {
+  const play = async (
+    requestedConnectionSeconds = DEFAULT_CONNECTION_SECONDS,
+    preview = false,
+    position = 0,
+  ) => {
     const [{duration}] = audio
-    validatePlayback(duration, position, seconds, closed)
+    validatePlayback(duration, position, requestedConnectionSeconds, closed)
     stop()
-    overlap = seconds
+    connectionSeconds = requestedConnectionSeconds
     current = 0
     const token = revision
-    await context.resume()
-    if (token !== revision) {
-      return
-    }
-    audio[0].currentTime = getStartPosition(duration, seconds, preview, position)
+    const resumeRequest = context.resume()
+    audio[0].currentTime = getStartPosition(duration, connectionSeconds, preview, position)
     onPosition?.(audio[0].currentTime)
     gains[0].gain.setValueAtTime(1, context.currentTime)
     try {
-      await audio[0].play()
+      const playRequest = audio[0].play()
+      await Promise.all([resumeRequest, playRequest])
       if (token !== revision) {
         return
       }
@@ -136,7 +136,7 @@ export function createLoopPlayer(
   const seek = async (seconds: number) => {
     validatePosition(seconds, audio[0].duration, closed)
     if (playing) {
-      await play(overlap, false, seconds)
+      await play(connectionSeconds, false, seconds)
       return
     }
     stop()
@@ -144,29 +144,65 @@ export function createLoopPlayer(
     audio[0].currentTime = seconds === audio[0].duration ? 0 : seconds
     onPosition?.(audio[0].currentTime)
   }
+  const setVolume = (volume: number) => setMasterVolume(context, masterGain, volume, closed)
   const close = async () => {
     if (closed) {
       return
     }
     stop()
     closed = true
-    disconnectPlayers(audio, gains)
+    disconnectPlayers(audio, gains, masterGain)
     await context.close()
   }
-  return {close, play, seek, stop}
+  return {close, play, seek, setVolume, stop}
 }
 
-function connectPlayers(context: AudioContext, audio: HTMLAudioElement[]) {
-  return audio.map((element) => {
-    element.preload = 'auto'
-    const gain = context.createGain()
-    context.createMediaElementSource(element).connect(gain)
-    gain.connect(context.destination)
-    return gain
+interface PlaybackEventHandlers {
+  readonly current: () => number
+  readonly ended: () => void
+  readonly onError: (cause: unknown) => void
+  readonly onPosition?: (seconds: number) => void
+  readonly playing: () => boolean
+  readonly transition: () => Promise<void>
+}
+
+function bindPlaybackEvents(audio: HTMLAudioElement[], handlers: PlaybackEventHandlers): void {
+  audio.forEach((element, index) => {
+    element.ontimeupdate = () => {
+      if (index === handlers.current()) {
+        handlers.onPosition?.(element.currentTime)
+        handlers.transition().catch(handlers.onError)
+      }
+    }
+    element.onended = () => {
+      if (handlers.playing() && index === handlers.current()) {
+        handlers.ended()
+      }
+    }
   })
 }
 
-function disconnectPlayers(audio: HTMLAudioElement[], gains: GainNode[]) {
+function createLoopAudio(url: string): HTMLAudioElement {
+  const element = new Audio()
+  element.crossOrigin = 'anonymous'
+  element.src = url
+  return element
+}
+
+function connectPlayers(context: AudioContext, audio: HTMLAudioElement[]) {
+  const gains = audio.map((element) => {
+    element.preload = 'auto'
+    const gain = context.createGain()
+    context.createMediaElementSource(element).connect(gain)
+    return gain
+  })
+  const masterGain = context.createGain()
+  gains.forEach((gain) => gain.connect(masterGain))
+  masterGain.connect(context.destination)
+  return {gains, masterGain}
+}
+
+function disconnectPlayers(audio: HTMLAudioElement[], gains: GainNode[], masterGain: GainNode) {
   for (const element of audio) {
     element.ontimeupdate = null
     element.onended = null
@@ -176,17 +212,23 @@ function disconnectPlayers(audio: HTMLAudioElement[], gains: GainNode[]) {
     element.load()
   }
   gains.forEach((gain) => gain.disconnect())
+  masterGain.disconnect()
 }
 
-function validatePlayback(duration: number, position: number, overlap: number, closed: boolean) {
+function validatePlayback(
+  duration: number,
+  position: number,
+  connectionSeconds: number,
+  closed: boolean,
+) {
   validatePosition(position, duration, closed)
   if (
     !Number.isFinite(duration) ||
-    !Number.isFinite(overlap) ||
-    overlap <= 0 ||
-    overlap > duration / 2
+    !Number.isFinite(connectionSeconds) ||
+    connectionSeconds <= 0 ||
+    connectionSeconds > duration / 2
   ) {
-    throw new Error('오디오 로딩 후, 겹침을 0초 초과·음원 길이의 절반 이하로 설정해 주세요.')
+    throw new Error('오디오 로딩 후, 연결 구간을 0초 초과·음원 길이의 절반 이하로 설정해 주세요.')
   }
 }
 
@@ -200,6 +242,24 @@ function validatePosition(position: number, duration: number, closed: boolean) {
   ) {
     throw new Error('재생 위치가 올바르지 않습니다.')
   }
+}
+
+function validateVolume(volume: number, closed: boolean) {
+  if (closed || !Number.isFinite(volume) || volume < 0 || volume > 1) {
+    throw new Error('음량은 0에서 1 사이여야 합니다.')
+  }
+}
+
+function setMasterVolume(
+  context: AudioContext,
+  masterGain: GainNode,
+  volume: number,
+  closed: boolean,
+) {
+  validateVolume(volume, closed)
+  const now = context.currentTime
+  masterGain.gain.cancelScheduledValues(now)
+  masterGain.gain.setValueAtTime(volume, now)
 }
 
 function crossfade(context: AudioContext, active: GainNode, next: GainNode, remaining: number) {
@@ -232,9 +292,14 @@ function observeAudio(
   }
 }
 
-function getStartPosition(duration: number, overlap: number, preview: boolean, position: number) {
+function getStartPosition(
+  duration: number,
+  connectionSeconds: number,
+  preview: boolean,
+  position: number,
+) {
   if (preview) {
-    return Math.max(0, duration - overlap - 1)
+    return Math.max(0, duration - connectionSeconds - 1)
   }
   return position === duration ? 0 : position
 }

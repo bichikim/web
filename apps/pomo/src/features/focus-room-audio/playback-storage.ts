@@ -1,3 +1,4 @@
+import {createTimestampedDualRuntimeStorage} from 'src/utils/runtime-storage/create-timestamped-dual-runtime-storage'
 import {z} from 'zod'
 
 import {createLatestAsyncTask} from 'src/utils/create-latest-async-task'
@@ -16,12 +17,14 @@ const storedPlaybackSchema = z.object({
   positionSeconds: z.number().finite().nonnegative(),
   savedAt: z.number().finite().nonnegative(),
   trackId: z.string().min(1),
+  trackIndex: z.number().int().nonnegative().optional(),
 })
 
 export interface PPlaybackState {
   readonly isPlaying: boolean
   readonly positionSeconds: number
   readonly trackId: string
+  readonly trackIndex?: number
 }
 
 export interface StoredPlaybackState extends PPlaybackState {
@@ -42,6 +45,46 @@ export interface PlaybackStorageAdapter {
   readonly writeToss: (state: StoredPlaybackState) => Promise<void>
 }
 
+interface PlaybackNativeWriteRequest {
+  readonly state: StoredPlaybackState
+  readonly write: (state: StoredPlaybackState) => Promise<void>
+}
+
+let activeNativeWriteCount = 0
+let latestNativeWrite: PlaybackNativeWriteRequest | null = null
+
+const writeNativePlayback = async (
+  storage: PlaybackStorageAdapter,
+  state: StoredPlaybackState,
+): Promise<void> => {
+  const request = {state, write: storage.writeToss} satisfies PlaybackNativeWriteRequest
+  const currentLatestWrite = latestNativeWrite
+  if (currentLatestWrite === null || state.savedAt >= currentLatestWrite.state.savedAt) {
+    latestNativeWrite = request
+  }
+  activeNativeWriteCount += 1
+
+  try {
+    await request.write(request.state)
+    let completedRequest = request
+    while (latestNativeWrite !== completedRequest) {
+      const latestRequest = latestNativeWrite
+      if (latestRequest === null) {
+        return
+      }
+      // Reconcile again after each write because a newer instance may submit while it is pending.
+      // eslint-disable-next-line no-await-in-loop
+      await latestRequest.write(latestRequest.state)
+      completedRequest = latestRequest
+    }
+  } finally {
+    activeNativeWriteCount -= 1
+    if (activeNativeWriteCount === 0) {
+      latestNativeWrite = null
+    }
+  }
+}
+
 const runtimeStorage = {
   readToss: () => readTossStorageJson(PLAYBACK_STORAGE_KEY, parseStoredPlayback),
   readWeb: () => readWebStorageJson(PLAYBACK_STORAGE_KEY, parseStoredPlayback),
@@ -50,28 +93,15 @@ const runtimeStorage = {
   writeWeb: (state) => writeWebStorageJson(PLAYBACK_STORAGE_KEY, state),
 } satisfies PlaybackStorageAdapter
 
-const selectLatestPlayback = (
-  webPlayback: StoredPlaybackState | null,
-  nativePlayback: StoredPlaybackState | null,
-) => {
-  if (webPlayback === null) {
-    return nativePlayback
-  }
-
-  if (nativePlayback === null || webPlayback.savedAt >= nativePlayback.savedAt) {
-    return webPlayback
-  }
-
-  return nativePlayback
-}
-
 const toPlaybackState = (state: StoredPlaybackState | null): PPlaybackState | null => {
   if (state === null) {
     return null
   }
 
-  const {isPlaying, positionSeconds, trackId} = state
-  return {isPlaying, positionSeconds, trackId}
+  const {isPlaying, positionSeconds, trackId, trackIndex} = state
+  return trackIndex === undefined
+    ? {isPlaying, positionSeconds, trackId}
+    : {isPlaying, positionSeconds, trackId, trackIndex}
 }
 
 export interface PlaybackClock {
@@ -86,7 +116,7 @@ export interface PPlaybackStorage {
 
 const systemClock: PlaybackClock = {now: Date.now}
 
-/** Creates playback storage with its own coordination state and the supplied clock. */
+/** Creates playback storage with the supplied clock and storage dependencies. */
 export const createPPlaybackStorage = (
   clock: PlaybackClock = systemClock,
   storage: PlaybackStorageAdapter = runtimeStorage,
@@ -94,20 +124,22 @@ export const createPPlaybackStorage = (
 ): PPlaybackStorage => {
   const writeLatestToss = createLatestAsyncTask(async (state: StoredPlaybackState) => {
     try {
-      await storage.writeToss(state)
+      await writeNativePlayback(storage, state)
     } catch (error: unknown) {
       reportError(error)
     }
   })
-  let playbackRevision = 0
-  let playbackWriteRevision = 0
+  let latestWebWrite: StoredPlaybackState | null = null
+  const coordinator = createTimestampedDualRuntimeStorage<StoredPlaybackState>({
+    now: () => clock.now(),
+  })
   let pendingNativeWrites = 0
   let pendingStop: Promise<void> | null = null
 
   const readStoredPlayback = async (): Promise<PPlaybackState | null> => {
-    const initialPlaybackRevision = playbackRevision
+    const initialWebWrite = latestWebWrite
+    const initialPlaybackRevision = coordinator.revision()
     const hadPendingWrite = pendingNativeWrites > 0
-    const initialRevision = playbackWriteRevision
     const webPlayback = storage.readWeb()
 
     if (!storage.usesTossStorage()) {
@@ -116,17 +148,20 @@ export const createPPlaybackStorage = (
 
     try {
       const nativePlayback = await storage.readToss()
-      if (playbackWriteRevision !== initialRevision) {
+      if (latestWebWrite !== initialWebWrite) {
         return toPlaybackState(storage.readWeb())
       }
-      const latestPlayback = selectLatestPlayback(webPlayback, nativePlayback)
+      const latestPlayback = coordinator.selectLatest(webPlayback, nativePlayback)
       if (
         latestPlayback !== null &&
-        latestPlayback === webPlayback &&
         !hadPendingWrite &&
-        playbackRevision === initialPlaybackRevision
+        coordinator.revision() === initialPlaybackRevision
       ) {
-        writeLatestToss(latestPlayback)
+        if (latestPlayback === webPlayback) {
+          writeLatestToss(latestPlayback)
+        } else {
+          storage.writeWeb(latestPlayback)
+        }
       }
       return toPlaybackState(latestPlayback)
     } catch {
@@ -142,10 +177,10 @@ export const createPPlaybackStorage = (
 
   /** Stops saved playback without changing its track or position. */
   const stop = (): Promise<void> => {
-    const revision = (playbackRevision += 1)
+    const revision = coordinator.invalidate()
     const stopping = (pendingStop ?? Promise.resolve()).then(async () => {
       const playback = await readStoredPlayback()
-      if (playback !== null && revision === playbackRevision) {
+      if (playback !== null && revision === coordinator.revision()) {
         await write({...playback, isPlaying: false})
       }
     })
@@ -161,11 +196,9 @@ export const createPPlaybackStorage = (
   }
 
   /** Persists playback until the host app or browser data is removed. */
-  const write = async (state: PPlaybackState): Promise<void> => {
-    playbackRevision += 1
-    const storedState = {...state, savedAt: clock.now()} satisfies StoredPlaybackState
+  const persistPlayback = async (storedState: StoredPlaybackState): Promise<void> => {
     if (storage.writeWeb(storedState) === null) {
-      playbackWriteRevision += 1
+      latestWebWrite = storedState
     }
 
     if (!storage.usesTossStorage()) {
@@ -179,6 +212,9 @@ export const createPPlaybackStorage = (
       pendingNativeWrites -= 1
     }
   }
+
+  const write = (state: PPlaybackState): Promise<void> =>
+    coordinator.writeStored((savedAt) => ({...state, savedAt}), persistPlayback)
 
   return {read, stop, write}
 }

@@ -84,6 +84,7 @@ describe('createFeedResponse', () => {
             ]
           },
         },
+        timeZone: 'Asia/Seoul',
       })
       const url = `https://pomo.example/api/feeds/today-in-history/${format}.xml`
       const previous = await createResponse(new Request(url), provider)
@@ -291,4 +292,35 @@ describe('createFeedResponse', () => {
       expect.any(RangeError),
     )
   })
+})
+
+it('should preserve the viewer time zone in the feed self URL', async () => {
+  const response = await createResponse(
+    new Request(
+      'https://pomo.example/api/feeds/today-in-history/rss.xml?timeZone=America%2FNew_York',
+    ),
+  )
+  expect(response.status).toBe(200)
+  expect(await response.text()).toContain('rss.xml?timeZone=America%2FNew_York')
+})
+it.each(['timeZone=Not/AZone', 'timeZone=', 'timeZone=UTC&timeZone=Asia/Seoul'])(
+  'should reject invalid time zone requests: %s',
+  async (query) => {
+    const response = await createResponse(
+      new Request(`https://pomo.example/api/feeds/today-in-history/rss.xml?${query}`),
+    )
+    expect(response.status).toBe(400)
+    expect(response.headers.get('Cache-Control')).toBe('no-store')
+  },
+)
+it('should retain the time zone when stripping unrelated query parameters', async () => {
+  const response = await createResponse(
+    new Request(
+      'https://pomo.example/api/feeds/today-in-history/rss.xml?source=reader&timeZone=UTC',
+    ),
+  )
+  expect(response.status).toBe(308)
+  expect(response.headers.get('Location')).toBe(
+    'https://pomo.example/api/feeds/today-in-history/rss.xml?timeZone=UTC',
+  )
 })

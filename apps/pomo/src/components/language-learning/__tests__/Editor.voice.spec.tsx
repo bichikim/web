@@ -6,6 +6,7 @@ import {
   expectStatusMessage,
   flush,
   getLatestProps,
+  LanguageLearningEditorWithPreferences,
   setWriterState,
   startVoiceModel,
 } from './editor.setup'
@@ -14,13 +15,12 @@ import {type ComponentProps} from 'solid-js'
 import {expect, it, vi} from 'vitest'
 import {isSupertonicModelDownloaded} from '../../../features/supertonic'
 import {PModelDownloadConsent} from '../../p-model-download-consent/PModelDownloadConsent'
-import {LanguageLearningEditor} from '../Editor'
 import {LanguageLearningReview} from '../Review'
 import {generateVoiceCandidates, regenerateCandidateVoice} from '../voice-generation'
 
 it('should cancel or complete a missing all-sentence voice model download', async () => {
   vi.mocked(isSupertonicModelDownloaded).mockResolvedValue(false)
-  render(() => <LanguageLearningEditor />)
+  render(() => <LanguageLearningEditorWithPreferences />)
 
   fireEvent.click(screen.getByRole('button', {name: 'generate'}))
   await flush()
@@ -53,7 +53,7 @@ it('should report voice workflow and model-check failures', async () => {
     message: 'voice workflow failed',
     status: 'error',
   })
-  render(() => <LanguageLearningEditor />)
+  render(() => <LanguageLearningEditorWithPreferences />)
   fireEvent.click(screen.getByRole('button', {name: 'generate'}))
   await flush()
   setWriterState({status: 'complete'})
@@ -64,7 +64,7 @@ it('should report voice workflow and model-check failures', async () => {
   setWriterState({status: 'idle'})
   vi.mocked(generateVoiceCandidates).mockResolvedValue({status: 'cancelled'})
   vi.mocked(isSupertonicModelDownloaded).mockRejectedValue(new Error('model check failed'))
-  render(() => <LanguageLearningEditor />)
+  render(() => <LanguageLearningEditorWithPreferences />)
   fireEvent.click(screen.getByRole('button', {name: 'generate'}))
   await flush()
   setWriterState({status: 'generating'})
@@ -74,7 +74,7 @@ it('should report voice workflow and model-check failures', async () => {
 })
 
 it('should handle missing and failed candidate voice regeneration', async () => {
-  render(() => <LanguageLearningEditor />)
+  render(() => <LanguageLearningEditorWithPreferences />)
   fireEvent.click(screen.getByRole('button', {name: 'generate'}))
   await flush()
   await completeTextGeneration()
@@ -89,7 +89,7 @@ it('should handle missing and failed candidate voice regeneration', async () => 
 })
 
 it('should handle candidate voice downloads and workflow results', async () => {
-  render(() => <LanguageLearningEditor />)
+  render(() => <LanguageLearningEditorWithPreferences />)
   fireEvent.click(screen.getByRole('button', {name: 'generate'}))
   await flush()
   await completeTextGeneration()
@@ -151,5 +151,8 @@ it('should handle candidate voice downloads and workflow results', async () => {
   await getLatestProps<ComponentProps<typeof LanguageLearningReview>>(
     vi.mocked(LanguageLearningReview),
   ).onRegenerate(candidateId)
-  expect(URL.revokeObjectURL).toHaveBeenCalledWith('blob:generated')
+  expect(
+    getLatestProps<ComponentProps<typeof LanguageLearningReview>>(vi.mocked(LanguageLearningReview))
+      .candidates,
+  ).toContainEqual(expect.objectContaining({audioUrl: 'blob:replacement'}))
 })

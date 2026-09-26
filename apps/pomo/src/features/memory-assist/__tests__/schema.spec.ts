@@ -1,6 +1,7 @@
 /** @vitest-environment node */
 import {expect, it} from 'vitest'
 
+import {getDueMemoryReminder} from '../schedule'
 import {parseMemoryMemos} from '../schema'
 
 it('should restore an unconsumed legacy exact reminder with non-repeating defaults', () => {
@@ -163,6 +164,35 @@ it('should preserve an exact reminder at its stored advance time', () => {
   expect(result?.[0]?.nextExactReminderAt).toBe('2026-09-04T03:30:00.000Z')
 })
 
+it('should restore a legacy exact reminder at its advance time when the next time is missing', () => {
+  const memo = parseMemoryMemos([
+    {
+      createdAt: '2026-09-04T03:00:00.000Z',
+      dialogueId: null,
+      exactReminderAdvanceMinutes: 30,
+      exactReminderAt: '2026-09-04T04:00:00.000Z',
+      id: 'memo-1',
+      nextRecallAt: null,
+      recallMode: 'none',
+      reinforcementIndex: 0,
+      reminderHistory: [],
+      text: '여권 갱신하기',
+      updatedAt: '2026-09-04T03:00:00.000Z',
+      version: 1,
+    },
+  ])?.[0]
+
+  expect(memo?.nextExactReminderAt).toBe('2026-09-04T03:30:00.000Z')
+  expect(memo).toBeDefined()
+
+  if (memo === undefined) {
+    return
+  }
+
+  expect(getDueMemoryReminder(memo, new Date('2026-09-04T03:25:00.000Z'))).toBeNull()
+  expect(getDueMemoryReminder(memo, new Date('2026-09-04T03:30:00.000Z'))).toBe('exact')
+})
+
 it('should preserve the stored next repeated exact reminder after delayed delivery', () => {
   const result = parseMemoryMemos([
     {
@@ -234,24 +264,27 @@ it.each([
       },
     ],
   },
-])('should not infer a missing next reminder from delivery history (%j)', ({reminderEvents}) => {
-  const exactReminderAt = '2026-09-04T04:00:00.000Z'
-  const result = parseMemoryMemos([
-    {
-      createdAt: '2026-09-04T03:00:00.000Z',
-      dialogueId: null,
-      exactReminderAt,
-      id: 'memo-1',
-      nextRecallAt: null,
-      recallMode: 'none',
-      reinforcementIndex: 0,
-      reminderEvents,
-      reminderHistory: [exactReminderAt],
-      text: '여권 갱신하기',
-      updatedAt: exactReminderAt,
-      version: 1,
-    },
-  ])
+])(
+  'should restore a consumed legacy exact reminder from delivery history (%j)',
+  ({reminderEvents}) => {
+    const exactReminderAt = '2026-09-04T04:00:00.000Z'
+    const result = parseMemoryMemos([
+      {
+        createdAt: '2026-09-04T03:00:00.000Z',
+        dialogueId: null,
+        exactReminderAt,
+        id: 'memo-1',
+        nextRecallAt: null,
+        recallMode: 'none',
+        reinforcementIndex: 0,
+        reminderEvents,
+        reminderHistory: [exactReminderAt],
+        text: '여권 갱신하기',
+        updatedAt: exactReminderAt,
+        version: 1,
+      },
+    ])
 
-  expect(result?.[0]?.nextExactReminderAt).toBe(exactReminderAt)
-})
+    expect(result?.[0]?.nextExactReminderAt).toBeNull()
+  },
+)

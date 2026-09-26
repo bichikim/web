@@ -1,3 +1,4 @@
+import {clamp} from 'es-toolkit/math'
 import classifierArtifact from './classifier-artifact.json'
 import type {
   MoodModifierScore,
@@ -159,8 +160,7 @@ const softmax = (values: ReadonlyArray<number>) => {
   return exponentials.map((value) => value / total)
 }
 
-const sigmoid = (value: number) =>
-  1 / (1 + Math.exp(-Math.max(-SIGMOID_LIMIT, Math.min(SIGMOID_LIMIT, value))))
+const sigmoid = (value: number) => 1 / (1 + Math.exp(-clamp(value, -SIGMOID_LIMIT, SIGMOID_LIMIT)))
 
 const getLinearScore = (
   embedding: ReadonlyArray<number>,

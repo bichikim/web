@@ -8,7 +8,7 @@ import {
   findGenerationRun,
   publishHistoryResponse,
   rejectHistoryResponse,
-} from './generation-repository'
+} from '../repositories/history-generation'
 import {retrieveHistoryResponse} from './response-result'
 
 const MAX_ERROR_LENGTH = 2000

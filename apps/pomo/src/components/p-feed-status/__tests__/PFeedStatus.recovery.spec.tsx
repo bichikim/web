@@ -1,3 +1,4 @@
+import {PreferenceProvider} from 'src/hooks/use-preference'
 /** @vitest-environment jsdom */
 
 import {fireEvent, render, screen} from '@solidjs/testing-library'
@@ -15,9 +16,13 @@ import {
   renderModal,
 } from '../../__tests__/feed-status/fixtures'
 
-vi.mock('src/features/focus-room-feed', () => ({
-  usePFeedContext: vi.fn(),
-}))
+vi.mock('src/features/focus-room-feed', async () => {
+  const {isNoFeedConnectionGuidance} = await vi.importActual<
+    typeof import('src/features/focus-room-feed/feed-controller')
+  >('src/features/focus-room-feed/feed-controller')
+
+  return {isNoFeedConnectionGuidance, usePFeedContext: vi.fn()}
+})
 
 vi.mock('src/features/model-download', () => ({
   useModelDownload: vi.fn(),
@@ -46,7 +51,7 @@ it('should require download consent before retrying a feed without a cached mode
   vi.mocked(usePFeedContext).mockReturnValue(feeds)
   vi.mocked(useModelDownload).mockReturnValue(modelDownload)
   vi.mocked(isSupertonicModelDownloaded).mockResolvedValue(false)
-  render(() => <PFeedStatus />)
+  render(() => <PFeedStatus />, {wrapper: PreferenceProvider})
 
   fireEvent.click(screen.getByRole('button', {name: '다시 시도'}))
 
@@ -73,7 +78,7 @@ it('should stop downloading remaining models when a confirmed download is cancel
   vi.mocked(usePFeedContext).mockReturnValue(feeds)
   vi.mocked(useModelDownload).mockReturnValue(modelDownload)
   vi.mocked(isSupertonicModelDownloaded).mockResolvedValue(false)
-  render(() => <PFeedStatus />)
+  render(() => <PFeedStatus />, {wrapper: PreferenceProvider})
 
   fireEvent.click(screen.getByRole('button', {name: '다시 시도'}))
   await screen.findByRole('dialog', {name: /모델을 받을까요/})
@@ -89,7 +94,7 @@ it('should retry immediately when every feed model is already cached', async () 
   const feeds = createFeeds([], false, [RECOVERY_JOB])
   vi.mocked(usePFeedContext).mockReturnValue(feeds)
   vi.mocked(isSupertonicModelDownloaded).mockResolvedValue(true)
-  render(() => <PFeedStatus />)
+  render(() => <PFeedStatus />, {wrapper: PreferenceProvider})
 
   fireEvent.click(screen.getByRole('button', {name: '다시 시도'}))
 
@@ -110,7 +115,7 @@ it.each(['cached', 'download', 'model-check'] as const)(
     } else {
       vi.mocked(feeds.retryRecovery).mockRejectedValueOnce(new Error('retry failed'))
     }
-    render(() => <PFeedStatus />)
+    render(() => <PFeedStatus />, {wrapper: PreferenceProvider})
 
     fireEvent.click(screen.getByRole('button', {name: '다시 시도'}))
     if (path === 'download') {
@@ -146,7 +151,7 @@ it('should clear an old retry failure when recovery jobs are dismissed', async (
   vi.spyOn(console, 'error').mockImplementation(() => undefined)
   vi.mocked(usePFeedContext).mockReturnValue(feeds)
   vi.mocked(isSupertonicModelDownloaded).mockResolvedValue(true)
-  render(() => <PFeedStatus />)
+  render(() => <PFeedStatus />, {wrapper: PreferenceProvider})
   fireEvent.click(screen.getByRole('button', {name: '다시 시도'}))
   const message = '피드 대화를 다시 만들지 못했어요. 잠시 후 다시 시도해 주세요.'
   await screen.findByText(message)
@@ -165,7 +170,7 @@ it('should restore retry actions when checking a feed model fails', async () => 
   const feeds = createFeeds([], false, [RECOVERY_JOB])
   vi.mocked(usePFeedContext).mockReturnValue(feeds)
   vi.mocked(isSupertonicModelDownloaded).mockRejectedValue(checkFailure)
-  render(() => <PFeedStatus />)
+  render(() => <PFeedStatus />, {wrapper: PreferenceProvider})
 
   fireEvent.click(screen.getByRole('button', {name: '다시 시도'}))
 
@@ -187,7 +192,7 @@ it('should ignore model consent confirmation while a download is already active'
   vi.mocked(usePFeedContext).mockReturnValue(feeds)
   vi.mocked(useModelDownload).mockReturnValue({...modelDownload, state: downloadState})
   vi.mocked(isSupertonicModelDownloaded).mockResolvedValue(false)
-  render(() => <PFeedStatus />)
+  render(() => <PFeedStatus />, {wrapper: PreferenceProvider})
 
   fireEvent.click(screen.getByRole('button', {name: '다시 시도'}))
   const confirmButton = await screen.findByRole('button', {name: '받고 시작'})
@@ -211,7 +216,7 @@ it('should dismiss or delete recovery jobs and report failed user actions', asyn
   })
   const consoleError = vi.spyOn(console, 'error').mockImplementation(() => undefined)
   vi.mocked(usePFeedContext).mockReturnValue(listeningFeeds)
-  const listeningResult = render(() => <PFeedStatus />)
+  const listeningResult = render(() => <PFeedStatus />, {wrapper: PreferenceProvider})
 
   fireEvent.click(listeningResult.container.querySelector('button')!)
   await Promise.resolve()
@@ -226,7 +231,7 @@ it('should dismiss or delete recovery jobs and report failed user actions', asyn
   })
   vi.mocked(usePFeedContext).mockReturnValue(recoveryFeeds)
   vi.mocked(isSupertonicModelDownloaded).mockResolvedValue(true)
-  const recoveryResult = render(() => <PFeedStatus />)
+  const recoveryResult = render(() => <PFeedStatus />, {wrapper: PreferenceProvider})
   const recoveryButtons = recoveryResult.container.querySelectorAll('button')
 
   fireEvent.click(recoveryButtons[0]!)
@@ -257,7 +262,7 @@ it('should keep a single model check in flight and let users cancel download con
       resolveDownloadCheck = resolve
     }),
   )
-  const recoveryResult = render(() => <PFeedStatus />)
+  const recoveryResult = render(() => <PFeedStatus />, {wrapper: PreferenceProvider})
   const retryButton = recoveryResult.container.querySelector('button')!
 
   fireEvent.click(retryButton)
@@ -284,7 +289,7 @@ it('should stop retrying when another feed generation starts during the model ch
       resolveDownloadCheck = resolve
     }),
   )
-  render(() => <PFeedStatus />)
+  render(() => <PFeedStatus />, {wrapper: PreferenceProvider})
 
   fireEvent.click(screen.getByRole('button', {name: '다시 시도'}))
   await vi.waitFor(() => expect(isSupertonicModelDownloaded).toHaveBeenCalledOnce())
@@ -309,7 +314,7 @@ it('should close pending model consent when another feed generation starts', asy
   const feeds = createFeeds([], false, [RECOVERY_JOB], {state})
   vi.mocked(usePFeedContext).mockReturnValue(feeds)
   vi.mocked(isSupertonicModelDownloaded).mockResolvedValue(false)
-  render(() => <PFeedStatus />)
+  render(() => <PFeedStatus />, {wrapper: PreferenceProvider})
 
   fireEvent.click(screen.getByRole('button', {name: '다시 시도'}))
   await screen.findByRole('dialog', {name: /모델을 받을까요/})
@@ -339,7 +344,7 @@ it('should continue a confirmed feed model download after leaving the page', asy
   vi.mocked(usePFeedContext).mockReturnValue(feeds)
   vi.mocked(useModelDownload).mockReturnValue(modelDownload)
   vi.mocked(isSupertonicModelDownloaded).mockResolvedValue(false)
-  const result = render(() => <PFeedStatus />)
+  const result = render(() => <PFeedStatus />, {wrapper: PreferenceProvider})
 
   fireEvent.click(screen.getByRole('button', {name: '다시 시도'}))
   await screen.findByRole('dialog', {name: /모델을 받을까요/})

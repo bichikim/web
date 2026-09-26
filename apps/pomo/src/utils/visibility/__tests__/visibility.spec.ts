@@ -1,6 +1,6 @@
 /** @vitest-environment jsdom */
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
-import {visibility} from '..'
+import {visibility} from '../visibility'
 
 describe('visibility', () => {
   let documentHidden = false
@@ -16,7 +16,7 @@ describe('visibility', () => {
 
   const changeVisibility = (hidden: boolean) => {
     documentHidden = hidden
-    document.dispatchEvent(new Event('visibilitychange', {bubbles: true}))
+    document.dispatchEvent(new Event('visibilitychange'))
   }
 
   it('should not call the callback before a visibility change', () => {

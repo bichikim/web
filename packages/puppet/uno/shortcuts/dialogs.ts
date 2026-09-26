@@ -1,17 +1,6 @@
 import {numberFieldDescendants} from './controls'
 
 export const dialogsShortcuts = {
-  'psd-reimport-dialog':
-    '[&_footer_button]:[height:2rem] [font-size:0.75rem] [line-height:1.5] [&_p]:m-0 [&_p]:text-[#a8bbb4]',
-  'psd-reimport-file': 'break-all',
-  'psd-reimport-add': 'flex items-center gap-2',
-  'psd-reimport-list': [
-    'm-0 p-0 list-none grid gap-3 max-h-72 overflow-y-auto',
-    '[&_li]:grid [&_li]:grid-cols-[4rem_minmax(0,1fr)] [&_li]:gap-2 [&_li>span]:text-[#91cbb8]',
-    '[&_strong]:block [&_strong]:break-words [&_strong]:font-medium',
-    '[&_small]:block [&_small]:text-[#91a09a] [&_small]:text-[0.6875rem]',
-  ],
-
   'auto-mesh-dialog-content': [
     '[&[data-closed]]:hidden',
     'fixed [top:50%] [left:50%] [width:min(32.5rem,_calc(100vw_-_2rem))] [max-height:calc(100vh_-_2rem)]',
@@ -80,8 +69,6 @@ export const dialogsShortcuts = {
     '[@media(max-width:35rem)]:[grid-template-columns:1fr]',
     '[@media(max-width:35rem)]:[&_label_>_span]:min-h-0',
   ],
-  'influence-chevron': 'transition-transform duration-200 motion-reduce:transition-none',
-
   'auto-mesh-settings': [
     'grid [grid-template-columns:repeat(2,_minmax(0,_1fr))] [gap:1rem]',
     '[&_>_label]:grid [&_>_label]:[gap:0.4375rem] [&_>_label]:[color:#bdc8c4] [&_>_label]:[font-size:0.6875rem]',
@@ -90,35 +77,10 @@ export const dialogsShortcuts = {
     '[&_label_>_small]:[font-weight:400] [&_label_>_small]:[line-height:1.5]',
     '[@media(max-width:35rem)]:[grid-template-columns:1fr]',
   ],
-  'influence-drawer': [
-    'col-span-2 [grid-row:3] min-w-0 text-xs border-b border-[#3c4b46]',
-    'overflow-hidden animate-influence-close [&[data-expanded]]:animate-influence-open motion-reduce:animate-none',
-    '[&_.influence-inline]:p-3 bg-[#141d19] [box-shadow:inset_0_3px_6px_rgb(0_0_0_/_20%)]',
-  ],
   'auto-mesh-warning': [
     'm-0 [padding:0.625rem_0.75rem] [border-left:0.1875rem_solid_#e5b55a] [color:#c7b889] [background:#211d13]',
     '[font-size:0.625rem] [line-height:1.6]',
   ],
-  'influence-graph': [
-    'm-0 grid gap-1 [&_svg]:w-full [&_svg]:block',
-    '[&_polyline]:fill-none [&_polyline]:stroke-[#64e5c4] [&_polyline]:[stroke-width:2]',
-    '[&_circle]:fill-[#e8f0ed] [&_circle]:stroke-[#111714] [&_circle]:[stroke-width:1.5] [&_circle]:[r:3]',
-    '[&_polyline]:[vector-effect:non-scaling-stroke]',
-    '[&_figcaption]:text-xs [&_figcaption]:leading-relaxed',
-  ],
-  'influence-inline': 'grid gap-2 [&_>_button]:justify-self-start',
-
-  'influence-inline-panel': 'contents [&_>_div]:contents',
-  'influence-toggle': [
-    'box-border flex items-center justify-end gap-2 [grid-column:1] [grid-row:2] w-full px-4 py-1.5',
-    '[.puppet-editor_&]:[border:0] [.puppet-editor_&]:rounded-none',
-    'bg-transparent text-[#aebeb7] cursor-pointer',
-    '[.puppet-editor_&]:[font-size:0.6875rem] [.puppet-editor_&]:font-normal [.puppet-editor_&]:leading-4',
-    'focus-visible:outline focus-visible:outline-[#64e5c4] hover:text-[#64e5c4] hover:bg-[#21332b]',
-    '[&[data-expanded]]:text-[#64e5c4] [&[data-expanded]_.influence-chevron]:rotate-180',
-  ],
-
-  'influence-graph-grid': 'fill-none stroke-[#3c4b46] [stroke-width:0.5]',
   'editor-help': [
     'fixed top-1/2 left-1/2 [transform:translate(-50%,_-50%)] m-0',
     'box-border [width:min(45.125rem,_calc(100vw_-_2rem))] [max-height:calc(100dvh_-_2rem)] [padding:1.5rem]',
@@ -135,12 +97,10 @@ export const dialogsShortcuts = {
     '[&_header_button]:[background:#26332f] [&_header_button]:cursor-pointer',
     '[&_button:focus-visible]:[outline:2px_solid_#64e5c4] [&_button:focus-visible]:[outline-offset:2px]',
   ],
-  'influence-inline-row': [
-    'flex flex-wrap items-center gap-2 text-[#e8f0ed] [&_label]:flex [&_label]:items-center [&_label]:gap-2',
-    '[&_input[type=range]]:w-24 [&_input[type=range]]:accent-[#64e5c4]',
-  ],
+
   'influence-actions': 'flex flex-wrap items-center gap-3',
-  'influence-source': 'flex items-center gap-2 [&_>_div]:w-32',
+  'influence-chevron': 'transition-transform duration-200 motion-reduce:transition-none',
+
   'influence-dialog-body': [
     'grid gap-4 p-5 text-sm [&_p]:m-0 [&_p]:leading-relaxed',
     '[&_select]:bg-[#17211e] [&_select]:text-[#e8f0ed] [&_select]:p-2',
@@ -152,6 +112,32 @@ export const dialogsShortcuts = {
     '[@media(min-width:40rem)]:[left:auto] [@media(min-width:40rem)]:[right:1rem]',
     '[@media(min-width:40rem)]:[transform:translateY(-50%)] [@media(min-width:40rem)]:[width:20rem]',
   ],
+  'influence-dialog-overlay': 'fixed inset-0 bg-black/15 [&[data-closed]]:hidden',
+  'influence-drawer': [
+    'col-span-2 [grid-row:3] min-w-0 text-xs border-b border-[#3c4b46]',
+    'overflow-hidden animate-influence-close [&[data-expanded]]:animate-influence-open motion-reduce:animate-none',
+    '[&_.influence-inline]:p-3 bg-[#141d19] [box-shadow:inset_0_3px_6px_rgb(0_0_0_/_20%)]',
+  ],
+  'influence-graph': [
+    'm-0 grid gap-1 [&_svg]:w-full [&_svg]:block',
+    '[&_polyline]:fill-none [&_polyline]:stroke-[#64e5c4] [&_polyline]:[stroke-width:2]',
+    '[&_circle]:fill-[#e8f0ed] [&_circle]:stroke-[#111714] [&_circle]:[stroke-width:1.5] [&_circle]:[r:3]',
+    '[&_polyline]:[vector-effect:non-scaling-stroke]',
+    '[&_figcaption]:text-xs [&_figcaption]:leading-relaxed',
+  ],
+
+  'influence-graph-grid': 'fill-none stroke-[#3c4b46] [stroke-width:0.5]',
+  'influence-graph-guide': 'stroke-[#b8c4bf] [stroke-width:1] [stroke-dasharray:3_3]',
+
+  'influence-graph-labels': 'flex justify-between text-xs text-[#b8c4bf]',
+  'influence-inline': 'grid gap-2 [&_>_button]:justify-self-start',
+  'influence-inline-panel': 'contents [&_>_div]:contents',
+  'influence-inline-row': [
+    'flex flex-wrap items-center gap-2 text-[#e8f0ed] [&_label]:flex [&_label]:items-center [&_label]:gap-2',
+    '[&_input[type=range]]:w-24 [&_input[type=range]]:accent-[#64e5c4]',
+  ],
+  'influence-point':
+    'grid grid-cols-2 gap-2 items-end [&_>button]:col-span-2 [&_>button]:justify-self-end',
   'influence-popover': [
     'box-border [width:min(20rem,_calc(100vw_-_2rem))] [max-height:min(32rem,_calc(100vh_-_2rem))]',
     'overflow-auto p-4 grid gap-3 text-xs bg-[#111714] text-[#e8f0ed]',
@@ -161,8 +147,6 @@ export const dialogsShortcuts = {
     '[&_h2]:text-sm [&_h2]:m-0 [&_p]:m-0 [&_p]:leading-relaxed',
     ...numberFieldDescendants,
   ],
-  'influence-dialog-overlay': 'fixed inset-0 bg-black/15 [&[data-closed]]:hidden',
-  'influence-graph-guide': 'stroke-[#b8c4bf] [stroke-width:1] [stroke-dasharray:3_3]',
   'influence-presets': [
     'flex flex-wrap gap-1 m-0 p-0 border-0 [&_legend]:sr-only',
     '[&_label]:relative [&_label]:cursor-pointer [&_input]:sr-only',
@@ -173,9 +157,6 @@ export const dialogsShortcuts = {
     '[&_polyline]:fill-none [&_polyline]:stroke-current [&_polyline]:[stroke-width:2]',
     '[&_polyline]:[vector-effect:non-scaling-stroke]',
   ],
-  'influence-graph-labels': 'flex justify-between text-xs text-[#b8c4bf]',
-  'influence-point':
-    'grid grid-cols-2 gap-2 items-end [&_>button]:col-span-2 [&_>button]:justify-self-end',
   'influence-relation': [
     'border border-[#3c4b46] rounded p-3 [&_summary]:cursor-pointer [&_summary]:leading-relaxed',
     '[&_summary:focus-visible]:outline [&_summary:focus-visible]:outline-[#64e5c4]',
@@ -184,4 +165,74 @@ export const dialogsShortcuts = {
     'grid gap-3 pt-3 [&_label]:grid [&_label]:gap-1',
     '[&_input[type=range]]:w-full [&_input[type=range]]:accent-[#64e5c4]',
   ],
+  'influence-source': 'flex items-center gap-2 [&_>_div]:w-32',
+  'influence-toggle': [
+    'box-border flex items-center justify-end gap-2 [grid-column:1] [grid-row:2] w-full px-4 py-1.5',
+    '[.puppet-editor_&]:[border:0] [.puppet-editor_&]:rounded-none',
+    'bg-transparent text-[#aebeb7] cursor-pointer',
+    '[.puppet-editor_&]:[font-size:0.6875rem] [.puppet-editor_&]:font-normal [.puppet-editor_&]:leading-4',
+    'focus-visible:outline focus-visible:outline-[#64e5c4] hover:text-[#64e5c4] hover:bg-[#21332b]',
+    '[&[data-expanded]]:text-[#64e5c4] [&[data-expanded]_.influence-chevron]:rotate-180',
+  ],
+  'psd-reimport-add': 'flex items-center gap-2',
+  'psd-reimport-dialog':
+    '[&_footer_button]:[height:2rem] [font-size:0.75rem] [line-height:1.5] [&_p]:m-0 [&_p]:text-[#a8bbb4]',
+  'psd-reimport-file': 'break-all',
+  'psd-reimport-list': [
+    'm-0 p-0 list-none grid gap-3 max-h-72 overflow-y-auto',
+    '[&_li]:grid [&_li]:grid-cols-[4rem_minmax(0,1fr)] [&_li]:gap-2 [&_li>span]:text-[#91cbb8]',
+    '[&_strong]:block [&_strong]:break-words [&_strong]:font-medium',
+    '[&_small]:block [&_small]:text-[#91a09a] [&_small]:text-[0.6875rem]',
+  ],
+  'spatial-mesh-combine-controls': 'flex flex-wrap items-end gap-2 [&_label]:grid [&_label]:gap-1',
+  'spatial-mesh-dialog-content': [
+    'auto-mesh-dialog-content',
+    '[width:min(70rem,_calc(100vw_-_2rem))]',
+    '[&_form]:[max-height:calc(100vh_-_2rem)]',
+    '[&_form]:overflow-y-auto',
+    '[&_header]:[margin-bottom:0.5rem]',
+    '[&_footer]:[margin-top:0.5rem]',
+  ],
+  'spatial-mesh-dialog-layout': [
+    'grid [grid-template-columns:minmax(0,_1fr)_minmax(18rem,_0.9fr)] [gap:1rem] min-h-0',
+    '[@media(max-width:48rem)]:[grid-template-columns:1fr]',
+  ],
+  'spatial-mesh-editor-toolbar': 'flex flex-wrap gap-2',
+  'spatial-mesh-object-list': [
+    'grid gap-1 m-0 p-0 list-none',
+    '[&_li]:flex [&_li]:items-center [&_li]:gap-2 [&_li]:rounded [&_li]:px-2 [&_li]:py-1',
+    '[&_li[data-selected=true]]:bg-[#263b34]',
+    '[&_li[data-depth="1"]]:ml-4 [&_li[data-depth="2"]]:ml-8',
+    '[&_li_button]:border-0 [&_li_button]:bg-transparent [&_li_button]:text-[#e8f0ed]',
+    '[&_li_button]:cursor-pointer [&_li_button:first-of-type]:flex-1 [&_li_button:first-of-type]:text-left',
+  ],
+  'spatial-mesh-operation': [
+    'grid [gap:0.75rem] [padding:0.75rem] [border:1px_solid_#35413d] [border-radius:0.5rem]',
+    '[&_legend]:[color:#64e5c4] [&_legend]:text-xs [&_legend]:font-bold',
+    '[&_label]:grid [&_label]:[gap:0.25rem] [&_label]:text-xs [&_label]:[color:#bdc8c4]',
+    '[&_label_>_input]:min-w-0 [&_label_>_input]:w-full [&_label_>_input]:[padding:0.375rem]',
+    '[&_label_>_input]:[border:1px_solid_#3b4743] [&_label_>_input]:[border-radius:0.375rem]',
+    '[&_label_>_input]:[color:#eef5f2] [&_label_>_input]:[background:#0d1210]',
+    '[&_select]:min-w-0 [&_select]:w-full [&_select]:[padding:0.375rem]',
+    '[&_select]:[border:1px_solid_#3b4743] [&_select]:[border-radius:0.375rem]',
+    '[&_select]:[color:#eef5f2] [&_select]:[background:#0d1210]',
+  ],
+  'spatial-mesh-operations': [
+    'grid [align-content:start] [gap:0.75rem] [max-height:60vh] overflow-y-auto',
+    '[&_h3]:m-0 [&_h3]:text-sm',
+  ],
+  'spatial-mesh-preview': [
+    'grid [align-content:start] [gap:0.75rem] min-w-0',
+    '[--spatial-preview-background:#202624] [--spatial-preview-face:#d4dbd5]',
+    '[--spatial-preview-muted:#626b66] [--spatial-preview-edge:#343d39]',
+    '[--spatial-preview-light:#ffffff] [--spatial-preview-ambient:0.7]',
+    '[--spatial-preview-directional:0.6] [--spatial-preview-edge-angle:15]',
+    '[&_canvas]:w-full [&_canvas]:[aspect-ratio:1] [&_canvas]:[border:1px_solid_#35413d]',
+    '[&_canvas]:[border-radius:0.5rem] [&_canvas]:[background:#202624]',
+    '[&_canvas]:touch-none [&_canvas]:cursor-grab [&_canvas:active]:cursor-grabbing',
+    '[&_canvas:focus-visible]:outline-2 [&_canvas:focus-visible]:outline-offset-2',
+    '[&_canvas:focus-visible]:[outline-color:#b9e3d2]',
+    '[&_p]:m-0 [&_p]:[color:#91a09a] [&_p]:text-xs',
+  ],
+  'spatial-mesh-preview-toolbar': ['flex flex-wrap items-center justify-between gap-2'],
 }

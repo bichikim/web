@@ -57,7 +57,7 @@ it('should load the selected locale after the runtime requests a document reload
   )
 
   const reload = vi.fn()
-  const browserWindow = window
+  const browserWindow = globalThis.window
   vi.stubGlobal('window', {location: {href: browserWindow.location.href, reload}})
   try {
     await setLocale('en')

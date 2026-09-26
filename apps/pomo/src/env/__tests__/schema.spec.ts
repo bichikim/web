@@ -235,6 +235,31 @@ describe('OPENAI_*', () => {
   })
 })
 
+describe('POMO_AI_*', () => {
+  it('should default the queue and runner settings without inventing a credit cap', () => {
+    expect(envSchema.POMO_AI_QUEUE_LIMIT.parse('')).toBe(100)
+    expect(envSchema.POMO_AI_RUNNER_TIMEOUT_MS.parse('')).toBe(120_000)
+    expect(envSchema.POMO_AI_SUBSCRIPTION_PRODUCT_CODE.parse('')).toBe('pomo-ai-service')
+    expect(envSchema.POMO_AI_MONTHLY_CREDIT_CAP.parse('')).toBeUndefined()
+    expect(envSchema.POMO_AI_MONTHLY_CREDIT_CAP.parse('500')).toBe(500)
+  })
+
+  it('should require an HTTPS runner URL', () => {
+    expect(envSchema.POMO_AI_RUNNER_URL.parse(' https://runner.example.test/ ')).toBe(
+      'https://runner.example.test/',
+    )
+    expect(() => envSchema.POMO_AI_RUNNER_URL.parse('http://127.0.0.1:8080')).toThrow(
+      'POMO_AI_RUNNER_URL must use https:',
+    )
+  })
+
+  it('should leave pricing and storage quota unset until operations configure them', () => {
+    expect(envSchema.POMO_AI_CREDIT_PROFILE_JSON.parse('')).toBeUndefined()
+    expect(envSchema.POMO_AI_STORAGE_QUOTA_BYTES.parse('')).toBeUndefined()
+    expect(envSchema.POMO_AI_STORAGE_QUOTA_BYTES.parse('1048576')).toBe(1_048_576)
+  })
+})
+
 describe('calendar integration settings', () => {
   it('should treat calendar credentials as optional until the feature is used', () => {
     expect(envSchema.GOOGLE_CALENDAR_CLIENT_ID.parse('')).toBeUndefined()

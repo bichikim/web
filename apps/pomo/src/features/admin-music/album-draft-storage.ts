@@ -234,8 +234,29 @@ export type AlbumDraftStorageResult =
   | {readonly success: true}
   | {readonly error: unknown; readonly success: false}
 
+export type AlbumDraftReadResult<T> =
+  | {readonly data: T; readonly success: true}
+  | {readonly error: unknown; readonly success: false}
+
 const storageSuccess = (): AlbumDraftStorageResult => ({success: true})
 const storageFailure = (error: unknown): AlbumDraftStorageResult => ({error, success: false})
+
+const hasDifferentCoverDraftId = (data: string | null, coverDraftId: string): boolean => {
+  if (data === null) {
+    return false
+  }
+
+  let parsedData: unknown
+
+  try {
+    parsedData = JSON.parse(data)
+  } catch {
+    return false
+  }
+
+  const parsedDraft = albumDraftSchema.safeParse(parsedData)
+  return parsedDraft.success && parsedDraft.data.coverDraftId !== coverDraftId
+}
 
 export const writeAlbumDraftReference = async (
   options: WriteAlbumDraftReferenceOptions,
@@ -290,14 +311,50 @@ export const deleteExpiredAlbumDraftCovers = async (
 
 export const readAlbumDraftData = (
   storage: AlbumDraftStorage = BROWSER_STORAGE,
-): AlbumDraftData | null => {
+): AlbumDraftReadResult<AlbumDraftData | null> => {
   try {
     const storedDraft = storage.readData()
-    return storedDraft === null ? null : albumDraftSchema.parse(JSON.parse(storedDraft))
+    return {
+      data: storedDraft === null ? null : albumDraftSchema.parse(JSON.parse(storedDraft)),
+      success: true,
+    }
   } catch (error: unknown) {
     console.warn('Failed to read the admin album draft.', error)
-    return null
+    return {error, success: false}
   }
+}
+
+/** Returns null when the browser draft cannot be read. */
+export const readAlbumDraftDataOrNull = (
+  storage: AlbumDraftStorage = BROWSER_STORAGE,
+): AlbumDraftData | null => {
+  const result = readAlbumDraftData(storage)
+  return result.success ? result.data : null
+}
+
+export const readAlbumDraftCover = async (
+  id: string,
+  storage: AlbumDraftStorage = BROWSER_STORAGE,
+): Promise<AlbumDraftReadResult<File | null>> => {
+  try {
+    const blob = await storage.readCover(id)
+    return {
+      data: blob === null ? null : new File([blob], 'cover.webp', {type: blob.type}),
+      success: true,
+    }
+  } catch (error: unknown) {
+    console.warn('Failed to read the admin album cover draft.', error)
+    return {error, success: false}
+  }
+}
+
+/** Returns null when the browser cover cannot be read. */
+export const readAlbumDraftCoverOrNull = async (
+  id: string,
+  storage: AlbumDraftStorage = BROWSER_STORAGE,
+): Promise<File | null> => {
+  const result = await readAlbumDraftCover(id, storage)
+  return result.success ? result.data : null
 }
 
 export const writeAlbumDraftData = (
@@ -310,19 +367,6 @@ export const writeAlbumDraftData = (
   } catch (error: unknown) {
     console.warn('Failed to save the admin album draft.', error)
     return storageFailure(error)
-  }
-}
-
-export const readAlbumDraftCover = async (
-  id: string,
-  storage: AlbumDraftStorage = BROWSER_STORAGE,
-): Promise<File | null> => {
-  try {
-    const blob = await storage.readCover(id)
-    return blob === null ? null : new File([blob], 'cover.webp', {type: blob.type})
-  } catch (error: unknown) {
-    console.warn('Failed to read the admin album cover draft.', error)
-    return null
   }
 }
 
@@ -355,24 +399,114 @@ export const deleteAlbumDraftCover = async (
   }
 }
 
+const draftDataRetainsCover = (draftData: string | null, coverDraftId: string): boolean => {
+  if (draftData === null) {
+    return false
+  }
+
+  try {
+    return albumDraftSchema.parse(JSON.parse(draftData)).coverDraftId === coverDraftId
+  } catch {
+    return false
+  }
+}
+
+const clearMissingCoverReference = (coverDraftId: string, storage: AlbumDraftStorage): void => {
+  const draftResult = readAlbumDraftData(storage)
+
+  if (
+    !draftResult.success ||
+    draftResult.data === null ||
+    draftResult.data.coverDraftId !== coverDraftId
+  ) {
+    return
+  }
+
+  const normalizedDraft = {...draftResult.data, coverDraftId: null, hasCoverFile: false}
+  const writeResult = writeAlbumDraftData(normalizedDraft, storage)
+
+  if (!writeResult.success) {
+    console.warn('Failed to clear the missing admin album cover from the draft.', writeResult.error)
+  }
+}
+
+const restoreCoverIfDraftRetainsIt = async (
+  draftData: string | null,
+  coverDraftId: string,
+  cover: Blob | null,
+  storage: AlbumDraftStorage,
+): Promise<AlbumDraftStorageResult> => {
+  if (cover === null || !draftDataRetainsCover(draftData, coverDraftId)) {
+    return storageSuccess()
+  }
+
+  try {
+    if ((await storage.readCover(coverDraftId)) !== null) {
+      return storageSuccess()
+    }
+
+    await storage.writeCover(coverDraftId, cover)
+    return storageSuccess()
+  } catch (error: unknown) {
+    clearMissingCoverReference(coverDraftId, storage)
+    console.warn('Failed to restore the admin album cover after a concurrent update.', error)
+    return storageFailure(error)
+  }
+}
+
 export const deleteAlbumDraft = async (
   coverDraftId: string | null,
   options: DeleteAlbumDraftOptions = {},
 ): Promise<AlbumDraftStorageResult> => {
   const storage = options.storage ?? BROWSER_STORAGE
-  let deletionResult = storageSuccess()
+
+  if (coverDraftId !== null) {
+    let draftData: string | null
+    let cover: Blob | null
+
+    try {
+      draftData = storage.readData()
+    } catch (error: unknown) {
+      console.warn('Failed to read the admin album draft before deletion.', error)
+      return storageFailure(error)
+    }
+
+    try {
+      cover = await storage.readCover(coverDraftId)
+    } catch (error: unknown) {
+      console.warn('Failed to read the admin album cover before draft deletion.', error)
+      return storageFailure(error)
+    }
+
+    const coverDeletionResult = await deleteAlbumDraftCover(coverDraftId, options)
+
+    if (!coverDeletionResult.success) {
+      return coverDeletionResult
+    }
+
+    let currentDraftData: string | null
+
+    try {
+      currentDraftData = storage.readData()
+    } catch (error: unknown) {
+      console.warn('Failed to confirm the admin album draft before deletion.', error)
+      return storageFailure(error)
+    }
+
+    if (currentDraftData !== draftData) {
+      return restoreCoverIfDraftRetainsIt(currentDraftData, coverDraftId, cover, storage)
+    }
+
+    if (hasDifferentCoverDraftId(currentDraftData, coverDraftId)) {
+      return storageSuccess()
+    }
+  }
 
   try {
     storage.deleteData()
+    return storageSuccess()
   } catch (error: unknown) {
     console.warn('Failed to delete the admin album draft.', error)
-    deletionResult = storageFailure(error)
+    return storageFailure(error)
   }
-
-  if (coverDraftId === null) {
-    return deletionResult
-  }
-
-  const coverDeletionResult = await deleteAlbumDraftCover(coverDraftId, options)
-  return coverDeletionResult.success ? deletionResult : coverDeletionResult
 }

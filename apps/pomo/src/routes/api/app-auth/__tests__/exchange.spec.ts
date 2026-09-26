@@ -8,7 +8,7 @@ const repositoryMocks = vi.hoisted(() => ({
 }))
 
 vi.mock('src/server/auth/exchange-toss-authorization', () => tossAuthMocks)
-vi.mock('src/server/auth/repository', () => repositoryMocks)
+vi.mock('src/server/auth/app-session', () => repositoryMocks)
 
 import {POST, PUT} from '../exchange'
 import {invokeApiRoute} from '../../__tests__/invoke'

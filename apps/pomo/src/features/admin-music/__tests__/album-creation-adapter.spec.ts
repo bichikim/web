@@ -58,22 +58,28 @@ describe('albumCreationServices', () => {
     })
 
     expect(coverMocks.uploadAlbumCover).not.toHaveBeenCalled()
-    expect(fetch).toHaveBeenCalledWith('/api/admin/music/albums', {
-      body: JSON.stringify({
-        coverDraftId: null,
-        coverFallback: 'music',
-        coverImageUrl: 'https://example.com/configured.jpg',
-        coverReservationId: null,
-        id: ALBUM_ID,
-        translations: [
-          {description: '한국어 설명', locale: 'ko', title: '한국어 제목'},
-          {description: '', locale: 'en', title: 'English title'},
-          {description: '日本語の説明', locale: 'ja', title: ''},
-        ],
+    expect(fetch).toHaveBeenCalledWith(
+      '/api/admin/music/albums',
+      expect.objectContaining({
+        body: JSON.stringify({
+          coverDraftId: null,
+          coverFallback: 'music',
+          coverImageUrl: 'https://example.com/configured.jpg',
+          coverReservationId: null,
+          id: ALBUM_ID,
+          translations: [
+            {description: '한국어 설명', locale: 'ko', title: '한국어 제목'},
+            {description: '', locale: 'en', title: 'English title'},
+            {description: '日本語の説明', locale: 'ja', title: ''},
+          ],
+        }),
+        headers: expect.any(Headers),
+        method: 'POST',
       }),
-      headers: {'Content-Type': 'application/json'},
-      method: 'POST',
-    })
+    )
+    expect(new Headers(vi.mocked(fetch).mock.calls[0]?.[1]?.headers).get('Content-Type')).toBe(
+      'application/json',
+    )
   })
 
   it('should use uploaded cover values and submit null for a blank configured URL', async () => {

@@ -1,7 +1,12 @@
 /** @vitest-environment node */
 import {describe, expect, it} from 'vitest'
 
-import {getAutomaticScenePeriod, getNextTimeMode, resolveScenePeriod} from '../index'
+import {
+  getAutomaticScenePeriod,
+  getNextScenePeriodChange,
+  getNextTimeMode,
+  resolveScenePeriod,
+} from '../index'
 
 describe('focus room time', () => {
   it.each([
@@ -13,6 +18,15 @@ describe('focus room time', () => {
     const date = new Date(2026, 0, 1, hour)
 
     expect(getAutomaticScenePeriod(date)).toBe(period)
+  })
+
+  it.each([
+    {date: new Date(2026, 0, 1, 6, 59, 59), nextChange: new Date(2026, 0, 1, 7)},
+    {date: new Date(2026, 0, 1, 7), nextChange: new Date(2026, 0, 1, 19)},
+    {date: new Date(2026, 0, 1, 18, 59, 59), nextChange: new Date(2026, 0, 1, 19)},
+    {date: new Date(2026, 0, 1, 19), nextChange: new Date(2026, 0, 2, 7)},
+  ])('should find the next scene period change after $date', ({date, nextChange}) => {
+    expect(getNextScenePeriodChange(date)).toEqual(nextChange)
   })
 
   it.each([

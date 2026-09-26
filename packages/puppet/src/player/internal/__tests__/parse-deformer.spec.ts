@@ -2,11 +2,11 @@ import {expect, test} from 'vitest'
 import {isDeformer} from '../parse-deformer'
 
 const shape = {
-  bounds: {x: 0, width: 100, y: 0, height: 100},
+  bounds: {height: 100, width: 100, x: 0, y: 0},
   columns: 1,
   controlPoints: [50, 50],
+  pins: [{radius: 40, strength: 1, x: 50, y: 50}],
   rows: 1,
-  pins: [{x: 50, radius: 40, y: 50, strength: 1}],
 }
 
 test('should accept pin shapes and reject invalid influence data or mixed deformer kinds', () => {

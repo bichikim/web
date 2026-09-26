@@ -1,5 +1,5 @@
 import {
-  getNextKoreanDate,
+  getNextPublicationDate,
   HISTORY_PROMPT_VERSION,
   HISTORY_SOURCE_POLICY,
 } from 'src/features/history-generation'
@@ -8,15 +8,11 @@ import {
   markGenerationSubmissionUnknown,
   markGenerationSubmitted,
   prepareGenerationRun,
-} from './generation-repository'
-import {HistorySubmissionError, submitHistoryResponse} from './openai-client'
-import {
-  persistGenerationSubmission,
-  persistUnknownGenerationSubmission,
-} from './submission-persistence'
-import {getSubmissionRecoveryDeadline} from './submission-recovery-policy'
-
-const MAX_ERROR_LENGTH = 2000
+} from '../repositories/history-generation'
+import {submitHistoryResponse} from './openai-client'
+import {persistAcceptedGenerationSubmission} from './submission-persistence'
+import {handleHistorySubmissionFailure} from './handle-submission-failure'
+import {withHistoryGenerationLock} from './submission-lock'
 
 export interface StartGenerationResult {
   readonly responseId: string | null
@@ -32,6 +28,7 @@ interface StartGenerationDependencies {
   readonly now: () => Date
   readonly prepare: typeof prepareGenerationRun
   readonly submit: typeof submitHistoryResponse
+  readonly withLock?: typeof withHistoryGenerationLock
 }
 
 const DEFAULT_DEPENDENCIES: StartGenerationDependencies = {
@@ -41,23 +38,26 @@ const DEFAULT_DEPENDENCIES: StartGenerationDependencies = {
   now: () => new Date(),
   prepare: prepareGenerationRun,
   submit: submitHistoryResponse,
+  withLock: withHistoryGenerationLock,
 }
 
-const getErrorMessage = (error: HistorySubmissionError): string =>
-  error.message.slice(0, MAX_ERROR_LENGTH)
-
-/** Creates the next daily run and returns after OpenAI accepts the background response. */
-export const startHistoryGeneration = async (
-  dependencies: StartGenerationDependencies = DEFAULT_DEPENDENCIES,
+const startHistoryGenerationForDate = async (
+  targetDate: ReturnType<typeof getNextPublicationDate>,
+  dependencies: StartGenerationDependencies,
 ): Promise<StartGenerationResult> => {
-  const targetDate = getNextKoreanDate(dependencies.now())
   const prepared = await dependencies.prepare({
     promptVersion: HISTORY_PROMPT_VERSION,
     sourcePolicyVersion: HISTORY_SOURCE_POLICY.version,
     targetDate,
   })
 
-  if (!prepared.created) {
+  const shouldSubmit =
+    prepared.created ||
+    (prepared.run.status === 'preparing' &&
+      prepared.run.openAiResponseId === null &&
+      prepared.run.submissionState === null)
+
+  if (!shouldSubmit) {
     return {
       responseId: prepared.run.openAiResponseId,
       runId: prepared.run.id,
@@ -77,36 +77,25 @@ export const startHistoryGeneration = async (
       targetDate,
     })
   } catch (error) {
-    if (error instanceof HistorySubmissionError) {
-      const errorMessage = getErrorMessage(error)
-
-      if (error.acceptance === 'rejected') {
-        await dependencies.markFailed(
-          prepared.run.id,
-          prepared.run.openAiSubmissionKey,
-          errorMessage,
-        )
-      } else {
-        const submissionExpiresAt = getSubmissionRecoveryDeadline(dependencies.now())
-        await persistUnknownGenerationSubmission({
-          errorMessage,
-          markUnknown: dependencies.markUnknown,
-          runId: prepared.run.id,
-          submissionExpiresAt,
-          submissionKey: prepared.run.openAiSubmissionKey,
-        })
-      }
-    }
-
+    await handleHistorySubmissionFailure({
+      error,
+      markFailed: dependencies.markFailed,
+      markUnknown: dependencies.markUnknown,
+      now: dependencies.now,
+      runId: prepared.run.id,
+      submissionKey: prepared.run.openAiSubmissionKey,
+    })
     throw error
   }
 
-  await persistGenerationSubmission(
-    prepared.run.id,
-    prepared.run.openAiSubmissionKey,
-    submitted.responseId,
-    dependencies.markSubmitted,
-  )
+  await persistAcceptedGenerationSubmission({
+    markSubmitted: dependencies.markSubmitted,
+    markUnknown: dependencies.markUnknown,
+    now: dependencies.now,
+    responseId: submitted.responseId,
+    runId: prepared.run.id,
+    submissionKey: prepared.run.openAiSubmissionKey,
+  })
 
   return {
     responseId: submitted.responseId,
@@ -114,4 +103,14 @@ export const startHistoryGeneration = async (
     status: 'submitted',
     targetDate: targetDate.isoDate,
   }
+}
+
+/** Creates the next daily run and returns after OpenAI accepts the background response. */
+export const startHistoryGeneration = async (
+  dependencies: StartGenerationDependencies = DEFAULT_DEPENDENCIES,
+): Promise<StartGenerationResult> => {
+  const targetDate = getNextPublicationDate(dependencies.now())
+  const withLock = dependencies.withLock ?? ((_targetDate, operation) => operation())
+
+  return withLock(targetDate.isoDate, () => startHistoryGenerationForDate(targetDate, dependencies))
 }

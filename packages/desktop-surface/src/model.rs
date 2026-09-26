@@ -1,6 +1,7 @@
 use std::path::PathBuf;
 
 use serde::{Deserialize, Serialize};
+use tauri::Url;
 
 use crate::error::{Error, Result};
 
@@ -28,6 +29,77 @@ pub(crate) struct BackgroundInteractionOptions {
 pub(crate) struct BackgroundSurfaceOptions {
     pub(crate) interaction: Option<BackgroundInteraction>,
     pub(crate) label: String,
+}
+
+#[derive(Clone, Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub(crate) struct BackgroundNavigationOptions {
+    pub(crate) label: String,
+    pub(crate) url: String,
+    #[serde(default)]
+    pub(crate) use_child: bool,
+}
+
+#[derive(Clone, Copy, Debug, Deserialize, PartialEq)]
+#[serde(rename_all = "camelCase")]
+pub(crate) enum BackgroundMouseEventKind {
+    Down,
+    Up,
+    Dragged,
+    Moved,
+    Left,
+    Cancelled,
+    Wheel,
+}
+
+#[derive(Clone, Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub(crate) struct BackgroundMouseEventOptions {
+    pub(crate) alt_key: bool,
+    pub(crate) button: u8,
+    pub(crate) buttons: u16,
+    pub(crate) click_count: u32,
+    pub(crate) ctrl_key: bool,
+    pub(crate) kind: BackgroundMouseEventKind,
+    pub(crate) label: String,
+    pub(crate) meta_key: bool,
+    pub(crate) shift_key: bool,
+    pub(crate) x: f64,
+    pub(crate) y: f64,
+    #[serde(default)]
+    pub(crate) delta_mode: Option<u8>,
+    #[serde(default)]
+    pub(crate) delta_x: Option<f64>,
+    #[serde(default)]
+    pub(crate) delta_y: Option<f64>,
+    #[serde(default)]
+    pub(crate) delta_z: Option<f64>,
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub(crate) struct ValidatedBackgroundMouseEvent {
+    pub(crate) alt_key: bool,
+    pub(crate) button: u8,
+    pub(crate) buttons: u16,
+    pub(crate) click_count: u32,
+    pub(crate) ctrl_key: bool,
+    pub(crate) kind: BackgroundMouseEventKind,
+    pub(crate) label: String,
+    pub(crate) meta_key: bool,
+    pub(crate) shift_key: bool,
+    pub(crate) x: f64,
+    pub(crate) y: f64,
+    pub(crate) delta_mode: Option<u8>,
+    pub(crate) delta_x: Option<f64>,
+    pub(crate) delta_y: Option<f64>,
+    pub(crate) delta_z: Option<f64>,
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub(crate) struct ValidatedBackgroundNavigation {
+    pub(crate) label: String,
+    pub(crate) url: Url,
+    pub(crate) use_child: bool,
 }
 
 #[derive(Clone, Debug, Deserialize)]
@@ -83,6 +155,84 @@ pub(crate) fn validate_label(label: String) -> Result<String> {
     }
 
     Ok(label.to_owned())
+}
+
+impl TryFrom<BackgroundNavigationOptions> for ValidatedBackgroundNavigation {
+    type Error = Error;
+
+    fn try_from(options: BackgroundNavigationOptions) -> Result<Self> {
+        let BackgroundNavigationOptions {
+            label,
+            url,
+            use_child,
+        } = options;
+        let label = validate_label(label)?;
+        let url = Url::parse(url.trim()).map_err(|_| Error::InvalidUrl)?;
+
+        if url.scheme() != "https" || url.host().is_none() {
+            return Err(Error::InvalidUrl);
+        }
+
+        Ok(Self {
+            label,
+            url,
+            use_child,
+        })
+    }
+}
+
+impl TryFrom<BackgroundMouseEventOptions> for ValidatedBackgroundMouseEvent {
+    type Error = Error;
+
+    fn try_from(options: BackgroundMouseEventOptions) -> Result<Self> {
+        let label = validate_label(options.label)?;
+
+        if !options.x.is_finite() || !options.y.is_finite() || options.x < 0.0 || options.y < 0.0 {
+            return Err(Error::InvalidMouseEvent);
+        }
+
+        if options.button > 2 || options.click_count == 0 {
+            return Err(Error::InvalidMouseEvent);
+        }
+
+        let wheel_values = (
+            options.delta_mode,
+            options.delta_x,
+            options.delta_y,
+            options.delta_z,
+        );
+        if options.kind == BackgroundMouseEventKind::Wheel {
+            let (Some(delta_mode), Some(delta_x), Some(delta_y), Some(delta_z)) = wheel_values
+            else {
+                return Err(Error::InvalidMouseEvent);
+            };
+            if delta_mode > 2
+                || !delta_x.is_finite()
+                || !delta_y.is_finite()
+                || !delta_z.is_finite()
+            {
+                return Err(Error::InvalidMouseEvent);
+            }
+        }
+
+        Ok(Self {
+            alt_key: options.alt_key,
+            button: options.button,
+            buttons: options.buttons,
+            click_count: options.click_count,
+            ctrl_key: options.ctrl_key,
+            kind: options.kind,
+            label,
+            meta_key: options.meta_key,
+            shift_key: options.shift_key,
+            x: options.x,
+            y: options.y,
+            delta_mode: options.delta_mode,
+            delta_x: options.delta_x,
+            delta_y: options.delta_y,
+            delta_z: options.delta_z,
+        })
+    }
 }
 
 impl TryFrom<ControlSurfaceOptions> for ValidatedControlSurface {
@@ -166,8 +316,9 @@ fn validate_corner_radius(corner_radius: Option<f64>) -> Result<Option<f64>> {
 #[cfg(test)]
 mod tests {
     use super::{
-        ControlSurfaceOptions, ValidatedControlSurface, ValidatedWidgetSurface,
-        WidgetSurfaceOptions,
+        BackgroundMouseEventKind, BackgroundMouseEventOptions, BackgroundNavigationOptions,
+        ControlSurfaceOptions, ValidatedBackgroundMouseEvent, ValidatedBackgroundNavigation,
+        ValidatedControlSurface, ValidatedWidgetSurface, WidgetSurfaceOptions,
     };
 
     fn options() -> ControlSurfaceOptions {
@@ -179,6 +330,26 @@ mod tests {
             width: None,
             x: None,
             y: None,
+        }
+    }
+
+    fn background_mouse_event_options() -> BackgroundMouseEventOptions {
+        BackgroundMouseEventOptions {
+            alt_key: false,
+            button: 0,
+            buttons: 1,
+            click_count: 1,
+            ctrl_key: false,
+            kind: BackgroundMouseEventKind::Down,
+            label: "background".to_owned(),
+            meta_key: false,
+            shift_key: false,
+            x: 120.0,
+            y: 80.0,
+            delta_mode: None,
+            delta_x: None,
+            delta_y: None,
+            delta_z: None,
         }
     }
 
@@ -285,6 +456,83 @@ mod tests {
             };
 
             assert!(ValidatedWidgetSurface::try_from(options).is_err());
+        }
+    }
+
+    #[test]
+    fn should_validate_https_background_navigation_urls() {
+        let navigation = ValidatedBackgroundNavigation::try_from(BackgroundNavigationOptions {
+            label: " background ".to_owned(),
+            url: " https://example.com/path ".to_owned(),
+            use_child: true,
+        })
+        .expect("valid background URL");
+
+        assert_eq!(navigation.label, "background");
+        assert_eq!(navigation.url.as_str(), "https://example.com/path");
+        assert!(navigation.use_child);
+    }
+
+    #[test]
+    fn should_reject_non_https_background_navigation_urls() {
+        for url in [
+            "http://example.com",
+            "javascript:alert(1)",
+            "not a URL",
+            "https://",
+        ] {
+            assert!(
+                ValidatedBackgroundNavigation::try_from(BackgroundNavigationOptions {
+                    label: "background".to_owned(),
+                    url: url.to_owned(),
+                    use_child: false,
+                })
+                .is_err()
+            );
+        }
+    }
+
+    #[test]
+    fn should_validate_background_mouse_event_coordinates() {
+        let mut valid_options = background_mouse_event_options();
+        valid_options.label = " background ".to_owned();
+        let event = ValidatedBackgroundMouseEvent::try_from(valid_options)
+            .expect("valid background mouse event");
+
+        assert_eq!(event.label, "background");
+
+        for (x, y) in [(f64::NAN, 80.0), (120.0, f64::INFINITY), (-1.0, 80.0)] {
+            let mut invalid = background_mouse_event_options();
+            invalid.x = x;
+            invalid.y = y;
+
+            assert!(ValidatedBackgroundMouseEvent::try_from(invalid).is_err());
+        }
+    }
+
+    #[test]
+    fn should_validate_background_wheel_event_deltas() {
+        let mut valid_options = background_mouse_event_options();
+        valid_options.kind = BackgroundMouseEventKind::Wheel;
+        valid_options.buttons = 0;
+        valid_options.delta_mode = Some(0);
+        valid_options.delta_x = Some(0.0);
+        valid_options.delta_y = Some(120.0);
+        valid_options.delta_z = Some(0.0);
+
+        let event = ValidatedBackgroundMouseEvent::try_from(valid_options)
+            .expect("valid background wheel event");
+        assert_eq!(event.delta_y, Some(120.0));
+
+        for (delta_mode, delta_x) in [(Some(3), Some(0.0)), (Some(0), Some(f64::NAN))] {
+            let mut invalid = background_mouse_event_options();
+            invalid.kind = BackgroundMouseEventKind::Wheel;
+            invalid.delta_mode = delta_mode;
+            invalid.delta_x = delta_x;
+            invalid.delta_y = Some(120.0);
+            invalid.delta_z = Some(0.0);
+
+            assert!(ValidatedBackgroundMouseEvent::try_from(invalid).is_err());
         }
     }
 }

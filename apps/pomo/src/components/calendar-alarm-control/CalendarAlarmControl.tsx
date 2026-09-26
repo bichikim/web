@@ -1,4 +1,4 @@
-import {formatLocalDate} from 'src/utils/format-local-date'
+import {dayjs} from 'src/utils/zoned-dayjs'
 import {PInput} from 'src/components/p-input/PInput'
 import {cx} from 'class-variance-authority'
 import {type Accessor, Show} from 'solid-js'
@@ -19,16 +19,20 @@ interface CalendarAlarmControlProps {
   readonly defaultAlarmDate?: Date
   readonly event: CalendarEvent
   readonly memos: Accessor<ReadonlyArray<MemoryMemo>>
+  readonly timeZone?: string
 }
 
 export const CalendarAlarmControl = (props: CalendarAlarmControlProps) => {
   const clock = () => (props.now ?? systemNow)()
-  const alarm = useCalendarAlarmController(
-    () => props.event,
-    () => props.memos(),
-    () => props.defaultAlarmDate,
+  const timeZone = () => props.timeZone ?? Intl.DateTimeFormat().resolvedOptions().timeZone
+  const currentDate = () => dayjs(clock()).tz(timeZone()).format('YYYY-MM-DD')
+  const alarm = useCalendarAlarmController({
     clock,
-  )
+    defaultAlarmDate: () => props.defaultAlarmDate,
+    event: () => props.event,
+    memos: () => props.memos(),
+    timeZone,
+  })
 
   return (
     <>
@@ -94,7 +98,7 @@ export const CalendarAlarmControl = (props: CalendarAlarmControlProps) => {
             <PInput
               unstyled
               class={INPUT_CLASSES}
-              min={formatLocalDate(clock())}
+              min={currentDate()}
               onInput={(event) => alarm.setDate(event.currentTarget.value)}
               type="date"
               value={alarm.date()}

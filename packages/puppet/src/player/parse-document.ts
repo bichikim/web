@@ -3,6 +3,8 @@ import {hasValidSkinning} from './internal/parse-skinning'
 import {hasValidGlueKeyforms, isGlueKeyforms} from './internal/parse-glue'
 import {hasValidInfluences, isParameterInfluences} from './internal/parse-influence'
 import {
+  MAXIMUM_PUPPET_FRAMES_PER_SECOND,
+  MINIMUM_PUPPET_FRAMES_PER_SECOND,
   PUPPET_DOCUMENT_FORMAT,
   PUPPET_DOCUMENT_VERSION,
   PUPPET_EASINGS,
@@ -18,6 +20,7 @@ import {
   type PuppetParameterPartKeyform,
   type PuppetPart,
   type PuppetPartRenderProperties,
+  type PuppetPhysics,
   type PuppetScene,
   type PuppetSceneNode,
   type PuppetTexture,
@@ -34,6 +37,12 @@ import {
   isDeformer,
   isParameterDeformerKeyform,
 } from './internal/parse-deformer'
+import {hasValidTrackTargets} from './internal/parse-motion'
+import {hasValidParameterOptions} from './internal/parse-parameter'
+import {hasValidPhysics} from './internal/parse-physics'
+import {hasValidLayerOrderRules} from './internal/parse-layer-order'
+import {hasValidSpatialAttachments, isSpatialSurface} from './internal/parse-spatial'
+import {expandDocumentTextureAssets} from './texture-assets'
 
 export type ParseDocumentErrorCode = 'invalid-document' | 'invalid-json'
 
@@ -141,7 +150,8 @@ const isPart = (value: unknown): value is PuppetPart =>
   value.id.length > 0 &&
   (value.properties === undefined || isPartRenderProperties(value.properties)) &&
   isTexture(value.texture) &&
-  isMesh(value.mesh)
+  isMesh(value.mesh) &&
+  (value.spatial === undefined || isSpatialSurface(value.spatial, value.mesh))
 
 const inspectSceneNode = (
   node: Record<string, unknown>,
@@ -242,7 +252,8 @@ const isParameterDefinition = (value: unknown): value is PuppetParameter =>
   value.minimum < value.maximum &&
   isFiniteNumber(value.defaultValue) &&
   value.defaultValue >= value.minimum &&
-  value.defaultValue <= value.maximum
+  value.defaultValue <= value.maximum &&
+  hasValidParameterOptions(value)
 
 const isParameterKeyform = (value: unknown): value is PuppetParameterKeyform =>
   isRecord(value) &&
@@ -410,43 +421,6 @@ const hasValidPartMasks = (parts: ReadonlyArray<PuppetPart>) => {
   })
 }
 
-const hasValidTrackTargets = (
-  parts: ReadonlyArray<PuppetPart>,
-  parameters: ReadonlyArray<PuppetParameter>,
-  motions: ReadonlyArray<PuppetMotion>,
-) => {
-  const partById = new Map(parts.map((part) => [part.id, part]))
-  const parameterById = new Map(parameters.map((parameter) => [parameter.id, parameter]))
-
-  return motions.every((motion) => {
-    const parameterTrackIds = motion.tracks.flatMap((track) =>
-      track.kind === 'parameter' ? [track.parameterId] : [],
-    )
-
-    return (
-      new Set(parameterTrackIds).size === parameterTrackIds.length &&
-      motion.tracks.every((track) => {
-        if (track.kind === 'parameter') {
-          const parameter = parameterById.get(track.parameterId)
-          return (
-            parameter !== undefined &&
-            track.keyframes.every(
-              (keyframe) =>
-                keyframe.value >= parameter.minimum && keyframe.value <= parameter.maximum,
-            )
-          )
-        }
-
-        const part = partById.get(track.partId)
-        const vertexCount =
-          part === undefined ? 0 : part.mesh.vertices.length / COORDINATES_PER_VERTEX
-
-        return part !== undefined && track.vertexIndex < vertexCount
-      })
-    )
-  })
-}
-
 const hasValidParameterBindings = (
   parts: ReadonlyArray<PuppetPart>,
   parameters: ReadonlyArray<PuppetParameter>,
@@ -516,18 +490,24 @@ const hasValidParameterBindings = (
 
       return keyform.parts.every((partKeyform) => {
         const part = partById.get(partKeyform.partId)
-        return part !== undefined && partKeyform.vertices.length === part.mesh.vertices.length
+        return (
+          part !== undefined &&
+          (partKeyform.vertices.length === 0 ||
+            partKeyform.vertices.length === part.mesh.vertices.length)
+        )
       })
     })
   })
 }
 
 interface CurrentDocumentValue {
+  readonly framesPerSecond?: number
   readonly format: typeof PUPPET_DOCUMENT_FORMAT
   readonly motions: ReadonlyArray<PuppetMotion>
   readonly parameterBindings?: ReadonlyArray<PuppetParameterBinding>
   readonly parameters?: ReadonlyArray<PuppetParameter>
   readonly parts: ReadonlyArray<PuppetPart>
+  readonly physics?: PuppetPhysics
   readonly scene?: PuppetScene
   readonly version: typeof PUPPET_DOCUMENT_VERSION
   readonly viewport: PuppetViewport
@@ -536,6 +516,11 @@ interface CurrentDocumentValue {
 const hasValidDocumentCollections = (
   value: Record<string, unknown>,
 ): value is Record<string, unknown> & CurrentDocumentValue =>
+  (value.framesPerSecond === undefined ||
+    (Number.isInteger(value.framesPerSecond) &&
+      isFiniteNumber(value.framesPerSecond) &&
+      value.framesPerSecond >= MINIMUM_PUPPET_FRAMES_PER_SECOND &&
+      value.framesPerSecond <= MAXIMUM_PUPPET_FRAMES_PER_SECOND)) &&
   isViewport(value.viewport) &&
   Array.isArray(value.parts) &&
   value.parts.every(isPart) &&
@@ -561,11 +546,19 @@ const isDocument = (value: unknown): value is PuppetDocument => {
   const parameterBindings = value.parameterBindings ?? []
 
   return (
+    hasValidLayerOrderRules(value.layerOrderRules, value.parts, parameters) &&
     hasValidGlueKeyforms(value.glue, parameterBindings, value.parts) &&
+    hasValidPhysics(value.physics, parameters) &&
     hasUniqueIds(value.parts) &&
     hasValidPartMasks(value.parts) &&
+    hasValidSpatialAttachments(value.parts, value.scene) &&
     hasUniqueIds(value.motions) &&
     hasUniqueIds(parameters) &&
+    value.parts.every((part) =>
+      (part.spatial?.rotationParameterIds ?? []).every(
+        (id) => id === null || parameters.some((parameter) => parameter.id === id),
+      ),
+    ) &&
     hasUniqueIds(parameterBindings) &&
     hasValidTrackTargets(value.parts, parameters, value.motions) &&
     hasValidParameterBindings(value.parts, parameters, parameterBindings, value.scene)
@@ -573,7 +566,7 @@ const isDocument = (value: unknown): value is PuppetDocument => {
 }
 
 export const parseDocumentValue = (value: unknown): ParseDocumentResult => {
-  const normalizedValue = normalizeLegacyTrackKinds(value)
+  const normalizedValue = normalizeLegacyTrackKinds(expandDocumentTextureAssets(value))
   if (!isDocument(normalizedValue)) {
     return {error: {code: 'invalid-document'}, ok: false}
   }

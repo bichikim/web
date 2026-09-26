@@ -8,12 +8,12 @@ test('should preserve scheduled and delivered times through Toss dev storage and
 }, information) => {
   await page.addInitScript(() => {
     // Devtools replaces the SDK but does not supply the native-storage routing marker.
-    Object.defineProperty(window, 'ReactNativeWebView', {configurable: true, value: {}})
+    Object.defineProperty(globalThis, 'ReactNativeWebView', {configurable: true, value: {}})
     localStorage.setItem('PARAGLIDE_LOCALE', 'ko')
   })
   await page.goto('/')
   await expect(page.getByRole('button', {exact: true, name: '시작하기'})).toBeVisible()
-  await page.waitForFunction(() => '__ait' in window)
+  await page.waitForFunction(() => '__ait' in globalThis.window)
 
   // Exercise the production scheduler and default repository without replacing storage methods.
   const deliveredMemo = await page.evaluate(async () => {

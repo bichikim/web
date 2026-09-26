@@ -20,6 +20,7 @@ export type {
   TranscribeSpeechOptions,
 } from './recognizer'
 export {appendSpeechTranscript} from './transcript'
+export {isSpeechBusyActivity} from './is-speech-busy-activity'
 export {createSpeechModelOwner} from './speech-model-owner'
 export type {
   CreateSpeechModelOwnerOptions,

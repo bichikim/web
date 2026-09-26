@@ -126,4 +126,22 @@ describe('dialogueEventBindingSchema', () => {
       }),
     ).toMatchObject({event: 'random'})
   })
+
+  it('should accept an action-only delayed end binding', () => {
+    expect(
+      dialogueEventBindingSchema.parse({
+        actionIds: ['music-stop', 'music-start', 'sound-effects-stop', 'sound-effects-start'],
+        dialogueIds: [],
+        event: 'delayed-end',
+        playbackMode: 'sequential-all',
+        version: 3,
+      }),
+    ).toEqual({
+      actionIds: ['music-stop', 'music-start', 'sound-effects-stop', 'sound-effects-start'],
+      dialogueIds: [],
+      event: 'delayed-end',
+      playbackMode: 'sequential-all',
+      version: 3,
+    })
+  })
 })

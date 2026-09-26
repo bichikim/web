@@ -1,7 +1,4 @@
-import {
-  AUTOMATIC_DIALOGUE_SETTINGS_CHANGED_EVENT,
-  type AutomaticDialogueSettingsStorage,
-} from '../focus-room-dialogue/automatic-dialogue-settings-contract'
+import {type AutomaticDialogueSettingsStorage} from '../focus-room-dialogue/automatic-dialogue-settings-contract'
 import type {GenerateDialogueAudioOptions} from '../focus-room-dialogue/generate-dialogue-audio'
 import type {SupertonicModelId} from '../supertonic/model'
 
@@ -32,5 +29,4 @@ export const feedGenerationRuntime = {
   generateDialogueAudio,
   isModelDownloaded,
   loadAutomaticDialogueSettings,
-  settingsChangedEvent: AUTOMATIC_DIALOGUE_SETTINGS_CHANGED_EVENT,
 }

@@ -157,6 +157,115 @@ it('should generate and persist a queued feed job through the controller boundar
   expect(fixture.feedRepository.complete).toHaveBeenCalledOnce()
 })
 
+it('should remove a saved dialogue when cancellation happens during feed completion', async () => {
+  const fixture = createFixture()
+  const completion = Promise.withResolvers<void>()
+  fixture.feedRepository.complete.mockReturnValue(completion.promise)
+  fixture.controller.schedule({jobIds: ['job-1']})
+
+  await vi.waitFor(() => expect(fixture.feedRepository.complete).toHaveBeenCalledOnce())
+  const completionOptions = fixture.feedRepository.complete.mock.calls[0]?.[0]
+  await fixture.controller.cancel()
+  expect(completionOptions?.signal?.aborted).toBe(true)
+  completion.resolve()
+
+  await vi.waitFor(() =>
+    expect(fixture.dialogueRepository.deleteDialogue).toHaveBeenCalledWith('dialogue-1'),
+  )
+  expect(fixture.onCompleted).not.toHaveBeenCalled()
+})
+
+it('should ignore an aborted feed completion after cancellation', async () => {
+  const fixture = createFixture()
+  const completion = Promise.withResolvers<void>()
+  fixture.feedRepository.complete.mockReturnValue(completion.promise)
+  fixture.controller.schedule({jobIds: ['job-1']})
+
+  await vi.waitFor(() => expect(fixture.feedRepository.complete).toHaveBeenCalledOnce())
+  await fixture.controller.cancel()
+  completion.reject(new DOMException('The transaction was aborted.', 'AbortError'))
+
+  await vi.waitFor(() =>
+    expect(fixture.dialogueRepository.deleteDialogue).toHaveBeenCalledWith('dialogue-1'),
+  )
+  expect(fixture.onCompleted).not.toHaveBeenCalled()
+  expect(fixture.onFailed).not.toHaveBeenCalled()
+})
+
+it('should preserve a sync state written before generation completes', async () => {
+  const fixture = createFixture()
+  fixture.runtime.generateDialogueAudio.mockImplementation(async () => {
+    fixture.setState({
+      message: '새 피드를 확인하고 있어요…',
+      progress: null,
+      status: 'syncing',
+    })
+    return {
+      ok: true,
+      value: {
+        audio: new Blob(['audio']),
+        durationMs: 1000,
+        segments: [{durationMs: 1000, index: 0, startMs: 0, text: '새 소식'}],
+      },
+    }
+  })
+  fixture.controller.schedule({jobIds: ['job-1']})
+
+  await vi.waitFor(() => expect(fixture.onCompleted).toHaveBeenCalledOnce())
+
+  expect(fixture.setState).toHaveBeenLastCalledWith({
+    message: '새 피드를 확인하고 있어요…',
+    progress: null,
+    status: 'syncing',
+  })
+})
+
+it('should preserve a sync error after queued generation completes', async () => {
+  const fixture = createFixture()
+  const syncError = {
+    message: '1개 피드를 가져오지 못했어요. 주소나 CORS 설정을 확인해 주세요.',
+    status: 'error',
+  } as const
+  fixture.setState(syncError)
+  fixture.controller.schedule({jobIds: ['job-1']})
+
+  await vi.waitFor(() => expect(fixture.onCompleted).toHaveBeenCalledOnce())
+  await vi.waitFor(() => expect(fixture.setState).toHaveBeenLastCalledWith(syncError))
+})
+
+it('should not restore a sync error cleared by a later successful sync', async () => {
+  const fixture = createFixture()
+  const generation =
+    Promise.withResolvers<Awaited<ReturnType<FeedGenerationRuntime['generateDialogueAudio']>>>()
+  let reportProgress: () => void = () => undefined
+  fixture.runtime.generateDialogueAudio.mockImplementation(async ({onChunk}) => {
+    reportProgress = () => onChunk(1, 2)
+    return generation.promise
+  })
+  fixture.setState({message: '피드 동기화 실패', status: 'error'})
+  fixture.controller.schedule({jobIds: ['job-1']})
+
+  await vi.waitFor(() => expect(fixture.runtime.generateDialogueAudio).toHaveBeenCalledOnce())
+  fixture.setState({message: '새 피드가 없어요.', status: 'idle'})
+  reportProgress()
+  generation.resolve({
+    ok: true,
+    value: {
+      audio: new Blob(['audio']),
+      durationMs: 1000,
+      segments: [{durationMs: 1000, index: 0, startMs: 0, text: '새 소식'}],
+    },
+  })
+
+  await vi.waitFor(() => expect(fixture.onCompleted).toHaveBeenCalledOnce())
+  await vi.waitFor(() =>
+    expect(fixture.setState).toHaveBeenLastCalledWith({
+      message: '다음 피드 확인을 기다리고 있어요.',
+      status: 'idle',
+    }),
+  )
+})
+
 it('should preserve an interrupted job when cancel races generation start', async () => {
   const fixture = createFixture()
   const generationStart = Promise.withResolvers<boolean>()

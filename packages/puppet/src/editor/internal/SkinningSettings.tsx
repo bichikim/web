@@ -1,6 +1,6 @@
 import {Show} from 'solid-js'
 import type {PuppetSkinBinding, PuppetSkinOptions} from '../../player/document'
-import {EditorSegmentedField, EditorCheckbox, EditorNumberField} from '../../design-system'
+import {EditorCheckbox, EditorNumberField, EditorSegmentedField} from '../../design-system'
 interface SkinningSettingsProps {
   readonly options: PuppetSkinOptions
   readonly binding?: PuppetSkinBinding

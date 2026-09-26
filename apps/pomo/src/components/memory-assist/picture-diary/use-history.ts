@@ -33,8 +33,7 @@ export const useDrawingHistory = (options: DrawingHistoryOptions) => {
       options.onChange?.(next)
     },
     reset: () => {
-      const {strokes} = options
-      setPast(strokes.map((_, index) => strokes.slice(0, index)))
+      setPast([])
       setFuture([])
     },
     undo: () => {

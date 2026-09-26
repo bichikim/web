@@ -7,8 +7,8 @@ export const getSelfUrl = () => {
   }
 
   // in client case, window exists
-  if (typeof window !== 'undefined') {
-    return window.location.origin
+  if (typeof globalThis.window !== 'undefined') {
+    return globalThis.location.origin
   }
 
   // ssr case

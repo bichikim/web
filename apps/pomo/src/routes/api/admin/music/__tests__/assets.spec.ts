@@ -6,8 +6,8 @@ const repositoryMocks = vi.hoisted(() => ({
   completeTrackRegistration: vi.fn(),
   failTrackAsset: vi.fn(),
   findTrackAsset: vi.fn(),
-  reserveTrackAsset: vi.fn(),
 }))
+const reservationMocks = vi.hoisted(() => ({reserveTrackAsset: vi.fn()}))
 const uploadMocks = vi.hoisted(() => ({
   createTrackPreviewObject: vi.fn(),
   createTrackUpload: vi.fn(),
@@ -18,7 +18,8 @@ const artworkMocks = vi.hoisted(() => ({storeTrackArtwork: vi.fn()}))
 const deletionMocks = vi.hoisted(() => ({deleteTrackAssetStorage: vi.fn()}))
 
 vi.mock('src/server/auth/authorize-admin-request', () => authMocks)
-vi.mock('src/server/music/track-registration-repository', () => repositoryMocks)
+vi.mock('src/server/music/reserve-track-asset', () => reservationMocks)
+vi.mock('src/server/repositories/music-track-registration', () => repositoryMocks)
 vi.mock('src/server/music/cover-upload', () => artworkMocks)
 vi.mock('src/server/music/track-storage-deletion', () => deletionMocks)
 vi.mock('src/server/music/track-upload', () => uploadMocks)
@@ -50,7 +51,7 @@ describe('admin music asset route', () => {
     repositoryMocks.findTrackAsset
       .mockReset()
       .mockResolvedValue({id: ASSET_ID, objectKey: OBJECT_KEY, status: 'pending'})
-    repositoryMocks.reserveTrackAsset
+    reservationMocks.reserveTrackAsset
       .mockReset()
       .mockResolvedValue({assetId: ASSET_ID, objectKey: OBJECT_KEY})
     uploadMocks.createTrackUpload.mockReset().mockResolvedValue({
@@ -91,7 +92,7 @@ describe('admin music asset route', () => {
     const response = await invokeApiRoute(handler, createRequest(method, body))
 
     expect(response).toBe(authorizationResponse)
-    expect(repositoryMocks.reserveTrackAsset).not.toHaveBeenCalled()
+    expect(reservationMocks.reserveTrackAsset).not.toHaveBeenCalled()
     expect(repositoryMocks.findTrackAsset).not.toHaveBeenCalled()
   })
 
@@ -119,12 +120,12 @@ describe('admin music asset route', () => {
     const response = await invokeApiRoute(POST, createRequest('POST', {trackId: TRACK_ID}))
 
     expect(response.status).toBe(200)
-    expect(repositoryMocks.reserveTrackAsset).toHaveBeenCalledWith(TRACK_ID)
+    expect(reservationMocks.reserveTrackAsset).toHaveBeenCalledWith(TRACK_ID)
     expect(uploadMocks.createTrackUpload).toHaveBeenCalledWith(OBJECT_KEY)
   })
 
   it('should return not found when the track cannot reserve an asset', async () => {
-    repositoryMocks.reserveTrackAsset.mockResolvedValue(null)
+    reservationMocks.reserveTrackAsset.mockResolvedValue(null)
 
     const response = await invokeApiRoute(POST, createRequest('POST', {trackId: TRACK_ID}))
 
@@ -136,7 +137,7 @@ describe('admin music asset route', () => {
   it('should return unavailable when track asset reservation throws', async () => {
     const error = new Error('database unavailable')
     const consoleError = vi.spyOn(console, 'error').mockImplementation(() => undefined)
-    repositoryMocks.reserveTrackAsset.mockRejectedValue(error)
+    reservationMocks.reserveTrackAsset.mockRejectedValue(error)
 
     const response = await invokeApiRoute(POST, createRequest('POST', {trackId: TRACK_ID}))
 

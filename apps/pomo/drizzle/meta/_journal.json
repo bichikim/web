@@ -134,6 +134,34 @@
       "when": 1788517330501,
       "tag": "0018_gifted_jack_murdock",
       "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1789633501872,
+      "tag": "0019_mature_arachne",
+      "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "7",
+      "when": 1789904628436,
+      "tag": "0020_tough_timeslip",
+      "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "7",
+      "when": 1789906279111,
+      "tag": "0021_youthful_vapor",
+      "breakpoints": true
+    },
+    {
+      "idx": 22,
+      "version": "7",
+      "when": 1789908802509,
+      "tag": "0022_organic_darwin",
+      "breakpoints": true
     }
   ]
 }

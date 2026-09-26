@@ -67,3 +67,34 @@ it('should defer restored playback persistence until its position changes', () =
   ).toBe(true)
   expect(writePlayback).toHaveBeenLastCalledWith({...RESTORED_PLAYBACK, positionSeconds: 8})
 })
+
+it('should persist a reconciled position when restoring paused playback', () => {
+  const audio = document.createElement('audio')
+  audio.currentTime = RESTORED_PLAYBACK.positionSeconds
+  const writePlayback = vi.fn()
+  const transition: PlaybackRestoreTransition = {
+    ...createTransition(),
+    playback: {...RESTORED_PLAYBACK, isPlaying: false},
+  }
+
+  expect(
+    persistRestoredPlayback({
+      element: audio,
+      trackId: 'track-1',
+      transition,
+      writePlayback,
+    }),
+  ).toBe(true)
+  expect(writePlayback).not.toHaveBeenCalled()
+
+  audio.currentTime = 12
+  expect(
+    persistRestoredPlayback({
+      element: audio,
+      trackId: 'track-1',
+      transition,
+      writePlayback,
+    }),
+  ).toBe(true)
+  expect(writePlayback).toHaveBeenLastCalledWith({...transition.playback, positionSeconds: 12})
+})

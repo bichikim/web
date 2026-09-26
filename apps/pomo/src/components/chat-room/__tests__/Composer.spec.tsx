@@ -143,15 +143,16 @@ describe('ChatComposer', () => {
   })
 
   it.each(['checking', 'processing', 'requesting'] as const)(
-    'should disable speech controls while %s',
+    'should disable sending and speech controls while %s',
     (activity) => {
       controls.setActivity(activity)
+      const onSend = vi.fn()
       render(() => (
         <ChatComposer
           chat={chat}
           endpointing={false}
           onEndpointingChange={vi.fn()}
-          onSend={vi.fn()}
+          onSend={onSend}
           onSpeechToggle={vi.fn()}
           speech={speech}
         />
@@ -159,6 +160,8 @@ describe('ChatComposer', () => {
 
       expect(screen.getByRole('button', {name: '음성 처리 중…'})).toBeDisabled()
       expect(screen.getByRole('button', {name: '보내기'})).toBeDisabled()
+      fireEvent.keyDown(screen.getByRole('textbox', {name: '메시지'}), {key: 'Enter'})
+      expect(onSend).not.toHaveBeenCalled()
     },
   )
 

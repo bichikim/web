@@ -1,0 +1,278 @@
+{
+  "groups": [
+    {
+      "description": "Software that powers Pomofi's current user experience and on-device runtime.",
+      "entries": [
+        {
+          "condition": "Preserve copyright and MIT license notices in distributions.",
+          "license": "MIT",
+          "links": [
+            {
+              "label": "SolidJS license text",
+              "url": "https://github.com/solidjs/solid/blob/main/LICENSE"
+            },
+            {
+              "label": "SolidStart license text",
+              "url": "https://github.com/solidjs/solid-start/blob/main/LICENSE"
+            }
+          ],
+          "name": "SolidJS · SolidStart",
+          "use": "User interface and server rendering"
+        },
+        {
+          "condition": "Preserve copyright and MIT license notices in distributions.",
+          "license": "MIT",
+          "links": [
+            {
+              "label": "Kobalte license text",
+              "url": "https://github.com/kobaltedev/kobalte/blob/main/LICENSE.md"
+            }
+          ],
+          "name": "Kobalte",
+          "use": "Accessible tabs and dialogs"
+        },
+        {
+          "condition": "Preserve copyright, the Apache 2.0 license, and NOTICE in distributions.",
+          "license": "Apache-2.0",
+          "links": [
+            {
+              "label": "Apps in Toss Web Framework license text",
+              "url": "https://cdn.jsdelivr.net/npm/@apps-in-toss/web-framework@3.0.4/LICENSE"
+            }
+          ],
+          "name": "Apps in Toss Web Framework",
+          "use": "Toss app login, storage, safe-area handling, and screen wake lock"
+        },
+        {
+          "condition": "Preserve each project's copyright, license, and NOTICE in distributions.",
+          "license": "Apache-2.0 · MIT",
+          "links": [
+            {
+              "label": "Transformers.js license text",
+              "url": "https://github.com/huggingface/transformers.js/blob/main/LICENSE"
+            },
+            {
+              "label": "ONNX Runtime license text",
+              "url": "https://github.com/microsoft/onnxruntime/blob/main/LICENSE"
+            }
+          ],
+          "name": "Transformers.js · ONNX Runtime Web",
+          "use": "Model downloads and inference in the browser"
+        },
+        {
+          "condition": "Preserve each project's copyright, license, and NOTICE in distributions.",
+          "license": "MIT · Apache-2.0",
+          "links": [
+            {
+              "label": "PixiJS license text",
+              "url": "https://github.com/pixijs/pixijs/blob/dev/LICENSE"
+            },
+            {
+              "label": "UnoCSS license text",
+              "url": "https://github.com/unocss/unocss/blob/main/LICENSE"
+            },
+            {
+              "label": "class-variance-authority license text",
+              "url": "https://github.com/joe-bell/cva/blob/main/LICENSE"
+            }
+          ],
+          "name": "PixiJS · UnoCSS · class-variance-authority",
+          "use": "Focus-scene rendering, the styling system, and UI variant classes"
+        },
+        {
+          "condition": "Preserve copyright and MIT license notices in distributions.",
+          "license": "MIT",
+          "links": [
+            {
+              "label": "media-chrome license text",
+              "url": "https://github.com/muxinc/media-chrome/blob/main/LICENSE"
+            }
+          ],
+          "name": "media-chrome",
+          "use": "Music player controls"
+        },
+        {
+          "condition": "Preserve the copyright and MIT license notices of hecomi and Noeri Huisman.",
+          "license": "MIT",
+          "links": [
+            {
+              "label": "wLipSync license text",
+              "url": "https://github.com/mrxz/wLipSync/blob/main/LICENSE"
+            }
+          ],
+          "name": "wLipSync",
+          "use": "Lip-sync analysis for speech played on the device"
+        },
+        {
+          "condition": "Preserve copyright, the Apache 2.0 license, and NOTICE in distributions.",
+          "license": "Apache-2.0",
+          "links": [
+            {
+              "label": "Dexie license text",
+              "url": "https://github.com/dexie/Dexie.js/blob/master/LICENSE"
+            }
+          ],
+          "name": "Dexie",
+          "use": "Local dialogue storage"
+        },
+        {
+          "condition": "Preserve each project's copyright, license, and NOTICE in distributions.",
+          "license": "Apache-2.0 · MIT",
+          "links": [
+            {
+              "label": "Neon Auth license text",
+              "url": "https://github.com/neondatabase/neon-js/blob/main/LICENSE"
+            },
+            {
+              "label": "Neon Serverless license text",
+              "url": "https://github.com/neondatabase/serverless/blob/main/LICENSE"
+            }
+          ],
+          "name": "Neon Database",
+          "use": "Sign-in and PostgreSQL connection"
+        },
+        {
+          "condition": "Preserve copyright, the Apache 2.0 license, and NOTICE in distributions.",
+          "license": "Apache-2.0",
+          "links": [
+            {
+              "label": "Drizzle ORM license text",
+              "url": "https://github.com/drizzle-team/drizzle-orm/blob/main/LICENSE"
+            }
+          ],
+          "name": "Drizzle ORM",
+          "use": "Server database schema and queries"
+        },
+        {
+          "condition": "Preserve copyright, the Apache 2.0 license, and NOTICE in distributions.",
+          "license": "Apache-2.0",
+          "links": [
+            {
+              "label": "Vercel Functions license text",
+              "url": "https://github.com/vercel/vercel/blob/main/LICENSE"
+            }
+          ],
+          "name": "Vercel Functions",
+          "use": "Server response cache invalidation"
+        },
+        {
+          "condition": "Preserve copyright, the Apache 2.0 license, and NOTICE in distributions.",
+          "license": "Apache-2.0",
+          "links": [
+            {
+              "label": "OpenAI Node.js SDK license text",
+              "url": "https://github.com/openai/openai-node/blob/main/LICENSE"
+            }
+          ],
+          "name": "OpenAI Node.js SDK",
+          "use": "Generating today's-history content on the server"
+        },
+        {
+          "condition": "Preserve copyright and MIT license notices in distributions.",
+          "license": "MIT",
+          "links": [
+            {
+              "label": "Zod license text",
+              "url": "https://github.com/colinhacks/zod/blob/main/LICENSE"
+            }
+          ],
+          "name": "Zod",
+          "use": "Input and stored-data validation"
+        },
+        {
+          "condition": "Distribute the copyright and the full SIL Open Font License 1.1 with the font files.",
+          "license": "SIL Open Font License 1.1",
+          "links": [
+            {
+              "label": "Pretendard license text",
+              "url": "https://github.com/orioncactus/pretendard/blob/main/LICENSE"
+            },
+            {
+              "label": "Pretendard official repository",
+              "url": "https://github.com/orioncactus/pretendard"
+            }
+          ],
+          "name": "Pretendard",
+          "use": "User-interface font for Korean and Latin text"
+        },
+        {
+          "name": "GL Transitions",
+          "license": "MIT",
+          "condition": "Preserve the original author's copyright and MIT license notices.",
+          "use": "Directional wipes, cross-warp, and circular reveal transition shaders for album images",
+          "links": [
+            {
+              "label": "source repository",
+              "url": "https://github.com/gl-transitions/gl-transitions"
+            },
+            {
+              "label": "License and attribution notice",
+              "url": "/licenses/gl-transitions.txt"
+            }
+          ]
+        },
+        {
+          "name": "rgbKineticSlider (visual-effects reference)",
+          "license": "Original shader code; no original code or assets included",
+          "condition": "The original project's RGB separation and distortion effects were used as visual reference.",
+          "use": "Visual reference for the album RGB kinetic transition",
+          "links": [
+            {
+              "label": "Original project",
+              "url": "https://github.com/hmongouachon/rgbKineticSlider"
+            }
+          ]
+        },
+        {
+          "condition": "Preserve copyright and MIT license notices in distributions.",
+          "license": "MIT",
+          "links": [
+            {
+              "label": "License text",
+              "url": "https://github.com/usingsky/korean_lunar_calendar_js/blob/main/LICENSE"
+            }
+          ],
+          "name": "korean-lunar-calendar",
+          "use": "Korean lunar/solar calendar conversion and auspicious-day calculation"
+        }
+      ],
+      "id": "core-software",
+      "summaryTitle": "Open-source software",
+      "title": "Core software"
+    },
+    {
+      "description": "Open-weight models and AI models downloaded by Pomofi.",
+      "entries": [
+        {
+          "condition": "Apply OpenRAIL-M use restrictions and provide a license copy and related notices. Mark changes in the INT8 distribution.",
+          "license": "OpenRAIL-M",
+          "links": [
+            {
+              "label": "Supertonic 3 license text",
+              "url": "https://huggingface.co/Supertone/supertonic-3/blob/3cadd1e/LICENSE"
+            }
+          ],
+          "name": "Supertonic 3 Full · INT8",
+          "summaryName": "Supertonic 3",
+          "use": "On-device speech synthesis for dialogue and feeds"
+        },
+        {
+          "condition": "Preserve the model repository's LICENSE, NOTICE, and copyright notices in distributions.",
+          "license": "Apache-2.0",
+          "links": [
+            {
+              "label": "Gemma 4 license text",
+              "url": "https://ai.google.dev/gemma/apache_2"
+            }
+          ],
+          "name": "Gemma 4 E2B ONNX",
+          "use": "Generating dialogue drafts in the browser"
+        }
+      ],
+      "id": "models",
+      "summaryTitle": "Open-weight and AI models",
+      "title": "Open-weight and AI models"
+    }
+  ],
+  "lastReviewed": "August 29, 2026"
+}

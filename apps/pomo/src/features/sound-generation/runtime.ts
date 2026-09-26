@@ -10,55 +10,130 @@ import {
   restoreInpaintContext,
   validateInpaint,
 } from './inpaint'
-import {createNoise, createSchedule, createStereoWave} from './audio'
+import {createSchedule, createStereoWave} from './audio'
+import {SAMPLE_RATE} from './connection'
+import {createNegativePromptGuidedVelocity} from './guidance'
+import {createNoise, createRandomNoiseSource, type NoiseSource} from './noise'
 
 export type {SoundProgress} from './assets'
 
-const SAMPLE_RATE = 44_100
+export interface GenerateSoundOptions {
+  readonly inpaint?: InpaintAudio
+  readonly negativePrompt?: string
+  readonly noiseSource?: NoiseSource
+}
+
 const CHANNELS = 256
 const STRIDE = 4096
 const TOKENS = 256
 const STEPS = 8
 const MAX_SECONDS = 120
+interface PromptConditioning {
+  readonly hidden: ort.Tensor
+  readonly mask: Float32Array
+}
+
+interface RunDiTOptions {
+  readonly condition: ort.Tensor
+  readonly dit: ort.InferenceSession
+  readonly latent: Float32Array
+  readonly length: number
+  readonly prompt: PromptConditioning
+  readonly seconds: number
+  readonly timestep: number
+}
+
 async function loadSession(path: string, progress: SoundProgress) {
   const bytes = await loadAsset(path, progress)
   progress(`${ASSET_LABELS[path]} 실행 준비 중…`)
   return ort.InferenceSession.create(bytes, {executionProviders: ['webgpu', 'wasm']})
 }
 
-async function encodePrompt(prompt: string, progress: SoundProgress) {
+async function copyPromptHidden(source: ort.Tensor): Promise<ort.Tensor> {
+  if (source.type !== 'float32') {
+    throw new Error('텍스트 조건의 출력 형식이 올바르지 않습니다.')
+  }
+  const data = await source.getData(true)
+  if (!(data instanceof Float32Array)) {
+    throw new Error('텍스트 조건의 데이터 형식이 올바르지 않습니다.')
+  }
+  return new ort.Tensor('float32', data.slice(), source.dims)
+}
+
+async function encodePrompts(
+  prompt: string,
+  negativePrompt: string | undefined,
+  progress: SoundProgress,
+) {
   const tokenizerBytes = await loadAsset('tensorRT/sm_90/t5gemma/tokenizer.json', progress)
   const tokenizer = new PreTrainedTokenizer(JSON.parse(new TextDecoder().decode(tokenizerBytes)), {
     eos_token: '</s>',
     model_max_length: TOKENS,
     pad_token: '<pad>',
   })
-  const tokens = tokenizer(prompt, {max_length: TOKENS, padding: 'max_length', truncation: true})
   const encoder = await loadSession('onnx/t5gemma/encoder.onnx', progress)
-  let hidden: ort.Tensor
   try {
-    progress('소리 설명을 이해하고 있어요…')
-    const inputs = {
-      attention_mask: new ort.Tensor(
-        'int64',
-        BigInt64Array.from(tokens.attention_mask.data, BigInt),
-        [1, TOKENS],
-      ),
-      input_ids: new ort.Tensor('int64', BigInt64Array.from(tokens.input_ids.data, BigInt), [
-        1,
-        TOKENS,
-      ]),
+    const encode = async (text: string): Promise<PromptConditioning> => {
+      const tokens = tokenizer(text, {max_length: TOKENS, padding: 'max_length', truncation: true})
+      progress('소리 설명을 이해하고 있어요…')
+      const inputs = {
+        attention_mask: new ort.Tensor(
+          'int64',
+          BigInt64Array.from(tokens.attention_mask.data, BigInt),
+          [1, TOKENS],
+        ),
+        input_ids: new ort.Tensor('int64', BigInt64Array.from(tokens.input_ids.data, BigInt), [
+          1,
+          TOKENS,
+        ]),
+      }
+      try {
+        const output = await encoder.run(inputs)
+        try {
+          return {
+            hidden: await copyPromptHidden(output.hidden_states),
+            mask: Float32Array.from(tokens.attention_mask.data, Number),
+          }
+        } finally {
+          output.hidden_states.dispose()
+        }
+      } finally {
+        Object.values(inputs).forEach((tensor) => tensor.dispose())
+      }
     }
-    try {
-      const output = await encoder.run(inputs)
-      hidden = output.hidden_states
-    } finally {
-      Object.values(inputs).forEach((tensor) => tensor.dispose())
-    }
+    const positive = await encode(prompt)
+    const negative =
+      negativePrompt !== undefined && isNonBlankString(negativePrompt)
+        ? await encode(negativePrompt)
+        : undefined
+    return {negative, positive}
   } finally {
     await encoder.release()
   }
-  return {hidden, mask: Float32Array.from(tokens.attention_mask.data, Number)}
+}
+
+async function runDiT(options: RunDiTOptions): Promise<Float32Array> {
+  const {condition, dit, latent, length, prompt, seconds, timestep} = options
+  const inputs = {
+    local_add_cond: condition,
+    seconds_total: new ort.Tensor('float32', new Float32Array([seconds]), [1]),
+    t: new ort.Tensor('float32', new Float32Array([timestep]), [1]),
+    t5_hidden: prompt.hidden,
+    t5_mask: new ort.Tensor('float32', prompt.mask, [1, TOKENS]),
+    x: new ort.Tensor('float32', latent, [1, CHANNELS, length]),
+  }
+  try {
+    const output = await dit.run(inputs)
+    try {
+      return Float32Array.from(output.velocity.data, Number)
+    } finally {
+      output.velocity.dispose()
+    }
+  } finally {
+    Object.values(inputs)
+      .filter((tensor) => tensor !== condition && tensor !== prompt.hidden)
+      .forEach((tensor) => tensor.dispose())
+  }
 }
 
 async function encodeInpaint(
@@ -99,8 +174,9 @@ export async function generateSound(
   prompt: string,
   seconds: number,
   progress: SoundProgress,
-  inpaint?: InpaintAudio,
+  options: GenerateSoundOptions = {},
 ): Promise<Blob> {
+  const {inpaint, negativePrompt, noiseSource} = options
   if (
     !isNonBlankString(prompt) ||
     !Number.isInteger(seconds) ||
@@ -121,9 +197,10 @@ export async function generateSound(
   const frames = seconds * SAMPLE_RATE
   const framesPerLatent = Math.ceil(frames / STRIDE)
   const length = inpaint === undefined ? framesPerLatent : Math.ceil(framesPerLatent / 2) * 2
-  const latent = createNoise(CHANNELS * length)
+  const source = noiseSource ?? createRandomNoiseSource()
+  const latent = createNoise(CHANNELS * length, source)
   const conditioning = await encodeInpaint(inpaint, length, progress)
-  const {hidden, mask} = await encodePrompt(prompt, progress)
+  const {negative, positive} = await encodePrompts(prompt, negativePrompt, progress)
   const condition = new ort.Tensor('float32', conditioning, [1, CHANNELS + 1, length])
   let dit: ort.InferenceSession | undefined
   try {
@@ -131,35 +208,45 @@ export async function generateSound(
     const schedule = createSchedule(STEPS)
     for (let step = 0; step < STEPS; step += 1) {
       progress(`환경음 생성 중 · ${step + 1}/${STEPS}`)
-      const inputs = {
-        local_add_cond: condition,
-        seconds_total: new ort.Tensor('float32', new Float32Array([seconds]), [1]),
-        t: new ort.Tensor('float32', new Float32Array([schedule[step]]), [1]),
-        t5_hidden: hidden,
-        t5_mask: new ort.Tensor('float32', mask, [1, TOKENS]),
-        x: new ort.Tensor('float32', latent, [1, CHANNELS, length]),
+      const timestep = schedule[step]
+      const positiveVelocity = await runDiT({
+        condition,
+        dit,
+        latent,
+        length,
+        prompt: positive,
+        seconds,
+        timestep,
+      })
+      const velocity =
+        negative === undefined
+          ? positiveVelocity
+          : createNegativePromptGuidedVelocity({
+              latent,
+              negativeVelocity: await runDiT({
+                condition,
+                dit,
+                latent,
+                length,
+                prompt: negative,
+                seconds,
+                timestep,
+              }),
+              positiveVelocity,
+              timestep,
+            })
+      const noise = createNoise(latent.length, source)
+      const next = schedule[step + 1]
+      for (let index = 0; index < latent.length; index += 1) {
+        latent[index] =
+          (1 - next) * (latent[index] - timestep * Number(velocity[index])) + next * noise[index]
       }
-      try {
-        const output = await dit.run(inputs)
-        const velocity = output.velocity.data
-        const noise = createNoise(latent.length)
-        const next = schedule[step + 1]
-        for (let index = 0; index < latent.length; index += 1) {
-          latent[index] =
-            (1 - next) * (latent[index] - schedule[step] * Number(velocity[index])) +
-            next * noise[index]
-        }
-        restoreInpaintContext(latent, conditioning, length)
-        output.velocity.dispose()
-      } finally {
-        Object.values(inputs)
-          .filter((tensor) => tensor !== condition && tensor !== hidden)
-          .forEach((tensor) => tensor.dispose())
-      }
+      restoreInpaintContext(latent, conditioning, length)
     }
   } finally {
     condition.dispose()
-    hidden.dispose()
+    positive.hidden.dispose()
+    negative?.hidden.dispose()
     await dit?.release()
   }
   return decodeSound(latent, frames, length, progress)

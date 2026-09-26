@@ -10,7 +10,7 @@ const generationMocks = vi.hoisted(() => ({
 }))
 
 vi.mock('src/env', () => ({env: {}}))
-vi.mock('../generation-repository', () => ({
+vi.mock('../../repositories/history-generation', () => ({
   markGenerationFailed: generationMocks.markFailed,
   markGenerationSubmissionUnknown: generationMocks.markUnknown,
   markGenerationSubmitted: generationMocks.markSubmitted,
@@ -21,6 +21,12 @@ vi.mock('../openai-client', async (importOriginal) => {
   const original = await importOriginal<typeof import('../openai-client')>()
   return {...original, submitHistoryResponse: generationMocks.submit}
 })
+
+vi.mock('../submission-lock', () => ({
+  withHistoryGenerationLock: vi.fn(async (_targetDate: string, operation: () => Promise<unknown>) =>
+    operation(),
+  ),
+}))
 
 beforeEach(() => {
   vi.clearAllMocks()

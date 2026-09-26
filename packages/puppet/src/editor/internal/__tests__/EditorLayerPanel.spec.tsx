@@ -7,8 +7,28 @@ import {describe, expect, test, vi} from 'vitest'
 import {createDemoDocument, type PuppetDocument} from '../../../player'
 import {createDeformer, type SceneSelection} from '../scene-graph'
 import {EditorLayerPanel} from '../EditorLayerPanel'
+import {convertSceneContainers} from '../container-conversion'
 
 describe('EditorLayerPanel', () => {
+  test('should distinguish a 3D deformer from a free deformation deformer in the layer tree', () => {
+    const spatial = convertSceneContainers({
+      document: createDemoDocument(),
+      nodeIds: ['shapes'],
+      targetKind: 'spatial',
+    })!
+    const document = createDeformer(spatial, ['mesh-preview'])!
+    const view = render(() => <EditorLayerPanel document={document} />)
+    const spatialSelect = view.getByRole('button', {name: 'Shapes 3D 디포머 레이어 선택'})
+    const freeSelect = view.getByRole('button', {name: '새 자유 변형 디포머 레이어 선택'})
+    const spatialIcon = spatialSelect.parentElement!.querySelector('[data-layer-icon="deformer"]')
+    const freeIcon = freeSelect.parentElement!.querySelector('[data-layer-icon="deformer"]')
+
+    expect(spatialIcon).toHaveClass('puppet-icon-cube')
+    expect(spatialIcon).not.toHaveClass('puppet-icon-mesh')
+    expect(freeIcon).toHaveClass('puppet-icon-mesh')
+    expect(spatialSelect.querySelector('.layer-kind-badge')).toHaveTextContent('3D')
+    expect(freeSelect.querySelector('.layer-kind-badge')).toBeNull()
+  })
   test('should distinguish group and free deformation icons by shape', () => {
     const document = createDeformer(createDemoDocument(), ['mesh-preview'])!
     const view = render(() => <EditorLayerPanel document={document} />)

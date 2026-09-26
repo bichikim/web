@@ -1,19 +1,83 @@
 /** @vitest-environment jsdom */
 
-import {getLatestProps} from './editor.setup'
-import {render} from '@solidjs/testing-library'
+import {
+  candidate,
+  getLatestProps,
+  LanguageLearningEditorWithPreferences,
+  renderGeneratedReview,
+  setWriterState,
+} from './editor.setup'
+import {render, renderHook, screen} from '@solidjs/testing-library'
 import {type ComponentProps, createSignal, onMount} from 'solid-js'
 import {expect, it, vi} from 'vitest'
+import {PreferenceProvider} from '../../../hooks/use-preference'
 import {
   getUnmemorizedLanguageLearningWordValues,
   useLanguageLearningWords,
 } from '../../../features/language-learning'
-import {LanguageLearningEditor} from '../Editor'
 import {LanguageLearningSettings} from '../Settings'
 import {LanguageLearningWordSourceControl} from '../WordSource'
+import {LanguageLearningReview} from '../Review'
+import {useLanguageLearningEditorState} from '../use-editor-state'
+
+it('should clear generated review state when changing the learning language', async () => {
+  const view = await renderGeneratedReview()
+  const reviewProps = getLatestProps<ComponentProps<typeof LanguageLearningReview>>(
+    vi.mocked(LanguageLearningReview),
+  )
+  expect(reviewProps.candidates).toHaveLength(1)
+
+  const settingsProps = getLatestProps<ComponentProps<typeof LanguageLearningSettings>>(
+    vi.mocked(LanguageLearningSettings),
+  )
+  settingsProps.onLanguageChange('ko')
+
+  expect(reviewProps.candidates).toEqual([])
+  expect(screen.queryByRole('button', {name: 'save'})).toBeNull()
+  view.unmount()
+})
+
+it('should cancel generation and clear generated state when changing the word source', () => {
+  const view = renderHook(() => useLanguageLearningEditorState(), {wrapper: PreferenceProvider})
+  view.result.setSentences(['A useful sentence.'])
+  view.result.setCandidates([candidate()])
+
+  view.result.handleWordSourceChange('saved')
+
+  expect(view.result.writer.release).toHaveBeenCalledOnce()
+  expect(view.result.sentences()).toEqual([])
+  expect(view.result.candidates()).toEqual([])
+  expect(URL.revokeObjectURL).toHaveBeenCalledWith('blob:generated')
+  view.cleanup()
+})
+
+it('should release dialogue generation when changing the learning language', () => {
+  const view = renderHook(() => useLanguageLearningEditorState(), {wrapper: PreferenceProvider})
+
+  view.result.handleLanguageChange('ko')
+
+  expect(view.result.writer.release).toHaveBeenCalledOnce()
+  view.cleanup()
+})
+
+it('should keep the editor busy while the writer is generating after changing the word source', () => {
+  render(() => <LanguageLearningEditorWithPreferences />)
+  setWriterState({status: 'generating'})
+
+  getLatestProps<ComponentProps<typeof LanguageLearningWordSourceControl>>(
+    vi.mocked(LanguageLearningWordSourceControl),
+  ).onSourceChange('saved')
+
+  expect(screen.getByRole('button', {name: 'generate'})).toBeDisabled()
+  expect(
+    getLatestProps<ComponentProps<typeof LanguageLearningWordSourceControl>>(
+      vi.mocked(LanguageLearningWordSourceControl),
+    ).disabled,
+  ).toBe(true)
+})
 
 it('should change source and language while keeping saved words available only when eligible', () => {
-  render(() => <LanguageLearningEditor />)
+  render(() => <LanguageLearningEditorWithPreferences />)
   const sourceProps = getLatestProps<ComponentProps<typeof LanguageLearningWordSourceControl>>(
     vi.mocked(LanguageLearningWordSourceControl),
   )
@@ -39,7 +103,7 @@ it('should change source and language while keeping saved words available only w
 })
 
 it('should keep direct word entry when changing the learning language', () => {
-  render(() => <LanguageLearningEditor />)
+  render(() => <LanguageLearningEditorWithPreferences />)
   const settingsProps = getLatestProps<ComponentProps<typeof LanguageLearningSettings>>(
     vi.mocked(LanguageLearningSettings),
   )
@@ -58,7 +122,7 @@ it('should restore the last selected word source after reopening the editor', ()
     'pomo:language-learning:word-source:v1',
     JSON.stringify({source: 'saved', version: 1}),
   )
-  let view = render(() => <LanguageLearningEditor />)
+  let view = render(() => <LanguageLearningEditorWithPreferences />)
 
   const sourceProps = getLatestProps<ComponentProps<typeof LanguageLearningWordSourceControl>>(
     vi.mocked(LanguageLearningWordSourceControl),
@@ -73,7 +137,7 @@ it('should restore the last selected word source after reopening the editor', ()
 
   view.unmount()
   vi.mocked(LanguageLearningWordSourceControl).mockClear()
-  view = render(() => <LanguageLearningEditor />)
+  view = render(() => <LanguageLearningEditorWithPreferences />)
 
   expect(
     getLatestProps<ComponentProps<typeof LanguageLearningWordSourceControl>>(
@@ -97,7 +161,7 @@ it('should validate a saved-word preference after persisted words load on mount'
     words.map((word) => word.value),
   )
 
-  render(() => <LanguageLearningEditor />)
+  render(() => <LanguageLearningEditorWithPreferences />)
 
   expect(
     getLatestProps<ComponentProps<typeof LanguageLearningWordSourceControl>>(
@@ -117,7 +181,7 @@ it('should replace an unavailable saved-word preference with direct entry', () =
   )
   vi.mocked(getUnmemorizedLanguageLearningWordValues).mockReturnValue([])
 
-  render(() => <LanguageLearningEditor />)
+  render(() => <LanguageLearningEditorWithPreferences />)
 
   expect(
     getLatestProps<ComponentProps<typeof LanguageLearningWordSourceControl>>(

@@ -117,6 +117,7 @@ interface ResolveContentOptions {
 const getDocumentUrl = (value: string) => {
   const url = new URL(value)
   url.hash = ''
+  url.pathname = url.pathname.replace(/\/$/u, '') || '/'
   return url.href
 }
 const resolveContent = async (options: ResolveContentOptions) => {
@@ -223,6 +224,13 @@ const processFeedItem = async (options: ProcessFeedItemOptions): Promise<string 
   const generationSettings = await options.resolveGenerationSettings(options.connection.id)
 
   if (generationSettings === null) {
+    const item = {
+      ...recordBase,
+      contentLength: script.length,
+      message: '음성 생성 설정을 찾지 못했어요.',
+      status: 'failed' as const,
+    } satisfies FeedItemRecord
+    await options.repository.saveItems([item])
     return null
   }
 
@@ -279,9 +287,13 @@ const createIgnoredItem = (options: CreateIgnoredItemOptions): FeedItemRecord =>
 })
 
 const getSubscriptionTimestamp = (connection: FeedConnection) => Date.parse(connection.createdAt)
-const isHistoricalItem = (connection: FeedConnection, item: ParsedFeedItem) => {
+const isHistoricalItem = (
+  connection: FeedConnection,
+  item: ParsedFeedItem,
+  isFirstSync: boolean,
+) => {
   if (item.publishedAt === null) {
-    return false
+    return isFirstSync
   }
 
   return Date.parse(item.publishedAt) < getSubscriptionTimestamp(connection)
@@ -297,6 +309,10 @@ const synchronizeConnection = async (
   const feed = parseFeedXml(xml, connection.url)
   const storedItems = await options.repository.listItems(connection.id)
   const storedIds = new Set(storedItems.map((item) => item.feedItemId))
+  const isFirstSync = storedItems.length === 0
+  const firstUndatedFeedItem = isFirstSync
+    ? feed.items.find((item) => item.publishedAt === null)
+    : undefined
   const unseenItems = sortItems(feed.items.filter((item) => !storedIds.has(item.id))).slice(
     -MAXIMUM_ITEMS_PER_SYNC,
   )
@@ -310,11 +326,15 @@ const synchronizeConnection = async (
   const staleItems = unseenItems.filter((item) => isStaleItem(item, oldestAcceptedTimestamp))
   const staleIds = new Set(staleItems.map((item) => item.id))
   const eligibleItems = unseenItems.filter((item) => !staleIds.has(item.id))
-  const historicalItems = eligibleItems.filter((item) => isHistoricalItem(connection, item))
+  const historicalItems = eligibleItems.filter((item) =>
+    isHistoricalItem(connection, item, isFirstSync),
+  )
   const historicalIds = new Set(historicalItems.map((item) => item.id))
   const currentItems = eligibleItems.filter((item) => !historicalIds.has(item.id))
   const itemsToProcess =
-    storedItems.length === 0 && currentItems.length === 0 ? eligibleItems.slice(-1) : currentItems
+    isFirstSync && currentItems.length === 0 && firstUndatedFeedItem !== undefined
+      ? [firstUndatedFeedItem]
+      : currentItems
   const processedIds = new Set(itemsToProcess.map((item) => item.id))
   const ignoredItems = unseenItems.filter((item) => !processedIds.has(item.id))
 

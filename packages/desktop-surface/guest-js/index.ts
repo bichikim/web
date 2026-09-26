@@ -16,6 +16,37 @@ export interface BackgroundSurfaceOptions extends SurfaceTarget {
   readonly interaction?: BackgroundInteraction
 }
 
+export interface BackgroundNavigationOptions extends SurfaceTarget {
+  readonly url: string
+  readonly useChild?: boolean
+}
+
+export type BackgroundMouseEventKind =
+  | 'down'
+  | 'up'
+  | 'dragged'
+  | 'moved'
+  | 'left'
+  | 'cancelled'
+  | 'wheel'
+
+export interface BackgroundMouseEventOptions extends SurfaceTarget {
+  readonly altKey: boolean
+  readonly button: number
+  readonly buttons: number
+  readonly clickCount: number
+  readonly ctrlKey: boolean
+  readonly kind: BackgroundMouseEventKind
+  readonly metaKey: boolean
+  readonly shiftKey: boolean
+  readonly x: number
+  readonly y: number
+  readonly deltaMode?: number
+  readonly deltaX?: number
+  readonly deltaY?: number
+  readonly deltaZ?: number
+}
+
 export interface OpenControlSurfaceOptions extends SurfaceTarget {
   readonly cornerRadius?: number
   readonly height?: number
@@ -38,6 +69,12 @@ export interface WidgetSurfaceOptions extends SurfaceTarget {
 export const setBackgroundSurface = (options: BackgroundSurfaceOptions): Promise<void> =>
   invoke(`${COMMAND_PREFIX}set_background_surface`, {options})
 
+export const navigateBackgroundSurface = (options: BackgroundNavigationOptions): Promise<void> =>
+  invoke(`${COMMAND_PREFIX}navigate_background_surface`, {options})
+
+export const forwardBackgroundMouseEvent = (options: BackgroundMouseEventOptions): Promise<void> =>
+  invoke(`${COMMAND_PREFIX}forward_background_mouse_event`, {options})
+
 export const getBackgroundInteraction = (target: SurfaceTarget): Promise<BackgroundInteraction> =>
   invoke(`${COMMAND_PREFIX}get_background_interaction`, {label: target.label})
 
@@ -46,6 +83,9 @@ export const setBackgroundInteraction = (options: BackgroundInteractionOptions):
 
 export const restoreSurface = (target: SurfaceTarget): Promise<void> =>
   invoke(`${COMMAND_PREFIX}restore_surface`, {label: target.label})
+
+export const restoreBackgroundContent = (target: SurfaceTarget): Promise<void> =>
+  invoke(`${COMMAND_PREFIX}restore_background_content`, {label: target.label})
 
 export const setWidgetSurface = (options: WidgetSurfaceOptions): Promise<void> =>
   invoke(`${COMMAND_PREFIX}set_widget_surface`, {options})

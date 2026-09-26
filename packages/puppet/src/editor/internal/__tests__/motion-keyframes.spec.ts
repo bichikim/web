@@ -3,10 +3,14 @@ import {describe, expect, test} from 'vitest'
 import {createDemoDocument} from '../../../player'
 import {
   deleteParameterKeyframe,
+  deleteParameterKeyframes,
   deleteVertexKeyframe,
   insertVertexKeyframe,
+  moveParameterKeyframe,
+  moveParameterKeyframes,
   setParameterKeyframe,
   setParameterKeyframeEasing,
+  setParameterKeyframesEasing,
   setVertexKeyframe,
   setVertexKeyframeEasing,
 } from '../motion-keyframes'
@@ -137,6 +141,86 @@ describe('deleteVertexKeyframe', () => {
 })
 
 describe('parameter keyframes', () => {
+  test('should move selected keyframes together without replacing an occupied frame', () => {
+    const document = createDemoDocument()
+    const moved = moveParameterKeyframes({
+      document,
+      motionId: 'idle-deform',
+      nextTime: 1.5,
+      parameterId: 'angle-y',
+      time: 1,
+      times: [0, 1],
+    })
+
+    expect(moved?.motions[0]?.tracks[0]?.keyframes).toEqual([
+      {time: 0.5, value: 0},
+      {time: 1.5, value: -30},
+      {time: 2, value: 0},
+    ])
+    expect(
+      moveParameterKeyframes({
+        document,
+        motionId: 'idle-deform',
+        nextTime: 2,
+        parameterId: 'angle-y',
+        time: 1,
+        times: [0, 1],
+      }),
+    ).toBeUndefined()
+  })
+
+  test('should ease and delete selected parameter keyframes together', () => {
+    const document = createDemoDocument()
+    const eased = setParameterKeyframesEasing({
+      document,
+      easing: 'ease-in-out',
+      motionId: 'idle-deform',
+      parameterId: 'angle-y',
+      times: [0, 1],
+    })!
+
+    expect(eased.motions[0]?.tracks[0]?.keyframes).toEqual([
+      {easing: 'ease-in-out', time: 0, value: 0},
+      {easing: 'ease-in-out', time: 1, value: -30},
+      {time: 2, value: 0},
+    ])
+
+    const deleted = deleteParameterKeyframes({
+      document: eased,
+      motionId: 'idle-deform',
+      parameterId: 'angle-y',
+      times: [0, 1],
+    })
+    expect(deleted?.motions[0]?.tracks[0]?.keyframes).toEqual([{time: 2, value: 0}])
+  })
+
+  test('should move one keyframe without replacing an occupied frame', () => {
+    const document = createDemoDocument()
+    const moved = moveParameterKeyframe({
+      document,
+      motionId: 'idle-deform',
+      nextTime: 1.5,
+      parameterId: 'angle-y',
+      time: 1,
+    })
+
+    expect(moved?.motions[0]?.tracks[0]?.keyframes).toEqual([
+      {time: 0, value: 0},
+      {time: 1.5, value: -30},
+      {time: 2, value: 0},
+    ])
+    expect(
+      moveParameterKeyframe({
+        document,
+        motionId: 'idle-deform',
+        nextTime: 2,
+        parameterId: 'angle-y',
+        time: 1,
+      }),
+    ).toBeUndefined()
+    expect(document.motions[0]?.tracks[0]?.keyframes[1]?.time).toBe(1)
+  })
+
   test('should set, clamp, ease, and delete one parameter track', () => {
     const document = createEmptyMotionDocument()
     const inserted = setParameterKeyframe({

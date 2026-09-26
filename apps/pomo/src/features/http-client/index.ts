@@ -1,3 +1,6 @@
+import {usesRemotePublicOrigin} from './runtime-origin'
+export * from './parse-retry-after-seconds'
+export * from './runtime-origin'
 import {type $Fetch, FetchError, ofetch} from 'ofetch'
 
 const RETRY_DELAY_MILLISECONDS = 250
@@ -23,7 +26,14 @@ const getMethod = (input: RequestInfo | URL, init?: RequestInit) =>
 
 const isRetryableMethod = (method: string) => method === 'GET' || method === 'HEAD'
 
-const createResponseFetch = (fetchInstance: $Fetch): typeof fetch =>
+export interface HttpRequestInit extends RequestInit {
+  readonly retry?: false
+}
+export interface HttpFetch {
+  (input: RequestInfo | URL, init?: HttpRequestInit): Promise<Response>
+}
+
+const createResponseFetch = (fetchInstance: $Fetch): HttpFetch =>
   async function responseFetch(input, init) {
     const {body, ...options} = init ?? {}
     const request = input instanceof URL ? input.href : input
@@ -33,7 +43,7 @@ const createResponseFetch = (fetchInstance: $Fetch): typeof fetch =>
         ...options,
         body: body ?? undefined,
         responseType: 'stream',
-        retry: isRetryableMethod(getMethod(input, init)) ? RETRY_COUNT : 0,
+        retry: init?.retry !== false && isRetryableMethod(getMethod(input, init)) ? RETRY_COUNT : 0,
       })
     } catch (error: unknown) {
       if (error instanceof FetchError) {
@@ -50,11 +60,8 @@ const createResponseFetch = (fetchInstance: $Fetch): typeof fetch =>
     }
   }
 
-const usesRemotePublicOrigin =
-  import.meta.env.VITE_POMO_IS_APPS_IN_TOSS === 'true' ||
-  import.meta.env.VITE_POMO_IS_DESKTOP === 'true' ||
-  (import.meta.env.VITE_POMO_IS_MOBILE === 'true' && !import.meta.env.DEV)
-const publicBaseURL = usesRemotePublicOrigin ? import.meta.env.VITE_POMO_PUBLIC_ORIGIN : undefined
+const usesBundledProductAssets = import.meta.env.VITE_POMO_DISTRIBUTION_TARGET === 'steam'
+const publicBaseURL = usesRemotePublicOrigin() ? import.meta.env.VITE_POMO_PUBLIC_ORIGIN : undefined
 const sharedFetch = ofetch.create({
   baseURL: publicBaseURL,
   retryDelay: RETRY_DELAY_MILLISECONDS,
@@ -63,14 +70,16 @@ const sharedFetch = ofetch.create({
 
 export const httpFetch = createResponseFetch(sharedFetch)
 
-const apiBaseURL = usesRemotePublicOrigin
+const apiBaseURL = usesRemotePublicOrigin()
   ? new URL('/api/', import.meta.env.VITE_POMO_PUBLIC_ORIGIN).href
   : '/api/'
 
 export const apiFetch = createResponseFetch(sharedFetch.create({baseURL: apiBaseURL}))
 
-const audioBaseURL = usesRemotePublicOrigin
-  ? new URL('/audio/', import.meta.env.VITE_POMO_PUBLIC_ORIGIN).href
-  : '/audio/'
+const audioBaseURL = usesBundledProductAssets
+  ? '/audio/'
+  : usesRemotePublicOrigin()
+    ? new URL('/audio/', import.meta.env.VITE_POMO_PUBLIC_ORIGIN).href
+    : '/audio/'
 
 export const audioFetch = createResponseFetch(sharedFetch.create({baseURL: audioBaseURL}))

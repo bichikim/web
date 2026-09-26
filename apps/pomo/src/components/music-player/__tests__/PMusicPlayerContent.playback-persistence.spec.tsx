@@ -1,5 +1,6 @@
 /** @vitest-environment jsdom */
 
+import {PreferenceProvider} from 'src/hooks/use-preference'
 import {cleanup, fireEvent, render} from '@solidjs/testing-library'
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 import {createSignal, Show} from 'solid-js'
@@ -54,18 +55,21 @@ describe('PMusicPlayerContent playback persistence', () => {
   afterEach(() => {
     cleanup()
     Reflect.deleteProperty(navigator, 'mediaSession')
-    Reflect.deleteProperty(window, 'ReactNativeWebView')
+    Reflect.deleteProperty(globalThis, 'ReactNativeWebView')
     vi.unstubAllGlobals()
     vi.restoreAllMocks()
   })
 
   it('should pause and persist stopped playback when disabled on unmount', async () => {
     const [visible, setVisible] = createSignal(true)
-    const result = render(() => (
-      <Show when={visible()}>
-        <PMusicPlayerContent stopOnUnmount={!visible()} tracks={TRACKS} />
-      </Show>
-    ))
+    const result = render(
+      () => (
+        <Show when={visible()}>
+          <PMusicPlayerContent stopOnUnmount={!visible()} tracks={TRACKS} />
+        </Show>
+      ),
+      {wrapper: PreferenceProvider},
+    )
     const audio = getAudioElement(result.container)
     await Promise.resolve()
     await Promise.resolve()
@@ -89,11 +93,14 @@ describe('PMusicPlayerContent playback persistence', () => {
       }),
     )
     const [visible, setVisible] = createSignal(true)
-    render(() => (
-      <Show when={visible()}>
-        <PMusicPlayerContent stopOnUnmount={!visible()} tracks={TRACKS} />
-      </Show>
-    ))
+    render(
+      () => (
+        <Show when={visible()}>
+          <PMusicPlayerContent stopOnUnmount={!visible()} tracks={TRACKS} />
+        </Show>
+      ),
+      {wrapper: PreferenceProvider},
+    )
     setVisible(false)
     await vi.waitFor(() =>
       expect(JSON.parse(localStorage.getItem('pomo:focus-room-playback:v1') ?? '{}')).toMatchObject(
@@ -107,7 +114,9 @@ describe('PMusicPlayerContent playback persistence', () => {
       'pomo:focus-room-playback:v1',
       JSON.stringify({positionSeconds: 22, savedAt: 1, trackId: 'three'}),
     )
-    const result = render(() => <PMusicPlayerContent tracks={TRACKS} />)
+    const result = render(() => <PMusicPlayerContent tracks={TRACKS} />, {
+      wrapper: PreferenceProvider,
+    })
     const audio = getAudioElement(result.container)
 
     markAudioMetadataReady(audio)
@@ -124,7 +133,9 @@ describe('PMusicPlayerContent playback persistence', () => {
       'pomo:focus-room-playback:v1',
       JSON.stringify({isPlaying: true, positionSeconds: 22, savedAt: 1, trackId: 'three'}),
     )
-    const result = render(() => <PMusicPlayerContent tracks={TRACKS} />)
+    const result = render(() => <PMusicPlayerContent tracks={TRACKS} />, {
+      wrapper: PreferenceProvider,
+    })
     const audio = getAudioElement(result.container)
 
     markAudioMetadataReady(audio)
@@ -142,12 +153,36 @@ describe('PMusicPlayerContent playback persistence', () => {
     })
   })
 
+  it('should not cancel restored autoplay when seeking reports an intermediate position', async () => {
+    localStorage.setItem(
+      'pomo:focus-room-playback:v1',
+      JSON.stringify({isPlaying: true, positionSeconds: 22, savedAt: 1, trackId: 'three'}),
+    )
+    const result = render(() => <PMusicPlayerContent tracks={TRACKS} />, {
+      wrapper: PreferenceProvider,
+    })
+    const audio = getAudioElement(result.container)
+
+    markAudioMetadataReady(audio)
+    await Promise.resolve()
+    await Promise.resolve()
+    fireEvent(audio, new Event('loadedmetadata'))
+    // Model a native seeking event before the restored position has settled.
+    audio.currentTime = 0
+    fireEvent(audio, new Event('seeking'))
+
+    expect(HTMLMediaElement.prototype.play).toHaveBeenCalledOnce()
+    expect(audio.pause).not.toHaveBeenCalled()
+  })
+
   it('should preserve restored playback through pagehide before play starts', async () => {
     localStorage.setItem(
       'pomo:focus-room-playback:v1',
       JSON.stringify({isPlaying: true, positionSeconds: 22, savedAt: 1, trackId: 'three'}),
     )
-    const result = render(() => <PMusicPlayerContent tracks={TRACKS} />)
+    const result = render(() => <PMusicPlayerContent tracks={TRACKS} />, {
+      wrapper: PreferenceProvider,
+    })
     const audio = getAudioElement(result.container)
 
     markAudioMetadataReady(audio)
@@ -155,7 +190,7 @@ describe('PMusicPlayerContent playback persistence', () => {
     await Promise.resolve()
     fireEvent(audio, new Event('loadedmetadata'))
     fireEvent(audio, new Event('seeked'))
-    fireEvent(window, new Event('pagehide'))
+    globalThis.dispatchEvent(new Event('pagehide'))
     await Promise.resolve()
 
     expect(JSON.parse(localStorage.getItem('pomo:focus-room-playback:v1') ?? '')).toMatchObject({
@@ -171,11 +206,14 @@ describe('PMusicPlayerContent playback persistence', () => {
       JSON.stringify({isPlaying: true, positionSeconds: 22, savedAt: 1, trackId: 'three'}),
     )
     const [visible, setVisible] = createSignal(true)
-    const result = render(() => (
-      <Show when={visible()}>
-        <PMusicPlayerContent tracks={TRACKS} />
-      </Show>
-    ))
+    const result = render(
+      () => (
+        <Show when={visible()}>
+          <PMusicPlayerContent tracks={TRACKS} />
+        </Show>
+      ),
+      {wrapper: PreferenceProvider},
+    )
     const audio = getAudioElement(result.container)
 
     markAudioMetadataReady(audio)
@@ -198,7 +236,9 @@ describe('PMusicPlayerContent playback persistence', () => {
       'pomo:focus-room-playback:v1',
       JSON.stringify({isPlaying: true, positionSeconds: 22, savedAt: 1, trackId: 'three'}),
     )
-    const result = render(() => <PMusicPlayerContent tracks={TRACKS} />)
+    const result = render(() => <PMusicPlayerContent tracks={TRACKS} />, {
+      wrapper: PreferenceProvider,
+    })
     const audio = getAudioElement(result.container)
 
     markAudioMetadataReady(audio)
@@ -223,7 +263,9 @@ describe('PMusicPlayerContent playback persistence', () => {
       'pomo:focus-room-playback:v1',
       JSON.stringify({isPlaying: true, positionSeconds: 22, savedAt: 1, trackId: 'three'}),
     )
-    const result = render(() => <PMusicPlayerContent tracks={TRACKS} />)
+    const result = render(() => <PMusicPlayerContent tracks={TRACKS} />, {
+      wrapper: PreferenceProvider,
+    })
     const audio = getAudioElement(result.container)
 
     markAudioMetadataReady(audio)
@@ -232,7 +274,7 @@ describe('PMusicPlayerContent playback persistence', () => {
     fireEvent(audio, new Event('loadedmetadata'))
     audio.currentTime = 8
     fireEvent(audio, new Event('seeking'))
-    fireEvent(window, new Event('pagehide'))
+    globalThis.dispatchEvent(new Event('pagehide'))
     await Promise.resolve()
 
     expect(JSON.parse(localStorage.getItem('pomo:focus-room-playback:v1') ?? '')).toMatchObject({
@@ -255,7 +297,9 @@ describe('PMusicPlayerContent playback persistence', () => {
       'pomo:focus-room-playback:v1',
       JSON.stringify({isPlaying: true, positionSeconds: 22, savedAt: 1, trackId: 'three'}),
     )
-    const result = render(() => <PMusicPlayerContent tracks={TRACKS} />)
+    const result = render(() => <PMusicPlayerContent tracks={TRACKS} />, {
+      wrapper: PreferenceProvider,
+    })
     const audio = getAudioElement(result.container)
 
     await Promise.resolve()
@@ -275,7 +319,9 @@ describe('PMusicPlayerContent playback persistence', () => {
       'pomo:focus-room-playback:v1',
       JSON.stringify({positionSeconds: 22, savedAt: 1, trackId: 'removed'}),
     )
-    const result = render(() => <PMusicPlayerContent tracks={TRACKS} />)
+    const result = render(() => <PMusicPlayerContent tracks={TRACKS} />, {
+      wrapper: PreferenceProvider,
+    })
     const audio = getAudioElement(result.container)
 
     await Promise.resolve()
@@ -292,7 +338,9 @@ describe('PMusicPlayerContent playback persistence', () => {
   })
 
   it('should save progress periodically and immediately after seeking', async () => {
-    const result = render(() => <PMusicPlayerContent tracks={TRACKS} />)
+    const result = render(() => <PMusicPlayerContent tracks={TRACKS} />, {
+      wrapper: PreferenceProvider,
+    })
     const audio = getAudioElement(result.container)
 
     await Promise.resolve()
@@ -320,7 +368,9 @@ describe('PMusicPlayerContent playback persistence', () => {
   })
 
   it('should stop detached audio without clearing its playing state', async () => {
-    const result = render(() => <PMusicPlayerContent tracks={TRACKS} />)
+    const result = render(() => <PMusicPlayerContent tracks={TRACKS} />, {
+      wrapper: PreferenceProvider,
+    })
     const audio = getAudioElement(result.container)
 
     fireEvent(audio, new Event('play'))

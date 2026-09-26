@@ -1,3 +1,4 @@
+import {PreferenceProvider} from 'src/hooks/use-preference'
 /** @vitest-environment jsdom */
 
 import {fireEvent, render, screen} from '@solidjs/testing-library'
@@ -19,9 +20,13 @@ import {
   renderModal,
 } from '../../__tests__/feed-status/fixtures'
 
-vi.mock('src/features/focus-room-feed', () => ({
-  usePFeedContext: vi.fn(),
-}))
+vi.mock('src/features/focus-room-feed', async () => {
+  const {isNoFeedConnectionGuidance} = await vi.importActual<
+    typeof import('src/features/focus-room-feed/feed-controller')
+  >('src/features/focus-room-feed/feed-controller')
+
+  return {isNoFeedConnectionGuidance, usePFeedContext: vi.fn()}
+})
 
 vi.mock('src/features/model-download', () => ({
   useModelDownload: vi.fn(),
@@ -67,7 +72,7 @@ it('should show feed generation status and block duplicate retry while its model
   vi.mocked(usePFeedContext).mockReturnValue(feeds)
   vi.mocked(useModelDownload).mockReturnValue({...modelDownload, state: downloadState})
   vi.mocked(isSupertonicModelDownloaded).mockResolvedValue(false)
-  render(() => <PFeedStatus />)
+  render(() => <PFeedStatus />, {wrapper: PreferenceProvider})
 
   const retryButton = screen.getByRole('button', {name: '다시 시도'})
   fireEvent.click(retryButton)
@@ -101,7 +106,7 @@ it('should show an already active recovery model download as feed generation', (
     }),
   })
 
-  render(() => <PFeedStatus />)
+  render(() => <PFeedStatus />, {wrapper: PreferenceProvider})
 
   expect(screen.getByRole('status')).toHaveAttribute('data-state', 'generating')
   expect(screen.getByText('Supertonic Full 음성 모델 받는 중 · 73%')).toBeInTheDocument()
@@ -121,7 +126,7 @@ it('should cancel a recovery model download and feed processing together', async
       target: {kind: 'voice', modelId: 'full'},
     }),
   })
-  render(() => <PFeedStatus />)
+  render(() => <PFeedStatus />, {wrapper: PreferenceProvider})
 
   fireEvent.click(screen.getByRole('button', {name: '중지'}))
 
@@ -149,7 +154,7 @@ it('should keep recovery actions hidden until cancellation persistence finishes'
   vi.mocked(modelDownload.cancel).mockImplementation(() => setDownloadState({status: 'idle'}))
   vi.mocked(usePFeedContext).mockReturnValue(feeds)
   vi.mocked(useModelDownload).mockReturnValue({...modelDownload, state: downloadState})
-  render(() => <PFeedStatus />)
+  render(() => <PFeedStatus />, {wrapper: PreferenceProvider})
 
   fireEvent.click(screen.getByRole('button', {name: '중지'}))
 
@@ -176,7 +181,7 @@ it('should stop active feed generation without cancelling an unrelated model dow
       target: {kind: 'voice', modelId: 'int8'},
     }),
   })
-  render(() => <PFeedStatus />)
+  render(() => <PFeedStatus />, {wrapper: PreferenceProvider})
 
   expect(screen.getByText('새 소식 · 1/3 구간 생성 중')).toBeInTheDocument()
   fireEvent.click(screen.getByRole('button', {name: '중지'}))
@@ -193,7 +198,7 @@ it('should report a feed cancellation failure and restore the stop action', asyn
     state: () => ({message: '새 소식 음성 생성 중', progress: null, status: 'generating'}),
   })
   vi.mocked(usePFeedContext).mockReturnValue(feeds)
-  render(() => <PFeedStatus />)
+  render(() => <PFeedStatus />, {wrapper: PreferenceProvider})
 
   const stopButton = screen.getByRole('button', {name: '중지'})
   fireEvent.click(stopButton)
@@ -221,7 +226,7 @@ it('should keep recovery visible while an unrelated voice model downloads', () =
     }),
   })
 
-  render(() => <PFeedStatus />)
+  render(() => <PFeedStatus />, {wrapper: PreferenceProvider})
 
   expect(screen.getByRole('status')).toHaveAttribute('data-state', 'recovery')
   expect(screen.getByRole('button', {name: '다시 시도'})).toBeDisabled()
@@ -242,7 +247,7 @@ it('should keep showing generation when the first of two feed dialogues becomes 
     unlistenedDialogues: dialogues,
   })
   vi.mocked(usePFeedContext).mockReturnValue(feeds)
-  render(() => <PFeedStatus />)
+  render(() => <PFeedStatus />, {wrapper: PreferenceProvider})
 
   expect(screen.getByText('첫 번째 음성을 만들고 있어요.')).toBeInTheDocument()
 
@@ -272,7 +277,7 @@ it('should hide recovery actions when another feed generation is already active'
   const [state, setState] = createSignal<PFeedState>({message: '대기 중', status: 'idle'})
   const feeds = createFeeds([], false, [RECOVERY_JOB], {state})
   vi.mocked(usePFeedContext).mockReturnValue(feeds)
-  render(() => <PFeedStatus />)
+  render(() => <PFeedStatus />, {wrapper: PreferenceProvider})
   const retryButton = screen.getByRole('button', {name: '다시 시도'})
 
   setState({

@@ -21,6 +21,10 @@ export const CLASSES = {
     'lg:mbe-entry-bottom',
     'lg:[margin-inline-start:calc(2.5rem_+_var(--pomo-safe-area-inset-left))]',
   ),
+  entryFooterLinks: cx(
+    'flex flex-wrap items-center gap-x-2 gap-y-1 text-sm leading-5',
+    'text-[#fff9f1]/80 [text-shadow:0_0.0625rem_0.1875rem_rgb(0_0_0_/_55%)]',
+  ),
   entryTitle: cx(
     'absolute left-safe-left-mobile top-safe-top-mobile',
     'm-0 text-[1.75rem] font-semibold tracking-[-0.055em] leading-none text-[#fff9f1]',
@@ -55,7 +59,6 @@ export const CLASSES = {
     '[&:has(.pomo-media-messages:not(:empty)):has(.pomo-dialogue-composer:not([data-expanded]))_.pomo-media-messages]:w-[min(36rem,_calc(100%_-_4rem))]',
     '[&[data-dialogue-active]:not([data-player-expanded])_.pomo-player-stage]:w-[var(--pomo-player-compact-width)]',
     '[&[data-dialogue-active]:not([data-player-expanded])_[data-player-summary]]:justify-center',
-    '[&[data-dialogue-active]:not([data-player-expanded])_[data-player-play-summary-frame]]:hidden',
     '[&[data-dialogue-active]:not([data-player-expanded])_[data-pomo-player-title]]:hidden',
     '[&[data-dialogue-active]:not([data-player-expanded])_[data-player-utility=album]]:hidden',
     '[&[data-player-expanded]_.pomo-player-stage]:[container-type:size]',

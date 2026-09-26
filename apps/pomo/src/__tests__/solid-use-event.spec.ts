@@ -6,7 +6,7 @@ import {expectTypeOf, it} from 'vitest'
 
 it('should infer event maps through the public consumer path', () => {
   const dispose = createRoot((dispose) => {
-    useEvent(window, 'resize', (event) => {
+    useEvent(globalThis.window, 'resize', (event) => {
       expectTypeOf(event).toEqualTypeOf<UIEvent>()
     })
     useEvent(document, 'visibilitychange', (event) => {
@@ -18,7 +18,7 @@ it('should infer event maps through the public consumer path', () => {
     useEvent(new EventTarget(), 'change', (event) => {
       expectTypeOf(event).toEqualTypeOf<Event>()
     })
-    useEvent(window, 'pomo:change', (event) => {
+    useEvent(globalThis.window, 'pomo:change', (event) => {
       expectTypeOf(event).toEqualTypeOf<CustomEvent<unknown>>()
     })
 

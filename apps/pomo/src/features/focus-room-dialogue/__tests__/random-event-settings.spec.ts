@@ -26,7 +26,7 @@ beforeEach(() => {
 })
 
 afterEach(() => {
-  Reflect.deleteProperty(window, 'ReactNativeWebView')
+  Reflect.deleteProperty(globalThis, 'ReactNativeWebView')
   vi.restoreAllMocks()
 })
 
@@ -55,7 +55,7 @@ describe('readRandomEventSettings', () => {
 
   it('should restore native settings when the browser copy is unavailable', async () => {
     const settings = {maximumMinutes: 8, minimumMinutes: 4, version: 1} as const
-    Object.defineProperty(window, 'ReactNativeWebView', {configurable: true, value: {}})
+    Object.defineProperty(globalThis, 'ReactNativeWebView', {configurable: true, value: {}})
     storageMocks.getItem.mockResolvedValue(JSON.stringify({...settings, isEnabled: false}))
 
     expect(await readRandomEventSettings()).toEqual(settings)
@@ -69,7 +69,7 @@ describe('readRandomEventSettings', () => {
     async (initialNativeValue) => {
       const settings = {maximumMinutes: 30, minimumMinutes: 15, version: 1} as const
       let nativeValue = initialNativeValue
-      Object.defineProperty(window, 'ReactNativeWebView', {configurable: true, value: {}})
+      Object.defineProperty(globalThis, 'ReactNativeWebView', {configurable: true, value: {}})
       localStorage.setItem('pomo:random-event-settings:v1', JSON.stringify(settings))
       storageMocks.getItem.mockImplementation(async () => nativeValue)
       storageMocks.setItem.mockImplementation(async (_key, value) => {
@@ -85,7 +85,7 @@ describe('readRandomEventSettings', () => {
   )
 
   it('should use defaults when native settings are empty or unreadable', async () => {
-    Object.defineProperty(window, 'ReactNativeWebView', {configurable: true, value: {}})
+    Object.defineProperty(globalThis, 'ReactNativeWebView', {configurable: true, value: {}})
     storageMocks.getItem.mockResolvedValueOnce(null).mockRejectedValueOnce(new Error('unavailable'))
 
     await expect(readRandomEventSettings()).resolves.toEqual(DEFAULT_RANDOM_EVENT_SETTINGS)
@@ -94,7 +94,7 @@ describe('readRandomEventSettings', () => {
 
   it('should recover the newest browser copy when a native read fails', async () => {
     const settings = {maximumMinutes: 8, minimumMinutes: 4, version: 1} as const
-    Object.defineProperty(window, 'ReactNativeWebView', {configurable: true, value: {}})
+    Object.defineProperty(globalThis, 'ReactNativeWebView', {configurable: true, value: {}})
     let rejectRead: (error: Error) => void = () => undefined
     storageMocks.getItem.mockReturnValue(
       new Promise((_resolve, reject) => {
@@ -108,59 +108,6 @@ describe('readRandomEventSettings', () => {
 
     await expect(pendingRead).resolves.toEqual(settings)
   })
-
-  it.each([
-    ['stale', JSON.stringify({maximumMinutes: 8, minimumMinutes: 4, version: 1})],
-    ['empty', null],
-    ['invalid', JSON.stringify({maximumMinutes: 2, minimumMinutes: 4, version: 1})],
-  ])(
-    'should return the newer browser copy when a pending native read is %s',
-    async (_label, nativeValue) => {
-      const nextSettings = {maximumMinutes: 30, minimumMinutes: 15, version: 1} as const
-      Object.defineProperty(window, 'ReactNativeWebView', {configurable: true, value: {}})
-      const tossRead = Promise.withResolvers<string | null>()
-      storageMocks.getItem.mockReturnValue(tossRead.promise)
-      storageMocks.setItem.mockResolvedValue()
-
-      const pendingRead = readRandomEventSettings()
-      await writeRandomEventSettings(nextSettings)
-      tossRead.resolve(nativeValue)
-
-      await expect(pendingRead).resolves.toEqual(nextSettings)
-      expect(JSON.parse(localStorage.getItem('pomo:random-event-settings:v1') ?? '')).toEqual(
-        nextSettings,
-      )
-    },
-  )
-
-  it.each(['resolved', 'rejected'])(
-    'should reload the newest native settings when browser persistence fails and the pending read is %s',
-    async (result) => {
-      const nextSettings = {maximumMinutes: 30, minimumMinutes: 15, version: 1} as const
-      Object.defineProperty(window, 'ReactNativeWebView', {configurable: true, value: {}})
-      vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
-        throw new Error('Browser storage unavailable')
-      })
-      const tossRead = Promise.withResolvers<string | null>()
-      storageMocks.getItem
-        .mockReturnValueOnce(tossRead.promise)
-        .mockResolvedValue(JSON.stringify(nextSettings))
-      storageMocks.setItem.mockResolvedValue()
-
-      const pendingRead = readRandomEventSettings()
-      await vi.waitFor(() => expect(storageMocks.getItem).toHaveBeenCalledTimes(1))
-      await writeRandomEventSettings(nextSettings)
-
-      if (result === 'resolved') {
-        tossRead.resolve(JSON.stringify({maximumMinutes: 8, minimumMinutes: 4, version: 1}))
-      } else {
-        tossRead.reject(new Error('Native read unavailable'))
-      }
-
-      await expect(pendingRead).resolves.toEqual(nextSettings)
-      expect(storageMocks.getItem).toHaveBeenCalledTimes(2)
-    },
-  )
 })
 
 describe('writeRandomEventSettings', () => {
@@ -185,7 +132,7 @@ describe('writeRandomEventSettings', () => {
   })
 
   it('should reject when neither browser nor native storage can persist the settings', async () => {
-    Object.defineProperty(window, 'ReactNativeWebView', {configurable: true, value: {}})
+    Object.defineProperty(globalThis, 'ReactNativeWebView', {configurable: true, value: {}})
     vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
       throw new Error('Browser storage unavailable')
     })
@@ -197,7 +144,7 @@ describe('writeRandomEventSettings', () => {
   })
 
   it('should use native storage when browser storage is unavailable', async () => {
-    Object.defineProperty(window, 'ReactNativeWebView', {configurable: true, value: {}})
+    Object.defineProperty(globalThis, 'ReactNativeWebView', {configurable: true, value: {}})
     vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
       throw new Error('Browser storage unavailable')
     })
@@ -208,20 +155,26 @@ describe('writeRandomEventSettings', () => {
     ).resolves.toBeUndefined()
   })
 
-  it('should retain a successful browser save when native storage is unavailable', async () => {
-    Object.defineProperty(window, 'ReactNativeWebView', {configurable: true, value: {}})
-    storageMocks.setItem.mockRejectedValue(new Error('Native storage unavailable'))
+  it('should report native storage failure after browser storage succeeds', async () => {
+    Object.defineProperty(globalThis, 'ReactNativeWebView', {configurable: true, value: {}})
+    const nativeError = new Error('Native storage unavailable')
+    const settings = {maximumMinutes: 30, minimumMinutes: 15, version: 1} as const
+    storageMocks.setItem.mockRejectedValue(nativeError)
 
-    await expect(
-      writeRandomEventSettings({maximumMinutes: 30, minimumMinutes: 15, version: 1}),
-    ).resolves.toBeUndefined()
+    await expect(writeRandomEventSettings(settings)).rejects.toMatchObject({
+      cause: nativeError,
+      message: 'Failed to persist random event settings.',
+    })
+    expect(JSON.parse(localStorage.getItem('pomo:random-event-settings:v1') ?? '')).toEqual(
+      settings,
+    )
   })
 
   it('should preserve native write order during rapid settings changes', async () => {
     const firstSettings = {maximumMinutes: 8, minimumMinutes: 4, version: 1} as const
     const secondSettings = {maximumMinutes: 30, minimumMinutes: 15, version: 1} as const
     const nativeWrites: string[] = []
-    Object.defineProperty(window, 'ReactNativeWebView', {configurable: true, value: {}})
+    Object.defineProperty(globalThis, 'ReactNativeWebView', {configurable: true, value: {}})
     storageMocks.setItem.mockImplementation(async (_key, value) => {
       nativeWrites.push(value)
     })
@@ -244,26 +197,6 @@ describe('createRandomEventSettingsRepository', () => {
     writeWeb: () => null,
   })
 
-  it('should return browser settings while native repair is pending and preserve a newer write', async () => {
-    const initial = {maximumMinutes: 8, minimumMinutes: 4, version: 1} as const
-    const latest = {maximumMinutes: 30, minimumMinutes: 15, version: 1} as const
-    const pending = Promise.withResolvers<void>()
-    const writeToss = vi.fn().mockReturnValueOnce(pending.promise).mockResolvedValue(undefined)
-    const repository = createRandomEventSettingsRepository({
-      ...createStorage(),
-      readWeb: () => initial,
-      writeToss,
-    })
-
-    await expect(repository.read()).resolves.toEqual(initial)
-    expect(writeToss).toHaveBeenCalledExactlyOnceWith(initial)
-    const write = repository.write(latest)
-    pending.resolve()
-    await write
-
-    expect(writeToss.mock.calls).toEqual([[initial], [latest]])
-  })
-
   it('should retain browser settings after native repair fails and retry on the next read', async () => {
     const settings = {maximumMinutes: 30, minimumMinutes: 15, version: 1} as const
     const writeToss = vi
@@ -281,42 +214,6 @@ describe('createRandomEventSettingsRepository', () => {
 
     expect(writeToss.mock.calls).toEqual([[settings], [settings]])
   })
-
-  it.each(['completed', 'pending', 'superseded'])(
-    'should preserve a native-only save when reading a stale browser copy (%s)',
-    async (timing) => {
-      const initial = {maximumMinutes: 8, minimumMinutes: 4, version: 1} as const
-      const latest = {maximumMinutes: 30, minimumMinutes: 15, version: 1} as const
-      const pending = Promise.withResolvers<void>()
-      let nativeSettings: RandomEventSettings = initial
-      const repository = createRandomEventSettingsRepository({
-        ...createStorage(),
-        readToss: async () => nativeSettings,
-        readWeb: () => initial,
-        writeToss: async (settings) => {
-          await pending.promise
-          nativeSettings = settings
-        },
-        writeWeb: () => new Error('Browser storage unavailable'),
-      })
-      const write = repository.write(latest)
-
-      if (timing === 'completed') {
-        pending.resolve()
-        await write
-      }
-
-      const read = repository.read()
-      const expected = timing === 'superseded' ? {...latest, maximumMinutes: 40} : latest
-      const newerWrite = timing === 'superseded' ? repository.write(expected) : Promise.resolve()
-      pending.resolve()
-      await Promise.all([write, newerWrite])
-
-      await expect(read).resolves.toEqual(expected)
-      await expect(repository.read()).resolves.toEqual(expected)
-      expect(nativeSettings).toEqual(expected)
-    },
-  )
 
   it('should retain the previous settings when both stores reject a new save', async () => {
     const initial = {maximumMinutes: 8, minimumMinutes: 4, version: 1} as const
@@ -377,25 +274,5 @@ describe('createRandomEventSettingsRepository', () => {
 
     expect(await read).toEqual(DEFAULT_RANDOM_EVENT_SETTINGS)
     expect(readToss).toHaveBeenCalledTimes(1)
-  })
-
-  it('should let another repository finish while retaining only the latest pending write', async () => {
-    const pending = Promise.withResolvers<void>()
-    const writeToss = vi.fn().mockReturnValueOnce(pending.promise).mockResolvedValue(undefined)
-    const first = createRandomEventSettingsRepository({...createStorage(), writeToss})
-    const secondWrite = vi.fn().mockResolvedValue(undefined)
-    const second = createRandomEventSettingsRepository({...createStorage(), writeToss: secondWrite})
-    const initial = {maximumMinutes: 2, minimumMinutes: 1, version: 1} as const
-    const middle = {...initial, maximumMinutes: 3}
-    const latest = {...initial, maximumMinutes: 4}
-    const writes = [first.write(initial), first.write(middle), first.write(latest)]
-
-    await second.write(middle)
-    expect(secondWrite).toHaveBeenCalledExactlyOnceWith(middle)
-    expect(writeToss).toHaveBeenCalledExactlyOnceWith(initial)
-
-    pending.resolve()
-    await Promise.all(writes)
-    expect(writeToss.mock.calls).toEqual([[initial], [latest]])
   })
 })

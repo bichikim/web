@@ -11,21 +11,29 @@ afterEach(() => {
 })
 
 it('should pass weather preferences and change callbacks to the weather controls', () => {
-  const onWeatherEnabledChange = vi.fn()
+  const onWeatherLocationChange = vi.fn()
   const onWeatherSceneModeChange = vi.fn()
   render(() => (
     <Weather
-      weatherEnabled
-      onWeatherEnabledChange={onWeatherEnabledChange}
+      onWeatherLocationChange={onWeatherLocationChange}
       onWeatherSceneModeChange={onWeatherSceneModeChange}
       weatherSceneMode="rain"
     />
   ))
   const props = vi.mocked(PWeatherSettings).mock.calls[0]![0]
-  expect(props.enabled).toBe(true)
   expect(props.sceneMode).toBe('rain')
-  props.onEnabledChange?.(false)
+  props.onLocationChange?.({
+    country: 'KR',
+    id: 'openweather:legacy:jeju',
+    name: 'Jeju',
+    region: '',
+  })
   props.onSceneModeChange?.('snow')
-  expect(onWeatherEnabledChange).toHaveBeenCalledWith(false)
+  expect(onWeatherLocationChange).toHaveBeenCalledWith({
+    country: 'KR',
+    id: 'openweather:legacy:jeju',
+    name: 'Jeju',
+    region: '',
+  })
   expect(onWeatherSceneModeChange).toHaveBeenCalledWith('snow')
 })

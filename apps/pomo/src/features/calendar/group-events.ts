@@ -1,7 +1,13 @@
 import {dayjs} from 'src/utils/zoned-dayjs'
+import {z} from 'zod'
 import type {CalendarEvent} from './types'
 
-/** Groups events by covered visible dates, excluding each event's end instant. */
+const calendarDateSchema = z.iso.date()
+
+/**
+ * Groups events with parseable end values and valid all-day start dates by covered visible dates,
+ * excluding each exclusive end boundary.
+ */
 export const groupCalendarEvents = (
   events: ReadonlyArray<CalendarEvent>,
   visibleDates: ReadonlyArray<string>,
@@ -9,10 +15,27 @@ export const groupCalendarEvents = (
 ): ReadonlyMap<string, ReadonlyArray<CalendarEvent>> => {
   const createDateKey = (timestamp: number) => dayjs(timestamp).tz(timeZone).format('YYYY-MM-DD')
   const grouped = new Map<string, CalendarEvent[]>()
-  for (const event of events) {
-    const start = event.allDay ? event.start : createDateKey(Date.parse(event.start))
-    // The last included instant keeps midnight and DST boundaries in the display time zone.
-    const end = event.allDay ? event.end : createDateKey(Date.parse(event.end) - 1)
+  events.forEach((event) => {
+    const endTimestamp = Date.parse(event.end)
+    if (Number.isNaN(endTimestamp)) {
+      return
+    }
+
+    const start = event.allDay
+      ? calendarDateSchema.safeParse(event.start).data
+      : createDateKey(Date.parse(event.start))
+    if (start === undefined) {
+      return
+    }
+
+    // All-day ends retain their date key; timed events use the last instant for local-day boundaries.
+    const end = event.allDay
+      ? calendarDateSchema.safeParse(event.end.slice(0, 'YYYY-MM-DD'.length)).data
+      : createDateKey(endTimestamp - 1)
+    if (end === undefined) {
+      return
+    }
+
     for (const date of visibleDates) {
       if (date >= start && (event.allDay ? date < end : date <= end)) {
         const entries = grouped.get(date)
@@ -23,6 +46,6 @@ export const groupCalendarEvents = (
         }
       }
     }
-  }
+  })
   return grouped
 }

@@ -6,12 +6,11 @@ const repository = vi.hoisted(() => ({
   completeTrackRegistration: vi.fn(),
   failTrackAsset: vi.fn(),
   findTrackAsset: vi.fn(),
-  reserveTrackAsset: vi.fn(),
 }))
 vi.mock('src/server/auth/authorize-admin-request', () => ({
   authorizeAdminRequest: async () => ({authorized: true, cookies: []}),
 }))
-vi.mock('src/server/music/track-registration-repository', () => repository)
+vi.mock('src/server/repositories/music-track-registration', () => repository)
 
 import {PUT} from '../assets'
 import {invokeApiRoute} from '../../../__tests__/invoke'

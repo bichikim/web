@@ -1,5 +1,6 @@
 /** @vitest-environment jsdom */
 
+import {PreferenceProvider} from 'src/hooks/use-preference'
 import {fireEvent, render, screen, within} from '@solidjs/testing-library'
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 
@@ -79,19 +80,27 @@ describe('PPomodoro', () => {
   })
 
   afterEach(() => {
-    Reflect.deleteProperty(window, 'ReactNativeWebView')
+    Reflect.deleteProperty(globalThis, 'ReactNativeWebView')
     vi.clearAllMocks()
     vi.useRealTimers()
   })
 
   it('should leave the modal body vertically scrollable', () => {
-    render(() => <PPomodoro />)
+    render(() => (
+      <PreferenceProvider>
+        <PPomodoro />
+      </PreferenceProvider>
+    ))
 
     expect(vi.mocked(PModal).mock.lastCall?.[0].contentOverflow).toBeUndefined()
   })
 
   it('should frame the quick controls only in scribble style', () => {
-    const originalResult = render(() => <PPomodoro />)
+    const originalResult = render(() => (
+      <PreferenceProvider>
+        <PPomodoro />
+      </PreferenceProvider>
+    ))
     const originalControls = screen.getByRole('group', {name: '포모도로 간편 조작'})
 
     expect(originalControls.parentElement?.querySelector('svg')).toBeNull()
@@ -99,7 +108,11 @@ describe('PPomodoro', () => {
     expect(originalControls.classList.contains('border-border')).toBe(true)
 
     originalResult.unmount()
-    render(() => <PPomodoro sceneStyle="scribble" />)
+    render(() => (
+      <PreferenceProvider>
+        <PPomodoro sceneStyle="scribble" />
+      </PreferenceProvider>
+    ))
     const scribbleControls = screen.getByRole('group', {name: '포모도로 간편 조작'})
     const scribbleFrame = scribbleControls.parentElement as HTMLElement
     const scribbleBorder = scribbleFrame.querySelector('svg')
@@ -132,7 +145,11 @@ describe('PPomodoro', () => {
     const getCharacterImage = () =>
       screen.getByRole('group', {name: '포모도로 간편 조작'}).querySelector<HTMLImageElement>('img')
 
-    const originalResult = render(() => <PPomodoro />)
+    const originalResult = render(() => (
+      <PreferenceProvider>
+        <PPomodoro />
+      </PreferenceProvider>
+    ))
 
     expect(getCharacterImage()?.getAttribute('src')).toBe(focusStatusIcon)
     fireEvent.click(screen.getByRole('button', {name: /포모도로 열기/}))
@@ -140,7 +157,11 @@ describe('PPomodoro', () => {
     expect(getCharacterImage()?.getAttribute('src')).toBe(breakStatusIcon)
 
     originalResult.unmount()
-    render(() => <PPomodoro sceneStyle="scribble" />)
+    render(() => (
+      <PreferenceProvider>
+        <PPomodoro sceneStyle="scribble" />
+      </PreferenceProvider>
+    ))
 
     expect(getCharacterImage()?.getAttribute('src')).toBe(scribbleFocusStatusIcon)
     fireEvent.click(screen.getByRole('button', {name: /포모도로 열기/}))
@@ -150,7 +171,11 @@ describe('PPomodoro', () => {
 
   it('should expose the timer state and primary controls through an accessible dialog', async () => {
     const onPresentationChange = vi.fn()
-    render(() => <PPomodoro onPresentationChange={onPresentationChange} />)
+    render(() => (
+      <PreferenceProvider>
+        <PPomodoro onPresentationChange={onPresentationChange} />
+      </PreferenceProvider>
+    ))
     await vi.advanceTimersByTimeAsync(0)
 
     expect(onPresentationChange).toHaveBeenLastCalledWith({
@@ -280,7 +305,11 @@ describe('PPomodoro', () => {
         shortBreakSeconds: 1,
       }),
     )
-    render(() => <PPomodoro onEvents={onEvents} />)
+    render(() => (
+      <PreferenceProvider>
+        <PPomodoro onEvents={onEvents} />
+      </PreferenceProvider>
+    ))
     await vi.advanceTimersByTimeAsync(0)
 
     const quickControls = screen.getByRole('group', {name: '포모도로 간편 조작'})
@@ -333,7 +362,11 @@ describe('PPomodoro', () => {
 
   it('should report focus and break lifecycle events without replaying starts on resume', async () => {
     const onEvents = vi.fn()
-    render(() => <PPomodoro onEvents={onEvents} />)
+    render(() => (
+      <PreferenceProvider>
+        <PPomodoro onEvents={onEvents} />
+      </PreferenceProvider>
+    ))
     await vi.advanceTimersByTimeAsync(0)
 
     const quickControls = screen.getByRole('group', {name: '포모도로 간편 조작'})
@@ -358,7 +391,11 @@ describe('PPomodoro', () => {
   })
 
   it('should restore automatic playback after the app view is remounted', async () => {
-    const firstView = render(() => <PPomodoro />)
+    const firstView = render(() => (
+      <PreferenceProvider>
+        <PPomodoro />
+      </PreferenceProvider>
+    ))
     const firstQuickControls = screen.getByRole('group', {name: '포모도로 간편 조작'})
     fireEvent.click(
       within(firstQuickControls).getByRole('button', {
@@ -367,8 +404,17 @@ describe('PPomodoro', () => {
     )
     fireEvent.click(screen.getByRole('switch', {name: '집중·휴식 자동 재생'}))
     firstView.unmount()
+    await vi.waitFor(() => {
+      expect(JSON.parse(localStorage.getItem('pomo:timer-auto-start:v2') ?? '{}').isEnabled).toBe(
+        true,
+      )
+    })
 
-    render(() => <PPomodoro />)
+    render(() => (
+      <PreferenceProvider>
+        <PPomodoro />
+      </PreferenceProvider>
+    ))
     await vi.advanceTimersByTimeAsync(0)
     const restoredQuickControls = screen.getByRole('group', {name: '포모도로 간편 조작'})
     fireEvent.click(
@@ -382,7 +428,7 @@ describe('PPomodoro', () => {
   })
 
   it('should wait for the native preference before restoring an elapsed timer', async () => {
-    Object.defineProperty(window, 'ReactNativeWebView', {configurable: true, value: {}})
+    Object.defineProperty(globalThis, 'ReactNativeWebView', {configurable: true, value: {}})
     localStorage.setItem(
       'pomo:timer-config:v1',
       JSON.stringify({
@@ -409,7 +455,11 @@ describe('PPomodoro', () => {
     )
 
     const onEvents = vi.fn()
-    render(() => <PPomodoro onEvents={onEvents} />)
+    render(() => (
+      <PreferenceProvider>
+        <PPomodoro onEvents={onEvents} />
+      </PreferenceProvider>
+    ))
     vi.advanceTimersByTime(1_500)
     resolvePreference('true')
     await vi.advanceTimersByTimeAsync(250)
@@ -445,6 +495,7 @@ describe('PPomodoro', () => {
         progress: () => 0,
         remainingSeconds: () => 1_500,
         state: () => invalidState,
+        waitForInitialization: async () => undefined,
       } satisfies PomodoroTimerController
 
       return {...actual, usePomodoroTimer: () => controller}
@@ -452,7 +503,11 @@ describe('PPomodoro', () => {
 
     try {
       const {PPomodoro: RuntimePomodoro} = await import('../PPomodoro')
-      const result = render(() => <RuntimePomodoro />)
+      const result = render(() => (
+        <PreferenceProvider>
+          <RuntimePomodoro />
+        </PreferenceProvider>
+      ))
 
       expect(result.container.querySelector('[data-phase="focus"]')).toBeDefined()
       result.unmount()

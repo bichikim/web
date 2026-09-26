@@ -7,6 +7,7 @@ const PROGRESS_SAVE_INTERVAL_MILLISECONDS = 5_000
 
 export interface UsePPlaybackPersistenceProps {
   readonly currentTrack: Accessor<PTrack | undefined>
+  readonly currentIndex?: Accessor<number>
   readonly getAudioElement: Accessor<HTMLAudioElement | undefined>
   readonly isPlaying: Accessor<boolean>
 }
@@ -35,7 +36,8 @@ export const usePPlaybackPersistence = (
   let lastProgressSavedAt = 0
 
   const writePlayback = (state: PPlaybackState) => {
-    writeStoredPlayback(state)
+    const trackIndex = state.trackIndex ?? props.currentIndex?.()
+    writeStoredPlayback(trackIndex === undefined ? state : {...state, trackIndex})
   }
 
   const setPendingPosition = (state: PPlaybackState | null) => {
@@ -52,11 +54,21 @@ export const usePPlaybackPersistence = (
 
     const pendingPlayback = pendingPosition
     if (pendingPlayback?.trackId === track.id) {
-      if (!updatePendingIntent || pendingPlayback.isPlaying === isPlaying) {
+      const currentIndex = props.currentIndex?.()
+      const indexedPendingPlayback =
+        currentIndex !== undefined && pendingPlayback.trackIndex !== currentIndex
+          ? {...pendingPlayback, trackIndex: currentIndex}
+          : pendingPlayback
+
+      if (!updatePendingIntent || indexedPendingPlayback.isPlaying === isPlaying) {
+        if (indexedPendingPlayback !== pendingPlayback) {
+          pendingPosition = indexedPendingPlayback
+          writePlayback(indexedPendingPlayback)
+        }
         return
       }
 
-      const updatedPlayback = {...pendingPlayback, isPlaying}
+      const updatedPlayback = {...indexedPendingPlayback, isPlaying}
       pendingPosition = updatedPlayback
       writePlayback(updatedPlayback)
       return
@@ -85,6 +97,7 @@ export const usePPlaybackPersistence = (
   }
 
   const persistSeekedPlayback = () => {
+    pendingPosition = null
     persistCurrentPlayback()
   }
 
@@ -122,7 +135,7 @@ export const usePPlaybackPersistence = (
       audioElement.currentTime = positionSeconds
       pendingPosition = null
       const restoredPlayback = {...playback, positionSeconds}
-      writeStoredPlayback(restoredPlayback)
+      writePlayback(restoredPlayback)
       return restoredPlayback
     } catch {
       // Metadata may not be ready yet; loadedmetadata will retry the restoration.

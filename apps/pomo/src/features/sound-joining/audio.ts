@@ -1,4 +1,11 @@
 import {createStereoWave} from '../sound-generation/audio'
+import {
+  CONNECTION_CONTEXT_SECONDS,
+  EDGE_RAMP_SECONDS,
+  MAX_AI_CONNECTION_SECONDS,
+  MIN_AI_CONNECTION_SECONDS,
+  SAMPLE_RATE,
+} from '../sound-generation/connection'
 
 export interface StereoAudio {
   readonly left: Float32Array
@@ -9,33 +16,31 @@ export interface JoinOptions {
   readonly second: StereoAudio
   readonly trimEnd: number
   readonly trimStart: number
-  readonly transition: number
+  readonly connectionSeconds: number
 }
 export interface JoinPlan extends StereoAudio {
   readonly offset: number
-  readonly transition: number
+  readonly connectionSeconds: number
   readonly context: StereoAudio
 }
-const RATE = 44100
-const CONTEXT_SECONDS = 6
-const MAX_TRANSITION = 8
-const BLEND_SECONDS = 0.2
 const PCM_SCALE = 32767
-const CONTEXT = CONTEXT_SECONDS * RATE
+const CONTEXT = CONNECTION_CONTEXT_SECONDS * SAMPLE_RATE
 
 export function prepareJoin(options: JoinOptions): JoinPlan {
-  const {first, second, trimEnd, trimStart, transition} = options
+  const {first, second, trimEnd, trimStart, connectionSeconds} = options
   if (
-    ![trimEnd, trimStart, transition].every(Number.isFinite) ||
+    ![trimEnd, trimStart, connectionSeconds].every(Number.isFinite) ||
     trimEnd < 0 ||
     trimStart < 0 ||
-    transition < 1 ||
-    transition > MAX_TRANSITION
+    connectionSeconds < MIN_AI_CONNECTION_SECONDS ||
+    connectionSeconds > MAX_AI_CONNECTION_SECONDS
   ) {
-    throw new Error('잘라낼 시간은 0 이상, 연결 구간은 1~8초로 지정해 주세요.')
+    throw new Error(
+      `잘라낼 시간은 0 이상, 연결 구간은 1~${MAX_AI_CONNECTION_SECONDS}초로 지정해 주세요.`,
+    )
   }
-  const end = first.left.length - Math.round(trimEnd * RATE)
-  const start = Math.round(trimStart * RATE)
+  const end = first.left.length - Math.round(trimEnd * SAMPLE_RATE)
+  const start = Math.round(trimStart * SAMPLE_RATE)
   if (
     end < CONTEXT ||
     second.left.length - start < CONTEXT ||
@@ -54,6 +59,7 @@ export function prepareJoin(options: JoinOptions): JoinPlan {
   const right = combine(first.right, second.right)
   const offset = end - CONTEXT
   return {
+    connectionSeconds,
     context: {
       left: left.slice(offset, end + CONTEXT),
       right: right.slice(offset, end + CONTEXT),
@@ -61,7 +67,6 @@ export function prepareJoin(options: JoinOptions): JoinPlan {
     left,
     offset,
     right,
-    transition,
   }
 }
 
@@ -69,9 +74,9 @@ export function assembleJoin(plan: JoinPlan, generated: StereoAudio): Blob {
   if (generated.left.length !== 2 * CONTEXT || generated.right.length !== 2 * CONTEXT) {
     throw new Error('생성된 연결음의 길이가 올바르지 않습니다.')
   }
-  const start = Math.round((CONTEXT_SECONDS - plan.transition / 2) * RATE)
-  const end = Math.round((CONTEXT_SECONDS + plan.transition / 2) * RATE)
-  const blend = Math.round(BLEND_SECONDS * RATE)
+  const start = Math.round((CONNECTION_CONTEXT_SECONDS - plan.connectionSeconds / 2) * SAMPLE_RATE)
+  const end = Math.round((CONNECTION_CONTEXT_SECONDS + plan.connectionSeconds / 2) * SAMPLE_RATE)
+  const blend = Math.round(EDGE_RAMP_SECONDS * SAMPLE_RATE)
   const channels = [plan.left.slice(), plan.right.slice()]
   const patches = [generated.left, generated.right]
   for (let channel = 0; channel < 2; channel += 1) {

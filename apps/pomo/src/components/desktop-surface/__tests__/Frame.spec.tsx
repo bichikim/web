@@ -137,6 +137,7 @@ beforeEach(() => {
   })
   vi.mocked(useWeather).mockReturnValue({
     enabled: () => false,
+    isReady: () => true,
     location: () => seoulLocation,
     onEnabledChange: vi.fn(),
     onLocationChange: vi.fn(),

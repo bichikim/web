@@ -4,7 +4,10 @@ import {cleanup, fireEvent, render, screen, waitFor, within} from '@solidjs/test
 
 import {afterEach, beforeEach, describe, expect, test, vi} from 'vitest'
 
+import {composeParameterVertices} from '../../deformation/composition'
+import {composeParameterPartProperties} from '../../deformation/part-properties'
 import {createDemoDocument, type Player, type PuppetDocument, serializeDocument} from '../../player'
+import {sampleMotionParameterValues} from '../../player/internal/motion'
 
 import {addParameter} from '../internal/parameter-keyforms'
 import {createSceneGroup} from '../internal/scene-graph'
@@ -20,9 +23,14 @@ const player: Player = {
   destroy: vi.fn(),
   pause: vi.fn(),
   play: vi.fn(),
+  playMotion: vi.fn(() => true),
+  redraw: vi.fn(),
+  resetPhysics: vi.fn(),
   resize: vi.fn(),
   seek: vi.fn(),
+  setMotion: vi.fn(() => true),
   setParameterValues: vi.fn(),
+  setPhysicsPreview: vi.fn(),
   updateDocument: vi.fn(() => true),
 }
 
@@ -56,10 +64,96 @@ beforeEach(() => {
 })
 
 describe('PuppetEditor', () => {
+  test.each(['mesh-preview', 'shape-circle'])(
+    'should preview manual values without motion overrides while selecting %s',
+    async (selectedPartId) => {
+      const source = createDemoDocument()
+      const document: PuppetDocument = {
+        ...source,
+        motions: source.motions.filter((motion) => motion.id === 'blink'),
+        parameterBindings: [
+          {
+            ...source.parameterBindings![0]!,
+            keyforms: source.parameterBindings![0]!.keyforms.map((keyform) => ({
+              ...keyform,
+              parts: keyform.parts.map((part) => ({
+                ...part,
+                properties: {opacity: 1 - Math.max(0, keyform.values[0]) / 30},
+              })),
+              values: [keyform.values[0], keyform.values[1] ?? 0] as const,
+            })),
+            parameterIds: ['angle-x', 'angle-y'],
+          },
+        ],
+      }
+      const onDocumentChange = vi.fn()
+      const view = render(() => (
+        <PuppetEditor initialDocument={document} onDocumentChange={onDocumentChange} />
+      ))
+      await waitFor(() => expect(mocks.createPlayer).toHaveBeenCalledOnce())
+      onDocumentChange.mockClear()
+      fireEvent.click(view.getByRole('button', {name: `${selectedPartId} 레이어 선택`}))
+      fireEvent.click(view.getByRole('button', {name: '모든 파라미터 보기'}))
+      fireEvent.input(view.getByRole('spinbutton', {name: 'Angle X 값'}), {
+        target: {value: '15'},
+      })
+
+      const manual = {'angle-x': 15, 'angle-y': 0}
+      await waitFor(() =>
+        expect(player.setParameterValues).toHaveBeenLastCalledWith(expect.objectContaining(manual)),
+      )
+      const preview = vi.mocked(player.updateDocument).mock.lastCall![0]
+      const values = sampleMotionParameterValues({
+        motion: preview.motions[0],
+        parameterValues: vi.mocked(player.setParameterValues).mock.lastCall![0],
+        time: 0,
+      })
+      const part = document.parts[0]!
+      expect(values).toMatchObject(manual)
+      expect(
+        composeParameterVertices({
+          document: preview,
+          parameterValues: values,
+          partId: part.id,
+          restVertices: part.mesh.vertices,
+        }),
+      ).toEqual(
+        composeParameterVertices({
+          document,
+          parameterValues: manual,
+          partId: part.id,
+          restVertices: part.mesh.vertices,
+        }),
+      )
+      expect(
+        composeParameterPartProperties({
+          document: preview,
+          parameterValues: values,
+          partId: part.id,
+        }).opacity,
+      ).toBe(0.5)
+
+      fireEvent.click(view.getByRole('button', {name: '애니메이션'}))
+      await waitFor(() =>
+        expect(vi.mocked(player.updateDocument).mock.lastCall![0].motions).toEqual(
+          document.motions,
+        ),
+      )
+      fireEvent.click(view.getByRole('button', {name: '모델링'}))
+      await waitFor(() =>
+        expect(vi.mocked(player.updateDocument).mock.lastCall![0].motions).toEqual([]),
+      )
+      expect(view.getByRole('spinbutton', {name: 'Angle X 값'})).toHaveValue(15)
+      expect(onDocumentChange).not.toHaveBeenCalled()
+    },
+  )
+
   test('should store animation edits as parameter tracks', async () => {
     const onDocumentChange = vi.fn()
     mocks.createPlayer.mockResolvedValue(player)
-    const view = render(() => <PuppetEditor onDocumentChange={onDocumentChange} />)
+    const view = render(() => (
+      <PuppetEditor initialDocument={createDemoDocument()} onDocumentChange={onDocumentChange} />
+    ))
 
     await waitFor(() => expect(mocks.createPlayer).toHaveBeenCalledOnce())
     fireEvent.click(view.getByRole('button', {name: '애니메이션'}))
@@ -81,7 +175,9 @@ describe('PuppetEditor', () => {
     const document = createDemoDocument()
     const onDocumentChange = vi.fn()
     mocks.createPlayer.mockResolvedValue(player)
-    const view = render(() => <PuppetEditor onDocumentChange={onDocumentChange} />)
+    const view = render(() => (
+      <PuppetEditor initialDocument={createDemoDocument()} onDocumentChange={onDocumentChange} />
+    ))
 
     fireEvent.change(screen.getByLabelText('불러오기'), {
       target: {
@@ -104,7 +200,9 @@ describe('PuppetEditor', () => {
   test('should create a new two-dimensional parameter binding', async () => {
     const onDocumentChange = vi.fn()
     mocks.createPlayer.mockResolvedValue(player)
-    const view = render(() => <PuppetEditor onDocumentChange={onDocumentChange} />)
+    const view = render(() => (
+      <PuppetEditor initialDocument={createDemoDocument()} onDocumentChange={onDocumentChange} />
+    ))
 
     fireEvent.click(view.getByRole('button', {name: '2차원 Parameter 추가'}))
 
@@ -119,7 +217,9 @@ describe('PuppetEditor', () => {
   test('should add and delete a sparse two-dimensional keyform at the current values', async () => {
     const onDocumentChange = vi.fn()
     mocks.createPlayer.mockResolvedValue(player)
-    const view = render(() => <PuppetEditor onDocumentChange={onDocumentChange} />)
+    const view = render(() => (
+      <PuppetEditor initialDocument={createDemoDocument()} onDocumentChange={onDocumentChange} />
+    ))
 
     fireEvent.input(view.getByRole('spinbutton', {name: 'Angle X 값'}), {
       target: {value: '15'},
@@ -148,7 +248,7 @@ describe('PuppetEditor', () => {
 
   test('should preserve and send values from multiple parameter bindings together', async () => {
     mocks.createPlayer.mockResolvedValue(player)
-    const view = render(() => <PuppetEditor />)
+    const view = render(() => <PuppetEditor initialDocument={createDemoDocument()} />)
 
     await waitFor(() => expect(mocks.createPlayer).toHaveBeenCalledOnce())
     fireEvent.input(view.getByRole('spinbutton', {name: 'Angle X 값'}), {
@@ -220,7 +320,7 @@ describe('PuppetEditor', () => {
 
   test('should activate an inactive parameter track at the clicked values', async () => {
     mocks.createPlayer.mockResolvedValue(player)
-    const view = render(() => <PuppetEditor />)
+    const view = render(() => <PuppetEditor initialDocument={createDemoDocument()} />)
 
     fireEvent.click(view.getByRole('button', {name: '1차원 Parameter 추가'}))
     await waitFor(() =>
@@ -257,7 +357,9 @@ describe('PuppetEditor', () => {
   test('should move a dragged keyform in the editor document', async () => {
     const onDocumentChange = vi.fn()
     mocks.createPlayer.mockResolvedValue(player)
-    const view = render(() => <PuppetEditor onDocumentChange={onDocumentChange} />)
+    const view = render(() => (
+      <PuppetEditor initialDocument={createDemoDocument()} onDocumentChange={onDocumentChange} />
+    ))
     fireEvent.click(view.getByRole('button', {name: '1차원 Parameter 추가'}))
     const track = view.getByLabelText('Parameter 3 키폼 트랙')
     vi.spyOn(track, 'getBoundingClientRect').mockReturnValue({
@@ -274,8 +376,8 @@ describe('PuppetEditor', () => {
     const marker = view.getByRole('button', {name: 'Parameter 3 0 키폼'})
 
     marker.dispatchEvent(new MouseEvent('pointerdown', {bubbles: true, button: 0, clientX: 400}))
-    window.dispatchEvent(new MouseEvent('pointermove', {clientX: 550}))
-    window.dispatchEvent(new MouseEvent('pointerup'))
+    globalThis.dispatchEvent(new MouseEvent('pointermove', {clientX: 550}))
+    globalThis.dispatchEvent(new MouseEvent('pointerup'))
 
     await waitFor(() => {
       const document: PuppetDocument | undefined = onDocumentChange.mock.calls.at(-1)?.[0]
@@ -292,7 +394,9 @@ describe('PuppetEditor', () => {
   test('should connect multiple selected parts to the active parameter', async () => {
     const onDocumentChange = vi.fn()
     mocks.createPlayer.mockResolvedValue(player)
-    const view = render(() => <PuppetEditor onDocumentChange={onDocumentChange} />)
+    const view = render(() => (
+      <PuppetEditor initialDocument={createDemoDocument()} onDocumentChange={onDocumentChange} />
+    ))
 
     fireEvent.click(view.getByRole('button', {name: 'shape-circle 레이어 선택'}), {ctrlKey: true})
     fireEvent.click(view.getByRole('button', {name: 'shape-diamond 레이어 선택'}), {ctrlKey: true})
@@ -373,14 +477,16 @@ describe('PuppetEditor', () => {
   test('should delete a parameter only after swiping beyond the threshold and releasing', async () => {
     const onDocumentChange = vi.fn()
     mocks.createPlayer.mockResolvedValue(player)
-    const view = render(() => <PuppetEditor onDocumentChange={onDocumentChange} />)
+    const view = render(() => (
+      <PuppetEditor initialDocument={createDemoDocument()} onDocumentChange={onDocumentChange} />
+    ))
 
     const parameter = view.getByRole('button', {name: 'Angle X'})
     parameter.dispatchEvent(new MouseEvent('pointerdown', {bubbles: true, button: 0, clientX: 200}))
-    window.dispatchEvent(new MouseEvent('pointermove', {clientX: 120}))
+    globalThis.dispatchEvent(new MouseEvent('pointermove', {clientX: 120}))
     expect(view.getByText('놓아 삭제')).toBeVisible()
     expect(view.getByRole('button', {name: 'Angle X'})).toBeVisible()
-    window.dispatchEvent(new MouseEvent('pointerup'))
+    globalThis.dispatchEvent(new MouseEvent('pointerup'))
 
     await waitFor(() => {
       const document = onDocumentChange.mock.calls.at(-1)?.[0]
@@ -392,7 +498,7 @@ describe('PuppetEditor', () => {
 
   test('should preserve the active parameter when deleting another parameter', async () => {
     mocks.createPlayer.mockResolvedValue(player)
-    const view = render(() => <PuppetEditor />)
+    const view = render(() => <PuppetEditor initialDocument={createDemoDocument()} />)
 
     fireEvent.click(view.getByRole('button', {name: '1차원 Parameter 추가'}))
     fireEvent.click(view.getByRole('button', {name: '1차원 Parameter 추가'}))
@@ -408,7 +514,9 @@ describe('PuppetEditor', () => {
 
   test('should edit original keyform properties below full influence and preserve the influence relation', async () => {
     const onDocumentChange = vi.fn<(document: PuppetDocument) => void>()
-    const view = render(() => <PuppetEditor onDocumentChange={onDocumentChange} />)
+    const view = render(() => (
+      <PuppetEditor initialDocument={createDemoDocument()} onDocumentChange={onDocumentChange} />
+    ))
     fireEvent.click(view.getByRole('button', {name: 'Angle X / Angle Y · 영향도'}))
     fireEvent.click(view.getByRole('button', {name: '기준 추가'}))
     expect(view.getByRole('spinbutton', {name: '파트 불투명도'})).toBeEnabled()

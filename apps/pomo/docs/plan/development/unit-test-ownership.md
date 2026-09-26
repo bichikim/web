@@ -59,7 +59,7 @@ Playback belongs to `components/media-player`; playlist presentation belongs to 
 - [x] `apps/pomo/src/server/music/track-upload/storage.ts`
 - [x] `apps/pomo/src/server/music/track-upload.ts`
 - [x] `apps/pomo/src/server/weather/locations.ts`
-- [x] `apps/pomo/src/server/weather/repository.ts`
+- [x] `apps/pomo/src/server/repositories/weather/index.ts`
 
 ## middleware/\*\* (1)
 

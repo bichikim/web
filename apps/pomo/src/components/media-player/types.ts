@@ -43,6 +43,7 @@ export interface PlayerState {
   readonly isPlaylistLoading: Accessor<boolean>
   readonly currentIndex: Accessor<number>
   readonly currentTrack: Accessor<PTrack | undefined>
+  readonly isPreparing: Accessor<boolean>
   readonly isPlaying: Accessor<boolean>
   readonly levels: Accessor<readonly number[]>
   readonly repeatMode: Accessor<RepeatMode>

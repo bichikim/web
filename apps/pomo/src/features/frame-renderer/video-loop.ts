@@ -1,4 +1,7 @@
+import {textureResolutionForMaxSide} from './texture-resolution-for-max-side'
+import {clampUnit} from 'src/utils/clamp-unit'
 import {type Application, Sprite, Texture, type Ticker} from 'pixi.js'
+import {cosineEaseOutAlpha} from './cosine-ease-out-alpha'
 
 const CENTER_ANCHOR = 0.5
 const FADE_DURATION = 700
@@ -21,9 +24,9 @@ export class VideoLoop {
   async repeat(): Promise<void> {
     this.destroy()
     const canvas = document.createElement('canvas')
-    const scale = Math.min(
-      1,
-      SNAPSHOT_LENGTH / Math.max(this.#video.videoWidth, this.#video.videoHeight),
+    const scale = textureResolutionForMaxSide(
+      Math.max(this.#video.videoWidth, this.#video.videoHeight),
+      SNAPSHOT_LENGTH,
     )
     canvas.width = Math.max(1, Math.round(this.#video.videoWidth * scale))
     canvas.height = Math.max(1, Math.round(this.#video.videoHeight * scale))
@@ -60,9 +63,9 @@ export class VideoLoop {
 
   readonly #update = (ticker: Ticker) => {
     this.#elapsed += ticker.elapsedMS
-    const progress = Math.min(1, this.#elapsed / FADE_DURATION)
+    const progress = clampUnit(this.#elapsed / FADE_DURATION)
     if (this.#overlay !== null) {
-      this.#overlay.alpha = (1 + Math.cos(Math.PI * progress)) / 2
+      this.#overlay.alpha = cosineEaseOutAlpha(this.#elapsed, FADE_DURATION)
     }
     if (progress >= 1) {
       this.destroy()

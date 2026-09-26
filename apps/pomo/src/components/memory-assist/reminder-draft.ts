@@ -77,19 +77,19 @@ export const createReminderDraft = (options: CreateReminderDraftOptions): Remind
   }
 }
 
-export const createStoredReminderDraft = (memo: MemoryMemo) =>
+export const createStoredReminderDraft = (memo: MemoryMemo, now: Date = new Date()) =>
   createReminderDraft({
     exactReminderAdvanceMinutes: memo.exactReminderAdvanceMinutes,
     exactReminderAt: memo.exactReminderAt,
     exactReminderRepeatIntervalMinutes: memo.exactReminderRepeatIntervalMinutes,
     exactReminderRepeatUntilMinutes: memo.exactReminderRepeatUntilMinutes,
-    now: new Date(),
+    now,
     recallMode: memo.recallMode,
   })
 
 export const areReminderDraftsEqual = (left: ReminderDraft, right: ReminderDraft) =>
   left.exactEnabled === right.exactEnabled &&
-  left.recallMode === right.recallMode &&
+  (left.exactEnabled || left.recallMode === right.recallMode) &&
   (!left.exactEnabled ||
     (left.exactReminderAdvanceMinutes === right.exactReminderAdvanceMinutes &&
       left.exactReminderRepeatEnabled === right.exactReminderRepeatEnabled &&

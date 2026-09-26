@@ -51,7 +51,7 @@ describe('scroll components', () => {
     expect(onScroll).toHaveBeenCalledWith('caller', expect.any(Event))
     fireEvent.pointerDown(view.getByRole('scrollbar'))
     expect(onPointerDown).toHaveBeenCalledOnce()
-    fireEvent.mouseUp(window)
+    fireEvent.mouseUp(globalThis.window)
 
     expect(view.getByTestId('bar').getAttribute('data-show')).toBe('true')
     expect(view.getByRole('scrollbar').getAttribute('aria-valuenow')).toBe('150')

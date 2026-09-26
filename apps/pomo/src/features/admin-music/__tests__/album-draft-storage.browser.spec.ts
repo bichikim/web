@@ -104,8 +104,8 @@ vi.mock('dexie', () => ({
 import {
   deleteAlbumDraft,
   deleteExpiredAlbumDraftCovers,
-  readAlbumDraftCover,
-  readAlbumDraftData,
+  readAlbumDraftCoverOrNull,
+  readAlbumDraftDataOrNull,
   writeAlbumDraftReference,
   writeAlbumDraftCover,
   writeAlbumDraftData,
@@ -133,19 +133,35 @@ beforeEach(() => {
 })
 
 it('should use session storage and initialize the browser cover database once', async () => {
-  expect(readAlbumDraftData()).toBeNull()
+  expect(readAlbumDraftDataOrNull()).toBeNull()
   expect(writeAlbumDraftData(DRAFT)).toEqual({success: true})
-  expect(readAlbumDraftData()).toEqual(DRAFT)
+  expect(readAlbumDraftDataOrNull()).toEqual(DRAFT)
 
   const cover = new File(['webp'], 'cover.webp', {type: 'image/webp'})
   await expect(writeAlbumDraftCover('cover', cover)).resolves.toEqual({success: true})
-  await expect(readAlbumDraftCover('cover')).resolves.toMatchObject({type: 'image/webp'})
-  await expect(readAlbumDraftCover('missing')).resolves.toBeNull()
+  await expect(readAlbumDraftCoverOrNull('cover')).resolves.toMatchObject({type: 'image/webp'})
+  await expect(readAlbumDraftCoverOrNull('missing')).resolves.toBeNull()
+  const activeDraft = {...DRAFT, coverDraftId: 'cover', hasCoverFile: true}
+  expect(writeAlbumDraftData(activeDraft)).toEqual({success: true})
   await expect(deleteAlbumDraft('cover')).resolves.toEqual({success: true})
-  expect(readAlbumDraftData()).toBeNull()
+  expect(readAlbumDraftDataOrNull()).toBeNull()
 
   expect(dexie.stores).toHaveBeenCalledTimes(3)
   expect(dexie.modify).toHaveBeenCalledWith({updatedAt: expect.any(Number)})
+})
+
+it('should preserve the session draft when deleting a stale cover id', async () => {
+  const activeDraft = {...DRAFT, coverDraftId: 'active-cover', hasCoverFile: true}
+  const cover = new File(['cover'], 'cover.webp', {type: 'image/webp'})
+  await writeAlbumDraftCover('active-cover', cover)
+  await writeAlbumDraftCover('stale-cover', cover)
+  expect(writeAlbumDraftData(activeDraft)).toEqual({success: true})
+
+  await expect(deleteAlbumDraft('stale-cover')).resolves.toEqual({success: true})
+
+  expect(readAlbumDraftDataOrNull()).toEqual(activeDraft)
+  await expect(readAlbumDraftCoverOrNull('active-cover')).resolves.not.toBeNull()
+  await expect(readAlbumDraftCoverOrNull('stale-cover')).resolves.toBeNull()
 })
 
 it('should delete expired browser covers while preserving an active cover', async () => {
@@ -179,5 +195,5 @@ it('should preserve an expired browser cover referenced by another active tab', 
     success: true,
   })
   expect(dexie.table.bulkDelete).toHaveBeenLastCalledWith([])
-  await expect(readAlbumDraftCover('other-tab-cover')).resolves.not.toBeNull()
+  await expect(readAlbumDraftCoverOrNull('other-tab-cover')).resolves.not.toBeNull()
 })

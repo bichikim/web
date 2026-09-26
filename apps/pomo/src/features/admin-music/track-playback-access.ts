@@ -1,3 +1,4 @@
+import {apiJsonRequest, parseJsonResponse} from '../api-json'
 import {z} from 'zod'
 
 const playbackResponseSchema = z.object({
@@ -14,11 +15,14 @@ export interface AdminTrackPlaybackAccess {
 export const requestAdminTrackPlaybackAccess = async (
   trackId: string,
 ): Promise<AdminTrackPlaybackAccess> => {
-  const response = await fetch(`/api/admin/music/tracks/${encodeURIComponent(trackId)}/playback`)
+  const response = await apiJsonRequest(
+    `admin/music/tracks/${encodeURIComponent(trackId)}/playback`,
+    {retry: false},
+  )
 
   if (!response.ok) {
     throw new Error(`Playback access failed with status ${response.status}`)
   }
 
-  return playbackResponseSchema.parse(await response.json())
+  return parseJsonResponse(response, playbackResponseSchema)
 }

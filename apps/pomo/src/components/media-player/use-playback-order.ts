@@ -1,4 +1,4 @@
-import {type Accessor, createSignal, untrack} from 'solid-js'
+import {type Accessor, createEffect, createSignal, untrack} from 'solid-js'
 import {
   type ManualNavigationResolution,
   normalizeTrackIndex,
@@ -181,6 +181,7 @@ export const usePlaybackOrder = (props: UsePlaybackOrderProps): PlaybackOrder =>
     currentIndex: props.currentIndex(),
     trackCount: props.trackCount(),
   })
+  let lastResetTrackCount = props.trackCount()
   const resetShuffleQueue = (snapshot = readSnapshot()) => {
     const normalizedCurrentIndex = normalizeTrackIndex(snapshot.currentIndex, snapshot.trackCount)
     setShuffleQueue(
@@ -191,6 +192,7 @@ export const usePlaybackOrder = (props: UsePlaybackOrderProps): PlaybackOrder =>
             trackCount: snapshot.trackCount,
           }),
     )
+    lastResetTrackCount = snapshot.trackCount
   }
   const resolveManualNavigationForSnapshot = (
     direction: TrackNavigationDirection,
@@ -323,9 +325,17 @@ export const usePlaybackOrder = (props: UsePlaybackOrderProps): PlaybackOrder =>
   }
 
   const resetOrder = () => {
-    resetShuffleQueue()
+    const snapshot = readSnapshot()
+    resetShuffleQueue(snapshot)
     setShuffleHistory([])
   }
+
+  createEffect(() => {
+    const trackCount = props.trackCount()
+    if (trackCount !== lastResetTrackCount) {
+      resetOrder()
+    }
+  })
 
   const clearShuffleQueue = () => {
     setShuffleQueue([])

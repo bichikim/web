@@ -44,4 +44,14 @@ describe('createTextGenerationProgress', () => {
       totalBytes: 0,
     })
   })
+
+  it('should preserve an observed byte ratio above the announced total', () => {
+    expect(
+      createTextGenerationProgress({
+        files: {'weights.bin': {loaded: 120, total: 100}},
+        loadedBytes: 120,
+        totalBytes: 100,
+      }),
+    ).toMatchObject({files: [{percentage: 120}], percentage: 120})
+  })
 })

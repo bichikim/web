@@ -78,7 +78,7 @@ describe('useSelectMenu', () => {
       y: 0,
     })
 
-    Object.defineProperty(window, 'innerWidth', {
+    Object.defineProperty(globalThis, 'innerWidth', {
       configurable: true,
       value: 1280,
     })
@@ -209,7 +209,7 @@ describe('useSelectMenu', () => {
     menu?.registerPanel(list)
     menu?.handleTriggerClick(createTriggerClick(button))
 
-    window.dispatchEvent(new KeyboardEvent('keydown', {key: 'Escape'}))
+    globalThis.dispatchEvent(new KeyboardEvent('keydown', {key: 'Escape'}))
 
     expect(list.hidePopover).toHaveBeenCalledTimes(1)
     expect(menu?.isOpen()).toBe(false)
@@ -257,8 +257,8 @@ describe('useSelectMenu', () => {
   })
 
   it('should cancel pending open work when the menu closes', () => {
-    const requestFrame = vi.spyOn(window, 'requestAnimationFrame').mockReturnValue(42)
-    const cancelFrame = vi.spyOn(window, 'cancelAnimationFrame').mockImplementation(() => {})
+    const requestFrame = vi.spyOn(globalThis, 'requestAnimationFrame').mockReturnValue(42)
+    const cancelFrame = vi.spyOn(globalThis, 'cancelAnimationFrame').mockImplementation(() => {})
     const menu = renderSelectMenu()()
     const button = document.createElement('button')
     const list = document.createElement('div')

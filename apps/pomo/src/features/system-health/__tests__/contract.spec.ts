@@ -8,7 +8,13 @@ describe('isHealthProbe', () => {
     expect(isHealthProbe({status: 'ok'})).toBe(true)
   })
 
-  it.each([null, 'ok', {status: 'unexpected'}])('should reject %j', (value) => {
+  it.each([
+    null,
+    'ok',
+    {status: 'unexpected'},
+    Object.assign([], {status: 'ok'}),
+    Object.assign(new Date(), {status: 'ok'}),
+  ])('should reject %j', (value) => {
     expect(isHealthProbe(value)).toBe(false)
   })
 })

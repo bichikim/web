@@ -32,7 +32,7 @@ describe('getScrollParent', () => {
   it('should return null none scroll able parent', () => {
     const {childNotScroll} = setup()
 
-    expect(getScrollParent(childNotScroll)).toBe(window)
+    expect(getScrollParent(childNotScroll)).toBe(globalThis.window)
   })
 
   it('should return window after traversing a connected non-scrollable tree', () => {
@@ -40,7 +40,7 @@ describe('getScrollParent', () => {
 
     document.body.append(child)
 
-    expect(getScrollParent(child)).toBe(window)
+    expect(getScrollParent(child)).toBe(globalThis.window)
     child.remove()
   })
 })

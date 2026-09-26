@@ -64,13 +64,13 @@ test('should preserve the rotation pivot layout without allowing extra joints', 
   })!
   for (const operation of ['append', 'insert', 'remove'] as const) {
     expect(
-      editBoneRest({document, nodeId: 'shapes', index: 1, operation, point: {x: 100, y: 100}}),
+      editBoneRest({document, index: 1, nodeId: 'shapes', operation, point: {x: 100, y: 100}}),
     ).toBeUndefined()
   }
   const moved = editBoneRest({
     document,
-    nodeId: 'shapes',
     index: 0,
+    nodeId: 'shapes',
     operation: 'move',
     point: {x: 100, y: 100},
   })!

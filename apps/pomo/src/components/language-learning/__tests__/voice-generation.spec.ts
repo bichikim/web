@@ -97,6 +97,11 @@ it('should generate every voice candidate and transfer their URL ownership', asy
   )
   expect(options.onProgress).toHaveBeenNthCalledWith(1, 1, 2)
   expect(options.onProgress).toHaveBeenNthCalledWith(2, 2, 2)
+  expect(initializeClient).toHaveBeenCalledOnce()
+  const generatedClients = vi
+    .mocked(generateCompressedDialogueAudio)
+    .mock.calls.map(([generationOptions]) => generationOptions.client)
+  expect(generatedClients[0]).toBe(generatedClients[1])
   expect(URL.revokeObjectURL).not.toHaveBeenCalled()
   expect(disposeClient).toHaveBeenCalledOnce()
 })
@@ -171,6 +176,7 @@ it('should regenerate one candidate with the selected voice configuration', asyn
     },
     status: 'complete',
   })
+  expect(URL.revokeObjectURL).toHaveBeenCalledExactlyOnceWith('blob:old')
   expect(disposeClient).toHaveBeenCalledOnce()
 })
 
@@ -216,4 +222,32 @@ it('should normalize unexpected regeneration failures', async () => {
   await expect(
     regenerateCandidateVoice({...createOptions(), candidate: candidate()}),
   ).resolves.toMatchObject({status: 'error'})
+})
+
+it('should retain cancellation precedence when initialization fails after disposal', async () => {
+  vi.mocked(generateCompressedDialogueAudio).mockClear()
+  const options = createOptions()
+  options.isDisposed.mockReturnValue(true)
+  initializeClient.mockResolvedValue({
+    error: {code: 'cancelled', phase: 'initialize', retryable: false},
+    ok: false,
+  })
+  await expect(generateVoiceCandidates({...options, sentences: ['Sentence.']})).resolves.toEqual({
+    status: 'cancelled',
+  })
+  await expect(regenerateCandidateVoice({...options, candidate: candidate()})).resolves.toEqual({
+    status: 'cancelled',
+  })
+  expect(generateCompressedDialogueAudio).not.toHaveBeenCalled()
+})
+
+it('should retain the previous candidate URL when replacement creation fails', async () => {
+  vi.mocked(URL.createObjectURL)
+    .mockReset()
+    .mockImplementation(() => {
+      throw new Error('URL failed')
+    })
+  const result = await regenerateCandidateVoice({...createOptions(), candidate: candidate()})
+  expect(result.status).toBe('error')
+  expect(URL.revokeObjectURL).not.toHaveBeenCalled()
 })

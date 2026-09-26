@@ -34,6 +34,25 @@ describe('EditorNumberField', () => {
     expect(onValueChange).toHaveBeenLastCalledWith(-12.5)
   })
 
+  test('should show an external value change without replacing a focused input', () => {
+    const [value, setValue] = createSignal(0)
+    const view = render(() => (
+      <EditorNumberField label="값" value={value()} onValueChange={setValue} />
+    ))
+    const input = view.getByRole('spinbutton', {name: '값'})
+
+    input.focus()
+    fireEvent.input(input, {target: {value: '60'}})
+    expect(value()).toBe(60)
+    setValue(30)
+
+    expect(view.getByRole('spinbutton', {name: '값'})).toBe(input)
+    expect(input).toHaveValue(30)
+    expect(input).toHaveFocus()
+    fireEvent.keyDown(input, {key: 'Escape'})
+    expect(value()).toBe(30)
+  })
+
   test('should scrub horizontally, clamp the range, and group the edit lifecycle', () => {
     const onEditEnd = vi.fn()
     const onEditStart = vi.fn()
@@ -51,17 +70,42 @@ describe('EditorNumberField', () => {
       />
     ))
     const input = view.getByRole('spinbutton', {name: '불투명도'})
-    vi.spyOn(input, 'getBoundingClientRect').mockReturnValue(DOMRect.fromRect({width: 100}))
+    vi.spyOn(input, 'getBoundingClientRect').mockReturnValue(DOMRect.fromRect({width: 100, x: 0}))
 
-    fireEvent(input, new MouseEvent('pointerdown', {bubbles: true, button: 0, clientX: 100}))
-    fireEvent(window, new MouseEvent('pointermove', {bubbles: true, clientX: 120}))
+    fireEvent(input, new MouseEvent('pointerdown', {bubbles: true, button: 0, clientX: 50}))
+    fireEvent(globalThis.window, new MouseEvent('pointermove', {bubbles: true, clientX: 70}))
     expect(onEditStart).toHaveBeenCalledOnce()
     expect(onValueChange).toHaveBeenLastCalledWith(0.7)
 
-    fireEvent(window, new MouseEvent('pointermove', {bubbles: true, clientX: 300}))
+    fireEvent(globalThis.window, new MouseEvent('pointermove', {bubbles: true, clientX: 300}))
     expect(onValueChange).toHaveBeenLastCalledWith(1)
-    fireEvent(window, new MouseEvent('pointerup', {bubbles: true, clientX: 300}))
+    fireEvent(globalThis.window, new MouseEvent('pointerup', {bubbles: true, clientX: 300}))
     expect(onEditEnd).toHaveBeenCalledOnce()
+  })
+
+  test('should keep bounded scrubbing precise in narrow fields', () => {
+    const onValueChange = vi.fn()
+    const view = render(() => (
+      <EditorNumberField
+        label="각도"
+        maximum={30}
+        minimum={-30}
+        value={0}
+        onValueChange={onValueChange}
+      />
+    ))
+    const input = view.getByRole('spinbutton', {name: '각도'})
+    vi.spyOn(input, 'getBoundingClientRect').mockReturnValue(DOMRect.fromRect({width: 46, x: 100}))
+
+    fireEvent(input, new MouseEvent('pointerdown', {bubbles: true, button: 0, clientX: 123}))
+    fireEvent(globalThis.window, new MouseEvent('pointermove', {bubbles: true, clientX: 146}))
+    expect(onValueChange).toHaveBeenLastCalledWith(30)
+
+    fireEvent(globalThis.window, new MouseEvent('pointerup', {bubbles: true, clientX: 146}))
+    fireEvent(input, new MouseEvent('pointerdown', {bubbles: true, button: 0, clientX: 123}))
+    fireEvent(globalThis.window, new MouseEvent('pointermove', {bubbles: true, clientX: 100}))
+
+    expect(onValueChange).toHaveBeenLastCalledWith(-30)
   })
 
   test('should use precision movement while Shift is held', () => {
@@ -72,8 +116,11 @@ describe('EditorNumberField', () => {
     const input = view.getByRole('spinbutton', {name: 'X'})
 
     fireEvent(input, new MouseEvent('pointerdown', {bubbles: true, button: 0, clientX: 100}))
-    fireEvent(window, new MouseEvent('pointermove', {bubbles: true, clientX: 120, shiftKey: true}))
-    fireEvent(window, new MouseEvent('pointerup', {bubbles: true, clientX: 120}))
+    fireEvent(
+      globalThis.window,
+      new MouseEvent('pointermove', {bubbles: true, clientX: 120, shiftKey: true}),
+    )
+    fireEvent(globalThis.window, new MouseEvent('pointerup', {bubbles: true, clientX: 120}))
 
     expect(onValueChange).toHaveBeenLastCalledWith(12)
   })
@@ -94,14 +141,14 @@ describe('EditorNumberField', () => {
     const input = view.getByRole('spinbutton', {name: '값'})
 
     fireEvent(input, new MouseEvent('pointerdown', {bubbles: true, button: 0, clientX: 100}))
-    fireEvent(window, new MouseEvent('pointermove', {bubbles: true, clientX: 120}))
+    fireEvent(globalThis.window, new MouseEvent('pointermove', {bubbles: true, clientX: 120}))
     expect(onEditStart).toHaveBeenCalledOnce()
 
     view.unmount()
 
     expect(onEditEnd).toHaveBeenCalledOnce()
     const changeCount = onValueChange.mock.calls.length
-    fireEvent(window, new MouseEvent('pointermove', {bubbles: true, clientX: 140}))
+    fireEvent(globalThis.window, new MouseEvent('pointermove', {bubbles: true, clientX: 140}))
     expect(onValueChange).toHaveBeenCalledTimes(changeCount)
   })
 
@@ -163,7 +210,7 @@ describe('EditorNumberField', () => {
   })
 })
 
-test('should prevent text selection before scrubbing and preserve focused text editing', () => {
+test('should allow scrubbing after focusing without preventing text editing clicks', () => {
   const onValueChange = vi.fn()
   const view = render(() => (
     <EditorNumberField label="드래그" value={10} onValueChange={onValueChange} />
@@ -177,7 +224,7 @@ test('should prevent text selection before scrubbing and preserve focused text e
   })
   fireEvent(input, down)
   expect(down.defaultPrevented).toBe(true)
-  fireEvent(window, new MouseEvent('pointerup', {bubbles: true}))
+  fireEvent(globalThis.window, new MouseEvent('pointerup', {bubbles: true}))
   fireEvent.click(input)
   expect(input).toHaveFocus()
   const focused = new MouseEvent('pointerdown', {
@@ -188,6 +235,6 @@ test('should prevent text selection before scrubbing and preserve focused text e
   })
   fireEvent(input, focused)
   expect(focused.defaultPrevented).toBe(false)
-  fireEvent(window, new MouseEvent('pointermove', {bubbles: true, clientX: 130}))
-  expect(onValueChange).not.toHaveBeenCalled()
+  fireEvent(globalThis.window, new MouseEvent('pointermove', {bubbles: true, clientX: 130}))
+  expect(onValueChange).toHaveBeenLastCalledWith(40)
 })

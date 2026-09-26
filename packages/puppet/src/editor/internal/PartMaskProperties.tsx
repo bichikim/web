@@ -1,4 +1,4 @@
-import {EditorTextInput, EditorCheckbox, EditorButton} from '../../design-system'
+import {EditorButton, EditorCheckbox, EditorTextInput} from '../../design-system'
 import {TextField} from '@kobalte/core/text-field'
 import {Popover} from '@kobalte/core/popover'
 import {createMemo, createSignal, For, Show} from 'solid-js'

@@ -1,3 +1,4 @@
+import {PreferenceProvider} from 'src/hooks/use-preference'
 import {
   createConnection,
   createEventContext,
@@ -32,7 +33,9 @@ it('should restore pending feeds without generation and prepare them only on use
       segments: [{durationMs: 1000, index: 0, startMs: 0, text: '새 소식'}],
     },
   })
-  const view = renderHook(() => usePFeeds({events: createEventContext()}))
+  const view = renderHook(() => usePFeeds({events: createEventContext()}), {
+    wrapper: PreferenceProvider,
+  })
   await vi.waitFor(() => expect(syncMocks.synchronizeFeeds).toHaveBeenCalled())
   expect(syncMocks.synchronizeFeeds).toHaveBeenCalledWith(
     expect.objectContaining({autoPrepare: false}),

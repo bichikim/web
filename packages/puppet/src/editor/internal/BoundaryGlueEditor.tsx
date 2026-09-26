@@ -1,4 +1,4 @@
-import {EditorButton, EditorSegmentedField, EditorNumberField} from '../../design-system'
+import {EditorButton, EditorNumberField, EditorSegmentedField} from '../../design-system'
 import {createMemo, createSignal, Show} from 'solid-js'
 import type {PuppetDocument} from '../../player'
 import {addBoundaryGlue} from './boundary-glue'
@@ -33,43 +33,45 @@ export const BoundaryGlueEditor = (props: BoundaryGlueEditorProps) => {
         )
   })
   return (
-    <fieldset class="deformer-properties">
-      <legend>선택 파츠 붙이기</legend>
-      <EditorButton
-        class="mask-action-button"
-        disabled={preview() === undefined}
-        onClick={() => {
-          const document = preview()
-          if (document !== undefined) {
-            props.onDocumentChange?.(document)
-          }
-        }}
-      >
-        붙이기
-      </EditorButton>
-      <div class="glue-distance-mode">
-        <span>연결 거리</span>
-        <EditorSegmentedField
-          label="연결 거리 방식"
-          value={manual() ? 'manual' : 'auto'}
-          options={[
-            {label: '자동', value: 'auto'},
-            {label: '수동', value: 'manual'},
-          ]}
-          onChange={(value) => setManual(value === 'manual')}
-        />
-      </div>
-      <Show when={manual()}>
-        <label>
-          <span>거리</span>
-          <EditorNumberField
-            label="경계 연결 거리"
-            minimum={0}
-            value={distance()}
-            onValueChange={setDistance}
+    <Show when={pair() !== undefined}>
+      <fieldset class="deformer-properties">
+        <legend>선택 파츠 붙이기</legend>
+        <EditorButton
+          class="mask-action-button"
+          disabled={preview() === undefined}
+          onClick={() => {
+            const document = preview()
+            if (document !== undefined) {
+              props.onDocumentChange?.(document)
+            }
+          }}
+        >
+          붙이기
+        </EditorButton>
+        <div class="glue-distance-mode">
+          <span>연결 거리</span>
+          <EditorSegmentedField
+            label="연결 거리 방식"
+            value={manual() ? 'manual' : 'auto'}
+            options={[
+              {label: '자동', value: 'auto'},
+              {label: '수동', value: 'manual'},
+            ]}
+            onChange={(value) => setManual(value === 'manual')}
           />
-        </label>
-      </Show>
-    </fieldset>
+        </div>
+        <Show when={manual()}>
+          <label>
+            <span>거리</span>
+            <EditorNumberField
+              label="경계 연결 거리"
+              minimum={0}
+              value={distance()}
+              onValueChange={setDistance}
+            />
+          </label>
+        </Show>
+      </fieldset>
+    </Show>
   )
 }

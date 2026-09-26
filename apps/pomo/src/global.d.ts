@@ -17,6 +17,18 @@ interface ImportMetaEnv {
   readonly OPENAI_SERVICE_TIER?: string
   readonly OPENAI_WEBHOOK_SECRET?: string
   readonly OPENWEATHER_API_KEY?: string
+  readonly POMO_AI_ARTIFACT_R2_ACCESS_KEY_ID?: string
+  readonly POMO_AI_ARTIFACT_R2_BUCKET?: string
+  readonly POMO_AI_ARTIFACT_R2_PREFIX?: string
+  readonly POMO_AI_ARTIFACT_R2_SECRET_ACCESS_KEY?: string
+  readonly POMO_AI_CREDIT_PROFILE_JSON?: string
+  readonly POMO_AI_MONTHLY_CREDIT_CAP?: string
+  readonly POMO_AI_QUEUE_LIMIT?: string
+  readonly POMO_AI_RUNNER_TIMEOUT_MS?: string
+  readonly POMO_AI_RUNNER_TOKEN?: string
+  readonly POMO_AI_RUNNER_URL?: string
+  readonly POMO_AI_STORAGE_QUOTA_BYTES?: string
+  readonly POMO_AI_SUBSCRIPTION_PRODUCT_CODE?: string
   readonly POMO_ALLOW_LOCAL_ASSET_ORIGIN: string
   readonly POMO_CONNECT_SOURCES: string
   readonly POMO_CONTENT_SECURITY_POLICY_TEMPLATE: string
@@ -31,6 +43,7 @@ interface ImportMetaEnv {
   readonly VERCEL_ENV?: string
   readonly VITE_POMO_APPS_IN_TOSS_PRIVACY_PATH: string
   readonly VITE_POMO_APPS_IN_TOSS_TERMS_PATH: string
+  readonly VITE_POMO_DISTRIBUTION_TARGET: string
   readonly VITE_POMO_ENVIRONMENT: string
   readonly VITE_POMO_IS_APPS_IN_TOSS: string
   readonly VITE_POMO_IS_DESKTOP: string

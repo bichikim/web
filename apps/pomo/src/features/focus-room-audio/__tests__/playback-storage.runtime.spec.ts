@@ -21,13 +21,18 @@ describe('playback-storage', () => {
   })
 
   afterEach(() => {
-    Reflect.deleteProperty(window, 'ReactNativeWebView')
+    Reflect.deleteProperty(globalThis.window, 'ReactNativeWebView')
     vi.restoreAllMocks()
   })
 
   it('should persist playback in browser storage', async () => {
     const startedAt = Date.now()
-    await writePPlayback({isPlaying: true, positionSeconds: 12, trackId: 'track-one'})
+    await writePPlayback({
+      isPlaying: true,
+      positionSeconds: 12,
+      trackId: 'track-one',
+      trackIndex: 1,
+    })
     const stored = JSON.parse(localStorage.getItem('pomo:focus-room-playback:v1') ?? 'null')
     expect(stored.savedAt).toBeGreaterThanOrEqual(startedAt)
     expect(stored.savedAt).toBeLessThanOrEqual(Date.now())
@@ -36,6 +41,7 @@ describe('playback-storage', () => {
       isPlaying: true,
       positionSeconds: 12,
       trackId: 'track-one',
+      trackIndex: 1,
     })
   })
 
@@ -89,7 +95,7 @@ describe('playback-storage', () => {
   })
 
   it('should select the latest app or browser copy', async () => {
-    Object.defineProperty(window, 'ReactNativeWebView', {configurable: true, value: {}})
+    Object.defineProperty(globalThis, 'ReactNativeWebView', {configurable: true, value: {}})
     localStorage.setItem(
       'pomo:focus-room-playback:v1',
       JSON.stringify({positionSeconds: 4, savedAt: 10, trackId: 'web-track'}),

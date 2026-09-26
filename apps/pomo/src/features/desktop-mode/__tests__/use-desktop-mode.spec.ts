@@ -8,6 +8,7 @@ import {
   applyDesktopMode,
   finishDesktopModeTransition,
   prepareDesktopModeTransition,
+  shouldHandoffDesktopModeOwner,
 } from '../runtime'
 import {useDesktopMode} from '../use-desktop-mode'
 
@@ -23,6 +24,7 @@ vi.mock('../runtime', () => ({
   applyDesktopMode: vi.fn(),
   finishDesktopModeTransition: vi.fn(),
   prepareDesktopModeTransition: vi.fn(),
+  shouldHandoffDesktopModeOwner: vi.fn(),
 }))
 
 class TestBroadcastChannel {
@@ -51,9 +53,10 @@ beforeEach(() => {
   TestBroadcastChannel.instances = []
   tauriMocks.listener = vi.fn()
   tauriMocks.unlisten.mockReset()
-  vi.mocked(applyDesktopMode).mockReset().mockResolvedValue()
+  vi.mocked(applyDesktopMode).mockReset().mockResolvedValue(false)
   vi.mocked(finishDesktopModeTransition).mockReset().mockResolvedValue()
   vi.mocked(prepareDesktopModeTransition).mockReset().mockResolvedValue()
+  vi.mocked(shouldHandoffDesktopModeOwner).mockReset().mockResolvedValue(false)
   vi.mocked(listen).mockClear()
   vi.stubGlobal('BroadcastChannel', TestBroadcastChannel)
   vi.stubEnv('VITE_POMO_IS_DESKTOP', 'true')
@@ -70,7 +73,7 @@ it('should recover normal mode after an unclean exit and mark a clean unload', a
 
   expect(view.result.mode()).toBe('normal')
   expect(localStorage.getItem('pomo:desktop-clean-exit:v1')).toBe('false')
-  window.dispatchEvent(new Event('beforeunload'))
+  globalThis.dispatchEvent(new Event('beforeunload'))
   expect(localStorage.getItem('pomo:desktop-clean-exit:v1')).toBe('true')
 
   view.cleanup()
@@ -98,8 +101,8 @@ it('should process the latest native request received during a transition', asyn
   await vi.waitFor(() => expect(listen).toHaveBeenCalledOnce())
   vi.mocked(applyDesktopMode).mockImplementationOnce(
     () =>
-      new Promise<void>((resolve) => {
-        finishTransition = resolve
+      new Promise<boolean>((resolve) => {
+        finishTransition = () => resolve(false)
       }),
   )
 
@@ -116,6 +119,7 @@ it('should persist desktop mode before opening surface windows', async () => {
   let modeDuringNativeTransition: string | null = null
   vi.mocked(applyDesktopMode).mockImplementationOnce(async () => {
     modeDuringNativeTransition = localStorage.getItem('pomo:desktop-mode:v1')
+    return false
   })
   const view = renderHook(() => useDesktopMode({isSurfaceOwner: true}))
 
@@ -217,6 +221,101 @@ it('should route a secondary mode change through the surface owner', async () =>
   expect(secondaryChannel?.postMessage).toHaveBeenCalledOnce()
 })
 
+it('should transfer website mode ownership to a handoff surface', async () => {
+  const owner = renderHook(() => useDesktopMode({isSurfaceOwner: true}))
+  const handoff = renderHook(() => useDesktopMode({isHandoffOwner: true}))
+  const ownerChannel = TestBroadcastChannel.instances[0]
+  const handoffChannel = TestBroadcastChannel.instances[1]
+  vi.mocked(shouldHandoffDesktopModeOwner).mockResolvedValueOnce(true)
+  let ownerStateDuringApply: string | null = null
+  vi.mocked(applyDesktopMode).mockImplementationOnce(async () => {
+    ownerStateDuringApply = localStorage.getItem('pomo:desktop-mode-owner:v1')
+    return true
+  })
+
+  const transition = owner.result.onModeChange('desktop')
+  await transition
+
+  expect(ownerStateDuringApply).toBe('released')
+  expect(localStorage.getItem('pomo:desktop-mode-owner:v1')).toBe('released')
+  const releaseMessage = ownerChannel?.postMessage.mock.calls.find(
+    ([message]) =>
+      typeof message === 'object' &&
+      message !== null &&
+      'type' in message &&
+      message.type === 'mode-owner-released',
+  )?.[0]
+  handoffChannel?.dispatch(releaseMessage)
+
+  vi.mocked(applyDesktopMode).mockResolvedValueOnce(false)
+  const handoffTransition = handoff.result.onModeChange('normal')
+  await vi.waitFor(() => expect(applyDesktopMode).toHaveBeenCalledTimes(2))
+  await handoffTransition
+
+  expect(handoffChannel?.postMessage).not.toHaveBeenCalledWith(
+    expect.objectContaining({type: 'mode-requested'}),
+  )
+  expect(localStorage.getItem('pomo:desktop-mode-owner:v1')).toBe('primary')
+})
+
+it('should activate a handoff surface when it mounts after the release broadcast', async () => {
+  localStorage.setItem('pomo:desktop-mode:v1', 'desktop')
+  localStorage.setItem('pomo:desktop-mode-owner:v1', 'released')
+  const view = renderHook(() => useDesktopMode({isHandoffOwner: true}))
+
+  vi.mocked(applyDesktopMode).mockResolvedValueOnce(false)
+  await view.result.onModeChange('normal')
+
+  expect(applyDesktopMode).toHaveBeenCalledWith('normal')
+  expect(TestBroadcastChannel.instances[0]?.postMessage).not.toHaveBeenCalledWith(
+    expect.objectContaining({type: 'mode-requested'}),
+  )
+})
+
+it('should return ownership to the main surface when it is restored', async () => {
+  localStorage.setItem('pomo:desktop-mode:v1', 'desktop')
+  localStorage.setItem('pomo:desktop-mode-owner:v1', 'released')
+  const view = renderHook(() => useDesktopMode({isHandoffOwner: true}))
+  const channel = TestBroadcastChannel.instances[0]
+
+  channel?.dispatch({type: 'mode-owner-reclaimed'})
+  const request = view.result.onModeChange('normal')
+
+  expect(applyDesktopMode).not.toHaveBeenCalled()
+  expect(channel?.postMessage).toHaveBeenCalledWith(
+    expect.objectContaining({mode: 'normal', type: 'mode-requested'}),
+  )
+  const requestMessage = channel?.postMessage.mock.calls.at(-1)?.[0]
+  if (
+    typeof requestMessage !== 'object' ||
+    requestMessage === null ||
+    !('requestId' in requestMessage) ||
+    typeof requestMessage.requestId !== 'string'
+  ) {
+    throw new Error('Expected a desktop mode request message')
+  }
+  channel?.dispatch({requestId: requestMessage.requestId, type: 'mode-change-completed'})
+  await request
+})
+
+it('should persist the local return mode before a handoff surface restores the background', async () => {
+  localStorage.setItem('pomo:desktop-mode:v1', 'desktop')
+  localStorage.setItem('pomo:desktop-mode-owner:v1', 'released')
+  const view = renderHook(() => useDesktopMode({isHandoffOwner: true}))
+  let modeDuringRestore: string | null = null
+  let cleanExitDuringRestore: string | null = null
+  vi.mocked(applyDesktopMode).mockImplementationOnce(async () => {
+    modeDuringRestore = localStorage.getItem('pomo:desktop-mode:v1')
+    cleanExitDuringRestore = localStorage.getItem('pomo:desktop-clean-exit:v1')
+    return false
+  })
+
+  await view.result.onModeChange('widget')
+
+  expect(modeDuringRestore).toBe('widget')
+  expect(cleanExitDuringRestore).toBe('true')
+})
+
 it('should return a surface owner failure to the requesting secondary window', async () => {
   vi.mocked(applyDesktopMode).mockRejectedValueOnce(new Error('native failed'))
   renderHook(() => useDesktopMode({isSurfaceOwner: true}))
@@ -254,8 +353,8 @@ it('should serialize owner mode changes', async () => {
   let finishTransition: (() => void) | undefined
   vi.mocked(applyDesktopMode).mockImplementationOnce(
     () =>
-      new Promise<void>((resolve) => {
-        finishTransition = resolve
+      new Promise<boolean>((resolve) => {
+        finishTransition = () => resolve(false)
       }),
   )
   const view = renderHook(() => useDesktopMode({isSurfaceOwner: true}))
@@ -343,7 +442,7 @@ it('should preserve both failures when a published mode cannot be rolled back', 
   const rollbackError = new Error('native restore failed')
   const view = renderHook(() => useDesktopMode({isSurfaceOwner: true}))
   vi.mocked(finishDesktopModeTransition).mockRejectedValueOnce(transitionError)
-  vi.mocked(applyDesktopMode).mockResolvedValueOnce().mockRejectedValueOnce(rollbackError)
+  vi.mocked(applyDesktopMode).mockResolvedValueOnce(false).mockRejectedValueOnce(rollbackError)
 
   await expect(view.result.onModeChange('desktop')).rejects.toMatchObject({
     errors: [transitionError, rollbackError],

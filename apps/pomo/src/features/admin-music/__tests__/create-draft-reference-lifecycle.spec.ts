@@ -56,6 +56,52 @@ describe('draft reference lifecycle', () => {
     await expect(reference.update('other-cover')).resolves.toMatchObject({success: false})
   })
 
+  it('should wait for pending reference writes before releasing the reference', async () => {
+    const storage = createStorage()
+    let resolveWriteStarted!: () => void
+    let resolveWrite!: () => void
+    const writeStarted = new Promise<void>((resolve) => {
+      resolveWriteStarted = resolve
+    })
+    const pendingWrite = new Promise<void>((resolve) => {
+      resolveWrite = resolve
+    })
+    vi.mocked(storage.writeAlbumDraftReference).mockImplementationOnce(async () => {
+      resolveWriteStarted()
+      await pendingWrite
+      return {success: true}
+    })
+    const reference = createDraftReferenceLifecycle({loadStorage: async () => storage})
+    reference.setId('tab')
+
+    const pendingUpdate = reference.update('cover')
+    await writeStarted
+    const release = reference.release()
+
+    expect(storage.deleteAlbumDraftReference).not.toHaveBeenCalled()
+    resolveWrite()
+
+    await expect(pendingUpdate).resolves.toEqual({success: true})
+    await release
+    expect(storage.deleteAlbumDraftReference).toHaveBeenCalledExactlyOnceWith('tab')
+  })
+
+  it('should report a failed reference deletion during release', async () => {
+    const storage = createStorage()
+    const error = new Error('reference deletion failed')
+    const warning = vi.spyOn(console, 'warn').mockImplementation(() => undefined)
+    vi.mocked(storage.deleteAlbumDraftReference).mockResolvedValueOnce({error, success: false})
+    const reference = createDraftReferenceLifecycle({loadStorage: async () => storage})
+    reference.setId('tab')
+
+    await reference.release()
+
+    expect(warning).toHaveBeenCalledWith(
+      'Failed to delete the admin album draft reference during release.',
+      error,
+    )
+  })
+
   it('should release before initialization without loading storage', async () => {
     const loadStorage = vi.fn(async () => createStorage())
     const reference = createDraftReferenceLifecycle({loadStorage})

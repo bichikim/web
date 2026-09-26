@@ -1,6 +1,7 @@
 import {getMeshEditingIssue} from './move-mesh-vertex'
 import {MeshModeControl} from './internal/MeshModeControl'
 import {getRestPreview} from './internal/rest-preview'
+import {getSceneNode} from './internal/scene-graph'
 import {EditorToggleButton} from '../design-system'
 import {CameraViewport} from './internal/CameraViewport'
 import {SkinningTools} from './internal/SkinningTools'
@@ -16,7 +17,11 @@ import {MeshEditor} from './MeshEditor'
 import {PlayerCanvas, type PlayerCanvasStatus} from './PlayerCanvas'
 
 export interface EditorViewportProps {
+  readonly brushControlsMount?: HTMLDivElement
+  readonly brushSettingsMount?: HTMLDivElement
+  readonly physicsPreview?: boolean
   readonly meshEditingDisabled?: boolean
+  readonly motionId?: string
   readonly onMeshEditingStart?: () => void
   readonly onRestDocumentChange?: (document: PuppetDocument) => void
   readonly fitRevision?: number
@@ -43,6 +48,7 @@ export interface EditorViewportProps {
   readonly onTimeChange?: (time: number) => void
   readonly onVertexEditStart?: () => void
   readonly onVertexSelect?: (vertexIndex: number | null) => void
+  readonly playbackActive?: boolean
   readonly parameterValues?: PuppetParameterValues
   readonly parameterValueMap?: PuppetParameterValueMap
   readonly previewDocument?: PuppetDocument
@@ -50,8 +56,8 @@ export interface EditorViewportProps {
   readonly targetNodeIds?: ReadonlyArray<string>
 }
 
-const useViewportMeshIssue = (props: EditorViewportProps) =>
-  createMemo(() =>
+const useViewportMeshIssue = (props: EditorViewportProps) => {
+  const issue = createMemo(() =>
     props.meshEditingDisabled
       ? '임시 변경을 저장하거나 삭제한 후 메시를 편집하세요.'
       : getMeshEditingIssue({
@@ -59,6 +65,100 @@ const useViewportMeshIssue = (props: EditorViewportProps) =>
           partId: props.activePartId,
         }),
   )
+  return issue
+}
+
+const getPlaybackDocument = (options: EditorViewportProps) =>
+  options.editMode === 'parameter' ? {...options.document, motions: []} : options.document
+
+const getEditingVisibilityTitle = (visible: boolean, playbackActive: boolean) =>
+  playbackActive ? '재생 중 편집 UI 숨김' : visible ? '편집 UI 숨기기' : '편집 UI 표시'
+
+interface EditingOverlaysProps {
+  readonly displayMount?: HTMLDivElement
+  readonly document: PuppetDocument
+  readonly editingMesh: boolean
+  readonly onMeshNotice: (message: string | null) => void
+  readonly viewport: EditorViewportProps
+  readonly visible: boolean
+}
+
+const EditingOverlays = (props: EditingOverlaysProps) => {
+  const renderControls = (controls: JSX.Element) => (
+    <Show when={props.visible}>{props.viewport.renderEditingControls?.(controls) ?? controls}</Show>
+  )
+
+  return (
+    <div
+      class="editing-overlays"
+      data-hidden={!props.visible}
+      inert={!props.visible}
+      aria-hidden={!props.visible}
+    >
+      <MeshEditor
+        brushControlsMount={props.viewport.brushControlsMount}
+        brushSettingsMount={props.viewport.brushSettingsMount}
+        brushControlsExternal
+        meshEditing={props.editingMesh}
+        renderDisplayControls={(controls) => (
+          <Show when={props.visible}>
+            <Show when={props.displayMount}>
+              {(mount) => <Portal mount={mount()}>{controls}</Portal>}
+            </Show>
+          </Show>
+        )}
+        activeBindingId={props.viewport.activeBindingId}
+        activeKeyformValues={props.viewport.activeKeyformValues}
+        activePartId={props.viewport.activePartId}
+        document={props.document}
+        editMode={props.viewport.editMode}
+        onDocumentChange={
+          props.editingMesh ? props.viewport.onRestDocumentChange : props.viewport.onDocumentChange
+        }
+        onNotice={props.editingMesh ? props.onMeshNotice : props.viewport.onNotice}
+        onVertexEditStart={props.viewport.onVertexEditStart}
+        onVertexSelect={props.viewport.onVertexSelect}
+        previewTime={props.viewport.currentTime}
+        parameterValues={props.viewport.parameterValues}
+        parameterValueMap={props.viewport.parameterValueMap}
+        selectedPartIds={props.viewport.selectedPartIds}
+        selectedVertexIndex={props.viewport.activeVertexIndex}
+      />
+      <Show when={!props.editingMesh}>
+        <SkinningTools
+          sourceDocument={props.viewport.sourceDocument ?? props.viewport.document}
+          document={props.viewport.document}
+          activePartId={props.viewport.activePartId}
+          activeBindingId={props.viewport.activeBindingId}
+          parameterValues={props.viewport.parameterValues}
+          parameterValueMap={props.viewport.parameterValueMap}
+          previewTime={props.viewport.currentTime}
+          editMode={props.viewport.editMode}
+          onDocumentChange={props.viewport.onDocumentChange}
+          onEditStart={props.viewport.onDeformerEditStart}
+          onEditEnd={props.viewport.onDeformerEditEnd}
+          renderControls={renderControls}
+        />
+        <DeformerEditor
+          deformerMode={props.viewport.deformerMode}
+          onDeformerModeChange={props.viewport.onDeformerModeChange}
+          renderControls={renderControls}
+          activeBindingId={props.viewport.activeBindingId}
+          activeKeyformValues={props.viewport.activeKeyformValues}
+          activeNodeId={props.viewport.activeNodeId}
+          controlSelection={props.viewport.deformerControlSelection}
+          document={props.viewport.document}
+          editMode={props.viewport.editMode}
+          onDocumentChange={props.viewport.onDocumentChange}
+          onEditEnd={props.viewport.onDeformerEditEnd}
+          onEditStart={props.viewport.onDeformerEditStart}
+          previewDocument={props.viewport.previewDocument}
+          targetNodeIds={props.viewport.targetNodeIds}
+        />
+      </Show>
+    </div>
+  )
+}
 
 export const EditorViewport = (props: EditorViewportProps) => {
   const [meshNotice, setMeshNotice] = createSignal<string | null>(null)
@@ -71,31 +171,38 @@ export const EditorViewport = (props: EditorViewportProps) => {
     }
   })
   const editingMesh = () => meshEditing() && props.editMode === 'parameter' && meshIssue() === null
-  const editDocument = () =>
-    editingMesh() ? (props.sourceDocument ?? props.document) : props.document
+  const editDocument = () => (editingMesh() ? props.sourceDocument : undefined) ?? props.document
   const displayDocument = createMemo(() =>
-    editingMesh() ? getRestPreview(editDocument()) : props.document,
+    editingMesh() ? getRestPreview(editDocument()) : getPlaybackDocument(props),
   )
-
   const [editingVisible, setEditingVisible] = createSignal(true)
+  const editingControlsVisible = () => editingVisible() && !props.playbackActive
+  const spatialSurface = createMemo(() => {
+    if (!editingControlsVisible() || editingMesh() || props.activeNodeId === undefined) {
+      return undefined
+    }
+    const document = props.previewDocument ?? editDocument()
+    const node = getSceneNode(document, props.activeNodeId)
+    return node?.kind === 'deformer' && node.deformerType === 'spatial'
+      ? {document, node}
+      : undefined
+  })
   const [displayMount, setDisplayMount] = createSignal<HTMLDivElement>()
   const meshControls = (
-    <>
-      <Show when={props.editMode === 'parameter' && props.activePartId !== undefined}>
-        <MeshModeControl
-          editing={editingMesh()}
-          notice={meshNotice() ?? undefined}
-          disabledReason={meshIssue() ?? undefined}
-          onChange={(editing) => {
-            setMeshNotice(null)
-            if (editing) {
-              props.onMeshEditingStart?.()
-            }
-            setMeshEditing(editing)
-          }}
-        />
-      </Show>
-    </>
+    <Show when={props.editMode === 'parameter' && props.activePartId !== undefined}>
+      <MeshModeControl
+        editing={editingMesh()}
+        notice={meshNotice() ?? undefined}
+        disabledReason={meshIssue() ?? undefined}
+        onChange={(editing) => {
+          setMeshNotice(null)
+          if (editing) {
+            props.onMeshEditingStart?.()
+          }
+          setMeshEditing(editing)
+        }}
+      />
+    </Show>
   )
   return (
     <section
@@ -116,8 +223,9 @@ export const EditorViewport = (props: EditorViewportProps) => {
             <EditorToggleButton
               size="md"
               aria-label="편집 UI 표시"
-              pressed={editingVisible()}
-              title={editingVisible() ? '편집 UI 숨기기' : '편집 UI 표시'}
+              disabled={props.playbackActive}
+              pressed={editingControlsVisible()}
+              title={getEditingVisibilityTitle(editingVisible(), props.playbackActive ?? false)}
               onClick={() => setEditingVisible(!editingVisible())}
             >
               <span
@@ -139,73 +247,23 @@ export const EditorViewport = (props: EditorViewportProps) => {
         }
       >
         <PlayerCanvas
+          physicsPreview={!editingMesh() && (props.physicsPreview ?? true)}
           document={displayDocument()}
+          motionId={props.editMode === 'parameter' ? undefined : props.motionId}
           onFrame={(frame: PlayerFrame) => props.onTimeChange?.(frame.time)}
           onPlayerChange={props.onPlayerChange}
           onStatusChange={props.onStatusChange}
           parameterValues={editingMesh() ? undefined : props.parameterValueMap}
+          spatialSurface={spatialSurface()}
         />
-        <div
-          class="editing-overlays"
-          data-hidden={!editingVisible()}
-          inert={!editingVisible()}
-          aria-hidden={!editingVisible()}
-        >
-          <MeshEditor
-            meshEditing={editingMesh()}
-            renderDisplayControls={(controls) => (
-              <Show when={displayMount()}>
-                {(mount) => <Portal mount={mount()}>{controls}</Portal>}
-              </Show>
-            )}
-            activeBindingId={props.activeBindingId}
-            activeKeyformValues={props.activeKeyformValues}
-            activePartId={props.activePartId}
-            document={editDocument()}
-            editMode={props.editMode}
-            onDocumentChange={editingMesh() ? props.onRestDocumentChange : props.onDocumentChange}
-            onNotice={editingMesh() ? setMeshNotice : props.onNotice}
-            onVertexEditStart={props.onVertexEditStart}
-            onVertexSelect={props.onVertexSelect}
-            previewTime={props.currentTime}
-            parameterValues={props.parameterValues}
-            parameterValueMap={props.parameterValueMap}
-            selectedPartIds={props.selectedPartIds}
-            selectedVertexIndex={props.activeVertexIndex}
-          />
-          <Show when={!editingMesh()}>
-            <SkinningTools
-              sourceDocument={props.sourceDocument ?? props.document}
-              document={props.document}
-              activePartId={props.activePartId}
-              activeBindingId={props.activeBindingId}
-              parameterValues={props.parameterValues}
-              parameterValueMap={props.parameterValueMap}
-              previewTime={props.currentTime}
-              editMode={props.editMode}
-              onDocumentChange={props.onDocumentChange}
-              onEditStart={props.onDeformerEditStart}
-              onEditEnd={props.onDeformerEditEnd}
-              renderControls={props.renderEditingControls}
-            />
-            <DeformerEditor
-              deformerMode={props.deformerMode}
-              onDeformerModeChange={props.onDeformerModeChange}
-              renderControls={props.renderEditingControls}
-              activeBindingId={props.activeBindingId}
-              activeKeyformValues={props.activeKeyformValues}
-              activeNodeId={props.activeNodeId}
-              controlSelection={props.deformerControlSelection}
-              document={props.document}
-              editMode={props.editMode}
-              onDocumentChange={props.onDocumentChange}
-              onEditEnd={props.onDeformerEditEnd}
-              onEditStart={props.onDeformerEditStart}
-              previewDocument={props.previewDocument}
-              targetNodeIds={props.targetNodeIds}
-            />
-          </Show>
-        </div>
+        <EditingOverlays
+          displayMount={displayMount()}
+          document={editDocument()}
+          editingMesh={editingMesh()}
+          onMeshNotice={setMeshNotice}
+          viewport={props}
+          visible={editingControlsVisible()}
+        />
       </CameraViewport>
     </section>
   )

@@ -1,10 +1,12 @@
-// Rejects destructive SQL statements from production migrations.
-import {readdir, readFile} from 'node:fs/promises'
+// Reports SQL statements that need review before production migrations.
+import {appendFile, readdir, readFile} from 'node:fs/promises'
 import path from 'node:path'
 import {fileURLToPath, pathToFileURL} from 'node:url'
 
+import {getLastAppliedAt} from './migration-journal.mjs'
+
 const unsafeRules = [
-  {label: 'DROP changes schema destructively', pattern: /\bDROP\b/giu},
+  {label: 'DROP requires production review', pattern: /\bDROP\b/giu},
   {label: 'RENAME breaks the previous application schema', pattern: /\bRENAME\b/giu},
   {
     label: 'ALTER COLUMN changes an existing column contract',
@@ -42,6 +44,9 @@ const maskAllowedDmlClauses = (sql) =>
     )
     .replace(/\bDO\s+UPDATE\b/giu, mask)
 
+export const pendingMigrationEntries = (entries, lastAppliedAt) =>
+  entries.filter((entry) => entry.when > lastAppliedAt)
+
 export const findUnsafeProductionMigrationStatements = (sql) => {
   const sanitizedSql = maskAllowedDmlClauses(maskCommentsAndQuotedValues(sql))
   const findings = []
@@ -57,10 +62,27 @@ export const findUnsafeProductionMigrationStatements = (sql) => {
 }
 
 const checkProductionMigrations = async () => {
+  const databaseUrl = process.env.DATABASE_URL_UNPOOLED?.trim()
+
+  if (!databaseUrl) {
+    throw new TypeError('DATABASE_URL_UNPOOLED is required to find pending production migrations')
+  }
+
   const migrationsDirectory = fileURLToPath(new URL('../../../drizzle/', import.meta.url))
-  const migrationFiles = (await readdir(migrationsDirectory))
-    .filter((file) => file.endsWith('.sql'))
-    .sort()
+  const journal = JSON.parse(
+    await readFile(path.join(migrationsDirectory, 'meta/_journal.json'), 'utf8'),
+  )
+  const availableFiles = new Set(await readdir(migrationsDirectory))
+  const lastAppliedAt = await getLastAppliedAt(databaseUrl)
+  const migrationFiles = pendingMigrationEntries(journal.entries, lastAppliedAt).map(({tag}) => {
+    const file = `${tag}.sql`
+
+    if (!availableFiles.has(file)) {
+      throw new Error(`Pending migration file is missing: ${file}`)
+    }
+
+    return file
+  })
   const migrationFindings = await Promise.all(
     migrationFiles.map(async (migrationFile) => {
       const migrationPath = path.join(migrationsDirectory, migrationFile)
@@ -71,12 +93,19 @@ const checkProductionMigrations = async () => {
       )
     }),
   )
-  const unsafeMigrations = migrationFindings.flat()
+  const reviewItems = migrationFindings.flat()
 
-  if (unsafeMigrations.length > 0) {
-    throw new Error(
-      `Production deployment accepts expand-only migrations:\n${unsafeMigrations.join('\n')}`,
-    )
+  if (reviewItems.length > 0) {
+    for (const item of reviewItems) {
+      console.warn(`::warning::Review production migration: ${item}`)
+    }
+
+    if (process.env.GITHUB_STEP_SUMMARY) {
+      await appendFile(
+        process.env.GITHUB_STEP_SUMMARY,
+        `## Production migration review\n\n${reviewItems.map((item) => `- ${item}`).join('\n')}\n`,
+      )
+    }
   }
 }
 

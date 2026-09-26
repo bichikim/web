@@ -9,7 +9,7 @@ const createDocument = () =>
     operation: 'append',
     point: {x: 900, y: 240},
   })!
-const options = {nodeId: 'bone', partId: 'mesh-preview', boneIndex: 0, vertexIndex: 0, weight: 0.25}
+const options = {boneIndex: 0, nodeId: 'bone', partId: 'mesh-preview', vertexIndex: 0, weight: 0.25}
 test('should reject malformed serialized weights', () => {
   const document = setDeformerVertexWeight({...options, document: createDocument()})!
   for (const weights of [[-1, 2], [0.3, 0.3], [0, 0], [1], [Infinity, 0]]) {

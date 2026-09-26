@@ -6,15 +6,15 @@ import {importPsd} from '../import-psd'
 
 test('should reject a non PSD file without replacing the document', async () => {
   expect(await importPsd(new File(['text'], 'notes.txt'))).toEqual({
-    ok: false,
     error: {code: 'invalid-file'},
+    ok: false,
   })
 })
 
 test('should reject a damaged PSD', async () => {
   expect(await importPsd(new File(['8BPS broken'], 'broken.psd'))).toEqual({
-    ok: false,
     error: {code: 'decode-failed'},
+    ok: false,
   })
 })
 
@@ -24,24 +24,24 @@ test.each([
 ])('should import a %i by %i canvas with bounded layer textures', async (width, height) => {
   vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue({
     createImageData: (width: number, height: number) => ({
-      width,
-      height,
       data: new Uint8ClampedArray(width * height * 4),
+      height,
+      width,
     }),
     putImageData: vi.fn(),
   } as unknown as ReturnType<HTMLCanvasElement['getContext']>)
   vi.spyOn(HTMLCanvasElement.prototype, 'toDataURL').mockReturnValue('data:image/png;base64,test')
   const bytes = writePsd({
-    width: 100,
-    height: 100,
     children: [
       {
-        name: '눈',
+        imageData: {data: new Uint8ClampedArray(8 * 8 * 4).fill(255), height: 8, width: 8},
         left: 20,
+        name: '눈',
         top: 30,
-        imageData: {width: 8, height: 8, data: new Uint8ClampedArray(8 * 8 * 4).fill(255)},
       },
     ],
+    height: 100,
+    width: 100,
   })
   // Change only the document bounds; importing skips the composite bitmap.
   const header = new DataView(bytes)
@@ -52,8 +52,8 @@ test.each([
   if (!result.ok) {
     return
   }
-  expect(result.document.viewport).toEqual({width, height})
+  expect(result.document.viewport).toEqual({height, width})
   expect(result.document.scene?.roots[0]?.name).toBe('눈')
   expect(result.document.parts[0]?.mesh.vertices.slice(0, 2)).toEqual([20, 30])
-  expect(result.document.parts[0]?.texture).toMatchObject({width: 8, height: 8})
+  expect(result.document.parts[0]?.texture).toMatchObject({height: 8, width: 8})
 })

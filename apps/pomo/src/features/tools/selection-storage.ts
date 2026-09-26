@@ -1,4 +1,6 @@
 import {z} from 'zod'
+
+import {createAuthoritativeWriter, restorePreferredValue} from '../preference-persistence'
 import {toolStorageAdapter, type ToolStorageAdapter} from './storage-adapter'
 import {getUnits, type UnitCategory} from './units'
 
@@ -13,6 +15,8 @@ export interface MovingSelection {
 }
 export type LunarDirection = 'solar' | 'lunar'
 export interface SelectionStorage<T> {
+  readonly key: string
+  readonly parse: (value: unknown) => T | null
   readonly read: () => Promise<T | null>
   readonly write: (value: T) => Promise<void>
 }
@@ -22,59 +26,43 @@ const createSelectionStorage = <T>(
   parse: (value: unknown) => T | null,
   reportRepairError: (error: unknown) => void,
 ): SelectionStorage<T> => {
-  let pending = Promise.resolve()
-  let writeRevision = 0
   const read = async (): Promise<T | null> => {
-    const revision = writeRevision
     const usesTossStorage = storage.usesTossStorage()
-    if (usesTossStorage) {
-      await pending
-      if (revision !== writeRevision) {
-        return read()
-      }
-    }
     const webValue = storage.readWeb(key, parse)
-    if (webValue !== null || !usesTossStorage) {
-      if (webValue !== null && usesTossStorage) {
-        pending = pending.then(() => storage.writeToss(key, webValue)).catch(reportRepairError)
-      }
+    if (!usesTossStorage) {
       return webValue
     }
-    try {
-      const nativeValue = await storage.readToss(key, parse)
-      return revision === writeRevision ? nativeValue : read()
-    } catch (error: unknown) {
-      if (revision !== writeRevision) {
-        return read()
-      }
-      throw error
-    }
+    return restorePreferredValue({
+      preferred: webValue,
+      repair: (value) => storage.writeToss(key, value).catch(reportRepairError),
+      restore: async () => {
+        const tossValue = await storage.readToss(key, parse)
+        if (tossValue !== null) {
+          // Keep the selection available when the Toss bridge disappears before the next read.
+          storage.writeWeb(key, tossValue)
+        }
+        return tossValue
+      },
+    })
   }
-  return {
-    read,
-    async write(value) {
-      writeRevision += 1
-      const revision = writeRevision
-      const error = storage.writeWeb(key, value)
-      if (!storage.usesTossStorage()) {
-        if (error !== null) {
-          throw new Error('Failed to save tool selection.', {cause: error})
-        }
-        return
-      }
-      const write = pending.then(async () => {
-        await storage.writeToss(key, value)
-        // An older native completion must not discard a newer web selection.
-        if (error !== null && revision === writeRevision) {
-          const removalError = storage.removeWeb(key)
-          if (removalError !== null && storage.readWeb(key, parse) !== null) {
-            throw new Error('Failed to discard stale tool selection.', {cause: removalError})
-          }
-        }
-      })
-      pending = write.catch(() => undefined)
-      await write
+  const write = createAuthoritativeWriter<T>({
+    failureMessage: 'Failed to save tool selection.',
+    isNative: storage.usesTossStorage,
+    mapNativeFailure: (error) => error,
+    mapRemovalFailure: (error) =>
+      new Error('Failed to discard stale tool selection.', {cause: error}),
+    removeWeb: () => {
+      const error = storage.removeWeb(key)
+      return error !== null && storage.readWeb(key, parse) !== null ? error : null
     },
+    writeNative: (value) => storage.writeToss(key, value),
+    writeWeb: (value) => storage.writeWeb(key, value),
+  })
+  return {
+    key,
+    parse,
+    read,
+    write,
   }
 }
 const unitSchema = z
@@ -108,7 +96,7 @@ export interface CreateToolSelectionStoragesOptions {
   readonly reportRepairError: (error: unknown) => void
 }
 
-/** Creates independently queued selection repositories over one storage adapter. */
+/** Reads and writes tool selections using one storage adapter. */
 export const createToolSelectionStorages = (
   options: CreateToolSelectionStoragesOptions,
 ): ToolSelectionStorages => {

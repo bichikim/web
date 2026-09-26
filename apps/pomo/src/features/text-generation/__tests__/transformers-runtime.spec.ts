@@ -11,6 +11,7 @@ const mocks = vi.hoisted(() => ({
   onProgress: vi.fn(),
   processorFromPretrained: vi.fn(),
   reportStorageError: vi.fn(),
+  resumableOptions: null as null | {readonly fetcher?: typeof fetch},
   stoppingCriteria: null as null | {readonly interrupt: () => void},
   streamerOptions: null as null | {callback_function: (text: string) => void},
 }))
@@ -50,10 +51,13 @@ vi.mock('../model', () => ({
 vi.mock('../qwen-model', () => ({loadQwenModel: mocks.loadQwenModel}))
 vi.mock('../../model-storage', () => ({
   createModelStorage: vi.fn(() => ({storage: true})),
-  createResumableModelFetch: vi.fn(() => ({
-    deletePartial: mocks.deletePartial,
-    fetch: vi.fn(),
-  })),
+  createResumableModelFetch: vi.fn((options: {readonly fetcher?: typeof fetch} = {}) => {
+    mocks.resumableOptions = options
+    return {
+      deletePartial: mocks.deletePartial,
+      fetch: vi.fn(),
+    }
+  }),
   createTransformersModelCache: vi.fn((options: Record<string, (...args: never[]) => unknown>) => {
     mocks.cacheOptions = options
     return {cache: true}
@@ -93,6 +97,7 @@ beforeEach(() => {
     },
   }
   mocks.cacheOptions = null
+  mocks.resumableOptions = null
   mocks.stoppingCriteria = null
   mocks.streamerOptions = null
 })
@@ -140,6 +145,26 @@ it('should prepare Gemma once, report byte progress, and configure versioned cac
     },
     remoteHost: 'https://models.example/',
   })
+})
+
+it('should fetch Steam model assets from the local bundle', async () => {
+  vi.stubEnv('VITE_POMO_DISTRIBUTION_TARGET', 'steam')
+  const nativeFetch = vi.fn<typeof fetch>().mockResolvedValue(new Response(null, {status: 200}))
+  vi.stubGlobal('fetch', nativeFetch)
+
+  createTransformersRuntime({onProgress: vi.fn()})
+  const fetcher = mocks.resumableOptions?.fetcher
+
+  if (fetcher === undefined) {
+    throw new Error('The model fetcher was not configured')
+  }
+
+  await fetcher('https://storage.pomofi.io/models/text-generation/model/revision/weights.onnx')
+
+  expect(nativeFetch).toHaveBeenCalledWith(
+    '/assets-steam/models/text-generation/model/revision/weights.onnx',
+    undefined,
+  )
 })
 
 it('should count and generate tokens through the prepared processor', async () => {

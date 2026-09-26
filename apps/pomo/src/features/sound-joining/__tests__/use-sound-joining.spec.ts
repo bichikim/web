@@ -36,10 +36,10 @@ function createBlob(): Blob {
 
 function createRequest() {
   return {
+    connectionSeconds: 4,
     first: createFile('first.wav'),
     prompt: 'continuous rainfall',
     second: createFile('second.wav'),
-    transition: 4,
     trimEnd: 0,
     trimStart: 0,
   }
@@ -126,6 +126,51 @@ it('should not start a worker when selection is cancelled while audio decoding i
   await execution
 
   expect(workers).toHaveLength(0)
+  expect(root.joining.busy()).toBe(false)
+  expect(root.joining.error()).toBeNull()
+  expect(root.joining.status()).toBe('연결 생성을 중지했습니다.')
+  root.dispose()
+})
+
+it('should report when a second generation request arrives while busy', async () => {
+  const workers = installWorker()
+  installAudioContext([createAudioBuffer(), createAudioBuffer(), createAudioBuffer(12)])
+  vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob:joined')
+  const root = createRoot((dispose) => ({dispose, joining: useSoundJoining()}))
+
+  const execution = root.joining.generate(createRequest())
+  await vi.waitFor(() => expect(workers).toHaveLength(1))
+
+  await root.joining.generate(createRequest())
+
+  expect(workers).toHaveLength(1)
+  expect(root.joining.busy()).toBe(true)
+  expect(root.joining.error()).toBe(
+    '이미 연결 생성 중인 작업이 있습니다. 완료 후 다시 시도해 주세요.',
+  )
+  expect(root.joining.status()).toBe('연결 생성이 진행 중입니다. 완료 후 다시 시도해 주세요.')
+
+  workers[0].onmessage?.({data: {blob: createBlob(), type: 'result'}} as MessageEvent)
+  await execution
+
+  expect(root.joining.busy()).toBe(false)
+  expect(root.joining.error()).toBeNull()
+  expect(root.joining.status()).toBe('연결 완료 · 12.0초')
+  root.dispose()
+})
+
+it('should clear busy feedback when generation is stopped', async () => {
+  const workers = installWorker()
+  installAudioContext([createAudioBuffer(), createAudioBuffer()])
+  const root = createRoot((dispose) => ({dispose, joining: useSoundJoining()}))
+
+  const execution = root.joining.generate(createRequest())
+  await vi.waitFor(() => expect(workers).toHaveLength(1))
+  await root.joining.generate(createRequest())
+
+  root.joining.stop()
+  await execution
+
   expect(root.joining.busy()).toBe(false)
   expect(root.joining.error()).toBeNull()
   expect(root.joining.status()).toBe('연결 생성을 중지했습니다.')

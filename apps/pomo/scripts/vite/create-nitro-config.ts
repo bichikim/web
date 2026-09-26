@@ -12,6 +12,7 @@ export interface CreateNitroConfigOptions extends ResolvePrerenderRoutesOptions 
   readonly createContentSecurityPolicy: ContentSecurityPolicyRenderer
   readonly fontAsset: PublicAssetDir
   readonly staticSecurityHeaders: Record<string, string>
+  readonly steamAsset?: PublicAssetDir
   readonly workerSecurityHeaders: Record<string, string>
 }
 
@@ -54,6 +55,7 @@ export const createNitroConfig = (options: CreateNitroConfigOptions) => {
     },
     publicAssets: [
       ...(options.command === 'serve' ? [{baseURL: '/', dir: './dev-public', maxAge: 0}] : []),
+      ...(options.steamAsset === undefined ? [] : [options.steamAsset]),
       options.fontAsset,
     ],
     routeRules: {

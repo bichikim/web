@@ -1,12 +1,12 @@
-import {type Accessor, createSignal, onCleanup, onMount} from 'solid-js'
+import {usePreference} from 'src/hooks/use-preference'
+import {type Accessor, createEffect, createSignal, onCleanup} from 'solid-js'
 
 import {
+  createDialogueVolumeDuckingPreferenceOptions,
   DEFAULT_DIALOGUE_VOLUME_DUCKING_SETTINGS,
-  DIALOGUE_VOLUME_DUCKING_SETTINGS_CHANGED_EVENT,
   type DialogueVolumeDuckingSettings as DialogueVolumeDuckingSettingsValue,
-  readDialogueVolumeDuckingSettings,
-  writeDialogueVolumeDuckingSettings,
 } from 'src/features/focus-room-dialogue'
+import {createPendingSave} from 'src/features/pending-save'
 import * as m from '@paraglide/message'
 
 interface VolumeDuckingState {
@@ -19,11 +19,13 @@ interface VolumeDuckingState {
 
 const SAVE_DEBOUNCE_MILLISECONDS = 300
 
-const dispatchSettingsChange = (settings: DialogueVolumeDuckingSettingsValue) => {
-  window.dispatchEvent(
-    new CustomEvent(DIALOGUE_VOLUME_DUCKING_SETTINGS_CHANGED_EVENT, {detail: settings}),
-  )
-}
+const areDialogueVolumeDuckingSettingsEqual = (
+  left: DialogueVolumeDuckingSettingsValue,
+  right: DialogueVolumeDuckingSettingsValue,
+) =>
+  left.enabled === right.enabled &&
+  left.playerVolumePercent === right.playerVolumePercent &&
+  left.version === right.version
 
 export const useVolumeDucking = (): VolumeDuckingState => {
   const [settings, setSettings] = createSignal<DialogueVolumeDuckingSettingsValue>(
@@ -31,81 +33,122 @@ export const useVolumeDucking = (): VolumeDuckingState => {
   )
   const [isLoading, setIsLoading] = createSignal(true)
   const [message, setMessage] = createSignal<string | null>(null)
-  let disposed = false
+  const pendingSaves: Array<DialogueVolumeDuckingSettingsValue> = []
+  let isDisposed = false
   let pendingSettings: DialogueVolumeDuckingSettingsValue | null = null
-  let saveTimeout: ReturnType<typeof globalThis.setTimeout> | null = null
+  let committedSettings: DialogueVolumeDuckingSettingsValue =
+    DEFAULT_DIALOGUE_VOLUME_DUCKING_SETTINGS
+  let failedStoredSettings: DialogueVolumeDuckingSettingsValue | null = null
 
-  const persistSettings = async (nextSettings: DialogueVolumeDuckingSettingsValue) => {
-    try {
-      await writeDialogueVolumeDuckingSettings(nextSettings)
-      if (!disposed) {
-        setMessage(null)
-      }
-    } catch (error: unknown) {
-      console.error('Failed to save dialogue volume ducking settings.', error)
-      if (!disposed) {
-        setMessage(m.settings_dialogue_volume_save_failed())
+  const settleSave = (didSave: boolean): DialogueVolumeDuckingSettingsValue | null => {
+    const settledSettings = pendingSaves.shift() ?? null
+    if (didSave && settledSettings !== null) {
+      committedSettings = settledSettings
+    }
+    return settledSettings
+  }
+
+  const handlePreferenceError = (error: unknown) => {
+    const isSaveError = pendingSaves.length > 0
+    console.error(
+      isSaveError
+        ? 'Failed to save dialogue volume ducking settings.'
+        : 'Failed to load dialogue volume ducking settings.',
+      error,
+    )
+    setMessage(
+      isSaveError
+        ? m.settings_dialogue_volume_save_failed()
+        : m.settings_dialogue_volume_loaded_failed(),
+    )
+    if (isSaveError) {
+      const settledSettings = settleSave(false)
+      if (settledSettings !== null && pendingSaves.length === 0) {
+        setSettings(committedSettings)
+        setStoredSettings(committedSettings, {persist: false})
       }
     }
+  }
+  const handlePreferenceSaved = () => {
+    const settledSettings = settleSave(true)
+    if (settledSettings === null) {
+      return
+    }
+    if (pendingSaves.length === 0) {
+      failedStoredSettings = null
+    }
+    if (!isDisposed) {
+      if (pendingSaves.length === 0) {
+        setSettings(committedSettings)
+      }
+      setMessage(null)
+    }
+  }
+  const [storedSettings, setStoredSettings] = usePreference(
+    createDialogueVolumeDuckingPreferenceOptions({
+      onError: handlePreferenceError,
+      onSaved: handlePreferenceSaved,
+    }),
+  )
+
+  const persistSettings = (nextSettings: DialogueVolumeDuckingSettingsValue) => {
+    failedStoredSettings = nextSettings
+    pendingSaves.push(nextSettings)
+    setStoredSettings(nextSettings)
+  }
+
+  const pendingSave = createPendingSave<DialogueVolumeDuckingSettingsValue>({
+    delayMilliseconds: SAVE_DEBOUNCE_MILLISECONDS,
+    save: (nextSettings) => {
+      pendingSettings = null
+      persistSettings(nextSettings)
+    },
+  })
+
+  const publishSettings = (nextSettings: DialogueVolumeDuckingSettingsValue) => {
+    setStoredSettings(nextSettings, {persist: false})
   }
 
   const scheduleSave = (nextSettings: DialogueVolumeDuckingSettingsValue) => {
+    failedStoredSettings = null
     setSettings(nextSettings)
     setMessage(null)
-    dispatchSettingsChange(nextSettings)
     pendingSettings = nextSettings
+    publishSettings(nextSettings)
 
-    if (saveTimeout !== null) {
-      globalThis.clearTimeout(saveTimeout)
-    }
-
-    saveTimeout = globalThis.setTimeout(() => {
-      saveTimeout = null
-      pendingSettings = null
-      persistSettings(nextSettings)
-    }, SAVE_DEBOUNCE_MILLISECONDS)
+    pendingSave.schedule(nextSettings)
   }
 
-  onMount(() => {
-    readDialogueVolumeDuckingSettings()
-      .then((storedSettings) => {
-        if (!disposed) {
-          setSettings(storedSettings)
-          dispatchSettingsChange(storedSettings)
-        }
-      })
-      .catch((error: unknown) => {
-        console.error('Failed to load dialogue volume ducking settings.', error)
-        if (!disposed) {
-          setMessage(m.settings_dialogue_volume_loaded_failed())
-        }
-      })
-      .finally(() => {
-        if (!disposed) {
-          setIsLoading(false)
-        }
-      })
+  createEffect(() => {
+    const nextSettings = storedSettings()
+
+    if (nextSettings === null) {
+      return
+    }
+    setIsLoading(false)
+    if (pendingSettings !== null || pendingSaves.length > 0) {
+      return
+    }
+
+    if (failedStoredSettings !== null) {
+      if (areDialogueVolumeDuckingSettingsEqual(nextSettings, failedStoredSettings)) {
+        return
+      }
+      failedStoredSettings = null
+    }
+
+    committedSettings = nextSettings
+    setSettings(nextSettings)
   })
 
   onCleanup(() => {
-    disposed = true
-
-    if (saveTimeout !== null) {
-      globalThis.clearTimeout(saveTimeout)
-    }
-
-    const nextSettings = pendingSettings
-    pendingSettings = null
-    if (nextSettings !== null) {
-      writeDialogueVolumeDuckingSettings(nextSettings).catch((error: unknown) => {
-        console.error('Failed to save dialogue volume ducking settings.', error)
-      })
-    }
+    isDisposed = true
+    pendingSave.flush()
   })
 
   const changeEnabled = (enabled: boolean) => scheduleSave({...settings(), enabled})
   const changeVolume = (playerVolumePercent: number) =>
     scheduleSave({...settings(), playerVolumePercent})
 
-  return {isLoading, settings, changeEnabled, message, changeVolume}
+  return {changeEnabled, changeVolume, isLoading, message, settings}
 }

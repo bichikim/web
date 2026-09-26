@@ -9,12 +9,15 @@ import {
 import {createPScenePreferencesRepository} from './create-p-scene-preferences-repository'
 import type {PScenePreferences} from './model'
 
-const preserveStoredValue = (value: unknown) => value
+export {
+  parsePScenePreferences,
+  SCENE_PREFERENCES_STORAGE_KEY,
+} from './create-p-scene-preferences-repository'
+
 const runtimeRepository = createPScenePreferencesRepository({
-  reportError: (error) => globalThis.reportError(error),
   storage: {
-    readToss: (key) => readTossStorageJson(key, preserveStoredValue),
-    readWeb: (key) => readWebStorageJson(key, preserveStoredValue),
+    readToss: (key) => readTossStorageJson(key, (value) => value),
+    readWeb: (key) => readWebStorageJson(key, (value) => value),
     usesTossStorage: hasNativeStorageBridge,
     writeToss: writeTossStorageJson,
     writeWeb: writeWebStorageJson,

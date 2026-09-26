@@ -1,25 +1,47 @@
-import {getMonotonicTime} from 'src/utils/get-monotonic-time'
 import {createEffect, createSignal, onCleanup, onMount} from 'solid-js'
 import {useEvent} from '@winter-love/solid-use/event'
+
+import {usePreference} from 'src/hooks/use-preference'
+import {createParsedPreferenceStorage} from '../parsed-preference-storage'
+import {getMonotonicTime} from 'src/utils/get-monotonic-time'
 
 import {
   getScreenSaverDelayMilliseconds,
   type ScreenSaverController,
   type ScreenSaverDelay,
 } from './model'
-import {readScreenSaverDelay, writeScreenSaverDelay} from './storage'
+import {
+  DEFAULT_SCREEN_SAVER_DELAY,
+  parseScreenSaverDelay,
+  readScreenSaverDelay,
+  SCREEN_SAVER_STORAGE_KEY,
+  writeScreenSaverDelay,
+} from './storage'
 
 const ACTIVITY_THROTTLE_MILLISECONDS = 500
 
-/** Tracks user inactivity and owns the persisted screen saver preference. */
+const screenSaverStorage = createParsedPreferenceStorage({
+  invalidMessage: 'Invalid screen saver delay.',
+  parse: parseScreenSaverDelay,
+  read: () => readScreenSaverDelay(),
+  write: (value) => writeScreenSaverDelay(value),
+})
+
+/** Tracks user inactivity and shares the persisted screen saver preference. */
 export const useScreenSaver = (): ScreenSaverController => {
-  const [delay, setDelay] = createSignal<ScreenSaverDelay>('off')
+  const [storedDelay, setStoredDelay] = usePreference({
+    defaultValue: DEFAULT_SCREEN_SAVER_DELAY,
+    key: SCREEN_SAVER_STORAGE_KEY,
+    onError: () => undefined,
+    parse: parseScreenSaverDelay,
+    storage: screenSaverStorage,
+  })
   const [isActive, setIsActive] = createSignal(false)
   const [isDocumentVisible, setIsDocumentVisible] = createSignal(true)
   const [activityRevision, setActivityRevision] = createSignal(0)
-  let preferenceRevision = 0
   let lastActivityTime = Number.NEGATIVE_INFINITY
-  let isDisposed = false
+
+  const delay = () => storedDelay() ?? DEFAULT_SCREEN_SAVER_DELAY
 
   const recordActivity = () => {
     const wasActive = isActive()
@@ -38,30 +60,15 @@ export const useScreenSaver = (): ScreenSaverController => {
   }
 
   const onDelayChange = (nextDelay: ScreenSaverDelay) => {
-    preferenceRevision += 1
-    setDelay(nextDelay)
+    setStoredDelay(nextDelay)
     setIsActive(false)
-    writeScreenSaverDelay(nextDelay).catch(() => {
-      // Persistence is best-effort; the in-memory preference remains active for this session.
-    })
   }
 
   onMount(() => {
-    const initialPreferenceRevision = preferenceRevision
-    setIsDocumentVisible(document.visibilityState === 'visible')
-
-    readScreenSaverDelay()
-      .then((storedDelay) => {
-        if (!isDisposed && preferenceRevision === initialPreferenceRevision) {
-          setDelay(storedDelay)
-        }
-      })
-      .catch(() => {
-        // Storage adapters already recover to a default value; this only guards unexpected failures.
-      })
+    setIsDocumentVisible(globalThis.document.visibilityState === 'visible')
 
     const handleVisibilityChange = () => {
-      const isVisible = document.visibilityState === 'visible'
+      const isVisible = globalThis.document.visibilityState === 'visible'
       setIsDocumentVisible(isVisible)
       setIsActive(false)
 
@@ -72,27 +79,29 @@ export const useScreenSaver = (): ScreenSaverController => {
 
     const activityEvents = ['keydown', 'pointerdown', 'pointermove', 'scroll', 'wheel'] as const
     for (const eventName of activityEvents) {
-      useEvent(window, eventName, recordActivity, {passive: true})
+      useEvent(globalThis, eventName, recordActivity, {passive: true})
     }
-    useEvent(document, 'visibilitychange', handleVisibilityChange)
+    useEvent(globalThis.document, 'visibilitychange', handleVisibilityChange)
 
     createEffect(() => {
-      const currentDelay = delay()
+      const currentDelay = storedDelay()
       const isVisible = isDocumentVisible()
       activityRevision()
+
+      if (!isVisible || currentDelay === null) {
+        setIsActive(false)
+        return
+      }
+
       const delayMilliseconds = getScreenSaverDelayMilliseconds(currentDelay)
 
-      if (!isVisible || delayMilliseconds === null) {
+      if (delayMilliseconds === null) {
         setIsActive(false)
         return
       }
 
       const timeout = globalThis.setTimeout(() => setIsActive(true), delayMilliseconds)
       onCleanup(() => globalThis.clearTimeout(timeout))
-    })
-
-    onCleanup(() => {
-      isDisposed = true
     })
   })
 

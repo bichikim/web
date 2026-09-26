@@ -6,7 +6,7 @@ import type {PuppetDocument, PuppetGlue, PuppetVertexReference} from '../../play
 import {addGlue, canGlueVertex, setGlueKeyform, updateGlue} from './glue'
 import {getSceneNode, isSceneNodeLocked} from './scene-graph'
 
-export interface GlueEditorProps {
+export interface UseGlueEditorProps {
   readonly activeBindingId?: string
   readonly activeKeyformValues?: PuppetParameterValues | null
   readonly editMode?: 'parameter' | 'motion'
@@ -24,7 +24,9 @@ export interface GlueEditorProps {
   readonly onEditEnd?: () => void
 }
 
-export const useGlueEditor = (props: GlueEditorProps) => {
+export interface GlueEditorProps extends UseGlueEditorProps {}
+
+export const useGlueEditor = (props: UseGlueEditorProps) => {
   const PERCENT = 100
   const [localFirst, setLocalFirst] = createSignal<PuppetVertexReference | null>(null)
   const first = () => (props.sourceVertex === undefined ? localFirst() : props.sourceVertex)
@@ -129,16 +131,16 @@ export const useGlueEditor = (props: GlueEditorProps) => {
         props.selectedPartIds?.includes(glue.second.partId),
     )
   return {
+    canEdit,
+    change,
+    connect,
+    connections,
     first,
     hasParameter,
-    canEdit,
     label,
-    change,
-    selected,
-    connect,
-    setFirst,
-    connections,
-    selectable,
     sampled,
+    selectable,
+    selected,
+    setFirst,
   }
 }

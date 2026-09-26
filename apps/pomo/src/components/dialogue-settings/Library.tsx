@@ -2,6 +2,7 @@ import {cx} from 'class-variance-authority'
 import {A} from '@solidjs/router'
 import {createSignal, For, onCleanup, Show} from 'solid-js'
 
+import {replaceBlobObjectUrl} from '../../features/blob-object-url'
 import {type PDialogue, usePEvents} from '../../features/focus-room-dialogue'
 import * as m from '@paraglide/message'
 import {DialogueLibraryItem, type DialogueLibraryItemProps} from './LibraryItem'
@@ -25,6 +26,7 @@ export interface DialogueLibraryEntry {
 export interface DialogueLibraryProps {
   readonly entries: ReadonlyArray<DialogueLibraryEntry>
   readonly onAfterDelete?: (dialogue: PDialogue) => void
+  readonly onDelete?: (dialogue: PDialogue) => Promise<void>
   readonly onRequestClose?: () => void
   readonly textLineLimit?: DialogueLibraryItemProps['lineLimit']
 }
@@ -51,7 +53,7 @@ export const DialogueLibrary = (props: DialogueLibraryProps) => {
     }
 
     if (playbackUrl !== null) {
-      URL.revokeObjectURL(playbackUrl)
+      replaceBlobObjectUrl(playbackUrl, () => null)
       playbackUrl = null
     }
 
@@ -61,6 +63,19 @@ export const DialogueLibrary = (props: DialogueLibraryProps) => {
 
   onCleanup(stopPlayback)
 
+  const resolveLibraryAudio = async (dialogue: PDialogue, requestId: number) => {
+    const audio = await events.getAudio(dialogue.audioKey)
+    if (requestId !== playbackRequestId) {
+      return null
+    }
+    if (audio === null) {
+      setMessage(null)
+      setMissingDialogueId(dialogue.id)
+      return null
+    }
+    return audio
+  }
+
   const handlePlayback = async (dialogue: PDialogue) => {
     if (playingDialogueId() === dialogue.id) {
       stopPlayback()
@@ -69,17 +84,9 @@ export const DialogueLibrary = (props: DialogueLibraryProps) => {
 
     stopPlayback()
     const currentRequestId = playbackRequestId
-
     try {
-      const audio = await events.getAudio(dialogue.audioKey)
-
-      if (currentRequestId !== playbackRequestId) {
-        return
-      }
-
+      const audio = await resolveLibraryAudio(dialogue, currentRequestId)
       if (audio === null) {
-        setMessage(null)
-        setMissingDialogueId(dialogue.id)
         return
       }
 
@@ -90,10 +97,26 @@ export const DialogueLibrary = (props: DialogueLibraryProps) => {
         return
       }
 
-      playbackUrl = URL.createObjectURL(audio)
-      player.src = playbackUrl
+      const nextPlaybackUrl = replaceBlobObjectUrl(null, () => audio)
+
+      if (nextPlaybackUrl === null) {
+        return
+      }
+
+      if (currentRequestId !== playbackRequestId) {
+        replaceBlobObjectUrl(nextPlaybackUrl, () => null)
+        return
+      }
+
+      playbackUrl = nextPlaybackUrl
+      player.src = nextPlaybackUrl
       setPlayingDialogueId(dialogue.id)
       setMessage(null)
+
+      if (currentRequestId !== playbackRequestId) {
+        return
+      }
+
       await player.play()
     } catch (error: unknown) {
       if (currentRequestId !== playbackRequestId) {
@@ -109,24 +132,20 @@ export const DialogueLibrary = (props: DialogueLibraryProps) => {
   const handleCharacterPlayback = async (dialogue: PDialogue) => {
     stopPlayback()
     const currentRequestId = playbackRequestId
-
     try {
-      const audio = await events.getAudio(dialogue.audioKey)
-
-      if (currentRequestId !== playbackRequestId) {
-        return
-      }
-
+      const audio = await resolveLibraryAudio(dialogue, currentRequestId)
       if (audio === null) {
-        setMessage(null)
-        setMissingDialogueId(dialogue.id)
         return
       }
 
       setMessage(null)
-      const playback = events.playDialogue(dialogue.id)
+      const didPlay = await events.playDialogue(dialogue.id)
+
+      if (currentRequestId !== playbackRequestId || !didPlay) {
+        return
+      }
+
       props.onRequestClose?.()
-      await playback
     } catch (error: unknown) {
       if (currentRequestId !== playbackRequestId) {
         return
@@ -140,7 +159,11 @@ export const DialogueLibrary = (props: DialogueLibraryProps) => {
   const handleDelete = async (dialogue: PDialogue) => {
     try {
       stopPlayback()
-      await events.deleteDialogue(dialogue.id)
+      if (props.onDelete === undefined) {
+        await events.deleteDialogue(dialogue.id)
+      } else {
+        await props.onDelete(dialogue)
+      }
       props.onAfterDelete?.(dialogue)
       setPendingDeleteId(null)
     } catch (error: unknown) {

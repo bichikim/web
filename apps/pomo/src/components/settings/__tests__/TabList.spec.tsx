@@ -28,6 +28,27 @@ beforeEach(() => {
 
 afterEach(() => {
   vi.unstubAllGlobals()
+  vi.unstubAllEnvs()
+})
+
+it('should show the app tab only in the desktop runtime', () => {
+  vi.stubEnv('VITE_POMO_IS_DESKTOP', 'true')
+  const desktop = render(() => (
+    <Tabs defaultValue="general">
+      <PSettingsTabList />
+    </Tabs>
+  ))
+  const appTab = screen.getByRole('tab', {name: '앱'})
+  expect(screen.getByRole('tab', {name: '일반'}).nextElementSibling).toBe(appTab)
+  desktop.unmount()
+
+  vi.stubEnv('VITE_POMO_IS_DESKTOP', 'false')
+  render(() => (
+    <Tabs defaultValue="general">
+      <PSettingsTabList />
+    </Tabs>
+  ))
+  expect(screen.queryByRole('tab', {name: '앱'})).not.toBeInTheDocument()
 })
 
 it('should show scroll hints, scroll in both directions, and react to layout changes', () => {

@@ -1,0 +1,72 @@
+{
+  "cases": [
+    {
+      "cacheKey": "52bd18a26d81b1ee3f305173db314dfb22ddd67edb90a0ebe82878daed6579fa",
+      "id": "52bd18a26d81b1ee3f305173db314dfb22ddd67edb90a0ebe82878daed6579fa-ko",
+      "language": "ko",
+      "model": {
+        "digest": "c6eb396dbd5992bbe3f5cdb947e8bbc0ee413d7c17e2beaae69f5d569cf982eb",
+        "name": "gemma4:latest"
+      },
+      "promptVersion": 1,
+      "query": "액세스 토큰 갱신에 실패하면 사용자를 어디로 이동시키나요?",
+      "source": {
+        "contentHash": "sha256:65471494c0e00a89fa08b40107db75576db072a94dbee417943ff422a7962be9",
+        "docId": "auth/session",
+        "unitId": "refresh"
+      }
+    },
+    {
+      "cacheKey": "52bd18a26d81b1ee3f305173db314dfb22ddd67edb90a0ebe82878daed6579fa",
+      "id": "52bd18a26d81b1ee3f305173db314dfb22ddd67edb90a0ebe82878daed6579fa-en",
+      "language": "en",
+      "model": {
+        "digest": "c6eb396dbd5992bbe3f5cdb947e8bbc0ee413d7c17e2beaae69f5d569cf982eb",
+        "name": "gemma4:latest"
+      },
+      "promptVersion": 1,
+      "query": "Where should the user be redirected if access token renewal fails?",
+      "source": {
+        "contentHash": "sha256:65471494c0e00a89fa08b40107db75576db072a94dbee417943ff422a7962be9",
+        "docId": "auth/session",
+        "unitId": "refresh"
+      }
+    },
+    {
+      "cacheKey": "228bdf33d13b101cd37b171fd3cd051fed537b3d898c86ffc49e19a222948c7c",
+      "id": "228bdf33d13b101cd37b171fd3cd051fed537b3d898c86ffc49e19a222948c7c-ko",
+      "language": "ko",
+      "model": {
+        "digest": "c6eb396dbd5992bbe3f5cdb947e8bbc0ee413d7c17e2beaae69f5d569cf982eb",
+        "name": "gemma4:latest"
+      },
+      "promptVersion": 1,
+      "query": "환불은 언제 처리되나요?",
+      "source": {
+        "contentHash": "sha256:706f80d221a707ba097c6bf01479f1e117f4b3c940a1c34cf47f7487e5951e51",
+        "docId": "payment/refund",
+        "unitId": "refund"
+      }
+    },
+    {
+      "cacheKey": "228bdf33d13b101cd37b171fd3cd051fed537b3d898c86ffc49e19a222948c7c",
+      "id": "228bdf33d13b101cd37b171fd3cd051fed537b3d898c86ffc49e19a222948c7c-en",
+      "language": "en",
+      "model": {
+        "digest": "c6eb396dbd5992bbe3f5cdb947e8bbc0ee413d7c17e2beaae69f5d569cf982eb",
+        "name": "gemma4:latest"
+      },
+      "promptVersion": 1,
+      "query": "When is a refund processed?",
+      "source": {
+        "contentHash": "sha256:706f80d221a707ba097c6bf01479f1e117f4b3c940a1c34cf47f7487e5951e51",
+        "docId": "payment/refund",
+        "unitId": "refund"
+      }
+    }
+  ],
+  "repoId": "demo/knowledge-cli",
+  "version": 1,
+  "workspaceId": "refs/heads/main",
+  "kind": "candidate"
+}

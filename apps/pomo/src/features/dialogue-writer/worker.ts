@@ -1,46 +1,37 @@
 /// <reference lib="webworker" />
 
-import {getErrorMessage} from 'src/utils/get-error-message'
-
 import {
-  createTextGenerationExecutor,
-  type DeviceTextGenerationTarget,
-  type TextGenerationError,
-} from '../text-generation/execution'
-import {type TextModelId, trimRepetitiveTail} from '../text-generation'
+  createDeviceTarget,
+  createGenerationFailure,
+  createRequestSequence,
+  type TextModelId,
+  trimRepetitiveTail,
+} from '../text-generation'
+
+import {getErrorMessage} from 'src/utils/get-error-message'
+import {createExclusiveAsyncTask} from 'src/utils/create-exclusive-async-task'
+
+import {createTextGenerationExecutor} from '../text-generation/execution'
 import {normalizeKoreanSpeechStyle} from './answer'
 import {createForeignTokenIds} from './foreign-tokens'
 import type {DialogueWorkerRequest, DialogueWorkerResponse} from './messages'
 import {createDirectAnswerMessages, type DialogueOutputLanguage} from './prompt'
 
 const MAXIMUM_NEW_TOKENS = 1024
-const workerScope = self as DedicatedWorkerGlobalScope
+const workerScope = globalThis.self as DedicatedWorkerGlobalScope
 
 const sendResponse = (response: DialogueWorkerResponse) => workerScope.postMessage(response)
 const textExecutor = createTextGenerationExecutor({
   onProgress: (progress) => sendResponse({...progress, type: 'loading'}),
 })
 let suppressedTokenIds: Array<number> | undefined
-let nextRequestId = 0
-
-const createDeviceTarget = (modelId: TextModelId): DeviceTextGenerationTarget => ({
-  kind: 'device',
-  modelId,
-})
-
-const createGenerationFailure = (error: TextGenerationError) =>
-  new Error(error.detail ?? '대화문 모델을 실행하지 못했어요.')
-
-const createRequestId = () => {
-  const requestId = `dialogue-${nextRequestId}`
-  nextRequestId += 1
-  return requestId
-}
+const generation = createExclusiveAsyncTask()
+const createRequestId = createRequestSequence('dialogue')
 
 const prepareModel = async (modelId: TextModelId) => {
   const result = await textExecutor.prepare(createDeviceTarget(modelId))
   if (!result.ok) {
-    throw createGenerationFailure(result.error)
+    throw createGenerationFailure(result.error, '대화문 모델을 실행하지 못했어요.')
   }
 
   sendResponse({type: 'ready'})
@@ -53,14 +44,14 @@ const generateDirectAnswer = async (
 ) => {
   const preparation = await textExecutor.prepare(createDeviceTarget(modelId))
   if (!preparation.ok) {
-    throw createGenerationFailure(preparation.error)
+    throw createGenerationFailure(preparation.error, '대화문 모델을 실행하지 못했어요.')
   }
 
   sendResponse({type: 'started'})
   if (outputLanguage === 'ko') {
     const tokenizerResult = textExecutor.getTokenizer(createDeviceTarget(modelId))
     if (!tokenizerResult.ok) {
-      throw createGenerationFailure(tokenizerResult.error)
+      throw createGenerationFailure(tokenizerResult.error, '대화문 모델을 실행하지 못했어요.')
     }
 
     suppressedTokenIds ??= createForeignTokenIds(tokenizerResult.value)
@@ -89,7 +80,7 @@ const generateDirectAnswer = async (
     },
   )
   if (!result.ok) {
-    throw createGenerationFailure(result.error)
+    throw createGenerationFailure(result.error, '대화문 모델을 실행하지 못했어요.')
   }
 
   const output = result.value
@@ -101,8 +92,11 @@ const generateDirectAnswer = async (
 
 const handleRequest = (request: DialogueWorkerRequest): Promise<void> => {
   switch (request.type) {
-    case 'generate':
-      return generateDirectAnswer(request.modelId, request.outputLanguage ?? 'ko', request.request)
+    case 'generate': {
+      return generation.run(() =>
+        generateDirectAnswer(request.modelId, request.outputLanguage ?? 'ko', request.request),
+      )
+    }
     case 'prepare':
       return prepareModel(request.modelId)
   }

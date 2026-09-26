@@ -1,15 +1,18 @@
+import {type Preference, usePreference} from 'src/hooks/use-preference'
 import {type Accessor, createEffect, createMemo, createSignal, onCleanup, untrack} from 'solid-js'
 import {useEvent} from '@winter-love/solid-use/event'
+import {clamp} from 'es-toolkit/math'
 
 import {
   createInitialPlaybackState,
   createShuffleQueue,
   normalizeTrackIndex,
+  playlistPreference,
+  type PlaylistPreference,
   type PTrack,
   stopPPlayback,
   usePAudioVisualizer,
   usePPlaybackPersistence,
-  writePPlaylist,
 } from '../../features/focus-room-audio'
 import {usePlayerVolumeDucking} from '../../features/focus-room-dialogue'
 import type {MediaPlayerOptions, PlayerState, SelectTrackOptions} from './types'
@@ -46,6 +49,9 @@ export interface PlayerController extends PlayerState {
   readonly stop: Playback['stop']
 }
 
+const clampTrackIndex = (index: number, trackCount: number) =>
+  clamp(index, 0, Math.max(trackCount - 1, 0))
+
 /** 음악 목록, 곡 선택·반복·셔플 정책, 저장된 재생 위치 복원과 미리듣기를 조율한다. */
 // oxlint-disable-next-line eslint/max-lines-per-function, eslint/max-statements -- Transport, persistence, and lifecycle callbacks remain coordinated here; playlist queue mutations are extracted to create-player-queue-controller.
 export const usePlayerController = (props: UsePlayerControllerProps): PlayerController => {
@@ -53,14 +59,24 @@ export const usePlayerController = (props: UsePlayerControllerProps): PlayerCont
   const initialState = createInitialPlaybackState({trackCount: initialTracks.length})
   const [loadedTracks, setLoadedTracks] = createSignal<readonly PTrack[]>(initialTracks)
   const [isPlaylistLoading, setIsPlaylistLoading] = createSignal(props.tracks === undefined)
+  const [isPreparing, setIsPreparing] = createSignal(false)
   const tracks = () => props.tracks ?? loadedTracks()
-  const [currentIndex, setCurrentIndex] = createSignal(initialState.currentIndex)
+  const [currentIndexValue, setCurrentIndex] = createSignal(initialState.currentIndex)
+  const currentIndex = createMemo(() => clampTrackIndex(currentIndexValue(), tracks().length))
   const visualizer = usePAudioVisualizer()
   usePlayerVolumeDucking({
     isDialogueActive: () => props.isDialogueActive ?? false,
     onGainChange: visualizer.setOutputGain,
   })
   const currentTrack = createMemo(() => tracks()[currentIndex()])
+  createEffect(() => {
+    const currentIndexSnapshot = currentIndexValue()
+    const nextIndex = currentIndex()
+
+    if (nextIndex !== currentIndexSnapshot) {
+      setCurrentIndex(nextIndex)
+    }
+  })
   let destroyed = false
   let playbackRevision = 0
   let restartPlaybackPending = false
@@ -68,10 +84,14 @@ export const usePlayerController = (props: UsePlayerControllerProps): PlayerCont
   let playbackTransition: PlaybackTransition | null = null
   const shouldIgnoreNativePause = () =>
     getCurrentPlaybackTransition(playbackTransition, currentTrack()?.id)?.pauseProtected === true
+  const clearPlaybackTransition = () => {
+    playbackTransition = null
+    setIsPreparing(false)
+  }
   const playback = usePlayback({
     element: props.element,
     onError: (error) => {
-      playbackTransition = null
+      clearPlaybackTransition()
       cancelPendingRestart()
       visualizer.stop()
       playbackPersistence.persistPlaybackError()
@@ -79,7 +99,7 @@ export const usePlayerController = (props: UsePlayerControllerProps): PlayerCont
     },
     onPause: (wasPlaying, isUserIntent) => handlePause(wasPlaying, isUserIntent),
     onPauseRequest: (isUserIntent) => {
-      playbackTransition = null
+      clearPlaybackTransition()
       clearPendingRestart()
       if (isUserIntent) {
         playbackPersistence.persistPlaybackIntent(false)
@@ -90,13 +110,20 @@ export const usePlayerController = (props: UsePlayerControllerProps): PlayerCont
   })
   const {isPlaying} = playback
   const playbackPersistence = usePPlaybackPersistence({
+    currentIndex,
     currentTrack,
     getAudioElement: props.element,
     isPlaying,
   })
   const getPlaybackTransition = () => {
-    playbackTransition = getCurrentPlaybackTransition(playbackTransition, currentTrack()?.id)
-    return playbackTransition
+    const transition = getCurrentPlaybackTransition(playbackTransition, currentTrack()?.id)
+    if (transition === null) {
+      clearPlaybackTransition()
+      return null
+    }
+
+    playbackTransition = transition
+    return transition
   }
   const persistPlaybackTransition = () =>
     persistRestoredPlayback({
@@ -112,7 +139,7 @@ export const usePlayerController = (props: UsePlayerControllerProps): PlayerCont
     onRestart: () => restartCurrentTrack(),
     onSelect: (options) => selectTrack(options),
     onStop: () => {
-      playbackTransition = null
+      clearPlaybackTransition()
       playback.onPause()
     },
     trackCount: () => tracks().length,
@@ -125,8 +152,14 @@ export const usePlayerController = (props: UsePlayerControllerProps): PlayerCont
     }
     notifyError(error)
   }
+  const [savedPlaylist, setSavedPlaylist] = untrack(
+    (): Preference<PlaylistPreference> =>
+      props.tracks === undefined
+        ? usePreference({...playlistPreference, onError: handleStorageError})
+        : [() => null, () => undefined],
+  )
   const persistTrackQueue = (queue: readonly PTrack[]) => {
-    writePPlaylist(queue.map((track) => track.id)).catch(handleStorageError)
+    setSavedPlaylist({trackIds: queue.map((track) => track.id)})
   }
   const clearPendingRestart = () => {
     restartPlaybackPending = false
@@ -138,6 +171,7 @@ export const usePlayerController = (props: UsePlayerControllerProps): PlayerCont
   }
   const prepareTrackChange = (shouldResume: boolean, trackId: string) => {
     playbackTransition = shouldResume ? {pauseProtected: true, phase: 'loading', trackId} : null
+    setIsPreparing(shouldResume)
   }
   createEffect(() => {
     const currentIsPlaying = isPlaying()
@@ -187,9 +221,7 @@ export const usePlayerController = (props: UsePlayerControllerProps): PlayerCont
   }
   const queueController = createPlayerQueueController({
     cancelPendingRestart,
-    clearPlaybackTransition: () => {
-      playbackTransition = null
-    },
+    clearPlaybackTransition,
     isPlaying,
     isQueueControlled: () => props.tracks !== undefined,
     onPlaybackRevisionChange: () => {
@@ -223,7 +255,12 @@ export const usePlayerController = (props: UsePlayerControllerProps): PlayerCont
     }
 
     const nextTrack = trackList[nextIndex]
-    const nextPlayback = {isPlaying: shouldResume, positionSeconds: 0, trackId: nextTrack.id}
+    const nextPlayback = {
+      isPlaying: shouldResume,
+      positionSeconds: 0,
+      trackId: nextTrack.id,
+      trackIndex: nextIndex,
+    }
     cancelPendingRestart()
     prepareTrackChange(shouldResume, nextTrack.id)
     playback.invalidate()
@@ -233,15 +270,17 @@ export const usePlayerController = (props: UsePlayerControllerProps): PlayerCont
     playbackPersistence.writePlayback(nextPlayback)
     queueMicrotask(restorePendingPlayback)
   }
+  let previousTrackKey: string | null = null
   createEffect(() => {
     const track = currentTrack() ?? null
+    const trackKey = track === null ? null : JSON.stringify([track.id, track.source])
+    const currentTrackChanged = trackKey !== previousTrackKey
+    previousTrackKey = trackKey
     cancelPendingRestart()
-    const shouldResumeControlledTrack = untrack(
-      () =>
-        props.tracks !== undefined &&
-        isPlaying() &&
-        getCurrentPlaybackTransition(playbackTransition, track?.id) === null,
-    )
+    const shouldResumeControlledTrack = untrack(() => {
+      const transition = getPlaybackTransition()
+      return props.tracks !== undefined && currentTrackChanged && isPlaying() && transition === null
+    })
     if (track !== null && shouldResumeControlledTrack) {
       selectTrack({index: untrack(currentIndex), shouldResume: true})
     }
@@ -249,7 +288,7 @@ export const usePlayerController = (props: UsePlayerControllerProps): PlayerCont
   })
 
   const handlePlay = () => {
-    playbackTransition = null
+    clearPlaybackTransition()
     clearPendingRestart()
     previewPlayback.stopBeforePlayback()
 
@@ -263,7 +302,7 @@ export const usePlayerController = (props: UsePlayerControllerProps): PlayerCont
   }
 
   const handlePause = (wasPlaying: boolean, isUserIntent: boolean) => {
-    playbackTransition = null
+    clearPlaybackTransition()
     clearPendingRestart()
     if (wasPlaying) {
       playback.invalidate()
@@ -286,12 +325,17 @@ export const usePlayerController = (props: UsePlayerControllerProps): PlayerCont
     const track = currentTrack()
     const shouldWaitForPlay = track !== undefined && !isPlaying()
     restartPlaybackPending = shouldWaitForPlay
-    restartSeekPending = shouldWaitForPlay
-    playbackTransition = null
+    restartSeekPending = track !== undefined
+    clearPlaybackTransition()
     playback.seek(0)
     playbackRevision += 1
     if (track !== undefined) {
-      playbackPersistence.writePlayback({isPlaying: true, positionSeconds: 0, trackId: track.id})
+      playbackPersistence.writePlayback({
+        isPlaying: true,
+        positionSeconds: 0,
+        trackId: track.id,
+        trackIndex: currentIndex(),
+      })
     }
     playAudio()
   }
@@ -306,11 +350,11 @@ export const usePlayerController = (props: UsePlayerControllerProps): PlayerCont
 
     const transition = getPlaybackTransition()
     if (transition?.phase === 'restoring') {
-      const positionSeconds = readPlaybackPosition(props.element())
-      if (transition.seekPending && positionSeconds === transition.playback.positionSeconds) {
+      if (transition.seekPending) {
         return
       }
 
+      const positionSeconds = readPlaybackPosition(props.element())
       playbackTransition =
         positionSeconds === null
           ? null
@@ -320,8 +364,22 @@ export const usePlayerController = (props: UsePlayerControllerProps): PlayerCont
               playback: {...transition.playback, positionSeconds},
               seekPending: false,
             }
+    } else if (transition?.phase === 'loading' || transition?.phase === 'awaiting-metadata') {
+      const positionSeconds = readPlaybackPosition(props.element())
+      playbackPersistence.setPendingPosition(
+        positionSeconds === null
+          ? null
+          : {
+              isPlaying: true,
+              positionSeconds,
+              trackId: transition.trackId,
+              trackIndex: currentIndex(),
+            },
+      )
+      cancelPendingRestart()
+      return
     } else if (transition !== null) {
-      playbackTransition = null
+      clearPlaybackTransition()
     }
 
     cancelPendingRestart()
@@ -336,10 +394,10 @@ export const usePlayerController = (props: UsePlayerControllerProps): PlayerCont
     onRestore: queueController.initializePlayback,
     playbackRevision: () => playbackRevision,
     queueRevision: queueController.queueRevision,
+    savedPlaylist,
     tracks,
   })
 
-  const {window} = globalThis
   const persistCurrentPlayback = () => {
     if (restartPlaybackPending) {
       return
@@ -378,7 +436,7 @@ export const usePlayerController = (props: UsePlayerControllerProps): PlayerCont
         return
       }
 
-      playbackTransition = null
+      clearPlaybackTransition()
     }
 
     playbackPersistence.persistSeekedPlayback()
@@ -395,13 +453,13 @@ export const usePlayerController = (props: UsePlayerControllerProps): PlayerCont
     playbackPersistence.persistPlaybackProgress()
   }
 
-  if (typeof window !== 'undefined') {
-    useEvent(window, 'pagehide', persistCurrentPlayback)
+  if (typeof globalThis.addEventListener === 'function') {
+    useEvent(globalThis, 'pagehide', persistCurrentPlayback)
   }
 
   onCleanup(() => {
     if (props.stopOnUnmount) {
-      playbackTransition = null
+      clearPlaybackTransition()
       playback.stop()
       if (playbackRevision === 0) {
         stopPPlayback().catch(globalThis.reportError)
@@ -425,6 +483,7 @@ export const usePlayerController = (props: UsePlayerControllerProps): PlayerCont
     invalidate: playback.invalidate,
     isPlaying,
     isPlaylistLoading,
+    isPreparing,
     levels: visualizer.levels,
     markPauseIntent: playback.markPauseIntent,
     onEnded: order.handleEnded,

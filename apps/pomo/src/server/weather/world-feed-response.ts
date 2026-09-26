@@ -1,4 +1,4 @@
-import {parseWeatherLocationId} from 'src/features/weather'
+import {parseWeatherExpiryMs, parseWeatherLocationId} from 'src/features/weather'
 import {getWorldWeatherLocation} from './world-locations'
 import {
   getWorldWeatherFeedState,
@@ -6,9 +6,13 @@ import {
   type WorldWeatherFeedState,
   type WorldWeatherIngestionResult,
 } from './world-weather'
+import {
+  getWeatherRetryAfterSeconds,
+  weatherFeedSuccessResponse,
+  weatherNotFoundResponse,
+  weatherUnavailableResponse,
+} from './feed-http'
 
-const HTTP_NOT_FOUND = 404
-const HTTP_SERVICE_UNAVAILABLE = 503
 const MILLISECONDS_PER_SECOND = 1_000
 const UNEXPECTED_FAILURE_RETRY_SECONDS = 60
 
@@ -30,34 +34,20 @@ export const createWorldWeatherFeedResponse = async (
   try {
     locationId = parseWeatherLocationId(value)
   } catch {
-    return Response.json(
-      {code: 'weather_location_not_found'},
-      {headers: {'Cache-Control': 'no-store'}, status: HTTP_NOT_FOUND},
-    )
+    return weatherNotFoundResponse('weather_location_not_found')
   }
 
   const location = await getWorldWeatherLocation(locationId)
   if (location === undefined) {
-    return Response.json(
-      {code: 'weather_location_not_found'},
-      {headers: {'Cache-Control': 'no-store'}, status: HTTP_NOT_FOUND},
-    )
+    return weatherNotFoundResponse('weather_location_not_found')
   }
 
   const existingState = await getWorldWeatherFeedState(location, now)
   if (existingState.status === 'current') {
-    const maxAge = Math.max(
-      1,
-      Math.ceil(
-        (Date.parse(existingState.feed.expiresAt) - now.getTime()) / MILLISECONDS_PER_SECOND,
-      ),
-    )
-    return Response.json(existingState.feed, {
-      headers: {
-        'Cache-Control': `public, max-age=${maxAge}, s-maxage=${maxAge}`,
-        'X-Content-Type-Options': 'nosniff',
-      },
-    })
+    const expiry = parseWeatherExpiryMs(existingState.feed.expiresAt)
+    const maxAge = getWeatherRetryAfterSeconds(new Date(expiry ?? now.getTime()), now)
+    const feed = expiry === null ? {...existingState.feed, stale: true} : existingState.feed
+    return weatherFeedSuccessResponse(feed, maxAge)
   }
 
   let outcome: WorldWeatherFeedOutcome | undefined
@@ -93,44 +83,30 @@ export const createWorldWeatherFeedResponse = async (
     const retryAfterSeconds =
       outcome.retryAfter === undefined
         ? UNEXPECTED_FAILURE_RETRY_SECONDS
-        : Math.max(
-            1,
-            Math.ceil((outcome.retryAfter.getTime() - now.getTime()) / MILLISECONDS_PER_SECOND),
-          )
+        : getWeatherRetryAfterSeconds(outcome.retryAfter, now)
     const code =
       outcome.collectionStatus === 'collecting' ? 'weather_collecting' : 'weather_unavailable'
-    return Response.json(
-      {code},
-      {
-        headers: {'Cache-Control': 'no-store', 'Retry-After': retryAfterSeconds.toString()},
-        status: HTTP_SERVICE_UNAVAILABLE,
-      },
-    )
+    return weatherUnavailableResponse({code, retryAfterSeconds})
   }
 
   const retryAfterSeconds =
     outcome.retryAfter === undefined
-      ? Math.max(
-          1,
-          Math.ceil((Date.parse(outcome.feed.expiresAt) - now.getTime()) / MILLISECONDS_PER_SECOND),
+      ? getWeatherRetryAfterSeconds(
+          new Date(parseWeatherExpiryMs(outcome.feed.expiresAt) ?? now.getTime()),
+          now,
         )
-      : Math.max(
-          1,
-          Math.ceil((outcome.retryAfter.getTime() - now.getTime()) / MILLISECONDS_PER_SECOND),
-        )
-  return Response.json(
+      : getWeatherRetryAfterSeconds(outcome.retryAfter, now)
+  return weatherFeedSuccessResponse(
     {
       ...outcome.feed,
       expiresAt: new Date(
         now.getTime() + retryAfterSeconds * MILLISECONDS_PER_SECOND,
       ).toISOString(),
-      stale: outcome.retryAfter !== undefined || outcome.feed.stale,
+      stale:
+        outcome.retryAfter !== undefined ||
+        outcome.feed.stale ||
+        parseWeatherExpiryMs(outcome.feed.expiresAt) === null,
     },
-    {
-      headers: {
-        'Cache-Control': `public, max-age=${retryAfterSeconds}, s-maxage=${retryAfterSeconds}`,
-        'X-Content-Type-Options': 'nosniff',
-      },
-    },
+    retryAfterSeconds,
   )
 }

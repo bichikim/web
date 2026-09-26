@@ -1,28 +1,17 @@
 import {type WeatherFeed, type WeatherLocationId} from 'src/features/weather'
-import {type Database, getDatabase, withTransactionalDatabase} from '../database'
+
+import {type Database, getDatabase} from '../database'
+import {getLatestWeather, type WeatherTransaction} from '../repositories/weather'
+import {runWeatherCollection, type WeatherCollectionResult} from './collection-orchestrator'
+import {createCurrentWeather} from './create-current-weather'
 import {fetchOpenWeatherCurrent} from './openweather-client'
-import {
-  createCurrentWeather,
-  getLatestWeather,
-  getWeatherCollectionState,
-  lockWeatherCollection,
-  ownsWeatherCollectionLease,
-  recordWeatherCollectionFailure,
-  resetWeatherCollectionFailure,
-  saveWeather,
-  setWeatherCollectionLease,
-  type WeatherCollectionLease,
-  type WeatherTransaction,
-} from './repository'
-import {getPublicWeatherLocation, type WorldWeatherLocation} from './world-locations'
 import {reserveOpenWeatherRequest} from './provider-quota'
+import {getPublicWeatherLocation, type WorldWeatherLocation} from './world-locations'
 
 const WORLD_WEATHER_REFRESH_MINUTES = 30
 const MILLISECONDS_PER_MINUTE = 60_000
 export const WORLD_WEATHER_REFRESH_MILLISECONDS =
   WORLD_WEATHER_REFRESH_MINUTES * MILLISECONDS_PER_MINUTE
-const COLLECTION_LEASE_MILLISECONDS = 15_000
-const COLLECTION_POLL_MILLISECONDS = 2_000
 
 interface WorldWeatherFeedCurrentState {
   readonly feed: WeatherFeed
@@ -43,40 +32,7 @@ export type WorldWeatherFeedState =
   | WorldWeatherFeedMissingState
   | WorldWeatherFeedOutdatedState
 
-interface CompletedWorldWeatherIngestionResult {
-  readonly status: 'completed'
-}
-
-interface CurrentWorldWeatherIngestionResult {
-  readonly status: 'current'
-}
-
-interface RetryWorldWeatherIngestionResult {
-  readonly retryAfter: Date
-  readonly status: 'collecting' | 'cooldown'
-}
-
-interface FailedWorldWeatherIngestionResult {
-  readonly error: unknown
-  readonly retryAfter: Date
-  readonly status: 'failed'
-}
-
-export type WorldWeatherIngestionResult =
-  | CompletedWorldWeatherIngestionResult
-  | CurrentWorldWeatherIngestionResult
-  | FailedWorldWeatherIngestionResult
-  | RetryWorldWeatherIngestionResult
-
-interface AcquiredWorldWeatherCollection {
-  readonly lease: WeatherCollectionLease
-  readonly status: 'acquired'
-}
-
-type WorldWeatherCollectionClaim =
-  | AcquiredWorldWeatherCollection
-  | CurrentWorldWeatherIngestionResult
-  | RetryWorldWeatherIngestionResult
+export type WorldWeatherIngestionResult = WeatherCollectionResult
 
 const getCurrentCutoff = (now: Date): Date =>
   new Date(now.getTime() - WORLD_WEATHER_REFRESH_MILLISECONDS)
@@ -90,138 +46,39 @@ const hasCurrentWorldWeather = async (
   return record !== undefined && record.collectedAt.getTime() >= getCurrentCutoff(now).getTime()
 }
 
-const claimWorldWeatherCollection = async (
-  locationId: WeatherLocationId,
-  now: Date,
-): Promise<WorldWeatherCollectionClaim> =>
-  withTransactionalDatabase((database) =>
-    database.transaction(async (transaction) => {
-      await lockWeatherCollection(locationId, transaction)
-
-      if (await hasCurrentWorldWeather(locationId, now, transaction)) {
-        return {status: 'current'}
-      }
-
-      const collectionState = await getWeatherCollectionState(locationId, transaction)
-      if (
-        collectionState?.retryAfter !== null &&
-        collectionState?.retryAfter !== undefined &&
-        collectionState.retryAfter.getTime() > now.getTime()
-      ) {
-        return {retryAfter: collectionState.retryAfter, status: 'cooldown'}
-      }
-
-      if (
-        collectionState?.leaseExpiresAt !== null &&
-        collectionState?.leaseExpiresAt !== undefined &&
-        collectionState.leaseExpiresAt.getTime() > now.getTime()
-      ) {
-        return {
-          retryAfter: new Date(
-            Math.min(
-              now.getTime() + COLLECTION_POLL_MILLISECONDS,
-              collectionState.leaseExpiresAt.getTime(),
-            ),
-          ),
-          status: 'collecting',
-        }
-      }
-
-      const bucket = Math.floor(now.getTime() / WORLD_WEATHER_REFRESH_MILLISECONDS)
-      const lease = {
-        expiresAt: new Date(now.getTime() + COLLECTION_LEASE_MILLISECONDS),
-        key: `openweather-v1|${locationId}|${bucket}`,
-        token: crypto.randomUUID(),
-      }
-      await setWeatherCollectionLease(locationId, lease, now, transaction)
-      return {lease, status: 'acquired'}
-    }),
-  )
-
-const recordWorldWeatherFailure = async (
-  locationId: WeatherLocationId,
-  lease: WeatherCollectionLease,
-  failedAt: Date,
-  error: unknown,
-): Promise<FailedWorldWeatherIngestionResult | RetryWorldWeatherIngestionResult> =>
-  withTransactionalDatabase((database) =>
-    database.transaction(async (transaction) => {
-      await lockWeatherCollection(locationId, transaction)
-      if (!(await ownsWeatherCollectionLease(locationId, lease, transaction))) {
-        return {
-          retryAfter: new Date(failedAt.getTime() + COLLECTION_POLL_MILLISECONDS),
-          status: 'collecting',
-        }
-      }
-
-      const retryAfter = await recordWeatherCollectionFailure(locationId, failedAt, transaction)
-      return {error, retryAfter, status: 'failed'}
-    }),
-  )
-
-const saveWorldWeather = async (
-  locationId: WeatherLocationId,
-  lease: WeatherCollectionLease,
-  now: Date,
-  current: Awaited<ReturnType<typeof fetchOpenWeatherCurrent>>,
-): Promise<WorldWeatherIngestionResult> =>
-  withTransactionalDatabase((database) =>
-    database.transaction(async (transaction) => {
-      await lockWeatherCollection(locationId, transaction)
-      if (!(await ownsWeatherCollectionLease(locationId, lease, transaction))) {
-        return {
-          retryAfter: new Date(now.getTime() + COLLECTION_POLL_MILLISECONDS),
-          status: 'collecting',
-        }
-      }
-
-      try {
-        await transaction.transaction((savepoint) =>
-          saveWeather(
-            {
-              collectedAt: now,
-              humidityPercent: current.humidityPercent,
-              location: locationId,
-              precipitation: current.precipitation,
-              precipitationMillimeters: current.precipitationMillimeters,
-              sky: current.sky,
-              temperatureCelsius: current.temperatureCelsius,
-              weatherAt: current.observedAt,
-              windSpeedMetersPerSecond: current.windSpeedMetersPerSecond,
-            },
-            savepoint,
-          ),
-        )
-      } catch (error) {
-        const retryAfter = await recordWeatherCollectionFailure(locationId, now, transaction)
-        return {error, retryAfter, status: 'failed'}
-      }
-
-      await resetWeatherCollectionFailure(locationId, now, transaction)
-      return {status: 'completed'}
-    }),
-  )
-
 /** Collects one OpenWeather row for a registered fixed coordinate. */
 export const ingestWorldWeather = async (
   location: WorldWeatherLocation,
   now = new Date(),
 ): Promise<WorldWeatherIngestionResult> => {
-  const claim = await claimWorldWeatherCollection(location.id, now)
-  if (claim.status !== 'acquired') {
-    return claim
-  }
+  const bucket = Math.floor(now.getTime() / WORLD_WEATHER_REFRESH_MILLISECONDS)
 
-  try {
-    await reserveOpenWeatherRequest('current', now)
-    const current = await fetchOpenWeatherCurrent({
-      latitude: location.latitude,
-      longitude: location.longitude,
-    })
-    return saveWorldWeather(location.id, claim.lease, now, current)
-  } catch (error) {
-    return recordWorldWeatherFailure(location.id, claim.lease, now, error)
-  }
+  return runWeatherCollection({
+    collect: async () => {
+      await reserveOpenWeatherRequest('current', now)
+      const current = await fetchOpenWeatherCurrent({
+        latitude: location.latitude,
+        longitude: location.longitude,
+      })
+
+      return {
+        collectedAt: now,
+        humidityPercent: current.humidityPercent,
+        location: location.id,
+        precipitation: current.precipitation,
+        precipitationMillimeters: current.precipitationMillimeters,
+        sky: current.sky,
+        temperatureCelsius: current.temperatureCelsius,
+        weatherAt: current.observedAt,
+        windSpeedMetersPerSecond: current.windSpeedMetersPerSecond,
+      }
+    },
+    collectionKey: `openweather-v1|${location.id}|${bucket}`,
+    isCurrent: (transaction) => hasCurrentWorldWeather(location.id, now, transaction),
+    locationId: location.id,
+    now,
+    saveFailure: 'propagate',
+  })
 }
 
 const createWorldWeatherFeed = (

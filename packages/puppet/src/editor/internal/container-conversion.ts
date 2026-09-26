@@ -9,6 +9,7 @@ import {getDeformerBounds} from './deformer-bounds'
 import {createDeformerControlPoints} from './grid-control-points'
 import {isSceneNodeLocked, removeParameterDeformerTargets} from './scene-graph'
 import {collectPartIds, findNode, updateNode} from './scene-tree'
+import {createSpatialSurface} from './create-spatial-surface'
 
 export type SceneContainerConversionTarget =
   | 'deformer'
@@ -17,6 +18,7 @@ export type SceneContainerConversionTarget =
   | 'bone'
   | 'pin'
   | 'rotation'
+  | 'spatial'
 
 export interface SceneContainerConversion {
   readonly nodeIds: ReadonlyArray<string>
@@ -68,13 +70,15 @@ export const getContainerKind = (node: PuppetSceneNode): SceneContainerConversio
   node.kind === 'deformer'
     ? node.deformerType === 'rotation'
       ? 'rotation'
-      : node.pins === undefined
-        ? node.boneRestPoints === undefined
-          ? node.curveAxis === undefined
-            ? 'deformer'
-            : 'curve'
-          : 'bone'
-        : 'pin'
+      : node.deformerType === 'spatial'
+        ? 'spatial'
+        : node.pins === undefined
+          ? node.boneRestPoints === undefined
+            ? node.curveAxis === undefined
+              ? 'deformer'
+              : 'curve'
+            : 'bone'
+          : 'pin'
     : 'group'
 
 const convertContainer = (
@@ -94,6 +98,17 @@ const convertContainer = (
     return base
   }
   const {bounds} = base
+  if (targetKind === 'spatial') {
+    return {
+      ...base,
+      deformerType: 'spatial',
+      spatialOrigin: [bounds.x + bounds.width / 2, bounds.y + bounds.height / 2, 0],
+      spatialRotation: [0, 0, 0],
+      spatialRotationParameterIds: [null, null, null],
+      spatialScale: [1, 1, 1],
+      spatialTranslation: [0, 0, 0],
+    }
+  }
   if (targetKind === 'pin') {
     const x = bounds.x + bounds.width / 2
     const y = bounds.y + bounds.height / 2
@@ -101,7 +116,7 @@ const convertContainer = (
       ...base,
       columns: 1,
       controlPoints: [x, y],
-      pins: [{radius: Math.max(bounds.width, bounds.height) / 2, x, strength: 1, y}],
+      pins: [{radius: Math.max(bounds.width, bounds.height) / 2, strength: 1, x, y}],
       rotationOrigin: undefined,
       rows: 1,
     }
@@ -120,8 +135,8 @@ const convertContainer = (
     boneRestPoints: rigid ? controlPoints : undefined,
     columns: 1,
     controlPoints,
-    deformerType: targetKind === 'rotation' ? 'rotation' : undefined,
     curveAxis: targetKind === 'curve' ? axis : undefined,
+    deformerType: targetKind === 'rotation' ? 'rotation' : undefined,
     rotationOrigin: undefined,
     rows: 1,
   }
@@ -157,7 +172,30 @@ export const convertSceneContainers = (
     )
   }
 
-  const document = {...options.document, scene: {...scene, roots}}
+  const spatialNodes = nodes.filter((node) => getContainerKind(node) === 'spatial')
+  const spatialPartIds = new Map<string, string>()
+  if (options.targetKind === 'spatial') {
+    for (const node of nodes) {
+      const childIds = new Set<string>()
+      collectPartIds(node, childIds)
+      for (const id of childIds) {
+        spatialPartIds.set(id, node.id)
+      }
+    }
+  }
+  const document = {
+    ...options.document,
+    parts: options.document.parts.map((part) => {
+      const groupId = spatialPartIds.get(part.id)
+      if (groupId !== undefined) {
+        return {...part, spatial: {...(part.spatial ?? createSpatialSurface(part)), groupId}}
+      }
+      return spatialNodes.some((node) => part.spatial?.groupId === node.id)
+        ? {...part, spatial: undefined}
+        : part
+    }),
+    scene: {...scene, roots},
+  }
   return removeParameterDeformerTargets(
     document,
     new Set(nodes.filter((node) => node.kind === 'deformer').map((node) => node.id)),

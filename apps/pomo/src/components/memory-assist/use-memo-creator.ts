@@ -32,6 +32,7 @@ export const useMemoCreator = (): MemoCreator => {
   const [isOpen, setIsOpen] = createSignal(false)
   const [message, setMessage] = createSignal<string | null>(null)
   const [text, setText] = createSignal('')
+  const [reminderDateReference, setReminderDateReference] = createSignal(new Date())
   const [reminderDraft, setReminderDraft] = createSignal(
     createReminderDraft({exactReminderAt: null, now: new Date(), recallMode: 'none'}),
   )
@@ -49,6 +50,9 @@ export const useMemoCreator = (): MemoCreator => {
 
   const changeReminder = (nextReminderDraft: ReminderDraft) => {
     draftRevision += 1
+    if (nextReminderDraft.reminderDay !== reminderDraft().reminderDay) {
+      setReminderDateReference(new Date())
+    }
     setReminderDraft(nextReminderDraft)
     persistCreationDraft(text(), nextReminderDraft)
   }
@@ -56,6 +60,7 @@ export const useMemoCreator = (): MemoCreator => {
   const changeOpen = (nextOpen: boolean) => {
     if (nextOpen) {
       draftRevision += 1
+      setReminderDateReference(new Date())
       setMessage(null)
     }
     setIsOpen(nextOpen)
@@ -91,7 +96,7 @@ export const useMemoCreator = (): MemoCreator => {
           currentDraft.reminderDay,
           currentDraft.customDate,
           currentDraft.reminderTime,
-          now,
+          currentDraft.reminderDay === 'tomorrow' ? now : reminderDateReference(),
         )
       : null
 
@@ -118,7 +123,9 @@ export const useMemoCreator = (): MemoCreator => {
     })
 
     try {
-      await updateMemoryMemos((currentMemos) => [memo, ...currentMemos])
+      await updateMemoryMemos((currentMemos) =>
+        savedRevision === draftRevision ? [memo, ...currentMemos] : currentMemos,
+      )
       if (savedRevision !== draftRevision) {
         return
       }
@@ -131,9 +138,7 @@ export const useMemoCreator = (): MemoCreator => {
       setIsOpen(false)
     } catch (error: unknown) {
       console.error('Failed to save a memory memo.', error)
-      if (savedRevision === draftRevision) {
-        setMessage(m.memory_memo_save_failed())
-      }
+      setMessage(m.memory_memo_save_failed())
     }
   }
 

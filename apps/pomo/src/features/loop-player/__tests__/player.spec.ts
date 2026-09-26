@@ -3,6 +3,9 @@ import {createLoopPlayer} from '../player'
 
 const media: Media[] = []
 const gains: ReturnType<typeof gain>[] = []
+let deferContextResume = false
+let releaseContextResume: (() => void) | undefined
+
 function gain() {
   return {
     connect: vi.fn(),
@@ -11,14 +14,17 @@ function gain() {
       cancelScheduledValues: vi.fn(),
       linearRampToValueAtTime: vi.fn(),
       setValueAtTime: vi.fn(),
+      value: 1,
     },
   }
 }
 class Media {
+  crossOrigin = ''
   duration = 120
   currentTime = 0
   paused = true
   preload = ''
+  src = ''
   ontimeupdate: (() => void) | null = null
   onended: (() => void) | null = null
   onerror: (() => void) | null = null
@@ -40,13 +46,19 @@ beforeEach(() => {
   vi.useFakeTimers()
   media.length = 0
   gains.length = 0
+  const resumeGate = Promise.withResolvers<void>()
+  releaseContextResume = resumeGate.resolve
   vi.stubGlobal('Audio', Media)
   vi.stubGlobal(
     'AudioContext',
     class {
       currentTime = 10
       destination = {}
-      resume = vi.fn(async () => {})
+      resume = vi.fn(async () => {
+        if (deferContextResume) {
+          await resumeGate.promise
+        }
+      })
       close = close
       createGain() {
         const node = gain()
@@ -60,13 +72,32 @@ beforeEach(() => {
   )
 })
 afterEach(() => {
+  deferContextResume = false
+  releaseContextResume = undefined
   vi.useRealTimers()
   vi.unstubAllGlobals()
   vi.clearAllMocks()
 })
+
+it('should request media playback before awaiting an audio-context resume', async () => {
+  deferContextResume = true
+  const player = createLoopPlayer('blob:audio', vi.fn(), vi.fn())
+
+  const playRequest = player.play()
+  await Promise.resolve()
+
+  expect(media[0].play).toHaveBeenCalledOnce()
+
+  releaseContextResume?.()
+  await playRequest
+  await player.close()
+})
+
 it('should start the next copy at zero and crossfade both gains over four seconds', async () => {
   const status = vi.fn()
   const player = createLoopPlayer('blob:audio', status, vi.fn())
+  expect(media.every((item) => item.crossOrigin === 'anonymous')).toBe(true)
+  expect(media.every((item) => item.src === 'blob:audio')).toBe(true)
   await player.play()
   media[0].currentTime = 116
   media[0].ontimeupdate?.()
@@ -84,7 +115,17 @@ it('should start the next copy at zero and crossfade both gains over four second
   expect(media[0].play).toHaveBeenCalledTimes(2)
   await player.close()
 })
-it('should preview immediately before the overlap and stop all scheduled work', async () => {
+it('should apply a master volume without changing the crossfade gains', async () => {
+  const player = createLoopPlayer('blob:audio', vi.fn(), vi.fn())
+
+  player.setVolume(0.35)
+
+  expect(gains[0].gain.value).toBe(1)
+  expect(gains[1].gain.value).toBe(1)
+  expect(gains[2].gain.setValueAtTime).toHaveBeenCalledWith(0.35, 10)
+  await player.close()
+})
+it('should preview immediately before the connection and stop all scheduled work', async () => {
   const player = createLoopPlayer('blob:audio', vi.fn(), vi.fn())
   await player.play(8, true)
   expect(media[0].currentTime).toBe(111)
@@ -95,13 +136,13 @@ it('should preview immediately before the overlap and stop all scheduled work', 
   await player.close()
   expect(close).toHaveBeenCalledOnce()
 })
-it.each([0, -1, 61, NaN, Infinity])('should reject invalid overlap %s', async (seconds) => {
+it.each([0, -1, 61, NaN, Infinity])('should reject invalid connection %s', async (seconds) => {
   const player = createLoopPlayer('blob:audio', vi.fn(), vi.fn())
   await expect(player.play(seconds)).rejects.toThrow()
   expect(media[0].play).not.toHaveBeenCalled()
   await player.close()
 })
-it('should stop both copies and report a rejected overlap playback', async () => {
+it('should stop both copies and report a rejected connection playback', async () => {
   const status = vi.fn()
   const player = createLoopPlayer('blob:audio', status, vi.fn())
   await player.play()
@@ -176,7 +217,7 @@ it('should ignore time updates and ended events after stopping', async () => {
   await player.close()
 })
 
-it('should continue a short overlap when time updates miss its transition window', async () => {
+it('should continue a short connection when time updates miss its transition window', async () => {
   const status = vi.fn()
   const player = createLoopPlayer('blob:audio', status, vi.fn())
   await player.play(0.1)

@@ -15,16 +15,29 @@ type TextModelDownloadWorkerResponse =
   | TextGenerationLoadingResponse
   | TextGenerationReadyResponse
 
-const workerScope = self as DedicatedWorkerGlobalScope
+const workerScope = globalThis.self as DedicatedWorkerGlobalScope
 const sendResponse = (response: TextModelDownloadWorkerResponse) =>
   workerScope.postMessage(response)
-const createTextExecutor = () =>
-  createTextGenerationExecutor({
+const textExecutors = new Map<
+  PrepareTextModelRequest['modelId'],
+  ReturnType<typeof createTextGenerationExecutor>
+>()
+
+const getTextExecutor = (modelId: PrepareTextModelRequest['modelId']) => {
+  const current = textExecutors.get(modelId)
+  if (current !== undefined) {
+    return current
+  }
+
+  const executor = createTextGenerationExecutor({
     onProgress: (progress) => sendResponse({...progress, type: 'loading'}),
   })
+  textExecutors.set(modelId, executor)
+  return executor
+}
 
 const prepareModel = async (request: PrepareTextModelRequest) => {
-  const textExecutor = createTextExecutor()
+  const textExecutor = getTextExecutor(request.modelId)
   const result = await textExecutor.prepare({kind: 'device', modelId: request.modelId})
   if (!result.ok) {
     throw new Error(result.error.detail ?? '모델 파일을 내려받지 못했어요.')
