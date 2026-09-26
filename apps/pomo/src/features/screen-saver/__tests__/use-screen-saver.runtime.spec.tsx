@@ -10,6 +10,24 @@ import {useScreenSaver} from '../use-screen-saver'
 const native = vi.hoisted(() => ({getItem: vi.fn(), setItem: vi.fn()}))
 vi.mock('@apps-in-toss/web-framework', () => ({Storage: native}))
 
+const readStoredDelay = (serialized: string | null | undefined) => {
+  if (serialized === null || serialized === undefined) {
+    return null
+  }
+
+  const value: unknown = JSON.parse(serialized)
+  if (typeof value === 'string') {
+    return value
+  }
+
+  return typeof value === 'object' &&
+    value !== null &&
+    'delay' in value &&
+    typeof value.delay === 'string'
+    ? value.delay
+    : null
+}
+
 afterEach(() => {
   cleanup()
   vi.restoreAllMocks()
@@ -27,7 +45,7 @@ it.each(['pending', 'completed'] as const)(
     const completion = Promise.withResolvers<void>()
     native.getItem.mockImplementation(async () => stored)
     native.setItem.mockImplementation(async (_key: string, value: string) => {
-      if (value === '"off"') {
+      if (readStoredDelay(value) === 'off') {
         await completion.promise
       }
       stored = value
@@ -51,12 +69,14 @@ it.each(['pending', 'completed'] as const)(
     })
 
     current!.onDelayChange('off')
-    await vi.waitFor(() =>
-      expect(native.setItem).toHaveBeenCalledWith('pomo:screen-saver-delay:v1', '"off"'),
-    )
+    await vi.waitFor(() => {
+      const saved = native.setItem.mock.lastCall
+      expect(saved?.[0]).toBe('pomo:screen-saver-delay:v1')
+      expect(readStoredDelay(saved?.[1])).toBe('off')
+    })
     if (phase === 'completed') {
       completion.resolve()
-      await vi.waitFor(() => expect(stored).toBe('"off"'))
+      await vi.waitFor(() => expect(readStoredDelay(stored)).toBe('off'))
     }
     expect(current!.delay()).toBe('off')
     setVisible(false)
@@ -64,13 +84,13 @@ it.each(['pending', 'completed'] as const)(
     setVisible(true)
     expect(current!.delay()).toBe('off')
     completion.resolve()
-    await vi.waitFor(() => expect(stored).toBe('"off"'))
+    await vi.waitFor(() => expect(readStoredDelay(stored)).toBe('off'))
     await vi.waitFor(() => expect(localStorage.getItem('pomo:screen-saver-delay:v1')).toBeNull())
     first.unmount()
     const restored = renderHook(() => useScreenSaver(), {wrapper: PreferenceProvider})
     await vi.waitFor(() => expect(native.getItem).toHaveBeenCalled())
     await vi.waitFor(() => {
-      expect(localStorage.getItem('pomo:screen-saver-delay:v1')).toBe('"off"')
+      expect(readStoredDelay(localStorage.getItem('pomo:screen-saver-delay:v1'))).toBe('off')
       expect(restored.result.delay()).toBe('off')
     })
   },

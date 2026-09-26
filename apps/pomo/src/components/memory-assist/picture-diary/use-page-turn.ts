@@ -1,3 +1,4 @@
+import {clampUnit} from 'src/utils/clamp-unit'
 import {
   type Accessor,
   batch,
@@ -7,6 +8,7 @@ import {
   type Setter,
   untrack,
 } from 'solid-js'
+import {clamp} from 'es-toolkit/math'
 
 import {
   createBrowserTurnEnvironment,
@@ -317,7 +319,7 @@ class PictureDiaryPageTurnMachine {
     return {
       x:
         clientX - metrics.left - (metrics.compact && direction === 'newer' ? 0 : metrics.pageWidth),
-      y: Math.max(0, Math.min(metrics.height, clientY - metrics.top)),
+      y: clamp(clientY - metrics.top, 0, metrics.height),
     }
   }
 
@@ -386,7 +388,7 @@ class PictureDiaryPageTurnMachine {
         return
       }
       startTime ??= time
-      const linearProgress = Math.min(1, (time - startTime) / PAGE_TURN_DURATION)
+      const linearProgress = clampUnit((time - startTime) / PAGE_TURN_DURATION)
       const progress = easeOutCubic(linearProgress)
       this.setFoldView(
         animation.currentGesture,

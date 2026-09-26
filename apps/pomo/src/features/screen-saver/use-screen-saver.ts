@@ -2,7 +2,7 @@ import {createEffect, createSignal, onCleanup, onMount} from 'solid-js'
 import {useEvent} from '@winter-love/solid-use/event'
 
 import {usePreference} from 'src/hooks/use-preference'
-import type {PreferenceStorage} from 'src/utils/preference-storage'
+import {createParsedPreferenceStorage} from '../parsed-preference-storage'
 import {getMonotonicTime} from 'src/utils/get-monotonic-time'
 
 import {
@@ -20,13 +20,12 @@ import {
 
 const ACTIVITY_THROTTLE_MILLISECONDS = 500
 
-const screenSaverStorage: PreferenceStorage = {
+const screenSaverStorage = createParsedPreferenceStorage({
+  invalidMessage: 'Invalid screen saver delay.',
+  parse: parseScreenSaverDelay,
   read: () => readScreenSaverDelay(),
-  write: (_key, value) => {
-    const delay = parseScreenSaverDelay(value)
-    return delay === null ? new Error('Invalid screen saver delay.') : writeScreenSaverDelay(delay)
-  },
-}
+  write: (value) => writeScreenSaverDelay(value),
+})
 
 /** Tracks user inactivity and shares the persisted screen saver preference. */
 export const useScreenSaver = (): ScreenSaverController => {
@@ -42,7 +41,7 @@ export const useScreenSaver = (): ScreenSaverController => {
   const [activityRevision, setActivityRevision] = createSignal(0)
   let lastActivityTime = Number.NEGATIVE_INFINITY
 
-  const delay = () => storedDelay() ?? 'off'
+  const delay = () => storedDelay() ?? DEFAULT_SCREEN_SAVER_DELAY
 
   const recordActivity = () => {
     const wasActive = isActive()
@@ -85,12 +84,18 @@ export const useScreenSaver = (): ScreenSaverController => {
     useEvent(globalThis.document, 'visibilitychange', handleVisibilityChange)
 
     createEffect(() => {
-      const currentDelay = delay()
+      const currentDelay = storedDelay()
       const isVisible = isDocumentVisible()
       activityRevision()
+
+      if (!isVisible || currentDelay === null) {
+        setIsActive(false)
+        return
+      }
+
       const delayMilliseconds = getScreenSaverDelayMilliseconds(currentDelay)
 
-      if (!isVisible || delayMilliseconds === null) {
+      if (delayMilliseconds === null) {
         setIsActive(false)
         return
       }

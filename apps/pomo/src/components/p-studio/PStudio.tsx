@@ -1,11 +1,27 @@
+import {getDocument} from '@winter-love/utils'
 import {visibilityInterval} from 'src/utils/visibility-interval'
+import {visibility} from 'src/utils/visibility'
 import * as m from '@paraglide/message'
 import {useStudioTourHint} from './use-studio-tour-hint'
 import {useUiAutoHide} from 'src/features/ui-auto-hide'
 import {useStudioDesktopSceneSettings} from './use-studio-desktop-scene-settings'
-import {type BackgroundController, useBackground} from '../../features/background'
+import {
+  type BackgroundController,
+  type BackgroundPreferences,
+  useBackground,
+} from '../../features/background'
 import {Player as FramePlayer} from '../frame/Player'
-import {createMemo, createSignal, onCleanup, onMount, type Setter, Show} from 'solid-js'
+import {
+  createEffect,
+  createMemo,
+  createSignal,
+  Match,
+  onCleanup,
+  onMount,
+  type Setter,
+  Show,
+  Switch,
+} from 'solid-js'
 
 import {
   getPScene,
@@ -34,14 +50,21 @@ import {
 import {getLocalizedSceneLabel} from '../../features/localization'
 import {
   getAutomaticScenePeriod,
+  getNextScenePeriodChange,
   resolveScenePeriod,
   type ScenePeriod,
   type SceneTimeMode,
 } from '../../features/focus-room-time'
 import {usePSay} from '../../features/pomo-webmcp'
 import {useWeather, type WeatherSceneCondition} from '../../features/weather'
-import {useDesktopMode, useDesktopSafeAreaTop} from '../../features/desktop-mode'
+import {
+  synchronizeDesktopBackground,
+  useDesktopMode,
+  useDesktopSafeAreaTop,
+  useWebsiteBackgroundInteraction,
+} from '../../features/desktop-mode'
 import {PEntry} from './Entry'
+import {DesktopWallpaperEventActionBridge} from './DesktopWallpaperEventActionBridge'
 import {resolvePSceneViseme} from '../pomo-scene-options'
 import {PSceneFallback} from './SceneFallback'
 import {SceneModelDownloadFallback} from './ModelDownloadFallback'
@@ -133,45 +156,74 @@ interface StudioSceneViewProps {
   readonly sceneGaze: PGaze
   readonly sceneStyle: PSceneStyle
   readonly time: SceneTime
-  readonly weatherCondition: WeatherSceneCondition
+  readonly weatherCondition?: WeatherSceneCondition
   readonly isReady: boolean
   readonly styleReady: boolean
+  readonly websiteBackgroundInteraction?: ReturnType<typeof useWebsiteBackgroundInteraction>
 }
+
+const shouldRenderCharacterScene = (preferences: BackgroundPreferences): boolean =>
+  preferences.mode === 'character' ||
+  (preferences.mode === 'website' &&
+    (import.meta.env.VITE_POMO_IS_DESKTOP !== 'true' || preferences.websiteUrl === null))
 
 const StudioSceneView = (props: StudioSceneViewProps) => (
   <Show when={props.background.ready() || props.background.error() !== null}>
-    <Show
-      when={props.background.preferences().mode === 'character'}
-      fallback={<FramePlayer background={props.background} />}
-    >
-      <figure
-        aria-label={props.scene.label}
-        class="pomo-scene relative m-0 h-full w-full overflow-hidden bg-background"
-        role="img"
+    <Switch fallback={<FramePlayer background={props.background} />}>
+      <Match when={shouldRenderCharacterScene(props.background.preferences())}>
+        <figure
+          aria-label={props.scene.label}
+          class="pomo-scene relative m-0 h-full w-full overflow-hidden bg-background"
+          role="img"
+        >
+          <Show when={!props.hasSceneRendered && !props.isDesktopWallpaper}>
+            <PSceneFallback />
+          </Show>
+          <Show when={props.isReady && props.styleReady}>
+            <PStudioScene
+              activity={props.activity}
+              depthSource={props.scene.depthSource}
+              gaze={props.sceneGaze}
+              interactive={!props.isDesktopWallpaper}
+              motionInput={props.motionInput}
+              motionMode={props.motionMode}
+              onLoadingChange={props.onLoadingChange}
+              onMotionInputChange={props.onMotionInputChange}
+              source={props.scene.source}
+              sceneId={props.scene.id}
+              sceneStyle={props.sceneStyle}
+              time={props.time}
+              viseme={props.activeViseme}
+              weatherCondition={props.weatherCondition}
+            />
+          </Show>
+        </figure>
+      </Match>
+      <Match when={props.background.preferences().mode === 'frame'}>
+        <FramePlayer background={props.background} />
+      </Match>
+      <Match
+        when={
+          import.meta.env.VITE_POMO_IS_DESKTOP === 'true' &&
+          props.background.preferences().mode === 'website' &&
+          props.background.preferences().websiteUrl !== null
+        }
       >
-        <Show when={!props.hasSceneRendered && !props.isDesktopWallpaper}>
-          <PSceneFallback />
-        </Show>
-        <Show when={props.isReady && props.styleReady}>
-          <PStudioScene
-            activity={props.activity}
-            depthSource={props.scene.depthSource}
-            gaze={props.sceneGaze}
-            interactive={!props.isDesktopWallpaper}
-            motionInput={props.motionInput}
-            motionMode={props.motionMode}
-            onLoadingChange={props.onLoadingChange}
-            onMotionInputChange={props.onMotionInputChange}
-            source={props.scene.source}
-            sceneId={props.scene.id}
-            sceneStyle={props.sceneStyle}
-            time={props.time}
-            viseme={props.activeViseme}
-            weatherCondition={props.weatherCondition}
-          />
-        </Show>
-      </figure>
-    </Show>
+        <div
+          class="pointer-events-auto absolute inset-0 bg-transparent"
+          onClick={(event) => props.websiteBackgroundInteraction?.handleClick(event)}
+          onContextMenu={(event) => props.websiteBackgroundInteraction?.handleContextMenu(event)}
+          onPointerCancel={(event) =>
+            props.websiteBackgroundInteraction?.handlePointerCancel(event)
+          }
+          onPointerDown={(event) => props.websiteBackgroundInteraction?.handlePointerDown(event)}
+          onPointerLeave={(event) => props.websiteBackgroundInteraction?.handlePointerLeave(event)}
+          onPointerMove={(event) => props.websiteBackgroundInteraction?.handlePointerMove(event)}
+          onPointerUp={(event) => props.websiteBackgroundInteraction?.handlePointerUp(event)}
+          onWheel={(event) => props.websiteBackgroundInteraction?.handleWheel(event)}
+        />
+      </Match>
+    </Switch>
   </Show>
 )
 
@@ -182,24 +234,62 @@ interface StudioRuntimeOptions {
   readonly setMotionInput: Setter<PSceneMotionInput>
 }
 
+const useAutomaticScenePeriodRefresh = (setAutomaticPeriod: Setter<ScenePeriod>) => {
+  let periodChangeTimeout: ReturnType<typeof globalThis.setTimeout> | null = null
+  const clearPeriodChangeTimeout = () => {
+    if (periodChangeTimeout === null) {
+      return
+    }
+
+    globalThis.clearTimeout(periodChangeTimeout)
+    periodChangeTimeout = null
+  }
+  const refreshAutomaticPeriod = () => {
+    const now = new Date()
+    setAutomaticPeriod(getAutomaticScenePeriod(now))
+    clearPeriodChangeTimeout()
+
+    if (getDocument()?.hidden !== false) {
+      return
+    }
+
+    const nextPeriodChange = getNextScenePeriodChange(now)
+
+    periodChangeTimeout = globalThis.setTimeout(() => {
+      periodChangeTimeout = null
+      refreshAutomaticPeriod()
+    }, nextPeriodChange.getTime() - now.getTime())
+  }
+  const stopPeriodRefresh = visibilityInterval({
+    callback: refreshAutomaticPeriod,
+    interval: AUTOMATIC_PERIOD_REFRESH,
+    runOnVisible: true,
+  })
+  const stopBoundaryVisibilityWatch = visibility((isHidden) => {
+    if (isHidden) {
+      clearPeriodChangeTimeout()
+    }
+  })
+
+  onCleanup(() => {
+    stopPeriodRefresh()
+    stopBoundaryVisibilityWatch()
+    clearPeriodChangeTimeout()
+  })
+
+  refreshAutomaticPeriod()
+}
+
 const useStudioRuntime = (options: StudioRuntimeOptions) => {
   onMount(() => {
     const gyroscopeAvailable = supportsPSceneGyroscope()
-    const updateAutomaticPeriod = () =>
-      options.setAutomaticPeriod(getAutomaticScenePeriod(new Date()))
-    const stopPeriodRefresh = visibilityInterval({
-      callback: updateAutomaticPeriod,
-      interval: AUTOMATIC_PERIOD_REFRESH,
-      runOnVisible: true,
-    })
     options.entry.restore()
     options.setCanUseGyroscope(gyroscopeAvailable)
     if (gyroscopeAvailable) {
       options.setMotionInput('gyroscope')
     }
 
-    updateAutomaticPeriod()
-    onCleanup(stopPeriodRefresh)
+    useAutomaticScenePeriodRefresh(options.setAutomaticPeriod)
   })
 }
 
@@ -280,7 +370,9 @@ const StudioUi = (props: StudioUiProps) => (
             props.displayPreferences.isReady() && props.displayPreferences.pomodoroVisible()
           }
           playerVisible={
-            props.displayPreferences.isReady() && props.displayPreferences.playerVisible()
+            props.displayPreferences.isReady()
+              ? props.displayPreferences.playerVisible()
+              : undefined
           }
           dialogueComposerVisible={props.displayPreferences.dialogueComposerVisible()}
           isPlayerExpanded={props.isPlayerExpanded}
@@ -374,6 +466,7 @@ export const PStudio = () => {
   const screenSaver = useStudioScreenSaver()
   const weather = useWeather()
   const desktopMode = useDesktopMode({isSurfaceOwner: true})
+  const websiteBackgroundInteraction = useWebsiteBackgroundInteraction()
   const isDesktopWallpaper = createMemo(() => desktopMode.mode() === 'desktop')
   const isDesktopWidget = createMemo(() => desktopMode.mode() === 'widget')
   const desktopSafeAreaTop = useDesktopSafeAreaTop(desktopMode.mode)
@@ -407,6 +500,17 @@ export const PStudio = () => {
   )
   const activeViseme = useStudioViseme(events, pomoSay)
   const tourHint = useStudioTourHint(entry.enter, () => tour.setIsOpen(true))
+  const backgroundContent = createMemo(() => {
+    const preferences = background.preferences()
+    return preferences.mode === 'website' ? preferences.websiteUrl : preferences.mode
+  })
+  createEffect(() => {
+    background.ready()
+    backgroundContent()
+    if (import.meta.env.VITE_POMO_IS_DESKTOP === 'true' && desktopMode.mode() === 'normal') {
+      synchronizeDesktopBackground().catch(() => undefined)
+    }
+  })
   useStudioRuntime({entry, setAutomaticPeriod, setCanUseGyroscope, setMotionInput})
   return (
     <section
@@ -435,6 +539,7 @@ export const PStudio = () => {
         sceneStyle={style.sceneStyle()}
         styleReady={style.isReady()}
         time={time()}
+        websiteBackgroundInteraction={websiteBackgroundInteraction}
         weatherCondition={weather.sceneCondition()}
       />
       <Show when={!isDesktopWallpaper()}>
@@ -463,6 +568,9 @@ export const PStudio = () => {
           uiAutoHide={uiAutoHide}
           weather={weather}
         />
+      </Show>
+      <Show when={isDesktopWallpaper()}>
+        <DesktopWallpaperEventActionBridge />
       </Show>
       <Show when={import.meta.env.VITE_POMO_IS_DESKTOP === 'true' && isDesktopWidget()}>
         <DesktopSurfaceHandle

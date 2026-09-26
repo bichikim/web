@@ -76,6 +76,20 @@ describe('EditorKeyformPanel', () => {
     expect(onKeyformSelect).toHaveBeenCalledWith('angle-xy', [30, 30])
   })
 
+  test('should show the binding purpose separately from its parameter axis names', () => {
+    const document = createDemoDocument()
+    const bindings = (document.parameterBindings ?? []).map((binding) =>
+      binding.id === 'angle-xy' ? {...binding, name: 'Face direction 2D'} : binding,
+    )
+    const view = render(() => (
+      <EditorKeyformPanel bindings={bindings} parameters={document.parameters ?? []} />
+    ))
+
+    expect(view.getByText('Face direction 2D')).toBeVisible()
+    expect(view.getByRole('button', {name: 'Angle X'})).toBeVisible()
+    expect(view.getByRole('button', {name: 'Angle Y'})).toBeVisible()
+  })
+
   test('should expose independent numeric inputs for both axes', () => {
     const document = createDemoDocument()
     const onValueChange = vi.fn()
@@ -99,6 +113,26 @@ describe('EditorKeyformPanel', () => {
     expect(view.queryByText('-30 · 0 · 30 · 9 keyforms')).not.toBeInTheDocument()
     expect(onValueChange).toHaveBeenNthCalledWith(1, [15, 0])
     expect(onValueChange).toHaveBeenNthCalledWith(2, [0, -10])
+  })
+
+  test('should rename the selected axis of a two-dimensional parameter', () => {
+    const document = createDemoDocument()
+    const onParameterNameChange = vi.fn()
+    const view = render(() => (
+      <EditorKeyformPanel
+        activeBindingId="angle-xy"
+        bindings={document.parameterBindings ?? []}
+        parameters={document.parameters ?? []}
+        onParameterNameChange={onParameterNameChange}
+      />
+    ))
+
+    fireEvent.dblClick(view.getByRole('button', {name: 'Angle Y'}))
+    const nameInput = view.getByRole('textbox', {name: 'Parameter 이름'})
+    fireEvent.input(nameInput, {target: {value: 'Head Y'}})
+    fireEvent.keyDown(nameInput, {key: 'Enter'})
+
+    expect(onParameterNameChange).toHaveBeenCalledWith('angle-xy', 'angle-y', 'Head Y')
   })
 
   test('should enable add and delete actions for two-dimensional keyforms', () => {

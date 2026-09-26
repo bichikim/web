@@ -1,7 +1,7 @@
 import {
+  EditorButton,
   EditorRangeInput,
   EditorSelect,
-  EditorButton,
   useEditorPortalMount,
 } from '../../design-system'
 import {Popover} from '@kobalte/core/popover'

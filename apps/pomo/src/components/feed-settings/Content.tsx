@@ -11,6 +11,7 @@ import {PSettingsActionButton} from '../settings/ActionButton'
 import {
   DEFAULT_FEED_VOICE_ID,
   type FeedVoiceId,
+  getFeedRequestUrl,
   useAutoPreparePreference,
   useFeedConnections,
   useOptionalPFeeds,
@@ -56,20 +57,30 @@ export function PFeedSettingsContent() {
   const preference = useReadingStatusPreference()
   const feeds = useFeedConnections()
   const publicOrigin = getRuntimePublicOrigin()
+  const {origin: localOrigin} = globalThis.location
+  const {timeZone} = Intl.DateTimeFormat().resolvedOptions()
+  const feedUrlEnvironment = {localOrigin, publicOrigin, timeZone}
   const recommendedFeeds: ReadonlyArray<RecommendedFeed> = [
     ...getRecommendedPublicFeeds().map((feed) => ({
       ...feed,
-      url: new URL(feed.path, publicOrigin).href,
+      url: getFeedRequestUrl(feed.path, {publicOrigin, timeZone}),
     })),
     ...(import.meta.env.DEV
       ? getRecommendedDevFeeds().map((feed) => ({
           ...feed,
-          url: new URL(feed.path, globalThis.location.origin).href,
+          url: getFeedRequestUrl(feed.path, {
+            localOrigin,
+            timeZone,
+          }),
         }))
       : []),
   ]
   const availableRecommendations = createMemo(() => {
-    const storedUrls = new Set(feeds.connections().map((connection) => connection.url))
+    const storedUrls = new Set(
+      feeds
+        .connections()
+        .map((connection) => getFeedRequestUrl(connection.url, feedUrlEnvironment)),
+    )
     return recommendedFeeds.filter((feed) => !storedUrls.has(feed.url))
   })
 

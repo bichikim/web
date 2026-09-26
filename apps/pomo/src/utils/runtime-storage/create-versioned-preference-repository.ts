@@ -28,6 +28,7 @@ export const createVersionedPreferenceRepository = <Value>(
 ): VersionedPreferenceRepository<Value> => {
   let preferenceWriteRevision = 0
   let prefersNativeSettings = false
+  let browserCopyMissing = false
   let pendingNativeSave: Promise<void> | null = null
   const writeLatestNative = createLatestAsyncTask(options.storage.writeNative)
 
@@ -43,12 +44,15 @@ export const createVersionedPreferenceRepository = <Value>(
     }
 
     const isNative = options.storage.isNative()
-    const webValue = isNative && prefersNativeSettings ? null : options.storage.readWeb()
+    const webValue = options.storage.readWeb()
 
-    if (webValue !== null) {
+    if (webValue !== null && (!isNative || !prefersNativeSettings || browserCopyMissing)) {
       if (isNative) {
         withPromiseNull(writeLatestNative(webValue))
       }
+
+      prefersNativeSettings = false
+      browserCopyMissing = false
 
       return webValue
     }
@@ -64,12 +68,23 @@ export const createVersionedPreferenceRepository = <Value>(
         return read()
       }
 
+      const latestWebValue = webValue === null ? options.storage.readWeb() : webValue
+
+      if (browserCopyMissing && latestWebValue !== null) {
+        prefersNativeSettings = false
+        browserCopyMissing = false
+        withPromiseNull(writeLatestNative(latestWebValue))
+        return latestWebValue
+      }
+
       if (nativeValue === null) {
         return options.defaultValue
       }
 
       const webWriteError = options.storage.writeWeb(nativeValue)
       prefersNativeSettings = webWriteError !== null
+      browserCopyMissing = webWriteError !== null && latestWebValue === null
+
       return nativeValue
     } catch {
       if (preferenceWriteRevision !== initialWriteRevision) {
@@ -88,6 +103,9 @@ export const createVersionedPreferenceRepository = <Value>(
 
     if (webWriteError === null) {
       prefersNativeSettings = false
+      browserCopyMissing = false
+    } else {
+      browserCopyMissing = options.storage.readWeb() === null
     }
 
     if (!options.storage.isNative()) {
@@ -111,9 +129,7 @@ export const createVersionedPreferenceRepository = <Value>(
         prefersNativeSettings = true
       }
     } catch (error: unknown) {
-      if (webWriteError !== null) {
-        throw new Error(options.writeFailureMessage, {cause: error})
-      }
+      throw new Error(options.writeFailureMessage, {cause: error})
     } finally {
       if (preferenceWriteRevision === writeRevision) {
         pendingNativeSave = null

@@ -1,3 +1,4 @@
+import {clamp} from 'es-toolkit/math'
 export interface FoldPoint {
   readonly x: number
   readonly y: number
@@ -152,9 +153,10 @@ export const computePageFold = (options: PageFoldOptions): PageFold | null => {
       2 * distanceFromOrigin * dragDirection.x,
       2 * distanceFromOrigin * dragDirection.y,
     ],
-    progress: Math.max(
+    progress: clamp(
+      (Math.abs(options.anchor.x - target.x) / (2 * options.width)) * PERCENT,
       0,
-      Math.min(PERCENT, (Math.abs(options.anchor.x - target.x) / (2 * options.width)) * PERCENT),
+      PERCENT,
     ),
   }
 }

@@ -64,6 +64,15 @@ describe('resolveWeatherRevalidationSchedule', () => {
     ).toEqual({kind: 'after-delay', milliseconds: 1_000})
   })
 
+  it('should enforce the minimum delay when a feed expiry cannot be parsed', () => {
+    const schedule = resolveSchedule({
+      ...availableResult,
+      feed: {...availableResult.feed, expiresAt: 'invalid'},
+    })
+
+    expect(schedule).toEqual({kind: 'after-delay', milliseconds: 1_000})
+  })
+
   it('should honor Retry-After and use the fallback when it is absent', () => {
     expect(
       resolveSchedule({locationId, retryAfterMilliseconds: 2_000, status: 'collecting'}),

@@ -121,11 +121,14 @@ it.each(['', 'true'])(
     vi.stubEnv('DEV', true)
     vi.stubEnv('VITE_POMO_IS_MOBILE', mobile)
     renderSettings()
-    const recommendedAddress = new URL('/__dev/feeds/rss.xml', globalThis.location.origin).href
+    const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone
+    const recommendedAddress = new URL('/__dev/feeds/rss.xml', globalThis.location.origin)
     const historyAddress = new URL(
       '/api/feeds/today-in-history/rss.xml',
       globalThis.location.origin,
-    ).href
+    )
+    recommendedAddress.searchParams.set('timeZone', timeZone)
+    historyAddress.searchParams.set('timeZone', timeZone)
 
     expect(screen.queryByText('아직 저장된 피드가 없어요. 피드 주소를 추가해 주세요.')).toBeNull()
     expect(screen.getByText('오늘의 역사')).toBeDefined()
@@ -135,13 +138,13 @@ it.each(['', 'true'])(
     fireEvent.click(screen.getByRole('button', {name: '오늘의 역사 추천 피드 추가'}))
 
     expect(screen.queryByText('오늘의 역사')).toBeNull()
-    expect(screen.getByText(historyAddress)).toBeDefined()
+    expect(screen.getByText(historyAddress.href)).toBeDefined()
 
     fireEvent.click(screen.getByRole('button', {name: 'Pomofi 5분 RSS 추천 피드 추가'}))
 
     expect(screen.queryByText('Pomofi 5분 RSS')).toBeNull()
     expect(screen.getByText('Pomofi 5분 Atom')).toBeDefined()
-    expect(screen.getByText(recommendedAddress)).toBeDefined()
+    expect(screen.getByText(recommendedAddress.href)).toBeDefined()
     expect(localStorage.getItem('pomo:focus-room-feed-connections:v1')).toContain(
       '"voiceId":"default"',
     )
@@ -154,17 +157,47 @@ it.each(['VITE_POMO_IS_APPS_IN_TOSS', 'VITE_POMO_IS_DESKTOP'] as const)(
     vi.stubEnv(runtime, 'true')
     vi.stubEnv('VITE_POMO_PUBLIC_ORIGIN', 'https://www.pomofi.io')
     renderSettings()
-    const developmentAddress = new URL('/__dev/feeds/rss.xml', globalThis.location.origin).href
+    const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone
+    const developmentAddress = new URL('/__dev/feeds/rss.xml', globalThis.location.origin)
+    developmentAddress.searchParams.set('timeZone', timeZone)
+    const historyAddress = new URL(
+      `/api/feeds/today-in-history/rss.xml?timeZone=${encodeURIComponent(timeZone)}`,
+      'https://www.pomofi.io',
+    ).href
 
     fireEvent.click(screen.getByRole('button', {name: '오늘의 역사 추천 피드 추가'}))
     fireEvent.click(screen.getByRole('button', {name: 'Pomofi 5분 RSS 추천 피드 추가'}))
 
-    expect(
-      screen.getByText('https://www.pomofi.io/api/feeds/today-in-history/rss.xml'),
-    ).toBeDefined()
-    expect(screen.getByText(developmentAddress)).toBeDefined()
+    expect(screen.getByText(historyAddress)).toBeDefined()
+    expect(screen.getByText(developmentAddress.href)).toBeDefined()
   },
 )
+
+it('should hide a recommendation already saved without a timezone query', () => {
+  vi.stubEnv('VITE_POMO_IS_APPS_IN_TOSS', 'true')
+  vi.stubEnv('VITE_POMO_PUBLIC_ORIGIN', 'https://www.pomofi.io')
+  localStorage.setItem(
+    'pomo:focus-room-feed-connections:v1',
+    JSON.stringify({
+      connections: [
+        {
+          createdAt: '2026-01-01T00:00:00.000Z',
+          id: 'legacy-history',
+          updatedAt: '2026-01-01T00:00:00.000Z',
+          url: 'https://www.pomofi.io/api/feeds/today-in-history/rss.xml',
+          version: 1,
+          voiceId: 'default',
+        },
+      ],
+      version: 1,
+    }),
+  )
+
+  renderSettings()
+
+  expect(screen.queryByRole('button', {name: '오늘의 역사 추천 피드 추가'})).toBeNull()
+  expect(screen.getByText('https://www.pomofi.io/api/feeds/today-in-history/rss.xml')).toBeDefined()
+})
 
 it('should omit development recommendations in production', () => {
   vi.stubEnv('DEV', false)
@@ -177,7 +210,12 @@ it('should omit development recommendations in production', () => {
   expect(screen.queryByText('Pomofi 5분 RSS')).toBeNull()
   expect(screen.queryByText('Pomofi 5분 Atom')).toBeNull()
   fireEvent.click(screen.getByRole('button', {name: '오늘의 역사 추천 피드 추가'}))
-  expect(screen.getByText('https://www.pomofi.io/api/feeds/today-in-history/rss.xml')).toBeDefined()
+  const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone
+  expect(
+    screen.getByText(
+      `https://www.pomofi.io/api/feeds/today-in-history/rss.xml?timeZone=${encodeURIComponent(timeZone)}`,
+    ),
+  ).toBeDefined()
 })
 
 it('should render saved dialogues when a feed runtime is available', () => {

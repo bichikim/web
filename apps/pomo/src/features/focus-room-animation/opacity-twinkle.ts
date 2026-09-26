@@ -1,3 +1,5 @@
+import {cosineEaseInOut} from 'src/utils/cosine-ease-in-out'
+import {clampUnit} from 'src/utils/clamp-unit'
 import type {Container} from 'pixi.js'
 
 import type {PixiSceneOpacityTwinkle, PixiSceneTravelRange} from './layer-scene-definition'
@@ -106,8 +108,8 @@ export const advanceOpacityTwinkle = (
     state.phase = 'transitioning'
   }
 
-  const progress = Math.min(1, state.elapsedSeconds / state.durationSeconds)
-  const easedProgress = (1 - Math.cos(progress * Math.PI)) / 2
+  const progress = clampUnit(state.elapsedSeconds / state.durationSeconds)
+  const easedProgress = cosineEaseInOut(progress)
   state.currentOpacity =
     state.fromOpacity + (state.targetOpacity - state.fromOpacity) * easedProgress
 

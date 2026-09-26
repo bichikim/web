@@ -89,6 +89,32 @@ it('should prepare a newly selected model before returning its latest voice', as
   expect(result).toEqual({job: {...JOB, modelId: 'full', voiceId: 'M2'}, status: 'ready'})
 })
 
+it('should stop after bounded retries when the model keeps changing', async () => {
+  const prepareModel = vi.fn(async () => true)
+  const resolveGenerationSettings = vi.fn(async () => {
+    const modelId =
+      resolveGenerationSettings.mock.calls.length % 2 === 0 ? ('int8' as const) : ('full' as const)
+    return {modelId, voiceId: 'M1' as const}
+  })
+
+  const result = await prepareFeedGeneration({
+    allowModelDownload: true,
+    isModelDownloaded: vi.fn(async () => true),
+    job: JOB,
+    now: () => '2026-08-14T00:01:00.000Z',
+    prepareModel,
+    repository: createRepository(),
+    resolveGenerationSettings,
+  })
+
+  expect(prepareModel).toHaveBeenCalledTimes(8)
+  expect(resolveGenerationSettings).toHaveBeenCalledTimes(9)
+  expect(result).toEqual({
+    job: {...JOB, modelId: 'int8'},
+    status: 'model-preparation-failed',
+  })
+})
+
 it('should require approval before preparing an unavailable model', async () => {
   const prepareModel = vi.fn(async () => true)
 

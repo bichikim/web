@@ -1,4 +1,4 @@
-import dayjs from 'dayjs'
+import {dayjs} from 'src/utils/zoned-dayjs'
 import {formatLocalDate} from 'src/utils/format-local-date'
 import {type Accessor, createMemo, createSignal, createUniqueId, type Setter} from 'solid-js'
 import * as m from '@paraglide/message'
@@ -12,25 +12,40 @@ import {
 } from '../memory-assist'
 import {createCalendarAlarmSaver} from './create-calendar-alarm-saver'
 const CALENDAR_ALARM_ID_PREFIX = 'calendar-alarm:'
-const ALL_DAY_ALARM_HOUR = 9
+const ALL_DAY_ALARM_TIME = '09:00:00'
 const DATE_KEY_LENGTH = 10
-const getTimeInputValue = (date: Date) => dayjs(date).format('HH:mm')
+const getDateInputValue = (date: Date, timeZone: string) =>
+  dayjs(date).tz(timeZone).format('YYYY-MM-DD')
+const getTimeInputValue = (date: Date, timeZone: string) => dayjs(date).tz(timeZone).format('HH:mm')
 const getMemoId = (eventId: string) => `${CALENDAR_ALARM_ID_PREFIX}${eventId}`
-const getEventAlarmAt = (event: CalendarEvent, defaultAlarmDate?: Date) => {
+const getLegacyMemoId = (event: CalendarEvent) => {
+  const legacyEventId = getLegacyEventId(event)
+  return legacyEventId === null ? undefined : getMemoId(legacyEventId)
+}
+const getEventAlarmAt = (
+  event: CalendarEvent,
+  defaultAlarmDate: Date | undefined,
+  timeZone: string,
+) => {
   if (event.allDay) {
-    if (defaultAlarmDate !== undefined) {
-      return new Date(
-        defaultAlarmDate.getFullYear(),
-        defaultAlarmDate.getMonth(),
-        defaultAlarmDate.getDate(),
-        ALL_DAY_ALARM_HOUR,
-      )
-    }
-    const [year, month, day] = event.start.slice(0, DATE_KEY_LENGTH).split('-').map(Number)
-    return new Date(year, month - 1, day, ALL_DAY_ALARM_HOUR)
+    const alarmDateValue =
+      defaultAlarmDate === undefined ? event.start : formatLocalDate(defaultAlarmDate)
+    const alarmDate =
+      alarmDateValue.length === DATE_KEY_LENGTH
+        ? alarmDateValue
+        : getDateInputValue(new Date(alarmDateValue), timeZone)
+    return dayjs.tz(`${alarmDate}T${ALL_DAY_ALARM_TIME}`, timeZone).toDate()
   }
 
   return new Date(event.start)
+}
+
+interface UseCalendarAlarmControllerProps {
+  readonly clock: Accessor<Date>
+  readonly defaultAlarmDate: Accessor<Date | undefined>
+  readonly event: Accessor<CalendarEvent>
+  readonly memos: Accessor<ReadonlyArray<MemoryMemo>>
+  readonly timeZone: Accessor<string>
 }
 
 interface CalendarAlarmController {
@@ -53,18 +68,17 @@ interface CalendarAlarmController {
 }
 
 export const useCalendarAlarmController = (
-  event: Accessor<CalendarEvent>,
-  memos: Accessor<ReadonlyArray<MemoryMemo>>,
-  defaultAlarmDate: Accessor<Date | undefined>,
-  clock: Accessor<Date>,
+  props: UseCalendarAlarmControllerProps,
 ): CalendarAlarmController => {
-  const alarmId = () => getMemoId(event().id)
+  const alarmId = () => getMemoId(props.event().id)
   const events = usePEvents()
   const saveToStorage = createCalendarAlarmSaver({
     cleanup: (memoId) =>
       memoryMemoDeletion.cleanup({deleteDialogue: events.deleteDialogue, memoId}),
-    reportError: (error) =>
-      console.error('Calendar alarm saved; retired dialogue cleanup will retry.', error),
+    deleteMemo: async (memoId) => {
+      await memoryMemoDeletion.delete({deleteDialogue: events.deleteDialogue, memoId})
+    },
+    reportError: (error) => console.error('Calendar alarm saved; cleanup will retry.', error),
     updateMemos: updateMemoryMemos,
   })
   const popoverId = createUniqueId()
@@ -75,15 +89,13 @@ export const useCalendarAlarmController = (
   const [time, setTime] = createSignal('')
   const [message, setMessage] = createSignal<string | null>(null)
   const [pending, setPending] = createSignal(false)
-  const usableMemos = () => memos().filter((memo) => !isMemoryMemoDeletionPending(memo))
+  const usableMemos = () => props.memos().filter((memo) => !isMemoryMemoDeletionPending(memo))
   const storedMemo = createMemo(() => usableMemos().find((memo) => memo.id === alarmId()))
   const legacyAlarm = createMemo(() => {
-    const legacyId = getLegacyEventId(event())
+    const legacyMemoId = getLegacyMemoId(props.event())
     return (
-      legacyId !== null &&
-      usableMemos().some(
-        (memo) => memo.id === getMemoId(legacyId) && memo.nextExactReminderAt !== null,
-      )
+      legacyMemoId !== undefined &&
+      usableMemos().some((memo) => memo.id === legacyMemoId && memo.nextExactReminderAt !== null)
     )
   })
   const activeAlarm = createMemo(() => {
@@ -92,13 +104,15 @@ export const useCalendarAlarmController = (
   })
 
   const resetFields = () => {
+    const currentEvent = props.event()
+    const currentTimeZone = props.timeZone()
     const storedAlarmAt = storedMemo()?.exactReminderAt
     const alarmAt =
       storedAlarmAt === null || storedAlarmAt === undefined
-        ? getEventAlarmAt(event(), defaultAlarmDate())
+        ? getEventAlarmAt(currentEvent, props.defaultAlarmDate(), currentTimeZone)
         : new Date(storedAlarmAt)
-    setDate(formatLocalDate(alarmAt))
-    setTime(getTimeInputValue(alarmAt))
+    setDate(getDateInputValue(alarmAt, currentTimeZone))
+    setTime(getTimeInputValue(alarmAt, currentTimeZone))
     setMessage(null)
   }
 
@@ -118,21 +132,27 @@ export const useCalendarAlarmController = (
   }
 
   const saveAlarm = async () => {
-    const alarmAt = new Date(`${date()}T${time()}:00`)
-    if (Number.isNaN(alarmAt.getTime()) || alarmAt.getTime() <= clock().getTime()) {
+    const currentDate = date()
+    const currentTime = time()
+    const currentTimeZone = props.timeZone()
+    const alarmAt = dayjs.tz(`${currentDate}T${currentTime}:00`, currentTimeZone).toDate()
+    const now = props.clock()
+    if (Number.isNaN(alarmAt.getTime()) || alarmAt.getTime() <= now.getTime()) {
       setMessage(m.calendar_alarm_invalid_time())
       return
     }
 
+    const currentEvent = props.event()
     setPending(true)
     setMessage(null)
     try {
       await saveToStorage({
         alarmAt,
-        memoId: alarmId(),
-        now: clock(),
+        legacyMemoId: getLegacyMemoId(currentEvent),
+        memoId: getMemoId(currentEvent.id),
+        now,
         random: Math.random,
-        text: m.calendar_alarm_dialogue({title: event().title}),
+        text: m.calendar_alarm_dialogue({title: currentEvent.title}),
       })
       popoverElement()?.hidePopover()
     } catch (error: unknown) {

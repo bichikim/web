@@ -1,10 +1,9 @@
 import {createMemo, Show} from 'solid-js'
 import {getDocumentScene, type PuppetDocument, type PuppetSkinBinding} from '../../player'
 import {getSkinFrames} from '../../deformation/skinning'
-import {changeSkinWeight} from './skinning'
+import {changeSkinWeight, connectSkinSelection} from './skinning'
 import {useSkinSession} from './skin-session'
 import {EditorButton, EditorNumberField} from '../../design-system'
-import {connectSkinSelection} from './skinning'
 import {SkinningDisconnect} from './SkinningDisconnect'
 interface SkinningInfluenceEditorProps {
   readonly document: PuppetDocument

@@ -1,3 +1,5 @@
+import {getExceptionMessage} from 'src/features/error-detail'
+import {replaceBlobObjectUrl} from 'src/features/blob-object-url'
 import {createSignal, onCleanup} from 'solid-js'
 import {isNonBlankString} from 'src/utils/is-non-blank-string'
 import {CONNECTION_CONTEXT_SECONDS, SAMPLE_RATE} from '../sound-generation/connection'
@@ -13,6 +15,7 @@ export interface JoinRequest {
   readonly prompt: string
 }
 const MAX_SECONDS = 600
+const BUSY_ERROR_MESSAGE = '이미 연결 생성 중인 작업이 있습니다. 완료 후 다시 시도해 주세요.'
 
 async function decode(blob: Blob): Promise<StereoAudio> {
   const context = new AudioContext({sampleRate: SAMPLE_RATE})
@@ -45,17 +48,22 @@ export function useSoundJoining() {
     cancel?.()
     cancel = null
     setBusy(false)
+    if (error() === BUSY_ERROR_MESSAGE) {
+      setError(null)
+    }
     setStatus('연결 생성을 중지했습니다.')
   }
   onCleanup(() => {
     stop()
     const value = url()
     if (value !== null) {
-      URL.revokeObjectURL(value)
+      replaceBlobObjectUrl(value, () => null)
     }
   })
   const generate = async (request: JoinRequest) => {
     if (busy()) {
+      setError(BUSY_ERROR_MESSAGE)
+      setStatus('연결 생성이 진행 중입니다. 완료 후 다시 시도해 주세요.')
       return
     }
     revision += 1
@@ -120,15 +128,12 @@ export function useSoundJoining() {
         return
       }
       const joined = assembleJoin(plan, generated)
-      const previous = url()
-      if (previous !== null) {
-        URL.revokeObjectURL(previous)
-      }
-      setUrl(URL.createObjectURL(joined))
+      setError(null)
+      setUrl(replaceBlobObjectUrl(url(), () => joined))
       setStatus(`연결 완료 · ${(plan.left.length / SAMPLE_RATE).toFixed(1)}초`)
     } catch (cause) {
       if (current === revision) {
-        setError(cause instanceof Error ? cause.message : String(cause))
+        setError(getExceptionMessage(cause, () => String(cause)))
       }
     } finally {
       if (current === revision) {

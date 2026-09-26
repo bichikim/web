@@ -1,3 +1,6 @@
+import {isPlainObject} from 'es-toolkit/predicate'
+import {isNonBlankString} from 'src/utils/is-non-blank-string'
+import {createCatalogRequestInit, hasUniqueIds} from 'src/features/catalog-policy'
 import {audioFetch, httpFetch} from '../http-client'
 import type {SoundEffect} from './types'
 
@@ -13,43 +16,38 @@ interface SoundEffectCollection {
   readonly version: number
 }
 
-const isNonEmptyString = (value: unknown): value is string =>
-  typeof value === 'string' && value.trim().length > 0
-
 const hasSoundEffectTitle = (value: unknown): value is SoundEffect['title'] => {
-  if (typeof value !== 'object' || value === null) {
+  if (!isPlainObject(value)) {
     return false
   }
 
-  const title = value as Record<string, unknown>
-  return isNonEmptyString(title.en) && isNonEmptyString(title.ko)
+  const title = value
+  return isNonBlankString(title.en) && isNonBlankString(title.ko)
 }
 
 const isSoundEffect = (value: unknown): value is SoundEffect => {
-  if (typeof value !== 'object' || value === null) {
+  if (!isPlainObject(value)) {
     return false
   }
 
-  const effect = value as Record<string, unknown>
+  const effect = value
   return (
-    isNonEmptyString(effect.artworkUrl) &&
+    isNonBlankString(effect.artworkUrl) &&
     typeof effect.durationSeconds === 'number' &&
     Number.isFinite(effect.durationSeconds) &&
     effect.durationSeconds > 0 &&
-    isNonEmptyString(effect.id) &&
-    isNonEmptyString(effect.source) &&
+    isNonBlankString(effect.id) &&
+    isNonBlankString(effect.source) &&
     hasSoundEffectTitle(effect.title)
   )
 }
 
-const hasUniqueIds = (ids: readonly string[]) => new Set(ids).size === ids.length
-
 const isSoundEffectCollection = (value: unknown): value is SoundEffectCollection => {
-  if (typeof value !== 'object' || value === null) {
+  if (!isPlainObject(value)) {
     return false
   }
 
-  const collection = value as Record<string, unknown>
+  const collection = value
   return (
     collection.version === 1 &&
     Array.isArray(collection.effects) &&
@@ -58,10 +56,17 @@ const isSoundEffectCollection = (value: unknown): value is SoundEffectCollection
   )
 }
 
-const createRequestInit = (signal?: AbortSignal): RequestInit => ({
-  cache: import.meta.env.DEV ? 'no-store' : 'default',
-  signal,
-})
+const fetchDefaultSoundEffects = (signal?: AbortSignal): Promise<Response> => {
+  const requestInit = createCatalogRequestInit(signal)
+
+  // Desktop development serves public assets from Vite while the desktop client uses the
+  // remote asset origin for packaged assets.
+  if (import.meta.env.DEV && import.meta.env.VITE_POMO_IS_DESKTOP === 'true') {
+    return globalThis.fetch(SOUND_EFFECTS_URL, requestInit)
+  }
+
+  return audioFetch('sound-effects.json', requestInit)
+}
 
 /** Loads and validates the public sound-effect catalog. */
 export const loadSoundEffects = async (
@@ -69,8 +74,8 @@ export const loadSoundEffects = async (
 ): Promise<readonly SoundEffect[]> => {
   const response =
     options.url === undefined
-      ? await audioFetch('sound-effects.json', createRequestInit(options.signal))
-      : await httpFetch(options.url, createRequestInit(options.signal))
+      ? await fetchDefaultSoundEffects(options.signal)
+      : await httpFetch(options.url, createCatalogRequestInit(options.signal))
 
   if (!response.ok) {
     throw new Error(`Sound effects request failed: ${response.status}`)

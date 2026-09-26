@@ -9,6 +9,7 @@ export interface EditorParameterFooterProps {
   readonly selectedPartIds?: ReadonlyArray<string>
   readonly targetPartIds?: ReadonlyArray<string>
   readonly influence?: number
+  readonly previewOnly?: boolean
   readonly allParametersVisible?: boolean
   readonly onAllParametersVisibleChange?: (visible: boolean) => void
   readonly onSelectionConnect?: () => void
@@ -58,8 +59,9 @@ export const EditorParameterFooter = (props: EditorParameterFooterProps) => {
         {(binding) => (
           <div class="influence-actions">
             <span class="keyform-help">
-              미리보기 적용량 {Number(((props.influence ?? 1) * WHOLE_PERCENT).toFixed(1))}%
-              {' · 원본 키폼 편집'}
+              {props.previewOnly
+                ? '물리 입력 미리보기'
+                : `미리보기 적용량 ${Number(((props.influence ?? 1) * WHOLE_PERCENT).toFixed(1))}% · 원본 키폼 편집`}
             </span>
           </div>
         )}

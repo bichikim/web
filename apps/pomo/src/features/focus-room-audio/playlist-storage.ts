@@ -1,3 +1,4 @@
+import {createTimestampedDualRuntimeStorage} from 'src/utils/runtime-storage/create-timestamped-dual-runtime-storage'
 import {z} from 'zod'
 
 import {createLatestAsyncTask} from 'src/utils/create-latest-async-task'
@@ -14,9 +15,7 @@ const PLAYLIST_STORAGE_KEY = 'pomo:focus-room-playlist:v1'
 
 const storedPlaylistSchema = z.object({
   savedAt: z.number().finite().nonnegative(),
-  trackIds: z
-    .array(z.string().min(1))
-    .refine((trackIds) => new Set(trackIds).size === trackIds.length),
+  trackIds: z.array(z.string().min(1)),
   version: z.literal(1),
 })
 
@@ -48,21 +47,6 @@ const parseStoredPlaylist = (value: unknown): StoredPlaylist | null => {
   return result.success ? result.data : null
 }
 
-const selectLatestPlaylist = (
-  webPlaylist: StoredPlaylist | null,
-  tossPlaylist: StoredPlaylist | null,
-) => {
-  if (webPlaylist === null) {
-    return tossPlaylist
-  }
-
-  if (tossPlaylist === null || webPlaylist.savedAt >= tossPlaylist.savedAt) {
-    return webPlaylist
-  }
-
-  return tossPlaylist
-}
-
 const runtimeStorage = {
   readToss: () => readTossStorageJson(PLAYLIST_STORAGE_KEY, parseStoredPlaylist),
   readWeb: () => readWebStorageJson(PLAYLIST_STORAGE_KEY, parseStoredPlaylist),
@@ -75,18 +59,26 @@ const systemClock = {
   now: Date.now,
 } satisfies PlaylistClock
 
+interface PlaylistTossWrite {
+  readonly playlist: StoredPlaylist
+  readonly write: PlaylistStorageAdapter['writeToss']
+}
+
+const writeLatestToss = createLatestAsyncTask<PlaylistTossWrite>(({playlist, write}) =>
+  write(playlist),
+)
+
 /** Reads and writes playlists using their persisted timestamps. */
 export const createPPlaylistStorage = (
   storage: PlaylistStorageAdapter = runtimeStorage,
   clock: PlaylistClock = systemClock,
   reportError: (error: unknown) => void = globalThis.reportError,
 ): PPlaylistStorage => {
-  const writeLatestToss = createLatestAsyncTask(storage.writeToss)
-  let playlistRevision = 0
+  const coordinator = createTimestampedDualRuntimeStorage<StoredPlaylist>({now: () => clock.now()})
 
   return {
     async read() {
-      const initialPlaylistRevision = playlistRevision
+      const initialPlaylistRevision = coordinator.revision()
       const webPlaylist = storage.readWeb()
 
       if (!storage.usesTossStorage()) {
@@ -96,48 +88,47 @@ export const createPPlaylistStorage = (
       try {
         const tossPlaylist = await storage.readToss()
 
-        if (playlistRevision !== initialPlaylistRevision) {
+        if (coordinator.revision() !== initialPlaylistRevision) {
           return storage.readWeb()?.trackIds ?? null
         }
 
-        const latestPlaylist = selectLatestPlaylist(webPlaylist, tossPlaylist)
+        const latestPlaylist = coordinator.selectLatest(webPlaylist, tossPlaylist)
 
         if (latestPlaylist !== null) {
           storage.writeWeb(latestPlaylist)
 
           if (latestPlaylist === webPlaylist) {
-            await writeLatestToss(latestPlaylist).catch(reportError)
+            await writeLatestToss({playlist: latestPlaylist, write: storage.writeToss}).catch(
+              reportError,
+            )
           }
         }
 
-        if (playlistRevision !== initialPlaylistRevision) {
+        if (coordinator.revision() !== initialPlaylistRevision) {
           return storage.readWeb()?.trackIds ?? null
         }
 
         return latestPlaylist?.trackIds ?? null
       } catch {
-        if (playlistRevision !== initialPlaylistRevision) {
+        if (coordinator.revision() !== initialPlaylistRevision) {
           return storage.readWeb()?.trackIds ?? null
         }
 
         return webPlaylist?.trackIds ?? null
       }
     },
-    async write(trackIds) {
-      const storedPlaylist = {
-        savedAt: clock.now(),
-        trackIds,
-        version: 1,
-      } satisfies StoredPlaylist
-      playlistRevision += 1
-      storage.writeWeb(storedPlaylist)
-
-      if (!storage.usesTossStorage()) {
-        return
-      }
-
-      await writeLatestToss(storedPlaylist).catch(() => undefined)
-    },
+    write: (trackIds) =>
+      coordinator.writeStored(
+        (savedAt) => ({savedAt, trackIds, version: 1}),
+        async (storedPlaylist) => {
+          storage.writeWeb(storedPlaylist)
+          if (storage.usesTossStorage()) {
+            await writeLatestToss({playlist: storedPlaylist, write: storage.writeToss}).catch(
+              () => undefined,
+            )
+          }
+        },
+      ),
   }
 }
 

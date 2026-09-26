@@ -1,6 +1,5 @@
 /** @vitest-environment jsdom */
 
-import flushPromises from 'flush-promises'
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 
 import {createPSceneStyleRepository, readPSceneStyle, writePSceneStyle} from '../style-storage'
@@ -80,6 +79,27 @@ describe('readPSceneStyle', () => {
     expect(localStorage.getItem('pomo:focus-room-scene-style:v1')).toBe('"original"')
   })
 
+  it('should prefer native style over a stale browser copy', async () => {
+    Object.defineProperty(globalThis, 'ReactNativeWebView', {configurable: true, value: {}})
+    localStorage.setItem('pomo:focus-room-scene-style:v1', '"original"')
+    storageMocks.getItem.mockResolvedValue('"scribble"')
+
+    await expect(readPSceneStyle()).resolves.toBe('scribble')
+    expect(storageMocks.getItem).toHaveBeenCalledWith('pomo:focus-room-scene-style:v1')
+    expect(storageMocks.setItem).not.toHaveBeenCalled()
+    expect(localStorage.getItem('pomo:focus-room-scene-style:v1')).toBe('"scribble"')
+  })
+
+  it('should keep a browser style when native storage has no saved style', async () => {
+    Object.defineProperty(globalThis, 'ReactNativeWebView', {configurable: true, value: {}})
+    localStorage.setItem('pomo:focus-room-scene-style:v1', '"scribble"')
+    storageMocks.getItem.mockResolvedValue(null)
+
+    await expect(readPSceneStyle()).resolves.toBe('scribble')
+    expect(storageMocks.getItem).toHaveBeenCalledWith('pomo:focus-room-scene-style:v1')
+    expect(storageMocks.setItem).not.toHaveBeenCalled()
+  })
+
   it('should use the runtime default when native storage is empty or unavailable', async () => {
     vi.stubEnv('VITE_POMO_IS_APPS_IN_TOSS', '')
     Object.defineProperty(globalThis, 'ReactNativeWebView', {configurable: true, value: {}})
@@ -122,44 +142,6 @@ describe('readPSceneStyle', () => {
     completeRead('"original"')
 
     await expect(pendingRead).resolves.toBe('original')
-  })
-
-  it.each(['"original"', null])(
-    'should repair native storage containing %s from the web choice',
-    async (initialValue) => {
-      Object.defineProperty(globalThis, 'ReactNativeWebView', {configurable: true, value: {}})
-      let nativeValue = initialValue
-      storageMocks.getItem.mockImplementation(async () => nativeValue)
-      storageMocks.setItem.mockImplementation(async (_key, value) => {
-        nativeValue = value
-      })
-      localStorage.setItem('pomo:focus-room-scene-style:v1', '"scribble"')
-
-      expect(await readPSceneStyle()).toBe('scribble')
-      await flushPromises()
-      expect(nativeValue).toBe('"scribble"')
-      expect(storageMocks.getItem).not.toHaveBeenCalled()
-
-      localStorage.clear()
-      expect(await readPSceneStyle()).toBe('scribble')
-    },
-  )
-
-  it('should retry a failed native repair on the next read', async () => {
-    Object.defineProperty(globalThis, 'ReactNativeWebView', {configurable: true, value: {}})
-    localStorage.setItem('pomo:focus-room-scene-style:v1', '"scribble"')
-    storageMocks.setItem.mockRejectedValueOnce(new Error('unavailable')).mockResolvedValue()
-
-    await expect(readPSceneStyle()).resolves.toBe('scribble')
-    await flushPromises()
-    await expect(readPSceneStyle()).resolves.toBe('scribble')
-    await flushPromises()
-
-    expect(storageMocks.setItem).toHaveBeenCalledTimes(2)
-    expect(storageMocks.setItem).toHaveBeenLastCalledWith(
-      'pomo:focus-room-scene-style:v1',
-      '"scribble"',
-    )
   })
 })
 
@@ -209,6 +191,25 @@ describe('createPSceneStyleRepository', () => {
 
     await expect(pendingRead).resolves.toBe('scribble')
     expect(firstStorage.writeWeb).toHaveBeenCalledWith('pomo:focus-room-scene-style:v1', 'scribble')
+  })
+
+  it('should keep a newer write when a native read completes late', async () => {
+    const storage = createStorage()
+    const webValues = new Map<string, unknown>()
+    const nativeRead = Promise.withResolvers<unknown>()
+    storage.readToss.mockReturnValue(nativeRead.promise)
+    storage.readWeb.mockImplementation((key) => webValues.get(key) ?? null)
+    storage.writeWeb.mockImplementation((key, value) => {
+      webValues.set(key, value)
+    })
+    const repository = createPSceneStyleRepository(storage)
+
+    const pendingRead = repository.read()
+    await repository.write('scribble')
+    nativeRead.resolve('original')
+
+    await expect(pendingRead).resolves.toBe('scribble')
+    expect(webValues.get('pomo:focus-room-scene-style:v1')).toBe('scribble')
   })
 
   it('should complete writes independently while another repository has a pending write', async () => {

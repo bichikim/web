@@ -60,7 +60,6 @@ export const ReminderFields = (props: ReminderFieldsProps) => {
     props.onChange({
       ...currentDraft,
       exactEnabled,
-      recallMode: exactEnabled ? 'none' : currentDraft.recallMode,
     })
   }
 

@@ -89,6 +89,81 @@ describe('parameter composition', () => {
       }),
     ).toBe(restVertices)
   })
+
+  test('should apply a binding once when its explicit target list repeats a part', () => {
+    const initial = createComposedDocument()
+    const part = initial.parts[0]!
+    const smile = initial.parameterBindings.at(-1)!
+    const document: PuppetDocument = {
+      ...initial,
+      parameterBindings: [{...smile, targetPartIds: [part.id, part.id]}],
+    }
+
+    expect(
+      composeParameterVertices({
+        document,
+        parameterValues: {smile: 10},
+        partId: part.id,
+        restVertices: part.mesh.vertices,
+      }).at(-2),
+    ).toBe(330)
+  })
+
+  test('should find parts from keyforms when explicit targets are absent', () => {
+    const initial = createComposedDocument()
+    const part = initial.parts[0]!
+    const {targetPartIds: _targetPartIds, ...smile} = initial.parameterBindings.at(-1)!
+    const document: PuppetDocument = {...initial, parameterBindings: [smile]}
+
+    expect(
+      composeParameterVertices({
+        document,
+        parameterValues: {smile: 10},
+        partId: part.id,
+        restVertices: part.mesh.vertices,
+      }).at(-2),
+    ).toBe(330)
+  })
+
+  test('should let an explicit empty target list override keyform parts', () => {
+    const initial = createComposedDocument()
+    const part = initial.parts[0]!
+    const smile = initial.parameterBindings.at(-1)!
+    const document: PuppetDocument = {
+      ...initial,
+      parameterBindings: [{...smile, targetPartIds: []}],
+    }
+
+    expect(
+      composeParameterVertices({
+        document,
+        parameterValues: {smile: 10},
+        partId: part.id,
+        restVertices: part.mesh.vertices,
+      }),
+    ).toBe(part.mesh.vertices)
+  })
+
+  test('should use the latest binding list after an immutable document update', () => {
+    const initial = createComposedDocument()
+    const part = initial.parts[0]!
+    const smile = initial.parameterBindings.at(-1)!
+    const document: PuppetDocument = {...initial, parameterBindings: [smile]}
+    const options = {
+      document,
+      parameterValues: {smile: 10},
+      partId: part.id,
+      restVertices: part.mesh.vertices,
+    }
+
+    expect(composeParameterVertices(options).at(-2)).toBe(330)
+    expect(
+      composeParameterVertices({
+        ...options,
+        document: {...document, parameterBindings: []},
+      }),
+    ).toBe(part.mesh.vertices)
+  })
 })
 
 test('should attenuate only the selected binding delta using another raw parameter', () => {
@@ -132,8 +207,6 @@ test('should combine five independent inputs with authored suppression through a
     motions: [],
     parameterBindings: ids.map((id, index) => ({
       id,
-      parameterIds: [id],
-      targetPartIds: [part.id],
       influences: ids.slice(index + 1).map((parameterId) => ({
         parameterId,
         points: [
@@ -142,9 +215,8 @@ test('should combine five independent inputs with authored suppression through a
         ],
       })),
       keyforms: [
-        {values: [0], parts: [{partId: part.id, vertices: part.mesh.vertices}]},
+        {parts: [{partId: part.id, vertices: part.mesh.vertices}], values: [0]},
         {
-          values: [1],
           parts: [
             {
               partId: part.id,
@@ -153,10 +225,13 @@ test('should combine five independent inputs with authored suppression through a
               ),
             },
           ],
+          values: [1],
         },
       ],
+      parameterIds: [id],
+      targetPartIds: [part.id],
     })),
-    parameters: ids.map((id) => ({id, name: id, minimum: 0, maximum: 1, defaultValue: 0})),
+    parameters: ids.map((id) => ({defaultValue: 0, id, maximum: 1, minimum: 0, name: id})),
   }
   const parsed = parseDocument(serializeDocument(document))
   if (!parsed.ok) {
@@ -172,7 +247,7 @@ test('should combine five independent inputs with authored suppression through a
   expect(sample({a: 1})).toBe(330)
   expect(sample({a: 0.5, i: 0.5})).toBe(332.5)
   expect(sample({a: 1, i: 0.5, u: 0.75})).toBe(347.5)
-  expect(sample({a: 1, i: 1, e: 1, u: 1, o: 1})).toBe(370)
+  expect(sample({a: 1, e: 1, i: 1, o: 1, u: 1})).toBe(370)
   expect(sample({a: 0})).toBe(320)
   expect(sample({a: 0.5, i: 0.5})).toBe(332.5)
 })

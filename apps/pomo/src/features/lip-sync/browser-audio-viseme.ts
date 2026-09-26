@@ -1,4 +1,5 @@
 import type {WLipSyncAudioNode} from 'wlipsync'
+import {clamp} from 'es-toolkit/math'
 
 import type {PViseme} from './index'
 
@@ -91,7 +92,7 @@ export const resolvePBrowserAudioVisemeFrame = (
 
   if (fallbackViseme === 'closed') {
     return {
-      intensity: Math.max(Math.min(intensity, CLOSED_VOLUME_THRESHOLD), ANALYSIS_VOLUME_THRESHOLD),
+      intensity: clamp(intensity, ANALYSIS_VOLUME_THRESHOLD, CLOSED_VOLUME_THRESHOLD),
       viseme: 'closed',
     }
   }

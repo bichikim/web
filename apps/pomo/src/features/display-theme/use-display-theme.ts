@@ -1,7 +1,7 @@
 import {createEffect, createSignal, onCleanup, onMount} from 'solid-js'
 
 import {usePreference} from 'src/hooks/use-preference'
-import type {PreferenceStorage} from 'src/utils/preference-storage'
+import {createParsedPreferenceStorage} from '../parsed-preference-storage'
 
 import {
   DEFAULT_DISPLAY_THEME,
@@ -16,15 +16,12 @@ import {
   writeDisplayThemePreference,
 } from './storage'
 
-const displayThemeStorage: PreferenceStorage = {
+const displayThemeStorage = createParsedPreferenceStorage({
+  invalidMessage: 'Invalid display theme preference.',
+  parse: parseDisplayThemePreference,
   read: () => readDisplayThemePreference(),
-  write: (_key, value) => {
-    const preference = parseDisplayThemePreference(value)
-    return preference === null
-      ? new Error('Invalid display theme preference.')
-      : writeDisplayThemePreference(preference)
-  },
-}
+  write: (value) => writeDisplayThemePreference(value),
+})
 
 const applyDocumentTheme = (preference: DisplayThemePreference, prefersDark: boolean) => {
   const isDark = resolveDisplayColorScheme(preference, prefersDark) === 'dark'
@@ -57,10 +54,7 @@ export const useDisplayThemeController = (): DisplayThemeController => {
     mediaQuery.addEventListener('change', handleSystemThemeChange)
 
     createEffect(() => {
-      const currentPreference = storedPreference()
-      if (currentPreference !== null) {
-        applyDocumentTheme(currentPreference, prefersDark())
-      }
+      applyDocumentTheme(preference(), prefersDark())
     })
 
     onCleanup(() => mediaQuery.removeEventListener('change', handleSystemThemeChange))

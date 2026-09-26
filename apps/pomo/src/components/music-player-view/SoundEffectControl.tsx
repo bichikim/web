@@ -2,6 +2,7 @@ import {getLocale} from '@paraglide/runtime'
 import {cx} from 'class-variance-authority'
 import {type Accessor, onMount, Show} from 'solid-js'
 import * as m from '@paraglide/message'
+import {releaseCapturedPointer} from 'src/utils/release-captured-pointer'
 
 import {
   SOUND_EFFECT_VOLUME_STEP,
@@ -48,9 +49,7 @@ const SoundEffectControlView = (props: SoundEffectControlViewProps) => {
   }
 
   const releasePointer = (event: PointerEvent & {currentTarget: HTMLButtonElement}) => {
-    if (event.currentTarget.hasPointerCapture?.(event.pointerId)) {
-      event.currentTarget.releasePointerCapture(event.pointerId)
-    }
+    releaseCapturedPointer(event.currentTarget, event.pointerId)
     dragStart = undefined
   }
 

@@ -1,5 +1,6 @@
 import {
   advancePomodoroTimer,
+  getPomodoroPhaseDuration,
   POMODORO_TIMER_CONFIG,
   type PomodoroTimerConfig,
   type PomodoroTimerState,
@@ -23,6 +24,11 @@ export interface PomodoroTimerEventDeliveryOptions {
 /** Limits the number of lifecycle events returned for delayed delivery. */
 export interface GetPomodoroTimerEventsOptions {
   readonly maxEventCount?: number
+}
+
+interface AppendTransitionEventsOptions {
+  readonly maxEventCount?: number
+  readonly shouldEmitStartEvent: boolean
 }
 
 const getEndEvent = (state: PomodoroTimerState): PomodoroTimerEvent => {
@@ -144,14 +150,28 @@ const appendTransitionEvents = (
   events: Array<PomodoroTimerEvent>,
   currentState: PomodoroTimerState,
   nextState: PomodoroTimerState,
-  maxEventCount?: number,
+  options: AppendTransitionEventsOptions,
 ) => {
-  events.push(getEndEvent(currentState), getStartEvent(nextState))
+  events.push(getEndEvent(currentState))
 
-  if (maxEventCount !== undefined && events.length > maxEventCount) {
-    events.splice(0, events.length - maxEventCount)
+  if (options.shouldEmitStartEvent) {
+    events.push(getStartEvent(nextState))
+  }
+
+  if (options.maxEventCount !== undefined && events.length > options.maxEventCount) {
+    events.splice(0, events.length - options.maxEventCount)
   }
 }
+
+const shouldEmitTransitionStartEvent = (
+  transitionedState: PomodoroTimerState,
+  nextState: PomodoroTimerState,
+  config: PomodoroTimerConfig,
+) =>
+  nextState.status === 'running' ||
+  hasPendingTransitions(transitionedState, nextState) ||
+  (nextState.status === 'paused' &&
+    nextState.remainingSeconds < getPomodoroPhaseDuration(nextState.phase, config))
 
 /** Returns lifecycle events caused by one observable timer state transition. */
 export const getPomodoroTimerEvents = (
@@ -181,7 +201,10 @@ export const getPomodoroTimerEvents = (
       }
 
       const nextPhaseState = advancePomodoroTimer(currentState, config)
-      appendTransitionEvents(events, currentState, nextPhaseState, options.maxEventCount)
+      appendTransitionEvents(events, currentState, nextPhaseState, {
+        maxEventCount: options.maxEventCount,
+        shouldEmitStartEvent: shouldEmitTransitionStartEvent(nextPhaseState, nextState, config),
+      })
       currentState = nextPhaseState
     }
 

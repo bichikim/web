@@ -1,4 +1,4 @@
-import dayjs from 'dayjs'
+import {dayjs} from 'src/utils/zoned-dayjs'
 import {localDateRuntime, useLocalDate} from 'src/features/civil-date'
 import {formatLocalDate} from 'src/utils/format-local-date'
 import {type Accessor, createEffect, createMemo, createResource, createSignal} from 'solid-js'
@@ -63,8 +63,11 @@ interface CalendarMonthRequest {
   readonly revision: number
 }
 
-const createMonthDays = (month: Date): ReadonlyArray<ReadonlyArray<CalendarDay | null>> => {
-  const start = dayjs(month).startOf('month')
+const createMonthDays = (
+  month: Date,
+  timeZone: string,
+): ReadonlyArray<ReadonlyArray<CalendarDay | null>> => {
+  const start = dayjs.tz(formatLocalDate(month), timeZone).startOf('month')
   const daysInMonth = start.daysInMonth()
   const leadingDays = start.day()
   const occupiedDays = leadingDays + daysInMonth
@@ -73,8 +76,8 @@ const createMonthDays = (month: Date): ReadonlyArray<ReadonlyArray<CalendarDay |
     ...Array.from({length: leadingDays}, () => null),
     ...Array.from({length: daysInMonth}, (_, index) => {
       const number = index + 1
-      const date = start.date(number).toDate()
-      return {date, key: formatLocalDate(date), number}
+      const date = new Date(start.year(), start.month(), number)
+      return {date, key: start.date(number).format('YYYY-MM-DD'), number}
     }),
     ...Array.from({length: trailingDays}, () => null),
   ]
@@ -105,21 +108,29 @@ export const useMonth = (props: UseMonthProps): MonthController => {
     props.authentication.session()
     return revision + 1
   }, 0)
+  const timeZone = () => props.environment.timeZone()
+  const initialTimeZone = timeZone()
   const today = props.environment.now()
+  const zonedToday = dayjs(today).tz(initialTimeZone)
   const todayKey = useLocalDate({
     initialDate: today,
     runtime: {...localDateRuntime, now: () => props.environment.now()},
+    timeZone,
   })
-  const [month, setMonth] = createSignal(dayjs(today).startOf('month').toDate())
-  const [selectedDate, setSelectedDate] = createSignal(new Date(today))
+  const [month, setMonth] = createSignal(new Date(zonedToday.year(), zonedToday.month(), 1))
+  const [selectedDate, setSelectedDate] = createSignal(
+    new Date(zonedToday.year(), zonedToday.month(), zonedToday.date()),
+  )
   const monthRange = createMemo(() => {
     const currentMonth = month()
-    const start = dayjs(currentMonth).startOf('month').toDate()
-    const end = dayjs(start).add(1, 'month').toDate()
+    const currentTimeZone = timeZone()
+    const start = dayjs.tz(formatLocalDate(currentMonth), currentTimeZone).startOf('month')
+    const nextMonth = start.add(1, 'month').format('YYYY-MM-01')
+    const end = dayjs.tz(nextMonth, currentTimeZone).startOf('month')
     const range = {
       end: end.toISOString(),
       start: start.toISOString(),
-      timeZone: props.environment.timeZone(),
+      timeZone: currentTimeZone,
     }
     const revision = props.revision ?? 0
     return {
@@ -178,7 +189,7 @@ export const useMonth = (props: UseMonthProps): MonthController => {
       ? result.value
       : cachedCalendar()
   })
-  const days = createMemo(() => createMonthDays(month()))
+  const days = createMemo(() => createMonthDays(month(), timeZone()))
   const eventsByDay = createMemo(() => {
     const result = calendar()
     const grouped = new Map<string, ReadonlyArray<CalendarEvent>>()

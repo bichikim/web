@@ -1,9 +1,10 @@
 import {createHash, randomUUID} from 'node:crypto'
-import {and, eq, inArray, isNull} from 'drizzle-orm'
+import {and, eq, isNull} from 'drizzle-orm'
 
 import {
   type HistoryGenerationOutput,
   type HistoryTargetDate,
+  normalizeHistoryTitle,
   renderHistoryContentHtml,
 } from 'src/features/history-generation'
 import {
@@ -71,7 +72,7 @@ export interface MarkGenerationSubmissionUnknownOptions {
 }
 
 const createStableKey = (moment: HistoryGenerationOutput['moments'][number]): string => {
-  const normalizedTitle = moment.title.normalize('NFKC').trim().toLocaleLowerCase('ko-KR')
+  const normalizedTitle = normalizeHistoryTitle(moment.title)
   const identity = `${moment.historicalEra}:${moment.eventYear}:${normalizedTitle}`
 
   return `history:${createHash('sha256').update(identity).digest('hex')}`
@@ -155,7 +156,21 @@ export const prepareGenerationRun = async (
     throw new Error('Generation run disappeared after a uniqueness conflict')
   }
 
-  if (existing.status === 'failed' && existing.attemptCount < MAX_GENERATION_ATTEMPTS) {
+  const retryCondition =
+    existing.status === 'failed'
+      ? eq(historicalGenerationRuns.status, 'failed')
+      : existing.status === 'preparing' &&
+          existing.openAiResponseId === null &&
+          existing.submissionState === 'expired'
+        ? and(
+            eq(historicalGenerationRuns.status, 'preparing'),
+            isNull(historicalGenerationRuns.openAiResponseId),
+            eq(historicalGenerationRuns.submissionState, 'expired'),
+          )
+        : undefined
+
+  // Rotate the key so a late response for the expired attempt cannot claim this retry.
+  if (existing.attemptCount < MAX_GENERATION_ATTEMPTS && retryCondition !== undefined) {
     const [retried] = await database
       .update(historicalGenerationRuns)
       .set({
@@ -164,13 +179,15 @@ export const prepareGenerationRun = async (
         openAiResponseId: null,
         openAiSubmissionKey: randomUUID(),
         status: 'preparing',
+        submissionExpiresAt: null,
+        submissionState: null,
         updatedAt: new Date(),
       })
       .where(
         and(
           eq(historicalGenerationRuns.id, existing.id),
-          eq(historicalGenerationRuns.status, 'failed'),
           eq(historicalGenerationRuns.attemptCount, existing.attemptCount),
+          retryCondition,
         ),
       )
       .returning()
@@ -189,7 +206,7 @@ export const prepareGenerationRerun = async (
   database: Database = getDatabase(),
 ): Promise<GenerationRun> => {
   const channelId = await getChannelId(database)
-  const selectedMoments = await database
+  const publishedMoments = await database
     .select({title: historicalMoments.title})
     .from(historicalMoments)
     .where(
@@ -198,12 +215,13 @@ export const prepareGenerationRerun = async (
         eq(historicalMoments.eventMonth, options.targetDate.month),
         eq(historicalMoments.eventDay, options.targetDate.day),
         eq(historicalMoments.status, 'published'),
-        inArray(historicalMoments.title, [...options.requiredTitles]),
       ),
     )
-  const selectedTitles = new Set(selectedMoments.map((moment) => moment.title))
+  const publishedTitles = new Set(
+    publishedMoments.map((moment) => normalizeHistoryTitle(moment.title)),
+  )
 
-  if (options.requiredTitles.some((title) => !selectedTitles.has(title))) {
+  if (options.requiredTitles.some((title) => !publishedTitles.has(normalizeHistoryTitle(title)))) {
     throw new Error('Every regeneration title must match an existing published moment')
   }
 

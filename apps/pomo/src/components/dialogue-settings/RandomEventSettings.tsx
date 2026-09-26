@@ -1,6 +1,16 @@
+import {createPendingSave} from 'src/features/pending-save'
 import {PNumberInput} from 'src/components/p-number-input/PNumberInput'
 import {usePreference} from 'src/hooks/use-preference'
-import {createEffect, createMemo, createSignal, onCleanup, Show, untrack} from 'solid-js'
+import {
+  type Accessor,
+  createEffect,
+  createMemo,
+  createSignal,
+  type JSX,
+  onCleanup,
+  Show,
+  untrack,
+} from 'solid-js'
 
 import {
   createRandomEventPreferenceOptions,
@@ -36,6 +46,13 @@ const createIntervalDraft = (settings: RandomEventSettingsValue): IntervalDraft 
   minimum: String(settings.minimumMinutes),
 })
 
+const logPreferenceError = (isSaveError: boolean, error: unknown) => {
+  console.error(
+    isSaveError ? 'Failed to save random event settings.' : 'Failed to load random event settings.',
+    error,
+  )
+}
+
 const parseInterval = (draft: IntervalDraft): RandomEventInterval | null => {
   const maximumMinutes = Number(draft.maximum)
   const minimumMinutes = Number(draft.minimum)
@@ -53,6 +70,53 @@ const parseInterval = (draft: IntervalDraft): RandomEventInterval | null => {
   return {maximumMinutes, minimumMinutes}
 }
 
+interface RandomEventIntervalFieldsProps {
+  readonly draft: Accessor<IntervalDraft>
+  readonly interval: Accessor<RandomEventInterval | null>
+  readonly isLoading: Accessor<boolean>
+  readonly onMaximumChange: (value: string) => void
+  readonly onMinimumChange: (value: string) => void
+}
+
+const RandomEventIntervalFields = (props: RandomEventIntervalFieldsProps): JSX.Element => (
+  <div class={CLASSES.fields}>
+    <label class={CLASSES.field}>
+      <span>{m.settings_random_interval_minimum()}</span>
+      <PNumberInput
+        aria-label={m.settings_random_interval_minimum_label()}
+        aria-invalid={props.interval() === null}
+        class="w-full"
+        decrementLabel={m.settings_random_interval_minimum_decrease()}
+        disabled={props.isLoading()}
+        incrementLabel={m.settings_random_interval_minimum_increase()}
+        max={MAXIMUM_INTERVAL_MINUTES}
+        min={MINIMUM_INTERVAL_MINUTES}
+        onInputValueChange={props.onMinimumChange}
+        onValueChange={(value) => props.onMinimumChange(String(value))}
+        size="small"
+        value={props.draft().minimum}
+      />
+    </label>
+    <label class={CLASSES.field}>
+      <span>{m.settings_random_interval_maximum()}</span>
+      <PNumberInput
+        aria-label={m.settings_random_interval_maximum_label()}
+        aria-invalid={props.interval() === null}
+        class="w-full"
+        decrementLabel={m.settings_random_interval_maximum_decrease()}
+        disabled={props.isLoading()}
+        incrementLabel={m.settings_random_interval_maximum_increase()}
+        max={MAXIMUM_INTERVAL_MINUTES}
+        min={MINIMUM_INTERVAL_MINUTES}
+        onInputValueChange={props.onMaximumChange}
+        onValueChange={(value) => props.onMaximumChange(String(value))}
+        size="small"
+        value={props.draft().maximum}
+      />
+    </label>
+  </div>
+)
+
 export const RandomEventSettings = () => {
   const [settings, setSettings] = createSignal<RandomEventSettingsValue>(
     DEFAULT_RANDOM_EVENT_SETTINGS,
@@ -62,22 +126,34 @@ export const RandomEventSettings = () => {
   const interval = createMemo(() => parseInterval(draft()))
   let edited = false
   let isDisposed = false
-  let pendingInterval: RandomEventInterval | null = null
+  let previousSettings: RandomEventSettingsValue | null = null
+  let pendingPreferenceSaves = 0
 
   const handlePreferenceError = (error: unknown) => {
     const isSaveError = edited
-    console.error(
-      isSaveError
-        ? 'Failed to save random event settings.'
-        : 'Failed to load random event settings.',
-      error,
-    )
+    if (isSaveError && pendingPreferenceSaves > 0) {
+      pendingPreferenceSaves -= 1
+    }
+    logPreferenceError(isSaveError, error)
 
     if (!isDisposed) {
+      if (isSaveError && previousSettings !== null) {
+        setSettings(previousSettings)
+        setDraft(createIntervalDraft(previousSettings))
+      }
       setMessage(isSaveError ? m.settings_random_save_failed() : m.settings_random_load_failed())
+    }
+    if (isSaveError && pendingPreferenceSaves === 0 && !pendingSave.hasPending()) {
+      edited = false
     }
   }
   const handlePreferenceSaved = () => {
+    if (pendingPreferenceSaves > 0) {
+      pendingPreferenceSaves -= 1
+    }
+    if (pendingPreferenceSaves === 0 && !pendingSave.hasPending()) {
+      edited = false
+    }
     if (!isDisposed && message() !== m.settings_random_saved()) {
       setMessage(null)
     }
@@ -93,7 +169,7 @@ export const RandomEventSettings = () => {
   createEffect(() => {
     const nextSettings = storedSettings()
 
-    if (nextSettings === null || pendingInterval !== null) {
+    if (nextSettings === null || pendingSave.hasPending()) {
       return
     }
 
@@ -102,6 +178,8 @@ export const RandomEventSettings = () => {
   })
 
   const saveSettings = (nextSettings: RandomEventSettingsValue) => {
+    pendingPreferenceSaves += 1
+    previousSettings = untrack(settings)
     setStoredSettings(nextSettings)
 
     if (!isDisposed) {
@@ -109,6 +187,12 @@ export const RandomEventSettings = () => {
       setMessage(m.settings_random_saved())
     }
   }
+
+  const pendingSave = createPendingSave({
+    delayMilliseconds: SAVE_DEBOUNCE_MILLISECONDS,
+    save: (nextInterval: RandomEventInterval) =>
+      saveSettings({...untrack(settings), ...nextInterval}),
+  })
 
   const updateMinimum = (value: string) => {
     edited = true
@@ -123,12 +207,7 @@ export const RandomEventSettings = () => {
 
   onCleanup(() => {
     isDisposed = true
-    const nextInterval = pendingInterval
-    pendingInterval = null
-
-    if (nextInterval !== null) {
-      saveSettings({...untrack(settings), ...nextInterval})
-    }
+    pendingSave.flush()
   })
 
   createEffect(() => {
@@ -141,17 +220,11 @@ export const RandomEventSettings = () => {
       (nextInterval.minimumMinutes === currentSettings.minimumMinutes &&
         nextInterval.maximumMinutes === currentSettings.maximumMinutes)
     ) {
-      pendingInterval = null
+      pendingSave.cancel()
       return
     }
 
-    pendingInterval = nextInterval
-    const timeoutId = globalThis.setTimeout(() => {
-      pendingInterval = null
-      saveSettings({...untrack(settings), ...nextInterval})
-    }, SAVE_DEBOUNCE_MILLISECONDS)
-
-    onCleanup(() => globalThis.clearTimeout(timeoutId))
+    pendingSave.schedule(nextInterval)
   })
 
   return (
@@ -160,42 +233,13 @@ export const RandomEventSettings = () => {
       label={m.settings_random_interval()}
     >
       <div class={CLASSES.interval}>
-        <div class={CLASSES.fields}>
-          <label class={CLASSES.field}>
-            <span>{m.settings_random_interval_minimum()}</span>
-            <PNumberInput
-              aria-label={m.settings_random_interval_minimum_label()}
-              aria-invalid={interval() === null}
-              class="w-full"
-              decrementLabel={m.settings_random_interval_minimum_decrease()}
-              disabled={isLoading()}
-              incrementLabel={m.settings_random_interval_minimum_increase()}
-              max={MAXIMUM_INTERVAL_MINUTES}
-              min={MINIMUM_INTERVAL_MINUTES}
-              onInputValueChange={updateMinimum}
-              onValueChange={(value) => updateMinimum(String(value))}
-              size="small"
-              value={draft().minimum}
-            />
-          </label>
-          <label class={CLASSES.field}>
-            <span>{m.settings_random_interval_maximum()}</span>
-            <PNumberInput
-              aria-label={m.settings_random_interval_maximum_label()}
-              aria-invalid={interval() === null}
-              class="w-full"
-              decrementLabel={m.settings_random_interval_maximum_decrease()}
-              disabled={isLoading()}
-              incrementLabel={m.settings_random_interval_maximum_increase()}
-              max={MAXIMUM_INTERVAL_MINUTES}
-              min={MINIMUM_INTERVAL_MINUTES}
-              onInputValueChange={updateMaximum}
-              onValueChange={(value) => updateMaximum(String(value))}
-              size="small"
-              value={draft().maximum}
-            />
-          </label>
-        </div>
+        <RandomEventIntervalFields
+          draft={draft}
+          interval={interval}
+          isLoading={isLoading}
+          onMaximumChange={updateMaximum}
+          onMinimumChange={updateMinimum}
+        />
         <Show
           fallback={
             <Show when={message()}>

@@ -1,0 +1,20 @@
+{
+  "finishedAt": "2026-09-06T17:51:33.917Z",
+  "doctorExitCode": 0,
+  "evaluationExitCode": 0,
+  "provisional": true,
+  "summary": {
+    "candidateSelectionRecall": 1,
+    "classificationAccuracy": 0.7142857142857143,
+    "classified": 14,
+    "correct": 10,
+    "positivePairs": 4,
+    "selectedPositivePairs": 4,
+    "unlabelledAssessments": 41
+  },
+  "stderr": {
+    "index": "",
+    "doctor": "",
+    "evaluation": ""
+  }
+}

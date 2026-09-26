@@ -103,25 +103,22 @@ export const useInfluenceSettings = (props: InfluenceRelationProps) => {
       props.draft.preset(props.index, current, value / WHOLE_PERCENT)
     }
   }
-  const editCurve = (operation: () => void) => {
-    setChosenDirection('custom')
-    operation()
-  }
+  const startCurveEdit = () => setChosenDirection('custom')
   return {
-    endEdit,
     changeDirection,
-    startEdit,
     changeMaximum,
-    description,
-    direction,
     changeSource: (id: string) => {
       setChosenDirection(null)
       props.draft.changeSource(props.index, id)
     },
-    relation,
-    editCurve,
-    maximum,
+    description,
+    direction,
+    endEdit,
     expanded,
+    maximum,
+    relation,
     setExpanded,
+    startCurveEdit,
+    startEdit,
   }
 }

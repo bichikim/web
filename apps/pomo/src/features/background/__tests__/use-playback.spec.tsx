@@ -5,13 +5,22 @@ import {afterEach, beforeEach, expect, it, vi} from 'vitest'
 import {type BackgroundPreferences, DEFAULT_BACKGROUND} from '../model'
 import {type BackgroundController} from '../use-background'
 import {usePlayback} from '../use-playback'
+import {getMonotonicTime} from 'src/utils/get-monotonic-time'
+
+vi.mock('src/utils/get-monotonic-time', () => ({getMonotonicTime: vi.fn()}))
+
+const monotonicTime = vi.mocked(getMonotonicTime)
 
 beforeEach(() => {
   vi.useFakeTimers()
   vi.setSystemTime(0)
+  monotonicTime.mockImplementation(() => vi.getMockedSystemTime()?.getTime() ?? 0)
 })
-afterEach(() => vi.useRealTimers())
-const setup = (videoMode: BackgroundPreferences['videoMode']) => {
+afterEach(() => {
+  vi.restoreAllMocks()
+  vi.useRealTimers()
+})
+const setup = (videoMode: BackgroundPreferences['videoMode'], initializeVideo = true) => {
   const [preferences, setPreferences] = createSignal({...DEFAULT_BACKGROUND, videoMode})
   const background = {
     failedIds: () => [],
@@ -22,8 +31,10 @@ const setup = (videoMode: BackgroundPreferences['videoMode']) => {
     preferences,
   } as unknown as BackgroundController
   const hook = renderHook(() => usePlayback({background}))
-  hook.result.onVideoStart()
-  hook.result.onReady()
+  if (initializeVideo) {
+    hook.result.onVideoStart()
+    hook.result.onReady()
+  }
   return {...hook, setPreferences}
 }
 it('should ignore display time in end mode', () => {
@@ -39,6 +50,19 @@ it('should count video playback toward the hold deadline', () => {
   vi.advanceTimersByTime(4000)
   result.onEnded()
   vi.advanceTimersByTime(5999)
+  expect(result.current()?.id).toBe('video')
+  vi.advanceTimersByTime(1)
+  expect(result.current()?.id).toBe('photo')
+  cleanup()
+})
+it('should preserve the ready deadline when video starts after the frame is ready', () => {
+  const {result, cleanup} = setup('hold', false)
+  result.onReady()
+  vi.advanceTimersByTime(5000)
+  result.onVideoStart()
+  vi.advanceTimersByTime(4000)
+  result.onEnded()
+  vi.advanceTimersByTime(999)
   expect(result.current()?.id).toBe('video')
   vi.advanceTimersByTime(1)
   expect(result.current()?.id).toBe('photo')
@@ -63,6 +87,19 @@ it('should preserve elapsed time when duration changes', () => {
   vi.advanceTimersByTime(4000)
   setPreferences((previous) => ({...previous, photoSeconds: 5}))
   vi.advanceTimersByTime(1000)
+  expect(result.current()?.id).toBe('photo')
+  cleanup()
+})
+it('should ignore wall-clock jumps when rescheduling the deadline', () => {
+  const {result, cleanup, setPreferences} = setup('loop')
+  vi.advanceTimersByTime(4000)
+  const wallTime = Date.now()
+  vi.spyOn(Date, 'now').mockReturnValue(wallTime + 60_000)
+  setPreferences((previous) => ({...previous}))
+  expect(result.current()?.id).toBe('video')
+  vi.advanceTimersByTime(5999)
+  expect(result.current()?.id).toBe('video')
+  vi.advanceTimersByTime(1)
   expect(result.current()?.id).toBe('photo')
   cleanup()
 })

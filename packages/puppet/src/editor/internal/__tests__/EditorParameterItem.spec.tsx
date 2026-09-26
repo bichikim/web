@@ -41,6 +41,29 @@ test('should edit its single visible name after a double click', () => {
   expect(view.queryByRole('textbox', {name: 'Parameter 이름'})).not.toBeInTheDocument()
 })
 
+test('should edit the independently selected name of a two-dimensional parameter', () => {
+  const onNameChange = vi.fn()
+  const onSecondaryNameChange = vi.fn()
+  const view = render(() => (
+    <EditorParameterItem
+      name="Angle X"
+      secondaryName="Angle Y"
+      onNameChange={onNameChange}
+      onSecondaryNameChange={onSecondaryNameChange}
+    />
+  ))
+
+  fireEvent.dblClick(view.getByRole('button', {name: 'Angle Y'}))
+  const nameInput = view.getByRole('textbox', {name: 'Parameter 이름'})
+  expect(nameInput).toHaveValue('Angle Y')
+
+  fireEvent.input(nameInput, {target: {value: 'Head Y'}})
+  fireEvent.keyDown(nameInput, {key: 'Enter'})
+
+  expect(onNameChange).not.toHaveBeenCalled()
+  expect(onSecondaryNameChange).toHaveBeenCalledWith('Head Y')
+})
+
 test('should return to its origin when released before the delete threshold', () => {
   const {item, onDelete, view} = renderItem()
 

@@ -396,7 +396,7 @@ describe('app session lifecycle', () => {
     })
   })
 
-  it.each(['invalid', '1.5', '0'])(
+  it.each(['invalid', '1.5', '0', '-1', 'Infinity', 'Wed, 21 Oct 2015 07:28:00 GMT'])(
     'should reject the invalid retry delay %s',
     async (retryAfter) => {
       vi.stubGlobal(

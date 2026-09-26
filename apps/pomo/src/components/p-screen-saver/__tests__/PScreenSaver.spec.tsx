@@ -65,11 +65,11 @@ describe('PScreenSaver', () => {
     expect(trackRegion.textContent).toContain('rainymonday')
     expect(trackRegion.textContent).toContain('음악 재생 중')
     const playbackIcon = trackRegion.querySelector('p > span[aria-hidden="true"]')
-    expect(playbackIcon?.classList).toContain('i-tabler-player-play')
+    expect(playbackIcon?.classList).toContain('i-tabler-player-pause')
 
     setIsMusicPlaying(false)
     expect(trackRegion.textContent).toContain('음악 일시 정지')
-    expect(playbackIcon?.classList).toContain('i-tabler-player-pause')
+    expect(playbackIcon?.classList).toContain('i-tabler-player-play')
 
     setIsActive(false)
     expect(close).toHaveBeenCalledOnce()
@@ -117,7 +117,7 @@ describe('PScreenSaver', () => {
     const playbackIcon = trackRegion.querySelector('p > span[aria-hidden="true"]')
 
     expect(trackRegion.textContent).toContain('음악 일시 정지')
-    expect(playbackIcon?.classList).toContain('i-tabler-player-pause')
+    expect(playbackIcon?.classList).toContain('i-tabler-player-play')
 
     fireEvent.keyDown(dialog)
     expect(close).not.toHaveBeenCalled()

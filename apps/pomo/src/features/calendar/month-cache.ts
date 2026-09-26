@@ -1,5 +1,6 @@
 import {z} from 'zod'
 
+import {createBestEffortValueStorage, createJsonCodec, createValueStorage} from '../value-storage'
 import {CALENDAR_PROVIDERS, type CalendarEventRange} from './types'
 import type {CalendarEvents} from './client'
 
@@ -42,6 +43,24 @@ const cacheSchema = z.object({
 })
 
 type CalendarMonthCache = z.infer<typeof cacheSchema>
+type CalendarMonthCacheEntry = CalendarMonthCache['entries'][number]
+
+const cacheCodec = createJsonCodec((value) => {
+  const result = cacheSchema.safeParse(value)
+  return result.success ? result.data : null
+})
+const createCacheStorage = (storage: Storage) =>
+  createValueStorage({
+    ...cacheCodec,
+    key: STORAGE_KEY,
+    storage: () => storage,
+  })
+
+const upsertCacheEntry = (
+  entries: CalendarMonthCache['entries'],
+  next: CalendarMonthCacheEntry,
+): CalendarMonthCache['entries'] =>
+  [next, ...entries.filter((entry) => entry.key !== next.key)].slice(0, MAXIMUM_CACHED_MONTHS)
 
 const createCacheKey = (range: CalendarMonthCacheRange) =>
   JSON.stringify([range.accountKey, range.start, range.end, range.timeZone])
@@ -54,20 +73,12 @@ const resolveStorage = (storage?: Storage): Storage | null => {
   return typeof sessionStorage === 'undefined' ? null : sessionStorage
 }
 
-const readCache = (storage: Storage): CalendarMonthCache | null => {
-  try {
-    const stored = storage.getItem(STORAGE_KEY)
-    if (stored === null) {
-      return null
-    }
-
-    const parsed: unknown = JSON.parse(stored)
-    const result = cacheSchema.safeParse(parsed)
-    return result.success ? result.data : null
-  } catch {
-    return null
-  }
-}
+const readCache = (storage: Storage): CalendarMonthCache | null =>
+  createBestEffortValueStorage({
+    ...cacheCodec,
+    key: STORAGE_KEY,
+    storage: () => storage,
+  }).read()
 
 export const readCalendarMonthCache = (
   range: CalendarMonthCacheRange,
@@ -95,15 +106,12 @@ export const writeCalendarMonthCache = (
   const key = createCacheKey(range)
   const entries = readCache(resolvedStorage)?.entries ?? []
   const nextCache: CalendarMonthCache = {
-    entries: [{key, value}, ...entries.filter((entry) => entry.key !== key)].slice(
-      0,
-      MAXIMUM_CACHED_MONTHS,
-    ),
+    entries: upsertCacheEntry(entries, {key, value}),
     version: CACHE_VERSION,
   }
 
   try {
-    resolvedStorage.setItem(STORAGE_KEY, JSON.stringify(nextCache))
+    createCacheStorage(resolvedStorage).write(nextCache)
     return null
   } catch (error: unknown) {
     return error

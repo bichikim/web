@@ -1,6 +1,6 @@
 // oxlint-disable require-yield -- Rejection coverage needs an async generator that fails before its first value.
 import {describe, expect, it, vi} from 'vitest'
-import {successResult} from 'src/features/result'
+import {failureResult, successResult} from 'src/features/result'
 import {type CreateOpusBlobOptions} from '../../supertonic'
 
 import type {PDialogue} from '../schema'
@@ -12,6 +12,7 @@ import {
   createEditorRoot,
   createStoredDialogue,
   moodAnalyzerMocks,
+  moodRuntime,
   repositoryMocks,
   supertonicMocks,
 } from './support/editor'
@@ -184,6 +185,106 @@ describe('usePDialogueEditor', () => {
     editor.dispose()
   })
 
+  it('should discard pending mood analysis after the dialogue text changes', async () => {
+    let resolveMoodAnalysis: (
+      result: Awaited<ReturnType<typeof moodAnalyzerMocks.analyze>>,
+    ) => void = () => undefined
+    const moodProgress: {callback: ((progress: number) => void) | null} = {callback: null}
+    moodAnalyzerMocks.analyze.mockReturnValueOnce(
+      new Promise((resolve) => {
+        resolveMoodAnalysis = resolve
+      }),
+    )
+    vi.mocked(moodRuntime.createAnalyzer).mockImplementationOnce(({onProgress}) => {
+      moodProgress.callback = onProgress ?? null
+      return moodAnalyzerMocks
+    })
+    const client = createClient([])
+    supertonicMocks.createClient.mockReturnValue(client)
+    const editor = createEditorRoot()
+    editor.controller.setText('분석 중 수정할 대사입니다.')
+
+    const generation = editor.controller.generate()
+    await vi.waitFor(() => expect(moodAnalyzerMocks.analyze).toHaveBeenCalledOnce())
+    expect(moodProgress.callback).not.toBeNull()
+    moodProgress.callback?.(20)
+    expect(editor.controller.state().status).toBe('analyzing')
+    expect(editor.controller.audioUrl()).toBe('blob:dialogue')
+    expect(editor.controller.segments()).toHaveLength(1)
+
+    editor.controller.setText('수정한 대사입니다.')
+    expect(editor.controller.audioUrl()).toBeNull()
+    expect(editor.controller.segments()).toEqual([])
+    moodProgress.callback?.(40)
+    expect(editor.controller.state().status).toBe('idle')
+
+    resolveMoodAnalysis(
+      successResult({analysis: cheerfulAnalysis, elapsedMilliseconds: 12, status: 'complete'}),
+    )
+    await generation
+
+    expect(editor.controller.audioUrl()).toBeNull()
+    expect(editor.controller.segments()).toEqual([])
+    expect(editor.controller.canSave()).toBe(false)
+    expect(editor.controller.state().status).toBe('idle')
+    editor.dispose()
+  })
+
+  it('should wait for stale mood analysis before analyzing the revised dialogue', async () => {
+    let resolveMoodAnalysis: (
+      result: Awaited<ReturnType<typeof moodAnalyzerMocks.analyze>>,
+    ) => void = () => undefined
+    const moodProgress: {callback: ((progress: number) => void) | null} = {callback: null}
+    moodAnalyzerMocks.analyze
+      .mockReturnValueOnce(
+        new Promise((resolve) => {
+          resolveMoodAnalysis = resolve
+        }),
+      )
+      .mockResolvedValueOnce(
+        successResult({analysis: cheerfulAnalysis, elapsedMilliseconds: 12, status: 'complete'}),
+      )
+    vi.mocked(moodRuntime.createAnalyzer).mockImplementationOnce(({onProgress}) => {
+      moodProgress.callback = onProgress ?? null
+      return moodAnalyzerMocks
+    })
+    const client = createClient([])
+    supertonicMocks.createClient.mockReturnValue(client)
+    const editor = createEditorRoot()
+    editor.controller.setText('첫 번째 대사입니다.')
+
+    const staleGeneration = editor.controller.generate()
+    await vi.waitFor(() => expect(moodAnalyzerMocks.analyze).toHaveBeenCalledOnce())
+    editor.controller.setText('수정한 대사입니다.')
+
+    const revisedGeneration = editor.controller.generate()
+    await vi.waitFor(() =>
+      expect(editor.controller.segments()).toEqual([
+        expect.objectContaining({text: '수정한 대사입니다.'}),
+      ]),
+    )
+    expect(moodAnalyzerMocks.analyze).toHaveBeenCalledOnce()
+    expect(editor.controller.state().status).toBe('generating')
+
+    moodProgress.callback?.(40)
+    expect(editor.controller.state().status).toBe('generating')
+    expect(editor.controller.segments()).toEqual([
+      expect.objectContaining({text: '수정한 대사입니다.'}),
+    ])
+    resolveMoodAnalysis(
+      successResult({analysis: cheerfulAnalysis, elapsedMilliseconds: 12, status: 'complete'}),
+    )
+    await Promise.all([staleGeneration, revisedGeneration])
+
+    expect(editor.controller.segments()).toEqual([
+      expect.objectContaining({mood: cheerfulAnalysis, text: '수정한 대사입니다.'}),
+    ])
+    expect(moodAnalyzerMocks.analyze).toHaveBeenCalledTimes(2)
+    expect(editor.controller.canSave()).toBe(true)
+    expect(editor.controller.state().status).toBe('ready')
+    editor.dispose()
+  })
+
   it('should invalidate generated audio and status when the language changes', async () => {
     const client = createClient([])
     supertonicMocks.createClient.mockReturnValue(client)
@@ -230,6 +331,46 @@ describe('usePDialogueEditor', () => {
     })
     expect(editor.controller.canGenerate()).toBe(true)
     expect(errorSpy).toHaveBeenCalledOnce()
+    editor.dispose()
+  })
+
+  it('should ignore late model callbacks after preparation fails and allow retry', async () => {
+    const client = createClient([])
+    let reportLateProgress: () => void = () => undefined
+    let reportLateStatus: () => void = () => undefined
+    vi.mocked(client.initialize).mockImplementationOnce(async ({onProgress, onStatus}) => {
+      reportLateProgress = () => {
+        onProgress({fileName: 'voice.onnx', loadedBytes: 10, totalBytes: 100})
+      }
+      reportLateStatus = () => {
+        onStatus('늦게 도착한 상태')
+      }
+      return failureResult({
+        code: 'worker-failed',
+        detail: 'worker failed',
+        phase: 'initialize',
+        retryable: true,
+      })
+    })
+    supertonicMocks.createClient.mockReturnValue(client)
+    const editor = createEditorRoot()
+    editor.controller.setText('늦은 진행률 뒤에도 재시도할 수 있어야 하는 대사')
+
+    await editor.controller.generate()
+
+    const errorState = editor.controller.state()
+    expect(errorState.status).toBe('error')
+
+    reportLateProgress()
+    reportLateStatus()
+
+    expect(editor.controller.state()).toEqual(errorState)
+    expect(editor.controller.canGenerate()).toBe(true)
+
+    await editor.controller.generate()
+
+    expect(client.initialize).toHaveBeenCalledTimes(2)
+    expect(client.generateStream).toHaveBeenCalledOnce()
     editor.dispose()
   })
 

@@ -1,6 +1,7 @@
 import {cva, cx} from 'class-variance-authority'
-import {createSignal, type JSX, Show, splitProps, untrack} from 'solid-js'
+import {createEffect, createSignal, type JSX, Show, splitProps, untrack} from 'solid-js'
 import {CONTROL_HEIGHT_CLASSES, CONTROL_PADDING_CLASSES} from '../control-size-classes'
+import {clampOptionalBounds} from './clamp-optional-bounds'
 import {type NumberInputRange, useNumberInputGesture} from './use-number-input-gesture'
 
 const DEFAULT_STEP = 1
@@ -85,11 +86,6 @@ const parseValue = (value: number | string | undefined): number | undefined => {
   return Number.isFinite(parsed) ? parsed : undefined
 }
 
-const clamp = (value: number, min: number | undefined, max: number | undefined): number => {
-  const lowerBoundedValue = min === undefined ? value : Math.max(value, min)
-  return max === undefined ? lowerBoundedValue : Math.min(lowerBoundedValue, max)
-}
-
 const decimalPlaces = (value: number): number => {
   const [, decimalPart] = value.toString().split('.')
   return decimalPart?.length ?? 0
@@ -110,7 +106,7 @@ const normalizeValue = (
   max: number | undefined,
 ): number => {
   const snapped = snapToStep(value, step, min)
-  const bounded = clamp(snapped, min, max)
+  const bounded = clampOptionalBounds(snapped, min, max)
   return Object.is(bounded, -0) ? 0 : bounded
 }
 
@@ -147,18 +143,35 @@ export const PNumberInput = (props: PNumberInputProps) => {
   const [uncontrolledValue, setUncontrolledValue] = createSignal(
     untrack(() => (local.value === undefined ? String(local.min ?? 0) : String(local.value))),
   )
+  const [lastValue, setLastValue] = createSignal<number | null>(
+    untrack(
+      () => parseValue(local.value === undefined ? uncontrolledValue() : local.value) ?? null,
+    ),
+  )
+  createEffect(() => {
+    const currentValue = parseValue(local.value === undefined ? uncontrolledValue() : local.value)
+    if (currentValue !== undefined) {
+      setLastValue(currentValue)
+    }
+  })
   const getSize = () => local.size ?? 'small'
 
   const getBounds = (): NumberInputRange => getRange(local.min, local.max)
   const getCurrentValue = () => {
     const bounds = getBounds()
     const currentValue = parseValue(local.value === undefined ? uncontrolledValue() : local.value)
-    return normalizeValue(currentValue ?? 0, getStep(local.step), bounds.min, bounds.max)
+    return normalizeValue(
+      currentValue ?? lastValue() ?? 0,
+      getStep(local.step),
+      bounds.min,
+      bounds.max,
+    )
   }
   const emitValue = (value: number) => {
     const bounds = getBounds()
     const nextValue = normalizeValue(value, getStep(local.step), bounds.min, bounds.max)
 
+    setLastValue(nextValue)
     if (local.value === undefined) {
       setUncontrolledValue(String(nextValue))
     }
@@ -170,6 +183,10 @@ export const PNumberInput = (props: PNumberInputProps) => {
 
   const handleInput: JSX.EventHandler<HTMLInputElement, InputEvent> = (event) => {
     const nextValue = event.currentTarget.value
+    const parsedValue = parseValue(nextValue)
+    if (parsedValue !== undefined) {
+      setLastValue(parsedValue)
+    }
     if (local.value === undefined) {
       setUncontrolledValue(nextValue)
     }

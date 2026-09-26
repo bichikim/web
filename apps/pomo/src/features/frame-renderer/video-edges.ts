@@ -1,5 +1,8 @@
+import {textureResolutionForMaxSide} from './texture-resolution-for-max-side'
+import {clampUnit} from 'src/utils/clamp-unit'
 import {Container, Rectangle, type Renderer, Sprite, Texture} from 'pixi.js'
 import {captureSample, sampleBlend, type VideoSample} from '../video-background'
+import {cosineEaseOutAlpha} from './cosine-ease-out-alpha'
 import {PhotoEdges, type PhotoEdgesLayout} from './edges'
 
 const FADE_MILLISECONDS = 700
@@ -95,7 +98,10 @@ export class VideoEdges {
     }
     const texture = this.#renderer.generateTexture({
       frame: new Rectangle(0, 0, layout.width, layout.height),
-      resolution: Math.min(1, SNAPSHOT_LENGTH / Math.max(layout.width, layout.height)),
+      resolution: textureResolutionForMaxSide(
+        Math.max(layout.width, layout.height),
+        SNAPSHOT_LENGTH,
+      ),
       target: this.view,
     })
     this.#fade?.destroy({texture: true, textureSource: true})
@@ -112,8 +118,8 @@ export class VideoEdges {
       return
     }
     this.#fadeElapsed += Math.max(0, elapsed)
-    const progress = Math.min(1, this.#fadeElapsed / FADE_MILLISECONDS)
-    fade.alpha = (1 + Math.cos(Math.PI * progress)) / 2
+    const progress = clampUnit(this.#fadeElapsed / FADE_MILLISECONDS)
+    fade.alpha = cosineEaseOutAlpha(this.#fadeElapsed, FADE_MILLISECONDS)
     if (progress >= 1) {
       fade.destroy({texture: true, textureSource: true})
       this.#fade = null

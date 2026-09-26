@@ -1,3 +1,4 @@
+import * as m from '@paraglide/message'
 import {createResource, ErrorBoundary, Show, Suspense} from 'solid-js'
 import {loadLicenseData} from 'src/features/licenses'
 import {ThirdPartyNoticesDocument} from '../components/third-party-notices/Document'
@@ -6,8 +7,8 @@ export default function ThirdPartyNoticesPage() {
   const [licenseData] = createResource(loadLicenseData)
 
   return (
-    <ErrorBoundary fallback={<p role="alert">라이선스 정보를 불러오지 못했습니다.</p>}>
-      <Suspense fallback={<p role="status">라이선스 정보를 불러오는 중…</p>}>
+    <ErrorBoundary fallback={<p role="alert">{m.third_party_notices_load_error()}</p>}>
+      <Suspense fallback={<p role="status">{m.third_party_notices_loading()}</p>}>
         <Show keyed when={licenseData()}>
           {(data) => <ThirdPartyNoticesDocument licenseData={data} />}
         </Show>

@@ -84,18 +84,23 @@ it('should distinguish a provider failure from an active collection', async () =
   ).resolves.toEqual({retryAfterMilliseconds: 30_000, status: 'unavailable'})
 })
 
-it.each([undefined, '0', '1.5'])('should ignore the invalid retry delay %s', async (retryAfter) => {
-  vi.useFakeTimers()
-  const headers = retryAfter === undefined ? undefined : {'Retry-After': retryAfter}
-  vi.stubGlobal(
-    'fetch',
-    vi.fn().mockResolvedValue(Response.json({code: 'weather_unavailable'}, {headers, status: 503})),
-  )
+it.each([undefined, '0', '-1', '1.5', 'Infinity', 'Wed, 21 Oct 2015 07:28:00 GMT'])(
+  'should ignore the invalid retry delay %s',
+  async (retryAfter) => {
+    vi.useFakeTimers()
+    const headers = retryAfter === undefined ? undefined : {'Retry-After': retryAfter}
+    vi.stubGlobal(
+      'fetch',
+      vi
+        .fn()
+        .mockResolvedValue(Response.json({code: 'weather_unavailable'}, {headers, status: 503})),
+    )
 
-  await expect(
-    resolveWeatherResultAfterRetry(fetchWeatherFeed(LEGACY_WEATHER_LOCATIONS.seoul.id)),
-  ).resolves.toEqual({retryAfterMilliseconds: null, status: 'unavailable'})
-})
+    await expect(
+      resolveWeatherResultAfterRetry(fetchWeatherFeed(LEGACY_WEATHER_LOCATIONS.seoul.id)),
+    ).resolves.toEqual({retryAfterMilliseconds: null, status: 'unavailable'})
+  },
+)
 
 it('should reject an unsuccessful weather response', async () => {
   vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(null, {status: 404})))

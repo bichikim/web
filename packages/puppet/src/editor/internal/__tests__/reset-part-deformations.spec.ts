@@ -11,7 +11,7 @@ const createDocument = () =>
     operation: 'append',
     point: {x: 900, y: 240},
   })!
-const options = {nodeId: 'bone', boneIndex: 0, partId: 'mesh-preview', vertexIndex: 0, weight: 0.25}
+const options = {boneIndex: 0, nodeId: 'bone', partId: 'mesh-preview', vertexIndex: 0, weight: 0.25}
 test('should clear weights on mesh topology replacement, including preserved binding steps', async () => {
   const {resetPartDeformations} = await import('../reset-part-deformations')
   const document = setDeformerVertexWeight({...options, document: createDocument()})!

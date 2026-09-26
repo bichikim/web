@@ -13,7 +13,7 @@ permissions:
   contents: read
 
 env:
-  NODE_VERSION: 24
+  NODE_VERSION: '24.x'
   PNPM_VERSION: 11.8.0
   VERCEL_CLI_VERSION: 59.5.0
   VERCEL_ORG_ID: team_Ic8YKQ9jWkFLhVzeljhB4ZLV
@@ -153,9 +153,6 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Check production migration safety
-        run: pnpm --dir apps/pomo db:check-production-migrations
-
       - name: Pull Vercel production settings
         env:
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
@@ -163,6 +160,14 @@ jobs:
           pnpm dlx vercel@${VERCEL_CLI_VERSION} pull
           --yes
           --environment=production
+
+      - name: Report pending production migration review items
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        run: |
+          pnpm dlx vercel@${VERCEL_CLI_VERSION} env run \
+            --environment=production \
+            -- sh -eu -c 'exec pnpm --dir apps/pomo db:check-production-migrations'
 
       - name: Migrate production database
         env:

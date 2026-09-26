@@ -87,6 +87,56 @@ describe('createSupertonicClient', () => {
     expect(onStatus).toHaveBeenCalledWith('확인 중')
   })
 
+  it('should resolve every concurrent initialization when the Worker is ready', async () => {
+    const client = createSupertonicClient()
+    const worker = getWorker()
+    const firstInitialization = client.initialize({
+      modelId: 'int8',
+      onProgress: vi.fn(),
+      onStatus: vi.fn(),
+    })
+    const secondInitialization = client.initialize({
+      modelId: 'int8',
+      onProgress: vi.fn(),
+      onStatus: vi.fn(),
+    })
+
+    expect(secondInitialization).toBe(firstInitialization)
+    expect(worker.postMessage).toHaveBeenCalledTimes(1)
+    worker.emitMessage({backend: 'wasm', type: 'ready'})
+
+    return expect(Promise.all([firstInitialization, secondInitialization])).resolves.toEqual([
+      {ok: true, value: undefined},
+      {ok: true, value: undefined},
+    ])
+  })
+
+  it('should serialize concurrent initializations for different models', async () => {
+    const client = createSupertonicClient()
+    const worker = getWorker()
+    const firstInitialization = client.initialize({
+      modelId: 'int8',
+      onProgress: vi.fn(),
+      onStatus: vi.fn(),
+    })
+    const secondInitialization = client.initialize({
+      modelId: 'full',
+      onProgress: vi.fn(),
+      onStatus: vi.fn(),
+    })
+
+    expect(worker.postMessage).toHaveBeenCalledTimes(1)
+    worker.emitMessage({backend: 'wasm', type: 'ready'})
+    expect(worker.postMessage).toHaveBeenLastCalledWith({modelId: 'full', type: 'initialize'})
+    expect(worker.postMessage).toHaveBeenCalledTimes(2)
+    worker.emitMessage({backend: 'wasm', type: 'ready'})
+
+    return expect(Promise.all([firstInitialization, secondInitialization])).resolves.toEqual([
+      {ok: true, value: undefined},
+      {ok: true, value: undefined},
+    ])
+  })
+
   it('should resolve generated audio and return a failure for concurrent requests', async () => {
     const client = createSupertonicClient()
     const worker = getWorker()

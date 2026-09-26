@@ -1,3 +1,5 @@
+import {clamp} from 'es-toolkit/math'
+
 const DEVICE_ORIENTATION_RANGE_X = 18
 const DEVICE_ORIENTATION_RANGE_Y = 14
 const DEVICE_ORIENTATION_DEAD_ZONE = 0.025
@@ -12,7 +14,6 @@ export interface OrientationAxes {
   readonly y: number
 }
 
-const clamp = (value: number) => Math.max(-1, Math.min(1, value))
 const removeDeadZone = (value: number) =>
   Math.abs(value) < DEVICE_ORIENTATION_DEAD_ZONE ? 0 : value
 const normalizeAngle = (angle: number) =>
@@ -47,6 +48,10 @@ export const getOrientationOffset = (
   current: OrientationAxes,
   baseline: OrientationAxes,
 ): OrientationAxes => ({
-  x: removeDeadZone(clamp(getAngleDelta(current.x, baseline.x) / DEVICE_ORIENTATION_RANGE_X)),
-  y: removeDeadZone(clamp(getAngleDelta(current.y, baseline.y) / DEVICE_ORIENTATION_RANGE_Y)),
+  x: removeDeadZone(
+    clamp(getAngleDelta(current.x, baseline.x) / DEVICE_ORIENTATION_RANGE_X, -1, 1),
+  ),
+  y: removeDeadZone(
+    clamp(getAngleDelta(current.y, baseline.y) / DEVICE_ORIENTATION_RANGE_Y, -1, 1),
+  ),
 })

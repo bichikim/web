@@ -1,5 +1,6 @@
 use std::{
     collections::HashMap,
+    ffi::c_void,
     ptr::NonNull,
     sync::{
         Arc, Mutex, MutexGuard,
@@ -13,21 +14,22 @@ use block2::RcBlock;
 use objc2::MainThreadMarker;
 use objc2_app_kit::{
     NSApp, NSApplicationActivationPolicy, NSApplicationDidChangeScreenParametersNotification,
-    NSColor, NSScreen, NSView, NSWindow, NSWindowCollectionBehavior, NSWindowLevel, NSWorkspace,
-    NSWorkspaceDidWakeNotification, NSWorkspaceScreensDidSleepNotification,
-    NSWorkspaceScreensDidWakeNotification, NSWorkspaceSessionDidBecomeActiveNotification,
-    NSWorkspaceSessionDidResignActiveNotification, NSWorkspaceWillSleepNotification,
+    NSColor, NSScreen, NSView, NSWindow, NSWindowCollectionBehavior, NSWindowLevel,
+    NSWindowOrderingMode, NSWorkspace, NSWorkspaceDidWakeNotification,
+    NSWorkspaceScreensDidSleepNotification, NSWorkspaceScreensDidWakeNotification,
+    NSWorkspaceSessionDidBecomeActiveNotification, NSWorkspaceSessionDidResignActiveNotification,
+    NSWorkspaceWillSleepNotification,
 };
 use objc2_core_graphics::{CGWindowLevelForKey, CGWindowLevelKey};
 use objc2_foundation::{NSNotification, NSNotificationCenter, NSNotificationName, NSRect};
 use tauri::{
-    AppHandle, LogicalSize, Manager, PhysicalPosition, PhysicalSize, Position, Runtime, Size,
-    WebviewWindow,
+    AppHandle, LogicalPosition, LogicalSize, Manager, PhysicalPosition, PhysicalSize, Position,
+    Runtime, Size, Url, Webview, WebviewBuilder, WebviewUrl, WebviewWindow, Window,
 };
 
 use crate::{
     error::{Error, Result},
-    model::BackgroundInteraction,
+    model::{BackgroundInteraction, ValidatedBackgroundMouseEvent},
 };
 
 #[derive(Clone, Copy, Debug)]
@@ -52,11 +54,14 @@ struct WindowSnapshot {
 
 #[derive(Default)]
 pub(crate) struct SurfaceState {
+    background_urls: Mutex<HashMap<String, Url>>,
     backgrounds: Mutex<HashMap<String, BackgroundInteraction>>,
     operation: Mutex<()>,
     snapshots: Mutex<HashMap<String, WindowSnapshot>>,
     suspended: AtomicBool,
 }
+
+const WEBSITE_BACKGROUND_WEBVIEW_SUFFIX: &str = "__website_background";
 
 #[derive(Clone, Copy)]
 enum LifecycleAction {
@@ -80,7 +85,7 @@ fn interactive_background_window_level() -> NSWindowLevel {
         .saturating_add(1)
 }
 
-fn capture_snapshot<R: Runtime>(window: &WebviewWindow<R>) -> Result<WindowSnapshot> {
+fn capture_snapshot<R: Runtime>(window: &Window<R>) -> Result<WindowSnapshot> {
     let native_snapshot = with_native_window(window, |window| WindowSnapshot {
         activation_policy: NSApp(unsafe { MainThreadMarker::new_unchecked() }).activationPolicy(),
         always_on_top: false,
@@ -110,7 +115,7 @@ fn capture_snapshot<R: Runtime>(window: &WebviewWindow<R>) -> Result<WindowSnaps
     })
 }
 
-fn baseline<R: Runtime>(state: &SurfaceState, window: &WebviewWindow<R>) -> Result<WindowSnapshot> {
+fn baseline<R: Runtime>(state: &SurfaceState, window: &Window<R>) -> Result<WindowSnapshot> {
     let snapshot = capture_snapshot(window)?;
     let mut snapshots = state
         .snapshots
@@ -122,7 +127,7 @@ fn baseline<R: Runtime>(state: &SurfaceState, window: &WebviewWindow<R>) -> Resu
         .or_insert(snapshot))
 }
 
-fn apply_snapshot<R: Runtime>(window: &WebviewWindow<R>, snapshot: WindowSnapshot) -> Result<()> {
+fn apply_snapshot<R: Runtime>(window: &Window<R>, snapshot: WindowSnapshot) -> Result<()> {
     window.set_always_on_top(snapshot.always_on_top)?;
     window.set_decorations(snapshot.decorations)?;
     window.set_resizable(snapshot.resizable)?;
@@ -216,8 +221,8 @@ pub(crate) fn get_background_interaction(
     active_background_interaction(state, label)
 }
 
-pub(crate) fn set_control_surface_corner_radius<R: Runtime>(
-    window: &WebviewWindow<R>,
+pub(crate) fn set_control_surface_corner_radius<W: NativeWindowHandle>(
+    window: &W,
     radius: f64,
 ) -> Result<()> {
     with_native_window(window, move |window| -> Result<()> {
@@ -241,7 +246,7 @@ pub(crate) fn set_control_surface_corner_radius<R: Runtime>(
     Ok(())
 }
 
-fn reset_surface_corner_radius<R: Runtime>(window: &WebviewWindow<R>) -> Result<()> {
+fn reset_surface_corner_radius<W: NativeWindowHandle>(window: &W) -> Result<()> {
     with_native_window(window, |window| -> Result<()> {
         window.setOpaque(true);
         let background = NSColor::windowBackgroundColor();
@@ -263,7 +268,7 @@ fn reset_surface_corner_radius<R: Runtime>(window: &WebviewWindow<R>) -> Result<
     Ok(())
 }
 
-pub(crate) fn set_control_surface_shadow<R: Runtime>(window: &WebviewWindow<R>) -> Result<()> {
+pub(crate) fn set_control_surface_shadow<W: NativeWindowHandle>(window: &W) -> Result<()> {
     with_native_window(window, |window| {
         window.setHasShadow(true);
         window.invalidateShadow();
@@ -272,8 +277,121 @@ pub(crate) fn set_control_surface_shadow<R: Runtime>(window: &WebviewWindow<R>) 
     Ok(())
 }
 
-fn with_native_window<R: Runtime, T>(
-    window: &WebviewWindow<R>,
+fn website_background_webview_label(window_label: &str) -> String {
+    format!("{window_label}{WEBSITE_BACKGROUND_WEBVIEW_SUFFIX}")
+}
+
+fn set_surface_transparent<W: NativeWindowHandle>(window: &W) -> Result<()> {
+    with_native_window(window, |window| {
+        window.setOpaque(false);
+        let clear = NSColor::clearColor();
+        window.setBackgroundColor(Some(&clear));
+    })?;
+
+    Ok(())
+}
+
+fn close_website_background<R: Runtime>(window: &Window<R>) -> Result<()> {
+    let label = website_background_webview_label(window.label());
+
+    if let Some(webview) = window
+        .webviews()
+        .into_iter()
+        .find(|webview| webview.label() == label)
+    {
+        webview.close()?;
+    }
+
+    Ok(())
+}
+
+fn place_website_background_below<R: Runtime>(
+    window: &Window<R>,
+    child: &Webview<R>,
+) -> Result<()> {
+    let main_webview = window
+        .webviews()
+        .into_iter()
+        .find(|webview| webview.label() == window.label())
+        .ok_or_else(|| {
+            Error::WindowOperation(format!("main webview '{}' was not found", window.label()))
+        })?;
+    let child = child.clone();
+
+    main_webview.with_webview(move |main_platform_webview| {
+        let main_view = main_platform_webview.inner() as usize;
+        if let Err(error) = child.with_webview(move |child_platform_webview| {
+            // The child is created after the app webview, so explicitly move it below the
+            // existing app view instead of relying on AppKit's insertion order.
+            let main_view = unsafe { &*(main_view as *const NSView) };
+            let child_view = unsafe { &*(child_platform_webview.inner() as *const NSView) };
+            let Some(parent_view) =
+                (unsafe { child_view.superview() }).or_else(|| unsafe { main_view.superview() })
+            else {
+                return;
+            };
+
+            parent_view.addSubview_positioned_relativeTo(
+                child_view,
+                NSWindowOrderingMode::Below,
+                Some(main_view),
+            );
+        }) {
+            eprintln!("failed to place website background below the app view: {error}");
+        }
+    })?;
+
+    Ok(())
+}
+
+pub(crate) fn forward_background_mouse_event<R: Runtime>(
+    state: &SurfaceState,
+    main_webview: &Webview<R>,
+    event: ValidatedBackgroundMouseEvent,
+) -> Result<()> {
+    let _operation = lock_operation(state)?;
+    let parent = main_webview.window();
+    let label = website_background_webview_label(main_webview.label());
+    let Some(child) = parent
+        .webviews()
+        .into_iter()
+        .find(|webview| webview.label() == label)
+    else {
+        return Ok(());
+    };
+
+    child.eval(crate::pointer::website_mouse_event_script(&event))?;
+
+    Ok(())
+}
+
+pub(crate) trait NativeWindowHandle {
+    fn native_view(&self) -> tauri::Result<*mut c_void>;
+    fn run_on_main_thread<F: FnOnce() + Send + 'static>(&self, operation: F) -> tauri::Result<()>;
+}
+
+impl<R: Runtime> NativeWindowHandle for Window<R> {
+    fn native_view(&self) -> tauri::Result<*mut c_void> {
+        self.ns_view()
+    }
+
+    fn run_on_main_thread<F: FnOnce() + Send + 'static>(&self, operation: F) -> tauri::Result<()> {
+        self.run_on_main_thread(operation)
+    }
+}
+
+impl<R: Runtime> NativeWindowHandle for WebviewWindow<R> {
+    fn native_view(&self) -> tauri::Result<*mut c_void> {
+        self.ns_view()
+    }
+
+    fn run_on_main_thread<F: FnOnce() + Send + 'static>(&self, operation: F) -> tauri::Result<()> {
+        self.run_on_main_thread(operation)
+    }
+}
+
+fn with_native_window<W: NativeWindowHandle, T>(
+    window: &W,
     operation: impl FnOnce(&NSWindow) -> T + Send + 'static,
 ) -> Result<T>
 where
@@ -282,7 +400,7 @@ where
     const INSTALLATION_TIMEOUT: Duration = Duration::from_secs(2);
     const RETRY_DELAY: Duration = Duration::from_millis(10);
 
-    let native_view = window.ns_view()? as usize;
+    let native_view = window.native_view()? as usize;
     let operation = Arc::new(Mutex::new(Some(operation)));
     let deadline = Instant::now() + INSTALLATION_TIMEOUT;
 
@@ -323,7 +441,7 @@ where
 }
 
 fn apply_background<R: Runtime>(
-    window: &WebviewWindow<R>,
+    window: &Window<R>,
     interaction: BackgroundInteraction,
 ) -> Result<()> {
     let monitor = window
@@ -392,7 +510,7 @@ fn apply_background<R: Runtime>(
 }
 
 fn show_background_surface<R: Runtime>(
-    window: &WebviewWindow<R>,
+    window: &Window<R>,
     interaction: BackgroundInteraction,
 ) -> Result<()> {
     window.show()?;
@@ -404,11 +522,7 @@ fn show_background_surface<R: Runtime>(
     Ok(())
 }
 
-fn wait_for_logical_size<R: Runtime>(
-    window: &WebviewWindow<R>,
-    width: f64,
-    height: f64,
-) -> Result<()> {
+fn wait_for_logical_size<R: Runtime>(window: &Window<R>, width: f64, height: f64) -> Result<()> {
     const SIZE_TOLERANCE: f64 = 1.0;
     const TIMEOUT: Duration = Duration::from_secs(2);
     const RETRY_DELAY: Duration = Duration::from_millis(10);
@@ -436,12 +550,131 @@ fn wait_for_logical_size<R: Runtime>(
     }
 }
 
+fn restore_background_content_unlocked<R: Runtime>(
+    state: &SurfaceState,
+    window: &Window<R>,
+    main_webview: &Webview<R>,
+) -> Result<()> {
+    close_website_background(window)?;
+    reset_surface_corner_radius(window)?;
+
+    let original_url = state
+        .background_urls
+        .lock()
+        .map_err(|error| Error::WindowOperation(error.to_string()))?
+        .get(window.label())
+        .cloned();
+
+    if let Some(original_url) = original_url {
+        main_webview.navigate(original_url)?;
+        state
+            .background_urls
+            .lock()
+            .map_err(|error| Error::WindowOperation(error.to_string()))?
+            .remove(window.label());
+    }
+
+    Ok(())
+}
+
+fn navigate_background_unlocked<R: Runtime>(
+    state: &SurfaceState,
+    window: &Window<R>,
+    main_webview: &Webview<R>,
+    url: Url,
+) -> Result<()> {
+    close_website_background(window)?;
+    let label = window.label().to_owned();
+    active_background_interaction(state, &label)?;
+    let original_url = main_webview.url()?;
+    let inserted = {
+        let mut background_urls = state
+            .background_urls
+            .lock()
+            .map_err(|error| Error::WindowOperation(error.to_string()))?;
+        if background_urls.contains_key(&label) {
+            false
+        } else {
+            background_urls.insert(label.clone(), original_url);
+            true
+        }
+    };
+
+    if let Err(error) = main_webview.navigate(url) {
+        if inserted {
+            state
+                .background_urls
+                .lock()
+                .map_err(|lock_error| Error::WindowOperation(lock_error.to_string()))?
+                .remove(&label);
+        }
+        return Err(error.into());
+    }
+
+    Ok(())
+}
+
+pub(crate) fn navigate_background_surface<R: Runtime>(
+    state: &SurfaceState,
+    window: &Window<R>,
+    main_webview: &Webview<R>,
+    url: Url,
+    use_child: bool,
+) -> Result<()> {
+    let _operation = lock_operation(state)?;
+
+    if use_child {
+        return navigate_website_background_unlocked(window, url);
+    }
+
+    match active_background_interaction(state, window.label()) {
+        Ok(_) => navigate_background_unlocked(state, window, main_webview, url),
+        Err(Error::NotBackgroundSurface(_)) => navigate_website_background_unlocked(window, url),
+        Err(error) => Err(error),
+    }
+}
+
+fn navigate_website_background_unlocked<R: Runtime>(window: &Window<R>, url: Url) -> Result<()> {
+    let label = website_background_webview_label(window.label());
+    let child = if let Some(child) = window
+        .webviews()
+        .into_iter()
+        .find(|webview| webview.label() == label)
+    {
+        child.navigate(url)?;
+        child
+    } else {
+        window.add_child(
+            WebviewBuilder::new(&label, WebviewUrl::External(url))
+                .auto_resize()
+                .focused(false),
+            LogicalPosition::new(0, 0),
+            window.inner_size()?,
+        )?
+    };
+
+    place_website_background_below(window, &child)?;
+    set_surface_transparent(window)?;
+    child.show()?;
+    Ok(())
+}
+
+pub(crate) fn restore_background_content<R: Runtime>(
+    state: &SurfaceState,
+    window: &Window<R>,
+    main_webview: &Webview<R>,
+) -> Result<()> {
+    let _operation = lock_operation(state)?;
+    restore_background_content_unlocked(state, window, main_webview)
+}
+
 pub(crate) fn set_background<R: Runtime>(
     state: &SurfaceState,
-    window: &WebviewWindow<R>,
+    window: &Window<R>,
     interaction: BackgroundInteraction,
 ) -> Result<()> {
     let _operation = lock_operation(state)?;
+    close_website_background(window)?;
     let snapshot = baseline(state, window)?;
     apply_snapshot(window, snapshot)?;
     apply_background(window, interaction)?;
@@ -461,7 +694,7 @@ fn refresh_backgrounds_unlocked<R: Runtime>(
     state: &SurfaceState,
 ) -> Result<()> {
     for (label, interaction) in backgrounds(state)? {
-        let Some(window) = app.get_webview_window(&label) else {
+        let Some(window) = app.get_webview(&label).map(|webview| webview.window()) else {
             set_background_state(state, &label, None)?;
             continue;
         };
@@ -487,7 +720,7 @@ fn suspend_backgrounds<R: Runtime>(app: &AppHandle<R>, state: &SurfaceState) -> 
     state.suspended.store(true, Ordering::Release);
 
     for (label, _) in backgrounds(state)? {
-        if let Some(window) = app.get_webview_window(&label) {
+        if let Some(window) = app.get_webview(&label).map(|webview| webview.window()) {
             window.hide()?;
         }
     }
@@ -580,12 +813,13 @@ pub(crate) fn install_lifecycle_observers<R: Runtime>(app: AppHandle<R>) {
 
 pub(crate) fn set_widget<R: Runtime>(
     state: &SurfaceState,
-    window: &WebviewWindow<R>,
+    window: &Window<R>,
     width: f64,
     height: f64,
     corner_radius: Option<f64>,
 ) -> Result<()> {
     let _operation = lock_operation(state)?;
+    close_website_background(window)?;
     set_background_state(state, window.label(), None)?;
     let snapshot = baseline(state, window)?;
     apply_snapshot(window, snapshot)?;
@@ -606,8 +840,13 @@ pub(crate) fn set_widget<R: Runtime>(
     Ok(())
 }
 
-pub(crate) fn restore<R: Runtime>(state: &SurfaceState, window: &WebviewWindow<R>) -> Result<()> {
+pub(crate) fn restore<R: Runtime>(
+    state: &SurfaceState,
+    window: &Window<R>,
+    main_webview: &Webview<R>,
+) -> Result<()> {
     let _operation = lock_operation(state)?;
+    restore_background_content_unlocked(state, window, main_webview)?;
     set_background_state(state, window.label(), None)?;
     let snapshot = state
         .snapshots
@@ -633,7 +872,7 @@ pub(crate) fn restore<R: Runtime>(state: &SurfaceState, window: &WebviewWindow<R
 
 pub(crate) fn set_background_interaction<R: Runtime>(
     state: &SurfaceState,
-    window: &WebviewWindow<R>,
+    window: &Window<R>,
     interaction: BackgroundInteraction,
 ) -> Result<()> {
     let _operation = lock_operation(state)?;

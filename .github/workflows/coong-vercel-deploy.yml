@@ -13,7 +13,7 @@ permissions:
   contents: read
 
 env:
-  NODE_VERSION: 24
+  NODE_VERSION: '24.x'
   VERCEL_CLI_VERSION: 59.5.0
   VERCEL_ORG_ID: team_Ic8YKQ9jWkFLhVzeljhB4ZLV
   VERCEL_PROJECT_ID: prj_WM157z2KV8cYjK0Tt2nYCqZzIFzQ

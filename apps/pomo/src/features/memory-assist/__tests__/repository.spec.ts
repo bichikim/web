@@ -65,6 +65,24 @@ it('should persist structured reminder events to web and Toss storage', async ()
   expect(writeToss).toHaveBeenCalledWith([deliveredMemo])
 })
 
+it('should reject a Toss write when the web snapshot cannot be persisted', async () => {
+  const webWriteError = new Error('Web storage unavailable')
+  const writeToss = vi.fn<MemoryMemoStorage['writeToss']>().mockResolvedValue()
+  const repository = createMemoryMemoRepository({
+    readToss: vi.fn().mockResolvedValue(null),
+    readWeb: vi.fn().mockReturnValue(null),
+    usesTossStorage: () => true,
+    writeToss,
+    writeWeb: vi.fn().mockReturnValue(webWriteError),
+  })
+
+  await expect(repository.write([])).rejects.toMatchObject({
+    cause: webWriteError,
+    message: 'Failed to persist memory memos.',
+  })
+  expect(writeToss).not.toHaveBeenCalled()
+})
+
 it('should restore Toss memos and converge the web snapshot', async () => {
   const memo = createMemoryMemo({
     exactReminderAt: null,
@@ -110,6 +128,30 @@ it('should prefer the authoritative Toss snapshot when the bridge is available',
   await expect(repository.read()).resolves.toEqual([tossMemo])
   expect(readToss).toHaveBeenCalledOnce()
   expect(writeWeb).toHaveBeenCalledWith([tossMemo])
+})
+
+it('should reject a Toss read when synchronizing the web snapshot fails', async () => {
+  const memo = createMemoryMemo({
+    exactReminderAt: null,
+    id: 'memo-1',
+    now: new Date('2026-09-04T03:00:00.000Z'),
+    random: () => 0,
+    recallMode: 'none',
+    text: '웹 동기화에 실패한 메모',
+  })
+  const webWriteError = new Error('Web storage unavailable')
+  const repository = createMemoryMemoRepository({
+    readToss: vi.fn().mockResolvedValue([memo]),
+    readWeb: vi.fn().mockReturnValue(null),
+    usesTossStorage: () => true,
+    writeToss: vi.fn<MemoryMemoStorage['writeToss']>().mockResolvedValue(),
+    writeWeb: vi.fn().mockReturnValue(webWriteError),
+  })
+
+  await expect(repository.read()).rejects.toMatchObject({
+    cause: webWriteError,
+    message: 'Failed to read memory memos.',
+  })
 })
 
 it('should retain a Toss write failure as the persistence error cause', async () => {
@@ -160,7 +202,58 @@ it('should reject a Toss read failure after a failed Toss write', async () => {
   expect(readWeb).not.toHaveBeenCalled()
 })
 
-it('should replace a failed web snapshot when authoritative Toss storage is empty', async () => {
+it('should restore and migrate browser memos when Toss storage is absent', async () => {
+  const memo = createMemoryMemo({
+    exactReminderAt: null,
+    id: 'memo-1',
+    now: new Date('2026-09-04T03:00:00.000Z'),
+    random: () => 0,
+    recallMode: 'none',
+    text: '브라우저에서 복원할 메모',
+  })
+  const writeToss = vi.fn<MemoryMemoStorage['writeToss']>().mockResolvedValue()
+  const repository = createMemoryMemoRepository({
+    readToss: vi.fn().mockResolvedValue(null),
+    readWeb: vi.fn().mockReturnValue([memo]),
+    usesTossStorage: () => true,
+    writeToss,
+    writeWeb: vi.fn().mockReturnValue(null),
+  })
+
+  await expect(repository.read()).resolves.toEqual([memo])
+  expect(writeToss).toHaveBeenCalledWith([memo])
+})
+
+it('should preserve browser memos when Toss migration fails', async () => {
+  const memo = createMemoryMemo({
+    exactReminderAt: null,
+    id: 'memo-1',
+    now: new Date('2026-09-04T03:00:00.000Z'),
+    random: () => 0,
+    recallMode: 'none',
+    text: '마이그레이션에 실패해도 보존할 메모',
+  })
+  const repairError = new Error('Toss migration failed')
+  const reportError = vi.fn()
+  vi.stubGlobal('reportError', reportError)
+
+  try {
+    const repository = createMemoryMemoRepository({
+      readToss: vi.fn().mockResolvedValue(null),
+      readWeb: vi.fn().mockReturnValue([memo]),
+      usesTossStorage: () => true,
+      writeToss: vi.fn<MemoryMemoStorage['writeToss']>().mockRejectedValue(repairError),
+      writeWeb: vi.fn().mockReturnValue(null),
+    })
+
+    await expect(repository.read()).resolves.toEqual([memo])
+    expect(reportError).toHaveBeenCalledExactlyOnceWith(repairError)
+  } finally {
+    vi.unstubAllGlobals()
+  }
+})
+
+it('should replace a browser snapshot when Toss storage is explicitly empty', async () => {
   const memo = createMemoryMemo({
     exactReminderAt: null,
     id: 'memo-1',
@@ -171,7 +264,7 @@ it('should replace a failed web snapshot when authoritative Toss storage is empt
   })
   let webSnapshot: ReadonlyArray<MemoryMemo> | null = null
   const repository = createMemoryMemoRepository({
-    readToss: vi.fn().mockResolvedValue(null),
+    readToss: vi.fn().mockResolvedValue([]),
     readWeb: vi.fn(() => webSnapshot),
     usesTossStorage: () => true,
     writeToss: vi.fn().mockRejectedValue(new Error('Toss write failed')),

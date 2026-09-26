@@ -161,7 +161,8 @@ it('should synchronize a running stored timer and publish mount events', async (
   view.cleanup()
 })
 
-it('should restore an already expired running timer as an inactive next phase', async () => {
+it('should restore an already expired running timer as an inactive next phase without events', async () => {
+  const onEvents = vi.fn()
   const runningState = {
     completedFocusSessions: 0,
     endsAt: 1,
@@ -172,7 +173,7 @@ it('should restore an already expired running timer as an inactive next phase', 
   localStorage.setItem(STATE_STORAGE_KEY, JSON.stringify(runningState))
   vi.setSystemTime(1_000)
 
-  const view = renderHook(usePomodoroTimer, {wrapper: PreferenceProvider})
+  const view = renderHook(() => usePomodoroTimer({onEvents}), {wrapper: PreferenceProvider})
   await finishInitialization(view)
 
   expect(view.result.state()).toEqual({
@@ -181,6 +182,7 @@ it('should restore an already expired running timer as an inactive next phase', 
     remainingSeconds: 4,
     status: 'idle',
   })
+  expect(onEvents).not.toHaveBeenCalled()
   view.cleanup()
 })
 
@@ -231,6 +233,28 @@ it('should preserve changes made while the auto-start preference is loading', as
   expect(view.result.isAutoStartEnabled()).toBe(true)
   expect(view.result.state().status).toBe('running')
   view.cleanup()
+})
+
+it('should persist a running timer when unmounted before auto-start initialization', async () => {
+  const preference = createDeferred<boolean>()
+  autoStartMocks.read.mockReturnValue(preference.promise)
+
+  const view = renderHook(usePomodoroTimer, {wrapper: PreferenceProvider})
+  view.result.onConfigChange(CONFIG)
+  view.result.onStart()
+
+  view.cleanup()
+
+  expect(JSON.parse(localStorage.getItem(STATE_STORAGE_KEY) ?? '')).toEqual({
+    completedFocusSessions: 0,
+    endsAt: 10_000,
+    phase: 'focus',
+    status: 'running',
+  })
+  expect(JSON.parse(localStorage.getItem(CONFIG_STORAGE_KEY) ?? '')).toEqual(CONFIG)
+
+  preference.resolve(false)
+  await preference.promise
 })
 
 it('should recover auto-start catch-up after pausing an expired restore while loading', async () => {
@@ -455,6 +479,125 @@ it('should synchronize timer actions between mounted controllers', async () => {
 
   first.cleanup()
   second.cleanup()
+})
+
+it('should deliver lifecycle events for a cross-tab phase transition', async () => {
+  const sourceEvents = vi.fn()
+  const receiverEvents = vi.fn()
+  const source = renderHook(() => usePomodoroTimer({onEvents: sourceEvents}), {
+    wrapper: PreferenceProvider,
+  })
+  const receiver = renderHook(() => usePomodoroTimer({onEvents: receiverEvents}), {
+    wrapper: PreferenceProvider,
+  })
+  await Promise.all([finishInitialization(source), finishInitialization(receiver)])
+
+  source.result.onConfigChange(CONFIG)
+  source.result.onAutoStartChange(true)
+  source.result.onStart()
+
+  await vi.waitFor(() => {
+    expect(receiver.result.state()).toEqual({
+      completedFocusSessions: 0,
+      endsAt: 10_000,
+      phase: 'focus',
+      status: 'running',
+    })
+  })
+  receiverEvents.mockClear()
+
+  vi.setSystemTime(10_000)
+  source.result.onNextPhase()
+
+  await vi.waitFor(() => {
+    expect(receiverEvents).toHaveBeenCalledExactlyOnceWith(['focus-end', 'break-start'], {
+      isCatchUp: true,
+    })
+  })
+
+  source.cleanup()
+  receiver.cleanup()
+})
+
+it('should not deliver lifecycle events when resetting a cross-tab running phase', async () => {
+  const sourceEvents = vi.fn()
+  const receiverEvents = vi.fn()
+  const source = renderHook(() => usePomodoroTimer({onEvents: sourceEvents}), {
+    wrapper: PreferenceProvider,
+  })
+  const receiver = renderHook(() => usePomodoroTimer({onEvents: receiverEvents}), {
+    wrapper: PreferenceProvider,
+  })
+  await Promise.all([finishInitialization(source), finishInitialization(receiver)])
+
+  source.result.onConfigChange(CONFIG)
+  source.result.onStart()
+
+  await vi.waitFor(() => {
+    expect(receiver.result.state()).toEqual({
+      completedFocusSessions: 0,
+      endsAt: 10_000,
+      phase: 'focus',
+      status: 'running',
+    })
+  })
+  sourceEvents.mockClear()
+  receiverEvents.mockClear()
+
+  source.result.onReset()
+
+  await vi.waitFor(() => {
+    expect(receiver.result.state()).toEqual({
+      completedFocusSessions: 0,
+      phase: 'focus',
+      remainingSeconds: 10,
+      status: 'idle',
+    })
+  })
+
+  expect(sourceEvents).not.toHaveBeenCalled()
+  expect(receiverEvents).not.toHaveBeenCalled()
+  source.cleanup()
+  receiver.cleanup()
+})
+
+it('should catch up an expired cross-tab running state before persisting it', async () => {
+  vi.spyOn(globalThis, 'requestAnimationFrame').mockReturnValue(0)
+  const source = renderHook(() => usePomodoroTimer(), {wrapper: PreferenceProvider})
+  const receiver = renderHook(() => usePomodoroTimer(), {wrapper: PreferenceProvider})
+  await Promise.all([finishInitialization(source), finishInitialization(receiver)])
+
+  source.result.onConfigChange(CONFIG)
+  source.result.onStart()
+  await vi.waitFor(() => {
+    expect(receiver.result.state()).toEqual({
+      completedFocusSessions: 0,
+      endsAt: 10_000,
+      phase: 'focus',
+      status: 'running',
+    })
+  })
+
+  vi.setSystemTime(20_000)
+  source.result.onAutoStartChange(false)
+
+  await vi.waitFor(() => {
+    expect(receiver.result.state()).toEqual({
+      completedFocusSessions: 1,
+      phase: 'shortBreak',
+      remainingSeconds: 4,
+      status: 'idle',
+    })
+  })
+
+  expect(JSON.parse(localStorage.getItem(STATE_STORAGE_KEY) ?? '')).toEqual({
+    completedFocusSessions: 1,
+    phase: 'shortBreak',
+    remainingSeconds: 4,
+    status: 'idle',
+  })
+  source.cleanup()
+  receiver.cleanup()
 })
 
 it('should abandon pending preference restoration after cleanup', async () => {

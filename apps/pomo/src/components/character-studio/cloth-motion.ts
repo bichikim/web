@@ -1,4 +1,5 @@
 import {Vector3} from '@babylonjs/core/Maths/math.vector'
+import {clamp} from 'es-toolkit/math'
 import {type ClothTriangle, createClothConstraints} from './cloth-constraints'
 import {createClothCollisions} from './cloth-collisions'
 
@@ -60,12 +61,10 @@ export const createClothMotion = (
     for (const capsule of capsules) {
       capsule.end.subtractToRef(capsule.start, direction)
       point.subtractToRef(capsule.start, offset)
-      const amount = Math.max(
+      const amount = clamp(
+        Vector3.Dot(offset, direction) / Math.max(direction.lengthSquared(), SETTINGS.epsilon),
         0,
-        Math.min(
-          1,
-          Vector3.Dot(offset, direction) / Math.max(direction.lengthSquared(), SETTINGS.epsilon),
-        ),
+        1,
       )
       nearest.copyFrom(capsule.start).addInPlace(direction.scaleInPlace(amount))
       point.subtractToRef(nearest, offset)
@@ -94,7 +93,7 @@ export const createClothMotion = (
           previous[index].copyFrom(point)
         }
       })
-      accumulated += Math.min(Math.max(delta, 0), 1 / SETTINGS.minimumFps)
+      accumulated += clamp(delta, 0, 1 / SETTINGS.minimumFps)
       while (accumulated >= step) {
         accumulated -= step
         for (const [index, point] of positions.entries()) {

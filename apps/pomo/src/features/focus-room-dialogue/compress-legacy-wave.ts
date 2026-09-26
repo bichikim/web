@@ -1,3 +1,4 @@
+import {readBlobAsArrayBuffer} from 'src/utils/read-blob-as-array-buffer'
 // oxlint-disable no-magic-numbers -- WAV uses fixed binary field sizes and PCM format identifiers.
 import {createOpusBlob} from '../supertonic/opus-client'
 
@@ -8,25 +9,6 @@ interface WavePcm {
 
 const readText = (data: Uint8Array, offset: number, length: number) =>
   new TextDecoder().decode(data.subarray(offset, offset + length))
-
-const readBlob = (blob: Blob) => {
-  if (typeof blob.arrayBuffer === 'function') {
-    return blob.arrayBuffer()
-  }
-
-  return new Promise<ArrayBuffer>((resolve, reject) => {
-    const reader = new FileReader()
-    reader.addEventListener('error', () => reject(new Error('Failed to read legacy WAV audio.')))
-    reader.addEventListener('load', () => {
-      if (reader.result instanceof ArrayBuffer) {
-        resolve(reader.result)
-      } else {
-        reject(new Error('Expected legacy WAV audio as an ArrayBuffer.'))
-      }
-    })
-    reader.readAsArrayBuffer(blob)
-  })
-}
 
 const parseWavePcm = (buffer: ArrayBuffer): WavePcm => {
   const data = new Uint8Array(buffer)
@@ -92,6 +74,11 @@ const parseWavePcm = (buffer: ArrayBuffer): WavePcm => {
 
 /** Converts Pomo's legacy mono PCM WAV cache entry into Ogg Opus. */
 export const compressLegacyWave = async (audio: Blob): Promise<Blob> => {
-  const wave = parseWavePcm(await readBlob(audio))
+  const wave = parseWavePcm(
+    await readBlobAsArrayBuffer(audio, {
+      invalidResult: 'Expected legacy WAV audio as an ArrayBuffer.',
+      readFailed: 'Failed to read legacy WAV audio.',
+    }),
+  )
   return createOpusBlob({sampleRate: wave.sampleRate, samples: wave.samples})
 }

@@ -2,6 +2,7 @@
 
 import {getErrorMessage} from 'src/utils/get-error-message'
 
+import {createTextGenerationExecutor} from '../text-generation/execution'
 import type {
   PrepareTextModelRequest,
   TextGenerationErrorResponse,
@@ -17,13 +18,31 @@ type TextModelDownloadWorkerResponse =
 const workerScope = globalThis.self as DedicatedWorkerGlobalScope
 const sendResponse = (response: TextModelDownloadWorkerResponse) =>
   workerScope.postMessage(response)
+const textExecutors = new Map<
+  PrepareTextModelRequest['modelId'],
+  ReturnType<typeof createTextGenerationExecutor>
+>()
 
-const prepareModel = async (request: PrepareTextModelRequest) => {
-  const {createTransformersRuntime} = await import('../text-generation/transformers-runtime')
-  const runtime = createTransformersRuntime({
+const getTextExecutor = (modelId: PrepareTextModelRequest['modelId']) => {
+  const current = textExecutors.get(modelId)
+  if (current !== undefined) {
+    return current
+  }
+
+  const executor = createTextGenerationExecutor({
     onProgress: (progress) => sendResponse({...progress, type: 'loading'}),
   })
-  await runtime.prepare(request.modelId)
+  textExecutors.set(modelId, executor)
+  return executor
+}
+
+const prepareModel = async (request: PrepareTextModelRequest) => {
+  const textExecutor = getTextExecutor(request.modelId)
+  const result = await textExecutor.prepare({kind: 'device', modelId: request.modelId})
+  if (!result.ok) {
+    throw new Error(result.error.detail ?? '모델 파일을 내려받지 못했어요.')
+  }
+
   sendResponse({type: 'ready'})
 }
 

@@ -41,6 +41,21 @@ it('should not overwrite a newer local value with a delayed initial read', async
   await vi.waitFor(() => expect(write).toHaveBeenCalledWith('setting', 50))
 })
 
+it('should keep a transient snapshot through initial restoration without persisting it', async () => {
+  const read = Promise.withResolvers<unknown>()
+  const write = vi.fn(() => null)
+  const {result} = renderPreference({read: () => read.promise, write})
+
+  result[0][1](50, {persist: false})
+  expect(result[1][0]()).toBe(50)
+
+  read.resolve(25)
+  await read.promise
+
+  expect(result[0][0]()).toBe(50)
+  expect(write).not.toHaveBeenCalled()
+})
+
 it('should serialize writes while updating all consumers immediately', async () => {
   const first = Promise.withResolvers<unknown>()
   const second = Promise.withResolvers<unknown>()

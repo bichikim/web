@@ -88,6 +88,55 @@ it('should expose every timer action and derived value', async () => {
   view.cleanup()
 })
 
+it('should not emit lifecycle events when resetting a running phase', async () => {
+  const onEvents = vi.fn()
+  const view = renderHook(() => usePomodoroTimer({onEvents}), {wrapper: PreferenceProvider})
+  await finishInitialization(view)
+
+  view.result.onConfigChange(CONFIG)
+  view.result.onStart()
+  onEvents.mockClear()
+
+  view.result.onReset()
+
+  expect(view.result.state()).toEqual({
+    completedFocusSessions: 0,
+    phase: 'focus',
+    remainingSeconds: 10,
+    status: 'idle',
+  })
+  expect(onEvents).not.toHaveBeenCalled()
+  view.cleanup()
+})
+
+it.each([
+  {completedFocusSessions: 0, phase: 'focus'},
+  {completedFocusSessions: 1, phase: 'shortBreak'},
+  {completedFocusSessions: 2, phase: 'longBreak'},
+] as const)('should not emit lifecycle events when changing a paused $phase', async (scenario) => {
+  localStorage.setItem(CONFIG_STORAGE_KEY, JSON.stringify(CONFIG))
+  localStorage.setItem(
+    STATE_STORAGE_KEY,
+    JSON.stringify({
+      completedFocusSessions: scenario.completedFocusSessions,
+      phase: scenario.phase,
+      remainingSeconds: 5,
+      status: 'paused',
+    }),
+  )
+  const onEvents = vi.fn()
+  const view = renderHook(() => usePomodoroTimer({onEvents}), {wrapper: PreferenceProvider})
+  await finishInitialization(view)
+
+  const nextConfig = {...CONFIG, focusSeconds: 20}
+  view.result.onConfigChange(nextConfig)
+
+  expect(view.result.config()).toEqual(nextConfig)
+  expect(view.result.state()).toMatchObject({phase: scenario.phase, status: 'idle'})
+  expect(onEvents).not.toHaveBeenCalled()
+  view.cleanup()
+})
+
 it('should refresh on visibility changes and stop after owner cleanup', async () => {
   const add = vi.spyOn(document, 'addEventListener')
   const remove = vi.spyOn(document, 'removeEventListener')
@@ -223,7 +272,7 @@ it('should preserve paused progress after auto-start catch-up on unmount', async
   })
 })
 
-it('should synchronize an expired timer before stopping it on unmount', async () => {
+it('should preserve an expired running phase when stopping on unmount', async () => {
   localStorage.setItem(CONFIG_STORAGE_KEY, JSON.stringify(CONFIG))
   localStorage.setItem(
     STATE_STORAGE_KEY,
@@ -244,9 +293,29 @@ it('should synchronize an expired timer before stopping it on unmount', async ()
   timer.cleanup()
 
   expect(JSON.parse(localStorage.getItem(STATE_STORAGE_KEY) ?? '{}')).toEqual({
+    completedFocusSessions: 0,
+    phase: 'focus',
+    remainingSeconds: 0,
+    status: 'idle',
+  })
+})
+
+it('should catch up every expired phase before stopping on unmount with auto-start enabled', async () => {
+  const timer = renderHook(() => usePomodoroTimer({stopOnUnmount: true}), {
+    wrapper: PreferenceProvider,
+  })
+  await finishInitialization(timer)
+  timer.result.onConfigChange(CONFIG)
+  timer.result.onAutoStartChange(true)
+  timer.result.onStart()
+
+  vi.setSystemTime(14_000)
+  timer.cleanup()
+
+  expect(JSON.parse(localStorage.getItem(STATE_STORAGE_KEY) ?? '{}')).toEqual({
     completedFocusSessions: 1,
-    phase: 'shortBreak',
-    remainingSeconds: 4,
+    phase: 'focus',
+    remainingSeconds: 10,
     status: 'idle',
   })
 })
@@ -409,6 +478,39 @@ it('should synchronize an expired running break before applying configuration ch
   view.cleanup()
 })
 
+it.each([
+  {completedFocusSessions: 1, endsAt: 10_000, phase: 'shortBreak'},
+  {completedFocusSessions: 2, endsAt: 12_000, phase: 'longBreak'},
+] as const)(
+  'should reset an unfinished running $phase to focus before applying configuration changes',
+  async (scenario) => {
+    const runningBreak = {
+      completedFocusSessions: scenario.completedFocusSessions,
+      endsAt: scenario.endsAt,
+      phase: scenario.phase,
+      status: 'running',
+    } satisfies PomodoroTimerState
+    const nextConfig = {...CONFIG, longBreakSeconds: 9, shortBreakSeconds: 8}
+    localStorage.setItem(CONFIG_STORAGE_KEY, JSON.stringify(CONFIG))
+    localStorage.setItem(STATE_STORAGE_KEY, JSON.stringify(runningBreak))
+
+    const view = renderHook(usePomodoroTimer, {wrapper: PreferenceProvider})
+    await finishInitialization(view)
+    vi.setSystemTime(5_000)
+
+    view.result.onConfigChange(nextConfig)
+
+    expect(view.result.config()).toEqual(nextConfig)
+    expect(view.result.state()).toEqual({
+      completedFocusSessions: scenario.completedFocusSessions,
+      phase: 'focus',
+      remainingSeconds: 10,
+      status: 'idle',
+    })
+    view.cleanup()
+  },
+)
+
 it('should stop after the first expired phase when applying configuration changes', async () => {
   const view = renderHook(usePomodoroTimer, {wrapper: PreferenceProvider})
   await finishInitialization(view)
@@ -424,6 +526,25 @@ it('should stop after the first expired phase when applying configuration change
     completedFocusSessions: 1,
     phase: 'shortBreak',
     remainingSeconds: 4,
+    status: 'idle',
+  })
+  view.cleanup()
+})
+
+it('should catch up every expired phase before stopping with auto-start enabled', async () => {
+  const view = renderHook(usePomodoroTimer, {wrapper: PreferenceProvider})
+  await finishInitialization(view)
+  view.result.onConfigChange(CONFIG)
+  view.result.onAutoStartChange(true)
+  view.result.onStart()
+
+  vi.setSystemTime(15_000)
+  view.result.onStop()
+
+  expect(view.result.state()).toEqual({
+    completedFocusSessions: 1,
+    phase: 'focus',
+    remainingSeconds: 10,
     status: 'idle',
   })
   view.cleanup()

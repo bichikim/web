@@ -1,8 +1,10 @@
 /** @vitest-environment jsdom */
 
 import {fireEvent, render, screen} from '@solidjs/testing-library'
-import {beforeEach, expect, it, vi} from 'vitest'
+import {createSignal} from 'solid-js'
+import {afterEach, beforeEach, expect, it, vi} from 'vitest'
 
+import {getLocale, overwriteGetLocale} from '@paraglide/runtime'
 import {type PEventContextValue, usePEvents} from '../../../features/focus-room-dialogue'
 
 const eventMocks = vi.hoisted(() => ({usePEvents: vi.fn()}))
@@ -16,6 +18,8 @@ vi.mock('../../../features/focus-room-dialogue', async () => {
 })
 
 import {DelayedEndEventSettings} from '../DelayedEndEventSettings'
+
+const originalGetLocale = getLocale
 
 const createEvents = (overrides: Partial<PEventContextValue> = {}): PEventContextValue => ({
   activeDialogueId: () => null,
@@ -69,6 +73,21 @@ beforeEach(() => {
   vi.clearAllMocks()
 })
 
+afterEach(() => {
+  overwriteGetLocale(originalGetLocale)
+})
+
+it('should render the waiting-time unit in English', () => {
+  overwriteGetLocale(() => 'en')
+  eventMocks.usePEvents.mockReturnValue(createEvents())
+
+  render(() => <DelayedEndEventSettings />)
+
+  expect(screen.getByText('Time (minutes)')).toBeInTheDocument()
+  expect(screen.getByText('min')).toBeInTheDocument()
+  expect(screen.queryByText('분')).toBeNull()
+})
+
 it('should show concise context for the waiting time', () => {
   const events = createEvents()
   eventMocks.usePEvents.mockReturnValue(events)
@@ -90,6 +109,107 @@ it('should not show a success message after saving the waiting time', async () =
 
   await vi.waitFor(() => expect(events.setDelayedEndEventDuration).toHaveBeenCalledWith(45))
   expect(screen.queryByRole('status')).toBeNull()
+})
+
+it('should wait for a complete multi-digit waiting time before saving', async () => {
+  const events = createEvents()
+  eventMocks.usePEvents.mockReturnValue(events)
+  vi.useFakeTimers()
+
+  try {
+    render(() => <DelayedEndEventSettings />)
+    const input = screen.getByRole('spinbutton', {name: '대기 시간(분)'})
+
+    fireEvent.input(input, {target: {value: '9'}})
+    expect(events.setDelayedEndEventDuration).not.toHaveBeenCalledWith(9)
+
+    fireEvent.input(input, {target: {value: '90'}})
+    await vi.advanceTimersByTimeAsync(499)
+    expect(events.setDelayedEndEventDuration).not.toHaveBeenCalled()
+
+    await vi.advanceTimersByTimeAsync(1)
+    expect(events.setDelayedEndEventDuration).toHaveBeenCalledOnce()
+    expect(events.setDelayedEndEventDuration).toHaveBeenCalledWith(90)
+  } finally {
+    vi.useRealTimers()
+  }
+})
+
+it('should use the latest waiting time when starting before the save debounce completes', () => {
+  const [duration, setDuration] = createSignal(30)
+  let startedWithDuration: number | null = null
+  const events = createEvents({
+    delayedEndEventDurationMinutes: duration,
+    setDelayedEndEventDuration: vi.fn(async (nextDuration: number) => {
+      setDuration(nextDuration)
+    }),
+    startDelayedEndEvent: vi.fn(() => {
+      startedWithDuration = duration()
+    }),
+  })
+  eventMocks.usePEvents.mockReturnValue(events)
+  vi.useFakeTimers()
+
+  try {
+    render(() => <DelayedEndEventSettings />)
+    fireEvent.input(screen.getByRole('spinbutton', {name: '대기 시간(분)'}), {
+      target: {value: '90'},
+    })
+
+    fireEvent.click(screen.getByRole('button', {name: '시작'}))
+
+    expect(startedWithDuration).toBe(90)
+    expect(events.setDelayedEndEventDuration).toHaveBeenCalledWith(90)
+  } finally {
+    vi.useRealTimers()
+  }
+})
+
+it('should synchronize an externally changed waiting time after saving', async () => {
+  const [duration, setDuration] = createSignal(30)
+  const save = Promise.withResolvers<void>()
+  const events = createEvents({
+    delayedEndEventDurationMinutes: duration,
+    setDelayedEndEventDuration: vi.fn(() => save.promise),
+  })
+  eventMocks.usePEvents.mockReturnValue(events)
+  vi.useFakeTimers()
+
+  try {
+    render(() => <DelayedEndEventSettings />)
+    const input = screen.getByRole('spinbutton', {name: '대기 시간(분)'})
+
+    fireEvent.input(input, {target: {value: '45'}})
+    await vi.advanceTimersByTimeAsync(500)
+    expect(events.setDelayedEndEventDuration).toHaveBeenCalledWith(45)
+
+    save.resolve()
+    await save.promise
+    setDuration(60)
+
+    await vi.waitFor(() => expect(input).toHaveValue(60))
+  } finally {
+    vi.useRealTimers()
+  }
+})
+
+it('should flush a pending waiting time when the settings unmount', () => {
+  const events = createEvents()
+  eventMocks.usePEvents.mockReturnValue(events)
+  vi.useFakeTimers()
+
+  try {
+    const view = render(() => <DelayedEndEventSettings />)
+    fireEvent.input(screen.getByRole('spinbutton', {name: '대기 시간(분)'}), {
+      target: {value: '90'},
+    })
+
+    view.unmount()
+
+    expect(events.setDelayedEndEventDuration).toHaveBeenCalledWith(90)
+  } finally {
+    vi.useRealTimers()
+  }
 })
 
 it('should restore the persisted waiting time when saving fails', async () => {

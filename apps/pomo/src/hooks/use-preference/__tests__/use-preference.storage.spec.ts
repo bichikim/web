@@ -18,9 +18,11 @@ it('should own edits during repository restoration and serialize subsequent nati
     .mockImplementationOnce(() => firstSave.promise)
     .mockResolvedValue(undefined)
   const repository = createDisplayThemePreferenceRepository({
+    now: () => 100,
     storage: {
       readToss: () => restoring.promise,
       readWeb: () => null,
+      removeWeb: () => null,
       usesTossStorage: () => true,
       writeToss,
       writeWeb: vi.fn(),
@@ -51,7 +53,10 @@ it('should own edits during repository restoration and serialize subsequent nati
   expect(writeToss).toHaveBeenCalledTimes(1)
   firstSave.resolve()
   await vi.waitFor(() => expect(writeToss).toHaveBeenCalledTimes(2))
-  expect(writeToss.mock.calls.map((call) => call[1])).toEqual(['dark', 'bright'])
+  expect(writeToss.mock.calls.map((call) => call[1])).toEqual([
+    {preference: 'dark', savedAt: 100},
+    {preference: 'bright', savedAt: 101},
+  ])
 })
 
 it('should finish native repair before saving an edit made during restoration', async () => {
@@ -61,9 +66,11 @@ it('should finish native repair before saving an edit made during restoration', 
     .mockImplementationOnce(() => repair.promise)
     .mockResolvedValue(undefined)
   const repository = createDisplayThemePreferenceRepository({
+    now: () => 100,
     storage: {
       readToss: vi.fn(),
       readWeb: () => 'bright',
+      removeWeb: () => null,
       usesTossStorage: () => true,
       writeToss,
       writeWeb: vi.fn(),
@@ -91,7 +98,10 @@ it('should finish native repair before saving an edit made during restoration', 
   expect(writeToss).toHaveBeenCalledTimes(1)
   repair.resolve()
   await vi.waitFor(() => expect(writeToss).toHaveBeenCalledTimes(2))
-  expect(writeToss.mock.calls.map((call) => call[1])).toEqual(['bright', 'dark'])
+  expect(writeToss.mock.calls.map((call) => call[1])).toEqual([
+    {preference: 'bright', savedAt: 0},
+    {preference: 'dark', savedAt: 100},
+  ])
 })
 
 it('should defer a save until an external refresh and its storage side effects finish', async () => {

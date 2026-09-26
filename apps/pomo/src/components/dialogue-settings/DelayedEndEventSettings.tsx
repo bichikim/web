@@ -1,3 +1,4 @@
+import {createPendingSave} from 'src/features/pending-save'
 import {PButton} from 'src/components/p-button/PButton'
 import {PNumberInput} from 'src/components/p-number-input/PNumberInput'
 import {createEffect, createSignal, onCleanup, Show} from 'solid-js'
@@ -13,6 +14,7 @@ import {DialogueEventSettingRow} from './EventSettingRow'
 const CONTROL_GROUP_CLASS = 'flex flex-wrap items-end gap-2'
 const INPUT_LABEL_CLASS = 'grid min-w-0 gap-1 text-sm leading-5 font-bold text-muted-foreground'
 const MESSAGE_CLASS = 'm-0 text-sm leading-[1.5] text-muted-foreground'
+const SAVE_DEBOUNCE_MILLISECONDS = 500
 
 const parseDuration = (value: string) => {
   const durationMinutes = Number(value)
@@ -34,10 +36,6 @@ export const DelayedEndEventSettings = () => {
   const duration = () => parseDuration(draft())
   const isRunning = () => events.delayedEndEventIsRunning()
 
-  onCleanup(() => {
-    isDisposed = true
-  })
-
   createEffect(() => {
     if (!hasEdited && !events.isLoading()) {
       setDraft(String(getDuration()))
@@ -50,15 +48,31 @@ export const DelayedEndEventSettings = () => {
       return
     }
 
-    events.setDelayedEndEventDuration(nextDuration).catch((error: unknown) => {
-      console.error('Failed to save delayed end event settings.', error)
-      if (!isDisposed && revision === editRevision) {
-        hasEdited = false
-        setDraft(String(getDuration()))
-        setMessage(m.settings_delayed_end_save_failed())
-      }
-    })
+    events
+      .setDelayedEndEventDuration(nextDuration)
+      .then(() => {
+        if (!isDisposed && revision === editRevision) {
+          hasEdited = false
+        }
+      })
+      .catch((error: unknown) => {
+        console.error('Failed to save delayed end event settings.', error)
+        if (!isDisposed && revision === editRevision) {
+          hasEdited = false
+          setDraft(String(getDuration()))
+          setMessage(m.settings_delayed_end_save_failed())
+        }
+      })
   }
+  const pendingSave = createPendingSave({
+    delayMilliseconds: SAVE_DEBOUNCE_MILLISECONDS,
+    save: (snapshot: {readonly value: string; readonly revision: number}) =>
+      saveDuration(snapshot.value, snapshot.revision),
+  })
+  onCleanup(() => {
+    isDisposed = true
+    pendingSave.flush()
+  })
 
   const handleStartOrCancel = () => {
     setMessage(null)
@@ -68,6 +82,7 @@ export const DelayedEndEventSettings = () => {
     }
 
     if (duration() !== null) {
+      pendingSave.flush()
       events.startDelayedEndEvent()
     }
   }
@@ -76,7 +91,7 @@ export const DelayedEndEventSettings = () => {
     const revision = (editRevision += 1)
     setMessage(null)
     setDraft(value)
-    saveDuration(value, revision)
+    pendingSave.schedule({revision, value})
   }
 
   return (
@@ -100,7 +115,7 @@ export const DelayedEndEventSettings = () => {
               onInputValueChange={updateDuration}
               onValueChange={(value) => updateDuration(String(value))}
               step={1}
-              unit="분"
+              unit={m.pomodoro_minute_suffix()}
               value={draft()}
             />
           </label>

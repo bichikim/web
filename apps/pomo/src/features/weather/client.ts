@@ -1,7 +1,7 @@
 import {z} from 'zod'
 
 import {parseJsonResponse} from '../api-json'
-import {apiFetch} from '../http-client'
+import {apiFetch, parseRetryAfterSeconds} from '../http-client'
 import {type WeatherFeed, weatherFeedSchema, type WeatherLocationId} from './contract'
 
 const MILLISECONDS_PER_SECOND = 1_000
@@ -30,16 +30,6 @@ export type WeatherFeedRequestResult =
   | CollectingWeatherFeedResult
   | UnavailableWeatherFeedResult
 
-const parseRetryAfterMilliseconds = (value: string | null): number | null => {
-  if (value === null) {
-    return null
-  }
-
-  const seconds = Number(value)
-
-  return Number.isInteger(seconds) && seconds >= 1 ? seconds * MILLISECONDS_PER_SECOND : null
-}
-
 /** Fetches and validates the public weather feed boundary. */
 export const fetchWeatherFeed = async (
   locationId: WeatherLocationId,
@@ -50,7 +40,9 @@ export const fetchWeatherFeed = async (
 
   if (response.status === HTTP_SERVICE_UNAVAILABLE) {
     const unavailable = await parseJsonResponse(response, weatherUnavailableSchema)
-    const retryAfterMilliseconds = parseRetryAfterMilliseconds(response.headers.get('Retry-After'))
+    const retryAfterSeconds = parseRetryAfterSeconds(response.headers.get('Retry-After'))
+    const retryAfterMilliseconds =
+      retryAfterSeconds === null ? null : retryAfterSeconds * MILLISECONDS_PER_SECOND
 
     return unavailable.code === 'weather_collecting'
       ? {retryAfterMilliseconds, status: 'collecting'}

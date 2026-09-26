@@ -108,7 +108,7 @@ const jejuLocation = {
 
 const publish = vi.fn()
 const onModeChange = vi.fn().mockResolvedValue(undefined)
-let mode: 'desktop' | 'normal' = 'desktop'
+let mode: 'desktop' | 'interactiveDesktop' | 'normal' = 'desktop'
 const displayPreferences: PDisplayPreferencesController = {
   dialogueComposerVisible: () => false,
   featureRequestVisible: () => true,
@@ -190,6 +190,7 @@ it('should publish every setting change from the separate scene toolbar', () => 
   ))
 
   expect(SceneToolbar).toHaveBeenCalledOnce()
+  expect(useDesktopMode).toHaveBeenCalledWith({isHandoffOwner: true})
   expect(screen.getByText('설정')).toHaveAttribute('data-layout', 'surface')
   for (const name of [
     '활동',
@@ -233,6 +234,20 @@ it('should publish every setting change from the separate scene toolbar', () => 
   expect(useWeather().onSceneModeChange).toHaveBeenCalledWith('rain')
   expect(onModeChange).toHaveBeenCalledWith('interactiveDesktop')
 })
+
+it('should not render the separate settings surface for interactive desktop mode', () => {
+  mode = 'interactiveDesktop'
+
+  render(() => (
+    <PreferenceProvider>
+      <DesktopSettings />
+    </PreferenceProvider>
+  ))
+
+  expect(SceneToolbar).not.toHaveBeenCalled()
+  expect(screen.queryByText('설정')).not.toBeInTheDocument()
+})
+
 it('should retain drag input when the desktop has no gyroscope', () => {
   vi.mocked(supportsPSceneGyroscope).mockReturnValue(false)
   render(() => (

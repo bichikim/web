@@ -33,6 +33,20 @@ it('should normalize HTTP feed URLs and remove fragments', () => {
   })
 })
 
+it('should remove trailing path slashes from feed URLs', () => {
+  expect(normalizeFeedUrl('https://example.test/feed.xml/')).toEqual(
+    normalizeFeedUrl('https://example.test/feed.xml'),
+  )
+  expect(normalizeFeedUrl('https://example.test/feed.xml///?token=feed')).toEqual({
+    ok: true,
+    value: 'https://example.test/feed.xml?token=feed',
+  })
+  expect(normalizeFeedUrl('https://example.test/')).toEqual({
+    ok: true,
+    value: 'https://example.test/',
+  })
+})
+
 it('should reject empty, oversized, malformed, and unsupported feed URLs', () => {
   expect(normalizeFeedUrl('   ')).toEqual({ok: false})
   expect(normalizeFeedUrl(`https://example.test/${'a'.repeat(2048)}`)).toEqual({ok: false})

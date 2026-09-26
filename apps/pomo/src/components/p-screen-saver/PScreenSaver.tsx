@@ -138,8 +138,8 @@ export const PScreenSaver = (props: PScreenSaverProps) => {
                     aria-hidden="true"
                     class="absolute top-1/2 right-full mr-2 size-4 -translate-y-1/2"
                     classList={{
-                      'i-tabler-player-pause': !(props.isMusicPlaying ?? false),
-                      'i-tabler-player-play': props.isMusicPlaying ?? false,
+                      'i-tabler-player-pause': props.isMusicPlaying ?? false,
+                      'i-tabler-player-play': !(props.isMusicPlaying ?? false),
                     }}
                   />
                   <POverflowMarquee focusable={false} text={track().title} />

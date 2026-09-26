@@ -2,6 +2,7 @@
 import {cleanup, fireEvent, render, screen} from '@solidjs/testing-library'
 import type {JSX} from 'solid-js'
 import {afterEach, beforeEach, expect, it, vi} from 'vitest'
+import {createLoopPlayer} from 'src/features/loop-player/player'
 import {SoundGenerationPage} from '../SoundGenerationPage'
 
 const loopPlayback = vi.hoisted(() => ({
@@ -11,6 +12,7 @@ const loopPlayback = vi.hoisted(() => ({
   onStatus: undefined as ((message: string, playing: boolean) => void) | undefined,
   play: vi.fn(async () => {}),
   seek: vi.fn(async () => {}),
+  setVolume: vi.fn(),
   stop: vi.fn(),
 }))
 
@@ -18,21 +20,7 @@ vi.mock('@solidjs/meta', () => ({Title: () => null}))
 vi.mock('@solidjs/router', () => ({
   A: (props: {href: string; children?: JSX.Element}) => <a href={props.href}>{props.children}</a>,
 }))
-vi.mock('src/features/loop-player', () => ({
-  createLoopPlayer: vi.fn(
-    (
-      _url: string,
-      onStatus: (message: string, playing: boolean) => void,
-      onReady?: (seconds: number) => void,
-      onPosition?: (seconds: number) => void,
-    ) => {
-      loopPlayback.onPosition = onPosition
-      loopPlayback.onStatus = onStatus
-      onReady?.(loopPlayback.duration)
-      return loopPlayback
-    },
-  ),
-}))
+vi.mock('src/features/loop-player/player', () => ({createLoopPlayer: vi.fn()}))
 
 class TestWorker {
   static current: TestWorker
@@ -46,6 +34,12 @@ class TestWorker {
 }
 
 beforeEach(() => {
+  vi.mocked(createLoopPlayer).mockImplementation((_url, onStatus, onReady, onPosition) => {
+    loopPlayback.onPosition = onPosition
+    loopPlayback.onStatus = onStatus
+    onReady?.(loopPlayback.duration)
+    return loopPlayback
+  })
   vi.stubGlobal('Worker', TestWorker)
   vi.spyOn(HTMLMediaElement.prototype, 'play').mockResolvedValue(undefined)
   vi.stubGlobal(

@@ -48,8 +48,8 @@ it('should not reclaim an ambiguous submission before recovery', async () => {
   expect(update).not.toHaveBeenCalled()
 })
 
-it('should not automatically retry an expired ambiguous submission', async () => {
-  const existing = createRun('preparing', null, undefined, 'expired')
+it('should not retry an expired ambiguous submission after the automatic attempt limit', async () => {
+  const existing = {...createRun('preparing', null, undefined, 'expired'), attemptCount: 2}
   const {database, update} = createGenerationDatabase(existing, existing)
 
   await expect(prepareGenerationRun(CREATE_OPTIONS, database)).resolves.toEqual({
@@ -57,6 +57,50 @@ it('should not automatically retry an expired ambiguous submission', async () =>
     run: expect.objectContaining({status: 'preparing', submissionState: 'expired'}),
   })
   expect(update).not.toHaveBeenCalled()
+})
+
+it('should reopen an expired ambiguous submission for the next automatic attempt', async () => {
+  const existing = {
+    ...createRun('preparing', null, undefined, 'expired'),
+    errorMessage: 'Response lost',
+    submissionExpiresAt: new Date('2026-08-15T00:30:00.000Z'),
+  }
+  const retried = {
+    ...existing,
+    attemptCount: 2,
+    errorMessage: null,
+    openAiSubmissionKey: '019d0000-0000-7000-8000-000000000004',
+    submissionExpiresAt: null,
+    submissionState: null,
+  }
+  const {database, set, where} = createGenerationDatabase(existing, retried)
+
+  await expect(prepareGenerationRun(CREATE_OPTIONS, database)).resolves.toEqual({
+    created: true,
+    run: expect.objectContaining({
+      openAiSubmissionKey: retried.openAiSubmissionKey,
+      status: 'preparing',
+      submissionExpiresAt: null,
+      submissionState: null,
+    }),
+  })
+  expect(set).toHaveBeenCalledWith(
+    expect.objectContaining({
+      attemptCount: 2,
+      errorMessage: null,
+      openAiResponseId: null,
+      submissionExpiresAt: null,
+      submissionState: null,
+    }),
+  )
+  expect(set.mock.calls[0]?.[0].openAiSubmissionKey).not.toBe(existing.openAiSubmissionKey)
+  const condition = where.mock.calls[0]?.[0]
+  if (condition === undefined) {
+    throw new Error('Retry condition was not built')
+  }
+  const query = new PgDialect({casing: 'snake_case'}).sqlToQuery(condition)
+  expect(query.params).toEqual([RUN_ID, 1, 'preparing', 'expired'])
+  expect(query.sql).toContain('"open_ai_response_id" is null')
 })
 
 it('should retry a confirmed failed submission', async () => {
@@ -326,6 +370,27 @@ it('should reject a rerun when any required title is not published', async () =>
   await expect(
     prepareGenerationRerun({...CREATE_OPTIONS, requiredTitles: ['사건 A', '누락 사건']}, database),
   ).rejects.toThrow('Every regeneration title must match an existing published moment')
+})
+
+it('should match required titles against published titles after NFKC and trim normalization', async () => {
+  const requiredTitles = ['1945년, 역사적 사건']
+  const storedTitle = '　１９４５년, 역사적 사건　'
+  const existing = createRun('completed')
+  const updated = {...existing, status: 'preparing' as const}
+  const {database, selectPublishedMoments} = createRerunDatabase(existing, updated, [storedTitle])
+
+  await expect(
+    prepareGenerationRerun({...CREATE_OPTIONS, requiredTitles}, database),
+  ).resolves.toMatchObject({id: RUN_ID, status: 'preparing'})
+
+  const [condition] = selectPublishedMoments.mock.calls[0] ?? []
+
+  if (condition === undefined) {
+    throw new Error('Published title query was not built')
+  }
+
+  const query = new PgDialect({casing: 'snake_case'}).sqlToQuery(condition)
+  expect(query.params).not.toContain(requiredTitles[0])
 })
 
 it.each(['completed', 'failed', 'rejected'] as const)(

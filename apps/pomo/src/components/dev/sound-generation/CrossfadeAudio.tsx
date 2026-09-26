@@ -1,6 +1,12 @@
+import {getExceptionMessage} from 'src/features/error-detail'
+import {clamp} from 'es-toolkit/math'
 import {createEffect, createSignal, onCleanup, untrack} from 'solid-js'
 
-import {createLoopPlayer, type LoopPlayback} from 'src/features/loop-player'
+import {
+  createLoopPlaybackControls,
+  createLoopPlayer,
+  type LoopPlayback,
+} from 'src/features/loop-player'
 
 export interface CrossfadeAudioProps {
   readonly autoPlay?: boolean
@@ -18,18 +24,22 @@ export interface CrossfadePlaybackState {
 // oxlint-disable-next-line eslint/max-lines-per-function -- This component owns one disposable playback lifecycle and its view state.
 export function CrossfadeAudio(props: CrossfadeAudioProps) {
   const [duration, setDuration] = createSignal(0)
-  const [position, setPosition] = createSignal(0)
   const [playing, setPlaying] = createSignal(false)
-  const [scrubbing, setScrubbing] = createSignal(false)
   const [status, setStatus] = createSignal('재생 준비 중…')
   let playback: LoopPlayback | undefined
   let autoPlayed = false
   let currentConnection: number | undefined
-  let positionBeforeScrubbing = 0
-  let seekRevision = 0
+  const controls = createLoopPlaybackControls({
+    onSeekError: (cause) => {
+      setPlaying(false)
+      setStatus(getExceptionMessage(cause, '위치를 이동하지 못했습니다.'))
+    },
+    player: () => playback,
+  })
+  const {position, previewPosition, seek} = controls
 
   const close = (preserveState = false) => {
-    seekRevision += 1
+    controls.invalidate()
     const current = playback
     playback = undefined
     if (current !== undefined) {
@@ -39,8 +49,7 @@ export function CrossfadeAudio(props: CrossfadeAudioProps) {
       current.close().catch((cause) => console.warn('Audio cleanup failed', cause))
     }
     setPlaying(false)
-    setScrubbing(false)
-    positionBeforeScrubbing = 0
+    controls.cancelScrubbing()
   }
 
   const connection = () =>
@@ -50,18 +59,18 @@ export function CrossfadeAudio(props: CrossfadeAudioProps) {
     return Number.isInteger(value) ? String(value) : value.toFixed(1)
   }
   const play = async (requestedPosition = position()) => {
-    seekRevision += 1
+    controls.invalidate()
     const current = playback
     if (current === undefined || duration() <= 0) {
       return
     }
-    const target = Math.min(Math.max(requestedPosition, 0), duration())
-    setPosition(target)
+    const target = clamp(requestedPosition, 0, duration())
+    controls.preparePlayback(target)
     try {
       await current.play(connection(), false, target)
     } catch (cause) {
       setPlaying(false)
-      setStatus(cause instanceof Error ? cause.message : '재생하지 못했습니다.')
+      setStatus(getExceptionMessage(cause, '재생하지 못했습니다.'))
     }
   }
 
@@ -74,8 +83,7 @@ export function CrossfadeAudio(props: CrossfadeAudioProps) {
     autoPlayed = false
     currentConnection = undefined
     setDuration(0)
-    setPosition(Math.max(initialPosition, 0))
-    setScrubbing(false)
+    controls.updatePosition(Math.max(initialPosition, 0))
     setStatus('재생 준비 중…')
     try {
       playback = createLoopPlayer(
@@ -88,14 +96,10 @@ export function CrossfadeAudio(props: CrossfadeAudioProps) {
           setDuration(seconds)
           setStatus('재생 준비 완료')
         },
-        (seconds) => {
-          if (!scrubbing()) {
-            setPosition(seconds)
-          }
-        },
+        controls.updatePosition,
       )
     } catch (cause) {
-      setStatus(cause instanceof Error ? cause.message : '오디오 플레이어를 준비하지 못했습니다.')
+      setStatus(getExceptionMessage(cause, '오디오 플레이어를 준비하지 못했습니다.'))
     }
   })
 
@@ -127,7 +131,7 @@ export function CrossfadeAudio(props: CrossfadeAudioProps) {
       return
     }
     if (playing()) {
-      seekRevision += 1
+      controls.invalidate()
       current.stop()
       setPlaying(false)
       setStatus('정지했습니다.')
@@ -137,30 +141,7 @@ export function CrossfadeAudio(props: CrossfadeAudioProps) {
       await play(position())
     } catch (cause) {
       setPlaying(false)
-      setStatus(cause instanceof Error ? cause.message : '재생하지 못했습니다.')
-    }
-  }
-
-  const seek = async () => {
-    const current = playback
-    const target = position()
-    const previousPosition = positionBeforeScrubbing
-    const revision = (seekRevision += 1)
-    setScrubbing(false)
-    if (current === undefined) {
-      return
-    }
-    try {
-      await current.seek(target)
-      if (revision === seekRevision && current === playback) {
-        positionBeforeScrubbing = position()
-      }
-    } catch (cause) {
-      if (revision === seekRevision && current === playback) {
-        setPlaying(false)
-        setPosition(previousPosition)
-        setStatus(cause instanceof Error ? cause.message : '위치를 이동하지 못했습니다.')
-      }
+      setStatus(getExceptionMessage(cause, '재생하지 못했습니다.'))
     }
   }
 
@@ -170,14 +151,7 @@ export function CrossfadeAudio(props: CrossfadeAudioProps) {
     <CrossfadeAudioView
       connection={displayedConnection()}
       duration={duration()}
-      onPreview={(seconds) => {
-        seekRevision += 1
-        if (!scrubbing()) {
-          positionBeforeScrubbing = position()
-        }
-        setScrubbing(true)
-        setPosition(seconds)
-      }}
+      onPreview={previewPosition}
       onSeek={seek}
       onToggle={togglePlayback}
       playing={playing()}

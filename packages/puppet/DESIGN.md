@@ -40,7 +40,7 @@ Keep surfaces quiet, borders thin, and corners modestly rounded. Use existing se
 
 Inherit the editor's Inter/system sans-serif stack. Preserve the compact label and metadata hierarchy defined in the shortcuts. Numeric values, coordinates, and color codes use the existing field typography. Do not resize a label independently to make it look like a section heading.
 
-Mesh vertex markers keep an 8px screen-space diameter at every document size and camera zoom. CSS compensates for camera zoom; do not derive marker size from document bounds.
+Mesh vertex markers and deformer control points keep an 8px screen-space diameter at every document size and camera zoom. CSS compensates for camera zoom; do not derive marker size from document bounds. Deformer rotation centers retain a 16px visible diameter and a 20px hit diameter at every zoom. Mesh and deformer markers use a 2px screen-space stroke, including selected markers; selection changes their colors. Compensate the stroke for the outer camera scale as well as the marker radius.
 
 ## Controls and sizes
 

@@ -1,20 +1,27 @@
+import {createLoopPlaybackControls} from './create-loop-playback-controls'
+import {replaceBlobObjectUrl} from 'src/features/blob-object-url'
+import {getExceptionMessage} from 'src/features/error-detail'
 import {createSignal, onCleanup} from 'solid-js'
 import {DEFAULT_CONNECTION_SECONDS} from '../sound-generation/connection'
 import {createLoopPlayer, type LoopPlayback} from './player'
 
 export function useLoopPlayer() {
-  const [position, setPosition] = createSignal(0)
-  const [scrubbing, setScrubbing] = createSignal(false)
   const [connectionSeconds, setConnectionSeconds] = createSignal(DEFAULT_CONNECTION_SECONDS)
   const [duration, setDuration] = createSignal(0)
   const [playing, setPlaying] = createSignal(false)
   const [status, setStatus] = createSignal('반복할 오디오 파일을 선택해 주세요.')
   let player: LoopPlayback | undefined
   let url: string | undefined
-  let positionBeforeScrubbing = 0
-  let seekRevision = 0
+  const controls = createLoopPlaybackControls({
+    onSeekError: (cause) => {
+      setPlaying(false)
+      setStatus(getExceptionMessage(cause, '위치 이동 실패'))
+    },
+    player: () => player,
+  })
+  const {position, previewPosition, seek} = controls
   const clear = () => {
-    seekRevision += 1
+    controls.invalidate()
     const previous = player
     const previousUrl = url
     player = undefined
@@ -25,17 +32,16 @@ export function useLoopPlayer() {
         .catch((cause) => console.warn('Audio cleanup failed', cause))
         .finally(() => {
           if (previousUrl !== undefined) {
-            URL.revokeObjectURL(previousUrl)
+            replaceBlobObjectUrl(previousUrl, () => null)
           }
         })
     } else if (previousUrl !== undefined) {
-      URL.revokeObjectURL(previousUrl)
+      replaceBlobObjectUrl(previousUrl, () => null)
     }
     setPlaying(false)
     setDuration(0)
-    setPosition(0)
-    setScrubbing(false)
-    positionBeforeScrubbing = 0
+    controls.cancelScrubbing()
+    controls.updatePosition(0)
   }
   onCleanup(clear)
   const select = (file: File | null) => {
@@ -45,7 +51,7 @@ export function useLoopPlayer() {
       return
     }
     setStatus('오디오를 읽고 있어요…')
-    const source = URL.createObjectURL(file)
+    const source = replaceBlobObjectUrl(null, () => file)
     url = source
     try {
       player = createLoopPlayer(
@@ -63,18 +69,18 @@ export function useLoopPlayer() {
           }
         },
         (seconds) => {
-          if (url === source && !scrubbing()) {
-            setPosition(seconds)
+          if (url === source) {
+            controls.updatePosition(seconds)
           }
         },
       )
     } catch (cause) {
       clear()
-      setStatus(cause instanceof Error ? cause.message : '플레이어를 준비하지 못했습니다.')
+      setStatus(getExceptionMessage(cause, '플레이어를 준비하지 못했습니다.'))
     }
   }
   const play = async (preview: boolean) => {
-    seekRevision += 1
+    controls.invalidate()
     const current = player
     if (current === undefined) {
       return
@@ -85,46 +91,17 @@ export function useLoopPlayer() {
     } catch (cause) {
       if (current === player) {
         setPlaying(false)
-        setStatus(cause instanceof Error ? cause.message : '재생 실패')
+        setStatus(getExceptionMessage(cause, '재생 실패'))
       }
     }
   }
   const stop = () => {
-    seekRevision += 1
+    controls.invalidate()
     player?.stop()
     setPlaying(false)
     setStatus('정지했습니다.')
   }
-  const previewPosition = (seconds: number) => {
-    seekRevision += 1
-    if (!scrubbing()) {
-      positionBeforeScrubbing = position()
-    }
-    setScrubbing(true)
-    setPosition(seconds)
-  }
-  const seek = async () => {
-    const current = player
-    const target = position()
-    const previousPosition = positionBeforeScrubbing
-    const revision = (seekRevision += 1)
-    setScrubbing(false)
-    if (current === undefined) {
-      return
-    }
-    try {
-      await current.seek(target)
-      if (revision === seekRevision && current === player) {
-        positionBeforeScrubbing = position()
-      }
-    } catch (cause) {
-      if (revision === seekRevision && current === player) {
-        setPlaying(false)
-        setPosition(previousPosition)
-        setStatus(cause instanceof Error ? cause.message : '위치 이동 실패')
-      }
-    }
-  }
+
   return {
     connectionSeconds,
     duration,

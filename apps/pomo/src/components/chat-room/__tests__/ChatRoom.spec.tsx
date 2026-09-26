@@ -204,6 +204,7 @@ describe('ChatRoom', () => {
       composerProps.onSend()
       composerProps.onSend()
       expect(loadCalendarPromptContext).toHaveBeenCalledOnce()
+      expect(voice.arm).not.toHaveBeenCalled()
 
       if (change === 'model') {
         headerProps.onModelChange('qwen-2b')
@@ -214,10 +215,12 @@ describe('ChatRoom', () => {
       deferred.resolve('obsolete context')
       await deferred.promise
       expect(chat.send).not.toHaveBeenCalled()
+      expect(voice.arm).not.toHaveBeenCalled()
 
       composerProps.onSend()
       await waitFor(() => expect(chat.send).toHaveBeenCalledOnce())
       expect(chat.send).toHaveBeenCalledWith({refineAnswer: true})
+      expect(voice.arm).toHaveBeenCalledOnce()
     },
   )
 
@@ -265,9 +268,11 @@ describe('ChatRoom', () => {
     expect(sidebarProps.disableRefining).toBe(true)
     expect(sidebarProps.speakBeforeRefining).toBe(true)
     composerProps.onSend()
+    expect(voice.arm).not.toHaveBeenCalled()
+    expect(speechBuffer.reset).not.toHaveBeenCalled()
+    await waitFor(() => expect(chat.send).toHaveBeenCalledWith({refineAnswer: false}))
     expect(voice.arm).toHaveBeenCalledOnce()
     expect(speechBuffer.reset).toHaveBeenCalledOnce()
-    await waitFor(() => expect(chat.send).toHaveBeenCalledWith({refineAnswer: false}))
   })
 
   it('should handle recording, preparation, model changes, clearing, and speech toggles', async () => {

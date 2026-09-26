@@ -3,9 +3,17 @@ import {DEFAULT_DISPLAY_THEME, DISPLAY_THEME_STORAGE_KEY} from './model'
 export const DISPLAY_THEME_BOOTSTRAP_SCRIPT = `(() => {
   let preference = ${JSON.stringify(DEFAULT_DISPLAY_THEME)}
   try {
-    const storedPreference = JSON.parse(
+    const storedValue = JSON.parse(
       globalThis.localStorage.getItem(${JSON.stringify(DISPLAY_THEME_STORAGE_KEY)}) ?? "null",
     )
+    const storedPreference =
+      storedValue !== null &&
+      typeof storedValue === "object" &&
+      typeof storedValue.savedAt === "number" &&
+      Number.isFinite(storedValue.savedAt) &&
+      storedValue.savedAt >= 0
+        ? storedValue.preference
+        : storedValue
     if (
       storedPreference === "bright" ||
       storedPreference === "dark" ||

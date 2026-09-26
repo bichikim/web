@@ -242,6 +242,10 @@ it.each(cases)(
       expect(payload.isEnabled).toBe(entry.latest)
     } else if (entry.name === 'playlist') {
       expect(payload).toMatchObject(entry.latest as object)
+    } else if (entry.name === 'screen saver') {
+      expect(payload).toMatchObject({delay: entry.latest, savedAt: expect.any(Number)})
+    } else if (entry.name === 'theme') {
+      expect(payload).toMatchObject({preference: entry.latest, savedAt: expect.any(Number)})
     } else {
       expect(payload).toEqual(entry.latest)
     }

@@ -10,7 +10,7 @@ interface DialogueLookupRepository extends Pick<PDialogueRepository, 'getDialogu
 
 interface FeedDialogueDeleteRepository extends Pick<
   FeedDialogueRepository,
-  'listExpiredMetadata' | 'removeMetadata'
+  'dismissItem' | 'listExpiredMetadata' | 'removeMetadata'
 > {}
 
 interface FeedDialogueIssueRepository extends Pick<FeedDialogueRepository, 'listItems'> {}
@@ -22,12 +22,16 @@ interface FeedDialogueJobRepository extends Pick<
 
 interface FeedDialogueListRepository extends Pick<
   FeedDialogueRepository,
-  'listMetadata' | 'removeItem' | 'removeMetadata'
+  'dismissItem' | 'listMetadata' | 'removeMetadata'
 > {}
+
+const ORPHAN_FEED_ITEM_MESSAGE = '대화를 찾을 수 없어 피드 항목을 정리했어요.'
+const EXPIRED_FEED_ITEM_MESSAGE = '피드 대화가 만료되어 정리했어요.'
 
 export interface LoadFeedDialogueListOptions {
   readonly dialogueRepository: DialogueLookupRepository
   readonly feedRepository: FeedDialogueListRepository
+  readonly now: Date
 }
 
 export interface DeleteExpiredFeedDialoguesOptions {
@@ -58,7 +62,19 @@ export const loadFeedDialogueList = async (
       const dialogue = await options.dialogueRepository.getDialogue(item.dialogueId)
 
       if (dialogue === null) {
-        await options.feedRepository.removeItem(item.feedConnectionId, item.feedItemId)
+        const updatedAt = options.now.toISOString()
+        await options.feedRepository.dismissItem({
+          fallback: {
+            itemTitle: item.itemTitle,
+            publishedAt: item.publishedAt,
+            sourceTitle: item.sourceTitle,
+            sourceUrl: item.sourceUrl,
+          },
+          feedConnectionId: item.feedConnectionId,
+          feedItemId: item.feedItemId,
+          message: ORPHAN_FEED_ITEM_MESSAGE,
+          updatedAt,
+        })
         await options.feedRepository.removeMetadata(item.dialogueId)
         return null
       }
@@ -107,6 +123,18 @@ export const deleteExpiredFeedDialogues = async (options: DeleteExpiredFeedDialo
   await Promise.all(
     removable.map(async (metadata) => {
       await options.dialogueRepository.deleteDialogue(metadata.dialogueId)
+      await options.feedRepository.dismissItem({
+        fallback: {
+          itemTitle: metadata.itemTitle,
+          publishedAt: metadata.publishedAt,
+          sourceTitle: metadata.sourceTitle,
+          sourceUrl: metadata.sourceUrl,
+        },
+        feedConnectionId: metadata.feedConnectionId,
+        feedItemId: metadata.feedItemId,
+        message: EXPIRED_FEED_ITEM_MESSAGE,
+        updatedAt: options.now.toISOString(),
+      })
       await options.feedRepository.removeMetadata(metadata.dialogueId)
     }),
   )

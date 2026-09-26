@@ -1,9 +1,12 @@
+import {createTimestampedDualRuntimeStorage} from 'src/utils/runtime-storage/create-timestamped-dual-runtime-storage'
 import {z} from 'zod'
 
 import {
+  createLatestStorageWriter,
   hasNativeStorageBridge,
   readTossStorageJson,
   readWebStorageJson,
+  removeWebStorageItem,
   writeTossStorageJson,
   writeWebStorageJson,
 } from 'src/utils/runtime-storage'
@@ -18,6 +21,7 @@ export interface DisplayThemePreferenceStorage {
   readonly usesTossStorage: () => boolean
   readonly readToss: (key: string) => Promise<unknown | null>
   readonly readWeb: (key: string) => unknown | null
+  readonly removeWeb: (key: string) => unknown | null
   readonly writeToss: (key: string, value: unknown) => Promise<void>
   readonly writeWeb: (key: string, value: unknown) => void
 }
@@ -29,13 +33,33 @@ export interface DisplayThemePreferenceRepository {
 
 export interface CreateDisplayThemePreferenceRepositoryOptions {
   readonly storage: DisplayThemePreferenceStorage
+  readonly now?: () => number
 }
 
 const displayThemeSchema = z.enum(['bright', 'dark', 'system'])
+const storedDisplayThemePreferenceSchema = z.object({
+  preference: displayThemeSchema,
+  savedAt: z.number().finite().nonnegative(),
+})
+
+interface StoredDisplayThemePreference {
+  readonly preference: DisplayThemePreference
+  readonly savedAt: number
+}
 
 export const parseDisplayThemePreference = (value: unknown): DisplayThemePreference | null => {
   const result = displayThemeSchema.safeParse(value)
   return result.success ? result.data : null
+}
+
+const parseStoredDisplayThemePreference = (value: unknown): StoredDisplayThemePreference | null => {
+  const result = storedDisplayThemePreferenceSchema.safeParse(value)
+  if (result.success) {
+    return result.data
+  }
+
+  const preference = parseDisplayThemePreference(value)
+  return preference === null ? null : {preference, savedAt: 0}
 }
 
 /** Creates the display theme persistence policy over one storage boundary. */
@@ -43,11 +67,18 @@ export const createDisplayThemePreferenceRepository = (
   options: CreateDisplayThemePreferenceRepositoryOptions,
 ): DisplayThemePreferenceRepository => {
   const {storage} = options
+  const now = options.now ?? Date.now
+  const coordinator = createTimestampedDualRuntimeStorage<StoredDisplayThemePreference>({
+    now,
+    timestamp: 'monotonic',
+  })
+  let latestKnownPreference: StoredDisplayThemePreference | null = null
+  const writeLatestToss = createLatestStorageWriter(DISPLAY_THEME_STORAGE_KEY, storage.writeToss)
 
   const readWebPreference = () =>
-    parseDisplayThemePreference(storage.readWeb(DISPLAY_THEME_STORAGE_KEY))
+    parseStoredDisplayThemePreference(storage.readWeb(DISPLAY_THEME_STORAGE_KEY))
 
-  const writeWebPreference = (preference: DisplayThemePreference) => {
+  const writeWebPreference = (preference: StoredDisplayThemePreference) => {
     try {
       storage.writeWeb(DISPLAY_THEME_STORAGE_KEY, preference)
       return null
@@ -56,48 +87,114 @@ export const createDisplayThemePreferenceRepository = (
     }
   }
 
-  const read = async (): Promise<DisplayThemePreference> => {
-    const usesTossStorage = storage.usesTossStorage()
+  const writeNativePreference = (preference: StoredDisplayThemePreference) =>
+    coordinator.trackWrite(writeLatestToss(preference))
 
-    if (!usesTossStorage) {
-      return readWebPreference() ?? DEFAULT_DISPLAY_THEME
-    }
-
-    try {
-      const webPreference = readWebPreference()
-
-      if (webPreference !== null) {
-        await storage.writeToss(DISPLAY_THEME_STORAGE_KEY, webPreference).catch(() => undefined)
-        return webPreference
-      }
-
-      const tossPreference = parseDisplayThemePreference(
-        await storage.readToss(DISPLAY_THEME_STORAGE_KEY),
-      )
-
-      const restoredPreference = tossPreference ?? DEFAULT_DISPLAY_THEME
-      writeWebPreference(restoredPreference)
-      return restoredPreference
-    } catch (error: unknown) {
-      throw new Error('Failed to read display theme preference.', {cause: error})
-    }
-  }
-
-  const write = async (preference: DisplayThemePreference): Promise<void> => {
+  const persistPreference = async (preference: StoredDisplayThemePreference): Promise<void> => {
     const webWriteError = writeWebPreference(preference)
-
     if (!storage.usesTossStorage()) {
       if (webWriteError !== null) {
         throw new Error('Failed to persist display theme preference.', {cause: webWriteError})
       }
-
       return
     }
 
     try {
-      await storage.writeToss(DISPLAY_THEME_STORAGE_KEY, preference)
+      await writeNativePreference(preference)
     } catch (error: unknown) {
       throw new Error('Failed to persist display theme preference.', {cause: error})
+    }
+
+    if (webWriteError !== null) {
+      const currentWebPreference = readWebPreference()
+      if (currentWebPreference !== null && currentWebPreference.savedAt > preference.savedAt) {
+        return
+      }
+
+      const removalError = storage.removeWeb(DISPLAY_THEME_STORAGE_KEY)
+      if (removalError !== null) {
+        throw new Error('Failed to persist display theme preference.', {cause: removalError})
+      }
+    }
+  }
+
+  const write = (preference: DisplayThemePreference): Promise<void> =>
+    coordinator.writeStored((savedAt) => ({preference, savedAt}), persistPreference)
+
+  const readWebFallback = (error: unknown): DisplayThemePreference => {
+    let webPreference: StoredDisplayThemePreference | null = null
+    try {
+      webPreference = readWebPreference()
+    } catch {
+      webPreference = null
+    }
+    if (webPreference !== null) {
+      coordinator.observeSavedAt(webPreference.savedAt)
+      return webPreference.preference
+    }
+    throw new Error('Failed to read display theme preference.', {cause: error})
+  }
+
+  const read = async (): Promise<DisplayThemePreference> => {
+    const initialWriteRevision = coordinator.revision()
+    const usesTossStorage = storage.usesTossStorage()
+
+    if (!usesTossStorage) {
+      const webPreference = readWebPreference()
+      const latestPreference = coordinator.selectLatest(latestKnownPreference, webPreference)
+      latestKnownPreference = latestPreference
+      coordinator.observeSavedAt(latestPreference?.savedAt ?? 0)
+      return latestPreference?.preference ?? DEFAULT_DISPLAY_THEME
+    }
+
+    try {
+      const webPreference = readWebPreference()
+      if (webPreference === null && coordinator.hasPendingWrites()) {
+        await coordinator.settleWrites()
+        if (coordinator.revision() !== initialWriteRevision) {
+          return read()
+        }
+      }
+
+      const tossPreference = parseStoredDisplayThemePreference(
+        await storage.readToss(DISPLAY_THEME_STORAGE_KEY),
+      )
+
+      if (coordinator.revision() !== initialWriteRevision) {
+        await coordinator.settleWrites()
+        return read()
+      }
+
+      // Legacy string preferences have no timestamp, so preserve the native copy on a tie.
+      const latestPreference = coordinator.selectLatest(tossPreference, webPreference)
+
+      if (latestPreference === null) {
+        writeWebPreference({preference: DEFAULT_DISPLAY_THEME, savedAt: 0})
+        return DEFAULT_DISPLAY_THEME
+      }
+
+      latestKnownPreference = coordinator.selectLatest(latestPreference, latestKnownPreference)
+
+      coordinator.observeSavedAt(webPreference?.savedAt ?? 0, tossPreference?.savedAt ?? 0)
+
+      if (latestPreference === webPreference) {
+        await writeNativePreference(latestPreference).catch(() => undefined)
+      } else {
+        writeWebPreference(latestPreference)
+      }
+
+      if (coordinator.revision() !== initialWriteRevision) {
+        await coordinator.settleWrites()
+        return read()
+      }
+
+      return latestPreference.preference
+    } catch (error: unknown) {
+      if (coordinator.revision() !== initialWriteRevision) {
+        await coordinator.settleWrites()
+        return read()
+      }
+      return readWebFallback(error)
     }
   }
 
@@ -105,9 +202,11 @@ export const createDisplayThemePreferenceRepository = (
 }
 
 const runtimeRepository = createDisplayThemePreferenceRepository({
+  now: Date.now,
   storage: {
     readToss: (key) => readTossStorageJson(key, (value) => value),
     readWeb: (key) => readWebStorageJson(key, (value) => value),
+    removeWeb: removeWebStorageItem,
     usesTossStorage: hasNativeStorageBridge,
     writeToss: writeTossStorageJson,
     writeWeb(key, value) {

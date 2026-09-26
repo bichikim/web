@@ -60,6 +60,7 @@ export const useLanguageLearningEditorState = () => {
   const writer = useDialogueWriter({modelId: TEXT_MODEL_ID, outputLanguage: language})
   const isBusy = () =>
     isLanguageLearningEditorBusy(phase(), regeneratingCandidateId()) ||
+    writer.isBusy() ||
     downloadContinuationActive() ||
     textModelCheckActive() ||
     modelDownload.state().status === 'loading'
@@ -92,6 +93,9 @@ export const useLanguageLearningEditorState = () => {
     setCandidates([])
   }
   const handleWordSourceChange = (nextSource: LanguageLearningWordSource) => {
+    writer.release()
+    clearCandidates()
+    setSentences([])
     setStoredWordSource(nextSource)
     setTags([])
     setTagInput('')
@@ -99,10 +103,15 @@ export const useLanguageLearningEditorState = () => {
     setPhase('idle')
   }
   const handleLanguageChange = (nextLanguage: LanguageLearningLanguage) => {
+    writer.release()
     const nextSavedWordCount = getUnmemorizedLanguageLearningWordValues({
       language: nextLanguage,
       words: learningWords(),
     }).length
+    clearCandidates()
+    setSentences([])
+    setMessage(m.learning_editor_idle())
+    setPhase('idle')
     setLanguage(nextLanguage)
 
     if (wordSource() === 'saved') {
@@ -110,8 +119,6 @@ export const useLanguageLearningEditorState = () => {
 
       if (nextSavedWordCount < MINIMUM_RANDOM_LANGUAGE_LEARNING_WORDS) {
         setStoredWordSource('direct')
-        setMessage(m.learning_editor_idle())
-        setPhase('idle')
       }
     }
   }

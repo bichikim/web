@@ -34,6 +34,7 @@ describe('PuppetEditorElement', () => {
     expect(mocks.PuppetEditor).toHaveBeenCalledOnce()
 
     const props = mocks.PuppetEditor.mock.calls[0]?.[0] as PuppetEditorProps | undefined
+    expect(props?.initialDocument?.parts).toHaveLength(0)
     props?.onDocumentChange?.(nextDocument)
 
     expect(element.document).toBe(nextDocument)

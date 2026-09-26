@@ -38,10 +38,16 @@ const transformers = vi.hoisted(() => ({
   qwenModelFromPretrained: vi.fn(),
 }))
 
+// Worker protocol assertions do not depend on the UI translation catalog loaded by storage imports.
+vi.mock('@paraglide/message', () => ({}))
+
 vi.mock('@huggingface/transformers', () => ({
   AutoProcessor: {from_pretrained: transformers.processorFromPretrained},
   env: transformers.environment,
   Gemma4ForCausalLM: {from_pretrained: transformers.gemmaModelFromPretrained},
+  InterruptableStoppingCriteria: class {
+    interrupt() {}
+  },
   Qwen3_5ForCausalLM: {from_pretrained: transformers.qwenModelFromPretrained},
   TextStreamer: class {
     readonly emit: (text: string) => void
@@ -96,7 +102,7 @@ const loadWorker = async () => {
 
 beforeEach(() => {
   vi.resetModules()
-  vi.clearAllMocks()
+  vi.resetAllMocks()
   vi.unstubAllGlobals()
 
   transformers.processorFromPretrained.mockResolvedValue(createProcessor())
@@ -153,6 +159,57 @@ describe('dialogue writer worker', () => {
       'token',
       'complete',
     ])
+  })
+
+  it('should ignore overlapping generations while one is in flight', async () => {
+    const firstGeneration = Promise.withResolvers<void>()
+    transformers.generate.mockImplementationOnce(async (options: MockGenerateOptions) => {
+      await firstGeneration.promise
+      options.streamer.emit('첫 번째 결과')
+    })
+    const worker = await loadWorker()
+
+    worker.dispatch({modelId: 'qwen-0.8b', request: '첫 번째 질문', type: 'generate'})
+    await vi.waitFor(() => expect(transformers.generate).toHaveBeenCalledOnce())
+
+    worker.dispatch({modelId: 'qwen-0.8b', request: '두 번째 질문', type: 'generate'})
+    await Promise.resolve()
+    await Promise.resolve()
+    await Promise.resolve()
+    expect(transformers.generate).toHaveBeenCalledOnce()
+    firstGeneration.resolve()
+    await vi.waitFor(() => {
+      expect(
+        worker.postMessage.mock.calls.filter(([response]) => response.type === 'complete'),
+      ).toHaveLength(1)
+    })
+
+    expect(transformers.generate).toHaveBeenCalledOnce()
+    expect(worker.postMessage).toHaveBeenCalledWith({text: '첫 번째 결과', type: 'complete'})
+  })
+
+  it('should release the generation guard after a generation failure', async () => {
+    transformers.generate.mockRejectedValueOnce(new Error('첫 생성 실패'))
+    const worker = await loadWorker()
+
+    worker.dispatch({modelId: 'qwen-0.8b', request: '첫 번째 질문', type: 'generate'})
+    await vi.waitFor(() => {
+      expect(worker.postMessage).toHaveBeenCalledWith({
+        message: '첫 생성 실패',
+        restartRequired: false,
+        type: 'error',
+      })
+    })
+
+    worker.dispatch({modelId: 'qwen-0.8b', request: '두 번째 질문', type: 'generate'})
+    await vi.waitFor(() => {
+      expect(worker.postMessage).toHaveBeenCalledWith({
+        text: '행복은 가까이에 있어요.',
+        type: 'complete',
+      })
+    })
+
+    expect(transformers.generate).toHaveBeenCalledTimes(2)
   })
 
   it('should load Gemma with its text-only causal model runtime', async () => {

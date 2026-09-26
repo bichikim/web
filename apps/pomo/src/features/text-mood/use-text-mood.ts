@@ -113,7 +113,7 @@ export const useTextMood = (props: UseTextMoodProps = {}): TextMoodController =>
   })
 
   const prepare = async () => {
-    if (isBusy()) {
+    if (isBusy() || state().status === 'ready') {
       return
     }
 
@@ -138,7 +138,8 @@ export const useTextMood = (props: UseTextMoodProps = {}): TextMoodController =>
     const result = await analyzer.analyze({text: analyzedText})
 
     if (requestVersion !== analysisVersion) {
-      setState({status: 'idle'})
+      const modelIsReady = result.ok ? true : result.error.code === 'classification-failed'
+      setState(modelIsReady ? {status: 'ready'} : {status: 'idle'})
       return
     }
 

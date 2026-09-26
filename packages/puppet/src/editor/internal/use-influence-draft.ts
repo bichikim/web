@@ -69,23 +69,46 @@ export const useInfluenceDraft = (props: UseInfluenceDraftProps) => {
       : undefined
   }
   return {
-    availableSources,
+    addPoint: (index: number) => {
+      const point = insertion(index)
+      const relation = relations()[index]
+      if (point !== undefined && relation !== undefined) {
+        replaceRelation(index, {
+          ...relation,
+          points: [...relation.points, point].sort((left, right) => left.value - right.value),
+        })
+      }
+    },
     addRelation: () => {
       const [source] = availableSources()
       if (source !== undefined) {
         updateRelations((current) => [...current, createRelation(source)])
       }
     },
-    error: () =>
-      isParameterInfluences(relations()) && hasValidInfluences(relations(), props.parameters)
-        ? null
-        : '입력값은 parameter 범위 안에서 작은 값부터 중복 없이 입력하세요.',
+    availableSources,
+    canAddPoint: (index: number) => insertion(index) !== undefined,
+    changePoint: (index: number, pointIndex: number, patch: Partial<PuppetInfluencePoint>) => {
+      const relation = relations()[index]
+      if (relation !== undefined) {
+        replaceRelation(index, {
+          ...relation,
+          points: relation.points.map((point, other) =>
+            other === pointIndex ? {...point, ...patch} : point,
+          ),
+        })
+      }
+    },
     changeSource: (index: number, id: string) => {
       const source = sources(index).find((item) => item.id === id)
       if (source !== undefined) {
         replaceRelation(index, createRelation(source))
       }
     },
+    error: () =>
+      isParameterInfluences(relations()) && hasValidInfluences(relations(), props.parameters)
+        ? null
+        : '입력값은 parameter 범위 안에서 작은 값부터 중복 없이 입력하세요.',
+    parameter,
     preset: (index: number, preset: InfluencePreset, maximum: number) => {
       const source = parameter(index)
       if (source !== undefined) {
@@ -108,29 +131,6 @@ export const useInfluenceDraft = (props: UseInfluenceDraftProps) => {
         })
       }
     },
-    changePoint: (index: number, pointIndex: number, patch: Partial<PuppetInfluencePoint>) => {
-      const relation = relations()[index]
-      if (relation !== undefined) {
-        replaceRelation(index, {
-          ...relation,
-          points: relation.points.map((point, other) =>
-            other === pointIndex ? {...point, ...patch} : point,
-          ),
-        })
-      }
-    },
-    canAddPoint: (index: number) => insertion(index) !== undefined,
-    parameter,
-    addPoint: (index: number) => {
-      const point = insertion(index)
-      const relation = relations()[index]
-      if (point !== undefined && relation !== undefined) {
-        replaceRelation(index, {
-          ...relation,
-          points: [...relation.points, point].sort((left, right) => left.value - right.value),
-        })
-      }
-    },
     relations,
     removePoint: (index: number, pointIndex: number) => {
       const relation = relations()[index]
@@ -141,9 +141,9 @@ export const useInfluenceDraft = (props: UseInfluenceDraftProps) => {
         })
       }
     },
-    sources,
     removeRelation: (index: number) =>
       updateRelations((current) => current.filter((_, other) => other !== index)),
     reset: () => setRelations(props.influences ?? []),
+    sources,
   }
 }

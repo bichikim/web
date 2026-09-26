@@ -52,8 +52,6 @@ export const mapSceneReferences = (
           {
             ...node,
             ...mapShape(node, transform),
-            children: mapSceneReferences(node.children, transform),
-            id: transform.rename(node.id),
             binding:
               node.binding === undefined
                 ? undefined
@@ -64,6 +62,8 @@ export const mapSceneReferences = (
                       shape: mapShape(step.shape, transform),
                     })),
                   },
+            children: mapSceneReferences(node.children, transform),
+            id: transform.rename(node.id),
           },
         ]
       default: {

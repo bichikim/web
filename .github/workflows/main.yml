@@ -9,7 +9,7 @@ on:
 
 env:
   PNPM_VERSION: 9.1.4
-  NODE_VERSION: 24
+  NODE_VERSION: '24.x'
   GCP_SERVICE_NAME: coong
   PROJECT_CLIENT_PATH: apps/coong-client
   ARTIFACT_CLIENT_NAME: dist-client

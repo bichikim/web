@@ -1,3 +1,5 @@
+import {getExceptionMessage} from 'src/features/error-detail'
+import {replaceBlobObjectUrl} from 'src/features/blob-object-url'
 import {createSignal, onCleanup} from 'solid-js'
 import type {LoopRequest, SoundMessage, SoundRequest} from './worker'
 
@@ -29,7 +31,7 @@ export function useSoundGeneration() {
     terminate()
     const previous = url()
     if (previous !== null) {
-      URL.revokeObjectURL(previous)
+      replaceBlobObjectUrl(previous, () => null)
     }
   })
   const generate = (request: SoundRequest | LoopRequest) => {
@@ -69,12 +71,12 @@ export function useSoundGeneration() {
             terminate()
             return
           case 'result': {
-            const previous = url()
-            if (previous !== null) {
-              URL.revokeObjectURL(previous)
-            }
-            setError(null)
-            setUrl(URL.createObjectURL(message.blob))
+            setUrl(
+              replaceBlobObjectUrl(url(), () => {
+                setError(null)
+                return message.blob
+              }),
+            )
             setStatus('환경음 생성 완료')
             terminate()
             return
@@ -92,7 +94,7 @@ export function useSoundGeneration() {
       }
       current.postMessage(request)
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : String(cause))
+      setError(getExceptionMessage(cause, () => String(cause)))
       setStatus('생성에 실패했습니다.')
       terminate()
     }

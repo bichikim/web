@@ -14,6 +14,7 @@ import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 import {PreferenceProvider} from 'src/hooks/use-preference'
 
 import type {ScreenSaverController} from '../model'
+import {DEFAULT_SCREEN_SAVER_DELAY} from '../storage'
 import {useScreenSaver} from '../use-screen-saver'
 
 const preferenceMocks = vi.hoisted(() => ({
@@ -59,6 +60,61 @@ describe('useScreenSaver', () => {
   afterEach(() => {
     Reflect.deleteProperty(document, 'visibilityState')
     vi.useRealTimers()
+  })
+
+  it('should expose the default delay while the stored preference is loading', async () => {
+    let completeRead: (delay: '1m') => void = () => undefined
+    preferenceMocks.read.mockReturnValue(
+      new Promise((resolve) => {
+        completeRead = resolve
+      }),
+    )
+    let controller: ScreenSaverController | undefined
+
+    render(() => (
+      <ScreenSaverProviderHarness
+        onController={(nextController) => {
+          controller = nextController
+        }}
+        onStateChange={() => undefined}
+      />
+    ))
+
+    expect(controller?.delay()).toBe(DEFAULT_SCREEN_SAVER_DELAY)
+
+    completeRead('1m')
+    await Promise.resolve()
+
+    expect(controller?.delay()).toBe('1m')
+  })
+
+  it('should not activate while the stored preference is loading', async () => {
+    let completeRead: (delay: 'off') => void = () => undefined
+    preferenceMocks.read.mockReturnValue(
+      new Promise((resolve) => {
+        completeRead = resolve
+      }),
+    )
+    let controller: ScreenSaverController | undefined
+
+    render(() => (
+      <ScreenSaverProviderHarness
+        onController={(nextController) => {
+          controller = nextController
+        }}
+        onStateChange={() => undefined}
+      />
+    ))
+
+    vi.advanceTimersByTime(600_000)
+
+    expect(controller?.isActive()).toBe(false)
+
+    completeRead('off')
+    await Promise.resolve()
+
+    expect(controller?.delay()).toBe('off')
+    expect(controller?.isActive()).toBe(false)
   })
 
   it('should activate after the stored inactivity delay', async () => {
@@ -173,7 +229,7 @@ describe('useScreenSaver', () => {
     completeRead('1m')
     await Promise.resolve()
 
-    expect(controller?.delay()).toBe('off')
+    expect(controller?.delay()).toBe(DEFAULT_SCREEN_SAVER_DELAY)
   })
 
   it('should throttle repeated activity while inactive without delaying the next activation', async () => {

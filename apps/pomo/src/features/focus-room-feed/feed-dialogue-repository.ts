@@ -15,6 +15,7 @@ export interface CompleteFeedDialogueOptions {
   readonly item: FeedItemRecord
   readonly jobId: string
   readonly metadata: FeedDialogueMetadata
+  readonly signal?: AbortSignal
 }
 
 export interface RecoverMissingDialogueOptions {
@@ -25,6 +26,19 @@ export interface RecoverMissingDialogueOptions {
 
 export interface CreateFeedDialogueRepositoryOptions {
   readonly deleteDialogueAudio: (audioKey: string) => Promise<void>
+}
+
+export interface DismissFeedItemOptions {
+  readonly fallback?: {
+    readonly itemTitle: string
+    readonly publishedAt: string
+    readonly sourceTitle: string
+    readonly sourceUrl: string
+  }
+  readonly feedConnectionId: string
+  readonly feedItemId: string
+  readonly message: string
+  readonly updatedAt: string
 }
 
 export interface FailedFeedDialogueJob extends FeedDialogueJob {
@@ -47,6 +61,7 @@ export interface GeneratingFeedDialogueJob extends FeedDialogueJob {
 export interface FeedDialogueRepository {
   readonly complete: (options: CompleteFeedDialogueOptions) => Promise<void>
   readonly deleteJobs: (jobIds: ReadonlyArray<string>, updatedAt: string) => Promise<void>
+  readonly dismissItem: (options: DismissFeedItemOptions) => Promise<void>
   readonly dispose: () => void
   readonly failJob: (options: FailFeedDialogueJobOptions) => Promise<boolean>
   readonly interruptUnfinishedJobs: (updatedAt: string) => Promise<ReadonlyArray<FeedDialogueJob>>
@@ -70,6 +85,42 @@ const parseItems = (values: ReadonlyArray<unknown>) =>
   values.map((value) => feedItemRecordSchema.parse(value))
 const parseMetadata = (values: ReadonlyArray<unknown>) =>
   values.map((value) => feedDialogueMetadataSchema.parse(value))
+
+const dismissFeedItem = async (database: PDatabase, options: DismissFeedItemOptions) => {
+  const itemId = getFeedItemRecordId(options.feedConnectionId, options.feedItemId)
+  const storedValue = await database.feedItems.get(itemId)
+
+  if (storedValue !== undefined) {
+    const item = feedItemRecordSchema.parse(storedValue)
+    await database.feedItems.put({
+      ...item,
+      message: options.message,
+      status: 'dismissed',
+      updatedAt: options.updatedAt,
+    })
+    return
+  }
+
+  if (options.fallback === undefined) {
+    return
+  }
+
+  await database.feedItems.put({
+    contentLength: 0,
+    discoveredAt: options.updatedAt,
+    feedConnectionId: options.feedConnectionId,
+    feedItemId: options.feedItemId,
+    id: itemId,
+    itemTitle: options.fallback.itemTitle,
+    message: options.message,
+    publishedAt: options.fallback.publishedAt,
+    sourceTitle: options.fallback.sourceTitle,
+    sourceUrl: options.fallback.sourceUrl,
+    status: 'dismissed',
+    updatedAt: options.updatedAt,
+    version: 1,
+  })
+}
 
 const updateRecoverableJobs = async (
   database: PDatabase,
@@ -154,6 +205,53 @@ const startQueuedJob = async (database: PDatabase, job: GeneratingFeedDialogueJo
   })
 }
 
+const persistFeedDialogueCompletion = async (
+  database: PDatabase,
+  options: CompleteFeedDialogueOptions,
+) => {
+  const metadata = feedDialogueMetadataSchema.parse(options.metadata)
+  const item = feedItemRecordSchema.parse(options.item)
+  let abortCompletion: (() => void) | undefined
+  let isTransactionAborted = false
+
+  const completion = database.transaction(
+    'rw',
+    database.feedDialogueJobs,
+    database.feedDialogueMetadata,
+    database.feedItems,
+    async (transaction) => {
+      if (options.signal !== undefined) {
+        abortCompletion = () => {
+          if (isTransactionAborted || !transaction.active) {
+            return
+          }
+
+          isTransactionAborted = true
+          transaction.abort()
+        }
+        options.signal.addEventListener('abort', abortCompletion, {once: true})
+
+        if (options.signal.aborted) {
+          abortCompletion()
+          return
+        }
+      }
+
+      await database.feedDialogueMetadata.put(metadata)
+      await database.feedItems.put(item)
+      await database.feedDialogueJobs.delete(options.jobId)
+    },
+  )
+
+  try {
+    await completion
+  } finally {
+    if (abortCompletion !== undefined) {
+      options.signal?.removeEventListener('abort', abortCompletion)
+    }
+  }
+}
+
 /** Persists feed discovery and generation state beside compatible dialogue records. */
 export const createFeedDialogueRepository = (
   options: CreateFeedDialogueRepositoryOptions,
@@ -162,24 +260,10 @@ export const createFeedDialogueRepository = (
   const {deleteDialogueAudio} = options
 
   return {
-    async complete(options) {
-      const metadata = feedDialogueMetadataSchema.parse(options.metadata)
-      const item = feedItemRecordSchema.parse(options.item)
-
-      return database.transaction(
-        'rw',
-        database.feedDialogueJobs,
-        database.feedDialogueMetadata,
-        database.feedItems,
-        async () => {
-          await database.feedDialogueMetadata.put(metadata)
-          await database.feedItems.put(item)
-          await database.feedDialogueJobs.delete(options.jobId)
-        },
-      )
-    },
+    complete: (completeOptions) => persistFeedDialogueCompletion(database, completeOptions),
     deleteJobs: (jobIds, updatedAt) =>
       updateRecoverableJobs(database, jobIds, updatedAt, 'dismissed'),
+    dismissItem: (options) => dismissFeedItem(database, options),
     dispose() {
       database.close()
     },

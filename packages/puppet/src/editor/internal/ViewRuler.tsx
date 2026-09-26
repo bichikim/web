@@ -17,11 +17,10 @@ export const ViewRuler = (props: ViewRulerProps) => {
   const [length, setLength] = createSignal(0)
   createEffect(() => {
     const element = host()
-    const {vertical} = props
     if (element === undefined || typeof ResizeObserver === 'undefined') {
       return
     }
-    const update = () => setLength(vertical ? element.clientHeight : element.clientWidth)
+    const update = () => setLength(props.vertical ? element.clientHeight : element.clientWidth)
     update()
     const observer = new ResizeObserver(update)
     observer.observe(element)

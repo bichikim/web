@@ -24,7 +24,6 @@ import {PScribbleCircleControl} from '../scribble/CircleControl'
 import {SceneSettingsPanel} from './SettingsPanel'
 import {CLASSES} from './shared'
 import {PWeatherStatus} from '../p-weather-status/PWeatherStatus'
-import {PDesktopModeControl} from '../p-desktop-mode-control/PDesktopModeControl'
 import type {DesktopMode} from '../../features/desktop-mode/index'
 import {MemoryAssistPanel} from './MemoryAssistPanel'
 import {VersionNoticePanel} from './VersionNoticePanel'
@@ -82,18 +81,19 @@ interface SceneToolbarProps {
 
 export const SceneToolbar = (props: SceneToolbarProps) => {
   const [actions, setActions] = createSignal<HTMLDivElement | null>(null)
-  const wrap = useToolbarWrap(actions)
+  const wrap = useToolbarWrap(actions, () => props.layout !== 'surface')
   return (
     <div
       class={cx(
-        props.layout === 'surface' ? 'flex w-fit flex-col items-end gap-2' : CLASSES.sceneToolbar,
+        props.layout === 'surface' ? 'flex w-max flex-col items-end gap-2' : CLASSES.sceneToolbar,
       )}
     >
       <div
         ref={setActions}
         data-wrap={wrap() ? '' : undefined}
         class={cx(
-          'pomo-toolbar-actions flex flex-wrap justify-end gap-2',
+          'pomo-toolbar-actions flex justify-end gap-2',
+          props.layout === 'surface' ? 'w-max flex-nowrap' : 'flex-wrap',
           '[&:not([data-wrap])>.pomo-toolbar-secondary]:order-first [&_button[data-icon-only]]:rounded-full',
         )}
         role="group"
@@ -153,6 +153,10 @@ export const SceneToolbar = (props: SceneToolbarProps) => {
             weatherEnabled={props.weatherEnabled}
             weatherLocation={props.weatherLocation}
             weatherSceneMode={props.weatherSceneMode}
+            desktopMode={props.desktopMode}
+            desktopModeError={props.desktopModeError}
+            isDesktopModeChanging={props.isDesktopModeChanging}
+            onDesktopModeChange={props.onDesktopModeChange}
           />
         </div>
         <div class="pomo-toolbar-secondary flex flex-none gap-2">
@@ -179,12 +183,6 @@ export const SceneToolbar = (props: SceneToolbarProps) => {
       </div>
       <div class="clear-both flex flex-col items-end gap-2">
         <PWeatherStatus sceneStyle={props.sceneStyle} state={props.weatherState} />
-        <PDesktopModeControl
-          error={props.desktopModeError}
-          isChanging={props.isDesktopModeChanging}
-          mode={props.desktopMode ?? 'normal'}
-          onModeChange={(mode) => props.onDesktopModeChange?.(mode) ?? Promise.resolve()}
-        />
         <PModelDownloadStatus />
         <Show when={props.isSceneTransitioning}>
           <span

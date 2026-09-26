@@ -1,5 +1,6 @@
 /** @vitest-environment jsdom */
 import {fireEvent, render} from '@solidjs/testing-library'
+import {createSignal} from 'solid-js'
 import {expect, test} from 'vitest'
 import {createDemoDocument} from '../../../player'
 import {useDocumentHistory} from '../../use-document-history'
@@ -28,7 +29,17 @@ test('should batch attach without selecting a vertex and undo the entire operati
 })
 
 test('should switch distance mode and retain the manual distance', () => {
-  const view = render(() => <BoundaryGlueEditor document={createDemoDocument()} />)
+  const [selectedPartIds, setSelectedPartIds] = createSignal<ReadonlyArray<string>>([])
+  const view = render(() => (
+    <BoundaryGlueEditor
+      document={createDemoDocument()}
+      partId="shape-diamond"
+      selectedPartIds={selectedPartIds()}
+    />
+  ))
+  expect(view.queryByRole('group', {name: '선택 파츠 붙이기'})).toBeNull()
+  setSelectedPartIds(['mesh-preview', 'shape-diamond'])
+  expect(view.getByRole('group', {name: '선택 파츠 붙이기'})).toBeInTheDocument()
   expect(view.queryByRole('spinbutton', {name: '경계 연결 거리'})).toBeNull()
   fireEvent.click(view.getByRole('button', {name: '수동'}))
   const input = view.getByRole('spinbutton', {name: '경계 연결 거리'})

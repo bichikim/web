@@ -9,6 +9,7 @@ import type {
   PuppetSceneNode,
 } from '../player/document'
 import type {MovePartVertexOptions} from './edit-document'
+import {reconcileSpatialSurface} from './internal/reconcile-spatial-surface'
 
 export interface MoveMeshVertexSuccess {
   readonly ok: true
@@ -272,15 +273,15 @@ export const moveMeshVertex = (options: MovePartVertexOptions): MoveMeshVertexRe
                     : remapShape({
                         part,
                         sample,
-                        shape: step.rest,
                         sampleValues,
+                        shape: step.rest,
                         vertexIndex: options.vertexIndex,
                       }),
                 shape: remapShape({
                   part,
                   sample,
-                  shape: step.shape,
                   sampleValues,
+                  shape: step.shape,
                   vertexIndex: options.vertexIndex,
                 }),
               })),
@@ -293,7 +294,13 @@ export const moveMeshVertex = (options: MovePartVertexOptions): MoveMeshVertexRe
       ...options.document,
       parameterBindings,
       parts: options.document.parts.map((candidate) =>
-        candidate.id === part.id ? {...part, mesh} : candidate,
+        candidate.id === part.id
+          ? {
+              ...part,
+              mesh,
+              spatial: reconcileSpatialSurface({document: options.document, mesh, part}),
+            }
+          : candidate,
       ),
       scene:
         options.document.scene === undefined

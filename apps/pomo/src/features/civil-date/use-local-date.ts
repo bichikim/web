@@ -1,29 +1,48 @@
-import {type Accessor, createSignal, onCleanup, onMount} from 'solid-js'
+import {dayjs} from 'src/utils/zoned-dayjs'
+import {type Accessor, createEffect, createSignal, onCleanup, onMount} from 'solid-js'
 import {formatLocalDate} from 'src/utils/format-local-date'
 import {type LocalDateRuntime, localDateRuntime} from './local-date-runtime'
 
 export interface UseLocalDateProps {
   readonly initialDate?: Date
   readonly runtime?: LocalDateRuntime
+  readonly timeZone?: string | Accessor<string>
 }
 
-/** Preserves the initial date until mount, then refreshes at local midnight and on visible return. */
+const formatDate = (date: Date, timeZone?: string): string =>
+  timeZone === undefined ? formatLocalDate(date) : dayjs(date).tz(timeZone).format('YYYY-MM-DD')
+
+const getNextMidnight = (date: Date, timeZone?: string): Date => {
+  if (timeZone === undefined) {
+    const midnight = new Date(date)
+    const nextDayHour = 24
+    midnight.setHours(nextDayHour, 0, 0, 0)
+    return midnight
+  }
+
+  const nextDate = dayjs(date).tz(timeZone).add(1, 'day').format('YYYY-MM-DD')
+  return dayjs.tz(nextDate, timeZone).startOf('day').toDate()
+}
+
+/** Preserves the initial date until mount, then refreshes on time zone changes, midnight, and visible return. */
 export const useLocalDate = (props: UseLocalDateProps = {}): Accessor<string> => {
   const initial = props.initialDate
-  const [date, setDate] = createSignal(initial === undefined ? '' : formatLocalDate(initial))
+  const timeZone = () => {
+    const configuredTimeZone = props.timeZone
+    return typeof configuredTimeZone === 'function' ? configuredTimeZone() : configuredTimeZone
+  }
+  const [date, setDate] = createSignal(initial === undefined ? '' : formatDate(initial, timeZone()))
   onMount(() => {
     const runtime = props.runtime ?? localDateRuntime
     let cancel: (() => void) | undefined
-    const refresh = () => {
+    const refresh = (currentTimeZone = timeZone()) => {
       cancel?.()
       const now = runtime.now()
-      setDate(formatLocalDate(now))
-      const midnight = new Date(now)
-      const nextDayHour = 24
-      midnight.setHours(nextDayHour, 0, 0, 0)
+      setDate(formatDate(now, currentTimeZone))
+      const midnight = getNextMidnight(now, currentTimeZone)
       cancel = runtime.schedule(refresh, midnight.getTime() - now.getTime())
     }
-    refresh()
+    createEffect(() => refresh(timeZone()))
     const unsubscribe = runtime.subscribe((isHidden) => {
       if (!isHidden) {
         refresh()

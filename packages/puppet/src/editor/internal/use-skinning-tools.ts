@@ -1,6 +1,5 @@
 import {useSkinSessionControls} from './skin-session'
-import {createEffect, createMemo, createSignal, on} from 'solid-js'
-import type {JSX} from 'solid-js'
+import {createEffect, createMemo, createSignal, type JSX, on} from 'solid-js'
 import {useSkinPaintGesture} from './use-skin-paint-gesture'
 import {getDocumentScene, type PuppetDocument} from '../../player'
 import type {MeshEditorProps} from '../mesh-editor-contract'
@@ -72,7 +71,6 @@ export const useSkinningTools = (props: SkinningToolsProps) => {
         JSON.stringify(props.parameterValueMap),
         props.previewTime,
       ].join(':'),
-    document: () => props.sourceDocument,
     create: () => {
       const skin = binding()
       const mesh = part()?.mesh
@@ -89,17 +87,18 @@ export const useSkinningTools = (props: SkinningToolsProps) => {
       }
       const stroke = createSkinStroke({
         binding: skin,
-        target: target(),
         indices: mesh.indices,
-        vertices: positions(),
-        radius: radius(),
         mode: mode as WeightPaintMode,
-        strength: amount() / PERCENT,
         protect: protect(),
+        radius: radius(),
         selected: selected(),
+        strength: amount() / PERCENT,
+        target: target(),
+        vertices: positions(),
       })
       return (point) => update(stroke.paint(point))
     },
+    document: () => props.sourceDocument,
     onEnd: () => props.onEditEnd?.(),
     onStart: () => props.onEditStart?.(),
   })
@@ -115,26 +114,26 @@ export const useSkinningTools = (props: SkinningToolsProps) => {
     ),
   )
   return {
+    amount,
     binding,
-    locked,
     enabled,
+    locked,
     part,
     positions,
-    setEnabled,
-    setTarget,
-    triangles,
-    radius,
-    setTool,
-    amount,
-    tool,
     protect,
-    target,
+    radius,
     selected,
     setAmount,
-    setRadius,
+    setEnabled,
     setProtect,
+    setRadius,
     setSelected,
+    setTarget,
+    setTool,
     setValue,
+    target,
+    tool,
+    triangles,
     value,
     ...gesture,
     apply: () => {

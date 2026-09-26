@@ -8,6 +8,7 @@ import {createPlayer} from '../create-player'
 import {parseDocument} from '../parse-document'
 import type {PreparedPuppetDocument} from '../prepare-puppet-document'
 import {serializeDocument} from '../serialize-document'
+import {markPreparedPuppetDocument} from '../internal/prepared-document'
 
 const mocks = vi.hoisted(() => ({
   AlphaMask: vi.fn(),
@@ -614,6 +615,7 @@ describe('createPlayer', () => {
     const onFrame = vi.fn()
     const physicsDocument: PuppetDocument = {
       ...puppetDocument,
+      motions: [{duration: 2, id: 'idle', tracks: []}],
       parameterBindings: [
         {
           id: 'output-binding',
@@ -712,12 +714,53 @@ describe('createPlayer', () => {
     expect(createdMesh?.vertices[5]).toBeGreaterThan(100)
 
     player.pause()
-    player.play()
+    player.seek(0.5)
+    const pausedY = createdMesh!.vertices[5]!
+    tick!({deltaMS: 1_000 / 60})
+    expect(createdMesh!.vertices[5]).toBeGreaterThan(pausedY)
+    expect(onFrame).toHaveBeenLastCalledWith({duration: 2, motionId: 'idle', time: 0.5})
+    expect(application.stop).not.toHaveBeenCalled()
+
+    player.setPhysicsPreview(false)
+    expect(createdMesh?.vertices[5]).toBeCloseTo(200)
     expect(application.stop).toHaveBeenCalledOnce()
-    expect(application.start).toHaveBeenCalledOnce()
+    player.setParameterValues({input: 15})
+    expect(createdMesh?.vertices[5]).toBeCloseTo(150)
+    player.setPhysicsPreview(true)
+    player.setParameterValues({input: 0})
+    tick?.({deltaMS: 1_000 / 60})
+    expect(createdMesh?.vertices[5]).toBeLessThan(150)
+    player.resetPhysics()
+    expect(createdMesh?.vertices[5]).toBeCloseTo(100)
+    tick?.({deltaMS: 1_000 / 60})
+    expect(createdMesh?.vertices[5]).toBeCloseTo(100)
+
+    player.play()
+    expect(application.start).toHaveBeenCalled()
+
+    const onComplete = vi.fn()
+    player.setParameterValues({input: 30})
+    player.play({loop: false, onComplete})
+    player.seek(1.99)
+    tick?.({deltaMS: 20})
+    expect(onComplete).toHaveBeenCalledOnce()
+    const completedY = createdMesh!.vertices[5]!
+    tick!({deltaMS: 20})
+    expect(onFrame).toHaveBeenLastCalledWith({duration: 2, motionId: 'idle', time: 2})
+    expect(createdMesh!.vertices[5]).toBeGreaterThan(completedY)
+    expect(onComplete).toHaveBeenCalledOnce()
+
+    const prepared = prepareDocument(physicsDocument)
+    expect(player.updateDocument(prepared)).toBe(true)
+    tick?.({deltaMS: 20})
+    const beforeEditY = createdMesh!.vertices[5]
+    expect(
+      player.updateDocument(markPreparedPuppetDocument({...prepared, parts: [...prepared.parts]})),
+    ).toBe(true)
+    expect(createdMesh?.vertices[5]).toBe(beforeEditY)
 
     player.seek(0.5)
-    expect(onFrame).toHaveBeenLastCalledWith({duration: 0, motionId: null, time: 0.5})
+    expect(onFrame).toHaveBeenLastCalledWith({duration: 2, motionId: 'idle', time: 0.5})
 
     const replacementDocument = prepareDocument({...physicsDocument, physics: undefined})
     expect(player.updateDocument(replacementDocument)).toBe(true)

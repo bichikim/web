@@ -123,12 +123,35 @@ it('should load the stored preference and expose the query result', async () => 
   root.dispose()
 })
 
-it('should expose scene readiness while restoring the stored preference', async () => {
+it('should wait for an automatic feed before exposing scene readiness', async () => {
+  const rainyFeed = {...feed, current: {...feed.current, condition: 'rain' as const}}
+  const rainyResult = {feed: rainyFeed, locationId: seoulLocation.id, status: 'available'} as const
+  const weatherRequest = Promise.withResolvers<typeof rainyResult>()
+  queryMocks.weatherFeedQuery.mockReturnValueOnce(weatherRequest.promise)
+  const root = createWeatherRoot()
+
+  await flushPromises()
+
+  expect(root.controller.isReady()).toBe(false)
+  expect(root.controller.sceneCondition()).toBeUndefined()
+
+  weatherRequest.resolve(rainyResult)
+  await flushPromises()
+
+  expect(root.controller.isReady()).toBe(true)
+  expect(root.controller.sceneCondition()).toBe('rain')
+  root.dispose()
+})
+
+it('should hide weather and scene until the stored preference is restored', async () => {
   const stored = Promise.withResolvers<WeatherPreference>()
   preferenceMocks.readWeatherPreference.mockReturnValueOnce(stored.promise)
   const root = createWeatherRoot()
 
   expect(root.controller.isReady()).toBe(false)
+  expect(root.controller.enabled()).toBe(false)
+  expect(root.controller.state()).toEqual({status: 'disabled'})
+  expect(queryMocks.weatherFeedQuery).not.toHaveBeenCalled()
 
   stored.resolve({
     enabled: false,
@@ -138,6 +161,8 @@ it('should expose scene readiness while restoring the stored preference', async 
   await flushPromises()
 
   expect(root.controller.isReady()).toBe(true)
+  expect(root.controller.enabled()).toBe(false)
+  expect(root.controller.state()).toEqual({status: 'disabled'})
   expect(root.controller.sceneCondition()).toBe('rain')
   root.dispose()
 })
@@ -204,9 +229,11 @@ it('should persist a location change, show loading, and ignore the superseded re
   root.controller.onLocationChange(busanLocation)
   expect(root.controller.location()).toEqual(busanLocation)
   expect(root.controller.state()).toEqual({location: busanLocation, status: 'loading'})
+  expect(root.controller.isReady()).toBe(false)
   await flushPromises()
 
   expect(root.controller.state()).toEqual({feed: busanFeed, status: 'ready'})
+  expect(root.controller.isReady()).toBe(true)
   expect(preferenceMocks.writeWeatherPreference).toHaveBeenCalledWith({
     enabled: true,
     location: busanLocation,
@@ -216,6 +243,28 @@ it('should persist a location change, show loading, and ignore the superseded re
   seoulRequest.resolve(availableResult)
   await flushPromises()
   expect(root.controller.state()).toEqual({feed: busanFeed, status: 'ready'})
+  root.dispose()
+})
+
+it('should withhold an automatic scene after a location change fetch failure', async () => {
+  const rainyFeed = {...feed, current: {...feed.current, condition: 'rain' as const}}
+  const rainyResult = {feed: rainyFeed, locationId: seoulLocation.id, status: 'available'} as const
+  queryMocks.weatherFeedQuery
+    .mockResolvedValueOnce(rainyResult)
+    .mockResolvedValueOnce({locationId: busanLocation.id, status: 'failed'})
+  const root = createWeatherRoot()
+
+  await flushPromises()
+
+  expect(root.controller.state()).toEqual({feed: rainyFeed, status: 'ready'})
+  expect(root.controller.sceneCondition()).toBe('rain')
+
+  root.controller.onLocationChange(busanLocation)
+  await flushPromises()
+
+  expect(root.controller.state()).toEqual({location: busanLocation, status: 'error'})
+  expect(root.controller.isReady()).toBe(false)
+  expect(root.controller.sceneCondition()).toBeUndefined()
   root.dispose()
 })
 
@@ -235,7 +284,44 @@ it('should keep the previous feed while the current location collects', async ()
   root.dispose()
 })
 
-it('should mark an expired retained feed stale after unavailable and failed results', async () => {
+it('should hide an automatic scene when revalidation returns an expired available feed', async () => {
+  queryMocks.weatherFeedQuery.mockResolvedValueOnce(availableResult).mockResolvedValueOnce({
+    feed,
+    locationId: seoulLocation.id,
+    status: 'available',
+  })
+  const root = createWeatherRoot()
+  await flushPromises()
+
+  expect(root.controller.sceneCondition()).toBe('clear')
+
+  vi.setSystemTime(new Date('2026-08-23T03:06:00.000Z'))
+  root.controller.onLocationChange(seoulLocation)
+  await flushPromises()
+
+  expect(root.controller.state()).toEqual({feed: {...feed, stale: true}, status: 'ready'})
+  expect(root.controller.isReady()).toBe(false)
+  expect(root.controller.sceneCondition()).toBeUndefined()
+  root.dispose()
+})
+
+it('should hide an automatic scene when an available feed has an invalid expiry', async () => {
+  const invalidExpiryFeed = {...feed, expiresAt: 'not-an-iso-timestamp'}
+  queryMocks.weatherFeedQuery.mockResolvedValueOnce({...availableResult, feed: invalidExpiryFeed})
+  const root = createWeatherRoot()
+
+  await flushPromises()
+
+  expect(root.controller.state()).toEqual({
+    feed: {...invalidExpiryFeed, stale: true},
+    status: 'ready',
+  })
+  expect(root.controller.isReady()).toBe(false)
+  expect(root.controller.sceneCondition()).toBeUndefined()
+  root.dispose()
+})
+
+it('should hide an automatic scene when revalidation retains an expired feed', async () => {
   queryMocks.weatherFeedQuery
     .mockResolvedValueOnce(availableResult)
     .mockResolvedValueOnce({
@@ -251,10 +337,14 @@ it('should mark an expired retained feed stale after unavailable and failed resu
   root.controller.onLocationChange(seoulLocation)
   await flushPromises()
   expect(root.controller.state()).toEqual({feed: {...feed, stale: true}, status: 'ready'})
+  expect(root.controller.isReady()).toBe(false)
+  expect(root.controller.sceneCondition()).toBeUndefined()
 
   root.controller.onLocationChange(seoulLocation)
   await flushPromises()
   expect(root.controller.state()).toEqual({feed: {...feed, stale: true}, status: 'ready'})
+  expect(root.controller.isReady()).toBe(false)
+  expect(root.controller.sceneCondition()).toBeUndefined()
   root.dispose()
 })
 
@@ -287,6 +377,20 @@ it('should distinguish collecting from unavailable and failed initial results', 
   await flushPromises()
   expect(failedRoot.controller.state()).toEqual({location: seoulLocation, status: 'error'})
   failedRoot.dispose()
+})
+
+it.each([
+  {locationId: seoulLocation.id, status: 'failed'},
+  {locationId: seoulLocation.id, retryAfterMilliseconds: null, status: 'unavailable'},
+] as const)('should withhold an automatic scene after an initial weather error', async (result) => {
+  queryMocks.weatherFeedQuery.mockResolvedValueOnce(result)
+  const root = createWeatherRoot()
+
+  await flushPromises()
+
+  expect(root.controller.isReady()).toBe(false)
+  expect(root.controller.sceneCondition()).toBeUndefined()
+  root.dispose()
 })
 
 it('should use the default preference when stored preference loading fails', async () => {

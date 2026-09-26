@@ -5,8 +5,11 @@ Allows an application to manage its desktop background and control surfaces.
 #### This default permission set includes the following:
 
 - `allow-close-control-surface`
+- `allow-forward-background-mouse-event`
 - `allow-get-background-interaction`
+- `allow-navigate-background-surface`
 - `allow-open-control-surface`
+- `allow-restore-background-content`
 - `allow-restore-surface`
 - `allow-set-background-interaction`
 - `allow-set-background-surface`
@@ -50,6 +53,32 @@ Denies the close_control_surface command without any pre-configured scope.
 <tr>
 <td>
 
+`desktop-surface:allow-forward-background-mouse-event`
+
+</td>
+<td>
+
+Enables the forward_background_mouse_event command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+`desktop-surface:deny-forward-background-mouse-event`
+
+</td>
+<td>
+
+Denies the forward_background_mouse_event command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
 `desktop-surface:allow-get-background-interaction`
 
 </td>
@@ -76,6 +105,32 @@ Denies the get_background_interaction command without any pre-configured scope.
 <tr>
 <td>
 
+`desktop-surface:allow-navigate-background-surface`
+
+</td>
+<td>
+
+Enables the navigate_background_surface command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+`desktop-surface:deny-navigate-background-surface`
+
+</td>
+<td>
+
+Denies the navigate_background_surface command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
 `desktop-surface:allow-open-control-surface`
 
 </td>
@@ -95,6 +150,32 @@ Enables the open_control_surface command without any pre-configured scope.
 <td>
 
 Denies the open_control_surface command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+`desktop-surface:allow-restore-background-content`
+
+</td>
+<td>
+
+Enables the restore_background_content command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+`desktop-surface:deny-restore-background-content`
+
+</td>
+<td>
+
+Denies the restore_background_content command without any pre-configured scope.
 
 </td>
 </tr>

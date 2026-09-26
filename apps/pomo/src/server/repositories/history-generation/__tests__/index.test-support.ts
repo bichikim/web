@@ -134,25 +134,26 @@ export const createGenerationDatabase = (
       })),
     })),
   }))
-  const set = vi.fn((_values: Record<string, unknown>) => ({
-    where: vi.fn(() => ({
-      returning: vi.fn(async () => [reclaimed]),
-    })),
-  }))
+  const where = vi.fn((_condition: SQL) => ({returning: vi.fn(async () => [reclaimed])}))
+  const set = vi.fn((_values: Record<string, unknown>) => ({where}))
   const update = vi.fn(() => ({set}))
 
   return {
     database: {insert, select, update} as unknown as Database,
     set,
     update,
+    where,
   }
 }
 
 export const createRerunDatabase = (
   existing: HistoricalGenerationRunRow,
   updated: HistoricalGenerationRunRow,
-  selectedTitles: ReadonlyArray<string>,
+  publishedTitles: ReadonlyArray<string>,
 ) => {
+  const selectPublishedMoments = vi.fn(async (_condition: SQL) =>
+    publishedTitles.map((title) => ({title})),
+  )
   const select = vi
     .fn()
     .mockReturnValueOnce({
@@ -162,7 +163,7 @@ export const createRerunDatabase = (
     })
     .mockReturnValueOnce({
       from: vi.fn(() => ({
-        where: vi.fn(async () => selectedTitles.map((title) => ({title}))),
+        where: selectPublishedMoments,
       })),
     })
     .mockReturnValueOnce({
@@ -175,6 +176,7 @@ export const createRerunDatabase = (
 
   return {
     database: {select, update: vi.fn(() => ({set}))} as unknown as Database,
+    selectPublishedMoments,
     set,
     where,
   }

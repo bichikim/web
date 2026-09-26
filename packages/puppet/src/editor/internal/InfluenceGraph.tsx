@@ -13,11 +13,9 @@ interface InfluenceGraphProps {
 
 export const InfluenceGraph = (props: InfluenceGraphProps) => {
   const input = createMemo(() => {
-    const {value} = props
-    const {parameter} = props
-    return value === undefined || !Number.isFinite(value)
-      ? parameter.defaultValue
-      : Math.max(parameter.minimum, Math.min(parameter.maximum, value))
+    return props.value === undefined || !Number.isFinite(props.value)
+      ? props.parameter.defaultValue
+      : Math.max(props.parameter.minimum, Math.min(props.parameter.maximum, props.value))
   })
   const weight = createMemo(() => sampleInfluence(props.relation, input()))
   const position = (value: number) =>
@@ -25,11 +23,16 @@ export const InfluenceGraph = (props: InfluenceGraphProps) => {
     GRAPH_WIDTH
   const height = (weight: number) => (1 - weight) * WHOLE_PERCENT
   const points = createMemo(() => {
-    const {relation} = props
     return [
-      {value: props.parameter.minimum, weight: sampleInfluence(relation, props.parameter.minimum)},
-      ...relation.points,
-      {value: props.parameter.maximum, weight: sampleInfluence(relation, props.parameter.maximum)},
+      {
+        value: props.parameter.minimum,
+        weight: sampleInfluence(props.relation, props.parameter.minimum),
+      },
+      ...props.relation.points,
+      {
+        value: props.parameter.maximum,
+        weight: sampleInfluence(props.relation, props.parameter.maximum),
+      },
     ]
       .map((point) => `${position(point.value)},${height(point.weight)}`)
       .join(' ')

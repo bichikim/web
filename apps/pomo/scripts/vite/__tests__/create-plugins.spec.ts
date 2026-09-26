@@ -95,6 +95,28 @@ it.each([
   },
 )
 
+it('should let SolidStart own desktop development server requests without Nitro', async () => {
+  const plugins = createPlugins({...options, command: 'serve', runtimeTarget: 'desktop'})
+
+  expect(createRemoteServerFunctionsPlugin).not.toHaveBeenCalled()
+  expect(solidStart).toHaveBeenCalledWith({
+    devOverlay: false,
+    middleware: './src/middleware/index.ts',
+    ssr: true,
+  })
+  expect(nitro).not.toHaveBeenCalled()
+  expect((await Promise.all(plugins.flat())).flat()).toEqual([
+    {name: 'mobile'},
+    {name: 'polyfills'},
+    {name: 'boundary'},
+    {name: 'paraglide'},
+    {name: 'uno'},
+    {name: 'solid-start'},
+    expect.objectContaining({name: 'feeds'}),
+    {name: 'icons'},
+  ])
+})
+
 it.each(['android', 'ios'] as const)(
   'should keep %s runtime development separate from a static build',
   (runtimeTarget) => {
@@ -116,6 +138,10 @@ it.each(['web', 'apps-in-toss', 'desktop', 'android', 'ios'] as const)(
     expect(aitDevtools.vite).toHaveBeenCalledTimes(runtimeTarget === 'apps-in-toss' ? 1 : 0)
     expect(paraglideVitePlugin).toHaveBeenCalledWith(
       expect.objectContaining({
+        outdir:
+          runtimeTarget === 'apps-in-toss'
+            ? './.i18n/paraglide/apps-in-toss'
+            : './.i18n/paraglide/web',
         outputStructure: 'locale-modules',
         strategy:
           runtimeTarget === 'apps-in-toss'
@@ -130,6 +156,9 @@ it('should use production message modules and leave optional devtools disabled',
   createPlugins({...options, command: 'build', runtimeTarget: 'apps-in-toss'})
   expect(aitDevtools.vite).not.toHaveBeenCalled()
   expect(paraglideVitePlugin).toHaveBeenCalledWith(
-    expect.objectContaining({outputStructure: 'message-modules'}),
+    expect.objectContaining({
+      outdir: './.i18n/paraglide',
+      outputStructure: 'message-modules',
+    }),
   )
 })

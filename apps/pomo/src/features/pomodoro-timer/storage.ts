@@ -1,5 +1,6 @@
 import {z} from 'zod'
 
+import {createBestEffortValueStorage, createJsonCodec, type ValueCodec} from '../value-storage'
 import {POMODORO_TIMER_LIMITS} from './limits'
 import {type PomodoroTimerConfig, type PomodoroTimerState} from './model'
 
@@ -17,7 +18,7 @@ const stateBaseSchema = {
 export const pomodoroTimerStateSchema = z.discriminatedUnion('status', [
   z.object({
     ...stateBaseSchema,
-    remainingSeconds: z.number().int().positive(),
+    remainingSeconds: z.number().int().nonnegative(),
     status: z.literal('idle'),
   }),
   z.object({
@@ -47,62 +48,48 @@ export interface PomodoroTimerStorage {
 const getStorage = (storage?: PomodoroTimerStorage): PomodoroTimerStorage =>
   storage ?? globalThis.localStorage
 
-/** Reads a persisted timer state and returns null for unavailable or invalid data. */
-export const readPomodoroTimerState = (
+const stateCodec = createJsonCodec((value) => {
+  const result = pomodoroTimerStateSchema.safeParse(value)
+  return result.success ? result.data : null
+})
+const configCodec = createJsonCodec((value) => {
+  const result = pomodoroTimerConfigSchema.safeParse(value)
+  return result.success ? result.data : null
+})
+
+const createTimerStorage = <Value>(
+  key: string,
+  codec: ValueCodec<Value>,
   storage?: PomodoroTimerStorage,
-): PomodoroTimerState | null => {
-  try {
-    const storedState = getStorage(storage).getItem(POMODORO_TIMER_STORAGE_KEY)
+) =>
+  createBestEffortValueStorage({
+    ...codec,
+    key,
+    storage: () => getStorage(storage),
+  })
 
-    if (storedState === null) {
-      return null
-    }
-
-    const result = pomodoroTimerStateSchema.safeParse(JSON.parse(storedState) as unknown)
-    return result.success ? result.data : null
-  } catch {
-    return null
-  }
-}
+/** Reads a persisted timer state and returns null for unavailable or invalid data. */
+export const readPomodoroTimerState = (storage?: PomodoroTimerStorage): PomodoroTimerState | null =>
+  createTimerStorage(POMODORO_TIMER_STORAGE_KEY, stateCodec, storage).read()
 
 /** Persists a timer state while allowing timer operation when storage is unavailable. */
 export const writePomodoroTimerState = (
   state: PomodoroTimerState,
   storage?: PomodoroTimerStorage,
 ): void => {
-  try {
-    getStorage(storage).setItem(POMODORO_TIMER_STORAGE_KEY, JSON.stringify(state))
-  } catch {
-    // Storage is an enhancement; timer operation must continue when it is unavailable.
-  }
+  createTimerStorage(POMODORO_TIMER_STORAGE_KEY, stateCodec, storage).write(state)
 }
 
 /** Reads a persisted timer configuration and returns null for unavailable or invalid data. */
 export const readPomodoroTimerConfig = (
   storage?: PomodoroTimerStorage,
-): PomodoroTimerConfig | null => {
-  try {
-    const storedConfig = getStorage(storage).getItem(POMODORO_TIMER_CONFIG_STORAGE_KEY)
-
-    if (storedConfig === null) {
-      return null
-    }
-
-    const result = pomodoroTimerConfigSchema.safeParse(JSON.parse(storedConfig) as unknown)
-    return result.success ? result.data : null
-  } catch {
-    return null
-  }
-}
+): PomodoroTimerConfig | null =>
+  createTimerStorage(POMODORO_TIMER_CONFIG_STORAGE_KEY, configCodec, storage).read()
 
 /** Persists a timer configuration while allowing timer operation when storage is unavailable. */
 export const writePomodoroTimerConfig = (
   config: PomodoroTimerConfig,
   storage?: PomodoroTimerStorage,
 ): void => {
-  try {
-    getStorage(storage).setItem(POMODORO_TIMER_CONFIG_STORAGE_KEY, JSON.stringify(config))
-  } catch {
-    // Storage is an enhancement; timer operation must continue when it is unavailable.
-  }
+  createTimerStorage(POMODORO_TIMER_CONFIG_STORAGE_KEY, configCodec, storage).write(config)
 }

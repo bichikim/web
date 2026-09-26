@@ -81,6 +81,20 @@ export const flush = async () => {
   await Promise.resolve()
 }
 
+const isWriterBusy = (state: DialogueWriterState) => {
+  switch (state.status) {
+    case 'generating':
+    case 'loading':
+      return true
+    case 'complete':
+    case 'error':
+    case 'idle':
+    case 'ready':
+    case 'unsupported':
+      return false
+  }
+}
+
 export function createDeferred<T>() {
   const {promise, resolve} = Promise.withResolvers<T>()
   return {promise, resolve}
@@ -149,7 +163,7 @@ beforeEach(() => {
     copyOutput: vi.fn(),
     generate: vi.fn(),
     generateWithPreparation,
-    isBusy: () => false,
+    isBusy: () => isWriterBusy(writerState()),
     isModelReady: () => true,
     output: writerOutput,
     prepare: vi.fn(),

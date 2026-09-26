@@ -1,3 +1,4 @@
+import * as m from '@paraglide/message'
 import {cx} from 'class-variance-authority'
 import {Show} from 'solid-js'
 import {PProgress} from '../p-progress/PProgress'
@@ -38,7 +39,7 @@ export const PGenerationStatus = (props: PGenerationStatusProps) => (
     <Show when={props.onCancel}>
       {(onCancel) => (
         <button class={CANCEL_CLASSES} onClick={onCancel()} type="button">
-          취소
+          {m.settings_dialogue_cancel()}
         </button>
       )}
     </Show>

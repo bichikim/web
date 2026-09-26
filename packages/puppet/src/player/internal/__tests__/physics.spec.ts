@@ -33,6 +33,18 @@ const createPhysicsDocument = (outputMaximum = 30): PuppetDocument => ({
 })
 
 describe('evaluatePhysics', () => {
+  test('should settle at the current input without velocity or accumulated time', () => {
+    const document = createPhysicsDocument()
+    const result = evaluatePhysics({
+      deltaTime: 1,
+      document,
+      parameterValues: {input: 5, output: 3},
+      physicsState: new Map([['swing', {accumulator: 0.002, position: -20, velocity: 100}]]),
+      settle: true,
+    })
+    expect(result.parameterValues.output).toBe(13)
+    expect(result.physicsState.get('swing')).toEqual({accumulator: 0, position: 5, velocity: 0})
+  })
   test('should add a pendulum displacement to the output parameter', () => {
     const document = createPhysicsDocument()
 
@@ -45,6 +57,46 @@ describe('evaluatePhysics', () => {
 
     expect(result.parameterValues.output).toBeGreaterThan(0)
     expect(result.physicsState.get('swing')?.position).toBeGreaterThan(0)
+  })
+
+  test('should trail a moving input, rebound past it, and settle without a permanent offset', () => {
+    const baseDocument = createPhysicsDocument()
+    const document: PuppetDocument = {
+      ...baseDocument,
+      physics: {
+        pendulums: baseDocument.physics!.pendulums.map((pendulum) => ({
+          ...pendulum,
+          outputMode: 'lag',
+        })),
+      },
+    }
+    let physicsState = createPhysicsState(document)
+    const sample = (input: number) => {
+      const result = evaluatePhysics({
+        deltaTime: 1 / 60,
+        document,
+        parameterValues: {input, output: 3},
+        physicsState,
+      })
+      physicsState = result.physicsState
+      return result.parameterValues.output!
+    }
+
+    expect(sample(5)).toBeLessThan(3)
+    Array.from({length: 1200}, () => sample(5))
+    expect(sample(5)).toBeCloseTo(3, 2)
+    expect(sample(0)).toBeGreaterThan(3)
+    Array.from({length: 1200}, () => sample(0))
+    expect(sample(0)).toBeCloseTo(3, 2)
+
+    const settled = evaluatePhysics({
+      deltaTime: 0,
+      document,
+      parameterValues: {input: 5, output: 3},
+      physicsState,
+      settle: true,
+    })
+    expect(settled.parameterValues.output).toBe(3)
   })
 
   test('should clamp a physics output to its parameter range', () => {

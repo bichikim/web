@@ -3,6 +3,13 @@ import {useEvent} from '@winter-love/solid-use/event'
 import {createInactivityController} from './create-inactivity-controller'
 import {useVisibilityPreferences} from './use-visibility-preferences'
 
+const hasVisibleOverlay = () =>
+  Array.from(
+    document.querySelectorAll(
+      '[role="dialog"], dialog[open], [role="alertdialog"], [role="tooltip"]',
+    ),
+  ).some((overlay) => overlay.getClientRects().length > 0)
+
 /** Connects persisted visibility preferences to browser inactivity. */
 export const useUiAutoHide = () => {
   const settings = useVisibilityPreferences()
@@ -10,10 +17,7 @@ export const useUiAutoHide = () => {
   onMount(() => {
     const inactivity = createInactivityController({
       enabled: () => settings.preferences().enabled,
-      isBlocked: () =>
-        Array.from(
-          document.querySelectorAll('[role="dialog"], dialog[open], [role="alertdialog"]'),
-        ).some((dialog) => dialog.getClientRects().length > 0),
+      isBlocked: hasVisibleOverlay,
       isSuspended: () => document.visibilityState === 'hidden',
       onHiddenChange: setHidden,
       schedule: (expire, milliseconds) => {
@@ -26,8 +30,22 @@ export const useUiAutoHide = () => {
       useEvent(globalThis.window, event, inactivity.wake, {capture: true, passive: true})
     }
     useEvent(document, 'visibilitychange', inactivity.wake)
+    const overlayObserver = new MutationObserver(() => {
+      if (hasVisibleOverlay()) {
+        inactivity.wake()
+      }
+    })
+    overlayObserver.observe(document.body, {
+      attributeFilter: ['aria-hidden', 'hidden', 'open', 'role'],
+      attributes: true,
+      childList: true,
+      subtree: true,
+    })
     createEffect(inactivity.wake)
-    onCleanup(inactivity.dispose)
+    onCleanup(() => {
+      overlayObserver.disconnect()
+      inactivity.dispose()
+    })
   })
   return {
     enabled: () => settings.preferences().enabled,

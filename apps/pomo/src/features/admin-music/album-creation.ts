@@ -1,3 +1,4 @@
+import {getExceptionMessage} from '../error-detail'
 import {type JSX, type Setter} from 'solid-js'
 
 import {
@@ -127,7 +128,7 @@ export const createAlbumSubmitHandler = (
       const {albumId: createdAlbumId} = result
       albumId = createdAlbumId
     } catch (error) {
-      options.setMessage(error instanceof Error ? error.message : '앨범을 저장하지 못했습니다.')
+      options.setMessage(getExceptionMessage(error, '앨범을 저장하지 못했습니다.'))
       options.setIsSavingAlbum(false)
       return
     }

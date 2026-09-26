@@ -36,25 +36,46 @@ describe('screen-saver storage', () => {
     await writeScreenSaverDelay('5s')
 
     expect(await readScreenSaverDelay()).toBe('5s')
-    expect(localStorage.getItem('pomo:screen-saver-delay:v1')).toBe('"5s"')
+    expect(JSON.parse(localStorage.getItem('pomo:screen-saver-delay:v1') ?? '')).toMatchObject({
+      delay: '5s',
+      savedAt: expect.any(Number),
+    })
     expect(storageMocks.setItem).not.toHaveBeenCalled()
   })
 
   it('should use native storage when the host bridge is available', async () => {
     Object.defineProperty(globalThis, 'ReactNativeWebView', {configurable: true, value: {}})
-    storageMocks.getItem.mockResolvedValue('"1h"')
-    storageMocks.setItem.mockResolvedValue()
+    let nativeValue = '"1h"'
+    storageMocks.getItem.mockImplementation(async () => nativeValue)
+    storageMocks.setItem.mockImplementation(async (_key, value) => {
+      nativeValue = value
+    })
 
     await writeScreenSaverDelay('1h')
 
     expect(await readScreenSaverDelay()).toBe('1h')
-    expect(storageMocks.setItem).toHaveBeenCalledWith('pomo:screen-saver-delay:v1', '"1h"')
-    expect(localStorage.getItem('pomo:screen-saver-delay:v1')).toBe('"1h"')
+    expect(JSON.parse(nativeValue)).toMatchObject({delay: '1h', savedAt: expect.any(Number)})
+    expect(JSON.parse(localStorage.getItem('pomo:screen-saver-delay:v1') ?? '')).toMatchObject({
+      delay: '1h',
+      savedAt: expect.any(Number),
+    })
+  })
+
+  it('should restore newer native storage over a stale browser cache', async () => {
+    Object.defineProperty(globalThis, 'ReactNativeWebView', {configurable: true, value: {}})
+    localStorage.setItem('pomo:screen-saver-delay:v1', JSON.stringify({delay: 'off', savedAt: 10}))
+    storageMocks.getItem.mockResolvedValue(JSON.stringify({delay: '1h', savedAt: 20}))
+
+    expect(await readScreenSaverDelay()).toBe('1h')
+    expect(localStorage.getItem('pomo:screen-saver-delay:v1')).toBe(
+      JSON.stringify({delay: '1h', savedAt: 20}),
+    )
+    expect(storageMocks.setItem).not.toHaveBeenCalled()
   })
 
   it('should restore a repaired native choice after web storage is cleared', async () => {
     Object.defineProperty(globalThis, 'ReactNativeWebView', {configurable: true, value: {}})
-    localStorage.setItem('pomo:screen-saver-delay:v1', '"off"')
+    localStorage.setItem('pomo:screen-saver-delay:v1', JSON.stringify({delay: 'off', savedAt: 20}))
     let stored = '"10m"'
     storageMocks.getItem.mockImplementation(async () => stored)
     storageMocks.setItem.mockImplementation(async (_key, value) => {
@@ -64,8 +85,11 @@ describe('screen-saver storage', () => {
     expect(await readScreenSaverDelay()).toBe('off')
     localStorage.clear()
     expect(await readScreenSaverDelay()).toBe('off')
-    expect(stored).toBe('"off"')
-    expect(localStorage.getItem('pomo:screen-saver-delay:v1')).toBe('"off"')
+    expect(JSON.parse(stored)).toMatchObject({delay: 'off', savedAt: 20})
+    expect(JSON.parse(localStorage.getItem('pomo:screen-saver-delay:v1') ?? '')).toMatchObject({
+      delay: 'off',
+      savedAt: 20,
+    })
   })
 
   it('should restore a native choice after a failed web write and module reload', async () => {
@@ -81,12 +105,15 @@ describe('screen-saver storage', () => {
     })
 
     await writeScreenSaverDelay('off')
-    expect(stored).toBe('"off"')
+    expect(JSON.parse(stored)).toMatchObject({delay: 'off', savedAt: expect.any(Number)})
     webWrite.mockRestore()
     vi.resetModules()
     const restored = await import('../storage')
 
     expect(await restored.readScreenSaverDelay()).toBe('off')
-    expect(localStorage.getItem('pomo:screen-saver-delay:v1')).toBe('"off"')
+    expect(JSON.parse(localStorage.getItem('pomo:screen-saver-delay:v1') ?? '')).toMatchObject({
+      delay: 'off',
+      savedAt: expect.any(Number),
+    })
   })
 })

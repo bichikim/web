@@ -69,6 +69,32 @@ describe('language learning sentences', () => {
     expect(isValidLanguageLearningSentence('ただいま。', 'ja')).toBe(true)
   })
 
+  it('should accept Unicode ellipses as sentence endings for each language', () => {
+    expect(isValidLanguageLearningSentence('I understand…', 'en')).toBe(true)
+    expect(isValidLanguageLearningSentence('다시 생각해 볼게…', 'ko')).toBe(true)
+    expect(isValidLanguageLearningSentence('また明日…', 'ja')).toBe(true)
+  })
+
+  it('should accept ASCII ellipses while rejecting multiple Korean and Japanese sentences', () => {
+    expect(isValidLanguageLearningSentence('오늘은 여기까지...', 'ko')).toBe(true)
+    expect(isValidLanguageLearningSentence('今日はここまで...', 'ja')).toBe(true)
+    expect(isValidLanguageLearningSentence('오늘은 여기까지. 내일 다시 만나요.', 'ko')).toBe(false)
+    expect(isValidLanguageLearningSentence('今日はここまで. また明日。', 'ja')).toBe(false)
+    expect(isValidLanguageLearningSentence('오늘은 여기까지... 내일 다시 만나요.', 'ko')).toBe(
+      false,
+    )
+    expect(isValidLanguageLearningSentence('今日はここまで... また明日。', 'ja')).toBe(false)
+  })
+
+  it('should accept English title abbreviations without accepting multiple sentences', () => {
+    expect(isValidLanguageLearningSentence('Dr. Smith went home.', 'en')).toBe(true)
+    expect(isValidLanguageLearningSentence('I met Dr. Smith yesterday.', 'en')).toBe(true)
+    expect(isValidLanguageLearningSentence('I met J. Smith yesterday.', 'en')).toBe(true)
+    expect(isValidLanguageLearningSentence('I live in the U.S. today.', 'en')).toBe(true)
+    expect(isValidLanguageLearningSentence('Dr. Smith went home. He waited.', 'en')).toBe(false)
+    expect(isValidLanguageLearningSentence('I live in the U.S. She stayed.', 'en')).toBe(false)
+  })
+
   it('should create a constrained multilingual prompt with prior results', () => {
     expect(
       createLanguageLearningPrompt({

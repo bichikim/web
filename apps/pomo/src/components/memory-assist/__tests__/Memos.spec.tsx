@@ -4,11 +4,12 @@ import {cleanup, fireEvent, render, screen, waitFor, within} from '@solidjs/test
 import {For, type JSX} from 'solid-js'
 import {afterEach, beforeEach, expect, it, vi} from 'vitest'
 
-import type {MemoryMemo} from '../../../features/memory-assist'
+import {getDueMemoryReminder, type MemoryMemo} from '../../../features/memory-assist'
 import {MemoryMemoList} from '../Memos'
 
 const mocks = vi.hoisted(() => ({
   deleteDialogue: vi.fn(),
+  isFirstReminderInFuture: vi.fn(),
   memos: [] as ReadonlyArray<MemoryMemo>,
   updateMemos: vi.fn(),
 }))
@@ -24,6 +25,11 @@ vi.mock('../../../features/memory-assist', async () => {
     updateMemoryMemos: mocks.updateMemos,
     useMemoryMemos: () => () => mocks.memos,
   }
+})
+vi.mock('../reminder-draft', async () => {
+  const actual = await vi.importActual<typeof import('../reminder-draft')>('../reminder-draft')
+  mocks.isFirstReminderInFuture.mockImplementation(actual.isFirstReminderInFuture)
+  return {...actual, isFirstReminderInFuture: mocks.isFirstReminderInFuture}
 })
 vi.mock('../../../features/memory-assist/repository', async () => ({
   ...(await vi.importActual('../../../features/memory-assist/repository')),
@@ -136,6 +142,42 @@ it('should save a memo with random recall enabled', async () => {
     text: '여권 갱신하기',
   })
   expect(sessionStorage.getItem('pomo:memory-memo:draft:v1')).toBeNull()
+})
+
+it.each(['random', 'reinforcement'] as const)(
+  'should preserve %s recall mode after toggling an exact reminder off before saving',
+  async (recallMode) => {
+    render(() => <MemoryMemoList />)
+
+    fireEvent.click(screen.getByRole('button', {name: '새 메모'}))
+    fireEvent.input(screen.getByLabelText('기억할 메모'), {target: {value: '여권 갱신하기'}})
+    fireEvent.change(screen.getByLabelText('기억 반복'), {target: {value: recallMode}})
+    fireEvent.click(screen.getByLabelText('날짜와 시간에 알려주기'))
+    fireEvent.click(screen.getByLabelText('날짜와 시간에 알려주기'))
+    fireEvent.click(screen.getByRole('button', {name: '메모 저장'}))
+
+    await waitFor(() => expect(mocks.updateMemos).toHaveBeenCalledOnce())
+    expect(mocks.memos[0]).toMatchObject({recallMode})
+  },
+)
+
+it('should preserve a recall mode when an exact reminder draft is remounted before being disabled', async () => {
+  const view = render(() => <MemoryMemoList />)
+
+  fireEvent.click(screen.getByRole('button', {name: '새 메모'}))
+  fireEvent.input(screen.getByLabelText('기억할 메모'), {target: {value: '여권 갱신하기'}})
+  fireEvent.change(screen.getByLabelText('기억 반복'), {target: {value: 'random'}})
+  fireEvent.click(screen.getByLabelText('날짜와 시간에 알려주기'))
+  fireEvent.click(screen.getByRole('button', {name: '닫기'}))
+  view.unmount()
+
+  render(() => <MemoryMemoList />)
+  fireEvent.click(screen.getByRole('button', {name: '새 메모'}))
+  fireEvent.click(screen.getByLabelText('날짜와 시간에 알려주기'))
+  fireEvent.click(screen.getByRole('button', {name: '메모 저장'}))
+
+  await waitFor(() => expect(mocks.updateMemos).toHaveBeenCalledOnce())
+  expect(mocks.memos[0]).toMatchObject({recallMode: 'random'})
 })
 
 it('should preserve a newer creation draft when an earlier save completes late', async () => {
@@ -293,6 +335,29 @@ it('should use the same memo modal for creating and editing memos', () => {
   expect(within(editorDialog).getByRole('button', {name: '변경 저장'})).toBeDisabled()
 })
 
+it('should not mark an unchanged exact reminder edit dirty after a temporary recall selection', () => {
+  const exactReminderAt = new Date('2026-09-21T14:30').toISOString()
+  mocks.memos = [
+    {
+      ...createStoredMemo(),
+      exactReminderAt,
+      nextExactReminderAt: exactReminderAt,
+      nextRecallAt: null,
+      recallMode: 'none',
+      reinforcementIndex: 0,
+    },
+  ]
+  render(() => <MemoryMemoList />)
+
+  fireEvent.click(screen.getByRole('button', {name: '여권 갱신하기 메모 편집'}))
+  const saveButton = screen.getByRole('button', {name: '변경 저장'})
+  fireEvent.click(screen.getByLabelText('날짜와 시간에 알려주기'))
+  fireEvent.change(screen.getByLabelText('기억 반복'), {target: {value: 'random'}})
+  fireEvent.click(screen.getByLabelText('날짜와 시간에 알려주기'))
+
+  expect(saveButton).toBeDisabled()
+})
+
 it('should cancel or save a memo edit and discard audio generated from old text', async () => {
   vi.useFakeTimers()
   vi.setSystemTime(new Date('2026-09-04T03:30:00.000Z'))
@@ -343,6 +408,156 @@ it('should keep editing and preserve existing audio when saving fails', async ()
   )
   expect(editor).toHaveProperty('value', '여권과 사진 갱신하기')
   expect(mocks.deleteDialogue).not.toHaveBeenCalled()
+})
+
+it('should reject advancing a pending exact reminder into the past', async () => {
+  vi.useFakeTimers()
+  const now = new Date(2026, 0, 31, 11)
+  const exactReminderAt = new Date(2026, 0, 31, 12).toISOString()
+  vi.setSystemTime(now)
+  mocks.memos = [
+    {
+      ...createStoredMemo(),
+      exactReminderAt,
+      nextExactReminderAt: exactReminderAt,
+      nextRecallAt: null,
+      recallMode: 'none',
+      reinforcementIndex: 0,
+    },
+  ]
+  render(() => <MemoryMemoList />)
+
+  fireEvent.click(screen.getByRole('button', {name: '여권 갱신하기 메모 편집'}))
+  fireEvent.input(screen.getByRole('spinbutton'), {target: {value: '120'}})
+  fireEvent.click(screen.getByRole('button', {name: '변경 저장'}))
+
+  await vi.runAllTimersAsync()
+  const editedMemo = mocks.memos[0]
+  expect(editedMemo).toBeDefined()
+  if (editedMemo === undefined) {
+    throw new Error('Expected the pending memo to remain stored.')
+  }
+  expect(getDueMemoryReminder(editedMemo, now)).toBeNull()
+  expect(mocks.updateMemos).not.toHaveBeenCalled()
+  expect(screen.getByRole('status')).toBeVisible()
+})
+
+it('should preserve a pending exact reminder when its schedule is unchanged', async () => {
+  vi.useFakeTimers()
+  const now = new Date(2026, 0, 31, 11)
+  const exactReminderAt = new Date(2026, 0, 31, 12).toISOString()
+  const nextExactReminderAt = new Date(2026, 0, 31, 11, 30).toISOString()
+  vi.setSystemTime(now)
+  mocks.memos = [
+    {
+      ...createStoredMemo(),
+      exactReminderAdvanceMinutes: 120,
+      exactReminderAt,
+      exactReminderRepeatIntervalMinutes: 30,
+      exactReminderRepeatUntilMinutes: 60,
+      nextExactReminderAt,
+      nextRecallAt: null,
+      recallMode: 'none',
+      reinforcementIndex: 0,
+    },
+  ]
+  render(() => <MemoryMemoList />)
+
+  fireEvent.click(screen.getByRole('button', {name: '여권 갱신하기 메모 편집'}))
+  fireEvent.input(screen.getByLabelText('기억할 메모'), {target: {value: '여권과 사진 갱신하기'}})
+  fireEvent.click(screen.getByRole('button', {name: '변경 저장'}))
+
+  await vi.runAllTimersAsync()
+  expect(mocks.updateMemos).toHaveBeenCalledTimes(1)
+  expect(mocks.memos[0]?.text).toBe('여권과 사진 갱신하기')
+  expect(mocks.memos[0]?.nextExactReminderAt).toBe(nextExactReminderAt)
+})
+
+it('should keep today fixed across midnight and rebase after a reminder change', async () => {
+  vi.useFakeTimers()
+  const exactReminderAt = new Date(2026, 0, 31, 23, 45).toISOString()
+  vi.setSystemTime(new Date(2026, 0, 31, 23))
+  mocks.memos = [
+    {
+      ...createStoredMemo(),
+      exactReminderAt,
+      nextExactReminderAt: exactReminderAt,
+      nextRecallAt: null,
+      recallMode: 'none',
+      reinforcementIndex: 0,
+    },
+  ]
+  render(() => <MemoryMemoList />)
+
+  fireEvent.click(screen.getByRole('button', {name: '여권 갱신하기 메모 편집'}))
+  fireEvent.input(screen.getByLabelText('기억할 메모'), {
+    target: {value: '여권과 사진 갱신하기'},
+  })
+  vi.setSystemTime(new Date(2026, 1, 1, 0, 30))
+  fireEvent.click(screen.getByRole('button', {name: '변경 저장'}))
+
+  await vi.runAllTimersAsync()
+  expect(screen.getByRole('status')).toBeVisible()
+  expect(mocks.isFirstReminderInFuture).toHaveBeenNthCalledWith(
+    1,
+    exactReminderAt,
+    0,
+    expect.any(Date),
+  )
+  expect(mocks.updateMemos).not.toHaveBeenCalled()
+  expect(mocks.memos[0]?.exactReminderAt).toBe(exactReminderAt)
+
+  fireEvent.input(screen.getByRole('spinbutton'), {target: {value: '5'}})
+  fireEvent.click(screen.getByRole('button', {name: '변경 저장'}))
+
+  await vi.runAllTimersAsync()
+  expect(screen.getByRole('status')).toBeVisible()
+  expect(mocks.isFirstReminderInFuture).toHaveBeenNthCalledWith(
+    2,
+    exactReminderAt,
+    5,
+    expect.any(Date),
+  )
+  expect(mocks.updateMemos).not.toHaveBeenCalled()
+
+  fireEvent.change(screen.getByLabelText('알림 날짜'), {target: {value: 'tomorrow'}})
+  fireEvent.click(screen.getByRole('button', {name: '변경 저장'}))
+
+  await vi.runAllTimersAsync()
+  expect(mocks.updateMemos).toHaveBeenCalledTimes(1)
+  const tomorrowReminderAt = new Date(2026, 1, 2, 23, 45).toISOString()
+  expect(mocks.isFirstReminderInFuture).toHaveBeenNthCalledWith(
+    3,
+    tomorrowReminderAt,
+    5,
+    expect.any(Date),
+  )
+  expect(mocks.memos[0]?.exactReminderAt).toBe(tomorrowReminderAt)
+})
+
+it('should resolve tomorrow from the save time after midnight while editing', async () => {
+  vi.useFakeTimers()
+  vi.setSystemTime(new Date(2025, 11, 31, 10))
+  mocks.memos = [createStoredMemo()]
+  render(() => <MemoryMemoList />)
+
+  fireEvent.click(screen.getByRole('button', {name: '여권 갱신하기 메모 편집'}))
+  fireEvent.click(screen.getByLabelText('날짜와 시간에 알려주기'))
+  fireEvent.change(screen.getByLabelText('알림 날짜'), {target: {value: 'tomorrow'}})
+  fireEvent.input(screen.getByLabelText('시간'), {target: {value: '23:00'}})
+  vi.setSystemTime(new Date(2026, 0, 1, 20))
+  fireEvent.click(screen.getByRole('button', {name: '변경 저장'}))
+
+  await vi.runAllTimersAsync()
+
+  const tomorrowReminderAt = new Date(2026, 0, 2, 23).toISOString()
+  expect(mocks.isFirstReminderInFuture).toHaveBeenCalledOnce()
+  expect(mocks.isFirstReminderInFuture).toHaveBeenCalledWith(
+    tomorrowReminderAt,
+    0,
+    expect.any(Date),
+  )
+  expect(mocks.memos[0]?.exactReminderAt).toBe(tomorrowReminderAt)
 })
 
 it('should stop ongoing recall when an exact reminder is enabled while editing', async () => {

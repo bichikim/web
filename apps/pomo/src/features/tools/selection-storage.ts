@@ -1,5 +1,6 @@
 import {z} from 'zod'
 
+import {createAuthoritativeWriter, restorePreferredValue} from '../preference-persistence'
 import {toolStorageAdapter, type ToolStorageAdapter} from './storage-adapter'
 import {getUnits, type UnitCategory} from './units'
 
@@ -28,35 +29,40 @@ const createSelectionStorage = <T>(
   const read = async (): Promise<T | null> => {
     const usesTossStorage = storage.usesTossStorage()
     const webValue = storage.readWeb(key, parse)
-    if (webValue !== null || !usesTossStorage) {
-      if (webValue !== null && usesTossStorage) {
-        await storage.writeToss(key, webValue).catch(reportRepairError)
-      }
+    if (!usesTossStorage) {
       return webValue
     }
-    return storage.readToss(key, parse)
+    return restorePreferredValue({
+      preferred: webValue,
+      repair: (value) => storage.writeToss(key, value).catch(reportRepairError),
+      restore: async () => {
+        const tossValue = await storage.readToss(key, parse)
+        if (tossValue !== null) {
+          // Keep the selection available when the Toss bridge disappears before the next read.
+          storage.writeWeb(key, tossValue)
+        }
+        return tossValue
+      },
+    })
   }
+  const write = createAuthoritativeWriter<T>({
+    failureMessage: 'Failed to save tool selection.',
+    isNative: storage.usesTossStorage,
+    mapNativeFailure: (error) => error,
+    mapRemovalFailure: (error) =>
+      new Error('Failed to discard stale tool selection.', {cause: error}),
+    removeWeb: () => {
+      const error = storage.removeWeb(key)
+      return error !== null && storage.readWeb(key, parse) !== null ? error : null
+    },
+    writeNative: (value) => storage.writeToss(key, value),
+    writeWeb: (value) => storage.writeWeb(key, value),
+  })
   return {
     key,
     parse,
     read,
-    async write(value) {
-      const error = storage.writeWeb(key, value)
-      if (!storage.usesTossStorage()) {
-        if (error !== null) {
-          throw new Error('Failed to save tool selection.', {cause: error})
-        }
-        return
-      }
-      await storage.writeToss(key, value)
-      // Discard the stale web copy after its native replacement persists.
-      if (error !== null) {
-        const removalError = storage.removeWeb(key)
-        if (removalError !== null && storage.readWeb(key, parse) !== null) {
-          throw new Error('Failed to discard stale tool selection.', {cause: removalError})
-        }
-      }
-    },
+    write,
   }
 }
 const unitSchema = z

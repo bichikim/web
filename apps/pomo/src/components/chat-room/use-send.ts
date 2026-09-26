@@ -34,7 +34,6 @@ export const useSend = (props: UseSendProps): SendController => {
     const submittedRevision = sendRevision
     const submittedDraft = props.chat.draft()
     calendarRequestPending = true
-    props.onSendStarted()
     let supplementaryContext: string | null = null
 
     try {
@@ -60,6 +59,7 @@ export const useSend = (props: UseSendProps): SendController => {
       return
     }
 
+    props.onSendStarted()
     props.chat.send({
       refineAnswer: props.refineAnswer(),
       ...(supplementaryContext === null ? {} : {supplementaryContext}),

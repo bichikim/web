@@ -49,6 +49,22 @@ describe('playback-storage', () => {
     expect(storage.state.web).toMatchObject({isPlaying: false, savedAt: 40})
   })
 
+  it('should preserve the optional playlist index during storage round trips', async () => {
+    await playbackStorage.write({
+      isPlaying: true,
+      positionSeconds: 12,
+      trackId: 'track-one',
+      trackIndex: 1,
+    })
+
+    await expect(playbackStorage.read()).resolves.toEqual({
+      isPlaying: true,
+      positionSeconds: 12,
+      trackId: 'track-one',
+      trackIndex: 1,
+    })
+  })
+
   it('should return null after browser playback storage is removed', async () => {
     await playbackStorage.write({isPlaying: true, positionSeconds: 12, trackId: 'track-one'})
     storage.state.web = null
@@ -58,18 +74,20 @@ describe('playback-storage', () => {
 
   it('should restore native playback when browser storage is empty', async () => {
     storage.adapter.usesTossStorage.mockReturnValue(true)
-    storage.adapter.readToss.mockResolvedValue({
+    const native = {
       isPlaying: true,
       positionSeconds: 8,
       savedAt: 15,
       trackId: 'native-track',
-    })
+    }
+    storage.adapter.readToss.mockResolvedValue(native)
 
     expect(await playbackStorage.read()).toEqual({
       isPlaying: true,
       positionSeconds: 8,
       trackId: 'native-track',
     })
+    expect(storage.state.web).toEqual(native)
   })
 
   it('should keep browser playback when native storage is empty', async () => {
@@ -139,17 +157,23 @@ describe('playback-storage', () => {
     },
   )
 
-  it('should leave newer native playback untouched', async () => {
+  it('should mirror newer native playback to web and preserve it after bridge loss', async () => {
     storage.adapter.usesTossStorage.mockReturnValue(true)
     storage.state.web = {isPlaying: false, positionSeconds: 1, savedAt: 10, trackId: 'old'}
-    storage.adapter.readToss.mockResolvedValue({
+    const latest = {
       isPlaying: true,
       positionSeconds: 12,
       savedAt: 200,
       trackId: 'new',
-    })
+    }
+    storage.adapter.readToss.mockResolvedValue(latest)
+
     await expect(playbackStorage.read()).resolves.toMatchObject({trackId: 'new'})
     expect(storage.adapter.writeToss).not.toHaveBeenCalled()
+    expect(storage.adapter.writeWeb).toHaveBeenCalledWith(latest)
+
+    storage.adapter.usesTossStorage.mockReturnValue(false)
+    await expect(playbackStorage.read()).resolves.toMatchObject({trackId: 'new'})
   })
 
   it('should return browser playback while repair is pending and serialize a newer write', async () => {
@@ -403,6 +427,67 @@ describe('playback-storage', () => {
     await stopping
     expect(storage.state.web).toMatchObject({isPlaying: false, savedAt: 20, trackId: 'first'})
     expect(other.state.web).toMatchObject({isPlaying: false, savedAt: 50, trackId: 'other'})
+  })
+
+  it('should preserve latest native playback across instances sharing storage', async () => {
+    let native: StoredPlaybackState | null = null
+    let web: StoredPlaybackState | null = null
+    const writeNative = async (value: StoredPlaybackState) => {
+      native = value
+    }
+    const createSharedAdapter = () => {
+      const adapter = {
+        readToss: vi.fn(async () => native),
+        readWeb: vi.fn(() => web),
+        usesTossStorage: vi.fn(() => true),
+        writeToss: vi.fn(writeNative),
+        writeWeb: vi.fn((value) => {
+          web = value
+          return null
+        }),
+      } satisfies PlaybackStorageAdapter
+      return adapter
+    }
+    const firstAdapter = createSharedAdapter()
+    const secondAdapter = createSharedAdapter()
+    const pending = Promise.withResolvers<void>()
+    firstAdapter.writeToss.mockImplementationOnce(async (value) => {
+      await pending.promise
+      await writeNative(value)
+    })
+
+    const firstPlaybackStorage = createPPlaybackStorage({now: () => 100}, firstAdapter, vi.fn())
+    const secondPlaybackStorage = createPPlaybackStorage({now: () => 200}, secondAdapter, vi.fn())
+    const firstWrite = firstPlaybackStorage.write({
+      isPlaying: true,
+      positionSeconds: 1,
+      trackId: 'stale',
+    })
+    await vi.waitFor(() => expect(firstAdapter.writeToss).toHaveBeenCalledOnce())
+
+    const secondWrite = secondPlaybackStorage.write({
+      isPlaying: false,
+      positionSeconds: 9,
+      trackId: 'latest',
+    })
+    await secondWrite
+    expect(native).toMatchObject({savedAt: 200, trackId: 'latest'})
+
+    pending.resolve()
+    await firstWrite
+    expect(native).toEqual({
+      isPlaying: false,
+      positionSeconds: 9,
+      savedAt: 200,
+      trackId: 'latest',
+    })
+
+    web = null
+    await expect(secondPlaybackStorage.read()).resolves.toEqual({
+      isPlaying: false,
+      positionSeconds: 9,
+      trackId: 'latest',
+    })
   })
 
   it('should let another instance write while one Toss writer is pending', async () => {

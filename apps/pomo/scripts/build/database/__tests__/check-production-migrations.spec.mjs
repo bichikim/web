@@ -1,7 +1,38 @@
 /** @vitest-environment node */
+import {readFileSync} from 'node:fs'
 import {describe, expect, it} from 'vitest'
 
-import {findUnsafeProductionMigrationStatements} from '../check-production-migrations.mjs'
+import {
+  findUnsafeProductionMigrationStatements,
+  pendingMigrationEntries,
+} from '../check-production-migrations.mjs'
+
+describe('pendingMigrationEntries', () => {
+  const entries = [
+    {tag: '0020_tough_timeslip', when: 100},
+    {tag: '0021_youthful_vapor', when: 200},
+    {tag: '0022_organic_darwin', when: 300},
+  ]
+
+  it('includes only migrations newer than the last applied one', () => {
+    expect(pendingMigrationEntries(entries, 200)).toEqual([entries[2]])
+  })
+
+  it('includes all migrations for an empty journal', () => {
+    expect(pendingMigrationEntries(entries, 0)).toEqual(entries)
+  })
+
+  it('selects migration 0022 after 0021 in the project journal', () => {
+    const journal = JSON.parse(
+      readFileSync(new URL('../../../../drizzle/meta/_journal.json', import.meta.url), 'utf8'),
+    )
+    const lastAppliedAt = journal.entries.find(({tag}) => tag === '0021_youthful_vapor').when
+
+    expect(pendingMigrationEntries(journal.entries, lastAppliedAt).map(({tag}) => tag)).toEqual([
+      '0022_organic_darwin',
+    ])
+  })
+})
 
 describe('findUnsafeProductionMigrationStatements', () => {
   it('accepts expand-only schema and seed migrations', () => {
@@ -31,7 +62,7 @@ describe('findUnsafeProductionMigrationStatements', () => {
       'CTE UPDATE',
       'WITH "expired" AS (SELECT "id" FROM "focus_sessions") UPDATE "focus_sessions" SET "label" = null;',
     ],
-  ])('rejects %s contract or data migrations', (_operation, sql) => {
+  ])('should report %s for production review', (_operation, sql) => {
     expect(findUnsafeProductionMigrationStatements(sql)).not.toEqual([])
   })
 })

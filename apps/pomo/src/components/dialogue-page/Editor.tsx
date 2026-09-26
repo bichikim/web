@@ -2,6 +2,7 @@ import {useAudioGeneration} from './use-audio-generation'
 import {formatDuration} from 'src/utils/format-duration'
 import {PTextarea} from 'src/components/p-textarea/PTextarea'
 import * as m from '@paraglide/message'
+import {getLocale} from '@paraglide/runtime'
 
 import {A, useNavigate} from '@solidjs/router'
 import {cx} from 'class-variance-authority'
@@ -13,6 +14,7 @@ import {
   type UsePDialogueEditorProps,
   usePEvents,
 } from '../../features/focus-room-dialogue'
+import {getLocalizedPrimaryMoodLabel} from '../../features/localization/localized-messages'
 import {formatModelDownloadSize} from '../../features/model-storage'
 import {
   getSupertonicModel,
@@ -142,7 +144,19 @@ const CLASSES = {
   dialogueEditorVoiceActions: 'flex justify-end gap-3',
 } as const
 
-const MAXIMUM_TEXT_LENGTH = 3000
+const MAXIMUM_TEXT_LENGTH = 10000
+
+const getLanguageOptions = () => {
+  const displayNames = new Intl.DisplayNames([getLocale()], {type: 'language'})
+
+  return SUPERTONIC_LANGUAGE_OPTIONS.map((option) => ({
+    label:
+      option.value === 'na'
+        ? m.dialogue_language_neutral()
+        : (displayNames.of(option.value) ?? option.value),
+    value: option.value,
+  }))
+}
 
 export interface PDialogueEditorProps {
   readonly dialogueId: string | null
@@ -174,7 +188,11 @@ export function PDialogueEditor(props: PDialogueEditorProps) {
   return (
     <main class={CLASSES.dialogueEditor}>
       <header class={CLASSES.dialogueEditorHeader}>
-        <h1>{props.dialogueId === null ? '새 대화 만들기' : '대화 편집하기'}</h1>
+        <h1>
+          {props.dialogueId === null
+            ? m.dialogue_editor_new_title()
+            : m.dialogue_editor_edit_title()}
+        </h1>
         <A class={CLASSES.dialogueEditorBack} href="/">
           <span aria-hidden="true" class="i-tabler-arrow-left size-5" />
           {m.app_return()}
@@ -186,7 +204,7 @@ export function PDialogueEditor(props: PDialogueEditorProps) {
           <div class={CLASSES.dialogueEditorSectionHeading}>
             <span>1</span>
             <div>
-              <h2 id="dialogue-content-title">대사 입력</h2>
+              <h2 id="dialogue-content-title">{m.dialogue_editor_script_section()}</h2>
             </div>
           </div>
 
@@ -198,7 +216,7 @@ export function PDialogueEditor(props: PDialogueEditorProps) {
 
           <label class={CLASSES.dialogueEditorField}>
             <span class={CLASSES.dialogueEditorFieldLabel}>
-              대사
+              {m.dialogue_editor_script_label()}
               <small>
                 {editor.text().length} / {MAXIMUM_TEXT_LENGTH}
               </small>
@@ -208,7 +226,7 @@ export function PDialogueEditor(props: PDialogueEditorProps) {
               disabled={audio.busy()}
               maxlength={MAXIMUM_TEXT_LENGTH}
               onInput={(event) => editor.setText(event.currentTarget.value)}
-              placeholder="원하는 대사를 입력하세요"
+              placeholder={m.dialogue_editor_script_placeholder()}
               value={editor.text()}
             />
           </label>
@@ -218,31 +236,28 @@ export function PDialogueEditor(props: PDialogueEditorProps) {
           <div class={CLASSES.dialogueEditorSectionHeading}>
             <span>2</span>
             <div>
-              <h2 id="dialogue-voice-title">목소리 선택과 음성 만들기</h2>
-              <p>
-                AI 생성 음성을 타인 사칭이나 괴롭힘 등에 악용할 수 없으며, 공개할 때는 AI 생성
-                음성임을 밝혀야 해요.
-              </p>
+              <h2 id="dialogue-voice-title">{m.dialogue_editor_voice_section()}</h2>
+              <p>{m.dialogue_editor_voice_notice()}</p>
             </div>
           </div>
 
           <div class={CLASSES.dialogueEditorSelects}>
             <PSelect
-              label="목소리"
+              label={m.dialogue_editor_voice_label()}
               disabled={audio.busy()}
               onChange={(voiceId) => editor.setVoiceId(voiceId)}
               value={editor.voiceId()}
               options={SUPERTONIC_VOICES.map((voice) => ({label: voice.label, value: voice.id}))}
             />
             <PSelect
-              label="언어"
+              label={m.dialogue_editor_language_label()}
               disabled={audio.busy()}
               onChange={(language) => editor.setLanguage(language)}
               value={editor.language()}
-              options={SUPERTONIC_LANGUAGE_OPTIONS}
+              options={getLanguageOptions()}
             />
             <PSelect
-              label="모델"
+              label={m.dialogue_editor_model_label()}
               disabled={audio.busy()}
               onChange={(modelId) => editor.setModelId(modelId)}
               value={editor.modelId()}
@@ -255,7 +270,7 @@ export function PDialogueEditor(props: PDialogueEditorProps) {
             message={audio.message()}
             onCancel={audio.cancelDownload()}
             progress={audio.progress()}
-            progressLabel="음성 모델 준비 진행률"
+            progressLabel={m.dialogue_editor_voice_progress()}
           />
 
           <div class={CLASSES.dialogueEditorVoiceActions}>
@@ -265,7 +280,7 @@ export function PDialogueEditor(props: PDialogueEditorProps) {
               onClick={audio.generate}
               type="button"
             >
-              음성 만들기
+              {m.dialogue_editor_create_voice()}
             </button>
           </div>
 
@@ -273,15 +288,19 @@ export function PDialogueEditor(props: PDialogueEditorProps) {
             {(audioUrl) => (
               <div class={CLASSES.dialogueEditorPreview}>
                 <div>
-                  <strong>전체 미리 듣기</strong>
-                  <span>AI 생성 음성 · {formatDuration(editor.durationMs())}</span>
+                  <strong>{m.dialogue_editor_full_preview()}</strong>
+                  <span>
+                    {m.dialogue_editor_ai_voice_duration({
+                      duration: formatDuration(editor.durationMs()),
+                    })}
+                  </span>
                 </div>
-                <PAudioPreview src={audioUrl()} title="전체 미리 듣기" />
+                <PAudioPreview src={audioUrl()} title={m.dialogue_editor_full_preview()} />
               </div>
             )}
           </Show>
           <PModelDownloadConsent
-            actionLabel="음성 만들기"
+            actionLabel={m.dialogue_editor_create_voice()}
             downloadSize={formatModelDownloadSize(getSupertonicModel(editor.modelId()).size)}
             isOpen={audio.consentOpen()}
             onCancel={audio.dismissConsent}
@@ -296,16 +315,14 @@ export function PDialogueEditor(props: PDialogueEditorProps) {
           <div class={CLASSES.dialogueEditorSectionHeading}>
             <span>3</span>
             <div>
-              <h2 id="dialogue-timeline-title">말풍선 확인</h2>
+              <h2 id="dialogue-timeline-title">{m.dialogue_editor_timeline_section()}</h2>
             </div>
           </div>
 
           <Show
             when={editor.segments().length > 0}
             fallback={
-              <p class={CLASSES.dialogueEditorEmpty}>
-                음성을 만들면 구간별 텍스트와 시작 시간이 표시돼요.
-              </p>
+              <p class={CLASSES.dialogueEditorEmpty}>{m.dialogue_editor_timeline_empty()}</p>
             }
           >
             <ol class={CLASSES.dialogueEditorSegments}>
@@ -327,14 +344,14 @@ export function PDialogueEditor(props: PDialogueEditorProps) {
                                   mood={definition.id}
                                   sceneStyle={sceneStyleController.sceneStyle()}
                                 />
-                                <span>{definition.label}</span>
+                                <span>{getLocalizedPrimaryMoodLabel(definition.id)}</span>
                               </div>
                             )
                           }}
                         </Show>
                         <button
-                          aria-description="전체 음성을 새로 만든 뒤 사용할 수 있어요."
-                          aria-label={`${position() + 1}번 말풍선 음성 다시 만들기`}
+                          aria-description={m.dialogue_editor_regenerate_description()}
+                          aria-label={m.dialogue_editor_regenerate_label({number: position() + 1})}
                           class={cx(
                             CLASSES.dialogueEditorButton,
                             CLASSES.dialogueEditorButtonSecondary,
@@ -346,9 +363,9 @@ export function PDialogueEditor(props: PDialogueEditorProps) {
                         >
                           <Show
                             when={editor.regeneratingSegmentIndex() === position()}
-                            fallback="다시 만들기"
+                            fallback={m.dialogue_editor_regenerate()}
                           >
-                            만드는 중…
+                            {m.dialogue_editor_regenerating()}
                           </Show>
                         </button>
                       </div>
@@ -362,14 +379,14 @@ export function PDialogueEditor(props: PDialogueEditorProps) {
       </div>
 
       <footer class={CLASSES.dialogueEditorFooter}>
-        <p>음성을 다시 만들기 전까지 변경한 대사나 목소리는 저장할 수 없어요.</p>
+        <p>{m.dialogue_editor_save_notice()}</p>
         <button
           class={cx(CLASSES.dialogueEditorButton, CLASSES.dialogueEditorButtonPrimary)}
           disabled={audio.busy() || !editor.canSave()}
           onClick={handleSave}
           type="button"
         >
-          대화 저장
+          {m.dialogue_editor_save()}
         </button>
       </footer>
     </main>

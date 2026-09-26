@@ -9,7 +9,7 @@ use objc2_app_kit::{
 use objc2_core_graphics::{CGWindowLevelForKey, CGWindowLevelKey};
 use objc2_foundation::NSNotificationCenter;
 use serde::Serialize;
-use tauri::{AppHandle, Manager, PhysicalSize, Runtime, Size, WebviewWindow};
+use tauri::{AppHandle, Manager, PhysicalSize, Runtime, Size, Webview, Window};
 
 #[derive(Clone, Copy, Debug, PartialEq)]
 struct WindowProbe {
@@ -45,9 +45,14 @@ struct HarnessMode {
     smoke: bool,
 }
 
-fn probe_window<R: Runtime>(window: &WebviewWindow<R>) -> Result<WindowProbe, String> {
+fn probe_window<R: Runtime>(window: &Window<R>) -> Result<WindowProbe, String> {
     let (sender, receiver) = sync_channel(1);
-    let native_view = window.ns_view().map_err(|error| error.to_string())? as usize;
+    let native_view = window.ns_view().map_err(|error| {
+        format!(
+            "native view for '{}' was unavailable: {error}",
+            window.label()
+        )
+    })? as usize;
 
     window
         .run_on_main_thread(move || {
@@ -81,7 +86,9 @@ fn probe_window<R: Runtime>(window: &WebviewWindow<R>) -> Result<WindowProbe, St
                         level: window.level(),
                         movable: window.isMovable(),
                         movable_by_window_background: window.isMovableByWindowBackground(),
-                        screen_frame_height: window.screen().map(|screen| screen.frame().size.height),
+                        screen_frame_height: window
+                            .screen()
+                            .map(|screen| screen.frame().size.height),
                         screen_frame_width: window.screen().map(|screen| screen.frame().size.width),
                         screen_frame_x: window.screen().map(|screen| screen.frame().origin.x),
                         screen_frame_y: window.screen().map(|screen| screen.frame().origin.y),
@@ -94,9 +101,71 @@ fn probe_window<R: Runtime>(window: &WebviewWindow<R>) -> Result<WindowProbe, St
     receiver.recv().map_err(|error| error.to_string())?
 }
 
-fn background_window<R: Runtime>(app: &AppHandle<R>) -> Result<WebviewWindow<R>, String> {
-    app.get_webview_window("background")
+fn background_window<R: Runtime>(app: &AppHandle<R>) -> Result<Window<R>, String> {
+    app.get_webview("background")
+        .map(|webview| webview.window())
         .ok_or_else(|| "background window was not found".to_owned())
+}
+
+fn website_background<R: Runtime>(app: &AppHandle<R>) -> Result<Webview<R>, String> {
+    app.get_webview("background")
+        .ok_or_else(|| "background webview was not found".to_owned())?
+        .window()
+        .webviews()
+        .into_iter()
+        .find(|webview| webview.label() == "background__website_background")
+        .ok_or_else(|| "website background webview was not found".to_owned())
+}
+
+#[tauri::command]
+fn prepare_website_event_probe<R: Runtime>(app: AppHandle<R>) -> Result<(), String> {
+    website_background(&app)?
+        .eval(
+            r#"
+(() => {
+  const eventNames = [
+    'pointerover', 'pointerenter', 'mouseover', 'mouseenter', 'pointermove', 'mousemove',
+    'pointerdown', 'mousedown', 'pointerup', 'mouseup', 'click', 'dblclick', 'wheel',
+    'pointerout', 'pointerleave', 'mouseout', 'mouseleave', 'pointercancel',
+  ];
+  const install = () => {
+    if (window.__pomoWebsiteEventProbeInstalled) return;
+    window.__pomoWebsiteEventProbeInstalled = true;
+    const events = [];
+    document.documentElement.innerHTML = '<head></head><body></body>';
+    document.body.style.cssText = 'margin:0; overflow:hidden;';
+    const target = document.createElement('button');
+    target.textContent = 'event probe';
+    target.style.cssText = 'position:fixed; inset:0; width:100vw; height:100vh;';
+    document.body.append(target);
+    const report = () => {
+      window.location.hash = `probe:${events.join(',')}`;
+    };
+    for (const eventName of eventNames) {
+      target.addEventListener(eventName, () => {
+        events.push(eventName);
+        report();
+      });
+    }
+    report();
+  };
+  if (document.readyState === 'loading') {
+    window.addEventListener('DOMContentLoaded', install, {once: true});
+  } else {
+    install();
+  }
+})()
+"#,
+        )
+        .map_err(|error| error.to_string())
+}
+
+#[tauri::command]
+fn read_website_event_probe<R: Runtime>(app: AppHandle<R>) -> Result<String, String> {
+    website_background(&app)?
+        .url()
+        .map(|url| url.fragment().unwrap_or_default().to_owned())
+        .map_err(|error| error.to_string())
 }
 
 #[tauri::command]
@@ -262,7 +331,8 @@ fn assert_control<R: Runtime>(app: AppHandle<R>) -> Result<(), String> {
     let window = app
         .get_webview_window("controls")
         .ok_or_else(|| "control window was not found".to_owned())?;
-    let probe = probe_window(&window)?;
+    let control_window = window.as_ref().window();
+    let probe = probe_window(&control_window)?;
 
     if probe.is_opaque || probe.ignores_mouse_events || !probe.has_shadow {
         return Err("control transparency, shadow, or input state is incorrect".to_owned());
@@ -294,8 +364,10 @@ fn assert_widget<R: Runtime>(app: AppHandle<R>) -> Result<(), String> {
         || !probe.content_masks_to_bounds
         || !probe.has_shadow
     {
-        return Err("widget level, decoration, resize, corner, clipping, or shadow state is incorrect"
-            .to_owned());
+        return Err(
+            "widget level, decoration, resize, corner, clipping, or shadow state is incorrect"
+                .to_owned(),
+        );
     }
 
     Ok(())
@@ -351,6 +423,8 @@ fn main() {
             disturb_background,
             finish_smoke,
             harness_mode,
+            prepare_website_event_probe,
+            read_website_event_probe,
             simulate_screen_sleep,
             simulate_screen_wake,
         ])

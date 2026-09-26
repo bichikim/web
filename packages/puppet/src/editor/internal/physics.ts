@@ -8,6 +8,7 @@ const DEFAULT_LENGTH = 1
 const DEFAULT_OUTPUT_SCALE = 1
 
 interface AddPhysicsPendulumOperation {
+  readonly inputParameterId?: string
   readonly kind: 'add'
 }
 
@@ -53,10 +54,12 @@ const createPendulumId = (pendulums: ReadonlyArray<PuppetPendulum>) => {
 const createDefaultPendulum = (
   document: PuppetDocument,
   pendulums: ReadonlyArray<PuppetPendulum>,
+  requestedInputParameterId?: string,
 ): PuppetPendulum | undefined => {
   const parameters = document.parameters ?? []
   const outputParameterIds = new Set(pendulums.map((pendulum) => pendulum.outputParameterId))
-  const [inputParameter] = parameters
+  const inputParameter =
+    parameters.find((parameter) => parameter.id === requestedInputParameterId) ?? parameters[0]
   const outputParameter = parameters.find(
     (parameter) => parameter.id !== inputParameter?.id && !outputParameterIds.has(parameter.id),
   )
@@ -89,9 +92,12 @@ const createPhysicsDocument = (
     : undefined
 }
 
-const addPendulum = (document: PuppetDocument): PuppetDocument | undefined => {
+const addPendulum = (
+  document: PuppetDocument,
+  inputParameterId?: string,
+): PuppetDocument | undefined => {
   const pendulums = getPendulums(document)
-  const pendulum = createDefaultPendulum(document, pendulums)
+  const pendulum = createDefaultPendulum(document, pendulums, inputParameterId)
 
   return pendulum === undefined
     ? undefined
@@ -134,7 +140,7 @@ const updatePendulum = (
 export const updatePhysics = (options: UpdatePhysicsOptions): PuppetDocument | undefined => {
   switch (options.operation.kind) {
     case 'add':
-      return addPendulum(options.document)
+      return addPendulum(options.document, options.operation.inputParameterId)
     case 'remove':
       return removePendulum(options.document, options.operation.pendulumId)
     case 'update':

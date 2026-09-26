@@ -5,6 +5,7 @@ interface LayerContainerIconProps {
   readonly pin?: boolean
   readonly bone?: boolean
   readonly curve?: boolean
+  readonly spatial?: boolean
   readonly kind: 'deformer' | 'group'
 }
 
@@ -24,10 +25,12 @@ export const LayerContainerIcon = (props: LayerContainerIconProps) => (
       class="puppet-icon layer-container-icon puppet-layer-container-icon deformer"
       classList={{
         'puppet-icon-bone': props.bone && !props.rotation,
-        'puppet-icon-pin': props.pin,
+        'puppet-icon-cube': props.spatial,
         'puppet-icon-curve': props.curve,
+        'puppet-icon-mesh':
+          !props.curve && !props.bone && !props.pin && !props.rotation && !props.spatial,
+        'puppet-icon-pin': props.pin,
         'puppet-icon-rotation': props.rotation,
-        'puppet-icon-mesh': !props.curve && !props.bone && !props.pin && !props.rotation,
       }}
       data-layer-icon="deformer"
     />

@@ -1,6 +1,7 @@
 import {type Accessor, createSignal, onMount} from 'solid-js'
 
 import {type FeedConnectionRepository} from './repository'
+import {type FeedUrlEnvironment, getFeedRequestUrl} from './feed-request-url'
 import {feedSettingsRuntime, type FeedSettingsRuntime} from './settings-runtime'
 import {DEFAULT_FEED_VOICE_ID, type FeedConnection, normalizeFeedUrl} from './schema'
 import * as m from '@paraglide/message'
@@ -29,6 +30,13 @@ const requestPersistentStorage = () => {
   persist.call(navigator.storage).catch((error: unknown) => {
     console.warn('Failed to request persistent feed connection storage.', error)
   })
+}
+
+const getFeedUrlEnvironment = (): FeedUrlEnvironment => {
+  const localOrigin = globalThis.location?.origin
+  const {timeZone} = Intl.DateTimeFormat().resolvedOptions()
+
+  return {localOrigin, publicOrigin: import.meta.env.VITE_POMO_PUBLIC_ORIGIN, timeZone}
 }
 
 /** Owns persistent feed connection settings for the browser-only settings tab. */
@@ -83,8 +91,18 @@ export const useFeedConnections = (
     }
 
     const currentConnections = connections()
+    const feedUrlEnvironment = getFeedUrlEnvironment()
+    const requestUrl = getFeedRequestUrl(normalizedUrl.value, feedUrlEnvironment)
 
-    if (currentConnections.some((connection) => connection.url === normalizedUrl.value)) {
+    if (
+      currentConnections.some((connection) => {
+        const existingUrl = normalizeFeedUrl(connection.url)
+
+        return (
+          existingUrl.ok && getFeedRequestUrl(existingUrl.value, feedUrlEnvironment) === requestUrl
+        )
+      })
+    ) {
       setMessage(m.settings_feed_duplicate_url())
       return false
     }

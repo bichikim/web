@@ -139,11 +139,11 @@ test('should paint a non-bone deformer mask without creating bone weights', () =
   const stroke = createWeightPaintStroke({
     boneIndex: 0,
     document,
+    mode: 'subtract',
     nodeId: 'bone',
     radius: 10,
-    mode: 'subtract',
-    vertices,
     strength: 0.5,
+    vertices,
   })
   expect(stroke).toBeDefined()
   const result = stroke!.paint({x: 0, y: 0})!

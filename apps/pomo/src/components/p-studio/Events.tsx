@@ -1,3 +1,4 @@
+import {SERVER_AI_RELEASED} from '../../features/ai-job/release'
 import {type PSceneStyle} from '../../features/focus-room-animation/index'
 import type {PTrack} from '../../features/focus-room-audio/index'
 import type {PomodoroTimerEventDeliveryOptions} from '../../features/pomodoro-timer'
@@ -12,6 +13,7 @@ import {useMemoryReminders} from '../../features/memory-assist'
 import {type PSayController} from '../../features/pomo-webmcp/index'
 import {PDialogueComposer} from '../p-dialogue-composer/PDialogueComposer'
 import {PDialoguePlayer} from '../p-dialogue-player/PDialoguePlayer'
+import {PAiJobStatus} from './PAiJobStatus'
 import {PFeedStatus} from '../p-feed-status/PFeedStatus'
 import {PFormMessage} from '../p-form-message/PFormMessage'
 import {PModelDownloadConsent} from '../p-model-download-consent/PModelDownloadConsent'
@@ -45,37 +47,28 @@ type SoundEffectsEventActionId = Extract<
   'sound-effects-start' | 'sound-effects-stop'
 >
 
-const runMusicAction = (actions: MusicPlaybackActions, actionId: MusicEventActionId) => {
-  switch (actionId) {
-    case 'music-start':
-      actions.play()
-      return
-    case 'music-stop':
-      actions.pause()
-      return
-    default: {
-      const exhaustiveAction: never = actionId
-      return exhaustiveAction
+const musicActionHandlers = {
+  'music-start': (actions: MusicPlaybackActions) => actions.play(),
+  'music-stop': (actions: MusicPlaybackActions) => actions.pause(),
+} satisfies Readonly<Record<MusicEventActionId, (actions: MusicPlaybackActions) => void>>
+
+const runMusicAction = (actions: MusicPlaybackActions, actionId: MusicEventActionId) =>
+  musicActionHandlers[actionId](actions)
+
+const soundEffectsActionHandlers = {
+  'sound-effects-start': (actions: SoundEffectsController) => {
+    if (!actions.isStopped()) {
+      actions.activate()
     }
-  }
-}
+  },
+  'sound-effects-stop': (actions: SoundEffectsController) => actions.stop(),
+} satisfies Readonly<Record<SoundEffectsEventActionId, (actions: SoundEffectsController) => void>>
 
 const runSoundEffectsAction = (
   actions: SoundEffectsController,
   actionId: SoundEffectsEventActionId,
 ) => {
-  switch (actionId) {
-    case 'sound-effects-start':
-      actions.activate()
-      return
-    case 'sound-effects-stop':
-      actions.stop()
-      return
-    default: {
-      const exhaustiveAction: never = actionId
-      return exhaustiveAction
-    }
-  }
+  soundEffectsActionHandlers[actionId](actions)
 }
 
 // oxlint-disable-next-line eslint/max-lines-per-function -- Event and media lifecycles share one owner.
@@ -89,17 +82,25 @@ export const PStudioEvents = (props: PStudioEventsProps) => {
   const [mediaMessages, setMediaMessages] = createSignal<HTMLDivElement>()
   const hasMediaMessages = useChildPresence(mediaMessages)
   const isMobileLayout = useMobileLayout()
-  const replySpeechQueue = useReplySpeechQueue({
-    isOccupied: () =>
+  const isDialogueOccupied = createMemo(
+    () =>
       events.activeText() !== null ||
       events.isDialoguePlaying() ||
       events.isDialoguePlaybackBlocked() ||
-      events.scheduledDialogueCount() > 0 ||
-      props.pomoSay.isPreparing() ||
-      props.pomoSay.isPlaying(),
+      events.scheduledDialogueCount() > 0,
+  )
+  const isOccupied = createMemo(
+    () => isDialogueOccupied() || props.pomoSay.isPreparing() || props.pomoSay.isPlaying(),
+  )
+  const replySpeechQueue = useReplySpeechQueue({
+    isDialogueOccupied,
+    isEnabled: () => props.dialogueComposerVisible,
+    isOccupied,
     speak: (text) => props.pomoSay.speak({text}),
+    stop: () => props.pomoSay.stop(),
   })
   const oneOffChat = useOneOffChat({
+    isEnabled: () => props.dialogueComposerVisible,
     onReply: replySpeechQueue.enqueue,
   })
   const runEventAction = (actionId: EventActionId) => {
@@ -132,7 +133,7 @@ export const PStudioEvents = (props: PStudioEventsProps) => {
   const handlePlaybackActionsReady = (actions: MusicPlaybackActions | null) => {
     setMusicPlaybackActions(actions)
     if (actions === null) {
-      pendingMusicActions = []
+      // Preserve actions queued before a visible player remounts.
       return
     }
 
@@ -143,11 +144,16 @@ export const PStudioEvents = (props: PStudioEventsProps) => {
     }
   }
   let unregisterEventActionExecutor: (() => void) | undefined
+  let unregisterBeforePlayback: (() => void) | undefined
   onMount(() => {
     // The executor reads the latest media controls when an event fires.
     unregisterEventActionExecutor = events.registerEventActionExecutor(runEventAction)
+    unregisterBeforePlayback = events.registerBeforePlayback?.(props.pomoSay.stop)
   })
-  onCleanup(() => unregisterEventActionExecutor?.())
+  onCleanup(() => {
+    unregisterEventActionExecutor?.()
+    unregisterBeforePlayback?.()
+  })
   const isDialoguePresented = createMemo((wasPresented) => {
     const hasVisibleContent =
       events.activeText() !== null ||
@@ -195,9 +201,15 @@ export const PStudioEvents = (props: PStudioEventsProps) => {
             <PDialogueComposer
               autoExpand={isMobileLayout() && !hasMediaMessages()}
               draft={oneOffChat.draft}
+              executionMode={oneOffChat.serverJob.executionMode()}
               loading={oneOffChat.isBusy() || props.pomoSay.isPreparing()}
               onDraftChange={oneOffChat.setDraft}
+              onExecutionModeChange={
+                SERVER_AI_RELEASED ? oneOffChat.serverJob.setExecutionMode : undefined
+              }
               onSubmit={oneOffChat.submit}
+              serverAccessStatus={oneOffChat.serverJob.accessStatus()}
+              serverAvailable={oneOffChat.serverJob.serverAvailable()}
             />
           </Show>
           <Show when={props.playerVisible ?? true}>
@@ -216,6 +228,9 @@ export const PStudioEvents = (props: PStudioEventsProps) => {
         <div class={CLASSES.mediaMessages} ref={setMediaMessages}>
           <Show when={oneOffChat.errorMessage()}>
             {(message) => <PFormMessage tone="error">{message()}</PFormMessage>}
+          </Show>
+          <Show when={SERVER_AI_RELEASED}>
+            <PAiJobStatus job={oneOffChat.serverJob} />
           </Show>
           <For each={reminders.skippedReminders()}>
             {(memo) => (

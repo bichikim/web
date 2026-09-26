@@ -2,7 +2,7 @@ import {createSerialTaskQueue} from 'src/utils/create-serial-task-queue'
 import {z} from 'zod'
 
 import {apiJson, ApiJsonError, apiJsonRequest} from '../api-json'
-import {apiFetch} from '../http-client'
+import {apiFetch, parseRetryAfterSeconds} from '../http-client'
 
 const APP_SESSION_STORAGE_KEY = 'pomo:app-session:v1'
 const HTTP_UNAUTHORIZED = 401
@@ -194,14 +194,8 @@ export const requestAccountLinkEmail = async (
   }
 
   if (response.status === HTTP_TOO_MANY_REQUESTS) {
-    const retryAfterHeader = response.headers.get('Retry-After')
-    const retryAfterSeconds = Number(retryAfterHeader)
-
     return {
-      retryAfterSeconds:
-        retryAfterHeader !== null && Number.isInteger(retryAfterSeconds) && retryAfterSeconds > 0
-          ? retryAfterSeconds
-          : null,
+      retryAfterSeconds: parseRetryAfterSeconds(response.headers.get('Retry-After')),
       status: 'rate-limited',
     }
   }
