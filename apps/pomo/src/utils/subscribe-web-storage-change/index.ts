@@ -1,3 +1,5 @@
+import {subscribeEvent} from 'src/utils/subscribe-event'
+
 interface WebStorageSubscriptionOptions {
   readonly key?: string
   readonly onChange: (key: string | null) => void
@@ -6,7 +8,7 @@ interface WebStorageSubscriptionOptions {
 
 /** Subscribes to local storage updates and clear events until explicitly unsubscribed. */
 export const subscribeWebStorageChange = (options: WebStorageSubscriptionOptions): (() => void) => {
-  const handleStorage = (event: StorageEvent) => {
+  const handleStorage = (event: Event) => {
     if (!(event instanceof StorageEvent)) {
       return
     }
@@ -21,6 +23,5 @@ export const subscribeWebStorageChange = (options: WebStorageSubscriptionOptions
       options.onChange(event.key)
     }
   }
-  globalThis.addEventListener('storage', handleStorage)
-  return () => globalThis.removeEventListener('storage', handleStorage)
+  return subscribeEvent(globalThis, 'storage', handleStorage)
 }

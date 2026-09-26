@@ -6,6 +6,7 @@ it('should filter the key and storage area, include clear events, and unsubscrib
   const onChange = vi.fn()
   const unsubscribe = subscribeWebStorageChange({key: 'target', onChange})
   try {
+    globalThis.dispatchEvent(new Event('storage'))
     globalThis.dispatchEvent(new StorageEvent('storage', {key: 'other', storageArea: localStorage}))
     globalThis.dispatchEvent(
       new StorageEvent('storage', {key: 'target', storageArea: sessionStorage}),
