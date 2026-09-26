@@ -7,7 +7,7 @@ import type {PDialogueRepository} from '../../focus-room-dialogue/repository'
 import {createFeedStateController} from '../feed-state'
 import type {FeedDialogueRepository} from '../feed-dialogue-repository'
 import type {FeedDialogueMetadata} from '../feed-dialogue-schema'
-import type {FeedDialogueListItem} from '../feed-controller'
+import {type FeedDialogueListItem, NO_FEED_CONNECTIONS_STATE} from '../feed-controller'
 
 const LISTENED_AT = '2026-08-14T01:00:00.000Z'
 
@@ -137,3 +137,29 @@ it('should apply a listened mark received from a fresh reload', async () => {
     }
   })
 })
+
+it.each(['generating', 'preparing'] as const)(
+  'should keep empty-subscription guidance when a late %s update arrives',
+  async (status) => {
+    await createRoot(async (dispose) => {
+      try {
+        const controller = createController(
+          createRepositories({
+            getDialogue: vi.fn(async () => DIALOGUE),
+            metadata: createMetadata(null),
+          }),
+        )
+        controller.setState(NO_FEED_CONNECTIONS_STATE)
+        controller.setState({message: 'active', progress: 42, status})
+
+        expect(controller.state()).toEqual(NO_FEED_CONNECTIONS_STATE)
+
+        controller.setState({message: '다음 피드 확인을 기다리고 있어요.', status: 'idle'})
+
+        expect(controller.state()).toEqual(NO_FEED_CONNECTIONS_STATE)
+      } finally {
+        dispose()
+      }
+    })
+  },
+)

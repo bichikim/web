@@ -13,11 +13,15 @@ export interface UseReplySpeechProps {
 export const useReplySpeech = (props: UseReplySpeechProps) => {
   const speechBuffer = createStreamingSpeechBuffer({locale: 'ko'})
   let handledMessageId: string | null = null
+  let messageCountAtStart = 0
+  let streamedReplyText: string | null = null
   let replySpeech: 'streaming' | 'completed' | 'stopped' = 'completed'
 
   const start = () => {
     props.voice.arm()
     speechBuffer.reset()
+    messageCountAtStart = props.chat.messages().length
+    streamedReplyText = null
     replySpeech = props.speakBeforeRefining() ? 'streaming' : 'completed'
   }
   const stop = () => {
@@ -46,9 +50,8 @@ export const useReplySpeech = (props: UseReplySpeechProps) => {
       }
 
       if (answerDraft !== null && answerDraft.id !== handledMessageId) {
-        const remainingText = speechBuffer.flush(
-          streamingText.length > 0 ? streamingText : answerDraft.content,
-        )
+        streamedReplyText = streamingText.length > 0 ? streamingText : answerDraft.content
+        const remainingText = speechBuffer.flush(streamedReplyText)
 
         if (remainingText !== null) {
           props.voice.speak(remainingText).catch(console.error)
@@ -56,6 +59,21 @@ export const useReplySpeech = (props: UseReplySpeechProps) => {
 
         props.voice.finish()
         handledMessageId = answerDraft.id
+      }
+
+      if (
+        answerDraft === null &&
+        messages.length > messageCountAtStart &&
+        latestMessage?.role === 'assistant'
+      ) {
+        handledMessageId = latestMessage.id
+        replySpeech = 'completed'
+
+        if (latestMessage.content !== streamedReplyText) {
+          props.voice.arm()
+          props.voice.speak(latestMessage.content).catch(console.error)
+          props.voice.finish()
+        }
       }
 
       return
