@@ -3,6 +3,8 @@ import type {CalendarEventRange} from './types'
 
 const CALENDAR_INTENT_PATTERN = /(?:일정|미팅|회의|약속|스케줄)/u
 const THIS_WEEK_PATTERN = /이번 ?주/u
+const THIS_WEEK_EXCLUSION_PATTERN =
+  /이번 ?주(?:(?!다음 ?주).)*(?:말고|빼고|제외(?:하고)?|아니|아닌|안\s*(?:되|돼))/u
 const TODAY_EXCLUSION_PATTERN =
   /오늘(?:(?!내일).)*(?:말고|빼고|제외(?:하고)?|아니|아닌|안\s*(?:되|돼))/u
 const TOMORROW_EXCLUSION_PATTERN =
@@ -80,6 +82,8 @@ export const createCalendarQuery = (
   const includesToday = options.text.includes('오늘') && !TODAY_EXCLUSION_PATTERN.test(options.text)
   const includesTomorrow =
     options.text.includes('내일') && !TOMORROW_EXCLUSION_PATTERN.test(options.text)
+  const includesThisWeek =
+    THIS_WEEK_PATTERN.test(options.text) && !THIS_WEEK_EXCLUSION_PATTERN.test(options.text)
   const includesDayAfterTomorrow =
     options.text.includes('모레') && !DAY_AFTER_TOMORROW_EXCLUSION_PATTERN.test(options.text)
   if (includesDayAfterTomorrow) {
@@ -122,7 +126,7 @@ export const createCalendarQuery = (
   }
   const weekday = local.day()
   const daysUntilNextMonday = weekday === 0 ? 1 : DAYS_PER_WEEK + 1 - weekday
-  if (THIS_WEEK_PATTERN.test(options.text)) {
+  if (includesThisWeek) {
     return toRange(now, boundary(daysUntilNextMonday))
   }
   if (NEXT_WEEK_PATTERN.test(options.text)) {
