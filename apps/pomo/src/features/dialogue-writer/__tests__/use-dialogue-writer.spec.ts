@@ -181,6 +181,31 @@ describe('useDialogueWriter', () => {
     expect(runtime.client.dispose).toHaveBeenCalledTimes(1)
   })
 
+  it('should clear completed output when the request changes and keep the model ready', () => {
+    const runtime = createRuntime(true)
+    const root = createDialogueRoot(runtime)
+
+    root.controller.prepare()
+    runtime.emit({type: 'ready'})
+    root.controller.generate()
+    runtime.emit({type: 'started'})
+    runtime.emit({text: '첫 답변', type: 'complete'})
+
+    expect(root.controller.output()).toBe('첫 답변')
+    expect(root.controller.state()).toEqual({status: 'complete'})
+
+    root.controller.setRequest('다른 질문')
+
+    expect(root.controller.output()).toBe('')
+    expect(root.controller.state()).toEqual({status: 'ready'})
+    expect(root.controller.canCopy()).toBe(false)
+    expect(root.controller.canGenerate()).toBe(true)
+
+    root.controller.generate()
+    expect(runtime.client.generate).toHaveBeenLastCalledWith('다른 질문')
+    root.dispose()
+  })
+
   it('should apply completed output before reporting completion', () => {
     const runtime = createRuntime(true)
     let controller: DialogueWriterController | null = null
