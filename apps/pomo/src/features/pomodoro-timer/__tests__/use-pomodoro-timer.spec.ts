@@ -272,7 +272,7 @@ it('should preserve paused progress after auto-start catch-up on unmount', async
   })
 })
 
-it('should synchronize an expired timer before stopping it on unmount', async () => {
+it('should preserve an expired running phase when stopping on unmount', async () => {
   localStorage.setItem(CONFIG_STORAGE_KEY, JSON.stringify(CONFIG))
   localStorage.setItem(
     STATE_STORAGE_KEY,
@@ -293,9 +293,9 @@ it('should synchronize an expired timer before stopping it on unmount', async ()
   timer.cleanup()
 
   expect(JSON.parse(localStorage.getItem(STATE_STORAGE_KEY) ?? '{}')).toEqual({
-    completedFocusSessions: 1,
-    phase: 'shortBreak',
-    remainingSeconds: 4,
+    completedFocusSessions: 0,
+    phase: 'focus',
+    remainingSeconds: 0,
     status: 'idle',
   })
 })
