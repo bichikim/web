@@ -117,6 +117,7 @@ interface ResolveContentOptions {
 const getDocumentUrl = (value: string) => {
   const url = new URL(value)
   url.hash = ''
+  url.pathname = url.pathname.replace(/\/$/u, '') || '/'
   return url.href
 }
 const resolveContent = async (options: ResolveContentOptions) => {
