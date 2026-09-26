@@ -1,5 +1,5 @@
 import * as m from '@paraglide/message'
-import {createSignal, untrack} from 'solid-js'
+import {createEffect, createMemo, createSignal, untrack} from 'solid-js'
 
 import {synchronizeDesktopBackground} from 'src/features/desktop-mode'
 import {type BackgroundController, backgroundWebsiteUrlSchema} from 'src/features/background'
@@ -11,8 +11,14 @@ export interface WebsiteProps {
 }
 
 export const Website = (props: WebsiteProps) => {
-  const [url, setUrl] = createSignal(untrack(() => props.background.preferences().websiteUrl ?? ''))
+  const websiteUrl = createMemo(() => props.background.preferences().websiteUrl ?? '')
+  const [url, setUrl] = createSignal(untrack(websiteUrl))
   const [hasUrlError, setHasUrlError] = createSignal(false)
+
+  createEffect(() => {
+    setUrl(websiteUrl())
+    setHasUrlError(false)
+  })
 
   const handleSubmit = (event: SubmitEvent) => {
     event.preventDefault()
