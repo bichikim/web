@@ -132,8 +132,8 @@ describe('applyDesktopMode', () => {
       height: 620,
       label: 'desktop-settings',
       path: '/desktop/settings/',
-      width: 420,
-      x: 996,
+      width: 480,
+      x: 936,
       y: 24,
     })
     expect(setBackgroundSurface).toHaveBeenCalledWith({
