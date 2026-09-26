@@ -14,6 +14,8 @@ import {PInput} from '../p-input/PInput'
 import {PSwitch} from '../p-switch/PSwitch'
 import {Result} from './Result'
 
+const AUTOMATIC_START_MINIMUM = '2022-01-01'
+
 export interface ServiceProps {
   readonly runtime?: LocalDateRuntime
 }
@@ -32,6 +34,15 @@ export const Service = (props: ServiceProps = {}) => {
   const branch = () => settings().branch
   const handleChange = (changes: Partial<ServiceSettings>) => {
     setPreference({...settings(), ...changes})
+  }
+  const handleManualChange = (manual: boolean) => {
+    const currentStart = start()
+    handleChange({
+      manual,
+      ...(!manual && currentStart !== '' && currentStart < AUTOMATIC_START_MINIMUM
+        ? {start: AUTOMATIC_START_MINIMUM}
+        : {}),
+    })
   }
   const serviceDays = createMemo(() => parseServiceDays(settings().days))
   const result = createMemo(() =>
@@ -59,7 +70,7 @@ export const Service = (props: ServiceProps = {}) => {
       <PDatePicker
         label="입대일"
         value={start()}
-        min={manual() ? '1900-01-01' : '2022-01-01'}
+        min={manual() ? '1900-01-01' : AUTOMATIC_START_MINIMUM}
         disabled={!ready()}
         onChange={(start) => handleChange({start})}
       />
@@ -67,7 +78,7 @@ export const Service = (props: ServiceProps = {}) => {
         label="복무기간 직접 입력"
         checked={manual()}
         disabled={!ready()}
-        onChange={(manual) => handleChange({manual})}
+        onChange={handleManualChange}
         description="복무기간이 다르면 전체 복무일수를 입력하세요. 입대일을 1일째로 계산합니다."
       />
       <Show when={manual()}>
