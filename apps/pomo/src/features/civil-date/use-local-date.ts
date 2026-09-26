@@ -1,12 +1,12 @@
 import {dayjs} from 'src/utils/zoned-dayjs'
-import {type Accessor, createSignal, onCleanup, onMount} from 'solid-js'
+import {type Accessor, createEffect, createSignal, onCleanup, onMount} from 'solid-js'
 import {formatLocalDate} from 'src/utils/format-local-date'
 import {type LocalDateRuntime, localDateRuntime} from './local-date-runtime'
 
 export interface UseLocalDateProps {
   readonly initialDate?: Date
   readonly runtime?: LocalDateRuntime
-  readonly timeZone?: string
+  readonly timeZone?: string | Accessor<string>
 }
 
 const formatDate = (date: Date, timeZone?: string): string =>
@@ -24,23 +24,25 @@ const getNextMidnight = (date: Date, timeZone?: string): Date => {
   return dayjs.tz(nextDate, timeZone).startOf('day').toDate()
 }
 
-/** Preserves the initial date until mount, then refreshes at the configured midnight and on visible return. */
+/** Preserves the initial date until mount, then refreshes on time zone changes, midnight, and visible return. */
 export const useLocalDate = (props: UseLocalDateProps = {}): Accessor<string> => {
   const initial = props.initialDate
-  const timeZone = () => props.timeZone
+  const timeZone = () => {
+    const configuredTimeZone = props.timeZone
+    return typeof configuredTimeZone === 'function' ? configuredTimeZone() : configuredTimeZone
+  }
   const [date, setDate] = createSignal(initial === undefined ? '' : formatDate(initial, timeZone()))
   onMount(() => {
     const runtime = props.runtime ?? localDateRuntime
     let cancel: (() => void) | undefined
-    const refresh = () => {
+    const refresh = (currentTimeZone = timeZone()) => {
       cancel?.()
       const now = runtime.now()
-      const currentTimeZone = timeZone()
       setDate(formatDate(now, currentTimeZone))
       const midnight = getNextMidnight(now, currentTimeZone)
       cancel = runtime.schedule(refresh, midnight.getTime() - now.getTime())
     }
-    refresh()
+    createEffect(() => refresh(timeZone()))
     const unsubscribe = runtime.subscribe((isHidden) => {
       if (!isHidden) {
         refresh()
