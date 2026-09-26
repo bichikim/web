@@ -3,9 +3,11 @@ import type {
   PuppetParameterDeformerKeyform,
   PuppetSceneNode,
 } from '../document'
+import {isSpatialMesh} from './parse-spatial-mesh'
 
 const CUBIC_DEGREE = 3
 const COORDINATES_PER_POINT = 2
+const SPATIAL_COORDINATES = 3
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null
@@ -15,6 +17,12 @@ const isFiniteNumber = (value: unknown): value is number =>
 
 const isFiniteNumberArray = (value: unknown): value is ReadonlyArray<number> =>
   Array.isArray(value) && value.every(isFiniteNumber)
+
+const isSpatialCoordinates = (value: unknown): value is ReadonlyArray<number> =>
+  isFiniteNumberArray(value) && value.length === SPATIAL_COORDINATES
+
+const isPositiveSpatialScale = (value: unknown) =>
+  isSpatialCoordinates(value) && value.every((coordinate) => coordinate > 0)
 
 const isPoint = (value: unknown) =>
   isRecord(value) && isFiniteNumber(value.x) && isFiniteNumber(value.y)
@@ -197,10 +205,38 @@ const isBounds = (value: unknown): boolean =>
   isFiniteNumber(value.height) &&
   value.height > 0
 
+const hasValidSpatialMeshPosition = (value: Record<string, unknown>): boolean =>
+  value.spatialMeshPosition === undefined || isSpatialCoordinates(value.spatialMeshPosition)
+
+const hasValidSpatial = (value: Record<string, unknown>): boolean => {
+  return (
+    value.deformerType === 'spatial' &&
+    Array.isArray(value.spatialOrigin) &&
+    value.spatialOrigin.length === SPATIAL_COORDINATES &&
+    value.spatialOrigin.every(isFiniteNumber) &&
+    (value.spatialRotation === undefined ||
+      (Array.isArray(value.spatialRotation) &&
+        value.spatialRotation.length === SPATIAL_COORDINATES &&
+        value.spatialRotation.every(isFiniteNumber))) &&
+    (value.spatialScale === undefined || isPositiveSpatialScale(value.spatialScale)) &&
+    (value.spatialTranslation === undefined || isSpatialCoordinates(value.spatialTranslation)) &&
+    hasValidSpatialMeshPosition(value) &&
+    (value.spatialMesh === undefined || isSpatialMesh(value.spatialMesh)) &&
+    Array.isArray(value.spatialRotationParameterIds) &&
+    value.spatialRotationParameterIds.length === SPATIAL_COORDINATES &&
+    value.spatialRotationParameterIds.every(
+      (id: unknown) => id === null || typeof id === 'string',
+    ) &&
+    value.boneRestPoints === undefined &&
+    value.pins === undefined
+  )
+}
+
 const hasValidRotation = (value: Record<string, unknown>): boolean => {
   const ROTATION_COORDINATES = 4
   return (
     value.deformerType === undefined ||
+    hasValidSpatial(value) ||
     (value.deformerType === 'rotation' &&
       isFiniteNumberArray(value.boneRestPoints) &&
       value.boneRestPoints.length === ROTATION_COORDINATES &&
@@ -254,7 +290,12 @@ export const isParameterDeformerKeyform = (
   value.kind === 'deformer' &&
   isFiniteNumberArray(value.controlPoints) &&
   isCurveHandles(value.curveHandles) &&
-  (value.rotationOrigin === undefined || isPoint(value.rotationOrigin))
+  (value.rotationOrigin === undefined || isPoint(value.rotationOrigin)) &&
+  (value.spatialOrigin === undefined || isSpatialCoordinates(value.spatialOrigin)) &&
+  (value.spatialMeshPosition === undefined || isSpatialCoordinates(value.spatialMeshPosition)) &&
+  (value.spatialRotation === undefined || isSpatialCoordinates(value.spatialRotation)) &&
+  (value.spatialScale === undefined || isPositiveSpatialScale(value.spatialScale)) &&
+  (value.spatialTranslation === undefined || isSpatialCoordinates(value.spatialTranslation))
 
 export const hasValidDeformerKeyform = (
   deformer: PuppetParameterDeformerKeyform,
@@ -267,6 +308,11 @@ export const hasValidDeformerKeyform = (
   const pointIndices = new Set(node.curveHandles?.map((handle) => handle.pointIndex) ?? [])
   return (
     node.controlPoints.length === deformer.controlPoints.length &&
+    (deformer.spatialOrigin === undefined || node.deformerType === 'spatial') &&
+    (deformer.spatialMeshPosition === undefined || node.deformerType === 'spatial') &&
+    (deformer.spatialRotation === undefined || node.deformerType === 'spatial') &&
+    (deformer.spatialScale === undefined || node.deformerType === 'spatial') &&
+    (deformer.spatialTranslation === undefined || node.deformerType === 'spatial') &&
     (deformer.curveHandles?.length ?? 0) === pointIndices.size &&
     deformer.curveHandles?.every((handle) => pointIndices.has(handle.pointIndex)) !== false
   )

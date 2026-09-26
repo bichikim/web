@@ -173,11 +173,14 @@ describe('SceneToolbar', () => {
     )
   })
 
-  it('should use flow layout inside a transparent desktop surface', () => {
+  it('should keep the controls in one row inside a transparent desktop surface', () => {
     const view = render(() => <SceneToolbar {...baseProps} layout="surface" />)
 
-    expect(view.container.firstElementChild).toHaveClass('w-fit')
+    expect(view.container.firstElementChild).toHaveClass('w-max')
     expect(view.container.firstElementChild).not.toHaveClass('absolute')
+    const actions = screen.getByRole('group')
+    expect(actions).toHaveClass('w-max', 'flex-nowrap')
+    expect(actions).not.toHaveClass('flex-wrap')
   })
 })
 

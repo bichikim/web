@@ -1,9 +1,16 @@
-import {type Accessor, createSignal, onCleanup, onMount} from 'solid-js'
+import {type Accessor, createEffect, createSignal, onCleanup} from 'solid-js'
 import {shouldWrapToolbar} from './should-wrap-toolbar'
 
-export const useToolbarWrap = (element: Accessor<HTMLDivElement | null>): Accessor<boolean> => {
+export const useToolbarWrap = (
+  element: Accessor<HTMLDivElement | null>,
+  enabled: Accessor<boolean>,
+): Accessor<boolean> => {
   const [wrap, setWrap] = createSignal(false)
-  onMount(() => {
+  createEffect(() => {
+    if (!enabled()) {
+      setWrap(false)
+      return
+    }
     const actions = element()
     if (!actions || typeof ResizeObserver === 'undefined') {
       return

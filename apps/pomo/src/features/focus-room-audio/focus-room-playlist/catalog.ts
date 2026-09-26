@@ -1,3 +1,4 @@
+import {isPlainObject, isString} from 'es-toolkit/predicate'
 import {createCatalogRequestInit, hasUniqueIds} from 'src/features/catalog-policy'
 import {audioFetch, httpFetch} from '../../http-client'
 import type {LoadPTrackCatalogOptions, PTrack} from './model'
@@ -7,14 +8,12 @@ interface PTrackCollection {
   readonly version: number
 }
 
-const isString = (value: unknown): value is string => typeof value === 'string'
-
 const isPTrack = (value: unknown): value is PTrack => {
-  if (typeof value !== 'object' || value === null) {
+  if (!isPlainObject(value)) {
     return false
   }
 
-  const track = value as Record<string, unknown>
+  const track = value
 
   return (
     (track.artworkUrl === undefined || isString(track.artworkUrl)) &&
@@ -29,11 +28,11 @@ const isPTrack = (value: unknown): value is PTrack => {
 }
 
 const isPTrackCollection = (value: unknown): value is PTrackCollection => {
-  if (typeof value !== 'object' || value === null) {
+  if (!isPlainObject(value)) {
     return false
   }
 
-  const collection = value as Record<string, unknown>
+  const collection = value
 
   return (
     collection.version === 1 &&

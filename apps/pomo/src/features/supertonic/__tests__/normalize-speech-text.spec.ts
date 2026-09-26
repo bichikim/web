@@ -13,6 +13,12 @@ describe('normalizeSpeechText', () => {
     ).toBe('사과 세 개, 고양이 스물한 마리, 오후 네 시, 오 분 남았고 십이 초 후 시작해요.')
   })
 
+  it('should pronounce Korean clock minutes with the hour', () => {
+    expect(normalizeSpeechText({language: 'ko', text: '오후 4시 30분에 만나요.'})).toBe(
+      '오후 네 시 삼십 분에 만나요.',
+    )
+  })
+
   it('should pronounce Korean amounts and percentages', () => {
     expect(
       normalizeSpeechText({language: 'ko', text: '가격은 12,500원이고 진행률은 12.5%예요.'}),

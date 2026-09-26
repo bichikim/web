@@ -182,6 +182,10 @@ export const layoutShortcuts = {
     '[&_button:disabled]:[opacity:0.42] [&_button:disabled]:cursor-not-allowed',
     '[&_button:disabled]:[background:transparent]',
   ],
+  'toolbar-menu-examples-trigger': [
+    'cursor-pointer rounded px-3 py-2 text-xs',
+    'hover:bg-[#26332f] focus-visible:outline-2 focus-visible:outline-[#64e5c4]',
+  ],
   'toolbar-menu-trigger': [
     '[.puppet-editor_&]:[anchor-name:\\-\\-toolbar-menu] [.puppet-editor_&]:grid',
     '[.puppet-editor_&]:place-items-center [.puppet-editor_&]:[width:2rem] [.puppet-editor_&]:[height:2rem]',

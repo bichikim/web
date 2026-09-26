@@ -1,3 +1,4 @@
+import {isPlainObject} from 'es-toolkit/predicate'
 import {createAuthoritativePreferenceRepository} from '../authoritative-preference'
 import {
   hasNativeStorageBridge,
@@ -46,7 +47,7 @@ export const DEFAULT_WEATHER_PREFERENCE = {
 
 export const parseWeatherPreference = (value: unknown): WeatherPreference | null => {
   try {
-    if (typeof value !== 'object' || value === null || !('location' in value)) {
+    if (!isPlainObject(value) || !('location' in value)) {
       return null
     }
 
@@ -67,7 +68,7 @@ export const parseWeatherPreference = (value: unknown): WeatherPreference | null
 
 const parseLegacyWeatherPreference = (value: unknown): WeatherPreference | null => {
   try {
-    if (typeof value !== 'object' || value === null || !('citySlug' in value)) {
+    if (!isPlainObject(value) || !('citySlug' in value)) {
       return null
     }
     if (!('enabled' in value) || typeof value.enabled !== 'boolean') {

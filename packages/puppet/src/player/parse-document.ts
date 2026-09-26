@@ -41,6 +41,8 @@ import {hasValidTrackTargets} from './internal/parse-motion'
 import {hasValidParameterOptions} from './internal/parse-parameter'
 import {hasValidPhysics} from './internal/parse-physics'
 import {hasValidLayerOrderRules} from './internal/parse-layer-order'
+import {hasValidSpatialAttachments, isSpatialSurface} from './internal/parse-spatial'
+import {expandDocumentTextureAssets} from './texture-assets'
 
 export type ParseDocumentErrorCode = 'invalid-document' | 'invalid-json'
 
@@ -148,7 +150,8 @@ const isPart = (value: unknown): value is PuppetPart =>
   value.id.length > 0 &&
   (value.properties === undefined || isPartRenderProperties(value.properties)) &&
   isTexture(value.texture) &&
-  isMesh(value.mesh)
+  isMesh(value.mesh) &&
+  (value.spatial === undefined || isSpatialSurface(value.spatial, value.mesh))
 
 const inspectSceneNode = (
   node: Record<string, unknown>,
@@ -548,8 +551,14 @@ const isDocument = (value: unknown): value is PuppetDocument => {
     hasValidPhysics(value.physics, parameters) &&
     hasUniqueIds(value.parts) &&
     hasValidPartMasks(value.parts) &&
+    hasValidSpatialAttachments(value.parts, value.scene) &&
     hasUniqueIds(value.motions) &&
     hasUniqueIds(parameters) &&
+    value.parts.every((part) =>
+      (part.spatial?.rotationParameterIds ?? []).every(
+        (id) => id === null || parameters.some((parameter) => parameter.id === id),
+      ),
+    ) &&
     hasUniqueIds(parameterBindings) &&
     hasValidTrackTargets(value.parts, parameters, value.motions) &&
     hasValidParameterBindings(value.parts, parameters, parameterBindings, value.scene)
@@ -557,7 +566,7 @@ const isDocument = (value: unknown): value is PuppetDocument => {
 }
 
 export const parseDocumentValue = (value: unknown): ParseDocumentResult => {
-  const normalizedValue = normalizeLegacyTrackKinds(value)
+  const normalizedValue = normalizeLegacyTrackKinds(expandDocumentTextureAssets(value))
   if (!isDocument(normalizedValue)) {
     return {error: {code: 'invalid-document'}, ok: false}
   }

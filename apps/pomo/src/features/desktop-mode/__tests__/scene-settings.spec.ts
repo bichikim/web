@@ -97,6 +97,23 @@ it.each(['listener', 'publisher'] as const)(
 )
 
 it.each(['listener', 'publisher'] as const)(
+  'should normalize legacy evening time mode updates through the %s',
+  (mode) => {
+    const onTimeModeChange = vi.fn()
+    renderHook(() =>
+      mode === 'listener'
+        ? useDesktopSceneSettingsListener({onTimeModeChange})
+        : useDesktopSceneSettingsPublisher({handlers: {onTimeModeChange}}),
+    )
+    const channel = TestBroadcastChannel.instances[0]
+
+    channel?.dispatch({name: 'timeMode', value: 'evening'})
+
+    expect(onTimeModeChange).toHaveBeenCalledExactlyOnceWith('night')
+  },
+)
+
+it.each(['listener', 'publisher'] as const)(
   'should ignore malformed settings and allow partial handlers through the %s',
   (mode) => {
     const onActivityChange = vi.fn()
@@ -266,6 +283,24 @@ it('should ignore unsolicited, malformed, and repeated snapshots', () => {
   expect(remoteChange).toHaveBeenCalledExactlyOnceWith('pan')
   owner.cleanup()
   surface.cleanup()
+})
+
+it('should normalize legacy evening time mode in the initial snapshot', () => {
+  const onTimeModeChange = vi.fn()
+  renderHook(() =>
+    useDesktopSceneSettingsPublisher({
+      handlers: {onTimeModeChange},
+      requestSnapshot: true,
+    }),
+  )
+  const channel = TestBroadcastChannel.instances[0]
+
+  channel?.dispatch({
+    settings: [{name: 'timeMode', value: 'evening'}],
+    type: 'snapshot',
+  })
+
+  expect(onTimeModeChange).toHaveBeenCalledExactlyOnceWith('night')
 })
 
 it('should preserve a received update ahead of an older snapshot', () => {

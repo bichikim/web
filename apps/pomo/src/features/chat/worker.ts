@@ -1,5 +1,6 @@
 /// <reference lib="webworker" />
 
+import {createExclusiveAsyncTask} from 'src/utils/create-exclusive-async-task'
 import {
   createDeviceTarget,
   createGenerationFailure,
@@ -41,7 +42,7 @@ const sendResponse = (response: ChatWorkerResponse) => workerScope.postMessage(r
 const textExecutor = createTextGenerationExecutor({
   onProgress: (progress) => sendResponse({...progress, type: 'loading'}),
 })
-let generationInFlight = false
+const generation = createExclusiveAsyncTask()
 let suppressedCjkTokenIds: Array<number> | null = null
 const createRequestId = createRequestSequence('chat')
 
@@ -245,13 +246,20 @@ const generateAnswer = async (options: GenerateAnswerOptions) => {
     : generatedText
   const text = limitChatAnswer(refinedText)
   const message: ChatMessage = {content: text, id: options.replyId, role: 'assistant'}
+  const completedContext: ChatContext = {
+    messages: [...compacted.context.messages, message],
+    summary: compacted.context.summary,
+  }
+  // Keep a completed reply when its display-only token count cannot be refreshed.
+  const completedContextTokens = await countPromptTokens(
+    completedContext,
+    options.modelId,
+    options.supplementaryContext,
+  ).catch(() => contextTokens)
 
   sendResponse({
-    context: {
-      messages: [...compacted.context.messages, message],
-      summary: compacted.context.summary,
-    },
-    contextTokens,
+    context: completedContext,
+    contextTokens: completedContextTokens,
     message,
     type: 'complete',
     wasCompacted: compacted.wasCompacted,
@@ -260,16 +268,8 @@ const generateAnswer = async (options: GenerateAnswerOptions) => {
 
 const handleRequest = (request: ChatWorkerRequest): Promise<void> => {
   switch (request.type) {
-    case 'generate': {
-      if (generationInFlight) {
-        return Promise.resolve()
-      }
-
-      generationInFlight = true
-      return generateAnswer(request).finally(() => {
-        generationInFlight = false
-      })
-    }
+    case 'generate':
+      return generation.run(() => generateAnswer(request))
     case 'prepare':
       return prepareModel(request.modelId)
   }

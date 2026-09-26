@@ -13,6 +13,7 @@ import {
   RenderTexture,
   Sprite,
   Texture,
+  UPDATE_PRIORITY,
 } from 'pixi.js'
 
 import {
@@ -31,18 +32,21 @@ import {applyMotionVertices, sampleMotionParameterValues} from './internal/motio
 import {createPhysicsState, evaluatePhysics} from './internal/physics'
 import {
   canReusePartResources,
+  getPartRenderFrame,
   getPartRenderPlans,
   type PartMaskRenderPlan,
   type PartRenderPlan,
 } from './internal/render-plan'
 import {applySceneDeformers} from './internal/scene-deformation'
 import {layoutPlayerRoot} from './internal/layout-player-root'
+import type {SpatialPartPose} from './internal/spatial-part'
 
 export interface Player {
   destroy(): void
   pause(): void
   play(options?: PlayerPlaybackOptions): void
   playMotion(motionId: string, options?: PlayerPlaybackOptions): boolean
+  redraw(): void
   resize(): void
   /** Removes inertia at the current input pose without changing timeline time. */
   resetPhysics(): void
@@ -69,6 +73,8 @@ export interface CreatePlayerOptions {
   readonly canvas: HTMLCanvasElement
   readonly document: PreparedPuppetDocument
   readonly motionId?: string
+  readonly onAfterRender?: () => void
+  readonly onBeforeRender?: () => void
   readonly onFrame?: (frame: PlayerFrame) => void
   readonly parameterValues?: PuppetParameterValueMap
   readonly physicsPreview?: boolean
@@ -106,6 +112,7 @@ interface ApplyFrameVerticesOptions {
   readonly parameterValues: PuppetParameterValueMap | undefined
   readonly partId: string
   readonly runtimePart: RuntimePart
+  readonly spatialPose?: SpatialPartPose
   readonly time: number
 }
 
@@ -124,6 +131,12 @@ const applyFrameVertices = (options: ApplyFrameVerticesOptions) => {
     time: options.time,
     vertices: options.runtimePart.vertices,
   })
+  if (options.spatialPose !== undefined) {
+    for (let index = 0; index < options.spatialPose.vertices.length; index += 1) {
+      options.runtimePart.vertices[index] +=
+        options.spatialPose.vertices[index]! - options.runtimePart.restVertices[index]!
+    }
+  }
 }
 
 const applyDocumentScene = (
@@ -436,7 +449,6 @@ interface ApplyRuntimeFrameOptions {
   readonly deltaTime: number
   readonly document: PuppetDocument
   readonly layoutRoot: () => void
-  readonly onFrame?: (frame: PlayerFrame) => void
   readonly parameterValues?: PuppetParameterValueMap
   readonly partById: ReadonlyMap<string, RuntimePart>
   readonly physicsState: ReadonlyMap<string, PendulumState>
@@ -462,7 +474,12 @@ const applyRuntimeFrame = (
     settle: options.settlePhysics,
   })
   const frameParameterValues = physicsResult.parameterValues
-  const renderPlans = getPartRenderPlans(options.document, frameParameterValues)
+  const posedScene = composeParameterScene(options.document, frameParameterValues)
+  const {plans: renderPlans, spatialPoses} = getPartRenderFrame(
+    options.document,
+    frameParameterValues,
+    posedScene,
+  )
   const planById = new Map(renderPlans.map((plan) => [plan.partId, plan]))
 
   for (const [partId, runtimePart] of options.partById) {
@@ -472,6 +489,7 @@ const applyRuntimeFrame = (
       parameterValues: frameParameterValues,
       partId,
       runtimePart,
+      spatialPose: spatialPoses.get(partId),
       time: options.time,
     })
   }
@@ -483,7 +501,7 @@ const applyRuntimeFrame = (
         document: options.document,
         parameterValues: frameParameterValues,
       }),
-      scene: composeParameterScene(options.document, frameParameterValues),
+      scene: posedScene,
     },
     verticesByPartId: new Map(
       [...options.partById].map(([partId, runtimePart]) => [partId, runtimePart.vertices]),
@@ -510,7 +528,6 @@ const applyRuntimeFrame = (
 
   applyDocumentScene(renderPlans, options.partById, options.root)
   options.layoutRoot()
-  options.onFrame?.(createPlayerFrame(options.activeMotion, options.time))
   return physicsResult.physicsState
 }
 
@@ -527,6 +544,7 @@ export const createPlayer = async (options: CreatePlayerOptions): Promise<Player
     backgroundAlpha: 0,
     canvas: options.canvas,
     height: options.document.viewport.height,
+    ...(options.onAfterRender === undefined ? {} : {preference: 'webgl' as const}),
     resolution: options.resolution ?? Math.min(window.devicePixelRatio, 2),
     width: options.document.viewport.width,
     ...(resizeTarget === null ? {} : {resizeTo: resizeTarget}),
@@ -588,7 +606,6 @@ export const createPlayer = async (options: CreatePlayerOptions): Promise<Player
       deltaTime,
       document,
       layoutRoot,
-      onFrame: options.onFrame,
       parameterValues,
       partById,
       physicsState,
@@ -596,8 +613,14 @@ export const createPlayer = async (options: CreatePlayerOptions): Promise<Player
       settlePhysics,
       time,
     })
+    let maskStateReset = false
     for (const part of partById.values()) {
       if (part.mask !== undefined && part.mesh.visible) {
+        if (!maskStateReset && options.onAfterRender !== undefined) {
+          // External drawing may have changed the shared WebGL state before this mask pass.
+          application.renderer.resetState()
+          maskStateReset = true
+        }
         const resolution = Math.max(
           MINIMUM_MASK_RESOLUTION,
           application.renderer.resolution * root.scale.x,
@@ -605,6 +628,8 @@ export const createPlayer = async (options: CreatePlayerOptions): Promise<Player
         renderRuntimeMask(part.mask, application.renderer, resolution, part.vertices)
       }
     }
+    // A frame listener can redraw synchronously, so publish after the masks are current.
+    options.onFrame?.(createPlayerFrame(activeMotion, time))
   }
 
   const syncTicker = () => {
@@ -613,6 +638,34 @@ export const createPlayer = async (options: CreatePlayerOptions): Promise<Player
     } else {
       application.stop()
     }
+  }
+
+  const finishRender = () => {
+    options.onAfterRender?.()
+    application.renderer.resetState()
+  }
+
+  const redraw = () => {
+    if (options.onAfterRender !== undefined) {
+      options.onBeforeRender?.()
+      application.renderer.resetState()
+    }
+    application.render()
+    if (options.onAfterRender !== undefined) {
+      finishRender()
+    }
+  }
+
+  if (options.onAfterRender !== undefined) {
+    application.ticker.add(
+      () => {
+        options.onBeforeRender?.()
+        application.renderer.resetState()
+      },
+      undefined,
+      UPDATE_PRIORITY.LOW + 1,
+    )
+    application.ticker.add(finishRender, undefined, UPDATE_PRIORITY.LOW - 1)
   }
 
   application.ticker.add((ticker) => {
@@ -636,7 +689,7 @@ export const createPlayer = async (options: CreatePlayerOptions): Promise<Player
   })
 
   applyFrame(motion, elapsedTime)
-  application.render()
+  redraw()
 
   const updateDocument = (nextDocument: PreparedPuppetDocument) => {
     assertPreparedPuppetDocument(nextDocument)
@@ -671,7 +724,7 @@ export const createPlayer = async (options: CreatePlayerOptions): Promise<Player
 
     elapsedTime = getSeekTime(motion, elapsedTime)
     applyFrame(motion, elapsedTime)
-    application.render()
+    redraw()
 
     return true
   }
@@ -692,7 +745,7 @@ export const createPlayer = async (options: CreatePlayerOptions): Promise<Player
     isLooping = true
     onMotionComplete = undefined
     applyFrame(motion, elapsedTime)
-    application.render()
+    redraw()
     return true
   }
 
@@ -706,7 +759,7 @@ export const createPlayer = async (options: CreatePlayerOptions): Promise<Player
     if (motion?.id === nextMotion.id) {
       elapsedTime = 0
       applyFrame(motion, elapsedTime)
-      application.render()
+      redraw()
     } else {
       setMotion(motionId)
     }
@@ -733,25 +786,26 @@ export const createPlayer = async (options: CreatePlayerOptions): Promise<Player
       application.start()
     },
     playMotion,
+    redraw,
     resetPhysics() {
       applyFrame(motion, elapsedTime, 0, true)
-      application.render()
+      redraw()
     },
     resize() {
       application.resize()
       layoutRoot()
-      application.render()
+      redraw()
     },
     seek(time: number) {
       elapsedTime = getSeekTime(motion, time)
       applyFrame(motion, elapsedTime)
-      application.render()
+      redraw()
     },
     setMotion,
     setParameterValues(values) {
       parameterValues = values
       applyFrame(motion, elapsedTime)
-      application.render()
+      redraw()
     },
     setPhysicsPreview(enabled) {
       if (physicsPreview === enabled) {
@@ -759,7 +813,7 @@ export const createPlayer = async (options: CreatePlayerOptions): Promise<Player
       }
       physicsPreview = enabled
       applyFrame(motion, elapsedTime, 0, true)
-      application.render()
+      redraw()
       syncTicker()
     },
     updateDocument,

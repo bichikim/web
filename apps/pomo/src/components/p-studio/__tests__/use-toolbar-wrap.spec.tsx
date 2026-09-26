@@ -38,7 +38,7 @@ it('should measure a late pomodoro and follow its removal and replacement', asyn
   let wrapping: ReturnType<typeof useToolbarWrap> | undefined
   const view = render(() => {
     const [element, setElement] = createSignal<HTMLDivElement | null>(null)
-    wrapping = useToolbarWrap(element)
+    wrapping = useToolbarWrap(element, () => true)
     return (
       <div>
         <Show when={visible()}>
@@ -124,7 +124,7 @@ it('should remeasure available space and added controls, then disconnect on unmo
   let wrapping: ReturnType<typeof useToolbarWrap> | undefined
   const view = render(() => {
     const [element, setElement] = createSignal<HTMLDivElement | null>(null)
-    wrapping = useToolbarWrap(element)
+    wrapping = useToolbarWrap(element, () => true)
     return (
       <div>
         <div class="pomo-pomodoro" data-testid="pomo-pomodoro" />
@@ -155,4 +155,91 @@ it('should remeasure available space and added controls, then disconnect on unmo
   view.unmount()
   expect(disconnectResize).toHaveBeenCalledOnce()
   expect(disconnectMutation).toHaveBeenCalledOnce()
+})
+
+it('should observe only while enabled and reset wrapping when disabled', async () => {
+  const observeResize = vi.fn()
+  const disconnectResize = vi.fn()
+  const observeMutation = vi.fn()
+  const disconnectMutation = vi.fn()
+  const createResizeObserver = vi.fn()
+  const createMutationObserver = vi.fn()
+  vi.stubGlobal(
+    'ResizeObserver',
+    class {
+      constructor() {
+        createResizeObserver()
+      }
+      observe = observeResize
+      disconnect = disconnectResize
+    },
+  )
+  vi.stubGlobal(
+    'MutationObserver',
+    class {
+      constructor() {
+        createMutationObserver()
+      }
+      observe = observeMutation
+      disconnect = disconnectMutation
+    },
+  )
+  vi.spyOn(Element.prototype, 'getBoundingClientRect').mockImplementation(
+    function measureBounds(this: Element) {
+      const width = this.classList.contains('toolbar')
+        ? 280
+        : this.classList.contains('pomo-pomodoro')
+          ? 134
+          : 44
+      return new DOMRect(0, 0, width, 44)
+    },
+  )
+  vi.stubGlobal('getComputedStyle', () => ({
+    columnGap: '8px',
+    cssFloat: 'left',
+    marginRight: '8px',
+  }))
+  const [enabled, setEnabled] = createSignal(false)
+  let wrapping: ReturnType<typeof useToolbarWrap> | undefined
+  const view = render(() => {
+    const [element, setElement] = createSignal<HTMLDivElement | null>(null)
+    wrapping = useToolbarWrap(element, enabled)
+    return (
+      <div>
+        <div class="pomo-pomodoro" />
+        <div class="toolbar">
+          <div ref={setElement}>
+            <div />
+            <div />
+            <div />
+          </div>
+        </div>
+      </div>
+    )
+  })
+
+  expect(createResizeObserver).not.toHaveBeenCalled()
+  expect(createMutationObserver).not.toHaveBeenCalled()
+  expect(wrapping?.()).toBe(false)
+
+  setEnabled(true)
+  await Promise.resolve()
+  expect(createResizeObserver).toHaveBeenCalledOnce()
+  expect(createMutationObserver).toHaveBeenCalledOnce()
+  expect(wrapping?.()).toBe(true)
+
+  setEnabled(false)
+  await Promise.resolve()
+  expect(disconnectResize).toHaveBeenCalled()
+  expect(disconnectMutation).toHaveBeenCalledOnce()
+  expect(wrapping?.()).toBe(false)
+
+  setEnabled(true)
+  await Promise.resolve()
+  expect(createResizeObserver).toHaveBeenCalledTimes(2)
+  expect(createMutationObserver).toHaveBeenCalledTimes(2)
+  expect(wrapping?.()).toBe(true)
+
+  view.unmount()
+  expect(disconnectMutation).toHaveBeenCalledTimes(2)
 })

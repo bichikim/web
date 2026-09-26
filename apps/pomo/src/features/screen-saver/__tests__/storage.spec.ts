@@ -53,6 +53,21 @@ describe('createScreenSaverRepository', () => {
     expect(storage.writeToss).not.toHaveBeenCalled()
   })
 
+  it('should keep a newer native preference when repairing web storage fails and the bridge disappears', async () => {
+    const storage = createStorage()
+    storage.writeWeb(STORAGE_KEY, stored('off', 10))
+    storage.readToss.mockResolvedValue(stored('1h', 20))
+    storage.writeWeb.mockReturnValue(new Error('web unavailable'))
+    const repository = createRepository(storage)
+
+    expect(await repository.read()).toBe('1h')
+    expect(storage.readWeb()).toEqual(stored('off', 10))
+
+    storage.usesTossStorage = () => false
+
+    expect(await repository.read()).toBe('1h')
+  })
+
   it('should prefer the native preference when legacy copies have no timestamps', async () => {
     const storage = createStorage()
     storage.writeWeb(STORAGE_KEY, 'off')

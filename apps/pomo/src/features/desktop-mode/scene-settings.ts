@@ -1,3 +1,4 @@
+import {isPlainObject} from 'es-toolkit/predicate'
 import {type Accessor, onCleanup, onMount} from 'solid-js'
 
 import type {PSceneMotionInput, PSceneMotionMode, PSceneStyle} from '../focus-room-animation'
@@ -27,6 +28,13 @@ type DesktopSceneSetting =
   | {readonly name: 'weatherEnabled'; readonly value: boolean}
   | {readonly name: 'weatherLocation'; readonly value: WeatherLocation}
   | {readonly name: 'weatherSceneMode'; readonly value: WeatherSceneMode}
+
+interface LegacyDesktopSceneTimeModeSetting {
+  readonly name: 'timeMode'
+  readonly value: 'evening'
+}
+
+type DesktopSceneSettingMessage = DesktopSceneSetting | LegacyDesktopSceneTimeModeSetting
 
 export interface DesktopSceneSettingsHandlers {
   readonly onActivityChange?: (value: PActivity) => void
@@ -61,8 +69,8 @@ const isOneOf = <TValue extends string>(
   options: ReadonlyArray<TValue>,
 ): value is TValue => typeof value === 'string' && options.includes(value as TValue)
 
-const isDesktopSceneSetting = (value: unknown): value is DesktopSceneSetting => {
-  if (typeof value !== 'object' || value === null || !('name' in value) || !('value' in value)) {
+const isDesktopSceneSetting = (value: unknown): value is DesktopSceneSettingMessage => {
+  if (!isPlainObject(value) || !('name' in value) || !('value' in value)) {
     return false
   }
 
@@ -106,12 +114,11 @@ const isDesktopSceneSetting = (value: unknown): value is DesktopSceneSetting => 
 
 interface DesktopSceneSnapshot {
   readonly type: 'snapshot'
-  readonly settings: ReadonlyArray<DesktopSceneSetting>
+  readonly settings: ReadonlyArray<DesktopSceneSettingMessage>
 }
 
 const isDesktopSceneSnapshot = (value: unknown): value is DesktopSceneSnapshot =>
-  typeof value === 'object' &&
-  value !== null &&
+  isPlainObject(value) &&
   'type' in value &&
   value.type === 'snapshot' &&
   'settings' in value &&
@@ -139,7 +146,7 @@ const applyDesktopWeatherSceneSetting = (
 
 const applyDesktopSceneSetting = (
   handlers: DesktopSceneSettingsHandlers,
-  setting: DesktopSceneSetting,
+  setting: DesktopSceneSettingMessage,
 ) => {
   switch (setting.name) {
     case 'activity':
@@ -161,7 +168,7 @@ const applyDesktopSceneSetting = (
       handlers.onScreenSaverDelayChange?.(setting.value)
       return
     case 'timeMode':
-      handlers.onTimeModeChange?.(setting.value)
+      handlers.onTimeModeChange?.(setting.value === 'evening' ? 'night' : setting.value)
       return
     case 'weatherCity':
     case 'weatherEnabled':

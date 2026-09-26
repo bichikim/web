@@ -1,3 +1,4 @@
+import {uniqBy} from 'es-toolkit/array'
 import {createCollectionStorage} from '../value-storage'
 import {z} from 'zod'
 
@@ -29,19 +30,8 @@ const getCollectionStorage = (options?: LanguageLearningStorageOptions) =>
 
 const deduplicateLanguageLearningWords = (
   values: ReadonlyArray<LanguageLearningWord>,
-): ReadonlyArray<LanguageLearningWord> => {
-  const normalizedValuesByLanguage = new Map<LanguageLearningLanguage, Set<string>>()
-
-  return values.filter((word) => {
-    const languageValues = normalizedValuesByLanguage.get(word.language) ?? new Set<string>()
-    const normalizedValue = normalizeLanguageLearningWordValue(word.value)
-    const isUnique = !languageValues.has(normalizedValue)
-
-    languageValues.add(normalizedValue)
-    normalizedValuesByLanguage.set(word.language, languageValues)
-    return isUnique
-  })
-}
+): ReadonlyArray<LanguageLearningWord> =>
+  uniqBy(values, (word) => `${word.language}:${normalizeLanguageLearningWordValue(word.value)}`)
 
 export const readLanguageLearningWords = (
   options?: LanguageLearningStorageOptions,

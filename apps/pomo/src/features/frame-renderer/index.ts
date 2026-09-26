@@ -11,10 +11,10 @@ import {Application, Sprite, Texture, VideoSource, type Ticker} from 'pixi.js'
 import {PhotoTransition} from './transition'
 import {VideoEdges} from './video-edges'
 import {prepareVideoBackground} from '../video-background'
-export * from './transition'
+export * from './texture-resolution-for-max-side'
 import {PhotoEdges} from './edges'
+export * from './transition'
 export * from './video-edges'
-export * from './video-loop'
 import {
   getPairDirection,
   type LoadedPhoto,
@@ -390,3 +390,5 @@ export class FrameRenderer {
     }
   }
 }
+
+export * from './video-loop'

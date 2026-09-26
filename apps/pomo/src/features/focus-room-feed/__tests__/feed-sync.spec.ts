@@ -48,6 +48,17 @@ const createUndatedFeedXml = (format: 'rss' | 'atom', itemIds: ReadonlyArray<str
     : `<feed xmlns="http://www.w3.org/2005/Atom"><title>발행일 없는 피드</title>${entries}</feed>`
 }
 
+const createUndatedSameTitleFeedXml = (contents: ReadonlyArray<string>) => {
+  const entries = contents
+    .map(
+      (content) =>
+        `<item><title>같은 제목</title><content:encoded>${content}</content:encoded></item>`,
+    )
+    .join('')
+
+  return `<rss version="2.0" xmlns:content="http://purl.org/rss/1.0/modules/content/"><channel><title>발행일 없는 피드</title>${entries}</channel></rss>`
+}
+
 it('should queue only the newest item on the first subscription sync', async () => {
   const {items, jobs, repository} = createRepository()
   const summary = await synchronizeFeeds({
@@ -83,6 +94,37 @@ it('should queue only the newest item on the first subscription sync', async () 
   )
 })
 
+it('should ignore dated items published before the first subscription', async () => {
+  const connection = {...CONNECTION, createdAt: '2026-08-14T00:06:00.000Z'}
+  const {items, jobs, repository} = createRepository()
+  const summary = await synchronizeFeeds({
+    connections: [connection],
+    createId: () => 'unused',
+    fetcher: vi.fn(
+      async () =>
+        new Response(
+          createRss([
+            {id: 'old', minute: '00'},
+            {id: 'new', minute: '05'},
+          ]),
+        ),
+    ),
+    now: new Date('2026-08-14T00:06:00.000Z'),
+    repository,
+    resolveGenerationSettings: createSettingsResolver(connection),
+  })
+
+  expect(summary.queuedJobIds).toEqual([])
+  expect(jobs).toHaveLength(0)
+  expect(items).toHaveLength(2)
+  expect(items).toEqual(
+    expect.arrayContaining([
+      expect.objectContaining({feedItemId: 'old', status: 'ignored'}),
+      expect.objectContaining({feedItemId: 'new', status: 'ignored'}),
+    ]),
+  )
+})
+
 it.each(['rss', 'atom'] as const)(
   'should limit undated items to one on the first %s subscription sync and process later arrivals',
   async (format) => {
@@ -90,9 +132,9 @@ it.each(['rss', 'atom'] as const)(
     let nextId = 0
     const fetcher = vi
       .fn()
-      .mockResolvedValueOnce(new Response(createUndatedFeedXml(format, ['oldest', 'newest'])))
+      .mockResolvedValueOnce(new Response(createUndatedFeedXml(format, ['newest', 'oldest'])))
       .mockResolvedValueOnce(
-        new Response(createUndatedFeedXml(format, ['oldest', 'newest', 'later'])),
+        new Response(createUndatedFeedXml(format, ['later', 'newest', 'oldest'])),
       )
     const options = {
       connections: [CONNECTION],
@@ -123,6 +165,55 @@ it.each(['rss', 'atom'] as const)(
     expect(jobs.map((job) => job.feedItemId)).toEqual(['newest', 'later'])
   },
 )
+
+it('should select the first undated item even when the feed exceeds the per-sync limit', async () => {
+  const {jobs, repository} = createRepository()
+  const itemIds = ['newest', ...Array.from({length: 25}, (_, index) => `older-${index}`)]
+  const summary = await synchronizeFeeds({
+    connections: [CONNECTION],
+    createId: () => 'job-1',
+    fetcher: vi.fn(async () => new Response(createUndatedFeedXml('rss', itemIds))),
+    now: new Date('2026-08-14T00:06:00.000Z'),
+    repository,
+    resolveGenerationSettings: createSettingsResolver(),
+  })
+
+  expect(summary.queuedJobIds).toEqual(['job-1'])
+  expect(jobs.map((job) => job.feedItemId)).toEqual(['newest'])
+})
+
+it('should sync a later undated item when it shares a title with an existing item', async () => {
+  const {items, jobs, repository} = createRepository()
+  let nextId = 0
+  const fetcher = vi
+    .fn()
+    .mockResolvedValueOnce(new Response(createUndatedSameTitleFeedXml(['기존 본문'])))
+    .mockResolvedValueOnce(new Response(createUndatedSameTitleFeedXml(['기존 본문', '새 본문'])))
+  const options = {
+    connections: [CONNECTION],
+    createId: () => {
+      nextId += 1
+      return `job-${nextId}`
+    },
+    fetcher,
+    now: new Date('2026-08-14T00:06:00.000Z'),
+    repository,
+    resolveGenerationSettings: createSettingsResolver(),
+  }
+
+  const firstSummary = await synchronizeFeeds(options)
+  const firstFeedItemId = jobs[0]?.feedItemId
+
+  expect(firstSummary.queuedJobIds).toEqual(['job-1'])
+  expect(firstFeedItemId).toBeDefined()
+
+  const secondSummary = await synchronizeFeeds(options)
+
+  expect(secondSummary.queuedJobIds).toEqual(['job-2'])
+  expect(jobs.map((job) => job.feedItemId)).toHaveLength(2)
+  expect(jobs[0]?.feedItemId).toBe(firstFeedItemId)
+  expect(new Set(items.map((item) => item.feedItemId)).size).toBe(2)
+})
 
 it('should resolve a default feed voice from the automatic dialogue settings', async () => {
   const {jobs, repository} = createRepository()
@@ -213,10 +304,11 @@ it('should ignore feed items published more than three days ago', async () => {
   })
 })
 
-it('should accept a feed item published exactly three days ago', async () => {
+it('should accept a feed item published exactly three days ago after subscribing', async () => {
+  const connection = {...CONNECTION, createdAt: '2026-08-10T00:00:00.000Z'}
   const {jobs, repository} = createRepository()
   const summary = await synchronizeFeeds({
-    connections: [CONNECTION],
+    connections: [connection],
     createId: () => 'job-at-cutoff',
     fetcher: vi.fn(
       async () =>
@@ -227,7 +319,7 @@ it('should accept a feed item published exactly three days ago', async () => {
     ),
     now: new Date('2026-08-14T00:00:00.000Z'),
     repository,
-    resolveGenerationSettings: createSettingsResolver(),
+    resolveGenerationSettings: createSettingsResolver(connection),
   })
 
   expect(summary.queuedJobIds).toEqual(['job-at-cutoff'])
@@ -290,6 +382,34 @@ it('should not treat the feed XML itself as an article document', async () => {
       new Response(`<rss><channel><title>Pomo 테스트</title><item>
         <title>안녕하세요</title><guid>self-link</guid>
         <link>https://example.com/feed.xml#self-link</link>
+        <pubDate>Fri, 14 Aug 2026 00:05:00 GMT</pubDate>
+        <description>안녕하세요</description></item></channel></rss>`),
+  )
+
+  await synchronizeFeeds({
+    connections: [CONNECTION],
+    createId: () => 'unused',
+    fetcher,
+    now: new Date('2026-08-14T00:06:00.000Z'),
+    repository,
+    resolveGenerationSettings: createSettingsResolver(),
+  })
+
+  expect(fetcher).toHaveBeenCalledOnce()
+  expect(jobs).toHaveLength(0)
+  expect(items[0]).toMatchObject({
+    message: '피드 항목이 원문 대신 피드 자체 주소를 가리키고 있어요.',
+    status: 'failed',
+  })
+})
+
+it('should reject a feed item URL that differs only by a trailing slash', async () => {
+  const {items, jobs, repository} = createRepository()
+  const fetcher = vi.fn(
+    async () =>
+      new Response(`<rss><channel><title>Pomo 테스트</title><item>
+        <title>안녕하세요</title><guid>self-link-trailing-slash</guid>
+        <link>https://example.com/feed.xml/</link>
         <pubDate>Fri, 14 Aug 2026 00:05:00 GMT</pubDate>
         <description>안녕하세요</description></item></channel></rss>`),
   )

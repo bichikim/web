@@ -56,6 +56,8 @@ const buildIntegrationTestFiles = [
 ]
 
 const runtimeIntegrationTestFiles = [
+  'apps/pomo/src/server/ai-runner/__tests__/storage.integration.spec.ts',
+  'apps/pomo/src/server/ai-runner/__tests__/http.integration.spec.ts',
   'apps/pomo/src/server/database/schema/__tests__/ai-jobs.migration.spec.ts',
   'apps/pomo/src/server/repositories/ai-jobs/__tests__/artifacts.spec.ts',
   'apps/pomo/src/server/ai-runner/__tests__/service.spec.ts',

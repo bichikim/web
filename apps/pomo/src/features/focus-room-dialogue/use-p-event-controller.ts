@@ -1,3 +1,4 @@
+import {uniq} from 'es-toolkit/array'
 import {setOptionalRecordEntry} from 'src/utils/set-optional-record-entry'
 import {createSerialTaskQueue} from 'src/utils/create-serial-task-queue'
 import {createEffect, createSignal, onCleanup, onMount} from 'solid-js'
@@ -180,8 +181,8 @@ export const usePEventController = (props: UsePEventControllerProps): PEventCont
     playbackMode: DialogueEventPlaybackMode,
     actionIds: ReadonlyArray<EventActionId> = eventActionIds()[eventId] ?? [],
   ) => {
-    const uniqueDialogueIds = [...new Set(dialogueIds)]
-    const uniqueActionIds = [...new Set(actionIds)]
+    const uniqueDialogueIds = uniq(dialogueIds)
+    const uniqueActionIds = uniq(actionIds)
     const hasBinding = uniqueDialogueIds.length > 0 || uniqueActionIds.length > 0
     bindingRevision += 1
     const currentEventRevision = (eventBindingRevisions[eventId] ?? 0) + 1

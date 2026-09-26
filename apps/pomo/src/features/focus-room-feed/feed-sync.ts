@@ -117,6 +117,7 @@ interface ResolveContentOptions {
 const getDocumentUrl = (value: string) => {
   const url = new URL(value)
   url.hash = ''
+  url.pathname = url.pathname.replace(/\/$/u, '') || '/'
   return url.href
 }
 const resolveContent = async (options: ResolveContentOptions) => {
@@ -308,6 +309,10 @@ const synchronizeConnection = async (
   const feed = parseFeedXml(xml, connection.url)
   const storedItems = await options.repository.listItems(connection.id)
   const storedIds = new Set(storedItems.map((item) => item.feedItemId))
+  const isFirstSync = storedItems.length === 0
+  const firstUndatedFeedItem = isFirstSync
+    ? feed.items.find((item) => item.publishedAt === null)
+    : undefined
   const unseenItems = sortItems(feed.items.filter((item) => !storedIds.has(item.id))).slice(
     -MAXIMUM_ITEMS_PER_SYNC,
   )
@@ -321,14 +326,15 @@ const synchronizeConnection = async (
   const staleItems = unseenItems.filter((item) => isStaleItem(item, oldestAcceptedTimestamp))
   const staleIds = new Set(staleItems.map((item) => item.id))
   const eligibleItems = unseenItems.filter((item) => !staleIds.has(item.id))
-  const isFirstSync = storedItems.length === 0
   const historicalItems = eligibleItems.filter((item) =>
     isHistoricalItem(connection, item, isFirstSync),
   )
   const historicalIds = new Set(historicalItems.map((item) => item.id))
   const currentItems = eligibleItems.filter((item) => !historicalIds.has(item.id))
   const itemsToProcess =
-    isFirstSync && currentItems.length === 0 ? eligibleItems.slice(-1) : currentItems
+    isFirstSync && currentItems.length === 0 && firstUndatedFeedItem !== undefined
+      ? [firstUndatedFeedItem]
+      : currentItems
   const processedIds = new Set(itemsToProcess.map((item) => item.id))
   const ignoredItems = unseenItems.filter((item) => !processedIds.has(item.id))
 

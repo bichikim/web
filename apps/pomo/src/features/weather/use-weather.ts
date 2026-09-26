@@ -1,3 +1,4 @@
+import {parseWeatherExpiryMs} from './parse-weather-expiry-ms'
 import {createAsync} from '@solidjs/router'
 import {type Accessor, createEffect, createSignal, untrack} from 'solid-js'
 
@@ -61,7 +62,8 @@ const isWeatherFeedRequired = (preference: WeatherPreference): boolean =>
 const getReadyFeedState = (
   feed: WeatherFeed,
 ): Extract<WeatherState, {readonly status: 'ready'}> => {
-  const stale = feed.stale || Date.parse(feed.expiresAt) <= Date.now()
+  const expiryTimestamp = parseWeatherExpiryMs(feed.expiresAt)
+  const stale = feed.stale || expiryTimestamp === null || expiryTimestamp <= Date.now()
   return {feed: {...feed, stale}, status: 'ready'}
 }
 

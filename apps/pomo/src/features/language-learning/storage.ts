@@ -1,3 +1,4 @@
+import {uniqBy} from 'es-toolkit/array'
 import {createCollectionStorage} from '../value-storage'
 import {z} from 'zod'
 
@@ -9,15 +10,7 @@ const storedSentencesSchema = z.array(languageLearningSentenceSchema).readonly()
 
 const deduplicateLanguageLearningSentences = (
   values: ReadonlyArray<LanguageLearningSentence>,
-): ReadonlyArray<LanguageLearningSentence> => {
-  const dialogueIds = new Set<string>()
-
-  return values.filter((sentence) => {
-    const isUnique = !dialogueIds.has(sentence.dialogueId)
-    dialogueIds.add(sentence.dialogueId)
-    return isUnique
-  })
-}
+): ReadonlyArray<LanguageLearningSentence> => uniqBy(values, (sentence) => sentence.dialogueId)
 
 export interface LanguageLearningStorage {
   readonly getItem: (key: string) => string | null

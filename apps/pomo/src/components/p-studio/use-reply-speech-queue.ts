@@ -38,6 +38,17 @@ export const useReplySpeechQueue = (options: UseReplySpeechQueueOptions) => {
       setRequests((current) => [...current, {cancelled: false, reject, resolve, text}])
     })
 
+  const releaseActiveRequest = (request: ReplySpeechRequest) => {
+    if (activeRequest !== request) {
+      return
+    }
+
+    activeRequest = null
+    if (!disposed) {
+      setIsSpeaking(false)
+    }
+  }
+
   const runRequest = async (request: ReplySpeechRequest) => {
     try {
       await untrack(() => options.speak(request.text))
@@ -45,10 +56,7 @@ export const useReplySpeechQueue = (options: UseReplySpeechQueueOptions) => {
     } catch (error: unknown) {
       request.reject(error)
     } finally {
-      activeRequest = null
-      if (!disposed) {
-        setIsSpeaking(false)
-      }
+      releaseActiveRequest(request)
     }
   }
 
@@ -65,7 +73,11 @@ export const useReplySpeechQueue = (options: UseReplySpeechQueueOptions) => {
   const cancelActiveRequest = () => {
     const request = activeRequest
 
-    if (request === null || request.cancelled) {
+    if (request === null) {
+      return
+    }
+
+    if (request.cancelled) {
       return
     }
 

@@ -1,3 +1,4 @@
+import {uniq} from 'es-toolkit/array'
 import type {Middleware} from 'h3'
 
 import {parseCommaSeparated} from 'src/utils/parse-comma-separated'
@@ -109,7 +110,7 @@ const getAllowedOrigin = (request: Request): string | undefined => {
 const appendVaryHeaders = (headers: Headers, values: ReadonlyArray<string>): void => {
   const existingVary = headers.get('Vary')
   const existingValues = existingVary === null ? [] : parseCommaSeparated(existingVary)
-  headers.set('Vary', [...new Set([...existingValues, ...values])].join(', '))
+  headers.set('Vary', uniq([...existingValues, ...values]).join(', '))
 }
 
 const applyAllowedOrigin = (headers: Headers, origin: string): void => {

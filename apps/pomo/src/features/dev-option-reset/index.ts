@@ -1,3 +1,4 @@
+import {uniq} from 'es-toolkit/array'
 export {
   deleteStoredDialogueAudio,
   type DialogueAudioDeletionResult,
@@ -66,12 +67,21 @@ export interface OptionResetManager {
   readonly resetAll: () => Promise<OptionResetResult>
 }
 
+export interface OptionResetSessionStorageEntry {
+  readonly key: string
+  readonly value: string
+}
+
 export interface OptionResetStorage {
   readonly getToss: (key: string) => Promise<string | null>
+  readonly getSessionStorageEntriesByPrefix: (
+    prefix: string,
+  ) => ReadonlyArray<OptionResetSessionStorageEntry>
   readonly usesTossStorage: () => boolean
   readonly removeToss: (key: string) => Promise<void>
   readonly removeWeb: (key: string) => void
   readonly removeSessionStorageByPrefix: (prefix: string) => void
+  readonly setSessionStorageItem: (key: string, value: string) => void
   readonly setToss: (key: string, value: string) => Promise<void>
   readonly setWeb: (key: string, value: string) => void
 }
@@ -202,24 +212,66 @@ export const OPTION_RESET_GROUPS: ReadonlyArray<OptionResetGroup> = GROUP_DEFINI
   }),
 )
 
-const getAllKeys = (): ReadonlyArray<string> => [
-  ...new Set(
+const getAllKeys = (): ReadonlyArray<string> =>
+  uniq(
     GROUP_DEFINITIONS.flatMap((group) => (group.resetKind === 'locale' ? [] : group.storageKeys)),
-  ),
-]
+  )
 
 const getSessionStoragePrefixes = (group: OptionResetGroupDefinition): ReadonlyArray<string> =>
   group.resetKind === 'locale' ? [] : (group.sessionStoragePrefixes ?? [])
 
-const getAllSessionStoragePrefixes = (): ReadonlyArray<string> => [
-  ...new Set(GROUP_DEFINITIONS.flatMap((group) => getSessionStoragePrefixes(group))),
-]
+const getAllSessionStoragePrefixes = (): ReadonlyArray<string> =>
+  uniq(GROUP_DEFINITIONS.flatMap((group) => getSessionStoragePrefixes(group)))
 
 const removeSessionStoragePrefixes = (
   storage: OptionResetStorage,
   prefixes: ReadonlyArray<string>,
 ): void => {
   prefixes.forEach((prefix) => storage.removeSessionStorageByPrefix(prefix))
+}
+
+const getSessionStorageEntries = (
+  storage: OptionResetStorage,
+  prefixes: ReadonlyArray<string>,
+): ReadonlyArray<OptionResetSessionStorageEntry> =>
+  prefixes.flatMap((prefix) => storage.getSessionStorageEntriesByPrefix(prefix))
+
+const restoreSessionStorageEntries = (
+  storage: OptionResetStorage,
+  entries: ReadonlyArray<OptionResetSessionStorageEntry>,
+): void => {
+  entries.forEach(({key, value}) => storage.setSessionStorageItem(key, value))
+}
+
+const resetWithSessionStorageRollback = async (
+  storage: OptionResetStorage,
+  prefixes: ReadonlyArray<string>,
+  reset: () => Promise<OptionResetResult>,
+): Promise<OptionResetResult> => {
+  const entries = getSessionStorageEntries(storage, prefixes)
+  let resetResult: OptionResetResult
+
+  try {
+    removeSessionStoragePrefixes(storage, prefixes)
+    resetResult = await reset()
+  } catch (error: unknown) {
+    try {
+      restoreSessionStorageEntries(storage, entries)
+    } catch (restoreError: unknown) {
+      throw new AggregateError(
+        [error, restoreError],
+        'Failed to restore session storage after option reset failure.',
+      )
+    }
+
+    throw error
+  }
+
+  if (resetResult.status === 'partial') {
+    restoreSessionStorageEntries(storage, entries)
+  }
+
+  return resetResult
 }
 
 const readTossSnapshots = (
@@ -402,8 +454,11 @@ export const createOptionResetManager = (
       if (group.id === 'entry') {
         await options.resetEntrySession()
       }
-      removeSessionStoragePrefixes(options.storage, getSessionStoragePrefixes(group))
-      return resetKeys(group.storageKeys)
+      return resetWithSessionStorageRollback(
+        options.storage,
+        getSessionStoragePrefixes(group),
+        () => resetKeys(group.storageKeys),
+      )
     })
   }
 
@@ -422,32 +477,46 @@ export const createOptionResetManager = (
     resetAll: () =>
       withResetError(async () => {
         await options.resetEntrySession()
-        removeSessionStoragePrefixes(options.storage, getAllSessionStoragePrefixes())
-        const storageResult = await removeKeys(options.storage, getAllKeys())
-        if (storageResult.status === 'partial') {
-          return {
-            ...storageResult,
-            preservedCount: storageResult.preservedCount + LOCALE_RESET_STORAGE_COUNT,
-          }
-        }
+        return resetWithSessionStorageRollback(
+          options.storage,
+          getAllSessionStoragePrefixes(),
+          async () => {
+            const storageResult = await removeKeys(options.storage, getAllKeys())
+            if (storageResult.status === 'partial') {
+              return {
+                ...storageResult,
+                preservedCount: storageResult.preservedCount + LOCALE_RESET_STORAGE_COUNT,
+              }
+            }
 
-        try {
-          await options.resetLocale()
-        } catch {
-          return {
-            preservedCount: 0,
-            resetCount: getAllKeys().length,
-            status: 'partial',
-            unresolvedCount: LOCALE_RESET_STORAGE_COUNT,
-          }
-        }
+            try {
+              await options.resetLocale()
+            } catch {
+              return {
+                preservedCount: 0,
+                resetCount: getAllKeys().length,
+                status: 'partial',
+                unresolvedCount: LOCALE_RESET_STORAGE_COUNT,
+              }
+            }
 
-        return COMPLETE_RESET_RESULT
+            return COMPLETE_RESET_RESULT
+          },
+        )
       }),
   }
 }
 
 const runtimeStorage: OptionResetStorage = {
+  getSessionStorageEntriesByPrefix: (prefix) => {
+    const matchingKeys = Array.from({length: sessionStorage.length}, (_, index) =>
+      sessionStorage.key(index),
+    ).filter((key): key is string => key !== null && key.startsWith(prefix))
+    return matchingKeys.flatMap((key) => {
+      const value = sessionStorage.getItem(key)
+      return value === null ? [] : [{key, value}]
+    })
+  },
   async getToss(key) {
     const storage = await loadTossStorage()
     return storage.getItem(key)
@@ -463,6 +532,7 @@ const runtimeStorage: OptionResetStorage = {
     await storage.removeItem(key)
   },
   removeWeb: (key) => localStorage.removeItem(key),
+  setSessionStorageItem: (key, value) => sessionStorage.setItem(key, value),
   async setToss(key, value) {
     const storage = await loadTossStorage()
     await storage.setItem(key, value)

@@ -142,7 +142,7 @@ test('should apply the parent, owner and child in one click without unrelated ro
   expect(view.getByRole('button', {name: '스키닝 적용'})).toBeInTheDocument()
 })
 
-test('should require a rotation hierarchy for an unattached part', () => {
+test('should hide skinning controls when an unattached part has no rotation hierarchy', () => {
   const document = createSkinDocument()
   const partId = document.parts[0]!.id
   const view = render(() => (
@@ -152,8 +152,7 @@ test('should require a rotation hierarchy for an unattached part', () => {
       onDocumentChange={() => {}}
     />
   ))
-  expect(view.getByRole('button', {name: '스키닝 적용'})).toBeDisabled()
-  expect(view.queryByText('파츠를 연결된 회전 디포머 아래에 배치하세요.')).not.toBeInTheDocument()
+  expect(view.queryByRole('group', {name: '회전 스키닝'})).toBeNull()
 })
 
 test('should recalculate smooth weights from the panel, persist settings and synchronize edits', () => {

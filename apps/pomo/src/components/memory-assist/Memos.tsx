@@ -35,6 +35,7 @@ export const MemoryMemoList = () => {
     const now = new Date()
     const hasPendingExactReminder =
       edit.exactReminderAt === memo.exactReminderAt &&
+      edit.exactReminderAdvanceMinutes === memo.exactReminderAdvanceMinutes &&
       memo.nextExactReminderAt !== null &&
       Date.parse(memo.nextExactReminderAt) > now.getTime()
 

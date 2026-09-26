@@ -41,8 +41,25 @@ const memoryMemoSchema = z.object({
   version: z.literal(1),
 })
 
-const hasConsumedExactReminder = (memo: z.infer<typeof memoryMemoSchema>) => {
+const getFirstExactReminderAt = (
+  memo: Pick<z.infer<typeof memoryMemoSchema>, 'exactReminderAdvanceMinutes' | 'exactReminderAt'>,
+) => {
   if (memo.exactReminderAt === null) {
+    return null
+  }
+
+  if (memo.exactReminderAdvanceMinutes === 0) {
+    return memo.exactReminderAt
+  }
+
+  return new Date(
+    Date.parse(memo.exactReminderAt) - memo.exactReminderAdvanceMinutes * MILLISECONDS_PER_MINUTE,
+  ).toISOString()
+}
+
+const hasConsumedExactReminder = (memo: z.infer<typeof memoryMemoSchema>) => {
+  const firstExactReminderAt = getFirstExactReminderAt(memo)
+  if (firstExactReminderAt === null) {
     return false
   }
 
@@ -50,10 +67,8 @@ const hasConsumedExactReminder = (memo: z.infer<typeof memoryMemoSchema>) => {
     return memo.reminderEvents.some((event) => event.kind === 'exact')
   }
 
-  const firstExactReminderTime =
-    Date.parse(memo.exactReminderAt) - memo.exactReminderAdvanceMinutes * MILLISECONDS_PER_MINUTE
   return memo.reminderHistory.some(
-    (deliveredAt) => Date.parse(deliveredAt) >= firstExactReminderTime,
+    (deliveredAt) => Date.parse(deliveredAt) >= Date.parse(firstExactReminderAt),
   )
 }
 
@@ -62,7 +77,7 @@ const getNormalizedNextExactReminderAt = (memo: z.infer<typeof memoryMemoSchema>
     return memo.nextExactReminderAt
   }
 
-  return hasConsumedExactReminder(memo) ? null : memo.exactReminderAt
+  return hasConsumedExactReminder(memo) ? null : getFirstExactReminderAt(memo)
 }
 
 const normalizedMemoryMemoSchema = memoryMemoSchema.transform((memo) => {

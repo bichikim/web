@@ -8,7 +8,8 @@ import type {PuppetDocument, PuppetPart} from '../player/document'
 import {getScenePartStates} from '../player/scene'
 import {addPartVertex, deletePartVertex, type VertexPoint} from './edit-document'
 import {type IndexedVertex, type MeshTriangle, snapPointToEdge} from './internal/mesh-view'
-import {getDeformerPreviewDocument} from './internal/mesh-preview'
+import {setVertexKeyframe} from './internal/motion-keyframes'
+import {getDeformerPreviewDocument, unapplyPartPreviewSpatialPose} from './internal/mesh-preview'
 import {getEditErrorMessage} from './internal/notices'
 import {createPartViews, type MeshPartView} from './internal/part-views'
 import {unapplySceneDeformersPoint} from './internal/scene-deformation'
@@ -362,12 +363,13 @@ const createPointerEndHandler = (props: MeshEditorProps, state: MeshEditorState)
     return
   }
 
-  const localPoint = unapplySceneDeformersPoint({
+  const scenePoint = unapplySceneDeformersPoint({
     document: getDeformerPreviewDocument(props),
     partId: activePart.id,
     point,
     vertexIndex,
   })
+  const localPoint = unapplyPartPreviewSpatialPose(props, activePart, vertexIndex, scenePoint)
   const result = commitVertexMove({
     ...localPoint,
     bindingId: props.activeBindingId,

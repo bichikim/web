@@ -32,7 +32,7 @@ export function SoundLoopPage() {
   onCleanup(() => {
     const url = sourceUrl()
     if (url !== null) {
-      URL.revokeObjectURL(url)
+      replaceBlobObjectUrl(url, () => null)
     }
   })
   const selectFile = (file: File | null) => {

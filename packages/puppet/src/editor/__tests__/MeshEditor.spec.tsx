@@ -4,11 +4,44 @@ import {fireEvent, render} from '@solidjs/testing-library'
 import {createSignal} from 'solid-js'
 import {describe, expect, test, vi} from 'vitest'
 
-import {createDemoDocument, type PuppetDocument} from '../../player'
+import {createDemoDocument, getDocumentScene, type PuppetDocument} from '../../player'
 import {MeshEditor} from '../MeshEditor'
+import {convertSceneContainers} from '../internal/container-conversion'
+import {unapplyPartPreviewSpatialPose} from '../internal/mesh-preview'
 import {createDeformer, getSceneNode} from '../internal/scene-graph'
 
 describe('MeshEditor', () => {
+  test('should draw rotated 3D part vertices over the rendered image without a control mesh', () => {
+    const grouped = createDeformer(createDemoDocument(), ['mesh-preview'])!
+    const initial = convertSceneContainers({
+      document: grouped,
+      nodeIds: ['deformer'],
+      targetKind: 'spatial',
+    })!
+    const scene = getDocumentScene(initial)
+    const document: PuppetDocument = {
+      ...initial,
+      scene: {
+        ...scene,
+        roots: scene.roots.map((node) =>
+          node.id === 'deformer' && node.kind === 'deformer'
+            ? {...node, spatialRotation: [0, 60, 0]}
+            : node,
+        ),
+      },
+    }
+    const part = document.parts.find((candidate) => candidate.id === 'mesh-preview')!
+    const view = render(() => <MeshEditor activePartId={part.id} document={document} />)
+    const first = view.container.querySelector('[data-part-id="mesh-preview"] circle')!
+
+    expect(first.getAttribute('cx')).toBe('160')
+    expect(first.getAttribute('cy')).toBe('0')
+    expect(part.mesh.vertices[0]).toBe(0)
+    const restored = unapplyPartPreviewSpatialPose({document}, part, 0, {x: 170, y: 0})
+    expect(restored.x).toBeCloseTo(10)
+    expect(restored.y).toBe(0)
+  })
+
   test('should select exactly one mouse editing tool', () => {
     const view = render(() => <MeshEditor document={createDemoDocument()} />)
     const mouse = view.getByRole('button', {name: '일반 마우스'})

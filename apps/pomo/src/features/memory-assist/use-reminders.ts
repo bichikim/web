@@ -1,3 +1,4 @@
+import {clamp} from 'es-toolkit/math'
 import {createEffect, createSignal, onCleanup, onMount} from 'solid-js'
 import {useEvent} from '@winter-love/solid-use/event'
 import {usePreference} from 'src/hooks/use-preference'
@@ -554,7 +555,7 @@ export const useMemoryReminders = (props: UseMemoryRemindersProps): MemoryRemind
       return
     }
 
-    const delay = Math.min(MAXIMUM_TIMEOUT, Math.max(0, scheduled.availableAt - Date.now()))
+    const delay = clamp(scheduled.availableAt - Date.now(), 0, MAXIMUM_TIMEOUT)
     const timerId = globalThis.setTimeout(() => {
       runDelivery(scheduled.memo).catch(() => undefined)
     }, delay)
