@@ -6,7 +6,6 @@ import {PButton} from '../p-button/PButton'
 import type {PSceneStyle} from '../../features/focus-room-animation'
 import {
   type FeedDialogueJob,
-  isNoFeedConnectionGuidance,
   type PFeedState,
   usePFeedContext,
 } from '../../features/focus-room-feed'
@@ -182,7 +181,6 @@ export const PFeedStatus = (props: PFeedStatusProps) => {
   const isRetryInProgress = () => actions.isRetrying() || activity.activeDownload() !== null
   const activeGenerationState = activity.generation
   const errorState = () => getErrorState(feeds.state())
-  const hasNoSubscriptionGuidance = () => isNoFeedConnectionGuidance(feeds.state())
   return (
     <>
       <Show when={!feeds.isListening()}>
@@ -245,14 +243,6 @@ export const PFeedStatus = (props: PFeedStatusProps) => {
                 </PButton>
               </FeedStatusSurface>
             )}
-          </Match>
-          <Match when={hasNoSubscriptionGuidance()}>
-            <FeedStatusSurface sceneStyle={props.sceneStyle} state="idle">
-              <span aria-hidden="true" class="i-tabler-rss size-5" />
-              <span class="min-w-0 flex-1 whitespace-normal text-sm font-semibold leading-relaxed">
-                {m.feed_add_subscription()}
-              </span>
-            </FeedStatusSurface>
           </Match>
           <Match when={errorState()}>
             {(feedState) => (
