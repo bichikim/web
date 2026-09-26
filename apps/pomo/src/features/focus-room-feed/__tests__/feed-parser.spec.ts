@@ -62,8 +62,20 @@ it('should parse Atom links and content', () => {
     contentKind: 'full',
     id: 'atom-1',
     link: 'https://example.com/atom-1',
+    publishedAt: '2026-08-14T01:00:00.000Z',
     title: 'Atom 소식',
   })
+})
+
+it('should prefer the Atom published date when updated appears first', () => {
+  const feed = parseFeedXml(
+    `<feed xmlns="http://www.w3.org/2005/Atom"><title>테스트 Atom</title><entry>
+      <updated>2026-09-20T00:00:00Z</updated><published>2024-01-01T00:00:00Z</published>
+    </entry></feed>`,
+    'https://example.com/atom.xml',
+  )
+
+  expect(feed.items[0]?.publishedAt).toBe('2024-01-01T00:00:00.000Z')
 })
 
 it('should parse RDF-style RSS items outside the channel element', () => {
