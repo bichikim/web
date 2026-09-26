@@ -14,7 +14,7 @@ export const DesktopSettings = () => {
   return (
     <DesktopSurfaceFrame
       accessibleLabel={m.desktop_settings_label()}
-      class="w-fit"
+      class="w-max"
       isVisible={settings.desktopMode.mode() === 'desktop'}
       title={m.desktop_settings_title()}
     >

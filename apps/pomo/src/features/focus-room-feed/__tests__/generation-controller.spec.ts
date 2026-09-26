@@ -157,6 +157,41 @@ it('should generate and persist a queued feed job through the controller boundar
   expect(fixture.feedRepository.complete).toHaveBeenCalledOnce()
 })
 
+it('should remove a saved dialogue when cancellation happens during feed completion', async () => {
+  const fixture = createFixture()
+  const completion = Promise.withResolvers<void>()
+  fixture.feedRepository.complete.mockReturnValue(completion.promise)
+  fixture.controller.schedule({jobIds: ['job-1']})
+
+  await vi.waitFor(() => expect(fixture.feedRepository.complete).toHaveBeenCalledOnce())
+  const completionOptions = fixture.feedRepository.complete.mock.calls[0]?.[0]
+  await fixture.controller.cancel()
+  expect(completionOptions?.signal?.aborted).toBe(true)
+  completion.resolve()
+
+  await vi.waitFor(() =>
+    expect(fixture.dialogueRepository.deleteDialogue).toHaveBeenCalledWith('dialogue-1'),
+  )
+  expect(fixture.onCompleted).not.toHaveBeenCalled()
+})
+
+it('should ignore an aborted feed completion after cancellation', async () => {
+  const fixture = createFixture()
+  const completion = Promise.withResolvers<void>()
+  fixture.feedRepository.complete.mockReturnValue(completion.promise)
+  fixture.controller.schedule({jobIds: ['job-1']})
+
+  await vi.waitFor(() => expect(fixture.feedRepository.complete).toHaveBeenCalledOnce())
+  await fixture.controller.cancel()
+  completion.reject(new DOMException('The transaction was aborted.', 'AbortError'))
+
+  await vi.waitFor(() =>
+    expect(fixture.dialogueRepository.deleteDialogue).toHaveBeenCalledWith('dialogue-1'),
+  )
+  expect(fixture.onCompleted).not.toHaveBeenCalled()
+  expect(fixture.onFailed).not.toHaveBeenCalled()
+})
+
 it('should preserve a sync state written before generation completes', async () => {
   const fixture = createFixture()
   fixture.runtime.generateDialogueAudio.mockImplementation(async () => {

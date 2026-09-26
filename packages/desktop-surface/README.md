@@ -68,3 +68,27 @@ WallpaperAgent가 재생하지만, 확장 안에서 실시간 WebView나 타이�
 배경 레벨과 입력 통과는 AppKit/Core Graphics API를 사용한다. 별도 WebView 창의 픽셀 투명화는
 Tauri의 `macos-private-api` 기능이 필요하며, Tauri 공식 문서상 이 기능을 사용한 앱은 Mac App
 Store에 제출할 수 없다. 따라서 1차 배포는 서명·공증 DMG를 전제로 한다.
+
+## Windows 구현과 검증
+
+Windows 어댑터는 원래 창 위치·크기·스타일을 저장한다. 미니 위젯은 420×520 논리 픽셀의
+둥근 무테두리 최상단 창이다. 바탕화면은 Explorer 아이콘 뒤에 배치하고 클릭을 통과시키며,
+인터랙티브 바탕화면은 아이콘 앞에서 WebView 입력을 받는다. 별도 조작 창과 일반 창 복원을 지원한다.
+
+Windows 11의 layered ShellView와 기존 WorkerW 구조를 구분한다. 창 부모 변경에는 Win32
+SetParent와 WS_CHILD/WS_POPUP 스타일 변경을 사용한다. Explorer의 0x052c/WorkerW 호스트
+프로토콜은 공개된 호환성 계약이 아니므로, 예상 호스트가 없으면 명시적인 오류를 반환한다.
+셸 재시작과 모니터 구성 변경에 대한 자동 복구는 아직 구현하지 않았다.
+
+`cargo test --manifest-path packages/desktop-surface/Cargo.toml --lib`로 계약 검사를 실행한다.
+잠금 해제된 실제 Windows 데스크톱에서는 다음 명령으로 네이티브 창 반복 검사를 실행한다.
+
+```sh
+cargo test --manifest-path packages/desktop-surface/Cargo.toml --lib native_modes_restore_original_window -- --ignored --nocapture
+```
+
+이 검사는 실제 창을 생성하여 위젯 크기, 바탕화면 모니터 크기, 부모 창, 입력 통과 스타일,
+원래 위치·크기·테두리·최상단 상태의 복원을 두 번 확인한다. 일반 UI 입력과 렌더링은
+Pomo 앱에서 별도로 검증해야 한다.
+
+Windows의 투명 조작 창은 Tauri 그림자 인셋으로 생기는 흰 테두리를 피하기 위해 네이티브 그림자를 사용하지 않는다.

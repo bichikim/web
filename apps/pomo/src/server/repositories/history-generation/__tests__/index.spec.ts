@@ -372,6 +372,27 @@ it('should reject a rerun when any required title is not published', async () =>
   ).rejects.toThrow('Every regeneration title must match an existing published moment')
 })
 
+it('should match required titles against published titles after NFKC and trim normalization', async () => {
+  const requiredTitles = ['1945년, 역사적 사건']
+  const storedTitle = '　１９４５년, 역사적 사건　'
+  const existing = createRun('completed')
+  const updated = {...existing, status: 'preparing' as const}
+  const {database, selectPublishedMoments} = createRerunDatabase(existing, updated, [storedTitle])
+
+  await expect(
+    prepareGenerationRerun({...CREATE_OPTIONS, requiredTitles}, database),
+  ).resolves.toMatchObject({id: RUN_ID, status: 'preparing'})
+
+  const [condition] = selectPublishedMoments.mock.calls[0] ?? []
+
+  if (condition === undefined) {
+    throw new Error('Published title query was not built')
+  }
+
+  const query = new PgDialect({casing: 'snake_case'}).sqlToQuery(condition)
+  expect(query.params).not.toContain(requiredTitles[0])
+})
+
 it.each(['completed', 'failed', 'rejected'] as const)(
   'should reopen a %s run for regeneration',
   async (status) => {

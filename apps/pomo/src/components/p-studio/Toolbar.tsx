@@ -85,14 +85,15 @@ export const SceneToolbar = (props: SceneToolbarProps) => {
   return (
     <div
       class={cx(
-        props.layout === 'surface' ? 'flex w-fit flex-col items-end gap-2' : CLASSES.sceneToolbar,
+        props.layout === 'surface' ? 'flex w-max flex-col items-end gap-2' : CLASSES.sceneToolbar,
       )}
     >
       <div
         ref={setActions}
         data-wrap={wrap() ? '' : undefined}
         class={cx(
-          'pomo-toolbar-actions flex flex-wrap justify-end gap-2',
+          'pomo-toolbar-actions flex justify-end gap-2',
+          props.layout === 'surface' ? 'w-max flex-nowrap' : 'flex-wrap',
           '[&:not([data-wrap])>.pomo-toolbar-secondary]:order-first [&_button[data-icon-only]]:rounded-full',
         )}
         role="group"

@@ -10,6 +10,10 @@
     "./dist/editor-element.js"
   ],
   "exports": {
+    "./converter": {
+      "types": "./dist/types/converter/index.d.ts",
+      "import": "./dist/converter.js"
+    },
     "./player": {
       "types": "./dist/types/player/index.d.ts",
       "import": "./dist/player.js"
@@ -24,16 +28,18 @@
     }
   },
   "scripts": {
-    "build": "vite build --mode player && vite build --mode editor && vite build --mode editor-element && tsc -p tsconfig.build.json",
+    "build": "vite build --mode player && vite build --mode editor && vite build --mode editor-element && vite build --mode converter && tsc -p tsconfig.build.json",
     "dev": "vite",
     "lint": "oxlint src visual vite.config.ts vitest.browser.config.ts",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@kobalte/core": "^0.13.13",
+    "@xmldom/xmldom": "^0.9.12",
     "ag-psd": "^31.0.2",
     "delaunator": "^5.1.0",
     "es-toolkit": "catalog:",
+    "fflate": "^0.8.3",
     "pixi.js": "^8.21.0"
   },
   "devDependencies": {

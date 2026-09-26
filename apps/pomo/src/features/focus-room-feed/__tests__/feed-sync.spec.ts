@@ -48,6 +48,17 @@ const createUndatedFeedXml = (format: 'rss' | 'atom', itemIds: ReadonlyArray<str
     : `<feed xmlns="http://www.w3.org/2005/Atom"><title>발행일 없는 피드</title>${entries}</feed>`
 }
 
+const createUndatedSameTitleFeedXml = (contents: ReadonlyArray<string>) => {
+  const entries = contents
+    .map(
+      (content) =>
+        `<item><title>같은 제목</title><content:encoded>${content}</content:encoded></item>`,
+    )
+    .join('')
+
+  return `<rss version="2.0" xmlns:content="http://purl.org/rss/1.0/modules/content/"><channel><title>발행일 없는 피드</title>${entries}</channel></rss>`
+}
+
 it('should queue only the newest item on the first subscription sync', async () => {
   const {items, jobs, repository} = createRepository()
   const summary = await synchronizeFeeds({
@@ -123,6 +134,39 @@ it.each(['rss', 'atom'] as const)(
     expect(jobs.map((job) => job.feedItemId)).toEqual(['newest', 'later'])
   },
 )
+
+it('should sync a later undated item when it shares a title with an existing item', async () => {
+  const {items, jobs, repository} = createRepository()
+  let nextId = 0
+  const fetcher = vi
+    .fn()
+    .mockResolvedValueOnce(new Response(createUndatedSameTitleFeedXml(['기존 본문'])))
+    .mockResolvedValueOnce(new Response(createUndatedSameTitleFeedXml(['기존 본문', '새 본문'])))
+  const options = {
+    connections: [CONNECTION],
+    createId: () => {
+      nextId += 1
+      return `job-${nextId}`
+    },
+    fetcher,
+    now: new Date('2026-08-14T00:06:00.000Z'),
+    repository,
+    resolveGenerationSettings: createSettingsResolver(),
+  }
+
+  const firstSummary = await synchronizeFeeds(options)
+  const firstFeedItemId = jobs[0]?.feedItemId
+
+  expect(firstSummary.queuedJobIds).toEqual(['job-1'])
+  expect(firstFeedItemId).toBeDefined()
+
+  const secondSummary = await synchronizeFeeds(options)
+
+  expect(secondSummary.queuedJobIds).toEqual(['job-2'])
+  expect(jobs.map((job) => job.feedItemId)).toHaveLength(2)
+  expect(jobs[0]?.feedItemId).toBe(firstFeedItemId)
+  expect(new Set(items.map((item) => item.feedItemId)).size).toBe(2)
+})
 
 it('should resolve a default feed voice from the automatic dialogue settings', async () => {
   const {jobs, repository} = createRepository()

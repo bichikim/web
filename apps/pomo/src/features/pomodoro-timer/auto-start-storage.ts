@@ -98,8 +98,12 @@ export const createAutoStartStorage = ({
         (value) => value.savedAt,
       )
 
-      if (latestPreference !== null && latestPreference === currentWebPreference) {
-        await writeLatestToss(latestPreference).catch(() => undefined)
+      if (latestPreference !== null) {
+        if (latestPreference === currentWebPreference) {
+          await writeLatestToss(latestPreference).catch(() => undefined)
+        } else {
+          writeWebPreference(latestPreference)
+        }
       }
 
       return latestPreference?.isEnabled ?? false
