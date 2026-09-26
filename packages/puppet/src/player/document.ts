@@ -58,7 +58,77 @@ export interface PuppetPart {
   readonly id: string
   readonly mesh: PuppetMesh
   readonly properties?: PuppetPartRenderProperties
+  readonly spatial?: PuppetSpatialSurface
   readonly texture: PuppetTexture
+}
+
+export interface PuppetSpatialSurface {
+  /** Barycentric links from image vertices to triangles of the grouped 3D mesh. */
+  readonly attachments?: ReadonlyArray<PuppetSpatialAttachment>
+  /** XYZ triples in the same order as the image mesh vertices. Positive Z faces the viewer. */
+  readonly controlPoints: ReadonlyArray<number>
+  /** Faces with the same group ID share depth ordering while other scene layers keep their order. */
+  readonly groupId?: string
+  readonly origin: readonly [number, number, number]
+  /** Parameter IDs for X, Y and Z rotation in degrees. Omitted axes remain at zero. */
+  readonly rotationParameterIds?: readonly [string | null, string | null, string | null]
+}
+
+export interface PuppetSpatialAttachment {
+  readonly triangleIndex: number
+  readonly weights: readonly [number, number, number]
+  readonly offset: readonly [number, number, number]
+}
+
+export interface PuppetSpatialPrimitive {
+  readonly center: readonly [number, number, number]
+  readonly id: string
+  readonly mode: 'add' | 'intersect' | 'smooth-add' | 'subtract'
+  readonly shape: 'box' | 'cylinder' | 'prism' | 'sphere'
+  readonly size: readonly [number, number, number]
+  readonly smoothness?: number
+}
+
+export interface PuppetSpatialObjectBase {
+  readonly id: string
+  readonly mode: PuppetSpatialPrimitive['mode']
+  readonly name: string
+  readonly visible: boolean
+}
+
+export interface PuppetSpatialPrimitiveObject extends PuppetSpatialObjectBase {
+  readonly kind: 'primitive'
+  readonly center: readonly [number, number, number]
+  readonly rotation: readonly [number, number, number]
+  readonly shape: PuppetSpatialPrimitive['shape']
+  readonly size: readonly [number, number, number]
+  readonly smoothness?: number
+}
+
+export interface PuppetSpatialGroupObject extends PuppetSpatialObjectBase {
+  readonly kind: 'group'
+  readonly children: ReadonlyArray<PuppetSpatialObject>
+  readonly smoothness?: number
+}
+
+export type PuppetSpatialObject = PuppetSpatialPrimitiveObject | PuppetSpatialGroupObject
+
+export interface PuppetSpatialMesh {
+  readonly indices: ReadonlyArray<number>
+  readonly source:
+    | {
+        readonly kind: 'generated'
+        readonly operations: ReadonlyArray<PuppetSpatialPrimitive>
+        readonly resolution: number
+      }
+    | {
+        readonly kind: 'authored'
+        readonly objects: ReadonlyArray<PuppetSpatialObject>
+        readonly resolution: number
+      }
+    | {readonly kind: 'imported'; readonly name: string}
+  /** XYZ triples in document coordinates. */
+  readonly vertices: ReadonlyArray<number>
 }
 
 export interface PuppetSceneNodeBase {
@@ -108,7 +178,7 @@ export interface PuppetVertexInfluence extends PuppetVertexReference {
 
 export interface PuppetDeformerShape {
   /** A rigid pivot and direction handle represented by exactly one bone segment. */
-  readonly deformerType?: 'rotation'
+  readonly deformerType?: 'rotation' | 'spatial'
   /** Per-vertex deformation amount; omission applies the full deformation. */
   readonly vertexInfluences?: ReadonlyArray<PuppetVertexInfluence>
   readonly boneWeights?: ReadonlyArray<PuppetBoneWeights>
@@ -143,6 +213,13 @@ export interface PuppetDeformerBinding {
 
 export interface PuppetSceneDeformerNode extends PuppetSceneContainerNodeBase, PuppetDeformerShape {
   readonly kind: 'deformer'
+  readonly spatialMesh?: PuppetSpatialMesh
+  readonly spatialMeshPosition?: readonly [number, number, number]
+  readonly spatialOrigin?: readonly [number, number, number]
+  readonly spatialRotation?: readonly [number, number, number]
+  readonly spatialRotationParameterIds?: readonly [string | null, string | null, string | null]
+  readonly spatialScale?: readonly [number, number, number]
+  readonly spatialTranslation?: readonly [number, number, number]
   /** Preserved deformation followed by the current control layout's bind mapping. */
   readonly binding?: PuppetDeformerBinding
 }
@@ -209,6 +286,11 @@ export interface PuppetParameterDeformerKeyform {
   readonly kind: 'deformer'
   readonly nodeId: string
   readonly rotationOrigin?: PuppetPoint
+  readonly spatialOrigin?: readonly [number, number, number]
+  readonly spatialMeshPosition?: readonly [number, number, number]
+  readonly spatialRotation?: readonly [number, number, number]
+  readonly spatialScale?: readonly [number, number, number]
+  readonly spatialTranslation?: readonly [number, number, number]
 }
 
 export interface PuppetParameterKeyformBase {

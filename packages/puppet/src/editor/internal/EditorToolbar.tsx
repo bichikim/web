@@ -4,9 +4,10 @@ import {Popover} from '@kobalte/core/popover'
 import {Button} from '@kobalte/core/button'
 import {EditorHelp} from './EditorHelp'
 import {ToggleButton} from '@kobalte/core/toggle-button'
-import {createSignal, createUniqueId, Show} from 'solid-js'
+import {createSignal, createUniqueId, For, Show} from 'solid-js'
 
 import type {PlayerCanvasStatus} from '../PlayerCanvas'
+import type {PuppetExampleDocument} from '../example-document'
 import type {EditorPanelVisibility} from './EditorPanelLayout'
 
 const STATUS_LABEL: Readonly<Record<PlayerCanvasStatus, string>> = {
@@ -16,6 +17,7 @@ const STATUS_LABEL: Readonly<Record<PlayerCanvasStatus, string>> = {
 }
 
 export interface EditorToolbarProps {
+  readonly examples?: ReadonlyArray<PuppetExampleDocument>
   readonly exportUrl?: string | null
   readonly activeWorkspace?: 'animation' | 'modeling'
   readonly canRedo?: boolean
@@ -28,6 +30,7 @@ export interface EditorToolbarProps {
   readonly panelVisibility?: EditorPanelVisibility
   readonly playerStatus: PlayerCanvasStatus
   readonly onExport: () => void
+  readonly onExampleOpen?: (example: PuppetExampleDocument) => void
   readonly onFileImport: (file: File | undefined) => void
   readonly onPsdReimport?: (file: File | undefined) => void
   readonly onFileOpen: (file: File | undefined) => void
@@ -64,6 +67,7 @@ const PanelVisibilityControls = (props: PanelVisibilityControlsProps) => (
 )
 
 interface ToolbarMenuProps {
+  readonly examples?: ReadonlyArray<PuppetExampleDocument>
   readonly exportUrl?: string | null
   readonly canUndo?: boolean
   readonly canRedo?: boolean
@@ -72,6 +76,7 @@ interface ToolbarMenuProps {
   readonly onUndo?: () => void
   readonly onRedo?: () => void
   readonly onExport: () => void
+  readonly onExampleOpen?: (example: PuppetExampleDocument) => void
   readonly onFileImport: (file: File | undefined) => void
   readonly onPsdReimport?: (file: File | undefined) => void
   readonly onFileOpen: (file: File | undefined) => void
@@ -80,6 +85,10 @@ interface ToolbarMenuProps {
 const ToolbarMenu = (props: ToolbarMenuProps) => {
   const [menuOpen, setMenuOpen] = createSignal(false)
   const portalMount = useEditorPortalMount()
+  const handleExampleOpen = (example: PuppetExampleDocument) => {
+    setMenuOpen(false)
+    props.onExampleOpen?.(example)
+  }
 
   return (
     <Popover forceMount open={menuOpen()} onOpenChange={setMenuOpen}>
@@ -107,6 +116,20 @@ const ToolbarMenu = (props: ToolbarMenuProps) => {
             onClose={() => setMenuOpen(false)}
             onImport={props.onPsdReimport}
           />
+          <Show when={props.examples?.length}>
+            <details>
+              <summary class="toolbar-menu-examples-trigger">예제</summary>
+              <div aria-label="예제 문서" class="grid pl-3" role="group">
+                <For each={props.examples}>
+                  {(example) => (
+                    <Button type="button" onClick={() => handleExampleOpen(example)}>
+                      {example.label}
+                    </Button>
+                  )}
+                </For>
+              </div>
+            </details>
+          </Show>
           <hr />
           <Button
             type="button"
@@ -160,6 +183,7 @@ const ToolbarMenu = (props: ToolbarMenuProps) => {
 export const EditorToolbar = (props: EditorToolbarProps) => (
   <header class="toolbar">
     <ToolbarMenu
+      examples={props.examples}
       exportUrl={props.exportUrl}
       canUndo={props.canUndo}
       canRedo={props.canRedo}
@@ -168,6 +192,7 @@ export const EditorToolbar = (props: EditorToolbarProps) => (
       onUndo={props.onUndo}
       onRedo={props.onRedo}
       onExport={props.onExport}
+      onExampleOpen={props.onExampleOpen}
       onFileImport={props.onFileImport}
       onPsdReimport={props.onPsdReimport}
       onFileOpen={props.onFileOpen}

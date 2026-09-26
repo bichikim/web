@@ -19,6 +19,7 @@ interface ContainerKindSelectProps {
 const kinds: ReadonlyArray<{value: SceneContainerConversionTarget; label: string}> = [
   {label: '일반 그룹', value: 'group'},
   {label: '자유 변형 디포머', value: 'deformer'},
+  {label: '3D 디포머', value: 'spatial'},
   {label: '곡선 디포머', value: 'curve'},
   {label: '회전 디포머', value: 'rotation'},
   {label: '본 디포머', value: 'bone'},
@@ -54,6 +55,7 @@ export const ContainerKindSelect = (props: ContainerKindSelectProps) => {
           bone={getContainerKind(props.node) === 'bone'}
           rotation={getContainerKind(props.node) === 'rotation'}
           curve={getContainerKind(props.node) === 'curve'}
+          spatial={getContainerKind(props.node) === 'spatial'}
         />
         <span aria-hidden="true" class="kind-chevron puppet-icon puppet-icon-chevron-down" />
       </DropdownMenu.Trigger>
@@ -75,6 +77,7 @@ export const ContainerKindSelect = (props: ContainerKindSelectProps) => {
                       bone={kind.value === 'bone'}
                       rotation={kind.value === 'rotation'}
                       curve={kind.value === 'curve'}
+                      spatial={kind.value === 'spatial'}
                     />
                     <DropdownMenu.ItemLabel>{kind.label}</DropdownMenu.ItemLabel>
                     <DropdownMenu.ItemIndicator class="kind-check">

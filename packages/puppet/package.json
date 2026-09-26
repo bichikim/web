@@ -34,9 +34,11 @@
     "ag-psd": "^31.0.2",
     "delaunator": "^5.1.0",
     "es-toolkit": "catalog:",
-    "pixi.js": "^8.21.0"
+    "pixi.js": "^8.21.0",
+    "three": "^0.186.1"
   },
   "devDependencies": {
+    "@types/three": "^0.186.0",
     "solid-js": "catalog:",
     "typescript": "catalog:",
     "unocss": "catalog:",

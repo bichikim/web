@@ -12,6 +12,7 @@ import {
 } from '../../player'
 import {isTwoDimensionalParameterBinding} from '../../deformation'
 import {getDeformerBounds} from './deformer-bounds'
+import {reconcileSpatialGroups} from './reconcile-spatial-groups'
 import {
   createDeformerControlPoints,
   isGridDivisionCount,
@@ -419,11 +420,12 @@ export const unwrapSceneNode = (
   if (nextScene === undefined) {
     return undefined
   }
-
   const nextDocument = withScene(document, nextScene)
-  return node.kind === 'deformer'
-    ? removeParameterDeformerTargets(nextDocument, new Set([nodeId]))
-    : nextDocument
+  const updated =
+    node.kind === 'deformer'
+      ? removeParameterDeformerTargets(nextDocument, new Set([nodeId]))
+      : nextDocument
+  return reconcileSpatialGroups(updated, scene)
 }
 
 export const unwrapSceneNodes = (
@@ -477,7 +479,6 @@ export const moveSceneNode = (options: MoveSceneNodeOptions): PuppetDocument | u
   if (detachedScene === undefined) {
     return undefined
   }
-
   const nextScene = updateChildren(detachedScene, options.parentId, (children) => {
     const insertionIndex =
       options.beforeNodeId === undefined
@@ -486,8 +487,9 @@ export const moveSceneNode = (options: MoveSceneNodeOptions): PuppetDocument | u
     const index = insertionIndex < 0 ? children.length : insertionIndex
     return [...children.slice(0, index), node, ...children.slice(index)]
   })
-
-  return nextScene === undefined ? undefined : withScene(options.document, nextScene)
+  return nextScene === undefined
+    ? undefined
+    : reconcileSpatialGroups(withScene(options.document, nextScene), scene)
 }
 
 export const moveSceneNodeRelative = (

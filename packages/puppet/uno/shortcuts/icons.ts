@@ -11,6 +11,7 @@ export const iconShortcuts = {
   'puppet-icon-chevron-left': 'i-tabler-chevron-left',
   'puppet-icon-chevron-right': 'i-tabler-chevron-right',
   'puppet-icon-curve': 'i-tabler-vector-bezier',
+  'puppet-icon-cube': 'i-tabler-cube',
   'puppet-icon-eye': 'i-tabler-eye',
   'puppet-icon-eye-off': 'i-tabler-eye-off',
   'puppet-icon-focus-2': 'i-tabler-focus-2',

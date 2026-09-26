@@ -34,6 +34,25 @@ describe('EditorNumberField', () => {
     expect(onValueChange).toHaveBeenLastCalledWith(-12.5)
   })
 
+  test('should show an external value change without replacing a focused input', () => {
+    const [value, setValue] = createSignal(0)
+    const view = render(() => (
+      <EditorNumberField label="값" value={value()} onValueChange={setValue} />
+    ))
+    const input = view.getByRole('spinbutton', {name: '값'})
+
+    input.focus()
+    fireEvent.input(input, {target: {value: '60'}})
+    expect(value()).toBe(60)
+    setValue(30)
+
+    expect(view.getByRole('spinbutton', {name: '값'})).toBe(input)
+    expect(input).toHaveValue(30)
+    expect(input).toHaveFocus()
+    fireEvent.keyDown(input, {key: 'Escape'})
+    expect(value()).toBe(30)
+  })
+
   test('should scrub horizontally, clamp the range, and group the edit lifecycle', () => {
     const onEditEnd = vi.fn()
     const onEditStart = vi.fn()

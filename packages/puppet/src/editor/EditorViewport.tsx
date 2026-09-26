@@ -1,6 +1,7 @@
 import {getMeshEditingIssue} from './move-mesh-vertex'
 import {MeshModeControl} from './internal/MeshModeControl'
 import {getRestPreview} from './internal/rest-preview'
+import {getSceneNode} from './internal/scene-graph'
 import {EditorToggleButton} from '../design-system'
 import {CameraViewport} from './internal/CameraViewport'
 import {SkinningTools} from './internal/SkinningTools'
@@ -171,6 +172,16 @@ export const EditorViewport = (props: EditorViewportProps) => {
   )
   const [editingVisible, setEditingVisible] = createSignal(true)
   const editingControlsVisible = () => editingVisible() && !props.playbackActive
+  const spatialSurface = createMemo(() => {
+    if (!editingControlsVisible() || editingMesh() || props.activeNodeId === undefined) {
+      return undefined
+    }
+    const document = props.previewDocument ?? editDocument()
+    const node = getSceneNode(document, props.activeNodeId)
+    return node?.kind === 'deformer' && node.deformerType === 'spatial'
+      ? {document, node}
+      : undefined
+  })
   const [displayMount, setDisplayMount] = createSignal<HTMLDivElement>()
   const meshControls = (
     <Show when={props.editMode === 'parameter' && props.activePartId !== undefined}>
@@ -238,6 +249,7 @@ export const EditorViewport = (props: EditorViewportProps) => {
           onPlayerChange={props.onPlayerChange}
           onStatusChange={props.onStatusChange}
           parameterValues={editingMesh() ? undefined : props.parameterValueMap}
+          spatialSurface={spatialSurface()}
         />
         <EditingOverlays
           displayMount={displayMount()}

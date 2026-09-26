@@ -2,6 +2,11 @@ import {describe, expect, test} from 'vitest'
 
 import {createDemoDocument, parseDocument, serializeDocument} from '../../player'
 import {autoMeshPart, getMinimumAutoMeshCellSize} from '../auto-mesh-part'
+import {generateSpatialMesh} from '../../deformation/generate-spatial-mesh'
+import {convertSceneContainers} from '../internal/container-conversion'
+import {moveSceneNodeRelative} from '../internal/scene-graph'
+import {setSpatialMesh} from '../internal/set-spatial-mesh'
+import {createSpatialSurface} from '../internal/set-spatial-surface'
 
 const createTwoPixelDocument = () => {
   const document = createDemoDocument()
@@ -27,6 +32,56 @@ const createPixels = (opaque = true) => {
 }
 
 describe('autoMeshPart', () => {
+  test('should reattach regenerated image vertices inside a meshed 3D deformer', () => {
+    const converted = convertSceneContainers({
+      document: createTwoPixelDocument(),
+      nodeIds: ['shapes'],
+      targetKind: 'spatial',
+    })!
+    const mesh = generateSpatialMesh({
+      operations: [
+        {center: [388, 243, 0], id: 'box', mode: 'add', shape: 'box', size: [800, 600, 80]},
+      ],
+      resolution: 8,
+    })
+    const meshed = setSpatialMesh({document: converted, mesh, nodeId: 'shapes'})!
+    const grouped = moveSceneNodeRelative({
+      document: meshed,
+      nodeId: 'mesh-preview',
+      position: 'inside',
+      targetNodeId: 'shapes',
+    })!
+    const result = autoMeshPart({
+      document: grouped,
+      partId: 'mesh-preview',
+      pixels: createPixels(),
+      settings: {alphaThreshold: 16, cellSize: 1},
+    })
+    expect(result.ok).toBe(true)
+    if (result.ok) {
+      const part = result.document.parts.find((candidate) => candidate.id === 'mesh-preview')!
+      expect(part.spatial?.groupId).toBe('shapes')
+      expect(part.spatial?.attachments).toHaveLength(part.mesh.vertices.length / 2)
+      expect(parseDocument(serializeDocument(result.document)).ok).toBe(true)
+    }
+  })
+
+  test('should remove spatial points when automatic remeshing replaces their topology', () => {
+    const source = createTwoPixelDocument()
+    const part = source.parts[0]!
+    const document = {
+      ...source,
+      parts: [{...part, spatial: createSpatialSurface(part)}, ...source.parts.slice(1)],
+    }
+    const result = autoMeshPart({
+      document,
+      partId: part.id,
+      pixels: createPixels(),
+      settings: {alphaThreshold: 16, cellSize: 1},
+    })
+    expect(result.ok && result.document.parts[0]?.spatial).toBeUndefined()
+  })
+
   test('should replace the selected mesh and reset only its stored deformations', () => {
     const document = createTwoPixelDocument()
 
