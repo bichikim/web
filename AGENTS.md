@@ -4,15 +4,14 @@
 
 - **Examples**: If the user asks only to see an example, provide it in the chat response without creating or editing files. If the user asks to build something from an example and its implementation code is available, study that implementation before implementing it.
 - **Intent gate**: State the concrete interpretation at task start and when the scope or direction changes.
-- **Existing code references**: When discussing existing code, always include its file path.
+- **Existing code references**: When discussing existing code, always include a clickable link to its exact file and line number so the link opens at that line.
 
 ## Styling ownership
 
-- Prefer UnoCSS over standalone `.css` files. Before creating or adding usage of a standalone `.css` file, explain why it is needed and obtain explicit user approval.
-- UnoCSS owns all visual style values.
-- JavaScript and TypeScript may communicate semantic state through classes or data attributes and inject runtime values through CSS custom properties; UnoCSS must define how those values affect visual styling.
-- JavaScript and TypeScript must not otherwise create style values or set them directly on the DOM.
-- If preserving the requested behavior requires other style handling in JavaScript or TypeScript, first present the concrete reason and alternatives and obtain explicit user approval.
+- Do not create standalone `.css` files on your own initiative. Before creating or adding usage of a standalone `.css` file, explain why it is needed and obtain explicit user approval.
+- Follow UnoCSS styling methods for all visual style values.
+- JavaScript and TypeScript may communicate semantic state through classes or data attributes and inject runtime values through CSS custom properties.
+- If other style handling in JavaScript or TypeScript is needed, first present the concrete reason and alternatives and obtain explicit user approval.
 
 ## Scripts
 
@@ -22,9 +21,7 @@
 
 ## React dependencies
 
-- Do not introduce React or React-specific libraries, whether directly or through a new transitive dependency. Prefer Solid-compatible or framework-agnostic alternatives.
-- If a task appears to require React or a dependency that brings in React-specific packages, explain why and ask the user before adding it. Do not proceed without explicit approval.
-- Existing React dependencies for Storybook and current integrations are exceptions, not permission to expand React usage.
+- Do not introduce React or React-specific libraries, whether directly or through a new transitive dependency.
 
 ## File naming
 
@@ -33,15 +30,13 @@
 
 ## Decision quality
 
-- Prefer event-driven work whenever the relevant event or completion signal is available. Use `setTimeout` or `setInterval` only when necessary, after explaining why an event-driven approach is insufficient and obtaining explicit user approval.
-- **Declarative programming (required)**: Write code declaratively by composing reusable operations. Judge readability by how clearly the composition expresses intent, not by code length.
-- When correcting AI behavior, use the lowest-prompt-cost instruction that preserves the outcome.
+- When implementing a feature, prefer event-driven work whenever the relevant event or completion signal is available. Before using `setTimeout` or `setInterval`, explain why an event-driven approach is insufficient and obtain explicit user approval.
+- **Declarative programming (required; very important)**: Write code declaratively by composing reusable operations. Judge readability by how clearly the composition expresses intent, not by code length.
 - Evaluate changes in repository-wide context, prioritizing compatibility, reusability, and readability over local optimization.
-- Do not treat prevalence as evidence of quality.
 
 ## Evidence
 
-- Treat assumptions as assumptions, not facts. Establish factual or technical conclusions from the source capable of proving them: the actual project's files, configuration, data, runtime, executed tests, current authoritative documentation, or a focused experiment.
+- Establish factual or technical conclusions only from evidence capable of proving them: the actual project's files, configuration, data, runtime, executed tests, current authoritative documentation, or a focused experiment.
 - Match the evidence to the claim: source inspection does not prove runtime behavior, an unexecuted test does not prove behavior, and a passing test proves only the assertions and environment it exercised. For changeable external information, verify the exact meaning and relevant consequence from a current authoritative source in the same turn.
 - When direct evidence is missing, run the smallest relevant test or runtime experiment and distinguish product defects from setup, runner, sandbox, and environment failures.
 - Show the decisive evidence. If no permitted source or viable experiment can establish the claim, state that it cannot be determined instead of guessing.
