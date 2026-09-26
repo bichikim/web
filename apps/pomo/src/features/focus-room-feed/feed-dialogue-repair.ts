@@ -9,6 +9,14 @@ const LEAKED_RSS_ID = 'pomo-dev-feed:'
 const LEAKED_ATOM_ID = 'urn:pomo:dev-feed:'
 const LEGACY_SELF_LINK_ERROR = '피드 항목이 원문 대신 피드 자체 주소를 가리키고 있어요.'
 
+const getSourcePath = (sourceUrl: string) => {
+  try {
+    return new URL(sourceUrl).pathname
+  } catch {
+    return null
+  }
+}
+
 export interface IsMalformedDevFeedDialogueOptions {
   readonly dialogue: PDialogue
   readonly metadata: FeedDialogueMetadata
@@ -22,9 +30,9 @@ export interface RepairStoredDevFeedDialoguesOptions {
 
 /** Detects dialogue text created when a legacy dev-feed link was parsed as article HTML. */
 export const isMalformedDevFeedDialogue = (options: IsMalformedDevFeedDialogueOptions) => {
-  const sourcePath = new URL(options.metadata.sourceUrl).pathname
+  const sourcePath = getSourcePath(options.metadata.sourceUrl)
 
-  if (!DEV_FEED_PATHS.has(sourcePath)) {
+  if (sourcePath === null || !DEV_FEED_PATHS.has(sourcePath)) {
     return false
   }
 
@@ -35,8 +43,9 @@ export const isMalformedDevFeedDialogue = (options: IsMalformedDevFeedDialogueOp
 
 /** Detects temporary dev-feed failures created before the dev endpoint exposed full content. */
 export const isLegacyDevFeedFailure = (item: FeedItemRecord) => {
-  const sourcePath = new URL(item.sourceUrl).pathname
+  const sourcePath = getSourcePath(item.sourceUrl)
   return (
+    sourcePath !== null &&
     DEV_FEED_PATHS.has(sourcePath) &&
     item.status === 'failed' &&
     item.message === LEGACY_SELF_LINK_ERROR
