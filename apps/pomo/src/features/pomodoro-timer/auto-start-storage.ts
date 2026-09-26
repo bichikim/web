@@ -58,6 +58,7 @@ export const createAutoStartStorage = ({
   now,
 }: AutoStartStorageOptions): AutoStartStorage => {
   const writeLatestToss = createLatestStorageWriter(AUTO_START_STORAGE_KEY, storage.writeToss)
+  let latestKnownPreference: StoredPreference | null = null
 
   const readWebPreference = () => {
     return (
@@ -80,25 +81,48 @@ export const createAutoStartStorage = ({
     return storage.writeWeb(AUTO_START_STORAGE_KEY, preference)
   }
 
+  const rememberPreference = (preference: StoredPreference) => {
+    latestKnownPreference = selectMaximumBy(
+      preference,
+      latestKnownPreference,
+      (value) => value.savedAt,
+    )
+  }
+
+  const readWebFallback = (webPreference = readWebPreference()) => {
+    const latestPreference = selectMaximumBy(
+      webPreference,
+      latestKnownPreference,
+      (value) => value.savedAt,
+    )
+    return latestPreference?.isEnabled ?? false
+  }
+
   /** Reads the latest auto-start preference saved by the app or browser runtime. */
   const read = async () => {
     const webPreference = readWebPreference()
 
     if (!storage.usesTossStorage()) {
-      return webPreference?.isEnabled ?? false
+      return readWebFallback(webPreference)
     }
 
     try {
       const tossPreference = await readTossPreference()
 
       const currentWebPreference = readWebPreference()
-      const latestPreference = selectMaximumBy(
+      const latestStoredPreference = selectMaximumBy(
         currentWebPreference,
         tossPreference,
         (value) => value.savedAt,
       )
+      const latestPreference = selectMaximumBy(
+        latestStoredPreference,
+        latestKnownPreference,
+        (value) => value.savedAt,
+      )
 
       if (latestPreference !== null) {
+        latestKnownPreference = latestPreference
         if (latestPreference === currentWebPreference) {
           await writeLatestToss(latestPreference).catch(() => undefined)
         } else {
@@ -108,7 +132,7 @@ export const createAutoStartStorage = ({
 
       return latestPreference?.isEnabled ?? false
     } catch {
-      return readWebPreference()?.isEnabled ?? false
+      return readWebFallback()
     }
   }
 
@@ -131,7 +155,12 @@ export const createAutoStartStorage = ({
       if (webWriteError !== null) {
         throw new Error('Failed to persist auto-start preference.', {cause: error})
       }
+
+      rememberPreference(preference)
+      return
     }
+
+    rememberPreference(preference)
   }
 
   return {read, write}
