@@ -74,18 +74,20 @@ describe('playback-storage', () => {
 
   it('should restore native playback when browser storage is empty', async () => {
     storage.adapter.usesTossStorage.mockReturnValue(true)
-    storage.adapter.readToss.mockResolvedValue({
+    const native = {
       isPlaying: true,
       positionSeconds: 8,
       savedAt: 15,
       trackId: 'native-track',
-    })
+    }
+    storage.adapter.readToss.mockResolvedValue(native)
 
     expect(await playbackStorage.read()).toEqual({
       isPlaying: true,
       positionSeconds: 8,
       trackId: 'native-track',
     })
+    expect(storage.state.web).toEqual(native)
   })
 
   it('should keep browser playback when native storage is empty', async () => {
@@ -155,17 +157,23 @@ describe('playback-storage', () => {
     },
   )
 
-  it('should leave newer native playback untouched', async () => {
+  it('should mirror newer native playback to web and preserve it after bridge loss', async () => {
     storage.adapter.usesTossStorage.mockReturnValue(true)
     storage.state.web = {isPlaying: false, positionSeconds: 1, savedAt: 10, trackId: 'old'}
-    storage.adapter.readToss.mockResolvedValue({
+    const latest = {
       isPlaying: true,
       positionSeconds: 12,
       savedAt: 200,
       trackId: 'new',
-    })
+    }
+    storage.adapter.readToss.mockResolvedValue(latest)
+
     await expect(playbackStorage.read()).resolves.toMatchObject({trackId: 'new'})
     expect(storage.adapter.writeToss).not.toHaveBeenCalled()
+    expect(storage.adapter.writeWeb).toHaveBeenCalledWith(latest)
+
+    storage.adapter.usesTossStorage.mockReturnValue(false)
+    await expect(playbackStorage.read()).resolves.toMatchObject({trackId: 'new'})
   })
 
   it('should return browser playback while repair is pending and serialize a newer write', async () => {
