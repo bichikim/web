@@ -149,8 +149,11 @@ export const createGenerationDatabase = (
 export const createRerunDatabase = (
   existing: HistoricalGenerationRunRow,
   updated: HistoricalGenerationRunRow,
-  selectedTitles: ReadonlyArray<string>,
+  publishedTitles: ReadonlyArray<string>,
 ) => {
+  const selectPublishedMoments = vi.fn(async (_condition: SQL) =>
+    publishedTitles.map((title) => ({title})),
+  )
   const select = vi
     .fn()
     .mockReturnValueOnce({
@@ -160,7 +163,7 @@ export const createRerunDatabase = (
     })
     .mockReturnValueOnce({
       from: vi.fn(() => ({
-        where: vi.fn(async () => selectedTitles.map((title) => ({title}))),
+        where: selectPublishedMoments,
       })),
     })
     .mockReturnValueOnce({
@@ -173,6 +176,7 @@ export const createRerunDatabase = (
 
   return {
     database: {select, update: vi.fn(() => ({set}))} as unknown as Database,
+    selectPublishedMoments,
     set,
     where,
   }

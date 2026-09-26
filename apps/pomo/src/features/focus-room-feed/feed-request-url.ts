@@ -16,8 +16,8 @@ export const getFeedRequestUrl = (value: string, environment: FeedUrlEnvironment
   }
   const ownedOrigin = url.origin === localOrigin || url.origin === publicOrigin
   const dateSensitive =
-    /^\/api\/feeds\/today-in-history\/(?:rss|atom)\.xml$/u.test(url.pathname) ||
-    /^\/__dev\/feeds\/(?:rss|atom)\.xml$/u.test(url.pathname)
+    /^\/api\/feeds\/today-in-history\/(?:rss|atom)\.xml\/?$/u.test(url.pathname) ||
+    /^\/__dev\/feeds\/(?:rss|atom)\.xml\/?$/u.test(url.pathname)
   if (!ownedOrigin || !dateSensitive) {
     return value
   }

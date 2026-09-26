@@ -31,6 +31,23 @@ it('should parse RSS content and preserve all readable text', () => {
   )
 })
 
+it('should ignore RSS items nested inside another item', () => {
+  const feed = parseFeedXml(
+    `<rss><channel><title>중첩 item</title>
+      <item><title>바깥 항목</title><guid>outer</guid>
+        <item><title>안쪽 항목</title><guid>inner</guid></item>
+      </item>
+      <item><title>다른 항목</title><guid>sibling</guid></item>
+    </channel></rss>`,
+    'https://example.com/feed.xml',
+  )
+
+  expect(feed.items.map(({id, title}) => ({id, title}))).toEqual([
+    {id: 'outer', title: '바깥 항목'},
+    {id: 'sibling', title: '다른 항목'},
+  ])
+})
+
 it('should prefer encoded content over an earlier empty media content', () => {
   const feed = parseFeedXml(
     `<rss version="2.0" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:media="http://search.yahoo.com/mrss/"><channel><title>테스트 RSS</title><item>
@@ -62,8 +79,20 @@ it('should parse Atom links and content', () => {
     contentKind: 'full',
     id: 'atom-1',
     link: 'https://example.com/atom-1',
+    publishedAt: '2026-08-14T01:00:00.000Z',
     title: 'Atom 소식',
   })
+})
+
+it('should prefer the Atom published date when updated appears first', () => {
+  const feed = parseFeedXml(
+    `<feed xmlns="http://www.w3.org/2005/Atom"><title>테스트 Atom</title><entry>
+      <updated>2026-09-20T00:00:00Z</updated><published>2024-01-01T00:00:00Z</published>
+    </entry></feed>`,
+    'https://example.com/atom.xml',
+  )
+
+  expect(feed.items[0]?.publishedAt).toBe('2024-01-01T00:00:00.000Z')
 })
 
 it('should parse RDF-style RSS items outside the channel element', () => {
@@ -101,6 +130,35 @@ it('should keep linkless feed items distinct with their title and publication ti
   ])
 })
 
+it('should keep undated items without an id or link distinct by their XML content', () => {
+  const xml = `<rss><channel><title>링크 없는 피드</title>
+    <item><title>같은 제목</title><description>첫 번째 항목</description></item>
+    <item><title>같은 제목</title><description>두 번째 항목</description></item>
+  </channel></rss>`
+  const feed = parseFeedXml(xml, 'https://example.com/feed.xml')
+  const repeatedFeed = parseFeedXml(xml, 'https://example.com/feed.xml')
+
+  expect(feed.items.map((item) => item.id)).toHaveLength(2)
+  expect(new Set(feed.items.map((item) => item.id)).size).toBe(2)
+  expect(feed.items.map((item) => item.id)).toEqual(repeatedFeed.items.map((item) => item.id))
+})
+
+it('should keep an undated item id stable when XML indentation changes', () => {
+  const compactFeed = parseFeedXml(
+    '<rss><channel><title>피드</title><item><title>같은 제목</title><description>본문</description></item></channel></rss>',
+    'https://example.com/feed.xml',
+  )
+  const indentedFeed = parseFeedXml(
+    `<rss><channel><title>피드</title><item>
+      <title>같은 제목</title>
+      <description>본문</description>
+    </item></channel></rss>`,
+    'https://example.com/feed.xml',
+  )
+
+  expect(indentedFeed.items[0]?.id).toBe(compactFeed.items[0]?.id)
+})
+
 it('should extract article text without navigation or scripts', () => {
   expect(
     extractArticleText(
@@ -127,12 +185,11 @@ it('should use safe fallbacks for incomplete feed metadata', () => {
     'https://example.com/feed.xml',
   )
 
-  expect(feed).toEqual({
+  expect(feed).toMatchObject({
     items: [
       {
         content: '',
         contentKind: 'none',
-        id: '제목 없는 피드\u0000',
         link: '',
         publishedAt: null,
         title: '제목 없는 피드',
@@ -140,6 +197,7 @@ it('should use safe fallbacks for incomplete feed metadata', () => {
     ],
     title: 'example.com',
   })
+  expect(feed.items[0]?.id).toMatch(/^제목 없는 피드\u0000\u0000[0-9a-z]+-[0-9a-z]+$/u)
 })
 
 it('should discard links that cannot be resolved against the feed URL', () => {

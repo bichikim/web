@@ -10,6 +10,7 @@ import type {PDialogueRepository} from '../repository'
 export interface PlayPDialogueSequenceOptions {
   readonly dialogueIds: ReadonlyArray<string>
   readonly onDialogueStart: (dialogueId: string) => Promise<void> | void
+  readonly onDialogueSkipped?: (dialogueId: string) => Promise<void> | void
   readonly onDialogueUnavailable?: (dialogueId: string) => Promise<void> | void
   readonly onSequenceStop: (dialogueIds: ReadonlyArray<string>) => Promise<void> | void
   readonly replacementPolicy?: DialogueSequenceReplacementPolicy
@@ -23,6 +24,7 @@ export interface DialoguePlaybackRequest {
   readonly applyPendingReplacement: () => boolean
   readonly getCurrentDialogueId: () => string | undefined
   readonly onDialogueStart: PlayPDialogueSequenceOptions['onDialogueStart']
+  readonly onDialogueSkipped: PlayPDialogueSequenceOptions['onDialogueSkipped']
   readonly onDialogueUnavailable: PlayPDialogueSequenceOptions['onDialogueUnavailable']
   readonly repository: PDialogueRepository
 }
@@ -33,6 +35,7 @@ interface PlaybackQueueRequest {
   isProcessing: boolean
   nextDialoguePosition: number
   readonly onDialogueStart: PlayPDialogueSequenceOptions['onDialogueStart']
+  readonly onDialogueSkipped: PlayPDialogueSequenceOptions['onDialogueSkipped']
   readonly onDialogueUnavailable: PlayPDialogueSequenceOptions['onDialogueUnavailable']
   readonly onSequenceStop: PlayPDialogueSequenceOptions['onSequenceStop']
   pendingDialogueIds: ReadonlyArray<string> | null
@@ -115,6 +118,7 @@ const createPlaybackQueueRequest = (request: PlaybackQueueRequest): DialoguePlay
   },
   applyPendingReplacement: () => applyPendingReplacement(request),
   getCurrentDialogueId: () => request.dialogueIds[request.nextDialoguePosition],
+  onDialogueSkipped: request.onDialogueSkipped,
   onDialogueStart: request.onDialogueStart,
   onDialogueUnavailable: request.onDialogueUnavailable,
   repository: request.repository,
@@ -302,6 +306,7 @@ export const createDialoguePlaybackQueue = (
           dialogueIds,
           isProcessing: false,
           nextDialoguePosition: 0,
+          onDialogueSkipped: sequenceOptions.onDialogueSkipped,
           onDialogueStart: sequenceOptions.onDialogueStart,
           onDialogueUnavailable: sequenceOptions.onDialogueUnavailable,
           onSequenceStop: sequenceOptions.onSequenceStop,

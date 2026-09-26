@@ -104,6 +104,20 @@ describe('createStreamingSpeechBuffer', () => {
     },
   )
 
+  it('should not repeat an earlier completed sentence when a later sentence changes', () => {
+    const buffer = createStreamingSpeechBuffer({locale: 'ko'})
+
+    expect(buffer.update('첫 문장입니다. 둘째 문장입니다.')).toEqual([
+      '첫 문장입니다.',
+      '둘째 문장입니다.',
+    ])
+    const correctedText = '첫 문장입니다. 수정된 둘째 문장입니다!'
+
+    expect(buffer.update(correctedText)).toEqual(['수정된 둘째 문장입니다!'])
+    expect(buffer.update(correctedText)).toEqual([])
+    expect(buffer.update(`${correctedText} 세 번째 문장입니다.`)).toEqual(['세 번째 문장입니다.'])
+  })
+
   it('should omit an empty completed segment and an empty remaining tail', () => {
     const buffer = createStreamingSpeechBuffer({locale: 'ko'})
 

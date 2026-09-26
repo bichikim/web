@@ -5,6 +5,7 @@ import {defineConfig} from 'vite'
 import unoConfig from './uno.config'
 
 const BUILD_TARGETS = {
+  converter: './src/converter/index.ts',
   editor: './src/editor/index.ts',
   'editor-element': './src/editor-element/index.ts',
   player: './src/player/index.ts',

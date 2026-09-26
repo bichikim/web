@@ -3,8 +3,10 @@ import type {CalendarEventRange} from './types'
 
 const CALENDAR_INTENT_PATTERN = /(?:일정|미팅|회의|약속|스케줄)/u
 const THIS_WEEK_PATTERN = /이번 ?주/u
-const IMPLICIT_SCHEDULE_PATTERN = /(?:오늘|내일|이번 ?주).*(?:뭐|무엇).*(?:있|하)/u
+const IMPLICIT_SCHEDULE_PATTERN = /(?:오늘|내일|모레|이번 ?주).*(?:뭐|무엇).*(?:있|하)/u
 const MILLISECONDS_PER_DAY = 86_400_000
+const DAY_AFTER_TOMORROW_START_DAYS = 2
+const DAY_AFTER_TOMORROW_END_DAYS = 3
 const NEXT_EVENT_WINDOW_DAYS = 30
 const DAYS_PER_WEEK = 7
 
@@ -39,6 +41,14 @@ export const createCalendarQuery = (
     return dayjs.tz(`${date}T${time}`, timeZone).toDate()
   }
 
+  if (options.text.includes('모레')) {
+    return toRange(
+      boundary(DAY_AFTER_TOMORROW_START_DAYS),
+      options.text.includes('오전')
+        ? boundary(DAY_AFTER_TOMORROW_START_DAYS, '12:00:00')
+        : boundary(DAY_AFTER_TOMORROW_END_DAYS),
+    )
+  }
   if (options.text.includes('내일')) {
     return toRange(
       boundary(1),

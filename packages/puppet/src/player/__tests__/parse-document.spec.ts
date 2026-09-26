@@ -87,6 +87,41 @@ describe('parseDocument', () => {
     expect(parseDocument(serializeDocument(document))).toEqual({document, ok: true})
   })
 
+  it('should store a repeated embedded texture once and restore it for every part', () => {
+    const document = createDemoDocument()
+    const texture = {height: 2, src: 'data:image/png;base64,AAAA', width: 2}
+    const source = {...document, parts: document.parts.map((part) => ({...part, texture}))}
+    const serialized = serializeDocument(source)
+    const wire = JSON.parse(serialized)
+
+    expect(wire.textureAssets).toEqual({'texture-0': texture.src})
+    for (const part of wire.parts) {
+      expect(part.texture).toEqual({assetId: 'texture-0', height: 2, width: 2})
+    }
+    expect(serialized.split(texture.src)).toHaveLength(2)
+    expect(parseDocument(serialized)).toEqual({document: source, ok: true})
+  })
+
+  it('should reject missing or conflicting embedded texture references', () => {
+    const document = createDemoDocument()
+    const texture = {assetId: 'missing', height: 2, width: 2}
+    const parts = [{...document.parts[0], texture}, ...document.parts.slice(1)]
+
+    expect(parseDocument(JSON.stringify({...document, parts, textureAssets: {}})).ok).toBe(false)
+    expect(
+      parseDocument(
+        JSON.stringify({
+          ...document,
+          parts: [
+            {...parts[0], texture: {...texture, src: 'data:image/png;base64,AAAA'}},
+            ...parts.slice(1),
+          ],
+          textureAssets: {missing: 'data:image/png;base64,AAAA'},
+        }),
+      ).ok,
+    ).toBe(false)
+  })
+
   it('should accept a positive integer frame rate and retain the legacy default when omitted', () => {
     const document = createDemoDocument()
 

@@ -61,7 +61,8 @@ const isWeatherFeedRequired = (preference: WeatherPreference): boolean =>
 const getReadyFeedState = (
   feed: WeatherFeed,
 ): Extract<WeatherState, {readonly status: 'ready'}> => {
-  const stale = feed.stale || Date.parse(feed.expiresAt) <= Date.now()
+  const expiryTimestamp = Date.parse(feed.expiresAt)
+  const stale = feed.stale || Number.isNaN(expiryTimestamp) || expiryTimestamp <= Date.now()
   return {feed: {...feed, stale}, status: 'ready'}
 }
 
