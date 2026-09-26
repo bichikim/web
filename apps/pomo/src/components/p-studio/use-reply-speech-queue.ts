@@ -70,26 +70,20 @@ export const useReplySpeechQueue = (options: UseReplySpeechQueueOptions) => {
     const error = createCancelledError()
     pendingRequests.forEach((request) => request.reject(error))
   }
-  const cancelActiveRequest = (releaseAfterStop = false) => {
+  const cancelActiveRequest = () => {
     const request = activeRequest
 
     if (request === null) {
       return
     }
 
-    try {
-      if (request.cancelled) {
-        return
-      }
-
-      request.cancelled = true
-      request.reject(createCancelledError())
-      options.stop()
-    } finally {
-      if (releaseAfterStop) {
-        releaseActiveRequest(request)
-      }
+    if (request.cancelled) {
+      return
     }
+
+    request.cancelled = true
+    request.reject(createCancelledError())
+    options.stop()
   }
 
   createEffect(() => {
@@ -110,7 +104,7 @@ export const useReplySpeechQueue = (options: UseReplySpeechQueueOptions) => {
 
     wasEnabled = true
     if (isDialogueOccupied) {
-      cancelActiveRequest(true)
+      cancelActiveRequest()
     }
     if (request === undefined || isSpeaking() || occupied) {
       return

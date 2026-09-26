@@ -250,13 +250,13 @@ it('should abort an active reply when dialogue becomes occupied', async () => {
   return expect(queuedReply).resolves.toBeUndefined().finally(cleanup)
 })
 
-it('should continue the queue when stopped reply speech does not settle', async () => {
+it('should wait for canceled in-flight speech before continuing after dialogue cancellation', async () => {
   const [isDialogueOccupied, setIsDialogueOccupied] = createSignal(false)
-  const completions = new Map<string, VoidFunction>()
+  const completions: Array<VoidFunction> = []
   const speak = vi.fn(
-    (text: string) =>
+    () =>
       new Promise<void>((resolve) => {
-        completions.set(text, resolve)
+        completions.push(resolve)
       }),
   )
   const stop = vi.fn()
@@ -267,6 +267,7 @@ it('should continue the queue when stopped reply speech does not settle', async 
   const activeReply = result.enqueue('재생 중인 답변')
   await vi.waitFor(() => expect(speak).toHaveBeenCalledWith('재생 중인 답변'))
   const queuedReply = result.enqueue('대화 뒤에 재생할 답변')
+  void queuedReply.catch(() => undefined)
 
   setIsDialogueOccupied(true)
 
@@ -275,19 +276,13 @@ it('should continue the queue when stopped reply speech does not settle', async 
 
   setIsDialogueOccupied(false)
 
-  await vi.waitFor(() => expect(speak).toHaveBeenNthCalledWith(2, '대화 뒤에 재생할 답변'))
-  const nextReply = result.enqueue('그다음 답변')
-
-  completions.get('재생 중인 답변')?.()
   await Promise.resolve()
+  await Promise.resolve()
+  expect(speak).toHaveBeenCalledTimes(1)
 
-  expect(speak).toHaveBeenCalledTimes(2)
-
-  completions.get('대화 뒤에 재생할 답변')?.()
+  completions[0]?.()
+  await vi.waitFor(() => expect(speak).toHaveBeenNthCalledWith(2, '대화 뒤에 재생할 답변'))
+  completions[1]?.()
   await expect(queuedReply).resolves.toBeUndefined()
-  await vi.waitFor(() => expect(speak).toHaveBeenCalledTimes(3))
-
-  completions.get('그다음 답변')?.()
-  await expect(nextReply).resolves.toBeUndefined()
   cleanup()
 })
