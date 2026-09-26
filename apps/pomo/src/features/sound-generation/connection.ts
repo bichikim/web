@@ -1,3 +1,4 @@
+import {clampUnit} from 'src/utils/clamp-unit'
 import {clamp} from 'es-toolkit/math'
 // oxlint-disable no-magic-numbers -- Shared PCM layout and audio-connection policy.
 
@@ -118,8 +119,8 @@ export function createPcmEdgeBlend(options: PcmEdgeBlendOptions): ArrayBuffer {
   for (let frame = 0; frame < frames; frame += 1) {
     const generatedWeight =
       direction === 'generated-to-original'
-        ? Math.min(1, (frames - 1 - frame) / rampFrames)
-        : Math.min(1, frame / rampFrames)
+        ? clampUnit((frames - 1 - frame) / rampFrames)
+        : clampUnit(frame / rampFrames)
     for (let channel = 0; channel < 2; channel += 1) {
       const offset = frame * STEREO_FRAME_BYTES + channel * 2
       const generatedOffset = (generatedStartFrame + frame) * STEREO_FRAME_BYTES + channel * 2

@@ -1,3 +1,4 @@
+import {clampUnit} from 'src/utils/clamp-unit'
 import 'pixi.js/unsafe-eval'
 import {Application, Container, Sprite, type Texture} from 'pixi.js'
 
@@ -397,7 +398,7 @@ export class PSceneRenderer {
 
       startedAt ??= timestamp
 
-      const progress = Math.min(1, (timestamp - startedAt) / SCENE_TRANSITION_DURATION)
+      const progress = clampUnit((timestamp - startedAt) / SCENE_TRANSITION_DURATION)
       this.#sceneTransitions.setProgress(progress)
       this.#depthFilter?.setDepthMix(progress)
       this.#application.render()

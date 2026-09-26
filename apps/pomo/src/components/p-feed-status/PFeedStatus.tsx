@@ -1,3 +1,4 @@
+import {uniq} from 'es-toolkit/array'
 import {FeedRecoveryNotice} from '../feed-status/FeedRecoveryNotice'
 import {useFeedProgress} from '../feed-status/use-feed-progress'
 import {createEffect, createSignal, Match, Show, Switch} from 'solid-js'
@@ -34,7 +35,7 @@ interface MissingModelDownloads {
 const getMissingModelDownloads = async (
   jobs: ReadonlyArray<FeedDialogueJob>,
 ): Promise<MissingModelDownloads> => {
-  const modelIds = [...new Set(jobs.map((job) => job.modelId))]
+  const modelIds = uniq(jobs.map((job) => job.modelId))
   const modelStates = await Promise.all(
     modelIds.map(async (modelId) => ({
       downloaded: await isSupertonicModelDownloaded({modelId}),

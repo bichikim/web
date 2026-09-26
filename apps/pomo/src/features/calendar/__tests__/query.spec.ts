@@ -25,6 +25,32 @@ describe('createCalendarQuery', () => {
     })
   })
 
+  it('should query only the afternoon for today when the current time is before noon', () => {
+    expect(
+      createCalendarQuery({
+        now: new Date('2026-09-03T23:00:00.000Z'),
+        text: '오늘 오후 일정 알려줘',
+        timeZone: 'Asia/Seoul',
+      }),
+    ).toEqual({
+      end: '2026-09-04T15:00:00.000Z',
+      start: '2026-09-04T03:00:00.000Z',
+    })
+  })
+
+  it('should query only the remaining afternoon for today when the current time is after noon', () => {
+    expect(
+      createCalendarQuery({
+        now: new Date('2026-09-04T04:00:00.000Z'),
+        text: '오늘 오후 일정 알려줘',
+        timeZone: 'Asia/Seoul',
+      }),
+    ).toEqual({
+      end: '2026-09-04T15:00:00.000Z',
+      start: '2026-09-04T04:00:00.000Z',
+    })
+  })
+
   it('should query the previous local day for yesterday', () => {
     expect(createCalendarQuery({now, text: '어제 일정 알려줘', timeZone: 'Asia/Seoul'})).toEqual({
       end: '2026-09-03T15:00:00.000Z',
@@ -109,6 +135,15 @@ describe('createCalendarQuery', () => {
     })
   })
 
+  it('should query only tomorrow afternoon', () => {
+    expect(
+      createCalendarQuery({now, text: '내일 오후 일정 알려줘', timeZone: 'Asia/Seoul'}),
+    ).toEqual({
+      end: '2026-09-05T15:00:00.000Z',
+      start: '2026-09-05T03:00:00.000Z',
+    })
+  })
+
   it('should query the day after tomorrow in the local timezone', () => {
     expect(createCalendarQuery({now, text: '모레 일정 알려줘', timeZone: 'Asia/Seoul'})).toEqual({
       end: '2026-09-06T15:00:00.000Z',
@@ -120,6 +155,13 @@ describe('createCalendarQuery', () => {
     expect(createCalendarQuery({now, text: '모레 오전 일정', timeZone: 'Asia/Seoul'})).toEqual({
       end: '2026-09-06T03:00:00.000Z',
       start: '2026-09-05T15:00:00.000Z',
+    })
+  })
+
+  it('should query only the afternoon of the day after tomorrow', () => {
+    expect(createCalendarQuery({now, text: '모레 오후 일정', timeZone: 'Asia/Seoul'})).toEqual({
+      end: '2026-09-06T15:00:00.000Z',
+      start: '2026-09-06T03:00:00.000Z',
     })
   })
 

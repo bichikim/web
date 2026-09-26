@@ -29,7 +29,7 @@ it('should own one storage subscription and remove it when disposed', () => {
   const listeners = add.mock.calls.filter(([name]) => name === 'storage')
   expect(listeners).toHaveLength(1)
   view.cleanup()
-  expect(remove).toHaveBeenCalledWith('storage', listeners[0][1])
+  expect(remove).toHaveBeenCalledWith('storage', listeners[0][1], false)
 })
 
 it('should isolate provider state while accepting external local storage updates', () => {

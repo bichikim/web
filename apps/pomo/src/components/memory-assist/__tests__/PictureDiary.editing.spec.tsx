@@ -67,8 +67,9 @@ it('should edit an existing entry, retry a failed save, and preserve the new dia
   expect(screen.getByLabelText('그림일기 내용')).toHaveValue('작성 중인 새 일기')
 })
 
-it('should restore an edit save completed after disposal', async () => {
+it('should keep an edit save completed after disposal', async () => {
   const pending = Promise.withResolvers<void>()
+  const updatedAt = '2026-09-26T00:00:00.000Z'
   const entry: PictureDiaryEntry = {
     createdAt: '2026-09-04T03:00:00.000Z',
     date: '2026-09-04',
@@ -81,12 +82,13 @@ it('should restore an edit save completed after disposal', async () => {
   const repository = createRepository([entry])
   repository.save.mockReturnValue(pending.promise)
   const onSaved = vi.fn()
+  const fixedEnvironment = {...environment, now: () => new Date(updatedAt)}
   let dispose!: () => void
   let save!: () => Promise<void>
 
   createRoot((disposeRoot) => {
     dispose = disposeRoot
-    const editing = useEntryEditing({environment, onSaved, repository})
+    const editing = useEntryEditing({environment: fixedEnvironment, onSaved, repository})
     editing.open(entry)
     save = editing.editor()!.onSave
   })
@@ -97,7 +99,7 @@ it('should restore an edit save completed after disposal', async () => {
   pending.resolve()
 
   await expect(saving).resolves.toBeUndefined()
-  expect(repository.save).toHaveBeenCalledTimes(2)
-  expect(repository.save).toHaveBeenNthCalledWith(2, entry)
+  expect(repository.save).toHaveBeenCalledOnce()
+  expect(repository.save).toHaveBeenCalledWith({...entry, updatedAt})
   expect(onSaved).not.toHaveBeenCalled()
 })

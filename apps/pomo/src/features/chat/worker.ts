@@ -1,5 +1,6 @@
 /// <reference lib="webworker" />
 
+import {createExclusiveAsyncTask} from 'src/utils/create-exclusive-async-task'
 import {
   createDeviceTarget,
   createGenerationFailure,
@@ -41,7 +42,7 @@ const sendResponse = (response: ChatWorkerResponse) => workerScope.postMessage(r
 const textExecutor = createTextGenerationExecutor({
   onProgress: (progress) => sendResponse({...progress, type: 'loading'}),
 })
-let generationInFlight = false
+const generation = createExclusiveAsyncTask()
 let suppressedCjkTokenIds: Array<number> | null = null
 const createRequestId = createRequestSequence('chat')
 
@@ -260,16 +261,8 @@ const generateAnswer = async (options: GenerateAnswerOptions) => {
 
 const handleRequest = (request: ChatWorkerRequest): Promise<void> => {
   switch (request.type) {
-    case 'generate': {
-      if (generationInFlight) {
-        return Promise.resolve()
-      }
-
-      generationInFlight = true
-      return generateAnswer(request).finally(() => {
-        generationInFlight = false
-      })
-    }
+    case 'generate':
+      return generation.run(() => generateAnswer(request))
     case 'prepare':
       return prepareModel(request.modelId)
   }

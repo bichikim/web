@@ -151,5 +151,8 @@ it('should handle candidate voice downloads and workflow results', async () => {
   await getLatestProps<ComponentProps<typeof LanguageLearningReview>>(
     vi.mocked(LanguageLearningReview),
   ).onRegenerate(candidateId)
-  expect(URL.revokeObjectURL).toHaveBeenCalledWith('blob:generated')
+  expect(
+    getLatestProps<ComponentProps<typeof LanguageLearningReview>>(vi.mocked(LanguageLearningReview))
+      .candidates,
+  ).toContainEqual(expect.objectContaining({audioUrl: 'blob:replacement'}))
 })

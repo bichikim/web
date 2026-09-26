@@ -1,3 +1,4 @@
+import {clamp} from 'es-toolkit/math'
 // oxlint-disable no-magic-numbers -- SQLite progress bounds and retry-safe timestamps are protocol values.
 
 import {createHash} from 'node:crypto'
@@ -251,7 +252,7 @@ export class SqliteRunnerJobStore implements RunnerJobStore {
   }
 
   updateProgress(jobId: string, progress: number, now: number): void {
-    const boundedProgress = Math.max(0, Math.min(100, Math.trunc(progress)))
+    const boundedProgress = clamp(Math.trunc(progress), 0, 100)
     this.#database
       .prepare(
         `UPDATE runner_jobs

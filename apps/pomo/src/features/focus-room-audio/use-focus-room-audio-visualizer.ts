@@ -1,3 +1,4 @@
+import {clamp} from 'es-toolkit/math'
 import {type Accessor, createSignal, onCleanup} from 'solid-js'
 
 /* oxlint-disable eslint/no-magic-numbers -- Deliberate idle VU-meter silhouette. */
@@ -96,10 +97,7 @@ export const usePAudioVisualizer = (): PAudioVisualizer => {
 
       const average = sum / Math.max(1, end - start)
 
-      return Math.max(
-        MINIMUM_LEVEL,
-        Math.min(MAXIMUM_LEVEL, Math.round((average / BYTE_MAXIMUM) * LEVEL_GAIN)),
-      )
+      return clamp(Math.round((average / BYTE_MAXIMUM) * LEVEL_GAIN), MINIMUM_LEVEL, MAXIMUM_LEVEL)
     })
 
     setLevels(nextLevels)

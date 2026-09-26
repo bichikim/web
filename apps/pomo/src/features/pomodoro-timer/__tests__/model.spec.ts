@@ -328,6 +328,22 @@ describe('stopPomodoroTimer', () => {
       status: 'idle',
     })
   })
+
+  it('should preserve an expired running phase when requested', () => {
+    const runningState = startPomodoroTimer(createPomodoroTimerState(CONFIG), 1_000)
+
+    expect(
+      stopPomodoroTimer(runningState, CONFIG, {
+        now: 12_000,
+        preserveRemainingProgress: true,
+      }),
+    ).toEqual({
+      completedFocusSessions: 0,
+      phase: 'focus',
+      remainingSeconds: 0,
+      status: 'idle',
+    })
+  })
 })
 
 describe('getPomodoroProgress', () => {

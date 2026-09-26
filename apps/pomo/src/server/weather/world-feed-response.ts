@@ -1,4 +1,4 @@
-import {parseWeatherLocationId} from 'src/features/weather'
+import {parseWeatherExpiryMs, parseWeatherLocationId} from 'src/features/weather'
 import {getWorldWeatherLocation} from './world-locations'
 import {
   getWorldWeatherFeedState,
@@ -44,11 +44,10 @@ export const createWorldWeatherFeedResponse = async (
 
   const existingState = await getWorldWeatherFeedState(location, now)
   if (existingState.status === 'current') {
-    const maxAge = getWeatherRetryAfterSeconds(
-      new Date(Date.parse(existingState.feed.expiresAt)),
-      now,
-    )
-    return weatherFeedSuccessResponse(existingState.feed, maxAge)
+    const expiry = parseWeatherExpiryMs(existingState.feed.expiresAt)
+    const maxAge = getWeatherRetryAfterSeconds(new Date(expiry ?? now.getTime()), now)
+    const feed = expiry === null ? {...existingState.feed, stale: true} : existingState.feed
+    return weatherFeedSuccessResponse(feed, maxAge)
   }
 
   let outcome: WorldWeatherFeedOutcome | undefined
@@ -92,7 +91,10 @@ export const createWorldWeatherFeedResponse = async (
 
   const retryAfterSeconds =
     outcome.retryAfter === undefined
-      ? getWeatherRetryAfterSeconds(new Date(Date.parse(outcome.feed.expiresAt)), now)
+      ? getWeatherRetryAfterSeconds(
+          new Date(parseWeatherExpiryMs(outcome.feed.expiresAt) ?? now.getTime()),
+          now,
+        )
       : getWeatherRetryAfterSeconds(outcome.retryAfter, now)
   return weatherFeedSuccessResponse(
     {
@@ -100,7 +102,10 @@ export const createWorldWeatherFeedResponse = async (
       expiresAt: new Date(
         now.getTime() + retryAfterSeconds * MILLISECONDS_PER_SECOND,
       ).toISOString(),
-      stale: outcome.retryAfter !== undefined || outcome.feed.stale,
+      stale:
+        outcome.retryAfter !== undefined ||
+        outcome.feed.stale ||
+        parseWeatherExpiryMs(outcome.feed.expiresAt) === null,
     },
     retryAfterSeconds,
   )

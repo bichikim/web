@@ -1,3 +1,5 @@
+import {isPlainObject} from 'es-toolkit/predicate'
+import {isNonBlankString} from 'src/utils/is-non-blank-string'
 import {createCatalogRequestInit, hasUniqueIds} from 'src/features/catalog-policy'
 import {audioFetch, httpFetch} from '../http-client'
 import type {SoundEffect} from './types'
@@ -14,41 +16,38 @@ interface SoundEffectCollection {
   readonly version: number
 }
 
-const isNonEmptyString = (value: unknown): value is string =>
-  typeof value === 'string' && value.trim().length > 0
-
 const hasSoundEffectTitle = (value: unknown): value is SoundEffect['title'] => {
-  if (typeof value !== 'object' || value === null) {
+  if (!isPlainObject(value)) {
     return false
   }
 
-  const title = value as Record<string, unknown>
-  return isNonEmptyString(title.en) && isNonEmptyString(title.ko)
+  const title = value
+  return isNonBlankString(title.en) && isNonBlankString(title.ko)
 }
 
 const isSoundEffect = (value: unknown): value is SoundEffect => {
-  if (typeof value !== 'object' || value === null) {
+  if (!isPlainObject(value)) {
     return false
   }
 
-  const effect = value as Record<string, unknown>
+  const effect = value
   return (
-    isNonEmptyString(effect.artworkUrl) &&
+    isNonBlankString(effect.artworkUrl) &&
     typeof effect.durationSeconds === 'number' &&
     Number.isFinite(effect.durationSeconds) &&
     effect.durationSeconds > 0 &&
-    isNonEmptyString(effect.id) &&
-    isNonEmptyString(effect.source) &&
+    isNonBlankString(effect.id) &&
+    isNonBlankString(effect.source) &&
     hasSoundEffectTitle(effect.title)
   )
 }
 
 const isSoundEffectCollection = (value: unknown): value is SoundEffectCollection => {
-  if (typeof value !== 'object' || value === null) {
+  if (!isPlainObject(value)) {
     return false
   }
 
-  const collection = value as Record<string, unknown>
+  const collection = value
   return (
     collection.version === 1 &&
     Array.isArray(collection.effects) &&

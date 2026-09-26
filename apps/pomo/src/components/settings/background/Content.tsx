@@ -1,3 +1,4 @@
+import {replaceBlobObjectUrl} from 'src/features/blob-object-url'
 import {createSignal, onCleanup, onMount, Show} from 'solid-js'
 import * as m from '@paraglide/message'
 import type {BackgroundController, BackgroundMedia} from 'src/features/background'
@@ -17,7 +18,7 @@ export const Content = (props: ContentProps) => {
       .load(props.item.id)
       .then((blob) => {
         if (!disposed) {
-          url = URL.createObjectURL(blob)
+          url = replaceBlobObjectUrl(null, () => blob)
           setSource(url)
         }
       })
@@ -29,7 +30,7 @@ export const Content = (props: ContentProps) => {
     onCleanup(() => {
       disposed = true
       if (url !== null) {
-        URL.revokeObjectURL(url)
+        replaceBlobObjectUrl(url, () => null)
       }
     })
   })

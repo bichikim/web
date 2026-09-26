@@ -1,3 +1,5 @@
+import DOMPurify from 'dompurify'
+
 /* istanbul ignore next -- Wallaby inconsistently counts module initialization across workers. */
 const BLOCKED_CONTENT_SELECTOR =
   'script, style, noscript, nav, aside, form, button, iframe, svg, canvas, template, [data-pomo-speech="exclude"]'
@@ -79,14 +81,11 @@ const getContent = (element: Element) => {
     : {content: '', contentKind: 'none' as const}
 }
 const getPublishedAt = (element: Element) => {
-  const value = getChildText(element, ['published', 'pubdate', 'updated', 'date'])
+  const timestamp = ['published', 'pubdate', 'updated', 'date']
+    .map((name) => Date.parse(getChildText(element, [name])))
+    .find((value) => !Number.isNaN(value))
 
-  if (value.length === 0) {
-    return null
-  }
-
-  const timestamp = Date.parse(value)
-  return Number.isNaN(timestamp) ? null : new Date(timestamp).toISOString()
+  return timestamp === undefined ? null : new Date(timestamp).toISOString()
 }
 const getItemFingerprint = (element: Element) => {
   const serializedItem = new XMLSerializer().serializeToString(element).replace(/>\s+</gu, '><')
@@ -119,21 +118,25 @@ const getItemId = (element: Element, link: string, title: string, publishedAt: s
   return publishedAt === null ? `${fallbackId}\u0000${getItemFingerprint(element)}` : fallbackId
 }
 
-/** Removes markup and page chrome while preserving all readable text. */
-export const cleanFeedText = (value: string) => {
-  const document = new DOMParser().parseFromString(value, 'text/html')
-  document.querySelectorAll(BLOCKED_CONTENT_SELECTOR).forEach((element) => element.remove())
-  return (document.body.textContent ?? '').replace(/\s+/gu, ' ').trim()
+const extractReadableHtmlText = (
+  html: string,
+  resolveRoot: (fragment: DocumentFragment) => Element | DocumentFragment,
+) => {
+  const fragment = DOMPurify.sanitize(html, {RETURN_DOM_FRAGMENT: true})
+  fragment.querySelectorAll(BLOCKED_CONTENT_SELECTOR).forEach((element) => element.remove())
+  return (resolveRoot(fragment).textContent ?? '').replace(/\s+/gu, ' ').trim()
 }
 
+/** Removes markup and page chrome while preserving all readable text. */
+export const cleanFeedText = (value: string) =>
+  extractReadableHtmlText(value, (fragment) => fragment)
+
 /** Extracts the main readable text from an article document without summarizing it. */
-export const extractArticleText = (html: string) => {
-  const document = new DOMParser().parseFromString(html, 'text/html')
-  document.querySelectorAll(BLOCKED_CONTENT_SELECTOR).forEach((element) => element.remove())
-  const content =
-    document.querySelector('article') ?? document.querySelector('main') ?? document.body
-  return (content.textContent ?? '').replace(/\s+/gu, ' ').trim()
-}
+export const extractArticleText = (html: string) =>
+  extractReadableHtmlText(
+    html,
+    (fragment) => fragment.querySelector('article') ?? fragment.querySelector('main') ?? fragment,
+  )
 
 /** Parses RSS 2.x, RDF-style RSS, or Atom XML into one feed-owned shape. */
 export const parseFeedXml = (xml: string, feedUrl: string): ParsedFeed => {

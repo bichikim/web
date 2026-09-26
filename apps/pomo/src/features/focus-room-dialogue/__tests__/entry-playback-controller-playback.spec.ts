@@ -232,7 +232,7 @@ describe('createEntryPlaybackController', () => {
       onDialogueStart,
       onSequenceStop: vi.fn(),
     })
-    await flush()
+    await vi.waitFor(() => expect(onDialogueStart).toHaveBeenCalledWith('first'))
     const firstAudio = latestAudio()
 
     controller.skip()
@@ -408,14 +408,12 @@ describe('createEntryPlaybackController', () => {
     )
     const controller = createEntryPlaybackController()
     const first = controller.prepare(createRepository(), DIALOGUE.id)
-    await flush()
-    expect(controller.isBlocked()).toBe(true)
+    await vi.waitFor(() => expect(controller.isBlocked()).toBe(true))
     expect(TestAudio.instances[0].play).not.toHaveBeenCalled()
     const second = controller.prepare(createRepository(), DIALOGUE.id)
     expect(resume).toHaveBeenCalledTimes(2)
-    await flush()
+    await vi.waitFor(() => expect(controller.isPlaying()).toBe(true))
     expect(TestAudio.instances[0].play).toHaveBeenCalledTimes(1)
-    expect(controller.isPlaying()).toBe(true)
     expect(controller.isBlocked()).toBe(false)
     controller.dispose()
     await Promise.all([first, second])
@@ -483,7 +481,7 @@ describe('createEntryPlaybackController', () => {
     )
     const first = createEntryPlaybackController()
     const firstPlayback = first.prepare(createRepository(DIALOGUE, legacyAudio), DIALOGUE.id)
-    await flush()
+    await vi.waitFor(() => expect(first.isPlaying()).toBe(true))
     latestAudio().dispatchEvent(new Event('ended'))
     await firstPlayback
     expect(playbackMocks.createEnvelope).toHaveBeenCalled()
@@ -507,7 +505,7 @@ describe('createEntryPlaybackController', () => {
     )
     const invalid = createEntryPlaybackController()
     const invalidPlayback = invalid.prepare(createRepository(DIALOGUE, legacyAudio), DIALOGUE.id)
-    await flush()
+    await vi.waitFor(() => expect(invalid.isPlaying()).toBe(true))
     latestAudio().dispatchEvent(new Event('ended'))
     await invalidPlayback
 
@@ -529,7 +527,7 @@ describe('createEntryPlaybackController', () => {
     )
     const failed = createEntryPlaybackController()
     const failedPlayback = failed.prepare(createRepository(DIALOGUE, legacyAudio), DIALOGUE.id)
-    await flush()
+    await vi.waitFor(() => expect(failed.isPlaying()).toBe(true))
     latestAudio().dispatchEvent(new Event('ended'))
     await failedPlayback
   })

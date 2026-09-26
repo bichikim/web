@@ -1,8 +1,11 @@
 /** @vitest-environment jsdom */
 
-import {expect, it, vi} from 'vitest'
+import DOMPurify from 'dompurify'
+import {afterEach, expect, it, vi} from 'vitest'
 
 import {cleanFeedText, createFeedScript, extractArticleText, parseFeedXml} from '../feed-parser'
+
+afterEach(() => vi.restoreAllMocks())
 
 it('should parse RSS content and preserve all readable text', () => {
   const feed = parseFeedXml(
@@ -93,6 +96,17 @@ it('should prefer the Atom published date when updated appears first', () => {
   )
 
   expect(feed.items[0]?.publishedAt).toBe('2024-01-01T00:00:00.000Z')
+})
+
+it('should use a valid Atom updated date when published date is invalid', () => {
+  const feed = parseFeedXml(
+    `<feed xmlns="http://www.w3.org/2005/Atom"><title>테스트 Atom</title><entry>
+      <published>not-a-date</published><updated>2026-08-14T01:00:00Z</updated>
+    </entry></feed>`,
+    'https://example.com/atom.xml',
+  )
+
+  expect(feed.items[0]?.publishedAt).toBe('2026-08-14T01:00:00.000Z')
 })
 
 it('should parse RDF-style RSS items outside the channel element', () => {
@@ -229,18 +243,44 @@ it('should fall back from main content to the document body', () => {
   expect(extractArticleText('<section><p>일반 본문</p></section>')).toBe('일반 본문')
 })
 
-it('should tolerate a parser document without body text', () => {
-  const documentWithoutText = {
-    body: {textContent: null},
-    querySelector: vi.fn(() => null),
-    querySelectorAll: vi.fn(() => []),
-  } as unknown as Document
-  const parse = vi
-    .spyOn(DOMParser.prototype, 'parseFromString')
-    .mockReturnValue(documentWithoutText)
-
+it('should return empty text for empty or excluded content', () => {
   expect(cleanFeedText('')).toBe('')
   expect(extractArticleText('')).toBe('')
+  expect(cleanFeedText('<nav>메뉴</nav>')).toBe('')
+})
 
-  parse.mockRestore()
+it('should sanitize hostile feed markup before extracting its text', () => {
+  const sanitize = vi.spyOn(DOMPurify, 'sanitize')
+  const feed = parseFeedXml(
+    `<rss><channel><item><content><![CDATA[
+      <p>본문</p><img src="x" onerror="alert(1)"><a href="javascript:alert(2)">링크</a>
+      <script>alert(3)</script>
+    ]]></content></item></channel></rss>`,
+    'https://example.com/feed.xml',
+  )
+  const content = feed.items[0]!.content
+
+  expect(cleanFeedText(content)).toBe('본문링크')
+  expect(sanitize).toHaveBeenCalledWith(
+    content,
+    expect.objectContaining({RETURN_DOM_FRAGMENT: true}),
+  )
+  const sanitized = sanitize.mock.results[0]?.value
+  expect(sanitized).toBeInstanceOf(DocumentFragment)
+  expect(sanitized.querySelector('script, [onerror], [href^="javascript:"]')).toBeNull()
+})
+
+it('should preserve escaped markup as literal speech text', () => {
+  const html = '<p>&lt;img src=x onerror=alert(1)&gt; &amp; 일반 본문</p>'
+  expect(cleanFeedText(html)).toBe('<img src=x onerror=alert(1)> & 일반 본문')
+  expect(extractArticleText(`<article>${html}</article>`)).toBe(
+    '<img src=x onerror=alert(1)> & 일반 본문',
+  )
+})
+
+it('should keep article selection and speech exclusions after sanitization', () => {
+  const html = `<main>대체 본문</main><article><p>기사 본문</p>
+      <footer data-pomo-speech="exclude">출처</footer><iframe srcdoc="광고">광고</iframe>
+      <svg><text>그림</text></svg></article>`
+  expect(extractArticleText(html)).toBe('기사 본문')
 })

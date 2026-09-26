@@ -22,10 +22,38 @@ interface CreateCalendarQueryOptions {
   readonly timeZone?: string
 }
 
+interface CreateCalendarDateRangeOptions {
+  readonly afternoonStart: Date
+  readonly end: Date
+  readonly morningEnd: Date
+  readonly now: Date
+  readonly start: Date
+  readonly text: string
+}
+
 const toRange = (start: Date, end: Date): CalendarEventRange => ({
   end: end.toISOString(),
   start: start.toISOString(),
 })
+
+const createCalendarDateRange = ({
+  afternoonStart,
+  end,
+  morningEnd,
+  now,
+  start,
+  text,
+}: CreateCalendarDateRangeOptions): CalendarEventRange => {
+  if (text.includes('오전')) {
+    return toRange(start, morningEnd)
+  }
+
+  if (text.includes('오후')) {
+    return toRange(now.getTime() < afternoonStart.getTime() ? afternoonStart : now, end)
+  }
+
+  return toRange(start, end)
+}
 
 /** Resolves a bounded calendar range in the requested time zone. */
 export const createCalendarQuery = (
@@ -51,21 +79,39 @@ export const createCalendarQuery = (
   const includesTomorrow =
     options.text.includes('내일') && !TOMORROW_EXCLUSION_PATTERN.test(options.text)
   if (options.text.includes('모레')) {
-    return toRange(
-      boundary(DAY_AFTER_TOMORROW_START_DAYS),
-      options.text.includes('오전')
-        ? boundary(DAY_AFTER_TOMORROW_START_DAYS, '12:00:00')
-        : boundary(DAY_AFTER_TOMORROW_END_DAYS),
-    )
+    const start = boundary(DAY_AFTER_TOMORROW_START_DAYS)
+    const noon = boundary(DAY_AFTER_TOMORROW_START_DAYS, '12:00:00')
+    return createCalendarDateRange({
+      afternoonStart: noon,
+      end: boundary(DAY_AFTER_TOMORROW_END_DAYS),
+      morningEnd: noon,
+      now,
+      start,
+      text: options.text,
+    })
   }
   if (includesTomorrow) {
-    return toRange(
-      includesToday ? now : boundary(1),
-      options.text.includes('오전') ? boundary(1, '12:00:00') : boundary(2),
-    )
+    const start = includesToday ? now : boundary(1)
+    const noon = boundary(1, '12:00:00')
+    return createCalendarDateRange({
+      afternoonStart: includesToday ? boundary(0, '12:00:00') : noon,
+      end: boundary(2),
+      morningEnd: noon,
+      now,
+      start,
+      text: options.text,
+    })
   }
   if (includesToday) {
-    return toRange(now, boundary(1))
+    const end = boundary(1)
+    return createCalendarDateRange({
+      afternoonStart: boundary(0, '12:00:00'),
+      end,
+      morningEnd: end,
+      now,
+      start: now,
+      text: options.text,
+    })
   }
   if (options.text.includes('어제')) {
     return toRange(boundary(-1), boundary(0))

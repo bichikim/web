@@ -1,3 +1,4 @@
+import {isPlainObject, isString} from 'es-toolkit/predicate'
 import {createCatalogRequestInit, hasUniqueIds} from 'src/features/catalog-policy'
 import * as m from '@paraglide/message'
 
@@ -22,14 +23,12 @@ interface PublishedAlbum {
   readonly tracks: ReadonlyArray<PTrackListing>
 }
 
-const isString = (value: unknown): value is string => typeof value === 'string'
-
 const isTrackListing = (value: unknown): value is PTrackListing => {
-  if (typeof value !== 'object' || value === null) {
+  if (!isPlainObject(value)) {
     return false
   }
 
-  const track = value as Record<string, unknown>
+  const track = value
   return (
     (track.artworkUrl === undefined || isString(track.artworkUrl)) &&
     isString(track.artist) &&
@@ -50,18 +49,18 @@ const hasPublishedTracks = (album: Record<string, unknown>): boolean => {
 }
 
 const isPublishedAlbum = (value: unknown): value is PublishedAlbum => {
-  if (typeof value !== 'object' || value === null) {
+  if (!isPlainObject(value)) {
     return false
   }
 
-  const album = value as Record<string, unknown>
+  const album = value
   const {sale} = album
 
-  if (typeof sale !== 'object' || sale === null) {
+  if (!isPlainObject(sale)) {
     return false
   }
 
-  const saleRecord = sale as Record<string, unknown>
+  const saleRecord = sale
   const hasValidSale =
     saleRecord.state === 'preparing' ||
     (saleRecord.state === 'configured' && isString(saleRecord.externalProductId))
@@ -82,11 +81,11 @@ const isPublishedAlbum = (value: unknown): value is PublishedAlbum => {
 }
 
 const isPublishedAlbumCollection = (value: unknown): value is PublishedAlbumCollection => {
-  if (typeof value !== 'object' || value === null) {
+  if (!isPlainObject(value)) {
     return false
   }
 
-  const collection = value as Record<string, unknown>
+  const collection = value
   return (
     collection.version === 1 &&
     Array.isArray(collection.albums) &&
