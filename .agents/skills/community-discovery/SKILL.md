@@ -1,12 +1,12 @@
 ---
 name: community-discovery
-description: "Use this skill to discover and score online communities across Reddit, Slack, Discord, Facebook, LinkedIn, and independent forums. Trigger it when finding where a target audience gathers, planning organic participation, partnerships, or community-led go-to-market."
+description: 'Use this skill to discover and score online communities across Reddit, Slack, Discord, Facebook, LinkedIn, and independent forums. Trigger it when finding where a target audience gathers, planning organic participation, partnerships, or community-led go-to-market.'
 license: MIT
-compatibility: "Requires internet access for web search and community directory lookups."
+compatibility: 'Requires internet access for web search and community directory lookups.'
 metadata:
   author: superamped
-  version: "1.0"
-  website: "https://superamped.com"
+  version: '1.0'
+  website: 'https://superamped.com'
 ---
 
 # Community Discovery
@@ -20,11 +20,13 @@ Use when finding communities to engage with organically, identifying where a tar
 ### Step 1: Gather Inputs
 
 Ask the user for:
+
 1. **Audience description** — who they're targeting (job title, industry, stage). Example: "B2B SaaS founders at seed stage", "freelance UX designers", "e-commerce store owners"
 2. **Product category** (optional) — what they sell, to help filter relevance and identify tool-adjacent communities
 3. **Minimum member count** (optional) — exclude communities below a threshold (default: no minimum — small communities are included with a flag)
 
 Extract from the audience description:
+
 - **Identity/role:** Who is the person (founder, marketer, developer, etc.)
 - **Industry/vertical:** What sector or market they're in
 - **Business type/stage:** Solo, SMB, startup, agency, enterprise — or consumer
@@ -35,6 +37,7 @@ Extract from the audience description:
 Generate 8 search queries to surface communities across platform types. Mix these angles:
 
 **Platform-specific queries:**
+
 - "slack community [identity/role]"
 - "discord server [industry/niche]"
 - "facebook group [job title or problem]"
@@ -42,11 +45,13 @@ Generate 8 search queries to surface communities across platform types. Mix thes
 - "[identity] community forum"
 
 **Directory-based queries:**
+
 - "hive.one [audience topic]"
 - "slofile [slack community] [niche]"
 - "disboard [discord] [niche]"
 
 **Discovery-angle queries:**
+
 - "best communities for [identity]"
 - "where do [audience] hang out online"
 - "[industry] online community"
@@ -55,20 +60,22 @@ Generate 8 search queries to surface communities across platform types. Mix thes
 
 Search these community directories first — they surface communities across many platforms in one pass:
 
-| Directory | What It Indexes | How to Search |
-|-----------|----------------|---------------|
-| hive.one | Audience-indexed communities by topic | Search by topic or person |
-| slofile.com | Public Slack workspaces | Search by keyword |
-| disboard.org | Discord servers by tag | Search by tag/keyword |
-| discadia.com | Discord servers | Search by category/keyword |
-| commsor.com | Community index | Browse by category |
+| Directory    | What It Indexes                       | How to Search              |
+| ------------ | ------------------------------------- | -------------------------- |
+| hive.one     | Audience-indexed communities by topic | Search by topic or person  |
+| slofile.com  | Public Slack workspaces               | Search by keyword          |
+| disboard.org | Discord servers by tag                | Search by tag/keyword      |
+| discadia.com | Discord servers                       | Search by category/keyword |
+| commsor.com  | Community index                       | Browse by category         |
 
 For each directory, search with the audience's identity, industry, and problem domain terms. Collect all relevant results.
 
 ### Step 4: Search Each Platform Directly
 
 #### Reddit
+
 Search for subreddits using:
+
 - "site:reddit.com [identity/role]"
 - "reddit [industry] community"
 - "r/findareddit [audience description]"
@@ -76,36 +83,42 @@ Search for subreddits using:
 Collect subreddit name, member count, and description.
 
 #### Slack & Discord
+
 Use slofile.com and disboard.org searches from Step 3. Also search:
+
 - "[industry] slack community"
 - "[niche] discord server"
 
 #### Facebook Groups
+
 Search: "facebook group [identity/role]" and "facebook group [industry]". Note: member counts require browsing Facebook directly — estimate when not verifiable.
 
 #### LinkedIn Groups
+
 Search: "linkedin group [industry]" and "linkedin group [job title]". Note: LinkedIn groups vary widely in activity — flag low-activity groups.
 
 #### Other Platforms
+
 Search for:
+
 - **Mighty Networks / Circle:** "[industry] community mighty networks" or "[niche] circle community"
 - **Geneva:** "[identity] geneva community"
 - **Luma:** "[niche] luma community events"
-- **Discourse forums:** "[industry] forum site:community.* OR site:forum.*"
+- **Discourse forums:** "[industry] forum `site:community.* OR site:forum.*`"
 - **Industry-specific forums:** "[industry] forum" + check known industry directories
 
 ### Step 5: Normalize All Results
 
 Compile all discovered communities into a single list. For each entry, record:
 
-| Field | Description |
-|-------|-------------|
-| Name | Community name |
-| URL | Direct link to the community |
+| Field         | Description                                                                |
+| ------------- | -------------------------------------------------------------------------- |
+| Name          | Community name                                                             |
+| URL           | Direct link to the community                                               |
 | Platform Type | Reddit / Slack / Discord / Facebook Group / LinkedIn Group / Forum / Other |
-| Member Count | Total member/subscriber count (or "unverified" if unknown) |
-| Description | One-line summary of what the community is about |
-| Source | Where it was discovered (directory name or search) |
+| Member Count  | Total member/subscriber count (or "unverified" if unknown)                 |
+| Description   | One-line summary of what the community is about                            |
+| Source        | Where it was discovered (directory name or search)                         |
 
 **Deduplication:** If the same community appears from multiple sources, keep one entry and note it appeared in multiple places (stronger signal of relevance).
 
@@ -117,35 +130,36 @@ Score every community on two dimensions:
 
 #### Dimension 1: Relevance (1–5)
 
-| Score | Signal |
-|-------|--------|
-| 5 | Community is built specifically for this exact audience (identity + industry match) |
-| 4 | Strong match — same role or same industry, minor gaps |
-| 3 | Adjacent — related audience, overlapping interests |
-| 2 | Loose match — your audience is a minority here |
-| 1 | Tangential — topic overlap but very different audience |
+| Score | Signal                                                                              |
+| ----- | ----------------------------------------------------------------------------------- |
+| 5     | Community is built specifically for this exact audience (identity + industry match) |
+| 4     | Strong match — same role or same industry, minor gaps                               |
+| 3     | Adjacent — related audience, overlapping interests                                  |
+| 2     | Loose match — your audience is a minority here                                      |
+| 1     | Tangential — topic overlap but very different audience                              |
 
 #### Dimension 2: Noise (1–5)
 
-| Score | Signal |
-|-------|--------|
-| 1 | Very low noise — tightly moderated, mostly signal |
-| 2 | Low noise — mostly on-topic with occasional spam |
-| 3 | Moderate noise — mixed quality, some spam |
-| 4 | High noise — significant spam or off-topic content |
-| 5 | Very high noise — dominated by promotions or irrelevant content |
+| Score | Signal                                                          |
+| ----- | --------------------------------------------------------------- |
+| 1     | Very low noise — tightly moderated, mostly signal               |
+| 2     | Low noise — mostly on-topic with occasional spam                |
+| 3     | Moderate noise — mixed quality, some spam                       |
+| 4     | High noise — significant spam or off-topic content              |
+| 5     | Very high noise — dominated by promotions or irrelevant content |
 
 #### Signal-to-Noise Rating
 
-| Rating | Criteria |
-|--------|----------|
-| **High** | Relevance ≥ 4 AND Noise ≤ 2 |
+| Rating     | Criteria                                       |
+| ---------- | ---------------------------------------------- |
+| **High**   | Relevance ≥ 4 AND Noise ≤ 2                    |
 | **Medium** | Relevance 3–4 OR Noise = 3 (not both extremes) |
-| **Low** | Relevance ≤ 2 OR Noise ≥ 4 |
+| **Low**    | Relevance ≤ 2 OR Noise ≥ 4                     |
 
 ### Step 7: Sort and Finalize
 
 Sort the full list:
+
 1. **Primary:** Signal-to-Noise rating (High → Medium → Low)
 2. **Secondary:** Member count (largest first within each tier)
 
