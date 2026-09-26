@@ -213,7 +213,12 @@ export const SpatialDeformerProperties = (props: SpatialDeformerPropertiesProps)
             accept=".glb,model/gltf-binary"
             disabled={props.disabled}
             aria-label="3D 메시 가져오기"
-            onChange={async (event) => importFile(event.currentTarget.files?.[0])}
+            onChange={async (event) => {
+              const input = event.currentTarget
+              const file = input.files?.[0]
+              input.value = ''
+              await importFile(file)
+            }}
           />
         </div>
         <Show when={meshError()}>
