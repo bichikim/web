@@ -96,7 +96,7 @@ export const useMemoCreator = (): MemoCreator => {
           currentDraft.reminderDay,
           currentDraft.customDate,
           currentDraft.reminderTime,
-          reminderDateReference(),
+          currentDraft.reminderDay === 'tomorrow' ? now : reminderDateReference(),
         )
       : null
 

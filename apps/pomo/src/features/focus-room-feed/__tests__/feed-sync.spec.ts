@@ -94,6 +94,37 @@ it('should queue only the newest item on the first subscription sync', async () 
   )
 })
 
+it('should ignore dated items published before the first subscription', async () => {
+  const connection = {...CONNECTION, createdAt: '2026-08-14T00:06:00.000Z'}
+  const {items, jobs, repository} = createRepository()
+  const summary = await synchronizeFeeds({
+    connections: [connection],
+    createId: () => 'unused',
+    fetcher: vi.fn(
+      async () =>
+        new Response(
+          createRss([
+            {id: 'old', minute: '00'},
+            {id: 'new', minute: '05'},
+          ]),
+        ),
+    ),
+    now: new Date('2026-08-14T00:06:00.000Z'),
+    repository,
+    resolveGenerationSettings: createSettingsResolver(connection),
+  })
+
+  expect(summary.queuedJobIds).toEqual([])
+  expect(jobs).toHaveLength(0)
+  expect(items).toHaveLength(2)
+  expect(items).toEqual(
+    expect.arrayContaining([
+      expect.objectContaining({feedItemId: 'old', status: 'ignored'}),
+      expect.objectContaining({feedItemId: 'new', status: 'ignored'}),
+    ]),
+  )
+})
+
 it.each(['rss', 'atom'] as const)(
   'should limit undated items to one on the first %s subscription sync and process later arrivals',
   async (format) => {
@@ -101,9 +132,9 @@ it.each(['rss', 'atom'] as const)(
     let nextId = 0
     const fetcher = vi
       .fn()
-      .mockResolvedValueOnce(new Response(createUndatedFeedXml(format, ['oldest', 'newest'])))
+      .mockResolvedValueOnce(new Response(createUndatedFeedXml(format, ['newest', 'oldest'])))
       .mockResolvedValueOnce(
-        new Response(createUndatedFeedXml(format, ['oldest', 'newest', 'later'])),
+        new Response(createUndatedFeedXml(format, ['later', 'newest', 'oldest'])),
       )
     const options = {
       connections: [CONNECTION],
@@ -134,6 +165,22 @@ it.each(['rss', 'atom'] as const)(
     expect(jobs.map((job) => job.feedItemId)).toEqual(['newest', 'later'])
   },
 )
+
+it('should select the first undated item even when the feed exceeds the per-sync limit', async () => {
+  const {jobs, repository} = createRepository()
+  const itemIds = ['newest', ...Array.from({length: 25}, (_, index) => `older-${index}`)]
+  const summary = await synchronizeFeeds({
+    connections: [CONNECTION],
+    createId: () => 'job-1',
+    fetcher: vi.fn(async () => new Response(createUndatedFeedXml('rss', itemIds))),
+    now: new Date('2026-08-14T00:06:00.000Z'),
+    repository,
+    resolveGenerationSettings: createSettingsResolver(),
+  })
+
+  expect(summary.queuedJobIds).toEqual(['job-1'])
+  expect(jobs.map((job) => job.feedItemId)).toEqual(['newest'])
+})
 
 it('should sync a later undated item when it shares a title with an existing item', async () => {
   const {items, jobs, repository} = createRepository()
@@ -257,10 +304,11 @@ it('should ignore feed items published more than three days ago', async () => {
   })
 })
 
-it('should accept a feed item published exactly three days ago', async () => {
+it('should accept a feed item published exactly three days ago after subscribing', async () => {
+  const connection = {...CONNECTION, createdAt: '2026-08-10T00:00:00.000Z'}
   const {jobs, repository} = createRepository()
   const summary = await synchronizeFeeds({
-    connections: [CONNECTION],
+    connections: [connection],
     createId: () => 'job-at-cutoff',
     fetcher: vi.fn(
       async () =>
@@ -271,7 +319,7 @@ it('should accept a feed item published exactly three days ago', async () => {
     ),
     now: new Date('2026-08-14T00:00:00.000Z'),
     repository,
-    resolveGenerationSettings: createSettingsResolver(),
+    resolveGenerationSettings: createSettingsResolver(connection),
   })
 
   expect(summary.queuedJobIds).toEqual(['job-at-cutoff'])

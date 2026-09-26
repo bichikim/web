@@ -94,12 +94,13 @@ export const MemoryMemoItem = (props: MemoryMemoItemProps) => {
     }
 
     const currentReminderDraft = reminderDraft()
+    const now = new Date()
     const exactReminderAt = currentReminderDraft.exactEnabled
       ? resolveReminderAt(
           currentReminderDraft.reminderDay,
           currentReminderDraft.customDate,
           currentReminderDraft.reminderTime,
-          reminderDateReference(),
+          currentReminderDraft.reminderDay === 'tomorrow' ? now : reminderDateReference(),
         )
       : null
     const errorMessage = await props.onSave(props.memo, {

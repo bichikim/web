@@ -181,6 +181,37 @@ it('should restore the saved occurrence when a controlled playlist repeats a tra
   expect(controller.currentTrack()).toBe(duplicateTracks[1])
 })
 
+it('should persist an adjusted position after restoring paused playback', async () => {
+  localStorage.setItem(
+    PLAYBACK_STORAGE_KEY,
+    JSON.stringify({
+      isPlaying: false,
+      positionSeconds: 3,
+      savedAt: 1,
+      trackId: TRACK.id,
+    }),
+  )
+
+  const {audio, controller} = renderController()
+
+  await vi.waitFor(() => expect(audio.load).toHaveBeenCalled())
+  Object.defineProperty(audio, 'readyState', {
+    configurable: true,
+    value: HTMLMediaElement.HAVE_METADATA,
+  })
+  controller.onLoadedMetadata()
+  expect(audio.currentTime).toBe(3)
+
+  audio.currentTime = 12
+  controller.onSeeked()
+
+  expect(readStoredPlayback()).toMatchObject({
+    isPlaying: false,
+    positionSeconds: 12,
+    trackId: TRACK.id,
+  })
+})
+
 it('should wait for controlled tracks before restoring saved playback', async () => {
   const storedPlayback = {
     isPlaying: false,
