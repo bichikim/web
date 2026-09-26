@@ -2,7 +2,7 @@
 
 import {afterEach, expect, it, vi} from 'vitest'
 
-import type {PomodoroTimerConfig, PomodoroTimerState} from '../model'
+import {type PomodoroTimerConfig, type PomodoroTimerState, stopPomodoroTimer} from '../model'
 import {
   type PomodoroTimerStorage,
   readPomodoroTimerConfig,
@@ -25,6 +25,13 @@ const STATE = {
   status: 'paused',
 } satisfies PomodoroTimerState
 
+const RUNNING_STATE = {
+  completedFocusSessions: 0,
+  endsAt: 1_000,
+  phase: 'focus',
+  status: 'running',
+} satisfies PomodoroTimerState
+
 const createStorage = (): PomodoroTimerStorage => {
   const values = new Map<string, string>()
   return {
@@ -45,6 +52,25 @@ it('should persist state and configuration through one injected store', () => {
 
   expect(readPomodoroTimerState(storage)).toEqual(STATE)
   expect(readPomodoroTimerConfig(storage)).toEqual(CONFIG)
+})
+
+it('should restore an expired idle state with preserved remaining progress', () => {
+  const storage = createStorage()
+  const state = stopPomodoroTimer(RUNNING_STATE, CONFIG, {
+    now: 1_000,
+    preserveRemainingProgress: true,
+  })
+
+  expect(state).toEqual({
+    completedFocusSessions: 0,
+    phase: 'focus',
+    remainingSeconds: 0,
+    status: 'idle',
+  })
+
+  writePomodoroTimerState(state, storage)
+
+  expect(readPomodoroTimerState(storage)).toEqual(state)
 })
 
 it('should return defaults when the injected store fails', () => {

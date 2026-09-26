@@ -18,7 +18,7 @@ const stateBaseSchema = {
 export const pomodoroTimerStateSchema = z.discriminatedUnion('status', [
   z.object({
     ...stateBaseSchema,
-    remainingSeconds: z.number().int().positive(),
+    remainingSeconds: z.number().int().nonnegative(),
     status: z.literal('idle'),
   }),
   z.object({
