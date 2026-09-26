@@ -64,6 +64,7 @@ export const normalizeFeedUrl = (input: string): NormalizeFeedUrlResult => {
       return {ok: false}
     }
 
+    url.pathname = url.pathname.replace(/\/+$/u, '') || '/'
     url.hash = ''
     return {ok: true, value: url.href}
   } catch {
