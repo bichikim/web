@@ -103,6 +103,7 @@ export const useLanguageLearningEditorState = () => {
     setPhase('idle')
   }
   const handleLanguageChange = (nextLanguage: LanguageLearningLanguage) => {
+    writer.release()
     const nextSavedWordCount = getUnmemorizedLanguageLearningWordValues({
       language: nextLanguage,
       words: learningWords(),
