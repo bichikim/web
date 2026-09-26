@@ -95,9 +95,13 @@ export const useFeedConnections = (
     const requestUrl = getFeedRequestUrl(normalizedUrl.value, feedUrlEnvironment)
 
     if (
-      currentConnections.some(
-        (connection) => getFeedRequestUrl(connection.url, feedUrlEnvironment) === requestUrl,
-      )
+      currentConnections.some((connection) => {
+        const existingUrl = normalizeFeedUrl(connection.url)
+
+        return (
+          existingUrl.ok && getFeedRequestUrl(existingUrl.value, feedUrlEnvironment) === requestUrl
+        )
+      })
     ) {
       setMessage(m.settings_feed_duplicate_url())
       return false
