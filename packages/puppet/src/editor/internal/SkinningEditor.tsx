@@ -102,7 +102,7 @@ export const SkinningEditor = (props: SkinningEditorProps) => {
         nodeIds={props.selectedNodeIds ?? []}
         onDocumentChange={(document) => props.onDocumentChange?.(document)}
       />
-      <Show when={node() !== undefined}>
+      <Show when={node() !== undefined && (binding() !== undefined || targets().length >= 2)}>
         <fieldset class="deformer-properties" disabled={locked()}>
           <legend>회전 스키닝</legend>
           <SkinningSettings

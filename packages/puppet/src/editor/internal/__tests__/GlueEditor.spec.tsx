@@ -7,6 +7,14 @@ import {createDemoDocument} from '../../../player'
 import {useDocumentHistory} from '../../use-document-history'
 import {GlueEditor} from '../GlueEditor'
 
+test('should hide glue tools when no part is selected', () => {
+  const view = render(() => (
+    <GlueEditor document={createDemoDocument()} selectedPartIds={[]} targetPartId="shapes" />
+  ))
+
+  expect(view.queryByRole('region', {name: 'Glue 경계 연결'})).toBeNull()
+})
+
 test('should connect selected boundary points and support undo and unlink', () => {
   const [part, setPart] = createSignal('mesh-preview')
   const history = useDocumentHistory({initialDocument: createDemoDocument()})

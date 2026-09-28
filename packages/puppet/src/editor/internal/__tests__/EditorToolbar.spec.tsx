@@ -1,5 +1,5 @@
 /** @vitest-environment jsdom */
-import {fireEvent, render, screen} from '@solidjs/testing-library'
+import {fireEvent, render, screen, within} from '@solidjs/testing-library'
 import {expect, test, vi} from 'vitest'
 
 import {EditorToolbar} from '../EditorToolbar'
@@ -71,4 +71,38 @@ test('should expose the retained JSON file for retrying a download', () => {
   const link = screen.getByRole('link', {name: 'JSON 파일 다시 다운로드'})
   expect(link).toHaveAttribute('href', 'blob:retained-model')
   expect(link).toHaveAttribute('download', 'puppet-model.json')
+})
+
+test('should show development examples in the main menu and open the selected example', () => {
+  const onExampleOpen = vi.fn()
+  const character = {label: '캐릭터', load: vi.fn()}
+  const simple = {label: '단순 3개 파츠', load: vi.fn()}
+  render(() => (
+    <EditorToolbar
+      examples={[character, simple]}
+      playerStatus="ready"
+      onExampleOpen={onExampleOpen}
+      onExport={vi.fn()}
+      onFileImport={vi.fn()}
+      onFileOpen={vi.fn()}
+    />
+  ))
+
+  fireEvent.click(screen.getByText('예제'))
+  fireEvent.click(screen.getByRole('button', {name: '단순 3개 파츠'}))
+  expect(onExampleOpen).toHaveBeenCalledWith(simple)
+})
+
+test('should omit the examples entry without development examples', () => {
+  render(() => (
+    <EditorToolbar
+      playerStatus="ready"
+      onExport={vi.fn()}
+      onFileImport={vi.fn()}
+      onFileOpen={vi.fn()}
+    />
+  ))
+
+  const menu = screen.getAllByLabelText('파일 및 편집 작업').at(-1)!
+  expect(within(menu).queryByText('예제')).not.toBeInTheDocument()
 })

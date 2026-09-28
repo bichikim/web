@@ -23,6 +23,7 @@ import {
 import {EditorLayerToolbar} from './EditorLayerToolbar'
 import {EditorLayerStateActions} from './EditorLayerStateActions'
 import {EditorLayerMaskUsage} from './EditorLayerMaskUsage'
+import {getLayerSelectionLabel, LayerNodeSummary} from './LayerNodeSummary'
 import {EditorLayerTreeToggle} from './EditorLayerTreeToggle'
 import {getLayerDropPosition, type LayerDropTarget} from './layer-drop'
 import {isLayerMaskPickDisabled} from './layer-mask'
@@ -150,7 +151,6 @@ const SceneNodeSelect = (props: SceneNodeSelectProps) => {
     if (props.locked || props.maskPicking) {
       return
     }
-
     event.preventDefault()
     event.stopPropagation()
     setNameDraft(props.node.name)
@@ -188,7 +188,7 @@ const SceneNodeSelect = (props: SceneNodeSelectProps) => {
             />
           </Show>
           <ToggleButton
-            aria-label={`${props.node.name} 레이어 선택`}
+            aria-label={getLayerSelectionLabel(props.node)}
             class="layer-select"
             classList={{'mask-pick-candidate': props.maskPicking && !props.maskPickDisabled}}
             disabled={props.maskPickDisabled}
@@ -208,11 +208,10 @@ const SceneNodeSelect = (props: SceneNodeSelectProps) => {
             </Show>
             <span class="layer-label">
               <LayerName name={props.node.name} selected={props.selected} />
-              <small>
-                {isSceneContainerNode(props.node)
-                  ? `${props.node.children.length} items`
-                  : `${(part()?.mesh.vertices.length ?? 0) / 2} vertices`}
-              </small>
+              <LayerNodeSummary
+                node={props.node}
+                vertexCount={(part()?.mesh.vertices.length ?? 0) / 2}
+              />
               <Show when={props.parameterLinks.length > 0}>
                 <span class="layer-parameter-links puppet-layer-parameter-links">
                   <For each={props.parameterLinks}>{(name) => <span>{name}</span>}</For>
@@ -239,6 +238,7 @@ const SceneNodeSelect = (props: SceneNodeSelectProps) => {
             rotation={props.node.kind === 'deformer' && props.node.deformerType === 'rotation'}
             bone={props.node.kind === 'deformer' && props.node.boneRestPoints !== undefined}
             curve={props.node.kind === 'deformer' && props.node.curveAxis !== undefined}
+            spatial={props.node.kind === 'deformer' && props.node.deformerType === 'spatial'}
           />
         </Show>
         <EditorTextInput

@@ -6,9 +6,17 @@ import {afterEach, describe, expect, test, vi} from 'vitest'
 
 import {createDemoDocument, type Player, type PuppetDocument} from '../../player'
 import {PlayerCanvas} from '../PlayerCanvas'
+import type {SpatialThreeSurface} from '../internal/spatial-three-overlay'
 
 const mocks = vi.hoisted(() => ({
   createPlayer: vi.fn(),
+  createSpatialThreeOverlay: vi.fn(),
+  overlay: {
+    destroy: vi.fn(),
+    prepare: vi.fn(),
+    render: vi.fn(),
+    update: vi.fn(),
+  },
   updateDocument: vi.fn(() => true),
 }))
 const player: Player = {
@@ -16,6 +24,7 @@ const player: Player = {
   pause: vi.fn(),
   play: vi.fn(),
   playMotion: vi.fn(() => true),
+  redraw: vi.fn(),
   resetPhysics: vi.fn(),
   resize: vi.fn(),
   seek: vi.fn(),
@@ -26,10 +35,14 @@ const player: Player = {
 }
 
 mocks.createPlayer.mockResolvedValue(player)
+mocks.createSpatialThreeOverlay.mockReturnValue(mocks.overlay)
 
 vi.mock('../../player', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../player')>()),
   createPlayer: mocks.createPlayer,
+}))
+vi.mock('../internal/spatial-three-overlay', () => ({
+  createSpatialThreeOverlay: mocks.createSpatialThreeOverlay,
 }))
 
 afterEach(() => {
@@ -39,6 +52,33 @@ afterEach(() => {
 })
 
 describe('PlayerCanvas', () => {
+  test('should render the selected 3D surface in the Pixi canvas and release it', async () => {
+    const document = createDemoDocument()
+    const surface = {document, node: {} as SpatialThreeSurface['node']}
+    const [selectedSurface, setSelectedSurface] = createSignal<SpatialThreeSurface | undefined>(
+      surface,
+    )
+    const view = render(() => (
+      <PlayerCanvas document={document} spatialSurface={selectedSurface()} />
+    ))
+
+    await waitFor(() => expect(mocks.createSpatialThreeOverlay).toHaveBeenCalledOnce())
+    const canvas = view.container.querySelector('canvas')
+    expect(mocks.createSpatialThreeOverlay).toHaveBeenCalledWith(canvas)
+    expect(mocks.overlay.update).toHaveBeenCalledWith(surface)
+    const options = mocks.createPlayer.mock.calls[0]?.[0]
+    options.onBeforeRender()
+    options.onAfterRender()
+    expect(mocks.overlay.prepare).toHaveBeenCalledOnce()
+    expect(mocks.overlay.render).toHaveBeenCalledOnce()
+
+    setSelectedSurface(undefined)
+    await waitFor(() => expect(mocks.overlay.update).toHaveBeenLastCalledWith(undefined))
+    expect(player.redraw).toHaveBeenCalled()
+    view.unmount()
+    expect(mocks.overlay.destroy).toHaveBeenCalledOnce()
+  })
+
   test('should update the existing player when mesh data changes', async () => {
     const initialDocument = createDemoDocument()
     const [document, setDocument] = createSignal<PuppetDocument>(initialDocument)

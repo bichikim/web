@@ -10,6 +10,7 @@ export * from './parameter-glue'
 export * from './part-properties'
 
 export * from './pin'
+export * from './project-spatial-surface'
 
 export * from './rigid-blend'
 

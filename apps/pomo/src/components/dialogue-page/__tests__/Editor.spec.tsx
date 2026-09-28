@@ -278,7 +278,7 @@ describe('PDialogueEditor fields', () => {
     )
     expect(screen.getByRole('link', {name: '앱으로 돌아가기'})).toHaveAttribute('href', '/')
     expect(screen.getByText('음성을 만들면 구간별 텍스트와 시작 시간이 표시돼요.')).toBeVisible()
-    expect(screen.getByText('13 / 3000')).toBeInTheDocument()
+    expect(screen.getByText('13 / 10000')).toBeInTheDocument()
     expect(screen.getByTestId('download-consent')).toHaveAttribute('data-download-size', '123 MB')
 
     fireEvent.input(screen.getByRole('textbox', {name: /대사/}), {

@@ -4,6 +4,11 @@ import {createEffect, createSignal, onCleanup, Show, untrack} from 'solid-js'
 import type {PuppetParameterValueMap} from '../deformation'
 import {createPlayer, type Player, type PlayerFrame, type PuppetDocument} from '../player'
 import {markPreparedPuppetDocument} from '../player/internal/prepared-document'
+import {
+  createSpatialThreeOverlay,
+  type SpatialThreeOverlay,
+  type SpatialThreeSurface,
+} from './internal/spatial-three-overlay'
 import {EDITOR_VIEWPORT_PADDING} from './internal/viewport'
 
 export type PlayerCanvasStatus = 'error' | 'loading' | 'ready'
@@ -20,6 +25,7 @@ export interface PlayerCanvasProps {
   readonly onStatusChange?: (status: PlayerCanvasStatus) => void
   readonly parameterValues?: PuppetParameterValueMap
   readonly physicsPreview?: boolean
+  readonly spatialSurface?: SpatialThreeSurface
 }
 
 export const PlayerCanvas = (props: PlayerCanvasProps) => {
@@ -27,6 +33,8 @@ export const PlayerCanvas = (props: PlayerCanvasProps) => {
   const [errorMessage, setErrorMessage] = createSignal<string | null>(null)
   const [player, setPlayer] = createSignal<Player | null>(null)
   let generation = 0
+  let overlay: SpatialThreeOverlay | undefined
+  let playerCanvas: HTMLCanvasElement | undefined
   const notifyFrame = (frame: PlayerFrame) => untrack(() => props.onFrame)?.(frame)
   const notifyPlayerChange = (nextPlayer: Player | null) =>
     untrack(() => props.onPlayerChange)?.(nextPlayer)
@@ -65,6 +73,26 @@ export const PlayerCanvas = (props: PlayerCanvasProps) => {
   })
 
   createEffect(() => {
+    const currentPlayer = player()
+    const surface = props.spatialSurface
+    if (currentPlayer === null || playerCanvas === undefined) {
+      return
+    }
+    if (overlay === undefined && surface !== undefined) {
+      try {
+        overlay = createSpatialThreeOverlay(playerCanvas)
+      } catch (error) {
+        setErrorMessage(error instanceof Error ? error.message : '3D 메시를 표시하지 못했습니다.')
+        return
+      }
+    }
+    if (overlay !== undefined) {
+      overlay.update(surface)
+      currentPlayer.redraw()
+    }
+  })
+
+  createEffect(() => {
     const hostElement = host()
     const onStatusChange = untrack(() => props.onStatusChange)
 
@@ -85,6 +113,8 @@ export const PlayerCanvas = (props: PlayerCanvasProps) => {
         return
       }
     } catch (error) {
+      overlay?.destroy()
+      overlay = undefined
       currentPlayer?.destroy()
       notifyPlayerChange(null)
       setPlayer(null)
@@ -96,16 +126,21 @@ export const PlayerCanvas = (props: PlayerCanvasProps) => {
 
     const canvasElement = globalThis.document.createElement('canvas')
 
+    overlay?.destroy()
+    overlay = undefined
     currentPlayer?.destroy()
     notifyPlayerChange(null)
     setPlayer(null)
     setErrorMessage(null)
     hostElement.replaceChildren(canvasElement)
+    playerCanvas = canvasElement
 
     createPlayer({
       canvas: canvasElement,
       document: preparedDocument,
       motionId: untrack(() => props.motionId),
+      onAfterRender: () => overlay?.render(),
+      onBeforeRender: () => overlay?.prepare(),
       onFrame: notifyFrame,
       parameterValues: untrack(() => props.parameterValues),
       physicsPreview: untrack(() => props.physicsPreview),
@@ -136,6 +171,8 @@ export const PlayerCanvas = (props: PlayerCanvasProps) => {
         }
 
         untrack(player)?.destroy()
+        overlay?.destroy()
+        overlay = undefined
         notifyPlayerChange(null)
         setPlayer(null)
         hostElement.replaceChildren()
@@ -146,6 +183,8 @@ export const PlayerCanvas = (props: PlayerCanvasProps) => {
 
   onCleanup(() => {
     generation += 1
+    overlay?.destroy()
+    overlay = undefined
     untrack(player)?.destroy()
     notifyPlayerChange(null)
   })

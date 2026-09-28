@@ -86,3 +86,31 @@ test('should replace a JSON document identified by its MIME type', async () => {
     dispose()
   })
 })
+
+test('should load an example on selection and keep the previous document in undo history', async () => {
+  await createRoot(async (dispose) => {
+    const original = createDemoDocument()
+    const incoming = {...original, viewport: {height: 640, width: 640}}
+    const history = useDocumentHistory({initialDocument: original})
+    const imports = useEditorImports({
+      document: history.document,
+      onDocumentChange: history.setDocument,
+      onNotice: vi.fn(),
+      onReimportDocumentChange: history.setDocument,
+    })
+    const load = vi.fn(async () => {
+      const file = new File([], 'example.json')
+      Object.defineProperty(file, 'text', {value: async () => serializeDocument(incoming)})
+      return file
+    })
+
+    expect(load).not.toHaveBeenCalled()
+    await imports.handleOpenExample({label: '예제', load})
+
+    expect(load).toHaveBeenCalledOnce()
+    expect(history.document().viewport).toEqual(incoming.viewport)
+    expect(history.undo()).toBe(true)
+    expect(history.document()).toEqual(original)
+    dispose()
+  })
+})

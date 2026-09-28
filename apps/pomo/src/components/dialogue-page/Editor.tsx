@@ -144,7 +144,7 @@ const CLASSES = {
   dialogueEditorVoiceActions: 'flex justify-end gap-3',
 } as const
 
-const MAXIMUM_TEXT_LENGTH = 3000
+const MAXIMUM_TEXT_LENGTH = 10000
 
 const getLanguageOptions = () => {
   const displayNames = new Intl.DisplayNames([getLocale()], {type: 'language'})

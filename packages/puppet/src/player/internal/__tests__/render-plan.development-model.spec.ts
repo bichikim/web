@@ -12,8 +12,8 @@ const model = parsed.document
 
 describe('development model arm occlusion', () => {
   const baseline = getPartRenderPlans(model).map((plan) => plan.partId)
-  const leftArm = ['psd-27', 'psd-30', 'psd-31', 'psd-33']
-  const rightArm = ['psd-28', 'psd-35', 'psd-36', 'psd-38']
+  const leftArm = ['psd-27', 'psd-30', 'psd-31', 'psd-32', 'psd-33']
+  const rightArm = ['psd-28', 'psd-35', 'psd-36', 'psd-37', 'psd-38']
 
   const expectOrder = (parameters: Readonly<Record<string, number>>) => {
     const rotation = (parameters['body-x'] ?? 0) + (parameters['full-body-x'] ?? 0)

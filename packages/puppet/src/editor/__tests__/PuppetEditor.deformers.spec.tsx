@@ -30,6 +30,7 @@ const player: Player = {
   pause: vi.fn(),
   play: vi.fn(),
   playMotion: vi.fn(() => true),
+  redraw: vi.fn(),
   resetPhysics: vi.fn(),
   resize: vi.fn(),
   seek: vi.fn(),

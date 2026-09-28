@@ -3,9 +3,10 @@ import {
   type PuppetParameterValueMap,
   type ResolvedPartRenderProperties,
 } from '../../deformation'
-import type {PuppetDocument, PuppetPart} from '../document'
+import type {PuppetDocument, PuppetPart, PuppetScene} from '../document'
 import {getScenePartStates} from '../scene'
 import {resolveParameterValue} from '../parameter-value'
+import {getSpatialPartPose, type SpatialPartPose} from './spatial-part'
 
 export interface PartMaskSourcePlan {
   readonly invertedMask: boolean
@@ -23,6 +24,11 @@ export interface PartRenderPlan {
   readonly properties: ResolvedPartRenderProperties
   readonly render: boolean
   readonly visible: boolean
+}
+
+export interface PartRenderFrame {
+  readonly plans: ReadonlyArray<PartRenderPlan>
+  readonly spatialPoses: ReadonlyMap<string, SpatialPartPose>
 }
 
 interface CreatePartMaskPlanOptions {
@@ -122,10 +128,11 @@ const getPartMaskPlan = (
   return structure.planByPartId.get(partId)
 }
 
-export const getPartRenderPlans = (
+export const getPartRenderFrame = (
   document: PuppetDocument,
   parameterValues?: PuppetParameterValueMap,
-): ReadonlyArray<PartRenderPlan> => {
+  posedScene?: PuppetScene,
+): PartRenderFrame => {
   const maskStructure = getStaticMaskStructure(document)
 
   const states = (document.layerOrderRules ?? []).reduce((orderedStates, rule) => {
@@ -155,7 +162,31 @@ export const getPartRenderPlans = (
     })
   }, getScenePartStates(document))
 
-  return states.flatMap((state): ReadonlyArray<PartRenderPlan> => {
+  const poseByPartId = new Map(
+    document.parts.flatMap((part) => {
+      const pose = getSpatialPartPose({document, parameterValues, part, posedScene})
+      return pose === undefined ? [] : [[part.id, pose] as const]
+    }),
+  )
+  const spatialGroups = new Map<string, Array<(typeof states)[number]>>()
+  for (const state of states) {
+    const groupId = maskStructure.partById.get(state.partId)?.spatial?.groupId
+    if (groupId !== undefined) {
+      spatialGroups.set(groupId, [...(spatialGroups.get(groupId) ?? []), state])
+    }
+  }
+  for (const group of spatialGroups.values()) {
+    group.sort(
+      (first, second) =>
+        poseByPartId.get(first.partId)!.depth - poseByPartId.get(second.partId)!.depth,
+    )
+  }
+  const orderedStates = states.map((state) => {
+    const groupId = maskStructure.partById.get(state.partId)?.spatial?.groupId
+    return groupId === undefined ? state : (spatialGroups.get(groupId)?.shift() ?? state)
+  })
+
+  const plans = orderedStates.flatMap((state): ReadonlyArray<PartRenderPlan> => {
     const part = maskStructure.partById.get(state.partId)
     if (part === undefined) {
       return []
@@ -173,11 +204,20 @@ export const getPartRenderPlans = (
         partId: state.partId,
         properties,
         render,
-        visible: state.visible && render,
+        visible:
+          state.visible &&
+          render &&
+          (part.spatial === undefined || poseByPartId.get(part.id)?.facing === true),
       },
     ]
   })
+  return {plans, spatialPoses: poseByPartId}
 }
+
+export const getPartRenderPlans = (
+  document: PuppetDocument,
+  parameterValues?: PuppetParameterValueMap,
+): ReadonlyArray<PartRenderPlan> => getPartRenderFrame(document, parameterValues).plans
 
 const valuesEqual = (first: ReadonlyArray<number>, second: ReadonlyArray<number>) =>
   first.length === second.length && first.every((value, index) => value === second[index])

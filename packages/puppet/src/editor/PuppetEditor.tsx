@@ -36,6 +36,7 @@ import {
 import {EditorPanelLayout} from './internal/EditorPanelLayout'
 import {EditorTimeline} from './internal/EditorTimeline'
 import {EditorToolbar} from './internal/EditorToolbar'
+import type {PuppetExampleDocument} from './example-document'
 import {type ParameterEditorResult, useParameterEditor} from './use-parameter-editor'
 import {useAutoMesh} from './use-auto-mesh'
 import {useDocumentHistory} from './use-document-history'
@@ -43,6 +44,7 @@ import {useDocumentHistoryShortcuts} from './use-document-history-shortcuts'
 import type {PlayerCanvasStatus} from './PlayerCanvas'
 import {EditorStyles} from './internal/EditorStyles'
 export interface PuppetEditorProps {
+  readonly examples?: ReadonlyArray<PuppetExampleDocument>
   readonly initialDocument?: PuppetDocument
   readonly initialMotionId?: string
   readonly initialWorkspace?: 'animation' | 'modeling'
@@ -163,6 +165,11 @@ export const PuppetEditor = (props: PuppetEditorProps) => {
   const [maskPickSourcePartId, setMaskPickSourcePartId] = createSignal<string | null>(null)
   const selectedPartIds = createMemo(() =>
     getSceneSelectionPartIds(sourceDocument(), layerSelection()),
+  )
+  const directlySelectedPartIds = createMemo(() =>
+    layerSelection().nodeIds.filter(
+      (nodeId) => getSceneNode(sourceDocument(), nodeId)?.kind === 'part',
+    ),
   )
   const meshPartIds = createMemo(() => {
     const document = sourceDocument()
@@ -442,7 +449,7 @@ export const PuppetEditor = (props: PuppetEditorProps) => {
               editingDocument={temporary.document()}
               editMode={WORKSPACE_EDIT_MODES[workspace()]}
               onKeyformChange={temporary.update}
-              selectedPartIds={selectedPartIds()}
+              selectedPartIds={directlySelectedPartIds()}
               targetPartId={layerSelection().activeNodeId ?? undefined}
               sourceVertex={glueVertex()}
               onSourceChange={setGlueVertex}
@@ -479,6 +486,7 @@ export const PuppetEditor = (props: PuppetEditorProps) => {
           <EditorToolbar
             setBrushSettingsMount={setBrushSettingsMount}
             activeWorkspace={workspace()}
+            examples={props.examples}
             canRedo={history.canRedo()}
             canUndo={history.canUndo()}
             historyRedoCount={history.redoCount()}
@@ -488,6 +496,7 @@ export const PuppetEditor = (props: PuppetEditorProps) => {
             onRedo={handleRedo}
             exportUrl={documentExport.url()}
             onExport={documentExport.exportDocument}
+            onExampleOpen={editorImports.handleOpenExample}
             onFileImport={editorImports.handleImport}
             onPsdReimport={editorImports.reimport.load}
             onFileOpen={editorImports.handleOpen}

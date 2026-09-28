@@ -1,5 +1,6 @@
 import {type Accessor, createSignal, onCleanup} from 'solid-js'
 import {preparePuppetDocument, type PuppetDocument} from '../player'
+import type {PuppetExampleDocument} from './example-document'
 import {importPng, type ImportPngErrorCode} from './import-png'
 import {getPsdErrorMessage, importPsd} from './import-psd'
 import {mergeDocument} from './internal/merge-document'
@@ -92,19 +93,28 @@ export const useEditorImports = (props: UseEditorImportsProps) => {
     generation += 1
     controller?.abort()
   })
-  const load = async (file: File | undefined, mode: 'append' | 'replace') => {
-    if (file === undefined) {
+  const load = async (
+    source: File | PuppetExampleDocument['load'] | undefined,
+    mode: 'append' | 'replace',
+  ) => {
+    if (source === undefined) {
       return
     }
     generation += 1
     const current = generation
     controller?.abort()
-    controller = new AbortController()
+    const nextController = new AbortController()
+    controller = nextController
     const original = props.document()
     reimport.cancel()
-    props.onNotice(`${file.name}을 읽는 중입니다.`)
+    const isExample = typeof source === 'function'
+    props.onNotice(isExample ? '예제를 불러오는 중입니다.' : `${source.name}을 읽는 중입니다.`)
     try {
-      const result = await readFile(file, controller.signal, props.readPsd)
+      const file = isExample ? await source(nextController.signal) : source
+      if (current !== generation) {
+        return
+      }
+      const result = await readFile(file, nextController.signal, props.readPsd)
       if (current !== generation) {
         return
       }
@@ -132,13 +142,14 @@ export const useEditorImports = (props: UseEditorImportsProps) => {
       )
     } catch {
       if (current === generation) {
-        props.onNotice('파일을 읽지 못했습니다.')
+        props.onNotice(isExample ? '예제를 불러오지 못했습니다.' : '파일을 읽지 못했습니다.')
       }
     }
   }
   return {
     handleImport: (file: File | undefined) => load(file, 'append'),
     handleOpen: (file: File | undefined) => load(file, 'replace'),
+    handleOpenExample: (example: PuppetExampleDocument) => load(example.load, 'replace'),
     reimport: {
       ...reimport,
       load: (file: File | undefined) => {

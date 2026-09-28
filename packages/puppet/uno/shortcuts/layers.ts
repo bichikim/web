@@ -31,6 +31,7 @@ export const layersShortcuts = {
     '[.puppet-editor_&]:[border-radius:0.375rem] [.puppet-editor_&]:[color:#84918c]',
     '[.puppet-editor_&]:[font-size:0.625rem]',
   ],
+  'layer-kind-badge': 'inline-block mr-1 px-1 rounded-sm bg-[#254c40] text-[#a4f3d9] font-semibold',
   'layer-label': [
     '[.puppet-editor_&]:flex-1',
     '[.puppet-editor_&]:grid [.puppet-editor_&]:min-w-0 [.puppet-editor_&]:[gap:0.125rem]',

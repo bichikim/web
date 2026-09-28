@@ -7,7 +7,7 @@ import {
   type PuppetPart,
   type PuppetPartRenderProperties,
 } from '../../document'
-import {canReusePartResources, getPartRenderPlans} from '../render-plan'
+import {canReusePartResources, getPartRenderFrame, getPartRenderPlans} from '../render-plan'
 
 const createPart = (id: string, properties?: PuppetPartRenderProperties): PuppetPart => ({
   id,
@@ -45,6 +45,49 @@ const createDocument = (): PuppetDocument => ({
 })
 
 describe('getPartRenderPlans', () => {
+  test('should reveal the side image and cull the front as a textured 3D pair turns', () => {
+    const front = createPart('front')
+    const side = createPart('side')
+    const document: PuppetDocument = {
+      ...createDocument(),
+      parameters: [{defaultValue: 0, id: 'yaw', maximum: 180, minimum: 0, name: 'Yaw'}],
+      parts: [
+        {
+          ...front,
+          spatial: {
+            controlPoints: [0, 0, 0, 1, 0, 0, 0, 1, 0],
+            groupId: 'head',
+            origin: [0, 0, 0],
+            rotationParameterIds: [null, 'yaw', null],
+          },
+        },
+        {
+          ...side,
+          spatial: {
+            controlPoints: [1, 0, 0, 1, 0, 1, 1, 1, 0],
+            groupId: 'head',
+            origin: [0, 0, 0],
+            rotationParameterIds: [null, 'yaw', null],
+          },
+        },
+      ],
+      scene: {
+        roots: [
+          {id: 'front', kind: 'part', locked: false, name: 'Front', visible: true},
+          {id: 'side', kind: 'part', locked: false, name: 'Side', visible: true},
+        ],
+      },
+    }
+    expect(getPartRenderPlans(document).map((plan) => plan.visible)).toEqual([true, false])
+    const frame = getPartRenderFrame(document, {yaw: 90})
+    expect(frame.plans.map((plan) => [plan.partId, plan.visible])).toEqual([
+      ['side', true],
+      ['front', false],
+    ])
+    expect(frame.spatialPoses.get('side')?.facing).toBe(true)
+    expect(frame.spatialPoses.get('front')?.facing).toBe(false)
+  })
+
   test('should move a cohesive set only beyond the combined parameter threshold and restore scene order', () => {
     const document = {
       ...createDocument(),

@@ -1,15 +1,17 @@
 import {EditorColorField, EditorNumberField, EditorSelect} from '../../design-system'
-import {For} from 'solid-js'
+import {For, Show} from 'solid-js'
 
 import {getPartRenderProperties} from '../../deformation'
 import {
   PUPPET_PART_BLEND_MODES,
   type PuppetColor,
+  type PuppetDocument,
   type PuppetPart,
   type PuppetPartBlendMode,
   type PuppetPartRenderProperties,
 } from '../../player'
 import {type MaskTargetOption, PartMaskProperties} from './PartMaskProperties'
+import {SpatialPartProperties} from './SpatialPartProperties'
 
 export type {MaskTargetOption} from './PartMaskProperties'
 
@@ -19,13 +21,16 @@ type InterpolatedPartProperties = Pick<
 >
 
 export interface PartPropertiesProps {
+  readonly document?: PuppetDocument
   readonly maskTargetOptions: ReadonlyArray<MaskTargetOption>
   readonly maskPicking?: boolean
   readonly part: PuppetPart
   readonly staticDisabled: boolean
+  readonly spatialDisabled?: boolean
   readonly visualDisabled: boolean
   readonly onEditEnd?: () => void
   readonly onEditStart?: () => void
+  readonly onDocumentChange?: (document: PuppetDocument) => void
   readonly onInterpolatedChange: (properties: InterpolatedPartProperties) => void
   readonly onMaskTargetChange?: (partId: string, checked: boolean) => void
   readonly onMaskPickCancel?: () => void
@@ -70,69 +75,83 @@ export const PartProperties = (props: PartPropertiesProps) => {
   }
 
   return (
-    <fieldset class="deformer-properties part-properties">
-      <legend>파트 렌더링</legend>
-      <label>
-        불투명도
-        <EditorNumberField
-          disabled={props.visualDisabled}
-          label="파트 불투명도"
-          maximum={1}
-          minimum={0}
-          name="part-opacity"
-          step={0.01}
-          value={properties().opacity}
-          onEditEnd={props.onEditEnd}
-          onEditStart={props.onEditStart}
-          onValueChange={(opacity) => props.onInterpolatedChange({opacity})}
+    <>
+      <fieldset class="deformer-properties part-properties">
+        <legend>파트 렌더링</legend>
+        <label>
+          불투명도
+          <EditorNumberField
+            disabled={props.visualDisabled}
+            label="파트 불투명도"
+            maximum={1}
+            minimum={0}
+            name="part-opacity"
+            step={0.01}
+            value={properties().opacity}
+            onEditEnd={props.onEditEnd}
+            onEditStart={props.onEditStart}
+            onValueChange={(opacity) => props.onInterpolatedChange({opacity})}
+          />
+        </label>
+        <label>
+          블렌드 모드
+          <EditorSelect
+            label="파트 블렌드 모드"
+            disabled={props.staticDisabled}
+            value={properties().blendMode}
+            options={PUPPET_PART_BLEND_MODES}
+            onChange={(blendMode) => {
+              if (isPartBlendMode(blendMode)) {
+                props.onStaticChange({blendMode})
+              }
+            }}
+          />
+        </label>
+        <div class="editor-color-row">
+          <span>곱하기 색상</span>
+          <EditorColorField
+            label="파트 곱하기 색상"
+            disabled={props.visualDisabled}
+            value={colorToHex(properties().multiplyColor)}
+            onEditStart={props.onEditStart}
+            onEditEnd={props.onEditEnd}
+            onValueChange={(value) => handleColorInput('multiplyColor', value)}
+          />
+        </div>
+        <div class="editor-color-row">
+          <span>스크린 색상</span>
+          <EditorColorField
+            label="파트 스크린 색상"
+            disabled={props.visualDisabled}
+            value={colorToHex(properties().screenColor)}
+            onEditStart={props.onEditStart}
+            onEditEnd={props.onEditEnd}
+            onValueChange={(value) => handleColorInput('screenColor', value)}
+          />
+        </div>
+        <PartMaskProperties
+          maskTargetOptions={props.maskTargetOptions}
+          maskPicking={props.maskPicking}
+          part={props.part}
+          staticDisabled={props.staticDisabled}
+          onMaskTargetChange={props.onMaskTargetChange}
+          onMaskPickCancel={props.onMaskPickCancel}
+          onMaskPickStart={props.onMaskPickStart}
+          onStaticChange={props.onStaticChange}
         />
-      </label>
-      <label>
-        블렌드 모드
-        <EditorSelect
-          label="파트 블렌드 모드"
-          disabled={props.staticDisabled}
-          value={properties().blendMode}
-          options={PUPPET_PART_BLEND_MODES}
-          onChange={(blendMode) => {
-            if (isPartBlendMode(blendMode)) {
-              props.onStaticChange({blendMode})
-            }
-          }}
-        />
-      </label>
-      <div class="editor-color-row">
-        <span>곱하기 색상</span>
-        <EditorColorField
-          label="파트 곱하기 색상"
-          disabled={props.visualDisabled}
-          value={colorToHex(properties().multiplyColor)}
-          onEditStart={props.onEditStart}
-          onEditEnd={props.onEditEnd}
-          onValueChange={(value) => handleColorInput('multiplyColor', value)}
-        />
-      </div>
-      <div class="editor-color-row">
-        <span>스크린 색상</span>
-        <EditorColorField
-          label="파트 스크린 색상"
-          disabled={props.visualDisabled}
-          value={colorToHex(properties().screenColor)}
-          onEditStart={props.onEditStart}
-          onEditEnd={props.onEditEnd}
-          onValueChange={(value) => handleColorInput('screenColor', value)}
-        />
-      </div>
-      <PartMaskProperties
-        maskTargetOptions={props.maskTargetOptions}
-        maskPicking={props.maskPicking}
-        part={props.part}
-        staticDisabled={props.staticDisabled}
-        onMaskTargetChange={props.onMaskTargetChange}
-        onMaskPickCancel={props.onMaskPickCancel}
-        onMaskPickStart={props.onMaskPickStart}
-        onStaticChange={props.onStaticChange}
-      />
-    </fieldset>
+      </fieldset>
+      <Show when={props.document}>
+        {(document) => (
+          <SpatialPartProperties
+            disabled={props.spatialDisabled}
+            document={document()}
+            part={props.part}
+            onDocumentChange={props.onDocumentChange}
+            onEditEnd={props.onEditEnd}
+            onEditStart={props.onEditStart}
+          />
+        )}
+      </Show>
+    </>
   )
 }

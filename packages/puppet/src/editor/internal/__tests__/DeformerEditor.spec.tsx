@@ -6,7 +6,10 @@ import {createSignal} from 'solid-js'
 import {describe, expect, test, vi} from 'vitest'
 import {createDemoDocument, type PuppetSceneDeformerNode} from '../../../player'
 import {DeformerEditor} from '../DeformerEditor'
+import {convertSceneContainers} from '../container-conversion'
 import {getSceneNode} from '../scene-graph'
+import {addParameter, insertParameterKeyform} from '../parameter-keyforms'
+import {createParameterPreview} from '../parameter-sampling'
 import {
   createDeformer,
   createDocument,
@@ -15,6 +18,164 @@ import {
 } from './fixtures/deformer-editor'
 
 describe('DeformerEditor', () => {
+  test('should show 3D rotation and translation gizmos instead of freeform grid controls', () => {
+    const converted = convertSceneContainers({
+      document: createDemoDocument(),
+      nodeIds: ['shapes'],
+      targetKind: 'spatial',
+    })!
+    const [document, setDocument] = createSignal(converted)
+    const view = render(() => (
+      <DeformerEditor activeNodeId="shapes" document={document()} onDocumentChange={setDocument} />
+    ))
+
+    expect(view.getByLabelText('3D 디포머 조작 영역')).toBeDefined()
+    expect(view.getByRole('button', {name: '3D X축 회전'})).toBeDefined()
+    expect(view.getByRole('button', {name: '3D X축 이동'})).toBeDefined()
+    expect(view.getByRole('button', {name: '3D Y축 이동'})).toBeDefined()
+    expect(view.getByRole('button', {name: '3D Z축 이동'})).toBeDefined()
+    expect(view.queryByRole('button', {name: '격자 제어점 1'})).toBeNull()
+    fireEvent.keyDown(view.getByRole('button', {name: '3D Y축 회전'}), {key: 'ArrowRight'})
+    const node = getSceneNode(document(), 'shapes')
+    expect(node?.kind === 'deformer' ? node.spatialRotation?.[1] : undefined).toBe(5)
+  })
+
+  test('should leave 3D faces to the shared canvas while keeping SVG rotation controls', () => {
+    const converted = convertSceneContainers({
+      document: createDemoDocument(),
+      nodeIds: ['shapes'],
+      targetKind: 'spatial',
+    })!
+    const mesh = {
+      indices: [0, 1, 2],
+      source: {kind: 'imported' as const, name: 'triangle.glb'},
+      vertices: [0, 0, 1, 100, 0, 1, 0, 100, 1],
+    }
+    const [document, setDocument] = createSignal({
+      ...converted,
+      scene: {
+        ...converted.scene!,
+        roots: converted.scene!.roots.map((node) =>
+          node.kind === 'deformer' && node.id === 'shapes' ? {...node, spatialMesh: mesh} : node,
+        ),
+      },
+    })
+    const view = render(() => (
+      <DeformerEditor activeNodeId="shapes" document={document()} onDocumentChange={setDocument} />
+    ))
+    const area = view.getByLabelText('3D 디포머 조작 영역')
+    expect(area.querySelector('polygon')).toBeNull()
+    expect(view.getByRole('button', {name: '3D X축 회전'})).toBeDefined()
+  })
+
+  test('should drag the three 3D translation handles in deformer coordinates', () => {
+    const converted = convertSceneContainers({
+      document: createDemoDocument(),
+      nodeIds: ['shapes'],
+      targetKind: 'spatial',
+    })!
+    const [document, setDocument] = createSignal(converted)
+    const onEditStart = vi.fn()
+    const onEditEnd = vi.fn()
+    const view = render(() => (
+      <DeformerEditor
+        activeNodeId="shapes"
+        document={document()}
+        onDocumentChange={setDocument}
+        onEditStart={onEditStart}
+        onEditEnd={onEditEnd}
+      />
+    ))
+    const svg = getEditorSvg(view.container)
+    mockViewportBounds(svg)
+
+    const drag = (axis: 'X' | 'Y' | 'Z', x: number, y: number) => {
+      fireEvent(
+        view.getByRole('button', {name: `3D ${axis}축 이동`}),
+        new MouseEvent('pointerdown', {bubbles: true, button: 0, clientX: 400, clientY: 300}),
+      )
+      fireEvent(svg, new MouseEvent('pointermove', {bubbles: true, clientX: x, clientY: y}))
+      fireEvent(svg, new MouseEvent('pointerup', {bubbles: true, clientX: x, clientY: y}))
+    }
+    drag('X', 440, 300)
+    drag('Y', 400, 330)
+    drag('Z', 400, 280)
+
+    const node = getSceneNode(document(), 'shapes')
+    expect(node?.kind === 'deformer' ? node.spatialTranslation : undefined).toEqual([40, 30, 20])
+    expect(onEditStart).toHaveBeenCalledTimes(3)
+    expect(onEditEnd).toHaveBeenCalledTimes(3)
+  })
+
+  test('should move the 3D rotation controls with the translated mesh', () => {
+    const converted = convertSceneContainers({
+      document: createDemoDocument(),
+      nodeIds: ['shapes'],
+      targetKind: 'spatial',
+    })!
+    const translated = {
+      ...converted,
+      scene: {
+        ...converted.scene!,
+        roots: converted.scene!.roots.map((node) =>
+          node.kind === 'deformer' && node.id === 'shapes'
+            ? {...node, spatialTranslation: [12, -8, 0] as const}
+            : node,
+        ),
+      },
+    }
+    const node = getSceneNode(translated, 'shapes') as PuppetSceneDeformerNode
+    const view = render(() => <DeformerEditor activeNodeId="shapes" document={translated} />)
+    const handle = view.getByRole('button', {name: '3D X축 회전'})
+
+    expect(Number(handle.getAttribute('cx'))).toBe(node.spatialOrigin![0] + 12)
+    expect(Number(handle.getAttribute('cy'))).toBe(node.spatialOrigin![1] - 8)
+  })
+
+  test('should store a 3D rotation gizmo edit in the active parameter keyform', () => {
+    const source = convertSceneContainers({
+      document: {...createDemoDocument(), parameterBindings: [], parameters: []},
+      nodeIds: ['shapes'],
+      targetKind: 'spatial',
+    })!
+    const added = addParameter({document: source, nodeIds: ['shapes']})!
+    const inserted = insertParameterKeyform({
+      bindingId: added.binding.id,
+      document: added.document,
+      values: [30],
+    })!
+    const [document, setDocument] = createSignal(inserted)
+    const preview = () =>
+      createParameterPreview({
+        document: document(),
+        parameterValues: {[added.binding.parameterIds[0]]: 30},
+      })
+    const view = render(() => (
+      <DeformerEditor
+        activeBindingId={added.binding.id}
+        activeKeyformValues={[30]}
+        activeNodeId="shapes"
+        document={document()}
+        editMode="parameter"
+        previewDocument={preview()}
+        onDocumentChange={setDocument}
+        targetNodeIds={['shapes']}
+      />
+    ))
+
+    fireEvent.keyDown(view.getByRole('button', {name: '3D Y축 회전'}), {key: 'ArrowRight'})
+    fireEvent.keyDown(view.getByRole('button', {name: '3D Z축 이동'}), {key: 'ArrowRight'})
+
+    expect(document().parameterBindings?.[0]?.keyforms[1]?.deformers?.[0]?.spatialRotation).toEqual(
+      [0, 5, 0],
+    )
+    expect(
+      document().parameterBindings?.[0]?.keyforms[1]?.deformers?.[0]?.spatialTranslation,
+    ).toEqual([0, 0, 5])
+    const rest = getSceneNode(document(), 'shapes')
+    expect(rest?.kind === 'deformer' ? rest.spatialRotation : undefined).toEqual([0, 0, 0])
+  })
+
   test('should rotate with the angle handle and translate from the deformer interior', () => {
     const [document, setDocument] = createSignal(createDocument(createDeformer()))
     const onEditEnd = vi.fn()

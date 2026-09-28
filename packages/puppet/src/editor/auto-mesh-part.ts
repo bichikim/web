@@ -1,6 +1,7 @@
 import {generateMesh, type GenerateMeshErrorCode, type PixelData} from '../mesh'
 import type {PuppetDocument, PuppetPart} from '../player/document'
 import {resetPartDeformations} from './internal/reset-part-deformations'
+import {reconcileSpatialGroups} from './internal/reconcile-spatial-groups'
 import {MAXIMUM_TEXTURE_PIXELS} from './internal/texture-limits'
 
 export interface AutoMeshSettings {
@@ -8,7 +9,11 @@ export interface AutoMeshSettings {
   readonly cellSize: number
 }
 
-export type AutoMeshPartErrorCode = GenerateMeshErrorCode | 'part-not-found' | 'too-large'
+export type AutoMeshPartErrorCode =
+  | GenerateMeshErrorCode
+  | 'part-not-found'
+  | 'spatial-bind-failed'
+  | 'too-large'
 
 export interface AutoMeshPartFailure {
   readonly error: {readonly code: AutoMeshPartErrorCode}
@@ -108,13 +113,15 @@ export const autoMeshPart = (options: AutoMeshPartOptions): AutoMeshPartResult =
     generatedMesh.mesh.vertices,
   )
 
-  return {
-    document: {
-      ...resetDocument,
-      parts: resetDocument.parts.map((candidate) =>
-        candidate.id === validation.part.id ? {...candidate, mesh: generatedMesh.mesh} : candidate,
-      ),
-    },
-    ok: true,
-  }
+  const document = reconcileSpatialGroups({
+    ...resetDocument,
+    parts: resetDocument.parts.map((candidate) =>
+      candidate.id === validation.part.id
+        ? {...candidate, mesh: generatedMesh.mesh, spatial: undefined}
+        : candidate,
+    ),
+  })
+  return document === undefined
+    ? {error: {code: 'spatial-bind-failed'}, ok: false}
+    : {document, ok: true}
 }

@@ -2,7 +2,7 @@ import type {ControlSizeProps} from './control-size'
 import {NumberField} from '@kobalte/core/number-field'
 import {Button} from '@kobalte/core/button'
 import {clamp} from 'es-toolkit/math'
-import {createSignal, onCleanup, Show} from 'solid-js'
+import {createEffect, createSignal, on, onCleanup, Show} from 'solid-js'
 
 const DEFAULT_STEP = 1
 const DRAG_THRESHOLD = 3
@@ -130,6 +130,19 @@ export const EditorNumberField = (props: EditorNumberFieldProps) => {
   let ignoreNextClick = false
   let lastEmittedValue: number | null = null
   let removeGestureListeners: (() => void) | undefined
+
+  createEffect(
+    on(
+      () => props.value,
+      (value) => {
+        if (value !== lastEmittedValue) {
+          setDraft(null)
+          editStartValue = value ?? 0
+          lastEmittedValue = value ?? null
+        }
+      },
+    ),
+  )
 
   const isBounded = () =>
     props.minimum !== undefined && props.maximum !== undefined && props.maximum > props.minimum

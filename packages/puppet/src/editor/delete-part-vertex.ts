@@ -89,7 +89,12 @@ export const deletePartVertex = (options: DeletePartVertexOptions): EditDocument
       return {error: {code: 'invalid-mesh'}, ok: false}
     }
 
-    const result = createPartResult(options.document, part, boundaryCollapse.mesh)
+    const result = createPartResult(
+      options.document,
+      part,
+      boundaryCollapse.mesh,
+      options.vertexIndex,
+    )
 
     return resetResultParameterVertices(
       result.ok
@@ -133,7 +138,12 @@ export const deletePartVertex = (options: DeletePartVertexOptions): EditDocument
     options.vertexIndex,
     nextTriangles.flatMap((triangle) => triangle),
   )
-  const result = createPartResult(options.document, part, reconstructMesh(mesh))
+  const result = createPartResult(
+    options.document,
+    part,
+    reconstructMesh(mesh),
+    options.vertexIndex,
+  )
 
   return resetResultParameterVertices(
     result.ok

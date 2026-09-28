@@ -1,7 +1,10 @@
 import {describe, expect, test} from 'vitest'
 
 import {transformDeformerPoint} from '../../../deformation'
+import {generateSpatialMesh} from '../../../deformation/generate-spatial-mesh'
 import {createDemoDocument, parseDocument, type PuppetSceneDeformerNode} from '../../../player'
+import {convertSceneContainers} from '../container-conversion'
+import {setSpatialMesh} from '../set-spatial-mesh'
 import {addDeformerCurveHandle, setDeformerCurveHandle} from '../deformer-curve-handles'
 import {
   addParameter,
@@ -212,6 +215,42 @@ describe('scene graph', () => {
       children: [{id: 'shape-diamond'}, {id: 'shape-circle'}],
       kind: 'deformer',
     })
+  })
+
+  test('should attach a part moved into a meshed 3D deformer and detach it when moved out', () => {
+    const converted = convertSceneContainers({
+      document: createDemoDocument(),
+      nodeIds: ['shapes'],
+      targetKind: 'spatial',
+    })!
+    const mesh = generateSpatialMesh({
+      operations: [
+        {center: [388, 243, 0], id: 'body', mode: 'add', shape: 'box', size: [800, 600, 80]},
+      ],
+      resolution: 8,
+    })
+    const source = setSpatialMesh({document: converted, mesh, nodeId: 'shapes'})!
+    const grouped = moveSceneNodeRelative({
+      document: source,
+      nodeId: 'mesh-preview',
+      position: 'inside',
+      targetNodeId: 'shapes',
+    })!
+    expect(grouped.parts.find((part) => part.id === 'mesh-preview')?.spatial).toMatchObject({
+      attachments: expect.any(Array),
+      groupId: 'shapes',
+    })
+    expect(parseDocument(JSON.stringify(grouped)).ok).toBe(true)
+    const ungrouped = moveSceneNodeRelative({
+      document: grouped,
+      nodeId: 'mesh-preview',
+      position: 'before',
+      targetNodeId: 'shapes',
+    })!
+    expect(ungrouped.parts.find((part) => part.id === 'mesh-preview')?.spatial).toBeUndefined()
+    const unwrapped = unwrapSceneNode(source, 'shapes')!
+    expect(unwrapped.parts.find((part) => part.id === 'shape-circle')?.spatial).toBeUndefined()
+    expect(parseDocument(JSON.stringify(unwrapped)).ok).toBe(true)
   })
 
   test('should remove only the unwrapped deformer from every parameter binding', () => {

@@ -62,6 +62,8 @@ const getAutoMeshErrorMessage = (code: AutoMeshGenerationErrorCode) => {
       return '자동 메시를 적용할 파트를 찾지 못했습니다.'
     case 'render-failed':
       return '텍스처 픽셀을 분석할 캔버스를 만들지 못했습니다.'
+    case 'spatial-bind-failed':
+      return '3D 메시 앞면에 새 이미지 정점을 연결하지 못했습니다.'
     case 'too-large':
       return '텍스처가 너무 큽니다. 1,677만 픽셀 이하 이미지를 사용하세요.'
     case 'invalid-alpha-threshold':

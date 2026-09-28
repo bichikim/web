@@ -10,6 +10,87 @@ import {expect, test} from 'vitest'
 
 import {transformDeformerPoint} from '../grid'
 
+test('should interpolate spatial deformer transforms and mesh position through parameter keyforms', () => {
+  const node: PuppetSceneDeformerNode = {
+    bounds: {height: 10, width: 10, x: 0, y: 0},
+    children: [],
+    columns: 1,
+    controlPoints: [0, 0, 10, 0, 0, 10, 10, 10],
+    deformerType: 'spatial',
+    id: 'spatial',
+    kind: 'deformer',
+    locked: false,
+    name: '3D',
+    rows: 1,
+    spatialMeshPosition: [0, 0, 0],
+    spatialOrigin: [5, 5, 0],
+    spatialRotation: [0, 0, 0],
+    spatialScale: [1, 1, 1],
+    spatialTranslation: [0, 0, 0],
+    visible: true,
+  }
+  const document: PuppetDocument = {
+    format: 'winter-love-puppet',
+    motions: [],
+    parameterBindings: [
+      {
+        id: 'turn',
+        keyforms: [
+          {
+            deformers: [
+              {
+                controlPoints: node.controlPoints,
+                kind: 'deformer',
+                nodeId: node.id,
+                spatialMeshPosition: [0, 0, 0],
+                spatialOrigin: [5, 5, 0],
+                spatialRotation: [0, 0, 0],
+                spatialScale: [1, 1, 1],
+                spatialTranslation: [0, 0, 0],
+              },
+            ],
+            parts: [],
+            values: [-30],
+          },
+          {
+            deformers: [
+              {
+                controlPoints: node.controlPoints,
+                kind: 'deformer',
+                nodeId: node.id,
+                spatialMeshPosition: [20, -10, 6],
+                spatialOrigin: [5, 5, 10],
+                spatialRotation: [0, 90, 0],
+                spatialScale: [2, 3, 4],
+                spatialTranslation: [20, -10, 6],
+              },
+            ],
+            parts: [],
+            values: [30],
+          },
+        ],
+        parameterIds: ['turn'],
+        targetDeformerIds: [node.id],
+        targetPartIds: [],
+      },
+    ],
+    parameters: [{defaultValue: -30, id: 'turn', maximum: 30, minimum: -30, name: 'Turn'}],
+    parts: [],
+    scene: {roots: [node]},
+    version: 1,
+    viewport: {height: 100, width: 100},
+  }
+  const sampled = composeParameterScene(document, {turn: 0}).roots[0]
+
+  expect(sampled?.kind === 'deformer' ? sampled.spatialRotation : undefined).toEqual([0, 45, 0])
+  expect(sampled?.kind === 'deformer' ? sampled.spatialOrigin : undefined).toEqual([5, 5, 5])
+  expect(sampled?.kind === 'deformer' ? sampled.spatialMeshPosition : undefined).toEqual([
+    10, -5, 3,
+  ])
+  expect(sampled?.kind === 'deformer' ? sampled.spatialScale : undefined).toEqual([1.5, 2, 2.5])
+  expect(sampled?.kind === 'deformer' ? sampled.spatialTranslation : undefined).toEqual([10, -5, 3])
+})
+
 test('should interpolate curve handles through parameter keyforms', () => {
   const node: PuppetSceneDeformerNode = {
     bounds: {height: 20, width: 90, x: 0, y: 0},
