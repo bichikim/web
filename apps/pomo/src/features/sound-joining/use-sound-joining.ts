@@ -75,6 +75,7 @@ export function useSoundJoining() {
       if (!isNonBlankString(request.prompt)) {
         throw new Error('영어 소리 설명을 입력해 주세요.')
       }
+      setUrl(replaceBlobObjectUrl(url(), () => null))
       const [first, second] = await Promise.all([decode(request.first), decode(request.second)])
       if (current !== revision) {
         return
