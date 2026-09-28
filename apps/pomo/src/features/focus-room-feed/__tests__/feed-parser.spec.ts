@@ -229,6 +229,26 @@ it('should discard links that cannot be resolved against the feed URL', () => {
   expect(feed.items[0]?.link).toBe('')
 })
 
+it('should prefer an RSS alternate link over an earlier link without a relation', () => {
+  const feed = parseFeedXml(
+    `<rss><channel><item><link>https://example.com/comments</link>
+      <link rel="alternate" href="https://example.com/article" /></item></channel></rss>`,
+    'https://example.com/feed.xml',
+  )
+
+  expect(feed.items[0]?.link).toBe('https://example.com/article')
+})
+
+it('should fall back to a resolvable link when an alternate href is empty', () => {
+  const feed = parseFeedXml(
+    `<rss><channel><item><link>https://example.com/article</link>
+      <link rel="alternate" href="" /></item></channel></rss>`,
+    'https://example.com/feed.xml',
+  )
+
+  expect(feed.items[0]?.link).toBe('https://example.com/article')
+})
+
 it('should prefer an alternate Atom link', () => {
   const feed = parseFeedXml(
     `<feed><title>Atom</title><entry><link rel="self" href="https://example.com/self" />

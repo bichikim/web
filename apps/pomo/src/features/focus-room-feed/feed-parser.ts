@@ -74,12 +74,14 @@ const resolveUrl = (value: string, baseUrl: string) => {
 }
 const getLink = (element: Element, baseUrl: string) => {
   const links = getChildren(element).filter((child) => child.localName.toLowerCase() === 'link')
-  const preferred = links.find((link) => {
-    const relation = link.getAttribute('rel')
-    return relation === null || relation === 'alternate'
-  })
-  const value = preferred?.getAttribute('href') ?? preferred?.textContent?.trim() ?? ''
-  return resolveUrl(value, baseUrl)
+  const candidates = links.map((link) => ({
+    relation: link.getAttribute('rel'),
+    url: resolveUrl(link.getAttribute('href') ?? link.textContent?.trim() ?? '', baseUrl),
+  }))
+  const preferred =
+    candidates.find(({relation, url}) => relation === 'alternate' && url.length > 0) ??
+    candidates.find(({relation, url}) => relation === null && url.length > 0)
+  return preferred?.url ?? ''
 }
 const getContent = (element: Element) => {
   const fullContent = getChildText(element, ['encoded', 'content'])
