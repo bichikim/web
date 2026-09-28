@@ -237,3 +237,34 @@ it('should revoke the previous joined URL when a later result replaces it', asyn
 
   expect(URL.revokeObjectURL).toHaveBeenCalledWith('blob:second')
 })
+
+it('should clear the previous joined URL when a later worker request fails', async () => {
+  const workers = installWorker()
+  installAudioContext([
+    createAudioBuffer(),
+    createAudioBuffer(),
+    createAudioBuffer(12),
+    createAudioBuffer(),
+    createAudioBuffer(),
+  ])
+  vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob:first')
+  vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => undefined)
+  const root = createRoot((dispose) => ({dispose, joining: useSoundJoining()}))
+
+  const firstExecution = root.joining.generate(createRequest())
+  await vi.waitFor(() => expect(workers).toHaveLength(1))
+  workers[0].onmessage?.({data: {blob: createBlob(), type: 'result'}} as MessageEvent)
+  await firstExecution
+  expect(root.joining.url()).toBe('blob:first')
+
+  const failedExecution = root.joining.generate(createRequest())
+  await vi.waitFor(() => expect(workers).toHaveLength(2))
+  workers[1].onmessage?.({data: {message: 'worker failed', type: 'error'}} as MessageEvent)
+  await failedExecution
+
+  expect(root.joining.error()).toBe('worker failed')
+  expect(root.joining.url()).toBeNull()
+  expect(URL.createObjectURL).toHaveBeenCalledOnce()
+  expect(URL.revokeObjectURL).toHaveBeenCalledWith('blob:first')
+  root.dispose()
+})
