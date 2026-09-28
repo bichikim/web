@@ -19,7 +19,7 @@ export default defineConfig({
   projects: [
     {
       name: 'web',
-      testMatch: ['**/e2e/shared/**/*.spec.ts', '**/e2e/web/**/*.spec.ts'],
+      testMatch: ['**/e2e/shared/**/*.e2e.ts', '**/e2e/web/**/*.e2e.ts'],
       use: {
         ...devices['Desktop Chrome'],
         baseURL: webBaseUrl,
@@ -27,7 +27,7 @@ export default defineConfig({
     },
     {
       name: 'apps-in-toss',
-      testMatch: ['**/e2e/shared/**/*.spec.ts', '**/e2e/apps-in-toss/**/*.spec.ts'],
+      testMatch: ['**/e2e/shared/**/*.e2e.ts', '**/e2e/apps-in-toss/**/*.e2e.ts'],
       use: {
         ...devices['Desktop Chrome'],
         baseURL: appsInTossBaseUrl,

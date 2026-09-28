@@ -90,7 +90,10 @@ export default defineConfig({
     },
     // test files
     {
-      files: ['**/*.spec.{ts,mts,tsx,js,mjs,jsx}', '**/*.e2e.{ts,mts,tsx,js,mjs,jsx}'],
+      files: [
+        '**/*.{spec,integration,e2e}.{ts,mts,cts,tsx,js,mjs,cjs,jsx}',
+        'packages/vite-plugin-natural-lint/examples/ai-mistakes/fixtures/test-oracle/*.fixture.ts',
+      ],
       rules: {
         '@typescript-eslint/no-unused-vars': 'off',
         '@typescript-eslint/no-var-requires': 'off',

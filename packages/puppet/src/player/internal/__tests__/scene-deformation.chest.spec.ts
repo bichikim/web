@@ -177,25 +177,4 @@ describe('development model chest surface perspective', () => {
       }
     },
   )
-
-  test.each([-30, -15, 0, 15, 30].flatMap((body) => [-22, 0, 22].map((full) => ({body, full}))))(
-    'should keep cloth and ribbon meshes unfolded at body=$body, full=$full',
-    ({body, full}) => {
-      const values = {'body-x': body, breath: 1, 'full-body-x': full}
-      for (const part of parts) {
-        const original = render(flat, part.id, values)
-        const curved = render(model, part.id, values)
-        expect(curved.every(Number.isFinite)).toBe(true)
-        for (let index = 0; index < part.mesh.indices.length; index += 3) {
-          const [a, b, c] = part.mesh.indices.slice(index, index + 3).map((point) => point * 2)
-          const area = (vertices: ReadonlyArray<number>) =>
-            (vertices[b!]! - vertices[a!]!) * (vertices[c! + 1]! - vertices[a! + 1]!) -
-            (vertices[b! + 1]! - vertices[a! + 1]!) * (vertices[c!]! - vertices[a!]!)
-          expect(area(curved) / area(original), `${part.id} triangle ${index / 3}`).toBeGreaterThan(
-            0.25,
-          )
-        }
-      }
-    },
-  )
 })

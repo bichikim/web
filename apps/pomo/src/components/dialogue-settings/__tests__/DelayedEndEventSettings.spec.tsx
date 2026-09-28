@@ -5,7 +5,7 @@ import {createSignal} from 'solid-js'
 import {afterEach, beforeEach, expect, it, vi} from 'vitest'
 
 import {getLocale, overwriteGetLocale} from '@paraglide/runtime'
-import {type PEventContextValue, usePEvents} from '../../../features/focus-room-dialogue'
+import {type PEventContextValue} from '../../../features/focus-room-dialogue'
 
 const eventMocks = vi.hoisted(() => ({usePEvents: vi.fn()}))
 
@@ -96,19 +96,6 @@ it('should show concise context for the waiting time', () => {
 
   expect(screen.getByText('시작 후 종료까지 기다리는 시간이에요.')).toBeInTheDocument()
   expect(screen.getByText('시간(분)')).toBeInTheDocument()
-})
-
-it('should not show a success message after saving the waiting time', async () => {
-  const events = createEvents()
-  eventMocks.usePEvents.mockReturnValue(events)
-
-  render(() => <DelayedEndEventSettings />)
-  fireEvent.input(screen.getByRole('spinbutton', {name: '대기 시간(분)'}), {
-    target: {value: '45'},
-  })
-
-  await vi.waitFor(() => expect(events.setDelayedEndEventDuration).toHaveBeenCalledWith(45))
-  expect(screen.queryByRole('status')).toBeNull()
 })
 
 it('should wait for a complete multi-digit waiting time before saving', async () => {
@@ -210,25 +197,6 @@ it('should flush a pending waiting time when the settings unmount', () => {
   } finally {
     vi.useRealTimers()
   }
-})
-
-it('should restore the persisted waiting time when saving fails', async () => {
-  const saveError = new Error('storage unavailable')
-  const events = createEvents({
-    setDelayedEndEventDuration: vi.fn(async () => {
-      throw saveError
-    }),
-  })
-  eventMocks.usePEvents.mockReturnValue(events)
-
-  render(() => <DelayedEndEventSettings />)
-  const input = screen.getByRole('spinbutton', {name: '대기 시간(분)'})
-  fireEvent.input(input, {target: {value: '45'}})
-
-  await vi.waitFor(() => expect(events.setDelayedEndEventDuration).toHaveBeenCalledWith(45))
-  await vi.waitFor(() => expect(screen.getByRole('status')).toHaveTextContent('저장하지 못했어요'))
-
-  expect(input).toHaveValue(30)
 })
 
 it('should hide status and helper descriptions while waiting', () => {

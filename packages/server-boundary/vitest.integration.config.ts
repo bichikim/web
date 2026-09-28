@@ -4,6 +4,6 @@ export default defineConfig({
   root: import.meta.dirname,
   test: {
     environment: 'node',
-    include: ['src/__tests__/plugin.e2e.spec.ts'],
+    include: ['src/__tests__/plugin.integration.ts'],
   },
 })

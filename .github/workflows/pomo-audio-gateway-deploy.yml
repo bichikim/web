@@ -85,8 +85,11 @@ jobs:
           pnpm --dir apps/pomo-audio-gateway typecheck
           pnpm exec vitest run \
             apps/pomo-audio-gateway/src/__tests__/index.spec.ts \
-            apps/pomo/src/server/music/__tests__/track-upload-operations.spec.ts \
-            apps/pomo/src/server/music/__tests__/delete-preview-audio.spec.ts \
+            apps/pomo/src/server/music/__tests__/track-upload.spec.ts \
+            apps/pomo/src/server/music/__tests__/track-upload.validation.spec.ts \
+            apps/pomo/src/server/music/track-upload/__tests__/preview.spec.ts \
+            apps/pomo/src/server/music/track-upload/__tests__/storage.spec.ts \
+            apps/pomo/scripts/build/storage/__tests__/delete-preview-audio.spec.ts \
             --project=unit \
             --reporter=dot
           pnpm --dir apps/pomo-audio-gateway build

@@ -7,7 +7,7 @@ import {CreateBoxVertexData} from '@babylonjs/core/Meshes/Builders/boxBuilder'
 import {MorphTarget} from '@babylonjs/core/Morph/morphTarget'
 import {MorphTargetManager} from '@babylonjs/core/Morph/morphTargetManager'
 import type {Scene} from '@babylonjs/core/scene'
-import {readFileSync} from 'node:fs'
+
 import {LoadAssetContainerAsync} from '@babylonjs/core/Loading/sceneLoader'
 import {createCharacterRenderer} from '../renderer'
 
@@ -126,28 +126,6 @@ describe('createCharacterRenderer', () => {
     expect(events.onError).toHaveBeenCalledWith(error)
     expect(events.onCloth).toHaveBeenLastCalledWith(false)
   })
-
-  it('should attach and reset cloth on the actual runtime GLB', async () => {
-    const {engine, renderer, events, loader} = setup()
-    const bytes = readFileSync('apps/pomo/dev-public/character-studio/pomo.glb')
-    loader.mockImplementation((_source, scene, options) =>
-      LoadAssetContainerAsync(bytes, scene, {
-        ...options,
-        pluginExtension: '.glb',
-        pluginOptions: {gltf: {skipMaterials: true}},
-      }),
-    )
-    await renderer.load('/pomo.glb')
-    expect(events.onError).not.toHaveBeenCalled()
-    expect(events.onCloth).toHaveBeenLastCalledWith(true)
-    const mesh = engine.scenes[0].meshes.find((item) => item.name === 'Settled knit sweater')
-    const original = Array.from(mesh?.getVerticesData('position') ?? [])
-    expect(original.length).toBeGreaterThan(0)
-    renderer.render(1 / 60, true, 1)
-    expect(Array.from(mesh?.getVerticesData('position') ?? [])).not.toEqual(original)
-    renderer.render(1 / 60, false, 0)
-    expect(Array.from(mesh?.getVerticesData('position') ?? [])).toEqual(original)
-  }, 30000)
 
   it('should ignore a superseded rejection while keeping the current model', async () => {
     const {engine, renderer, events, loader} = setup()

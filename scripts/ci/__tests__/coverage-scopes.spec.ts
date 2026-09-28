@@ -57,11 +57,9 @@ describe('selectCoverageScopes', () => {
       'tsconfig.json',
       'vite.config.mts',
       'vitest.base.config.mts',
-      'vitest.build-integration.config.mts',
+      'vitest.integration.config.mts',
       'vitest.d.ts',
       'vitest.setup.ts',
-      'vitest.source-coverage.config.mts',
-      'vitest.stress.config.mts',
       'patches/example.patch',
     ]) {
       expect(selectCoverageScopes([path])).toEqual({coong: true, pomo: true, workspace: true})
