@@ -67,8 +67,9 @@ it.each(['android', 'ios'] as const)(
     expect(result?.config.nitro?.preset).toBe('static')
     expect(result?.config.nitro?.prerender?.failOnError).toBe(true)
     expect(result?.config.nitro?.prerender?.routes).toEqual(
-      expect.arrayContaining(['/dialogue', '/focus-room', '/focus-room-dialogue']),
+      expect.arrayContaining(['/', '/dialogue', '/focus-room-dialogue']),
     )
+    expect(result?.config.nitro?.prerender?.routes).not.toContain('/focus-room')
   },
 )
 

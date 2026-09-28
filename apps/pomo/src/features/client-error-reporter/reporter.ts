@@ -76,7 +76,6 @@ const STATIC_ROUTE_TEMPLATES = new Set([
   '/app-in-toss/terms',
   '/dev/terms',
   '/dialogue',
-  '/focus-room',
   '/focus-room-dialogue',
   '/privacy',
   '/refund-policy',

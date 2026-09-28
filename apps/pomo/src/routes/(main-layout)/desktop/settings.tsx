@@ -1,4 +1,4 @@
-import {DesktopSettings} from '../../components/desktop-surface/Settings'
+import {DesktopSettings} from 'src/components/desktop-surface/Settings'
 
 export default function DesktopSettingsPage() {
   return <DesktopSettings />

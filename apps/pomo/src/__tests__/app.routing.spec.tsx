@@ -18,7 +18,6 @@ import {useApplicationRecovery} from '../features/application-recovery'
 const componentMocks = vi.hoisted(() => ({
   displayThemeProvider: vi.fn(),
   fileRoutes: vi.fn(),
-  focusRoomLayout: vi.fn(),
   metadata: vi.fn(),
   metaProvider: vi.fn(),
   recoveryBoundary: vi.fn(),
@@ -34,9 +33,6 @@ vi.mock('@solidjs/router', () => ({
 vi.mock('@solidjs/start/router', () => ({FileRoutes: componentMocks.fileRoutes}))
 vi.mock('../components/p-document-metadata/PDocumentMetadata', () => ({
   PDocumentMetadata: componentMocks.metadata,
-}))
-vi.mock('../components/p-focus-room-layout/PFocusRoomLayout', () => ({
-  PFocusRoomLayout: componentMocks.focusRoomLayout,
 }))
 vi.mock('../components/p-recovery-boundary/PRecoveryBoundary', () => ({
   PRecoveryBoundary: componentMocks.recoveryBoundary,
@@ -112,7 +108,6 @@ beforeEach(() => {
   componentMocks.recoveryBoundary.mockImplementation((props: PRecoveryBoundaryProps) => (
     <>{props.children}</>
   ))
-  componentMocks.focusRoomLayout.mockImplementation((props: ChildrenProps) => props.children)
   componentMocks.metadata.mockImplementation(() => null)
   componentMocks.fileRoutes.mockImplementation(() => (
     <Show fallback={<HomeRoute />} when={pathname() === '/language-learning'}>
