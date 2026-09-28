@@ -214,6 +214,12 @@ it('should use safe fallbacks for incomplete feed metadata', () => {
   expect(feed.items[0]?.id).toMatch(/^제목 없는 피드\u0000\u0000[0-9a-z]+-[0-9a-z]+$/u)
 })
 
+it('should use a safe title when a title-less feed has an invalid URL', () => {
+  const feed = parseFeedXml('<rss><channel /></rss>', 'not-a-url')
+
+  expect(feed.title).toBe('제목 없는 피드')
+})
+
 it('should discard links that cannot be resolved against the feed URL', () => {
   const feed = parseFeedXml(
     `<rss><channel><title>잘못된 링크</title><item><link>relative-link</link></item></channel></rss>`,

@@ -39,12 +39,12 @@ it('should expose every dedicated desktop surface and dialog route', async () =>
     {default: ToolsDialogPage},
     {default: VersionNoticeDialogPage},
   ] = await Promise.all([
-    import('../desktop/player'),
-    import('../desktop/pomodoro'),
-    import('../desktop/settings'),
-    import('../desktop/dialog/memory-assist'),
+    import('../(main-layout)/desktop/player'),
+    import('../(main-layout)/desktop/pomodoro'),
+    import('../(main-layout)/desktop/settings'),
+    import('../(main-layout)/desktop/dialog/memory-assist'),
     import('../desktop/dialog/pomodoro'),
-    import('../desktop/dialog/settings'),
+    import('../(main-layout)/desktop/dialog/settings'),
     import('../desktop/dialog/tools'),
     import('../desktop/dialog/version-notice'),
   ])

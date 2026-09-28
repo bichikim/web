@@ -1,7 +1,7 @@
 import * as m from '@paraglide/message'
 import {Title} from '@solidjs/meta'
 import {useSearchParams} from '@solidjs/router'
-import {DialogueEditorContent} from '../components/dialogue-page/EditorContent'
+import {DialogueEditorContent} from 'src/components/dialogue-page/EditorContent'
 
 export default function PDialoguePage() {
   const [searchParams] = useSearchParams()

@@ -22,7 +22,7 @@ const CONTEXT = {
   environment: 'test',
   platform: 'web',
   release: 'release-123',
-  route: {origin: 'https://www.pomofi.io', template: '/focus-room'},
+  route: {origin: 'https://www.pomofi.io', template: '/'},
 } satisfies ClientErrorContext
 
 const createReporter = (send: (event: ClientErrorEvent) => Promise<void> | void) =>
@@ -152,10 +152,11 @@ describe('normalizeClientError', () => {
 describe('normalizeClientErrorUrl', () => {
   it('should retain only the origin and an allowed route template', () => {
     expect(
-      normalizeClientErrorUrl(
-        'https://www.pomofi.io/focus-room?link_token=secret&verifier=secret#private',
-      ),
-    ).toBe('https://www.pomofi.io/focus-room')
+      normalizeClientErrorUrl('https://www.pomofi.io/?link_token=secret&verifier=secret#private'),
+    ).toBe('https://www.pomofi.io/')
+    expect(normalizeClientErrorUrl('https://www.pomofi.io/focus-room')).toBe(
+      'https://www.pomofi.io/other',
+    )
     expect(normalizeClientErrorUrl('https://feed.example/users/private-feed?q=secret')).toBe(
       'https://feed.example/other',
     )
