@@ -1,3 +1,4 @@
+/** @vitest-environment jsdom */
 import {execFile} from 'node:child_process'
 import {resolve} from 'node:path'
 import {promisify} from 'node:util'

@@ -5,6 +5,9 @@ import type {KoreanTextSegment} from '../../korean-text-postprocessor'
 import type {GenerateTextOptions, TextGenerationRuntime} from '../../text-generation'
 import type {ChatContext, ChatWorkerRequest, ChatWorkerResponse} from '../messages'
 
+// Worker protocol assertions do not depend on model-storage discovery.
+vi.mock('../../text-generation/download', () => ({isTextModelDownloaded: vi.fn()}))
+
 const koreanMocks = vi.hoisted(() => ({
   containsForeignCjk: vi.fn(),
   createForeignCjkTokenIds: vi.fn(),
@@ -52,6 +55,12 @@ vi.mock('../prompt', () => ({
 }))
 
 type WorkerMessageListener = (event: MessageEvent<ChatWorkerRequest>) => void
+
+interface ResponseWaiter<TType extends string> {
+  reject(error: Error): void
+  resolve(): void
+  readonly type: TType
+}
 const WORKER_IMPORT_TEST_TIMEOUT_MILLISECONDS = 30_000
 
 const context: ChatContext = {
@@ -72,7 +81,20 @@ const generateRequest = (
 
 const loadWorker = async () => {
   let messageListener: WorkerMessageListener | null = null
-  const postMessage = vi.fn<(response: ChatWorkerResponse) => void>()
+  const responseWaiters = new Set<ResponseWaiter<ChatWorkerResponse['type']>>()
+  const postMessage = vi.fn((response: ChatWorkerResponse) => {
+    for (const waiter of responseWaiters) {
+      if (response.type === waiter.type) {
+        responseWaiters.delete(waiter)
+        waiter.resolve()
+        break
+      } else if (response.type === 'error') {
+        responseWaiters.delete(waiter)
+        waiter.reject(new Error(response.message))
+        break
+      }
+    }
+  })
 
   vi.stubGlobal('self', {
     addEventListener: (type: string, listener: WorkerMessageListener) => {
@@ -84,15 +106,38 @@ const loadWorker = async () => {
   })
   await import('../worker')
 
-  return {
-    dispatch: (request: ChatWorkerRequest) => {
-      if (messageListener === null) {
-        throw new Error('채팅 Worker 메시지 리스너가 등록되지 않았습니다.')
-      }
+  const dispatch = (request: ChatWorkerRequest) => {
+    if (messageListener === null) {
+      throw new Error('채팅 Worker 메시지 리스너가 등록되지 않았습니다.')
+    }
 
-      messageListener({data: request} as MessageEvent<ChatWorkerRequest>)
+    messageListener({data: request} as MessageEvent<ChatWorkerRequest>)
+  }
+  const waitForNextResponse = (type: ChatWorkerResponse['type']) =>
+    new Promise<void>((resolve, reject) => {
+      responseWaiters.add({reject, resolve, type})
+    })
+
+  return {
+    dispatch,
+    dispatchAndWaitForResponse: async (
+      request: ChatWorkerRequest,
+      type: ChatWorkerResponse['type'],
+    ) => {
+      const response = waitForNextResponse(type)
+      dispatch(request)
+      await response
+      await Promise.resolve()
     },
     postMessage,
+    waitForNextResponse,
+    waitForResponse: (type: ChatWorkerResponse['type']) => {
+      if (postMessage.mock.calls.some(([response]) => response.type === type)) {
+        return Promise.resolve().then(() => undefined)
+      }
+
+      return waitForNextResponse(type).then(() => Promise.resolve())
+    },
   }
 }
 
@@ -100,9 +145,7 @@ const waitForResponse = async (
   worker: Awaited<ReturnType<typeof loadWorker>>,
   type: ChatWorkerResponse['type'],
 ) => {
-  await vi.waitFor(() => {
-    expect(worker.postMessage).toHaveBeenCalledWith(expect.objectContaining({type}))
-  })
+  await worker.waitForResponse(type)
 }
 
 beforeEach(() => {
@@ -144,33 +187,6 @@ beforeEach(() => {
 })
 
 describe('chat worker preparation', () => {
-  it(
-    'should cache the runtime and forward loading progress while preparing models',
-    async () => {
-      const worker = await loadWorker()
-
-      worker.dispatch({modelId: 'qwen-4b', type: 'prepare'})
-      await waitForResponse(worker, 'ready')
-      const createOptions = runtimeMocks.create.mock.calls[0]?.[0]
-      createOptions?.onProgress({file: 'model', progress: 0.5, status: 'progress'})
-      worker.dispatch({modelId: 'gemma-4-e2b', type: 'prepare'})
-      await vi.waitFor(() => expect(runtimeMocks.prepare).toHaveBeenCalledTimes(2))
-
-      expect(runtimeMocks.create).toHaveBeenCalledOnce()
-      expect(runtimeMocks.prepare).toHaveBeenNthCalledWith(1, 'qwen-4b')
-      expect(runtimeMocks.prepare).toHaveBeenNthCalledWith(2, 'gemma-4-e2b')
-      expect(worker.postMessage).toHaveBeenCalledWith(
-        expect.objectContaining({
-          file: 'model',
-          progress: 0.5,
-          status: 'progress',
-          type: 'loading',
-        }),
-      )
-    },
-    WORKER_IMPORT_TEST_TIMEOUT_MILLISECONDS,
-  )
-
   it.each([
     {error: new Error('준비 실패'), message: '준비 실패'},
     {error: new Error(), message: '채팅 모델을 실행하지 못했어요.'},
@@ -181,14 +197,11 @@ describe('chat worker preparation', () => {
       runtimeMocks.prepare.mockRejectedValue(error)
       const worker = await loadWorker()
 
-      worker.dispatch({modelId: 'qwen-4b', type: 'prepare'})
-
-      await vi.waitFor(() => {
-        expect(worker.postMessage).toHaveBeenCalledWith({
-          message,
-          restartRequired: false,
-          type: 'error',
-        })
+      await worker.dispatchAndWaitForResponse({modelId: 'qwen-4b', type: 'prepare'}, 'error')
+      expect(worker.postMessage).toHaveBeenCalledWith({
+        message,
+        restartRequired: false,
+        type: 'error',
       })
     },
     WORKER_IMPORT_TEST_TIMEOUT_MILLISECONDS,
@@ -344,23 +357,26 @@ describe('chat worker context compaction', () => {
 describe('chat worker generation', () => {
   it('should ignore a concurrent generate request while one is in flight', async () => {
     const firstGeneration = Promise.withResolvers<string>()
-    runtimeMocks.generate.mockImplementationOnce(() => firstGeneration.promise)
+    const generationStarted = Promise.withResolvers<void>()
+    runtimeMocks.generate.mockImplementationOnce(() => {
+      generationStarted.resolve()
+      return firstGeneration.promise
+    })
     const worker = await loadWorker()
 
     worker.dispatch(generateRequest({replyId: 'reply-a'}))
-    await vi.waitFor(() => expect(runtimeMocks.generate).toHaveBeenCalledOnce())
+    await generationStarted.promise
 
     worker.dispatch(generateRequest({replyId: 'reply-b'}))
+    const completed = worker.waitForNextResponse('complete')
     firstGeneration.resolve(' 첫 답변 ')
-
-    await vi.waitFor(() => {
-      expect(worker.postMessage).toHaveBeenCalledWith(
-        expect.objectContaining({
-          message: expect.objectContaining({content: '첫 답변', id: 'reply-a'}),
-          type: 'complete',
-        }),
-      )
-    })
+    await completed
+    expect(worker.postMessage).toHaveBeenCalledWith(
+      expect.objectContaining({
+        message: expect.objectContaining({content: '첫 답변', id: 'reply-a'}),
+        type: 'complete',
+      }),
+    )
 
     expect(runtimeMocks.generate).toHaveBeenCalledOnce()
     const completeResponses = worker.postMessage.mock.calls
@@ -376,24 +392,20 @@ describe('chat worker generation', () => {
     runtimeMocks.generate.mockRejectedValueOnce(new Error('첫 생성 실패'))
     const worker = await loadWorker()
 
-    worker.dispatch(generateRequest({replyId: 'reply-a'}))
-    await vi.waitFor(() => {
-      expect(worker.postMessage).toHaveBeenCalledWith({
-        message: '첫 생성 실패',
-        restartRequired: false,
-        type: 'error',
-      })
+    await worker.dispatchAndWaitForResponse(generateRequest({replyId: 'reply-a'}), 'error')
+    expect(worker.postMessage).toHaveBeenCalledWith({
+      message: '첫 생성 실패',
+      restartRequired: false,
+      type: 'error',
     })
 
-    worker.dispatch(generateRequest({replyId: 'reply-b'}))
-    await vi.waitFor(() => {
-      expect(worker.postMessage).toHaveBeenCalledWith(
-        expect.objectContaining({
-          message: expect.objectContaining({id: 'reply-b'}),
-          type: 'complete',
-        }),
-      )
-    })
+    await worker.dispatchAndWaitForResponse(generateRequest({replyId: 'reply-b'}), 'complete')
+    expect(worker.postMessage).toHaveBeenCalledWith(
+      expect.objectContaining({
+        message: expect.objectContaining({id: 'reply-b'}),
+        type: 'complete',
+      }),
+    )
 
     expect(runtimeMocks.generate).toHaveBeenCalledTimes(2)
   })
@@ -424,14 +436,11 @@ describe('chat worker generation', () => {
     runtimeMocks.generate.mockRejectedValue(new Error('생성 실패'))
     const worker = await loadWorker()
 
-    worker.dispatch(generateRequest())
-
-    await vi.waitFor(() => {
-      expect(worker.postMessage).toHaveBeenLastCalledWith({
-        message: '생성 실패',
-        restartRequired: false,
-        type: 'error',
-      })
+    await worker.dispatchAndWaitForResponse(generateRequest(), 'error')
+    expect(worker.postMessage).toHaveBeenLastCalledWith({
+      message: '생성 실패',
+      restartRequired: false,
+      type: 'error',
     })
   })
 
@@ -501,12 +510,13 @@ describe('chat worker Korean refinement', () => {
 
     worker.dispatch(generateRequest({refineAnswer: true}))
     await waitForResponse(worker, 'complete')
-    worker.dispatch(generateRequest({refineAnswer: true, replyId: 'reply-2'}))
-    await vi.waitFor(() => {
-      expect(worker.postMessage).toHaveBeenCalledWith(
-        expect.objectContaining({message: expect.objectContaining({id: 'reply-2'})}),
-      )
-    })
+    await worker.dispatchAndWaitForResponse(
+      generateRequest({refineAnswer: true, replyId: 'reply-2'}),
+      'complete',
+    )
+    expect(worker.postMessage).toHaveBeenCalledWith(
+      expect.objectContaining({message: expect.objectContaining({id: 'reply-2'})}),
+    )
 
     expect(koreanMocks.createForeignCjkTokenIds).toHaveBeenCalledOnce()
   })

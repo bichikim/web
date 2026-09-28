@@ -30,6 +30,12 @@ interface MockTransformersEnvironment {
 
 type WorkerMessageListener = (event: MessageEvent<DialogueWorkerRequest>) => void
 
+interface ResponseWaiter<TType extends string> {
+  reject(error: Error): void
+  resolve(): void
+  readonly type: TType
+}
+
 const transformers = vi.hoisted(() => ({
   environment: {} as MockTransformersEnvironment,
   gemmaModelFromPretrained: vi.fn(),
@@ -76,7 +82,20 @@ const createProcessor = () => {
 
 const loadWorker = async () => {
   let messageListener: WorkerMessageListener | null = null
-  const postMessage = vi.fn<(response: DialogueWorkerResponse) => void>()
+  const responseWaiters = new Set<ResponseWaiter<DialogueWorkerResponse['type']>>()
+  const postMessage = vi.fn((response: DialogueWorkerResponse) => {
+    for (const waiter of responseWaiters) {
+      if (response.type === waiter.type) {
+        responseWaiters.delete(waiter)
+        waiter.resolve()
+        break
+      } else if (response.type === 'error') {
+        responseWaiters.delete(waiter)
+        waiter.reject(new Error(response.message))
+        break
+      }
+    }
+  })
 
   vi.stubGlobal('self', {
     addEventListener: (type: string, listener: WorkerMessageListener) => {
@@ -88,15 +107,31 @@ const loadWorker = async () => {
   })
   await import('../worker')
 
-  return {
-    dispatch: (request: DialogueWorkerRequest) => {
-      if (messageListener === null) {
-        throw new Error('대화문 Worker 메시지 리스너가 등록되지 않았습니다.')
-      }
+  const dispatch = (request: DialogueWorkerRequest) => {
+    if (messageListener === null) {
+      throw new Error('대화문 Worker 메시지 리스너가 등록되지 않았습니다.')
+    }
 
-      messageListener({data: request} as MessageEvent<DialogueWorkerRequest>)
+    messageListener({data: request} as MessageEvent<DialogueWorkerRequest>)
+  }
+  const waitForNextResponse = (type: DialogueWorkerResponse['type']) =>
+    new Promise<void>((resolve, reject) => {
+      responseWaiters.add({reject, resolve, type})
+    })
+
+  return {
+    dispatch,
+    dispatchAndWaitForResponse: async (
+      request: DialogueWorkerRequest,
+      type: DialogueWorkerResponse['type'],
+    ) => {
+      const response = waitForNextResponse(type)
+      dispatch(request)
+      await response
+      await Promise.resolve()
     },
     postMessage,
+    waitForNextResponse,
   }
 }
 
@@ -126,11 +161,7 @@ describe('dialogue writer worker', () => {
   it('should report aggregate loading progress and readiness during preparation', async () => {
     const worker = await loadWorker()
 
-    worker.dispatch({modelId: 'qwen-0.8b', type: 'prepare'})
-
-    await vi.waitFor(() => {
-      expect(worker.postMessage).toHaveBeenLastCalledWith({type: 'ready'})
-    })
+    await worker.dispatchAndWaitForResponse({modelId: 'qwen-0.8b', type: 'prepare'}, 'ready')
     expect(worker.postMessage).toHaveBeenCalledWith({
       files: [{fileName: 'model.onnx', loadedBytes: 50, percentage: 50, totalBytes: 100}],
       loadedBytes: 50,
@@ -142,17 +173,16 @@ describe('dialogue writer worker', () => {
 
   it('should not re-enable the UI between generation start and completion', async () => {
     const worker = await loadWorker()
-    worker.dispatch({modelId: 'qwen-2b', type: 'prepare'})
-    await vi.waitFor(() => expect(worker.postMessage).toHaveBeenCalledWith({type: 'ready'}))
+    await worker.dispatchAndWaitForResponse({modelId: 'qwen-2b', type: 'prepare'}, 'ready')
     worker.postMessage.mockClear()
 
-    worker.dispatch({modelId: 'qwen-2b', request: '삶의 행복에 대해 이야기해줘', type: 'generate'})
-
-    await vi.waitFor(() => {
-      expect(worker.postMessage).toHaveBeenLastCalledWith({
-        text: '행복은 가까이에 있어요.',
-        type: 'complete',
-      })
+    await worker.dispatchAndWaitForResponse(
+      {modelId: 'qwen-2b', request: '삶의 행복에 대해 이야기해줘', type: 'generate'},
+      'complete',
+    )
+    expect(worker.postMessage).toHaveBeenLastCalledWith({
+      text: '행복은 가까이에 있어요.',
+      type: 'complete',
     })
     expect(worker.postMessage.mock.calls.map(([response]) => response.type)).toEqual([
       'started',
@@ -163,27 +193,26 @@ describe('dialogue writer worker', () => {
 
   it('should ignore overlapping generations while one is in flight', async () => {
     const firstGeneration = Promise.withResolvers<void>()
+    const generationStarted = Promise.withResolvers<void>()
     transformers.generate.mockImplementationOnce(async (options: MockGenerateOptions) => {
+      generationStarted.resolve()
       await firstGeneration.promise
       options.streamer.emit('첫 번째 결과')
     })
     const worker = await loadWorker()
 
     worker.dispatch({modelId: 'qwen-0.8b', request: '첫 번째 질문', type: 'generate'})
-    await vi.waitFor(() => expect(transformers.generate).toHaveBeenCalledOnce())
+    await generationStarted.promise
 
     worker.dispatch({modelId: 'qwen-0.8b', request: '두 번째 질문', type: 'generate'})
-    await Promise.resolve()
-    await Promise.resolve()
-    await Promise.resolve()
     expect(transformers.generate).toHaveBeenCalledOnce()
+    const complete = worker.waitForNextResponse('complete')
     firstGeneration.resolve()
-    await vi.waitFor(() => {
-      expect(
-        worker.postMessage.mock.calls.filter(([response]) => response.type === 'complete'),
-      ).toHaveLength(1)
-    })
+    await complete
 
+    expect(
+      worker.postMessage.mock.calls.filter(([response]) => response.type === 'complete'),
+    ).toHaveLength(1)
     expect(transformers.generate).toHaveBeenCalledOnce()
     expect(worker.postMessage).toHaveBeenCalledWith({text: '첫 번째 결과', type: 'complete'})
   })
@@ -192,21 +221,23 @@ describe('dialogue writer worker', () => {
     transformers.generate.mockRejectedValueOnce(new Error('첫 생성 실패'))
     const worker = await loadWorker()
 
-    worker.dispatch({modelId: 'qwen-0.8b', request: '첫 번째 질문', type: 'generate'})
-    await vi.waitFor(() => {
-      expect(worker.postMessage).toHaveBeenCalledWith({
-        message: '첫 생성 실패',
-        restartRequired: false,
-        type: 'error',
-      })
+    await worker.dispatchAndWaitForResponse(
+      {modelId: 'qwen-0.8b', request: '첫 번째 질문', type: 'generate'},
+      'error',
+    )
+    expect(worker.postMessage).toHaveBeenCalledWith({
+      message: '첫 생성 실패',
+      restartRequired: false,
+      type: 'error',
     })
 
-    worker.dispatch({modelId: 'qwen-0.8b', request: '두 번째 질문', type: 'generate'})
-    await vi.waitFor(() => {
-      expect(worker.postMessage).toHaveBeenCalledWith({
-        text: '행복은 가까이에 있어요.',
-        type: 'complete',
-      })
+    await worker.dispatchAndWaitForResponse(
+      {modelId: 'qwen-0.8b', request: '두 번째 질문', type: 'generate'},
+      'complete',
+    )
+    expect(worker.postMessage).toHaveBeenCalledWith({
+      text: '행복은 가까이에 있어요.',
+      type: 'complete',
     })
 
     expect(transformers.generate).toHaveBeenCalledTimes(2)
@@ -221,9 +252,7 @@ describe('dialogue writer worker', () => {
     vi.stubGlobal('caches', {open: vi.fn(async () => cache)})
     const worker = await loadWorker()
 
-    worker.dispatch({modelId: 'gemma-4-e2b', type: 'prepare'})
-
-    await vi.waitFor(() => expect(worker.postMessage).toHaveBeenLastCalledWith({type: 'ready'}))
+    await worker.dispatchAndWaitForResponse({modelId: 'gemma-4-e2b', type: 'prepare'}, 'ready')
     expect(transformers.gemmaModelFromPretrained).toHaveBeenCalledWith(
       'onnx-community/gemma-4-E2B-it-ONNX',
       expect.objectContaining({
@@ -256,9 +285,10 @@ describe('dialogue writer worker', () => {
   it('should load mobile Gemma with q2f16 text sessions', async () => {
     const worker = await loadWorker()
 
-    worker.dispatch({modelId: 'gemma-4-e2b-mobile', type: 'prepare'})
-
-    await vi.waitFor(() => expect(worker.postMessage).toHaveBeenLastCalledWith({type: 'ready'}))
+    await worker.dispatchAndWaitForResponse(
+      {modelId: 'gemma-4-e2b-mobile', type: 'prepare'},
+      'ready',
+    )
     expect(transformers.gemmaModelFromPretrained).toHaveBeenCalledWith(
       'onnx-community/gemma-4-E2B-it-qat-mobile-ONNX',
       expect.objectContaining({
@@ -277,38 +307,31 @@ describe('dialogue writer worker', () => {
     const worker = await loadWorker()
     const request = {modelId: 'qwen-0.8b', request: '행복을 말해줘', type: 'generate'} as const
 
-    worker.dispatch(request)
-    await vi.waitFor(() =>
-      expect(worker.postMessage).toHaveBeenLastCalledWith(
-        expect.objectContaining({type: 'complete'}),
-      ),
-    )
-    worker.dispatch(request)
-    await vi.waitFor(() => {
-      expect(
-        worker.postMessage.mock.calls.filter(([response]) => response.type === 'complete'),
-      ).toHaveLength(2)
-    })
+    await worker.dispatchAndWaitForResponse(request, 'complete')
+    await worker.dispatchAndWaitForResponse(request, 'complete')
 
+    expect(
+      worker.postMessage.mock.calls.filter(([response]) => response.type === 'complete'),
+    ).toHaveLength(2)
     expect(transformers.qwenModelFromPretrained).toHaveBeenCalledOnce()
   })
 
   it('should generate a trimmed non-Korean answer without suppressed tokens', async () => {
     const worker = await loadWorker()
 
-    worker.dispatch({
-      modelId: 'qwen-0.8b',
-      outputLanguage: 'en',
-      request: 'Give me an answer',
-      type: 'generate',
-    })
-
-    await vi.waitFor(() =>
-      expect(worker.postMessage).toHaveBeenLastCalledWith({
-        text: '행복은 가까이에 있어요.',
-        type: 'complete',
-      }),
+    await worker.dispatchAndWaitForResponse(
+      {
+        modelId: 'qwen-0.8b',
+        outputLanguage: 'en',
+        request: 'Give me an answer',
+        type: 'generate',
+      },
+      'complete',
     )
+    expect(worker.postMessage).toHaveBeenLastCalledWith({
+      text: '행복은 가까이에 있어요.',
+      type: 'complete',
+    })
     expect(transformers.generate).toHaveBeenCalledWith(
       expect.objectContaining({suppress_tokens: undefined}),
     )
@@ -322,14 +345,14 @@ describe('dialogue writer worker', () => {
     transformers.generate.mockRejectedValue(error)
     const worker = await loadWorker()
 
-    worker.dispatch({modelId: 'qwen-0.8b', request: '행복을 말해줘', type: 'generate'})
-
-    await vi.waitFor(() => {
-      expect(worker.postMessage).toHaveBeenLastCalledWith({
-        message,
-        restartRequired: false,
-        type: 'error',
-      })
+    await worker.dispatchAndWaitForResponse(
+      {modelId: 'qwen-0.8b', request: '행복을 말해줘', type: 'generate'},
+      'error',
+    )
+    expect(worker.postMessage).toHaveBeenLastCalledWith({
+      message,
+      restartRequired: false,
+      type: 'error',
     })
   })
 

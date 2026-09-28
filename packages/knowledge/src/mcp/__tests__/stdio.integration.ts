@@ -1,3 +1,4 @@
+/** @vitest-environment jsdom */
 import {spawn} from 'node:child_process'
 import {once} from 'node:events'
 import {resolve} from 'node:path'
