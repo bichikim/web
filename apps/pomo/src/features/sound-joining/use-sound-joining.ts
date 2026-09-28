@@ -135,6 +135,7 @@ export function useSoundJoining() {
     } catch (cause) {
       if (current === revision) {
         setError(getExceptionMessage(cause, () => String(cause)))
+        setStatus('연결 생성에 실패했습니다. 다시 시도할 수 있습니다.')
       }
     } finally {
       if (current === revision) {

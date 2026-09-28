@@ -206,6 +206,26 @@ it('should clear busy state when the worker reports an execution failure', async
   root.dispose()
 })
 
+it('should replace worker progress status when the worker reports an error', async () => {
+  const workers = installWorker()
+  installAudioContext([createAudioBuffer(), createAudioBuffer()])
+  const root = createRoot((dispose) => ({dispose, joining: useSoundJoining()}))
+
+  const execution = root.joining.generate(createRequest())
+  await vi.waitFor(() => expect(workers).toHaveLength(1))
+  workers[0].onmessage?.({
+    data: {message: '인퍼런스 진행 중 · 1/8', type: 'progress'},
+  } as MessageEvent)
+  workers[0].onmessage?.({data: {message: 'WebGPU is unavailable', type: 'error'}} as MessageEvent)
+  await execution
+
+  expect(workers[0].terminate).toHaveBeenCalledOnce()
+  expect(root.joining.busy()).toBe(false)
+  expect(root.joining.error()).toBe('WebGPU is unavailable')
+  expect(root.joining.status()).toBe('연결 생성에 실패했습니다. 다시 시도할 수 있습니다.')
+  root.dispose()
+})
+
 it('should revoke the previous joined URL when a later result replaces it', async () => {
   const workers = installWorker()
   installAudioContext([
