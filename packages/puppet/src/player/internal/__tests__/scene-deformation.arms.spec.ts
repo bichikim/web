@@ -74,7 +74,7 @@ describe('development model independent arm movement', () => {
 })
 
 describe('development model arm yaw volume', () => {
-  test.each([
+  test.each<Readonly<Record<string, number>>>([
     {'full-body-x': 16},
     {'full-body-x': 22},
     {'full-body-x': -16},
