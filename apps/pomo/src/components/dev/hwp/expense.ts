@@ -58,21 +58,8 @@ const toPositiveInteger = (value: unknown) => {
   return Number.isSafeInteger(parsed) && parsed > 0 ? parsed : null
 }
 
-const readDate = (value: unknown) => {
-  if (value === undefined || value === null) {
-    return null
-  }
-
-  if (typeof value !== 'string' || !isNonBlankString(value)) {
-    return null
-  }
-
-  const date = value.trim()
-  return parseDate(date) === null ? null : date
-}
-
-const readTextDate = (line: string) => {
-  const dateMatch = DATE_LINE_PATTERN.exec(line)
+const readExpenseDate = (value: string) => {
+  const dateMatch = DATE_LINE_PATTERN.exec(value)
   const year = dateMatch?.groups?.year
   const month = dateMatch?.groups?.month
   const day = dateMatch?.groups?.day
@@ -82,6 +69,18 @@ const readTextDate = (line: string) => {
 
   const normalizedDate = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`
   return parseDate(normalizedDate) === null ? null : `${year}-${month}-${day}`
+}
+
+const readDate = (value: unknown) => {
+  if (value === undefined || value === null) {
+    return null
+  }
+
+  if (typeof value !== 'string' || !isNonBlankString(value)) {
+    return null
+  }
+
+  return readExpenseDate(value.trim())
 }
 
 const readQuestions = (value: unknown) => {
@@ -188,7 +187,7 @@ export const parseExpenseText = (text: string): ExpenseParseResult => {
   const items: Array<ExpenseItem> = []
 
   for (const line of lines) {
-    const dateValue = readTextDate(line)
+    const dateValue = readExpenseDate(line)
     if (dateValue !== null && date === null) {
       date = dateValue
     } else {
