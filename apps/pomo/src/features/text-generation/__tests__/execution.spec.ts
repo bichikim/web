@@ -265,4 +265,56 @@ describe('text generation executor', () => {
     ])
     expect(runtimeMocks.create).not.toHaveBeenCalled()
   })
+
+  it('should cancel a pending prepare when the executor is disposed', async () => {
+    let resolvePreparation: (() => void) | undefined
+    const preparation = new Promise<void>((resolve) => {
+      resolvePreparation = resolve
+    })
+    const provider: TextGenerationExecutionProvider = {
+      cancel: vi.fn(),
+      countTokens: vi.fn().mockResolvedValue(7),
+      dispose: vi.fn(),
+      generate: vi.fn().mockResolvedValue('서버 응답'),
+      getTokenizer: vi.fn().mockReturnValue(tokenizer),
+      prepare: vi.fn().mockReturnValue(preparation),
+    }
+    const executor = createTextGenerationExecutor({createServerProvider: () => provider})
+    const resultPromise = executor.prepare(serverTarget)
+
+    executor.dispose()
+    resolvePreparation?.()
+
+    expect(await resultPromise).toEqual({
+      error: {code: 'cancelled', phase: 'prepare', retryable: false},
+      ok: false,
+    })
+    expect(provider.dispose).toHaveBeenCalledOnce()
+  })
+
+  it('should cancel pending token counting when the executor is disposed', async () => {
+    let resolveTokenCount: ((value: number) => void) | undefined
+    const tokenCount = new Promise<number>((resolve) => {
+      resolveTokenCount = resolve
+    })
+    const provider: TextGenerationExecutionProvider = {
+      cancel: vi.fn(),
+      countTokens: vi.fn().mockReturnValue(tokenCount),
+      dispose: vi.fn(),
+      generate: vi.fn().mockResolvedValue('서버 응답'),
+      getTokenizer: vi.fn().mockReturnValue(tokenizer),
+      prepare: vi.fn().mockResolvedValue(undefined),
+    }
+    const executor = createTextGenerationExecutor({createServerProvider: () => provider})
+    const resultPromise = executor.countTokens(serverTarget, messages)
+
+    executor.dispose()
+    resolveTokenCount?.(7)
+
+    expect(await resultPromise).toEqual({
+      error: {code: 'cancelled', phase: 'count-tokens', retryable: false},
+      ok: false,
+    })
+    expect(provider.dispose).toHaveBeenCalledOnce()
+  })
 })
