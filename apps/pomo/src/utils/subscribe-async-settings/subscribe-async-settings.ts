@@ -38,6 +38,10 @@ export const subscribeAsyncSettings = <Value>(
         options.onChange(value)
       }
     })
-    .catch(options.onError)
+    .catch((error: unknown) => {
+      if (!disposed && revision === initialRevision) {
+        options.onError(error)
+      }
+    })
   return unsubscribe
 }
