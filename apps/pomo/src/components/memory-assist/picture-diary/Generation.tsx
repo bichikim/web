@@ -48,7 +48,7 @@ const getStyles = () =>
   ] satisfies ReadonlyArray<StyleOption>
 
 export function Generation(props: GenerationProps) {
-  const studio = useImageGeneration()
+  const studio = useImageGeneration({clearPreviousResultOnGenerate: true})
   studio.setIdea(untrack(() => props.initialIdea ?? ''))
   studio.setStyle('coloredPencil')
   studio.selectRatio('16:9')

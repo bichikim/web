@@ -31,6 +31,19 @@ The translation is complete; this closing brace is explanatory prose: }`
     })
   })
 
+  it('should find the translation JSON after an explanatory brace object', () => {
+    const output = `Model note: {note}
+{"en":{"title":"Night","description":"Rest"},
+"ja":{"title":"夜","description":"休息"},
+"zh-Hans":{"title":"夜晚","description":"休息"}}`
+
+    expect(parseAlbumTranslation(output)).toEqual({
+      en: {description: 'Rest', title: 'Night'},
+      ja: {description: '休息', title: '夜'},
+      'zh-Hans': {description: '休息', title: '夜晚'},
+    })
+  })
+
   it('should reject incomplete model output', () => {
     expect(() => parseAlbumTranslation('{"en":{"title":"Night","description":"Rest"}}')).toThrow(
       'Gemma 4 번역 결과를 읽지 못했습니다.',

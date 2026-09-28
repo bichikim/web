@@ -1,4 +1,4 @@
-import {DesktopPlayer} from '../../components/desktop-surface/Player'
+import {DesktopPlayer} from 'src/components/desktop-surface/Player'
 
 export default function DesktopPlayerPage() {
   return <DesktopPlayer />

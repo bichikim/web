@@ -2,7 +2,7 @@
 
 import {describe, expect, it} from 'vitest'
 
-import {normalizeDeviceLocale, resolveAppsInTossLocale} from '../index'
+import {normalizeDeviceLocale, resolveAppsInTossLocale} from '../resolve-apps-in-toss-locale'
 
 describe('normalizeDeviceLocale', () => {
   it('should normalize exact and regional Apps in Toss locales', () => {

@@ -65,6 +65,27 @@ it.each([
   fixture.getItem.mockResolvedValue(stored)
   await expect(repository.read()).resolves.toEqual(settings)
 })
+it('should merge a native legacy date into current native settings with an empty start', async () => {
+  fixture.usesTossStorage.mockReturnValue(true)
+  const settings = {branch: 'navy', days: '300', manual: true, start: ''} as const
+  const restoredSettings = {...settings, start: '2026-09-01'}
+  fixture.getItem
+    .mockResolvedValueOnce(JSON.stringify(settings))
+    .mockResolvedValueOnce('"2026-09-01"')
+
+  await expect(repository.read()).resolves.toEqual(restoredSettings)
+  expect(fixture.web.get('pomo:service-settings:v1')).toBe(JSON.stringify(restoredSettings))
+})
+it('should merge a web legacy date into current native settings with an empty start', async () => {
+  fixture.usesTossStorage.mockReturnValue(true)
+  const settings = {branch: 'air', days: '', manual: false, start: ''} as const
+  const restoredSettings = {...settings, start: '2026-08-15'}
+  fixture.getItem.mockResolvedValueOnce(JSON.stringify(settings))
+  fixture.web.set('pomo:service-start:v1', '"2026-08-15"')
+
+  await expect(repository.read()).resolves.toEqual(restoredSettings)
+  expect(fixture.web.get('pomo:service-settings:v1')).toBe(JSON.stringify(restoredSettings))
+})
 it('should restore the web copy after a native save fails', async () => {
   fixture.usesTossStorage.mockReturnValue(true)
   const settings = {branch: 'navy', days: '300', manual: true, start: '2026-09-01'} as const

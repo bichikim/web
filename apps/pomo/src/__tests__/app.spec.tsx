@@ -13,7 +13,6 @@ const componentMocks = vi.hoisted(() => ({
   authProvider: vi.fn(),
   displayThemeProvider: vi.fn(),
   fileRoutes: vi.fn(),
-  focusRoomLayout: vi.fn(),
   metadata: vi.fn(),
   metaProvider: vi.fn(),
   modelDownloadProvider: vi.fn(),
@@ -27,9 +26,6 @@ vi.mock('@solidjs/router', () => ({Router: componentMocks.router}))
 vi.mock('@solidjs/start/router', () => ({FileRoutes: componentMocks.fileRoutes}))
 vi.mock('../components/p-document-metadata/PDocumentMetadata', () => ({
   PDocumentMetadata: componentMocks.metadata,
-}))
-vi.mock('../components/p-focus-room-layout/PFocusRoomLayout', () => ({
-  PFocusRoomLayout: componentMocks.focusRoomLayout,
 }))
 vi.mock('../components/p-recovery-boundary/PRecoveryBoundary', () => ({
   PRecoveryBoundary: componentMocks.recoveryBoundary,
@@ -94,9 +90,6 @@ describe('App', () => {
       }
       return <section data-testid="recovery-boundary">{props.children}</section>
     })
-    componentMocks.focusRoomLayout.mockImplementation((props: ChildrenProps) => (
-      <main data-testid="focus-room-layout">{props.children}</main>
-    ))
     componentMocks.fileRoutes.mockImplementation(() => <div>file routes</div>)
     componentMocks.metadata.mockImplementation(() => <div>document metadata</div>)
   })
@@ -120,7 +113,6 @@ describe('App', () => {
     expect(componentMocks.modelDownloadProvider).toHaveBeenCalledOnce()
     expect(screen.getByText('document metadata')).toBeTruthy()
     expect(screen.getByText('file routes')).toBeTruthy()
-    expect(screen.getByTestId('focus-room-layout')).toBeTruthy()
     expect(screen.getByTestId('recovery-boundary')).toBeTruthy()
     expect(recoveryProps).toMatchObject({canRetry, onError, onReady, onReload, onRetry})
   })

@@ -98,6 +98,21 @@ describe('parseExpenseAssistantResponse', () => {
     })
   })
 
+  it('should preserve an unpadded date', () => {
+    expect(
+      parseExpenseAssistantResponse(
+        JSON.stringify({
+          date: '2026-9-5',
+          items: [{name: '두부', quantity: 1, unitPrice: 1500}],
+          questions: [],
+        }),
+      ),
+    ).toMatchObject({
+      ok: true,
+      value: {date: '2026-9-5'},
+    })
+  })
+
   it('should reject a civil date that does not exist', () => {
     expect(
       parseExpenseAssistantResponse(

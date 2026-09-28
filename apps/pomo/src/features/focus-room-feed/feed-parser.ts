@@ -48,6 +48,19 @@ const hasItemAncestor = (element: Element, itemScope: Element, itemName: string)
 }
 const getChildText = (element: Element, names: ReadonlyArray<string>) =>
   findPreferredChild(element, names)?.textContent?.trim() ?? ''
+const getFeedTitle = (element: Element, feedUrl: string) => {
+  const title = getChildText(element, ['title'])
+
+  if (title.length > 0) {
+    return title
+  }
+
+  try {
+    return new URL(feedUrl).hostname
+  } catch {
+    return '제목 없는 피드'
+  }
+}
 const resolveUrl = (value: string, baseUrl: string) => {
   if (value.length === 0) {
     return ''
@@ -154,7 +167,7 @@ export const parseFeedXml = (xml: string, feedUrl: string): ParsedFeed => {
   const itemElements = Array.from(itemScope.getElementsByTagNameNS('*', itemName)).filter(
     (element) => !hasItemAncestor(element, itemScope, itemName),
   )
-  const title = getChildText(container, ['title']) || new URL(feedUrl).hostname
+  const title = getFeedTitle(container, feedUrl)
   const items = itemElements.map((element) => {
     const itemTitle = getChildText(element, ['title']) || '제목 없는 피드'
     const publishedAt = getPublishedAt(element)
