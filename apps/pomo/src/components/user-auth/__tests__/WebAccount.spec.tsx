@@ -13,7 +13,13 @@ const authMocks = vi.hoisted(() => ({useAuth: vi.fn()}))
 
 vi.mock('@solidjs/router', async () => {
   const actual: typeof import('@solidjs/router') = await vi.importActual('@solidjs/router')
-  return {...actual, action: vi.fn(), useAction: vi.fn(), useSubmission: vi.fn()}
+  return {
+    ...actual,
+    action: vi.fn(),
+    useAction: vi.fn(),
+    useSearchParams: vi.fn(() => [{}]),
+    useSubmission: vi.fn(),
+  }
 })
 vi.mock('../../../features/user-auth/web-session', () => ({
   completeAccountLink: vi.fn(),

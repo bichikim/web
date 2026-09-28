@@ -9,11 +9,12 @@ afterEach(() => {
   vi.restoreAllMocks()
 })
 
-it('should request only the SKU and forward submission with the album id', () => {
+it('should expose provider and Paddle pricing fields and forward submission', () => {
   const {model, setSavingOffer} = createModelHarness()
   const view = render(() => <OfferForm albumId="album" albumTitle="앨범" model={model} />)
-  expect(screen.getAllByRole('textbox')).toHaveLength(1)
-  expect(screen.getByRole('textbox')).toBeRequired()
+  expect(screen.getByRole('combobox', {name: '판매 채널'})).toHaveValue('apps-in-toss')
+  expect(screen.getByRole('textbox', {name: '외부 상품 ID'})).toBeRequired()
+  expect(screen.getByText('Paddle 웹 가격')).toBeTruthy()
   expect(view.container.querySelector('input[name=albumId]')).toHaveValue('album')
   fireEvent.submit(view.container.querySelector('form')!)
   expect(model.handleOfferSubmit).toHaveBeenCalledOnce()

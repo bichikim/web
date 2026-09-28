@@ -3,9 +3,11 @@ import {beforeEach, describe, expect, it, vi} from 'vitest'
 
 const authMocks = vi.hoisted(() => ({authorizeAdminRequest: vi.fn()}))
 const repositoryMocks = vi.hoisted(() => ({connectAlbumOffer: vi.fn()}))
+const paddleMocks = vi.hoisted(() => ({retrievePaddlePrice: vi.fn()}))
 
 vi.mock('src/server/auth/authorize-admin-request', () => authMocks)
 vi.mock('src/server/repositories/music-admin', () => repositoryMocks)
+vi.mock('src/server/payment/providers/paddle', () => paddleMocks)
 
 import {POST} from '../offers'
 import {invokeApiRoute} from '../../../__tests__/invoke'
@@ -33,17 +35,159 @@ describe('admin music offer route', () => {
   beforeEach(() => {
     authMocks.authorizeAdminRequest.mockReset().mockResolvedValue({authorized: true, cookies: []})
     repositoryMocks.connectAlbumOffer.mockReset().mockResolvedValue({success: true})
+    paddleMocks.retrievePaddlePrice.mockReset().mockResolvedValue({
+      active: true,
+      amountMinor: 1000n,
+      currency: 'USD',
+      fractionalDigits: 2,
+      id: 'pri_album_first',
+      type: 'one_time',
+    })
   })
 
   it('should connect an Apps in Toss one-time product for an administrator', async () => {
     const response = await invokeApiRoute(POST, createRequest())
 
     expect(response.status).toBe(200)
+    expect(paddleMocks.retrievePaddlePrice).not.toHaveBeenCalled()
     expect(repositoryMocks.connectAlbumOffer).toHaveBeenCalledWith({
       albumId: ALBUM_ID,
       externalProductId: 'pomo.album.first',
       provider: 'apps-in-toss',
     })
+  })
+
+  it('should reject a Paddle offer whose configured price differs from the Price API', async () => {
+    paddleMocks.retrievePaddlePrice.mockResolvedValueOnce({
+      active: true,
+      amountMinor: 1200n,
+      currency: 'USD',
+      fractionalDigits: 2,
+      id: 'pri_album_first',
+      type: 'one_time',
+    })
+
+    const response = await invokeApiRoute(
+      POST,
+      createRequestWithBody(
+        JSON.stringify({
+          albumId: ALBUM_ID,
+          amountMinor: '1000',
+          currency: 'USD',
+          externalProductId: 'pri_album_first',
+          fractionalDigits: 2,
+          provider: 'paddle',
+        }),
+      ),
+    )
+
+    expect(response.status).toBe(409)
+    await expect(response.json()).resolves.toEqual({error: 'paddle_price_mismatch'})
+    expect(repositoryMocks.connectAlbumOffer).not.toHaveBeenCalled()
+  })
+
+  it('should reject an inactive recurring or free Paddle Price', async () => {
+    paddleMocks.retrievePaddlePrice.mockResolvedValueOnce({
+      active: false,
+      amountMinor: null,
+      currency: 'USD',
+      fractionalDigits: 2,
+      id: 'pri_album_first',
+      type: 'recurring',
+    })
+
+    const response = await invokeApiRoute(
+      POST,
+      createRequestWithBody(
+        JSON.stringify({
+          albumId: ALBUM_ID,
+          amountMinor: '1000',
+          currency: 'USD',
+          externalProductId: 'pri_album_first',
+          fractionalDigits: 2,
+          provider: 'paddle',
+        }),
+      ),
+    )
+
+    expect(response.status).toBe(409)
+    await expect(response.json()).resolves.toEqual({error: 'paddle_price_mismatch'})
+    expect(repositoryMocks.connectAlbumOffer).not.toHaveBeenCalled()
+  })
+
+  it('should reject a Paddle Price with mismatched currency precision', async () => {
+    paddleMocks.retrievePaddlePrice.mockResolvedValueOnce({
+      active: true,
+      amountMinor: 1000n,
+      currency: 'JPY',
+      fractionalDigits: 0,
+      id: 'pri_album_first',
+      type: 'one_time',
+    })
+
+    const response = await invokeApiRoute(
+      POST,
+      createRequestWithBody(
+        JSON.stringify({
+          albumId: ALBUM_ID,
+          amountMinor: '1000',
+          currency: 'USD',
+          externalProductId: 'pri_album_first',
+          fractionalDigits: 2,
+          provider: 'paddle',
+        }),
+      ),
+    )
+
+    expect(response.status).toBe(409)
+    await expect(response.json()).resolves.toEqual({error: 'paddle_price_mismatch'})
+    expect(repositoryMocks.connectAlbumOffer).not.toHaveBeenCalled()
+  })
+
+  it('should connect a server-priced Paddle Price for an administrator', async () => {
+    const response = await invokeApiRoute(
+      POST,
+      createRequestWithBody(
+        JSON.stringify({
+          albumId: ALBUM_ID,
+          amountMinor: '1000',
+          currency: 'USD',
+          externalProductId: 'pri_album_first',
+          fractionalDigits: 2,
+          provider: 'paddle',
+        }),
+      ),
+    )
+
+    expect(response.status).toBe(200)
+    expect(paddleMocks.retrievePaddlePrice).toHaveBeenCalledWith('pri_album_first')
+    expect(repositoryMocks.connectAlbumOffer).toHaveBeenCalledWith({
+      albumId: ALBUM_ID,
+      amountMinor: '1000',
+      currency: 'USD',
+      externalProductId: 'pri_album_first',
+      fractionalDigits: 2,
+      provider: 'paddle',
+    })
+  })
+
+  it('should reject a Paddle amount outside the PostgreSQL bigint range', async () => {
+    const response = await invokeApiRoute(
+      POST,
+      createRequestWithBody(
+        JSON.stringify({
+          albumId: ALBUM_ID,
+          amountMinor: '9223372036854775808',
+          currency: 'USD',
+          externalProductId: 'pri_album_first',
+          fractionalDigits: 2,
+          provider: 'paddle',
+        }),
+      ),
+    )
+
+    expect(response.status).toBe(400)
+    expect(repositoryMocks.connectAlbumOffer).not.toHaveBeenCalled()
   })
 
   it('should ignore a client-supplied internal product code', async () => {

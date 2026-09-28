@@ -11,6 +11,7 @@ import {
 } from '../auth/actions'
 import {useAuth} from '../auth/AuthProvider'
 import {completeAccountLinkAction} from './actions'
+import {getSafeReturnTo} from './return-path'
 import type {AccountSession} from './web-session'
 
 export interface WebAccountController {
@@ -37,6 +38,8 @@ export const useWebAccount = (): WebAccountController => {
     MagicLinkActionResult['status'] | null
   >(null)
   const [signOutStatus, setSignOutStatus] = createSignal<SignOutActionResult['status'] | null>(null)
+  const [canRedirectToReturnPath, setCanRedirectToReturnPath] = createSignal(false)
+  let returnRedirectStarted = false
   const session = createMemo<AccountSession | null>(() => {
     const state = authentication.session()
 
@@ -91,6 +94,8 @@ export const useWebAccount = (): WebAccountController => {
             throw new Error('Linked account session is unavailable')
           }
 
+          setCanRedirectToReturnPath(true)
+
           setLocalSuccessMessage(m.web_account_linked())
         } else {
           accountCallbackErrorMessage = m.web_account_link_expired()
@@ -100,6 +105,8 @@ export const useWebAccount = (): WebAccountController => {
         url.searchParams.delete('link_error')
         accountCallbackErrorMessage = m.web_account_link_invalid()
         setLocalErrorMessage(accountCallbackErrorMessage)
+      } else {
+        setCanRedirectToReturnPath(true)
       }
 
       globalThis.history.replaceState(null, '', url)
@@ -112,6 +119,23 @@ export const useWebAccount = (): WebAccountController => {
         setLocalErrorMessage(m.web_account_load_failed())
       }
     })
+  })
+
+  createEffect(() => {
+    if (!canRedirectToReturnPath() || authentication.state().kind !== 'authenticated') {
+      return
+    }
+
+    const returnTo = getSafeReturnTo(new URL(globalThis.location.href).searchParams.get('returnTo'))
+    if (returnTo === null || returnRedirectStarted) {
+      return
+    }
+
+    returnRedirectStarted = true
+    const url = new URL(globalThis.location.href)
+    url.searchParams.delete('returnTo')
+    globalThis.history.replaceState(null, '', url)
+    globalThis.location.assign(returnTo)
   })
 
   createEffect(() => {

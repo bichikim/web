@@ -1,9 +1,17 @@
-import {isPlainObject, isString} from 'es-toolkit/predicate'
 import {createCatalogRequestInit, hasUniqueIds} from 'src/features/catalog-policy'
 import * as m from '@paraglide/message'
 
+import {isPaymentProvider} from 'src/features/payment/types'
+
 import {apiFetch, httpFetch} from '../../http-client'
-import type {LoadPublishedPAlbumsOptions, PPublishedAlbumCatalog, PTrackListing} from './model'
+import type {
+  LoadPublishedPAlbumsOptions,
+  PAlbumOffer,
+  PPublishedAlbumCatalog,
+  PTrackListing,
+} from './model'
+
+const MAXIMUM_FRACTIONAL_DIGITS = 6
 
 interface PublishedAlbumCollection {
   readonly albums: ReadonlyArray<PublishedAlbum>
@@ -15,6 +23,8 @@ interface PublishedAlbum {
   readonly coverImageUrl: string | null
   readonly description: string
   readonly id: string
+  readonly offers?: ReadonlyArray<PAlbumOffer>
+  readonly productId?: string
   readonly sale:
     | {readonly externalProductId: string; readonly state: 'configured'}
     | {readonly state: 'preparing'}
@@ -23,12 +33,17 @@ interface PublishedAlbum {
   readonly tracks: ReadonlyArray<PTrackListing>
 }
 
+const isString = (value: unknown): value is string => typeof value === 'string'
+
+const isNonNegativeIntegerString = (value: unknown): value is string =>
+  isString(value) && /^(?:0|[1-9]\d*)$/u.test(value)
+
 const isTrackListing = (value: unknown): value is PTrackListing => {
-  if (!isPlainObject(value)) {
+  if (typeof value !== 'object' || value === null) {
     return false
   }
 
-  const track = value
+  const track = value as Record<string, unknown>
   return (
     (track.artworkUrl === undefined || isString(track.artworkUrl)) &&
     isString(track.artist) &&
@@ -48,22 +63,69 @@ const hasPublishedTracks = (album: Record<string, unknown>): boolean => {
   )
 }
 
+const isPublishedAlbumOffer = (value: unknown): value is PAlbumOffer => {
+  if (typeof value !== 'object' || value === null) {
+    return false
+  }
+
+  const offer = value as Record<string, unknown>
+  if (
+    !isString(offer.externalProductId) ||
+    !isString(offer.productId) ||
+    !isPaymentProvider(offer.provider)
+  ) {
+    return false
+  }
+
+  if (offer.provider === 'apps-in-toss') {
+    return offer.amountMinor === null && offer.currency === null && offer.fractionalDigits === null
+  }
+
+  return (
+    isNonNegativeIntegerString(offer.amountMinor) &&
+    isString(offer.currency) &&
+    /^[A-Z]{3}$/u.test(offer.currency) &&
+    Number.isInteger(offer.fractionalDigits) &&
+    Number(offer.fractionalDigits) >= 0 &&
+    Number(offer.fractionalDigits) <= MAXIMUM_FRACTIONAL_DIGITS
+  )
+}
+
+const isPublishedAlbumSale = (value: unknown): boolean => {
+  if (typeof value !== 'object' || value === null) {
+    return false
+  }
+
+  const sale = value as Record<string, unknown>
+  return (
+    sale.state === 'preparing' || (sale.state === 'configured' && isString(sale.externalProductId))
+  )
+}
+
+const isPublishedAlbumPaymentCatalog = (album: Record<string, unknown>): boolean => {
+  const {offers, productId} = album
+
+  if (productId !== undefined && !isString(productId)) {
+    return false
+  }
+
+  if (offers === undefined) {
+    return true
+  }
+
+  return (
+    Array.isArray(offers) &&
+    offers.every(isPublishedAlbumOffer) &&
+    (offers.length === 0 || isString(productId))
+  )
+}
+
 const isPublishedAlbum = (value: unknown): value is PublishedAlbum => {
-  if (!isPlainObject(value)) {
+  if (typeof value !== 'object' || value === null) {
     return false
   }
 
-  const album = value
-  const {sale} = album
-
-  if (!isPlainObject(sale)) {
-    return false
-  }
-
-  const saleRecord = sale
-  const hasValidSale =
-    saleRecord.state === 'preparing' ||
-    (saleRecord.state === 'configured' && isString(saleRecord.externalProductId))
+  const album = value as Record<string, unknown>
 
   return (
     (album.coverFallback === 'cd' ||
@@ -72,7 +134,8 @@ const isPublishedAlbum = (value: unknown): value is PublishedAlbum => {
     (album.coverImageUrl === null || isString(album.coverImageUrl)) &&
     isString(album.description) &&
     isString(album.id) &&
-    hasValidSale &&
+    isPublishedAlbumPaymentCatalog(album) &&
+    isPublishedAlbumSale(album.sale) &&
     isString(album.title) &&
     Number.isInteger(album.trackCount) &&
     Number(album.trackCount) >= 0 &&
@@ -81,11 +144,11 @@ const isPublishedAlbum = (value: unknown): value is PublishedAlbum => {
 }
 
 const isPublishedAlbumCollection = (value: unknown): value is PublishedAlbumCollection => {
-  if (!isPlainObject(value)) {
+  if (typeof value !== 'object' || value === null) {
     return false
   }
 
-  const collection = value
+  const collection = value as Record<string, unknown>
   return (
     collection.version === 1 &&
     Array.isArray(collection.albums) &&
@@ -93,12 +156,6 @@ const isPublishedAlbumCollection = (value: unknown): value is PublishedAlbumColl
     hasUniqueIds(collection.albums.map((album) => album.id))
   )
 }
-
-const createRequestInit = (signal?: AbortSignal): RequestInit => ({
-  /* v8 ignore next -- Vitest compiles import.meta.env.DEV as one fixed execution mode. */
-  cache: import.meta.env.DEV ? 'no-store' : 'default',
-  signal,
-})
 
 const getCoverIcon = (fallback: PublishedAlbum['coverFallback']): string => {
   switch (fallback) {
@@ -142,6 +199,8 @@ export const loadPublishedPAlbums = async (
         description: album.description,
         icon: getCoverIcon(album.coverFallback),
         id: album.id,
+        ...(album.offers === undefined ? {} : {offers: album.offers}),
+        ...(album.productId === undefined ? {} : {productId: album.productId}),
         sale:
           album.sale.state === 'preparing'
             ? {

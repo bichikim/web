@@ -1,6 +1,23 @@
 import type {AlbumStatusAction} from './catalog'
 
-const postJson = async (url: string, body: Readonly<Record<string, unknown>>): Promise<void> => {
+interface ConnectAppsInTossAlbumOfferInput {
+  readonly albumId: string
+  readonly externalProductId: string
+  readonly provider: 'apps-in-toss'
+}
+
+interface ConnectPaddleAlbumOfferInput {
+  readonly albumId: string
+  readonly amountMinor: string
+  readonly currency: string
+  readonly externalProductId: string
+  readonly fractionalDigits: number
+  readonly provider: 'paddle'
+}
+
+export type ConnectAlbumOfferInput = ConnectAppsInTossAlbumOfferInput | ConnectPaddleAlbumOfferInput
+
+const postJson = async (url: string, body: object): Promise<void> => {
   const response = await fetch(url, {
     body: JSON.stringify(body),
     headers: {'Content-Type': 'application/json'},
@@ -17,9 +34,5 @@ export const changeAlbumStatus = (
   statusAction: AlbumStatusAction,
 ): Promise<void> => postJson('/api/admin/music/status', {action: statusAction, albumId})
 
-export const connectAlbumOffer = (albumId: string, externalProductId: string): Promise<void> =>
-  postJson('/api/admin/music/offers', {
-    albumId,
-    externalProductId,
-    provider: 'apps-in-toss',
-  })
+export const connectAlbumOffer = (input: ConnectAlbumOfferInput): Promise<void> =>
+  postJson('/api/admin/music/offers', input)

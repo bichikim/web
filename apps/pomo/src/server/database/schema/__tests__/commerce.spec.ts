@@ -6,6 +6,7 @@ import {
   commerceEntitlementGrants,
   commerceOffers,
   commerceOrderItems,
+  commerceOrderReservations,
   commerceOrders,
   commerceProductAlbums,
   commerceProducts,
@@ -25,11 +26,12 @@ it('should allow only one offer per product and provider', () => {
 it.each([
   [commerceProducts, 1],
   [commerceProductAlbums, 1],
-  [commerceOffers, 3],
-  [commerceOrders, 6],
+  [commerceOffers, 7],
+  [commerceOrders, 8],
+  [commerceOrderReservations, 5],
   [commerceOrderItems, 5],
   [commerceEntitlementGrants, 4],
-  [commerceProviderEvents, 2],
+  [commerceProviderEvents, 4],
 ])('should expose the table constraints and indexes', (table, expectedConstraintCount) => {
   const config = getTableConfig(table)
 

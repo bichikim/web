@@ -660,6 +660,9 @@ importers:
       '@neondatabase/serverless':
         specifier: ^1.1.0
         version: 1.1.0
+      '@paddle/paddle-js':
+        specifier: ^1.6.5
+        version: 1.6.5
       '@pomo/playback-token':
         specifier: workspace:*
         version: link:../../packages/playback-token
@@ -5005,6 +5008,9 @@ packages:
     engines: {node: ^20.19.0 || >=22.12.0}
     cpu: [x64]
     os: [win32]
+
+  '@paddle/paddle-js@1.6.5':
+    resolution: {integrity: sha512-uFRvptUzYRqRlqTU5XmfcZWC9BGVYpZNdANd3giJjZbJlHesnE4gn8PyjtYpesU1ar2ZGPuJxHvrrSIV9jjdVw==}
 
   '@parcel/watcher-android-arm64@2.5.6':
     resolution: {integrity: sha512-YQxSS34tPF/6ZG7r/Ih9xy+kP/WwediEUsqmtf0cuCV5TPPKw/PQHRhueUo6JdeFJaqV3pyjm0GdYjZotbRt/A==}
@@ -16551,6 +16557,8 @@ snapshots:
 
   '@oxlint/binding-win32-x64-msvc@1.77.0':
     optional: true
+
+  '@paddle/paddle-js@1.6.5': {}
 
   '@parcel/watcher-android-arm64@2.5.6':
     optional: true

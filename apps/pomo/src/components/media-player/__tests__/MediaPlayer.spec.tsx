@@ -1,6 +1,6 @@
 /** @vitest-environment jsdom */
 import {PreferenceProvider} from 'src/hooks/use-preference'
-import {cleanup, fireEvent, render} from '@solidjs/testing-library'
+import {cleanup, fireEvent, render, waitFor} from '@solidjs/testing-library'
 import {afterEach, beforeEach, expect, it, vi} from 'vitest'
 import {useMediaPlayer} from '../context'
 import {MediaPlayer} from '../index'
@@ -147,4 +147,35 @@ it('should select the next track internally on end and device requests and relea
   result.unmount()
   expect(session.metadata).toBeNull()
   expect([...handlers.values()]).toEqual([null, null, null, null])
+})
+
+it('should resolve an entitled source before assigning it to the audio element', async () => {
+  const fetchMock = vi.fn<typeof fetch>().mockResolvedValue(
+    Response.json({
+      expiresAt: '2026-09-20T01:00:00.000Z',
+      mode: 'full',
+      url: 'https://audio.example/track.mp3?token=signed',
+    }),
+  )
+  vi.stubGlobal('fetch', fetchMock)
+  const tracks = [
+    {
+      artist: 'Paid Artist',
+      durationSeconds: 120,
+      id: 'owned-track',
+      source: {kind: 'entitled', trackId: 'owned-track'},
+      title: 'Owned Track',
+    },
+  ] as const
+
+  const result = render(() => <MediaPlayer tracks={tracks} />, {wrapper: PreferenceProvider})
+  const audio = result.container.querySelector('audio')!
+
+  await waitFor(() =>
+    expect(audio.getAttribute('src')).toBe('https://audio.example/track.mp3?token=signed'),
+  )
+  expect(fetchMock).toHaveBeenCalledWith(
+    '/api/music/tracks/owned-track/access',
+    expect.objectContaining({cache: 'no-store', credentials: 'include'}),
+  )
 })

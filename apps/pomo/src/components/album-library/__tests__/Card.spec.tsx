@@ -79,6 +79,7 @@ const renderCard = (album: PResolvedAlbum, isInPlayer = false) => {
 afterEach(() => {
   cleanup()
   vi.clearAllMocks()
+  vi.unstubAllEnvs()
 })
 
 describe('AlbumCard', () => {
@@ -167,5 +168,75 @@ describe('AlbumCard', () => {
     expect(screen.getByText(unpricedSale.statusLabel)).toBeTruthy()
     expect(screen.queryByRole('list')).toBeNull()
     expect(screen.queryByRole('button')).toBeNull()
+  })
+
+  it('should restrict an unpurchased web album to previews and checkout', () => {
+    const album = {
+      ...createAlbum({id: '웹 판매 앨범', trackListings: [LISTING], tracks: []}),
+      offers: [
+        {
+          amountMinor: '4900',
+          currency: 'KRW',
+          externalProductId: 'price-album-1',
+          fractionalDigits: 0,
+          productId: 'product-album-1',
+          provider: 'paddle' as const,
+        },
+      ],
+      productId: 'product-album-1',
+    }
+
+    renderCard(album)
+
+    expect(screen.getByRole('button', {name: '구매하기'})).toBeTruthy()
+    expect(screen.getByRole('button', {name: '판매 곡 30초 미리듣기'})).toBeTruthy()
+    expect(screen.queryByRole('button', {name: /플레이어에 추가/u})).toBeNull()
+  })
+
+  it('should use full-access playback labels after ownership is restored', () => {
+    const album = {
+      ...createAlbum({id: '소유 앨범', trackListings: [LISTING], tracks: []}),
+      offers: [
+        {
+          amountMinor: '4900',
+          currency: 'KRW',
+          externalProductId: 'price-album-1',
+          fractionalDigits: 0,
+          productId: 'product-album-1',
+          provider: 'paddle' as const,
+        },
+      ],
+      owned: true,
+      productId: 'product-album-1',
+    }
+
+    renderCard(album)
+
+    expect(screen.getByText('구매한 앨범')).toBeTruthy()
+    expect(screen.getByRole('button', {name: '판매 곡 재생'})).toBeTruthy()
+    expect(screen.queryByText('수록곡을 준비하고 있어요')).toBeNull()
+    expect(screen.queryByRole('button', {name: '구매하기'})).toBeNull()
+  })
+
+  it('should not expose web checkout from the Apps in Toss runtime', () => {
+    vi.stubEnv('VITE_POMO_IS_APPS_IN_TOSS', 'true')
+    const album = {
+      ...createAlbum({id: '앱인토스 앨범', trackListings: [LISTING], tracks: []}),
+      offers: [
+        {
+          amountMinor: '4900',
+          currency: 'KRW',
+          externalProductId: 'price-album-1',
+          fractionalDigits: 0,
+          productId: 'product-album-1',
+          provider: 'paddle' as const,
+        },
+      ],
+      productId: 'product-album-1',
+    }
+
+    renderCard(album)
+
+    expect(screen.queryByRole('button', {name: '구매하기'})).toBeNull()
   })
 })

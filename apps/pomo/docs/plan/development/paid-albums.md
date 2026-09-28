@@ -2,6 +2,8 @@
 
 [개발 기술 계획으로 돌아가기](../development.md)
 
+웹 결제 1차 범위와 실행 순서는 [웹 단건 앨범 구매](./web-album-purchases.md)를 따른다.
+
 ## 목표
 
 관리자가 웹에서 앨범과 곡을 등록하고, 사용자가 구매한 앨범만 재생할 수 있도록 한다. 음원은
@@ -89,17 +91,14 @@ interface AlbumArtwork {
 모든 주문과 권한은 결제 제공자의 사용자 ID나 이메일이 아니라 내부 `pomo_users.id`에 연결한다.
 웹과 앱인토스의 계정이 같은 Pomo 사용자로 연결된 경우에만 두 채널의 구매 권한을 공유한다.
 
-`Link`가 Stripe Link를 뜻하면 별도 제공자가 아니라 Stripe Checkout 안의 결제수단으로 기록한다.
-Stripe Payment Link처럼 공유 URL을 뜻해도 오퍼와 주문 구조는 같다. 다만 디지털 권한은 로그인한
-Pomo 사용자에게 귀속해야 하므로, 웹 구매는 서버가 인증된 사용자를 연결한 Checkout Session을
-만들거나 제공자가 검증한 동일 수준의 참조값을 사용한다. 성공 화면이나 클라이언트 응답만으로
-권한을 지급하지 않고 서명이 검증된 webhook과 제공자 주문 조회를 기준으로 처리한다.
+웹 구매는 Paddle의 단건 transaction을 내부 주문과 인증된 사용자에 연결한다. 성공 화면이나
+클라이언트 응답만으로 권한을 지급하지 않고 서명이 검증된 webhook과 Paddle transaction 조회를
+기준으로 처리한다. 앱인토스는 기존 IAP 경로를 유지한다.
 
 참고:
 
-- [Stripe Link with Checkout](https://docs.stripe.com/payments/link/checkout-link)
-- [Stripe Payment Links](https://docs.stripe.com/payment-links)
-- [Stripe Checkout fulfillment](https://docs.stripe.com/checkout/fulfillment)
+- [Paddle transaction 생성](https://developer.paddle.com/build/transactions/create-transaction/)
+- [Paddle webhook 검증](https://developer.paddle.com/webhooks/about/signature-verification/)
 
 ## R2 저장소
 
@@ -354,15 +353,15 @@ Gemma 4 E2B 번역은 관리자 브라우저의 WebGPU에서 요청할 때만 �
 
 ## 웹 결제
 
-웹 결제 제공자는 아직 확정하지 않는다. Stripe Checkout·Link·Payment Links 또는 같은 방식의
-호스팅 체크아웃을 후보로 두되 다음 계약을 만족해야 한다.
+웹 단건 결제는 [실행 계획](./web-album-purchases.md)의 Paddle Checkout 흐름을 따른다.
+다음 공통 계약은 결제 구현 방식과 관계없이 유지한다.
 
 - 로그인한 Pomo 사용자와 Checkout을 서버에서 안전하게 연결할 수 있다.
 - 일회성 결제 완료와 환불을 서명된 webhook 또는 서버 간 조회로 확인할 수 있다.
 - 제공자 이벤트의 고유 ID로 중복 처리를 막을 수 있다.
 - 내부 상품 ID와 제공자 Price·상품 ID를 분리할 수 있다.
 
-웹 결제수단이 카드, Stripe Link나 다른 지갑으로 바뀌어도 `provider`는 결제 계약 주체를 나타내고
+웹 결제수단이 카드나 다른 지갑으로 바뀌어도 `provider`는 결제 계약 주체를 나타내고
 세부 결제수단은 주문의 선택적 감사 정보로만 보존한다. 결제수단에 따라 앨범 권한 모델을 나누지
 않는다.
 

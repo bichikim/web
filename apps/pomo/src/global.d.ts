@@ -17,6 +17,9 @@ interface ImportMetaEnv {
   readonly OPENAI_SERVICE_TIER?: string
   readonly OPENAI_WEBHOOK_SECRET?: string
   readonly OPENWEATHER_API_KEY?: string
+  readonly PADDLE_API_KEY?: string
+  readonly PADDLE_ENVIRONMENT?: string
+  readonly PADDLE_WEBHOOK_SECRET?: string
   readonly POMO_AI_ARTIFACT_R2_ACCESS_KEY_ID?: string
   readonly POMO_AI_ARTIFACT_R2_BUCKET?: string
   readonly POMO_AI_ARTIFACT_R2_PREFIX?: string
@@ -57,6 +60,8 @@ interface ImportMetaEnv {
   readonly VITE_POMO_RUNTIME_TARGET: string
   readonly VITE_POMO_WEB_PRIVACY_PATH: string
   readonly VITE_POMO_WEB_TERMS_PATH: string
+  readonly VITE_PADDLE_CLIENT_TOKEN?: string
+  readonly VITE_PADDLE_ENVIRONMENT?: string
 }
 
 declare namespace App {

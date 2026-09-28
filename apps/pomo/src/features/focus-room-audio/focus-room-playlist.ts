@@ -15,11 +15,14 @@ import type {
   PTrackQueueSource,
 } from './focus-room-playlist/model'
 import {loadPTrackCatalog} from './focus-room-playlist/catalog'
+import {loadOwnedPAlbums} from './focus-room-playlist/owned-catalog'
 import {loadPublishedPAlbums} from './focus-room-playlist/published-catalog'
 
 export type * from './focus-room-playlist/model'
 export {loadPTrackCatalog} from './focus-room-playlist/catalog'
+export {loadOwnedPAlbums} from './focus-room-playlist/owned-catalog'
 export {loadPublishedPAlbums} from './focus-room-playlist/published-catalog'
+export {resolvePTrackSource} from './focus-room-playlist/track-source'
 
 interface PAlbumCollection {
   readonly albums: readonly PAlbum[]
@@ -104,6 +107,13 @@ const resolveTrackIds = (
   })
 }
 
+const mergeTrackCatalogs = (
+  bundledTracks: readonly PTrack[],
+  ownedTracks: readonly PTrack[],
+): readonly PTrack[] => [
+  ...new Map([...bundledTracks, ...ownedTracks].map((track) => [track.id, track])).values(),
+]
+
 const resolveAlbumTracks = (album: PAlbum, tracks: readonly PTrack[]): readonly PTrack[] =>
   resolveTrackIds(album.trackIds, tracks, 'Focus-room albums reference unknown tracks').map(
     (track) =>
@@ -114,7 +124,7 @@ const resolveAlbumTracks = (album: PAlbum, tracks: readonly PTrack[]): readonly 
 
 const resolveBundledTrack = (track: PTrack): PTrack => ({
   ...track,
-  source: resolvePomoAssetUrl(track.source),
+  source: typeof track.source === 'string' ? resolvePomoAssetUrl(track.source) : track.source,
 })
 
 const localizeBundledAlbum = (album: PAlbum, locale: Locale | undefined): PAlbum => {
@@ -204,9 +214,22 @@ export const loadPAlbums = async (options: LoadPAlbumsOptions = {}): Promise<PAl
 export const loadPTrackQueueSource = async (
   options: LoadPTracksOptions = {},
 ): Promise<PTrackQueueSource> => {
-  const [catalogTracks, playlistResponse] = await Promise.all([
+  const ownedTracksPromise = loadOwnedPAlbums({
+    ownedAlbumsUrl: options.ownedAlbumsUrl,
+    signal: options.signal,
+  })
+    .then((albums) => albums.flatMap((album) => album.tracks))
+    .catch((error: unknown) => {
+      if (options.signal?.aborted === true) {
+        throw error
+      }
+
+      return [] as readonly PTrack[]
+    })
+  const [catalogTracks, playlistResponse, ownedTracks] = await Promise.all([
     loadPTrackCatalog({signal: options.signal, tracksUrl: options.tracksUrl}),
     fetchAudioJson('playlist.json', options.playlistUrl, options.signal),
+    ownedTracksPromise,
   ])
 
   if (!playlistResponse.ok) {
@@ -219,11 +242,12 @@ export const loadPTrackQueueSource = async (
     throw new TypeError('Focus-room playlist has an invalid format')
   }
 
-  const tracks = catalogTracks.map(resolveBundledTrack)
+  const bundledTracks = catalogTracks.map(resolveBundledTrack)
+  const tracks = mergeTrackCatalogs(bundledTracks, ownedTracks)
   return {
     defaultTracks: resolveTrackIds(
       playlist.trackIds,
-      tracks,
+      bundledTracks,
       'Focus-room playlist references unknown tracks',
     ),
     tracks,

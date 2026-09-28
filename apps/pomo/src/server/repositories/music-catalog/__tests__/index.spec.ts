@@ -59,7 +59,9 @@ const createOfferQuery = (result: ReadonlyArray<unknown>) => ({
   from: vi.fn(() => ({
     innerJoin: vi.fn(() => ({
       innerJoin: vi.fn(() => ({
-        innerJoin: vi.fn(() => ({where: vi.fn().mockResolvedValue(result)})),
+        innerJoin: vi.fn(() => ({
+          where: vi.fn(() => ({orderBy: vi.fn().mockResolvedValue(result)})),
+        })),
       })),
     })),
   })),
@@ -215,7 +217,17 @@ describe('listPublishedAlbums', () => {
           title: 'Track Two',
         },
       ],
-      [{albumId: 'album-1', externalProductId: 'product-1'}],
+      [
+        {
+          albumId: 'album-1',
+          amountMinor: null,
+          currency: null,
+          externalProductId: 'product-1',
+          fractionalDigits: null,
+          productId: 'product-1',
+          provider: 'apps-in-toss',
+        },
+      ],
     )
 
     await expect(listPublishedAlbums()).resolves.toEqual([
@@ -224,6 +236,17 @@ describe('listPublishedAlbums', () => {
         coverImageUrl: null,
         description: '첫 번째 설명',
         id: 'album-1',
+        offers: [
+          {
+            amountMinor: null,
+            currency: null,
+            externalProductId: 'product-1',
+            fractionalDigits: null,
+            productId: 'product-1',
+            provider: 'apps-in-toss',
+          },
+        ],
+        productId: 'product-1',
         sale: {externalProductId: 'product-1', state: 'configured'},
         title: '첫 번째',
         trackCount: 2,
@@ -244,6 +267,58 @@ describe('listPublishedAlbums', () => {
         id: 'album-2',
         sale: {state: 'preparing'},
         title: '두 번째',
+        trackCount: 0,
+        tracks: [],
+      },
+    ])
+  })
+
+  it('should expose internal products and server prices for web offers', async () => {
+    queueCatalog(
+      [
+        {
+          coverFallback: 'music',
+          coverImageUrl: null,
+          description: 'Web album',
+          id: 'album-1',
+          locale: 'ko',
+          publishedAt: new Date('2026-09-16T00:00:00Z'),
+          title: 'Web album',
+        },
+      ],
+      [],
+      [
+        {
+          albumId: 'album-1',
+          amountMinor: 1000n,
+          currency: 'USD',
+          externalProductId: 'price_album_1',
+          fractionalDigits: 2,
+          productId: 'product-1',
+          provider: 'paddle',
+        },
+      ],
+    )
+
+    await expect(listPublishedAlbums()).resolves.toEqual([
+      {
+        coverFallback: 'music',
+        coverImageUrl: null,
+        description: 'Web album',
+        id: 'album-1',
+        offers: [
+          {
+            amountMinor: '1000',
+            currency: 'USD',
+            externalProductId: 'price_album_1',
+            fractionalDigits: 2,
+            productId: 'product-1',
+            provider: 'paddle',
+          },
+        ],
+        productId: 'product-1',
+        sale: {state: 'preparing'},
+        title: 'Web album',
         trackCount: 0,
         tracks: [],
       },

@@ -120,7 +120,7 @@ export const MediaPlayer = (props: MediaPlayerProps) => {
           crossorigin="anonymous"
           preload="metadata"
           slot="media"
-          src={player.currentTrack()?.source}
+          src={player.currentSource()}
           onPlay={onPlay}
           onPause={onPause}
           onEnded={handleEnded}

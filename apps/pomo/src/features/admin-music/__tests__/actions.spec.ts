@@ -172,21 +172,58 @@ describe('form actions', () => {
   })
 
   it('should convert offer form values and normalize adapter rejection', async () => {
-    const values = new URLSearchParams({albumId: ' album-one ', externalProductId: ' sku-one '})
+    const values = new URLSearchParams({
+      albumId: ' album-one ',
+      externalProductId: ' sku-one ',
+      provider: 'apps-in-toss',
+    })
     commandMocks.connectAlbumOffer.mockRejectedValueOnce(new Error('offer rejected'))
 
     await expect(connectAdminAlbumOfferAction(values)).resolves.toEqual({
       detail: 'offer rejected',
       status: 'failed',
     })
-    expect(commandMocks.connectAlbumOffer).toHaveBeenCalledWith('album-one', 'sku-one')
+    expect(commandMocks.connectAlbumOffer).toHaveBeenCalledWith({
+      albumId: 'album-one',
+      externalProductId: 'sku-one',
+      provider: 'apps-in-toss',
+    })
   })
 
   it('should return success after connecting an offer', async () => {
-    const values = new URLSearchParams({albumId: 'album-one', externalProductId: 'sku-one'})
+    const values = new URLSearchParams({
+      albumId: 'album-one',
+      externalProductId: 'sku-one',
+      provider: 'apps-in-toss',
+    })
 
     await expect(connectAdminAlbumOfferAction(values)).resolves.toEqual({status: 'succeeded'})
-    expect(commandMocks.connectAlbumOffer).toHaveBeenCalledWith('album-one', 'sku-one')
+    expect(commandMocks.connectAlbumOffer).toHaveBeenCalledWith({
+      albumId: 'album-one',
+      externalProductId: 'sku-one',
+      provider: 'apps-in-toss',
+    })
+  })
+
+  it('should convert Paddle offer form values for the command', async () => {
+    const values = new URLSearchParams({
+      albumId: 'album-one',
+      amountMinor: '1000',
+      currency: 'USD',
+      externalProductId: 'price-one',
+      fractionalDigits: '2',
+      provider: 'paddle',
+    })
+
+    await expect(connectAdminAlbumOfferAction(values)).resolves.toEqual({status: 'succeeded'})
+    expect(commandMocks.connectAlbumOffer).toHaveBeenCalledWith({
+      albumId: 'album-one',
+      amountMinor: '1000',
+      currency: 'USD',
+      externalProductId: 'price-one',
+      fractionalDigits: 2,
+      provider: 'paddle',
+    })
   })
 })
 

@@ -110,6 +110,31 @@ it('should derive the displayed session from the authentication context', async 
   expect(await screen.findByText('user@example.com')).toBeVisible()
 })
 
+it('should return to the requested path after a normal magic-link callback', async () => {
+  const returnTo = '/payments/return?order_id=order-1'
+  const assign = vi.fn()
+  const callbackUrl = new URL(
+    `/account?returnTo=${encodeURIComponent(returnTo)}`,
+    document.location.origin,
+  ).href
+  globalThis.history.replaceState(null, '', callbackUrl)
+  vi.stubGlobal('location', {
+    assign,
+    href: callbackUrl,
+  })
+  setAuthenticationState({
+    email: 'user@example.com',
+    kind: 'authenticated',
+    provider: 'email',
+  })
+  vi.mocked(readAccountSession).mockResolvedValue(null)
+
+  render(() => <MemoryRouter root={AccountSession} />)
+
+  await waitFor(() => expect(assign).toHaveBeenCalledWith(returnTo))
+  expect(new URL(document.location.href).searchParams.has('returnTo')).toBe(false)
+})
+
 it('should not restore consumed sign-out feedback after remounting in the same router', async () => {
   setAuthenticationState({
     email: 'user@example.com',

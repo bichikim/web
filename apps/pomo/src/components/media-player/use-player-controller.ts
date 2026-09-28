@@ -14,6 +14,7 @@ import {
   usePAudioVisualizer,
   usePPlaybackPersistence,
 } from '../../features/focus-room-audio'
+import {resolvePTrackSource} from '../../features/focus-room-audio/focus-room-playlist/track-source'
 import {usePlayerVolumeDucking} from '../../features/focus-room-dialogue'
 import type {MediaPlayerOptions, PlayerState, SelectTrackOptions} from './types'
 import {createPlayerQueueController} from './create-player-queue-controller'
@@ -33,6 +34,7 @@ export interface UsePlayerControllerProps extends MediaPlayerOptions {
 }
 
 export interface PlayerController extends PlayerState {
+  readonly currentSource: Accessor<string | undefined>
   readonly invalidate: Playback['invalidate']
   readonly markPauseIntent: Playback['markPauseIntent']
   readonly onEnded: () => void
@@ -63,6 +65,7 @@ export const usePlayerController = (props: UsePlayerControllerProps): PlayerCont
   const tracks = () => props.tracks ?? loadedTracks()
   const [currentIndexValue, setCurrentIndex] = createSignal(initialState.currentIndex)
   const currentIndex = createMemo(() => clampTrackIndex(currentIndexValue(), tracks().length))
+  const [currentSource, setCurrentSource] = createSignal<string>()
   const visualizer = usePAudioVisualizer()
   usePlayerVolumeDucking({
     isDialogueActive: () => props.isDialogueActive ?? false,
@@ -178,6 +181,35 @@ export const usePlayerController = (props: UsePlayerControllerProps): PlayerCont
     untrack(() => props.onPlayingChange?.(currentIsPlaying))
   })
   const handleAudioError = playback.onError
+  let sourceResolutionRevision = 0
+  createEffect(() => {
+    const track = currentTrack()
+    sourceResolutionRevision += 1
+    const revision = sourceResolutionRevision
+    setCurrentSource(undefined)
+
+    if (track === undefined) {
+      return
+    }
+
+    const resolvedSource = resolvePTrackSource(track.source)
+    if (typeof resolvedSource === 'string') {
+      setCurrentSource(resolvedSource)
+      return
+    }
+
+    resolvedSource
+      .then((source) => {
+        if (!destroyed && revision === sourceResolutionRevision) {
+          setCurrentSource(source)
+        }
+      })
+      .catch((error: unknown) => {
+        if (!destroyed && revision === sourceResolutionRevision) {
+          handleAudioError(error)
+        }
+      })
+  })
   const playAudio = playback.play
   const previewPlayback = createPreviewPlayback({
     isPlaying,
@@ -479,6 +511,7 @@ export const usePlayerController = (props: UsePlayerControllerProps): PlayerCont
     canNavigatePreviousTrack: order.canNavigatePreviousTrack,
     clearTrackQueue: queueController.clearTrackQueue,
     currentIndex,
+    currentSource,
     currentTrack,
     invalidate: playback.invalidate,
     isPlaying,

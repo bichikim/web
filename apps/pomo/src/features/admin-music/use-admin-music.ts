@@ -16,6 +16,11 @@ const getAlbumStats = (albums: AdminCatalog['albums']) => ({
   total: albums.length,
 })
 
+const getOfferSuccessMessage = (provider: FormDataEntryValue | null): string =>
+  provider === 'paddle'
+    ? 'Paddle 웹 일회성 판매 상품을 연결했습니다.'
+    : '앱인토스 일회성 판매 상품을 연결했습니다.'
+
 export const useAdminMusic = () => {
   const changeAlbumStatus = useAction(changeAdminAlbumStatusAction)
   const albumStatusSubmissions = useSubmissions(changeAdminAlbumStatusAction)
@@ -145,7 +150,7 @@ export const useAdminMusic = () => {
     if (result.status === 'succeeded') {
       offerForm.reset()
       await refreshCatalog()
-      setMessage('앱인토스 일회성 판매 상품을 연결했습니다.')
+      setMessage(getOfferSuccessMessage(form.get('provider')))
       return
     }
 

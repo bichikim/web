@@ -5,9 +5,22 @@ export interface PTrack {
   readonly artist: string
   readonly durationSeconds: number
   readonly id: string
-  readonly source: string
+  readonly source: PTrackSource
   readonly title: string
 }
+
+export interface PPublicTrackSource {
+  readonly kind: 'public'
+  readonly url: string
+}
+
+export interface PEntitledTrackSource {
+  readonly kind: 'entitled'
+  readonly trackId: string
+}
+
+/** Supports the legacy v1 JSON source while owned tracks use an access-aware source. */
+export type PTrackSource = PEntitledTrackSource | PPublicTrackSource | string
 
 export interface PTrackListing {
   readonly artworkUrl?: string
@@ -21,12 +34,36 @@ export interface PAlbum {
   readonly description: string
   readonly icon: string
   readonly id: string
+  readonly offers?: readonly PAlbumOffer[]
+  readonly owned?: boolean
+  readonly productId?: string
   readonly sale?: PAlbumSale
   readonly title: string
   readonly trackCount?: number
   readonly trackIds: readonly string[]
   readonly trackListings?: readonly PTrackListing[]
 }
+
+export interface PAlbumOfferBase {
+  readonly externalProductId: string
+  readonly productId: string
+}
+
+export interface PAppsInTossAlbumOffer extends PAlbumOfferBase {
+  readonly amountMinor: null
+  readonly currency: null
+  readonly fractionalDigits: null
+  readonly provider: 'apps-in-toss'
+}
+
+export interface PPaddleAlbumOffer extends PAlbumOfferBase {
+  readonly amountMinor: string
+  readonly currency: string
+  readonly fractionalDigits: number
+  readonly provider: 'paddle'
+}
+
+export type PAlbumOffer = PAppsInTossAlbumOffer | PPaddleAlbumOffer
 
 export interface PAlbumSale {
   readonly priceLabel?: string
@@ -61,6 +98,7 @@ export interface LoadPTrackCatalogOptions {
 }
 
 export interface LoadPTracksOptions extends LoadPTrackCatalogOptions {
+  readonly ownedAlbumsUrl?: string
   readonly playlistUrl?: string
 }
 
@@ -79,6 +117,12 @@ export interface LoadBundledPAlbumsOptions {
 export interface LoadPublishedPAlbumsOptions {
   readonly locale?: Locale
   readonly publishedAlbumsUrl?: string
+  readonly signal?: AbortSignal
+}
+
+export interface LoadOwnedPAlbumsOptions {
+  readonly locale?: Locale
+  readonly ownedAlbumsUrl?: string
   readonly signal?: AbortSignal
 }
 

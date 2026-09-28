@@ -4,6 +4,31 @@ import {afterEach, expect, it, vi} from 'vitest'
 import {createAlbum, createModelHarness} from '../../__tests__/fixtures/model'
 import {SalesPanel} from '../SalesPanel'
 
+const APPS_IN_TOSS_OFFER = {
+  albumId: 'album',
+  amountMinor: null,
+  billingType: 'one_time',
+  currency: null,
+  externalProductId: 'sku_album',
+  fractionalDigits: null,
+  productCode: 'album.product',
+  productStatus: 'active',
+  provider: 'apps-in-toss',
+  status: 'active',
+} as const
+const PADDLE_OFFER = {
+  albumId: 'album',
+  amountMinor: '1000',
+  billingType: 'one_time',
+  currency: 'USD',
+  externalProductId: 'pri_album',
+  fractionalDigits: 2,
+  productCode: 'album.product',
+  productStatus: 'active',
+  provider: 'paddle',
+  status: 'active',
+} as const
+
 afterEach(() => {
   cleanup()
   vi.restoreAllMocks()
@@ -37,3 +62,25 @@ it.each(['draft', 'published'] as const)(
     )
   },
 )
+
+it('should show every active provider offer with its provider', () => {
+  const {model} = createModelHarness()
+  render(() => (
+    <SalesPanel
+      album={createAlbum('draft')}
+      albumId="album"
+      albumTitle="앨범"
+      model={model}
+      isStatusReviewOpen={false}
+      offers={[APPS_IN_TOSS_OFFER, PADDLE_OFFER]}
+      onStatusReviewClose={vi.fn()}
+      onStatusReviewOpen={vi.fn()}
+      trackCount={0}
+    />
+  ))
+
+  expect(screen.getByText('Paddle')).toBeTruthy()
+  expect(screen.getByText('pri_album')).toBeTruthy()
+  expect(screen.getByText('앱인토스', {selector: 'dd'})).toBeTruthy()
+  expect(screen.getByText('sku_album')).toBeTruthy()
+})

@@ -3,6 +3,7 @@ import {z} from 'zod'
 import {ALBUM_LOCALES} from './album-draft'
 
 const coverFallbackSchema = z.enum(['lp', 'cd', 'music'])
+const MAXIMUM_FRACTIONAL_DIGITS = 6
 const albumTranslationSchema = z.object({
   albumId: z.string(),
   description: z.string(),
@@ -39,8 +40,11 @@ const assetSchema = z.object({
 })
 const offerSchema = z.object({
   albumId: z.string(),
+  amountMinor: z.string().nullable().optional(),
   billingType: z.enum(['one_time', 'subscription']),
+  currency: z.string().nullable().optional(),
   externalProductId: z.string(),
+  fractionalDigits: z.number().int().min(0).max(MAXIMUM_FRACTIONAL_DIGITS).nullable().optional(),
   productCode: z.string(),
   productStatus: z.enum(['active', 'archived']),
   provider: z.string(),

@@ -6,6 +6,7 @@ import {
   type PTrackListing,
   type PTrackPreviewRequest,
   requestTrackAccessAction,
+  resolvePTrackSource,
   resolveTrackPreviewAccess,
 } from '../../features/focus-room-audio'
 import * as m from '@paraglide/message'
@@ -13,6 +14,7 @@ import {PreviewButton} from './PreviewButton'
 
 interface PAlbumTrackListProps {
   readonly albumTitle: string
+  readonly hasFullAccess?: boolean
   readonly onAddTrack: (track: PTrack) => void
   readonly onPreview: (request: PTrackPreviewRequest) => void
   readonly pendingTrackId: string | null
@@ -20,6 +22,19 @@ interface PAlbumTrackListProps {
   readonly playingTrackId: string | null
   readonly trackIds: ReadonlySet<string>
   readonly tracks: readonly PTrackListing[]
+}
+
+const createPlayablePreviewRequest = (
+  trackId: string,
+  source: PTrack['source'],
+): PTrackPreviewRequest => {
+  const resolvedSource = resolvePTrackSource(source)
+  return typeof resolvedSource === 'string'
+    ? {id: trackId, source: resolvedSource}
+    : {
+        id: trackId,
+        loadSource: async () => ({ok: true, source: await resolvedSource}),
+      }
 }
 
 export const PAlbumTrackList = (props: PAlbumTrackListProps) => {
@@ -70,7 +85,7 @@ export const PAlbumTrackList = (props: PAlbumTrackListProps) => {
             )
             const isInPlayer = () => props.trackIds.has(track.id)
             const isPreviewing = () => props.playingTrackId === track.id
-            const isLimited = () => playableTrack() === undefined
+            const isLimited = () => playableTrack() === undefined && props.hasFullAccess !== true
             const isAccessPending = () =>
               accessSubmissions.some(
                 (submission) => submission.pending && submission.input[0] === track.id,
@@ -93,6 +108,7 @@ export const PAlbumTrackList = (props: PAlbumTrackListProps) => {
                   </span>
                 </span>
                 <PreviewButton
+                  hasFullAccess={props.hasFullAccess === true}
                   isLimited={isLimited()}
                   isPending={props.pendingTrackId === track.id || isAccessPending()}
                   isPlaying={isPreviewing()}
@@ -124,7 +140,7 @@ export const PAlbumTrackList = (props: PAlbumTrackListProps) => {
                               }
                             },
                           }
-                        : {id: track.id, source: playable.source},
+                        : createPlayablePreviewRequest(track.id, playable.source),
                     )
                   }}
                   title={track.title}

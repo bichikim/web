@@ -1,7 +1,11 @@
 /** @vitest-environment node */
-import {afterEach, describe, expect, it, vi} from 'vitest'
+import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 
 import {loadPTrackQueueSource, loadPTracks} from '../focus-room-playlist'
+
+const sessionMocks = vi.hoisted(() => ({readStoredAppSession: vi.fn()}))
+
+vi.mock('../../user-auth/app-session', () => sessionMocks)
 
 const TRACKS = [
   {artist: 'Artist', durationSeconds: 1, id: 'one', source: '/one.mp3', title: 'One'},
@@ -32,6 +36,10 @@ const createErrorResponse = (status: number) => ({
 afterEach(() => {
   vi.unstubAllGlobals()
   vi.unstubAllEnvs()
+})
+
+beforeEach(() => {
+  sessionMocks.readStoredAppSession.mockResolvedValue(null)
 })
 
 describe('loadPTracks', () => {
@@ -87,6 +95,67 @@ describe('loadPTracks', () => {
     return expect(loadPTrackQueueSource()).resolves.toEqual({
       defaultTracks: [TRACKS[1]],
       tracks: TRACKS,
+    })
+  })
+
+  it('should include owned tracks for restoration without adding them to the default playlist', async () => {
+    const ownedTrack = {
+      artist: 'Paid Artist',
+      durationSeconds: 180,
+      id: 'owned-track',
+      source: {kind: 'entitled', trackId: 'owned-track'},
+      title: 'Owned Track',
+    } as const
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(createJsonResponse({tracks: TRACKS, version: 1}))
+      .mockResolvedValueOnce(createJsonResponse({trackIds: ['one'], version: 1}))
+      .mockResolvedValueOnce(
+        createJsonResponse({
+          albums: [
+            {
+              coverFallback: 'lp',
+              coverImageUrl: null,
+              description: 'Owned album',
+              id: 'owned-album',
+              productId: 'product-1',
+              title: 'Owned album',
+              trackCount: 1,
+              tracks: [
+                {
+                  artist: ownedTrack.artist,
+                  durationSeconds: ownedTrack.durationSeconds,
+                  id: ownedTrack.id,
+                  title: ownedTrack.title,
+                },
+              ],
+            },
+            {
+              coverFallback: 'cd',
+              coverImageUrl: null,
+              description: 'Another owned album',
+              id: 'another-owned-album',
+              productId: 'product-2',
+              title: 'Another owned album',
+              trackCount: 1,
+              tracks: [
+                {
+                  artist: ownedTrack.artist,
+                  durationSeconds: ownedTrack.durationSeconds,
+                  id: ownedTrack.id,
+                  title: ownedTrack.title,
+                },
+              ],
+            },
+          ],
+          version: 1,
+        }),
+      )
+    vi.stubGlobal('fetch', fetchMock)
+
+    await expect(loadPTrackQueueSource()).resolves.toEqual({
+      defaultTracks: [TRACKS[0]],
+      tracks: [...TRACKS, ownedTrack],
     })
   })
 

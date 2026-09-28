@@ -1,4 +1,4 @@
-import {useAction} from '@solidjs/router'
+import {useAction, useSearchParams} from '@solidjs/router'
 import {type JSX, Show} from 'solid-js'
 
 import * as m from '@paraglide/message'
@@ -8,11 +8,13 @@ import {
   signOutAccountSessionAction,
 } from '../../features/auth/actions'
 import {useWebAccount} from '../../features/user-auth/use-web-account'
+import {getSafeReturnTo} from '../../features/user-auth/return-path'
 import {P_BUTTON_CLASSES, PButton} from '../p-button/PButton'
 import {PFormMessage} from '../p-form-message/PFormMessage'
 import {PTextField} from '../p-text-field/PTextField'
 
 export const WebAccount = () => {
+  const [searchParams] = useSearchParams()
   const account = useWebAccount()
   const requestMagicLink = useAction(requestAccountMagicLinkAction)
   const signOut = useAction(signOutAccountSessionAction)
@@ -43,6 +45,15 @@ export const WebAccount = () => {
               onSubmit={handleMagicLinkSubmit}
             >
               <p class="m-0 text-sm leading-6 text-muted-foreground">{m.web_account_intro()}</p>
+              <Show
+                when={
+                  typeof searchParams.returnTo === 'string'
+                    ? getSafeReturnTo(searchParams.returnTo)
+                    : null
+                }
+              >
+                {(returnTo) => <input name="returnTo" type="hidden" value={returnTo()} />}
+              </Show>
               <PTextField
                 autoComplete="email"
                 disabled={account.isSubmitting()}

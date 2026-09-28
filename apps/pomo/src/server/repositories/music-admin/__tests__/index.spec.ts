@@ -124,6 +124,15 @@ const offerInput = {
   provider: 'apps-in-toss' as const,
 }
 
+const paddleOfferInput = {
+  albumId: 'album-1',
+  amountMinor: '1000',
+  currency: 'USD',
+  externalProductId: 'price-album-1',
+  fractionalDigits: 2,
+  provider: 'paddle' as const,
+}
+
 beforeEach(() => {
   vi.clearAllMocks()
   readSelect.mockReset()
@@ -163,7 +172,13 @@ describe('listAdminMusic', () => {
     const pendingTracks = [
       {albumId: 'album-1', artist: 'Pending Artist', id: 'track-3', title: 'Pending'},
     ]
-    const offers = [{albumId: 'album-1', externalProductId: 'product-1'}]
+    const offers = [
+      {
+        albumId: 'album-1',
+        amountMinor: null,
+        externalProductId: 'product-1',
+      },
+    ]
     queueAdminList(albums, translations, tracks, pendingTracks, assets, offers)
 
     await expect(listAdminMusic()).resolves.toEqual({
@@ -321,6 +336,24 @@ describe('connectAlbumOffer', () => {
       .mockReturnValueOnce(createProductAlbumInsert())
       .mockReturnValueOnce(createOfferInsert())
     await expect(connectAlbumOffer(offerInput)).resolves.toEqual({success: true})
+  })
+
+  it('should store the server price when connecting a Paddle offer', async () => {
+    queueOfferLookups([{id: 'album-1'}], [], [])
+    const offerInsert = createOfferInsert()
+    transactionInsert
+      .mockReturnValueOnce(createProductInsert([{id: 'product-1'}]))
+      .mockReturnValueOnce(createProductAlbumInsert())
+      .mockReturnValueOnce(offerInsert)
+
+    await expect(connectAlbumOffer(paddleOfferInput)).resolves.toEqual({success: true})
+    expect(offerInsert.values).toHaveBeenCalledWith(
+      expect.objectContaining({
+        amountMinor: 1000n,
+        currency: 'USD',
+        fractionalDigits: 2,
+      }),
+    )
   })
 
   it('should restore an existing product and matching offer', async () => {

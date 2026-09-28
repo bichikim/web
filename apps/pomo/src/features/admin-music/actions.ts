@@ -136,7 +136,27 @@ const runCreateTrack = async (values: FormValues): Promise<CreateTrackActionResu
 
 const runConnectOffer = async (values: FormValues): Promise<AdminCommandResult> => {
   try {
-    await connectAlbumOffer(getString(values, 'albumId'), getString(values, 'externalProductId'))
+    const provider = getString(values, 'provider')
+
+    if (provider === 'paddle') {
+      await connectAlbumOffer({
+        albumId: getString(values, 'albumId'),
+        amountMinor: getString(values, 'amountMinor'),
+        currency: getString(values, 'currency'),
+        externalProductId: getString(values, 'externalProductId'),
+        fractionalDigits: Number(getString(values, 'fractionalDigits')),
+        provider,
+      })
+    } else if (provider === 'apps-in-toss') {
+      await connectAlbumOffer({
+        albumId: getString(values, 'albumId'),
+        externalProductId: getString(values, 'externalProductId'),
+        provider,
+      })
+    } else {
+      throw new Error('지원하지 않는 판매 채널입니다.')
+    }
+
     return {status: 'succeeded'}
   } catch (error: unknown) {
     return {

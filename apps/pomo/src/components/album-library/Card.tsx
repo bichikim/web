@@ -11,11 +11,15 @@ import {PAlbumTrackList} from './TrackList'
 import * as m from '@paraglide/message'
 import {AlbumSummary} from './Summary'
 import {AlbumSaleStatus} from './SaleStatus'
+import {AlbumPurchaseAction} from './PurchaseAction'
+import type {PaymentFlowState} from '../../features/payment'
 
 const ALBUM_CARD_CLASSES = cx(
   'overflow-hidden rounded-panel-inner border border-solid border-border',
   'bg-surface-interactive',
 )
+
+const isWebRuntime = () => import.meta.env.VITE_POMO_IS_APPS_IN_TOSS !== 'true'
 
 interface AlbumCardProps {
   readonly album: PResolvedAlbum
@@ -24,6 +28,8 @@ interface AlbumCardProps {
   readonly onAddAlbum: (album: PResolvedAlbum) => void
   readonly onAddTrack: (track: PTrack) => void
   readonly onPreview: (request: PTrackPreviewRequest) => void
+  readonly onPurchase?: (productId: string) => void
+  readonly paymentState?: PaymentFlowState
   readonly pendingTrackId: string | null
   readonly playingTrackId: string | null
   readonly trackIds: ReadonlySet<string>
@@ -37,23 +43,35 @@ interface AlbumCardProps {
 export const AlbumCard = (props: AlbumCardProps) => {
   const listedTracks = (): readonly PTrackListing[] =>
     props.album.trackListings ?? props.album.tracks
+  const hasWebOffer = () =>
+    isWebRuntime() && (props.album.offers?.some((offer) => offer.provider === 'paddle') ?? false)
+  const isOwned = () => props.album.owned === true
+  const isPaid = () => props.album.productId !== undefined
+  const canAddTracks = () => !isPaid() || isOwned()
+  const fallbackSale = () => (!isOwned() && !hasWebOffer() ? props.album.sale : undefined)
 
   return (
     <article class={ALBUM_CARD_CLASSES}>
       <AlbumSummary album={props.album} index={props.index} />
+      <Show when={isOwned()}>
+        <p class="m-0 border-t border-solid border-border px-4 py-3 text-sm font-700 text-highlight">
+          {m.album_purchase_owned()}
+        </p>
+      </Show>
       <Show when={listedTracks().length > 0}>
         <PAlbumTrackList
           albumTitle={props.album.title}
+          hasFullAccess={isOwned()}
           onAddTrack={props.onAddTrack}
           onPreview={props.onPreview}
           pendingTrackId={props.pendingTrackId}
-          playableTracks={props.album.sale === undefined ? props.album.tracks : []}
+          playableTracks={canAddTracks() ? props.album.tracks : []}
           playingTrackId={props.playingTrackId}
           trackIds={props.trackIds}
           tracks={listedTracks()}
         />
       </Show>
-      <Show when={props.album.sale === undefined && props.album.tracks.length === 0}>
+      <Show when={canAddTracks() && props.album.tracks.length === 0 && listedTracks().length === 0}>
         <div
           class="flex items-center gap-2 border-t border-solid border-border px-4 py-3 text-sm leading-5
             text-muted-foreground"
@@ -62,7 +80,7 @@ export const AlbumCard = (props: AlbumCardProps) => {
           <span>{m.album_tracks_preparing()}</span>
         </div>
       </Show>
-      <Show when={props.album.sale === undefined && props.album.tracks.length > 0}>
+      <Show when={canAddTracks() && props.album.tracks.length > 0}>
         <div class="px-4 pb-4">
           <PButton
             bordered={props.isInPlayer}
@@ -79,7 +97,14 @@ export const AlbumCard = (props: AlbumCardProps) => {
           </PButton>
         </div>
       </Show>
-      <Show when={props.album.sale}>{(sale) => <AlbumSaleStatus sale={sale()} />}</Show>
+      <Show when={isPaid() && !isOwned() && hasWebOffer()}>
+        <AlbumPurchaseAction
+          album={props.album}
+          onPurchase={(productId) => props.onPurchase?.(productId)}
+          state={props.paymentState ?? {status: 'idle'}}
+        />
+      </Show>
+      <Show when={fallbackSale()}>{(sale) => <AlbumSaleStatus sale={sale()} />}</Show>
     </article>
   )
 }

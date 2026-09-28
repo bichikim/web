@@ -1,6 +1,7 @@
 import * as m from '@paraglide/message'
 
 interface PreviewButtonProps {
+  readonly hasFullAccess?: boolean
   readonly isLimited: boolean
   readonly isPending: boolean
   readonly isPlaying: boolean
@@ -15,9 +16,13 @@ export const PreviewButton = (props: PreviewButtonProps) => (
         ? props.isPlaying
           ? m.album_preview_limited_stop()
           : m.album_preview_limited()
-        : props.isPlaying
-          ? m.album_preview_stop()
-          : m.album_preview()
+        : props.hasFullAccess
+          ? props.isPlaying
+            ? m.album_play_stop()
+            : m.album_play()
+          : props.isPlaying
+            ? m.album_preview_stop()
+            : m.album_preview()
     }`}
     aria-pressed={props.isPlaying}
     class="grid size-8 flex-none cursor-pointer place-items-center rounded-control border

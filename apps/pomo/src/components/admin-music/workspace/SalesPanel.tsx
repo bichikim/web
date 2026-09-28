@@ -1,8 +1,15 @@
-import {Show} from 'solid-js'
+import {For, Show} from 'solid-js'
 import {type AdminAlbum, type AdminOffer} from '../../../features/admin-music'
 import {BUTTON_CLASSES, SECONDARY_BUTTON_CLASSES} from '../button-classes'
 import {type AlbumTaskFormProps} from './form-props'
 import {OfferForm} from './OfferForm'
+
+const PROVIDER_LABELS: Readonly<Record<string, string>> = {
+  'apps-in-toss': '앱인토스',
+  paddle: 'Paddle',
+}
+
+const getProviderLabel = (provider: string): string => PROVIDER_LABELS[provider] ?? provider
 
 interface SalesPanelProps extends AlbumTaskFormProps {
   readonly album: AdminAlbum
@@ -64,20 +71,24 @@ export const SalesPanel = (props: SalesPanelProps) => {
                 공개 화면에는 판매 준비중으로 표시됩니다.
               </p>
             }
-            when={activeOffers()[0]}
+            when={activeOffers().length > 0}
           >
-            {(offer) => (
-              <dl class="mb-0 mt-3 grid gap-2 text-xs">
-                <div class="flex justify-between gap-3">
-                  <dt class="text-white/45">채널</dt>
-                  <dd class="m-0 text-white/75">앱인토스</dd>
-                </div>
-                <div class="flex justify-between gap-3">
-                  <dt class="text-white/45">상품 ID</dt>
-                  <dd class="m-0 truncate text-white/75">{offer().externalProductId}</dd>
-                </div>
-              </dl>
-            )}
+            <div class="mt-3 grid gap-3">
+              <For each={activeOffers()}>
+                {(offer) => (
+                  <dl class="mb-0 grid gap-2 text-xs">
+                    <div class="flex justify-between gap-3">
+                      <dt class="text-white/45">채널</dt>
+                      <dd class="m-0 text-white/75">{getProviderLabel(offer.provider)}</dd>
+                    </div>
+                    <div class="flex justify-between gap-3">
+                      <dt class="text-white/45">상품 ID</dt>
+                      <dd class="m-0 truncate text-white/75">{offer.externalProductId}</dd>
+                    </div>
+                  </dl>
+                )}
+              </For>
+            </div>
           </Show>
         </section>
       </div>

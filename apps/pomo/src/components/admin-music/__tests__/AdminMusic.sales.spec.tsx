@@ -10,13 +10,14 @@ import {
 } from '../../__tests__/fixtures/admin-music'
 
 describe('AdminMusic', () => {
-  it('should only ask for the Apps in Toss SKU when connecting a product', async () => {
+  it('should offer Apps in Toss and Paddle fields when connecting a product', async () => {
     vi.stubGlobal('fetch', vi.fn<typeof fetch>().mockResolvedValue(Response.json(catalogWithAlbum)))
     renderAdminMusic()
 
     fireEvent.click(await screen.findByRole('tab', {name: '판매 및 공개'}))
 
-    expect(screen.getByText('앱인토스 상품 ID (SKU)')).toBeTruthy()
+    expect(screen.getByRole('combobox', {name: '판매 채널'})).toBeTruthy()
+    expect(screen.getByText('Paddle 웹 가격')).toBeTruthy()
     expect(screen.queryByText('내부 상품 코드')).toBeNull()
   })
 
@@ -152,7 +153,7 @@ describe('AdminMusic', () => {
     vi.stubGlobal('fetch', fetcher)
     renderAdminMusic()
     fireEvent.click(await screen.findByRole('tab', {name: '판매 및 공개'}))
-    const skuInput = screen.getByLabelText('앱인토스 상품 ID (SKU)')
+    const skuInput = screen.getByLabelText('외부 상품 ID')
     fireEvent.input(skuInput, {target: {value: 'sku-1'}})
     const offerForm = skuInput.closest('form')
 
@@ -172,7 +173,11 @@ describe('AdminMusic', () => {
       method: 'POST',
     })
 
-    offerForm.querySelectorAll('[name]').forEach((element) => element.removeAttribute('name'))
+    offerForm
+      .querySelectorAll('[name]')
+      .forEach(
+        (element) => element.getAttribute('name') !== 'provider' && element.removeAttribute('name'),
+      )
     fireEvent.submit(offerForm)
     await waitFor(() => expect(fetcher).toHaveBeenCalledTimes(5))
     expect(fetcher).toHaveBeenLastCalledWith('/api/admin/music')
@@ -191,7 +196,7 @@ describe('AdminMusic', () => {
     vi.stubGlobal('fetch', fetcher)
     renderAdminMusic()
     fireEvent.click(await screen.findByRole('tab', {name: '판매 및 공개'}))
-    const offerForm = screen.getByLabelText('앱인토스 상품 ID (SKU)').closest('form')
+    const offerForm = screen.getByLabelText('외부 상품 ID').closest('form')
 
     if (offerForm === null) {
       throw new Error('상품 연결 폼을 찾지 못했습니다.')
@@ -209,7 +214,7 @@ describe('AdminMusic', () => {
       .mockRejectedValueOnce('network')
     renderAdminMusic()
     fireEvent.click(await screen.findByRole('tab', {name: '판매 및 공개'}))
-    const nextOfferForm = screen.getByLabelText('앱인토스 상품 ID (SKU)').closest('form')
+    const nextOfferForm = screen.getByLabelText('외부 상품 ID').closest('form')
 
     if (nextOfferForm === null) {
       throw new Error('상품 연결 폼을 찾지 못했습니다.')

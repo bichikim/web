@@ -338,6 +338,104 @@ describe('loadPAlbums', () => {
     )
   })
 
+  it('should preserve a published web product and its server price', async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(createJsonResponse({tracks: [], version: 1}))
+      .mockResolvedValueOnce(createJsonResponse({albums: [], version: 1}))
+      .mockResolvedValueOnce(
+        createJsonResponse({
+          albums: [
+            createPublishedAlbum({
+              offers: [
+                {
+                  amountMinor: '1000',
+                  currency: 'USD',
+                  externalProductId: 'price_album_1',
+                  fractionalDigits: 2,
+                  productId: 'product-1',
+                  provider: 'paddle',
+                },
+              ],
+              productId: 'product-1',
+            }),
+          ],
+          version: 1,
+        }),
+      )
+    vi.stubGlobal('fetch', fetchMock)
+
+    await expect(loadPAlbums()).resolves.toEqual(
+      createReadyAlbumLibrary(
+        [],
+        [
+          expect.objectContaining({
+            offers: [
+              {
+                amountMinor: '1000',
+                currency: 'USD',
+                externalProductId: 'price_album_1',
+                fractionalDigits: 2,
+                productId: 'product-1',
+                provider: 'paddle',
+              },
+            ],
+            productId: 'product-1',
+          }),
+        ],
+      ),
+    )
+  })
+
+  it('should preserve an Apps-in-Toss product without price metadata', async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(createJsonResponse({tracks: [], version: 1}))
+      .mockResolvedValueOnce(createJsonResponse({albums: [], version: 1}))
+      .mockResolvedValueOnce(
+        createJsonResponse({
+          albums: [
+            createPublishedAlbum({
+              offers: [
+                {
+                  amountMinor: null,
+                  currency: null,
+                  externalProductId: 'sku_album_1',
+                  fractionalDigits: null,
+                  productId: 'product-1',
+                  provider: 'apps-in-toss',
+                },
+              ],
+              productId: 'product-1',
+            }),
+          ],
+          version: 1,
+        }),
+      )
+    vi.stubGlobal('fetch', fetchMock)
+
+    await expect(loadPAlbums()).resolves.toEqual(
+      createReadyAlbumLibrary(
+        [],
+        [
+          expect.objectContaining({
+            offers: [
+              {
+                amountMinor: null,
+                currency: null,
+                externalProductId: 'sku_album_1',
+                fractionalDigits: null,
+                productId: 'product-1',
+                provider: 'apps-in-toss',
+              },
+            ],
+            productId: 'product-1',
+          }),
+        ],
+      ),
+    )
+  })
+
   it('should localize every bundled album identifier in catalog order', async () => {
     const ids = ['cafe-focus', 'tension-focus', 'happy-detour', 'quiet-pages'] as const
     const albums = ids.map((id) => ({
@@ -461,6 +559,27 @@ describe('loadPAlbums', () => {
         version: 1,
       },
       label: 'null track listing',
+    },
+    {
+      collection: {
+        albums: [
+          createPublishedAlbum({
+            offers: [
+              {
+                amountMinor: '1000',
+                currency: null,
+                externalProductId: 'price_album_1',
+                fractionalDigits: 2,
+                productId: 'product-1',
+                provider: 'paddle',
+              },
+            ],
+            productId: 'product-1',
+          }),
+        ],
+        version: 1,
+      },
+      label: 'partially populated offer price',
     },
   ])('should expose a published $label as a catalog failure', async ({collection}) => {
     vi.stubGlobal(

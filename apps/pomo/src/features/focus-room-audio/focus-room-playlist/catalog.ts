@@ -1,5 +1,3 @@
-import {isPlainObject, isString} from 'es-toolkit/predicate'
-import {createCatalogRequestInit, hasUniqueIds} from 'src/features/catalog-policy'
 import {audioFetch, httpFetch} from '../../http-client'
 import type {LoadPTrackCatalogOptions, PTrack} from './model'
 
@@ -8,12 +6,14 @@ interface PTrackCollection {
   readonly version: number
 }
 
+const isString = (value: unknown): value is string => typeof value === 'string'
+
 const isPTrack = (value: unknown): value is PTrack => {
-  if (!isPlainObject(value)) {
+  if (typeof value !== 'object' || value === null) {
     return false
   }
 
-  const track = value
+  const track = value as Record<string, unknown>
 
   return (
     (track.artworkUrl === undefined || isString(track.artworkUrl)) &&
@@ -27,12 +27,14 @@ const isPTrack = (value: unknown): value is PTrack => {
   )
 }
 
+const hasUniqueIds = (ids: readonly string[]) => new Set(ids).size === ids.length
+
 const isPTrackCollection = (value: unknown): value is PTrackCollection => {
-  if (!isPlainObject(value)) {
+  if (typeof value !== 'object' || value === null) {
     return false
   }
 
-  const collection = value
+  const collection = value as Record<string, unknown>
 
   return (
     collection.version === 1 &&
@@ -54,8 +56,8 @@ export const loadPTrackCatalog = async (
 ): Promise<readonly PTrack[]> => {
   const response =
     options.tracksUrl === undefined
-      ? await audioFetch('tracks.json', createCatalogRequestInit(options.signal))
-      : await httpFetch(options.tracksUrl, createCatalogRequestInit(options.signal))
+      ? await audioFetch('tracks.json', createRequestInit(options.signal))
+      : await httpFetch(options.tracksUrl, createRequestInit(options.signal))
 
   if (!response.ok) {
     throw new Error(`Focus-room tracks request failed: ${response.status}`)

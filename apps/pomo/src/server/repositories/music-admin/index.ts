@@ -27,11 +27,22 @@ export type UpdateAlbumStatusResult =
     }
   | {readonly status: 'archived' | 'published'; readonly success: true}
 
-export interface ConnectAlbumOfferInput {
+export interface ConnectAppsInTossAlbumOfferInput {
   readonly albumId: string
   readonly externalProductId: string
   readonly provider: 'apps-in-toss'
 }
+
+export interface ConnectPaddleAlbumOfferInput {
+  readonly albumId: string
+  readonly amountMinor: string
+  readonly currency: string
+  readonly externalProductId: string
+  readonly fractionalDigits: number
+  readonly provider: 'paddle'
+}
+
+export type ConnectAlbumOfferInput = ConnectAppsInTossAlbumOfferInput | ConnectPaddleAlbumOfferInput
 
 export type ConnectAlbumOfferResult =
   | {readonly code: 'album_not_found' | 'external_product_conflict'; readonly success: false}
@@ -91,8 +102,11 @@ export const listAdminMusic = async () => {
     database
       .select({
         albumId: commerceProductAlbums.albumId,
+        amountMinor: commerceOffers.amountMinor,
         billingType: commerceOffers.billingType,
+        currency: commerceOffers.currency,
         externalProductId: commerceOffers.externalProductId,
+        fractionalDigits: commerceOffers.fractionalDigits,
         productCode: commerceProducts.code,
         productStatus: commerceProducts.status,
         provider: commerceOffers.provider,
@@ -106,6 +120,10 @@ export const listAdminMusic = async () => {
   const activeAssetTrackIds = new Set(
     assets.filter((asset) => asset.status === 'active').map((asset) => asset.trackId),
   )
+  const serializedOffers = offers.map((offer) => ({
+    ...offer,
+    amountMinor: offer.amountMinor?.toString() ?? null,
+  }))
   const trackIdsByAlbum = new Map<string, string[]>()
 
   for (const track of tracks) {
@@ -129,7 +147,7 @@ export const listAdminMusic = async () => {
       }
     }),
     assets,
-    offers,
+    offers: serializedOffers,
     pendingTracks,
     tracks,
   }
@@ -266,9 +284,18 @@ export const connectAlbumOffer = async (
         .insert(commerceProductAlbums)
         .values({albumId: input.albumId, productId: product.id})
         .onConflictDoNothing()
+      const offerPrice =
+        input.provider === 'paddle'
+          ? {
+              amountMinor: BigInt(input.amountMinor),
+              currency: input.currency,
+              fractionalDigits: input.fractionalDigits,
+            }
+          : {}
       await transaction
         .insert(commerceOffers)
         .values({
+          ...offerPrice,
           billingType: 'one_time',
           externalProductId: input.externalProductId,
           productId: product.id,
@@ -277,6 +304,7 @@ export const connectAlbumOffer = async (
         })
         .onConflictDoUpdate({
           set: {
+            ...offerPrice,
             billingType: 'one_time',
             externalProductId: input.externalProductId,
             status: 'active',

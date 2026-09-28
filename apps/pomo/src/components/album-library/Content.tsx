@@ -2,11 +2,13 @@ import {createMemo, ErrorBoundary, For, Show, Suspense} from 'solid-js'
 import {PButton} from '../p-button/PButton'
 import {reportClientError} from '../../features/client-error-reporter'
 import {type PResolvedAlbum, type PTrack, useTrackPreview} from '../../features/focus-room-audio'
+import {usePaymentFlow} from '../../features/payment'
 import {AlbumCard} from './Card'
 import {LoadingStatus} from './LoadingStatus'
 import {useAlbumLibrary} from './use-album-library'
 import * as m from '@paraglide/message'
 import {PublishedCatalogError} from './PublishedCatalogError'
+import {PurchaseHistory} from './PurchaseHistory'
 
 export interface PAlbumLibraryContentProps {
   readonly onAddTracks: (tracks: readonly PTrack[]) => void
@@ -17,11 +19,15 @@ export interface PAlbumLibraryContentProps {
 
 export function PAlbumLibraryContent(props: PAlbumLibraryContentProps) {
   const albumLibrary = useAlbumLibrary()
+  const payment = usePaymentFlow()
   const trackIds = createMemo(() => new Set(props.tracks.map((track) => track.id)))
   const isAlbumInPlayer = (album: PResolvedAlbum) =>
     album.tracks.length > 0 && album.tracks.every((track) => trackIds().has(track.id))
   const handleAlbumAdd = (album: PResolvedAlbum) => props.onAddTracks(album.tracks)
   const handleTrackAdd = (track: PTrack) => props.onAddTracks([track])
+  const handlePurchase = (productId: string) => {
+    payment.purchase(productId).catch(() => undefined)
+  }
   const preview = useTrackPreview({
     onEnd: () => props.onPreviewEnd?.(),
     onStart: (stopPreview) => props.onPreviewStart?.(stopPreview),
@@ -121,7 +127,9 @@ export function PAlbumLibraryContent(props: PAlbumLibraryContentProps) {
                         console.error('Failed to toggle album track preview.', error)
                       })
                     }}
+                    onPurchase={handlePurchase}
                     pendingTrackId={preview.pendingTrackId()}
+                    paymentState={payment.state()}
                     playingTrackId={preview.playingTrackId()}
                     trackIds={trackIds()}
                   />
@@ -129,6 +137,10 @@ export function PAlbumLibraryContent(props: PAlbumLibraryContentProps) {
               </For>
             </div>
           </Show>
+          <PurchaseHistory
+            albums={albumLibrary.albums()}
+            orders={albumLibrary.paymentOrders() ?? []}
+          />
         </Suspense>
       </ErrorBoundary>
     </>
