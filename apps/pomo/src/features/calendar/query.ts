@@ -86,6 +86,7 @@ export const createCalendarQuery = (
     THIS_WEEK_PATTERN.test(options.text) && !THIS_WEEK_EXCLUSION_PATTERN.test(options.text)
   const includesDayAfterTomorrow =
     options.text.includes('모레') && !DAY_AFTER_TOMORROW_EXCLUSION_PATTERN.test(options.text)
+  const includesYesterday = options.text.includes('어제')
   if (includesDayAfterTomorrow) {
     const start = boundary(DAY_AFTER_TOMORROW_START_DAYS)
     const noon = boundary(DAY_AFTER_TOMORROW_START_DAYS, '12:00:00')
@@ -121,16 +122,17 @@ export const createCalendarQuery = (
       text: options.text,
     })
   }
-  if (options.text.includes('어제')) {
-    return toRange(boundary(-1), boundary(0))
-  }
   const weekday = local.day()
   const daysUntilNextMonday = weekday === 0 ? 1 : DAYS_PER_WEEK + 1 - weekday
   if (includesThisWeek) {
-    return toRange(now, boundary(daysUntilNextMonday))
+    return toRange(includesYesterday ? boundary(-1) : now, boundary(daysUntilNextMonday))
   }
   if (NEXT_WEEK_PATTERN.test(options.text)) {
-    return toRange(boundary(daysUntilNextMonday), boundary(daysUntilNextMonday + DAYS_PER_WEEK))
+    const start = includesYesterday ? boundary(-1) : boundary(daysUntilNextMonday)
+    return toRange(start, boundary(daysUntilNextMonday + DAYS_PER_WEEK))
+  }
+  if (includesYesterday) {
+    return toRange(boundary(-1), boundary(0))
   }
   return toRange(now, new Date(now.getTime() + NEXT_EVENT_WINDOW_DAYS * MILLISECONDS_PER_DAY))
 }

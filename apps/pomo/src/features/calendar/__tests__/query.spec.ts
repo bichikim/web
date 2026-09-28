@@ -251,6 +251,16 @@ describe('createCalendarQuery', () => {
     )
   })
 
+  it.each([
+    {end: '2026-09-06T15:00:00.000Z', text: '어제 이번 주 일정 알려줘'},
+    {end: '2026-09-13T15:00:00.000Z', text: '어제 다음 주 일정 알려줘'},
+  ])('should include yesterday through the selected week in "$text"', ({end, text}) => {
+    expect(createCalendarQuery({now, text, timeZone: 'Asia/Seoul'})).toEqual({
+      end,
+      start: '2026-09-02T15:00:00.000Z',
+    })
+  })
+
   it('should recognize next week without a space as an implicit schedule query', () => {
     expect(createCalendarQuery({now, text: '다음주 뭐 있어?', timeZone: 'Asia/Seoul'})).toEqual({
       end: '2026-09-13T15:00:00.000Z',
