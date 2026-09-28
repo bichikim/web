@@ -13,7 +13,7 @@ const USE_E2E_SERVER = PORT === 22222
 export default defineConfig({
   retries: process.env.CI ? 2 : 0,
   testDir: './e2e-tests',
-  testMatch: /.*\.spec\.ts/u,
+  testMatch: /.*\.e2e\.ts/u,
   use: {
     baseURL: `http://localhost:${PORT}`,
     trace: 'on-first-retry',

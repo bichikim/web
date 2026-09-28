@@ -6,7 +6,7 @@ export default defineConfig({
   projects: [
     {
       name: 'web',
-      testMatch: '**/e2e/rendering/**/*.spec.ts',
+      testMatch: '**/e2e/rendering/**/*.e2e.ts',
       use: {
         ...devices['Desktop Chrome'],
         baseURL: 'http://127.0.0.1:44173',
