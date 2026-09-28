@@ -61,6 +61,44 @@ test('should reject oversized layer bounds before decoding', () => {
   ).toEqual({error: {code: 'too-large'}, ok: false})
 })
 
+test('should import layered art near the expanded total pixel budget', () => {
+  vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue({
+    createImageData: (width: number, height: number) => ({
+      data: new Uint8ClampedArray(width * height * 4),
+      height,
+      width,
+    }),
+    putImageData: vi.fn(),
+  } as unknown as ReturnType<HTMLCanvasElement['getContext']>)
+  vi.spyOn(HTMLCanvasElement.prototype, 'toDataURL').mockReturnValue('data:image/png;base64,test')
+  const result = createPsdDocument({
+    children: [
+      ...Array.from({length: 33}, () => ({bottom: 2000, right: 2000})),
+      {bottom: 8, imageData: pixels(), name: 'visible', right: 8},
+    ],
+    height: 9385,
+    width: 3825,
+  })
+  expect(result.ok).toBe(true)
+  if (result.ok) {
+    expect(result.document.parts).toHaveLength(1)
+    expect(result.document.scene?.roots.at(-1)?.name).toBe('visible')
+  }
+})
+
+test('should reject layers exceeding the expanded total pixel budget', () => {
+  expect(
+    createPsdDocument({
+      children: [
+        ...Array.from({length: 34}, () => ({bottom: 2000, right: 2000})),
+        {bottom: 8, right: 8},
+      ],
+      height: 9385,
+      width: 3825,
+    }),
+  ).toEqual({error: {code: 'too-large'}, ok: false})
+})
+
 test('should reject a document without usable pixel layers', () => {
   expect(createPsdDocument({children: [{name: 'empty'}], height: 100, width: 100})).toEqual({
     error: {code: 'empty-document'},
