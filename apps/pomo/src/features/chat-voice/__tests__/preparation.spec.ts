@@ -273,6 +273,44 @@ describe('useChatVoice preparation', () => {
     chatVoice.dispose()
   })
 
+  it('should settle queued playback when initialization fails', async () => {
+    const client = createClient()
+    vi.mocked(client.initialize).mockResolvedValueOnce(
+      failureResult({
+        code: 'worker-failed',
+        detail: '초기화 실패',
+        phase: 'initialize',
+        retryable: true,
+      }),
+    )
+    const {runtime} = createRuntime(client)
+    const chatVoice = createTestRoot(runtime)
+
+    chatVoice.controller.arm()
+    const speech = chatVoice.controller.speak('준비 실패 뒤 정리')
+    const playback = chatVoice.controller.finish()
+    let isSpeechSettled = false
+    let isPlaybackSettled = false
+    void speech.then(() => {
+      isSpeechSettled = true
+    })
+    void playback.then(() => {
+      isPlaybackSettled = true
+    })
+
+    try {
+      await chatVoice.controller.prepare()
+      await Promise.resolve()
+
+      expect(isSpeechSettled).toBe(true)
+      expect(isPlaybackSettled).toBe(true)
+      expect(client.generateStream).not.toHaveBeenCalled()
+      expect(chatVoice.controller.state()).toMatchObject({modelReady: false, status: 'error'})
+    } finally {
+      chatVoice.dispose()
+    }
+  })
+
   it('should report unexpected initialization failures', async () => {
     const error = new Error('Initialization crashed')
     const consoleError = vi.spyOn(console, 'error').mockImplementation(() => undefined)
@@ -280,13 +318,31 @@ describe('useChatVoice preparation', () => {
     vi.mocked(client.initialize).mockRejectedValueOnce(error)
     const {runtime} = createRuntime(client)
     const chatVoice = createTestRoot(runtime)
+    chatVoice.controller.arm()
+    const speech = chatVoice.controller.speak('예상치 못한 준비 실패 뒤 정리')
+    const playback = chatVoice.controller.finish()
+    let isSpeechSettled = false
+    let isPlaybackSettled = false
+    void speech.then(() => {
+      isSpeechSettled = true
+    })
+    void playback.then(() => {
+      isPlaybackSettled = true
+    })
 
-    await chatVoice.controller.prepare()
+    try {
+      await chatVoice.controller.prepare()
+      await Promise.resolve()
 
-    expect(consoleError).toHaveBeenCalledWith('Unexpected chat voice failure', error)
-    expect(chatVoice.controller.state()).toMatchObject({modelReady: false, status: 'error'})
-    chatVoice.dispose()
-    consoleError.mockRestore()
+      expect(consoleError).toHaveBeenCalledWith('Unexpected chat voice failure', error)
+      expect(isSpeechSettled).toBe(true)
+      expect(isPlaybackSettled).toBe(true)
+      expect(client.generateStream).not.toHaveBeenCalled()
+      expect(chatVoice.controller.state()).toMatchObject({modelReady: false, status: 'error'})
+    } finally {
+      chatVoice.dispose()
+      consoleError.mockRestore()
+    }
   })
 
   it('should ignore an initialization rejection after disposal', async () => {
