@@ -10,7 +10,6 @@ import {PreferenceProvider} from './hooks/use-preference'
 import {webLocalStorage} from './utils/preference-storage'
 
 import {PDocumentMetadata} from './components/p-document-metadata/PDocumentMetadata'
-import {PFocusRoomLayout} from './components/p-focus-room-layout/PFocusRoomLayout'
 import {PRecoveryBoundary} from './components/p-recovery-boundary/PRecoveryBoundary'
 import {useApplicationRecovery} from './features/application-recovery'
 import {SafeArea} from './components/safe-area/SafeArea'
@@ -42,9 +41,7 @@ export default function App() {
                         onReload={applicationRecovery.onReload}
                         onRetry={applicationRecovery.onRetry}
                       >
-                        <Suspense>
-                          <PFocusRoomLayout>{props.children}</PFocusRoomLayout>
-                        </Suspense>
+                        <Suspense>{props.children}</Suspense>
                       </PRecoveryBoundary>
                     </PModelDownloadProvider>
                   </AuthProvider>

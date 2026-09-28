@@ -5,7 +5,7 @@ import {
   localStorageKey,
   toLocale,
 } from '@paraglide/runtime'
-import {resolveAppsInTossLocale} from './index'
+import {resolveAppsInTossLocale} from './resolve-apps-in-toss-locale'
 
 const readStoredLocale = () => {
   try {
@@ -25,7 +25,7 @@ const readDeviceLocale = async (): Promise<unknown> => {
   }
 }
 
-/** Resolves the initial locale before the client-rendered Apps in Toss home mounts. */
+/** Resolves the initial locale from persisted, device, and browser sources. */
 export const getInitialAppsInTossLocale = async (): Promise<Locale> => {
   const browserLocale = extractLocaleFromNavigator()
   const persistedLocale = readStoredLocale() ?? extractLocaleFromCookie()

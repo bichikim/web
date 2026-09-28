@@ -1,13 +1,7 @@
 /** @vitest-environment node */
 import {expect, it} from 'vitest'
 
-import {
-  getCanonicalPathname,
-  isPomoHomePath,
-  isSearchIndexablePath,
-  normalizePathname,
-  usesPomoLayout,
-} from '../pomo-route'
+import {getCanonicalPathname, isSearchIndexablePath, normalizePathname} from '../pomo-route'
 
 it.each([
   ['/', '/'],
@@ -20,44 +14,6 @@ it.each([
 ])('should normalize %s to %s', (pathname, expected) => {
   expect(normalizePathname(pathname)).toBe(expected)
 })
-
-it.each([
-  ['/', true],
-  ['/dialogue', true],
-  ['/dialogue/', true],
-  ['/desktop/dialog/memory-assist', true],
-  ['/desktop/dialog/memory-assist/', true],
-  ['/desktop/dialog/settings', true],
-  ['/desktop/dialog/settings/', true],
-  ['/desktop/player', true],
-  ['/desktop/player/', true],
-  ['/desktop/pomodoro', true],
-  ['/desktop/pomodoro/', true],
-  ['/desktop/settings', true],
-  ['/desktop/settings/', true],
-  ['/en', false],
-  ['/ko/', false],
-  ['/en/dialogue', false],
-  ['/dev', false],
-  ['/dev/dialogue', false],
-])('should classify %s as a Pomo layout route when expected', (pathname, expected) => {
-  expect(usesPomoLayout(pathname)).toBe(expected)
-})
-
-it.each([
-  ['/', true],
-  ['///', true],
-  ['/dialogue', false],
-  ['/dialogue/', false],
-  ['/en', false],
-  ['/ko/', false],
-  ['/en/dialogue', false],
-])(
-  'should enable entry playback for %s only when it is the Pomo home route',
-  (pathname, expected) => {
-    expect(isPomoHomePath(pathname)).toBe(expected)
-  },
-)
 
 it.each([
   ['/', true],

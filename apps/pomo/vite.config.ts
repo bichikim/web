@@ -149,7 +149,6 @@ const APPS_IN_TOSS_BASE_STATIC_ROUTES = [
   SERVICE_POLICY_PATHS.legacy.terms,
   '/account',
   '/dialogue',
-  '/focus-room',
   '/focus-room-dialogue',
 ]
 const APPS_IN_TOSS_STATIC_ROUTES = APPS_IN_TOSS_BASE_STATIC_ROUTES
@@ -168,7 +167,6 @@ const DESKTOP_STATIC_ROUTES = [
 const MOBILE_STATIC_ROUTES = [
   ...SHARED_STATIC_ROUTES,
   '/dialogue',
-  '/focus-room',
   '/focus-room-dialogue',
 ]
 
