@@ -164,11 +164,7 @@ const DESKTOP_STATIC_ROUTES = [
   '/desktop/dialog/tools',
   '/desktop/dialog/version-notice',
 ]
-const MOBILE_STATIC_ROUTES = [
-  ...SHARED_STATIC_ROUTES,
-  '/dialogue',
-  '/focus-room-dialogue',
-]
+const MOBILE_STATIC_ROUTES = [...SHARED_STATIC_ROUTES, '/dialogue', '/focus-room-dialogue']
 
 const BASE_SECURITY_HEADERS = {
   'Permissions-Policy': PERMISSIONS_POLICY,
