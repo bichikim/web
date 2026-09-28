@@ -11,7 +11,7 @@ const componentMocks = vi.hoisted(() => ({eventProvider: vi.fn()}))
 
 vi.mock('@solidjs/router', () => ({
   useCurrentMatches: () => () => [{route: {info: {}}}],
-  useLocation: () => ({pathname: '///', search: '', hash: '', query: {}, state: null, key: ''}),
+  useLocation: () => ({hash: '', key: '', pathname: '///', query: {}, search: '', state: null}),
 }))
 vi.mock('../components/p-event-provider/PEventProvider', () => ({
   PEventProvider: componentMocks.eventProvider,
