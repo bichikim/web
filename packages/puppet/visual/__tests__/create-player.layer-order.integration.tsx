@@ -24,7 +24,6 @@ const arms = [
   'psd-38',
 ]
 const skirt = ['psd-6', 'psd-7', 'psd-41', 'psd-42', 'psd-43']
-const fixedForegroundArmIds = ['psd-32', 'psd-37']
 const players: Array<Player> = []
 
 const createProbe = (id: string): PuppetPart => {
@@ -94,10 +93,7 @@ describe('createPlayer development model layer order', () => {
         context.drawImage(canvas, 0, 0)
         arms.forEach((armId, column) => {
           skirt.forEach((skirtId, row) => {
-            const armInFront =
-              fixedForegroundArmIds.includes(armId) ||
-              Math.abs(value) <= 15 ||
-              (value > 0 ? column < 5 : column >= 5)
+            const armInFront = Math.abs(value) <= 15 || (value > 0 ? column < 5 : column >= 5)
             const pixel = Array.from(context.getImageData(column * 16 + 8, row * 16 + 8, 1, 1).data)
             expect(pixel, `${parameterId}=${value}: ${armId} overlaps ${skirtId}`).toEqual(
               armInFront ? [255, 0, 0, 255] : [0, 0, 255, 255],
