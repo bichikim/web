@@ -28,12 +28,16 @@ export const createEntryHistoryRepository = (
   storage: EntryHistoryStorage,
 ): EntryHistoryRepository => {
   const queue = createSerialTaskQueue()
+  let knownNativeEntry = false
   /** Reads whether a previous entry was persisted for this browser or host app. */
   const read = async (): Promise<boolean> => {
     if (storage.readWeb() === true) {
       if (storage.usesNative()) {
         await queue
-          .run(() => storage.writeToss())
+          .run(async () => {
+            await storage.writeToss()
+            knownNativeEntry = true
+          })
           .catch((error: unknown) => {
             console.warn('Failed to repair native focus room entry history.', error)
           })
@@ -41,10 +45,13 @@ export const createEntryHistoryRepository = (
       return true
     }
     if (!storage.usesNative()) {
-      return false
+      return knownNativeEntry
     }
     const entered = await storage.readToss()
-    return entered === true
+    if (entered === true) {
+      knownNativeEntry = true
+    }
+    return knownNativeEntry
   }
 
   const persistRuntimeEntryHistory = async (): Promise<void> => {
@@ -52,6 +59,7 @@ export const createEntryHistoryRepository = (
     if (storage.usesNative()) {
       try {
         await storage.writeToss()
+        knownNativeEntry = true
         return
       } catch (error: unknown) {
         if (webError !== null) {
