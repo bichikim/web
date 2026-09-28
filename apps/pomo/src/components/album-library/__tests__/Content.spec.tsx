@@ -320,7 +320,7 @@ describe('PAlbumLibraryContent', () => {
     expect(audioMocks.loadPublishedPAlbums).toHaveBeenCalledTimes(2)
   })
 
-  it('should recover through the full boundary when a catalog retry rejects unexpectedly', async () => {
+  it('should preserve bundled albums and report the inline error when a catalog retry rejects', async () => {
     const catalogError = new Error('published catalog failed')
     const retryError = new Error('published catalog retry crashed')
     const bundledAlbum = createAlbum('bundled', [TRACK_ONE])
@@ -335,16 +335,19 @@ describe('PAlbumLibraryContent', () => {
 
     await screen.findByRole('alert')
     screen.getByRole('button', {name: '다시 시도'}).click()
-    await screen.findByText('앨범을 불러오지 못했어요')
-    expect(reporterMocks.reportClientError).toHaveBeenCalledWith(retryError, {
-      feature: 'album-library',
-      source: 'error-boundary',
-    })
-    const retryProps = componentMocks.button.mock.lastCall?.[0] as ButtonProps
-    await retryProps.onPress()
+    await waitFor(() =>
+      expect(reporterMocks.reportClientError).toHaveBeenCalledWith(retryError, {
+        feature: 'album-library',
+        source: 'direct',
+      }),
+    )
+    expect(screen.getByTestId('album-bundled')).toBeTruthy()
+    expect(screen.queryByText('앨범을 불러오지 못했어요')).toBeNull()
+
+    screen.getByRole('button', {name: '다시 시도'}).click()
 
     expect(await screen.findByTestId('album-published')).toBeTruthy()
-    expect(audioMocks.loadBundledPAlbums).toHaveBeenCalledTimes(2)
+    expect(audioMocks.loadBundledPAlbums).toHaveBeenCalledOnce()
     expect(audioMocks.loadPublishedPAlbums).toHaveBeenCalledTimes(3)
   })
 
