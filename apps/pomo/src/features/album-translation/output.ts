@@ -1,5 +1,7 @@
 import {z} from 'zod'
 
+import {findJsonObjectEnd} from 'src/utils/json'
+
 import type {AlbumTranslationCompleteResponse} from './messages'
 
 const translationTextSchema = z.object({description: z.string(), title: z.string().min(1)})
@@ -8,38 +10,6 @@ const translationOutputSchema = z.object({
   ja: translationTextSchema,
   'zh-Hans': translationTextSchema,
 })
-
-const findJsonObjectEnd = (output: string, start: number): number => {
-  let depth = 0
-  let inString = false
-  let isEscaped = false
-
-  for (let index = start; index < output.length; index += 1) {
-    const character = output[index]
-
-    if (inString) {
-      if (isEscaped) {
-        isEscaped = false
-      } else if (character === '\\') {
-        isEscaped = true
-      } else if (character === '"') {
-        inString = false
-      }
-    } else if (character === '"') {
-      inString = true
-    } else if (character === '{') {
-      depth += 1
-    } else if (character === '}') {
-      depth -= 1
-
-      if (depth === 0) {
-        return index
-      }
-    }
-  }
-
-  return -1
-}
 
 export const parseAlbumTranslation = (
   output: string,
