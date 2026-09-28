@@ -9,6 +9,8 @@ const NEXT_WEEK_EXCLUSION_PATTERN =
   /다음 ?주(?:(?!이번 ?주).)*(?:말고|빼고|제외(?:하고)?|아니|아닌|안\s*(?:되|돼))/u
 const TODAY_EXCLUSION_PATTERN =
   /오늘(?:(?!내일).)*(?:말고|빼고|제외(?:하고)?|아니|아닌|안\s*(?:되|돼))/u
+const YESTERDAY_EXCLUSION_PATTERN =
+  /어제(?:(?!오늘|내일).)*(?:말고|빼고|제외(?:하고)?|아니|아닌|안\s*(?:되|돼))/u
 const TOMORROW_EXCLUSION_PATTERN =
   /내일(?:(?!오늘).)*(?:말고|빼고|제외(?:하고)?|아니|아닌|안\s*(?:되|돼))/u
 const DAY_AFTER_TOMORROW_EXCLUSION_PATTERN =
@@ -20,6 +22,12 @@ const MILLISECONDS_PER_DAY = 86_400_000
 const DAY_AFTER_TOMORROW_START_DAYS = 2
 const DAY_AFTER_TOMORROW_END_DAYS = 3
 const NEXT_EVENT_WINDOW_DAYS = 30
+
+const includesUnexcludedPhrase = (
+  text: string,
+  phrase: string,
+  exclusionPattern: RegExp,
+): boolean => text.includes(phrase) && !exclusionPattern.test(text)
 const DAYS_PER_WEEK = 7
 
 interface CreateCalendarQueryOptions {
@@ -115,15 +123,26 @@ export const createCalendarQuery = (
     return dayjs.tz(`${date}T${time}`, timeZone).toDate()
   }
 
-  const includesToday = options.text.includes('오늘') && !TODAY_EXCLUSION_PATTERN.test(options.text)
-  const includesTomorrow =
-    options.text.includes('내일') && !TOMORROW_EXCLUSION_PATTERN.test(options.text)
+  const includesToday = includesUnexcludedPhrase(options.text, '오늘', TODAY_EXCLUSION_PATTERN)
+  const includesTomorrow = includesUnexcludedPhrase(
+    options.text,
+    '내일',
+    TOMORROW_EXCLUSION_PATTERN,
+  )
+  const includesYesterday = includesUnexcludedPhrase(
+    options.text,
+    '어제',
+    YESTERDAY_EXCLUSION_PATTERN,
+  )
   const includesThisWeek =
     THIS_WEEK_PATTERN.test(options.text) && !THIS_WEEK_EXCLUSION_PATTERN.test(options.text)
   const includesNextWeek =
     NEXT_WEEK_PATTERN.test(options.text) && !NEXT_WEEK_EXCLUSION_PATTERN.test(options.text)
-  const includesDayAfterTomorrow =
-    options.text.includes('모레') && !DAY_AFTER_TOMORROW_EXCLUSION_PATTERN.test(options.text)
+  const includesDayAfterTomorrow = includesUnexcludedPhrase(
+    options.text,
+    '모레',
+    DAY_AFTER_TOMORROW_EXCLUSION_PATTERN,
+  )
   if (includesDayAfterTomorrow) {
     const startDayOffset = getFirstRequestedDateOffset(includesToday, includesTomorrow)
     const start = includesToday ? now : boundary(startDayOffset)
@@ -145,7 +164,7 @@ export const createCalendarQuery = (
       end: boundary(2),
       morningEnd: noon,
       now,
-      start,
+      start: includesYesterday ? boundary(-1) : start,
       text: options.text,
     })
   }
@@ -156,11 +175,11 @@ export const createCalendarQuery = (
       end,
       morningEnd: end,
       now,
-      start: now,
+      start: includesYesterday ? boundary(-1) : now,
       text: options.text,
     })
   }
-  if (options.text.includes('어제')) {
+  if (includesYesterday) {
     return toRange(boundary(-1), boundary(0))
   }
   const weekday = local.day()
