@@ -50,6 +50,7 @@ export function useSoundGeneration() {
       setStatus('생성 길이를 확인해 주세요.')
       return
     }
+    setUrl(replaceBlobObjectUrl(url(), () => null))
     setError(null)
     setBusy(true)
     setStatus('생성 환경을 확인하고 있어요…')
