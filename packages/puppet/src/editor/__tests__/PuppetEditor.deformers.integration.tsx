@@ -4,22 +4,23 @@ import {cleanup, fireEvent, render, screen} from '@solidjs/testing-library'
 
 import {afterEach, beforeEach, describe, expect, test, vi} from 'vitest'
 
-import {createDemoDocument, type Player} from '../../player'
+import {createDemoDocument, type createPlayer} from '../../player'
 
 import {createDeformer} from '../internal/scene-graph'
 import {PuppetEditor} from '../PuppetEditor'
 
 const mocks = vi.hoisted(() => ({
   autoMeshPart: vi.fn(),
-  createPlayer: vi.fn(),
+  createPlayer: vi.fn<typeof createPlayer>(),
   importPng: vi.fn(),
   readTexturePixels: vi.fn(),
 }))
-const player: Player = {
+const player = {
   destroy: vi.fn(),
   pause: vi.fn(),
   play: vi.fn(),
   playMotion: vi.fn(() => true),
+  redraw: vi.fn(),
   resetPhysics: vi.fn(),
   resize: vi.fn(),
   seek: vi.fn(),
