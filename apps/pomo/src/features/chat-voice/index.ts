@@ -94,6 +94,7 @@ interface ClientReference {
 interface CreatePrepareOptions {
   readonly canPrepare: Accessor<boolean>
   readonly clientReference: ClientReference
+  readonly discardQueuedSpeech: () => void
   readonly modelId: SupertonicModelId
   readonly runQueuedSpeech: () => Promise<void>
   readonly runtime: ChatVoiceRuntime
@@ -116,6 +117,7 @@ interface CreateSpeechQueueOptions {
 
 interface SpeechQueueController {
   readonly arm: () => void
+  readonly discardQueuedSpeech: () => void
   readonly dispose: () => void
   readonly finish: () => Promise<void>
   readonly run: () => Promise<void>
@@ -274,6 +276,7 @@ const createPrepare = (options: CreatePrepareOptions) => {
       }
 
       if (!result.ok) {
+        options.discardQueuedSpeech()
         options.setState({
           message: getSupertonicErrorMessage(result.error),
           modelReady: false,
@@ -286,6 +289,7 @@ const createPrepare = (options: CreatePrepareOptions) => {
       await options.runQueuedSpeech()
     } catch (error: unknown) {
       if (options.clientReference.current === client) {
+        options.discardQueuedSpeech()
         reportUnexpectedError(error)
         options.setState({
           message: '답변 음성 모델을 준비하는 중 예상하지 못한 문제가 발생했어요.',
@@ -325,6 +329,7 @@ const createSpeechQueue = (options: CreateSpeechQueueOptions): SpeechQueueContro
   const armedPlayer: PlayerReference = {current: null}
   const activePlayer: PlayerReference = {current: null}
   const speechQueue: Array<QueuedSpeech> = []
+  const discardQueuedSpeech = () => completeQueuedSpeech(speechQueue)
   const playbackCompletion = createPlaybackCompletion()
   let generation: Promise<void> | null = null
   let playerFinished = false
@@ -484,7 +489,7 @@ const createSpeechQueue = (options: CreateSpeechQueueOptions): SpeechQueueContro
     options.setViseme('rest')
   }
 
-  return {arm, dispose, finish, run, speak, stop}
+  return {arm, discardQueuedSpeech, dispose, finish, run, speak, stop}
 }
 
 /** Converts completed chat answers to speech and owns their cancellable playback queue. */
@@ -532,6 +537,7 @@ export const useChatVoice = (props: UseChatVoiceProps = {}): ChatVoiceController
   const prepare = createPrepare({
     canPrepare,
     clientReference,
+    discardQueuedSpeech: speechQueue.discardQueuedSpeech,
     modelId,
     runQueuedSpeech: speechQueue.run,
     runtime,

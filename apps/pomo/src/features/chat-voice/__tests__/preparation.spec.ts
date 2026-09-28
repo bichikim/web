@@ -244,7 +244,7 @@ describe('useChatVoice preparation', () => {
     }
   })
 
-  it('should expose initialization failures and allow a successful retry', async () => {
+  it('should discard queued speech after an initialization failure before retrying', async () => {
     const client = createClient()
     vi.mocked(client.initialize)
       .mockResolvedValueOnce(
@@ -258,35 +258,67 @@ describe('useChatVoice preparation', () => {
       .mockResolvedValueOnce(successResult(undefined))
     const {runtime} = createRuntime(client)
     const chatVoice = createTestRoot(runtime)
+    const queuedSpeechBeforeFailure = chatVoice.controller.speak('실패 전에 큐에 넣은 문장')
 
-    await chatVoice.controller.prepare()
+    try {
+      await chatVoice.controller.prepare()
 
-    expect(chatVoice.controller.state()).toMatchObject({modelReady: false, status: 'error'})
-    expect(chatVoice.controller.canPrepare()).toBe(true)
+      expect(chatVoice.controller.state()).toMatchObject({modelReady: false, status: 'error'})
+      expect(chatVoice.controller.canPrepare()).toBe(true)
 
-    await chatVoice.controller.prepare()
-    await chatVoice.controller.prepare()
+      await chatVoice.controller.prepare()
+      await queuedSpeechBeforeFailure
 
-    expect(client.initialize).toHaveBeenCalledTimes(2)
-    expect(client.dispose).toHaveBeenCalledOnce()
-    expect(chatVoice.controller.state().status).toBe('ready')
-    chatVoice.dispose()
+      expect(chatVoice.controller.state().status).toBe('ready')
+      expect(client.generateStream).not.toHaveBeenCalled()
+
+      await chatVoice.controller.speak('재시도 이후 새 문장')
+
+      expect(client.initialize).toHaveBeenCalledTimes(2)
+      expect(client.dispose).toHaveBeenCalledOnce()
+      expect(client.generateStream).toHaveBeenCalledOnce()
+      expect(client.generateStream).toHaveBeenCalledWith(
+        expect.objectContaining({text: '재시도 이후 새 문장'}),
+      )
+    } finally {
+      chatVoice.dispose()
+    }
   })
 
-  it('should report unexpected initialization failures', async () => {
+  it('should discard queued speech after an unexpected initialization failure before retrying', async () => {
     const error = new Error('Initialization crashed')
     const consoleError = vi.spyOn(console, 'error').mockImplementation(() => undefined)
     const client = createClient()
-    vi.mocked(client.initialize).mockRejectedValueOnce(error)
+    vi.mocked(client.initialize)
+      .mockRejectedValueOnce(error)
+      .mockResolvedValueOnce(successResult(undefined))
     const {runtime} = createRuntime(client)
     const chatVoice = createTestRoot(runtime)
+    const queuedSpeechBeforeFailure = chatVoice.controller.speak('실패 전에 큐에 넣은 문장')
 
-    await chatVoice.controller.prepare()
+    try {
+      await chatVoice.controller.prepare()
 
-    expect(consoleError).toHaveBeenCalledWith('Unexpected chat voice failure', error)
-    expect(chatVoice.controller.state()).toMatchObject({modelReady: false, status: 'error'})
-    chatVoice.dispose()
-    consoleError.mockRestore()
+      expect(consoleError).toHaveBeenCalledWith('Unexpected chat voice failure', error)
+      expect(chatVoice.controller.state()).toMatchObject({modelReady: false, status: 'error'})
+
+      await chatVoice.controller.prepare()
+      await queuedSpeechBeforeFailure
+
+      expect(chatVoice.controller.state().status).toBe('ready')
+      expect(client.generateStream).not.toHaveBeenCalled()
+
+      await chatVoice.controller.speak('재시도 이후 새 문장')
+
+      expect(client.initialize).toHaveBeenCalledTimes(2)
+      expect(client.generateStream).toHaveBeenCalledOnce()
+      expect(client.generateStream).toHaveBeenCalledWith(
+        expect.objectContaining({text: '재시도 이후 새 문장'}),
+      )
+    } finally {
+      chatVoice.dispose()
+      consoleError.mockRestore()
+    }
   })
 
   it('should ignore an initialization rejection after disposal', async () => {
