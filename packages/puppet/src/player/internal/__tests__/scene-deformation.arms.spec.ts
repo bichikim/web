@@ -2,6 +2,7 @@ import {describe, expect, test} from 'vitest'
 
 import modelSource from '../../../../examples/development-model.json?raw'
 import {composeParameterScene, composeParameterVertices} from '../../../deformation'
+import {composeParameterPartProperties} from '../../../deformation/part-properties'
 import type {PuppetPart} from '../../document'
 import {parseDocument} from '../../parse-document'
 import {applySceneDeformers} from '../scene-deformation'
@@ -73,6 +74,93 @@ describe('development model independent arm movement', () => {
 })
 
 describe('development model arm yaw volume', () => {
+  test.each([
+    {'full-body-x': 16},
+    {'full-body-x': 22},
+    {'full-body-x': -16},
+    {'full-body-x': -22},
+    {'body-x': 30},
+    {'body-x': -30},
+    {'body-x': 30, 'full-body-x': 22},
+    {'body-x': -30, 'full-body-x': -22},
+    {'body-x': 10, 'full-body-x': 6},
+    {'body-x': -10, 'full-body-x': -6},
+  ])('should tuck the far shoulder against the upper frill at %s', (values) => {
+    const right = (values['body-x'] ?? values['full-body-x'] ?? 0) > 0
+    const shoulder = right ? [2546, 1750, 2563, 1800] : [1493, 1750, 1476, 1800]
+    const frill = right ? [2317, 1750, 2249, 1800] : [1722, 1750, 1791, 1800]
+    const vertices = new Map([
+      ['psd-20', shoulder],
+      [right ? 'psd-37' : 'psd-32', frill],
+    ])
+    applySceneDeformers({
+      document: {...model, scene: composeParameterScene(model, values)},
+      verticesByPartId: vertices,
+    })
+    for (const index of [0, 2]) {
+      expect((shoulder[index]! - frill[index]!) * (right ? 1 : -1)).toBeLessThan(15)
+    }
+    for (const partId of ['psd-20', 'psd-21']) {
+      const part = model.parts.find((candidate) => candidate.id === partId)!
+      const moved = renderArm(part, values)
+      for (let index = 0; index < part.mesh.indices.length; index += 3) {
+        const triangle = part.mesh.indices.slice(index, index + 3)
+        expect(
+          triangleArea(moved, triangle) / triangleArea(part.mesh.vertices, triangle),
+          `${partId} triangle ${index / 3}`,
+        ).toBeGreaterThan(0)
+      }
+    }
+  })
+
+  test.each([-22, 22])('should turn the sleeve surface at different depths at yaw=%s', (yaw) => {
+    const flat = {
+      ...model,
+      parameterBindings: model.parameterBindings?.filter(
+        (binding) => binding.id !== 'sleeve-yaw-surface',
+      ),
+    }
+    for (const partId of ['psd-30', 'psd-35']) {
+      const part = model.parts.find((candidate) => candidate.id === partId)!
+      const values = {'full-body-x': yaw}
+      const original = renderArm(part, values, flat)
+      const turned = renderArm(part, values)
+      const shifts = turned.flatMap((coordinate, index) =>
+        index % 2 === 0 ? [Math.abs(coordinate - original[index]!)] : [],
+      )
+      expect(Math.max(...shifts)).toBeGreaterThan(20)
+      expect(Math.min(...shifts)).toBeLessThan(1e-5)
+      expect(renderArm(part, {}, flat)).toEqual(renderArm(part, {}))
+    }
+  })
+
+  test.each(['body-x', 'full-body-x'])(
+    'should keep white sleeves neutral and shade the receding assembly for %s',
+    (parameterId) => {
+      const color = (partId: string, value: number) =>
+        composeParameterPartProperties({
+          document: model,
+          parameterValues: {[parameterId]: value},
+          partId,
+        }).multiplyColor
+      for (const [left, right] of [
+        ['psd-30', 'psd-35'],
+        ['psd-31', 'psd-36'],
+        ['psd-32', 'psd-37'],
+        ['psd-33', 'psd-38'],
+      ] as const) {
+        expect(color(left, 0)).toEqual([1, 1, 1])
+        expect(color(right, 0)).toEqual([1, 1, 1])
+        for (const direction of [-1, 1]) {
+          const near = color(direction > 0 ? left : right, direction * 15)
+          const far = color(direction > 0 ? right : left, direction * 15)
+          expect(far[0]).toBeLessThan(near[0] - 0.015)
+          expect(Math.min(...far)).toBeGreaterThan(0.9)
+        }
+      }
+    },
+  )
+
   test.each(['body-x', 'full-body-x'])(
     'should fold the outer sleeve panel separately for %s',
     (parameterId) => {
