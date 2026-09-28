@@ -60,6 +60,44 @@ describe('parseExpenseText', () => {
 })
 
 describe('parseExpenseAssistantResponse', () => {
+  it('should parse JSON after brace-delimited prose', () => {
+    expect(
+      parseExpenseAssistantResponse(
+        '메모 {참고} {"date":"2026-09-05","items":[{"name":"두부 {냉장}","quantity":1,"unitPrice":1500}]}',
+      ),
+    ).toEqual({
+      ok: true,
+      value: {
+        date: '2026-09-05',
+        items: [{amount: 1500, name: '두부 {냉장}', quantity: 1, unitPrice: 1500}],
+        questions: [],
+        total: 1500,
+      },
+    })
+  })
+
+  it('should skip unrelated JSON objects before the expense response', () => {
+    expect(
+      parseExpenseAssistantResponse(
+        '메모 {"type":"note"} {"date":"2026-09-05","items":[{"name":"두부","quantity":1,"unitPrice":1500}]}',
+      ),
+    ).toMatchObject({
+      ok: true,
+      value: {date: '2026-09-05', items: [{name: '두부'}], total: 1500},
+    })
+  })
+
+  it('should reject an expense-shaped object nested in unrelated valid JSON', () => {
+    expect(
+      parseExpenseAssistantResponse(
+        '메모 {"example":{"date":"2026-09-05","items":[{"name":"두부","quantity":1,"unitPrice":1500}]}}',
+      ),
+    ).toEqual({
+      error: {code: 'invalid-shape'},
+      ok: false,
+    })
+  })
+
   it('should preserve an unpadded date', () => {
     expect(
       parseExpenseAssistantResponse(
