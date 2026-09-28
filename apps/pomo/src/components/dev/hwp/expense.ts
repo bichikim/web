@@ -1,4 +1,5 @@
 import {parseDate} from 'src/features/civil-date'
+import {findJsonObjectEnd} from 'src/utils/json'
 import {isNonBlankString} from 'src/utils/is-non-blank-string'
 
 export interface ExpenseItem {
@@ -128,12 +129,6 @@ const readItems = (value: unknown) => {
   return items
 }
 
-const extractJson = (text: string) => {
-  const start = text.indexOf('{')
-  const end = text.lastIndexOf('}')
-  return start >= 0 && end > start ? text.slice(start, end + 1) : null
-}
-
 const createExpenseForm = (
   date: string | null,
   items: ReadonlyArray<ExpenseItem>,
@@ -148,12 +143,7 @@ const createExpenseForm = (
   return {ok: true, value: {date, items, questions, total}}
 }
 
-export const parseExpenseAssistantResponse = (text: string): ExpenseParseResult => {
-  const json = extractJson(text)
-  if (json === null) {
-    return invalid('invalid-json')
-  }
-
+const parseExpenseAssistantCandidate = (json: string): ExpenseParseResult => {
   let parsed: unknown
   try {
     parsed = JSON.parse(json)
@@ -176,6 +166,34 @@ export const parseExpenseAssistantResponse = (text: string): ExpenseParseResult 
   }
 
   return createExpenseForm(date, items, questions)
+}
+
+export const parseExpenseAssistantResponse = (text: string): ExpenseParseResult => {
+  let invalidShape: ExpenseParseResult | null = null
+  let candidateStart = text.indexOf('{')
+
+  while (candidateStart >= 0) {
+    const candidateEnd = findJsonObjectEnd(text, candidateStart)
+    if (candidateEnd <= candidateStart) {
+      candidateStart = text.indexOf('{', candidateStart + 1)
+    } else {
+      const candidateResult = parseExpenseAssistantCandidate(
+        text.slice(candidateStart, candidateEnd + 1),
+      )
+      if (candidateResult.ok) {
+        return candidateResult
+      }
+
+      if (candidateResult.error.code === 'invalid-shape') {
+        invalidShape = candidateResult
+        candidateStart = text.indexOf('{', candidateEnd + 1)
+      } else {
+        candidateStart = text.indexOf('{', candidateStart + 1)
+      }
+    }
+  }
+
+  return invalidShape ?? invalid('invalid-json')
 }
 
 export const parseExpenseText = (text: string): ExpenseParseResult => {
