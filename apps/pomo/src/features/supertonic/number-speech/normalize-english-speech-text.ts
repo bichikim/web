@@ -157,7 +157,7 @@ const pronounceCardinal = (value: string): string | null => {
     return null
   }
 
-  const isNegative = value.startsWith('-')
+  const isNegative = value.startsWith('-') || value.startsWith('−')
   const isPositive = value.startsWith('+')
   const words = pronouncePositiveInteger(parsed < 0n ? -parsed : parsed)
   const sign = isNegative ? 'minus ' : isPositive ? 'plus ' : ''

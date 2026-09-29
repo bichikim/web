@@ -150,12 +150,23 @@ describe('normalizeSpeechText', () => {
     expect(normalizeSpeechText({language: 'en', text: '+2%'})).toBe('plus two percent')
   })
 
-  it('should preserve leading-zero identifiers and pronounce an explicit negative zero', () => {
-    expect(normalizeSpeechText({language: 'ko', text: '007개, 0001원, -0%'})).toBe(
-      '007개, 0001원, 마이너스 영 퍼센트',
+  it('should pronounce Unicode-minus Korean temperature and percentage values', () => {
+    expect(normalizeSpeechText({language: 'ko', text: '온도는 −5도입니다.'})).toBe(
+      '온도는 마이너스 오 도입니다.',
     )
-    expect(normalizeSpeechText({language: 'en', text: '007 agents, -0%'})).toBe(
-      '007 agents, minus zero percent',
+    expect(normalizeSpeechText({language: 'ko', text: '−5%'})).toBe('마이너스 오 퍼센트')
+  })
+
+  it('should pronounce Unicode-minus English percentages', () => {
+    expect(normalizeSpeechText({language: 'en', text: '−5%'})).toBe('minus five percent')
+  })
+
+  it('should preserve leading-zero identifiers and pronounce an explicit negative zero', () => {
+    expect(normalizeSpeechText({language: 'ko', text: '007개, 0001원, -0%, −0%'})).toBe(
+      '007개, 0001원, 마이너스 영 퍼센트, 마이너스 영 퍼센트',
+    )
+    expect(normalizeSpeechText({language: 'en', text: '007 agents, -0%, −0%'})).toBe(
+      '007 agents, minus zero percent, minus zero percent',
     )
   })
 
