@@ -271,7 +271,7 @@ const handleRequest = (request: ChatWorkerRequest): Promise<void> => {
     case 'generate':
       return generation.run(() => generateAnswer(request))
     case 'prepare':
-      return prepareModel(request.modelId)
+      return generation.run(() => prepareModel(request.modelId))
   }
 
   request satisfies never
