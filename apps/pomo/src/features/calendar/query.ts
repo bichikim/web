@@ -34,6 +34,8 @@ const includesUnexcludedPhrase = (
   phrase: string,
   exclusionPattern: RegExp,
 ): boolean => text.includes(phrase) && !exclusionPattern.test(text)
+const isStandaloneDateRequest = (includesDate: boolean, includesThisWeek: boolean): boolean =>
+  includesDate && !includesThisWeek
 const DAYS_PER_WEEK = 7
 type CalendarWeekendIntent = 'next' | 'previous' | 'upcoming'
 
@@ -74,12 +76,26 @@ interface CreateCalendarDateRangeOptions {
   readonly text: string
 }
 
-interface CreateCalendarPeriodRangeOptions {
-  readonly boundary: (days: number) => Date
-  readonly daysUntilNextMonday: number
+interface CreateStandaloneCalendarDateRangeOptions {
+  readonly boundary: (days: number, time?: string) => Date
+  readonly includesDayAfterTomorrow: boolean
   readonly includesNextWeek: boolean
   readonly includesThisWeek: boolean
   readonly includesToday: boolean
+  readonly includesTomorrow: boolean
+  readonly includesYesterday: boolean
+  readonly now: Date
+  readonly text: string
+}
+
+interface CreateCalendarPeriodRangeOptions {
+  readonly boundary: (days: number) => Date
+  readonly daysUntilNextMonday: number
+  readonly includesDayAfterTomorrow: boolean
+  readonly includesNextWeek: boolean
+  readonly includesThisWeek: boolean
+  readonly includesToday: boolean
+  readonly includesTomorrow: boolean
   readonly includesYesterday: boolean
   readonly now: Date
   readonly weekday: number
@@ -158,6 +174,63 @@ const createCalendarDateRange = ({
   return toRange(start, end)
 }
 
+const createStandaloneCalendarDateRange = ({
+  boundary,
+  includesDayAfterTomorrow,
+  includesNextWeek,
+  includesThisWeek,
+  includesToday,
+  includesTomorrow,
+  includesYesterday,
+  now,
+  text,
+}: CreateStandaloneCalendarDateRangeOptions): CalendarEventRange | null => {
+  if (isStandaloneDateRequest(includesDayAfterTomorrow, includesThisWeek)) {
+    const startDayOffset = getFirstRequestedDateOffset({
+      includesToday,
+      includesTomorrow,
+      includesYesterday,
+    })
+    const start = includesToday && startDayOffset === 0 ? now : boundary(startDayOffset)
+    const noon = boundary(DAY_AFTER_TOMORROW_START_DAYS, '12:00:00')
+    return createCalendarDateRange({
+      afternoonStart: boundary(startDayOffset, '12:00:00'),
+      end: boundary(DAY_AFTER_TOMORROW_END_DAYS),
+      morningEnd: noon,
+      now,
+      start,
+      text,
+    })
+  }
+
+  if (isStandaloneDateRequest(includesTomorrow, includesThisWeek)) {
+    const start = includesToday ? now : boundary(1)
+    const noon = boundary(1, '12:00:00')
+    return createCalendarDateRange({
+      afternoonStart: includesToday ? boundary(0, '12:00:00') : noon,
+      end: boundary(2),
+      morningEnd: noon,
+      now,
+      start: includesYesterday ? boundary(-1) : start,
+      text,
+    })
+  }
+
+  if (includesToday && !includesThisWeek && !includesNextWeek) {
+    const end = boundary(1)
+    return createCalendarDateRange({
+      afternoonStart: boundary(0, '12:00:00'),
+      end,
+      morningEnd: end,
+      now,
+      start: includesYesterday ? boundary(-1) : now,
+      text,
+    })
+  }
+
+  return null
+}
+
 const getWeekendStartOffset = ({
   daysUntilNextMonday,
   intent,
@@ -195,9 +268,11 @@ const createCalendarWeekendRange = ({
 const createCalendarPeriodRange = ({
   boundary,
   daysUntilNextMonday,
+  includesDayAfterTomorrow,
   includesNextWeek,
   includesThisWeek,
   includesToday,
+  includesTomorrow,
   includesYesterday,
   now,
   weekday,
@@ -220,7 +295,15 @@ const createCalendarPeriodRange = ({
   const nextMonday = boundary(daysUntilNextMonday)
   const followingMonday = boundary(daysUntilNextMonday + DAYS_PER_WEEK)
   const startsThisWeek = includesThisWeek || (includesToday && includesNextWeek)
-  const start = includesYesterday ? boundary(-1) : startsThisWeek ? now : nextMonday
+  const includesRequestedDate =
+    includesYesterday || includesToday || includesTomorrow || includesDayAfterTomorrow
+  const requestedDateOffset = getFirstRequestedDateOffset({
+    includesToday,
+    includesTomorrow,
+    includesYesterday,
+  })
+  const requestedDateStart = requestedDateOffset === 0 ? now : boundary(requestedDateOffset)
+  const start = includesRequestedDate ? requestedDateStart : startsThisWeek ? now : nextMonday
   const end = includesNextWeek ? followingMonday : nextMonday
   return toRange(start, end)
 }
@@ -254,54 +337,30 @@ export const createCalendarQuery = (
     includesYesterday,
     weekendIntent,
   } = getCalendarQueryIntent(options.text)
-  if (includesDayAfterTomorrow) {
-    const startDayOffset = getFirstRequestedDateOffset({
-      includesToday,
-      includesTomorrow,
-      includesYesterday,
-    })
-    const start = includesToday && startDayOffset === 0 ? now : boundary(startDayOffset)
-    const noon = boundary(DAY_AFTER_TOMORROW_START_DAYS, '12:00:00')
-    return createCalendarDateRange({
-      afternoonStart: boundary(startDayOffset, '12:00:00'),
-      end: boundary(DAY_AFTER_TOMORROW_END_DAYS),
-      morningEnd: noon,
-      now,
-      start,
-      text: options.text,
-    })
-  }
-  if (includesTomorrow) {
-    const start = includesToday ? now : boundary(1)
-    const noon = boundary(1, '12:00:00')
-    return createCalendarDateRange({
-      afternoonStart: includesToday ? boundary(0, '12:00:00') : noon,
-      end: boundary(2),
-      morningEnd: noon,
-      now,
-      start: includesYesterday ? boundary(-1) : start,
-      text: options.text,
-    })
-  }
-  if (includesToday && !includesThisWeek && !includesNextWeek) {
-    const end = boundary(1)
-    return createCalendarDateRange({
-      afternoonStart: boundary(0, '12:00:00'),
-      end,
-      morningEnd: end,
-      now,
-      start: includesYesterday ? boundary(-1) : now,
-      text: options.text,
-    })
+  const standaloneDateRange = createStandaloneCalendarDateRange({
+    boundary,
+    includesDayAfterTomorrow,
+    includesNextWeek,
+    includesThisWeek,
+    includesToday,
+    includesTomorrow,
+    includesYesterday,
+    now,
+    text: options.text,
+  })
+  if (standaloneDateRange !== null) {
+    return standaloneDateRange
   }
   const weekday = local.day()
   const daysUntilNextMonday = weekday === 0 ? 1 : DAYS_PER_WEEK + 1 - weekday
   const weekRange = createCalendarPeriodRange({
     boundary,
     daysUntilNextMonday,
+    includesDayAfterTomorrow,
     includesNextWeek,
     includesThisWeek,
     includesToday,
+    includesTomorrow,
     includesYesterday,
     now,
     weekday,
