@@ -1,6 +1,6 @@
 import {expect, it, vi} from 'vitest'
 
-import {createAppsInTossLocalePreparation} from '../create-apps-in-toss-locale-preparation'
+import {createAppsInTossLocalePreparation} from '..'
 
 it('should activate the locale before updating the document', async () => {
   const steps: string[] = []
@@ -18,7 +18,7 @@ it('should activate the locale before updating the document', async () => {
     },
   })
 
-  await prepare(() => true)
+  expect(await prepare(() => true)).toEqual({status: 'prepared'})
 
   expect(steps).toEqual(['read', 'activate', 'document'])
 })
@@ -40,7 +40,7 @@ it('should stop before activation when the caller becomes inactive', async () =>
   const completion = prepare(() => isActive)
   isActive = false
   resolveLocale?.('en')
-  await completion
+  expect(await completion).toEqual({status: 'cancelled'})
 
   expect(activateLocale).not.toHaveBeenCalled()
 })
@@ -63,12 +63,12 @@ it('should stop before updating the document when activation finishes after disp
   await Promise.resolve()
   isActive = false
   resolveActivation?.()
-  await completion
+  expect(await completion).toEqual({status: 'cancelled'})
 
   expect(updateDocumentLocale).not.toHaveBeenCalled()
 })
 
-it('should report preparation failures and settle', async () => {
+it('should report preparation failures and return a failed result', () => {
   const error = new Error('locale unavailable')
   const reportError = vi.fn()
   const prepare = createAppsInTossLocalePreparation({
@@ -78,6 +78,9 @@ it('should report preparation failures and settle', async () => {
     updateDocumentLocale: vi.fn(),
   })
 
-  await expect(prepare(() => true)).resolves.toBeUndefined()
-  expect(reportError).toHaveBeenCalledWith(error)
+  return expect(prepare(() => true))
+    .resolves.toEqual({status: 'failed'})
+    .then(() => {
+      expect(reportError).toHaveBeenCalledWith(error)
+    })
 })
