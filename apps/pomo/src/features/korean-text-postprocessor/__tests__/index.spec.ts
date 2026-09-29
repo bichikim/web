@@ -30,6 +30,19 @@ describe('createKoreanTextSegments', () => {
     ])
     expect(createKoreanTextSegments('')).toEqual([])
   })
+
+  it('should keep decimals and URL hostnames within their sentence', () => {
+    expect(createKoreanTextSegments('3.14는 원주율입니다.')).toEqual([
+      {kind: 'text', text: '3.14는 원주율입니다.'},
+    ])
+    expect(createKoreanTextSegments('https://example.com 에서 확인하세요.')).toEqual([
+      {kind: 'text', text: 'https://example.com 에서 확인하세요.'},
+    ])
+    expect(createKoreanTextSegments('문장.다음 문장입니다.')).toEqual([
+      {kind: 'text', text: '문장.'},
+      {kind: 'text', text: '다음 문장입니다.'},
+    ])
+  })
 })
 
 describe('createKoreanRefinementMessages', () => {
