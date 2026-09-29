@@ -57,6 +57,18 @@ const executeEventAction = (actionId: EventActionId, executor: EventActionExecut
   }
 }
 
+const executeEventActionAndRetainRoomEntry = (
+  eventId: DialogueEventId,
+  actionId: EventActionId,
+  executor: EventActionExecutor | null,
+  queueEventAction: (eventId: DialogueEventId, actionId: EventActionId) => void,
+) => {
+  executeEventAction(actionId, executor)
+  if (eventId === FOCUS_ROOM_ENTRY_EVENT) {
+    queueEventAction(eventId, actionId)
+  }
+}
+
 const executeEventActionHandler = (actionId: EventActionId, handler: EventActionHandler) => {
   try {
     return handler(actionId)
@@ -128,7 +140,7 @@ export const createEventActionRunner = (
     }
 
     if (!shouldQueueAction) {
-      executeEventAction(actionId, executor)
+      executeEventActionAndRetainRoomEntry(eventId, actionId, executor, queueEventAction)
       return
     }
 
