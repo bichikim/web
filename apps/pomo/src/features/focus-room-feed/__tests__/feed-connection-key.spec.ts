@@ -18,6 +18,20 @@ it.each(['rss', 'atom'])('should match local and public today-in-history %s feed
   )
 })
 
+it.each(['rss', 'atom'])(
+  'should match today-in-history %s feeds regardless of path casing',
+  (format) => {
+    const path = `/api/feeds/today-in-history/${format}.xml`
+    const mixedCasePath = `/API/FEEDS/TODAY-IN-HISTORY/${format.toUpperCase()}.XML`
+    const localUrl = new URL(mixedCasePath, environment.localOrigin).href
+    const publicUrl = new URL(path, environment.publicOrigin).href
+
+    expect(getFeedConnectionKey(localUrl, environment)).toBe(
+      getFeedConnectionKey(publicUrl, environment),
+    )
+  },
+)
+
 it('should keep development feed origins distinct', () => {
   const path = '/__dev/feeds/rss.xml'
   const localUrl = new URL(path, environment.localOrigin).href
