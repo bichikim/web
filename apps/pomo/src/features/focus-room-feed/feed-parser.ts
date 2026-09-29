@@ -79,8 +79,9 @@ const getLink = (element: Element, baseUrl: string) => {
     url: resolveUrl(link.getAttribute('href') ?? link.textContent?.trim() ?? '', baseUrl),
   }))
   const preferred =
-    candidates.find(({relation, url}) => relation === 'alternate' && url.length > 0) ??
-    candidates.find(({relation, url}) => relation === null && url.length > 0)
+    candidates.find(
+      ({relation, url}) => relation?.toLowerCase() === 'alternate' && url.length > 0,
+    ) ?? candidates.find(({relation, url}) => relation === null && url.length > 0)
   return preferred?.url ?? ''
 }
 const getContent = (element: Element) => {

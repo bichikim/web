@@ -143,6 +143,14 @@ const isDialogueModelReady = (state: DialogueWriterState) => {
 const isDialoguePreparationAllowed = (state: DialogueWriterState) =>
   state.status === 'idle' || state.status === 'error'
 
+const getDialogueWriterProgress = (currentState: DialogueWriterState, modelReady: boolean) => {
+  if (currentState.status === 'loading') {
+    return currentState.percentage
+  }
+
+  return modelReady ? MAXIMUM_PROGRESS : 0
+}
+
 const getDialogueWriterStatusMessage = (currentState: DialogueWriterState): string => {
   switch (currentState.status) {
     case 'complete':
@@ -174,6 +182,7 @@ export const useDialogueWriter = (props: UseDialogueWriterProps): DialogueWriter
   const runtime = untrack(() => props.runtime ?? DEFAULT_RUNTIME)
   const [request, setRequest] = createSignal(untrack(() => props.initialRequest ?? ''))
   const [output, setOutput] = createSignal('')
+  const [hasCompleteOutput, setHasCompleteOutput] = createSignal(false)
   const [state, setState] = createSignal<DialogueWriterState>(
     runtime.supportsWebGpu() ? {status: 'idle'} : {status: 'unsupported'},
   )
@@ -183,16 +192,8 @@ export const useDialogueWriter = (props: UseDialogueWriterProps): DialogueWriter
   const isModelReady = createMemo(() => isDialogueModelReady(state()))
   const canPrepare = createMemo(() => isDialoguePreparationAllowed(state()))
   const canGenerate = createMemo(() => isModelReady() && !isBusy() && isNonBlankString(request()))
-  const canCopy = createMemo(() => !isBusy() && output().length > 0)
-  const progress = createMemo(() => {
-    const currentState = state()
-
-    if (currentState.status === 'loading') {
-      return currentState.percentage
-    }
-
-    return isModelReady() ? MAXIMUM_PROGRESS : 0
-  })
+  const canCopy = createMemo(() => hasCompleteOutput() && !isBusy() && output().length > 0)
+  const progress = createMemo(() => getDialogueWriterProgress(state(), isModelReady()))
   const statusMessage = createMemo(() => getDialogueWriterStatusMessage(state()))
 
   const handleResponse = (response: DialogueWorkerResponse) => {
@@ -200,6 +201,7 @@ export const useDialogueWriter = (props: UseDialogueWriterProps): DialogueWriter
       case 'complete':
         generationInFlight = false
         setOutput(response.text)
+        setHasCompleteOutput(true)
         props.onComplete?.(response.text)
         setState({status: 'complete'})
         return
@@ -232,6 +234,7 @@ export const useDialogueWriter = (props: UseDialogueWriterProps): DialogueWriter
 
         return
       case 'started':
+        setHasCompleteOutput(false)
         setOutput('')
         setState({status: 'generating'})
         return
@@ -256,6 +259,7 @@ export const useDialogueWriter = (props: UseDialogueWriterProps): DialogueWriter
 
     setRequest(nextRequest)
     setOutput('')
+    setHasCompleteOutput(false)
 
     if (generationInFlight) {
       clientSession.dispose()
@@ -286,6 +290,7 @@ export const useDialogueWriter = (props: UseDialogueWriterProps): DialogueWriter
     generationInFlight = true
     setState({status: 'generating'})
     setOutput('')
+    setHasCompleteOutput(false)
     const client = clientSession.get()
     const trimmedRequest = request().trim()
 
