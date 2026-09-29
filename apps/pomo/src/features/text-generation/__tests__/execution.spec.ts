@@ -144,6 +144,23 @@ describe('text generation executor', () => {
     })
   })
 
+  it('should retry local runtime initialization after a retryable prepare failure', async () => {
+    runtimeMocks.create.mockRejectedValueOnce(new Error('transient init failure'))
+    const executor = createTextGenerationExecutor()
+
+    expect(await executor.prepare(deviceTarget)).toEqual({
+      error: {
+        code: 'execution-failed',
+        detail: 'transient init failure',
+        phase: 'prepare',
+        retryable: true,
+      },
+      ok: false,
+    })
+    expect(await executor.prepare(deviceTarget)).toEqual({ok: true, value: undefined})
+    expect(runtimeMocks.create).toHaveBeenCalledTimes(2)
+  })
+
   it('should expose cancellation while ignoring late local runtime responses', async () => {
     let emitToken: ((text: string) => void) | undefined
     let generationSignal: AbortSignal | undefined

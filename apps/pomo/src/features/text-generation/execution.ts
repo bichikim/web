@@ -237,13 +237,16 @@ const createDeviceTextGenerationProvider = (options: {
   const generationControllers = new Map<string, AbortController>()
 
   const getTextRuntime = () => {
-    textRuntimePromise ??= import('./transformers-runtime').then(
-      async ({createTransformersRuntime}) => {
+    textRuntimePromise ??= import('./transformers-runtime')
+      .then(async ({createTransformersRuntime}) => {
         const runtime = await createTransformersRuntime({onProgress: options.onProgress})
         textRuntime = runtime
         return runtime
-      },
-    )
+      })
+      .catch((error: unknown) => {
+        textRuntimePromise = null
+        throw error
+      })
     return textRuntimePromise
   }
 
