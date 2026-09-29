@@ -163,6 +163,9 @@ const extractReadableHtmlText = (
   return (resolveRoot(fragment).textContent ?? '').replace(/\s+/gu, ' ').trim()
 }
 
+const findReadableElement = (fragment: DocumentFragment, selector: 'article' | 'main') =>
+  Array.from(fragment.querySelectorAll(selector)).find((element) => element.textContent?.trim())
+
 /** Removes markup and page chrome while preserving all readable text. */
 export const cleanFeedText = (value: string) =>
   extractReadableHtmlText(value, (fragment) => fragment)
@@ -171,7 +174,8 @@ export const cleanFeedText = (value: string) =>
 export const extractArticleText = (html: string) =>
   extractReadableHtmlText(
     html,
-    (fragment) => fragment.querySelector('article') ?? fragment.querySelector('main') ?? fragment,
+    (fragment) =>
+      findReadableElement(fragment, 'article') ?? findReadableElement(fragment, 'main') ?? fragment,
   )
 
 /** Parses RSS 2.x, RDF-style RSS, or Atom XML into one feed-owned shape. */
