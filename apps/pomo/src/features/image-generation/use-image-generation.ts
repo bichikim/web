@@ -18,6 +18,7 @@ import {
   DEFAULT_DIMENSION,
   DEFAULT_STEPS,
   type ImageVariant,
+  MAXIMUM_SEED,
   resolvePreset,
 } from './settings'
 
@@ -48,10 +49,11 @@ const clearGeneratedImage = (
 }
 
 const parseSeed = (text: string) => {
-  if (text !== '' && !/^\d+$/u.test(text)) {
+  const seed = Number(text)
+  if (text !== '' && (!/^\d+$/u.test(text) || seed > MAXIMUM_SEED)) {
     throw new Error(m.picture_diary_generation_seed_error())
   }
-  return text === '' ? crypto.getRandomValues(new Uint32Array(1))[0]! : Number(text)
+  return text === '' ? crypto.getRandomValues(new Uint32Array(1))[0]! : seed
 }
 
 interface DownloadProgressOptions {
