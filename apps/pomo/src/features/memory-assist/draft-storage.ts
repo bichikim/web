@@ -7,7 +7,7 @@ const DEFAULT_EXACT_REPEAT_UNTIL_MINUTES = 60
 
 const memoryMemoDraftSchema = z.object({
   customDate: z.string(),
-  exactEnabled: z.boolean(),
+  exactEnabled: z.boolean().default(false),
   exactReminderAdvanceMinutes: z.number().int().nonnegative().default(0),
   exactReminderRepeatEnabled: z.boolean().default(false),
   exactReminderRepeatIntervalMinutes: z
