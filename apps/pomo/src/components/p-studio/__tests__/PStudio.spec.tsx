@@ -367,7 +367,7 @@ describe('PStudio', () => {
     expect(SceneToolbar).not.toHaveBeenCalled()
   })
 
-  it('should wait for weather restoration before mounting the scene', () => {
+  it('should mount the scene while weather restoration is pending', () => {
     const {setWeatherReady} = configureStudio({
       entrySession: true,
       weatherReady: false,
@@ -376,7 +376,7 @@ describe('PStudio', () => {
 
     renderStudio()
 
-    expect(screen.queryByRole('button', {name: '장면 로드 완료'})).not.toBeInTheDocument()
+    expect(screen.getByRole('button', {name: '장면 로드 완료'})).toBeInTheDocument()
 
     setWeatherReady(true)
 

@@ -19,10 +19,15 @@ const ALBUM_CARD_CLASSES = cx(
 
 interface AlbumCardProps {
   readonly album: PResolvedAlbum
+  readonly customCoverImage?: Blob
+  readonly deletingAlbumId?: string | null
   readonly index: number
   readonly isInPlayer: boolean
+  readonly onDelete?: () => Promise<void> | void
+  readonly onEdit?: () => void
   readonly onAddAlbum: (album: PResolvedAlbum) => void
   readonly onAddTrack: (track: PTrack) => void
+  readonly onRemoveTracks?: (trackIds: ReadonlySet<string>) => void
   readonly onPreview: (request: PTrackPreviewRequest) => void
   readonly pendingTrackId: string | null
   readonly playingTrackId: string | null
@@ -40,11 +45,19 @@ export const AlbumCard = (props: AlbumCardProps) => {
 
   return (
     <article class={ALBUM_CARD_CLASSES}>
-      <AlbumSummary album={props.album} index={props.index} />
+      <AlbumSummary
+        album={props.album}
+        coverImage={props.customCoverImage}
+        deletingAlbumId={props.deletingAlbumId}
+        index={props.index}
+        onDelete={props.onDelete}
+        onEdit={props.onEdit}
+      />
       <Show when={listedTracks().length > 0}>
         <PAlbumTrackList
           albumTitle={props.album.title}
           onAddTrack={props.onAddTrack}
+          onRemoveTracks={props.onRemoveTracks}
           onPreview={props.onPreview}
           pendingTrackId={props.pendingTrackId}
           playableTracks={props.album.sale === undefined ? props.album.tracks : []}
@@ -58,8 +71,11 @@ export const AlbumCard = (props: AlbumCardProps) => {
           class="flex items-center gap-2 border-t border-solid border-border px-4 py-3 text-sm leading-5
             text-muted-foreground"
         >
-          <span aria-hidden="true" class="i-tabler-clock-hour-4 size-4 text-highlight" />
-          <span>{m.album_tracks_preparing()}</span>
+          <span
+            aria-hidden="true"
+            class={`${props.onEdit ? 'i-tabler-music-off' : 'i-tabler-clock-hour-4'} size-4 text-highlight`}
+          />
+          <span>{props.onEdit ? m.album_custom_no_tracks() : m.album_tracks_preparing()}</span>
         </div>
       </Show>
       <Show when={props.album.sale === undefined && props.album.tracks.length > 0}>
@@ -69,13 +85,24 @@ export const AlbumCard = (props: AlbumCardProps) => {
             transparent={props.isInPlayer}
             raised={!props.isInPlayer}
             class="w-full"
-            disabled={props.isInPlayer}
-            icon="i-tabler-playlist-add"
-            onPress={() => props.onAddAlbum(props.album)}
+            disabled={props.isInPlayer && props.onRemoveTracks === undefined}
+            icon={props.isInPlayer ? 'i-tabler-playlist-x' : 'i-tabler-playlist-add'}
+            onPress={() => {
+              if (props.isInPlayer) {
+                props.onRemoveTracks?.(new Set(props.album.tracks.map((track) => track.id)))
+                return
+              }
+
+              props.onAddAlbum(props.album)
+            }}
             size="small"
             tone={props.isInPlayer ? 'secondary' : 'primary'}
           >
-            {m.album_add_all()}
+            {props.isInPlayer
+              ? props.onRemoveTracks === undefined
+                ? m.album_track_in_player({title: props.album.title})
+                : m.album_remove_all()
+              : m.album_add_all()}
           </PButton>
         </div>
       </Show>

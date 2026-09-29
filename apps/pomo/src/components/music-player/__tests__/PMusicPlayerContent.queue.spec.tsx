@@ -234,11 +234,7 @@ describe('PMusicPlayerContent queue and restoration paths', () => {
     )
 
     playlist.resolve([storedPlayback.trackId])
-    await Promise.resolve()
-    await Promise.resolve()
-    await Promise.resolve()
-
-    expect(featureMocks.resolvePlaybackRestore).toHaveBeenCalledTimes(2)
+    await vi.waitFor(() => expect(featureMocks.resolvePlaybackRestore).toHaveBeenCalledTimes(2))
     expect(featureMocks.resolvePlaybackRestore).toHaveBeenLastCalledWith(
       expect.objectContaining({storedPlayback, tracks: restoredTracks}),
     )
