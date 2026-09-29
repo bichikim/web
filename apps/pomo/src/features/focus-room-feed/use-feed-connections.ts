@@ -1,7 +1,8 @@
 import {type Accessor, createSignal, onMount} from 'solid-js'
 
 import {type FeedConnectionRepository} from './repository'
-import {type FeedUrlEnvironment, getFeedRequestUrl} from './feed-request-url'
+import {getFeedConnectionKey} from './feed-connection-key'
+import {type FeedUrlEnvironment} from './feed-request-url'
 import {feedSettingsRuntime, type FeedSettingsRuntime} from './settings-runtime'
 import {DEFAULT_FEED_VOICE_ID, type FeedConnection, normalizeFeedUrl} from './schema'
 import * as m from '@paraglide/message'
@@ -92,14 +93,15 @@ export const useFeedConnections = (
 
     const currentConnections = connections()
     const feedUrlEnvironment = getFeedUrlEnvironment()
-    const requestUrl = getFeedRequestUrl(normalizedUrl.value, feedUrlEnvironment)
+    const connectionKey = getFeedConnectionKey(normalizedUrl.value, feedUrlEnvironment)
 
     if (
       currentConnections.some((connection) => {
         const existingUrl = normalizeFeedUrl(connection.url)
 
         return (
-          existingUrl.ok && getFeedRequestUrl(existingUrl.value, feedUrlEnvironment) === requestUrl
+          existingUrl.ok &&
+          getFeedConnectionKey(existingUrl.value, feedUrlEnvironment) === connectionKey
         )
       })
     ) {

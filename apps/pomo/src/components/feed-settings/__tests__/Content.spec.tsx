@@ -199,6 +199,32 @@ it('should hide a recommendation already saved without a timezone query', () => 
   expect(screen.getByText('https://www.pomofi.io/api/feeds/today-in-history/rss.xml')).toBeDefined()
 })
 
+it('should hide the local recommendation for a saved public today-in-history feed', () => {
+  vi.stubEnv('DEV', true)
+  vi.stubEnv('VITE_POMO_PUBLIC_ORIGIN', 'https://www.pomofi.io')
+  localStorage.setItem(
+    'pomo:focus-room-feed-connections:v1',
+    JSON.stringify({
+      connections: [
+        {
+          createdAt: '2026-01-01T00:00:00.000Z',
+          id: 'public-history',
+          updatedAt: '2026-01-01T00:00:00.000Z',
+          url: 'https://www.pomofi.io/api/feeds/today-in-history/rss.xml',
+          version: 1,
+          voiceId: 'default',
+        },
+      ],
+      version: 1,
+    }),
+  )
+
+  renderSettings()
+
+  expect(screen.queryByRole('button', {name: '오늘의 역사 추천 피드 추가'})).toBeNull()
+  expect(screen.getByText('https://www.pomofi.io/api/feeds/today-in-history/rss.xml')).toBeDefined()
+})
+
 it('should omit development recommendations in production', () => {
   vi.stubEnv('DEV', false)
   vi.stubEnv('VITE_POMO_IS_MOBILE', 'true')

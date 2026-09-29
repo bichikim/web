@@ -1,5 +1,6 @@
 import {type Accessor, createMemo, createSignal, onCleanup, onMount} from 'solid-js'
 import {isNonBlankString} from 'src/utils/is-non-blank-string'
+import {formatLocalDate} from 'src/utils/format-local-date'
 
 import * as m from '@paraglide/message'
 import {
@@ -91,10 +92,14 @@ export const useMemoCreator = (): MemoCreator => {
     const now = new Date()
     const savedText = text()
     const currentDraft = reminderDraft()
+    const reminderDate =
+      currentDraft.reminderDay === 'today'
+        ? formatLocalDate(reminderDateReference())
+        : currentDraft.customDate
     const exactReminderAt = currentDraft.exactEnabled
       ? resolveReminderAt(
           currentDraft.reminderDay,
-          currentDraft.customDate,
+          reminderDate,
           currentDraft.reminderTime,
           currentDraft.reminderDay === 'tomorrow' ? now : reminderDateReference(),
         )

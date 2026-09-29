@@ -3,6 +3,7 @@ import {createMemo, createSignal, Show, untrack} from 'solid-js'
 
 import * as m from '@paraglide/message'
 import {getLocale} from '@paraglide/runtime'
+import {formatLocalDate} from 'src/utils/format-local-date'
 import type {MemoryMemo, MemoryRecallMode} from '../../features/memory-assist'
 import {MemoryMemoModal} from './MemoryMemoModal'
 import {
@@ -95,10 +96,14 @@ export const MemoryMemoItem = (props: MemoryMemoItemProps) => {
 
     const currentReminderDraft = reminderDraft()
     const now = new Date()
+    const reminderDate =
+      currentReminderDraft.reminderDay === 'today'
+        ? formatLocalDate(reminderDateReference())
+        : currentReminderDraft.customDate
     const exactReminderAt = currentReminderDraft.exactEnabled
       ? resolveReminderAt(
           currentReminderDraft.reminderDay,
-          currentReminderDraft.customDate,
+          reminderDate,
           currentReminderDraft.reminderTime,
           currentReminderDraft.reminderDay === 'tomorrow' ? now : reminderDateReference(),
         )

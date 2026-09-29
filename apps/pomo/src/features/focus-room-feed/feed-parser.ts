@@ -8,11 +8,14 @@ const ITEM_FINGERPRINT_PRIMARY_MODULUS = 2_147_483_647
 const ITEM_FINGERPRINT_RADIX = 36
 const ITEM_FINGERPRINT_SECONDARY_BASE = 37
 const ITEM_FINGERPRINT_SECONDARY_MODULUS = 2_147_483_629
+const ISO_DATE_LENGTH = 'YYYY-MM-DD'.length
+const ISO_DATE_PREFIX_PATTERN = /^\d{4}-\d{2}-\d{2}/u
 
 export interface ParsedFeedItem {
   readonly content: string
   readonly contentKind: 'full' | 'none' | 'summary'
   readonly id: string
+  readonly legacyId?: string
   readonly link: string
   readonly publishedAt: string | null
   readonly title: string
@@ -74,12 +77,20 @@ const resolveUrl = (value: string, baseUrl: string) => {
 }
 const getLink = (element: Element, baseUrl: string) => {
   const links = getChildren(element).filter((child) => child.localName.toLowerCase() === 'link')
-  const preferred = links.find((link) => {
-    const relation = link.getAttribute('rel')
-    return relation === null || relation === 'alternate'
-  })
-  const value = preferred?.getAttribute('href') ?? preferred?.textContent?.trim() ?? ''
-  return resolveUrl(value, baseUrl)
+  const candidates = links.map((link) => ({
+    hasHref: link.hasAttribute('href'),
+    relation: link.getAttribute('rel'),
+    url: resolveUrl(link.getAttribute('href') ?? link.textContent?.trim() ?? '', baseUrl),
+  }))
+  const preferred =
+    candidates.find(
+      ({relation, url}) => relation?.toLowerCase() === 'alternate' && url.length > 0,
+    ) ??
+    candidates.find(({relation, url}) => relation === null && url.length > 0) ??
+    candidates.find(
+      ({hasHref, relation, url}) => hasHref && relation?.toLowerCase() === 'self' && url.length > 0,
+    )
+  return preferred?.url ?? ''
 }
 const getContent = (element: Element) => {
   const fullContent = getChildText(element, ['encoded', 'content'])
@@ -93,10 +104,28 @@ const getContent = (element: Element) => {
     ? {content: summary, contentKind: 'summary' as const}
     : {content: '', contentKind: 'none' as const}
 }
+const parseFeedTimestamp = (value: string): number | null => {
+  const normalizedValue = value.trim()
+  const datePrefix = normalizedValue.slice(0, ISO_DATE_LENGTH)
+
+  if (ISO_DATE_PREFIX_PATTERN.test(normalizedValue)) {
+    const parsedDate = new Date(`${datePrefix}T00:00:00Z`)
+
+    if (
+      Number.isNaN(parsedDate.getTime()) ||
+      parsedDate.toISOString().slice(0, ISO_DATE_LENGTH) !== datePrefix
+    ) {
+      return null
+    }
+  }
+
+  const timestamp = Date.parse(normalizedValue)
+  return Number.isNaN(timestamp) ? null : timestamp
+}
 const getPublishedAt = (element: Element) => {
   const timestamp = ['published', 'pubdate', 'updated', 'date']
-    .map((name) => Date.parse(getChildText(element, [name])))
-    .find((value) => !Number.isNaN(value))
+    .map((name) => parseFeedTimestamp(getChildText(element, [name])))
+    .find((value) => value !== null)
 
   return timestamp === undefined ? null : new Date(timestamp).toISOString()
 }
@@ -116,19 +145,27 @@ const getItemFingerprint = (element: Element) => {
 
   return `${primaryHash.toString(ITEM_FINGERPRINT_RADIX)}-${secondaryHash.toString(ITEM_FINGERPRINT_RADIX)}`
 }
-const getItemId = (element: Element, link: string, title: string, publishedAt: string | null) => {
+const getItemIdentity = (
+  element: Element,
+  link: string,
+  title: string,
+  publishedAt: string | null,
+): Pick<ParsedFeedItem, 'id' | 'legacyId'> => {
   const explicitId = getChildText(element, ['guid', 'id'])
 
   if (explicitId.length > 0) {
-    return explicitId
+    return {id: explicitId}
   }
 
   if (link.length > 0) {
-    return link
+    return {id: link}
   }
 
   const fallbackId = `${title}\u0000${publishedAt ?? ''}`
-  return publishedAt === null ? `${fallbackId}\u0000${getItemFingerprint(element)}` : fallbackId
+  return {
+    id: `${fallbackId}\u0000${getItemFingerprint(element)}`,
+    ...(publishedAt === null ? {} : {legacyId: fallbackId}),
+  }
 }
 
 const extractReadableHtmlText = (
@@ -140,6 +177,9 @@ const extractReadableHtmlText = (
   return (resolveRoot(fragment).textContent ?? '').replace(/\s+/gu, ' ').trim()
 }
 
+const findReadableElement = (fragment: DocumentFragment, selector: 'article' | 'main') =>
+  Array.from(fragment.querySelectorAll(selector)).find((element) => element.textContent?.trim())
+
 /** Removes markup and page chrome while preserving all readable text. */
 export const cleanFeedText = (value: string) =>
   extractReadableHtmlText(value, (fragment) => fragment)
@@ -148,7 +188,8 @@ export const cleanFeedText = (value: string) =>
 export const extractArticleText = (html: string) =>
   extractReadableHtmlText(
     html,
-    (fragment) => fragment.querySelector('article') ?? fragment.querySelector('main') ?? fragment,
+    (fragment) =>
+      findReadableElement(fragment, 'article') ?? findReadableElement(fragment, 'main') ?? fragment,
   )
 
 /** Parses RSS 2.x, RDF-style RSS, or Atom XML into one feed-owned shape. */
@@ -176,7 +217,7 @@ export const parseFeedXml = (xml: string, feedUrl: string): ParsedFeed => {
 
     return {
       ...content,
-      id: getItemId(element, link, itemTitle, publishedAt),
+      ...getItemIdentity(element, link, itemTitle, publishedAt),
       link,
       publishedAt,
       title: itemTitle,
@@ -192,6 +233,10 @@ export const createFeedScript = (title: string, content: string) => {
 
   if (cleanContent.length === 0) {
     return cleanTitle
+  }
+
+  if (cleanTitle.length === 0) {
+    return cleanContent
   }
 
   return cleanContent === cleanTitle ? cleanTitle : `${cleanTitle}\n\n${cleanContent}`

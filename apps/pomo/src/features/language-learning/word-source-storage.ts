@@ -7,7 +7,7 @@ import type {LanguageLearningWordSource} from './word-selection'
 export const LANGUAGE_LEARNING_WORD_SOURCE_STORAGE_KEY = 'pomo:language-learning:word-source:v1'
 const wordSourcePreferenceSchema = z.object({
   source: z.enum(['direct', 'saved']),
-  version: z.literal(1),
+  version: z.literal(1).optional(),
 })
 const wordSourceSchema = z.enum(['direct', 'saved'])
 

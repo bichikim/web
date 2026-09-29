@@ -33,7 +33,7 @@ const voiceIdSchema = z.custom<SupertonicVoiceId>((value) =>
 )
 const automaticDialogueSettingsSchema: z.ZodType<AutomaticDialogueSettings> = z.object({
   modelId: modelIdSchema,
-  version: z.literal(1),
+  version: z.literal(1).default(1),
   voiceId: voiceIdSchema,
 })
 

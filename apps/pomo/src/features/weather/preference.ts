@@ -10,7 +10,7 @@ import {
 import {parseWeatherCitySlug, parseWeatherLocation, type WeatherLocation} from './contract'
 import {DEFAULT_WEATHER_LOCATION, LEGACY_WEATHER_LOCATIONS} from './locations'
 import {isWeatherSceneMode, type WeatherSceneMode} from './scene-mode'
-import {restoreWeatherLocationNames} from './location-names'
+import {hasEnglishOrKoreanWeatherLocationName, restoreWeatherLocationNames} from './location-names'
 
 export const WEATHER_PREFERENCE_STORAGE_KEY = 'pomo:weather-preference:v2'
 const LEGACY_WEATHER_PREFERENCE_STORAGE_KEY = 'pomo:weather-preference:v1'
@@ -157,7 +157,7 @@ export const createWeatherPreferenceRepository = (
     }
     try {
       const location = await restoreLocation(saved.location)
-      if (location === saved.location) {
+      if (location === saved.location || !hasEnglishOrKoreanWeatherLocationName(location)) {
         return saved
       }
       const restored = {...saved, location: {...saved.location, names: location.names}}

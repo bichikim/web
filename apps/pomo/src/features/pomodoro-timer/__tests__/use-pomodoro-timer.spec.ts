@@ -32,6 +32,30 @@ interface TimerView {
   }
 }
 
+class TestBroadcastChannel {
+  static instances: TestBroadcastChannel[] = []
+
+  onmessage: ((event: MessageEvent<unknown>) => void) | null = null
+
+  constructor(readonly name: string) {
+    TestBroadcastChannel.instances.push(this)
+  }
+
+  close() {
+    TestBroadcastChannel.instances = TestBroadcastChannel.instances.filter(
+      (channel) => channel !== this,
+    )
+  }
+
+  postMessage(data: unknown) {
+    for (const channel of TestBroadcastChannel.instances) {
+      if (channel !== this && channel.name === this.name) {
+        channel.onmessage?.(new MessageEvent('message', {data}))
+      }
+    }
+  }
+}
+
 const finishInitialization = async (view: TimerView) => {
   await view.result.waitForInitialization()
 }
@@ -45,6 +69,8 @@ beforeEach(() => {
 })
 
 afterEach(() => {
+  TestBroadcastChannel.instances = []
+  vi.unstubAllGlobals()
   vi.useRealTimers()
   vi.restoreAllMocks()
 })
@@ -160,21 +186,52 @@ it('should refresh on visibility changes and stop after owner cleanup', async ()
   expect(remove).toHaveBeenCalledWith('visibilitychange', expect.any(Function), {})
 })
 
-it('should persist a stopped timer when disabled on unmount', async () => {
+it('should emit lifecycle events and persist a stopped timer on unmount', async () => {
   const cancelFrame = vi.spyOn(globalThis, 'cancelAnimationFrame')
-  const timer = renderHook(() => usePomodoroTimer({stopOnUnmount: true}), {
+  const onEvents = vi.fn()
+  const timer = renderHook(() => usePomodoroTimer({onEvents, stopOnUnmount: true}), {
     wrapper: PreferenceProvider,
   })
   await finishInitialization(timer)
   timer.result.onStart()
   expect(timer.result.state().status).toBe('running')
+  onEvents.mockClear()
   timer.cleanup()
+  expect(onEvents).toHaveBeenCalledTimes(1)
+  expect(onEvents).toHaveBeenCalledWith(['focus-end'])
   expect(JSON.parse(localStorage.getItem(STATE_STORAGE_KEY) ?? '{}').status).toBe('idle')
   expect(cancelFrame).toHaveBeenCalledTimes(1)
   const restored = renderHook(() => usePomodoroTimer(), {wrapper: PreferenceProvider})
   await finishInitialization(restored)
   expect(restored.result.state().status).toBe('idle')
   restored.cleanup()
+})
+
+it('should synchronize a stopped timer to other tabs when disabled on unmount', async () => {
+  vi.stubGlobal('BroadcastChannel', TestBroadcastChannel)
+
+  const receiver = renderHook(() => usePomodoroTimer(), {wrapper: PreferenceProvider})
+  await finishInitialization(receiver)
+  const timer = renderHook(() => usePomodoroTimer({stopOnUnmount: true}), {
+    wrapper: PreferenceProvider,
+  })
+  await finishInitialization(timer)
+
+  timer.result.onConfigChange(CONFIG)
+  timer.result.onStart()
+
+  expect(receiver.result.state().status).toBe('running')
+
+  timer.cleanup()
+
+  expect(receiver.result.state()).toEqual({
+    completedFocusSessions: 0,
+    phase: 'focus',
+    remainingSeconds: 10,
+    status: 'idle',
+  })
+
+  receiver.cleanup()
 })
 
 it('should preserve paused progress when disabled on unmount', async () => {

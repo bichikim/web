@@ -86,6 +86,33 @@ it('should merge a web legacy date into current native settings with an empty st
   await expect(repository.read()).resolves.toEqual(restoredSettings)
   expect(fixture.web.get('pomo:service-settings:v1')).toBe(JSON.stringify(restoredSettings))
 })
+it('should restore an empty web start from current native settings before repairing native storage', async () => {
+  fixture.usesTossStorage.mockReturnValue(true)
+  const webSettings = {branch: 'air', days: '300', manual: true, start: ''} as const
+  const nativeSettings = {branch: 'army', days: '', manual: false, start: '2026-09-01'} as const
+  const restoredSettings = {...webSettings, start: nativeSettings.start}
+  fixture.web.set('pomo:service-settings:v1', JSON.stringify(webSettings))
+  fixture.getItem.mockResolvedValue(JSON.stringify(nativeSettings))
+
+  const result = await repository.read()
+  expect(result).toEqual(restoredSettings)
+  expect(fixture.setItem).toHaveBeenCalledWith(
+    'pomo:service-settings:v1',
+    JSON.stringify(restoredSettings),
+  )
+})
+it('should preserve web settings without repairing native storage when the native lookup fails', async () => {
+  fixture.usesTossStorage.mockReturnValue(true)
+  const settings = {branch: 'air', days: '300', manual: true, start: ''} as const
+  const error = new Error('read failed')
+  fixture.web.set('pomo:service-settings:v1', JSON.stringify(settings))
+  fixture.getItem.mockRejectedValue(error)
+
+  const result = await repository.read()
+  expect(result).toEqual(settings)
+  expect(fixture.setItem).not.toHaveBeenCalled()
+  expect(reportRepairError).toHaveBeenCalledExactlyOnceWith(error)
+})
 it('should restore the web copy after a native save fails', async () => {
   fixture.usesTossStorage.mockReturnValue(true)
   const settings = {branch: 'navy', days: '300', manual: true, start: '2026-09-01'} as const

@@ -123,6 +123,24 @@ it('should deduplicate owned today-in-history URLs after applying the viewer tim
   unmount()
 })
 
+it('should deduplicate owned today-in-history URLs across local and public origins', () => {
+  vi.stubEnv('VITE_POMO_PUBLIC_ORIGIN', 'https://www.pomofi.io')
+  const publicConnection = {
+    ...STORED_CONNECTION,
+    url: 'https://www.pomofi.io/api/feeds/today-in-history/rss.xml',
+  } satisfies FeedConnection
+  const save = vi.fn()
+  mocks.createRepository.mockReturnValue({list: () => [publicConnection], save})
+  const {controller, unmount} = mountController()
+  const localUrl = new URL('/api/feeds/today-in-history/rss.xml', globalThis.location.origin).href
+
+  expect(controller.onAddRecommendation(localUrl)).toBe(false)
+  expect(controller.connections()).toEqual([publicConnection])
+  expect(save).not.toHaveBeenCalled()
+
+  unmount()
+})
+
 it('should preserve time zone variants for external feed URLs', () => {
   mocks.createRepository.mockReturnValue({list: () => [], save: vi.fn()})
   const {controller, unmount} = mountController()

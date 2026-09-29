@@ -15,6 +15,10 @@ import {useScreenSaver} from '../../../features/screen-saver'
 import {useWeather, type WeatherLocation} from '../../../features/weather'
 import {usePDisplayPreferences} from '../../../features/focus-room-display-preferences'
 import {PMusicPlayer} from '../../p-music-player/PMusicPlayer'
+import {
+  createDesktopMusicActionChannel,
+  createDesktopMusicActionInbox,
+} from '../../../features/desktop-mode/desktop-music-actions'
 import {DesktopPlayer} from '../Player'
 
 const playerActions = vi.hoisted(() => ({pause: vi.fn(), play: vi.fn()}))
@@ -126,7 +130,13 @@ class TestBroadcastChannel {
   static instances: TestBroadcastChannel[] = []
   readonly close = vi.fn()
   readonly listeners: Array<(event: MessageEvent) => void> = []
-  readonly postMessage = vi.fn()
+  readonly postMessage = vi.fn((data: unknown) => {
+    for (const channel of TestBroadcastChannel.instances) {
+      if (channel !== this && channel.name === this.name) {
+        channel.dispatch(data)
+      }
+    }
+  })
 
   constructor(readonly name: string) {
     TestBroadcastChannel.instances.push(this)
@@ -250,6 +260,25 @@ it.each([
     expect(playerActions[method]).toHaveBeenCalledTimes(1)
   },
 )
+
+it('should apply a wallpaper action sent before the desktop player subscribes', () => {
+  const musicActionInbox = createDesktopMusicActionInbox()
+  const sender = createDesktopMusicActionChannel()
+  if (sender === null) {
+    throw new Error('BroadcastChannel is required for desktop music actions.')
+  }
+
+  sender.postMessage({actionId: 'music-stop'})
+  expect(playerActions.pause).not.toHaveBeenCalled()
+
+  const view = render(() => <DesktopPlayer musicActionInbox={musicActionInbox} />)
+
+  expect(playerActions.pause).toHaveBeenCalledTimes(1)
+
+  view.unmount()
+  sender.close()
+  musicActionInbox.close()
+})
 
 it('should apply a desktop wallpaper action after playback controls become ready', () => {
   playerActionsReady.value = false

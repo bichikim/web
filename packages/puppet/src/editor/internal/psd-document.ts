@@ -11,7 +11,7 @@ import {
 import type {ImportPsdResult} from '../import-psd'
 import {MAXIMUM_TEXTURE_PIXELS} from './texture-limits'
 
-const MAXIMUM_TOTAL_PIXELS = 67_108_864
+const MAXIMUM_TOTAL_PIXELS = 134_217_728
 const MAXIMUM_LAYERS = 1024
 const MAXIMUM_DEPTH = 64
 

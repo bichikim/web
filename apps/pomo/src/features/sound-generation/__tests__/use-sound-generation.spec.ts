@@ -177,3 +177,53 @@ it('should clear the busy error after the active generation succeeds', () => {
     }
   })
 })
+
+it('should revoke the previous result when the next generation fails', () => {
+  const workers: {
+    onmessage: ((event: MessageEvent) => void) | null
+    postMessage: ReturnType<typeof vi.fn>
+    terminate: ReturnType<typeof vi.fn>
+  }[] = []
+  vi.stubGlobal(
+    'Worker',
+    vi.fn(function MockWorker() {
+      const worker = {
+        onmessage: null as ((event: MessageEvent) => void) | null,
+        postMessage: vi.fn(),
+        terminate: vi.fn(),
+      }
+      workers.push(worker)
+      return worker
+    }),
+  )
+  const nativeUrl = URL
+  const createObjectURL = vi.fn(() => 'blob:result')
+  const revokeObjectURL = vi.fn()
+  vi.stubGlobal(
+    'URL',
+    class extends nativeUrl {
+      static createObjectURL = createObjectURL
+      static revokeObjectURL = revokeObjectURL
+    },
+  )
+
+  createRoot((dispose) => {
+    try {
+      const generation = useSoundGeneration()
+      generation.generate({prompt: 'rain', seconds: 30})
+      workers[0]?.onmessage?.({data: {blob: new Blob(['wav']), type: 'result'}} as MessageEvent)
+      expect(generation.url()).toBe('blob:result')
+
+      generation.generate({prompt: 'ocean', seconds: 45})
+      expect(generation.url()).toBeNull()
+      expect(revokeObjectURL).toHaveBeenCalledWith('blob:result')
+
+      workers[1]?.onmessage?.({data: {message: 'worker failed', type: 'error'}} as MessageEvent)
+
+      expect(generation.error()).toBe('worker failed')
+      expect(generation.url()).toBeNull()
+    } finally {
+      dispose()
+    }
+  })
+})
