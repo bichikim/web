@@ -39,7 +39,7 @@ export const subscribeAsyncSettings = <Value>(
       }
     })
     .catch((error: unknown) => {
-      if (!disposed) {
+      if (!disposed && revision === initialRevision) {
         options.onError(error)
       }
     })
