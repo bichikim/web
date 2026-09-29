@@ -148,15 +148,43 @@ export const createWeatherPreferenceRepository = (
   })
   const read = () => repository.read()
   const write = (value: WeatherPreference) => repository.write(value)
+  const unrestorableLocationIds = new Set<WeatherLocation['id']>()
+  const pendingLocationRestorations = new Map<WeatherLocation['id'], Promise<WeatherLocation>>()
+
+  const restoreLocationOnce = (
+    location: WeatherLocation,
+    restoreLocation: (location: WeatherLocation) => Promise<WeatherLocation>,
+  ): Promise<WeatherLocation> => {
+    const pendingRestoration = pendingLocationRestorations.get(location.id)
+    if (pendingRestoration !== undefined) {
+      return pendingRestoration
+    }
+
+    const restoration = Promise.resolve()
+      .then(() => restoreLocation(location))
+      .then((restored) => {
+        if (
+          location.legacyCitySlug === undefined &&
+          !hasEnglishOrKoreanWeatherLocationName(location) &&
+          (restored === location || !hasEnglishOrKoreanWeatherLocationName(restored))
+        ) {
+          unrestorableLocationIds.add(location.id)
+        }
+        return restored
+      })
+      .finally(() => pendingLocationRestorations.delete(location.id))
+    pendingLocationRestorations.set(location.id, restoration)
+    return restoration
+  }
 
   const readWithNames = async (): Promise<WeatherPreference> => {
     const saved = await read()
     const {restoreLocation} = options
-    if (restoreLocation === undefined) {
+    if (restoreLocation === undefined || unrestorableLocationIds.has(saved.location.id)) {
       return saved
     }
     try {
-      const location = await restoreLocation(saved.location)
+      const location = await restoreLocationOnce(saved.location, restoreLocation)
       if (location === saved.location || !hasEnglishOrKoreanWeatherLocationName(location)) {
         return saved
       }
