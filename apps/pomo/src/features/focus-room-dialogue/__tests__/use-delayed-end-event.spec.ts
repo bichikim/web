@@ -60,6 +60,28 @@ describe('useDelayedEndEvent', () => {
     view.unmount()
   })
 
+  it('should not trigger a restarted timer while an earlier event is pending', async () => {
+    let resolveEvent: (() => void) | undefined
+    const onEvent = vi.fn(
+      () =>
+        new Promise<void>((resolve) => {
+          resolveEvent = resolve
+        }),
+    )
+    const {controller, view} = renderDelayedEndEvent(() => true, onEvent)
+
+    controller.start(1)
+    await vi.advanceTimersByTimeAsync(60_000)
+    expect(onEvent).toHaveBeenCalledOnce()
+
+    controller.start(2)
+    await vi.advanceTimersByTimeAsync(2 * 60_000)
+    expect(onEvent).toHaveBeenCalledOnce()
+
+    resolveEvent?.()
+    view.unmount()
+  })
+
   it('should ignore starts outside the enabled playback scope or duration range', async () => {
     const onEvent = vi.fn()
     const {controller, view} = renderDelayedEndEvent(() => false, onEvent)
