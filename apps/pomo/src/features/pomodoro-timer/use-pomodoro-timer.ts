@@ -308,13 +308,12 @@ export const usePomodoroTimer = (props: UsePomodoroTimerProps = {}): PomodoroTim
               autoStartNextPhase: true,
             })
           : currentState
-        writePomodoroTimerState(
-          stopPomodoroTimer(stateToStop, currentConfig, {
-            now: currentTime,
-            preserveRemainingProgress: true,
-          }),
-          props.storage,
-        )
+        const stoppedState = stopPomodoroTimer(stateToStop, currentConfig, {
+          now: currentTime,
+          preserveRemainingProgress: true,
+        })
+        writePomodoroTimerState(stoppedState, props.storage)
+        applyState(stoppedState, {shouldPublish: false})
       } else if (shouldPersistStateBeforeInitialization) {
         writePomodoroTimerState(state(), props.storage)
       }
