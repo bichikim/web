@@ -302,6 +302,26 @@ it('should prefer an uppercase alternate Atom link', () => {
   expect(feed.items[0]?.id).toBe('https://example.com/article')
 })
 
+it('should use an RSS self link as the item link and ID when no alternate exists', () => {
+  const feed = parseFeedXml(
+    `<rss><channel><item><link rel="self" href="https://example.com/article" /></item></channel></rss>`,
+    'https://example.com/feed.xml',
+  )
+
+  expect(feed.items[0]?.link).toBe('https://example.com/article')
+  expect(feed.items[0]?.id).toBe('https://example.com/article')
+})
+
+it('should use an Atom self link as the item link and ID when no alternate exists', () => {
+  const feed = parseFeedXml(
+    `<feed><entry><link rel="self" href="https://example.com/article" /></entry></feed>`,
+    'https://example.com/feed.xml',
+  )
+
+  expect(feed.items[0]?.link).toBe('https://example.com/article')
+  expect(feed.items[0]?.id).toBe('https://example.com/article')
+})
+
 it('should use the title for empty or duplicate feed content', () => {
   expect(createFeedScript('제목', '')).toBe('제목')
   expect(createFeedScript('같은 내용', '<p>같은 내용</p>')).toBe('같은 내용')

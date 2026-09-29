@@ -77,13 +77,18 @@ const resolveUrl = (value: string, baseUrl: string) => {
 const getLink = (element: Element, baseUrl: string) => {
   const links = getChildren(element).filter((child) => child.localName.toLowerCase() === 'link')
   const candidates = links.map((link) => ({
+    hasHref: link.hasAttribute('href'),
     relation: link.getAttribute('rel'),
     url: resolveUrl(link.getAttribute('href') ?? link.textContent?.trim() ?? '', baseUrl),
   }))
   const preferred =
     candidates.find(
       ({relation, url}) => relation?.toLowerCase() === 'alternate' && url.length > 0,
-    ) ?? candidates.find(({relation, url}) => relation === null && url.length > 0)
+    ) ??
+    candidates.find(({relation, url}) => relation === null && url.length > 0) ??
+    candidates.find(
+      ({hasHref, relation, url}) => hasHref && relation?.toLowerCase() === 'self' && url.length > 0,
+    )
   return preferred?.url ?? ''
 }
 const getContent = (element: Element) => {
