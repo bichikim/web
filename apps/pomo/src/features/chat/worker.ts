@@ -271,7 +271,7 @@ const handleRequest = async (request: ChatWorkerRequest): Promise<void> => {
     case 'generate':
       return generation.run(() => generateAnswer(request))
     case 'prepare':
-      return prepareModel(request.modelId)
+      return generation.run(() => prepareModel(request.modelId))
     default:
       request satisfies never
       throw new Error('지원하지 않는 채팅 요청이에요.')

@@ -370,6 +370,30 @@ describe('chat worker context compaction', () => {
 })
 
 describe('chat worker generation', () => {
+  it('should not send ready when prepare arrives during a generation', async () => {
+    const firstGeneration = Promise.withResolvers<string>()
+    const generationStarted = Promise.withResolvers<void>()
+    runtimeMocks.generate.mockImplementationOnce(() => {
+      generationStarted.resolve()
+      return firstGeneration.promise
+    })
+    const worker = await loadWorker()
+
+    worker.dispatch(generateRequest())
+    await generationStarted.promise
+
+    worker.dispatch({modelId: 'qwen-4b', type: 'prepare'})
+    await new Promise<void>((resolve) => {
+      setImmediate(resolve)
+    })
+
+    expect(worker.postMessage).not.toHaveBeenCalledWith({type: 'ready'})
+
+    const completed = worker.waitForNextResponse('complete')
+    firstGeneration.resolve(' 첫 답변 ')
+    await completed
+  })
+
   it('should ignore a concurrent generate request while one is in flight', async () => {
     const firstGeneration = Promise.withResolvers<string>()
     const generationStarted = Promise.withResolvers<void>()
