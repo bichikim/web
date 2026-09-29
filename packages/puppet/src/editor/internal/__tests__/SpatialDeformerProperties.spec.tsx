@@ -1,11 +1,46 @@
 /** @vitest-environment jsdom */
 
-import {fireEvent, render} from '@solidjs/testing-library'
+import {fireEvent, render, screen} from '@solidjs/testing-library'
 import {expect, test, vi} from 'vitest'
 
 import {createDemoDocument, getDocumentScene} from '../../../player'
 import {convertSceneContainers} from '../container-conversion'
 import {SpatialDeformerProperties} from '../SpatialDeformerProperties'
+
+const preview = vi.hoisted(() => ({render: vi.fn()}))
+
+vi.mock('../spatial-mesh-preview-renderer', () => ({
+  createSpatialMeshPreviewRenderer: () => ({
+    destroy: () => undefined,
+    pick: () => undefined,
+    render: preview.render,
+    resize: () => undefined,
+  }),
+}))
+
+test('should show linked visible parts while creating a spatial mesh', () => {
+  const document = convertSceneContainers({
+    document: createDemoDocument(),
+    nodeIds: ['shapes'],
+    targetKind: 'spatial',
+  })!
+  const node = getDocumentScene(document).roots.find((candidate) => candidate.id === 'shapes')
+  if (node?.kind !== 'deformer' || node.deformerType !== 'spatial') {
+    throw new Error('Missing spatial deformer')
+  }
+  const view = render(() => <SpatialDeformerProperties document={document} node={node} />)
+
+  fireEvent.click(view.getByRole('button', {name: '메시 만들기'}))
+  expect(preview.render).toHaveBeenCalledWith(
+    expect.objectContaining({
+      referenceParts: expect.arrayContaining([
+        expect.objectContaining({id: 'shape-circle'}),
+        expect.objectContaining({id: 'shape-diamond'}),
+      ]),
+    }),
+  )
+  view.unmount()
+})
 
 test('should allow retrying the same GLB after an import error', async () => {
   const document = convertSceneContainers({
@@ -18,13 +53,14 @@ test('should allow retrying the same GLB after an import error', async () => {
     throw new Error('Missing spatial deformer')
   }
   const view = render(() => <SpatialDeformerProperties document={document} node={node} />)
-  const input = view.getByLabelText('3D 메시 가져오기') as HTMLInputElement
+  fireEvent.click(view.getByRole('button', {name: '메시 만들기'}))
+  const input = screen.getByLabelText('GLB 메시 가져오기') as HTMLInputElement
   const file = new File(['invalid'], 'mesh.glb', {type: 'model/gltf-binary'})
   const arrayBuffer = vi.fn().mockResolvedValue(new ArrayBuffer(0))
   Object.defineProperty(file, 'arrayBuffer', {value: arrayBuffer})
 
   fireEvent.change(input, {target: {files: [file]}})
-  await view.findByRole('alert')
+  await screen.findByRole('alert')
   expect(input.value).toBe('')
   expect(arrayBuffer).toHaveBeenCalledTimes(1)
 

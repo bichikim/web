@@ -1,6 +1,6 @@
 /** @vitest-environment jsdom */
 
-import {cleanup, fireEvent, render, screen, waitFor} from '@solidjs/testing-library'
+import {cleanup, fireEvent, render, screen, waitFor, within} from '@solidjs/testing-library'
 import {createSignal} from 'solid-js'
 import {afterEach, beforeEach, describe, expect, test, vi} from 'vitest'
 
@@ -75,7 +75,6 @@ describe('PuppetEditor', () => {
     await waitFor(() => expect(player.setPhysicsPreview).toHaveBeenLastCalledWith(true))
     const documentChanges = onDocumentChange.mock.calls.length
     fireEvent.click(view.getByRole('button', {name: '모든 파라미터 보기'}))
-    fireEvent.click(view.getByRole('button', {name: '물리 0'}))
     fireEvent.click(view.getByRole('button', {name: '물리 미리보기'}))
     expect(player.setPhysicsPreview).toHaveBeenLastCalledWith(false)
     fireEvent.click(view.getByRole('button', {name: '물리 초기화'}))
@@ -99,7 +98,7 @@ describe('PuppetEditor', () => {
       <PuppetEditor initialDocument={{...createDemoDocument(), motions: []}} />
     ))
     await waitFor(() => expect(mocks.createPlayer).toHaveBeenCalled())
-    expect(view.getByRole('complementary', {name: '선택 작업'})).toContainElement(
+    expect(view.getByRole('group', {name: '메시 편집'})).toContainElement(
       view.getByRole('group', {name: '정점 편집 방식'}),
     )
     expect(view.container.querySelector('.viewport-tools')).not.toContainElement(
@@ -109,7 +108,36 @@ describe('PuppetEditor', () => {
     expect(view.getByRole('button', {name: '기준 배치'})).toHaveAttribute('aria-pressed', 'true')
     fireEvent.click(view.container.querySelector('.layer-scroll')!)
     fireEvent.click(view.getByRole('button', {name: 'mesh-preview 레이어 선택'}))
-    expect(view.getByRole('button', {name: '변형 편집'})).toHaveAttribute('aria-pressed', 'true')
+    expect(view.getByRole('button', {name: '키폼 변형'})).toHaveAttribute('aria-pressed', 'true')
+  })
+
+  test('should keep mesh target and tool choices together without visible group labels', () => {
+    const view = render(() => <PuppetEditor initialDocument={createDemoDocument()} />)
+    const toolbar = view.getByRole('group', {name: '메시 편집'})
+
+    expect(within(toolbar).getByRole('group', {name: '정점 편집 방식'})).toBeInTheDocument()
+    expect(within(toolbar).getByRole('group', {name: '편집 도구'})).toBeInTheDocument()
+    expect(within(toolbar).getByRole('button', {name: '키폼 변형'})).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    )
+    expect(within(toolbar).getByRole('button', {name: '정점 선택·이동'})).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    )
+
+    fireEvent.click(within(toolbar).getByRole('button', {name: '기준 배치'}))
+    fireEvent.click(within(toolbar).getByRole('button', {name: '변형 브러시'}))
+    expect(within(toolbar).getByRole('button', {name: '기준 배치'})).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    )
+    expect(within(toolbar).getByRole('button', {name: '변형 브러시'})).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    )
+    expect(view.queryByText('편집 대상')).not.toBeInTheDocument()
+    expect(view.queryByText('도구')).not.toBeInTheDocument()
   })
 
   test('should explain unsupported mesh editing before a drag starts', async () => {

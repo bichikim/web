@@ -8,13 +8,14 @@ export interface MeshEditorProps {
   readonly brushControlsMount?: HTMLDivElement
   readonly brushSettingsMount?: HTMLDivElement
   readonly meshEditing?: boolean
+  readonly modeControls?: JSX.Element
   readonly activeBindingId?: string
   readonly activeKeyformValues?: PuppetParameterValues | null
   readonly activePartId?: string
   readonly document: PuppetDocument
   readonly editMode?: 'motion' | 'parameter'
   readonly onDocumentChange?: (document: PuppetDocument) => void
-  readonly onNotice?: (message: string) => void
+  readonly onNotice?: (message: string | null) => void
   readonly onVertexEditStart?: () => void
   readonly onVertexSelect?: (vertexIndex: number | null) => void
   readonly previewTime?: number

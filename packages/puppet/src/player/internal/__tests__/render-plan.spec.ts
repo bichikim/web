@@ -48,8 +48,33 @@ describe('getPartRenderPlans', () => {
   test('should reveal the side image and cull the front as a textured 3D pair turns', () => {
     const front = createPart('front')
     const side = createPart('side')
+    const controlPoints = [0, 0, 1, 0, 0, 1, 1, 1]
     const document: PuppetDocument = {
       ...createDocument(),
+      parameterBindings: [
+        {
+          id: 'turn',
+          keyforms: [
+            {
+              deformers: [
+                {controlPoints, kind: 'deformer', nodeId: 'head', spatialRotation: [0, 0, 0]},
+              ],
+              parts: [],
+              values: [0],
+            },
+            {
+              deformers: [
+                {controlPoints, kind: 'deformer', nodeId: 'head', spatialRotation: [0, 90, 0]},
+              ],
+              parts: [],
+              values: [90],
+            },
+          ],
+          parameterIds: ['yaw'],
+          targetDeformerIds: ['head'],
+          targetPartIds: [],
+        },
+      ],
       parameters: [{defaultValue: 0, id: 'yaw', maximum: 180, minimum: 0, name: 'Yaw'}],
       parts: [
         {
@@ -58,7 +83,6 @@ describe('getPartRenderPlans', () => {
             controlPoints: [0, 0, 0, 1, 0, 0, 0, 1, 0],
             groupId: 'head',
             origin: [0, 0, 0],
-            rotationParameterIds: [null, 'yaw', null],
           },
         },
         {
@@ -67,14 +91,28 @@ describe('getPartRenderPlans', () => {
             controlPoints: [1, 0, 0, 1, 0, 1, 1, 1, 0],
             groupId: 'head',
             origin: [0, 0, 0],
-            rotationParameterIds: [null, 'yaw', null],
           },
         },
       ],
       scene: {
         roots: [
-          {id: 'front', kind: 'part', locked: false, name: 'Front', visible: true},
-          {id: 'side', kind: 'part', locked: false, name: 'Side', visible: true},
+          {
+            bounds: {height: 1, width: 1, x: 0, y: 0},
+            children: [
+              {id: 'front', kind: 'part', locked: false, name: 'Front', visible: true},
+              {id: 'side', kind: 'part', locked: false, name: 'Side', visible: true},
+            ],
+            columns: 1,
+            controlPoints,
+            deformerType: 'spatial',
+            id: 'head',
+            kind: 'deformer',
+            locked: false,
+            name: 'Head',
+            rows: 1,
+            spatialOrigin: [0, 0, 0],
+            visible: true,
+          },
         ],
       },
     }

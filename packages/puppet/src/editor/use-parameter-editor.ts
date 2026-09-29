@@ -31,6 +31,7 @@ import {
   moveParameterKeyform,
   renameParameter,
 } from './internal/parameter-keyforms'
+import {getParameterPresentation} from './internal/parameter-presentation'
 
 interface UseParameterEditorProps {
   readonly document: Accessor<PuppetDocument>
@@ -103,9 +104,7 @@ const updateParameterConnection = (
 
   if (document !== undefined) {
     props.onDocumentChange(document)
-    props.onNotice(
-      `${nodeIds.length}개 노드를 ${operation === 'connect' ? '연결했습니다.' : '연결 해제했습니다.'}`,
-    )
+    props.onNotice(null)
   }
 }
 
@@ -131,15 +130,26 @@ const selectBindingState = (
   setters.activeKeyformValues(getDefaultKeyformValues(document, binding, parameterValues))
 }
 
+const getSelectableBindings = (
+  document: PuppetDocument,
+  candidates: ReadonlyArray<PuppetParameterBinding>,
+) => {
+  const visibleIds = new Set(
+    getParameterPresentation(document, candidates).bindings.map((binding) => binding.id),
+  )
+  return candidates.filter((binding) => visibleIds.has(binding.id))
+}
+
 const createParameterSelectionSync = (
   options: ParameterSelectionSyncOptions,
   allParametersVisible: Accessor<boolean>,
 ) => {
   createEffect(() => {
     const document = options.props.document()
-    const bindings = allParametersVisible()
+    const candidates = allParametersVisible()
       ? getDocumentParameterBindings(document)
       : getParameterBindingsForNodeIds(document, options.props.selectedNodeIds())
+    const bindings = getSelectableBindings(document, candidates)
     const currentBindingId = options.activeBindingId()
 
     if (bindings.some((binding) => binding.id === currentBindingId)) {
@@ -171,7 +181,7 @@ const createParameterBindingHandler =
     if (result !== undefined) {
       props.onDocumentChange(result.document)
       selectBindingState(result.document, result.binding, parameterValueMap(), setters)
-      props.onNotice(`${dimension}차원 Parameter를 추가했습니다.`)
+      props.onNotice(null)
     }
   }
 
@@ -197,7 +207,7 @@ const createKeyformRemovalHandler =
     if (document !== undefined) {
       props.onDocumentChange(document)
       setActiveKeyformValues(null)
-      props.onNotice(`${formatValues(values)} 값의 키폼을 삭제했습니다.`)
+      props.onNotice(null)
     }
   }
 
@@ -266,9 +276,7 @@ const createKeyformMoveHandler =
         ),
       }))
       options.setActiveKeyformValues(nextValues)
-      options.onNotice(
-        `${formatValues(values)} 값의 키폼을 ${formatValues(nextValues)} 값으로 이동했습니다.`,
-      )
+      options.onNotice(null)
     }
   }
 
@@ -301,7 +309,7 @@ const createKeyformInsertionHandler = (options: CreateKeyformInsertionHandlerOpt
   if (document !== undefined) {
     options.props.onDocumentChange(document)
     options.setActiveKeyformValues(values)
-    options.props.onNotice(`${formatValues(values)} 값에 키폼을 추가했습니다.`)
+    options.props.onNotice(null)
   }
 }
 
@@ -322,7 +330,7 @@ const applyInfluences = (
     return false
   }
   props.onDocumentChange(document)
-  props.onNotice('Parameter 영향도 관계를 변경했습니다.')
+  props.onNotice(null)
   return true
 }
 
@@ -342,7 +350,10 @@ const applyParameterName = (
 }
 
 export const useParameterEditor = (props: UseParameterEditorProps): ParameterEditorResult => {
-  const [initialBinding] = getDocumentParameterBindings(props.document())
+  const [initialBinding] = getSelectableBindings(
+    props.document(),
+    getDocumentParameterBindings(props.document()),
+  )
   const [activeBindingId, setActiveBindingId] = createSignal<string | null>(
     initialBinding?.id ?? null,
   )
@@ -443,10 +454,13 @@ export const useParameterEditor = (props: UseParameterEditorProps): ParameterEdi
       }
       props.onDocumentChange(document)
       if (bindingId === activeBindingId()) {
-        const [nextBinding] = getDocumentParameterBindings(document)
+        const [nextBinding] = getSelectableBindings(
+          document,
+          getDocumentParameterBindings(document),
+        )
         selectBindingState(document, nextBinding, parameterValueMap(), setters)
       }
-      props.onNotice('Parameter를 삭제했습니다.')
+      props.onNotice(null)
     },
     disconnectSelection: () => {
       const binding = activeBinding()
@@ -467,7 +481,7 @@ export const useParameterEditor = (props: UseParameterEditorProps): ParameterEdi
       setParameterValueMap(nextParameterValues)
       selectBindingState(
         document,
-        getDocumentParameterBindings(document)[0],
+        getSelectableBindings(document, getDocumentParameterBindings(document))[0],
         nextParameterValues,
         setters,
       )

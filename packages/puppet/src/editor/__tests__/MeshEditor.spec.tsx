@@ -44,7 +44,7 @@ describe('MeshEditor', () => {
 
   test('should select exactly one mouse editing tool', () => {
     const view = render(() => <MeshEditor document={createDemoDocument()} />)
-    const mouse = view.getByRole('button', {name: '일반 마우스'})
+    const mouse = view.getByRole('button', {name: '정점 선택·이동'})
     const brush = view.getByRole('button', {name: '변형 브러시'})
 
     expect(mouse.getAttribute('aria-pressed')).toBe('true')

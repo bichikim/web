@@ -2,7 +2,7 @@
 import {render} from '@solidjs/testing-library'
 import {createSignal} from 'solid-js'
 import {expect, test, vi} from 'vitest'
-import {createDemoDocument} from '../../player'
+import {createDemoDocument, type PuppetDocument, type PuppetParameterBinding} from '../../player'
 import {type ParameterEditorResult, useParameterEditor} from '../use-parameter-editor'
 
 test('should persist relations and allow keyform editing while their influence is reduced', () => {
@@ -32,6 +32,7 @@ test('should persist relations and allow keyform editing while their influence i
     ]),
   ).toBe(true)
   expect(editor.influence()).toBe(0.5)
+  expect(notice).toHaveBeenLastCalledWith(null)
   expect(editor.activeKeyformValues()).toEqual([0, 0])
   editor.setParameterValues([15, 0])
   editor.addKeyform()
@@ -69,4 +70,59 @@ test('should keep preview changes outside document history and discard them', ()
   editor.previewInfluences(null)
   expect(onDocumentChange).toHaveBeenCalledTimes(1)
   expect(editor.influence()).toBe(0.25)
+})
+
+test('should select a visible parameter instead of an internal physics output', () => {
+  const initial = createDemoDocument()
+  const visibleBinding = initial.parameterBindings![0]!
+  const hiddenBinding: PuppetParameterBinding = {
+    ...visibleBinding,
+    id: 'physics-output-binding',
+    keyforms: [],
+    name: 'Internal physics output',
+    parameterIds: ['physics-output'],
+  }
+  const [document, setDocument] = createSignal<PuppetDocument>({
+    ...initial,
+    parameterBindings: [hiddenBinding, ...initial.parameterBindings!],
+    parameters: [
+      {
+        defaultValue: 0,
+        id: 'physics-output',
+        maximum: 1,
+        minimum: -1,
+        name: 'Internal physics output',
+      },
+      ...(initial.parameters ?? []),
+    ],
+    physics: {
+      pendulums: [
+        {
+          damping: 1,
+          gravity: 1,
+          id: 'physics-test',
+          inputParameterId: 'angle-x',
+          inputScale: 1,
+          length: 1,
+          outputParameterId: 'physics-output',
+          outputScale: 1,
+        },
+      ],
+    },
+  })
+  let editor!: ParameterEditorResult
+  render(() => {
+    editor = useParameterEditor({
+      document,
+      onDocumentChange: setDocument,
+      onNotice: vi.fn(),
+      selectedNodeIds: () => ['mesh-preview'],
+    })
+    return <div />
+  })
+
+  expect(editor.activeBindingId()).toBe(visibleBinding.id)
+  editor.setAllParametersVisible(true)
+  editor.selectBinding(hiddenBinding.id)
+  expect(editor.activeBindingId()).toBe(visibleBinding.id)
 })

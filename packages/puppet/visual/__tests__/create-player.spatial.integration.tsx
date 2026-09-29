@@ -36,7 +36,6 @@ const createFace = (
     controlPoints,
     groupId: 'head',
     origin: [32, 32, 0],
-    rotationParameterIds: [null, 'yaw', null],
   },
   texture: {
     height: HEIGHT,
@@ -143,13 +142,12 @@ describe('createPlayer spatial faces', () => {
       rows: 1,
       spatialOrigin: [32, 32, 0] as const,
       spatialRotation: [0, 0, 0] as const,
-      spatialRotationParameterIds: [null, null, null] as const,
       visible: true,
     }
     const model: PuppetDocument = {
       format: PUPPET_DOCUMENT_FORMAT,
       motions: [],
-      parts: [{...front, spatial: {...front.spatial!, rotationParameterIds: [null, null, null]}}],
+      parts: [{...front, spatial: {...front.spatial!}}],
       scene: {roots: [node]},
       version: PUPPET_DOCUMENT_VERSION,
       viewport: {height: HEIGHT, width: WIDTH},
@@ -187,9 +185,34 @@ describe('createPlayer spatial faces', () => {
   })
 
   test('should render front artwork at rest and reveal separate side artwork after yaw rotation', async () => {
+    const controlPoints = [16, 16, 48, 16, 16, 48, 48, 48]
     const model: PuppetDocument = {
       format: PUPPET_DOCUMENT_FORMAT,
       motions: [],
+      parameterBindings: [
+        {
+          id: 'turn',
+          keyforms: [
+            {
+              deformers: [
+                {controlPoints, kind: 'deformer', nodeId: 'head', spatialRotation: [0, 0, 0]},
+              ],
+              parts: [],
+              values: [0],
+            },
+            {
+              deformers: [
+                {controlPoints, kind: 'deformer', nodeId: 'head', spatialRotation: [0, 90, 0]},
+              ],
+              parts: [],
+              values: [90],
+            },
+          ],
+          parameterIds: ['yaw'],
+          targetDeformerIds: ['head'],
+          targetPartIds: [],
+        },
+      ],
       parameters: [{defaultValue: 0, id: 'yaw', maximum: 90, minimum: 0, name: 'Yaw'}],
       parts: [
         createFace(
@@ -205,6 +228,27 @@ describe('createPlayer spatial faces', () => {
           [48, 16, 0, 48, 16, 32, 48, 48, 32, 48, 48, 0],
         ),
       ],
+      scene: {
+        roots: [
+          {
+            bounds: {height: 32, width: 32, x: 16, y: 16},
+            children: [
+              {id: 'front', kind: 'part', locked: false, name: 'Front', visible: true},
+              {id: 'side', kind: 'part', locked: false, name: 'Side', visible: true},
+            ],
+            columns: 1,
+            controlPoints,
+            deformerType: 'spatial',
+            id: 'head',
+            kind: 'deformer',
+            locked: false,
+            name: 'Head',
+            rows: 1,
+            spatialOrigin: [32, 32, 0],
+            visible: true,
+          },
+        ],
+      },
       version: PUPPET_DOCUMENT_VERSION,
       viewport: {height: HEIGHT, width: WIDTH},
     }

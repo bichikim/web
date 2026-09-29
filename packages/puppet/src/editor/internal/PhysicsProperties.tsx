@@ -3,6 +3,7 @@ import type {PuppetDocument, PuppetPendulum} from '../../player'
 import {For, Show} from 'solid-js'
 
 import {PhysicsInputGroup} from './PhysicsInputGroup'
+import {EditorPropertyGroup} from './EditorPropertyGroup'
 import {
   type PhysicsNumberProperty,
   type PhysicsOperation,
@@ -112,8 +113,7 @@ export const PhysicsProperties = (props: PhysicsPropertiesProps) => {
   ) => applyOperation({changes: {outputMode}, kind: 'update', pendulumId})
 
   return (
-    <fieldset class="deformer-properties physics-properties">
-      <legend>물리</legend>
+    <EditorPropertyGroup class="physics-properties" title="물리">
       <Show when={props.onPhysicsPreviewChange !== undefined}>
         <div class="physics-header">
           <EditorToggleButton
@@ -135,7 +135,7 @@ export const PhysicsProperties = (props: PhysicsPropertiesProps) => {
         </div>
       </Show>
       <div class="physics-header">
-        <span>{pendulums().length}개 물리 연결</span>
+        <span>연결 {pendulums().length}개</span>
         <EditorButton
           class="physics-action-button"
           disabled={disabled() || !canAdd()}
@@ -148,7 +148,7 @@ export const PhysicsProperties = (props: PhysicsPropertiesProps) => {
       </div>
       <Show
         when={pendulums().length > 0}
-        fallback={<p class="physics-empty">물리 연결을 추가하면 파라미터 움직임을 연결합니다.</p>}
+        fallback={<p class="physics-empty">연결된 출력 파라미터 없음</p>}
       >
         <div class="physics-pendulum-list">
           <For each={inputGroups()}>
@@ -170,6 +170,6 @@ export const PhysicsProperties = (props: PhysicsPropertiesProps) => {
           </For>
         </div>
       </Show>
-    </fieldset>
+    </EditorPropertyGroup>
   )
 }

@@ -64,6 +64,41 @@ beforeEach(() => {
 })
 
 describe('PuppetEditor', () => {
+  test('should show part and parameter settings together in the inspector', async () => {
+    const source = createDemoDocument()
+    const document: PuppetDocument = {
+      ...source,
+      layerOrderRules: [
+        {
+          partIds: ['shape-circle'],
+          placement: 'before',
+          referencePartId: 'mesh-preview',
+          when: {comparison: 'greater-than', parameterIds: ['angle-x'], threshold: 10},
+        },
+      ],
+    }
+    const view = render(() => <PuppetEditor initialDocument={document} />)
+    await waitFor(() => expect(mocks.createPlayer).toHaveBeenCalledOnce())
+
+    fireEvent.click(view.getByRole('button', {name: 'mesh-preview 레이어 선택'}))
+    const inspector = view.getByRole('complementary', {name: '선택 작업'})
+    expect(within(inspector).getByRole('group', {name: '파트 렌더링'})).toBeInTheDocument()
+
+    fireEvent.click(view.getByRole('button', {name: 'Angle X'}))
+    expect(within(inspector).getByRole('group', {name: '파트 렌더링'})).toBeInTheDocument()
+    const parameterProperties = within(inspector).getByRole('region', {name: '파라미터 속성'})
+    const parameterGroup = within(parameterProperties).getByRole('group', {name: '파라미터'})
+    expect(within(parameterGroup).getByRole('group', {name: '영향도'})).toBeInTheDocument()
+    expect(within(inspector).getByText('Angle X / Angle Y')).toBeInTheDocument()
+    const orderGroup = within(parameterGroup).getByRole('group', {name: '표시 순서'})
+    expect(within(orderGroup).getByText('규칙 1개 · 현재 적용 안 됨')).toBeInTheDocument()
+    expect(within(parameterGroup).getByText('기준 없음 · 현재 적용량 100%')).toBeInTheDocument()
+    expect(within(parameterGroup).getByRole('group', {name: '물리'})).toBeInTheDocument()
+    expect(view.queryByRole('button', {name: /표시 순서 1 · 물리/})).toBeNull()
+
+    expect(within(inspector).queryByRole('navigation', {name: '속성 대상'})).toBeNull()
+  })
+
   test.each(['mesh-preview', 'shape-circle'])(
     'should preview manual values without motion overrides while selecting %s',
     async (selectedPartId) => {
@@ -517,7 +552,11 @@ describe('PuppetEditor', () => {
     const view = render(() => (
       <PuppetEditor initialDocument={createDemoDocument()} onDocumentChange={onDocumentChange} />
     ))
-    fireEvent.click(view.getByRole('button', {name: 'Angle X / Angle Y · 영향도'}))
+    fireEvent.click(view.getByRole('button', {name: 'Angle X'}))
+    const inspector = view.getByRole('complementary', {name: '선택 작업'})
+    expect(within(inspector).getByRole('region', {name: '파라미터 속성'})).toBeInTheDocument()
+    expect(within(inspector).getByRole('group', {name: '영향도'})).toBeInTheDocument()
+    fireEvent.click(view.getByRole('button', {name: 'Angle X / Angle Y · 영향도 설정'}))
     fireEvent.click(view.getByRole('button', {name: '기준 추가'}))
     expect(view.getByRole('spinbutton', {name: '파트 불투명도'})).toBeEnabled()
     expect(view.getByRole('textbox', {name: '파트 곱하기 색상'})).toBeEnabled()

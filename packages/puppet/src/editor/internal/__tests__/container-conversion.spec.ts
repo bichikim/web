@@ -17,7 +17,6 @@ describe('convertSceneContainers', () => {
     expect(getContainerKind(node)).toBe('spatial')
     expect(node).toMatchObject({
       deformerType: 'spatial',
-      spatialRotationParameterIds: [null, null, null],
     })
     expect(converted.parts.find((part) => part.id === 'shape-circle')?.spatial?.groupId).toBe(
       'shapes',

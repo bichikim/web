@@ -222,11 +222,6 @@ const hasValidSpatial = (value: Record<string, unknown>): boolean => {
     (value.spatialTranslation === undefined || isSpatialCoordinates(value.spatialTranslation)) &&
     hasValidSpatialMeshPosition(value) &&
     (value.spatialMesh === undefined || isSpatialMesh(value.spatialMesh)) &&
-    Array.isArray(value.spatialRotationParameterIds) &&
-    value.spatialRotationParameterIds.length === SPATIAL_COORDINATES &&
-    value.spatialRotationParameterIds.every(
-      (id: unknown) => id === null || typeof id === 'string',
-    ) &&
     value.boneRestPoints === undefined &&
     value.pins === undefined
   )

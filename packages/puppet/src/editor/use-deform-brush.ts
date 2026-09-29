@@ -185,7 +185,7 @@ export const useDeformBrush = (context: DeformBrushContext) => {
     }
     if (result.document !== original) {
       props.onDocumentChange(result.document)
-      props.onNotice?.('변형 브러시 획을 적용했습니다.')
+      props.onNotice?.(null)
     }
   }
 

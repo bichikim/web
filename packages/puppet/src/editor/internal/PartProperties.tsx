@@ -12,6 +12,8 @@ import {
 } from '../../player'
 import {type MaskTargetOption, PartMaskProperties} from './PartMaskProperties'
 import {SpatialPartProperties} from './SpatialPartProperties'
+import {EditorPropertyGroup} from './EditorPropertyGroup'
+import {EditorInspectorActions} from './EditorInspectorActions'
 
 export type {MaskTargetOption} from './PartMaskProperties'
 
@@ -21,6 +23,7 @@ type InterpolatedPartProperties = Pick<
 >
 
 export interface PartPropertiesProps {
+  readonly autoMeshAvailable?: boolean
   readonly document?: PuppetDocument
   readonly maskTargetOptions: ReadonlyArray<MaskTargetOption>
   readonly maskPicking?: boolean
@@ -30,6 +33,7 @@ export interface PartPropertiesProps {
   readonly visualDisabled: boolean
   readonly onEditEnd?: () => void
   readonly onEditStart?: () => void
+  readonly onAutoMesh?: () => void
   readonly onDocumentChange?: (document: PuppetDocument) => void
   readonly onInterpolatedChange: (properties: InterpolatedPartProperties) => void
   readonly onMaskTargetChange?: (partId: string, checked: boolean) => void
@@ -76,8 +80,11 @@ export const PartProperties = (props: PartPropertiesProps) => {
 
   return (
     <>
-      <fieldset class="deformer-properties part-properties">
-        <legend>파트 렌더링</legend>
+      <EditorPropertyGroup class="part-properties" title="파트 렌더링">
+        <EditorInspectorActions
+          autoMeshAvailable={props.autoMeshAvailable}
+          onAutoMesh={props.onAutoMesh}
+        />
         <label>
           불투명도
           <EditorNumberField
@@ -139,7 +146,7 @@ export const PartProperties = (props: PartPropertiesProps) => {
           onMaskPickStart={props.onMaskPickStart}
           onStaticChange={props.onStaticChange}
         />
-      </fieldset>
+      </EditorPropertyGroup>
       <Show when={props.document}>
         {(document) => (
           <SpatialPartProperties
