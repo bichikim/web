@@ -76,7 +76,7 @@ const getLink = (element: Element, baseUrl: string) => {
   const links = getChildren(element).filter((child) => child.localName.toLowerCase() === 'link')
   const preferred = links.find((link) => {
     const relation = link.getAttribute('rel')
-    if (relation !== null && relation !== 'alternate') {
+    if (relation !== null && relation.toLowerCase() !== 'alternate') {
       return false
     }
 

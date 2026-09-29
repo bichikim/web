@@ -251,3 +251,23 @@ it('should avoid writing when lookup does not enrich the stored city', async () 
   expect(await restoring.read()).toEqual(storedPreference)
   expect(storage.writeWeb).not.toHaveBeenCalled()
 })
+
+it.each([false, true])(
+  'should not persist names when lookup only adds an empty names object with toss=%s',
+  async (toss) => {
+    storage.usesTossStorage.mockReturnValue(toss)
+    webValues.set(STORAGE_KEY, storedPreference)
+    tossValues.set(STORAGE_KEY, storedPreference)
+    const restoring = createWeatherPreferenceRepository({
+      restoreLocation: async (location) => ({...location, names: {}}),
+      storage,
+    })
+
+    expect(await restoring.read()).toEqual(storedPreference)
+    expect(storage.writeWeb).toHaveBeenCalledTimes(toss ? 1 : 0)
+    if (toss) {
+      expect(storage.writeWeb).toHaveBeenCalledWith(STORAGE_KEY, storedPreference)
+    }
+    expect(storage.writeToss).not.toHaveBeenCalled()
+  },
+)

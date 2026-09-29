@@ -18,6 +18,15 @@ test('should reject a damaged PSD', async () => {
   })
 })
 
+test('should reject a PSD larger than 256 MiB before reading it', async () => {
+  const file = new File([], 'large.psd')
+  Object.defineProperty(file, 'size', {value: 268_435_457})
+  const read = vi.spyOn(FileReader.prototype, 'readAsArrayBuffer')
+
+  expect(await importPsd(file)).toEqual({error: {code: 'too-large'}, ok: false})
+  expect(read).not.toHaveBeenCalled()
+})
+
 test.each([
   [100, 100],
   [4000, 7100],

@@ -181,6 +181,56 @@ describe('useDialogueWriter', () => {
     expect(runtime.client.dispose).toHaveBeenCalledTimes(1)
   })
 
+  it('should disable copying partial output after generation fails', async () => {
+    const writeText = vi.fn(async () => undefined)
+    vi.stubGlobal('navigator', {clipboard: {writeText}})
+    const runtime = createRuntime(true)
+    const root = createDialogueRoot(runtime)
+
+    root.controller.prepare()
+    runtime.emit({type: 'ready'})
+    root.controller.generate()
+    runtime.emit({type: 'started'})
+    runtime.emit({text: '부분 응답', type: 'token'})
+    runtime.emit({
+      message: '대화문 모델을 실행하지 못했어요.',
+      restartRequired: false,
+      type: 'error',
+    })
+
+    expect(root.controller.output()).toBe('부분 응답')
+    expect(root.controller.state()).toMatchObject({status: 'error'})
+    expect(root.controller.canCopy()).toBe(false)
+    await root.controller.copyOutput()
+    expect(writeText).not.toHaveBeenCalled()
+    root.dispose()
+  })
+
+  it('should keep failed partial output unavailable after preparing a crashed worker again', async () => {
+    const writeText = vi.fn(async () => undefined)
+    vi.stubGlobal('navigator', {clipboard: {writeText}})
+    const runtime = createRuntime(true)
+    const root = createDialogueRoot(runtime)
+
+    root.controller.prepare()
+    runtime.emit({type: 'ready'})
+    root.controller.generate()
+    runtime.emit({type: 'started'})
+    runtime.emit({text: '부분 응답', type: 'token'})
+    runtime.emit({message: 'Worker 충돌', restartRequired: true, type: 'error'})
+
+    expect(root.controller.canCopy()).toBe(false)
+    root.controller.prepare()
+    runtime.emit({type: 'ready'})
+
+    expect(root.controller.output()).toBe('부분 응답')
+    expect(root.controller.state()).toEqual({status: 'ready'})
+    expect(root.controller.canCopy()).toBe(false)
+    await root.controller.copyOutput()
+    expect(writeText).not.toHaveBeenCalled()
+    root.dispose()
+  })
+
   it('should clear completed output when the request changes and keep the model ready', () => {
     const runtime = createRuntime(true)
     const root = createDialogueRoot(runtime)
@@ -430,6 +480,7 @@ describe('useDialogueWriter', () => {
 
     expect(root.controller.state()).toEqual({status: 'idle'})
     expect(root.controller.output()).toBe('보존할 결과예요.')
+    expect(root.controller.canCopy()).toBe(true)
     expect(runtime.client.dispose).toHaveBeenCalledTimes(1)
 
     root.controller.prepare()

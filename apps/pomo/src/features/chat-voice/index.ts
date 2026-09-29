@@ -98,6 +98,7 @@ interface CreatePrepareOptions {
   readonly runQueuedSpeech: () => Promise<void>
   readonly runtime: ChatVoiceRuntime
   readonly setState: Setter<ChatVoiceState>
+  readonly stopQueuedSpeech: () => void
 }
 
 interface ActivePreparation {
@@ -244,6 +245,11 @@ const updateStateAfterStop = (options: CreateSpeechQueueOptions) => {
 const createPrepare = (options: CreatePrepareOptions) => {
   let preparation: ActivePreparation | null = null
 
+  const handlePreparationFailure = (message: string) => {
+    options.stopQueuedSpeech()
+    options.setState({message, modelReady: false, status: 'error'})
+  }
+
   const run = async () => {
     disposeClient(options.clientReference)
     const client = options.runtime.createClient()
@@ -274,11 +280,7 @@ const createPrepare = (options: CreatePrepareOptions) => {
       }
 
       if (!result.ok) {
-        options.setState({
-          message: getSupertonicErrorMessage(result.error),
-          modelReady: false,
-          status: 'error',
-        })
+        handlePreparationFailure(getSupertonicErrorMessage(result.error))
         return
       }
 
@@ -287,11 +289,7 @@ const createPrepare = (options: CreatePrepareOptions) => {
     } catch (error: unknown) {
       if (options.clientReference.current === client) {
         reportUnexpectedError(error)
-        options.setState({
-          message: '답변 음성 모델을 준비하는 중 예상하지 못한 문제가 발생했어요.',
-          modelReady: false,
-          status: 'error',
-        })
+        handlePreparationFailure('답변 음성 모델을 준비하는 중 예상하지 못한 문제가 발생했어요.')
       }
     }
   }
@@ -536,6 +534,7 @@ export const useChatVoice = (props: UseChatVoiceProps = {}): ChatVoiceController
     runQueuedSpeech: speechQueue.run,
     runtime,
     setState,
+    stopQueuedSpeech: speechQueue.stop,
   })
 
   onCleanup(() => {

@@ -50,6 +50,7 @@ interface CreateCalendarWeekRangeOptions {
   readonly daysUntilNextMonday: number
   readonly includesNextWeek: boolean
   readonly includesThisWeek: boolean
+  readonly includesYesterday: boolean
   readonly now: Date
 }
 
@@ -90,6 +91,7 @@ const createCalendarWeekRange = ({
   daysUntilNextMonday,
   includesNextWeek,
   includesThisWeek,
+  includesYesterday,
   now,
 }: CreateCalendarWeekRangeOptions): CalendarEventRange | null => {
   if (!includesThisWeek && !includesNextWeek) {
@@ -98,7 +100,7 @@ const createCalendarWeekRange = ({
 
   const nextMonday = boundary(daysUntilNextMonday)
   const followingMonday = boundary(daysUntilNextMonday + DAYS_PER_WEEK)
-  const start = includesThisWeek ? now : nextMonday
+  const start = includesYesterday ? boundary(-1) : includesThisWeek ? now : nextMonday
   const end = includesNextWeek ? followingMonday : nextMonday
   return toRange(start, end)
 }
@@ -179,9 +181,6 @@ export const createCalendarQuery = (
       text: options.text,
     })
   }
-  if (includesYesterday) {
-    return toRange(boundary(-1), boundary(0))
-  }
   const weekday = local.day()
   const daysUntilNextMonday = weekday === 0 ? 1 : DAYS_PER_WEEK + 1 - weekday
   const weekRange = createCalendarWeekRange({
@@ -189,10 +188,14 @@ export const createCalendarQuery = (
     daysUntilNextMonday,
     includesNextWeek,
     includesThisWeek,
+    includesYesterday,
     now,
   })
   if (weekRange !== null) {
     return weekRange
+  }
+  if (includesYesterday) {
+    return toRange(boundary(-1), boundary(0))
   }
   return toRange(now, new Date(now.getTime() + NEXT_EVENT_WINDOW_DAYS * MILLISECONDS_PER_DAY))
 }
