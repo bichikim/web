@@ -2,6 +2,14 @@ import {describe, expect, it} from 'vitest'
 import {areReminderDraftsEqual, createReminderDraft, resolveReminderAt} from '../reminder-draft'
 
 describe('reminder draft dates', () => {
+  it('should keep the selected today date when saving after midnight', () => {
+    const selectedDate = new Date(2026, 0, 31, 23, 45)
+    const savedAt = new Date(2026, 1, 1, 0, 30)
+
+    expect(resolveReminderAt('today', '2026-01-31', '23:45', savedAt)).toBe(
+      selectedDate.toISOString(),
+    )
+  })
   it('should resolve tomorrow across a local year boundary without changing now', () => {
     const now = new Date(2026, 11, 31, 23, 59, 45)
     const timestamp = now.getTime()
