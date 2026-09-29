@@ -123,7 +123,7 @@ const parseFeedTimestamp = (value: string): number | null => {
   return Number.isNaN(timestamp) ? null : timestamp
 }
 const getPublishedAt = (element: Element) => {
-  const timestamp = ['published', 'pubdate', 'updated', 'date']
+  const timestamp = ['published', 'pubdate', 'updated', 'date', 'created', 'issued']
     .map((name) => parseFeedTimestamp(getChildText(element, [name])))
     .find((value) => value !== null)
 

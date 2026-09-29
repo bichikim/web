@@ -87,6 +87,20 @@ it('should parse Atom links and content', () => {
   })
 })
 
+it.each(['created', 'issued'] as const)(
+  'should use an Atom %s date when published and updated are absent',
+  (dateElement) => {
+    const feed = parseFeedXml(
+      `<feed version="0.3" xmlns="http://purl.org/atom/ns#"><title>테스트 Atom</title><entry>
+        <${dateElement}>2026-08-14T01:00:00Z</${dateElement}>
+      </entry></feed>`,
+      'https://example.com/atom.xml',
+    )
+
+    expect(feed.items[0]?.publishedAt).toBe('2026-08-14T01:00:00.000Z')
+  },
+)
+
 it('should prefer the Atom published date when updated appears first', () => {
   const feed = parseFeedXml(
     `<feed xmlns="http://www.w3.org/2005/Atom"><title>테스트 Atom</title><entry>
