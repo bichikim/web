@@ -16,6 +16,12 @@ const defaultRuntime: FocusRoomTourAudioRuntime = {
   },
 }
 
+const stopAudio = (audio: HTMLAudioElement) => {
+  audio.pause()
+  audio.removeAttribute('src')
+  audio.load()
+}
+
 /** Creates a single-player controller for pre-recorded focus-room tour narration. */
 export const createFocusRoomTourAudioPlayer = (
   runtime: FocusRoomTourAudioRuntime = defaultRuntime,
@@ -30,9 +36,7 @@ export const createFocusRoomTourAudioPlayer = (
       return
     }
 
-    audio.pause()
-    audio.removeAttribute('src')
-    audio.load()
+    stopAudio(audio)
   }
 
   const play = (source: string) => {
@@ -40,14 +44,19 @@ export const createFocusRoomTourAudioPlayer = (
     const audio = runtime.createAudio(source)
     currentAudio = audio
     audio.currentTime = 0
-    audio.play().catch(() => {
-      if (currentAudio === audio) {
-        currentAudio = null
-        audio.pause()
-        audio.removeAttribute('src')
-        audio.load()
-      }
-    })
+    audio.play().then(
+      () => {
+        if (currentAudio !== audio) {
+          stopAudio(audio)
+        }
+      },
+      () => {
+        if (currentAudio === audio) {
+          currentAudio = null
+          stopAudio(audio)
+        }
+      },
+    )
   }
 
   return {dispose: stop, play, stop}
