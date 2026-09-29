@@ -1,6 +1,6 @@
 import {createSignal, onCleanup, onMount, type ParentProps, Show} from 'solid-js'
 
-import {prepareAppsInTossLocale} from '../../features/apps-in-toss-locale/prepare-apps-in-toss-locale'
+import {prepareAppsInTossLocale} from '../../features/apps-in-toss-locale'
 import {AppsInTossLoadingPage} from '../apps-in-toss-loading-page/AppsInTossLoadingPage'
 
 export const AppsInTossPrepare = (props: ParentProps) => {
@@ -13,8 +13,8 @@ export const AppsInTossPrepare = (props: ParentProps) => {
       isActive = false
     })
 
-    prepareAppsInTossLocale(() => isActive).finally(() => {
-      if (isActive) {
+    prepareAppsInTossLocale(() => isActive).then((result) => {
+      if (result.status === 'prepared' && isActive) {
         setIsReady(true)
       }
     })
