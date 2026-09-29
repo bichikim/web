@@ -54,22 +54,25 @@ it('should resolve stale remote development feeds to the local desktop server', 
   )
 })
 
-it('should resolve stale remote development feeds with a trailing slash to the local desktop server', async () => {
-  vi.stubEnv('VITE_POMO_IS_DESKTOP', 'true')
-  vi.stubEnv('VITE_POMO_PUBLIC_ORIGIN', 'https://www.pomofi.io')
-  vi.stubGlobal('location', {origin: 'http://127.0.0.1:1420'})
-  vi.spyOn(AbortSignal, 'timeout').mockReturnValue(AbortSignal.abort())
-  mocks.httpFetch.mockResolvedValue(new Response('feed', {status: 200}))
+it.each(['rss', 'atom'])(
+  'should resolve stale remote development %s feeds with a trailing slash to the local desktop server',
+  async (format) => {
+    vi.stubEnv('VITE_POMO_IS_DESKTOP', 'true')
+    vi.stubEnv('VITE_POMO_PUBLIC_ORIGIN', 'https://www.pomofi.io')
+    vi.stubGlobal('location', {origin: 'http://127.0.0.1:1420'})
+    vi.spyOn(AbortSignal, 'timeout').mockReturnValue(AbortSignal.abort())
+    mocks.httpFetch.mockResolvedValue(new Response('feed', {status: 200}))
 
-  await createFeedFetcher()('https://www.pomofi.io/__dev/feeds/rss.xml/')
+    await createFeedFetcher()(`https://www.pomofi.io/__dev/feeds/${format}.xml/`)
 
-  const expectedUrl = new URL('http://127.0.0.1:1420/__dev/feeds/rss.xml')
-  expectedUrl.searchParams.set('timeZone', Intl.DateTimeFormat().resolvedOptions().timeZone)
-  expect(mocks.httpFetch).toHaveBeenCalledWith(
-    expectedUrl.href,
-    expect.objectContaining({cache: 'no-store'}),
-  )
-})
+    const expectedUrl = new URL(`http://127.0.0.1:1420/__dev/feeds/${format}.xml`)
+    expectedUrl.searchParams.set('timeZone', Intl.DateTimeFormat().resolvedOptions().timeZone)
+    expect(mocks.httpFetch).toHaveBeenCalledWith(
+      expectedUrl.href,
+      expect.objectContaining({cache: 'no-store'}),
+    )
+  },
+)
 
 it('should preserve third-party feeds with a development-feed path', async () => {
   vi.stubEnv('VITE_POMO_IS_DESKTOP', 'true')
