@@ -266,15 +266,16 @@ const generateAnswer = async (options: GenerateAnswerOptions) => {
   })
 }
 
-const handleRequest = (request: ChatWorkerRequest): Promise<void> => {
+const handleRequest = async (request: ChatWorkerRequest): Promise<void> => {
   switch (request.type) {
     case 'generate':
       return generation.run(() => generateAnswer(request))
     case 'prepare':
       return generation.run(() => prepareModel(request.modelId))
+    default:
+      request satisfies never
+      throw new Error('지원하지 않는 채팅 요청이에요.')
   }
-
-  request satisfies never
 }
 
 workerScope.addEventListener('message', (event: MessageEvent<ChatWorkerRequest>) => {

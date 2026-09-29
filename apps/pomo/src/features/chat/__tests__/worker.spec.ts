@@ -106,7 +106,7 @@ const loadWorker = async () => {
   })
   await import('../worker')
 
-  const dispatch = (request: ChatWorkerRequest) => {
+  const dispatch = (request: unknown) => {
     if (messageListener === null) {
       throw new Error('채팅 Worker 메시지 리스너가 등록되지 않았습니다.')
     }
@@ -120,10 +120,7 @@ const loadWorker = async () => {
 
   return {
     dispatch,
-    dispatchAndWaitForResponse: async (
-      request: ChatWorkerRequest,
-      type: ChatWorkerResponse['type'],
-    ) => {
+    dispatchAndWaitForResponse: async (request: unknown, type: ChatWorkerResponse['type']) => {
       const response = waitForNextResponse(type)
       dispatch(request)
       await response
@@ -200,6 +197,24 @@ describe('chat worker preparation', () => {
       await worker.dispatchAndWaitForResponse({modelId: 'qwen-4b', type: 'prepare'}, 'error')
       expect(worker.postMessage).toHaveBeenCalledWith({
         message,
+        restartRequired: false,
+        type: 'error',
+      })
+    },
+    WORKER_IMPORT_TEST_TIMEOUT_MILLISECONDS,
+  )
+})
+
+describe('chat worker requests', () => {
+  it(
+    'should report unsupported request types as an error response',
+    async () => {
+      const worker = await loadWorker()
+
+      await worker.dispatchAndWaitForResponse({type: 'unknown'}, 'error')
+
+      expect(worker.postMessage).toHaveBeenCalledWith({
+        message: '지원하지 않는 채팅 요청이에요.',
         restartRequired: false,
         type: 'error',
       })
@@ -466,14 +481,6 @@ describe('chat worker generation', () => {
       restartRequired: false,
       type: 'error',
     })
-  })
-
-  it('should execute the exhaustive request guard for an unknown runtime request', async () => {
-    const worker = await loadWorker()
-
-    expect(() => {
-      worker.dispatch({type: 'unknown'} as unknown as ChatWorkerRequest)
-    }).toThrow("Cannot read properties of undefined (reading 'catch')")
   })
 })
 
