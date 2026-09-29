@@ -8,6 +8,8 @@ const ITEM_FINGERPRINT_PRIMARY_MODULUS = 2_147_483_647
 const ITEM_FINGERPRINT_RADIX = 36
 const ITEM_FINGERPRINT_SECONDARY_BASE = 37
 const ITEM_FINGERPRINT_SECONDARY_MODULUS = 2_147_483_629
+const ISO_DATE_LENGTH = 'YYYY-MM-DD'.length
+const ISO_DATE_PREFIX_PATTERN = /^\d{4}-\d{2}-\d{2}/u
 
 export interface ParsedFeedItem {
   readonly content: string
@@ -96,10 +98,28 @@ const getContent = (element: Element) => {
     ? {content: summary, contentKind: 'summary' as const}
     : {content: '', contentKind: 'none' as const}
 }
+const parseFeedTimestamp = (value: string): number | null => {
+  const normalizedValue = value.trim()
+  const datePrefix = normalizedValue.slice(0, ISO_DATE_LENGTH)
+
+  if (ISO_DATE_PREFIX_PATTERN.test(normalizedValue)) {
+    const parsedDate = new Date(`${datePrefix}T00:00:00Z`)
+
+    if (
+      Number.isNaN(parsedDate.getTime()) ||
+      parsedDate.toISOString().slice(0, ISO_DATE_LENGTH) !== datePrefix
+    ) {
+      return null
+    }
+  }
+
+  const timestamp = Date.parse(normalizedValue)
+  return Number.isNaN(timestamp) ? null : timestamp
+}
 const getPublishedAt = (element: Element) => {
   const timestamp = ['published', 'pubdate', 'updated', 'date']
-    .map((name) => Date.parse(getChildText(element, [name])))
-    .find((value) => !Number.isNaN(value))
+    .map((name) => parseFeedTimestamp(getChildText(element, [name])))
+    .find((value) => value !== null)
 
   return timestamp === undefined ? null : new Date(timestamp).toISOString()
 }
