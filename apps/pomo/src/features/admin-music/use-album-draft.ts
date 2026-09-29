@@ -45,16 +45,29 @@ const persistDraftData = async (
   draft: AlbumDraftData,
   setMessage: Setter<string | null>,
   updateDraftReference: DraftReferenceUpdater,
+  preserveLatestCoverMetadata: boolean,
 ): Promise<void> => {
   try {
-    const {writeAlbumDraftData} = await getAlbumDraftStorage()
+    const {readAlbumDraftData, writeAlbumDraftData} = await getAlbumDraftStorage()
+    const storedDraftResult = preserveLatestCoverMetadata ? readAlbumDraftData() : null
+    if (storedDraftResult !== null && !storedDraftResult.success) {
+      setMessage('브라우저 초안의 최신 상태를 읽지 못했습니다. 다시 시도해 주세요.')
+      return
+    }
+    const storedDraft = storedDraftResult?.data ?? null
+    const draftToPersist = {
+      ...draft,
+      ...(storedDraft === null
+        ? {}
+        : {coverDraftId: storedDraft.coverDraftId, hasCoverFile: storedDraft.hasCoverFile}),
+    }
 
-    if (!writeAlbumDraftData(draft).success) {
+    if (!writeAlbumDraftData(draftToPersist).success) {
       setMessage('브라우저에 초안을 저장하지 못했습니다. 이 탭을 닫기 전에 다시 시도해 주세요.')
       return
     }
 
-    if (!(await updateDraftReference(draft.coverDraftId)).success) {
+    if (!(await updateDraftReference(draftToPersist.coverDraftId)).success) {
       setMessage(
         '브라우저 초안은 저장했지만 다른 탭과 커버 참조를 동기화하지 못했습니다. 이 탭을 닫기 전에 다시 시도해 주세요.',
       )
@@ -181,7 +194,7 @@ const createDraftDataGetter = (options: CreateDraftDataGetterOptions) => (): Alb
 
 interface DraftPersistence {
   readonly enqueue: <Value>(operation: () => Promise<Value>) => Promise<Value>
-  readonly persist: () => void
+  readonly persist: (preserveLatestCoverMetadata?: boolean) => void
   readonly wait: () => Promise<void>
 }
 
@@ -195,9 +208,11 @@ const createDraftPersistence = (
 
   return {
     enqueue,
-    persist: () => {
+    persist: (preserveLatestCoverMetadata = true) => {
       const draft = getDraftData()
-      enqueue(() => persistDraftData(draft, setMessage, updateDraftReference))
+      enqueue(() =>
+        persistDraftData(draft, setMessage, updateDraftReference, preserveLatestCoverMetadata),
+      )
     },
     wait: queue.settle,
   }
@@ -540,7 +555,7 @@ export const useAlbumDraft = (props: UseAlbumDraftProps) => {
     getCoverDraftId: coverDraftId,
     getCoverFile: preparedCoverFile,
     getDraftData,
-    persistDraft: draftPersistence.persist,
+    persistDraft: () => draftPersistence.persist(false),
     renewAlbumId: albumCreationId.renew,
     services: createActionAlbumCreationServices(albumAction, draftReference.update),
     setAlbumId: albumCreationId.set,
