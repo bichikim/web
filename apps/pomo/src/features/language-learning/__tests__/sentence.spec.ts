@@ -1,6 +1,6 @@
 import {describe, expect, it} from 'vitest'
 
-import {isValidLanguageLearningSentence} from '../sentence'
+import {isValidLanguageLearningSentence, normalizeLanguageLearningSentence} from '../sentence'
 
 describe('isValidLanguageLearningSentence', () => {
   it('should accept decimal points in Korean and Japanese sentences', () => {
@@ -36,5 +36,16 @@ describe('isValidLanguageLearningSentence', () => {
     expect(
       isValidLanguageLearningSentence('本当にそうですか？！今日はよく晴れています。', 'ja'),
     ).toBe(false)
+  })
+})
+
+describe('normalizeLanguageLearningSentence', () => {
+  it('should recover mismatched quote wrappers without dropping sentence endings', () => {
+    const sentence = normalizeLanguageLearningSentence('"hello\'')
+    const question = normalizeLanguageLearningSentence('"hello?\'')
+
+    expect(sentence).toBe('hello.')
+    expect(isValidLanguageLearningSentence(sentence, 'en')).toBe(true)
+    expect(question).toBe('hello?')
   })
 })
