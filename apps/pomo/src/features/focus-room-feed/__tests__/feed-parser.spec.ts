@@ -338,6 +338,16 @@ it('should prefer an uppercase alternate Atom link', () => {
   expect(feed.items[0]?.id).toBe('https://example.com/article')
 })
 
+it('should recognize an alternate Atom link among multiple relation tokens', () => {
+  const feed = parseFeedXml(
+    `<feed><title>Atom</title><entry><link rel="alternate noopener" href="https://example.com/article" /></entry></feed>`,
+    'https://example.com/feed.xml',
+  )
+
+  expect(feed.items[0]?.link).toBe('https://example.com/article')
+  expect(feed.items[0]?.id).toBe('https://example.com/article')
+})
+
 it('should use an RSS self link as the item link and ID when no alternate exists', () => {
   const feed = parseFeedXml(
     `<rss><channel><item><link rel="self" href="https://example.com/article" /></item></channel></rss>`,

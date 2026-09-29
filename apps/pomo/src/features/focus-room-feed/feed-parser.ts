@@ -79,16 +79,21 @@ const getLink = (element: Element, baseUrl: string) => {
   const links = getChildren(element).filter((child) => child.localName.toLowerCase() === 'link')
   const candidates = links.map((link) => ({
     hasHref: link.hasAttribute('href'),
-    relation: link.getAttribute('rel'),
+    relationTokens:
+      link
+        .getAttribute('rel')
+        ?.toLowerCase()
+        .split(/[\t\n\f\r ]+/u) ?? null,
     url: resolveUrl(link.getAttribute('href') ?? link.textContent?.trim() ?? '', baseUrl),
   }))
   const preferred =
     candidates.find(
-      ({relation, url}) => relation?.toLowerCase() === 'alternate' && url.length > 0,
+      ({relationTokens, url}) => relationTokens?.includes('alternate') === true && url.length > 0,
     ) ??
-    candidates.find(({relation, url}) => relation === null && url.length > 0) ??
+    candidates.find(({relationTokens, url}) => relationTokens === null && url.length > 0) ??
     candidates.find(
-      ({hasHref, relation, url}) => hasHref && relation?.toLowerCase() === 'self' && url.length > 0,
+      ({hasHref, relationTokens, url}) =>
+        hasHref && relationTokens?.includes('self') === true && url.length > 0,
     )
   return preferred?.url ?? ''
 }
