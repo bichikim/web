@@ -204,11 +204,10 @@ describe('PMusicPlayerContent queue and restoration paths', () => {
     } satisfies PPlaybackState
     featureMocks.readPPlayback.mockResolvedValue(storedPlayback)
     render(() => <PMusicPlayerContent />, {wrapper: PreferenceProvider})
-    await Promise.resolve()
-    await Promise.resolve()
-    await Promise.resolve()
-    expect(featureMocks.resolvePlaybackRestore).toHaveBeenCalledWith(
-      expect.objectContaining({storedPlayback}),
+    await vi.waitFor(() =>
+      expect(featureMocks.resolvePlaybackRestore).toHaveBeenCalledWith(
+        expect.objectContaining({storedPlayback}),
+      ),
     )
   })
 
@@ -225,23 +224,20 @@ describe('PMusicPlayerContent queue and restoration paths', () => {
     featureMocks.resolvePPlaylist.mockReturnValue(restoredTracks)
 
     render(() => <PMusicPlayerContent />, {wrapper: PreferenceProvider})
-    await Promise.resolve()
-    await Promise.resolve()
-    await Promise.resolve()
-
-    expect(featureMocks.resolvePlaybackRestore).toHaveBeenCalledExactlyOnceWith(
-      expect.objectContaining({storedPlayback: null, tracks: TRACKS}),
+    await vi.waitFor(() =>
+      expect(featureMocks.resolvePlaybackRestore).toHaveBeenCalledExactlyOnceWith(
+        expect.objectContaining({storedPlayback: null, tracks: TRACKS}),
+      ),
     )
 
     playlist.resolve([storedPlayback.trackId])
-    await Promise.resolve()
-    await Promise.resolve()
-    await Promise.resolve()
+    await vi.waitFor(() =>
+      expect(featureMocks.resolvePlaybackRestore).toHaveBeenLastCalledWith(
+        expect.objectContaining({storedPlayback, tracks: restoredTracks}),
+      ),
+    )
 
     expect(featureMocks.resolvePlaybackRestore).toHaveBeenCalledTimes(2)
-    expect(featureMocks.resolvePlaybackRestore).toHaveBeenLastCalledWith(
-      expect.objectContaining({storedPlayback, tracks: restoredTracks}),
-    )
   })
 
   it('should restore stored playback after a queue edit during initial loading', async () => {
