@@ -25,6 +25,15 @@ describe('createCalendarQuery', () => {
     })
   })
 
+  it('should include next week when querying today and next week', () => {
+    expect(
+      createCalendarQuery({now, text: '오늘 다음 주 일정 알려줘', timeZone: 'Asia/Seoul'}),
+    ).toEqual({
+      end: '2026-09-13T15:00:00.000Z',
+      start: '2026-09-04T10:30:00.000Z',
+    })
+  })
+
   it('should query only the afternoon for today when the current time is before noon', () => {
     expect(
       createCalendarQuery({

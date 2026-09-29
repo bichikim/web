@@ -50,6 +50,7 @@ interface CreateCalendarWeekRangeOptions {
   readonly daysUntilNextMonday: number
   readonly includesNextWeek: boolean
   readonly includesThisWeek: boolean
+  readonly includesToday: boolean
   readonly includesYesterday: boolean
   readonly now: Date
 }
@@ -91,6 +92,7 @@ const createCalendarWeekRange = ({
   daysUntilNextMonday,
   includesNextWeek,
   includesThisWeek,
+  includesToday,
   includesYesterday,
   now,
 }: CreateCalendarWeekRangeOptions): CalendarEventRange | null => {
@@ -100,7 +102,8 @@ const createCalendarWeekRange = ({
 
   const nextMonday = boundary(daysUntilNextMonday)
   const followingMonday = boundary(daysUntilNextMonday + DAYS_PER_WEEK)
-  const start = includesYesterday ? boundary(-1) : includesThisWeek ? now : nextMonday
+  const startsThisWeek = includesThisWeek || (includesToday && includesNextWeek)
+  const start = includesYesterday ? boundary(-1) : startsThisWeek ? now : nextMonday
   const end = includesNextWeek ? followingMonday : nextMonday
   return toRange(start, end)
 }
@@ -170,7 +173,7 @@ export const createCalendarQuery = (
       text: options.text,
     })
   }
-  if (includesToday && !includesThisWeek) {
+  if (includesToday && !includesThisWeek && !includesNextWeek) {
     const end = boundary(1)
     return createCalendarDateRange({
       afternoonStart: boundary(0, '12:00:00'),
@@ -188,6 +191,7 @@ export const createCalendarQuery = (
     daysUntilNextMonday,
     includesNextWeek,
     includesThisWeek,
+    includesToday,
     includesYesterday,
     now,
   })
