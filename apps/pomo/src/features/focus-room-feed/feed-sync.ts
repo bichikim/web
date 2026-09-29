@@ -2,7 +2,7 @@
 import {getErrorMessage} from 'src/utils/get-error-message'
 
 import type {FeedGenerationSettings} from './generation-settings'
-import type {FeedConnection} from './schema'
+import {type FeedConnection, normalizeFeedDocumentUrl} from './schema'
 import {
   type FeedDialogueJob,
   type FeedItemRecord,
@@ -115,10 +115,7 @@ interface ResolveContentOptions {
 }
 
 const getDocumentUrl = (value: string) => {
-  const url = new URL(value)
-  url.hash = ''
-  url.pathname = url.pathname.replace(/\/$/u, '') || '/'
-  return url.href
+  return normalizeFeedDocumentUrl(new URL(value)).href
 }
 const resolveContent = async (options: ResolveContentOptions) => {
   const feedContent = cleanFeedText(options.item.content)
