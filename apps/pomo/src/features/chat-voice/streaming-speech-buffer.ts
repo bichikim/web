@@ -95,31 +95,35 @@ export const createStreamingSpeechBuffer = (
     return combinedSegments.filter(({segment}) => isCompletedSentence(segment))
   }
 
-  const update = (text: string) => {
+  const reconcileConsumedText = (text: string) => {
     if (!text.startsWith(consumedText)) {
       const currentConsumedText = text.slice(0, consumedText.length)
 
       if (isOnlyTerminalPunctuationChanged(consumedText, currentConsumedText)) {
         consumedText = currentConsumedText
-      } else {
-        let commonPrefixLength = 0
-
-        while (
-          commonPrefixLength < consumedText.length &&
-          consumedText[commonPrefixLength] === text[commonPrefixLength]
-        ) {
-          commonPrefixLength += 1
-        }
-
-        const lastUnchangedSegment = getCompletedSegments(text.slice(0, commonPrefixLength)).at(-1)
-        consumedLength =
-          lastUnchangedSegment === undefined
-            ? 0
-            : lastUnchangedSegment.index + lastUnchangedSegment.segment.trimEnd().length
-        consumedText = text.slice(0, consumedLength)
+        return
       }
-    }
 
+      let commonPrefixLength = 0
+
+      while (
+        commonPrefixLength < consumedText.length &&
+        consumedText[commonPrefixLength] === text[commonPrefixLength]
+      ) {
+        commonPrefixLength += 1
+      }
+
+      const lastUnchangedSegment = getCompletedSegments(text.slice(0, commonPrefixLength)).at(-1)
+      consumedLength =
+        lastUnchangedSegment === undefined
+          ? 0
+          : lastUnchangedSegment.index + lastUnchangedSegment.segment.trimEnd().length
+      consumedText = text.slice(0, consumedLength)
+    }
+  }
+
+  const update = (text: string) => {
+    reconcileConsumedText(text)
     const remainingText = text.slice(consumedLength)
     const completedSegments = getCompletedSegments(remainingText)
     const lastSegment = completedSegments.at(-1)
@@ -139,6 +143,7 @@ export const createStreamingSpeechBuffer = (
       return null
     }
 
+    reconcileConsumedText(text)
     const remainingText = text.slice(consumedLength).trim()
     consumedLength = text.length
     consumedText = text
