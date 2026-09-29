@@ -115,7 +115,9 @@ interface ResolveContentOptions {
 }
 
 const getDocumentUrl = (value: string) => {
-  return normalizeFeedDocumentUrl(new URL(value)).href
+  const documentUrl = normalizeFeedDocumentUrl(new URL(value))
+  documentUrl.hostname = documentUrl.hostname.replace(/^www\./u, '')
+  return documentUrl.href
 }
 const resolveContent = async (options: ResolveContentOptions) => {
   const feedContent = cleanFeedText(options.item.content)
