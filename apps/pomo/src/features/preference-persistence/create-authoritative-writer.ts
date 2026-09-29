@@ -7,6 +7,8 @@ export interface CreateAuthoritativeWriterOptions<Value> {
   readonly failureMessage: string
   readonly mapNativeFailure?: (error: unknown) => unknown
   readonly mapRemovalFailure?: (error: unknown) => unknown
+  /** Called after native storage commits, with the browser write error if it failed. */
+  readonly onNativeCommit?: (value: Value, webWriteError: unknown | null) => void
 }
 
 /** Writes the web copy first and removes a failed web copy after native success when supported. */
@@ -27,6 +29,8 @@ export const createAuthoritativeWriter =
         ? new Error(options.failureMessage, {cause: error})
         : options.mapNativeFailure(error)
     }
+
+    options.onNativeCommit?.(value, webError)
 
     if (webError !== null && options.removeWeb !== undefined) {
       const removalError = options.removeWeb()
