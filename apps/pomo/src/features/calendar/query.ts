@@ -146,8 +146,10 @@ export const createCalendarQuery = (
     DAY_AFTER_TOMORROW_EXCLUSION_PATTERN,
   )
   if (includesDayAfterTomorrow) {
-    const startDayOffset = getFirstRequestedDateOffset(includesToday, includesTomorrow)
-    const start = includesToday ? now : boundary(startDayOffset)
+    const startDayOffset = includesYesterday
+      ? -1
+      : getFirstRequestedDateOffset(includesToday, includesTomorrow)
+    const start = includesToday && !includesYesterday ? now : boundary(startDayOffset)
     const noon = boundary(DAY_AFTER_TOMORROW_START_DAYS, '12:00:00')
     return createCalendarDateRange({
       afternoonStart: boundary(startDayOffset, '12:00:00'),

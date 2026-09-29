@@ -113,6 +113,18 @@ describe('createCalendarQuery', () => {
       start: '2026-09-04T10:30:00.000Z',
       text: '오늘 모레 일정 알려줘',
     },
+    {
+      start: '2026-09-02T15:00:00.000Z',
+      text: '어제 모레 일정 알려줘',
+    },
+    {
+      start: '2026-09-02T15:00:00.000Z',
+      text: '어제 내일 모레 일정 알려줘',
+    },
+    {
+      start: '2026-09-02T15:00:00.000Z',
+      text: '어제 오늘 모레 일정 알려줘',
+    },
   ])(
     'should include all requested days through the day after tomorrow for $text',
     ({start, text}) => {
