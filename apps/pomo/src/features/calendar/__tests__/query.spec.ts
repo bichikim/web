@@ -271,6 +271,101 @@ describe('createCalendarQuery', () => {
     })
   })
 
+  it.each(['주말 일정 알려줘', '주말 뭐 있어?', '이번 주말 뭐 있어?'])(
+    'should query the upcoming weekend for "%s"',
+    (text) => {
+      expect(
+        createCalendarQuery({
+          now: new Date('2026-03-02T01:00:00.000Z'),
+          text,
+          timeZone: 'Asia/Seoul',
+        }),
+      ).toEqual({
+        end: '2026-03-08T15:00:00.000Z',
+        start: '2026-03-06T15:00:00.000Z',
+      })
+    },
+  )
+
+  it.each([
+    {day: 'Saturday', now: '2026-03-07T03:00:00.000Z'},
+    {day: 'Sunday', now: '2026-03-08T03:00:00.000Z'},
+  ])('should query the remaining weekend from $day', ({now, day}) => {
+    expect(
+      createCalendarQuery({now: new Date(now), text: '주말 일정', timeZone: 'Asia/Seoul'}),
+    ).toEqual({
+      end: '2026-03-08T15:00:00.000Z',
+      start: now,
+    })
+  })
+
+  it.each([
+    {
+      end: '2026-03-15T15:00:00.000Z',
+      now: '2026-03-02T01:00:00.000Z',
+      start: '2026-03-13T15:00:00.000Z',
+      text: '다음 주말 일정 알려줘',
+    },
+    {
+      end: '2026-03-15T15:00:00.000Z',
+      now: '2026-03-08T03:00:00.000Z',
+      start: '2026-03-13T15:00:00.000Z',
+      text: '다음 주말 일정 알려줘',
+    },
+    {
+      end: '2026-03-01T15:00:00.000Z',
+      now: '2026-03-02T01:00:00.000Z',
+      start: '2026-02-27T15:00:00.000Z',
+      text: '지난 주말 일정 알려줘',
+    },
+    {
+      end: '2026-03-01T15:00:00.000Z',
+      now: '2026-03-08T03:00:00.000Z',
+      start: '2026-02-27T15:00:00.000Z',
+      text: '지난 주말 일정 알려줘',
+    },
+    {
+      end: '2026-03-01T15:00:00.000Z',
+      now: '2026-03-02T01:00:00.000Z',
+      start: '2026-02-27T15:00:00.000Z',
+      text: '지난 주말 뭐 있어?',
+    },
+  ])('should query the local weekend described by "$text"', ({end, now, start, text}) => {
+    expect(
+      createCalendarQuery({
+        now: new Date(now),
+        text,
+        timeZone: 'Asia/Seoul',
+      }),
+    ).toEqual({end, start})
+  })
+
+  it('should ignore an excluded weekend when another week is requested', () => {
+    expect(
+      createCalendarQuery({
+        now: new Date('2026-03-02T01:00:00.000Z'),
+        text: '주말 말고 다음 주 일정 알려줘',
+        timeZone: 'Asia/Seoul',
+      }),
+    ).toEqual({
+      end: '2026-03-15T15:00:00.000Z',
+      start: '2026-03-08T15:00:00.000Z',
+    })
+  })
+
+  it('should use local boundaries when the upcoming weekend crosses daylight saving time', () => {
+    expect(
+      createCalendarQuery({
+        now: new Date('2026-03-06T12:00:00.000Z'),
+        text: '주말 일정',
+        timeZone: 'America/New_York',
+      }),
+    ).toEqual({
+      end: '2026-03-09T04:00:00.000Z',
+      start: '2026-03-07T05:00:00.000Z',
+    })
+  })
+
   it.each([
     '이번 주 다음 주 일정 알려줘',
     '다음 주 이번 주 일정 알려줘',
