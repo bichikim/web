@@ -76,7 +76,7 @@ const getLink = (element: Element, baseUrl: string) => {
   const links = getChildren(element).filter((child) => child.localName.toLowerCase() === 'link')
   const preferred = links.find((link) => {
     const relation = link.getAttribute('rel')
-    return relation === null || relation === 'alternate'
+    return relation === null || relation.toLowerCase() === 'alternate'
   })
   const value = preferred?.getAttribute('href') ?? preferred?.textContent?.trim() ?? ''
   return resolveUrl(value, baseUrl)
