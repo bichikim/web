@@ -10,6 +10,7 @@ import {PPlayerUtilityButton} from '../p-player-utility-button/PPlayerUtilityBut
 export interface PAlbumLibraryProps {
   readonly onAddTracks: (tracks: readonly PTrack[]) => void
   readonly onClearTracks?: () => void
+  readonly onRemoveTracks?: (trackIds: ReadonlySet<string>) => void
   readonly onPreviewEnd?: () => void
   readonly onPreviewStart?: (stopPreview: () => void) => void
   readonly sceneStyle?: PSceneStyle
@@ -36,6 +37,7 @@ export const PAlbumLibrary = (props: PAlbumLibraryProps) => {
           isOpen={isOpen()}
           onAddTracks={props.onAddTracks}
           onClearTracks={props.onClearTracks}
+          onRemoveTracks={props.onRemoveTracks}
           onCloseAutoFocus={() => triggerElement()?.focus()}
           onOpenChange={setIsOpen}
           onPreviewEnd={props.onPreviewEnd}

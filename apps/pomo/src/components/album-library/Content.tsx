@@ -3,6 +3,7 @@ import {PButton} from '../p-button/PButton'
 import {reportClientError} from '../../features/client-error-reporter'
 import {type PResolvedAlbum, type PTrack, useTrackPreview} from '../../features/focus-room-audio'
 import {AlbumCard} from './Card'
+import {CustomAlbumSection} from './CustomAlbumSection'
 import {LoadingStatus} from './LoadingStatus'
 import {useAlbumLibrary} from './use-album-library'
 import * as m from '@paraglide/message'
@@ -10,6 +11,7 @@ import {PublishedCatalogError} from './PublishedCatalogError'
 
 export interface PAlbumLibraryContentProps {
   readonly onAddTracks: (tracks: readonly PTrack[]) => void
+  readonly onRemoveTracks?: (trackIds: ReadonlySet<string>) => void
   readonly onPreviewEnd?: () => void
   readonly onPreviewStart?: (stopPreview: () => void) => void
   readonly tracks: readonly PTrack[]
@@ -20,7 +22,8 @@ export function PAlbumLibraryContent(props: PAlbumLibraryContentProps) {
   const trackIds = createMemo(() => new Set(props.tracks.map((track) => track.id)))
   const isAlbumInPlayer = (album: PResolvedAlbum) =>
     album.tracks.length > 0 && album.tracks.every((track) => trackIds().has(track.id))
-  const handleAlbumAdd = (album: PResolvedAlbum) => props.onAddTracks(album.tracks)
+  const handleAlbumAdd = (album: PResolvedAlbum) =>
+    props.onAddTracks(album.tracks.filter((track) => !trackIds().has(track.id)))
   const handleTrackAdd = (track: PTrack) => props.onAddTracks([track])
   const preview = useTrackPreview({
     onEnd: () => props.onPreviewEnd?.(),
@@ -48,6 +51,25 @@ export function PAlbumLibraryContent(props: PAlbumLibraryContentProps) {
           </p>
         )}
       </Show>
+      <CustomAlbumSection
+        albums={albumLibrary.customAlbums()}
+        error={albumLibrary.customAlbumError()}
+        isLoading={albumLibrary.isCustomAlbumsLoading()}
+        onAddAlbum={handleAlbumAdd}
+        onAddTrack={handleTrackAdd}
+        onDeleteAlbum={albumLibrary.deleteCustomAlbum}
+        onRemoveTracks={props.onRemoveTracks}
+        onSaved={albumLibrary.reloadCustomAlbums}
+        onPreview={(request) => {
+          preview.togglePreview(request).catch((error: unknown) => {
+            console.error('Failed to toggle custom album track preview.', error)
+          })
+        }}
+        onRetry={albumLibrary.reloadCustomAlbums}
+        pendingTrackId={preview.pendingTrackId()}
+        playingTrackId={preview.playingTrackId()}
+        trackIds={trackIds()}
+      />
       <ErrorBoundary
         fallback={(error, reset) => {
           reportClientError(error, {feature: 'album-library', source: 'error-boundary'})
@@ -116,6 +138,7 @@ export function PAlbumLibraryContent(props: PAlbumLibraryContentProps) {
                     isInPlayer={isAlbumInPlayer(album)}
                     onAddAlbum={handleAlbumAdd}
                     onAddTrack={handleTrackAdd}
+                    onRemoveTracks={props.onRemoveTracks}
                     onPreview={(request) => {
                       preview.togglePreview(request).catch((error: unknown) => {
                         console.error('Failed to toggle album track preview.', error)

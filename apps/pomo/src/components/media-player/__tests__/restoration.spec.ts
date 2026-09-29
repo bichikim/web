@@ -133,4 +133,26 @@ describe('restorePPlayerState', () => {
     await restoration
     expect(onRestore).not.toHaveBeenCalled()
   })
+
+  it('should keep playback restoration responsive while custom tracks are loading', async () => {
+    const customTracks = Promise.withResolvers<readonly PTrack[]>()
+    const onRestore = vi.fn()
+    const restoration = restorePPlayerState({
+      canRestore: () => true,
+      defaultTracks: [DEFAULT_TRACK],
+      onRestore,
+      playbackRequest: Promise.resolve(ALBUM_PLAYBACK),
+      playlistRequest: Promise.resolve([ALBUM_TRACK.id]),
+      resolveTracks: () => customTracks.promise,
+      tracks: [DEFAULT_TRACK],
+    })
+
+    await Promise.resolve()
+    expect(onRestore).not.toHaveBeenCalled()
+
+    customTracks.resolve([ALBUM_TRACK])
+    await restoration
+
+    expect(onRestore).toHaveBeenCalledExactlyOnceWith([ALBUM_TRACK], ALBUM_PLAYBACK)
+  })
 })

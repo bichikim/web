@@ -3,6 +3,9 @@ import {Show} from 'solid-js'
 
 import {type PResolvedAlbum, type PTrack} from '../../features/focus-room-audio/index'
 import * as m from '@paraglide/message'
+import {HConfirmButton} from '../h-confirm-button/HConfirmButton'
+import {P_BUTTON_CLASSES, PButton} from '../p-button/PButton'
+import {CustomAlbumCoverImage} from './CustomAlbumCoverImage'
 
 const SECONDS_PER_MINUTE = 60
 
@@ -33,22 +36,39 @@ const ALBUM_ART_CLASSES = [
 
 interface AlbumSummaryProps {
   readonly album: PResolvedAlbum
+  readonly coverImage?: Blob
+  readonly deletingAlbumId?: string | null
   readonly index: number
+  readonly onDelete?: () => Promise<void> | void
+  readonly onEdit?: () => void
 }
 
 export const AlbumSummary = (props: AlbumSummaryProps) => (
   <div class="flex gap-3.5 p-4">
     <Show
       fallback={
-        <div
-          aria-hidden="true"
-          class={cx(
-            'grid size-16 flex-none place-items-center rounded-4 text-white shadow-panel',
-            ALBUM_ART_CLASSES[props.index % ALBUM_ART_CLASSES.length],
-          )}
+        <Show
+          fallback={
+            <div
+              aria-hidden="true"
+              class={cx(
+                'grid size-16 flex-none place-items-center rounded-4 text-white shadow-panel',
+                ALBUM_ART_CLASSES[props.index % ALBUM_ART_CLASSES.length],
+              )}
+            >
+              <span class={`${props.album.icon} size-6.5 opacity-90`} />
+            </div>
+          }
+          when={props.coverImage}
         >
-          <span class={`${props.album.icon} size-6.5 opacity-90`} />
-        </div>
+          {(coverImage) => (
+            <CustomAlbumCoverImage
+              alt={m.album_cover_alt({title: props.album.title})}
+              class="size-16 flex-none rounded-4 object-cover shadow-panel"
+              coverImage={coverImage()}
+            />
+          )}
+        </Show>
       }
       when={props.album.coverImageUrl}
     >
@@ -61,10 +81,70 @@ export const AlbumSummary = (props: AlbumSummaryProps) => (
       )}
     </Show>
     <div class="min-w-0 flex-1 py-0.5">
-      <h3 class="m-0 truncate text-base font-750 leading-5 text-foreground">{props.album.title}</h3>
-      <p class="mb-0 mt-1 line-clamp-2 text-sm leading-5 text-muted-foreground">
-        {props.album.description}
-      </p>
+      <div class="flex min-w-0 items-start justify-between gap-2">
+        <h3 class="m-0 min-w-0 flex-1 truncate text-base font-750 leading-5 text-foreground">
+          {props.album.title}
+        </h3>
+        <Show when={props.onEdit !== undefined || props.onDelete !== undefined}>
+          <div class="flex flex-none items-center gap-2">
+            <Show when={props.onEdit}>
+              <PButton
+                bordered
+                class="flex-none"
+                onPress={() => props.onEdit?.()}
+                size="small"
+                tone="secondary"
+                transparent
+              >
+                {m.album_custom_edit()}
+              </PButton>
+            </Show>
+            <Show when={props.onDelete}>
+              <HConfirmButton
+                accessibleLabel={
+                  props.deletingAlbumId === props.album.id
+                    ? m.album_custom_deleting()
+                    : m.album_custom_delete_accessible({title: props.album.title})
+                }
+                class={P_BUTTON_CLASSES({
+                  bordered: true,
+                  class: 'flex-none',
+                  size: 'small',
+                  tone: 'danger',
+                  transparent: true,
+                })}
+                confirmationAccessibleLabel={m.album_custom_delete_confirm_accessible({
+                  title: props.album.title,
+                })}
+                confirmationChildren={m.album_custom_delete_confirm()}
+                disabled={props.deletingAlbumId !== null && props.deletingAlbumId !== undefined}
+                onConfirm={() => props.onDelete?.()}
+              >
+                <>
+                  <span
+                    aria-hidden="true"
+                    class={
+                      props.deletingAlbumId === props.album.id
+                        ? 'i-tabler-loader-2 size-4.5 flex-none animate-spin'
+                        : 'i-tabler-trash size-4.5 flex-none'
+                    }
+                  />
+                  {props.deletingAlbumId === props.album.id
+                    ? m.album_custom_deleting()
+                    : m.album_custom_delete()}
+                </>
+              </HConfirmButton>
+            </Show>
+          </div>
+        </Show>
+      </div>
+      <Show when={props.album.description}>
+        {(description) => (
+          <p class="mb-0 mt-1 line-clamp-2 text-sm leading-5 text-muted-foreground">
+            {description()}
+          </p>
+        )}
+      </Show>
       <Show when={(props.album.trackCount ?? props.album.tracks.length) > 0}>
         <p class="mb-0 mt-2 flex items-center gap-1.5 text-sm leading-5 text-muted-foreground">
           <span aria-hidden="true" class="i-tabler-music size-3.5" />
