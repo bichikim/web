@@ -4,7 +4,12 @@ export const parseRetryAfterSeconds = (header: string | null): number | null => 
     return null
   }
 
-  const seconds = Number(header)
+  const normalizedHeader = header.trim()
+  if (!/^[0-9]+$/u.test(normalizedHeader)) {
+    return null
+  }
+
+  const seconds = Number(normalizedHeader)
 
   return Number.isInteger(seconds) && seconds > 0 ? seconds : null
 }
