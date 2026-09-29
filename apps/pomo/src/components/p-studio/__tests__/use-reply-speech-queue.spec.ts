@@ -213,6 +213,7 @@ it('should wait for canceled in-flight speech when dialogue occupancy is omitted
 it('should abort an active reply when dialogue becomes occupied', async () => {
   const [isOccupied, setIsOccupied] = createSignal(false)
   const [isDialogueOccupied, setIsDialogueOccupied] = createSignal(false)
+  const [speechRevision, setSpeechRevision] = createSignal(0)
   let abortSpeech: () => void = () => undefined
   const speak = vi
     .fn<(text: string) => Promise<void>>()
@@ -220,13 +221,14 @@ it('should abort an active reply when dialogue becomes occupied', async () => {
       () =>
         new Promise<void>((_, reject) => {
           abortSpeech = () => reject(new DOMException('Speech stopped.', 'AbortError'))
+          setSpeechRevision((revision) => revision + 1)
           setIsOccupied(true)
         }),
     )
     .mockResolvedValueOnce(undefined)
   const stop = vi.fn(() => abortSpeech())
   const {cleanup, result} = renderHook(() =>
-    useReplySpeechQueue({isDialogueOccupied, isOccupied, speak, stop}),
+    useReplySpeechQueue({isDialogueOccupied, isOccupied, speak, speechRevision, stop}),
   )
 
   const activeReply = result.enqueue('재생 중인 답변')
@@ -248,6 +250,68 @@ it('should abort an active reply when dialogue becomes occupied', async () => {
 
   await vi.waitFor(() => expect(speak).toHaveBeenCalledTimes(2))
   return expect(queuedReply).resolves.toBeUndefined().finally(cleanup)
+})
+
+it('should cancel a reply superseded by another PomoSay session', async () => {
+  const [isOccupied, setIsOccupied] = createSignal(false)
+  const [speechRevision, setSpeechRevision] = createSignal(0)
+  let completeSpeech: () => void = () => undefined
+  const speak = vi.fn(
+    () =>
+      new Promise<void>((resolve) => {
+        completeSpeech = resolve
+        setIsOccupied(true)
+        setSpeechRevision((revision) => revision + 1)
+      }),
+  )
+  const stop = vi.fn()
+  const {cleanup, result} = renderHook(() =>
+    useReplySpeechQueue({isOccupied, speak, speechRevision, stop}),
+  )
+
+  const activeReply = result.enqueue('재생 중인 답변')
+  void activeReply.catch(() => undefined)
+
+  try {
+    await vi.waitFor(() => expect(speak).toHaveBeenCalledWith('재생 중인 답변'))
+    expect(stop).not.toHaveBeenCalled()
+
+    setSpeechRevision((revision) => revision + 1)
+
+    await expect(activeReply).rejects.toMatchObject({name: 'AbortError'})
+    expect(stop).not.toHaveBeenCalled()
+  } finally {
+    completeSpeech()
+    cleanup()
+  }
+})
+
+it('should abort an active reply when PomoSay becomes occupied', async () => {
+  const [isOccupied, setIsOccupied] = createSignal(false)
+  let abortSpeech: () => void = () => undefined
+  const speak = vi.fn(
+    () =>
+      new Promise<void>((_, reject) => {
+        abortSpeech = () => reject(new DOMException('Speech stopped.', 'AbortError'))
+      }),
+  )
+  const stop = vi.fn(() => abortSpeech())
+  const {cleanup, result} = renderHook(() =>
+    useReplySpeechQueue({isDialogueOccupied: () => false, isOccupied, speak, stop}),
+  )
+
+  const activeReply = result.enqueue('재생 중인 답변')
+  void activeReply.catch(() => undefined)
+
+  try {
+    await vi.waitFor(() => expect(speak).toHaveBeenCalledWith('재생 중인 답변'))
+    setIsOccupied(true)
+
+    await vi.waitFor(() => expect(stop).toHaveBeenCalledOnce())
+    await expect(activeReply).rejects.toMatchObject({name: 'AbortError'})
+  } finally {
+    cleanup()
+  }
 })
 
 it('should wait for canceled in-flight speech before continuing after dialogue cancellation', async () => {

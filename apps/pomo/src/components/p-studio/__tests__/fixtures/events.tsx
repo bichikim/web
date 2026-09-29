@@ -275,6 +275,7 @@ const createPomoSay = (speechText: string | null = null, isPreparing = false): P
   isPlaying: () => false,
   isPreparing: () => isPreparing,
   speak: vi.fn(async () => undefined),
+  speechRevision: () => 0,
   speechText: () => speechText,
   stop: vi.fn(),
 })
