@@ -4,7 +4,8 @@ import {createTokenIdsMatching} from '../text-generation/create-token-ids-matchi
 import type {TextTokenVocabulary} from '../text-generation/runtime'
 
 const FOREIGN_CJK_PATTERN = /[\p{Script_Extensions=Han}\p{Script=Hiragana}\p{Script=Katakana}]/u
-const SENTENCE_PATTERN = /[^.!?\n。！？]+[.!?\n。！？]*|[.!?\n。！？]+/gu
+const SENTENCE_PATTERN =
+  /(?:[^.!?\n。！？]|(?<=[\p{Script=Latin}\p{N}])\.(?=[\p{Script=Latin}\p{N}]))+[.!?\n。！？]*|[.!?\n。！？]+/gu
 const REFINEMENT_FALLBACK = '답변의 일부 표현을 자연스러운 한국어로 바꾸지 못했어요.'
 
 interface RefiningKoreanTextSegment {

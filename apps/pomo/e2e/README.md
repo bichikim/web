@@ -48,14 +48,14 @@ pnpm --filter @apps/pomo test:e2e --config=playwright.settings.config.ts --worke
 타이머 테스트는 조작으로 시간을 설정하고 Playwright 시계로 경과 시간만 제어합니다.
 새로고침 중에는 hydration이 끝나도록 시계를 진행하고, 복원 후 다시 멈춥니다.
 
-[배경 탭 테스트](rendering/background.spec.ts)는 실제 웹 IndexedDB에 저장한 액자 모드·랜덤 재생·
+[배경 탭 테스트](rendering/background.e2e.ts)는 실제 웹 IndexedDB에 저장한 액자 모드·랜덤 재생·
 사진 두 장 표시 설정을 새로고침 후 확인하고, 캐릭터 모드로 돌아갈 수 있는지 검증합니다.
-다크·라이트 액자 설정 화면의 [최초 기준](rendering/background.spec.ts-snapshots)과
+다크·라이트 액자 설정 화면의 [최초 기준](rendering/background.e2e.ts-snapshots)과
 [현재 이미지·촬영 환경](rendering/evidence/background/manifest.json)을 함께 보존합니다.
 미디어 목록은 비어 있으므로 파일 업로드·사진/영상 재생·네이티브 저장소는 검증하지 않습니다.
 
 ```sh
-pnpm --filter @apps/pomo test:e2e --config=playwright.rendering.config.ts e2e/rendering/background.spec.ts
+pnpm --filter @apps/pomo test:e2e --config=playwright.rendering.config.ts e2e/rendering/background.e2e.ts
 ```
 
 ```sh
@@ -63,10 +63,10 @@ pnpm --filter @apps/pomo test:e2e --config=playwright.rendering.config.ts
 ```
 
 [촬영 환경](rendering/evidence/manifest.json)의 OS·Chromium 버전·화면 크기·DPR·언어·시간대와
-같은 환경에서 비교해야 합니다. [설정 기준 PNG](rendering/settings.spec.ts-snapshots)와
-[타이머 기준 PNG](rendering/pomodoro.spec.ts-snapshots)는 Git에 보존합니다.
+같은 환경에서 비교해야 합니다. [설정 기준 PNG](rendering/settings.e2e.ts-snapshots)와
+[타이머 기준 PNG](rendering/pomodoro.e2e.ts-snapshots)는 Git에 보존합니다.
 
-[포모도로 테스트](rendering/pomodoro.spec.ts)의 빠른 제어·세션 초기화 시나리오는
+[포모도로 테스트](rendering/pomodoro.e2e.ts)의 빠른 제어·세션 초기화 시나리오는
 실제 버튼으로 시작·일시정지·재개하고, 완료 횟수가 있는 휴식 도중 세션을 초기화합니다.
 새로고침 뒤에도 완료 횟수는 0이며 저장한 시간 설정은 유지되고, 타이머는 멈춰 있어야 합니다.
 타이머 상태나 저장소는 모킹하지 않으며 비교와 무관한 재생목록만 비웁니다.
@@ -92,7 +92,7 @@ pnpm --filter @apps/pomo test:e2e --config=playwright.rendering.config.ts
 설정 Esc 동작 보강 시 실행한 [렌더링 비교 기록](rendering/evidence/dismissal/manifest.json)은
 기존 여섯 기준을 유지하며 대표 현재 PNG를 보존합니다. 정확한 커밋의 로컬 실행 결과는 해당 PR 본문에 기록합니다.
 
-[캐릭터 장면 테스트](rendering/character.spec.ts)는 배경 탭에서 키보드로 밤을 선택하고,
+[캐릭터 장면 테스트](rendering/character.e2e.ts)는 배경 탭에서 키보드로 밤을 선택하고,
 타이핑·사용자 보기를 선택한 뒤 새로고침합니다. 복원된 라디오 선택과 실제 장면의
 접근성 이름, canvas 준비를 확인하고 다크·라이트 설정 화면을 PNG로 비교합니다.
 두 화면은 이전 기준이 없는 최초 기준이며 [촬영 기록](rendering/evidence/character/manifest.json)에
@@ -101,10 +101,10 @@ pnpm --filter @apps/pomo test:e2e --config=playwright.rendering.config.ts
 데스크톱 창 간 동기화는 검증 범위가 아닙니다.
 
 ```sh
-pnpm --filter @apps/pomo test:e2e --config=playwright.rendering.config.ts e2e/rendering/character.spec.ts
+pnpm --filter @apps/pomo test:e2e --config=playwright.rendering.config.ts e2e/rendering/character.e2e.ts
 ```
 
-[재생목록 테스트](rendering/playlist.spec.ts)는 실제 홈 화면에서 목록 비우기·되돌리기와
+[재생목록 테스트](rendering/playlist.e2e.ts)는 실제 홈 화면에서 목록 비우기·되돌리기와
 새로고침 후 빈 목록 유지를 검증합니다. 앨범 팝업의 완료 안내·되돌리기 버튼과 빈 플레이어를
 PNG로 비교하고, 팝업을 닫은 뒤 포커스 복원과 재생·곡 이동 비활성화도 확인합니다.
 목록 조작과 웹 localStorage는 실제 구현을 사용합니다. 번들·공개 카탈로그 HTTP 응답은
@@ -114,10 +114,10 @@ PNG로 비교하고, 팝업을 닫은 뒤 포커스 복원과 재생·곡 이동
 기준·현재 이미지와 실행 환경을 보존합니다.
 
 ```sh
-pnpm --filter @apps/pomo test:e2e --config=playwright.rendering.config.ts e2e/rendering/playlist.spec.ts
+pnpm --filter @apps/pomo test:e2e --config=playwright.rendering.config.ts e2e/rendering/playlist.e2e.ts
 ```
 
-[화면 보호기 테스트](rendering/screen-saver.spec.ts)는 실제 홈 설정에서 1분을 선택한 뒤 새로고침해
+[화면 보호기 테스트](rendering/screen-saver.e2e.ts)는 실제 홈 설정에서 1분을 선택한 뒤 새로고침해
 설정이 복원되는지 확인합니다. 실제 타이머로 자동 진입·Escape 해제·다시 진입·제자리 포인터 해제를
 검증하고, 끄기를 저장한 뒤 다시 로드해 61초 동안 나타나지 않는지도 확인합니다. 날짜 표시만 고정하며
 타이머와 입력 이벤트는 모의 구현으로 대체하지 않습니다. 빈 재생목록과 초기 포모도로 상태를 사용하므로
@@ -129,10 +129,10 @@ pnpm --filter @apps/pomo test:e2e --config=playwright.rendering.config.ts e2e/re
 둘러보기 안내 아이콘 추가를 반영하며, 갱신 전·현재·차이 PNG를 같은 폴더에 보존합니다.
 
 ```sh
-pnpm --filter @apps/pomo test:e2e --config=playwright.rendering.config.ts e2e/rendering/screen-saver.spec.ts
+pnpm --filter @apps/pomo test:e2e --config=playwright.rendering.config.ts e2e/rendering/screen-saver.e2e.ts
 ```
 
-[전체 화면 테스트](rendering/fullscreen.spec.ts)는 일반 설정의 스위치로 실제 브라우저 전체 화면에
+[전체 화면 테스트](rendering/fullscreen.e2e.ts)는 일반 설정의 스위치로 실제 브라우저 전체 화면에
 진입하고, 탭 전환과 설정 재진입 후 상태가 유지되는지 확인합니다. 스위치로 해제한 뒤 다시
 진입하고, 외부 `document.exitFullscreen()`의 상태 변화도 UI에 반영되는지 검증합니다.
 브라우저 API와 이벤트는 모킹하지 않습니다. 마지막 닫기에서 설정 버튼의 포커스 복원도 확인합니다.
@@ -144,10 +144,10 @@ pnpm --filter @apps/pomo test:e2e --config=playwright.rendering.config.ts e2e/re
 실제 OS 창 장식·하드웨어 화면 유지·네이티브 플랫폼은 검증 범위에 포함하지 않습니다.
 
 ```sh
-pnpm --filter @apps/pomo test:e2e --config=playwright.rendering.config.ts e2e/rendering/fullscreen.spec.ts
+pnpm --filter @apps/pomo test:e2e --config=playwright.rendering.config.ts e2e/rendering/fullscreen.e2e.ts
 ```
 
-기억보조의 학습 단어는 [단어 관리 E2E](rendering/words.spec.ts)에서 실제 입력과 버튼 조작으로
+기억보조의 학습 단어는 [단어 관리 E2E](rendering/words.e2e.ts)에서 실제 입력과 버튼 조작으로
 저장·대소문자 중복 제거·다중 선택·외움 상태 이동·필터·삭제·새로고침 후 복원을 검증합니다.
 다중 선택 화면과 외운 단어 필터 화면은 최초 PNG 기준이며, 생성 후 일반 비교로 다시 확인했습니다.
 [촬영 환경과 비교 기록](rendering/evidence/words/manifest.json)에 기준과 현재 이미지의 해시를 보존합니다.
@@ -155,5 +155,5 @@ pnpm --filter @apps/pomo test:e2e --config=playwright.rendering.config.ts e2e/re
 웹 환경을 검증하며, 발음 생성·오디오 재생·다른 탭과의 동기화·네이티브 저장소는 범위 밖입니다.
 
 ```sh
-pnpm --filter @apps/pomo exec playwright test --config playwright.rendering.config.ts e2e/rendering/words.spec.ts
+pnpm --filter @apps/pomo exec playwright test --config playwright.rendering.config.ts e2e/rendering/words.e2e.ts
 ```

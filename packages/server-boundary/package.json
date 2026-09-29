@@ -20,7 +20,7 @@
     "build": "vite build",
     "prepare-build": "pnpm run build",
     "typecheck": "tsc --noEmit",
-    "test:e2e": "pnpm run build && vitest run --config vitest.e2e.config.ts"
+    "test:integration": "pnpm run build && vitest run --config vitest.integration.config.ts"
   },
   "devDependencies": {
     "@solidjs/router": "catalog:",

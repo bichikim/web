@@ -147,12 +147,15 @@ export const usePomodoroTimer = (props: UsePomodoroTimerProps = {}): PomodoroTim
   const [now, setNow] = createSignal(0)
   const [isStorageReady, setIsStorageReady] = createSignal(false)
 
-  const publishSnapshot = (options: TimerSyncPublishOptions = {}) =>
+  const publishSnapshot = (
+    options: TimerSyncPublishOptions = {},
+    timerState: PomodoroTimerState = state(),
+  ) =>
     syncController?.publish({
       config: config(),
       deferEvents: options.deferEvents === true,
       isAutoStartEnabled: isAutoStartEnabled(),
-      state: state(),
+      state: timerState,
     })
 
   const applyState = (
@@ -290,8 +293,6 @@ export const usePomodoroTimer = (props: UsePomodoroTimerProps = {}): PomodoroTim
     onCleanup(() => {
       isDisposed = true
       globalThis.cancelAnimationFrame(frame)
-      syncController?.close()
-      syncController = null
       const shouldPersistBeforeInitialization = !isStorageReady()
       const shouldPersistStateBeforeInitialization =
         shouldPersistBeforeInitialization && state().status !== 'idle'
@@ -308,16 +309,17 @@ export const usePomodoroTimer = (props: UsePomodoroTimerProps = {}): PomodoroTim
               autoStartNextPhase: true,
             })
           : currentState
-        writePomodoroTimerState(
-          stopPomodoroTimer(stateToStop, currentConfig, {
-            now: currentTime,
-            preserveRemainingProgress: true,
-          }),
-          props.storage,
-        )
+        const stoppedState = stopPomodoroTimer(stateToStop, currentConfig, {
+          now: currentTime,
+          preserveRemainingProgress: true,
+        })
+        writePomodoroTimerState(stoppedState, props.storage)
+        applyState(stoppedState)
       } else if (shouldPersistStateBeforeInitialization) {
         writePomodoroTimerState(state(), props.storage)
       }
+      syncController?.close()
+      syncController = null
     })
   })
 

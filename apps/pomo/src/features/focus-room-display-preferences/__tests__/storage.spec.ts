@@ -253,6 +253,38 @@ it('should keep the tour visible for preferences saved before the tour setting e
   })
 })
 
+it.each(['web', 'toss'] as const)(
+  'should preserve legacy display preferences when the dialogue composer setting is missing in %s storage',
+  async (storageType) => {
+    const harness = createStorageHarness()
+    const legacyPreferences = {
+      featureRequestVisible: true,
+      memoryAssistVisible: true,
+      playerVisible: false,
+      pomodoroVisible: false,
+      toolsButtonVisible: true,
+      tourButtonVisible: true,
+    }
+
+    if (storageType === 'toss') {
+      harness.storage.usesTossStorage.mockReturnValue(true)
+      harness.tossValues.set(STORAGE_KEY, legacyPreferences)
+    } else {
+      harness.webValues.set(STORAGE_KEY, legacyPreferences)
+    }
+
+    await expect(harness.repository.read()).resolves.toEqual({
+      dialogueComposerVisible: false,
+      featureRequestVisible: true,
+      memoryAssistVisible: true,
+      playerVisible: false,
+      pomodoroVisible: false,
+      toolsButtonVisible: true,
+      tourButtonVisible: true,
+    })
+  },
+)
+
 it('should persist and restore a hidden tour button', async () => {
   const harness = createStorageHarness()
   await harness.repository.write({

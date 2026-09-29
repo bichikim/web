@@ -49,6 +49,13 @@ interface InvalidFeedUrl {
 
 export type NormalizeFeedUrlResult = InvalidFeedUrl | ValidFeedUrl
 
+/** Normalizes a feed document URL in place by removing trailing path slashes and its fragment. */
+export const normalizeFeedDocumentUrl = (url: URL) => {
+  url.pathname = url.pathname.replace(/\/+$/u, '') || '/'
+  url.hash = ''
+  return url
+}
+
 /** Normalizes a user-entered HTTP(S) feed address for storage and duplicate checks. */
 export const normalizeFeedUrl = (input: string): NormalizeFeedUrlResult => {
   const value = input.trim()
@@ -64,9 +71,7 @@ export const normalizeFeedUrl = (input: string): NormalizeFeedUrlResult => {
       return {ok: false}
     }
 
-    url.pathname = url.pathname.replace(/\/+$/u, '') || '/'
-    url.hash = ''
-    return {ok: true, value: url.href}
+    return {ok: true, value: normalizeFeedDocumentUrl(url).href}
   } catch {
     return {ok: false}
   }

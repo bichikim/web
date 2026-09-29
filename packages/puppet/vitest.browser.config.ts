@@ -22,7 +22,7 @@ export default defineConfig({
       instances: [{browser: 'chromium', viewport: {height: 700, width: 900}}],
       provider: playwright({contextOptions: {deviceScaleFactor: 1}}),
     },
-    include: ['visual/__tests__/**/*.spec.tsx'],
+    include: ['visual/__tests__/**/*.integration.tsx'],
     name: 'puppet-visual',
   },
 })

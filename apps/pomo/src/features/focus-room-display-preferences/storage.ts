@@ -30,7 +30,9 @@ export interface CreatePDisplayPreferencesRepositoryOptions {
 
 export const DISPLAY_PREFERENCES_STORAGE_KEY = 'pomo:focus-room-display-preferences:v1'
 const displayPreferencesSchema = z.object({
-  dialogueComposerVisible: z.boolean(),
+  dialogueComposerVisible: z
+    .boolean()
+    .default(DEFAULT_P_DISPLAY_PREFERENCES.dialogueComposerVisible),
   featureRequestVisible: z.boolean().default(true),
   memoryAssistVisible: z.boolean().default(true),
   playerVisible: z.boolean().default(true),

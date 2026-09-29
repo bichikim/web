@@ -102,6 +102,41 @@ describe('focus room entry history', () => {
     expect(writeTossStorageJson).toHaveBeenCalledWith('pomo:focus-room-entry-history:v1', true)
   })
 
+  it('should retain native entry history after the bridge disappears', async () => {
+    let usesNative = true
+    const readToss = vi.fn(async () => null)
+    const repository = createEntryHistoryRepository({
+      readToss,
+      readWeb: () => null,
+      usesNative: () => usesNative,
+      writeToss: async () => undefined,
+      writeWeb: () => new Error('blocked'),
+    })
+
+    await repository.write()
+    usesNative = false
+
+    expect(await repository.read()).toBe(true)
+    expect(readToss).not.toHaveBeenCalled()
+  })
+
+  it('should keep confirmed native history when an earlier read finishes late', async () => {
+    const pendingNativeRead = Promise.withResolvers<true | null>()
+    const repository = createEntryHistoryRepository({
+      readToss: () => pendingNativeRead.promise,
+      readWeb: () => null,
+      usesNative: () => true,
+      writeToss: async () => undefined,
+      writeWeb: () => new Error('blocked'),
+    })
+    const reading = repository.read()
+
+    await repository.write()
+    pendingNativeRead.resolve(null)
+
+    expect(await reading).toBe(true)
+  })
+
   it('should retain the web record when native writing fails', async () => {
     vi.mocked(hasNativeStorageBridge).mockReturnValue(true)
     vi.mocked(writeTossStorageJson).mockRejectedValue(new Error('native unavailable'))

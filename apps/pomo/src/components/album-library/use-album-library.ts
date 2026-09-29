@@ -28,7 +28,7 @@ export interface AlbumLibraryController {
 }
 
 type PublishedCatalogLoadState =
-  | {readonly error: unknown; readonly kind: 'rejected'}
+  | {readonly error: Error; readonly kind: 'rejected'}
   | {readonly kind: 'pending'}
   | {readonly catalog: PPublishedAlbumCatalog; readonly kind: 'resolved'}
 
@@ -60,7 +60,13 @@ export const useAlbumLibrary = (): AlbumLibraryController => {
       return catalog
     } catch (error: unknown) {
       if (!isDisposed) {
-        setPublishedCatalogState({error, kind: 'rejected'})
+        setPublishedCatalogState({
+          error:
+            error instanceof Error
+              ? error
+              : new Error('Published focus-room albums request failed', {cause: error}),
+          kind: 'rejected',
+        })
       }
 
       throw error
@@ -103,11 +109,17 @@ export const useAlbumLibrary = (): AlbumLibraryController => {
   const getPublishedCatalog = (): PPublishedAlbumCatalog | undefined => {
     const state = publishedCatalogState()
 
-    if (state.kind === 'rejected') {
-      throw state.error
+    switch (state.kind) {
+      case 'pending':
+      case 'rejected':
+        return undefined
+      case 'resolved':
+        return state.catalog
+      default: {
+        const unreachableState: never = state
+        return unreachableState
+      }
     }
-
-    return state.kind === 'resolved' ? state.catalog : undefined
   }
   const albums = () => {
     const bundled = bundledAlbums()
@@ -120,8 +132,20 @@ export const useAlbumLibrary = (): AlbumLibraryController => {
     return published?.status === 'ready' ? [...bundled, ...published.albums] : bundled
   }
   const catalogError = () => {
-    const catalog = getPublishedCatalog()
-    return catalog?.status === 'failed' ? catalog.error : null
+    const state = publishedCatalogState()
+
+    switch (state.kind) {
+      case 'pending':
+        return null
+      case 'rejected':
+        return state.error
+      case 'resolved':
+        return state.catalog.status === 'failed' ? state.catalog.error : null
+      default: {
+        const unreachableState: never = state
+        return unreachableState
+      }
+    }
   }
   const retryCatalog = async () => {
     if (isCatalogRetrying()) {
@@ -133,7 +157,7 @@ export const useAlbumLibrary = (): AlbumLibraryController => {
     try {
       await refreshPublishedCatalog()
     } catch {
-      // The resource preserves unexpected retry errors for the ErrorBoundary.
+      // The rejected query state exposes catalog errors through the inline banner.
     } finally {
       setIsCatalogRetrying(false)
     }
@@ -142,7 +166,7 @@ export const useAlbumLibrary = (): AlbumLibraryController => {
     try {
       await Promise.all([refetchBundledAlbums(), refreshPublishedCatalog(), reloadCustomAlbums()])
     } catch {
-      // The resources preserve retry errors for the ErrorBoundary to render after reset.
+      // Bundled album errors use the boundary, while catalog errors use the inline banner.
     }
   }
 

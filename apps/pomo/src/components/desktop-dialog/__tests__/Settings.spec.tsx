@@ -1,6 +1,7 @@
 /** @vitest-environment jsdom */
 
 import {render} from '@solidjs/testing-library'
+import {createSignal} from 'solid-js'
 import {afterEach, beforeEach, expect, it, vi} from 'vitest'
 
 import {useDesktopSettingsState} from '../../desktop-surface/use-settings-state'
@@ -129,4 +130,24 @@ it('should pass desktop settings state to the window presentation', () => {
   props.onRequestClose?.()
 
   expect(closeDesktopDialog).toHaveBeenCalledExactlyOnceWith('settings')
+})
+
+it('should wait for restored display preferences before mounting the window settings', () => {
+  const [isReady, setIsReady] = createSignal(false)
+  vi.mocked(usePDisplayPreferences).mockReturnValue({
+    ...displayPreferences,
+    featureRequestVisible: () => false,
+    isReady,
+  })
+
+  render(() => <DesktopSettingsDialog />)
+
+  expect(PSettings).not.toHaveBeenCalled()
+
+  setIsReady(true)
+
+  expect(PSettings).toHaveBeenCalledOnce()
+  expect(vi.mocked(PSettings).mock.calls[0]?.[0]).toMatchObject({
+    featureRequestVisible: false,
+  })
 })

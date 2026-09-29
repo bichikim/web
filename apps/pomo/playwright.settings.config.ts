@@ -27,7 +27,7 @@ export default defineConfig({
   ...base,
   projects: base.projects?.map((project) => ({
     ...project,
-    testMatch: '**/e2e/shared/settings.spec.ts',
+    testMatch: '**/e2e/shared/settings.e2e.ts',
   })),
   webServer: [
     webServer,

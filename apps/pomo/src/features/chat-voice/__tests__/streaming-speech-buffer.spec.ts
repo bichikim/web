@@ -83,6 +83,23 @@ describe('createStreamingSpeechBuffer', () => {
     expect(buffer.flush('짧음')).toBeNull()
   })
 
+  it('should flush a longer replacement answer from the beginning', () => {
+    const buffer = createStreamingSpeechBuffer({locale: 'ko'})
+    const replacementAnswer = 'Replacement sentence is much longer.'
+
+    expect(buffer.update('Earlier sentence.')).toEqual(['Earlier sentence.'])
+    expect(buffer.flush(replacementAnswer)).toBe(replacementAnswer)
+  })
+
+  it('should preserve unchanged completed sentences when flushing a replacement answer', () => {
+    const buffer = createStreamingSpeechBuffer({locale: 'ko'})
+    const streamedAnswer = 'Earlier sentence. Original ending.'
+    const replacementAnswer = 'Earlier sentence. Replacement sentence is much longer.'
+
+    expect(buffer.update(streamedAnswer)).toEqual(['Earlier sentence.', 'Original ending.'])
+    expect(buffer.flush(replacementAnswer)).toBe('Replacement sentence is much longer.')
+  })
+
   it('should not repeat a completed sentence when the stream shrinks to it', () => {
     const buffer = createStreamingSpeechBuffer({locale: 'ko'})
 

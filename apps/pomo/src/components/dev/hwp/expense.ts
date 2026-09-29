@@ -1,4 +1,5 @@
 import {parseDate} from 'src/features/civil-date'
+import {findJsonObjectEnd} from 'src/utils/json'
 import {isNonBlankString} from 'src/utils/is-non-blank-string'
 
 export interface ExpenseItem {
@@ -58,21 +59,8 @@ const toPositiveInteger = (value: unknown) => {
   return Number.isSafeInteger(parsed) && parsed > 0 ? parsed : null
 }
 
-const readDate = (value: unknown) => {
-  if (value === undefined || value === null) {
-    return null
-  }
-
-  if (typeof value !== 'string' || !isNonBlankString(value)) {
-    return null
-  }
-
-  const date = value.trim()
-  return parseDate(date) === null ? null : date
-}
-
-const readTextDate = (line: string) => {
-  const dateMatch = DATE_LINE_PATTERN.exec(line)
+const readExpenseDate = (value: string) => {
+  const dateMatch = DATE_LINE_PATTERN.exec(value)
   const year = dateMatch?.groups?.year
   const month = dateMatch?.groups?.month
   const day = dateMatch?.groups?.day
@@ -82,6 +70,18 @@ const readTextDate = (line: string) => {
 
   const normalizedDate = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`
   return parseDate(normalizedDate) === null ? null : `${year}-${month}-${day}`
+}
+
+const readDate = (value: unknown) => {
+  if (value === undefined || value === null) {
+    return null
+  }
+
+  if (typeof value !== 'string' || !isNonBlankString(value)) {
+    return null
+  }
+
+  return readExpenseDate(value.trim())
 }
 
 const readQuestions = (value: unknown) => {
@@ -129,12 +129,6 @@ const readItems = (value: unknown) => {
   return items
 }
 
-const extractJson = (text: string) => {
-  const start = text.indexOf('{')
-  const end = text.lastIndexOf('}')
-  return start >= 0 && end > start ? text.slice(start, end + 1) : null
-}
-
 const createExpenseForm = (
   date: string | null,
   items: ReadonlyArray<ExpenseItem>,
@@ -149,12 +143,7 @@ const createExpenseForm = (
   return {ok: true, value: {date, items, questions, total}}
 }
 
-export const parseExpenseAssistantResponse = (text: string): ExpenseParseResult => {
-  const json = extractJson(text)
-  if (json === null) {
-    return invalid('invalid-json')
-  }
-
+const parseExpenseAssistantCandidate = (json: string): ExpenseParseResult => {
   let parsed: unknown
   try {
     parsed = JSON.parse(json)
@@ -179,6 +168,34 @@ export const parseExpenseAssistantResponse = (text: string): ExpenseParseResult 
   return createExpenseForm(date, items, questions)
 }
 
+export const parseExpenseAssistantResponse = (text: string): ExpenseParseResult => {
+  let invalidShape: ExpenseParseResult | null = null
+  let candidateStart = text.indexOf('{')
+
+  while (candidateStart >= 0) {
+    const candidateEnd = findJsonObjectEnd(text, candidateStart)
+    if (candidateEnd <= candidateStart) {
+      candidateStart = text.indexOf('{', candidateStart + 1)
+    } else {
+      const candidateResult = parseExpenseAssistantCandidate(
+        text.slice(candidateStart, candidateEnd + 1),
+      )
+      if (candidateResult.ok) {
+        return candidateResult
+      }
+
+      if (candidateResult.error.code === 'invalid-shape') {
+        invalidShape = candidateResult
+        candidateStart = text.indexOf('{', candidateEnd + 1)
+      } else {
+        candidateStart = text.indexOf('{', candidateStart + 1)
+      }
+    }
+  }
+
+  return invalidShape ?? invalid('invalid-json')
+}
+
 export const parseExpenseText = (text: string): ExpenseParseResult => {
   const lines = text
     .split(/\r?\n/u)
@@ -188,7 +205,7 @@ export const parseExpenseText = (text: string): ExpenseParseResult => {
   const items: Array<ExpenseItem> = []
 
   for (const line of lines) {
-    const dateValue = readTextDate(line)
+    const dateValue = readExpenseDate(line)
     if (dateValue !== null && date === null) {
       date = dateValue
     } else {

@@ -6,9 +6,7 @@ export default () => ({
   tests: {
     override: (testPatterns) => [
       ...testPatterns,
-      '__tests__/**/*.spec.?(c|m)[jt]s?(x)',
-      'scripts/**/*.spec.?(c|m)[jt]s?(x)',
-      'src/**/*.spec.?(c|m)[jt]s?(x)',
+      '**/*.spec.?(c|m)[jt]s?(x)',
       '!**/*.story.*',
       '!**/*.stories.*',
     ],

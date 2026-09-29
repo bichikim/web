@@ -10,7 +10,9 @@ import {PSelect, type PSelectOption} from '../p-select/PSelect'
 import {PSettingsActionButton} from '../settings/ActionButton'
 import {
   DEFAULT_FEED_VOICE_ID,
+  type FeedUrlEnvironment,
   type FeedVoiceId,
+  getFeedConnectionKey,
   getFeedRequestUrl,
   useAutoPreparePreference,
   useFeedConnections,
@@ -51,16 +53,10 @@ const getRecommendedDevFeeds = () =>
     },
   ] as const
 
-export function PFeedSettingsContent() {
-  const runtime = useOptionalPFeeds()
-  const automatic = runtime?.automaticPreparation ?? useAutoPreparePreference()
-  const preference = useReadingStatusPreference()
-  const feeds = useFeedConnections()
-  const publicOrigin = getRuntimePublicOrigin()
-  const {origin: localOrigin} = globalThis.location
-  const {timeZone} = Intl.DateTimeFormat().resolvedOptions()
-  const feedUrlEnvironment = {localOrigin, publicOrigin, timeZone}
-  const recommendedFeeds: ReadonlyArray<RecommendedFeed> = [
+const getRecommendedFeeds = (environment: FeedUrlEnvironment): ReadonlyArray<RecommendedFeed> => {
+  const {localOrigin, publicOrigin, timeZone} = environment
+
+  return [
     ...getRecommendedPublicFeeds().map((feed) => ({
       ...feed,
       url: getFeedRequestUrl(feed.path, {publicOrigin, timeZone}),
@@ -75,13 +71,31 @@ export function PFeedSettingsContent() {
         }))
       : []),
   ]
+}
+
+export function PFeedSettingsContent() {
+  const runtime = useOptionalPFeeds()
+  const automatic = runtime?.automaticPreparation ?? useAutoPreparePreference()
+  const preference = useReadingStatusPreference()
+  const feeds = useFeedConnections()
+  const publicOrigin = getRuntimePublicOrigin()
+  const {origin: localOrigin} = globalThis.location
+  const {timeZone} = Intl.DateTimeFormat().resolvedOptions()
+  const feedUrlEnvironment = {
+    localOrigin,
+    publicOrigin: import.meta.env.VITE_POMO_PUBLIC_ORIGIN,
+    timeZone,
+  }
+  const recommendedFeeds = getRecommendedFeeds({localOrigin, publicOrigin, timeZone})
   const availableRecommendations = createMemo(() => {
     const storedUrls = new Set(
       feeds
         .connections()
-        .map((connection) => getFeedRequestUrl(connection.url, feedUrlEnvironment)),
+        .map((connection) => getFeedConnectionKey(connection.url, feedUrlEnvironment)),
     )
-    return recommendedFeeds.filter((feed) => !storedUrls.has(feed.url))
+    return recommendedFeeds.filter(
+      (feed) => !storedUrls.has(getFeedConnectionKey(feed.url, feedUrlEnvironment)),
+    )
   })
 
   const handleSubmit = (event: SubmitEvent) => {

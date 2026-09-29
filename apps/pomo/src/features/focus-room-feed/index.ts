@@ -65,4 +65,5 @@ export {
 } from './use-auto-prepare-preference'
 
 export * from './settings-runtime'
+export {getFeedConnectionKey} from './feed-connection-key'
 export {getFeedRequestUrl, type FeedUrlEnvironment} from './feed-request-url'

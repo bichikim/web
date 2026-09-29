@@ -28,7 +28,7 @@ export const Service = (props: ServiceProps = {}) => {
   })
   const settings = createMemo(() => preference() ?? DEFAULT_SERVICE_SETTINGS)
   const ready = () => preference() !== null
-  const today = useLocalDate({initialDate: runtime.now(), runtime})
+  const today = useLocalDate({initialDate: runtime.now(), runtime, timeZone: 'UTC'})
   const start = () => settings().start
   const manual = () => settings().manual
   const branch = () => settings().branch
@@ -112,7 +112,7 @@ export const Service = (props: ServiceProps = {}) => {
         )}
       </Show>
       <p class="m-0 text-sm leading-6 text-muted-foreground">
-        현재 기기의 날짜 {today()} 기준. 자동 계산은 2022년 이후 입대하는 현역병의 현재 복무기간을
+        현재 UTC 날짜 {today()} 기준. 자동 계산은 2022년 이후 입대하는 현역병의 현재 복무기간을
         적용한 예상치입니다. 입대일을 포함하며 복무 제외 기간·개인별 조정은 자동 반영하지 않습니다.
         진행률은 완료한 날짜를 기준으로 계산하며, 예상 전역일부터 100%로 표시합니다.
       </p>

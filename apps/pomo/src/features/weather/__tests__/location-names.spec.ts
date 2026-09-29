@@ -26,6 +26,36 @@ it('should preserve the stored city when no exact match exists', async () => {
   await expect(restoreWeatherLocationNames({location, search})).resolves.toBe(location)
 })
 
+it('should retry restoration when the stored names object is empty', async () => {
+  const savedLocation = {...location, names: {}}
+  const names = {en: 'New York', ko: '뉴욕'}
+  const search = vi.fn().mockResolvedValue([{...location, names}])
+
+  await expect(restoreWeatherLocationNames({location: savedLocation, search})).resolves.toEqual({
+    ...savedLocation,
+    names,
+  })
+  expect(search).toHaveBeenCalledWith({query: '뉴욕,US'})
+})
+
+it('should retry restoration when the stored english and korean names are blank', async () => {
+  const savedLocation = {...location, names: {en: '  ', ko: ''}}
+  const names = {en: 'New York', ko: '뉴욕'}
+  const search = vi.fn().mockResolvedValue([{...location, names}])
+
+  await expect(restoreWeatherLocationNames({location: savedLocation, search})).resolves.toEqual({
+    ...savedLocation,
+    names,
+  })
+  expect(search).toHaveBeenCalledWith({query: '뉴욕,US'})
+})
+
+it('should preserve the stored city when matching search names are empty', async () => {
+  const search = vi.fn().mockResolvedValue([{...location, names: {}}])
+
+  await expect(restoreWeatherLocationNames({location, search})).resolves.toBe(location)
+})
+
 it('should avoid searching already localized or legacy cities', async () => {
   const search = vi.fn()
   const localized = {...location, names: {en: 'New York'}}

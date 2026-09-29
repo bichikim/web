@@ -135,6 +135,18 @@ it('should report an error if a readable stale web copy cannot be removed', asyn
   fixture.removeWeb.mockReturnValue(new Error('blocked'))
   await expect(lunarDirectionStorage.write(next)).rejects.toThrow('Failed to discard stale')
 })
+it('should preserve the native selection after stale web removal fails', async () => {
+  fixture.usesTossStorage.mockReturnValue(true)
+  const previous = 'solar'
+  const next = 'lunar'
+  fixture.web.set('pomo:tool-lunar-direction:v1', JSON.stringify(previous))
+  fixture.writeWeb.mockReturnValue(new Error('blocked'))
+  fixture.removeWeb.mockReturnValue(new Error('blocked'))
+  await expect(lunarDirectionStorage.write(next)).rejects.toThrow('Failed to discard stale')
+
+  await expect(lunarDirectionStorage.read()).resolves.toBe(next)
+  await expect(fixture.getItem('pomo:tool-lunar-direction:v1')).resolves.toBe(JSON.stringify(next))
+})
 
 it('should isolate pending writes between repository instances and selection keys', async () => {
   fixture.usesTossStorage.mockReturnValue(true)

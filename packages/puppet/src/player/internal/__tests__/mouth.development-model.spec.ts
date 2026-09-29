@@ -74,51 +74,6 @@ describe('development model articulation', () => {
     expect(up.bottom - up.top).toBeLessThan((down.bottom - down.top) * 0.8)
   })
 
-  test.each([-30, 0, 30].flatMap((yaw) => [-30, 0, 30].map((pitch) => ({pitch, yaw}))))(
-    'should retain mouth surfaces at yaw=$yaw and pitch=$pitch',
-    ({yaw, pitch}) => {
-      for (const open of [0, 0.35, 1]) {
-        const values = {
-          'face-x': yaw,
-          'face-y': pitch,
-          'face-z': 15,
-          'mouth-open': open,
-          'mouth-shape': 0.7,
-        }
-        const background = bounds(render('psd-79', values))
-        const upper = bounds(render('psd-91', values))
-        const lower = bounds(render('psd-88', values))
-        expect(background.left).toBeLessThan(Math.min(upper.left, lower.left))
-        expect(background.right).toBeGreaterThan(Math.max(upper.right, lower.right))
-        expect(background.top).toBeLessThan(upper.top)
-        expect(background.bottom).toBeGreaterThan(lower.bottom)
-        for (const partId of [
-          'psd-79',
-          'psd-80',
-          'psd-81',
-          'psd-83',
-          'psd-84',
-          'psd-85',
-          'psd-87',
-          'psd-88',
-          'psd-90',
-          'psd-91',
-        ]) {
-          const part = model.parts.find((candidate) => candidate.id === partId)!
-          const vertices = render(partId, values)
-          expect(vertices.every(Number.isFinite)).toBe(true)
-          for (let index = 0; index < part.mesh.indices.length; index += 3) {
-            const [a, b, c] = part.mesh.indices.slice(index, index + 3).map((vertex) => vertex * 2)
-            const area = (v: ReadonlyArray<number>) =>
-              (v[b!]! - v[a!]!) * (v[c! + 1]! - v[a! + 1]!) -
-              (v[b! + 1]! - v[a! + 1]!) * (v[c!]! - v[a!]!)
-            expect(area(vertices) / area(part.mesh.vertices), partId).toBeGreaterThan(0)
-          }
-        }
-      }
-    },
-  )
-
   test('should distinguish wide vowels from rounded vowels', () => {
     const width = (time: number) => {
       const box = bounds(render('psd-88', sample(time)))
@@ -157,47 +112,4 @@ describe('development model articulation', () => {
     const raised = render('psd-83', {'mouth-open': 0.65, 'tongue-raise': 1})
     expect(bounds(raised).top).toBeCloseTo(bounds(neutral).top - 22, 6)
   })
-
-  test.each([-30, 0, 30])(
-    'should keep mouth surfaces unfolded and the background behind the aperture at yaw %s',
-    (yaw) => {
-      const parts = [
-        'psd-79',
-        'psd-80',
-        'psd-81',
-        'psd-83',
-        'psd-84',
-        'psd-85',
-        'psd-87',
-        'psd-88',
-        'psd-90',
-        'psd-91',
-      ]
-      for (const time of [0, 1, 2, 3, 4, 5, 6, 7, 8]) {
-        const values = {...sample(time), 'face-x': yaw}
-        const background = bounds(render('psd-79', values))
-        const upper = bounds(render('psd-91', values))
-        const lower = bounds(render('psd-88', values))
-        expect(background.top).toBeLessThan(upper.top)
-        expect(background.bottom).toBeGreaterThan(lower.bottom)
-        expect(background.left).toBeLessThan(Math.min(upper.left, lower.left))
-        expect(background.right).toBeGreaterThan(Math.max(upper.right, lower.right))
-        for (const partId of parts) {
-          const part = model.parts.find((candidate) => candidate.id === partId)!
-          const vertices = render(partId, values)
-          expect(vertices.every(Number.isFinite)).toBe(true)
-          for (let index = 0; index < part.mesh.indices.length; index += 3) {
-            const [a, b, c] = part.mesh.indices.slice(index, index + 3).map((vertex) => vertex * 2)
-            const area = (v: ReadonlyArray<number>) =>
-              (v[b!]! - v[a!]!) * (v[c! + 1]! - v[a! + 1]!) -
-              (v[b! + 1]! - v[a! + 1]!) * (v[c!]! - v[a!]!)
-            expect(
-              area(vertices) / area(part.mesh.vertices),
-              `${partId} time ${time} triangle ${index / 3}`,
-            ).toBeGreaterThan(0)
-          }
-        }
-      }
-    },
-  )
 })

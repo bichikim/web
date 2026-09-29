@@ -33,6 +33,7 @@ const storageMocks = vi.hoisted(() => ({
 const ENTRY_DIALOGUE_IDS: EventDialogueIds = {'room-enter': ['dialogue']}
 const ENTRY_PLAYBACK_MODES: EventPlaybackModes = {'room-enter': 'sequential-all'}
 const ENTRY_PLAYBACK_SESSION_KEY = 'pomo:focus-room-entry-playback:v1'
+const UI_AUTO_HIDE_STORAGE_KEY = 'pomo:ui-auto-hide:v1'
 
 vi.mock('@apps-in-toss/web-framework', () => ({Storage: storageMocks}))
 
@@ -96,6 +97,7 @@ const FOCUS_ROOM_STORAGE_KEYS = [
   'pomo:weather-preference:v1',
   DISPLAY_PREFERENCES_STORAGE_KEY,
   'pomo:screen-saver-delay:v1',
+  UI_AUTO_HIDE_STORAGE_KEY,
 ]
 
 it('should reset only the storage keys owned by one option group', async () => {
@@ -149,6 +151,14 @@ it('should remove persisted display preferences when resetting focus-room option
   await createRuntimeOptionResetManager().reset('focus-room')
 
   expect(localStorage.getItem(DISPLAY_PREFERENCES_STORAGE_KEY)).toBeNull()
+})
+
+it('should remove persisted UI auto-hide preferences when resetting focus-room options', async () => {
+  localStorage.setItem(UI_AUTO_HIDE_STORAGE_KEY, JSON.stringify({enabled: true, seconds: 300}))
+
+  await createRuntimeOptionResetManager().reset('focus-room')
+
+  expect(localStorage.getItem(UI_AUTO_HIDE_STORAGE_KEY)).toBeNull()
 })
 
 it('should clear persisted timer progress when resetting timer options', async () => {
@@ -255,7 +265,7 @@ it('should restore toss values when the last deletion fails', async () => {
   vi.mocked(storage.getToss).mockImplementation(async (key) => tossValues.get(key) ?? null)
   vi.mocked(storage.removeToss).mockImplementation(async (key) => {
     tossValues.delete(key)
-    if (key === 'pomo:screen-saver-delay:v1') {
+    if (key === UI_AUTO_HIDE_STORAGE_KEY) {
       throw new Error('toss unavailable')
     }
   })

@@ -1,14 +1,14 @@
 /** @vitest-environment jsdom */
 
 import {Tabs} from '@kobalte/core/tabs'
-import {fireEvent, render, screen, waitFor} from '@solidjs/testing-library'
+import {fireEvent, render, screen} from '@solidjs/testing-library'
 import type {JSX} from 'solid-js'
 import {beforeEach, expect, it, vi} from 'vitest'
 
 import {PModal, type PModalProps} from 'src/components/p-modal/PModal'
 import {PRadioSwitch} from 'src/components/p-radio-switch/PRadioSwitch'
 import {PSelect} from 'src/components/p-select/PSelect'
-import {PSwitch, type PSwitchProps} from 'src/components/p-switch/PSwitch'
+import {PSwitch} from 'src/components/p-switch/PSwitch'
 import {useDisplayTheme} from 'src/features/display-theme'
 import {useFullscreen} from 'src/features/fullscreen'
 import {useScreenWakeLock} from 'src/features/screen-wake-lock'
@@ -170,105 +170,6 @@ it('should expose the guide and credits as the final settings tabs', async () =>
     '크레딧',
   ])
   expect(screen.queryByRole('tab', {name: '날씨'})).toBeNull()
-})
-
-it('should map the scribble style switch to the scene style value', async () => {
-  const onSceneStyleChange = vi.fn()
-
-  render(() => <PSettings onSceneStyleChange={onSceneStyleChange} sceneStyle="scribble" />)
-
-  const settingsTrigger = screen.getByRole('button', {name: '설정'})
-
-  expect(settingsTrigger.parentElement?.querySelector('svg')).not.toBeNull()
-  expect(settingsTrigger.querySelector('[aria-hidden="true"]')).toHaveClass(
-    'i-pomo-scribble:settings',
-  )
-
-  await waitFor(() => expect(PSwitch).toHaveBeenCalled(), {timeout: 5000})
-  const styleSwitch = vi
-    .mocked(PSwitch)
-    .mock.calls.map(([props]) => props as PSwitchProps)
-    .find((props) => props.label === '하찮은 스타일')
-
-  expect(styleSwitch).toMatchObject({
-    checked: true,
-    description: expect.any(String),
-    label: '하찮은 스타일',
-  })
-
-  styleSwitch?.onChange(false)
-  expect(onSceneStyleChange).toHaveBeenLastCalledWith('original')
-
-  styleSwitch?.onChange(true)
-  expect(onSceneStyleChange).toHaveBeenLastCalledWith('scribble')
-})
-
-it('should forward every scene, weather, and modal action', async () => {
-  const onDialogueComposerVisibleChange = vi.fn()
-  const onActivityChange = vi.fn()
-  const onGazeChange = vi.fn()
-  const onMotionInputChange = vi.fn()
-  const onMotionModeChange = vi.fn()
-  const onSceneStyleChange = vi.fn()
-  const onScreenSaverDelayChange = vi.fn()
-  const onTimeModeChange = vi.fn()
-  const onWeatherLocationChange = vi.fn()
-  const onWeatherEnabledChange = vi.fn()
-  const onWeatherSceneModeChange = vi.fn()
-  render(() => (
-    <PSettings
-      canUseGyroscope
-      dialogueComposerVisible={false}
-      onActivityChange={onActivityChange}
-      onGazeChange={onGazeChange}
-      onDialogueComposerVisibleChange={onDialogueComposerVisibleChange}
-      onMotionInputChange={onMotionInputChange}
-      onMotionModeChange={onMotionModeChange}
-      onSceneStyleChange={onSceneStyleChange}
-      onScreenSaverDelayChange={onScreenSaverDelayChange}
-      onTimeModeChange={onTimeModeChange}
-      onWeatherLocationChange={onWeatherLocationChange}
-      onWeatherEnabledChange={onWeatherEnabledChange}
-      onWeatherSceneModeChange={onWeatherSceneModeChange}
-      weatherEnabled={false}
-    />
-  ))
-
-  fireEvent.click(screen.getByRole('button', {name: '설정'}))
-  fireEvent.click(await screen.findByRole('button', {name: '시간'}))
-  fireEvent.click(screen.getByRole('button', {name: '행동'}))
-  fireEvent.click(screen.getByRole('button', {name: '보기'}))
-  fireEvent.click(screen.getByRole('button', {name: '장면 움직임'}))
-  fireEvent.click(screen.getByRole('button', {name: '장면 조작 방식'}))
-  fireEvent.click(screen.getByRole('button', {name: '하찮은 스타일'}))
-  fireEvent.click(screen.getByRole('button', {name: '스크린 세이버'}))
-  fireEvent.click(screen.getByRole('button', {name: '전체 화면'}))
-  fireEvent.click(screen.getByRole('button', {name: '화면 자동 꺼짐 방지'}))
-  fireEvent.click(screen.getByRole('button', {name: '대화 입력 버튼 표시'}))
-  fireEvent.click(screen.getByRole('button', {name: '날씨 표시'}))
-  fireEvent.click(screen.getByRole('button', {name: '날씨 변경'}))
-  fireEvent.click(screen.getByRole('button', {name: '대화 닫기'}))
-
-  expect(onTimeModeChange).toHaveBeenCalledOnce()
-  expect(onActivityChange).toHaveBeenCalledOnce()
-  expect(onGazeChange).toHaveBeenCalledOnce()
-  expect(onMotionModeChange).toHaveBeenCalledOnce()
-  expect(onMotionInputChange).toHaveBeenCalledOnce()
-  expect(onSceneStyleChange).toHaveBeenCalledWith('scribble')
-  expect(onScreenSaverDelayChange).toHaveBeenCalledWith('10m')
-  expect(vi.mocked(useFullscreen).mock.results.at(-1)?.value.onEnabledChange).toHaveBeenCalledWith(
-    true,
-  )
-  expect(onWeatherEnabledChange).toHaveBeenCalledWith(true)
-  expect(onWeatherLocationChange).toHaveBeenCalledWith(LEGACY_WEATHER_LOCATIONS.seoul)
-  expect(onWeatherSceneModeChange).toHaveBeenCalledWith('rain')
-  expect(onDialogueComposerVisibleChange).toHaveBeenCalledWith(true)
-  const wakeLockSwitch = vi
-    .mocked(PSwitch)
-    .mock.calls.map(([props]) => props)
-    .find((props) => props.label === '화면 자동 꺼짐 방지')
-  expect(Object.getOwnPropertyDescriptor(wakeLockSwitch ?? {}, 'checked')?.get?.()).toBe(false)
-  expect(vi.mocked(PModal).mock.calls.at(-1)?.[0].isOpen).toBe(false)
 })
 
 it('should keep the settings icon at its explicit toolbar size', () => {

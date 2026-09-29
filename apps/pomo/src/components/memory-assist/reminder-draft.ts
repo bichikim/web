@@ -19,7 +19,7 @@ const getDefaultReminderDate = (now: Date) =>
 
 export const resolveReminderAt = (
   day: ReminderDay,
-  customDate: string,
+  reminderDate: string,
   time: string,
   now: Date,
 ) => {
@@ -27,7 +27,7 @@ export const resolveReminderAt = (
     .add(day === 'tomorrow' ? 1 : 0, 'day')
     .toDate()
 
-  const dateValue = day === 'custom' ? customDate : formatLocalDate(date)
+  const dateValue = day === 'custom' || day === 'today' ? reminderDate : formatLocalDate(date)
   const reminder = new Date(`${dateValue}T${time}`)
   return Number.isNaN(reminder.getTime()) ? null : reminder.toISOString()
 }
