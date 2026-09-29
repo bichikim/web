@@ -16,6 +16,7 @@ const QUOTED_TEXT_PATTERN = /"[^"]*"|“[^”]*”|‘[^’]*’|「[^」]*」|�
 const ENGLISH_ABBREVIATION_PATTERN =
   /(?:^|\s)(?:Dr|Mr|Mrs|Ms|Prof|Rev|Hon|Gov|Pres|Sen|Rep|Gen|Lt|Col|Capt|Sgt|St|Mt|Jr|Sr|vs|[A-Z])\.\s*$/iu
 const WRAPPING_QUOTES_PATTERN = /^["'“”‘’「」『』].*["'“”‘’「」『』]$/u
+const MATCHING_WRAPPING_QUOTES_PATTERN = /^(?:"[^"]*"|'.*'|“.*”|‘.*’|「.*」|『.*』)$/u
 const LEADING_MARKER_PATTERN = /^(?:[-*•]|\d+(?:\.|\)))\s*/u
 
 const hasMultipleEnglishSentences = (sentence: string) => {
@@ -34,7 +35,16 @@ const hasMultipleEnglishSentences = (sentence: string) => {
 
 export const normalizeLanguageLearningSentence = (output: string) => {
   const singleLine = output.trim().replace(LEADING_MARKER_PATTERN, '')
-  return (WRAPPING_QUOTES_PATTERN.test(singleLine) ? singleLine.slice(1, -1) : singleLine).trim()
+  const hasWrappingQuotes = WRAPPING_QUOTES_PATTERN.test(singleLine)
+  const hasMatchingWrappingQuotes = MATCHING_WRAPPING_QUOTES_PATTERN.test(singleLine)
+  const sentence = (hasWrappingQuotes ? singleLine.slice(1, -1) : singleLine).trim()
+
+  return hasWrappingQuotes &&
+    !hasMatchingWrappingQuotes &&
+    sentence.length > 0 &&
+    !ENDING_PATTERN.test(sentence)
+    ? `${sentence}.`
+    : sentence
 }
 
 export const isValidLanguageLearningSentence = (

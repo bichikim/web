@@ -72,5 +72,5 @@ it('should display the device date at a year boundary', () => {
       <Service />
     </PreferenceProvider>
   ))
-  expect(screen.getByText(/현재 기기의 날짜 2026-12-31 기준/u)).toBeVisible()
+  expect(screen.getByText(/현재 UTC 날짜 2026-12-31 기준/u)).toBeVisible()
 })

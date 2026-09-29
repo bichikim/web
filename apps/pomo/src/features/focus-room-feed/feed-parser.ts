@@ -15,6 +15,7 @@ export interface ParsedFeedItem {
   readonly content: string
   readonly contentKind: 'full' | 'none' | 'summary'
   readonly id: string
+  readonly legacyId?: string
   readonly link: string
   readonly publishedAt: string | null
   readonly title: string
@@ -77,13 +78,18 @@ const resolveUrl = (value: string, baseUrl: string) => {
 const getLink = (element: Element, baseUrl: string) => {
   const links = getChildren(element).filter((child) => child.localName.toLowerCase() === 'link')
   const candidates = links.map((link) => ({
+    hasHref: link.hasAttribute('href'),
     relation: link.getAttribute('rel'),
     url: resolveUrl(link.getAttribute('href') ?? link.textContent?.trim() ?? '', baseUrl),
   }))
   const preferred =
     candidates.find(
       ({relation, url}) => relation?.toLowerCase() === 'alternate' && url.length > 0,
-    ) ?? candidates.find(({relation, url}) => relation === null && url.length > 0)
+    ) ??
+    candidates.find(({relation, url}) => relation === null && url.length > 0) ??
+    candidates.find(
+      ({hasHref, relation, url}) => hasHref && relation?.toLowerCase() === 'self' && url.length > 0,
+    )
   return preferred?.url ?? ''
 }
 const getContent = (element: Element) => {
@@ -139,19 +145,27 @@ const getItemFingerprint = (element: Element) => {
 
   return `${primaryHash.toString(ITEM_FINGERPRINT_RADIX)}-${secondaryHash.toString(ITEM_FINGERPRINT_RADIX)}`
 }
-const getItemId = (element: Element, link: string, title: string, publishedAt: string | null) => {
+const getItemIdentity = (
+  element: Element,
+  link: string,
+  title: string,
+  publishedAt: string | null,
+): Pick<ParsedFeedItem, 'id' | 'legacyId'> => {
   const explicitId = getChildText(element, ['guid', 'id'])
 
   if (explicitId.length > 0) {
-    return explicitId
+    return {id: explicitId}
   }
 
   if (link.length > 0) {
-    return link
+    return {id: link}
   }
 
   const fallbackId = `${title}\u0000${publishedAt ?? ''}`
-  return publishedAt === null ? `${fallbackId}\u0000${getItemFingerprint(element)}` : fallbackId
+  return {
+    id: `${fallbackId}\u0000${getItemFingerprint(element)}`,
+    ...(publishedAt === null ? {} : {legacyId: fallbackId}),
+  }
 }
 
 const extractReadableHtmlText = (
@@ -163,6 +177,9 @@ const extractReadableHtmlText = (
   return (resolveRoot(fragment).textContent ?? '').replace(/\s+/gu, ' ').trim()
 }
 
+const findReadableElement = (fragment: DocumentFragment, selector: 'article' | 'main') =>
+  Array.from(fragment.querySelectorAll(selector)).find((element) => element.textContent?.trim())
+
 /** Removes markup and page chrome while preserving all readable text. */
 export const cleanFeedText = (value: string) =>
   extractReadableHtmlText(value, (fragment) => fragment)
@@ -171,7 +188,8 @@ export const cleanFeedText = (value: string) =>
 export const extractArticleText = (html: string) =>
   extractReadableHtmlText(
     html,
-    (fragment) => fragment.querySelector('article') ?? fragment.querySelector('main') ?? fragment,
+    (fragment) =>
+      findReadableElement(fragment, 'article') ?? findReadableElement(fragment, 'main') ?? fragment,
   )
 
 /** Parses RSS 2.x, RDF-style RSS, or Atom XML into one feed-owned shape. */
@@ -199,7 +217,7 @@ export const parseFeedXml = (xml: string, feedUrl: string): ParsedFeed => {
 
     return {
       ...content,
-      id: getItemId(element, link, itemTitle, publishedAt),
+      ...getItemIdentity(element, link, itemTitle, publishedAt),
       link,
       publishedAt,
       title: itemTitle,
