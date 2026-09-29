@@ -239,6 +239,16 @@ it('should prefer an alternate Atom link', () => {
   expect(feed.items[0]?.link).toBe('https://example.com/article')
 })
 
+it('should skip an alternate Atom link with an empty href', () => {
+  const feed = parseFeedXml(
+    `<feed><title>Atom</title><entry><link rel="alternate" href="" />
+      <link rel="alternate" href="https://example.com/article" /></entry></feed>`,
+    'https://example.com/feed.xml',
+  )
+
+  expect(feed.items[0]?.link).toBe('https://example.com/article')
+})
+
 it('should prefer an uppercase alternate Atom link', () => {
   const feed = parseFeedXml(
     `<feed><title>Atom</title><entry><link rel="self" href="https://example.com/self" />
