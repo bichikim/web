@@ -27,7 +27,8 @@ export const parseAlbumTranslation = (
         return undefined
       }
     })
-    .find((candidate) => candidate !== undefined)
+    .filter((candidate) => candidate !== undefined)
+    .pop()
 
   if (translations !== undefined) {
     return translations
