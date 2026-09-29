@@ -314,7 +314,7 @@ export const usePomodoroTimer = (props: UsePomodoroTimerProps = {}): PomodoroTim
           preserveRemainingProgress: true,
         })
         writePomodoroTimerState(stoppedState, props.storage)
-        publishSnapshot({}, stoppedState)
+        applyState(stoppedState)
       } else if (shouldPersistStateBeforeInitialization) {
         writePomodoroTimerState(state(), props.storage)
       }

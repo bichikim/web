@@ -186,15 +186,19 @@ it('should refresh on visibility changes and stop after owner cleanup', async ()
   expect(remove).toHaveBeenCalledWith('visibilitychange', expect.any(Function), {})
 })
 
-it('should persist a stopped timer when disabled on unmount', async () => {
+it('should emit lifecycle events and persist a stopped timer on unmount', async () => {
   const cancelFrame = vi.spyOn(globalThis, 'cancelAnimationFrame')
-  const timer = renderHook(() => usePomodoroTimer({stopOnUnmount: true}), {
+  const onEvents = vi.fn()
+  const timer = renderHook(() => usePomodoroTimer({onEvents, stopOnUnmount: true}), {
     wrapper: PreferenceProvider,
   })
   await finishInitialization(timer)
   timer.result.onStart()
   expect(timer.result.state().status).toBe('running')
+  onEvents.mockClear()
   timer.cleanup()
+  expect(onEvents).toHaveBeenCalledTimes(1)
+  expect(onEvents).toHaveBeenCalledWith(['focus-end'])
   expect(JSON.parse(localStorage.getItem(STATE_STORAGE_KEY) ?? '{}').status).toBe('idle')
   expect(cancelFrame).toHaveBeenCalledTimes(1)
   const restored = renderHook(() => usePomodoroTimer(), {wrapper: PreferenceProvider})
