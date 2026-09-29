@@ -201,14 +201,14 @@ const createCalendarPeriodRange = ({
   return toRange(start, end)
 }
 
+const hasCalendarQueryIntent = (text: string) =>
+  CALENDAR_INTENT_PATTERN.test(text) || IMPLICIT_SCHEDULE_PATTERN.test(text)
+
 /** Resolves a bounded calendar range in the requested time zone. */
 export const createCalendarQuery = (
   options: CreateCalendarQueryOptions,
 ): CalendarEventRange | null => {
-  if (
-    !CALENDAR_INTENT_PATTERN.test(options.text) &&
-    !IMPLICIT_SCHEDULE_PATTERN.test(options.text)
-  ) {
+  if (!hasCalendarQueryIntent(options.text)) {
     return null
   }
 
