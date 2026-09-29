@@ -255,6 +255,15 @@ describe('createCalendarQuery', () => {
     })
   })
 
+  it('should query through Sunday when today and this week are requested', () => {
+    expect(
+      createCalendarQuery({now, text: '오늘 이번 주 일정 알려줘', timeZone: 'Asia/Seoul'}),
+    ).toEqual({
+      end: '2026-09-06T15:00:00.000Z',
+      start: '2026-09-04T10:30:00.000Z',
+    })
+  })
+
   it('should query through Sunday for this week without a space', () => {
     expect(
       createCalendarQuery({now, text: '이번주 중요한 일정 알려줘', timeZone: 'Asia/Seoul'}),

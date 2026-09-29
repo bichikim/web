@@ -173,7 +173,7 @@ export const createCalendarQuery = (
       text: options.text,
     })
   }
-  if (includesToday && !includesNextWeek) {
+  if (includesToday && !includesThisWeek && !includesNextWeek) {
     const end = boundary(1)
     return createCalendarDateRange({
       afternoonStart: boundary(0, '12:00:00'),

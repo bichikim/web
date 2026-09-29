@@ -4,7 +4,7 @@ import {beforeEach, expect, it, vi} from 'vitest'
 import {getTextDirection, setLocale} from '@paraglide/runtime'
 import {reportClientError} from '../../client-error-reporter'
 import {getInitialAppsInTossLocale} from '../bootstrap'
-import {prepareAppsInTossLocale} from '../prepare-apps-in-toss-locale'
+import {prepareAppsInTossLocale} from '..'
 
 vi.mock('@paraglide/runtime', () => ({getTextDirection: vi.fn(), setLocale: vi.fn()}))
 vi.mock('../../client-error-reporter', () => ({reportClientError: vi.fn()}))
@@ -28,14 +28,16 @@ it('should apply the resolved locale and document direction', async () => {
   expect(document.documentElement.dir).toBe('ltr')
 })
 
-it('should report locale failures under the Toss preparation feature', async () => {
+it('should report locale failures and return a failed result', () => {
   const error = new Error('locale unavailable')
   vi.mocked(getInitialAppsInTossLocale).mockRejectedValue(error)
 
-  await prepareAppsInTossLocale(() => true)
-
-  expect(reportClientError).toHaveBeenCalledWith(error, {
-    feature: 'apps-in-toss-locale',
-    source: 'direct',
-  })
+  return expect(prepareAppsInTossLocale(() => true))
+    .resolves.toEqual({status: 'failed'})
+    .then(() => {
+      expect(reportClientError).toHaveBeenCalledWith(error, {
+        feature: 'apps-in-toss-locale',
+        source: 'direct',
+      })
+    })
 })
