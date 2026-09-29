@@ -348,6 +348,10 @@ it('should fall back from main content to the document body', () => {
   expect(extractArticleText('<section><p>일반 본문</p></section>')).toBe('일반 본문')
 })
 
+it('should fall back to main content when an article has no readable text', () => {
+  expect(extractArticleText('<article></article><main><p>본문</p></main>')).toBe('본문')
+})
+
 it('should return empty text for empty or excluded content', () => {
   expect(cleanFeedText('')).toBe('')
   expect(extractArticleText('')).toBe('')
