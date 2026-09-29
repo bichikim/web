@@ -39,7 +39,12 @@ export const normalizeFeed = (value: unknown): NormalizedFeed => {
   }
 
   const latestTimestamp = entries.reduce(
-    (latest, entry) => Math.max(latest, Date.parse(entry.updatedAt ?? entry.publishedAt)),
+    (latest, entry) =>
+      Math.max(
+        latest,
+        Date.parse(entry.publishedAt),
+        Date.parse(entry.updatedAt ?? entry.publishedAt),
+      ),
     Date.parse(EMPTY_FEED_UPDATED_AT),
   )
 
