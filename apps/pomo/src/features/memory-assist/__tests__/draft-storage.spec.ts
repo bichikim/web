@@ -42,6 +42,15 @@ it('should persist and restore the unsaved memo draft for the browser session', 
   expect(readMemoryMemoDraft()).toEqual(draft)
 })
 
+it('should restore legacy drafts without exactEnabled as disabled', () => {
+  sessionStorage.setItem(
+    'pomo:memory-memo:draft:v1',
+    JSON.stringify({...draft, exactEnabled: undefined}),
+  )
+
+  expect(readMemoryMemoDraft()).toEqual({...draft, exactEnabled: false})
+})
+
 it('should ignore malformed stored drafts', () => {
   sessionStorage.setItem('pomo:memory-memo:draft:v1', '{"version":1,"text":3}')
 
