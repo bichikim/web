@@ -15,6 +15,7 @@ export interface ParsedFeedItem {
   readonly content: string
   readonly contentKind: 'full' | 'none' | 'summary'
   readonly id: string
+  readonly legacyId?: string
   readonly link: string
   readonly publishedAt: string | null
   readonly title: string
@@ -139,19 +140,27 @@ const getItemFingerprint = (element: Element) => {
 
   return `${primaryHash.toString(ITEM_FINGERPRINT_RADIX)}-${secondaryHash.toString(ITEM_FINGERPRINT_RADIX)}`
 }
-const getItemId = (element: Element, link: string, title: string, publishedAt: string | null) => {
+const getItemIdentity = (
+  element: Element,
+  link: string,
+  title: string,
+  publishedAt: string | null,
+): Pick<ParsedFeedItem, 'id' | 'legacyId'> => {
   const explicitId = getChildText(element, ['guid', 'id'])
 
   if (explicitId.length > 0) {
-    return explicitId
+    return {id: explicitId}
   }
 
   if (link.length > 0) {
-    return link
+    return {id: link}
   }
 
   const fallbackId = `${title}\u0000${publishedAt ?? ''}`
-  return publishedAt === null ? `${fallbackId}\u0000${getItemFingerprint(element)}` : fallbackId
+  return {
+    id: `${fallbackId}\u0000${getItemFingerprint(element)}`,
+    ...(publishedAt === null ? {} : {legacyId: fallbackId}),
+  }
 }
 
 const extractReadableHtmlText = (
@@ -199,7 +208,7 @@ export const parseFeedXml = (xml: string, feedUrl: string): ParsedFeed => {
 
     return {
       ...content,
-      id: getItemId(element, link, itemTitle, publishedAt),
+      ...getItemIdentity(element, link, itemTitle, publishedAt),
       link,
       publishedAt,
       title: itemTitle,

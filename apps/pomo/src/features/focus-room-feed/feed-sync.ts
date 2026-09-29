@@ -309,13 +309,29 @@ const synchronizeConnection = async (
   const feed = parseFeedXml(xml, connection.url)
   const storedItems = await options.repository.listItems(connection.id)
   const storedIds = new Set(storedItems.map((item) => item.feedItemId))
+  const matchedLegacyIds = new Set<string>()
   const isFirstSync = storedItems.length === 0
   const firstUndatedFeedItem = isFirstSync
     ? feed.items.find((item) => item.publishedAt === null)
     : undefined
-  const unseenItems = sortItems(feed.items.filter((item) => !storedIds.has(item.id))).slice(
-    -MAXIMUM_ITEMS_PER_SYNC,
-  )
+  const unseenItems = sortItems(
+    feed.items.filter((item) => {
+      const isStoredItem = storedIds.has(item.id)
+      const isStoredLegacyItem =
+        item.legacyId !== undefined &&
+        storedIds.has(item.legacyId) &&
+        !matchedLegacyIds.has(item.legacyId)
+
+      if (isStoredItem || isStoredLegacyItem) {
+        if (item.legacyId !== undefined) {
+          matchedLegacyIds.add(item.legacyId)
+        }
+        return false
+      }
+
+      return true
+    }),
+  ).slice(-MAXIMUM_ITEMS_PER_SYNC)
 
   if (unseenItems.length === 0) {
     return []

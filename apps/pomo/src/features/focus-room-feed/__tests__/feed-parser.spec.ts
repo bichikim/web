@@ -160,10 +160,46 @@ it('should keep linkless feed items distinct with their title and publication ti
   )
 
   expect(feed.items.map((item) => item.link)).toEqual(['', ''])
-  expect(feed.items.map((item) => item.id)).toEqual([
+  expect(feed.items.map((item) => item.legacyId)).toEqual([
     '첫 번째\u00002026-08-14T00:00:00.000Z',
     '두 번째\u00002026-08-14T00:05:00.000Z',
   ])
+  expect(feed.items.map(({id, legacyId}) => id.startsWith(`${legacyId}\u0000`))).toEqual([
+    true,
+    true,
+  ])
+})
+
+it('should keep dated RSS items with the same title distinct by their XML content', () => {
+  const xml = `<rss><channel><title>링크 없는 피드</title>
+    <item><title>같은 제목</title><pubDate>Fri, 14 Aug 2026 00:00:00 GMT</pubDate>
+      <description>첫 번째 항목</description></item>
+    <item><title>같은 제목</title><pubDate>Fri, 14 Aug 2026 00:00:00 GMT</pubDate>
+      <description>두 번째 항목</description></item>
+  </channel></rss>`
+  const feed = parseFeedXml(xml, 'https://example.com/feed.xml')
+  const repeatedFeed = parseFeedXml(xml, 'https://example.com/feed.xml')
+  const ids = feed.items.map((item) => item.id)
+
+  expect(ids).toHaveLength(2)
+  expect(new Set(ids).size).toBe(2)
+  expect(ids).toEqual(repeatedFeed.items.map((item) => item.id))
+})
+
+it('should keep dated Atom entries with the same title distinct by their XML content', () => {
+  const xml = `<feed xmlns="http://www.w3.org/2005/Atom"><title>링크 없는 피드</title>
+    <entry><title>같은 제목</title><published>2026-08-14T00:00:00Z</published>
+      <summary>첫 번째 항목</summary></entry>
+    <entry><title>같은 제목</title><published>2026-08-14T00:00:00Z</published>
+      <summary>두 번째 항목</summary></entry>
+  </feed>`
+  const feed = parseFeedXml(xml, 'https://example.com/feed.xml')
+  const repeatedFeed = parseFeedXml(xml, 'https://example.com/feed.xml')
+  const ids = feed.items.map((item) => item.id)
+
+  expect(ids).toHaveLength(2)
+  expect(new Set(ids).size).toBe(2)
+  expect(ids).toEqual(repeatedFeed.items.map((item) => item.id))
 })
 
 it('should keep undated items without an id or link distinct by their XML content', () => {
