@@ -55,6 +55,16 @@ interface CreateCalendarQueryOptions {
   readonly timeZone?: string
 }
 
+interface CalendarQueryIntent {
+  readonly includesDayAfterTomorrow: boolean
+  readonly includesNextWeek: boolean
+  readonly includesThisWeek: boolean
+  readonly includesToday: boolean
+  readonly includesTomorrow: boolean
+  readonly includesYesterday: boolean
+  readonly weekendIntent: CalendarWeekendIntent | null
+}
+
 interface CreateCalendarDateRangeOptions {
   readonly afternoonStart: Date
   readonly end: Date
@@ -89,6 +99,20 @@ interface GetWeekendStartOffsetOptions {
   readonly intent: CalendarWeekendIntent
   readonly weekday: number
 }
+
+const getCalendarQueryIntent = (text: string): CalendarQueryIntent => ({
+  includesDayAfterTomorrow: includesUnexcludedPhrase(
+    text,
+    '모레',
+    DAY_AFTER_TOMORROW_EXCLUSION_PATTERN,
+  ),
+  includesNextWeek: NEXT_WEEK_PATTERN.test(text) && !NEXT_WEEK_EXCLUSION_PATTERN.test(text),
+  includesThisWeek: THIS_WEEK_PATTERN.test(text) && !THIS_WEEK_EXCLUSION_PATTERN.test(text),
+  includesToday: includesUnexcludedPhrase(text, '오늘', TODAY_EXCLUSION_PATTERN),
+  includesTomorrow: includesUnexcludedPhrase(text, '내일', TOMORROW_EXCLUSION_PATTERN),
+  includesYesterday: includesUnexcludedPhrase(text, '어제', YESTERDAY_EXCLUSION_PATTERN),
+  weekendIntent: getCalendarWeekendIntent(text),
+})
 
 const toRange = (start: Date, end: Date): CalendarEventRange => ({
   end: end.toISOString(),
@@ -221,27 +245,15 @@ export const createCalendarQuery = (
     return dayjs.tz(`${date}T${time}`, timeZone).toDate()
   }
 
-  const includesToday = includesUnexcludedPhrase(options.text, '오늘', TODAY_EXCLUSION_PATTERN)
-  const includesTomorrow = includesUnexcludedPhrase(
-    options.text,
-    '내일',
-    TOMORROW_EXCLUSION_PATTERN,
-  )
-  const includesYesterday = includesUnexcludedPhrase(
-    options.text,
-    '어제',
-    YESTERDAY_EXCLUSION_PATTERN,
-  )
-  const includesThisWeek =
-    THIS_WEEK_PATTERN.test(options.text) && !THIS_WEEK_EXCLUSION_PATTERN.test(options.text)
-  const includesNextWeek =
-    NEXT_WEEK_PATTERN.test(options.text) && !NEXT_WEEK_EXCLUSION_PATTERN.test(options.text)
-  const weekendIntent = getCalendarWeekendIntent(options.text)
-  const includesDayAfterTomorrow = includesUnexcludedPhrase(
-    options.text,
-    '모레',
-    DAY_AFTER_TOMORROW_EXCLUSION_PATTERN,
-  )
+  const {
+    includesDayAfterTomorrow,
+    includesNextWeek,
+    includesThisWeek,
+    includesToday,
+    includesTomorrow,
+    includesYesterday,
+    weekendIntent,
+  } = getCalendarQueryIntent(options.text)
   if (includesDayAfterTomorrow) {
     const startDayOffset = getFirstRequestedDateOffset({
       includesToday,

@@ -363,6 +363,11 @@ it('should use the title for empty or duplicate feed content', () => {
   expect(createFeedScript('같은 내용', '<p>같은 내용</p>')).toBe('같은 내용')
 })
 
+it('should omit title spacing when the title is empty after cleaning', () => {
+  expect(createFeedScript('', '본문')).toBe('본문')
+  expect(createFeedScript('<p></p>', '본문')).toBe('본문')
+})
+
 it('should fall back from main content to the document body', () => {
   expect(extractArticleText('<main><p>메인 본문</p></main>')).toBe('메인 본문')
   expect(extractArticleText('<section><p>일반 본문</p></section>')).toBe('일반 본문')
