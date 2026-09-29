@@ -9,6 +9,21 @@ import type {MusicPlayerViewProps} from './types'
 
 /** Pomo 화면에 주 플레이어, 앨범 선택과 음악 목록을 배치한다. */
 export const MusicPlayerView = (props: MusicPlayerViewProps) => {
+  const removeAlbumTracks = (trackIds: ReadonlySet<string>) => {
+    const removeTrack = props.onTrackRemove
+
+    if (removeTrack === undefined) {
+      return
+    }
+
+    const indexes = props.tracks
+      .map((track, index) => (trackIds.has(track.id) ? index : -1))
+      .filter((index) => index >= 0)
+      .toReversed()
+
+    indexes.forEach((index) => removeTrack(index))
+  }
+
   return (
     <div
       class={cx(
@@ -30,6 +45,7 @@ export const MusicPlayerView = (props: MusicPlayerViewProps) => {
           <PAlbumLibrary
             onAddTracks={(tracks) => props.onAlbumAdd?.(tracks)}
             onClearTracks={props.onAlbumClear}
+            onRemoveTracks={props.onTrackRemove === undefined ? undefined : removeAlbumTracks}
             onPreviewEnd={props.onPreviewEnd}
             onPreviewStart={props.onPreviewStart}
             sceneStyle={props.sceneStyle}
@@ -63,6 +79,9 @@ export const MusicPlayerView = (props: MusicPlayerViewProps) => {
                   <PAlbumLibrary
                     onAddTracks={(tracks) => props.onAlbumAdd?.(tracks)}
                     onClearTracks={props.onAlbumClear}
+                    onRemoveTracks={
+                      props.onTrackRemove === undefined ? undefined : removeAlbumTracks
+                    }
                     onPreviewEnd={props.onPreviewEnd}
                     onPreviewStart={props.onPreviewStart}
                     sceneStyle={props.sceneStyle}

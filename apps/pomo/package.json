@@ -72,7 +72,7 @@
     "libopus-wasm": "0.2.0",
     "media-chrome": "^4.19.2",
     "music-metadata": "^11.15.0",
-    "nitro": "catalog:",
+    "nitro": "catalog:pomo",
     "ofetch": "^1.5.1",
     "onnxruntime-node": "1.24.3",
     "onnxruntime-web": "1.23.2",

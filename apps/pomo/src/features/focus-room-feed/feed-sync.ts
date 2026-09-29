@@ -115,13 +115,14 @@ interface ResolveContentOptions {
 }
 
 const getDocumentUrl = (value: string) => {
-  const url = normalizeFeedDocumentUrl(new URL(value))
+  const documentUrl = normalizeFeedDocumentUrl(new URL(value))
+  documentUrl.hostname = documentUrl.hostname.replace(/^www\./u, '')
 
-  if (url.protocol === 'https:') {
-    url.protocol = 'http:'
+  if (documentUrl.protocol === 'https:') {
+    documentUrl.protocol = 'http:'
   }
 
-  return url.href
+  return documentUrl.href
 }
 const resolveContent = async (options: ResolveContentOptions) => {
   const feedContent = cleanFeedText(options.item.content)

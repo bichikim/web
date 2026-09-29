@@ -231,13 +231,12 @@ describe('PMusicPlayerContent queue and restoration paths', () => {
     )
 
     playlist.resolve([storedPlayback.trackId])
-    await vi.waitFor(() =>
+    await vi.waitFor(() => {
       expect(featureMocks.resolvePlaybackRestore).toHaveBeenLastCalledWith(
         expect.objectContaining({storedPlayback, tracks: restoredTracks}),
-      ),
-    )
-
-    expect(featureMocks.resolvePlaybackRestore).toHaveBeenCalledTimes(2)
+      )
+      expect(featureMocks.resolvePlaybackRestore).toHaveBeenCalledTimes(2)
+    })
   })
 
   it('should restore stored playback after a queue edit during initial loading', async () => {

@@ -235,5 +235,9 @@ export const createFeedScript = (title: string, content: string) => {
     return cleanTitle
   }
 
+  if (cleanTitle.length === 0) {
+    return cleanContent
+  }
+
   return cleanContent === cleanTitle ? cleanTitle : `${cleanTitle}\n\n${cleanContent}`
 }

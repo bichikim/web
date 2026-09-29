@@ -7,6 +7,7 @@ import {
   readPPlayback,
 } from '../../features/focus-room-audio'
 import {restorePPlayerState} from './restoration'
+import {resolveStoredPlaylistTracks} from './resolve-stored-playlist-tracks'
 
 export interface PlaylistLoad {
   readonly defaultTracks: readonly PTrack[]
@@ -122,9 +123,15 @@ export const usePlaylistRestoration = (props: UsePlaylistRestorationProps): void
             props.playbackRevision() === restoreRevision &&
             props.queueRevision() === resolvedQueueRevision,
           defaultTracks: resolvedTracks,
-          onRestore: (tracks, playback) => props.onRestore(tracks, playback),
+          onRestore: (restoredTracks, playback) => props.onRestore(restoredTracks, playback),
           playbackRequest,
           playlistRequest: effectivePlaylistRequest,
+          resolveTracks: (storedTrackIds) =>
+            resolveStoredPlaylistTracks({
+              onError: handleError,
+              sourceTracks: source.tracks,
+              storedTrackIds: Promise.resolve(storedTrackIds),
+            }),
           tracks: source.tracks,
         })
       })
