@@ -59,7 +59,19 @@ const toRange = (start: Date, end: Date): CalendarEventRange => ({
   start: start.toISOString(),
 })
 
-const getFirstRequestedDateOffset = (includesToday: boolean, includesTomorrow: boolean) => {
+const getFirstRequestedDateOffset = ({
+  includesToday,
+  includesTomorrow,
+  includesYesterday,
+}: {
+  readonly includesToday: boolean
+  readonly includesTomorrow: boolean
+  readonly includesYesterday: boolean
+}) => {
+  if (includesYesterday) {
+    return -1
+  }
+
   if (includesToday) {
     return 0
   }
@@ -146,10 +158,12 @@ export const createCalendarQuery = (
     DAY_AFTER_TOMORROW_EXCLUSION_PATTERN,
   )
   if (includesDayAfterTomorrow) {
-    const startDayOffset = includesYesterday
-      ? -1
-      : getFirstRequestedDateOffset(includesToday, includesTomorrow)
-    const start = includesToday && !includesYesterday ? now : boundary(startDayOffset)
+    const startDayOffset = getFirstRequestedDateOffset({
+      includesToday,
+      includesTomorrow,
+      includesYesterday,
+    })
+    const start = includesToday && startDayOffset === 0 ? now : boundary(startDayOffset)
     const noon = boundary(DAY_AFTER_TOMORROW_START_DAYS, '12:00:00')
     return createCalendarDateRange({
       afternoonStart: boundary(startDayOffset, '12:00:00'),
