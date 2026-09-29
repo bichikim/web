@@ -27,8 +27,15 @@ describe('resolvePlaybackRestore', () => {
     ).toEqual({currentIndex: 1, playback: null, shouldPersist: false})
   })
 
+  it('should fall back to the first track for a non-integer fallback index', () => {
+    expect(
+      resolvePlaybackRestore({fallbackIndex: 1.5, storedPlayback: null, tracks: TRACKS}),
+    ).toEqual({currentIndex: 0, playback: null, shouldPersist: false})
+  })
+
   it.each([
     {expectedIndex: 1, fallbackIndex: -1},
+    {expectedIndex: 1, fallbackIndex: -3},
     {expectedIndex: 1, fallbackIndex: 3},
   ])(
     'should wrap fallback index $fallbackIndex to $expectedIndex',

@@ -1,5 +1,6 @@
 import type {PTrack} from './focus-room-playlist'
 import type {PPlaybackState} from './playback-storage'
+import {normalizeTrackIndex} from './playback-policy'
 
 export interface ResolvePlaybackRestoreOptions {
   readonly fallbackIndex: number
@@ -21,7 +22,7 @@ export const resolvePlaybackRestore = (options: ResolvePlaybackRestoreOptions): 
   }
 
   if (options.storedPlayback === null) {
-    const currentIndex = (options.fallbackIndex + trackCount) % trackCount
+    const currentIndex = normalizeTrackIndex(options.fallbackIndex, trackCount) ?? 0
     return {currentIndex, playback: null, shouldPersist: false}
   }
 
