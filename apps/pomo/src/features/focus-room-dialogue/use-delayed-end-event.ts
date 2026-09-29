@@ -27,22 +27,31 @@ const isValidDuration = (durationMinutes: number) =>
 export const useDelayedEndEvent = (props: UseDelayedEndEventProps): DelayedEndEventController => {
   const [isRunning, setIsRunning] = createSignal(false)
   let timerId: ReturnType<typeof globalThis.setTimeout> | null = null
-  let isEventPending = false
+  let eventState: 'idle' | 'running' | 'queued' = 'idle'
 
-  const triggerEvent = () => {
-    if (isEventPending) {
-      return
-    }
-
-    isEventPending = true
+  const runEvent = () => {
+    eventState = 'running'
     Promise.resolve()
       .then(() => props.onEvent())
       .catch((error: unknown) => {
         console.error('Failed to queue the delayed end event.', error)
       })
       .finally(() => {
-        isEventPending = false
+        if (eventState === 'queued') {
+          runEvent()
+          return
+        }
+        eventState = 'idle'
       })
+  }
+
+  const triggerEvent = () => {
+    if (eventState !== 'idle') {
+      eventState = 'queued'
+      return
+    }
+
+    runEvent()
   }
 
   const cancel = () => {
