@@ -14,6 +14,8 @@ export const groupCalendarEvents = (
   timeZone: string,
 ): ReadonlyMap<string, ReadonlyArray<CalendarEvent>> => {
   const createDateKey = (timestamp: number) => dayjs(timestamp).tz(timeZone).format('YYYY-MM-DD')
+  const getAllDayDateKey = (date: string) =>
+    calendarDateSchema.safeParse(date.slice(0, 'YYYY-MM-DD'.length)).data
   const grouped = new Map<string, CalendarEvent[]>()
   events.forEach((event) => {
     const endTimestamp = Date.parse(event.end)
@@ -22,16 +24,14 @@ export const groupCalendarEvents = (
     }
 
     const start = event.allDay
-      ? calendarDateSchema.safeParse(event.start).data
+      ? getAllDayDateKey(event.start)
       : createDateKey(Date.parse(event.start))
     if (start === undefined) {
       return
     }
 
     // All-day ends retain their date key; timed events use the last instant for local-day boundaries.
-    const end = event.allDay
-      ? calendarDateSchema.safeParse(event.end.slice(0, 'YYYY-MM-DD'.length)).data
-      : createDateKey(endTimestamp - 1)
+    const end = event.allDay ? getAllDayDateKey(event.end) : createDateKey(endTimestamp - 1)
     if (end === undefined) {
       return
     }

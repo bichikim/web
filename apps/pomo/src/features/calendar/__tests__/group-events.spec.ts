@@ -105,6 +105,19 @@ it.each([
   }
 })
 
+it('should group all-day events by the date prefix of an ISO start instant', () => {
+  const source = {
+    ...event,
+    allDay: true,
+    end: '2026-10-01',
+    start: '2026-09-30T00:00:00Z',
+  }
+
+  expect(
+    groupCalendarEvents([source], ['2026-09-30'], 'America/Los_Angeles').get('2026-09-30'),
+  ).toEqual([source])
+})
+
 it('should preserve input order and event identity for overlapping events', () => {
   const second = {...event, id: 'second'}
   expect(
