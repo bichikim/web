@@ -6,6 +6,7 @@ import albumData from './public/audio/albums.json'
 import {pomoComponentStylePreflight} from './scripts/unocss/component-styles'
 import {sansFontFamily} from './scripts/unocss/typography'
 import {createSafeAreaMaxHeight, createSafeAreaSpacing} from './scripts/unocss/safe-area-spacing'
+import {pomoAnimation} from './scripts/unocss/animation'
 
 const colors = {
   backdrop: 'rgb(var(--pomo-color-backdrop-channels) / var(--pomo-color-backdrop-opacity))',
@@ -430,116 +431,7 @@ body {
     ],
     safelist: albumData.albums.map((album) => album.icon),
     theme: {
-      animation: {
-        counts: {
-          'dialogue-settings-spin': 'infinite',
-          'feedback-hold': '1',
-          'diary-progress-pending': 'infinite',
-          'focus-glow': 'infinite',
-          'orbit-border': 'infinite',
-          'overflow-marquee': 'infinite',
-          'rest-sway': 'infinite',
-          'screen-saver-content-drift': 'infinite',
-        },
-        durations: {
-          'dialogue-menu-in': '140ms',
-          'feedback-hold': '2s',
-          'dialogue-settings-spin': '800ms',
-          'diary-progress-pending': '1.8s',
-          'entry-reveal-room': '700ms',
-          'focus-glow': '19s',
-          'modal-content-in': '180ms',
-          'modal-content-in-top': '180ms',
-          'modal-overlay-in': '140ms',
-          'orbit-border': '3.2s',
-          'overflow-marquee': '6s',
-          'rest-sway': '2.4s',
-          'screen-saver-content-drift': '48s',
-          'select-in': '140ms',
-        },
-        keyframes: {
-          // Completion restores temporary feedback without introducing visual motion.
-          'dialogue-menu-in': `{
-            from { opacity: 0; transform: scale(0.97) translateY(-0.2rem); }
-            to { opacity: 1; transform: scale(1) translateY(0); }
-          }`,
-          'feedback-hold': '{ from { opacity: 1; } to { opacity: 1; } }',
-          'dialogue-settings-spin': '{ to { transform: rotate(1turn); } }',
-          'diary-progress-pending': '{ to { background-position: 150% 0; } }',
-          'entry-reveal-room': '{ from { opacity: 1; } to { opacity: 0; } }',
-          'focus-glow': `{
-            0% { transform: scale(0); }
-            2% { transform: translateY(-0.0625rem) rotate(-6deg) scale(1.12); }
-            4%, 18% { transform: none; }
-            19% { transform: scale(0.68); }
-            20% { transform: scale(0.28); }
-            21% { transform: scale(0); }
-            22% { transform: translate3d(-0.1875rem, 0.125rem, 0) scale(0); }
-            24% { transform: translate3d(-0.1875rem, 0.125rem, 0) rotate(-6deg) scale(1.12); }
-            26%, 43% { transform: translate3d(-0.1875rem, 0.125rem, 0) rotate(-4deg) scale(1); }
-            44% { transform: translate3d(-0.1875rem, 0.125rem, 0) rotate(-4deg) scale(0.68); }
-            45% { transform: translate3d(-0.1875rem, 0.125rem, 0) rotate(-4deg) scale(0.28); }
-            46% { transform: translate3d(-0.1875rem, 0.125rem, 0) rotate(-4deg) scale(0); }
-            47% { transform: translate3d(0.125rem, -0.1875rem, 0) scale(0); }
-            49% { transform: translate3d(0.125rem, -0.1875rem, 0) rotate(7deg) scale(1.12); }
-            51%, 74% { transform: translate3d(0.125rem, -0.1875rem, 0) rotate(5deg) scale(1); }
-            75% { transform: translate3d(0.125rem, -0.1875rem, 0) rotate(5deg) scale(0.68); }
-            76% { transform: translate3d(0.125rem, -0.1875rem, 0) rotate(5deg) scale(0.28); }
-            77% { transform: translate3d(0.125rem, -0.1875rem, 0) rotate(5deg) scale(0); }
-            78% { transform: translate3d(-0.0625rem, -0.0625rem, 0) scale(0); }
-            80% { transform: translate3d(-0.0625rem, -0.0625rem, 0) rotate(-5deg) scale(1.12); }
-            82%, 97% { transform: translate3d(-0.0625rem, -0.0625rem, 0) rotate(-2deg) scale(1); }
-            98% { transform: translate3d(-0.0625rem, -0.0625rem, 0) rotate(-2deg) scale(0.68); }
-            99% { transform: translate3d(-0.0625rem, -0.0625rem, 0) rotate(-2deg) scale(0.28); }
-            100% { transform: translate3d(-0.0625rem, -0.0625rem, 0) rotate(-2deg) scale(0); }
-          }`,
-          'modal-content-in': `{
-            from { opacity: 0; transform: translate(-50%, calc(-50% + 0.5rem)) scale(0.98); }
-          }`,
-          'modal-content-in-top': `{
-            from { opacity: 0; transform: translate(-50%, 0.5rem) scale(0.98); }
-          }`,
-          'modal-overlay-in': '{ from { opacity: 0; } }',
-          'orbit-border': '{ to { transform: rotate(1turn); } }',
-          'overflow-marquee': `{
-            from { transform: translateX(0); }
-            to { transform: translateX(calc(-1 * var(--pomo-marquee-distance))); }
-          }`,
-          'rest-sway': `{
-            0%, 100% { transform: translate3d(0, 0, 0) rotate(-8deg); }
-            50% { transform: translate3d(0.0625rem, -0.125rem, 0) rotate(9deg); }
-          }`,
-          'screen-saver-content-drift': `{
-            0% { transform: translate(-2rem, -1.5rem); }
-            33% { transform: translate(1.75rem, -0.75rem); }
-            66% { transform: translate(-1rem, 1.5rem); }
-            100% { transform: translate(2rem, 0.75rem); }
-          }`,
-          'select-in': `{
-            from { opacity: 0; transform: scale(0.97) translateY(-0.25rem); }
-            to { opacity: 1; transform: scale(1) translateY(0); }
-          }`,
-        },
-        properties: {
-          'entry-reveal-room': {'animation-fill-mode': 'both'},
-          'screen-saver-content-drift': {'animation-direction': 'alternate'},
-        },
-        timingFns: {
-          'dialogue-menu-in': 'ease-out',
-          'dialogue-settings-spin': 'linear',
-          'diary-progress-pending': 'ease-in-out',
-          'entry-reveal-room': 'cubic-bezier(0.22, 1, 0.36, 1)',
-          'focus-glow': 'ease-in-out',
-          'modal-content-in': 'cubic-bezier(0.2, 0.8, 0.2, 1)',
-          'modal-content-in-top': 'cubic-bezier(0.2, 0.8, 0.2, 1)',
-          'modal-overlay-in': 'ease-out',
-          'orbit-border': 'linear',
-          'overflow-marquee': 'linear',
-          'rest-sway': 'ease-in-out',
-          'screen-saver-content-drift': 'ease-in-out',
-          'select-in': 'ease-out',
-        },
-      },
+      animation: pomoAnimation,
       blur: {
         DEFAULT: '0.5rem',
         surface: '0.5rem',
