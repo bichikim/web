@@ -32,7 +32,8 @@ export type ExpenseParseResult =
 const MAXIMUM_ITEMS = 20
 const EXPENSE_LINE_PATTERN =
   /^\s*(?<name>.+?)\s+(?<unitPrice>[\d,]+)\s*원(?:\s+(?<quantity>[\d,]+)\s*개)?\s*$/u
-const DATE_LINE_PATTERN = /^\s*(?<year>\d{4})-(?<month>\d{1,2})-(?<day>\d{1,2})\s*$/u
+const DATE_LINE_PATTERN =
+  /^\s*(?<year>\d{4})-(?<month>\d{1,2})-(?<day>\d{1,2})(?:\s+[월화수목금토일]요일)?\s*$/u
 
 const invalid = (code: ExpenseParseError['code']): ExpenseParseResult => ({
   error: {code},
