@@ -75,4 +75,12 @@ describe('normalizeLanguageLearningSentence', () => {
     expect(normalized).toBe('hello.')
     expect(isValidLanguageLearningSentence(normalized, 'en')).toBe(true)
   })
+
+  it('should remove fullwidth double quote wrappers', () => {
+    const normalized = normalizeLanguageLearningSentence('\uFF02hello.\uFF02')
+
+    expect(isValidLanguageLearningSentence('hello.', 'en')).toBe(true)
+    expect(normalized).toBe('hello.')
+    expect(isValidLanguageLearningSentence(normalized, 'en')).toBe(true)
+  })
 })

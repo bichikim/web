@@ -44,8 +44,9 @@ const INTERNAL_LATIN_ABBREVIATION_PATTERN = new RegExp(
   `\\b(?:(?:${ENGLISH_ABBREVIATIONS.join('|')})\\.|(?:[A-Z]\\.)+)`,
   'giu',
 )
-const WRAPPING_QUOTES_PATTERN = /^["'“”‘’「」『』].*["'“”‘’「」『』]$/u
-const MATCHING_WRAPPING_QUOTES_PATTERN = /^(?:"[^"]*"|'.*'|“.*”|‘.*’|「.*」|『.*』)$/u
+const WRAPPING_QUOTES_PATTERN = /^["\uFF02'“”‘’「」『』].*["\uFF02'“”‘’「」『』]$/u
+const MATCHING_WRAPPING_QUOTES_PATTERN =
+  /^(?:"[^"]*"|\uFF02.*\uFF02|'.*'|“.*”|‘.*’|「.*」|『.*』)$/u
 const LEADING_MARKER_PATTERN = /^(?:[-*•]|\d+(?:\.|\)))\s*/u
 
 const hasMultipleEnglishSentences = (sentence: string) => {
