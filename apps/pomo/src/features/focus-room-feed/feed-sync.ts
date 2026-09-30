@@ -117,6 +117,11 @@ interface ResolveContentOptions {
 const getDocumentUrl = (value: string) => {
   const documentUrl = normalizeFeedDocumentUrl(new URL(value))
   documentUrl.hostname = documentUrl.hostname.replace(/^www\./u, '')
+
+  if (documentUrl.protocol === 'https:') {
+    documentUrl.protocol = 'http:'
+  }
+
   return documentUrl.href
 }
 const resolveContent = async (options: ResolveContentOptions) => {
