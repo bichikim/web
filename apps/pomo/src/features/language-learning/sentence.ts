@@ -10,6 +10,8 @@ export const LANGUAGE_LEARNING_SENTENCE_LIMITS = {
 >
 
 const ENDING_PATTERN = /[.!?。！？…]$/u
+const TRAILING_SYMBOLS_PATTERN =
+  /(?:\p{White_Space}*(?:[\p{S}\p{M}\u200D\u{E0020}-\u{E007F}]+|[#*0-9]\uFE0F?\u20E3))+\p{White_Space}*$/u
 const INTERNAL_ENDING_PATTERN =
   /(?:[!?。！？]+(?![!?。！？])|(?<=\d)\.(?![\d.])|(?<!\d)\.(?!\.)).+/u
 const QUOTED_TEXT_PATTERN = /"[^"]*"|“[^”]*”|‘[^’]*’|「[^」]*」|『[^』]*』/gu
@@ -49,6 +51,8 @@ const MATCHING_WRAPPING_QUOTES_PATTERN =
   /^(?:"[^"]*"|\uFF02.*\uFF02|'.*'|“.*”|‘.*’|「.*」|『.*』)$/u
 const LEADING_MARKER_PATTERN = /^(?:[-*•]|\d+(?:\.|\)))\s*/u
 
+const stripTrailingSymbols = (sentence: string) => sentence.replace(TRAILING_SYMBOLS_PATTERN, '')
+
 const hasMultipleEnglishSentences = (sentence: string) => {
   let previousSegment: string | undefined
 
@@ -77,7 +81,7 @@ export const normalizeLanguageLearningSentence = (output: string) => {
   return hasWrappingQuotes &&
     !hasMatchingWrappingQuotes &&
     sentence.length > 0 &&
-    !ENDING_PATTERN.test(sentence)
+    !ENDING_PATTERN.test(stripTrailingSymbols(sentence))
     ? `${sentence}.`
     : sentence
 }
@@ -88,22 +92,25 @@ export const isValidLanguageLearningSentence = (
 ) => {
   const limits = LANGUAGE_LEARNING_SENTENCE_LIMITS[language]
   const characterCount = [...sentence].length
+  const sentenceWithoutTrailingSymbols = stripTrailingSymbols(sentence)
   const hasMultipleSentences =
     language === 'en'
-      ? hasMultipleEnglishSentences(sentence)
-      : hasMultipleNonEnglishSentences(sentence)
+      ? hasMultipleEnglishSentences(sentenceWithoutTrailingSymbols)
+      : hasMultipleNonEnglishSentences(sentenceWithoutTrailingSymbols)
 
   if (
     sentence.length === 0 ||
     sentence.includes('\n') ||
     characterCount > limits.characters ||
-    !ENDING_PATTERN.test(sentence) ||
+    !ENDING_PATTERN.test(sentenceWithoutTrailingSymbols) ||
     hasMultipleSentences
   ) {
     return false
   }
 
-  return limits.words === null || sentence.split(/\s+/u).length <= limits.words
+  return (
+    limits.words === null || sentenceWithoutTrailingSymbols.split(/\s+/u).length <= limits.words
+  )
 }
 
 const hasMultipleNonEnglishSentences = (sentence: string) => {
