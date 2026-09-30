@@ -20,6 +20,45 @@ vi.mock('../spatial-mesh-preview-renderer', () => ({
   }),
 }))
 
+test('should import a GLB into the workspace for transforms and composition', async () => {
+  imported.parse.mockReturnValue({
+    indices: [0, 1, 2],
+    source: {kind: 'imported', name: 'sample.glb'},
+    vertices: [0, 0, 0, 2, 0, 0, 0, 2, 0],
+  })
+  const onApply = vi.fn(() => true)
+  const view = render(() => (
+    <SpatialMeshDialog
+      bounds={{height: 100, width: 100, x: 0, y: 0}}
+      isOpen
+      onApply={onApply}
+      onOpenChange={vi.fn()}
+    />
+  ))
+  const file = new File(['mesh'], 'sample.glb', {type: 'model/gltf-binary'})
+  Object.defineProperty(file, 'arrayBuffer', {value: vi.fn().mockResolvedValue(new ArrayBuffer(0))})
+  fireEvent.change(screen.getByLabelText('GLB 메시 가져오기'), {target: {files: [file]}})
+
+  expect(await screen.findByRole('button', {name: 'sample.glb 편집'})).toBeInTheDocument()
+  expect(screen.getByRole('spinbutton', {name: 'rotation X'})).toBeInTheDocument()
+  expect(screen.queryByRole('combobox', {name: '도형 종류'})).toBeNull()
+  fireEvent.click(screen.getByRole('button', {name: '박스 추가'}))
+  fireEvent.click(screen.getByRole('button', {name: '전체 선택'}))
+  fireEvent.click(screen.getByRole('button', {name: '더하기로 합성'}))
+  fireEvent.click(screen.getByRole('button', {name: '메시 적용'}))
+
+  expect(onApply).toHaveBeenCalledWith([
+    expect.objectContaining({
+      children: [
+        expect.objectContaining({kind: 'mesh', name: 'sample.glb'}),
+        expect.objectContaining({kind: 'primitive', shape: 'box'}),
+      ],
+      kind: 'group',
+    }),
+  ])
+  view.unmount()
+})
+
 test('should edit mesh coordinates with the shared number field and undo a continuous edit once', () => {
   const bounds = {height: 100, width: 100, x: 0, y: 0}
   const object = createSpatialEditorObject(bounds, 'box')

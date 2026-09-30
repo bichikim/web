@@ -14,7 +14,7 @@ async function createWave(seconds: number, sample = 0): Promise<Blob> {
   view.setUint32(40, bytes, true)
   const pattern = Buffer.alloc(2)
   pattern.writeInt16LE(sample)
-  const pcm = Buffer.alloc(bytes, pattern)
+  const pcm = sample === 0 ? Buffer.alloc(bytes) : Buffer.alloc(bytes, pattern)
   return new Blob([header, pcm], {type: 'audio/wav'})
 }
 
@@ -97,7 +97,7 @@ it('should share one seeded noise stream across continuous chunks', async () => 
 
   await generateExtendedSound('rain', 241, vi.fn(), {
     chunkNoiseMode: 'continuous',
-    connectionSeconds: 4,
+    connectionSeconds: 0,
   })
 
   expect(sources).toHaveLength(3)
