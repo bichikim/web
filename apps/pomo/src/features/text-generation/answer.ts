@@ -1,7 +1,7 @@
 const SEGMENT_PATTERN =
-  /(?:[^,.!?。！？，\n]|(?<=[\p{Script=Latin}\p{N}])\.(?=[\p{Script=Latin}\p{N}]))+(?:[,.!?。！？，]|\n|$)\s*/gu
-const TRAILING_SEPARATOR_PATTERN = /[,，]$/u
-const NORMALIZATION_PATTERN = /[,.!?。！？，\s]+$/gu
+  /(?:[^,;；.!?。！？，\n]|;(?=\S)|(?<=[\p{Script=Latin}\p{N}])\.(?=[\p{Script=Latin}\p{N}]))+(?:[,;；.!?。！？，]|\n|$)\s*/gu
+const TRAILING_SEPARATOR_PATTERN = /[,，;；]$/u
+const NORMALIZATION_PATTERN = /[,;；.!?。！？，\s]+$/gu
 const WHITESPACE_PATTERN = /\s+/gu
 const MINIMUM_REPEATED_LENGTH = 4
 const MAXIMUM_CONSECUTIVE_REPETITIONS = 3
