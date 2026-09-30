@@ -21,7 +21,7 @@ const truncateLanguageLearningTag = (tag: string): string => {
 
 export const parseLanguageLearningTags = (input: string): ReadonlyArray<string> =>
   pipe(
-    input.split(/[,\n]/u),
+    input.split(/[,\uFF0C\n]/u),
     map((value) => truncateLanguageLearningTag(value.trim())),
     filter((tag) => tag.length > 0),
     uniqBy((tag) => tag.toLocaleLowerCase()),

@@ -7,6 +7,10 @@ it('should discard empty values and preserve the first casing after trimming', (
   expect(parseLanguageLearningTags(' Home,HOME\n home,Work ')).toEqual(['Home', 'Work'])
 })
 
+it('should split tags on the fullwidth comma used in Korean IME input', () => {
+  expect(parseLanguageLearningTags('home，work')).toEqual(['home', 'work'])
+})
+
 it('should deduplicate after truncation and count only unique tags toward the limit', () => {
   const prefix = 'X'.repeat(30)
   expect(parseLanguageLearningTags(`${prefix}first,${prefix}second,a,A,b,c,d,e,f,g,h,i,j`)).toEqual(

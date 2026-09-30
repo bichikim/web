@@ -50,6 +50,27 @@ it('should create, remove, and focus inline tags with the keyboard', () => {
   expect(document.activeElement).toBe(input)
 })
 
+it('should commit tags when a fullwidth comma is typed', () => {
+  const {tags} = renderTagInput()
+  const input = screen.getByRole('textbox', {name: '프롬프트 단어'})
+
+  fireEvent.input(input, {target: {value: 'home，work'}})
+
+  expect(tags()).toEqual(['home', 'work'])
+  expect(input).toHaveValue('')
+})
+
+it('should commit the current tag when a fullwidth comma key is pressed', () => {
+  const {tags} = renderTagInput()
+  const input = screen.getByRole('textbox', {name: '프롬프트 단어'})
+
+  fireEvent.input(input, {target: {value: 'home'}})
+  fireEvent.keyDown(input, {key: '，'})
+
+  expect(tags()).toEqual(['home'])
+  expect(input).toHaveValue('')
+})
+
 it('should commit a Korean IME word only once after composition ends', () => {
   const {tags} = renderTagInput()
   const input = screen.getByRole('textbox', {name: '프롬프트 단어'})
@@ -86,6 +107,16 @@ it('should split pasted tags and commit the remaining input on blur', () => {
   fireEvent.input(input, {target: {value: 'maintain'}})
   fireEvent.blur(input)
   expect(tags()).toEqual(['acknowledge', 'consequence', 'perspective', 'reluctant', 'maintain'])
+})
+
+it('should split pasted tags on a fullwidth comma', () => {
+  const {tags} = renderTagInput()
+  const input = screen.getByRole('textbox', {name: '프롬프트 단어'})
+
+  fireEvent.paste(input, {clipboardData: {getData: () => 'home，work'}})
+
+  expect(tags()).toEqual(['home', 'work'])
+  expect(input).toHaveValue('')
 })
 
 it('should disable tag editing while generation is busy', () => {
