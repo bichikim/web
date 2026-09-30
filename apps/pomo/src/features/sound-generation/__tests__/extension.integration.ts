@@ -59,3 +59,36 @@ it('should extend sequentially using the previous tail and write exactly 300 sec
     }),
   )
 })
+
+it('should keep a quieter generated chunk at the previous level after its connection', async () => {
+  let calls = 0
+  vi.mocked(generateSound).mockImplementation(async (_prompt, seconds) => {
+    calls += 1
+    return createWave(seconds, calls === 1 ? 2000 : 1000)
+  })
+
+  const result = await generateExtendedSound('rain', 121, vi.fn())
+  const readSample = async (second: number): Promise<number> => {
+    const position = 44 + second * 44100 * 4
+    const view = new DataView(await result.slice(position, position + 2).arrayBuffer())
+    return view.getInt16(0, true)
+  }
+
+  expect(await readSample(120)).toBe(2000)
+  expect(await readSample(120.5)).toBe(2000)
+})
+
+it('should use the custom connection duration for context and remove exactly that duration', async () => {
+  vi.mocked(generateSound).mockImplementation(async (_prompt, seconds, _progress, options) => {
+    const context = options?.inpaint
+    if (context !== undefined) {
+      expect(context.start).toBe(8)
+      expect(context.left[8 * 44100 - 1]).toBe(0.5)
+      expect(context.left[8 * 44100]).toBe(0)
+    }
+    return createWave(seconds, 16384)
+  })
+  const result = await generateExtendedSound('rain', 121, vi.fn(), {connectionSeconds: 8})
+  expect(vi.mocked(generateSound).mock.calls.map((call) => call[1])).toEqual([120, 17])
+  expect(result.size).toBe(44 + 121 * 44100 * 4)
+})
