@@ -19,13 +19,16 @@ export const groupCalendarEvents = (
   const grouped = new Map<string, CalendarEvent[]>()
   events.forEach((event) => {
     const endTimestamp = Date.parse(event.end)
-    if (Number.isNaN(endTimestamp)) {
+    if (!Number.isFinite(endTimestamp)) {
       return
     }
 
-    const start = event.allDay
-      ? getAllDayDateKey(event.start)
-      : createDateKey(Date.parse(event.start))
+    const startTimestamp = Date.parse(event.start)
+    if (!event.allDay && (!Number.isFinite(startTimestamp) || endTimestamp <= startTimestamp)) {
+      return
+    }
+
+    const start = event.allDay ? getAllDayDateKey(event.start) : createDateKey(startTimestamp)
     if (start === undefined) {
       return
     }
