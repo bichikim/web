@@ -150,6 +150,7 @@ export const createPBrowserAudioVisemeAnalyzer = (
   let isDisposed = false
   let isDestinationConnected = false
   let node: WLipSyncAudioNode | null = null
+  let silentOutputNode: GainNode | null = null
   const connectedSources = new Set<AudioNode>()
   const disconnectedSources = new WeakSet<AudioNode>()
   const nodePromise = createNode(context).then((createdNode) => {
@@ -178,7 +179,15 @@ export const createPBrowserAudioVisemeAnalyzer = (
     connectedSources.add(source)
 
     if (!isDestinationConnected) {
-      currentNode.connect(context.destination)
+      if (silentOutputNode === null) {
+        silentOutputNode = context.createGain()
+        // Keep the analysis branch connected while silencing its copy of the audio.
+        silentOutputNode.gain.value = 0
+      }
+
+      const outputNode = silentOutputNode
+      currentNode.connect(outputNode)
+      outputNode.connect(context.destination)
       isDestinationConnected = true
     }
   }
@@ -191,7 +200,10 @@ export const createPBrowserAudioVisemeAnalyzer = (
       connectedSources.delete(source)
 
       if (connectedSources.size === 0 && isDestinationConnected) {
-        node.disconnect(context.destination)
+        if (silentOutputNode !== null) {
+          node.disconnect(silentOutputNode)
+          silentOutputNode.disconnect(context.destination)
+        }
         isDestinationConnected = false
       }
     }
@@ -212,7 +224,9 @@ export const createPBrowserAudioVisemeAnalyzer = (
   const dispose = () => {
     isDisposed = true
     node?.disconnect()
+    silentOutputNode?.disconnect()
     node = null
+    silentOutputNode = null
     connectedSources.clear()
     isDestinationConnected = false
   }
