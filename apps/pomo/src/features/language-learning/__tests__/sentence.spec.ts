@@ -37,10 +37,26 @@ describe('isValidLanguageLearningSentence', () => {
 
   it('should accept trailing emoji sequences, keycap emoji, and symbols', () => {
     expect(isValidLanguageLearningSentence('Hello! 👩🏽‍💻', 'en')).toBe(true)
+    expect(isValidLanguageLearningSentence('Hello! 👨‍👩‍👧‍👦', 'en')).toBe(true)
+    expect(isValidLanguageLearningSentence('Hello! ❤️‍🔥', 'en')).toBe(true)
     expect(isValidLanguageLearningSentence('Hello! 🇺🇸', 'en')).toBe(true)
+    expect(
+      isValidLanguageLearningSentence(
+        'Hello! \u{1F3F4}\u{E0067}\u{E0062}\u{E0065}\u{E006E}\u{E0067}\u{E007F}',
+        'en',
+      ),
+    ).toBe(true)
     expect(isValidLanguageLearningSentence('Hello! 1️⃣', 'en')).toBe(true)
     expect(isValidLanguageLearningSentence('Hello!👋', 'en')).toBe(true)
     expect(isValidLanguageLearningSentence('Keep going! ™', 'en')).toBe(true)
+  })
+
+  it('should reject a repeated zero-width-joiner suffix within a bounded time', () => {
+    const adversarialSentence = `Hello! ${'\u200D'.repeat(10_000)}x`
+    const startedAt = performance.now()
+
+    expect(isValidLanguageLearningSentence(adversarialSentence, 'en')).toBe(false)
+    expect(performance.now() - startedAt).toBeLessThan(1_000)
   })
 
   it('should count only English words before a trailing emoji suffix', () => {
@@ -57,6 +73,9 @@ describe('isValidLanguageLearningSentence', () => {
     expect(isValidLanguageLearningSentence('Hello world 👋', 'en')).toBe(false)
     expect(isValidLanguageLearningSentence('Hello world! \u202E', 'en')).toBe(false)
     expect(isValidLanguageLearningSentence('Hello world! \u200B', 'en')).toBe(false)
+    expect(isValidLanguageLearningSentence('Hello world! 👋 \u202E', 'en')).toBe(false)
+    expect(isValidLanguageLearningSentence('Hello world! 👋 \u200B', 'en')).toBe(false)
+    expect(isValidLanguageLearningSentence('Hello world! 👋\u200D', 'en')).toBe(false)
   })
 
   it('should accept a Korean sentence with a question mark inside quoted dialogue', () => {
