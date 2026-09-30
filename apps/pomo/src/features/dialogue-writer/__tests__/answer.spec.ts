@@ -14,6 +14,29 @@ describe('normalizeKoreanSpeechStyle', () => {
     )
   })
 
+  it('should convert formal endings before ASCII and fullwidth commas', () => {
+    expect(normalizeKoreanSpeechStyle('좋습니다, 계속해 보세요.')).toBe('좋아요, 계속해 보세요.')
+    expect(normalizeKoreanSpeechStyle('좋습니다， 계속해 보세요。')).toBe(
+      '좋아요， 계속해 보세요。',
+    )
+  })
+
+  it('should convert 테니까 before ASCII and fullwidth commas', () => {
+    expect(normalizeKoreanSpeechStyle('힘이 생길 테니까, 계속하세요.')).toBe(
+      '힘이 생길 테니까요, 계속하세요.',
+    )
+    expect(normalizeKoreanSpeechStyle('힘이 생길 테니까， 계속하세요。')).toBe(
+      '힘이 생길 테니까요， 계속하세요。',
+    )
+  })
+
+  it('should preserve fullwidth question marks when normalizing question endings', () => {
+    expect(normalizeKoreanSpeechStyle('이게 건가？')).toBe('이게 건가요？')
+    expect(normalizeKoreanSpeechStyle('좋은 방법일지？')).toBe('좋은 방법일까요？')
+    expect(normalizeKoreanSpeechStyle('무엇일까？')).toBe('무엇일까요？')
+    expect(normalizeKoreanSpeechStyle('시작할까？')).toBe('시작할까요？')
+  })
+
   it('should preserve formal-looking text when it is not a sentence ending', () => {
     const answer = '필요합니다라는 표현을 설명해요.'
 

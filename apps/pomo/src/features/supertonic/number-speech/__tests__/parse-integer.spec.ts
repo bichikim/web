@@ -2,10 +2,11 @@ import {describe, expect, it} from 'vitest'
 import {parseInteger} from '../index'
 
 describe('parseInteger', () => {
-  it('should parse signed integers with ASCII and Unicode minus signs', () => {
+  it('should parse signed integers with ASCII and Unicode signs', () => {
     expect(parseInteger('-5')).toBe(-5n)
     expect(parseInteger('−5')).toBe(-5n)
     expect(parseInteger('+5')).toBe(5n)
+    expect(parseInteger('＋5')).toBe(5n)
   })
 
   it('should preserve grouped values and reject leading-zero identifiers', () => {
