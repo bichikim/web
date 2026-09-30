@@ -67,6 +67,16 @@ describe('normalizeKoreanSpeechStyle', () => {
       '한번 생각해 보세요, 이게 좋은 방법일까요? 다시 시작할까요? 힘이 생길 테니까요.',
     )
   })
+
+  it('should convert 테니까 at the end without punctuation', () => {
+    expect(normalizeKoreanSpeechStyle('힘이 생길 테니까')).toBe('힘이 생길 테니까요')
+  })
+
+  it('should preserve 테니까 when the sentence continues', () => {
+    const answer = '힘이 생길 테니까 생각해요.'
+
+    expect(normalizeKoreanSpeechStyle(answer)).toBe(answer)
+  })
 })
 
 describe('trimRepetitiveTail', () => {
