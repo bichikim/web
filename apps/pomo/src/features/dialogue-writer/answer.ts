@@ -18,7 +18,7 @@ const SPEECH_STYLE_REPLACEMENTS: ReadonlyArray<readonly [RegExp, string]> = [
   [/일지\?/gu, '일까요?'],
   [/일까\?/gu, '일까요?'],
   [/할까\?/gu, '할까요?'],
-  [/테니까(?=[.!?。！？])/gu, '테니까요'],
+  [new RegExp(`테니까${SENTENCE_END_PATTERN}`, 'gu'), '테니까요'],
 ]
 
 /** Converts common formal sentence endings without rewriting the surrounding sentence. */
