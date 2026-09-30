@@ -76,7 +76,10 @@ export const selectEventDialogues = (
       }
 
       const random = options.random ?? Math.random
-      const position = Math.floor(random() * latestDialogueIds.length)
+      const position = Math.min(
+        Math.floor(random() * latestDialogueIds.length),
+        latestDialogueIds.length - 1,
+      )
       return [latestDialogueIds[position] as string]
     }
     default: {

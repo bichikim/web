@@ -46,6 +46,16 @@ describe('selectEventDialogues', () => {
     ).toEqual(['second'])
   })
 
+  it('should select the last dialogue when the random value is 1', () => {
+    expect(
+      selectEventDialogues({
+        dialogueIds: DIALOGUE_IDS,
+        playbackMode: 'random-one',
+        random: () => 1,
+      }),
+    ).toEqual(['third'])
+  })
+
   it('should choose random-one from the latest dialogue IDs when limited', () => {
     expect(
       selectEventDialogues({
