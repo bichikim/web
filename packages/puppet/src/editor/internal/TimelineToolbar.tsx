@@ -2,6 +2,8 @@ import {EditorButton, EditorSelect} from '../../design-system'
 import {PUPPET_EASINGS, type PuppetEasing} from '../../player/document'
 import {TimelineSettingsControls} from './TimelineSettingsControls'
 import {TimelineMotionControls} from './TimelineMotionControls'
+import {TimelineParameterPicker} from './TimelineParameterPicker'
+import type {PuppetParameter} from '../../player'
 
 export interface TimelineToolbarProps {
   readonly canAddKeyframe: boolean
@@ -12,11 +14,13 @@ export interface TimelineToolbarProps {
   readonly isPlaying?: boolean
   readonly motionIds: ReadonlyArray<string>
   readonly motionId?: string
+  readonly availableParameters: ReadonlyArray<PuppetParameter>
   readonly onMotionAdd?: () => void
   readonly onMotionChange?: (motionId: string) => void
   readonly onMotionDelete?: () => void
   readonly onMotionDuplicate?: () => void
   readonly onMotionRename?: (name: string) => void
+  readonly onParameterAdd?: (parameterId: string) => void
   readonly onEasingChange?: (value: string) => void
   readonly onKeyframeAdd?: () => void
   readonly onKeyframeDelete?: () => void
@@ -44,6 +48,10 @@ export const TimelineToolbar = (props: TimelineToolbarProps) => (
         onViewChange={(value) => props.onMotionChange?.(value)}
         options={props.motionIds}
         value={props.motionId}
+      />
+      <TimelineParameterPicker
+        parameters={props.availableParameters}
+        onAdd={props.onParameterAdd}
       />
       <TimelineSettingsControls
         framesPerSecond={props.framesPerSecond}

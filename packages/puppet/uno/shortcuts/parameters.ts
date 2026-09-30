@@ -207,7 +207,7 @@ export const parametersShortcuts = {
   'parameter-item-main': 'relative',
   'parameter-item-surface': [
     '[&:has(.parameter-item[data-selected])]:bg-[#17211e]',
-    'relative bg-[#121916] [transform:translateX(calc(var(--parameter-swipe-offset)_*_-1))]',
+    'relative bg-[#121916] [transform:translateX(var(--parameter-swipe-offset))]',
     '[transition:transform_160ms_ease-out] [.dragging_&]:transition-none',
   ],
   'parameter-list': ['[.puppet-editor_&]:grid [.puppet-editor_&]:[gap:0.375rem]'],
@@ -252,7 +252,7 @@ export const parametersShortcuts = {
     '[.puppet-editor_&_>_.influence-toggle]:[grid-column:auto] [.puppet-editor_&_>_.influence-toggle]:[grid-row:auto]',
   ],
   'parameter-swipe-delete': [
-    '[.puppet-editor_&]:absolute [.puppet-editor_&]:[top:0] [.puppet-editor_&]:[right:0]',
+    '[.puppet-editor_&]:absolute [.puppet-editor_&]:[top:0] [.puppet-editor_&]:[left:0]',
     '[.puppet-editor_&]:[bottom:0] [.puppet-editor_&]:grid [.puppet-editor_&]:[width:5rem]',
     '[.puppet-editor_&]:[gap:0.125rem] [.puppet-editor_&]:[align-content:center]',
     '[.puppet-editor_&]:[justify-items:center] [.puppet-editor_&]:[color:#f3aaa5]',
@@ -260,7 +260,7 @@ export const parametersShortcuts = {
     '[.puppet-editor_&_.puppet-icon]:[width:1rem] [.puppet-editor_&_.puppet-icon]:[height:1rem]',
   ],
   'parameter-swipe-hint': [
-    '[.puppet-editor_&]:absolute [.puppet-editor_&]:[top:0.625rem] [.puppet-editor_&]:[right:0.625rem]',
+    '[.puppet-editor_&]:absolute [.puppet-editor_&]:[top:0.625rem] [.puppet-editor_&]:[left:0.625rem]',
     '[.puppet-editor_&]:[color:#596762] [.puppet-editor_&]:[font-size:0.75rem]',
   ],
   'parameter-swipe-row': [
@@ -349,6 +349,7 @@ export const parametersShortcuts = {
     '[.puppet-editor_&]:[grid-column:1_/_-1] [.puppet-editor_&]:m-0 [.puppet-editor_&]:[padding:1.125rem]',
     '[.puppet-editor_&]:[color:#788580] [.puppet-editor_&]:[font-size:0.625rem] [.puppet-editor_&]:text-center',
   ],
+  'timeline-parameter-picker-list': 'max-h-64 overflow-y-auto',
   'timeline-keyframe': [
     '[.puppet-editor_&]:absolute [.puppet-editor_&]:[top:50%] [.puppet-editor_&]:[width:0.625rem]',
     '[.puppet-editor_&]:[height:0.625rem] [.puppet-editor_&]:p-0',
@@ -483,12 +484,14 @@ export const parametersShortcuts = {
     '[.puppet-editor_&[data-selected]]:[border-bottom-color:#3d5f56]',
   ],
   'timeline-row-label': [
+    '[.puppet-editor_&]:relative [.puppet-editor_&]:[transform:translateX(var(--parameter-swipe-offset))]',
+    '[.puppet-editor_&]:[transition:transform_160ms_ease-out]',
     '[.puppet-editor_&]:[border-right:0.0625rem_solid_#313a37]',
     '[.puppet-editor_&]:[border-bottom:0.0625rem_solid_#27302d] [.puppet-editor_&]:[background:#121816]',
     '[.puppet-editor_&]:grid [.puppet-editor_&]:[height:2.375rem]',
-    '[.puppet-editor_&]:[grid-template-columns:minmax(0,_1fr)_5.5rem] [.puppet-editor_&]:[gap:0.5rem]',
+    '[.puppet-editor_&]:[grid-template-columns:minmax(0,_1fr)_5.5rem] [.puppet-editor_&]:[gap:0.375rem]',
     '[.puppet-editor_&]:items-center [.puppet-editor_&]:[align-content:center]',
-    '[.puppet-editor_&]:[padding:0_0.875rem]',
+    '[.puppet-editor_&]:[padding:0_0.5rem]',
     '[.puppet-editor_&_>_span]:[color:#6f7d78] [.puppet-editor_&_>_span]:[font-size:0.5rem]',
     '[.puppet-editor_&_strong]:overflow-hidden [.puppet-editor_&_strong]:[color:#c5d0cc]',
     '[.puppet-editor_&_strong]:[font-size:0.625rem] [.puppet-editor_&_strong]:font-semibold',
@@ -507,6 +510,22 @@ export const parametersShortcuts = {
     "[.puppet-editor_&_.editor-number-field_>_input[type='number']]:[font-size:0.625rem]",
     '[.puppet-editor_&_input:focus-visible]:[border-color:#64e5c4]',
     '[.puppet-editor_&_input:focus-visible]:[outline:none]',
+  ],
+  'timeline-row-label-swipe': [
+    '[.puppet-editor_&]:relative [.puppet-editor_&]:overflow-hidden',
+    '[.puppet-editor_&]:[height:2.375rem] [.puppet-editor_&]:[touch-action:pan-y]',
+    '[.puppet-editor_&]:[background:#351918]',
+    '[.puppet-editor_&.armed_.timeline-row-swipe-delete]:[color:#fff1ef]',
+    '[.puppet-editor_&.armed_.timeline-row-swipe-delete]:[background:#a63f3a]',
+    '[.puppet-editor_&.dragging_.timeline-row-label]:[transition:none]',
+  ],
+  'timeline-row-swipe-delete': [
+    '[.puppet-editor_&]:absolute [.puppet-editor_&]:inset-y-0 [.puppet-editor_&]:left-0',
+    '[.puppet-editor_&]:grid [.puppet-editor_&]:[width:5rem] [.puppet-editor_&]:[gap:0.125rem]',
+    '[.puppet-editor_&]:[align-content:center] [.puppet-editor_&]:[justify-items:center]',
+    '[.puppet-editor_&]:[color:#f3aaa5] [.puppet-editor_&]:[background:#471f1d]',
+    '[.puppet-editor_&]:[font-size:0.5rem] [.puppet-editor_&]:font-bold',
+    '[.puppet-editor_&_.puppet-icon]:[width:1rem] [.puppet-editor_&_.puppet-icon]:[height:1rem]',
   ],
   'timeline-row-playhead': [
     '[.puppet-editor_&]:absolute [.puppet-editor_&]:[top:0] [.puppet-editor_&]:[bottom:0]',

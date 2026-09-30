@@ -14,6 +14,10 @@ describe('timeline keyframe selection', () => {
     const source = createDemoDocument()
     const document = {
       ...source,
+      motions: source.motions.map((motion) => ({
+        ...motion,
+        timelineParameterIds: ['angle-x', 'angle-y'],
+      })),
       physics: {
         pendulums: [
           {
