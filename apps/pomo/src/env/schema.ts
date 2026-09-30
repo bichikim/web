@@ -85,7 +85,7 @@ export const OPENAI_REASONING_EFFORTS_WITH_MINIMAL = [
 export const OPENAI_SERVICE_TIERS = ['auto', 'default', 'flex', 'priority'] as const
 
 const BASIC_AUTH_PREFIX = 'Basic '
-const DEFAULT_OPENAI_MODEL = 'gpt-5.6-luna'
+const DEFAULT_OPENAI_MODEL = 'gpt-6-luna'
 const DEFAULT_AI_QUEUE_LIMIT = 100
 const DEFAULT_AI_RUNNER_TIMEOUT_MS = 120_000
 const MINIMUM_COOKIE_SECRET_LENGTH = 32
