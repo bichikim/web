@@ -13,15 +13,16 @@ export const MeshModeControl = (props: MeshModeControlProps) => (
     class="mesh-mode-controls"
     data-tooltip={
       props.disabledReason ??
-      '기준 배치는 그림을 고정하고 정점 배치를 바꿉니다. 변형 편집은 정점으로 그림을 변형합니다.'
+      '기준 배치는 그림을 고정하고 정점 배치를 바꿉니다. 키폼 변형은 정점으로 그림을 변형합니다.'
     }
   >
     <EditorSegmentedField
       label="정점 편집 방식"
+      size="md"
       value={props.editing ? 'mesh' : 'form'}
       options={[
         {disabled: props.disabledReason !== undefined, label: '기준 배치', value: 'mesh'},
-        {label: '변형 편집', value: 'form'},
+        {label: '키폼 변형', value: 'form'},
       ]}
       onChange={(value) => props.onChange(value === 'mesh')}
     />

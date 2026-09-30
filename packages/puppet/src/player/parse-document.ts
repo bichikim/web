@@ -554,11 +554,6 @@ const isDocument = (value: unknown): value is PuppetDocument => {
     hasValidSpatialAttachments(value.parts, value.scene) &&
     hasUniqueIds(value.motions) &&
     hasUniqueIds(parameters) &&
-    value.parts.every((part) =>
-      (part.spatial?.rotationParameterIds ?? []).every(
-        (id) => id === null || parameters.some((parameter) => parameter.id === id),
-      ),
-    ) &&
     hasUniqueIds(parameterBindings) &&
     hasValidTrackTargets(value.parts, parameters, value.motions) &&
     hasValidParameterBindings(value.parts, parameters, parameterBindings, value.scene)

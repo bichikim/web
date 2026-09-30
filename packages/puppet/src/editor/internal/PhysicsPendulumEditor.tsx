@@ -71,6 +71,9 @@ const getParameterLabel = (document: PuppetDocument, parameterId: string) => {
     : `${parameter.name} · ${parameter.id}`
 }
 
+const getParameterName = (document: PuppetDocument, parameterId: string) =>
+  document.parameters?.find((parameter) => parameter.id === parameterId)?.name ?? parameterId
+
 const getParameterOptions = (
   pendulum: PuppetPendulum,
   pendulums: ReadonlyArray<PuppetPendulum>,
@@ -96,6 +99,7 @@ const getParameterOptions = (
 export const PhysicsPendulumEditor = (props: PhysicsPendulumEditorProps) => {
   const title = () => `물리 연결 ${props.index() + 1}`
   const parameterLabel = (parameterId: string) => getParameterLabel(props.document, parameterId)
+  const parameterName = (parameterId: string) => getParameterName(props.document, parameterId)
   const inputDirection = () => getInputDirection(props.pendulum.inputScale)
   const handleDirectionChange = (value: string) => {
     if (value !== 'forward' && value !== 'reverse') {
@@ -119,7 +123,8 @@ export const PhysicsPendulumEditor = (props: PhysicsPendulumEditorProps) => {
     <article class="physics-pendulum">
       <header class="physics-pendulum-header">
         <h3>
-          {title()} <code>{props.pendulum.id}</code>
+          {parameterName(props.pendulum.inputParameterId)} →{' '}
+          {parameterName(props.pendulum.outputParameterId)}
         </h3>
         <EditorButton
           aria-label={`${title()} 삭제`}
@@ -155,77 +160,82 @@ export const PhysicsPendulumEditor = (props: PhysicsPendulumEditorProps) => {
           )}
         </For>
       </div>
-      <div class="physics-number-fields">
-        <label>
-          출력 방식
-          <EditorSelect
-            disabled={props.disabled}
-            label={`${title()} 출력 방식`}
-            options={[...OUTPUT_MODES]}
-            optionLabel={(mode) => (mode === 'lag' ? '지연·반동' : '위치')}
-            value={props.pendulum.outputMode ?? 'position'}
-            onChange={handleOutputModeChange}
-          />
-        </label>
-        <label>
-          입력 방향
-          <EditorSelect
-            disabled={props.disabled}
-            label={`${title()} 입력 방향`}
-            options={[...INPUT_DIRECTIONS]}
-            optionLabel={(value) => (value === 'reverse' ? '반대 방향' : '같은 방향')}
-            value={inputDirection()}
-            onChange={handleDirectionChange}
-          />
-        </label>
-        <label>
-          입력 범위
-          <EditorNumberField
-            disabled={props.disabled}
-            label={`${title()} 입력 범위`}
-            minimum={MINIMUM_INPUT_RANGE}
-            name={`${props.pendulum.id}-input-range`}
-            step={0.1}
-            value={getInputRange(props.pendulum.inputScale)}
-            onEditEnd={props.onEditEnd}
-            onEditStart={props.onEditStart}
-            onValueChange={handleInputRangeChange}
-          />
-        </label>
-        <label>
-          물리 강도
-          <EditorNumberField
-            disabled={props.disabled}
-            label={`${title()} 물리 강도`}
-            name={`${props.pendulum.id}-output-strength`}
-            step={0.1}
-            value={props.pendulum.outputScale}
-            onEditEnd={props.onEditEnd}
-            onEditStart={props.onEditStart}
-            onValueChange={(value) => props.onNumberChange(props.pendulum.id, 'outputScale', value)}
-          />
-        </label>
-        <For each={PHYSICS_NUMBER_FIELDS}>
-          {(field) => (
-            <label>
-              {field.label}
-              <EditorNumberField
-                label={`${title()} ${field.label}`}
-                minimum={field.minimum}
-                name={`${props.pendulum.id}-${field.property}`}
-                step={field.step}
-                value={props.pendulum[field.property]}
-                disabled={props.disabled}
-                onEditEnd={props.onEditEnd}
-                onEditStart={props.onEditStart}
-                onValueChange={(value) =>
-                  props.onNumberChange(props.pendulum.id, field.property, value)
-                }
-              />
-            </label>
-          )}
-        </For>
-      </div>
+      <details class="physics-settings">
+        <summary>움직임 설정</summary>
+        <div class="physics-number-fields">
+          <label>
+            출력 방식
+            <EditorSelect
+              disabled={props.disabled}
+              label={`${title()} 출력 방식`}
+              options={[...OUTPUT_MODES]}
+              optionLabel={(mode) => (mode === 'lag' ? '지연·반동' : '위치')}
+              value={props.pendulum.outputMode ?? 'position'}
+              onChange={handleOutputModeChange}
+            />
+          </label>
+          <label>
+            입력 방향
+            <EditorSelect
+              disabled={props.disabled}
+              label={`${title()} 입력 방향`}
+              options={[...INPUT_DIRECTIONS]}
+              optionLabel={(value) => (value === 'reverse' ? '반대 방향' : '같은 방향')}
+              value={inputDirection()}
+              onChange={handleDirectionChange}
+            />
+          </label>
+          <label>
+            입력 범위
+            <EditorNumberField
+              disabled={props.disabled}
+              label={`${title()} 입력 범위`}
+              minimum={MINIMUM_INPUT_RANGE}
+              name={`${props.pendulum.id}-input-range`}
+              step={0.1}
+              value={getInputRange(props.pendulum.inputScale)}
+              onEditEnd={props.onEditEnd}
+              onEditStart={props.onEditStart}
+              onValueChange={handleInputRangeChange}
+            />
+          </label>
+          <label>
+            물리 강도
+            <EditorNumberField
+              disabled={props.disabled}
+              label={`${title()} 물리 강도`}
+              name={`${props.pendulum.id}-output-strength`}
+              step={0.1}
+              value={props.pendulum.outputScale}
+              onEditEnd={props.onEditEnd}
+              onEditStart={props.onEditStart}
+              onValueChange={(value) =>
+                props.onNumberChange(props.pendulum.id, 'outputScale', value)
+              }
+            />
+          </label>
+          <For each={PHYSICS_NUMBER_FIELDS}>
+            {(field) => (
+              <label>
+                {field.label}
+                <EditorNumberField
+                  label={`${title()} ${field.label}`}
+                  minimum={field.minimum}
+                  name={`${props.pendulum.id}-${field.property}`}
+                  step={field.step}
+                  value={props.pendulum[field.property]}
+                  disabled={props.disabled}
+                  onEditEnd={props.onEditEnd}
+                  onEditStart={props.onEditStart}
+                  onValueChange={(value) =>
+                    props.onNumberChange(props.pendulum.id, field.property, value)
+                  }
+                />
+              </label>
+            )}
+          </For>
+        </div>
+      </details>
     </article>
   )
 }

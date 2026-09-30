@@ -21,7 +21,7 @@ export const InfluencePresets = (props: InfluencePresetsProps) => {
       <legend>곡선 모양</legend>
       <For each={props.compact ? PRESETS.filter((preset) => preset.value !== 'custom') : PRESETS}>
         {(preset) => (
-          <label>
+          <label class="influence-preset-option">
             <input
               type="radio"
               name={name}

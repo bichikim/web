@@ -50,9 +50,7 @@ test('should replace a JSON document with a UTF-8 byte order mark', async () => 
 
     await imports.handleOpen(file)
 
-    expect(onNotice).toHaveBeenLastCalledWith(
-      expect.stringContaining('model.json: 문서를 교체했습니다.'),
-    )
+    expect(onNotice).toHaveBeenLastCalledWith(null)
     expect(history.document().viewport).toEqual(incoming.viewport)
     dispose()
   })
@@ -79,9 +77,7 @@ test('should replace a JSON document identified by its MIME type', async () => {
 
     await imports.handleOpen(file)
 
-    expect(onNotice).toHaveBeenLastCalledWith(
-      expect.stringContaining('puppet-export: 문서를 교체했습니다.'),
-    )
+    expect(onNotice).toHaveBeenLastCalledWith(null)
     expect(history.document().viewport).toEqual(incoming.viewport)
     dispose()
   })

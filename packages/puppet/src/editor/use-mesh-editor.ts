@@ -1,5 +1,5 @@
 import {moveMeshVertex} from './move-mesh-vertex'
-import {canEditSelectedKeyform, commitVertexMove, getVertexMoveNotice} from './commit-vertex-move'
+import {canEditSelectedKeyform, commitVertexMove} from './commit-vertex-move'
 import {useDeformBrush} from './use-deform-brush'
 import {type Accessor, createEffect, createMemo, createSignal, type Setter, untrack} from 'solid-js'
 
@@ -288,7 +288,7 @@ const createAddVertexHandler =
     onDocumentChange(result.document)
     state.setSelectedVertex(result.vertexIndex ?? null)
     props.onVertexSelect?.(result.vertexIndex ?? null)
-    props.onNotice?.('새 정점을 추가하고 주변 메시를 다시 연결했습니다.')
+    props.onNotice?.(null)
   }
 
 const createDeleteVertexHandler = (props: MeshEditorProps, state: MeshEditorState) => () => {
@@ -319,7 +319,7 @@ const createDeleteVertexHandler = (props: MeshEditorProps, state: MeshEditorStat
   props.onVertexSelect?.(null)
   state.setDraftPoint(null)
   state.setDragStartPoint(null)
-  props.onNotice?.('선택한 정점을 제거하고 남은 정점으로 메시를 다시 연결했습니다.')
+  props.onNotice?.(null)
 }
 
 const createPointerEndHandler = (props: MeshEditorProps, state: MeshEditorState) => () => {
@@ -357,6 +357,7 @@ const createPointerEndHandler = (props: MeshEditorProps, state: MeshEditorState)
     })
     if (result.ok) {
       onDocumentChange(result.document)
+      props.onNotice?.(null)
     } else {
       props.onNotice?.(result.message)
     }
@@ -384,7 +385,7 @@ const createPointerEndHandler = (props: MeshEditorProps, state: MeshEditorState)
 
   if (result.ok) {
     onDocumentChange(result.document)
-    props.onNotice?.(getVertexMoveNotice(props.editMode, result.keyframeTime, vertexIndex))
+    props.onNotice?.(null)
   } else {
     props.onNotice?.(result.message)
   }

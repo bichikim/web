@@ -2,6 +2,7 @@ import {describe, expect, test} from 'vitest'
 
 import {PUPPET_SPATIAL_OBJECT_MAX_DEPTH, type PuppetSpatialObject} from '../../player/document'
 import {isSpatialMesh} from '../../player/internal/parse-spatial-mesh'
+import {createSpatialMeshObject} from '../create-spatial-mesh-object'
 import {generateSpatialMesh} from '../generate-spatial-mesh'
 
 const createNestedObject = (depth: number): PuppetSpatialObject => {
@@ -154,6 +155,38 @@ describe('generateSpatialMesh', () => {
     expect(mesh.source.kind).toBe('authored')
   })
 
+  test('should rotate a rounded primitive without changing its triangulation', () => {
+    const object = {
+      center: [3, 4, 5],
+      id: 'rounded',
+      kind: 'primitive',
+      mode: 'add',
+      name: '동그라미',
+      rotation: [0, 90, 0],
+      shape: 'sphere',
+      size: [10, 8, 6],
+      visible: true,
+    } as const
+    const rotated = generateSpatialMesh({objects: [object], resolution: 10})
+    const original = generateSpatialMesh({
+      objects: [{...object, rotation: [0, 0, 0]}],
+      resolution: 10,
+    })
+
+    expect(rotated.indices).toEqual(original.indices)
+    expect(rotated.vertices).toHaveLength(original.vertices.length)
+    for (let index = 0; index < original.vertices.length; index += 3) {
+      expect(rotated.vertices[index]).toBeCloseTo(
+        object.center[0] + original.vertices[index + 2]! - object.center[2],
+      )
+      expect(rotated.vertices[index + 1]).toBeCloseTo(original.vertices[index + 1]!)
+      expect(rotated.vertices[index + 2]).toBeCloseTo(
+        object.center[2] - original.vertices[index]! + object.center[0],
+      )
+    }
+    expect(rotated.source).toMatchObject({kind: 'authored', objects: [object]})
+  })
+
   test('should create a closed control surface from a box', () => {
     const mesh = generateSpatialMesh({
       operations: [{center: [5, 5, 0], id: 'body', mode: 'add', shape: 'box', size: [10, 10, 4]}],
@@ -215,5 +248,42 @@ describe('generateSpatialMesh', () => {
     expect(mesh.vertices.length).toBeGreaterThan(0)
     expect(mesh.indices.every((index) => index < mesh.vertices.length / 3)).toBe(true)
     expect(mesh.source.kind).toBe('generated')
+  })
+
+  test('should compose an imported triangle mesh with a primitive and retain editable source', () => {
+    const imported = createSpatialMeshObject(
+      generateSpatialMesh({
+        operations: [{center: [0, 0, 0], id: 'source', mode: 'add', shape: 'box', size: [4, 4, 4]}],
+      }),
+    )
+    const objects: PuppetSpatialObject[] = [
+      {
+        children: [
+          imported,
+          {
+            center: [0, 0, 0],
+            id: 'cut',
+            kind: 'primitive',
+            mode: 'subtract',
+            name: '구멍',
+            rotation: [0, 0, 0],
+            shape: 'box',
+            size: [2, 2, 2],
+            visible: true,
+          },
+        ],
+        id: 'combined',
+        kind: 'group',
+        mode: 'add',
+        name: '합친 메시',
+        visible: true,
+      },
+    ]
+    const mesh = generateSpatialMesh({objects, resolution: 14})
+    const positions = mesh.vertices.filter((_, index) => index % 3 === 0)
+
+    expect(mesh.indices.length).toBeGreaterThan(0)
+    expect(positions.some((value) => Math.abs(value) < 1.5)).toBe(true)
+    expect(isSpatialMesh(mesh)).toBe(true)
   })
 })
