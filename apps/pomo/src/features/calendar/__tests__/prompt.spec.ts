@@ -69,6 +69,54 @@ it('should include the exclusive end date for a multi-day all-day event', () => 
   expect(context).toContain('2026. 9. 5.–2026. 9. 7. (종일, 종료일 미포함)')
 })
 
+it('should include and format an all-day event with an ISO start date-time', () => {
+  const context = createCalendarPromptContext({
+    events: [
+      createEvent({
+        allDay: true,
+        end: '2026-09-06',
+        start: '2026-09-05T00:00:00Z',
+        title: 'ISO 시작 일정',
+      }),
+    ],
+    timeZone: 'Asia/Seoul',
+  })
+
+  expect(context).toContain('2026. 9. 5. 종일 · ISO 시작 일정')
+  expect(context).not.toContain('일부 일정만 확인했습니다.')
+})
+
+it.each([
+  {
+    description: 'one-day',
+    end: '2026-09-06T00:00:00Z',
+    formattedTime: '2026. 9. 5. 종일',
+  },
+  {
+    description: 'multi-day',
+    end: '2026-09-07T00:00:00Z',
+    formattedTime: '2026. 9. 5.–2026. 9. 7. (종일, 종료일 미포함)',
+  },
+])(
+  'should include and format a $description event with an ISO end date-time',
+  ({end, formattedTime}) => {
+    const context = createCalendarPromptContext({
+      events: [
+        createEvent({
+          allDay: true,
+          end,
+          start: '2026-09-05',
+          title: 'ISO 종료 일정',
+        }),
+      ],
+      timeZone: 'Asia/Seoul',
+    })
+
+    expect(context).toContain(`${formattedTime} · ISO 종료 일정`)
+    expect(context).not.toContain('일부 일정만 확인했습니다.')
+  },
+)
+
 it('should include the end date when a timed event crosses a local day', () => {
   expect(
     createCalendarPromptContext({

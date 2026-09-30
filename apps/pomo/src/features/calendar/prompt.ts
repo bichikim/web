@@ -18,31 +18,35 @@ const PROVIDER_LABELS = {
 
 const dateTimeSchema = z.iso.datetime({offset: true})
 
+const parseAllDayDate = (value: string) => parseDate(value.slice(0, 'YYYY-MM-DD'.length))
+
 const hasValidEventTimes = (event: CalendarEvent) => {
-  if (event.allDay) {
-    return (
-      parseDate(event.start) !== null && parseDate(event.end) !== null && event.start < event.end
-    )
+  if (!event.allDay) {
+    const start = dateTimeSchema.safeParse(event.start)
+    const end = dateTimeSchema.safeParse(event.end)
+    return start.success && end.success && Date.parse(end.data) > Date.parse(start.data)
   }
 
-  const start = dateTimeSchema.safeParse(event.start)
-  const end = dateTimeSchema.safeParse(event.end)
-  return start.success && end.success && Date.parse(end.data) > Date.parse(start.data)
+  const startDate = parseAllDayDate(event.start)
+  const endDate = parseAllDayDate(event.end)
+  return startDate !== null && endDate !== null && formatDate(startDate) < formatDate(endDate)
 }
 
 const formatAllDayDate = (value: string) => {
-  const [year, month, day] = value.split('-').map(Number)
+  const [year, month, day] = value.slice(0, 'YYYY-MM-DD'.length).split('-').map(Number)
   return `${year}. ${month}. ${day}.`
 }
 
 const formatEventTime = (event: CalendarEvent, timeZone: string) => {
   if (event.allDay) {
-    const startDate = parseDate(event.start)
+    const startDate = parseAllDayDate(event.start)
+    const endDate = parseAllDayDate(event.end)
     const start = formatAllDayDate(event.start)
     if (
       startDate === null ||
-      event.end <= event.start ||
-      event.end === formatDate(addDays(startDate, 1))
+      endDate === null ||
+      formatDate(endDate) <= formatDate(startDate) ||
+      formatDate(endDate) === formatDate(addDays(startDate, 1))
     ) {
       return `${start} 종일`
     }
