@@ -289,6 +289,33 @@ describe('createCalendarQuery', () => {
     })
   })
 
+  it('should query the afternoon two days ago without using the current time', () => {
+    expect(createCalendarQuery({now, text: '그저께 오후 일정', timeZone: 'Asia/Seoul'})).toEqual({
+      end: '2026-09-02T15:00:00.000Z',
+      start: '2026-09-02T03:00:00.000Z',
+    })
+  })
+
+  it('should query only the morning three days ahead', () => {
+    expect(createCalendarQuery({now, text: '글피 오전 일정', timeZone: 'Asia/Seoul'})).toEqual({
+      end: '2026-09-07T03:00:00.000Z',
+      start: '2026-09-06T15:00:00.000Z',
+    })
+  })
+
+  it.each([
+    {
+      expected: {end: '2026-09-07T15:00:00.000Z', start: '2026-09-06T15:00:00.000Z'},
+      text: '그저께 말고 글피 일정 알려줘',
+    },
+    {
+      expected: {end: '2026-09-02T15:00:00.000Z', start: '2026-09-01T15:00:00.000Z'},
+      text: '글피 말고 그저께 일정 알려줘',
+    },
+  ])('should ignore the excluded relative date in "$text"', ({expected, text}) => {
+    expect(createCalendarQuery({now, text, timeZone: 'Asia/Seoul'})).toEqual(expected)
+  })
+
   it('should query through Sunday for this week', () => {
     expect(
       createCalendarQuery({now, text: '이번 주 중요한 일정 알려줘', timeZone: 'Asia/Seoul'}),

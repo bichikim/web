@@ -101,6 +101,19 @@ it('should restore an empty web start from current native settings before repair
     JSON.stringify(restoredSettings),
   )
 })
+it('should restore an empty web start from the native legacy date', async () => {
+  fixture.usesTossStorage.mockReturnValue(true)
+  const webSettings = {branch: 'navy', days: '300', manual: true, start: ''} as const
+  const restoredSettings = {...webSettings, start: '2026-09-01'}
+  fixture.web.set('pomo:service-settings:v1', JSON.stringify(webSettings))
+  fixture.getItem.mockResolvedValueOnce(null).mockResolvedValueOnce('"2026-09-01"')
+
+  await expect(repository.read()).resolves.toEqual(restoredSettings)
+  expect(fixture.setItem).toHaveBeenCalledWith(
+    'pomo:service-settings:v1',
+    JSON.stringify(restoredSettings),
+  )
+})
 it('should preserve web settings without repairing native storage when the native lookup fails', async () => {
   fixture.usesTossStorage.mockReturnValue(true)
   const settings = {branch: 'air', days: '300', manual: true, start: ''} as const
