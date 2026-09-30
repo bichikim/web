@@ -23,7 +23,10 @@ vi.mock('dexie', () => ({
   },
 }))
 vi.mock('../sample', () => ({sampleVideo: vi.fn()}))
-const samples = [{height: 1, pixels: new Uint8ClampedArray([255, 0, 0, 255]), time: 0, width: 1}]
+const samples = [
+  {height: 1, pixels: new Uint8ClampedArray([255, 0, 0, 255]), time: 0, width: 1},
+  {height: 1, pixels: new Uint8ClampedArray([0, 255, 0, 255]), time: 0.04, width: 1},
+]
 beforeEach(() => {
   records.clear()
   vi.clearAllMocks()
@@ -37,6 +40,14 @@ it('should deduplicate pending analysis and reuse persisted samples', async () =
   await expect(first).resolves.toEqual(samples)
   await expect(prepareVideoBackground('cache', blob)).resolves.toEqual(samples)
   expect(sampleVideo).toHaveBeenCalledOnce()
+})
+it('should replace samples cached before the current analysis version', async () => {
+  records.set('stale', {id: 'stale', samples: [samples[0]]})
+
+  await expect(prepareVideoBackground('stale', new Blob())).resolves.toEqual(samples)
+
+  expect(sampleVideo).toHaveBeenCalledOnce()
+  expect(records.get('stale')).toEqual({id: 'stale', samples, sampleVersion: 2})
 })
 it('should serialize decoders for different videos', async () => {
   let finish: ((value: typeof samples) => void) | undefined
