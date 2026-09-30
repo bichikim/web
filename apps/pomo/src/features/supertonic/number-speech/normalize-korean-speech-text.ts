@@ -1,13 +1,14 @@
 import {classifySpeechNumber} from './classify-speech-number'
 import {hasNumberKind} from './has-number-kind'
 import {parseInteger} from './parse-integer'
-import {DECIMAL_PERCENT_PATTERN, INTEGER_PERCENT_PATTERN} from './percent-patterns'
+import {KOREAN_DECIMAL_PERCENT_PATTERN, KOREAN_INTEGER_PERCENT_PATTERN} from './percent-patterns'
 import {
-  INTEGER_PATTERN_SOURCE,
+  KOREAN_DIGIT_PATTERN_SOURCE,
+  KOREAN_INTEGER_PATTERN_SOURCE,
   KOREAN_PARTICLE_PATTERN_SOURCE,
   KOREAN_UNIT_END_PATTERN_SOURCE,
+  KOREAN_UNSIGNED_INTEGER_PATTERN_SOURCE,
   NUMBER_TOKEN_START_PATTERN_SOURCE,
-  UNSIGNED_INTEGER_PATTERN_SOURCE,
 } from './number-patterns'
 
 const DIGIT_WORDS = ['영', '일', '이', '삼', '사', '오', '육', '칠', '팔', '구'] as const
@@ -43,13 +44,13 @@ const NATIVE_TENS = [
 const NATIVE_COUNTERS = '시간|개|명|마리|살|잔|권|대|장|점|곡'
 const SINO_UNITS = '개월|년대|년생|년형|년|초|층|월|일|도'
 const TOKEN_START_PATTERN = NUMBER_TOKEN_START_PATTERN_SOURCE
-const UNSIGNED_INTEGER_PATTERN = UNSIGNED_INTEGER_PATTERN_SOURCE
+const UNSIGNED_INTEGER_PATTERN = KOREAN_UNSIGNED_INTEGER_PATTERN_SOURCE
 const KOREAN_PARTICLE_PATTERN = KOREAN_PARTICLE_PATTERN_SOURCE
 const KOREAN_UNIT_END_PATTERN = KOREAN_UNIT_END_PATTERN_SOURCE
-const LEVEL_FOLLOWING_PATTERN = '[\\p{L}\\p{N}_]|[.,]\\d|[+\\-/:~–—#@$€£¥₩<>≤≥≈]'
+const LEVEL_FOLLOWING_PATTERN = `[\\p{L}\\p{N}_]|[.,]${KOREAN_DIGIT_PATTERN_SOURCE}|[+\\-/:~–—#@$€£¥₩<>≤≥≈]`
 const LEVEL_NUMBER_END = `(?:(?=${KOREAN_PARTICLE_PATTERN})|(?!${LEVEL_FOLLOWING_PATTERN})${KOREAN_UNIT_END_PATTERN})`
 const WON_PATTERN = new RegExp(
-  `${TOKEN_START_PATTERN}(${INTEGER_PATTERN_SOURCE})\\s*원${KOREAN_UNIT_END_PATTERN}`,
+  `${TOKEN_START_PATTERN}(${KOREAN_INTEGER_PATTERN_SOURCE})\\s*원${KOREAN_UNIT_END_PATTERN}`,
   'gu',
 )
 const DURATION_MINUTE_PATTERN = new RegExp(
@@ -72,7 +73,7 @@ const CLOCK_HOUR_PATTERN = new RegExp(
   'gu',
 )
 const SINO_UNIT_PATTERN = new RegExp(
-  `${TOKEN_START_PATTERN}(${INTEGER_PATTERN_SOURCE})\\s*` +
+  `${TOKEN_START_PATTERN}(${KOREAN_INTEGER_PATTERN_SOURCE})\\s*` +
     `(${SINO_UNITS})${KOREAN_UNIT_END_PATTERN}`,
   'gu',
 )
@@ -186,13 +187,19 @@ const pronounceDecimal = (value: string): string | null => {
     return null
   }
 
-  const fraction = Array.from(value.slice(decimalIndex + 1), (digit) => DIGIT_WORDS[Number(digit)])
+  const fraction = Array.from(
+    value.slice(decimalIndex + 1),
+    (digit) => DIGIT_WORDS[Number(digit.normalize('NFKC'))],
+  )
 
   return fraction.some((word) => word === undefined) ? null : `${integer} 점 ${fraction.join(' ')}`
 }
 
 const pronounceDigits = (value: string) =>
-  Array.from(value.replaceAll(',', ''), (digit) => DIGIT_WORDS[Number(digit)]).join(' ')
+  Array.from(
+    value.replaceAll(',', ''),
+    (digit) => DIGIT_WORDS[Number(digit.normalize('NFKC'))],
+  ).join(' ')
 
 const replaceWhenPronounceable = (
   match: string,
@@ -223,22 +230,28 @@ export const normalizeKoreanSpeechText = (text: string): string =>
           : match
       },
     )
-    .replace(DECIMAL_PERCENT_PATTERN, (match, value: string, start: number, input: string) => {
-      if (!hasNumberKind('ko', input, start, value, 'cardinal')) {
-        return match
-      }
+    .replace(
+      KOREAN_DECIMAL_PERCENT_PATTERN,
+      (match, value: string, start: number, input: string) => {
+        if (!hasNumberKind('ko', input, start, value, 'cardinal')) {
+          return match
+        }
 
-      const pronunciation = pronounceDecimal(value)
-      return pronunciation === null ? match : `${pronunciation} 퍼센트`
-    })
-    .replace(INTEGER_PERCENT_PATTERN, (match, value: string, start: number, input: string) => {
-      if (!hasNumberKind('ko', input, start, value, 'cardinal')) {
-        return match
-      }
+        const pronunciation = pronounceDecimal(value)
+        return pronunciation === null ? match : `${pronunciation} 퍼센트`
+      },
+    )
+    .replace(
+      KOREAN_INTEGER_PERCENT_PATTERN,
+      (match, value: string, start: number, input: string) => {
+        if (!hasNumberKind('ko', input, start, value, 'cardinal')) {
+          return match
+        }
 
-      const pronunciation = pronounceSinoInteger(value)
-      return pronunciation === null ? match : `${pronunciation} 퍼센트`
-    })
+        const pronunciation = pronounceSinoInteger(value)
+        return pronunciation === null ? match : `${pronunciation} 퍼센트`
+      },
+    )
     .replace(WON_PATTERN, (match, value: string, start: number, input: string) =>
       hasNumberKind('ko', input, start, value, 'cardinal')
         ? replaceWhenPronounceable(match, value, '원', pronounceSinoInteger)
