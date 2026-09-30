@@ -41,16 +41,19 @@ it('should load a requested calendar range for calendar views', async () => {
   expect(requestOptions).toEqual(expect.objectContaining({responseSchema: expect.any(Object)}))
 })
 
-it('should skip the API for a question without calendar intent', async () => {
-  await expect(
-    loadCalendarPromptContext({
-      now: new Date('2026-09-04T10:30:00.000Z'),
-      text: '오늘 날씨 알려줘',
-      timeZone: 'Asia/Seoul',
-    }),
-  ).resolves.toBeNull()
-  expect(apiJson).not.toHaveBeenCalled()
-})
+it.each(['오늘 날씨 알려줘', '오늘 날씨 뭐 있어?', '오늘 뉴스 뭐 있어?', '오늘 뭐 뉴스 있어?'])(
+  'should skip the API for a question without calendar intent: "%s"',
+  async (text) => {
+    await expect(
+      loadCalendarPromptContext({
+        now: new Date('2026-09-04T10:30:00.000Z'),
+        text,
+        timeZone: 'Asia/Seoul',
+      }),
+    ).resolves.toBeNull()
+    expect(apiJson).not.toHaveBeenCalled()
+  },
+)
 
 it('should fetch only the resolved range and create grounded prompt context', async () => {
   vi.mocked(apiJson).mockResolvedValue({
