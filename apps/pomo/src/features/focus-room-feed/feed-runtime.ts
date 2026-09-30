@@ -22,15 +22,16 @@ const resolveDesktopDevelopmentFeedUrl = (url: string, localOrigin: string | und
 
   try {
     const parsedUrl = new URL(url)
+    const pathname = parsedUrl.pathname.replace(/\/$/u, '')
     if (
-      !DEV_FEED_PATHS.has(parsedUrl.pathname) ||
+      !DEV_FEED_PATHS.has(pathname) ||
       (parsedUrl.origin !== localOrigin &&
         parsedUrl.origin !== import.meta.env.VITE_POMO_PUBLIC_ORIGIN)
     ) {
       return url
     }
 
-    const localUrl = new URL(parsedUrl.pathname, localOrigin)
+    const localUrl = new URL(pathname, localOrigin)
     localUrl.search = parsedUrl.search
     localUrl.hash = parsedUrl.hash
     return localUrl.href
