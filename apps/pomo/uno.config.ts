@@ -433,6 +433,7 @@ body {
       animation: {
         counts: {
           'dialogue-settings-spin': 'infinite',
+          'feedback-hold': '1',
           'diary-progress-pending': 'infinite',
           'focus-glow': 'infinite',
           'orbit-border': 'infinite',
@@ -442,6 +443,7 @@ body {
         },
         durations: {
           'dialogue-menu-in': '140ms',
+          'feedback-hold': '2s',
           'dialogue-settings-spin': '800ms',
           'diary-progress-pending': '1.8s',
           'entry-reveal-room': '700ms',
@@ -456,10 +458,12 @@ body {
           'select-in': '140ms',
         },
         keyframes: {
+          // Completion restores temporary feedback without introducing visual motion.
           'dialogue-menu-in': `{
             from { opacity: 0; transform: scale(0.97) translateY(-0.2rem); }
             to { opacity: 1; transform: scale(1) translateY(0); }
           }`,
+          'feedback-hold': '{ from { opacity: 1; } to { opacity: 1; } }',
           'dialogue-settings-spin': '{ to { transform: rotate(1turn); } }',
           'diary-progress-pending': '{ to { background-position: 150% 0; } }',
           'entry-reveal-room': '{ from { opacity: 1; } to { opacity: 0; } }',

@@ -6,6 +6,7 @@ import {afterEach, expect, it, vi} from 'vitest'
 vi.mock('@solidjs/meta', () => ({
   Title: (props: {readonly children: unknown}) => <>{props.children}</>,
 }))
+vi.mock('../../p-tools/PToolsDialog', () => ({PToolsDialog: () => <p>tools dialog ready</p>}))
 vi.mock('../../p-studio/PStudio', () => ({PStudio: () => <p>studio ready</p>}))
 
 afterEach(() => {
@@ -21,6 +22,7 @@ it.each([false, true])('should render the home studio for Toss=%s', async (isApp
   render(() => <PHomePage />)
 
   expect(screen.getByText('studio ready')).toBeInTheDocument()
+  expect(screen.getByText('tools dialog ready')).toBeInTheDocument()
   expect(screen.queryByRole('status')).toBeNull()
   const main = screen.getByRole('main')
   expect(main.className.includes('radial-gradient')).toBe(!isAppsInToss)
