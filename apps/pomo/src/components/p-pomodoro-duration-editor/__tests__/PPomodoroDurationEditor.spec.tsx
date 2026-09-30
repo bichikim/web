@@ -14,6 +14,13 @@ const CONFIG = {
   shortBreakSeconds: 5 * 60,
 } satisfies PomodoroTimerConfig
 
+const SYNCED_CONFIG = {
+  focusSeconds: 30 * 60,
+  focusSessionsPerCycle: 6,
+  longBreakSeconds: 20 * 60,
+  shortBreakSeconds: 7 * 60,
+} satisfies PomodoroTimerConfig
+
 afterEach(() => {
   cleanup()
 })
@@ -77,6 +84,33 @@ describe('PPomodoroDurationEditor', () => {
     fireEvent.click(summary)
     expect(screen.queryByRole('spinbutton')).toBeNull()
     expect(onEditingChange).toHaveBeenLastCalledWith(false)
+  })
+
+  it('should refresh and save the config received while editing', () => {
+    const [config, setConfig] = createSignal(CONFIG)
+    const onChange = vi.fn()
+    render(() => (
+      <PPomodoroDurationEditor
+        config={config()}
+        isEditing
+        onChange={onChange}
+        onEditingChange={vi.fn()}
+      />
+    ))
+
+    setConfig(SYNCED_CONFIG)
+
+    expect(screen.getByRole('spinbutton', {name: '집중 횟수(회)'})).toHaveProperty('value', '6')
+    expect(screen.getByRole('spinbutton', {name: '집중 시간(분)'})).toHaveProperty('value', '30')
+    expect(screen.getByRole('spinbutton', {name: '짧은 휴식 시간(분)'})).toHaveProperty(
+      'value',
+      '7',
+    )
+    expect(screen.getByRole('spinbutton', {name: '긴 휴식 시간(분)'})).toHaveProperty('value', '20')
+
+    fireEvent.click(screen.getByRole('button', {name: '설정 저장'}))
+
+    expect(onChange).toHaveBeenCalledWith(SYNCED_CONFIG)
   })
 
   it.each([
