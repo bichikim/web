@@ -25,11 +25,11 @@ describe('normalizeKoreanSpeechStyle', () => {
   })
 
   it('should convert formal endings before a Unicode ellipsis', () => {
-    expect(normalizeKoreanSpeechStyle('좋습니다…')).toBe('좋아요…')
+    expect(normalizeKoreanSpeechStyle('잠시만 기다려 주십니다…')).toBe('잠시만 기다려 주세요…')
   })
 
   it('should convert formal endings before a fullwidth closing parenthesis', () => {
-    expect(normalizeKoreanSpeechStyle('좋습니다）')).toBe('좋아요）')
+    expect(normalizeKoreanSpeechStyle('알겠습니다）')).toBe('알겠어요）')
   })
 
   it('should normalize common informal commands and questions', () => {

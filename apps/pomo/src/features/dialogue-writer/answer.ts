@@ -5,6 +5,8 @@ const SPEECH_STYLE_REPLACEMENTS: ReadonlyArray<readonly [RegExp, string]> = [
   [new RegExp(`없습니다${SENTENCE_END_PATTERN}`, 'gu'), '없어요'],
   [new RegExp(`같습니다${SENTENCE_END_PATTERN}`, 'gu'), '같아요'],
   [new RegExp(`괜찮습니다${SENTENCE_END_PATTERN}`, 'gu'), '괜찮아요'],
+  [new RegExp(`주십니다${SENTENCE_END_PATTERN}`, 'gu'), '주세요'],
+  [new RegExp(`알겠습니다${SENTENCE_END_PATTERN}`, 'gu'), '알겠어요'],
   [new RegExp(`좋습니다${SENTENCE_END_PATTERN}`, 'gu'), '좋아요'],
   [new RegExp(`되었습니다${SENTENCE_END_PATTERN}`, 'gu'), '되었어요'],
   [new RegExp(`됩니다${SENTENCE_END_PATTERN}`, 'gu'), '돼요'],
