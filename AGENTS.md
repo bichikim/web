@@ -41,6 +41,13 @@
 - When direct evidence is missing, run the smallest relevant test or runtime experiment and distinguish product defects from setup, runner, sandbox, and environment failures.
 - Show the decisive evidence. If no permitted source or viable experiment can establish the claim, state that it cannot be determined instead of guessing.
 
+## Completion
+
+- Keep the user's requested outcome, scope, constraints, and completion criteria as the task's authority throughout the work. Do not silently narrow or replace them with intermediate artifacts or checks.
+- Before reporting completion, compare the actual result against each of the user's original completion criteria. For each criterion, cite evidence that proves that criterion; a plan, edited file, or passing partial check cannot substitute for a different requested outcome.
+- Keep source inspection, executed checks, and user-goal completion as separate claims. Verify runtime behavior when the requested outcome depends on it. Do not infer that the whole task is complete from implementation or test progress alone.
+- If a criterion remains unmet or unverified, report the exact remaining work or blocker and the verified progress; do not label the whole task complete.
+
 ## Architecture authority
 
 - Follow explicit requirements in current official documentation. Disclose conflicts with those requirements before implementation; do not deviate unless the user explicitly directs it.
