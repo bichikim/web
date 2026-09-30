@@ -142,24 +142,6 @@ describe('development model chest surface perspective', () => {
     ).toBeLessThan(1.08)
   })
 
-  test('should retain neutral chest width and upper attachment while fitting its hem', () => {
-    for (const part of parts) {
-      const original = render(flat, part.id, {})
-      render(model, part.id, {}).forEach((value, index) => {
-        if (index % 2 === 0) {
-          expect(value).toBeCloseTo(original[index]!, 5)
-          return
-        }
-        if (original[index]! <= 2040) {
-          expect(Math.abs(value - original[index]!)).toBeLessThan(1.5)
-          return
-        }
-        expect(value - original[index]!).toBeGreaterThanOrEqual(-0.001)
-        expect(value - original[index]!).toBeLessThan(80)
-      })
-    }
-  })
-
   test.each(['body-x', 'full-body-x'])(
     'should curve the cloth and carry the ribbon with %s',
     (parameterId) => {

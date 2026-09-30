@@ -4,10 +4,11 @@ export const isValidServiceDays = (value: number): boolean =>
   Number.isSafeInteger(value) && value > 0
 
 export const parseServiceDays = (value: string): number | null => {
-  if (!SERVICE_DAYS_PATTERN.test(value)) {
+  const normalizedValue = value.replace(/[０-９]/gu, (digit) => digit.normalize('NFKC'))
+  if (!SERVICE_DAYS_PATTERN.test(normalizedValue)) {
     return null
   }
-  const numericValue = Number(value)
+  const numericValue = Number(normalizedValue)
   return isValidServiceDays(numericValue) ? numericValue : null
 }
 

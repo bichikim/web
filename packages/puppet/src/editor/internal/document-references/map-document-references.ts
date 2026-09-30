@@ -41,6 +41,7 @@ export const mapDocumentReferences = (options: MapDocumentReferencesOptions): Pu
     motions: document.motions.map((motion) => ({
       ...motion,
       id: rename(motion.id),
+      timelineParameterIds: motion.timelineParameterIds?.map(rename),
       tracks: motion.tracks.flatMap<PuppetTrack>((track) => {
         switch (track.kind) {
           case 'vertex':

@@ -11,6 +11,8 @@ For test execution, status, coverage, and debugging, apply the `wallaby-testing`
 
 ## Test Authoring Workflow
 
+Write unit tests only for observable behavior or failure contracts. Do not add or retain tests whose sole purpose is to confirm that an export exists, a module imports, or a route/component renders only mocked dependencies.
+
 Complete these steps in order before final verification:
 
 1. Write the tests.

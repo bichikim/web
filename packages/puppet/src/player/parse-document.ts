@@ -397,6 +397,10 @@ const isMotion = (value: unknown): value is PuppetMotion => {
     value.id.length === 0 ||
     !isFiniteNumber(value.duration) ||
     value.duration <= 0 ||
+    (value.timelineParameterIds !== undefined &&
+      (!Array.isArray(value.timelineParameterIds) ||
+        !value.timelineParameterIds.every((id) => typeof id === 'string') ||
+        new Set(value.timelineParameterIds).size !== value.timelineParameterIds.length)) ||
     !Array.isArray(value.tracks)
   ) {
     return false
