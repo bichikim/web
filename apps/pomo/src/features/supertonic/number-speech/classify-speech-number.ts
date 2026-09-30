@@ -18,7 +18,7 @@ const ORDINAL_DECISION: SpeechNumberDecision = {confidence: 0.99, kind: 'ordinal
 const DIGITS_DECISION: SpeechNumberDecision = {confidence: 0.99, kind: 'digits'}
 const IDENTIFIER_DECISION: SpeechNumberDecision = {confidence: 0.99, kind: 'identifier'}
 const SECOND_TO_LAST_INDEX = -2
-const NUMBER_PATTERN = /^[+-]?\d[\d,.]*(?:st|nd|rd|th)?$/iu
+const NUMBER_PATTERN = /^[-+−]?\d[\d,.]*(?:st|nd|rd|th)?$/iu
 const STRUCTURED_SEPARATOR_PATTERN = /[/:~–—-]/u
 const ENGLISH_IDENTIFIER_PATTERN =
   /(?:^|[^A-Za-z])(?:channel|episode|formula|gpt|highway|id|iphone|iso|model|room|route|version)\s+$/iu
@@ -76,7 +76,7 @@ const getContext = (options: ClassifySpeechNumberOptions): NumberContext | null 
     : null
 }
 
-const hasLeadingZero = (value: string) => /^[+-]?0\d/u.test(value.replaceAll(',', ''))
+const hasLeadingZero = (value: string) => /^[-+−]?0\d/u.test(value.replaceAll(',', ''))
 
 const hasStructuredNeighbor = (context: NumberContext) => {
   const previousCharacter = context.prefix.at(-1)

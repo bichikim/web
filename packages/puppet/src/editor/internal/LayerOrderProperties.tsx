@@ -2,6 +2,9 @@ import {EditorButton} from '../../design-system'
 import {createSignal, For, Show} from 'solid-js'
 
 import type {PuppetDocument, PuppetLayerOrderRule} from '../../player'
+import {resolveParameterValue} from '../../player/parameter-value'
+import type {PuppetParameterValueMap} from '../../deformation'
+import {EditorPropertyGroup} from './EditorPropertyGroup'
 import {LayerOrderRuleEditor} from './LayerOrderRuleEditor'
 import {getSceneNode} from './scene-graph'
 
@@ -9,6 +12,8 @@ export interface LayerOrderPropertiesProps {
   readonly document: PuppetDocument
   readonly onDocumentChange?: (document: PuppetDocument) => void
   readonly selectedPartIds: ReadonlyArray<string>
+  readonly parameterIds?: ReadonlyArray<string>
+  readonly parameterValues?: PuppetParameterValueMap
 }
 
 const getRuleSummary = (document: PuppetDocument, rule: PuppetLayerOrderRule) => {
@@ -33,6 +38,27 @@ const getSelectedTargets = (document: PuppetDocument, selectedPartIds: ReadonlyA
 
 export const LayerOrderProperties = (props: LayerOrderPropertiesProps) => {
   const [adding, setAdding] = createSignal(false)
+  const visibleRules = () =>
+    (props.document.layerOrderRules ?? [])
+      .map((rule, index) => ({index, rule}))
+      .filter(
+        ({rule}) =>
+          props.parameterIds === undefined ||
+          rule.when.parameterIds.some((id) => props.parameterIds?.includes(id)),
+      )
+  const ruleTotal = (rule: PuppetLayerOrderRule) => {
+    const {parameters} = props.document
+    const values = props.parameterValues
+    return rule.when.parameterIds.reduce((sum, id) => {
+      const parameter = parameters?.find((candidate) => candidate.id === id)
+      return sum + (parameter === undefined ? 0 : resolveParameterValue(parameter, values?.[id]))
+    }, 0)
+  }
+  const ruleActive = (rule: PuppetLayerOrderRule) =>
+    rule.when.comparison === 'greater-than'
+      ? ruleTotal(rule) > rule.when.threshold
+      : ruleTotal(rule) < rule.when.threshold
+  const activeCount = () => visibleRules().filter(({rule}) => ruleActive(rule)).length
   const selectedTargets = () => getSelectedTargets(props.document, props.selectedPartIds)
   const canAdd = () =>
     selectedTargets().length > 0 &&
@@ -44,7 +70,7 @@ export const LayerOrderProperties = (props: LayerOrderPropertiesProps) => {
     referencePartId: '',
     when: {
       comparison: 'greater-than',
-      parameterIds: [],
+      parameterIds: props.parameterIds ?? [],
       threshold: 0,
     },
   })
@@ -75,78 +101,87 @@ export const LayerOrderProperties = (props: LayerOrderPropertiesProps) => {
     rules[destination] = current
     props.onDocumentChange?.({...props.document, layerOrderRules: rules})
   }
+  const adjacentRule = (index: number, offset: number) => {
+    const visibleIndex = visibleRules().findIndex((item) => item.index === index)
+    return visibleRules()[visibleIndex + offset]?.index
+  }
 
   return (
-    <details class="deformer-properties order-rule-panel">
-      <summary
-        class="order-rule-heading"
-        title="기본은 레이어 목록 순서입니다. 조건을 만족한 규칙을 위에서 아래로 적용합니다."
-      >
-        레이어 순서 규칙 · {props.document.layerOrderRules?.length ?? 0}개
-      </summary>
-      <For each={props.document.layerOrderRules ?? []}>
-        {(rule, index) => {
-          const summary = () => getRuleSummary(props.document, rule)
-          return (
-            <details class="order-rule-rule">
-              <summary
-                class="order-rule-summary"
-                aria-label={`${summary().targetName} · ${summary().placementLabel}. ${summary().conditionLabel}`}
-              >
-                <span class="order-rule-summary-content">
-                  <span>{summary().targetName}</span>
-                  <span>{summary().placementLabel}</span>
-                  <span class="order-rule-condition">{summary().conditionLabel}</span>
-                </span>
-              </summary>
-              <LayerOrderRuleEditor
-                document={props.document}
-                initialRule={rule}
-                selectedPartIds={props.selectedPartIds}
-                onCancel={() => undefined}
-                onSave={(updated) => saveRule(index(), updated)}
-              />
-              <div class="order-rule-actions">
-                <EditorButton
-                  aria-label="규칙 위로"
-                  disabled={index() === 0}
-                  onClick={() => moveRule(index(), index() - 1)}
+    <EditorPropertyGroup class="order-rule-panel" title="표시 순서">
+      <div class="order-rule-list">
+        <p class="parameter-section-summary">
+          규칙 {visibleRules().length}개 · 현재{' '}
+          {activeCount() === 0 ? '적용 안 됨' : `${activeCount()}개 적용 중`}
+        </p>
+        <For each={visibleRules()}>
+          {({rule, index}) => {
+            const summary = () => getRuleSummary(props.document, rule)
+            return (
+              <details class="order-rule-rule">
+                <summary
+                  class="order-rule-summary"
+                  aria-label={`${summary().targetName} · ${summary().placementLabel}. ${summary().conditionLabel}`}
                 >
-                  ↑
-                </EditorButton>
-                <EditorButton
-                  aria-label="규칙 아래로"
-                  disabled={index() === (props.document.layerOrderRules?.length ?? 0) - 1}
-                  onClick={() => moveRule(index(), index() + 1)}
-                >
-                  ↓
-                </EditorButton>
-                <EditorButton onClick={() => deleteRule(index())}>규칙 삭제</EditorButton>
-              </div>
-            </details>
-          )
-        }}
-      </For>
-      <Show when={adding() && canAdd()}>
-        <div class="order-rule-rule">
-          <h3 class="order-rule-heading">새 레이어 순서 규칙</h3>
-          <LayerOrderRuleEditor
-            document={props.document}
-            initialRule={initialRule()}
-            selectedPartIds={props.selectedPartIds}
-            onCancel={() => setAdding(false)}
-            onSave={(rule) => saveRule(null, rule)}
-          />
-        </div>
-      </Show>
-      <Show when={!adding()}>
-        <EditorButton disabled={!canAdd()} onClick={() => setAdding(true)}>
-          선택 파츠로 규칙 추가
-        </EditorButton>
-      </Show>
-      <Show when={selectedTargets().length === 0}>
-        <p class="order-rule-hint">왼쪽 레이어 목록에서 이동할 파츠를 선택하세요.</p>
-      </Show>
-    </details>
+                  <span class="order-rule-summary-content">
+                    <strong>
+                      {summary().targetName} → {summary().placementLabel}
+                    </strong>
+                    <span class="order-rule-condition">{summary().conditionLabel}</span>
+                    <span class="order-rule-state" data-active={ruleActive(rule)}>
+                      현재 {rule.when.parameterIds.length > 1 ? '합계' : '값'} {ruleTotal(rule)} ·{' '}
+                      {ruleActive(rule) ? '조건 충족' : '조건 미충족'}
+                    </span>
+                  </span>
+                </summary>
+                <LayerOrderRuleEditor
+                  document={props.document}
+                  initialRule={rule}
+                  selectedPartIds={props.selectedPartIds}
+                  onCancel={() => undefined}
+                  onSave={(updated) => saveRule(index, updated)}
+                />
+                <div class="order-rule-actions">
+                  <EditorButton
+                    aria-label="규칙 위로"
+                    disabled={adjacentRule(index, -1) === undefined}
+                    onClick={() => moveRule(index, adjacentRule(index, -1) ?? index)}
+                  >
+                    ↑
+                  </EditorButton>
+                  <EditorButton
+                    aria-label="규칙 아래로"
+                    disabled={adjacentRule(index, 1) === undefined}
+                    onClick={() => moveRule(index, adjacentRule(index, 1) ?? index)}
+                  >
+                    ↓
+                  </EditorButton>
+                  <EditorButton onClick={() => deleteRule(index)}>규칙 삭제</EditorButton>
+                </div>
+              </details>
+            )
+          }}
+        </For>
+        <Show when={adding() && canAdd()}>
+          <div class="order-rule-rule">
+            <h3 class="order-rule-heading">새 레이어 순서 규칙</h3>
+            <LayerOrderRuleEditor
+              document={props.document}
+              initialRule={initialRule()}
+              selectedPartIds={props.selectedPartIds}
+              onCancel={() => setAdding(false)}
+              onSave={(rule) => saveRule(null, rule)}
+            />
+          </div>
+        </Show>
+        <Show when={!adding()}>
+          <EditorButton disabled={!canAdd()} onClick={() => setAdding(true)}>
+            선택 파츠로 규칙 추가
+          </EditorButton>
+        </Show>
+        <Show when={selectedTargets().length === 0}>
+          <p class="order-rule-hint">왼쪽 레이어 목록에서 이동할 파츠를 선택하세요.</p>
+        </Show>
+      </div>
+    </EditorPropertyGroup>
   )
 }

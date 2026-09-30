@@ -273,6 +273,12 @@ export const canvasShortcuts = {
     '[.puppet-editor_&_text]:[fill:#d9e9e3] [.puppet-editor_&_text]:[font-size:12px]',
     '[.puppet-editor_&_text]:pointer-events-none',
   ],
+  'spatial-deformer-properties': [
+    '[.puppet-editor_&_legend]:[font-size:0.6875rem]',
+    '[.puppet-editor_&_label]:[grid-template-columns:6.5rem_minmax(0,_1fr)]',
+    '[.puppet-editor_&_label]:[font-size:0.625rem] [.puppet-editor_&_label]:[color:#b9c8c0]',
+    '[.puppet-editor_&_.editor-button]:[font-size:0.6875rem]',
+  ],
   'temporary-form': [
     'flex items-center gap-0 pointer-events-auto text-[0.625rem] leading-none font-medium',
     '[&:has(>button+button)>button:first-child]:rounded-r-none',

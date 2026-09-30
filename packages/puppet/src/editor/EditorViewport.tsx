@@ -42,7 +42,7 @@ export interface EditorViewportProps {
   readonly onDeformerEditEnd?: () => void
   readonly onDeformerEditStart?: () => void
   readonly onDocumentChange?: (document: PuppetDocument) => void
-  readonly onNotice?: (message: string) => void
+  readonly onNotice?: (message: string | null) => void
   readonly onPlayerChange?: (player: Player | null) => void
   readonly onStatusChange?: (status: PlayerCanvasStatus) => void
   readonly onTimeChange?: (time: number) => void
@@ -78,6 +78,7 @@ interface EditingOverlaysProps {
   readonly displayMount?: HTMLDivElement
   readonly document: PuppetDocument
   readonly editingMesh: boolean
+  readonly meshControls: JSX.Element
   readonly onMeshNotice: (message: string | null) => void
   readonly viewport: EditorViewportProps
   readonly visible: boolean
@@ -100,6 +101,11 @@ const EditingOverlays = (props: EditingOverlaysProps) => {
         brushSettingsMount={props.viewport.brushSettingsMount}
         brushControlsExternal
         meshEditing={props.editingMesh}
+        modeControls={
+          props.viewport.editMode === 'parameter' && props.viewport.activePartId !== undefined
+            ? props.meshControls
+            : undefined
+        }
         renderDisplayControls={(controls) => (
           <Show when={props.visible}>
             <Show when={props.displayMount}>
@@ -189,20 +195,18 @@ export const EditorViewport = (props: EditorViewportProps) => {
   })
   const [displayMount, setDisplayMount] = createSignal<HTMLDivElement>()
   const meshControls = (
-    <Show when={props.editMode === 'parameter' && props.activePartId !== undefined}>
-      <MeshModeControl
-        editing={editingMesh()}
-        notice={meshNotice() ?? undefined}
-        disabledReason={meshIssue() ?? undefined}
-        onChange={(editing) => {
-          setMeshNotice(null)
-          if (editing) {
-            props.onMeshEditingStart?.()
-          }
-          setMeshEditing(editing)
-        }}
-      />
-    </Show>
+    <MeshModeControl
+      editing={editingMesh()}
+      notice={meshNotice() ?? undefined}
+      disabledReason={meshIssue() ?? undefined}
+      onChange={(editing) => {
+        setMeshNotice(null)
+        if (editing) {
+          props.onMeshEditingStart?.()
+        }
+        setMeshEditing(editing)
+      }}
+    />
   )
   return (
     <section
@@ -213,7 +217,15 @@ export const EditorViewport = (props: EditorViewportProps) => {
       }
       class="viewport-panel"
     >
-      {props.renderEditingControls?.(meshControls) ?? meshControls}
+      <Show
+        when={
+          props.brushControlsMount === undefined &&
+          props.editMode === 'parameter' &&
+          props.activePartId !== undefined
+        }
+      >
+        {props.renderEditingControls?.(meshControls) ?? meshControls}
+      </Show>
       <CameraViewport
         fitRevision={props.fitRevision}
         width={props.document.viewport.width}
@@ -260,6 +272,7 @@ export const EditorViewport = (props: EditorViewportProps) => {
           displayMount={displayMount()}
           document={editDocument()}
           editingMesh={editingMesh()}
+          meshControls={meshControls}
           onMeshNotice={setMeshNotice}
           viewport={props}
           visible={editingControlsVisible()}

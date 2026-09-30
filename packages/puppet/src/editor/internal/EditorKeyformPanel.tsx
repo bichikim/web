@@ -1,10 +1,8 @@
-import {InfluenceEditor} from './InfluenceEditor'
 import {EditorDiamondButton} from '../../design-system'
 import {ParameterValueFields} from './ParameterValueFields'
 import {EditorParameterFooter} from './EditorParameterFooter'
 import {
   type Accessor,
-  createSignal,
   createUniqueId,
   For,
   getOwner,
@@ -22,7 +20,6 @@ import type {PuppetParameter, PuppetParameterBinding} from '../../player/documen
 import {EditorKeyformMarker} from './EditorKeyformMarker'
 import {EditorKeyformToolbar} from './EditorKeyformToolbar'
 import {EditorParameterItem} from './EditorParameterItem'
-import {EditorBindingSettingsDrawer, EditorBindingSettingsToggle} from './EditorBindingSettings'
 import type {EditorKeyformPanelProps} from './editor-keyform-panel-props'
 import {createKeyformPanelModel} from './keyform-panel-model'
 import {
@@ -435,8 +432,6 @@ const KeyformPanelFooter = (props: Omit<KeyformPanelSectionProps, 'titleId'>) =>
 
 export const EditorKeyformPanel = (props: EditorKeyformPanelProps) => {
   const titleId = createUniqueId()
-  const [expandedBinding, setExpandedBinding] = createSignal<string>()
-  const [expandedSettingsBinding, setExpandedSettingsBinding] = createSignal<string>()
   const {activeBinding, activePreview, bindingParameters, bindingValues} =
     createKeyformPanelModel(props)
   return (
@@ -456,8 +451,6 @@ export const EditorKeyformPanel = (props: EditorKeyformPanelProps) => {
             {(bindingId) => {
               const binding = () => props.bindings.find((item) => item.id === bindingId)!
               const parameters = () => bindingParameters(binding())
-              const settingsLabel = () => props.getBindingSettingsLabel?.(binding(), parameters())
-              const settingsId = `${titleId}-${bindingId}-settings`
               return (
                 <div class="keyform-binding-row" data-binding-id={bindingId}>
                   <div
@@ -489,76 +482,23 @@ export const EditorKeyformPanel = (props: EditorKeyformPanelProps) => {
                       />
                     </div>
                   </div>
-                  <section class="influence-inline-panel" aria-label="파라미터 영향도">
-                    <InfluenceEditor
-                      renderTrigger={(trigger) => (
-                        <div class="keyform-track-labels">
-                          <KeyformTrackLabel
-                            footer={
-                              <div class="parameter-settings-toggles">
-                                {trigger}
-                                <EditorBindingSettingsToggle
-                                  controlsId={settingsId}
-                                  expanded={expandedSettingsBinding() === bindingId}
-                                  label={settingsLabel()}
-                                  onToggle={() => {
-                                    props.onBindingSelect?.(bindingId)
-                                    setExpandedBinding(undefined)
-                                    setExpandedSettingsBinding((current) =>
-                                      current === bindingId ? undefined : bindingId,
-                                    )
-                                  }}
-                                />
-                              </div>
-                            }
-                            active={bindingId === props.activeBindingId}
-                            activeKeyformValues={props.activeKeyformValues}
-                            binding={binding()}
-                            parameters={parameters()}
-                            values={bindingValues(binding())}
-                            onBindingDelete={
-                              props.previewBindingIds?.has(bindingId)
-                                ? undefined
-                                : props.onBindingDelete
-                            }
-                            onBindingSelect={props.onBindingSelect}
-                            onEditEnd={props.onEditEnd}
-                            onEditStart={props.onEditStart}
-                            onParameterNameChange={props.onParameterNameChange}
-                            onValueChange={props.onValueChange}
-                          />
-                        </div>
-                      )}
-                      title={`${bindingParameters(binding())
-                        .map((parameter) => parameter.name)
-                        .join(' / ')} · 영향도`}
-                      expanded={
-                        expandedBinding() === bindingId && props.activeBindingId === bindingId
+                  <div class="keyform-track-labels">
+                    <KeyformTrackLabel
+                      active={bindingId === props.activeBindingId}
+                      activeKeyformValues={props.activeKeyformValues}
+                      binding={binding()}
+                      parameters={parameters()}
+                      values={bindingValues(binding())}
+                      onBindingDelete={
+                        props.previewBindingIds?.has(bindingId) ? undefined : props.onBindingDelete
                       }
-                      onExpandedChange={(open) => {
-                        if (open) {
-                          props.onBindingSelect?.(bindingId)
-                          setExpandedSettingsBinding(undefined)
-                        }
-                        setExpandedBinding(open ? bindingId : undefined)
-                      }}
-                      influences={binding().influences}
-                      parameters={props.parameters}
-                      parameterValues={props.parameterValueMap}
-                      onChange={props.onInfluencesChange}
-                      onEditStart={props.onEditStart}
+                      onBindingSelect={props.onBindingSelect}
                       onEditEnd={props.onEditEnd}
+                      onEditStart={props.onEditStart}
+                      onParameterNameChange={props.onParameterNameChange}
+                      onValueChange={props.onValueChange}
                     />
-                  </section>
-                  <EditorBindingSettingsDrawer
-                    expanded={expandedSettingsBinding() === bindingId}
-                    id={settingsId}
-                    label={`${parameters()
-                      .map((parameter) => parameter.name)
-                      .join(' / ')} 설정`}
-                  >
-                    {props.renderBindingSettings?.(binding(), parameters())}
-                  </EditorBindingSettingsDrawer>
+                  </div>
                 </div>
               )
             }}

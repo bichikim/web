@@ -5,6 +5,10 @@ import {
   type PuppetSpatialPrimitive,
   type PuppetSpatialPrimitiveObject,
 } from '../player/document'
+import {compileSpatialMeshDistance} from './compile-spatial-mesh-distance'
+import {getSpatialMeshBounds} from './get-spatial-mesh-bounds'
+import {placeRotatedSpatialPoint, rotateSpatialPoint} from './rotate-spatial-point'
+import {transformSpatialMeshObject} from './transform-spatial-mesh-object'
 
 type Point3 = readonly [number, number, number]
 type DistanceField = (point: Point3) => number
@@ -17,7 +21,6 @@ interface GenerateSpatialMeshOptions {
 
 const HALF = 0.5
 const COORDINATES = 3
-const PADDING_RATIO = 0.1
 const DEFAULT_RESOLUTION = 16
 const MIN_RESOLUTION = 4
 const MAX_RESOLUTION = 32
@@ -80,25 +83,17 @@ const clamp = (value: number, minimum: number, maximum: number) =>
 
 const createBoxVertices = (
   primitive: PuppetSpatialPrimitive | PuppetSpatialPrimitiveObject,
-): ReadonlyArray<number> => {
-  const [angleX, angleY, angleZ] = ('rotation' in primitive ? primitive.rotation : [0, 0, 0]).map(
-    (angle) => (angle * Math.PI) / DEGREES_PER_HALF_ROTATION,
+): ReadonlyArray<number> =>
+  BOX_CORNERS.flatMap((corner) =>
+    rotateSpatialPoint(
+      [
+        corner[0] * primitive.size[0] * HALF,
+        corner[1] * primitive.size[1] * HALF,
+        corner[2] * primitive.size[2] * HALF,
+      ],
+      'rotation' in primitive ? primitive.rotation : [0, 0, 0],
+    ).map((value, axis) => value + primitive.center[axis]!),
   )
-  return BOX_CORNERS.flatMap((corner) => {
-    const x = corner[0] * primitive.size[0] * HALF
-    const y = corner[1] * primitive.size[1] * HALF
-    const z = corner[2] * primitive.size[2] * HALF
-    const pitchedY = y * Math.cos(angleX!) - z * Math.sin(angleX!)
-    const pitchedZ = y * Math.sin(angleX!) + z * Math.cos(angleX!)
-    const turnedX = x * Math.cos(angleY!) + pitchedZ * Math.sin(angleY!)
-    const turnedZ = -x * Math.sin(angleY!) + pitchedZ * Math.cos(angleY!)
-    return [
-      primitive.center[0] + turnedX * Math.cos(angleZ!) - pitchedY * Math.sin(angleZ!),
-      primitive.center[1] + turnedX * Math.sin(angleZ!) + pitchedY * Math.cos(angleZ!),
-      primitive.center[2] + turnedZ,
-    ]
-  })
-}
 
 const compilePrimitiveDistance = (
   primitive: PuppetSpatialPrimitive | PuppetSpatialPrimitiveObject,
@@ -182,6 +177,9 @@ const compileObjectDistance = (object: PuppetSpatialObject): DistanceField => {
   if (object.kind === 'primitive') {
     return compilePrimitiveDistance(object)
   }
+  if (object.kind === 'mesh') {
+    return compileSpatialMeshDistance(object)
+  }
   const children = object.children
     .filter((child) => child.visible)
     .map((child) => ({
@@ -220,6 +218,9 @@ const collectPrimitives = (objects: ReadonlyArray<PuppetSpatialObject>): PuppetS
     if (object.kind === 'group') {
       return collectPrimitives(object.children)
     }
+    if (object.kind === 'mesh') {
+      return []
+    }
     return [
       {
         center: object.center,
@@ -251,6 +252,23 @@ const hasValidSpatialPrimitive = (object: PuppetSpatialPrimitiveObject) =>
   object.size.length === COORDINATES &&
   object.size.every((value) => Number.isFinite(value) && value > 0)
 
+const hasValidSpatialMeshObject = (object: Extract<PuppetSpatialObject, {kind: 'mesh'}>) =>
+  object.center.length === COORDINATES &&
+  object.center.every(Number.isFinite) &&
+  object.rotation.length === COORDINATES &&
+  object.rotation.every(Number.isFinite) &&
+  object.size.length === COORDINATES &&
+  object.size.every((value) => Number.isFinite(value) && value > 0) &&
+  object.vertices.length > 0 &&
+  object.vertices.length % COORDINATES === 0 &&
+  object.vertices.every(Number.isFinite) &&
+  object.indices.length > 0 &&
+  object.indices.length % COORDINATES === 0 &&
+  object.indices.every(
+    (index) =>
+      Number.isInteger(index) && index >= 0 && index < object.vertices.length / COORDINATES,
+  )
+
 function hasValidSpatialObject(object: PuppetSpatialObject, depth = 0): boolean {
   if (depth > PUPPET_SPATIAL_OBJECT_MAX_DEPTH || !hasValidSpatialObjectMetadata(object)) {
     return false
@@ -258,38 +276,15 @@ function hasValidSpatialObject(object: PuppetSpatialObject, depth = 0): boolean 
   if (object.kind === 'primitive') {
     return hasValidSpatialPrimitive(object)
   }
+  if (object.kind === 'mesh') {
+    return hasValidSpatialMeshObject(object)
+  }
   return (
     object.kind === 'group' &&
     object.children.length >= 2 &&
     object.children[0]?.mode === 'add' &&
     object.children.every((child) => hasValidSpatialObject(child, depth + 1))
   )
-}
-
-const getBounds = (operations: ReadonlyArray<PuppetSpatialPrimitive>) => {
-  const solids = operations.filter(
-    (primitive) => primitive.mode === 'add' || primitive.mode === 'smooth-add',
-  )
-  const primitives = solids.length > 0 ? solids : operations
-  const minimum: [number, number, number] = [Infinity, Infinity, Infinity]
-  const maximum: [number, number, number] = [-Infinity, -Infinity, -Infinity]
-  for (const primitive of primitives) {
-    for (const axis of [0, 1, 2] as const) {
-      const radius =
-        'rotation' in primitive &&
-        Array.isArray(primitive.rotation) &&
-        primitive.rotation.some((angle) => angle !== 0)
-          ? Math.hypot(...primitive.size) * HALF
-          : primitive.size[axis] * HALF
-      minimum[axis] = Math.min(minimum[axis], primitive.center[axis] - radius)
-      maximum[axis] = Math.max(maximum[axis], primitive.center[axis] + radius)
-    }
-  }
-  const padding = Math.max(...maximum.map((value, axis) => value - minimum[axis]!)) * PADDING_RATIO
-  return {
-    maximum: [maximum[0] + padding, maximum[1] + padding, maximum[2] + padding] as Point3,
-    minimum: [minimum[0] - padding, minimum[1] - padding, minimum[2] - padding] as Point3,
-  }
 }
 
 const getGridIndex = (x: number, y: number, z: number, edge: number) => x + edge * (y + edge * z)
@@ -302,10 +297,11 @@ interface Grid {
 
 const createGrid = (options: {
   readonly operations: ReadonlyArray<PuppetSpatialPrimitive>
+  readonly objects?: ReadonlyArray<PuppetSpatialObject>
   readonly resolution: number
   readonly distance: (point: Point3) => number
 }): Grid => {
-  const {minimum, maximum} = getBounds(options.operations)
+  const {minimum, maximum} = getSpatialMeshBounds(options.operations, options.objects)
   const edge = options.resolution + 1
   const coordinates: Point3[] = []
   const distances: number[] = []
@@ -490,7 +486,7 @@ const hasValidSpatialInput = (
       ? operations[0]?.mode === 'add'
       : options.objects.length === 1 && options.objects[0]?.visible === true
   return (
-    operations.length > 0 &&
+    (options.objects !== undefined || operations.length > 0) &&
     validSource &&
     Number.isInteger(resolution) &&
     resolution >= MIN_RESOLUTION &&
@@ -509,7 +505,52 @@ const hasValidSpatialInput = (
   )
 }
 
-/** Generates a triangle control mesh from editable primitive volume operations. */
+const createDirectSpatialMesh = (
+  options: GenerateSpatialMeshOptions,
+  operations: ReadonlyArray<PuppetSpatialPrimitive>,
+  resolution: number,
+  source: PuppetSpatialMesh['source'],
+): PuppetSpatialMesh | undefined => {
+  const object = options.objects?.[0]
+  const single = object ?? operations[0]
+  if (
+    single !== undefined &&
+    'shape' in single &&
+    single.shape === 'box' &&
+    (options.objects === undefined ? operations.length === 1 : options.objects.length === 1)
+  ) {
+    return {indices: BOX_INDICES, source, vertices: createBoxVertices(single)}
+  }
+  if (object?.kind === 'mesh') {
+    return {...transformSpatialMeshObject(object), source}
+  }
+  if (
+    object?.kind !== 'primitive' ||
+    object.shape === 'box' ||
+    object.rotation.every((angle) => angle === 0)
+  ) {
+    return undefined
+  }
+  const canonical = generateSpatialMesh({
+    objects: [{...object, rotation: [0, 0, 0]}],
+    resolution,
+  })
+  const vertices = Array.from({length: canonical.vertices.length / COORDINATES}, (_, index) => {
+    const offset = index * COORDINATES
+    return placeRotatedSpatialPoint(
+      [
+        canonical.vertices[offset]!,
+        canonical.vertices[offset + 1]!,
+        canonical.vertices[offset + 2]!,
+      ],
+      object.center,
+      object.rotation,
+    )
+  }).flat()
+  return {indices: canonical.indices, source, vertices}
+}
+
+/** Generates a triangle control mesh from editable spatial objects and volume operations. */
 export const generateSpatialMesh = (options: GenerateSpatialMeshOptions): PuppetSpatialMesh => {
   const resolution = options.resolution ?? DEFAULT_RESOLUTION
   if (
@@ -528,20 +569,16 @@ export const generateSpatialMesh = (options: GenerateSpatialMeshOptions): Puppet
     options.objects === undefined
       ? {kind: 'generated', operations, resolution}
       : {kind: 'authored', objects: options.objects, resolution}
-  const single = options.objects?.[0] ?? operations[0]
-  if (
-    single !== undefined &&
-    'shape' in single &&
-    single.shape === 'box' &&
-    (options.objects === undefined ? operations.length === 1 : options.objects.length === 1)
-  ) {
-    return {indices: BOX_INDICES, source, vertices: createBoxVertices(single)}
+  const direct = createDirectSpatialMesh(options, operations, resolution, source)
+  if (direct !== undefined) {
+    return direct
   }
   const grid = createGrid({
     distance:
       options.objects === undefined
         ? compileFieldDistance(operations)
         : compileObjectDistance(options.objects[0]!),
+    objects: options.objects,
     operations,
     resolution,
   })

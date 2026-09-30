@@ -33,7 +33,7 @@ export interface UsePsdReimportProps {
   readonly readPsd?: (file: File) => Promise<ImportPsdResult>
   readonly document: Accessor<PuppetDocument>
   readonly onDocumentChange: (document: PuppetDocument) => void
-  readonly onNotice: (message: string) => void
+  readonly onNotice: (message: string | null) => void
 }
 
 export interface PsdReimportDialogController {
@@ -146,7 +146,7 @@ export const usePsdReimport = (props: UsePsdReimportProps): PsdReimportControlle
       return
     }
     props.onDocumentChange(result.document)
-    props.onNotice('PSD의 그림을 갱신했습니다. 실행 취소로 이전 상태를 복원할 수 있습니다.')
+    props.onNotice(null)
     cancel()
   }
   return {

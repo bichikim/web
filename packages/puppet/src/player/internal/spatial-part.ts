@@ -18,7 +18,6 @@ import type {
   PuppetSpatialSurface,
 } from '../document'
 import {getDocumentScene} from '../scene'
-import {resolveParameterValue} from '../parameter-value'
 
 const FACING_AREA_RATIO = 0.000_001
 const SPATIAL_COORDINATES = 3
@@ -80,27 +79,6 @@ export interface GetSpatialPartPoseOptions {
   readonly part: PuppetPart
   readonly posedScene?: PuppetScene
 }
-
-export interface ResolveSpatialRotationOptions {
-  readonly document: PuppetDocument
-  readonly parameterIds?: readonly [string | null, string | null, string | null]
-  readonly parameterValues?: PuppetParameterValueMap
-  readonly rotation?: readonly [number, number, number]
-}
-
-export const resolveSpatialRotation = (
-  options: ResolveSpatialRotationOptions,
-): [number, number, number] =>
-  (options.rotation ?? [0, 0, 0]).map((angle, axis) => {
-    const id = options.parameterIds?.[axis]
-    const parameter = options.document.parameters?.find((candidate) => candidate.id === id)
-    return (
-      angle +
-      (parameter === undefined
-        ? 0
-        : resolveParameterValue(parameter, options.parameterValues?.[parameter.id]))
-    )
-  }) as [number, number, number]
 
 interface GetAttachedMeshPointsOptions {
   readonly attachments: ReadonlyArray<PuppetSpatialAttachment>
@@ -221,12 +199,7 @@ export const getSpatialPartPose = (
         ? undefined
         : composeParameterDeformer(options.document, sourceDeformer, options.parameterValues)
       : findSpatialDeformer(options.posedScene.roots)
-  const rotation = resolveSpatialRotation({
-    document: options.document,
-    parameterIds: deformer?.spatialRotationParameterIds ?? spatial.rotationParameterIds,
-    parameterValues: options.parameterValues,
-    rotation: deformer?.spatialRotation,
-  })
+  const rotation = deformer?.spatialRotation ?? [0, 0, 0]
   const controlPoints =
     getMeshControlPoints(options.part, sourceDeformer, deformer?.spatialMeshPosition) ??
     spatial.controlPoints

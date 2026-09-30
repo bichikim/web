@@ -12,7 +12,7 @@ interface Bounds {
   readonly height: number
 }
 
-const SHAPE_NAMES = {box: '네모', cylinder: '원기둥', prism: '세모', sphere: '동그라미'} as const
+const SHAPE_NAMES = {box: '박스', cylinder: '원기둥', prism: '삼각기둥', sphere: '구체'} as const
 const DEFAULT_DEPTH_RATIO = 3
 const DEFAULT_SMOOTHNESS = 20
 

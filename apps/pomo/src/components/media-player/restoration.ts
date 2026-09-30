@@ -6,6 +6,7 @@ export interface RestorePPlayerStateOptions {
   readonly onRestore: (tracks: readonly PTrack[], playback: PPlaybackState | null) => void
   readonly playbackRequest: Promise<PPlaybackState | null>
   readonly playlistRequest: Promise<readonly string[] | null>
+  readonly resolveTracks?: (storedTrackIds: readonly string[]) => Promise<readonly PTrack[]>
   readonly tracks: readonly PTrack[]
 }
 
@@ -30,8 +31,15 @@ export const restorePPlayerState = async (options: RestorePPlayerStateOptions): 
       : resolvePPlaylist({
           defaultTracks: options.defaultTracks,
           storedTrackIds,
-          tracks: options.tracks,
+          tracks:
+            options.resolveTracks === undefined
+              ? options.tracks
+              : await options.resolveTracks(storedTrackIds),
         })
+
+  if (!options.canRestore()) {
+    return
+  }
 
   options.onRestore(restoredTracks, storedPlayback)
 }

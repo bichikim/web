@@ -87,6 +87,20 @@ it('should parse Atom links and content', () => {
   })
 })
 
+it.each(['created', 'issued'] as const)(
+  'should use an Atom %s date when published and updated are absent',
+  (dateElement) => {
+    const feed = parseFeedXml(
+      `<feed version="0.3" xmlns="http://purl.org/atom/ns#"><title>테스트 Atom</title><entry>
+        <${dateElement}>2026-08-14T01:00:00Z</${dateElement}>
+      </entry></feed>`,
+      'https://example.com/atom.xml',
+    )
+
+    expect(feed.items[0]?.publishedAt).toBe('2026-08-14T01:00:00.000Z')
+  },
+)
+
 it('should prefer the Atom published date when updated appears first', () => {
   const feed = parseFeedXml(
     `<feed xmlns="http://www.w3.org/2005/Atom"><title>테스트 Atom</title><entry>
@@ -361,6 +375,11 @@ it('should use an Atom self link as the item link and ID when no alternate exist
 it('should use the title for empty or duplicate feed content', () => {
   expect(createFeedScript('제목', '')).toBe('제목')
   expect(createFeedScript('같은 내용', '<p>같은 내용</p>')).toBe('같은 내용')
+})
+
+it('should omit title spacing when the title is empty after cleaning', () => {
+  expect(createFeedScript('', '본문')).toBe('본문')
+  expect(createFeedScript('<p></p>', '본문')).toBe('본문')
 })
 
 it('should fall back from main content to the document body', () => {

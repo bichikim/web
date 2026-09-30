@@ -1,4 +1,4 @@
-import {type JSX, Show} from 'solid-js'
+import {type JSX} from 'solid-js'
 
 import {HButton} from '../h-button'
 import {useConfirmPress} from '../use-confirm-press'
@@ -38,9 +38,23 @@ export const HConfirmButton = (props: HConfirmButtonProps) => {
       onKeyDown={handleKeyDown}
       type="button"
     >
-      <Show fallback={props.children} when={confirmation.isConfirming()}>
-        {props.confirmationChildren}
-      </Show>
+      <span class="grid">
+        <span
+          aria-hidden={confirmation.isConfirming() ? 'true' : undefined}
+          class="col-start-1 row-start-1 inline-flex items-center justify-center gap-2"
+          classList={{invisible: confirmation.isConfirming()}}
+        >
+          {props.children}
+        </span>
+        <span
+          aria-hidden={confirmation.isConfirming() ? undefined : 'true'}
+          class="col-start-1 row-start-1 inline-flex items-center justify-center gap-2"
+          classList={{invisible: !confirmation.isConfirming()}}
+        >
+          <span aria-hidden="true" class="i-tabler-check size-4 flex-none" />
+          {props.confirmationChildren}
+        </span>
+      </span>
     </HButton.Root>
   )
 }

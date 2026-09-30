@@ -18,7 +18,7 @@ export const layerOrderShortcuts = {
   ],
   'order-rule-heading': [
     '[.puppet-editor_&]:m-0 [.puppet-editor_&]:cursor-pointer',
-    '[.puppet-editor_&]:text-[0.6875rem] [.puppet-editor_&]:font-semibold [.puppet-editor_&]:leading-normal',
+    '[.puppet-editor_&]:text-[0.625rem] [.puppet-editor_&]:font-semibold [.puppet-editor_&]:leading-normal',
     '[.puppet-editor_&]:text-[#bfeee1]',
   ],
   'order-rule-hint': [
@@ -33,8 +33,16 @@ export const layerOrderShortcuts = {
     '[.puppet-editor_&:focus-visible]:outline-[#64e5c4]',
   ],
   'order-rule-label': '[.puppet-editor_&]:text-[#b9c5c0]',
-  'order-rule-panel': '[.puppet-editor_&]:text-[#cbd7d3] [.puppet-editor_&]:text-[0.6875rem]',
+  'order-rule-list': '[.puppet-editor_&]:min-w-0',
+  'order-rule-panel': [
+    '[.puppet-editor_&]:text-[#cbd7d3] [.puppet-editor_&]:text-[0.6875rem]',
+    '[.puppet-editor_&]:min-w-0',
+  ],
   'order-rule-rule': '[.puppet-editor_&]:mt-2 [.puppet-editor_&]:min-w-0',
+  'order-rule-state': [
+    '[.puppet-editor_&]:text-[#a9bdb5] [.puppet-editor_&]:text-[0.625rem]',
+    '[.puppet-editor_&[data-active=true]]:text-[#64e5c4]',
+  ],
   'order-rule-summary': [
     '[.puppet-editor_&]:cursor-pointer [.puppet-editor_&]:text-[0.6875rem]',
     '[.puppet-editor_&]:leading-normal [.puppet-editor_&]:text-[#dfe8e4]',
@@ -43,7 +51,10 @@ export const layerOrderShortcuts = {
   'order-rule-summary-content': [
     '[.puppet-editor_&]:inline-grid [.puppet-editor_&]:align-top',
     '[.puppet-editor_&]:[max-width:calc(100%_-_1rem)] [.puppet-editor_&]:[overflow-wrap:anywhere]',
+    '[.puppet-editor_&_strong]:font-semibold',
   ],
   'order-rule-targets':
     '[.puppet-editor_&]:m-0 [.puppet-editor_&]:break-words [.puppet-editor_&]:leading-normal',
+  'parameter-binding-settings':
+    '[.puppet-editor_&]:grid [.puppet-editor_&]:gap-3 [.puppet-editor_&]:min-w-0',
 }

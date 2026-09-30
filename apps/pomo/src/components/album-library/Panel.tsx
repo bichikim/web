@@ -16,6 +16,7 @@ export interface PAlbumLibraryPanelProps {
   readonly isOpen: boolean
   readonly onAddTracks: (tracks: readonly PTrack[]) => void
   readonly onClearTracks?: () => void
+  readonly onRemoveTracks?: (trackIds: ReadonlySet<string>) => void
   readonly onCloseAutoFocus: () => void
   readonly onOpenChange: (isOpen: boolean) => void
   readonly onPreviewEnd?: () => void
@@ -92,6 +93,7 @@ export const PAlbumLibraryPanel = (props: PAlbumLibraryPanelProps) => {
         <Suspense fallback={<LoadingStatus />}>
           <PAlbumLibraryContent
             onAddTracks={addTracks}
+            onRemoveTracks={props.onRemoveTracks}
             onPreviewEnd={props.onPreviewEnd}
             onPreviewStart={props.onPreviewStart}
             tracks={props.tracks}

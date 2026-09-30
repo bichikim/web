@@ -123,7 +123,7 @@ const parseFeedTimestamp = (value: string): number | null => {
   return Number.isNaN(timestamp) ? null : timestamp
 }
 const getPublishedAt = (element: Element) => {
-  const timestamp = ['published', 'pubdate', 'updated', 'date']
+  const timestamp = ['published', 'pubdate', 'updated', 'date', 'created', 'issued']
     .map((name) => parseFeedTimestamp(getChildText(element, [name])))
     .find((value) => value !== null)
 
@@ -233,6 +233,10 @@ export const createFeedScript = (title: string, content: string) => {
 
   if (cleanContent.length === 0) {
     return cleanTitle
+  }
+
+  if (cleanTitle.length === 0) {
+    return cleanContent
   }
 
   return cleanContent === cleanTitle ? cleanTitle : `${cleanTitle}\n\n${cleanContent}`

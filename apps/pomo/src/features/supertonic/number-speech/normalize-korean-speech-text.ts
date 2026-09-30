@@ -41,7 +41,7 @@ const NATIVE_TENS = [
   '아흔',
 ] as const
 const NATIVE_COUNTERS = '시간|개|명|마리|살|잔|권|대|장|점|곡'
-const SINO_UNITS = '개월|년대|년생|년형|년|초|층|월|일'
+const SINO_UNITS = '개월|년대|년생|년형|년|초|층|월|일|도'
 const TOKEN_START_PATTERN = NUMBER_TOKEN_START_PATTERN_SOURCE
 const UNSIGNED_INTEGER_PATTERN = UNSIGNED_INTEGER_PATTERN_SOURCE
 const KOREAN_PARTICLE_PATTERN = KOREAN_PARTICLE_PATTERN_SOURCE
@@ -72,7 +72,7 @@ const CLOCK_HOUR_PATTERN = new RegExp(
   'gu',
 )
 const SINO_UNIT_PATTERN = new RegExp(
-  `${TOKEN_START_PATTERN}(${UNSIGNED_INTEGER_PATTERN})\\s*` +
+  `${TOKEN_START_PATTERN}(${INTEGER_PATTERN_SOURCE})\\s*` +
     `(${SINO_UNITS})${KOREAN_UNIT_END_PATTERN}`,
   'gu',
 )
@@ -117,7 +117,7 @@ const pronounceSinoInteger = (value: string): string | null => {
     return null
   }
 
-  const isNegative = value.startsWith('-')
+  const isNegative = value.startsWith('-') || value.startsWith('−')
   const isPositive = value.startsWith('+')
   let remaining = parsed < 0n ? -parsed : parsed
 

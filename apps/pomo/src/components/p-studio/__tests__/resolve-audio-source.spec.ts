@@ -10,7 +10,7 @@ describe('resolveAudioSource', () => {
     {documentLocale: '', expectedLocale: 'ko', runtimeLocale: 'ko'},
     {documentLocale: 'ja', expectedLocale: 'ko', runtimeLocale: 'ko'},
   ])('should resolve $documentLocale with runtime $runtimeLocale', (copy) => {
-    for (const sourceLocale of ['en', 'ko']) {
+    for (const sourceLocale of ['en', 'ko', 'EN', 'KO']) {
       expect(
         resolveAudioSource({
           documentLocale: copy.documentLocale,

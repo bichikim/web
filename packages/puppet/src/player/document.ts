@@ -71,8 +71,6 @@ export interface PuppetSpatialSurface {
   /** Faces with the same group ID share depth ordering while other scene layers keep their order. */
   readonly groupId?: string
   readonly origin: readonly [number, number, number]
-  /** Parameter IDs for X, Y and Z rotation in degrees. Omitted axes remain at zero. */
-  readonly rotationParameterIds?: readonly [string | null, string | null, string | null]
 }
 
 export interface PuppetSpatialAttachment {
@@ -94,6 +92,7 @@ export interface PuppetSpatialObjectBase {
   readonly id: string
   readonly mode: PuppetSpatialPrimitive['mode']
   readonly name: string
+  readonly smoothness?: number
   readonly visible: boolean
 }
 
@@ -106,13 +105,25 @@ export interface PuppetSpatialPrimitiveObject extends PuppetSpatialObjectBase {
   readonly smoothness?: number
 }
 
+export interface PuppetSpatialMeshObject extends PuppetSpatialObjectBase {
+  readonly kind: 'mesh'
+  readonly center: readonly [number, number, number]
+  readonly rotation: readonly [number, number, number]
+  readonly size: readonly [number, number, number]
+  readonly vertices: ReadonlyArray<number>
+  readonly indices: ReadonlyArray<number>
+}
+
 export interface PuppetSpatialGroupObject extends PuppetSpatialObjectBase {
   readonly kind: 'group'
   readonly children: ReadonlyArray<PuppetSpatialObject>
   readonly smoothness?: number
 }
 
-export type PuppetSpatialObject = PuppetSpatialPrimitiveObject | PuppetSpatialGroupObject
+export type PuppetSpatialObject =
+  | PuppetSpatialPrimitiveObject
+  | PuppetSpatialMeshObject
+  | PuppetSpatialGroupObject
 
 export interface PuppetSpatialMesh {
   readonly indices: ReadonlyArray<number>
@@ -218,7 +229,6 @@ export interface PuppetSceneDeformerNode extends PuppetSceneContainerNodeBase, P
   readonly spatialMeshPosition?: readonly [number, number, number]
   readonly spatialOrigin?: readonly [number, number, number]
   readonly spatialRotation?: readonly [number, number, number]
-  readonly spatialRotationParameterIds?: readonly [string | null, string | null, string | null]
   readonly spatialScale?: readonly [number, number, number]
   readonly spatialTranslation?: readonly [number, number, number]
   /** Preserved deformation followed by the current control layout's bind mapping. */

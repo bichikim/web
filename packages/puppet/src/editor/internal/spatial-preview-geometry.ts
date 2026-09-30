@@ -3,7 +3,6 @@ import {generateSpatialMesh} from '../../deformation/generate-spatial-mesh'
 import {placeSpatialMesh} from '../../deformation/bind-spatial-mesh'
 import {projectSpatialSurface} from '../../deformation/project-spatial-surface'
 import type {PuppetDocument, PuppetSceneDeformerNode, PuppetSpatialMesh} from '../../player'
-import {resolveSpatialRotation} from '../../player/internal/spatial-part'
 import {applySceneNodeAncestorsPoint} from './scene-deformation'
 import {type EditorViewBox, getEditorViewBox} from './viewport'
 
@@ -83,11 +82,7 @@ export const createSpatialPreviewGeometry = (
   ]
   const placedMesh = placeSpatialMesh(mesh, node.spatialMeshPosition)
   const projection = projectSpatialSurface({
-    rotation: resolveSpatialRotation({
-      document,
-      parameterIds: node.spatialRotationParameterIds,
-      rotation: node.spatialRotation,
-    }),
+    rotation: node.spatialRotation ?? [0, 0, 0],
     scale: node.spatialScale,
     surface: {controlPoints: placedMesh.vertices, origin},
     translation: node.spatialTranslation,

@@ -26,7 +26,6 @@ interface CommitVertexMoveOptions extends VertexPoint {
 
 interface CommitVertexMoveSuccess {
   readonly document: PuppetDocument
-  readonly keyframeTime: number | null
   readonly ok: true
 }
 
@@ -43,20 +42,6 @@ export const canEditSelectedKeyform = (props: MeshEditorProps) =>
   (props.activeBindingId !== undefined &&
     props.activeKeyformValues !== null &&
     props.activeKeyformValues !== undefined)
-
-export const getVertexMoveNotice = (
-  editMode: MeshEditorProps['editMode'],
-  keyframeTime: number | null,
-  vertexIndex: number,
-) => {
-  if (editMode === 'parameter') {
-    return '선택한 Parameter 키폼을 변경했습니다.'
-  }
-
-  return keyframeTime === null
-    ? `정점 ${vertexIndex + 1} 위치를 변경했습니다.`
-    : `${keyframeTime.toFixed(2)}초에 정점 ${vertexIndex + 1} 키프레임을 저장했습니다.`
-}
 
 export const commitVertexMove = (options: CommitVertexMoveOptions): CommitVertexMoveResult => {
   if (options.editMode === 'parameter') {
@@ -91,7 +76,7 @@ export const commitVertexMove = (options: CommitVertexMoveOptions): CommitVertex
 
     return document === undefined
       ? {message: '정점 위치가 메시를 뒤집거나 유효 범위를 벗어났습니다.', ok: false}
-      : {document, keyframeTime: options.keyframeTime, ok: true}
+      : {document, ok: true}
   }
 
   const [motion] = options.document.motions
@@ -125,7 +110,7 @@ export const commitVertexMove = (options: CommitVertexMoveOptions): CommitVertex
   }
 
   if (options.keyframeTime === null || motion === undefined) {
-    return {document: result.document, keyframeTime: null, ok: true}
+    return {document: result.document, ok: true}
   }
 
   const document = setVertexKeyframe({
@@ -139,5 +124,5 @@ export const commitVertexMove = (options: CommitVertexMoveOptions): CommitVertex
 
   return document === undefined
     ? {message: '선택한 시간에 정점 키프레임을 만들지 못했습니다.', ok: false}
-    : {document, keyframeTime: options.keyframeTime, ok: true}
+    : {document, ok: true}
 }
