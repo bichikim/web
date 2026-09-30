@@ -55,6 +55,7 @@ export const convertUnit = (options: ConvertUnitOptions): ConversionResult => {
   const input = options.value
     .trim()
     .replace(/[０-９]/gu, (digit) => digit.normalize('NFKC'))
+    .replace(/^＋/u, '+')
     .replaceAll('−', '-')
   if (!input) {
     return {kind: 'empty'}
