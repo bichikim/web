@@ -1,15 +1,15 @@
 /** @vitest-environment node */
 import {beforeEach, expect, it, vi} from 'vitest'
 
+import {parseWeatherLocation, type WeatherLocation} from '../contract'
 import {LEGACY_WEATHER_LOCATIONS} from '../locations'
+import {restoreWeatherLocationNames} from '../location-names'
 import {
   createWeatherPreferenceRepository,
   DEFAULT_WEATHER_PREFERENCE,
   type WeatherPreferenceRepository,
   type WeatherPreferenceStorage,
 } from '../preference'
-import type {WeatherLocation} from '../contract'
-
 const STORAGE_KEY = 'pomo:weather-preference:v2'
 const LEGACY_STORAGE_KEY = 'pomo:weather-preference:v1'
 const disabledPreference = {
@@ -212,6 +212,7 @@ const storedLocation = {
 } as const satisfies WeatherLocation
 const storedPreference = {...DEFAULT_WEATHER_PREFERENCE, location: storedLocation}
 const restoredLocation = {...storedLocation, names: {en: 'New York', ko: '뉴욕'}}
+const japaneseLocation = parseWeatherLocation({...storedLocation, names: {ja: 'ニューヨーク'}})
 
 it.each([false, true])(
   'should persist restored names through the repository with toss=%s',
@@ -232,14 +233,21 @@ it.each([false, true])(
 
 it('should keep stored data when name lookup fails', async () => {
   webValues.set(STORAGE_KEY, storedPreference)
-  const restoring = createWeatherPreferenceRepository({
-    restoreLocation: async () => {
-      throw new Error('lookup failed')
-    },
-    storage,
-  })
-  expect(await restoring.read()).toEqual(storedPreference)
-  expect(storage.writeWeb).not.toHaveBeenCalled()
+  const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined)
+  const restoreLocation = vi
+    .fn()
+    .mockRejectedValueOnce(new Error('lookup failed'))
+    .mockResolvedValue(restoredLocation)
+
+  try {
+    const restoring = createWeatherPreferenceRepository({restoreLocation, storage})
+    expect(await restoring.read()).toEqual(storedPreference)
+    expect(storage.writeWeb).not.toHaveBeenCalled()
+    expect(await restoring.read()).toEqual({...storedPreference, location: restoredLocation})
+    expect(restoreLocation).toHaveBeenCalledTimes(2)
+  } finally {
+    warn.mockRestore()
+  }
 })
 
 it('should avoid writing when lookup does not enrich the stored city', async () => {
@@ -250,6 +258,35 @@ it('should avoid writing when lookup does not enrich the stored city', async () 
   })
   expect(await restoring.read()).toEqual(storedPreference)
   expect(storage.writeWeb).not.toHaveBeenCalled()
+})
+
+it('should skip repeated searches when a location has no English or Korean name', async () => {
+  webValues.set(STORAGE_KEY, storedPreference)
+  const search = vi.fn().mockResolvedValue([japaneseLocation])
+  const restoring = createWeatherPreferenceRepository({
+    restoreLocation: (location) => restoreWeatherLocationNames({location, search}),
+    storage,
+  })
+
+  expect(await restoring.read()).toEqual(storedPreference)
+  expect(await restoring.read()).toEqual(storedPreference)
+  expect(japaneseLocation.names).toEqual({})
+  expect(search).toHaveBeenCalledTimes(1)
+})
+
+it('should share an in-flight name search across concurrent preference reads', async () => {
+  webValues.set(STORAGE_KEY, storedPreference)
+  const search = vi.fn().mockResolvedValue([japaneseLocation])
+  const restoring = createWeatherPreferenceRepository({
+    restoreLocation: (location) => restoreWeatherLocationNames({location, search}),
+    storage,
+  })
+
+  expect(await Promise.all([restoring.read(), restoring.read()])).toEqual([
+    storedPreference,
+    storedPreference,
+  ])
+  expect(search).toHaveBeenCalledTimes(1)
 })
 
 it.each([false, true])(

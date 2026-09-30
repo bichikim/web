@@ -56,7 +56,7 @@ export const convertUnit = (options: ConvertUnitOptions): ConversionResult => {
   if (!input) {
     return {kind: 'empty'}
   }
-  if (!/^[+-]?(?:\d+(?:\.\d*)?|\.\d+|\d{1,3}(?:,\d{3})+(?:\.\d*)?)(?:e[+-]?\d+)?$/iu.test(input)) {
+  if (!/^[+-]?(?:\d+(?:\.\d*)?|\.\d+|\d{1,3}(?:,\d{3})+(?:\.\d*)?)$/u.test(input)) {
     return {kind: 'invalid'}
   }
   const from = UNITS.find((unit) => unit.id === options.from)

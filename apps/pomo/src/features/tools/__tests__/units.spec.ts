@@ -16,7 +16,7 @@ it('should convert temperature offsets and accept negative temperatures', () => 
 })
 it('should reject malformed mismatched and overflowing values while keeping blank input empty', () => {
   expect(convertUnit({from: 'm', to: 'ft', value: ''}).kind).toBe('empty')
-  for (const value of ['abc', '0xff', '1,23', 'Infinity', '1e309']) {
+  for (const value of ['abc', '0xff', '1,23', 'Infinity', '1e2', '1E2', '1e309']) {
     expect(convertUnit({from: 'm', to: 'ft', value}).kind).toBe('invalid')
   }
   expect(convertUnit({from: 'm', to: 'kg', value: '1'}).kind).toBe('invalid')
