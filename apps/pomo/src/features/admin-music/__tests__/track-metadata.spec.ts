@@ -29,6 +29,16 @@ describe('readTrackMetadata', () => {
     expect(metadata).toEqual({artist: 'Pomo, Friend', title: null})
   })
 
+  it('should use the artists list when the primary artist tag is empty', async () => {
+    const metadata = await readTrackMetadata(new File(['mp3'], 'track.mp3'), {
+      parseMetadata: vi.fn().mockResolvedValue({
+        common: {artist: '', artists: ['Pomo', 'Friend'], title: 'Focus Song'},
+      }),
+    })
+
+    expect(metadata).toEqual({artist: 'Pomo, Friend', title: 'Focus Song'})
+  })
+
   it('should lazily parse a file with default metadata options', async () => {
     metadataMocks.parseBlob.mockResolvedValue({common: {artist: ' ', title: 'Song'}})
     const file = new File(['mp3'], 'track.mp3')
