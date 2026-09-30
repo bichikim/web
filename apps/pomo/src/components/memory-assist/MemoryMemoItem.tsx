@@ -3,7 +3,6 @@ import {createMemo, createSignal, Show, untrack} from 'solid-js'
 
 import * as m from '@paraglide/message'
 import {getLocale} from '@paraglide/runtime'
-import {formatLocalDate} from 'src/utils/format-local-date'
 import type {MemoryMemo, MemoryRecallMode} from '../../features/memory-assist'
 import {MemoryMemoModal} from './MemoryMemoModal'
 import {
@@ -45,7 +44,6 @@ const formatReminderTime = (value: string) =>
 export const MemoryMemoItem = (props: MemoryMemoItemProps) => {
   const initialReminderDraft = untrack(() => createStoredReminderDraft(props.memo))
   const [isEditing, setIsEditing] = createSignal(false)
-  const [reminderDateReference, setReminderDateReference] = createSignal(new Date())
   const [message, setMessage] = createSignal<string | null>(null)
   const [draft, setDraft] = createSignal(untrack(() => props.memo.text))
   const [reminderDraft, setReminderDraft] = createSignal(initialReminderDraft)
@@ -63,7 +61,6 @@ export const MemoryMemoItem = (props: MemoryMemoItemProps) => {
   const handleStartEdit = (source: HTMLButtonElement) => {
     const now = new Date()
     const nextReminderDraft = createStoredReminderDraft(props.memo, now)
-    setReminderDateReference(now)
     props.onEditStart()
     setMessage(null)
     setTriggerElement(source)
@@ -74,9 +71,6 @@ export const MemoryMemoItem = (props: MemoryMemoItemProps) => {
   }
 
   const handleReminderChange = (nextReminderDraft: ReminderDraft) => {
-    if (nextReminderDraft.reminderDay !== reminderDraft().reminderDay) {
-      setReminderDateReference(new Date())
-    }
     setReminderDraft(nextReminderDraft)
   }
 
@@ -96,16 +90,12 @@ export const MemoryMemoItem = (props: MemoryMemoItemProps) => {
 
     const currentReminderDraft = reminderDraft()
     const now = new Date()
-    const reminderDate =
-      currentReminderDraft.reminderDay === 'today'
-        ? formatLocalDate(reminderDateReference())
-        : currentReminderDraft.customDate
     const exactReminderAt = currentReminderDraft.exactEnabled
       ? resolveReminderAt(
           currentReminderDraft.reminderDay,
-          reminderDate,
+          currentReminderDraft.customDate,
           currentReminderDraft.reminderTime,
-          currentReminderDraft.reminderDay === 'tomorrow' ? now : reminderDateReference(),
+          now,
         )
       : null
     const errorMessage = await props.onSave(props.memo, {

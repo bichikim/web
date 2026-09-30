@@ -25,6 +25,7 @@ export function PMusicPlayerContent(props: PMusicPlayerContentProps) {
         onExpandedChange={props.onExpandedChange}
         onPlaybackActionsReady={props.onPlaybackActionsReady}
         sceneStyle={props.sceneStyle}
+        soundEffectsVisible={props.soundEffectsVisible}
       />
     </MediaPlayer>
   )

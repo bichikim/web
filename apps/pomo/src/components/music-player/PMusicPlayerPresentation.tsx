@@ -5,7 +5,12 @@ import type {PMusicPlayerContentProps} from './types'
 
 export interface PMusicPlayerPresentationProps extends Pick<
   PMusicPlayerContentProps,
-  'backdropBlur' | 'expanded' | 'onExpandedChange' | 'onPlaybackActionsReady' | 'sceneStyle'
+  | 'backdropBlur'
+  | 'expanded'
+  | 'onExpandedChange'
+  | 'onPlaybackActionsReady'
+  | 'sceneStyle'
+  | 'soundEffectsVisible'
 > {}
 
 export function PMusicPlayerPresentation(props: PMusicPlayerPresentationProps) {
@@ -52,6 +57,7 @@ export function PMusicPlayerPresentation(props: PMusicPlayerPresentationProps) {
       onTrackSelect={player.selectChosenTrack}
       repeatMode={player.repeatMode()}
       sceneStyle={props.sceneStyle}
+      soundEffectsVisible={props.soundEffectsVisible}
       shuffleEnabled={player.shuffleEnabled()}
       tracks={player.tracks()}
     />

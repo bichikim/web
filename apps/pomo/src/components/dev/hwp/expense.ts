@@ -207,9 +207,7 @@ export const parseExpenseText = (text: string): ExpenseParseResult => {
 
   for (const line of lines) {
     const dateValue = readExpenseDate(line)
-    if (dateValue !== null && date === null) {
-      date = dateValue
-    } else {
+    if (dateValue === null) {
       const expenseMatch = EXPENSE_LINE_PATTERN.exec(line)
       if (expenseMatch?.groups === undefined) {
         return invalid('invalid-input')
@@ -223,6 +221,8 @@ export const parseExpenseText = (text: string): ExpenseParseResult => {
       }
 
       items.push({amount: unitPrice * quantity, name, quantity, unitPrice})
+    } else if (date === null) {
+      date = dateValue
     }
   }
 

@@ -143,7 +143,7 @@ it('should retain the draft and report a failure in the original session', async
   expect(sessionStorage.getItem('pomo:memory-memo:draft:v1')).toContain('저장할 메모')
 })
 
-it('should keep today fixed across midnight and rebase after a reminder change', async () => {
+it('should resolve a today reminder from save time after midnight', async () => {
   vi.useFakeTimers()
   vi.setSystemTime(new Date(2026, 0, 31, 23))
   const savedMemos: ReadonlyArray<MemoryMemo>[] = []
@@ -159,26 +159,14 @@ it('should keep today fixed across midnight and rebase after a reminder change',
     ...creator.reminderDraft(),
     exactEnabled: true,
     reminderDay: 'today',
-    reminderTime: '23:45',
+    reminderTime: '09:45',
   })
 
   vi.setSystemTime(new Date(2026, 1, 1, 0, 30))
   await creator.save()
 
-  expect(creator.message()).toBeTruthy()
-  expect(updateMemoryMemos).not.toHaveBeenCalled()
-
-  creator.changeReminder({...creator.reminderDraft(), exactReminderAdvanceMinutes: 5})
-  await creator.save()
-
-  expect(creator.message()).toBeTruthy()
-  expect(updateMemoryMemos).not.toHaveBeenCalled()
-
-  creator.changeReminder({...creator.reminderDraft(), reminderDay: 'tomorrow'})
-  await creator.save()
-
   expect(updateMemoryMemos).toHaveBeenCalledOnce()
-  expect(savedMemos[0]?.[0]?.exactReminderAt).toBe(new Date(2026, 1, 2, 23, 45).toISOString())
+  expect(savedMemos[0]?.[0]?.exactReminderAt).toBe(new Date(2026, 1, 1, 9, 45).toISOString())
 })
 
 it('should resolve tomorrow from the save time after midnight', async () => {

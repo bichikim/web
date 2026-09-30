@@ -22,7 +22,10 @@ export const getOpusEncodingInput = (
     return {sampleRate, samples}
   }
 
-  const outputLength = Math.round((samples.length * OPUS_OUTPUT_SAMPLE_RATE) / sampleRate)
+  const outputLength =
+    samples.length === 0
+      ? 0
+      : Math.max(1, Math.round((samples.length * OPUS_OUTPUT_SAMPLE_RATE) / sampleRate))
   const output = new Float32Array(outputLength)
   const sourceScale = sampleRate / OPUS_OUTPUT_SAMPLE_RATE
 

@@ -219,7 +219,9 @@ const createAlbumWritePlan = (options: CreateAlbumWritePlanOptions): AlbumWriteP
       title: track.title.trim(),
     }
 
-    return existingTrack === undefined || existingTrack.artist !== nextTrack.artist
+    return existingTrack === undefined ||
+      existingTrack.artist !== nextTrack.artist ||
+      existingTrack.title !== nextTrack.title
       ? [nextTrack]
       : []
   })

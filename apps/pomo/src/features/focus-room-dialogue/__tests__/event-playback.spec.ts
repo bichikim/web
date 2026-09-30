@@ -36,6 +36,16 @@ describe('selectEventDialogues', () => {
     ).toEqual(['third', 'second', 'first'])
   })
 
+  it('should keep dialogue IDs in range when random-all receives the upper boundary', () => {
+    expect(
+      selectEventDialogues({
+        dialogueIds: DIALOGUE_IDS,
+        playbackMode: 'random-all',
+        random: () => 1,
+      }),
+    ).toEqual(DIALOGUE_IDS)
+  })
+
   it('should select one dialogue in random-one mode', () => {
     expect(
       selectEventDialogues({
@@ -44,6 +54,16 @@ describe('selectEventDialogues', () => {
         random: () => 0.5,
       }),
     ).toEqual(['second'])
+  })
+
+  it('should select the last dialogue when the random value is 1', () => {
+    expect(
+      selectEventDialogues({
+        dialogueIds: DIALOGUE_IDS,
+        playbackMode: 'random-one',
+        random: () => 1,
+      }),
+    ).toEqual(['third'])
   })
 
   it('should choose random-one from the latest dialogue IDs when limited', () => {
