@@ -202,7 +202,7 @@ describe('OPENAI_*', () => {
   })
 
   it('should default the model, reasoning effort, and service tier', () => {
-    expect(envSchema.OPENAI_MODEL.parse('')).toBe('gpt-5.6-luna')
+    expect(envSchema.OPENAI_MODEL.parse('')).toBe('gpt-6-luna')
     expect(envSchema.OPENAI_REASONING_EFFORT.parse('')).toBe('medium')
     expect(envSchema.OPENAI_SERVICE_TIER.parse('')).toBe('default')
   })
