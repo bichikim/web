@@ -89,12 +89,12 @@ it('should include and format an all-day event with an ISO start date-time', () 
 it.each([
   {
     description: 'one-day',
-    end: '2026-09-06T00:00:00Z',
+    end: '2026-09-06T00:00:00.000Z',
     formattedTime: '2026. 9. 5. 종일',
   },
   {
     description: 'multi-day',
-    end: '2026-09-07T00:00:00Z',
+    end: '2026-09-07T00:00:00.000Z',
     formattedTime: '2026. 9. 5.–2026. 9. 7. (종일, 종료일 미포함)',
   },
 ])(
