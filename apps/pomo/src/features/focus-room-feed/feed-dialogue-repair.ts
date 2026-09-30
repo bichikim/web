@@ -1,5 +1,5 @@
 import type {PDialogue, PDialogueRepository} from '../focus-room-dialogue'
-import type {FeedConnection} from './schema'
+import {type FeedConnection, normalizeFeedDocumentUrl} from './schema'
 import type {FeedDialogueListItem} from './feed-controller'
 import type {FeedDialogueRepository} from './feed-dialogue-repository'
 import type {FeedDialogueMetadata, FeedItemRecord} from './feed-dialogue-schema'
@@ -11,7 +11,7 @@ const LEGACY_SELF_LINK_ERROR = '피드 항목이 원문 대신 피드 자체 주
 
 const getSourcePath = (sourceUrl: string) => {
   try {
-    return new URL(sourceUrl).pathname
+    return normalizeFeedDocumentUrl(new URL(sourceUrl)).pathname
   } catch {
     return null
   }
