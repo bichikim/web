@@ -12,4 +12,5 @@ export interface PMusicPlayerContentProps extends MediaPlayerOptions {
   readonly onExpandedChange?: (expanded: boolean) => void
   readonly onPlaybackActionsReady?: (actions: MusicPlaybackActions | null) => void
   readonly sceneStyle?: PSceneStyle
+  readonly soundEffectsVisible?: boolean
 }

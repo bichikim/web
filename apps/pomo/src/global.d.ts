@@ -41,6 +41,7 @@ interface ImportMetaEnv {
   readonly POMO_TOSS_MTLS_KEY?: string
   readonly POMO_WORKER_CONTENT_SECURITY_POLICY_TEMPLATE: string
   readonly VERCEL_ENV?: string
+  readonly VITE_APP_LAYOUT?: string
   readonly VITE_POMO_APPS_IN_TOSS_PRIVACY_PATH: string
   readonly VITE_POMO_APPS_IN_TOSS_TERMS_PATH: string
   readonly VITE_POMO_DISTRIBUTION_TARGET: string

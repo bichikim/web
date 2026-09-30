@@ -51,6 +51,32 @@ it('should handle empty and single-item lists and discard deleted queued items',
   ).toBe('b')
 })
 
+it('should consume the remaining sequential queue before catalog order', () => {
+  expect(
+    nextSlide({
+      current: 'a',
+      ids: ['a', 'b', 'c'],
+      mode: 'sequential',
+      remaining: ['c', 'b'],
+      seen: ['a'],
+    }),
+  ).toMatchObject({current: 'c', remaining: ['b']})
+})
+
+it('should not reshuffle an in-progress random queue', () => {
+  const random = vi.spyOn(Math, 'random')
+  const slide = nextSlide({
+    current: 'a',
+    ids: ['a', 'b', 'c', 'd'],
+    mode: 'random',
+    remaining: ['d', 'c', 'b'],
+    seen: ['a'],
+  })
+
+  expect(slide).toMatchObject({current: 'd', remaining: ['c', 'b']})
+  expect(random).not.toHaveBeenCalled()
+})
+
 it.each(['sequential', 'random'] as const)(
   'should not replay a companion before the %s cycle ends',
   (mode) => {
@@ -80,8 +106,22 @@ it('should randomize an unseen queue inherited from sequential playback', () => 
     ids: ['a', 'b', 'c', 'd'],
     mode: 'random',
     remaining: ['b', 'c', 'd'],
+    remainingMode: 'sequential',
     seen: ['a'],
   })
   expect(slide.current).toBe('c')
   expect(slide.seen).toEqual(['a', 'c'])
+})
+
+it('should restore catalog order when a random queue switches to sequential playback', () => {
+  const slide = nextSlide({
+    current: 'a',
+    ids: ['a', 'b', 'c', 'd'],
+    mode: 'sequential',
+    remaining: ['d', 'b', 'c'],
+    remainingMode: 'random',
+    seen: ['a'],
+  })
+
+  expect(slide).toMatchObject({current: 'b', remaining: ['c', 'd']})
 })

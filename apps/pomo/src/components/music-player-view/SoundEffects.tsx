@@ -6,10 +6,12 @@ import {getPomoIconClass} from '../icon-style'
 import {PModal} from '../p-modal/PModal'
 import {PButton} from '../p-button/PButton'
 import {PPlayerUtilityButton} from '../p-player-utility-button/PPlayerUtilityButton'
+import {GLASS_ICON_BUTTON} from '../button-presets'
 import {SoundEffectControl} from './SoundEffectControl'
 
 interface SoundEffectsProps {
   readonly sceneStyle?: PSceneStyle
+  readonly trigger?: 'player' | 'toolbar'
 }
 
 const SoundEffectsPlaybackToggle = () => {
@@ -90,12 +92,26 @@ export const SoundEffects = (props: SoundEffectsProps) => {
   return (
     <Show when={soundEffects !== undefined}>
       <>
-        <PPlayerUtilityButton
-          accessibleLabel={m.sound_effects_title()}
-          icon={getPomoIconClass('i-tabler-wave-sine', props.sceneStyle)}
-          onPress={handlePress}
-          purpose="sound-effects"
-        />
+        <Show
+          fallback={
+            <PPlayerUtilityButton
+              accessibleLabel={m.sound_effects_title()}
+              icon={getPomoIconClass('i-tabler-wave-sine', props.sceneStyle)}
+              onPress={handlePress}
+              purpose="sound-effects"
+            />
+          }
+          when={props.trigger === 'toolbar'}
+        >
+          <PButton
+            {...GLASS_ICON_BUTTON}
+            pill
+            accessibleLabel={m.sound_effects_title()}
+            tooltip={m.sound_effects_title()}
+            icon={getPomoIconClass('i-tabler-wave-sine', props.sceneStyle)}
+            onPress={handlePress}
+          />
+        </Show>
         <Show when={isOpen()}>
           <PModal
             isOpen={isOpen()}

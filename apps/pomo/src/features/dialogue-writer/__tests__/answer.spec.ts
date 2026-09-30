@@ -39,6 +39,29 @@ describe('trimRepetitiveTail', () => {
     )
   })
 
+  it('should trim repeated sentences that contain a decimal', () => {
+    const sentence = '정답은 3.14입니다.'
+    const answer = Array.from({length: 4}, () => sentence).join(' ')
+
+    expect(trimRepetitiveTail(answer)).toBe(Array.from({length: 3}, () => sentence).join(' '))
+  })
+
+  it('should trim repeated sentences that contain a URL', () => {
+    const sentence = 'https://example.com에서 확인하세요.'
+    const answer = Array.from({length: 4}, () => sentence).join(' ')
+
+    expect(trimRepetitiveTail(answer)).toBe(Array.from({length: 3}, () => sentence).join(' '))
+  })
+
+  it('should keep splitting Korean sentence boundaries without spaces', () => {
+    const sentence = '다음 문장입니다.'
+    const answer = `문장.${Array.from({length: 4}, () => sentence).join('')}`
+
+    expect(trimRepetitiveTail(answer)).toBe(
+      `문장.${Array.from({length: 3}, () => sentence).join('')}`,
+    )
+  })
+
   it('should preserve a normal answer including non-consecutive repetition', () => {
     const answer =
       '행복은 가까이에 있어요. 행복을 찾는 과정도 중요해요. 가까이에 귀를 기울여 보세요.'

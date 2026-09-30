@@ -1,4 +1,5 @@
-const SEGMENT_PATTERN = /[^,.!?。！？，\n]+(?:[,.!?。！？，]|\n|$)\s*/gu
+const SEGMENT_PATTERN =
+  /(?:[^,.!?。！？，\n]|(?<=[\p{Script=Latin}\p{N}])\.(?=[\p{Script=Latin}\p{N}]))+(?:[,.!?。！？，]|\n|$)\s*/gu
 const TRAILING_SEPARATOR_PATTERN = /[,，]$/u
 const NORMALIZATION_PATTERN = /[,.!?。！？，\s]+$/gu
 const WHITESPACE_PATTERN = /\s+/gu

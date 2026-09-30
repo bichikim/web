@@ -13,8 +13,37 @@ const ENDING_PATTERN = /[.!?。！？…]$/u
 const INTERNAL_ENDING_PATTERN =
   /(?:[!?。！？]+(?![!?。！？])|(?<=\d)\.(?![\d.])|(?<!\d)\.(?!\.)).+/u
 const QUOTED_TEXT_PATTERN = /"[^"]*"|“[^”]*”|‘[^’]*’|「[^」]*」|『[^』]*』/gu
-const ENGLISH_ABBREVIATION_PATTERN =
-  /(?:^|\s)(?:Dr|Mr|Mrs|Ms|Prof|Rev|Hon|Gov|Pres|Sen|Rep|Gen|Lt|Col|Capt|Sgt|St|Mt|Jr|Sr|vs|[A-Z])\.\s*$/iu
+const ENGLISH_ABBREVIATIONS = [
+  'Dr',
+  'Mr',
+  'Mrs',
+  'Ms',
+  'Prof',
+  'Rev',
+  'Hon',
+  'Gov',
+  'Pres',
+  'Sen',
+  'Rep',
+  'Gen',
+  'Lt',
+  'Col',
+  'Capt',
+  'Sgt',
+  'St',
+  'Mt',
+  'Jr',
+  'Sr',
+  'vs',
+] as const
+const ENGLISH_ABBREVIATION_PATTERN = new RegExp(
+  `(?:^|\\s)(?:${ENGLISH_ABBREVIATIONS.join('|')}|[A-Z])\\.\\s*$`,
+  'iu',
+)
+const INTERNAL_LATIN_ABBREVIATION_PATTERN = new RegExp(
+  `\\b(?:(?:${ENGLISH_ABBREVIATIONS.join('|')})\\.|(?:[A-Z]\\.)+)`,
+  'giu',
+)
 const WRAPPING_QUOTES_PATTERN = /^["'“”‘’「」『』].*["'“”‘’「」『』]$/u
 const MATCHING_WRAPPING_QUOTES_PATTERN = /^(?:"[^"]*"|'.*'|“.*”|‘.*’|「.*」|『.*』)$/u
 const LEADING_MARKER_PATTERN = /^(?:[-*•]|\d+(?:\.|\)))\s*/u
@@ -56,7 +85,7 @@ export const isValidLanguageLearningSentence = (
   const hasMultipleSentences =
     language === 'en'
       ? hasMultipleEnglishSentences(sentence)
-      : INTERNAL_ENDING_PATTERN.test(sentence.replace(QUOTED_TEXT_PATTERN, ''))
+      : hasMultipleNonEnglishSentences(sentence)
 
   if (
     sentence.length === 0 ||
@@ -69,4 +98,14 @@ export const isValidLanguageLearningSentence = (
   }
 
   return limits.words === null || sentence.split(/\s+/u).length <= limits.words
+}
+
+const hasMultipleNonEnglishSentences = (sentence: string) => {
+  const sentenceWithoutQuotedText = sentence.replace(QUOTED_TEXT_PATTERN, '')
+  const sentenceWithoutAbbreviationPeriods = sentenceWithoutQuotedText.replace(
+    INTERNAL_LATIN_ABBREVIATION_PATTERN,
+    (abbreviation) => abbreviation.replaceAll('.', ''),
+  )
+
+  return INTERNAL_ENDING_PATTERN.test(sentenceWithoutAbbreviationPeriods)
 }
