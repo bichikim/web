@@ -85,9 +85,20 @@ const findActiveTrackIndex = (
     (track, index) => index >= currentIndex && track.id === activeTrackId,
   )
 
-  return activeIndex < 0
-    ? mergedTracks.findIndex((track) => track.id === activeTrackId)
-    : activeIndex
+  if (activeIndex >= 0) {
+    return activeIndex
+  }
+
+  const activeOccurrenceCount = currentTracks
+    .slice(0, currentIndex + 1)
+    .filter((track) => track.id === activeTrackId).length
+  const mergedOccurrenceCount = mergedTracks.filter((track) => track.id === activeTrackId).length
+
+  if (activeOccurrenceCount > mergedOccurrenceCount) {
+    return mergedTracks.length === 0 ? -1 : Math.min(currentIndex, mergedTracks.length - 1)
+  }
+
+  return mergedTracks.findIndex((track) => track.id === activeTrackId)
 }
 
 const filterRemovedTrackOccurrences = (
