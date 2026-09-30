@@ -18,10 +18,17 @@ const PROVIDER_LABELS = {
 
 const dateTimeSchema = z.iso.datetime({offset: true})
 
-const hasValidEventTimes = (event: CalendarEvent) =>
-  event.allDay
-    ? parseDate(event.start) !== null && parseDate(event.end) !== null && event.start < event.end
-    : dateTimeSchema.safeParse(event.start).success && dateTimeSchema.safeParse(event.end).success
+const hasValidEventTimes = (event: CalendarEvent) => {
+  if (event.allDay) {
+    return (
+      parseDate(event.start) !== null && parseDate(event.end) !== null && event.start < event.end
+    )
+  }
+
+  const start = dateTimeSchema.safeParse(event.start)
+  const end = dateTimeSchema.safeParse(event.end)
+  return start.success && end.success && Date.parse(end.data) > Date.parse(start.data)
+}
 
 const formatAllDayDate = (value: string) => {
   const [year, month, day] = value.split('-').map(Number)
