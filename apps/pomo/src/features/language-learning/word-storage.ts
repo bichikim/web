@@ -9,7 +9,8 @@ import {type LanguageLearningWord, languageLearningWordSchema} from './word-sche
 const STORAGE_KEY = 'pomo:language-learning:words:v1'
 export const LANGUAGE_LEARNING_WORDS_CHANGED_EVENT = 'pomo:language-learning:words-changed'
 const storedWordsSchema = z.array(languageLearningWordSchema).readonly()
-const normalizeLanguageLearningWordValue = (value: string): string => value.toLocaleLowerCase()
+const normalizeLanguageLearningWordValue = (value: string): string =>
+  value.trim().toLocaleLowerCase()
 
 export interface AppendLanguageLearningWordsResult {
   readonly addedCount: number
@@ -55,14 +56,15 @@ export const appendLanguageLearningWords = (
   )
   const createdAt = new Date().toISOString()
   const newWords = values.flatMap((value): ReadonlyArray<LanguageLearningWord> => {
-    const normalizedValue = normalizeLanguageLearningWordValue(value)
+    const trimmedValue = value.trim()
+    const normalizedValue = normalizeLanguageLearningWordValue(trimmedValue)
 
-    if (existingValues.has(normalizedValue)) {
+    if (trimmedValue.length === 0 || existingValues.has(normalizedValue)) {
       return []
     }
 
     existingValues.add(normalizedValue)
-    return [{createdAt, language, memorized: false, value, version: 1}]
+    return [{createdAt, language, memorized: false, value: trimmedValue, version: 1}]
   })
 
   if (newWords.length > 0) {

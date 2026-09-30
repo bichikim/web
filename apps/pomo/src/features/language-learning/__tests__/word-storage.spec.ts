@@ -26,6 +26,36 @@ const createEvents = (): LanguageLearningEventTarget => {
   return events
 }
 
+it('should skip empty language learning words without throwing', () => {
+  const storage = createStorage()
+
+  expect(appendLanguageLearningWords('en', [''], {storage})).toEqual({
+    addedCount: 0,
+    skippedCount: 1,
+  })
+  expect(readLanguageLearningWords({storage})).toEqual([])
+})
+
+it('should not persist whitespace-only language learning words', () => {
+  const storage = createStorage()
+
+  expect(appendLanguageLearningWords('en', ['   '], {storage})).toEqual({
+    addedCount: 0,
+    skippedCount: 1,
+  })
+  expect(readLanguageLearningWords({storage})).toEqual([])
+})
+
+it('should trim saved language learning words', () => {
+  const storage = createStorage()
+
+  expect(appendLanguageLearningWords('en', [' Home '], {storage})).toEqual({
+    addedCount: 1,
+    skippedCount: 0,
+  })
+  expect(readLanguageLearningWords({storage})).toMatchObject([{value: 'Home'}])
+})
+
 it('should match word identity without regard to case for memorization and deletion', () => {
   const storage = createStorage()
   const events = createEvents()
