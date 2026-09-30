@@ -57,7 +57,8 @@ const restoreWebServiceSettings = async (
   let nativeStart: string | null = null
   if (usesTossStorage && settings.start === '' && legacyStart === null) {
     try {
-      nativeStart = (await storage.readToss(STORAGE_KEY, parseSettings))?.start ?? null
+      const nativeSettings = await storage.readToss(STORAGE_KEY, parseSettings)
+      nativeStart = nativeSettings?.start || (await storage.readToss(LEGACY_KEY, parseStart))
     } catch (error) {
       shouldRepairNativeSettings = false
       reportRepairError(error)

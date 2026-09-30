@@ -14,6 +14,14 @@ describe('video background timeline', () => {
     expect(sampleTimes(0)).toEqual([0])
     expect(sampleTimes(1)).toEqual([0, 0.95])
   })
+  it('should preserve the blend range for clips no longer than the end margin', () => {
+    for (const duration of [0.04, 0.05]) {
+      const times = sampleTimes(duration)
+
+      expect(times).toEqual([0, duration])
+      expect(sampleBlend(times, duration / 2)).toEqual({first: 0, mix: 0.5, next: 1})
+    }
+  })
   it('should interpolate using actual timestamps and clamp outside the timeline', () => {
     expect(sampleBlend([0, 5, 10], 7.5)).toEqual({first: 1, mix: 0.5, next: 2})
     expect(sampleBlend([0, 5, 10], -1)).toEqual({first: 0, mix: 0, next: 1})

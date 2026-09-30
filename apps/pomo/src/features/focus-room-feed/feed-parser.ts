@@ -8,8 +8,23 @@ const ITEM_FINGERPRINT_PRIMARY_MODULUS = 2_147_483_647
 const ITEM_FINGERPRINT_RADIX = 36
 const ITEM_FINGERPRINT_SECONDARY_BASE = 37
 const ITEM_FINGERPRINT_SECONDARY_MODULUS = 2_147_483_629
-const ISO_DATE_LENGTH = 'YYYY-MM-DD'.length
-const ISO_DATE_PREFIX_PATTERN = /^\d{4}-\d{2}-\d{2}/u
+const ISO_DATE_PREFIX_PATTERN = /^(?<year>\d{4})-(?<month>\d{2})-(?<day>\d{2})/u
+const MONTH_ABBREVIATIONS = [
+  'jan',
+  'feb',
+  'mar',
+  'apr',
+  'may',
+  'jun',
+  'jul',
+  'aug',
+  'sep',
+  'oct',
+  'nov',
+  'dec',
+] as const
+const RFC_822_DATE_PREFIX_PATTERN =
+  /^(?:[A-Z]{3},\s*)?(?<day>\d{1,2})\s+(?<month>[A-Z]{3})\s+(?<year>\d{2,4})\b/iu
 
 export interface ParsedFeedItem {
   readonly content: string
@@ -109,16 +124,41 @@ const getContent = (element: Element) => {
     ? {content: summary, contentKind: 'summary' as const}
     : {content: '', contentKind: 'none' as const}
 }
+const isValidCalendarDate = (year: number, month: number, day: number) => {
+  if (month < 1 || month > MONTH_ABBREVIATIONS.length || day < 1) {
+    return false
+  }
+
+  const endOfMonth = new Date(0)
+  endOfMonth.setUTCFullYear(year, month, 0)
+  return day <= endOfMonth.getUTCDate()
+}
 const parseFeedTimestamp = (value: string): number | null => {
   const normalizedValue = value.trim()
-  const datePrefix = normalizedValue.slice(0, ISO_DATE_LENGTH)
+  const isoDateParts = normalizedValue.match(ISO_DATE_PREFIX_PATTERN)?.groups
 
-  if (ISO_DATE_PREFIX_PATTERN.test(normalizedValue)) {
-    const parsedDate = new Date(`${datePrefix}T00:00:00Z`)
+  if (
+    isoDateParts !== undefined &&
+    !isValidCalendarDate(
+      Number(isoDateParts.year),
+      Number(isoDateParts.month),
+      Number(isoDateParts.day),
+    )
+  ) {
+    return null
+  }
+
+  const rfc822DateParts = normalizedValue.match(RFC_822_DATE_PREFIX_PATTERN)?.groups
+
+  if (rfc822DateParts !== undefined) {
+    const day = Number(rfc822DateParts.day)
+    const monthName = rfc822DateParts.month!.toLowerCase()
+    const month = MONTH_ABBREVIATIONS.findIndex((abbreviation) => abbreviation === monthName) + 1
+    const yearTimestamp = Date.parse(`1 ${monthName} ${rfc822DateParts.year} 00:00 GMT`)
 
     if (
-      Number.isNaN(parsedDate.getTime()) ||
-      parsedDate.toISOString().slice(0, ISO_DATE_LENGTH) !== datePrefix
+      Number.isNaN(yearTimestamp) ||
+      !isValidCalendarDate(new Date(yearTimestamp).getUTCFullYear(), month, day)
     ) {
       return null
     }

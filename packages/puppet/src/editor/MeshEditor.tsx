@@ -38,6 +38,7 @@ const DeformBrushControls = (props: DeformBrushControlsProps) => {
         class="editor-control editor-segmented-field deform-brush-toolbar"
         data-control-size="md"
         data-size="md"
+        data-icons=""
         role="group"
         aria-label="편집 도구"
       >
@@ -49,7 +50,9 @@ const DeformBrushControls = (props: DeformBrushControlsProps) => {
           onClick={() => props.editor.setBrushEnabled(false)}
         >
           <span class="puppet-icon puppet-icon-pointer" aria-hidden="true" />
-          <span>정점 선택·이동</span>
+          <span class="editor-segmented-label" aria-hidden="true">
+            정점 선택·이동
+          </span>
         </ToggleButton>
         <ToggleButton
           type="button"
@@ -59,7 +62,9 @@ const DeformBrushControls = (props: DeformBrushControlsProps) => {
           onClick={() => props.editor.setBrushEnabled(true)}
         >
           <span class="puppet-icon puppet-icon-brush" aria-hidden="true" />
-          <span>변형 브러시</span>
+          <span class="editor-segmented-label" aria-hidden="true">
+            변형 브러시
+          </span>
         </ToggleButton>
       </div>
     </div>

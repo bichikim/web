@@ -127,7 +127,7 @@ it('should preserve the all-day event date when no selected date is provided', (
   expect(screen.getByLabelText('시간')).toHaveValue('09:00')
 })
 
-it('should use the calendar-local date for an all-day ISO start', () => {
+it('should preserve the all-day event calendar date for an ISO start', () => {
   const isoStartEvent: CalendarEvent = {
     ...event,
     start: '2026-09-06T00:00:00.000Z',
@@ -142,7 +142,7 @@ it('should use the calendar-local date for an all-day ISO start', () => {
   ))
 
   fireEvent.click(screen.getByRole('button', {name: '팀 회의 알람 설정'}))
-  expect(screen.getByLabelText('날짜')).toHaveValue('2026-09-05')
+  expect(screen.getByLabelText('날짜')).toHaveValue('2026-09-06')
   expect(screen.getByLabelText('시간')).toHaveValue('09:00')
 })
 

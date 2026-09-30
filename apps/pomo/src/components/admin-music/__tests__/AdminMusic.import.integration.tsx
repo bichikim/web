@@ -81,7 +81,9 @@ it('should retain the queue across workspace controls and refresh the catalog on
   first.resolve({success: true})
   try {
     await screen.findByText('등록 완료 2곡 · 등록 실패 0곡 · 상태 확인 필요 0곡')
-    expect(fetcher.mock.calls.map(([input]) => String(input))).toEqual(['/api/admin/music'])
+    await waitFor(() =>
+      expect(fetcher.mock.calls.map(([input]) => String(input))).toEqual(['/api/admin/music']),
+    )
     expect(screen.getByRole('button', {name: '추가 화면 닫기'})).toBeDisabled()
     expect(screen.getByLabelText(/^MP3 파일 여러/u)).toBeDisabled()
     expect(screen.getByRole('button', {name: '닫기'})).toBeDisabled()

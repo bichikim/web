@@ -14,7 +14,7 @@ const findBreakIndex = (
   preferredLength: number,
   maximumLength: number,
 ) => {
-  const preferredEnd = Math.min(preferredLength, characters.length)
+  const preferredEnd = Math.min(preferredLength, maximumLength, characters.length)
 
   for (let index = preferredEnd; index >= minimumLength; index -= 1) {
     if (BREAK_CHARACTER.test(characters[index - 1]!)) {

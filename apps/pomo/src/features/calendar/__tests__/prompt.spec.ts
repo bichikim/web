@@ -89,12 +89,12 @@ it('should include and format an all-day event with an ISO start date-time', () 
 it.each([
   {
     description: 'one-day',
-    end: '2026-09-06T00:00:00Z',
+    end: '2026-09-06T00:00:00.000Z',
     formattedTime: '2026. 9. 5. 종일',
   },
   {
     description: 'multi-day',
-    end: '2026-09-07T00:00:00Z',
+    end: '2026-09-07T00:00:00.000Z',
     formattedTime: '2026. 9. 5.–2026. 9. 7. (종일, 종료일 미포함)',
   },
 ])(
@@ -170,6 +170,34 @@ it('should omit events with invalid times and mark the context incomplete', () =
   expect(context).not.toContain('Invalid Date')
   expect(context).not.toContain('2026. 13. 45.')
 })
+
+it.each([
+  {
+    description: 'reversed',
+    end: '2026-09-05T00:00:00+09:00',
+    start: '2026-09-05T01:00:00+09:00',
+  },
+  {
+    description: 'same-instant',
+    end: '2026-09-04T16:00:00.000Z',
+    start: '2026-09-05T01:00:00+09:00',
+  },
+])(
+  'should omit timed events with a $description range and mark the context incomplete',
+  ({end, start}) => {
+    const context = createCalendarPromptContext({
+      events: [
+        createEvent({end, start, title: '유효하지 않은 시간 범위'}),
+        createEvent({title: '정상 일정'}),
+      ],
+      timeZone: 'Asia/Seoul',
+    })
+
+    expect(context).toContain('일부 일정만 확인했습니다.')
+    expect(context).toContain('정상 일정')
+    expect(context).not.toContain('유효하지 않은 시간 범위')
+  },
+)
 
 it.each([
   {description: 'reversed', end: '2026-09-05', start: '2026-09-07'},

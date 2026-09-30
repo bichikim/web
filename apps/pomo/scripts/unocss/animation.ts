@@ -1,3 +1,4 @@
+import {relaxPlayerAnimations} from './relax-player-animations'
 import type {PresetWind3Theme} from 'unocss'
 
 export const pomoAnimation = {
@@ -8,6 +9,7 @@ export const pomoAnimation = {
     'focus-glow': 'infinite',
     'orbit-border': 'infinite',
     'overflow-marquee': 'infinite',
+    ...relaxPlayerAnimations.counts,
     'rest-sway': 'infinite',
     'screen-saver-content-drift': 'infinite',
   },
@@ -23,6 +25,7 @@ export const pomoAnimation = {
     'modal-overlay-in': '140ms',
     'orbit-border': '3.2s',
     'overflow-marquee': '6s',
+    ...relaxPlayerAnimations.durations,
     'rest-sway': '2.4s',
     'screen-saver-content-drift': '48s',
     'select-in': '140ms',
@@ -75,6 +78,7 @@ export const pomoAnimation = {
       from { transform: translateX(0); }
       to { transform: translateX(calc(-1 * var(--pomo-marquee-distance))); }
     }`,
+    ...relaxPlayerAnimations.keyframes,
     'rest-sway': `{
       0%, 100% { transform: translate3d(0, 0, 0) rotate(-8deg); }
       50% { transform: translate3d(0.0625rem, -0.125rem, 0) rotate(9deg); }
@@ -92,6 +96,7 @@ export const pomoAnimation = {
   },
   properties: {
     'entry-reveal-room': {'animation-fill-mode': 'both'},
+    ...relaxPlayerAnimations.properties,
     'screen-saver-content-drift': {'animation-direction': 'alternate'},
   },
   timingFns: {
@@ -105,6 +110,7 @@ export const pomoAnimation = {
     'modal-overlay-in': 'ease-out',
     'orbit-border': 'linear',
     'overflow-marquee': 'linear',
+    ...relaxPlayerAnimations.timingFns,
     'rest-sway': 'ease-in-out',
     'screen-saver-content-drift': 'ease-in-out',
     'select-in': 'ease-out',

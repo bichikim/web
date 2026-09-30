@@ -3,7 +3,41 @@ import {describe, expect, it} from 'vitest'
 
 import {createStreamingSpeechBuffer} from '../streaming-speech-buffer'
 
+const speakStreamed = (text: string, chunkSize: number) => {
+  const buffer = createStreamingSpeechBuffer({locale: 'ko'})
+  const characters = Array.from(text)
+  const spoken: string[] = []
+
+  for (let end = chunkSize; end < characters.length + chunkSize; end += chunkSize) {
+    spoken.push(...buffer.update(characters.slice(0, Math.min(end, characters.length)).join('')))
+  }
+
+  const remainder = buffer.flush(text)
+  return remainder === null ? spoken : [...spoken, remainder]
+}
+
+const withoutWhitespace = (text: string) => text.replace(/\s+/gu, '')
+
 describe('createStreamingSpeechBuffer', () => {
+  it.each([
+    '좋아요‼ 그렇죠.',
+    '좋아요⁉ 그렇죠.',
+    '그는 「안녕.」이라고 했다.',
+    '결과입니다.） 다음 문장이에요.',
+    '결과입니다.» 다음 문장이에요.',
+  ])(
+    'should conserve every non-whitespace character for whole-text and character chunks: %s',
+    (text) => {
+      const characterCount = Array.from(text).length
+      const expected = withoutWhitespace(text)
+      const spokenByChunkSize = [characterCount, 1].map((chunkSize) =>
+        withoutWhitespace(speakStreamed(text, chunkSize).join('')),
+      )
+
+      expect(spokenByChunkSize).toEqual([expected, expected])
+    },
+  )
+
   it('should emit each completed sentence once while retaining the unfinished tail', () => {
     const buffer = createStreamingSpeechBuffer({locale: 'ko'})
 

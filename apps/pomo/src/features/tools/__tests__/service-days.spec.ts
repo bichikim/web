@@ -4,22 +4,34 @@ import {isValidServiceDays, normalizeServiceDays, parseServiceDays} from 'src/fe
 it.each([
   {input: '1', output: 1},
   {input: '0001', output: 1},
+  {input: '３６５', output: 365},
+  {input: '０００１', output: 1},
   {input: '300', output: 300},
   {input: '9007199254740991', output: Number.MAX_SAFE_INTEGER},
+  {input: '９００７１９９２５４７４０９９１', output: Number.MAX_SAFE_INTEGER},
 ])('should parse valid service days from $input', ({input, output}) => {
   expect(parseServiceDays(input)).toBe(output)
 })
 
-it.each(['', '0', '-1', '1.5', 'not-a-number', '9007199254740992'])(
-  'should reject invalid service days %s',
-  (input) => {
-    expect(parseServiceDays(input)).toBeNull()
-  },
-)
+it.each([
+  '',
+  '0',
+  '０',
+  '-1',
+  '1.5',
+  '１．５',
+  '＋１',
+  'not-a-number',
+  '9007199254740992',
+  '９００７１９９２５４７４０９９２',
+])('should reject invalid service days %s', (input) => {
+  expect(parseServiceDays(input)).toBeNull()
+})
 
 it.each([
   {input: '', output: ''},
   {input: '000300', output: '000300'},
+  {input: '０００３００', output: '０００３００'},
   {input: '0', output: ''},
   {input: 'not-a-number', output: ''},
 ])('should normalize service days $input to $output', ({input, output}) => {

@@ -393,6 +393,32 @@ it('should cancel or save a memo edit and discard audio generated from old text'
   expect(mocks.deleteDialogue).toHaveBeenCalledWith('memory-memo-memo-1')
 })
 
+it('should resolve a today reminder from save time when editing across midnight', async () => {
+  vi.useFakeTimers()
+  vi.setSystemTime(new Date(2026, 0, 31, 23))
+  const tomorrowReminderAt = new Date(2026, 1, 1, 9).toISOString()
+  mocks.memos = [
+    {
+      ...createStoredMemo(),
+      exactReminderAt: tomorrowReminderAt,
+      nextExactReminderAt: tomorrowReminderAt,
+      nextRecallAt: null,
+      recallMode: 'none',
+      reinforcementIndex: 0,
+    },
+  ]
+  render(() => <MemoryMemoList />)
+
+  fireEvent.click(screen.getByRole('button', {name: '여권 갱신하기 메모 편집'}))
+  fireEvent.change(screen.getByLabelText('알림 날짜'), {target: {value: 'today'}})
+  fireEvent.input(screen.getByLabelText('시간'), {target: {value: '09:45'}})
+  vi.setSystemTime(new Date(2026, 1, 1, 0, 30))
+  fireEvent.click(screen.getByRole('button', {name: '변경 저장'}))
+
+  await waitFor(() => expect(mocks.updateMemos).toHaveBeenCalledOnce())
+  expect(mocks.memos[0]?.exactReminderAt).toBe(new Date(2026, 1, 1, 9, 45).toISOString())
+})
+
 it('should keep editing and preserve existing audio when saving fails', async () => {
   mocks.memos = [createStoredMemo()]
   mocks.updateMemos.mockRejectedValueOnce(new Error('write failed'))
@@ -473,9 +499,10 @@ it('should preserve a pending exact reminder when its schedule is unchanged', as
   expect(mocks.memos[0]?.nextExactReminderAt).toBe(nextExactReminderAt)
 })
 
-it('should keep today fixed across midnight and rebase after a reminder change', async () => {
+it('should resolve a today reminder from save time after midnight while editing', async () => {
   vi.useFakeTimers()
   const exactReminderAt = new Date(2026, 0, 31, 23, 45).toISOString()
+  const savedReminderAt = new Date(2026, 1, 1, 23, 45).toISOString()
   vi.setSystemTime(new Date(2026, 0, 31, 23))
   mocks.memos = [
     {
@@ -497,42 +524,8 @@ it('should keep today fixed across midnight and rebase after a reminder change',
   fireEvent.click(screen.getByRole('button', {name: '변경 저장'}))
 
   await vi.runAllTimersAsync()
-  expect(screen.getByRole('status')).toBeVisible()
-  expect(mocks.isFirstReminderInFuture).toHaveBeenNthCalledWith(
-    1,
-    exactReminderAt,
-    0,
-    expect.any(Date),
-  )
-  expect(mocks.updateMemos).not.toHaveBeenCalled()
-  expect(mocks.memos[0]?.exactReminderAt).toBe(exactReminderAt)
-
-  fireEvent.input(screen.getByRole('spinbutton'), {target: {value: '5'}})
-  fireEvent.click(screen.getByRole('button', {name: '변경 저장'}))
-
-  await vi.runAllTimersAsync()
-  expect(screen.getByRole('status')).toBeVisible()
-  expect(mocks.isFirstReminderInFuture).toHaveBeenNthCalledWith(
-    2,
-    exactReminderAt,
-    5,
-    expect.any(Date),
-  )
-  expect(mocks.updateMemos).not.toHaveBeenCalled()
-
-  fireEvent.change(screen.getByLabelText('알림 날짜'), {target: {value: 'tomorrow'}})
-  fireEvent.click(screen.getByRole('button', {name: '변경 저장'}))
-
-  await vi.runAllTimersAsync()
-  expect(mocks.updateMemos).toHaveBeenCalledTimes(1)
-  const tomorrowReminderAt = new Date(2026, 1, 2, 23, 45).toISOString()
-  expect(mocks.isFirstReminderInFuture).toHaveBeenNthCalledWith(
-    3,
-    tomorrowReminderAt,
-    5,
-    expect.any(Date),
-  )
-  expect(mocks.memos[0]?.exactReminderAt).toBe(tomorrowReminderAt)
+  expect(mocks.updateMemos).toHaveBeenCalledOnce()
+  expect(mocks.memos[0]?.exactReminderAt).toBe(savedReminderAt)
 })
 
 it('should resolve tomorrow from the save time after midnight while editing', async () => {

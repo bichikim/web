@@ -22,9 +22,9 @@ const parseAllDayDate = (value: string) => parseDate(value.slice(0, 'YYYY-MM-DD'
 
 const hasValidEventTimes = (event: CalendarEvent) => {
   if (!event.allDay) {
-    return (
-      dateTimeSchema.safeParse(event.start).success && dateTimeSchema.safeParse(event.end).success
-    )
+    const start = dateTimeSchema.safeParse(event.start)
+    const end = dateTimeSchema.safeParse(event.end)
+    return start.success && end.success && Date.parse(end.data) > Date.parse(start.data)
   }
 
   const startDate = parseAllDayDate(event.start)

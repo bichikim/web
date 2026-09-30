@@ -14,6 +14,15 @@ it('should convert temperature offsets and accept negative temperatures', () => 
   expect(convertUnit({from: 'C', to: 'F', value: '-40'})).toEqual({kind: 'valid', value: -40})
   expect(convertUnit({from: 'F', to: 'C', value: '32'})).toEqual({kind: 'valid', value: 0})
 })
+it('should convert temperatures pasted with a Unicode minus sign', () => {
+  expect(convertUnit({from: 'C', to: 'F', value: '−40'})).toEqual({kind: 'valid', value: -40})
+})
+it('should convert values pasted with fullwidth digits', () => {
+  expect(convertUnit({from: 'm', to: 'ft', value: '１０'})).toEqual({
+    kind: 'valid',
+    value: 10 / 0.3048,
+  })
+})
 it('should reject malformed mismatched and overflowing values while keeping blank input empty', () => {
   expect(convertUnit({from: 'm', to: 'ft', value: ''}).kind).toBe('empty')
   for (const value of ['abc', '0xff', '1,23', 'Infinity', '1e2', '1E2', '1e309']) {

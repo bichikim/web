@@ -37,6 +37,9 @@ const endsWithAbbreviation = (segment: string) => {
 const isCompletedSentence = (segment: string) =>
   SENTENCE_END.test(segment) && !endsWithAbbreviation(segment)
 
+const isCompletedSegment = (segment: string, hasFollowingSegment: boolean) =>
+  hasFollowingSegment || isCompletedSentence(segment)
+
 const isOnlyTerminalPunctuationChanged = (previousText: string, nextText: string) => {
   const previousEnding = TERMINAL_PUNCTUATION.exec(previousText)
   const nextEnding = TERMINAL_PUNCTUATION.exec(nextText)
@@ -92,7 +95,9 @@ export const createStreamingSpeechBuffer = (
       [] as typeof segments,
     )
 
-    return combinedSegments.filter(({segment}) => isCompletedSentence(segment))
+    return combinedSegments.filter(({segment}, index) =>
+      isCompletedSegment(segment, index < combinedSegments.length - 1),
+    )
   }
 
   const reconcileConsumedText = (text: string) => {

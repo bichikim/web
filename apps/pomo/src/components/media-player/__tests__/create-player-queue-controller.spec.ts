@@ -122,6 +122,17 @@ describe('onLoad', () => {
     expect(tracks()).toEqual(currentTracks)
   })
 
+  it('should preserve the queue slot when a catalog reload removes the active duplicate occurrence', () => {
+    const defaultTracks = [createTrack('track-1'), createTrack('track-2'), createTrack('track-3')]
+    const currentTracks = [...defaultTracks, createTrack('track-1'), createTrack('track-4')]
+    const {controller, currentIndex, tracks} = createHarness(currentTracks, 3)
+
+    controller.onLoad({defaultTracks, queueChanged: true})
+
+    expect(tracks().map((track) => track.id)).toEqual(['track-1', 'track-2', 'track-3', 'track-4'])
+    expect(currentIndex()).toBe(3)
+  })
+
   it('should fall back to the matching track when merging moves it before the old index', () => {
     const defaultTracks = [createTrack('track-2'), createTrack('track-1'), createTrack('track-3')]
     const currentTracks = [createTrack('track-4'), createTrack('track-5'), createTrack('track-1')]

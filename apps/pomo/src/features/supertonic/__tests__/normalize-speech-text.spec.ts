@@ -25,6 +25,21 @@ describe('normalizeSpeechText', () => {
     ).toBe('가격은 만 이천오백 원이고 진행률은 십이 점 오 퍼센트예요.')
   })
 
+  it('should normalize fullwidth Korean digits according to number context', () => {
+    expect(
+      normalizeSpeechText({
+        language: 'ko',
+        text: '가격은 １２３４원이고 티켓 ３장을 샀고 진행률은 １２.５%예요.',
+      }),
+    ).toBe('가격은 천이백삼십사 원이고 티켓 세 장을 샀고 진행률은 십이 점 오 퍼센트예요.')
+    expect(normalizeSpeechText({language: 'ko', text: '００７개, ０００１원'})).toBe(
+      '００７개, ０００１원',
+    )
+    expect(normalizeSpeechText({language: 'ko', text: '기준 연도는 ２０２６입니다.'})).toBe(
+      '기준 연도는 ２０２６입니다.',
+    )
+  })
+
   it('should pronounce Korean counter and place-value boundaries', () => {
     expect(
       normalizeSpeechText({

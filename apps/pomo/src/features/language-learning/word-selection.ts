@@ -35,11 +35,13 @@ export const selectRandomLanguageLearningWords = (
   const random = options.random ?? Math.random
   const maximumCount = Math.min(options.values.length, MAXIMUM_RANDOM_LANGUAGE_LEARNING_WORDS)
   const countRange = maximumCount - MINIMUM_RANDOM_LANGUAGE_LEARNING_WORDS + 1
-  const count = MINIMUM_RANDOM_LANGUAGE_LEARNING_WORDS + Math.floor(random() * countRange)
+  const randomIndex = (length: number) =>
+    Math.max(0, Math.min(Math.floor(random() * length), length - 1))
+  const count = MINIMUM_RANDOM_LANGUAGE_LEARNING_WORDS + randomIndex(countRange)
   const shuffledValues = [...options.values]
 
   for (let index = shuffledValues.length - 1; index > 0; index -= 1) {
-    const targetIndex = Math.floor(random() * (index + 1))
+    const targetIndex = randomIndex(index + 1)
     const currentValue = shuffledValues[index]
     shuffledValues[index] = shuffledValues[targetIndex]
     shuffledValues[targetIndex] = currentValue

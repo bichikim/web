@@ -13,8 +13,13 @@ export const DeformerMode = (props: DeformerModeProps) => (
     label="디포머 편집 방식"
     value={props.mode}
     options={[
-      {disabled: props.restEditable === false, label: '기준 배치', value: 'rest'},
-      {label: '변형 편집', value: 'pose'},
+      {
+        disabled: props.restEditable === false,
+        icon: 'puppet-icon-mesh',
+        label: '기준 배치',
+        value: 'rest',
+      },
+      {icon: 'puppet-icon-curve', label: '변형 편집', value: 'pose'},
     ]}
     onChange={props.onChange}
   />
