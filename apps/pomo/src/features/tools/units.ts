@@ -52,7 +52,10 @@ export type ConversionResult =
   | {readonly kind: 'invalid'}
   | {readonly kind: 'valid'; readonly value: number}
 export const convertUnit = (options: ConvertUnitOptions): ConversionResult => {
-  const input = options.value.trim().replace(/[０-９]/gu, (digit) => digit.normalize('NFKC'))
+  const input = options.value
+    .trim()
+    .replace(/[０-９]/gu, (digit) => digit.normalize('NFKC'))
+    .replaceAll('−', '-')
   if (!input) {
     return {kind: 'empty'}
   }
