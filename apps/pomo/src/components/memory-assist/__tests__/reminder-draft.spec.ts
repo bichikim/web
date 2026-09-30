@@ -16,6 +16,12 @@ describe('reminder draft dates', () => {
       new Date(2026, 1, 3, 9, 5).toISOString(),
     )
   })
+  it('should reject invalid custom calendar dates instead of rolling them over', () => {
+    const savedAt = new Date(2026, 1, 1, 0, 30)
+
+    expect(resolveReminderAt('custom', '2026-02-30', '09:05', savedAt)).toBeNull()
+    expect(resolveReminderAt('custom', '2026-02-29', '09:05', savedAt)).toBeNull()
+  })
   it('should resolve tomorrow across a local year boundary without changing now', () => {
     const now = new Date(2026, 11, 31, 23, 59, 45)
     const timestamp = now.getTime()
