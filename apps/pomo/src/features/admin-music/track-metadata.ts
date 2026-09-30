@@ -36,7 +36,7 @@ export const readTrackMetadata = async (
   const fallbackArtist = metadata.common.artists?.join(', ')
 
   return {
-    artist: normalizeTag(metadata.common.artist ?? fallbackArtist),
+    artist: normalizeTag(metadata.common.artist) ?? normalizeTag(fallbackArtist),
     title: normalizeTag(metadata.common.title),
   }
 }
