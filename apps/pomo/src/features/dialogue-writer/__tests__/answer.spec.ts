@@ -21,6 +21,11 @@ describe('normalizeKoreanSpeechStyle', () => {
     )
   })
 
+  it('should convert formal endings before ASCII and fullwidth semicolons', () => {
+    expect(normalizeKoreanSpeechStyle('주십니다; 계속하세요.')).toBe('주세요; 계속하세요.')
+    expect(normalizeKoreanSpeechStyle('알겠습니다； 계속하세요。')).toBe('알겠어요； 계속하세요。')
+  })
+
   it('should convert 테니까 before ASCII and fullwidth commas', () => {
     expect(normalizeKoreanSpeechStyle('힘이 생길 테니까, 계속하세요.')).toBe(
       '힘이 생길 테니까요, 계속하세요.',
