@@ -25,7 +25,7 @@ const orderQueue = (
     case 'random': {
       const shuffled = [...queue]
       for (let index = shuffled.length - 1; index > 0; index -= 1) {
-        const target = Math.floor(Math.random() * (index + 1))
+        const target = Math.min(index, Math.floor(Math.random() * (index + 1)))
         ;[shuffled[index], shuffled[target]] = [shuffled[target], shuffled[index]]
       }
       if (shuffled.length > 1 && shuffled[0] === current) {

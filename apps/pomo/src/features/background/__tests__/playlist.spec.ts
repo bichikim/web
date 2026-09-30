@@ -4,6 +4,17 @@ import {nextSlide} from '../playlist'
 
 afterEach(() => vi.restoreAllMocks())
 
+it('should keep shuffled slide ids in the playlist when Math.random returns one', () => {
+  vi.spyOn(Math, 'random').mockReturnValue(1)
+  const ids = ['a', 'b']
+
+  const slide = nextSlide({current: null, ids, mode: 'random', remaining: []})
+  const slideIds = [slide.current, ...slide.remaining]
+
+  expect(slideIds).toHaveLength(ids.length)
+  expect(slideIds).toEqual(expect.arrayContaining(ids))
+})
+
 it('should repeat sequentially and start from the first item after deleting the current item', () => {
   expect(
     nextSlide({current: 'a', ids: ['a', 'b'], mode: 'sequential', remaining: []}).current,
