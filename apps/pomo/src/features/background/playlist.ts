@@ -27,7 +27,7 @@ export const nextSlide = (options: NextSlideOptions): Slide => {
   const remaining = [...available]
   if (options.mode === 'random') {
     for (let index = remaining.length - 1; index > 0; index -= 1) {
-      const target = Math.floor(Math.random() * (index + 1))
+      const target = Math.min(index, Math.floor(Math.random() * (index + 1)))
       ;[remaining[index], remaining[target]] = [remaining[target], remaining[index]]
     }
     if (remaining.length > 1 && remaining[0] === options.current) {
