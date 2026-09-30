@@ -18,6 +18,37 @@ describe('createCalendarQuery', () => {
     expect(createCalendarQuery({now, text: '오늘 날씨 알려줘'})).toBeNull()
   })
 
+  it.each(['오늘 날씨 뭐 있어?', '오늘 뉴스 뭐 있어?', '오늘 뭐 뉴스 있어?'])(
+    'should ignore a non-calendar topic in an implicit schedule question: "%s"',
+    (text) => {
+      expect(createCalendarQuery({now, text})).toBeNull()
+    },
+  )
+
+  it.each(['이번 주제 뭐 있어?', '다음 주식 뭐 있어?'])(
+    'should ignore a week substring in a non-calendar phrase: "%s"',
+    (text) => {
+      expect(createCalendarQuery({now, text})).toBeNull()
+    },
+  )
+
+  it.each([
+    ['이번 주에 일정 알려줘', '2026-09-04T10:30:00.000Z', '2026-09-06T15:00:00.000Z'],
+    ['다음 주에 일정 알려줘', '2026-09-06T15:00:00.000Z', '2026-09-13T15:00:00.000Z'],
+  ])('should recognize a week term followed by a particle in "%s"', (text, start, end) => {
+    expect(createCalendarQuery({now, text, timeZone: 'Asia/Seoul'})).toEqual({end, start})
+  })
+
+  it.each(['다음 주식 회의 일정 알려줘', '이번 주제 회의 일정 알려줘'])(
+    'should not use a week substring inside a longer word: "%s"',
+    (text) => {
+      expect(createCalendarQuery({now, text, timeZone: 'Asia/Seoul'})).toEqual({
+        end: '2026-10-04T10:30:00.000Z',
+        start: '2026-09-04T10:30:00.000Z',
+      })
+    },
+  )
+
   it('should query the remaining local day for today', () => {
     expect(createCalendarQuery({now, text: '오늘 일정 알려줘', timeZone: 'Asia/Seoul'})).toEqual({
       end: '2026-09-04T15:00:00.000Z',
