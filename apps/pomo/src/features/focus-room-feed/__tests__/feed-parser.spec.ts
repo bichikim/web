@@ -341,6 +341,19 @@ it('should skip an alternate Atom link with an empty href', () => {
   expect(feed.items[0]?.link).toBe('https://example.com/article')
 })
 
+it.each([' alternate ', '\talternate\t'] as const)(
+  'should trim whitespace around an alternate Atom relation: %s',
+  (relation) => {
+    const feed = parseFeedXml(
+      `<feed><title>Atom</title><entry><link rel="${relation}" href="https://example.com/article" /></entry></feed>`,
+      'https://example.com/feed.xml',
+    )
+
+    expect(feed.items[0]?.link).toBe('https://example.com/article')
+    expect(feed.items[0]?.id).toBe('https://example.com/article')
+  },
+)
+
 it('should prefer an uppercase alternate Atom link', () => {
   const feed = parseFeedXml(
     `<feed><title>Atom</title><entry><link rel="self" href="https://example.com/self" />
