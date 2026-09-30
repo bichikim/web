@@ -26,6 +26,7 @@ export interface MusicPlayerViewProps {
   readonly onTrackSelect: (index: number) => void
   readonly repeatMode: RepeatMode
   readonly sceneStyle?: PSceneStyle
+  readonly soundEffectsVisible?: boolean
   readonly shuffleEnabled: boolean
   readonly tracks: readonly PTrack[]
 }

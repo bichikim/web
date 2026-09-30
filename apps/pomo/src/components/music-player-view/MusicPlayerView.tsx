@@ -1,4 +1,5 @@
 import {cx} from 'class-variance-authority'
+import {Show} from 'solid-js'
 import {PAlbumLibrary} from '../p-album-library/PAlbumLibrary'
 import {ExpandedPlayerControls} from './ExpandedPlayerControls'
 import {Frame} from './Frame'
@@ -68,7 +69,9 @@ export const MusicPlayerView = (props: MusicPlayerViewProps) => {
                     sceneStyle={props.sceneStyle}
                     tracks={props.tracks}
                   />
-                  <SoundEffects sceneStyle={props.sceneStyle} />
+                  <Show when={props.soundEffectsVisible !== false}>
+                    <SoundEffects sceneStyle={props.sceneStyle} />
+                  </Show>
                 </>
               }
             />
