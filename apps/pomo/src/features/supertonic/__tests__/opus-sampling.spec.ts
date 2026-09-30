@@ -26,6 +26,13 @@ describe('getOpusEncodingInput', () => {
     expect(result.samples[2]).toBe(1)
   })
 
+  it('should retain non-empty legacy PCM when the resampled length rounds to zero', () => {
+    const result = getOpusEncodingInput(new Float32Array([0.25, -0.5, 0.75]), 384_000)
+
+    expect(result.sampleRate).toBe(48_000)
+    expect(result.samples).toEqual(new Float32Array([0.25]))
+  })
+
   it('should preserve an empty legacy PCM buffer', () => {
     expect(getOpusEncodingInput(new Float32Array(), 44_100)).toEqual({
       sampleRate: 48_000,
