@@ -1,7 +1,7 @@
 /** @vitest-environment node */
 import {describe, expect, it} from 'vitest'
 
-import {getOrientationAxes, getOrientationOffset} from '../device-orientation'
+import {getOrientationAxes, getOrientationOffset} from '../axes'
 
 describe('getOrientationAxes', () => {
   it('should map device axes to the current screen orientation', () => {
