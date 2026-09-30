@@ -29,7 +29,9 @@ const getEventAlarmAt = (
 ) => {
   if (event.allDay) {
     const alarmDateValue =
-      defaultAlarmDate === undefined ? event.start : formatLocalDate(defaultAlarmDate)
+      defaultAlarmDate === undefined
+        ? event.start.slice(0, DATE_KEY_LENGTH)
+        : formatLocalDate(defaultAlarmDate)
     const alarmDate =
       alarmDateValue.length === DATE_KEY_LENGTH
         ? alarmDateValue

@@ -66,7 +66,12 @@ export const normalizeLanguageLearningSentence = (output: string) => {
   const singleLine = output.trim().replace(LEADING_MARKER_PATTERN, '')
   const hasWrappingQuotes = WRAPPING_QUOTES_PATTERN.test(singleLine)
   const hasMatchingWrappingQuotes = MATCHING_WRAPPING_QUOTES_PATTERN.test(singleLine)
-  const sentence = (hasWrappingQuotes ? singleLine.slice(1, -1) : singleLine).trim()
+  const unwrappedSentence = (hasWrappingQuotes ? singleLine.slice(1, -1) : singleLine).trim()
+  const hasNestedMatchingWrappingQuotes =
+    hasMatchingWrappingQuotes && MATCHING_WRAPPING_QUOTES_PATTERN.test(unwrappedSentence)
+  const sentence = hasNestedMatchingWrappingQuotes
+    ? unwrappedSentence.slice(1, -1).trim()
+    : unwrappedSentence
 
   return hasWrappingQuotes &&
     !hasMatchingWrappingQuotes &&
