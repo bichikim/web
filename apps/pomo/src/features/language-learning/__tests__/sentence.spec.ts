@@ -66,4 +66,13 @@ describe('normalizeLanguageLearningSentence', () => {
     expect(isValidLanguageLearningSentence(sentence, 'en')).toBe(true)
     expect(question).toBe('hello?')
   })
+
+  it('should remove nested matching ASCII quote wrappers', () => {
+    const normalized = normalizeLanguageLearningSentence('"\'hello.\'"')
+
+    expect(isValidLanguageLearningSentence('hello.', 'en')).toBe(true)
+    expect(isValidLanguageLearningSentence("'hello.'", 'en')).toBe(false)
+    expect(normalized).toBe('hello.')
+    expect(isValidLanguageLearningSentence(normalized, 'en')).toBe(true)
+  })
 })
