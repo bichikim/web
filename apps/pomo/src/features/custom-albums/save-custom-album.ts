@@ -96,6 +96,7 @@ const resolveCoverImage = (
 
 const validateCustomAlbum = (options: SaveCustomAlbumOptions): void => {
   validateCoverUpdate(options.coverImage)
+  const replacementCoverImage = resolveCoverImage(options.coverImage, undefined)
 
   if (options.title.trim().length === 0 || options.tracks.length > MAXIMUM_CUSTOM_TRACK_COUNT) {
     throw new CustomAlbumError('invalid-album')
@@ -121,7 +122,7 @@ const validateCustomAlbum = (options: SaveCustomAlbumOptions): void => {
     return total + track.audio.size
   }, 0)
 
-  if (albumBytes > MAXIMUM_CUSTOM_ALBUM_BYTES) {
+  if (albumBytes + (replacementCoverImage?.size ?? 0) > MAXIMUM_CUSTOM_ALBUM_BYTES) {
     throw new CustomAlbumError('album-too-large')
   }
 }
