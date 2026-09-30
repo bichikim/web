@@ -310,6 +310,12 @@ export const usePEventController = (props: UsePEventControllerProps): PEventCont
     onEvent: delayedEndPlayback.request,
   })
 
+  const cancelActiveDelayedEndPlayback = () => {
+    if (delayedEndPlayback.isActive()) {
+      playback.cancel()
+    }
+  }
+
   const setDelayedEndEventDuration = async (durationMinutes: number): Promise<void> => {
     const nextSettings = parseDelayedEndEventSettings({durationMinutes, version: 1})
 
@@ -343,6 +349,7 @@ export const usePEventController = (props: UsePEventControllerProps): PEventCont
     cancelDelayedEndEvent: () => {
       delayedEndEvent.cancel()
       delayedEndPlayback.clearPendingEvent()
+      cancelActiveDelayedEndPlayback()
     },
     delayedEndEventDurationMinutes,
     delayedEndEventIsRunning: delayedEndEvent.isRunning,
@@ -513,9 +520,7 @@ export const usePEventController = (props: UsePEventControllerProps): PEventCont
       delayedEndEvent.start(delayedEndEventDurationMinutes())
       if (delayedEndEvent.isRunning()) {
         delayedEndPlayback.clearPendingEvent()
-        if (delayedEndPlayback.isActive()) {
-          playback.cancel()
-        }
+        cancelActiveDelayedEndPlayback()
       }
     },
   }
