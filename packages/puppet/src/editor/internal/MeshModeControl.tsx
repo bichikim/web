@@ -21,8 +21,13 @@ export const MeshModeControl = (props: MeshModeControlProps) => (
       size="md"
       value={props.editing ? 'mesh' : 'form'}
       options={[
-        {disabled: props.disabledReason !== undefined, label: '기준 배치', value: 'mesh'},
-        {label: '키폼 변형', value: 'form'},
+        {
+          disabled: props.disabledReason !== undefined,
+          icon: 'puppet-icon-mesh',
+          label: '기준 배치',
+          value: 'mesh',
+        },
+        {icon: 'puppet-icon-curve', label: '키폼 변형', value: 'form'},
       ]}
       onChange={(value) => props.onChange(value === 'mesh')}
     />

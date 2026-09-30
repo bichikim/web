@@ -32,7 +32,8 @@ export type ExpenseParseResult =
 const MAXIMUM_ITEMS = 20
 const EXPENSE_LINE_PATTERN =
   /^\s*(?<name>.+?)\s+(?<unitPrice>[\d,]+)\s*원(?:\s+(?<quantity>[\d,]+)\s*개)?\s*$/u
-const DATE_LINE_PATTERN = /^\s*(?<year>\d{4})-(?<month>\d{1,2})-(?<day>\d{1,2})\s*$/u
+const DATE_LINE_PATTERN =
+  /^\s*(?<year>\d{4})-(?<month>\d{1,2})-(?<day>\d{1,2})(?:\s+[월화수목금토일]요일)?\s*$/u
 
 const invalid = (code: ExpenseParseError['code']): ExpenseParseResult => ({
   error: {code},
@@ -206,9 +207,7 @@ export const parseExpenseText = (text: string): ExpenseParseResult => {
 
   for (const line of lines) {
     const dateValue = readExpenseDate(line)
-    if (dateValue !== null && date === null) {
-      date = dateValue
-    } else {
+    if (dateValue === null) {
       const expenseMatch = EXPENSE_LINE_PATTERN.exec(line)
       if (expenseMatch?.groups === undefined) {
         return invalid('invalid-input')
@@ -222,6 +221,8 @@ export const parseExpenseText = (text: string): ExpenseParseResult => {
       }
 
       items.push({amount: unitPrice * quantity, name, quantity, unitPrice})
+    } else if (date === null) {
+      date = dateValue
     }
   }
 

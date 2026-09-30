@@ -2,7 +2,9 @@
 export const parseInteger = (value: string): bigint | null => {
   const integer = value
     .replace(/[０-９]/gu, (digit) => digit.normalize('NFKC'))
+    .replace(/^＋/u, '+')
     .replace(/^−/u, '-')
+    .replace(/^－/u, '-')
     .replaceAll(',', '')
   const digits = integer.replace(/^[+-]/u, '')
 

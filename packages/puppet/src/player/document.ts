@@ -389,6 +389,7 @@ export type PuppetTrack = PuppetParameterTrack | PuppetVertexTrack
 export interface PuppetMotion {
   readonly duration: number
   readonly id: string
+  readonly timelineParameterIds?: ReadonlyArray<string>
   readonly tracks: ReadonlyArray<PuppetTrack>
 }
 

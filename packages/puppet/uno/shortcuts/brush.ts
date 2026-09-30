@@ -27,5 +27,5 @@ export const brushShortcuts = {
     '[.puppet-editor_&]:shrink-0 [.puppet-editor_&]:bg-[#35413d]',
   ],
   'mesh-editing-toolbar':
-    '[.puppet-editor_&]:flex [.puppet-editor_&]:items-center [.puppet-editor_&]:gap-2',
+    '[.puppet-editor_&]:flex [.puppet-editor_&]:min-w-0 [.puppet-editor_&]:items-center [.puppet-editor_&]:gap-2',
 }

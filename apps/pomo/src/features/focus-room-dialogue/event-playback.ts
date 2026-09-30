@@ -27,7 +27,7 @@ const shuffleDialogues = (dialogueIds: ReadonlyArray<string>, random: () => numb
   const shuffledIds = [...dialogueIds]
 
   for (let position = shuffledIds.length - 1; position > 0; position -= 1) {
-    const targetPosition = Math.floor(random() * (position + 1))
+    const targetPosition = Math.min(Math.floor(random() * (position + 1)), position)
     const currentId = shuffledIds[position]
     shuffledIds[position] = shuffledIds[targetPosition] as string
     shuffledIds[targetPosition] = currentId as string
@@ -76,7 +76,10 @@ export const selectEventDialogues = (
       }
 
       const random = options.random ?? Math.random
-      const position = Math.floor(random() * latestDialogueIds.length)
+      const position = Math.min(
+        Math.floor(random() * latestDialogueIds.length),
+        latestDialogueIds.length - 1,
+      )
       return [latestDialogueIds[position] as string]
     }
     default: {

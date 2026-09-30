@@ -8,6 +8,15 @@ describe('isValidLanguageLearningSentence', () => {
     expect(isValidLanguageLearningSentence('円周率は3.14として計算します。', 'ja')).toBe(true)
   })
 
+  it('should accept Latin abbreviations in Korean and Japanese sentences', () => {
+    expect(isValidLanguageLearningSentence('Dr. Kim은 의사예요.', 'ko')).toBe(true)
+    expect(isValidLanguageLearningSentence('예를 들어 e.g. 이렇게 말해요.', 'ko')).toBe(true)
+    expect(isValidLanguageLearningSentence('이것은 U.S. 이야기예요.', 'ko')).toBe(true)
+    expect(isValidLanguageLearningSentence('Dr. Kimは医者です。', 'ja')).toBe(true)
+    expect(isValidLanguageLearningSentence('例えばe.g.このように言います。', 'ja')).toBe(true)
+    expect(isValidLanguageLearningSentence('これはU.S.の話です。', 'ja')).toBe(true)
+  })
+
   it('should accept combined terminal punctuation in Korean and Japanese sentences', () => {
     expect(isValidLanguageLearningSentence('정말 그래요?!', 'ko')).toBe(true)
     expect(isValidLanguageLearningSentence('本当にそうですか?!', 'ja')).toBe(true)
@@ -26,8 +35,17 @@ describe('isValidLanguageLearningSentence', () => {
     expect(isValidLanguageLearningSentence('원주율은 3.14예요. 오늘은 날씨가 좋아요.', 'ko')).toBe(
       false,
     )
+    expect(isValidLanguageLearningSentence('Dr. Kim은 의사예요. 오늘은 날씨가 좋아요.', 'ko')).toBe(
+      false,
+    )
     expect(
       isValidLanguageLearningSentence('円周率は3.14です。今日はよく晴れています。', 'ja'),
+    ).toBe(false)
+    expect(
+      isValidLanguageLearningSentence(
+        '例えばe.g.このように言います。今日はよく晴れています。',
+        'ja',
+      ),
     ).toBe(false)
   })
 
@@ -47,5 +65,22 @@ describe('normalizeLanguageLearningSentence', () => {
     expect(sentence).toBe('hello.')
     expect(isValidLanguageLearningSentence(sentence, 'en')).toBe(true)
     expect(question).toBe('hello?')
+  })
+
+  it('should remove nested matching ASCII quote wrappers', () => {
+    const normalized = normalizeLanguageLearningSentence('"\'hello.\'"')
+
+    expect(isValidLanguageLearningSentence('hello.', 'en')).toBe(true)
+    expect(isValidLanguageLearningSentence("'hello.'", 'en')).toBe(false)
+    expect(normalized).toBe('hello.')
+    expect(isValidLanguageLearningSentence(normalized, 'en')).toBe(true)
+  })
+
+  it('should remove fullwidth double quote wrappers', () => {
+    const normalized = normalizeLanguageLearningSentence('\uFF02hello.\uFF02')
+
+    expect(isValidLanguageLearningSentence('hello.', 'en')).toBe(true)
+    expect(normalized).toBe('hello.')
+    expect(isValidLanguageLearningSentence(normalized, 'en')).toBe(true)
   })
 })

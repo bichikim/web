@@ -1,0 +1,24 @@
+{
+  "model": "depth-anything/DA3MONO-LARGE",
+  "revision": "f465978e618db8cc79c83b8bbf24964857db1875",
+  "checkpointSha256": "7a799a7f95eb8d4c404c2ca8be3dc3276b350a417ddc4420db72ba850cc0e960",
+  "processResolution": 1008,
+  "maps": [
+    {
+      "depth": "depth-city-sunny-riverside.png",
+      "source": "city-sunny-riverside.png",
+      "sourceSha256": "2ecf5f7f4c724b9778458d7eafcffd658770671948cb7f0d8cadc7c3274d88c5"
+    },
+    {
+      "depth": "depth-coast.png",
+      "source": "coast.png",
+      "sourceSha256": "9ebaf2a35c7654f0a195bcbf5f9e8a492dcfc30f8988b91863c79a20d4f091eb",
+      "publish": false
+    },
+    {
+      "depth": "depth-post-rain-square-upper-floor.png",
+      "source": "post-rain-square-upper-floor.png",
+      "sourceSha256": "f408327834756e67ed3c360bb82f50766fd26dfc85242d96fc5dfdf86542215d"
+    }
+  ]
+}

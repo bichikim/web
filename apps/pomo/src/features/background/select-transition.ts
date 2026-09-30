@@ -6,7 +6,8 @@ export const selectTransition = (preferences: BackgroundPreferences): Transition
     return preferences.transition
   }
   const pool = preferences.transitionPool
-  return pool[Math.floor(Math.random() * pool.length)] ?? 'fade'
+  const randomIndex = Math.min(Math.floor(Math.random() * pool.length), pool.length - 1)
+  return pool[randomIndex] ?? 'fade'
 }
 
 /** Returns the active effect selection, including legacy fixed settings. */

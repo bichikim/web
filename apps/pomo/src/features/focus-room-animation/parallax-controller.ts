@@ -1,6 +1,10 @@
 import {clamp} from 'es-toolkit/math'
 import {releaseCapturedPointer} from 'src/utils/release-captured-pointer'
-import {getOrientationAxes, getOrientationOffset, type OrientationAxes} from './device-orientation'
+import {
+  getOrientationAxes,
+  getOrientationOffset,
+  type OrientationAxes,
+} from 'src/features/device-orientation'
 import {createMotionEnvironment, type MotionEnvironment} from './motion-environment'
 import type {PSceneMotionInput} from './scene-motion'
 
