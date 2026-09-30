@@ -39,14 +39,15 @@ const readAudioDuration = (file: File): Promise<number> =>
     }
     const handleLoadedMetadata = () => {
       const {duration} = audio
+      const roundedDuration = Math.round(duration)
       cleanUp()
 
-      if (!Number.isFinite(duration) || duration <= 0) {
+      if (!Number.isFinite(duration) || duration <= 0 || roundedDuration <= 0) {
         reject(new CustomAlbumError('invalid-audio'))
         return
       }
 
-      resolve(Math.round(duration))
+      resolve(roundedDuration)
     }
     const handleError = () => {
       cleanUp()

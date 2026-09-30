@@ -26,9 +26,39 @@ afterEach(async () => {
   try {
     await resetAlbumDatabase()
   } finally {
+    vi.restoreAllMocks()
     vi.unstubAllGlobals()
   }
 })
+
+const stubAudioMetadata = (durationSeconds: number): void => {
+  vi.stubGlobal('document', {
+    createElement: (tagName: string) => {
+      if (tagName !== 'audio') {
+        throw new Error(`Unexpected element: ${tagName}`)
+      }
+
+      let loadedMetadataListener: (() => void) | undefined
+
+      return {
+        addEventListener: (eventName: string, listener: () => void) => {
+          if (eventName === 'loadedmetadata') {
+            loadedMetadataListener = listener
+          }
+        },
+        duration: durationSeconds,
+        load: () => {
+          queueMicrotask(() => loadedMetadataListener?.())
+        },
+        preload: '',
+        removeAttribute: vi.fn(),
+        removeEventListener: vi.fn(),
+      }
+    },
+  } as unknown as Document)
+  vi.spyOn(globalThis.URL, 'createObjectURL').mockReturnValue('blob:audio')
+  vi.spyOn(globalThis.URL, 'revokeObjectURL').mockImplementation(() => undefined)
+}
 
 it('should persist a changed track title when re-saving a custom album', async () => {
   vi.stubGlobal('crypto', {
@@ -229,4 +259,55 @@ it('should reject a track replacement when available quota only covers the exist
   const audioText = draft === null ? null : await draft.tracks[0]?.audio.text()
 
   expect(audioText).toBe('audio-a')
+})
+
+it('should reject audio whose rounded duration would be zero as invalid audio', async () => {
+  stubAudioMetadata(0.499)
+  vi.stubGlobal('crypto', {randomUUID: () => 'track-1'})
+
+  const {addCustomAlbumTracks} = await import('src/features/custom-albums')
+  const file = new File([new Uint8Array(32)], 'short.mp3', {type: 'audio/mpeg'})
+
+  await expect(
+    addCustomAlbumTracks({
+      currentAlbumBytes: 0,
+      currentTrackCount: 0,
+      files: [file],
+      readEmbeddedCover: false,
+    }),
+  ).rejects.toMatchObject({code: 'invalid-audio'})
+})
+
+it('should persist audio that rounds to one second', async () => {
+  stubAudioMetadata(0.5)
+  vi.stubGlobal('crypto', {randomUUID: () => 'track-1'})
+
+  const {addCustomAlbumTracks, readCustomAlbumDraft, saveCustomAlbum} =
+    await import('src/features/custom-albums')
+  const file = new File([new Uint8Array(32)], 'short.mp3', {type: 'audio/mpeg'})
+  const result = await addCustomAlbumTracks({
+    currentAlbumBytes: 0,
+    currentTrackCount: 0,
+    files: [file],
+    readEmbeddedCover: false,
+  })
+
+  expect(result.kind).toBe('added')
+  if (result.kind !== 'added') {
+    throw new Error('Expected the supported audio file to be added.')
+  }
+  expect(result.tracks[0]?.durationSeconds).toBe(1)
+
+  const albumId = await saveCustomAlbum({
+    albumId: null,
+    artist: 'Artist',
+    coverIcon: 'disc',
+    coverImage: {kind: 'keep'},
+    coverSource: 'automatic',
+    title: 'Album',
+    tracks: result.tracks,
+  })
+  const draft = await readCustomAlbumDraft({albumId})
+
+  expect(draft?.tracks[0]?.durationSeconds).toBe(1)
 })
