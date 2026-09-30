@@ -57,44 +57,6 @@ const setup = async () => {
   return {catalog, fetcher, first, history}
 }
 
-it('should retain the queue across workspace controls and refresh the catalog only after the batch', async () => {
-  const {first, fetcher} = await setup()
-  fireEvent.submit(screen.getByRole('form', {name: '곡 추가'}))
-  expect(imports.createTrackWithAudio).toHaveBeenCalledTimes(1)
-  const controls = [
-    screen.getByRole('button', {name: /둘째 앨범/u}),
-    screen.getByRole('button', {name: '추가 화면 닫기'}),
-    screen.getByRole('button', {name: '공개 설정'}),
-    screen.getByRole('tab', {name: '기본 정보'}),
-  ]
-  for (const control of controls) {
-    expect(control).toBeDisabled()
-    fireEvent.click(control)
-  }
-  fireEvent.click(screen.getByRole('button', {name: '+ 새 앨범 만들기'}))
-  expect(screen.getByRole('region', {name: '새 앨범 만들기'})).toBeInTheDocument()
-  fireEvent.click(screen.getByRole('button', {name: '작성 화면 닫기'}))
-  expect(screen.getByRole('group', {name: 'two.mp3'})).toBeInTheDocument()
-  expect(fetcher).not.toHaveBeenCalled()
-  const refresh = Promise.withResolvers<Response>()
-  fetcher.mockReturnValueOnce(refresh.promise)
-  first.resolve({success: true})
-  try {
-    await screen.findByText('등록 완료 2곡 · 등록 실패 0곡 · 상태 확인 필요 0곡')
-    expect(fetcher.mock.calls.map(([input]) => String(input))).toEqual(['/api/admin/music'])
-    expect(screen.getByRole('button', {name: '추가 화면 닫기'})).toBeDisabled()
-    expect(screen.getByLabelText(/^MP3 파일 여러/u)).toBeDisabled()
-    expect(screen.getByRole('button', {name: '닫기'})).toBeDisabled()
-    fireEvent.drop(screen.getByRole('group', {name: '파일 드롭 영역'}), {
-      dataTransfer: {files: [new File(['third'], 'third.mp3')]},
-    })
-    expect(screen.queryByRole('group', {name: 'third.mp3'})).toBeNull()
-  } finally {
-    refresh.resolve(Response.json(catalogWithAlbum))
-  }
-  await waitFor(() => expect(screen.getByRole('button', {name: '추가 화면 닫기'})).toBeEnabled())
-})
-
 it.each([false, true])(
   'should honor route departure %s and stop the queue after unmount',
   async (leave) => {

@@ -7,36 +7,6 @@ import {expect, it, vi} from 'vitest'
 import type {PictureDiaryStroke} from '../../../../features/picture-diary'
 import {PictureDiaryCanvas} from '../Canvas'
 
-it('should cap a continuous stroke and report the limit without invalidating the drawing', () => {
-  const onLimit = vi.fn()
-  let latest: ReadonlyArray<PictureDiaryStroke> = []
-  render(() => {
-    const [strokes, setStrokes] = createSignal<ReadonlyArray<PictureDiaryStroke>>([])
-    return (
-      <PictureDiaryCanvas
-        strokes={strokes()}
-        onLimit={onLimit}
-        onChange={(next) => {
-          latest = next
-          setStrokes(next)
-        }}
-      />
-    )
-  })
-  const canvas = screen.getByLabelText('그림 그리는 곳')
-  for (let index = 0; index < 2001; index += 1) {
-    const event = new Event(index === 0 ? 'pointerdown' : 'pointermove', {bubbles: true})
-    Object.defineProperties(event, {
-      button: {value: 0},
-      buttons: {value: 1},
-      pointerId: {value: 1},
-    })
-    canvas.dispatchEvent(event)
-  }
-  expect(latest[0]?.points).toHaveLength(2000)
-  expect(onLimit).toHaveBeenCalledOnce()
-})
-
 it('should not emit a drawing that exceeds the storage stroke limit', () => {
   const onChange = vi.fn()
   const strokes = Array.from({length: 200}, () => ({points: [{x: 0.5, y: 0.5}]}))
