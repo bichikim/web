@@ -79,15 +79,42 @@ it('should accept canonical variants of a searched source URL', () => {
   output.moments[0]!.sections.context.sourceUrls[0] =
     'https://www.archive.example/a/?utm_source=openai#section'
 
-  expect(() =>
-    validateHistoryOutput({
-      outputText: JSON.stringify(output),
-      policy: POLICY,
-      searchSourceUrls: SOURCE_URLS,
-      targetDay: 15,
-      targetMonth: 8,
-    }),
-  ).not.toThrow()
+  const result = validateHistoryOutput({
+    outputText: JSON.stringify(output),
+    policy: POLICY,
+    searchSourceUrls: SOURCE_URLS,
+    targetDay: 15,
+    targetMonth: 8,
+  })
+
+  expect(result.moments[0]!.sources[0]!.url).toBe(SOURCE_URLS[0])
+  expect(result.moments[0]!.sections.context.sourceUrls[0]).toBe(SOURCE_URLS[0])
+})
+
+it('should keep searched documents with different identity queries distinct', () => {
+  const firstDocumentUrl = 'https://www.un.org/en/ga/search/view_doc.asp?symbol=A/RES/217(III)'
+  const secondDocumentUrl = 'https://www.un.org/en/ga/search/view_doc.asp?symbol=A/RES/260(III)'
+  const output = createOutput()
+  const firstMoment = output.moments[0]!
+  const secondMoment = output.moments[1]!
+  firstMoment.sources[0]!.url = firstDocumentUrl
+  secondMoment.sources[0]!.url = secondDocumentUrl
+
+  for (const section of Object.values(firstMoment.sections)) {
+    section.sourceUrls[0] = firstDocumentUrl
+  }
+
+  for (const section of Object.values(secondMoment.sections)) {
+    section.sourceUrls[0] = secondDocumentUrl
+  }
+
+  const result = validate(output, {
+    policy: {...POLICY, allowedDomains: [...POLICY.allowedDomains, 'un.org']},
+    searchSourceUrls: [firstDocumentUrl, secondDocumentUrl, ...SOURCE_URLS],
+  })
+
+  expect(result.moments[0]!.sources[0]!.url).toBe(firstDocumentUrl)
+  expect(result.moments[1]!.sources[0]!.url).toBe(secondDocumentUrl)
 })
 
 it('should replace a mistyped article slug when its source ID uniquely matches', () => {
