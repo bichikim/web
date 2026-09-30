@@ -2,7 +2,9 @@ import {dayjs} from 'src/utils/zoned-dayjs'
 import type {CalendarEventRange} from './types'
 
 const CALENDAR_INTENT_PATTERN = /(?:일정|미팅|회의|약속|스케줄)/u
-const THIS_WEEK_PATTERN = /이번 ?주/u
+const WEEK_BOUNDARY_PATTERN =
+  /(?=$|[\s,.!?…]|(?:에는|에서|부터|까지|은|는|이|가|을|를|에|엔|도|로|만|중|쯤)(?=$|[\s,.!?…]))/u
+const THIS_WEEK_PATTERN = new RegExp(`이번 ?주${WEEK_BOUNDARY_PATTERN.source}`, 'u')
 const THIS_WEEK_EXCLUSION_PATTERN =
   /이번 ?주(?:(?!다음 ?주).)*(?:말고|빼고|제외(?:하고)?|아니|아닌|안\s*(?:되|돼))/u
 const NEXT_WEEK_EXCLUSION_PATTERN =
@@ -24,9 +26,15 @@ const DAY_AFTER_TOMORROW_EXCLUSION_PATTERN =
   /모레(?:(?!오늘|내일).)*(?:말고|빼고|제외(?:하고)?|아니|아닌|안\s*(?:되|돼))/u
 const THREE_DAYS_AHEAD_EXCLUSION_PATTERN =
   /글피(?:(?!그저께|어제|오늘|내일|모레).)*(?:말고|빼고|제외(?:하고)?|아니|아닌|안\s*(?:되|돼))/u
-const NEXT_WEEK_PATTERN = /다음 ?주/u
-const IMPLICIT_SCHEDULE_PATTERN =
-  /(?:그저께|오늘|내일|모레|글피|어제|이번 ?주|다음 ?주|주말).*(?:뭐|무엇).*(?:있|하)/u
+const NEXT_WEEK_PATTERN = new RegExp(`다음 ?주${WEEK_BOUNDARY_PATTERN.source}`, 'u')
+const IMPLICIT_SCHEDULE_PATTERN = new RegExp(
+  `(?:그저께|오늘|내일|모레|글피|어제|${THIS_WEEK_PATTERN.source}|${NEXT_WEEK_PATTERN.source}|주말)` +
+    `(?:\\s*(?:에는|에|엔|은|는|도))?` +
+    `(?:\\s*(?:새벽|아침|오전|점심|오후|저녁|밤|낮|정오))?` +
+    `(?:\\s*(?:에는|에|엔|은|는|도))?\\s*` +
+    `(?:뭐|무엇)(?:가|이|은|는)?\\s*(?:있|하)`,
+  'u',
+)
 const MILLISECONDS_PER_DAY = 86_400_000
 const DAY_BEFORE_YESTERDAY_START_DAYS = -2
 const DAY_AFTER_TOMORROW_START_DAYS = 2
