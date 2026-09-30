@@ -20,6 +20,18 @@ describe('normalizeKoreanSpeechStyle', () => {
     expect(normalizeKoreanSpeechStyle(answer)).toBe(answer)
   })
 
+  it('should convert formal endings before an ASCII closing parenthesis', () => {
+    expect(normalizeKoreanSpeechStyle('(도움이 됩니다)')).toBe('(도움이 돼요)')
+  })
+
+  it('should convert formal endings before a Unicode ellipsis', () => {
+    expect(normalizeKoreanSpeechStyle('좋습니다…')).toBe('좋아요…')
+  })
+
+  it('should convert formal endings before a fullwidth closing parenthesis', () => {
+    expect(normalizeKoreanSpeechStyle('좋습니다）')).toBe('좋아요）')
+  })
+
   it('should normalize common informal commands and questions', () => {
     const answer = '한번 생각해보라, 이게 좋은 방법일지? 다시 시작할까? 힘이 생길 테니까.'
 

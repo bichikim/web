@@ -1,4 +1,4 @@
-const SENTENCE_END_PATTERN = '(?=[.!?。！？]|$)'
+const SENTENCE_END_PATTERN = '(?=[.!?。！？…）)]|$)'
 const SPEECH_STYLE_REPLACEMENTS: ReadonlyArray<readonly [RegExp, string]> = [
   [new RegExp(`아닙니다${SENTENCE_END_PATTERN}`, 'gu'), '아니에요'],
   [new RegExp(`있습니다${SENTENCE_END_PATTERN}`, 'gu'), '있어요'],
