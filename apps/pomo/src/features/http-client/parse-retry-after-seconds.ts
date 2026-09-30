@@ -11,5 +11,5 @@ export const parseRetryAfterSeconds = (header: string | null): number | null => 
 
   const seconds = Number(normalizedHeader)
 
-  return Number.isInteger(seconds) && seconds > 0 ? seconds : null
+  return Number.isSafeInteger(seconds) && seconds > 0 ? seconds : null
 }
