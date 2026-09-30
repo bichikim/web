@@ -18,6 +18,7 @@ export const hasValidTrackTargets = (
 
     return (
       new Set(parameterTrackIds).size === parameterTrackIds.length &&
+      (motion.timelineParameterIds ?? []).every((id) => parameterById.has(id)) &&
       motion.tracks.every((track) => {
         if (track.kind === 'parameter') {
           const parameter = parameterById.get(track.parameterId)

@@ -12,7 +12,7 @@ import {
   snapToFrame,
 } from './timeline-keyframe-selection'
 import {TimelineKeyframeMarker} from './TimelineKeyframeMarker'
-import {TimelineParameterValueField} from './TimelineParameterValueField'
+import {TimelineParameterRowLabel} from './TimelineParameterRowLabel'
 import {useTimelineKeyframeMovePreview} from './use-timeline-keyframe-move-preview'
 
 const PERCENT = 100
@@ -51,6 +51,7 @@ export interface TimelineDopesheetProps {
   ) => void
   readonly onParameterValueChange?: (track: ParameterTimelineTrack, value: number) => void
   readonly onParameterSelect?: (parameterId: string) => void
+  readonly onParameterRemove?: (parameterId: string) => void
   readonly onSeek?: (time: number, preferredParameterId?: string) => void
   readonly rulerLabel?: JSX.Element
   readonly rulerStatus?: JSX.Element
@@ -148,38 +149,24 @@ export const TimelineDopesheet = (props: TimelineDopesheetProps) => {
     >
       <Show
         when={props.tracks.length > 0}
-        fallback={<p class="timeline-empty">Parameter가 없습니다.</p>}
+        fallback={<p class="timeline-empty">타임라인에 파라미터가 없습니다.</p>}
       >
         <div class="timeline-labels">
           <div class="timeline-ruler-label">{props.rulerLabel ?? 'Parameter'}</div>
           <Index each={props.tracks}>
-            {(track) => {
-              const parameterId = () => track().parameter.id
-              const parameterName = () => track().parameter.name
-
-              return (
-                <div
-                  class="timeline-row-label"
-                  data-selected={props.selectedParameterId === parameterId() ? '' : undefined}
-                  onClick={() => props.onParameterSelect?.(parameterId())}
-                >
-                  <strong>{parameterName()}</strong>
-                  <TimelineParameterValueField
-                    disabled={
-                      props.motion === undefined || props.onParameterValueChange === undefined
-                    }
-                    parameter={track().parameter}
-                    value={props.values[parameterId()]}
-                    onEditEnd={props.onEditEnd}
-                    onEditStart={() => {
-                      props.onParameterSelect?.(parameterId())
-                      props.onEditStart?.()
-                    }}
-                    onValueChange={(value) => props.onParameterValueChange?.(track(), value)}
-                  />
-                </div>
-              )
-            }}
+            {(track) => (
+              <TimelineParameterRowLabel
+                disabled={props.motion === undefined || props.onParameterValueChange === undefined}
+                onEditEnd={props.onEditEnd}
+                onEditStart={props.onEditStart}
+                onParameterRemove={props.onParameterRemove}
+                onParameterSelect={props.onParameterSelect}
+                onParameterValueChange={props.onParameterValueChange}
+                selected={props.selectedParameterId === track().parameter.id}
+                track={track()}
+                value={props.values[track().parameter.id]}
+              />
+            )}
           </Index>
         </div>
         <div class="timeline-tracks-scroll">

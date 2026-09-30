@@ -192,6 +192,11 @@ describe('PuppetEditor', () => {
 
     await waitFor(() => expect(mocks.createPlayer).toHaveBeenCalledOnce())
     fireEvent.click(view.getByRole('button', {name: '애니메이션'}))
+    fireEvent.keyDown(view.getByRole('button', {name: '타임라인 파라미터 추가'}), {
+      key: 'Enter',
+    })
+    const parameter = await screen.findByRole('menuitem', {name: 'Angle X'})
+    parameter.dispatchEvent(new MouseEvent('pointerup', {bubbles: true, button: 0}))
     fireEvent.input(view.getByRole('spinbutton', {name: 'Angle X 현재 값'}), {
       target: {value: '15'},
     })
@@ -517,8 +522,8 @@ describe('PuppetEditor', () => {
     ))
 
     const parameter = view.getByRole('button', {name: 'Angle X'})
-    parameter.dispatchEvent(new MouseEvent('pointerdown', {bubbles: true, button: 0, clientX: 200}))
-    globalThis.dispatchEvent(new MouseEvent('pointermove', {clientX: 120}))
+    parameter.dispatchEvent(new MouseEvent('pointerdown', {bubbles: true, button: 0, clientX: 120}))
+    globalThis.dispatchEvent(new MouseEvent('pointermove', {clientX: 200}))
     expect(view.getByText('놓아 삭제')).toBeVisible()
     expect(view.getByRole('button', {name: 'Angle X'})).toBeVisible()
     globalThis.dispatchEvent(new MouseEvent('pointerup'))
