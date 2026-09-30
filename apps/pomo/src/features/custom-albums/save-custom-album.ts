@@ -164,12 +164,8 @@ const createAlbumWritePlan = (options: CreateAlbumWritePlanOptions): AlbumWriteP
   }
 
   const retainedTrackIds = new Set(input.tracks.map((track) => track.id))
-  const existingTrackIds = new Set(existingTracks.map((track) => track.id))
-  const addedBytes = input.tracks
-    .filter((track) => !existingTrackIds.has(track.id))
-    .reduce((total, track) => total + track.audio.size, 0)
-  const albumTrackBytes = input.tracks.reduce((total, track) => total + track.audio.size, 0)
-  const currentAlbumBytes = albumTrackBytes + (coverImage?.size ?? 0)
+  const trackBytesToAdd = input.tracks.reduce((total, track) => total + track.audio.size, 0)
+  const currentAlbumBytes = trackBytesToAdd + (coverImage?.size ?? 0)
   const libraryBytes =
     otherTracks.reduce((total, track) => total + track.audio.size, 0) +
     otherAlbums.reduce((total, album) => total + (album.coverImage?.size ?? 0), 0) +
@@ -188,8 +184,11 @@ const createAlbumWritePlan = (options: CreateAlbumWritePlanOptions): AlbumWriteP
   const removedTrackBytes = existingTracks
     .filter((track) => !retainedTrackIds.has(track.id))
     .reduce((total, track) => total + track.audio.size, 0)
-  const bytesToRelease = removedTrackBytes + replacedCoverBytes
-  const bytesToAdd = addedBytes + addedCoverBytes
+  const replacedTrackBytes = existingTracks
+    .filter((track) => retainedTrackIds.has(track.id))
+    .reduce((total, track) => total + track.audio.size, 0)
+  const bytesToRelease = removedTrackBytes + replacedTrackBytes + replacedCoverBytes
+  const bytesToAdd = trackBytesToAdd + addedCoverBytes
 
   if (availableBytes !== null && bytesToAdd > availableBytes + bytesToRelease) {
     throw new CustomAlbumError('quota-exceeded')
@@ -207,25 +206,15 @@ const createAlbumWritePlan = (options: CreateAlbumWritePlanOptions): AlbumWriteP
     trackIds: input.tracks.map((track) => track.id),
     updatedAt: timestamp,
   }
-  const existingTracksById = new Map(existingTracks.map((track) => [track.id, track]))
-  const tracksToPut = input.tracks.flatMap((track) => {
-    const existingTrack = existingTracksById.get(track.id)
-    const nextTrack: StoredCustomTrack = {
-      albumId,
-      artist: input.artist.trim(),
-      audio: existingTrack?.audio ?? track.audio,
-      durationSeconds: existingTrack?.durationSeconds ?? track.durationSeconds,
-      fileName: existingTrack?.fileName ?? track.fileName,
-      id: track.id,
-      title: track.title.trim(),
-    }
-
-    return existingTrack === undefined ||
-      existingTrack.artist !== nextTrack.artist ||
-      existingTrack.title !== nextTrack.title
-      ? [nextTrack]
-      : []
-  })
+  const tracksToPut: readonly StoredCustomTrack[] = input.tracks.map((track) => ({
+    albumId,
+    artist: input.artist.trim(),
+    audio: track.audio,
+    durationSeconds: track.durationSeconds,
+    fileName: track.fileName,
+    id: track.id,
+    title: track.title.trim(),
+  }))
 
   return {
     album,
