@@ -1,5 +1,6 @@
 import {createRoot, createSignal, onCleanup} from 'solid-js'
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
+import {getLocale, setLocale as setRuntimeLocale} from '@paraglide/runtime'
 import {useModelDownload} from '../../model-download'
 import {
   createModelDownloadController,
@@ -371,5 +372,41 @@ describe('useTarotReading', () => {
     reading.retry()
     await flush()
     expect(vi.mocked(mocks.generate).mock.lastCall?.[0].locale).toBe('en')
+  })
+
+  it('uses the runtime locale active when download consent is accepted after a no-reload change', async () => {
+    const previousRuntimeLocale = getLocale()
+    const pageUrl = globalThis.window.location.href
+
+    try {
+      await setRuntimeLocale('ko', {reload: false})
+      dispose()
+      createRoot((cleanup) => {
+        dispose = cleanup
+        reading = useTarotReading({locale: getLocale})
+      })
+      mocks.downloaded.mockResolvedValue(false)
+      reading.setQuestion('무엇을 기억해야 할까요?')
+      reading.draw()
+      const selected = reading.cards()
+      await flush()
+      expect(reading.status()).toBe('consent')
+
+      await setRuntimeLocale('en', {reload: false})
+      expect(getLocale()).toBe('en')
+      expect(globalThis.window.location.href).toBe(pageUrl)
+
+      await reading.startDownload()
+
+      expect(mocks.generate).toHaveBeenCalledWith(
+        expect.objectContaining({
+          cards: selected,
+          locale: 'en',
+          question: '무엇을 기억해야 할까요?',
+        }),
+      )
+    } finally {
+      await setRuntimeLocale(previousRuntimeLocale, {reload: false})
+    }
   })
 })

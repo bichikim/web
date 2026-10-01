@@ -276,6 +276,7 @@ export const useTarotReading = (props: UseTarotReadingProps): TarotReadingContro
   const waitForDownload = async () => {
     revision += 1
     readingQuestion = question().trim()
+    readingLocale = props.locale()
     const downloadRevision = revision
     setStatus('downloading')
     try {
