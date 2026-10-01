@@ -1,3 +1,4 @@
+import {createRetryableLazyPromise} from 'src/utils/create-retryable-lazy-promise'
 import {createSignal, getOwner, onCleanup, runWithOwner} from 'solid-js'
 
 import type {ChatVoiceController, ChatVoiceState, UseChatVoiceProps} from './index'
@@ -9,7 +10,6 @@ export const useLazyChatVoice = (props: UseChatVoiceProps = {}): ChatVoiceContro
   const owner = getOwner()
   const [version, setVersion] = createSignal(0)
   let controller: ChatVoiceController | null = null
-  let loading: Promise<ChatVoiceController> | null = null
   let disposed = false
   let stopVersion = 0
 
@@ -22,31 +22,25 @@ export const useLazyChatVoice = (props: UseChatVoiceProps = {}): ChatVoiceContro
       return Promise.reject(new DOMException('Voice runtime was disposed.', 'AbortError'))
     }
 
-    if (loading === null) {
-      loading = import('./index')
-        .then(({useChatVoice}) => {
-          if (disposed) {
-            throw new DOMException('Voice runtime was disposed.', 'AbortError')
-          }
-
-          const nextController = runWithOwner(owner, () => useChatVoice(props))
-
-          if (nextController === undefined) {
-            throw new Error('Voice runtime could not attach to the current reactive owner.')
-          }
-
-          controller = nextController
-          setVersion((currentVersion) => currentVersion + 1)
-          return nextController
-        })
-        .catch((error: unknown) => {
-          loading = null
-          throw error
-        })
-    }
-
-    return loading
+    return loadController()
   }
+  const loadController = createRetryableLazyPromise(() => {
+    return import('./index').then(({useChatVoice}) => {
+      if (disposed) {
+        throw new DOMException('Voice runtime was disposed.', 'AbortError')
+      }
+
+      const nextController = runWithOwner(owner, () => useChatVoice(props))
+
+      if (nextController === undefined) {
+        throw new Error('Voice runtime could not attach to the current reactive owner.')
+      }
+
+      controller = nextController
+      setVersion((currentVersion) => currentVersion + 1)
+      return nextController
+    })
+  })
   const loadForOperation = (operation: (voice: ChatVoiceController) => Promise<void>) => {
     const operationVersion = stopVersion
 

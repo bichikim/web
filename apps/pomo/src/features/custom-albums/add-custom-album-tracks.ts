@@ -1,3 +1,4 @@
+import {replaceBlobObjectUrl} from 'src/features/blob-object-url'
 import {
   CUSTOM_TRACK_ID_PREFIX,
   CustomAlbumError,
@@ -30,12 +31,12 @@ export type AddCustomAlbumTracksResult =
 const readAudioDuration = (file: File): Promise<number> =>
   new Promise((resolve, reject) => {
     const audio = globalThis.document.createElement('audio')
-    const source = globalThis.URL.createObjectURL(file)
+    const source = replaceBlobObjectUrl(null, () => file)
     const cleanUp = () => {
       audio.removeEventListener('loadedmetadata', handleLoadedMetadata)
       audio.removeEventListener('error', handleError)
       audio.removeAttribute('src')
-      globalThis.URL.revokeObjectURL(source)
+      replaceBlobObjectUrl(source, () => null)
     }
     const handleLoadedMetadata = () => {
       const {duration} = audio

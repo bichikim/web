@@ -1,6 +1,6 @@
 import {TrackSummary} from './TrackSummary'
 import {cx} from 'class-variance-authority'
-import {For, type JSX, Show} from 'solid-js'
+import {Index, type JSX, Show} from 'solid-js'
 import {getPomoIconClass} from '../icon-style'
 import type {PSceneStyle} from '../../features/focus-room-animation'
 import * as m from '@paraglide/message'
@@ -77,7 +77,7 @@ export const Frame = (props: FrameProps) => (
             props.isPreparing && 'animate-pulse motion-reduce:animate-none',
           )}
         >
-          <For each={props.levels}>
+          <Index each={props.levels}>
             {(level) => (
               <span
                 aria-hidden="true"
@@ -87,10 +87,10 @@ export const Frame = (props: FrameProps) => (
                   'transition-[height,opacity] duration-75',
                   props.isPlaying || props.isPreparing ? 'opacity-76' : 'opacity-34',
                 )}
-                style={{'--pomo-level-height': `${level}%`}}
+                style={{'--pomo-level-height': `${level()}%`}}
               />
             )}
-          </For>
+          </Index>
         </div>
       </div>
 

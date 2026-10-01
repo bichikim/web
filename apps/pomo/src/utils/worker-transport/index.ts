@@ -44,3 +44,5 @@ export const createWorkerTransport = <Request, Response>(
     send: (request) => options.worker.postMessage(request),
   }
 }
+
+export * from './create-one-shot-worker-request'

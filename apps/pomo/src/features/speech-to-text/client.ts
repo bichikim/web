@@ -1,3 +1,12 @@
+import {
+  createRpcCancelledError,
+  createRpcWorkerFailedError,
+  createWorkerRpcFailureReporter,
+  createWorkerRpcTransport,
+  isWorkerRpcFailure,
+  mapWorkerRpcFailureToPhaseError,
+  type WorkerRpcFailure,
+} from '../worker-rpc'
 import type {SpeechRecognitionError, SpeechRecognitionPhase} from './errors'
 import type {SpeechWorkerRequest, SpeechWorkerResponse} from './messages'
 import type {
@@ -8,18 +17,6 @@ import type {
 } from './recognizer'
 import {reportClientError} from '../client-error-reporter'
 import {failureResult, type Result, successResult} from 'src/features/result'
-import {createWorkerRpcTransport, isWorkerRpcFailure, type WorkerRpcFailure} from '../worker-rpc'
-
-const createCancelledError = (phase: SpeechRecognitionPhase): SpeechRecognitionError => ({
-  code: 'cancelled',
-  phase,
-  retryable: false,
-})
-
-const createWorkerError = (
-  phase: SpeechRecognitionPhase,
-  detail: string,
-): SpeechRecognitionError => ({code: 'worker-failed', detail, phase, retryable: true})
 
 const getRequestId = (response: SpeechWorkerResponse) => {
   switch (response.type) {
@@ -37,20 +34,18 @@ const getFailureResult = <Value>(
   failure: WorkerRpcFailure,
   phase: SpeechRecognitionPhase,
 ): Result<Value, SpeechRecognitionError> =>
-  failure.code === 'disposed'
-    ? failureResult(createCancelledError(phase))
-    : failureResult(createWorkerError(phase, failure.detail))
+  failureResult(
+    mapWorkerRpcFailureToPhaseError(failure, phase, 'Worker 요청을 완료하지 못했습니다.'),
+  )
 
 const getUnexpectedResponse = <Value>(
   phase: SpeechRecognitionPhase,
 ): Result<Value, SpeechRecognitionError> =>
-  failureResult(createWorkerError(phase, 'Worker가 예상하지 않은 응답을 반환했습니다.'))
+  failureResult(createRpcWorkerFailedError(phase, 'Worker가 예상하지 않은 응답을 반환했습니다.'))
 
-const reportSpeechWorkerFailure = (failure: WorkerRpcFailure) => {
-  if (failure.code !== 'disposed') {
-    reportClientError(failure, {feature: 'speech-to-text-model', source: 'worker'})
-  }
-}
+const reportSpeechWorkerFailure = createWorkerRpcFailureReporter((failure) =>
+  reportClientError(failure, {feature: 'speech-to-text-model', source: 'worker'}),
+)
 
 const getUnknownFailureResult = <Value>(
   error: unknown,
@@ -61,7 +56,7 @@ const getUnknownFailureResult = <Value>(
     return getFailureResult(error, phase)
   }
 
-  return failureResult(createWorkerError(phase, 'Worker 요청을 완료하지 못했습니다.'))
+  return failureResult(createRpcWorkerFailedError(phase, 'Worker 요청을 완료하지 못했습니다.'))
 }
 
 /** Creates an isolated speech recognizer and owns its Worker until disposal. */
@@ -131,7 +126,7 @@ export const createSpeechRecognizer = (
     phase: SpeechRecognitionPhase,
   ): Result<Value, SpeechRecognitionError> | null => {
     if (disposed) {
-      return failureResult(createCancelledError(phase))
+      return failureResult(createRpcCancelledError(phase))
     }
 
     const failure = transport.getFailure()

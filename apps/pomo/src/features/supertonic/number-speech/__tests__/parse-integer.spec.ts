@@ -26,6 +26,10 @@ describe('parseInteger', () => {
     expect(parseInteger('−007')).toBeNull()
   })
 
+  it('should parse grouped integers pasted with a fullwidth comma', () => {
+    expect(parseInteger('５，０００')).toBe(5_000n)
+  })
+
   it('should return null for invalid integer tokens', () => {
     expect(parseInteger('--5')).toBeNull()
     expect(parseInteger('five')).toBeNull()

@@ -15,6 +15,8 @@ const getStatusMessage = (status: RelaxDepthStatus) => {
     case 'ready':
     case 'active':
       return null
+    case 'reduced-motion':
+      return m.relax_depth_input_reduced_motion()
     case 'requesting':
       return m.relax_tilt_requesting()
     case 'waiting':
@@ -31,6 +33,7 @@ const getStatusMessage = (status: RelaxDepthStatus) => {
 export const RelaxDepthInputPicker = (props: RelaxDepthInputPickerProps) => (
   <div class="mt-5">
     <PRadioSwitch
+      disabled={props.status === 'reduced-motion'}
       label={m.relax_depth_input_title()}
       onChange={props.onChange}
       options={[

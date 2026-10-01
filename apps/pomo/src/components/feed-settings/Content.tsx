@@ -1,3 +1,4 @@
+import {KeyedList} from '../keyed-list'
 import {getRuntimePublicOrigin} from '../../features/http-client/runtime-origin'
 import {PFeedProgress} from './Progress'
 import {useReadingStatusPreference} from 'src/features/feed-display-preferences'
@@ -156,27 +157,27 @@ export function PFeedSettingsContent() {
         >
           <Show when={feeds.connections().length > 0}>
             <ul aria-labelledby="pomo-feed-list-title" class={CLASSES.feedSettingsList}>
-              <For each={feeds.connections()}>
+              <KeyedList each={feeds.connections()} by={(connection) => connection.id}>
                 {(connection) => (
                   <li>
                     <div class={CLASSES.feedSettingsAddress}>
                       <span aria-hidden="true" class="i-tabler-rss size-5" />
                       <span class={CLASSES.feedSettingsAddressCopy}>
-                        <strong>{connection.url}</strong>
+                        <strong>{connection().url}</strong>
                       </span>
                     </div>
                     <PSelect
-                      accessibleLabel={m.settings_feed_voice_label({url: connection.url})}
+                      accessibleLabel={m.settings_feed_voice_label({url: connection().url})}
                       hideLabel
                       label={m.settings_feed_voice()}
-                      onChange={(voiceId) => feeds.onVoiceChange(connection.id, voiceId)}
+                      onChange={(voiceId) => feeds.onVoiceChange(connection().id, voiceId)}
                       options={getVoiceOptions()}
-                      value={connection.voiceId}
+                      value={connection().voiceId}
                     />
                     <button
-                      aria-label={m.settings_feed_delete_label({url: connection.url})}
+                      aria-label={m.settings_feed_delete_label({url: connection().url})}
                       class={CLASSES.feedSettingsDelete}
-                      onClick={() => feeds.onDelete(connection.id)}
+                      onClick={() => feeds.onDelete(connection().id)}
                       type="button"
                     >
                       <span aria-hidden="true" class="i-tabler-trash size-4" />
@@ -184,7 +185,7 @@ export function PFeedSettingsContent() {
                     </button>
                   </li>
                 )}
-              </For>
+              </KeyedList>
             </ul>
           </Show>
 
