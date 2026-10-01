@@ -20,7 +20,7 @@ it('should keep the modal closable after preloading fails', async () => {
     Object.defineProperty(styles, 'animationName', {configurable: true, value: 'none'})
     return styles
   })
-  render(() => <PSettings />)
+  const view = render(() => <PSettings />)
   const trigger = screen.getByRole('button', {name: '설정'})
   fireEvent.click(trigger)
   expect(await screen.findByRole('alert')).toBeVisible()

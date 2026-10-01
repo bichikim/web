@@ -1,6 +1,6 @@
 /** @vitest-environment jsdom */
 
-import {getLocale, overwriteGetLocale} from '@paraglide/runtime'
+import {getLocale, overwriteGetLocale, setLocale} from '@paraglide/runtime'
 import {fireEvent, render, renderHook, screen, waitFor} from '@solidjs/testing-library'
 import {afterEach, describe, expect, it, vi} from 'vitest'
 
@@ -358,31 +358,50 @@ describe('useStudioTour', () => {
     },
   )
 
-  it('should resolve the narration locale when playback starts', () => {
-    let locale: 'en' | 'ko' = 'en'
-    overwriteGetLocale(() => locale)
-    class AudioMock {
-      static lastInstance: AudioMock | undefined
+  it('should use the runtime locale after a no-reload language change', async () => {
+    const previousRuntimeLocale = getLocale()
+    const previousDocumentLocale = document.documentElement.lang
+    try {
+      document.documentElement.lang = 'ko'
+      await setLocale('ko', {reload: false})
+      const pageUrl = globalThis.window.location.href
 
-      currentTime = 0
-      load = vi.fn()
-      pause = vi.fn()
-      play = vi.fn().mockResolvedValue(undefined)
-      removeAttribute = vi.fn()
-      source: string
+      class AudioMock {
+        static lastInstance: AudioMock | undefined
 
-      constructor(source: string) {
-        this.source = source
-        AudioMock.lastInstance = this
+        currentTime = 0
+        load = vi.fn()
+        pause = vi.fn()
+        play = vi.fn().mockResolvedValue(undefined)
+        removeAttribute = vi.fn()
+        source: string
+
+        constructor(source: string) {
+          this.source = source
+          AudioMock.lastInstance = this
+        }
       }
+      vi.stubGlobal('Audio', AudioMock)
+
+      const view = renderHook(() => useStudioTour())
+      await setLocale('en', {reload: false})
+
+      expect(getLocale()).toBe('en')
+      expect(document.documentElement.lang).toBe('ko')
+      expect(globalThis.window.location.href).toBe(pageUrl)
+
+      view.result.onEvent({activeElement: null, step: view.result.steps()[0]!, type: 'started'})
+
+      expect(AudioMock.lastInstance?.source).toBe('/tour/audio/en/pomodoro.mp3')
+
+      await setLocale('ko', {reload: false})
+      view.result.onEvent({activeElement: null, step: view.result.steps()[0]!, type: 'started'})
+
+      expect(AudioMock.lastInstance?.source).toBe('/tour/audio/ko/pomodoro.mp3')
+      expect(globalThis.window.location.href).toBe(pageUrl)
+    } finally {
+      document.documentElement.lang = previousDocumentLocale
+      await setLocale(previousRuntimeLocale, {reload: false})
     }
-    vi.stubGlobal('Audio', AudioMock)
-
-    const view = renderHook(() => useStudioTour())
-    locale = 'ko'
-
-    view.result.onEvent({activeElement: null, step: view.result.steps()[0]!, type: 'started'})
-
-    expect(AudioMock.lastInstance?.source).toBe('/tour/audio/ko/pomodoro.mp3')
   })
 })
