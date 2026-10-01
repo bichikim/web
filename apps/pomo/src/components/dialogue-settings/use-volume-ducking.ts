@@ -1,3 +1,4 @@
+import {createPreferenceSaveQueue} from 'src/features/preference-save-queue'
 import {usePreference} from 'src/hooks/use-preference'
 import {type Accessor, createEffect, createSignal, onCleanup} from 'solid-js'
 
@@ -33,23 +34,15 @@ export const useVolumeDucking = (): VolumeDuckingState => {
   )
   const [isLoading, setIsLoading] = createSignal(true)
   const [message, setMessage] = createSignal<string | null>(null)
-  const pendingSaves: Array<DialogueVolumeDuckingSettingsValue> = []
+  const saveQueue = createPreferenceSaveQueue<DialogueVolumeDuckingSettingsValue>({
+    equal: areDialogueVolumeDuckingSettingsEqual,
+    initial: DEFAULT_DIALOGUE_VOLUME_DUCKING_SETTINGS,
+  })
   let isDisposed = false
   let pendingSettings: DialogueVolumeDuckingSettingsValue | null = null
-  let committedSettings: DialogueVolumeDuckingSettingsValue =
-    DEFAULT_DIALOGUE_VOLUME_DUCKING_SETTINGS
-  let failedStoredSettings: DialogueVolumeDuckingSettingsValue | null = null
-
-  const settleSave = (didSave: boolean): DialogueVolumeDuckingSettingsValue | null => {
-    const settledSettings = pendingSaves.shift() ?? null
-    if (didSave && settledSettings !== null) {
-      committedSettings = settledSettings
-    }
-    return settledSettings
-  }
 
   const handlePreferenceError = (error: unknown) => {
-    const isSaveError = pendingSaves.length > 0
+    const isSaveError = saveQueue.hasPending()
     console.error(
       isSaveError
         ? 'Failed to save dialogue volume ducking settings.'
@@ -62,24 +55,21 @@ export const useVolumeDucking = (): VolumeDuckingState => {
         : m.settings_dialogue_volume_loaded_failed(),
     )
     if (isSaveError) {
-      const settledSettings = settleSave(false)
-      if (settledSettings !== null && pendingSaves.length === 0) {
-        setSettings(committedSettings)
-        setStoredSettings(committedSettings, {persist: false})
+      const settled = saveQueue.settle(false)
+      if (settled.value !== null && !settled.hasPending) {
+        setSettings(settled.committed)
+        setStoredSettings(settled.committed, {persist: false})
       }
     }
   }
   const handlePreferenceSaved = () => {
-    const settledSettings = settleSave(true)
-    if (settledSettings === null) {
+    const settled = saveQueue.settle(true)
+    if (settled.value === null) {
       return
     }
-    if (pendingSaves.length === 0) {
-      failedStoredSettings = null
-    }
     if (!isDisposed) {
-      if (pendingSaves.length === 0) {
-        setSettings(committedSettings)
+      if (!settled.hasPending) {
+        setSettings(settled.committed)
       }
       setMessage(null)
     }
@@ -92,8 +82,7 @@ export const useVolumeDucking = (): VolumeDuckingState => {
   )
 
   const persistSettings = (nextSettings: DialogueVolumeDuckingSettingsValue) => {
-    failedStoredSettings = nextSettings
-    pendingSaves.push(nextSettings)
+    saveQueue.enqueue(nextSettings)
     setStoredSettings(nextSettings)
   }
 
@@ -110,7 +99,7 @@ export const useVolumeDucking = (): VolumeDuckingState => {
   }
 
   const scheduleSave = (nextSettings: DialogueVolumeDuckingSettingsValue) => {
-    failedStoredSettings = null
+    saveQueue.clearFailure()
     setSettings(nextSettings)
     setMessage(null)
     pendingSettings = nextSettings
@@ -126,18 +115,13 @@ export const useVolumeDucking = (): VolumeDuckingState => {
       return
     }
     setIsLoading(false)
-    if (pendingSettings !== null || pendingSaves.length > 0) {
+    if (pendingSettings !== null || saveQueue.hasPending()) {
       return
     }
 
-    if (failedStoredSettings !== null) {
-      if (areDialogueVolumeDuckingSettingsEqual(nextSettings, failedStoredSettings)) {
-        return
-      }
-      failedStoredSettings = null
+    if (!saveQueue.synchronize(nextSettings)) {
+      return
     }
-
-    committedSettings = nextSettings
     setSettings(nextSettings)
   })
 

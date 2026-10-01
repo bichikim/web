@@ -2,6 +2,7 @@ import {createMemo, createSignal} from 'solid-js'
 import {
   addDays,
   type CivilDate,
+  civilDateFromUtc,
   dateEpoch,
   daysInMonth,
   formatDate,
@@ -69,15 +70,7 @@ export const usePicker = (props: UsePickerProps) => {
       return
     }
     const now = new Date()
-    setView(
-      clamp(
-        parseDate(value()) ?? {
-          day: now.getUTCDate(),
-          month: now.getUTCMonth() + 1,
-          year: now.getUTCFullYear(),
-        },
-      ),
-    )
+    setView(clamp(parseDate(value()) ?? civilDateFromUtc(now)))
     setOpen(true)
     focus(view())
   }

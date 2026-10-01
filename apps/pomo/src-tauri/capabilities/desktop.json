@@ -18,6 +18,7 @@
   "permissions": [
     "core:default",
     "core:window:allow-set-size",
+    "core:window:allow-hide",
     "core:window:allow-start-dragging",
     "desktop-surface:default"
   ]

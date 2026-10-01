@@ -73,6 +73,7 @@ export const PictureDiaryReadPage = (props: PictureDiaryReadPageProps) => (
                       </span>
                     }
                     onConfirm={() => onDelete()(entry().id)}
+                    reserveSpace={false}
                   >
                     <span aria-hidden="true" class="i-tabler-x w-4 h-4" />
                   </HConfirmButton>

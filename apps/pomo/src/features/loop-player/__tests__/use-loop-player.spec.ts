@@ -1,3 +1,4 @@
+import {createDeferred} from 'src/test-utils/create-deferred'
 /** @vitest-environment node */
 import {createRoot} from 'solid-js'
 import {afterEach, expect, it, vi} from 'vitest'
@@ -15,14 +16,6 @@ interface PlayerCallbacks {
   readonly onPosition: (seconds: number) => void
   readonly onReady: (seconds: number) => void
   readonly onStatus: (message: string, playing: boolean) => void
-}
-
-function createDeferred<Value>(): Deferred<Value> {
-  let resolvePromise: (value: Value) => void = () => undefined
-  const promise = new Promise<Value>((resolve) => {
-    resolvePromise = resolve
-  })
-  return {promise, resolve: resolvePromise}
 }
 
 function createFile(): File {

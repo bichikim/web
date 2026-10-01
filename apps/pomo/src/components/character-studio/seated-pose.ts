@@ -1,3 +1,4 @@
+import {clamp} from 'es-toolkit/math'
 import type {AssetContainer} from '@babylonjs/core/assetContainer'
 import {VertexBuffer} from '@babylonjs/core/Buffers/buffer'
 import {Ray} from '@babylonjs/core/Culling/ray'
@@ -146,7 +147,7 @@ export const seatCharacter = (
     ) {
       cushionAligned = alignCushion(container, root, inset)
     }
-    elapsed += Math.min(scene.getEngine().getDeltaTime() / MOTION.seconds, MOTION.maxDelta)
+    elapsed += clamp(scene.getEngine().getDeltaTime() / MOTION.seconds, 0, MOTION.maxDelta)
     const action = sampleSeatedAction(elapsed + index * MOTION.blinkInterval)
     rotate(
       'J_Bip_C_Spine',

@@ -148,3 +148,5 @@ export type {
   GenerateDialogueAudioResult,
   RegenerateDialogueSegmentAudioOptions,
 } from './generate-dialogue-audio'
+
+export * from './run-pending-event'
