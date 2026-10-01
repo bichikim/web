@@ -209,7 +209,13 @@ const replaceWhenPronounceable = (
   pronounce: (value: string) => string | null,
 ) => {
   const pronunciation = pronounce(value)
-  return pronunciation === null ? match : `${pronunciation} ${unit}`
+
+  if (pronunciation === null) {
+    return match
+  }
+
+  const unitSeparator = unit === '월' && /^1[12]$/u.test(value.normalize('NFKC')) ? '' : ' '
+  return `${pronunciation}${unitSeparator}${unit}`
 }
 
 /** Converts only Korean number forms whose pronunciation is established by their syntax. */
