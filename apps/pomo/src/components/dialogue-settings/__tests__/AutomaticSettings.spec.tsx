@@ -1,3 +1,4 @@
+import {createDeferred} from 'src/test-utils/create-deferred'
 /** @vitest-environment jsdom */
 
 import {PreferenceProvider} from 'src/hooks/use-preference'
@@ -56,17 +57,6 @@ vi.mock('../../p-select/PSelect', () => ({
     </label>
   ),
 }))
-
-function createDeferred<T>() {
-  let reject: (reason?: unknown) => void = () => undefined
-  let resolve: (value: T) => void = () => undefined
-  const promise = new Promise<T>((resolvePromise, rejectPromise) => {
-    resolve = resolvePromise
-    reject = rejectPromise
-  })
-
-  return {promise, reject, resolve}
-}
 
 describe('AutomaticDialogueSettings', () => {
   beforeEach(() => {

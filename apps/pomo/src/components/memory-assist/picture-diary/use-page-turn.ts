@@ -1,3 +1,4 @@
+import {resolvePointerGestureAxis} from 'src/utils/resolve-pointer-gesture-axis'
 import {clampUnit} from 'src/utils/clamp-unit'
 import {
   type Accessor,
@@ -293,14 +294,15 @@ class PictureDiaryPageTurnMachine {
     verticalDistance: number,
   ) {
     if (this.gestureAxis === 'pending') {
-      if (
-        Math.max(Math.abs(horizontalDistance), Math.abs(verticalDistance)) < POINTER_INTENT_DISTANCE
-      ) {
+      this.gestureAxis = resolvePointerGestureAxis({
+        axis: this.gestureAxis,
+        horizontalDistance,
+        intentDistance: POINTER_INTENT_DISTANCE,
+        verticalDistance,
+      })
+      if (this.gestureAxis === 'pending') {
         return false
       }
-
-      this.gestureAxis =
-        Math.abs(horizontalDistance) > Math.abs(verticalDistance) ? 'horizontal' : 'vertical'
       if (this.gestureAxis === 'vertical' && currentGesture.pointerType === 'touch') {
         this.resetGesture()
         return false

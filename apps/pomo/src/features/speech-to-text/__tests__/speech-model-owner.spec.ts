@@ -1,3 +1,4 @@
+import {createDeferred} from 'src/test-utils/create-deferred'
 /** @vitest-environment node */
 import {describe, expect, it, vi} from 'vitest'
 
@@ -7,14 +8,6 @@ import {
   type CreateSpeechRecognizerOptions,
   type SpeechRecognizer,
 } from '../index'
-
-const createDeferred = <Value>() => {
-  let resolve: (value: Value) => void = () => undefined
-  const promise = new Promise<Value>((resolvePromise) => {
-    resolve = resolvePromise
-  })
-  return {promise, resolve}
-}
 
 const createSuccessfulRecognizer = (): SpeechRecognizer => ({
   dispose: vi.fn(),

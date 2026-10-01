@@ -1,3 +1,5 @@
+import {smoothStep} from 'src/utils/smooth-step'
+import {clampUnit} from 'src/utils/clamp-unit'
 /* eslint-disable no-magic-numbers -- Particle timing and placement are visually tuned against the fixed 1672x941 focus-room masters. */
 import {Container, Sprite, type Texture} from 'pixi.js'
 
@@ -25,11 +27,9 @@ const MAXIMUM_ALPHA = 0.24
 const INITIAL_SCALE = 0.36
 const SCALE_GROWTH = 0.04
 
-const smoothStep = (value: number) => value * value * (3 - 2 * value)
-
 const getOpacity = (progress: number) => {
-  const fadeIn = smoothStep(Math.min(1, progress / 0.2))
-  const fadeOut = 1 - smoothStep(Math.max(0, (progress - 0.48) / 0.52))
+  const fadeIn = smoothStep(clampUnit(progress / 0.2))
+  const fadeOut = 1 - smoothStep(clampUnit((progress - 0.48) / 0.52))
 
   return fadeIn * fadeOut * MAXIMUM_ALPHA
 }

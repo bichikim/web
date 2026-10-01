@@ -1,3 +1,4 @@
+import {hasValidIsoCalendarDate} from 'src/utils/iso-calendar-date'
 import DOMPurify from 'dompurify'
 
 /* istanbul ignore next -- Wallaby inconsistently counts module initialization across workers. */
@@ -137,14 +138,7 @@ const parseFeedTimestamp = (value: string): number | null => {
   const normalizedValue = value.trim()
   const isoDateParts = normalizedValue.match(ISO_DATE_PREFIX_PATTERN)?.groups
 
-  if (
-    isoDateParts !== undefined &&
-    !isValidCalendarDate(
-      Number(isoDateParts.year),
-      Number(isoDateParts.month),
-      Number(isoDateParts.day),
-    )
-  ) {
+  if (isoDateParts !== undefined && !hasValidIsoCalendarDate(normalizedValue)) {
     return null
   }
 

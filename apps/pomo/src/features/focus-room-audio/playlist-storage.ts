@@ -1,15 +1,8 @@
+import {createBoundTossWebStorageAdapter} from 'src/utils/runtime-storage'
 import {createTimestampedDualRuntimeStorage} from 'src/utils/runtime-storage/create-timestamped-dual-runtime-storage'
 import {z} from 'zod'
 
 import {createLatestAsyncTask} from 'src/utils/create-latest-async-task'
-
-import {
-  hasNativeStorageBridge,
-  readTossStorageJson,
-  readWebStorageJson,
-  writeTossStorageJson,
-  writeWebStorageJson,
-} from 'src/utils/runtime-storage'
 
 const PLAYLIST_STORAGE_KEY = 'pomo:focus-room-playlist:v1'
 
@@ -47,13 +40,10 @@ const parseStoredPlaylist = (value: unknown): StoredPlaylist | null => {
   return result.success ? result.data : null
 }
 
-const runtimeStorage = {
-  readToss: () => readTossStorageJson(PLAYLIST_STORAGE_KEY, parseStoredPlaylist),
-  readWeb: () => readWebStorageJson(PLAYLIST_STORAGE_KEY, parseStoredPlaylist),
-  usesTossStorage: hasNativeStorageBridge,
-  writeToss: (playlist) => writeTossStorageJson(PLAYLIST_STORAGE_KEY, playlist),
-  writeWeb: (playlist) => writeWebStorageJson(PLAYLIST_STORAGE_KEY, playlist),
-} satisfies PlaylistStorageAdapter
+const runtimeStorage = createBoundTossWebStorageAdapter({
+  key: PLAYLIST_STORAGE_KEY,
+  parse: parseStoredPlaylist,
+}) satisfies PlaylistStorageAdapter
 
 const systemClock = {
   now: Date.now,

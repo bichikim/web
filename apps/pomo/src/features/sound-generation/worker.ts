@@ -3,36 +3,15 @@ import {getExceptionMessage} from 'src/features/error-detail'
 import {generateSound} from './runtime'
 import {generateExtendedSound} from './extension'
 import {generateLoopSound} from './loop'
-import type {InpaintAudio} from './inpaint'
-import type {ChunkNoiseMode} from './noise'
-
-export interface SoundRequest {
-  readonly negativePrompt?: string
-  readonly prompt: string
-  readonly seconds: number
-  readonly inpaint?: InpaintAudio
-  readonly connectionSeconds?: number
-  readonly chunkNoiseMode?: ChunkNoiseMode
-}
-export interface LoopRequest {
-  readonly type: 'loop'
-  readonly source: Blob
-  readonly prompt: string
-  readonly connectionSeconds?: number
-}
-export interface SoundProgressMessage {
-  readonly type: 'progress'
-  readonly message: string
-}
-export interface SoundErrorMessage {
-  readonly type: 'error'
-  readonly message: string
-}
-export interface SoundResultMessage {
-  readonly type: 'result'
-  readonly blob: Blob
-}
-export type SoundMessage = SoundProgressMessage | SoundErrorMessage | SoundResultMessage
+import type {LoopRequest, SoundMessage, SoundRequest} from './types'
+export type {
+  LoopRequest,
+  SoundMessage,
+  SoundRequest,
+  SoundProgressMessage,
+  SoundErrorMessage,
+  SoundResultMessage,
+} from './types'
 const scope = globalThis.self as DedicatedWorkerGlobalScope
 const IN_FLIGHT_ERROR_MESSAGE = '이미 환경음을 생성하고 있습니다.'
 let inFlight = false
