@@ -1,6 +1,11 @@
 const MAX_CLOCK_HOUR = 24
 const MINUTES_PER_HOUR = 60
 
+interface ParsedClockTime {
+  readonly hour: number
+  readonly minute: number
+}
+
 const parseClockComponent = (value: string): number | null => {
   const normalized = value.replace(/[０-９]/gu, (digit) => digit.normalize('NFKC'))
 
@@ -12,10 +17,7 @@ const parseClockComponent = (value: string): number | null => {
 }
 
 /** Parses clock components, allowing 24:00 as the end of a day. */
-export const parseClockTime = (
-  hourValue: string,
-  minuteValue: string,
-): {hour: number; minute: number} | null => {
+export const parseClockTime = (hourValue: string, minuteValue: string): ParsedClockTime | null => {
   const hour = parseClockComponent(hourValue)
   const minute = parseClockComponent(minuteValue)
 
