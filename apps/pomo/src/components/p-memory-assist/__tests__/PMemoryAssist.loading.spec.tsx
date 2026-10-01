@@ -2,6 +2,7 @@
 import {fireEvent, render, screen, waitFor} from '@solidjs/testing-library'
 import {afterEach, expect, it, vi} from 'vitest'
 import {PMemoryAssist} from '../PMemoryAssist'
+import {PModelDownloadProvider} from '../../../features/model-download'
 
 interface LoadedContent {
   readonly PMemoryAssistContent: () => string
@@ -34,18 +35,22 @@ it('should open and close while preloading and reveal content without replacing 
     Object.defineProperty(styles, 'animationName', {configurable: true, value: 'none'})
     return styles
   })
-  render(() => <PMemoryAssist />)
-  const trigger = screen.getByRole('button', {name: '기억보조'})
+  render(() => (
+    <PModelDownloadProvider>
+      <PMemoryAssist />
+    </PModelDownloadProvider>
+  ))
+  const trigger = screen.getByRole('button', {name: '생각 보조'})
   await waitFor(() => expect(loading.started).toHaveBeenCalledOnce())
   fireEvent.click(trigger)
-  expect(screen.getByRole('dialog', {name: 'Pomofi 기억 보조'})).toBeVisible()
+  expect(screen.getByRole('dialog', {name: 'Pomofi 생각 보조'})).toBeVisible()
   expect(screen.getByRole('status')).toBeVisible()
   fireEvent.click(screen.getByRole('button', {name: '닫기'}))
   await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull())
   loading.resolve({PMemoryAssistContent: () => '준비된 내용'})
   await Promise.resolve()
   expect(screen.queryByRole('dialog')).toBeNull()
-  expect(screen.getByRole('button', {name: '기억보조'})).toBe(trigger)
+  expect(screen.getByRole('button', {name: '생각 보조'})).toBe(trigger)
   fireEvent.click(trigger)
   expect(await screen.findByText('준비된 내용')).toBeVisible()
   expect(screen.queryByRole('status')).toBeNull()

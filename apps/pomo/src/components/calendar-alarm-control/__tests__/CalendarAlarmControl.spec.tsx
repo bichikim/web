@@ -494,7 +494,7 @@ it('should save, edit and remove scoped alarms independently while replacing a l
   const personalControl = within(personalView.container)
   expect(
     workControl.getByText(
-      '이전 일정 알람이 별도로 남아 있어요. 새 알람과 중복될 수 있으니 기억 도우미의 메모 목록에서 확인하거나 해제해 주세요.',
+      '이전 일정 알람이 별도로 남아 있어요. 새 알람과 중복될 수 있으니 생각 보조의 메모 목록에서 확인하거나 해제해 주세요.',
     ),
   ).toBeInTheDocument()
   fireEvent.click(workControl.getByRole('button', {name: 'Work 알람 설정'}))

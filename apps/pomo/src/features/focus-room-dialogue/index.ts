@@ -140,6 +140,7 @@ export {
   generateDialogueAudio,
   regenerateDialogueSegmentAudio,
 } from './dialogue-audio-runtime'
+export * from './speech-defaults'
 export type {
   GeneratedCompressedDialogueAudio,
   GeneratedDialogueAudio,

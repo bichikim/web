@@ -14,6 +14,8 @@ import {MEMORY_ASSIST_ICON} from '../memory-assist/icon'
 import {PMemoryAssistTabList} from '../memory-assist/TabList'
 import {PScribbleCircleControl} from '../scribble/CircleControl'
 import {openDesktopDialog} from '../../features/desktop-mode/dialogs'
+import {getLocale} from '@paraglide/runtime'
+import {useTarotReading, useTarotSpeech} from '../../features/tarot'
 
 export interface PMemoryAssistProps {
   readonly desktopSurface?: boolean
@@ -37,6 +39,11 @@ const PMemoryAssistContent = lazy(async () => {
 
 export const PMemoryAssist = (props: PMemoryAssistProps) => {
   onMount(() => PMemoryAssistContent.preload())
+  const tarot = useTarotReading({locale: getLocale})
+  const tarotSpeech = useTarotSpeech({
+    locale: getLocale,
+    text: () => (tarot.status() === 'complete' ? tarot.output() : ''),
+  })
   const [isOpen, setIsOpen] = createSignal(false)
   const [activeTab, setActiveTab] = createSignal('sentences')
   const [calendarRevision, setCalendarRevision] = createSignal(0)
@@ -58,12 +65,21 @@ export const PMemoryAssist = (props: PMemoryAssistProps) => {
     setIsOpen(true)
   }
   const handleTabChange = (value: string) => {
+    if (value !== 'tarot') {
+      tarot.cancel()
+    }
     setActiveTab(value)
     if (value === 'calendar') {
       refreshCalendar()
     }
   }
   const handleCloseAutoFocus = () => triggerElement()?.focus()
+  const handleOpenChange = (open: boolean) => {
+    if (!open) {
+      tarot.cancel()
+    }
+    setIsOpen(open)
+  }
 
   return (
     <>
@@ -79,10 +95,11 @@ export const PMemoryAssist = (props: PMemoryAssistProps) => {
       </PScribbleCircleControl>
       <Tabs class="contents" value={activeTab()} onChange={handleTabChange}>
         <PModal
+          contentPadding={activeTab() === 'tarot' ? 'none' : 'default'}
           isOpen={isOpen()}
           navigation={<PMemoryAssistTabList />}
           onCloseAutoFocus={handleCloseAutoFocus}
-          onOpenChange={setIsOpen}
+          onOpenChange={handleOpenChange}
           placement="top"
           size="expanded"
           title={m.memory_assist_title()}
@@ -97,10 +114,12 @@ export const PMemoryAssist = (props: PMemoryAssistProps) => {
               }
             >
               <PMemoryAssistContent
+                tarot={tarot}
+                tarotSpeech={tarotSpeech}
                 weatherState={props.weatherState}
                 calendarRevision={calendarRevision()}
                 onRefreshCalendar={refreshCalendar}
-                onRequestClose={() => setIsOpen(false)}
+                onRequestClose={() => handleOpenChange(false)}
               />
             </Suspense>
           </ErrorBoundary>
