@@ -1,3 +1,4 @@
+import {createDeferred} from 'src/test-utils/create-deferred'
 /** @vitest-environment jsdom */
 
 import {render} from '@solidjs/testing-library'
@@ -18,17 +19,6 @@ vi.mock('@tauri-apps/api/window', () => ({
   currentMonitor: windowMocks.currentMonitor,
   getCurrentWindow: windowMocks.getCurrentWindow,
 }))
-
-function createDeferred<Value>() {
-  let reject!: (reason?: unknown) => void
-  let resolve!: (value: Value | PromiseLike<Value>) => void
-  const promise = new Promise<Value>((resolvePromise, rejectPromise) => {
-    reject = rejectPromise
-    resolve = resolvePromise
-  })
-
-  return {promise, reject, resolve}
-}
 
 const createMonitor = (top: number, workAreaTop: number, scaleFactor = 2): Monitor =>
   ({

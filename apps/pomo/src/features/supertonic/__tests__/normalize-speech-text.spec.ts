@@ -90,9 +90,9 @@ describe('normalizeSpeechText', () => {
     expect(
       normalizeSpeechText({
         language: 'ko',
-        text: '16월, 106월, 110월, 210월, 06월, 010월, +6월, -10월',
+        text: '16월, 106월, 110월, 210월, 06월, 010월, +6월, -10월, ＋６월',
       }),
-    ).toBe('십육 월, 백육 월, 백십 월, 이백십 월, 06월, 010월, 플러스 육 월, 마이너스 십 월')
+    ).toBe('십육 월, 백육 월, 백십 월, 이백십 월, 06월, 010월, 플러스 육 월, 마이너스 십 월, 육 월')
   })
 
   it('should pronounce explicit Korean year expressions with Sino-Korean numbers', () => {

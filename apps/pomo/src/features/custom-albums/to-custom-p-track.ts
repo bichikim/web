@@ -1,3 +1,4 @@
+import {replaceBlobObjectUrl} from 'src/features/blob-object-url'
 import type {PTrack} from '../focus-room-audio'
 import type {StoredCustomTrack} from './database'
 
@@ -8,7 +9,7 @@ export const revokeCustomTrackObjectUrls = (trackIds: ReadonlySet<string>): void
     const source = trackObjectUrls.get(trackId)
 
     if (source !== undefined) {
-      URL.revokeObjectURL(source)
+      replaceBlobObjectUrl(source, () => null)
       trackObjectUrls.delete(trackId)
     }
   }
@@ -27,7 +28,7 @@ export const toCustomPTrack = (track: StoredCustomTrack): PTrack => {
     }
   }
 
-  const source = URL.createObjectURL(track.audio)
+  const source = replaceBlobObjectUrl(null, () => track.audio)
   trackObjectUrls.set(track.id, source)
 
   return {

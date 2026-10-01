@@ -1,3 +1,4 @@
+import {createTestBroadcastChannel} from 'src/test-utils/create-test-broadcast-channel'
 /** @vitest-environment jsdom */
 
 import {fireEvent, render, screen} from '@solidjs/testing-library'
@@ -126,39 +127,7 @@ const publish = vi.fn()
 const onModeChange = vi.fn().mockResolvedValue(undefined)
 let mode: 'desktop' | 'normal' = 'desktop'
 
-class TestBroadcastChannel {
-  static instances: TestBroadcastChannel[] = []
-  readonly close = vi.fn()
-  readonly listeners: Array<(event: MessageEvent) => void> = []
-  readonly postMessage = vi.fn((data: unknown) => {
-    for (const channel of TestBroadcastChannel.instances) {
-      if (channel !== this && channel.name === this.name) {
-        channel.dispatch(data)
-      }
-    }
-  })
-
-  constructor(readonly name: string) {
-    TestBroadcastChannel.instances.push(this)
-  }
-
-  addEventListener(_type: string, listener: (event: MessageEvent) => void) {
-    this.listeners.push(listener)
-  }
-
-  removeEventListener(_type: string, listener: (event: MessageEvent) => void) {
-    const index = this.listeners.indexOf(listener)
-    if (index >= 0) {
-      this.listeners.splice(index, 1)
-    }
-  }
-
-  dispatch(data: unknown) {
-    for (const listener of this.listeners) {
-      listener(new MessageEvent('message', {data}))
-    }
-  }
-}
+const TestBroadcastChannel = createTestBroadcastChannel({broadcast: true})
 
 beforeEach(() => {
   vi.useFakeTimers()

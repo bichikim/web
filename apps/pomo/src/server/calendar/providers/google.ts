@@ -7,8 +7,8 @@ import type {
   ProviderEvent,
   ProviderEventsResult,
 } from './types'
-import {mapInBatches} from './batch'
-import {requestTokens} from './oauth'
+import {aggregateProviderEvents} from './aggregate-provider-events'
+import {createOAuthTokenMethods} from './create-oauth-token-methods'
 import {paginate, PAGINATION_LIMITS} from './paginate'
 
 const GOOGLE_ACCOUNT_API = 'https://openidconnect.googleapis.com/v1/userinfo'
@@ -18,7 +18,6 @@ const GOOGLE_TOKEN_URL = 'https://oauth2.googleapis.com/token'
 const GOOGLE_SCOPES = ['openid', 'email', 'https://www.googleapis.com/auth/calendar.readonly'].join(
   ' ',
 )
-const EVENT_REQUEST_CONCURRENCY = 4
 const googleEventSchema = z.object({
   end: z.object({date: z.string().optional(), dateTime: z.string().optional()}),
   id: z.string(),
@@ -159,19 +158,11 @@ const listEvents = async (
   fetch: typeof globalThis.fetch,
 ): Promise<ProviderEventsResult> => {
   const calendarList = await listCalendars(options.accessToken, fetch)
-  const eventLists = await mapInBatches(
-    calendarList.calendars,
-    EVENT_REQUEST_CONCURRENCY,
-    (calendar) => listCalendarEvents(calendar.id, calendar.summary, options, fetch),
-  )
-  return {
-    events: eventLists.flatMap((eventList) => eventList.events),
-    truncated: calendarList.truncated || eventLists.some((eventList) => eventList.truncated),
-    unavailableCalendars: eventLists.reduce(
-      (count, eventList) => count + eventList.unavailableCalendars,
-      0,
-    ),
-  }
+  return aggregateProviderEvents({
+    calendars: calendarList.calendars,
+    load: (calendar) => listCalendarEvents(calendar.id, calendar.summary, options, fetch),
+    truncated: calendarList.truncated,
+  })
 }
 
 export const createGoogleCalendarProvider = (
@@ -179,11 +170,6 @@ export const createGoogleCalendarProvider = (
 ): CalendarProvider => {
   const fetch = options.fetch ?? globalThis.fetch
   const now = options.now ?? (() => new Date())
-  const createTokenBody = () =>
-    new URLSearchParams([
-      ['client_id', options.clientId],
-      ['client_secret', options.clientSecret],
-    ])
 
   return {
     createAuthorizationUrl: (authorizationOptions) => {
@@ -202,14 +188,13 @@ export const createGoogleCalendarProvider = (
       ]).toString()
       return url.href
     },
-    exchangeCode: (exchangeOptions) => {
-      const body = createTokenBody()
-      body.set('code', exchangeOptions.code)
-      body.set('code_verifier', exchangeOptions.codeVerifier)
-      body.set('grant_type', 'authorization_code')
-      body.set('redirect_uri', exchangeOptions.redirectUri)
-      return requestTokens({body, fetch, now, tokenUrl: GOOGLE_TOKEN_URL})
-    },
+    ...createOAuthTokenMethods({
+      clientId: options.clientId,
+      clientSecret: options.clientSecret,
+      fetch,
+      now,
+      tokenUrl: GOOGLE_TOKEN_URL,
+    }),
     listEvents: (query) => listEvents(query, fetch),
     provider: 'google',
     readAccount: async (accessToken) => {
@@ -223,13 +208,6 @@ export const createGoogleCalendarProvider = (
 
       const account = googleAccountSchema.parse(await response.json())
       return {label: account.email, subject: account.sub}
-    },
-    refreshTokens: async (refreshToken) => {
-      const body = createTokenBody()
-      body.set('grant_type', 'refresh_token')
-      body.set('refresh_token', refreshToken)
-      const tokens = await requestTokens({body, fetch, now, tokenUrl: GOOGLE_TOKEN_URL})
-      return {...tokens, refreshToken: tokens.refreshToken ?? refreshToken}
     },
   }
 }

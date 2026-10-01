@@ -1,3 +1,4 @@
+import {replaceBlobObjectUrl} from 'src/features/blob-object-url'
 import {Title} from '@solidjs/meta'
 import {A} from '@solidjs/router'
 import {createSignal, onCleanup} from 'solid-js'
@@ -34,7 +35,7 @@ export const SoundPlayerPage = () => {
       MAX_SOUND_LAYERS - layers().length,
     )
     for (const file of files) {
-      const url = URL.createObjectURL(file)
+      const url = replaceBlobObjectUrl(null, () => file)
       urls.push(url)
       addLayer(url, file.name)
     }
@@ -52,12 +53,12 @@ export const SoundPlayerPage = () => {
   const handleClearClick = () => {
     setLayers([])
     for (const url of urls.splice(0)) {
-      URL.revokeObjectURL(url)
+      replaceBlobObjectUrl(url, () => null)
     }
   }
   onCleanup(() => {
     for (const url of urls) {
-      URL.revokeObjectURL(url)
+      replaceBlobObjectUrl(url, () => null)
     }
   })
   return (
