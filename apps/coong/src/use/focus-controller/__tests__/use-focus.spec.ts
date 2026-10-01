@@ -1,10 +1,12 @@
 /**
  * @vitest-environment jsdom
  */
-import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
+import {beforeEach, describe, expect, it, vi} from 'vitest'
 import {render} from '@solidjs/testing-library'
 import {createComponent} from 'solid-js'
 import {type DeepPosition, getDeepPositionKey} from 'src/utils/focus-controller/deep-position'
+import {FocusControllerContext, type FocusControllerContextValue} from '../FocusController'
+import {useFocus} from '../focus'
 
 const mocks = vi.hoisted(() => {
   return {
@@ -66,19 +68,8 @@ const createFocusControllerMock = () => {
   }
 }
 
-const importSubject = (options?: {useContextReturnsNull?: boolean}) => {
+const importSubject = () => {
   vi.resetModules()
-
-  if (options?.useContextReturnsNull === true) {
-    vi.doMock('solid-js', async () => {
-      const actual = await vi.importActual<typeof import('solid-js')>('solid-js')
-
-      return {
-        ...actual,
-        useContext: () => null,
-      }
-    })
-  }
 
   return import('../focus')
 }
@@ -86,10 +77,6 @@ const importSubject = (options?: {useContextReturnsNull?: boolean}) => {
 describe('useFocus', () => {
   beforeEach(() => {
     mocks.useDelegatedOn.mockReset()
-  })
-
-  afterEach(() => {
-    vi.doUnmock('solid-js')
   })
 
   const setupWithProvider = async () => {
@@ -172,15 +159,21 @@ describe('useFocus', () => {
   }
 
   it('should fall back to local signals when FocusControllerContext is missing', async () => {
-    const {useFocus} = await importSubject({useContextReturnsNull: true})
     const deepPosition: DeepPosition = [{x: 1, y: 2}]
     let api: ReturnType<typeof useFocus> | undefined
 
-    const {unmount} = render(() => {
-      api = useFocus(deepPosition)
+    const {unmount} = render(() =>
+      createComponent(FocusControllerContext.Provider, {
+        get children() {
+          return createComponent(() => {
+            api = useFocus(deepPosition)
 
-      return null
-    })
+            return null
+          }, {})
+        },
+        value: null as unknown as FocusControllerContextValue,
+      }),
+    )
 
     expect(api).toBeDefined()
     expect(api?.isFocused()).toBe(false)
