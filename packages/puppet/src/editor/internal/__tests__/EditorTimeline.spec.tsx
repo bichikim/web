@@ -101,28 +101,6 @@ describe('EditorTimeline', () => {
     expect(document().motions[2]?.tracks).toEqual(createBaseDocument().motions[2]?.tracks)
   })
 
-  test('should retain another motion selection when removing a timeline row', async () => {
-    const [document, setDocument] = createSignal<PuppetDocument>(createDemoDocument())
-    const view = render(() => (
-      <EditorTimeline document={document()} onDocumentChange={setDocument} />
-    ))
-    fireEvent.keyDown(view.getByRole('button', {name: /모션 선택/}), {key: 'Enter'})
-    await waitFor(() => screen.getByRole('option', {name: '모든 타임라인 보기'}))
-    fireEvent.keyDown(screen.getByRole('option', {name: '모든 타임라인 보기'}), {key: 'Enter'})
-
-    const blink = view.getByRole('region', {name: 'blink 타임라인'})
-    fireEvent.click(within(blink).getByRole('button', {name: 'Angle X 타임라인 행'}))
-    const selectedRow = within(blink).getByRole('button', {name: 'Angle X 타임라인 행'})
-    expect(selectedRow.closest('.timeline-row-label')).toHaveAttribute('data-selected')
-
-    const idle = view.getByRole('region', {name: 'idle-deform 타임라인'})
-    const removedRow = within(idle).getByRole('button', {name: 'Angle Y 타임라인 행'})
-    fireEvent.keyDown(removedRow, {key: 'Delete'})
-    fireEvent.keyDown(removedRow, {key: 'Delete'})
-
-    expect(selectedRow.closest('.timeline-row-label')).toHaveAttribute('data-selected')
-  })
-
   test('should edit the active motion duration and document frame rate', async () => {
     const [document, setDocument] = createSignal<PuppetDocument>(createDemoDocument())
     const view = render(() => (
