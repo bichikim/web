@@ -2,7 +2,7 @@
 import {createSignal} from 'solid-js'
 import {PreferenceProvider} from 'src/hooks/use-preference'
 import {fireEvent, render, screen} from '@solidjs/testing-library'
-import {expect, it, vi} from 'vitest'
+import {beforeAll, expect, it, vi} from 'vitest'
 import {Content} from '../Content'
 
 vi.mock('../Transfer', () => ({Transfer: () => <p>Transfer panel</p>}))
@@ -12,6 +12,10 @@ vi.mock('../Units', () => ({
     throw new Error('Tool failed')
   },
 }))
+
+beforeAll(async () => {
+  await import('../Text')
+})
 
 it('should allow another tool to load after the current tool fails', async () => {
   render(() => (

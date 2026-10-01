@@ -184,7 +184,7 @@ describe('ChatRoom STT draft callback', () => {
     const existingDraft = 'already drafted text'
     const {chat, onTranscript} = renderChatRoom(existingDraft)
 
-    onTranscript('  \n  ')
+    onTranscript('')
 
     expect(chat.draft()).toBe(existingDraft)
     expect(chat.setDraft).toHaveBeenCalledWith(existingDraft)

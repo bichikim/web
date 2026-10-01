@@ -124,8 +124,10 @@ jobs:
             apps/pomo/src/components/admin-music/__tests__/AdminMusic.import.integration.tsx \
             apps/pomo/src/components/admin-music/__tests__/AlbumWorkspace.integration.tsx \
             apps/pomo/src/components/chat-room/__tests__/ChatRoom.stt-draft.integration.tsx \
+            apps/pomo/src/components/album-library/__tests__/use-custom-album-editor.integration.ts \
             apps/pomo/src/components/dialogue-page/__tests__/Editor.integration.tsx \
             apps/pomo/src/components/layer-review/__tests__/MouthFramePicker.integration.tsx \
+            apps/pomo/src/components/music-player/__tests__/PMusicPlayerContent.queue-restoration.integration.tsx \
             apps/pomo/src/components/memory-assist/__tests__/PictureDiary.generation.integration.tsx \
             apps/pomo/src/components/memory-assist/picture-diary/__tests__/Canvas.integration.tsx \
             apps/pomo/src/components/memory-assist/picture-diary/__tests__/Drawing.integration.tsx \

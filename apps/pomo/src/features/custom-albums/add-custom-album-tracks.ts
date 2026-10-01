@@ -90,9 +90,15 @@ export const addCustomAlbumTracks = async (
       title: getTrackTitle(file.name) || file.name,
     })),
   )
-  const embeddedCoverImage = options.readEmbeddedCover
+  const embeddedCoverCandidate = options.readEmbeddedCover
     ? await readFirstEmbeddedAudioCover(options.files)
     : null
+  const embeddedCoverImage =
+    embeddedCoverCandidate !== null &&
+    options.currentAlbumBytes + addedBytes + embeddedCoverCandidate.size >
+      MAXIMUM_CUSTOM_ALBUM_BYTES
+      ? null
+      : embeddedCoverCandidate
 
   return {embeddedCoverImage, kind: 'added', tracks}
 }

@@ -205,26 +205,31 @@ beforeEach(() => {
   vi.spyOn(HTMLMediaElement.prototype, 'pause').mockImplementation(() => undefined)
 })
 
+const renderSavedDialogues = () => {
+  const second = {
+    ...DIALOGUE,
+    id: 'second-dialogue',
+    text: '두 번째 대화',
+    voiceId: 'retired-voice' as PDialogue['voiceId'],
+  } satisfies PDialogue
+  const events = createEvents({
+    dialogues: () => [DIALOGUE, second],
+    eventDialogueIds: () => ({
+      'focus-start': [DIALOGUE.id, second.id],
+      'room-enter': ['missing'],
+    }),
+    eventPlaybackModes: () => ({'focus-start': 'random-all'}),
+  })
+  vi.mocked(usePEvents).mockReturnValue(events)
+  render(() => <PDialogueSettingsContent onRequestClose={vi.fn()} />, {
+    wrapper: PreferenceProvider,
+  })
+  return events
+}
+
 describe('PDialogueSettingsContent', () => {
-  it('should bind event dialogues, modes, and expose saved dialogue controls', async () => {
-    const second = {
-      ...DIALOGUE,
-      id: 'second-dialogue',
-      text: '두 번째 대화',
-      voiceId: 'retired-voice' as PDialogue['voiceId'],
-    } satisfies PDialogue
-    const events = createEvents({
-      dialogues: () => [DIALOGUE, second],
-      eventDialogueIds: () => ({
-        'focus-start': [DIALOGUE.id, second.id],
-        'room-enter': ['missing'],
-      }),
-      eventPlaybackModes: () => ({'focus-start': 'random-all'}),
-    })
-    vi.mocked(usePEvents).mockReturnValue(events)
-    render(() => <PDialogueSettingsContent onRequestClose={vi.fn()} />, {
-      wrapper: PreferenceProvider,
-    })
+  it('should show saved dialogue metadata and bind event items', () => {
+    const events = renderSavedDialogues()
 
     expect(screen.getAllByText('Yuna · 1:01 · 1개 말풍선')).toHaveLength(1)
     expect(screen.getByRole('button', {name: '입장 대화 및 행동 연결'})).toHaveAttribute(
@@ -232,21 +237,35 @@ describe('PDialogueSettingsContent', () => {
       'Yuna · 1:01 · 1개 말풍선|retired-voice · 1:01 · 1개 말풍선',
     )
     fireEvent.click(screen.getByRole('button', {name: '포모도르 집중 시작 대화 및 행동 연결'}))
-    fireEvent.click(screen.getByRole('button', {name: '포모도르 집중 시작 재생 방식'}))
-    fireEvent.click(screen.getAllByRole('button', {name: '삭제'})[0]!)
-    fireEvent.click(screen.getByRole('button', {name: '취소'}))
-    fireEvent.click(screen.getAllByRole('button', {name: '삭제'})[0]!)
-    fireEvent.click(screen.getByRole('button', {name: '삭제 확인'}))
 
     expect(events.setEventItems).toHaveBeenCalledWith('focus-start', [
       {id: DIALOGUE.id, type: 'dialogue'},
-      {id: second.id, type: 'dialogue'},
+      {id: 'second-dialogue', type: 'dialogue'},
       {id: 'music-stop', type: 'action'},
       {id: 'music-start', type: 'action'},
       {id: 'sound-effects-stop', type: 'action'},
       {id: 'sound-effects-start', type: 'action'},
     ])
+  })
+
+  it('should update the event playback mode', () => {
+    const events = renderSavedDialogues()
+
+    fireEvent.click(screen.getByRole('button', {name: '포모도르 집중 시작 재생 방식'}))
+
     expect(events.setEventPlaybackMode).toHaveBeenCalledWith('focus-start', 'random-one')
+  })
+
+  it('should cancel deletion and require confirmation before deleting a saved dialogue', () => {
+    const events = renderSavedDialogues()
+
+    fireEvent.click(screen.getAllByRole('button', {name: '삭제'})[0]!)
+    fireEvent.click(screen.getByRole('button', {name: '취소'}))
+    expect(FEEDS.onDeleteDialogue).not.toHaveBeenCalled()
+
+    fireEvent.click(screen.getAllByRole('button', {name: '삭제'})[0]!)
+    fireEvent.click(screen.getByRole('button', {name: '삭제 확인'}))
+
     expect(FEEDS.onDeleteDialogue).toHaveBeenCalledWith(DIALOGUE.id)
     expect(events.deleteDialogue).not.toHaveBeenCalled()
   })
