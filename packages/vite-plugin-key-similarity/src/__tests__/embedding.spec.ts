@@ -80,6 +80,36 @@ describe('CachedEmbeddingProvider', () => {
     }
   })
 
+  it('should regenerate vectors from truncated legacy cache files', async () => {
+    const cacheDir = await mkdtemp(path.join(import.meta.dirname, '.embedding-'))
+    const initialProvider = new CachedEmbeddingProvider(
+      {
+        embed: vi.fn(async () => [Float32Array.from([1, 0])]),
+        identifier: 'truncated-cache',
+        revision: '1',
+      },
+      cacheDir,
+    )
+    const regenerate = vi.fn(async () => [Float32Array.from([0, 1])])
+    const provider = new CachedEmbeddingProvider(
+      {embed: regenerate, identifier: 'truncated-cache', revision: '1'},
+      cacheDir,
+    )
+
+    try {
+      await initialProvider.embed(['shared text'])
+      const [cacheFile] = await readdir(path.join(cacheDir, 'vectors'))
+      await writeFile(path.join(cacheDir, 'vectors', cacheFile!), new Uint8Array(4))
+
+      const [vector] = await provider.embed(['shared text'])
+
+      expect(regenerate).toHaveBeenCalledOnce()
+      expect([...vector!]).toEqual([0, 1])
+    } finally {
+      await rm(cacheDir, {force: true, recursive: true})
+    }
+  })
+
   it('should publish complete vectors when providers share a cache concurrently', async () => {
     const cacheDir = await mkdtemp(path.join(import.meta.dirname, '.embedding-'))
     const firstEmbed = vi.fn(async () => [Float32Array.from([1, 0])])
