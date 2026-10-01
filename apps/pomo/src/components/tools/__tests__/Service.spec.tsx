@@ -25,6 +25,43 @@ it('should not mark valid service days invalid while the enlistment date is empt
   expect(days).toHaveAttribute('aria-invalid', 'true')
 })
 
+it('should keep pasted service days with surrounding whitespace valid after saving', async () => {
+  localStorage.setItem(
+    'pomo:service-settings:v1',
+    JSON.stringify({branch: 'army', days: '300', manual: true, start: '2026-01-01'}),
+  )
+  const firstView = render(() => (
+    <PreferenceProvider>
+      <Service />
+    </PreferenceProvider>
+  ))
+  const manual = screen.getByRole('switch', {name: '복무기간 직접 입력'})
+  await waitFor(() => expect(manual).toBeEnabled())
+
+  const days = screen.getByRole('textbox', {name: /복무기간 \(일\)/u})
+  fireEvent.input(days, {target: {value: ' 300 '}})
+
+  expect(days).toHaveAttribute('aria-invalid', 'false')
+  expect(screen.getByRole('region', {name: '예상 전역일'})).toBeVisible()
+  await waitFor(() =>
+    expect(JSON.parse(localStorage.getItem('pomo:service-settings:v1') ?? 'null').days).toBe(
+      ' 300 ',
+    ),
+  )
+
+  firstView.unmount()
+  render(() => (
+    <PreferenceProvider>
+      <Service />
+    </PreferenceProvider>
+  ))
+
+  await waitFor(() =>
+    expect(screen.getByRole('textbox', {name: /복무기간 \(일\)/u})).toHaveValue('300'),
+  )
+  expect(screen.getByRole('region', {name: '예상 전역일'})).toBeVisible()
+})
+
 it('should reset old enlistment dates when direct duration is disabled', async () => {
   localStorage.setItem(
     'pomo:service-settings:v1',
