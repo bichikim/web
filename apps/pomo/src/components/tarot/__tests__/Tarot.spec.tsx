@@ -12,7 +12,7 @@ const TarotFixture = (props: {readonly reading: TarotReadingController}) => {
   return <Tarot locale="ko" reading={props.reading} speech={speech} />
 }
 
-it('should keep options above the cards and preserve cards while interpreting', () => {
+const renderTarot = () => {
   const [cards] = createSignal(
     TAROT_CARDS.slice(0, 3).map((card) => ({...card, orientation: 'reversed' as const})),
   )
@@ -47,6 +47,12 @@ it('should keep options above the cards and preserve cards while interpreting', 
       <TarotFixture reading={reading} />
     </PModelDownloadProvider>
   ))
+
+  return {cards, reading, setStatus}
+}
+
+it('should keep options above the cards and preserve cards while changing display options', () => {
+  const {cards, reading} = renderTarot()
 
   expect(screen.getByRole('button', {name: '다시 뽑기'})).toBeInTheDocument()
   screen.getAllByRole('article').forEach((article) => fireEvent.load(article.querySelector('img')!))
@@ -83,6 +89,11 @@ it('should keep options above the cards and preserve cards while interpreting', 
   expect(reading.retry).not.toHaveBeenCalled()
   fireEvent.click(screen.getByRole('radio', {name: '5장'}))
   expect(reading.setCount).toHaveBeenCalledWith(5)
+})
+
+it('should show model-download consent and progress without replacing cards', () => {
+  const {reading, setStatus} = renderTarot()
+  const pastCard = screen.getByRole('article', {name: '과거'})
 
   setStatus('consent')
   expect(screen.getByRole('dialog')).toBeInTheDocument()
@@ -99,9 +110,17 @@ it('should keep options above the cards and preserve cards while interpreting', 
   expect(screen.getByRole('heading', {name: '카드 해석'})).toBeInTheDocument()
   expect(document.querySelector('.animate-glint')).not.toBeInTheDocument()
   expect(screen.queryByRole('button', {name: '해석 취소'})).not.toBeInTheDocument()
+  expect(screen.getByRole('article', {name: '과거'})).toBe(pastCard)
   fireEvent.click(screen.getByRole('button', {name: '다운로드 취소'}))
   expect(reading.cancelDownload).toHaveBeenCalledOnce()
   expect(reading.cancel).not.toHaveBeenCalled()
+})
+
+it('should retain tarot controls and cards through interpretation states', () => {
+  const {reading, setStatus} = renderTarot()
+  const pastCard = screen.getByRole('article', {name: '과거'})
+  const autoRead = screen.getByRole('checkbox', {name: '자동으로 읽어주기'})
+  const uprightView = screen.getByRole('checkbox', {name: '카드는 정방향으로 보기'})
 
   setStatus('checking')
   expect(screen.getByRole('checkbox', {name: '자동으로 읽어주기'})).toBe(autoRead)
@@ -117,5 +136,7 @@ it('should keep options above the cards and preserve cards while interpreting', 
   setStatus('generating')
   expect(screen.queryByRole('button', {name: '다시 뽑기'})).not.toBeInTheDocument()
   expect(screen.getByRole('button', {name: '해석 취소'})).toBeInTheDocument()
-  expect(screen.getByRole('article', {name: '과거'})).toBeInTheDocument()
+  expect(screen.getByRole('article', {name: '과거'})).toBe(pastCard)
+  expect(reading.draw).not.toHaveBeenCalled()
+  expect(reading.retry).not.toHaveBeenCalled()
 })
