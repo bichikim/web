@@ -5,7 +5,11 @@ import {beforeEach, describe, expect, it, vi} from 'vitest'
 import {render} from '@solidjs/testing-library'
 import {createComponent} from 'solid-js'
 import {type DeepPosition, getDeepPositionKey} from 'src/utils/focus-controller/deep-position'
-import {FocusControllerContext, type FocusControllerContextValue} from '../FocusController'
+import {
+  FOCUS_CONTROLLER_CHANNEL,
+  FocusControllerContext,
+  type FocusControllerContextValue,
+} from '../FocusController'
 import {useFocus} from '../focus'
 
 const mocks = vi.hoisted(() => {
@@ -68,21 +72,12 @@ const createFocusControllerMock = () => {
   }
 }
 
-const importSubject = () => {
-  vi.resetModules()
-
-  return import('../focus')
-}
-
 describe('useFocus', () => {
   beforeEach(() => {
     mocks.useDelegatedOn.mockReset()
   })
 
   const setupWithProvider = async () => {
-    const {useFocus} = await importSubject()
-    const {FocusControllerContext, FOCUS_CONTROLLER_CHANNEL} = await import('../FocusController')
-
     const deepPosition: DeepPosition = [
       {x: 1, y: 2},
       {x: 3, y: 4},
@@ -235,9 +230,6 @@ describe('useFocus', () => {
   })
 
   it('should use the focus-controller delegated channel', async () => {
-    const {useFocus} = await importSubject()
-    const {FocusControllerContext, FOCUS_CONTROLLER_CHANNEL} = await import('../FocusController')
-
     const deepPosition: DeepPosition = [{x: 1, y: 2}]
     const focusController = createFocusControllerMock()
 
