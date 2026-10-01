@@ -9,6 +9,8 @@ import {
 } from '../repository'
 import type {MemoryMemo} from '../schema'
 
+const serializeMemos = (memos: ReadonlyArray<MemoryMemo>) => JSON.stringify(memos)
+
 it('should persist memo snapshots to web and Toss storage', async () => {
   const writeToss = vi.fn<MemoryMemoStorage['writeToss']>().mockResolvedValue()
   const writeWeb = vi.fn().mockReturnValue(null)
@@ -65,6 +67,49 @@ it('should persist structured reminder events to web and Toss storage', async ()
   expect(writeToss).toHaveBeenCalledWith([deliveredMemo])
 })
 
+it('should read valid web memos without using Toss storage', async () => {
+  const memo = createMemoryMemo({
+    exactReminderAt: null,
+    id: 'memo-1',
+    now: new Date('2026-09-04T03:00:00.000Z'),
+    random: () => 0,
+    recallMode: 'none',
+    text: '웹에서 읽을 메모',
+  })
+  const readToss = vi.fn().mockResolvedValue(null)
+  const writeToss = vi.fn<MemoryMemoStorage['writeToss']>().mockResolvedValue()
+  const writeWeb = vi.fn().mockReturnValue(null)
+  const repository = createMemoryMemoRepository({
+    readToss,
+    readWeb: vi.fn().mockReturnValue(serializeMemos([memo])),
+    usesTossStorage: () => false,
+    writeToss,
+    writeWeb,
+  })
+
+  await expect(repository.read()).resolves.toEqual([memo])
+  expect(readToss).not.toHaveBeenCalled()
+  expect(writeToss).not.toHaveBeenCalled()
+  expect(writeWeb).not.toHaveBeenCalled()
+})
+
+it('should return an empty list without writing when both Toss and web snapshots are missing', async () => {
+  const writeToss = vi.fn<MemoryMemoStorage['writeToss']>().mockResolvedValue()
+  const writeWeb = vi.fn().mockReturnValue(null)
+  const repository = createMemoryMemoRepository({
+    readToss: vi.fn().mockResolvedValue(null),
+    readWeb: vi.fn().mockReturnValue(null),
+    usesTossStorage: () => true,
+    writeToss,
+    writeWeb,
+  })
+
+  await expect(repository.read()).resolves.toEqual([])
+
+  expect(writeToss).not.toHaveBeenCalled()
+  expect(writeWeb).not.toHaveBeenCalled()
+})
+
 it('should reject a Toss write when the web snapshot cannot be persisted', async () => {
   const webWriteError = new Error('Web storage unavailable')
   const writeToss = vi.fn<MemoryMemoStorage['writeToss']>().mockResolvedValue()
@@ -94,7 +139,7 @@ it('should restore Toss memos and converge the web snapshot', async () => {
   })
   const writeWeb = vi.fn().mockReturnValue(null)
   const repository = createMemoryMemoRepository({
-    readToss: vi.fn().mockResolvedValue([memo]),
+    readToss: vi.fn().mockResolvedValue(serializeMemos([memo])),
     readWeb: vi.fn().mockReturnValue(null),
     usesTossStorage: () => true,
     writeToss: vi.fn<MemoryMemoStorage['writeToss']>().mockResolvedValue(),
@@ -115,11 +160,11 @@ it('should prefer the authoritative Toss snapshot when the bridge is available',
     text: '웹 메모',
   })
   const tossMemo = {...memo, text: '토스 메모'}
-  const readToss = vi.fn().mockResolvedValue([tossMemo])
+  const readToss = vi.fn().mockResolvedValue(serializeMemos([tossMemo]))
   const writeWeb = vi.fn().mockReturnValue(null)
   const repository = createMemoryMemoRepository({
     readToss,
-    readWeb: vi.fn().mockReturnValue([memo]),
+    readWeb: vi.fn().mockReturnValue(serializeMemos([memo])),
     usesTossStorage: () => true,
     writeToss: vi.fn<MemoryMemoStorage['writeToss']>().mockResolvedValue(),
     writeWeb,
@@ -128,6 +173,34 @@ it('should prefer the authoritative Toss snapshot when the bridge is available',
   await expect(repository.read()).resolves.toEqual([tossMemo])
   expect(readToss).toHaveBeenCalledOnce()
   expect(writeWeb).toHaveBeenCalledWith([tossMemo])
+})
+
+it('should use valid web memos as fallback without migrating over invalid Toss data', async () => {
+  const memo = createMemoryMemo({
+    exactReminderAt: null,
+    id: 'memo-1',
+    now: new Date('2026-09-04T03:00:00.000Z'),
+    random: () => 0,
+    recallMode: 'none',
+    text: '유효한 웹 대체 메모',
+  })
+  const invalidTossSnapshot = '{"memos":'
+  const readToss = vi.fn().mockResolvedValue(invalidTossSnapshot)
+  const writeToss = vi.fn<MemoryMemoStorage['writeToss']>().mockResolvedValue()
+  const writeWeb = vi.fn().mockReturnValue(null)
+  const repository = createMemoryMemoRepository({
+    readToss,
+    readWeb: vi.fn().mockReturnValue(serializeMemos([memo])),
+    usesTossStorage: () => true,
+    writeToss,
+    writeWeb,
+  })
+
+  await expect(repository.read()).resolves.toEqual([memo])
+
+  expect(readToss).toHaveBeenCalledOnce()
+  expect(writeToss).not.toHaveBeenCalled()
+  expect(writeWeb).not.toHaveBeenCalled()
 })
 
 it('should reject a Toss read when synchronizing the web snapshot fails', async () => {
@@ -141,7 +214,7 @@ it('should reject a Toss read when synchronizing the web snapshot fails', async 
   })
   const webWriteError = new Error('Web storage unavailable')
   const repository = createMemoryMemoRepository({
-    readToss: vi.fn().mockResolvedValue([memo]),
+    readToss: vi.fn().mockResolvedValue(serializeMemos([memo])),
     readWeb: vi.fn().mockReturnValue(null),
     usesTossStorage: () => true,
     writeToss: vi.fn<MemoryMemoStorage['writeToss']>().mockResolvedValue(),
@@ -180,7 +253,7 @@ it('should reject a Toss read failure after a failed Toss write', async () => {
     text: '저장되지 않은 메모',
   })
   const tossReadError = new Error('Toss read failed')
-  let webSnapshot: ReadonlyArray<MemoryMemo> | null = null
+  let webSnapshot: string | null = null
   const readWeb = vi.fn(() => webSnapshot)
   const repository = createMemoryMemoRepository({
     readToss: vi.fn().mockRejectedValue(tossReadError),
@@ -188,13 +261,13 @@ it('should reject a Toss read failure after a failed Toss write', async () => {
     usesTossStorage: () => true,
     writeToss: vi.fn().mockRejectedValue(new Error('Toss write failed')),
     writeWeb: vi.fn((memos) => {
-      webSnapshot = memos
+      webSnapshot = serializeMemos(memos)
       return null
     }),
   })
 
   await expect(repository.write([memo])).rejects.toThrow('Failed to persist memory memos.')
-  expect(webSnapshot).toEqual([memo])
+  expect(JSON.parse(webSnapshot ?? 'null')).toEqual([memo])
   await expect(repository.read()).rejects.toMatchObject({
     cause: tossReadError,
     message: 'Failed to read memory memos.',
@@ -214,7 +287,7 @@ it('should restore and migrate browser memos when Toss storage is absent', async
   const writeToss = vi.fn<MemoryMemoStorage['writeToss']>().mockResolvedValue()
   const repository = createMemoryMemoRepository({
     readToss: vi.fn().mockResolvedValue(null),
-    readWeb: vi.fn().mockReturnValue([memo]),
+    readWeb: vi.fn().mockReturnValue(serializeMemos([memo])),
     usesTossStorage: () => true,
     writeToss,
     writeWeb: vi.fn().mockReturnValue(null),
@@ -240,7 +313,7 @@ it('should preserve browser memos when Toss migration fails', async () => {
   try {
     const repository = createMemoryMemoRepository({
       readToss: vi.fn().mockResolvedValue(null),
-      readWeb: vi.fn().mockReturnValue([memo]),
+      readWeb: vi.fn().mockReturnValue(serializeMemos([memo])),
       usesTossStorage: () => true,
       writeToss: vi.fn<MemoryMemoStorage['writeToss']>().mockRejectedValue(repairError),
       writeWeb: vi.fn().mockReturnValue(null),
@@ -262,22 +335,22 @@ it('should replace a browser snapshot when Toss storage is explicitly empty', as
     recallMode: 'none',
     text: '저장되지 않은 메모',
   })
-  let webSnapshot: ReadonlyArray<MemoryMemo> | null = null
+  let webSnapshot: string | null = null
   const repository = createMemoryMemoRepository({
-    readToss: vi.fn().mockResolvedValue([]),
+    readToss: vi.fn().mockResolvedValue(serializeMemos([])),
     readWeb: vi.fn(() => webSnapshot),
     usesTossStorage: () => true,
     writeToss: vi.fn().mockRejectedValue(new Error('Toss write failed')),
     writeWeb: vi.fn((memos) => {
-      webSnapshot = memos
+      webSnapshot = serializeMemos(memos)
       return null
     }),
   })
 
   await expect(repository.write([memo])).rejects.toThrow('Failed to persist memory memos.')
-  expect(webSnapshot).toEqual([memo])
+  expect(JSON.parse(webSnapshot ?? 'null')).toEqual([memo])
   await expect(repository.read()).resolves.toEqual([])
-  expect(webSnapshot).toEqual([])
+  expect(JSON.parse(webSnapshot ?? 'null')).toEqual([])
 })
 
 it('should keep independent memo update queues and notification revisions isolated', async () => {
@@ -285,8 +358,8 @@ it('should keep independent memo update queues and notification revisions isolat
   const notifyFirst = vi.fn()
   const notifySecond = vi.fn()
   const storage: MemoryMemoStorage = {
-    readToss: async () => [],
-    readWeb: () => [],
+    readToss: async () => serializeMemos([]),
+    readWeb: () => serializeMemos([]),
     usesTossStorage: () => true,
     writeToss: () => blocked.promise,
     writeWeb: () => null,
@@ -303,7 +376,7 @@ it('should keep independent memo update queues and notification revisions isolat
 })
 
 it('should serialize a direct replacement after an update already reading the stored memos', async () => {
-  const restoring = Promise.withResolvers<ReadonlyArray<MemoryMemo> | null>()
+  const restoring = Promise.withResolvers<string | null>()
   const started = Promise.withResolvers<void>()
   const earlier = createMemoryMemo({
     exactReminderAt: null,
@@ -314,7 +387,7 @@ it('should serialize a direct replacement after an update already reading the st
     text: 'Earlier update',
   })
   const replacement = {...earlier, id: 'replacement', text: 'Latest replacement'}
-  let stored: ReadonlyArray<MemoryMemo> = []
+  let stored = serializeMemos([])
   const store = createMemoryMemoStore(
     {
       readToss: () => {
@@ -324,7 +397,7 @@ it('should serialize a direct replacement after an update already reading the st
       readWeb: () => stored,
       usesTossStorage: () => true,
       writeToss: async (memos) => {
-        stored = memos
+        stored = serializeMemos(memos)
       },
       writeWeb: () => null,
     },
@@ -333,9 +406,9 @@ it('should serialize a direct replacement after an update already reading the st
   const updating = store.update((memos) => [...memos, earlier])
   await started.promise
   const replacing = store.write([replacement])
-  restoring.resolve([])
+  restoring.resolve(serializeMemos([]))
   await Promise.all([updating, replacing])
-  expect(stored).toEqual([replacement])
+  expect(JSON.parse(stored)).toEqual([replacement])
 })
 
 it('should read the committed snapshot after a previously requested write', async () => {
@@ -349,7 +422,7 @@ it('should read the committed snapshot after a previously requested write', asyn
     recallMode: 'none',
     text: 'Committed memo',
   })
-  let stored: ReadonlyArray<MemoryMemo> = []
+  let stored = serializeMemos([])
   const store = createMemoryMemoStore(
     {
       readToss: async () => stored,
@@ -358,7 +431,7 @@ it('should read the committed snapshot after a previously requested write', asyn
       writeToss: async (memos) => {
         started.resolve()
         await completion.promise
-        stored = memos
+        stored = serializeMemos(memos)
       },
       writeWeb: () => null,
     },
