@@ -1,6 +1,7 @@
 import {classifySpeechNumber} from './classify-speech-number'
 import {hasNumberKind} from './has-number-kind'
 import {parseInteger} from './parse-integer'
+import {parseClockTime} from './parse-clock-time'
 import {KOREAN_DECIMAL_PERCENT_PATTERN, KOREAN_INTEGER_PERCENT_PATTERN} from './percent-patterns'
 import {
   KOREAN_DIGIT_PATTERN_SOURCE,
@@ -14,7 +15,6 @@ import {
 const DIGIT_WORDS = ['영', '일', '이', '삼', '사', '오', '육', '칠', '팔', '구'] as const
 const DECIMAL_RADIX = 10
 const MAX_CLOCK_HOUR = 23
-const MAX_CLOCK_MINUTE = 59
 const MAX_TWELVE_HOUR_CLOCK_HOUR = 12
 const NATIVE_LIMIT = 100n
 const SPECIAL_TWENTY = 20
@@ -244,19 +244,19 @@ const replaceColonClockTime = (
     return match
   }
 
-  const hourNumber = Number(hour.normalize('NFKC'))
-  const minuteNumber = Number(minute.normalize('NFKC'))
+  const clockTime = parseClockTime(hour, minute)
 
   if (
-    hourNumber > MAX_CLOCK_HOUR ||
-    minuteNumber > MAX_CLOCK_MINUTE ||
-    (timeOfDay !== undefined && (hourNumber < 1 || hourNumber > MAX_TWELVE_HOUR_CLOCK_HOUR))
+    clockTime === null ||
+    clockTime.hour > MAX_CLOCK_HOUR ||
+    (timeOfDay !== undefined &&
+      (clockTime.hour < 1 || clockTime.hour > MAX_TWELVE_HOUR_CLOCK_HOUR))
   ) {
     return match
   }
 
-  const hourPronunciation = pronounceClockHour(String(hourNumber))
-  const minutePronunciation = pronounceSinoInteger(String(minuteNumber))
+  const hourPronunciation = pronounceClockHour(String(clockTime.hour))
+  const minutePronunciation = pronounceSinoInteger(String(clockTime.minute))
 
   if (hourPronunciation === null || minutePronunciation === null) {
     return match
