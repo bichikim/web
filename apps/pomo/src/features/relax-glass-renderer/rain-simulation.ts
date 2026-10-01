@@ -71,6 +71,9 @@ const dropSize = (drop: SimulatedDrop) => {
   return {height: base * (1 + drop.spreadY), width: base * (1 + drop.spreadX)}
 }
 
+const mergeReach = (drop: SimulatedDrop) =>
+  dropSize(drop).width * (1 + drop.spreadX) * MERGE_DISTANCE_RATIO
+
 const distanceSquared = (left: SimulatedDrop, right: SimulatedDrop) =>
   (left.x - right.x) ** 2 + (left.y - right.y) ** 2
 
@@ -231,29 +234,36 @@ export class RainSimulation {
   }
 
   #mergeDrops() {
+    let maximumReach = this.#drops.reduce((maximum, drop) => Math.max(maximum, mergeReach(drop)), 0)
     for (let index = 0; index < this.#drops.length; index += 1) {
       const drop = this.#drops[index]
+      let dropReach = mergeReach(drop)
       for (let otherIndex = index + 1; otherIndex < this.#drops.length; otherIndex += 1) {
         const other = this.#drops[otherIndex]
-        const reach =
-          dropSize(drop).width * (1 + drop.spreadX) * MERGE_DISTANCE_RATIO +
-          dropSize(other).width * (1 + other.spreadX) * MERGE_DISTANCE_RATIO
+        const maximumDistance = dropReach + maximumReach
+        const outsideReach =
+          Math.abs(drop.x - other.x) >= maximumDistance ||
+          Math.abs(drop.y - other.y) >= maximumDistance
         if (
+          !outsideReach &&
           drop.parentId !== other.id &&
           other.parentId !== drop.id &&
           (drop.parentId === null || drop.parentId !== other.parentId) &&
-          distanceSquared(drop, other) < reach ** 2
+          distanceSquared(drop, other) < (dropReach + mergeReach(other)) ** 2
         ) {
           const mass = drop.mass + other.mass
           const velocity = (drop.velocity * drop.mass + other.velocity * other.mass) / mass
           if (drop.mass >= other.mass) {
             drop.velocity = velocity
             drop.mass = mass
+            dropReach = mergeReach(drop)
+            maximumReach = Math.max(maximumReach, dropReach)
             this.#drops.splice(otherIndex, 1)
             otherIndex -= 1
           } else {
             other.velocity = velocity
             other.mass = mass
+            maximumReach = Math.max(maximumReach, mergeReach(other))
             this.#drops.splice(index, 1)
             index -= 1
             break
