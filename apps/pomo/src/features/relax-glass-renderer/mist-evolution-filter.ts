@@ -1,6 +1,7 @@
+import {RAIN_MAP_ERASER} from './rain-map-eraser'
 import {Filter, GlProgram, type Texture, UniformGroup} from 'pixi.js'
 
-import {FULLSCREEN_VERTEX} from './fullscreen-vertex'
+import {FULLSCREEN_VERTEX} from 'src/utils/fullscreen-vertex'
 
 const FRAGMENT = `
 in vec2 vUv;
@@ -9,8 +10,9 @@ uniform sampler2D uMistMap;
 uniform sampler2D uRainMap;
 uniform float uGrowth;
 
+${RAIN_MAP_ERASER}
 void main() {
-  float eraser = smoothstep(0.93, 1.0, texture(uRainMap, vUv).a);
+  float eraser = rainMapEraser(vUv);
   float mist = min(texture(uMistMap, vUv).r + uGrowth, 1.0) * (1.0 - eraser);
   finalColor = vec4(mist, 0.0, 0.0, 1.0);
 }

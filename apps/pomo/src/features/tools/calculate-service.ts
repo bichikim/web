@@ -1,3 +1,4 @@
+export const AUTOMATIC_START_MINIMUM = '2022-01-01'
 import {addDays, dateEpoch, formatDate, parseDate, periodEnd} from '../civil-date'
 import {clamp} from 'es-toolkit/math'
 import {isValidServiceDays} from './service-days'
@@ -24,7 +25,7 @@ export const calculateService = (options: CalculateServiceOptions): ServiceResul
   if (start === null || today === null) {
     return null
   }
-  if (options.days === undefined && options.start < '2022-01-01') {
+  if (options.days === undefined && options.start < AUTOMATIC_START_MINIMUM) {
     return null
   }
   if (options.days !== undefined && !isValidServiceDays(options.days)) {

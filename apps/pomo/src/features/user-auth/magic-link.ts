@@ -1,4 +1,4 @@
-import {apiJsonRequest} from '../api-json'
+import {requestMagicLink} from '../magic-link'
 
 interface RequestUserMagicLinkInput {
   readonly email: string
@@ -7,15 +7,9 @@ interface RequestUserMagicLinkInput {
 
 export const requestUserMagicLink = async (input: RequestUserMagicLinkInput): Promise<boolean> => {
   const callbackUrl = new URL('/account', input.origin)
-  const response = await apiJsonRequest('auth/sign-in/magic-link', {
-    body: {
-      callbackURL: callbackUrl.toString(),
-      email: input.email,
-      errorCallbackURL: callbackUrl.toString(),
-    },
-    credentials: 'include',
-    method: 'POST',
+  return requestMagicLink({
+    callbackURL: callbackUrl.toString(),
+    email: input.email,
+    errorCallbackURL: callbackUrl.toString(),
   })
-
-  return response.ok
 }
