@@ -30,11 +30,7 @@ export const DesktopMemoryAssistDialog = () => {
         </div>
         <ErrorBoundary fallback={<p role="alert">{m.modal_content_load_error()}</p>}>
           <Suspense fallback={<PLoadingStatus message={m.modal_content_loading()} />}>
-            <Content
-              calendarRevision={calendarRevision()}
-              onRefreshCalendar={refreshCalendar}
-              onRequestClose={close}
-            />
+            <Content calendarRevision={calendarRevision()} onRefreshCalendar={refreshCalendar} />
           </Suspense>
         </ErrorBoundary>
       </DesktopDialogFrame>

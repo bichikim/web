@@ -1391,5 +1391,9 @@
   "transfer_auto_accept": "Automatically accept all files",
   "transfer_incoming_title": "Incoming file request",
   "transfer_incoming_description": "The other device wants to send this file. Accept it to add it to your received files.",
-  "transfer_outgoing_description": "Transfer starts when the other device accepts this file."
+  "transfer_outgoing_description": "Transfer starts when the other device accepts this file.",
+  "toast_close": "Dismiss notification",
+  "toast_count": "Notifications: {count}",
+  "toast_label": "Notifications",
+  "toast_waiting": "Waiting: {count}"
 }

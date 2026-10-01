@@ -83,11 +83,7 @@ beforeEach(() => {
       </button>
     </div>
   ))
-  vi.mocked(LanguageLearningLibrary).mockImplementation((props) => (
-    <button onClick={props.onRequestClose} type="button">
-      language learning library
-    </button>
-  ))
+  vi.mocked(LanguageLearningLibrary).mockImplementation(() => <div>language learning library</div>)
   vi.mocked(PModal).mockImplementation((props: PModalProps) => (
     <div aria-label={props.title} hidden={!props.isOpen} role="dialog">
       {props.navigation}

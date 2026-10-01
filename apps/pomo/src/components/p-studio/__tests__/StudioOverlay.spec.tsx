@@ -8,7 +8,6 @@ import {PScreenSaver} from '../../p-screen-saver/PScreenSaver'
 
 vi.mock('../../p-screen-saver/PScreenSaver', () => ({PScreenSaver: vi.fn()}))
 vi.mock('../Tour', () => ({PStudioTour: vi.fn()}))
-vi.mock('../TourHint', () => ({PStudioTourHint: vi.fn()}))
 
 const createOptions = (): ComponentProps<typeof StudioOverlay> => ({
   desktopMode: 'normal',
@@ -29,10 +28,7 @@ const createOptions = (): ComponentProps<typeof StudioOverlay> => ({
     toolsButtonVisible: () => true,
     tourButtonVisible: () => true,
   },
-  entryVisible: false,
   hasEntered: true,
-  isTourHintVisible: false,
-  onDismissTourHint: vi.fn(),
   screenSaver: {
     currentTrack: () => null,
     delay: () => '5s',
@@ -53,7 +49,6 @@ const createOptions = (): ComponentProps<typeof StudioOverlay> => ({
     setStudioElement: vi.fn(),
     steps: () => [],
   },
-  tourButtonVisible: true,
 })
 
 beforeEach(() => vi.clearAllMocks())

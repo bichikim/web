@@ -29,6 +29,8 @@ export const pomoAnimation = {
     'rest-sway': '2.4s',
     'screen-saver-content-drift': '48s',
     'select-in': '140ms',
+    'toast-enter': '180ms',
+    'toast-exit': '180ms',
   },
   keyframes: {
     'dialogue-menu-in': `{
@@ -93,11 +95,18 @@ export const pomoAnimation = {
       from { opacity: 0; transform: scale(0.97) translateY(-0.25rem); }
       to { opacity: 1; transform: scale(1) translateY(0); }
     }`,
+    'toast-enter': `{
+      from { height: 0; margin-bottom: 0; opacity: 0; overflow: hidden; }
+      to { height: 2rem; opacity: 1; overflow: hidden; }
+    }`,
+    'toast-exit': '{ from { height: 2rem; } to { height: 0; margin-bottom: 0; } }',
   },
   properties: {
     'entry-reveal-room': {'animation-fill-mode': 'both'},
     ...relaxPlayerAnimations.properties,
     'screen-saver-content-drift': {'animation-direction': 'alternate'},
+    'toast-enter': {'animation-fill-mode': 'backwards'},
+    'toast-exit': {'animation-fill-mode': 'forwards'},
   },
   timingFns: {
     'dialogue-menu-in': 'ease-out',
@@ -114,5 +123,7 @@ export const pomoAnimation = {
     'rest-sway': 'ease-in-out',
     'screen-saver-content-drift': 'ease-in-out',
     'select-in': 'ease-out',
+    'toast-enter': 'ease-out',
+    'toast-exit': 'ease-out',
   },
 } satisfies PresetWind3Theme['animation']
