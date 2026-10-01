@@ -48,6 +48,7 @@ interface RenderOptions {
   readonly min?: number
   readonly size?: 'medium' | 'small'
   readonly step?: number
+  readonly type?: 'number' | 'text'
   readonly value?: string
 }
 
@@ -67,6 +68,7 @@ const renderNumberInput = (options: RenderOptions = {}) => {
       onValueChange={onValueChange}
       size={options.size}
       step={options.step}
+      type={options.type}
       value={value()}
     />
   ))
@@ -125,6 +127,27 @@ describe('PNumberInput', () => {
 
     expect(onInputValueChange).toHaveBeenCalledWith('7')
     expect(input).toHaveValue(7)
+  })
+
+  it('should keep text mode as a bounded spinbutton with native number stepping', () => {
+    const {input, onValueChange} = renderNumberInput({max: 100, min: 1, type: 'text'})
+
+    expect(input).toHaveProperty('type', 'text')
+    expect(input).toHaveAttribute('aria-valuemin', '1')
+    expect(input).toHaveAttribute('aria-valuemax', '100')
+    expect(input).toHaveAttribute('aria-valuenow', '5')
+
+    fireEvent.keyDown(input, {key: 'ArrowUp'})
+    expect(onValueChange).toHaveBeenNthCalledWith(1, 6)
+    fireEvent.keyDown(input, {key: 'ArrowDown'})
+    expect(onValueChange).toHaveBeenNthCalledWith(2, 5)
+
+    fireEvent.input(input, {target: {value: '３０'}})
+    expect(input).toHaveAttribute('aria-valuenow', '30')
+    fireEvent.click(screen.getByRole('button', {name: 'Increase Duration'}))
+
+    expect(onValueChange).toHaveBeenLastCalledWith(31)
+    expect(input).toHaveProperty('value', '31')
   })
 
   it('should map a bounded horizontal drag to the field range', () => {
