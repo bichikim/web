@@ -124,6 +124,8 @@ jobs:
             apps/pomo/src/components/admin-music/__tests__/AdminMusic.import.integration.tsx \
             apps/pomo/src/components/admin-music/__tests__/AlbumWorkspace.integration.tsx \
             apps/pomo/src/components/chat-room/__tests__/ChatRoom.stt-draft.integration.tsx \
+            apps/pomo/src/components/tour/__tests__/PTour.navigation.integration.tsx \
+            apps/pomo/src/components/tarot/__tests__/Tarot.integration.tsx \
             apps/pomo/src/components/album-library/__tests__/use-custom-album-editor.integration.ts \
             apps/pomo/src/components/dialogue-page/__tests__/Editor.integration.tsx \
             apps/pomo/src/components/layer-review/__tests__/MouthFramePicker.integration.tsx \
@@ -136,6 +138,7 @@ jobs:
             apps/pomo/src/components/memory-assist/picture-diary/__tests__/Drawing.integration.tsx \
             apps/pomo/src/components/p-credits-settings/__tests__/PCreditsSettings.integration.tsx \
             apps/pomo/src/components/p-time-picker/__tests__/PTimePicker.integration.tsx \
+            apps/pomo/src/components/tools/__tests__/Lunar.integration.tsx \
             apps/pomo/src/components/p-layer-review/__tests__/PLayerReview.mouth-time-mode.integration.tsx \
             apps/pomo/src/components/p-settings/__tests__/PSettings.failure.integration.tsx \
             apps/pomo/src/routes/__tests__/third-party-notices.integration.tsx \
@@ -146,6 +149,7 @@ jobs:
             packages/puppet/src/editor/internal/__tests__/EditorInspector.integration.tsx \
             packages/puppet/src/editor/internal/__tests__/EditorInspector.interaction.integration.tsx \
             packages/puppet/src/editor/internal/__tests__/EditorTimeline.integration.tsx \
+            packages/puppet/src/editor/internal/__tests__/DeformerWeights.selection.integration.tsx \
             packages/puppet/src/editor/internal/__tests__/InfluenceEditor.integration.tsx \
             packages/puppet/src/editor/internal/__tests__/PhysicsProperties.interaction.integration.tsx \
             packages/puppet/src/editor/internal/__tests__/SpatialMeshDialog.integration.tsx \
