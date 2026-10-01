@@ -1,4 +1,5 @@
-import {createSignal, For, type JSX, Show} from 'solid-js'
+import {KeyedList} from '../keyed-list'
+import {createSignal, type JSX, Show} from 'solid-js'
 import * as m from '@paraglide/message'
 
 import type {AuthController} from '../../features/auth/controller'
@@ -92,16 +93,16 @@ export const FeatureRequestList = (props: FeatureRequestListProps) => {
               when={props.model.requests().length > 0}
             >
               <div class="grid gap-3">
-                <For each={props.model.requests()}>
+                <KeyedList each={props.model.requests()} by={(request) => request.id}>
                   {(request) => (
                     <FeatureRequestCard
                       isAuthenticated={isAuthenticated()}
-                      isVoting={props.model.votingRequestId() === request.id}
+                      isVoting={props.model.votingRequestId() === request().id}
                       onVote={(requestId) => handleVote(requestId).catch(() => undefined)}
-                      request={request}
+                      request={request()}
                     />
                   )}
-                </For>
+                </KeyedList>
               </div>
             </Show>
           }

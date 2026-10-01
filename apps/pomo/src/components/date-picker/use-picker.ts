@@ -127,8 +127,10 @@ export const usePicker = (props: UsePickerProps) => {
       close()
     }
   }
+  const year = createMemo(() => view().year)
+  const month = createMemo(() => view().month)
   const cells = createMemo(() => {
-    const current = view()
+    const current = {month: month(), year: year()}
     const offset = new Date(Date.UTC(current.year, current.month - 1, 1)).getUTCDay()
     return Array.from({length: offset + daysInMonth(current.year, current.month)}, (_, index) =>
       index < offset ? null : {day: index - offset + 1, month: current.month, year: current.year},

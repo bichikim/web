@@ -1,5 +1,5 @@
 import {cx} from 'class-variance-authority'
-import {createEffect, createSignal, onCleanup, untrack} from 'solid-js'
+import {createEffect, createMemo, createSignal, onCleanup, untrack} from 'solid-js'
 import * as m from '@paraglide/message'
 
 const WORD_ACTION_BUTTON_CLASS = cx(
@@ -48,9 +48,9 @@ export const LanguageLearningWordPronunciationButton = (
     )
   }
 
+  const shouldAutoplay = createMemo(() => props.autoplay)
   createEffect(() => {
-    const shouldAutoplay = props.autoplay
-    if (shouldAutoplay && untrack(() => props.src) !== null) {
+    if (shouldAutoplay() && untrack(() => props.src) !== null) {
       play()
     }
   })
