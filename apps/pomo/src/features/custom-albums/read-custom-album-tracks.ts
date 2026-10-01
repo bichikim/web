@@ -10,17 +10,8 @@ import {CUSTOM_TRACK_ID_PREFIX, CustomAlbumError} from './model'
 import {toCustomPTrack} from './to-custom-p-track'
 
 export interface ReadCustomAlbumTracksOptions {
+  readonly onError: (error: CustomAlbumError, trackId: string) => void
   readonly trackIds: readonly string[]
-}
-
-const parseStoredTrack = (value: unknown) => {
-  const result = storedTrackSchema.safeParse(value)
-
-  if (!result.success) {
-    throw new CustomAlbumError('corrupt-data', {cause: result.error})
-  }
-
-  return result.data
 }
 
 export const readCustomAlbumTracks = async (
@@ -38,12 +29,26 @@ export const readCustomAlbumTracks = async (
   const transaction = database.transaction(TRACK_STORE_NAME, 'readonly')
   const finished = waitForTransaction(transaction)
   const trackRequests = trackIds.map((trackId) =>
-    readRequest<unknown>(transaction.objectStore(TRACK_STORE_NAME).get(trackId)),
+    readRequest<unknown>(transaction.objectStore(TRACK_STORE_NAME).get(trackId)).then((track) => ({
+      track,
+      trackId,
+    })),
   )
-  const [, rawTracks] = await Promise.all([finished, Promise.all(trackRequests)])
-  const tracks = rawTracks.flatMap((track) =>
-    track === undefined ? [] : [parseStoredTrack(track)],
-  )
+  const [, requestedTracks] = await Promise.all([finished, Promise.all(trackRequests)])
+  const tracks = requestedTracks.flatMap(({track, trackId}) => {
+    if (track === undefined) {
+      return []
+    }
+
+    const result = storedTrackSchema.safeParse(track)
+
+    if (!result.success) {
+      options.onError(new CustomAlbumError('corrupt-data', {cause: result.error}), trackId)
+      return []
+    }
+
+    return [result.data]
+  })
 
   return tracks.map(toCustomPTrack)
 }
