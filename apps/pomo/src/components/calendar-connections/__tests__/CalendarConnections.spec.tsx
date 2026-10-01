@@ -15,7 +15,6 @@ import {
 import {CalendarConnections} from '../CalendarConnections'
 
 vi.mock('../../../features/calendar', () => ({
-  CALENDAR_PROVIDERS: ['google', 'microsoft'],
   createCalendarAuthorization: vi.fn(),
   deleteCalendarConnection: vi.fn(),
   listCalendarConnections: vi.fn(),
@@ -53,13 +52,19 @@ it('should show provider actions in a settings popover', async () => {
   expect(disconnectButton).toHaveClass('rounded-control')
   expect(accountLabel.closest('button')).toBe(disconnectButton)
 
-  const microsoftButton = screen.getByRole('button', {name: 'Microsoft Outlook 연결'})
-  expect(microsoftButton).toHaveClass('rounded-control')
-  fireEvent.click(microsoftButton)
-  await waitFor(() =>
-    expect(openCalendarAuthorization).toHaveBeenCalledWith('https://accounts.google.com/authorize'),
-  )
-  expect(createCalendarAuthorization).toHaveBeenCalledWith('microsoft')
+  expect(screen.queryByRole('button', {name: 'Microsoft Outlook 연결'})).not.toBeInTheDocument()
+})
+
+it('should report a failed Google connection without offering Outlook', async () => {
+  vi.mocked(listCalendarConnections).mockResolvedValue([])
+  vi.mocked(openCalendarAuthorization).mockRejectedValue(new Error('Authorization unavailable'))
+  render(() => <CalendarConnections />)
+
+  fireEvent.click(await screen.findByRole('button', {name: 'Google Calendar 연결'}))
+
+  expect(await screen.findByRole('alert')).toHaveTextContent('캘린더 연결을 확인하지 못했습니다.')
+  expect(createCalendarAuthorization).toHaveBeenCalledWith('google')
+  expect(screen.queryByRole('button', {name: 'Microsoft Outlook 연결'})).not.toBeInTheDocument()
 })
 
 it('should require a second press before disconnecting a calendar', async () => {
