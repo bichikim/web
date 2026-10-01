@@ -1,5 +1,9 @@
 import {createSignal, Show} from 'solid-js'
 import {cx} from 'class-variance-authority'
+import * as m from '@paraglide/message'
+
+import {GLASS_ICON_BUTTON} from '../button-presets'
+import {PButton} from '../p-button/PButton'
 
 import {PMusicPlayer} from '../p-music-player/PMusicPlayer'
 import {SoundEffects} from '../music-player-view/SoundEffects'
@@ -16,6 +20,7 @@ export interface PRelaxPlayerPageProps {
   readonly backgroundSrc?: string
   readonly daylightPosition?: VirtualLightPosition
   readonly interiorPosition?: VirtualLightPosition
+  readonly returnHref?: string
 }
 
 export const PRelaxPlayerPage = (props: PRelaxPlayerPageProps) => {
@@ -79,6 +84,18 @@ export const PRelaxPlayerPage = (props: PRelaxPlayerPageProps) => {
           weather={weather()}
         />
         <SoundEffects trigger="toolbar" />
+        <Show when={props.returnHref}>
+          {(href) => (
+            <PButton
+              {...GLASS_ICON_BUTTON}
+              accessibleLabel={m.relax_return_to_app()}
+              href={href()}
+              icon="i-tabler-apps"
+              pill
+              tooltip={m.relax_return_to_app()}
+            />
+          )}
+        </Show>
       </div>
       <div
         class={cx(
