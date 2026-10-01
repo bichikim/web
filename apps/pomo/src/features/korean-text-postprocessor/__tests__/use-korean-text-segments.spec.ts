@@ -10,6 +10,9 @@ it('should derive Korean text segments reactively', () => {
 
     expect(segments()).toEqual([{kind: 'text', text: '안녕하세요.'}])
 
+    setText('국어·영어·수학을 공부해요.')
+    expect(segments()).toEqual([{kind: 'text', text: '국어·영어·수학을 공부해요.'}])
+
     setText('今日は 맑아요.')
     expect(segments()).toEqual([{kind: 'refining', text: '今日は 맑아요.'}])
     dispose()
