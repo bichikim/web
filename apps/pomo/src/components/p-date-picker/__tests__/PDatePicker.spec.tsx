@@ -55,3 +55,17 @@ it('should close the calendar from a month navigation button without bubbling Es
   expect(trigger).toHaveFocus()
   expect(escaped).not.toHaveBeenCalled()
 })
+
+it('should preserve every date button while moving focus within the same month', () => {
+  render(() => <PDatePicker label="날짜" value="2026-10-15" />)
+  fireEvent.click(screen.getByRole('button', {name: '날짜: 2026-10-15'}))
+  const buttons = screen.getAllByRole('button', {name: /^2026-10-/})
+  expect(buttons).toHaveLength(31)
+  fireEvent.keyDown(screen.getByRole('button', {name: '2026-10-15'}), {key: 'ArrowRight'})
+  screen.getAllByRole('button', {name: /^2026-10-/}).forEach((button, index) => {
+    expect(button).toBe(buttons[index])
+  })
+  expect(screen.getByRole('button', {name: '2026-10-16'})).toHaveFocus()
+  expect(screen.getByRole('button', {name: '2026-10-16'})).toHaveAttribute('tabindex', '0')
+  expect(screen.getByRole('button', {name: '2026-10-15'})).toHaveAttribute('tabindex', '-1')
+})

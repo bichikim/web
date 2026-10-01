@@ -1,6 +1,7 @@
+import {KeyedList} from '../keyed-list'
 import {Title} from '@solidjs/meta'
 import {A} from '@solidjs/router'
-import {For, Show} from 'solid-js'
+import {Show} from 'solid-js'
 import * as m from '@paraglide/message'
 
 import {useAdminFeatureRequests} from '../../features/feature-requests/use-admin-feature-requests'
@@ -69,15 +70,15 @@ export const AdminFeatureRequests = () => {
             fallback={<p class="text-sm text-white/55">{m.admin_feature_requests_empty()}</p>}
             when={model.requests().length > 0}
           >
-            <For each={model.requests()}>
+            <KeyedList each={model.requests()} by={(request) => request.id}>
               {(request) => (
                 <AdminFeatureRequestCard
-                  disabled={model.updatingRequestId() === request.id}
+                  disabled={model.updatingRequestId() === request().id}
                   onSave={handleRequestSave}
-                  request={request}
+                  request={request()}
                 />
               )}
-            </For>
+            </KeyedList>
           </Show>
         </section>
       </Show>
