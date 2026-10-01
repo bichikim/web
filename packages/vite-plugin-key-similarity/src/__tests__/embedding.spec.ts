@@ -50,6 +50,42 @@ describe('createLocalE5Provider', () => {
 })
 
 describe('CachedEmbeddingProvider', () => {
+  it('should publish complete vectors when providers share a cache concurrently', async () => {
+    const cacheDir = await mkdtemp(path.join(import.meta.dirname, '.embedding-'))
+    const firstEmbed = vi.fn(async () => [Float32Array.from([1, 0])])
+    const secondEmbed = vi.fn(async () => [Float32Array.from([1, 0])])
+    const thirdEmbed = vi.fn(async () => [Float32Array.from([1, 0])])
+    const firstProvider = new CachedEmbeddingProvider(
+      {embed: firstEmbed, identifier: 'shared-cache', revision: '1'},
+      cacheDir,
+    )
+    const secondProvider = new CachedEmbeddingProvider(
+      {embed: secondEmbed, identifier: 'shared-cache', revision: '1'},
+      cacheDir,
+    )
+    const thirdProvider = new CachedEmbeddingProvider(
+      {embed: thirdEmbed, identifier: 'shared-cache', revision: '1'},
+      cacheDir,
+    )
+
+    try {
+      const [firstVectors, secondVectors] = await Promise.all([
+        firstProvider.embed(['shared text']),
+        secondProvider.embed(['shared text']),
+      ])
+      const thirdVectors = await thirdProvider.embed(['shared text'])
+
+      expect(firstEmbed).toHaveBeenCalledOnce()
+      expect(secondEmbed).toHaveBeenCalledOnce()
+      expect(thirdEmbed).not.toHaveBeenCalled()
+      expect([...firstVectors[0]!]).toEqual([1, 0])
+      expect([...secondVectors[0]!]).toEqual([1, 0])
+      expect([...thirdVectors[0]!]).toEqual([1, 0])
+    } finally {
+      await rm(cacheDir, {force: true, recursive: true})
+    }
+  })
+
   it('should retain vectors in memory after the disk cache is removed', async () => {
     const cacheDir = await mkdtemp(path.join(import.meta.dirname, '.embedding-'))
     const embed = vi.fn(async () => [Float32Array.from([1, 0])])

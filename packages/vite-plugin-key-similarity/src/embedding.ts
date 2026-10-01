@@ -1,5 +1,5 @@
-import {createHash} from 'node:crypto'
-import {mkdir, readFile, writeFile} from 'node:fs/promises'
+import {createHash, randomUUID} from 'node:crypto'
+import {mkdir, readFile, rename, rm, writeFile} from 'node:fs/promises'
 import path from 'node:path'
 import {NORMALIZATION_VERSION} from './normalization'
 import {normalizeVector} from './similarity'
@@ -75,7 +75,14 @@ export class CachedEmbeddingProvider implements EmbeddingProvider {
 
   private async write(text: string, vector: Float32Array): Promise<void> {
     const bytes = Buffer.from(vector.buffer, vector.byteOffset, vector.byteLength)
-    await writeFile(path.join(this.cacheDir, `${createCacheKey(this, text)}.f32`), bytes)
+    const filePath = path.join(this.cacheDir, `${createCacheKey(this, text)}.f32`)
+    const temporaryPath = `${filePath}.${randomUUID()}.tmp`
+    try {
+      await writeFile(temporaryPath, bytes, {flag: 'wx'})
+      await rename(temporaryPath, filePath)
+    } finally {
+      await rm(temporaryPath, {force: true})
+    }
   }
 }
 
