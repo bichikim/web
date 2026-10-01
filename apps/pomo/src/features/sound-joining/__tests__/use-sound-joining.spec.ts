@@ -1,7 +1,16 @@
+import {createSoundWorker} from 'src/features/sound-generation/create-sound-worker'
+vi.mock('src/features/sound-generation/create-sound-worker', () => ({createSoundWorker: vi.fn()}))
+import {createDeferred} from 'src/test-utils/create-deferred'
 /** @vitest-environment node */
 import {createRoot} from 'solid-js'
-import {afterEach, expect, it, vi} from 'vitest'
+import {afterEach, beforeEach, expect, it, vi} from 'vitest'
+import {assembleJoin} from '../audio'
 import {useSoundJoining} from '../use-sound-joining'
+
+vi.mock('../audio', async (importOriginal) => {
+  const original = await importOriginal<typeof import('../audio')>()
+  return {...original, assembleJoin: vi.fn()}
+})
 
 const RATE = 44100
 
@@ -45,14 +54,6 @@ function createRequest() {
   }
 }
 
-function createDeferred<Value>(): Deferred<Value> {
-  let resolvePromise: (value: Value) => void = () => undefined
-  const promise = new Promise<Value>((resolve) => {
-    resolvePromise = resolve
-  })
-  return {promise, resolve: resolvePromise}
-}
-
 function installAudioContext(buffers: readonly (AudioBuffer | Promise<AudioBuffer>)[]) {
   let index = 0
   const close = vi.fn(async () => {})
@@ -73,17 +74,17 @@ function installAudioContext(buffers: readonly (AudioBuffer | Promise<AudioBuffe
 
 function installWorker() {
   const workers: TestWorker[] = []
-  vi.stubGlobal(
-    'Worker',
-    class extends TestWorker {
-      constructor() {
-        super()
-        workers.push(this)
-      }
-    },
-  )
+  vi.mocked(createSoundWorker).mockImplementation(() => {
+    const worker = new TestWorker()
+    workers.push(worker)
+    return worker
+  })
   return workers
 }
+
+beforeEach(() => {
+  vi.mocked(assembleJoin).mockReturnValue(createBlob())
+})
 
 afterEach(() => {
   vi.restoreAllMocks()
@@ -227,6 +228,9 @@ it('should replace worker progress status when the worker reports an error', asy
 })
 
 it('should revoke the previous joined URL when a later result replaces it', async () => {
+  const firstJoined = createBlob()
+  const secondJoined = createBlob()
+  vi.mocked(assembleJoin).mockReturnValueOnce(firstJoined).mockReturnValueOnce(secondJoined)
   const workers = installWorker()
   installAudioContext([
     createAudioBuffer(),
@@ -251,6 +255,8 @@ it('should revoke the previous joined URL when a later result replaces it', asyn
   workers[1].onmessage?.({data: {blob: createBlob(), type: 'result'}} as MessageEvent)
   await replacement
 
+  expect(URL.createObjectURL).toHaveBeenNthCalledWith(1, firstJoined)
+  expect(URL.createObjectURL).toHaveBeenNthCalledWith(2, secondJoined)
   expect(root.joining.url()).toBe('blob:second')
   expect(URL.revokeObjectURL).toHaveBeenCalledWith('blob:first')
   root.dispose()

@@ -3,7 +3,7 @@ import {expect, it, vi} from 'vitest'
 
 const mocks = vi.hoisted(() => ({
   createClient: vi.fn(() => 'client'),
-  createRepository: vi.fn(() => ({load: vi.fn(async () => 'settings')})),
+  createRepository: vi.fn(() => ({read: vi.fn(async () => 'settings')})),
   generateAudio: vi.fn(async () => 'audio'),
   isDownloaded: vi.fn(async () => true),
 }))
@@ -14,7 +14,7 @@ vi.mock('../../focus-room-dialogue/generate-dialogue-audio', () => ({
   generateCompressedDialogueAudio: mocks.generateAudio,
 }))
 vi.mock('../../focus-room-dialogue/automatic-dialogue-settings', () => ({
-  createAutomaticDialogueSettingsRepository: mocks.createRepository,
+  createAutomaticDialogueRuntimeRepository: mocks.createRepository,
 }))
 
 import type {AutomaticDialogueSettingsStorage} from '../../focus-room-dialogue/automatic-dialogue-settings-contract'

@@ -1,3 +1,4 @@
+import {createDeferred} from 'src/test-utils/create-deferred'
 import {createRoot} from 'solid-js'
 import {describe, expect, it, vi} from 'vitest'
 
@@ -12,17 +13,6 @@ interface Deferred<Result> {
 interface AsyncTaskTestRoot<Arguments extends readonly unknown[], Result> {
   readonly controller: AsyncTaskController<Arguments, Result>
   readonly dispose: () => void
-}
-
-const createDeferred = <Result>(): Deferred<Result> => {
-  let rejectPromise: (error: unknown) => void = () => undefined
-  let resolvePromise: (result: Result) => void = () => undefined
-  const promise = new Promise<Result>((resolve, reject) => {
-    rejectPromise = reject
-    resolvePromise = resolve
-  })
-
-  return {promise, reject: rejectPromise, resolve: resolvePromise}
 }
 
 const createTaskRoot = <Arguments extends readonly unknown[], Result>(

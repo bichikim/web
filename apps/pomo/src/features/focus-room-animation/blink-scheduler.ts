@@ -1,3 +1,4 @@
+import {randomInRange} from 'src/utils/random-in-range'
 export interface BlinkSchedulerOptions {
   readonly maximumDelay: number
   readonly minimumDelay: number
@@ -36,8 +37,11 @@ export function createBlinkScheduler(options: BlinkSchedulerOptions): BlinkSched
       return
     }
 
-    const range = Math.max(0, options.maximumDelay - options.minimumDelay)
-    const delay = options.minimumDelay + random() * range
+    const delay = randomInRange(
+      options.minimumDelay,
+      Math.max(options.minimumDelay, options.maximumDelay),
+      random,
+    )
 
     timer = setTimer(() => {
       timer = null

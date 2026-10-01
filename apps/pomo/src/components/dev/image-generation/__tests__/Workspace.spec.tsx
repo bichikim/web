@@ -3,7 +3,7 @@ import {useModelDownload} from 'src/features/model-download'
 import {createModelDownloadController} from 'src/features/model-download/controller'
 vi.mock('src/features/model-download', () => ({useModelDownload: vi.fn()}))
 
-import {cleanup, fireEvent, render, screen} from '@solidjs/testing-library'
+import {cleanup, fireEvent, render, screen, waitFor} from '@solidjs/testing-library'
 import {runImageGeneration} from 'src/features/image-generation/client'
 import {afterEach, beforeEach, expect, it, vi} from 'vitest'
 import {Workspace} from '../Workspace'
@@ -27,8 +27,8 @@ it('should render indeterminate progress on generation start and keep the stop a
   fireEvent.input(screen.getByLabelText('어떤 장면을 만들까요?'), {
     target: {value: '춤추는 햄버거'},
   })
-  const generate = screen.getByRole('button', {name: '이미지 생성'}) as HTMLButtonElement
-  await vi.waitFor(() => expect(generate.disabled).toBe(false))
+  const generate = screen.getByRole('button', {name: '이미지 생성'})
+  await waitFor(() => expect(generate).toBeEnabled())
   fireEvent.click(generate)
   expect(screen.getByRole('progressbar').hasAttribute('value')).toBe(false)
   const options = vi.mocked(runImageGeneration).mock.calls[0]?.[0]

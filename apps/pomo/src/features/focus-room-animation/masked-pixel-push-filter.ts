@@ -1,3 +1,4 @@
+import {FILTER_SCENE_VERTEX} from './filter-vertex'
 import {Filter, GlProgram, type Texture, UniformGroup} from 'pixi.js'
 
 export interface MaskedPixelPushFilterOptions {
@@ -6,27 +7,8 @@ export interface MaskedPixelPushFilterOptions {
   readonly maskTexture: Texture
 }
 
-const FILTER_VERTEX = `
-in vec2 aPosition;
-out vec2 vMaskCoord;
-out vec2 vTextureCoord;
-
-uniform vec4 uInputSize;
-uniform vec4 uOutputFrame;
-uniform vec4 uOutputTexture;
-
-void main(void) {
-  vec2 position = aPosition * uOutputFrame.zw + uOutputFrame.xy;
-  position.x = position.x * (2.0 / uOutputTexture.x) - 1.0;
-  position.y = position.y * (2.0 * uOutputTexture.z / uOutputTexture.y) - uOutputTexture.z;
-  gl_Position = vec4(position, 0.0, 1.0);
-  vTextureCoord = aPosition * (uOutputFrame.zw * uInputSize.zw);
-  vMaskCoord = aPosition;
-}
-`
-
 const MASKED_PIXEL_PUSH_FRAGMENT = `
-in vec2 vMaskCoord;
+in vec2 vSceneCoord;
 in vec2 vTextureCoord;
 out vec4 finalColor;
 
@@ -38,7 +20,7 @@ uniform vec2 uDistancePixels;
 uniform float uProgress;
 
 void main(void) {
-  float maskWeight = texture(uMaskTexture, vMaskCoord).r;
+  float maskWeight = texture(uMaskTexture, vSceneCoord).r;
   vec2 sampleOffset = uDistancePixels * uProgress * maskWeight * uInputSize.zw;
   vec2 sampleCoordinate = clamp(vTextureCoord - sampleOffset, uInputClamp.xy, uInputClamp.zw);
   finalColor = texture(uTexture, sampleCoordinate);
@@ -66,7 +48,7 @@ export class MaskedPixelPushFilter extends Filter {
       glProgram: GlProgram.from({
         fragment: MASKED_PIXEL_PUSH_FRAGMENT,
         name: 'focus-room-masked-pixel-push',
-        vertex: FILTER_VERTEX,
+        vertex: FILTER_SCENE_VERTEX,
       }),
       resources: {
         maskedPixelPushUniforms: uniformGroup,

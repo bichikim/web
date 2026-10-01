@@ -2,7 +2,7 @@
 import {afterEach, beforeEach, expect, it, vi} from 'vitest'
 import {generateExtendedSound} from '../extension'
 import {generateLoopSound} from '../loop'
-import type {LoopRequest, SoundRequest} from '../worker'
+import type {LoopRequest, SoundRequest} from '../types'
 
 vi.mock('../loop', () => ({generateLoopSound: vi.fn()}))
 vi.mock('../runtime', () => ({generateSound: vi.fn()}))

@@ -7,9 +7,9 @@ import type {
   ProviderEvent,
   ProviderEventsResult,
 } from './types'
-import {mapInBatches} from './batch'
+import {aggregateProviderEvents} from './aggregate-provider-events'
 import {formatCalendarDate} from './format-calendar-date'
-import {requestTokens} from './oauth'
+import {createOAuthTokenMethods} from './create-oauth-token-methods'
 import {paginate, PAGINATION_LIMITS} from './paginate'
 
 const MICROSOFT_ACCOUNT_API =
@@ -20,7 +20,6 @@ const MICROSOFT_TOKEN_URL = 'https://login.microsoftonline.com/common/oauth2/v2.
 const MICROSOFT_SCOPES = ['openid', 'email', 'offline_access', 'User.Read', 'Calendars.Read'].join(
   ' ',
 )
-const EVENT_REQUEST_CONCURRENCY = 4
 const CALENDAR_DATE_LENGTH = 10
 const graphDateTimeSchema = z.object({dateTime: z.string(), timeZone: z.string()})
 const graphEventSchema = z.object({
@@ -202,10 +201,9 @@ const listEvents = async (
     year: 'numeric',
   })
   const calendarList = await listCalendars(options.accessToken, fetch)
-  const eventLists = await mapInBatches(
-    calendarList.calendars,
-    EVENT_REQUEST_CONCURRENCY,
-    (calendar) =>
+  return aggregateProviderEvents({
+    calendars: calendarList.calendars,
+    load: (calendar) =>
       listCalendarEvents({
         calendarId: calendar.id,
         calendarLabel: calendar.name,
@@ -213,15 +211,8 @@ const listEvents = async (
         eventOptions: options,
         fetch,
       }),
-  )
-  return {
-    events: eventLists.flatMap((eventList) => eventList.events),
-    truncated: calendarList.truncated || eventLists.some((eventList) => eventList.truncated),
-    unavailableCalendars: eventLists.reduce(
-      (count, eventList) => count + eventList.unavailableCalendars,
-      0,
-    ),
-  }
+    truncated: calendarList.truncated,
+  })
 }
 
 export const createMicrosoftCalendarProvider = (
@@ -229,12 +220,6 @@ export const createMicrosoftCalendarProvider = (
 ): CalendarProvider => {
   const fetch = options.fetch ?? globalThis.fetch
   const now = options.now ?? (() => new Date())
-  const createTokenBody = () =>
-    new URLSearchParams([
-      ['client_id', options.clientId],
-      ['client_secret', options.clientSecret],
-      ['scope', MICROSOFT_SCOPES],
-    ])
 
   return {
     createAuthorizationUrl: (authorizationOptions) => {
@@ -251,14 +236,14 @@ export const createMicrosoftCalendarProvider = (
       ]).toString()
       return url.href
     },
-    exchangeCode: (exchangeOptions) => {
-      const body = createTokenBody()
-      body.set('code', exchangeOptions.code)
-      body.set('code_verifier', exchangeOptions.codeVerifier)
-      body.set('grant_type', 'authorization_code')
-      body.set('redirect_uri', exchangeOptions.redirectUri)
-      return requestTokens({body, fetch, now, tokenUrl: MICROSOFT_TOKEN_URL})
-    },
+    ...createOAuthTokenMethods({
+      clientId: options.clientId,
+      clientSecret: options.clientSecret,
+      fetch,
+      now,
+      scope: MICROSOFT_SCOPES,
+      tokenUrl: MICROSOFT_TOKEN_URL,
+    }),
     listEvents: (query) => listEvents(query, fetch),
     provider: 'microsoft',
     readAccount: async (accessToken) => {
@@ -276,13 +261,6 @@ export const createMicrosoftCalendarProvider = (
           account.mail ?? account.userPrincipalName ?? account.displayName?.trim() ?? 'Microsoft',
         subject: account.id,
       }
-    },
-    refreshTokens: async (refreshToken) => {
-      const body = createTokenBody()
-      body.set('grant_type', 'refresh_token')
-      body.set('refresh_token', refreshToken)
-      const tokens = await requestTokens({body, fetch, now, tokenUrl: MICROSOFT_TOKEN_URL})
-      return {...tokens, refreshToken: tokens.refreshToken ?? refreshToken}
     },
   }
 }
