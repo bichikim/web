@@ -124,6 +124,39 @@ describe('useReplySpeech', () => {
     expect(voice.speak).toHaveBeenCalledExactlyOnceWith('Please ask Dr. Smith to call.')
   })
 
+  it('should speak earlier sentences while holding only a trailing decimal period', () => {
+    const {result, voice, setStreamingText} = setup()
+    result.start()
+    const partialText = 'An earlier sentence. The value is 3.'
+
+    setStreamingText(partialText)
+    expect(voice.speak).toHaveBeenCalledExactlyOnceWith('An earlier sentence.')
+
+    setStreamingText(`${partialText}14. Next sentence.`)
+    expect(voice.speak.mock.calls.map(([text]) => text)).toEqual([
+      'An earlier sentence.',
+      'The value is 3.14.',
+      'Next sentence.',
+    ])
+  })
+
+  it('should discard a held decimal period after reply speech is stopped', () => {
+    const {result, voice, setAnswerDraft, setStreamingText} = setup()
+    result.start()
+    const partialText = 'The value is 3.'
+
+    setStreamingText(partialText)
+    expect(voice.speak).not.toHaveBeenCalled()
+
+    result.stop()
+    const completedText = 'The value is 3.14.'
+    setStreamingText(completedText)
+    setAnswerDraft({content: completedText, id: 'stopped'})
+
+    expect(voice.speak).not.toHaveBeenCalled()
+    expect(voice.finish).not.toHaveBeenCalled()
+  })
+
   it('should not repeat a completed sentence when streaming text shrinks', async () => {
     const {result, voice, setStreamingText} = setup()
     result.start()
