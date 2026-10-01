@@ -99,7 +99,7 @@ const createProps = () => ({
 })
 
 describe('ReviewControls', () => {
-  it('should render scribble controls and forward every child control change', () => {
+  it('should render scribble controls and the initial reference value', () => {
     const props = createProps()
     render(() => <ReviewControls {...props} />)
 
@@ -121,10 +121,25 @@ describe('ReviewControls', () => {
       'aria-valuenow',
       '0.5',
     )
+  })
+
+  it('should forward panel, scene, and animation changes', () => {
+    const props = createProps()
+    render(() => <ReviewControls {...props} />)
 
     fireEvent.click(screen.getByRole('button', {name: '레이어 패널 축소'}))
     fireEvent.click(screen.getByRole('button', {name: '하찮은 스타일'}))
     fireEvent.click(screen.getByRole('button', {name: '미세 애니메이션'}))
+
+    expect(props.onCollapse).toHaveBeenCalledOnce()
+    expect(props.onSceneStyleChange).toHaveBeenCalledWith('original')
+    expect(props.onAnimationChange).toHaveBeenCalledWith(false)
+  })
+
+  it('should forward layer and mouth control changes', () => {
+    const props = createProps()
+    render(() => <ReviewControls {...props} />)
+
     fireEvent.click(screen.getByRole('button', {name: '머리 레이어'}))
     fireEvent.click(screen.getByRole('button', {name: '눈 레이어'}))
     fireEvent.click(screen.getByRole('button', {name: '입 레이어'}))
@@ -133,15 +148,7 @@ describe('ReviewControls', () => {
     fireEvent.click(screen.getByRole('button', {name: '입 모양'}))
     fireEvent.click(screen.getByRole('button', {name: '입 프레임'}))
     fireEvent.click(screen.getByRole('button', {name: '입 위치 비교'}))
-    fireEvent.click(screen.getByRole('button', {name: '모두 표시'}))
-    fireEvent.click(screen.getByRole('button', {name: '모두 숨김'}))
-    fireEvent.keyDown(screen.getByRole('slider', {name: '원본 오버레이'}), {
-      key: 'ArrowRight',
-    })
 
-    expect(props.onCollapse).toHaveBeenCalledOnce()
-    expect(props.onSceneStyleChange).toHaveBeenCalledWith('original')
-    expect(props.onAnimationChange).toHaveBeenCalledWith(false)
     expect(props.onHeadChange).toHaveBeenCalledWith(false)
     expect(props.onEyesChange).toHaveBeenCalledWith(false)
     expect(props.onMouthChange).toHaveBeenCalledWith(false)
@@ -150,6 +157,18 @@ describe('ReviewControls', () => {
     expect(props.onVisemeChange).toHaveBeenCalledWith('wide')
     expect(props.onMouthFrameChange).toHaveBeenCalledWith('round')
     expect(props.onMouthPositionComparisonChange).toHaveBeenCalledWith(true)
+  })
+
+  it('should forward bulk visibility and reference changes', () => {
+    const props = createProps()
+    render(() => <ReviewControls {...props} />)
+
+    fireEvent.click(screen.getByRole('button', {name: '모두 표시'}))
+    fireEvent.click(screen.getByRole('button', {name: '모두 숨김'}))
+    fireEvent.keyDown(screen.getByRole('slider', {name: '원본 오버레이'}), {
+      key: 'ArrowRight',
+    })
+
     expect(props.onShowAll).toHaveBeenCalledOnce()
     expect(props.onHideAll).toHaveBeenCalledOnce()
     expect(props.onReferenceChange).toHaveBeenCalledOnce()

@@ -149,6 +149,37 @@ it('should configure unique location options and forward search and selection', 
   expect(onChange).toHaveBeenCalledWith(tokyo)
 })
 
+it('should keep nearby provider results separately selectable by their coordinate IDs', () => {
+  const nearbyLocations = [
+    {
+      country: 'GB',
+      id: 'openweather:51.52001,-0.11001',
+      name: 'Location A',
+      region: 'England',
+    },
+    {
+      country: 'GB',
+      id: 'openweather:51.52004,-0.11004',
+      name: 'Location B',
+      region: 'England',
+    },
+  ] as const satisfies ReadonlyArray<WeatherLocation>
+  const onChange = vi.fn()
+  searchMocks.results.mockReturnValue(nearbyLocations)
+  render(() => <PWeatherLocationSearch location={seoul} onChange={onChange} />)
+
+  const props = comboboxMocks.rootProps as {
+    onChange: (location: WeatherLocation | null) => void
+    onInputChange: (query: string) => void
+    options: ReadonlyArray<WeatherLocation>
+  }
+  props.onInputChange('nearby')
+
+  expect(props.options).toEqual(nearbyLocations)
+  props.onChange(nearbyLocations[1])
+  expect(onChange).toHaveBeenCalledWith(nearbyLocations[1])
+})
+
 it.each(['ko', 'en'] as const)('should format city selection labels for %s', (locale) => {
   overwriteGetLocale(() => locale)
   render(() => <PWeatherLocationSearch location={seoul} />)

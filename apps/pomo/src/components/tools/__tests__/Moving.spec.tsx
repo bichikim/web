@@ -2,6 +2,13 @@
 import {PreferenceProvider} from 'src/hooks/use-preference'
 import {render, screen} from '@solidjs/testing-library'
 import {afterEach, expect, it, vi} from 'vitest'
+
+vi.mock('../../p-select/PSelect', () => ({
+  PSelect: (props: {label: string; value: string}) => (
+    <div aria-label={props.label} data-value={props.value} />
+  ),
+}))
+
 import {Moving} from '../Moving'
 
 afterEach(() => {

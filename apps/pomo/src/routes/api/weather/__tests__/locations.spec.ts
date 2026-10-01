@@ -49,6 +49,29 @@ it('should return cached registered locations for a trimmed query', async () => 
   })
 })
 
+it('should return nearby coordinates under distinct IDs in a cacheable response', async () => {
+  const locations = [
+    {
+      country: 'GB',
+      id: 'openweather:51.52001,-0.11001',
+      name: 'Location A',
+      region: 'England',
+    },
+    {
+      country: 'GB',
+      id: 'openweather:51.52004,-0.11004',
+      name: 'Location B',
+      region: 'England',
+    },
+  ]
+  weatherLocationMocks.searchWorldWeatherLocations.mockResolvedValue(locations)
+
+  const response = await GET(createEvent('q=nearby'))
+
+  expect(response.headers.get('Cache-Control')).toBe('public, max-age=60, s-maxage=86400')
+  await expect(response.json()).resolves.toEqual(locations)
+})
+
 it('should hide provider failures behind a retryable service response', async () => {
   weatherLocationMocks.searchWorldWeatherLocations.mockRejectedValue(new Error('secret'))
 
