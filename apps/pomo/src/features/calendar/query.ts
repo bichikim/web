@@ -4,6 +4,21 @@ import type {CalendarEventRange} from './types'
 const CALENDAR_INTENT_PATTERN = /(?:일정|미팅|회의|약속|스케줄)/u
 const WEEK_BOUNDARY_PATTERN =
   /(?=$|[\s,.!?…]|(?:에는|에서|부터|까지|은|는|이|가|을|를|에|엔|도|로|만|중|쯤)(?=$|[\s,.!?…]))/u
+const WEEKDAY_NAME_PATTERN = /(?:월|화|수|목|금|토|일)요일/u
+const WEEKDAY_BOUNDARY_PATTERN =
+  /(?=$|[\s,.!?…]|(?:에는|에서|부터|까지|은|는|이|가|을|를|에|엔|도|로|만|중|쯤|과|와|하고|및|말고|빼고|제외(?:하고)?|아니|아닌|안\s*(?:되|돼))(?=$|[\s,.!?…]))/u
+const WEEKDAY_PATTERN = new RegExp(
+  `${WEEKDAY_NAME_PATTERN.source}${WEEKDAY_BOUNDARY_PATTERN.source}`,
+  'u',
+)
+const WEEKDAY_PARTICLE_PATTERN = /(?:에는|에|엔|은|는|이|가|을|를|도)/u
+const WEEKDAY_EXCLUSION_TERM_PATTERN =
+  /(?:말고|빼고|제외(?:하고)?|아니고|아닌|아니|안\s*(?:되(?:고)?|돼(?:고)?))/u
+const WEEKDAY_LIST_CONNECTOR_PATTERN = /(?:과|와|하고|및|,)/u
+const WEEKDAY_EXCLUSION_PATTERN = new RegExp(
+  `${WEEKDAY_PATTERN.source}(?:(?!${WEEKDAY_NAME_PATTERN.source}).)*(?:말고|빼고|제외(?:하고)?|아니|아닌|안\\s*(?:되|돼))`,
+  'u',
+)
 const THIS_WEEK_PATTERN = new RegExp(`이번 ?주${WEEK_BOUNDARY_PATTERN.source}`, 'u')
 const THIS_WEEK_EXCLUSION_PATTERN =
   /이번 ?주(?:(?!다음 ?주).)*(?:말고|빼고|제외(?:하고)?|아니|아닌|안\s*(?:되|돼))/u
@@ -33,6 +48,15 @@ const IMPLICIT_SCHEDULE_PATTERN = new RegExp(
     `(?:\\s*(?:새벽|아침|오전|점심|오후|저녁|밤|낮|정오))?` +
     `(?:\\s*(?:에는|에|엔|은|는|도))?\\s*` +
     `(?:뭐|무엇)(?:가|이|은|는)?\\s*(?:있|하)`,
+  'u',
+)
+const IMPLICIT_WEEKDAY_SCHEDULE_PATTERN = new RegExp(
+  `^\\s*(?:${WEEKDAY_PATTERN.source}` +
+    `(?:\\s*(?:${WEEKDAY_PARTICLE_PATTERN.source}))?` +
+    `(?:\\s*(?:${WEEKDAY_EXCLUSION_TERM_PATTERN.source}|${WEEKDAY_LIST_CONNECTOR_PATTERN.source}))?\\s*)+` +
+    `(?:\\s*(?:새벽|아침|오전|점심|오후|저녁|밤|낮|정오))?` +
+    `(?:\\s*(?:에는|에|엔|은|는|도))?\\s*` +
+    `(?:뭐|무엇)(?:가|이|은|는)?\\s*(?:있|하)(?:어)?[?.!…]*\\s*$`,
   'u',
 )
 const MILLISECONDS_PER_DAY = 86_400_000
@@ -95,6 +119,14 @@ interface CreateStandaloneCalendarDateRangeOptions {
   readonly text: string
 }
 
+interface CreateStandaloneCalendarWeekdayRangeOptions {
+  readonly boundary: (days: number, time?: string) => Date
+  readonly currentWeekday: number
+  readonly now: Date
+  readonly text: string
+  readonly weekdays: ReadonlyArray<number>
+}
+
 interface CreateCalendarPeriodRangeOptions {
   readonly boundary: (days: number) => Date
   readonly daysUntilNextMonday: number
@@ -149,6 +181,22 @@ const getFirstRequestedDateOffset = (relativeDayOffsets: ReadonlyArray<number>) 
   relativeDayOffsets[0] ?? DAY_AFTER_TOMORROW_START_DAYS
 const getLastRequestedDateOffset = (relativeDayOffsets: ReadonlyArray<number>) =>
   relativeDayOffsets[relativeDayOffsets.length - 1] ?? DAY_AFTER_TOMORROW_START_DAYS
+
+const KOREAN_WEEKDAY_OFFSETS: Readonly<Record<string, number>> = {
+  금요일: 5,
+  목요일: 4,
+  수요일: 3,
+  월요일: 1,
+  일요일: 0,
+  토요일: 6,
+  화요일: 2,
+}
+
+const getRequestedWeekdays = (text: string): ReadonlyArray<number> =>
+  [...text.matchAll(new RegExp(WEEKDAY_PATTERN.source, 'gu'))]
+    .filter((match) => match.index !== undefined)
+    .filter((match) => !WEEKDAY_EXCLUSION_PATTERN.test(text.slice(match.index)))
+    .map((match) => KOREAN_WEEKDAY_OFFSETS[match[0]])
 
 const createCalendarDateRange = ({
   afternoonStart,
@@ -228,6 +276,36 @@ const createStandaloneCalendarDateRange = ({
   return null
 }
 
+const createStandaloneCalendarWeekdayRange = ({
+  boundary,
+  currentWeekday,
+  now,
+  text,
+  weekdays,
+}: CreateStandaloneCalendarWeekdayRangeOptions): CalendarEventRange | null => {
+  if (weekdays.length === 0) {
+    return null
+  }
+
+  const dayOffsets = weekdays.map(
+    (weekday) => (weekday - currentWeekday + DAYS_PER_WEEK) % DAYS_PER_WEEK,
+  )
+  const firstDayOffset = Math.min(...dayOffsets)
+  const lastDayOffset = Math.max(...dayOffsets)
+  const morningEnd = boundary(firstDayOffset, '12:00:00')
+  const isPastSameDayMorning =
+    firstDayOffset === 0 && text.includes('오전') && now.getTime() >= morningEnd.getTime()
+  const start = firstDayOffset === 0 && !isPastSameDayMorning ? now : boundary(firstDayOffset)
+  return createCalendarDateRange({
+    afternoonStart: morningEnd,
+    end: boundary(lastDayOffset + 1),
+    morningEnd: boundary(lastDayOffset, '12:00:00'),
+    now,
+    start,
+    text,
+  })
+}
+
 const getWeekendStartOffset = ({
   daysUntilNextMonday,
   intent,
@@ -298,7 +376,9 @@ const createCalendarPeriodRange = ({
 }
 
 const hasCalendarQueryIntent = (text: string) =>
-  CALENDAR_INTENT_PATTERN.test(text) || IMPLICIT_SCHEDULE_PATTERN.test(text)
+  CALENDAR_INTENT_PATTERN.test(text) ||
+  IMPLICIT_SCHEDULE_PATTERN.test(text) ||
+  IMPLICIT_WEEKDAY_SCHEDULE_PATTERN.test(text)
 
 /** Resolves a bounded calendar range in the requested time zone. */
 export const createCalendarQuery = (
@@ -315,6 +395,16 @@ export const createCalendarQuery = (
   const boundary = (days: number, time = '00:00:00') => {
     const date = dayjs.utc(local.format('YYYY-MM-DD')).add(days, 'day').format('YYYY-MM-DD')
     return dayjs.tz(`${date}T${time}`, timeZone).toDate()
+  }
+
+  if (IMPLICIT_WEEKDAY_SCHEDULE_PATTERN.test(options.text)) {
+    return createStandaloneCalendarWeekdayRange({
+      boundary,
+      currentWeekday: local.day(),
+      now,
+      text: options.text,
+      weekdays: getRequestedWeekdays(options.text),
+    })
   }
 
   const {includesNextWeek, includesThisWeek, relativeDayOffsets, weekendIntent} =
