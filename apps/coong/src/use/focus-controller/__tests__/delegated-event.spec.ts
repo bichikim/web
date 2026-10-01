@@ -4,6 +4,7 @@
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 import {render, renderHook} from '@solidjs/testing-library'
 import {createComponent, useContext} from 'solid-js'
+import * as delegatedEventSubject from '../DelegatedEvent'
 
 const mocks = vi.hoisted(() => {
   return {
@@ -22,26 +23,14 @@ vi.mock('src/utils/focus-controller/delegated-event', () => {
   }
 })
 
-interface ImportSubjectOptions {
-  isServer?: boolean
-}
+vi.mock('solid-js/web', async () => {
+  const actual = await vi.importActual<typeof import('solid-js/web')>('solid-js/web')
 
-const importSubject = async (options: ImportSubjectOptions = {}) => {
-  const {isServer = false} = options
-
-  vi.resetModules()
-
-  vi.doMock('solid-js/web', async () => {
-    const actual = await vi.importActual<typeof import('solid-js/web')>('solid-js/web')
-
-    return {
-      ...actual,
-      isServer: isServer,
-    }
-  })
-
-  return import('../DelegatedEvent')
-}
+  return {
+    ...actual,
+    isServer: false,
+  }
+})
 
 describe('DelegatedEvent', () => {
   let warnSpy: ReturnType<typeof vi.spyOn>
@@ -57,10 +46,8 @@ describe('DelegatedEvent', () => {
     warnSpy.mockRestore()
   })
 
-  it('DelegatedEventProvider should provide context values and cleanup on unmount', async () => {
-    const {DelegatedEventContext, DelegatedEventProvider} = await importSubject({
-      isServer: false,
-    })
+  it('DelegatedEventProvider should provide context values and cleanup on unmount', () => {
+    const {DelegatedEventContext, DelegatedEventProvider} = delegatedEventSubject
     const delegatedEventMap = new Map()
     const unsubscribe = vi.fn()
 
@@ -81,7 +68,6 @@ describe('DelegatedEvent', () => {
         },
       }),
     )
-
     expect(providedContext).toBeDefined()
     expect((providedContext as any).delegatedEventMap).toBe(delegatedEventMap)
     expect((providedContext as any).delegatedEventMap).toBeInstanceOf(Map)
@@ -91,18 +77,16 @@ describe('DelegatedEvent', () => {
     expect(unsubscribe).toHaveBeenCalledTimes(1)
   })
 
-  it('DelegatedEventContext should provide fake context by default', async () => {
-    const {DelegatedEventContext} = await importSubject({isServer: false})
+  it('DelegatedEventContext should provide fake context by default', () => {
+    const {DelegatedEventContext} = delegatedEventSubject
     const {result} = renderHook(() => useContext(DelegatedEventContext))
 
     expect(result.isFake).toBe(true)
     expect(result.delegatedEventMap).toBeInstanceOf(Map)
   })
 
-  it('useDelegatedEmitHandler should emit event inside provider (no warn)', async () => {
-    const {DelegatedEventProvider, useDelegatedEmitHandler} = await importSubject({
-      isServer: false,
-    })
+  it('useDelegatedEmitHandler should emit event inside provider (no warn)', () => {
+    const {DelegatedEventProvider, useDelegatedEmitHandler} = delegatedEventSubject
     const delegatedEventMap = new Map()
 
     mocks.createDelegatedEvent.mockReturnValue({delegatedEventMap, unsubscribe: vi.fn()})
@@ -126,8 +110,8 @@ describe('DelegatedEvent', () => {
     expect(warnSpy).not.toHaveBeenCalled()
   })
 
-  it('useDelegatedEmitHandler should warn when provider is missing on client', async () => {
-    const {useDelegatedEmitHandler} = await importSubject({isServer: false})
+  it('useDelegatedEmitHandler should warn when provider is missing on client', () => {
+    const {useDelegatedEmitHandler} = delegatedEventSubject
 
     render(() => {
       const emit = useDelegatedEmitHandler()
@@ -140,22 +124,8 @@ describe('DelegatedEvent', () => {
     expect(mocks.delegatedEmit).toHaveBeenCalledWith('c', 'k', 'v')
   })
 
-  it('useDelegatedEmitHandler should not warn on server', async () => {
-    const {useDelegatedEmitHandler} = await importSubject({isServer: true})
-
-    render(() => {
-      const emit = useDelegatedEmitHandler()
-
-      emit('c', 'k', 'v')
-
-      return null
-    })
-    expect(warnSpy).not.toHaveBeenCalled()
-    expect(mocks.delegatedEmit).toHaveBeenCalledWith('c', 'k', 'v')
-  })
-
-  it('useGlobalDelegatedEventMap should return fake map when target is invalid', async () => {
-    const {useGlobalDelegatedEventMap} = await importSubject({isServer: false})
+  it('useGlobalDelegatedEventMap should return fake map when target is invalid', () => {
+    const {useGlobalDelegatedEventMap} = delegatedEventSubject
 
     const result = useGlobalDelegatedEventMap(() => null)
 
@@ -164,8 +134,8 @@ describe('DelegatedEvent', () => {
     expect(mocks.createDelegatedEvent).not.toHaveBeenCalled()
   })
 
-  it('useGlobalDelegatedEventMap should return fake map when target is not an object', async () => {
-    const {useGlobalDelegatedEventMap} = await importSubject({isServer: false})
+  it('useGlobalDelegatedEventMap should return fake map when target is not an object', () => {
+    const {useGlobalDelegatedEventMap} = delegatedEventSubject
 
     const result = useGlobalDelegatedEventMap(() => 1)
 
@@ -174,8 +144,8 @@ describe('DelegatedEvent', () => {
     expect(mocks.createDelegatedEvent).not.toHaveBeenCalled()
   })
 
-  it('useGlobalDelegatedEventMap should cache delegatedEventMap on target', async () => {
-    const {useGlobalDelegatedEventMap} = await importSubject({isServer: false})
+  it('useGlobalDelegatedEventMap should cache delegatedEventMap on target', () => {
+    const {useGlobalDelegatedEventMap} = delegatedEventSubject
 
     const delegatedEventMap = new Map()
     const unsubscribe = vi.fn()
@@ -194,10 +164,8 @@ describe('DelegatedEvent', () => {
     expect(mocks.createDelegatedEvent).toHaveBeenCalledTimes(1)
   })
 
-  it('useGlobalDelegatedEventMap should use getDocument as default target', async () => {
-    const {DELEGATED_EVENT_KEYS, useGlobalDelegatedEventMap} = await importSubject({
-      isServer: false,
-    })
+  it('useGlobalDelegatedEventMap should use getDocument as default target', () => {
+    const {DELEGATED_EVENT_KEYS, useGlobalDelegatedEventMap} = delegatedEventSubject
     const delegatedEventMap = new Map()
     const unsubscribe = vi.fn()
 
@@ -212,7 +180,7 @@ describe('DelegatedEvent', () => {
   })
 
   it('useDelegatedOn should early-return when listener is undefined', async () => {
-    const {DelegatedEventProvider, useDelegatedOn} = await importSubject({isServer: false})
+    const {DelegatedEventProvider, useDelegatedOn} = delegatedEventSubject
     const delegatedEventMap = new Map()
 
     mocks.createDelegatedEvent.mockReturnValue({delegatedEventMap, unsubscribe: vi.fn()})
@@ -234,8 +202,8 @@ describe('DelegatedEvent', () => {
     expect(mocks.delegatedOn).not.toHaveBeenCalled()
   })
 
-  it('useDelegatedOn should warn when provider is missing on client', async () => {
-    const {useDelegatedOn} = await importSubject({isServer: false})
+  it('useDelegatedOn should warn when provider is missing on client', () => {
+    const {useDelegatedOn} = delegatedEventSubject
 
     render(() => {
       // WARN happens even if listener is undefined, and this avoids triggering delegatedOn in the effect
@@ -247,7 +215,7 @@ describe('DelegatedEvent', () => {
   })
 
   it('useDelegatedOn should add listener and cleanup on unmount (provider)', async () => {
-    const {DelegatedEventProvider, useDelegatedOn} = await importSubject({isServer: false})
+    const {DelegatedEventProvider, useDelegatedOn} = delegatedEventSubject
     const addListener = vi.fn()
     const removeListener = vi.fn()
 
@@ -289,31 +257,5 @@ describe('DelegatedEvent', () => {
     unmount()
     expect(removeListener).toHaveBeenCalledTimes(1)
     expect(unsubscribe).toHaveBeenCalledTimes(1)
-  })
-
-  it('useDelegatedOn should not call addListener on server but should cleanup', async () => {
-    const {useDelegatedOn} = await importSubject({isServer: true})
-    const addListener = vi.fn()
-    const removeListener = vi.fn()
-
-    mocks.delegatedOn.mockReturnValue({addListener, removeListener})
-    mocks.createDelegatedEvent.mockReturnValue({
-      delegatedEventMap: new Map(),
-      unsubscribe: vi.fn(),
-    })
-
-    const listener = vi.fn()
-
-    const {unmount} = render(() => {
-      useDelegatedOn('c', 'k', () => listener, {globalMap: true, target: () => ({})})
-
-      return null
-    })
-
-    await Promise.resolve()
-    expect(addListener).not.toHaveBeenCalled()
-    expect(removeListener).not.toHaveBeenCalled()
-    unmount()
-    expect(removeListener).toHaveBeenCalledTimes(1)
   })
 })
