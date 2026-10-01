@@ -60,21 +60,9 @@ const stubAudioMetadata = (durationSeconds: number): void => {
   vi.spyOn(globalThis.URL, 'revokeObjectURL').mockImplementation(() => undefined)
 }
 
-it('should persist a changed track title when re-saving a custom album', async () => {
-  vi.stubGlobal('crypto', {
-    randomUUID: () => 'custom-album:album-1',
-  })
-
-  const {readCustomAlbumDraft, readCustomAlbums, saveCustomAlbum} =
-    await import('src/features/custom-albums')
+const seedCustomAlbum = async (trackTitle: string, audio: Blob) => {
+  const albumId = 'custom-album:album-1'
   const trackId = 'custom-track:track-1'
-  const baseTrack = {
-    audio: new Blob(['audio'], {type: 'audio/mpeg'}),
-    durationSeconds: 60,
-    fileName: 'song.mp3',
-    id: trackId,
-    title: 'Original title',
-  }
   const albumOptions = {
     albumId: null,
     artist: 'Artist',
@@ -83,13 +71,60 @@ it('should persist a changed track title when re-saving a custom album', async (
     coverSource: 'automatic' as const,
     title: 'Album',
   }
+  const {ALBUM_STORE_NAME, TRACK_STORE_NAME, openCustomAlbumDatabase, waitForTransaction} =
+    await import('src/features/custom-albums/database')
+  const database = await openCustomAlbumDatabase()
+  const transaction = database.transaction([ALBUM_STORE_NAME, TRACK_STORE_NAME], 'readwrite')
+  const finished = waitForTransaction(transaction)
+  const now = Date.now()
 
-  const albumId = await saveCustomAlbum({...albumOptions, tracks: [baseTrack]})
+  transaction.objectStore(ALBUM_STORE_NAME).put({
+    artist: albumOptions.artist,
+    coverIcon: albumOptions.coverIcon,
+    coverSource: albumOptions.coverSource,
+    createdAt: now,
+    id: albumId,
+    title: albumOptions.title,
+    trackIds: [trackId],
+    updatedAt: now,
+  })
+  transaction.objectStore(TRACK_STORE_NAME).put({
+    albumId,
+    artist: albumOptions.artist,
+    audio,
+    durationSeconds: 60,
+    fileName: 'song.mp3',
+    id: trackId,
+    title: trackTitle,
+  })
+
+  await finished
+
+  return {
+    albumId,
+    albumOptions,
+    track: {
+      audio,
+      durationSeconds: 60,
+      fileName: 'song.mp3',
+      id: trackId,
+      title: trackTitle,
+    },
+  }
+}
+
+it('should persist a changed track title when re-saving a custom album', async () => {
+  const {albumId, albumOptions, track} = await seedCustomAlbum(
+    'Original title',
+    new Blob(['audio'], {type: 'audio/mpeg'}),
+  )
+  const {readCustomAlbumDraft, readCustomAlbums, saveCustomAlbum} =
+    await import('src/features/custom-albums')
 
   await saveCustomAlbum({
     ...albumOptions,
     albumId,
-    tracks: [{...baseTrack, title: 'Renamed title'}],
+    tracks: [{...track, title: 'Renamed title'}],
   })
 
   const draft = await readCustomAlbumDraft({albumId})
@@ -100,34 +135,16 @@ it('should persist a changed track title when re-saving a custom album', async (
 })
 
 it('should persist replaced track audio when re-saving with the same title and artist', async () => {
-  vi.stubGlobal('crypto', {
-    randomUUID: () => 'custom-album:album-1',
-  })
-
+  const {albumId, albumOptions, track} = await seedCustomAlbum(
+    'Same title',
+    new Blob(['audio-a'], {type: 'audio/mpeg'}),
+  )
   const {readCustomAlbumDraft, saveCustomAlbum} = await import('src/features/custom-albums')
-  const trackId = 'custom-track:track-1'
-  const baseTrack = {
-    audio: new Blob(['audio-a'], {type: 'audio/mpeg'}),
-    durationSeconds: 60,
-    fileName: 'song.mp3',
-    id: trackId,
-    title: 'Same title',
-  }
-  const albumOptions = {
-    albumId: null,
-    artist: 'Artist',
-    coverIcon: 'disc' as const,
-    coverImage: {kind: 'keep' as const},
-    coverSource: 'automatic' as const,
-    title: 'Album',
-  }
-
-  const albumId = await saveCustomAlbum({...albumOptions, tracks: [baseTrack]})
 
   await saveCustomAlbum({
     ...albumOptions,
     albumId,
-    tracks: [{...baseTrack, audio: new Blob(['audio-b'], {type: 'audio/mpeg'})}],
+    tracks: [{...track, audio: new Blob(['audio-b'], {type: 'audio/mpeg'})}],
   })
 
   const draft = await readCustomAlbumDraft({albumId})

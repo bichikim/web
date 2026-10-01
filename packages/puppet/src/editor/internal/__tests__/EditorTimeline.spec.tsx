@@ -24,6 +24,38 @@ afterEach(() => {
   vi.restoreAllMocks()
 })
 
+const renderAllMotionTimelines = async () => {
+  const [currentTime, setCurrentTime] = createSignal(0.5)
+  const [document, setDocument] = createSignal<PuppetDocument>(createDemoDocument())
+  const [motionId, setMotionId] = createSignal('idle-deform')
+  const onMotionSeek = vi.fn((nextMotionId: string, time: number) => {
+    setMotionId(nextMotionId)
+    setCurrentTime(time)
+  })
+  const view = render(() => (
+    <EditorTimeline
+      currentTime={currentTime()}
+      document={document()}
+      motionId={motionId()}
+      onDocumentChange={setDocument}
+      onMotionSeek={onMotionSeek}
+    />
+  ))
+
+  fireEvent.keyDown(view.getByRole('button', {name: /모션 선택/}), {key: 'Enter'})
+  await waitFor(() => screen.getByRole('option', {name: '모든 타임라인 보기'}))
+  fireEvent.keyDown(screen.getByRole('option', {name: '모든 타임라인 보기'}), {key: 'Enter'})
+
+  return {
+    blinkGroup: view.getByRole('region', {name: 'blink 타임라인'}),
+    document,
+    idleGroup: view.getByRole('region', {name: 'idle-deform 타임라인'}),
+    nodGroup: view.getByRole('region', {name: 'nod 타임라인'}),
+    onMotionSeek,
+    view,
+  }
+}
+
 describe('EditorTimeline', () => {
   test('should reset the swipe state when the next parameter takes a removed row position', () => {
     const [document, setDocument] = createSignal<PuppetDocument>(createDemoDocument())
@@ -303,31 +335,8 @@ describe('EditorTimeline', () => {
     expect(motionId()).toBe('blink')
   })
 
-  test('should group all motions with independently retained timeline positions', async () => {
-    const [currentTime, setCurrentTime] = createSignal(0.5)
-    const [document, setDocument] = createSignal<PuppetDocument>(createDemoDocument())
-    const [motionId, setMotionId] = createSignal('idle-deform')
-    const onMotionSeek = vi.fn((nextMotionId: string, time: number) => {
-      setMotionId(nextMotionId)
-      setCurrentTime(time)
-    })
-    const view = render(() => (
-      <EditorTimeline
-        currentTime={currentTime()}
-        document={document()}
-        motionId={motionId()}
-        onDocumentChange={setDocument}
-        onMotionSeek={onMotionSeek}
-      />
-    ))
-
-    fireEvent.keyDown(view.getByRole('button', {name: /모션 선택/}), {key: 'Enter'})
-    await waitFor(() => screen.getByRole('option', {name: '모든 타임라인 보기'}))
-    fireEvent.keyDown(screen.getByRole('option', {name: '모든 타임라인 보기'}), {key: 'Enter'})
-
-    const idleGroup = view.getByRole('region', {name: 'idle-deform 타임라인'})
-    const blinkGroup = view.getByRole('region', {name: 'blink 타임라인'})
-    const nodGroup = view.getByRole('region', {name: 'nod 타임라인'})
+  test('should render each motion timeline with its own retained position', async () => {
+    const {blinkGroup, idleGroup, nodGroup, view} = await renderAllMotionTimelines()
     const idleSeek = within(idleGroup).getByRole('slider', {name: 'idle-deform 재생 위치'})
     const blinkSeek = within(blinkGroup).getByRole('slider', {name: 'blink 재생 위치'})
     const nodSeek = within(nodGroup).getByRole('slider', {name: 'nod 재생 위치'})
@@ -344,6 +353,13 @@ describe('EditorTimeline', () => {
     expect(idleSeek).toHaveAttribute('aria-valuenow', '0.5')
     expect(blinkSeek).toHaveAttribute('aria-valuenow', '0')
     expect(nodSeek).toHaveAttribute('aria-valuenow', '0')
+  })
+
+  test('should retain independent positions when seeking different motion timelines', async () => {
+    const {blinkGroup, idleGroup, nodGroup, onMotionSeek} = await renderAllMotionTimelines()
+    const idleSeek = within(idleGroup).getByRole('slider', {name: 'idle-deform 재생 위치'})
+    const blinkSeek = within(blinkGroup).getByRole('slider', {name: 'blink 재생 위치'})
+    const nodSeek = within(nodGroup).getByRole('slider', {name: 'nod 재생 위치'})
 
     fireEvent.focus(blinkSeek)
     fireEvent.keyDown(blinkSeek, {key: 'End'})
@@ -357,7 +373,10 @@ describe('EditorTimeline', () => {
     expect(blinkSeek).toHaveAttribute('aria-valuenow', '0.4')
     expect(onMotionSeek).toHaveBeenNthCalledWith(1, 'blink', 0.4)
     expect(onMotionSeek).toHaveBeenNthCalledWith(2, 'nod', 0.8)
+  })
 
+  test('should select keyframes only in their owning motion timeline', async () => {
+    const {blinkGroup, idleGroup, onMotionSeek} = await renderAllMotionTimelines()
     const blinkKeyframe = within(blinkGroup).getByRole('button', {
       name: 'Angle X 0.20초 키프레임',
     })
@@ -366,6 +385,7 @@ describe('EditorTimeline', () => {
     })
     const blinkTrack = within(blinkGroup).getByLabelText('Angle X 트랙')
     const idleTrack = within(idleGroup).getByLabelText('Angle Y 트랙')
+
     fireEvent.click(blinkKeyframe)
     await waitFor(() => expect(blinkKeyframe).toHaveAttribute('aria-pressed', 'true'))
     expect(blinkTrack).toHaveAttribute('data-selected', '')
@@ -375,32 +395,8 @@ describe('EditorTimeline', () => {
     expect(blinkKeyframe).toHaveAttribute('aria-pressed', 'false')
     expect(blinkTrack).not.toHaveAttribute('data-selected')
     expect(idleTrack).toHaveAttribute('data-selected', '')
-    expect(onMotionSeek).toHaveBeenNthCalledWith(3, 'blink', 0.2)
-    expect(onMotionSeek).toHaveBeenNthCalledWith(4, 'idle-deform', 1)
-
-    vi.spyOn(blinkTrack, 'getBoundingClientRect').mockReturnValue(
-      DOMRect.fromRect({height: 20, width: 240}),
-    )
-    fireEvent(
-      blinkKeyframe,
-      new MouseEvent('pointerdown', {bubbles: true, button: 0, clientX: 120}),
-    )
-    fireEvent(blinkKeyframe, new MouseEvent('pointermove', {bubbles: true, clientX: 181}))
-    fireEvent(blinkKeyframe, new MouseEvent('pointerup', {bubbles: true, clientX: 181}))
-
-    await waitFor(() =>
-      expect(
-        within(view.getByRole('region', {name: 'blink 타임라인'})).getByRole('button', {
-          name: 'Angle X 0.29초 키프레임',
-        }),
-      ).toBeVisible(),
-    )
-    expect(
-      document()
-        .motions.find((candidate) => candidate.id === 'blink')
-        ?.tracks.find((track) => track.kind === 'parameter' && track.parameterId === 'angle-x')
-        ?.keyframes[1]?.time,
-    ).toBe(7 / 24)
+    expect(onMotionSeek).toHaveBeenNthCalledWith(1, 'blink', 0.2)
+    expect(onMotionSeek).toHaveBeenNthCalledWith(2, 'idle-deform', 1)
   })
 
   test('should batch-edit keyframes in the all-motions view', async () => {

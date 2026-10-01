@@ -59,4 +59,45 @@ describe('EditorTimeline', () => {
     expect(view.getByRole('button', {name: /모션 선택 모든 타임라인 보기/})).toBeVisible()
     expect(view.queryByRole('region', {name: 'blink 타임라인'})).not.toBeInTheDocument()
   })
+
+  test('should persist a dragged keyframe on its motion in the all-motions view', async () => {
+    const [document, setDocument] = createSignal<PuppetDocument>(createDemoDocument())
+    const view = render(() => (
+      <EditorTimeline document={document()} onDocumentChange={setDocument} />
+    ))
+
+    fireEvent.keyDown(view.getByRole('button', {name: /모션 선택/}), {key: 'Enter'})
+    await waitFor(() => screen.getByRole('option', {name: '모든 타임라인 보기'}))
+    fireEvent.keyDown(screen.getByRole('option', {name: '모든 타임라인 보기'}), {key: 'Enter'})
+
+    const blinkGroup = view.getByRole('region', {name: 'blink 타임라인'})
+    const blinkKeyframe = within(blinkGroup).getByRole('button', {
+      name: 'Angle X 0.20초 키프레임',
+    })
+    const blinkTrack = within(blinkGroup).getByLabelText('Angle X 트랙')
+
+    vi.spyOn(blinkTrack, 'getBoundingClientRect').mockReturnValue(
+      DOMRect.fromRect({height: 20, width: 240}),
+    )
+    fireEvent(
+      blinkKeyframe,
+      new MouseEvent('pointerdown', {bubbles: true, button: 0, clientX: 120}),
+    )
+    fireEvent(blinkKeyframe, new MouseEvent('pointermove', {bubbles: true, clientX: 181}))
+    fireEvent(blinkKeyframe, new MouseEvent('pointerup', {bubbles: true, clientX: 181}))
+
+    await waitFor(() =>
+      expect(
+        within(view.getByRole('region', {name: 'blink 타임라인'})).getByRole('button', {
+          name: 'Angle X 0.29초 키프레임',
+        }),
+      ).toBeVisible(),
+    )
+    expect(
+      document()
+        .motions.find((candidate) => candidate.id === 'blink')
+        ?.tracks.find((track) => track.kind === 'parameter' && track.parameterId === 'angle-x')
+        ?.keyframes[1]?.time,
+    ).toBe(7 / 24)
+  })
 })
