@@ -11,7 +11,7 @@ const RATE = 44100
 it.each([4, 2, 7.5, 10])(
   'should wrap a generated %s-second connection and preserve duration and middle samples',
   async (connectionSeconds) => {
-    const frames = 49 * RATE
+    const frames = 14 * RATE
     const original = new Int32Array(frames * 2)
     original.fill(1000, 0, 8 * RATE * 2)
     original.fill(2000, 8 * RATE * 2)

@@ -344,7 +344,7 @@
   "learning_language_en": "영어",
   "learning_language_ja": "일본어",
   "learning_words_input": "모르는 단어",
-  "learning_words_input_hint": "쉼표나 Enter로 여러 단어를 한 번에 추가할 수 있어요. 한 번에 최대 10개까지 입력할 수 있습니다.",
+  "learning_words_input_hint": "쉼표, 세미콜론, 줄바꿈 또는 Enter로 여러 단어를 한 번에 추가할 수 있어요. 한 번에 최대 10개까지 입력할 수 있습니다.",
   "learning_words_input_placeholder": "예: acknowledge, perspective",
   "learning_words_save": "단어 저장",
   "learning_words_saved": "저장한 단어",
@@ -399,7 +399,7 @@
   "learning_editor_word_source_direct": "직접 입력",
   "learning_editor_word_source_saved": "학습 단어에서 가져오기",
   "learning_editor_tags": "프롬프트 단어",
-  "learning_editor_tags_hint": "쉼표나 Enter로 태그를 만들 수 있어요. 최대 2개까지 입력할 수 있습니다.",
+  "learning_editor_tags_hint": "쉼표, 세미콜론, 줄바꿈 또는 Enter로 태그를 나눌 수 있어요. 최대 2개까지 입력할 수 있습니다.",
   "learning_editor_tags_placeholder": "예: home, wave",
   "learning_editor_remove_tag": "{tag} 태그 삭제",
   "learning_editor_saved_words_hint": "외운 단어를 제외한 현재 언어의 학습 단어 {count}개 중 {minimum}~{maximum}개를 무작위로 골라 프롬프트에 넣습니다. 문장에는 그중 최소 1개를 사용합니다.",
@@ -1391,5 +1391,9 @@
   "transfer_auto_accept": "모든 파일 받기 허용",
   "transfer_incoming_title": "파일 수신 요청",
   "transfer_incoming_description": "상대 기기가 보낸 파일입니다. 받으면 받은 파일 목록에 추가됩니다.",
-  "transfer_outgoing_description": "상대 기기가 파일을 수락하면 전송을 시작합니다."
+  "transfer_outgoing_description": "상대 기기가 파일을 수락하면 전송을 시작합니다.",
+  "toast_close": "알림 닫기",
+  "toast_count": "알림 {count}개",
+  "toast_label": "알림 목록",
+  "toast_waiting": "대기 {count}개"
 }

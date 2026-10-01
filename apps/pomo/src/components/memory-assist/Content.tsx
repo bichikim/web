@@ -12,12 +12,11 @@ interface PMemoryAssistContentProps {
   readonly weatherState?: WeatherState
   readonly calendarRevision?: number
   readonly onRefreshCalendar?: () => void
-  readonly onRequestClose?: () => void
 }
 export const PMemoryAssistContent = (props: PMemoryAssistContentProps) => (
   <>
     <Tabs.Content value="sentences">
-      <LanguageLearningLibrary onRequestClose={props.onRequestClose} />
+      <LanguageLearningLibrary />
     </Tabs.Content>
     <Tabs.Content value="words">
       <LanguageLearningWords />

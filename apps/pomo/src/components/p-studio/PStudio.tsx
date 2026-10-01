@@ -402,6 +402,13 @@ const StudioUi = (props: StudioUiProps) => (
               props.displayPreferences.onDialogueComposerVisibleChange
             }
             onTourOpen={props.tourHint.openTour}
+            tourHintVisible={
+              props.tourHint.visible() &&
+              !props.entry.isVisible() &&
+              props.displayPreferences.tourButtonVisible() &&
+              props.desktopMode.mode() !== 'desktop'
+            }
+            onDismissTourHint={props.tourHint.dismiss}
             tourButtonVisible={props.displayPreferences.tourButtonVisible()}
             onTourButtonVisibleChange={props.displayPreferences.onTourButtonVisibleChange}
             screenSaverDelay={props.screenSaver.delay()}
@@ -436,13 +443,9 @@ const StudioUi = (props: StudioUiProps) => (
         uiAutoHideEnabled={props.uiAutoHide.enabled()}
         displayPreferences={props.displayPreferences}
         desktopMode={props.desktopMode.mode()}
-        entryVisible={props.entry.isVisible()}
         hasEntered={props.hasEntered}
-        isTourHintVisible={props.tourHint.visible()}
-        onDismissTourHint={props.tourHint.dismiss}
         screenSaver={props.screenSaver}
         tour={props.tour}
-        tourButtonVisible={props.displayPreferences.tourButtonVisible()}
       />
     </div>
   </>

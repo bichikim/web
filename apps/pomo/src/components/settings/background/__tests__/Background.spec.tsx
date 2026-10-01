@@ -31,7 +31,7 @@ afterEach(() => {
   vi.unstubAllEnvs()
 })
 
-it('should switch between character controls and frame media settings', () => {
+const createInteractiveBackground = () => {
   const [preferences, setPreferences] = createSignal<BackgroundPreferences>(DEFAULT_BACKGROUND)
   const background: BackgroundController = {
     add: vi.fn(),
@@ -50,24 +50,9 @@ it('should switch between character controls and frame media settings', () => {
     remove: vi.fn(),
     retry: vi.fn(),
   }
-  render(() => <Background background={background} />)
-  expect(screen.getByText('character scene controls')).toBeInTheDocument()
-  expect(screen.queryByRole('radio', {name: 'URL'})).not.toBeInTheDocument()
-  fireEvent.click(screen.getByRole('radio', {name: '액자'}))
-  expect(screen.queryByText('character scene controls')).not.toBeInTheDocument()
-  expect(screen.queryByText('window weather controls')).not.toBeInTheDocument()
-  expect(screen.getByText('보여줄 사진 또는 동영상이 없어요')).toBeInTheDocument()
-  fireEvent.click(screen.getByRole('radio', {name: '랜덤'}))
-  expect(preferences().order).toBe('random')
-  fireEvent.click(screen.getByRole('switch', {name: '최대 2장 함께 보기'}))
-  expect(preferences().pairPhotos).toBe(true)
-  const input = screen.getByLabelText('사진 및 동영상 추가', {selector: 'input'})
-  const file = new File(['media'], 'photo.png', {type: 'image/png'})
-  fireEvent.change(input, {target: {files: [file]}})
-  expect(background.add).toHaveBeenCalledWith([file])
-  fireEvent.click(screen.getByRole('radio', {name: '캐릭터'}))
-  expect(screen.getByText('window weather controls')).toBeInTheDocument()
-})
+
+  return {background, preferences}
+}
 
 it('should add the URL background option only to the desktop build', () => {
   vi.stubEnv('VITE_POMO_IS_DESKTOP', 'true')
@@ -110,4 +95,59 @@ it('should recover a persisted website mode to frame settings in the web build',
 
   expect(screen.getByRole('radio', {name: '캐릭터'})).toBeChecked()
   expect(screen.queryByText('website background controls')).not.toBeInTheDocument()
+})
+
+it('should switch between character controls and frame media settings', () => {
+  const {background} = createInteractiveBackground()
+
+  render(() => <Background background={background} />)
+
+  expect(screen.getByText('character scene controls')).toBeInTheDocument()
+  expect(screen.queryByRole('radio', {name: 'URL'})).not.toBeInTheDocument()
+  fireEvent.click(screen.getByRole('radio', {name: '액자'}))
+  expect(screen.queryByText('character scene controls')).not.toBeInTheDocument()
+  expect(screen.queryByText('window weather controls')).not.toBeInTheDocument()
+  expect(screen.getByText('보여줄 사진 또는 동영상이 없어요')).toBeInTheDocument()
+})
+
+it('should update slideshow preferences in frame media settings', () => {
+  const {background, preferences} = createInteractiveBackground()
+
+  render(() => <Background background={background} />)
+
+  fireEvent.click(screen.getByRole('radio', {name: '액자'}))
+  fireEvent.click(screen.getByRole('radio', {name: '랜덤'}))
+
+  expect(preferences().order).toBe('random')
+
+  fireEvent.click(screen.getByRole('switch', {name: '최대 2장 함께 보기'}))
+
+  expect(preferences().pairPhotos).toBe(true)
+})
+
+it('should forward added frame media to the background controller', () => {
+  const {background} = createInteractiveBackground()
+
+  render(() => <Background background={background} />)
+
+  fireEvent.click(screen.getByRole('radio', {name: '액자'}))
+  const input = screen.getByLabelText('사진 및 동영상 추가', {selector: 'input'})
+  const file = new File(['media'], 'photo.png', {type: 'image/png'})
+
+  fireEvent.change(input, {target: {files: [file]}})
+
+  expect(background.add).toHaveBeenCalledWith([file])
+})
+
+it('should return to character controls after switching to frame settings', () => {
+  const {background} = createInteractiveBackground()
+
+  render(() => <Background background={background} />)
+
+  fireEvent.click(screen.getByRole('radio', {name: '액자'}))
+  expect(screen.queryByText('window weather controls')).not.toBeInTheDocument()
+
+  fireEvent.click(screen.getByRole('radio', {name: '캐릭터'}))
+
+  expect(screen.getByText('window weather controls')).toBeInTheDocument()
 })

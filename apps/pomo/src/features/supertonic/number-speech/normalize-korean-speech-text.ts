@@ -44,6 +44,7 @@ const NATIVE_TENS = [
 const NATIVE_COUNTERS = '시간|개|명|마리|살|잔|권|대|장|점|곡'
 const SINO_UNITS = '개월|년대|년생|년형|년|초|층|월|일|도'
 const TOKEN_START_PATTERN = NUMBER_TOKEN_START_PATTERN_SOURCE
+const UNSIGNED_MONTH_NUMBER_PATTERN = /^[\d０-９]+$/u
 const UNSIGNED_INTEGER_PATTERN = KOREAN_UNSIGNED_INTEGER_PATTERN_SOURCE
 const KOREAN_PARTICLE_PATTERN = KOREAN_PARTICLE_PATTERN_SOURCE
 const KOREAN_UNIT_END_PATTERN = KOREAN_UNIT_END_PATTERN_SOURCE
@@ -208,7 +209,13 @@ const replaceWhenPronounceable = (
   pronounce: (value: string) => string | null,
 ) => {
   const pronunciation = pronounce(value)
-  return pronunciation === null ? match : `${pronunciation} ${unit}`
+
+  if (pronunciation === null) {
+    return match
+  }
+
+  const unitSeparator = unit === '월' && /^1[12]$/u.test(value.normalize('NFKC')) ? '' : ' '
+  return `${pronunciation}${unitSeparator}${unit}`
 }
 
 /** Converts only Korean number forms whose pronunciation is established by their syntax. */
@@ -297,8 +304,23 @@ export const normalizeKoreanSpeechText = (text: string): string =>
           start,
           text: input,
         })
-        return kind === 'cardinal' || kind === 'year-date-time'
-          ? replaceWhenPronounceable(match, value, unit, pronounceSinoInteger)
-          : match
+
+        if (kind !== 'cardinal' && kind !== 'year-date-time') {
+          return match
+        }
+
+        if (unit === '월' && UNSIGNED_MONTH_NUMBER_PATTERN.test(value)) {
+          const month = parseInteger(value)
+
+          if (month === 6n) {
+            return '유월'
+          }
+
+          if (month === 10n) {
+            return '시월'
+          }
+        }
+
+        return replaceWhenPronounceable(match, value, unit, pronounceSinoInteger)
       },
     )
