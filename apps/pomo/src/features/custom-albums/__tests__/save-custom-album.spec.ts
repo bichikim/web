@@ -1,7 +1,7 @@
 /** @vitest-environment node */
 
 import 'fake-indexeddb/auto'
-import {afterEach, expect, it, vi} from 'vitest'
+import {afterEach, beforeEach, expect, it, vi} from 'vitest'
 
 const DATABASE_NAME = 'pomo-custom-albums'
 
@@ -21,6 +21,10 @@ const resetAlbumDatabase = async (): Promise<void> => {
     vi.resetModules()
   }
 }
+
+beforeEach(async () => {
+  await import('src/features/custom-albums')
+})
 
 afterEach(async () => {
   try {
