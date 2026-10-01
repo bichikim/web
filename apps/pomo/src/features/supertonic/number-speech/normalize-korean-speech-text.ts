@@ -249,8 +249,7 @@ const replaceColonClockTime = (
   if (
     clockTime === null ||
     clockTime.hour > MAX_CLOCK_HOUR ||
-    (timeOfDay !== undefined &&
-      (clockTime.hour < 1 || clockTime.hour > MAX_TWELVE_HOUR_CLOCK_HOUR))
+    (timeOfDay !== undefined && (clockTime.hour < 1 || clockTime.hour > MAX_TWELVE_HOUR_CLOCK_HOUR))
   ) {
     return match
   }
