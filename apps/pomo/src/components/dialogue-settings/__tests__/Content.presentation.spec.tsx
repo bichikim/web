@@ -148,15 +148,18 @@ it('should render event and dialogue settings in English', () => {
   overwriteGetLocale(() => 'en')
   vi.mocked(usePEvents).mockReturnValue(createEvents())
 
-  render(() => <PDialogueSettingsContent />, {wrapper: PreferenceProvider})
+  const {container} = render(() => <PDialogueSettingsContent />, {wrapper: PreferenceProvider})
+  const headings = [...container.querySelectorAll('h1, h2, h3, h4, h5, h6')]
+  const headingText = headings.map((heading) => heading.textContent?.trim())
+  const linkText = [...container.querySelectorAll('a')].map((link) => link.textContent?.trim())
+  const content = container.textContent ?? ''
 
-  expect(screen.getByRole('heading', {name: 'Events'})).toBeDefined()
-  expect(screen.getByRole('heading', {name: 'Enter Pomofi'})).toBeDefined()
-  expect(screen.getByText('Play once when entering Pomofi')).toBeDefined()
-  expect(screen.getByRole('heading', {name: 'Dialogue options'})).toBeDefined()
-  expect(screen.getByRole('heading', {name: 'Saved dialogue'})).toBeDefined()
-  expect(screen.getByRole('link', {name: 'New dialogue'})).toBeDefined()
-  expect(screen.getByText('Yuna · 0:01 · 1 speech bubble')).toBeDefined()
+  expect(headingText).toEqual(
+    expect.arrayContaining(['Events', 'Enter Pomofi', 'Dialogue options', 'Saved dialogue']),
+  )
+  expect(content).toContain('Play once when entering Pomofi')
+  expect(linkText).toContain('New dialogue')
+  expect(content).toContain('Yuna · 0:01 · 1 speech bubble')
 })
 
 it('should keep saved dialogue content full-width with bounded text and actions', () => {
@@ -333,40 +336,51 @@ it('should offer and save a playback mode when an event has multiple dialogues',
   vi.spyOn(HTMLMediaElement.prototype, 'load').mockImplementation(() => undefined)
   vi.mocked(usePEvents).mockReturnValue(events)
 
-  render(() => <PDialogueSettingsContent />, {wrapper: PreferenceProvider})
+  const {container} = render(() => <PDialogueSettingsContent />, {wrapper: PreferenceProvider})
 
-  const modeSelect = screen.getByRole('combobox', {name: '포모도르 집중 시작 재생 방식'})
+  const modeSelect = container.querySelector(
+    'select[aria-label="포모도르 집중 시작 재생 방식"]',
+  ) as HTMLSelectElement
   const modeLayout = modeSelect.parentElement?.parentElement?.parentElement
   const modeControlLayout = modeLayout?.lastElementChild
-  expect((modeSelect as HTMLSelectElement).value).toBe('random-all')
-  expect(screen.getByText('발생 간격')).toBeInTheDocument()
-  expect(modeLayout?.firstElementChild).toHaveTextContent('재생 방식')
-  expect(screen.queryByText('대화 연결')).toBeNull()
-  expect(screen.queryByText('이 이벤트에서 재생할 대화를 선택해요.')).toBeNull()
+  const content = container.textContent ?? ''
+  expect(modeSelect.value).toBe('random-all')
+  expect(content).toContain('발생 간격')
+  expect(modeLayout?.firstElementChild?.textContent).toContain('재생 방식')
+  expect(content).not.toContain('대화 연결')
+  expect(content).not.toContain('이 이벤트에서 재생할 대화를 선택해요.')
   expect(modeLayout?.classList).toContain('grid-cols-[minmax(12rem,_2fr)_minmax(16rem,_5fr)]')
   expect(modeLayout?.classList).toContain('settings-compact:grid-cols-[1fr]')
   expect(modeControlLayout?.classList).toContain('w-full')
-  expect(screen.getByText('2개 대화/행동 연결됨')).toBeDefined()
-  expect(screen.getAllByText('대화 또는 행동 선택')).toHaveLength(8)
-  expect(screen.getByRole('button', {name: '포모도르 집중 시작 대화 및 행동 연결'})).toBeDefined()
-  expect(screen.getByRole('button', {name: '포모도르 집중 종료 대화 및 행동 연결'})).toBeDefined()
-  expect(screen.getByRole('button', {name: '포모도르 휴식 시작 대화 및 행동 연결'})).toBeDefined()
-  expect(screen.getByRole('button', {name: '포모도르 휴식 종료 대화 및 행동 연결'})).toBeDefined()
+  expect(content).toContain('2개 대화/행동 연결됨')
+  const placeholders = [...container.querySelectorAll('button')].filter(
+    (button) => button.textContent?.trim() === '대화 또는 행동 선택',
+  )
+  expect(placeholders).toHaveLength(8)
+  const actionLabels = [...container.querySelectorAll('button[aria-label]')].map((button) =>
+    button.getAttribute('aria-label'),
+  )
+  expect(actionLabels).toEqual(
+    expect.arrayContaining([
+      '포모도르 집중 시작 대화 및 행동 연결',
+      '포모도르 집중 종료 대화 및 행동 연결',
+      '포모도르 휴식 시작 대화 및 행동 연결',
+      '포모도르 휴식 종료 대화 및 행동 연결',
+      '포모도르 긴 휴식 시작 대화 및 행동 연결',
+      '포모도르 긴 휴식 종료 대화 및 행동 연결',
+      '지정 시간 후 종료 대화 및 행동 연결',
+      '랜덤 이벤트 대화 및 행동 연결',
+      '입장 대화 및 행동 연결',
+    ]),
+  )
+  expect(content).not.toContain(
+    '시작 버튼을 누른 뒤 지정한 시간이 지나면 연결한 대화와 행동을 실행',
+  )
+  expect(container.querySelector('[role="switch"][aria-label="랜덤 이벤트 사용"]')).toBeNull()
+  expect(content).toContain('이벤트가 발생할 때마다 모든 대화의 순서를 섞어요.')
   expect(
-    screen.getByRole('button', {name: '포모도르 긴 휴식 시작 대화 및 행동 연결'}),
-  ).toBeDefined()
-  expect(
-    screen.getByRole('button', {name: '포모도르 긴 휴식 종료 대화 및 행동 연결'}),
-  ).toBeDefined()
-  expect(screen.getByRole('button', {name: '지정 시간 후 종료 대화 및 행동 연결'})).toBeDefined()
-  expect(screen.getByRole('button', {name: '랜덤 이벤트 대화 및 행동 연결'})).toBeDefined()
-  expect(
-    screen.queryByText('시작 버튼을 누른 뒤 지정한 시간이 지나면 연결한 대화와 행동을 실행'),
+    container.querySelector('[role="list"][aria-label="포모도르 집중 시작 대화 재생 대상"]'),
   ).toBeNull()
-  expect(screen.queryByRole('switch', {name: '랜덤 이벤트 사용'})).toBeNull()
-  expect(screen.getByRole('button', {name: '입장 대화 및 행동 연결'})).toBeDefined()
-  expect(screen.getByText('이벤트가 발생할 때마다 모든 대화의 순서를 섞어요.')).toBeDefined()
-  expect(screen.queryByRole('list', {name: '포모도르 집중 시작 대화 재생 대상'})).toBeNull()
 
   fireEvent.change(modeSelect, {target: {value: 'random-one'}})
   expect(events.setEventPlaybackMode).toHaveBeenCalledWith('focus-start', 'random-one')

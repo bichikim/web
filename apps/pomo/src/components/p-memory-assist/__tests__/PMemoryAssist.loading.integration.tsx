@@ -1,5 +1,5 @@
 /** @vitest-environment jsdom */
-import {fireEvent, render, screen, waitFor} from '@solidjs/testing-library'
+import {fireEvent, render, screen} from '@solidjs/testing-library'
 import {afterEach, expect, it, vi} from 'vitest'
 import {PMemoryAssist} from '../PMemoryAssist'
 
@@ -9,10 +9,15 @@ interface LoadedContent {
 
 const loading = vi.hoisted(() => {
   let resolve: (value: LoadedContent) => void = () => undefined
+  let resolveStarted: () => void = () => undefined
   const promise = new Promise<LoadedContent>((done) => {
     resolve = done
   })
-  return {promise, resolve, started: vi.fn()}
+  const startedPromise = new Promise<void>((done) => {
+    resolveStarted = done
+  })
+  const started = vi.fn(() => resolveStarted())
+  return {promise, resolve, started, startedPromise}
 })
 vi.mock('../../memory-assist/Content', () => {
   loading.started()
@@ -34,21 +39,25 @@ it('should open and close while preloading and reveal content without replacing 
     Object.defineProperty(styles, 'animationName', {configurable: true, value: 'none'})
     return styles
   })
-  render(() => <PMemoryAssist />)
-  const trigger = screen.getByRole('button', {name: '기억보조'})
-  await waitFor(() => expect(loading.started).toHaveBeenCalledOnce())
-  fireEvent.click(trigger)
-  expect(screen.getByRole('dialog', {name: 'Pomofi 기억 보조'})).toBeVisible()
-  expect(screen.getByRole('status')).toBeVisible()
+  const view = render(() => <PMemoryAssist />)
+  const trigger = view.container.querySelector<HTMLButtonElement>('button[aria-label="기억보조"]')
+  expect(trigger).not.toBeNull()
+  await loading.startedPromise
+  expect(loading.started).toHaveBeenCalledOnce()
+  fireEvent.click(trigger!)
+  const dialog = document.querySelector('[role="dialog"]')
+  expect(dialog).toBeVisible()
+  expect(document.querySelector('[role="status"]')).toBeVisible()
   fireEvent.click(screen.getByRole('button', {name: '닫기'}))
-  await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull())
+  expect(document.querySelector('[role="dialog"]')).toBeNull()
   loading.resolve({PMemoryAssistContent: () => '준비된 내용'})
   await Promise.resolve()
-  expect(screen.queryByRole('dialog')).toBeNull()
-  expect(screen.getByRole('button', {name: '기억보조'})).toBe(trigger)
-  fireEvent.click(trigger)
-  expect(await screen.findByText('준비된 내용')).toBeVisible()
-  expect(screen.queryByRole('status')).toBeNull()
+  expect(document.querySelector('[role="dialog"]')).toBeNull()
+  expect(view.container.querySelector('button[aria-label="기억보조"]')).toBe(trigger)
+  fireEvent.click(trigger!)
+  const content = await screen.findByText('준비된 내용')
+  expect(content).toBeVisible()
+  expect(document.querySelector('[role="status"]')).toBeNull()
 })
 
 afterEach(() => {
