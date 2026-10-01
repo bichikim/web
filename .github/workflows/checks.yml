@@ -143,6 +143,7 @@ jobs:
             packages/puppet/src/editor/internal/__tests__/EditorInspector.interaction.integration.tsx \
             packages/puppet/src/editor/internal/__tests__/EditorTimeline.integration.tsx \
             packages/puppet/src/editor/internal/__tests__/InfluenceEditor.integration.tsx \
+            packages/puppet/src/editor/internal/__tests__/PhysicsProperties.interaction.integration.tsx \
             packages/puppet/src/editor/internal/__tests__/SpatialMeshDialog.integration.tsx \
             packages/puppet/src/player/internal/__tests__/physics.development-model.ear-attachment.integration.ts \
             packages/puppet/src/player/internal/__tests__/physics.ribbon.integration.ts \
