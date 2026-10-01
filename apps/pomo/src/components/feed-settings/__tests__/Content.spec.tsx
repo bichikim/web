@@ -305,3 +305,19 @@ it('should save the automatic feed audio preparation switch', () => {
   renderSettings()
   expect(screen.getByRole('switch', {name: '새 피드 음성 자동 준비'})).not.toBeChecked()
 })
+
+it('should preserve the feed voice control and focus after a voice update', () => {
+  renderSettings()
+  const address = 'https://example.com/identity.xml'
+  fireEvent.input(screen.getByRole('textbox', {name: '피드 주소'}), {target: {value: address}})
+  fireEvent.click(screen.getByRole('button', {name: '추가'}))
+  const voice = screen.getByRole('combobox', {name: `음성 ${address} 피드 음성`})
+  voice.focus()
+  expect(document.activeElement).toBe(voice)
+  fireEvent.change(voice, {target: {value: 'M2'}})
+  const nextVoice = screen.getByRole('combobox', {name: `음성 ${address} 피드 음성`})
+  expect(nextVoice).toHaveValue('M2')
+  expect(nextVoice).toBe(voice)
+  expect(voice.isConnected).toBe(true)
+  expect(document.activeElement).toBe(nextVoice)
+})

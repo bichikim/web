@@ -93,6 +93,7 @@ beforeEach(() => {
 
 afterEach(() => {
   vi.restoreAllMocks()
+  vi.useRealTimers()
   Object.defineProperty(HTMLElement.prototype, 'matches', {
     configurable: true,
     value: matches,
@@ -182,14 +183,30 @@ it.each([
   },
 )
 
-it('should preserve the existing earlier-instance choice for a fall-back wall time', async () => {
-  submitAlarm({
-    date: '2026-11-01',
-    now: '2026-11-01T04:00:00.000Z',
-    time: '01:30',
-    timeZone: 'America/New_York',
-  })
+it.each([
+  {
+    expected: '2026-11-01T05:30:00.000Z',
+    season: 'summer',
+    systemTime: '2026-07-01T12:00:00.000Z',
+  },
+  {
+    expected: '2026-11-01T06:30:00.000Z',
+    season: 'winter',
+    systemTime: '2026-01-01T12:00:00.000Z',
+  },
+])(
+  'should preserve Day.js fall-back resolution with a $season current-date seed',
+  async ({expected, systemTime}) => {
+    vi.useFakeTimers({toFake: ['Date']})
+    vi.setSystemTime(new Date(systemTime))
+    submitAlarm({
+      date: '2026-11-01',
+      now: '2026-11-01T04:00:00.000Z',
+      time: '01:30',
+      timeZone: 'America/New_York',
+    })
 
-  await waitFor(() => expect(mocks.updateMemos).toHaveBeenCalledOnce())
-  expect(mocks.memos[0]?.exactReminderAt).toBe('2026-11-01T05:30:00.000Z')
-})
+    await waitFor(() => expect(mocks.updateMemos).toHaveBeenCalledOnce())
+    expect(mocks.memos[0]?.exactReminderAt).toBe(expected)
+  },
+)

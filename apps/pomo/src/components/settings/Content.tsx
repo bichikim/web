@@ -12,7 +12,6 @@ import {App} from './app/App'
 
 interface PSettingsContentProps extends PSettingsProps {
   readonly wakeLock: ScreenWakeLockController
-  readonly onRequestClose?: () => void
 }
 
 export const PSettingsContent = (props: PSettingsContentProps) => {
@@ -30,7 +29,7 @@ export const PSettingsContent = (props: PSettingsContentProps) => {
       <PGuideSettings />
       <PCreditsSettings />
       <PFeedSettings />
-      <PDialogueSettings onRequestClose={props.onRequestClose} />
+      <PDialogueSettings />
       <UserSettings />
     </>
   )

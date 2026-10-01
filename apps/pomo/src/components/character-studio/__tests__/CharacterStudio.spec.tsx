@@ -62,7 +62,7 @@ describe('CharacterStudio', () => {
     vi.clearAllMocks()
   })
 
-  it('should control and reset eye width for the default model', () => {
+  it('should control eye width for the default model', () => {
     const renderer = createRenderer()
     vi.mocked(useCharacterRenderer).mockReturnValue({
       ...renderer,
@@ -75,6 +75,17 @@ describe('CharacterStudio', () => {
       'data-eye-narrowing',
       '1',
     )
+  })
+
+  it('should reset the default model eye width', () => {
+    const renderer = createRenderer()
+    vi.mocked(useCharacterRenderer).mockReturnValue({
+      ...renderer,
+      modelUrl: () => '/character-studio/scene.glb',
+    })
+    render(() => <CharacterStudio />)
+    const slider = screen.getByRole('slider', {name: '눈 가로폭 좁힘 정도'})
+    fireEvent.input(slider, {target: {value: '1'}})
     fireEvent.click(screen.getByRole('button', {name: '눈 가로폭 초기화'}))
     expect(slider).toHaveValue('0')
     expect(document.querySelector('[data-eye-narrowing]')).toHaveAttribute(

@@ -2,6 +2,7 @@
 
 import {render, screen} from '@solidjs/testing-library'
 import {beforeEach, describe, expect, it, vi} from 'vitest'
+import * as m from '@paraglide/message'
 
 import type {WeatherLocation} from '../../../features/weather'
 import {getPomoIconClass} from '../../icon-style'
@@ -178,7 +179,7 @@ describe('SceneToolbar', () => {
 
     expect(view.container.firstElementChild).toHaveClass('w-max')
     expect(view.container.firstElementChild).not.toHaveClass('absolute')
-    const actions = screen.getByRole('group')
+    const actions = screen.getByRole('group', {name: m.scene_group_label()})
     expect(actions).toHaveClass('w-max', 'flex-nowrap')
     expect(actions).not.toHaveClass('flex-wrap')
   })

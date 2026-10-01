@@ -36,7 +36,7 @@ pnpm --filter @apps/pomo test:e2e --config=playwright.settings.config.ts --worke
 네이티브 Storage 검증을 대체하지 않습니다.
 
 렌더링 비교는 로컬 Chromium 전용 설정으로 따로 실행합니다. 일반 설정의 다크·라이트 화면과
-열린 테마 목록을 PNG로 비교하고, 도구·기억보조·투어 버튼을 숨긴 뒤 새로고침해도 선택이 유지되는지
+열린 테마 목록을 PNG로 비교하고, 도구·생각 보조·투어 버튼을 숨긴 뒤 새로고침해도 선택이 유지되는지
 확인합니다. 플레이어·뽀모도로 표시 설정도 숨기기·새로고침·다시 켜기로 검증하며,
 숨긴 타이머가 중지되고 다시 켜도 자동으로 재생되지 않는지 확인합니다.
 두 위젯이 꺼진 설정 화면은 [별도 최초 기준과 실행 증거](rendering/evidence/widgets/manifest.json)를
@@ -147,7 +147,7 @@ pnpm --filter @apps/pomo test:e2e --config=playwright.rendering.config.ts e2e/re
 pnpm --filter @apps/pomo test:e2e --config=playwright.rendering.config.ts e2e/rendering/fullscreen.e2e.ts
 ```
 
-기억보조의 학습 단어는 [단어 관리 E2E](rendering/words.e2e.ts)에서 실제 입력과 버튼 조작으로
+생각 보조의 학습 단어는 [단어 관리 E2E](rendering/words.e2e.ts)에서 실제 입력과 버튼 조작으로
 저장·대소문자 중복 제거·다중 선택·외움 상태 이동·필터·삭제·새로고침 후 복원을 검증합니다.
 다중 선택 화면과 외운 단어 필터 화면은 최초 PNG 기준이며, 생성 후 일반 비교로 다시 확인했습니다.
 [촬영 환경과 비교 기록](rendering/evidence/words/manifest.json)에 기준과 현재 이미지의 해시를 보존합니다.

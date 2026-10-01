@@ -1,7 +1,8 @@
+import {KeyedList} from '../keyed-list'
 import {clearHtmlMediaElement} from 'src/utils/clear-html-media-element'
 import {cx} from 'class-variance-authority'
 import {A} from '@solidjs/router'
-import {createSignal, For, onCleanup, Show} from 'solid-js'
+import {createSignal, onCleanup, Show} from 'solid-js'
 
 import {replaceBlobObjectUrl} from '../../features/blob-object-url'
 import {type PDialogue, usePEvents} from '../../features/focus-room-dialogue'
@@ -28,7 +29,6 @@ export interface DialogueLibraryProps {
   readonly entries: ReadonlyArray<DialogueLibraryEntry>
   readonly onAfterDelete?: (dialogue: PDialogue) => void
   readonly onDelete?: (dialogue: PDialogue) => Promise<void>
-  readonly onRequestClose?: () => void
   readonly textLineLimit?: DialogueLibraryItemProps['lineLimit']
 }
 
@@ -138,13 +138,7 @@ export const DialogueLibrary = (props: DialogueLibraryProps) => {
       }
 
       setMessage(null)
-      const didPlay = await events.playDialogue(dialogue.id)
-
-      if (currentRequestId !== playbackRequestId || !didPlay) {
-        return
-      }
-
-      props.onRequestClose?.()
+      await events.playDialogue(dialogue.id)
     } catch (error: unknown) {
       if (currentRequestId !== playbackRequestId) {
         return
@@ -175,12 +169,12 @@ export const DialogueLibrary = (props: DialogueLibraryProps) => {
     <>
       <audio class={CLASSES.audio} onEnded={stopPlayback} preload="none" ref={setAudioElement} />
       <ul aria-label={m.settings_dialogue_saved_list()} class={CLASSES.list}>
-        <For each={props.entries}>
+        <KeyedList each={props.entries} by={(entry) => entry.dialogue.id}>
           {(entry) => (
             <DialogueLibraryItem
               actions={
                 <>
-                  <Show when={missingDialogueId() === entry.dialogue.id}>
+                  <Show when={missingDialogueId() === entry().dialogue.id}>
                     <p
                       aria-live="polite"
                       class="m-0 basis-full text-sm leading-relaxed text-danger"
@@ -190,21 +184,21 @@ export const DialogueLibrary = (props: DialogueLibraryProps) => {
                     </p>
                   </Show>
                   <DialoguePlaybackButton
-                    isPlaying={playingDialogueId() === entry.dialogue.id}
-                    onPress={() => handlePlayback(entry.dialogue)}
+                    isPlaying={playingDialogueId() === entry().dialogue.id}
+                    onPress={() => handlePlayback(entry().dialogue)}
                   />
-                  <button onClick={() => handleCharacterPlayback(entry.dialogue)} type="button">
+                  <button onClick={() => handleCharacterPlayback(entry().dialogue)} type="button">
                     <span aria-hidden="true" class="i-tabler-message-circle size-4" />
                     {m.settings_dialogue_character_listen()}
                   </button>
-                  <A href={`/dialogue?dialogueId=${encodeURIComponent(entry.dialogue.id)}`}>
+                  <A href={`/dialogue?dialogueId=${encodeURIComponent(entry().dialogue.id)}`}>
                     <span aria-hidden="true" class="i-tabler-pencil size-4" />
                     {m.settings_dialogue_edit()}
                   </A>
                   <Show
-                    when={pendingDeleteId() === entry.dialogue.id}
+                    when={pendingDeleteId() === entry().dialogue.id}
                     fallback={
-                      <button onClick={() => setPendingDeleteId(entry.dialogue.id)} type="button">
+                      <button onClick={() => setPendingDeleteId(entry().dialogue.id)} type="button">
                         {m.settings_dialogue_delete()}
                       </button>
                     }
@@ -214,7 +208,7 @@ export const DialogueLibrary = (props: DialogueLibraryProps) => {
                     </button>
                     <button
                       data-pomo-dialogue-delete-confirm=""
-                      onClick={() => handleDelete(entry.dialogue)}
+                      onClick={() => handleDelete(entry().dialogue)}
                       type="button"
                     >
                       {m.settings_dialogue_delete_confirm()}
@@ -222,12 +216,12 @@ export const DialogueLibrary = (props: DialogueLibraryProps) => {
                   </Show>
                 </>
               }
-              metadata={entry.metadata}
-              text={entry.dialogue.text}
+              metadata={entry().metadata}
+              text={entry().dialogue.text}
               lineLimit={props.textLineLimit}
             />
           )}
-        </For>
+        </KeyedList>
       </ul>
       <Show when={message() ?? events.errorMessage()}>
         {(currentMessage) => (

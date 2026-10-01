@@ -3,7 +3,7 @@
 import {PreferenceProvider} from 'src/hooks/use-preference'
 
 import {render} from '@solidjs/testing-library'
-import {createSignal} from 'solid-js'
+import {createSignal, Show} from 'solid-js'
 import {vi} from 'vitest'
 
 import {
@@ -349,10 +349,13 @@ export const setupStudio = () => {
 
     return (
       <div data-tour-step="settings" data-transitioning={String(props.isSceneTransitioning)}>
+        <Show when={props.tourHintVisible}>
+          <PStudioTourHint onDismiss={props.onDismissTourHint} />
+        </Show>
         <button onClick={() => props.onTourOpen?.()} type="button">
           둘러보기
         </button>
-        <div data-tour-step="memory-assist">기억 보조</div>
+        <div data-tour-step="memory-assist">생각 보조</div>
         <button onClick={() => props.onActivityChange('writing')} type="button">
           글쓰기
         </button>

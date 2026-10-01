@@ -102,3 +102,32 @@ it('should forward layer edits to the consumer without changing its supplied lay
   expect(onLayerChange.mock.lastCall?.[0]).not.toBe(LAYER)
   expect(LAYER.volume).toBe(0.5)
 })
+
+it('should retain a focused volume slider through consecutive controlled layer edits', () => {
+  vi.mocked(useSoundPlayer).mockReturnValue({
+    error: () => null,
+    pause: vi.fn(),
+    play: vi.fn(),
+    status: () => 'idle',
+    stop: vi.fn(),
+  })
+  const [layers, setLayers] = createSignal<ReadonlyArray<SoundLayer>>([LAYER])
+  const result = render(() => (
+    <SoundPlayer
+      layers={layers()}
+      onLayerChange={(layer) =>
+        setLayers((current) => current.map((entry) => (entry.id === layer.id ? layer : entry)))
+      }
+    />
+  ))
+  const slider = result.getByRole('slider', {name: '비 음량'})
+  slider.focus()
+  fireEvent.input(slider, {target: {value: '0.6'}})
+  expect(result.getByRole('slider', {name: '비 음량'})).toBe(slider)
+  expect(slider).toHaveFocus()
+  expect(result.getByText('음량 60%')).toBeVisible()
+  fireEvent.input(slider, {target: {value: '0.7'}})
+  expect(layers()[0]?.volume).toBe(0.7)
+  expect(slider).toHaveFocus()
+  expect(result.getByText('음량 70%')).toBeVisible()
+})

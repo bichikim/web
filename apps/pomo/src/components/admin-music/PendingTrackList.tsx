@@ -1,4 +1,5 @@
-import {For, Show} from 'solid-js'
+import {Show} from 'solid-js'
+import {KeyedList} from '../keyed-list'
 
 import type {AdminAsset, AdminPendingTrack} from '../../features/admin-music'
 import {DANGER_BUTTON_CLASSES, SECONDARY_BUTTON_CLASSES} from './button-classes'
@@ -74,36 +75,38 @@ export const PendingTrackList = (props: PendingTrackListProps) => {
           완료 응답이 확인되지 않은 곡입니다. 같은 MP3로 등록을 다시 확인하거나 삭제할 수 있습니다.
         </p>
         <ul class="mb-0 mt-4 list-none divide-y divide-white/8 p-0">
-          <For each={tracks()}>
+          <KeyedList each={tracks()} by={(track) => track.id}>
             {(track) => {
-              const asset = () => getTrackAsset(track.id)
+              const asset = () => getTrackAsset(track().id)
 
               return (
                 <li class="grid gap-3 py-4 first:pt-0 last:pb-0 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center">
                   <span class="min-w-0">
-                    <span class="block truncate text-sm font-750 text-white/90">{track.title}</span>
-                    <span class="mt-1 block truncate text-xs text-white/45">{track.artist}</span>
+                    <span class="block truncate text-sm font-750 text-white/90">
+                      {track().title}
+                    </span>
+                    <span class="mt-1 block truncate text-xs text-white/45">{track().artist}</span>
                     <span class="mt-2 block text-xs font-700 text-#e8bc88">
                       {getPendingTrackStatus(asset())}
                     </span>
                   </span>
                   <span class="flex flex-wrap gap-2 sm:justify-end">
-                    <Show when={props.onConfirm && canConfirmAsset(asset()) && asset()} keyed>
+                    <Show when={props.onConfirm && canConfirmAsset(asset()) && asset()}>
                       {(confirmableAsset) => (
                         <button
-                          aria-label={`${track.title} 등록 확인 재시도`}
+                          aria-label={`${track().title} 등록 확인 재시도`}
                           class={SECONDARY_BUTTON_CLASSES}
                           disabled={
-                            (props.isConfirmingAsset?.(confirmableAsset.id) ??
-                              props.confirmingAssetId === confirmableAsset.id) ||
-                            (props.isRemovingTrack?.(track.id) ??
-                              props.removingTrackId === track.id)
+                            (props.isConfirmingAsset?.(confirmableAsset().id) ??
+                              props.confirmingAssetId === confirmableAsset().id) ||
+                            (props.isRemovingTrack?.(track().id) ??
+                              props.removingTrackId === track().id)
                           }
-                          onClick={() => props.onConfirm?.(confirmableAsset.id)}
+                          onClick={() => props.onConfirm?.(confirmableAsset().id)}
                           type="button"
                         >
-                          {(props.isConfirmingAsset?.(confirmableAsset.id) ??
-                          props.confirmingAssetId === confirmableAsset.id)
+                          {(props.isConfirmingAsset?.(confirmableAsset().id) ??
+                          props.confirmingAssetId === confirmableAsset().id)
                             ? '확인 중…'
                             : '등록 확인'}
                         </button>
@@ -111,19 +114,20 @@ export const PendingTrackList = (props: PendingTrackListProps) => {
                     </Show>
                     <Show when={props.onRemove}>
                       <button
-                        aria-label={`${track.title} 대기 등록 삭제`}
+                        aria-label={`${track().title} 대기 등록 삭제`}
                         class={DANGER_BUTTON_CLASSES}
                         disabled={
-                          (props.isRemovingTrack?.(track.id) ??
-                            props.removingTrackId === track.id) ||
+                          (props.isRemovingTrack?.(track().id) ??
+                            props.removingTrackId === track().id) ||
                           (asset() !== undefined &&
                             (props.isConfirmingAsset?.(asset()!.id) ??
                               props.confirmingAssetId === asset()?.id))
                         }
-                        onClick={async (event) => handleRemove(event, track)}
+                        onClick={async (event) => handleRemove(event, track())}
                         type="button"
                       >
-                        {(props.isRemovingTrack?.(track.id) ?? props.removingTrackId === track.id)
+                        {(props.isRemovingTrack?.(track().id) ??
+                        props.removingTrackId === track().id)
                           ? '삭제 중…'
                           : '삭제'}
                       </button>
@@ -132,7 +136,7 @@ export const PendingTrackList = (props: PendingTrackListProps) => {
                 </li>
               )
             }}
-          </For>
+          </KeyedList>
         </ul>
       </section>
     </Show>
