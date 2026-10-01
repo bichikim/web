@@ -20,8 +20,9 @@ const TODAY_EXCLUSION_PATTERN =
   /오늘(?:(?!내일).)*(?:말고|빼고|제외(?:하고)?|아니|아닌|안\s*(?:되|돼))/u
 const YESTERDAY_EXCLUSION_PATTERN =
   /어제(?:(?!오늘|내일).)*(?:말고|빼고|제외(?:하고)?|아니|아닌|안\s*(?:되|돼))/u
+const TOMORROW_PATTERN = /내일(?!모레)/u
 const TOMORROW_EXCLUSION_PATTERN =
-  /내일(?:(?!오늘).)*(?:말고|빼고|제외(?:하고)?|아니|아닌|안\s*(?:되|돼))/u
+  /내일(?!모레)(?:(?!오늘).)*(?:말고|빼고|제외(?:하고)?|아니|아닌|안\s*(?:되|돼))/u
 const DAY_AFTER_TOMORROW_EXCLUSION_PATTERN =
   /모레(?:(?!오늘|내일).)*(?:말고|빼고|제외(?:하고)?|아니|아닌|안\s*(?:되|돼))/u
 const THREE_DAYS_AHEAD_EXCLUSION_PATTERN =
@@ -47,6 +48,8 @@ const includesUnexcludedPhrase = (
   phrase: string,
   exclusionPattern: RegExp,
 ): boolean => text.includes(phrase) && !exclusionPattern.test(text)
+const includesUnexcludedTomorrow = (text: string): boolean =>
+  TOMORROW_PATTERN.test(text) && !TOMORROW_EXCLUSION_PATTERN.test(text)
 const isStandaloneDateRequest = (includesDate: boolean, includesThisWeek: boolean): boolean =>
   includesDate && !includesThisWeek
 const DAYS_PER_WEEK = 7
@@ -129,7 +132,7 @@ const getCalendarQueryIntent = (text: string): CalendarQueryIntent => ({
       : []),
     ...(includesUnexcludedPhrase(text, '어제', YESTERDAY_EXCLUSION_PATTERN) ? [-1] : []),
     ...(includesUnexcludedPhrase(text, '오늘', TODAY_EXCLUSION_PATTERN) ? [0] : []),
-    ...(includesUnexcludedPhrase(text, '내일', TOMORROW_EXCLUSION_PATTERN) ? [1] : []),
+    ...(includesUnexcludedTomorrow(text) ? [1] : []),
     ...(includesUnexcludedPhrase(text, '모레', DAY_AFTER_TOMORROW_EXCLUSION_PATTERN)
       ? [DAY_AFTER_TOMORROW_START_DAYS]
       : []),
