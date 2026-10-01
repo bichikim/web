@@ -1,3 +1,4 @@
+import {createSquareWebpEncoder, getCenteredSquareCrop} from 'src/utils/square-webp-cover'
 import {validateAlbumCover} from './cover-upload'
 
 export const COVER_IMAGE_EDGE = 1200
@@ -37,43 +38,12 @@ const createBrowserRuntime = (): CoverImageRuntime => ({
       width: bitmap.width,
     }
   },
-  encode: (options) => {
-    const canvas = document.createElement('canvas')
-    canvas.height = options.targetSize
-    canvas.width = options.targetSize
-    const context = canvas.getContext('2d')
-
-    if (context === null) {
-      throw new Error('커버 이미지를 처리할 Canvas를 만들지 못했습니다.')
-    }
-
-    context.drawImage(
-      options.source,
-      options.sourceX,
-      options.sourceY,
-      options.sourceSize,
-      options.sourceSize,
-      0,
-      0,
-      options.targetSize,
-      options.targetSize,
-    )
-
-    return new Promise((resolve, reject) => {
-      canvas.toBlob(
-        (blob) => {
-          if (blob === null) {
-            reject(new Error('커버 이미지를 WebP로 변환하지 못했습니다.'))
-            return
-          }
-
-          resolve(blob)
-        },
-        options.type,
-        options.quality,
-      )
-    })
-  },
+  encode: (options) =>
+    createSquareWebpEncoder({
+      ...options,
+      contextError: () => new Error('커버 이미지를 처리할 Canvas를 만들지 못했습니다.'),
+      encodingError: () => new Error('커버 이미지를 WebP로 변환하지 못했습니다.'),
+    })(options.quality),
 })
 
 export const prepareAlbumCover = async (
@@ -88,13 +58,10 @@ export const prepareAlbumCover = async (
       throw new TypeError('크기를 확인할 수 없는 커버 이미지입니다.')
     }
 
-    const sourceSize = Math.min(image.width, image.height)
     const blob = await runtime.encode({
       quality: COVER_IMAGE_QUALITY,
       source: image.source,
-      sourceSize,
-      sourceX: (image.width - sourceSize) / 2,
-      sourceY: (image.height - sourceSize) / 2,
+      ...getCenteredSquareCrop(image.width, image.height),
       targetSize: COVER_IMAGE_EDGE,
       type: COVER_IMAGE_TYPE,
     })

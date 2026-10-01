@@ -1,3 +1,4 @@
+import {runPendingEvent} from './run-pending-event'
 import {usePreference} from 'src/hooks/use-preference'
 import {visibility} from 'src/utils/visibility'
 import {getDocument} from '@winter-love/utils'
@@ -59,16 +60,15 @@ export const useRandomEvent = (props: UseRandomEventProps) => {
             }
 
             setIsEventPending(true)
-            Promise.resolve()
-              .then(() => props.onEvent())
-              .catch((error: unknown) => {
-                console.error('Failed to queue a random dialogue event.', error)
-              })
-              .finally(() => {
+            runPendingEvent({
+              onError: (error) => console.error('Failed to queue a random dialogue event.', error),
+              onEvent: () => props.onEvent(),
+              onSettled: () => {
                 if (!isDisposed) {
                   setIsEventPending(false)
                 }
-              })
+              },
+            })
           },
           getRandomEventDelay(currentSettings, props.random ?? Math.random),
         )

@@ -1,3 +1,4 @@
+import {normalizePathname} from 'src/utils/normalize-pathname'
 import {Meta, Title} from '@solidjs/meta'
 import {type Component, type JSX, lazy, Show} from 'solid-js'
 
@@ -95,8 +96,6 @@ export interface PageDispatcherProps {
   fallback: JSX.Element
   pathname: string
 }
-
-const normalizePathname = (pathname: string) => pathname.replace(/\/+$/u, '') || '/'
 
 export function PageDispatcher(props: PageDispatcherProps) {
   const pathname = () => normalizePathname(props.pathname)

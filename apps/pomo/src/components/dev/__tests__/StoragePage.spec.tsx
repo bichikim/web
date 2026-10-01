@@ -1,3 +1,4 @@
+import {createDeferred} from 'src/test-utils/create-deferred'
 /** @vitest-environment jsdom */
 
 import {cleanup, fireEvent, render, screen, waitFor} from '@solidjs/testing-library'
@@ -20,15 +21,6 @@ vi.mock('src/components/p-modal/PModal', () => ({PModal: vi.fn()}))
 vi.mock('src/features/model-download', () => ({useModelDownload: vi.fn()}))
 
 let setDownloadState: (value: ModelDownloadState) => ModelDownloadState
-
-function createDeferred<Value>() {
-  let resolvePromise: (value: Value) => void = () => undefined
-  const promise = new Promise<Value>((resolve) => {
-    resolvePromise = resolve
-  })
-
-  return {promise, resolvePromise}
-}
 
 const createManager = (): ModelStorageManager => ({
   clearCache: vi.fn(async () => successResult(true)),
@@ -84,7 +76,7 @@ it('should show partial storage loading until the first inspection completes', a
   expect(screen.getAllByText('조회 중…')).toHaveLength(2)
   expect(screen.queryByText('0개 파일이 남아 있어요.')).not.toBeInTheDocument()
 
-  inspection.resolvePromise(
+  inspection.resolve(
     successResult({cacheEntries: [], partialFileCount: 0, partialStorageAvailable: true}),
   )
   expect(await screen.findByText('0개 파일이 남아 있어요.')).toBeInTheDocument()

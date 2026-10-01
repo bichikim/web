@@ -42,3 +42,8 @@ it('should include pyeong only for Korean', () => {
   expect(getUnits('area', 'en').some((unit) => unit.id === 'pyeong')).toBe(false)
   expect(getUnits('area', 'ko').some((unit) => unit.id === 'pyeong')).toBe(true)
 })
+
+it('should convert fullwidth signed pasted values', () => {
+  expect(convertUnit({from: 'm', to: 'm', value: '＋５'})).toEqual({kind: 'valid', value: 5})
+  expect(convertUnit({from: 'm', to: 'm', value: '－５'})).toEqual({kind: 'valid', value: -5})
+})

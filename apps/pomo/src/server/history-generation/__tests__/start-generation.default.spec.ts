@@ -1,5 +1,6 @@
 /** @vitest-environment node */
 import {beforeEach, expect, it, vi} from 'vitest'
+import {startHistoryGeneration} from '../start-generation'
 
 const generationMocks = vi.hoisted(() => ({
   markFailed: vi.fn(),
@@ -41,7 +42,6 @@ it('should use the production dependencies by default', async () => {
       targetDate: '2026-08-27',
     },
   })
-  const {startHistoryGeneration} = await import('../start-generation')
 
   await expect(startHistoryGeneration()).resolves.toEqual({
     responseId: 'response-default',

@@ -1,8 +1,7 @@
+import {isEnglishTitleAbbreviation} from 'src/utils/english-title-abbreviation'
 /* istanbul ignore next -- Wallaby inconsistently counts module initialization across workers. */
 const SENTENCE_END = /(?:[.!?…。！？]["'”’)}\]]*|\n)\s*$/u
 const TERMINAL_PUNCTUATION = /(?<punctuation>[.!?…。！？])(?<closingCharacters>["'”’)}\]]*)$/u
-const KNOWN_ABBREVIATION =
-  /^(?:Dr|Mr|Mrs|Ms|Prof|Rev|Hon|Gov|Pres|Sen|Rep|Gen|Lt|Col|Capt|Sgt|St|Mt|Jr|Sr|vs)\.$/iu
 const DOTTED_ABBREVIATION = /^(?:[A-Z]\.){2,}$/iu
 const SINGLE_INITIAL = /^[A-Z]\.$/u
 const SINGLE_LETTER_LABEL_END =
@@ -28,7 +27,7 @@ const endsWithAbbreviation = (segment: string) => {
 
   return (
     lastToken !== undefined &&
-    (KNOWN_ABBREVIATION.test(lastToken) ||
+    (isEnglishTitleAbbreviation(lastToken) ||
       DOTTED_ABBREVIATION.test(lastToken) ||
       SINGLE_INITIAL.test(lastToken))
   )

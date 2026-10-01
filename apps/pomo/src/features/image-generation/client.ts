@@ -1,3 +1,4 @@
+import {createOneShotWorkerRequest} from 'src/utils/worker-transport'
 import * as m from '@paraglide/message'
 import type {ModelDownloadController} from '../model-download'
 import {prepareImageModels} from './prepare'
@@ -27,49 +28,28 @@ interface RunWorkerOptions {
 }
 
 const runWorker = (options: RunWorkerOptions): Promise<GenerationResponse> =>
-  new Promise((resolve, reject) => {
-    options.signal.throwIfAborted()
-    const worker = new Worker(new URL('./worker.ts', import.meta.url), {type: 'module'})
-    const cleanup = () => {
-      worker.terminate()
-      worker.onmessage = null
-      worker.onerror = null
-      options.signal.removeEventListener('abort', handleAbort)
-    }
-    const handleAbort = () => {
-      cleanup()
-      reject(new DOMException('Generation cancelled', 'AbortError'))
-    }
-    worker.onerror = (event) => {
-      cleanup()
-      reject(new Error(event.message || m.picture_diary_generation_error()))
-    }
-    worker.onmessage = (event: MessageEvent<GenerationResponse>) => {
-      const response = event.data
+  createOneShotWorkerRequest<GenerationRequest, GenerationResponse, GenerationResponse>({
+    abortError: () => new DOMException('Generation cancelled', 'AbortError'),
+    failureMessage: m.picture_diary_generation_error(),
+    onMessage: (response, reply) => {
       switch (response.type) {
         case 'progress':
           options.onUpdate(response)
           return
         case 'error':
-          cleanup()
-          reject(new Error(response.message))
+          reply.reject(new Error(response.message))
           return
         case 'ready':
         case 'prompt':
         case 'image':
-          cleanup()
-          resolve(response)
+          reply.resolve(response)
           return
       }
       response satisfies never
-    }
-    options.signal.addEventListener('abort', handleAbort, {once: true})
-    try {
-      worker.postMessage(options.request)
-    } catch (error) {
-      cleanup()
-      reject(error)
-    }
+    },
+    request: options.request,
+    signal: options.signal,
+    worker: () => new Worker(new URL('./worker.ts', import.meta.url), {type: 'module'}),
   })
 
 /** Generates an English prompt, releases its model, then runs Bonsai; abort terminates active work. */

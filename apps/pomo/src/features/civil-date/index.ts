@@ -39,9 +39,16 @@ export const parseDate = (value: string): CivilDate | null => {
 
 export const dateEpoch = (date: CivilDate): number => Date.UTC(date.year, date.month - 1, date.day)
 
+/** Extracts a civil date using UTC calendar fields. */
+export const civilDateFromUtc = (date: Date): CivilDate => ({
+  day: date.getUTCDate(),
+  month: date.getUTCMonth() + 1,
+  year: date.getUTCFullYear(),
+})
+
 export const addDays = (date: CivilDate, count: number): CivilDate => {
   const next = new Date(dateEpoch(date) + count * DAY_MILLISECONDS)
-  return {day: next.getUTCDate(), month: next.getUTCMonth() + 1, year: next.getUTCFullYear()}
+  return civilDateFromUtc(next)
 }
 
 /** Returns the final included day of a whole calendar-month period. */

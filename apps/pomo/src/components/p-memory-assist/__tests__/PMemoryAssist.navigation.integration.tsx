@@ -119,7 +119,7 @@ it('should show cached events and the month grid before the refresh resolves', a
           accountLabel: 'test',
           allDay: false,
           calendarLabel: 'test',
-          end: today.toISOString(),
+          end: new Date(today.getTime() + 60 * 60 * 1000).toISOString(),
           id: 'cached',
           provider: 'google',
           start: today.toISOString(),
