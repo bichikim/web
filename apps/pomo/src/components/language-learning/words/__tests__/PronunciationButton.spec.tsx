@@ -52,3 +52,25 @@ it('should request pronunciation and expose loading state', () => {
   expect(screen.getByRole('button')).toBeDisabled()
   expect(screen.getByRole('button')).toHaveAttribute('aria-busy', 'true')
 })
+
+it('should autoplay only when the requested boolean changes to true', () => {
+  const play = vi.spyOn(HTMLMediaElement.prototype, 'play').mockResolvedValue(undefined)
+  vi.spyOn(HTMLMediaElement.prototype, 'pause').mockImplementation(() => undefined)
+  const [request, setRequest] = createSignal({autoplay: true})
+  render(() => (
+    <LanguageLearningWordPronunciationButton
+      autoplay={request().autoplay}
+      disabled={false}
+      loading={false}
+      onPress={vi.fn()}
+      src="/apple.mp3"
+      word="apple"
+    />
+  ))
+  expect(play).toHaveBeenCalledOnce()
+  setRequest({autoplay: true})
+  expect(play).toHaveBeenCalledOnce()
+  setRequest({autoplay: false})
+  setRequest({autoplay: true})
+  expect(play).toHaveBeenCalledTimes(2)
+})
