@@ -1,4 +1,5 @@
-import {For, Show} from 'solid-js'
+import {KeyedList} from '../keyed-list'
+import {Show} from 'solid-js'
 import {type SoundLayer, useSoundPlayer} from 'src/features/sound-player'
 import {SoundLayerControls} from './SoundLayerControls'
 
@@ -57,9 +58,9 @@ export const SoundPlayer = (props: SoundPlayerProps) => {
           {player.error()}
         </p>
       </Show>
-      <For each={props.layers}>
-        {(layer) => <SoundLayerControls layer={layer} onChange={props.onLayerChange} />}
-      </For>
+      <KeyedList each={props.layers} by={(layer) => layer.id}>
+        {(layer) => <SoundLayerControls layer={layer()} onChange={props.onLayerChange} />}
+      </KeyedList>
     </section>
   )
 }
