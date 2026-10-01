@@ -15,10 +15,14 @@ const renderBatchSelection = async () => {
   const initialDocument = createDemoDocument()
   const [document, setDocument] = createSignal<PuppetDocument>({
     ...initialDocument,
-    motions: initialDocument.motions.map((motion) => ({
-      ...motion,
-      timelineParameterIds: ['angle-x', 'angle-y'],
-    })),
+    motions: initialDocument.motions
+      .filter((motion) => ['idle-deform', 'blink'].includes(motion.id))
+      .map((motion) => ({
+        ...motion,
+        timelineParameterIds: motion.tracks.flatMap((track) =>
+          track.kind === 'parameter' ? [track.parameterId] : [],
+        ),
+      })),
   })
   const view = render(() => <EditorTimeline document={document()} onDocumentChange={setDocument} />)
 
