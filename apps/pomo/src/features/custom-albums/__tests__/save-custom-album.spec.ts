@@ -228,7 +228,6 @@ it('should reject a track replacement when available quota only covers the exist
     },
   })
 
-  const {readCustomAlbumDraft, saveCustomAlbum} = await import('src/features/custom-albums')
   const baseTrack = {
     audio: new Blob(['audio-a'], {type: 'audio/mpeg'}),
     durationSeconds: 60,
