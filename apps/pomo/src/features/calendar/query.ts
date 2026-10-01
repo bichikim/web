@@ -14,12 +14,9 @@ const PREVIOUS_WEEKEND_PATTERN = /(?:지난|저번) ?주말/u
 const WEEKEND_EXCLUSION_PATTERN =
   /주말(?:은|에)?\s*(?:말고|빼고|제외(?:하고)?|아니|아닌|안\s*(?:되|돼))/u
 const WEEKEND_PATTERN = /주말/u
-const DAY_BEFORE_YESTERDAY_PATTERN = /(?:그저께|엊그제)/u
-const DAY_BEFORE_YESTERDAY_EXCLUSION_PATTERN = new RegExp(
-  `${DAY_BEFORE_YESTERDAY_PATTERN.source}(?:(?!어제|오늘|내일|모레|글피).)*` +
-    '(?:말고|빼고|제외(?:하고)?|아니|아닌|안\\s*(?:되|돼))',
-  'u',
-)
+const DAY_BEFORE_YESTERDAY_PATTERN = /(?:그저께|그제|엊그제)/u
+const DAY_BEFORE_YESTERDAY_EXCLUSION_PATTERN =
+  /(?:그저께|그제|엊그제)(?:(?!어제|오늘|내일|모레|글피).)*(?:말고|빼고|제외(?:하고)?|아니|아닌|안\s*(?:되|돼))/u
 const TODAY_EXCLUSION_PATTERN =
   /오늘(?:(?!내일).)*(?:말고|빼고|제외(?:하고)?|아니|아닌|안\s*(?:되|돼))/u
 const YESTERDAY_EXCLUSION_PATTERN =
@@ -28,11 +25,8 @@ const TOMORROW_EXCLUSION_PATTERN =
   /내일(?:(?!오늘).)*(?:말고|빼고|제외(?:하고)?|아니|아닌|안\s*(?:되|돼))/u
 const DAY_AFTER_TOMORROW_EXCLUSION_PATTERN =
   /모레(?:(?!오늘|내일).)*(?:말고|빼고|제외(?:하고)?|아니|아닌|안\s*(?:되|돼))/u
-const THREE_DAYS_AHEAD_EXCLUSION_PATTERN = new RegExp(
-  `글피(?:(?!${DAY_BEFORE_YESTERDAY_PATTERN.source}|어제|오늘|내일|모레).)*` +
-    '(?:말고|빼고|제외(?:하고)?|아니|아닌|안\\s*(?:되|돼))',
-  'u',
-)
+const THREE_DAYS_AHEAD_EXCLUSION_PATTERN =
+  /글피(?:(?!그저께|그제|엊그제|어제|오늘|내일|모레).)*(?:말고|빼고|제외(?:하고)?|아니|아닌|안\s*(?:되|돼))/u
 const NEXT_WEEK_PATTERN = new RegExp(`다음 ?주${WEEK_BOUNDARY_PATTERN.source}`, 'u')
 const IMPLICIT_SCHEDULE_PATTERN = new RegExp(
   `(?:${DAY_BEFORE_YESTERDAY_PATTERN.source}|오늘|내일|모레|글피|어제|` +

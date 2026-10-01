@@ -13,4 +13,14 @@ export const RELAX_BACKGROUND_OPTIONS = [
     label: m.relax_background_square,
     source: '/relax-player/post-rain-square-upper-floor.png',
   },
+  {
+    depthSource: '/relax-player/depth/rain-alley-upper-floor.webp',
+    label: m.relax_background_alley,
+    source: '/relax-player/rain-alley-upper-floor.png',
+  },
+  {
+    depthSource: '/relax-player/depth/coastal-village-upper-floor.webp',
+    label: m.relax_background_village,
+    source: '/relax-player/coastal-village-upper-floor.png',
+  },
 ] as const
