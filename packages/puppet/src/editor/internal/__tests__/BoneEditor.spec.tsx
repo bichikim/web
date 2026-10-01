@@ -11,8 +11,10 @@ import {getSceneNode} from '../scene-graph'
 import {addParameter, setParameterKeyformDeformerControlPoints} from '../parameter-keyforms'
 import {createParameterPreview} from '../parameter-sampling'
 
+const boneEditorSource = createBoneDeformer(createDemoDocument(), ['mesh-preview'])!
+
 test('should place bind joints, pose a chain with fixed lengths, and preserve the document contract', () => {
-  const source = createBoneDeformer(createDemoDocument(), ['mesh-preview'])!
+  const source = structuredClone(boneEditorSource)
   const [document, setDocument] = createSignal(source)
   const node = () => getSceneNode(document(), 'bone') as PuppetSceneDeformerNode
   const view = render(() => (

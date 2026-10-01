@@ -7,6 +7,12 @@ import {createDemoDocument, getDocumentScene} from '../../../player'
 import {convertSceneContainers} from '../container-conversion'
 import {SpatialDeformerProperties} from '../SpatialDeformerProperties'
 
+const spatialDocumentSource = convertSceneContainers({
+  document: createDemoDocument(),
+  nodeIds: ['shapes'],
+  targetKind: 'spatial',
+})!
+
 const preview = vi.hoisted(() => ({render: vi.fn()}))
 
 vi.mock('../spatial-mesh-preview-renderer', () => ({
@@ -19,11 +25,7 @@ vi.mock('../spatial-mesh-preview-renderer', () => ({
 }))
 
 test('should show linked visible parts while creating a spatial mesh', () => {
-  const document = convertSceneContainers({
-    document: createDemoDocument(),
-    nodeIds: ['shapes'],
-    targetKind: 'spatial',
-  })!
+  const document = structuredClone(spatialDocumentSource)
   const node = getDocumentScene(document).roots.find((candidate) => candidate.id === 'shapes')
   if (node?.kind !== 'deformer' || node.deformerType !== 'spatial') {
     throw new Error('Missing spatial deformer')
@@ -43,11 +45,7 @@ test('should show linked visible parts while creating a spatial mesh', () => {
 })
 
 test('should allow retrying the same GLB after an import error', async () => {
-  const document = convertSceneContainers({
-    document: createDemoDocument(),
-    nodeIds: ['shapes'],
-    targetKind: 'spatial',
-  })!
+  const document = structuredClone(spatialDocumentSource)
   const node = getDocumentScene(document).roots.find((candidate) => candidate.id === 'shapes')
   if (node?.kind !== 'deformer' || node.deformerType !== 'spatial') {
     throw new Error('Missing spatial deformer')
