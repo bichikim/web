@@ -62,19 +62,21 @@ describe('normalizeSpeechText', () => {
     ['9월', '구 월'],
     ['10월', '시월'],
     ['１０월', '시월'],
-    ['11월', '십일 월'],
-    ['12월', '십이 월'],
+    ['11월', '십일월'],
+    ['１１월', '십일월'],
+    ['12월', '십이월'],
+    ['１２월', '십이월'],
   ])('should pronounce %s with its Korean calendar reading', (text, expected) => {
     expect(normalizeSpeechText({language: 'ko', text})).toBe(expected)
   })
 
-  it('should pronounce irregular Korean month readings in date sentences', () => {
+  it('should preserve special and joined Korean month readings in date sentences', () => {
     expect(
       normalizeSpeechText({
         language: 'ko',
-        text: '6월 10일에 만나요. 10월 3일은 개천절이에요.',
+        text: '6월 10일에 만나요. 10월 3일은 개천절이에요. 11월 15일, 12월 31일.',
       }),
-    ).toBe('유월 십 일에 만나요. 시월 삼 일은 개천절이에요.')
+    ).toBe('유월 십 일에 만나요. 시월 삼 일은 개천절이에요. 십일월 십오 일, 십이월 삼십일 일.')
   })
 
   it('should keep irregular month readings alongside padded clock and duration readings', () => {

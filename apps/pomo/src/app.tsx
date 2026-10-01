@@ -17,6 +17,7 @@ import {DisplayThemeProvider} from './features/display-theme'
 import {AuthProvider} from './features/auth'
 import {PModelDownloadProvider} from './features/model-download'
 import {Analytics} from './components/vercel'
+import {ToastProvider} from '@winter-love/solid-components'
 
 export default function App() {
   const applicationRecovery = useApplicationRecovery()
@@ -34,15 +35,17 @@ export default function App() {
                 <PTooltipProvider>
                   <AuthProvider>
                     <PModelDownloadProvider>
-                      <PRecoveryBoundary
-                        canRetry={applicationRecovery.canRetry}
-                        onError={applicationRecovery.onError}
-                        onReady={applicationRecovery.onReady}
-                        onReload={applicationRecovery.onReload}
-                        onRetry={applicationRecovery.onRetry}
-                      >
-                        <Suspense>{props.children}</Suspense>
-                      </PRecoveryBoundary>
+                      <ToastProvider>
+                        <PRecoveryBoundary
+                          canRetry={applicationRecovery.canRetry}
+                          onError={applicationRecovery.onError}
+                          onReady={applicationRecovery.onReady}
+                          onReload={applicationRecovery.onReload}
+                          onRetry={applicationRecovery.onRetry}
+                        >
+                          <Suspense>{props.children}</Suspense>
+                        </PRecoveryBoundary>
+                      </ToastProvider>
                     </PModelDownloadProvider>
                   </AuthProvider>
                   <PTooltipContent />
