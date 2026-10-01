@@ -8,11 +8,11 @@ it('should clear gyroscope active status when reduced motion becomes preferred',
   let reduced = false
   const listeners = new Map<string, Set<() => void>>()
   const preference = {
-    get matches() {
-      return reduced
-    },
     addEventListener: (type: string, listener: () => void) => {
       listeners.set(type, new Set([...(listeners.get(type) ?? []), listener]))
+    },
+    get matches() {
+      return reduced
     },
     removeEventListener: (type: string, listener: () => void) => {
       listeners.get(type)?.delete(listener)

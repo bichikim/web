@@ -7,10 +7,10 @@ import {useRelaxDepthMotion} from '../components/p-relax-player-page/use-relax-d
 it('should not leave gyroscope depth input waiting when reduced motion is preferred', async () => {
   const listeners = new Map<string, Set<() => void>>()
   const preference = {
-    matches: true,
     addEventListener: (type: string, listener: () => void) => {
       listeners.set(type, new Set([...(listeners.get(type) ?? []), listener]))
     },
+    matches: true,
     removeEventListener: (type: string, listener: () => void) => {
       listeners.get(type)?.delete(listener)
     },
