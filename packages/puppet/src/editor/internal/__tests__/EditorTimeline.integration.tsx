@@ -8,12 +8,52 @@ import {createDemoDocument, type PuppetDocument} from '../../../player'
 import {EditorTimeline} from '../EditorTimeline'
 import {setParameterKeyframe} from '../motion-keyframes'
 
+const createSelectionPreservationDocument = (): PuppetDocument => {
+  const document = createDemoDocument()
+
+  return {
+    ...document,
+    motions: document.motions
+      .filter((motion) => motion.id === 'idle-deform' || motion.id === 'blink')
+      .map((motion) => ({
+        ...motion,
+        timelineParameterIds: ['angle-x'],
+        tracks: motion.id === 'blink' ? motion.tracks : [],
+      })),
+  }
+}
+
 afterEach(() => {
   cleanup()
   vi.restoreAllMocks()
 })
 
 describe('EditorTimeline', () => {
+  test('should retain another motion selection when removing a timeline row', async () => {
+    const [document, setDocument] = createSignal<PuppetDocument>(
+      createSelectionPreservationDocument(),
+    )
+    const view = render(() => (
+      <EditorTimeline document={document()} onDocumentChange={setDocument} />
+    ))
+
+    fireEvent.keyDown(view.getByRole('button', {name: /모션 선택/}), {key: 'Enter'})
+    await waitFor(() => screen.getByRole('option', {name: '모든 타임라인 보기'}))
+    fireEvent.keyDown(screen.getByRole('option', {name: '모든 타임라인 보기'}), {key: 'Enter'})
+
+    const blink = view.getByRole('region', {name: 'blink 타임라인'})
+    fireEvent.click(within(blink).getByRole('button', {name: 'Angle X 타임라인 행'}))
+    const selectedRow = within(blink).getByRole('button', {name: 'Angle X 타임라인 행'})
+    expect(selectedRow.closest('.timeline-row-label')).toHaveAttribute('data-selected')
+
+    const idle = view.getByRole('region', {name: 'idle-deform 타임라인'})
+    const removedRow = within(idle).getByRole('button', {name: 'Angle X 타임라인 행'})
+    fireEvent.keyDown(removedRow, {key: 'Delete'})
+    fireEvent.keyDown(removedRow, {key: 'Delete'})
+
+    expect(selectedRow.closest('.timeline-row-label')).toHaveAttribute('data-selected')
+  })
+
   test('should rename and swipe-delete motion groups without leaving the all-motions view', async () => {
     const [document, setDocument] = createSignal<PuppetDocument>(createDemoDocument())
     const [motionId, setMotionId] = createSignal('idle-deform')
