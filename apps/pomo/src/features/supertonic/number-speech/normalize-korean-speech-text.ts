@@ -14,6 +14,7 @@ import {
 
 const DIGIT_WORDS = ['영', '일', '이', '삼', '사', '오', '육', '칠', '팔', '구'] as const
 const DECIMAL_RADIX = 10
+const MAX_COLON_CLOCK_HOUR = 23
 const MAX_TWELVE_HOUR_CLOCK_HOUR = 12
 const NATIVE_LIMIT = 100n
 const SPECIAL_TWENTY = 20
@@ -52,6 +53,9 @@ const KOREAN_PARTICLE_PATTERN = KOREAN_PARTICLE_PATTERN_SOURCE
 const KOREAN_UNIT_END_PATTERN = KOREAN_UNIT_END_PATTERN_SOURCE
 const LEVEL_FOLLOWING_PATTERN = `[\\p{L}\\p{N}_]|[.,]${KOREAN_DIGIT_PATTERN_SOURCE}|[+\\-/:~–—#@$€£¥₩<>≤≥≈]`
 const LEVEL_NUMBER_END = `(?:(?=${KOREAN_PARTICLE_PATTERN})|(?!${LEVEL_FOLLOWING_PATTERN})${KOREAN_UNIT_END_PATTERN})`
+const COLON_CLOCK_TOKEN_START_PATTERN = `${TOKEN_START_PATTERN}(?<![?&=%\\\\])`
+const COLON_CLOCK_CONTEXT_SUFFIX_PATTERN_SOURCE =
+  '\\s*(?:에|부터|까지|에서|쯤|경)(?=$|[^\\p{L}\\p{N}_])'
 const SIGNED_NUMBER_PREFIX_PATTERN = /[+＋−－-]\s*$/u
 const TIME_OF_DAY_PREFIX_PATTERN = /(?:오전|오후)\s*$/u
 const WON_PATTERN = new RegExp(
@@ -67,6 +71,15 @@ const CLOCK_TIME_PATTERN = new RegExp(
   `${TOKEN_START_PATTERN}(${UNSIGNED_INTEGER_PATTERN})\\s*시\\s*` +
     `(${UNSIGNED_INTEGER_PATTERN})\\s*분${KOREAN_UNIT_END_PATTERN}`,
   'gu',
+)
+const COLON_CLOCK_TIME_PATTERN = new RegExp(
+  `${COLON_CLOCK_TOKEN_START_PATTERN}((?:오전|오후)\\s*)?([\\d０-９]{2}):([\\d０-９]{2})` +
+    `(?=${COLON_CLOCK_CONTEXT_SUFFIX_PATTERN_SOURCE}|(?:$|[,.!?…](?=$|\\s))|\\s+)`,
+  'gu',
+)
+const COLON_CLOCK_CONTEXT_SUFFIX_PATTERN = new RegExp(
+  `^${COLON_CLOCK_CONTEXT_SUFFIX_PATTERN_SOURCE}`,
+  'u',
 )
 const CLOCK_MINUTE_PREFIX_PATTERN = new RegExp(`(?:${UNSIGNED_INTEGER_PATTERN})\\s*시\\s*$`, 'u')
 const NATIVE_COUNTER_PATTERN = new RegExp(
@@ -259,6 +272,45 @@ const hasValidClockHourInContext = (hour: number, input: string, start: number) 
   !TIME_OF_DAY_PREFIX_PATTERN.test(input.slice(0, start)) ||
   (hour >= 1 && hour <= MAX_TWELVE_HOUR_CLOCK_HOUR)
 
+const replaceColonClockTime = (
+  ...[match, timeOfDay, hour, minute, start, input]: [
+    string,
+    string | undefined,
+    string,
+    string,
+    number,
+    string,
+  ]
+) => {
+  const hasKoreanTimeSuffix = COLON_CLOCK_CONTEXT_SUFFIX_PATTERN.test(
+    input.slice(start + match.length),
+  )
+
+  if (timeOfDay === undefined && !hasKoreanTimeSuffix) {
+    return match
+  }
+
+  const clockTime = parseClockTime(hour, minute)
+
+  if (
+    clockTime === null ||
+    clockTime.hour > MAX_COLON_CLOCK_HOUR ||
+    (timeOfDay !== undefined && (clockTime.hour < 1 || clockTime.hour > MAX_TWELVE_HOUR_CLOCK_HOUR))
+  ) {
+    return match
+  }
+
+  const hourPronunciation = pronounceClockHour(String(clockTime.hour))
+  const minutePronunciation = pronounceSinoInteger(String(clockTime.minute))
+
+  if (hourPronunciation === null || minutePronunciation === null) {
+    return match
+  }
+
+  const timeOfDayPrefix = timeOfDay === undefined ? '' : `${timeOfDay.trim()} `
+  return `${timeOfDayPrefix}${hourPronunciation} 시 ${minutePronunciation} 분`
+}
+
 /** Converts only Korean number forms whose pronunciation is established by their syntax. */
 export const normalizeKoreanSpeechText = (text: string): string =>
   text
@@ -305,6 +357,7 @@ export const normalizeKoreanSpeechText = (text: string): string =>
         ? replaceWhenPronounceable(match, value, '원', pronounceSinoInteger)
         : match,
     )
+    .replace(COLON_CLOCK_TIME_PATTERN, replaceColonClockTime)
     .replace(
       CLOCK_TIME_PATTERN,
       (...[match, hour, minute, start, input]: [string, string, string, number, string]) => {
