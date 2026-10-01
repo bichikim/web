@@ -5,6 +5,60 @@ import {createCalendarQuery} from '../query'
 describe('createCalendarQuery', () => {
   const now = new Date('2026-09-04T10:30:00.000Z')
 
+  it.each([
+    ['일요일 뭐 있어?', '2026-09-05T15:00:00.000Z', '2026-09-06T15:00:00.000Z'],
+    ['월요일 뭐 있어?', '2026-09-06T15:00:00.000Z', '2026-09-07T15:00:00.000Z'],
+    ['화요일 뭐 있어?', '2026-09-07T15:00:00.000Z', '2026-09-08T15:00:00.000Z'],
+    ['수요일 뭐 있어?', '2026-09-08T15:00:00.000Z', '2026-09-09T15:00:00.000Z'],
+    ['목요일 뭐 있어?', '2026-09-09T15:00:00.000Z', '2026-09-10T15:00:00.000Z'],
+    ['금요일 뭐 있어?', '2026-09-04T10:30:00.000Z', '2026-09-04T15:00:00.000Z'],
+    ['토요일 뭐 있어?', '2026-09-04T15:00:00.000Z', '2026-09-05T15:00:00.000Z'],
+  ])('should query the upcoming local weekday for "%s"', (text, start, end) => {
+    expect(createCalendarQuery({now, text, timeZone: 'Asia/Seoul'})).toEqual({end, start})
+  })
+
+  it('should use local midnight boundaries when an implicit weekday crosses daylight saving time', () => {
+    expect(
+      createCalendarQuery({
+        now: new Date('2026-03-06T12:00:00.000Z'),
+        text: '일요일 뭐 있어?',
+        timeZone: 'America/New_York',
+      }),
+    ).toEqual({end: '2026-03-09T04:00:00.000Z', start: '2026-03-08T05:00:00.000Z'})
+  })
+
+  it.each([
+    '수요일 말고 목요일 뭐 있어?',
+    '수요일 빼고 목요일 뭐 있어?',
+    '수요일 제외하고 목요일 뭐 있어?',
+    '수요일은 제외하고 목요일 뭐 있어?',
+    '수요일이 아닌 목요일 뭐 있어?',
+    '수요일 안 되고 목요일 뭐 있어?',
+  ])('should skip an excluded weekday in "%s"', (text) => {
+    expect(createCalendarQuery({now, text, timeZone: 'Asia/Seoul'})).toEqual({
+      end: '2026-09-10T15:00:00.000Z',
+      start: '2026-09-09T15:00:00.000Z',
+    })
+  })
+
+  it('should not fall back to a broad window when the only weekday is excluded', () => {
+    expect(
+      createCalendarQuery({now, text: '수요일 말고 뭐 있어?', timeZone: 'Asia/Seoul'}),
+    ).toBeNull()
+  })
+
+  it('should keep a same-day morning weekday query within the local day', () => {
+    expect(
+      createCalendarQuery({now, text: '금요일 오전 뭐 있어?', timeZone: 'Asia/Seoul'}),
+    ).toEqual({end: '2026-09-04T03:00:00.000Z', start: '2026-09-03T15:00:00.000Z'})
+  })
+
+  it('should ignore a weekday in an unrelated implicit question', () => {
+    expect(
+      createCalendarQuery({now, text: '수요일 날씨 뭐 있어?', timeZone: 'Asia/Seoul'}),
+    ).toBeNull()
+  })
+
   it('should resolve tomorrow using local calendar dates across a year boundary', () => {
     const localNow = new Date(2026, 11, 31, 23, 30)
     expect(createCalendarQuery({now: localNow, text: '내일 일정'})).toEqual({
