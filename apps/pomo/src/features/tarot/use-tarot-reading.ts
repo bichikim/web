@@ -303,6 +303,7 @@ export const useTarotReading = (props: UseTarotReadingProps): TarotReadingContro
     revision += 1
     const {modelId} = readingModelSelection()
     readingContext.question = question().trim()
+    readingContext.locale = props.locale()
     const downloadRevision = revision
     setStatus('downloading')
     try {

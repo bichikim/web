@@ -294,4 +294,31 @@ describe('useTarotReading', () => {
     expect(mocks.startTextModel).toHaveBeenCalledWith('lfm-2.6b-qad')
     expect(mocks.generate).toHaveBeenCalledWith(expect.objectContaining({modelId: 'lfm-2.6b-qad'}))
   })
+
+  it('should read the locale accessor at download start after consent', async () => {
+    const fixture = getFixture()
+    fixture.dispose()
+    let locale: 'en' | 'ko' = 'ko'
+    fixture.reading = createRoot((dispose) => {
+      fixture.dispose = dispose
+      return useTarotReading({locale: () => locale})
+    })
+    mocks.downloaded.mockResolvedValue(false)
+    fixture.reading.setQuestion('무엇을 기억해야 할까요?')
+    fixture.reading.draw()
+    const selected = fixture.reading.cards()
+    await flush()
+    expect(fixture.reading.status()).toBe('consent')
+
+    locale = 'en'
+    await fixture.reading.startDownload()
+
+    expect(mocks.generate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        cards: selected,
+        locale: 'en',
+        question: '무엇을 기억해야 할까요?',
+      }),
+    )
+  })
 })
