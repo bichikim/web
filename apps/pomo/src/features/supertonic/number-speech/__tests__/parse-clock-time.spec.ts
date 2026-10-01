@@ -1,7 +1,7 @@
 /** @vitest-environment node */
 import {describe, expect, it} from 'vitest'
 
-import {parseClockTime} from '../parse-clock-time'
+import {parseClockTime} from '..'
 
 describe('parseClockTime', () => {
   it('should normalize valid ASCII and fullwidth clock components', () => {

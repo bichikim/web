@@ -14,6 +14,7 @@ import {
 
 const DIGIT_WORDS = ['영', '일', '이', '삼', '사', '오', '육', '칠', '팔', '구'] as const
 const DECIMAL_RADIX = 10
+const MAX_TWELVE_HOUR_CLOCK_HOUR = 12
 const NATIVE_LIMIT = 100n
 const SPECIAL_TWENTY = 20
 const SMALL_UNITS = ['', '십', '백', '천'] as const
@@ -51,6 +52,7 @@ const KOREAN_UNIT_END_PATTERN = KOREAN_UNIT_END_PATTERN_SOURCE
 const LEVEL_FOLLOWING_PATTERN = `[\\p{L}\\p{N}_]|[.,]${KOREAN_DIGIT_PATTERN_SOURCE}|[+\\-/:~–—#@$€£¥₩<>≤≥≈]`
 const LEVEL_NUMBER_END = `(?:(?=${KOREAN_PARTICLE_PATTERN})|(?!${LEVEL_FOLLOWING_PATTERN})${KOREAN_UNIT_END_PATTERN})`
 const SIGNED_NUMBER_PREFIX_PATTERN = /[+＋−－-]\s*$/u
+const TIME_OF_DAY_PREFIX_PATTERN = /(?:오전|오후)\s*$/u
 const WON_PATTERN = new RegExp(
   `${TOKEN_START_PATTERN}(${KOREAN_INTEGER_PATTERN_SOURCE})\\s*원${KOREAN_UNIT_END_PATTERN}`,
   'gu',
@@ -252,6 +254,10 @@ const hasCanonicalNumberKind = ({
   return hasNumberKind('ko', canonicalInput, start, canonicalValue, kind)
 }
 
+const hasValidClockHourInContext = (hour: number, input: string, start: number) =>
+  !TIME_OF_DAY_PREFIX_PATTERN.test(input.slice(0, start)) ||
+  (hour >= 1 && hour <= MAX_TWELVE_HOUR_CLOCK_HOUR)
+
 /** Converts only Korean number forms whose pronunciation is established by their syntax. */
 export const normalizeKoreanSpeechText = (text: string): string =>
   text
@@ -306,6 +312,10 @@ export const normalizeKoreanSpeechText = (text: string): string =>
           return match
         }
 
+        if (!hasValidClockHourInContext(clockTime.hour, input, start)) {
+          return match
+        }
+
         const canonicalHour = String(clockTime.hour)
 
         if (
@@ -354,16 +364,19 @@ export const normalizeKoreanSpeechText = (text: string): string =>
     )
     .replace(CLOCK_HOUR_PATTERN, (match, value: string, start: number, input: string) => {
       const clockTime = parseClockTime(value, '00')
-      const canonicalHour = clockTime === null ? null : String(clockTime.hour)
+      if (clockTime === null || !hasValidClockHourInContext(clockTime.hour, input, start)) {
+        return match
+      }
 
-      return canonicalHour !== null &&
-        hasCanonicalNumberKind({
-          canonicalValue: canonicalHour,
-          input,
-          kind: 'year-date-time',
-          start,
-          value,
-        })
+      const canonicalHour = String(clockTime.hour)
+
+      return hasCanonicalNumberKind({
+        canonicalValue: canonicalHour,
+        input,
+        kind: 'year-date-time',
+        start,
+        value,
+      })
         ? replaceWhenPronounceable(match, canonicalHour, '시', pronounceClockHour)
         : match
     })

@@ -34,6 +34,12 @@ describe('normalizeKoreanSpeechText clock and duration expressions', () => {
     expect(normalizeKoreanSpeechText('25시 00분에 만나요.')).toBe('25시 00분에 만나요.')
     expect(normalizeKoreanSpeechText('25시 45분 남았어요.')).toBe('25시 45분 남았어요.')
     expect(normalizeKoreanSpeechText('123시 05분에 만나요.')).toBe('123시 05분에 만나요.')
+    expect(normalizeKoreanSpeechText('오전 00시 00분에 만나요.')).toBe('오전 00시 00분에 만나요.')
+    expect(normalizeKoreanSpeechText('오전 24시 00분에 만나요.')).toBe('오전 24시 00분에 만나요.')
+    expect(normalizeKoreanSpeechText('오후 13시 00분에 만나요.')).toBe('오후 13시 00분에 만나요.')
+    expect(normalizeKoreanSpeechText('오전 00시입니다.')).toBe('오전 00시입니다.')
+    expect(normalizeKoreanSpeechText('오전 24시입니다.')).toBe('오전 24시입니다.')
+    expect(normalizeKoreanSpeechText('오후 13시입니다.')).toBe('오후 13시입니다.')
   })
 
   it('should preserve signs and identifier-like leading-zero values', () => {

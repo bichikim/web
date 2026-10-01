@@ -10,6 +10,10 @@ afterEach(() => {
 })
 it('should not mark valid service days invalid while the enlistment date is empty', async () => {
   localStorage.clear()
+  localStorage.setItem(
+    'pomo:service-settings:v1',
+    JSON.stringify({branch: 'army', days: '300', manual: true, start: ''}),
+  )
   render(() => (
     <PreferenceProvider>
       <Service />
@@ -17,9 +21,8 @@ it('should not mark valid service days invalid while the enlistment date is empt
   ))
   const manual = screen.getByRole('switch', {name: '복무기간 직접 입력'})
   await waitFor(() => expect(manual).toBeEnabled())
-  fireEvent.click(manual)
+  expect(manual).toBeChecked()
   const days = screen.getByRole('textbox', {name: /복무기간 \(일\)/u})
-  fireEvent.input(days, {target: {value: '300'}})
   expect(days).toHaveAttribute('aria-invalid', 'false')
   fireEvent.input(days, {target: {value: '0'}})
   expect(days).toHaveAttribute('aria-invalid', 'true')

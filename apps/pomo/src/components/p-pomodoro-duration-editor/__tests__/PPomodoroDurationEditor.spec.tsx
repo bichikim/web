@@ -26,15 +26,14 @@ afterEach(() => {
 })
 
 describe('PPomodoroDurationEditor', () => {
-  it('should edit, save, reset, cancel, and toggle duration settings', () => {
+  it('should open the editor with the current settings', () => {
     const [isEditing, setIsEditing] = createSignal(false)
-    const onChange = vi.fn()
     const onEditingChange = vi.fn((nextEditing: boolean) => setIsEditing(nextEditing))
     render(() => (
       <PPomodoroDurationEditor
         config={CONFIG}
         isEditing={isEditing()}
-        onChange={onChange}
+        onChange={vi.fn()}
         onEditingChange={onEditingChange}
       />
     ))
@@ -48,10 +47,38 @@ describe('PPomodoroDurationEditor', () => {
       '5',
     )
     expect(screen.getByRole('spinbutton', {name: '긴 휴식 시간(분)'})).toHaveProperty('value', '15')
+  })
 
+  it('should increment focus duration by one minute', () => {
+    const [isEditing, setIsEditing] = createSignal(false)
+    render(() => (
+      <PPomodoroDurationEditor
+        config={CONFIG}
+        isEditing={isEditing()}
+        onChange={vi.fn()}
+        onEditingChange={setIsEditing}
+      />
+    ))
+
+    fireEvent.click(screen.getByRole('button', {name: /4세션/}))
     const focusInput = screen.getByRole('spinbutton', {name: '집중 시간(분)'})
     fireEvent.click(screen.getByRole('button', {name: '집중 시간(분) 늘리기'}))
     expect(focusInput).toHaveProperty('value', '26')
+  })
+
+  it('should save edited duration settings and close the editor', () => {
+    const [isEditing, setIsEditing] = createSignal(true)
+    const onChange = vi.fn()
+    const onEditingChange = vi.fn((nextEditing: boolean) => setIsEditing(nextEditing))
+    render(() => (
+      <PPomodoroDurationEditor
+        config={CONFIG}
+        isEditing={isEditing()}
+        onChange={onChange}
+        onEditingChange={onEditingChange}
+      />
+    ))
+    const summary = screen.getByRole('button', {name: /4세션/})
 
     fireEvent.input(screen.getByRole('spinbutton', {name: '집중 횟수(회)'}), {
       target: {value: '6'},
@@ -74,13 +101,35 @@ describe('PPomodoroDurationEditor', () => {
       shortBreakSeconds: 7 * 60,
     })
     expect(screen.queryByRole('spinbutton')).toBeNull()
+    expect(onEditingChange).toHaveBeenCalledWith(false)
 
     fireEvent.click(summary)
     expect(screen.getByRole('spinbutton', {name: '집중 횟수(회)'})).toHaveProperty('value', '4')
+  })
+
+  it('should discard cancelled edits and toggle the editor', () => {
+    const [isEditing, setIsEditing] = createSignal(false)
+    const onEditingChange = vi.fn((nextEditing: boolean) => setIsEditing(nextEditing))
+    render(() => (
+      <PPomodoroDurationEditor
+        config={CONFIG}
+        isEditing={isEditing()}
+        onChange={vi.fn()}
+        onEditingChange={onEditingChange}
+      />
+    ))
+    const summary = screen.getByRole('button', {name: /4세션/})
+
+    fireEvent.click(summary)
+    fireEvent.input(screen.getByRole('spinbutton', {name: '집중 시간(분)'}), {
+      target: {value: '30'},
+    })
     fireEvent.click(screen.getByRole('button', {name: '취소'}))
     expect(screen.queryByRole('spinbutton')).toBeNull()
 
     fireEvent.click(summary)
+    expect(screen.getByRole('spinbutton', {name: '집중 횟수(회)'})).toHaveProperty('value', '4')
+    expect(screen.getByRole('spinbutton', {name: '집중 시간(분)'})).toHaveProperty('value', '25')
     fireEvent.click(summary)
     expect(screen.queryByRole('spinbutton')).toBeNull()
     expect(onEditingChange).toHaveBeenLastCalledWith(false)
