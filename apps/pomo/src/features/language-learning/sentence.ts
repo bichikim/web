@@ -47,7 +47,7 @@ const INTERNAL_LATIN_ABBREVIATION_PATTERN = new RegExp(
 const WRAPPING_QUOTES_PATTERN = /^["\uFF02'“”‘’「」『』].*["\uFF02'“”‘’「」『』]$/u
 const MATCHING_WRAPPING_QUOTES_PATTERN =
   /^(?:"[^"]*"|\uFF02.*\uFF02|'.*'|“.*”|‘.*’|「.*」|『.*』)$/u
-const LEADING_MARKER_PATTERN = /^(?:[-*•]|\d+(?:\.|\)))\s*/u
+const LEADING_MARKER_PATTERN = /^(?:[-*•]|\d+(?:\.|\)))\s+/u
 
 const hasMultipleEnglishSentences = (sentence: string) => {
   let previousSegment: string | undefined
