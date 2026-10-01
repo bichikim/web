@@ -146,7 +146,23 @@ jobs:
             packages/puppet/src/editor/internal/__tests__/SpatialMeshDialog.integration.tsx \
             packages/puppet/src/player/internal/__tests__/physics.development-model.ear-attachment.integration.ts \
             packages/puppet/src/player/internal/__tests__/physics.ribbon.integration.ts \
-            packages/puppet/src/player/internal/__tests__/scene-deformation.chest.attachment.integration.ts
+            packages/puppet/src/player/internal/__tests__/scene-deformation.chest.attachment.integration.ts \
+            apps/pomo/__tests__/build/polyfills.integration.ts \
+            apps/pomo/scripts/vite/__tests__/prune-transform-cache.integration.ts \
+            apps/pomo/scripts/vite/__tests__/transform-cache.integration.ts \
+            apps/pomo/scripts/vite/__tests__/validate-steam-assets.integration.ts \
+            apps/pomo/src/features/album-translation/__tests__/worker.integration.ts \
+            apps/pomo/src/features/chat/__tests__/worker.lifecycle.integration.ts \
+            apps/pomo/src/features/dialogue-writer/__tests__/worker.integration.ts \
+            apps/pomo/src/features/image-generation/__tests__/worker.lifecycle.integration.ts \
+            apps/pomo/src/features/model-download/__tests__/text-worker.integration.ts \
+            apps/pomo/src/features/sound-generation/__tests__/worker.integration.ts \
+            apps/pomo/src/features/speech-to-text/__tests__/worker.integration.ts \
+            apps/pomo/src/features/supertonic/__tests__/opus-worker.integration.ts \
+            apps/pomo/src/features/supertonic/__tests__/worker.download-failures.integration.ts \
+            apps/pomo/src/features/supertonic/__tests__/worker.integration.ts \
+            apps/pomo/src/features/text-mood/__tests__/worker.integration.ts \
+            apps/pomo/src/server/ai-runner/__tests__/index.integration.ts
 
   tests:
     name: Tests
