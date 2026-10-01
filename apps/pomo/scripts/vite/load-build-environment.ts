@@ -31,7 +31,10 @@ export const loadBuildEnvironment = ({
 }: LoadBuildEnvironmentOptions): BuildEnvironment => {
   const environment = loadEnv(mode, environmentDirectory, POMO_ENVIRONMENT_PREFIX)
   const publicOrigin = resolvePublicOrigin(environment)
-  const connectSourceList = ["'self'", publicOrigin, ...CONNECT_SOURCE_ORIGINS].join(' ')
+  const socketOrigin = publicOrigin.replace(/^http/u, 'ws')
+  const connectSourceList = ["'self'", publicOrigin, socketOrigin, ...CONNECT_SOURCE_ORIGINS].join(
+    ' ',
+  )
   const publicAssetOrigin = vercelUrl ? new URL(`https://${vercelUrl}`).origin : publicOrigin
 
   return {connectSourceList, environment, publicAssetOrigin, publicOrigin}

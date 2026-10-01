@@ -31,6 +31,16 @@ interface NitroInstance {
 export const createNitroConfig = (options: CreateNitroConfigOptions) => {
   const isStaticBuild = options.target !== 'web'
   return {
+    features: {websocket: !isStaticBuild || options.command === 'serve'},
+    handlers:
+      isStaticBuild && options.command === 'build'
+        ? []
+        : [
+            {
+              handler: './src/server/file-transfer/signaling.ts',
+              route: '/api/transfer/socket',
+            },
+          ],
     hooks: {
       'prerender:generate'(route: NitroPrerenderRoute, nitroInstance: NitroInstance) {
         if (route.contents === undefined || !route.contentType?.includes('html')) {

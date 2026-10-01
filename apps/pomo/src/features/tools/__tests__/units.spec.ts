@@ -17,6 +17,10 @@ it('should convert temperature offsets and accept negative temperatures', () => 
 it('should convert temperatures pasted with a Unicode minus sign', () => {
   expect(convertUnit({from: 'C', to: 'F', value: '−40'})).toEqual({kind: 'valid', value: -40})
 })
+it('should convert temperatures pasted with a fullwidth plus sign', () => {
+  expect(convertUnit({from: 'C', to: 'F', value: '＋40'})).toEqual({kind: 'valid', value: 104})
+  expect(convertUnit({from: 'C', to: 'F', value: '＋４０'})).toEqual({kind: 'valid', value: 104})
+})
 it('should convert values pasted with fullwidth digits', () => {
   expect(convertUnit({from: 'm', to: 'ft', value: '１０'})).toEqual({
     kind: 'valid',
