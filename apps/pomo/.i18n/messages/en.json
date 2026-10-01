@@ -774,6 +774,7 @@
   "relax_depth_input_title": "Depth movement",
   "relax_depth_input_drag": "Drag",
   "relax_depth_input_gyroscope": "Gyroscope",
+  "relax_depth_input_reduced_motion": "Depth movement is disabled while reduced motion is enabled. Turn off reduced motion to choose an input.",
   "relax_depth_input_waiting": "Tilt your device to move the background.",
   "relax_depth_input_denied": "Sensor access was denied. Switched to drag.",
   "relax_depth_input_unavailable": "Gyroscope unavailable. Switched to drag.",
