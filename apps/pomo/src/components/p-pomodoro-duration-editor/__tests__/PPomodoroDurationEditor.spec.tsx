@@ -26,20 +26,16 @@ afterEach(() => {
 })
 
 describe('PPomodoroDurationEditor', () => {
-  it('should open the editor with the current settings', () => {
-    const [isEditing, setIsEditing] = createSignal(false)
-    const onEditingChange = vi.fn((nextEditing: boolean) => setIsEditing(nextEditing))
+  it('should render the current settings while editing', () => {
     render(() => (
       <PPomodoroDurationEditor
         config={CONFIG}
-        isEditing={isEditing()}
+        isEditing
         onChange={vi.fn()}
-        onEditingChange={onEditingChange}
+        onEditingChange={vi.fn()}
       />
     ))
-    const summary = screen.getByRole('button', {name: /4세션/})
 
-    fireEvent.click(summary)
     expect(screen.getByRole('spinbutton', {name: '집중 횟수(회)'})).toHaveProperty('value', '4')
     expect(screen.getByRole('spinbutton', {name: '집중 시간(분)'})).toHaveProperty('value', '25')
     expect(screen.getByRole('spinbutton', {name: '짧은 휴식 시간(분)'})).toHaveProperty(

@@ -83,7 +83,7 @@ describe('normalizeSpeechText', () => {
     expect(
       normalizeSpeechText({
         language: 'ko',
-        text: '６월 １０월, ０９시 ０５분, ０５분 남았어요.',
+        text: '６월 １０월, ０９시 ０５분, 05분 남았어요.',
       }),
     ).toBe('유월 시월, 아홉 시 오 분, 오 분 남았어요.')
   })

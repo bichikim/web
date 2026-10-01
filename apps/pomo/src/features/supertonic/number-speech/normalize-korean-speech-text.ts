@@ -54,6 +54,8 @@ const LEVEL_FOLLOWING_PATTERN = `[\\p{L}\\p{N}_]|[.,]${KOREAN_DIGIT_PATTERN_SOUR
 const LEVEL_NUMBER_END = `(?:(?=${KOREAN_PARTICLE_PATTERN})|(?!${LEVEL_FOLLOWING_PATTERN})${KOREAN_UNIT_END_PATTERN})`
 const SIGNED_NUMBER_PREFIX_PATTERN = /[+＋−－-]\s*$/u
 const TIME_OF_DAY_PREFIX_PATTERN = /(?:오전|오후)\s*$/u
+const REMAINING_DURATION_SUFFIX_PATTERN =
+  /^\s*남(?:$|[^\p{L}\p{N}_]|았|아|은|는|을|음|지|습니다|는다)/u
 const WON_PATTERN = new RegExp(
   `${TOKEN_START_PATTERN}(${KOREAN_INTEGER_PATTERN_SOURCE})\\s*원${KOREAN_UNIT_END_PATTERN}`,
   'gu',
@@ -225,7 +227,7 @@ const replaceWhenPronounceable = (
 }
 
 const parseDurationMinuteValue = (value: string): string | null => {
-  const integer = value.normalize('NFKC').replaceAll(',', '')
+  const integer = value.replaceAll(',', '')
 
   if (!/^\d+$/u.test(integer)) {
     return null
@@ -346,6 +348,15 @@ export const normalizeKoreanSpeechText = (text: string): string =>
     )
     .replace(DURATION_MINUTE_PATTERN, (match, value: string, start: number, input: string) => {
       if (CLOCK_MINUTE_PREFIX_PATTERN.test(input.slice(0, start))) {
+        return match
+      }
+
+      const hasLeadingZero = value.length > 1 && value.startsWith('0')
+      const hasRemainingDurationSuffix = REMAINING_DURATION_SUFFIX_PATTERN.test(
+        input.slice(start + match.length),
+      )
+
+      if (hasLeadingZero && !hasRemainingDurationSuffix) {
         return match
       }
 
