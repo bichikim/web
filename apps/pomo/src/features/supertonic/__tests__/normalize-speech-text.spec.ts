@@ -49,6 +49,61 @@ describe('normalizeSpeechText', () => {
     ).toBe('영 개, 스무 개, 백 개, 이십사 시, 삼 월 십오 일, 일억 원')
   })
 
+  it.each([
+    ['1월', '일 월'],
+    ['2월', '이 월'],
+    ['3월', '삼 월'],
+    ['4월', '사 월'],
+    ['5월', '오 월'],
+    ['6월', '유월'],
+    ['６월', '유월'],
+    ['7월', '칠 월'],
+    ['8월', '팔 월'],
+    ['9월', '구 월'],
+    ['10월', '시월'],
+    ['１０월', '시월'],
+    ['11월', '십일 월'],
+    ['12월', '십이 월'],
+  ])('should pronounce %s with its Korean calendar reading', (text, expected) => {
+    expect(normalizeSpeechText({language: 'ko', text})).toBe(expected)
+  })
+
+  it('should pronounce irregular Korean month readings in date sentences', () => {
+    expect(
+      normalizeSpeechText({
+        language: 'ko',
+        text: '6월 10일에 만나요. 10월 3일은 개천절이에요.',
+      }),
+    ).toBe('유월 십 일에 만나요. 시월 삼 일은 개천절이에요.')
+  })
+
+  it('should keep irregular month readings alongside padded clock and duration readings', () => {
+    expect(
+      normalizeSpeechText({
+        language: 'ko',
+        text: '６월 １０월, ０９시 ０５분, ０５분 남았어요.',
+      }),
+    ).toBe('유월 시월, 아홉 시 오 분, 오 분 남았어요.')
+  })
+
+  it('should not apply irregular month readings to durations and other units', () => {
+    expect(
+      normalizeSpeechText({
+        language: 'ko',
+        text: '6개월, 10개월, 6일, 10일, 6년, 10초, 6층, 10도',
+      }),
+    ).toBe('육 개월, 십 개월, 육 일, 십 일, 육 년, 십 초, 육 층, 10도')
+  })
+
+  it('should not apply irregular month readings to part of a larger number', () => {
+    expect(
+      normalizeSpeechText({
+        language: 'ko',
+        text: '16월, 106월, 110월, 210월, 06월, 010월, +6월, -10월, ＋６월',
+      }),
+    ).toBe('십육 월, 백육 월, 백십 월, 이백십 월, 06월, 010월, 플러스 육 월, 마이너스 십 월, 육 월')
+  })
+
   it('should pronounce explicit Korean year expressions with Sino-Korean numbers', () => {
     expect(
       normalizeSpeechText({

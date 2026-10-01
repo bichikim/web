@@ -8,6 +8,14 @@ describe('isValidLanguageLearningSentence', () => {
     expect(isValidLanguageLearningSentence('円周率は3.14として計算します。', 'ja')).toBe(true)
   })
 
+  it('should accept decimal values at the start of sentences', () => {
+    const englishSentence = '3.5 million people visit the park each year.'
+    const koreanSentence = '1.5배 빠르게 달릴 수 있어요.'
+
+    expect(isValidLanguageLearningSentence(englishSentence, 'en')).toBe(true)
+    expect(isValidLanguageLearningSentence(koreanSentence, 'ko')).toBe(true)
+  })
+
   it('should accept Latin abbreviations in Korean and Japanese sentences', () => {
     expect(isValidLanguageLearningSentence('Dr. Kim은 의사예요.', 'ko')).toBe(true)
     expect(isValidLanguageLearningSentence('예를 들어 e.g. 이렇게 말해요.', 'ko')).toBe(true)
@@ -58,6 +66,17 @@ describe('isValidLanguageLearningSentence', () => {
 })
 
 describe('normalizeLanguageLearningSentence', () => {
+  it('should preserve decimal values and strip genuine numbered list markers', () => {
+    const englishSentence = '3.5 million people visit the park each year.'
+    const koreanSentence = '1.5배 빠르게 달릴 수 있어요.'
+
+    expect(normalizeLanguageLearningSentence(englishSentence)).toBe(englishSentence)
+    expect(normalizeLanguageLearningSentence(koreanSentence)).toBe(koreanSentence)
+    expect(normalizeLanguageLearningSentence('1. The cat sleeps.')).toBe('The cat sleeps.')
+    expect(normalizeLanguageLearningSentence('2) The cat sleeps.')).toBe('The cat sleeps.')
+    expect(normalizeLanguageLearningSentence('1.The cat sleeps.')).toBe('1.The cat sleeps.')
+  })
+
   it('should recover mismatched quote wrappers without dropping sentence endings', () => {
     const sentence = normalizeLanguageLearningSentence('"hello\'')
     const question = normalizeLanguageLearningSentence('"hello?\'')
