@@ -139,8 +139,8 @@ describe('lunar-to-solar date selection', () => {
     renderLunarInLunarMode()
     expect(await screen.findByText('2026-02-17')).toBeVisible()
 
-    await selectOption(/음력 일/u, '30')
-    await selectOption(/음력 월/u, '2')
+    await changeHiddenSelect(/음력 일/u, '30')
+    await changeHiddenSelect(/음력 월/u, '2')
 
     expect(screen.getByRole('button', {name: /음력 일/u})).toHaveTextContent('29')
     await openSelect(/음력 일/u)
