@@ -1,5 +1,6 @@
+import {KeyedList} from '../keyed-list'
 import {cx} from 'class-variance-authority'
-import {For, Match, Show, Switch} from 'solid-js'
+import {createMemo, Match, Show, Switch} from 'solid-js'
 
 import {useModelDownload} from '../../features/model-download'
 import {PButton} from '../p-button/PButton'
@@ -18,10 +19,19 @@ export const PModelDownloadStatus = () => {
   return (
     <Show when={download.downloads().length > 0}>
       <div class="grid max-h-64 gap-2 overflow-y-auto" aria-label="모델 다운로드 목록">
-        <For each={download.downloads()}>
+        <KeyedList
+          each={download.downloads()}
+          by={(item) => `${item.target.kind}:${item.target.modelId}`}
+        >
           {(item) => {
-            const loadingState = () => (item.status === 'loading' ? item : null)
-            const errorState = () => (item.status === 'error' ? item : null)
+            const loadingState = createMemo(() => {
+              const current = item()
+              return current.status === 'loading' ? current : null
+            })
+            const errorState = createMemo(() => {
+              const current = item()
+              return current.status === 'error' ? current : null
+            })
             return (
               <Switch>
                 <Match when={loadingState()}>
@@ -30,7 +40,7 @@ export const PModelDownloadStatus = () => {
                       <div class="border border-solid border-border rounded-control backdrop-blur-surface">
                         <PLoadingStatus
                           message={`${state().label} 모델 받는 중 · ${state().percentage}%`}
-                          onCancel={() => download.cancel(item.target)}
+                          onCancel={() => download.cancel(item().target)}
                         />
                       </div>
                       <PProgress label="모델 다운로드 진행률" value={state().percentage} />
@@ -50,7 +60,7 @@ export const PModelDownloadStatus = () => {
                       <PButton
                         bordered
                         transparent
-                        onPress={() => download.dismissError(item.target)}
+                        onPress={() => download.dismissError(item().target)}
                         size="small"
                         tone="secondary"
                       >
@@ -59,15 +69,15 @@ export const PModelDownloadStatus = () => {
                     </PFormMessage>
                   )}
                 </Match>
-                <Match when={item.status === 'queued'}>
+                <Match when={item().status === 'queued'}>
                   <div class={ERROR_CLASSES} role="status">
-                    <span>{item.label} · 다운로드 대기 중</span>
+                    <span>{item().label} · 다운로드 대기 중</span>
                     <PButton
                       bordered
                       transparent
                       size="small"
                       tone="secondary"
-                      onPress={() => download.cancel(item.target)}
+                      onPress={() => download.cancel(item().target)}
                     >
                       취소
                     </PButton>
@@ -76,7 +86,7 @@ export const PModelDownloadStatus = () => {
               </Switch>
             )
           }}
-        </For>
+        </KeyedList>
       </div>
     </Show>
   )

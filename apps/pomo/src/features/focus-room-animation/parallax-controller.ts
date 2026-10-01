@@ -1,3 +1,4 @@
+import {exponentialApproachFactor} from 'src/utils/exponential-approach-factor'
 import {clamp} from 'es-toolkit/math'
 import {releaseCapturedPointer} from 'src/utils/release-captured-pointer'
 import {
@@ -27,9 +28,6 @@ export interface ParallaxControllerOptions {
   readonly onInputModeChange?: MotionInputChange
   readonly onMotionPreferenceChange?: MotionPreferenceChange
 }
-
-const getFrameEasing = (duration: number, timeConstant: number) =>
-  1 - Math.exp(-duration / timeConstant)
 
 const getScreenAngle = (angle: number) => {
   return ((angle % FULL_ROTATION_DEGREES) + FULL_ROTATION_DEGREES) % FULL_ROTATION_DEGREES
@@ -463,12 +461,9 @@ export class ParallaxController {
 
   #renderFrame(time: number) {
     this.#frame = null
-    const frameDuration = Math.min(
-      MAXIMUM_FRAME_DURATION,
-      Math.max(0, time - (this.#lastFrameTime ?? time)),
-    )
+    const frameDuration = clamp(time - (this.#lastFrameTime ?? time), 0, MAXIMUM_FRAME_DURATION)
     this.#lastFrameTime = time
-    const easing = getFrameEasing(
+    const easing = exponentialApproachFactor(
       frameDuration,
       this.#isReturning ? RETURN_TIME_CONSTANT : FOLLOW_TIME_CONSTANT,
     )

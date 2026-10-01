@@ -1,3 +1,4 @@
+import {clearHtmlMediaElement} from 'src/utils/clear-html-media-element'
 import {createSignal, onCleanup} from 'solid-js'
 
 import type {TrackPreviewSourceResult} from './track-preview-access'
@@ -34,10 +35,7 @@ export const useTrackPreview = (options: UseTrackPreviewOptions) => {
       return
     }
 
-    audioElement.pause()
-    audioElement.currentTime = 0
-    audioElement.removeAttribute('src')
-    audioElement.load()
+    clearHtmlMediaElement(audioElement, true)
     releaseSource?.()
     releaseSource = undefined
   }

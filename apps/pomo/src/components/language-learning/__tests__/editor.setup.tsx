@@ -1,3 +1,4 @@
+export {createDeferred} from 'src/test-utils/create-deferred'
 import {useNavigate} from '@solidjs/router'
 import {cleanup, fireEvent, render, screen, waitFor} from '@solidjs/testing-library'
 import {type ComponentProps, createSignal} from 'solid-js'
@@ -93,11 +94,6 @@ const isWriterBusy = (state: DialogueWriterState) => {
     case 'unsupported':
       return false
   }
-}
-
-export function createDeferred<T>() {
-  const {promise, resolve} = Promise.withResolvers<T>()
-  return {promise, resolve}
 }
 
 export function getLatestProps<T>(mock: {

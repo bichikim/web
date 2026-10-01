@@ -31,3 +31,5 @@ export type {
   FeatureRequestPage,
   FeatureRequestStatus,
 } from './types'
+
+export * from './create-offset-list-controller'

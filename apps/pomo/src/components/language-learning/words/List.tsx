@@ -1,5 +1,6 @@
+import {KeyedList} from '../../keyed-list'
 import {cva, cx} from 'class-variance-authority'
-import {createMemo, For, Show} from 'solid-js'
+import {createMemo, Show} from 'solid-js'
 import {type LanguageLearningWord} from '../../../features/language-learning'
 import {PSettingsEmptyState} from '../../settings/EmptyState'
 import {LanguageLearningWordPronunciationButton} from './PronunciationButton'
@@ -49,36 +50,36 @@ export const LanguageLearningWordList = (props: LanguageLearningWordListProps) =
           '[scrollbar-color:var(--pomo-color-modal-scrollbar)_transparent] [scrollbar-width:thin]'
         }
       >
-        <For each={props.words}>
+        <KeyedList each={props.words} by={(word) => `${word.language}:${word.value}`}>
           {(word) => {
-            const audioUrl = () => props.getAudioUrl(word)
-            const pronunciationLoading = createMemo(() => props.isPronunciationLoading(word))
+            const audioUrl = () => props.getAudioUrl(word())
+            const pronunciationLoading = createMemo(() => props.isPronunciationLoading(word()))
             const selected = () =>
-              props.selectedWords().some((selectedWord) => selectedWord.value === word.value)
+              props.selectedWords().some((selectedWord) => selectedWord.value === word().value)
 
             return (
               <li class={WORD_CLASSES({selected: selected()})}>
                 <button
-                  aria-label={word.value}
+                  aria-label={word().value}
                   aria-pressed={selected()}
                   class={WORD_SELECT_BUTTON_CLASS}
-                  onClick={() => props.onSelect(word)}
+                  onClick={() => props.onSelect(word())}
                   type="button"
                 >
-                  {word.value}
+                  {word().value}
                 </button>
                 <LanguageLearningWordPronunciationButton
-                  autoplay={props.autoplayKey() === `${word.language}:${word.value}`}
+                  autoplay={props.autoplayKey() === `${word().language}:${word().value}`}
                   disabled={pronunciationLoading()}
                   loading={pronunciationLoading()}
-                  onPress={() => props.onPronounce(word)}
+                  onPress={() => props.onPronounce(word())}
                   src={audioUrl()}
-                  word={word.value}
+                  word={word().value}
                 />
               </li>
             )
           }}
-        </For>
+        </KeyedList>
       </ul>
     </Show>
 

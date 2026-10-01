@@ -1,3 +1,5 @@
+import {clamp} from 'es-toolkit/math'
+import {clampUnit} from 'src/utils/clamp-unit'
 import {z} from 'zod'
 const AXES = 3
 const CONTACT_STRIDE = 4
@@ -103,8 +105,7 @@ export const createCloth = (data: ClothData) => {
       for (let axis = 0; axis < AXES; axis += 1) {
         distance += (positions[offset + axis] - data.positions[offset + axis]) ** 2
       }
-      const scale = Math.min(
-        1,
+      const scale = clampUnit(
         (MAX_DISPLACEMENT * data.mobility[index]) / Math.max(Math.sqrt(distance), EPSILON),
       )
       let contact = data.contacts[index * CONTACT_STRIDE + AXES]
@@ -129,7 +130,7 @@ export const createCloth = (data: ClothData) => {
       if (!Number.isFinite(elapsed) || elapsed <= 0) {
         return
       }
-      accumulator += Math.min(elapsed, 1 / MIN_FRAME_RATE)
+      accumulator += clamp(elapsed, 0, 1 / MIN_FRAME_RATE)
       while (accumulator + TIME_EPSILON >= 1 / STEP_RATE) {
         accumulator -= 1 / STEP_RATE
         time += 1 / STEP_RATE

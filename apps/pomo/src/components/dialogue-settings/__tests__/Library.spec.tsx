@@ -1,7 +1,7 @@
 /** @vitest-environment jsdom */
 
 import {fireEvent, render, screen, within} from '@solidjs/testing-library'
-import {createSignal, type JSX} from 'solid-js'
+import {createMemo, createSignal, type JSX} from 'solid-js'
 import {PModal} from '../../p-modal/PModal'
 import {afterEach, beforeEach, expect, it, vi} from 'vitest'
 
@@ -252,4 +252,38 @@ it('should revoke a superseded inline playback URL', async () => {
   secondAudio.resolve(new Blob(['second audio']))
   await vi.waitFor(() => expect(play).toHaveBeenCalledOnce())
   expect(revokeObjectURL).toHaveBeenCalledWith('blob:dialogue-1')
+})
+
+it('should preserve the library row and focus when another dialogue is appended', () => {
+  const [dialogues, setDialogues] = createSignal<ReadonlyArray<PDialogue>>([DIALOGUE])
+  const entries = createMemo(() => dialogues().map((dialogue) => ({dialogue})))
+  const result = render(() => <DialogueLibrary entries={entries()} />)
+  const audio = result.container.querySelector('audio')
+  const button = screen.getByRole('button', {name: '듣기'})
+  button.focus()
+  expect(document.activeElement).toBe(button)
+  setDialogues([DIALOGUE, SECOND_DIALOGUE])
+  const nextButton = screen.getAllByRole('button', {name: '듣기'})[0]
+  expect(nextButton).toBe(button)
+  expect(button.isConnected).toBe(true)
+  expect(document.activeElement).toBe(nextButton)
+  expect(result.container.querySelector('audio')).toBe(audio)
+})
+
+it('should preserve the row while displaying and deleting the current dialogue', async () => {
+  const [dialogue, setDialogue] = createSignal(DIALOGUE)
+  const entries = createMemo(() => [{dialogue: dialogue(), metadata: dialogue().voiceId}])
+  const onDelete = vi.fn(async () => undefined)
+  render(() => <DialogueLibrary entries={entries()} onDelete={onDelete} />)
+  const button = screen.getByRole('button', {name: '듣기'})
+  button.focus()
+  const updated = {...DIALOGUE, text: '갱신한 대화', voiceId: 'Hana' as const}
+  setDialogue(updated)
+  expect(screen.getByRole('button', {name: '듣기'})).toBe(button)
+  expect(document.activeElement).toBe(button)
+  expect(screen.getByText('갱신한 대화')).toBeInTheDocument()
+  expect(screen.getByText('Hana')).toBeInTheDocument()
+  fireEvent.click(screen.getByRole('button', {name: '삭제'}))
+  fireEvent.click(screen.getByRole('button', {name: '삭제 확인'}))
+  await vi.waitFor(() => expect(onDelete).toHaveBeenCalledWith(updated))
 })
