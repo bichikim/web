@@ -774,6 +774,7 @@
   "relax_depth_input_title": "깊이 이동",
   "relax_depth_input_drag": "드래그",
   "relax_depth_input_gyroscope": "자이로",
+  "relax_depth_input_reduced_motion": "동작 줄이기 설정을 따르는 동안 깊이 움직임을 사용할 수 없어요. 설정을 끄면 입력 방식을 다시 선택할 수 있어요.",
   "relax_depth_input_waiting": "기기를 기울이면 배경이 움직여요.",
   "relax_depth_input_denied": "센서 권한이 없어 드래그로 전환했어요.",
   "relax_depth_input_unavailable": "이 기기에서는 자이로를 사용할 수 없어 드래그로 전환했어요.",

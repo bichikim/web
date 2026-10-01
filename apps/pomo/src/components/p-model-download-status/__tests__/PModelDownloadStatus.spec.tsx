@@ -55,3 +55,38 @@ it('should keep a dismissible error beside another active download', () => {
   fireEvent.click(within(alert).getByRole('button', {name: '닫기'}))
   expect(controller.dismissError).toHaveBeenCalledWith(target)
 })
+
+it('should retain the focused cancel button while updating download progress', () => {
+  const target = {kind: 'voice', modelId: 'full'} as const
+  setItems([{label: '음성', percentage: 10, status: 'loading', target}])
+  render(() => <PModelDownloadStatus />)
+  const cancel = screen.getByRole('button', {name: '취소'})
+  cancel.focus()
+  setItems([{label: '음성', percentage: 65, status: 'loading', target: {...target}}])
+  expect(screen.getByRole('button', {name: '취소'})).toBe(cancel)
+  expect(cancel).toHaveFocus()
+  expect(screen.getByRole('progressbar')).toHaveAttribute('aria-valuenow', '65')
+  expect(screen.getByText('음성 모델 받는 중 · 65%')).toBeVisible()
+  fireEvent.click(cancel)
+  expect(controller.cancel).toHaveBeenCalledWith(target)
+})
+
+it('should update retained downloads through queue, loading, error, and removal', () => {
+  const target = {kind: 'voice', modelId: 'full'} as const
+  setItems([{label: '음성', status: 'queued', target}])
+  render(() => <PModelDownloadStatus />)
+  expect(screen.getByText('음성 · 다운로드 대기 중')).toBeVisible()
+  setItems([{label: '음성', percentage: 25, status: 'loading', target}])
+  expect(screen.queryByText('음성 · 다운로드 대기 중')).toBeNull()
+  expect(screen.getByRole('progressbar')).toHaveAttribute('aria-valuenow', '25')
+  setItems([{label: '음성', message: '전송 실패', status: 'error', target}])
+  expect(screen.queryByRole('progressbar')).toBeNull()
+  const dismiss = screen.getByRole('button', {name: '닫기'})
+  setItems([{label: '음성', message: '재시도 실패', status: 'error', target}])
+  expect(screen.getByRole('button', {name: '닫기'})).toBe(dismiss)
+  expect(screen.getByRole('alert')).toHaveTextContent('재시도 실패')
+  fireEvent.click(dismiss)
+  expect(controller.dismissError).toHaveBeenCalledWith(target)
+  setItems([])
+  expect(screen.queryByLabelText('모델 다운로드 목록')).toBeNull()
+})
