@@ -123,6 +123,7 @@ jobs:
             apps/coong/src/components/instruments/__tests__/SPiano.integration.tsx \
             apps/pomo/src/components/admin-music/__tests__/AdminMusic.import.integration.tsx \
             apps/pomo/src/components/admin-music/__tests__/AlbumWorkspace.integration.tsx \
+            apps/pomo/src/components/chat-room/__tests__/ChatRoom.stt-draft.integration.tsx \
             apps/pomo/src/components/dialogue-page/__tests__/Editor.integration.tsx \
             apps/pomo/src/components/layer-review/__tests__/MouthFramePicker.integration.tsx \
             apps/pomo/src/components/memory-assist/__tests__/PictureDiary.generation.integration.tsx \
