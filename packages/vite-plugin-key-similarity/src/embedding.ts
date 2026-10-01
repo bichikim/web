@@ -59,7 +59,7 @@ export class CachedEmbeddingProvider implements EmbeddingProvider {
   private async read(text: string): Promise<Float32Array | undefined> {
     try {
       const bytes = await readFile(path.join(this.cacheDir, `${createCacheKey(this, text)}.f32`))
-      if (bytes.byteLength % Float32Array.BYTES_PER_ELEMENT !== 0) {
+      if (bytes.byteLength === 0 || bytes.byteLength % Float32Array.BYTES_PER_ELEMENT !== 0) {
         return undefined
       }
       return new Float32Array(
