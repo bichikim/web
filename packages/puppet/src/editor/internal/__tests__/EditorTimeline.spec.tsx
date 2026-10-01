@@ -398,11 +398,11 @@ describe('EditorTimeline', () => {
 
     fireEvent.focus(blinkSeek)
     fireEvent.keyDown(blinkSeek, {key: 'End'})
-    expect(blinkSeek).toHaveAttribute('aria-valuenow', '0.4')
+    await waitFor(() => expect(blinkSeek).toHaveAttribute('aria-valuenow', '0.4'))
 
     fireEvent.focus(nodSeek)
     fireEvent.keyDown(nodSeek, {key: 'End'})
-    expect(nodSeek).toHaveAttribute('aria-valuenow', '0.8')
+    await waitFor(() => expect(nodSeek).toHaveAttribute('aria-valuenow', '0.8'))
 
     expect(idleSeek).toHaveAttribute('aria-valuenow', '0.5')
     expect(blinkSeek).toHaveAttribute('aria-valuenow', '0.4')
@@ -422,10 +422,10 @@ describe('EditorTimeline', () => {
     const idleTrack = findByLabel(idleGroup, 'Angle Y 트랙')
 
     fireEvent.click(blinkKeyframe)
-    expect(blinkKeyframe).toHaveAttribute('aria-pressed', 'true')
+    await waitFor(() => expect(blinkKeyframe).toHaveAttribute('aria-pressed', 'true'))
     expect(blinkTrack).toHaveAttribute('data-selected', '')
     fireEvent.click(idleKeyframe)
-    expect(idleKeyframe).toHaveAttribute('aria-pressed', 'true')
+    await waitFor(() => expect(idleKeyframe).toHaveAttribute('aria-pressed', 'true'))
 
     expect(blinkKeyframe).toHaveAttribute('aria-pressed', 'false')
     expect(blinkTrack).not.toHaveAttribute('data-selected')

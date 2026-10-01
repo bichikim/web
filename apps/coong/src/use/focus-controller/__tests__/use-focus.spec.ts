@@ -5,7 +5,11 @@ import {beforeEach, describe, expect, it, vi} from 'vitest'
 import {render} from '@solidjs/testing-library'
 import {createComponent} from 'solid-js'
 import {type DeepPosition, getDeepPositionKey} from 'src/utils/focus-controller/deep-position'
-import {FOCUS_CONTROLLER_CHANNEL, FocusControllerContext} from '../FocusController'
+import {
+  FOCUS_CONTROLLER_CHANNEL,
+  FocusControllerContext,
+  type FocusControllerContextValue,
+} from '../FocusController'
 import {useFocus} from '../focus'
 
 const mocks = vi.hoisted(() => {
@@ -160,7 +164,7 @@ describe('useFocus', () => {
             return null
           }, {})
         },
-        value: null as never,
+        value: null as unknown as FocusControllerContextValue,
       }),
     )
 
