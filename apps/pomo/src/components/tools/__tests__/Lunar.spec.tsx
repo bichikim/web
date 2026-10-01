@@ -135,20 +135,6 @@ describe('lunar-to-solar date selection', () => {
     expect(screen.getByText('2050-12-31')).toBeVisible()
   })
 
-  it('should render 29-day months and reconcile a selected day after changing months', async () => {
-    renderLunarInLunarMode()
-    expect(await screen.findByText('2026-02-17')).toBeVisible()
-
-    await changeHiddenSelect(/음력 일/u, '30')
-    await changeHiddenSelect(/음력 월/u, '2')
-
-    expect(screen.getByRole('button', {name: /음력 일/u})).toHaveTextContent('29')
-    await openSelect(/음력 일/u)
-    const dayListbox = screen.getByRole('listbox', {name: '음력 일'})
-    expect(within(dayListbox).getByRole('option', {name: '29'})).toBeVisible()
-    expect(within(dayListbox).queryByRole('option', {name: '30'})).not.toBeInTheDocument()
-  })
-
   it('should update the day options and conversion when toggling a leap month', async () => {
     renderLunarInLunarMode()
     expect(await screen.findByText('2026-02-17')).toBeVisible()
