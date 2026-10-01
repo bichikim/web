@@ -11,15 +11,6 @@ import {setPartSkinning} from '../skinning'
 import {findNode} from '../scene-tree'
 import {SkinningTools} from '../SkinningTools'
 
-const findButton = (root: ParentNode, label: string) => {
-  const button = Array.from(root.querySelectorAll<HTMLButtonElement>('button')).find(
-    (candidate) =>
-      candidate.getAttribute('aria-label') === label || candidate.textContent?.trim() === label,
-  )
-  expect(button).not.toBeNull()
-  return button!
-}
-
 test('should let a child rotation influence selected vertices of its parent part and undo the edit', () => {
   const parsed = parseDocument(JSON.stringify(example))
   if (!parsed.ok) {
@@ -46,17 +37,12 @@ test('should let a child rotation influence selected vertices of its parent part
       onEditEnd={history.endTransaction}
     />
   ))
-  fireEvent.click(view.container.querySelector('input[aria-label="스키닝 가중치 편집"]')!)
-  fireEvent.pointerDown(
-    view.container.querySelector('[role="button"][aria-label="정점 25 가중치 50%"]')!,
-    {button: 0},
-  )
-  const input = view.container.querySelector<HTMLInputElement>(
-    'input[aria-label="선택 정점 스키닝 가중치"]',
-  )!
+  fireEvent.click(view.getByRole('checkbox', {name: '스키닝 가중치 편집'}))
+  fireEvent.pointerDown(view.getByRole('button', {name: '정점 25 가중치 50%'}), {button: 0})
+  const input = view.getByRole('spinbutton', {name: '선택 정점 스키닝 가중치'})
   fireEvent.input(input, {target: {value: '75'}})
   fireEvent.blur(input)
-  fireEvent.click(findButton(view.container, '선택 정점에 적용'))
+  fireEvent.click(view.getByRole('button', {name: '선택 정점에 적용'}))
   const node = findNode(history.document().scene!.roots, 'fore')
   expect(node?.kind === 'part' ? node.skinning?.influences[0]?.weights[24] : undefined).toBe(0.75)
   const before = new Map([['fore', [...part.mesh.vertices]]])
@@ -68,7 +54,7 @@ test('should let a child rotation influence selected vertices of its parent part
   )
   expect(after.get('fore')!.slice(48, 50)).not.toEqual(before.get('fore')!.slice(48, 50))
   expect(after.get('fore')!.slice(0, 48)).toEqual(before.get('fore')!.slice(0, 48))
-  expect(view.container.querySelector('[role="status"]')).toHaveTextContent('뒤집힘')
+  expect(view.getByRole('status')).toHaveTextContent('뒤집힘')
   history.undo()
   expect(history.document()).toEqual(document)
 })
@@ -85,23 +71,19 @@ test('should expose the shared brush buttons and retain settings across selectio
       activePartId="fore"
     />
   ))
-  fireEvent.click(view.container.querySelector('input[aria-label="스키닝 가중치 편집"]')!)
-  fireEvent.click(findButton(view.container, '브러시'))
-  expect(findButton(view.container, '더하기')).toHaveAttribute('aria-pressed', 'true')
-  fireEvent.click(findButton(view.container, '빼기'))
-  expect(findButton(view.container, '빼기')).toHaveAttribute('aria-pressed', 'true')
-  const radius = view.container.querySelector<HTMLInputElement>(
-    'input[aria-label="스키닝 브러시 반경"]',
-  )!
+  fireEvent.click(view.getByRole('checkbox', {name: '스키닝 가중치 편집'}))
+  fireEvent.click(view.getByRole('button', {name: '브러시'}))
+  expect(view.getByRole('button', {name: '더하기'})).toHaveAttribute('aria-pressed', 'true')
+  fireEvent.click(view.getByRole('button', {name: '빼기'}))
+  expect(view.getByRole('button', {name: '빼기'})).toHaveAttribute('aria-pressed', 'true')
+  const radius = view.getByRole('spinbutton', {name: '스키닝 브러시 반경'})
   fireEvent.input(radius, {target: {value: '80'}})
   fireEvent.blur(radius)
-  fireEvent.click(findButton(view.container, '정점 선택'))
-  expect(
-    view.container.querySelector('input[aria-label="스키닝 브러시 반경"]'),
-  ).not.toBeInTheDocument()
-  fireEvent.click(findButton(view.container, '브러시'))
-  expect(findButton(view.container, '빼기')).toHaveAttribute('aria-pressed', 'true')
-  expect(view.container.querySelector('input[aria-label="스키닝 브러시 반경"]')).toHaveValue(80)
-  fireEvent.click(findButton(view.container, '부드럽게'))
-  expect(findButton(view.container, '부드럽게')).toHaveAttribute('aria-pressed', 'true')
+  fireEvent.click(view.getByRole('button', {name: '정점 선택'}))
+  expect(view.queryByRole('spinbutton', {name: '스키닝 브러시 반경'})).not.toBeInTheDocument()
+  fireEvent.click(view.getByRole('button', {name: '브러시'}))
+  expect(view.getByRole('button', {name: '빼기'})).toHaveAttribute('aria-pressed', 'true')
+  expect(view.getByRole('spinbutton', {name: '스키닝 브러시 반경'})).toHaveValue(80)
+  fireEvent.click(view.getByRole('button', {name: '부드럽게'}))
+  expect(view.getByRole('button', {name: '부드럽게'})).toHaveAttribute('aria-pressed', 'true')
 })

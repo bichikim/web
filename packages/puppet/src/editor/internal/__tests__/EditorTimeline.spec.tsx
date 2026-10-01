@@ -32,25 +32,10 @@ const createSingleMotionDocument = (): PuppetDocument => {
   }
 }
 
-const findByLabel = <T extends HTMLElement>(root: ParentNode, label: string) => {
-  const element = root.querySelector<T>(`[aria-label="${label}"]`)
-  expect(element).not.toBeNull()
-  return element!
-}
-
 const enterAllMotionView = async (view: ReturnType<typeof render>) => {
-  fireEvent.keyDown(findByLabel<HTMLButtonElement>(view.container, '모션 선택'), {key: 'Enter'})
-  await waitFor(() => {
-    const option = Array.from(
-      view.container.ownerDocument.querySelectorAll<HTMLElement>('[role="option"]'),
-    ).find((candidate) => candidate.textContent?.trim() === '모든 타임라인 보기')
-    expect(option).toBeDefined()
-  })
-  const option = Array.from(
-    view.container.ownerDocument.querySelectorAll<HTMLElement>('[role="option"]'),
-  ).find((candidate) => candidate.textContent?.trim() === '모든 타임라인 보기')
-  expect(option).toBeDefined()
-  fireEvent.keyDown(option!, {key: 'Enter'})
+  fireEvent.keyDown(view.getByRole('button', {name: /모션 선택/}), {key: 'Enter'})
+  await waitFor(() => screen.getByRole('option', {name: '모든 타임라인 보기'}))
+  fireEvent.keyDown(screen.getByRole('option', {name: '모든 타임라인 보기'}), {key: 'Enter'})
 }
 
 const createAllMotionTimeline = () => {
@@ -85,19 +70,15 @@ describe('EditorTimeline', () => {
     const view = render(() => (
       <EditorTimeline document={document()} onDocumentChange={setDocument} />
     ))
-    const getRow = (name: 'Angle X' | 'Angle Y') =>
-      view.container.querySelector<HTMLElement>(`[aria-label="${name} 타임라인 행"]`)
-    const row = getRow('Angle X')
-    expect(row).not.toBeNull()
+    const row = view.getByRole('button', {name: 'Angle X 타임라인 행'})
 
-    row!.dispatchEvent(new MouseEvent('pointerdown', {bubbles: true, button: 0, clientX: 200}))
+    row.dispatchEvent(new MouseEvent('pointerdown', {bubbles: true, button: 0, clientX: 200}))
     globalThis.dispatchEvent(new MouseEvent('pointermove', {clientX: 280}))
     globalThis.dispatchEvent(new MouseEvent('pointerup'))
 
-    expect(getRow('Angle X')).toBeNull()
-    const nextRow = getRow('Angle Y')
-    expect(nextRow).not.toBeNull()
-    expect(nextRow!.closest('.timeline-row-label-swipe')).toHaveAttribute(
+    expect(view.queryByRole('button', {name: 'Angle X 타임라인 행'})).not.toBeInTheDocument()
+    const nextRow = view.getByRole('button', {name: 'Angle Y 타임라인 행'})
+    expect(nextRow.closest('.timeline-row-label-swipe')).toHaveAttribute(
       'style',
       expect.stringContaining('--parameter-swipe-offset: 0px'),
     )
@@ -112,9 +93,7 @@ describe('EditorTimeline', () => {
     expect(view.queryByLabelText('Angle X 트랙')).not.toBeInTheDocument()
     expect(view.getByLabelText('Angle Y 트랙')).toBeVisible()
 
-    fireEvent.keyDown(findByLabel<HTMLButtonElement>(view.container, '타임라인 파라미터 추가'), {
-      key: 'Enter',
-    })
+    fireEvent.keyDown(view.getByRole('button', {name: '타임라인 파라미터 추가'}), {key: 'Enter'})
     const parameter = await screen.findByRole('menuitem', {name: 'Angle X'})
     parameter.dispatchEvent(new MouseEvent('pointerup', {bubbles: true, button: 0}))
 
@@ -128,9 +107,9 @@ describe('EditorTimeline', () => {
     const view = render(() => (
       <EditorTimeline document={document()} onDocumentChange={setDocument} />
     ))
-    const angleXTrack = findByLabel(view.container, 'Angle X 트랙')
-    const angleYTrack = findByLabel(view.container, 'Angle Y 트랙')
-    const row = findByLabel<HTMLElement>(view.container, 'Angle Y 타임라인 행')
+    const angleXTrack = view.getByLabelText('Angle X 트랙')
+    const angleYTrack = view.getByLabelText('Angle Y 트랙')
+    const row = view.getByRole('button', {name: 'Angle Y 타임라인 행'})
 
     expect(angleXTrack).toBeVisible()
     row.dispatchEvent(new MouseEvent('pointerdown', {bubbles: true, button: 0, clientX: 280}))
@@ -377,20 +356,21 @@ describe('EditorTimeline', () => {
     const {onMotionSeek, view} = createAllMotionTimeline()
     await enterAllMotionView(view)
 
-    const idleGroup = findByLabel(view.container, 'idle-deform 타임라인')
-    const blinkGroup = findByLabel(view.container, 'blink 타임라인')
-    const nodGroup = findByLabel(view.container, 'nod 타임라인')
-    const idleSeek = findByLabel(idleGroup, 'idle-deform 재생 위치')
-    const blinkSeek = findByLabel(blinkGroup, 'blink 재생 위치')
-    const nodSeek = findByLabel(nodGroup, 'nod 재생 위치')
+    const idleGroup = view.getByRole('region', {name: 'idle-deform 타임라인'})
+    const blinkGroup = view.getByRole('region', {name: 'blink 타임라인'})
+    const nodGroup = view.getByRole('region', {name: 'nod 타임라인'})
+    const idleSeek = within(idleGroup).getByRole('slider', {name: 'idle-deform 재생 위치'})
+    const blinkSeek = within(blinkGroup).getByRole('slider', {name: 'blink 재생 위치'})
+    const nodSeek = within(nodGroup).getByRole('slider', {name: 'nod 재생 위치'})
 
-    expect(findByLabel<HTMLInputElement>(view.container, '타임라인 FPS')).toHaveValue(24)
-    expect(findByLabel<HTMLInputElement>(idleGroup, 'idle-deform 모션 길이')).toHaveValue(2)
-    expect(findByLabel<HTMLInputElement>(blinkGroup, 'blink 모션 길이')).toHaveValue(0.4)
+    expect(view.getByRole('spinbutton', {name: '타임라인 FPS'})).toHaveValue(24)
+    expect(within(idleGroup).getByRole('spinbutton', {name: 'idle-deform 모션 길이'})).toHaveValue(
+      2,
+    )
+    expect(within(blinkGroup).getByRole('spinbutton', {name: 'blink 모션 길이'})).toHaveValue(0.4)
     expect(within(idleGroup).queryByText('Parameter', {exact: true})).not.toBeInTheDocument()
     expect(within(idleGroup).queryByText('길이', {exact: true})).not.toBeInTheDocument()
-    expect(idleGroup.querySelector('.timeline-ruler-status')).toBeVisible()
-    expect(idleGroup.querySelector('.timeline-ruler-status')).toHaveTextContent(/12f \/ 48f/)
+    expect(within(idleGroup).getByText(/12f \/ 48f/)).toBeVisible()
 
     expect(idleSeek).toHaveAttribute('aria-valuenow', '0.5')
     expect(blinkSeek).toHaveAttribute('aria-valuenow', '0')
@@ -414,12 +394,16 @@ describe('EditorTimeline', () => {
     const {onMotionSeek, view} = createAllMotionTimeline()
     await enterAllMotionView(view)
 
-    const idleGroup = findByLabel(view.container, 'idle-deform 타임라인')
-    const blinkGroup = findByLabel(view.container, 'blink 타임라인')
-    const blinkKeyframe = findByLabel(blinkGroup, 'Angle X 0.20초 키프레임')
-    const idleKeyframe = findByLabel(idleGroup, 'Angle Y 1.00초 키프레임')
-    const blinkTrack = findByLabel(blinkGroup, 'Angle X 트랙')
-    const idleTrack = findByLabel(idleGroup, 'Angle Y 트랙')
+    const idleGroup = view.getByRole('region', {name: 'idle-deform 타임라인'})
+    const blinkGroup = view.getByRole('region', {name: 'blink 타임라인'})
+    const blinkKeyframe = within(blinkGroup).getByRole('button', {
+      name: 'Angle X 0.20초 키프레임',
+    })
+    const idleKeyframe = within(idleGroup).getByRole('button', {
+      name: 'Angle Y 1.00초 키프레임',
+    })
+    const blinkTrack = within(blinkGroup).getByLabelText('Angle X 트랙')
+    const idleTrack = within(idleGroup).getByLabelText('Angle Y 트랙')
 
     fireEvent.click(blinkKeyframe)
     await waitFor(() => expect(blinkKeyframe).toHaveAttribute('aria-pressed', 'true'))
@@ -438,9 +422,11 @@ describe('EditorTimeline', () => {
     const {document, view} = createAllMotionTimeline()
     await enterAllMotionView(view)
 
-    const blinkGroup = findByLabel(view.container, 'blink 타임라인')
-    const blinkKeyframe = findByLabel(blinkGroup, 'Angle X 0.20초 키프레임')
-    const blinkTrack = findByLabel(blinkGroup, 'Angle X 트랙')
+    const blinkGroup = view.getByRole('region', {name: 'blink 타임라인'})
+    const blinkKeyframe = within(blinkGroup).getByRole('button', {
+      name: 'Angle X 0.20초 키프레임',
+    })
+    const blinkTrack = within(blinkGroup).getByLabelText('Angle X 트랙')
 
     vi.spyOn(blinkTrack, 'getBoundingClientRect').mockReturnValue(
       DOMRect.fromRect({height: 20, width: 240}),
@@ -453,9 +439,9 @@ describe('EditorTimeline', () => {
     fireEvent(blinkKeyframe, new MouseEvent('pointerup', {bubbles: true, clientX: 181}))
 
     await waitFor(() => {
-      const currentBlinkGroup = view.container.querySelector('[aria-label="blink 타임라인"]')
+      const currentBlinkGroup = view.getByRole('region', {name: 'blink 타임라인'})
       expect(
-        currentBlinkGroup?.querySelector('[aria-label="Angle X 0.29초 키프레임"]'),
+        within(currentBlinkGroup).getByRole('button', {name: 'Angle X 0.29초 키프레임'}),
       ).toBeVisible()
     })
     expect(

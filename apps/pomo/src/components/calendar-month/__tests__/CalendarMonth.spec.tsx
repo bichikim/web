@@ -91,9 +91,7 @@ afterEach(() => {
 })
 
 it('should show the selected day and its agenda events', async () => {
-  const {container} = render(() => (
-    <CalendarMonth settings={<button type="button">캘린더 설정</button>} />
-  ))
+  render(() => <CalendarMonth settings={<button type="button">캘린더 설정</button>} />)
 
   expect(await screen.findByRole('heading', {name: '2026년 9월'})).toBeVisible()
   expect(screen.getAllByRole('columnheader').map((heading) => heading.textContent)).toEqual([
@@ -111,12 +109,10 @@ it('should show the selected day and its agenda events', async () => {
   expect(selectedDay).toHaveAttribute('aria-pressed', 'true')
   expect(selectedDay).toHaveClass('rounded-panel-inner')
   expect(selectedDay).not.toHaveClass('rounded-control')
-  expect(selectedDay.textContent).toContain('팀 회의')
-  const settings = [...container.querySelectorAll('button')].find(
-    (button) => button.textContent === '캘린더 설정',
+  expect(within(selectedDay).getByText('팀 회의')).toBeVisible()
+  expect(screen.getByRole('button', {name: '캘린더 설정'}).previousElementSibling).toBe(
+    screen.getByRole('navigation', {name: '캘린더 월 이동'}),
   )
-  const navigation = container.querySelector('nav[aria-label="캘린더 월 이동"]')
-  expect(settings?.previousElementSibling).toBe(navigation)
   expect(screen.getAllByText('팀 회의')).toHaveLength(2)
 })
 
@@ -126,19 +122,16 @@ it('should show the selected day agenda when another day is selected', async () 
   const dayButton = await screen.findByRole('button', {name: '2026년 9월 5일, 일정 1개'})
   fireEvent.click(dayButton)
   const selectedAgenda = screen.getByRole('region', {name: '2026년 9월 5일'})
-  const agendaText = selectedAgenda.textContent ?? ''
-  expect(agendaText).not.toContain('팀 회의')
-  expect(agendaText).toContain('휴가')
-  expect(agendaText).toContain('종일')
-  const holiday = [...selectedAgenda.querySelectorAll('li')].find((item) =>
-    item.textContent?.includes('휴가'),
-  )
-  expect(holiday?.classList.contains('rounded-panel-inner')).toBe(true)
+  expect(within(selectedAgenda).queryByText('팀 회의')).not.toBeInTheDocument()
+  const holiday = within(selectedAgenda).getByText('휴가')
+  expect(holiday).toBeVisible()
+  expect(holiday.closest('li')).toHaveClass('rounded-panel-inner')
   expect(within(selectedAgenda).getByRole('button', {name: '휴가 알람 설정'})).toBeVisible()
   const eventList = within(selectedAgenda).getByRole('list')
   expect(eventList).toHaveClass('overflow-y-auto', 'overscroll-contain')
   expect(eventList.className).toContain('max-h-[min(18rem,35dvh)]')
   expect(eventList).toHaveAttribute('tabindex', '0')
+  expect(within(selectedAgenda).getByText('종일')).toBeVisible()
 })
 
 it('should navigate to the next calendar month', async () => {

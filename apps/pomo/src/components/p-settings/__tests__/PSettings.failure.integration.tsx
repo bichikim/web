@@ -1,5 +1,5 @@
 /** @vitest-environment jsdom */
-import {fireEvent, render, waitFor} from '@solidjs/testing-library'
+import {fireEvent, render, screen, waitFor} from '@solidjs/testing-library'
 import {afterEach, expect, it, vi} from 'vitest'
 import {PSettings} from '../PSettings'
 vi.mock('../../settings/Content', () => {
@@ -21,14 +21,13 @@ it('should keep the modal closable after preloading fails', async () => {
     return styles
   })
   const view = render(() => <PSettings />)
-  const trigger = view.container.querySelector<HTMLButtonElement>('button[aria-label="설정"]')
-  expect(trigger).not.toBeNull()
-  fireEvent.click(trigger!)
-  await waitFor(() => expect(document.querySelector('[role="alert"]')).toBeVisible())
-  expect(document.querySelector('[role="status"]')).toBeNull()
-  fireEvent.click(document.querySelector<HTMLButtonElement>('button[aria-label="닫기"]')!)
-  await waitFor(() => expect(document.querySelector('[role="dialog"]')).toBeNull())
-  expect(view.container.querySelector('button[aria-label="설정"]')).toBe(trigger)
+  const trigger = screen.getByRole('button', {name: '설정'})
+  fireEvent.click(trigger)
+  expect(await screen.findByRole('alert')).toBeVisible()
+  expect(screen.queryByRole('status')).toBeNull()
+  fireEvent.click(screen.getByRole('button', {name: '닫기'}))
+  await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull())
+  expect(screen.getByRole('button', {name: '설정'})).toBe(trigger)
 })
 afterEach(() => {
   vi.unstubAllGlobals()

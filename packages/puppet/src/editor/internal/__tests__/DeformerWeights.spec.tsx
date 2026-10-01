@@ -21,25 +21,15 @@ test('should select a vertex, edit normalized bone weights and return to automat
   const view = render(() => (
     <DeformerWeights document={document()} node={node()} onDocumentChange={setDocument} />
   ))
-  const clickButton = (label: string) => {
-    const button = Array.from(view.container.querySelectorAll('button')).find(
-      (candidate) => candidate.textContent?.trim() === label,
-    )
-    expect(button).toBeDefined()
-    fireEvent.click(button!)
-  }
-  clickButton('영향도 편집')
-  clickButton('정점 선택')
-  const vertex = view.container.querySelector('[role="button"][aria-label="mesh-preview 정점 1"]')
-  expect(vertex).toBeInTheDocument()
-  fireEvent.click(vertex!)
-  const weight = view.container.querySelector<HTMLInputElement>('input[aria-label="본 1 영향도"]')
-  expect(weight).toBeInTheDocument()
-  fireEvent.input(weight!, {target: {value: '25'}})
-  fireEvent.change(weight!)
+  fireEvent.click(view.getByRole('button', {name: '영향도 편집'}))
+  fireEvent.click(view.getByRole('button', {name: '정점 선택'}))
+  fireEvent.click(view.getByRole('button', {name: 'mesh-preview 정점 1'}))
+  const weight = view.getByRole('spinbutton', {name: '본 1 영향도'})
+  fireEvent.input(weight, {target: {value: '25'}})
+  fireEvent.change(weight)
   expect(node().boneWeights?.[0]?.weights).toEqual([0.25, 0.75])
   expect(view.getByRole('spinbutton', {name: '본 2 영향도'})).toHaveValue(75)
-  clickButton('자동 영향도로 복원')
+  fireEvent.click(view.getByRole('button', {name: '자동 영향도로 복원'}))
   expect(node().boneWeights).toEqual([])
 })
 
