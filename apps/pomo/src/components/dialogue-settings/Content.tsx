@@ -89,12 +89,8 @@ const getDialogueMetadata = (dialogue: PDialogue) =>
     formatBubbleCount(dialogue.segments.length),
   ].join(' · ')
 
-export interface PDialogueSettingsContentProps {
-  readonly onRequestClose?: () => void
-}
-
 // oxlint-disable-next-line eslint/max-lines-per-function -- Both tabs share one repository and audio playback lifecycle.
-export function PDialogueSettingsContent(props: PDialogueSettingsContentProps) {
+export function PDialogueSettingsContent() {
   const events = usePEvents()
   const dialogueEvents = getDialogueEvents()
   const dialogueEventActions = getDialogueEventActions()
@@ -282,11 +278,7 @@ export function PDialogueSettingsContent(props: PDialogueSettingsContentProps) {
               when={libraryDialogues().length > 0}
               fallback={<PSettingsEmptyState>{m.settings_dialogue_empty()}</PSettingsEmptyState>}
             >
-              <DialogueLibrary
-                entries={libraryEntries()}
-                onDelete={handleLibraryDelete}
-                onRequestClose={props.onRequestClose}
-              />
+              <DialogueLibrary entries={libraryEntries()} onDelete={handleLibraryDelete} />
             </Show>
           </Show>
 

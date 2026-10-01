@@ -85,11 +85,7 @@ beforeEach(() => {
       </button>
     </div>
   ))
-  vi.mocked(LanguageLearningLibrary).mockImplementation((props) => (
-    <button onClick={props.onRequestClose} type="button">
-      language learning library
-    </button>
-  ))
+  vi.mocked(LanguageLearningLibrary).mockImplementation(() => <div>language learning library</div>)
   vi.mocked(PModal).mockImplementation((props: PModalProps) => (
     <div aria-label={props.title} hidden={!props.isOpen} role="dialog">
       {props.navigation}
@@ -171,7 +167,6 @@ it('should open a Korean memory assist modal', async () => {
 
   fireEvent.click(screen.getByRole('button', {name: 'Restore focus'}))
   expect(document.activeElement).toBe(trigger)
-  fireEvent.click(screen.getByRole('button', {name: 'language learning library'}))
   fireEvent.click(screen.getByRole('button', {hidden: true, name: 'Close modal'}))
   fireEvent.click(screen.getByRole('button', {name: 'Change tab'}))
 })

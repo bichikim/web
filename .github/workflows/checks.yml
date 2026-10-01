@@ -130,6 +130,7 @@ jobs:
             apps/pomo/src/components/music-player/__tests__/PMusicPlayerContent.queue-restoration.integration.tsx \
             apps/pomo/src/components/p-memory-assist/__tests__/PMemoryAssist.loading.integration.tsx \
             apps/pomo/src/components/memory-assist/__tests__/PictureDiary.generation.integration.tsx \
+            apps/pomo/src/components/p-memory-assist/__tests__/PMemoryAssist.navigation.integration.tsx \
             apps/pomo/src/components/memory-assist/picture-diary/__tests__/Canvas.integration.tsx \
             apps/pomo/src/components/memory-assist/picture-diary/__tests__/Drawing.integration.tsx \
             apps/pomo/src/components/p-credits-settings/__tests__/PCreditsSettings.integration.tsx \

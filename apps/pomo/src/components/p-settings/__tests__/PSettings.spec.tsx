@@ -61,6 +61,9 @@ beforeEach(() => {
     <div aria-label={props.title} hidden={!props.isOpen} role="dialog">
       {props.navigation}
       {props.children}
+      <button onClick={() => props.onOpenChange(false)} type="button">
+        설정 닫기
+      </button>
       <button onClick={props.onCloseAutoFocus} type="button">
         포커스 복원
       </button>
@@ -128,11 +131,7 @@ beforeEach(() => {
     onPreferenceChange: vi.fn(),
     preference: () => 'system',
   })
-  vi.mocked(PDialogueSettings).mockImplementation((props) => (
-    <button onClick={props.onRequestClose} type="button">
-      대화 닫기
-    </button>
-  ))
+  vi.mocked(PDialogueSettings).mockImplementation(() => <div>대화 설정</div>)
   vi.mocked(PHealthCheck).mockImplementation(() => <div>헬스 체크 진단</div>)
   vi.mocked(PWeatherSettings).mockImplementation((props) => (
     <button

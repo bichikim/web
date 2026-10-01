@@ -1,4 +1,5 @@
 /** @vitest-environment jsdom */
+import {finishAnimation} from '../../__tests__/animation'
 import {
   createEvents,
   createPomoSay,
@@ -50,7 +51,7 @@ describe('PStudioEvents', () => {
     vi.restoreAllMocks()
   })
 
-  it('should show skipped reminder text and remove its alert after recovery', () => {
+  it('should keep skipped reminder errors until the user dismisses them after recovery', () => {
     const memo = createMemoryMemo({
       exactReminderAt: '2026-09-04T03:00:00.000Z',
       id: 'memo-1',
@@ -66,6 +67,9 @@ describe('PStudioEvents', () => {
       m.memory_reminder_playback_skipped({text: memo.text}),
     )
     setSkippedReminders([])
+    expect(screen.getByRole('alert')).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', {name: m.toast_close()}))
+    finishAnimation(screen.getByRole('alert'), 'toast-exit')
     expect(screen.queryByRole('alert')).toBeNull()
   })
 
