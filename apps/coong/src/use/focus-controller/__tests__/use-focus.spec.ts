@@ -1,14 +1,32 @@
 /**
  * @vitest-environment jsdom
  */
-import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
+import {beforeEach, describe, expect, it, vi} from 'vitest'
 import {render} from '@solidjs/testing-library'
 import {createComponent} from 'solid-js'
 import {type DeepPosition, getDeepPositionKey} from 'src/utils/focus-controller/deep-position'
+import {FOCUS_CONTROLLER_CHANNEL, FocusControllerContext} from '../FocusController'
+import {useFocus} from '../focus'
 
 const mocks = vi.hoisted(() => {
   return {
+    contextToReturnNull: undefined as unknown,
     useDelegatedOn: vi.fn(),
+  }
+})
+
+vi.mock('solid-js', async () => {
+  const actual = await vi.importActual<typeof import('solid-js')>('solid-js')
+
+  return {
+    ...actual,
+    useContext: (context: Parameters<typeof actual.useContext>[0]) => {
+      if (mocks.contextToReturnNull !== undefined && context === mocks.contextToReturnNull) {
+        return null
+      }
+
+      return actual.useContext(context)
+    },
   }
 })
 
@@ -66,36 +84,13 @@ const createFocusControllerMock = () => {
   }
 }
 
-const importSubject = (options?: {useContextReturnsNull?: boolean}) => {
-  vi.resetModules()
-
-  if (options?.useContextReturnsNull === true) {
-    vi.doMock('solid-js', async () => {
-      const actual = await vi.importActual<typeof import('solid-js')>('solid-js')
-
-      return {
-        ...actual,
-        useContext: () => null,
-      }
-    })
-  }
-
-  return import('../focus')
-}
-
 describe('useFocus', () => {
   beforeEach(() => {
     mocks.useDelegatedOn.mockReset()
-  })
-
-  afterEach(() => {
-    vi.doUnmock('solid-js')
+    mocks.contextToReturnNull = undefined
   })
 
   const setupWithProvider = async () => {
-    const {useFocus} = await importSubject()
-    const {FocusControllerContext, FOCUS_CONTROLLER_CHANNEL} = await import('../FocusController')
-
     const deepPosition: DeepPosition = [
       {x: 1, y: 2},
       {x: 3, y: 4},
@@ -172,7 +167,7 @@ describe('useFocus', () => {
   }
 
   it('should fall back to local signals when FocusControllerContext is missing', async () => {
-    const {useFocus} = await importSubject({useContextReturnsNull: true})
+    mocks.contextToReturnNull = FocusControllerContext
     const deepPosition: DeepPosition = [{x: 1, y: 2}]
     let api: ReturnType<typeof useFocus> | undefined
 
@@ -242,9 +237,6 @@ describe('useFocus', () => {
   })
 
   it('should use the focus-controller delegated channel', async () => {
-    const {useFocus} = await importSubject()
-    const {FocusControllerContext, FOCUS_CONTROLLER_CHANNEL} = await import('../FocusController')
-
     const deepPosition: DeepPosition = [{x: 1, y: 2}]
     const focusController = createFocusControllerMock()
 
