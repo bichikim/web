@@ -11,6 +11,7 @@ export interface HConfirmButtonProps {
   readonly confirmationChildren: JSX.Element
   readonly disabled?: boolean
   readonly onConfirm: () => void
+  readonly reserveSpace?: boolean
 }
 
 export const HConfirmButton = (props: HConfirmButtonProps) => {
@@ -41,15 +42,23 @@ export const HConfirmButton = (props: HConfirmButtonProps) => {
       <span class="grid">
         <span
           aria-hidden={confirmation.isConfirming() ? 'true' : undefined}
-          class="col-start-1 row-start-1 inline-flex items-center justify-center gap-2"
-          classList={{invisible: confirmation.isConfirming()}}
+          class="col-start-1 row-start-1 items-center justify-center gap-2"
+          classList={{
+            hidden: props.reserveSpace === false && confirmation.isConfirming(),
+            'inline-flex': props.reserveSpace !== false || !confirmation.isConfirming(),
+            invisible: props.reserveSpace !== false && confirmation.isConfirming(),
+          }}
         >
           {props.children}
         </span>
         <span
           aria-hidden={confirmation.isConfirming() ? undefined : 'true'}
-          class="col-start-1 row-start-1 inline-flex items-center justify-center gap-2"
-          classList={{invisible: !confirmation.isConfirming()}}
+          class="col-start-1 row-start-1 items-center justify-center gap-2"
+          classList={{
+            hidden: props.reserveSpace === false && !confirmation.isConfirming(),
+            'inline-flex': props.reserveSpace !== false || confirmation.isConfirming(),
+            invisible: props.reserveSpace !== false && !confirmation.isConfirming(),
+          }}
         >
           <span aria-hidden="true" class="i-tabler-check size-4 flex-none" />
           {props.confirmationChildren}
