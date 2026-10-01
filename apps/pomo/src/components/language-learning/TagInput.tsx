@@ -5,6 +5,7 @@ import {createSignal, For} from 'solid-js'
 
 import * as m from '@paraglide/message'
 import {
+  LANGUAGE_LEARNING_TAG_DELIMITER_PATTERN,
   MAXIMUM_LANGUAGE_LEARNING_TAGS,
   parseLanguageLearningTags,
 } from '../../features/language-learning'
@@ -24,8 +25,6 @@ const INPUT_CLASS = cx(
   'min-h-8 min-w-32 flex-1 border-0 bg-transparent px-2 text-sm font-650 text-foreground',
   'outline-none placeholder:font-500 placeholder:text-muted-foreground',
 )
-const TAG_DELIMITER_PATTERN = /[,\uFF0C\n]/u
-
 export interface LanguageLearningTagInputProps {
   readonly description?: string
   readonly disabled?: boolean
@@ -55,7 +54,7 @@ export const LanguageLearningTagInput = (props: LanguageLearningTagInputProps) =
   }
 
   const handleInputChange = (value: string) => {
-    if (!isComposing() && TAG_DELIMITER_PATTERN.test(value)) {
+    if (!isComposing() && LANGUAGE_LEARNING_TAG_DELIMITER_PATTERN.test(value)) {
       commitInput(value)
       return
     }
@@ -66,7 +65,7 @@ export const LanguageLearningTagInput = (props: LanguageLearningTagInputProps) =
   const handlePaste = (event: ClipboardEvent) => {
     const pasted = event.clipboardData?.getData('text') ?? ''
 
-    if (!TAG_DELIMITER_PATTERN.test(pasted)) {
+    if (!LANGUAGE_LEARNING_TAG_DELIMITER_PATTERN.test(pasted)) {
       return
     }
 
@@ -119,7 +118,7 @@ export const LanguageLearningTagInput = (props: LanguageLearningTagInputProps) =
               return
             }
 
-            if (event.key === 'Enter' || TAG_DELIMITER_PATTERN.test(event.key)) {
+            if (event.key === 'Enter' || LANGUAGE_LEARNING_TAG_DELIMITER_PATTERN.test(event.key)) {
               event.preventDefault()
               commitInput(props.inputValue)
             } else if (
