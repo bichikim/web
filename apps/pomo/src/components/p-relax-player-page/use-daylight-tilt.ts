@@ -1,7 +1,12 @@
+import {
+  getCalibratedOrientation,
+  hasDeviceOrientation,
+  type OrientationReference,
+  requestDeviceOrientationPermission,
+} from 'src/features/device-orientation'
 import {type Accessor, createEffect, createMemo, createSignal, onCleanup} from 'solid-js'
 
 import type {VirtualLightPosition} from 'src/features/relax-glass-renderer'
-import {getCalibratedOrientation, type OrientationReference} from 'src/features/device-orientation'
 
 const MAX_TILT_DEGREES = 30
 const MAX_HORIZONTAL_OFFSET = 0.08
@@ -86,25 +91,22 @@ export const useDaylightTilt = (basePosition: Accessor<VirtualLightPosition>) =>
   const enable = async () => {
     requestVersion += 1
     const currentRequest = requestVersion
-    if (typeof DeviceOrientationEvent === 'undefined' || globalThis.isSecureContext === false) {
+    if (!hasDeviceOrientation()) {
       setStatus('unavailable')
       return
     }
 
     setStatus('requesting')
     try {
-      if (
-        'requestPermission' in DeviceOrientationEvent &&
-        typeof DeviceOrientationEvent.requestPermission === 'function'
-      ) {
-        const permission = await DeviceOrientationEvent.requestPermission()
-        if (currentRequest !== requestVersion) {
-          return
-        }
-        if (permission !== 'granted') {
-          setStatus('denied')
-          return
-        }
+      const permissionRequest = requestDeviceOrientationPermission()
+      const permission =
+        typeof permissionRequest === 'string' ? permissionRequest : await permissionRequest
+      if (currentRequest !== requestVersion) {
+        return
+      }
+      if (permission !== 'granted') {
+        setStatus(permission)
+        return
       }
       reference = null
       setOffset(ZERO_OFFSET)

@@ -1,3 +1,5 @@
+import {COVER_UV} from './cover-uv'
+import {FULLSCREEN_VERTEX} from 'src/utils/fullscreen-vertex'
 import {Filter, GlProgram, type Texture, UniformGroup} from 'pixi.js'
 import {DEPTH_PARALLAX_FRAGMENT} from './depth-shader'
 
@@ -12,21 +14,6 @@ export interface GlassLightPositions {
   readonly daylight: VirtualLightPosition
   readonly interior: VirtualLightPosition
 }
-
-const VERTEX = `
-in vec2 aPosition;
-out vec2 vUv;
-uniform vec4 uOutputFrame;
-uniform vec4 uOutputTexture;
-
-void main() {
-  vec2 position = aPosition * uOutputFrame.zw + uOutputFrame.xy;
-  position.x = position.x * (2.0 / uOutputTexture.x) - 1.0;
-  position.y = position.y * (2.0 * uOutputTexture.z / uOutputTexture.y) - uOutputTexture.z;
-  gl_Position = vec4(position, 0.0, 1.0);
-  vUv = aPosition;
-}
-`
 
 const FRAGMENT = `
 in vec2 vUv;
@@ -48,16 +35,7 @@ float residueAt(vec2 uv) {
   return dot(residueColor, vec3(0.299, 0.587, 0.114));
 }
 
-vec2 coverUv(vec2 uv, vec2 sourceSize, float horizontalAlignment) {
-  float viewportAspect = uViewportSize.x / uViewportSize.y;
-  float sourceAspect = sourceSize.x / sourceSize.y;
-  if (viewportAspect > sourceAspect) {
-    float visibleHeight = sourceAspect / viewportAspect;
-    return vec2(uv.x, (uv.y - 0.5) * visibleHeight + 0.5);
-  }
-  float visibleWidth = viewportAspect / sourceAspect;
-  return vec2(uv.x * visibleWidth + (1.0 - visibleWidth) * horizontalAlignment, uv.y);
-}
+${COVER_UV}
 
 void main() {
   float viewportAspect = uViewportSize.x / uViewportSize.y;
@@ -155,7 +133,11 @@ export class GlassLightFilter extends Filter {
     })
 
     super({
-      glProgram: GlProgram.from({fragment: FRAGMENT, name: 'relax-glass-light', vertex: VERTEX}),
+      glProgram: GlProgram.from({
+        fragment: FRAGMENT,
+        name: 'relax-glass-light',
+        vertex: FULLSCREEN_VERTEX,
+      }),
       resources: {
         glassUniforms: uniforms,
         uBackdrop: backdrop.source,

@@ -1,3 +1,4 @@
+import {createDeferred} from 'src/test-utils/create-deferred'
 /** @vitest-environment jsdom */
 
 import {createRoot} from 'solid-js'
@@ -26,14 +27,6 @@ const ANALYSIS: TextMoodAnalysis = {
   ],
   secondary: null,
   uncertain: false,
-}
-
-const createDeferred = <Value>() => {
-  let resolve: (value: Value) => void = () => undefined
-  const promise = new Promise<Value>((resolvePromise) => {
-    resolve = resolvePromise
-  })
-  return {promise, resolve}
 }
 
 interface TextMoodTestRoot {

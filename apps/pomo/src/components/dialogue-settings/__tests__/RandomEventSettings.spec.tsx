@@ -1,3 +1,4 @@
+import {createDeferred} from 'src/test-utils/create-deferred'
 /** @vitest-environment jsdom */
 
 import {PreferenceProvider} from 'src/hooks/use-preference'
@@ -33,17 +34,6 @@ vi.mock('src/features/focus-room-dialogue', async () => {
     }),
   }
 })
-
-function createDeferred<T>() {
-  let reject: (reason?: unknown) => void = () => undefined
-  let resolve: (value: T) => void = () => undefined
-  const promise = new Promise<T>((resolvePromise, rejectPromise) => {
-    resolve = resolvePromise
-    reject = rejectPromise
-  })
-
-  return {promise, reject, resolve}
-}
 
 beforeEach(() => {
   settingsMocks.read.mockResolvedValue(DEFAULT_RANDOM_EVENT_SETTINGS)

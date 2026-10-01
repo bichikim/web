@@ -1,3 +1,4 @@
+import {createTestBroadcastChannel} from 'src/test-utils/create-test-broadcast-channel'
 /** @vitest-environment jsdom */
 
 import {renderHook} from '@solidjs/testing-library'
@@ -27,26 +28,7 @@ vi.mock('../runtime', () => ({
   shouldHandoffDesktopModeOwner: vi.fn(),
 }))
 
-class TestBroadcastChannel {
-  static instances: TestBroadcastChannel[] = []
-  readonly listeners: Array<(event: MessageEvent) => void> = []
-  readonly postMessage = vi.fn<(data: unknown) => void>()
-  readonly close = vi.fn()
-
-  constructor(readonly name: string) {
-    TestBroadcastChannel.instances.push(this)
-  }
-
-  addEventListener(_type: string, listener: (event: MessageEvent) => void) {
-    this.listeners.push(listener)
-  }
-
-  dispatch(data: unknown) {
-    for (const listener of this.listeners) {
-      listener(new MessageEvent('message', {data}))
-    }
-  }
-}
+const TestBroadcastChannel = createTestBroadcastChannel()
 
 beforeEach(() => {
   localStorage.clear()

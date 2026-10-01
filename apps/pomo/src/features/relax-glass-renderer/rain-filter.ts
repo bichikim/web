@@ -1,6 +1,7 @@
+import {COVER_UV} from './cover-uv'
 import {Filter, GlProgram, type Texture, UniformGroup} from 'pixi.js'
 
-import {FULLSCREEN_VERTEX} from './fullscreen-vertex'
+import {FULLSCREEN_VERTEX} from 'src/utils/fullscreen-vertex'
 import {DEPTH_PARALLAX_FRAGMENT} from './depth-shader'
 
 const FRAGMENT = `
@@ -16,25 +17,16 @@ uniform float uMistIntensity;
 uniform vec2 uViewportSize;
 ${DEPTH_PARALLAX_FRAGMENT}
 
-vec2 coverUv(vec2 uv) {
-  float viewportAspect = uViewportSize.x / uViewportSize.y;
-  float sourceAspect = uBackdropSize.x / uBackdropSize.y;
-  if (viewportAspect > sourceAspect) {
-    float visibleHeight = sourceAspect / viewportAspect;
-    return vec2(uv.x, (uv.y - 0.5) * visibleHeight + 0.5);
-  }
-  float visibleWidth = viewportAspect / sourceAspect;
-  return vec2((uv.x - 0.5) * visibleWidth + 0.5, uv.y);
-}
+${COVER_UV}
 
 vec3 backgroundAt(vec2 uv) {
-  vec2 depthUv = coverUv(clamp(uv, 0.0, 1.0));
-  return texture(uBackdrop, coverUv(parallaxUv(uv, depthUv, uViewportSize))).rgb;
+  vec2 depthUv = coverUv(clamp(uv, 0.0, 1.0), uBackdropSize, 0.5);
+  return texture(uBackdrop, coverUv(parallaxUv(uv, depthUv, uViewportSize), uBackdropSize, 0.5)).rgb;
 }
 
 vec3 mistedBackground(vec2 uv, float mist) {
-  vec2 depthUv = coverUv(clamp(uv, 0.0, 1.0));
-  vec3 softened = texture(uMistBackdrop, coverUv(parallaxUv(uv, depthUv, uViewportSize))).rgb;
+  vec2 depthUv = coverUv(clamp(uv, 0.0, 1.0), uBackdropSize, 0.5);
+  vec3 softened = texture(uMistBackdrop, coverUv(parallaxUv(uv, depthUv, uViewportSize), uBackdropSize, 0.5)).rgb;
   return mix(backgroundAt(uv), softened + vec3(0.01), mist);
 }
 

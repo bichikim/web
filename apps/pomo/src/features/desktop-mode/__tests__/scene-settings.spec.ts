@@ -1,3 +1,4 @@
+import {createTestBroadcastChannel} from 'src/test-utils/create-test-broadcast-channel'
 /** @vitest-environment jsdom */
 
 import {BroadcastChannel as NativeBroadcastChannel} from 'node:worker_threads'
@@ -7,26 +8,7 @@ import {afterEach, beforeEach, expect, it, vi} from 'vitest'
 import {useDesktopSceneSettingsListener, useDesktopSceneSettingsPublisher} from '../scene-settings'
 import {LEGACY_WEATHER_LOCATIONS} from '../../weather'
 
-class TestBroadcastChannel {
-  static instances: TestBroadcastChannel[] = []
-  readonly close = vi.fn()
-  readonly listeners: Array<(event: MessageEvent) => void> = []
-  readonly postMessage = vi.fn()
-
-  constructor(readonly name: string) {
-    TestBroadcastChannel.instances.push(this)
-  }
-
-  addEventListener(_type: string, listener: (event: MessageEvent) => void) {
-    this.listeners.push(listener)
-  }
-
-  dispatch(data: unknown) {
-    for (const listener of this.listeners) {
-      listener(new MessageEvent('message', {data}))
-    }
-  }
-}
+const TestBroadcastChannel = createTestBroadcastChannel()
 
 const validSettings = [
   {name: 'activity', value: 'writing'},

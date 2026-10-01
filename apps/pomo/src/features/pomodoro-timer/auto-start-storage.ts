@@ -1,14 +1,14 @@
-import {createTimestampedDualRuntimeStorage} from 'src/utils/runtime-storage/create-timestamped-dual-runtime-storage'
-import {z} from 'zod'
-
 import {
   createLatestStorageWriter,
+  createTossWebStorageAdapter,
   hasNativeStorageBridge,
   readTossStorageJson,
   readWebStorageJson,
   writeTossStorageJson,
   writeWebStorageJson,
 } from 'src/utils/runtime-storage'
+import {createTimestampedDualRuntimeStorage} from 'src/utils/runtime-storage/create-timestamped-dual-runtime-storage'
+import {z} from 'zod'
 
 const AUTO_START_STORAGE_KEY = 'pomo:timer-auto-start:v2'
 const LEGACY_AUTO_START_STORAGE_KEY = 'pomo:timer-auto-start:v1'
@@ -159,11 +159,9 @@ export const createAutoStartStorage = ({
 const runtimeStorage = createAutoStartStorage({
   now: () => Date.now(),
   storage: {
+    ...createTossWebStorageAdapter({writeWebMode: 'return-error'}),
     readToss: readTossStorageJson,
     readWeb: readWebStorageJson,
-    usesTossStorage: hasNativeStorageBridge,
-    writeToss: writeTossStorageJson,
-    writeWeb: writeWebStorageJson,
   },
 })
 

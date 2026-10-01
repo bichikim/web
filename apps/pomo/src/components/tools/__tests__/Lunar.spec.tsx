@@ -18,9 +18,10 @@ it('should convert the selected solar new year date to the lunar new year', asyn
       <Lunar />
     </PreferenceProvider>
   ))
-  await waitFor(() => expect(screen.getByRole('button', {name: /변환 방향/u})).toBeEnabled())
-  fireEvent.click(screen.getByRole('button', {name: '양력 날짜: 날짜 선택'}))
-  fireEvent.click(screen.getByRole('button', {name: '2026-02-17'}))
+  const direction = screen.getByRole('button', {name: /변환 방향/u})
+  await waitFor(() => expect(direction).toBeEnabled())
+  fireEvent.click(screen.getByLabelText('양력 날짜: 날짜 선택'))
+  fireEvent.click(screen.getByLabelText('2026-02-17'))
   expect(screen.getByText('2026년 1월 1일')).toBeVisible()
 })
 
