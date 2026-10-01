@@ -1,3 +1,4 @@
+import {clampUnit} from 'src/utils/clamp-unit'
 const AXES = 3
 const INFLUENCES = 4
 const EPSILON = 0.000001
@@ -117,7 +118,7 @@ export const attachCloth = (container: AssetContainer) => {
             for (let axis = 0; axis < AXES; axis += 1) {
               length += (surface.positions[offset + axis] - surface.rest[offset + axis]) ** 2
             }
-            const scale = Math.min(1, surface.limits[vertex] / Math.max(Math.sqrt(length), EPSILON))
+            const scale = clampUnit(surface.limits[vertex] / Math.max(Math.sqrt(length), EPSILON))
             for (let axis = 0; axis < AXES; axis += 1) {
               surface.positions[offset + axis] =
                 surface.rest[offset + axis] +

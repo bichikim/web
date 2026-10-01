@@ -1,3 +1,4 @@
+import {clearHtmlMediaElement} from 'src/utils/clear-html-media-element'
 import {replaceBlobObjectUrl} from 'src/features/blob-object-url'
 import {sampleTimes} from './timeline'
 
@@ -90,9 +91,7 @@ export const sampleVideo = async (blob: Blob, signal: AbortSignal): Promise<Vide
     }
     return samples
   } finally {
-    video.pause()
-    video.removeAttribute('src')
-    video.load()
+    clearHtmlMediaElement(video)
     replaceBlobObjectUrl(url, () => null)
   }
 }

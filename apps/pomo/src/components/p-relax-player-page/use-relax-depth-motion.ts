@@ -1,11 +1,16 @@
-import {createEffect, createSignal, type JSX, onCleanup} from 'solid-js'
-import {clamp} from 'es-toolkit/math'
-
 import {
   getCalibratedOrientation,
   getOrientationOffset,
+  hasDeviceOrientation,
   type OrientationReference,
+  readDeviceOrientationRuntime,
+  requestDeviceOrientationPermission,
+  requiresDeviceOrientationPermission,
 } from 'src/features/device-orientation'
+import {exponentialApproachFactor} from 'src/utils/exponential-approach-factor'
+import {createEffect, createSignal, type JSX, onCleanup} from 'solid-js'
+import {clamp} from 'es-toolkit/math'
+
 import {releaseCapturedPointer} from 'src/utils/release-captured-pointer'
 import type {RelaxDepthInput, RelaxDepthOffset, RelaxDepthStatus} from './types'
 
@@ -51,7 +56,7 @@ const createDepthOffsetSmoother = (isReducedMotion: () => boolean) => {
       Math.max(0, time - (lastFrameTime ?? time - FRAME_DURATION_FALLBACK)),
     )
     lastFrameTime = time
-    const easing = 1 - Math.exp(-duration / FOLLOW_TIME_CONSTANT)
+    const easing = exponentialApproachFactor(duration, FOLLOW_TIME_CONSTANT)
     const current = offset()
     const next = {
       x: current.x + (target.x - current.x) * easing,
@@ -223,36 +228,38 @@ export const useRelaxDepthMotion = () => {
       disableMotionForReducedPreference()
       return
     }
-    const orientation = globalThis.DeviceOrientationEvent
-    if (orientation === undefined || globalThis.isSecureContext === false) {
+    const runtime = readDeviceOrientationRuntime()
+    if (!hasDeviceOrientation(runtime)) {
       setStatus('unavailable')
       return
     }
-    if ('requestPermission' in orientation && typeof orientation.requestPermission === 'function') {
+    if (requiresDeviceOrientationPermission(runtime)) {
       setStatus('requesting')
-      try {
-        const permission = await orientation.requestPermission()
-        if (version !== requestVersion) {
-          return
-        }
-        if (isReducedMotion()) {
-          disableMotionForReducedPreference()
-          return
-        }
-        if (permission !== 'granted') {
-          setStatus('denied')
-          return
-        }
-      } catch {
-        if (version === requestVersion) {
-          if (isReducedMotion()) {
-            disableMotionForReducedPreference()
-          } else {
-            setStatus('denied')
-          }
-        }
+    }
+    try {
+      const permissionRequest = requestDeviceOrientationPermission(runtime)
+      const permission =
+        typeof permissionRequest === 'string' ? permissionRequest : await permissionRequest
+      if (version !== requestVersion) {
         return
       }
+      if (isReducedMotion()) {
+        disableMotionForReducedPreference()
+        return
+      }
+      if (permission !== 'granted') {
+        setStatus(permission)
+        return
+      }
+    } catch {
+      if (version === requestVersion) {
+        if (isReducedMotion()) {
+          disableMotionForReducedPreference()
+        } else {
+          setStatus('denied')
+        }
+      }
+      return
     }
     if (version !== requestVersion) {
       return

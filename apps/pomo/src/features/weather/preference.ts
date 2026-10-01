@@ -1,12 +1,6 @@
+import {createTossWebStorageAdapter} from 'src/utils/runtime-storage'
 import {isPlainObject} from 'es-toolkit/predicate'
 import {createAuthoritativePreferenceRepository} from '../authoritative-preference'
-import {
-  hasNativeStorageBridge,
-  readTossStorageJson,
-  readWebStorageJson,
-  writeTossStorageJson,
-  writeWebStorageJson,
-} from 'src/utils/runtime-storage'
 import {parseWeatherCitySlug, parseWeatherLocation, type WeatherLocation} from './contract'
 import {DEFAULT_WEATHER_LOCATION, LEGACY_WEATHER_LOCATIONS} from './locations'
 import {isWeatherSceneMode, type WeatherSceneMode} from './scene-mode'
@@ -203,16 +197,7 @@ export const createWeatherPreferenceRepository = (
 const runtimeRepository = createWeatherPreferenceRepository({
   restoreLocation: (location) => restoreWeatherLocationNames({location}),
   storage: {
-    readToss: (key) => readTossStorageJson(key, (value) => value),
-    readWeb: (key) => readWebStorageJson(key, (value) => value),
-    usesTossStorage: hasNativeStorageBridge,
-    writeToss: writeTossStorageJson,
-    writeWeb(key, value) {
-      const error = writeWebStorageJson(key, value)
-      if (error !== null) {
-        throw error
-      }
-    },
+    ...createTossWebStorageAdapter(),
   },
 })
 

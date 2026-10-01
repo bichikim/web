@@ -1,22 +1,18 @@
 /** @vitest-environment jsdom */
 
 import {cleanup, fireEvent, renderHook} from '@solidjs/testing-library'
-import {afterEach, expect, it, vi} from 'vitest'
+import {afterEach, beforeEach, expect, it, vi} from 'vitest'
 
 import {useRelaxDepthMotion} from '../use-relax-depth-motion'
 
 const createPreference = (initiallyReduced: boolean) => {
   const listeners = new Set<(event: {readonly matches: boolean}) => void>()
   const preference = {
-    addEventListener: (
-      _type: string,
-      listener: (event: {readonly matches: boolean}) => void,
-    ) => listeners.add(listener),
+    addEventListener: (_type: string, listener: (event: {readonly matches: boolean}) => void) =>
+      listeners.add(listener),
     matches: initiallyReduced,
-    removeEventListener: (
-      _type: string,
-      listener: (event: {readonly matches: boolean}) => void,
-    ) => listeners.delete(listener),
+    removeEventListener: (_type: string, listener: (event: {readonly matches: boolean}) => void) =>
+      listeners.delete(listener),
   }
 
   return {
@@ -33,11 +29,12 @@ const createPreference = (initiallyReduced: boolean) => {
 }
 
 const sendOrientation = (beta: number, gamma: number) => {
-  fireEvent(
-    globalThis.window,
-    Object.assign(new Event('deviceorientation'), {beta, gamma}),
-  )
+  fireEvent(globalThis.window, Object.assign(new Event('deviceorientation'), {beta, gamma}))
 }
+
+beforeEach(() => {
+  vi.stubGlobal('isSecureContext', true)
+})
 
 afterEach(() => {
   cleanup()
@@ -145,6 +142,7 @@ it.each([
     }
     resolvePermission('granted')
     await permission
+    await Promise.resolve()
 
     expect(result.inputMode()).toBe('drag')
     expect(result.status()).toBe('reduced-motion')
@@ -173,6 +171,7 @@ it('should preserve reduced motion status when a pending permission request is r
   setMatches(true)
   rejectPermission(new Error('permission request failed'))
   await permission.catch(() => undefined)
+  await Promise.resolve()
 
   expect(result.inputMode()).toBe('drag')
   expect(result.status()).toBe('reduced-motion')
@@ -201,6 +200,7 @@ it('should ignore a late permission grant after switching back to drag', async (
   expect(result.status()).toBe('ready')
   resolvePermission('granted')
   await permission
+  await Promise.resolve()
 
   expect(result.inputMode()).toBe('drag')
   expect(result.status()).toBe('ready')
@@ -227,6 +227,7 @@ it('should ignore a permission result after disposal', async () => {
   dispose()
   resolvePermission('granted')
   await permission
+  await Promise.resolve()
 
   expect(result.inputMode()).toBe('drag')
   expect(result.status()).toBe('requesting')

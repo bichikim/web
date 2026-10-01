@@ -1,3 +1,4 @@
+import {createDeferred} from 'src/test-utils/create-deferred'
 // oxlint-disable require-yield -- Rejection coverage needs an async generator that fails before its first value.
 import {createRoot} from 'solid-js'
 import {describe, expect, it, vi} from 'vitest'
@@ -36,15 +37,6 @@ const GENERATION_TIME = 1_200
 interface VoiceLabTestRoot {
   readonly controller: SupertonicVoiceLabController
   readonly dispose: () => void
-}
-
-const createDeferred = () => {
-  let resolvePromise: () => void = () => undefined
-  const promise = new Promise<void>((resolve) => {
-    resolvePromise = resolve
-  })
-
-  return {promise, resolve: resolvePromise}
 }
 
 const createAudio = () => ({
