@@ -79,8 +79,8 @@ test('should preserve scheduled and delivered times through Toss dev storage and
   ).toEqual(snapshot)
 
   await page.getByRole('button', {exact: true, name: '시작하기'}).click()
-  await page.getByRole('button', {exact: true, name: '기억보조'}).click()
-  const dialog = page.getByRole('dialog', {exact: true, name: 'Pomofi 기억 보조'})
+  await page.getByRole('button', {exact: true, name: '생각 보조'}).click()
+  const dialog = page.getByRole('dialog', {exact: true, name: 'Pomofi 생각 보조'})
   await dialog.getByRole('tab', {exact: true, name: '메모'}).click()
   await expect(dialog.getByText(deliveredMemo.text, {exact: true})).toBeVisible()
   await page.screenshot({path: information.outputPath('restored-reminder.png')})

@@ -56,6 +56,52 @@ it('should keep a dismissible error beside another active download', () => {
   expect(controller.dismissError).toHaveBeenCalledWith(target)
 })
 
+it('should keep the cancel button and its focus during progress updates', () => {
+  const target = {kind: 'text', modelId: 'gemma-4-e2b'} as const
+  setItems([{label: 'Gemma', percentage: 8, status: 'loading', target}])
+  render(() => <PModelDownloadStatus />)
+  const cancel = screen.getByRole('button', {name: '취소'})
+  cancel.focus()
+  fireEvent.pointerDown(cancel, {button: 0, pointerType: 'mouse'})
+
+  setItems([{label: 'Gemma', percentage: 9, status: 'loading', target: {...target}}])
+  expect(screen.getByText('Gemma 모델 받는 중 · 9%')).toBeInTheDocument()
+  expect(screen.getByRole('button', {name: '취소'})).toBe(cancel)
+  expect(cancel).toHaveFocus()
+  fireEvent.pointerUp(cancel, {button: 0, pointerType: 'mouse'})
+  fireEvent.click(cancel)
+  expect(controller.cancel).toHaveBeenCalledExactlyOnceWith(target)
+})
+
+it('should update controls through queued, loading, error and retry states for the same model', () => {
+  const target = {kind: 'text', modelId: 'gemma-4-e2b'} as const
+  setItems([{label: 'Gemma', status: 'queued', target}])
+  const view = render(() => <PModelDownloadStatus />)
+  expect(screen.getByRole('status')).toHaveTextContent('Gemma · 다운로드 대기 중')
+
+  setItems([{label: 'Gemma', percentage: 8, status: 'loading', target: {...target}}])
+  expect(screen.getByRole('status')).toHaveTextContent('Gemma 모델 받는 중 · 8%')
+  expect(screen.getByRole('progressbar')).toHaveAttribute('aria-valuenow', '8')
+
+  setItems([{label: 'Gemma', message: '연결 실패', status: 'error', target: {...target}}])
+  expect(screen.queryByRole('progressbar')).not.toBeInTheDocument()
+  expect(screen.queryByRole('button', {name: '취소'})).not.toBeInTheDocument()
+  const alert = screen.getByRole('alert')
+  expect(alert).toHaveTextContent('Gemma: 연결 실패')
+  fireEvent.click(within(alert).getByRole('button', {name: '닫기'}))
+  expect(controller.dismissError).toHaveBeenCalledExactlyOnceWith(target)
+
+  setItems([{label: 'Gemma', status: 'queued', target: {...target}}])
+  expect(screen.queryByRole('alert')).not.toBeInTheDocument()
+  expect(screen.getByRole('status')).toHaveTextContent('Gemma · 다운로드 대기 중')
+
+  setItems([{label: 'Gemma', percentage: 0, status: 'loading', target: {...target}}])
+  fireEvent.click(screen.getByRole('button', {name: '취소'}))
+  expect(controller.cancel).toHaveBeenCalledExactlyOnceWith(target)
+  setItems([])
+  expect(view.container).toBeEmptyDOMElement()
+})
+
 it('should retain the focused cancel button while updating download progress', () => {
   const target = {kind: 'voice', modelId: 'full'} as const
   setItems([{label: '음성', percentage: 10, status: 'loading', target}])
