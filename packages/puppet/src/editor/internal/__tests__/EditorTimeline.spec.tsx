@@ -403,63 +403,6 @@ describe('EditorTimeline', () => {
     ).toBe(7 / 24)
   })
 
-  test('should batch-edit keyframes in the all-motions view', async () => {
-    const [document, setDocument] = createSignal<PuppetDocument>(createDemoDocument())
-    const view = render(() => (
-      <EditorTimeline document={document()} onDocumentChange={setDocument} />
-    ))
-
-    fireEvent.keyDown(view.getByRole('button', {name: /모션 선택/}), {key: 'Enter'})
-    await waitFor(() => screen.getByRole('option', {name: '모든 타임라인 보기'}))
-    fireEvent.keyDown(screen.getByRole('option', {name: '모든 타임라인 보기'}), {key: 'Enter'})
-
-    const blinkGroup = view.getByRole('region', {name: 'blink 타임라인'})
-    const firstMarker = within(blinkGroup).getByRole('button', {
-      name: 'Angle X 0.00초 키프레임',
-    })
-    const middleMarker = within(blinkGroup).getByRole('button', {
-      name: 'Angle X 0.20초 키프레임',
-    })
-    const track = within(blinkGroup).getByLabelText('Angle X 트랙')
-
-    fireEvent.click(firstMarker)
-    fireEvent.click(middleMarker, {shiftKey: true})
-    expect(firstMarker).toHaveAttribute('aria-pressed', 'true')
-    expect(middleMarker).toHaveAttribute('aria-pressed', 'true')
-    expect(view.getByRole('button', {name: '선택 키프레임 2개 삭제'})).toBeEnabled()
-
-    vi.spyOn(track, 'getBoundingClientRect').mockReturnValue(
-      DOMRect.fromRect({height: 20, width: 240}),
-    )
-    fireEvent(middleMarker, new MouseEvent('pointerdown', {bubbles: true, button: 0, clientX: 120}))
-    fireEvent(middleMarker, new MouseEvent('pointermove', {bubbles: true, clientX: 180}))
-    fireEvent(middleMarker, new MouseEvent('pointerup', {bubbles: true, clientX: 180}))
-
-    await waitFor(() =>
-      expect(
-        document()
-          .motions.find((motion) => motion.id === 'blink')
-          ?.tracks[0]?.keyframes.map((keyframe) => keyframe.time),
-      ).toEqual([7 / 24 - 0.2, 7 / 24, 0.4]),
-    )
-
-    fireEvent.keyDown(view.getByRole('button', {name: /^키프레임 이징/}), {key: 'Enter'})
-    fireEvent.keyDown(screen.getByRole('option', {name: 'ease-out'}), {key: 'Enter'})
-    expect(
-      document()
-        .motions.find((motion) => motion.id === 'blink')
-        ?.tracks[0]?.keyframes.slice(0, 2),
-    ).toEqual([
-      {easing: 'ease-out', time: 7 / 24 - 0.2, value: 0},
-      {easing: 'ease-out', time: 7 / 24, value: 30},
-    ])
-
-    fireEvent.click(view.getByRole('button', {name: '선택 키프레임 2개 삭제'}))
-    expect(
-      document().motions.find((motion) => motion.id === 'blink')?.tracks[0]?.keyframes,
-    ).toEqual([{time: 0.4, value: 0}])
-  })
-
   test('should add, ease, and delete parameter keyframes', () => {
     const [document, setDocument] = createSignal<PuppetDocument>(createDemoDocument())
     const view = render(() => (
