@@ -5,9 +5,11 @@ vi.mock('src/features/model-download', () => ({useModelDownload: vi.fn()}))
 
 import {createSignal} from 'solid-js'
 import {cleanup, renderHook} from '@solidjs/testing-library'
+import * as m from '@paraglide/message'
 import {getLocale, overwriteGetLocale} from '@paraglide/runtime'
 import {afterEach, beforeEach, expect, it, vi} from 'vitest'
 import {runImageGeneration} from '../client'
+import {MAXIMUM_SEED} from '../settings'
 import {useImageGeneration} from '../use-image-generation'
 
 vi.mock('../client', () => ({runImageGeneration: vi.fn()}))
@@ -47,6 +49,30 @@ it('should preserve the generated image metadata and revoke its URL on disposal'
   expect(result.busy()).toBe(false)
   cleanup()
   expect(URL.revokeObjectURL).toHaveBeenCalledWith('blob:generated')
+})
+
+it('should accept the maximum supported seed', async () => {
+  vi.mocked(runImageGeneration).mockResolvedValue({
+    blob: new Blob(['png']),
+    prompt: 'A dancing hamburger',
+  })
+  const {result} = renderHook(useImageGeneration)
+  await vi.waitFor(() => expect(result.supported()).toBe(true))
+  result.setIdea('춤추는 햄버거')
+  result.setSeed(String(MAXIMUM_SEED))
+  await result.generate()
+  expect(result.result()?.seed).toBe(MAXIMUM_SEED)
+})
+
+it('should reject seeds above the supported range before image generation', async () => {
+  const {result} = renderHook(useImageGeneration)
+  await vi.waitFor(() => expect(result.supported()).toBe(true))
+  result.setIdea('춤추는 햄버거')
+  result.setSeed(String(MAXIMUM_SEED + 1))
+  await result.generate()
+  expect(runImageGeneration).not.toHaveBeenCalled()
+  expect(result.error()).toBe(m.picture_diary_generation_seed_error())
+  expect(result.busy()).toBe(false)
 })
 
 it('should abort pending work and ignore late completion after stopping', async () => {

@@ -6,38 +6,40 @@ export interface RestorePPlayerStateOptions {
   readonly onRestore: (tracks: readonly PTrack[], playback: PPlaybackState | null) => void
   readonly playbackRequest: Promise<PPlaybackState | null>
   readonly playlistRequest: Promise<readonly string[] | null>
+  readonly resolveTracks?: (storedTrackIds: readonly string[]) => Promise<readonly PTrack[]>
   readonly tracks: readonly PTrack[]
 }
 
-/** Restores the playlist as it settles and applies playback only to the resolved queue. */
+/** Restores the saved playlist and playback state after both requests settle. */
 export const restorePPlayerState = async (options: RestorePPlayerStateOptions): Promise<void> => {
-  let playlistResolved = false
-  let restoredTracks = options.defaultTracks
-  let storedPlayback: PPlaybackState | null = null
-  const restorePlayback = options.playbackRequest.then((playback) => {
-    storedPlayback = playback
+  const [storedTrackIds, storedPlayback] = await Promise.all([
+    options.playlistRequest,
+    options.playbackRequest,
+  ])
 
-    if (playback !== null && playlistResolved && options.canRestore()) {
-      options.onRestore(restoredTracks, playback)
-    }
-  })
-  const restorePlaylist = options.playlistRequest.then((storedTrackIds) => {
-    playlistResolved = true
+  if (storedTrackIds === null && storedPlayback === null) {
+    return
+  }
 
-    if (storedTrackIds !== null) {
-      restoredTracks = resolvePPlaylist({
-        defaultTracks: options.defaultTracks,
-        storedTrackIds,
-        tracks: options.tracks,
-      })
-    }
+  if (!options.canRestore()) {
+    return
+  }
 
-    const shouldRestore = storedTrackIds !== null || storedPlayback !== null
+  const restoredTracks =
+    storedTrackIds === null
+      ? options.defaultTracks
+      : resolvePPlaylist({
+          defaultTracks: options.defaultTracks,
+          storedTrackIds,
+          tracks:
+            options.resolveTracks === undefined
+              ? options.tracks
+              : await options.resolveTracks(storedTrackIds),
+        })
 
-    if (shouldRestore && options.canRestore()) {
-      options.onRestore(restoredTracks, storedPlayback)
-    }
-  })
+  if (!options.canRestore()) {
+    return
+  }
 
-  await Promise.all([restorePlayback, restorePlaylist])
+  options.onRestore(restoredTracks, storedPlayback)
 }

@@ -14,6 +14,8 @@ import {useOptionalSoundEffects} from '../../../../features/sound-effects'
 import {useMemoryReminders} from '../../../../features/memory-assist'
 import type {PSayController} from '../../../../features/pomo-webmcp'
 import {PStudioEvents} from '../../Events'
+import {PToastRegion} from '../../../p-toast'
+import {ToastProvider} from '@winter-love/solid-components'
 import {useChildPresence} from '../../use-child-presence'
 import {useMobileLayout} from '../../use-mobile-layout'
 import {useOneOffChat} from '../../use-one-off-chat'
@@ -275,6 +277,7 @@ const createPomoSay = (speechText: string | null = null, isPreparing = false): P
   isPlaying: () => false,
   isPreparing: () => isPreparing,
   speak: vi.fn(async () => undefined),
+  speechRevision: () => 0,
   speechText: () => speechText,
   stop: vi.fn(),
 })
@@ -298,16 +301,19 @@ const renderEvents = (
   vi.mocked(usePEvents).mockReturnValue(options.events ?? createEvents())
 
   return render(() => (
-    <PStudioEvents
-      dialogueComposerVisible={options.dialogueComposerVisible ?? true}
-      isPlayerExpanded={options.expanded ?? false}
-      onMusicPlayingChange={options.onMusicPlayingChange ?? vi.fn()}
-      onPlayerExpandedChange={options.onPlayerExpandedChange ?? vi.fn()}
-      onPomodoroPresentationChange={options.onPomodoroPresentationChange ?? vi.fn()}
-      onTrackChange={options.onTrackChange ?? vi.fn()}
-      pomoSay={options.pomoSay ?? createPomoSay()}
-      sceneStyle="original"
-    />
+    <ToastProvider>
+      <PStudioEvents
+        dialogueComposerVisible={options.dialogueComposerVisible ?? true}
+        isPlayerExpanded={options.expanded ?? false}
+        onMusicPlayingChange={options.onMusicPlayingChange ?? vi.fn()}
+        onPlayerExpandedChange={options.onPlayerExpandedChange ?? vi.fn()}
+        onPomodoroPresentationChange={options.onPomodoroPresentationChange ?? vi.fn()}
+        onTrackChange={options.onTrackChange ?? vi.fn()}
+        pomoSay={options.pomoSay ?? createPomoSay()}
+        sceneStyle="original"
+      />
+      <PToastRegion />
+    </ToastProvider>
   ))
 }
 

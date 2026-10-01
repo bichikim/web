@@ -5,6 +5,7 @@ import {createEffect, createSignal, type JSX} from 'solid-js'
 import {expect, it, vi} from 'vitest'
 
 const [playbackEnabled, setPlaybackEnabled] = createSignal(false)
+const [pathname, setPathname] = createSignal('/settings')
 const eventPlaybackStates: boolean[] = []
 const componentMocks = vi.hoisted(() => ({eventProvider: vi.fn()}))
 
@@ -12,6 +13,11 @@ vi.mock('@solidjs/router', () => ({
   useCurrentMatches: () => () => [
     {route: {info: playbackEnabled() ? {focusRoomPlayback: true} : {}}},
   ],
+  useLocation: () => ({
+    get pathname() {
+      return pathname()
+    },
+  }),
 }))
 vi.mock('../../components/p-event-provider/PEventProvider', () => ({
   PEventProvider: componentMocks.eventProvider,
@@ -26,7 +32,7 @@ vi.mock('../../components/p-feed-provider/PFeedProvider', () => ({
 
 import MainLayout from '../(main-layout)'
 
-it('should retain shared event and feed providers while playback follows route metadata', () => {
+it('should retain shared providers and enable focus-room playback for normalized root paths', () => {
   componentMocks.eventProvider.mockImplementation(
     (props: {
       readonly children: JSX.Element
@@ -58,4 +64,12 @@ it('should retain shared event and feed providers while playback follows route m
   expect(componentMocks.eventProvider).toHaveBeenCalledOnce()
   expect(eventPlaybackStates).toEqual([true, false])
   expect(screen.getByText('page')).toBeInTheDocument()
+
+  setPathname('///')
+
+  expect(eventPlaybackStates).toEqual([true, false, true])
+
+  setPathname('/settings')
+
+  expect(eventPlaybackStates).toEqual([true, false, true, false])
 })

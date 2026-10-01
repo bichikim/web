@@ -1,3 +1,4 @@
+import {ENGLISH_TITLE_ABBREVIATIONS} from 'src/utils/english-title-abbreviation'
 import type {LanguageLearningLanguage} from './schema'
 
 export const LANGUAGE_LEARNING_SENTENCE_LIMITS = {
@@ -13,10 +14,18 @@ const ENDING_PATTERN = /[.!?。！？…]$/u
 const INTERNAL_ENDING_PATTERN =
   /(?:[!?。！？]+(?![!?。！？])|(?<=\d)\.(?![\d.])|(?<!\d)\.(?!\.)).+/u
 const QUOTED_TEXT_PATTERN = /"[^"]*"|“[^”]*”|‘[^’]*’|「[^」]*」|『[^』]*』/gu
-const ENGLISH_ABBREVIATION_PATTERN =
-  /(?:^|\s)(?:Dr|Mr|Mrs|Ms|Prof|Rev|Hon|Gov|Pres|Sen|Rep|Gen|Lt|Col|Capt|Sgt|St|Mt|Jr|Sr|vs|[A-Z])\.\s*$/iu
-const WRAPPING_QUOTES_PATTERN = /^["'“”‘’「」『』].*["'“”‘’「」『』]$/u
-const LEADING_MARKER_PATTERN = /^(?:[-*•]|\d+(?:\.|\)))\s*/u
+const ENGLISH_ABBREVIATION_PATTERN = new RegExp(
+  `(?:^|\\s)(?:${ENGLISH_TITLE_ABBREVIATIONS.join('|')}|[A-Z])\\.\\s*$`,
+  'iu',
+)
+const INTERNAL_LATIN_ABBREVIATION_PATTERN = new RegExp(
+  `\\b(?:(?:${ENGLISH_TITLE_ABBREVIATIONS.join('|')})\\.|(?:[A-Z]\\.)+)`,
+  'giu',
+)
+const WRAPPING_QUOTES_PATTERN = /^["\uFF02'“”‘’「」『』].*["\uFF02'“”‘’「」『』]$/u
+const MATCHING_WRAPPING_QUOTES_PATTERN =
+  /^(?:"[^"]*"|\uFF02.*\uFF02|'.*'|“.*”|‘.*’|「.*」|『.*』)$/u
+const LEADING_MARKER_PATTERN = /^(?:[-*•]|\d+(?:\.|\)))\s+/u
 
 const hasMultipleEnglishSentences = (sentence: string) => {
   let previousSegment: string | undefined
@@ -34,7 +43,21 @@ const hasMultipleEnglishSentences = (sentence: string) => {
 
 export const normalizeLanguageLearningSentence = (output: string) => {
   const singleLine = output.trim().replace(LEADING_MARKER_PATTERN, '')
-  return (WRAPPING_QUOTES_PATTERN.test(singleLine) ? singleLine.slice(1, -1) : singleLine).trim()
+  const hasWrappingQuotes = WRAPPING_QUOTES_PATTERN.test(singleLine)
+  const hasMatchingWrappingQuotes = MATCHING_WRAPPING_QUOTES_PATTERN.test(singleLine)
+  const unwrappedSentence = (hasWrappingQuotes ? singleLine.slice(1, -1) : singleLine).trim()
+  const hasNestedMatchingWrappingQuotes =
+    hasMatchingWrappingQuotes && MATCHING_WRAPPING_QUOTES_PATTERN.test(unwrappedSentence)
+  const sentence = hasNestedMatchingWrappingQuotes
+    ? unwrappedSentence.slice(1, -1).trim()
+    : unwrappedSentence
+
+  return hasWrappingQuotes &&
+    !hasMatchingWrappingQuotes &&
+    sentence.length > 0 &&
+    !ENDING_PATTERN.test(sentence)
+    ? `${sentence}.`
+    : sentence
 }
 
 export const isValidLanguageLearningSentence = (
@@ -46,7 +69,7 @@ export const isValidLanguageLearningSentence = (
   const hasMultipleSentences =
     language === 'en'
       ? hasMultipleEnglishSentences(sentence)
-      : INTERNAL_ENDING_PATTERN.test(sentence.replace(QUOTED_TEXT_PATTERN, ''))
+      : hasMultipleNonEnglishSentences(sentence)
 
   if (
     sentence.length === 0 ||
@@ -59,4 +82,14 @@ export const isValidLanguageLearningSentence = (
   }
 
   return limits.words === null || sentence.split(/\s+/u).length <= limits.words
+}
+
+const hasMultipleNonEnglishSentences = (sentence: string) => {
+  const sentenceWithoutQuotedText = sentence.replace(QUOTED_TEXT_PATTERN, '')
+  const sentenceWithoutAbbreviationPeriods = sentenceWithoutQuotedText.replace(
+    INTERNAL_LATIN_ABBREVIATION_PATTERN,
+    (abbreviation) => abbreviation.replaceAll('.', ''),
+  )
+
+  return INTERNAL_ENDING_PATTERN.test(sentenceWithoutAbbreviationPeriods)
 }

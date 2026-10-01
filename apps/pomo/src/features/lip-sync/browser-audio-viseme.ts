@@ -1,3 +1,4 @@
+import {maxBy} from 'es-toolkit/array'
 import type {WLipSyncAudioNode} from 'wlipsync'
 import {clamp} from 'es-toolkit/math'
 
@@ -53,23 +54,13 @@ const decodeProfile = () => {
 }
 
 const getDominantProfile = (weights: Readonly<Record<string, number>>) => {
-  let dominantName: keyof typeof VISEME_BY_PROFILE_NAME | null = null
-  let dominantWeight = Number.NEGATIVE_INFINITY
-
-  for (const name of Object.keys(VISEME_BY_PROFILE_NAME) as Array<
-    keyof typeof VISEME_BY_PROFILE_NAME
-  >) {
-    const weight = weights[name] ?? 0
-
-    if (weight > dominantWeight) {
-      dominantName = name
-      dominantWeight = weight
-    }
-  }
-
-  return dominantName === null || dominantWeight <= 0
-    ? null
-    : {name: dominantName, weight: dominantWeight}
+  const profiles = (
+    Object.keys(VISEME_BY_PROFILE_NAME) as Array<keyof typeof VISEME_BY_PROFILE_NAME>
+  )
+    .map((name) => ({name, weight: weights[name] ?? 0}))
+    .filter(({weight}) => !Number.isNaN(weight))
+  const dominant = maxBy(profiles, ({weight}) => weight)
+  return dominant === undefined || dominant.weight <= 0 ? null : dominant
 }
 
 const getVisemeWeight = (weights: Readonly<Record<string, number>>, viseme: PViseme) => {
@@ -150,6 +141,7 @@ export const createPBrowserAudioVisemeAnalyzer = (
   let isDisposed = false
   let isDestinationConnected = false
   let node: WLipSyncAudioNode | null = null
+  let silentOutputNode: GainNode | null = null
   const connectedSources = new Set<AudioNode>()
   const disconnectedSources = new WeakSet<AudioNode>()
   const nodePromise = createNode(context).then((createdNode) => {
@@ -178,7 +170,15 @@ export const createPBrowserAudioVisemeAnalyzer = (
     connectedSources.add(source)
 
     if (!isDestinationConnected) {
-      currentNode.connect(context.destination)
+      if (silentOutputNode === null) {
+        silentOutputNode = context.createGain()
+        // Keep the analysis branch connected while silencing its copy of the audio.
+        silentOutputNode.gain.value = 0
+      }
+
+      const outputNode = silentOutputNode
+      currentNode.connect(outputNode)
+      outputNode.connect(context.destination)
       isDestinationConnected = true
     }
   }
@@ -191,7 +191,10 @@ export const createPBrowserAudioVisemeAnalyzer = (
       connectedSources.delete(source)
 
       if (connectedSources.size === 0 && isDestinationConnected) {
-        node.disconnect(context.destination)
+        if (silentOutputNode !== null) {
+          node.disconnect(silentOutputNode)
+          silentOutputNode.disconnect(context.destination)
+        }
         isDestinationConnected = false
       }
     }
@@ -212,7 +215,9 @@ export const createPBrowserAudioVisemeAnalyzer = (
   const dispose = () => {
     isDisposed = true
     node?.disconnect()
+    silentOutputNode?.disconnect()
     node = null
+    silentOutputNode = null
     connectedSources.clear()
     isDestinationConnected = false
   }

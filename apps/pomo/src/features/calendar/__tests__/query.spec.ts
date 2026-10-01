@@ -18,9 +18,49 @@ describe('createCalendarQuery', () => {
     expect(createCalendarQuery({now, text: '오늘 날씨 알려줘'})).toBeNull()
   })
 
+  it.each(['오늘 날씨 뭐 있어?', '오늘 뉴스 뭐 있어?', '오늘 뭐 뉴스 있어?'])(
+    'should ignore a non-calendar topic in an implicit schedule question: "%s"',
+    (text) => {
+      expect(createCalendarQuery({now, text})).toBeNull()
+    },
+  )
+
+  it.each(['이번 주제 뭐 있어?', '다음 주식 뭐 있어?'])(
+    'should ignore a week substring in a non-calendar phrase: "%s"',
+    (text) => {
+      expect(createCalendarQuery({now, text})).toBeNull()
+    },
+  )
+
+  it.each([
+    ['이번 주에 일정 알려줘', '2026-09-04T10:30:00.000Z', '2026-09-06T15:00:00.000Z'],
+    ['다음 주에 일정 알려줘', '2026-09-06T15:00:00.000Z', '2026-09-13T15:00:00.000Z'],
+  ])('should recognize a week term followed by a particle in "%s"', (text, start, end) => {
+    expect(createCalendarQuery({now, text, timeZone: 'Asia/Seoul'})).toEqual({end, start})
+  })
+
+  it.each(['다음 주식 회의 일정 알려줘', '이번 주제 회의 일정 알려줘'])(
+    'should not use a week substring inside a longer word: "%s"',
+    (text) => {
+      expect(createCalendarQuery({now, text, timeZone: 'Asia/Seoul'})).toEqual({
+        end: '2026-10-04T10:30:00.000Z',
+        start: '2026-09-04T10:30:00.000Z',
+      })
+    },
+  )
+
   it('should query the remaining local day for today', () => {
     expect(createCalendarQuery({now, text: '오늘 일정 알려줘', timeZone: 'Asia/Seoul'})).toEqual({
       end: '2026-09-04T15:00:00.000Z',
+      start: '2026-09-04T10:30:00.000Z',
+    })
+  })
+
+  it('should include next week when querying today and next week', () => {
+    expect(
+      createCalendarQuery({now, text: '오늘 다음 주 일정 알려줘', timeZone: 'Asia/Seoul'}),
+    ).toEqual({
+      end: '2026-09-13T15:00:00.000Z',
       start: '2026-09-04T10:30:00.000Z',
     })
   })
@@ -112,6 +152,18 @@ describe('createCalendarQuery', () => {
     {
       start: '2026-09-04T10:30:00.000Z',
       text: '오늘 모레 일정 알려줘',
+    },
+    {
+      start: '2026-09-02T15:00:00.000Z',
+      text: '어제 모레 일정 알려줘',
+    },
+    {
+      start: '2026-09-02T15:00:00.000Z',
+      text: '어제 내일 모레 일정 알려줘',
+    },
+    {
+      start: '2026-09-02T15:00:00.000Z',
+      text: '어제 오늘 모레 일정 알려줘',
     },
   ])(
     'should include all requested days through the day after tomorrow for $text',
@@ -237,12 +289,85 @@ describe('createCalendarQuery', () => {
     })
   })
 
+  it('should query the afternoon two days ago without using the current time', () => {
+    expect(createCalendarQuery({now, text: '그저께 오후 일정', timeZone: 'Asia/Seoul'})).toEqual({
+      end: '2026-09-02T15:00:00.000Z',
+      start: '2026-09-02T03:00:00.000Z',
+    })
+  })
+
+  it('should query two days ago for the 엊그제 synonym', () => {
+    expect(createCalendarQuery({now, text: '엊그제 일정 알려줘', timeZone: 'Asia/Seoul'})).toEqual({
+      end: '2026-09-02T15:00:00.000Z',
+      start: '2026-09-01T15:00:00.000Z',
+    })
+  })
+
+  it('should recognize 엊그제 in an implicit schedule question', () => {
+    expect(createCalendarQuery({now, text: '엊그제 뭐 있었어?', timeZone: 'Asia/Seoul'})).toEqual({
+      end: '2026-09-02T15:00:00.000Z',
+      start: '2026-09-01T15:00:00.000Z',
+    })
+  })
+
+  it('should query only the morning three days ahead', () => {
+    expect(createCalendarQuery({now, text: '글피 오전 일정', timeZone: 'Asia/Seoul'})).toEqual({
+      end: '2026-09-07T03:00:00.000Z',
+      start: '2026-09-06T15:00:00.000Z',
+    })
+  })
+
+  it.each([
+    {
+      expected: {end: '2026-09-07T15:00:00.000Z', start: '2026-09-06T15:00:00.000Z'},
+      text: '그저께 말고 글피 일정 알려줘',
+    },
+    {
+      expected: {end: '2026-09-02T15:00:00.000Z', start: '2026-09-01T15:00:00.000Z'},
+      text: '글피 말고 그저께 일정 알려줘',
+    },
+    {
+      expected: {end: '2026-09-07T15:00:00.000Z', start: '2026-09-06T15:00:00.000Z'},
+      text: '엊그제 말고 글피 일정 알려줘',
+    },
+    {
+      expected: {end: '2026-09-02T15:00:00.000Z', start: '2026-09-01T15:00:00.000Z'},
+      text: '글피 말고 엊그제 일정 알려줘',
+    },
+    {
+      expected: {end: '2026-09-07T15:00:00.000Z', start: '2026-09-06T15:00:00.000Z'},
+      text: '글피 엊그제 말고 일정 알려줘',
+    },
+  ])('should ignore the excluded relative date in "$text"', ({expected, text}) => {
+    expect(createCalendarQuery({now, text, timeZone: 'Asia/Seoul'})).toEqual(expected)
+  })
+
   it('should query through Sunday for this week', () => {
     expect(
       createCalendarQuery({now, text: '이번 주 중요한 일정 알려줘', timeZone: 'Asia/Seoul'}),
     ).toEqual({
       end: '2026-09-06T15:00:00.000Z',
       start: '2026-09-04T10:30:00.000Z',
+    })
+  })
+
+  it('should query through Sunday when today and this week are requested', () => {
+    expect(
+      createCalendarQuery({now, text: '오늘 이번 주 일정 알려줘', timeZone: 'Asia/Seoul'}),
+    ).toEqual({
+      end: '2026-09-06T15:00:00.000Z',
+      start: '2026-09-04T10:30:00.000Z',
+    })
+  })
+
+  it.each([
+    ['내일 이번 주 일정 알려줘', '2026-09-04T15:00:00.000Z'],
+    ['내일 이번주 일정 알려줘', '2026-09-04T15:00:00.000Z'],
+    ['모레 이번 주 일정 알려줘', '2026-09-05T15:00:00.000Z'],
+  ])('should query through Sunday from the first requested date in "%s"', (text, start) => {
+    expect(createCalendarQuery({now, text, timeZone: 'Asia/Seoul'})).toEqual({
+      end: '2026-09-06T15:00:00.000Z',
+      start,
     })
   })
 
@@ -259,6 +384,101 @@ describe('createCalendarQuery', () => {
     expect(createCalendarQuery({now, text: '이번주 뭐 있어?', timeZone: 'Asia/Seoul'})).toEqual({
       end: '2026-09-06T15:00:00.000Z',
       start: '2026-09-04T10:30:00.000Z',
+    })
+  })
+
+  it.each(['주말 일정 알려줘', '주말 뭐 있어?', '이번 주말 뭐 있어?'])(
+    'should query the upcoming weekend for "%s"',
+    (text) => {
+      expect(
+        createCalendarQuery({
+          now: new Date('2026-03-02T01:00:00.000Z'),
+          text,
+          timeZone: 'Asia/Seoul',
+        }),
+      ).toEqual({
+        end: '2026-03-08T15:00:00.000Z',
+        start: '2026-03-06T15:00:00.000Z',
+      })
+    },
+  )
+
+  it.each([
+    {day: 'Saturday', now: '2026-03-07T03:00:00.000Z'},
+    {day: 'Sunday', now: '2026-03-08T03:00:00.000Z'},
+  ])('should query the remaining weekend from $day', ({now, day}) => {
+    expect(
+      createCalendarQuery({now: new Date(now), text: '주말 일정', timeZone: 'Asia/Seoul'}),
+    ).toEqual({
+      end: '2026-03-08T15:00:00.000Z',
+      start: now,
+    })
+  })
+
+  it.each([
+    {
+      end: '2026-03-15T15:00:00.000Z',
+      now: '2026-03-02T01:00:00.000Z',
+      start: '2026-03-13T15:00:00.000Z',
+      text: '다음 주말 일정 알려줘',
+    },
+    {
+      end: '2026-03-15T15:00:00.000Z',
+      now: '2026-03-08T03:00:00.000Z',
+      start: '2026-03-13T15:00:00.000Z',
+      text: '다음 주말 일정 알려줘',
+    },
+    {
+      end: '2026-03-01T15:00:00.000Z',
+      now: '2026-03-02T01:00:00.000Z',
+      start: '2026-02-27T15:00:00.000Z',
+      text: '지난 주말 일정 알려줘',
+    },
+    {
+      end: '2026-03-01T15:00:00.000Z',
+      now: '2026-03-08T03:00:00.000Z',
+      start: '2026-02-27T15:00:00.000Z',
+      text: '지난 주말 일정 알려줘',
+    },
+    {
+      end: '2026-03-01T15:00:00.000Z',
+      now: '2026-03-02T01:00:00.000Z',
+      start: '2026-02-27T15:00:00.000Z',
+      text: '지난 주말 뭐 있어?',
+    },
+  ])('should query the local weekend described by "$text"', ({end, now, start, text}) => {
+    expect(
+      createCalendarQuery({
+        now: new Date(now),
+        text,
+        timeZone: 'Asia/Seoul',
+      }),
+    ).toEqual({end, start})
+  })
+
+  it('should ignore an excluded weekend when another week is requested', () => {
+    expect(
+      createCalendarQuery({
+        now: new Date('2026-03-02T01:00:00.000Z'),
+        text: '주말 말고 다음 주 일정 알려줘',
+        timeZone: 'Asia/Seoul',
+      }),
+    ).toEqual({
+      end: '2026-03-15T15:00:00.000Z',
+      start: '2026-03-08T15:00:00.000Z',
+    })
+  })
+
+  it('should use local boundaries when the upcoming weekend crosses daylight saving time', () => {
+    expect(
+      createCalendarQuery({
+        now: new Date('2026-03-06T12:00:00.000Z'),
+        text: '주말 일정',
+        timeZone: 'America/New_York',
+      }),
+    ).toEqual({
+      end: '2026-03-09T04:00:00.000Z',
+      start: '2026-03-07T05:00:00.000Z',
     })
   })
 

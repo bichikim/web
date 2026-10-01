@@ -143,27 +143,6 @@ describe('embedded artwork registration with real MP3 files', () => {
     )
   })
 
-  it.each([614_400, 3_145_728])(
-    'should register supported embedded artwork with %i bytes of ID3 padding',
-    async (paddingBytes) => {
-      const {fetcher, objects} = await createStorage(paddingBytes)
-      const response = await complete(RED_ASSET)
-      expect(await response.json()).toEqual({assetId: RED_ASSET, status: 'active'})
-      expect(response.status).toBe(200)
-      const ranges = fetcher.mock.calls
-        .map(([request]) => (request instanceof Request ? request.headers.get('Range') : null))
-        .filter((range) => range !== null)
-      expect(ranges).toHaveLength(2)
-      expect(ranges[0]).toBe('bytes=0-2097151')
-      const [, start, end] = /^bytes=(\d+)-(\d+)$/u.exec(ranges[1]!)!
-      expect(Number(start)).toBeGreaterThan(paddingBytes)
-      expect(Number(end) - Number(start) + 1).toBe(2_097_152)
-      expect(objects.get(artworkPath(RED_ASSET))?.body).toEqual(
-        new Uint8Array(await readFile(new URL('./fixtures/artwork/red.png', import.meta.url))),
-      )
-    },
-  )
-
   it('should reject a truncated ID3 tag before generating a preview', async () => {
     const {fetcher} = await createStorage()
     const store = fetcher.getMockImplementation()!

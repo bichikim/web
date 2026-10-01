@@ -33,10 +33,13 @@ export const readTrackMetadata = async (
       return parseBlob(audioFile, {duration: false, skipCovers: true})
     })
   const metadata = await parseMetadata(file)
-  const fallbackArtist = metadata.common.artists?.join(', ')
+  const fallbackArtist = metadata.common.artists
+    ?.map(normalizeTag)
+    .filter((artist): artist is string => artist !== null)
+    .join(', ')
 
   return {
-    artist: normalizeTag(metadata.common.artist ?? fallbackArtist),
+    artist: normalizeTag(metadata.common.artist) ?? normalizeTag(fallbackArtist),
     title: normalizeTag(metadata.common.title),
   }
 }

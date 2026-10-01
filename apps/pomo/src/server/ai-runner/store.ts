@@ -1,3 +1,4 @@
+import {isObject} from 'src/utils/is-object'
 import {clamp} from 'es-toolkit/math'
 // oxlint-disable no-magic-numbers -- SQLite progress bounds and retry-safe timestamps are protocol values.
 
@@ -47,9 +48,6 @@ interface CreateRunnerJobStoreOptions {
 const JOB_STATUS_VALUES = ['queued', 'running', 'succeeded', 'failed', 'cancelled'] as const
 const JOB_STATUS_SQL = JOB_STATUS_VALUES.map((value) => `'${value}'`).join(', ')
 
-const isRecord = (value: unknown): value is Record<string, unknown> =>
-  typeof value === 'object' && value !== null && !Array.isArray(value)
-
 const getString = (row: SqliteRow, key: string): string => {
   const value = row[key]
 
@@ -90,7 +88,7 @@ const getJsonRecord = (row: SqliteRow, key: string): Record<string, unknown> | n
     return null
   }
 
-  if (!isRecord(value)) {
+  if (!isObject(value)) {
     throw new Error(`Runner database column ${key} is not an object`)
   }
 

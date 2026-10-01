@@ -9,7 +9,6 @@ import type {
 
 const COORDINATES_PER_VERTEX = 2
 const COORDINATES_PER_POINT = 3
-const ROTATION_AXES = 3
 const WEIGHT_TOLERANCE = 0.00001
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
@@ -52,13 +51,7 @@ export const isSpatialSurface = (value: unknown, mesh: PuppetMesh): value is Pup
     (typeof value.groupId === 'string' && value.groupId.length > 0)) &&
   Array.isArray(value.origin) &&
   value.origin.length === COORDINATES_PER_POINT &&
-  value.origin.every(isFiniteNumber) &&
-  (value.rotationParameterIds === undefined ||
-    (Array.isArray(value.rotationParameterIds) &&
-      value.rotationParameterIds.length === ROTATION_AXES &&
-      value.rotationParameterIds.every(
-        (id: unknown) => id === null || (typeof id === 'string' && id.length > 0),
-      )))
+  value.origin.every(isFiniteNumber)
 
 /** Verifies that persisted image links reference a present 3D control mesh. */
 export const hasValidSpatialAttachments = (

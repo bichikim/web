@@ -6,13 +6,14 @@ import {beforeEach, expect, it} from 'vitest'
 
 import {LanguageLearningTagInput} from '../TagInput'
 
-const renderTagInput = (disabled = false) => {
+const renderTagInput = (disabled = false, maximumTags?: number) => {
   const [inputValue, setInputValue] = createSignal('')
   const [tags, setTags] = createSignal<ReadonlyArray<string>>([])
   const result = render(() => (
     <LanguageLearningTagInput
       disabled={disabled}
       inputValue={inputValue()}
+      maximumTags={maximumTags}
       onInputChange={setInputValue}
       onTagsChange={setTags}
       tags={tags()}
@@ -48,6 +49,44 @@ it('should create, remove, and focus inline tags with the keyboard', () => {
   input.blur()
   fireEvent.click(input.parentElement!)
   expect(document.activeElement).toBe(input)
+})
+
+it('should commit tags when a fullwidth comma is typed', () => {
+  const {tags} = renderTagInput()
+  const input = screen.getByRole('textbox', {name: '프롬프트 단어'})
+
+  fireEvent.input(input, {target: {value: 'home，work'}})
+
+  expect(tags()).toEqual(['home', 'work'])
+  expect(input).toHaveValue('')
+})
+
+it('should commit the current tag when a fullwidth comma key is pressed', () => {
+  const {tags} = renderTagInput()
+  const input = screen.getByRole('textbox', {name: '프롬프트 단어'})
+
+  fireEvent.input(input, {target: {value: 'home'}})
+  fireEvent.keyDown(input, {key: '，'})
+
+  expect(tags()).toEqual(['home'])
+  expect(input).toHaveValue('')
+})
+
+it('should split semicolon input while preserving the two-tag limit and hint', () => {
+  const {tags} = renderTagInput(false, 2)
+  const input = screen.getByRole('textbox', {name: '프롬프트 단어'})
+
+  expect(
+    screen.getByText(
+      '쉼표, 세미콜론, 줄바꿈 또는 Enter로 태그를 나눌 수 있어요. 최대 2개까지 입력할 수 있습니다.',
+    ),
+  ).toBeDefined()
+
+  fireEvent.input(input, {target: {value: 'one;'}})
+  fireEvent.paste(input, {clipboardData: {getData: () => 'take off;three'}})
+
+  expect(tags()).toEqual(['one', 'take off'])
+  expect(input).toHaveValue('')
 })
 
 it('should commit a Korean IME word only once after composition ends', () => {
@@ -86,6 +125,16 @@ it('should split pasted tags and commit the remaining input on blur', () => {
   fireEvent.input(input, {target: {value: 'maintain'}})
   fireEvent.blur(input)
   expect(tags()).toEqual(['acknowledge', 'consequence', 'perspective', 'reluctant', 'maintain'])
+})
+
+it('should split pasted tags on a fullwidth comma', () => {
+  const {tags} = renderTagInput()
+  const input = screen.getByRole('textbox', {name: '프롬프트 단어'})
+
+  fireEvent.paste(input, {clipboardData: {getData: () => 'home，work'}})
+
+  expect(tags()).toEqual(['home', 'work'])
+  expect(input).toHaveValue('')
 })
 
 it('should disable tag editing while generation is busy', () => {

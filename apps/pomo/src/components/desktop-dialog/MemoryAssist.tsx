@@ -52,7 +52,6 @@ export const DesktopMemoryAssistDialog = () => {
               tarotSpeech={tarotSpeech}
               calendarRevision={calendarRevision()}
               onRefreshCalendar={refreshCalendar}
-              onRequestClose={handleClose}
             />
           </Suspense>
         </ErrorBoundary>

@@ -4,9 +4,14 @@ interface ResolveAudioSourceOptions {
   readonly source: string
 }
 
+const isTourAudioLocale = (locale: string): locale is 'en' | 'ko' =>
+  locale === 'en' || locale === 'ko'
+
 export const resolveAudioSource = (options: ResolveAudioSourceOptions): string => {
   const {documentLocale, runtimeLocale, source} = options
-  const locale = documentLocale === 'en' || documentLocale === 'ko' ? documentLocale : runtimeLocale
+  const sourceLocale =
+    /^\/tour\/audio\/(?<locale>[^/]+)\//iu.exec(source)?.groups?.locale?.toLowerCase() ?? ''
+  const locale = [runtimeLocale, documentLocale, sourceLocale].find(isTourAudioLocale) ?? 'ko'
 
-  return source.replace(/^\/tour\/audio\/(?:ko|en)\//u, `/tour/audio/${locale}/`)
+  return source.replace(/^\/tour\/audio\/[^/]+\//iu, `/tour/audio/${locale}/`)
 }

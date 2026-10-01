@@ -107,6 +107,8 @@ describe('usePSay', () => {
     await vi.waitFor(() => expect(voice.speak).toHaveBeenCalledWith('첫 번째 소식', undefined))
     const activeCall = tool.execute({text: '두 번째 소식'})
     await vi.waitFor(() => expect(result.speechText()).toBe('두 번째 소식'))
+    expect(result.speechRevision()).toBe(2)
+    expect(voice.stop).toHaveBeenCalledOnce()
     const supersededRejection = expect(supersededCall).rejects.toMatchObject({
       name: 'AbortError',
     })

@@ -373,7 +373,6 @@ it('should offer and save a playback mode when an event has multiple dialogues',
 })
 
 it('should queue a saved dialogue through the character without stopping existing playback', async () => {
-  const onRequestClose = vi.fn()
   const events = createEvents({getAudio: vi.fn(async () => new Blob(['audio']))})
   const pauseAudio = vi
     .spyOn(HTMLMediaElement.prototype, 'pause')
@@ -381,7 +380,7 @@ it('should queue a saved dialogue through the character without stopping existin
   const loadAudio = vi.spyOn(HTMLMediaElement.prototype, 'load').mockImplementation(() => undefined)
   vi.mocked(usePEvents).mockReturnValue(events)
 
-  render(() => <PDialogueSettingsContent onRequestClose={onRequestClose} />, {
+  render(() => <PDialogueSettingsContent />, {
     wrapper: PreferenceProvider,
   })
   fireEvent.click(screen.getByRole('button', {name: '캐릭터로 듣기'}))
@@ -391,5 +390,4 @@ it('should queue a saved dialogue through the character without stopping existin
   expect(events.onStopDialoguePlayback).not.toHaveBeenCalled()
   await vi.waitFor(() => expect(events.playDialogue).toHaveBeenCalledWith(DIALOGUE.id))
   expect(events.setEventItems).not.toHaveBeenCalled()
-  expect(onRequestClose).toHaveBeenCalledOnce()
 })

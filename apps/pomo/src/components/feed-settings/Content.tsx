@@ -1,3 +1,4 @@
+import {KeyedList} from '../keyed-list'
 import {getRuntimePublicOrigin} from '../../features/http-client/runtime-origin'
 import {PFeedProgress} from './Progress'
 import {useReadingStatusPreference} from 'src/features/feed-display-preferences'
@@ -10,7 +11,9 @@ import {PSelect, type PSelectOption} from '../p-select/PSelect'
 import {PSettingsActionButton} from '../settings/ActionButton'
 import {
   DEFAULT_FEED_VOICE_ID,
+  type FeedUrlEnvironment,
   type FeedVoiceId,
+  getFeedConnectionKey,
   getFeedRequestUrl,
   useAutoPreparePreference,
   useFeedConnections,
@@ -51,16 +54,10 @@ const getRecommendedDevFeeds = () =>
     },
   ] as const
 
-export function PFeedSettingsContent() {
-  const runtime = useOptionalPFeeds()
-  const automatic = runtime?.automaticPreparation ?? useAutoPreparePreference()
-  const preference = useReadingStatusPreference()
-  const feeds = useFeedConnections()
-  const publicOrigin = getRuntimePublicOrigin()
-  const {origin: localOrigin} = globalThis.location
-  const {timeZone} = Intl.DateTimeFormat().resolvedOptions()
-  const feedUrlEnvironment = {localOrigin, publicOrigin, timeZone}
-  const recommendedFeeds: ReadonlyArray<RecommendedFeed> = [
+const getRecommendedFeeds = (environment: FeedUrlEnvironment): ReadonlyArray<RecommendedFeed> => {
+  const {localOrigin, publicOrigin, timeZone} = environment
+
+  return [
     ...getRecommendedPublicFeeds().map((feed) => ({
       ...feed,
       url: getFeedRequestUrl(feed.path, {publicOrigin, timeZone}),
@@ -75,13 +72,31 @@ export function PFeedSettingsContent() {
         }))
       : []),
   ]
+}
+
+export function PFeedSettingsContent() {
+  const runtime = useOptionalPFeeds()
+  const automatic = runtime?.automaticPreparation ?? useAutoPreparePreference()
+  const preference = useReadingStatusPreference()
+  const feeds = useFeedConnections()
+  const publicOrigin = getRuntimePublicOrigin()
+  const {origin: localOrigin} = globalThis.location
+  const {timeZone} = Intl.DateTimeFormat().resolvedOptions()
+  const feedUrlEnvironment = {
+    localOrigin,
+    publicOrigin: import.meta.env.VITE_POMO_PUBLIC_ORIGIN,
+    timeZone,
+  }
+  const recommendedFeeds = getRecommendedFeeds({localOrigin, publicOrigin, timeZone})
   const availableRecommendations = createMemo(() => {
     const storedUrls = new Set(
       feeds
         .connections()
-        .map((connection) => getFeedRequestUrl(connection.url, feedUrlEnvironment)),
+        .map((connection) => getFeedConnectionKey(connection.url, feedUrlEnvironment)),
     )
-    return recommendedFeeds.filter((feed) => !storedUrls.has(feed.url))
+    return recommendedFeeds.filter(
+      (feed) => !storedUrls.has(getFeedConnectionKey(feed.url, feedUrlEnvironment)),
+    )
   })
 
   const handleSubmit = (event: SubmitEvent) => {
@@ -142,27 +157,27 @@ export function PFeedSettingsContent() {
         >
           <Show when={feeds.connections().length > 0}>
             <ul aria-labelledby="pomo-feed-list-title" class={CLASSES.feedSettingsList}>
-              <For each={feeds.connections()}>
+              <KeyedList each={feeds.connections()} by={(connection) => connection.id}>
                 {(connection) => (
                   <li>
                     <div class={CLASSES.feedSettingsAddress}>
                       <span aria-hidden="true" class="i-tabler-rss size-5" />
                       <span class={CLASSES.feedSettingsAddressCopy}>
-                        <strong>{connection.url}</strong>
+                        <strong>{connection().url}</strong>
                       </span>
                     </div>
                     <PSelect
-                      accessibleLabel={m.settings_feed_voice_label({url: connection.url})}
+                      accessibleLabel={m.settings_feed_voice_label({url: connection().url})}
                       hideLabel
                       label={m.settings_feed_voice()}
-                      onChange={(voiceId) => feeds.onVoiceChange(connection.id, voiceId)}
+                      onChange={(voiceId) => feeds.onVoiceChange(connection().id, voiceId)}
                       options={getVoiceOptions()}
-                      value={connection.voiceId}
+                      value={connection().voiceId}
                     />
                     <button
-                      aria-label={m.settings_feed_delete_label({url: connection.url})}
+                      aria-label={m.settings_feed_delete_label({url: connection().url})}
                       class={CLASSES.feedSettingsDelete}
-                      onClick={() => feeds.onDelete(connection.id)}
+                      onClick={() => feeds.onDelete(connection().id)}
                       type="button"
                     >
                       <span aria-hidden="true" class="i-tabler-trash size-4" />
@@ -170,7 +185,7 @@ export function PFeedSettingsContent() {
                     </button>
                   </li>
                 )}
-              </For>
+              </KeyedList>
             </ul>
           </Show>
 

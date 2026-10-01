@@ -26,9 +26,22 @@ const createSelectionStorage = <T>(
   parse: (value: unknown) => T | null,
   reportRepairError: (error: unknown) => void,
 ): SelectionStorage<T> => {
+  let latestNativeOverride: T | null = null
+  const writeWeb = (value: T) => {
+    const error = storage.writeWeb(key, value)
+    if (error === null) {
+      latestNativeOverride = null
+    }
+    return error
+  }
   const read = async (): Promise<T | null> => {
     const usesTossStorage = storage.usesTossStorage()
     const webValue = storage.readWeb(key, parse)
+    if (latestNativeOverride !== null) {
+      const nativeValue = latestNativeOverride
+      writeWeb(nativeValue)
+      return nativeValue
+    }
     if (!usesTossStorage) {
       return webValue
     }
@@ -51,12 +64,17 @@ const createSelectionStorage = <T>(
     mapNativeFailure: (error) => error,
     mapRemovalFailure: (error) =>
       new Error('Failed to discard stale tool selection.', {cause: error}),
+    onNativeCommit: (value, webWriteError) => {
+      if (webWriteError !== null) {
+        latestNativeOverride = value
+      }
+    },
     removeWeb: () => {
       const error = storage.removeWeb(key)
       return error !== null && storage.readWeb(key, parse) !== null ? error : null
     },
     writeNative: (value) => storage.writeToss(key, value),
-    writeWeb: (value) => storage.writeWeb(key, value),
+    writeWeb,
   })
   return {
     key,

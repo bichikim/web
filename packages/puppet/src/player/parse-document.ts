@@ -397,6 +397,10 @@ const isMotion = (value: unknown): value is PuppetMotion => {
     value.id.length === 0 ||
     !isFiniteNumber(value.duration) ||
     value.duration <= 0 ||
+    (value.timelineParameterIds !== undefined &&
+      (!Array.isArray(value.timelineParameterIds) ||
+        !value.timelineParameterIds.every((id) => typeof id === 'string') ||
+        new Set(value.timelineParameterIds).size !== value.timelineParameterIds.length)) ||
     !Array.isArray(value.tracks)
   ) {
     return false
@@ -554,11 +558,6 @@ const isDocument = (value: unknown): value is PuppetDocument => {
     hasValidSpatialAttachments(value.parts, value.scene) &&
     hasUniqueIds(value.motions) &&
     hasUniqueIds(parameters) &&
-    value.parts.every((part) =>
-      (part.spatial?.rotationParameterIds ?? []).every(
-        (id) => id === null || parameters.some((parameter) => parameter.id === id),
-      ),
-    ) &&
     hasUniqueIds(parameterBindings) &&
     hasValidTrackTargets(value.parts, parameters, value.motions) &&
     hasValidParameterBindings(value.parts, parameters, parameterBindings, value.scene)

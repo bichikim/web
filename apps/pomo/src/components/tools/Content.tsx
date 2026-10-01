@@ -2,6 +2,7 @@ import {createSignal, ErrorBoundary, lazy, Show, Suspense} from 'solid-js'
 import {Dynamic} from 'solid-js/web'
 import {getLocale} from '@paraglide/runtime'
 import * as m from '@paraglide/message'
+import {fileTransfer} from 'src/features/file-transfer/session'
 import {PSideTabs} from '../p-side-tabs/PSideTabs'
 import {PLoadingStatus} from '../p-loading-status/PLoadingStatus'
 const TOOLS = [
@@ -40,20 +41,44 @@ const TOOLS = [
     korean: true,
     title: m.tools_moving,
   },
+  {
+    component: lazy(() => import('./Transfer').then((module) => ({default: module.Transfer}))),
+    icon: 'i-tabler-transfer',
+    id: 'transfer',
+    korean: false,
+    title: m.tools_transfer,
+  },
 ] as const
-export const Content = () => {
-  const [selected, setSelected] = createSignal('units')
-  const available = () => TOOLS.filter((tool) => !tool.korean || getLocale() === 'ko')
+export interface ContentProps {
+  readonly selected?: string
+  readonly onSelectedChange?: (selected: string) => void
+}
+
+export const Content = (props: ContentProps) => {
+  const [localSelected, setLocalSelected] = createSignal('units')
+  const selected = () => props.selected ?? localSelected()
+  const handleSelectedChange = (value: string) => {
+    setLocalSelected(value)
+    props.onSelectedChange?.(value)
+  }
+  const available = () =>
+    TOOLS.filter(
+      (tool) =>
+        (!tool.korean || getLocale() === 'ko') &&
+        (tool.id !== 'transfer' || fileTransfer.isConfigured),
+    )
   const active = () => available().find((tool) => tool.id === selected()) ?? TOOLS[0]
   return (
     <PSideTabs
       accessibleLabel={m.tools_choose()}
       items={available().map((tool) => ({icon: tool.icon, label: tool.title(), value: tool.id}))}
       value={active().id}
-      onChange={setSelected}
+      onChange={handleSelectedChange}
     >
       <section class="min-w-0">
-        <h2 class="mb-4 mt-0 text-lg font-750 text-foreground">{active().title()}</h2>
+        <Show when={active().id !== 'transfer'}>
+          <h2 class="mb-4 mt-0 text-lg font-750 text-foreground">{active().title()}</h2>
+        </Show>
         <Show when={active()} keyed>
           {(tool) => (
             <ErrorBoundary fallback={<p role="alert">{m.modal_content_load_error()}</p>}>

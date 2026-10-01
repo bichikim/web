@@ -87,6 +87,20 @@ it('should parse Atom links and content', () => {
   })
 })
 
+it.each(['created', 'issued'] as const)(
+  'should use an Atom %s date when published and updated are absent',
+  (dateElement) => {
+    const feed = parseFeedXml(
+      `<feed version="0.3" xmlns="http://purl.org/atom/ns#"><title>테스트 Atom</title><entry>
+        <${dateElement}>2026-08-14T01:00:00Z</${dateElement}>
+      </entry></feed>`,
+      'https://example.com/atom.xml',
+    )
+
+    expect(feed.items[0]?.publishedAt).toBe('2026-08-14T01:00:00.000Z')
+  },
+)
+
 it('should prefer the Atom published date when updated appears first', () => {
   const feed = parseFeedXml(
     `<feed xmlns="http://www.w3.org/2005/Atom"><title>테스트 Atom</title><entry>
@@ -119,6 +133,47 @@ it('should reject an Atom updated date with an impossible calendar day', () => {
 
   expect(feed.items[0]?.publishedAt).toBeNull()
 })
+
+it.each(['Wed, 30 Feb 2026 00:00:00 GMT', 'Sat, 29 Feb 2025 00:00:00 GMT'])(
+  'should reject an RSS pubDate with an impossible calendar day: %s',
+  (pubDate) => {
+    const feed = parseFeedXml(
+      `<rss version="2.0"><channel><title>테스트 RSS</title><item>
+      <pubDate>${pubDate}</pubDate>
+    </item></channel></rss>`,
+      'https://example.com/rss.xml',
+    )
+
+    expect(feed.items[0]?.publishedAt).toBeNull()
+  },
+)
+
+it.each([
+  {
+    pubDate: 'Thu, 29 Feb 2024 00:00:00 +0530',
+    publishedAt: '2024-02-28T18:30:00.000Z',
+  },
+  {
+    pubDate: 'Fri, 14 Aug 2026 00:00:00 -0700',
+    publishedAt: '2026-08-14T07:00:00.000Z',
+  },
+  {
+    pubDate: 'Fri, 14 Aug 26 00:00:00 GMT',
+    publishedAt: '2026-08-14T00:00:00.000Z',
+  },
+])(
+  'should preserve a valid RSS pubDate timezone and year form: $pubDate',
+  ({pubDate, publishedAt}) => {
+    const feed = parseFeedXml(
+      `<rss version="2.0"><channel><title>테스트 RSS</title><item>
+      <pubDate>${pubDate}</pubDate>
+    </item></channel></rss>`,
+      'https://example.com/rss.xml',
+    )
+
+    expect(feed.items[0]?.publishedAt).toBe(publishedAt)
+  },
+)
 
 it('should preserve a valid Atom date before year 0100', () => {
   const feed = parseFeedXml(
@@ -160,10 +215,46 @@ it('should keep linkless feed items distinct with their title and publication ti
   )
 
   expect(feed.items.map((item) => item.link)).toEqual(['', ''])
-  expect(feed.items.map((item) => item.id)).toEqual([
+  expect(feed.items.map((item) => item.legacyId)).toEqual([
     '첫 번째\u00002026-08-14T00:00:00.000Z',
     '두 번째\u00002026-08-14T00:05:00.000Z',
   ])
+  expect(feed.items.map(({id, legacyId}) => id.startsWith(`${legacyId}\u0000`))).toEqual([
+    true,
+    true,
+  ])
+})
+
+it('should keep dated RSS items with the same title distinct by their XML content', () => {
+  const xml = `<rss><channel><title>링크 없는 피드</title>
+    <item><title>같은 제목</title><pubDate>Fri, 14 Aug 2026 00:00:00 GMT</pubDate>
+      <description>첫 번째 항목</description></item>
+    <item><title>같은 제목</title><pubDate>Fri, 14 Aug 2026 00:00:00 GMT</pubDate>
+      <description>두 번째 항목</description></item>
+  </channel></rss>`
+  const feed = parseFeedXml(xml, 'https://example.com/feed.xml')
+  const repeatedFeed = parseFeedXml(xml, 'https://example.com/feed.xml')
+  const ids = feed.items.map((item) => item.id)
+
+  expect(ids).toHaveLength(2)
+  expect(new Set(ids).size).toBe(2)
+  expect(ids).toEqual(repeatedFeed.items.map((item) => item.id))
+})
+
+it('should keep dated Atom entries with the same title distinct by their XML content', () => {
+  const xml = `<feed xmlns="http://www.w3.org/2005/Atom"><title>링크 없는 피드</title>
+    <entry><title>같은 제목</title><published>2026-08-14T00:00:00Z</published>
+      <summary>첫 번째 항목</summary></entry>
+    <entry><title>같은 제목</title><published>2026-08-14T00:00:00Z</published>
+      <summary>두 번째 항목</summary></entry>
+  </feed>`
+  const feed = parseFeedXml(xml, 'https://example.com/feed.xml')
+  const repeatedFeed = parseFeedXml(xml, 'https://example.com/feed.xml')
+  const ids = feed.items.map((item) => item.id)
+
+  expect(ids).toHaveLength(2)
+  expect(new Set(ids).size).toBe(2)
+  expect(ids).toEqual(repeatedFeed.items.map((item) => item.id))
 })
 
 it('should keep undated items without an id or link distinct by their XML content', () => {
@@ -291,10 +382,53 @@ it('should skip an alternate Atom link with an empty href', () => {
   expect(feed.items[0]?.link).toBe('https://example.com/article')
 })
 
+it.each([' alternate ', '\talternate\t'] as const)(
+  'should trim whitespace around an alternate Atom relation: %s',
+  (relation) => {
+    const feed = parseFeedXml(
+      `<feed><title>Atom</title><entry><link rel="${relation}" href="https://example.com/article" /></entry></feed>`,
+      'https://example.com/feed.xml',
+    )
+
+    expect(feed.items[0]?.link).toBe('https://example.com/article')
+    expect(feed.items[0]?.id).toBe('https://example.com/article')
+  },
+)
+
 it('should prefer an uppercase alternate Atom link', () => {
   const feed = parseFeedXml(
     `<feed><title>Atom</title><entry><link rel="self" href="https://example.com/self" />
       <link rel="ALTERNATE" href="https://example.com/article" /></entry></feed>`,
+    'https://example.com/feed.xml',
+  )
+
+  expect(feed.items[0]?.link).toBe('https://example.com/article')
+  expect(feed.items[0]?.id).toBe('https://example.com/article')
+})
+
+it('should recognize an alternate Atom link among multiple relation tokens', () => {
+  const feed = parseFeedXml(
+    `<feed><title>Atom</title><entry><link rel="alternate noopener" href="https://example.com/article" /></entry></feed>`,
+    'https://example.com/feed.xml',
+  )
+
+  expect(feed.items[0]?.link).toBe('https://example.com/article')
+  expect(feed.items[0]?.id).toBe('https://example.com/article')
+})
+
+it('should use an RSS self link as the item link and ID when no alternate exists', () => {
+  const feed = parseFeedXml(
+    `<rss><channel><item><link rel="self" href="https://example.com/article" /></item></channel></rss>`,
+    'https://example.com/feed.xml',
+  )
+
+  expect(feed.items[0]?.link).toBe('https://example.com/article')
+  expect(feed.items[0]?.id).toBe('https://example.com/article')
+})
+
+it('should use an Atom self link as the item link and ID when no alternate exists', () => {
+  const feed = parseFeedXml(
+    `<feed><entry><link rel="self" href="https://example.com/article" /></entry></feed>`,
     'https://example.com/feed.xml',
   )
 
@@ -307,9 +441,18 @@ it('should use the title for empty or duplicate feed content', () => {
   expect(createFeedScript('같은 내용', '<p>같은 내용</p>')).toBe('같은 내용')
 })
 
+it('should omit title spacing when the title is empty after cleaning', () => {
+  expect(createFeedScript('', '본문')).toBe('본문')
+  expect(createFeedScript('<p></p>', '본문')).toBe('본문')
+})
+
 it('should fall back from main content to the document body', () => {
   expect(extractArticleText('<main><p>메인 본문</p></main>')).toBe('메인 본문')
   expect(extractArticleText('<section><p>일반 본문</p></section>')).toBe('일반 본문')
+})
+
+it('should fall back to main content when an article has no readable text', () => {
+  expect(extractArticleText('<article></article><main><p>본문</p></main>')).toBe('본문')
 })
 
 it('should return empty text for empty or excluded content', () => {

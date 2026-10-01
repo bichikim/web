@@ -119,7 +119,6 @@ export const PMemoryAssist = (props: PMemoryAssistProps) => {
                 weatherState={props.weatherState}
                 calendarRevision={calendarRevision()}
                 onRefreshCalendar={refreshCalendar}
-                onRequestClose={() => handleOpenChange(false)}
               />
             </Suspense>
           </ErrorBoundary>

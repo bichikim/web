@@ -105,6 +105,19 @@ it.each([
   }
 })
 
+it('should group all-day events by the date prefix of an ISO start instant', () => {
+  const source = {
+    ...event,
+    allDay: true,
+    end: '2026-10-01',
+    start: '2026-09-30T00:00:00Z',
+  }
+
+  expect(
+    groupCalendarEvents([source], ['2026-09-30'], 'America/Los_Angeles').get('2026-09-30'),
+  ).toEqual([source])
+})
+
 it('should preserve input order and event identity for overlapping events', () => {
   const second = {...event, id: 'second'}
   expect(
@@ -138,6 +151,23 @@ it.each([
     groupCalendarEvents([source], ['2026-09-02', '2026-09-03', '2026-09-04', '2026-09-05'], 'UTC')
       .size,
   ).toBe(0)
+})
+
+it.each([
+  {
+    description: 'reversed',
+    end: '2026-09-05T01:00:00.000Z',
+    start: '2026-09-05T02:00:00.000Z',
+  },
+  {
+    description: 'zero-length',
+    end: '2026-09-05T02:00:00.000Z',
+    start: '2026-09-05T02:00:00.000Z',
+  },
+])('should omit timed events with a $description interval', ({end, start}) => {
+  const source = {...event, end, start}
+
+  expect(groupCalendarEvents([source], ['2026-09-05'], 'UTC').get('2026-09-05')).toBeUndefined()
 })
 
 it.each(['', ' ', 'not-a-date', '2026-02-31'])(

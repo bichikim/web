@@ -41,6 +41,13 @@
 - When direct evidence is missing, run the smallest relevant test or runtime experiment and distinguish product defects from setup, runner, sandbox, and environment failures.
 - Show the decisive evidence. If no permitted source or viable experiment can establish the claim, state that it cannot be determined instead of guessing.
 
+## Completion
+
+- Keep the user's requested outcome, scope, constraints, and completion criteria as the task's authority throughout the work. Do not silently narrow or replace them with intermediate artifacts or checks.
+- Before reporting completion, compare the actual result against each of the user's original completion criteria. For each criterion, cite evidence that proves that criterion; a plan, edited file, or passing partial check cannot substitute for a different requested outcome.
+- Keep source inspection, executed checks, and user-goal completion as separate claims. Verify runtime behavior when the requested outcome depends on it. Do not infer that the whole task is complete from implementation or test progress alone.
+- If a criterion remains unmet or unverified, report the exact remaining work or blocker and the verified progress; do not label the whole task complete.
+
 ## Architecture authority
 
 - Follow explicit requirements in current official documentation. Disclose conflicts with those requirements before implementation; do not deviate unless the user explicitly directs it.
@@ -72,6 +79,12 @@
 ## Pomo local servers
 
 - Run Pomo commands that bind a local port—including Vite, Playwright, Storybook browser tests, Wallaby, and Wrangler local tooling—with escalated permissions on the first attempt. Treat loopback `listen EPERM` as a sandbox restriction, retry the same command in the approved context, and verify it there before attributing the failure to product code.
+
+## Unit test execution time
+
+- Preserve the unit test time limit configured in Vitest. Never change or override it, including through test-specific timeout settings. No environment-based exceptions are allowed.
+- The recommended maximum execution-time target is 150ms per Vitest unit test. Write tests to execute as quickly as possible.
+- To reduce execution time, prioritize mocking over splitting tests, and splitting tests over moving integration-test portions into integration tests. Preserve the behavior and assertions that need verification.
 
 ## Required after changes
 

@@ -1,6 +1,6 @@
 import {z} from 'zod'
 
-import {findJsonObjectEnd} from 'src/utils/json'
+import {iterateJsonObjectSlices} from 'src/utils/json'
 
 import type {AlbumTranslationCompleteResponse} from './messages'
 
@@ -14,20 +14,17 @@ const translationOutputSchema = z.object({
 export const parseAlbumTranslation = (
   output: string,
 ): AlbumTranslationCompleteResponse['translations'] => {
-  const objectCandidates = Array.from(output.matchAll(/\{/gu), ({index}) => {
-    const end = findJsonObjectEnd(output, index)
-    return {end, start: index}
-  })
+  const objectCandidates = Array.from(iterateJsonObjectSlices(output))
   const translations = objectCandidates
-    .filter(({end, start}) => end > start)
-    .map(({end, start}) => {
+    .map(({slice}) => {
       try {
-        return translationOutputSchema.parse(JSON.parse(output.slice(start, end + 1)))
+        return translationOutputSchema.parse(JSON.parse(slice))
       } catch {
         return undefined
       }
     })
-    .find((candidate) => candidate !== undefined)
+    .filter((candidate) => candidate !== undefined)
+    .pop()
 
   if (translations !== undefined) {
     return translations

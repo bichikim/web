@@ -1,13 +1,6 @@
+import {createTossWebStorageAdapter} from 'src/utils/runtime-storage'
 import {createAuthoritativePreferenceRepository} from '../authoritative-preference'
 import {z} from 'zod'
-
-import {
-  hasNativeStorageBridge,
-  readTossStorageJson,
-  readWebStorageJson,
-  writeTossStorageJson,
-  writeWebStorageJson,
-} from 'src/utils/runtime-storage'
 
 import {DEFAULT_P_DISPLAY_PREFERENCES, type PDisplayPreferences} from './model'
 
@@ -30,7 +23,9 @@ export interface CreatePDisplayPreferencesRepositoryOptions {
 
 export const DISPLAY_PREFERENCES_STORAGE_KEY = 'pomo:focus-room-display-preferences:v1'
 const displayPreferencesSchema = z.object({
-  dialogueComposerVisible: z.boolean(),
+  dialogueComposerVisible: z
+    .boolean()
+    .default(DEFAULT_P_DISPLAY_PREFERENCES.dialogueComposerVisible),
   featureRequestVisible: z.boolean().default(true),
   memoryAssistVisible: z.boolean().default(true),
   playerVisible: z.boolean().default(true),
@@ -86,16 +81,7 @@ export const createPDisplayPreferencesRepository = (
 
 const runtimeRepository = createPDisplayPreferencesRepository({
   storage: {
-    readToss: (key) => readTossStorageJson(key, (value) => value),
-    readWeb: (key) => readWebStorageJson(key, (value) => value),
-    usesTossStorage: hasNativeStorageBridge,
-    writeToss: writeTossStorageJson,
-    writeWeb(key, value) {
-      const error = writeWebStorageJson(key, value)
-      if (error !== null) {
-        throw error
-      }
-    },
+    ...createTossWebStorageAdapter(),
   },
 })
 

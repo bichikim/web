@@ -20,6 +20,7 @@ const audioMocks = vi.hoisted(() => ({
   }),
   useTrackPreview: vi.fn(),
 }))
+const customAlbumMocks = vi.hoisted(() => ({readCustomAlbums: vi.fn()}))
 const componentMocks = vi.hoisted(() => ({
   albumCard: vi.fn(),
   button: vi.fn(),
@@ -28,6 +29,10 @@ const reporterMocks = vi.hoisted(() => ({reportClientError: vi.fn()}))
 const revalidationMocks = vi.hoisted(() => ({revalidate: vi.fn()}))
 
 vi.mock('../../../features/focus-room-audio', () => audioMocks)
+vi.mock('../../../features/custom-albums', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../../features/custom-albums')>()),
+  ...customAlbumMocks,
+}))
 vi.mock('@solidjs/router', async () => {
   const actual: typeof import('@solidjs/router') = await vi.importActual('@solidjs/router')
   return {...actual, revalidate: revalidationMocks.revalidate}
@@ -99,6 +104,7 @@ let refreshPublishedCatalog: () => void = () => undefined
 let refreshedCatalogRequest: Promise<PPublishedAlbumCatalog> | undefined
 
 beforeEach(() => {
+  customAlbumMocks.readCustomAlbums.mockReset().mockResolvedValue([])
   const [catalogRevision, setCatalogRevision] = createSignal(0)
   refreshPublishedCatalog = () => setCatalogRevision((revision) => revision + 1)
   refreshedCatalogRequest = undefined
@@ -193,7 +199,7 @@ describe('PAlbumLibraryContent', () => {
     ))
 
     expect(await screen.findByTestId('album-partial')).toBeTruthy()
-    expect(screen.getByRole('status')).toHaveTextContent('미리듣기 오류')
+    expect(screen.getByText('미리듣기 오류')).toBeInTheDocument()
     expect(vi.mocked(previewSetAudio).mock.calls[0]?.[0]).toBeInstanceOf(HTMLAudioElement)
     const cards = componentMocks.albumCard.mock.calls.map(([props]) => props as AlbumCardProps)
     expect(cards.map((props) => props.isInPlayer)).toEqual([false, true, false])

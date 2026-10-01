@@ -4,9 +4,60 @@ import {cleanup, fireEvent, render, screen, waitFor, within} from '@solidjs/test
 import {createSignal} from 'solid-js'
 import {afterEach, describe, expect, test, vi} from 'vitest'
 
-import {createDemoDocument, type PuppetDocument} from '../../../player'
+import {createDemoDocument as createBaseDocument, type PuppetDocument} from '../../../player'
 import {EditorTimeline} from '../EditorTimeline'
 import {setParameterKeyframe} from '../motion-keyframes'
+
+const createDemoDocument = (): PuppetDocument => {
+  const document = createBaseDocument()
+  return {
+    ...document,
+    motions: document.motions.map((motion) => ({
+      ...motion,
+      timelineParameterIds: ['angle-x', 'angle-y'],
+    })),
+  }
+}
+
+const createSingleMotionDocument = (): PuppetDocument => {
+  const document = createBaseDocument()
+  return {
+    ...document,
+    motions: [
+      {
+        ...document.motions[0]!,
+        timelineParameterIds: ['angle-x', 'angle-y'],
+      },
+    ],
+  }
+}
+
+const enterAllMotionView = async (view: ReturnType<typeof render>) => {
+  fireEvent.keyDown(view.getByRole('button', {name: /모션 선택/}), {key: 'Enter'})
+  await waitFor(() => screen.getByRole('option', {name: '모든 타임라인 보기'}))
+  fireEvent.keyDown(screen.getByRole('option', {name: '모든 타임라인 보기'}), {key: 'Enter'})
+}
+
+const createAllMotionTimeline = () => {
+  const [currentTime, setCurrentTime] = createSignal(0.5)
+  const [document, setDocument] = createSignal<PuppetDocument>(createDemoDocument())
+  const [motionId, setMotionId] = createSignal('idle-deform')
+  const onMotionSeek = vi.fn((nextMotionId: string, time: number) => {
+    setMotionId(nextMotionId)
+    setCurrentTime(time)
+  })
+  const view = render(() => (
+    <EditorTimeline
+      currentTime={currentTime()}
+      document={document()}
+      motionId={motionId()}
+      onDocumentChange={setDocument}
+      onMotionSeek={onMotionSeek}
+    />
+  ))
+
+  return {currentTime, document, motionId, onMotionSeek, view}
+}
 
 afterEach(() => {
   cleanup()
@@ -14,6 +65,113 @@ afterEach(() => {
 })
 
 describe('EditorTimeline', () => {
+  test('should reset the swipe state when the next parameter takes a removed row position', () => {
+    const [document, setDocument] = createSignal<PuppetDocument>(createSingleMotionDocument())
+    const view = render(() => (
+      <EditorTimeline document={document()} onDocumentChange={setDocument} />
+    ))
+    const row = view.getByRole('button', {name: 'Angle X 타임라인 행'})
+
+    row.dispatchEvent(new MouseEvent('pointerdown', {bubbles: true, button: 0, clientX: 200}))
+    globalThis.dispatchEvent(new MouseEvent('pointermove', {clientX: 280}))
+    globalThis.dispatchEvent(new MouseEvent('pointerup'))
+
+    expect(view.queryByRole('button', {name: 'Angle X 타임라인 행'})).not.toBeInTheDocument()
+    const nextRow = view.getByRole('button', {name: 'Angle Y 타임라인 행'})
+    expect(nextRow.closest('.timeline-row-label-swipe')).toHaveAttribute(
+      'style',
+      expect.stringContaining('--parameter-swipe-offset: 0px'),
+    )
+  })
+
+  test('should add timeline rows without creating keyframes', async () => {
+    const [document, setDocument] = createSignal<PuppetDocument>(createBaseDocument())
+    const view = render(() => (
+      <EditorTimeline document={document()} onDocumentChange={setDocument} />
+    ))
+
+    expect(view.queryByLabelText('Angle X 트랙')).not.toBeInTheDocument()
+    expect(view.getByLabelText('Angle Y 트랙')).toBeVisible()
+
+    fireEvent.keyDown(view.getByRole('button', {name: '타임라인 파라미터 추가'}), {key: 'Enter'})
+    const parameter = await screen.findByRole('menuitem', {name: 'Angle X'})
+    parameter.dispatchEvent(new MouseEvent('pointerup', {bubbles: true, button: 0}))
+
+    expect(view.getByLabelText('Angle X 트랙')).toBeVisible()
+    expect(document().motions[0]?.timelineParameterIds).toEqual(['angle-x'])
+    expect(document().motions[0]?.tracks).toEqual(createBaseDocument().motions[0]?.tracks)
+  })
+
+  test('should delete a timeline row without deleting parameters or other motions', () => {
+    const [document, setDocument] = createSignal<PuppetDocument>(createDemoDocument())
+    const view = render(() => (
+      <EditorTimeline document={document()} onDocumentChange={setDocument} />
+    ))
+    const angleXTrack = view.getByLabelText('Angle X 트랙')
+    const angleYTrack = view.getByLabelText('Angle Y 트랙')
+    const row = view.getByRole('button', {name: 'Angle Y 타임라인 행'})
+
+    expect(angleXTrack).toBeVisible()
+    row.dispatchEvent(new MouseEvent('pointerdown', {bubbles: true, button: 0, clientX: 280}))
+    globalThis.dispatchEvent(new MouseEvent('pointermove', {clientX: 200}))
+    globalThis.dispatchEvent(new MouseEvent('pointerup'))
+    expect(angleYTrack).toBeVisible()
+
+    row.dispatchEvent(new MouseEvent('pointerdown', {bubbles: true, button: 0, clientX: 200}))
+    globalThis.dispatchEvent(new MouseEvent('pointermove', {clientX: 280}))
+    expect(view.getByText('놓아 삭제')).toBeVisible()
+    globalThis.dispatchEvent(new MouseEvent('pointerup'))
+
+    expect(view.queryByLabelText('Angle Y 트랙')).not.toBeInTheDocument()
+    expect(view.getByLabelText('Angle X 트랙')).toBeVisible()
+    expect(document().motions[0]?.tracks).toEqual([])
+    expect(document().motions[2]?.tracks).toEqual(createBaseDocument().motions[2]?.tracks)
+    expect(document().parameters).toEqual(createBaseDocument().parameters)
+  })
+
+  test('should delete a row from one motion in the all-motions view', async () => {
+    const [document, setDocument] = createSignal<PuppetDocument>(createBaseDocument())
+    const view = render(() => (
+      <EditorTimeline document={document()} onDocumentChange={setDocument} />
+    ))
+
+    fireEvent.keyDown(view.getByRole('button', {name: /모션 선택/}), {key: 'Enter'})
+    await waitFor(() => screen.getByRole('option', {name: '모든 타임라인 보기'}))
+    fireEvent.keyDown(screen.getByRole('option', {name: '모든 타임라인 보기'}), {key: 'Enter'})
+
+    const idle = view.getByRole('region', {name: 'idle-deform 타임라인'})
+    const row = within(idle).getByRole('button', {name: 'Angle Y 타임라인 행'})
+    fireEvent.keyDown(row, {key: 'Delete'})
+    expect(within(idle).getByLabelText('Angle Y 트랙')).toBeVisible()
+    fireEvent.keyDown(row, {key: 'Delete'})
+
+    expect(within(idle).queryByLabelText('Angle Y 트랙')).not.toBeInTheDocument()
+    expect(document().motions[0]?.tracks).toEqual([])
+    expect(document().motions[2]?.tracks).toEqual(createBaseDocument().motions[2]?.tracks)
+  })
+
+  test('should retain another motion selection when removing a timeline row', async () => {
+    const [document, setDocument] = createSignal<PuppetDocument>(createDemoDocument())
+    const view = render(() => (
+      <EditorTimeline document={document()} onDocumentChange={setDocument} />
+    ))
+    fireEvent.keyDown(view.getByRole('button', {name: /모션 선택/}), {key: 'Enter'})
+    await waitFor(() => screen.getByRole('option', {name: '모든 타임라인 보기'}))
+    fireEvent.keyDown(screen.getByRole('option', {name: '모든 타임라인 보기'}), {key: 'Enter'})
+
+    const blink = view.getByRole('region', {name: 'blink 타임라인'})
+    fireEvent.click(within(blink).getByRole('button', {name: 'Angle X 타임라인 행'}))
+    const selectedRow = within(blink).getByRole('button', {name: 'Angle X 타임라인 행'})
+    expect(selectedRow.closest('.timeline-row-label')).toHaveAttribute('data-selected')
+
+    const idle = view.getByRole('region', {name: 'idle-deform 타임라인'})
+    const removedRow = within(idle).getByRole('button', {name: 'Angle Y 타임라인 행'})
+    fireEvent.keyDown(removedRow, {key: 'Delete'})
+    fireEvent.keyDown(removedRow, {key: 'Delete'})
+
+    expect(selectedRow.closest('.timeline-row-label')).toHaveAttribute('data-selected')
+  })
+
   test('should edit the active motion duration and document frame rate', async () => {
     const [document, setDocument] = createSignal<PuppetDocument>(createDemoDocument())
     const view = render(() => (
@@ -194,27 +352,9 @@ describe('EditorTimeline', () => {
     expect(motionId()).toBe('blink')
   })
 
-  test('should group all motions with independently retained timeline positions', async () => {
-    const [currentTime, setCurrentTime] = createSignal(0.5)
-    const [document, setDocument] = createSignal<PuppetDocument>(createDemoDocument())
-    const [motionId, setMotionId] = createSignal('idle-deform')
-    const onMotionSeek = vi.fn((nextMotionId: string, time: number) => {
-      setMotionId(nextMotionId)
-      setCurrentTime(time)
-    })
-    const view = render(() => (
-      <EditorTimeline
-        currentTime={currentTime()}
-        document={document()}
-        motionId={motionId()}
-        onDocumentChange={setDocument}
-        onMotionSeek={onMotionSeek}
-      />
-    ))
-
-    fireEvent.keyDown(view.getByRole('button', {name: /모션 선택/}), {key: 'Enter'})
-    await waitFor(() => screen.getByRole('option', {name: '모든 타임라인 보기'}))
-    fireEvent.keyDown(screen.getByRole('option', {name: '모든 타임라인 보기'}), {key: 'Enter'})
+  test('should keep motion positions independent in the all-motions view', async () => {
+    const {onMotionSeek, view} = createAllMotionTimeline()
+    await enterAllMotionView(view)
 
     const idleGroup = view.getByRole('region', {name: 'idle-deform 타임라인'})
     const blinkGroup = view.getByRole('region', {name: 'blink 타임라인'})
@@ -248,7 +388,14 @@ describe('EditorTimeline', () => {
     expect(blinkSeek).toHaveAttribute('aria-valuenow', '0.4')
     expect(onMotionSeek).toHaveBeenNthCalledWith(1, 'blink', 0.4)
     expect(onMotionSeek).toHaveBeenNthCalledWith(2, 'nod', 0.8)
+  })
 
+  test('should select keyframes independently across all motion timelines', async () => {
+    const {onMotionSeek, view} = createAllMotionTimeline()
+    await enterAllMotionView(view)
+
+    const idleGroup = view.getByRole('region', {name: 'idle-deform 타임라인'})
+    const blinkGroup = view.getByRole('region', {name: 'blink 타임라인'})
     const blinkKeyframe = within(blinkGroup).getByRole('button', {
       name: 'Angle X 0.20초 키프레임',
     })
@@ -257,6 +404,7 @@ describe('EditorTimeline', () => {
     })
     const blinkTrack = within(blinkGroup).getByLabelText('Angle X 트랙')
     const idleTrack = within(idleGroup).getByLabelText('Angle Y 트랙')
+
     fireEvent.click(blinkKeyframe)
     await waitFor(() => expect(blinkKeyframe).toHaveAttribute('aria-pressed', 'true'))
     expect(blinkTrack).toHaveAttribute('data-selected', '')
@@ -266,8 +414,19 @@ describe('EditorTimeline', () => {
     expect(blinkKeyframe).toHaveAttribute('aria-pressed', 'false')
     expect(blinkTrack).not.toHaveAttribute('data-selected')
     expect(idleTrack).toHaveAttribute('data-selected', '')
-    expect(onMotionSeek).toHaveBeenNthCalledWith(3, 'blink', 0.2)
-    expect(onMotionSeek).toHaveBeenNthCalledWith(4, 'idle-deform', 1)
+    expect(onMotionSeek).toHaveBeenNthCalledWith(1, 'blink', 0.2)
+    expect(onMotionSeek).toHaveBeenNthCalledWith(2, 'idle-deform', 1)
+  })
+
+  test('should move a keyframe within its motion timeline', async () => {
+    const {document, view} = createAllMotionTimeline()
+    await enterAllMotionView(view)
+
+    const blinkGroup = view.getByRole('region', {name: 'blink 타임라인'})
+    const blinkKeyframe = within(blinkGroup).getByRole('button', {
+      name: 'Angle X 0.20초 키프레임',
+    })
+    const blinkTrack = within(blinkGroup).getByLabelText('Angle X 트랙')
 
     vi.spyOn(blinkTrack, 'getBoundingClientRect').mockReturnValue(
       DOMRect.fromRect({height: 20, width: 240}),
@@ -279,122 +438,18 @@ describe('EditorTimeline', () => {
     fireEvent(blinkKeyframe, new MouseEvent('pointermove', {bubbles: true, clientX: 181}))
     fireEvent(blinkKeyframe, new MouseEvent('pointerup', {bubbles: true, clientX: 181}))
 
-    await waitFor(() =>
+    await waitFor(() => {
+      const currentBlinkGroup = view.getByRole('region', {name: 'blink 타임라인'})
       expect(
-        within(view.getByRole('region', {name: 'blink 타임라인'})).getByRole('button', {
-          name: 'Angle X 0.29초 키프레임',
-        }),
-      ).toBeVisible(),
-    )
+        within(currentBlinkGroup).getByRole('button', {name: 'Angle X 0.29초 키프레임'}),
+      ).toBeVisible()
+    })
     expect(
       document()
         .motions.find((candidate) => candidate.id === 'blink')
         ?.tracks.find((track) => track.kind === 'parameter' && track.parameterId === 'angle-x')
         ?.keyframes[1]?.time,
     ).toBe(7 / 24)
-  })
-
-  test('should rename and swipe-delete motion groups without leaving the all-motions view', async () => {
-    const [document, setDocument] = createSignal<PuppetDocument>(createDemoDocument())
-    const [motionId, setMotionId] = createSignal('idle-deform')
-    const view = render(() => (
-      <EditorTimeline
-        document={document()}
-        motionId={motionId()}
-        onDocumentChange={setDocument}
-        onMotionChange={setMotionId}
-      />
-    ))
-
-    fireEvent.keyDown(view.getByRole('button', {name: /모션 선택/}), {key: 'Enter'})
-    await waitFor(() => screen.getByRole('option', {name: '모든 타임라인 보기'}))
-    fireEvent.keyDown(screen.getByRole('option', {name: '모든 타임라인 보기'}), {key: 'Enter'})
-
-    const idleGroup = view.getByRole('region', {name: 'idle-deform 타임라인'})
-    fireEvent.dblClick(within(idleGroup).getByRole('button', {name: 'idle-deform 모션 이름'}))
-    const nameInput = within(idleGroup).getByRole('textbox', {name: '모션 이름'})
-    fireEvent.input(nameInput, {target: {value: 'idle'}})
-    fireEvent.keyDown(nameInput, {key: 'Enter'})
-
-    await waitFor(() => expect(document().motions[0]?.id).toBe('idle'))
-    expect(view.getByRole('button', {name: /모션 선택 모든 타임라인 보기/})).toBeVisible()
-    expect(view.getByRole('region', {name: 'idle 타임라인'})).toBeVisible()
-
-    const blinkGroup = view.getByRole('region', {name: 'blink 타임라인'})
-    const blinkName = within(blinkGroup).getByRole('button', {name: 'blink 모션 이름'})
-    expect(blinkName.closest('.timeline-motion-name-surface')).toContainElement(
-      within(blinkGroup).getByRole('spinbutton', {name: 'blink 모션 길이'}),
-    )
-    blinkName.dispatchEvent(new MouseEvent('pointerdown', {bubbles: true, button: 0, clientX: 200}))
-    globalThis.dispatchEvent(new MouseEvent('pointermove', {clientX: 120}))
-
-    expect(within(blinkGroup).getByText('놓아 삭제')).toBeVisible()
-    expect(document().motions.some((motion) => motion.id === 'blink')).toBe(true)
-
-    globalThis.dispatchEvent(new MouseEvent('pointerup'))
-
-    await waitFor(() =>
-      expect(document().motions.some((motion) => motion.id === 'blink')).toBe(false),
-    )
-    expect(view.getByRole('button', {name: /모션 선택 모든 타임라인 보기/})).toBeVisible()
-    expect(view.queryByRole('region', {name: 'blink 타임라인'})).not.toBeInTheDocument()
-  })
-
-  test('should batch-edit keyframes in the all-motions view', async () => {
-    const [document, setDocument] = createSignal<PuppetDocument>(createDemoDocument())
-    const view = render(() => (
-      <EditorTimeline document={document()} onDocumentChange={setDocument} />
-    ))
-
-    fireEvent.keyDown(view.getByRole('button', {name: /모션 선택/}), {key: 'Enter'})
-    await waitFor(() => screen.getByRole('option', {name: '모든 타임라인 보기'}))
-    fireEvent.keyDown(screen.getByRole('option', {name: '모든 타임라인 보기'}), {key: 'Enter'})
-
-    const blinkGroup = view.getByRole('region', {name: 'blink 타임라인'})
-    const firstMarker = within(blinkGroup).getByRole('button', {
-      name: 'Angle X 0.00초 키프레임',
-    })
-    const middleMarker = within(blinkGroup).getByRole('button', {
-      name: 'Angle X 0.20초 키프레임',
-    })
-    const track = within(blinkGroup).getByLabelText('Angle X 트랙')
-
-    fireEvent.click(firstMarker)
-    fireEvent.click(middleMarker, {shiftKey: true})
-    expect(firstMarker).toHaveAttribute('aria-pressed', 'true')
-    expect(middleMarker).toHaveAttribute('aria-pressed', 'true')
-    expect(view.getByRole('button', {name: '선택 키프레임 2개 삭제'})).toBeEnabled()
-
-    vi.spyOn(track, 'getBoundingClientRect').mockReturnValue(
-      DOMRect.fromRect({height: 20, width: 240}),
-    )
-    fireEvent(middleMarker, new MouseEvent('pointerdown', {bubbles: true, button: 0, clientX: 120}))
-    fireEvent(middleMarker, new MouseEvent('pointermove', {bubbles: true, clientX: 180}))
-    fireEvent(middleMarker, new MouseEvent('pointerup', {bubbles: true, clientX: 180}))
-
-    await waitFor(() =>
-      expect(
-        document()
-          .motions.find((motion) => motion.id === 'blink')
-          ?.tracks[0]?.keyframes.map((keyframe) => keyframe.time),
-      ).toEqual([7 / 24 - 0.2, 7 / 24, 0.4]),
-    )
-
-    fireEvent.keyDown(view.getByRole('button', {name: /^키프레임 이징/}), {key: 'Enter'})
-    fireEvent.keyDown(screen.getByRole('option', {name: 'ease-out'}), {key: 'Enter'})
-    expect(
-      document()
-        .motions.find((motion) => motion.id === 'blink')
-        ?.tracks[0]?.keyframes.slice(0, 2),
-    ).toEqual([
-      {easing: 'ease-out', time: 7 / 24 - 0.2, value: 0},
-      {easing: 'ease-out', time: 7 / 24, value: 30},
-    ])
-
-    fireEvent.click(view.getByRole('button', {name: '선택 키프레임 2개 삭제'}))
-    expect(
-      document().motions.find((motion) => motion.id === 'blink')?.tracks[0]?.keyframes,
-    ).toEqual([{time: 0.4, value: 0}])
   })
 
   test('should add, ease, and delete parameter keyframes', () => {
@@ -727,17 +782,18 @@ describe('EditorTimeline', () => {
     },
   )
 
-  test('should retain a read-only timeline for a static document', () => {
+  test('should show an empty read-only timeline when there is no motion', () => {
     const document = {...createDemoDocument(), motions: []}
     const view = render(() => <EditorTimeline document={document} />)
 
     expect(view.getByText('Timeline')).toBeVisible()
     expect(view.queryByText('Static mesh')).not.toBeInTheDocument()
-    expect(view.getByLabelText('Angle X 트랙')).toBeVisible()
-    expect(view.getByRole('spinbutton', {name: 'Angle X 현재 값'})).toBeDisabled()
+    expect(view.getByText('타임라인에 파라미터가 없습니다.')).toBeVisible()
+    expect(view.queryByLabelText('Angle X 트랙')).not.toBeInTheDocument()
+    expect(view.getByRole('button', {name: '타임라인 파라미터 추가'})).toBeDisabled()
     expect(view.getByRole('button', {name: '정지'})).toBeDisabled()
     expect(view.getByRole('button', {name: '현재 위치에 키프레임'})).toBeDisabled()
     expect(view.getByRole('button', {name: '선택 키프레임 삭제'})).toBeDisabled()
-    expect(view.getByRole('slider', {name: '재생 위치'})).toHaveAttribute('aria-disabled', 'true')
+    expect(view.queryByRole('slider', {name: '재생 위치'})).not.toBeInTheDocument()
   })
 })

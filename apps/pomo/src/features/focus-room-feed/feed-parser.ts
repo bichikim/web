@@ -1,3 +1,4 @@
+import {hasValidIsoCalendarDate} from 'src/utils/iso-calendar-date'
 import DOMPurify from 'dompurify'
 
 /* istanbul ignore next -- Wallaby inconsistently counts module initialization across workers. */
@@ -8,13 +9,29 @@ const ITEM_FINGERPRINT_PRIMARY_MODULUS = 2_147_483_647
 const ITEM_FINGERPRINT_RADIX = 36
 const ITEM_FINGERPRINT_SECONDARY_BASE = 37
 const ITEM_FINGERPRINT_SECONDARY_MODULUS = 2_147_483_629
-const ISO_DATE_LENGTH = 'YYYY-MM-DD'.length
-const ISO_DATE_PREFIX_PATTERN = /^\d{4}-\d{2}-\d{2}/u
+const ISO_DATE_PREFIX_PATTERN = /^(?<year>\d{4})-(?<month>\d{2})-(?<day>\d{2})/u
+const MONTH_ABBREVIATIONS = [
+  'jan',
+  'feb',
+  'mar',
+  'apr',
+  'may',
+  'jun',
+  'jul',
+  'aug',
+  'sep',
+  'oct',
+  'nov',
+  'dec',
+] as const
+const RFC_822_DATE_PREFIX_PATTERN =
+  /^(?:[A-Z]{3},\s*)?(?<day>\d{1,2})\s+(?<month>[A-Z]{3})\s+(?<year>\d{2,4})\b/iu
 
 export interface ParsedFeedItem {
   readonly content: string
   readonly contentKind: 'full' | 'none' | 'summary'
   readonly id: string
+  readonly legacyId?: string
   readonly link: string
   readonly publishedAt: string | null
   readonly title: string
@@ -77,13 +94,23 @@ const resolveUrl = (value: string, baseUrl: string) => {
 const getLink = (element: Element, baseUrl: string) => {
   const links = getChildren(element).filter((child) => child.localName.toLowerCase() === 'link')
   const candidates = links.map((link) => ({
-    relation: link.getAttribute('rel'),
+    hasHref: link.hasAttribute('href'),
+    relationTokens:
+      link
+        .getAttribute('rel')
+        ?.toLowerCase()
+        .split(/[\t\n\f\r ]+/u) ?? null,
     url: resolveUrl(link.getAttribute('href') ?? link.textContent?.trim() ?? '', baseUrl),
   }))
   const preferred =
     candidates.find(
-      ({relation, url}) => relation?.toLowerCase() === 'alternate' && url.length > 0,
-    ) ?? candidates.find(({relation, url}) => relation === null && url.length > 0)
+      ({relationTokens, url}) => relationTokens?.includes('alternate') === true && url.length > 0,
+    ) ??
+    candidates.find(({relationTokens, url}) => relationTokens === null && url.length > 0) ??
+    candidates.find(
+      ({hasHref, relationTokens, url}) =>
+        hasHref && relationTokens?.includes('self') === true && url.length > 0,
+    )
   return preferred?.url ?? ''
 }
 const getContent = (element: Element) => {
@@ -98,16 +125,34 @@ const getContent = (element: Element) => {
     ? {content: summary, contentKind: 'summary' as const}
     : {content: '', contentKind: 'none' as const}
 }
+const isValidCalendarDate = (year: number, month: number, day: number) => {
+  if (month < 1 || month > MONTH_ABBREVIATIONS.length || day < 1) {
+    return false
+  }
+
+  const endOfMonth = new Date(0)
+  endOfMonth.setUTCFullYear(year, month, 0)
+  return day <= endOfMonth.getUTCDate()
+}
 const parseFeedTimestamp = (value: string): number | null => {
   const normalizedValue = value.trim()
-  const datePrefix = normalizedValue.slice(0, ISO_DATE_LENGTH)
+  const isoDateParts = normalizedValue.match(ISO_DATE_PREFIX_PATTERN)?.groups
 
-  if (ISO_DATE_PREFIX_PATTERN.test(normalizedValue)) {
-    const parsedDate = new Date(`${datePrefix}T00:00:00Z`)
+  if (isoDateParts !== undefined && !hasValidIsoCalendarDate(normalizedValue)) {
+    return null
+  }
+
+  const rfc822DateParts = normalizedValue.match(RFC_822_DATE_PREFIX_PATTERN)?.groups
+
+  if (rfc822DateParts !== undefined) {
+    const day = Number(rfc822DateParts.day)
+    const monthName = rfc822DateParts.month!.toLowerCase()
+    const month = MONTH_ABBREVIATIONS.findIndex((abbreviation) => abbreviation === monthName) + 1
+    const yearTimestamp = Date.parse(`1 ${monthName} ${rfc822DateParts.year} 00:00 GMT`)
 
     if (
-      Number.isNaN(parsedDate.getTime()) ||
-      parsedDate.toISOString().slice(0, ISO_DATE_LENGTH) !== datePrefix
+      Number.isNaN(yearTimestamp) ||
+      !isValidCalendarDate(new Date(yearTimestamp).getUTCFullYear(), month, day)
     ) {
       return null
     }
@@ -117,7 +162,7 @@ const parseFeedTimestamp = (value: string): number | null => {
   return Number.isNaN(timestamp) ? null : timestamp
 }
 const getPublishedAt = (element: Element) => {
-  const timestamp = ['published', 'pubdate', 'updated', 'date']
+  const timestamp = ['published', 'pubdate', 'updated', 'date', 'created', 'issued']
     .map((name) => parseFeedTimestamp(getChildText(element, [name])))
     .find((value) => value !== null)
 
@@ -139,19 +184,27 @@ const getItemFingerprint = (element: Element) => {
 
   return `${primaryHash.toString(ITEM_FINGERPRINT_RADIX)}-${secondaryHash.toString(ITEM_FINGERPRINT_RADIX)}`
 }
-const getItemId = (element: Element, link: string, title: string, publishedAt: string | null) => {
+const getItemIdentity = (
+  element: Element,
+  link: string,
+  title: string,
+  publishedAt: string | null,
+): Pick<ParsedFeedItem, 'id' | 'legacyId'> => {
   const explicitId = getChildText(element, ['guid', 'id'])
 
   if (explicitId.length > 0) {
-    return explicitId
+    return {id: explicitId}
   }
 
   if (link.length > 0) {
-    return link
+    return {id: link}
   }
 
   const fallbackId = `${title}\u0000${publishedAt ?? ''}`
-  return publishedAt === null ? `${fallbackId}\u0000${getItemFingerprint(element)}` : fallbackId
+  return {
+    id: `${fallbackId}\u0000${getItemFingerprint(element)}`,
+    ...(publishedAt === null ? {} : {legacyId: fallbackId}),
+  }
 }
 
 const extractReadableHtmlText = (
@@ -163,6 +216,9 @@ const extractReadableHtmlText = (
   return (resolveRoot(fragment).textContent ?? '').replace(/\s+/gu, ' ').trim()
 }
 
+const findReadableElement = (fragment: DocumentFragment, selector: 'article' | 'main') =>
+  Array.from(fragment.querySelectorAll(selector)).find((element) => element.textContent?.trim())
+
 /** Removes markup and page chrome while preserving all readable text. */
 export const cleanFeedText = (value: string) =>
   extractReadableHtmlText(value, (fragment) => fragment)
@@ -171,7 +227,8 @@ export const cleanFeedText = (value: string) =>
 export const extractArticleText = (html: string) =>
   extractReadableHtmlText(
     html,
-    (fragment) => fragment.querySelector('article') ?? fragment.querySelector('main') ?? fragment,
+    (fragment) =>
+      findReadableElement(fragment, 'article') ?? findReadableElement(fragment, 'main') ?? fragment,
   )
 
 /** Parses RSS 2.x, RDF-style RSS, or Atom XML into one feed-owned shape. */
@@ -199,7 +256,7 @@ export const parseFeedXml = (xml: string, feedUrl: string): ParsedFeed => {
 
     return {
       ...content,
-      id: getItemId(element, link, itemTitle, publishedAt),
+      ...getItemIdentity(element, link, itemTitle, publishedAt),
       link,
       publishedAt,
       title: itemTitle,
@@ -215,6 +272,10 @@ export const createFeedScript = (title: string, content: string) => {
 
   if (cleanContent.length === 0) {
     return cleanTitle
+  }
+
+  if (cleanTitle.length === 0) {
+    return cleanContent
   }
 
   return cleanContent === cleanTitle ? cleanTitle : `${cleanTitle}\n\n${cleanContent}`

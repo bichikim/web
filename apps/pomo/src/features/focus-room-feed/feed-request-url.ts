@@ -1,3 +1,4 @@
+import {isOwnedFeedOrigin, isOwnedTodayInHistoryFeedUrl} from './is-owned-today-in-history-feed-url'
 export interface FeedUrlEnvironment {
   readonly localOrigin?: string
   readonly publicOrigin?: string
@@ -14,10 +15,10 @@ export const getFeedRequestUrl = (value: string, environment: FeedUrlEnvironment
   } catch {
     return value
   }
-  const ownedOrigin = url.origin === localOrigin || url.origin === publicOrigin
+  const ownedOrigin = isOwnedFeedOrigin(url, environment)
   const dateSensitive =
-    /^\/api\/feeds\/today-in-history\/(?:rss|atom)\.xml\/?$/u.test(url.pathname) ||
-    /^\/__dev\/feeds\/(?:rss|atom)\.xml\/?$/u.test(url.pathname)
+    isOwnedTodayInHistoryFeedUrl(url, environment) ||
+    /^\/__dev\/feeds\/(?:rss|atom)\.xml\/?$/iu.test(url.pathname)
   if (!ownedOrigin || !dateSensitive) {
     return value
   }

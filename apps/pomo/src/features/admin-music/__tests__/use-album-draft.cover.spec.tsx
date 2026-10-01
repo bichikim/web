@@ -164,6 +164,77 @@ describe('useAlbumDraft cover preparation', () => {
     cleanup()
   })
 
+  it('should preserve persisted cover metadata when a queued field snapshot is stale', async () => {
+    const {cleanup, result} = renderAlbumDraft()
+    await waitForRestoration(result)
+
+    let storedDraft = createDraft()
+    storageMocks.readAlbumDraftData.mockImplementation(() => storedDraft)
+    storageMocks.writeAlbumDraftData.mockImplementation((draft) => {
+      storedDraft = draft
+      return {success: true}
+    })
+    storageMocks.writeAlbumDraftReference.mockClear()
+
+    let releaseReference: (result: {success: true}) => void = () => undefined
+    const blockedReference = new Promise<{success: true}>((resolve) => {
+      releaseReference = resolve
+    })
+    storageMocks.writeAlbumDraftReference.mockImplementation(async () => {
+      if (storageMocks.writeAlbumDraftReference.mock.calls.length === 1) {
+        return blockedReference
+      }
+      return {success: true}
+    })
+
+    const firstEdit = {...createTranslations(), ko: {description: '', title: '첫 번째 제목'}}
+    result.handleTranslationsChange(firstEdit)
+    await waitFor(() => expect(storageMocks.writeAlbumDraftData).toHaveBeenCalledOnce())
+
+    const secondEdit = {...createTranslations(), ko: {description: '', title: '두 번째 제목'}}
+    result.handleTranslationsChange(secondEdit)
+    storedDraft = {...storedDraft, coverDraftId: 'saved-cover', hasCoverFile: true}
+
+    releaseReference({success: true})
+    await waitFor(() => expect(storageMocks.writeAlbumDraftData).toHaveBeenCalledTimes(2))
+    await waitFor(() => expect(storageMocks.writeAlbumDraftReference).toHaveBeenCalledTimes(2))
+
+    expect(storedDraft).toMatchObject({
+      coverDraftId: 'saved-cover',
+      hasCoverFile: true,
+      translations: secondEdit,
+    })
+    expect(storageMocks.writeAlbumDraftData).toHaveBeenLastCalledWith(
+      expect.objectContaining({coverDraftId: 'saved-cover', hasCoverFile: true}),
+    )
+    expect(storageMocks.writeAlbumDraftReference).toHaveBeenLastCalledWith(
+      expect.objectContaining({coverDraftId: 'saved-cover'}),
+    )
+    cleanup()
+  })
+
+  it('should not write a field snapshot when persisted cover metadata cannot be read', async () => {
+    const {cleanup, result, setMessage} = renderAlbumDraft()
+    await waitForRestoration(result)
+    storageMocks.readAlbumDraftData.mockImplementation(() => {
+      throw new Error('storage unavailable')
+    })
+    storageMocks.writeAlbumDraftData.mockClear()
+    storageMocks.writeAlbumDraftReference.mockClear()
+    setMessage.mockClear()
+
+    result.handleTranslationsChange(createTranslations())
+    await waitFor(() =>
+      expect(setMessage).toHaveBeenCalledWith(
+        '브라우저 초안의 최신 상태를 읽지 못했습니다. 다시 시도해 주세요.',
+      ),
+    )
+
+    expect(storageMocks.writeAlbumDraftData).not.toHaveBeenCalled()
+    expect(storageMocks.writeAlbumDraftReference).not.toHaveBeenCalled()
+    cleanup()
+  })
+
   it('should preserve a cleared cover state when queued field persistence finishes later', async () => {
     storageMocks.readAlbumDraftData.mockReturnValue(
       createDraft({coverDraftId: COVER_DRAFT_ID, hasCoverFile: true}),

@@ -1,3 +1,4 @@
+import {runPendingEvent} from './run-pending-event'
 import {createEffect, createSignal, onCleanup} from 'solid-js'
 
 import {
@@ -27,22 +28,30 @@ const isValidDuration = (durationMinutes: number) =>
 export const useDelayedEndEvent = (props: UseDelayedEndEventProps): DelayedEndEventController => {
   const [isRunning, setIsRunning] = createSignal(false)
   let timerId: ReturnType<typeof globalThis.setTimeout> | null = null
-  let isEventPending = false
+  let eventState: 'idle' | 'running' | 'queued' = 'idle'
+
+  const runEvent = () => {
+    eventState = 'running'
+    runPendingEvent({
+      onError: (error) => console.error('Failed to queue the delayed end event.', error),
+      onEvent: () => props.onEvent(),
+      onSettled: () => {
+        if (eventState === 'queued') {
+          runEvent()
+          return
+        }
+        eventState = 'idle'
+      },
+    })
+  }
 
   const triggerEvent = () => {
-    if (isEventPending) {
+    if (eventState !== 'idle') {
+      eventState = 'queued'
       return
     }
 
-    isEventPending = true
-    Promise.resolve()
-      .then(() => props.onEvent())
-      .catch((error: unknown) => {
-        console.error('Failed to queue the delayed end event.', error)
-      })
-      .finally(() => {
-        isEventPending = false
-      })
+    runEvent()
   }
 
   const cancel = () => {

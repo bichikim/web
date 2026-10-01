@@ -9,6 +9,7 @@ import {settleEntryHistoryWrites} from '../focus-room-entry-history'
 import {DIALOGUE_DRAFT_KEY_PREFIX} from '../focus-room-dialogue'
 import {clearEntryEventPlaybackSession} from '../focus-room-dialogue/use-p-event-controller/entry-playback'
 import {LOCALE_RESET_STORAGE_COUNT, resetLocale as resetLocaleStorage} from '../locale'
+import {UI_AUTO_HIDE_STORAGE_KEY} from '../ui-auto-hide/storage'
 import {hasNativeStorageBridge} from 'src/utils/runtime-storage'
 
 interface OptionResetGroupDefinitionBase {
@@ -133,7 +134,7 @@ const GROUP_DEFINITIONS: ReadonlyArray<OptionResetGroupDefinition> = [
     storageKeys: ['pomo:focus-room-entry-history:v1'],
   },
   {
-    description: '행동·시선·시간·날씨·장면 스타일과 화면 보호기 설정',
+    description: '행동·시선·시간·날씨·장면 스타일, 화면 보호기와 UI 자동 숨김 설정',
     id: 'focus-room',
     label: '집중 공간',
     storageKeys: [
@@ -144,6 +145,7 @@ const GROUP_DEFINITIONS: ReadonlyArray<OptionResetGroupDefinition> = [
       'pomo:weather-preference:v1',
       DISPLAY_PREFERENCES_STORAGE_KEY,
       'pomo:screen-saver-delay:v1',
+      UI_AUTO_HIDE_STORAGE_KEY,
     ],
   },
   {

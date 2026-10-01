@@ -1,6 +1,10 @@
 import type {SupertonicLanguage} from '../language'
 import {classifyTinySpeechNumber} from './classify-tiny-speech-number'
-import {KOREAN_PARTICLE_PATTERN_SOURCE, KOREAN_UNIT_END_PATTERN_SOURCE} from './number-patterns'
+import {
+  KOREAN_PARTICLE_PATTERN_SOURCE,
+  KOREAN_UNIT_END_PATTERN_SOURCE,
+  NUMBER_SIGN_PATTERN_SOURCE,
+} from './number-patterns'
 import type {ClassifySpeechNumberOptions, SpeechNumberDecision} from './types'
 
 interface NumberContext {
@@ -18,7 +22,10 @@ const ORDINAL_DECISION: SpeechNumberDecision = {confidence: 0.99, kind: 'ordinal
 const DIGITS_DECISION: SpeechNumberDecision = {confidence: 0.99, kind: 'digits'}
 const IDENTIFIER_DECISION: SpeechNumberDecision = {confidence: 0.99, kind: 'identifier'}
 const SECOND_TO_LAST_INDEX = -2
-const NUMBER_PATTERN = /^[+-]?\d[\d,.]*(?:st|nd|rd|th)?$/iu
+const NUMBER_PATTERN = new RegExp(
+  `^${NUMBER_SIGN_PATTERN_SOURCE}?[\\d０-９][\\d０-９,.]*(?:st|nd|rd|th)?$`,
+  'iu',
+)
 const STRUCTURED_SEPARATOR_PATTERN = /[/:~–—-]/u
 const ENGLISH_IDENTIFIER_PATTERN =
   /(?:^|[^A-Za-z])(?:channel|episode|formula|gpt|highway|id|iphone|iso|model|room|route|version)\s+$/iu
@@ -76,7 +83,8 @@ const getContext = (options: ClassifySpeechNumberOptions): NumberContext | null 
     : null
 }
 
-const hasLeadingZero = (value: string) => /^[+-]?0\d/u.test(value.replaceAll(',', ''))
+const LEADING_ZERO_PATTERN = new RegExp(`^${NUMBER_SIGN_PATTERN_SOURCE}?[0０][\\d０-９]`, 'u')
+const hasLeadingZero = (value: string) => LEADING_ZERO_PATTERN.test(value.replaceAll(',', ''))
 
 const hasStructuredNeighbor = (context: NumberContext) => {
   const previousCharacter = context.prefix.at(-1)
@@ -103,6 +111,9 @@ const hasEnglishQuantityContext = (prefix: string) => {
     ? true
     : ENGLISH_QUANTITY_CUE_PATTERN.test(prefix)
 }
+
+const hasCountContext = (context: NumberContext) =>
+  hasEnglishQuantityContext(context.prefix) || /^[-−－]/u.test(context.value)
 
 const hasValidOrdinalSuffix = (value: string) => {
   const match = /^(?<number>\d{1,3}(?:,\d{3})+|\d+)(?<suffix>st|nd|rd|th)$/iu.exec(value)
@@ -184,18 +195,14 @@ const classifyEnglishNumber = (context: NumberContext): SpeechNumberDecision => 
     return CARDINAL_DECISION
   }
 
-  const isInteger = /^\d{1,3}(?:,\d{3})*$|^\d+$/u.test(context.value)
+  const isInteger = /^[-−－]?(?:\d{1,3}(?:,\d{3})*|\d+)$/u.test(context.value)
   const isPotentialYear = /^\d{4}$/u.test(context.value)
 
   if (isPotentialYear && !ENGLISH_DIGIT_CUE_PATTERN.test(context.prefix)) {
     return AMBIGUOUS_DECISION
   }
 
-  if (
-    isInteger &&
-    ENGLISH_COUNT_NOUN_PATTERN.test(context.suffix) &&
-    hasEnglishQuantityContext(context.prefix)
-  ) {
+  if (isInteger && ENGLISH_COUNT_NOUN_PATTERN.test(context.suffix) && hasCountContext(context)) {
     return COUNT_DECISION
   }
 

@@ -1,3 +1,4 @@
+import {createRetryableLazyPromise} from 'src/utils/create-retryable-lazy-promise'
 import {failureResult, type Result, successResult} from 'src/features/result'
 import {getErrorMessage} from 'src/utils/get-error-message'
 
@@ -232,20 +233,16 @@ const getDeviceTarget = (target: TextGenerationExecutionTarget): DeviceTextGener
 const createDeviceTextGenerationProvider = (options: {
   readonly onProgress: (progress: TextGenerationProgress) => void
 }): TextGenerationExecutionProvider => {
-  let textRuntimePromise: Promise<TextGenerationRuntime> | null = null
   let textRuntime: TextGenerationRuntime | null = null
   const generationControllers = new Map<string, AbortController>()
 
-  const getTextRuntime = () => {
-    textRuntimePromise ??= import('./transformers-runtime').then(
-      async ({createTransformersRuntime}) => {
-        const runtime = await createTransformersRuntime({onProgress: options.onProgress})
-        textRuntime = runtime
-        return runtime
-      },
-    )
-    return textRuntimePromise
-  }
+  const getTextRuntime = createRetryableLazyPromise(() =>
+    import('./transformers-runtime').then(async ({createTransformersRuntime}) => {
+      const runtime = await createTransformersRuntime({onProgress: options.onProgress})
+      textRuntime = runtime
+      return runtime
+    }),
+  )
 
   return {
     cancel: (requestId) => generationControllers.get(requestId)?.abort(),

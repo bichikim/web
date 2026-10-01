@@ -20,6 +20,41 @@ it('should capture an aspect-preserving color sample and reject an unavailable c
   context.mockReturnValue(null)
   expect(() => captureSample(video)).toThrow('canvas')
 })
+it('should capture both samples for a clip shorter than the end margin', async () => {
+  vi.stubGlobal('URL', {createObjectURL: vi.fn(() => 'blob:sample'), revokeObjectURL: vi.fn()})
+  let currentTime = 0
+  let initialized = false
+  vi.spyOn(HTMLMediaElement.prototype, 'load').mockImplementation(
+    function load(this: HTMLMediaElement) {
+      if (!initialized && this instanceof HTMLVideoElement) {
+        initialized = true
+        Object.defineProperties(this, {
+          duration: {value: 0.04},
+          videoHeight: {value: 2},
+          videoWidth: {value: 2},
+        })
+        Object.defineProperty(this, 'currentTime', {
+          configurable: true,
+          get: () => currentTime,
+          set: (time: number) => {
+            currentTime = time
+            this.dispatchEvent(new Event('seeked'))
+          },
+        })
+      }
+      this.dispatchEvent(new Event('loadeddata'))
+    },
+  )
+  vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue({
+    drawImage: vi.fn(),
+    getImageData: () => ({data: new Uint8ClampedArray(32 * 32 * 4)}),
+  } as unknown as ReturnType<HTMLCanvasElement['getContext']>)
+
+  const samples = await sampleVideo(new Blob(), new AbortController().signal)
+
+  expect(samples.map((sample) => sample.time)).toEqual([0, 0.04])
+  expect(URL.revokeObjectURL).toHaveBeenCalledWith('blob:sample')
+})
 it('should stop the decoder and release its URL when loading is aborted', async () => {
   vi.stubGlobal('URL', {createObjectURL: vi.fn(() => 'blob:sample'), revokeObjectURL: vi.fn()})
   const load = vi.spyOn(HTMLMediaElement.prototype, 'load').mockImplementation(() => undefined)

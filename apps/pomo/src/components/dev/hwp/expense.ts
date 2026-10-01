@@ -1,5 +1,6 @@
+import {isObject} from 'src/utils/is-object'
 import {parseDate} from 'src/features/civil-date'
-import {findJsonObjectEnd} from 'src/utils/json'
+import {iterateJsonObjectSlices} from 'src/utils/json'
 import {isNonBlankString} from 'src/utils/is-non-blank-string'
 
 export interface ExpenseItem {
@@ -32,15 +33,15 @@ export type ExpenseParseResult =
 const MAXIMUM_ITEMS = 20
 const EXPENSE_LINE_PATTERN =
   /^\s*(?<name>.+?)\s+(?<unitPrice>[\d,]+)\s*원(?:\s+(?<quantity>[\d,]+)\s*개)?\s*$/u
-const DATE_LINE_PATTERN = /^\s*(?<year>\d{4})-(?<month>\d{1,2})-(?<day>\d{1,2})\s*$/u
+const DATE_LINE_PATTERN =
+  /^\s*(?<year>\d{4})-(?<month>\d{1,2})-(?<day>\d{1,2})(?:\s+[월화수목금토일]요일)?\s*$/u
 
 const invalid = (code: ExpenseParseError['code']): ExpenseParseResult => ({
   error: {code},
   ok: false,
 })
 
-const isRecord = (value: unknown): value is Record<string, unknown> =>
-  typeof value === 'object' && value !== null && !Array.isArray(value)
+const isRecord = (value: unknown): value is Record<string, unknown> => isObject(value)
 
 const toPositiveInteger = (value: unknown) => {
   if (typeof value === 'number' && Number.isSafeInteger(value) && value > 0) {
@@ -170,27 +171,18 @@ const parseExpenseAssistantCandidate = (json: string): ExpenseParseResult => {
 
 export const parseExpenseAssistantResponse = (text: string): ExpenseParseResult => {
   let invalidShape: ExpenseParseResult | null = null
-  let candidateStart = text.indexOf('{')
-
-  while (candidateStart >= 0) {
-    const candidateEnd = findJsonObjectEnd(text, candidateStart)
-    if (candidateEnd <= candidateStart) {
-      candidateStart = text.indexOf('{', candidateStart + 1)
-    } else {
-      const candidateResult = parseExpenseAssistantCandidate(
-        text.slice(candidateStart, candidateEnd + 1),
-      )
-      if (candidateResult.ok) {
-        return candidateResult
-      }
-
-      if (candidateResult.error.code === 'invalid-shape') {
-        invalidShape = candidateResult
-        candidateStart = text.indexOf('{', candidateEnd + 1)
-      } else {
-        candidateStart = text.indexOf('{', candidateStart + 1)
-      }
+  const candidates = iterateJsonObjectSlices(text)
+  let candidate = candidates.next()
+  while (!candidate.done) {
+    const result = parseExpenseAssistantCandidate(candidate.value.slice)
+    if (result.ok) {
+      return result
     }
+    const skipNested = result.error.code === 'invalid-shape'
+    if (skipNested) {
+      invalidShape = result
+    }
+    candidate = candidates.next(skipNested ? candidate.value.end + 1 : undefined)
   }
 
   return invalidShape ?? invalid('invalid-json')
@@ -206,9 +198,7 @@ export const parseExpenseText = (text: string): ExpenseParseResult => {
 
   for (const line of lines) {
     const dateValue = readExpenseDate(line)
-    if (dateValue !== null && date === null) {
-      date = dateValue
-    } else {
+    if (dateValue === null) {
       const expenseMatch = EXPENSE_LINE_PATTERN.exec(line)
       if (expenseMatch?.groups === undefined) {
         return invalid('invalid-input')
@@ -222,6 +212,8 @@ export const parseExpenseText = (text: string): ExpenseParseResult => {
       }
 
       items.push({amount: unitPrice * quantity, name, quantity, unitPrice})
+    } else if (date === null) {
+      date = dateValue
     }
   }
 

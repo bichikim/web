@@ -68,6 +68,17 @@ describe('splitSpeechText', () => {
     expect(chunks.join('')).toBe('가'.repeat(549))
   })
 
+  it('should split without empty chunks when the recommendation exceeds the maximum', () => {
+    const policy = {...POLICY, considerSplitLength: 1, maximumLength: 5, recommendedLength: 6}
+    const text = '가'.repeat(6)
+
+    const chunks = splitSpeechText(text, policy)
+
+    expect(chunks.every((chunk) => Array.from(chunk).length > 0)).toBe(true)
+    expect(chunks.every((chunk) => Array.from(chunk).length <= policy.maximumLength)).toBe(true)
+    expect(chunks.join('')).toBe(text)
+  })
+
   it('should split oversized sentences near the recommendation at a word boundary', () => {
     const chunks = splitSpeechText(Array.from({length: 80}, () => '긴문장').join(' '), POLICY)
 

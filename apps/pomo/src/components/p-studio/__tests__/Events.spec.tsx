@@ -1,4 +1,5 @@
 /** @vitest-environment jsdom */
+import {finishAnimation} from '../../__tests__/animation'
 import {
   createEvents,
   createPomoSay,
@@ -50,7 +51,7 @@ describe('PStudioEvents', () => {
     vi.restoreAllMocks()
   })
 
-  it('should show skipped reminder text and remove its alert after recovery', () => {
+  it('should keep skipped reminder errors until the user dismisses them after recovery', () => {
     const memo = createMemoryMemo({
       exactReminderAt: '2026-09-04T03:00:00.000Z',
       id: 'memo-1',
@@ -66,6 +67,9 @@ describe('PStudioEvents', () => {
       m.memory_reminder_playback_skipped({text: memo.text}),
     )
     setSkippedReminders([])
+    expect(screen.getByRole('alert')).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', {name: m.toast_close()}))
+    finishAnimation(screen.getByRole('alert'), 'toast-exit')
     expect(screen.queryByRole('alert')).toBeNull()
   })
 
@@ -277,6 +281,45 @@ describe('PStudioEvents', () => {
     await expect(reply).rejects.toMatchObject({name: 'AbortError'})
     expect(stop).toHaveBeenCalledOnce()
     result.unmount()
+  })
+
+  it('should cancel an active input reply when another PomoSay session starts', async () => {
+    const [isPreparing, setIsPreparing] = createSignal(false)
+    const [speechRevision, setSpeechRevision] = createSignal(0)
+    let completeSpeech: () => void = () => undefined
+    const speak: PSayController['speak'] = vi.fn(
+      () =>
+        new Promise<void>((resolve) => {
+          completeSpeech = resolve
+          setIsPreparing(true)
+          setSpeechRevision((revision) => revision + 1)
+        }),
+    )
+    const stop = vi.fn()
+    const pomoSay: PSayController = {
+      ...createPomoSay(),
+      isPreparing,
+      speak,
+      speechRevision,
+      stop,
+    }
+    const result = renderEvents({pomoSay})
+    const oneOffChatOptions = vi.mocked(useOneOffChat).mock.calls[0]?.[0]
+    const reply = oneOffChatOptions?.onReply('재생 중인 답변')
+    void reply?.catch(() => undefined)
+
+    try {
+      await vi.waitFor(() => expect(speak).toHaveBeenCalledWith({text: '재생 중인 답변'}))
+      expect(stop).not.toHaveBeenCalled()
+
+      setSpeechRevision((revision) => revision + 1)
+
+      await expect(reply).rejects.toMatchObject({name: 'AbortError'})
+      expect(stop).not.toHaveBeenCalled()
+    } finally {
+      completeSpeech()
+      result.unmount()
+    }
   })
 
   it('should omit the dialogue composer when its display setting is off', () => {

@@ -1,3 +1,5 @@
+import {createSoundWorker} from 'src/features/sound-generation/create-sound-worker'
+vi.mock('src/features/sound-generation/create-sound-worker', () => ({createSoundWorker: vi.fn()}))
 /** @vitest-environment jsdom */
 import {createRoot} from 'solid-js'
 import {afterEach, expect, it, vi} from 'vitest'
@@ -8,7 +10,7 @@ it.each([3601, 21600, 0, NaN, 1.5])(
   'should reject UI duration %s before starting a Worker',
   (seconds) => {
     const worker = vi.fn()
-    vi.stubGlobal('Worker', worker)
+    vi.mocked(createSoundWorker).mockImplementation(worker)
     createRoot((dispose) => {
       try {
         const generation = useSoundGeneration()
@@ -25,12 +27,9 @@ it.each([3601, 21600, 0, NaN, 1.5])(
 it('should accept one hour in the UI and terminate the Worker on stop', () => {
   const postMessage = vi.fn()
   const terminate = vi.fn()
-  vi.stubGlobal(
-    'Worker',
-    vi.fn(function MockWorker() {
-      return {postMessage, terminate}
-    }),
-  )
+  vi.mocked(createSoundWorker).mockImplementation(function MockWorker() {
+    return {postMessage, terminate}
+  })
   createRoot((dispose) => {
     try {
       const generation = useSoundGeneration()
@@ -49,12 +48,9 @@ it('should accept one hour in the UI and terminate the Worker on stop', () => {
 it('should pass loop input to the Worker without applying generation duration validation', () => {
   const postMessage = vi.fn()
   const terminate = vi.fn()
-  vi.stubGlobal(
-    'Worker',
-    vi.fn(function MockWorker() {
-      return {postMessage, terminate}
-    }),
-  )
+  vi.mocked(createSoundWorker).mockImplementation(function MockWorker() {
+    return {postMessage, terminate}
+  })
   createRoot((dispose) => {
     try {
       const generation = useSoundGeneration()
@@ -81,7 +77,7 @@ it('should report a busy request and clear the error when stopped', () => {
   const worker = vi.fn(function MockWorker() {
     return {postMessage, terminate: vi.fn()}
   })
-  vi.stubGlobal('Worker', worker)
+  vi.mocked(createSoundWorker).mockImplementation(worker)
 
   createRoot((dispose) => {
     try {
@@ -116,12 +112,9 @@ it('should preserve a worker error when stopped after failure', () => {
     postMessage: vi.fn(),
     terminate: vi.fn(),
   }
-  vi.stubGlobal(
-    'Worker',
-    vi.fn(function MockWorker() {
-      return worker
-    }),
-  )
+  vi.mocked(createSoundWorker).mockImplementation(function MockWorker() {
+    return worker
+  })
 
   createRoot((dispose) => {
     try {
@@ -154,12 +147,9 @@ it('should clear the busy error after the active generation succeeds', () => {
       static revokeObjectURL = vi.fn()
     },
   )
-  vi.stubGlobal(
-    'Worker',
-    vi.fn(function MockWorker() {
-      return worker
-    }),
-  )
+  vi.mocked(createSoundWorker).mockImplementation(function MockWorker() {
+    return worker
+  })
 
   createRoot((dispose) => {
     try {
@@ -184,18 +174,15 @@ it('should revoke the previous result when the next generation fails', () => {
     postMessage: ReturnType<typeof vi.fn>
     terminate: ReturnType<typeof vi.fn>
   }[] = []
-  vi.stubGlobal(
-    'Worker',
-    vi.fn(function MockWorker() {
-      const worker = {
-        onmessage: null as ((event: MessageEvent) => void) | null,
-        postMessage: vi.fn(),
-        terminate: vi.fn(),
-      }
-      workers.push(worker)
-      return worker
-    }),
-  )
+  vi.mocked(createSoundWorker).mockImplementation(function MockWorker() {
+    const worker = {
+      onmessage: null as ((event: MessageEvent) => void) | null,
+      postMessage: vi.fn(),
+      terminate: vi.fn(),
+    }
+    workers.push(worker)
+    return worker
+  })
   const nativeUrl = URL
   const createObjectURL = vi.fn(() => 'blob:result')
   const revokeObjectURL = vi.fn()
@@ -222,6 +209,23 @@ it('should revoke the previous result when the next generation fails', () => {
 
       expect(generation.error()).toBe('worker failed')
       expect(generation.url()).toBeNull()
+    } finally {
+      dispose()
+    }
+  })
+})
+
+it('should clear busy state and expose a failed worker factory request', () => {
+  vi.mocked(createSoundWorker).mockImplementation(() => {
+    throw new Error('worker unavailable')
+  })
+  createRoot((dispose) => {
+    try {
+      const generation = useSoundGeneration()
+      generation.generate({prompt: 'rain', seconds: 30})
+      expect(generation.busy()).toBe(false)
+      expect(generation.error()).toBe('worker unavailable')
+      expect(generation.status()).toBe('생성에 실패했습니다.')
     } finally {
       dispose()
     }

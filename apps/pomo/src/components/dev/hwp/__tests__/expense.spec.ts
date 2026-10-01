@@ -30,6 +30,23 @@ describe('parseExpenseText', () => {
     })
   })
 
+  it('should parse a date line with a trailing weekday label', () => {
+    expect(parseExpenseText('2026-09-05 금요일\n두부 1,500원')).toMatchObject({
+      ok: true,
+      value: {date: '2026-09-05', items: [{amount: 1500, name: '두부'}], total: 1500},
+    })
+  })
+
+  it('should keep the first date and ignore later date lines', () => {
+    expect(parseExpenseText('2026-09-05\n2026-09-06\n두부 1,500원')).toMatchObject({
+      ok: true,
+      value: {
+        date: '2026-09-05',
+        items: [{amount: 1500, name: '두부', quantity: 1, unitPrice: 1500}],
+      },
+    })
+  })
+
   it('should preserve support for unpadded date parts', () => {
     expect(parseExpenseText('2026-9-5\n두부 1,500원')).toMatchObject({
       ok: true,
