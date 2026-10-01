@@ -1,3 +1,4 @@
+import {createDeferred} from 'src/test-utils/create-deferred'
 import {createRoot} from 'solid-js'
 import {afterEach, describe, expect, it, vi} from 'vitest'
 
@@ -28,16 +29,6 @@ import {failureResult, successResult} from 'src/features/result'
 interface SpeechTestRoot {
   readonly controller: SpeechToTextController
   readonly dispose: () => void
-}
-
-const createDeferred = <Value>() => {
-  let resolvePromise: (value: Value) => void = () => undefined
-  let rejectPromise: (reason?: unknown) => void = () => undefined
-  const promise = new Promise<Value>((resolve, reject) => {
-    resolvePromise = resolve
-    rejectPromise = reject
-  })
-  return {promise, reject: rejectPromise, resolve: resolvePromise}
 }
 
 const createRecording = (): SpeechRecording => ({

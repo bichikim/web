@@ -1,6 +1,6 @@
 /** @vitest-environment jsdom */
 import * as m from '@paraglide/message'
-import {cleanup, fireEvent, render, screen} from '@solidjs/testing-library'
+import {cleanup, fireEvent, render, screen, waitFor} from '@solidjs/testing-library'
 import {createSignal} from 'solid-js'
 import {afterEach, expect, it, vi} from 'vitest'
 import {LanguageLearningWordPronunciationButton} from '../PronunciationButton'
@@ -24,9 +24,11 @@ it('should report rejected autoplay and pause audio on disposal', async () => {
     />
   ))
   expect(play).toHaveBeenCalledOnce()
-  expect(
-    await screen.findByRole('button', {name: m.learning_words_playback_failed({word: 'apple'})}),
-  ).toBeVisible()
+  const button = screen.getByRole('button')
+  await waitFor(() =>
+    expect(button).toHaveAccessibleName(m.learning_words_playback_failed({word: 'apple'})),
+  )
+  expect(button).toBeVisible()
   view.unmount()
   expect(pause).toHaveBeenCalledOnce()
 })

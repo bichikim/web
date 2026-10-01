@@ -1,20 +1,10 @@
+import {createDeferred} from 'src/test-utils/create-deferred'
 import {createSignal} from 'solid-js'
 import {expect, it, type Mock, vi} from 'vitest'
 
 import type {ModelDownloadResult} from '../../../features/model-download'
 import type {LanguageLearningPendingDownload} from '../editor-state'
 import {type LanguageLearningDownloadState, useModelDownload} from '../use-model-download'
-
-function createDeferred<T>() {
-  let resolve = (_value: T) => undefined
-  const promise = new Promise<T>((nextResolve) => {
-    resolve = (value) => {
-      nextResolve(value)
-    }
-  })
-
-  return {promise, resolve}
-}
 
 interface DownloadTestContext {
   readonly beginTextGeneration: Mock<() => void>

@@ -1,3 +1,5 @@
+import {sample} from 'es-toolkit/array'
+import {randomInRange} from 'src/utils/random-in-range'
 import {Container, Sprite, type Texture} from 'pixi.js'
 
 import dayFocusedClosedImage from './assets/animation/eyes/day-focused/closed.webp'
@@ -410,7 +412,7 @@ export class PEyeController {
       return
     }
 
-    const delay = PUPIL_MINIMUM_DELAY + Math.random() * (PUPIL_MAXIMUM_DELAY - PUPIL_MINIMUM_DELAY)
+    const delay = randomInRange(PUPIL_MINIMUM_DELAY, PUPIL_MAXIMUM_DELAY)
     this.#pupilTimer = globalThis.setTimeout(() => {
       this.#pupilTimer = null
 
@@ -421,8 +423,11 @@ export class PEyeController {
       const candidates = EYE_TARGET_OFFSETS.filter(
         ({x, y}) => x !== this.#pupilOffset.x || y !== this.#pupilOffset.y,
       )
-      const index = Math.min(candidates.length - 1, Math.floor(Math.random() * candidates.length))
-      this.#pupilOffset = candidates[index]
+      const offset = sample(candidates) ?? candidates.at(-1)
+      if (offset === undefined) {
+        return
+      }
+      this.#pupilOffset = offset
       this.#render('open')
     }, delay)
   }

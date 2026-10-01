@@ -1,8 +1,7 @@
 import {dayjs} from 'src/utils/zoned-dayjs'
-import {z} from 'zod'
+import {parseAllDayDateKey} from './all-day-date'
+import {parseTimedInterval} from './parse-timed-interval'
 import type {CalendarEvent} from './types'
-
-const calendarDateSchema = z.iso.date()
 
 /**
  * Groups events with parseable end values and valid all-day start dates by covered visible dates,
@@ -14,8 +13,6 @@ export const groupCalendarEvents = (
   timeZone: string,
 ): ReadonlyMap<string, ReadonlyArray<CalendarEvent>> => {
   const createDateKey = (timestamp: number) => dayjs(timestamp).tz(timeZone).format('YYYY-MM-DD')
-  const getAllDayDateKey = (date: string) =>
-    calendarDateSchema.safeParse(date.slice(0, 'YYYY-MM-DD'.length)).data
   const grouped = new Map<string, CalendarEvent[]>()
   events.forEach((event) => {
     const endTimestamp = Date.parse(event.end)
@@ -24,18 +21,18 @@ export const groupCalendarEvents = (
     }
 
     const startTimestamp = Date.parse(event.start)
-    if (!event.allDay && (!Number.isFinite(startTimestamp) || endTimestamp <= startTimestamp)) {
+    if (!event.allDay && parseTimedInterval(event.start, event.end) === null) {
       return
     }
 
-    const start = event.allDay ? getAllDayDateKey(event.start) : createDateKey(startTimestamp)
-    if (start === undefined) {
+    const start = event.allDay ? parseAllDayDateKey(event.start) : createDateKey(startTimestamp)
+    if (start === null) {
       return
     }
 
     // All-day ends retain their date key; timed events use the last instant for local-day boundaries.
-    const end = event.allDay ? getAllDayDateKey(event.end) : createDateKey(endTimestamp - 1)
-    if (end === undefined) {
+    const end = event.allDay ? parseAllDayDateKey(event.end) : createDateKey(endTimestamp - 1)
+    if (end === null) {
       return
     }
 

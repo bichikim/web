@@ -7,14 +7,19 @@ import {PSelectItem} from '../Item'
 
 const options = [{icon: 'i-tabler-moon', label: '밤', value: 'night'}] as const
 
-it('should resolve icon item classes through actual Kobalte item primitives', () => {
-  const getIconClass = vi.fn((icon: string) => `resolved-${icon}`)
+it.each(['custom', 'fallback'] as const)(
+  'should resolve %s icon item classes through actual Kobalte item primitives',
+  (resolution) => {
+    const getIconClass = vi.fn((icon: string) => `resolved-${icon}`)
 
-  render(() => (
-    <>
+    render(() => (
       <Select
         itemComponent={(itemProps) => (
-          <PSelectItem appearance="icon" getIconClass={getIconClass} {...itemProps} />
+          <PSelectItem
+            appearance="icon"
+            getIconClass={resolution === 'custom' ? getIconClass : undefined}
+            {...itemProps}
+          />
         )}
         optionTextValue="label"
         optionValue="value"
@@ -23,27 +28,19 @@ it('should resolve icon item classes through actual Kobalte item primitives', ()
       >
         <Select.Listbox />
       </Select>
-      <Select
-        itemComponent={(itemProps) => <PSelectItem appearance="icon" {...itemProps} />}
-        optionTextValue="label"
-        optionValue="value"
-        options={[...options]}
-        value={options[0]}
-      >
-        <Select.Listbox />
-      </Select>
-    </>
-  ))
+    ))
 
-  expect(screen.getAllByText('밤')).toHaveLength(2)
-  expect(getIconClass).toHaveBeenCalledWith('i-tabler-check')
-  expect(getIconClass).toHaveBeenCalledWith('i-tabler-moon')
-  const items = screen.getAllByRole('option', {name: '밤'})
-  const [customItemIcon, customIndicator, fallbackItemIcon, fallbackIndicator] = items.flatMap(
-    (item) => [...item.querySelectorAll('span[aria-hidden="true"]')],
-  )
-  expect(customItemIcon).toHaveClass('resolved-i-tabler-moon')
-  expect(customIndicator).toHaveClass('resolved-i-tabler-check', 'size-4')
-  expect(fallbackItemIcon).toHaveClass('i-tabler-moon')
-  expect(fallbackIndicator).toHaveClass('i-tabler-check', 'size-4')
-})
+    expect(screen.getByText('밤')).toBeVisible()
+    const item = screen.getByRole('option', {name: '밤'})
+    const [itemIcon, indicator] = item.querySelectorAll('span[aria-hidden="true"]')
+    if (resolution === 'custom') {
+      expect(getIconClass).toHaveBeenCalledWith('i-tabler-check')
+      expect(getIconClass).toHaveBeenCalledWith('i-tabler-moon')
+      expect(itemIcon).toHaveClass('resolved-i-tabler-moon')
+      expect(indicator).toHaveClass('resolved-i-tabler-check', 'size-4')
+    } else {
+      expect(itemIcon).toHaveClass('i-tabler-moon')
+      expect(indicator).toHaveClass('i-tabler-check', 'size-4')
+    }
+  },
+)

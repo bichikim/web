@@ -29,8 +29,8 @@ export const PRelaxPlayerPage = (props: PRelaxPlayerPageProps) => {
     selectedBackground() ?? props.backgroundSrc ?? DEFAULT_RELAX_BACKGROUND_SOURCE
   const daylightPosition = () =>
     selectedDaylightPosition() ?? props.daylightPosition ?? DEFAULT_DAYLIGHT_POSITION
-  const daylightTilt = useDaylightTilt(daylightPosition)
   const depthMotion = useRelaxDepthMotion()
+  const daylightTilt = useDaylightTilt(daylightPosition, depthMotion.offset)
   const depthSource = () => {
     const source = backgroundSource()
     return RELAX_BACKGROUND_OPTIONS.find((option) => option.source === source)?.depthSource
@@ -77,9 +77,6 @@ export const PRelaxPlayerPage = (props: PRelaxPlayerPageProps) => {
           mistIntensity={mistIntensity()}
           selectedSource={backgroundSource()}
           weather={weather()}
-          tiltEnabled={daylightTilt.enabled()}
-          tiltStatus={daylightTilt.status()}
-          onTiltEnabledChange={daylightTilt.setEnabled}
         />
         <SoundEffects trigger="toolbar" />
       </div>

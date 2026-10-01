@@ -1,3 +1,4 @@
+import {clampUnit} from 'src/utils/clamp-unit'
 import {getMonotonicTime} from 'src/utils/get-monotonic-time'
 import type {FloatArray} from '@babylonjs/core/types'
 import type {AbstractMesh} from '@babylonjs/core/Meshes/abstractMesh'
@@ -165,13 +166,9 @@ const projectInitial = (targets: readonly Vector3[], capsules: readonly ClothCap
     for (const point of initial) {
       for (const capsule of capsules) {
         const direction = capsule.end.subtract(capsule.start)
-        const amount = Math.max(
-          0,
-          Math.min(
-            1,
-            Vector3.Dot(point.subtract(capsule.start), direction) /
-              Math.max(direction.lengthSquared(), SETTINGS.epsilon),
-          ),
+        const amount = clampUnit(
+          Vector3.Dot(point.subtract(capsule.start), direction) /
+            Math.max(direction.lengthSquared(), SETTINGS.epsilon),
         )
         const nearest = capsule.start.add(direction.scale(amount))
         const offset = point.subtract(nearest)
