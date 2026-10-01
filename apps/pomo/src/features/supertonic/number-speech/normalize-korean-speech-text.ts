@@ -53,6 +53,8 @@ const KOREAN_PARTICLE_PATTERN = KOREAN_PARTICLE_PATTERN_SOURCE
 const KOREAN_UNIT_END_PATTERN = KOREAN_UNIT_END_PATTERN_SOURCE
 const COLON_CLOCK_CONTEXT_SUFFIX_PATTERN_SOURCE =
   '\\s*(?:에|부터|까지|에서|쯤|경)(?=$|[^\\p{L}\\p{N}_])'
+const COLON_CLOCK_NON_TIME_PREFIX_PATTERN =
+  /(?:^|[^\p{L}\p{N}_])(?:비율|비례|버전|aspect\s+ratio|ratio|version|ver|v)\.?\s*(?:(?:은|는|이|가|을|를|의)\s*)?$/iu
 const LEVEL_FOLLOWING_PATTERN = `[\\p{L}\\p{N}_]|[.,]${KOREAN_DIGIT_PATTERN_SOURCE}|[+\\-/:~–—#@$€£¥₩<>≤≥≈]`
 const LEVEL_NUMBER_END = `(?:(?=${KOREAN_PARTICLE_PATTERN})|(?!${LEVEL_FOLLOWING_PATTERN})${KOREAN_UNIT_END_PATTERN})`
 const WON_PATTERN = new RegExp(
@@ -236,6 +238,10 @@ const replaceColonClockTime = (
     string,
   ]
 ) => {
+  if (COLON_CLOCK_NON_TIME_PREFIX_PATTERN.test(input.slice(0, start))) {
+    return match
+  }
+
   const hasKoreanTimeSuffix = COLON_CLOCK_CONTEXT_SUFFIX_PATTERN.test(
     input.slice(start + match.length),
   )
