@@ -3,7 +3,7 @@ import {createTokenIdsMatching} from '../text-generation/create-token-ids-matchi
 
 import type {TextTokenVocabulary} from '../text-generation/runtime'
 
-const FOREIGN_CJK_PATTERN = /[\p{Script_Extensions=Han}\p{Script=Hiragana}\p{Script=Katakana}]/u
+const FOREIGN_CJK_PATTERN = /[\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}]/u
 const SENTENCE_CONTENT_PATTERN = [
   String.raw`(?<!\S)\d+\.(?=\s+\S)`,
   String.raw`[^.!?\n。！？]`,
