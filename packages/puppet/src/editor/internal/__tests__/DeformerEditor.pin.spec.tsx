@@ -35,8 +35,10 @@ const renderPinEditor = () => {
   return {document, node, setDocument, svg, view}
 }
 
-test('should preserve the pin pose while switching its baseline and editing radius', () => {
-  const {node, view} = renderPinEditor()
+const posePinAndReturnToBaseline = (
+  node: () => PuppetSceneDeformerNode,
+  view: ReturnType<typeof render>,
+) => {
   const point = {x: node().controlPoints[0]!, y: node().controlPoints[1]!}
   fireEvent.keyDown(view.getByRole('button', {name: '핀 1'}), {key: 'ArrowRight', shiftKey: true})
   const posed = transformDeformerPoint(node(), point)
@@ -44,6 +46,17 @@ test('should preserve the pin pose while switching its baseline and editing radi
   fireEvent.click(view.getByRole('button', {name: '기준 배치'}))
   fireEvent.keyDown(view.getByRole('button', {name: '핀 1'}), {key: 'ArrowDown', shiftKey: true})
   expect(transformDeformerPoint(node(), point)).toEqual(posed)
+  return {point, posed}
+}
+
+test('should preserve a posed pin when returning to baseline placement', () => {
+  const {node, view} = renderPinEditor()
+  posePinAndReturnToBaseline(node, view)
+})
+
+test('should adjust pin radius without moving the posed result', () => {
+  const {document, node, setDocument, svg, view} = renderPinEditor()
+  const {point, posed} = posePinAndReturnToBaseline(node, view)
   fireEvent.input(view.getByLabelText('핀 영향 반경'), {target: {value: '120'}})
   expect(node().pins![0]!.radius).toBe(120)
   expect(transformDeformerPoint(node(), point)).toEqual(posed)
@@ -51,12 +64,7 @@ test('should preserve the pin pose while switching its baseline and editing radi
 
 test('should add and delete pins without losing the pose', () => {
   const {document, node, setDocument, svg, view} = renderPinEditor()
-  const point = {x: node().controlPoints[0]!, y: node().controlPoints[1]!}
-  fireEvent.keyDown(view.getByRole('button', {name: '핀 1'}), {key: 'ArrowRight', shiftKey: true})
-  const posed = transformDeformerPoint(node(), point)
-  fireEvent.click(view.getByRole('button', {name: '기준 배치'}))
-  fireEvent.keyDown(view.getByRole('button', {name: '핀 1'}), {key: 'ArrowDown', shiftKey: true})
-  expect(transformDeformerPoint(node(), point)).toEqual(posed)
+  const {point, posed} = posePinAndReturnToBaseline(node, view)
   fireEvent.input(view.getByLabelText('핀 영향 반경'), {target: {value: '120'}})
   expect(node().pins![0]!.radius).toBe(120)
   expect(transformDeformerPoint(node(), point)).toEqual(posed)
@@ -73,14 +81,9 @@ test('should add and delete pins without losing the pose', () => {
   expect(parseDocument(JSON.stringify(document())).ok).toBe(true)
 })
 
-test('should drag a pin and preserve its pose', () => {
+test('should drag a pin without changing its posed result', () => {
   const {document, node, svg, view} = renderPinEditor()
-  const point = {x: node().controlPoints[0]!, y: node().controlPoints[1]!}
-  fireEvent.keyDown(view.getByRole('button', {name: '핀 1'}), {key: 'ArrowRight', shiftKey: true})
-  const posed = transformDeformerPoint(node(), point)
-  fireEvent.click(view.getByRole('button', {name: '기준 배치'}))
-  fireEvent.keyDown(view.getByRole('button', {name: '핀 1'}), {key: 'ArrowDown', shiftKey: true})
-  expect(transformDeformerPoint(node(), point)).toEqual(posed)
+  const {point, posed} = posePinAndReturnToBaseline(node, view)
   fireEvent.input(view.getByLabelText('핀 영향 반경'), {target: {value: '120'}})
   expect(node().pins![0]!.radius).toBe(120)
   expect(transformDeformerPoint(node(), point)).toEqual(posed)

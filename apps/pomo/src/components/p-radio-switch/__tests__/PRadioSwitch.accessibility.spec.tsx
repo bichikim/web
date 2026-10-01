@@ -32,7 +32,52 @@ describe('PRadioSwitch accessibility with Kobalte', () => {
     expect(within(group).getByRole('radio', {name: '자동'})).not.toBeChecked()
   })
 
-  it('should move focus and controlled selection while skipping disabled radios', () => {
+  it.each([
+    {
+      currentLabel: '낮',
+      currentValue: 'day',
+      key: 'ArrowRight',
+      nextLabel: '자동',
+      nextValue: 'auto',
+    },
+    {
+      currentLabel: '자동',
+      currentValue: 'auto',
+      key: 'ArrowLeft',
+      nextLabel: '낮',
+      nextValue: 'day',
+    },
+  ])(
+    'should move focus from $currentLabel to $nextLabel with $key while skipping disabled radios',
+    ({currentLabel, currentValue, key, nextLabel, nextValue}) => {
+      const onChange = vi.fn()
+      render(() => {
+        const [value, setValue] = createSignal(currentValue)
+        return (
+          <PRadioSwitch
+            label="시간"
+            onChange={(nextValue) => {
+              onChange(nextValue)
+              setValue(nextValue)
+            }}
+            options={OPTIONS}
+            value={value()}
+          />
+        )
+      })
+
+      const current = screen.getByRole('radio', {name: currentLabel})
+      const next = screen.getByRole('radio', {name: nextLabel})
+      current.focus()
+      fireEvent.keyDown(current, {key})
+      expect(next).toHaveFocus()
+      expect(next).toBeChecked()
+      expect(current).not.toBeChecked()
+      expect(onChange).toHaveBeenCalledExactlyOnceWith(nextValue)
+    },
+  )
+
+  it('should preserve sequential keyboard navigation in the mounted radio group', () => {
     const onChange = vi.fn()
     render(() => {
       const [value, setValue] = createSignal('day')
@@ -50,20 +95,18 @@ describe('PRadioSwitch accessibility with Kobalte', () => {
     })
 
     const day = screen.getByRole('radio', {name: '낮'})
-    const automatic = screen.getByRole('radio', {name: '자동'})
+    const auto = screen.getByRole('radio', {name: '자동'})
     day.focus()
     fireEvent.keyDown(day, {key: 'ArrowRight'})
-    expect(automatic).toHaveFocus()
-    expect(automatic).toBeChecked()
+    expect(auto).toHaveFocus()
+    expect(auto).toBeChecked()
     expect(day).not.toBeChecked()
-    expect(onChange).toHaveBeenNthCalledWith(1, 'auto')
 
-    fireEvent.keyDown(automatic, {key: 'ArrowLeft'})
+    fireEvent.keyDown(auto, {key: 'ArrowLeft'})
     expect(day).toHaveFocus()
     expect(day).toBeChecked()
-    expect(automatic).not.toBeChecked()
-    expect(onChange).toHaveBeenNthCalledWith(2, 'day')
-    expect(onChange).toHaveBeenCalledTimes(2)
+    expect(auto).not.toBeChecked()
+    expect(onChange.mock.calls).toEqual([['auto'], ['day']])
   })
 
   it('should disable all native radios and prevent selection when the switch is disabled', async () => {

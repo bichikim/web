@@ -6,6 +6,21 @@ import {afterEach, beforeEach, expect, it, vi} from 'vitest'
 import {useScreenWakeLock} from 'src/features/screen-wake-lock'
 import {PGeneralDisplaySettings} from '../Display'
 
+vi.mock('../UiAutoHide', () => ({PUiAutoHideSettings: () => null}))
+vi.mock('src/components/p-select/PSelect', () => ({PSelect: () => null}))
+vi.mock('src/components/p-weather-settings/PWeatherDisplaySwitch', () => ({
+  PWeatherDisplaySwitch: () => null,
+}))
+vi.mock('src/features/fullscreen', () => ({
+  useFullscreen: () => ({
+    availability: () => 'supported',
+    error: () => null,
+    isEnabled: () => false,
+    isRequestPending: () => false,
+    onEnabledChange: vi.fn(),
+  }),
+}))
+
 const WakeLockDisplayHarness = () => {
   const wakeLock = useScreenWakeLock()
 
@@ -46,7 +61,7 @@ it('should remove a stale acquire error after the user turns the real switch off
   const wakeLockSwitch = screen.getByRole('switch', {name: '화면 자동 꺼짐 방지'})
   await waitFor(() => expect(wakeLockSwitch).toBeEnabled())
   fireEvent.click(wakeLockSwitch)
-  await waitFor(() => expect(request).toHaveBeenCalledWith('screen'))
+  expect(request).toHaveBeenCalledExactlyOnceWith('screen')
   expect(wakeLockSwitch).toBeChecked()
   expect(wakeLockSwitch).toBeEnabled()
 

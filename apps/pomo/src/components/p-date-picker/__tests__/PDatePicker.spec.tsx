@@ -3,9 +3,18 @@ import {fireEvent, render, screen} from '@solidjs/testing-library'
 import {createSignal} from 'solid-js'
 import {expect, it, vi} from 'vitest'
 import {PDatePicker} from '../PDatePicker'
-it('should select a bounded date with a custom calendar and return focus', async () => {
-  const onChange = vi.fn()
+it('should render a bounded custom calendar without a native date input', () => {
   const {container} = render(() => (
+    <PDatePicker label="입대일" value="2026-02-17" min="2026-02-15" max="2026-02-28" />
+  ))
+  fireEvent.click(screen.getByRole('button', {name: '입대일: 2026-02-17'}))
+  expect(container.querySelector('input[type=date]')).toBeNull()
+  expect(screen.getByRole('button', {name: '2026-02-14'})).toBeDisabled()
+})
+
+it('should select a bounded date and return focus to the trigger', () => {
+  const onChange = vi.fn()
+  render(() => (
     <PDatePicker
       label="입대일"
       value="2026-02-17"
@@ -14,13 +23,12 @@ it('should select a bounded date with a custom calendar and return focus', async
       onChange={onChange}
     />
   ))
-  fireEvent.click(screen.getByRole('button', {name: '입대일: 2026-02-17'}))
-  expect(container.querySelector('input[type=date]')).toBeNull()
-  expect(screen.getByRole('button', {name: '2026-02-14'})).toBeDisabled()
+  const trigger = screen.getByRole('button', {name: '입대일: 2026-02-17'})
+  fireEvent.click(trigger)
   fireEvent.click(screen.getByRole('button', {name: '2026-02-18'}))
   expect(onChange).toHaveBeenCalledWith('2026-02-18')
   expect(screen.queryByRole('button', {name: '2026-02-18'})).not.toBeInTheDocument()
-  expect(screen.getByRole('button', {name: '입대일: 2026-02-17'})).toHaveFocus()
+  expect(trigger).toHaveFocus()
 })
 it('should follow external changes and navigate with keyboard across month boundaries', () => {
   const [value, setValue] = createSignal('2024-02-29')

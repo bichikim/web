@@ -35,6 +35,22 @@ const renderArm = (
   return vertices
 }
 
+const neutralArmVerticesByPart = new WeakMap<PuppetPart, Map<string, ReadonlyArray<number>>>()
+const renderNeutralArm = (part: PuppetPart, values: Readonly<Record<string, number>>) => {
+  const key = JSON.stringify(
+    Object.entries(values).sort(([first], [second]) => first.localeCompare(second)),
+  )
+  const cachedByPose = neutralArmVerticesByPart.get(part) ?? new Map()
+  const cached = cachedByPose.get(key)
+  if (cached !== undefined) {
+    return cached
+  }
+  const vertices = Object.freeze(renderArm(part, values))
+  cachedByPose.set(key, vertices)
+  neutralArmVerticesByPart.set(part, cachedByPose)
+  return vertices
+}
+
 const width = (vertices: ReadonlyArray<number>) => {
   const horizontal = vertices.filter((_, index) => index % 2 === 0)
   return Math.max(...horizontal) - Math.min(...horizontal)
@@ -198,8 +214,10 @@ describe('development model articulated arms', () => {
       }
       for (const partId of partIds) {
         const part = model.parts.find((candidate) => candidate.id === partId)!
-        const neutral = renderArm(part, baseline)
+        const neutral = renderNeutralArm(part, baseline)
+        expect(Object.isFrozen(neutral)).toBe(true)
         const moved = renderArm(part, values)
+        expect(renderNeutralArm(part, baseline)).toBe(neutral)
         expect(moved.every(Number.isFinite)).toBe(true)
         part.mesh.vertices.forEach((coordinate, index) => {
           if (index % 2 === 1 && coordinate <= 1750) {
