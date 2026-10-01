@@ -5,64 +5,62 @@ import {expect, it, vi} from 'vitest'
 
 import {LanguageLearningSettings} from '../Settings'
 
-it('should expose and update every language learning generation setting', () => {
-  const onCountChange = vi.fn()
-  const onLanguageChange = vi.fn()
-  const onModelChange = vi.fn()
-  const onVoiceChange = vi.fn()
+const createChangeHandlers = () => ({
+  count: vi.fn(),
+  language: vi.fn(),
+  model: vi.fn(),
+  voice: vi.fn(),
+})
+
+const renderSettings = (handlers: ReturnType<typeof createChangeHandlers>, disabled = false) => {
   render(() => (
     <LanguageLearningSettings
       count={1}
-      disabled={false}
+      disabled={disabled}
       language="en"
       modelId="full"
-      onCountChange={onCountChange}
-      onLanguageChange={onLanguageChange}
-      onModelChange={onModelChange}
-      onVoiceChange={onVoiceChange}
+      onCountChange={handlers.count}
+      onLanguageChange={handlers.language}
+      onModelChange={handlers.model}
+      onVoiceChange={handlers.voice}
       voiceId="Yuna"
     />
   ))
+}
 
-  for (const [name, value] of [
-    ['학습 언어', 'ja'],
-    ['만들 개수', '3'],
-    ['목소리', 'Hana'],
-    ['음성 모델', 'int8'],
-  ]) {
-    fireEvent.keyDown(screen.getByRole('button', {name: new RegExp(name)}), {key: 'ArrowDown'})
-    const option = document.querySelector(`[role="option"][data-key="${value}"]`)
-    expect(option).not.toBeNull()
-    fireEvent.click(option!)
-  }
+const updateCases = [
+  {buttonName: '학습 언어', expectedValue: 'ja', handler: 'language', optionValue: 'ja'},
+  {buttonName: '만들 개수', expectedValue: 3, handler: 'count', optionValue: '3'},
+  {buttonName: '목소리', expectedValue: 'Hana', handler: 'voice', optionValue: 'Hana'},
+  {buttonName: '음성 모델', expectedValue: 'int8', handler: 'model', optionValue: 'int8'},
+] as const
 
-  expect(onLanguageChange).toHaveBeenCalledWith('ja')
-  expect(onCountChange).toHaveBeenCalledWith(3)
-  expect(onVoiceChange).toHaveBeenCalledWith('Hana')
-  expect(onModelChange).toHaveBeenCalledWith('int8')
+it.each(updateCases)('should update the $buttonName setting', (testCase) => {
+  const handlers = createChangeHandlers()
+  renderSettings(handlers)
+
+  fireEvent.keyDown(screen.getByRole('button', {name: new RegExp(testCase.buttonName)}), {
+    key: 'ArrowDown',
+  })
+  const option = document.querySelector(`[role="option"][data-key="${testCase.optionValue}"]`)
+  expect(option).not.toBeNull()
+  fireEvent.click(option!)
+
+  expect(handlers[testCase.handler]).toHaveBeenCalledWith(testCase.expectedValue)
 })
 
 it('should disable every dropdown', () => {
-  const onChange = vi.fn()
-  render(() => (
-    <LanguageLearningSettings
-      count={1}
-      disabled
-      language="en"
-      modelId="full"
-      onCountChange={onChange}
-      onLanguageChange={onChange}
-      onModelChange={onChange}
-      onVoiceChange={onChange}
-      voiceId="Yuna"
-    />
-  ))
+  const handlers = createChangeHandlers()
+  renderSettings(handlers, true)
 
   for (const select of screen.getAllByRole('button')) {
     expect(select).toBeDisabled()
   }
 
-  expect(onChange).not.toHaveBeenCalled()
+  expect(handlers.count).not.toHaveBeenCalled()
+  expect(handlers.language).not.toHaveBeenCalled()
+  expect(handlers.model).not.toHaveBeenCalled()
+  expect(handlers.voice).not.toHaveBeenCalled()
 })
 
 it('should lock sentence settings while preserving voice regeneration choices', () => {
