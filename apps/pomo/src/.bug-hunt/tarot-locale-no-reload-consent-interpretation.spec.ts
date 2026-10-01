@@ -24,7 +24,9 @@ vi.mock('../features/text-generation', () => ({
   isTextModelDownloaded: mocks.downloaded,
   supportsWebGpu: () => mocks.supported,
 }))
-vi.mock('../features/supertonic/download', () => ({isSupertonicModelDownloaded: mocks.voiceDownloaded}))
+vi.mock('../features/supertonic/download', () => ({
+  isSupertonicModelDownloaded: mocks.voiceDownloaded,
+}))
 vi.mock('../features/tarot/client', () => ({
   createTarotClient: (options: {onResponse: (response: TarotWorkerResponse) => void}) => {
     mocks.onResponse = options.onResponse
