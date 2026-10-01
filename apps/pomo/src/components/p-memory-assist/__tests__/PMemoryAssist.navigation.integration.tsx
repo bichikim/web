@@ -67,10 +67,20 @@ beforeEach(() => {
 })
 
 afterEach(() => {
+  vi.useRealTimers()
   vi.unstubAllGlobals()
   overwriteGetLocale(originalGetLocale)
   vi.restoreAllMocks()
 })
+
+const renderMemoryAssist = async () => {
+  await import('../../memory-assist/Content')
+  render(() => (
+    <Suspense>
+      <PMemoryAssist />
+    </Suspense>
+  ))
+}
 
 it.each(['events', 'connections'] as const)(
   'should switch panels before the calendar %s request resolves',
@@ -80,11 +90,7 @@ it.each(['events', 'connections'] as const)(
     } else {
       vi.mocked(listCalendarConnections).mockReturnValue(new Promise(() => {}))
     }
-    render(() => (
-      <Suspense>
-        <PMemoryAssist />
-      </Suspense>
-    ))
+    await renderMemoryAssist()
     fireEvent.click(screen.getByRole('button', {name: '기억보조'}))
     fireEvent.click(await screen.findByRole('tab', {name: '캘린더'}))
     await waitFor(() => expect(listCalendarEvents).toHaveBeenCalled())
@@ -101,6 +107,8 @@ it.each(['events', 'connections'] as const)(
 )
 
 it('should show cached events and the month grid before the refresh resolves', async () => {
+  vi.useFakeTimers({toFake: ['Date']})
+  vi.setSystemTime(new Date('2026-09-04T10:30:00.000Z'))
   const today = new Date()
   const start = new Date(today.getFullYear(), today.getMonth(), 1)
   const end = new Date(today.getFullYear(), today.getMonth() + 1, 1)
@@ -119,7 +127,7 @@ it('should show cached events and the month grid before the refresh resolves', a
           accountLabel: 'test',
           allDay: false,
           calendarLabel: 'test',
-          end: today.toISOString(),
+          end: new Date(today.getTime() + 60_000).toISOString(),
           id: 'cached',
           provider: 'google',
           start: today.toISOString(),
@@ -133,11 +141,7 @@ it('should show cached events and the month grid before the refresh resolves', a
   )
   vi.mocked(listCalendarEvents).mockReturnValue(new Promise(() => {}))
   vi.mocked(listCalendarConnections).mockReturnValue(new Promise(() => {}))
-  render(() => (
-    <Suspense>
-      <PMemoryAssist />
-    </Suspense>
-  ))
+  await renderMemoryAssist()
   fireEvent.click(screen.getByRole('button', {name: '기억보조'}))
   fireEvent.click(await screen.findByRole('tab', {name: '캘린더'}))
   expect(await screen.findByRole('grid')).toBeVisible()

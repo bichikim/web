@@ -15,6 +15,20 @@ describe('containsForeignCjk', () => {
     expect(containsForeignCjk('これは 테스트예요.')).toBe(true)
     expect(containsForeignCjk('Qwen과 한국어로 대화해요.')).toBe(false)
   })
+
+  it.each(['국어·영어·수학', '「시작」', '『인용』', '1~2분 쉬어요〜'])(
+    'should ignore Korean text with common CJK punctuation: %s',
+    (text) => {
+      expect(containsForeignCjk(text)).toBe(false)
+    },
+  )
+
+  it.each(['人生', 'かな', 'カタカナ'])(
+    'should continue to detect actual Han and Japanese kana: %s',
+    (text) => {
+      expect(containsForeignCjk(text)).toBe(true)
+    },
+  )
 })
 
 describe('createKoreanTextSegments', () => {
@@ -30,6 +44,22 @@ describe('createKoreanTextSegments', () => {
     ])
     expect(createKoreanTextSegments('')).toEqual([])
   })
+
+  it.each([
+    '국어·영어·수학을 공부해요.',
+    '그는 「시작」이라고 말했어요.',
+    '『인용』처럼 여러 기호를 써요.',
+    '1~2분 쉬어요〜',
+  ])('should keep Korean sentences with common CJK punctuation visible: %s', (text) => {
+    expect(createKoreanTextSegments(text)).toEqual([{kind: 'text', text}])
+  })
+
+  it.each(['人生은 길어요.', 'かなを書きます.', 'カタカナを使います.'])(
+    'should continue to conceal sentences with actual foreign CJK: %s',
+    (text) => {
+      expect(createKoreanTextSegments(text)).toEqual([{kind: 'refining', text}])
+    },
+  )
 
   it('should keep decimals and URL hostnames within their sentence', () => {
     expect(createKoreanTextSegments('3.14는 원주율입니다.')).toEqual([
@@ -80,6 +110,10 @@ describe('createForeignCjkTokenIds', () => {
       [1, '한글'],
       [2, '人生'],
       [3, 'かな'],
+      [4, 'カタカナ'],
+      [5, '·'],
+      [6, '「」'],
+      [7, '〜'],
     ])
     const tokenizer = {
       all_special_ids: [0],
@@ -87,7 +121,7 @@ describe('createForeignCjkTokenIds', () => {
       get_vocab: () => new Map([...texts.keys()].map((tokenId) => [String(tokenId), tokenId])),
     }
 
-    expect(createForeignCjkTokenIds(tokenizer)).toEqual([2, 3])
+    expect(createForeignCjkTokenIds(tokenizer)).toEqual([2, 3, 4])
   })
 })
 
@@ -95,6 +129,12 @@ describe('replaceUnrefinedSentences', () => {
   it('should preserve clean sentences and replace unresolved contamination', () => {
     expect(replaceUnrefinedSentences('괜찮아요. 人生은 길어요.')).toBe(
       '괜찮아요. 답변의 일부 표현을 자연스러운 한국어로 바꾸지 못했어요.',
+    )
+  })
+
+  it('should preserve Korean punctuation instead of replacing the sentence with a fallback', () => {
+    expect(replaceUnrefinedSentences('좋아요. 국어·영어·수학을 공부해요.')).toBe(
+      '좋아요. 국어·영어·수학을 공부해요.',
     )
   })
 })

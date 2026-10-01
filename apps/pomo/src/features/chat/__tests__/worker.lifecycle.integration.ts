@@ -495,6 +495,26 @@ describe('chat worker Korean refinement', () => {
     expect(runtimeMocks.generate).toHaveBeenCalledOnce()
   })
 
+  it('should not refine or hide Korean punctuation with the real segmenter', async () => {
+    const answer = '국어·영어·수학을 공부해요.'
+    const {createKoreanTextSegments} = await vi.importActual<
+      typeof import('../../korean-text-postprocessor')
+    >('../../korean-text-postprocessor')
+    koreanMocks.createKoreanTextSegments.mockImplementation(createKoreanTextSegments)
+    runtimeMocks.generate.mockResolvedValueOnce(answer)
+    const worker = await loadWorker()
+
+    worker.dispatch(generateRequest({refineAnswer: true}))
+    await waitForResponse(worker, 'complete')
+
+    expect(koreanMocks.createKoreanTextSegments).toHaveBeenCalledWith(answer)
+    expect(worker.postMessage).not.toHaveBeenCalledWith({type: 'refining'})
+    expect(runtimeMocks.generate).toHaveBeenCalledOnce()
+    expect(worker.postMessage).toHaveBeenLastCalledWith(
+      expect.objectContaining({message: expect.objectContaining({content: answer})}),
+    )
+  })
+
   it('should preserve text segments and replace foreign CJK in refined segments', async () => {
     koreanMocks.createKoreanTextSegments.mockReturnValue([
       {kind: 'text', text: '앞 문장. '},

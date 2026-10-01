@@ -1,3 +1,4 @@
+import {createCalendarExclusionPattern} from './create-calendar-exclusion-pattern'
 import {dayjs} from 'src/utils/zoned-dayjs'
 import type {CalendarEventRange} from './types'
 
@@ -8,37 +9,44 @@ const THIS_WEEK_PATTERN = new RegExp(`이번 ?주${CALENDAR_PERIOD_BOUNDARY_PATT
 const THIS_MONTH_PATTERN = new RegExp(`이번 ?달${CALENDAR_PERIOD_BOUNDARY_PATTERN.source}`, 'u')
 const NEXT_MONTH_PATTERN = new RegExp(`다음 ?달${CALENDAR_PERIOD_BOUNDARY_PATTERN.source}`, 'u')
 const PREVIOUS_MONTH_PATTERN = new RegExp(`지난 ?달${CALENDAR_PERIOD_BOUNDARY_PATTERN.source}`, 'u')
-const THIS_WEEK_EXCLUSION_PATTERN =
-  /이번 ?주(?:(?!다음 ?주).)*(?:말고|빼고|제외(?:하고)?|아니|아닌|안\s*(?:되|돼))/u
-const NEXT_WEEK_EXCLUSION_PATTERN =
-  /다음 ?주(?:(?!이번 ?주).)*(?:말고|빼고|제외(?:하고)?|아니|아닌|안\s*(?:되|돼))/u
-const THIS_MONTH_EXCLUSION_PATTERN =
-  /이번 ?달(?:(?!다음 ?달|지난 ?달).)*(?:말고|빼고|제외(?:하고)?|아니|아닌|안\s*(?:되|돼))/u
-const NEXT_MONTH_EXCLUSION_PATTERN =
-  /다음 ?달(?:(?!이번 ?달|지난 ?달).)*(?:말고|빼고|제외(?:하고)?|아니|아닌|안\s*(?:되|돼))/u
-const PREVIOUS_MONTH_EXCLUSION_PATTERN =
-  /지난 ?달(?:(?!이번 ?달|다음 ?달).)*(?:말고|빼고|제외(?:하고)?|아니|아닌|안\s*(?:되|돼))/u
+const THIS_WEEK_EXCLUSION_PATTERN = createCalendarExclusionPattern('이번 ?주', '다음 ?주')
+const NEXT_WEEK_EXCLUSION_PATTERN = createCalendarExclusionPattern('다음 ?주', '이번 ?주')
+const PREVIOUS_WEEK_EXCLUSION_PATTERN = createCalendarExclusionPattern(
+  '(?:지난|저번) ?주',
+  '이번 ?주|다음 ?주',
+)
+const THIS_MONTH_EXCLUSION_PATTERN = createCalendarExclusionPattern('이번 ?달', '다음 ?달|지난 ?달')
+const NEXT_MONTH_EXCLUSION_PATTERN = createCalendarExclusionPattern('다음 ?달', '이번 ?달|지난 ?달')
+const PREVIOUS_MONTH_EXCLUSION_PATTERN = createCalendarExclusionPattern(
+  '지난 ?달',
+  '이번 ?달|다음 ?달',
+)
 const NEXT_WEEKEND_PATTERN = /다음 ?주말/u
 const PREVIOUS_WEEKEND_PATTERN = /(?:지난|저번) ?주말/u
-const WEEKEND_EXCLUSION_PATTERN =
-  /주말(?:은|에)?\s*(?:말고|빼고|제외(?:하고)?|아니|아닌|안\s*(?:되|돼))/u
+const WEEKEND_EXCLUSION_PATTERN = createCalendarExclusionPattern('주말(?:은|에)?\\s*')
 const WEEKEND_PATTERN = /주말/u
-const DAY_BEFORE_YESTERDAY_EXCLUSION_PATTERN =
-  /그저께(?:(?!어제|오늘|내일|모레|글피).)*(?:말고|빼고|제외(?:하고)?|아니|아닌|안\s*(?:되|돼))/u
-const TODAY_EXCLUSION_PATTERN =
-  /오늘(?:(?!내일).)*(?:말고|빼고|제외(?:하고)?|아니|아닌|안\s*(?:되|돼))/u
-const YESTERDAY_EXCLUSION_PATTERN =
-  /어제(?:(?!오늘|내일).)*(?:말고|빼고|제외(?:하고)?|아니|아닌|안\s*(?:되|돼))/u
-const TOMORROW_EXCLUSION_PATTERN =
-  /내일(?:(?!오늘).)*(?:말고|빼고|제외(?:하고)?|아니|아닌|안\s*(?:되|돼))/u
-const DAY_AFTER_TOMORROW_EXCLUSION_PATTERN =
-  /모레(?:(?!오늘|내일).)*(?:말고|빼고|제외(?:하고)?|아니|아닌|안\s*(?:되|돼))/u
-const THREE_DAYS_AHEAD_EXCLUSION_PATTERN =
-  /글피(?:(?!그저께|어제|오늘|내일|모레).)*(?:말고|빼고|제외(?:하고)?|아니|아닌|안\s*(?:되|돼))/u
+const DAY_BEFORE_YESTERDAY_PATTERN = /(?:그저께|그제)/u
+const DAY_BEFORE_YESTERDAY_EXCLUSION_PATTERN = createCalendarExclusionPattern(
+  DAY_BEFORE_YESTERDAY_PATTERN.source,
+  '어제|오늘|내일|모레|글피',
+)
+const TODAY_EXCLUSION_PATTERN = createCalendarExclusionPattern('오늘', '내일')
+const YESTERDAY_EXCLUSION_PATTERN = createCalendarExclusionPattern('어제', '오늘|내일')
+const TOMORROW_EXCLUSION_PATTERN = createCalendarExclusionPattern('내일', '오늘')
+const DAY_AFTER_TOMORROW_EXCLUSION_PATTERN = createCalendarExclusionPattern('모레', '오늘|내일')
+const THREE_DAYS_AHEAD_EXCLUSION_PATTERN = createCalendarExclusionPattern(
+  '글피',
+  '그저께|그제|어제|오늘|내일|모레',
+)
 const NEXT_WEEK_PATTERN = new RegExp(`다음 ?주${CALENDAR_PERIOD_BOUNDARY_PATTERN.source}`, 'u')
+const PREVIOUS_WEEK_PATTERN = new RegExp(
+  `(?:지난|저번) ?주${CALENDAR_PERIOD_BOUNDARY_PATTERN.source}`,
+  'u',
+)
 const IMPLICIT_SCHEDULE_PATTERN = new RegExp(
-  `(?:그저께|오늘|내일|모레|글피|어제|${THIS_WEEK_PATTERN.source}|${NEXT_WEEK_PATTERN.source}` +
-    `|${THIS_MONTH_PATTERN.source}|${NEXT_MONTH_PATTERN.source}|${PREVIOUS_MONTH_PATTERN.source}|주말)` +
+  `(?:${DAY_BEFORE_YESTERDAY_PATTERN.source}|오늘|내일|모레|글피|어제|` +
+    `${THIS_WEEK_PATTERN.source}|${NEXT_WEEK_PATTERN.source}|${PREVIOUS_WEEK_PATTERN.source}|` +
+    `${THIS_MONTH_PATTERN.source}|${NEXT_MONTH_PATTERN.source}|${PREVIOUS_MONTH_PATTERN.source}|주말)` +
     `(?:\\s*(?:에는|에|엔|은|는|도))?` +
     `(?:\\s*(?:새벽|아침|오전|점심|오후|저녁|밤|낮|정오))?` +
     `(?:\\s*(?:에는|에|엔|은|는|도))?\\s*` +
@@ -82,6 +90,7 @@ interface CreateCalendarQueryOptions {
 
 interface CalendarQueryIntent {
   readonly includesNextWeek: boolean
+  readonly includesPreviousWeek: boolean
   readonly includesThisWeek: boolean
   readonly monthOffsets: ReadonlyArray<number>
   readonly relativeDayOffsets: ReadonlyArray<number>
@@ -100,6 +109,7 @@ interface CreateCalendarDateRangeOptions {
 interface CreateStandaloneCalendarDateRangeOptions {
   readonly boundary: (days: number, time?: string) => Date
   readonly includesNextWeek: boolean
+  readonly includesPreviousWeek: boolean
   readonly includesThisWeek: boolean
   readonly now: Date
   readonly relativeDayOffsets: ReadonlyArray<number>
@@ -110,6 +120,7 @@ interface CreateCalendarPeriodRangeOptions {
   readonly boundary: (days: number) => Date
   readonly daysUntilNextMonday: number
   readonly includesNextWeek: boolean
+  readonly includesPreviousWeek: boolean
   readonly includesThisWeek: boolean
   readonly now: Date
   readonly relativeDayOffsets: ReadonlyArray<number>
@@ -139,6 +150,8 @@ interface GetWeekendStartOffsetOptions {
 
 const getCalendarQueryIntent = (text: string): CalendarQueryIntent => ({
   includesNextWeek: NEXT_WEEK_PATTERN.test(text) && !NEXT_WEEK_EXCLUSION_PATTERN.test(text),
+  includesPreviousWeek:
+    PREVIOUS_WEEK_PATTERN.test(text) && !PREVIOUS_WEEK_EXCLUSION_PATTERN.test(text),
   includesThisWeek: THIS_WEEK_PATTERN.test(text) && !THIS_WEEK_EXCLUSION_PATTERN.test(text),
   monthOffsets: [
     ...(PREVIOUS_MONTH_PATTERN.test(text) && !PREVIOUS_MONTH_EXCLUSION_PATTERN.test(text)
@@ -148,7 +161,8 @@ const getCalendarQueryIntent = (text: string): CalendarQueryIntent => ({
     ...(NEXT_MONTH_PATTERN.test(text) && !NEXT_MONTH_EXCLUSION_PATTERN.test(text) ? [1] : []),
   ],
   relativeDayOffsets: [
-    ...(includesUnexcludedPhrase(text, '그저께', DAY_BEFORE_YESTERDAY_EXCLUSION_PATTERN)
+    ...(DAY_BEFORE_YESTERDAY_PATTERN.test(text) &&
+    !DAY_BEFORE_YESTERDAY_EXCLUSION_PATTERN.test(text)
       ? [DAY_BEFORE_YESTERDAY_START_DAYS]
       : []),
     ...(includesUnexcludedPhrase(text, '어제', YESTERDAY_EXCLUSION_PATTERN) ? [-1] : []),
@@ -200,11 +214,16 @@ const createCalendarDateRange = ({
 const createStandaloneCalendarDateRange = ({
   boundary,
   includesNextWeek,
+  includesPreviousWeek,
   includesThisWeek,
   now,
   relativeDayOffsets,
   text,
 }: CreateStandaloneCalendarDateRangeOptions): CalendarEventRange | null => {
+  if (includesPreviousWeek) {
+    return null
+  }
+
   const includesExtendedRelativeDate = relativeDayOffsets.some(
     (offset) => offset < -1 || offset > 1,
   )
@@ -290,6 +309,7 @@ const createCalendarPeriodRange = ({
   boundary,
   daysUntilNextMonday,
   includesNextWeek,
+  includesPreviousWeek,
   includesThisWeek,
   now,
   relativeDayOffsets,
@@ -306,18 +326,32 @@ const createCalendarPeriodRange = ({
     })
   }
 
-  if (!includesThisWeek && !includesNextWeek) {
+  if (!includesPreviousWeek && !includesThisWeek && !includesNextWeek) {
     return null
   }
 
+  const currentMonday = boundary(daysUntilNextMonday - DAYS_PER_WEEK)
   const nextMonday = boundary(daysUntilNextMonday)
+  const previousMonday = boundary(daysUntilNextMonday - DAYS_PER_WEEK * 2)
   const followingMonday = boundary(daysUntilNextMonday + DAYS_PER_WEEK)
   const startsThisWeek = includesThisWeek || (relativeDayOffsets.includes(0) && includesNextWeek)
   const includesRequestedDate = relativeDayOffsets.length > 0
   const requestedDateOffset = getFirstRequestedDateOffset(relativeDayOffsets)
+  const lastRequestedDateOffset = getLastRequestedDateOffset(relativeDayOffsets)
   const requestedDateStart = requestedDateOffset === 0 ? now : boundary(requestedDateOffset)
-  const start = includesRequestedDate ? requestedDateStart : startsThisWeek ? now : nextMonday
-  const end = includesNextWeek ? followingMonday : nextMonday
+  const requestedDateEnd = boundary(lastRequestedDateOffset + 1)
+  const start = includesPreviousWeek
+    ? previousMonday
+    : includesRequestedDate
+      ? requestedDateStart
+      : startsThisWeek
+        ? now
+        : nextMonday
+  const weekEnd = includesNextWeek ? followingMonday : includesThisWeek ? nextMonday : currentMonday
+  const end =
+    includesPreviousWeek && includesRequestedDate && requestedDateEnd.getTime() > weekEnd.getTime()
+      ? requestedDateEnd
+      : weekEnd
   return toRange(start, end)
 }
 
@@ -355,11 +389,18 @@ export const createCalendarQuery = (
     return dayjs.tz(`${date}T${time}`, timeZone).toDate()
   }
 
-  const {includesNextWeek, includesThisWeek, monthOffsets, relativeDayOffsets, weekendIntent} =
-    getCalendarQueryIntent(options.text)
+  const {
+    includesNextWeek,
+    includesPreviousWeek,
+    includesThisWeek,
+    monthOffsets,
+    relativeDayOffsets,
+    weekendIntent,
+  } = getCalendarQueryIntent(options.text)
   const standaloneDateRange = createStandaloneCalendarDateRange({
     boundary,
     includesNextWeek,
+    includesPreviousWeek,
     includesThisWeek,
     now,
     relativeDayOffsets,
@@ -371,6 +412,7 @@ export const createCalendarQuery = (
     boundary,
     daysUntilNextMonday,
     includesNextWeek,
+    includesPreviousWeek,
     includesThisWeek,
     now,
     relativeDayOffsets,

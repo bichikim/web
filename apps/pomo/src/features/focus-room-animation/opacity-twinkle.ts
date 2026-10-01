@@ -1,3 +1,4 @@
+import {randomInRange} from 'src/utils/random-in-range'
 import {cosineEaseInOut} from 'src/utils/cosine-ease-in-out'
 import {clampUnit} from 'src/utils/clamp-unit'
 import type {Container} from 'pixi.js'
@@ -31,7 +32,7 @@ const BRIGHT_TARGET_MINIMUM = 0.8
 const BRIGHT_TARGET_RANGE = 0.2
 
 const randomRange = (range: PixiSceneTravelRange, random: () => number) =>
-  range.minimumSeconds + random() * (range.maximumSeconds - range.minimumSeconds)
+  randomInRange(range.minimumSeconds, range.maximumSeconds, random)
 
 const interpolateOpacity = (motion: PixiSceneOpacityTwinkle, fraction: number) =>
   motion.minimumOpacity + (motion.maximumOpacity - motion.minimumOpacity) * fraction

@@ -1,3 +1,4 @@
+import {isObject} from 'src/utils/is-object'
 import {clampUnit} from '../../utils/clamp-unit/index.ts'
 // oxlint-disable eslint-js/camelcase -- Supertonic ONNX tensor names are an external model contract.
 // oxlint-disable no-await-in-loop -- Each denoising step consumes the previous step.
@@ -118,9 +119,6 @@ const configSchema = z.object({
 const voiceFieldSchema = z.object({data: z.unknown(), dims: z.array(z.number().int().positive())})
 const voiceSchema = z.object({style_dp: voiceFieldSchema, style_ttl: voiceFieldSchema})
 
-const isRecord = (value: unknown): value is Record<string, unknown> =>
-  typeof value === 'object' && value !== null && !Array.isArray(value)
-
 const fetchJson = async (url: string, signal: AbortSignal): Promise<unknown> => {
   const response = await fetch(url, {signal})
   if (!response.ok) {
@@ -215,7 +213,7 @@ const loadState = async (
 }
 
 const getFloatData = (value: unknown): Float32Array => {
-  if (!isRecord(value) || !(value.data instanceof Float32Array)) {
+  if (!isObject(value) || !(value.data instanceof Float32Array)) {
     throw new RunnerExecutionError('invalid-model-output', 'Supertonic returned an invalid tensor')
   }
   return value.data
