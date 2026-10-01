@@ -14,8 +14,9 @@ const PREVIOUS_WEEKEND_PATTERN = /(?:지난|저번) ?주말/u
 const WEEKEND_EXCLUSION_PATTERN =
   /주말(?:은|에)?\s*(?:말고|빼고|제외(?:하고)?|아니|아닌|안\s*(?:되|돼))/u
 const WEEKEND_PATTERN = /주말/u
+const DAY_BEFORE_YESTERDAY_PATTERN = /(?:그저께|그제)/u
 const DAY_BEFORE_YESTERDAY_EXCLUSION_PATTERN =
-  /그저께(?:(?!어제|오늘|내일|모레|글피).)*(?:말고|빼고|제외(?:하고)?|아니|아닌|안\s*(?:되|돼))/u
+  /(?:그저께|그제)(?:(?!어제|오늘|내일|모레|글피).)*(?:말고|빼고|제외(?:하고)?|아니|아닌|안\s*(?:되|돼))/u
 const TODAY_EXCLUSION_PATTERN =
   /오늘(?:(?!내일).)*(?:말고|빼고|제외(?:하고)?|아니|아닌|안\s*(?:되|돼))/u
 const YESTERDAY_EXCLUSION_PATTERN =
@@ -25,10 +26,11 @@ const TOMORROW_EXCLUSION_PATTERN =
 const DAY_AFTER_TOMORROW_EXCLUSION_PATTERN =
   /모레(?:(?!오늘|내일).)*(?:말고|빼고|제외(?:하고)?|아니|아닌|안\s*(?:되|돼))/u
 const THREE_DAYS_AHEAD_EXCLUSION_PATTERN =
-  /글피(?:(?!그저께|어제|오늘|내일|모레).)*(?:말고|빼고|제외(?:하고)?|아니|아닌|안\s*(?:되|돼))/u
+  /글피(?:(?!그저께|그제|어제|오늘|내일|모레).)*(?:말고|빼고|제외(?:하고)?|아니|아닌|안\s*(?:되|돼))/u
 const NEXT_WEEK_PATTERN = new RegExp(`다음 ?주${WEEK_BOUNDARY_PATTERN.source}`, 'u')
 const IMPLICIT_SCHEDULE_PATTERN = new RegExp(
-  `(?:그저께|오늘|내일|모레|글피|어제|${THIS_WEEK_PATTERN.source}|${NEXT_WEEK_PATTERN.source}|주말)` +
+  `(?:${DAY_BEFORE_YESTERDAY_PATTERN.source}|오늘|내일|모레|글피|어제|` +
+    `${THIS_WEEK_PATTERN.source}|${NEXT_WEEK_PATTERN.source}|주말)` +
     `(?:\\s*(?:에는|에|엔|은|는|도))?` +
     `(?:\\s*(?:새벽|아침|오전|점심|오후|저녁|밤|낮|정오))?` +
     `(?:\\s*(?:에는|에|엔|은|는|도))?\\s*` +
@@ -124,7 +126,8 @@ const getCalendarQueryIntent = (text: string): CalendarQueryIntent => ({
   includesNextWeek: NEXT_WEEK_PATTERN.test(text) && !NEXT_WEEK_EXCLUSION_PATTERN.test(text),
   includesThisWeek: THIS_WEEK_PATTERN.test(text) && !THIS_WEEK_EXCLUSION_PATTERN.test(text),
   relativeDayOffsets: [
-    ...(includesUnexcludedPhrase(text, '그저께', DAY_BEFORE_YESTERDAY_EXCLUSION_PATTERN)
+    ...(DAY_BEFORE_YESTERDAY_PATTERN.test(text) &&
+    !DAY_BEFORE_YESTERDAY_EXCLUSION_PATTERN.test(text)
       ? [DAY_BEFORE_YESTERDAY_START_DAYS]
       : []),
     ...(includesUnexcludedPhrase(text, '어제', YESTERDAY_EXCLUSION_PATTERN) ? [-1] : []),
