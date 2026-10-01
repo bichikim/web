@@ -1,7 +1,7 @@
 /** @vitest-environment jsdom */
 
 import {fireEvent, render, screen} from '@solidjs/testing-library'
-import {expect, test, vi} from 'vitest'
+import {afterEach, beforeEach, describe, expect, test, vi} from 'vitest'
 
 import type {PuppetPart} from '../../../player'
 import {createSpatialEditorObject} from '../spatial-editor-objects'
@@ -102,12 +102,7 @@ test('fits a box to linked part vertices and displays its center as 0, 0, 0', ()
   view.unmount()
 })
 
-test('should import a GLB into the workspace for transforms and composition', async () => {
-  imported.parse.mockReturnValue({
-    indices: [0, 1, 2],
-    source: {kind: 'imported', name: 'sample.glb'},
-    vertices: [0, 0, 0, 2, 0, 0, 0, 2, 0],
-  })
+const createWorkspace = () => {
   const onApply = vi.fn(() => true)
   const view = render(() => (
     <SpatialMeshDialog
@@ -117,28 +112,60 @@ test('should import a GLB into the workspace for transforms and composition', as
       onOpenChange={vi.fn()}
     />
   ))
+  return {onApply, view}
+}
+
+const importGlb = () => {
+  imported.parse.mockReturnValue({
+    indices: [0, 1, 2],
+    source: {kind: 'imported', name: 'sample.glb'},
+    vertices: [0, 0, 0, 2, 0, 0, 0, 2, 0],
+  })
   const file = new File(['mesh'], 'sample.glb', {type: 'model/gltf-binary'})
   Object.defineProperty(file, 'arrayBuffer', {value: vi.fn().mockResolvedValue(new ArrayBuffer(0))})
   fireEvent.change(screen.getByLabelText('GLB 메시 가져오기'), {target: {files: [file]}})
+  return screen.findByRole('button', {name: 'sample.glb 편집'})
+}
 
-  expect(await screen.findByRole('button', {name: 'sample.glb 편집'})).toBeInTheDocument()
-  expect(screen.getByRole('spinbutton', {name: 'rotation X'})).toBeInTheDocument()
-  expect(screen.queryByRole('combobox', {name: '도형 종류'})).toBeNull()
-  fireEvent.click(screen.getByRole('button', {name: '박스 추가'}))
-  fireEvent.click(screen.getByRole('button', {name: '전체 선택'}))
-  fireEvent.click(screen.getByRole('button', {name: '더하기로 합성'}))
-  fireEvent.click(screen.getByRole('button', {name: '메시 적용'}))
+describe('GLB workspace import', () => {
+  let workspace: ReturnType<typeof createWorkspace>
 
-  expect(onApply).toHaveBeenCalledWith([
-    expect.objectContaining({
-      children: [
-        expect.objectContaining({kind: 'mesh', name: 'sample.glb'}),
-        expect.objectContaining({kind: 'primitive', shape: 'box'}),
-      ],
-      kind: 'group',
-    }),
-  ])
-  view.unmount()
+  beforeEach(() => {
+    workspace = createWorkspace()
+  })
+
+  afterEach(() => {
+    workspace.view.unmount()
+  })
+
+  test('should import a GLB into the workspace for transforms', async () => {
+    expect(await importGlb()).toBeInTheDocument()
+    expect(screen.getByRole('spinbutton', {name: 'rotation X'})).toBeInTheDocument()
+    expect(screen.queryByRole('combobox', {name: '도형 종류'})).toBeNull()
+  })
+
+  describe('imported mesh composition', () => {
+    beforeEach(async () => {
+      await importGlb()
+    })
+
+    test('should compose the imported mesh with a box and apply the group', () => {
+      fireEvent.click(screen.getByRole('button', {name: '박스 추가'}))
+      fireEvent.click(screen.getByRole('button', {name: '전체 선택'}))
+      fireEvent.click(screen.getByRole('button', {name: '더하기로 합성'}))
+      fireEvent.click(screen.getByRole('button', {name: '메시 적용'}))
+
+      expect(workspace.onApply).toHaveBeenCalledWith([
+        expect.objectContaining({
+          children: [
+            expect.objectContaining({kind: 'mesh', name: 'sample.glb'}),
+            expect.objectContaining({kind: 'primitive', shape: 'box'}),
+          ],
+          kind: 'group',
+        }),
+      ])
+    })
+  })
 })
 
 test('should reopen an existing imported mesh as an editable object', () => {
