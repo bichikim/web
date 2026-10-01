@@ -537,9 +537,9 @@ test('should end a drag before switching the selected deformer', () => {
   expect(onEditEnd).toHaveBeenCalledTimes(1)
 })
 
-test('should expose and edit influence masks for pin, curve and grid deformers', async () => {
-  const {convertSceneContainers} = await import('../container-conversion')
-  for (const targetKind of ['pin', 'curve', 'deformer'] as const) {
+test.each(['pin', 'curve', 'deformer'] as const)(
+  'should expose and edit influence masks for %s deformers',
+  (targetKind) => {
     const [document, setDocument] = createSignal(
       convertSceneContainers({document: createDemoDocument(), nodeIds: ['shapes'], targetKind})!,
     )
@@ -553,5 +553,5 @@ test('should expose and edit influence masks for pin, curve and grid deformers',
     expect(getSceneNode(document(), 'shapes')).toMatchObject({vertexInfluences: [{weight: 0.25}]})
     expect(view.queryByRole('button', {name: '칠할 본 1'})).toBeNull()
     view.unmount()
-  }
-})
+  },
+)
