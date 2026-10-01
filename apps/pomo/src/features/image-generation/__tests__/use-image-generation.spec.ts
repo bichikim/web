@@ -75,6 +75,23 @@ it('should reject seeds above the supported range before image generation', asyn
   expect(result.busy()).toBe(false)
 })
 
+it.each([
+  ['ASCII plus (U+002B)', '+'],
+  ['fullwidth plus (U+FF0B)', '＋'],
+  ['en dash (U+2013)', '–'],
+  ['figure dash (U+2012)', '‒'],
+  ['small hyphen-minus (U+FE63)', '﹣'],
+] as const)('should reject image seeds pasted with a leading %s', async (_label, sign) => {
+  const {result} = renderHook(useImageGeneration)
+  await vi.waitFor(() => expect(result.supported()).toBe(true))
+  result.setIdea('춤추는 햄버거')
+  result.setSeed(`${sign}123`)
+  await result.generate()
+  expect(runImageGeneration).not.toHaveBeenCalled()
+  expect(result.error()).toBe(m.picture_diary_generation_seed_error())
+  expect(result.busy()).toBe(false)
+})
+
 it('should abort pending work and ignore late completion after stopping', async () => {
   let finish: ((image: {blob: Blob; prompt: string}) => void) | undefined
   vi.mocked(runImageGeneration).mockImplementation(

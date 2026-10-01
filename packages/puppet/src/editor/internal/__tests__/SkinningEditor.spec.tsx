@@ -14,8 +14,10 @@ import {composeParameterScene} from '../../../deformation/scene'
 import {applySceneNodeDeformers} from '../../../deformation/vertices'
 import {findNode} from '../scene-tree'
 
+const skinEditorSource = createSkinDocument()
+
 test('should connect two rotations, edit one vertex, and undo the changes', () => {
-  const initial = createSkinDocument()
+  const initial = structuredClone(skinEditorSource)
   const [mesh, group, shoulder, elbow] = initial.scene.roots
   if (
     shoulder?.kind !== 'deformer' ||
