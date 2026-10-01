@@ -131,7 +131,7 @@ const getRange = (min: number | undefined, max: number | undefined) => {
 const handleNumberInputKeyDown = (
   event: Parameters<JSX.EventHandler<HTMLInputElement, KeyboardEvent>>[0],
   handler: JSX.EventHandlerUnion<HTMLInputElement, KeyboardEvent> | undefined,
-  type: 'number' | 'text' | undefined,
+  shouldStep: boolean,
   changeByStep: (direction: -1 | 1) => void,
 ) => {
   if (typeof handler === 'function') {
@@ -142,7 +142,7 @@ const handleNumberInputKeyDown = (
 
   if (
     event.defaultPrevented ||
-    type !== 'text' ||
+    !shouldStep ||
     event.altKey ||
     event.ctrlKey ||
     event.metaKey ||
@@ -203,7 +203,8 @@ export const PNumberInput = (props: PNumberInputProps) => {
     }
   })
   const getSize = () => local.size ?? 'small'
-
+  const getReadOnly = () =>
+    local.readOnly ?? (local.value !== undefined && local.onInputValueChange === undefined)
   const getBounds = (): NumberInputRange => getRange(local.min, local.max)
   const getCurrentValue = () => {
     const bounds = getBounds()
@@ -241,7 +242,12 @@ export const PNumberInput = (props: PNumberInputProps) => {
     local.onInputValueChange?.(nextValue)
   }
   const handleKeyDown: JSX.EventHandler<HTMLInputElement, KeyboardEvent> = (event) =>
-    handleNumberInputKeyDown(event, local.onKeyDown, local.type, changeByStep)
+    handleNumberInputKeyDown(
+      event,
+      local.onKeyDown,
+      local.type === 'text' && !getReadOnly() && !local.disabled,
+      changeByStep,
+    )
   const gesture = useNumberInputGesture({
     getRange: getBounds,
     getStep: () => getStep(local.step),
@@ -285,9 +291,7 @@ export const PNumberInput = (props: PNumberInputProps) => {
           onPointerMove={gesture.handlePointerMove}
           onPointerUp={gesture.handlePointerUp}
           role={local.type === 'text' ? 'spinbutton' : undefined}
-          readOnly={
-            local.readOnly ?? (local.value !== undefined && local.onInputValueChange === undefined)
-          }
+          readOnly={getReadOnly()}
           step={local.type === 'text' ? undefined : local.step}
           type={local.type ?? 'number'}
           value={local.value === undefined ? uncontrolledValue() : local.value}
