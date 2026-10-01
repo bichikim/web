@@ -14,6 +14,7 @@ import {PMemoryAssist} from '../PMemoryAssist'
 import {LanguageLearningLibrary} from '../../language-learning/Library'
 import {MemoryMemoList} from '../../memory-assist/Memos'
 import {PictureDiary} from '../../memory-assist/PictureDiary'
+import {PModelDownloadProvider} from '../../../features/model-download'
 import {PScribbleCircleControl} from '../../scribble/CircleControl'
 
 vi.mock('@kobalte/core/tabs', () => ({Tabs: vi.fn()}))
@@ -115,19 +116,23 @@ afterEach(() => {
   overwriteGetLocale(originalGetLocale)
 })
 
-it('should open a Korean memory assist modal', async () => {
+it('should open a Korean thinking space modal', async () => {
   const weatherState = {status: 'disabled'} as const
-  render(() => <PMemoryAssist weatherState={weatherState} />)
+  render(() => (
+    <PModelDownloadProvider>
+      <PMemoryAssist weatherState={weatherState} />
+    </PModelDownloadProvider>
+  ))
 
-  const trigger = screen.getByRole('button', {name: '기억보조'})
+  const trigger = screen.getByRole('button', {name: '생각 보조'})
   fireEvent.click(trigger)
 
-  expect(screen.getByRole('dialog', {name: 'Pomofi 기억 보조'}).hasAttribute('hidden')).toBe(false)
+  expect(screen.getByRole('dialog', {name: 'Pomofi 생각 보조'}).hasAttribute('hidden')).toBe(false)
   expect(PButton).toHaveBeenCalledWith(
     expect.objectContaining({
-      accessibleLabel: '기억보조',
+      accessibleLabel: '생각 보조',
       icon: 'i-tabler-brain',
-      tooltip: '기억보조',
+      tooltip: '생각 보조',
     }),
   )
   expect(PModal).toHaveBeenCalledWith(expect.objectContaining({size: 'expanded'}))
@@ -138,8 +143,9 @@ it('should open a Korean memory assist modal', async () => {
     '메모',
     '일기장',
     '캘린더',
+    '타로',
   ])
-  expect(screen.getByRole('tablist', {name: '기억 보조 종류'})).toBeInTheDocument()
+  expect(screen.getByRole('tablist', {name: '생각 보조 종류'})).toBeInTheDocument()
   expect(screen.getAllByRole('tab')[0]?.className).toContain('ui-selected:shadow-tab-active')
   expect(await screen.findByText('language learning library')).toBeInTheDocument()
   expect(screen.getByText('language learning words')).toBeInTheDocument()

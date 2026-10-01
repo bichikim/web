@@ -11,6 +11,7 @@ import {PModal, type PModalProps} from 'src/components/p-modal/PModal'
 import {PButton} from '../../p-button/PButton'
 import {PMemoryAssist} from '../PMemoryAssist'
 import {LanguageLearningLibrary} from '../../language-learning/Library'
+import {PModelDownloadProvider} from '../../../features/model-download'
 
 import {PScribbleCircleControl} from '../../scribble/CircleControl'
 
@@ -114,21 +115,34 @@ afterEach(() => {
 })
 
 it('should use the scribble brain icon in scribble scenes', () => {
-  render(() => <PMemoryAssist sceneStyle="scribble" />)
+  render(() => (
+    <PModelDownloadProvider>
+      <PMemoryAssist sceneStyle="scribble" />
+    </PModelDownloadProvider>
+  ))
 
   expect(PButton).toHaveBeenCalledWith(expect.objectContaining({icon: 'i-pomo-scribble:brain'}))
   expect(PScribbleCircleControl).toHaveBeenCalledWith(expect.objectContaining({enabled: true}))
 })
 
-it('should open an English memory assist modal', () => {
+it('should open an English thinking space modal', () => {
   overwriteGetLocale(() => 'en')
-  render(() => <PMemoryAssist />)
+  render(() => (
+    <PModelDownloadProvider>
+      <PMemoryAssist />
+    </PModelDownloadProvider>
+  ))
 
-  fireEvent.click(screen.getByRole('button', {name: 'Open memory aid'}))
+  fireEvent.click(screen.getByRole('button', {name: 'Open thinking space'}))
 
-  expect(screen.getByRole('dialog', {name: 'Pomofi memory aid'}).hasAttribute('hidden')).toBe(false)
+  expect(screen.getByRole('dialog', {name: 'Pomofi thinking space'}).hasAttribute('hidden')).toBe(
+    false,
+  )
   expect(PButton).toHaveBeenCalledWith(
-    expect.objectContaining({accessibleLabel: 'Open memory aid', tooltip: 'Open memory aid'}),
+    expect.objectContaining({
+      accessibleLabel: 'Open thinking space',
+      tooltip: 'Open thinking space',
+    }),
   )
   expect(screen.getAllByRole('tab').map((tab) => tab.textContent)).toEqual([
     'Learning sentences',
@@ -136,5 +150,6 @@ it('should open an English memory assist modal', () => {
     'Memos',
     'Diary',
     'Calendar',
+    'Tarot',
   ])
 })

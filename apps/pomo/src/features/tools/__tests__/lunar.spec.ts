@@ -1,6 +1,12 @@
 /** @vitest-environment node */
 import {expect, it} from 'vitest'
-import {getMovingDays, lunarToSolar, solarToLunar} from '../lunar'
+import {
+  getConvertibleLunarDays,
+  getLunarToSolarResult,
+  getMovingDays,
+  lunarToSolar,
+  solarToLunar,
+} from '../lunar'
 it('should match KASI 2026 lunar new year and round trip a leap month', () => {
   expect(solarToLunar('2026-02-17')).toEqual({day: 1, leap: false, month: 1, year: 2026})
   expect(lunarToSolar({day: 1, leap: true, month: 5, year: 2017})).toBe('2017-06-24')
@@ -27,4 +33,25 @@ it('should round trip both solar range boundaries and reject earlier solar resul
     }
   }
   expect(lunarToSolar({day: 1, leap: false, month: 1, year: 1899})).toBeNull()
+})
+
+it('should distinguish dates outside converter coverage from nonexistent lunar dates', () => {
+  expect(getLunarToSolarResult({day: 18, leap: false, month: 11, year: 2050})).toEqual({
+    status: 'converted',
+    value: '2050-12-31',
+  })
+  expect(getLunarToSolarResult({day: 19, leap: false, month: 11, year: 2050})).toEqual({
+    status: 'unsupported',
+  })
+  expect(getLunarToSolarResult({day: 1, leap: false, month: 12, year: 2050})).toEqual({
+    status: 'unsupported',
+  })
+  expect(getLunarToSolarResult({day: 1, leap: true, month: 1, year: 2026})).toEqual({
+    status: 'invalid',
+  })
+  expect(getConvertibleLunarDays({leap: false, month: 11, year: 2050})).toEqual(
+    Array.from({length: 18}, (_, index) => index + 1),
+  )
+  expect(getConvertibleLunarDays({leap: false, month: 1, year: 2026})).toHaveLength(30)
+  expect(getConvertibleLunarDays({leap: false, month: 2, year: 2026})).toHaveLength(29)
 })
