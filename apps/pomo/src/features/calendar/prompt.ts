@@ -1,7 +1,7 @@
-import {z} from 'zod'
-
+import {parseAllDayDate} from './all-day-date'
+import {parseTimedInterval} from './parse-timed-interval'
 import {dayjs} from 'src/utils/zoned-dayjs'
-import {addDays, formatDate, parseDate} from '../civil-date'
+import {addDays, formatDate} from '../civil-date'
 import 'dayjs/locale/ko'
 import type {CalendarEvent} from './types'
 
@@ -16,15 +16,9 @@ const PROVIDER_LABELS = {
   microsoft: 'Microsoft',
 } as const
 
-const dateTimeSchema = z.iso.datetime({offset: true})
-
-const parseAllDayDate = (value: string) => parseDate(value.slice(0, 'YYYY-MM-DD'.length))
-
 const hasValidEventTimes = (event: CalendarEvent) => {
   if (!event.allDay) {
-    const start = dateTimeSchema.safeParse(event.start)
-    const end = dateTimeSchema.safeParse(event.end)
-    return start.success && end.success && Date.parse(end.data) > Date.parse(start.data)
+    return parseTimedInterval(event.start, event.end) !== null
   }
 
   const startDate = parseAllDayDate(event.start)

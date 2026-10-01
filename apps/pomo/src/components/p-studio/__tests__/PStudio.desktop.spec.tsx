@@ -1,3 +1,4 @@
+import {createTestBroadcastChannel} from 'src/test-utils/create-test-broadcast-channel'
 /** @vitest-environment jsdom */
 
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
@@ -20,33 +21,7 @@ const {
   useStudioScreenSaver,
 } = studioMocks
 
-class TestBroadcastChannel {
-  static instances: TestBroadcastChannel[] = []
-  readonly close = vi.fn()
-  readonly listeners: Array<(event: MessageEvent) => void> = []
-  readonly postMessage = vi.fn()
-
-  constructor(readonly name: string) {
-    TestBroadcastChannel.instances.push(this)
-  }
-
-  addEventListener(_type: string, listener: (event: MessageEvent) => void) {
-    this.listeners.push(listener)
-  }
-
-  removeEventListener(_type: string, listener: (event: MessageEvent) => void) {
-    const listenerIndex = this.listeners.indexOf(listener)
-    if (listenerIndex >= 0) {
-      this.listeners.splice(listenerIndex, 1)
-    }
-  }
-
-  dispatch(data: unknown) {
-    for (const listener of this.listeners) {
-      listener(new MessageEvent('message', {data}))
-    }
-  }
-}
+const TestBroadcastChannel = createTestBroadcastChannel()
 
 beforeEach(setupStudio)
 afterEach(() => {

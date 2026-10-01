@@ -1,4 +1,11 @@
-import {createWorkerRpcTransport, isWorkerRpcFailure} from '../worker-rpc'
+import {
+  createRpcCancelledError,
+  createRpcWorkerFailedError,
+  createWorkerRpcFailureReporter,
+  createWorkerRpcTransport,
+  mapWorkerRpcFailureToPhaseError,
+} from '../worker-rpc'
+
 import type {TextMoodAnalysis, TextSufficiencyAnalysis} from './analysis'
 import type {TextMoodError, TextMoodPhase} from './errors'
 import type {TextMoodWorkerRequest, TextMoodWorkerResponse} from './messages'
@@ -43,18 +50,8 @@ export interface TextMoodAnalyzer {
   readonly prepare: () => Promise<Result<TextMoodAnalyzerReady, TextMoodError>>
 }
 
-const createCancelledError = (phase: TextMoodPhase): TextMoodError => ({
-  code: 'cancelled',
-  phase,
-  retryable: false,
-})
-
-const createWorkerError = (phase: TextMoodPhase, detail: string): TextMoodError => ({
-  code: 'worker-failed',
-  detail,
-  phase,
-  retryable: true,
-})
+const mapFailure = (error: unknown, phase: TextMoodPhase): TextMoodError =>
+  mapWorkerRpcFailureToPhaseError(error, phase, 'Worker 요청을 완료하지 못했습니다.')
 
 /** Owns one embedding Worker and resolves feature requests through the shared RPC transport. */
 export const createTextMoodAnalyzer = (
@@ -71,30 +68,20 @@ export const createTextMoodAnalyzer = (
     getRequestId: (response) => (response.type === 'loading' ? null : response.requestId),
     messageFailureMessage: '분위기 분석 Worker 응답을 읽지 못했습니다.',
     onEvent: (response) => options.onProgress?.(response.progress),
-    onFailure: (failure) => {
-      if (failure.code !== 'disposed') {
-        reportClientError(failure.cause ?? failure, {feature: 'text-mood-model', source: 'worker'})
-      }
-    },
+    onFailure: createWorkerRpcFailureReporter((failure) =>
+      reportClientError(failure.cause ?? failure, {feature: 'text-mood-model', source: 'worker'}),
+    ),
     worker,
     workerFailureMessage: '분위기 분석 Worker 실행 오류',
   })
 
   const getFailure = (phase: TextMoodPhase): TextMoodError | null => {
     if (disposed) {
-      return createCancelledError(phase)
+      return createRpcCancelledError(phase)
     }
     const failure = transport.getFailure()
-    return failure === null ? null : createWorkerError(phase, failure.detail)
+    return failure === null ? null : createRpcWorkerFailedError(phase, failure.detail)
   }
-  const mapFailure = (error: unknown, phase: TextMoodPhase): TextMoodError =>
-    isWorkerRpcFailure(error) && error.code === 'disposed'
-      ? createCancelledError(phase)
-      : createWorkerError(
-          phase,
-          isWorkerRpcFailure(error) ? error.detail : 'Worker 요청을 완료하지 못했습니다.',
-        )
-
   const prepare: TextMoodAnalyzer['prepare'] = async () => {
     const unavailable = getFailure('prepare')
     if (unavailable !== null) {
@@ -122,7 +109,7 @@ export const createTextMoodAnalyzer = (
         case 'complete':
         case 'insufficient':
           return failureResult(
-            createWorkerError('prepare', 'Worker가 예상하지 않은 응답을 반환했습니다.'),
+            createRpcWorkerFailedError('prepare', 'Worker가 예상하지 않은 응답을 반환했습니다.'),
           )
       }
     } catch (error: unknown) {
@@ -167,7 +154,7 @@ export const createTextMoodAnalyzer = (
           return failureResult(response.error)
         case 'ready':
           return failureResult(
-            createWorkerError('analyze', 'Worker가 예상하지 않은 응답을 반환했습니다.'),
+            createRpcWorkerFailedError('analyze', 'Worker가 예상하지 않은 응답을 반환했습니다.'),
           )
       }
     } catch (error: unknown) {

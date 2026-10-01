@@ -1,4 +1,5 @@
-const SPEECH_STYLE_BOUNDARY_PATTERN = '(?=[,.!?，。！？…）);；]|$)'
+const SPEECH_STYLE_PUNCTUATION_CLASS = '[,.!?，。！？…）);；]'
+const SPEECH_STYLE_BOUNDARY_PATTERN = `(?=${SPEECH_STYLE_PUNCTUATION_CLASS}|$)`
 const SPEECH_STYLE_REPLACEMENTS: ReadonlyArray<readonly [RegExp, string]> = [
   [new RegExp(`아닙니다${SPEECH_STYLE_BOUNDARY_PATTERN}`, 'gu'), '아니에요'],
   [new RegExp(`있습니다${SPEECH_STYLE_BOUNDARY_PATTERN}`, 'gu'), '있어요'],
@@ -15,7 +16,7 @@ const SPEECH_STYLE_REPLACEMENTS: ReadonlyArray<readonly [RegExp, string]> = [
   [new RegExp(`입니다${SPEECH_STYLE_BOUNDARY_PATTERN}`, 'gu'), '이에요'],
   [new RegExp(`겁니다${SPEECH_STYLE_BOUNDARY_PATTERN}`, 'gu'), '거예요'],
   [new RegExp(`바랍니다${SPEECH_STYLE_BOUNDARY_PATTERN}`, 'gu'), '바라요'],
-  [/해보라(?=[,.!?。！？，])/gu, '해 보세요'],
+  [new RegExp(`해보라(?=${SPEECH_STYLE_PUNCTUATION_CLASS})`, 'gu'), '해 보세요'],
   [/건가(?<punctuation>[?？])/gu, '건가요$<punctuation>'],
   [/일지(?<punctuation>[?？])/gu, '일까요$<punctuation>'],
   [/일까(?<punctuation>[?？])/gu, '일까요$<punctuation>'],

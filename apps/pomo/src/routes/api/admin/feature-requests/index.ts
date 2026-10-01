@@ -1,5 +1,5 @@
+import {listOffsetQuerySchema} from 'src/server/http/list-offset-query-schema'
 import type {APIEvent} from '@solidjs/start/server'
-import {z} from 'zod'
 
 import {authorizeAdminRequest} from 'src/server/auth/authorize-admin-request'
 import {noStoreJson} from 'src/server/http/response'
@@ -7,10 +7,6 @@ import {listAdminFeatureRequests} from 'src/server/repositories/feature-requests
 
 const HTTP_INTERNAL_SERVER_ERROR = 500
 const HTTP_BAD_REQUEST = 400
-const MAXIMUM_LIST_OFFSET = 10_000
-const listFeatureRequestQuerySchema = z.object({
-  offset: z.coerce.number().int().min(0).max(MAXIMUM_LIST_OFFSET).default(0),
-})
 
 export const GET = async (event: APIEvent): Promise<Response> => {
   const authorization = await authorizeAdminRequest(event.request)
@@ -19,7 +15,7 @@ export const GET = async (event: APIEvent): Promise<Response> => {
     return authorization.response
   }
 
-  const parsedQuery = listFeatureRequestQuerySchema.safeParse(
+  const parsedQuery = listOffsetQuerySchema.safeParse(
     Object.fromEntries(new URL(event.request.url).searchParams),
   )
 

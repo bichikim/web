@@ -5,41 +5,50 @@ import {expect, it, vi} from 'vitest'
 
 import {LanguageLearningSettings} from '../Settings'
 
-it('should expose and update every language learning generation setting', () => {
-  const onCountChange = vi.fn()
-  const onLanguageChange = vi.fn()
-  const onModelChange = vi.fn()
-  const onVoiceChange = vi.fn()
+it.each([
+  {name: '학습 언어', setting: 'language', value: 'ja'},
+  {name: '만들 개수', setting: 'count', value: '3'},
+  {name: '목소리', setting: 'voice', value: 'Hana'},
+  {name: '음성 모델', setting: 'model', value: 'int8'},
+] as const)('should update the $setting generation setting', (setting) => {
+  const callbacks = {
+    count: vi.fn(),
+    language: vi.fn(),
+    model: vi.fn(),
+    voice: vi.fn(),
+  }
   render(() => (
     <LanguageLearningSettings
       count={1}
       disabled={false}
       language="en"
       modelId="full"
-      onCountChange={onCountChange}
-      onLanguageChange={onLanguageChange}
-      onModelChange={onModelChange}
-      onVoiceChange={onVoiceChange}
+      onCountChange={callbacks.count}
+      onLanguageChange={callbacks.language}
+      onModelChange={callbacks.model}
+      onVoiceChange={callbacks.voice}
       voiceId="Yuna"
     />
   ))
 
-  for (const [name, value] of [
-    ['학습 언어', 'ja'],
-    ['만들 개수', '3'],
-    ['목소리', 'Hana'],
-    ['음성 모델', 'int8'],
-  ]) {
-    fireEvent.keyDown(screen.getByRole('button', {name: new RegExp(name)}), {key: 'ArrowDown'})
-    const option = document.querySelector(`[role="option"][data-key="${value}"]`)
-    expect(option).not.toBeNull()
-    fireEvent.click(option!)
-  }
+  fireEvent.keyDown(screen.getByRole('button', {name: new RegExp(setting.name)}), {
+    key: 'ArrowDown',
+  })
+  const option = screen
+    .getAllByRole('option')
+    .find((candidate) => candidate.dataset.key === setting.value)
+  expect(option).toBeDefined()
+  fireEvent.click(option!)
 
-  expect(onLanguageChange).toHaveBeenCalledWith('ja')
-  expect(onCountChange).toHaveBeenCalledWith(3)
-  expect(onVoiceChange).toHaveBeenCalledWith('Hana')
-  expect(onModelChange).toHaveBeenCalledWith('int8')
+  expect(callbacks[setting.setting]).toHaveBeenCalledWith(
+    setting.setting === 'count' ? Number(setting.value) : setting.value,
+  )
+  expect(callbacks[setting.setting]).toHaveBeenCalledTimes(1)
+  for (const [name, callback] of Object.entries(callbacks)) {
+    if (name !== setting.setting) {
+      expect(callback).not.toHaveBeenCalled()
+    }
+  }
 })
 
 it('should disable every dropdown', () => {

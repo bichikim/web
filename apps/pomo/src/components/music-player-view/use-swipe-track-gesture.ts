@@ -1,3 +1,4 @@
+import {resolvePointerGestureAxis} from 'src/utils/resolve-pointer-gesture-axis'
 import {type Accessor, createSignal, type JSX, onCleanup} from 'solid-js'
 import {releaseCapturedPointer} from 'src/utils/release-captured-pointer'
 
@@ -61,14 +62,15 @@ export const useSwipeTrackGesture = (props: UseSwipeTrackGestureProps): SwipeTra
     const verticalDistance = event.clientY - startY
 
     if (gestureAxis === 'pending') {
-      if (
-        Math.max(Math.abs(horizontalDistance), Math.abs(verticalDistance)) < DRAG_INTENT_DISTANCE
-      ) {
+      gestureAxis = resolvePointerGestureAxis({
+        axis: gestureAxis,
+        horizontalDistance,
+        intentDistance: DRAG_INTENT_DISTANCE,
+        verticalDistance,
+      })
+      if (gestureAxis === 'pending') {
         return
       }
-
-      gestureAxis =
-        Math.abs(horizontalDistance) > Math.abs(verticalDistance) ? 'horizontal' : 'vertical'
 
       if (gestureAxis === 'vertical') {
         activePointerId = undefined

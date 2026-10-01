@@ -1,3 +1,5 @@
+import {clamp} from 'es-toolkit/math'
+import {exponentialApproachFactor} from 'src/utils/exponential-approach-factor'
 import {decodePcm16Wav} from 'src/utils/decode-pcm16-wav'
 import {clampUnit} from 'src/utils/clamp-unit'
 
@@ -52,9 +54,10 @@ const getRootMeanSquare = (samples: Float32Array, start: number, end: number) =>
 
 const getPeakReference = (levels: ReadonlyArray<number>) => {
   const sortedLevels = [...levels].sort((first, second) => first - second)
-  const percentileIndex = Math.max(
+  const percentileIndex = clamp(
+    Math.floor(sortedLevels.length * PEAK_REFERENCE_PERCENTILE),
     0,
-    Math.min(sortedLevels.length - 1, Math.floor(sortedLevels.length * PEAK_REFERENCE_PERCENTILE)),
+    Math.max(0, sortedLevels.length - 1),
   )
 
   return Math.max(REFERENCE_FLOOR, sortedLevels[percentileIndex] ?? 0)
@@ -117,7 +120,7 @@ export const createPWaveEnvelope = (buffer: ArrayBuffer): PAudioEnvelope | null 
 
 const smoothIntensity = (current: number, target: number, elapsedMs: number) => {
   const durationMs = target > current ? ATTACK_DURATION_MS : RELEASE_DURATION_MS
-  const progress = 1 - Math.exp(-elapsedMs / durationMs)
+  const progress = exponentialApproachFactor(elapsedMs, durationMs)
   return current + (target - current) * progress
 }
 

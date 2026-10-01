@@ -1,3 +1,4 @@
+import {randomInRange} from 'src/utils/random-in-range'
 import {cosineEaseInOut} from 'src/utils/cosine-ease-in-out'
 import {Container, type Texture, Ticker} from 'pixi.js'
 
@@ -510,7 +511,7 @@ export class PixiLayerScene {
   }
 
   #randomDuration(range: PixiSceneTravelRange) {
-    return range.minimumSeconds + this.#random() * (range.maximumSeconds - range.minimumSeconds)
+    return randomInRange(range.minimumSeconds, range.maximumSeconds, this.#random)
   }
 
   #resetMotion() {

@@ -1,8 +1,7 @@
 import {cx} from 'class-variance-authority'
-import {createMemo, createResource, createSignal, createUniqueId, For, Show} from 'solid-js'
+import {createMemo, createResource, createSignal, createUniqueId, Show} from 'solid-js'
 import * as m from '@paraglide/message'
 import {
-  CALENDAR_PROVIDERS,
   type CalendarConnection,
   createCalendarAuthorization,
   deleteCalendarConnection,
@@ -81,6 +80,17 @@ export const CalendarConnections = (props: CalendarConnectionsProps) => {
     }
   }
 
+  const handleSettingsClick = (event: MouseEvent) => {
+    event.preventDefault()
+    togglePopover()
+  }
+
+  const handlePopoverToggle = (event: ToggleEvent) => {
+    if (event.newState === 'closed') {
+      setConfirmingId(null)
+    }
+  }
+
   return (
     <>
       <button
@@ -93,10 +103,7 @@ export const CalendarConnections = (props: CalendarConnectionsProps) => {
           'hover:bg-surface-interactive focus-visible:shadow-focus ' +
           '[anchor-name:var(--pomo-calendar-settings-anchor)]'
         }
-        onClick={(event) => {
-          event.preventDefault()
-          togglePopover()
-        }}
+        onClick={handleSettingsClick}
         popovertarget={popoverId}
         style={{'--pomo-calendar-settings-anchor': popoverAnchor}}
         type="button"
@@ -113,11 +120,7 @@ export const CalendarConnections = (props: CalendarConnectionsProps) => {
           '[position-anchor:var(--pomo-calendar-settings-anchor)]',
         )}
         id={popoverId}
-        onToggle={(event) => {
-          if (event.newState === 'closed') {
-            setConfirmingId(null)
-          }
-        }}
+        onToggle={handlePopoverToggle}
         popover="auto"
         ref={setPopoverElement}
         role="dialog"
@@ -140,25 +143,31 @@ export const CalendarConnections = (props: CalendarConnectionsProps) => {
           >
             <Show
               when={authentication.state().kind !== 'unavailable' && !connections.error}
-              fallback={<p role="alert">{m.calendar_connections_failed()}</p>}
+              fallback={
+                <p class="m-0 pt-3" role="alert">
+                  {m.calendar_connections_failed()}
+                </p>
+              }
             >
               <div class="grid gap-2">
-                <For each={CALENDAR_PROVIDERS}>
-                  {(provider) => (
-                    <CalendarProviderActions
-                      connections={connections() ?? []}
-                      confirmingId={confirmingId()}
-                      onConnect={connect}
-                      onDisconnect={disconnect}
-                      pending={pendingAction() !== null}
-                      provider={provider}
-                    />
-                  )}
-                </For>
+                <CalendarProviderActions
+                  connections={connections() ?? []}
+                  confirmingId={confirmingId()}
+                  onConnect={connect}
+                  onDisconnect={disconnect}
+                  pending={pendingAction() !== null}
+                  provider="google"
+                />
               </div>
             </Show>
           </Show>
-          <Show when={errorMessage()}>{(message) => <p role="alert">{message()}</p>}</Show>
+          <Show when={errorMessage()}>
+            {(message) => (
+              <p class="m-0 pt-3" role="alert">
+                {message()}
+              </p>
+            )}
+          </Show>
         </Show>
       </section>
     </>

@@ -611,6 +611,10 @@ describe('PMusicPlayerContent queue restoration integration', () => {
     await waitFor(() => expect(audio.getAttribute('src')).toBe('/two.mp3'))
     markAudioMetadataReady(audio)
     fireEvent(audio, new Event('loadedmetadata'))
+    await waitFor(() => {
+      expect(audio.currentTime).toBe(22)
+      expect(HTMLMediaElement.prototype.play).toHaveBeenCalledOnce()
+    })
     fireEvent.click(screen.getByRole('button', {name: '재생목록 모두 비우기'}))
     await Promise.resolve()
 
