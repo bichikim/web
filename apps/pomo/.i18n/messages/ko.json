@@ -1386,5 +1386,9 @@
   "transfer_auto_accept": "모든 파일 받기 허용",
   "transfer_incoming_title": "파일 수신 요청",
   "transfer_incoming_description": "상대 기기가 보낸 파일입니다. 받으면 받은 파일 목록에 추가됩니다.",
-  "transfer_outgoing_description": "상대 기기가 파일을 수락하면 전송을 시작합니다."
+  "transfer_outgoing_description": "상대 기기가 파일을 수락하면 전송을 시작합니다.",
+  "toast_close": "알림 닫기",
+  "toast_count": "알림 {count}개",
+  "toast_label": "알림 목록",
+  "toast_waiting": "대기 {count}개"
 }

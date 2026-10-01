@@ -122,7 +122,6 @@ beforeEach(() => {
 it('should use the shared language select and filter saved sentences', async () => {
   const events = createEvents()
   vi.mocked(events.getAudio).mockResolvedValue(new Blob(['audio']))
-  const onRequestClose = vi.fn()
   vi.mocked(usePEvents).mockReturnValue(events)
   writeLanguageLearningSentences([
     {
@@ -142,7 +141,7 @@ it('should use the shared language select and filter saved sentences', async () 
       version: 1,
     },
   ])
-  const result = render(() => <LanguageLearningLibrary onRequestClose={onRequestClose} />)
+  const result = render(() => <LanguageLearningLibrary />)
 
   expect(PSelect).toHaveBeenCalledWith(
     expect.objectContaining({
@@ -184,7 +183,6 @@ it('should use the shared language select and filter saved sentences', async () 
 
   fireEvent.click(screen.getByRole('button', {name: '캐릭터로 듣기'}))
   await vi.waitFor(() => expect(events.playDialogue).toHaveBeenCalledWith('dialogue-ja'))
-  expect(onRequestClose).toHaveBeenCalledOnce()
 
   fireEvent.click(screen.getByRole('button', {name: '삭제'}))
   fireEvent.click(screen.getByRole('button', {name: '삭제 확인'}))

@@ -2,7 +2,8 @@
 
 import {fireEvent, render, screen} from '@solidjs/testing-library'
 import {useContext} from 'solid-js'
-import {describe, expect, it, vi} from 'vitest'
+import {afterEach, describe, expect, it, vi} from 'vitest'
+import {useToast} from '../../index'
 import {ToastAction} from '../ToastAction'
 import {ToastActionBody} from '../ToastActionBody'
 import {ToastActionList} from '../ToastActionList'
@@ -13,7 +14,42 @@ import {ToastProvider} from '../ToastProvider'
 import {ToastTitle} from '../ToastTitle'
 import {ToastContext, type ToastContextValue} from '../context'
 
+const ToastApiProbe = (props: {readonly onReady: (toast: ReturnType<typeof useToast>) => void}) => {
+  props.onReady(useToast())
+  return null
+}
+
+afterEach(() => vi.useRealTimers())
+
 describe('ToastBody', () => {
+  it('should apply queue and visible expiry rules to function-created toasts', () => {
+    vi.useFakeTimers()
+    let toast: ReturnType<typeof useToast> | undefined
+    render(() => (
+      <ToastProvider>
+        <ToastApiProbe
+          onReady={(value) => {
+            toast = value
+          }}
+        />
+        <ToastBody>
+          <ToastItem>
+            <ToastMessage />
+          </ToastItem>
+        </ToastBody>
+      </ToastProvider>
+    ))
+    for (const message of ['notice 1', 'notice 2', 'notice 3', 'notice 4']) {
+      toast?.showToast({message})
+    }
+    expect(screen.getAllByText(/^notice/)).toHaveLength(3)
+    expect(screen.queryByText('notice 4')).toBeNull()
+    vi.advanceTimersByTime(10_000)
+    expect(screen.getAllByText(/^notice/)).toHaveLength(1)
+    expect(screen.getByText('notice 4')).toBeDefined()
+    vi.advanceTimersByTime(10_000)
+    expect(screen.queryByText('notice 4')).toBeNull()
+  })
   it('should render message actions and close after the configured action', async () => {
     let context: ToastContextValue | undefined
     const action = vi.fn()

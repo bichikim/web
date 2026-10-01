@@ -3,7 +3,7 @@
 import {PreferenceProvider} from 'src/hooks/use-preference'
 
 import {render} from '@solidjs/testing-library'
-import {createSignal} from 'solid-js'
+import {createSignal, Show} from 'solid-js'
 import {vi} from 'vitest'
 
 import {
@@ -349,6 +349,9 @@ export const setupStudio = () => {
 
     return (
       <div data-tour-step="settings" data-transitioning={String(props.isSceneTransitioning)}>
+        <Show when={props.tourHintVisible}>
+          <PStudioTourHint onDismiss={props.onDismissTourHint} />
+        </Show>
         <button onClick={() => props.onTourOpen?.()} type="button">
           둘러보기
         </button>

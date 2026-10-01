@@ -43,15 +43,29 @@ export interface Message {
   id: string | number
   message: string
   title?: string
+  tone?: ToastTone
+}
+
+export type ToastTone = 'error' | 'notification'
+
+export interface ToastInput {
+  readonly message: string
+  readonly tone?: ToastTone
 }
 
 export interface ToastContextValue {
+  registerDismiss: (id: string | number, request: () => void) => () => void
   setMessage: (message: Message) => void
   turnOffMessage: (id: string | number) => void
+  showToast: (input: ToastInput) => string | null
+  dismissToast: (id: string | number) => void
 }
 
 export interface ToastInnerContextValue {
   messages: Accessor<Map<string | number, Message>>
+  visible: Accessor<ReadonlyArray<Message>>
+  count: Accessor<number>
+  waitingCount: Accessor<number>
 }
 
 export interface ToastContentContextValue {
@@ -70,8 +84,13 @@ export type ToastActionContextValue = MessageAction & {
 }
 
 export const ToastContext = createContext<ToastContextValue>({
+  dismissToast: () => undefined,
+  registerDismiss: () => () => undefined,
   setMessage: () => {
     //
+  },
+  showToast: () => {
+    throw new Error('showToast must be used inside ToastProvider.')
   },
   turnOffMessage: () => {
     //
@@ -79,7 +98,10 @@ export const ToastContext = createContext<ToastContextValue>({
 })
 
 export const ToastInnerContext = createContext<ToastInnerContextValue>({
+  count: () => 0,
   messages: () => new Map(),
+  visible: () => [],
+  waitingCount: () => 0,
 })
 
 export const ToastContentContext = createContext<ToastContentContextValue>({
