@@ -1,34 +1,34 @@
 /** @vitest-environment node */
 
 import 'fake-indexeddb/auto'
-import {afterEach, beforeEach, expect, it, vi} from 'vitest'
+import {afterEach, expect, it, vi} from 'vitest'
+import {
+  ALBUM_STORE_NAME,
+  openCustomAlbumDatabase,
+  TRACK_STORE_NAME,
+  waitForTransaction,
+} from 'src/features/custom-albums/database'
+import {
+  addCustomAlbumTracks,
+  readCustomAlbumDraft,
+  readCustomAlbums,
+  saveCustomAlbum,
+} from 'src/features/custom-albums'
 
-const DATABASE_NAME = 'pomo-custom-albums'
+const clearCustomAlbumDatabase = async (): Promise<void> => {
+  const database = await openCustomAlbumDatabase()
+  const transaction = database.transaction([ALBUM_STORE_NAME, TRACK_STORE_NAME], 'readwrite')
+  const finished = waitForTransaction(transaction)
 
-const resetAlbumDatabase = async (): Promise<void> => {
-  try {
-    const {openCustomAlbumDatabase} = await import('src/features/custom-albums/database')
-    const database = await openCustomAlbumDatabase()
-    database.close()
+  transaction.objectStore(ALBUM_STORE_NAME).clear()
+  transaction.objectStore(TRACK_STORE_NAME).clear()
 
-    await new Promise<void>((resolve, reject) => {
-      const request = indexedDB.deleteDatabase(DATABASE_NAME)
-      request.onsuccess = () => resolve()
-      request.onerror = () => reject(request.error)
-      request.onblocked = () => reject(new Error('Custom album database deletion was blocked.'))
-    })
-  } finally {
-    vi.resetModules()
-  }
+  await finished
 }
-
-beforeEach(async () => {
-  await import('src/features/custom-albums')
-})
 
 afterEach(async () => {
   try {
-    await resetAlbumDatabase()
+    await clearCustomAlbumDatabase()
   } finally {
     vi.restoreAllMocks()
     vi.unstubAllGlobals()
@@ -69,8 +69,6 @@ it('should persist a changed track title when re-saving a custom album', async (
     randomUUID: () => 'custom-album:album-1',
   })
 
-  const {readCustomAlbumDraft, readCustomAlbums, saveCustomAlbum} =
-    await import('src/features/custom-albums')
   const trackId = 'custom-track:track-1'
   const baseTrack = {
     audio: new Blob(['audio'], {type: 'audio/mpeg'}),
@@ -108,7 +106,6 @@ it('should persist replaced track audio when re-saving with the same title and a
     randomUUID: () => 'custom-album:album-1',
   })
 
-  const {readCustomAlbumDraft, saveCustomAlbum} = await import('src/features/custom-albums')
   const trackId = 'custom-track:track-1'
   const baseTrack = {
     audio: new Blob(['audio-a'], {type: 'audio/mpeg'}),
@@ -145,7 +142,6 @@ it('should persist changed track metadata when re-saving with the same title and
     randomUUID: () => 'custom-album:album-1',
   })
 
-  const {readCustomAlbumDraft, saveCustomAlbum} = await import('src/features/custom-albums')
   const baseTrack = {
     audio: new Blob(['audio'], {type: 'audio/mpeg'}),
     durationSeconds: 60,
@@ -189,7 +185,6 @@ it('should count replaced track bytes against the existing audio quota', async (
     },
   })
 
-  const {readCustomAlbumDraft, saveCustomAlbum} = await import('src/features/custom-albums')
   const baseTrack = {
     audio: new Blob(['audio-a'], {type: 'audio/mpeg'}),
     durationSeconds: 60,
@@ -269,7 +264,6 @@ it('should reject audio whose rounded duration would be zero as invalid audio', 
   stubAudioMetadata(0.499)
   vi.stubGlobal('crypto', {randomUUID: () => 'track-1'})
 
-  const {addCustomAlbumTracks} = await import('src/features/custom-albums')
   const file = new File([new Uint8Array(32)], 'short.mp3', {type: 'audio/mpeg'})
 
   await expect(
@@ -286,8 +280,6 @@ it('should persist audio that rounds to one second', async () => {
   stubAudioMetadata(0.5)
   vi.stubGlobal('crypto', {randomUUID: () => 'track-1'})
 
-  const {addCustomAlbumTracks, readCustomAlbumDraft, saveCustomAlbum} =
-    await import('src/features/custom-albums')
   const file = new File([new Uint8Array(32)], 'short.mp3', {type: 'audio/mpeg'})
   const result = await addCustomAlbumTracks({
     currentAlbumBytes: 0,

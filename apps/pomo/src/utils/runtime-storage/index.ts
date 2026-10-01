@@ -1,6 +1,9 @@
+export * from './create-bound-toss-web-storage-adapter'
 export * from './create-latest-storage-writer'
+export * from './create-timestamped-dual-runtime-preference-repository'
 export * from './create-timestamped-dual-runtime-storage'
 export * from './create-toss-storage-driver'
+export * from './create-toss-web-storage-adapter'
 export * from './create-versioned-preference-repository'
 export * from './create-web-storage-driver'
 export * from './get-toss-runtime-storage'
@@ -12,7 +15,5 @@ export * from './read-toss-storage-json'
 export * from './read-web-storage-json'
 export * from './remove-web-storage-item'
 export * from './types'
-
 export * from './write-toss-storage-json'
-
 export * from './write-web-storage-json'

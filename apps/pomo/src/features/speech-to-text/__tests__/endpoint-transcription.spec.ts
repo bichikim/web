@@ -1,17 +1,10 @@
+import {createDeferred} from 'src/test-utils/create-deferred'
 /** @vitest-environment node */
 import {describe, expect, it, vi} from 'vitest'
 
 import {createEndpointTranscription} from '../endpoint-transcription'
 import type {SpeechRecording} from '../recorder'
 import {failureResult, successResult} from 'src/features/result'
-
-const createDeferred = <Value>() => {
-  let resolve: (value: Value) => void = () => undefined
-  const promise = new Promise<Value>((resolvePromise) => {
-    resolve = resolvePromise
-  })
-  return {promise, resolve}
-}
 
 describe('createEndpointTranscription', () => {
   it('should wait for an in-flight segment before stopping and preserve transcription order', async () => {

@@ -1,10 +1,8 @@
+import {normalizePathname} from 'src/utils/normalize-pathname'
+export {normalizePathname} from 'src/utils/normalize-pathname'
 import {SEARCH_CONFIG} from 'src/features/search-discovery'
 
 const SEARCH_INDEXABLE_PATHS: ReadonlySet<string> = new Set(SEARCH_CONFIG.indexablePaths)
-
-export const normalizePathname = (pathname: string) => {
-  return pathname.replace(/\/+$/u, '') || '/'
-}
 
 export const getCanonicalPathname = normalizePathname
 

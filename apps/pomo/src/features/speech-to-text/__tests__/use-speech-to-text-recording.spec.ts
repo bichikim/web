@@ -1,3 +1,4 @@
+import {createDeferred} from 'src/test-utils/create-deferred'
 import {getMonotonicTime} from 'src/utils/get-monotonic-time'
 
 vi.mock('src/utils/get-monotonic-time', () => ({getMonotonicTime: vi.fn()}))
@@ -36,16 +37,6 @@ import {failureResult, successResult} from 'src/features/result'
 interface SpeechTestRoot {
   readonly controller: SpeechToTextController
   readonly dispose: () => void
-}
-
-const createDeferred = <Value>() => {
-  let resolvePromise: (value: Value) => void = () => undefined
-  let rejectPromise: (reason?: unknown) => void = () => undefined
-  const promise = new Promise<Value>((resolve, reject) => {
-    resolvePromise = resolve
-    rejectPromise = reject
-  })
-  return {promise, reject: rejectPromise, resolve: resolvePromise}
 }
 
 const createRecording = (): SpeechRecording => ({
