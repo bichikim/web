@@ -22,7 +22,8 @@ describe('normalizeKoreanSpeechText', () => {
     const text =
       '24:00에, 12:60에, 오전 00:00에, 오후 13:00에, 124:05에, 09:051에, v09:05에, 1.09:05에, ' +
       '09:05:30에, https://example.com/09:05에, https://example.com/?time=09:05에, ' +
-      '비율 09:05, 버전 09:05. 비율 09:05에, 버전 오전 09:05에, aspect ratio 09:05에.'
+      '비율 09:05, 버전 09:05. 비율 09:05에, 비율: 09:05에, 버전 오전 09:05에, ' +
+      'version: 오전 09:05에, aspect ratio 09:05에.'
 
     expect(normalizeKoreanSpeechText(text)).toBe(text)
   })
