@@ -2,7 +2,7 @@
 
 import {cleanup, fireEvent, render, screen, within} from '@solidjs/testing-library'
 import {createSignal} from 'solid-js'
-import {afterEach, describe, expect, it, vi} from 'vitest'
+import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 import {createDemoDocument, type PuppetDocument} from '../../../player'
 import {EditorTimeline} from '../EditorTimeline'
 
@@ -54,9 +54,14 @@ const moveBatchSelection = (batch: Awaited<ReturnType<typeof renderBatchSelectio
   fireEvent(batch.middleMarker, new MouseEvent('pointerup', {bubbles: true, clientX: 180}))
 }
 
+let batch: Awaited<ReturnType<typeof renderBatchSelection>>
+
+beforeEach(async () => {
+  batch = await renderBatchSelection()
+})
+
 describe('EditorTimeline batch editing', () => {
-  it('should move selected keyframes together in the all-motions view', async () => {
-    const batch = await renderBatchSelection()
+  it('should move selected keyframes together in the all-motions view', () => {
     expect(batch.firstMarker).toHaveAttribute('aria-pressed', 'true')
     expect(batch.middleMarker).toHaveAttribute('aria-pressed', 'true')
     expect(batch.view.getByRole('button', {name: '선택 키프레임 2개 삭제'})).toBeEnabled()
@@ -66,8 +71,7 @@ describe('EditorTimeline batch editing', () => {
     expect(batch.keyframes()?.map((keyframe) => keyframe.time)).toEqual([7 / 24 - 0.2, 7 / 24, 0.4])
   })
 
-  it('should update easing for moved selected keyframes', async () => {
-    const batch = await renderBatchSelection()
+  it('should update easing for moved selected keyframes', () => {
     moveBatchSelection(batch)
 
     fireEvent.keyDown(batch.view.getByRole('button', {name: /^키프레임 이징/}), {key: 'Enter'})
@@ -79,8 +83,7 @@ describe('EditorTimeline batch editing', () => {
     ])
   })
 
-  it('should delete moved selected keyframes while preserving unselected keyframes', async () => {
-    const batch = await renderBatchSelection()
+  it('should delete moved selected keyframes while preserving unselected keyframes', () => {
     moveBatchSelection(batch)
 
     fireEvent.click(batch.view.getByRole('button', {name: '선택 키프레임 2개 삭제'}))
