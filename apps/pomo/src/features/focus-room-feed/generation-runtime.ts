@@ -14,9 +14,9 @@ const generateDialogueAudio = async (options: GenerateDialogueAudioOptions) => {
 }
 
 const loadAutomaticDialogueSettings = async (storage: AutomaticDialogueSettingsStorage) => {
-  const {createAutomaticDialogueSettingsRepository} =
+  const {createAutomaticDialogueRuntimeRepository} =
     await import('../focus-room-dialogue/automatic-dialogue-settings')
-  return createAutomaticDialogueSettingsRepository(storage).load()
+  return createAutomaticDialogueRuntimeRepository(storage).read()
 }
 
 const isModelDownloaded = async (modelId: SupertonicModelId) => {

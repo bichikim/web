@@ -4,7 +4,12 @@ import {cleanup, fireEvent, render, screen, waitFor} from '@solidjs/testing-libr
 import {type JSX, Show} from 'solid-js'
 import {afterEach, beforeEach, expect, it, vi} from 'vitest'
 
+import {readDeviceOrientationRuntime} from 'src/features/device-orientation/read-device-orientation-runtime'
 import {PRelaxPlayerPage} from '../PRelaxPlayerPage'
+
+vi.mock('src/features/device-orientation/read-device-orientation-runtime', () => ({
+  readDeviceOrientationRuntime: vi.fn(),
+}))
 
 vi.mock('../../p-modal/PModal', () => ({
   PModal: (props: {
@@ -59,6 +64,10 @@ vi.mock('../RelaxGlassBackground', () => ({
 }))
 
 beforeEach(() => {
+  vi.mocked(readDeviceOrientationRuntime).mockReturnValue({
+    available: false,
+    requestPermission: null,
+  })
   vi.stubGlobal(
     'ResizeObserver',
     class {
@@ -232,7 +241,10 @@ it.each([
 })
 
 it('should let the listener choose drag or gyroscope depth movement', () => {
-  vi.stubGlobal('DeviceOrientationEvent', class {})
+  vi.mocked(readDeviceOrientationRuntime).mockReturnValue({
+    available: true,
+    requestPermission: null,
+  })
   render(() => <PRelaxPlayerPage />)
 
   fireEvent.click(screen.getByRole('button', {name: '배경 선택'}))
@@ -386,7 +398,10 @@ it('should allow a new drag after changing the background during a drag', () => 
 })
 
 it('should calibrate gyroscope motion and ignore drag while gyroscope is selected', () => {
-  vi.stubGlobal('DeviceOrientationEvent', class {})
+  vi.mocked(readDeviceOrientationRuntime).mockReturnValue({
+    available: true,
+    requestPermission: null,
+  })
   const frames: FrameRequestCallback[] = []
   vi.stubGlobal('requestAnimationFrame', (callback: FrameRequestCallback) => {
     frames.push(callback)
@@ -427,12 +442,7 @@ it('should update the daylight position without changing the selected background
 
 it('should move depth and light together with gyroscope input and reset both with drag', async () => {
   const requestPermission = vi.fn().mockResolvedValue('granted')
-  vi.stubGlobal(
-    'DeviceOrientationEvent',
-    class {
-      static requestPermission = requestPermission
-    },
-  )
+  vi.mocked(readDeviceOrientationRuntime).mockReturnValue({available: true, requestPermission})
   const frames: FrameRequestCallback[] = []
   vi.stubGlobal('requestAnimationFrame', (callback: FrameRequestCallback) => {
     frames.push(callback)
@@ -476,7 +486,10 @@ it('should move depth and light together with gyroscope input and reset both wit
 it.each([true, false])(
   'should keep depth and light at the manual position with reduced motion (initially %s)',
   (initiallyReduced) => {
-    vi.stubGlobal('DeviceOrientationEvent', class {})
+    vi.mocked(readDeviceOrientationRuntime).mockReturnValue({
+      available: true,
+      requestPermission: null,
+    })
     vi.stubGlobal('requestAnimationFrame', undefined)
     const preference = new EventTarget()
     const media = Object.assign(preference, {matches: initiallyReduced})
@@ -507,12 +520,7 @@ it.each([true, false])(
 
 it('should keep manual positioning available when orientation permission is denied', async () => {
   const requestPermission = vi.fn().mockResolvedValue('denied')
-  vi.stubGlobal(
-    'DeviceOrientationEvent',
-    class {
-      static requestPermission = requestPermission
-    },
-  )
+  vi.mocked(readDeviceOrientationRuntime).mockReturnValue({available: true, requestPermission})
   render(() => <PRelaxPlayerPage />)
 
   fireEvent.click(screen.getByRole('button', {name: '배경 선택'}))

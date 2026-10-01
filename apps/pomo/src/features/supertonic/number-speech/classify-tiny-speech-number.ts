@@ -1,3 +1,5 @@
+import {uniq} from 'es-toolkit/array'
+import {numericallyStableSoftmax} from 'src/utils/numerically-stable-softmax'
 import type {SupertonicLanguage} from '../language'
 import modelArtifact from './model/tiny-speech-number-model.json'
 import type {SpeechNumberDecision} from './types'
@@ -55,7 +57,7 @@ const getFeatureIndexes = (language: string, text: string) => {
     }
   }
 
-  return Array.from(new Set(Array.from(features, hashFeature)))
+  return uniq(Array.from(features, hashFeature))
 }
 
 const getWeights = () => {
@@ -81,11 +83,7 @@ const getProbabilities = (options: TinyClassifierOptions) => {
       TINY_SPEECH_NUMBER_MODEL.biases[kindIndex]!,
     )
   })
-  const maximum = Math.max(...logits)
-  const exponentials = logits.map((value) => Math.exp(value - maximum))
-  const total = exponentials.reduce((sum, value) => sum + value, 0)
-
-  return exponentials.map((value) => value / total)
+  return numericallyStableSoftmax(logits)
 }
 
 /** Classifies unresolved number context with an offline-trained quantized logistic model. */

@@ -1,3 +1,4 @@
+import {getCenteredSquareCrop} from 'src/utils/square-webp-cover'
 import {cropCustomAlbumImage} from './crop-custom-album-image'
 import {MAXIMUM_CUSTOM_COVER_SOURCE_BYTES} from './model'
 
@@ -31,13 +32,9 @@ export const readEmbeddedAudioCover = async (file: Blob): Promise<Blob | null> =
         return null
       }
 
-      const sourceSize = Math.min(image.width, image.height)
-
       return await cropCustomAlbumImage({
         image,
-        sourceSize,
-        sourceX: (image.width - sourceSize) / 2,
-        sourceY: (image.height - sourceSize) / 2,
+        ...getCenteredSquareCrop(image.width, image.height),
       })
     } finally {
       image.close()
