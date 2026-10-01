@@ -63,7 +63,7 @@ export const Settings = (props: SettingsProps) => (
         id="image-seed"
         type="text"
         inputmode="numeric"
-        pattern="[0-9]*"
+        pattern="[0-9０-９]*"
         maxlength={10}
         placeholder="랜덤"
         value={props.studio.seed()}
