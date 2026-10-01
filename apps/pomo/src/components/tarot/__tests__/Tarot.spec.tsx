@@ -3,12 +3,29 @@
 import {fireEvent, render, screen, within} from '@solidjs/testing-library'
 import {createSignal} from 'solid-js'
 import {expect, it, vi} from 'vitest'
-import {TAROT_CARDS, type TarotReadingController, useTarotSpeech} from '../../../features/tarot'
+import {
+  TAROT_CARDS,
+  type TarotReadingController,
+  type TarotSpeechController,
+} from '../../../features/tarot'
 import {Tarot} from '../Tarot'
-import {PModelDownloadProvider} from '../../../features/model-download'
 
 const TarotFixture = (props: {readonly reading: TarotReadingController}) => {
-  const speech = useTarotSpeech({locale: () => 'ko', text: props.reading.output})
+  const [autoRead, setAutoRead] = createSignal(false)
+  const speech: TarotSpeechController = {
+    audioUrl: () => null,
+    autoplay: () => false,
+    autoRead,
+    error: () => null,
+    onPlaybackEnd: () => undefined,
+    onPlaybackError: () => undefined,
+    onPlaybackRequest: () => false,
+    onPlaybackStart: () => undefined,
+    paused: () => true,
+    request: () => undefined,
+    setAutoRead,
+    status: () => 'idle',
+  }
   return <Tarot locale="ko" reading={props.reading} speech={speech} />
 }
 
@@ -42,11 +59,7 @@ it('should keep options above the cards and preserve cards while interpreting', 
     status,
   }
 
-  render(() => (
-    <PModelDownloadProvider>
-      <TarotFixture reading={reading} />
-    </PModelDownloadProvider>
-  ))
+  render(() => <TarotFixture reading={reading} />)
 
   expect(screen.getByRole('button', {name: '다시 뽑기'})).toBeInTheDocument()
   screen.getAllByRole('article').forEach((article) => fireEvent.load(article.querySelector('img')!))
