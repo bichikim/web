@@ -8,6 +8,7 @@ export const isCalendarProviderId = (value: string): value is CalendarProviderId
 export interface CalendarEvent {
   readonly accountLabel: string
   readonly allDay: boolean
+  readonly calendarTimeZone?: string
   readonly calendarLabel: string
   readonly end: string
   readonly id: string
@@ -20,3 +21,14 @@ export interface CalendarEventRange {
   readonly end: string
   readonly start: string
 }
+
+export interface CalendarEventInstant {
+  readonly at: string
+}
+
+export interface EmptyCalendarEventQuery {
+  readonly empty: true
+}
+
+export type CalendarEventLookup = CalendarEventRange | CalendarEventInstant
+export type CalendarEventQuery = CalendarEventLookup | EmptyCalendarEventQuery
