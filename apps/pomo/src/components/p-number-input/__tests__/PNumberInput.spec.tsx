@@ -154,6 +154,27 @@ describe('PNumberInput', () => {
     expect(input).toHaveProperty('value', '31')
   })
 
+  it('should preserve caller-provided role and value attributes in native number mode', () => {
+    render(() => (
+      <PNumberInput
+        aria-label="Custom duration"
+        aria-valuemax="60"
+        aria-valuemin="1"
+        aria-valuenow="30"
+        readOnly
+        role="slider"
+        value="30"
+      />
+    ))
+
+    const input = screen.getByRole('slider', {name: 'Custom duration'})
+
+    expect(input).toHaveProperty('type', 'number')
+    expect(input).toHaveAttribute('aria-valuemin', '1')
+    expect(input).toHaveAttribute('aria-valuemax', '60')
+    expect(input).toHaveAttribute('aria-valuenow', '30')
+  })
+
   it('should not step a read-only text spinbutton like a native number input', () => {
     const [textValue, setTextValue] = createSignal('5')
     const [numberValue, setNumberValue] = createSignal('5')
@@ -238,19 +259,23 @@ describe('PNumberInput', () => {
   it('should forward keydown and honor a caller-prevented default before text stepping', () => {
     const [value, setValue] = createSignal('5')
     const onKeyDown = vi.fn((event: Event) => event.preventDefault())
+    const onInputValueChange = vi.fn((nextValue: string) => setValue(nextValue))
     const onValueChange = vi.fn((nextValue: number) => setValue(String(nextValue)))
 
     render(() => (
       <PNumberInput
         aria-label="Duration"
         onKeyDown={onKeyDown}
+        onInputValueChange={onInputValueChange}
         onValueChange={onValueChange}
+        readOnly={false}
         type="text"
         value={value()}
       />
     ))
 
     const input = screen.getByRole('spinbutton', {name: 'Duration'})
+    expect(input).toHaveProperty('readOnly', false)
     fireEvent.keyDown(input, {key: 'ArrowUp'})
 
     expect(onKeyDown).toHaveBeenCalledOnce()
