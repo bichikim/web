@@ -176,6 +176,71 @@ it('should ask for voice consent when automatic reading is enabled', async () =>
   expect(speech.autoplay()).toBe(true)
 })
 
+it('should keep the consented voice download visible when the reading changes', async () => {
+  const download = Promise.withResolvers<ModelDownloadResult>()
+  voiceDownloaded = false
+  startVoiceModel.mockReturnValue(download.promise)
+  setText('이전 해석')
+  await flush()
+  speech.request()
+  await vi.waitFor(() => expect(speech.status()).toBe('consent'))
+
+  voiceDownloads.mockReturnValue([
+    {
+      label: 'Supertonic 음성',
+      percentage: 38,
+      status: 'loading',
+      target: {kind: 'voice', modelId: 'full'},
+    },
+  ])
+  const pending = speech.startDownload()
+  await vi.waitFor(() => expect(speech.status()).toBe('downloading'))
+  expect(speech.progress()).toBe(38)
+
+  setText('새 해석')
+  await flush()
+  expect(speech.status()).toBe('downloading')
+  expect(speech.progress()).toBe(38)
+
+  download.resolve({status: 'complete'})
+  await pending
+  expect(speech.status()).toBe('idle')
+  expect(generateDialogueAudio).not.toHaveBeenCalled()
+})
+
+it('should prepare the latest automatic reading after a shared voice download completes', async () => {
+  const download = Promise.withResolvers<ModelDownloadResult>()
+  voiceDownloaded = false
+  startVoiceModel.mockImplementation(() => {
+    voiceDownloads.mockReturnValue([
+      {
+        label: 'Supertonic 음성',
+        percentage: 38,
+        status: 'loading',
+        target: {kind: 'voice', modelId: 'full'},
+      },
+    ])
+    return download.promise
+  })
+  speech.setAutoRead(true)
+  setText('이전 해석')
+  await vi.waitFor(() => expect(speech.status()).toBe('consent'))
+
+  const pending = speech.startDownload()
+  await vi.waitFor(() => expect(speech.status()).toBe('downloading'))
+  setText('새 해석')
+  await flush()
+  voiceDownloaded = true
+  download.resolve({status: 'complete'})
+  await pending
+  await vi.waitFor(() => expect(speech.status()).toBe('ready'))
+
+  expect(generateDialogueAudio).toHaveBeenCalledExactlyOnceWith(
+    expect.objectContaining({text: '새 해석'}),
+  )
+  expect(speech.autoplay()).toBe(true)
+})
+
 it('should keep the latest reading current when an older voice check finishes late', async () => {
   voiceDownloaded = false
   const olderCheck = Promise.withResolvers<{readonly status: 'missing'}>()

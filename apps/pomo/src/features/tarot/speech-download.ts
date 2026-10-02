@@ -23,6 +23,7 @@ export const createTarotSpeechDownloads = (
 ): TarotSpeechDownloads => {
   const [status, setStatus] = createSignal<'consent' | 'downloading' | 'error' | null>(null)
   const [error, setError] = createSignal<string | null>(null)
+  let startRevision = 0
   const activeDownload = () =>
     modelDownload
       .downloads()
@@ -42,29 +43,38 @@ export const createTarotSpeechDownloads = (
           download.status !== 'error',
       )
   const reset = () => {
+    startRevision += 1
     setError(null)
     setStatus(null)
   }
   const start = async (isCurrent: () => boolean, onComplete: () => Promise<unknown>) => {
+    startRevision += 1
+    const currentStartRevision = startRevision
     setStatus('downloading')
     try {
       const result = await modelDownload.startVoiceModel(DEFAULT_DIALOGUE_MODEL_ID)
-      if (!isCurrent()) {
+      if (currentStartRevision !== startRevision) {
         return
       }
-      await handleResult(result, onComplete)
+      await handleResult(result, isCurrent, onComplete)
     } catch (cause: unknown) {
-      if (isCurrent()) {
+      if (currentStartRevision === startRevision) {
         setError(cause instanceof Error ? cause.message : m.tarot_voice_failed())
         setStatus('error')
       }
     }
   }
-  const handleResult = async (result: ModelDownloadResult, onComplete: () => Promise<unknown>) => {
+  const handleResult = async (
+    result: ModelDownloadResult,
+    isCurrent: () => boolean,
+    onComplete: () => Promise<unknown>,
+  ) => {
     switch (result.status) {
       case 'complete':
         reset()
-        await onComplete()
+        if (isCurrent()) {
+          await onComplete()
+        }
         return
       case 'cancelled':
         reset()

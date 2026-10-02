@@ -53,7 +53,9 @@ export const useTarotSpeech = (props: UseTarotSpeechProps): TarotSpeechControlle
   const status = () => downloads.status() ?? audio.status()
   const prepare = async (preparation: typeof latestPreparation, requested: boolean) => {
     latestPreparation = preparation
-    downloads.reset()
+    if (downloads.status() !== 'downloading') {
+      downloads.reset()
+    }
     const result = await audio.prepare(preparation)
     if (audio.isCurrent(result.revision)) {
       latestRevision = result.revision
