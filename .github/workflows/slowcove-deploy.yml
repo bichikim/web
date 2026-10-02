@@ -55,6 +55,9 @@ jobs:
           NODE_OPTIONS=--no-experimental-webstorage pnpm exec vitest run \
             'apps/pomo/src/routes/(main-layout)/(home-layout)/__tests__/index.spec.tsx' \
             apps/pomo/src/components/p-relax-player-page/__tests__/PRelaxPlayerPage.spec.tsx \
+            apps/pomo/src/middleware/__tests__/relax-routing.spec.ts \
+            apps/pomo/scripts/vite/__tests__/create-plugins.spec.ts \
+            apps/pomo/scripts/vite/__tests__/create-nitro-config.spec.ts \
             --project=unit --reporter=dot
 
       - name: Pull Slowcove production settings
@@ -74,12 +77,26 @@ jobs:
           test -f .vercel/output/static/relax-player/city-sunny-riverside.png
           node --input-type=module <<'NODE'
           import {readFileSync} from 'node:fs'
+          import handler from './.vercel/output/functions/__server.func/index.mjs'
           const config = JSON.parse(readFileSync('.vercel/output/config.json', 'utf8'))
           if (!config.routes.some((route) => route.dest === '/__server')) {
             throw new Error('Slowcove output must route requests to the Nitro server')
           }
           if (config.crons?.length) {
             throw new Error('Slowcove must not schedule Pomo cron jobs')
+          }
+          for (const [path, status] of [
+            ['/', 200], ['/relax', 200], ['/?layout=all-in-one', 302],
+            ['/api/cron/ai-jobs', 404], ['/admin', 404],
+          ]) {
+            const response = await handler.fetch(new Request(`https://slowcove.example${path}`), {})
+            if (response.status !== status) {
+              throw new Error(`Slowcove ${path} returned ${response.status}, expected ${status}`)
+            }
+            if (status === 302 && response.headers.get('location') !== 'https://www.pomofi.io/?layout=all-in-one') {
+              throw new Error('The full-app escape route must open Pomo')
+            }
+            await response.text()
           }
           NODE
 

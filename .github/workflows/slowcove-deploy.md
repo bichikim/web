@@ -11,9 +11,12 @@ relax-player entry. Pomo's `main` release is independent. The workflow reuses th
 repository's existing `VERCEL_TOKEN` secret and needs no new credentials.
 
 The generated production URL is <https://slowcove-bichis-projects.vercel.app>.
-`/` opens the relax player; `/?layout=all-in-one` opens the existing full app, and
-`/relax` remains the integrated relax route. Full-app server features that require
-Pomo's private environment are not configured in this separate project.
+`/` and `/relax` reuse the existing relax-player pages. The all-in-one link opens
+the existing Pomo site, and direct `/?layout=all-in-one` navigation redirects there.
+The standalone build uses a separate route directory and document middleware;
+Pomo's API/admin routes, authentication middleware, and signaling handler are not
+included. Unknown routes return 404, and no private Pomo environment is required.
+Regular Pomo builds keep their existing routes, middleware, and authentication.
 
 `slowcove.app` and DNS are intentionally left for later. Domain connection also
 requires reviewing the public origin in the build configuration.
