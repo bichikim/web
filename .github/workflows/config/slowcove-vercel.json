@@ -1,7 +1,7 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "framework": "solidstart-1",
-  "buildCommand": "POMO_PUBLIC_ORIGIN=https://slowcove-bichis-projects.vercel.app pnpm run build:web:relax-player",
+  "buildCommand": "NITRO_PRESET=vercel POMO_PUBLIC_ORIGIN=https://slowcove-bichis-projects.vercel.app pnpm run build:web:relax-player",
   "installCommand": "pnpm install --frozen-lockfile",
   "git": {
     "deploymentEnabled": false

@@ -67,9 +67,21 @@ jobs:
       - name: Build Slowcove output
         env:
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
-        run: >-
-          pnpm dlx vercel@${VERCEL_CLI_VERSION} build
-          --prod --local-config="${VERCEL_CONFIG}"
+        run: |
+          pnpm dlx vercel@${VERCEL_CLI_VERSION} build \
+            --prod --local-config="${VERCEL_CONFIG}"
+          test -f .vercel/output/functions/__server.func/.vc-config.json
+          test -f .vercel/output/static/relax-player/city-sunny-riverside.png
+          node --input-type=module <<'NODE'
+          import {readFileSync} from 'node:fs'
+          const config = JSON.parse(readFileSync('.vercel/output/config.json', 'utf8'))
+          if (!config.routes.some((route) => route.dest === '/__server')) {
+            throw new Error('Slowcove output must route requests to the Nitro server')
+          }
+          if (config.crons?.length) {
+            throw new Error('Slowcove must not schedule Pomo cron jobs')
+          }
+          NODE
 
       - name: Deploy verified output
         id: deploy
