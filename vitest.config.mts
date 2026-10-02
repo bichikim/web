@@ -7,7 +7,7 @@ export default {
     ...baseConfig.test,
     environment: 'jsdom',
     include: ['**/*.spec.?(c|m)[jt]s?(x)'],
-    maxWorkers: 1,
+    maxWorkers: 3,
     name: 'unit',
     testTimeout: 400,
   },

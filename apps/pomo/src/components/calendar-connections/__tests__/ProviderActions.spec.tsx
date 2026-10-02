@@ -1,25 +1,7 @@
 /** @vitest-environment jsdom */
 import {cleanup, fireEvent, render, screen} from '@solidjs/testing-library'
-import {createSignal, type JSX} from 'solid-js'
+import {createSignal} from 'solid-js'
 import {afterEach, expect, it, vi} from 'vitest'
-
-vi.mock('../../p-button/PButton', () => ({
-  PButton: (props: {
-    accessibleLabel?: string
-    children?: JSX.Element
-    disabled?: boolean
-    onPress?: (source: HTMLButtonElement) => void
-  }) => (
-    <button
-      aria-label={props.accessibleLabel}
-      disabled={props.disabled}
-      onClick={(event) => props.onPress?.(event.currentTarget)}
-    >
-      {props.children}
-    </button>
-  ),
-}))
-
 import {CalendarProviderActions} from '../ProviderActions'
 
 afterEach(() => {

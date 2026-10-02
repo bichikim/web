@@ -7,29 +7,24 @@ import {MemoryMemoList} from '../Memos'
 
 const {createStoredMemo, mocks} = setupMemos()
 
-it.each(['creator', 'editor'] as const)(
-  'should use the shared memo textarea style in the %s modal',
-  (mode) => {
-    mocks.memos = [createStoredMemo()]
-    render(() => <MemoryMemoList />)
+it('should use the same memo modal for creating and editing memos', () => {
+  mocks.memos = [createStoredMemo()]
+  render(() => <MemoryMemoList />)
 
-    const dialogName = mode === 'creator' ? '새 메모 만들기' : '여권 갱신하기 메모 편집'
-    fireEvent.click(
-      screen.getByRole('button', {
-        name: mode === 'creator' ? '새 메모' : '여권 갱신하기 메모 편집',
-      }),
-    )
-    const dialog = screen.getByRole('dialog', {name: dialogName})
-    const editor = within(dialog).getByLabelText('기억할 메모')
+  fireEvent.click(screen.getByRole('button', {name: '새 메모'}))
+  const creatorDialog = screen.getByRole('dialog', {name: '새 메모 만들기'})
+  const creator = within(creatorDialog).getByLabelText('기억할 메모')
+  fireEvent.click(screen.getByRole('button', {name: '닫기'}))
+  fireEvent.click(screen.getByRole('button', {name: '여권 갱신하기 메모 편집'}))
+  const editorDialog = screen.getByRole('dialog', {name: '여권 갱신하기 메모 편집'})
+  const editor = within(editorDialog).getByLabelText('기억할 메모')
 
-    expect(editor).toHaveClass('rounded-5', 'bg-surface-strong', 'p-4', 'leading-7')
-    expect(editor).not.toHaveClass('rounded-control', 'bg-black/20')
-    if (mode === 'editor') {
-      expect(within(dialog).getByLabelText('기억 반복')).toHaveValue('reinforcement')
-      expect(within(dialog).getByRole('button', {name: '변경 저장'})).toBeDisabled()
-    }
-  },
-)
+  expect(creator.className).toBe(editor.className)
+  expect(creator).toHaveClass('rounded-5', 'bg-surface-strong', 'p-4', 'leading-7')
+  expect(creator).not.toHaveClass('rounded-control', 'bg-black/20')
+  expect(within(editorDialog).getByLabelText('기억 반복')).toHaveValue('reinforcement')
+  expect(within(editorDialog).getByRole('button', {name: '변경 저장'})).toBeDisabled()
+})
 
 it('should not mark an unchanged exact reminder edit dirty after a temporary recall selection', () => {
   const exactReminderAt = new Date('2026-09-21T14:30').toISOString()
