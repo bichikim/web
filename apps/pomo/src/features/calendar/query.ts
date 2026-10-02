@@ -258,12 +258,19 @@ const createStandaloneCalendarDateRange = ({
 
   if (relativeDayOffsets.includes(0) && !includesThisWeek && !includesNextWeek) {
     const end = boundary(1)
+    const noon = boundary(0, '12:00:00')
+    const hasPassedNoon = now.getTime() >= noon.getTime()
+    const start = relativeDayOffsets.includes(-1)
+      ? boundary(-1)
+      : text.includes('오전') && hasPassedNoon
+        ? boundary(0)
+        : now
     return createCalendarDateRange({
-      afternoonStart: boundary(0, '12:00:00'),
+      afternoonStart: noon,
       end,
-      morningEnd: end,
+      morningEnd: noon,
       now,
-      start: relativeDayOffsets.includes(-1) ? boundary(-1) : now,
+      start,
       text,
     })
   }
