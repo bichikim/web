@@ -166,7 +166,9 @@ const getDialogueWriterStatusMessage = (currentState: DialogueWriterState): stri
         return m.dialogue_writer_download_complete_status()
       }
 
-      return m.dialogue_writer_downloading_status({percentage: currentState.percentage})
+      return m.dialogue_writer_downloading_status({
+        percentage: Math.min(MAXIMUM_PROGRESS, Math.max(0, currentState.percentage)),
+      })
     case 'ready':
       return m.dialogue_writer_ready_status()
     case 'unsupported':
