@@ -143,6 +143,10 @@ export const loadCalendarPromptContext = async (
   }
 
   if ('empty' in query) {
+    if ((await listCalendarConnections()).length === 0) {
+      return '연결된 캘린더가 없습니다. 일정이 없다고 답하지 말고 캘린더 연결이 필요하다고 안내하세요.'
+    }
+
     return createCalendarPromptContext({events: [], timeZone})
   }
 

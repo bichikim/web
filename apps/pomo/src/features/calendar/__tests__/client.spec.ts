@@ -226,7 +226,9 @@ it('should retain Microsoft UTC all-day noon membership through service and publ
   )
 })
 
-it('should answer an expired remaining-daypart query without requesting another date', async () => {
+it('should answer an expired remaining-daypart query without requesting an event range', async () => {
+  vi.mocked(apiJson).mockResolvedValue({connections: [{id: 'work'}]})
+
   await expect(
     loadCalendarPromptContext({
       now: new Date('2026-09-04T12:30:00.000Z'),
@@ -234,7 +236,26 @@ it('should answer an expired remaining-daypart query without requesting another 
       timeZone: 'Asia/Seoul',
     }),
   ).resolves.toContain('조회 기간에 등록된 일정이 없습니다.')
-  expect(apiJson).not.toHaveBeenCalled()
+  expect(apiJson).toHaveBeenCalledOnce()
+  const requestUrl = new URL(String(vi.mocked(apiJson).mock.calls[0]?.[0]), 'https://pomofi.io')
+  expect(requestUrl.pathname).toBe('/calendar/connections')
+})
+
+it('should report that a calendar must be connected for an expired remaining-daypart query', async () => {
+  vi.mocked(apiJson).mockResolvedValue({connections: []})
+
+  await expect(
+    loadCalendarPromptContext({
+      now: new Date('2026-09-04T12:30:00.000Z'),
+      text: '오늘 저녁 남은 일정 알려줘',
+      timeZone: 'Asia/Seoul',
+    }),
+  ).resolves.toBe(
+    '연결된 캘린더가 없습니다. 일정이 없다고 답하지 말고 캘린더 연결이 필요하다고 안내하세요.',
+  )
+  expect(apiJson).toHaveBeenCalledOnce()
+  const requestUrl = new URL(String(vi.mocked(apiJson).mock.calls[0]?.[0]), 'https://pomofi.io')
+  expect(requestUrl.pathname).toBe('/calendar/connections')
 })
 
 it('should send the resolved next-week range to calendar events', async () => {
