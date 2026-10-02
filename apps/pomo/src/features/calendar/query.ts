@@ -1,6 +1,6 @@
 import {createCalendarExclusionPattern} from './create-calendar-exclusion-pattern'
 import {dayjs} from 'src/utils/zoned-dayjs'
-import type {CalendarEventRange} from './types'
+import type {CalendarEventQuery, CalendarEventRange} from './types'
 
 const CALENDAR_INTENT_PATTERN = /(?:일정|미팅|회의|약속|스케줄)/u
 const CALENDAR_PERIOD_BOUNDARY_PATTERN =
@@ -60,6 +60,29 @@ const THREE_DAYS_AHEAD_START_DAYS = 3
 const DAYS_FROM_NEXT_MONDAY_TO_SATURDAY = 5
 const NEXT_EVENT_WINDOW_DAYS = 30
 
+// 승인된 사용자 현지 시각 범위: 새벽 00–06, 아침 06–10, 점심 11–14, 낮 09–18, 저녁 18–21, 밤 21–24.
+// 아침·낮·점심의 자연스러운 겹침은 의도했습니다.
+// 정오는 구간이 아니라 정확한 시점이며, 그 시각에 시작하거나 그 시각에도 진행 중인 일정만 포함합니다.
+// 시간대 표현은 기본적으로 전체 구간을 조회하고, '남은 일정'만 현재 시각부터 자릅니다.
+// 남은 구간이 끝났으면 다음 날로 넘기지 않고 빈 결과를 나타냅니다.
+const CALENDAR_DAYPART_WINDOWS = [
+  {end: '06:00:00', endDayOffset: 0, name: '새벽', start: '00:00:00'},
+  {end: '10:00:00', endDayOffset: 0, name: '아침', start: '06:00:00'},
+  {end: '14:00:00', endDayOffset: 0, name: '점심', start: '11:00:00'},
+  {end: '18:00:00', endDayOffset: 0, name: '낮', start: '09:00:00'},
+  {end: '21:00:00', endDayOffset: 0, name: '저녁', start: '18:00:00'},
+  {end: '00:00:00', endDayOffset: 1, name: '밤', start: '21:00:00'},
+] as const
+const REMAINING_SCHEDULE_PATTERN = /남은\s*(?:일정|미팅|회의|약속|스케줄)/u
+const CALENDAR_DAYPART_NAMES = ['정오', ...CALENDAR_DAYPART_WINDOWS.map(({name}) => name)]
+
+const includesUnexcludedCalendarDaypart = (text: string, name: string) =>
+  text.includes(name) &&
+  !createCalendarExclusionPattern(
+    name,
+    CALENDAR_DAYPART_NAMES.filter((daypart) => daypart !== name).join('|'),
+  ).test(text)
+
 const includesUnexcludedPhrase = (
   text: string,
   phrase: string,
@@ -99,6 +122,7 @@ interface CalendarQueryIntent {
 
 interface CreateCalendarDateRangeOptions {
   readonly afternoonStart: Date
+  readonly daypartQuery: CalendarEventQuery | null
   readonly end: Date
   readonly morningEnd: Date
   readonly now: Date
@@ -183,6 +207,38 @@ const toRange = (start: Date, end: Date): CalendarEventRange => ({
   start: start.toISOString(),
 })
 
+const createCalendarDaypartQuery = ({
+  boundary,
+  dayOffset,
+  now,
+  text,
+}: {
+  readonly boundary: (days: number, time?: string) => Date
+  readonly dayOffset: number
+  readonly now: Date
+  readonly text: string
+}): CalendarEventQuery | null => {
+  if (includesUnexcludedCalendarDaypart(text, '정오')) {
+    return {at: boundary(dayOffset, '12:00:00').toISOString()}
+  }
+
+  const window = CALENDAR_DAYPART_WINDOWS.find(({name}) =>
+    includesUnexcludedCalendarDaypart(text, name),
+  )
+  if (window === undefined) {
+    return null
+  }
+
+  const start = boundary(dayOffset, window.start)
+  const end = boundary(dayOffset + window.endDayOffset, window.end)
+  if (!REMAINING_SCHEDULE_PATTERN.test(text)) {
+    return toRange(start, end)
+  }
+
+  const remainingStart = now.getTime() > start.getTime() ? now : start
+  return remainingStart.getTime() >= end.getTime() ? {empty: true} : toRange(remainingStart, end)
+}
+
 const getFirstRequestedDateOffset = (relativeDayOffsets: ReadonlyArray<number>) =>
   relativeDayOffsets[0] ?? DAY_AFTER_TOMORROW_START_DAYS
 const getLastRequestedDateOffset = (relativeDayOffsets: ReadonlyArray<number>) =>
@@ -190,12 +246,13 @@ const getLastRequestedDateOffset = (relativeDayOffsets: ReadonlyArray<number>) =
 
 const createCalendarDateRange = ({
   afternoonStart,
+  daypartQuery,
   end,
   morningEnd,
   now,
   start,
   text,
-}: CreateCalendarDateRangeOptions): CalendarEventRange => {
+}: CreateCalendarDateRangeOptions): CalendarEventQuery => {
   if (text.includes('오전')) {
     return toRange(start, morningEnd)
   }
@@ -206,6 +263,10 @@ const createCalendarDateRange = ({
         ? afternoonStart
         : now
     return toRange(afternoonRangeStart, end)
+  }
+
+  if (daypartQuery !== null) {
+    return daypartQuery
   }
 
   return toRange(start, end)
@@ -219,7 +280,7 @@ const createStandaloneCalendarDateRange = ({
   now,
   relativeDayOffsets,
   text,
-}: CreateStandaloneCalendarDateRangeOptions): CalendarEventRange | null => {
+}: CreateStandaloneCalendarDateRangeOptions): CalendarEventQuery | null => {
   if (includesPreviousWeek) {
     return null
   }
@@ -233,8 +294,13 @@ const createStandaloneCalendarDateRange = ({
     const includesToday = relativeDayOffsets.includes(0)
     const start = includesToday && startDayOffset === 0 ? now : boundary(startDayOffset)
     const noon = boundary(endDayOffset, '12:00:00')
+    const daypartQuery =
+      relativeDayOffsets.length === 1
+        ? createCalendarDaypartQuery({boundary, dayOffset: startDayOffset, now, text})
+        : null
     return createCalendarDateRange({
       afternoonStart: boundary(startDayOffset, '12:00:00'),
+      daypartQuery,
       end: boundary(endDayOffset + 1),
       morningEnd: noon,
       now,
@@ -246,8 +312,13 @@ const createStandaloneCalendarDateRange = ({
   if (isStandaloneDateRequest(relativeDayOffsets.includes(1), includesThisWeek)) {
     const start = relativeDayOffsets.includes(0) ? now : boundary(1)
     const noon = boundary(1, '12:00:00')
+    const daypartQuery =
+      relativeDayOffsets.length === 1
+        ? createCalendarDaypartQuery({boundary, dayOffset: 1, now, text})
+        : null
     return createCalendarDateRange({
       afternoonStart: relativeDayOffsets.includes(0) ? boundary(0, '12:00:00') : noon,
+      daypartQuery,
       end: boundary(2),
       morningEnd: noon,
       now,
@@ -265,8 +336,13 @@ const createStandaloneCalendarDateRange = ({
       : text.includes('오전') && hasPassedNoon
         ? boundary(0)
         : now
+    const daypartQuery =
+      relativeDayOffsets.length === 1
+        ? createCalendarDaypartQuery({boundary, dayOffset: 0, now, text})
+        : null
     return createCalendarDateRange({
       afternoonStart: noon,
+      daypartQuery,
       end,
       morningEnd: noon,
       now,
@@ -379,10 +455,10 @@ const createCalendarMonthRange = ({
 const hasCalendarQueryIntent = (text: string) =>
   CALENDAR_INTENT_PATTERN.test(text) || IMPLICIT_SCHEDULE_PATTERN.test(text)
 
-/** Resolves a bounded calendar range in the requested time zone. */
+/** Resolves a calendar lookup in the requested time zone. */
 export const createCalendarQuery = (
   options: CreateCalendarQueryOptions,
-): CalendarEventRange | null => {
+): CalendarEventQuery | null => {
   if (!hasCalendarQueryIntent(options.text)) {
     return null
   }
