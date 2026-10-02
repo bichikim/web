@@ -99,8 +99,13 @@ beforeEach(() => {
 })
 
 describe('AlbumWorkspace', () => {
-  it('should expose a pending registration for confirmation or explicit removal', async () => {
-    const harness = createModelHarness()
+  it('should expose a pending registration for confirmation or explicit removal', () => {
+    const harness = createModelHarness({
+      ...BASE_CATALOG,
+      assets: BASE_CATALOG.assets.filter((asset) => asset.id === 'asset-pending'),
+      offers: [],
+      tracks: [],
+    })
     render(() => <AlbumWorkspace album={createAlbum()} model={harness.model} />)
 
     expect(screen.getByRole('heading', {name: '등록 확인 필요 1'})).toBeInTheDocument()
@@ -108,9 +113,7 @@ describe('AlbumWorkspace', () => {
     expect(screen.queryByText('Other pending')).not.toBeInTheDocument()
 
     fireEvent.click(screen.getByRole('button', {name: 'Pending track 등록 확인 재시도'}))
-    await waitFor(() =>
-      expect(harness.model.handleTrackConfirmation).toHaveBeenCalledWith('asset-pending'),
-    )
+    expect(harness.model.handleTrackConfirmation).toHaveBeenCalledWith('asset-pending')
 
     harness.setConfirmingAssetId('asset-pending')
     expect(screen.getByRole('button', {name: 'Pending track 등록 확인 재시도'})).toBeDisabled()
@@ -121,7 +124,7 @@ describe('AlbumWorkspace', () => {
     expect(harness.model.handleTrackRemove).not.toHaveBeenCalled()
     vi.mocked(globalThis.confirm).mockReturnValueOnce(true)
     fireEvent.click(screen.getByRole('button', {name: 'Pending track 대기 등록 삭제'}))
-    await waitFor(() => expect(harness.model.handleTrackRemove).toHaveBeenCalledWith('pending'))
+    expect(harness.model.handleTrackRemove).toHaveBeenCalledWith('pending')
     expect(globalThis.confirm).toHaveBeenLastCalledWith(expect.stringContaining('대기 등록을 삭제'))
   })
 
@@ -145,9 +148,15 @@ describe('AlbumWorkspace', () => {
     const harness = createModelHarness({...BASE_CATALOG, assets: [], pendingTracks: []})
     render(() => <AlbumWorkspace album={createAlbum()} model={harness.model} />)
 
+    expect(screen.getByRole('tab', {name: '수록곡 0'})).toHaveAttribute('aria-selected', 'true')
     expect(screen.getByText('아직 수록곡이 없습니다.')).toBeInTheDocument()
+    expect(screen.queryByLabelText(/^MP3 파일/u)).not.toBeInTheDocument()
     fireEvent.click(screen.getByRole('button', {name: '첫 곡 추가'}))
     expect(screen.getByText('새 곡 추가')).toBeInTheDocument()
+    const audioInput = screen.getByLabelText(/^MP3 파일/u)
+    expect(audioInput).toHaveAttribute('type', 'file')
+    expect(audioInput).toHaveAttribute('multiple')
+    expect(screen.getByRole('button', {name: '0곡 추가'})).toBeDisabled()
     fireEvent.click(screen.getByRole('button', {name: '추가 화면 닫기'}))
     expect(screen.queryByText('새 곡 추가')).not.toBeInTheDocument()
   })

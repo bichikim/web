@@ -9,6 +9,20 @@ import {createDeformer, type SceneSelection} from '../scene-graph'
 import {EditorLayerPanel} from '../EditorLayerPanel'
 import {convertSceneContainers} from '../container-conversion'
 
+const createGroupSelectionDocument = (): PuppetDocument => {
+  const document = createDemoDocument()
+  return {
+    ...document,
+    motions: [],
+    parameterBindings: [],
+    parameters: [],
+    parts: document.parts.filter(
+      (part) => part.id === 'mesh-preview' || part.id === 'shape-circle',
+    ),
+    scene: undefined,
+  }
+}
+
 describe('EditorLayerPanel', () => {
   test('should distinguish a 3D deformer from a free deformation deformer in the layer tree', () => {
     const spatial = convertSceneContainers({
@@ -90,8 +104,8 @@ describe('EditorLayerPanel', () => {
     expect(onSelectionChange).not.toHaveBeenCalled()
   })
 
-  test('should create a free deformer for a multiple selection and edit its state', () => {
-    const initialDocument = {...createDemoDocument(), scene: undefined}
+  test('should create a group from a multiple selection and edit its state', () => {
+    const initialDocument = createGroupSelectionDocument()
     const [document, setDocument] = createSignal<PuppetDocument>(initialDocument)
     const [selection, setSelection] = createSignal<SceneSelection>({
       activeNodeId: 'mesh-preview' as string | null,
@@ -109,21 +123,14 @@ describe('EditorLayerPanel', () => {
     fireEvent.click(view.getByRole('button', {name: 'shape-circle 레이어 선택'}), {ctrlKey: true})
     fireEvent.click(view.getByRole('button', {name: '그룹'}))
 
-    expect(view.getByRole('button', {name: '새 그룹 레이어 선택'})).toBeDefined()
+    const groupButton = view.getByRole('button', {name: '새 그룹 레이어 선택'})
+    expect(groupButton).toBeDefined()
     expect(document().scene?.roots[0]).toMatchObject({
       children: [{id: 'mesh-preview'}, {id: 'shape-circle'}],
       kind: 'group',
     })
-
-    fireEvent.click(view.getByRole('button', {name: '새 그룹 레이어 선택'}))
-
-    expect(
-      view
-        .getByRole('button', {name: '새 그룹 레이어 선택'})
-        .closest('[role="treeitem"]')
-        ?.getAttribute('aria-selected'),
-    ).toBe('true')
-    fireEvent.dblClick(view.getByRole('button', {name: '새 그룹 레이어 선택'}))
+    expect(groupButton.closest('[role="treeitem"]')?.getAttribute('aria-selected')).toBe('true')
+    fireEvent.dblClick(groupButton)
     const groupNameInput = view.getByRole('textbox', {
       name: '새 그룹 그룹 이름',
     })

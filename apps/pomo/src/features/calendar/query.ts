@@ -5,6 +5,11 @@ import type {CalendarEventRange} from './types'
 const CALENDAR_INTENT_PATTERN = /(?:일정|미팅|회의|약속|스케줄)/u
 const CALENDAR_PERIOD_BOUNDARY_PATTERN =
   /(?=$|[\s,.!?…]|(?:에는|에서|부터|까지|은|는|이|가|을|를|에|엔|도|로|만|중|쯤)(?=$|[\s,.!?…]))/u
+const WEEKDAY_PATTERN = new RegExp(
+  `([월화수목금토일])요일${CALENDAR_PERIOD_BOUNDARY_PATTERN.source}`,
+  'gu',
+)
+const QUALIFIED_WEEKDAY_PATTERN = /(?:다음|이번|지난|저번|다가오는|오는|매주)\s*$/u
 const THIS_WEEK_PATTERN = new RegExp(`이번 ?주${CALENDAR_PERIOD_BOUNDARY_PATTERN.source}`, 'u')
 const THIS_MONTH_PATTERN = new RegExp(`이번 ?달${CALENDAR_PERIOD_BOUNDARY_PATTERN.source}`, 'u')
 const NEXT_MONTH_PATTERN = new RegExp(`다음 ?달${CALENDAR_PERIOD_BOUNDARY_PATTERN.source}`, 'u')
@@ -59,6 +64,7 @@ const DAY_AFTER_TOMORROW_START_DAYS = 2
 const THREE_DAYS_AHEAD_START_DAYS = 3
 const DAYS_FROM_NEXT_MONDAY_TO_SATURDAY = 5
 const NEXT_EVENT_WINDOW_DAYS = 30
+const CALENDAR_WEEKDAY_SYMBOLS = ['일', '월', '화', '수', '목', '금', '토']
 
 const includesUnexcludedPhrase = (
   text: string,
@@ -94,6 +100,7 @@ interface CalendarQueryIntent {
   readonly includesThisWeek: boolean
   readonly monthOffsets: ReadonlyArray<number>
   readonly relativeDayOffsets: ReadonlyArray<number>
+  readonly requestedWeekday: number | null
   readonly weekendIntent: CalendarWeekendIntent | null
 }
 
@@ -103,6 +110,13 @@ interface CreateCalendarDateRangeOptions {
   readonly morningEnd: Date
   readonly now: Date
   readonly start: Date
+  readonly text: string
+}
+
+interface CreateCalendarDayRangeOptions {
+  readonly boundary: (days: number, time?: string) => Date
+  readonly dayOffset: number
+  readonly now: Date
   readonly text: string
 }
 
@@ -175,8 +189,29 @@ const getCalendarQueryIntent = (text: string): CalendarQueryIntent => ({
       ? [THREE_DAYS_AHEAD_START_DAYS]
       : []),
   ],
+  requestedWeekday: getRequestedWeekday(text),
   weekendIntent: getCalendarWeekendIntent(text),
 })
+
+const getRequestedWeekday = (text: string): number | null => {
+  const matches = [...text.matchAll(WEEKDAY_PATTERN)]
+  const match = matches.length === 1 ? matches[0] : undefined
+  if (match === undefined) {
+    return null
+  }
+
+  const [, weekday] = match
+  if (weekday === undefined || match.index === undefined) {
+    return null
+  }
+
+  if (QUALIFIED_WEEKDAY_PATTERN.test(text.slice(0, match.index))) {
+    return null
+  }
+
+  const offset = CALENDAR_WEEKDAY_SYMBOLS.indexOf(weekday)
+  return offset < 0 ? null : offset
+}
 
 const toRange = (start: Date, end: Date): CalendarEventRange => ({
   end: end.toISOString(),
@@ -210,6 +245,28 @@ const createCalendarDateRange = ({
 
   return toRange(start, end)
 }
+
+const createCalendarDayRange = ({
+  boundary,
+  dayOffset,
+  now,
+  text,
+}: CreateCalendarDayRangeOptions): CalendarEventRange => {
+  const noon = boundary(dayOffset, '12:00:00')
+  const isPastSameDayMorning =
+    dayOffset === 0 && text.includes('오전') && now.getTime() >= noon.getTime()
+  return createCalendarDateRange({
+    afternoonStart: noon,
+    end: boundary(dayOffset + 1),
+    morningEnd: noon,
+    now,
+    start: dayOffset === 0 && !isPastSameDayMorning ? now : boundary(dayOffset),
+    text,
+  })
+}
+
+const getDaysUntilWeekday = (weekday: number, requestedWeekday: number) =>
+  (requestedWeekday - weekday + DAYS_PER_WEEK) % DAYS_PER_WEEK
 
 const createStandaloneCalendarDateRange = ({
   boundary,
@@ -395,6 +452,7 @@ export const createCalendarQuery = (
     includesThisWeek,
     monthOffsets,
     relativeDayOffsets,
+    requestedWeekday,
     weekendIntent,
   } = getCalendarQueryIntent(options.text)
   const standaloneDateRange = createStandaloneCalendarDateRange({
@@ -429,6 +487,22 @@ export const createCalendarQuery = (
   }
   if (standaloneDateRange !== null) {
     return standaloneDateRange
+  }
+  if (
+    requestedWeekday !== null &&
+    !includesPreviousWeek &&
+    !includesThisWeek &&
+    !includesNextWeek &&
+    monthOffsets.length === 0 &&
+    relativeDayOffsets.length === 0 &&
+    weekendIntent === null
+  ) {
+    return createCalendarDayRange({
+      boundary,
+      dayOffset: getDaysUntilWeekday(weekday, requestedWeekday),
+      now,
+      text: options.text,
+    })
   }
   if (weekRange !== null) {
     return weekRange
