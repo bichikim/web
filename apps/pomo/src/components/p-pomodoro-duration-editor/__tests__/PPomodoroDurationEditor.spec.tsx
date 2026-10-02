@@ -42,30 +42,25 @@ describe('PPomodoroDurationEditor', () => {
     const summary = screen.getByRole('button', {name: /4세션/})
 
     fireEvent.click(summary)
-    expect(screen.getByRole('spinbutton', {name: '집중 횟수(회)'})).toHaveProperty('value', '4')
     const focusInput = screen.getByRole('spinbutton', {name: '집중 시간(분)'})
+    const sessionInput = screen.getByRole('spinbutton', {name: '집중 횟수(회)'})
+    const shortBreakInput = screen.getByRole('spinbutton', {name: '짧은 휴식 시간(분)'})
+    const longBreakInput = screen.getByRole('spinbutton', {name: '긴 휴식 시간(분)'})
+    const incrementButton = screen.getByRole('button', {name: '집중 시간(분) 늘리기'})
+    const saveButton = screen.getByRole('button', {name: '설정 저장'})
+
+    expect(sessionInput).toHaveProperty('value', '4')
     expect(focusInput).toHaveProperty('value', '25')
-    expect(screen.getByRole('spinbutton', {name: '짧은 휴식 시간(분)'})).toHaveProperty(
-      'value',
-      '5',
-    )
-    expect(screen.getByRole('spinbutton', {name: '긴 휴식 시간(분)'})).toHaveProperty('value', '15')
-    fireEvent.click(screen.getByRole('button', {name: '집중 시간(분) 늘리기'}))
+    expect(shortBreakInput).toHaveProperty('value', '5')
+    expect(longBreakInput).toHaveProperty('value', '15')
+    fireEvent.click(incrementButton)
     expect(focusInput).toHaveProperty('value', '26')
 
-    fireEvent.input(screen.getByRole('spinbutton', {name: '집중 횟수(회)'}), {
-      target: {value: '6'},
-    })
-    fireEvent.input(screen.getByRole('spinbutton', {name: '집중 시간(분)'}), {
-      target: {value: '30'},
-    })
-    fireEvent.input(screen.getByRole('spinbutton', {name: '짧은 휴식 시간(분)'}), {
-      target: {value: '7'},
-    })
-    fireEvent.input(screen.getByRole('spinbutton', {name: '긴 휴식 시간(분)'}), {
-      target: {value: '20'},
-    })
-    fireEvent.click(screen.getByRole('button', {name: '설정 저장'}))
+    fireEvent.input(sessionInput, {target: {value: '6'}})
+    fireEvent.input(focusInput, {target: {value: '30'}})
+    fireEvent.input(shortBreakInput, {target: {value: '7'}})
+    fireEvent.input(longBreakInput, {target: {value: '20'}})
+    fireEvent.click(saveButton)
 
     expect(onChange).toHaveBeenCalledWith({
       focusSeconds: 30 * 60,
@@ -77,16 +72,19 @@ describe('PPomodoroDurationEditor', () => {
     expect(onEditingChange).toHaveBeenCalledWith(false)
 
     fireEvent.click(summary)
-    expect(screen.getByRole('spinbutton', {name: '집중 횟수(회)'})).toHaveProperty('value', '4')
-    fireEvent.input(screen.getByRole('spinbutton', {name: '집중 시간(분)'}), {
-      target: {value: '30'},
-    })
-    fireEvent.click(screen.getByRole('button', {name: '취소'}))
+    const reopenedSessionInput = screen.getByRole('spinbutton', {name: '집중 횟수(회)'})
+    const reopenedFocusInput = screen.getByRole('spinbutton', {name: '집중 시간(분)'})
+    const cancelButton = screen.getByRole('button', {name: '취소'})
+    expect(reopenedSessionInput).toHaveProperty('value', '4')
+    fireEvent.input(reopenedFocusInput, {target: {value: '30'}})
+    fireEvent.click(cancelButton)
     expect(screen.queryByRole('spinbutton')).toBeNull()
 
     fireEvent.click(summary)
-    expect(screen.getByRole('spinbutton', {name: '집중 횟수(회)'})).toHaveProperty('value', '4')
-    expect(screen.getByRole('spinbutton', {name: '집중 시간(분)'})).toHaveProperty('value', '25')
+    const resetSessionInput = screen.getByRole('spinbutton', {name: '집중 횟수(회)'})
+    const resetFocusInput = screen.getByRole('spinbutton', {name: '집중 시간(분)'})
+    expect(resetSessionInput).toHaveProperty('value', '4')
+    expect(resetFocusInput).toHaveProperty('value', '25')
     fireEvent.click(summary)
     expect(screen.queryByRole('spinbutton')).toBeNull()
     expect(onEditingChange).toHaveBeenLastCalledWith(false)
