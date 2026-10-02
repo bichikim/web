@@ -11,10 +11,14 @@ export const LANGUAGE_LEARNING_SENTENCE_LIMITS = {
 >
 
 const ENDING_PATTERN = /[.!?。！？…]$/u
-const TRAILING_SYMBOL_CHARACTER_PATTERN = /^[\p{S}\p{M}\u{E0020}-\u{E007F}]$/u
-const TRAILING_SYMBOL_BASE_PATTERN = /^\p{S}$/u
-const TRAILING_MARK_CHARACTER_PATTERN = /^\p{M}$/u
+const TRAILING_SYMBOL_PATTERN = /^\p{S}$/u
+const TRAILING_MARK_PATTERN = /^[\uFE0E\uFE0F\u20E0]$/u
 const KEYCAP_BASE_PATTERN = /^[#*0-9]$/u
+const EMOJI_TAG_BASE_PATTERN = /^\p{Extended_Pictographic}$/u
+const EMOJI_TAG_SPEC_PATTERN = /^[\u{E0020}-\u{E007E}]$/u
+const EMOJI_TAG_END_CHARACTER = '\u{E007F}'
+const EMOJI_MODIFIER_BASE_PATTERN = /^\p{Emoji_Modifier_Base}$/u
+const EMOJI_MODIFIER_PATTERN = /^\p{Emoji_Modifier}$/u
 const WHITE_SPACE_CHARACTER_PATTERN = /^\p{White_Space}$/u
 const INTERNAL_ENDING_PATTERN =
   /(?:[!?。！？]+(?![!?。！？])|(?<=\d)\.(?![\d.])|(?<!\d)\.(?!\.)).+/u
@@ -48,6 +52,49 @@ const getKeycapBaseIndex = (characters: readonly string[], index: number) => {
     : -1
 }
 
+const getEmojiTagBaseIndex = (characters: readonly string[], index: number) => {
+  const character = characters[index]
+  const previousCharacter = characters[index - 1]
+
+  if (
+    character !== undefined &&
+    EMOJI_MODIFIER_PATTERN.test(character) &&
+    previousCharacter !== undefined &&
+    EMOJI_MODIFIER_BASE_PATTERN.test(previousCharacter)
+  ) {
+    return index - 1
+  }
+
+  if (
+    character === '\uFE0F' &&
+    previousCharacter !== undefined &&
+    EMOJI_TAG_BASE_PATTERN.test(previousCharacter)
+  ) {
+    return index - 1
+  }
+
+  return character !== undefined && EMOJI_TAG_BASE_PATTERN.test(character) ? index : -1
+}
+
+const getEmojiTagSequenceStartIndex = (characters: readonly string[], index: number) => {
+  if (characters[index] !== EMOJI_TAG_END_CHARACTER) {
+    return -1
+  }
+
+  let tagSpecificationIndex = index - 1
+
+  while (
+    tagSpecificationIndex >= 0 &&
+    EMOJI_TAG_SPEC_PATTERN.test(characters[tagSpecificationIndex] ?? '')
+  ) {
+    tagSpecificationIndex -= 1
+  }
+
+  return tagSpecificationIndex === index - 1
+    ? -1
+    : getEmojiTagBaseIndex(characters, tagSpecificationIndex)
+}
+
 const stripTrailingSymbols = (sentence: string) => {
   const characters = Array.from(sentence)
   let index = characters.length - 1
@@ -56,13 +103,23 @@ const stripTrailingSymbols = (sentence: string) => {
 
   while (index >= 0) {
     const character = characters[index]!
+    const emojiTagStartIndex = getEmojiTagSequenceStartIndex(characters, index)
+    const keycapBaseIndex = getKeycapBaseIndex(characters, index)
 
     if (requiresPrecedingSymbol) {
-      if (TRAILING_SYMBOL_BASE_PATTERN.test(character)) {
+      if (TRAILING_SYMBOL_PATTERN.test(character)) {
         requiresPrecedingSymbol = false
         hasTrailingSymbols = true
         index -= 1
-      } else if (TRAILING_MARK_CHARACTER_PATTERN.test(character)) {
+      } else if (emojiTagStartIndex >= 0) {
+        requiresPrecedingSymbol = false
+        hasTrailingSymbols = true
+        index = emojiTagStartIndex - 1
+      } else if (keycapBaseIndex >= 0) {
+        requiresPrecedingSymbol = false
+        hasTrailingSymbols = true
+        index = keycapBaseIndex - 1
+      } else if (TRAILING_MARK_PATTERN.test(character)) {
         index -= 1
       } else {
         break
@@ -72,11 +129,18 @@ const stripTrailingSymbols = (sentence: string) => {
     } else if (character === '\u200D' && hasTrailingSymbols) {
       requiresPrecedingSymbol = true
       index -= 1
-    } else if (TRAILING_SYMBOL_CHARACTER_PATTERN.test(character)) {
-      const keycapBaseIndex = getKeycapBaseIndex(characters, index)
-
+    } else if (emojiTagStartIndex >= 0) {
       hasTrailingSymbols = true
-      index = keycapBaseIndex >= 0 ? keycapBaseIndex - 1 : index - 1
+      index = emojiTagStartIndex - 1
+    } else if (keycapBaseIndex >= 0) {
+      hasTrailingSymbols = true
+      index = keycapBaseIndex - 1
+    } else if (TRAILING_MARK_PATTERN.test(character)) {
+      requiresPrecedingSymbol = true
+      index -= 1
+    } else if (TRAILING_SYMBOL_PATTERN.test(character)) {
+      hasTrailingSymbols = true
+      index -= 1
     } else {
       break
     }
