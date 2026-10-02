@@ -74,6 +74,15 @@ const hasConsumedExactReminder = (memo: z.infer<typeof memoryMemoSchema>) => {
 
 const getNormalizedNextExactReminderAt = (memo: z.infer<typeof memoryMemoSchema>) => {
   if (memo.nextExactReminderAt !== undefined) {
+    if (
+      memo.nextExactReminderAt !== null &&
+      memo.reminderEvents.some(
+        (event) => event.kind === 'exact' && event.scheduledAt === memo.nextExactReminderAt,
+      )
+    ) {
+      return null
+    }
+
     return memo.nextExactReminderAt
   }
 
