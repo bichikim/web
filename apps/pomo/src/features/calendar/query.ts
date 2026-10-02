@@ -4,7 +4,7 @@ import type {CalendarEventQuery, CalendarEventRange} from './types'
 
 const CALENDAR_INTENT_PATTERN = /(?:일정|미팅|회의|약속|스케줄)/u
 const CALENDAR_PERIOD_BOUNDARY_PATTERN =
-  /(?=$|[\s,.!?…]|(?:에는|에서|부터|까지|은|는|이|가|을|를|에|엔|도|로|만|중|쯤|의)(?=$|[\s,.!?…]))/u
+  /(?=$|[\s,.!?…]|(?:에는|에서|부터|까지|이랑|하고|은|는|이|가|을|를|에|엔|도|로|만|중|쯤|의|과|와|랑)(?=$|[\s,.!?…]))/u
 const createCalendarRelativeDayPattern = (phrase: string): RegExp =>
   new RegExp(`(?<![\\p{L}\\p{N}_])(?:${phrase})${CALENDAR_PERIOD_BOUNDARY_PATTERN.source}`, 'u')
 const THIS_WEEK_PATTERN = new RegExp(`이번 ?주${CALENDAR_PERIOD_BOUNDARY_PATTERN.source}`, 'u')

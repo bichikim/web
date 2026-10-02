@@ -43,6 +43,26 @@ describe('createCalendarQuery relative days', () => {
   })
 
   it.each([
+    ['오늘과 내일 일정 알려줘', '2026-09-05T15:00:00.000Z', '2026-09-04T10:30:00.000Z'],
+    ['어제와 오늘 일정 알려줘', '2026-09-04T15:00:00.000Z', '2026-09-02T15:00:00.000Z'],
+    ['내일하고 오늘 일정 알려줘', '2026-09-05T15:00:00.000Z', '2026-09-04T10:30:00.000Z'],
+    ['모레랑 내일 일정 알려줘', '2026-09-06T15:00:00.000Z', '2026-09-04T15:00:00.000Z'],
+    ['오늘이랑 내일 일정 알려줘', '2026-09-05T15:00:00.000Z', '2026-09-04T10:30:00.000Z'],
+  ])('should include relative days joined by a conjunction in "%s"', (text, end, start) => {
+    expect(createCalendarQuery({now, text, timeZone: 'Asia/Seoul'})).toEqual({end, start})
+  })
+
+  it('should still exclude a conjunction-joined relative day when requested', () => {
+    expect(
+      createCalendarQuery({
+        now,
+        text: '오늘과 내일은 빼고 일정 알려줘',
+        timeZone: 'Asia/Seoul',
+      }),
+    ).toEqual({end: '2026-09-04T15:00:00.000Z', start: '2026-09-04T10:30:00.000Z'})
+  })
+
+  it.each([
     {
       expected: {end: '2026-09-07T15:00:00.000Z', start: '2026-09-06T15:00:00.000Z'},
       text: '그제 말고 글피 일정 알려줘',
