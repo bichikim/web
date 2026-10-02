@@ -25,7 +25,7 @@ export default function RootPage() {
             searchParams.layout !== 'all-in-one'
           }
         >
-          <RelaxPlayerPage />
+          <RelaxPlayerPage returnHref="/?layout=all-in-one" />
         </Show>
       }
       when={import.meta.env.VITE_POMO_IS_APPS_IN_TOSS === 'true'}
