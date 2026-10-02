@@ -1,4 +1,5 @@
 import {createPendingSave} from 'src/features/pending-save'
+import {normalizePasteNumericInput} from 'src/utils/normalize-paste-numeric-input'
 import {PButton} from 'src/components/p-button/PButton'
 import {PNumberInput} from 'src/components/p-number-input/PNumberInput'
 import {createEffect, createSignal, onCleanup, Show} from 'solid-js'
@@ -17,7 +18,7 @@ const MESSAGE_CLASS = 'm-0 text-sm leading-[1.5] text-muted-foreground'
 const SAVE_DEBOUNCE_MILLISECONDS = 500
 
 const parseDuration = (value: string) => {
-  const durationMinutes = Number(value)
+  const durationMinutes = Number(normalizePasteNumericInput(value))
   return Number.isInteger(durationMinutes) &&
     durationMinutes >= MIN_DELAYED_END_EVENT_MINUTES &&
     durationMinutes <= MAX_DELAYED_END_EVENT_MINUTES
@@ -109,12 +110,14 @@ export const DelayedEndEventSettings = () => {
               class="w-32"
               decrementLabel={m.settings_delayed_end_decrease()}
               disabled={events.isLoading()}
+              inputMode="numeric"
               incrementLabel={m.settings_delayed_end_increase()}
               max={MAX_DELAYED_END_EVENT_MINUTES}
               min={MIN_DELAYED_END_EVENT_MINUTES}
               onInputValueChange={updateDuration}
               onValueChange={(value) => updateDuration(String(value))}
               step={1}
+              type="text"
               unit={m.pomodoro_minute_suffix()}
               value={draft()}
             />
