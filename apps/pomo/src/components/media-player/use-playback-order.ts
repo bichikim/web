@@ -1,4 +1,9 @@
-import {type Accessor, createEffect, createSignal, untrack} from 'solid-js'
+import {usePreference} from 'src/hooks/use-preference'
+import {
+  repeatModePreference,
+  shufflePreference,
+} from 'src/features/focus-room-audio/playback-order-preferences'
+import {type Accessor, createEffect, createSignal, on, untrack} from 'solid-js'
 import {
   type ManualNavigationResolution,
   normalizeTrackIndex,
@@ -165,8 +170,10 @@ const resolveManualNavigationForExecution = (
 /** 이전·다음 곡, 반복·셔플 순서와 셔플 이력을 관리한다. */
 // oxlint-disable-next-line eslint/max-lines-per-function -- Playback order coordinates mode state, manual resolution, and natural ending in one public controller contract.
 export const usePlaybackOrder = (props: UsePlaybackOrderProps): PlaybackOrder => {
-  const [repeatMode, setRepeatMode] = createSignal<RepeatMode>('repeat-all')
-  const [shuffleEnabled, setShuffleEnabled] = createSignal(true)
+  const [savedRepeatMode, setRepeatMode] = usePreference(repeatModePreference)
+  const [savedShuffleEnabled, setShuffleEnabled] = usePreference(shufflePreference)
+  const repeatMode = () => savedRepeatMode() ?? 'repeat-all'
+  const shuffleEnabled = () => savedShuffleEnabled() ?? true
   const [shuffleHistory, setShuffleHistory] = createSignal<readonly number[]>([])
   const [shuffleQueue, setShuffleQueue] = createSignal<readonly number[]>(
     untrack(() => [...props.initialQueue]),
@@ -240,19 +247,24 @@ export const usePlaybackOrder = (props: UsePlaybackOrderProps): PlaybackOrder =>
   const selectPreviousTrack = () => selectManualTrack('previous')
   const selectNextTrack = () => selectManualTrack('next')
 
-  const toggleShuffle = () => {
-    const enabled = !shuffleEnabled()
-    if (enabled) {
-      resetShuffleQueue()
-    } else {
-      setShuffleQueue([])
-    }
-    setShuffleHistory([])
-    setShuffleEnabled(enabled)
-  }
+  createEffect(
+    on(
+      shuffleEnabled,
+      (enabled) => {
+        if (enabled) {
+          resetShuffleQueue()
+        } else {
+          setShuffleQueue([])
+        }
+        setShuffleHistory([])
+      },
+      {defer: true},
+    ),
+  )
+  const toggleShuffle = () => setShuffleEnabled(!shuffleEnabled())
 
   const toggleRepeatMode = (mode: Exclude<RepeatMode, 'none'>) => {
-    setRepeatMode((currentMode) => (currentMode === mode ? 'none' : mode))
+    setRepeatMode(repeatMode() === mode ? 'none' : mode)
   }
 
   const selectChosenTrack = (index: number) => {
