@@ -1,9 +1,7 @@
-import {useSearchParams} from '@solidjs/router'
 import {clientOnly} from '@solidjs/start'
 import {Show} from 'solid-js'
 
 import {AppsInTossPrepare} from 'src/components/apps-in-toss-prepare'
-import {PHomePage} from 'src/components/p-home-page/PHomePage'
 
 const RelaxPlayerPage = clientOnly(
   async () => {
@@ -13,25 +11,14 @@ const RelaxPlayerPage = clientOnly(
   {lazy: true},
 )
 
-export default function RootPage() {
-  const [searchParams] = useSearchParams()
+export default function RelaxPage() {
   return (
     <Show
-      fallback={
-        <Show
-          fallback={<PHomePage />}
-          when={
-            import.meta.env.VITE_APP_LAYOUT === 'relax-player' &&
-            searchParams.layout !== 'all-in-one'
-          }
-        >
-          <RelaxPlayerPage returnHref="/?layout=all-in-one" />
-        </Show>
-      }
+      fallback={<RelaxPlayerPage returnHref="/?layout=all-in-one" />}
       when={import.meta.env.VITE_POMO_IS_APPS_IN_TOSS === 'true'}
     >
       <AppsInTossPrepare>
-        <PHomePage />
+        <RelaxPlayerPage returnHref="/?layout=all-in-one" />
       </AppsInTossPrepare>
     </Show>
   )
