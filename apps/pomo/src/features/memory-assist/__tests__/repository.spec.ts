@@ -1,7 +1,8 @@
 /** @vitest-environment node */
 import {expect, it, vi} from 'vitest'
 
-import {advanceMemoryMemo, createMemoryMemo} from '../schedule'
+import {createCalendarAlarmSaver} from '../../calendar-alarm/create-calendar-alarm-saver'
+import {advanceMemoryMemo, createMemoryMemo, getDueMemoryReminder} from '../schedule'
 import {
   createMemoryMemoRepository,
   createMemoryMemoStore,
@@ -65,6 +66,94 @@ it('should persist structured reminder events to web and Toss storage', async ()
 
   expect(writeWeb).toHaveBeenCalledWith([deliveredMemo])
   expect(writeToss).toHaveBeenCalledWith([deliveredMemo])
+})
+
+it('should preserve an intentional exact reminder rearm through the repository boundary', async () => {
+  const exactReminderAt = '2026-09-04T04:00:00.000Z'
+  const deliveredMemo = advanceMemoryMemo({
+    kind: 'exact',
+    memo: createMemoryMemo({
+      exactReminderAt,
+      id: 'calendar-alarm:event',
+      now: new Date('2026-09-04T03:00:00.000Z'),
+      random: () => 0,
+      recallMode: 'none',
+      text: 'Calendar alarm',
+    }),
+    now: new Date('2026-09-04T04:05:00.000Z'),
+    random: () => 0,
+  })
+  let storedSnapshot = serializeMemos([deliveredMemo])
+  const store = createMemoryMemoStore(
+    {
+      readToss: vi.fn().mockResolvedValue(null),
+      readWeb: () => storedSnapshot,
+      usesTossStorage: () => false,
+      writeToss: vi.fn<MemoryMemoStorage['writeToss']>().mockResolvedValue(),
+      writeWeb: (memos) => {
+        storedSnapshot = serializeMemos(memos)
+        return null
+      },
+    },
+    vi.fn(),
+  )
+  const save = createCalendarAlarmSaver({
+    cleanup: vi.fn().mockResolvedValue(undefined),
+    deleteMemo: vi.fn(),
+    reportError: vi.fn(),
+    updateMemos: store.update,
+  })
+
+  await save({
+    alarmAt: new Date(exactReminderAt),
+    memoId: 'calendar-alarm:event',
+    now: new Date('2026-09-04T03:30:00.000Z'),
+    random: () => 0,
+    text: 'Calendar alarm',
+  })
+
+  const [savedMemo] = await store.read()
+
+  expect(savedMemo).toMatchObject({
+    exactReminderAt,
+    nextExactReminderAt: exactReminderAt,
+    nextExactReminderRearmed: true,
+    reminderEvents: deliveredMemo.reminderEvents,
+    reminderHistory: deliveredMemo.reminderHistory,
+  })
+  expect(
+    savedMemo === undefined
+      ? null
+      : getDueMemoryReminder(savedMemo, new Date('2026-09-04T04:01:00.000Z')),
+  ).toBe('exact')
+
+  await store.update((memos) =>
+    memos.map((memo) =>
+      advanceMemoryMemo({
+        kind: 'exact',
+        memo,
+        now: new Date('2026-09-04T04:07:00.000Z'),
+        random: () => 0,
+      }),
+    ),
+  )
+
+  const [deliveredAgain] = await store.read()
+
+  expect(deliveredAgain).toMatchObject({
+    exactReminderAt: null,
+    nextExactReminderAt: null,
+    reminderEvents: [
+      ...deliveredMemo.reminderEvents,
+      {
+        deliveredAt: '2026-09-04T04:07:00.000Z',
+        kind: 'exact',
+        scheduledAt: exactReminderAt,
+      },
+    ],
+    reminderHistory: [...deliveredMemo.reminderHistory, '2026-09-04T04:07:00.000Z'],
+  })
+  expect(deliveredAgain?.nextExactReminderRearmed).toBeUndefined()
 })
 
 it('should read valid web memos without using Toss storage', async () => {
