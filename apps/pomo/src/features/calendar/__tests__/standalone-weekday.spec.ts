@@ -13,6 +13,24 @@ describe('createCalendarQuery for a standalone explicit weekday', () => {
     })
   })
 
+  it.each(['다음', '이번', '지난', '저번', '오는', '매주'])(
+    'should leave a weekday qualified by %s outside the standalone weekday path',
+    (qualifier) => {
+      const qualifiedWeekday = createCalendarQuery({
+        now,
+        text: `${qualifier} 수요일 일정 알려줘`,
+        timeZone,
+      })
+      const existingFallback = createCalendarQuery({
+        now,
+        text: '다음 미팅 언제야?',
+        timeZone,
+      })
+
+      expect(qualifiedWeekday).toEqual(existingFallback)
+    },
+  )
+
   it('should query the remaining local day when the requested weekday is today', () => {
     const weekdayQuery = createCalendarQuery({now, text: '금요일 일정 알려줘', timeZone})
     const todayQuery = createCalendarQuery({now, text: '오늘 일정 알려줘', timeZone})

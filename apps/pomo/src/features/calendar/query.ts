@@ -9,6 +9,7 @@ const WEEKDAY_PATTERN = new RegExp(
   `([월화수목금토일])요일${CALENDAR_PERIOD_BOUNDARY_PATTERN.source}`,
   'gu',
 )
+const QUALIFIED_WEEKDAY_PATTERN = /(?:다음|이번|지난|저번|다가오는|오는|매주)\s*$/u
 const THIS_WEEK_PATTERN = new RegExp(`이번 ?주${CALENDAR_PERIOD_BOUNDARY_PATTERN.source}`, 'u')
 const THIS_MONTH_PATTERN = new RegExp(`이번 ?달${CALENDAR_PERIOD_BOUNDARY_PATTERN.source}`, 'u')
 const NEXT_MONTH_PATTERN = new RegExp(`다음 ?달${CALENDAR_PERIOD_BOUNDARY_PATTERN.source}`, 'u')
@@ -194,8 +195,17 @@ const getCalendarQueryIntent = (text: string): CalendarQueryIntent => ({
 
 const getRequestedWeekday = (text: string): number | null => {
   const matches = [...text.matchAll(WEEKDAY_PATTERN)]
-  const weekday = matches.length === 1 ? matches[0]?.[1] : undefined
-  if (weekday === undefined) {
+  const match = matches.length === 1 ? matches[0] : undefined
+  if (match === undefined) {
+    return null
+  }
+
+  const [, weekday] = match
+  if (weekday === undefined || match.index === undefined) {
+    return null
+  }
+
+  if (QUALIFIED_WEEKDAY_PATTERN.test(text.slice(0, match.index))) {
     return null
   }
 

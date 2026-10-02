@@ -14,7 +14,7 @@ import {composeParameterScene} from '../../../deformation/scene'
 import {applySceneNodeDeformers} from '../../../deformation/vertices'
 import {findNode} from '../scene-tree'
 
-const createNestedSkinDocument = () => {
+test('should connect two rotations, edit one vertex, and undo the changes', () => {
   const initial = createSkinDocument()
   const [mesh, group, shoulder, elbow] = initial.scene.roots
   if (
@@ -30,11 +30,6 @@ const createNestedSkinDocument = () => {
     scene: {roots: [group, {...shoulder, children: [{...elbow, children: [mesh]}]}]},
   }
   const partId = document.parts[0]!.id
-  return {document, partId}
-}
-
-test('should connect two rotations to the part', () => {
-  const {document, partId} = createNestedSkinDocument()
   const history = useDocumentHistory({initialDocument: setPartSkinning(document, partId)})
   const view = render(() => (
     <SkinningEditor
@@ -48,21 +43,6 @@ test('should connect two rotations to the part', () => {
   expect(view.queryByRole('checkbox')).not.toBeInTheDocument()
   expect(connect).not.toBeDisabled()
   fireEvent.click(connect)
-  expect(view.getByRole('spinbutton', {name: 'Shoulder 스키닝 가중치'})).toBeInTheDocument()
-  expect(view.getByRole('button', {name: '스키닝 해제'})).toBeInTheDocument()
-})
-
-test('should edit one vertex and undo the skinning changes', () => {
-  const {document, partId} = createNestedSkinDocument()
-  const history = useDocumentHistory({initialDocument: document})
-  const view = render(() => (
-    <SkinningEditor
-      document={history.document()}
-      partId={partId}
-      vertexIndex={0}
-      onDocumentChange={history.setDocument}
-    />
-  ))
   const input = view.getByRole('spinbutton', {name: 'Shoulder 스키닝 가중치'})
   fireEvent.input(input, {target: {value: '80'}})
   fireEvent.blur(input)

@@ -150,8 +150,13 @@ describe('AlbumWorkspace', () => {
 
     expect(screen.getByRole('tab', {name: '수록곡 0'})).toHaveAttribute('aria-selected', 'true')
     expect(screen.getByText('아직 수록곡이 없습니다.')).toBeInTheDocument()
+    expect(screen.queryByLabelText(/^MP3 파일/u)).not.toBeInTheDocument()
     fireEvent.click(screen.getByRole('button', {name: '첫 곡 추가'}))
     expect(screen.getByText('새 곡 추가')).toBeInTheDocument()
+    const audioInput = screen.getByLabelText(/^MP3 파일/u)
+    expect(audioInput).toHaveAttribute('type', 'file')
+    expect(audioInput).toHaveAttribute('multiple')
+    expect(screen.getByRole('button', {name: '0곡 추가'})).toBeDisabled()
     fireEvent.click(screen.getByRole('button', {name: '추가 화면 닫기'}))
     expect(screen.queryByText('새 곡 추가')).not.toBeInTheDocument()
   })
