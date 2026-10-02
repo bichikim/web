@@ -8,7 +8,7 @@ beforeEach(() => {
   vi.mocked(getMonotonicTime).mockImplementation(() => Date.now())
 })
 
-import {render} from '@solidjs/testing-library'
+import {render, renderHook} from '@solidjs/testing-library'
 import {createEffect} from 'solid-js'
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 import {PreferenceProvider} from 'src/hooks/use-preference'
@@ -346,5 +346,93 @@ describe('useScreenSaver', () => {
     Object.defineProperty(document, 'visibilityState', {configurable: true, value: 'hidden'})
     document.dispatchEvent(new Event('visibilitychange'))
     expect(controller?.isActive()).toBe(false)
+  })
+
+  it('should retain non-capturing activity and the 500ms throttle between resets', async () => {
+    const {result} = renderHook(useScreenSaver, {wrapper: PreferenceProvider})
+    await Promise.resolve()
+    vi.advanceTimersByTime(60_000)
+    expect(result.isActive()).toBe(true)
+    const child = document.createElement('button')
+    child.addEventListener('pointerdown', (event) => event.stopPropagation())
+    document.body.append(child)
+
+    try {
+      child.dispatchEvent(new Event('pointerdown', {bubbles: true}))
+      expect(result.isActive()).toBe(true)
+      globalThis.window.dispatchEvent(new Event('pointerdown'))
+      expect(result.isActive()).toBe(false)
+      vi.advanceTimersByTime(250)
+      globalThis.window.dispatchEvent(new Event('pointermove'))
+      vi.advanceTimersByTime(59_750)
+      expect(result.isActive()).toBe(true)
+    } finally {
+      child.remove()
+    }
+  })
+
+  it('should leave the screen saver active behind visible dialogs', async () => {
+    const {result} = renderHook(useScreenSaver, {wrapper: PreferenceProvider})
+    await Promise.resolve()
+    const dialog = document.createElement('div')
+    dialog.setAttribute('role', 'dialog')
+    vi.spyOn(dialog, 'getClientRects').mockReturnValue({length: 1} as DOMRectList)
+    document.body.append(dialog)
+
+    try {
+      vi.advanceTimersByTime(60_000)
+      expect(result.isActive()).toBe(true)
+    } finally {
+      dialog.remove()
+    }
+  })
+
+  it('should throttle activity immediately after returning to the visible document', async () => {
+    const {result} = renderHook(useScreenSaver, {wrapper: PreferenceProvider})
+    await Promise.resolve()
+    vi.advanceTimersByTime(1000)
+    Object.defineProperty(document, 'visibilityState', {configurable: true, value: 'hidden'})
+    document.dispatchEvent(new Event('visibilitychange'))
+    Object.defineProperty(document, 'visibilityState', {configurable: true, value: 'visible'})
+    document.dispatchEvent(new Event('visibilitychange'))
+    vi.advanceTimersByTime(100)
+    globalThis.window.dispatchEvent(new Event('pointermove'))
+    vi.advanceTimersByTime(59_900)
+    expect(result.isActive()).toBe(true)
+  })
+
+  it('should preserve the pending deadline when the same delay is saved again', async () => {
+    const {result} = renderHook(useScreenSaver, {wrapper: PreferenceProvider})
+    await Promise.resolve()
+    vi.advanceTimersByTime(30_000)
+    result.onDelayChange('1m')
+    vi.advanceTimersByTime(30_000)
+    expect(result.isActive()).toBe(true)
+  })
+
+  it('should dismiss an active saver without rearming its deadline when the same delay is saved', async () => {
+    const {result} = renderHook(useScreenSaver, {wrapper: PreferenceProvider})
+    await Promise.resolve()
+    vi.advanceTimersByTime(60_000)
+    expect(result.isActive()).toBe(true)
+    result.onDelayChange('1m')
+    expect(result.isActive()).toBe(false)
+    vi.advanceTimersByTime(60_000)
+    expect(result.isActive()).toBe(false)
+    result.onDismiss()
+    vi.advanceTimersByTime(60_000)
+    expect(result.isActive()).toBe(true)
+  })
+
+  it('should not count a preference change as throttled activity', async () => {
+    const {result} = renderHook(useScreenSaver, {wrapper: PreferenceProvider})
+    await Promise.resolve()
+    result.onDelayChange('10m')
+    vi.advanceTimersByTime(100)
+    result.onDismiss()
+    vi.advanceTimersByTime(599_900)
+    expect(result.isActive()).toBe(false)
+    vi.advanceTimersByTime(100)
+    expect(result.isActive()).toBe(true)
   })
 })

@@ -1,7 +1,8 @@
-import {createEffect, createSignal, onCleanup, onMount} from 'solid-js'
-import {useEvent} from '@winter-love/solid-use/event'
-import {createInactivityController} from './create-inactivity-controller'
+import {onCleanup, onMount} from 'solid-js'
+import {useInactivity} from 'src/hooks/use-inactivity'
 import {useVisibilityPreferences} from './use-visibility-preferences'
+
+const MILLISECONDS_PER_SECOND = 1000
 
 const hasVisibleOverlay = () =>
   Array.from(
@@ -13,26 +14,16 @@ const hasVisibleOverlay = () =>
 /** Connects persisted visibility preferences to browser inactivity. */
 export const useUiAutoHide = () => {
   const settings = useVisibilityPreferences()
-  const [hidden, setHidden] = createSignal(false)
+  const inactivity = useInactivity({
+    capture: () => true,
+    enabled: () => settings.preferences().enabled,
+    isBlocked: hasVisibleOverlay,
+    timeoutMs: () => settings.preferences().seconds * MILLISECONDS_PER_SECOND,
+  })
   onMount(() => {
-    const inactivity = createInactivityController({
-      enabled: () => settings.preferences().enabled,
-      isBlocked: hasVisibleOverlay,
-      isSuspended: () => document.visibilityState === 'hidden',
-      onHiddenChange: setHidden,
-      schedule: (expire, milliseconds) => {
-        const timeout = globalThis.setTimeout(expire, milliseconds)
-        return () => globalThis.clearTimeout(timeout)
-      },
-      seconds: () => settings.preferences().seconds,
-    })
-    for (const event of ['pointermove', 'pointerdown', 'keydown', 'wheel', 'scroll'] as const) {
-      useEvent(globalThis.window, event, inactivity.wake, {capture: true, passive: true})
-    }
-    useEvent(document, 'visibilitychange', inactivity.wake)
     const overlayObserver = new MutationObserver(() => {
       if (hasVisibleOverlay()) {
-        inactivity.wake()
+        inactivity.reset()
       }
     })
     overlayObserver.observe(document.body, {
@@ -41,15 +32,13 @@ export const useUiAutoHide = () => {
       childList: true,
       subtree: true,
     })
-    createEffect(inactivity.wake)
     onCleanup(() => {
       overlayObserver.disconnect()
-      inactivity.dispose()
     })
   })
   return {
     enabled: () => settings.preferences().enabled,
-    hidden,
+    hidden: inactivity.inactive,
     onEnabledChange: settings.onEnabledChange,
     onSecondsChange: settings.onSecondsChange,
     seconds: () => settings.preferences().seconds,

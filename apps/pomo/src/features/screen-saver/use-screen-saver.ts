@@ -1,9 +1,8 @@
-import {createEffect, createSignal, onCleanup, onMount} from 'solid-js'
-import {useEvent} from '@winter-love/solid-use/event'
+import {createMemo} from 'solid-js'
+import {useInactivity} from 'src/hooks/use-inactivity'
 
 import {usePreference} from 'src/hooks/use-preference'
 import {createParsedPreferenceStorage} from '../parsed-preference-storage'
-import {getMonotonicTime} from 'src/utils/get-monotonic-time'
 
 import {
   getScreenSaverDelayMilliseconds,
@@ -36,79 +35,26 @@ export const useScreenSaver = (): ScreenSaverController => {
     parse: parseScreenSaverDelay,
     storage: screenSaverStorage,
   })
-  const [isActive, setIsActive] = createSignal(false)
-  const [isDocumentVisible, setIsDocumentVisible] = createSignal(true)
-  const [activityRevision, setActivityRevision] = createSignal(0)
-  let lastActivityTime = Number.NEGATIVE_INFINITY
-
   const delay = () => storedDelay() ?? DEFAULT_SCREEN_SAVER_DELAY
-
-  const recordActivity = () => {
-    const wasActive = isActive()
-
-    if (wasActive) {
-      setIsActive(false)
-    }
-
-    const currentTime = getMonotonicTime()
-    if (!wasActive && currentTime - lastActivityTime < ACTIVITY_THROTTLE_MILLISECONDS) {
-      return
-    }
-
-    lastActivityTime = currentTime
-    setActivityRevision((revision) => revision + 1)
-  }
+  const timeoutMs = createMemo(() => {
+    const currentDelay = storedDelay()
+    return currentDelay === null ? null : getScreenSaverDelayMilliseconds(currentDelay)
+  })
+  const inactivity = useInactivity({
+    activityThrottleMs: () => ACTIVITY_THROTTLE_MILLISECONDS,
+    enabled: () => timeoutMs() !== null,
+    timeoutMs: () => timeoutMs() ?? 0,
+  })
 
   const onDelayChange = (nextDelay: ScreenSaverDelay) => {
     setStoredDelay(nextDelay)
-    setIsActive(false)
+    inactivity.wake()
   }
-
-  onMount(() => {
-    setIsDocumentVisible(globalThis.document.visibilityState === 'visible')
-
-    const handleVisibilityChange = () => {
-      const isVisible = globalThis.document.visibilityState === 'visible'
-      setIsDocumentVisible(isVisible)
-      setIsActive(false)
-
-      if (isVisible) {
-        recordActivity()
-      }
-    }
-
-    const activityEvents = ['keydown', 'pointerdown', 'pointermove', 'scroll', 'wheel'] as const
-    for (const eventName of activityEvents) {
-      useEvent(globalThis, eventName, recordActivity, {passive: true})
-    }
-    useEvent(globalThis.document, 'visibilitychange', handleVisibilityChange)
-
-    createEffect(() => {
-      const currentDelay = storedDelay()
-      const isVisible = isDocumentVisible()
-      activityRevision()
-
-      if (!isVisible || currentDelay === null) {
-        setIsActive(false)
-        return
-      }
-
-      const delayMilliseconds = getScreenSaverDelayMilliseconds(currentDelay)
-
-      if (delayMilliseconds === null) {
-        setIsActive(false)
-        return
-      }
-
-      const timeout = globalThis.setTimeout(() => setIsActive(true), delayMilliseconds)
-      onCleanup(() => globalThis.clearTimeout(timeout))
-    })
-  })
 
   return {
     delay,
-    isActive,
+    isActive: inactivity.inactive,
     onDelayChange,
-    onDismiss: recordActivity,
+    onDismiss: inactivity.reset,
   }
 }
