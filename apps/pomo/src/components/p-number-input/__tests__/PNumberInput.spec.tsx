@@ -1,6 +1,7 @@
 /** @vitest-environment jsdom */
 
 import {cleanup, fireEvent, render, screen} from '@solidjs/testing-library'
+import userEvent from '@testing-library/user-event'
 import {createSignal, type JSX} from 'solid-js'
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 
@@ -133,8 +134,13 @@ describe('PNumberInput', () => {
     expect(input).toHaveValue(7)
   })
 
-  it('should keep text mode as a bounded spinbutton with native number stepping', () => {
-    const {input, onValueChange} = renderNumberInput({max: 100, min: 1, type: 'text'})
+  it('should keep text mode as a bounded spinbutton with native number stepping', async () => {
+    const user = userEvent.setup()
+    const {input, onInputValueChange, onValueChange} = renderNumberInput({
+      max: 100,
+      min: 1,
+      type: 'text',
+    })
 
     expect(input).toHaveProperty('type', 'text')
     expect(input).toHaveAttribute('aria-valuemin', '1')
@@ -146,7 +152,10 @@ describe('PNumberInput', () => {
     fireEvent.keyDown(input, {key: 'ArrowDown'})
     expect(onValueChange).toHaveBeenNthCalledWith(2, 5)
 
-    fireEvent.input(input, {target: {value: '３０'}})
+    await user.clear(input)
+    await user.paste('３０')
+    expect(input).toHaveValue('３０')
+    expect(onInputValueChange).toHaveBeenLastCalledWith('３０')
     expect(input).toHaveAttribute('aria-valuenow', '30')
     fireEvent.click(screen.getByRole('button', {name: 'Increase Duration'}))
 
