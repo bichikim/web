@@ -54,15 +54,19 @@ const LEVEL_FOLLOWING_PATTERN = `[\\p{L}\\p{N}_]|[.,]${KOREAN_DIGIT_PATTERN_SOUR
 const LEVEL_NUMBER_END = `(?:(?=${KOREAN_PARTICLE_PATTERN})|(?!${LEVEL_FOLLOWING_PATTERN})${KOREAN_UNIT_END_PATTERN})`
 const SIGNED_NUMBER_PREFIX_PATTERN = /[+＋−－-]\s*$/u
 const TIME_OF_DAY_PREFIX_PATTERN = /(?:오전|오후)\s*$/u
-const REMAINING_DURATION_SUFFIX_PATTERN =
-  /^\s*남(?:$|[^\p{L}\p{N}_]|았|아|은|는|을|음|지|습니다|는다)/u
+const REMAINING_DURATION_SUFFIX_SOURCE =
+  '남(?:$|[^\\p{L}\\p{N}_]|았|아|은|는|을|음|지|습니다|는다|으면)'
+const REMAINING_DURATION_SUFFIX_PATTERN = new RegExp(
+  `^\\s*${REMAINING_DURATION_SUFFIX_SOURCE}`,
+  'u',
+)
 const WON_PATTERN = new RegExp(
   `${TOKEN_START_PATTERN}(${KOREAN_INTEGER_PATTERN_SOURCE})\\s*원${KOREAN_UNIT_END_PATTERN}`,
   'gu',
 )
 const DURATION_MINUTE_PATTERN = new RegExp(
   `${TOKEN_START_PATTERN}(${UNSIGNED_INTEGER_PATTERN})\\s*분` +
-    `(?=\\s*(?:남|후|동안|전(?:에|부터|\\s|$)|간(?:\\s|$)))`,
+    `(?=\\s*(?:${REMAINING_DURATION_SUFFIX_SOURCE}|후|동안|전(?:에|부터|\\s|$)|간(?:\\s|$)))`,
   'gu',
 )
 const CLOCK_TIME_PATTERN = new RegExp(
