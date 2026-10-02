@@ -28,6 +28,8 @@ const memoryMemoSchema = z.object({
   exactReminderRepeatUntilMinutes: z.number().int().nonnegative().default(0),
   id: z.string().min(1),
   nextExactReminderAt: z.iso.datetime().nullable().optional(),
+  // Marks an explicit rearm that intentionally reuses a delivered occurrence time.
+  nextExactReminderRearmed: z.literal(true).optional(),
   nextRecallAt: z.iso.datetime().nullable(),
   recallMode: z.enum(MEMORY_RECALL_MODES),
   reinforcementIndex: z.number().int().nonnegative(),
@@ -72,10 +74,19 @@ const hasConsumedExactReminder = (memo: z.infer<typeof memoryMemoSchema>) => {
   )
 }
 
+const isIntentionalExactReminderRearm = (memo: z.infer<typeof memoryMemoSchema>) =>
+  memo.nextExactReminderRearmed === true &&
+  memo.nextExactReminderAt !== undefined &&
+  memo.nextExactReminderAt !== null &&
+  memo.reminderEvents.some(
+    (event) => event.kind === 'exact' && event.scheduledAt === memo.nextExactReminderAt,
+  )
+
 const getNormalizedNextExactReminderAt = (memo: z.infer<typeof memoryMemoSchema>) => {
   if (memo.nextExactReminderAt !== undefined) {
     if (
       memo.nextExactReminderAt !== null &&
+      !isIntentionalExactReminderRearm(memo) &&
       memo.reminderEvents.some(
         (event) => event.kind === 'exact' && event.scheduledAt === memo.nextExactReminderAt,
       )
@@ -91,8 +102,13 @@ const getNormalizedNextExactReminderAt = (memo: z.infer<typeof memoryMemoSchema>
 
 const normalizedMemoryMemoSchema = memoryMemoSchema.transform((memo) => {
   const hasExactReminder = memo.exactReminderAt !== null
+  const hasIntentionalRearm = isIntentionalExactReminderRearm(memo)
+  const memoWithoutRearmMarker = {...memo}
+  delete memoWithoutRearmMarker.nextExactReminderRearmed
+
   return {
-    ...memo,
+    ...memoWithoutRearmMarker,
+    ...(hasIntentionalRearm ? {nextExactReminderRearmed: true as const} : {}),
     nextExactReminderAt: getNormalizedNextExactReminderAt(memo),
     nextRecallAt: hasExactReminder ? null : memo.nextRecallAt,
     recallMode: hasExactReminder ? ('none' as const) : memo.recallMode,
