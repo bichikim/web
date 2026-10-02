@@ -4,7 +4,14 @@ import {cleanup, render, screen, within} from '@solidjs/testing-library'
 import type {JSX} from 'solid-js'
 import {afterEach, expect, it, vi} from 'vitest'
 
+interface RelaxPlayerPageProps {
+  readonly returnHref?: string
+}
+
 const {searchParams} = vi.hoisted(() => ({searchParams: {layout: ''}}))
+const {mockRelaxPlayerPage} = vi.hoisted(() => ({
+  mockRelaxPlayerPage: vi.fn<(props: RelaxPlayerPageProps) => string>(),
+}))
 vi.mock('@solidjs/router', () => ({useSearchParams: () => [searchParams]}))
 
 vi.mock('@solidjs/meta', () => ({
@@ -17,8 +24,10 @@ vi.mock('src/components/apps-in-toss-prepare', () => ({
 }))
 vi.mock('src/components/p-home-page/PHomePage', () => ({PHomePage: () => <p>Pomo home</p>}))
 vi.mock('src/components/p-relax-player-page/PRelaxPlayerPage', () => ({
-  PRelaxPlayerPage: () => <p>Relax player</p>,
+  PRelaxPlayerPage: mockRelaxPlayerPage,
 }))
+
+mockRelaxPlayerPage.mockImplementation(() => 'Relax player')
 
 afterEach(() => {
   searchParams.layout = ''
@@ -51,7 +60,7 @@ it.each(['all-in-one', 'unknown'])('should render the Pomo home for layout %s', 
   expect(screen.queryByText('Relax player')).not.toBeInTheDocument()
 })
 
-it('should render the relax player layout on the web', async () => {
+it('should render the relax player layout with an all-in-one escape href', async () => {
   vi.stubEnv('VITE_POMO_IS_APPS_IN_TOSS', '')
   vi.stubEnv('VITE_APP_LAYOUT', 'relax-player')
   const {default: RootPage} = await import('../index')
@@ -59,6 +68,7 @@ it('should render the relax player layout on the web', async () => {
   render(() => <RootPage />)
 
   expect(await screen.findByText('Relax player')).toBeInTheDocument()
+  expect(mockRelaxPlayerPage.mock.calls[0]?.[0].returnHref).toBe('/?layout=all-in-one')
   expect(screen.queryByText('Pomo home')).not.toBeInTheDocument()
 })
 
