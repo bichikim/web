@@ -20,7 +20,11 @@ vi.mock('../spatial-mesh-preview-renderer', () => ({
   }),
 }))
 
-test('should show the Three.js mesh preview canvas', () => {
+vi.mock('../SpatialMeshPreview', () => ({
+  SpatialMeshPreview: () => <canvas aria-label="3D 메시 회전 미리보기" role="group" />,
+}))
+
+test('should mount the mesh preview canvas when a shape is added', () => {
   const view = render(() => (
     <SpatialMeshDialog
       bounds={{height: 100, width: 100, x: 0, y: 0}}

@@ -1,11 +1,32 @@
 /** @vitest-environment jsdom */
 import {cleanup, fireEvent, render, screen} from '@solidjs/testing-library'
-import {createSignal} from 'solid-js'
+import {createSignal, type JSX} from 'solid-js'
 import {afterEach, beforeEach, expect, it, vi} from 'vitest'
 import type {CalendarEvent} from '../../../features/calendar'
 import {CalendarAgenda} from '../Agenda'
 
 vi.mock('../../../features/focus-room-dialogue', () => ({usePEvents: vi.fn()}))
+vi.mock('src/components/p-input/PInput', () => ({
+  PInput: (props: JSX.InputHTMLAttributes<HTMLInputElement> & {unstyled?: boolean}) => {
+    const {unstyled: _unstyled, ...inputProps} = props
+    return <input {...inputProps} />
+  },
+}))
+vi.mock('src/components/p-button/PButton', () => ({
+  PButton: (props: {
+    children?: JSX.Element
+    disabled?: boolean
+    onPress?: (source: HTMLButtonElement) => void
+  }) => (
+    <button
+      disabled={props.disabled}
+      onClick={(event) => props.onPress?.(event.currentTarget)}
+      type="button"
+    >
+      {props.children}
+    </button>
+  ),
+}))
 
 const matches = HTMLElement.prototype.matches
 beforeEach(() => {

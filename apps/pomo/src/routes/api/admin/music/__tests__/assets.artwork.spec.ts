@@ -121,27 +121,23 @@ afterEach(() => {
 })
 
 describe('embedded artwork registration with real MP3 files', () => {
-  it('should parse each MP3, upload its own image, and persist the matching URL', async () => {
-    const {objects} = await createStorage()
-    expect((await complete(RED_ASSET)).status).toBe(200)
-    expect((await complete(BLUE_ASSET)).status).toBe(200)
-    const red = objects.get(artworkPath(RED_ASSET))
-    const blue = objects.get(artworkPath(BLUE_ASSET))
-    expect(red?.contentType).toBe('image/png')
-    expect(blue?.contentType).toBe('image/png')
-    const redImage = await readFile(new URL('./fixtures/artwork/red.png', import.meta.url))
-    const blueImage = await readFile(new URL('./fixtures/artwork/blue.png', import.meta.url))
-    expect(red?.body).toEqual(new Uint8Array(redImage))
-    expect(blue?.body).toEqual(new Uint8Array(blueImage))
-    expect(repository.completeTrackRegistration).toHaveBeenNthCalledWith(
-      1,
-      expect.objectContaining({artworkUrl: artworkUrl(RED_ASSET), assetId: RED_ASSET}),
-    )
-    expect(repository.completeTrackRegistration).toHaveBeenNthCalledWith(
-      2,
-      expect.objectContaining({artworkUrl: artworkUrl(BLUE_ASSET), assetId: BLUE_ASSET}),
-    )
-  })
+  it.each([
+    {assetId: RED_ASSET, color: 'red', imageFilename: 'red.png'},
+    {assetId: BLUE_ASSET, color: 'blue', imageFilename: 'blue.png'},
+  ])(
+    'should parse the $color MP3 and upload its matching image',
+    async ({assetId, imageFilename}) => {
+      const {objects} = await createStorage()
+      expect((await complete(assetId)).status).toBe(200)
+      const artwork = objects.get(artworkPath(assetId))
+      expect(artwork?.contentType).toBe('image/png')
+      const image = await readFile(new URL(`./fixtures/artwork/${imageFilename}`, import.meta.url))
+      expect(artwork?.body).toEqual(new Uint8Array(image))
+      expect(repository.completeTrackRegistration).toHaveBeenCalledExactlyOnceWith(
+        expect.objectContaining({artworkUrl: artworkUrl(assetId), assetId}),
+      )
+    },
+  )
 
   it('should reject a truncated ID3 tag before generating a preview', async () => {
     const {fetcher} = await createStorage()

@@ -77,6 +77,55 @@ describe('searchOpenWeatherLocations', () => {
     ])
   })
 
+  it('should preserve enough coordinate precision to distinguish nearby results', async () => {
+    const fetcher = vi.fn<typeof fetch>().mockResolvedValue(
+      Response.json([
+        {
+          country: 'GB',
+          lat: 51.52001,
+          lon: -0.11001,
+          name: 'Location A',
+          state: 'England',
+        },
+        {
+          country: 'GB',
+          lat: 51.52004,
+          lon: -0.11004,
+          name: 'Location B',
+          state: 'England',
+        },
+      ]),
+    )
+
+    const locations = await searchOpenWeatherLocations({fetcher, query: 'nearby'})
+
+    expect(locations.map((location) => location.providerLocationId)).toEqual([
+      '51.52001,-0.11001',
+      '51.52004,-0.11004',
+    ])
+  })
+
+  it('should normalize negative zero and preserve existing four-place identifiers', async () => {
+    const fetcher = vi
+      .fn<typeof fetch>()
+      .mockResolvedValue(
+        new Response(
+          [
+            '[{"country":"GB","lat":-0,"lon":35.69,"name":"Zero"},',
+            '{"country":"GB","lat":1e-7,"lon":-1e-7,"name":"Precision"}]',
+          ].join('\n'),
+          {headers: {'Content-Type': 'application/json'}},
+        ),
+      )
+
+    const locations = await searchOpenWeatherLocations({fetcher, query: 'coordinates'})
+
+    expect(locations.map((location) => location.providerLocationId)).toEqual([
+      '0.0000,35.6900',
+      '1e-7,-1e-7',
+    ])
+  })
+
   it('should use the runtime fetcher and describe an HTTP failure without a status', async () => {
     const fetcher = vi.fn<typeof fetch>().mockResolvedValue(Response.json([]))
     vi.stubGlobal('fetch', fetcher)

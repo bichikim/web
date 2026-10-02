@@ -114,13 +114,28 @@ const getSearchWeatherLocation = (location: OpenWeatherSearchLocation): WeatherL
     : toWeatherLocation(legacyLocation)
 }
 
+const deduplicateProviderLocations = (
+  locations: ReadonlyArray<OpenWeatherSearchLocation>,
+): ReadonlyArray<OpenWeatherSearchLocation> => {
+  const seenProviderLocationIds = new Set<string>()
+
+  return locations.filter((location) => {
+    if (seenProviderLocationIds.has(location.providerLocationId)) {
+      return false
+    }
+
+    seenProviderLocationIds.add(location.providerLocationId)
+    return true
+  })
+}
+
 /** Searches and registers fixed provider coordinates for subsequent feed requests. */
 export const searchWorldWeatherLocations = async (
   options: SearchOpenWeatherLocationsOptions,
   database: Database = getDatabase(),
 ): Promise<ReadonlyArray<WeatherLocation>> => {
   await reserveOpenWeatherRequest('search')
-  const providerLocations = await searchOpenWeatherLocations(options)
+  const providerLocations = deduplicateProviderLocations(await searchOpenWeatherLocations(options))
 
   if (providerLocations.length === 0) {
     return []
