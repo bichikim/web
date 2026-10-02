@@ -1,5 +1,5 @@
+import {KeyedList} from '../keyed-list'
 import {cx} from 'class-variance-authority'
-import {For} from 'solid-js'
 
 import * as m from '@paraglide/message'
 import {PAudioPreview} from '../p-audio-preview/PAudioPreview'
@@ -38,39 +38,39 @@ export const LanguageLearningReview = (props: LanguageLearningReviewProps) => {
         </strong>
       </div>
       <ul class="m-0 grid list-none gap-3 p-0">
-        <For each={props.candidates}>
+        <KeyedList each={props.candidates} by={(candidate) => candidate.id}>
           {(candidate) => (
             <li class="grid gap-3 rounded-4 bg-secondary-soft p-4">
               <label class="flex items-start gap-3">
                 <input
-                  checked={candidate.selected}
+                  checked={candidate().selected}
                   class="mt-1 size-5"
                   disabled={props.busy}
-                  onChange={() => props.onToggle(candidate.id)}
+                  onChange={() => props.onToggle(candidate().id)}
                   type="checkbox"
                 />
-                <span>{candidate.text}</span>
+                <span>{candidate().text}</span>
               </label>
               <div class="flex flex-wrap items-center gap-3">
                 <PAudioPreview
                   class="min-w-0 flex-1"
-                  src={candidate.audioUrl}
-                  title={candidate.text}
+                  src={candidate().audioUrl}
+                  title={candidate().text}
                 />
                 <button
                   class={REGENERATE_CLASS}
                   disabled={props.busy}
-                  onClick={() => props.onRegenerate(candidate.id)}
+                  onClick={() => props.onRegenerate(candidate().id)}
                   type="button"
                 >
-                  {props.regeneratingCandidateId === candidate.id
+                  {props.regeneratingCandidateId === candidate().id
                     ? m.learning_editor_regenerating_voice()
                     : m.learning_editor_regenerate_voice()}
                 </button>
               </div>
             </li>
           )}
-        </For>
+        </KeyedList>
       </ul>
       <button
         class={SAVE_CLASS}

@@ -86,27 +86,30 @@ it('should omit the development-only screen saver delay in production mode', () 
   vi.unstubAllEnvs()
 })
 
-it('should describe every wake-lock availability state and pending request', () => {
-  const states = [
-    {availability: () => 'checking' as const, isRequestPending: () => false},
-    {availability: () => 'supported' as const, isRequestPending: () => false},
-    {availability: () => 'supported' as const, isRequestPending: () => true},
-    {availability: () => 'unsupported' as const, isRequestPending: () => false},
-  ]
-
-  for (const state of states) {
+it.each([
+  {availability: 'checking', pending: false},
+  {availability: 'supported', pending: false},
+  {availability: 'supported', pending: true},
+  {availability: 'unsupported', pending: false},
+] as const)(
+  'should describe wake-lock $availability with pending=$pending',
+  ({availability, pending}) => {
     vi.mocked(useScreenWakeLock).mockReturnValue({
-      ...state,
+      availability: () => availability,
       errorMessage: () => null,
       isEnabled: () => false,
+      isRequestPending: () => pending,
       onEnabledChange: vi.fn(),
     })
     render(() => <PGeneralDisplaySettings wakeLock={useScreenWakeLock()} />)
-    expect(
-      screen.getAllByRole('button', {hidden: true, name: '화면 자동 꺼짐 방지'}).at(-1),
-    ).toHaveAttribute('data-description', expect.any(String))
-  }
+    expect(screen.getByRole('button', {name: '화면 자동 꺼짐 방지'})).toHaveAttribute(
+      'data-description',
+      expect.any(String),
+    )
+  },
+)
 
+it('should describe the wake-lock permission error', () => {
   vi.mocked(useScreenWakeLock).mockReturnValue({
     availability: () => 'unsupported',
     errorMessage: () => '권한을 확인할 수 없어요.',
@@ -115,10 +118,13 @@ it('should describe every wake-lock availability state and pending request', () 
     onEnabledChange: vi.fn(),
   })
   render(() => <PGeneralDisplaySettings wakeLock={useScreenWakeLock()} />)
-  expect(
-    screen.getAllByRole('button', {hidden: true, name: '화면 자동 꺼짐 방지'}).at(-1),
-  ).toHaveAttribute('data-description', '권한을 확인할 수 없어요.')
+  expect(screen.getByRole('button', {name: '화면 자동 꺼짐 방지'})).toHaveAttribute(
+    'data-description',
+    '권한을 확인할 수 없어요.',
+  )
+})
 
+it('should describe an unknown wake-lock availability', () => {
   vi.mocked(useScreenWakeLock).mockReturnValue({
     availability: () => 'future-runtime' as never,
     errorMessage: () => null,
@@ -127,42 +133,38 @@ it('should describe every wake-lock availability state and pending request', () 
     onEnabledChange: vi.fn(),
   })
   render(() => <PGeneralDisplaySettings wakeLock={useScreenWakeLock()} />)
-  expect(
-    screen.getAllByRole('button', {hidden: true, name: '화면 자동 꺼짐 방지'}).at(-1),
-  ).toHaveAttribute('data-description', 'future-runtime')
+  expect(screen.getByRole('button', {name: '화면 자동 꺼짐 방지'})).toHaveAttribute(
+    'data-description',
+    'future-runtime',
+  )
 })
 
-it('should describe every full-screen availability, pending, and failure state', () => {
-  const states = [
-    {availability: () => 'checking' as const, error: () => null, isRequestPending: () => false},
-    {availability: () => 'supported' as const, error: () => null, isRequestPending: () => false},
-    {availability: () => 'supported' as const, error: () => null, isRequestPending: () => true},
-    {availability: () => 'unsupported' as const, error: () => null, isRequestPending: () => false},
-    {
-      availability: () => 'supported' as const,
-      error: () => 'enter-failed' as const,
-      isRequestPending: () => false,
-    },
-    {
-      availability: () => 'supported' as const,
-      error: () => 'exit-failed' as const,
-      isRequestPending: () => false,
-    },
-  ]
-
-  for (const state of states) {
+it.each([
+  {availability: 'checking', error: null, pending: false},
+  {availability: 'supported', error: null, pending: false},
+  {availability: 'supported', error: null, pending: true},
+  {availability: 'unsupported', error: null, pending: false},
+  {availability: 'supported', error: 'enter-failed', pending: false},
+  {availability: 'supported', error: 'exit-failed', pending: false},
+] as const)(
+  'should describe fullscreen $availability with pending=$pending and error=$error',
+  ({availability, error, pending}) => {
     vi.mocked(useFullscreen).mockReturnValue({
-      ...state,
+      availability: () => availability,
+      error: () => error,
       isEnabled: () => false,
+      isRequestPending: () => pending,
       onEnabledChange: vi.fn(),
     })
     render(() => <PGeneralDisplaySettings wakeLock={useScreenWakeLock()} />)
-    expect(screen.getAllByRole('button', {hidden: true, name: '전체 화면'}).at(-1)).toHaveAttribute(
+    expect(screen.getByRole('button', {name: '전체 화면'})).toHaveAttribute(
       'data-description',
       expect.any(String),
     )
-  }
+  },
+)
 
+it('should describe an unknown fullscreen availability', () => {
   vi.mocked(useFullscreen).mockReturnValue({
     availability: () => 'future-runtime' as never,
     error: () => null,
@@ -171,11 +173,13 @@ it('should describe every full-screen availability, pending, and failure state',
     onEnabledChange: vi.fn(),
   })
   render(() => <PGeneralDisplaySettings wakeLock={useScreenWakeLock()} />)
-  expect(screen.getAllByRole('button', {hidden: true, name: '전체 화면'}).at(-1)).toHaveAttribute(
+  expect(screen.getByRole('button', {name: '전체 화면'})).toHaveAttribute(
     'data-description',
     'future-runtime',
   )
+})
 
+it('should describe an unknown fullscreen error', () => {
   vi.mocked(useFullscreen).mockReturnValue({
     availability: () => 'supported',
     error: () => 'future-error' as never,
@@ -184,7 +188,7 @@ it('should describe every full-screen availability, pending, and failure state',
     onEnabledChange: vi.fn(),
   })
   render(() => <PGeneralDisplaySettings wakeLock={useScreenWakeLock()} />)
-  expect(screen.getAllByRole('button', {hidden: true, name: '전체 화면'}).at(-1)).toHaveAttribute(
+  expect(screen.getByRole('button', {name: '전체 화면'})).toHaveAttribute(
     'data-description',
     'future-error',
   )
@@ -238,7 +242,7 @@ it('should show toolbar toggles enabled by default and emit hidden choices', () 
   for (const [label, change] of [
     ['기능 요청 표시', featureRequest],
     ['도구 표시', tools],
-    ['기억보조 표시', memory],
+    ['생각 보조 표시', memory],
   ] as const) {
     const control = screen.getByRole('button', {name: label})
     expect(control).toHaveAttribute('aria-pressed', 'true')
@@ -279,7 +283,7 @@ it('should describe every display switch', () => {
 
   for (const [label, description] of [
     ['대화 입력 버튼 표시', '집중 화면에 대화 입력 버튼을 표시해요.'],
-    ['기억보조 표시', '집중 화면에 기억보조 버튼을 표시해요.'],
+    ['생각 보조 표시', '집중 화면에 생각 보조 버튼을 표시해요.'],
     ['기능 요청 표시', '집중 화면에 기능 요청 버튼을 표시해요.'],
     ['플레이어 표시', '끄면 음악 재생이 중지돼요.'],
     ['뽀모도로 표시', '표시를 끄면 타이머도 멈춰요.'],

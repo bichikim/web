@@ -7,6 +7,7 @@ import {closeDesktopDialog} from '../../../features/desktop-mode/dialogs'
 import {PMemoryAssistTabList} from '../../memory-assist/TabList'
 import {PMemoryAssistContent} from '../../memory-assist/Content'
 import {DesktopMemoryAssistDialog} from '../MemoryAssist'
+import {PModelDownloadProvider} from '../../../features/model-download'
 
 vi.mock('../../../features/desktop-mode/dialogs', () => ({closeDesktopDialog: vi.fn()}))
 vi.mock('../../memory-assist/Content', () => ({PMemoryAssistContent: vi.fn()}))
@@ -21,7 +22,11 @@ afterEach(() => {
 })
 
 it('should load memory assist content and close its native window', async () => {
-  render(() => <DesktopMemoryAssistDialog />)
+  render(() => (
+    <PModelDownloadProvider>
+      <DesktopMemoryAssistDialog />
+    </PModelDownloadProvider>
+  ))
 
   await waitFor(() => expect(PMemoryAssistContent).toHaveBeenCalledOnce())
   const contentProps = vi.mocked(PMemoryAssistContent).mock.calls[0]?.[0]

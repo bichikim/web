@@ -15,11 +15,7 @@ const workerMocks = {
 const dispatch = (type: string, event: ErrorEvent | MessageEvent<OpusWorkerResponse>) => {
   const listener = workerMocks.listeners.get(type)
 
-  if (listener === undefined) {
-    throw new Error(`Expected a ${type} Worker listener.`)
-  }
-
-  listener(event)
+  listener?.(event)
 }
 
 beforeEach(() => {
@@ -29,8 +25,35 @@ beforeEach(() => {
     'Worker',
     vi.fn(function WorkerMock() {
       return {
-        addEventListener: (type: string, listener: WorkerListener) => {
-          workerMocks.listeners.set(type, listener)
+        get onerror() {
+          return workerMocks.listeners.get('error') ?? null
+        },
+        set onerror(listener: WorkerListener | null) {
+          if (listener === null) {
+            workerMocks.listeners.delete('error')
+          } else {
+            workerMocks.listeners.set('error', listener)
+          }
+        },
+        get onmessage() {
+          return workerMocks.listeners.get('message') ?? null
+        },
+        set onmessage(listener: WorkerListener | null) {
+          if (listener === null) {
+            workerMocks.listeners.delete('message')
+          } else {
+            workerMocks.listeners.set('message', listener)
+          }
+        },
+        get onmessageerror() {
+          return workerMocks.listeners.get('messageerror') ?? null
+        },
+        set onmessageerror(listener: WorkerListener | null) {
+          if (listener === null) {
+            workerMocks.listeners.delete('messageerror')
+          } else {
+            workerMocks.listeners.set('messageerror', listener)
+          }
         },
         postMessage: workerMocks.postMessage,
         terminate: workerMocks.terminate,

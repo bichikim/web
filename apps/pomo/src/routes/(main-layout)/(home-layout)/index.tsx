@@ -1,3 +1,4 @@
+import {useSearchParams} from '@solidjs/router'
 import {clientOnly} from '@solidjs/start'
 import {Show} from 'solid-js'
 
@@ -13,11 +14,18 @@ const RelaxPlayerPage = clientOnly(
 )
 
 export default function RootPage() {
+  const [searchParams] = useSearchParams()
   return (
     <Show
       fallback={
-        <Show fallback={<PHomePage />} when={import.meta.env.VITE_APP_LAYOUT === 'relax-player'}>
-          <RelaxPlayerPage />
+        <Show
+          fallback={<PHomePage />}
+          when={
+            import.meta.env.VITE_APP_LAYOUT === 'relax-player' &&
+            searchParams.layout !== 'all-in-one'
+          }
+        >
+          <RelaxPlayerPage returnHref="/?layout=all-in-one" />
         </Show>
       }
       when={import.meta.env.VITE_POMO_IS_APPS_IN_TOSS === 'true'}

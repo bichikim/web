@@ -1,3 +1,4 @@
+import {normalizePathname} from 'src/utils/normalize-pathname'
 import {z} from 'zod'
 
 import {SUPERTONIC_VOICES, type SupertonicVoiceId} from '../supertonic'
@@ -51,7 +52,7 @@ export type NormalizeFeedUrlResult = InvalidFeedUrl | ValidFeedUrl
 
 /** Normalizes a feed document URL in place by removing trailing path slashes and its fragment. */
 export const normalizeFeedDocumentUrl = (url: URL) => {
-  url.pathname = url.pathname.replace(/\/+$/u, '') || '/'
+  url.pathname = normalizePathname(url.pathname)
   url.hash = ''
   return url
 }

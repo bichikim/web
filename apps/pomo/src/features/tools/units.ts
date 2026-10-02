@@ -1,3 +1,4 @@
+import {normalizePasteNumericInput} from 'src/utils/normalize-paste-numeric-input'
 const FAHRENHEIT_SCALE = 9
 const CELSIUS_SCALE = 5
 const FAHRENHEIT_OFFSET = -32
@@ -52,10 +53,7 @@ export type ConversionResult =
   | {readonly kind: 'invalid'}
   | {readonly kind: 'valid'; readonly value: number}
 export const convertUnit = (options: ConvertUnitOptions): ConversionResult => {
-  const input = options.value
-    .trim()
-    .replace(/[０-９]/gu, (digit) => digit.normalize('NFKC'))
-    .replaceAll('−', '-')
+  const input = normalizePasteNumericInput(options.value.trim())
   if (!input) {
     return {kind: 'empty'}
   }

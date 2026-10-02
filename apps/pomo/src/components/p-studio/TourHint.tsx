@@ -4,7 +4,7 @@ import {PButton} from '../p-button/PButton'
 import {InlineIconText} from '../inline-icon-text/InlineIconText'
 
 export interface PStudioTourHintProps {
-  readonly onDismiss: () => void
+  readonly onDismiss?: () => void
 }
 
 /** Points first-time users to the focus-room tour after they enter the app. */
@@ -13,10 +13,9 @@ export const PStudioTourHint = (props: PStudioTourHintProps) => (
     aria-label={m.tour_first_visit_hint_title()}
     aria-live="polite"
     class={
-      'pointer-events-auto absolute right-safe-right-mobile top-[calc(4.75rem+var(--pomo-safe-area-inset-top))] ' +
-      'w-[min(calc(100%_-_2rem),20rem)] rounded-panel border border-solid border-border ' +
-      'bg-surface-strong p-4 text-foreground shadow-panel backdrop-blur-surface ' +
-      'lg:right-safe-right lg:top-[calc(5.5rem+var(--pomo-safe-area-inset-top))]'
+      'pointer-events-auto w-80 max-w-[calc(100vw_-_3.5rem_-_var(--pomo-safe-area-inset-left))] ' +
+      'rounded-panel border border-solid border-border ' +
+      'bg-surface-strong p-4 text-foreground shadow-panel backdrop-blur-surface'
     }
     role="status"
   >

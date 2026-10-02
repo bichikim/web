@@ -1,3 +1,4 @@
+import {createDeferred} from 'src/test-utils/create-deferred'
 /** @vitest-environment jsdom */
 
 import {renderHook, waitFor} from '@solidjs/testing-library'
@@ -11,17 +12,6 @@ vi.mock('../track-metadata', () => metadataMocks)
 import {useTrackFields} from '../use-track-fields'
 
 const AUDIO_FILE = new File(['audio'], 'track.mp3', {type: 'audio/mpeg'})
-
-const createDeferred = <Value>() => {
-  let rejectPromise: (error: Error) => void = () => undefined
-  let resolvePromise: (value: Value) => void = () => undefined
-  const promise = new Promise<Value>((resolve, reject) => {
-    rejectPromise = reject
-    resolvePromise = resolve
-  })
-
-  return {promise, rejectPromise, resolvePromise}
-}
 
 const renderTrackFields = () => {
   const onArtistChange = vi.fn()
@@ -122,7 +112,7 @@ describe('useTrackFields', () => {
 
     expect(result.metadataMessage()).toBe('MP3 정보를 읽는 중…')
     await result.onMetadataToggle(false, AUDIO_FILE)
-    deferred.resolvePromise({artist: '늦은 아티스트', title: '늦은 제목'})
+    deferred.resolve({artist: '늦은 아티스트', title: '늦은 제목'})
     await read
 
     expect(onTitleChange).not.toHaveBeenCalled()
@@ -152,7 +142,7 @@ describe('useTrackFields', () => {
 
     setResetVersion((version) => version + 1)
     await waitFor(() => expect(result.metadataMessage()).toBeNull())
-    deferred.rejectPromise(new Error('late failure'))
+    deferred.reject(new Error('late failure'))
     await read
 
     expect(result.metadataMessage()).toBeNull()

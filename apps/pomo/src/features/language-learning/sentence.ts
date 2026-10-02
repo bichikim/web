@@ -1,3 +1,4 @@
+import {ENGLISH_TITLE_ABBREVIATIONS} from 'src/utils/english-title-abbreviation'
 import type {LanguageLearningLanguage} from './schema'
 
 export const LANGUAGE_LEARNING_SENTENCE_LIMITS = {
@@ -18,41 +19,18 @@ const WHITE_SPACE_CHARACTER_PATTERN = /^\p{White_Space}$/u
 const INTERNAL_ENDING_PATTERN =
   /(?:[!?。！？]+(?![!?。！？])|(?<=\d)\.(?![\d.])|(?<!\d)\.(?!\.)).+/u
 const QUOTED_TEXT_PATTERN = /"[^"]*"|“[^”]*”|‘[^’]*’|「[^」]*」|『[^』]*』/gu
-const ENGLISH_ABBREVIATIONS = [
-  'Dr',
-  'Mr',
-  'Mrs',
-  'Ms',
-  'Prof',
-  'Rev',
-  'Hon',
-  'Gov',
-  'Pres',
-  'Sen',
-  'Rep',
-  'Gen',
-  'Lt',
-  'Col',
-  'Capt',
-  'Sgt',
-  'St',
-  'Mt',
-  'Jr',
-  'Sr',
-  'vs',
-] as const
 const ENGLISH_ABBREVIATION_PATTERN = new RegExp(
-  `(?:^|\\s)(?:${ENGLISH_ABBREVIATIONS.join('|')}|[A-Z])\\.\\s*$`,
+  `(?:^|\\s)(?:${ENGLISH_TITLE_ABBREVIATIONS.join('|')}|[A-Z])\\.\\s*$`,
   'iu',
 )
 const INTERNAL_LATIN_ABBREVIATION_PATTERN = new RegExp(
-  `\\b(?:(?:${ENGLISH_ABBREVIATIONS.join('|')})\\.|(?:[A-Z]\\.)+)`,
+  `\\b(?:(?:${ENGLISH_TITLE_ABBREVIATIONS.join('|')})\\.|(?:[A-Z]\\.)+)`,
   'giu',
 )
 const WRAPPING_QUOTES_PATTERN = /^["\uFF02'“”‘’「」『』].*["\uFF02'“”‘’「」『』]$/u
 const MATCHING_WRAPPING_QUOTES_PATTERN =
   /^(?:"[^"]*"|\uFF02.*\uFF02|'.*'|“.*”|‘.*’|「.*」|『.*』)$/u
-const LEADING_MARKER_PATTERN = /^(?:[-*•]|\d+(?:\.|\)))\s*/u
+const LEADING_MARKER_PATTERN = /^(?:[-*•]|\d+(?:\.|\)))\s+/u
 
 const getKeycapBaseIndex = (characters: readonly string[], index: number) => {
   if (characters[index] !== '\u20E3') {

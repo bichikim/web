@@ -1,3 +1,5 @@
+import {uniq} from 'es-toolkit/array'
+import {shuffleWithRandom} from 'src/utils/shuffle-with-random'
 import type {PlaybackOrder} from './model'
 
 export interface Slide {
@@ -23,11 +25,7 @@ const orderQueue = (
       return ids.filter((id) => queuedIds.has(id))
     }
     case 'random': {
-      const shuffled = [...queue]
-      for (let index = shuffled.length - 1; index > 0; index -= 1) {
-        const target = Math.min(index, Math.floor(Math.random() * (index + 1)))
-        ;[shuffled[index], shuffled[target]] = [shuffled[target], shuffled[index]]
-      }
+      const shuffled = shuffleWithRandom(queue, Math.random)
       if (shuffled.length > 1 && shuffled[0] === current) {
         ;[shuffled[0], shuffled[1]] = [shuffled[1], shuffled[0]]
       }
@@ -46,17 +44,13 @@ export const nextSlide = (options: NextSlideOptions): Slide => {
   if (ids.length === 0) {
     return {current: null, remaining: []}
   }
-  const seen = [
-    ...new Set(
-      (options.seen ?? (options.current === null ? [] : [options.current])).filter((id) =>
-        ids.includes(id),
-      ),
+  const seen = uniq(
+    (options.seen ?? (options.current === null ? [] : [options.current])).filter((id) =>
+      ids.includes(id),
     ),
-  ]
+  )
   const seenIds = new Set(seen)
-  const queued = [
-    ...new Set(options.remaining.filter((id) => ids.includes(id) && !seenIds.has(id))),
-  ]
+  const queued = uniq(options.remaining.filter((id) => ids.includes(id) && !seenIds.has(id)))
   const queuedIds = new Set(queued)
   const available = ids.filter((id) => !seenIds.has(id))
   const queue = [...queued, ...available.filter((id) => !queuedIds.has(id))]

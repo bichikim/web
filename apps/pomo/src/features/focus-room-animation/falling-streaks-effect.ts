@@ -1,5 +1,6 @@
+import {createMaskedParticleEffect} from './create-masked-particle-effect'
 /* eslint-disable no-magic-numbers -- Rain depth, density, and movement are visually tuned against the fixed focus-room master. */
-import {Container, Particle, ParticleContainer, Rectangle, Sprite, Texture} from 'pixi.js'
+import {type Container, Particle, type ParticleContainer, Texture} from 'pixi.js'
 
 interface FallingStreak {
   readonly drift: number
@@ -25,35 +26,26 @@ const RESET_MARGIN = 48
 
 /** Renders deterministic, depth-layered falling streaks through a fixed scene mask. */
 export class FallingStreaksEffect {
-  readonly container = new Container()
+  readonly container: Container
   readonly #height: number
   readonly #particleContainer: ParticleContainer<Particle>
   readonly #random: () => number
   readonly #streaks: readonly FallingStreak[]
   readonly #width: number
-  #destroyed = false
+  readonly #effect: ReturnType<typeof createMaskedParticleEffect>
 
   constructor(options: FallingStreaksEffectOptions) {
     this.#height = options.height
     this.#random = options.random
     this.#width = options.width
-    this.#particleContainer = new ParticleContainer<Particle>({
-      boundsArea: new Rectangle(0, 0, options.width, options.height),
-      dynamicProperties: {
-        color: false,
-        position: true,
-        rotation: false,
-        uvs: false,
-        vertex: false,
-      },
-      texture: Texture.WHITE,
+    this.#effect = createMaskedParticleEffect({
+      height: options.height,
+      maskTexture: options.maskTexture,
+      rotation: false,
+      width: options.width,
     })
-
-    const maskedContent = new Container()
-    const maskSprite = new Sprite(options.maskTexture)
-    maskedContent.addChild(this.#particleContainer)
-    this.container.addChild(maskSprite, maskedContent)
-    maskedContent.setMask({channel: 'red', mask: maskSprite})
+    this.container = this.#effect.container
+    this.#particleContainer = this.#effect.particles
 
     const textureWidth = Texture.WHITE.width
     const textureHeight = Texture.WHITE.height
@@ -83,7 +75,7 @@ export class FallingStreaksEffect {
   }
 
   advance(deltaSeconds: number) {
-    if (this.#destroyed) {
+    if (this.#effect.isDestroyed()) {
       return
     }
 
@@ -102,16 +94,9 @@ export class FallingStreaksEffect {
   }
 
   setAnimationEnabled(animationEnabled: boolean) {
-    this.container.visible = animationEnabled
+    this.#effect.setAnimationEnabled(animationEnabled)
   }
-
   destroy() {
-    if (this.#destroyed) {
-      return
-    }
-
-    this.#destroyed = true
-    this.container.removeFromParent()
-    this.container.destroy({children: true})
+    this.#effect.destroy()
   }
 }

@@ -1,3 +1,4 @@
+import {AUTOMATIC_START_MINIMUM} from 'src/features/tools/calculate-service'
 import {usePreference} from 'src/hooks/use-preference'
 import {createMemo, Show} from 'solid-js'
 import {
@@ -13,8 +14,6 @@ import {PSelect} from '../p-select/PSelect'
 import {PInput} from '../p-input/PInput'
 import {PSwitch} from '../p-switch/PSwitch'
 import {Result} from './Result'
-
-const AUTOMATIC_START_MINIMUM = '2022-01-01'
 
 export interface ServiceProps {
   readonly runtime?: LocalDateRuntime

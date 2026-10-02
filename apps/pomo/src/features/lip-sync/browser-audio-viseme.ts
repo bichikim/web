@@ -1,3 +1,4 @@
+import {maxBy} from 'es-toolkit/array'
 import type {WLipSyncAudioNode} from 'wlipsync'
 import {clamp} from 'es-toolkit/math'
 
@@ -53,23 +54,13 @@ const decodeProfile = () => {
 }
 
 const getDominantProfile = (weights: Readonly<Record<string, number>>) => {
-  let dominantName: keyof typeof VISEME_BY_PROFILE_NAME | null = null
-  let dominantWeight = Number.NEGATIVE_INFINITY
-
-  for (const name of Object.keys(VISEME_BY_PROFILE_NAME) as Array<
-    keyof typeof VISEME_BY_PROFILE_NAME
-  >) {
-    const weight = weights[name] ?? 0
-
-    if (weight > dominantWeight) {
-      dominantName = name
-      dominantWeight = weight
-    }
-  }
-
-  return dominantName === null || dominantWeight <= 0
-    ? null
-    : {name: dominantName, weight: dominantWeight}
+  const profiles = (
+    Object.keys(VISEME_BY_PROFILE_NAME) as Array<keyof typeof VISEME_BY_PROFILE_NAME>
+  )
+    .map((name) => ({name, weight: weights[name] ?? 0}))
+    .filter(({weight}) => !Number.isNaN(weight))
+  const dominant = maxBy(profiles, ({weight}) => weight)
+  return dominant === undefined || dominant.weight <= 0 ? null : dominant
 }
 
 const getVisemeWeight = (weights: Readonly<Record<string, number>>, viseme: PViseme) => {

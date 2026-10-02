@@ -79,6 +79,21 @@ describe('PPomodoro', () => {
     })
   })
 
+  const renderPomodoro = async (onPresentationChange = vi.fn()) => {
+    render(() => (
+      <PreferenceProvider>
+        <PPomodoro onPresentationChange={onPresentationChange} />
+      </PreferenceProvider>
+    ))
+    await vi.advanceTimersByTimeAsync(0)
+    const quickControls = screen.getByRole('group', {name: '포모도로 간편 조작'})
+    const timeTrigger = within(quickControls).getByRole('button', {
+      name: '포모도로 열기, 집중 준비, 25:00',
+    })
+
+    return {onPresentationChange, quickControls, timeTrigger}
+  }
+
   afterEach(() => {
     Reflect.deleteProperty(globalThis, 'ReactNativeWebView')
     vi.clearAllMocks()
@@ -169,25 +184,14 @@ describe('PPomodoro', () => {
     expect(getCharacterImage()?.getAttribute('src')).toBe(scribbleBreakStatusIcon)
   })
 
-  it('should expose the timer state and primary controls through an accessible dialog', async () => {
-    const onPresentationChange = vi.fn()
-    render(() => (
-      <PreferenceProvider>
-        <PPomodoro onPresentationChange={onPresentationChange} />
-      </PreferenceProvider>
-    ))
-    await vi.advanceTimersByTimeAsync(0)
-
+  it('should expose the timer state and primary controls', async () => {
+    const {onPresentationChange, quickControls} = await renderPomodoro()
     expect(onPresentationChange).toHaveBeenLastCalledWith({
       phaseLabel: '집중',
       statusLabel: '집중 준비',
       timeLabel: '25:00',
     })
 
-    const quickControls = screen.getByRole('group', {name: '포모도로 간편 조작'})
-    const timeTrigger = within(quickControls).getByRole('button', {
-      name: '포모도로 열기, 집중 준비, 25:00',
-    })
     const primaryButton = within(quickControls).getByRole('button', {name: '집중 시작'})
     const characterEmotion = primaryButton.querySelector('img')?.parentElement
     const actionIndicator = primaryButton.lastElementChild
@@ -208,6 +212,15 @@ describe('PPomodoro', () => {
     expect(within(quickControls).getByRole('button', {name: '계속하기'})).toBeDefined()
     expect(characterEmotion?.hasAttribute('data-active')).toBe(false)
     expect(actionIndicator?.lastElementChild).toHaveClass('i-tabler-player-play')
+  })
+
+  it('should expose dialog focus and active timer updates', async () => {
+    const {onPresentationChange, quickControls, timeTrigger} = await renderPomodoro()
+    const characterEmotion = within(quickControls)
+      .getByRole('button', {name: '집중 시작'})
+      .querySelector('img')?.parentElement
+    fireEvent.click(within(quickControls).getByRole('button', {name: '집중 시작'}))
+    fireEvent.click(within(quickControls).getByRole('button', {name: '일시정지'}))
 
     fireEvent.click(timeTrigger)
 
@@ -240,6 +253,22 @@ describe('PPomodoro', () => {
       timeLabel: '24:59',
     })
 
+    fireEvent.click(within(dialog).getByRole('button', {name: '일시정지'}))
+    expect(within(dialog).getByRole('button', {name: '계속하기'})).toBeDefined()
+    expect(characterEmotion?.hasAttribute('data-active')).toBe(false)
+  })
+
+  it('should advance phases, save session settings and restore trigger focus', async () => {
+    const {quickControls, timeTrigger} = await renderPomodoro()
+    const characterEmotion = within(quickControls)
+      .getByRole('button', {name: '집중 시작'})
+      .querySelector('img')?.parentElement
+    fireEvent.click(within(quickControls).getByRole('button', {name: '집중 시작'}))
+    fireEvent.click(within(quickControls).getByRole('button', {name: '일시정지'}))
+    fireEvent.click(timeTrigger)
+    const dialog = screen.getByRole('dialog', {name: '포모도로'})
+
+    fireEvent.click(within(dialog).getByRole('button', {name: '계속하기'}))
     fireEvent.click(within(dialog).getByRole('button', {name: '일시정지'}))
     expect(within(dialog).getByRole('button', {name: '계속하기'})).toBeDefined()
     expect(characterEmotion?.hasAttribute('data-active')).toBe(false)

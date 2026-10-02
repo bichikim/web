@@ -1,9 +1,11 @@
-import {createHash} from 'node:crypto'
-import {mkdir, readFile, writeFile} from 'node:fs/promises'
+import {createHash, randomUUID} from 'node:crypto'
+import {mkdir, readFile, rename, rm, writeFile} from 'node:fs/promises'
 import path from 'node:path'
 import {NORMALIZATION_VERSION} from './normalization'
 import {normalizeVector} from './similarity'
 import type {EmbeddingProvider, ResolvedKeySimilarityOptions} from './types'
+
+const CACHE_FILE_HEADER = Buffer.from('KSV1')
 
 const createCacheKey = (provider: EmbeddingProvider, normalizedText: string): string =>
   createHash('sha256')
@@ -59,11 +61,21 @@ export class CachedEmbeddingProvider implements EmbeddingProvider {
   private async read(text: string): Promise<Float32Array | undefined> {
     try {
       const bytes = await readFile(path.join(this.cacheDir, `${createCacheKey(this, text)}.f32`))
-      if (bytes.byteLength % Float32Array.BYTES_PER_ELEMENT !== 0) {
+      if (!bytes.subarray(0, CACHE_FILE_HEADER.byteLength).equals(CACHE_FILE_HEADER)) {
+        return undefined
+      }
+      const vectorBytes = bytes.subarray(CACHE_FILE_HEADER.byteLength)
+      if (
+        vectorBytes.byteLength === 0 ||
+        vectorBytes.byteLength % Float32Array.BYTES_PER_ELEMENT !== 0
+      ) {
         return undefined
       }
       return new Float32Array(
-        bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength),
+        vectorBytes.buffer.slice(
+          vectorBytes.byteOffset,
+          vectorBytes.byteOffset + vectorBytes.byteLength,
+        ),
       )
     } catch (error: unknown) {
       if (error instanceof Error && 'code' in error && error.code === 'ENOENT') {
@@ -74,8 +86,18 @@ export class CachedEmbeddingProvider implements EmbeddingProvider {
   }
 
   private async write(text: string, vector: Float32Array): Promise<void> {
-    const bytes = Buffer.from(vector.buffer, vector.byteOffset, vector.byteLength)
-    await writeFile(path.join(this.cacheDir, `${createCacheKey(this, text)}.f32`), bytes)
+    const bytes = Buffer.concat([
+      CACHE_FILE_HEADER,
+      Buffer.from(vector.buffer, vector.byteOffset, vector.byteLength),
+    ])
+    const filePath = path.join(this.cacheDir, `${createCacheKey(this, text)}.f32`)
+    const temporaryPath = `${filePath}.${randomUUID()}.tmp`
+    try {
+      await writeFile(temporaryPath, bytes, {flag: 'wx'})
+      await rename(temporaryPath, filePath)
+    } finally {
+      await rm(temporaryPath, {force: true})
+    }
   }
 }
 

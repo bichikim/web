@@ -6,6 +6,7 @@ export type RelaxDepthStatus =
   | 'waiting'
   | 'active'
   | 'denied'
+  | 'reduced-motion'
   | 'unavailable'
 
 export interface RelaxDepthOffset {

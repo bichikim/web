@@ -1,3 +1,4 @@
+import {replaceBlobObjectUrl} from 'src/features/blob-object-url'
 import {
   CUSTOM_TRACK_ID_PREFIX,
   CustomAlbumError,
@@ -30,23 +31,24 @@ export type AddCustomAlbumTracksResult =
 const readAudioDuration = (file: File): Promise<number> =>
   new Promise((resolve, reject) => {
     const audio = globalThis.document.createElement('audio')
-    const source = globalThis.URL.createObjectURL(file)
+    const source = replaceBlobObjectUrl(null, () => file)
     const cleanUp = () => {
       audio.removeEventListener('loadedmetadata', handleLoadedMetadata)
       audio.removeEventListener('error', handleError)
       audio.removeAttribute('src')
-      globalThis.URL.revokeObjectURL(source)
+      replaceBlobObjectUrl(source, () => null)
     }
     const handleLoadedMetadata = () => {
       const {duration} = audio
+      const roundedDuration = Math.round(duration)
       cleanUp()
 
-      if (!Number.isFinite(duration) || duration <= 0) {
+      if (!Number.isFinite(duration) || duration <= 0 || roundedDuration <= 0) {
         reject(new CustomAlbumError('invalid-audio'))
         return
       }
 
-      resolve(Math.round(duration))
+      resolve(roundedDuration)
     }
     const handleError = () => {
       cleanUp()
@@ -89,9 +91,15 @@ export const addCustomAlbumTracks = async (
       title: getTrackTitle(file.name) || file.name,
     })),
   )
-  const embeddedCoverImage = options.readEmbeddedCover
+  const embeddedCoverCandidate = options.readEmbeddedCover
     ? await readFirstEmbeddedAudioCover(options.files)
     : null
+  const embeddedCoverImage =
+    embeddedCoverCandidate !== null &&
+    options.currentAlbumBytes + addedBytes + embeddedCoverCandidate.size >
+      MAXIMUM_CUSTOM_ALBUM_BYTES
+      ? null
+      : embeddedCoverCandidate
 
   return {embeddedCoverImage, kind: 'added', tracks}
 }

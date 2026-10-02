@@ -1,5 +1,6 @@
 import {cx} from 'class-variance-authority'
 
+import {PToolsDialog} from '../p-tools/PToolsDialog'
 import {PStudio} from '../p-studio/PStudio'
 
 const MAIN_CLASSES = cx(
@@ -16,6 +17,7 @@ export const PHomePage = () => (
   <main class={MAIN_CLASSES}>
     <div class="relative h-full w-full">
       <PStudio />
+      <PToolsDialog />
     </div>
   </main>
 )

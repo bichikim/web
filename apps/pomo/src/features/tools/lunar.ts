@@ -6,9 +6,31 @@ const FIRST_MOVING_DAY = 9
 const MONTH_COUNT = 12
 const LAST_YEAR = 2050
 const FIRST_YEAR = 1900
+const MAXIMUM_LUNAR_DAY = 30
+const LAST_SUPPORTED_LUNAR_DATE = {day: 18, month: 11, year: LAST_YEAR}
 export interface LunarDate extends CivilDate {
   readonly leap: boolean
 }
+export interface GetConvertibleLunarDaysOptions {
+  readonly leap: boolean
+  readonly month: number
+  readonly year: number
+}
+export type LunarToSolarResult =
+  | {readonly status: 'converted'; readonly value: string}
+  | {readonly status: 'invalid'}
+  | {readonly status: 'unsupported'}
+
+const isAfterLastSupportedLunarDate = (date: LunarDate): boolean => {
+  if (date.year !== LAST_SUPPORTED_LUNAR_DATE.year) {
+    return date.year > LAST_SUPPORTED_LUNAR_DATE.year
+  }
+  if (date.month !== LAST_SUPPORTED_LUNAR_DATE.month) {
+    return date.month > LAST_SUPPORTED_LUNAR_DATE.month
+  }
+  return date.day > LAST_SUPPORTED_LUNAR_DATE.day
+}
+
 export const solarToLunar = (value: string): LunarDate | null => {
   const date = parseDate(value)
   if (date === null || date.year < FIRST_YEAR || date.year > LAST_YEAR) {
@@ -26,17 +48,24 @@ export const solarToLunar = (value: string): LunarDate | null => {
     year: result.year,
   }
 }
-export const lunarToSolar = (date: LunarDate): string | null => {
+const getLunarToSolarResultWithCalendar = (
+  date: LunarDate,
+  calendar: KoreanLunarCalendar,
+): LunarToSolarResult => {
   if (
     ![date.year, date.month, date.day].every(Number.isInteger) ||
-    date.year < FIRST_YEAR - 1 ||
-    date.year > LAST_YEAR
+    date.month < 1 ||
+    date.month > MONTH_COUNT ||
+    date.day < 1 ||
+    date.day > MAXIMUM_LUNAR_DAY
   ) {
-    return null
+    return {status: 'invalid'}
   }
-  const calendar = new KoreanLunarCalendar()
+  if (date.year < FIRST_YEAR - 1 || date.year > LAST_YEAR || isAfterLastSupportedLunarDate(date)) {
+    return {status: 'unsupported'}
+  }
   if (!calendar.setLunarDate(date.year, date.month, date.day, date.leap)) {
-    return null
+    return {status: 'invalid'}
   }
   const actual = calendar.getLunarCalendar()
   if (
@@ -45,11 +74,41 @@ export const lunarToSolar = (date: LunarDate): string | null => {
     actual.day !== date.day ||
     (actual.intercalation === true) !== date.leap
   ) {
-    return null
+    return {status: 'invalid'}
   }
   const solar = calendar.getSolarCalendar()
-  return solar.year < FIRST_YEAR || solar.year > LAST_YEAR ? null : formatDate(solar)
+  if (solar.year < FIRST_YEAR || solar.year > LAST_YEAR) {
+    return {status: 'unsupported'}
+  }
+  return {status: 'converted', value: formatDate(solar)}
 }
+
+export const getLunarToSolarResult = (date: LunarDate): LunarToSolarResult =>
+  getLunarToSolarResultWithCalendar(date, new KoreanLunarCalendar())
+
+export const lunarToSolar = (date: LunarDate): string | null => {
+  const result = getLunarToSolarResult(date)
+  return result.status === 'converted' ? result.value : null
+}
+
+export const getConvertibleLunarDays = (
+  options: GetConvertibleLunarDaysOptions,
+): ReadonlyArray<number> => {
+  const calendar = new KoreanLunarCalendar()
+  return Array.from({length: MAXIMUM_LUNAR_DAY}, (_, index) => index + 1).filter((day) => {
+    const result = getLunarToSolarResultWithCalendar(
+      {
+        day,
+        leap: options.leap,
+        month: options.month,
+        year: options.year,
+      },
+      calendar,
+    )
+    return result.status === 'converted'
+  })
+}
+
 export const getMovingDays = (year: number, month: number): ReadonlyArray<string> => {
   if (
     !Number.isInteger(year) ||

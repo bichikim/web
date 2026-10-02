@@ -1,3 +1,4 @@
+import {createSoftNativePreferenceRepository} from './create-soft-native-preference-repository'
 import {createAuthoritativeWriter} from '../preference-persistence'
 export interface AuthoritativePreferenceStorage<Value> {
   readonly isNative: () => boolean
@@ -15,6 +16,11 @@ export interface AuthoritativePreferenceRepository<Value> {
 
 export interface CreateAuthoritativePreferenceRepositoryOptions<Value> {
   readonly storage: AuthoritativePreferenceStorage<Value>
+  readonly softNativeWrite?: boolean
+  readonly nativeWriteFailure?: {
+    readonly read: () => boolean
+    readonly write: (failed: boolean) => void
+  }
   readonly defaultValue: Value
   readonly readFailureMessage: string
   readonly writeFailureMessage: string
@@ -24,6 +30,9 @@ export interface CreateAuthoritativePreferenceRepositoryOptions<Value> {
 export const createAuthoritativePreferenceRepository = <Value>(
   options: CreateAuthoritativePreferenceRepositoryOptions<Value>,
 ): AuthoritativePreferenceRepository<Value> => {
+  if (options.softNativeWrite) {
+    return createSoftNativePreferenceRepository(options)
+  }
   const {storage} = options
   let writeRevision = 0
   const pendingWrites = new Set<Promise<void>>()
