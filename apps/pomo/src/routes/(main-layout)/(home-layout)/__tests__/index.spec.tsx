@@ -4,6 +4,9 @@ import {cleanup, render, screen, within} from '@solidjs/testing-library'
 import type {JSX} from 'solid-js'
 import {afterEach, expect, it, vi} from 'vitest'
 
+const {searchParams} = vi.hoisted(() => ({searchParams: {layout: ''}}))
+vi.mock('@solidjs/router', () => ({useSearchParams: () => [searchParams]}))
+
 vi.mock('@solidjs/meta', () => ({
   Title: (props: {readonly children: JSX.Element}) => <>{props.children}</>,
 }))
@@ -18,6 +21,7 @@ vi.mock('src/components/p-relax-player-page/PRelaxPlayerPage', () => ({
 }))
 
 afterEach(() => {
+  searchParams.layout = ''
   cleanup()
   vi.clearAllMocks()
   vi.resetModules()
@@ -66,4 +70,16 @@ it('should render the Pomo home inside Apps in Toss preparation', async () => {
   render(() => <RootPage />)
   const preparation = screen.getByRole('region', {name: 'Apps in Toss preparation'})
   expect(within(preparation).getByText('Pomo home')).toBeInTheDocument()
+})
+
+it('should open the all-in-one app from a relax-player build when explicitly requested', async () => {
+  vi.stubEnv('VITE_POMO_IS_APPS_IN_TOSS', '')
+  vi.stubEnv('VITE_APP_LAYOUT', 'relax-player')
+  searchParams.layout = 'all-in-one'
+  const {default: RootPage} = await import('../index')
+
+  render(() => <RootPage />)
+
+  expect(screen.getByText('Pomo home')).toBeInTheDocument()
+  expect(screen.queryByText('Relax player')).not.toBeInTheDocument()
 })
