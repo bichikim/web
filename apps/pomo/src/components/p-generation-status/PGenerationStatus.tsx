@@ -39,8 +39,10 @@ export interface PGenerationStatusProps {
 
 export const PGenerationStatus = (props: PGenerationStatusProps) => {
   const progressState = createMemo(() => {
-    const hasProgress = props.progress !== null && props.progress !== undefined
-    return hasProgress ? {value: props.progress} : undefined
+    const currentProgress = props.progress
+    return currentProgress === null || currentProgress === undefined
+      ? undefined
+      : {value: currentProgress}
   })
 
   return (

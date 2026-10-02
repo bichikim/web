@@ -107,21 +107,23 @@ it('should keep finite and nonfinite progress presentation within its display ra
   expect(screen.queryByRole('progressbar')).toBeNull()
 })
 
-it('should keep the semantic progress value valid when a volatile accessor becomes unavailable', () => {
+it('should snapshot a volatile progress accessor once', () => {
   let progressReads = 0
   const props = {
     kind: 'draft' as const,
     message: '대사 초안을 작성하고 있어요.',
     get progress() {
       progressReads += 1
-      return progressReads < 3 ? 20 : undefined
+      return progressReads === 1 ? 20 : undefined
     },
     progressLabel: '대사 생성 진행률',
   }
 
   render(() => PGenerationStatus(props))
 
+  expect(progressReads).toBe(1)
+  expect(screen.getByRole('status').textContent).toContain('20%')
   expect(
     screen.getByRole('progressbar', {name: '대사 생성 진행률'}).getAttribute('aria-valuenow'),
-  ).toBe('0')
+  ).toBe('20')
 })
