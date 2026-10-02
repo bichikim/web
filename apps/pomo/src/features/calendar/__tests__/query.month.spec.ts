@@ -37,8 +37,25 @@ describe('calendar month queries', () => {
       start: '2026-07-31T15:00:00.000Z',
       text: '지난달',
     },
+    {
+      end: '2026-08-31T15:00:00.000Z',
+      start: '2026-07-31T15:00:00.000Z',
+      text: '저번 달',
+    },
+    {
+      end: '2026-08-31T15:00:00.000Z',
+      start: '2026-07-31T15:00:00.000Z',
+      text: '저번달',
+    },
   ])('should query the local month for "$text"', ({end, start, text}) => {
     expect(createCalendarQuery({now, text: `${text} 일정 알려줘`, timeZone})).toEqual({end, start})
+  })
+
+  it('should prioritize the previous month over week and day phrases', () => {
+    expect(createCalendarQuery({now, text: '저번달 지난 주 어제 일정 알려줘', timeZone})).toEqual({
+      end: '2026-08-31T15:00:00.000Z',
+      start: '2026-07-31T15:00:00.000Z',
+    })
   })
 
   it('should recognize an implicit schedule question about this month', () => {
@@ -102,6 +119,16 @@ describe('calendar month queries', () => {
     ).toEqual({end: '2026-04-01T04:00:00.000Z', start: '2026-03-01T05:00:00.000Z'})
   })
 
+  it('should use each local month boundary for a previous month alias across daylight saving time', () => {
+    expect(
+      createCalendarQuery({
+        now: new Date('2026-04-15T16:00:00.000Z'),
+        text: '저번달 일정',
+        timeZone: 'America/New_York',
+      }),
+    ).toEqual({end: '2026-04-01T04:00:00.000Z', start: '2026-03-01T05:00:00.000Z'})
+  })
+
   it.each([
     {
       end: '2026-10-31T15:00:00.000Z',
@@ -112,6 +139,21 @@ describe('calendar month queries', () => {
       end: '2026-09-30T15:00:00.000Z',
       start: '2026-09-04T10:30:00.000Z',
       text: '지난 달 말고 이번 달 일정',
+    },
+    {
+      end: '2026-09-30T15:00:00.000Z',
+      start: '2026-09-04T10:30:00.000Z',
+      text: '저번 달 말고 이번 달 일정',
+    },
+    {
+      end: '2026-08-31T15:00:00.000Z',
+      start: '2026-07-31T15:00:00.000Z',
+      text: '이번 달 말고 저번달 일정',
+    },
+    {
+      end: '2026-08-31T15:00:00.000Z',
+      start: '2026-07-31T15:00:00.000Z',
+      text: '다음 달 말고 저번 달 일정',
     },
   ])('should omit the excluded month in "$text"', ({end, start, text}) => {
     expect(createCalendarQuery({now, text, timeZone})).toEqual({end, start})
