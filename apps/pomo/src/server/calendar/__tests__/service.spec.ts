@@ -322,6 +322,134 @@ it('should preserve events when one connected calendar is unavailable', async ()
   })
 })
 
+it('should match events starting or in progress at an exact instant and respect end boundaries', async () => {
+  vi.mocked(repository.listConnections).mockResolvedValue([
+    {
+      accountLabel: 'work@example.com',
+      encryptedTokens: 'google-sealed',
+      id: 'google-connection',
+      provider: 'google',
+    },
+  ])
+  vi.mocked(vault.open).mockReturnValue({
+    accessToken: 'access',
+    expiresAt: null,
+    refreshToken: null,
+  })
+  vi.mocked(googleProvider.listEvents).mockResolvedValue({
+    events: [
+      {
+        allDay: false,
+        calendarLabel: '업무',
+        end: '2026-09-04T16:30:00.000Z',
+        id: 'starts-at-noon',
+        start: '2026-09-04T16:00:00.000Z',
+        title: '정오 시작',
+      },
+      {
+        allDay: false,
+        calendarLabel: '업무',
+        end: '2026-09-04T16:00:00.001Z',
+        id: 'in-progress-at-noon',
+        start: '2026-09-04T15:30:00.000Z',
+        title: '정오 진행 중',
+      },
+      {
+        allDay: false,
+        calendarLabel: '업무',
+        end: '2026-09-04T16:00:00.000Z',
+        id: 'ends-at-noon',
+        start: '2026-09-04T15:30:00.000Z',
+        title: '정오 종료',
+      },
+      {
+        allDay: false,
+        calendarLabel: '업무',
+        end: '2026-09-04T16:30:00.000Z',
+        id: 'starts-after-noon',
+        start: '2026-09-04T16:00:00.001Z',
+        title: '정오 이후 시작',
+      },
+      {
+        allDay: false,
+        calendarLabel: '업무',
+        end: '2026-09-04T16:00:00.000Z',
+        id: 'zero-duration-at-noon',
+        start: '2026-09-04T16:00:00.000Z',
+        title: '정오 단일 시점',
+      },
+      {
+        allDay: true,
+        calendarLabel: '업무',
+        calendarTimeZone: 'Pacific/Kiritimati',
+        end: '2026-09-06',
+        id: 'all-day-in-another-calendar-zone',
+        start: '2026-09-05',
+        title: '다른 시간대 종일 일정',
+      },
+      {
+        allDay: true,
+        calendarLabel: '업무',
+        calendarTimeZone: 'Asia/Shanghai',
+        end: '2026-09-06',
+        id: 'all-day-starts-at-noon',
+        start: '2026-09-05',
+        title: '정오에 시작하는 종일 일정',
+      },
+      {
+        allDay: true,
+        calendarLabel: '업무',
+        calendarTimeZone: 'Asia/Shanghai',
+        end: '2026-09-05',
+        id: 'all-day-ends-at-noon',
+        start: '2026-09-04',
+        title: '정오에 끝나는 종일 일정',
+      },
+      {
+        allDay: true,
+        calendarLabel: '업무',
+        end: '2026-09-05',
+        id: 'all-day-on-local-date',
+        start: '2026-09-04',
+        title: '종일',
+      },
+      {
+        allDay: true,
+        calendarLabel: '업무',
+        end: '2026-09-04',
+        id: 'all-day-ended-before-local-date',
+        start: '2026-09-03',
+        title: '전날 종일',
+      },
+    ],
+    truncated: false,
+    unavailableCalendars: 0,
+  })
+  const service = createCalendarService({providerFor, repository, vault})
+
+  const result = await service.listEvents({
+    at: '2026-09-04T16:00:00.000Z',
+    displayTimeZone: 'America/New_York',
+    userId: 'user-1',
+  })
+
+  expect(googleProvider.listEvents).toHaveBeenCalledWith({
+    accessToken: 'access',
+    displayTimeZone: 'America/New_York',
+    end: '2026-09-04T16:00:01.000Z',
+    lookupInstant: '2026-09-04T16:00:00.000Z',
+    start: '2026-09-04T15:59:59.000Z',
+  })
+  expect(result.events.map((event) => event.id)).toEqual([
+    'google-connection:all-day-on-local-date',
+    'google-connection:in-progress-at-noon',
+    'google-connection:starts-at-noon',
+    'google-connection:zero-duration-at-noon',
+    'google-connection:all-day-in-another-calendar-zone',
+    'google-connection:all-day-starts-at-noon',
+  ])
+})
+
 it('should keep the same Google event independent across calendars and connections', async () => {
   vi.mocked(repository.listConnections).mockResolvedValue(
     ['connection-1', 'connection-2'].map((id) => ({

@@ -1,5 +1,6 @@
 export interface ProviderEvent {
   readonly allDay: boolean
+  readonly calendarTimeZone?: string
   readonly calendarLabel: string
   readonly end: string
   readonly id: string
@@ -11,6 +12,7 @@ export interface ListProviderEventsOptions {
   readonly accessToken: string
   readonly displayTimeZone: string
   readonly end: string
+  readonly lookupInstant?: string
   readonly start: string
 }
 

@@ -99,6 +99,38 @@ it('should fetch the day-after-tomorrow range for an implicit schedule question'
   expect(requestUrl.searchParams.get('timeZone')).toBe('Asia/Seoul')
 })
 
+it('should send an exact local-noon instant query to the calendar API', async () => {
+  vi.mocked(apiJson).mockResolvedValue({
+    connectedConnections: 1,
+    events: [],
+    timeZone: 'Asia/Seoul',
+    truncated: false,
+    unavailableConnections: 0,
+  })
+
+  await loadCalendarPromptContext({
+    now: new Date('2026-09-04T10:30:00.000Z'),
+    text: '오늘 정오 뭐 있어?',
+    timeZone: 'Asia/Seoul',
+  })
+
+  const requestUrl = new URL(String(vi.mocked(apiJson).mock.calls[0]?.[0]), 'https://pomofi.io')
+  expect(requestUrl.searchParams.get('at')).toBe('2026-09-04T03:00:00.000Z')
+  expect(requestUrl.searchParams.get('start')).toBeNull()
+  expect(requestUrl.searchParams.get('end')).toBeNull()
+})
+
+it('should answer an expired remaining-daypart query without requesting another date', async () => {
+  await expect(
+    loadCalendarPromptContext({
+      now: new Date('2026-09-04T12:30:00.000Z'),
+      text: '오늘 저녁 남은 일정 알려줘',
+      timeZone: 'Asia/Seoul',
+    }),
+  ).resolves.toContain('조회 기간에 등록된 일정이 없습니다.')
+  expect(apiJson).not.toHaveBeenCalled()
+})
+
 it('should send the resolved next-week range to calendar events', async () => {
   vi.mocked(apiJson).mockResolvedValue({
     connectedConnections: 1,
