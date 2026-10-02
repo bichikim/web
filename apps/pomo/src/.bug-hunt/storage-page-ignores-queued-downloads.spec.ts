@@ -6,8 +6,10 @@ import type {ModelDownloadItem, ModelDownloadState} from '../features/model-down
 /** Mirrors `StoragePage` download guard (`StoragePage.tsx`). */
 const isModelDownloading = (state: ModelDownloadState) => state.status === 'loading'
 
-const blocksStorageDeletion = (state: ModelDownloadState, _downloads: ReadonlyArray<ModelDownloadItem>) =>
-  isModelDownloading(state)
+const blocksStorageDeletion = (
+  state: ModelDownloadState,
+  _downloads: ReadonlyArray<ModelDownloadItem>,
+) => isModelDownloading(state)
 
 it('should block storage deletion while a model download is still queued', () => {
   const downloads: ReadonlyArray<ModelDownloadItem> = [
