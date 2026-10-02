@@ -13,6 +13,9 @@ const RelaxPlayerPage = clientOnly(
   {lazy: true},
 )
 
+const isAllInOneLayout = (layout: string | string[] | undefined) =>
+  layout === 'all-in-one' || (Array.isArray(layout) && layout.includes('all-in-one'))
+
 export default function RootPage() {
   const [searchParams] = useSearchParams()
   return (
@@ -22,7 +25,7 @@ export default function RootPage() {
           fallback={<PHomePage />}
           when={
             import.meta.env.VITE_APP_LAYOUT === 'relax-player' &&
-            searchParams.layout !== 'all-in-one'
+            !isAllInOneLayout(searchParams.layout)
           }
         >
           <RelaxPlayerPage returnHref="/?layout=all-in-one" />

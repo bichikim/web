@@ -8,7 +8,9 @@ interface RelaxPlayerPageProps {
   readonly returnHref?: string
 }
 
-const {searchParams} = vi.hoisted(() => ({searchParams: {layout: ''}}))
+const {searchParams} = vi.hoisted(() => ({
+  searchParams: {layout: '' as string | string[] | undefined},
+}))
 const {mockRelaxPlayerPage} = vi.hoisted(() => ({
   mockRelaxPlayerPage: vi.fn<(props: RelaxPlayerPageProps) => string>(),
 }))
@@ -93,3 +95,21 @@ it('should open the all-in-one app from a relax-player build when explicitly req
   expect(screen.getByText('Pomo home')).toBeInTheDocument()
   expect(screen.queryByText('Relax player')).not.toBeInTheDocument()
 })
+
+it.each([
+  {description: 'a single query value', layout: ['all-in-one']},
+  {description: 'one of multiple query values', layout: ['relax-player', 'all-in-one']},
+])(
+  'should open the all-in-one app when an array layout includes all-in-one ($description)',
+  async ({layout}) => {
+    vi.stubEnv('VITE_POMO_IS_APPS_IN_TOSS', '')
+    vi.stubEnv('VITE_APP_LAYOUT', 'relax-player')
+    searchParams.layout = layout
+    const {default: RootPage} = await import('../index')
+
+    render(() => <RootPage />)
+
+    expect(screen.getByText('Pomo home')).toBeInTheDocument()
+    expect(screen.queryByText('Relax player')).not.toBeInTheDocument()
+  },
+)
