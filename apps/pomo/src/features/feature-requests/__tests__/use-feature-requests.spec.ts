@@ -92,6 +92,25 @@ it('should not duplicate a preserved request when loading its refreshed page aga
   cleanup()
 })
 
+it('should adopt hasMore false after a manual refresh and keep loaded pages', async () => {
+  apiMocks.listFeatureRequests
+    .mockResolvedValueOnce({hasMore: true, requests: [REQUEST]})
+    .mockResolvedValueOnce({hasMore: true, requests: [NEXT_REQUEST]})
+    .mockResolvedValueOnce({hasMore: false, requests: [REQUEST]})
+
+  const {cleanup, result} = renderHook(() => useFeatureRequests())
+  await waitFor(() => expect(result.isLoading()).toBe(false))
+
+  await result.loadMore()
+  expect(result.hasMore()).toBe(true)
+
+  await result.refresh()
+
+  expect(result.requests()).toEqual([REQUEST, NEXT_REQUEST])
+  expect(result.hasMore()).toBe(false)
+  cleanup()
+})
+
 it('should preserve hasMore when refreshing fails after loading more requests', async () => {
   apiMocks.listFeatureRequests
     .mockResolvedValueOnce({hasMore: true, requests: [REQUEST]})
@@ -109,6 +128,36 @@ it('should preserve hasMore when refreshing fails after loading more requests', 
   expect(result.loadFailed()).toBe(true)
   expect(result.requests()).toEqual([REQUEST, NEXT_REQUEST])
   expect(result.hasMore()).toBe(true)
+  cleanup()
+})
+
+it('should restore the last settled hasMore when the latest concurrent refresh fails', async () => {
+  const firstRefreshResponse = Promise.withResolvers<FeatureRequestPage>()
+  const latestRefreshResponse = Promise.withResolvers<FeatureRequestPage>()
+  apiMocks.listFeatureRequests
+    .mockResolvedValueOnce({hasMore: true, requests: [REQUEST]})
+    .mockResolvedValueOnce({hasMore: true, requests: [NEXT_REQUEST]})
+    .mockReturnValueOnce(firstRefreshResponse.promise)
+    .mockReturnValueOnce(latestRefreshResponse.promise)
+
+  const {cleanup, result} = renderHook(() => useFeatureRequests())
+  await waitFor(() => expect(result.isLoading()).toBe(false))
+
+  await result.loadMore()
+  const firstRefresh = result.refresh()
+  const latestRefresh = result.refresh()
+  latestRefreshResponse.reject(new Error('latest refresh failed'))
+  await latestRefresh
+
+  expect(result.loadFailed()).toBe(true)
+  expect(result.hasMore()).toBe(true)
+
+  firstRefreshResponse.resolve({hasMore: false, requests: [REQUEST]})
+  await firstRefresh
+
+  expect(result.requests()).toEqual([REQUEST, NEXT_REQUEST])
+  expect(result.hasMore()).toBe(true)
+  expect(result.loadFailed()).toBe(true)
   cleanup()
 })
 
@@ -265,13 +314,13 @@ it('should ignore a load more response that started before refresh', async () =>
   const refreshPromise = result.refresh()
   expect(result.isLoading()).toBe(true)
 
-  refreshResponse.resolve({hasMore: true, requests: [refreshedRequest]})
+  refreshResponse.resolve({hasMore: false, requests: [refreshedRequest]})
   await refreshPromise
-  loadMoreResponse.resolve({hasMore: false, requests: [NEXT_REQUEST]})
+  loadMoreResponse.resolve({hasMore: true, requests: [NEXT_REQUEST]})
   await loadMorePromise
 
   expect(result.requests()).toEqual([refreshedRequest])
-  expect(result.hasMore()).toBe(true)
+  expect(result.hasMore()).toBe(false)
   expect(result.isLoadingMore()).toBe(false)
   expect(result.loadMoreFailed()).toBe(false)
   cleanup()
