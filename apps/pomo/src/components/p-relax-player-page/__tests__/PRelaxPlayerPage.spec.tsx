@@ -538,3 +538,18 @@ it('should keep manual positioning available when orientation permission is deni
   expect(Number(screen.getByRole('status', {name: '햇빛 가로 값'}).textContent)).toBe(0.08)
   expect(screen.getByRole('slider', {name: '햇빛 가로 위치'})).toHaveValue('8')
 })
+
+it('should show the all-in-one app link when a return destination is provided', () => {
+  render(() => <PRelaxPlayerPage returnHref="/?layout=all-in-one" />)
+
+  expect(screen.getByRole('link', {name: '통합앱으로 돌아가기'})).toHaveAttribute(
+    'href',
+    '/?layout=all-in-one',
+  )
+})
+
+it('should omit the all-in-one app link without a return destination', () => {
+  render(() => <PRelaxPlayerPage />)
+
+  expect(screen.queryByRole('link', {name: '통합앱으로 돌아가기'})).not.toBeInTheDocument()
+})
