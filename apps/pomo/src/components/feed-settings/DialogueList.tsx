@@ -117,16 +117,25 @@ const SECONDS_PER_MINUTE = 60
 const MILLISECONDS_PER_SECOND = 1000
 const HOUR_MS = MINUTES_PER_HOUR * SECONDS_PER_MINUTE * MILLISECONDS_PER_SECOND
 const DIALOGUE_PAGE_SIZE = 20
+const publishedAtFormatters = new Map<string, Intl.DateTimeFormat>()
 
 export interface PFeedDialogueListProps {
   readonly controller: PFeedController
 }
 
-const formatPublishedAt = (value: string) =>
-  new Intl.DateTimeFormat(getLocale() === 'ko' ? 'ko-KR' : 'en-US', {
-    dateStyle: 'medium',
-    timeStyle: 'short',
-  }).format(new Date(value))
+const getPublishedAtFormatter = () => {
+  const locale = getLocale() === 'ko' ? 'ko-KR' : 'en-US'
+  const cached = publishedAtFormatters.get(locale)
+  if (cached) {
+    return cached
+  }
+
+  const formatter = new Intl.DateTimeFormat(locale, {dateStyle: 'medium', timeStyle: 'short'})
+  publishedAtFormatters.set(locale, formatter)
+  return formatter
+}
+
+const formatPublishedAt = (value: string) => getPublishedAtFormatter().format(new Date(value))
 
 const formatRemaining = (value: string) => {
   const hours = Math.max(0, Math.ceil((Date.parse(value) - Date.now()) / HOUR_MS))

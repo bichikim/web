@@ -6,14 +6,31 @@ import {render, screen} from '@solidjs/testing-library'
 import type {JSX} from 'solid-js'
 import {afterEach, beforeEach, expect, it, vi} from 'vitest'
 
-import licenseData from '../../../../public/licenses.json' with {type: 'json'}
-import englishLicenseData from '../../../../public/licenses.en.json' with {type: 'json'}
-
 import {getLocale, overwriteGetLocale} from '@paraglide/runtime'
 import {PCreditsSettings} from '../PCreditsSettings'
 
+import licenseData from '../../../../public/licenses.json' with {type: 'json'}
+import englishLicenseData from '../../../../public/licenses.en.json' with {type: 'json'}
+
 vi.mock('@kobalte/core/tabs', () => ({Tabs: vi.fn()}))
 vi.mock('@solidjs/router', () => ({A: vi.fn()}))
+
+const CREDIT_ENTRY_NAMES = new Set(['SolidJS · SolidStart', 'Pretendard', 'GL Transitions'])
+const makeCreditsFixture = (data: typeof licenseData) => ({
+  ...data,
+  groups: data.groups
+    .filter((group) => group.id === 'core-software' || group.id === 'models')
+    .map((group) => ({
+      ...group,
+      entries:
+        group.id === 'core-software'
+          ? group.entries.filter(
+              (entry) =>
+                CREDIT_ENTRY_NAMES.has(entry.name) || entry.name.startsWith('rgbKineticSlider ('),
+            )
+          : [],
+    })),
+})
 
 const originalGetLocale = getLocale
 
@@ -24,7 +41,13 @@ beforeEach(() => {
     'fetch',
     vi.fn(
       async () =>
-        new Response(JSON.stringify(getLocale() === 'en' ? englishLicenseData : licenseData)),
+        new Response(
+          JSON.stringify(
+            getLocale() === 'en'
+              ? makeCreditsFixture(englishLicenseData)
+              : makeCreditsFixture(licenseData),
+          ),
+        ),
     ),
   )
   Object.assign(Tabs, {
