@@ -18,8 +18,11 @@ it.each([
   expect(response?.headers.get('Cache-Control')).toBe('no-store')
 })
 
-it('should send the all-in-one escape route to the configured Pomo site', () => {
-  const response = handleRelaxRequest(new Request('https://slowcove.example/?layout=all-in-one'))
-  expect(response?.status).toBe(302)
-  expect(response?.headers.get('Location')).toBe('https://www.pomofi.io/?layout=all-in-one')
-})
+it.each(['/', '/relax'])(
+  'should keep legacy layout queries on the dedicated player at %s',
+  (path) => {
+    expect(
+      handleRelaxRequest(new Request(`https://slowcove.example${path}?layout=all-in-one`)),
+    ).toBeNull()
+  },
+)

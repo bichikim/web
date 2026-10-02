@@ -3,7 +3,15 @@ name: Release Slowcove
 on:
   push:
     branches:
-      - release/slowcove
+      - dev
+    paths:
+      - apps/pomo/**
+      - packages/**
+      - pnpm-lock.yaml
+      - pnpm-workspace.yaml
+      - package.json
+      - .github/workflows/slowcove-deploy.yml
+      - .github/workflows/config/slowcove-vercel.json
   workflow_dispatch:
 
 run-name: Release Slowcove from ${{ github.ref_name }} at ${{ github.sha }}
@@ -26,7 +34,7 @@ env:
 jobs:
   deploy:
     name: Verify and deploy relax player
-    if: github.ref == 'refs/heads/release/slowcove'
+    if: github.ref == 'refs/heads/dev'
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
@@ -54,6 +62,7 @@ jobs:
           pnpm --dir apps/pomo typecheck
           NODE_OPTIONS=--no-experimental-webstorage pnpm exec vitest run \
             'apps/pomo/src/routes/(main-layout)/(home-layout)/__tests__/index.spec.tsx' \
+            'apps/pomo/src/routes/(main-layout)/(home-layout)/__tests__/relax.spec.tsx' \
             apps/pomo/src/components/p-relax-player-page/__tests__/PRelaxPlayerPage.spec.tsx \
             apps/pomo/src/middleware/__tests__/relax-routing.spec.ts \
             apps/pomo/scripts/vite/__tests__/create-plugins.spec.ts \
@@ -86,15 +95,12 @@ jobs:
             throw new Error('Slowcove must not schedule Pomo cron jobs')
           }
           for (const [path, status] of [
-            ['/', 200], ['/relax', 200], ['/?layout=all-in-one', 302],
+            ['/', 200], ['/relax', 200], ['/?layout=all-in-one', 200],
             ['/api/cron/ai-jobs', 404], ['/admin', 404],
           ]) {
             const response = await handler.fetch(new Request(`https://slowcove.example${path}`), {})
             if (response.status !== status) {
               throw new Error(`Slowcove ${path} returned ${response.status}, expected ${status}`)
-            }
-            if (status === 302 && response.headers.get('location') !== 'https://www.pomofi.io/?layout=all-in-one') {
-              throw new Error('The full-app escape route must open Pomo')
             }
             await response.text()
           }

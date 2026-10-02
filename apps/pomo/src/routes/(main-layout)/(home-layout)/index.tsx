@@ -4,7 +4,6 @@ import {Show} from 'solid-js'
 
 import {AppsInTossPrepare} from 'src/components/apps-in-toss-prepare'
 import {PHomePage} from 'src/components/p-home-page/PHomePage'
-import {RELAX_FULL_APP_HREF} from 'src/features/relax-player'
 
 const RelaxPlayerPage = clientOnly(
   async () => {
@@ -16,10 +15,12 @@ const RelaxPlayerPage = clientOnly(
 
 export default function RootPage() {
   const [searchParams] = useSearchParams()
+  // Dedicated player builds intentionally omit returnHref; returning to Pomo belongs
+  // to its integrated /relax entry, not this separately published player.
   return (
     <>
       {import.meta.env.VITE_POMO_STANDALONE_RELAX === 'true' ? (
-        <RelaxPlayerPage returnHref={RELAX_FULL_APP_HREF} />
+        <RelaxPlayerPage />
       ) : (
         <Show
           fallback={
@@ -30,7 +31,7 @@ export default function RootPage() {
                 searchParams.layout !== 'all-in-one'
               }
             >
-              <RelaxPlayerPage returnHref="/?layout=all-in-one" />
+              <RelaxPlayerPage />
             </Show>
           }
           when={import.meta.env.VITE_POMO_IS_APPS_IN_TOSS === 'true'}

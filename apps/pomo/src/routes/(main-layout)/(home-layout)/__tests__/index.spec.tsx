@@ -66,14 +66,14 @@ it.each(['all-in-one', 'unknown'])('should render the Pomo home for layout %s', 
   expect(screen.queryByText('Relax player')).not.toBeInTheDocument()
 })
 
-it('should render the relax player layout with an all-in-one escape href', async () => {
+it('should render the dedicated relax player without an integrated-app return href', async () => {
   vi.stubEnv('VITE_POMO_IS_APPS_IN_TOSS', '')
   vi.stubEnv('VITE_APP_LAYOUT', 'relax-player')
 
   render(() => <RootPage />)
 
   expect(await screen.findByText('Relax player')).toBeInTheDocument()
-  expect(mockRelaxPlayerPage.mock.calls[0]?.[0].returnHref).toBe('/?layout=all-in-one')
+  expect(mockRelaxPlayerPage.mock.calls[0]?.[0].returnHref).toBeUndefined()
   expect(screen.queryByText('Pomo home')).not.toBeInTheDocument()
 })
 
@@ -97,15 +97,13 @@ it('should open the all-in-one app from a relax-player build when explicitly req
   expect(screen.queryByText('Relax player')).not.toBeInTheDocument()
 })
 
-it('should keep a standalone release on the relax player and link to the full Pomo site', async () => {
+it('should keep a standalone release on the player without return navigation', async () => {
   vi.stubEnv('VITE_POMO_STANDALONE_RELAX', 'true')
   searchParams.layout = 'all-in-one'
 
   render(() => <RootPage />)
 
   expect(await screen.findByText('Relax player')).toBeInTheDocument()
-  expect(mockRelaxPlayerPage.mock.calls[0]?.[0].returnHref).toBe(
-    'https://www.pomofi.io/?layout=all-in-one',
-  )
+  expect(mockRelaxPlayerPage.mock.calls[0]?.[0].returnHref).toBeUndefined()
   expect(screen.queryByText('Pomo home')).not.toBeInTheDocument()
 })
