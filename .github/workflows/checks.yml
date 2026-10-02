@@ -140,6 +140,7 @@ jobs:
             apps/pomo/src/components/p-settings/__tests__/PSettings.failure.integration.tsx \
             apps/pomo/src/components/p-service-terms/__tests__/PServiceTerms.integration.tsx \
             apps/pomo/src/components/tarot/__tests__/Tarot.integration.tsx \
+            apps/pomo/src/components/tools/__tests__/Moving.integration.tsx \
             apps/pomo/src/routes/__tests__/third-party-notices.integration.tsx \
             apps/pomo/src/routes/api/admin/music/__tests__/assets.artwork.integration.ts \
             packages/puppet/src/editor/__tests__/PuppetEditor.deformers.interaction.integration.tsx \
