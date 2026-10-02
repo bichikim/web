@@ -62,6 +62,26 @@ it('should keep loaded pages visible after refreshing the first page', async () 
   await result.refresh()
 
   expect(result.requests()).toEqual([refreshedRequest, NEXT_REQUEST])
+  expect(result.hasMore()).toBe(false)
+  cleanup()
+})
+
+it('should adopt hasMore false after a manual refresh and keep loaded pages', async () => {
+  apiMocks.listAdminFeatureRequests
+    .mockResolvedValueOnce({hasMore: true, requests: [REQUEST]})
+    .mockResolvedValueOnce({hasMore: true, requests: [NEXT_REQUEST]})
+    .mockResolvedValueOnce({hasMore: false, requests: [REQUEST]})
+
+  const {cleanup, result} = renderHook(() => useAdminFeatureRequests())
+  await waitFor(() => expect(result.isLoading()).toBe(false))
+
+  await result.loadMore()
+  expect(result.hasMore()).toBe(true)
+
+  await result.refresh()
+
+  expect(result.requests()).toEqual([REQUEST, NEXT_REQUEST])
+  expect(result.hasMore()).toBe(false)
   cleanup()
 })
 
@@ -121,13 +141,13 @@ it('should ignore a load more response that started before refresh', async () =>
   const refreshPromise = result.refresh()
   expect(result.isLoading()).toBe(true)
 
-  refreshResponse.resolve({hasMore: true, requests: [refreshedRequest]})
+  refreshResponse.resolve({hasMore: false, requests: [refreshedRequest]})
   await refreshPromise
-  loadMoreResponse.resolve({hasMore: false, requests: [NEXT_REQUEST]})
+  loadMoreResponse.resolve({hasMore: true, requests: [NEXT_REQUEST]})
   await loadMorePromise
 
   expect(result.requests()).toEqual([refreshedRequest])
-  expect(result.hasMore()).toBe(true)
+  expect(result.hasMore()).toBe(false)
   expect(result.isLoadingMore()).toBe(false)
   expect(result.loadMoreFailed()).toBe(false)
   cleanup()
