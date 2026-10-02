@@ -18,24 +18,32 @@ const isAllInOneLayout = (layout: string | string[] | undefined) =>
 
 export default function RootPage() {
   const [searchParams] = useSearchParams()
+  // Dedicated player builds intentionally omit returnHref; returning to Pomo belongs
+  // to its integrated /relax entry, not this separately published player.
   return (
-    <Show
-      fallback={
+    <>
+      {import.meta.env.VITE_POMO_STANDALONE_RELAX === 'true' ? (
+        <RelaxPlayerPage />
+      ) : (
         <Show
-          fallback={<PHomePage />}
-          when={
-            import.meta.env.VITE_APP_LAYOUT === 'relax-player' &&
-            !isAllInOneLayout(searchParams.layout)
+          fallback={
+            <Show
+              fallback={<PHomePage />}
+              when={
+                import.meta.env.VITE_APP_LAYOUT === 'relax-player' &&
+                !isAllInOneLayout(searchParams.layout)
+              }
+            >
+              <RelaxPlayerPage />
+            </Show>
           }
+          when={import.meta.env.VITE_POMO_IS_APPS_IN_TOSS === 'true'}
         >
-          <RelaxPlayerPage returnHref="/?layout=all-in-one" />
+          <AppsInTossPrepare>
+            <PHomePage />
+          </AppsInTossPrepare>
         </Show>
-      }
-      when={import.meta.env.VITE_POMO_IS_APPS_IN_TOSS === 'true'}
-    >
-      <AppsInTossPrepare>
-        <PHomePage />
-      </AppsInTossPrepare>
-    </Show>
+      )}
+    </>
   )
 }
