@@ -52,8 +52,12 @@ type ListCalendarEventsOptions = CalendarEventLookup & {
   readonly userId: string
 }
 
+interface CalendarServiceEvent extends CalendarEvent {
+  readonly exactInstantRange?: {readonly end: string; readonly start: string}
+}
+
 interface ConnectionEventsResult {
-  readonly events: ReadonlyArray<CalendarEvent>
+  readonly events: ReadonlyArray<CalendarServiceEvent>
   readonly truncated: boolean
 }
 
@@ -67,9 +71,10 @@ interface CalendarEventSearch {
   readonly range: CalendarEventRange
 }
 
-export interface CalendarEventsResult extends ConnectionEventsResult {
+export interface CalendarEventsResult {
   readonly connectedConnections: number
   readonly events: ReadonlyArray<CalendarEvent>
+  readonly truncated: boolean
   readonly unavailableConnections: number
 }
 
@@ -95,8 +100,19 @@ const createCalendarEventSearch = (lookup: CalendarEventLookup): CalendarEventSe
   return {instant, lookupInstant: lookup.at, range: createInstantLookupRange(instant)}
 }
 
-const eventMatchesInstant = (event: CalendarEvent, instant: Date, timeZone: string) => {
+const eventMatchesInstant = (event: CalendarServiceEvent, instant: Date, timeZone: string) => {
   if (event.allDay) {
+    if (event.exactInstantRange !== undefined) {
+      const start = new Date(event.exactInstantRange.start).getTime()
+      const end = new Date(event.exactInstantRange.end).getTime()
+      return (
+        Number.isFinite(start) &&
+        Number.isFinite(end) &&
+        start <= instant.getTime() &&
+        instant.getTime() < end
+      )
+    }
+
     const startDate = parseAllDayDateKey(event.start)
     const endDate = parseAllDayDateKey(event.end)
     if (startDate === null || endDate === null) {
@@ -115,9 +131,7 @@ const eventMatchesInstant = (event: CalendarEvent, instant: Date, timeZone: stri
     return false
   }
 
-  return start === instant.getTime()
-    ? end >= instant.getTime()
-    : start < instant.getTime() && end > instant.getTime()
+  return start <= instant.getTime() && instant.getTime() < end
 }
 
 const shouldRefresh = (tokens: CalendarProviderTokens, now: Date) =>
@@ -233,10 +247,13 @@ export const createCalendarService = (options: CreateCalendarServiceOptions): Ca
       const results = await Promise.allSettled(
         connections.map((connection) => readConnectionEvents(connection, providerRange)),
       )
-      const events = results
+      const matchingEvents = results
         .flatMap((result) => (result.status === 'fulfilled' ? result.value.events : []))
         .filter((event) => instant === null || eventMatchesInstant(event, instant, displayTimeZone))
         .sort((left, right) => left.start.localeCompare(right.start))
+      const events = matchingEvents.map(
+        ({exactInstantRange: _exactInstantRange, ...event}) => event,
+      )
 
       return {
         connectedConnections: connections.length,

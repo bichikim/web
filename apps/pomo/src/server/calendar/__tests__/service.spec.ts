@@ -322,7 +322,7 @@ it('should preserve events when one connected calendar is unavailable', async ()
   })
 })
 
-it('should match events starting or in progress at an exact instant and respect end boundaries', async () => {
+it('should include valid noon starts and progress, but exclude noon ends and zero-length events', async () => {
   vi.mocked(repository.listConnections).mockResolvedValue([
     {
       accountLabel: 'work@example.com',
@@ -444,7 +444,6 @@ it('should match events starting or in progress at an exact instant and respect 
     'google-connection:all-day-on-local-date',
     'google-connection:in-progress-at-noon',
     'google-connection:starts-at-noon',
-    'google-connection:zero-duration-at-noon',
     'google-connection:all-day-in-another-calendar-zone',
     'google-connection:all-day-starts-at-noon',
   ])

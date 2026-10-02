@@ -3,6 +3,7 @@ export interface ProviderEvent {
   readonly calendarTimeZone?: string
   readonly calendarLabel: string
   readonly end: string
+  readonly exactInstantRange?: {readonly end: string; readonly start: string}
   readonly id: string
   readonly start: string
   readonly title: string
