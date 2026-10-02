@@ -147,7 +147,7 @@ export const loadCalendarPromptContext = async (
       return '연결된 캘린더가 없습니다. 일정이 없다고 답하지 말고 캘린더 연결이 필요하다고 안내하세요.'
     }
 
-    return createCalendarPromptContext({events: [], timeZone})
+    return '요청한 남은 일정 시간대가 이미 종료되어 조회하지 않았습니다. 다음 날로 넘기지 않았습니다.'
   }
 
   const response = await listCalendarEvents({...query, timeZone})

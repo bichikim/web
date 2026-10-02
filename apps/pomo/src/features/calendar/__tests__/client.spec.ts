@@ -229,13 +229,14 @@ it('should retain Microsoft UTC all-day noon membership through service and publ
 it('should answer an expired remaining-daypart query without requesting an event range', async () => {
   vi.mocked(apiJson).mockResolvedValue({connections: [{id: 'work'}]})
 
-  await expect(
-    loadCalendarPromptContext({
-      now: new Date('2026-09-04T12:30:00.000Z'),
-      text: '오늘 저녁 남은 일정 알려줘',
-      timeZone: 'Asia/Seoul',
-    }),
-  ).resolves.toContain('조회 기간에 등록된 일정이 없습니다.')
+  const context = await loadCalendarPromptContext({
+    now: new Date('2026-09-04T12:30:00.000Z'),
+    text: '오늘 저녁 남은 일정 알려줘',
+    timeZone: 'Asia/Seoul',
+  })
+
+  expect(context).toContain('요청한 남은 일정 시간대가 이미 종료되어 조회하지 않았습니다.')
+  expect(context).not.toContain('조회 기간에 등록된 일정이 없습니다.')
   expect(apiJson).toHaveBeenCalledOnce()
   const requestUrl = new URL(String(vi.mocked(apiJson).mock.calls[0]?.[0]), 'https://pomofi.io')
   expect(requestUrl.pathname).toBe('/calendar/connections')
