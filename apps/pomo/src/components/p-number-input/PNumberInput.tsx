@@ -3,6 +3,7 @@ import {createEffect, createSignal, type JSX, Show, splitProps, untrack} from 's
 import {CONTROL_HEIGHT_CLASSES, CONTROL_PADDING_CLASSES} from '../control-size-classes'
 import {clampOptionalBounds} from './clamp-optional-bounds'
 import {type NumberInputRange, useNumberInputGesture} from './use-number-input-gesture'
+import {normalizePasteNumericInput} from 'src/utils/normalize-paste-numeric-input'
 
 const DEFAULT_STEP = 1
 const EXTRA_PRECISION_DIGITS = 6
@@ -67,13 +68,17 @@ export interface PNumberInputProps extends NativeInputProps {
   readonly size?: 'medium' | 'small'
   readonly step?: number
   readonly unit?: string
+  readonly type?: 'number' | 'text'
   readonly value?: number | string
 }
 
 const toFiniteNumber = (value: number | undefined): number | undefined =>
   value !== undefined && Number.isFinite(value) ? value : undefined
 
-const parseValue = (value: number | string | undefined): number | undefined => {
+const parseValue = (
+  value: number | string | undefined,
+  normalizeFullwidth = false,
+): number | undefined => {
   if (typeof value === 'number') {
     return Number.isFinite(value) ? value : undefined
   }
@@ -82,7 +87,7 @@ const parseValue = (value: number | string | undefined): number | undefined => {
     return undefined
   }
 
-  const parsed = Number(value)
+  const parsed = Number(normalizeFullwidth ? normalizePasteNumericInput(value) : value)
   return Number.isFinite(parsed) ? parsed : undefined
 }
 
@@ -123,6 +128,41 @@ const getRange = (min: number | undefined, max: number | undefined) => {
   }
 }
 
+const handleNumberInputKeyDown = (
+  event: Parameters<JSX.EventHandler<HTMLInputElement, KeyboardEvent>>[0],
+  handler: JSX.EventHandlerUnion<HTMLInputElement, KeyboardEvent> | undefined,
+  shouldStep: boolean,
+  changeByStep: (direction: -1 | 1) => void,
+) => {
+  if (typeof handler === 'function') {
+    handler(event)
+  } else if (handler !== undefined) {
+    handler[0](handler[1], event)
+  }
+
+  if (
+    event.defaultPrevented ||
+    !shouldStep ||
+    event.altKey ||
+    event.ctrlKey ||
+    event.metaKey ||
+    event.shiftKey
+  ) {
+    return
+  }
+
+  if (event.key === 'ArrowUp') {
+    event.preventDefault()
+    changeByStep(1)
+    return
+  }
+
+  if (event.key === 'ArrowDown') {
+    event.preventDefault()
+    changeByStep(-1)
+  }
+}
+
 export const PNumberInput = (props: PNumberInputProps) => {
   const [local, rest] = splitProps(props, [
     'aria-label',
@@ -133,10 +173,12 @@ export const PNumberInput = (props: PNumberInputProps) => {
     'max',
     'min',
     'onInputValueChange',
+    'onKeyDown',
     'onValueChange',
     'readOnly',
     'size',
     'step',
+    'type',
     'unit',
     'value',
   ])
@@ -145,21 +187,28 @@ export const PNumberInput = (props: PNumberInputProps) => {
   )
   const [lastValue, setLastValue] = createSignal<number | null>(
     untrack(
-      () => parseValue(local.value === undefined ? uncontrolledValue() : local.value) ?? null,
+      () =>
+        parseValue(
+          local.value === undefined ? uncontrolledValue() : local.value,
+          local.type === 'text',
+        ) ?? null,
     ),
   )
+  const getInputValue = () =>
+    parseValue(local.value === undefined ? uncontrolledValue() : local.value, local.type === 'text')
   createEffect(() => {
-    const currentValue = parseValue(local.value === undefined ? uncontrolledValue() : local.value)
+    const currentValue = getInputValue()
     if (currentValue !== undefined) {
       setLastValue(currentValue)
     }
   })
   const getSize = () => local.size ?? 'small'
-
+  const getReadOnly = () =>
+    local.readOnly ?? (local.value !== undefined && local.onInputValueChange === undefined)
   const getBounds = (): NumberInputRange => getRange(local.min, local.max)
   const getCurrentValue = () => {
     const bounds = getBounds()
-    const currentValue = parseValue(local.value === undefined ? uncontrolledValue() : local.value)
+    const currentValue = getInputValue()
     return normalizeValue(
       currentValue ?? lastValue() ?? 0,
       getStep(local.step),
@@ -183,7 +232,7 @@ export const PNumberInput = (props: PNumberInputProps) => {
 
   const handleInput: JSX.EventHandler<HTMLInputElement, InputEvent> = (event) => {
     const nextValue = event.currentTarget.value
-    const parsedValue = parseValue(nextValue)
+    const parsedValue = parseValue(nextValue, local.type === 'text')
     if (parsedValue !== undefined) {
       setLastValue(parsedValue)
     }
@@ -192,6 +241,13 @@ export const PNumberInput = (props: PNumberInputProps) => {
     }
     local.onInputValueChange?.(nextValue)
   }
+  const handleKeyDown: JSX.EventHandler<HTMLInputElement, KeyboardEvent> = (event) =>
+    handleNumberInputKeyDown(
+      event,
+      local.onKeyDown,
+      local.type === 'text' && !getReadOnly() && !local.disabled,
+      changeByStep,
+    )
   const gesture = useNumberInputGesture({
     getRange: getBounds,
     getStep: () => getStep(local.step),
@@ -214,6 +270,9 @@ export const PNumberInput = (props: PNumberInputProps) => {
         <input
           {...rest}
           aria-label={local['aria-label']}
+          aria-valuemax={local.type === 'text' ? local.max : undefined}
+          aria-valuemin={local.type === 'text' ? local.min : undefined}
+          aria-valuenow={local.type === 'text' ? getInputValue() : undefined}
           class={cx(
             INPUT_CLASS,
             INPUT_SIZE_CLASSES[getSize()],
@@ -221,8 +280,9 @@ export const PNumberInput = (props: PNumberInputProps) => {
             gesture.dragging() && 'select-none',
           )}
           disabled={local.disabled}
-          max={local.max}
-          min={local.min}
+          max={local.type === 'text' ? undefined : local.max}
+          min={local.type === 'text' ? undefined : local.min}
+          onKeyDown={handleKeyDown}
           onClick={gesture.handleClick}
           onInput={handleInput}
           onLostPointerCapture={gesture.handleLostPointerCapture}
@@ -230,11 +290,10 @@ export const PNumberInput = (props: PNumberInputProps) => {
           onPointerDown={gesture.handlePointerDown}
           onPointerMove={gesture.handlePointerMove}
           onPointerUp={gesture.handlePointerUp}
-          readOnly={
-            local.readOnly ?? (local.value !== undefined && local.onInputValueChange === undefined)
-          }
-          step={local.step}
-          type="number"
+          role={local.type === 'text' ? 'spinbutton' : undefined}
+          readOnly={getReadOnly()}
+          step={local.type === 'text' ? undefined : local.step}
+          type={local.type ?? 'number'}
           value={local.value === undefined ? uncontrolledValue() : local.value}
         />
         <Show when={local.unit}>
