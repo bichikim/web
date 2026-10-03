@@ -19,6 +19,25 @@ describe('normalizeSpeechText', () => {
     )
   })
 
+  it('should pronounce Korean colon clock ranges through the production wrapper', () => {
+    expect(normalizeSpeechText({language: 'ko', text: '09:05부터 12:30까지'})).toBe(
+      '아홉 시 오 분부터 열두 시 삼십 분까지',
+    )
+  })
+
+  it('should preserve protected numeric ranges and structured contexts around clock times', () => {
+    expect(normalizeSpeechText({language: 'ko', text: '5부터 12까지'})).toBe('5부터 12까지')
+    expect(
+      normalizeSpeechText({language: 'ko', text: 'https://example.com/09:05?time=12:30'}),
+    ).toBe('https://example.com/09:05?time=12:30')
+    expect(normalizeSpeechText({language: 'ko', text: '비율 09:05에, 버전 09:05에'})).toBe(
+      '비율 09:05에, 버전 09:05에',
+    )
+    expect(normalizeSpeechText({language: 'ko', text: '０９:０５에, 6월 10일 09:05에'})).toBe(
+      '아홉 시 오 분에, 유월 십 일 아홉 시 오 분에',
+    )
+  })
+
   it('should pronounce Korean amounts and percentages', () => {
     expect(
       normalizeSpeechText({language: 'ko', text: '가격은 12,500원이고 진행률은 12.5%예요.'}),
