@@ -1,49 +1,28 @@
-import {createSignal} from 'solid-js'
-import type {PictureDiaryStroke} from '../../../features/picture-diary'
+import {useUndoHistory} from 'src/hooks/use-undo-history'
+import type {PictureDiaryStroke} from 'src/features/picture-diary'
 
-interface DrawingHistoryOptions {
+interface UseDrawingHistoryProps {
   readonly strokes: ReadonlyArray<PictureDiaryStroke>
   readonly onChange?: (strokes: ReadonlyArray<PictureDiaryStroke>) => void
 }
 
-const MAXIMUM_HISTORY = 200
+export const useDrawingHistory = (props: UseDrawingHistoryProps) => {
+  const history = useUndoHistory({
+    limit: 200,
+    onChange: (strokes) => props.onChange?.(strokes),
+    valueAccessor: () => props.strokes,
+  })
 
-export const useDrawingHistory = (options: DrawingHistoryOptions) => {
-  const [past, setPast] = createSignal<ReadonlyArray<ReadonlyArray<PictureDiaryStroke>>>([])
-  const [future, setFuture] = createSignal<ReadonlyArray<ReadonlyArray<PictureDiaryStroke>>>([])
-  const begin = () => {
-    setPast((history) => [...history.slice(1 - MAXIMUM_HISTORY), options.strokes])
-    setFuture([])
-  }
   return {
-    begin,
-    canRedo: () => future().length > 0,
-    canUndo: () => past().length > 0,
+    begin: history.capture,
+    canRedo: history.canRedo,
+    canUndo: history.canUndo,
     clear: () => {
-      begin()
-      options.onChange?.([])
+      history.capture()
+      props.onChange?.([])
     },
-    redo: () => {
-      const next = future().at(-1)
-      if (next === undefined) {
-        return
-      }
-      setPast((history) => [...history, options.strokes])
-      setFuture((history) => history.slice(0, -1))
-      options.onChange?.(next)
-    },
-    reset: () => {
-      setPast([])
-      setFuture([])
-    },
-    undo: () => {
-      const previous = past().at(-1)
-      if (previous === undefined) {
-        return
-      }
-      setFuture((history) => [...history, options.strokes])
-      setPast((history) => history.slice(0, -1))
-      options.onChange?.(previous)
-    },
+    redo: history.redo,
+    reset: history.reset,
+    undo: history.undo,
   }
 }

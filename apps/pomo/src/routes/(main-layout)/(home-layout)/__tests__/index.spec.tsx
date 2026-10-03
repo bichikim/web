@@ -9,7 +9,9 @@ interface RelaxPlayerPageProps {
   readonly returnHref?: string
 }
 
-const {searchParams} = vi.hoisted(() => ({searchParams: {layout: ''}}))
+const {searchParams} = vi.hoisted(() => ({
+  searchParams: {layout: '' as string | string[] | undefined},
+}))
 const {mockRelaxPlayerPage} = vi.hoisted(() => ({
   mockRelaxPlayerPage: vi.fn<(props: RelaxPlayerPageProps) => string>(),
 }))
@@ -97,13 +99,36 @@ it('should open the all-in-one app from a relax-player build when explicitly req
   expect(screen.queryByText('Relax player')).not.toBeInTheDocument()
 })
 
-it('should keep a standalone release on the player without return navigation', async () => {
-  vi.stubEnv('VITE_POMO_STANDALONE_RELAX', 'true')
-  searchParams.layout = 'all-in-one'
+it.each([
+  {description: 'a single query value', layout: ['all-in-one']},
+  {description: 'one of multiple query values', layout: ['relax-player', 'all-in-one']},
+])(
+  'should open the all-in-one app when an array layout includes all-in-one ($description)',
+  ({layout}) => {
+    vi.stubEnv('VITE_POMO_IS_APPS_IN_TOSS', '')
+    vi.stubEnv('VITE_APP_LAYOUT', 'relax-player')
+    searchParams.layout = layout
 
-  render(() => <RootPage />)
+    render(() => <RootPage />)
 
-  expect(await screen.findByText('Relax player')).toBeInTheDocument()
-  expect(mockRelaxPlayerPage.mock.calls[0]?.[0].returnHref).toBeUndefined()
-  expect(screen.queryByText('Pomo home')).not.toBeInTheDocument()
-})
+    expect(screen.getByText('Pomo home')).toBeInTheDocument()
+    expect(screen.queryByText('Relax player')).not.toBeInTheDocument()
+  },
+)
+
+it.each([
+  {description: 'a string', layout: 'all-in-one'},
+  {description: 'an array', layout: ['relax-player', 'all-in-one']},
+])(
+  'should keep a standalone release on the player for $description layout queries',
+  async ({layout}) => {
+    vi.stubEnv('VITE_POMO_STANDALONE_RELAX', 'true')
+    searchParams.layout = layout
+
+    render(() => <RootPage />)
+
+    expect(await screen.findByText('Relax player')).toBeInTheDocument()
+    expect(mockRelaxPlayerPage.mock.calls[0]?.[0].returnHref).toBeUndefined()
+    expect(screen.queryByText('Pomo home')).not.toBeInTheDocument()
+  },
+)

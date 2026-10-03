@@ -3,6 +3,7 @@ import {createDeferred} from 'src/test-utils/create-deferred'
 
 import {PreferenceProvider} from 'src/hooks/use-preference'
 import {fireEvent, render, screen} from '@solidjs/testing-library'
+import userEvent from '@testing-library/user-event'
 import {afterEach, beforeEach, expect, it, vi} from 'vitest'
 
 import {
@@ -61,6 +62,30 @@ it('should save a valid interval after changes remain idle for 500 milliseconds'
   fireEvent.input(screen.getByRole('spinbutton', {name: '랜덤 이벤트 최대 간격(분)'}), {
     target: {value: '24'},
   })
+
+  await vi.advanceTimersByTimeAsync(499)
+  expect(settingsMocks.write).not.toHaveBeenCalled()
+
+  await vi.advanceTimersByTimeAsync(1)
+  expect(settingsMocks.write).toHaveBeenCalledOnce()
+  expect(settingsMocks.write).toHaveBeenCalledWith({
+    ...DEFAULT_RANDOM_EVENT_SETTINGS,
+    maximumMinutes: 24,
+    minimumMinutes: 12,
+  })
+})
+
+it('should save fullwidth interval values pasted into both fields', async () => {
+  const user = userEvent.setup({advanceTimers: vi.advanceTimersByTime})
+  render(() => <RandomEventSettings />, {wrapper: PreferenceProvider})
+  await vi.advanceTimersByTimeAsync(0)
+
+  const minimumInput = screen.getByRole('spinbutton', {name: '랜덤 이벤트 최소 간격(분)'})
+  const maximumInput = screen.getByRole('spinbutton', {name: '랜덤 이벤트 최대 간격(분)'})
+  await user.clear(minimumInput)
+  await user.paste('１２')
+  await user.clear(maximumInput)
+  await user.paste('２４')
 
   await vi.advanceTimersByTimeAsync(499)
   expect(settingsMocks.write).not.toHaveBeenCalled()
@@ -140,7 +165,7 @@ it('should restore the persisted interval after an automatic save failure', asyn
   await vi.advanceTimersByTimeAsync(500)
 
   expect(screen.getByRole('status').textContent).toBe('랜덤 이벤트 설정을 저장하지 못했어요.')
-  expect(minimumInput).toHaveValue(DEFAULT_RANDOM_EVENT_SETTINGS.minimumMinutes)
+  expect(minimumInput).toHaveValue(String(DEFAULT_RANDOM_EVENT_SETTINGS.minimumMinutes))
   expect(consoleError).toHaveBeenCalledOnce()
 })
 
@@ -154,7 +179,7 @@ it('should report a load failure after a successful edit when settings reload', 
   await vi.advanceTimersByTimeAsync(500)
 
   expect(settingsMocks.write).toHaveBeenCalledOnce()
-  expect(minimumInput).toHaveValue(12)
+  expect(minimumInput).toHaveValue('12')
 
   const reloadFailure = new Error('Storage unavailable on reload')
   settingsMocks.read.mockRejectedValueOnce(reloadFailure)
@@ -167,7 +192,7 @@ it('should report a load failure after a successful edit when settings reload', 
   await vi.advanceTimersByTimeAsync(0)
 
   expect(screen.getByRole('status')).toHaveTextContent('랜덤 이벤트 설정을 불러오지 못했어요.')
-  expect(minimumInput).toHaveValue(12)
+  expect(minimumInput).toHaveValue('12')
   expect(consoleError).toHaveBeenCalledWith('Failed to load random event settings.', reloadFailure)
 })
 
@@ -196,7 +221,7 @@ it('should keep a save failure classification while a later edit is pending', as
   await vi.advanceTimersByTimeAsync(0)
 
   expect(screen.getByRole('status')).toHaveTextContent('랜덤 이벤트 설정을 저장하지 못했어요.')
-  expect(minimumInput).toHaveValue(DEFAULT_RANDOM_EVENT_SETTINGS.minimumMinutes)
+  expect(minimumInput).toHaveValue(String(DEFAULT_RANDOM_EVENT_SETTINGS.minimumMinutes))
   expect(consoleError).toHaveBeenCalledWith('Failed to save random event settings.', reloadFailure)
 })
 
@@ -226,7 +251,7 @@ it('should report a failure for a later write queued behind an earlier save', as
   await vi.advanceTimersByTimeAsync(0)
 
   expect(screen.getByRole('status')).toHaveTextContent('랜덤 이벤트 설정을 저장하지 못했어요.')
-  expect(minimumInput).toHaveValue(12)
+  expect(minimumInput).toHaveValue('12')
   expect(consoleError).toHaveBeenCalledWith('Failed to save random event settings.', saveFailure)
 })
 
