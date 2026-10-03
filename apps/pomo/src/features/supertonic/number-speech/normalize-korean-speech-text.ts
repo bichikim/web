@@ -1,6 +1,7 @@
 import {classifySpeechNumber} from './classify-speech-number'
 import {hasNumberKind} from './has-number-kind'
 import {parseInteger} from './parse-integer'
+import {parseClockTime} from './parse-clock-time'
 import {KOREAN_DECIMAL_PERCENT_PATTERN, KOREAN_INTEGER_PERCENT_PATTERN} from './percent-patterns'
 import {
   KOREAN_DIGIT_PATTERN_SOURCE,
@@ -13,6 +14,7 @@ import {
 
 const DIGIT_WORDS = ['영', '일', '이', '삼', '사', '오', '육', '칠', '팔', '구'] as const
 const DECIMAL_RADIX = 10
+const MAX_TWELVE_HOUR_CLOCK_HOUR = 12
 const NATIVE_LIMIT = 100n
 const SPECIAL_TWENTY = 20
 const SMALL_UNITS = ['', '십', '백', '천'] as const
@@ -50,13 +52,21 @@ const KOREAN_PARTICLE_PATTERN = KOREAN_PARTICLE_PATTERN_SOURCE
 const KOREAN_UNIT_END_PATTERN = KOREAN_UNIT_END_PATTERN_SOURCE
 const LEVEL_FOLLOWING_PATTERN = `[\\p{L}\\p{N}_]|[.,]${KOREAN_DIGIT_PATTERN_SOURCE}|[+\\-/:~–—#@$€£¥₩<>≤≥≈]`
 const LEVEL_NUMBER_END = `(?:(?=${KOREAN_PARTICLE_PATTERN})|(?!${LEVEL_FOLLOWING_PATTERN})${KOREAN_UNIT_END_PATTERN})`
+const SIGNED_NUMBER_PREFIX_PATTERN = /[+＋−－-]\s*$/u
+const TIME_OF_DAY_PREFIX_PATTERN = /(?:오전|오후)\s*$/u
+const REMAINING_DURATION_SUFFIX_SOURCE =
+  '남(?:$|[^\\p{L}\\p{N}_]|았|아|은|는|을|음|지|습니다|는다|으면)'
+const REMAINING_DURATION_SUFFIX_PATTERN = new RegExp(
+  `^\\s*${REMAINING_DURATION_SUFFIX_SOURCE}`,
+  'u',
+)
 const WON_PATTERN = new RegExp(
   `${TOKEN_START_PATTERN}(${KOREAN_INTEGER_PATTERN_SOURCE})\\s*원${KOREAN_UNIT_END_PATTERN}`,
   'gu',
 )
 const DURATION_MINUTE_PATTERN = new RegExp(
   `${TOKEN_START_PATTERN}(${UNSIGNED_INTEGER_PATTERN})\\s*분` +
-    `(?=\\s*(?:남|후|동안|전(?:에|부터|\\s|$)|간(?:\\s|$)))`,
+    `(?=\\s*(?:${REMAINING_DURATION_SUFFIX_SOURCE}|후|동안|전(?:에|부터|\\s|$)|간(?:\\s|$)))`,
   'gu',
 )
 const CLOCK_TIME_PATTERN = new RegExp(
@@ -64,13 +74,15 @@ const CLOCK_TIME_PATTERN = new RegExp(
     `(${UNSIGNED_INTEGER_PATTERN})\\s*분${KOREAN_UNIT_END_PATTERN}`,
   'gu',
 )
+const CLOCK_MINUTE_PREFIX_PATTERN = new RegExp(`(?:${UNSIGNED_INTEGER_PATTERN})\\s*시\\s*$`, 'u')
 const NATIVE_COUNTER_PATTERN = new RegExp(
   `${TOKEN_START_PATTERN}(${UNSIGNED_INTEGER_PATTERN})\\s*` +
     `(${NATIVE_COUNTERS})${KOREAN_UNIT_END_PATTERN}`,
   'gu',
 )
 const CLOCK_HOUR_PATTERN = new RegExp(
-  `${TOKEN_START_PATTERN}(${UNSIGNED_INTEGER_PATTERN})\\s*시${KOREAN_UNIT_END_PATTERN}`,
+  `${TOKEN_START_PATTERN}(${UNSIGNED_INTEGER_PATTERN})\\s*시` +
+    `(?!\\s*${UNSIGNED_INTEGER_PATTERN}\\s*분)${KOREAN_UNIT_END_PATTERN}`,
   'gu',
 )
 const SINO_UNIT_PATTERN = new RegExp(
@@ -218,6 +230,47 @@ const replaceWhenPronounceable = (
   return `${pronunciation}${unitSeparator}${unit}`
 }
 
+const parseDurationMinuteValue = (value: string): string | null => {
+  const integer = value.replaceAll(',', '')
+
+  if (!/^\d+$/u.test(integer)) {
+    return null
+  }
+
+  const hasLeadingZero = integer.length > 1 && integer.startsWith('0')
+
+  if (hasLeadingZero && integer.length !== 2) {
+    return null
+  }
+
+  return integer.replace(/^0(?=\d)/u, '')
+}
+
+const hasCanonicalNumberKind = ({
+  input,
+  start,
+  value,
+  canonicalValue,
+  kind,
+}: {
+  input: string
+  start: number
+  value: string
+  canonicalValue: string
+  kind: 'cardinal' | 'year-date-time'
+}) => {
+  if (SIGNED_NUMBER_PREFIX_PATTERN.test(input.slice(0, start))) {
+    return false
+  }
+
+  const canonicalInput = `${input.slice(0, start)}${canonicalValue}${input.slice(start + value.length)}`
+  return hasNumberKind('ko', canonicalInput, start, canonicalValue, kind)
+}
+
+const hasValidClockHourInContext = (hour: number, input: string, start: number) =>
+  !TIME_OF_DAY_PREFIX_PATTERN.test(input.slice(0, start)) ||
+  (hour >= 1 && hour <= MAX_TWELVE_HOUR_CLOCK_HOUR)
+
 /** Converts only Korean number forms whose pronunciation is established by their syntax. */
 export const normalizeKoreanSpeechText = (text: string): string =>
   text
@@ -264,25 +317,66 @@ export const normalizeKoreanSpeechText = (text: string): string =>
         ? replaceWhenPronounceable(match, value, '원', pronounceSinoInteger)
         : match,
     )
-    .replace(DURATION_MINUTE_PATTERN, (match, value: string, start: number, input: string) =>
-      hasNumberKind('ko', input, start, value, 'cardinal')
-        ? replaceWhenPronounceable(match, value, '분', pronounceSinoInteger)
-        : match,
-    )
     .replace(
       CLOCK_TIME_PATTERN,
       (...[match, hour, minute, start, input]: [string, string, string, number, string]) => {
-        if (!hasNumberKind('ko', input, start, hour, 'year-date-time')) {
+        const clockTime = parseClockTime(hour, minute)
+        if (clockTime === null) {
           return match
         }
 
-        const hourPronunciation = pronounceClockHour(hour)
-        const minutePronunciation = pronounceSinoInteger(minute)
+        if (!hasValidClockHourInContext(clockTime.hour, input, start)) {
+          return match
+        }
+
+        const canonicalHour = String(clockTime.hour)
+
+        if (
+          !hasCanonicalNumberKind({
+            canonicalValue: canonicalHour,
+            input,
+            kind: 'year-date-time',
+            start,
+            value: hour,
+          })
+        ) {
+          return match
+        }
+
+        const hourPronunciation = pronounceClockHour(canonicalHour)
+        const minutePronunciation = pronounceSinoInteger(String(clockTime.minute))
         return hourPronunciation === null || minutePronunciation === null
           ? match
           : `${hourPronunciation} 시 ${minutePronunciation} 분`
       },
     )
+    .replace(DURATION_MINUTE_PATTERN, (match, value: string, start: number, input: string) => {
+      if (CLOCK_MINUTE_PREFIX_PATTERN.test(input.slice(0, start))) {
+        return match
+      }
+
+      const hasLeadingZero = value.length > 1 && value.startsWith('0')
+      const hasRemainingDurationSuffix = REMAINING_DURATION_SUFFIX_PATTERN.test(
+        input.slice(start + match.length),
+      )
+
+      if (hasLeadingZero && !hasRemainingDurationSuffix) {
+        return match
+      }
+
+      const durationMinutes = parseDurationMinuteValue(value)
+
+      return durationMinutes !== null &&
+        hasCanonicalNumberKind({
+          canonicalValue: durationMinutes,
+          input,
+          kind: 'cardinal',
+          start,
+          value,
+        })
+        ? replaceWhenPronounceable(match, durationMinutes, '분', pronounceSinoInteger)
+        : match
+    })
     .replace(
       NATIVE_COUNTER_PATTERN,
       (...[match, value, counter, start, input]: [string, string, string, number, string]) =>
@@ -290,11 +384,24 @@ export const normalizeKoreanSpeechText = (text: string): string =>
           ? replaceWhenPronounceable(match, value, counter, pronounceNativeCounter)
           : match,
     )
-    .replace(CLOCK_HOUR_PATTERN, (match, value: string, start: number, input: string) =>
-      hasNumberKind('ko', input, start, value, 'year-date-time')
-        ? replaceWhenPronounceable(match, value, '시', pronounceClockHour)
-        : match,
-    )
+    .replace(CLOCK_HOUR_PATTERN, (match, value: string, start: number, input: string) => {
+      const clockTime = parseClockTime(value, '00')
+      if (clockTime === null || !hasValidClockHourInContext(clockTime.hour, input, start)) {
+        return match
+      }
+
+      const canonicalHour = String(clockTime.hour)
+
+      return hasCanonicalNumberKind({
+        canonicalValue: canonicalHour,
+        input,
+        kind: 'year-date-time',
+        start,
+        value,
+      })
+        ? replaceWhenPronounceable(match, canonicalHour, '시', pronounceClockHour)
+        : match
+    })
     .replace(
       SINO_UNIT_PATTERN,
       (...[match, value, unit, start, input]: [string, string, string, number, string]) => {

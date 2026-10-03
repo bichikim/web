@@ -7,7 +7,9 @@ import {SpeechControls} from '../SpeechControls'
 
 const [autoRead, setAutoRead] = createSignal(false)
 const [audioUrl, setAudioUrl] = createSignal<string | null>(null)
-const [status, setStatus] = createSignal<'idle' | 'preparing' | 'ready' | 'error'>('idle')
+const [status, setStatus] = createSignal<
+  'consent' | 'downloading' | 'idle' | 'preparing' | 'ready' | 'error'
+>('idle')
 let speech: TarotSpeechController
 const request = vi.fn()
 const onPlaybackStart = vi.fn()
@@ -26,14 +28,19 @@ beforeEach(() => {
     audioUrl,
     autoplay: autoRead,
     autoRead,
+    cancelDownload: vi.fn(),
+    cancelDownloadConsent: vi.fn(),
+    downloadSize: () => '200MB',
     error: () => null,
     onPlaybackEnd,
     onPlaybackError: vi.fn(),
     onPlaybackRequest: () => true,
     onPlaybackStart,
     paused: () => false,
+    progress: () => null,
     request,
     setAutoRead,
+    startDownload: vi.fn(),
     status,
   }
 })
@@ -42,9 +49,9 @@ afterEach(() => {
   vi.restoreAllMocks()
 })
 
-it('should allow retrying failed voice preparation and show preparation progress', () => {
+it('should allow requesting speech before audio is prepared and retry voice failures', () => {
   render(() => <SpeechControls speech={speech} />)
-  expect(screen.getByRole('button', {name: '해석 음성 재생'})).toBeDisabled()
+  expect(screen.getByRole('button', {name: '해석 음성 재생'})).toBeEnabled()
   expect(screen.queryByRole('checkbox')).toBeNull()
   setStatus('error')
   fireEvent.click(screen.getByRole('button', {name: '해석 음성 재생'}))

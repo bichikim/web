@@ -1,4 +1,11 @@
-import type {CalendarEvent, CalendarEventRange, CalendarProviderId} from 'src/features/calendar'
+import {
+  type CalendarEvent,
+  type CalendarEventLookup,
+  type CalendarEventRange,
+  type CalendarProviderId,
+  parseAllDayDateKey,
+} from 'src/features/calendar'
+import {dayjs} from 'src/utils/zoned-dayjs'
 import {createOpaqueToken, hashOpaqueToken} from 'src/server/utils/token'
 
 import type {CalendarConnectionRecord, CalendarRepository} from '../repositories/calendar'
@@ -12,6 +19,8 @@ const SECONDS_PER_MINUTE = 60
 const OAUTH_STATE_LIFETIME_MINUTES = 10
 const OAUTH_STATE_LIFETIME_MILLISECONDS =
   OAUTH_STATE_LIFETIME_MINUTES * SECONDS_PER_MINUTE * MILLISECONDS_PER_SECOND
+// Google bounds are exclusive and ignore milliseconds; pad by one second, then filter at the exact point.
+const CALENDAR_INSTANT_LOOKUP_PADDING_MILLISECONDS = 1000
 
 export interface CalendarConnectionSummary {
   readonly accountLabel: string
@@ -38,13 +47,17 @@ interface CompleteCalendarConnectionOptions {
   readonly state: string
 }
 
-interface ListCalendarEventsOptions extends CalendarEventRange {
+type ListCalendarEventsOptions = CalendarEventLookup & {
   readonly displayTimeZone: string
   readonly userId: string
 }
 
+interface CalendarServiceEvent extends CalendarEvent {
+  readonly exactInstantRange?: {readonly end: string; readonly start: string}
+}
+
 interface ConnectionEventsResult {
-  readonly events: ReadonlyArray<CalendarEvent>
+  readonly events: ReadonlyArray<CalendarServiceEvent>
   readonly truncated: boolean
 }
 
@@ -52,9 +65,16 @@ interface ProviderConnectionEventsResult extends ConnectionEventsResult {
   readonly unavailableCalendars: number
 }
 
-export interface CalendarEventsResult extends ConnectionEventsResult {
+interface CalendarEventSearch {
+  readonly instant: Date | null
+  readonly lookupInstant: string | null
+  readonly range: CalendarEventRange
+}
+
+export interface CalendarEventsResult {
   readonly connectedConnections: number
   readonly events: ReadonlyArray<CalendarEvent>
+  readonly truncated: boolean
   readonly unavailableConnections: number
 }
 
@@ -66,6 +86,54 @@ export interface CalendarService {
   readonly listEvents: (options: ListCalendarEventsOptions) => Promise<CalendarEventsResult>
 }
 
+const createInstantLookupRange = (instant: Date): CalendarEventRange => ({
+  end: new Date(instant.getTime() + CALENDAR_INSTANT_LOOKUP_PADDING_MILLISECONDS).toISOString(),
+  start: new Date(instant.getTime() - CALENDAR_INSTANT_LOOKUP_PADDING_MILLISECONDS).toISOString(),
+})
+
+const createCalendarEventSearch = (lookup: CalendarEventLookup): CalendarEventSearch => {
+  if (!('at' in lookup)) {
+    return {instant: null, lookupInstant: null, range: lookup}
+  }
+
+  const instant = new Date(lookup.at)
+  return {instant, lookupInstant: lookup.at, range: createInstantLookupRange(instant)}
+}
+
+const eventMatchesInstant = (event: CalendarServiceEvent, instant: Date, timeZone: string) => {
+  if (event.allDay) {
+    if (event.exactInstantRange !== undefined) {
+      const start = new Date(event.exactInstantRange.start).getTime()
+      const end = new Date(event.exactInstantRange.end).getTime()
+      return (
+        Number.isFinite(start) &&
+        Number.isFinite(end) &&
+        start <= instant.getTime() &&
+        instant.getTime() < end
+      )
+    }
+
+    const startDate = parseAllDayDateKey(event.start)
+    const endDate = parseAllDayDateKey(event.end)
+    if (startDate === null || endDate === null) {
+      return false
+    }
+
+    const calendarTimeZone = event.calendarTimeZone ?? timeZone
+    const start = dayjs.tz(`${startDate}T00:00:00`, calendarTimeZone).valueOf()
+    const end = dayjs.tz(`${endDate}T00:00:00`, calendarTimeZone).valueOf()
+    return start <= instant.getTime() && instant.getTime() < end
+  }
+
+  const start = new Date(event.start).getTime()
+  const end = new Date(event.end).getTime()
+  if (!Number.isFinite(start) || !Number.isFinite(end)) {
+    return false
+  }
+
+  return start <= instant.getTime() && instant.getTime() < end
+}
+
 const shouldRefresh = (tokens: CalendarProviderTokens, now: Date) =>
   tokens.expiresAt !== null &&
   new Date(tokens.expiresAt).getTime() <= now.getTime() + TOKEN_REFRESH_LEEWAY_MILLISECONDS
@@ -75,7 +143,7 @@ export const createCalendarService = (options: CreateCalendarServiceOptions): Ca
 
   const readConnectionEvents = async (
     connection: CalendarConnectionRecord,
-    range: Omit<ListCalendarEventsOptions, 'userId'>,
+    range: CalendarEventRange & {readonly displayTimeZone: string; readonly lookupInstant?: string},
   ): Promise<ProviderConnectionEventsResult> => {
     const provider = options.providerFor(connection.provider)
     let tokens = options.vault.open(connection.encryptedTokens)
@@ -168,14 +236,24 @@ export const createCalendarService = (options: CreateCalendarServiceOptions): Ca
         provider: connection.provider,
       })),
     listEvents: async (listOptions) => {
-      const {userId, ...range} = listOptions
+      const {displayTimeZone, userId, ...lookup} = listOptions
+      const {instant, lookupInstant, range} = createCalendarEventSearch(lookup)
+      const providerRange = {
+        ...range,
+        displayTimeZone,
+        ...(lookupInstant === null ? {} : {lookupInstant}),
+      }
       const connections = await options.repository.listConnections(userId)
       const results = await Promise.allSettled(
-        connections.map((connection) => readConnectionEvents(connection, range)),
+        connections.map((connection) => readConnectionEvents(connection, providerRange)),
       )
-      const events = results
+      const matchingEvents = results
         .flatMap((result) => (result.status === 'fulfilled' ? result.value.events : []))
+        .filter((event) => instant === null || eventMatchesInstant(event, instant, displayTimeZone))
         .sort((left, right) => left.start.localeCompare(right.start))
+      const events = matchingEvents.map(
+        ({exactInstantRange: _exactInstantRange, ...event}) => event,
+      )
 
       return {
         connectedConnections: connections.length,

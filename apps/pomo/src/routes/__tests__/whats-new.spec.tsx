@@ -1,7 +1,7 @@
 /** @vitest-environment jsdom */
 
 import {A} from '@solidjs/router'
-import {render, screen, waitFor} from '@solidjs/testing-library'
+import {render, screen, waitFor, within} from '@solidjs/testing-library'
 import {afterEach, beforeEach, expect, it, vi} from 'vitest'
 
 import catalog from '../../../public/versions/v2/ko.json' with {type: 'json'}
@@ -37,29 +37,42 @@ it('should show the newest changes and the first release from the public catalog
 
   expect(await screen.findByRole('heading', {name: '새로운 소식'})).toBeTruthy()
   expect(screen.getAllByRole('heading', {name: 'Pomo 업데이트 안내'})).toHaveLength(4)
-  expect(screen.getByText('2026. 09. 18 03:03')).toBeVisible()
-  expect(screen.getByText('기능 제안과 투표')).toBeVisible()
-  expect(screen.getByText('2026. 09. 13 10:43')).toBeVisible()
+
+  const release = (date: string) => {
+    const releaseDate = screen.getByText(date)
+    expect(releaseDate).toBeVisible()
+    const article = releaseDate.closest('article')
+    if (article === null) {
+      throw new Error(`Expected the release dated ${date} to have an article.`)
+    }
+    return within(article)
+  }
+  const september18 = release('2026. 09. 18 03:03')
+  const september13 = release('2026. 09. 13 10:43')
+  const september09 = release('2026. 09. 09 18:40')
+  const september08 = release('2026. 09. 08 11:44')
+  const september03 = release('2026. 09. 03 00:57')
+  const firstRelease = release('2026. 08. 25 05:26')
+
+  expect(september18.getByText('기능 제안과 투표')).toBeVisible()
   expect(
-    screen.getByText(
+    september13.getByText(
       '집중 화면을 원하는 대로 정리하고, 피드 음성과 기록 기능을 더 편하게 사용해 보세요.',
     ),
   ).toBeVisible()
-  expect(screen.getByText('플레이어와 타이머 표시 설정')).toBeVisible()
-  expect(screen.getByText('토스 로그인 유지 개선')).toBeVisible()
-  expect(screen.getByText('2026. 09. 09 18:40')).toBeVisible()
-  expect(screen.getByText('사진과 동영상으로 꾸미는 배경')).toBeVisible()
+  expect(september13.getByText('플레이어와 타이머 표시 설정')).toBeVisible()
+  expect(september13.getByText('토스 로그인 유지 개선')).toBeVisible()
+  expect(september09.getByText('사진과 동영상으로 꾸미는 배경')).toBeVisible()
   expect(
-    screen.getByText('기억할 일부터 하루의 기록까지, Pomo에서 할 수 있는 일이 늘어났어요.'),
+    september08.getByText('기억할 일부터 하루의 기록까지, Pomo에서 할 수 있는 일이 늘어났어요.'),
   ).toBeVisible()
-  expect(screen.getByText('메모와 알림')).toBeVisible()
-  expect(screen.getByText('2026. 09. 03 00:57')).toBeTruthy()
+  expect(september08.getByText('메모와 알림')).toBeVisible()
   expect(
-    screen.getByText('집중 공간의 캐릭터 움직임과 표정을 더 자연스럽게 다듬었습니다.'),
-  ).toBeTruthy()
+    september03.getByText('집중 공간의 캐릭터 움직임과 표정을 더 자연스럽게 다듬었습니다.'),
+  ).toBeVisible()
   expect(screen.getAllByRole('listitem')).toHaveLength(44)
   expect(screen.getByRole('heading', {name: '첫 출시'})).toBeTruthy()
-  expect(screen.getByText('2026. 08. 25 05:26')).toBeTruthy()
+  expect(firstRelease.getByRole('heading', {name: '첫 출시'})).toBeTruthy()
   const returnLinks = screen.getAllByRole('link', {name: '앱으로 돌아가기'})
   expect(returnLinks).toHaveLength(2)
   expect(returnLinks[0]).toHaveClass('min-h-11', 'rounded-full', 'text-base', 'text-foreground')

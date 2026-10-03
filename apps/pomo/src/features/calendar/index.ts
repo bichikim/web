@@ -1,6 +1,14 @@
 export {createCalendarPromptContext} from './prompt'
 export {createCalendarQuery} from './query'
-export type {CalendarEvent, CalendarEventRange, CalendarProviderId} from './types'
+export type {
+  CalendarEvent,
+  CalendarEventInstant,
+  CalendarEventLookup,
+  CalendarEventQuery,
+  CalendarEventRange,
+  CalendarProviderId,
+  EmptyCalendarEventQuery,
+} from './types'
 export {CALENDAR_PROVIDERS, isCalendarProviderId} from './types'
 export type {CalendarConnection, CalendarEvents} from './client'
 export {

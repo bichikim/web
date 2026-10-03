@@ -1,3 +1,4 @@
+import {useSearchParams} from '@solidjs/router'
 import {clientOnly} from '@solidjs/start'
 import {Show} from 'solid-js'
 
@@ -12,19 +13,37 @@ const RelaxPlayerPage = clientOnly(
   {lazy: true},
 )
 
+const isAllInOneLayout = (layout: string | string[] | undefined) =>
+  layout === 'all-in-one' || (Array.isArray(layout) && layout.includes('all-in-one'))
+
 export default function RootPage() {
+  const [searchParams] = useSearchParams()
+  // Dedicated player builds intentionally omit returnHref; returning to Pomo belongs
+  // to its integrated /relax entry, not this separately published player.
   return (
-    <Show
-      fallback={
-        <Show fallback={<PHomePage />} when={import.meta.env.VITE_APP_LAYOUT === 'relax-player'}>
-          <RelaxPlayerPage />
+    <>
+      {import.meta.env.VITE_POMO_STANDALONE_RELAX === 'true' ? (
+        <RelaxPlayerPage />
+      ) : (
+        <Show
+          fallback={
+            <Show
+              fallback={<PHomePage />}
+              when={
+                import.meta.env.VITE_APP_LAYOUT === 'relax-player' &&
+                !isAllInOneLayout(searchParams.layout)
+              }
+            >
+              <RelaxPlayerPage />
+            </Show>
+          }
+          when={import.meta.env.VITE_POMO_IS_APPS_IN_TOSS === 'true'}
+        >
+          <AppsInTossPrepare>
+            <PHomePage />
+          </AppsInTossPrepare>
         </Show>
-      }
-      when={import.meta.env.VITE_POMO_IS_APPS_IN_TOSS === 'true'}
-    >
-      <AppsInTossPrepare>
-        <PHomePage />
-      </AppsInTossPrepare>
-    </Show>
+      )}
+    </>
   )
 }

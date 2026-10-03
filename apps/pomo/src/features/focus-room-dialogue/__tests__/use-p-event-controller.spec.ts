@@ -401,6 +401,31 @@ describe('delayed-end playback', () => {
     view.cleanup()
   })
 
+  it('should restore a timer started during a failed save to its persisted duration', async () => {
+    const save = Promise.withResolvers<undefined>()
+    const failure = new Error('settings unavailable')
+    delayedEndEventSettingsMocks.write.mockReturnValueOnce(save.promise)
+
+    const view = renderHook(() => usePEventController({}))
+    await vi.waitFor(() => expect(view.result.isLoading()).toBe(false))
+    const saveRequest = view.result.setDelayedEndEventDuration(1)
+    await vi.waitFor(() => expect(delayedEndEventSettingsMocks.write).toHaveBeenCalledOnce())
+    view.result.startDelayedEndEvent()
+    await vi.advanceTimersByTimeAsync(30_000)
+
+    save.reject(failure)
+    await expect(saveRequest).rejects.toBe(failure)
+
+    expect(view.result.delayedEndEventDurationMinutes()).toBe(30)
+    await vi.advanceTimersByTimeAsync(60_000 - 30_000)
+    expect(playback.playSequence).not.toHaveBeenCalled()
+    await vi.advanceTimersByTimeAsync(30 * 60_000 - 60_000)
+    expect(playback.playSequence).not.toHaveBeenCalled()
+    await vi.advanceTimersByTimeAsync(60_000)
+    expect(playback.playSequence).toHaveBeenCalledOnce()
+    view.cleanup()
+  })
+
   it('should not rearm a cancelled timer when its duration save completes', async () => {
     const save = Promise.withResolvers<undefined>()
     delayedEndEventSettingsMocks.write.mockReturnValueOnce(save.promise)

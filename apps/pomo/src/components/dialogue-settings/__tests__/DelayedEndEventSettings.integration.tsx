@@ -106,5 +106,5 @@ it('should restore the persisted waiting time when saving fails', async () => {
   await vi.waitFor(() => expect(events.setDelayedEndEventDuration).toHaveBeenCalledWith(45))
   await vi.waitFor(() => expect(screen.getByRole('status')).toHaveTextContent('저장하지 못했어요'))
 
-  expect(input).toHaveValue(30)
+  expect(input).toHaveValue('30')
 })

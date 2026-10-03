@@ -125,19 +125,25 @@ jobs:
             apps/pomo/src/components/admin-music/__tests__/AlbumWorkspace.integration.tsx \
             apps/pomo/src/components/chat-room/__tests__/ChatRoom.stt-draft.integration.tsx \
             apps/pomo/src/components/album-library/__tests__/use-custom-album-editor.integration.ts \
+            apps/pomo/src/components/album-library/__tests__/Content.catalog.integration.tsx \
             apps/pomo/src/components/dialogue-page/__tests__/Editor.integration.tsx \
             apps/pomo/src/components/layer-review/__tests__/MouthFramePicker.integration.tsx \
             apps/pomo/src/components/music-player/__tests__/PMusicPlayerContent.queue-restoration.integration.tsx \
             apps/pomo/src/components/p-memory-assist/__tests__/PMemoryAssist.loading.integration.tsx \
             apps/pomo/src/components/memory-assist/__tests__/PictureDiary.generation.integration.tsx \
+            apps/pomo/src/components/memory-assist/picture-diary/__tests__/Generation.progress.integration.tsx \
             apps/pomo/src/components/p-memory-assist/__tests__/PMemoryAssist.navigation.integration.tsx \
             apps/pomo/src/features/memory-assist/__tests__/repository.read.integration.ts \
             apps/pomo/src/components/memory-assist/picture-diary/__tests__/Canvas.integration.tsx \
             apps/pomo/src/components/memory-assist/picture-diary/__tests__/Drawing.integration.tsx \
             apps/pomo/src/components/p-credits-settings/__tests__/PCreditsSettings.integration.tsx \
             apps/pomo/src/components/p-time-picker/__tests__/PTimePicker.integration.tsx \
+            apps/pomo/src/components/tools/__tests__/Lunar.integration.tsx \
             apps/pomo/src/components/p-layer-review/__tests__/PLayerReview.mouth-time-mode.integration.tsx \
             apps/pomo/src/components/p-settings/__tests__/PSettings.failure.integration.tsx \
+            apps/pomo/src/components/p-service-terms/__tests__/PServiceTerms.integration.tsx \
+            apps/pomo/src/components/tarot/__tests__/Tarot.integration.tsx \
+            apps/pomo/src/components/tools/__tests__/Moving.integration.tsx \
             apps/pomo/src/routes/__tests__/third-party-notices.integration.tsx \
             apps/pomo/src/routes/api/admin/music/__tests__/assets.artwork.integration.ts \
             packages/puppet/src/editor/__tests__/PuppetEditor.deformers.interaction.integration.tsx \

@@ -323,9 +323,8 @@ export const usePEventController = (props: UsePEventControllerProps): PEventCont
       throw new Error('지정 시간은 1~120분 사이의 정수여야 해요.')
     }
 
-    const timerGenerationAtSave = delayedEndEvent.isRunning()
-      ? delayedEndEvent.getTimerGeneration()
-      : null
+    const timerGenerationAtSave = delayedEndEvent.getTimerGeneration()
+    const wasTimerRunningAtSave = delayedEndEvent.isRunning()
     const currentRevision = (delayedEndEventDurationRevision += 1)
     setDelayedEndEventDurationMinutes(nextSettings.durationMinutes)
 
@@ -335,7 +334,7 @@ export const usePEventController = (props: UsePEventControllerProps): PEventCont
         persistedDelayedEndEventDurationMinutes = nextSettings.durationMinutes
 
         if (
-          timerGenerationAtSave !== null &&
+          wasTimerRunningAtSave &&
           delayedEndEvent.isRunning() &&
           delayedEndEvent.getTimerGeneration() === timerGenerationAtSave
         ) {
@@ -345,6 +344,13 @@ export const usePEventController = (props: UsePEventControllerProps): PEventCont
     } catch (error: unknown) {
       if (!isDisposed && currentRevision === delayedEndEventDurationRevision) {
         setDelayedEndEventDurationMinutes(persistedDelayedEndEventDurationMinutes)
+
+        if (
+          delayedEndEvent.isRunning() &&
+          delayedEndEvent.getTimerGeneration() !== timerGenerationAtSave
+        ) {
+          delayedEndEvent.start(persistedDelayedEndEventDurationMinutes)
+        }
       }
       throw error
     }

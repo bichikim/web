@@ -3,7 +3,12 @@
 import {fireEvent, render, screen, within} from '@solidjs/testing-library'
 import {createSignal} from 'solid-js'
 import {expect, it, vi} from 'vitest'
-import {TAROT_CARDS, type TarotReadingController, useTarotSpeech} from '../../../features/tarot'
+import {
+  TAROT_CARDS,
+  type TarotReadingController,
+  type TarotSpeechController,
+  useTarotSpeech,
+} from '../../../features/tarot'
 import {Tarot} from '../Tarot'
 import {PModelDownloadProvider} from '../../../features/model-download'
 
@@ -118,4 +123,108 @@ it('should keep options above the cards and preserve cards while interpreting', 
   expect(screen.queryByRole('button', {name: '다시 뽑기'})).not.toBeInTheDocument()
   expect(screen.getByRole('button', {name: '해석 취소'})).toBeInTheDocument()
   expect(screen.getByRole('article', {name: '과거'})).toBeInTheDocument()
+})
+
+it('should route voice download consent and progress through the Tarot UI while keeping text drawing available', () => {
+  const [cards] = createSignal(
+    TAROT_CARDS.slice(0, 3).map((card) => ({...card, orientation: 'upright' as const})),
+  )
+  const [readingStatus] = createSignal<ReturnType<TarotReadingController['status']>>('complete')
+  const [speechStatus, setSpeechStatus] =
+    createSignal<ReturnType<TarotSpeechController['status']>>('idle')
+  const draw = vi.fn()
+  const cancelTextDownload = vi.fn()
+  const startTextDownload = vi.fn()
+  const reading: TarotReadingController = {
+    cancel: vi.fn(),
+    cancelDownload: cancelTextDownload,
+    cancelDownloadConsent: vi.fn(),
+    cards,
+    count: () => 3,
+    downloadKind: () => 'text',
+    downloadSize: () => '100MB',
+    draw,
+    error: () => null,
+    output: () => '세 카드의 해석',
+    progress: () => null,
+    question: () => '',
+    retry: vi.fn(),
+    setCount: vi.fn(),
+    setQuestion: vi.fn(),
+    setShowCardsUpright: vi.fn(),
+    showCardsUpright: () => true,
+    startDownload: startTextDownload,
+    status: readingStatus,
+  }
+  const requestVoice = vi.fn(() => setSpeechStatus('consent'))
+  const cancelVoiceDownload = vi.fn(() => setSpeechStatus('idle'))
+  const cancelVoiceConsent = vi.fn(() => setSpeechStatus('idle'))
+  const startVoiceDownload = vi.fn(() => {
+    setSpeechStatus('downloading')
+    return Promise.resolve()
+  })
+  const speech: TarotSpeechController = {
+    audioUrl: () => null,
+    autoplay: () => false,
+    autoRead: () => false,
+    cancelDownload: cancelVoiceDownload,
+    cancelDownloadConsent: cancelVoiceConsent,
+    downloadSize: () => '200MB',
+    error: () => null,
+    onPlaybackEnd: vi.fn(),
+    onPlaybackError: vi.fn(),
+    onPlaybackRequest: () => true,
+    onPlaybackStart: vi.fn(),
+    paused: () => false,
+    progress: () => (speechStatus() === 'downloading' ? 38 : null),
+    request: requestVoice,
+    setAutoRead: vi.fn(),
+    startDownload: startVoiceDownload,
+    status: speechStatus,
+  }
+
+  render(() => <Tarot locale="ko" reading={reading} speech={speech} />)
+
+  const drawButton = screen.getByRole('button', {name: '다시 뽑기'})
+  fireEvent.click(screen.getByRole('button', {name: '해석 음성 재생'}))
+  expect(requestVoice).toHaveBeenCalledOnce()
+
+  const consent = screen.getByRole('dialog')
+  expect(consent).toHaveTextContent('해석 음성 재생')
+  expect(drawButton).toBeDisabled()
+  fireEvent.click(drawButton)
+  expect(draw).not.toHaveBeenCalled()
+
+  fireEvent.click(within(consent).getByRole('button', {name: '취소'}))
+  expect(cancelVoiceConsent).toHaveBeenCalledOnce()
+  expect(consent).toHaveAttribute('data-closed')
+  expect(drawButton).toBeEnabled()
+
+  fireEvent.click(screen.getByRole('button', {name: '해석 음성 재생'}))
+  expect(requestVoice).toHaveBeenCalledTimes(2)
+  expect(consent).not.toHaveAttribute('data-closed')
+  expect(drawButton).toBeDisabled()
+
+  fireEvent.keyDown(consent, {key: 'Escape'})
+  expect(cancelVoiceConsent).toHaveBeenCalledTimes(2)
+  expect(consent).toHaveAttribute('data-closed')
+  expect(drawButton).toBeEnabled()
+
+  fireEvent.click(screen.getByRole('button', {name: '해석 음성 재생'}))
+  expect(requestVoice).toHaveBeenCalledTimes(3)
+  expect(consent).not.toHaveAttribute('data-closed')
+
+  fireEvent.click(within(consent).getByRole('button', {name: '받고 시작'}))
+  expect(startVoiceDownload).toHaveBeenCalledOnce()
+  expect(startTextDownload).not.toHaveBeenCalled()
+  expect(screen.getByRole('dialog')).toHaveAttribute('data-closed')
+  expect(screen.getByRole('status')).toHaveTextContent('음성 모델 다운로드 중 · 38%')
+  expect(screen.getByRole('progressbar')).toHaveAttribute('aria-valuenow', '38')
+  expect(drawButton).toBeEnabled()
+
+  fireEvent.click(drawButton)
+  expect(draw).toHaveBeenCalledOnce()
+  fireEvent.click(screen.getByRole('button', {name: '다운로드 취소'}))
+  expect(cancelVoiceDownload).toHaveBeenCalledOnce()
+  expect(cancelTextDownload).not.toHaveBeenCalled()
 })

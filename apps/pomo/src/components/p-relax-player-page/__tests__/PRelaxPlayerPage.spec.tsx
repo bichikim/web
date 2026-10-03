@@ -164,60 +164,65 @@ it('should switch between sunny and rainy glass without changing the background'
 })
 
 it('should adjust visible condensation in rainy weather and retain the level across weather changes', () => {
-  render(() => <PRelaxPlayerPage />)
+  const view = render(() => <PRelaxPlayerPage />)
 
-  fireEvent.click(screen.getByRole('button', {name: '배경 선택'}))
-  expect(screen.queryByRole('slider', {name: '습기 강도'})).not.toBeInTheDocument()
-  fireEvent.click(screen.getByRole('radio', {name: '비'}))
+  fireEvent.click(view.getByRole('button', {name: '배경 선택'}))
+  expect(view.queryByRole('slider', {name: '습기 강도'})).not.toBeInTheDocument()
+  const rain = view.getByRole('radio', {name: '비'})
+  const sunny = view.getByRole('radio', {name: '맑음'})
+  const mistStatus = view.getByRole('status', {name: '습기 강도 값'})
+  fireEvent.click(rain)
 
-  const intensity = screen.getByRole('slider', {name: '습기 강도'})
+  const intensity = view.getByRole('slider', {name: '습기 강도'})
   expect(intensity).toHaveValue('100')
-  expect(Number(screen.getByRole('status', {name: '습기 강도 값'}).textContent)).toBe(1)
+  expect(Number(mistStatus.textContent)).toBe(1)
 
   fireEvent.input(intensity, {target: {value: '35'}})
-  expect(Number(screen.getByRole('status', {name: '습기 강도 값'}).textContent)).toBe(0.35)
+  expect(Number(mistStatus.textContent)).toBe(0.35)
 
-  fireEvent.click(screen.getByRole('radio', {name: '맑음'}))
-  expect(screen.queryByRole('slider', {name: '습기 강도'})).not.toBeInTheDocument()
-  fireEvent.click(screen.getByRole('radio', {name: '비'}))
-  expect(screen.getByRole('slider', {name: '습기 강도'})).toHaveValue('35')
+  fireEvent.click(sunny)
+  expect(view.queryByRole('slider', {name: '습기 강도'})).not.toBeInTheDocument()
+  fireEvent.click(rain)
+  expect(view.getByRole('slider', {name: '습기 강도'})).toHaveValue('35')
 })
 
 it('should offer four backgrounds beside sound effects', () => {
-  render(() => <PRelaxPlayerPage />)
+  const view = render(() => <PRelaxPlayerPage />)
 
-  fireEvent.click(screen.getByRole('button', {name: '배경 선택'}))
+  fireEvent.click(view.getByRole('button', {name: '배경 선택'}))
 
-  expect(screen.getByRole('dialog', {name: '배경 선택'})).toBeInTheDocument()
-  expect(screen.getByRole('radio', {name: '강변 공원'})).toBeChecked()
-  expect(screen.queryByRole('radio', {name: '바다'})).not.toBeInTheDocument()
-  expect(screen.getByRole('radio', {name: '비 갠 뒤 광장'})).not.toBeChecked()
-  expect(screen.getByRole('radio', {name: '비 온 뒤 골목'})).not.toBeChecked()
-  expect(screen.getByRole('radio', {name: '바닷가 마을'})).not.toBeChecked()
-  expect(screen.getByRole('status', {name: '현재 깊이 맵'})).toHaveTextContent(
-    '/relax-player/depth/city-sunny-riverside.webp',
-  )
+  const dialog = view.getByRole('dialog', {name: '배경 선택'})
+  const riverside = view.getByRole('radio', {name: '강변 공원'})
+  const postRain = view.getByRole('radio', {name: '비 갠 뒤 광장'})
+  const depthMap = view.getByRole('status', {name: '현재 깊이 맵'})
+  expect(dialog).toBeInTheDocument()
+  expect(riverside).toBeChecked()
+  expect(view.queryByRole('radio', {name: '바다'})).not.toBeInTheDocument()
+  expect(postRain).not.toBeChecked()
+  expect(view.getByRole('radio', {name: '비 온 뒤 골목'})).not.toBeChecked()
+  expect(view.getByRole('radio', {name: '바닷가 마을'})).not.toBeChecked()
+  expect(depthMap).toHaveTextContent('/relax-player/depth/city-sunny-riverside.webp')
 
-  fireEvent.click(screen.getByRole('radio', {name: '비 갠 뒤 광장'}))
+  fireEvent.click(postRain)
 
-  expect(screen.getByRole('img', {name: '현재 배경'})).toHaveAttribute(
+  expect(view.getByRole('img', {name: '현재 배경'})).toHaveAttribute(
     'src',
     '/relax-player/post-rain-square-upper-floor.png',
   )
-  expect(screen.getByRole('status', {name: '현재 깊이 맵'})).toHaveTextContent(
+  expect(view.getByRole('status', {name: '현재 깊이 맵'})).toHaveTextContent(
     '/relax-player/depth/post-rain-square-upper-floor.webp',
   )
 
-  expect(screen.getByRole('dialog', {name: '배경 선택'})).toBeInTheDocument()
-  fireEvent.click(screen.getByRole('radio', {name: '강변 공원'}))
+  expect(dialog).toBeInTheDocument()
+  fireEvent.click(riverside)
 
-  expect(screen.getByRole('img', {name: '현재 배경'})).toHaveAttribute(
+  expect(view.getByRole('img', {name: '현재 배경'})).toHaveAttribute(
     'src',
     '/relax-player/city-sunny-riverside.png',
   )
-  expect(screen.getByRole('dialog', {name: '배경 선택'})).toBeInTheDocument()
-  fireEvent.click(screen.getByRole('button', {name: '닫기'}))
-  expect(screen.queryByRole('dialog', {name: '배경 선택'})).not.toBeInTheDocument()
+  expect(dialog).toBeInTheDocument()
+  fireEvent.click(view.getByRole('button', {name: '닫기'}))
+  expect(view.queryByRole('dialog', {name: '배경 선택'})).not.toBeInTheDocument()
 })
 
 it.each([
@@ -537,4 +542,19 @@ it('should keep manual positioning available when orientation permission is deni
   sendOrientation(0, 30)
   expect(Number(screen.getByRole('status', {name: '햇빛 가로 값'}).textContent)).toBe(0.08)
   expect(screen.getByRole('slider', {name: '햇빛 가로 위치'})).toHaveValue('8')
+})
+
+it('should show the all-in-one app link when a return destination is provided', () => {
+  render(() => <PRelaxPlayerPage returnHref="/?layout=all-in-one" />)
+
+  expect(screen.getByRole('link', {name: '통합앱으로 돌아가기'})).toHaveAttribute(
+    'href',
+    '/?layout=all-in-one',
+  )
+})
+
+it('should omit the all-in-one app link without a return destination', () => {
+  render(() => <PRelaxPlayerPage />)
+
+  expect(screen.queryByRole('link', {name: '통합앱으로 돌아가기'})).not.toBeInTheDocument()
 })

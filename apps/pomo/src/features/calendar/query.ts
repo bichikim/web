@@ -1,10 +1,12 @@
 import {createCalendarExclusionPattern} from './create-calendar-exclusion-pattern'
 import {dayjs} from 'src/utils/zoned-dayjs'
-import type {CalendarEventRange} from './types'
+import type {CalendarEventQuery, CalendarEventRange} from './types'
 
 const CALENDAR_INTENT_PATTERN = /(?:일정|미팅|회의|약속|스케줄)/u
 const CALENDAR_PERIOD_BOUNDARY_PATTERN =
-  /(?=$|[\s,.!?…]|(?:에는|에서|부터|까지|은|는|이|가|을|를|에|엔|도|로|만|중|쯤)(?=$|[\s,.!?…]))/u
+  /(?=$|[\s,.!?…]|(?:에는|에서|부터|까지|이랑|하고|은|는|이|가|을|를|에|엔|도|로|만|중|쯤|의|과|와|랑)(?=$|[\s,.!?…]))/u
+const createCalendarRelativeDayPattern = (phrase: string): RegExp =>
+  new RegExp(`(?<![\\p{L}\\p{N}_])(?:${phrase})${CALENDAR_PERIOD_BOUNDARY_PATTERN.source}`, 'u')
 const THIS_WEEK_PATTERN = new RegExp(`이번 ?주${CALENDAR_PERIOD_BOUNDARY_PATTERN.source}`, 'u')
 const THIS_MONTH_PATTERN = new RegExp(`이번 ?달${CALENDAR_PERIOD_BOUNDARY_PATTERN.source}`, 'u')
 const NEXT_MONTH_PATTERN = new RegExp(`다음 ?달${CALENDAR_PERIOD_BOUNDARY_PATTERN.source}`, 'u')
@@ -25,17 +27,32 @@ const NEXT_WEEKEND_PATTERN = /다음 ?주말/u
 const PREVIOUS_WEEKEND_PATTERN = /(?:지난|저번) ?주말/u
 const WEEKEND_EXCLUSION_PATTERN = createCalendarExclusionPattern('주말(?:은|에)?\\s*')
 const WEEKEND_PATTERN = /주말/u
-const DAY_BEFORE_YESTERDAY_PATTERN = /(?:그저께|그제)/u
+const DAY_BEFORE_YESTERDAY_PHRASE = '(?:엊그제|그저께|그제)'
+const DAY_BEFORE_YESTERDAY_PATTERN = createCalendarRelativeDayPattern(DAY_BEFORE_YESTERDAY_PHRASE)
+const YESTERDAY_PATTERN = createCalendarRelativeDayPattern('어제')
+const TODAY_PATTERN = createCalendarRelativeDayPattern('오늘')
+const TOMORROW_PATTERN = createCalendarRelativeDayPattern('내일')
+const DAY_AFTER_TOMORROW_PATTERN = createCalendarRelativeDayPattern('모레')
+const THREE_DAYS_AHEAD_PATTERN = createCalendarRelativeDayPattern('글피')
+const RELATIVE_DAY_PATTERN = createCalendarRelativeDayPattern(
+  `(?:${DAY_BEFORE_YESTERDAY_PHRASE}|어제|오늘|내일|모레|글피)`,
+)
 const DAY_BEFORE_YESTERDAY_EXCLUSION_PATTERN = createCalendarExclusionPattern(
   DAY_BEFORE_YESTERDAY_PATTERN.source,
   '어제|오늘|내일|모레|글피',
 )
-const TODAY_EXCLUSION_PATTERN = createCalendarExclusionPattern('오늘', '내일')
-const YESTERDAY_EXCLUSION_PATTERN = createCalendarExclusionPattern('어제', '오늘|내일')
-const TOMORROW_EXCLUSION_PATTERN = createCalendarExclusionPattern('내일', '오늘')
-const DAY_AFTER_TOMORROW_EXCLUSION_PATTERN = createCalendarExclusionPattern('모레', '오늘|내일')
+const TODAY_EXCLUSION_PATTERN = createCalendarExclusionPattern(TODAY_PATTERN.source, '내일')
+const YESTERDAY_EXCLUSION_PATTERN = createCalendarExclusionPattern(
+  YESTERDAY_PATTERN.source,
+  '오늘|내일',
+)
+const TOMORROW_EXCLUSION_PATTERN = createCalendarExclusionPattern(TOMORROW_PATTERN.source, '오늘')
+const DAY_AFTER_TOMORROW_EXCLUSION_PATTERN = createCalendarExclusionPattern(
+  DAY_AFTER_TOMORROW_PATTERN.source,
+  '오늘|내일',
+)
 const THREE_DAYS_AHEAD_EXCLUSION_PATTERN = createCalendarExclusionPattern(
-  '글피',
+  THREE_DAYS_AHEAD_PATTERN.source,
   '그저께|그제|어제|오늘|내일|모레',
 )
 const NEXT_WEEK_PATTERN = new RegExp(`다음 ?주${CALENDAR_PERIOD_BOUNDARY_PATTERN.source}`, 'u')
@@ -44,9 +61,9 @@ const PREVIOUS_WEEK_PATTERN = new RegExp(
   'u',
 )
 const IMPLICIT_SCHEDULE_PATTERN = new RegExp(
-  `(?:${DAY_BEFORE_YESTERDAY_PATTERN.source}|오늘|내일|모레|글피|어제|` +
-    `${THIS_WEEK_PATTERN.source}|${NEXT_WEEK_PATTERN.source}|${PREVIOUS_WEEK_PATTERN.source}|` +
-    `${THIS_MONTH_PATTERN.source}|${NEXT_MONTH_PATTERN.source}|${PREVIOUS_MONTH_PATTERN.source}|주말)` +
+  `(?:${RELATIVE_DAY_PATTERN.source}|${THIS_WEEK_PATTERN.source}|${NEXT_WEEK_PATTERN.source}|` +
+    `${PREVIOUS_WEEK_PATTERN.source}|${THIS_MONTH_PATTERN.source}|${NEXT_MONTH_PATTERN.source}|` +
+    `${PREVIOUS_MONTH_PATTERN.source}|주말)` +
     `(?:\\s*(?:에는|에|엔|은|는|도))?` +
     `(?:\\s*(?:새벽|아침|오전|점심|오후|저녁|밤|낮|정오))?` +
     `(?:\\s*(?:에는|에|엔|은|는|도))?\\s*` +
@@ -60,11 +77,34 @@ const THREE_DAYS_AHEAD_START_DAYS = 3
 const DAYS_FROM_NEXT_MONDAY_TO_SATURDAY = 5
 const NEXT_EVENT_WINDOW_DAYS = 30
 
+// 승인된 사용자 현지 시각 범위: 새벽 00–06, 아침 06–10, 점심 11–14, 낮 09–18, 저녁 18–21, 밤 21–24.
+// 아침·낮·점심의 자연스러운 겹침은 의도했습니다.
+// 정오는 구간이 아니라 정확한 시점이며, 그 시각에 시작하거나 그 시각에도 진행 중인 일정만 포함합니다.
+// 시간대 표현은 기본적으로 전체 구간을 조회하고, '남은 일정'만 현재 시각부터 자릅니다.
+// 남은 구간이 끝났으면 다음 날로 넘기지 않고 빈 결과를 나타냅니다.
+const CALENDAR_DAYPART_WINDOWS = [
+  {end: '06:00:00', endDayOffset: 0, name: '새벽', start: '00:00:00'},
+  {end: '10:00:00', endDayOffset: 0, name: '아침', start: '06:00:00'},
+  {end: '14:00:00', endDayOffset: 0, name: '점심', start: '11:00:00'},
+  {end: '18:00:00', endDayOffset: 0, name: '낮', start: '09:00:00'},
+  {end: '21:00:00', endDayOffset: 0, name: '저녁', start: '18:00:00'},
+  {end: '00:00:00', endDayOffset: 1, name: '밤', start: '21:00:00'},
+] as const
+const REMAINING_SCHEDULE_PATTERN = /남은\s*(?:일정|미팅|회의|약속|스케줄)/u
+const CALENDAR_DAYPART_NAMES = ['정오', ...CALENDAR_DAYPART_WINDOWS.map(({name}) => name)]
+
+const includesUnexcludedCalendarDaypart = (text: string, name: string) =>
+  text.includes(name) &&
+  !createCalendarExclusionPattern(
+    name,
+    CALENDAR_DAYPART_NAMES.filter((daypart) => daypart !== name).join('|'),
+  ).test(text)
+
 const includesUnexcludedPhrase = (
   text: string,
-  phrase: string,
+  phrasePattern: RegExp,
   exclusionPattern: RegExp,
-): boolean => text.includes(phrase) && !exclusionPattern.test(text)
+): boolean => phrasePattern.test(text) && !exclusionPattern.test(text)
 const isStandaloneDateRequest = (includesDate: boolean, includesThisWeek: boolean): boolean =>
   includesDate && !includesThisWeek
 const DAYS_PER_WEEK = 7
@@ -99,6 +139,7 @@ interface CalendarQueryIntent {
 
 interface CreateCalendarDateRangeOptions {
   readonly afternoonStart: Date
+  readonly daypartQuery: CalendarEventQuery | null
   readonly end: Date
   readonly morningEnd: Date
   readonly now: Date
@@ -161,17 +202,24 @@ const getCalendarQueryIntent = (text: string): CalendarQueryIntent => ({
     ...(NEXT_MONTH_PATTERN.test(text) && !NEXT_MONTH_EXCLUSION_PATTERN.test(text) ? [1] : []),
   ],
   relativeDayOffsets: [
-    ...(DAY_BEFORE_YESTERDAY_PATTERN.test(text) &&
-    !DAY_BEFORE_YESTERDAY_EXCLUSION_PATTERN.test(text)
+    ...(includesUnexcludedPhrase(
+      text,
+      DAY_BEFORE_YESTERDAY_PATTERN,
+      DAY_BEFORE_YESTERDAY_EXCLUSION_PATTERN,
+    )
       ? [DAY_BEFORE_YESTERDAY_START_DAYS]
       : []),
-    ...(includesUnexcludedPhrase(text, '어제', YESTERDAY_EXCLUSION_PATTERN) ? [-1] : []),
-    ...(includesUnexcludedPhrase(text, '오늘', TODAY_EXCLUSION_PATTERN) ? [0] : []),
-    ...(includesUnexcludedPhrase(text, '내일', TOMORROW_EXCLUSION_PATTERN) ? [1] : []),
-    ...(includesUnexcludedPhrase(text, '모레', DAY_AFTER_TOMORROW_EXCLUSION_PATTERN)
+    ...(includesUnexcludedPhrase(text, YESTERDAY_PATTERN, YESTERDAY_EXCLUSION_PATTERN) ? [-1] : []),
+    ...(includesUnexcludedPhrase(text, TODAY_PATTERN, TODAY_EXCLUSION_PATTERN) ? [0] : []),
+    ...(includesUnexcludedPhrase(text, TOMORROW_PATTERN, TOMORROW_EXCLUSION_PATTERN) ? [1] : []),
+    ...(includesUnexcludedPhrase(
+      text,
+      DAY_AFTER_TOMORROW_PATTERN,
+      DAY_AFTER_TOMORROW_EXCLUSION_PATTERN,
+    )
       ? [DAY_AFTER_TOMORROW_START_DAYS]
       : []),
-    ...(includesUnexcludedPhrase(text, '글피', THREE_DAYS_AHEAD_EXCLUSION_PATTERN)
+    ...(includesUnexcludedPhrase(text, THREE_DAYS_AHEAD_PATTERN, THREE_DAYS_AHEAD_EXCLUSION_PATTERN)
       ? [THREE_DAYS_AHEAD_START_DAYS]
       : []),
   ],
@@ -183,6 +231,38 @@ const toRange = (start: Date, end: Date): CalendarEventRange => ({
   start: start.toISOString(),
 })
 
+const createCalendarDaypartQuery = ({
+  boundary,
+  dayOffset,
+  now,
+  text,
+}: {
+  readonly boundary: (days: number, time?: string) => Date
+  readonly dayOffset: number
+  readonly now: Date
+  readonly text: string
+}): CalendarEventQuery | null => {
+  if (includesUnexcludedCalendarDaypart(text, '정오')) {
+    return {at: boundary(dayOffset, '12:00:00').toISOString()}
+  }
+
+  const window = CALENDAR_DAYPART_WINDOWS.find(({name}) =>
+    includesUnexcludedCalendarDaypart(text, name),
+  )
+  if (window === undefined) {
+    return null
+  }
+
+  const start = boundary(dayOffset, window.start)
+  const end = boundary(dayOffset + window.endDayOffset, window.end)
+  if (!REMAINING_SCHEDULE_PATTERN.test(text)) {
+    return toRange(start, end)
+  }
+
+  const remainingStart = now.getTime() > start.getTime() ? now : start
+  return remainingStart.getTime() >= end.getTime() ? {empty: true} : toRange(remainingStart, end)
+}
+
 const getFirstRequestedDateOffset = (relativeDayOffsets: ReadonlyArray<number>) =>
   relativeDayOffsets[0] ?? DAY_AFTER_TOMORROW_START_DAYS
 const getLastRequestedDateOffset = (relativeDayOffsets: ReadonlyArray<number>) =>
@@ -190,12 +270,13 @@ const getLastRequestedDateOffset = (relativeDayOffsets: ReadonlyArray<number>) =
 
 const createCalendarDateRange = ({
   afternoonStart,
+  daypartQuery,
   end,
   morningEnd,
   now,
   start,
   text,
-}: CreateCalendarDateRangeOptions): CalendarEventRange => {
+}: CreateCalendarDateRangeOptions): CalendarEventQuery => {
   if (text.includes('오전')) {
     return toRange(start, morningEnd)
   }
@@ -206,6 +287,10 @@ const createCalendarDateRange = ({
         ? afternoonStart
         : now
     return toRange(afternoonRangeStart, end)
+  }
+
+  if (daypartQuery !== null) {
+    return daypartQuery
   }
 
   return toRange(start, end)
@@ -219,7 +304,7 @@ const createStandaloneCalendarDateRange = ({
   now,
   relativeDayOffsets,
   text,
-}: CreateStandaloneCalendarDateRangeOptions): CalendarEventRange | null => {
+}: CreateStandaloneCalendarDateRangeOptions): CalendarEventQuery | null => {
   if (includesPreviousWeek) {
     return null
   }
@@ -233,8 +318,13 @@ const createStandaloneCalendarDateRange = ({
     const includesToday = relativeDayOffsets.includes(0)
     const start = includesToday && startDayOffset === 0 ? now : boundary(startDayOffset)
     const noon = boundary(endDayOffset, '12:00:00')
+    const daypartQuery =
+      relativeDayOffsets.length === 1
+        ? createCalendarDaypartQuery({boundary, dayOffset: startDayOffset, now, text})
+        : null
     return createCalendarDateRange({
       afternoonStart: boundary(startDayOffset, '12:00:00'),
+      daypartQuery,
       end: boundary(endDayOffset + 1),
       morningEnd: noon,
       now,
@@ -246,8 +336,13 @@ const createStandaloneCalendarDateRange = ({
   if (isStandaloneDateRequest(relativeDayOffsets.includes(1), includesThisWeek)) {
     const start = relativeDayOffsets.includes(0) ? now : boundary(1)
     const noon = boundary(1, '12:00:00')
+    const daypartQuery =
+      relativeDayOffsets.length === 1
+        ? createCalendarDaypartQuery({boundary, dayOffset: 1, now, text})
+        : null
     return createCalendarDateRange({
       afternoonStart: relativeDayOffsets.includes(0) ? boundary(0, '12:00:00') : noon,
+      daypartQuery,
       end: boundary(2),
       morningEnd: noon,
       now,
@@ -258,12 +353,24 @@ const createStandaloneCalendarDateRange = ({
 
   if (relativeDayOffsets.includes(0) && !includesThisWeek && !includesNextWeek) {
     const end = boundary(1)
+    const noon = boundary(0, '12:00:00')
+    const hasPassedNoon = now.getTime() >= noon.getTime()
+    const start = relativeDayOffsets.includes(-1)
+      ? boundary(-1)
+      : text.includes('오전') && hasPassedNoon
+        ? boundary(0)
+        : now
+    const daypartQuery =
+      relativeDayOffsets.length === 1
+        ? createCalendarDaypartQuery({boundary, dayOffset: 0, now, text})
+        : null
     return createCalendarDateRange({
-      afternoonStart: boundary(0, '12:00:00'),
+      afternoonStart: noon,
+      daypartQuery,
       end,
-      morningEnd: end,
+      morningEnd: noon,
       now,
-      start: relativeDayOffsets.includes(-1) ? boundary(-1) : now,
+      start,
       text,
     })
   }
@@ -372,10 +479,10 @@ const createCalendarMonthRange = ({
 const hasCalendarQueryIntent = (text: string) =>
   CALENDAR_INTENT_PATTERN.test(text) || IMPLICIT_SCHEDULE_PATTERN.test(text)
 
-/** Resolves a bounded calendar range in the requested time zone. */
+/** Resolves a calendar lookup in the requested time zone. */
 export const createCalendarQuery = (
   options: CreateCalendarQueryOptions,
-): CalendarEventRange | null => {
+): CalendarEventQuery | null => {
   if (!hasCalendarQueryIntent(options.text)) {
     return null
   }
