@@ -5,6 +5,7 @@ import {type JSX, Show} from 'solid-js'
 import {afterEach, beforeEach, expect, it, vi} from 'vitest'
 
 import {readDeviceOrientationRuntime} from 'src/features/device-orientation/read-device-orientation-runtime'
+import {PreferenceProvider} from 'src/hooks/use-preference'
 import {PRelaxPlayerPage} from '../PRelaxPlayerPage'
 
 vi.mock('src/features/device-orientation/read-device-orientation-runtime', () => ({
@@ -64,6 +65,7 @@ vi.mock('../RelaxGlassBackground', () => ({
 }))
 
 beforeEach(() => {
+  localStorage.clear()
   vi.mocked(readDeviceOrientationRuntime).mockReturnValue({
     available: false,
     requestPermission: null,
@@ -87,7 +89,7 @@ const sendOrientation = (beta: number, gamma: number) => {
 }
 
 it('should start with the sunny riverside background', () => {
-  render(() => <PRelaxPlayerPage />)
+  render(() => <PRelaxPlayerPage />, {wrapper: PreferenceProvider})
 
   expect(screen.getByRole('img', {name: '현재 배경'})).toHaveAttribute(
     'src',
@@ -108,7 +110,7 @@ it('should scroll backgrounds in both directions and disable arrows at the edges
       disconnect = disconnect
     },
   )
-  const view = render(() => <PRelaxPlayerPage />)
+  const view = render(() => <PRelaxPlayerPage />, {wrapper: PreferenceProvider})
   fireEvent.click(screen.getByRole('button', {name: '배경 선택'}))
   const list = screen.getByRole('radiogroup', {name: '배경 선택'})
   const scrollBy = vi.fn()
@@ -141,7 +143,7 @@ it('should scroll backgrounds in both directions and disable arrows at the edges
 })
 
 it('should switch between sunny and rainy glass without changing the background', () => {
-  render(() => <PRelaxPlayerPage />)
+  render(() => <PRelaxPlayerPage />, {wrapper: PreferenceProvider})
 
   fireEvent.click(screen.getByRole('button', {name: '배경 선택'}))
   expect(screen.getByRole('radio', {name: '맑음'})).toBeChecked()
@@ -164,7 +166,7 @@ it('should switch between sunny and rainy glass without changing the background'
 })
 
 it('should adjust visible condensation in rainy weather and retain the level across weather changes', () => {
-  render(() => <PRelaxPlayerPage />)
+  render(() => <PRelaxPlayerPage />, {wrapper: PreferenceProvider})
 
   fireEvent.click(screen.getByRole('button', {name: '배경 선택'}))
   expect(screen.queryByRole('slider', {name: '습기 강도'})).not.toBeInTheDocument()
@@ -184,7 +186,7 @@ it('should adjust visible condensation in rainy weather and retain the level acr
 })
 
 it('should offer four backgrounds beside sound effects', () => {
-  render(() => <PRelaxPlayerPage />)
+  render(() => <PRelaxPlayerPage />, {wrapper: PreferenceProvider})
 
   fireEvent.click(screen.getByRole('button', {name: '배경 선택'}))
 
@@ -224,7 +226,7 @@ it.each([
   ['비 온 뒤 골목', 'rain-alley-upper-floor'],
   ['바닷가 마을', 'coastal-village-upper-floor'],
 ])('should select %s with its matching depth map and retain weather', (label, source) => {
-  render(() => <PRelaxPlayerPage />)
+  render(() => <PRelaxPlayerPage />, {wrapper: PreferenceProvider})
   fireEvent.click(screen.getByRole('button', {name: '배경 선택'}))
   fireEvent.click(screen.getByRole('radio', {name: '비'}))
   fireEvent.click(screen.getByRole('radio', {name: label}))
@@ -245,7 +247,7 @@ it('should let the listener choose drag or gyroscope depth movement', () => {
     available: true,
     requestPermission: null,
   })
-  render(() => <PRelaxPlayerPage />)
+  render(() => <PRelaxPlayerPage />, {wrapper: PreferenceProvider})
 
   fireEvent.click(screen.getByRole('button', {name: '배경 선택'}))
   expect(screen.getByRole('radio', {name: '드래그'})).toBeChecked()
@@ -269,7 +271,7 @@ it('should move depth and light with drag, then restore the manual light positio
     frames.clear()
     callbacks.forEach((callback) => callback(time))
   }
-  render(() => <PRelaxPlayerPage />)
+  render(() => <PRelaxPlayerPage />, {wrapper: PreferenceProvider})
 
   fireEvent.click(screen.getByRole('button', {name: '배경 선택'}))
   fireEvent.input(screen.getByRole('slider', {name: '햇빛 가로 위치'}), {target: {value: '40'}})
@@ -319,7 +321,7 @@ it('should keep the first pointer in control when another finger touches the bac
     return frames.length
   })
   vi.stubGlobal('cancelAnimationFrame', vi.fn())
-  render(() => <PRelaxPlayerPage />)
+  render(() => <PRelaxPlayerPage />, {wrapper: PreferenceProvider})
 
   const surface = screen.getByLabelText('배경 깊이 드래그')
   vi.spyOn(surface, 'getBoundingClientRect').mockReturnValue({
@@ -356,7 +358,7 @@ it('should allow a new drag after changing the background during a drag', () => 
     return frames.length
   })
   vi.stubGlobal('cancelAnimationFrame', vi.fn())
-  render(() => <PRelaxPlayerPage />)
+  render(() => <PRelaxPlayerPage />, {wrapper: PreferenceProvider})
 
   const firstSurface = screen.getByLabelText('배경 깊이 드래그')
   Object.defineProperty(firstSurface, 'setPointerCapture', {value: vi.fn()})
@@ -408,7 +410,7 @@ it('should calibrate gyroscope motion and ignore drag while gyroscope is selecte
     return frames.length
   })
   vi.stubGlobal('cancelAnimationFrame', vi.fn())
-  render(() => <PRelaxPlayerPage />)
+  render(() => <PRelaxPlayerPage />, {wrapper: PreferenceProvider})
 
   fireEvent.click(screen.getByRole('button', {name: '배경 선택'}))
   fireEvent.click(screen.getByRole('radio', {name: '자이로'}))
@@ -422,7 +424,7 @@ it('should calibrate gyroscope motion and ignore drag while gyroscope is selecte
 })
 
 it('should update the daylight position without changing the selected background', () => {
-  render(() => <PRelaxPlayerPage />)
+  render(() => <PRelaxPlayerPage />, {wrapper: PreferenceProvider})
 
   fireEvent.click(screen.getByRole('button', {name: '배경 선택'}))
   fireEvent.input(screen.getByRole('slider', {name: '햇빛 가로 위치'}), {
@@ -449,7 +451,7 @@ it('should move depth and light together with gyroscope input and reset both wit
     return frames.length
   })
   vi.stubGlobal('cancelAnimationFrame', vi.fn())
-  render(() => <PRelaxPlayerPage />)
+  render(() => <PRelaxPlayerPage />, {wrapper: PreferenceProvider})
 
   fireEvent.click(screen.getByRole('button', {name: '배경 선택'}))
   fireEvent.input(screen.getByRole('slider', {name: '햇빛 가로 위치'}), {
@@ -494,7 +496,7 @@ it.each([true, false])(
     const preference = new EventTarget()
     const media = Object.assign(preference, {matches: initiallyReduced})
     vi.stubGlobal('matchMedia', () => media)
-    render(() => <PRelaxPlayerPage />)
+    render(() => <PRelaxPlayerPage />, {wrapper: PreferenceProvider})
     fireEvent.click(screen.getByRole('button', {name: '배경 선택'}))
     fireEvent.input(screen.getByRole('slider', {name: '햇빛 가로 위치'}), {
       target: {value: '40'},
@@ -521,7 +523,7 @@ it.each([true, false])(
 it('should keep manual positioning available when orientation permission is denied', async () => {
   const requestPermission = vi.fn().mockResolvedValue('denied')
   vi.mocked(readDeviceOrientationRuntime).mockReturnValue({available: true, requestPermission})
-  render(() => <PRelaxPlayerPage />)
+  render(() => <PRelaxPlayerPage />, {wrapper: PreferenceProvider})
 
   fireEvent.click(screen.getByRole('button', {name: '배경 선택'}))
   fireEvent.click(screen.getByRole('radio', {name: '자이로'}))
@@ -540,7 +542,7 @@ it('should keep manual positioning available when orientation permission is deni
 })
 
 it('should show the all-in-one app link when a return destination is provided', () => {
-  render(() => <PRelaxPlayerPage returnHref="/?layout=all-in-one" />)
+  render(() => <PRelaxPlayerPage returnHref="/?layout=all-in-one" />, {wrapper: PreferenceProvider})
 
   expect(screen.getByRole('link', {name: '통합앱으로 돌아가기'})).toHaveAttribute(
     'href',
@@ -549,7 +551,26 @@ it('should show the all-in-one app link when a return destination is provided', 
 })
 
 it('should omit the all-in-one app link without a return destination', () => {
-  render(() => <PRelaxPlayerPage />)
+  render(() => <PRelaxPlayerPage />, {wrapper: PreferenceProvider})
 
   expect(screen.queryByRole('link', {name: '통합앱으로 돌아가기'})).not.toBeInTheDocument()
+})
+
+it('should render restored scene settings after revisiting the page', () => {
+  localStorage.setItem(
+    'pomo:relax-background:v1',
+    '"/relax-player/coastal-village-upper-floor.png"',
+  )
+  localStorage.setItem('pomo:relax-weather:v1', '"rainy"')
+  localStorage.setItem('pomo:relax-mist:v1', '0.25')
+  localStorage.setItem('pomo:relax-daylight:v1', '{"depth":0.38,"x":0.6,"y":0.7}')
+  render(() => <PRelaxPlayerPage />, {wrapper: PreferenceProvider})
+  expect(screen.getByRole('img', {name: '현재 배경'})).toHaveAttribute(
+    'src',
+    '/relax-player/coastal-village-upper-floor.png',
+  )
+  expect(screen.getByLabelText('현재 날씨')).toHaveTextContent('rainy')
+  expect(screen.getByLabelText('습기 강도 값')).toHaveTextContent('0.25')
+  expect(screen.getByLabelText('햇빛 가로 값')).toHaveTextContent('0.6')
+  expect(screen.getByLabelText('햇빛 세로 값')).toHaveTextContent('0.7')
 })

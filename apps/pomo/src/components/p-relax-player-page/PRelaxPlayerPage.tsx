@@ -12,7 +12,7 @@ import {DEFAULT_RELAX_BACKGROUND_SOURCE, RELAX_BACKGROUND_OPTIONS} from './backg
 import {DEFAULT_DAYLIGHT_POSITION} from './light-positions'
 import {RelaxBackgroundPicker} from './RelaxBackgroundPicker'
 import {RelaxGlassBackground} from './RelaxGlassBackground'
-import type {RelaxWeather} from './types'
+import {useRelaxPreferences} from './use-relax-preferences'
 import {useDaylightTilt} from './use-daylight-tilt'
 import {useRelaxDepthMotion} from './use-relax-depth-motion'
 
@@ -25,11 +25,16 @@ export interface PRelaxPlayerPageProps {
 
 export const PRelaxPlayerPage = (props: PRelaxPlayerPageProps) => {
   const [expanded, setExpanded] = createSignal(true)
-  const [selectedBackground, setSelectedBackground] = createSignal<string | null>(null)
-  const [weather, setWeather] = createSignal<RelaxWeather>('sunny')
-  const [mistIntensity, setMistIntensity] = createSignal(1)
-  const [selectedDaylightPosition, setSelectedDaylightPosition] =
-    createSignal<VirtualLightPosition | null>(null)
+  const {
+    selectedBackground,
+    setSelectedBackground,
+    weather,
+    setWeather,
+    mistIntensity,
+    setMistIntensity,
+    selectedDaylightPosition,
+    setSelectedDaylightPosition,
+  } = useRelaxPreferences()
   const backgroundSource = () =>
     selectedBackground() ?? props.backgroundSrc ?? DEFAULT_RELAX_BACKGROUND_SOURCE
   const daylightPosition = () =>

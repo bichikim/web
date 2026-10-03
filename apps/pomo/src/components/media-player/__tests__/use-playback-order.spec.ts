@@ -1,6 +1,8 @@
 /** @vitest-environment jsdom */
 import {createRenderEffect, createRoot, createSignal} from 'solid-js'
-import {describe, expect, it} from 'vitest'
+import {afterEach, beforeEach, describe, expect, it} from 'vitest'
+import {cleanup, renderHook} from '@solidjs/testing-library'
+import {PreferenceProvider} from 'src/hooks/use-preference'
 import {
   type ShuffleQueueFactory,
   usePlaybackOrder,
@@ -18,13 +20,20 @@ const createOrder = (
   props: TestPlaybackOrderProps,
   createShuffleQueue: ShuffleQueueFactory = createTestShuffleQueue,
 ) =>
-  usePlaybackOrder({
-    ...props,
-    createShuffleQueue,
-    onRestart: () => props.onRestart(),
-    onSelect: (options) => props.onSelect(options),
-    onStop: () => props.onStop(),
-  })
+  renderHook(
+    () =>
+      usePlaybackOrder({
+        ...props,
+        createShuffleQueue,
+        onRestart: () => props.onRestart(),
+        onSelect: (options) => props.onSelect(options),
+        onStop: () => props.onStop(),
+      }),
+    {wrapper: PreferenceProvider},
+  ).result
+
+beforeEach(() => localStorage.clear())
+afterEach(cleanup)
 
 describe('manual navigation', () => {
   it('should retain previous-track history when a shuffled cycle restarts', () => {

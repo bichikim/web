@@ -1,6 +1,7 @@
 export * from './actions'
 export * from './focus-room-playlist'
 export * from './initial-playback-state'
+export * from './playback-order-preferences'
 export * from './playback-policy'
 export * from './playback-restore'
 export * from './playback-storage'
