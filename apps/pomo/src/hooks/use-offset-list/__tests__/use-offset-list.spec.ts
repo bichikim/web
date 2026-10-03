@@ -20,6 +20,42 @@ it('should advance raw offsets independently from deduplicated visible rows', ()
   expect(result.nextOffset()).toBe(4)
 })
 
+it.each([
+  {duplicateKey: 1, key: 1, name: 'ordinary'},
+  {duplicateKey: Number.NaN, key: Number.NaN, name: 'NaN'},
+  {duplicateKey: -0, key: 0, name: 'positive-zero'},
+  {duplicateKey: 0, key: -0, name: 'negative-zero'},
+])('should keep the first row for duplicate $name keys', ({duplicateKey, key}) => {
+  const {result} = renderHook(() => useOffsetList({getKey: (row: Row) => row.key}))
+  const first: Row = {key, title: 'first'}
+  const duplicate: Row = {key: duplicateKey, title: 'duplicate'}
+
+  result.replacePage([first, duplicate])
+  expect(result.items()).toHaveLength(1)
+  expect(result.items()[0]).toBe(first)
+  expect(result.nextOffset()).toBe(2)
+
+  result.appendPage([duplicate])
+  expect(result.items()).toHaveLength(1)
+  expect(result.items()[0]).toBe(first)
+  expect(result.nextOffset()).toBe(3)
+
+  result.replacePage([duplicate], {retainItems: true})
+  expect(result.items()).toHaveLength(1)
+  expect(result.items()[0]).toBe(duplicate)
+  expect(result.nextOffset()).toBe(1)
+})
+
+it('should call key selectors with only each row', () => {
+  const {result} = renderHook(() => useOffsetList({getKey: parseInt}))
+  result.replacePage(['10', '20', '30'])
+  expect(result.items()).toEqual(['10', '20', '30'])
+  result.appendPage(['40', '50'])
+  expect(result.items()).toEqual(['10', '20', '30', '40', '50'])
+  result.replacePage(['60'], {retainItems: true})
+  expect(result.items()).toEqual(['60', '10', '20', '30', '40', '50'])
+})
+
 it('should retain unmatched rows on replacement and restart the raw offset', () => {
   const {result} = renderHook(() => useOffsetList({getKey: (row: Row) => row.key}))
   result.replacePage([FIRST, SECOND])

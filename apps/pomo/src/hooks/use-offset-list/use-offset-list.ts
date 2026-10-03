@@ -1,3 +1,4 @@
+import {uniqBy} from 'es-toolkit/array'
 import {batch, createSignal} from 'solid-js'
 
 import type {OffsetList, ReplaceOffsetPageOptions, UseOffsetListProps} from './types'
@@ -8,26 +9,17 @@ export const useOffsetList = <Item, Key>(
 ): OffsetList<Item, Key> => {
   const [items, setItems] = createSignal<ReadonlyArray<Item>>([])
   const [nextOffset, setNextOffset] = createSignal(0)
-  const uniqueItems = (rows: ReadonlyArray<Item>): ReadonlyArray<Item> => {
-    const keys = new Set<Key>()
-    return rows.filter((item) => {
-      const key = props.getKey(item)
-      if (keys.has(key)) {
-        return false
-      }
-      keys.add(key)
-      return true
-    })
-  }
   const appendPage = (page: ReadonlyArray<Item>): void => {
     batch(() => {
-      setItems((current) => uniqueItems([...current, ...page]))
+      setItems((current) => uniqBy([...current, ...page], (item) => props.getKey(item)))
       setNextOffset((offset) => offset + page.length)
     })
   }
   const replacePage = (page: ReadonlyArray<Item>, options: ReplaceOffsetPageOptions = {}): void => {
     batch(() => {
-      setItems((current) => uniqueItems(options.retainItems ? [...page, ...current] : page))
+      setItems((current) =>
+        uniqBy(options.retainItems ? [...page, ...current] : page, (item) => props.getKey(item)),
+      )
       setNextOffset(page.length)
     })
   }
