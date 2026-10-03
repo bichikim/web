@@ -30,6 +30,61 @@ describe('parseExpenseText', () => {
     })
   })
 
+  it('should normalize fullwidth digits in unit-price tokens only', () => {
+    const asciiResult = parseExpenseText('2026-09-05\n두부２ 1,500원')
+
+    expect(parseExpenseText('2026-09-05\n두부２ １,５００원')).toEqual(asciiResult)
+    expect(parseExpenseText('2026-09-05\n두부２ １５００원')).toEqual(asciiResult)
+    expect(asciiResult).toMatchObject({
+      ok: true,
+      value: {
+        date: '2026-09-05',
+        items: [{amount: 1500, name: '두부２', quantity: 1, unitPrice: 1500}],
+        total: 1500,
+      },
+    })
+  })
+
+  it('should not normalize fullwidth digits in dates or quantities', () => {
+    expect(parseExpenseText('２０２６-０９-０５\n두부 1,500원')).toEqual({
+      error: {code: 'invalid-input'},
+      ok: false,
+    })
+    expect(parseExpenseText('두부 1,500원 ２개')).toEqual({
+      error: {code: 'invalid-input'},
+      ok: false,
+    })
+    expect(parseExpenseText('두부 １，５００원')).toEqual({
+      error: {code: 'invalid-input'},
+      ok: false,
+    })
+  })
+
+  it('should retain positive, safe-integer, item-overflow, and total-overflow checks', () => {
+    const maximumSafePrice = '９００７１９９２５４７４０９９１'
+
+    expect(parseExpenseText(`상품 ${maximumSafePrice}원`)).toMatchObject({
+      ok: true,
+      value: {
+        items: [{amount: Number.MAX_SAFE_INTEGER, quantity: 1, unitPrice: Number.MAX_SAFE_INTEGER}],
+        total: Number.MAX_SAFE_INTEGER,
+      },
+    })
+    expect(parseExpenseText('상품 ０원')).toEqual({error: {code: 'invalid-input'}, ok: false})
+    expect(parseExpenseText('상품 ９００７１９９２５４７４０９９２원')).toEqual({
+      error: {code: 'invalid-input'},
+      ok: false,
+    })
+    expect(parseExpenseText(`상품 ${maximumSafePrice}원 2개`)).toEqual({
+      error: {code: 'invalid-input'},
+      ok: false,
+    })
+    expect(parseExpenseText(`상품 ${maximumSafePrice}원\n추가 1원`)).toEqual({
+      error: {code: 'invalid-input'},
+      ok: false,
+    })
+  })
+
   it('should parse a date line with a trailing weekday label', () => {
     expect(parseExpenseText('2026-09-05 금요일\n두부 1,500원')).toMatchObject({
       ok: true,
