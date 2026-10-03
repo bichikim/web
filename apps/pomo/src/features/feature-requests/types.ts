@@ -26,3 +26,9 @@ export interface CreateFeatureRequestInput {
   readonly description: string
   readonly title: string
 }
+
+export interface FeatureRequestPageQuery {
+  (scope: string, offset: number): Promise<FeatureRequestPage>
+  readonly key: string
+  readonly keyFor: (scope: string, offset: number) => string
+}
