@@ -30,6 +30,23 @@ describe('parseExpenseText', () => {
     })
   })
 
+  it('should parse fullwidth digits in date lines and keep the first date', () => {
+    const expected = parseExpenseText('2026-09-05\n2026-09-06\n두부２ 1,500원')
+
+    expect(parseExpenseText('２０２６-０９-０５\n2026-09-06\n두부２ 1,500원')).toEqual(expected)
+    expect(expected).toMatchObject({
+      ok: true,
+      value: {
+        date: '2026-09-05',
+        items: [{amount: 1500, name: '두부２', quantity: 1, unitPrice: 1500}],
+        total: 1500,
+      },
+    })
+    expect(parseExpenseText('２０２６-９-５\n두부 1,500원')).toEqual(
+      parseExpenseText('2026-9-5\n두부 1,500원'),
+    )
+  })
+
   it('should normalize fullwidth digits in unit-price tokens only', () => {
     const asciiResult = parseExpenseText('2026-09-05\n두부２ 1,500원')
 
@@ -45,11 +62,7 @@ describe('parseExpenseText', () => {
     })
   })
 
-  it('should not normalize fullwidth digits in dates or quantities', () => {
-    expect(parseExpenseText('２０２６-０９-０５\n두부 1,500원')).toEqual({
-      error: {code: 'invalid-input'},
-      ok: false,
-    })
+  it('should not normalize fullwidth digits in quantities or separators', () => {
     expect(parseExpenseText('두부 1,500원 ２개')).toEqual({
       error: {code: 'invalid-input'},
       ok: false,
@@ -114,6 +127,10 @@ describe('parseExpenseText', () => {
       error: {code: 'invalid-input'},
       ok: false,
     })
+    expect(parseExpenseText('２０２６-０２-３０\n두부 1,500원')).toEqual({
+      error: {code: 'invalid-input'},
+      ok: false,
+    })
   })
 
   it('should reject a line without an explicit price', () => {
@@ -132,6 +149,17 @@ describe('parseExpenseText', () => {
 })
 
 describe('parseExpenseAssistantResponse', () => {
+  it('should reject fullwidth digits in structured date values', () => {
+    expect(
+      parseExpenseAssistantResponse(
+        '{"date":"２０２６-０９-０５","items":[{"name":"두부","quantity":1,"unitPrice":1500}]}',
+      ),
+    ).toEqual({
+      error: {code: 'invalid-shape'},
+      ok: false,
+    })
+  })
+
   it('should parse JSON after brace-delimited prose', () => {
     expect(
       parseExpenseAssistantResponse(
