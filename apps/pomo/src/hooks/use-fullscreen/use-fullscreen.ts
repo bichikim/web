@@ -19,6 +19,7 @@ const isFullscreenSupported = (): boolean =>
 
 const getFullscreenState = (): boolean => document.fullscreenElement !== null
 
+/** Tracks document-wide fullscreen state and requests fullscreen on the document element. */
 export const useFullscreen = (): FullscreenController => {
   const [availability, setAvailability] = createSignal<FullscreenAvailability>('checking')
   const [error, setError] = createSignal<FullscreenError | null>(null)
