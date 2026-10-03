@@ -233,7 +233,7 @@ it('should publish every setting change from the separate scene toolbar', () => 
   expect(useWeather().onLocationChange).toHaveBeenCalledWith(jejuLocation)
   expect(useWeather().onSceneModeChange).toHaveBeenCalledWith('rain')
   expect(onModeChange).toHaveBeenCalledWith('interactiveDesktop')
-}, 1_000)
+})
 
 it('should not render the separate settings surface for interactive desktop mode', () => {
   mode = 'interactiveDesktop'

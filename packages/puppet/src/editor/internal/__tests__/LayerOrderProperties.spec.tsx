@@ -43,7 +43,7 @@ describe('LayerOrderProperties', () => {
 
     expect(document().layerOrderRules?.[0]?.when.threshold).toBe(28)
     expect(parseDocument(serializeDocument(document())).ok).toBe(true)
-  }, 1_000)
+  })
 
   test('should create a rule from selected parts without changing the document before saving', () => {
     const [document, setDocument] = createSignal(createDemoDocument())

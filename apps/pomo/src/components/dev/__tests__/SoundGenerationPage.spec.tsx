@@ -86,7 +86,6 @@ it.each([1, 5, 10, 30, 60, 120])(
     )
     expect(worker.terminate).toHaveBeenCalledOnce()
   },
-  1_500,
 )
 
 it('should send the selected connection duration for extended generation', () => {

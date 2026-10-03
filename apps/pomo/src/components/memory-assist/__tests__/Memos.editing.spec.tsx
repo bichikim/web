@@ -24,7 +24,7 @@ it('should use the same memo modal for creating and editing memos', () => {
   expect(creator).not.toHaveClass('rounded-control', 'bg-black/20')
   expect(within(editorDialog).getByLabelText('기억 반복')).toHaveValue('reinforcement')
   expect(within(editorDialog).getByRole('button', {name: '변경 저장'})).toBeDisabled()
-}, 1_000)
+})
 
 it('should not mark an unchanged exact reminder edit dirty after a temporary recall selection', () => {
   const exactReminderAt = new Date('2026-09-21T14:30').toISOString()

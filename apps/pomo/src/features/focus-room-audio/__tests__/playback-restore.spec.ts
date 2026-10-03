@@ -119,6 +119,44 @@ describe('resolvePlaybackRestore', () => {
     })
   })
 
+  it.each([
+    {
+      description: 'is missing from the active queue',
+      queueEntryId: 'removed-entry',
+      queueEntryIds: ['one-first', 'two', 'one-second'],
+    },
+    {
+      description: 'now identifies a different track',
+      queueEntryId: 'two',
+      queueEntryIds: ['one-first', 'two', 'one-second'],
+    },
+    {
+      description: 'cannot be resolved because entry metadata is unavailable',
+      queueEntryId: 'removed-entry',
+      queueEntryIds: undefined,
+    },
+  ])(
+    'should not restore a saved position when identity $description',
+    ({queueEntryId, queueEntryIds}) => {
+      const storedPlayback = {
+        isPlaying: true,
+        positionSeconds: 17,
+        queueEntryId,
+        trackId: 'one',
+        trackIndex: 2,
+      }
+
+      expect(
+        resolvePlaybackRestore({
+          fallbackIndex: 0,
+          ...(queueEntryIds === undefined ? {} : {queueEntryIds}),
+          storedPlayback,
+          tracks: [TRACKS[0]!, TRACKS[1]!, TRACKS[0]!],
+        }),
+      ).toEqual({currentIndex: 0, playback: null, shouldPersist: false})
+    },
+  )
+
   it('should preserve legacy index behavior when stable queue identity is unavailable', () => {
     const storedPlayback = {
       isPlaying: true,

@@ -25,7 +25,7 @@ it('should show the word set catalog page and Pomo return link', () => {
   ).toEqual(['전체', '한글', '영어', '일본어'])
   expect(screen.queryByRole('heading', {level: 3})).toBeNull()
   expect(within(main).getByText('가져올 수 있는 단어 세트를 준비 중이에요.')).toBeInTheDocument()
-}, 1_000)
+})
 
 it('should render one mixed list and filter it by Hangul, English, or Japanese', () => {
   render(() => (

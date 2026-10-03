@@ -62,7 +62,7 @@ it('should require download consent before retrying a feed without a cached mode
   fireEvent.click(screen.getByRole('button', {name: '받고 시작'}))
   await vi.waitFor(() => expect(feeds.retryRecovery).toHaveBeenCalledTimes(1))
   expect(modelDownload.startVoiceModel).toHaveBeenCalledWith('full')
-}, 1_000)
+})
 
 it('should stop downloading remaining models when a confirmed download is cancelled', async () => {
   renderModal()

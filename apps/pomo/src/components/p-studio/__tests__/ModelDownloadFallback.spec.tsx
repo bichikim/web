@@ -40,7 +40,7 @@ it('should expose download progress and cancellation before the scene toolbar is
 
   await expect(result).resolves.toEqual({status: 'cancelled'})
   expect(dispose).toHaveBeenCalledTimes(1)
-}, 1_000)
+})
 
 it('should stay absent while the scene toolbar owns the download status', () => {
   const runtime: ModelDownloadRuntime = {

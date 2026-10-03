@@ -167,6 +167,22 @@ describe('onLoad', () => {
     expect(tracks()).toEqual(currentTracks)
   })
 
+  it('should preserve an added entry ID when its track is also in the late catalog load', () => {
+    const {controller, currentIndex, entryIds, tracks} = createHarness([], 0, [])
+    const addedTrack = createTrack('track-1')
+    const defaultTracks = [addedTrack, createTrack('track-2')]
+
+    controller.addTracksToQueue([addedTrack])
+    const addedEntryId = entryIds()[0]
+    expect(addedEntryId).toMatch(/^entry:/u)
+
+    controller.onLoad({defaultTracks, queueChanged: true})
+
+    expect(tracks()).toEqual(defaultTracks)
+    expect(entryIds()).toEqual([addedEntryId, 'legacy:["track-2",0]'])
+    expect(currentIndex()).toBe(0)
+  })
+
   it('should preserve the queue slot when a catalog reload removes the active duplicate occurrence', () => {
     const defaultTracks = [createTrack('track-1'), createTrack('track-2'), createTrack('track-3')]
     const currentTracks = [...defaultTracks, createTrack('track-1'), createTrack('track-4')]

@@ -111,6 +111,14 @@ export const resolvePlaybackRestore = (options: ResolvePlaybackRestoreOptions): 
     queueEntryIds,
     options.tracks,
   )
+  if (options.storedPlayback.queueEntryId !== undefined && storedEntryIndex < 0) {
+    return {
+      currentIndex: normalizeTrackIndex(options.fallbackIndex, trackCount) ?? 0,
+      playback: null,
+      shouldPersist: false,
+    }
+  }
+
   const matchingIndex = findMatchingTrackIndex(options.storedPlayback, options.tracks)
   const matchedIndex = storedEntryIndex >= 0 ? storedEntryIndex : matchingIndex
 

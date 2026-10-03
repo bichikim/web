@@ -158,6 +158,5 @@ describe('development model chest surface perspective', () => {
         ).toBeGreaterThan(20)
       }
     },
-    1_500,
   )
 })

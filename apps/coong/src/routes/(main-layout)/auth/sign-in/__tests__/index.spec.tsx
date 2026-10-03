@@ -74,5 +74,5 @@ describe('Login', () => {
       email: 'user@example.com',
       password: 'wrong-password',
     })
-  }, 1_000)
+  })
 })

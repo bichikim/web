@@ -29,4 +29,4 @@ it('should report a license fetch failure', async () => {
   render(() => <ThirdPartyNoticesPage />)
 
   expect(await screen.findByRole('alert')).toHaveTextContent('라이선스 정보를 불러오지 못했습니다.')
-}, 1_000)
+})

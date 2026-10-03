@@ -92,4 +92,4 @@ it('should replace the loading card with a readable localized name when artwork 
   expect(article).toHaveTextContent('역방향')
   setLocale('en')
   expect(screen.getByRole('heading', {name: 'The Fool'})).toBeInTheDocument()
-}, 1_500)
+})

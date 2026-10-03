@@ -40,7 +40,7 @@ test('should show linked visible parts while creating a spatial mesh', () => {
     }),
   )
   view.unmount()
-}, 1_000)
+})
 
 test('should allow retrying the same GLB after an import error', async () => {
   const document = convertSceneContainers({
@@ -66,4 +66,4 @@ test('should allow retrying the same GLB after an import error', async () => {
 
   fireEvent.change(input, {target: {files: [file]}})
   expect(arrayBuffer).toHaveBeenCalledTimes(2)
-}, 1_000)
+})

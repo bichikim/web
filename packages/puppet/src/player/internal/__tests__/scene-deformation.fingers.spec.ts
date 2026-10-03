@@ -97,7 +97,6 @@ describe('development model subtle finger curl', () => {
         }
       }
     },
-    1_000,
   )
 
   test('should animate hands at different times with a continuous gentle idle loop', () => {

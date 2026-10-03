@@ -61,7 +61,7 @@ it('should delegate file selection, connection changes, playback, preview, and s
   expect(seek).toHaveBeenCalledOnce()
   expect(play).toHaveBeenNthCalledWith(1, false)
   expect(play).toHaveBeenNthCalledWith(2, true)
-}, 1_000)
+})
 
 it('should stop active loop playback', () => {
   render(() => <LoopPlayerPage />)

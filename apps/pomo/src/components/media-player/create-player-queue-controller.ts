@@ -165,8 +165,11 @@ const initializeQueuePlayback = (
   storedEntryIds?: readonly string[],
 ) => {
   const trackIds = nextTracks.map((track) => track.id)
-  const entryIds = hasValidPlaylistEntryIds(trackIds, storedEntryIds)
-    ? storedEntryIds
+  const retainedEntryIds =
+    storedEntryIds ??
+    (nextTracks === options.readTracks() ? options.readQueueEntryIds() : undefined)
+  const entryIds = hasValidPlaylistEntryIds(trackIds, retainedEntryIds)
+    ? retainedEntryIds
     : createLegacyPlaylistEntryIds(trackIds)
   const fallbackIndex =
     storedPlayback === null
@@ -386,18 +389,26 @@ const loadTrackQueue = (
   const currentTracks = options.readTracks()
   const currentIndex = options.readCurrentIndex()
   const mergedTracks = appendUniqueTracks(availableTracks, currentTracks)
-  const availableEntryIds = createLegacyPlaylistEntryIds(availableTracks.map((track) => track.id))
   const currentEntryIds = getPlaylistEntryIds(options, currentTracks)
-  const availableTrackIds = new Set(availableTracks.map((track) => track.id))
-  const appendedCurrentEntryIds = currentTracks.flatMap((track, index) => {
+  const currentEntryIdsByTrackId = new Map<string, string[]>()
+  currentTracks.forEach((track, index) => {
     const entryId = currentEntryIds[index]
-    if (entryId === undefined || availableTrackIds.has(track.id)) {
-      return []
+    if (entryId === undefined) {
+      return
     }
-    availableTrackIds.add(track.id)
-    return [entryId]
+
+    const entryIds = currentEntryIdsByTrackId.get(track.id) ?? []
+    entryIds.push(entryId)
+    currentEntryIdsByTrackId.set(track.id, entryIds)
   })
-  const mergedEntryIds = [...availableEntryIds, ...appendedCurrentEntryIds]
+  const mergedEntryIds = createLegacyPlaylistEntryIds(mergedTracks.map((track) => track.id)).map(
+    (legacyEntryId, index) => {
+      const track = mergedTracks[index]
+      return track === undefined
+        ? legacyEntryId
+        : (currentEntryIdsByTrackId.get(track.id)?.shift() ?? legacyEntryId)
+    },
+  )
   const activeEntryId = currentEntryIds[currentIndex]
   const identityMatchedIndex =
     activeEntryId === undefined ? -1 : mergedEntryIds.indexOf(activeEntryId)

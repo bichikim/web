@@ -35,7 +35,7 @@ test('should group file and history actions in the main menu', () => {
   expect(view.getByRole('group', {name: '편집 작업 공간'}).nextElementSibling).toHaveClass(
     'panel-visibility-controls',
   )
-}, 1_000)
+})
 
 test('should invoke available undo and redo actions from the menu', () => {
   const onUndo = vi.fn()

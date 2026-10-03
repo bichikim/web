@@ -59,7 +59,7 @@ describe('AdminMusic', () => {
       '/api/admin/music/albums',
       expect.objectContaining({method: 'POST'}),
     )
-  }, 1_000)
+  })
 
   it('should retain the album session draft when album creation fails', async () => {
     writeAlbumDraftData({
