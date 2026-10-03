@@ -75,7 +75,7 @@ const mountModelPanel = (runtime: DialogueWriterRuntime) => {
 afterEach(cleanup)
 
 describe('ModelPanel progress', () => {
-  it('should bound visible progress while preserving telemetry and worker-driven status updates', () => {
+  it('should preserve telemetry while bounding visible progress to 100%', () => {
     const runtime = createRuntime()
     const writer = mountModelPanel(runtime)
     const rawProgress = createTextGenerationProgress({
@@ -110,17 +110,35 @@ describe('ModelPanel progress', () => {
     expect(writer.state()).toMatchObject({percentage: 100, status: 'loading'})
     expect(screen.getByRole('progressbar', {name: '모델 준비 100%'})).toBeInTheDocument()
     expect(screen.getByRole('button', {name: '모델 준비 중…'})).toBeDisabled()
+  })
 
+  it('should preserve negative telemetry while bounding visible progress to 0%', () => {
+    const runtime = createRuntime()
+    const writer = mountModelPanel(runtime)
+
+    writer.prepare()
     runtime.emit({files: [], loadedBytes: -5, percentage: -5, totalBytes: 100, type: 'loading'})
 
     expect(writer.state()).toMatchObject({percentage: -5, status: 'loading'})
     expect(writer.statusMessage()).toContain('0%')
-    expect(screen.getByRole('progressbar', {name: '모델 준비 0%'})).toHaveAttribute(
-      'aria-valuenow',
-      '0',
-    )
+    const progress = screen.getByRole('progressbar', {name: '모델 준비 0%'})
+    expect(progress).toHaveAttribute('aria-valuenow', '0')
     expect(screen.getByText('0%')).toBeInTheDocument()
     expect(progress.firstElementChild).toHaveStyle('--pomo-progress-width: 0%')
+  })
+
+  it('should clear loading progress on release and after the worker becomes ready', () => {
+    const runtime = createRuntime()
+    const writer = mountModelPanel(runtime)
+    const rawProgress = createTextGenerationProgress({
+      files: {'weights.bin': {loaded: 120, total: 100}},
+      loadedBytes: 120,
+      totalBytes: 100,
+    })
+
+    writer.prepare()
+    runtime.emit({...rawProgress, type: 'loading'})
+    expect(screen.getByRole('progressbar', {name: '모델 준비 100%'})).toBeInTheDocument()
 
     writer.release()
 
