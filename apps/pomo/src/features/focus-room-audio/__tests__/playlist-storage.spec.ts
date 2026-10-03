@@ -4,11 +4,17 @@ import {expect, it, vi} from 'vitest'
 
 import {
   createPPlaylistStorage,
+  playlistPreference,
   type PlaylistStorageAdapter,
   type StoredPlaylist,
 } from '../playlist-storage'
 
-const createStoredPlaylist = (trackIds: readonly string[], savedAt: number): StoredPlaylist => ({
+const createStoredPlaylist = (
+  trackIds: readonly string[],
+  savedAt: number,
+  entryIds?: readonly string[],
+): StoredPlaylist => ({
+  ...(entryIds === undefined ? {} : {entryIds}),
   savedAt,
   trackIds,
   version: 1,
@@ -84,6 +90,30 @@ it('should preserve an explicitly emptied playlist', async () => {
   await playlistStorage.write([])
 
   await expect(playlistStorage.read()).resolves.toEqual([])
+})
+
+it('should round-trip stable entry IDs alongside duplicate track IDs', async () => {
+  const storage = createStorage()
+  const playlistStorage = createPPlaylistStorage(storage, {now: () => 20})
+
+  await playlistStorage.writeWithEntryIds(['one', 'one'], ['entry-first', 'entry-second'])
+
+  await expect(playlistStorage.readWithEntryIds()).resolves.toEqual({
+    entryIds: ['entry-first', 'entry-second'],
+    trackIds: ['one', 'one'],
+  })
+  expect(storage.writeWeb).toHaveBeenCalledWith(
+    createStoredPlaylist(['one', 'one'], 20, ['entry-first', 'entry-second']),
+  )
+})
+
+it('should discard invalid optional entry IDs without dropping a valid legacy playlist', () => {
+  expect(playlistPreference.parse({entryIds: ['entry-first'], trackIds: ['one', 'one']})).toEqual({
+    trackIds: ['one', 'one'],
+  })
+  expect(
+    playlistPreference.parse({entryIds: ['duplicate', 'duplicate'], trackIds: ['one', 'one']}),
+  ).toEqual({trackIds: ['one', 'one']})
 })
 
 it('should tolerate web storage write failures', async () => {
