@@ -104,13 +104,8 @@ export interface SearchOpenWeatherLocationsOptions {
   readonly query: string
 }
 
-const formatLocationCoordinate = (coordinate: number): string => {
-  const legacyCoordinate = coordinate.toFixed(4)
-  return Number(legacyCoordinate) === coordinate ? legacyCoordinate : coordinate.toString()
-}
-
 const createProviderLocationId = (latitude: number, longitude: number): string =>
-  `${formatLocationCoordinate(latitude)},${formatLocationCoordinate(longitude)}`
+  `${latitude.toString()},${longitude.toString()}`
 
 /** Searches OpenWeather without exposing provider DTOs or credentials to callers. */
 export const searchOpenWeatherLocations = async (

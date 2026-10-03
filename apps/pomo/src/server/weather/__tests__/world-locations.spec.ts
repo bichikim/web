@@ -145,6 +145,76 @@ it('should register distinct OpenWeather coordinates and deduplicate exact dupli
   expect(fetcher).toHaveBeenCalledOnce()
 })
 
+it('should preserve a rounded ID only for exact registered coordinates', async () => {
+  apiMocks.searchOpenWeatherLocations.mockResolvedValue([
+    {
+      country: 'GB',
+      latitude: 51.52001,
+      longitude: -0.11001,
+      name: 'Location A',
+      names: {en: 'Location A'},
+      providerLocationId: '51.52001,-0.11001',
+      region: 'England',
+    },
+    {
+      country: 'GB',
+      latitude: 51.52004,
+      longitude: -0.11004,
+      name: 'Location B',
+      names: {en: 'Location B'},
+      providerLocationId: '51.52004,-0.11004',
+      region: 'England',
+    },
+  ])
+  const registeredLocation = {
+    country: 'GB',
+    id: 'openweather:51.5200,-0.1100',
+    latitude: 51.52001,
+    longitude: -0.11001,
+    name: 'Location A',
+    providerLocationId: '51.5200,-0.1100',
+    region: 'England',
+  }
+  const mocks = createDatabase([registeredLocation])
+
+  await expect(searchWorldWeatherLocations({query: 'nearby'}, mocks.database)).resolves.toEqual([
+    {
+      country: 'GB',
+      id: 'openweather:51.5200,-0.1100',
+      name: 'Location A',
+      names: {en: 'Location A'},
+      region: 'England',
+    },
+    {
+      country: 'GB',
+      id: 'openweather:51.52004,-0.11004',
+      name: 'Location B',
+      names: {en: 'Location B'},
+      region: 'England',
+    },
+  ])
+  expect(mocks.values).toHaveBeenCalledWith([
+    {
+      country: 'GB',
+      id: 'openweather:51.5200,-0.1100',
+      latitude: 51.52001,
+      longitude: -0.11001,
+      name: 'Location A',
+      providerLocationId: '51.5200,-0.1100',
+      region: 'England',
+    },
+    {
+      country: 'GB',
+      id: 'openweather:51.52004,-0.11004',
+      latitude: 51.52004,
+      longitude: -0.11004,
+      name: 'Location B',
+      providerLocationId: '51.52004,-0.11004',
+      region: 'England',
+    },
+  ])
+})
+
 it('should avoid a database write for an empty provider search', async () => {
   apiMocks.searchOpenWeatherLocations.mockResolvedValue([])
   const mocks = createDatabase()

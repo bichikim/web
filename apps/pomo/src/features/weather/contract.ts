@@ -8,7 +8,7 @@ const weatherCitySlugSchema = z.enum(WEATHER_CITY_SLUGS)
 const weatherLocationIdSchema = z
   .string()
   .regex(
-    /^openweather:(?:-?\d{1,2}(?:\.\d+(?:e-\d+)?|e-\d+),-?\d{1,3}(?:\.\d+(?:e-\d+)?|e-\d+)|legacy:[a-z]+)$/u,
+    /^openweather:(?:-?\d{1,2}(?:\.\d+)?(?:e-\d+)?,-?\d{1,3}(?:\.\d+)?(?:e-\d+)?|legacy:[a-z]+)$/u,
   )
 export type WeatherLocationId = `openweather:${string}`
 

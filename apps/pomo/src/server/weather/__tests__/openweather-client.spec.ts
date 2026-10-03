@@ -54,7 +54,7 @@ describe('searchOpenWeatherLocations', () => {
         longitude: -0.11,
         name: 'London',
         names: {en: 'London', ko: '런던'},
-        providerLocationId: '51.5200,-0.1100',
+        providerLocationId: '51.52,-0.11',
         region: 'England',
       },
     ])
@@ -73,7 +73,7 @@ describe('searchOpenWeatherLocations', () => {
       )
 
     await expect(searchOpenWeatherLocations({fetcher, query: 'Seoul'})).resolves.toEqual([
-      expect.objectContaining({providerLocationId: '37.5665,126.9780', region: ''}),
+      expect.objectContaining({providerLocationId: '37.5665,126.978', region: ''}),
     ])
   })
 
@@ -105,7 +105,7 @@ describe('searchOpenWeatherLocations', () => {
     ])
   })
 
-  it('should normalize negative zero and preserve existing four-place identifiers', async () => {
+  it('should use exact coordinate strings and normalize negative zero', async () => {
     const fetcher = vi
       .fn<typeof fetch>()
       .mockResolvedValue(
@@ -121,7 +121,7 @@ describe('searchOpenWeatherLocations', () => {
     const locations = await searchOpenWeatherLocations({fetcher, query: 'coordinates'})
 
     expect(locations.map((location) => location.providerLocationId)).toEqual([
-      '0.0000,35.6900',
+      '0,35.69',
       '1e-7,-1e-7',
     ])
   })
