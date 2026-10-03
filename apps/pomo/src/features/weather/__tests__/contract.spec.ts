@@ -41,7 +41,14 @@ it('should parse the public weather feed contract', () => {
 it('should parse only registered provider location identifiers', () => {
   expect(parseWeatherLocation(FEED.location)).toEqual(FEED.location)
   expect(parseWeatherLocationId('openweather:51.5200,-0.1100')).toBe('openweather:51.5200,-0.1100')
+  expect(parseWeatherLocationId('openweather:51.52001,-0.11001')).toBe(
+    'openweather:51.52001,-0.11001',
+  )
+  expect(parseWeatherLocationId('openweather:51,-0.11')).toBe('openweather:51,-0.11')
+  expect(parseWeatherLocationId('openweather:0,90')).toBe('openweather:0,90')
+  expect(parseWeatherLocationId('openweather:1e-7,-1e-7')).toBe('openweather:1e-7,-1e-7')
   expect(() => parseWeatherLocationId('openweather:tokyo')).toThrow()
+  expect(() => parseWeatherLocationId('openweather:51.,-0.11')).toThrow()
 })
 
 it('should parse only supported weather city slugs', () => {

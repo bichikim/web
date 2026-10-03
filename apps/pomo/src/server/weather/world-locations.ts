@@ -1,4 +1,4 @@
-import {eq, sql} from 'drizzle-orm'
+import {eq, inArray, sql} from 'drizzle-orm'
 
 import {
   LEGACY_WEATHER_LOCATIONS,
@@ -27,6 +27,7 @@ interface LegacyWorldWeatherLocation extends WorldWeatherLocation {
 
 const LEGACY_LOCATION_MAXIMUM_DISTANCE_DEGREES = 0.05
 const LEGACY_LOCATION_PROVIDER_COUNTRY = 'KR'
+const LEGACY_PROVIDER_LOCATION_ID_DECIMAL_PLACES = 4
 
 const LEGACY_WORLD_WEATHER_LOCATIONS = Object.fromEntries(
   Object.values(LEGACY_WEATHER_LOCATIONS).map((location) => {
@@ -51,6 +52,15 @@ const LEGACY_PROVIDER_LOCATION_ALIASES: Partial<
 
 const createProviderLocationId = (providerLocationId: string): WeatherLocationId =>
   `openweather:${providerLocationId}`
+
+const formatLegacyRoundedCoordinate = (coordinate: number): string => {
+  return coordinate.toFixed(LEGACY_PROVIDER_LOCATION_ID_DECIMAL_PLACES)
+}
+
+const createLegacyRoundedProviderLocationId = (
+  location: Pick<OpenWeatherSearchLocation, 'latitude' | 'longitude'>,
+): string =>
+  `${formatLegacyRoundedCoordinate(location.latitude)},${formatLegacyRoundedCoordinate(location.longitude)}`
 
 const readLegacyLocation = (id: WeatherLocationId): LegacyWorldWeatherLocation | undefined => {
   const prefix = 'openweather:legacy:'
@@ -101,6 +111,53 @@ const findLegacyWorldWeatherLocation = (
   })
 }
 
+const preserveExactRegisteredLegacyIds = async (
+  locations: ReadonlyArray<OpenWeatherSearchLocation>,
+  database: Database,
+): Promise<ReadonlyArray<OpenWeatherSearchLocation>> => {
+  const candidateLocations = locations.filter(
+    (location) => findLegacyWorldWeatherLocation(location) === undefined,
+  )
+  if (candidateLocations.length === 0) {
+    return locations
+  }
+
+  const legacyRoundedProviderLocationIds = Array.from(
+    new Set(candidateLocations.map(createLegacyRoundedProviderLocationId)),
+  )
+  const registeredLocations = await database
+    .select({
+      latitude: weatherLocations.latitude,
+      longitude: weatherLocations.longitude,
+      providerLocationId: weatherLocations.providerLocationId,
+    })
+    .from(weatherLocations)
+    .where(inArray(weatherLocations.providerLocationId, legacyRoundedProviderLocationIds))
+    .limit(legacyRoundedProviderLocationIds.length)
+  const registeredLocationsByProviderId = new Map(
+    registeredLocations.map((location) => [location.providerLocationId, location]),
+  )
+
+  return locations.map((location) => {
+    if (findLegacyWorldWeatherLocation(location) !== undefined) {
+      return location
+    }
+
+    const registeredLocation = registeredLocationsByProviderId.get(
+      createLegacyRoundedProviderLocationId(location),
+    )
+    if (
+      registeredLocation === undefined ||
+      registeredLocation.latitude !== location.latitude ||
+      registeredLocation.longitude !== location.longitude
+    ) {
+      return location
+    }
+
+    return {...location, providerLocationId: registeredLocation.providerLocationId}
+  })
+}
+
 const getSearchWeatherLocation = (location: OpenWeatherSearchLocation): WeatherLocation => {
   const legacyLocation = findLegacyWorldWeatherLocation(location)
   return legacyLocation === undefined
@@ -114,19 +171,38 @@ const getSearchWeatherLocation = (location: OpenWeatherSearchLocation): WeatherL
     : toWeatherLocation(legacyLocation)
 }
 
+const deduplicateProviderLocations = (
+  locations: ReadonlyArray<OpenWeatherSearchLocation>,
+): ReadonlyArray<OpenWeatherSearchLocation> => {
+  const seenProviderLocationIds = new Set<string>()
+
+  return locations.filter((location) => {
+    if (seenProviderLocationIds.has(location.providerLocationId)) {
+      return false
+    }
+
+    seenProviderLocationIds.add(location.providerLocationId)
+    return true
+  })
+}
+
 /** Searches and registers fixed provider coordinates for subsequent feed requests. */
 export const searchWorldWeatherLocations = async (
   options: SearchOpenWeatherLocationsOptions,
   database: Database = getDatabase(),
 ): Promise<ReadonlyArray<WeatherLocation>> => {
   await reserveOpenWeatherRequest('search')
-  const providerLocations = await searchOpenWeatherLocations(options)
+  const providerLocations = deduplicateProviderLocations(await searchOpenWeatherLocations(options))
 
   if (providerLocations.length === 0) {
     return []
   }
 
-  const newProviderLocations = providerLocations.filter(
+  const providerLocationsWithRegisteredIds = await preserveExactRegisteredLegacyIds(
+    providerLocations,
+    database,
+  )
+  const newProviderLocations = providerLocationsWithRegisteredIds.filter(
     (location) => findLegacyWorldWeatherLocation(location) === undefined,
   )
 
@@ -157,7 +233,7 @@ export const searchWorldWeatherLocations = async (
       })
   }
 
-  return providerLocations.map(getSearchWeatherLocation)
+  return providerLocationsWithRegisteredIds.map(getSearchWeatherLocation)
 }
 
 /** Resolves only server-registered location IDs to fixed coordinates. */
