@@ -73,6 +73,7 @@ describe('useFullscreen', () => {
     getController()?.onEnabledChange(true)
 
     expect(requestFullscreen).toHaveBeenCalledOnce()
+    expect(requestFullscreen.mock.contexts[0]).toBe(document.documentElement)
     expect(getController()?.isEnabled()).toBe(true)
     expect(getController()?.isRequestPending()).toBe(true)
     await waitFor(() => expect(getController()?.isRequestPending()).toBe(false))
@@ -82,6 +83,50 @@ describe('useFullscreen', () => {
 
     expect(exitFullscreen).toHaveBeenCalledOnce()
     await waitFor(() => expect(getController()?.isRequestPending()).toBe(false))
+    expect(getController()?.isEnabled()).toBe(false)
+  })
+
+  it('should expose a neutral state before mounting', () => {
+    const onController = vi.fn((controller: FullscreenController) => {
+      expect(controller.availability()).toBe('checking')
+      expect(controller.isEnabled()).toBe(false)
+      expect(controller.isRequestPending()).toBe(false)
+      expect(controller.error()).toBeNull()
+      controller.onEnabledChange(true)
+      expect(requestFullscreen).not.toHaveBeenCalled()
+    })
+
+    render(() => <FullscreenHarness onController={onController} />)
+
+    expect(onController).toHaveBeenCalledOnce()
+  })
+
+  it('should track and exit fullscreen owned by any document element', async () => {
+    fullscreenElement = document.createElement('video')
+    const {getController} = renderController()
+
+    expect(getController()?.isEnabled()).toBe(true)
+    getController()?.onEnabledChange(false)
+
+    expect(exitFullscreen).toHaveBeenCalledOnce()
+    expect(exitFullscreen.mock.contexts[0]).toBe(document)
+    await waitFor(() => expect(getController()?.isRequestPending()).toBe(false))
+    expect(getController()?.isEnabled()).toBe(false)
+
+    fullscreenElement = document.createElement('canvas')
+    document.dispatchEvent(new Event('fullscreenchange'))
+
+    expect(getController()?.isEnabled()).toBe(true)
+  })
+
+  it('should stop listening to fullscreen changes after disposal', () => {
+    const {getController, view} = renderController()
+    expect(getController()?.isEnabled()).toBe(false)
+
+    view.unmount()
+    fullscreenElement = document.documentElement
+    document.dispatchEvent(new Event('fullscreenchange'))
+
     expect(getController()?.isEnabled()).toBe(false)
   })
 
@@ -195,6 +240,10 @@ describe('useFullscreen', () => {
     rejectRequest?.(new Error('owner disposed'))
     await Promise.resolve()
     await Promise.resolve()
+
+    expect(getController()?.isEnabled()).toBe(true)
+    expect(getController()?.isRequestPending()).toBe(true)
+    expect(getController()?.error()).toBeNull()
   })
 
   it('should stop resolved updates after disposal', async () => {
@@ -213,5 +262,9 @@ describe('useFullscreen', () => {
     resolveRequest?.()
     await Promise.resolve()
     await Promise.resolve()
+
+    expect(getController()?.isEnabled()).toBe(true)
+    expect(getController()?.isRequestPending()).toBe(true)
+    expect(getController()?.error()).toBeNull()
   })
 })
