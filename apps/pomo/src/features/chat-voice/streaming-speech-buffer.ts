@@ -7,6 +7,7 @@ const SINGLE_INITIAL = /^[A-Z]\.$/u
 const SINGLE_LETTER_LABEL_END =
   /(?:^|\s)(?:category|option|answer|choice|part|section|step|level|plan)\s+[A-Z]\.\s*$/iu
 const LAST_TOKEN = /(?:^|\s)[["'“‘({]*(?<token>\S+?)["'”’)}\]]*\s*$/u
+const UNRESOLVED_DECIMAL_POINT = /\p{Nd}\.$/u
 
 export interface CreateStreamingSpeechBufferOptions {
   readonly locale: string
@@ -34,7 +35,9 @@ const endsWithAbbreviation = (segment: string) => {
 }
 
 const isCompletedSentence = (segment: string) =>
-  SENTENCE_END.test(segment) && !endsWithAbbreviation(segment)
+  SENTENCE_END.test(segment) &&
+  !endsWithAbbreviation(segment) &&
+  !UNRESOLVED_DECIMAL_POINT.test(segment)
 
 const isCompletedSegment = (segment: string, hasFollowingSegment: boolean) =>
   hasFollowingSegment || isCompletedSentence(segment)
