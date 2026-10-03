@@ -77,6 +77,70 @@ describe('resolvePlaybackRestore', () => {
     })
   })
 
+  it('should not rewrite an unchanged duplicate entry when its stable ID still matches', () => {
+    const storedPlayback = {
+      isPlaying: true,
+      positionSeconds: 8,
+      queueEntryId: 'one-second',
+      trackId: 'one',
+      trackIndex: 1,
+    }
+
+    expect(
+      resolvePlaybackRestore({
+        fallbackIndex: 0,
+        queueEntryIds: ['one-first', 'one-second', 'two'],
+        storedPlayback,
+        tracks: DUPLICATE_TRACKS,
+      }),
+    ).toEqual({currentIndex: 1, playback: storedPlayback, shouldPersist: false})
+  })
+
+  it('should restore the same duplicate playlist entry after its track moves', () => {
+    const storedPlayback = {
+      isPlaying: true,
+      positionSeconds: 8,
+      queueEntryId: 'one-second',
+      trackId: 'one',
+      trackIndex: 2,
+    }
+
+    expect(
+      resolvePlaybackRestore({
+        fallbackIndex: 0,
+        queueEntryIds: ['one-first', 'two-first', 'two-second', 'one-second'],
+        storedPlayback,
+        tracks: [TRACKS[0], TRACKS[1], TRACKS[1], TRACKS[0]],
+      }),
+    ).toEqual({
+      currentIndex: 3,
+      playback: {...storedPlayback, trackIndex: 3},
+      shouldPersist: true,
+    })
+  })
+
+  it('should preserve legacy index behavior when stable queue identity is unavailable', () => {
+    const storedPlayback = {
+      isPlaying: true,
+      positionSeconds: 8,
+      trackId: 'one',
+      trackIndex: 2,
+    }
+
+    expect(
+      resolvePlaybackRestore({
+        fallbackIndex: 0,
+        queueEntryIds: ['one-first', 'two-first', 'two-second', 'one-second'],
+        storedPlayback,
+        tracks: [TRACKS[0], TRACKS[1], TRACKS[1], TRACKS[0]],
+      }),
+    ).toEqual({
+      currentIndex: 0,
+      playback: {...storedPlayback, queueEntryId: 'one-first', trackIndex: 0},
+      shouldPersist: true,
+    })
+  })
+
   it('should fall back to the first matching occurrence for legacy playback', () => {
     const storedPlayback = {isPlaying: true, positionSeconds: 8, trackId: 'one'}
 

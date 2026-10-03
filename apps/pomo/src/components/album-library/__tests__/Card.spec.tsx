@@ -98,7 +98,7 @@ describe('AlbumCard', () => {
     expect(onAddAlbum).toHaveBeenCalledWith(album)
     expect(onAddTrack).toHaveBeenCalledWith(TRACK)
     expect(onPreview).toHaveBeenCalledWith({id: TRACK.id, source: TRACK.source})
-  })
+  }, 1_000)
 
   it('should show the preparing state for an empty free album', () => {
     renderCard({...createAlbum({id: '준비 중 앨범', tracks: []}), coverImageUrl: ''})

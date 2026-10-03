@@ -16,12 +16,18 @@ const createTrack = (id: string): PTrack => ({
 
 const INITIAL_TRACKS = [createTrack('track-1'), createTrack('track-2'), createTrack('track-3')]
 
-const createHarness = (initialTracks = INITIAL_TRACKS, initialIndex = 0) => {
+const createHarness = (
+  initialTracks = INITIAL_TRACKS,
+  initialIndex = 0,
+  initialEntryIds = initialTracks.map((_track, index) => `entry-${index}`),
+) => {
   const [tracks, setTracks] = createSignal<readonly PTrack[]>(initialTracks)
+  const [entryIds, setEntryIds] = createSignal<readonly string[]>(initialEntryIds)
   const [currentIndex, setCurrentIndex] = createSignal(initialIndex)
   const cancelPendingRestart = vi.fn()
   const invalidate = vi.fn()
   const persistCurrentPlayback = vi.fn()
+  const persistTrackQueue = vi.fn()
   const controller = createPlayerQueueController({
     cancelPendingRestart,
     clearPlaybackTransition: vi.fn(),
@@ -32,7 +38,7 @@ const createHarness = (initialTracks = INITIAL_TRACKS, initialIndex = 0) => {
       clearShuffleQueue: vi.fn(),
       resetOrder: vi.fn(),
     },
-    persistTrackQueue: vi.fn(),
+    persistTrackQueue,
     playback: {
       invalidate,
       stop: vi.fn(),
@@ -46,9 +52,11 @@ const createHarness = (initialTracks = INITIAL_TRACKS, initialIndex = 0) => {
     prepareTrackChange: vi.fn(),
     previewPlayback: {preventResume: vi.fn()},
     readCurrentIndex: currentIndex,
+    readQueueEntryIds: entryIds,
     readTracks: tracks,
     restorePendingPlayback: vi.fn(),
     setCurrentIndex: (index) => setCurrentIndex(index),
+    setLoadedEntryIds: (nextEntryIds) => setEntryIds(nextEntryIds),
     setLoadedTracks: (nextTracks) => setTracks(nextTracks),
     visualizer: {stop: vi.fn()},
   })
@@ -57,11 +65,48 @@ const createHarness = (initialTracks = INITIAL_TRACKS, initialIndex = 0) => {
     cancelPendingRestart,
     controller,
     currentIndex,
+    entryIds,
     invalidate,
     persistCurrentPlayback,
+    persistTrackQueue,
     tracks,
   }
 }
+
+describe('reorderTrackInQueue', () => {
+  it('should keep the selected duplicate entry active and persist both reordered arrays', () => {
+    const duplicateTracks = [createTrack('track-1'), createTrack('track-2'), createTrack('track-1')]
+    const entryIds = ['one-first', 'two', 'one-second']
+    const {
+      controller,
+      currentIndex,
+      entryIds: readEntryIds,
+      persistCurrentPlayback,
+      persistTrackQueue,
+      tracks,
+    } = createHarness(duplicateTracks, 2, entryIds)
+
+    controller.reorderTrackInQueue(2, 0)
+
+    expect(tracks().map((track) => track.id)).toEqual(['track-1', 'track-1', 'track-2'])
+    expect(readEntryIds()).toEqual(['one-second', 'one-first', 'two'])
+    expect(currentIndex()).toBe(0)
+    expect(persistTrackQueue).toHaveBeenCalledExactlyOnceWith(
+      [duplicateTracks[2], duplicateTracks[0], duplicateTracks[1]],
+      ['one-second', 'one-first', 'two'],
+    )
+    expect(persistCurrentPlayback).toHaveBeenCalledOnce()
+  })
+
+  it('should ignore invalid reorder indices', () => {
+    const {controller, persistTrackQueue, tracks} = createHarness()
+
+    controller.reorderTrackInQueue(0, 4)
+
+    expect(tracks()).toBe(INITIAL_TRACKS)
+    expect(persistTrackQueue).not.toHaveBeenCalled()
+  })
+})
 
 describe('removeTrackFromQueue', () => {
   it('should preserve the current playback restart when removing another track', () => {

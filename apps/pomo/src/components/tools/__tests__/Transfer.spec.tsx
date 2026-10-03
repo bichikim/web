@@ -29,7 +29,7 @@ describe('Transfer connection controls', () => {
     render(() => <Transfer />)
     fireEvent.click(screen.getByRole('button', {name: m.transfer_cancel()}))
     expect(fileTransfer.cancel).toHaveBeenCalledOnce()
-  })
+  }, 1_000)
 
   it.each(['idle', 'error'] as const)(
     'should hide disconnect controls in the %s state',

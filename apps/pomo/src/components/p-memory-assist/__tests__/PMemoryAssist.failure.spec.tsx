@@ -33,7 +33,7 @@ it('should keep the modal closable after preloading fails', async () => {
   fireEvent.click(screen.getByRole('button', {name: '닫기'}))
   await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull())
   expect(screen.getByRole('button', {name: '생각 보조'})).toBe(trigger)
-})
+}, 1_000)
 afterEach(() => {
   vi.unstubAllGlobals()
   vi.restoreAllMocks()

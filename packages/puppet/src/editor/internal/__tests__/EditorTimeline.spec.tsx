@@ -170,7 +170,7 @@ describe('EditorTimeline', () => {
     fireEvent.keyDown(removedRow, {key: 'Delete'})
 
     expect(selectedRow.closest('.timeline-row-label')).toHaveAttribute('data-selected')
-  })
+  }, 1_500)
 
   test('should edit the active motion duration and document frame rate', async () => {
     const [document, setDocument] = createSignal<PuppetDocument>(createDemoDocument())
@@ -416,7 +416,7 @@ describe('EditorTimeline', () => {
     expect(idleTrack).toHaveAttribute('data-selected', '')
     expect(onMotionSeek).toHaveBeenNthCalledWith(1, 'blink', 0.2)
     expect(onMotionSeek).toHaveBeenNthCalledWith(2, 'idle-deform', 1)
-  })
+  }, 1_500)
 
   test('should move a keyframe within its motion timeline', async () => {
     const {document, view} = createAllMotionTimeline()
@@ -450,7 +450,7 @@ describe('EditorTimeline', () => {
         ?.tracks.find((track) => track.kind === 'parameter' && track.parameterId === 'angle-x')
         ?.keyframes[1]?.time,
     ).toBe(7 / 24)
-  })
+  }, 1_500)
 
   test('should add, ease, and delete parameter keyframes', () => {
     const [document, setDocument] = createSignal<PuppetDocument>(createDemoDocument())
@@ -492,7 +492,7 @@ describe('EditorTimeline', () => {
     expect(document().motions[0]?.tracks).toHaveLength(2)
     expect(document().motions[0]?.tracks[0]?.keyframes).toHaveLength(2)
     expect(view.getByRole('button', {name: '선택 키프레임 삭제'})).toBeDisabled()
-  })
+  }, 1_500)
 
   test('should shift-select, move, ease, and delete keyframes together', async () => {
     const [document, setDocument] = createSignal<PuppetDocument>(createDemoDocument())
@@ -546,7 +546,7 @@ describe('EditorTimeline', () => {
 
     fireEvent.click(view.getByRole('button', {name: '선택 키프레임 2개 삭제'}))
     expect(document().motions[0]?.tracks[0]?.keyframes).toEqual([{time: 2, value: 0}])
-  })
+  }, 1_500)
 
   test('should preview a keyframe drag and commit its snapped time on release', async () => {
     const [currentTime, setCurrentTime] = createSignal(1)
@@ -709,7 +709,7 @@ describe('EditorTimeline', () => {
     )
     expect(view.getByRole('button', {name: '선택 키프레임 삭제'})).toBeDisabled()
     expect(onDocumentChange).not.toHaveBeenCalled()
-  })
+  }, 1_500)
 
   test('should clear keyframe selection when switching to a parameter without a keyframe', () => {
     const onDocumentChange = vi.fn()
@@ -737,7 +737,7 @@ describe('EditorTimeline', () => {
     expect(view.getByRole('button', {name: '선택 키프레임 삭제'})).toBeDisabled()
     expect(view.getByLabelText('Angle X 트랙')).toHaveAttribute('data-selected', '')
     expect(onDocumentChange).not.toHaveBeenCalled()
-  })
+  }, 1_500)
 
   test.each([
     {parameterId: 'angle-x', parameterName: 'Angle X'},

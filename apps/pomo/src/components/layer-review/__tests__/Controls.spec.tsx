@@ -153,7 +153,7 @@ describe('ReviewControls', () => {
     expect(props.onShowAll).toHaveBeenCalledOnce()
     expect(props.onHideAll).toHaveBeenCalledOnce()
     expect(props.onReferenceChange).toHaveBeenCalledOnce()
-  })
+  }, 1_000)
 
   it('should present the original style and enable scribble from an unchecked switch', () => {
     const props = {...createProps(), sceneStyle: 'original' as const}

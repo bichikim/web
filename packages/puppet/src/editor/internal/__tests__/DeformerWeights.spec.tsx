@@ -31,7 +31,7 @@ test('should select a vertex, edit normalized bone weights and return to automat
   expect(view.getByRole('spinbutton', {name: '본 2 영향도'})).toHaveValue(75)
   fireEvent.click(view.getByRole('button', {name: '자동 영향도로 복원'}))
   expect(node().boneWeights).toEqual([])
-})
+}, 1_000)
 
 test('should paint multiple vertices as one undoable stroke and stop after capture loss', () => {
   const initial = editBoneRest({

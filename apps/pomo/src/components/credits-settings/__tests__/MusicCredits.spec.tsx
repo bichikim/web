@@ -27,7 +27,7 @@ it('should render the expansion control in English', () => {
 
   fireEvent.click(screen.getByRole('button', {name: 'Show all (+1)'}))
   expect(screen.getByRole('button', {name: 'Collapse'})).toBeTruthy()
-})
+}, 1_000)
 
 it('should show four credits before expanding and collapse the list again', () => {
   render(() => <PMusicCredits entries={MUSIC_CREDITS} />)

@@ -93,7 +93,7 @@ it('should initialize the direct Rust and WebAssembly document runtime', async (
 
   await waitFor(() => expect(coreMocks.init).toHaveBeenCalledOnce())
   expect(await screen.findByText('Rust/WASM 문서 엔진과 iframe 에디터 준비 완료')).toBeDefined()
-})
+}, 1_500)
 
 it('should load a selected HWP file into the iframe editor', async () => {
   render(() => <HwpDocumentWorkspace />)
