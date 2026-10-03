@@ -309,4 +309,30 @@ describe('useTarotReading', () => {
     await flush()
     expect(vi.mocked(mocks.generate).mock.lastCall?.[0].locale).toBe('en')
   })
+
+  it('reads the locale accessor at download start after consent', async () => {
+    let locale: 'en' | 'ko' = 'ko'
+    dispose()
+    createRoot((cleanup) => {
+      dispose = cleanup
+      reading = useTarotReading({locale: () => locale})
+    })
+    mocks.downloaded.mockResolvedValue(false)
+    reading.setQuestion('무엇을 기억해야 할까요?')
+    reading.draw()
+    const selected = reading.cards()
+    await flush()
+    expect(reading.status()).toBe('consent')
+
+    locale = 'en'
+    await reading.startDownload()
+
+    expect(mocks.generate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        cards: selected,
+        locale: 'en',
+        question: '무엇을 기억해야 할까요?',
+      }),
+    )
+  })
 })
