@@ -1,4 +1,5 @@
 import {isObject} from 'src/utils/is-object'
+import {normalizePasteNumericInput} from 'src/utils/normalize-paste-numeric-input'
 import {parseDate} from 'src/features/civil-date'
 import {iterateJsonObjectSlices} from 'src/utils/json'
 import {isNonBlankString} from 'src/utils/is-non-blank-string'
@@ -32,7 +33,7 @@ export type ExpenseParseResult =
 
 const MAXIMUM_ITEMS = 20
 const EXPENSE_LINE_PATTERN =
-  /^\s*(?<name>.+?)\s+(?<unitPrice>[\d,]+)\s*원(?:\s+(?<quantity>[\d,]+)\s*개)?\s*$/u
+  /^\s*(?<name>.+?)\s+(?<unitPrice>[\d０-９,]+)\s*원(?:\s+(?<quantity>[\d,]+)\s*개)?\s*$/u
 const DATE_LINE_PATTERN =
   /^\s*(?<year>\d{4})-(?<month>\d{1,2})-(?<day>\d{1,2})(?:\s+[월화수목금토일]요일)?\s*$/u
 
@@ -204,7 +205,7 @@ export const parseExpenseText = (text: string): ExpenseParseResult => {
         return invalid('invalid-input')
       }
 
-      const unitPrice = toPositiveInteger(expenseMatch.groups.unitPrice)
+      const unitPrice = toPositiveInteger(normalizePasteNumericInput(expenseMatch.groups.unitPrice))
       const quantity = toPositiveInteger(expenseMatch.groups.quantity ?? '1')
       const name = expenseMatch.groups.name.trim()
       if (unitPrice === null || quantity === null || name.length === 0) {
