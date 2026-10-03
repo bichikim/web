@@ -1,4 +1,5 @@
-import type {SquareCropFrame, SquareCropPoint, SquareCropSelection} from './types'
+import type {Point} from '@winter-love/utils/core/types/shared'
+import type {SquareCropFrame, SquareCropSelection} from './types'
 
 const clampPosition = (value: number): number => Math.min(1, Math.max(-1, value))
 
@@ -6,7 +7,7 @@ const clampPosition = (value: number): number => Math.min(1, Math.max(-1, value)
 export const getSquareCropPosition = (
   frame: SquareCropFrame,
   selection: SquareCropSelection,
-): SquareCropPoint => {
+): Point => {
   const maxX = Math.max(0, (frame.imageWidth - selection.size) / 2)
   const maxY = Math.max(0, (frame.imageHeight - selection.size) / 2)
 

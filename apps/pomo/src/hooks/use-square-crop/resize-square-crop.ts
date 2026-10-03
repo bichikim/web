@@ -1,6 +1,6 @@
+import type {Point} from '@winter-love/utils/core/types/shared'
 import type {
   SquareCropFrame,
-  SquareCropPoint,
   SquareCropResizeHandle,
   SquareCropSelection,
   SquareCropZoomLimits,
@@ -9,13 +9,13 @@ import type {
 export interface ResizeSquareCropOptions {
   readonly frame: SquareCropFrame
   readonly handle: SquareCropResizeHandle
-  readonly pointer: SquareCropPoint
+  readonly pointer: Point
   readonly zoomLimits: SquareCropZoomLimits
 }
 
 type ResizeDirection = -1 | 0 | 1
 
-interface ResizeAnchors extends SquareCropPoint {
+interface ResizeAnchors extends Point {
   readonly horizontal: ResizeDirection
   readonly maximumSize: number
   readonly vertical: ResizeDirection
@@ -63,7 +63,7 @@ const getResizeAnchors = (
   }
 }
 
-const getCandidateSize = (anchors: ResizeAnchors, pointer: SquareCropPoint): number => {
+const getCandidateSize = (anchors: ResizeAnchors, pointer: Point): number => {
   const horizontalSize =
     anchors.horizontal === 0 ? null : (pointer.x - anchors.x) * anchors.horizontal
   const verticalSize = anchors.vertical === 0 ? null : (pointer.y - anchors.y) * anchors.vertical

@@ -1,3 +1,5 @@
+import {getArrowKeyDelta} from '@winter-love/utils/browser/events/get-arrow-key-delta'
+import type {Point, Size} from '@winter-love/utils/core/types/shared'
 import {
   type Accessor,
   batch,
@@ -13,25 +15,23 @@ import {getSquareCropKeyboardDelta} from './get-square-crop-keyboard-delta'
 import {getSquareCropPosition} from './get-square-crop-position'
 import {resizeSquareCrop} from './resize-square-crop'
 import type {
-  SquareCropDimensions,
   SquareCropFrame,
   SquareCropHandle,
-  SquareCropPoint,
   SquareCropResizeHandle,
   SquareCropSelection,
   SquareCropZoomLimits,
 } from './types'
 
 export interface UseSquareCropProps {
-  readonly image: Accessor<SquareCropDimensions | null>
-  readonly viewport: Accessor<SquareCropDimensions>
+  readonly image: Accessor<Readonly<Size> | null>
+  readonly viewport: Accessor<Readonly<Size>>
   readonly zoomLimits: Accessor<SquareCropZoomLimits>
   readonly keyboardStep?: number
 }
 
 export interface SquareCropPointer {
   readonly pointerId: number
-  readonly point: SquareCropPoint
+  readonly point: Point
 }
 
 export interface SquareCropGesture extends SquareCropPointer {
@@ -41,11 +41,11 @@ export interface SquareCropGesture extends SquareCropPointer {
 export interface SquareCropController {
   readonly frame: Accessor<SquareCropFrame | null>
   readonly selection: Accessor<SquareCropSelection | null>
-  readonly position: Accessor<SquareCropPoint>
+  readonly position: Accessor<Point>
   readonly zoom: Accessor<number>
   readonly reset: () => void
   readonly changeZoom: (zoom: number) => void
-  readonly moveTo: (position: SquareCropPoint) => void
+  readonly moveTo: (position: Point) => void
   readonly beginGesture: (gesture: SquareCropGesture) => boolean
   readonly moveGesture: (pointer: SquareCropPointer) => void
   readonly endGesture: (pointerId?: number) => void
@@ -54,8 +54,8 @@ export interface SquareCropController {
 }
 
 interface CropConfiguration {
-  readonly image: SquareCropDimensions | null
-  readonly viewport: SquareCropDimensions
+  readonly image: Readonly<Size> | null
+  readonly viewport: Readonly<Size>
   readonly zoomLimits: SquareCropZoomLimits
 }
 
@@ -66,13 +66,13 @@ interface ActiveGesture extends SquareCropGesture {
 
 const DEFAULT_KEYBOARD_STEP = 5
 
-const hasFinitePoint = (point: SquareCropPoint): boolean =>
+const hasFinitePoint = (point: Point): boolean =>
   Number.isFinite(point.x) && Number.isFinite(point.y)
 
 const clampValue = (value: number, minimum: number, maximum: number, fallback: number): number =>
   Math.min(maximum, Math.max(minimum, Number.isNaN(value) ? fallback : value))
 
-const boundPosition = (position: SquareCropPoint): SquareCropPoint => ({
+const boundPosition = (position: Point): Point => ({
   x: clampValue(position.x, -1, 1, 0),
   y: clampValue(position.y, -1, 1, 0),
 })
@@ -84,17 +84,14 @@ const normalizeZoomLimits = (limits: SquareCropZoomLimits): SquareCropZoomLimits
   return {maximum, minimum}
 }
 
-const getMovedPosition = (frame: SquareCropFrame, delta: SquareCropPoint): SquareCropPoint =>
+const getMovedPosition = (frame: SquareCropFrame, delta: Point): Point =>
   getSquareCropPosition(frame, {
     size: frame.cropSize,
     x: frame.cropX + delta.x,
     y: frame.cropY + delta.y,
   })
 
-const getResizePointer = (
-  frame: SquareCropFrame,
-  handle: SquareCropResizeHandle,
-): SquareCropPoint => ({
+const getResizePointer = (frame: SquareCropFrame, handle: SquareCropResizeHandle): Point => ({
   x: handle.includes('west')
     ? frame.cropX
     : handle.includes('east')
@@ -126,7 +123,7 @@ const readCropConfiguration = (props: UseSquareCropProps): CropConfiguration => 
 export const useSquareCrop = (props: UseSquareCropProps): SquareCropController => {
   const configuration = createMemo(() => readCropConfiguration(props))
   const [requestedZoom, setZoom] = createSignal(1)
-  const [position, setPosition] = createSignal<SquareCropPoint>({x: 0, y: 0})
+  const [position, setPosition] = createSignal<Point>({x: 0, y: 0})
   const [gesture, setGesture] = createSignal<ActiveGesture | null>(null)
   const zoom = createMemo(() => {
     const limits = configuration().zoomLimits
@@ -170,7 +167,7 @@ export const useSquareCrop = (props: UseSquareCropProps): SquareCropController =
     setZoom(clampValue(value, limits.minimum, limits.maximum, limits.minimum))
   }
 
-  const moveTo = (value: SquareCropPoint): void => {
+  const moveTo = (value: Point): void => {
     endGesture()
     setPosition(boundPosition(value))
   }
@@ -232,7 +229,7 @@ export const useSquareCrop = (props: UseSquareCropProps): SquareCropController =
 
   const moveWithKeyboard = (key: string): boolean => {
     const current = frame()
-    const delta = getSquareCropKeyboardDelta(key, props.keyboardStep ?? DEFAULT_KEYBOARD_STEP)
+    const delta = getArrowKeyDelta(key, props.keyboardStep ?? DEFAULT_KEYBOARD_STEP)
     if (current === null || delta === null) {
       return false
     }

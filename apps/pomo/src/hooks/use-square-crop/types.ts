@@ -1,14 +1,6 @@
-export interface SquareCropPoint {
-  readonly x: number
-  readonly y: number
-}
+import type {Point} from '@winter-love/utils/core/types/shared'
 
-export interface SquareCropDimensions {
-  readonly height: number
-  readonly width: number
-}
-
-export interface SquareCropSelection extends SquareCropPoint {
+export interface SquareCropSelection extends Point {
   readonly size: number
 }
 

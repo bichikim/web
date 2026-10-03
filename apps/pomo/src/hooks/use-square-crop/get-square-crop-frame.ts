@@ -1,17 +1,13 @@
-import type {SquareCropDimensions, SquareCropFrame, SquareCropPoint} from './types'
+import {getContainedRect} from '@winter-love/utils/domain/geometry/get-contained-rect'
+import type {Point, Size} from '@winter-love/utils/core/types/shared'
+import type {SquareCropFrame} from './types'
 
 export interface GetSquareCropFrameOptions {
-  readonly image: SquareCropDimensions
-  readonly position: SquareCropPoint
-  readonly viewport: SquareCropDimensions
+  readonly image: Readonly<Size>
+  readonly position: Point
+  readonly viewport: Readonly<Size>
   readonly zoom: number
 }
-
-const hasPositiveDimensions = (dimensions: SquareCropDimensions): boolean =>
-  Number.isFinite(dimensions.width) &&
-  dimensions.width > 0 &&
-  Number.isFinite(dimensions.height) &&
-  dimensions.height > 0
 
 /**
  * Fits an image into the viewport and maps a normalized crop to its source pixels.
@@ -21,15 +17,12 @@ const hasPositiveDimensions = (dimensions: SquareCropDimensions): boolean =>
 export const getSquareCropFrame = (options: GetSquareCropFrameOptions): SquareCropFrame | null => {
   const {image, position, viewport, zoom} = options
 
-  if (!hasPositiveDimensions(image) || !hasPositiveDimensions(viewport)) {
+  const contained = getContainedRect({container: viewport, content: image})
+  if (contained === null) {
     return null
   }
 
-  const scale = Math.min(viewport.width / image.width, viewport.height / image.height)
-  const imageWidth = image.width * scale
-  const imageHeight = image.height * scale
-  const imageX = (viewport.width - imageWidth) / 2
-  const imageY = (viewport.height - imageHeight) / 2
+  const {height: imageHeight, scale, width: imageWidth, x: imageX, y: imageY} = contained
   const maximumCropSize = Math.min(imageWidth, imageHeight)
   const cropSize = maximumCropSize / zoom
   const maxX = Math.max(0, (imageWidth - cropSize) / 2)

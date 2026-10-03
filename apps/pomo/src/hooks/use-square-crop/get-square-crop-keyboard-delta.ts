@@ -1,29 +1,16 @@
-import type {SquareCropPoint, SquareCropResizeHandle} from './types'
-
-const getArrowDelta = (key: string, step: number): SquareCropPoint | null => {
-  switch (key) {
-    case 'ArrowDown':
-      return {x: 0, y: step}
-    case 'ArrowLeft':
-      return {x: -step, y: 0}
-    case 'ArrowRight':
-      return {x: step, y: 0}
-    case 'ArrowUp':
-      return {x: 0, y: -step}
-    default:
-      return null
-  }
-}
+import {getArrowKeyDelta} from '@winter-love/utils/browser/events/get-arrow-key-delta'
+import type {Point} from '@winter-love/utils/core/types/shared'
+import type {SquareCropResizeHandle} from './types'
 
 /** Maps arrow keys to movement, constraining resize handles to their axes. */
 export const getSquareCropKeyboardDelta = (
   key: string,
   step: number,
-  handle?: SquareCropResizeHandle,
-): SquareCropPoint | null => {
-  const delta = getArrowDelta(key, step)
+  handle: SquareCropResizeHandle,
+): Point | null => {
+  const delta = getArrowKeyDelta(key, step)
 
-  if (delta === null || handle === undefined) {
+  if (delta === null) {
     return delta
   }
 

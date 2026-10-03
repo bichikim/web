@@ -1,20 +1,21 @@
 /** @vitest-environment jsdom */
+import type {Size} from '@winter-love/utils/core/types/shared'
 import {cleanup, renderHook} from '@solidjs/testing-library'
 import {batch, createSignal} from 'solid-js'
 import {createStore} from 'solid-js/store'
 import {afterEach, describe, expect, it, vi} from 'vitest'
-import type {SquareCropDimensions, SquareCropZoomLimits} from '../types'
+import type {SquareCropZoomLimits} from '../types'
 import {useSquareCrop} from '../use-square-crop'
 
 interface RenderCropOptions {
-  readonly image?: SquareCropDimensions | null
+  readonly image?: Readonly<Size> | null
   readonly keyboardStep?: number
-  readonly viewport?: SquareCropDimensions
+  readonly viewport?: Readonly<Size>
   readonly zoomLimits?: SquareCropZoomLimits
 }
 
 const renderCrop = (options: RenderCropOptions = {}) => {
-  const [image, setImage] = createSignal<SquareCropDimensions | null>(
+  const [image, setImage] = createSignal<Readonly<Size> | null>(
     options.image === undefined ? {height: 400, width: 400} : options.image,
   )
   const [viewport, setViewport] = createSignal(options.viewport ?? {height: 200, width: 200})

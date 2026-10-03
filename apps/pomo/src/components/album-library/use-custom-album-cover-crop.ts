@@ -1,10 +1,10 @@
+import type {Point} from '@winter-love/utils/core/types/shared'
 import {type Accessor, createEffect, createMemo, createSignal, type JSX, untrack} from 'solid-js'
 
 import * as m from '@paraglide/message'
 import {
   type SquareCropFrame,
   type SquareCropHandle,
-  type SquareCropPoint,
   type SquareCropResizeHandle,
   useSquareCrop,
 } from 'src/hooks/use-square-crop'
@@ -37,7 +37,7 @@ export interface CustomAlbumCoverCropController {
   readonly imageFrame: Accessor<CropFrame | null>
   readonly isCropping: Accessor<boolean>
   readonly isLoading: Accessor<boolean>
-  readonly position: Accessor<SquareCropPoint>
+  readonly position: Accessor<Point>
   readonly zoom: Accessor<number>
   readonly handleCrop: () => Promise<void>
   readonly handleHorizontalPositionInput: JSX.EventHandler<HTMLInputElement, InputEvent>
@@ -74,7 +74,7 @@ const getCropHandle = (target: EventTarget | null): SquareCropHandle | null => {
   }
 }
 
-const getViewBoxPoint = (svg: SVGSVGElement, event: PointerEvent): SquareCropPoint | null => {
+const getViewBoxPoint = (svg: SVGSVGElement, event: PointerEvent): Point | null => {
   const bounds = svg.getBoundingClientRect()
   if (bounds.width <= 0 || bounds.height <= 0) {
     return null

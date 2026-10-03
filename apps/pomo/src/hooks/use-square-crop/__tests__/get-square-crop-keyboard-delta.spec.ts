@@ -15,15 +15,6 @@ const handles = [
 
 describe('getSquareCropKeyboardDelta', () => {
   it.each([
-    {delta: {x: 0, y: 7}, key: 'ArrowDown'},
-    {delta: {x: -7, y: 0}, key: 'ArrowLeft'},
-    {delta: {x: 7, y: 0}, key: 'ArrowRight'},
-    {delta: {x: 0, y: -7}, key: 'ArrowUp'},
-  ])('should move by the configured step for $key', ({delta, key}) => {
-    expect(getSquareCropKeyboardDelta(key, 7)).toEqual(delta)
-  })
-
-  it.each([
     {delta: {x: 0, y: -5}, handle: 'north', key: 'ArrowUp'},
     {delta: {x: 0, y: 0}, handle: 'north', key: 'ArrowRight'},
     {delta: {x: 0, y: 5}, handle: 'south', key: 'ArrowDown'},
@@ -60,7 +51,6 @@ describe('getSquareCropKeyboardDelta', () => {
   })
 
   it('should ignore keys that do not move the selection', () => {
-    expect(getSquareCropKeyboardDelta('Enter', 5)).toBeNull()
     for (const handle of handles) {
       expect(getSquareCropKeyboardDelta('Escape', 5, handle)).toBeNull()
     }
