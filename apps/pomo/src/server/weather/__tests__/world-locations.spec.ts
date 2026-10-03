@@ -215,6 +215,40 @@ it('should preserve a rounded ID only for exact registered coordinates', async (
   ])
 })
 
+it('should preserve the legacy sign when negative coordinates round to zero', async () => {
+  apiMocks.searchOpenWeatherLocations.mockResolvedValue([
+    {
+      country: 'US',
+      latitude: -0.00001,
+      longitude: 12.34568,
+      name: 'Location C',
+      names: {en: 'Location C'},
+      providerLocationId: '-0.00001,12.34568',
+      region: 'Region C',
+    },
+  ])
+  const registeredLocation = {
+    country: 'US',
+    id: 'openweather:-0.0000,12.3457',
+    latitude: -0.00001,
+    longitude: 12.34568,
+    name: 'Location C',
+    providerLocationId: '-0.0000,12.3457',
+    region: 'Region C',
+  }
+  const mocks = createDatabase([registeredLocation])
+
+  await expect(searchWorldWeatherLocations({query: 'nearby'}, mocks.database)).resolves.toEqual([
+    {
+      country: 'US',
+      id: 'openweather:-0.0000,12.3457',
+      name: 'Location C',
+      names: {en: 'Location C'},
+      region: 'Region C',
+    },
+  ])
+})
+
 it('should avoid a database write for an empty provider search', async () => {
   apiMocks.searchOpenWeatherLocations.mockResolvedValue([])
   const mocks = createDatabase()

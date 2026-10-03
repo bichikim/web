@@ -54,8 +54,7 @@ const createProviderLocationId = (providerLocationId: string): WeatherLocationId
   `openweather:${providerLocationId}`
 
 const formatLegacyRoundedCoordinate = (coordinate: number): string => {
-  const roundedCoordinate = coordinate.toFixed(LEGACY_PROVIDER_LOCATION_ID_DECIMAL_PLACES)
-  return Number(roundedCoordinate) === 0 ? '0.0000' : roundedCoordinate
+  return coordinate.toFixed(LEGACY_PROVIDER_LOCATION_ID_DECIMAL_PLACES)
 }
 
 const createLegacyRoundedProviderLocationId = (
