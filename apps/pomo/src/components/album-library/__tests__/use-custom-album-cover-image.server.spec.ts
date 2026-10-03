@@ -2,7 +2,7 @@
 
 import {createRoot} from 'solid-js'
 import {afterEach, expect, it, vi} from 'vitest'
-import {useImageBitmap} from '..'
+import {useCustomAlbumCoverImage} from '../use-custom-album-cover-image'
 
 vi.mock('solid-js', () => vi.importActual<typeof import('solid-js')>('solid-js/dist/server.js'))
 
@@ -11,17 +11,18 @@ afterEach(() => {
   vi.restoreAllMocks()
 })
 
-it('should remain idle during SSR without accessing browser image APIs', () => {
+it('should remain neutral during SSR without allocating or decoding an open cover', () => {
   const decode = vi.fn()
   const createUrl = vi.spyOn(URL, 'createObjectURL')
   vi.stubGlobal('createImageBitmap', decode)
 
   createRoot((dispose) => {
-    const image = useImageBitmap(() => new Blob(['image']))
+    const result = useCustomAlbumCoverImage({file: new File(['image'], 'image.png'), isOpen: true})
 
-    expect(image.imageBitmap()).toBeNull()
-    expect(image.error()).toBeNull()
-    expect(image.isLoading()).toBe(false)
+    expect(result.imageBitmap()).toBeNull()
+    expect(result.previewUrl()).toBeNull()
+    expect(result.errorMessage()).toBeNull()
+    expect(result.isLoading()).toBe(false)
     dispose()
   })
 

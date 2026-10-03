@@ -1,45 +1,40 @@
-import {type Accessor, batch, createEffect, createSignal, onCleanup} from 'solid-js'
-import {replaceBlobObjectUrl} from '../../features/blob-object-url'
+import {type Accessor, batch, createEffect, createMemo, createSignal, onCleanup} from 'solid-js'
 
 export interface ImageBitmapController {
   readonly error: Accessor<Error | null>
   readonly imageBitmap: Accessor<ImageBitmap | null>
   readonly isLoading: Accessor<boolean>
-  readonly previewUrl: Accessor<string | null>
 }
 
 /**
  * Decodes the current Blob after rendering; null clears the source.
- * Owns the bitmap and preview URL until replacement or disposal, including failed previews.
- * Consumers borrow these resources and must not close or revoke them.
+ * Owns one bitmap per Blob identity until replacement or disposal.
+ * Consumers borrow the bitmap and must not close it.
  */
 export const useImageBitmap = (source: Accessor<Blob | null>): ImageBitmapController => {
+  const blob = createMemo(source)
   const [imageBitmap, setImageBitmap] = createSignal<ImageBitmap | null>(null)
-  const [previewUrl, setPreviewUrl] = createSignal<string | null>(null)
   const [error, setError] = createSignal<Error | null>(null)
   const [isLoading, setIsLoading] = createSignal(false)
 
   createEffect(() => {
-    const blob = source()
+    const current = blob()
     setError(null)
-    setIsLoading(blob !== null)
-    if (blob === null) {
+    setIsLoading(current !== null)
+    if (current === null) {
       return
     }
 
     let isCancelled = false
     let decodedImage: ImageBitmap | null = null
-    let objectUrl: string | null = null
 
     onCleanup(() => {
       isCancelled = true
       decodedImage?.close()
       batch(() => {
         setImageBitmap(null)
-        setPreviewUrl(null)
         setIsLoading(false)
       })
-      replaceBlobObjectUrl(objectUrl, () => null)
     })
 
     const decode = async () => {
@@ -48,9 +43,7 @@ export const useImageBitmap = (source: Accessor<Blob | null>): ImageBitmapContro
           throw new Error('Image decoding is not supported')
         }
 
-        objectUrl = replaceBlobObjectUrl(null, () => blob)
-        setPreviewUrl(objectUrl)
-        const image = await globalThis.createImageBitmap(blob)
+        const image = await globalThis.createImageBitmap(current)
         if (isCancelled) {
           image.close()
           return
@@ -76,5 +69,5 @@ export const useImageBitmap = (source: Accessor<Blob | null>): ImageBitmapContro
     decode()
   })
 
-  return {error, imageBitmap, isLoading, previewUrl}
+  return {error, imageBitmap, isLoading}
 }
