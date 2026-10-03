@@ -5,6 +5,7 @@ import {composeParameterScene, composeParameterVertices} from '../../../deformat
 import type {PuppetDocument} from '../../document'
 import {parseDocument} from '../../parse-document'
 import {applySceneDeformers} from '../scene-deformation'
+import {getSpatialPartPose} from '../spatial-part'
 
 const parsed = parseDocument(source)
 if (!parsed.ok) {
@@ -22,14 +23,17 @@ const render = (
   values: Readonly<Record<string, number>>,
 ) => {
   const part = document.parts.find((candidate) => candidate.id === partId)!
-  const vertices = [
-    ...composeParameterVertices({
-      document,
-      parameterValues: values,
-      partId,
-      restVertices: part.mesh.vertices,
-    }),
-  ]
+  const pose = getSpatialPartPose({document, parameterValues: values, part})
+  const vertices = composeParameterVertices({
+    document,
+    parameterValues: values,
+    partId,
+    restVertices: part.mesh.vertices,
+  }).map((coordinate, index) =>
+    pose === undefined
+      ? coordinate
+      : coordinate + pose.vertices[index]! - part.mesh.vertices[index]!,
+  )
   applySceneDeformers({
     document: {...document, scene: composeParameterScene(document, values)},
     verticesByPartId: new Map([[partId, vertices]]),
@@ -37,13 +41,34 @@ const render = (
   return vertices
 }
 
-describe('development model collar cylinder', () => {
+describe('development model collar spatial surface', () => {
+  test('should attach every collar vertex to a curved mesh', () => {
+    const part = parts[0]!
+    expect(part.spatial?.attachments).toHaveLength(part.mesh.vertices.length / 2)
+    const depths = part.spatial!.controlPoints.filter((_, index) => index % 3 === 2)
+    expect(Math.max(...depths) - Math.min(...depths)).toBeGreaterThan(150)
+  })
+
   test('should preserve the neutral collar', () => {
     for (const part of parts) {
       const original = render(flat, part.id, {})
       render(model, part.id, {}).forEach((value, index) =>
         expect(value).toBeCloseTo(original[index]!, 6),
       )
+    }
+  })
+
+  test.each([-1, 1])('should use only cylinder Y rotation when turning %s', (direction) => {
+    const values = {'body-x': direction * 30, 'full-body-x': direction * 22}
+    for (const part of parts) {
+      const pose = getSpatialPartPose({document: model, parameterValues: values, part})!
+      const vertices = render(model, part.id, values)
+      vertices.forEach((value, index) => {
+        expect(value).toBeCloseTo(pose.vertices[index]!, 6)
+        if (index % 2 === 1) {
+          expect(value).toBeCloseTo(part.mesh.vertices[index]!, 6)
+        }
+      })
     }
   })
 
