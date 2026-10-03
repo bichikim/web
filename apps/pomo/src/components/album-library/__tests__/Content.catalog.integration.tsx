@@ -12,7 +12,6 @@ const audioMocks = vi.hoisted(() => ({
     keyFor: vi.fn(),
   }),
 }))
-const modalMocks = vi.hoisted(() => ({render: vi.fn()}))
 
 vi.mock('@solidjs/router', async () => {
   const actual: typeof import('@solidjs/router') = await vi.importActual('@solidjs/router')
@@ -32,41 +31,21 @@ vi.mock('../../p-modal/PModal', () => ({
     readonly children: JSX.Element
     readonly footer?: JSX.Element
     readonly size?: string
-  }) => {
-    modalMocks.render(props)
-    return (
-      <section>
-        {props.children}
-        {props.footer}
-      </section>
-    )
-  },
+  }) => (
+    <section>
+      {props.children}
+      {props.footer}
+    </section>
+  ),
 }))
-vi.mock('../TrackList', () => ({PAlbumTrackList: vi.fn()}))
 
 import {PAlbumLibraryContent} from '../Content'
-import {PAlbumTrackList} from '../TrackList'
 
 beforeEach(() => {
+  audioMocks.loadBundledPAlbums.mockResolvedValue([])
   audioMocks.publishedAlbumCatalogQuery.mockImplementation((locale) =>
     audioMocks.loadPublishedPAlbums({locale}),
   )
-  vi.mocked(PAlbumTrackList).mockImplementation((props) => (
-    <ol aria-label={`${props.albumTitle} 수록곡`} tabIndex={0} />
-  ))
-})
-
-afterEach(() => {
-  cleanup()
-  audioMocks.loadBundledPAlbums.mockReset()
-  audioMocks.loadPublishedPAlbums.mockReset()
-  audioMocks.publishedAlbumCatalogQuery.mockReset()
-  modalMocks.render.mockClear()
-  vi.restoreAllMocks()
-})
-
-it('should show an unconfigured published album as sale preparation', async () => {
-  audioMocks.loadBundledPAlbums.mockResolvedValue([])
   audioMocks.loadPublishedPAlbums.mockResolvedValue({
     albums: [
       {
@@ -92,32 +71,41 @@ it('should show an unconfigured published album as sale preparation', async () =
     ],
     status: 'ready',
   })
+})
 
+afterEach(() => {
+  cleanup()
+  audioMocks.loadBundledPAlbums.mockReset()
+  audioMocks.loadPublishedPAlbums.mockReset()
+  audioMocks.publishedAlbumCatalogQuery.mockReset()
+  vi.restoreAllMocks()
+})
+
+it('should render all nine limited previews for an unconfigured published album', async () => {
   render(() => <PAlbumLibraryContent onAddTracks={vi.fn()} tracks={[]} />)
 
   const albumCard = await screen.findByRole('article')
   expect(within(albumCard).getByText('공개 앨범')).toBeVisible()
   expect(within(albumCard).queryByText('[미정]')).toBeNull()
   expect(within(albumCard).getByText('판매 준비중')).toBeVisible()
+  expect(within(albumCard).getByText('첫 공개곡')).toBeVisible()
+  expect(within(albumCard).getByText('첫 가수')).toBeVisible()
+  expect(within(albumCard).getByText('둘째 공개곡')).toBeVisible()
+  expect(within(albumCard).getByText('둘째 가수')).toBeVisible()
+  expect(within(albumCard).getByText('9번째 공개곡')).toBeVisible()
   expect(within(albumCard).queryByRole('button', {name: /더 많은 곡/u})).toBeNull()
   expect(within(albumCard).queryByRole('button', {name: '앨범 모두 추가'})).toBeNull()
   expect(within(albumCard).queryByRole('button', {name: /플레이어에 추가/u})).toBeNull()
 
-  expect(albumCard?.parentElement?.classList.contains('2xl:grid-cols-2')).toBe(true)
+  expect(albumCard.parentElement).toHaveClass('2xl:grid-cols-2')
   const trackList = within(albumCard).getByRole('list', {name: '공개 앨범 수록곡'})
-  const trackListProps = vi.mocked(PAlbumTrackList).mock.calls[0]?.[0]
-
+  expect(trackList).toHaveClass(
+    '2xl:grid-cols-1',
+    'overflow-y-auto',
+    'max-h-[10.5rem]',
+    'sm:max-h-[5.25rem]',
+    '2xl:max-h-[10.5rem]',
+  )
   expect(trackList.tabIndex).toBe(0)
-  expect(trackListProps?.tracks.map(({artist, id, title}) => [id, title, artist])).toEqual([
-    ['paid-one', '첫 공개곡', '첫 가수'],
-    ['paid-two', '둘째 공개곡', '둘째 가수'],
-    ['paid-3', '3번째 공개곡', '3번째 가수'],
-    ['paid-4', '4번째 공개곡', '4번째 가수'],
-    ['paid-5', '5번째 공개곡', '5번째 가수'],
-    ['paid-6', '6번째 공개곡', '6번째 가수'],
-    ['paid-7', '7번째 공개곡', '7번째 가수'],
-    ['paid-8', '8번째 공개곡', '8번째 가수'],
-    ['paid-9', '9번째 공개곡', '9번째 가수'],
-  ])
-  expect(trackListProps?.playableTracks).toEqual([])
+  expect(within(trackList).getAllByRole('button', {name: /30초 미리듣기$/u})).toHaveLength(9)
 })

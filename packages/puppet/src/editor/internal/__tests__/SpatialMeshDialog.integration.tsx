@@ -3,7 +3,6 @@
 import {fireEvent, render, screen} from '@solidjs/testing-library'
 import {expect, test, vi} from 'vitest'
 
-import type {PuppetPart} from '../../../player'
 import {createSpatialEditorObject} from '../spatial-editor-objects'
 import {SpatialMeshDialog} from '../SpatialMeshDialog'
 
@@ -19,6 +18,23 @@ vi.mock('../spatial-mesh-preview-renderer', () => ({
     resize: () => undefined,
   }),
 }))
+
+test('should show the Three.js mesh preview canvas', () => {
+  const view = render(() => (
+    <SpatialMeshDialog
+      bounds={{height: 100, width: 100, x: 0, y: 0}}
+      isOpen
+      onApply={() => true}
+      onOpenChange={vi.fn()}
+    />
+  ))
+
+  fireEvent.click(screen.getByRole('button', {name: '박스 추가'}))
+  const preview = screen.getByRole('group', {name: '3D 메시 회전 미리보기'})
+  expect(preview.tagName).toBe('CANVAS')
+  expect(screen.queryByRole('group', {name: '미리보기 방식'})).toBeNull()
+  view.unmount()
+})
 
 test('should edit mesh coordinates with the shared number field and undo a continuous edit once', () => {
   const bounds = {height: 100, width: 100, x: 0, y: 0}

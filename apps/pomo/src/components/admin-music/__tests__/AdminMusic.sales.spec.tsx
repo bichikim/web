@@ -1,6 +1,6 @@
 /** @vitest-environment jsdom */
 
-import {cleanup, fireEvent, screen, waitFor} from '@solidjs/testing-library'
+import {cleanup, fireEvent, render, screen, waitFor} from '@solidjs/testing-library'
 import {describe, expect, it, vi} from 'vitest'
 
 import {
@@ -8,13 +8,25 @@ import {
   coverImageMocks,
   renderAdminMusic,
 } from '../../__tests__/fixtures/admin-music'
+import {createAlbum, createModelHarness} from './fixtures/model'
+import {SalesPanel} from '../workspace/SalesPanel'
 
 describe('AdminMusic', () => {
-  it('should only ask for the Apps in Toss SKU when connecting a product', async () => {
-    vi.stubGlobal('fetch', vi.fn<typeof fetch>().mockResolvedValue(Response.json(catalogWithAlbum)))
-    renderAdminMusic()
-
-    fireEvent.click(await screen.findByRole('tab', {name: '판매 및 공개'}))
+  it('should show only the Apps in Toss SKU in the sales panel', () => {
+    const {model} = createModelHarness()
+    render(() => (
+      <SalesPanel
+        album={createAlbum()}
+        albumId="album-id"
+        albumTitle="첫 앨범"
+        isStatusReviewOpen={false}
+        model={model}
+        offers={[]}
+        onStatusReviewClose={vi.fn()}
+        onStatusReviewOpen={vi.fn()}
+        trackCount={0}
+      />
+    ))
 
     expect(screen.getByText('앱인토스 상품 ID (SKU)')).toBeTruthy()
     expect(screen.queryByText('내부 상품 코드')).toBeNull()

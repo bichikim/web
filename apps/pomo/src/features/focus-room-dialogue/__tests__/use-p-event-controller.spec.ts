@@ -1,6 +1,7 @@
 /** @vitest-environment jsdom */
 
 import {renderHook} from '@solidjs/testing-library'
+import {createSignal} from 'solid-js'
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 
 import {usePEventController} from '../use-p-event-controller'
@@ -332,6 +333,211 @@ describe('delayed-end playback', () => {
     expect(stopExternalSpeech).toHaveBeenCalledOnce()
     expect(playbackOrder).toEqual(['stop', 'play'])
     unregister?.()
+    view.cleanup()
+  })
+
+  it('should restart the running timer from the successful duration save', async () => {
+    const save = Promise.withResolvers<undefined>()
+    delayedEndEventSettingsMocks.write.mockReturnValueOnce(save.promise)
+
+    const view = renderHook(() => usePEventController({}))
+    await vi.waitFor(() => expect(view.result.isLoading()).toBe(false))
+    view.result.startDelayedEndEvent()
+    await vi.advanceTimersByTimeAsync(5 * 60_000)
+
+    const saveRequest = view.result.setDelayedEndEventDuration(5)
+    await vi.waitFor(() => expect(delayedEndEventSettingsMocks.write).toHaveBeenCalledOnce())
+    await vi.advanceTimersByTimeAsync(4 * 60_000)
+    save.resolve(undefined)
+    await saveRequest
+
+    await vi.advanceTimersByTimeAsync(5 * 60_000 - 1)
+    expect(playback.playSequence).not.toHaveBeenCalled()
+    await vi.advanceTimersByTimeAsync(1)
+    expect(playback.playSequence).toHaveBeenCalledOnce()
+    view.cleanup()
+  })
+
+  it('should keep a newly started timer on its original schedule while saving its duration', async () => {
+    const save = Promise.withResolvers<undefined>()
+    delayedEndEventSettingsMocks.write.mockReturnValueOnce(save.promise)
+
+    const view = renderHook(() => usePEventController({}))
+    await vi.waitFor(() => expect(view.result.isLoading()).toBe(false))
+    const saveRequest = view.result.setDelayedEndEventDuration(1)
+    await vi.waitFor(() => expect(delayedEndEventSettingsMocks.write).toHaveBeenCalledOnce())
+    view.result.startDelayedEndEvent()
+    await vi.advanceTimersByTimeAsync(30_000)
+
+    save.resolve(undefined)
+    await saveRequest
+
+    await vi.advanceTimersByTimeAsync(30_000)
+    expect(playback.playSequence).toHaveBeenCalledOnce()
+    view.cleanup()
+  })
+
+  it('should leave the running timer unchanged when saving the duration fails', async () => {
+    const save = Promise.withResolvers<undefined>()
+    const failure = new Error('settings unavailable')
+    delayedEndEventSettingsMocks.write.mockReturnValueOnce(save.promise)
+
+    const view = renderHook(() => usePEventController({}))
+    await vi.waitFor(() => expect(view.result.isLoading()).toBe(false))
+    view.result.startDelayedEndEvent()
+    await vi.advanceTimersByTimeAsync(5 * 60_000)
+
+    const saveRequest = view.result.setDelayedEndEventDuration(5)
+    await vi.waitFor(() => expect(delayedEndEventSettingsMocks.write).toHaveBeenCalledOnce())
+    await vi.advanceTimersByTimeAsync(4 * 60_000)
+    save.reject(failure)
+    await expect(saveRequest).rejects.toBe(failure)
+
+    expect(view.result.delayedEndEventDurationMinutes()).toBe(30)
+    await vi.advanceTimersByTimeAsync(20 * 60_000)
+    expect(playback.playSequence).not.toHaveBeenCalled()
+    await vi.advanceTimersByTimeAsync(60_000)
+    expect(playback.playSequence).toHaveBeenCalledOnce()
+    view.cleanup()
+  })
+
+  it('should restore a timer started during a failed save to its persisted duration', async () => {
+    const save = Promise.withResolvers<undefined>()
+    const failure = new Error('settings unavailable')
+    delayedEndEventSettingsMocks.write.mockReturnValueOnce(save.promise)
+
+    const view = renderHook(() => usePEventController({}))
+    await vi.waitFor(() => expect(view.result.isLoading()).toBe(false))
+    const saveRequest = view.result.setDelayedEndEventDuration(1)
+    await vi.waitFor(() => expect(delayedEndEventSettingsMocks.write).toHaveBeenCalledOnce())
+    view.result.startDelayedEndEvent()
+    await vi.advanceTimersByTimeAsync(30_000)
+
+    save.reject(failure)
+    await expect(saveRequest).rejects.toBe(failure)
+
+    expect(view.result.delayedEndEventDurationMinutes()).toBe(30)
+    await vi.advanceTimersByTimeAsync(60_000 - 30_000)
+    expect(playback.playSequence).not.toHaveBeenCalled()
+    await vi.advanceTimersByTimeAsync(30 * 60_000 - 60_000)
+    expect(playback.playSequence).not.toHaveBeenCalled()
+    await vi.advanceTimersByTimeAsync(60_000)
+    expect(playback.playSequence).toHaveBeenCalledOnce()
+    view.cleanup()
+  })
+
+  it('should not rearm a cancelled timer when its duration save completes', async () => {
+    const save = Promise.withResolvers<undefined>()
+    delayedEndEventSettingsMocks.write.mockReturnValueOnce(save.promise)
+
+    const view = renderHook(() => usePEventController({}))
+    await vi.waitFor(() => expect(view.result.isLoading()).toBe(false))
+    view.result.startDelayedEndEvent()
+    await vi.advanceTimersByTimeAsync(5 * 60_000)
+
+    const saveRequest = view.result.setDelayedEndEventDuration(5)
+    await vi.waitFor(() => expect(delayedEndEventSettingsMocks.write).toHaveBeenCalledOnce())
+    view.result.cancelDelayedEndEvent()
+    save.resolve(undefined)
+    await saveRequest
+
+    expect(view.result.delayedEndEventIsRunning()).toBe(false)
+    await vi.advanceTimersByTimeAsync(30 * 60_000)
+    expect(playback.playSequence).not.toHaveBeenCalled()
+    view.cleanup()
+  })
+
+  it('should not restart a newer timer when the previous timer duration save completes', async () => {
+    const save = Promise.withResolvers<undefined>()
+    delayedEndEventSettingsMocks.write.mockReturnValueOnce(save.promise)
+
+    const view = renderHook(() => usePEventController({}))
+    await vi.waitFor(() => expect(view.result.isLoading()).toBe(false))
+    view.result.startDelayedEndEvent()
+    await vi.advanceTimersByTimeAsync(5 * 60_000)
+
+    const saveRequest = view.result.setDelayedEndEventDuration(1)
+    await vi.waitFor(() => expect(delayedEndEventSettingsMocks.write).toHaveBeenCalledOnce())
+    view.result.cancelDelayedEndEvent()
+    view.result.startDelayedEndEvent()
+    await vi.advanceTimersByTimeAsync(30_000)
+    save.resolve(undefined)
+    await saveRequest
+
+    await vi.advanceTimersByTimeAsync(30_000)
+    expect(playback.playSequence).toHaveBeenCalledOnce()
+    view.cleanup()
+  })
+
+  it('should not restart the timer when its delayed-end scope is disabled during a save', async () => {
+    const save = Promise.withResolvers<undefined>()
+    delayedEndEventSettingsMocks.write.mockReturnValueOnce(save.promise)
+    let disableDelayedEndEvent: () => void = () => undefined
+
+    const view = renderHook(() => {
+      const [isEnabled, setIsEnabled] = createSignal(true)
+      disableDelayedEndEvent = () => setIsEnabled(false)
+      return usePEventController({
+        get isDelayedEndEventEnabled() {
+          return isEnabled()
+        },
+      })
+    })
+    await vi.waitFor(() => expect(view.result.isLoading()).toBe(false))
+    view.result.startDelayedEndEvent()
+    const saveRequest = view.result.setDelayedEndEventDuration(5)
+    await vi.waitFor(() => expect(delayedEndEventSettingsMocks.write).toHaveBeenCalledOnce())
+
+    disableDelayedEndEvent()
+    await vi.waitFor(() => expect(view.result.delayedEndEventIsRunning()).toBe(false))
+    save.resolve(undefined)
+    await saveRequest
+
+    await vi.advanceTimersByTimeAsync(30 * 60_000)
+    expect(playback.playSequence).not.toHaveBeenCalled()
+    view.cleanup()
+  })
+
+  it('should not restart the timer when its owner is disposed during a save', async () => {
+    const save = Promise.withResolvers<undefined>()
+    delayedEndEventSettingsMocks.write.mockReturnValueOnce(save.promise)
+
+    const view = renderHook(() => usePEventController({}))
+    await vi.waitFor(() => expect(view.result.isLoading()).toBe(false))
+    view.result.startDelayedEndEvent()
+    const saveRequest = view.result.setDelayedEndEventDuration(5)
+    await vi.waitFor(() => expect(delayedEndEventSettingsMocks.write).toHaveBeenCalledOnce())
+
+    view.cleanup()
+    save.resolve(undefined)
+    await saveRequest
+
+    await vi.advanceTimersByTimeAsync(30 * 60_000)
+    expect(playback.playSequence).not.toHaveBeenCalled()
+  })
+
+  it('should ignore an older save completion after a newer duration save restarts the timer', async () => {
+    const olderSave = Promise.withResolvers<undefined>()
+    const newerSave = Promise.withResolvers<undefined>()
+    delayedEndEventSettingsMocks.write
+      .mockReturnValueOnce(olderSave.promise)
+      .mockReturnValueOnce(newerSave.promise)
+
+    const view = renderHook(() => usePEventController({}))
+    await vi.waitFor(() => expect(view.result.isLoading()).toBe(false))
+    view.result.startDelayedEndEvent()
+    const olderSaveRequest = view.result.setDelayedEndEventDuration(1)
+    const newerSaveRequest = view.result.setDelayedEndEventDuration(2)
+    await vi.waitFor(() => expect(delayedEndEventSettingsMocks.write).toHaveBeenCalledTimes(2))
+
+    newerSave.resolve(undefined)
+    await newerSaveRequest
+    await vi.advanceTimersByTimeAsync(90_000)
+    olderSave.resolve(undefined)
+    await olderSaveRequest
+
+    await vi.advanceTimersByTimeAsync(30_000)
+    expect(playback.playSequence).toHaveBeenCalledOnce()
     view.cleanup()
   })
 })
