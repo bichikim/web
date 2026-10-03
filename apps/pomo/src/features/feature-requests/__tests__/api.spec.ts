@@ -1,6 +1,6 @@
 /** @vitest-environment node */
 
-import {beforeEach, expect, it, vi} from 'vitest'
+import {afterEach, beforeEach, expect, it, vi} from 'vitest'
 
 const apiMocks = vi.hoisted(() => ({
   apiJson: vi.fn(),
@@ -113,4 +113,22 @@ it('should classify administrator status updates', async () => {
       method: 'PATCH',
     }),
   )
+})
+
+afterEach(() => {
+  vi.unstubAllEnvs()
+})
+
+it('should preserve Toss bearer authentication without changing public pagination parameters', async () => {
+  vi.stubEnv('VITE_POMO_IS_APPS_IN_TOSS', 'true')
+  sessionMocks.readStoredAppSession.mockResolvedValue('test-session')
+  await listFeatureRequests({offset: 12})
+  expect(apiMocks.apiJson).toHaveBeenCalledWith(
+    'feature-requests?offset=12',
+    expect.objectContaining({
+      headers: {Authorization: 'Bearer test-session'},
+      responseSchema: expect.anything(),
+    }),
+  )
+  expect(apiMocks.apiJson.mock.calls[0][1]).not.toHaveProperty('credentials')
 })
