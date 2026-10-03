@@ -1,6 +1,7 @@
 /** @vitest-environment node */
 import {describe, expect, it} from 'vitest'
 
+import {CUSTOM_TRACK_ID_PREFIX} from '../../custom-albums/model'
 import type {PTrack} from '../focus-room-playlist'
 import {resolvePPlaylist} from '../playlist-restore'
 
@@ -11,6 +12,7 @@ const TRACKS = [
 ] as const satisfies readonly PTrack[]
 
 const DEFAULT_TRACKS = [TRACKS[0], TRACKS[1]]
+const MISSING_CUSTOM_TRACK_ID = `${CUSTOM_TRACK_ID_PREFIX}missing`
 
 describe('resolvePPlaylist', () => {
   it('should use the default playlist when no user playlist was saved', () => {
@@ -23,7 +25,7 @@ describe('resolvePPlaylist', () => {
     expect(
       resolvePPlaylist({
         defaultTracks: DEFAULT_TRACKS,
-        storedTrackIds: ['three', 'removed', 'one'],
+        storedTrackIds: ['three', 'removed', MISSING_CUSTOM_TRACK_ID, 'one'],
         tracks: TRACKS,
       }),
     ).toEqual([TRACKS[2], TRACKS[0]])
@@ -43,5 +45,15 @@ describe('resolvePPlaylist', () => {
         tracks: TRACKS,
       }),
     ).toBe(DEFAULT_TRACKS)
+  })
+
+  it('should preserve a custom-only selection when every saved custom track is missing', () => {
+    expect(
+      resolvePPlaylist({
+        defaultTracks: DEFAULT_TRACKS,
+        storedTrackIds: [MISSING_CUSTOM_TRACK_ID],
+        tracks: TRACKS,
+      }),
+    ).toEqual([])
   })
 })
