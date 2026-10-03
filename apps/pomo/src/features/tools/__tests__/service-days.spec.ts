@@ -7,6 +7,8 @@ it.each([
   {input: '３６５', output: 365},
   {input: '０００１', output: 1},
   {input: '300', output: 300},
+  {input: ' 300 ', output: 300},
+  {input: '\t３００\r\n', output: 300},
   {input: '9007199254740991', output: Number.MAX_SAFE_INTEGER},
   {input: '９００７１９９２５４７４０９９１', output: Number.MAX_SAFE_INTEGER},
 ])('should parse valid service days from $input', ({input, output}) => {
@@ -21,6 +23,9 @@ it.each([
   '1.5',
   '１．５',
   '＋１',
+  ' 3 00 ',
+  '300,000',
+  '３００，０００',
   'not-a-number',
   '9007199254740992',
   '９００７１９９２５４７４０９９２',
@@ -32,7 +37,10 @@ it.each([
   {input: '', output: ''},
   {input: '000300', output: '000300'},
   {input: '０００３００', output: '０００３００'},
+  {input: ' 300 ', output: '300'},
+  {input: '\t３００\r\n', output: '３００'},
   {input: '0', output: ''},
+  {input: ' 3 00 ', output: ''},
   {input: 'not-a-number', output: ''},
 ])('should normalize service days $input to $output', ({input, output}) => {
   expect(normalizeServiceDays(input)).toBe(output)
