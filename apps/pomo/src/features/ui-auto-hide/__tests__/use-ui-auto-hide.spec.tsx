@@ -139,3 +139,46 @@ it('should keep the UI visible while a manual tooltip popover is open', () => {
     tooltip.remove()
   }
 })
+
+it('should capture activity stopped by a child and restart on every event without a throttle', () => {
+  const {result} = renderHook(useUiAutoHide, {wrapper: PreferenceProvider})
+  result.onEnabledChange(true)
+  result.onSecondsChange(5)
+  const child = document.createElement('button')
+  child.addEventListener('pointerdown', (event) => event.stopPropagation())
+  document.body.append(child)
+
+  try {
+    vi.advanceTimersByTime(5000)
+    child.dispatchEvent(new Event('pointerdown', {bubbles: true}))
+    expect(result.hidden()).toBe(false)
+    vi.advanceTimersByTime(250)
+    child.dispatchEvent(new Event('pointerdown', {bubbles: true}))
+    vi.advanceTimersByTime(4999)
+    expect(result.hidden()).toBe(false)
+    vi.advanceTimersByTime(1)
+    expect(result.hidden()).toBe(true)
+  } finally {
+    child.remove()
+  }
+})
+
+it('should disconnect overlay observation and activity listeners on disposal', async () => {
+  const view = renderHook(useUiAutoHide, {wrapper: PreferenceProvider})
+  view.result.onEnabledChange(true)
+  vi.advanceTimersByTime(30_000)
+  view.cleanup()
+  const dialog = document.createElement('div')
+  dialog.setAttribute('role', 'dialog')
+  vi.spyOn(dialog, 'getClientRects').mockReturnValue({length: 1} as DOMRectList)
+  document.body.append(dialog)
+
+  try {
+    await Promise.resolve()
+    globalThis.dispatchEvent(new Event('keydown'))
+    expect(view.result.hidden()).toBe(true)
+    expect(vi.getTimerCount()).toBe(0)
+  } finally {
+    dialog.remove()
+  }
+})
