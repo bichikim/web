@@ -3,7 +3,8 @@
 import {Tabs} from '@kobalte/core/tabs'
 import {fireEvent, render, screen, within} from '@solidjs/testing-library'
 import {createSignal, type JSX} from 'solid-js'
-import {beforeEach, describe, expect, it, vi} from 'vitest'
+import {getLocale, overwriteGetLocale} from '@paraglide/runtime'
+import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 
 import {
   type EventBindingItem,
@@ -37,7 +38,9 @@ vi.mock('../../../features/focus-room-feed', () => ({
   usePFeedContext: vi.fn(),
 }))
 vi.mock('../AutomaticSettings', () => ({AutomaticDialogueSettings: () => <div>자동 설정</div>}))
+vi.mock('../DelayedEndEventSettings', () => ({DelayedEndEventSettings: vi.fn()}))
 vi.mock('../RandomEventSettings', () => ({RandomEventSettings: () => <div>랜덤 설정</div>}))
+vi.mock('../VolumeDuckingSettings', () => ({DialogueVolumeDuckingSettings: vi.fn()}))
 vi.mock('../EventSettingRow', () => ({
   DialogueEventSettingRow: (props: {
     readonly children: JSX.Element
@@ -109,6 +112,8 @@ vi.mock('../PlaybackButton', () => ({
     </button>
   ),
 }))
+
+const originalGetLocale = getLocale
 
 import {PDialogueSettingsContent} from '../Content'
 
@@ -200,6 +205,10 @@ beforeEach(() => {
   vi.spyOn(HTMLMediaElement.prototype, 'pause').mockImplementation(() => undefined)
 })
 
+afterEach(() => {
+  overwriteGetLocale(originalGetLocale)
+})
+
 const renderSavedDialogues = () => {
   const second = {
     ...DIALOGUE,
@@ -223,6 +232,22 @@ const renderSavedDialogues = () => {
 }
 
 describe('PDialogueSettingsContent', () => {
+  it('should render event and dialogue settings in English', () => {
+    overwriteGetLocale(() => 'en')
+    vi.mocked(usePEvents).mockReturnValue(createEvents())
+
+    render(() => <PDialogueSettingsContent />, {wrapper: PreferenceProvider})
+
+    const eventsHeading = screen.getByRole('heading', {name: 'Events'})
+    const eventsSection = eventsHeading.closest('section')
+
+    expect(within(eventsSection!).getByRole('heading', {name: 'Enter Pomofi'})).toBeDefined()
+    expect(within(eventsSection!).getByText('Play once when entering Pomofi')).toBeDefined()
+    expect(screen.getByRole('heading', {name: 'Saved dialogue'})).toBeDefined()
+    expect(screen.getByRole('link', {name: 'New dialogue'})).toBeDefined()
+    expect(screen.getByText('Yuna · 1:01 · 1 speech bubble')).toBeDefined()
+  })
+
   it('should show saved dialogue metadata and bind event items', () => {
     const events = renderSavedDialogues()
 

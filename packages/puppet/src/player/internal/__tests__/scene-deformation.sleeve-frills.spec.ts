@@ -174,9 +174,15 @@ describe('development model lower sleeve frill depth', () => {
   )
 
   test.each(
-    [-30, -15, 0, 15, 30].flatMap((body) => [-22, -15, 0, 15, 22].map((full) => [body, full])),
-  )('should retain attachment and triangle orientation at body=%s, full=%s', (body, full) => {
-    for (const part of frills) {
+    [-30, -15, 0, 15, 30].flatMap((body) =>
+      [-22, -15, 0, 15, 22].flatMap((full) =>
+        frills.map((part) => ({body, full, partId: part.id})),
+      ),
+    ),
+  )(
+    'should retain attachment and triangle orientation for $partId at body=$body, full=$full',
+    ({body, full, partId}) => {
+      const part = frills.find((candidate) => candidate.id === partId)!
       const values = {'body-x': body, 'full-body-x': full}
       const original = renderFrill(inherited, part, values)
       const deformed = renderFrill(model, part, values)
@@ -193,6 +199,6 @@ describe('development model lower sleeve frill depth', () => {
         expect(ratio).toBeGreaterThan(0.55)
         expect(ratio).toBeLessThan(1.45)
       }
-    }
-  })
+    },
+  )
 })

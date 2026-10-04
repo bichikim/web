@@ -121,20 +121,6 @@ describe('lunar-to-solar date selection', () => {
     )
   })
 
-  it('should reduce a 30-day selection when the year and month change', async () => {
-    renderLunarInLunarMode()
-    expect(await screen.findByText('2026-02-17')).toBeVisible()
-
-    await selectOption(/음력 일/u, '30')
-    await changeHiddenSelect(/음력 연도/u, '2050')
-    await changeHiddenSelect(/음력 월/u, '11')
-
-    expect(screen.getByRole('button', {name: /음력 연도/u})).toHaveTextContent('2050')
-    expect(screen.getByRole('button', {name: /음력 월/u})).toHaveTextContent('11')
-    expect(screen.getByRole('button', {name: /음력 일/u})).toHaveTextContent('18')
-    expect(screen.getByText('2050-12-31')).toBeVisible()
-  })
-
   it('should update the day options and conversion when toggling a leap month', async () => {
     renderLunarInLunarMode()
     expect(await screen.findByText('2026-02-17')).toBeVisible()

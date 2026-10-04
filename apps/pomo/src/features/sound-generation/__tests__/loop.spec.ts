@@ -7,15 +7,22 @@ import {generateSound} from '../runtime'
 vi.mock('../runtime', () => ({generateSound: vi.fn()}))
 afterEach(() => vi.resetAllMocks())
 const RATE = 44100
+const source = (() => {
+  const original = new Int32Array(14 * RATE * 2)
+  original.fill(1000, 0, 8 * RATE * 2)
+  original.fill(2000, 8 * RATE * 2)
+  return createStereoWave(original, 14 * RATE)
+})()
+const generatedPatch = (() => {
+  const patch = new Int32Array(12 * RATE * 2).fill(3000)
+  patch[(6 * RATE - 1) * 2] = 3100
+  patch[6 * RATE * 2] = 3101
+  return createStereoWave(patch, 12 * RATE)
+})()
 
 it.each([4, 2, 7.5, 10])(
   'should wrap a generated %s-second connection and preserve duration and middle samples',
   async (connectionSeconds) => {
-    const frames = 14 * RATE
-    const original = new Int32Array(frames * 2)
-    original.fill(1000, 0, 8 * RATE * 2)
-    original.fill(2000, 8 * RATE * 2)
-    const source = createStereoWave(original, frames)
     vi.mocked(generateSound).mockImplementation(async (prompt, seconds, _progress, options) => {
       const context = options?.inpaint
       expect(prompt).toBe('rain')
@@ -25,10 +32,7 @@ it.each([4, 2, 7.5, 10])(
       expect(context?.left[0]).toBe(2000 / 32768)
       expect(context?.left[6 * RATE]).toBe(1000 / 32768)
       expect(context?.right[0]).toBe(2000 / 32768)
-      const patch = new Int32Array(12 * RATE * 2).fill(3000)
-      patch[(6 * RATE - 1) * 2] = 3100
-      patch[6 * RATE * 2] = 3101
-      return createStereoWave(patch, 12 * RATE)
+      return generatedPatch
     })
     const result = await generateLoopSound(source, 'rain', vi.fn(), connectionSeconds)
     expect(result.size).toBe(source.size)
