@@ -4,6 +4,7 @@ import {render, waitFor} from '@solidjs/testing-library'
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 
 import {type FullscreenController, useFullscreen} from '..'
+import {createDeferred} from 'src/test-utils/create-deferred'
 
 interface FullscreenHarnessProps {
   readonly onController: (controller: FullscreenController) => void
@@ -231,15 +232,14 @@ describe('useFullscreen', () => {
     const {getController, view} = renderController()
     await waitFor(() => expect(getController()?.availability()).toBe('supported'))
 
-    getController()?.onEnabledChange(true)
+    const execution = getController()?.onEnabledChange(true)
     getController()?.onEnabledChange(false)
 
     expect(requestFullscreen).toHaveBeenCalledOnce()
     expect(exitFullscreen).not.toHaveBeenCalled()
     view.unmount()
     rejectRequest?.(new Error('owner disposed'))
-    await Promise.resolve()
-    await Promise.resolve()
+    await expect(execution).resolves.toBeUndefined()
 
     expect(getController()?.isEnabled()).toBe(true)
     expect(getController()?.isRequestPending()).toBe(true)
@@ -256,15 +256,76 @@ describe('useFullscreen', () => {
     )
     const {getController, view} = renderController()
     await waitFor(() => expect(getController()?.availability()).toBe('supported'))
-    getController()?.onEnabledChange(true)
+    const execution = getController()?.onEnabledChange(true)
 
     view.unmount()
     resolveRequest?.()
-    await Promise.resolve()
-    await Promise.resolve()
+    await expect(execution).resolves.toBeUndefined()
 
     expect(getController()?.isEnabled()).toBe(true)
     expect(getController()?.isRequestPending()).toBe(true)
     expect(getController()?.error()).toBeNull()
+  })
+
+  it.each(['enter', 'exit'] as const)(
+    'should handle synchronous %s failures without rejecting the UI callback',
+    async (direction) => {
+      fullscreenElement = direction === 'exit' ? document.documentElement : null
+      const method = direction === 'exit' ? exitFullscreen : requestFullscreen
+      method.mockImplementationOnce(() => {
+        throw new TypeError('denied')
+      })
+      const {getController} = renderController()
+      await expect(getController()?.onEnabledChange(direction === 'enter')).resolves.toBeUndefined()
+      expect(getController()?.error()).toBe(direction === 'enter' ? 'enter-failed' : 'exit-failed')
+      expect(getController()?.isEnabled()).toBe(direction === 'exit')
+      expect(getController()?.isRequestPending()).toBe(false)
+    },
+  )
+
+  it('should preserve a pending request across change and error events and allow retry', async () => {
+    const deferred = createDeferred<void>()
+    requestFullscreen.mockReturnValueOnce(deferred.promise)
+    const {getController} = renderController()
+    const execution = getController()?.onEnabledChange(true)
+    document.dispatchEvent(new Event('fullscreenerror'))
+    expect(getController()?.error()).toBe('enter-failed')
+    expect(getController()?.isEnabled()).toBe(false)
+    expect(getController()?.isRequestPending()).toBe(true)
+    document.dispatchEvent(new Event('fullscreenchange'))
+    expect(getController()?.error()).toBeNull()
+    getController()?.onEnabledChange(false)
+    getController()?.onEnabledChange(true)
+    expect(requestFullscreen).toHaveBeenCalledOnce()
+    expect(exitFullscreen).not.toHaveBeenCalled()
+    deferred.reject(new Error('denied'))
+    await expect(execution).resolves.toBeUndefined()
+    expect(getController()?.error()).toBe('enter-failed')
+    expect(getController()?.isRequestPending()).toBe(false)
+    await expect(getController()?.onEnabledChange(true)).resolves.toBeUndefined()
+    expect(requestFullscreen).toHaveBeenCalledTimes(2)
+    expect(getController()?.error()).toBeNull()
+    expect(getController()?.isEnabled()).toBe(true)
+  })
+
+  it('should recover exit error events and remove both listeners on disposal', async () => {
+    fullscreenElement = document.documentElement
+    const deferred = createDeferred<void>()
+    exitFullscreen.mockReturnValueOnce(deferred.promise)
+    const {getController, view} = renderController()
+    const execution = getController()?.onEnabledChange(false)
+    document.dispatchEvent(new Event('fullscreenerror'))
+    expect(getController()?.error()).toBe('exit-failed')
+    expect(getController()?.isEnabled()).toBe(true)
+    view.unmount()
+    fullscreenElement = null
+    document.dispatchEvent(new Event('fullscreenchange'))
+    document.dispatchEvent(new Event('fullscreenerror'))
+    deferred.resolve()
+    await expect(execution).resolves.toBeUndefined()
+    expect(getController()?.isEnabled()).toBe(true)
+    expect(getController()?.error()).toBe('exit-failed')
+    getController()?.onEnabledChange(true)
+    expect(requestFullscreen).not.toHaveBeenCalled()
   })
 })
