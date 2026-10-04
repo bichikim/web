@@ -1,4 +1,5 @@
-import {type Accessor, batch, createEffect, createMemo, createSignal, onCleanup} from 'solid-js'
+import {type Accessor, createEffect, createMemo, on, onCleanup} from 'solid-js'
+import {useAsyncTask} from 'src/features/async-task'
 
 export interface ImageBitmapController {
   readonly error: Accessor<Error | null>
@@ -13,61 +14,39 @@ export interface ImageBitmapController {
  */
 export const useImageBitmap = (source: Accessor<Blob | null>): ImageBitmapController => {
   const blob = createMemo(source)
-  const [imageBitmap, setImageBitmap] = createSignal<ImageBitmap | null>(null)
-  const [error, setError] = createSignal<Error | null>(null)
-  const [isLoading, setIsLoading] = createSignal(false)
-
-  createEffect(() => {
-    const current = blob()
-    setError(null)
-    setIsLoading(current !== null)
-    if (current === null) {
-      return
-    }
-
-    let isCancelled = false
-    let decodedImage: ImageBitmap | null = null
-
-    onCleanup(() => {
-      isCancelled = true
-      decodedImage?.close()
-      batch(() => {
-        setImageBitmap(null)
-        setIsLoading(false)
-      })
-    })
-
-    const decode = async () => {
-      try {
-        if (typeof globalThis.createImageBitmap === 'undefined') {
-          throw new Error('Image decoding is not supported')
-        }
-
-        const image = await globalThis.createImageBitmap(current)
-        if (isCancelled) {
-          image.close()
-          return
-        }
-
-        decodedImage = image
-        batch(() => {
-          setImageBitmap(image)
-          setIsLoading(false)
-        })
-      } catch (cause: unknown) {
-        if (isCancelled) {
-          return
-        }
-
-        batch(() => {
-          setError(cause instanceof Error ? cause : new Error('Image decoding failed', {cause}))
-          setIsLoading(false)
-        })
+  const task = useAsyncTask({
+    cleanupResult: (image: ImageBitmap) => image.close(),
+    task: (current: Blob) => {
+      if (typeof globalThis.createImageBitmap === 'undefined') {
+        throw new Error('Image decoding is not supported')
       }
-    }
-
-    decode()
+      return globalThis.createImageBitmap(current)
+    },
   })
+
+  createEffect(
+    on(blob, (current) => {
+      onCleanup(task.reset)
+      if (current !== null) {
+        // The task state supplies diagnostics; this effect has no promise consumer.
+        task.execute(current).catch(() => undefined)
+      }
+    }),
+  )
+
+  const imageBitmap = () => {
+    const state = task.state()
+    return state.status === 'success' ? state.result : null
+  }
+  const error = createMemo(() => {
+    const state = task.state()
+    if (state.status !== 'error') {
+      return null
+    }
+    const cause = state.error
+    return cause instanceof Error ? cause : new Error('Image decoding failed', {cause})
+  })
+  const isLoading = () => task.state().status === 'pending'
 
   return {error, imageBitmap, isLoading}
 }
