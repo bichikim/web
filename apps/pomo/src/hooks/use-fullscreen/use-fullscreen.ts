@@ -76,7 +76,6 @@ export const useFullscreen = (): FullscreenController => {
 
   const handleFullscreenError = () => {
     setIsEnabled(getFullscreenState())
-    setError(requestError)
   }
 
   onCleanup(() => {
