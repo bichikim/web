@@ -1,4 +1,4 @@
-import {createMemo} from 'solid-js'
+import {createEffect, createMemo, on} from 'solid-js'
 import {useInactivity} from 'src/hooks/use-inactivity'
 
 import {usePreference} from 'src/hooks/use-preference'
@@ -42,9 +42,21 @@ export const useScreenSaver = (): ScreenSaverController => {
   })
   const inactivity = useInactivity({
     activityThrottleMs: () => ACTIVITY_THROTTLE_MILLISECONDS,
-    enabled: () => timeoutMs() !== null,
     timeoutMs: () => timeoutMs() ?? 0,
   })
+
+  createEffect(
+    on(
+      () => timeoutMs() !== null,
+      (enabled) => {
+        if (enabled) {
+          inactivity.start()
+        } else {
+          inactivity.stop()
+        }
+      },
+    ),
+  )
 
   const onDelayChange = (nextDelay: ScreenSaverDelay) => {
     setStoredDelay(nextDelay)

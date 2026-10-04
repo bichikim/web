@@ -1,4 +1,4 @@
-import {onCleanup, onMount} from 'solid-js'
+import {createEffect, on, onCleanup, onMount} from 'solid-js'
 import {useInactivity} from 'src/hooks/use-inactivity'
 import {useVisibilityPreferences} from './use-visibility-preferences'
 
@@ -16,10 +16,21 @@ export const useUiAutoHide = () => {
   const settings = useVisibilityPreferences()
   const inactivity = useInactivity({
     capture: () => true,
-    enabled: () => settings.preferences().enabled,
     isBlocked: hasVisibleOverlay,
     timeoutMs: () => settings.preferences().seconds * MILLISECONDS_PER_SECOND,
   })
+  createEffect(
+    on(
+      () => settings.preferences().enabled,
+      (enabled) => {
+        if (enabled) {
+          inactivity.start()
+        } else {
+          inactivity.stop()
+        }
+      },
+    ),
+  )
   onMount(() => {
     const overlayObserver = new MutationObserver(() => {
       if (hasVisibleOverlay()) {
