@@ -61,6 +61,7 @@
     "@winter-love/solid-components": "workspace:*",
     "@winter-love/solid-use": "workspace:*",
     "@winter-love/utils": "workspace:*",
+    "@wllama/wllama": "3.6.1",
     "aws4fetch": "1.0.20",
     "class-variance-authority": "catalog:",
     "core-js": "3.50.0",

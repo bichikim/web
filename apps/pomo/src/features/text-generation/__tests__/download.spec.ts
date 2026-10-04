@@ -30,6 +30,28 @@ describe('isTextModelDownloaded', () => {
     )
   })
 
+  it('should require the LFM graph and external weights to be stored', async () => {
+    const storage = createStorage()
+    await expect(isTextModelDownloaded({modelId: 'lfm-1.2b', storage})).resolves.toBe(true)
+    expect(storage.get).toHaveBeenCalledTimes(2)
+    expect(storage.get).toHaveBeenCalledWith(
+      'https://huggingface.co/LiquidAI/LFM2.5-1.2B-Instruct-ONNX/resolve/main/onnx/model_q4.onnx',
+    )
+    expect(storage.get).toHaveBeenCalledWith(
+      'https://huggingface.co/LiquidAI/LFM2.5-1.2B-Instruct-ONNX/resolve/main/onnx/model_q4.onnx_data',
+    )
+    vi.mocked(storage.get).mockResolvedValueOnce(successResult(null))
+    await expect(isTextModelDownloaded({modelId: 'lfm-1.2b', storage})).resolves.toBe(false)
+  })
+
+  it('should check the exact QAD GGUF file instead of ONNX weights', async () => {
+    const storage = createStorage()
+    await expect(isTextModelDownloaded({modelId: 'lfm-2.6b-qad', storage})).resolves.toBe(true)
+    expect(storage.get).toHaveBeenCalledExactlyOnceWith(
+      'https://huggingface.co/LiquidAI/LFM2.5-2.6B-GGUF/resolve/main/LFM2.5-2.6B-QAD-Q4_0.gguf',
+    )
+  })
+
   it('should report a missing or unreadable model weight as not downloaded', async () => {
     const missingStorage = createStorage()
     vi.mocked(missingStorage.get).mockResolvedValueOnce(successResult(null))
