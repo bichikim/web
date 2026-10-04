@@ -1,10 +1,7 @@
 /** @vitest-environment jsdom */
 import {beforeEach, expect, it} from 'vitest'
 
-import {
-  readScreenSaverDelay,
-  SCREEN_SAVER_STORAGE_KEY,
-} from '../features/screen-saver/storage'
+import {readScreenSaverDelay, SCREEN_SAVER_STORAGE_KEY} from '../features/screen-saver/storage'
 
 beforeEach(() => {
   localStorage.clear()
