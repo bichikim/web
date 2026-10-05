@@ -1,9 +1,29 @@
 /** @vitest-environment jsdom */
 
-import {fireEvent, render, screen} from '@solidjs/testing-library'
+import {fireEvent, render, screen, within} from '@solidjs/testing-library'
+import {For} from 'solid-js'
 import {expect, it, vi} from 'vitest'
+import type {PSelectSingleProps} from '../../p-select/PSelect'
 
 import {LanguageLearningSettings} from '../Settings'
+
+vi.mock('../../p-select/PSelect', () => ({
+  PSelect: (props: PSelectSingleProps<string>) => (
+    <label>
+      {props.label}
+      <select
+        aria-label={props.label}
+        disabled={props.disabled}
+        onChange={(event) => props.onChange(event.currentTarget.value)}
+        value={props.value}
+      >
+        <For each={props.options}>
+          {(option) => <option value={option.value}>{option.label}</option>}
+        </For>
+      </select>
+    </label>
+  ),
+}))
 
 it.each([
   {name: '학습 언어', setting: 'language', value: 'ja'},
@@ -17,7 +37,7 @@ it.each([
     model: vi.fn(),
     voice: vi.fn(),
   }
-  render(() => (
+  const view = render(() => (
     <LanguageLearningSettings
       count={1}
       disabled={false}
@@ -31,14 +51,13 @@ it.each([
     />
   ))
 
-  fireEvent.keyDown(screen.getByRole('button', {name: new RegExp(setting.name)}), {
-    key: 'ArrowDown',
+  const select = within(view.container).getByRole('combobox', {
+    name: new RegExp(setting.name),
   })
-  const option = screen
-    .getAllByRole('option')
-    .find((candidate) => candidate.dataset.key === setting.value)
-  expect(option).toBeDefined()
-  fireEvent.click(option!)
+  expect(
+    Array.from(select.querySelectorAll('option')).some((option) => option.value === setting.value),
+  ).toBe(true)
+  fireEvent.change(select, {target: {value: setting.value}})
 
   expect(callbacks[setting.setting]).toHaveBeenCalledWith(
     setting.setting === 'count' ? Number(setting.value) : setting.value,
@@ -67,7 +86,7 @@ it('should disable every dropdown', () => {
     />
   ))
 
-  for (const select of screen.getAllByRole('button')) {
+  for (const select of screen.getAllByRole('combobox')) {
     expect(select).toBeDisabled()
   }
 
@@ -90,8 +109,8 @@ it('should lock sentence settings while preserving voice regeneration choices', 
     />
   ))
 
-  expect(screen.getByRole('button', {name: /학습 언어/})).toBeDisabled()
-  expect(screen.getByRole('button', {name: /만들 개수/})).toBeDisabled()
-  expect(screen.getByRole('button', {name: /목소리/})).toBeEnabled()
-  expect(screen.getByRole('button', {name: /음성 모델/})).toBeEnabled()
+  expect(screen.getByRole('combobox', {name: /학습 언어/})).toBeDisabled()
+  expect(screen.getByRole('combobox', {name: /만들 개수/})).toBeDisabled()
+  expect(screen.getByRole('combobox', {name: /목소리/})).toBeEnabled()
+  expect(screen.getByRole('combobox', {name: /음성 모델/})).toBeEnabled()
 })

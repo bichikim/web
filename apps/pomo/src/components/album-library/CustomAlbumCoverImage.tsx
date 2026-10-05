@@ -1,6 +1,6 @@
-import {createEffect, createSignal, onCleanup, Show} from 'solid-js'
+import {Show} from 'solid-js'
 
-import {replaceBlobObjectUrl} from '../../features/blob-object-url'
+import {useObjectUrl} from 'src/hooks/use-object-url'
 
 interface CustomAlbumCoverImageProps {
   readonly alt: string
@@ -9,17 +9,7 @@ interface CustomAlbumCoverImageProps {
 }
 
 export const CustomAlbumCoverImage = (props: CustomAlbumCoverImageProps) => {
-  const [source, setSource] = createSignal<string | null>(null)
-
-  createEffect(() => {
-    const image = props.coverImage
-    const imageUrl = replaceBlobObjectUrl(null, () => image)
-    setSource(imageUrl)
-
-    if (imageUrl !== null) {
-      onCleanup(() => replaceBlobObjectUrl(imageUrl, () => null))
-    }
-  })
+  const source = useObjectUrl(() => props.coverImage)
 
   return (
     <Show when={source()}>

@@ -77,6 +77,10 @@ import {useDialogueSceneGaze} from '../use-dialogue-scene-gaze'
 import {StudioOverlay} from './StudioOverlay'
 import {useStudioTour} from './use-tour'
 import {DesktopSurfaceHandle} from '../desktop-surface/DesktopSurfaceHandle'
+import {
+  usePStudioMotionInput,
+  usePStudioMotionInputSession,
+} from './PStudioMotionInputSessionProvider'
 
 const AUTOMATIC_PERIOD_REFRESH = 60_000
 
@@ -229,9 +233,10 @@ const StudioSceneView = (props: StudioSceneViewProps) => (
 
 interface StudioRuntimeOptions {
   readonly entry: ReturnType<typeof useStudioEntry>
+  readonly motionInputSession: ReturnType<typeof usePStudioMotionInputSession>
   readonly setAutomaticPeriod: Setter<ScenePeriod>
   readonly setCanUseGyroscope: Setter<boolean>
-  readonly setMotionInput: Setter<PSceneMotionInput>
+  readonly setMotionInput: (motionInput: PSceneMotionInput) => void
 }
 
 const useAutomaticScenePeriodRefresh = (setAutomaticPeriod: Setter<ScenePeriod>) => {
@@ -285,9 +290,11 @@ const useStudioRuntime = (options: StudioRuntimeOptions) => {
     const gyroscopeAvailable = supportsPSceneGyroscope()
     options.entry.restore()
     options.setCanUseGyroscope(gyroscopeAvailable)
-    if (gyroscopeAvailable) {
-      options.setMotionInput('gyroscope')
-    }
+    const rememberedMotionInput = options.motionInputSession?.motionInput()
+    const motionInput = rememberedMotionInput ?? (gyroscopeAvailable ? 'gyroscope' : 'drag')
+    options.setMotionInput(
+      motionInput === 'gyroscope' && !gyroscopeAvailable ? 'drag' : motionInput,
+    )
 
     useAutomaticScenePeriodRefresh(options.setAutomaticPeriod)
   })
@@ -457,7 +464,7 @@ export const PStudio = () => {
   const events = usePEvents()
   const pomoSay = usePSay({onBeforeSpeech: events.onStopDialoguePlayback})
   const [automaticPeriod, setAutomaticPeriod] = createSignal<ScenePeriod>('day')
-  const [motionInput, setMotionInput] = createSignal<PSceneMotionInput>('drag')
+  const {motionInput, motionInputSession, setMotionInput} = usePStudioMotionInput()
   const [motionMode, setMotionMode] = createSignal<PSceneMotionMode>('depth')
   const [canUseGyroscope, setCanUseGyroscope] = createSignal(false)
   const [isSceneLoading, setIsSceneLoading] = createSignal(true)
@@ -514,7 +521,13 @@ export const PStudio = () => {
       synchronizeDesktopBackground().catch(() => undefined)
     }
   })
-  useStudioRuntime({entry, setAutomaticPeriod, setCanUseGyroscope, setMotionInput})
+  useStudioRuntime({
+    entry,
+    motionInputSession,
+    setAutomaticPeriod,
+    setCanUseGyroscope,
+    setMotionInput,
+  })
   return (
     <section
       aria-label="Pomo"
