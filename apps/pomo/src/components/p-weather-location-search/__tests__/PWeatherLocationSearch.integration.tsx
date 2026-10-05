@@ -1,7 +1,6 @@
 /** @vitest-environment jsdom */
 
-import {render} from '@solidjs/testing-library'
-import type {JSX} from 'solid-js'
+import {fireEvent, render, screen} from '@solidjs/testing-library'
 import {afterEach, beforeEach, expect, it, vi} from 'vitest'
 
 const databaseMocks = vi.hoisted(() => {
@@ -15,9 +14,6 @@ const databaseMocks = vi.hoisted(() => {
 
   return {database: {insert, select}, insert, onConflictDoUpdate, values}
 })
-const comboboxMocks = vi.hoisted(() => ({
-  rootProps: undefined as Record<string, unknown> | undefined,
-}))
 
 vi.mock('src/env', () => ({env: {OPENWEATHER_API_KEY: 'weather-search-test-key'}}))
 vi.mock('src/server/database', async (importOriginal) => {
@@ -27,28 +23,6 @@ vi.mock('src/server/database', async (importOriginal) => {
 vi.mock('src/server/weather/provider-quota', () => ({
   reserveOpenWeatherRequest: vi.fn().mockResolvedValue(undefined),
 }))
-vi.mock('@kobalte/core/combobox', () => {
-  const passthrough = (props: {readonly children?: JSX.Element}) => <>{props.children}</>
-  const Combobox = Object.assign(
-    (props: Record<string, unknown>) => {
-      comboboxMocks.rootProps = props
-      return null
-    },
-    {
-      Content: passthrough,
-      Control: passthrough,
-      HiddenSelect: () => null,
-      Input: passthrough,
-      Item: passthrough,
-      ItemDescription: passthrough,
-      ItemLabel: passthrough,
-      Label: passthrough,
-      Listbox: passthrough,
-      Portal: passthrough,
-    },
-  )
-  return {Combobox}
-})
 
 import type {APIEvent} from '@solidjs/start/server'
 import {PWeatherLocationSearch} from '../PWeatherLocationSearch'
@@ -94,12 +68,6 @@ const createFetch = () =>
     throw new Error(`Unexpected weather-search request: ${url}`)
   })
 
-const flushMicrotasks = () =>
-  Array.from({length: 32}).reduce<Promise<void>>(
-    (promise) => promise.then(() => undefined),
-    Promise.resolve(),
-  )
-
 beforeEach(() => {
   vi.useFakeTimers()
 })
@@ -109,25 +77,19 @@ afterEach(() => {
   vi.unstubAllGlobals()
 })
 
-it('maps real provider search results to distinct combobox options', async () => {
+it('searches and selects distinct nearby locations through the real combobox and provider flow', async () => {
   const fetcher = createFetch()
   vi.stubGlobal('fetch', fetcher)
   const onChange = vi.fn()
   const view = render(() => <PWeatherLocationSearch onChange={onChange} />)
-  const props = comboboxMocks.rootProps as {
-    onChange: (location: {readonly id: string} | null) => void
-    onInputChange: (query: string) => void
-    options: ReadonlyArray<{readonly id: string; readonly name: string}>
-  }
+  const input = screen.getByRole('combobox')
 
-  props.onInputChange('Location')
-  vi.advanceTimersByTime(300)
-  await flushMicrotasks()
+  fireEvent.focus(input)
+  fireEvent.input(input, {target: {value: 'Location'}})
+  await vi.advanceTimersByTimeAsync(300)
 
-  expect(props.options.map(({id}) => id)).toEqual([
-    'openweather:51.52001,-0.11001',
-    'openweather:51.52004,-0.11004',
-  ])
+  expect(screen.getByRole('option', {name: /Location A/u})).toBeVisible()
+  expect(screen.getByRole('option', {name: /Location B/u})).toBeVisible()
   expect(fetcher.mock.calls.map(([request]) => String(request))).toContain(
     '/api/weather/locations?q=Location',
   )
@@ -142,7 +104,7 @@ it('maps real provider search results to distinct combobox options', async () =>
     }),
   ])
 
-  props.onChange(props.options[1] ?? null)
+  await fireEvent.click(screen.getByRole('option', {name: /Location B/u}))
   expect(onChange).toHaveBeenCalledWith(
     expect.objectContaining({id: 'openweather:51.52004,-0.11004', name: 'Location B'}),
   )

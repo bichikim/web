@@ -144,6 +144,7 @@ jobs:
             apps/pomo/src/components/p-layer-review/__tests__/PLayerReview.mouth-time-mode.integration.tsx \
             apps/pomo/src/components/p-settings/__tests__/PSettings.failure.integration.tsx \
             apps/pomo/src/components/p-service-terms/__tests__/PServiceTerms.integration.tsx \
+            apps/pomo/src/components/p-weather-location-search/__tests__/PWeatherLocationSearch.integration.tsx \
             apps/pomo/src/components/tarot/__tests__/Tarot.integration.tsx \
             apps/pomo/src/components/tools/__tests__/Moving.integration.tsx \
             apps/pomo/src/routes/__tests__/third-party-notices.integration.tsx \
