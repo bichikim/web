@@ -11,6 +11,9 @@ import {
   waitForTransaction,
 } from '../database'
 import {readCustomAlbums} from '../read-custom-albums'
+import {revokeCustomTrackObjectUrls} from '../to-custom-p-track'
+
+const HEALTHY_TRACK_ID = 'custom-track:healthy'
 
 const clearCustomAlbumDatabase = async (): Promise<void> => {
   const database = await openCustomAlbumDatabase()
@@ -23,7 +26,10 @@ const clearCustomAlbumDatabase = async (): Promise<void> => {
   await finished
 }
 
-afterEach(clearCustomAlbumDatabase)
+afterEach(async () => {
+  await clearCustomAlbumDatabase()
+  revokeCustomTrackObjectUrls(new Set([HEALTHY_TRACK_ID]))
+})
 
 it('should retain healthy albums when other stored albums reference missing or mismatched tracks', async () => {
   const healthyAlbum = {
@@ -33,7 +39,7 @@ it('should retain healthy albums when other stored albums reference missing or m
     createdAt: 1,
     id: 'custom-album:healthy',
     title: 'Healthy album',
-    trackIds: ['custom-track:healthy'],
+    trackIds: [HEALTHY_TRACK_ID],
     updatedAt: 1,
   }
   const missingTrackAlbum = {
@@ -62,7 +68,7 @@ it('should retain healthy albums when other stored albums reference missing or m
     audio: new Blob(['audio'], {type: 'audio/mpeg'}),
     durationSeconds: 60,
     fileName: 'healthy.mp3',
-    id: 'custom-track:healthy',
+    id: HEALTHY_TRACK_ID,
     title: 'Healthy track',
   }
   const database = await openCustomAlbumDatabase()
