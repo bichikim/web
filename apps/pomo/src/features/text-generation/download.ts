@@ -16,7 +16,13 @@ const getModelWeightUrls = (modelId: TextModelId): ReadonlyArray<string> => {
     .replaceAll('{model}', model.repositoryId)
     .replaceAll('{revision}', model.assetSource.revision)
 
-  return MODEL_WEIGHT_NAMES.flatMap((name) =>
+  if (model.architecture === 'lfm-2-gguf') {
+    return [new URL(`${modelPath}${model.weightFile}`, model.assetSource.host).href]
+  }
+
+  const weightNames = model.architecture === 'lfm-2' ? ['model'] : MODEL_WEIGHT_NAMES
+
+  return weightNames.flatMap((name) =>
     MODEL_WEIGHT_EXTENSIONS.map(
       (extension) =>
         new URL(
