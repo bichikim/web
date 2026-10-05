@@ -50,6 +50,17 @@ beforeEach(() => {
 
 afterEach(() => vi.clearAllMocks())
 
+it('should isolate standalone player routes and middleware while retaining SSR', () => {
+  createPlugins({...options, command: 'build', standaloneRelax: true})
+
+  expect(solidStart).toHaveBeenCalledWith({
+    devOverlay: false,
+    middleware: './src/middleware/relax.ts',
+    routeDir: './routes-relax',
+    ssr: true,
+  })
+})
+
 it.each([
   {remote: false, ssr: true, target: 'web'},
   {remote: true, ssr: true, target: 'apps-in-toss'},

@@ -87,6 +87,20 @@ it('should parse Atom links and content', () => {
   })
 })
 
+it.each(['created', 'issued'] as const)(
+  'should use an Atom %s date when published and updated are absent',
+  (dateElement) => {
+    const feed = parseFeedXml(
+      `<feed version="0.3" xmlns="http://purl.org/atom/ns#"><title>테스트 Atom</title><entry>
+        <${dateElement}>2026-08-14T01:00:00Z</${dateElement}>
+      </entry></feed>`,
+      'https://example.com/atom.xml',
+    )
+
+    expect(feed.items[0]?.publishedAt).toBe('2026-08-14T01:00:00.000Z')
+  },
+)
+
 it('should prefer the Atom published date when updated appears first', () => {
   const feed = parseFeedXml(
     `<feed xmlns="http://www.w3.org/2005/Atom"><title>테스트 Atom</title><entry>
@@ -119,6 +133,47 @@ it('should reject an Atom updated date with an impossible calendar day', () => {
 
   expect(feed.items[0]?.publishedAt).toBeNull()
 })
+
+it.each(['Wed, 30 Feb 2026 00:00:00 GMT', 'Sat, 29 Feb 2025 00:00:00 GMT'])(
+  'should reject an RSS pubDate with an impossible calendar day: %s',
+  (pubDate) => {
+    const feed = parseFeedXml(
+      `<rss version="2.0"><channel><title>테스트 RSS</title><item>
+      <pubDate>${pubDate}</pubDate>
+    </item></channel></rss>`,
+      'https://example.com/rss.xml',
+    )
+
+    expect(feed.items[0]?.publishedAt).toBeNull()
+  },
+)
+
+it.each([
+  {
+    pubDate: 'Thu, 29 Feb 2024 00:00:00 +0530',
+    publishedAt: '2024-02-28T18:30:00.000Z',
+  },
+  {
+    pubDate: 'Fri, 14 Aug 2026 00:00:00 -0700',
+    publishedAt: '2026-08-14T07:00:00.000Z',
+  },
+  {
+    pubDate: 'Fri, 14 Aug 26 00:00:00 GMT',
+    publishedAt: '2026-08-14T00:00:00.000Z',
+  },
+])(
+  'should preserve a valid RSS pubDate timezone and year form: $pubDate',
+  ({pubDate, publishedAt}) => {
+    const feed = parseFeedXml(
+      `<rss version="2.0"><channel><title>테스트 RSS</title><item>
+      <pubDate>${pubDate}</pubDate>
+    </item></channel></rss>`,
+      'https://example.com/rss.xml',
+    )
+
+    expect(feed.items[0]?.publishedAt).toBe(publishedAt)
+  },
+)
 
 it('should preserve a valid Atom date before year 0100', () => {
   const feed = parseFeedXml(
@@ -327,10 +382,33 @@ it('should skip an alternate Atom link with an empty href', () => {
   expect(feed.items[0]?.link).toBe('https://example.com/article')
 })
 
+it.each([' alternate ', '\talternate\t'] as const)(
+  'should trim whitespace around an alternate Atom relation: %s',
+  (relation) => {
+    const feed = parseFeedXml(
+      `<feed><title>Atom</title><entry><link rel="${relation}" href="https://example.com/article" /></entry></feed>`,
+      'https://example.com/feed.xml',
+    )
+
+    expect(feed.items[0]?.link).toBe('https://example.com/article')
+    expect(feed.items[0]?.id).toBe('https://example.com/article')
+  },
+)
+
 it('should prefer an uppercase alternate Atom link', () => {
   const feed = parseFeedXml(
     `<feed><title>Atom</title><entry><link rel="self" href="https://example.com/self" />
       <link rel="ALTERNATE" href="https://example.com/article" /></entry></feed>`,
+    'https://example.com/feed.xml',
+  )
+
+  expect(feed.items[0]?.link).toBe('https://example.com/article')
+  expect(feed.items[0]?.id).toBe('https://example.com/article')
+})
+
+it('should recognize an alternate Atom link among multiple relation tokens', () => {
+  const feed = parseFeedXml(
+    `<feed><title>Atom</title><entry><link rel="alternate noopener" href="https://example.com/article" /></entry></feed>`,
     'https://example.com/feed.xml',
   )
 

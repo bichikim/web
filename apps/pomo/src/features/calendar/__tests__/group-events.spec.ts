@@ -153,6 +153,23 @@ it.each([
   ).toBe(0)
 })
 
+it.each([
+  {
+    description: 'reversed',
+    end: '2026-09-05T01:00:00.000Z',
+    start: '2026-09-05T02:00:00.000Z',
+  },
+  {
+    description: 'zero-length',
+    end: '2026-09-05T02:00:00.000Z',
+    start: '2026-09-05T02:00:00.000Z',
+  },
+])('should omit timed events with a $description interval', ({end, start}) => {
+  const source = {...event, end, start}
+
+  expect(groupCalendarEvents([source], ['2026-09-05'], 'UTC').get('2026-09-05')).toBeUndefined()
+})
+
 it.each(['', ' ', 'not-a-date', '2026-02-31'])(
   'should omit all-day events with an invalid start value %j',
   (start) => {

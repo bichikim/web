@@ -27,7 +27,9 @@ MANIFEST_NAME = "manifest.json"
 def parse_arguments() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
     parser.add_argument("--da3-source", required=True, type=Path)
-    parser.add_argument("--input-dir", required=True, type=Path)
+    sources = parser.add_mutually_exclusive_group(required=True)
+    sources.add_argument("--input-dir", type=Path)
+    sources.add_argument("--source", action="append", type=Path)
     parser.add_argument("--output-dir", required=True, type=Path)
     parser.add_argument("--only", action="append", default=[])
     parser.add_argument("--process-resolution", default=1008, type=int)
@@ -71,7 +73,7 @@ def normalize_depth(depth: np.ndarray) -> np.ndarray:
 
 
 def output_name(source: Path) -> str:
-    scene_name = source.name.removeprefix(SCENE_PREFIX).removesuffix(SCENE_SUFFIX)
+    scene_name = source.stem.removeprefix(SCENE_PREFIX).removesuffix("-concept")
     return f"depth-{scene_name}.png"
 
 
@@ -99,9 +101,16 @@ def load_existing_maps(output_dir: Path, process_resolution: int) -> dict[str, d
 
 def main() -> None:
     arguments = parse_arguments()
-    all_sources = sorted(arguments.input_dir.glob(f"{SCENE_PREFIX}*{SCENE_SUFFIX}"))
+    all_sources = sorted(
+        arguments.source
+        if arguments.source is not None
+        else arguments.input_dir.glob(f"{SCENE_PREFIX}*{SCENE_SUFFIX}")
+    )
     if not all_sources:
-        raise ValueError(f"no {SCENE_PREFIX}*{SCENE_SUFFIX} scenes found")
+        raise ValueError("no depth-map sources found")
+    output_names = [output_name(source) for source in all_sources]
+    if len(set(output_names)) != len(output_names):
+        raise ValueError("depth-map sources have duplicate output names")
 
     sources = all_sources
     existing_maps: dict[str, dict] = {}

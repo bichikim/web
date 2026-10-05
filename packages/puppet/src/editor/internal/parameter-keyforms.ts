@@ -282,11 +282,9 @@ export const deleteParameter = (options: ParameterBindingTarget): PuppetDocument
   const remainingBindings = getDocumentParameterBindings(options.document).filter(
     (candidate) => candidate.id !== binding.id,
   )
-  const retainedParameterIds = new Set(
-    remainingBindings.flatMap((candidate) => candidate.parameterIds),
-  )
+  const retainedParameterIds = new Set(remainingBindings.flatMap((item) => item.parameterIds))
   const removedParameterIds = new Set(
-    binding.parameterIds.filter((parameterId) => !retainedParameterIds.has(parameterId)),
+    binding.parameterIds.filter((id) => !retainedParameterIds.has(id)),
   )
   const pendulums = options.document.physics?.pendulums.filter(
     (pendulum) =>
@@ -300,6 +298,9 @@ export const deleteParameter = (options: ParameterBindingTarget): PuppetDocument
     ),
     motions: options.document.motions.map((motion) => ({
       ...motion,
+      timelineParameterIds: motion.timelineParameterIds?.filter(
+        (id) => !removedParameterIds.has(id),
+      ),
       tracks: motion.tracks.filter(
         (track) => track.kind !== 'parameter' || !removedParameterIds.has(track.parameterId),
       ),
@@ -590,7 +591,6 @@ export const moveParameterKeyform = (options: MoveParameterKeyformOptions) => {
     }
   })
 }
-
 export {createParameterPreview, sampleParameterVertices}
 export {
   setParameterKeyformDeformerControlPoints,

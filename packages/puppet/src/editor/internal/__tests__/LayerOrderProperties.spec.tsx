@@ -33,7 +33,6 @@ describe('LayerOrderProperties', () => {
       />
     ))
 
-    fireEvent.click(view.getByText(/레이어 순서 규칙/))
     fireEvent.click(view.getByLabelText(/shape-circle.*mesh-preview/))
     expect(view.getByRole('button', {name: 'angle-x 제거'})).toBeDefined()
     expect(view.getByRole('button', {name: 'angle-y 제거'})).toBeDefined()
@@ -56,7 +55,6 @@ describe('LayerOrderProperties', () => {
       />
     ))
 
-    fireEvent.click(view.getByText(/레이어 순서 규칙/))
     fireEvent.click(view.getByRole('button', {name: '선택 파츠로 규칙 추가'}))
     expect(document().layerOrderRules).toBeUndefined()
     expect(view.getByRole('button', {name: '규칙 저장'})).toBeDisabled()
@@ -84,7 +82,6 @@ describe('LayerOrderProperties', () => {
       />
     ))
 
-    fireEvent.click(view.getByText(/레이어 순서 규칙/))
     fireEvent.click(view.getByRole('button', {name: '선택 파츠로 규칙 추가'}))
     fireEvent.input(view.getByRole('searchbox', {name: '기준 파츠 검색'}), {
       target: {value: 'diamond'},
@@ -149,7 +146,6 @@ describe('LayerOrderProperties', () => {
       />
     ))
 
-    fireEvent.click(view.getByText(/레이어 순서 규칙/))
     const firstRule = view.getByLabelText(/shape-circle.*mesh-preview/).closest('details')!
     fireEvent.click(view.getByLabelText(/shape-circle.*mesh-preview/))
     expect(within(firstRule).getByRole('button', {name: '규칙 위로'})).toBeDisabled()
@@ -168,7 +164,6 @@ describe('LayerOrderProperties', () => {
       />
     ))
 
-    fireEvent.click(view.getByText(/레이어 순서 규칙/))
     fireEvent.click(view.getByRole('button', {name: '선택 파츠로 규칙 추가'}))
     fireEvent.click(view.getByRole('button', {name: '취소'}))
     expect(document().layerOrderRules).toBeUndefined()
@@ -190,8 +185,61 @@ describe('LayerOrderProperties', () => {
       <LayerOrderProperties document={createDemoDocument()} selectedPartIds={[]} />
     ))
 
-    fireEvent.click(view.getByText(/레이어 순서 규칙/))
     expect(view.getByRole('button', {name: '선택 파츠로 규칙 추가'})).toBeDisabled()
     expect(view.getByText('왼쪽 레이어 목록에서 이동할 파츠를 선택하세요.')).toBeDefined()
+  })
+
+  test('should show only rules for the current parameter and indicate their live state', () => {
+    const source = createDemoDocument()
+    const document = {
+      ...source,
+      layerOrderRules: [
+        {
+          partIds: ['shape-circle'],
+          placement: 'before' as const,
+          referencePartId: 'mesh-preview',
+          when: {comparison: 'greater-than' as const, parameterIds: ['angle-x'], threshold: 10},
+        },
+        {
+          partIds: ['shape-diamond'],
+          placement: 'after' as const,
+          referencePartId: 'mesh-preview',
+          when: {comparison: 'greater-than' as const, parameterIds: ['angle-y'], threshold: 10},
+        },
+      ],
+    }
+    const view = render(() => (
+      <LayerOrderProperties
+        document={document}
+        parameterIds={['angle-x']}
+        parameterValues={{'angle-x': 20}}
+        selectedPartIds={['shape-circle']}
+      />
+    ))
+
+    expect(view.getByText('규칙 1개 · 현재 1개 적용 중')).toBeVisible()
+    expect(view.getByText('현재 값 20 · 조건 충족')).toBeDefined()
+    expect(view.getByLabelText(/shape-circle.*mesh-preview/)).toBeDefined()
+    expect(view.queryByLabelText(/shape-diamond.*mesh-preview/)).toBeNull()
+  })
+
+  test('should preselect the current parameter for a new rule', () => {
+    const [document, setDocument] = createSignal(createDemoDocument())
+    const view = render(() => (
+      <LayerOrderProperties
+        document={document()}
+        onDocumentChange={setDocument}
+        parameterIds={['angle-x']}
+        selectedPartIds={['shape-circle']}
+      />
+    ))
+
+    fireEvent.click(view.getByRole('button', {name: '선택 파츠로 규칙 추가'}))
+    fireEvent.change(view.getByRole('combobox', {name: '기준 파츠'}), {
+      target: {value: 'mesh-preview'},
+    })
+    fireEvent.click(view.getByRole('button', {name: '규칙 저장'}))
+
+    expect(document().layerOrderRules?.[0]?.when.parameterIds).toEqual(['angle-x'])
   })
 })

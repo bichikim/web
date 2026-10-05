@@ -3,9 +3,19 @@ import {createTokenIdsMatching} from '../text-generation/create-token-ids-matchi
 
 import type {TextTokenVocabulary} from '../text-generation/runtime'
 
-const FOREIGN_CJK_PATTERN = /[\p{Script_Extensions=Han}\p{Script=Hiragana}\p{Script=Katakana}]/u
-const SENTENCE_PATTERN =
-  /(?:[^.!?\n。！？]|(?<=[\p{Script=Latin}\p{N}])\.(?=[\p{Script=Latin}\p{N}]))+[.!?\n。！？]*|[.!?\n。！？]+/gu
+const FOREIGN_CJK_PATTERN = /[\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}]/u
+const SENTENCE_CONTENT_PATTERN = [
+  String.raw`(?<!\S)\d+\.(?=\s+\S)`,
+  String.raw`[^.!?\n。！？]`,
+  String.raw`(?<=[\p{Script=Latin}\p{N}])\.(?=[\p{Script=Latin}\p{N}])`,
+  String.raw`(?<=\b(?:Mr|Dr))\.(?=\s+\p{L})`,
+].join('|')
+const SENTENCE_PATTERN_SOURCE = [
+  '(?:',
+  SENTENCE_CONTENT_PATTERN,
+  String.raw`)+[.!?\n。！？]*|[.!?\n。！？]+`,
+].join('')
+const SENTENCE_PATTERN = new RegExp(SENTENCE_PATTERN_SOURCE, 'gu')
 const REFINEMENT_FALLBACK = '답변의 일부 표현을 자연스러운 한국어로 바꾸지 못했어요.'
 
 interface RefiningKoreanTextSegment {

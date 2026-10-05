@@ -36,19 +36,24 @@ export interface SelectedKeyframe {
 export const getParameterTracks = (
   document: PuppetDocument,
   motion: PuppetMotion | undefined,
-): ReadonlyArray<ParameterTimelineTrack> =>
-  getVisibleParameters(document).map((parameter) => {
-    const track = motion?.tracks.find(
-      (candidate) => candidate.kind === 'parameter' && candidate.parameterId === parameter.id,
-    )
-    return {
-      keyframes: sortBy(track?.keyframes ?? [], ['time']).map((keyframe) => ({
+): ReadonlyArray<ParameterTimelineTrack> => {
+  const tracks = new Map(
+    motion?.tracks.flatMap((track) =>
+      track.kind === 'parameter' ? [[track.parameterId, track] as const] : [],
+    ),
+  )
+  const visibleIds = new Set([...(motion?.timelineParameterIds ?? []), ...tracks.keys()])
+
+  return getVisibleParameters(document)
+    .filter((parameter) => visibleIds.has(parameter.id))
+    .map((parameter) => ({
+      keyframes: sortBy(tracks.get(parameter.id)?.keyframes ?? [], ['time']).map((keyframe) => ({
         easing: keyframe.easing ?? 'linear',
         time: keyframe.time,
       })),
       parameter,
-    }
-  })
+    }))
+}
 
 export const getFrame = (time: number, framesPerSecond = DEFAULT_PUPPET_FRAMES_PER_SECOND) =>
   Math.round(time * framesPerSecond)

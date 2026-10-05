@@ -1,3 +1,4 @@
+import {hasValidIsoCalendarDate} from 'src/utils/iso-calendar-date'
 import DOMPurify from 'dompurify'
 
 /* istanbul ignore next -- Wallaby inconsistently counts module initialization across workers. */
@@ -8,8 +9,23 @@ const ITEM_FINGERPRINT_PRIMARY_MODULUS = 2_147_483_647
 const ITEM_FINGERPRINT_RADIX = 36
 const ITEM_FINGERPRINT_SECONDARY_BASE = 37
 const ITEM_FINGERPRINT_SECONDARY_MODULUS = 2_147_483_629
-const ISO_DATE_LENGTH = 'YYYY-MM-DD'.length
-const ISO_DATE_PREFIX_PATTERN = /^\d{4}-\d{2}-\d{2}/u
+const ISO_DATE_PREFIX_PATTERN = /^(?<year>\d{4})-(?<month>\d{2})-(?<day>\d{2})/u
+const MONTH_ABBREVIATIONS = [
+  'jan',
+  'feb',
+  'mar',
+  'apr',
+  'may',
+  'jun',
+  'jul',
+  'aug',
+  'sep',
+  'oct',
+  'nov',
+  'dec',
+] as const
+const RFC_822_DATE_PREFIX_PATTERN =
+  /^(?:[A-Z]{3},\s*)?(?<day>\d{1,2})\s+(?<month>[A-Z]{3})\s+(?<year>\d{2,4})\b/iu
 
 export interface ParsedFeedItem {
   readonly content: string
@@ -79,16 +95,21 @@ const getLink = (element: Element, baseUrl: string) => {
   const links = getChildren(element).filter((child) => child.localName.toLowerCase() === 'link')
   const candidates = links.map((link) => ({
     hasHref: link.hasAttribute('href'),
-    relation: link.getAttribute('rel'),
+    relationTokens:
+      link
+        .getAttribute('rel')
+        ?.toLowerCase()
+        .split(/[\t\n\f\r ]+/u) ?? null,
     url: resolveUrl(link.getAttribute('href') ?? link.textContent?.trim() ?? '', baseUrl),
   }))
   const preferred =
     candidates.find(
-      ({relation, url}) => relation?.toLowerCase() === 'alternate' && url.length > 0,
+      ({relationTokens, url}) => relationTokens?.includes('alternate') === true && url.length > 0,
     ) ??
-    candidates.find(({relation, url}) => relation === null && url.length > 0) ??
+    candidates.find(({relationTokens, url}) => relationTokens === null && url.length > 0) ??
     candidates.find(
-      ({hasHref, relation, url}) => hasHref && relation?.toLowerCase() === 'self' && url.length > 0,
+      ({hasHref, relationTokens, url}) =>
+        hasHref && relationTokens?.includes('self') === true && url.length > 0,
     )
   return preferred?.url ?? ''
 }
@@ -104,16 +125,34 @@ const getContent = (element: Element) => {
     ? {content: summary, contentKind: 'summary' as const}
     : {content: '', contentKind: 'none' as const}
 }
+const isValidCalendarDate = (year: number, month: number, day: number) => {
+  if (month < 1 || month > MONTH_ABBREVIATIONS.length || day < 1) {
+    return false
+  }
+
+  const endOfMonth = new Date(0)
+  endOfMonth.setUTCFullYear(year, month, 0)
+  return day <= endOfMonth.getUTCDate()
+}
 const parseFeedTimestamp = (value: string): number | null => {
   const normalizedValue = value.trim()
-  const datePrefix = normalizedValue.slice(0, ISO_DATE_LENGTH)
+  const isoDateParts = normalizedValue.match(ISO_DATE_PREFIX_PATTERN)?.groups
 
-  if (ISO_DATE_PREFIX_PATTERN.test(normalizedValue)) {
-    const parsedDate = new Date(`${datePrefix}T00:00:00Z`)
+  if (isoDateParts !== undefined && !hasValidIsoCalendarDate(normalizedValue)) {
+    return null
+  }
+
+  const rfc822DateParts = normalizedValue.match(RFC_822_DATE_PREFIX_PATTERN)?.groups
+
+  if (rfc822DateParts !== undefined) {
+    const day = Number(rfc822DateParts.day)
+    const monthName = rfc822DateParts.month!.toLowerCase()
+    const month = MONTH_ABBREVIATIONS.findIndex((abbreviation) => abbreviation === monthName) + 1
+    const yearTimestamp = Date.parse(`1 ${monthName} ${rfc822DateParts.year} 00:00 GMT`)
 
     if (
-      Number.isNaN(parsedDate.getTime()) ||
-      parsedDate.toISOString().slice(0, ISO_DATE_LENGTH) !== datePrefix
+      Number.isNaN(yearTimestamp) ||
+      !isValidCalendarDate(new Date(yearTimestamp).getUTCFullYear(), month, day)
     ) {
       return null
     }
@@ -123,7 +162,7 @@ const parseFeedTimestamp = (value: string): number | null => {
   return Number.isNaN(timestamp) ? null : timestamp
 }
 const getPublishedAt = (element: Element) => {
-  const timestamp = ['published', 'pubdate', 'updated', 'date']
+  const timestamp = ['published', 'pubdate', 'updated', 'date', 'created', 'issued']
     .map((name) => parseFeedTimestamp(getChildText(element, [name])))
     .find((value) => value !== null)
 

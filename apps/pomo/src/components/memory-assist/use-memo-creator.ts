@@ -1,6 +1,5 @@
 import {type Accessor, createMemo, createSignal, onCleanup, onMount} from 'solid-js'
 import {isNonBlankString} from 'src/utils/is-non-blank-string'
-import {formatLocalDate} from 'src/utils/format-local-date'
 
 import * as m from '@paraglide/message'
 import {
@@ -33,7 +32,6 @@ export const useMemoCreator = (): MemoCreator => {
   const [isOpen, setIsOpen] = createSignal(false)
   const [message, setMessage] = createSignal<string | null>(null)
   const [text, setText] = createSignal('')
-  const [reminderDateReference, setReminderDateReference] = createSignal(new Date())
   const [reminderDraft, setReminderDraft] = createSignal(
     createReminderDraft({exactReminderAt: null, now: new Date(), recallMode: 'none'}),
   )
@@ -51,9 +49,6 @@ export const useMemoCreator = (): MemoCreator => {
 
   const changeReminder = (nextReminderDraft: ReminderDraft) => {
     draftRevision += 1
-    if (nextReminderDraft.reminderDay !== reminderDraft().reminderDay) {
-      setReminderDateReference(new Date())
-    }
     setReminderDraft(nextReminderDraft)
     persistCreationDraft(text(), nextReminderDraft)
   }
@@ -61,7 +56,6 @@ export const useMemoCreator = (): MemoCreator => {
   const changeOpen = (nextOpen: boolean) => {
     if (nextOpen) {
       draftRevision += 1
-      setReminderDateReference(new Date())
       setMessage(null)
     }
     setIsOpen(nextOpen)
@@ -92,16 +86,12 @@ export const useMemoCreator = (): MemoCreator => {
     const now = new Date()
     const savedText = text()
     const currentDraft = reminderDraft()
-    const reminderDate =
-      currentDraft.reminderDay === 'today'
-        ? formatLocalDate(reminderDateReference())
-        : currentDraft.customDate
     const exactReminderAt = currentDraft.exactEnabled
       ? resolveReminderAt(
           currentDraft.reminderDay,
-          reminderDate,
+          currentDraft.customDate,
           currentDraft.reminderTime,
-          currentDraft.reminderDay === 'tomorrow' ? now : reminderDateReference(),
+          now,
         )
       : null
 

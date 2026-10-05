@@ -14,6 +14,7 @@ import {PreviewButton} from './PreviewButton'
 interface PAlbumTrackListProps {
   readonly albumTitle: string
   readonly onAddTrack: (track: PTrack) => void
+  readonly onRemoveTracks?: (trackIds: ReadonlySet<string>) => void
   readonly onPreview: (request: PTrackPreviewRequest) => void
   readonly pendingTrackId: string | null
   readonly playableTracks: readonly PTrack[]
@@ -21,6 +22,51 @@ interface PAlbumTrackListProps {
   readonly trackIds: ReadonlySet<string>
   readonly tracks: readonly PTrackListing[]
 }
+
+interface TrackQueueButtonProps {
+  readonly isInPlayer: boolean
+  readonly onAddTrack: (track: PTrack) => void
+  readonly onRemoveTracks?: (trackIds: ReadonlySet<string>) => void
+  readonly playableTrack?: PTrack
+  readonly title: string
+  readonly trackId: string
+}
+
+const TrackQueueButton = (props: TrackQueueButtonProps) => (
+  <Show when={props.playableTrack || props.isInPlayer}>
+    <button
+      aria-label={
+        props.isInPlayer
+          ? props.onRemoveTracks === undefined
+            ? m.album_track_in_player({title: props.title})
+            : m.album_track_remove({title: props.title})
+          : m.album_track_add({title: props.title})
+      }
+      class="grid size-8 flex-none cursor-pointer place-items-center rounded-control border
+        border-solid border-border bg-transparent text-highlight outline-none
+        transition-colors hover:border-border-hover hover:bg-surface focus-visible:shadow-focus
+        disabled:cursor-not-allowed disabled:opacity-45 disabled:hover:border-border
+        disabled:hover:bg-transparent motion-reduce:transition-none"
+      disabled={props.isInPlayer && props.onRemoveTracks === undefined}
+      onClick={() => {
+        if (props.isInPlayer) {
+          props.onRemoveTracks?.(new Set([props.trackId]))
+          return
+        }
+
+        if (props.playableTrack !== undefined) {
+          props.onAddTrack(props.playableTrack)
+        }
+      }}
+      type="button"
+    >
+      <span
+        aria-hidden="true"
+        class={props.isInPlayer ? 'i-tabler-check size-4' : 'i-tabler-plus size-4'}
+      />
+    </button>
+  </Show>
+)
 
 export const PAlbumTrackList = (props: PAlbumTrackListProps) => {
   const requestTrackAccess = useAction(requestTrackAccessAction)
@@ -71,6 +117,8 @@ export const PAlbumTrackList = (props: PAlbumTrackListProps) => {
             const isInPlayer = () => props.trackIds.has(track.id)
             const isPreviewing = () => props.playingTrackId === track.id
             const isLimited = () => playableTrack() === undefined
+            const isPreviewLimitVisible = () =>
+              isPreviewing() && props.pendingTrackId !== track.id && isLimited()
             const isAccessPending = () =>
               accessSubmissions.some(
                 (submission) => submission.pending && submission.input[0] === track.id,
@@ -83,14 +131,18 @@ export const PAlbumTrackList = (props: PAlbumTrackListProps) => {
                 </span>
                 <span class="min-w-0 flex-1">
                   <span class="block truncate text-foreground">{track.title}</span>
-                  <span class="mt-0.5 flex min-w-0 items-center gap-1.5 text-sm leading-5">
-                    <span class="min-w-0 truncate">{track.artist}</span>
-                    <Show when={isPreviewing() && props.pendingTrackId !== track.id && isLimited()}>
-                      <PTag class="flex-none" tone="highlight">
-                        {m.album_preview_limited()}
-                      </PTag>
-                    </Show>
-                  </span>
+                  <Show when={track.artist.length > 0 || isPreviewLimitVisible()}>
+                    <span class="mt-0.5 flex min-w-0 items-center gap-1.5 text-sm leading-5">
+                      <Show when={track.artist.length > 0}>
+                        <span class="min-w-0 truncate">{track.artist}</span>
+                      </Show>
+                      <Show when={isPreviewLimitVisible()}>
+                        <PTag class="flex-none" tone="highlight">
+                          {m.album_preview_limited()}
+                        </PTag>
+                      </Show>
+                    </span>
+                  </Show>
                 </span>
                 <PreviewButton
                   isLimited={isLimited()}
@@ -129,33 +181,14 @@ export const PAlbumTrackList = (props: PAlbumTrackListProps) => {
                   }}
                   title={track.title}
                 />
-                <Show when={playableTrack()}>
-                  {(playable) => (
-                    <>
-                      <button
-                        aria-label={
-                          isInPlayer()
-                            ? m.album_track_in_player({title: track.title})
-                            : m.album_track_add({title: track.title})
-                        }
-                        class="grid size-8 flex-none cursor-pointer place-items-center
-                          rounded-control border border-solid border-border bg-transparent
-                          text-highlight outline-none transition-colors hover:border-border-hover
-                          hover:bg-surface focus-visible:shadow-focus disabled:cursor-not-allowed
-                          disabled:opacity-45 disabled:hover:border-border
-                          disabled:hover:bg-transparent motion-reduce:transition-none"
-                        disabled={isInPlayer()}
-                        onClick={() => props.onAddTrack(playable())}
-                        type="button"
-                      >
-                        <span
-                          aria-hidden="true"
-                          class={isInPlayer() ? 'i-tabler-check size-4' : 'i-tabler-plus size-4'}
-                        />
-                      </button>
-                    </>
-                  )}
-                </Show>
+                <TrackQueueButton
+                  isInPlayer={isInPlayer()}
+                  onAddTrack={props.onAddTrack}
+                  onRemoveTracks={props.onRemoveTracks}
+                  playableTrack={playableTrack()}
+                  title={track.title}
+                  trackId={track.id}
+                />
               </li>
             )
           }}

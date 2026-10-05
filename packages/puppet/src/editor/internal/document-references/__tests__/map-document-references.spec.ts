@@ -4,6 +4,21 @@ import {parseDocumentValue} from '../../../../player/parse-document'
 import {mapDocumentReferences} from '../map-document-references'
 import {createDemoDocument} from '../../../../player/create-demo-document'
 
+test('should rename saved timeline parameter rows with their parameter definitions', () => {
+  const source = createDemoDocument()
+  const document = {
+    ...source,
+    motions: source.motions.map((motion) => ({
+      ...motion,
+      timelineParameterIds: ['angle-x'],
+    })),
+  }
+  const renamed = mapDocumentReferences({document, rename: (id) => `copy:${id}`})
+
+  expect(renamed.motions[0]?.timelineParameterIds).toEqual(['copy:angle-x'])
+  expect(parseDocumentValue(renamed).ok).toBe(true)
+})
+
 test('should rename layer rule references and remove rules with removed anchors or empty selections', () => {
   const source = createDemoDocument()
   const partIds = source.parts.map((part) => part.id)

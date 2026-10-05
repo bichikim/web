@@ -10,6 +10,7 @@ import {layerOrderShortcuts} from './uno/shortcuts/layer-order'
 import {propertiesShortcuts} from './uno/shortcuts/properties'
 import {canvasShortcuts} from './uno/shortcuts/canvas'
 import {parametersShortcuts} from './uno/shortcuts/parameters'
+import {timelineShortcuts} from './uno/shortcuts/timeline'
 import {dialogsShortcuts} from './uno/shortcuts/dialogs'
 
 const shortcuts = {
@@ -26,6 +27,7 @@ const shortcuts = {
   ...canvasShortcuts,
   ...brushShortcuts,
   ...parametersShortcuts,
+  ...timelineShortcuts,
   ...dialogsShortcuts,
 }
 

@@ -10,18 +10,17 @@ describe('parseDocument spatial surface', () => {
   const controlPoints = part.mesh.vertices.flatMap((coordinate, index) =>
     index % 2 === 0 ? [coordinate, part.mesh.vertices[index + 1]!, 0] : [],
   )
-  const spatial = {controlPoints, origin: [0, 0, 0], rotationParameterIds: [null, 'angle-x', null]}
+  const spatial = {controlPoints, origin: [0, 0, 0]}
   const document = {...source, parts: [{...part, spatial}, ...source.parts.slice(1)]}
 
   test('should accept a textured 3D surface with matching mesh vertices', () => {
     expect(parseDocument(JSON.stringify(document))).toMatchObject({ok: true})
   })
 
-  test('should reject malformed spatial coordinates and missing parameters', () => {
+  test('should reject malformed spatial coordinates', () => {
     for (const invalid of [
       {...spatial, controlPoints: [0, 0]},
       {...spatial, origin: [0, 0]},
-      {...spatial, rotationParameterIds: [null, 'missing', null]},
     ]) {
       expect(
         parseDocument(
@@ -32,6 +31,17 @@ describe('parseDocument spatial surface', () => {
         ),
       ).toMatchObject({ok: false})
     }
+  })
+
+  test('should still open documents with an obsolete direct rotation connection', () => {
+    const legacy = {
+      ...document,
+      parts: [
+        {...part, spatial: {...spatial, rotationParameterIds: [null, 'missing', null]}},
+        ...source.parts.slice(1),
+      ],
+    }
+    expect(parseDocument(JSON.stringify(legacy)).ok).toBe(true)
   })
 
   test('should accept optional movement and scale on old 3D documents but reject a zero scale', () => {

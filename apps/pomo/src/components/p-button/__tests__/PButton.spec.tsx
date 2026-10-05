@@ -349,3 +349,60 @@ it('should forward keyboard and blur events through the headless root', () => {
   expect(onKeyDown).toHaveBeenCalledOnce()
   expect(onBlur).toHaveBeenCalledOnce()
 })
+
+it('should render a native link with shared button content when href is provided', () => {
+  const result = render(() => (
+    <PButton href="/?layout=all-in-one" icon="i-tabler-apps" leadingImage="pomo-smile.png">
+      통합앱으로 돌아가기
+    </PButton>
+  ))
+  const link = result.getByRole('link', {name: '통합앱으로 돌아가기'})
+
+  expect(link.tagName).toBe('A')
+  expect(link).toHaveAttribute('href', '/?layout=all-in-one')
+  expect(link).not.toHaveAttribute('type')
+  expect(link.querySelector('img')).toHaveAttribute('src', 'pomo-smile.png')
+})
+
+it('should emit the source link and preserve native keyboard and blur events', () => {
+  const onPress = vi.fn()
+  const onBlur = vi.fn()
+  const onKeyDown = vi.fn()
+  const result = render(() => (
+    <PButton href="#relax" onBlur={onBlur} onKeyDown={onKeyDown} onPress={onPress}>
+      릴랙스 모드
+    </PButton>
+  ))
+  const link = result.getByRole('link', {name: '릴랙스 모드'})
+
+  fireEvent.click(link)
+  fireEvent.keyDown(link, {key: 'Escape'})
+  fireEvent.blur(link)
+
+  expect(onPress).toHaveBeenCalledWith(link)
+  expect(onBlur).toHaveBeenCalledOnce()
+  expect(onKeyDown).toHaveBeenCalledOnce()
+})
+
+it('should prevent a disabled link from navigating or emitting a press', () => {
+  const [disabled, setDisabled] = createSignal(true)
+  const onPress = vi.fn()
+  const result = render(() => (
+    <PButton disabled={disabled()} href="#relax" onPress={onPress}>
+      릴랙스 모드
+    </PButton>
+  ))
+  const link = result.getByRole('link', {name: '릴랙스 모드'})
+
+  expect(link).toHaveAttribute('aria-disabled', 'true')
+  expect(link).not.toHaveAttribute('href')
+  expect(link).toHaveAttribute('tabindex', '-1')
+  expect(link).not.toHaveAttribute('disabled')
+  expect(fireEvent.click(link)).toBe(false)
+  expect(onPress).not.toHaveBeenCalled()
+
+  setDisabled(false)
+  expect(result.getByRole('link', {name: '릴랙스 모드'})).toHaveAttribute('href', '#relax')
+  expect(link).not.toHaveAttribute('aria-disabled')
+  expect(link).not.toHaveAttribute('tabindex')
+})

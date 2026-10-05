@@ -33,6 +33,28 @@ const getColorSchemeBody = (css: string, scheme: 'dark' | 'light') => {
   return match?.[1] ?? ''
 }
 
+it('should animate toast entry and exit height and spacing with a reduced motion duration', async () => {
+  const uno = await createGenerator(unoConfig)
+  const {css, matched} = await uno.generate(
+    'animate-toast-enter animate-toast-exit motion-reduce:[animation-duration:1ms]',
+    {
+      safelist: false,
+    },
+  )
+  expect(matched).toContain('animate-toast-exit')
+  expect(matched).toContain('animate-toast-enter')
+  expect(css).toContain('@keyframes toast-enter')
+  expect(css).toContain('from { height: 0; margin-bottom: 0; opacity: 0; overflow: hidden; }')
+  expect(css).toContain('to { height: 2rem; opacity: 1; overflow: hidden; }')
+  expect(css).toContain('animation-fill-mode:backwards')
+  expect(css).toContain('@keyframes toast-exit')
+  expect(css).toContain('from { height: 2rem; }')
+  expect(css).toContain('to { height: 0; margin-bottom: 0; }')
+  expect(css).toContain('180ms')
+  expect(css).toContain('animation-fill-mode:forwards')
+  expect(css).toContain('animation-duration:1ms')
+})
+
 it('should extract loading and scene fallback utilities from component constants', async () => {
   const uno = await createGenerator(unoConfig)
   const {css, matched} = await uno.generate(`${loadingSource}\n${sceneFallbackSource}`, {

@@ -1,0 +1,84 @@
+{
+  "model": "depth-anything/DA3MONO-LARGE",
+  "revision": "f465978e618db8cc79c83b8bbf24964857db1875",
+  "checkpointSha256": "7a799a7f95eb8d4c404c2ca8be3dc3276b350a417ddc4420db72ba850cc0e960",
+  "processResolution": 1008,
+  "maps": [
+    {
+      "depth": "depth-city-sunny-riverside.png",
+      "source": "city-sunny-riverside.png",
+      "sourceSha256": "2ecf5f7f4c724b9778458d7eafcffd658770671948cb7f0d8cadc7c3274d88c5"
+    },
+    {
+      "depth": "depth-coast.png",
+      "source": "coast.png",
+      "sourceSha256": "9ebaf2a35c7654f0a195bcbf5f9e8a492dcfc30f8988b91863c79a20d4f091eb",
+      "publish": false
+    },
+    {
+      "depth": "depth-post-rain-square-upper-floor.png",
+      "source": "post-rain-square-upper-floor.png",
+      "sourceSha256": "f408327834756e67ed3c360bb82f50766fd26dfc85242d96fc5dfdf86542215d"
+    },
+    {
+      "depth": "depth-rain-alley-upper-floor.png",
+      "source": "rain-alley-upper-floor.png",
+      "sourceSha256": "f4f4e2e0698427bf062685ed4df5b74582febfc3ed24e3ec6b0f092fd05946ef",
+      "generator": {
+        "model": "Xenova/depth-anything-small-hf",
+        "revision": "9103bc8e2d785bcfd024e4bfd7e7c4593bc50bba",
+        "checkpointSha256": "e4e2ffe9b0396ebd4a0c09b855762b186aab338e79f76531b09777aafc91db84",
+        "runtime": "@huggingface/transformers 4.2.0, CPU, q8, local files only",
+        "processor": {
+          "do_normalize": true,
+          "do_pad": false,
+          "do_rescale": true,
+          "do_resize": true,
+          "ensure_multiple_of": 14,
+          "image_mean": [0.485, 0.456, 0.406],
+          "image_processor_type": "DPTImageProcessor",
+          "image_std": [0.229, 0.224, 0.225],
+          "keep_aspect_ratio": true,
+          "resample": 3,
+          "rescale_factor": 0.00392156862745098,
+          "size": {
+            "height": 518,
+            "width": 518
+          },
+          "size_divisor": null
+        },
+        "normalization": "Pipeline min-max normalization to uint8; near-white inverse depth"
+      }
+    },
+    {
+      "depth": "depth-coastal-village-upper-floor.png",
+      "source": "coastal-village-upper-floor.png",
+      "sourceSha256": "a543302a5ae57dc891efa7685cec087c8609de4b681e64223e821b9a2f2170ad",
+      "generator": {
+        "model": "Xenova/depth-anything-small-hf",
+        "revision": "9103bc8e2d785bcfd024e4bfd7e7c4593bc50bba",
+        "checkpointSha256": "e4e2ffe9b0396ebd4a0c09b855762b186aab338e79f76531b09777aafc91db84",
+        "runtime": "@huggingface/transformers 4.2.0, CPU, q8, local files only",
+        "processor": {
+          "do_normalize": true,
+          "do_pad": false,
+          "do_rescale": true,
+          "do_resize": true,
+          "ensure_multiple_of": 14,
+          "image_mean": [0.485, 0.456, 0.406],
+          "image_processor_type": "DPTImageProcessor",
+          "image_std": [0.229, 0.224, 0.225],
+          "keep_aspect_ratio": true,
+          "resample": 3,
+          "rescale_factor": 0.00392156862745098,
+          "size": {
+            "height": 518,
+            "width": 518
+          },
+          "size_divisor": null
+        },
+        "normalization": "Pipeline min-max normalization to uint8; near-white inverse depth"
+      }
+    }
+  ]
+}

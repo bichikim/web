@@ -11,6 +11,5 @@ export const createSpatialSurface = (part: PuppetPart): PuppetSpatialSurface => 
     ),
     groupId: part.id,
     origin: [originX, originY, 0],
-    rotationParameterIds: [null, null, null],
   }
 }

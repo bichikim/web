@@ -2,24 +2,35 @@
 import {afterEach, beforeEach, expect, it, vi} from 'vitest'
 
 const mocks = vi.hoisted(() => ({
+  cacheMatch: vi.fn(async () => undefined as Response | undefined),
   cacheOptions: null as null | Record<string, (...args: never[]) => unknown>,
+  cachePut: vi.fn(),
   deletePartial: vi.fn(),
   env: {} as Record<string, unknown>,
   gemmaFromPretrained: vi.fn(),
+  gemmaProcessorFromPretrained: vi.fn(),
   interrupt: vi.fn(),
+  lfmFromPretrained: vi.fn(),
+  loadGgufModel: vi.fn(),
   loadQwenModel: vi.fn(),
   onProgress: vi.fn(),
   processorFromPretrained: vi.fn(),
   reportStorageError: vi.fn(),
+  resumableFetch: vi.fn(
+    async () => new Response('{%- generation -%}QAD chat template{%- endgeneration -%}'),
+  ),
   resumableOptions: null as null | {readonly fetcher?: typeof fetch},
   stoppingCriteria: null as null | {readonly interrupt: () => void},
   streamerOptions: null as null | {callback_function: (text: string) => void},
+  tokenizerFromPretrained: vi.fn(),
 }))
 
 vi.mock('@huggingface/transformers', () => ({
   AutoProcessor: {from_pretrained: mocks.processorFromPretrained},
+  AutoTokenizer: {from_pretrained: mocks.tokenizerFromPretrained},
   env: mocks.env,
   Gemma4ForCausalLM: {from_pretrained: mocks.gemmaFromPretrained},
+  Gemma4Processor: {from_pretrained: mocks.gemmaProcessorFromPretrained},
   InterruptableStoppingCriteria: class InterruptableStoppingCriteriaMock {
     constructor() {
       mocks.stoppingCriteria = this
@@ -29,6 +40,7 @@ vi.mock('@huggingface/transformers', () => ({
       mocks.interrupt()
     }
   },
+  Lfm2ForCausalLM: {from_pretrained: mocks.lfmFromPretrained},
   TextStreamer: class TextStreamerMock {
     constructor(_tokenizer: unknown, options: {callback_function: (text: string) => void}) {
       mocks.streamerOptions = options
@@ -37,7 +49,14 @@ vi.mock('@huggingface/transformers', () => ({
 }))
 vi.mock('../model', () => ({
   getTextModelImplementation: (modelId: string) => ({
-    architecture: modelId.startsWith('qwen') ? 'qwen-3.5' : 'gemma-4',
+    architecture:
+      modelId === 'lfm-2.6b-qad'
+        ? 'lfm-2-gguf'
+        : modelId.startsWith('lfm')
+          ? 'lfm-2'
+          : modelId.startsWith('qwen')
+            ? 'qwen-3.5'
+            : 'gemma-4',
     assetSource: {
       host: 'https://models.example/',
       pathTemplate: 'models/{model}/{revision}/',
@@ -46,26 +65,56 @@ vi.mock('../model', () => ({
     id: modelId,
     quantization: 'q4',
     repositoryId: `repository/${modelId}`,
+    tokenizerSubfolder: 'qad',
   }),
 }))
 vi.mock('../qwen-model', () => ({loadQwenModel: mocks.loadQwenModel}))
+vi.mock('../load-gguf-model', () => ({loadGgufModel: mocks.loadGgufModel}))
 vi.mock('../../model-storage', () => ({
   createModelStorage: vi.fn(() => ({storage: true})),
   createResumableModelFetch: vi.fn((options: {readonly fetcher?: typeof fetch} = {}) => {
     mocks.resumableOptions = options
     return {
       deletePartial: mocks.deletePartial,
-      fetch: vi.fn(),
+      fetch: mocks.resumableFetch,
     }
   }),
   createTransformersModelCache: vi.fn((options: Record<string, (...args: never[]) => unknown>) => {
     mocks.cacheOptions = options
-    return {cache: true}
+    return {cache: true, match: mocks.cacheMatch, put: mocks.cachePut}
   }),
   reportModelStorageError: mocks.reportStorageError,
 }))
 
 import {createTransformersRuntime} from '../transformers-runtime'
+
+it('prepares GGUF weights with the QAD tokenizer instead of an ONNX session', async () => {
+  mocks.loadGgufModel.mockResolvedValue({createChatCompletion: vi.fn()})
+  mocks.tokenizerFromPretrained.mockResolvedValue(tokenizer)
+  const runtime = createTransformersRuntime({onProgress: mocks.onProgress})
+
+  await runtime.prepare('lfm-2.6b-qad')
+
+  expect(mocks.loadGgufModel).toHaveBeenCalledOnce()
+  expect(mocks.loadGgufModel).toHaveBeenCalledWith(
+    expect.objectContaining({
+      fetcher: mocks.resumableFetch,
+      onStorageError: mocks.reportStorageError,
+      onStored: mocks.deletePartial,
+      storage: {storage: true},
+    }),
+  )
+  expect(mocks.cachePut.mock.calls[0]?.[0]).toBe(
+    'https://models.example/models/repository/lfm-2.6b-qad/revision-1/qad/chat_template.jinja',
+  )
+  expect(mocks.tokenizerFromPretrained).toHaveBeenCalledWith('repository/lfm-2.6b-qad', {
+    revision: 'revision-1',
+  })
+  expect(mocks.env.remotePathTemplate).toBe('models/{model}/{revision}/qad/')
+  expect(mocks.lfmFromPretrained).not.toHaveBeenCalled()
+  expect(runtime.getTokenizer()).toBe(tokenizer)
+  expect(tokenizer).toMatchObject({chat_template: 'QAD chat template'})
+})
 
 const messages = [{content: '안녕', role: 'user' as const}]
 const tokenizer = {
@@ -86,6 +135,7 @@ const createProcessor = () => {
 
 beforeEach(() => {
   vi.clearAllMocks()
+  mocks.gemmaProcessorFromPretrained.mockImplementation(mocks.processorFromPretrained)
   mocks.env.backends = {
     onnx: {
       wasm: {
@@ -103,7 +153,31 @@ beforeEach(() => {
 })
 
 afterEach(() => {
+  mocks.cacheMatch.mockResolvedValue(undefined)
+  mocks.resumableFetch.mockImplementation(
+    async () => new Response('{%- generation -%}QAD chat template{%- endgeneration -%}'),
+  )
   vi.unstubAllEnvs()
+})
+
+it('prepares cached QAD files even when the network is unavailable', async () => {
+  mocks.loadGgufModel.mockResolvedValue({createChatCompletion: vi.fn()})
+  mocks.tokenizerFromPretrained.mockResolvedValue(tokenizer)
+  mocks.cacheMatch.mockResolvedValue(new Response('cached QAD template'))
+  mocks.resumableFetch.mockRejectedValue(new Error('offline'))
+  const runtime = createTransformersRuntime({onProgress: vi.fn()})
+  await expect(runtime.prepare('lfm-2.6b-qad')).resolves.toBeUndefined()
+  expect(mocks.resumableFetch).not.toHaveBeenCalled()
+})
+
+it('does not allocate a GGUF engine when its tokenizer fails to load', async () => {
+  const error = new Error('invalid tokenizer')
+  mocks.tokenizerFromPretrained.mockRejectedValueOnce(error)
+  mocks.loadGgufModel.mockResolvedValue({createChatCompletion: vi.fn()})
+  const runtime = createTransformersRuntime({onProgress: vi.fn()})
+  await expect(runtime.prepare('lfm-2.6b-qad')).rejects.toBe(error)
+  await vi.dynamicImportSettled()
+  expect(mocks.loadGgufModel).not.toHaveBeenCalled()
 })
 
 it('should prepare Gemma once, report byte progress, and configure versioned caching', async () => {
@@ -167,7 +241,7 @@ it('should fetch Steam model assets from the local bundle', async () => {
   )
 })
 
-it('should count and generate tokens through the prepared processor', async () => {
+it('should count and generate Gemma mobile tokens with its tokenizer-bearing processor', async () => {
   const processor = createProcessor()
   const model = {
     generate: vi.fn(async () => {
@@ -179,6 +253,10 @@ it('should count and generate tokens through the prepared processor', async () =
   mocks.gemmaFromPretrained.mockResolvedValue(model)
   const runtime = createTransformersRuntime({onProgress: vi.fn()})
   await runtime.prepare('gemma-4-e2b-mobile')
+
+  expect(mocks.gemmaProcessorFromPretrained).toHaveBeenCalledWith('repository/gemma-4-e2b-mobile', {
+    revision: 'revision-1',
+  })
 
   await expect(runtime.countTokens(messages)).resolves.toBe(7)
   processor.mockResolvedValueOnce({input_ids: {dims: []}})
@@ -298,5 +376,38 @@ it('should reject Qwen outside development builds', async () => {
 
   await expect(runtime.prepare('qwen-0.8b')).rejects.toThrow(
     'Qwen 텍스트 모델은 개발 빌드에서만 사용할 수 있어요.',
+  )
+})
+
+it('should prepare LFM Q4 and generate through its text-only tokenizer', async () => {
+  const textTokenizer = Object.assign(
+    vi.fn(() => ({input_ids: {dims: [1, 7]}})),
+    tokenizer,
+    {apply_chat_template: vi.fn(() => 'prompt')},
+  )
+  mocks.tokenizerFromPretrained.mockResolvedValue(textTokenizer)
+  mocks.lfmFromPretrained.mockResolvedValue({
+    generate: vi.fn(async () => {
+      mocks.streamerOptions?.callback_function('안녕하세요')
+    }),
+  })
+  const runtime = createTransformersRuntime({onProgress: vi.fn()})
+  await runtime.prepare('lfm-1.2b')
+  expect(runtime.getTokenizer()).toBe(textTokenizer)
+  await expect(runtime.countTokens(messages)).resolves.toBe(7)
+  await expect(
+    runtime.generate({
+      maximumTokens: 12,
+      messages,
+      noRepeatNgramSize: 0,
+      repetitionPenalty: 1,
+      temperature: 0.1,
+      topK: 50,
+      topP: 1,
+    }),
+  ).resolves.toBe('안녕하세요')
+  expect(mocks.lfmFromPretrained).toHaveBeenCalledWith(
+    'repository/lfm-1.2b',
+    expect.objectContaining({device: 'webgpu', dtype: 'q4'}),
   )
 })

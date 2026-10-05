@@ -90,7 +90,7 @@ afterEach(() => {
   vi.useRealTimers()
 })
 
-it('should show a navigable month and the selected day events', async () => {
+it('should show the selected day and its agenda events', async () => {
   render(() => <CalendarMonth settings={<button type="button">캘린더 설정</button>} />)
 
   expect(await screen.findByRole('heading', {name: '2026년 9월'})).toBeVisible()
@@ -114,20 +114,30 @@ it('should show a navigable month and the selected day events', async () => {
     screen.getByRole('navigation', {name: '캘린더 월 이동'}),
   )
   expect(screen.getAllByText('팀 회의')).toHaveLength(2)
+})
 
-  fireEvent.click(screen.getByRole('button', {name: '2026년 9월 5일, 일정 1개'}))
+it('should show the selected day agenda when another day is selected', async () => {
+  render(() => <CalendarMonth settings={<button type="button">캘린더 설정</button>} />)
+
+  const dayButton = await screen.findByRole('button', {name: '2026년 9월 5일, 일정 1개'})
+  fireEvent.click(dayButton)
   const selectedAgenda = screen.getByRole('region', {name: '2026년 9월 5일'})
   expect(within(selectedAgenda).queryByText('팀 회의')).not.toBeInTheDocument()
   const holiday = within(selectedAgenda).getByText('휴가')
-  const eventList = within(selectedAgenda).getByRole('list')
   expect(holiday).toBeVisible()
   expect(holiday.closest('li')).toHaveClass('rounded-panel-inner')
   expect(within(selectedAgenda).getByRole('button', {name: '휴가 알람 설정'})).toBeVisible()
+  const eventList = within(selectedAgenda).getByRole('list')
   expect(eventList).toHaveClass('overflow-y-auto', 'overscroll-contain')
   expect(eventList.className).toContain('max-h-[min(18rem,35dvh)]')
   expect(eventList).toHaveAttribute('tabindex', '0')
   expect(within(selectedAgenda).getByText('종일')).toBeVisible()
+})
 
+it('should navigate to the next calendar month', async () => {
+  render(() => <CalendarMonth settings={<button type="button">캘린더 설정</button>} />)
+
+  expect(await screen.findByRole('heading', {name: '2026년 9월'})).toBeVisible()
   fireEvent.click(screen.getByRole('button', {name: '다음 달'}))
   await waitFor(() => expect(listCalendarEvents).toHaveBeenCalledTimes(2))
   expect(screen.getByRole('heading', {name: '2026년 10월'})).toBeVisible()

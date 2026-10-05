@@ -1,11 +1,9 @@
 /// <reference lib="webworker" />
 
-import {
-  createDeviceTarget,
-  createGenerationFailure,
-  createRequestSequence,
-  trimRepetitiveTail,
-} from '../text-generation'
+import {trimRepetitiveTail} from '../text-generation/answer'
+import {createDeviceTarget} from '../text-generation/create-device-target'
+import {createGenerationFailure} from '../text-generation/create-generation-failure'
+import {createRequestSequence} from '../text-generation/create-request-sequence'
 
 import {getErrorMessage} from 'src/utils/get-error-message'
 import {createExclusiveAsyncTask} from 'src/utils/create-exclusive-async-task'

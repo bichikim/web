@@ -1,5 +1,7 @@
+import {isObject} from 'src/utils/is-object'
+import {normalizePasteNumericInput} from 'src/utils/normalize-paste-numeric-input'
 import {parseDate} from 'src/features/civil-date'
-import {findJsonObjectEnd} from 'src/utils/json'
+import {iterateJsonObjectSlices} from 'src/utils/json'
 import {isNonBlankString} from 'src/utils/is-non-blank-string'
 
 export interface ExpenseItem {
@@ -30,17 +32,23 @@ export type ExpenseParseResult =
   | {readonly error: ExpenseParseError; readonly ok: false}
 
 const MAXIMUM_ITEMS = 20
+const FULLWIDTH_TO_ASCII_DIGIT_OFFSET = 0xfee0
 const EXPENSE_LINE_PATTERN =
-  /^\s*(?<name>.+?)\s+(?<unitPrice>[\d,]+)\s*원(?:\s+(?<quantity>[\d,]+)\s*개)?\s*$/u
-const DATE_LINE_PATTERN = /^\s*(?<year>\d{4})-(?<month>\d{1,2})-(?<day>\d{1,2})\s*$/u
+  /^\s*(?<name>.+?)\s+(?<unitPrice>[\d０-９,]+)\s*원(?:\s+(?<quantity>[\d,]+)\s*개)?\s*$/u
+const DATE_LINE_PATTERN =
+  /^\s*(?<year>[0-9０-９]{4})-(?<month>[0-9０-９]{1,2})-(?<day>[0-9０-９]{1,2})(?:\s+[월화수목금토일]요일)?\s*$/u
+
+const normalizeDateDigits = (value: string) =>
+  value.replace(/[０-９]/gu, (digit) =>
+    String.fromCharCode(digit.charCodeAt(0) - FULLWIDTH_TO_ASCII_DIGIT_OFFSET),
+  )
 
 const invalid = (code: ExpenseParseError['code']): ExpenseParseResult => ({
   error: {code},
   ok: false,
 })
 
-const isRecord = (value: unknown): value is Record<string, unknown> =>
-  typeof value === 'object' && value !== null && !Array.isArray(value)
+const isRecord = (value: unknown): value is Record<string, unknown> => isObject(value)
 
 const toPositiveInteger = (value: unknown) => {
   if (typeof value === 'number' && Number.isSafeInteger(value) && value > 0) {
@@ -59,7 +67,7 @@ const toPositiveInteger = (value: unknown) => {
   return Number.isSafeInteger(parsed) && parsed > 0 ? parsed : null
 }
 
-const readExpenseDate = (value: string) => {
+const readExpenseDate = (value: string, allowFullwidthDateDigits = false) => {
   const dateMatch = DATE_LINE_PATTERN.exec(value)
   const year = dateMatch?.groups?.year
   const month = dateMatch?.groups?.month
@@ -68,8 +76,17 @@ const readExpenseDate = (value: string) => {
     return null
   }
 
-  const normalizedDate = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`
-  return parseDate(normalizedDate) === null ? null : `${year}-${month}-${day}`
+  if (!allowFullwidthDateDigits && [year, month, day].some((part) => /[０-９]/u.test(part))) {
+    return null
+  }
+
+  const normalizedYear = normalizeDateDigits(year)
+  const normalizedMonth = normalizeDateDigits(month)
+  const normalizedDay = normalizeDateDigits(day)
+  const normalizedDate = `${normalizedYear}-${normalizedMonth.padStart(2, '0')}-${normalizedDay.padStart(2, '0')}`
+  return parseDate(normalizedDate) === null
+    ? null
+    : `${normalizedYear}-${normalizedMonth}-${normalizedDay}`
 }
 
 const readDate = (value: unknown) => {
@@ -170,27 +187,18 @@ const parseExpenseAssistantCandidate = (json: string): ExpenseParseResult => {
 
 export const parseExpenseAssistantResponse = (text: string): ExpenseParseResult => {
   let invalidShape: ExpenseParseResult | null = null
-  let candidateStart = text.indexOf('{')
-
-  while (candidateStart >= 0) {
-    const candidateEnd = findJsonObjectEnd(text, candidateStart)
-    if (candidateEnd <= candidateStart) {
-      candidateStart = text.indexOf('{', candidateStart + 1)
-    } else {
-      const candidateResult = parseExpenseAssistantCandidate(
-        text.slice(candidateStart, candidateEnd + 1),
-      )
-      if (candidateResult.ok) {
-        return candidateResult
-      }
-
-      if (candidateResult.error.code === 'invalid-shape') {
-        invalidShape = candidateResult
-        candidateStart = text.indexOf('{', candidateEnd + 1)
-      } else {
-        candidateStart = text.indexOf('{', candidateStart + 1)
-      }
+  const candidates = iterateJsonObjectSlices(text)
+  let candidate = candidates.next()
+  while (!candidate.done) {
+    const result = parseExpenseAssistantCandidate(candidate.value.slice)
+    if (result.ok) {
+      return result
     }
+    const skipNested = result.error.code === 'invalid-shape'
+    if (skipNested) {
+      invalidShape = result
+    }
+    candidate = candidates.next(skipNested ? candidate.value.end + 1 : undefined)
   }
 
   return invalidShape ?? invalid('invalid-json')
@@ -205,16 +213,14 @@ export const parseExpenseText = (text: string): ExpenseParseResult => {
   const items: Array<ExpenseItem> = []
 
   for (const line of lines) {
-    const dateValue = readExpenseDate(line)
-    if (dateValue !== null && date === null) {
-      date = dateValue
-    } else {
+    const dateValue = readExpenseDate(line, true)
+    if (dateValue === null) {
       const expenseMatch = EXPENSE_LINE_PATTERN.exec(line)
       if (expenseMatch?.groups === undefined) {
         return invalid('invalid-input')
       }
 
-      const unitPrice = toPositiveInteger(expenseMatch.groups.unitPrice)
+      const unitPrice = toPositiveInteger(normalizePasteNumericInput(expenseMatch.groups.unitPrice))
       const quantity = toPositiveInteger(expenseMatch.groups.quantity ?? '1')
       const name = expenseMatch.groups.name.trim()
       if (unitPrice === null || quantity === null || name.length === 0) {
@@ -222,6 +228,8 @@ export const parseExpenseText = (text: string): ExpenseParseResult => {
       }
 
       items.push({amount: unitPrice * quantity, name, quantity, unitPrice})
+    } else if (date === null) {
+      date = dateValue
     }
   }
 

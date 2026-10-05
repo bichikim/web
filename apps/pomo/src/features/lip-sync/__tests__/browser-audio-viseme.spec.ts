@@ -20,7 +20,16 @@ vi.mock('wlipsync', () => ({
 
 const createAudioHarness = () => {
   const destination = {}
-  const context = {audioWorklet: {}, destination} as unknown as AudioContext
+  const outputGainNode = {
+    connect: vi.fn(),
+    disconnect: vi.fn(),
+    gain: {value: 1},
+  } as unknown as GainNode
+  const context = {
+    audioWorklet: {},
+    createGain: vi.fn(() => outputGainNode),
+    destination,
+  } as unknown as AudioContext
   const node = {
     connect: vi.fn(),
     disconnect: vi.fn(),
@@ -33,7 +42,7 @@ const createAudioHarness = () => {
   const source = {connect: vi.fn(), disconnect: vi.fn()} as unknown as AudioNode
 
   vi.stubGlobal('AudioWorkletNode', class {})
-  return {context, destination, node, source}
+  return {context, destination, node, outputGainNode, source}
 }
 
 afterEach(() => {
@@ -195,22 +204,26 @@ describe('createPBrowserAudioVisemeAnalyzer', () => {
   })
 
   it('should connect, read, and release an analyzed source', async () => {
-    const {context, destination, node, source} = createAudioHarness()
+    const {context, destination, node, outputGainNode, source} = createAudioHarness()
     wlipsyncMocks.createNode.mockResolvedValue(node)
     const analyzer = createPBrowserAudioVisemeAnalyzer(context)
 
     await analyzer.connect(source)
 
     expect(source.connect).toHaveBeenCalledWith(node)
-    expect(node.connect).toHaveBeenCalledWith(destination)
+    expect(node.connect).toHaveBeenCalledWith(outputGainNode)
+    expect(outputGainNode.gain.value).toBe(0)
+    expect(outputGainNode.connect).toHaveBeenCalledWith(destination)
     expect(analyzer.getFrame('rest')).toEqual({intensity: 0.8, viseme: 'open'})
 
     analyzer.disconnect(source)
     expect(source.disconnect).toHaveBeenCalledWith(node)
-    expect(node.disconnect).toHaveBeenCalledWith(destination)
+    expect(node.disconnect).toHaveBeenCalledWith(outputGainNode)
+    expect(outputGainNode.disconnect).toHaveBeenCalledWith(destination)
 
     analyzer.dispose()
     expect(node.disconnect).toHaveBeenCalledTimes(2)
+    expect(outputGainNode.disconnect).toHaveBeenCalledTimes(2)
     expect(analyzer.getFrame('rest')).toBeNull()
   })
 
@@ -233,7 +246,7 @@ describe('createPBrowserAudioVisemeAnalyzer', () => {
   })
 
   it('should disconnect the worklet while idle and reconnect it for a later source', async () => {
-    const {context, destination, node, source: firstSource} = createAudioHarness()
+    const {context, node, outputGainNode, source: firstSource} = createAudioHarness()
     const secondSource = {connect: vi.fn(), disconnect: vi.fn()} as unknown as AudioNode
     const laterSource = {connect: vi.fn(), disconnect: vi.fn()} as unknown as AudioNode
     wlipsyncMocks.createNode.mockResolvedValue(node)
@@ -247,14 +260,17 @@ describe('createPBrowserAudioVisemeAnalyzer', () => {
     expect(node.disconnect).not.toHaveBeenCalled()
 
     analyzer.disconnect(secondSource)
-    expect(node.disconnect).toHaveBeenCalledWith(destination)
+    expect(node.disconnect).toHaveBeenCalledWith(outputGainNode)
+    expect(outputGainNode.disconnect).toHaveBeenCalledOnce()
 
     await analyzer.connect(laterSource)
     expect(node.connect).toHaveBeenCalledTimes(2)
-    expect(node.connect).toHaveBeenLastCalledWith(destination)
+    expect(node.connect).toHaveBeenLastCalledWith(outputGainNode)
+    expect(outputGainNode.connect).toHaveBeenCalledTimes(2)
 
     analyzer.disconnect(laterSource)
     expect(node.disconnect).toHaveBeenCalledTimes(2)
-    expect(node.disconnect).toHaveBeenLastCalledWith(destination)
+    expect(node.disconnect).toHaveBeenLastCalledWith(outputGainNode)
+    expect(outputGainNode.disconnect).toHaveBeenCalledTimes(2)
   })
 })

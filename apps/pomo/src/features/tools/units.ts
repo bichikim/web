@@ -1,3 +1,4 @@
+import {normalizePasteNumericInput} from 'src/utils/normalize-paste-numeric-input'
 const FAHRENHEIT_SCALE = 9
 const CELSIUS_SCALE = 5
 const FAHRENHEIT_OFFSET = -32
@@ -52,11 +53,11 @@ export type ConversionResult =
   | {readonly kind: 'invalid'}
   | {readonly kind: 'valid'; readonly value: number}
 export const convertUnit = (options: ConvertUnitOptions): ConversionResult => {
-  const input = options.value.trim()
+  const input = normalizePasteNumericInput(options.value.trim())
   if (!input) {
     return {kind: 'empty'}
   }
-  if (!/^[+-]?(?:\d+(?:\.\d*)?|\.\d+|\d{1,3}(?:,\d{3})+(?:\.\d*)?)(?:e[+-]?\d+)?$/iu.test(input)) {
+  if (!/^[+-]?(?:\d+(?:\.\d*)?|\.\d+|\d{1,3}(?:,\d{3})+(?:\.\d*)?)$/u.test(input)) {
     return {kind: 'invalid'}
   }
   const from = UNITS.find((unit) => unit.id === options.from)

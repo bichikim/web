@@ -30,6 +30,91 @@ describe('parseExpenseText', () => {
     })
   })
 
+  it('should parse fullwidth digits in date lines and keep the first date', () => {
+    const expected = parseExpenseText('2026-09-05\n2026-09-06\n두부２ 1,500원')
+
+    expect(parseExpenseText('２０２６-０９-０５\n2026-09-06\n두부２ 1,500원')).toEqual(expected)
+    expect(expected).toMatchObject({
+      ok: true,
+      value: {
+        date: '2026-09-05',
+        items: [{amount: 1500, name: '두부２', quantity: 1, unitPrice: 1500}],
+        total: 1500,
+      },
+    })
+    expect(parseExpenseText('２０２６-９-５\n두부 1,500원')).toEqual(
+      parseExpenseText('2026-9-5\n두부 1,500원'),
+    )
+  })
+
+  it('should normalize fullwidth digits in unit-price tokens only', () => {
+    const asciiResult = parseExpenseText('2026-09-05\n두부２ 1,500원')
+
+    expect(parseExpenseText('2026-09-05\n두부２ １,５００원')).toEqual(asciiResult)
+    expect(parseExpenseText('2026-09-05\n두부２ １５００원')).toEqual(asciiResult)
+    expect(asciiResult).toMatchObject({
+      ok: true,
+      value: {
+        date: '2026-09-05',
+        items: [{amount: 1500, name: '두부２', quantity: 1, unitPrice: 1500}],
+        total: 1500,
+      },
+    })
+  })
+
+  it('should not normalize fullwidth digits in quantities or separators', () => {
+    expect(parseExpenseText('두부 1,500원 ２개')).toEqual({
+      error: {code: 'invalid-input'},
+      ok: false,
+    })
+    expect(parseExpenseText('두부 １，５００원')).toEqual({
+      error: {code: 'invalid-input'},
+      ok: false,
+    })
+  })
+
+  it('should retain positive, safe-integer, item-overflow, and total-overflow checks', () => {
+    const maximumSafePrice = '９００７１９９２５４７４０９９１'
+
+    expect(parseExpenseText(`상품 ${maximumSafePrice}원`)).toMatchObject({
+      ok: true,
+      value: {
+        items: [{amount: Number.MAX_SAFE_INTEGER, quantity: 1, unitPrice: Number.MAX_SAFE_INTEGER}],
+        total: Number.MAX_SAFE_INTEGER,
+      },
+    })
+    expect(parseExpenseText('상품 ０원')).toEqual({error: {code: 'invalid-input'}, ok: false})
+    expect(parseExpenseText('상품 ９００７１９９２５４７４０９９２원')).toEqual({
+      error: {code: 'invalid-input'},
+      ok: false,
+    })
+    expect(parseExpenseText(`상품 ${maximumSafePrice}원 2개`)).toEqual({
+      error: {code: 'invalid-input'},
+      ok: false,
+    })
+    expect(parseExpenseText(`상품 ${maximumSafePrice}원\n추가 1원`)).toEqual({
+      error: {code: 'invalid-input'},
+      ok: false,
+    })
+  })
+
+  it('should parse a date line with a trailing weekday label', () => {
+    expect(parseExpenseText('2026-09-05 금요일\n두부 1,500원')).toMatchObject({
+      ok: true,
+      value: {date: '2026-09-05', items: [{amount: 1500, name: '두부'}], total: 1500},
+    })
+  })
+
+  it('should keep the first date and ignore later date lines', () => {
+    expect(parseExpenseText('2026-09-05\n2026-09-06\n두부 1,500원')).toMatchObject({
+      ok: true,
+      value: {
+        date: '2026-09-05',
+        items: [{amount: 1500, name: '두부', quantity: 1, unitPrice: 1500}],
+      },
+    })
+  })
+
   it('should preserve support for unpadded date parts', () => {
     expect(parseExpenseText('2026-9-5\n두부 1,500원')).toMatchObject({
       ok: true,
@@ -39,6 +124,10 @@ describe('parseExpenseText', () => {
 
   it('should reject a civil date that does not exist', () => {
     expect(parseExpenseText('2026-02-30\n두부 1,500원')).toEqual({
+      error: {code: 'invalid-input'},
+      ok: false,
+    })
+    expect(parseExpenseText('２０２６-０２-３０\n두부 1,500원')).toEqual({
       error: {code: 'invalid-input'},
       ok: false,
     })
@@ -60,6 +149,17 @@ describe('parseExpenseText', () => {
 })
 
 describe('parseExpenseAssistantResponse', () => {
+  it('should reject fullwidth digits in structured date values', () => {
+    expect(
+      parseExpenseAssistantResponse(
+        '{"date":"２０２６-０９-０５","items":[{"name":"두부","quantity":1,"unitPrice":1500}]}',
+      ),
+    ).toEqual({
+      error: {code: 'invalid-shape'},
+      ok: false,
+    })
+  })
+
   it('should parse JSON after brace-delimited prose', () => {
     expect(
       parseExpenseAssistantResponse(

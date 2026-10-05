@@ -1,10 +1,4 @@
-import {
-  hasNativeStorageBridge,
-  readTossStorageJson,
-  readWebStorageJson,
-  writeTossStorageJson,
-  writeWebStorageJson,
-} from 'src/utils/runtime-storage'
+import {createTossWebStorageAdapter} from 'src/utils/runtime-storage'
 
 import {createPScenePreferencesRepository} from './create-p-scene-preferences-repository'
 import type {PScenePreferences} from './model'
@@ -16,11 +10,7 @@ export {
 
 const runtimeRepository = createPScenePreferencesRepository({
   storage: {
-    readToss: (key) => readTossStorageJson(key, (value) => value),
-    readWeb: (key) => readWebStorageJson(key, (value) => value),
-    usesTossStorage: hasNativeStorageBridge,
-    writeToss: writeTossStorageJson,
-    writeWeb: writeWebStorageJson,
+    ...createTossWebStorageAdapter({writeWebMode: 'return-error'}),
   },
 })
 

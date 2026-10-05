@@ -17,6 +17,15 @@ it.each([
   expect(url.searchParams.getAll('timeZone')).toEqual(['America/New_York'])
 })
 it.each([
+  '/API/FEEDS/TODAY-IN-HISTORY/RSS.XML',
+  'https://www.pomofi.io/api/feeds/today-in-history/Atom.Xml',
+  '/__DEV/FEEDS/RSS.XML',
+  '/__dev/feeds/Atom.xml?timeZone=Asia%2FSeoul',
+])('should apply the supplied viewer zone regardless of path casing: %s', (value) => {
+  const url = new URL(getFeedRequestUrl(value, environment), environment.localOrigin)
+  expect(url.searchParams.getAll('timeZone')).toEqual(['America/New_York'])
+})
+it.each([
   '/api/feeds/today-in-history/rss.xml/',
   'https://www.pomofi.io/api/feeds/today-in-history/atom.xml/',
   '/__dev/feeds/rss.xml/',

@@ -1,3 +1,4 @@
+import {clamp} from 'es-toolkit/math'
 import type {AssetContainer} from '@babylonjs/core/assetContainer'
 import {Matrix, Quaternion, Vector3} from '@babylonjs/core/Maths/math.vector'
 import {advanceSpring} from './spring-motion'
@@ -51,8 +52,9 @@ export const mountGarmentPhysics = (container: AssetContainer, modelUrl: string)
     )
   let accumulated = 0
   const observer = container.scene.onBeforeRenderObservable.add(() => {
-    accumulated += Math.min(
+    accumulated += clamp(
       container.scene.getEngine().getDeltaTime() / PHYSICS.seconds,
+      0,
       PHYSICS.maxFrame,
     )
     while (accumulated >= STEP) {

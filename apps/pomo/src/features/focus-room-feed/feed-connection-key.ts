@@ -1,7 +1,5 @@
+import {isOwnedTodayInHistoryFeedUrl} from './is-owned-today-in-history-feed-url'
 import {type FeedUrlEnvironment, getFeedRequestUrl} from './feed-request-url'
-
-const isTodayInHistoryPath = (pathname: string): boolean =>
-  /^\/api\/feeds\/today-in-history\/(?:rss|atom)\.xml\/?$/u.test(pathname)
 
 /** Returns a comparable URL for an owned today-in-history feed. */
 export const getFeedConnectionKey = (value: string, environment: FeedUrlEnvironment): string => {
@@ -14,12 +12,11 @@ export const getFeedConnectionKey = (value: string, environment: FeedUrlEnvironm
     return requestUrl
   }
 
-  const isOwnedOrigin =
-    url.origin === environment.localOrigin || url.origin === environment.publicOrigin
-
-  if (!isOwnedOrigin || !isTodayInHistoryPath(url.pathname)) {
+  if (!isOwnedTodayInHistoryFeedUrl(url, environment)) {
     return requestUrl
   }
+
+  url.pathname = url.pathname.toLowerCase()
 
   if (environment.publicOrigin !== undefined) {
     return new URL(

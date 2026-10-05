@@ -1,7 +1,7 @@
 /** @vitest-environment jsdom */
 
 import {cleanup, fireEvent, render, screen} from '@solidjs/testing-library'
-import {createSignal, type JSX} from 'solid-js'
+import {createSignal, type JSX, Show} from 'solid-js'
 import {afterEach, expect, it, vi} from 'vitest'
 
 import {
@@ -13,11 +13,17 @@ import {
 import {SoundEffects} from '../SoundEffects'
 
 vi.mock('../../p-modal/PModal', () => ({
-  PModal: (props: {readonly children: JSX.Element; readonly headerActions?: JSX.Element}) => (
-    <>
-      {props.headerActions}
-      {props.children}
-    </>
+  PModal: (props: {
+    readonly children: JSX.Element
+    readonly headerActions?: JSX.Element
+    readonly isOpen: boolean
+  }) => (
+    <Show when={props.isOpen}>
+      <div role="dialog" aria-label="효과음">
+        {props.headerActions}
+        {props.children}
+      </div>
+    </Show>
   ),
 }))
 
@@ -106,6 +112,23 @@ it('should render the sound effect control when its provider is available', () =
   ))
 
   expect(screen.getByRole('button', {name: '효과음'})).toBeInTheDocument()
+})
+
+it('should open sound effects from the settings-style toolbar button', async () => {
+  render(() => (
+    <SoundEffectsContext.Provider value={controller}>
+      <SoundEffects trigger="toolbar" />
+    </SoundEffectsContext.Provider>
+  ))
+
+  const trigger = screen.getByRole('button', {name: '효과음'})
+  expect(trigger).toHaveClass('rounded-full', 'text-foreground')
+  expect(screen.queryByRole('dialog', {name: '효과음'})).not.toBeInTheDocument()
+
+  fireEvent.click(trigger)
+
+  expect(screen.getByRole('dialog', {name: '효과음'})).toBeInTheDocument()
+  expect(await screen.findByRole('list', {name: '효과음'})).toBeInTheDocument()
 })
 
 it('should arrange sound effect controls from left to right and wrap when needed', async () => {

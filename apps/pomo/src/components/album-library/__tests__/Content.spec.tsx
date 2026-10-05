@@ -20,6 +20,7 @@ const audioMocks = vi.hoisted(() => ({
   }),
   useTrackPreview: vi.fn(),
 }))
+const customAlbumMocks = vi.hoisted(() => ({readCustomAlbums: vi.fn()}))
 const componentMocks = vi.hoisted(() => ({
   albumCard: vi.fn(),
   button: vi.fn(),
@@ -28,6 +29,10 @@ const reporterMocks = vi.hoisted(() => ({reportClientError: vi.fn()}))
 const revalidationMocks = vi.hoisted(() => ({revalidate: vi.fn()}))
 
 vi.mock('../../../features/focus-room-audio', () => audioMocks)
+vi.mock('../../../features/custom-albums', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../../features/custom-albums')>()),
+  ...customAlbumMocks,
+}))
 vi.mock('@solidjs/router', async () => {
   const actual: typeof import('@solidjs/router') = await vi.importActual('@solidjs/router')
   return {...actual, revalidate: revalidationMocks.revalidate}
@@ -88,6 +93,15 @@ const createAlbum = (id: string, tracks: readonly PTrack[]): PResolvedAlbum => (
   tracks,
 })
 
+const finishAlbumLoads = async () => {
+  const loads = [
+    ...audioMocks.loadBundledPAlbums.mock.results,
+    ...audioMocks.loadPublishedPAlbums.mock.results,
+    ...customAlbumMocks.readCustomAlbums.mock.results,
+  ]
+  await Promise.all(loads.map(({value}) => Promise.resolve(value)))
+}
+
 let previewOptions: PreviewOptions
 let previewError: () => string | null
 let previewHandleEnded: () => void
@@ -99,6 +113,7 @@ let refreshPublishedCatalog: () => void = () => undefined
 let refreshedCatalogRequest: Promise<PPublishedAlbumCatalog> | undefined
 
 beforeEach(() => {
+  customAlbumMocks.readCustomAlbums.mockReset().mockResolvedValue([])
   const [catalogRevision, setCatalogRevision] = createSignal(0)
   refreshPublishedCatalog = () => setCatalogRevision((revision) => revision + 1)
   refreshedCatalogRequest = undefined
@@ -192,8 +207,9 @@ describe('PAlbumLibraryContent', () => {
       />
     ))
 
-    expect(await screen.findByTestId('album-partial')).toBeTruthy()
-    expect(screen.getByRole('status')).toHaveTextContent('미리듣기 오류')
+    await finishAlbumLoads()
+    expect(screen.getByTestId('album-partial')).toBeTruthy()
+    expect(screen.getByText('미리듣기 오류')).toBeInTheDocument()
     expect(vi.mocked(previewSetAudio).mock.calls[0]?.[0]).toBeInstanceOf(HTMLAudioElement)
     const cards = componentMocks.albumCard.mock.calls.map(([props]) => props as AlbumCardProps)
     expect(cards.map((props) => props.isInPlayer)).toEqual([false, true, false])
@@ -225,12 +241,15 @@ describe('PAlbumLibraryContent', () => {
     vi.mocked(previewToggle).mockRejectedValueOnce(previewFailure)
     const consoleError = vi.spyOn(console, 'error').mockImplementation(() => undefined)
     screen.getByRole('button', {name: 'preview partial'}).click()
-    await waitFor(() => {
-      expect(consoleError).toHaveBeenCalledWith(
-        'Failed to toggle album track preview.',
-        previewFailure,
-      )
-    })
+    const previewResult = vi.mocked(previewToggle).mock.results.at(-1)
+    if (previewResult?.type !== 'return') {
+      throw new Error('Album preview did not start.')
+    }
+    await Promise.allSettled([previewResult.value])
+    expect(consoleError).toHaveBeenCalledWith(
+      'Failed to toggle album track preview.',
+      previewFailure,
+    )
   })
 
   it('should support optional preview callbacks', async () => {

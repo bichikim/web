@@ -1,7 +1,7 @@
 import {describe, expect, test} from 'vitest'
 
 import {parameterValuesEqual} from '../../../deformation'
-import {createDemoDocument} from '../../../player'
+import {createDemoDocument, parseDocument} from '../../../player'
 import {
   addParameter,
   addTwoDimensionalParameter,
@@ -184,6 +184,21 @@ describe('parameter keyform editing', () => {
     expect(deleted?.motions[0]?.tracks).toEqual([])
     expect(deleted?.physics).toBeUndefined()
     expect(deleteParameter({bindingId: 'missing', document})).toBeUndefined()
+  })
+
+  test('should remove deleted parameter IDs from saved timeline rows', () => {
+    const base = createDemoDocument()
+    const document = {
+      ...base,
+      motions: base.motions.map((motion) => ({
+        ...motion,
+        timelineParameterIds: ['angle-x', 'angle-y'],
+      })),
+    }
+    const deleted = deleteParameter({bindingId: 'angle-xy', document})!
+
+    expect(deleted.motions.every((motion) => motion.timelineParameterIds?.length === 0)).toBe(true)
+    expect(parseDocument(JSON.stringify(deleted)).ok).toBe(true)
   })
 
   test('should retain parameter definitions referenced by another binding', () => {

@@ -25,6 +25,21 @@ describe('normalizeSpeechText', () => {
     ).toBe('가격은 만 이천오백 원이고 진행률은 십이 점 오 퍼센트예요.')
   })
 
+  it('should normalize fullwidth Korean digits according to number context', () => {
+    expect(
+      normalizeSpeechText({
+        language: 'ko',
+        text: '가격은 １２３４원이고 티켓 ３장을 샀고 진행률은 １２.５%예요.',
+      }),
+    ).toBe('가격은 천이백삼십사 원이고 티켓 세 장을 샀고 진행률은 십이 점 오 퍼센트예요.')
+    expect(normalizeSpeechText({language: 'ko', text: '００７개, ０００１원'})).toBe(
+      '００７개, ０００１원',
+    )
+    expect(normalizeSpeechText({language: 'ko', text: '기준 연도는 ２０２６입니다.'})).toBe(
+      '기준 연도는 ２０２６입니다.',
+    )
+  })
+
   it('should pronounce Korean counter and place-value boundaries', () => {
     expect(
       normalizeSpeechText({
@@ -32,6 +47,63 @@ describe('normalizeSpeechText', () => {
         text: '0개, 20개, 100개, 24시, 3월 15일, 100,000,000원',
       }),
     ).toBe('영 개, 스무 개, 백 개, 이십사 시, 삼 월 십오 일, 일억 원')
+  })
+
+  it.each([
+    ['1월', '일 월'],
+    ['2월', '이 월'],
+    ['3월', '삼 월'],
+    ['4월', '사 월'],
+    ['5월', '오 월'],
+    ['6월', '유월'],
+    ['６월', '유월'],
+    ['7월', '칠 월'],
+    ['8월', '팔 월'],
+    ['9월', '구 월'],
+    ['10월', '시월'],
+    ['１０월', '시월'],
+    ['11월', '십일월'],
+    ['１１월', '십일월'],
+    ['12월', '십이월'],
+    ['１２월', '십이월'],
+  ])('should pronounce %s with its Korean calendar reading', (text, expected) => {
+    expect(normalizeSpeechText({language: 'ko', text})).toBe(expected)
+  })
+
+  it('should preserve special and joined Korean month readings in date sentences', () => {
+    expect(
+      normalizeSpeechText({
+        language: 'ko',
+        text: '6월 10일에 만나요. 10월 3일은 개천절이에요. 11월 15일, 12월 31일.',
+      }),
+    ).toBe('유월 십 일에 만나요. 시월 삼 일은 개천절이에요. 십일월 십오 일, 십이월 삼십일 일.')
+  })
+
+  it('should keep irregular month readings alongside padded clock and duration readings', () => {
+    expect(
+      normalizeSpeechText({
+        language: 'ko',
+        text: '６월 １０월, ０９시 ０５분, 05분 남았어요.',
+      }),
+    ).toBe('유월 시월, 아홉 시 오 분, 오 분 남았어요.')
+  })
+
+  it('should not apply irregular month readings to durations and other units', () => {
+    expect(
+      normalizeSpeechText({
+        language: 'ko',
+        text: '6개월, 10개월, 6일, 10일, 6년, 10초, 6층, 10도',
+      }),
+    ).toBe('육 개월, 십 개월, 육 일, 십 일, 육 년, 십 초, 육 층, 10도')
+  })
+
+  it('should not apply irregular month readings to part of a larger number', () => {
+    expect(
+      normalizeSpeechText({
+        language: 'ko',
+        text: '16월, 106월, 110월, 210월, 06월, 010월, +6월, -10월, ＋６월',
+      }),
+    ).toBe('십육 월, 백육 월, 백십 월, 이백십 월, 06월, 010월, 플러스 육 월, 마이너스 십 월, 육 월')
   })
 
   it('should pronounce explicit Korean year expressions with Sino-Korean numbers', () => {
@@ -150,12 +222,23 @@ describe('normalizeSpeechText', () => {
     expect(normalizeSpeechText({language: 'en', text: '+2%'})).toBe('plus two percent')
   })
 
-  it('should preserve leading-zero identifiers and pronounce an explicit negative zero', () => {
-    expect(normalizeSpeechText({language: 'ko', text: '007개, 0001원, -0%'})).toBe(
-      '007개, 0001원, 마이너스 영 퍼센트',
+  it('should pronounce Unicode-minus Korean temperature and percentage values', () => {
+    expect(normalizeSpeechText({language: 'ko', text: '온도는 −5도입니다.'})).toBe(
+      '온도는 마이너스 오 도입니다.',
     )
-    expect(normalizeSpeechText({language: 'en', text: '007 agents, -0%'})).toBe(
-      '007 agents, minus zero percent',
+    expect(normalizeSpeechText({language: 'ko', text: '−5%'})).toBe('마이너스 오 퍼센트')
+  })
+
+  it('should pronounce Unicode-minus English percentages', () => {
+    expect(normalizeSpeechText({language: 'en', text: '−5%'})).toBe('minus five percent')
+  })
+
+  it('should preserve leading-zero identifiers and pronounce an explicit negative zero', () => {
+    expect(normalizeSpeechText({language: 'ko', text: '007개, 0001원, -0%, −0%'})).toBe(
+      '007개, 0001원, 마이너스 영 퍼센트, 마이너스 영 퍼센트',
+    )
+    expect(normalizeSpeechText({language: 'en', text: '007 agents, -0%, −0%'})).toBe(
+      '007 agents, minus zero percent, minus zero percent',
     )
   })
 

@@ -16,9 +16,12 @@ import {EditorViewport} from './EditorViewport'
 import {createDeformerControlSelection} from './internal/deformer-control-selection'
 import {EditorAutoMeshDialog} from './internal/EditorAutoMeshDialog'
 import {EditorInspector} from './internal/EditorInspector'
-import {LayerOrderProperties} from './internal/LayerOrderProperties'
+import {EditorParameterProperties} from './internal/EditorParameterProperties'
 import {EditorLayerPanel} from './internal/EditorLayerPanel'
-import {getParameterBindingsForNodeIds} from './internal/parameter-keyforms'
+import {
+  getDocumentParameterBindings,
+  getParameterBindingsForNodeIds,
+} from './internal/parameter-keyforms'
 import {setMaskTarget} from './internal/mask-targets'
 import {createParameterPreview} from './internal/parameter-sampling'
 import {getParameterSelectionNodeIds} from './internal/parameter-targets'
@@ -80,10 +83,7 @@ interface EditorWorkspacePanelProps {
   readonly onMotionChange?: (motionId: string) => void
   readonly onMotionSeek?: (motionId: string, time: number) => void
   readonly onPlaybackToggle?: () => void
-  readonly onPhysicsPreviewChange?: (enabled: boolean) => void
-  readonly onPhysicsReset?: () => void
   readonly onSeek?: (time: number) => void
-  readonly physicsPreview?: boolean
   readonly selectedNodeIds: ReadonlyArray<string>
   readonly setBrushControlsMount?: (element: HTMLDivElement | undefined) => void
   readonly workspace: 'animation' | 'modeling'
@@ -114,9 +114,6 @@ const EditorWorkspacePanel = (props: EditorWorkspacePanelProps) => (
         editor={props.editor}
         onEditEnd={props.onEditEnd}
         onEditStart={props.onEditStart}
-        onPhysicsPreviewChange={props.onPhysicsPreviewChange}
-        onPhysicsReset={props.onPhysicsReset}
-        physicsPreview={props.physicsPreview}
         selectedNodeIds={props.selectedNodeIds}
         setBrushControlsMount={props.setBrushControlsMount}
       />
@@ -193,6 +190,10 @@ export const PuppetEditor = (props: PuppetEditorProps) => {
     onNotice: setNotice,
     selectedNodeIds,
   })
+  const activeParameterBinding = () =>
+    getDocumentParameterBindings(sourceDocument()).find(
+      (binding) => binding.id === parameterEditor.activeBindingId(),
+    )
   const temporary = useTemporaryForm({
     bindingId: () => parameterEditor.activeBindingId() ?? undefined,
     document: parameterEditor.previewDocument,
@@ -364,7 +365,7 @@ export const PuppetEditor = (props: PuppetEditorProps) => {
     }
     history.setDocument(document)
     setMaskPickSourcePartId(null)
-    setNotice(`${targetPartId} 레이어에 마스크를 적용했습니다.`)
+    setNotice(null)
   }
 
   return (
@@ -386,10 +387,7 @@ export const PuppetEditor = (props: PuppetEditorProps) => {
             onMotionChange={handleMotionChange}
             onMotionSeek={player() === null ? undefined : handleMotionSeek}
             onPlaybackToggle={player() === null ? undefined : handlePlaybackToggle}
-            onPhysicsPreviewChange={setPhysicsPreview}
-            onPhysicsReset={() => player()?.resetPhysics()}
             onSeek={player() === null ? undefined : (time) => player()?.seek(time)}
-            physicsPreview={physicsPreview()}
             selectedNodeIds={selectedNodeIds()}
             workspace={workspace()}
           />
@@ -402,14 +400,25 @@ export const PuppetEditor = (props: PuppetEditorProps) => {
             autoMeshAvailable={workspace() === 'modeling' && autoMesh.targets().length > 0}
             containerUnwrapAvailable={selectionActions().containerIds.length > 0}
             document={temporary.document()}
-            layerOrderProperties={
-              <LayerOrderProperties
-                document={sourceDocument()}
-                selectedPartIds={selectedPartIds()}
-                onDocumentChange={history.setDocument}
-              />
-            }
             editMode={WORKSPACE_EDIT_MODES[workspace()]}
+            parameterProperties={
+              <Show when={workspace() === 'modeling' ? activeParameterBinding() : undefined}>
+                {(binding) => (
+                  <EditorParameterProperties
+                    binding={binding()}
+                    document={sourceDocument()}
+                    editor={parameterEditor}
+                    onDocumentChange={handleTimelineDocumentChange}
+                    onEditEnd={history.endTransaction}
+                    onEditStart={handleDocumentEditStart}
+                    onPhysicsPreviewChange={setPhysicsPreview}
+                    onPhysicsReset={() => player()?.resetPhysics()}
+                    physicsPreview={physicsPreview()}
+                    selectedPartIds={selectedPartIds()}
+                  />
+                )}
+              </Show>
+            }
             maskPickSourcePartId={maskPickSourcePartId() ?? undefined}
             notice={notice()}
             onAutoMesh={() => autoMesh.onOpenChange(true)}

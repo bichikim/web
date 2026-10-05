@@ -10,6 +10,7 @@ import {useInfluenceDraft} from './use-influence-draft'
 interface InfluenceEditorProps {
   readonly renderTrigger?: (trigger: JSX.Element) => JSX.Element
   readonly title?: string
+  readonly triggerLabel?: string
   readonly expanded?: boolean
   readonly onExpandedChange?: (open: boolean) => void
   readonly influences?: ReadonlyArray<PuppetParameterInfluence>
@@ -38,7 +39,11 @@ export const InfluenceEditor = (props: InfluenceEditorProps) => {
         props.onExpandedChange?.(open)
       }}
     >
-      <InfluenceEditorTrigger renderTrigger={props.renderTrigger} title={props.title} />
+      <InfluenceEditorTrigger
+        label={props.triggerLabel}
+        renderTrigger={props.renderTrigger}
+        title={props.title}
+      />
 
       <Collapsible.Content class="influence-drawer" inert={!expanded()}>
         <div class="influence-inline">

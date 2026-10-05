@@ -170,6 +170,14 @@ describe('language learning random word selection', () => {
     expect(maximum.every((value) => values.includes(value))).toBe(true)
   })
 
+  it('should cap the selection when the random source returns one', () => {
+    const selected = selectRandomLanguageLearningWords({random: () => 1, values})
+
+    expect(selected).toHaveLength(10)
+    expect(new Set(selected).size).toBe(10)
+    expect(selected.every((value) => values.includes(value))).toBe(true)
+  })
+
   it('should use the platform random source by default', () => {
     vi.spyOn(Math, 'random').mockReturnValue(0)
 

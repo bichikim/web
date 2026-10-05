@@ -101,6 +101,7 @@ interface AllMotionTimelineGroupProps {
   readonly onKeyframeMove?: (move: Omit<MoveParameterKeyframesTarget, 'motionId'>) => boolean
   readonly onSelectionChange: (selection: KeyframeSelection | null) => void
   readonly onParameterSelect: (parameterId: string) => void
+  readonly onParameterRemove?: (parameterId: string) => void
   readonly onRename?: (name: string) => void
   readonly onSeek?: (time: number) => void
   readonly parameterValues?: PuppetParameterValueMap
@@ -220,6 +221,7 @@ const AllMotionTimelineGroup = (props: AllMotionTimelineGroupProps) => {
         onKeyframeSelect={handleKeyframeSelect}
         onKeyframeMove={handleKeyframeMove}
         onParameterSelect={handleParameterSelect}
+        onParameterRemove={props.onParameterRemove}
         onSeek={handleSeek}
         rulerLabel={
           <div class="timeline-motion-group-heading">
@@ -284,6 +286,7 @@ export interface AllMotionTimelineProps {
   readonly onMotionAdd?: () => void
   readonly onMotionDelete?: (motionId: string) => void
   readonly onMotionRename?: (motionId: string, name: string) => void
+  readonly onParameterRemove?: (motionId: string, parameterId: string) => boolean
   readonly onViewChange: (value: string) => void
   readonly parameterValues?: PuppetParameterValueMap
   readonly titleId: string
@@ -377,6 +380,21 @@ export const AllMotionTimeline = (props: AllMotionTimelineProps) => {
             const handleParameterSelect = (parameterId: string) => {
               setActiveParameter({motionId: motion.id, parameterId})
             }
+            const handleParameterRemove = (parameterId: string) => {
+              if (props.onParameterRemove?.(motion.id, parameterId) !== true) {
+                return
+              }
+              setActiveParameter((current) =>
+                current?.motionId === motion.id && current.parameterId === parameterId
+                  ? null
+                  : current,
+              )
+              setKeyframeSelection((current) =>
+                current?.motionId === motion.id && current.parameterId === parameterId
+                  ? null
+                  : current,
+              )
+            }
 
             return (
               <AllMotionTimelineGroup
@@ -403,6 +421,9 @@ export const AllMotionTimeline = (props: AllMotionTimelineProps) => {
                     : (move) => props.onKeyframeMove?.({...move, motionId: motion.id}) === true
                 }
                 onParameterSelect={handleParameterSelect}
+                onParameterRemove={
+                  props.onParameterRemove === undefined ? undefined : handleParameterRemove
+                }
                 onRename={
                   props.onMotionRename === undefined
                     ? undefined

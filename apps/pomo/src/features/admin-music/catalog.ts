@@ -64,4 +64,4 @@ export type AdminTrack = z.infer<typeof trackSchema>
 export type AlbumStatusAction = 'archive' | 'publish'
 
 export const getAlbumTranslation = (album: AdminAlbum, locale: (typeof ALBUM_LOCALES)[number]) =>
-  album.translations.find((translation) => translation.locale === locale) ?? album.translations[0]
+  album.translations.find((translation) => translation.locale === locale)

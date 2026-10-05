@@ -41,6 +41,13 @@
 - When direct evidence is missing, run the smallest relevant test or runtime experiment and distinguish product defects from setup, runner, sandbox, and environment failures.
 - Show the decisive evidence. If no permitted source or viable experiment can establish the claim, state that it cannot be determined instead of guessing.
 
+## Completion
+
+- Keep the user's requested outcome, scope, constraints, and completion criteria as the task's authority throughout the work. Do not silently narrow or replace them with intermediate artifacts or checks.
+- Before reporting completion, compare the actual result against each of the user's original completion criteria. For each criterion, cite evidence that proves that criterion; a plan, edited file, or passing partial check cannot substitute for a different requested outcome.
+- Keep source inspection, executed checks, and user-goal completion as separate claims. Verify runtime behavior when the requested outcome depends on it. Do not infer that the whole task is complete from implementation or test progress alone.
+- If a criterion remains unmet or unverified, report the exact remaining work or blocker and the verified progress; do not label the whole task complete.
+
 ## Architecture authority
 
 - Follow explicit requirements in current official documentation. Disclose conflicts with those requirements before implementation; do not deviate unless the user explicitly directs it.
@@ -72,6 +79,12 @@
 ## Pomo local servers
 
 - Run Pomo commands that bind a local port—including Vite, Playwright, Storybook browser tests, Wallaby, and Wrangler local tooling—with escalated permissions on the first attempt. Treat loopback `listen EPERM` as a sandbox restriction, retry the same command in the approved context, and verify it there before attributing the failure to product code.
+
+## Unit test execution time
+
+- Preserve the unit test time limit configured in Vitest. Never change or override it, including through test-specific timeout settings. No environment-based exceptions are allowed.
+- The recommended maximum execution-time target is 150ms per Vitest unit test. Write tests to execute as quickly as possible.
+- To reduce execution time, prioritize mocking over splitting tests, and splitting tests over moving integration-test portions into integration tests. Preserve the behavior and assertions that need verification.
 
 ## Required after changes
 
@@ -109,47 +122,3 @@ pnpm + Turborepo (`@winter-love/web`) · Node ≥24 · pnpm 11.x (`package.json`
 **Commands:** `pnpm lint` · `pnpm test` · `turbo prepare-build` · `pnpm typecheck` (`apps/coong`)
 
 **Gotcha:** Without Supabase, auth/DB features error but the app renders. Re-run `turbo prepare-build` after cleaning `node_modules` or `dist/`.
-
-<!-- graft:start -->
-
-## Graft — repo context graph
-
-This repo is indexed in `graft/`: small linked markdown nodes that explain each
-system and carry exact file:line spans, kept in sync with the code through git.
-
-For ANY task here — understanding how something works, finding where code lives,
-or scoping a change — get context from the graph before grepping or opening
-source files. Re-ask freely (it's cheap) and reuse literal identifiers you
-already have (symbol, error string, file name) as the query. New to this repo?
-Run `graft map` first — a token-budgeted orientation (dir clusters, hubs,
-hotspots), no LLM, no key.
-
-- Run `graft ask "<your question>" --source` → ranked nodes with the relevant
-  code spans inlined (each hit's ≤8-line crux by default; `--full` for whole
-  definitions when the crux isn't enough). Match the tool to the task shape:
-  for understanding or editing, the top node IS the answer — cite its
-  `covers:` file:line spans and edit straight from `--source`. For
-  exhaustive tasks ("every occurrence / every caller of this pattern"), ranked
-  results are top-N, not complete — run `graft grep "<literal>"` instead
-  (exhaustive over indexed files, grouped by enclosing symbol), falling back
-  to raw `grep -rn` only for unindexed files.
-- `graft skeleton <file>` → every definition's signature + span, ~10× cheaper
-  than reading the file; use it to skim an API surface.
-- `graft callers <symbol>` gives precomputed, exact edges — who calls this.
-  Add `--direction out` for what it calls, or `--depth N` to walk
-  transitively for the full blast radius. For structural questions, skip
-  ranking and use this directly.
-- Or browse: `graft/INDEX.md` lists every node; follow the links.
-- Monorepos and folders of multiple repos rank fairly across sub-projects —
-  hits carry `[scope/]` labels naming which one they're from. Narrow with
-  `graft ask "<task>" --in <scope>/` once you know where you're working.
-
-If a returned span is truncated ("+N more lines"), open the file at that exact
-range before finalizing. Only open source files when a node genuinely lacks a
-needed detail, and then at the exact file:line the node points to — never
-re-read whole files.
-
-After big code changes, refresh the graph with `graft build` (deterministic,
-no API key, $0).
-
-<!-- graft:end -->

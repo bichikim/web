@@ -7,6 +7,7 @@ import {
   readPPlayback,
 } from '../../features/focus-room-audio'
 import {restorePPlayerState} from './restoration'
+import {resolveStoredPlaylistTracks} from './resolve-stored-playlist-tracks'
 
 export interface PlaylistLoad {
   readonly defaultTracks: readonly PTrack[]
@@ -21,17 +22,21 @@ export interface UsePlaylistRestorationProps {
   readonly queueRevision: Accessor<number>
   readonly onLoad: (loaded: PlaylistLoad) => readonly PTrack[]
   readonly onLoadSettled: () => void
-  readonly onRestore: (tracks: readonly PTrack[], playback: PPlaybackState | null) => void
+  readonly onRestore: (
+    tracks: readonly PTrack[],
+    playback: PPlaybackState | null,
+    entryIds?: readonly string[],
+  ) => void
   readonly onError: (error: unknown) => void
 }
 
 /** 목록과 저장된 재생 상태를 불러오고, 사용자 조작 이후의 오래된 복원과 종료 후 적용을 막는다. */
 export const usePlaylistRestoration = (props: UsePlaylistRestorationProps): void => {
-  const playlist = Promise.withResolvers<readonly string[] | null>()
+  const playlist = Promise.withResolvers<PlaylistPreference | null>()
   createEffect(() => {
     const saved = props.savedPlaylist()
     if (saved !== null) {
-      playlist.resolve(saved.trackIds)
+      playlist.resolve(saved)
     }
   })
   const request = new AbortController()
@@ -122,9 +127,21 @@ export const usePlaylistRestoration = (props: UsePlaylistRestorationProps): void
             props.playbackRevision() === restoreRevision &&
             props.queueRevision() === resolvedQueueRevision,
           defaultTracks: resolvedTracks,
-          onRestore: (tracks, playback) => props.onRestore(tracks, playback),
+          onRestore: (restoredTracks, playback, entryIds) => {
+            if (entryIds === undefined) {
+              props.onRestore(restoredTracks, playback)
+              return
+            }
+            props.onRestore(restoredTracks, playback, entryIds)
+          },
           playbackRequest,
           playlistRequest: effectivePlaylistRequest,
+          resolveTracks: (storedTrackIds) =>
+            resolveStoredPlaylistTracks({
+              onError: handleError,
+              sourceTracks: source.tracks,
+              storedTrackIds: Promise.resolve(storedTrackIds),
+            }),
           tracks: source.tracks,
         })
       })
