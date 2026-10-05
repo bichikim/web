@@ -11,6 +11,7 @@ import {webLocalStorage} from './utils/preference-storage'
 
 import {PDocumentMetadata} from './components/p-document-metadata/PDocumentMetadata'
 import {PRecoveryBoundary} from './components/p-recovery-boundary/PRecoveryBoundary'
+import {PStudioMotionInputSessionProvider} from './components/p-studio/PStudioMotionInputSessionProvider'
 import {useApplicationRecovery} from './features/application-recovery'
 import {SafeArea} from './components/safe-area/SafeArea'
 import {DisplayThemeProvider} from './features/display-theme'
@@ -36,15 +37,17 @@ export default function App() {
                   <AuthProvider>
                     <PModelDownloadProvider>
                       <ToastProvider>
-                        <PRecoveryBoundary
-                          canRetry={applicationRecovery.canRetry}
-                          onError={applicationRecovery.onError}
-                          onReady={applicationRecovery.onReady}
-                          onReload={applicationRecovery.onReload}
-                          onRetry={applicationRecovery.onRetry}
-                        >
-                          <Suspense>{props.children}</Suspense>
-                        </PRecoveryBoundary>
+                        <PStudioMotionInputSessionProvider>
+                          <PRecoveryBoundary
+                            canRetry={applicationRecovery.canRetry}
+                            onError={applicationRecovery.onError}
+                            onReady={applicationRecovery.onReady}
+                            onReload={applicationRecovery.onReload}
+                            onRetry={applicationRecovery.onRetry}
+                          >
+                            <Suspense>{props.children}</Suspense>
+                          </PRecoveryBoundary>
+                        </PStudioMotionInputSessionProvider>
                       </ToastProvider>
                     </PModelDownloadProvider>
                   </AuthProvider>

@@ -11,6 +11,10 @@ it('should split tags on the fullwidth comma used in Korean IME input', () => {
   expect(parseLanguageLearningTags('home，work')).toEqual(['home', 'work'])
 })
 
+it('should split tags on the fullwidth semicolon used in Korean IME input', () => {
+  expect(parseLanguageLearningTags(' home；HOME；\nwork ')).toEqual(['home', 'work'])
+})
+
 it('should split semicolons with mixed delimiters while preserving phrase text', () => {
   expect(parseLanguageLearningTags(' ;\nfirst phrase;;look-after，can’t,one\ntwo; ')).toEqual([
     'first phrase',

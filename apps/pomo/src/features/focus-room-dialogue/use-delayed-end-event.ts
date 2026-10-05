@@ -15,6 +15,7 @@ export interface UseDelayedEndEventProps {
 
 export interface DelayedEndEventController {
   readonly cancel: () => void
+  readonly getTimerGeneration: () => number
   readonly isRunning: () => boolean
   readonly start: (durationMinutes: number) => void
 }
@@ -28,6 +29,7 @@ const isValidDuration = (durationMinutes: number) =>
 export const useDelayedEndEvent = (props: UseDelayedEndEventProps): DelayedEndEventController => {
   const [isRunning, setIsRunning] = createSignal(false)
   let timerId: ReturnType<typeof globalThis.setTimeout> | null = null
+  let timerGeneration = 0
   let eventState: 'idle' | 'running' | 'queued' = 'idle'
 
   const runEvent = () => {
@@ -55,6 +57,7 @@ export const useDelayedEndEvent = (props: UseDelayedEndEventProps): DelayedEndEv
   }
 
   const cancel = () => {
+    timerGeneration += 1
     if (timerId !== null) {
       globalThis.clearTimeout(timerId)
       timerId = null
@@ -68,8 +71,13 @@ export const useDelayedEndEvent = (props: UseDelayedEndEventProps): DelayedEndEv
     }
 
     cancel()
+    const currentGeneration = timerGeneration
     setIsRunning(true)
     timerId = globalThis.setTimeout(() => {
+      if (currentGeneration !== timerGeneration) {
+        return
+      }
+
       timerId = null
       setIsRunning(false)
       triggerEvent()
@@ -84,5 +92,5 @@ export const useDelayedEndEvent = (props: UseDelayedEndEventProps): DelayedEndEv
 
   onCleanup(cancel)
 
-  return {cancel, isRunning, start}
+  return {cancel, getTimerGeneration: () => timerGeneration, isRunning, start}
 }

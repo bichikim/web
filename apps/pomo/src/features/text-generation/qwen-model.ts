@@ -2,12 +2,12 @@
 
 import {type ProgressInfo, Qwen3_5ForCausalLM} from '@huggingface/transformers'
 
-import type {TextModelImplementation} from './model'
+import type {TransformersTextModelImplementation} from './model'
 
 export type QwenTextGenerationModel = Awaited<ReturnType<typeof Qwen3_5ForCausalLM.from_pretrained>>
 
 interface LoadQwenModelOptions {
-  readonly model: TextModelImplementation
+  readonly model: TransformersTextModelImplementation
   readonly onProgress: (progress: ProgressInfo) => void
 }
 

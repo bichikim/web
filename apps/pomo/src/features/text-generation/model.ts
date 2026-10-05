@@ -1,6 +1,12 @@
 import {POMO_R2_ASSET_HOST} from '../product-assets'
 
-const DEVELOPMENT_TEXT_MODEL_IDS = ['qwen-0.8b', 'qwen-2b', 'qwen-4b'] as const
+const DEVELOPMENT_TEXT_MODEL_IDS = [
+  'qwen-0.8b',
+  'qwen-2b',
+  'qwen-4b',
+  'lfm-1.2b',
+  'lfm-2.6b-qad',
+] as const
 
 const PRODUCTION_TEXT_MODEL_IDS = ['gemma-4-e2b', 'gemma-4-e2b-mobile'] as const
 
@@ -19,12 +25,25 @@ export interface TextModelDefinition {
   readonly label: string
 }
 
-export interface TextModelImplementation extends TextModelDefinition {
-  readonly architecture: 'gemma-4' | 'qwen-3.5'
+export interface TransformersTextModelImplementation extends TextModelDefinition {
+  readonly architecture: 'gemma-4' | 'lfm-2' | 'qwen-3.5'
   readonly assetSource: TextModelAssetSource
   readonly quantization: 'q2f16' | 'q4'
   readonly repositoryId: string
 }
+
+export interface GgufTextModelImplementation extends TextModelDefinition {
+  readonly architecture: 'lfm-2-gguf'
+  readonly assetSource: TextModelAssetSource
+  readonly quantization: 'q4_0'
+  readonly repositoryId: string
+  readonly tokenizerSubfolder: string
+  readonly weightFile: string
+}
+
+export type TextModelImplementation =
+  | TransformersTextModelImplementation
+  | GgufTextModelImplementation
 
 export interface TextModelAssetSource {
   readonly host: string
@@ -73,6 +92,28 @@ const PRODUCTION_TEXT_MODEL_IMPLEMENTATIONS: Record<
 }
 
 const createDevelopmentTextModels = (): Partial<Record<TextModelId, TextModelImplementation>> => ({
+  'lfm-1.2b': {
+    architecture: 'lfm-2',
+    assetSource: HUGGING_FACE_MODEL_SOURCE,
+    description: '경량 다국어 모델의 한국어 표현 비교용',
+    downloadSize: '약 1.2GB',
+    id: 'lfm-1.2b',
+    label: 'LFM2.5-1.2B Instruct',
+    quantization: 'q4',
+    repositoryId: 'LiquidAI/LFM2.5-1.2B-Instruct-ONNX',
+  },
+  'lfm-2.6b-qad': {
+    architecture: 'lfm-2-gguf',
+    assetSource: HUGGING_FACE_MODEL_SOURCE,
+    description: 'QAD Q4_0 경량화 모델의 한국어 표현 비교용',
+    downloadSize: '약 1.6GB',
+    id: 'lfm-2.6b-qad',
+    label: 'LFM2.5-2.6B QAD Q4_0',
+    quantization: 'q4_0',
+    repositoryId: 'LiquidAI/LFM2.5-2.6B-GGUF',
+    tokenizerSubfolder: 'qad',
+    weightFile: 'LFM2.5-2.6B-QAD-Q4_0.gguf',
+  },
   'qwen-0.8b': {
     architecture: 'qwen-3.5',
     assetSource: HUGGING_FACE_MODEL_SOURCE,
