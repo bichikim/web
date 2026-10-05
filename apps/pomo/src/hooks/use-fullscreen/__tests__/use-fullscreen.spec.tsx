@@ -16,6 +16,13 @@ const FullscreenHarness = (props: FullscreenHarnessProps) => {
   return null
 }
 
+const dispatchUnrelatedFullscreenError = () => {
+  const unrelatedElement = document.createElement('dialog')
+  document.body.append(unrelatedElement)
+  unrelatedElement.dispatchEvent(new Event('fullscreenerror', {bubbles: true}))
+  unrelatedElement.remove()
+}
+
 describe('useFullscreen', () => {
   let fullscreenElement: Element | null
   let requestFullscreen: ReturnType<typeof vi.fn>
@@ -288,8 +295,8 @@ describe('useFullscreen', () => {
     requestFullscreen.mockReturnValueOnce(deferred.promise)
     const {getController} = renderController()
     const execution = getController()?.onEnabledChange(true)
-    document.dispatchEvent(new Event('fullscreenerror'))
-    expect(getController()?.error()).toBe('enter-failed')
+    document.documentElement.dispatchEvent(new Event('fullscreenerror', {bubbles: true}))
+    expect(getController()?.error()).toBeNull()
     expect(getController()?.isEnabled()).toBe(false)
     expect(getController()?.isRequestPending()).toBe(true)
     document.dispatchEvent(new Event('fullscreenchange'))
@@ -308,23 +315,39 @@ describe('useFullscreen', () => {
     expect(getController()?.isEnabled()).toBe(true)
   })
 
-  it('should recover exit error events and remove both listeners on disposal', async () => {
+  it('should ignore unrelated fullscreen errors before a request and after a successful cycle', async () => {
+    const {getController} = renderController()
+
+    dispatchUnrelatedFullscreenError()
+    expect(getController()?.error()).toBeNull()
+    expect(getController()?.isRequestPending()).toBe(false)
+
+    getController()?.onEnabledChange(true)
+    await waitFor(() => expect(getController()?.isRequestPending()).toBe(false))
+    getController()?.onEnabledChange(false)
+    await waitFor(() => expect(getController()?.isRequestPending()).toBe(false))
+    dispatchUnrelatedFullscreenError()
+
+    expect(getController()?.error()).toBeNull()
+  })
+
+  it('should remove both listeners on disposal while an exit remains pending', async () => {
     fullscreenElement = document.documentElement
     const deferred = createDeferred<void>()
     exitFullscreen.mockReturnValueOnce(deferred.promise)
     const {getController, view} = renderController()
     const execution = getController()?.onEnabledChange(false)
-    document.dispatchEvent(new Event('fullscreenerror'))
-    expect(getController()?.error()).toBe('exit-failed')
+    dispatchUnrelatedFullscreenError()
+    expect(getController()?.error()).toBeNull()
     expect(getController()?.isEnabled()).toBe(true)
     view.unmount()
     fullscreenElement = null
     document.dispatchEvent(new Event('fullscreenchange'))
-    document.dispatchEvent(new Event('fullscreenerror'))
+    dispatchUnrelatedFullscreenError()
     deferred.resolve()
     await expect(execution).resolves.toBeUndefined()
     expect(getController()?.isEnabled()).toBe(true)
-    expect(getController()?.error()).toBe('exit-failed')
+    expect(getController()?.error()).toBeNull()
     getController()?.onEnabledChange(true)
     expect(requestFullscreen).not.toHaveBeenCalled()
   })
