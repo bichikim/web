@@ -3,6 +3,7 @@
 import {waitFor} from '@solidjs/testing-library'
 import {expect, it, vi} from 'vitest'
 
+import {COVER_STORAGE_WARNING} from '../album-draft-persistence'
 import {
   coverMocks,
   createCoverEvent,
@@ -86,6 +87,84 @@ it('should preserve a cover selection still being prepared when the earlier albu
   } finally {
     resolvePreparation(PREPARED_B)
     await pendingSelection
+    cleanup()
+  }
+})
+
+it('should retain a new cover storage warning while the successful album refresh is pending', async () => {
+  let resolvePost: (response: Response) => void = () => undefined
+  let resolvePreparation: (file: File) => void = () => undefined
+  let resolveRefresh: () => void = () => undefined
+  let pendingAlbumSubmit: Promise<void> | null = null
+  let pendingSelection: Promise<void> | null = null
+  const refreshCatalog = vi.fn(
+    () =>
+      new Promise<void>((resolve) => {
+        resolveRefresh = resolve
+      }),
+  )
+  const {cleanup, result, setMessage} = renderAlbumDraft({refreshCatalog})
+
+  try {
+    await waitForRestoration(result)
+    vi.mocked(fetch).mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          resolvePost = resolve
+        }),
+    )
+    pendingAlbumSubmit = result.handleAlbumSubmit(
+      createSubmitEvent().event,
+    ) as unknown as Promise<void>
+    await waitFor(() => expect(fetch).toHaveBeenCalledOnce())
+
+    coverMocks.prepareAlbumCover.mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          resolvePreparation = resolve
+        }),
+    )
+    pendingSelection = result.handleCoverChange(
+      createCoverEvent(SOURCE_B).event,
+    ) as unknown as Promise<void>
+    await waitFor(() => expect(coverMocks.prepareAlbumCover).toHaveBeenCalledOnce())
+
+    resolvePost(
+      new Response(JSON.stringify({id: 'created-album-a'}), {
+        headers: {'Content-Type': 'application/json'},
+        status: 201,
+      }),
+    )
+    await waitFor(() => expect(refreshCatalog).toHaveBeenCalledOnce())
+
+    storageMocks.writeAlbumDraftCover.mockResolvedValueOnce({error: 'quota', success: false})
+    resolvePreparation(PREPARED_B)
+    await pendingSelection
+
+    expect(result.isProcessingCover()).toBe(false)
+    expect(setMessage).toHaveBeenLastCalledWith(COVER_STORAGE_WARNING)
+
+    resolveRefresh()
+    await pendingAlbumSubmit
+
+    expect(setMessage).toHaveBeenLastCalledWith(
+      `${COVER_STORAGE_WARNING}\n앨범을 만들었고 제출 중 수정한 초안을 유지했습니다.`,
+    )
+  } finally {
+    resolvePost(
+      new Response(JSON.stringify({id: 'created-album-a'}), {
+        headers: {'Content-Type': 'application/json'},
+        status: 201,
+      }),
+    )
+    resolvePreparation(PREPARED_B)
+    resolveRefresh()
+    if (pendingSelection !== null) {
+      await pendingSelection
+    }
+    if (pendingAlbumSubmit !== null) {
+      await pendingAlbumSubmit
+    }
     cleanup()
   }
 })

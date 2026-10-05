@@ -58,16 +58,16 @@ export interface CreateAlbumSubmitHandlerOptions extends AlbumCreationCallbacks 
 
 interface AlbumCreationRefreshOptions {
   readonly albumId: string
-  readonly coverStorageWarning: string | null
   readonly didClearDraft: boolean
   readonly didPreserveDraft: boolean
+  readonly getCoverStorageWarning: () => string | null
 }
 
 const refreshAfterAlbumCreation = async (
   options: AlbumCreationCallbacks,
   result: AlbumCreationRefreshOptions,
 ): Promise<void> => {
-  const {albumId, coverStorageWarning, didClearDraft, didPreserveDraft} = result
+  const {albumId, didClearDraft, didPreserveDraft, getCoverStorageWarning} = result
   let didRefreshCatalog = true
 
   try {
@@ -77,6 +77,7 @@ const refreshAfterAlbumCreation = async (
   }
 
   options.onAlbumCreated?.(albumId)
+  const coverStorageWarning = getCoverStorageWarning()
 
   if (!didRefreshCatalog) {
     options.setMessage(
@@ -203,9 +204,9 @@ export const createAlbumSubmitHandler = (
 
       await refreshAfterAlbumCreation(options, {
         albumId,
-        coverStorageWarning: options.getCoverStorageWarning?.() ?? null,
         didClearDraft,
         didPreserveDraft: !isDraftUnchanged,
+        getCoverStorageWarning: () => options.getCoverStorageWarning?.() ?? null,
       })
     } finally {
       options.setIsSavingAlbum(false)
