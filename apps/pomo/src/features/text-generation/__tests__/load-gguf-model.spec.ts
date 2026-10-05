@@ -60,6 +60,10 @@ it('should loads cached GGUF bytes without fetching the weights again', async ()
   expect(mocks.get).toHaveBeenCalledWith(url)
   expect(mocks.fetch).not.toHaveBeenCalled()
   expect(await mocks.loadModel.mock.calls[0]?.[0][0].text()).toBe('cached weights')
+  expect(mocks.loadModel).toHaveBeenCalledWith(
+    expect.any(Array),
+    expect.objectContaining({jinja: true, reasoning: true, reasoning_budget_tokens: 2048}),
+  )
 })
 
 it('should downloads the exact checkpoint, reports byte progress, and stores its bytes', async () => {

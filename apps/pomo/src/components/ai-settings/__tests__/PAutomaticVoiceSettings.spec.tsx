@@ -1,7 +1,7 @@
 import {createDeferred} from 'src/test-utils/create-deferred'
 /** @vitest-environment jsdom */
 
-import {PreferenceProvider} from 'src/hooks/use-preference'
+import {PreferenceProvider, usePreference} from 'src/hooks/use-preference'
 import {fireEvent, render, screen, waitFor} from '@solidjs/testing-library'
 import {For} from 'solid-js'
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
@@ -9,9 +9,15 @@ import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 import {
   AUTOMATIC_DIALOGUE_SETTINGS_STORAGE_KEY,
   type AutomaticDialogueSettings as AutomaticDialogueSettingsValue,
+  createAutomaticDialoguePreferenceOptions,
   DEFAULT_AUTOMATIC_DIALOGUE_SETTINGS,
 } from '../../../features/focus-room-dialogue'
-import {AutomaticDialogueSettings} from '../AutomaticSettings'
+import {PAutomaticVoiceSettings} from '../PAutomaticVoiceSettings'
+
+const VoiceDefaults = () => {
+  const [settings] = usePreference(createAutomaticDialoguePreferenceOptions())
+  return <output aria-label="현재 음성 생성 모델">{settings()?.modelId}</output>
+}
 
 const mocks = vi.hoisted(() => ({
   read: vi.fn(),
@@ -77,11 +83,14 @@ describe('AutomaticDialogueSettings', () => {
     } satisfies AutomaticDialogueSettingsValue
     mocks.read.mockResolvedValue(storedSettings)
 
-    render(() => <AutomaticDialogueSettings />, {wrapper: PreferenceProvider})
+    render(() => <PAutomaticVoiceSettings />, {wrapper: PreferenceProvider})
 
     expect(screen.getByText('설정 불러오는 중')).toBeInTheDocument()
     const model = await screen.findByRole('combobox', {name: '자동 음성 생성 모델'})
     const voice = screen.getByRole('combobox', {name: '자동 음성 생성 목소리'})
+    expect(screen.getByRole('region', {name: '기본 자동 음성 생성'})).toHaveClass(
+      'settings-compact:gap-3',
+    )
     expect(model).toHaveValue('full')
     expect(voice).toHaveValue('Yuna')
 
@@ -105,7 +114,7 @@ describe('AutomaticDialogueSettings', () => {
   })
 
   it('should expose the stable preference key used by storage writes', async () => {
-    render(() => <AutomaticDialogueSettings />, {wrapper: PreferenceProvider})
+    render(() => <PAutomaticVoiceSettings />, {wrapper: PreferenceProvider})
     const model = await screen.findByRole('combobox', {name: '자동 음성 생성 모델'})
 
     fireEvent.change(model, {target: {value: 'full'}})
@@ -123,16 +132,23 @@ describe('AutomaticDialogueSettings', () => {
     const consoleError = vi.spyOn(console, 'error').mockImplementation(() => undefined)
     mocks.write.mockReturnValueOnce(failure)
 
-    render(() => <AutomaticDialogueSettings />, {wrapper: PreferenceProvider})
+    render(
+      () => (
+        <>
+          <PAutomaticVoiceSettings />
+          <VoiceDefaults />
+        </>
+      ),
+      {wrapper: PreferenceProvider},
+    )
     const model = await screen.findByRole('combobox', {name: '자동 음성 생성 모델'})
     fireEvent.change(model, {target: {value: 'full'}})
 
     await waitFor(() =>
-      expect(screen.getByRole('status')).toHaveTextContent(
-        '자동 음성 생성 설정을 저장하지 못했어요.',
-      ),
+      expect(screen.getByText(/자동 음성 생성 설정을 저장하지 못했어요/)).toBeInTheDocument(),
     )
     expect(model).toHaveValue('int8')
+    expect(screen.getByRole('status', {name: '현재 음성 생성 모델'})).toHaveTextContent('int8')
     expect(consoleError).toHaveBeenCalledWith(
       'Failed to save automatic dialogue settings.',
       failure,
@@ -144,7 +160,7 @@ describe('AutomaticDialogueSettings', () => {
     const consoleError = vi.spyOn(console, 'error').mockImplementation(() => undefined)
     mocks.read.mockRejectedValueOnce(failure)
 
-    render(() => <AutomaticDialogueSettings />, {wrapper: PreferenceProvider})
+    render(() => <PAutomaticVoiceSettings />, {wrapper: PreferenceProvider})
     const model = await screen.findByRole('combobox', {name: '자동 음성 생성 모델'})
 
     expect(consoleError).toHaveBeenCalledWith(
@@ -158,7 +174,7 @@ describe('AutomaticDialogueSettings', () => {
   it('should not update state after the settings component is disposed during loading', async () => {
     const deferred = createDeferred<AutomaticDialogueSettingsValue>()
     mocks.read.mockReturnValue(deferred.promise)
-    const view = render(() => <AutomaticDialogueSettings />, {wrapper: PreferenceProvider})
+    const view = render(() => <PAutomaticVoiceSettings />, {wrapper: PreferenceProvider})
 
     await waitFor(() => expect(mocks.read).toHaveBeenCalledOnce())
     view.unmount()
@@ -173,7 +189,7 @@ describe('AutomaticDialogueSettings', () => {
     const failure = new Error('late settings failure')
     const consoleError = vi.spyOn(console, 'error').mockImplementation(() => undefined)
     mocks.read.mockReturnValue(deferred.promise)
-    const view = render(() => <AutomaticDialogueSettings />, {wrapper: PreferenceProvider})
+    const view = render(() => <PAutomaticVoiceSettings />, {wrapper: PreferenceProvider})
 
     await waitFor(() => expect(mocks.read).toHaveBeenCalledOnce())
     view.unmount()

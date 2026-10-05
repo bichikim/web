@@ -48,7 +48,7 @@ describe('isTextModelDownloaded', () => {
     const storage = createStorage()
     await expect(isTextModelDownloaded({modelId: 'lfm-2.6b-qad', storage})).resolves.toBe(true)
     expect(storage.get).toHaveBeenCalledExactlyOnceWith(
-      'https://huggingface.co/LiquidAI/LFM2.5-2.6B-GGUF/resolve/main/LFM2.5-2.6B-QAD-Q4_0.gguf',
+      'https://storage.pomofi.io/models/text-generation/LiquidAI/LFM2.5-2.6B-GGUF/e7caca5d835a3901a8e0d63e94009429bafafdfc/LFM2.5-2.6B-QAD-Q4_0.gguf',
     )
   })
 

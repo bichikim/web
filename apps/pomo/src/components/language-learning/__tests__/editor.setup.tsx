@@ -161,11 +161,13 @@ beforeEach(() => {
     generateWithPreparation,
     isBusy: () => isWriterBusy(writerState()),
     isModelReady: () => true,
+    modelId: () => 'gemma-4-e2b',
     output: writerOutput,
     prepare: vi.fn(),
     progress: () => 0,
     release: vi.fn(),
     request: () => '',
+    selectModel: vi.fn(),
     setRequest: vi.fn(),
     state: writerState,
     statusMessage: () => '',
@@ -304,3 +306,7 @@ export const renderGeneratedReview = async () => {
   await completeTextGeneration()
   return view
 }
+
+vi.mock('src/features/text-generation/use-default-text-model', () => ({
+  useDefaultTextModel: () => () => 'gemma-4-e2b',
+}))

@@ -10,9 +10,9 @@ describe('text model definitions', () => {
       'qwen-2b',
       'qwen-4b',
       'lfm-1.2b',
-      'lfm-2.6b-qad',
       'gemma-4-e2b',
       'gemma-4-e2b-mobile',
+      'lfm-2.6b-qad',
     ])
     expect(getTextModelImplementation('qwen-0.8b')).toMatchObject({
       architecture: 'qwen-3.5',

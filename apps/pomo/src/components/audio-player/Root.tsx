@@ -72,9 +72,15 @@ export const AudioPlayerRoot = (props: AudioPlayerRootProps) => {
     untrack(() => {
       if (props.autoplay === true) {
         audioElement.load()
-        audioElement.play().catch(handlePlayFailure)
       }
     })
+  })
+
+  createEffect(() => {
+    const audioElement = element()
+    if (props.autoplay === true && audioElement !== null) {
+      untrack(() => audioElement.play().catch(handlePlayFailure))
+    }
   })
 
   const seek = (time: number) => {

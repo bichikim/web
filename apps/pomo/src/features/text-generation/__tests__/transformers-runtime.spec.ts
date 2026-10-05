@@ -110,7 +110,7 @@ it('prepares GGUF weights with the QAD tokenizer instead of an ONNX session', as
   expect(mocks.tokenizerFromPretrained).toHaveBeenCalledWith('repository/lfm-2.6b-qad', {
     revision: 'revision-1',
   })
-  expect(mocks.env.remotePathTemplate).toBe('models/{model}/{revision}/qad/')
+  expect(mocks.env.remotePathTemplate).toBe('models/{model}/revision-1/qad/')
   expect(mocks.lfmFromPretrained).not.toHaveBeenCalled()
   expect(runtime.getTokenizer()).toBe(tokenizer)
   expect(tokenizer).toMatchObject({chat_template: 'QAD chat template'})

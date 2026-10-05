@@ -7,7 +7,6 @@ import {createTextGenerationExecutor} from '../text-generation/execution'
 import type {TarotGenerateRequest, TarotWorkerRequest, TarotWorkerResponse} from './messages'
 import {createTarotMessages} from './prompt'
 
-const MODEL_ID = 'gemma-4-e2b'
 const MAXIMUM_NEW_TOKENS = 2560
 const workerScope = globalThis.self as DedicatedWorkerGlobalScope
 let activeRequestId = ''
@@ -20,7 +19,7 @@ const generation = createExclusiveAsyncTask()
 
 const generateReading = async (request: TarotGenerateRequest) => {
   activeRequestId = request.requestId
-  const target = createDeviceTarget(MODEL_ID)
+  const target = createDeviceTarget(request.modelId)
   const preparation = await textExecutor.prepare(target)
   if (!preparation.ok) {
     throw createGenerationFailure(preparation.error, '타로 해석 모델을 준비하지 못했어요.')

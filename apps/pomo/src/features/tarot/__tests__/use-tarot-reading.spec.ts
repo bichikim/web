@@ -14,6 +14,7 @@ const mocks = vi.hoisted(() => ({
   dispose: vi.fn(),
   downloaded: vi.fn<() => Promise<boolean>>(),
   generate: vi.fn(),
+  modelId: 'gemma-4-e2b' as 'gemma-4-e2b' | 'lfm-2.6b-qad',
   onResponse: null as ((response: TarotWorkerResponse) => void) | null,
   startTextModel: vi.fn<() => Promise<ModelDownloadResult>>(),
   startVoiceModel: vi.fn<() => Promise<ModelDownloadResult>>(),
@@ -51,6 +52,7 @@ describe('useTarotReading', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     mocks.onResponse = null
+    mocks.modelId = 'gemma-4-e2b'
     mocks.supported = true
     mocks.downloaded.mockResolvedValue(true)
     mocks.startTextModel.mockResolvedValue({status: 'complete'})
@@ -108,6 +110,15 @@ describe('useTarotReading', () => {
     mocks.onResponse?.({requestId, text: '세 카드의 해석', type: 'complete'})
     expect(reading.status()).toBe('complete')
     expect(reading.output()).toBe('세 카드의 해석')
+  })
+
+  it('should start cached LFM interpretation when WebGPU is unavailable', async () => {
+    mocks.modelId = 'lfm-2.6b-qad'
+    mocks.supported = false
+    reading.draw()
+    await flush()
+    expect(mocks.generate).toHaveBeenCalledWith(expect.objectContaining({modelId: 'lfm-2.6b-qad'}))
+    expect(reading.status()).toBe('preparing')
   })
 
   it('starts text interpretation when Gemma is ready and the voice model is missing', async () => {
@@ -309,4 +320,19 @@ describe('useTarotReading', () => {
     await flush()
     expect(vi.mocked(mocks.generate).mock.lastCall?.[0].locale).toBe('en')
   })
+  it('should use the chosen LFM model for consent, download, and the worker request', async () => {
+    mocks.modelId = 'lfm-2.6b-qad'
+    mocks.downloaded.mockResolvedValue(false)
+    reading.draw()
+    await flush()
+    expect(mocks.downloaded).toHaveBeenCalledWith({modelId: 'lfm-2.6b-qad'})
+    mocks.modelId = 'gemma-4-e2b'
+    await reading.startDownload()
+    expect(mocks.startTextModel).toHaveBeenCalledWith('lfm-2.6b-qad')
+    expect(mocks.generate).toHaveBeenCalledWith(expect.objectContaining({modelId: 'lfm-2.6b-qad'}))
+  })
 })
+
+vi.mock('src/features/text-generation/use-default-text-model', () => ({
+  useDefaultTextModel: () => () => mocks.modelId,
+}))

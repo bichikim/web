@@ -1,8 +1,8 @@
 /** @vitest-environment jsdom */
 
-import {fireEvent, render, screen} from '@solidjs/testing-library'
+import {fireEvent, render, screen, within} from '@solidjs/testing-library'
 import {createSignal} from 'solid-js'
-import {expect, it} from 'vitest'
+import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 import {type DrawnTarotCard, TAROT_CARDS, type TarotLocale} from '../../../features/tarot'
 import {TarotCardView} from '../TarotCardView'
 
@@ -15,6 +15,7 @@ it('should update the illustration, marker, and localized name when the drawn ca
   expect(article.querySelector('img')).toHaveAttribute('src', expect.stringContaining('fool.png'))
   expect(screen.queryByRole('heading', {name: 'The Fool'})).not.toBeInTheDocument()
   fireEvent.load(article.querySelector('img')!)
+  fireEvent.load(article.querySelectorAll('img')[1]!)
   expect(screen.getByRole('heading', {name: 'The Fool'})).toBeInTheDocument()
   expect(article).toHaveTextContent('0')
 
@@ -23,6 +24,9 @@ it('should update the illustration, marker, and localized name when the drawn ca
     screen.getByRole('article', {name: 'King of Pentacles'}).querySelector('img'),
   ).toHaveAttribute('src', expect.stringContaining('pentacles-king.png'))
   fireEvent.load(screen.getByRole('article', {name: 'King of Pentacles'}).querySelector('img')!)
+  fireEvent.load(
+    screen.getByRole('article', {name: 'King of Pentacles'}).querySelectorAll('img')[1]!,
+  )
   expect(screen.getByRole('article', {name: 'King of Pentacles'})).toHaveTextContent('King')
 
   setLocale('ko')
@@ -92,4 +96,101 @@ it('should replace the loading card with a readable localized name when artwork 
   expect(article).toHaveTextContent('역방향')
   setLocale('en')
   expect(screen.getByRole('heading', {name: 'The Fool'})).toBeInTheDocument()
+})
+
+it('should show a readable name when the separate frame fails on a reversed card', () => {
+  render(() => (
+    <TarotCardView
+      card={{...TAROT_CARDS[0]!, orientation: 'reversed'}}
+      locale="ko"
+      showUpright={false}
+    />
+  ))
+  const article = screen.getByRole('article', {name: '광대'})
+  fireEvent.load(article.querySelector('img')!)
+  fireEvent.error(article.querySelectorAll('img')[1]!)
+  expect(screen.getByRole('heading', {name: '광대'})).toHaveClass('rotate-180')
+  expect(article).toHaveTextContent('역방향')
+})
+
+describe('card enlargement', () => {
+  const showModal = vi.fn(function showModal(this: HTMLDialogElement) {
+    this.setAttribute('open', '')
+  })
+  const close = vi.fn(function close(this: HTMLDialogElement) {
+    this.removeAttribute('open')
+    this.dispatchEvent(new Event('close'))
+  })
+
+  beforeEach(() => {
+    showModal.mockClear()
+    close.mockClear()
+    Object.defineProperty(HTMLDialogElement.prototype, 'showModal', {
+      configurable: true,
+      value: showModal,
+    })
+    Object.defineProperty(HTMLDialogElement.prototype, 'close', {configurable: true, value: close})
+  })
+  afterEach(() => {
+    Reflect.deleteProperty(HTMLDialogElement.prototype, 'showModal')
+    Reflect.deleteProperty(HTMLDialogElement.prototype, 'close')
+  })
+
+  it('should enlarge the selected artwork and preserve the reversed view without dismissing on card clicks', () => {
+    render(() => (
+      <TarotCardView
+        card={{...TAROT_CARDS[0]!, orientation: 'reversed'}}
+        locale="ko"
+        showUpright={false}
+      />
+    ))
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', {name: '광대 크게 보기'}))
+    const dialog = screen.getByRole('dialog', {name: '광대'})
+    expect(showModal).toHaveBeenCalledOnce()
+    const image = dialog.querySelector('img')!
+    expect(image).toHaveAttribute('src', expect.stringContaining('fool.png'))
+    fireEvent.load(image)
+    fireEvent.load(dialog.querySelectorAll('img')[1]!)
+    expect(within(dialog).getByRole('heading', {name: '광대'})).toBeInTheDocument()
+    const frame = image.parentElement!.parentElement!
+    expect(frame).toHaveClass('rotate-180')
+    fireEvent.pointerDown(frame)
+    expect(dialog).toHaveAttribute('open')
+    expect(close).not.toHaveBeenCalled()
+    const parentEscape = vi.fn()
+    dialog.parentElement!.addEventListener('keydown', parentEscape)
+    fireEvent.keyDown(dialog, {key: 'Escape'})
+    expect(parentEscape).not.toHaveBeenCalled()
+  })
+
+  it.each(['button', 'backdrop', 'escape'] as const)(
+    'should dismiss enlargement through %s while keeping the drawn card',
+    (action) => {
+      render(() => (
+        <TarotCardView card={{...TAROT_CARDS[0]!, orientation: 'upright'}} locale="ko" />
+      ))
+      fireEvent.click(screen.getByRole('button', {name: '광대 크게 보기'}))
+      const dialog = screen.getByRole('dialog', {name: '광대'})
+      switch (action) {
+        case 'button':
+          fireEvent.click(within(dialog).getByRole('button', {name: '닫기'}))
+          break
+        case 'backdrop':
+          fireEvent.pointerDown(dialog)
+          break
+        case 'escape':
+          fireEvent(dialog, new Event('cancel', {cancelable: true}))
+          break
+        default: {
+          const unexpected: never = action
+          throw new Error(`Unexpected dismissal: ${unexpected}`)
+        }
+      }
+      expect(close).toHaveBeenCalledOnce()
+      expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+      expect(screen.getByRole('article', {name: '광대'})).toBeInTheDocument()
+      expect(screen.getByRole('button', {name: '광대 크게 보기'})).toBeInTheDocument()
+    },
+  )
 })

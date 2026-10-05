@@ -1,0 +1,47 @@
+{
+  "bucket": "pomofi-audio",
+  "publicBaseUrl": "https://storage.pomofi.io/",
+  "repositoryId": "LiquidAI/LFM2.5-2.6B-GGUF",
+  "revision": "e7caca5d835a3901a8e0d63e94009429bafafdfc",
+  "revisionObjects": [
+    {
+      "path": "LFM2.5-2.6B-QAD-Q4_0.gguf",
+      "bytes": 1593894944,
+      "sha256": "a247afd6414918eac8e520a9e6137dc271235461ecbe1180462221d5b8d40b03"
+    },
+    {
+      "path": "LICENSE",
+      "bytes": 10574
+    },
+    {
+      "path": "README.md",
+      "bytes": 3068
+    },
+    {
+      "path": "qad/chat_template.jinja",
+      "bytes": 5443
+    },
+    {
+      "path": "qad/config.json",
+      "bytes": 1553
+    },
+    {
+      "path": "qad/generation_config.json",
+      "bytes": 327
+    },
+    {
+      "path": "qad/provenance.json",
+      "bytes": 936
+    },
+    {
+      "path": "qad/tokenizer.json",
+      "bytes": 17905598,
+      "sha256": "695be7802a0e4b8a81048f0ff5ebb7fc811a0ba5a6be63dbb24deb5a81096f41"
+    },
+    {
+      "path": "qad/tokenizer_config.json",
+      "bytes": 363
+    }
+  ],
+  "aliases": []
+}

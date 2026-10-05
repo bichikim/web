@@ -13,11 +13,11 @@ describe('createTarotMessages', () => {
     expect(messages).toHaveLength(2)
     expect(messages[0]?.role).toBe('system')
     expect(messages[0]?.content).toContain('English')
-    expect(messages[1]?.content).toContain(TAROT_CARDS[0]!.meaning.en)
-    expect(messages[1]?.content).toContain(TAROT_CARDS[0]!.name.en)
+    expect(messages[1]?.content).toContain(TAROT_CARDS[0]!.readingMeaning.en)
+    expect(messages[1]?.content).toContain(`Present: ${TAROT_CARDS[0]!.readingMeaning.en}`)
+    expect(messages[1]?.content).not.toContain(TAROT_CARDS[0]!.name.en)
+    expect(messages[1]?.content).not.toContain(TAROT_CARDS[0]!.meaning.en)
     expect(messages[1]?.content).toContain('What should I reflect on?')
-    expect(messages[1]?.content).toContain('First, answer tentatively')
-    expect(messages[1]?.content).toContain('apply the drawn card meaning to the question')
   })
 
   it('should put a Korean decision question before the three card positions', () => {
@@ -33,10 +33,6 @@ describe('createTarotMessages', () => {
     const content = messages[1]?.content ?? ''
 
     expect(content.indexOf('질문: 이직해야 하나요?')).toBeLessThan(content.indexOf('과거:'))
-    expect(content).toContain('첫 문장에서 잠정적으로 답하고')
-    expect(content).toContain('과거·현재·미래의 의미를 질문에 연결')
-    expect(content).toContain('다른 쪽이 나을 조건도 비교하세요')
-    expect(content).toContain('결정 전에 확인할 구체적인 조건')
     expect(content).not.toContain('지금 돌아볼 만한 것은 무엇인가요?')
   })
 
@@ -48,11 +44,10 @@ describe('createTarotMessages', () => {
     const messages = createTarotMessages({cards, locale: 'ko', question: ''})
     const content = messages[1]?.content ?? ''
 
-    expect(content).toContain(`과거: 정방향: ${cards[0]?.meaning.ko}`)
-    expect(content).toContain(`현재: 정방향: ${cards[1]?.meaning.ko}`)
-    expect(content).toContain(`미래: 정방향: ${cards[2]?.meaning.ko}`)
+    expect(content).toContain(`과거: ${cards[0]?.readingMeaning.ko}`)
+    expect(content).toContain(`현재: ${cards[1]?.readingMeaning.ko}`)
+    expect(content).toContain(`미래: ${cards[2]?.readingMeaning.ko}`)
     expect(content).toContain('지금 돌아볼 만한 것은 무엇인가요?')
-    expect(content).not.toContain('첫 문장에서 잠정적으로 답하고')
   })
 
   it.each(['ko', 'en'] as const)(
@@ -64,11 +59,12 @@ describe('createTarotMessages', () => {
         locale,
         question: '질문',
       })[1]!.content
-      expect(content).toContain(locale === 'ko' ? '역방향:' : 'Reversed:')
-      expect(content).toContain(card.reversedMeaning[locale])
-      expect(content).not.toContain(card.meaning[locale])
-      expect(content).toContain(card.name[locale])
+      expect(content).not.toContain(locale === 'ko' ? '역방향' : 'Reversed')
+      expect(content).toContain(card.reversedReadingMeaning[locale])
+      expect(content).not.toContain(card.readingMeaning[locale])
+      expect(content).not.toContain(card.name[locale])
       expect(content).not.toContain(card.id)
+      expect(content).not.toContain(card.reversedMeaning[locale])
     },
   )
 
@@ -96,10 +92,12 @@ describe('createTarotMessages', () => {
       cards.forEach((card, index) => {
         expect(lines[index]).toMatch(new RegExp(`^${positions[index]}:`))
         expect(lines[index]).toContain(
-          (card.orientation === 'reversed' ? card.reversedMeaning : card.meaning)[locale],
+          (card.orientation === 'reversed' ? card.reversedReadingMeaning : card.readingMeaning)[
+            locale
+          ],
         )
       })
-      expect(lines[1]).not.toContain(cards[1]!.meaning[locale])
+      expect(lines[1]).not.toContain(cards[1]!.readingMeaning[locale])
       expect(content).toContain(locale === 'ko' ? '1,400~1,900자' : '550–750 words')
       expect(content).toContain(
         question ||
@@ -107,6 +105,38 @@ describe('createTarotMessages', () => {
             ? '지금 돌아볼 만한 것은 무엇인가요?'
             : 'What is worth reflecting on now?'),
       )
+    },
+  )
+
+  it.each(
+    (['ko', 'en'] as const).flatMap((locale) =>
+      ([1, 3, 5] as const).map((count) => ({count, locale})),
+    ),
+  )(
+    'should send only position meanings without card metadata for $count cards in $locale',
+    ({count, locale}) => {
+      const cards = TAROT_CARDS.slice(0, count).map((card, index) => ({
+        ...card,
+        id: `metadata-id-${index}`,
+        meaning: {en: 'metadata-background', ko: 'metadata-background'},
+        name: {en: `metadata-name-${index}`, ko: `metadata-name-${index}`},
+        orientation: index === 0 ? ('reversed' as const) : ('upright' as const),
+        reversedMeaning: {en: 'metadata-background', ko: 'metadata-background'},
+      }))
+      const messages = createTarotMessages({cards, locale, question: ''})
+      const content = messages.map((message) => message.content).join('\n')
+      expect(content).not.toContain('metadata-')
+      expect(content).not.toMatch(/정방향|역방향|Upright|Reversed/i)
+      const lines = messages[1]!.content.split('\n')
+      const positions = count === 1 ? [locale === 'ko' ? '현재' : 'Present'] : undefined
+      cards.forEach((card, index) => {
+        const selected =
+          card.orientation === 'reversed' ? card.reversedReadingMeaning : card.readingMeaning
+        expect(lines.some((line) => line.endsWith(`: ${selected[locale]}`))).toBe(true)
+        if (positions !== undefined) {
+          expect(lines).toContain(`${positions[index]}: ${selected[locale]}`)
+        }
+      })
     },
   )
 
