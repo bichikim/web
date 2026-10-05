@@ -1,3 +1,5 @@
+import {createSerialTaskQueue} from 'src/utils/create-serial-task-queue'
+
 import {
   type AlbumCoverCleanupCandidate,
   finalizeAlbumCoverDeletion,
@@ -36,49 +38,6 @@ const createRepository = (): AlbumCoverMaintenanceRepository => ({
   prepare: prepareAlbumCoverDeletion,
 })
 
-interface CleanupProgress {
-  readonly errors: ReadonlyArray<unknown>
-  readonly finalized: number
-}
-
-interface ProcessCandidatesOptions {
-  readonly candidates: ReadonlyArray<AlbumCoverCleanupCandidate>
-  readonly now: Date
-  readonly repository: AlbumCoverMaintenanceRepository
-}
-
-const processCandidates = async (
-  options: ProcessCandidatesOptions,
-  index = 0,
-  progress: CleanupProgress = {errors: [], finalized: 0},
-): Promise<CleanupProgress> => {
-  const candidate = options.candidates[index]
-
-  if (candidate === undefined) {
-    return progress
-  }
-
-  try {
-    const objectKey = await options.repository.prepare(candidate.id, options.now)
-
-    if (objectKey === null) {
-      return processCandidates(options, index + 1, progress)
-    }
-
-    await options.repository.deleteStorage(objectKey)
-    const finalized = await options.repository.finalize(candidate.id)
-    return processCandidates(options, index + 1, {
-      ...progress,
-      finalized: progress.finalized + Number(finalized),
-    })
-  } catch (error: unknown) {
-    return processCandidates(options, index + 1, {
-      ...progress,
-      errors: [...progress.errors, error],
-    })
-  }
-}
-
 /** Reclaims a bounded batch of expired, unclaimed album covers. */
 export const runAlbumCoverMaintenance = async (
   options: RunAlbumCoverMaintenanceOptions = {},
@@ -91,18 +50,27 @@ export const runAlbumCoverMaintenance = async (
     throw new RangeError('Album cover maintenance repository exceeded the requested limit')
   }
 
-  const progress = await processCandidates({
-    candidates: candidates.slice(0, CLEANUP_BATCH_SIZE),
-    now,
-    repository,
-  })
+  const queue = createSerialTaskQueue()
+  const results = await Promise.allSettled(
+    candidates.slice(0, CLEANUP_BATCH_SIZE).map((candidate) =>
+      queue.run(async () => {
+        const objectKey = await repository.prepare(candidate.id, now)
+        if (objectKey === null) {
+          return false
+        }
+        await repository.deleteStorage(objectKey)
+        return repository.finalize(candidate.id)
+      }),
+    ),
+  )
+  const errors = results.flatMap((result) => (result.status === 'rejected' ? [result.reason] : []))
 
-  if (progress.errors.length > 0) {
-    throw new AggregateError(progress.errors, 'One or more album cover cleanups failed')
+  if (errors.length > 0) {
+    throw new AggregateError(errors, 'One or more album cover cleanups failed')
   }
 
   return {
     complete: candidates.length <= CLEANUP_BATCH_SIZE,
-    finalized: progress.finalized,
+    finalized: results.filter((result) => result.status === 'fulfilled' && result.value).length,
   }
 }

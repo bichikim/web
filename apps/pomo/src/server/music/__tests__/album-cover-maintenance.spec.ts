@@ -99,4 +99,59 @@ describe('runAlbumCoverMaintenance', () => {
     expect(repository.prepare).toHaveBeenCalledTimes(2)
     expect(repository.finalize).toHaveBeenCalledOnce()
   })
+
+  it('should wait for each cleanup and retain failures in candidate order', async () => {
+    const repository = createRepository()
+    const first = Promise.withResolvers<string | null>()
+    const started = Promise.withResolvers<void>()
+    const storageError = new Error('storage failed')
+    const finalizationError = new Error('finalization failed')
+    vi.mocked(repository.listCandidates).mockResolvedValue([
+      {id: 'cover-1'},
+      {id: 'cover-2'},
+      {id: 'cover-3'},
+      {id: 'cover-4'},
+    ])
+    vi.mocked(repository.prepare)
+      .mockImplementationOnce(() => {
+        started.resolve()
+        return first.promise
+      })
+      .mockResolvedValueOnce(null)
+      .mockResolvedValueOnce('cover-3')
+      .mockResolvedValueOnce('cover-4')
+    vi.mocked(repository.deleteStorage)
+      .mockRejectedValueOnce(storageError)
+      .mockResolvedValue(undefined)
+    vi.mocked(repository.finalize).mockRejectedValueOnce(finalizationError)
+
+    const maintenance = runAlbumCoverMaintenance({now: NOW, repository})
+    const assertion = expect(maintenance).rejects.toMatchObject({
+      errors: [storageError, finalizationError],
+      message: 'One or more album cover cleanups failed',
+    })
+    await started.promise
+    expect(repository.prepare).toHaveBeenCalledTimes(1)
+    expect(repository.deleteStorage).not.toHaveBeenCalled()
+    first.resolve('cover-1')
+    await assertion
+    expect(repository.prepare).toHaveBeenCalledTimes(4)
+    expect(vi.mocked(repository.deleteStorage).mock.calls).toEqual([
+      ['cover-1'],
+      ['cover-3'],
+      ['cover-4'],
+    ])
+    expect(vi.mocked(repository.finalize).mock.calls).toEqual([['cover-3'], ['cover-4']])
+  })
+
+  it('should count only finalizations completed by this invocation', async () => {
+    const repository = createRepository()
+    vi.mocked(repository.listCandidates).mockResolvedValue([{id: 'cover-1'}, {id: 'cover-2'}])
+    vi.mocked(repository.finalize).mockResolvedValueOnce(false).mockResolvedValueOnce(true)
+
+    await expect(runAlbumCoverMaintenance({now: NOW, repository})).resolves.toEqual({
+      complete: true,
+      finalized: 1,
+    })
+  })
 })
