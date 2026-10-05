@@ -1,11 +1,9 @@
-import {createOffsetListController} from './create-offset-list-controller'
-import {createSignal} from 'solid-js'
+import {createSignal, createUniqueId} from 'solid-js'
 
-import {
-  listAdminFeatureRequests,
-  updateAdminFeatureRequest,
-  type UpdateFeatureRequestResult,
-} from './api'
+import {adminFeatureRequestsQuery, invalidateFeatureRequestPages} from './page-query'
+import {useFeatureRequestList} from './use-feature-request-list'
+
+import {updateAdminFeatureRequest, type UpdateFeatureRequestResult} from './api'
 import {FEATURE_REQUEST_STATUSES, type FeatureRequest, type FeatureRequestStatus} from './types'
 
 export interface AdminFeatureRequestStatusInput {
@@ -30,7 +28,9 @@ export interface AdminFeatureRequestsController {
 }
 
 export const useAdminFeatureRequests = (): AdminFeatureRequestsController => {
-  const list = createOffsetListController({loadPage: listAdminFeatureRequests})
+  // Admin auth has no reactive identity; do not reuse private pages across mounts.
+  const scope = createUniqueId()
+  const list = useFeatureRequestList({pageQuery: adminFeatureRequestsQuery, scope: () => scope})
   const {
     requests,
     hasMore,
@@ -50,6 +50,7 @@ export const useAdminFeatureRequests = (): AdminFeatureRequestsController => {
     try {
       const result = await updateAdminFeatureRequest(input)
       if (result.status === 'updated') {
+        await invalidateFeatureRequestPages()
         list.updateRequest(input.requestId, (request) => ({
           ...request,
           status: input.status,

@@ -1,5 +1,5 @@
 import {createDeferred} from 'src/test-utils/create-deferred'
-import {createRoot} from 'solid-js'
+import {createEffect, createRoot, createSignal} from 'solid-js'
 import {describe, expect, it, vi} from 'vitest'
 
 import {type AsyncTaskController, useAsyncTask} from '../index'
@@ -171,4 +171,128 @@ describe('useAsyncTask', () => {
 
     expect(root.controller.state()).toEqual({status: 'pending'})
   })
+})
+
+describe('result cleanup', () => {
+  it('should release published and stale results exactly once across replacement and reset', async () => {
+    const release = vi.fn()
+    const pending = Promise.withResolvers<string>()
+    const task = vi
+      .fn()
+      .mockResolvedValueOnce('first')
+      .mockReturnValueOnce(pending.promise)
+      .mockResolvedValueOnce('latest')
+    const controller = createRoot(() => useAsyncTask({cleanupResult: release, task}))
+    await controller.execute()
+    const obsolete = controller.execute()
+    expect(release).toHaveBeenCalledExactlyOnceWith('first')
+    await controller.execute()
+    pending.resolve('obsolete')
+    await obsolete
+    expect(controller.state()).toEqual({result: 'latest', status: 'success'})
+    controller.reset()
+    controller.reset()
+    expect(release.mock.calls).toEqual([['first'], ['obsolete'], ['latest']])
+    expect(controller.state()).toEqual({status: 'idle'})
+  })
+
+  it('should release pending results after reset and disposal and reject execution after disposal', async () => {
+    const release = vi.fn()
+    const pending = Promise.withResolvers<number>()
+    const task = vi.fn(() => pending.promise)
+    const root = createRoot((dispose) => ({
+      controller: useAsyncTask({cleanupResult: release, task}),
+      dispose,
+    }))
+    const execution = root.controller.execute()
+    root.controller.reset()
+    root.dispose()
+    pending.resolve(7)
+    await execution
+    expect(release).toHaveBeenCalledExactlyOnceWith(7)
+    expect(root.controller.state()).toEqual({status: 'idle'})
+    await expect(root.controller.execute()).rejects.toThrow('disposed')
+    expect(task).toHaveBeenCalledOnce()
+  })
+
+  it('should release a published result on disposal', async () => {
+    const release = vi.fn()
+    const root = createRoot((dispose) => ({
+      controller: useAsyncTask({cleanupResult: release, task: async () => 0}),
+      dispose,
+    }))
+    await root.controller.execute()
+    root.dispose()
+    expect(release).toHaveBeenCalledExactlyOnceWith(0)
+    expect(root.controller.state()).toEqual({status: 'idle'})
+  })
+
+  it('should accept values and function arguments without observing their signals', async () => {
+    const [value, setValue] = createSignal(2)
+    const task = vi.fn(async (factor: number, read: () => number) => factor * read())
+    const root = createTaskRoot(task)
+    expect(task).not.toHaveBeenCalled()
+    await root.controller.execute(3, value)
+    setValue(4)
+    expect(task).toHaveBeenCalledOnce()
+    expect(root.controller.state()).toEqual({result: 6, status: 'success'})
+    await root.controller.execute(3, value)
+    expect(root.controller.state()).toEqual({result: 12, status: 'success'})
+    root.dispose()
+  })
+})
+
+it('should share an exhaust execution and release its result once', async () => {
+  const pending = Promise.withResolvers<string>()
+  const release = vi.fn()
+  const task = vi.fn(() => pending.promise)
+  const root = createRoot((dispose) => ({
+    controller: useAsyncTask({cleanupResult: release, concurrency: 'exhaust', task}),
+    dispose,
+  }))
+  const first = root.controller.execute()
+  expect(root.controller.execute()).toBe(first)
+  expect(release).not.toHaveBeenCalled()
+  pending.resolve('result')
+  await first
+  root.dispose()
+  expect(release).toHaveBeenCalledExactlyOnceWith('result')
+})
+
+it('should track the consumer trigger without tracking signals read by the task', async () => {
+  const [trigger, setTrigger] = createSignal(1)
+  const [value, setValue] = createSignal(2)
+  const task = vi.fn(async (factor: number) => factor * value())
+  const root = createRoot((dispose) => {
+    const controller = useAsyncTask({task})
+    createEffect(() => {
+      controller.execute(trigger())
+    })
+    return {controller, dispose}
+  })
+  await Promise.resolve()
+  expect(task).toHaveBeenCalledExactlyOnceWith(1)
+  setValue(4)
+  expect(task).toHaveBeenCalledOnce()
+  setTrigger(3)
+  await Promise.resolve()
+  expect(task).toHaveBeenCalledTimes(2)
+  expect(root.controller.state()).toEqual({result: 12, status: 'success'})
+  root.dispose()
+})
+
+it('should ignore a synchronous failure when the operation invalidates itself', async () => {
+  const failure = new Error('invalidated')
+  const root = createRoot((dispose) => {
+    const controller = useAsyncTask({
+      task: () => {
+        controller.reset()
+        throw failure
+      },
+    })
+    return {controller, dispose}
+  })
+  await expect(root.controller.execute()).rejects.toBe(failure)
+  expect(root.controller.state()).toEqual({status: 'idle'})
+  root.dispose()
 })
