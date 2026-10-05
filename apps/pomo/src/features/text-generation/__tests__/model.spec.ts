@@ -9,6 +9,8 @@ describe('text model definitions', () => {
       'qwen-0.8b',
       'qwen-2b',
       'qwen-4b',
+      'lfm-1.2b',
+      'lfm-2.6b-qad',
       'gemma-4-e2b',
       'gemma-4-e2b-mobile',
     ])
@@ -42,6 +44,18 @@ describe('text model definitions', () => {
       },
       quantization: 'q2f16',
       repositoryId: 'onnx-community/gemma-4-E2B-it-qat-mobile-ONNX',
+    })
+    expect(getTextModelImplementation('lfm-1.2b')).toMatchObject({
+      architecture: 'lfm-2',
+      quantization: 'q4',
+      repositoryId: 'LiquidAI/LFM2.5-1.2B-Instruct-ONNX',
+    })
+    expect(getTextModelImplementation('lfm-2.6b-qad')).toMatchObject({
+      architecture: 'lfm-2-gguf',
+      quantization: 'q4_0',
+      repositoryId: 'LiquidAI/LFM2.5-2.6B-GGUF',
+      tokenizerSubfolder: 'qad',
+      weightFile: 'LFM2.5-2.6B-QAD-Q4_0.gguf',
     })
     expect(getTextModel('gemma-4-e2b')).toMatchObject({id: 'gemma-4-e2b'})
   })

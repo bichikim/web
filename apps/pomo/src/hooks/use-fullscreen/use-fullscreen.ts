@@ -1,7 +1,9 @@
 import {type Accessor, createSignal, onCleanup, onMount} from 'solid-js'
 import {useEvent} from '@winter-love/solid-use/event'
 
-export type FullscreenAvailability = 'checking' | 'supported' | 'unsupported'
+import {type CapabilityAvailability, useCapabilityTask} from 'src/hooks/use-capability-task'
+
+export type FullscreenAvailability = CapabilityAvailability
 export type FullscreenError = 'enter-failed' | 'exit-failed'
 
 export interface FullscreenController {
@@ -19,12 +21,12 @@ const isFullscreenSupported = (): boolean =>
 
 const getFullscreenState = (): boolean => document.fullscreenElement !== null
 
+/** Tracks document-wide fullscreen state and requests fullscreen on the document element. */
 export const useFullscreen = (): FullscreenController => {
-  const [availability, setAvailability] = createSignal<FullscreenAvailability>('checking')
   const [error, setError] = createSignal<FullscreenError | null>(null)
   const [isEnabled, setIsEnabled] = createSignal(false)
-  const [isRequestPending, setIsRequestPending] = createSignal(false)
   let disposed = false
+  let requestError: FullscreenError = 'enter-failed'
 
   const handleFullscreenChange = () => {
     setIsEnabled(getFullscreenState())
@@ -32,13 +34,9 @@ export const useFullscreen = (): FullscreenController => {
   }
 
   const changeFullscreen = async (nextEnabled: boolean) => {
-    if (availability() !== 'supported' || isRequestPending()) {
-      return
-    }
-
     setError(null)
     setIsEnabled(nextEnabled)
-    setIsRequestPending(true)
+    requestError = nextEnabled ? 'enter-failed' : 'exit-failed'
 
     try {
       if (nextEnabled) {
@@ -54,37 +52,46 @@ export const useFullscreen = (): FullscreenController => {
       const actualState = getFullscreenState()
       setIsEnabled(actualState)
       if (actualState !== nextEnabled) {
-        setError(nextEnabled ? 'enter-failed' : 'exit-failed')
+        throw new Error('Fullscreen state does not match the requested state')
       }
-    } catch {
+    } catch (cause: unknown) {
       if (disposed) {
         return
       }
 
       setIsEnabled(getFullscreenState())
-      setError(nextEnabled ? 'enter-failed' : 'exit-failed')
-    } finally {
-      if (!disposed) {
-        setIsRequestPending(false)
-      }
+      setError(requestError)
+      throw cause
     }
   }
 
-  const onEnabledChange = (nextEnabled: boolean) => changeFullscreen(nextEnabled)
+  const task = useCapabilityTask({
+    capability: isFullscreenSupported,
+    concurrency: 'exhaust',
+    task: changeFullscreen,
+  })
+  const isRequestPending = () => task.state().status === 'pending'
+  // The UI consumes domain error state rather than promise rejections.
+  const onEnabledChange = (nextEnabled: boolean) => task.execute(nextEnabled).catch(() => undefined)
+
+  const handleFullscreenError = () => {
+    setIsEnabled(getFullscreenState())
+    setError(requestError)
+  }
+
+  onCleanup(() => {
+    disposed = true
+  })
 
   onMount(() => {
-    if (!isFullscreenSupported()) {
-      setAvailability('unsupported')
+    if (task.availability() !== 'supported') {
       return
     }
 
-    setAvailability('supported')
     setIsEnabled(getFullscreenState())
     useEvent(document, 'fullscreenchange', handleFullscreenChange)
-    onCleanup(() => {
-      disposed = true
-    })
+    useEvent(document, 'fullscreenerror', handleFullscreenError)
   })
 
-  return {availability, error, isEnabled, isRequestPending, onEnabledChange}
+  return {availability: task.availability, error, isEnabled, isRequestPending, onEnabledChange}
 }
