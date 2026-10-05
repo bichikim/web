@@ -3,8 +3,8 @@
  */
 
 import {afterEach, describe, expect, it, vi} from 'vitest'
-import {useStorage} from './'
-import {createRoot, createSignal} from 'solid-js'
+import {useStorage} from '../index'
+import {batch, createRoot, createSignal} from 'solid-js'
 import {getAnyStorageItem, setAnyStorageItem} from '@winter-love/utils'
 
 vi.mock('@winter-love/utils', () => ({
@@ -15,9 +15,201 @@ vi.mock('@winter-love/utils', () => ({
 }))
 
 describe('useStorage local', () => {
+  it('should persist inactive edits on activation without deferred mounting', () => {
+    vi.mocked(getAnyStorageItem).mockReturnValue('stored-value')
+    const api = createRoot((dispose) => {
+      const [active, setActive] = createSignal(false)
+      const [value, setValue] = useStorage<string>('local', 'key', {active})
+      return {dispose, setActive, setValue, value}
+    })
+    try {
+      api.setValue('edited-value')
+      expect(setAnyStorageItem).not.toHaveBeenCalled()
+      api.setActive(true)
+      expect(api.value()).toBe('edited-value')
+      expect(setAnyStorageItem).toHaveBeenCalledWith(
+        'local',
+        'key',
+        'edited-value',
+        expect.any(Object),
+      )
+    } finally {
+      api.dispose()
+    }
+  })
+
+  it('should read the current key if it changes before mount', () => {
+    vi.mocked(getAnyStorageItem).mockImplementation((_kind, key) => `${key}-value`)
+    const api = createRoot((dispose) => {
+      const [key, setKey] = createSignal('first')
+      const [value, setValue] = useStorage<string>('local', key)
+      setKey('second')
+      return {dispose, setValue, value}
+    })
+    try {
+      expect(api.value()).toBe('second-value')
+      api.setValue((previous) => `${previous}-edited`)
+      expect(setAnyStorageItem).toHaveBeenLastCalledWith(
+        'local',
+        'second',
+        'second-value-edited',
+        {},
+      )
+    } finally {
+      api.dispose()
+    }
+  })
+
   afterEach(() => {
     vi.mocked(getAnyStorageItem).mockRestore()
     vi.mocked(setAnyStorageItem).mockRestore()
+  })
+
+  it('should preserve and persist the enforced value when the key changes', () => {
+    vi.mocked(getAnyStorageItem).mockReturnValue('stored-value')
+    const api = createRoot((dispose) => {
+      const [key, setKey] = createSignal('first-key')
+      const [value] = useStorage('local', key, {enforceValue: false})
+      return {dispose, setKey, value}
+    })
+    try {
+      api.setKey('second-key')
+      expect(api.value()).toBe(false)
+      expect(setAnyStorageItem).toHaveBeenLastCalledWith(
+        'local',
+        'second-key',
+        false,
+        expect.objectContaining({enforceValue: false}),
+      )
+    } finally {
+      api.dispose()
+    }
+  })
+
+  it('should restore the enforced value when reactivated after an explicit edit', () => {
+    const api = createRoot((dispose) => {
+      const [active, setActive] = createSignal(true)
+      const [value, setValue] = useStorage('local', 'key', {active, enforceValue: false})
+      return {dispose, setActive, setValue, value}
+    })
+    try {
+      api.setActive(false)
+      api.setValue(true)
+      api.setActive(true)
+      expect(api.value()).toBe(false)
+      expect(setAnyStorageItem).toHaveBeenLastCalledWith(
+        'local',
+        'key',
+        false,
+        expect.objectContaining({enforceValue: false}),
+      )
+    } finally {
+      api.dispose()
+    }
+  })
+
+  it('should defer storage reads and writes until mount when called during setup', () => {
+    createRoot((dispose) => {
+      const [, setValue] = useStorage<string>('local', 'key', {mounted: true})
+      setValue('setup-value')
+      expect(getAnyStorageItem).not.toHaveBeenCalled()
+      expect(setAnyStorageItem).not.toHaveBeenCalled()
+      dispose()
+    })
+  })
+
+  it('should enforce an explicitly supplied undefined value', () => {
+    vi.mocked(getAnyStorageItem).mockReturnValue('stored-value')
+    const api = createRoot((dispose) => {
+      const [value] = useStorage<string | undefined>('local', 'key', {enforceValue: undefined})
+      return {dispose, value}
+    })
+    try {
+      expect(api.value()).toBeUndefined()
+      expect(setAnyStorageItem).toHaveBeenCalledWith(
+        'local',
+        'key',
+        undefined,
+        expect.objectContaining({enforceValue: undefined}),
+      )
+    } finally {
+      api.dispose()
+    }
+  })
+
+  it.each(['value', 'updater'] as const)(
+    'should preserve the previous key when a batched key change uses the %s setter',
+    (setterKind) => {
+      const stored = new Map([
+        ['first-key', 'first-value'],
+        ['second-key', 'second-value'],
+      ])
+      vi.mocked(getAnyStorageItem).mockImplementation((_kind, key) => stored.get(key))
+      vi.mocked(setAnyStorageItem).mockImplementation((_kind, key, value) => {
+        stored.set(key, value)
+      })
+      const api = createRoot((dispose) => {
+        const [key, setKey] = createSignal('first-key')
+        const [value, setValue] = useStorage<string>('local', key)
+
+        return {dispose, setKey, setValue, value}
+      })
+
+      try {
+        batch(() => {
+          api.setKey('second-key')
+          if (setterKind === 'value') {
+            api.setValue('edited-value')
+          } else {
+            api.setValue((previous) => `${previous}-edited`)
+          }
+        })
+
+        const expected = setterKind === 'value' ? 'edited-value' : 'second-value-edited'
+        expect(stored.get('first-key')).toBe('first-value')
+        expect(stored.get('second-key')).toBe(expected)
+        expect(api.value()).toBe(expected)
+        expect(setAnyStorageItem).toHaveBeenCalledTimes(1)
+      } finally {
+        api.dispose()
+      }
+    },
+  )
+
+  it('should retain an inactive edit made during a batched key change until activation', () => {
+    vi.mocked(getAnyStorageItem).mockReturnValue('stored-value')
+    const api = createRoot((dispose) => {
+      const [key, setKey] = createSignal('first-key')
+      const [active, setActive] = createSignal(false)
+      const [value, setValue] = useStorage<string>('local', key, {
+        active,
+        initValue: 'initial-value',
+        mounted: true,
+      })
+
+      return {dispose, setActive, setKey, setValue, value}
+    })
+
+    try {
+      batch(() => {
+        api.setKey('second-key')
+        api.setValue('edited-value')
+      })
+
+      expect(api.value()).toBe('edited-value')
+      expect(setAnyStorageItem).not.toHaveBeenCalled()
+      api.setActive(true)
+      expect(api.value()).toBe('edited-value')
+      expect(getAnyStorageItem).not.toHaveBeenCalled()
+      expect(setAnyStorageItem).toHaveBeenCalledWith(
+        'local',
+        'second-key',
+        'edited-value',
+        expect.objectContaining({mounted: true}),
+      )
+    } finally {
+      api.dispose()
+    }
   })
 
   it('should return stored data when data exists', () => {

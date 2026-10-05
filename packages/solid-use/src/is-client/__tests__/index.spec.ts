@@ -1,7 +1,7 @@
 /**
  * @vitest-environment jsdom
  */
-import {useIsClient} from './'
+import {useIsClient} from '../index'
 import {describe, expect, it} from 'vitest'
 import {createRoot, createSignal, onMount} from 'solid-js'
 

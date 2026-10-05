@@ -1,6 +1,6 @@
 import {createSignal} from 'solid-js'
 import {describe, expect, it} from 'vitest'
-import {toggleValue} from './'
+import {toggleValue} from '../index'
 import {renderHook} from '@solidjs/testing-library'
 
 describe('toggleValue', () => {

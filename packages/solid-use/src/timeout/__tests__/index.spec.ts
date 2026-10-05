@@ -1,4 +1,4 @@
-import {useTimeout} from './'
+import {useTimeout} from '../index'
 import {describe, expect, it, vi} from 'vitest'
 import {renderHook} from '@solidjs/testing-library'
 

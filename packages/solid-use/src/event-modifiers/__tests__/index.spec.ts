@@ -1,7 +1,7 @@
 /**
  * @vitest-environment jsdom
  */
-import {stopPropagation} from './'
+import {stopPropagation} from '../index'
 import {describe, expect, it, vi} from 'vitest'
 
 describe('stopPropagation', () => {

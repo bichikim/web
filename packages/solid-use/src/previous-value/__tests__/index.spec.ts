@@ -1,6 +1,6 @@
 import {batch, createRoot, createSignal} from 'solid-js'
 import {describe, expect, it} from 'vitest'
-import {createPreviousValue} from './index'
+import {createPreviousValue} from '.././index'
 
 const setupPreviousValue = <T>(value: T | (() => T)) => {
   let dispose: () => void = () => undefined

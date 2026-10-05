@@ -1,6 +1,6 @@
 import {describe, expect, it} from 'vitest'
 import {createRoot} from 'solid-js'
-import {useIsMounted} from './'
+import {useIsMounted} from '../index'
 
 describe('useIsMounted', () => {
   it('should return false initially and true after mount', () => {

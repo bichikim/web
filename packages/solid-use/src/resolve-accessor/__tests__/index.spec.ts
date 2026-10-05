@@ -1,6 +1,6 @@
 import {createRoot, createSignal} from 'solid-js'
 import {describe, expect, expectTypeOf, it} from 'vitest'
-import {resolveAccessor, resolveAccessors} from './'
+import {resolveAccessor, resolveAccessors} from '../index'
 
 describe('resolveAccessor', () => {
   it.each([

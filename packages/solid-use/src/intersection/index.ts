@@ -13,12 +13,18 @@ export const useIntersection = (
   createEffect(() => {
     const options = optionsAccessor()
     const element = targetAccessor()
+    setIsIntersecting(false)
 
     if (!element) {
       return
     }
 
+    let observing = true
     const observer = new IntersectionObserver((entries) => {
+      if (!observing) {
+        return
+      }
+
       for (const entry of entries) {
         setIsIntersecting(entry.isIntersecting)
       }
@@ -27,6 +33,7 @@ export const useIntersection = (
     observer.observe(element)
 
     onCleanup(() => {
+      observing = false
       observer.disconnect()
     })
   })

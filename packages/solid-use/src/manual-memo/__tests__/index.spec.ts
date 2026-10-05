@@ -1,4 +1,4 @@
-import {createManualMemo} from './'
+import {createManualMemo} from '../index'
 import {createSignal} from 'solid-js'
 import {describe, expect, it} from 'vitest'
 import {renderHook} from '@solidjs/testing-library'

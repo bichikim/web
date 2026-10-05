@@ -1,7 +1,7 @@
 /**
  * @vitest-environment jsdom
  */
-import {type Emitter, useEvent} from './'
+import {type Emitter, useEvent} from '../index'
 import {createRoot, createSignal} from 'solid-js'
 import {describe, expect, expectTypeOf, it, vi} from 'vitest'
 
