@@ -51,6 +51,7 @@ export interface PlayerState {
   readonly canEditQueue: Accessor<boolean>
   readonly addTracksToQueue: (tracks: readonly PTrack[]) => void
   readonly removeTrackFromQueue: (index: number) => void
+  readonly reorderTrackInQueue: (fromIndex: number, toIndex: number) => void
   readonly clearTrackQueue: () => void
   readonly selectChosenTrack: (index: number) => void
   readonly selectNextTrack: () => void

@@ -54,6 +54,7 @@ export const MediaPlayer = (props: MediaPlayerProps) => {
     levels: player.levels,
     previewPlayback: player.previewPlayback,
     removeTrackFromQueue: player.removeTrackFromQueue,
+    reorderTrackInQueue: player.reorderTrackInQueue,
     repeatMode: player.repeatMode,
     selectChosenTrack: player.selectChosenTrack,
     selectNextTrack: player.selectNextTrack,
