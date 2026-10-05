@@ -8,7 +8,7 @@ export interface WorkerTransportFailure {
 
 export interface WorkerTransport<Request> {
   readonly dispose: () => void
-  readonly send: (request: Request) => void
+  readonly send: (request: Request, transfer?: Array<Transferable>) => void
 }
 
 export interface CreateWorkerTransportOptions<Response> {
@@ -41,7 +41,14 @@ export const createWorkerTransport = <Request, Response>(
 
   return {
     dispose: () => options.worker.terminate(),
-    send: (request) => options.worker.postMessage(request),
+    send: (request, transfer) => {
+      if (transfer === undefined) {
+        options.worker.postMessage(request)
+        return
+      }
+
+      options.worker.postMessage(request, transfer)
+    },
   }
 }
 
