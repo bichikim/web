@@ -91,6 +91,36 @@ describe('createStreamingSpeechBuffer', () => {
     expect(buffer.update('J. R. R. Tolkien arrived. Next')).toEqual(['J. R. R. Tolkien arrived.'])
   })
 
+  it('should keep Korean No. attached to a following list number across every chunk boundary', () => {
+    const text = 'No. 5번. 다음 문장.'
+    const characterCount = Array.from(text).length
+    const expected = ['No. 5번.', '다음 문장.']
+    const spokenByChunkSize = Array.from({length: characterCount}, (_, index) =>
+      speakStreamed(text, index + 1),
+    )
+
+    expect(spokenByChunkSize).toEqual(Array.from({length: characterCount}, () => expected))
+  })
+
+  it('should preserve the current English handling of No. as a completed sentence', () => {
+    const buffer = createStreamingSpeechBuffer({locale: 'en'})
+
+    expect(buffer.update('No.')).toEqual(['No.'])
+  })
+
+  it('should not merge Korean No. with a following non-number sentence', () => {
+    const buffer = createStreamingSpeechBuffer({locale: 'ko'})
+
+    expect(buffer.update('No. Thank you.')).toEqual(['No.', 'Thank you.'])
+  })
+
+  it('should flush a terminal Korean No. when no list number follows', () => {
+    const buffer = createStreamingSpeechBuffer({locale: 'ko'})
+
+    expect(buffer.update('No.')).toEqual([])
+    expect(buffer.flush('No.')).toBe('No.')
+  })
+
   it('should keep an embedded initial attached to the following name', () => {
     const buffer = createStreamingSpeechBuffer({locale: 'ko'})
 
