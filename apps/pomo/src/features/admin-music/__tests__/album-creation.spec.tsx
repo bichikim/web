@@ -80,7 +80,7 @@ describe('createAlbumSubmitHandler', () => {
     expect(operations).toEqual(['persist', 'wait', 'create'])
     expect(preventDefault).toHaveBeenCalledOnce()
     expect(services.createAlbum).toHaveBeenCalledWith(createDraft(), null)
-    expect(services.clearDraft).toHaveBeenCalledWith(COVER_DRAFT_ID)
+    expect(services.clearDraft).toHaveBeenCalledWith(COVER_DRAFT_ID, createDraft())
     expect(reset).toHaveBeenCalledOnce()
     expect(options.clearPreparedCover).toHaveBeenCalledOnce()
     expect(options.refreshCatalog).toHaveBeenCalledOnce()
@@ -102,6 +102,24 @@ describe('createAlbumSubmitHandler', () => {
     expect(options.refreshCatalog).not.toHaveBeenCalled()
     expect(options.setMessage).toHaveBeenLastCalledWith('response lost')
     expect(options.setIsSavingAlbum).toHaveBeenLastCalledWith(false)
+  })
+
+  it('should preserve a cover change made while album creation is in flight', async () => {
+    const {options, services} = createOptions()
+    const submittedDraft = createDraft()
+    let currentDraft = submittedDraft
+    vi.spyOn(options, 'getDraftData').mockImplementation(() => currentDraft)
+    vi.mocked(services.createAlbum).mockImplementation(async () => {
+      currentDraft = {...submittedDraft, coverDraftId: null, hasCoverFile: false}
+      return {albumId: ALBUM_ID, success: true}
+    })
+
+    await createAlbumSubmitHandler(options)(createSubmitEvent().event)
+
+    expect(services.clearDraft).not.toHaveBeenCalled()
+    expect(options.setMessage).toHaveBeenLastCalledWith(
+      '앨범은 만들었지만 브라우저의 작성 초안을 지우지 못했습니다.',
+    )
   })
 
   it('should report the generic message for non-Error creation failures', async () => {

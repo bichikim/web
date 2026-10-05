@@ -2,13 +2,17 @@ import {getExceptionMessage} from '../error-detail'
 import {type JSX, type Setter} from 'solid-js'
 
 import {
+  ALBUM_LOCALES,
   type AlbumDraftData,
   type AlbumDraftTranslations,
   createEmptyAlbumTranslations,
 } from './album-draft'
 
 export interface AlbumCreationServices {
-  readonly clearDraft: (coverDraftId: string | null) => Promise<boolean>
+  readonly clearDraft: (
+    coverDraftId: string | null,
+    expectedDraft?: AlbumDraftData,
+  ) => Promise<boolean>
   readonly createAlbum: (
     draft: AlbumDraftData,
     coverFile: File | null,
@@ -50,6 +54,18 @@ export interface CreateAlbumSubmitHandlerOptions extends AlbumCreationCallbacks 
   readonly setTranslations: Setter<AlbumDraftTranslations>
   readonly waitForDraftPersistence: () => Promise<void>
 }
+
+const hasSameDraftSnapshot = (current: AlbumDraftData, submitted: AlbumDraftData): boolean =>
+  current.albumId === submitted.albumId &&
+  current.coverDraftId === submitted.coverDraftId &&
+  current.coverFallback === submitted.coverFallback &&
+  current.coverImageUrl === submitted.coverImageUrl &&
+  current.hasCoverFile === submitted.hasCoverFile &&
+  ALBUM_LOCALES.every(
+    (locale) =>
+      current.translations[locale].description === submitted.translations[locale].description &&
+      current.translations[locale].title === submitted.translations[locale].title,
+  )
 
 const refreshAfterAlbumCreation = async (
   options: AlbumCreationCallbacks,
@@ -127,14 +143,13 @@ export const createAlbumSubmitHandler = (
     options.setMessage(options.getCoverStorageWarning?.() ?? null)
 
     let albumId: string
+    let submittedDraft = options.getDraftData()
 
     try {
       options.persistDraft()
       await options.waitForDraftPersistence()
-      const result = await options.services.createAlbum(
-        options.getDraftData(),
-        options.getCoverFile(),
-      )
+      submittedDraft = options.getDraftData()
+      const result = await options.services.createAlbum(submittedDraft, options.getCoverFile())
 
       if (!result.success) {
         await recoverFromPayloadMismatch(options)
@@ -156,7 +171,7 @@ export const createAlbumSubmitHandler = (
     }
 
     try {
-      const coverDraftId = options.getCoverDraftId()
+      const isDraftUnchanged = hasSameDraftSnapshot(options.getDraftData(), submittedDraft)
       albumForm.reset()
       options.clearPreparedCover()
       options.setAlbumId(null)
@@ -164,7 +179,9 @@ export const createAlbumSubmitHandler = (
       options.setTranslations(createEmptyAlbumTranslations())
       options.setCoverImageUrl('')
       options.setCoverFallback('lp')
-      const didClearDraft = await options.services.clearDraft(coverDraftId)
+      const didClearDraft = isDraftUnchanged
+        ? await options.services.clearDraft(submittedDraft.coverDraftId, submittedDraft)
+        : false
       await refreshAfterAlbumCreation(options, albumId, didClearDraft)
     } finally {
       options.setIsSavingAlbum(false)

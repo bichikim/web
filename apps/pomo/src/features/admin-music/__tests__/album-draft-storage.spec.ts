@@ -270,6 +270,63 @@ describe('album draft cover storage', () => {
     expect(storage.deleteData).not.toHaveBeenCalled()
   })
 
+  it('should clear a coverless session matching a successfully submitted draft', async () => {
+    const storage = createStorage()
+    const submittedDraft = createDraft()
+    const persistedDraft = {...submittedDraft, coverDraftId: null, hasCoverFile: false}
+    writeAlbumDraftData(persistedDraft, storage)
+
+    await expect(
+      deleteAlbumDraft(submittedDraft.coverDraftId, {expectedDraft: submittedDraft, storage}),
+    ).resolves.toEqual({success: true})
+
+    expect(readAlbumDraftDataOrNull(storage)).toBeNull()
+  })
+
+  it('should preserve a newer coverless draft when clearing a submitted draft', async () => {
+    const storage = createStorage()
+    const submittedDraft = createDraft()
+    const newerDraft: AlbumDraftData = {
+      ...submittedDraft,
+      coverDraftId: null,
+      hasCoverFile: false,
+      translations: {
+        ...submittedDraft.translations,
+        ko: {...submittedDraft.translations.ko, title: '새 앨범'},
+      },
+    }
+    writeAlbumDraftData(newerDraft, storage)
+
+    await expect(
+      deleteAlbumDraft(submittedDraft.coverDraftId, {expectedDraft: submittedDraft, storage}),
+    ).resolves.toEqual({success: true})
+
+    expect(readAlbumDraftDataOrNull(storage)).toEqual(newerDraft)
+    expect(storage.deleteData).not.toHaveBeenCalled()
+  })
+
+  it('should keep a newer draft when the cover reference cannot be cleared', async () => {
+    const storage = createStorage()
+    const submittedDraft = createDraft()
+    const newerDraft: AlbumDraftData = {
+      ...submittedDraft,
+      coverDraftId: null,
+      hasCoverFile: false,
+      translations: {
+        ...submittedDraft.translations,
+        ko: {...submittedDraft.translations.ko, title: '새 앨범'},
+      },
+    }
+    writeAlbumDraftData(newerDraft, storage)
+
+    await expect(deleteAlbumDraft(null, {expectedDraft: submittedDraft, storage})).resolves.toEqual(
+      {success: true},
+    )
+
+    expect(readAlbumDraftDataOrNull(storage)).toEqual(newerDraft)
+    expect(storage.deleteData).not.toHaveBeenCalled()
+  })
+
   it('should report a cover persistence failure to the caller', async () => {
     const storage = createStorage()
     const error = new Error('quota exceeded')

@@ -261,10 +261,11 @@ const createActionAlbumCreationServices = (
   albumAction: ReturnType<typeof useCreateAlbumAction>,
   updateDraftReference: DraftReferenceUpdater,
 ): AlbumCreationServices => ({
-  clearDraft: async (coverDraftId) => {
+  clearDraft: async (coverDraftId, expectedDraft) => {
     const didClearReference = (await updateDraftReference(null)).success
     const didClearDraft = await albumCreationServices.clearDraft(
       didClearReference ? coverDraftId : null,
+      expectedDraft,
     )
 
     return didClearReference && didClearDraft

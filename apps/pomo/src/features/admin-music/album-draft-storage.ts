@@ -1,7 +1,7 @@
 import Dexie, {type Table} from 'dexie'
 import {z} from 'zod'
 
-import type {AlbumDraftData} from './album-draft'
+import {ALBUM_LOCALES, type AlbumDraftData} from './album-draft'
 
 interface AlbumCoverRecord {
   readonly blob: Blob
@@ -38,6 +38,7 @@ export interface DeleteCoverOptions {
 }
 
 export interface DeleteAlbumDraftOptions {
+  readonly expectedDraft?: AlbumDraftData
   readonly now?: () => number
   readonly storage?: AlbumDraftStorage
 }
@@ -241,7 +242,53 @@ export type AlbumDraftReadResult<T> =
 const storageSuccess = (): AlbumDraftStorageResult => ({success: true})
 const storageFailure = (error: unknown): AlbumDraftStorageResult => ({error, success: false})
 
-const hasDifferentCoverDraftId = (data: string | null, coverDraftId: string): boolean => {
+const hasSameDraftContent = (current: AlbumDraftData, expected: AlbumDraftData): boolean =>
+  current.albumId === expected.albumId &&
+  current.coverFallback === expected.coverFallback &&
+  current.coverImageUrl === expected.coverImageUrl &&
+  ALBUM_LOCALES.every(
+    (locale) =>
+      current.translations[locale].description === expected.translations[locale].description &&
+      current.translations[locale].title === expected.translations[locale].title,
+  )
+
+const matchesExpectedDraft = (
+  data: string | null,
+  expectedDraft: AlbumDraftData | undefined,
+): boolean => {
+  if (data === null || expectedDraft === undefined) {
+    return false
+  }
+
+  let parsedData: unknown
+
+  try {
+    parsedData = JSON.parse(data)
+  } catch {
+    return false
+  }
+
+  const currentDraft = albumDraftSchema.safeParse(parsedData)
+
+  if (!currentDraft.success || !hasSameDraftContent(currentDraft.data, expectedDraft)) {
+    return false
+  }
+
+  return (
+    (currentDraft.data.coverDraftId === expectedDraft.coverDraftId &&
+      currentDraft.data.hasCoverFile === expectedDraft.hasCoverFile) ||
+    (currentDraft.data.coverDraftId === null &&
+      !currentDraft.data.hasCoverFile &&
+      expectedDraft.coverDraftId !== null &&
+      expectedDraft.hasCoverFile)
+  )
+}
+
+const hasDifferentCoverDraftId = (
+  data: string | null,
+  coverDraftId: string,
+  expectedDraft?: AlbumDraftData,
+): boolean => {
   if (data === null) {
     return false
   }
@@ -255,7 +302,11 @@ const hasDifferentCoverDraftId = (data: string | null, coverDraftId: string): bo
   }
 
   const parsedDraft = albumDraftSchema.safeParse(parsedData)
-  return parsedDraft.success && parsedDraft.data.coverDraftId !== coverDraftId
+  return (
+    parsedDraft.success &&
+    parsedDraft.data.coverDraftId !== coverDraftId &&
+    !matchesExpectedDraft(data, expectedDraft)
+  )
 }
 
 export const writeAlbumDraftReference = async (
@@ -460,6 +511,17 @@ export const deleteAlbumDraft = async (
 ): Promise<AlbumDraftStorageResult> => {
   const storage = options.storage ?? BROWSER_STORAGE
 
+  if (coverDraftId === null && options.expectedDraft !== undefined) {
+    try {
+      if (!matchesExpectedDraft(storage.readData(), options.expectedDraft)) {
+        return storageSuccess()
+      }
+    } catch (error: unknown) {
+      console.warn('Failed to confirm the admin album draft before deletion.', error)
+      return storageFailure(error)
+    }
+  }
+
   if (coverDraftId !== null) {
     let draftData: string | null
     let cover: Blob | null
@@ -493,11 +555,14 @@ export const deleteAlbumDraft = async (
       return storageFailure(error)
     }
 
-    if (currentDraftData !== draftData) {
+    if (
+      currentDraftData !== draftData &&
+      !matchesExpectedDraft(currentDraftData, options.expectedDraft)
+    ) {
       return restoreCoverIfDraftRetainsIt(currentDraftData, coverDraftId, cover, storage)
     }
 
-    if (hasDifferentCoverDraftId(currentDraftData, coverDraftId)) {
+    if (hasDifferentCoverDraftId(currentDraftData, coverDraftId, options.expectedDraft)) {
       return storageSuccess()
     }
   }
