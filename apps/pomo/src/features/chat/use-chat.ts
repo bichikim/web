@@ -86,6 +86,7 @@ interface PendingUser {
 }
 
 const EMPTY_CONTEXT: ChatContext = {messages: [], summary: ''}
+const MAXIMUM_DISPLAYED_PERCENTAGE = 100
 const DEFAULT_RUNTIME: ChatRuntime = {
   createClient: createChatClient,
   createId: () => crypto.randomUUID(),
@@ -104,8 +105,13 @@ const getStatusMessage = (state: ChatState, modelId: TextModelId) => {
       return '답변을 만들고 있어요…'
     case 'idle':
       return `${model.downloadSize} 모델을 처음 한 번 내려받아 보관해요.`
-    case 'loading':
-      return `${model.label} 내려받는 중 · ${state.percentage}%`
+    case 'loading': {
+      const displayProgress = Number.isFinite(state.percentage)
+        ? ` · ${Math.min(MAXIMUM_DISPLAYED_PERCENTAGE, Math.max(0, state.percentage))}%`
+        : ''
+
+      return `${model.label} 내려받는 중${displayProgress}`
+    }
     case 'ready':
       return '모델 준비 완료 · 대화는 이 브라우저 안에서 처리돼요.'
     case 'refining':

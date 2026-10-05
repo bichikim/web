@@ -38,13 +38,15 @@ export const createOffsetListController = (options: OffsetListControllerOptions)
   let listGeneration = 0
   let loadedPagesState: LoadedPagesState = 'none'
   let nextOffset = 0
+  let refreshFallbackHasMore: boolean | undefined
 
   const refresh = async (refreshOptions: FeatureRequestsRefreshOptions = {}): Promise<void> => {
     const preserveLoadedPagesExplicitly = refreshOptions.preserveLoadedPages === true
     const preserveLoadedPages = preserveLoadedPagesExplicitly || loadedPagesState !== 'none'
-    const previousHasMore = hasMore()
-    const preservePreviousHasMore =
+    const previousHasMore = refreshFallbackHasMore ?? hasMore()
+    const preservePreviousNoMore =
       loadedPagesState === 'refreshed' || !preserveLoadedPagesExplicitly
+    refreshFallbackHasMore = previousHasMore
 
     listGeneration += 1
     const generation = listGeneration
@@ -59,9 +61,10 @@ export const createOffsetListController = (options: OffsetListControllerOptions)
         return
       }
 
+      refreshFallbackHasMore = undefined
       nextOffset = page.requests.length
       if (preserveLoadedPages) {
-        setHasMore(preservePreviousHasMore ? previousHasMore : page.hasMore)
+        setHasMore(preservePreviousNoMore ? previousHasMore && page.hasMore : page.hasMore)
         setRequests((currentRequests) => {
           const refreshedRequestIds = new Set(page.requests.map((request) => request.id))
           const refreshedRequests = [
@@ -85,6 +88,7 @@ export const createOffsetListController = (options: OffsetListControllerOptions)
         return
       }
 
+      refreshFallbackHasMore = undefined
       setHasMore(previousHasMore)
       setLoadFailed(true)
     } finally {

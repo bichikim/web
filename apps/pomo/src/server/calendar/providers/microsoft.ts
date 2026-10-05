@@ -68,6 +68,7 @@ const normalizeEvent = (
   event: z.infer<typeof graphEventSchema>,
   calendarLabel: string,
   displayTimeZoneFormatter: Intl.DateTimeFormat,
+  includeExactInstantRange: boolean,
 ): ProviderEvent | null => {
   if (event.isCancelled === true) {
     return null
@@ -83,6 +84,9 @@ const normalizeEvent = (
     allDay: event.isAllDay,
     calendarLabel,
     end,
+    ...(event.isAllDay && includeExactInstantRange
+      ? {exactInstantRange: {end: toUtcIso(event.end), start: toUtcIso(event.start)}}
+      : {}),
     id: event.id,
     start,
     title: event.subject?.trim() || '제목 없는 일정',
@@ -140,7 +144,12 @@ const listCalendarEvents = async ({
 
         const body = graphEventsSchema.parse(await response.json())
         const items = body.value.flatMap((event) => {
-          const normalized = normalizeEvent(event, calendarLabel, displayTimeZoneFormatter)
+          const normalized = normalizeEvent(
+            event,
+            calendarLabel,
+            displayTimeZoneFormatter,
+            eventOptions.lookupInstant !== undefined,
+          )
           return normalized === null ? [] : [normalized]
         })
         return {items, nextCursor: readNextUrl(body['@odata.nextLink'])}

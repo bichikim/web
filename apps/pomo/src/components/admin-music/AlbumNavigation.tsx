@@ -1,6 +1,6 @@
 import {cx} from 'class-variance-authority'
 import {For, Show} from 'solid-js'
-import {type AdminAlbum, getAlbumTranslation} from '../../features/admin-music'
+import {type AdminAlbum, getAlbumTranslation} from '../../features/admin-music/catalog'
 
 interface AlbumNavigationProps {
   readonly disabled?: boolean
