@@ -1,5 +1,6 @@
 import {hasValidIsoCalendarDate} from 'src/utils/iso-calendar-date'
 import DOMPurify from 'dompurify'
+import {groupBy} from 'es-toolkit/array'
 
 /* istanbul ignore next -- Wallaby inconsistently counts module initialization across workers. */
 const BLOCKED_CONTENT_SELECTOR =
@@ -42,16 +43,12 @@ export interface ParsedFeed {
   readonly title: string
 }
 
-const getChildren = (element: Element) => Array.from(element.children)
-const findPreferredChild = (element: Element, names: ReadonlyArray<string>) => {
-  const children = getChildren(element)
-
-  return (
-    names
-      .map((name) => children.find((child) => child.localName.toLowerCase() === name))
-      .find((child): child is Element => child !== undefined) ?? null
-  )
+interface ChildGroups {
+  readonly [name: string]: ReadonlyArray<Element> | undefined
 }
+
+const findPreferredChild = (children: ChildGroups, names: ReadonlyArray<string>) =>
+  names.map((name) => children[name]?.[0]).find((child) => child !== undefined) ?? null
 const hasItemAncestor = (element: Element, itemScope: Element, itemName: string) => {
   let ancestor = element.parentElement
 
@@ -65,10 +62,10 @@ const hasItemAncestor = (element: Element, itemScope: Element, itemName: string)
 
   return false
 }
-const getChildText = (element: Element, names: ReadonlyArray<string>) =>
-  findPreferredChild(element, names)?.textContent?.trim() ?? ''
-const getFeedTitle = (element: Element, feedUrl: string) => {
-  const title = getChildText(element, ['title'])
+const getChildText = (children: ChildGroups, names: ReadonlyArray<string>) =>
+  findPreferredChild(children, names)?.textContent?.trim() ?? ''
+const getFeedTitle = (children: ChildGroups, feedUrl: string) => {
+  const title = getChildText(children, ['title'])
 
   if (title.length > 0) {
     return title
@@ -91,8 +88,8 @@ const resolveUrl = (value: string, baseUrl: string) => {
     return ''
   }
 }
-const getLink = (element: Element, baseUrl: string) => {
-  const links = getChildren(element).filter((child) => child.localName.toLowerCase() === 'link')
+const getLink = (children: ChildGroups, baseUrl: string) => {
+  const links = children.link ?? []
   const candidates = links.map((link) => ({
     hasHref: link.hasAttribute('href'),
     relationTokens:
@@ -113,14 +110,14 @@ const getLink = (element: Element, baseUrl: string) => {
     )
   return preferred?.url ?? ''
 }
-const getContent = (element: Element) => {
-  const fullContent = getChildText(element, ['encoded', 'content'])
+const getContent = (children: ChildGroups) => {
+  const fullContent = getChildText(children, ['encoded', 'content'])
 
   if (fullContent.length > 0) {
     return {content: fullContent, contentKind: 'full' as const}
   }
 
-  const summary = getChildText(element, ['description', 'summary'])
+  const summary = getChildText(children, ['description', 'summary'])
   return summary.length > 0
     ? {content: summary, contentKind: 'summary' as const}
     : {content: '', contentKind: 'none' as const}
@@ -161,9 +158,9 @@ const parseFeedTimestamp = (value: string): number | null => {
   const timestamp = Date.parse(normalizedValue)
   return Number.isNaN(timestamp) ? null : timestamp
 }
-const getPublishedAt = (element: Element) => {
+const getPublishedAt = (children: ChildGroups) => {
   const timestamp = ['published', 'pubdate', 'updated', 'date', 'created', 'issued']
-    .map((name) => parseFeedTimestamp(getChildText(element, [name])))
+    .map((name) => parseFeedTimestamp(getChildText(children, [name])))
     .find((value) => value !== null)
 
   return timestamp === undefined ? null : new Date(timestamp).toISOString()
@@ -184,26 +181,31 @@ const getItemFingerprint = (element: Element) => {
 
   return `${primaryHash.toString(ITEM_FINGERPRINT_RADIX)}-${secondaryHash.toString(ITEM_FINGERPRINT_RADIX)}`
 }
+interface GetItemIdentityOptions {
+  readonly children: ChildGroups
+  readonly element: Element
+  readonly link: string
+  readonly title: string
+  readonly publishedAt: string | null
+}
+
 const getItemIdentity = (
-  element: Element,
-  link: string,
-  title: string,
-  publishedAt: string | null,
+  options: GetItemIdentityOptions,
 ): Pick<ParsedFeedItem, 'id' | 'legacyId'> => {
-  const explicitId = getChildText(element, ['guid', 'id'])
+  const explicitId = getChildText(options.children, ['guid', 'id'])
 
   if (explicitId.length > 0) {
     return {id: explicitId}
   }
 
-  if (link.length > 0) {
-    return {id: link}
+  if (options.link.length > 0) {
+    return {id: options.link}
   }
 
-  const fallbackId = `${title}\u0000${publishedAt ?? ''}`
+  const fallbackId = `${options.title}\u0000${options.publishedAt ?? ''}`
   return {
-    id: `${fallbackId}\u0000${getItemFingerprint(element)}`,
-    ...(publishedAt === null ? {} : {legacyId: fallbackId}),
+    id: `${fallbackId}\u0000${getItemFingerprint(options.element)}`,
+    ...(options.publishedAt === null ? {} : {legacyId: fallbackId}),
   }
 }
 
@@ -241,22 +243,28 @@ export const parseFeedXml = (xml: string, feedUrl: string): ParsedFeed => {
 
   const root = document.documentElement
   const isAtom = root.localName.toLowerCase() === 'feed'
-  const container = isAtom ? root : (findPreferredChild(root, ['channel']) ?? root)
+  const rootChildren = groupBy(Array.from(root.children), (child) => child.localName.toLowerCase())
+  const container = isAtom ? root : (findPreferredChild(rootChildren, ['channel']) ?? root)
+  const containerChildren =
+    container === root
+      ? rootChildren
+      : groupBy(Array.from(container.children), (child) => child.localName.toLowerCase())
   const itemName = isAtom ? 'entry' : 'item'
   const itemScope = isAtom ? container : root
   const itemElements = Array.from(itemScope.getElementsByTagNameNS('*', itemName)).filter(
     (element) => !hasItemAncestor(element, itemScope, itemName),
   )
-  const title = getFeedTitle(container, feedUrl)
+  const title = getFeedTitle(containerChildren, feedUrl)
   const items = itemElements.map((element) => {
-    const itemTitle = getChildText(element, ['title']) || '제목 없는 피드'
-    const publishedAt = getPublishedAt(element)
-    const link = getLink(element, feedUrl)
-    const content = getContent(element)
+    const children = groupBy(Array.from(element.children), (child) => child.localName.toLowerCase())
+    const itemTitle = getChildText(children, ['title']) || '제목 없는 피드'
+    const publishedAt = getPublishedAt(children)
+    const link = getLink(children, feedUrl)
+    const content = getContent(children)
 
     return {
       ...content,
-      ...getItemIdentity(element, link, itemTitle, publishedAt),
+      ...getItemIdentity({children, element, link, publishedAt, title: itemTitle}),
       link,
       publishedAt,
       title: itemTitle,

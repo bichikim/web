@@ -496,3 +496,71 @@ it('should keep article selection and speech exclusions after sanitization', () 
       <svg><text>그림</text></svg></article>`
   expect(extractArticleText(html)).toBe('기사 본문')
 })
+
+it('should preserve alias priority and first direct children across namespaces', () => {
+  const feed = parseFeedXml(
+    `<rss xmlns:content="urn:content" xmlns:other="urn:other"><channel>
+      <TITLE>First feed title</TITLE><title>Second feed title</title>
+      <item>
+        <wrapper><title>Nested title</title><guid>nested-id</guid><link>/nested</link></wrapper>
+        <other:TITLE>First item title</other:TITLE><title>Second item title</title>
+        <id>lower-priority-id</id><GUID>first-id</GUID><guid>second-id</guid>
+        <updated>2026-09-01T00:00:00Z</updated>
+        <pubDate>2026-08-14T00:00:00Z</pubDate><pubDate>2026-08-15T00:00:00Z</pubDate>
+        <content>Lower priority content</content>
+        <content:encoded>First encoded content</content:encoded>
+        <other:encoded>Second encoded content</other:encoded>
+        <link rel="self" href="/self" /><LINK rel="alternate" href="/first" />
+        <link rel="alternate" href="/second" />
+      </item>
+      <item><title>Other item</title><guid>other-id</guid><summary>Summary</summary></item>
+    </channel></rss>`,
+    'https://example.com/feed.xml',
+  )
+
+  expect(feed).toEqual({
+    items: [
+      {
+        content: 'First encoded content',
+        contentKind: 'full',
+        id: 'first-id',
+        link: 'https://example.com/first',
+        publishedAt: '2026-08-14T00:00:00.000Z',
+        title: 'First item title',
+      },
+      {
+        content: 'Summary',
+        contentKind: 'summary',
+        id: 'other-id',
+        link: '',
+        publishedAt: null,
+        title: 'Other item',
+      },
+    ],
+    title: 'First feed title',
+  })
+})
+
+it('should retain an empty first duplicate rather than select a later value', () => {
+  const feed = parseFeedXml(
+    `<rss><channel><item><title /><title>Later title</title>
+      <guid /><guid>Later id</guid><id>Lower-priority id</id>
+      <encoded /><encoded>Later content</encoded><content>Lower-priority content</content>
+      <description>First summary</description><summary>Lower-priority summary</summary>
+      <published>invalid</published><published>2026-01-01T00:00:00Z</published>
+      <updated>2026-08-14T00:00:00Z</updated><link>/article</link>
+    </item></channel></rss>`,
+    'https://example.com/feed.xml',
+  )
+
+  expect(feed.items).toEqual([
+    {
+      content: 'First summary',
+      contentKind: 'summary',
+      id: 'https://example.com/article',
+      link: 'https://example.com/article',
+      publishedAt: '2026-08-14T00:00:00.000Z',
+      title: '제목 없는 피드',
+    },
+  ])
+})
