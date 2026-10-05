@@ -67,3 +67,17 @@ it('should render 29-day months and reconcile a selected day after changing mont
   expect(within(dayListbox).getByRole('option', {name: '29'})).toBeVisible()
   expect(within(dayListbox).queryByRole('option', {name: '30'})).not.toBeInTheDocument()
 })
+
+it('should reconcile a selected day at the 2050 converter cutoff', async () => {
+  renderLunarInLunarMode()
+  expect(await screen.findByText('2026-02-17')).toBeVisible()
+
+  await selectOption(/음력 일/u, '30')
+  await selectOption(/음력 연도/u, '2050')
+  await selectOption(/음력 월/u, '11')
+
+  expect(screen.getByRole('button', {name: /음력 연도/u})).toHaveTextContent('2050')
+  expect(screen.getByRole('button', {name: /음력 월/u})).toHaveTextContent('11')
+  expect(screen.getByRole('button', {name: /음력 일/u})).toHaveTextContent('18')
+  expect(screen.getByText('2050-12-31')).toBeVisible()
+})

@@ -2,7 +2,7 @@
 
 import {PreferenceProvider} from 'src/hooks/use-preference'
 
-import {fireEvent, render, screen} from '@solidjs/testing-library'
+import {render, screen} from '@solidjs/testing-library'
 import {createSignal} from 'solid-js'
 import {afterEach, beforeEach, expect, it, vi} from 'vitest'
 
@@ -48,45 +48,7 @@ vi.mock('../../p-pomodoro/PPomodoro', () => ({
 }))
 vi.mock('../../p-studio/Toolbar', () => ({
   SceneToolbar: vi.fn((props) => {
-    Object.values(props)
-    return (
-      <div>
-        <span data-layout={props.layout}>설정</span>
-        <button onClick={() => props.onActivityChange('writing')} type="button">
-          활동
-        </button>
-        <button onClick={() => props.onGazeChange('user')} type="button">
-          시선
-        </button>
-        <button onClick={() => props.onMotionInputChange('drag')} type="button">
-          입력
-        </button>
-        <button onClick={() => props.onMotionModeChange('pan')} type="button">
-          움직임
-        </button>
-        <button onClick={() => props.onSceneStyleChange('scribble')} type="button">
-          스타일
-        </button>
-        <button onClick={() => props.onScreenSaverDelayChange('1h')} type="button">
-          화면 보호기
-        </button>
-        <button onClick={() => props.onTimeModeChange('auto')} type="button">
-          시간
-        </button>
-        <button onClick={() => props.onWeatherLocationChange(jejuLocation)} type="button">
-          도시
-        </button>
-        <button onClick={() => props.onWeatherEnabledChange(true)} type="button">
-          날씨
-        </button>
-        <button onClick={() => props.onWeatherSceneModeChange('rain')} type="button">
-          날씨 장면
-        </button>
-        <button onClick={() => props.onDesktopModeChange('interactiveDesktop')} type="button">
-          모드
-        </button>
-      </div>
-    )
+    return <span data-layout={props.layout}>설정</span>
   }),
 }))
 
@@ -192,21 +154,33 @@ it('should publish every setting change from the separate scene toolbar', () => 
   expect(SceneToolbar).toHaveBeenCalledOnce()
   expect(useDesktopMode).toHaveBeenCalledWith({isHandoffOwner: true})
   expect(screen.getByText('설정')).toHaveAttribute('data-layout', 'surface')
-  for (const name of [
-    '활동',
-    '시선',
-    '입력',
-    '움직임',
-    '스타일',
-    '화면 보호기',
-    '시간',
-    '도시',
-    '날씨',
-    '날씨 장면',
-    '모드',
-  ]) {
-    fireEvent.click(screen.getByRole('button', {name}))
+  const toolbarProps = vi.mocked(SceneToolbar).mock.calls[0]?.[0]
+  if (toolbarProps === undefined) {
+    throw new Error('Missing scene toolbar props')
   }
+  const onActivityChange = toolbarProps.onActivityChange
+  if (onActivityChange === undefined) {
+    throw new Error('Missing activity change handler')
+  }
+  const onMotionInputChange = toolbarProps.onMotionInputChange
+  if (onMotionInputChange === undefined) {
+    throw new Error('Missing motion input change handler')
+  }
+  const onDesktopModeChange = toolbarProps.onDesktopModeChange
+  if (onDesktopModeChange === undefined) {
+    throw new Error('Missing desktop mode change handler')
+  }
+  onActivityChange('writing')
+  toolbarProps.onGazeChange('user')
+  onMotionInputChange('drag')
+  toolbarProps.onMotionModeChange('pan')
+  toolbarProps.onSceneStyleChange('scribble')
+  toolbarProps.onScreenSaverDelayChange('1h')
+  toolbarProps.onTimeModeChange('auto')
+  toolbarProps.onWeatherLocationChange(jejuLocation)
+  toolbarProps.onWeatherEnabledChange(true)
+  toolbarProps.onWeatherSceneModeChange('rain')
+  onDesktopModeChange('interactiveDesktop')
 
   expect(publish.mock.calls.map(([setting]) => setting)).toEqual([
     {name: 'activity', value: 'writing'},
@@ -294,7 +268,15 @@ it('should apply every received scene setting without echoing it to other WebVie
   expect(useWeather().onLocationChange).toHaveBeenCalledWith(jejuLocation)
   expect(useWeather().onSceneModeChange).toHaveBeenCalledWith('rain')
   expect(publish).not.toHaveBeenCalled()
-  fireEvent.click(screen.getByRole('button', {name: '활동'}))
+  const toolbarProps = vi.mocked(SceneToolbar).mock.calls[0]?.[0]
+  if (toolbarProps === undefined) {
+    throw new Error('Missing scene toolbar props')
+  }
+  const onActivityChange = toolbarProps.onActivityChange
+  if (onActivityChange === undefined) {
+    throw new Error('Missing activity change handler')
+  }
+  onActivityChange('writing')
   expect(publish).toHaveBeenCalledExactlyOnceWith({name: 'activity', value: 'writing'})
 })
 

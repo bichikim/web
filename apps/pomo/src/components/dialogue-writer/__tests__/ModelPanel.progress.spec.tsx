@@ -75,7 +75,7 @@ const mountModelPanel = (runtime: DialogueWriterRuntime) => {
 afterEach(cleanup)
 
 describe('ModelPanel progress', () => {
-  it('should bound visible progress while preserving telemetry and worker-driven status updates', () => {
+  it('should preserve progress telemetry and state through loading, release, prepare, and ready', () => {
     const runtime = createRuntime()
     const writer = mountModelPanel(runtime)
     const rawProgress = createTextGenerationProgress({
@@ -108,17 +108,15 @@ describe('ModelPanel progress', () => {
     runtime.emit({...exactProgress, type: 'loading'})
 
     expect(writer.state()).toMatchObject({percentage: 100, status: 'loading'})
-    expect(screen.getByRole('progressbar', {name: '모델 준비 100%'})).toBeInTheDocument()
+    expect(screen.getByRole('progressbar', {name: '모델 준비 100%'})).toBe(progress)
     expect(screen.getByRole('button', {name: '모델 준비 중…'})).toBeDisabled()
 
     runtime.emit({files: [], loadedBytes: -5, percentage: -5, totalBytes: 100, type: 'loading'})
 
     expect(writer.state()).toMatchObject({percentage: -5, status: 'loading'})
     expect(writer.statusMessage()).toContain('0%')
-    expect(screen.getByRole('progressbar', {name: '모델 준비 0%'})).toHaveAttribute(
-      'aria-valuenow',
-      '0',
-    )
+    expect(screen.getByRole('progressbar', {name: '모델 준비 0%'})).toBe(progress)
+    expect(progress).toHaveAttribute('aria-valuenow', '0')
     expect(screen.getByText('0%')).toBeInTheDocument()
     expect(progress.firstElementChild).toHaveStyle('--pomo-progress-width: 0%')
 
@@ -130,6 +128,7 @@ describe('ModelPanel progress', () => {
 
     writer.prepare()
     runtime.emit({...rawProgress, type: 'loading'})
+    expect(screen.getByRole('progressbar', {name: '모델 준비 100%'})).not.toBe(progress)
     runtime.emit({type: 'ready'})
 
     expect(writer.state()).toEqual({status: 'ready'})

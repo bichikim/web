@@ -1,5 +1,3 @@
-import {debounce as baseDebounce} from 'es-toolkit/function'
-
 export interface DebounceSettings {
   leading?: boolean
   maxWait?: number
@@ -12,58 +10,109 @@ export interface DebouncedFunc<T extends (...args: any[]) => any> {
   flush(): ReturnType<T> | undefined
 }
 
-// Preserve the published leading/trailing/maxWait contract while using the modern API.
+/** Delays calls until the trailing edge or maximum waiting deadline, with optional leading execution. */
 export const debounce = <T extends (...args: any[]) => any>(
   func: T,
   debounceMs: number = 0,
   options: DebounceSettings = {},
 ): DebouncedFunc<T> => {
   const {leading = false, maxWait, trailing = true} = options
-  const edges: Array<'leading' | 'trailing'> = []
-
-  if (leading) {
-    edges.push('leading')
-  }
-
-  if (trailing) {
-    edges.push('trailing')
-  }
-
   let result: ReturnType<T> | undefined
-  let pendingAt: null | number = null
-  const debounced = baseDebounce(
-    (...args: Parameters<T>) => {
+  let pendingArgs: Parameters<T> | null = null
+  let lastCallAt: number | undefined
+  let lastInvokeAt = 0
+  let timer: ReturnType<typeof setTimeout> | undefined
+
+  const invoke = (now: number) => {
+    const args = pendingArgs
+    pendingArgs = null
+    lastInvokeAt = now
+
+    if (args !== null) {
       result = func(...args)
-      pendingAt = null
-    },
-    debounceMs,
-    {edges},
-  )
+    }
+    return result
+  }
+
+  const shouldInvoke = (now: number) => {
+    if (lastCallAt === undefined) {
+      return true
+    }
+    const elapsed = now - lastCallAt
+    return (
+      elapsed >= debounceMs ||
+      elapsed < 0 ||
+      (maxWait !== undefined && now - lastInvokeAt >= maxWait)
+    )
+  }
+
+  const finishWaiting = (now: number) => {
+    timer = undefined
+    if (trailing && pendingArgs !== null) {
+      return invoke(now)
+    }
+    pendingArgs = null
+    return result
+  }
+
+  const onDeadline = () => {
+    const now = Date.now()
+    if (shouldInvoke(now)) {
+      finishWaiting(now)
+      return
+    }
+    const quietRemaining = debounceMs - (now - (lastCallAt ?? now))
+    const remaining =
+      maxWait === undefined
+        ? quietRemaining
+        : Math.min(quietRemaining, maxWait - (now - lastInvokeAt))
+    timer = setTimeout(onDeadline, remaining)
+  }
+
+  const startWaiting = () => {
+    timer = setTimeout(onDeadline, Math.min(debounceMs, maxWait ?? Infinity))
+  }
+
+  const cancel = () => {
+    clearTimeout(timer)
+    timer = undefined
+    lastCallAt = undefined
+    lastInvokeAt = 0
+    pendingArgs = null
+  }
+
+  const flush = () => {
+    if (timer === undefined) {
+      return result
+    }
+    clearTimeout(timer)
+    return finishWaiting(Date.now())
+  }
 
   const wrapped = (...args: Parameters<T>): ReturnType<T> | undefined => {
-    if (maxWait !== undefined) {
-      pendingAt ??= Date.now()
+    const now = Date.now()
+    const isDue = shouldInvoke(now)
+    pendingArgs = args
+    lastCallAt = now
 
-      if (Date.now() - pendingAt >= maxWait) {
-        result = func(...args)
-        pendingAt = Date.now()
-        debounced.cancel()
-        debounced.schedule()
-
-        return result
+    if (isDue) {
+      if (timer === undefined) {
+        lastInvokeAt = now
+        startWaiting()
+        return leading ? invoke(now) : result
+      }
+      if (maxWait !== undefined) {
+        clearTimeout(timer)
+        startWaiting()
+        return leading || trailing ? invoke(now) : result
       }
     }
 
-    debounced(...args)
-
+    if (timer === undefined) {
+      startWaiting()
+    }
     return result
   }
 
-  const flush = (): ReturnType<T> | undefined => {
-    debounced.flush()
-
-    return result
-  }
-
-  return Object.assign(wrapped, {cancel: debounced.cancel, flush})
+  return Object.assign(wrapped, {cancel, flush})
 }
