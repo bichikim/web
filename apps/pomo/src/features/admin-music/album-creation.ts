@@ -37,6 +37,7 @@ export interface CreateAlbumSubmitHandlerOptions extends AlbumCreationCallbacks 
   readonly clearPreparedCover: () => void
   readonly getCoverDraftId: () => string | null
   readonly getCoverFile: () => File | null
+  readonly getCoverStorageWarning?: () => string | null
   readonly getDraftData: () => AlbumDraftData
   readonly persistDraft: () => void
   readonly renewAlbumId: () => void
@@ -81,6 +82,16 @@ const refreshAfterAlbumCreation = async (
   )
 }
 
+const includeCoverStorageWarning = (
+  options: CreateAlbumSubmitHandlerOptions,
+  message: string,
+): string => {
+  const warning = options.getCoverStorageWarning?.()
+  return warning === undefined || warning === null || warning === message
+    ? message
+    : `${warning}\n${message}`
+}
+
 const recoverFromPayloadMismatch = async (
   options: CreateAlbumSubmitHandlerOptions,
 ): Promise<void> => {
@@ -91,11 +102,17 @@ const recoverFromPayloadMismatch = async (
   try {
     await options.refreshCatalog()
     options.setMessage(
-      '이전 요청에서 앨범이 이미 만들어졌습니다. 현재 입력은 유지하고 새 앨범 ID로 전환했습니다. 목록에서 기존 앨범을 확인한 뒤 필요하면 다시 저장해 주세요.',
+      includeCoverStorageWarning(
+        options,
+        '이전 요청에서 앨범이 이미 만들어졌습니다. 현재 입력은 유지하고 새 앨범 ID로 전환했습니다. 목록에서 기존 앨범을 확인한 뒤 필요하면 다시 저장해 주세요.',
+      ),
     )
   } catch {
     options.setMessage(
-      '이전 요청에서 앨범이 이미 만들어졌지만 목록을 새로고침하지 못했습니다. 현재 입력은 유지하고 새 앨범 ID로 전환했으니 페이지를 새로고침한 뒤 확인해 주세요.',
+      includeCoverStorageWarning(
+        options,
+        '이전 요청에서 앨범이 이미 만들어졌지만 목록을 새로고침하지 못했습니다. 현재 입력은 유지하고 새 앨범 ID로 전환했으니 페이지를 새로고침한 뒤 확인해 주세요.',
+      ),
     )
   }
 }
@@ -107,7 +124,7 @@ export const createAlbumSubmitHandler = (
     event.preventDefault()
     const albumForm = event.currentTarget
     options.setIsSavingAlbum(true)
-    options.setMessage(null)
+    options.setMessage(options.getCoverStorageWarning?.() ?? null)
 
     let albumId: string
 
@@ -128,7 +145,12 @@ export const createAlbumSubmitHandler = (
       const {albumId: createdAlbumId} = result
       albumId = createdAlbumId
     } catch (error) {
-      options.setMessage(getExceptionMessage(error, '앨범을 저장하지 못했습니다.'))
+      options.setMessage(
+        includeCoverStorageWarning(
+          options,
+          getExceptionMessage(error, '앨범을 저장하지 못했습니다.'),
+        ),
+      )
       options.setIsSavingAlbum(false)
       return
     }
