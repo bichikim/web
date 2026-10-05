@@ -30,6 +30,30 @@ describe('parseExpenseText', () => {
     })
   })
 
+  it('should parse dot and slash date separators and keep the first date', () => {
+    const expected = parseExpenseText('2026-09-05\n2026-09-06\n두부 1,500원')
+
+    expect(parseExpenseText('2026.09.05\n2026/09/06\n두부 1,500원')).toEqual(expected)
+    expect(parseExpenseText('2026/9/5\n두부 1,500원')).toEqual(
+      parseExpenseText('2026-9-5\n두부 1,500원'),
+    )
+    expect(parseExpenseText('２０２６.９.５\n두부 1,500원')).toEqual(
+      parseExpenseText('2026-9-5\n두부 1,500원'),
+    )
+    expect(parseExpenseText('2026.09/05\n두부 1,500원')).toEqual({
+      error: {code: 'invalid-input'},
+      ok: false,
+    })
+    expect(parseExpenseText('2026.02.30\n두부 1,500원')).toEqual({
+      error: {code: 'invalid-input'},
+      ok: false,
+    })
+    expect(parseExpenseText('2026/02/30\n두부 1,500원')).toEqual({
+      error: {code: 'invalid-input'},
+      ok: false,
+    })
+  })
+
   it('should parse fullwidth digits in date lines and keep the first date', () => {
     const expected = parseExpenseText('2026-09-05\n2026-09-06\n두부２ 1,500원')
 
@@ -210,6 +234,26 @@ describe('parseExpenseAssistantResponse', () => {
     ).toMatchObject({
       ok: true,
       value: {date: '2026-9-5'},
+    })
+  })
+
+  it('should parse dot and slash date separators in structured values', () => {
+    const items = [{name: '두부', quantity: 1, unitPrice: 1500}]
+    const expected = parseExpenseAssistantResponse(JSON.stringify({date: '2026-09-05', items}))
+
+    expect(parseExpenseAssistantResponse(JSON.stringify({date: '2026.09.05', items}))).toEqual(
+      expected,
+    )
+    expect(parseExpenseAssistantResponse(JSON.stringify({date: '2026/9/5', items}))).toEqual(
+      parseExpenseAssistantResponse(JSON.stringify({date: '2026-9-5', items})),
+    )
+    expect(parseExpenseAssistantResponse(JSON.stringify({date: '2026.09/05', items}))).toEqual({
+      error: {code: 'invalid-shape'},
+      ok: false,
+    })
+    expect(parseExpenseAssistantResponse(JSON.stringify({date: '2026.02.30', items}))).toEqual({
+      error: {code: 'invalid-shape'},
+      ok: false,
     })
   })
 

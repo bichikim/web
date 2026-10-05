@@ -35,8 +35,12 @@ const MAXIMUM_ITEMS = 20
 const FULLWIDTH_TO_ASCII_DIGIT_OFFSET = 0xfee0
 const EXPENSE_LINE_PATTERN =
   /^\s*(?<name>.+?)\s+(?<unitPrice>[\d０-９,]+)\s*원(?:\s+(?<quantity>[\d,]+)\s*개)?\s*$/u
-const DATE_LINE_PATTERN =
-  /^\s*(?<year>[0-9０-９]{4})-(?<month>[0-9０-９]{1,2})-(?<day>[0-9０-９]{1,2})(?:\s+[월화수목금토일]요일)?\s*$/u
+const DATE_LINE_PATTERN = new RegExp(
+  String.raw`^\s*(?<year>[0-9０-９]{4})(?<separator>[-./])` +
+    String.raw`(?<month>[0-9０-９]{1,2})\k<separator>(?<day>[0-9０-９]{1,2})` +
+    String.raw`(?:\s+[월화수목금토일]요일)?\s*$`,
+  'u',
+)
 
 const normalizeDateDigits = (value: string) =>
   value.replace(/[０-９]/gu, (digit) =>
