@@ -48,6 +48,15 @@ vi.mock('src/features/focus-room-feed', () => ({
   excludeFeedDialogues: (dialogues: ReadonlyArray<PDialogue>) => dialogues,
   usePFeedContext: vi.fn(),
 }))
+vi.mock('../use-volume-ducking', () => ({
+  useVolumeDucking: () => ({
+    changeEnabled: () => undefined,
+    changeVolume: () => undefined,
+    isLoading: () => false,
+    message: () => null,
+    settings: () => ({enabled: true, playerVolumePercent: 50, version: 2}),
+  }),
+}))
 
 const DIALOGUE: PDialogue = {
   audioKey: 'audio-saved',

@@ -122,3 +122,19 @@ it('should reject empty audio and unsupported sample rates', async () => {
   )
   expect(encoderMocks.create).not.toHaveBeenCalled()
 })
+
+it('should preserve encoded packet bytes and order across Blob parts', async () => {
+  const backing = Uint8Array.of(99, 1, 2, 3, 99)
+  const packets = [backing.subarray(1, 4), new Uint8Array(255).fill(4), Uint8Array.of(5)]
+  for (const packet of packets) {
+    encoderMocks.encodeFloat.mockReturnValueOnce(packet)
+  }
+
+  const blob = await encodeOpusBlob(new Float32Array(960), 24_000)
+  backing.fill(0)
+  const pages = readPages(new Uint8Array(await readBlob(blob)))
+
+  expect(pages).toHaveLength(3)
+  expect(pages[2]?.payload).toEqual(Uint8Array.from([1, 2, 3, ...new Array(255).fill(4), 5]))
+  expect(encoderMocks.free).toHaveBeenCalledOnce()
+})

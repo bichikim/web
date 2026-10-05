@@ -75,7 +75,7 @@ describe('AutomaticDialogueSettings', () => {
     vi.restoreAllMocks()
   })
 
-  it('should load saved defaults and persist model and voice changes', async () => {
+  it('should load saved model and voice defaults', async () => {
     const storedSettings = {
       modelId: 'full',
       version: 1,
@@ -91,6 +91,22 @@ describe('AutomaticDialogueSettings', () => {
     expect(screen.getByRole('region', {name: '기본 자동 음성 생성'})).toHaveClass(
       'settings-compact:gap-3',
     )
+    expect(model).toHaveValue('full')
+    expect(voice).toHaveValue('Yuna')
+  })
+
+  it('should persist model and voice changes', async () => {
+    const storedSettings = {
+      modelId: 'full',
+      version: 1,
+      voiceId: 'Yuna',
+    } satisfies AutomaticDialogueSettingsValue
+    mocks.read.mockResolvedValue(storedSettings)
+
+    render(() => <PAutomaticVoiceSettings />, {wrapper: PreferenceProvider})
+
+    const model = await screen.findByRole('combobox', {name: '자동 음성 생성 모델'})
+    const voice = screen.getByRole('combobox', {name: '자동 음성 생성 목소리'})
     expect(model).toHaveValue('full')
     expect(voice).toHaveValue('Yuna')
 

@@ -1,6 +1,7 @@
 /** @vitest-environment jsdom */
 
 import {fireEvent, render, screen} from '@solidjs/testing-library'
+import {getLocale, overwriteGetLocale} from '@paraglide/runtime'
 import {PreferenceProvider} from 'src/hooks/use-preference'
 import {afterEach, beforeEach, expect, it, vi} from 'vitest'
 
@@ -14,6 +15,7 @@ const settingsMocks = vi.hoisted(() => ({
   read: vi.fn<() => Promise<DialogueVolumeDuckingSettingsValue>>(),
   write: vi.fn<(settings: DialogueVolumeDuckingSettingsValue) => Promise<void>>(),
 }))
+const originalGetLocale = getLocale
 
 vi.mock('src/features/focus-room-dialogue', async () => {
   const actual: typeof import('src/features/focus-room-dialogue') = await vi.importActual(
@@ -44,8 +46,17 @@ beforeEach(() => {
 })
 
 afterEach(() => {
+  overwriteGetLocale(originalGetLocale)
   vi.clearAllMocks()
   vi.useRealTimers()
+})
+
+it('should localize the dialogue options heading in English', async () => {
+  overwriteGetLocale(() => 'en')
+  render(() => <DialogueVolumeDuckingSettings />, {wrapper: PreferenceProvider})
+  await vi.advanceTimersByTimeAsync(0)
+
+  expect(screen.getByRole('heading', {name: 'Dialogue options'})).toBeVisible()
 })
 
 it('should show the dialogue option and save the selected player volume percentage', async () => {

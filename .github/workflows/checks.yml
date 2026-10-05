@@ -125,9 +125,12 @@ jobs:
             apps/pomo/src/components/admin-music/__tests__/AlbumWorkspace.integration.tsx \
             apps/pomo/src/components/chat-room/__tests__/ChatRoom.stt-draft.integration.tsx \
             apps/pomo/src/components/album-library/__tests__/use-custom-album-editor.integration.ts \
+            apps/pomo/src/components/album-library/__tests__/Content.catalog.integration.tsx \
             apps/pomo/src/components/dialogue-page/__tests__/Editor.integration.tsx \
+            apps/pomo/src/components/dev/__tests__/StoragePage.integration.tsx \
             apps/pomo/src/components/layer-review/__tests__/MouthFramePicker.integration.tsx \
             apps/pomo/src/components/music-player/__tests__/PMusicPlayerContent.queue-restoration.integration.tsx \
+            apps/pomo/src/components/media-player/__tests__/playlist-entry-identity.integration.tsx \
             apps/pomo/src/components/p-memory-assist/__tests__/PMemoryAssist.loading.integration.tsx \
             apps/pomo/src/components/memory-assist/__tests__/PictureDiary.generation.integration.tsx \
             apps/pomo/src/components/memory-assist/picture-diary/__tests__/Generation.progress.integration.tsx \
@@ -145,6 +148,7 @@ jobs:
             apps/pomo/src/components/tools/__tests__/Moving.integration.tsx \
             apps/pomo/src/routes/__tests__/third-party-notices.integration.tsx \
             apps/pomo/src/routes/api/admin/music/__tests__/assets.artwork.integration.ts \
+            packages/puppet/src/design-system/__tests__/EditorColorField.integration.tsx \
             packages/puppet/src/editor/__tests__/PuppetEditor.deformers.interaction.integration.tsx \
             packages/puppet/src/editor/__tests__/PuppetEditor.integration.tsx \
             packages/puppet/src/editor/__tests__/PuppetEditor.parameters.integration.tsx \
@@ -154,6 +158,7 @@ jobs:
             packages/puppet/src/editor/internal/__tests__/InfluenceEditor.integration.tsx \
             packages/puppet/src/editor/internal/__tests__/PhysicsProperties.interaction.integration.tsx \
             packages/puppet/src/editor/internal/__tests__/SpatialMeshDialog.integration.tsx \
+            packages/puppet/src/editor/internal/__tests__/ViewCameraControls.integration.tsx \
             packages/puppet/src/player/internal/__tests__/physics.development-model.ear-attachment.integration.ts \
             packages/puppet/src/player/internal/__tests__/physics.ribbon.integration.ts \
             packages/puppet/src/player/internal/__tests__/scene-deformation.chest.attachment.integration.ts \

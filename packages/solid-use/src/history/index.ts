@@ -1,6 +1,12 @@
-import {createMemo, createSignal} from 'solid-js'
+import {type Accessor, createMemo, createSignal} from 'solid-js'
 
-export const useHistory = <T>(initHistory: T[] = []) => {
+export type HistoryReturn<T> = [
+  currentValue: Accessor<T | undefined>,
+  addValue: (newValue: T) => void,
+  history: Accessor<T[]>,
+]
+
+export const useHistory = <T>(initHistory: T[] = []): HistoryReturn<T> => {
   const [history, setHistory] = createSignal<T[]>(initHistory)
 
   const currentValue = createMemo(() => {

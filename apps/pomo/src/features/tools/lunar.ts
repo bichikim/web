@@ -1,4 +1,5 @@
 import KoreanLunarCalendar from 'korean-lunar-calendar'
+import {normalizePasteNumericInput} from 'src/utils/normalize-paste-numeric-input'
 import {type CivilDate, daysInMonth, formatDate, parseDate} from '../civil-date'
 
 const DAY_CYCLE = 10
@@ -32,7 +33,7 @@ const isAfterLastSupportedLunarDate = (date: LunarDate): boolean => {
 }
 
 export const solarToLunar = (value: string): LunarDate | null => {
-  const date = parseDate(value)
+  const date = parseDate(normalizePasteNumericInput(value))
   if (date === null || date.year < FIRST_YEAR || date.year > LAST_YEAR) {
     return null
   }

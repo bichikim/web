@@ -41,6 +41,9 @@ vi.mock('../../memory-assist/Memos', () => ({
 vi.mock('../../memory-assist/PictureDiary', () => ({
   PictureDiary: vi.fn(() => <div>picture diary</div>),
 }))
+vi.mock('../../memory-assist/Content', () => ({
+  PMemoryAssistContent: () => <div>memory assist content</div>,
+}))
 vi.mock('../../scribble/CircleControl', () => ({PScribbleCircleControl: vi.fn()}))
 
 interface TabsRootProps {
