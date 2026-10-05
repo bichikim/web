@@ -9,7 +9,7 @@ import {afterEach, beforeEach, expect, it, vi} from 'vitest'
 import {
   DEFAULT_RANDOM_EVENT_SETTINGS,
   type RandomEventSettings as RandomEventSettingsValue,
-} from 'src/features/focus-room-dialogue'
+} from 'src/features/focus-room-dialogue/random-event-settings'
 import {webLocalStorage} from 'src/utils/preference-storage/web-local-storage'
 import {RandomEventSettings} from '../RandomEventSettings'
 
@@ -19,9 +19,8 @@ const settingsMocks = vi.hoisted(() => ({
 }))
 
 vi.mock('src/features/focus-room-dialogue', async () => {
-  const actual: typeof import('src/features/focus-room-dialogue') = await vi.importActual(
-    'src/features/focus-room-dialogue',
-  )
+  const actual: typeof import('src/features/focus-room-dialogue/random-event-settings') =
+    await vi.importActual('src/features/focus-room-dialogue/random-event-settings')
 
   return {
     ...actual,
