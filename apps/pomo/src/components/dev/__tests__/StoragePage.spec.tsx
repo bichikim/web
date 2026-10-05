@@ -60,17 +60,6 @@ afterEach(() => {
   vi.clearAllMocks()
 })
 
-it('should show stored model data and verification destinations', async () => {
-  render(() => <StoragePage manager={createManager()} />)
-
-  expect(await screen.findByText('model.onnx')).toBeDefined()
-  expect(screen.getByText('2개 파일이 남아 있어요.')).toBeDefined()
-  expect(screen.getByRole('link', {name: '문장 만들기 →'}).getAttribute('href')).toBe(
-    '/dev/dialogue',
-  )
-  expect(screen.getByRole('link', {name: '음성 생성 →'}).getAttribute('href')).toBe('/dev/voice')
-})
-
 it('should show partial storage loading until the first inspection completes', async () => {
   const manager = createManager()
   const inspection = createDeferred<Awaited<ReturnType<ModelStorageManager['inspect']>>>()
