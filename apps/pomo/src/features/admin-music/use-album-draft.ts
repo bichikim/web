@@ -500,6 +500,7 @@ export const useAlbumDraft = (props: UseAlbumDraftProps) => {
     getCoverFile: preparedCoverFile,
     getCoverStorageWarning: coverStorageWarning,
     getDraftData,
+    getIsProcessingCover: isProcessingCover,
     persistDraft: () =>
       draftPersistence.persist(() => coverStorageWarning() !== null || isProcessingCover()),
     renewAlbumId: albumCreationId.renew,

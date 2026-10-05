@@ -42,6 +42,7 @@ const createOptions = () => {
     getCoverDraftId: () => COVER_DRAFT_ID,
     getCoverFile: () => null,
     getDraftData: createDraft,
+    getIsProcessingCover: () => false,
     onAlbumCreated: vi.fn(),
     persistDraft: vi.fn().mockResolvedValue(createDraft()),
     refreshCatalog: vi.fn().mockResolvedValue(undefined),

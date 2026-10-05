@@ -43,6 +43,7 @@ export interface CreateAlbumSubmitHandlerOptions extends AlbumCreationCallbacks 
   readonly getCoverFile: () => File | null
   readonly getCoverStorageWarning?: () => string | null
   readonly getDraftData: () => AlbumDraftData
+  readonly getIsProcessingCover: () => boolean
   readonly persistDraft: () => Promise<AlbumDraftData | null>
   readonly renewAlbumId: () => void
   readonly services: AlbumCreationServices
@@ -178,7 +179,8 @@ export const createAlbumSubmitHandler = (
     }
 
     try {
-      const isDraftUnchanged = hasSameAlbumDraft(options.getDraftData(), submittedDraft)
+      const isDraftUnchanged =
+        !options.getIsProcessingCover() && hasSameAlbumDraft(options.getDraftData(), submittedDraft)
       let didClearDraft = false
 
       if (isDraftUnchanged) {
