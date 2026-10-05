@@ -8,9 +8,11 @@ export interface DebouncedFunc<T extends (...args: any[]) => any> {
   (...args: Parameters<T>): ReturnType<T> | undefined
   cancel(): void
   flush(): ReturnType<T> | undefined
+  /** Whether a trailing invocation is waiting to run. */
+  hasPending(): boolean
 }
 
-/** Delays calls until the trailing edge or maximum waiting deadline, with optional leading execution. */
+/** Delays calls until the trailing edge or maximum waiting deadline; the caller owns cancellation and flushing. */
 export const debounce = <T extends (...args: any[]) => any>(
   func: T,
   debounceMs: number = 0,
@@ -95,6 +97,12 @@ export const debounce = <T extends (...args: any[]) => any>(
     pendingArgs = args
     lastCallAt = now
 
+    if (!leading && trailing && maxWait === undefined) {
+      clearTimeout(timer)
+      timer = setTimeout(() => finishWaiting(Date.now()), debounceMs)
+      return result
+    }
+
     if (isDue) {
       if (timer === undefined) {
         lastInvokeAt = now
@@ -114,5 +122,9 @@ export const debounce = <T extends (...args: any[]) => any>(
     return result
   }
 
-  return Object.assign(wrapped, {cancel, flush})
+  return Object.assign(wrapped, {
+    cancel,
+    flush,
+    hasPending: () => trailing && timer !== undefined && pendingArgs !== null,
+  })
 }

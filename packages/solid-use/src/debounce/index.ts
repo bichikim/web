@@ -4,6 +4,7 @@ import {debounce, type DebouncedFunc, type DebounceSettings} from 'src/internal/
 import {createScheduledCallback} from 'src/internal/create-scheduled-callback'
 
 export type {DebouncedFunc, DebounceSettings}
+export {debounce}
 
 export const createDebounce = <T extends (...args: any) => any>(
   callback: T,
