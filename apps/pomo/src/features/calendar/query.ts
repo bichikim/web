@@ -6,6 +6,7 @@ const CALENDAR_INTENT_PATTERN = /(?:일정|미팅|회의|약속|스케줄)/u
 const CALENDAR_PERIOD_BOUNDARY_PATTERN =
   /(?=$|[\s,.!?…]|(?:에는|에서|부터|까지|이랑|하고|은|는|이|가|을|를|에|엔|도|로|만|중|쯤|의|과|와|랑)(?=$|[\s,.!?…]))/u
 const CALENDAR_WORD_START_PATTERN = '(?<![\\p{L}\\p{N}_])'
+const PREVIOUS_MONTH_PHRASE_SOURCE = '(?:지난|저번) ?달'
 const createCalendarRelativeDayPattern = (phrase: string): RegExp =>
   new RegExp(
     `${CALENDAR_WORD_START_PATTERN}(?:${phrase})${CALENDAR_PERIOD_BOUNDARY_PATTERN.source}`,
@@ -14,7 +15,10 @@ const createCalendarRelativeDayPattern = (phrase: string): RegExp =>
 const THIS_WEEK_PATTERN = new RegExp(`이번 ?주${CALENDAR_PERIOD_BOUNDARY_PATTERN.source}`, 'u')
 const THIS_MONTH_PATTERN = new RegExp(`이번 ?달${CALENDAR_PERIOD_BOUNDARY_PATTERN.source}`, 'u')
 const NEXT_MONTH_PATTERN = new RegExp(`다음 ?달${CALENDAR_PERIOD_BOUNDARY_PATTERN.source}`, 'u')
-const PREVIOUS_MONTH_PATTERN = new RegExp(`지난 ?달${CALENDAR_PERIOD_BOUNDARY_PATTERN.source}`, 'u')
+const PREVIOUS_MONTH_PATTERN = new RegExp(
+  `${PREVIOUS_MONTH_PHRASE_SOURCE}${CALENDAR_PERIOD_BOUNDARY_PATTERN.source}`,
+  'u',
+)
 const PREVIOUS_WEEK_TERM_PATTERN = `${CALENDAR_WORD_START_PATTERN}(?:지난|저번) ?주`
 const TWO_WEEKS_AGO_TERM_PATTERN = `${CALENDAR_WORD_START_PATTERN}지지난 ?주`
 const createCalendarWeekPattern = (termPattern: string): RegExp =>
@@ -29,10 +33,16 @@ const TWO_WEEKS_AGO_EXCLUSION_PATTERN = createCalendarExclusionPattern(
   TWO_WEEKS_AGO_TERM_PATTERN,
   '지난 ?주|저번 ?주|이번 ?주|다음 ?주',
 )
-const THIS_MONTH_EXCLUSION_PATTERN = createCalendarExclusionPattern('이번 ?달', '다음 ?달|지난 ?달')
-const NEXT_MONTH_EXCLUSION_PATTERN = createCalendarExclusionPattern('다음 ?달', '이번 ?달|지난 ?달')
+const THIS_MONTH_EXCLUSION_PATTERN = createCalendarExclusionPattern(
+  '이번 ?달',
+  `다음 ?달|${PREVIOUS_MONTH_PHRASE_SOURCE}`,
+)
+const NEXT_MONTH_EXCLUSION_PATTERN = createCalendarExclusionPattern(
+  '다음 ?달',
+  `이번 ?달|${PREVIOUS_MONTH_PHRASE_SOURCE}`,
+)
 const PREVIOUS_MONTH_EXCLUSION_PATTERN = createCalendarExclusionPattern(
-  '지난 ?달',
+  PREVIOUS_MONTH_PHRASE_SOURCE,
   '이번 ?달|다음 ?달',
 )
 const NEXT_WEEKEND_PATTERN = /다음 ?주말/u

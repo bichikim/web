@@ -81,6 +81,18 @@ describe('previous-week calendar queries', () => {
     })
   })
 
+  it.each(['저번달', '저번 달'])(
+    'should keep the previous-month alias ahead of a two-weeks-ago phrase for "%s"',
+    (month) => {
+      expect(
+        createCalendarQuery({now, text: `지지난주 ${month} 일정 알려줘`, timeZone: 'Asia/Seoul'}),
+      ).toEqual({
+        end: '2026-08-31T15:00:00.000Z',
+        start: '2026-07-31T15:00:00.000Z',
+      })
+    },
+  )
+
   it('should extend a two-weeks-ago range through an explicitly requested date', () => {
     expect(
       createCalendarQuery({now, text: '지지난주, 오늘 일정 알려줘', timeZone: 'Asia/Seoul'}),
