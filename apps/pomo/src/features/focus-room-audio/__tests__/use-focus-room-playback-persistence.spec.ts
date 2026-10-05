@@ -16,8 +16,10 @@ const createHarness = (currentIndex?: number) => {
   let playing = true
   let track: PTrack | undefined
   let currentIndexValue = currentIndex ?? 0
+  let currentQueueEntryId: string | undefined
   const persistence = usePPlaybackPersistence({
     currentIndex: currentIndex === undefined ? undefined : () => currentIndexValue,
+    currentQueueEntryId: () => currentQueueEntryId,
     currentTrack: () => track,
     getAudioElement: () => audio,
     isPlaying: () => playing,
@@ -33,6 +35,9 @@ const createHarness = (currentIndex?: number) => {
     },
     setPlaying: (value: boolean) => {
       playing = value
+    },
+    setQueueEntryId: (value: string | undefined) => {
+      currentQueueEntryId = value
     },
     setTrack: (value: PTrack | undefined) => {
       track = value
@@ -89,6 +94,23 @@ it('should persist the current playlist index with playback position', () => {
   })
 })
 
+it('should persist the active queue entry ID with playback position', () => {
+  const harness = createHarness(1)
+  harness.setTrack(TRACK)
+  harness.setQueueEntryId('entry-one')
+  harness.setAudio(createAudio(4, 10))
+
+  harness.persistence.persistCurrentPlayback()
+
+  expect(storageMocks.write).toHaveBeenCalledWith({
+    isPlaying: true,
+    positionSeconds: 4,
+    queueEntryId: 'entry-one',
+    trackId: TRACK.id,
+    trackIndex: 1,
+  })
+})
+
 it('should update a pending playlist index when the queue shifts the current track', () => {
   const harness = createHarness(2)
   harness.setTrack(TRACK)
@@ -96,9 +118,11 @@ it('should update a pending playlist index when the queue shifts the current tra
   harness.persistence.setPendingPosition({
     isPlaying: true,
     positionSeconds: 3,
+    queueEntryId: 'entry-one',
     trackId: TRACK.id,
     trackIndex: 2,
   })
+  harness.setQueueEntryId('entry-one')
   harness.setCurrentIndex(1)
 
   harness.persistence.persistCurrentPlayback()
@@ -106,12 +130,14 @@ it('should update a pending playlist index when the queue shifts the current tra
   expect(storageMocks.write).toHaveBeenCalledWith({
     isPlaying: true,
     positionSeconds: 3,
+    queueEntryId: 'entry-one',
     trackId: TRACK.id,
     trackIndex: 1,
   })
   expect(harness.persistence.applyPendingPosition()).toEqual({
     isPlaying: true,
     positionSeconds: 3,
+    queueEntryId: 'entry-one',
     trackId: TRACK.id,
     trackIndex: 1,
   })

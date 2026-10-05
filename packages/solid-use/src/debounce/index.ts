@@ -1,7 +1,7 @@
 import {MaybeAccessor} from 'src/types'
 import {resolveAccessor} from 'src/resolve-accessor'
 import {debounce, type DebouncedFunc, type DebounceSettings} from 'src/internal/debounce'
-import {createEffect, onCleanup} from 'solid-js'
+import {createScheduledCallback} from 'src/internal/create-scheduled-callback'
 
 export type {DebouncedFunc, DebounceSettings}
 
@@ -12,46 +12,9 @@ export const createDebounce = <T extends (...args: any) => any>(
 ) => {
   const debounceMsAccessor = resolveAccessor(debounceMs)
   const optionsAccessor = resolveAccessor(options)
-  let debounceInstance: DebouncedFunc<T> | null = null
-  let shouldExecute: Parameters<T> | null = null
-
-  createEffect(() => {
-    const ms = debounceMsAccessor()
-    const options = optionsAccessor()
-    debounceInstance = debounce(callback, ms, options)
-
-    if (shouldExecute) {
-      debounceInstance(...shouldExecute)
-      shouldExecute = null
-    }
-
-    onCleanup(() => {
-      debounceInstance?.cancel()
-      debounceInstance = null
-    })
-  })
-
-  onCleanup(() => {
-    shouldExecute = null
-  })
-
-  return {
-    cancel: () => {
-      shouldExecute = null
-      debounceInstance?.cancel()
-    },
-    execute: (...args: Parameters<T>) => {
-      // 최초 createEffect 전에 여러번 execute 될 경우 마지막 execute 만 실행됩니다
-      if (!debounceInstance) {
-        shouldExecute = args
-        return
-      }
-      debounceInstance(...args)
-    },
-    flush: () => {
-      debounceInstance?.flush()
-    },
-  }
+  return createScheduledCallback<Parameters<T>>(() =>
+    debounce(callback, debounceMsAccessor(), optionsAccessor()),
+  )
 }
 
 export const useDebounce = createDebounce

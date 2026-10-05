@@ -109,21 +109,18 @@ describe('EditorLayerPanel', () => {
     fireEvent.click(view.getByRole('button', {name: 'shape-circle 레이어 선택'}), {ctrlKey: true})
     fireEvent.click(view.getByRole('button', {name: '그룹'}))
 
-    expect(view.getByRole('button', {name: '새 그룹 레이어 선택'})).toBeDefined()
+    const newGroupButton = view.getByRole('button', {name: '새 그룹 레이어 선택'})
+    expect(newGroupButton).toBeDefined()
     expect(document().scene?.roots[0]).toMatchObject({
       children: [{id: 'mesh-preview'}, {id: 'shape-circle'}],
       kind: 'group',
     })
 
-    fireEvent.click(view.getByRole('button', {name: '새 그룹 레이어 선택'}))
+    fireEvent.click(newGroupButton)
 
-    expect(
-      view
-        .getByRole('button', {name: '새 그룹 레이어 선택'})
-        .closest('[role="treeitem"]')
-        ?.getAttribute('aria-selected'),
-    ).toBe('true')
-    fireEvent.dblClick(view.getByRole('button', {name: '새 그룹 레이어 선택'}))
+    expect(newGroupButton.closest('[role="treeitem"]')?.getAttribute('aria-selected')).toBe('true')
+    expect(newGroupButton).toBeInTheDocument()
+    fireEvent.dblClick(newGroupButton)
     const groupNameInput = view.getByRole('textbox', {
       name: '새 그룹 그룹 이름',
     })
