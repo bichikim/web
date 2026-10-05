@@ -1,6 +1,6 @@
 import {describe, expect, it} from 'vitest'
 import {createRoot} from 'solid-js'
-import {useIsCleanup} from './'
+import {useIsCleanup} from '../index'
 
 describe('useIsCleanup', () => {
   it('should return false initially and true after cleanup', () => {

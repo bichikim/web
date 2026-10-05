@@ -1,7 +1,7 @@
 /**
  * @vitest-environment jsdom
  */
-import {createAnimationLoop} from './'
+import {createAnimationLoop} from '../index'
 import {afterEach, beforeEach, describe, expect, it, type Mock, vi} from 'vitest'
 import {createRoot} from 'solid-js'
 import {createTrigger} from '@winter-love/solid-test'

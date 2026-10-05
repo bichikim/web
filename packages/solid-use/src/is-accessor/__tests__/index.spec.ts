@@ -1,5 +1,5 @@
 import {describe, expect, it} from 'vitest'
-import {isAccessor, nonAccessor} from './'
+import {isAccessor, nonAccessor} from '../index'
 import {createSignal} from 'solid-js'
 
 describe('is-accessor', () => {

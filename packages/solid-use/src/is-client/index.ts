@@ -1,16 +1,7 @@
-import {createSignal, onMount} from 'solid-js'
+import {type Accessor} from 'solid-js'
+import {isServer} from 'solid-js/web'
 
 /**
  * @deprecated use isServer from solid-js/web or clientOnly from @solidjs/start
- * @returns
  */
-export const useIsClient = () => {
-  // it can be used in client only environment
-  const [isClient, setIsClient] = createSignal(!import.meta.env.SSR)
-
-  onMount(() => {
-    setIsClient(true)
-  })
-
-  return isClient
-}
+export const useIsClient = (): Accessor<boolean> => () => !isServer

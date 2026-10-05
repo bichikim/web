@@ -1,6 +1,6 @@
 /** @vitest-environment jsdom */
 
-import {createTimeout} from './'
+import {createTimeout} from '../index'
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 import {cleanup, renderHook} from '@solidjs/testing-library'
 

@@ -1,5 +1,5 @@
 import {createSignal} from 'solid-js'
-import {createSync} from './'
+import {createSync} from '../index'
 import {describe, expect, it} from 'vitest'
 import {renderHook} from '@solidjs/testing-library'
 

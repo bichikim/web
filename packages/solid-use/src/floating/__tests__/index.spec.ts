@@ -5,8 +5,8 @@
 import {computePosition} from '@floating-ui/dom'
 import {createRoot, createSignal} from 'solid-js'
 import {afterEach, describe, expect, it, vi} from 'vitest'
-import {useFloating} from './'
-import type {FloatingOptions} from './types'
+import {useFloating} from '../index'
+import type {FloatingOptions} from '../types'
 
 vi.mock('@floating-ui/dom', () => ({
   computePosition: vi.fn(),

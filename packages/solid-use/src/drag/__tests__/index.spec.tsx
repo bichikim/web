@@ -4,10 +4,10 @@
 
 import {render} from '@solidjs/testing-library'
 import {describe, expect, it, vi} from 'vitest'
-import {useDrag} from './'
+import {useDrag} from '../index'
 
 describe('useDrag', () => {
-  it.each(['pointercancel', 'touchcancel', 'blur'])(
+  it.each(['pointerup', 'pointercancel', 'touchcancel', 'blur'])(
     'should end the active drag when %s is dispatched',
     (eventType) => {
       const callback = vi.fn()
@@ -20,6 +20,8 @@ describe('useDrag', () => {
         new MouseEvent('pointerdown', {bubbles: true, clientX: 10, clientY: 20}),
       )
       globalThis.dispatchEvent(new Event(eventType))
+      expect(callback).toHaveBeenCalledTimes(2)
+      globalThis.dispatchEvent(new Event('mouseup'))
       globalThis.dispatchEvent(new MouseEvent('pointermove', {clientX: 30, clientY: 40}))
 
       expect(callback).toHaveBeenCalledTimes(2)

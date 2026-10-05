@@ -1,4 +1,4 @@
-import {useToggle} from './'
+import {useToggle} from '../index'
 import {describe, expect, it} from 'vitest'
 
 describe('useToggle', () => {
