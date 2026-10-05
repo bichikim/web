@@ -13,13 +13,15 @@ export const persistDraftData = async (
   setMessage: Setter<string | null>,
   updateDraftReference: DraftReferenceUpdater,
   preserveLatestCoverMetadata: boolean,
-): Promise<void> => {
+): Promise<AlbumDraftData | null> => {
+  let persistedDraft: AlbumDraftData | null = null
+
   try {
     const {readAlbumDraftData, writeAlbumDraftData} = await getAlbumDraftStorage()
     const storedDraftResult = preserveLatestCoverMetadata ? readAlbumDraftData() : null
     if (storedDraftResult !== null && !storedDraftResult.success) {
       setMessage('브라우저 초안의 최신 상태를 읽지 못했습니다. 다시 시도해 주세요.')
-      return
+      return null
     }
     const storedDraft = storedDraftResult?.data ?? null
     const draftToPersist = {
@@ -34,17 +36,20 @@ export const persistDraftData = async (
 
     if (!writeAlbumDraftData(draftToPersist).success) {
       setMessage('브라우저에 초안을 저장하지 못했습니다. 이 탭을 닫기 전에 다시 시도해 주세요.')
-      return
+      return null
     }
+    persistedDraft = draftToPersist
 
     if (!(await updateDraftReference(draftToPersist.coverDraftId)).success) {
       setMessage(
         '브라우저 초안은 저장했지만 다른 탭과 커버 참조를 동기화하지 못했습니다. 이 탭을 닫기 전에 다시 시도해 주세요.',
       )
     }
+    return persistedDraft
   } catch (error) {
     console.warn('Failed to load the album draft storage.', error)
     setMessage('브라우저 초안 저장 기능을 불러오지 못했습니다. 이 탭을 닫지 마세요.')
+    return persistedDraft
   }
 }
 

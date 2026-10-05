@@ -11,7 +11,6 @@ import {
   getAlbumDraftStorage,
   persistDraftData,
   persistPreparedCover,
-  type PreparedCoverPersistenceResult,
   removePreparedCoverDraft,
 } from './album-draft-persistence'
 import {
@@ -100,7 +99,9 @@ const createDraftDataGetter = (options: CreateDraftDataGetterOptions) => (): Alb
 
 interface DraftPersistence {
   readonly enqueue: <Value>(operation: () => Promise<Value>) => Promise<Value>
-  readonly persist: (preserveLatestCoverMetadata?: boolean) => void
+  readonly persist: (
+    preserveLatestCoverMetadata?: boolean | (() => boolean),
+  ) => Promise<AlbumDraftData | null>
   readonly wait: () => Promise<void>
 }
 
@@ -116,9 +117,18 @@ const createDraftPersistence = (
     enqueue,
     persist: (preserveLatestCoverMetadata = true) => {
       const draft = getDraftData()
-      enqueue(() =>
-        persistDraftData(draft, setMessage, updateDraftReference, preserveLatestCoverMetadata),
-      )
+      return enqueue(() => {
+        const shouldPreserveCoverMetadata =
+          typeof preserveLatestCoverMetadata === 'function'
+            ? preserveLatestCoverMetadata()
+            : preserveLatestCoverMetadata
+        return persistDraftData(
+          draft,
+          setMessage,
+          updateDraftReference,
+          shouldPreserveCoverMetadata,
+        )
+      })
     },
     wait: queue.settle,
   }
@@ -364,17 +374,30 @@ const createCoverChangeHandler =
       }
 
       options.setCoverStorageWarning(null)
-      let persistenceResult: PreparedCoverPersistenceResult
       try {
-        persistenceResult = await options.enqueuePersistence(() =>
-          persistPreparedCover({
-            draft: options.getDraftData(),
-            file: preparedFile,
-            nextCoverDraftId,
-            previousCoverDraftId,
-            updateDraftReference: options.updateDraftReference,
-          }),
-        )
+        await options.enqueuePersistence(async () => {
+          try {
+            const result = await persistPreparedCover({
+              draft: options.getDraftData(),
+              file: preparedFile,
+              nextCoverDraftId,
+              previousCoverDraftId,
+              updateDraftReference: options.updateDraftReference,
+            })
+            options.setCoverStorageWarning(result.success ? null : result.message)
+            options.setMessage(result.message)
+            return result
+          } catch (error) {
+            const detail = getExceptionMessage(error, '')
+            const message =
+              detail === '' || detail === COVER_STORAGE_WARNING
+                ? COVER_STORAGE_WARNING
+                : `${COVER_STORAGE_WARNING}\n${detail}`
+            options.setCoverStorageWarning(message)
+            options.setMessage(message)
+            return {message, success: false}
+          }
+        })
       } catch (error) {
         const detail = getExceptionMessage(error, '')
         const message =
@@ -383,10 +406,7 @@ const createCoverChangeHandler =
             : `${COVER_STORAGE_WARNING}\n${detail}`
         options.setCoverStorageWarning(message)
         options.setMessage(message)
-        return
       }
-      options.setCoverStorageWarning(persistenceResult.success ? null : persistenceResult.message)
-      options.setMessage(persistenceResult.message)
     } catch (error) {
       input.value = ''
       options.setMessage(getExceptionMessage(error, COVER_SELECTION_ERROR))
@@ -480,7 +500,8 @@ export const useAlbumDraft = (props: UseAlbumDraftProps) => {
     getCoverFile: preparedCoverFile,
     getCoverStorageWarning: coverStorageWarning,
     getDraftData,
-    persistDraft: () => draftPersistence.persist(coverStorageWarning() !== null),
+    persistDraft: () =>
+      draftPersistence.persist(() => coverStorageWarning() !== null || isProcessingCover()),
     renewAlbumId: albumCreationId.renew,
     services: createActionAlbumCreationServices(albumAction, draftReference.update),
     setAlbumId: albumCreationId.set,

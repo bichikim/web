@@ -43,7 +43,7 @@ const createOptions = () => {
     getCoverFile: () => null,
     getDraftData: createDraft,
     onAlbumCreated: vi.fn(),
-    persistDraft: vi.fn(),
+    persistDraft: vi.fn().mockResolvedValue(createDraft()),
     refreshCatalog: vi.fn().mockResolvedValue(undefined),
     renewAlbumId: vi.fn(),
     services,
@@ -65,7 +65,10 @@ describe('createAlbumSubmitHandler', () => {
   it('should persist before creating and reset state after all post-create work succeeds', async () => {
     const {options, services} = createOptions()
     const operations: string[] = []
-    vi.mocked(options.persistDraft).mockImplementation(() => operations.push('persist'))
+    vi.mocked(options.persistDraft).mockImplementation(() => {
+      operations.push('persist')
+      return Promise.resolve(createDraft())
+    })
     vi.mocked(options.waitForDraftPersistence).mockImplementation(async () => {
       operations.push('wait')
     })
@@ -114,11 +117,16 @@ describe('createAlbumSubmitHandler', () => {
       return {albumId: ALBUM_ID, success: true}
     })
 
-    await createAlbumSubmitHandler(options)(createSubmitEvent().event)
+    const {event, reset} = createSubmitEvent()
+    await createAlbumSubmitHandler(options)(event)
 
     expect(services.clearDraft).not.toHaveBeenCalled()
+    expect(reset).not.toHaveBeenCalled()
+    expect(options.renewAlbumId).toHaveBeenCalledOnce()
+    expect(options.persistDraft).toHaveBeenCalledTimes(2)
+    expect(options.waitForDraftPersistence).toHaveBeenCalledTimes(2)
     expect(options.setMessage).toHaveBeenLastCalledWith(
-      '앨범은 만들었지만 브라우저의 작성 초안을 지우지 못했습니다.',
+      '앨범을 만들었고 제출 중 수정한 초안을 유지했습니다.',
     )
   })
 

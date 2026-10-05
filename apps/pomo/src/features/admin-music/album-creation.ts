@@ -2,10 +2,10 @@ import {getExceptionMessage} from '../error-detail'
 import {type JSX, type Setter} from 'solid-js'
 
 import {
-  ALBUM_LOCALES,
   type AlbumDraftData,
   type AlbumDraftTranslations,
   createEmptyAlbumTranslations,
+  hasSameAlbumDraft,
 } from './album-draft'
 
 export interface AlbumCreationServices {
@@ -43,7 +43,7 @@ export interface CreateAlbumSubmitHandlerOptions extends AlbumCreationCallbacks 
   readonly getCoverFile: () => File | null
   readonly getCoverStorageWarning?: () => string | null
   readonly getDraftData: () => AlbumDraftData
-  readonly persistDraft: () => void
+  readonly persistDraft: () => Promise<AlbumDraftData | null>
   readonly renewAlbumId: () => void
   readonly services: AlbumCreationServices
   readonly setAlbumId: Setter<string | null>
@@ -55,23 +55,18 @@ export interface CreateAlbumSubmitHandlerOptions extends AlbumCreationCallbacks 
   readonly waitForDraftPersistence: () => Promise<void>
 }
 
-const hasSameDraftSnapshot = (current: AlbumDraftData, submitted: AlbumDraftData): boolean =>
-  current.albumId === submitted.albumId &&
-  current.coverDraftId === submitted.coverDraftId &&
-  current.coverFallback === submitted.coverFallback &&
-  current.coverImageUrl === submitted.coverImageUrl &&
-  current.hasCoverFile === submitted.hasCoverFile &&
-  ALBUM_LOCALES.every(
-    (locale) =>
-      current.translations[locale].description === submitted.translations[locale].description &&
-      current.translations[locale].title === submitted.translations[locale].title,
-  )
+interface AlbumCreationRefreshOptions {
+  readonly albumId: string
+  readonly coverStorageWarning: string | null
+  readonly didClearDraft: boolean
+  readonly didPreserveDraft: boolean
+}
 
 const refreshAfterAlbumCreation = async (
   options: AlbumCreationCallbacks,
-  albumId: string,
-  didClearDraft: boolean,
+  result: AlbumCreationRefreshOptions,
 ): Promise<void> => {
+  const {albumId, coverStorageWarning, didClearDraft, didPreserveDraft} = result
   let didRefreshCatalog = true
 
   try {
@@ -84,35 +79,46 @@ const refreshAfterAlbumCreation = async (
 
   if (!didRefreshCatalog) {
     options.setMessage(
-      didClearDraft
-        ? '앨범은 만들었지만 목록을 새로고침하지 못했습니다.'
-        : '앨범은 만들었지만 목록을 새로고침하지 못했고 브라우저의 작성 초안도 지우지 못했습니다.',
+      withCoverStorageWarning(
+        coverStorageWarning,
+        didPreserveDraft
+          ? '앨범은 만들었지만 목록을 새로고침하지 못했습니다. 제출 중 수정한 초안은 유지했습니다.'
+          : didClearDraft
+            ? '앨범은 만들었지만 목록을 새로고침하지 못했습니다.'
+            : '앨범은 만들었지만 목록을 새로고침하지 못했고 브라우저의 작성 초안도 지우지 못했습니다.',
+      ),
     )
     return
   }
 
   options.setMessage(
-    didClearDraft
-      ? '앨범 초안을 만들었습니다.'
-      : '앨범은 만들었지만 브라우저의 작성 초안을 지우지 못했습니다.',
+    withCoverStorageWarning(
+      coverStorageWarning,
+      didPreserveDraft
+        ? '앨범을 만들었고 제출 중 수정한 초안을 유지했습니다.'
+        : didClearDraft
+          ? '앨범 초안을 만들었습니다.'
+          : '앨범은 만들었지만 브라우저의 작성 초안을 지우지 못했습니다.',
+    ),
   )
 }
+
+const withCoverStorageWarning = (warning: string | null, message: string): string =>
+  warning === null || warning === message ? message : `${warning}\n${message}`
 
 const includeCoverStorageWarning = (
   options: CreateAlbumSubmitHandlerOptions,
   message: string,
 ): string => {
   const warning = options.getCoverStorageWarning?.()
-  return warning === undefined || warning === null || warning === message
-    ? message
-    : `${warning}\n${message}`
+  return withCoverStorageWarning(warning ?? null, message)
 }
 
 const recoverFromPayloadMismatch = async (
   options: CreateAlbumSubmitHandlerOptions,
 ): Promise<void> => {
   options.renewAlbumId()
-  options.persistDraft()
+  await options.persistDraft()
   await options.waitForDraftPersistence()
 
   try {
@@ -143,13 +149,14 @@ export const createAlbumSubmitHandler = (
     options.setMessage(options.getCoverStorageWarning?.() ?? null)
 
     let albumId: string
-    let submittedDraft = options.getDraftData()
+    const submittedDraft = options.getDraftData()
+    const submittedCoverFile = options.getCoverFile()
+    let persistedDraft: AlbumDraftData | null = null
 
     try {
-      options.persistDraft()
+      persistedDraft = await options.persistDraft()
       await options.waitForDraftPersistence()
-      submittedDraft = options.getDraftData()
-      const result = await options.services.createAlbum(submittedDraft, options.getCoverFile())
+      const result = await options.services.createAlbum(submittedDraft, submittedCoverFile)
 
       if (!result.success) {
         await recoverFromPayloadMismatch(options)
@@ -171,18 +178,33 @@ export const createAlbumSubmitHandler = (
     }
 
     try {
-      const isDraftUnchanged = hasSameDraftSnapshot(options.getDraftData(), submittedDraft)
-      albumForm.reset()
-      options.clearPreparedCover()
-      options.setAlbumId(null)
-      options.setCoverDraftId(null)
-      options.setTranslations(createEmptyAlbumTranslations())
-      options.setCoverImageUrl('')
-      options.setCoverFallback('lp')
-      const didClearDraft = isDraftUnchanged
-        ? await options.services.clearDraft(submittedDraft.coverDraftId, submittedDraft)
-        : false
-      await refreshAfterAlbumCreation(options, albumId, didClearDraft)
+      const isDraftUnchanged = hasSameAlbumDraft(options.getDraftData(), submittedDraft)
+      let didClearDraft = false
+
+      if (isDraftUnchanged) {
+        albumForm.reset()
+        options.clearPreparedCover()
+        options.setAlbumId(null)
+        options.setCoverDraftId(null)
+        options.setTranslations(createEmptyAlbumTranslations())
+        options.setCoverImageUrl('')
+        options.setCoverFallback('lp')
+        didClearDraft =
+          persistedDraft === null
+            ? false
+            : await options.services.clearDraft(persistedDraft.coverDraftId, persistedDraft)
+      } else {
+        options.renewAlbumId()
+        await options.persistDraft()
+        await options.waitForDraftPersistence()
+      }
+
+      await refreshAfterAlbumCreation(options, {
+        albumId,
+        coverStorageWarning: options.getCoverStorageWarning?.() ?? null,
+        didClearDraft,
+        didPreserveDraft: !isDraftUnchanged,
+      })
     } finally {
       options.setIsSavingAlbum(false)
     }
