@@ -22,7 +22,7 @@ const createUndatedFeedXml = (itemIds: ReadonlyArray<string>) => {
 }
 
 it('should queue every new undated item after bootstrap even when more than the per-sync limit arrive at once', async () => {
-  const {jobs} = createRepository()
+  const {jobs, repository} = createRepository()
   let nextId = 0
   const undatedIds = Array.from({length: 25}, (_, index) => `undated-${index}`)
   const undatedFeed = new Response(createUndatedFeedXml(undatedIds))
