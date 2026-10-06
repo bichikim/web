@@ -99,6 +99,12 @@ it('should release metadata listeners and the source after a successful duration
   expectReleasedAudio(audio)
 })
 
+it('should accept the half-second boundary after rounding and release the source', async () => {
+  const audio = stubCustomAlbumAudioMetadata({durationSeconds: 0.5})
+  await expect(addTrack()).resolves.toMatchObject({kind: 'added', tracks: [{durationSeconds: 1}]})
+  expectReleasedAudio(audio)
+})
+
 it.each([NaN, Infinity, 0, -1, 0.4])(
   'should reject invalid duration %s and release the audio source',
   async (duration) => {
