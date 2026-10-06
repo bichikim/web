@@ -8,6 +8,7 @@ import {
   getLastRequestedDateOffset,
   toRange,
 } from './period-range'
+import {createCalendarWeekdayParser, type WeekdayIntent} from './weekday-expression'
 import {dayjs} from 'src/utils/zoned-dayjs'
 import type {CalendarEventQuery, CalendarEventRange} from './types'
 
@@ -25,6 +26,16 @@ const THIS_MONTH_PATTERN = new RegExp(`이번 ?달${CALENDAR_PERIOD_BOUNDARY_PAT
 const NEXT_MONTH_PATTERN = new RegExp(`다음 ?달${CALENDAR_PERIOD_BOUNDARY_PATTERN.source}`, 'u')
 const PREVIOUS_MONTH_PATTERN = new RegExp(`지난 ?달${CALENDAR_PERIOD_BOUNDARY_PATTERN.source}`, 'u')
 const NEXT_WEEK_TERM_PATTERN = '(?<!다)다음 ?주'
+const NEXT_WEEK_TERM_REGEXP = new RegExp(NEXT_WEEK_TERM_PATTERN, 'u')
+const {
+  getWeekdayIntent,
+  weekdayExclusionPattern: WEEKDAY_EXCLUSION_PATTERN,
+  weekdayPatternSource: WEEKDAY_PATTERN_SOURCE,
+} = createCalendarWeekdayParser({
+  calendarIntentPattern: CALENDAR_INTENT_PATTERN,
+  calendarPeriodBoundaryPattern: CALENDAR_PERIOD_BOUNDARY_PATTERN,
+  calendarWordStartPattern: CALENDAR_WORD_START_PATTERN,
+})
 const WEEK_AFTER_NEXT_TERM_PATTERN = `${CALENDAR_WORD_START_PATTERN}다다음 ?주`
 const PREVIOUS_WEEK_TERM_PATTERN = `${CALENDAR_WORD_START_PATTERN}(?:지난|저번) ?주`
 const TWO_WEEKS_AGO_TERM_PATTERN = `${CALENDAR_WORD_START_PATTERN}지지난 ?주`
@@ -33,7 +44,7 @@ const createCalendarWeekPattern = (termPattern: string): RegExp =>
 const THIS_WEEK_EXCLUSION_PATTERN = createCalendarExclusionPattern('이번 ?주', '다음 ?주')
 const NEXT_WEEK_EXCLUSION_PATTERN = createCalendarExclusionPattern(
   NEXT_WEEK_TERM_PATTERN,
-  `이번 ?주|${WEEK_AFTER_NEXT_TERM_PATTERN}`,
+  `이번 ?주|\\s*${WEEKDAY_PATTERN_SOURCE}${CALENDAR_PERIOD_BOUNDARY_PATTERN.source}|${WEEK_AFTER_NEXT_TERM_PATTERN}`,
 )
 const WEEK_AFTER_NEXT_EXCLUSION_PATTERN = createCalendarExclusionPattern(
   WEEK_AFTER_NEXT_TERM_PATTERN,
@@ -67,6 +78,14 @@ const THREE_DAYS_AHEAD_PATTERN = createCalendarRelativeDayPattern('글피')
 const RELATIVE_DAY_PATTERN = createCalendarRelativeDayPattern(
   `(?:${DAY_BEFORE_YESTERDAY_PHRASE}|어제|오늘|내일|모레|글피)`,
 )
+const CALENDAR_OTHER_PERIOD_TERM_PATTERN = new RegExp(
+  `(?:${WEEK_AFTER_NEXT_TERM_PATTERN}${CALENDAR_PERIOD_BOUNDARY_PATTERN.source}|` +
+    `${PREVIOUS_WEEK_TERM_PATTERN}${CALENDAR_PERIOD_BOUNDARY_PATTERN.source}|` +
+    `${TWO_WEEKS_AGO_TERM_PATTERN}${CALENDAR_PERIOD_BOUNDARY_PATTERN.source}|` +
+    `${CALENDAR_WORD_START_PATTERN}(?:이번 ?주|이번 ?달|다음 ?달|지난 ?달)${CALENDAR_PERIOD_BOUNDARY_PATTERN.source}|` +
+    `${RELATIVE_DAY_PATTERN.source}|${CALENDAR_WORD_START_PATTERN}주말${CALENDAR_PERIOD_BOUNDARY_PATTERN.source})`,
+  'u',
+)
 const DAY_BEFORE_YESTERDAY_EXCLUSION_PATTERN = createCalendarExclusionPattern(
   DAY_BEFORE_YESTERDAY_PATTERN.source,
   '어제|오늘|내일|모레|글피',
@@ -85,7 +104,9 @@ const THREE_DAYS_AHEAD_EXCLUSION_PATTERN = createCalendarExclusionPattern(
   THREE_DAYS_AHEAD_PATTERN.source,
   '그저께|그제|어제|오늘|내일|모레',
 )
-const NEXT_WEEK_PATTERN = createCalendarWeekPattern(NEXT_WEEK_TERM_PATTERN)
+const NEXT_WEEK_PATTERN = createCalendarWeekPattern(
+  `${NEXT_WEEK_TERM_PATTERN}(?:\\s*${WEEKDAY_PATTERN_SOURCE})?`,
+)
 const WEEK_AFTER_NEXT_PATTERN = createCalendarWeekPattern(WEEK_AFTER_NEXT_TERM_PATTERN)
 const PREVIOUS_WEEK_PATTERN = createCalendarWeekPattern(PREVIOUS_WEEK_TERM_PATTERN)
 const TWO_WEEKS_AGO_PATTERN = createCalendarWeekPattern(TWO_WEEKS_AGO_TERM_PATTERN)
@@ -133,6 +154,38 @@ const includesUnexcludedPhrase = (
   phrasePattern: RegExp,
   exclusionPattern: RegExp,
 ): boolean => phrasePattern.test(text) && !exclusionPattern.test(text)
+interface RequestedNextWeekdayIntent extends WeekdayIntent {
+  readonly hasOtherPeriod: boolean
+}
+
+const getRequestedNextWeekdayIntent = (text: string): RequestedNextWeekdayIntent => {
+  const nextWeekMatch = NEXT_WEEK_TERM_REGEXP.exec(text)
+  if (nextWeekMatch === null) {
+    return {hasExcludedWeekday: false, hasOtherPeriod: false, offsets: []}
+  }
+
+  const followingText = text.slice(nextWeekMatch.index + nextWeekMatch[0].length)
+  const nextPeriodMatch = CALENDAR_OTHER_PERIOD_TERM_PATTERN.exec(followingText)
+  const nextWeekClause =
+    nextPeriodMatch === null ? followingText : followingText.slice(0, nextPeriodMatch.index)
+  return {
+    ...getWeekdayIntent(nextWeekClause),
+    hasOtherPeriod: CALENDAR_OTHER_PERIOD_TERM_PATTERN.test(text),
+  }
+}
+
+const includesRequestedNextWeek = (
+  text: string,
+  requestedWeekdayIntent: RequestedNextWeekdayIntent,
+): boolean =>
+  NEXT_WEEK_PATTERN.test(text) &&
+  !NEXT_WEEK_EXCLUSION_PATTERN.test(text) &&
+  !(
+    requestedWeekdayIntent.hasOtherPeriod &&
+    requestedWeekdayIntent.hasExcludedWeekday &&
+    requestedWeekdayIntent.offsets.length === 0
+  )
+
 const isStandaloneDateRequest = (includesDate: boolean, includesThisWeek: boolean): boolean =>
   includesDate && !includesThisWeek
 const getCalendarWeekendIntent = (text: string): CalendarWeekendIntent | null => {
@@ -161,6 +214,7 @@ interface CalendarQueryIntent {
   readonly includesWeekAfterNext: boolean
   readonly monthOffsets: ReadonlyArray<number>
   readonly relativeDayOffsets: ReadonlyArray<number>
+  readonly requestedWeekdayOffsets: ReadonlyArray<number>
   readonly weekendIntent: CalendarWeekendIntent | null
 }
 
@@ -192,46 +246,56 @@ interface CreateCalendarMonthRangeOptions {
   readonly now: Date
 }
 
-const getCalendarQueryIntent = (text: string): CalendarQueryIntent => ({
-  includesNextWeek: NEXT_WEEK_PATTERN.test(text) && !NEXT_WEEK_EXCLUSION_PATTERN.test(text),
-  includesPreviousWeek:
-    PREVIOUS_WEEK_PATTERN.test(text) && !PREVIOUS_WEEK_EXCLUSION_PATTERN.test(text),
-  includesThisWeek: THIS_WEEK_PATTERN.test(text) && !THIS_WEEK_EXCLUSION_PATTERN.test(text),
-  includesTwoWeeksAgo:
-    TWO_WEEKS_AGO_PATTERN.test(text) && !TWO_WEEKS_AGO_EXCLUSION_PATTERN.test(text),
-  includesWeekAfterNext:
-    WEEK_AFTER_NEXT_PATTERN.test(text) && !WEEK_AFTER_NEXT_EXCLUSION_PATTERN.test(text),
-  monthOffsets: [
-    ...(PREVIOUS_MONTH_PATTERN.test(text) && !PREVIOUS_MONTH_EXCLUSION_PATTERN.test(text)
-      ? [-1]
-      : []),
-    ...(THIS_MONTH_PATTERN.test(text) && !THIS_MONTH_EXCLUSION_PATTERN.test(text) ? [0] : []),
-    ...(NEXT_MONTH_PATTERN.test(text) && !NEXT_MONTH_EXCLUSION_PATTERN.test(text) ? [1] : []),
-  ],
-  relativeDayOffsets: [
-    ...(includesUnexcludedPhrase(
-      text,
-      DAY_BEFORE_YESTERDAY_PATTERN,
-      DAY_BEFORE_YESTERDAY_EXCLUSION_PATTERN,
-    )
-      ? [DAY_BEFORE_YESTERDAY_START_DAYS]
-      : []),
-    ...(includesUnexcludedPhrase(text, YESTERDAY_PATTERN, YESTERDAY_EXCLUSION_PATTERN) ? [-1] : []),
-    ...(includesUnexcludedPhrase(text, TODAY_PATTERN, TODAY_EXCLUSION_PATTERN) ? [0] : []),
-    ...(includesUnexcludedPhrase(text, TOMORROW_PATTERN, TOMORROW_EXCLUSION_PATTERN) ? [1] : []),
-    ...(includesUnexcludedPhrase(
-      text,
-      DAY_AFTER_TOMORROW_PATTERN,
-      DAY_AFTER_TOMORROW_EXCLUSION_PATTERN,
-    )
-      ? [DAY_AFTER_TOMORROW_START_DAYS]
-      : []),
-    ...(includesUnexcludedPhrase(text, THREE_DAYS_AHEAD_PATTERN, THREE_DAYS_AHEAD_EXCLUSION_PATTERN)
-      ? [THREE_DAYS_AHEAD_START_DAYS]
-      : []),
-  ],
-  weekendIntent: getCalendarWeekendIntent(text),
-})
+const getCalendarQueryIntent = (text: string): CalendarQueryIntent => {
+  const requestedNextWeekdayIntent = getRequestedNextWeekdayIntent(text)
+  return {
+    includesNextWeek: includesRequestedNextWeek(text, requestedNextWeekdayIntent),
+    includesPreviousWeek:
+      PREVIOUS_WEEK_PATTERN.test(text) && !PREVIOUS_WEEK_EXCLUSION_PATTERN.test(text),
+    includesThisWeek: THIS_WEEK_PATTERN.test(text) && !THIS_WEEK_EXCLUSION_PATTERN.test(text),
+    includesTwoWeeksAgo:
+      TWO_WEEKS_AGO_PATTERN.test(text) && !TWO_WEEKS_AGO_EXCLUSION_PATTERN.test(text),
+    includesWeekAfterNext:
+      WEEK_AFTER_NEXT_PATTERN.test(text) && !WEEK_AFTER_NEXT_EXCLUSION_PATTERN.test(text),
+    monthOffsets: [
+      ...(PREVIOUS_MONTH_PATTERN.test(text) && !PREVIOUS_MONTH_EXCLUSION_PATTERN.test(text)
+        ? [-1]
+        : []),
+      ...(THIS_MONTH_PATTERN.test(text) && !THIS_MONTH_EXCLUSION_PATTERN.test(text) ? [0] : []),
+      ...(NEXT_MONTH_PATTERN.test(text) && !NEXT_MONTH_EXCLUSION_PATTERN.test(text) ? [1] : []),
+    ],
+    relativeDayOffsets: [
+      ...(includesUnexcludedPhrase(
+        text,
+        DAY_BEFORE_YESTERDAY_PATTERN,
+        DAY_BEFORE_YESTERDAY_EXCLUSION_PATTERN,
+      )
+        ? [DAY_BEFORE_YESTERDAY_START_DAYS]
+        : []),
+      ...(includesUnexcludedPhrase(text, YESTERDAY_PATTERN, YESTERDAY_EXCLUSION_PATTERN)
+        ? [-1]
+        : []),
+      ...(includesUnexcludedPhrase(text, TODAY_PATTERN, TODAY_EXCLUSION_PATTERN) ? [0] : []),
+      ...(includesUnexcludedPhrase(text, TOMORROW_PATTERN, TOMORROW_EXCLUSION_PATTERN) ? [1] : []),
+      ...(includesUnexcludedPhrase(
+        text,
+        DAY_AFTER_TOMORROW_PATTERN,
+        DAY_AFTER_TOMORROW_EXCLUSION_PATTERN,
+      )
+        ? [DAY_AFTER_TOMORROW_START_DAYS]
+        : []),
+      ...(includesUnexcludedPhrase(
+        text,
+        THREE_DAYS_AHEAD_PATTERN,
+        THREE_DAYS_AHEAD_EXCLUSION_PATTERN,
+      )
+        ? [THREE_DAYS_AHEAD_START_DAYS]
+        : []),
+    ],
+    requestedWeekdayOffsets: requestedNextWeekdayIntent.offsets,
+    weekendIntent: getCalendarWeekendIntent(text),
+  }
+}
 
 const createCalendarDaypartQuery = ({
   boundary,
@@ -424,6 +488,7 @@ export const createCalendarQuery = (
     includesWeekAfterNext,
     monthOffsets,
     relativeDayOffsets,
+    requestedWeekdayOffsets,
     weekendIntent,
   } = getCalendarQueryIntent(options.text)
   const standaloneDateRange = createStandaloneCalendarDateRange({
@@ -449,6 +514,7 @@ export const createCalendarQuery = (
     includesWeekAfterNext,
     now,
     relativeDayOffsets,
+    requestedWeekdayOffsets,
     weekday,
     weekendIntent,
   })
