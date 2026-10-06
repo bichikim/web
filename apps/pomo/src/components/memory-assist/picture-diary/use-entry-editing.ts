@@ -1,4 +1,5 @@
-import {createSignal, onCleanup} from 'solid-js'
+import {createMemo, createSignal, onCleanup} from 'solid-js'
+import {useAsyncTask} from 'src/features/async-task'
 import * as m from '@paraglide/message'
 import {
   createPictureDiaryEntry,
@@ -17,34 +18,15 @@ interface EntryEditingOptions {
 
 export const useEntryEditing = (options: EntryEditingOptions) => {
   const [entry, setEntry] = createSignal<PictureDiaryEntry>()
-  const [saving, setSaving] = createSignal(false)
-  const [message, setMessage] = createSignal<string>()
   let isDisposed = false
 
   onCleanup(() => {
     isDisposed = true
   })
 
-  const update = (change: Partial<PictureDiaryEntry>) => {
-    if (!saving()) {
-      setEntry((current) => current && {...current, ...change})
-      setMessage(undefined)
-    }
-  }
-  const close = () => {
-    if (!saving()) {
-      setEntry(undefined)
-      setMessage(undefined)
-    }
-  }
-  const save = async () => {
-    const draft = entry()
-    if (draft === undefined || saving()) {
-      return
-    }
-    setSaving(true)
-    setMessage(undefined)
-    try {
+  const persistence = useAsyncTask({
+    concurrency: 'exhaust',
+    task: async (draft: PictureDiaryEntry) => {
       const updated = createPictureDiaryEntry({...draft, now: options.environment.now()})
       await options.repository.save(updated)
       if (isDisposed) {
@@ -54,15 +36,31 @@ export const useEntryEditing = (options: EntryEditingOptions) => {
       if (!isDisposed) {
         setEntry(undefined)
       }
-    } catch {
-      if (!isDisposed) {
-        setMessage(m.picture_diary_save_failed())
-      }
-    } finally {
-      if (!isDisposed) {
-        setSaving(false)
-      }
+    },
+  })
+  const saving = createMemo(() => persistence.state().status === 'pending')
+  const message = () =>
+    persistence.state().status === 'error' ? m.picture_diary_save_failed() : undefined
+
+  const update = (change: Partial<PictureDiaryEntry>) => {
+    if (!saving()) {
+      setEntry((current) => current && {...current, ...change})
+      persistence.reset()
     }
+  }
+  const close = () => {
+    if (!saving()) {
+      setEntry(undefined)
+      persistence.reset()
+    }
+  }
+  const save = async () => {
+    const draft = entry()
+    if (draft === undefined || saving()) {
+      return
+    }
+    // The editor exposes persistence failures through the task state.
+    await persistence.execute(draft).catch(() => undefined)
   }
   const editor = () => {
     const draft = entry()
@@ -86,7 +84,7 @@ export const useEntryEditing = (options: EntryEditingOptions) => {
   const open = (value: PictureDiaryEntry) => {
     if (!saving()) {
       setEntry(value)
-      setMessage(undefined)
+      persistence.reset()
     }
   }
   return {editor, open}
