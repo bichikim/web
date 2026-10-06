@@ -184,6 +184,13 @@ describe('createCalendarQuery', () => {
     })
   })
 
+  it('should recognize the unspaced 내일모레 compound in an implicit schedule question', () => {
+    expect(createCalendarQuery({now, text: '내일모레 뭐 있어?', timeZone: 'Asia/Seoul'})).toEqual({
+      end: '2026-09-06T15:00:00.000Z',
+      start: '2026-09-05T15:00:00.000Z',
+    })
+  })
+
   it('should preserve a separate tomorrow after excluding the 내일모레 compound', () => {
     expect(
       createCalendarQuery({now, text: '내일모레 말고 내일 일정 알려줘', timeZone: 'Asia/Seoul'}),
