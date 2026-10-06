@@ -29,6 +29,13 @@ export const AudioPlayerRoot = (props: AudioPlayerRootProps) => {
   const [muted, setMuted] = createSignal(false)
   const [paused, setPaused] = createSignal(true)
   const handlePlayFailure = (error: unknown) => props.onPlayError?.(error)
+  const requestPlayback = (audioElement: HTMLAudioElement) => {
+    if (props.onBeforePlayback?.(audioElement.currentTime, true, 'play') === false) {
+      return
+    }
+
+    audioElement.play().catch(handlePlayFailure)
+  }
 
   const handleMediaEvent =
     (update: (media: HTMLAudioElement) => void): JSX.EventHandler<HTMLAudioElement, Event> =>
@@ -79,7 +86,7 @@ export const AudioPlayerRoot = (props: AudioPlayerRootProps) => {
   createEffect(() => {
     const audioElement = element()
     if (props.autoplay === true && audioElement !== null) {
-      untrack(() => audioElement.play().catch(handlePlayFailure))
+      untrack(() => requestPlayback(audioElement))
     }
   })
 
@@ -118,10 +125,7 @@ export const AudioPlayerRoot = (props: AudioPlayerRootProps) => {
     }
 
     if (audioElement.paused) {
-      if (props.onBeforePlayback?.(audioElement.currentTime, true, 'play') === false) {
-        return
-      }
-      audioElement.play().catch(handlePlayFailure)
+      requestPlayback(audioElement)
       return
     }
 

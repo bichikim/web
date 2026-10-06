@@ -164,6 +164,7 @@ it('should expose the guide and credits as the final settings tabs', async () =>
     '이벤트',
     '피드',
     '대화',
+    'AI',
     '사용자',
     '설명서',
     '크레딧',

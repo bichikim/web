@@ -1,5 +1,7 @@
 /** @vitest-environment jsdom */
 
+import {PreferenceProvider} from 'src/hooks/use-preference'
+
 import {fireEvent, render, screen, waitFor} from '@solidjs/testing-library'
 import {Suspense} from 'solid-js'
 import {afterEach, beforeEach, expect, it, vi} from 'vitest'
@@ -76,13 +78,16 @@ afterEach(() => {
 
 const renderMemoryAssist = async () => {
   await import('../../memory-assist/Content')
-  render(() => (
-    <PModelDownloadProvider>
-      <Suspense>
-        <PMemoryAssist />
-      </Suspense>
-    </PModelDownloadProvider>
-  ))
+  render(
+    () => (
+      <PModelDownloadProvider>
+        <Suspense>
+          <PMemoryAssist />
+        </Suspense>
+      </PModelDownloadProvider>
+    ),
+    {wrapper: PreferenceProvider},
+  )
 }
 
 it.each(['events', 'connections'] as const)(

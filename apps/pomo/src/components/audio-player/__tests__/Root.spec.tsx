@@ -180,6 +180,31 @@ describe('AudioPlayerRoot', () => {
     expect(HTMLMediaElement.prototype.pause).toHaveBeenCalled()
   })
 
+  it('should consult the playback guard before autoplaying retained media', () => {
+    const [autoplay, setAutoplay] = createSignal(false)
+    const onBeforePlayback = vi.fn(() => false)
+    const view = render(() => (
+      <AudioPlayer.Root autoplay={autoplay()} onBeforePlayback={onBeforePlayback}>
+        <AudioPlayer.Media src="blob:retained-audio" />
+      </AudioPlayer.Root>
+    ))
+    const audio = view.container.querySelector('audio')!
+    audio.currentTime = 12
+
+    setAutoplay(true)
+
+    expect(onBeforePlayback).toHaveBeenCalledWith(12, true, 'play')
+    expect(HTMLMediaElement.prototype.play).not.toHaveBeenCalled()
+
+    onBeforePlayback.mockReturnValue(true)
+    setAutoplay(false)
+    setAutoplay(true)
+
+    expect(HTMLMediaElement.prototype.play).toHaveBeenCalledOnce()
+    expect(audio.currentTime).toBe(12)
+    expect(HTMLMediaElement.prototype.load).not.toHaveBeenCalled()
+  })
+
   it('should stop playback before releasing its media element', () => {
     const result = render(() => (
       <AudioPlayer.Root>
