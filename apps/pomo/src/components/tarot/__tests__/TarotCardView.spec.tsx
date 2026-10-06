@@ -1,10 +1,40 @@
 /** @vitest-environment jsdom */
 
 import {fireEvent, render, screen, within} from '@solidjs/testing-library'
-import {createSignal} from 'solid-js'
+import {createSignal, type JSX} from 'solid-js'
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 import {type DrawnTarotCard, TAROT_CARDS, type TarotLocale} from '../../../features/tarot'
+import {TarotCardDepthView} from '../TarotCardDepthView'
 import {TarotCardView} from '../TarotCardView'
+
+const depthRendererMocks = vi.hoisted(() => ({
+  destroy: vi.fn(() => undefined),
+  initialize: vi.fn(
+    async (_options: {
+      canvas: HTMLCanvasElement
+      depth: string
+      frame: string
+      image: string
+      marker: string
+      name: string
+    }) => true,
+  ),
+  render: vi.fn(
+    (_frame: {height: number; reversed: boolean; width: number; x: number; y: number}) => undefined,
+  ),
+}))
+
+vi.mock('@solidjs/start', () => ({
+  clientOnly: (_loader: () => Promise<unknown>) => (props: {fallback?: JSX.Element}) =>
+    props.fallback,
+}))
+vi.mock('src/features/tarot-depth', () => ({
+  TarotDepthRenderer: class {
+    destroy = depthRendererMocks.destroy
+    initialize = depthRendererMocks.initialize
+    render = depthRendererMocks.render
+  },
+}))
 
 it('should update the illustration, marker, and localized name when the drawn card or language changes', () => {
   const [card, setCard] = createSignal<DrawnTarotCard>({...TAROT_CARDS[0]!, orientation: 'upright'})
@@ -111,6 +141,66 @@ it('should show a readable name when the separate frame fails on a reversed card
   fireEvent.error(article.querySelectorAll('img')[1]!)
   expect(screen.getByRole('heading', {name: '광대'})).toHaveClass('rotate-180')
   expect(article).toHaveTextContent('역방향')
+})
+
+describe('TarotCardDepthView', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    depthRendererMocks.initialize.mockResolvedValue(true)
+  })
+
+  afterEach(() => vi.unstubAllGlobals())
+
+  it('should expose the accessible depth surface and release initialized view resources', async () => {
+    const preference = new EventTarget()
+    const resizeObserver = {disconnect: vi.fn(), observe: vi.fn()}
+    vi.stubGlobal('matchMedia', () => ({
+      addEventListener: preference.addEventListener.bind(preference),
+      matches: false,
+      removeEventListener: preference.removeEventListener.bind(preference),
+    }))
+    vi.stubGlobal(
+      'ResizeObserver',
+      class {
+        disconnect = resizeObserver.disconnect
+        observe = resizeObserver.observe
+
+        constructor(_callback: ResizeObserverCallback) {}
+      },
+    )
+
+    const view = render(() => (
+      <TarotCardDepthView
+        card={{...TAROT_CARDS[0]!, orientation: 'reversed'}}
+        locale="ko"
+        showUpright={false}
+      />
+    ))
+    const surface = screen.getByRole('group', {name: '광대'})
+    const hint = surface.querySelector('p')!
+    const canvas = surface.querySelector('canvas')!
+    expect(surface).toHaveAttribute('aria-describedby', hint.id)
+    expect(surface).toHaveAttribute('tabindex', '0')
+    expect(hint).toHaveClass('sr-only')
+    expect(canvas).toHaveAttribute('aria-hidden', 'true')
+    expect(resizeObserver.observe).toHaveBeenCalledWith(canvas)
+
+    await Promise.resolve()
+    await Promise.resolve()
+    expect(depthRendererMocks.initialize).toHaveBeenCalledOnce()
+    expect(depthRendererMocks.initialize.mock.calls[0]?.[0]).toEqual(
+      expect.objectContaining({marker: '0', name: '광대'}),
+    )
+    expect(canvas).not.toHaveClass('invisible')
+    expect(surface.querySelector('div[aria-hidden="true"]')).toHaveClass('invisible')
+    expect(depthRendererMocks.render).toHaveBeenLastCalledWith(
+      expect.objectContaining({reversed: true, x: 0, y: 0}),
+    )
+
+    view.unmount()
+    expect(depthRendererMocks.destroy).toHaveBeenCalledOnce()
+    expect(resizeObserver.disconnect).toHaveBeenCalledOnce()
+  })
 })
 
 describe('card enlargement', () => {
