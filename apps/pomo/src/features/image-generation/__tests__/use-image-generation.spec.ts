@@ -5,9 +5,11 @@ vi.mock('src/features/model-download', () => ({useModelDownload: vi.fn()}))
 
 import {createSignal} from 'solid-js'
 import {cleanup, renderHook} from '@solidjs/testing-library'
+import * as m from '@paraglide/message'
 import {getLocale, overwriteGetLocale} from '@paraglide/runtime'
 import {afterEach, beforeEach, expect, it, vi} from 'vitest'
 import {runImageGeneration} from '../client'
+import {MAXIMUM_SEED} from '../settings'
 import {useImageGeneration} from '../use-image-generation'
 
 vi.mock('../client', () => ({runImageGeneration: vi.fn()}))
@@ -49,6 +51,30 @@ it('should preserve the generated image metadata and revoke its URL on disposal'
   expect(URL.revokeObjectURL).toHaveBeenCalledWith('blob:generated')
 })
 
+it('should accept the maximum supported seed', async () => {
+  vi.mocked(runImageGeneration).mockResolvedValue({
+    blob: new Blob(['png']),
+    prompt: 'A dancing hamburger',
+  })
+  const {result} = renderHook(useImageGeneration)
+  await vi.waitFor(() => expect(result.supported()).toBe(true))
+  result.setIdea('춤추는 햄버거')
+  result.setSeed(String(MAXIMUM_SEED))
+  await result.generate()
+  expect(result.result()?.seed).toBe(MAXIMUM_SEED)
+})
+
+it('should reject seeds above the supported range before image generation', async () => {
+  const {result} = renderHook(useImageGeneration)
+  await vi.waitFor(() => expect(result.supported()).toBe(true))
+  result.setIdea('춤추는 햄버거')
+  result.setSeed(String(MAXIMUM_SEED + 1))
+  await result.generate()
+  expect(runImageGeneration).not.toHaveBeenCalled()
+  expect(result.error()).toBe(m.picture_diary_generation_seed_error())
+  expect(result.busy()).toBe(false)
+})
+
 it('should abort pending work and ignore late completion after stopping', async () => {
   let finish: ((image: {blob: Blob; prompt: string}) => void) | undefined
   vi.mocked(runImageGeneration).mockImplementation(
@@ -60,6 +86,7 @@ it('should abort pending work and ignore late completion after stopping', async 
   const {result} = renderHook(useImageGeneration)
   await vi.waitFor(() => expect(result.supported()).toBe(true))
   result.setIdea('햄버거')
+  result.setSeed('123')
   const pending = result.generate()
   expect(result.busy()).toBe(true)
   const options = vi.mocked(runImageGeneration).mock.calls[0]?.[0]
@@ -72,11 +99,59 @@ it('should abort pending work and ignore late completion after stopping', async 
   expect(result.busy()).toBe(false)
 })
 
+it('should clear the previous image when a later generation is stopped', async () => {
+  let finish: ((image: {blob: Blob; prompt: string}) => void) | undefined
+  vi.mocked(runImageGeneration)
+    .mockResolvedValueOnce({blob: new Blob(['first']), prompt: 'First scene'})
+    .mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          finish = resolve
+        }),
+    )
+  const {result} = renderHook(() => useImageGeneration({clearPreviousResultOnGenerate: true}))
+  await vi.waitFor(() => expect(result.supported()).toBe(true))
+  result.setIdea('First scene')
+  result.setSeed('123')
+  await result.generate()
+  expect(result.result()?.prompt).toBe('First scene')
+
+  result.setIdea('Second scene')
+  const pending = result.generate()
+  expect(result.result()).toBe(null)
+  expect(URL.revokeObjectURL).toHaveBeenCalledWith('blob:generated')
+  result.stop()
+  finish?.({blob: new Blob(['second']), prompt: 'Second scene'})
+  await pending
+
+  expect(result.result()).toBe(null)
+})
+
+it('should clear the previous image when a later generation fails', async () => {
+  vi.mocked(runImageGeneration)
+    .mockResolvedValueOnce({blob: new Blob(['first']), prompt: 'First scene'})
+    .mockRejectedValueOnce(new Error('Generation failed'))
+  const {result} = renderHook(() => useImageGeneration({clearPreviousResultOnGenerate: true}))
+  await vi.waitFor(() => expect(result.supported()).toBe(true))
+  result.setIdea('First scene')
+  result.setSeed('123')
+  await result.generate()
+  expect(result.result()?.prompt).toBe('First scene')
+
+  result.setIdea('Second scene')
+  await result.generate()
+
+  expect(result.result()).toBe(null)
+  expect(result.error()).toBe('Generation failed')
+  expect(URL.revokeObjectURL).toHaveBeenCalledWith('blob:generated')
+})
+
 it('should surface a failure and allow another generation', async () => {
   vi.mocked(runImageGeneration).mockRejectedValue(new Error('Download failed'))
   const {result} = renderHook(useImageGeneration)
   await vi.waitFor(() => expect(result.supported()).toBe(true))
   result.setIdea('햄버거')
+  result.setSeed('123')
   await result.generate()
   expect(result.error()).toBe('Download failed')
   expect(result.busy()).toBe(false)
@@ -103,6 +178,7 @@ it('should keep generation progress and failures in English', async () => {
   const {result} = renderHook(useImageGeneration)
   await vi.waitFor(() => expect(result.supported()).toBe(true))
   result.setIdea('A walk')
+  result.setSeed('123')
   const firstGeneration = result.generate()
   vi.mocked(runImageGeneration).mock.lastCall![0].onUpdate({
     label: '이미지 생성 중 · 1/4',

@@ -42,6 +42,10 @@ export const useDesktopSettingsState = (props: UseDesktopSettingsStateProps = {}
       onWeatherSceneModeChange: weather.onSceneModeChange,
     },
     requestSnapshot: true,
+    snapshot: () => [
+      {name: 'motionInput', value: motionInput()},
+      {name: 'motionMode', value: motionMode()},
+    ],
   })
 
   onMount(() => {

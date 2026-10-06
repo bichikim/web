@@ -16,6 +16,13 @@ const options = {
   workerSecurityHeaders: {'Content-Security-Policy-Report-Only': 'worker policy'},
 } satisfies CreateNitroConfigOptions
 
+it('should omit the signaling backend and fail standalone prerendering on startup errors', () => {
+  const config = createNitroConfig({...options, standaloneRelax: true})
+  expect(config.handlers).toEqual([])
+  expect(config.prerender.routes).toEqual(['/relax'])
+  expect(config.prerender.failOnError).toBe(true)
+})
+
 it.each(['web', 'apps-in-toss', 'desktop', 'android', 'ios'] as const)(
   'should derive the %s build policy from explicit options',
   (target) => {

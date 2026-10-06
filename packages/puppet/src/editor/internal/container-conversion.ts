@@ -104,7 +104,6 @@ const convertContainer = (
       deformerType: 'spatial',
       spatialOrigin: [bounds.x + bounds.width / 2, bounds.y + bounds.height / 2, 0],
       spatialRotation: [0, 0, 0],
-      spatialRotationParameterIds: [null, null, null],
       spatialScale: [1, 1, 1],
       spatialTranslation: [0, 0, 0],
     }

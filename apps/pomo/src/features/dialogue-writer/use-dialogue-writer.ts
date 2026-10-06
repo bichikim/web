@@ -6,6 +6,7 @@ import {localizeErrorMessage} from 'src/features/localization/localized-messages
 import {createDialogueClient, type CreateDialogueClientOptions, type DialogueClient} from './client'
 import type {DialogueWorkerResponse} from './messages'
 import {supportsWebGpu} from '../text-generation/environment'
+import {supportsTextModel} from '../text-generation/supports-text-model'
 import {createLazyClient} from '../text-generation/lazy-client'
 import type {TextModelId} from '../text-generation/model'
 import type {TextGenerationProgress} from '../text-generation/progress'
@@ -64,6 +65,8 @@ export interface DialogueWriterController {
   readonly generateWithPreparation: () => void
   readonly isBusy: Accessor<boolean>
   readonly isModelReady: Accessor<boolean>
+  readonly modelId: Accessor<TextModelId>
+  readonly selectModel: (modelId: TextModelId) => void
   readonly output: Accessor<string>
   readonly prepare: () => void
   readonly progress: Accessor<number>
@@ -79,10 +82,13 @@ const DEFAULT_RUNTIME: DialogueWriterRuntime = {createClient: createDialogueClie
 interface DialogueClientSessionOptions {
   readonly createClient: DialogueWriterRuntime['createClient']
   readonly modelId: TextModelId
+  readonly isBusy: Accessor<boolean>
+  readonly onModelChange: () => void
   readonly onResponse: (response: DialogueWorkerResponse) => void
 }
 
 const createDialogueClientSession = (options: DialogueClientSessionOptions) => {
+  const [modelId, setModelId] = createSignal(options.modelId)
   let nextClientId = 0
   let activeClientId: number | null = null
   const clientOwner = createLazyClient(() => {
@@ -91,7 +97,7 @@ const createDialogueClientSession = (options: DialogueClientSessionOptions) => {
     activeClientId = clientId
 
     return options.createClient({
-      modelId: options.modelId,
+      modelId: modelId(),
       onResponse: (response) => {
         if (clientId !== activeClientId) {
           return
@@ -102,13 +108,20 @@ const createDialogueClientSession = (options: DialogueClientSessionOptions) => {
     })
   })
 
-  return {
-    dispose: () => {
-      activeClientId = null
-      clientOwner.dispose()
-    },
-    get: () => clientOwner.get(),
+  const dispose = () => {
+    activeClientId = null
+    clientOwner.dispose()
   }
+  const selectModel = (nextModelId: TextModelId) => {
+    if (nextModelId === modelId() || options.isBusy()) {
+      return
+    }
+    dispose()
+    setModelId(nextModelId)
+    options.onModelChange()
+  }
+  onCleanup(dispose)
+  return {dispose, get: clientOwner.get, modelId, selectModel}
 }
 
 const isDialogueBusy = (state: DialogueWriterState) => {
@@ -143,6 +156,14 @@ const isDialogueModelReady = (state: DialogueWriterState) => {
 const isDialoguePreparationAllowed = (state: DialogueWriterState) =>
   state.status === 'idle' || state.status === 'error'
 
+const getDialogueWriterProgress = (currentState: DialogueWriterState, modelReady: boolean) => {
+  if (currentState.status === 'loading') {
+    return currentState.percentage
+  }
+
+  return modelReady ? MAXIMUM_PROGRESS : 0
+}
+
 const getDialogueWriterStatusMessage = (currentState: DialogueWriterState): string => {
   switch (currentState.status) {
     case 'complete':
@@ -158,7 +179,9 @@ const getDialogueWriterStatusMessage = (currentState: DialogueWriterState): stri
         return m.dialogue_writer_download_complete_status()
       }
 
-      return m.dialogue_writer_downloading_status({percentage: currentState.percentage})
+      return m.dialogue_writer_downloading_status({
+        percentage: Math.min(MAXIMUM_PROGRESS, Math.max(0, currentState.percentage)),
+      })
     case 'ready':
       return m.dialogue_writer_ready_status()
     case 'unsupported':
@@ -168,14 +191,17 @@ const getDialogueWriterStatusMessage = (currentState: DialogueWriterState): stri
   currentState satisfies never
 }
 
+// oxlint-disable-next-line eslint/max-lines-per-function -- One owner coordinates the selected model, Worker session and output.
 export const useDialogueWriter = (props: UseDialogueWriterProps): DialogueWriterController => {
-  const modelId = untrack(() => props.modelId)
   const outputLanguage = untrack(() => props.outputLanguage)
   const runtime = untrack(() => props.runtime ?? DEFAULT_RUNTIME)
+  const isSupported = (modelId: TextModelId) =>
+    supportsTextModel({modelId, webGpu: runtime.supportsWebGpu()})
   const [request, setRequest] = createSignal(untrack(() => props.initialRequest ?? ''))
   const [output, setOutput] = createSignal('')
+  const [hasCompleteOutput, setHasCompleteOutput] = createSignal(false)
   const [state, setState] = createSignal<DialogueWriterState>(
-    runtime.supportsWebGpu() ? {status: 'idle'} : {status: 'unsupported'},
+    isSupported(untrack(() => props.modelId)) ? {status: 'idle'} : {status: 'unsupported'},
   )
   let shouldGenerateAfterPreparation = false
   let generationInFlight = false
@@ -183,23 +209,15 @@ export const useDialogueWriter = (props: UseDialogueWriterProps): DialogueWriter
   const isModelReady = createMemo(() => isDialogueModelReady(state()))
   const canPrepare = createMemo(() => isDialoguePreparationAllowed(state()))
   const canGenerate = createMemo(() => isModelReady() && !isBusy() && isNonBlankString(request()))
-  const canCopy = createMemo(() => !isBusy() && output().length > 0)
-  const progress = createMemo(() => {
-    const currentState = state()
-
-    if (currentState.status === 'loading') {
-      return currentState.percentage
-    }
-
-    return isModelReady() ? MAXIMUM_PROGRESS : 0
-  })
-  const statusMessage = createMemo(() => getDialogueWriterStatusMessage(state()))
+  const canCopy = createMemo(() => hasCompleteOutput() && !isBusy() && output().length > 0)
+  const progress = createMemo(() => getDialogueWriterProgress(state(), isModelReady()))
 
   const handleResponse = (response: DialogueWorkerResponse) => {
     switch (response.type) {
       case 'complete':
         generationInFlight = false
         setOutput(response.text)
+        setHasCompleteOutput(true)
         props.onComplete?.(response.text)
         setState({status: 'complete'})
         return
@@ -232,6 +250,7 @@ export const useDialogueWriter = (props: UseDialogueWriterProps): DialogueWriter
 
         return
       case 'started':
+        setHasCompleteOutput(false)
         setOutput('')
         setState({status: 'generating'})
         return
@@ -245,7 +264,9 @@ export const useDialogueWriter = (props: UseDialogueWriterProps): DialogueWriter
 
   const clientSession = createDialogueClientSession({
     createClient: runtime.createClient,
-    modelId,
+    isBusy,
+    modelId: untrack(() => props.modelId),
+    onModelChange: () => release(),
     onResponse: handleResponse,
   })
 
@@ -256,6 +277,7 @@ export const useDialogueWriter = (props: UseDialogueWriterProps): DialogueWriter
 
     setRequest(nextRequest)
     setOutput('')
+    setHasCompleteOutput(false)
 
     if (generationInFlight) {
       clientSession.dispose()
@@ -269,7 +291,7 @@ export const useDialogueWriter = (props: UseDialogueWriterProps): DialogueWriter
   }
 
   const prepare = () => {
-    if (!canPrepare() || !runtime.supportsWebGpu()) {
+    if (!canPrepare() || !isSupported(clientSession.modelId())) {
       return
     }
 
@@ -286,6 +308,7 @@ export const useDialogueWriter = (props: UseDialogueWriterProps): DialogueWriter
     generationInFlight = true
     setState({status: 'generating'})
     setOutput('')
+    setHasCompleteOutput(false)
     const client = clientSession.get()
     const trimmedRequest = request().trim()
 
@@ -320,10 +343,8 @@ export const useDialogueWriter = (props: UseDialogueWriterProps): DialogueWriter
     shouldGenerateAfterPreparation = false
     generationInFlight = false
     clientSession.dispose()
-    setState(runtime.supportsWebGpu() ? {status: 'idle'} : {status: 'unsupported'})
+    setState(isSupported(clientSession.modelId()) ? {status: 'idle'} : {status: 'unsupported'})
   }
-
-  onCleanup(clientSession.dispose)
 
   return {
     canCopy,
@@ -334,13 +355,15 @@ export const useDialogueWriter = (props: UseDialogueWriterProps): DialogueWriter
     generateWithPreparation,
     isBusy,
     isModelReady,
+    modelId: clientSession.modelId,
     output,
     prepare,
     progress,
     release,
     request,
+    selectModel: clientSession.selectModel,
     setRequest: updateRequest,
     state,
-    statusMessage,
+    statusMessage: createMemo(() => getDialogueWriterStatusMessage(state())),
   }
 }

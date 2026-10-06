@@ -11,6 +11,7 @@ import {
   type PuppetMotion,
 } from '../../player/document'
 import {sampleMotionParameterValues} from '../../player/internal/motion'
+import {createTimelineParameterRowActions} from './timeline-parameter-rows'
 import {ALL_MOTIONS_OPTION, AllMotionTimeline} from './AllMotionTimeline'
 import {createTimelineMotionActions} from './create-timeline-motion-actions'
 import {editMotion} from './edit-motion'
@@ -83,6 +84,16 @@ const hasEditableSelection = (
   onDocumentChange: EditorTimelineProps['onDocumentChange'],
 ) => selection !== null && selection.editableTimes.length > 0 && onDocumentChange !== undefined
 
+const getMotionSeekAction = (
+  motionSeek: EditorTimelineProps['onMotionSeek'],
+  motionChange: EditorTimelineProps['onMotionChange'],
+  seek: EditorTimelineProps['onSeek'],
+  action: (motionId: string, time: number) => void,
+) =>
+  motionSeek !== undefined || (motionChange !== undefined && seek !== undefined)
+    ? action
+    : undefined
+
 // eslint-disable-next-line max-lines-per-function
 export const EditorTimeline = (props: EditorTimelineProps) => {
   const titleId = createUniqueId()
@@ -95,6 +106,16 @@ export const EditorTimeline = (props: EditorTimelineProps) => {
   const duration = () => motion()?.duration ?? 0
   const currentTime = () => clamp(props.currentTime ?? 0, 0, duration())
   const parameterTracks = createMemo(() => getParameterTracks(props.document, motion()))
+  const parameterRows = createTimelineParameterRowActions({
+    document: () => props.document,
+    motionId: () => motion()?.id,
+    onDocumentChange: () => props.onDocumentChange,
+    onSelect: (parameterId) => {
+      setActiveParameterId(parameterId)
+      setSelection(null)
+    },
+    tracks: parameterTracks,
+  })
   const parameterValues = createMemo(() =>
     sampleMotionParameterValues({
       motion: motion(),
@@ -106,9 +127,6 @@ export const EditorTimeline = (props: EditorTimelineProps) => {
   const selectedKeyframe = createMemo(() => getSelectedKeyframe(selection(), parameterTracks()))
   const motionIds = () => props.document.motions.map((candidate) => candidate.id)
   const motionOptions = () => (motionIds().length === 0 ? [] : [ALL_MOTIONS_OPTION, ...motionIds()])
-  const canSeekAllMotions = () =>
-    props.onMotionSeek !== undefined ||
-    (props.onMotionChange !== undefined && props.onSeek !== undefined)
   const minimumDuration = (targetMotion: PuppetMotion) =>
     Math.max(
       1 / framesPerSecond(),
@@ -453,6 +471,7 @@ export const EditorTimeline = (props: EditorTimelineProps) => {
                 props.onDocumentChange,
               )}
               isPlaying={props.isPlaying}
+              availableParameters={parameterRows.available()}
               motionIds={motionOptions()}
               motionId={motion()?.id}
               onEditEnd={props.onEditEnd}
@@ -471,6 +490,7 @@ export const EditorTimeline = (props: EditorTimelineProps) => {
               onMotionRename={
                 props.onDocumentChange === undefined ? undefined : motionActions.rename
               }
+              onParameterAdd={props.onDocumentChange === undefined ? undefined : parameterRows.add}
               onEasingChange={handleEasingChange}
               onKeyframeAdd={handleKeyframeAdd}
               onKeyframeDelete={handleKeyframeDelete}
@@ -491,6 +511,16 @@ export const EditorTimeline = (props: EditorTimelineProps) => {
                 updateParameterKeyframe(track.parameter.id, value)
               }
               onParameterSelect={handleParameterSelect}
+              onParameterRemove={
+                props.onDocumentChange === undefined
+                  ? undefined
+                  : (parameterId) => {
+                      const activeMotion = motion()
+                      if (activeMotion !== undefined) {
+                        parameterRows.remove(activeMotion.id, parameterId)
+                      }
+                    }
+              }
               onSeek={handleSeek}
               rulerLabel={
                 <Show when={motion()} fallback="Parameter">
@@ -550,8 +580,16 @@ export const EditorTimeline = (props: EditorTimelineProps) => {
           onMotionAdd={props.onDocumentChange === undefined ? undefined : motionActions.add}
           onMotionDelete={getEditableAction(props.onDocumentChange, motionActions.deleteById)}
           onKeyframeMove={getEditableAction(props.onDocumentChange, updateKeyframeTimes)}
-          onMotionSeek={canSeekAllMotions() ? handleMotionSeek : undefined}
+          onMotionSeek={getMotionSeekAction(
+            props.onMotionSeek,
+            props.onMotionChange,
+            props.onSeek,
+            handleMotionSeek,
+          )}
           onMotionRename={getEditableAction(props.onDocumentChange, motionActions.renameById)}
+          onParameterRemove={
+            props.onDocumentChange === undefined ? undefined : parameterRows.remove
+          }
           onViewChange={handleViewChange}
           parameterValues={props.parameterValues}
           titleId={titleId}

@@ -23,8 +23,11 @@ vi.mock('src/utils/runtime-storage', async () => ({
     }
     mocks.tossSnapshot = structuredClone(value)
   },
+  getTossRuntimeStorage: () => ({
+    read: async () => JSON.stringify(mocks.tossSnapshot),
+    write: vi.fn().mockResolvedValue(undefined),
+  }),
   hasNativeStorageBridge: () => mocks.native,
-  readTossStorageJson: async () => structuredClone(mocks.tossSnapshot),
   writeWebStorageJson: (_key: string, value: ReadonlyArray<MemoryMemo>) => {
     if (mocks.webError === null) {
       mocks.webSnapshot = structuredClone(value)

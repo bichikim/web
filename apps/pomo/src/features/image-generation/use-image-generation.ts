@@ -18,6 +18,7 @@ import {
   DEFAULT_DIMENSION,
   DEFAULT_STEPS,
   type ImageVariant,
+  MAXIMUM_SEED,
   resolvePreset,
 } from './settings'
 
@@ -31,11 +32,28 @@ export interface ImageResult {
   readonly width: number
 }
 
+interface UseImageGenerationOptions {
+  readonly clearPreviousResultOnGenerate?: boolean
+}
+
+const clearGeneratedImage = (
+  image: ImageResult | null,
+  setResult: Setter<ImageResult | null>,
+  shouldClear: boolean,
+) => {
+  if (!shouldClear || image === null) {
+    return
+  }
+  replaceBlobObjectUrl(image.url, () => null)
+  setResult(null)
+}
+
 const parseSeed = (text: string) => {
-  if (text !== '' && !/^\d+$/u.test(text)) {
+  const seed = Number(text)
+  if (text !== '' && (!/^\d+$/u.test(text) || seed > MAXIMUM_SEED)) {
     throw new Error(m.picture_diary_generation_seed_error())
   }
-  return text === '' ? crypto.getRandomValues(new Uint32Array(1))[0]! : Number(text)
+  return text === '' ? crypto.getRandomValues(new Uint32Array(1))[0]! : seed
 }
 
 interface DownloadProgressOptions {
@@ -79,7 +97,7 @@ const imageUrlRuntime = {
   revoke: (url: string) => URL.revokeObjectURL(url),
 }
 
-export const useImageGeneration = () => {
+export const useImageGeneration = (options: UseImageGenerationOptions = {}) => {
   const downloads = useModelDownload()
   const [idea, setIdea] = createSignal('')
   const [style, setStyle] = createSignal<ArtStyle>('none')
@@ -109,6 +127,7 @@ export const useImageGeneration = () => {
   const stop = () => {
     controller?.abort()
     controller = null
+    clearGeneratedImage(result(), setResult, options.clearPreviousResultOnGenerate === true)
     setBusy(false)
     setPercentage(undefined)
     setStatus(m.picture_diary_generation_stopped())
@@ -129,6 +148,7 @@ export const useImageGeneration = () => {
     }
     const abort = new AbortController()
     controller = abort
+    clearGeneratedImage(result(), setResult, options.clearPreviousResultOnGenerate === true)
     setBusy(true)
     setError(null)
     setPrompt('')

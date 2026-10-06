@@ -85,6 +85,20 @@ describe('createWorkerTransport', () => {
     expect(() => transport.send({type: 'request'})).toThrow(error)
   })
 
+  it('should forward the provided transfer list including an empty list', () => {
+    const worker = new FakeWorker()
+    const {transport} = createTransport(worker)
+    const request = {type: 'request'} as const
+    const transfer = [new ArrayBuffer(4)]
+
+    transport.send(request, transfer)
+    transport.send(request, [])
+
+    expect(worker.postMessage).toHaveBeenNthCalledWith(1, request, transfer)
+    expect(worker.postMessage.mock.calls[0]![1]).toBe(transfer)
+    expect(worker.postMessage).toHaveBeenNthCalledWith(2, request, [])
+  })
+
   it('should report worker errors', () => {
     const worker = new FakeWorker()
     const onFailure = vi.fn()

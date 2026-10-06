@@ -1,3 +1,4 @@
+import {createRetryableLazyPromise} from 'src/utils/create-retryable-lazy-promise'
 import {failureResult, type Result, successResult} from 'src/features/result'
 import {getErrorMessage} from 'src/utils/get-error-message'
 
@@ -232,20 +233,16 @@ const getDeviceTarget = (target: TextGenerationExecutionTarget): DeviceTextGener
 const createDeviceTextGenerationProvider = (options: {
   readonly onProgress: (progress: TextGenerationProgress) => void
 }): TextGenerationExecutionProvider => {
-  let textRuntimePromise: Promise<TextGenerationRuntime> | null = null
   let textRuntime: TextGenerationRuntime | null = null
   const generationControllers = new Map<string, AbortController>()
 
-  const getTextRuntime = () => {
-    textRuntimePromise ??= import('./transformers-runtime').then(
-      async ({createTransformersRuntime}) => {
-        const runtime = await createTransformersRuntime({onProgress: options.onProgress})
-        textRuntime = runtime
-        return runtime
-      },
-    )
-    return textRuntimePromise
-  }
+  const getTextRuntime = createRetryableLazyPromise(() =>
+    import('./transformers-runtime').then(async ({createTransformersRuntime}) => {
+      const runtime = await createTransformersRuntime({onProgress: options.onProgress})
+      textRuntime = runtime
+      return runtime
+    }),
+  )
 
   return {
     cancel: (requestId) => generationControllers.get(requestId)?.abort(),
@@ -353,10 +350,10 @@ const resolveTextGenerationProvider = (
 
 const prepareTextGenerationTarget = async (
   target: TextGenerationExecutionTarget,
-  disposed: boolean,
+  isDisposed: () => boolean,
   resolveProvider: TextGenerationProviderResolver,
 ): Promise<Result<void, TextGenerationError>> => {
-  if (disposed) {
+  if (isDisposed()) {
     return failureResult(createCancelledError('prepare'))
   }
 
@@ -367,19 +364,21 @@ const prepareTextGenerationTarget = async (
 
   try {
     await providerResult.value.prepare(target)
-    return successResult(undefined)
+    return isDisposed() ? failureResult(createCancelledError('prepare')) : successResult(undefined)
   } catch (error: unknown) {
-    return failureResult(createExecutionError('prepare', error))
+    return failureResult(
+      isDisposed() ? createCancelledError('prepare') : createExecutionError('prepare', error),
+    )
   }
 }
 
 const countTextGenerationTokens = async (
   target: TextGenerationExecutionTarget,
   messages: ReadonlyArray<TextGenerationMessage>,
-  disposed: boolean,
+  isDisposed: () => boolean,
   resolveProvider: TextGenerationProviderResolver,
 ): Promise<Result<number, TextGenerationError>> => {
-  if (disposed) {
+  if (isDisposed()) {
     return failureResult(createCancelledError('count-tokens'))
   }
 
@@ -389,9 +388,14 @@ const countTextGenerationTokens = async (
   }
 
   try {
-    return successResult(await providerResult.value.countTokens(target, messages))
+    const count = await providerResult.value.countTokens(target, messages)
+    return isDisposed() ? failureResult(createCancelledError('count-tokens')) : successResult(count)
   } catch (error: unknown) {
-    return failureResult(createExecutionError('count-tokens', error))
+    return failureResult(
+      isDisposed()
+        ? createCancelledError('count-tokens')
+        : createExecutionError('count-tokens', error),
+    )
   }
 }
 
@@ -531,6 +535,7 @@ export const createTextGenerationExecutor = (
   const serverProviders = new Map<string, TextGenerationExecutionProvider>()
   const activeOperations = new Map<string, ActiveTextGenerationOperation>()
   let disposed = false
+  const isDisposed = () => disposed
   const providerOptions: TextGenerationProviderOptions = {
     createServerProvider: options.createServerProvider,
     deviceProvider,
@@ -559,11 +564,11 @@ export const createTextGenerationExecutor = (
   return {
     cancel,
     countTokens: (target, messages) =>
-      countTextGenerationTokens(target, messages, disposed, resolveProvider),
+      countTextGenerationTokens(target, messages, isDisposed, resolveProvider),
     dispose,
     generate: (request, observer) =>
       generateText({activeOperations, disposed, observer, request, resolveProvider}),
     getTokenizer: (target) => getTextGenerationTokenizer(target, disposed, resolveProvider),
-    prepare: (target) => prepareTextGenerationTarget(target, disposed, resolveProvider),
+    prepare: (target) => prepareTextGenerationTarget(target, isDisposed, resolveProvider),
   }
 }

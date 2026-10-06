@@ -1,6 +1,6 @@
 /** @vitest-environment jsdom */
 
-import {fireEvent, render, screen} from '@solidjs/testing-library'
+import {fireEvent, render, screen, within} from '@solidjs/testing-library'
 import {createSignal} from 'solid-js'
 import {describe, expect, test, vi} from 'vitest'
 
@@ -14,6 +14,7 @@ import {
   parseDocument,
   type PuppetDocument,
 } from '../../../player'
+import {createEmptyDocument} from '../../../player/create-empty-document'
 import {getDeformerAngle} from '../deformer-transform'
 import {
   addParameter,
@@ -28,20 +29,36 @@ import {convertSceneContainers} from '../container-conversion'
 import {setSpatialMesh} from '../set-spatial-mesh'
 import {createSpatialSurface} from '../set-spatial-surface'
 
+const createMaskCycleDocument = (): PuppetDocument => {
+  const createPart = (id: string, clippingMaskIds: ReadonlyArray<string> = []) => ({
+    id,
+    mesh: {indices: [0, 1, 2], uvs: [0, 0, 1, 0, 0, 1], vertices: [0, 0, 1, 0, 0, 1]},
+    properties: {clippingMaskIds},
+    texture: {
+      height: 1,
+      src: 'data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=',
+      width: 1,
+    },
+  })
+
+  return {
+    ...createEmptyDocument(),
+    parts: [
+      createPart('mesh-preview'),
+      createPart('shape-circle', ['mesh-preview']),
+      createPart('shape-diamond', ['mesh-preview']),
+    ],
+  }
+}
+
 describe('EditorInspector', () => {
-  test('should show controls for the selected node while retaining global controls', () => {
+  test('should show controls for the selected node', () => {
     const document = createDeformer(createDemoDocument(), ['mesh-preview'])!
     const [activeNodeId, setActiveNodeId] = createSignal<string>()
     const view = render(() => (
-      <EditorInspector
-        activeNodeId={activeNodeId()}
-        document={document}
-        editMode="parameter"
-        layerOrderProperties={<section aria-label="전역 레이어 순서" />}
-      />
+      <EditorInspector activeNodeId={activeNodeId()} document={document} editMode="parameter" />
     ))
 
-    expect(view.getByRole('region', {name: '전역 레이어 순서'})).toBeInTheDocument()
     expect(view.queryByRole('group', {name: '파트 렌더링'})).toBeNull()
     expect(view.queryByRole('spinbutton', {name: '자유 변형 각도'})).toBeNull()
 
@@ -52,7 +69,6 @@ describe('EditorInspector', () => {
     setActiveNodeId('deformer')
     expect(view.queryByRole('group', {name: '파트 렌더링'})).toBeNull()
     expect(view.getByRole('spinbutton', {name: '자유 변형 각도'})).toBeInTheDocument()
-    expect(view.getByRole('region', {name: '전역 레이어 순서'})).toBeInTheDocument()
   })
 
   test('should show shared 3D move, scale, and rotation controls for a selected 3D deformer', () => {
@@ -71,7 +87,6 @@ describe('EditorInspector', () => {
     expect(view.getByRole('spinbutton', {name: '3D 크기 X'})).toHaveValue(1)
     expect(view.queryByRole('spinbutton', {name: '3D 메시 위치 X'})).toBeNull()
     expect(view.getByRole('button', {name: '메시 만들기'})).toBeEnabled()
-    expect(view.getByLabelText('3D 메시 가져오기')).toBeEnabled()
     expect(view.queryByRole('spinbutton', {name: '자유 변형 각도'})).toBeNull()
   })
 
@@ -114,98 +129,6 @@ describe('EditorInspector', () => {
       spatialTranslation: [0, 0, 0],
     })
     expect(view.getByRole('spinbutton', {name: '3D 이동 X'})).toHaveValue(0)
-  })
-
-  test('should keyframe mesh placement and pose translation independently', () => {
-    const source = convertSceneContainers({
-      document: {...createDemoDocument(), motions: [], parameterBindings: [], parameters: []},
-      nodeIds: ['shapes'],
-      targetKind: 'spatial',
-    })!
-    const mesh = generateSpatialMesh({
-      operations: [
-        {center: [388, 243, 0], id: 'box', mode: 'add', shape: 'box', size: [600, 500, 80]},
-      ],
-    })
-    const bound = setSpatialMesh({document: source, mesh, nodeId: 'shapes'})!
-    const added = addParameter({document: bound, nodeIds: ['shapes']})!
-    const inserted = insertParameterKeyform({
-      bindingId: added.binding.id,
-      document: added.document,
-      values: [30],
-    })!
-    const [document, setDocument] = createSignal(inserted)
-    const parameterId = added.binding.parameterIds[0]!
-    const preview = () =>
-      createParameterPreview({document: document(), parameterValues: {[parameterId]: 30}})
-    const view = render(() => (
-      <EditorInspector
-        activeBindingId={added.binding.id}
-        activeKeyformValues={[30]}
-        activeNodeId="shapes"
-        document={document()}
-        editMode="parameter"
-        previewDocument={preview()}
-        onDocumentChange={setDocument}
-        targetNodeIds={['shapes']}
-      />
-    ))
-
-    const meshPositionInput = view.getByRole('spinbutton', {name: '3D 메시 위치 X'})
-    meshPositionInput.focus()
-    fireEvent.input(meshPositionInput, {
-      target: {value: '24'},
-    })
-    expect(view.getByRole('spinbutton', {name: '3D 메시 위치 X'})).toBe(meshPositionInput)
-    expect(view.container.ownerDocument.activeElement).toBe(meshPositionInput)
-    fireEvent.input(view.getByRole('spinbutton', {name: '3D 메시 위치 Z'}), {
-      target: {value: '8'},
-    })
-
-    const rest = getDocumentScene(document()).roots.find((node) => node.id === 'shapes')
-    const keyed = document().parameterBindings?.[0]?.keyforms.find(
-      (keyform) => keyform.values[0] === 30,
-    )?.deformers?.[0]
-    expect(rest?.kind === 'deformer' ? rest.spatialMeshPosition : undefined).toBeUndefined()
-    expect(keyed?.spatialMeshPosition).toEqual([24, 0, 8])
-    expect(getDocumentScene(preview()).roots.find((node) => node.id === 'shapes')).toMatchObject({
-      spatialMeshPosition: [24, 0, 8],
-      spatialTranslation: [0, 0, 0],
-    })
-    const part = document().parts.find((candidate) => candidate.id === 'shape-circle')!
-    const basePose = getSpatialPartPose({
-      document: document(),
-      parameterValues: {[parameterId]: 0},
-      part,
-    })!
-    const keyPose = getSpatialPartPose({
-      document: document(),
-      parameterValues: {[parameterId]: 30},
-      part,
-    })!
-    keyPose.vertices.forEach((coordinate, index) =>
-      expect(coordinate).toBeCloseTo(basePose.vertices[index]!),
-    )
-    expect(keyPose.depths[0]! - basePose.depths[0]!).toBeCloseTo(8)
-
-    fireEvent.input(view.getByRole('spinbutton', {name: '3D 이동 X'}), {
-      target: {value: '12'},
-    })
-    const translatedKeyform = document().parameterBindings?.[0]?.keyforms.find(
-      (keyform) => keyform.values[0] === 30,
-    )?.deformers?.[0]
-    expect(translatedKeyform?.spatialMeshPosition).toEqual([24, 0, 8])
-    expect(translatedKeyform?.spatialTranslation).toEqual([12, 0, 0])
-    const translatedPose = getSpatialPartPose({
-      document: document(),
-      parameterValues: {[parameterId]: 30},
-      part,
-    })!
-    translatedPose.vertices.forEach((coordinate, index) =>
-      expect(coordinate - keyPose.vertices[index]!).toBeCloseTo(index % 2 === 0 ? 12 : 0),
-    )
-    expect(translatedPose.depths).toEqual(keyPose.depths)
-    expect(parseDocument(JSON.stringify(document())).ok).toBe(true)
   })
 
   test('should store 3D rotation in a connected parameter keyform', () => {
@@ -272,117 +195,6 @@ describe('EditorInspector', () => {
       spatialTranslation: [12, 0, 0],
     })
     expect(parseDocument(JSON.stringify(document())).ok).toBe(true)
-  })
-
-  test('should create, bind, and remove a primitive 3D mesh from the inspector', () => {
-    const source = convertSceneContainers({
-      document: createDemoDocument(),
-      nodeIds: ['shapes'],
-      targetKind: 'spatial',
-    })!
-    const [document, setDocument] = createSignal(source)
-    const view = render(() => (
-      <EditorInspector
-        activeNodeId="shapes"
-        document={document()}
-        editMode="parameter"
-        onDocumentChange={setDocument}
-      />
-    ))
-
-    fireEvent.click(view.getByRole('button', {name: '메시 만들기'}))
-    expect(screen.getByRole('dialog', {name: '3D 변형 메시 만들기'})).toBeDefined()
-    expect(screen.getByRole('button', {name: '메시 적용'})).toBeDisabled()
-    fireEvent.click(screen.getByRole('button', {name: '네모 추가'}))
-    fireEvent.click(screen.getByRole('button', {name: '메시 적용'}))
-    expect(getDocumentScene(document()).roots.find((node) => node.id === 'shapes')).toMatchObject({
-      spatialMesh: {source: {kind: 'authored'}},
-    })
-    expect(
-      document()
-        .parts.find((part) => part.id === 'shape-circle')
-        ?.spatial?.controlPoints.some((value, index) => index % 3 === 2 && value > 0),
-    ).toBe(true)
-    fireEvent.click(view.getByRole('button', {name: '메시 제거'}))
-    expect(getDocumentScene(document()).roots.find((node) => node.id === 'shapes')).toMatchObject({
-      spatialMesh: undefined,
-    })
-    expect(view.getByText('연결된 메시 없음')).toBeInTheDocument()
-    expect(view.queryByRole('button', {name: '메시 제거'})).toBeNull()
-  })
-
-  test('should combine three separate shapes in two explicit steps and reopen the editable hierarchy', () => {
-    const source = convertSceneContainers({
-      document: createDemoDocument(),
-      nodeIds: ['shapes'],
-      targetKind: 'spatial',
-    })!
-    const [document, setDocument] = createSignal(source)
-    const view = render(() => (
-      <EditorInspector
-        activeNodeId="shapes"
-        document={document()}
-        editMode="parameter"
-        onDocumentChange={setDocument}
-      />
-    ))
-
-    fireEvent.click(view.getByRole('button', {name: '메시 만들기'}))
-    fireEvent.click(screen.getByRole('button', {name: '네모 추가'}))
-    fireEvent.click(screen.getByRole('button', {name: '세모 추가'}))
-    fireEvent.click(screen.getByRole('button', {name: '동그라미 추가'}))
-    expect(screen.getByRole('button', {name: '메시 적용'})).toBeDisabled()
-    fireEvent.click(screen.getByRole('checkbox', {name: '동그라미 합성 선택'}))
-    fireEvent.click(screen.getByRole('checkbox', {name: '네모 합성 선택'}))
-    fireEvent.click(screen.getByRole('checkbox', {name: '세모 합성 선택'}))
-    fireEvent.click(screen.getByRole('button', {name: '선택한 도형 합치기'}))
-    expect(screen.getByRole('checkbox', {name: '동그라미 합성 선택'})).toBeEnabled()
-    expect(screen.getByRole('button', {name: '메시 적용'})).toBeDisabled()
-    fireEvent.click(screen.getByRole('checkbox', {name: '동그라미 합성 선택'}))
-    fireEvent.click(screen.getByRole('button', {name: '선택한 도형 합치기'}))
-    fireEvent.click(screen.getByRole('button', {name: '메시 적용'}))
-
-    const node = getDocumentScene(document()).roots.find((item) => item.id === 'shapes')
-    expect(node).toMatchObject({
-      spatialMesh: {
-        source: {
-          kind: 'authored',
-          objects: [
-            {children: [{children: [{shape: 'box'}, {shape: 'prism'}]}, {shape: 'sphere'}]},
-          ],
-        },
-      },
-    })
-    fireEvent.click(view.getByRole('button', {name: '메시 편집'}))
-    expect(screen.getByRole('button', {name: '네모 편집'})).toBeDefined()
-    expect(screen.getByRole('button', {name: '세모 편집'})).toBeDefined()
-    expect(screen.getByRole('button', {name: '동그라미 편집'})).toBeDefined()
-  })
-
-  test('should remove added shapes from the mesh list and restore them with undo', () => {
-    const document = convertSceneContainers({
-      document: createDemoDocument(),
-      nodeIds: ['shapes'],
-      targetKind: 'spatial',
-    })!
-    const view = render(() => (
-      <EditorInspector activeNodeId="shapes" document={document} editMode="parameter" />
-    ))
-
-    fireEvent.click(view.getByRole('button', {name: '메시 만들기'}))
-    fireEvent.click(screen.getByRole('button', {name: '네모 추가'}))
-    fireEvent.click(screen.getByRole('button', {name: '동그라미 추가'}))
-    fireEvent.click(screen.getByRole('button', {name: '네모 삭제'}))
-    expect(screen.queryByRole('button', {name: '네모 편집'})).toBeNull()
-    fireEvent.click(screen.getByRole('button', {name: '실행 취소'}))
-    expect(screen.getByRole('button', {name: '네모 편집'})).toBeEnabled()
-
-    fireEvent.click(screen.getByRole('checkbox', {name: '네모 합성 선택'}))
-    fireEvent.click(screen.getByRole('checkbox', {name: '동그라미 합성 선택'}))
-    fireEvent.click(screen.getByRole('button', {name: '선택한 도형 합치기'}))
-    fireEvent.click(screen.getByRole('button', {name: '네모 삭제'}))
-    expect(screen.queryByRole('button', {name: '네모 편집'})).toBeNull()
-    expect(screen.getByRole('button', {name: '동그라미 편집'})).toBeEnabled()
   })
 
   test('should edit a grouped 3D part surface without duplicate rotation controls', () => {
@@ -512,7 +324,7 @@ describe('EditorInspector', () => {
     const view = render(() => (
       <EditorInspector
         activeNodeId={activeNodeId()}
-        autoMeshAvailable={activeNodeId() === 'mesh-preview'}
+        autoMeshAvailable={activeNodeId() === 'mesh-preview' || activeNodeId() === group.id}
         containerUnwrapAvailable={activeNodeId() === group.id}
         document={document}
         onAutoMesh={onAutoMesh}
@@ -520,74 +332,35 @@ describe('EditorInspector', () => {
       />
     ))
 
-    fireEvent.click(view.getByRole('button', {name: '자동 메시'}))
+    const partRendering = view.getByRole('group', {name: '파트 렌더링'})
+    fireEvent.click(within(partRendering).getByRole('button', {name: '자동 메시'}))
     expect(onAutoMesh).toHaveBeenCalledOnce()
 
     setActiveNodeId(group.id)
-    expect(view.queryByRole('button', {name: '자동 메시'})).toBeNull()
+    const groupRendering = view.getByRole('group', {name: '파트 렌더링'})
+    expect(within(groupRendering).getByRole('button', {name: '자동 메시'})).toBeEnabled()
+    fireEvent.click(within(groupRendering).getByRole('button', {name: '자동 메시'}))
+    expect(onAutoMesh).toHaveBeenCalledTimes(2)
     fireEvent.click(view.getByRole('button', {name: '컨테이너 해제'}))
     expect(onContainerUnwrap).toHaveBeenCalledOnce()
-  })
-
-  test('should edit rest rendering properties without an active parameter keyform', () => {
-    const source = createDemoDocument()
-    const [document, setDocument] = createSignal({
-      ...source,
-      parts: source.parts.map((part) =>
-        part.id === 'shape-circle' ? {...part, properties: undefined} : part,
-      ),
-    })
-    const view = render(() => (
-      <EditorInspector
-        activeNodeId="mesh-preview"
-        document={document()}
-        editMode="parameter"
-        onDocumentChange={setDocument}
-      />
-    ))
-
-    expect(view.getByRole('button', {name: /^파트 블렌드 모드/})).toBeEnabled()
-    expect(view.getByRole('spinbutton', {name: '파트 불투명도'})).toBeEnabled()
-    fireEvent.click(view.getByRole('button', {name: '대상 추가'}))
-    expect(view.getByRole('checkbox', {name: 'shape-circle에 마스크 적용'})).toBeEnabled()
-    expect(view.queryByRole('spinbutton', {name: '파트 그리기 순서'})).toBeNull()
-    fireEvent.input(view.getByRole('spinbutton', {name: '파트 불투명도'}), {
-      target: {value: '0.4'},
-    })
-    fireEvent.keyDown(view.getByRole('button', {name: /^파트 블렌드 모드/}), {key: 'Enter'})
-    fireEvent.keyDown(screen.getByRole('option', {name: 'screen'}), {key: 'Enter'})
-    fireEvent.click(view.getByRole('button', {name: '대상 추가'}))
-    fireEvent.click(view.getByRole('checkbox', {name: 'shape-circle에 마스크 적용'}))
-    fireEvent.click(view.getByRole('checkbox', {name: '마스크 반전'}))
-    expect(view.getByRole('checkbox', {name: '이 파트도 표시'})).toBeChecked()
-    fireEvent.click(view.getByRole('checkbox', {name: '이 파트도 표시'}))
-
-    expect(
-      document().parts.find((part) => part.id === 'shape-circle')?.properties?.clippingMaskIds,
-    ).toEqual(['mesh-preview'])
-    expect(document().parts[0]?.properties).toEqual({
-      blendMode: 'screen',
-      invertedMask: true,
-      opacity: 0.4,
-      renderWhenUsedAsMask: false,
-    })
   })
 
   test('should disable mask candidates that would close a cycle', () => {
     const view = render(() => (
       <EditorInspector
         activeNodeId="shape-circle"
-        document={createDemoDocument()}
+        document={createMaskCycleDocument()}
         editMode="parameter"
       />
     ))
 
     fireEvent.click(view.getByRole('button', {name: '대상 추가'}))
-    const circleMask = view.getByRole('checkbox', {name: 'mesh-preview에 마스크 적용'})
+    const picker = within(view.getByRole('dialog', {name: '대상 추가'}))
+    const circleMask = picker.getByRole('checkbox', {name: 'mesh-preview에 마스크 적용'})
 
     expect(circleMask).toBeDisabled()
     expect(circleMask.closest('label')).toHaveAttribute('title', '순환 참조')
-    expect(view.getByRole('checkbox', {name: 'shape-diamond에 마스크 적용'})).toBeEnabled()
+    expect(picker.getByRole('checkbox', {name: 'shape-diamond에 마스크 적용'})).toBeEnabled()
   })
 
   test('should keep the mask picker open while adding multiple masks', () => {

@@ -2,6 +2,7 @@
 
 import {fireEvent, render, screen, waitFor, within} from '@solidjs/testing-library'
 import {afterEach, beforeEach, expect, it, vi} from 'vitest'
+import {createSignal} from 'solid-js'
 
 import {getLocale, overwriteGetLocale} from '@paraglide/runtime'
 import type {FeedDialogueListItem, PFeedController} from 'src/features/focus-room-feed'
@@ -273,4 +274,25 @@ it('should show an empty dialogue state, refresh feeds, and list unreadable item
   )
   fireEvent.click(screen.getByRole('button', {name: '지금 확인'}))
   expect(controller.syncNow).toHaveBeenCalledOnce()
+})
+
+it('should preserve the feed dialogue control and focus when listened metadata changes', () => {
+  const [dialogues, setDialogues] = createSignal<ReadonlyArray<FeedDialogueListItem>>([
+    FEED_DIALOGUE,
+  ])
+  const {controller: base} = createController()
+  render(() => <PFeedDialogueList controller={{...base, dialogues}} />)
+  const button = screen.getByRole('button', {name: '듣기'})
+  button.focus()
+  expect(document.activeElement).toBe(button)
+  setDialogues([
+    {
+      ...FEED_DIALOGUE,
+      metadata: {...FEED_DIALOGUE.metadata, listenedAt: '2026-08-14T01:00:00.000Z'},
+    },
+  ])
+  const nextButton = screen.getByRole('button', {name: '다시 듣기'})
+  expect(nextButton).toBe(button)
+  expect(button.isConnected).toBe(true)
+  expect(document.activeElement).toBe(nextButton)
 })

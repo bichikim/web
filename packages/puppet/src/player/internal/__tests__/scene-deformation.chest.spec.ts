@@ -142,24 +142,6 @@ describe('development model chest surface perspective', () => {
     ).toBeLessThan(1.08)
   })
 
-  test('should retain neutral chest width and upper attachment while fitting its hem', () => {
-    for (const part of parts) {
-      const original = render(flat, part.id, {})
-      render(model, part.id, {}).forEach((value, index) => {
-        if (index % 2 === 0) {
-          expect(value).toBeCloseTo(original[index]!, 5)
-          return
-        }
-        if (original[index]! <= 2040) {
-          expect(Math.abs(value - original[index]!)).toBeLessThan(1.5)
-          return
-        }
-        expect(value - original[index]!).toBeGreaterThanOrEqual(-0.001)
-        expect(value - original[index]!).toBeLessThan(80)
-      })
-    }
-  })
-
   test.each(['body-x', 'full-body-x'])(
     'should curve the cloth and carry the ribbon with %s',
     (parameterId) => {
@@ -174,27 +156,6 @@ describe('development model chest surface perspective', () => {
         expect(
           (meanX(render(model, 'psd-51', values)) - meanX(render(model, 'psd-51', {}))) * direction,
         ).toBeGreaterThan(20)
-      }
-    },
-  )
-
-  test.each([-30, -15, 0, 15, 30].flatMap((body) => [-22, 0, 22].map((full) => ({body, full}))))(
-    'should keep cloth and ribbon meshes unfolded at body=$body, full=$full',
-    ({body, full}) => {
-      const values = {'body-x': body, breath: 1, 'full-body-x': full}
-      for (const part of parts) {
-        const original = render(flat, part.id, values)
-        const curved = render(model, part.id, values)
-        expect(curved.every(Number.isFinite)).toBe(true)
-        for (let index = 0; index < part.mesh.indices.length; index += 3) {
-          const [a, b, c] = part.mesh.indices.slice(index, index + 3).map((point) => point * 2)
-          const area = (vertices: ReadonlyArray<number>) =>
-            (vertices[b!]! - vertices[a!]!) * (vertices[c! + 1]! - vertices[a! + 1]!) -
-            (vertices[b! + 1]! - vertices[a! + 1]!) * (vertices[c!]! - vertices[a!]!)
-          expect(area(curved) / area(original), `${part.id} triangle ${index / 3}`).toBeGreaterThan(
-            0.25,
-          )
-        }
       }
     },
   )

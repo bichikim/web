@@ -21,7 +21,6 @@ import {
 import {excludeMemoryMemoDialogues} from '../../features/memory-assist'
 import {SUPERTONIC_VOICES} from '../../features/supertonic'
 import * as m from '@paraglide/message'
-import {AutomaticDialogueSettings} from './AutomaticSettings'
 import {getDialogueEventActions, getDialogueEvents} from './event-definitions'
 import {DialogueConnectionMenu} from './ConnectionMenu'
 import {DelayedEndEventSettings} from './DelayedEndEventSettings'
@@ -89,12 +88,8 @@ const getDialogueMetadata = (dialogue: PDialogue) =>
     formatBubbleCount(dialogue.segments.length),
   ].join(' · ')
 
-export interface PDialogueSettingsContentProps {
-  readonly onRequestClose?: () => void
-}
-
 // oxlint-disable-next-line eslint/max-lines-per-function -- Both tabs share one repository and audio playback lifecycle.
-export function PDialogueSettingsContent(props: PDialogueSettingsContentProps) {
+export function PDialogueSettingsContent() {
   const events = usePEvents()
   const dialogueEvents = getDialogueEvents()
   const dialogueEventActions = getDialogueEventActions()
@@ -257,8 +252,6 @@ export function PDialogueSettingsContent(props: PDialogueSettingsContentProps) {
         <section class={CLASSES.dialogueSettings}>
           <DialogueVolumeDuckingSettings />
 
-          <AutomaticDialogueSettings />
-
           <PSettingsSectionHeading
             actions={
               <PSettingsActionLink class="ml-auto" href="/dialogue" icon="i-tabler-plus">
@@ -282,11 +275,7 @@ export function PDialogueSettingsContent(props: PDialogueSettingsContentProps) {
               when={libraryDialogues().length > 0}
               fallback={<PSettingsEmptyState>{m.settings_dialogue_empty()}</PSettingsEmptyState>}
             >
-              <DialogueLibrary
-                entries={libraryEntries()}
-                onDelete={handleLibraryDelete}
-                onRequestClose={props.onRequestClose}
-              />
+              <DialogueLibrary entries={libraryEntries()} onDelete={handleLibraryDelete} />
             </Show>
           </Show>
 

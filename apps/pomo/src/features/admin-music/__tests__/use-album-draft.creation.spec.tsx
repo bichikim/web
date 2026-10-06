@@ -151,6 +151,7 @@ it.each(['draft', 'reference'] as const)(
       await result.handleAlbumSubmit(createSubmitEvent().event)
       expect(storageMocks.deleteAlbumDraft).toHaveBeenCalledWith(
         failure === 'draft' ? COVER_DRAFT_ID : null,
+        {expectedDraft: createDraft({coverDraftId: COVER_DRAFT_ID, hasCoverFile: true})},
       )
       expect(storageMocks.deleteAlbumDraftCover).not.toHaveBeenCalled()
     } finally {

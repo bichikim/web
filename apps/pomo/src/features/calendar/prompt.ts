@@ -1,7 +1,7 @@
-import {z} from 'zod'
-
+import {parseAllDayDate} from './all-day-date'
+import {parseTimedInterval} from './parse-timed-interval'
 import {dayjs} from 'src/utils/zoned-dayjs'
-import {addDays, formatDate, parseDate} from '../civil-date'
+import {addDays, formatDate} from '../civil-date'
 import 'dayjs/locale/ko'
 import type {CalendarEvent} from './types'
 
@@ -16,26 +16,31 @@ const PROVIDER_LABELS = {
   microsoft: 'Microsoft',
 } as const
 
-const dateTimeSchema = z.iso.datetime({offset: true})
+const hasValidEventTimes = (event: CalendarEvent) => {
+  if (!event.allDay) {
+    return parseTimedInterval(event.start, event.end) !== null
+  }
 
-const hasValidEventTimes = (event: CalendarEvent) =>
-  event.allDay
-    ? parseDate(event.start) !== null && parseDate(event.end) !== null && event.start < event.end
-    : dateTimeSchema.safeParse(event.start).success && dateTimeSchema.safeParse(event.end).success
+  const startDate = parseAllDayDate(event.start)
+  const endDate = parseAllDayDate(event.end)
+  return startDate !== null && endDate !== null && formatDate(startDate) < formatDate(endDate)
+}
 
 const formatAllDayDate = (value: string) => {
-  const [year, month, day] = value.split('-').map(Number)
+  const [year, month, day] = value.slice(0, 'YYYY-MM-DD'.length).split('-').map(Number)
   return `${year}. ${month}. ${day}.`
 }
 
 const formatEventTime = (event: CalendarEvent, timeZone: string) => {
   if (event.allDay) {
-    const startDate = parseDate(event.start)
+    const startDate = parseAllDayDate(event.start)
+    const endDate = parseAllDayDate(event.end)
     const start = formatAllDayDate(event.start)
     if (
       startDate === null ||
-      event.end <= event.start ||
-      event.end === formatDate(addDays(startDate, 1))
+      endDate === null ||
+      formatDate(endDate) <= formatDate(startDate) ||
+      formatDate(endDate) === formatDate(addDays(startDate, 1))
     ) {
       return `${start} 종일`
     }

@@ -1,3 +1,4 @@
+import {replaceBlobObjectUrl} from 'src/features/blob-object-url'
 import type {DialogueSegment} from '../../features/focus-room-dialogue'
 import type {SupertonicModelId, SupertonicVoiceId} from '../../features/supertonic'
 
@@ -22,6 +23,6 @@ export const revokeLanguageLearningAudioUrls = (
   candidates: ReadonlyArray<LanguageLearningAudioUrl>,
 ) => {
   for (const candidate of candidates) {
-    URL.revokeObjectURL(candidate.audioUrl)
+    replaceBlobObjectUrl(candidate.audioUrl, () => null)
   }
 }

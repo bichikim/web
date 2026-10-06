@@ -259,55 +259,6 @@ describe('PDialogueEditor fields', () => {
     expect(screen.getByRole('heading', {name: 'Review speech bubbles'})).toBeInTheDocument()
   })
 
-  it('should render a new dialogue and update text, voice, language, model, and draft state', async () => {
-    const harness = createEditorHarness()
-    const result = renderEditor(harness)
-
-    expect(screen.getByRole('heading', {name: '새 대화 만들기'})).toBeInTheDocument()
-    expect(result.container.querySelector('main')).toHaveClass(
-      '[background:var(--pomo-editor-background)]',
-      'text-foreground',
-    )
-    expect(screen.getByRole('region', {name: '대사 입력'})).toHaveClass(
-      'border-border',
-      'bg-modal-surface',
-    )
-    expect(screen.getByRole('textbox', {name: /대사/}).closest('label')).toHaveClass(
-      '[&_textarea]:bg-surface-strong',
-      '[&_textarea]:text-foreground',
-    )
-    expect(screen.getByRole('link', {name: '앱으로 돌아가기'})).toHaveAttribute('href', '/')
-    expect(screen.getByText('음성을 만들면 구간별 텍스트와 시작 시간이 표시돼요.')).toBeVisible()
-    expect(screen.getByText('13 / 10000')).toBeInTheDocument()
-    expect(screen.getByTestId('download-consent')).toHaveAttribute('data-download-size', '123 MB')
-
-    fireEvent.input(screen.getByRole('textbox', {name: /대사/}), {
-      target: {value: '직접 입력'},
-    })
-    expect(harness.controller.setText).toHaveBeenCalledWith('직접 입력')
-
-    for (const [select, value] of [
-      [getVoiceSelect(), 'F1'],
-      [getLanguageSelect(), 'en'],
-      [getModelSelect(), 'int8'],
-    ] as const) {
-      fireEvent.keyDown(select, {key: 'ArrowDown'})
-      const option = document.querySelector(`[role="option"][data-key="${value}"]`)
-      expect(option).not.toBeNull()
-      fireEvent.click(option!)
-    }
-    expect(harness.controller.voiceId()).toBe('F1')
-    expect(harness.controller.language()).toBe('en')
-    expect(harness.controller.modelId()).toBe('int8')
-
-    fireEvent.click(screen.getByRole('button', {name: '초안 적용'}))
-    expect(harness.controller.setText).toHaveBeenCalledWith('생성된 대사')
-    fireEvent.click(screen.getByRole('button', {name: '초안 시작'}))
-    expect(screen.getByRole('textbox', {name: /대사/})).toBeDisabled()
-    fireEvent.click(screen.getByRole('button', {name: '초안 종료'}))
-    await waitFor(() => expect(screen.getByRole('textbox', {name: /대사/})).toBeEnabled())
-  })
-
   it('should render the edit heading for an existing dialogue', () => {
     renderEditor(createEditorHarness(), 'dialogue-1')
 
@@ -458,7 +409,7 @@ describe('PDialogueEditor audio generation', () => {
     expect(getGenerateButton()).toBeEnabled()
   })
 
-  it('should report audio download errors and ignore a download completing after disposal', async () => {
+  it('should report a failed audio model download', async () => {
     const modelDownload = createModelDownload()
     vi.mocked(modelDownload.startVoiceModel).mockResolvedValue({
       message: '음성 모델을 내려받지 못했어요.',
@@ -478,8 +429,13 @@ describe('PDialogueEditor audio generation', () => {
       ),
     )
     errorView.unmount()
+  })
 
+  it('should report when an audio model download is cancelled', async () => {
+    const modelDownload = createModelDownload()
     vi.mocked(modelDownload.startVoiceModel).mockResolvedValueOnce({status: 'cancelled'})
+    vi.mocked(useModelDownload).mockReturnValue(modelDownload)
+    vi.mocked(isSupertonicModelDownloaded).mockResolvedValue(false)
     const cancelledHarness = createEditorHarness()
     const cancelledView = renderEditor(cancelledHarness)
     fireEvent.click(getGenerateButton())
@@ -487,7 +443,12 @@ describe('PDialogueEditor audio generation', () => {
     fireEvent.click(screen.getByRole('button', {name: '다운로드 확인'}))
     await waitFor(() => expect(screen.getByTestId('generation-status')).toHaveTextContent('준비됨'))
     cancelledView.unmount()
+  })
 
+  it('should ignore an audio model download completing after disposal', async () => {
+    const modelDownload = createModelDownload()
+    vi.mocked(useModelDownload).mockReturnValue(modelDownload)
+    vi.mocked(isSupertonicModelDownloaded).mockResolvedValue(false)
     let resolveDownload: ((result: ModelDownloadResult) => void) | undefined
     vi.mocked(modelDownload.startVoiceModel).mockImplementationOnce(
       () =>

@@ -2,7 +2,7 @@
 import {getErrorMessage} from 'src/utils/get-error-message'
 
 import type {FeedGenerationSettings} from './generation-settings'
-import type {FeedConnection} from './schema'
+import {type FeedConnection, normalizeFeedDocumentUrl} from './schema'
 import {
   type FeedDialogueJob,
   type FeedItemRecord,
@@ -115,10 +115,15 @@ interface ResolveContentOptions {
 }
 
 const getDocumentUrl = (value: string) => {
-  const url = new URL(value)
-  url.hash = ''
-  url.pathname = url.pathname.replace(/\/$/u, '') || '/'
-  return url.href
+  const documentUrl = normalizeFeedDocumentUrl(new URL(value))
+  documentUrl.hostname = documentUrl.hostname.replace(/^www\./u, '')
+  documentUrl.search = ''
+
+  if (documentUrl.protocol === 'https:') {
+    documentUrl.protocol = 'http:'
+  }
+
+  return documentUrl.href
 }
 const resolveContent = async (options: ResolveContentOptions) => {
   const feedContent = cleanFeedText(options.item.content)
@@ -309,13 +314,29 @@ const synchronizeConnection = async (
   const feed = parseFeedXml(xml, connection.url)
   const storedItems = await options.repository.listItems(connection.id)
   const storedIds = new Set(storedItems.map((item) => item.feedItemId))
+  const matchedLegacyIds = new Set<string>()
   const isFirstSync = storedItems.length === 0
   const firstUndatedFeedItem = isFirstSync
     ? feed.items.find((item) => item.publishedAt === null)
     : undefined
-  const unseenItems = sortItems(feed.items.filter((item) => !storedIds.has(item.id))).slice(
-    -MAXIMUM_ITEMS_PER_SYNC,
-  )
+  const unseenItems = sortItems(
+    feed.items.filter((item) => {
+      const isStoredItem = storedIds.has(item.id)
+      const isStoredLegacyItem =
+        item.legacyId !== undefined &&
+        storedIds.has(item.legacyId) &&
+        !matchedLegacyIds.has(item.legacyId)
+
+      if (isStoredItem || isStoredLegacyItem) {
+        if (item.legacyId !== undefined) {
+          matchedLegacyIds.add(item.legacyId)
+        }
+        return false
+      }
+
+      return true
+    }),
+  ).slice(-MAXIMUM_ITEMS_PER_SYNC)
 
   if (unseenItems.length === 0) {
     return []

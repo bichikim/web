@@ -1,3 +1,4 @@
+import {numericallyStableSoftmax} from 'src/utils/numerically-stable-softmax'
 import {clamp} from 'es-toolkit/math'
 import classifierArtifact from './classifier-artifact.json'
 import type {
@@ -153,13 +154,6 @@ const validateEmbedding = (embedding: ReadonlyArray<number>) => {
   }
 }
 
-const softmax = (values: ReadonlyArray<number>) => {
-  const maximum = Math.max(...values)
-  const exponentials = values.map((value) => Math.exp(value - maximum))
-  const total = exponentials.reduce((sum, value) => sum + value, 0)
-  return exponentials.map((value) => value / total)
-}
-
 const sigmoid = (value: number) => 1 / (1 + Math.exp(-clamp(value, -SIGMOID_LIMIT, SIGMOID_LIMIT)))
 
 const getLinearScore = (
@@ -188,7 +182,7 @@ const getPrimaryScores = (embedding: ReadonlyArray<number>) => {
         index * TEXT_MOOD_MODEL.dimension,
       ) / ARTIFACT.temperature,
   }))
-  const probabilities = softmax(logits.map(({logit}) => logit))
+  const probabilities = numericallyStableSoftmax(logits.map(({logit}) => logit))
 
   return logits
     .map(({id}, index) => ({id, probability: probabilities[index]}))

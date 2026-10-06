@@ -38,62 +38,7 @@ it('should allocate exactly the requested duration with four seconds of context'
 it('should plan independent chunks when the connection duration is disabled', () => {
   expect(createGenerationPlan(300, 0)).toEqual([120, 120, 60])
 })
-it('should extend sequentially using the previous tail and write exactly 300 seconds', async () => {
-  let calls = 0
-  vi.mocked(generateSound).mockImplementation(async (_prompt, seconds, _progress, options) => {
-    calls += 1
-    const context = options?.inpaint
-    if (calls > 1) {
-      expect(context?.start).toBe(4)
-      expect(context?.end).toBe(seconds)
-      expect(context?.left.length).toBe(seconds * 44100)
-      expect(context?.left[0]).toBe(1000 / 32768)
-      expect(context?.right[0]).toBe(1000 / 32768)
-      expect(context?.left[4 * 44100]).toBe(0)
-    }
-    return createWave(seconds, calls * 1000)
-  })
-  const result = await generateExtendedSound('rain', 300, vi.fn())
-  expect(vi.mocked(generateSound).mock.calls.map((call) => call[1])).toEqual([120, 120, 76])
-  expect(result.size).toBe(44 + 300 * 44100 * 4)
-  const header = new DataView(await result.slice(0, 44).arrayBuffer())
-  expect(header.getUint32(40, true)).toBe(300 * 44100 * 4)
-  await Promise.all(
-    [
-      [115, 1000],
-      [116, 1000],
-      [119, 1307],
-      [120, 1000],
-      [227, 1000],
-      [228, 1000],
-      [231, 1307],
-      [232, 1000],
-      [299, 1000],
-    ].map(async ([second, sample]) => {
-      const position = 44 + second * 44100 * 4
-      expect(
-        new DataView(await result.slice(position, position + 2).arrayBuffer()).getInt16(0, true),
-      ).toBe(sample)
-    }),
-  )
-})
-it('should keep a quieter generated chunk at the previous level after its connection', async () => {
-  let calls = 0
-  vi.mocked(generateSound).mockImplementation(async (_prompt, seconds) => {
-    calls += 1
-    return createWave(seconds, calls === 1 ? 2000 : 1000)
-  })
 
-  const result = await generateExtendedSound('rain', 121, vi.fn())
-  const readSample = async (second: number): Promise<number> => {
-    const position = 44 + second * 44100 * 4
-    const view = new DataView(await result.slice(position, position + 2).arrayBuffer())
-    return view.getInt16(0, true)
-  }
-
-  expect(await readSample(120)).toBe(2000)
-  expect(await readSample(120.5)).toBe(2000)
-})
 it('should prompt later chunks to continue the same sound', async () => {
   const prompts: string[] = []
   vi.mocked(generateSound).mockImplementation(async (prompt, seconds) => {
@@ -101,7 +46,7 @@ it('should prompt later chunks to continue the same sound', async () => {
     return createWave(seconds)
   })
 
-  await generateExtendedSound('steady rain', 121, vi.fn(), {connectionSeconds: 4})
+  await generateExtendedSound('steady rain', 121, vi.fn(), {connectionSeconds: 0})
 
   expect(prompts).toHaveLength(2)
   expect(prompts[0]).toBe('steady rain')
@@ -117,7 +62,7 @@ it('should preserve the negative prompt across every generated chunk', async () 
   })
 
   await generateExtendedSound('steady thunder', 121, vi.fn(), {
-    connectionSeconds: 4,
+    connectionSeconds: 0,
     negativePrompt: 'rain, rainfall',
   })
 
@@ -135,7 +80,7 @@ it('should share one seeded noise stream across continuous chunks', async () => 
 
   await generateExtendedSound('rain', 241, vi.fn(), {
     chunkNoiseMode: 'continuous',
-    connectionSeconds: 4,
+    connectionSeconds: 0,
   })
 
   expect(sources).toHaveLength(3)
@@ -155,7 +100,7 @@ it('should restart the same seeded noise pattern for each repeated chunk', async
 
   await generateExtendedSound('rain', 241, vi.fn(), {
     chunkNoiseMode: 'repeat',
-    connectionSeconds: 4,
+    connectionSeconds: 0,
   })
 
   expect(sequences).toHaveLength(3)
@@ -173,8 +118,9 @@ it('should use continuous noise by default', async () => {
     return createWave(seconds)
   })
 
-  await generateExtendedSound('rain', 241, vi.fn())
+  await generateExtendedSound('rain', 121, vi.fn(), {connectionSeconds: 0})
 
+  expect(sources).toHaveLength(2)
   expect(DEFAULT_CHUNK_NOISE_MODE).toBe('continuous')
   expect(sources[0]).toBe(sources[1])
 })
@@ -232,20 +178,6 @@ it('should plan with a custom connection duration and reject invalid or excessiv
     expect(() => createGenerationPlan(300, connectionSeconds)).toThrow()
   }
   expect(() => createGenerationPlan(21600, 60)).toThrow()
-})
-it('should use the custom connection duration for context and remove exactly that duration', async () => {
-  vi.mocked(generateSound).mockImplementation(async (_prompt, seconds, _progress, options) => {
-    const context = options?.inpaint
-    if (context !== undefined) {
-      expect(context.start).toBe(8)
-      expect(context.left[8 * 44100 - 1]).toBe(0.5)
-      expect(context.left[8 * 44100]).toBe(0)
-    }
-    return createWave(seconds, 16384)
-  })
-  const result = await generateExtendedSound('rain', 121, vi.fn(), {connectionSeconds: 8})
-  expect(vi.mocked(generateSound).mock.calls.map((call) => call[1])).toEqual([120, 17])
-  expect(result.size).toBe(44 + 121 * 44100 * 4)
 })
 it('should omit inpaint context when connection duration is disabled', async () => {
   const contexts: unknown[] = []

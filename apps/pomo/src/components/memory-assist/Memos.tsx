@@ -1,6 +1,7 @@
-import {createSignal, For, Show} from 'solid-js'
+import {createSignal, Show} from 'solid-js'
 
 import * as m from '@paraglide/message'
+import {KeyedList} from '../keyed-list'
 import {usePEvents} from '../../features/focus-room-dialogue'
 import {
   editMemoryMemo,
@@ -99,16 +100,16 @@ export const MemoryMemoList = () => {
         when={memos().length > 0}
       >
         <ul class="m-0 grid max-h-[21rem] list-none gap-2 overflow-y-auto p-0 pr-1">
-          <For each={memos()}>
+          <KeyedList each={memos()} by={(memo) => `${memo.id}:${memo.createdAt}`}>
             {(memo) => (
               <MemoryMemoItem
-                memo={memo}
+                memo={memo()}
                 onDelete={handleDelete}
                 onEditStart={() => setMessage(null)}
                 onSave={handleEdit}
               />
             )}
-          </For>
+          </KeyedList>
         </ul>
       </Show>
 

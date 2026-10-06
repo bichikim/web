@@ -11,6 +11,7 @@ interface UseReplySpeechQueueOptions {
   readonly isEnabled?: Accessor<boolean>
   readonly isOccupied: Accessor<boolean>
   readonly isDialogueOccupied?: Accessor<boolean>
+  readonly speechRevision?: Accessor<number>
   readonly speak: (text: string) => Promise<void>
   readonly stop: () => void
 }
@@ -23,6 +24,7 @@ export const useReplySpeechQueue = (options: UseReplySpeechQueueOptions) => {
   const [requests, setRequests] = createSignal<ReadonlyArray<ReplySpeechRequest>>([])
   const [isSpeaking, setIsSpeaking] = createSignal(false)
   let activeRequest: ReplySpeechRequest | null = null
+  let activeSpeechRevision: number | undefined
   let disposed = false
 
   const isEnabled = () => options.isEnabled?.() ?? true
@@ -44,6 +46,7 @@ export const useReplySpeechQueue = (options: UseReplySpeechQueueOptions) => {
     }
 
     activeRequest = null
+    activeSpeechRevision = undefined
     if (!disposed) {
       setIsSpeaking(false)
     }
@@ -51,7 +54,9 @@ export const useReplySpeechQueue = (options: UseReplySpeechQueueOptions) => {
 
   const runRequest = async (request: ReplySpeechRequest) => {
     try {
-      await untrack(() => options.speak(request.text))
+      const speech = untrack(() => options.speak(request.text))
+      activeSpeechRevision = options.speechRevision?.()
+      await speech
       request.resolve()
     } catch (error: unknown) {
       request.reject(error)
@@ -70,19 +75,27 @@ export const useReplySpeechQueue = (options: UseReplySpeechQueueOptions) => {
     const error = createCancelledError()
     pendingRequests.forEach((request) => request.reject(error))
   }
-  const cancelActiveRequest = () => {
+  const rejectActiveRequest = () => {
     const request = activeRequest
 
     if (request === null) {
-      return
+      return false
     }
 
     if (request.cancelled) {
-      return
+      return false
     }
 
     request.cancelled = true
     request.reject(createCancelledError())
+    return true
+  }
+
+  const cancelActiveRequest = () => {
+    if (!rejectActiveRequest()) {
+      return
+    }
+
     options.stop()
   }
 
@@ -91,6 +104,16 @@ export const useReplySpeechQueue = (options: UseReplySpeechQueueOptions) => {
     const [request] = requests()
     const occupied = options.isOccupied()
     const isDialogueOccupied = options.isDialogueOccupied?.() ?? false
+    const speechRevision = options.speechRevision?.()
+    const isSpeechSuperseded =
+      activeRequest !== null &&
+      activeSpeechRevision !== undefined &&
+      speechRevision !== undefined &&
+      activeSpeechRevision !== speechRevision
+
+    if (isSpeechSuperseded) {
+      rejectActiveRequest()
+    }
 
     if (!enabled) {
       const shouldCancelActiveRequest = wasEnabled
@@ -104,6 +127,9 @@ export const useReplySpeechQueue = (options: UseReplySpeechQueueOptions) => {
 
     wasEnabled = true
     if (isDialogueOccupied) {
+      cancelActiveRequest()
+    }
+    if (occupied && options.speechRevision === undefined) {
       cancelActiveRequest()
     }
     if (request === undefined || isSpeaking() || occupied) {

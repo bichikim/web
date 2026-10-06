@@ -1,3 +1,4 @@
+import {KeyedList} from '../keyed-list'
 import {cx} from 'class-variance-authority'
 import {createMemo, createSignal, For, Show} from 'solid-js'
 
@@ -116,16 +117,25 @@ const SECONDS_PER_MINUTE = 60
 const MILLISECONDS_PER_SECOND = 1000
 const HOUR_MS = MINUTES_PER_HOUR * SECONDS_PER_MINUTE * MILLISECONDS_PER_SECOND
 const DIALOGUE_PAGE_SIZE = 20
+const publishedAtFormatters = new Map<string, Intl.DateTimeFormat>()
 
 export interface PFeedDialogueListProps {
   readonly controller: PFeedController
 }
 
-const formatPublishedAt = (value: string) =>
-  new Intl.DateTimeFormat(getLocale() === 'ko' ? 'ko-KR' : 'en-US', {
-    dateStyle: 'medium',
-    timeStyle: 'short',
-  }).format(new Date(value))
+const getPublishedAtFormatter = () => {
+  const locale = getLocale() === 'ko' ? 'ko-KR' : 'en-US'
+  const cached = publishedAtFormatters.get(locale)
+  if (cached) {
+    return cached
+  }
+
+  const formatter = new Intl.DateTimeFormat(locale, {dateStyle: 'medium', timeStyle: 'short'})
+  publishedAtFormatters.set(locale, formatter)
+  return formatter
+}
+
+const formatPublishedAt = (value: string) => getPublishedAtFormatter().format(new Date(value))
 
 const formatRemaining = (value: string) => {
   const hours = Math.max(0, Math.ceil((Date.parse(value) - Date.now()) / HOUR_MS))
@@ -184,40 +194,41 @@ export const PFeedDialogueList = (props: PFeedDialogueListProps) => {
         fallback={<p class={CLASSES.feedSettingsEmpty}>{m.settings_feed_empty()}</p>}
       >
         <ul aria-labelledby="pomo-feed-dialogues-title" class={CLASSES.feedSettingsDialogueList}>
-          <For each={visibleDialogues()}>
+          <KeyedList each={visibleDialogues()} by={(item) => item.dialogue.id}>
             {(item) => (
               <li>
                 <span class={CLASSES.feedSettingsDialogueCopy}>
-                  <strong>{item.metadata.itemTitle}</strong>
+                  <strong>{item().metadata.itemTitle}</strong>
                   <small>
-                    {item.metadata.sourceTitle} · {formatPublishedAt(item.metadata.publishedAt)} ·{' '}
+                    {item().metadata.sourceTitle} · {formatPublishedAt(item().metadata.publishedAt)}{' '}
+                    ·{' '}
                     <span
                       class={CLASSES.feedSettingsListenedState}
-                      data-listened={item.metadata.listenedAt === null ? undefined : ''}
+                      data-listened={item().metadata.listenedAt === null ? undefined : ''}
                     >
-                      {item.metadata.listenedAt === null
+                      {item().metadata.listenedAt === null
                         ? m.settings_feed_not_listened()
                         : m.settings_feed_listened()}
                     </span>{' '}
-                    · {formatRemaining(item.metadata.expiresAt)}
+                    · {formatRemaining(item().metadata.expiresAt)}
                   </small>
                 </span>
                 <span class={CLASSES.feedSettingsDialogueActions}>
-                  <button onClick={() => handleListen(item.dialogue.id)} type="button">
-                    {item.metadata.listenedAt === null
+                  <button onClick={() => handleListen(item().dialogue.id)} type="button">
+                    {item().metadata.listenedAt === null
                       ? m.settings_feed_listen()
                       : m.settings_feed_listen_again()}
                   </button>
                   <Show
-                    when={pendingDeleteId() === item.dialogue.id}
+                    when={pendingDeleteId() === item().dialogue.id}
                     fallback={
                       <button
                         aria-label={m.settings_feed_dialogue_delete_label({
-                          title: item.metadata.itemTitle,
+                          title: item().metadata.itemTitle,
                         })}
                         onClick={() => {
                           setDeleteError(null)
-                          setPendingDeleteId(item.dialogue.id)
+                          setPendingDeleteId(item().dialogue.id)
                         }}
                         type="button"
                       >
@@ -230,10 +241,10 @@ export const PFeedDialogueList = (props: PFeedDialogueListProps) => {
                     </button>
                     <button
                       aria-label={m.settings_feed_dialogue_delete_confirm_label({
-                        title: item.metadata.itemTitle,
+                        title: item().metadata.itemTitle,
                       })}
                       data-pomo-feed-delete-confirm=""
-                      onClick={() => handleDelete(item.dialogue.id)}
+                      onClick={() => handleDelete(item().dialogue.id)}
                       type="button"
                     >
                       {m.settings_feed_delete_confirm()}
@@ -242,7 +253,7 @@ export const PFeedDialogueList = (props: PFeedDialogueListProps) => {
                 </span>
               </li>
             )}
-          </For>
+          </KeyedList>
         </ul>
         <Show when={hiddenDialogueCount() > 0}>
           <button

@@ -14,6 +14,10 @@ import {
   usePAudioVisualizer,
   usePPlaybackPersistence,
 } from '../../features/focus-room-audio'
+import {
+  createLegacyPlaylistEntryIds,
+  hasValidPlaylistEntryIds,
+} from '../../features/focus-room-audio/playlist-entry'
 import {usePlayerVolumeDucking} from '../../features/focus-room-dialogue'
 import type {MediaPlayerOptions, PlayerState, SelectTrackOptions} from './types'
 import {createPlayerQueueController} from './create-player-queue-controller'
@@ -58,11 +62,26 @@ export const usePlayerController = (props: UsePlayerControllerProps): PlayerCont
   const initialTracks = untrack(() => props.tracks ?? [])
   const initialState = createInitialPlaybackState({trackCount: initialTracks.length})
   const [loadedTracks, setLoadedTracks] = createSignal<readonly PTrack[]>(initialTracks)
+  const [loadedEntryIds, setLoadedEntryIds] = createSignal<readonly string[]>(
+    createLegacyPlaylistEntryIds(initialTracks.map((track) => track.id)),
+  )
   const [isPlaylistLoading, setIsPlaylistLoading] = createSignal(props.tracks === undefined)
   const [isPreparing, setIsPreparing] = createSignal(false)
   const tracks = () => props.tracks ?? loadedTracks()
   const [currentIndexValue, setCurrentIndex] = createSignal(initialState.currentIndex)
   const currentIndex = createMemo(() => clampTrackIndex(currentIndexValue(), tracks().length))
+  const queueEntryIds = createMemo(() => {
+    const currentTracks = tracks()
+    const entryIds = loadedEntryIds()
+    return props.tracks === undefined &&
+      hasValidPlaylistEntryIds(
+        currentTracks.map((track) => track.id),
+        entryIds,
+      )
+      ? entryIds
+      : createLegacyPlaylistEntryIds(currentTracks.map((track) => track.id))
+  })
+  const currentQueueEntryId = createMemo(() => queueEntryIds()[currentIndex()])
   const visualizer = usePAudioVisualizer()
   usePlayerVolumeDucking({
     isDialogueActive: () => props.isDialogueActive ?? false,
@@ -111,6 +130,7 @@ export const usePlayerController = (props: UsePlayerControllerProps): PlayerCont
   const {isPlaying} = playback
   const playbackPersistence = usePPlaybackPersistence({
     currentIndex,
+    currentQueueEntryId,
     currentTrack,
     getAudioElement: props.element,
     isPlaying,
@@ -158,8 +178,8 @@ export const usePlayerController = (props: UsePlayerControllerProps): PlayerCont
         ? usePreference({...playlistPreference, onError: handleStorageError})
         : [() => null, () => undefined],
   )
-  const persistTrackQueue = (queue: readonly PTrack[]) => {
-    setSavedPlaylist({trackIds: queue.map((track) => track.id)})
+  const persistTrackQueue = (queue: readonly PTrack[], entryIds: readonly string[]) => {
+    setSavedPlaylist({entryIds, trackIds: queue.map((track) => track.id)})
   }
   const clearPendingRestart = () => {
     restartPlaybackPending = false
@@ -234,9 +254,11 @@ export const usePlayerController = (props: UsePlayerControllerProps): PlayerCont
     prepareTrackChange,
     previewPlayback,
     readCurrentIndex: currentIndex,
+    readQueueEntryIds: queueEntryIds,
     readTracks: tracks,
     restorePendingPlayback,
     setCurrentIndex,
+    setLoadedEntryIds,
     setLoadedTracks,
     visualizer,
   })
@@ -260,6 +282,9 @@ export const usePlayerController = (props: UsePlayerControllerProps): PlayerCont
       positionSeconds: 0,
       trackId: nextTrack.id,
       trackIndex: nextIndex,
+      ...(queueEntryIds()[nextIndex] === undefined
+        ? {}
+        : {queueEntryId: queueEntryIds()[nextIndex]}),
     }
     cancelPendingRestart()
     prepareTrackChange(shouldResume, nextTrack.id)
@@ -333,6 +358,7 @@ export const usePlayerController = (props: UsePlayerControllerProps): PlayerCont
       playbackPersistence.writePlayback({
         isPlaying: true,
         positionSeconds: 0,
+        ...(currentQueueEntryId() === undefined ? {} : {queueEntryId: currentQueueEntryId()}),
         trackId: track.id,
         trackIndex: currentIndex(),
       })
@@ -372,6 +398,7 @@ export const usePlayerController = (props: UsePlayerControllerProps): PlayerCont
           : {
               isPlaying: true,
               positionSeconds,
+              ...(currentQueueEntryId() === undefined ? {} : {queueEntryId: currentQueueEntryId()}),
               trackId: transition.trackId,
               trackIndex: currentIndex(),
             },
@@ -498,6 +525,7 @@ export const usePlayerController = (props: UsePlayerControllerProps): PlayerCont
     play: playback.play,
     previewPlayback,
     removeTrackFromQueue: queueController.removeTrackFromQueue,
+    reorderTrackInQueue: queueController.reorderTrackInQueue,
     repeatMode: order.repeatMode,
     seek: playback.seek,
     selectChosenTrack: order.selectChosenTrack,

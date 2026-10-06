@@ -5,24 +5,39 @@ import type {PuppetParameterValues} from '../../deformation'
 import {getParameterPresentation} from './parameter-presentation'
 import {getDocumentParameterBindings, getParameterBindingsForNodeIds} from './parameter-keyforms'
 import {EditorKeyformPanel} from './EditorKeyformPanel'
-import {EditorPhysicsProperties} from './EditorPhysicsProperties'
 interface EditorModelingKeyformPanelProps {
   readonly document: PuppetDocument
   readonly editor: ParameterEditorResult
-  readonly onDocumentChange?: (document: PuppetDocument) => void
   readonly onEditEnd?: () => void
   readonly onEditStart?: () => void
-  readonly onPhysicsPreviewChange?: (enabled: boolean) => void
-  readonly onPhysicsReset?: () => void
-  readonly physicsPreview?: boolean
   readonly selectedNodeIds: ReadonlyArray<string>
   readonly setBrushControlsMount?: (element: HTMLDivElement | undefined) => void
 }
 export const EditorModelingKeyformPanel = (props: EditorModelingKeyformPanelProps) => {
-  const bindings = () =>
-    props.editor.allParametersVisible()
-      ? getDocumentParameterBindings(props.document)
-      : getParameterBindingsForNodeIds(props.document, props.selectedNodeIds)
+  const bindings = () => {
+    const allBindings = getDocumentParameterBindings(props.document)
+    if (props.editor.allParametersVisible()) {
+      return allBindings
+    }
+    const selectedIds = new Set(props.selectedNodeIds)
+    const linkedIds = new Set(
+      (props.document.layerOrderRules ?? [])
+        .filter(
+          (rule) =>
+            rule.partIds.some((id) => selectedIds.has(id)) || selectedIds.has(rule.referencePartId),
+        )
+        .flatMap((rule) => rule.when.parameterIds),
+    )
+    const deformationIds = new Set(
+      getParameterBindingsForNodeIds(props.document, props.selectedNodeIds).map(
+        (binding) => binding.id,
+      ),
+    )
+    return allBindings.filter(
+      (binding) =>
+        deformationIds.has(binding.id) || binding.parameterIds.some((id) => linkedIds.has(id)),
+    )
+  }
   const presentation = createMemo(() => getParameterPresentation(props.document, bindings()))
   const handleValueChange = (values: PuppetParameterValues) => {
     const bindingId = props.editor.activeBindingId()
@@ -43,24 +58,16 @@ export const EditorModelingKeyformPanel = (props: EditorModelingKeyformPanelProp
       props.editor.activeBindingId() ?? '',
       props.editor.parameterValues(),
     )
-  const physicsConnectionCount = (parameterIds: ReadonlyArray<string>) =>
-    (props.document.physics?.pendulums ?? []).filter((pendulum) =>
-      parameterIds.includes(pendulum.inputParameterId),
-    ).length
   return (
     <EditorKeyformPanel
       setBrushControlsMount={props.setBrushControlsMount}
       influence={props.editor.influence()}
-      onInfluencesChange={props.editor.setInfluences}
       activeBindingId={props.editor.activeBindingId() ?? undefined}
       activeKeyformValues={props.editor.activeKeyformValues()}
       allParametersVisible={props.editor.allParametersVisible()}
       bindings={presentation().bindings}
       parameters={presentation().parameters}
       previewBindingIds={presentation().previewBindingIds}
-      getBindingSettingsLabel={(_, parameters) =>
-        `물리 ${physicsConnectionCount(parameters.map((parameter) => parameter.id))}`
-      }
       parameterCreationAvailable={props.selectedNodeIds.length > 0}
       parameterValueMap={props.editor.parameterValueMap()}
       selectedPartIds={props.selectedNodeIds}
@@ -90,12 +97,6 @@ export const EditorModelingKeyformPanel = (props: EditorModelingKeyformPanelProp
       onAllParametersVisibleChange={props.editor.setAllParametersVisible}
       onTwoDimensionalParameterAdd={props.editor.addTwoDimensionalParameter}
       onValueChange={handleValueChange}
-      renderBindingSettings={(_, parameters) => (
-        <EditorPhysicsProperties
-          inputParameterIds={parameters.map((parameter) => parameter.id)}
-          source={props}
-        />
-      )}
     />
   )
 }

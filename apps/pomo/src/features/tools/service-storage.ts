@@ -42,6 +42,36 @@ export interface CreateServiceSettingsStorageOptions {
   readonly reportRepairError: (error: unknown) => void
 }
 
+interface RestoreWebServiceSettingsOptions {
+  readonly reportRepairError: (error: unknown) => void
+  readonly settings: ServiceSettings
+  readonly storage: ToolStorageAdapter
+  readonly usesTossStorage: boolean
+}
+const restoreWebServiceSettings = async (
+  options: RestoreWebServiceSettingsOptions,
+): Promise<ServiceSettings> => {
+  const {reportRepairError, settings, storage, usesTossStorage} = options
+  const legacyStart = settings.start === '' ? storage.readWeb(LEGACY_KEY, parseStart) : null
+  let shouldRepairNativeSettings = true
+  let nativeStart: string | null = null
+  if (usesTossStorage && settings.start === '' && legacyStart === null) {
+    try {
+      const nativeSettings = await storage.readToss(STORAGE_KEY, parseSettings)
+      nativeStart = nativeSettings?.start || (await storage.readToss(LEGACY_KEY, parseStart))
+    } catch (error) {
+      shouldRepairNativeSettings = false
+      reportRepairError(error)
+    }
+  }
+  const restoredStart = legacyStart ?? nativeStart
+  const restoredSettings = restoredStart === null ? settings : {...settings, start: restoredStart}
+  if (usesTossStorage && shouldRepairNativeSettings) {
+    await storage.writeToss(STORAGE_KEY, restoredSettings).catch(reportRepairError)
+  }
+  return restoredSettings
+}
+
 /** Reads and writes service settings, including legacy start dates. */
 export const createServiceSettingsStorage = (
   options: CreateServiceSettingsStorageOptions,
@@ -51,13 +81,12 @@ export const createServiceSettingsStorage = (
     const usesTossStorage = storage.usesTossStorage()
     const webSettings = storage.readWeb(STORAGE_KEY, parseSettings)
     if (webSettings !== null) {
-      const legacyStart = webSettings.start === '' ? storage.readWeb(LEGACY_KEY, parseStart) : null
-      const restoredSettings =
-        legacyStart === null ? webSettings : {...webSettings, start: legacyStart}
-      if (usesTossStorage) {
-        await storage.writeToss(STORAGE_KEY, restoredSettings).catch(reportRepairError)
-      }
-      return restoredSettings
+      return restoreWebServiceSettings({
+        reportRepairError,
+        settings: webSettings,
+        storage,
+        usesTossStorage,
+      })
     }
     const legacySettings = () => ({
       ...DEFAULT_SERVICE_SETTINGS,
@@ -68,9 +97,17 @@ export const createServiceSettingsStorage = (
     }
     const tossSettings = await storage.readToss(STORAGE_KEY, parseSettings)
     if (tossSettings !== null) {
+      const legacyStart =
+        tossSettings.start === ''
+          ? legacySettings().start || (await storage.readToss(LEGACY_KEY, parseStart))
+          : tossSettings.start
+      const restoredSettings =
+        legacyStart === null || legacyStart === tossSettings.start
+          ? tossSettings
+          : {...tossSettings, start: legacyStart}
       // Keep the settings available when the Toss bridge disappears before the next read.
-      storage.writeWeb(STORAGE_KEY, tossSettings)
-      return tossSettings
+      storage.writeWeb(STORAGE_KEY, restoredSettings)
+      return restoredSettings
     }
     const webLegacy = legacySettings()
     if (webLegacy.start !== '') {

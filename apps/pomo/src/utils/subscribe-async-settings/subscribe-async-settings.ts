@@ -25,7 +25,11 @@ export const subscribeAsyncSettings = <Value>(
       options.onChange(value)
     }
   }
-  const unsubscribe = subscribeEvent(options.target, options.eventName, handleChange)
+  const unsubscribe = subscribeEvent(options.target, options.eventName, handleChange, {
+    onUnsubscribe: () => {
+      disposed = true
+    },
+  })
   const initialRevision = revision
   options
     .read()
@@ -34,9 +38,10 @@ export const subscribeAsyncSettings = <Value>(
         options.onChange(value)
       }
     })
-    .catch(options.onError)
-  return () => {
-    disposed = true
-    unsubscribe()
-  }
+    .catch((error: unknown) => {
+      if (!disposed && revision === initialRevision) {
+        options.onError(error)
+      }
+    })
+  return unsubscribe
 }

@@ -137,9 +137,7 @@ export const useEditorImports = (props: UseEditorImportsProps) => {
         props.onDocumentChange(next.document)
         setRevision((value) => value + 1)
       }
-      props.onNotice(
-        `${file.name}: ${mode === 'append' ? '기존 문서에 추가했습니다.' : '문서를 교체했습니다.'} 실행 취소로 복원할 수 있습니다. ${result.notice}`,
-      )
+      props.onNotice(result.notice || null)
     } catch {
       if (current === generation) {
         props.onNotice(isExample ? '예제를 불러오지 못했습니다.' : '파일을 읽지 못했습니다.')

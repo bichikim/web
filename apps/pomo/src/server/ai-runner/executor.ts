@@ -1,3 +1,4 @@
+import {isObject} from 'src/utils/is-object'
 // oxlint-disable eslint-js/camelcase -- Transformers.js generation options are external contracts.
 // oxlint-disable no-magic-numbers -- Model generation defaults and progress phases are operational constants.
 import {
@@ -61,11 +62,8 @@ const SPEECH_MODELS = {
   'whisper-tiny': 'onnx-community/whisper-tiny',
 } as const
 
-const isRecord = (value: unknown): value is Record<string, unknown> =>
-  typeof value === 'object' && value !== null && !Array.isArray(value)
-
 const getStringValue = (value: unknown, key: string): string => {
-  if (!isRecord(value) || typeof value[key] !== 'string') {
+  if (!isObject(value) || typeof value[key] !== 'string') {
     throw new RunnerExecutionError(
       'invalid-model-output',
       'The speech model returned no transcript',
@@ -84,7 +82,7 @@ const configureTransformers = (cacheDirectory?: string): void => {
 }
 
 const getProgress = (value: unknown): number | null => {
-  if (!isRecord(value)) {
+  if (!isObject(value)) {
     return null
   }
   const {progress} = value

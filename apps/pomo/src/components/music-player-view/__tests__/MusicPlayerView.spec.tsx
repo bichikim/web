@@ -39,6 +39,18 @@ describe('MusicPlayerView', () => {
     browser.restore()
   })
 
+  it('should show the volume tooltip when the expanded speaker button receives keyboard focus', () => {
+    const result = renderMusicPlayerView({expanded: true})
+    const button = result.getByRole('button', {name: m.player_volume()})
+
+    browser.setVisibleFocus(button)
+    fireEvent.focus(button)
+    expect(button).toHaveAttribute('title', m.player_volume())
+
+    fireEvent.blur(button)
+    expect(button).not.toHaveAttribute('title')
+  })
+
   it.each([false, true])(
     'should update every playback tooltip with the playback state (expanded: %s)',
     (expanded) => {
@@ -355,7 +367,7 @@ describe('MusicPlayerView', () => {
     ).toBe(true)
     expect(
       expandedRange.classList.contains(
-        '[--media-time-range-buffered-color:var(--pomo-color-muted-foreground)]',
+        '[--media-time-range-buffered-color:rgb(var(--pomo-color-foreground-channels)_/_30%)]',
       ),
     ).toBe(true)
     expect(

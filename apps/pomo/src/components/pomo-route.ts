@@ -1,23 +1,10 @@
+import {normalizePathname} from 'src/utils/normalize-pathname'
+export {normalizePathname} from 'src/utils/normalize-pathname'
 import {SEARCH_CONFIG} from 'src/features/search-discovery'
 
-const POMO_LAYOUT_PATHS: ReadonlySet<string> = new Set([
-  '/',
-  '/dialogue',
-  '/desktop/dialog/memory-assist',
-  '/desktop/dialog/settings',
-  '/desktop/player',
-  '/desktop/pomodoro',
-  '/desktop/settings',
-])
 const SEARCH_INDEXABLE_PATHS: ReadonlySet<string> = new Set(SEARCH_CONFIG.indexablePaths)
 
-export const normalizePathname = (pathname: string) => {
-  return pathname.replace(/\/+$/u, '') || '/'
-}
-
 export const getCanonicalPathname = normalizePathname
-
-export const isPomoHomePath = (pathname: string) => normalizePathname(pathname) === '/'
 
 export const isSearchIndexablePath = (pathname: string) => {
   const canonicalPathname = normalizePathname(pathname)
@@ -27,10 +14,4 @@ export const isSearchIndexablePath = (pathname: string) => {
     !(import.meta.env.VITE_POMO_IS_MOBILE === 'true') &&
     SEARCH_INDEXABLE_PATHS.has(canonicalPathname)
   )
-}
-
-export const usesPomoLayout = (pathname: string) => {
-  const canonicalPathname = normalizePathname(pathname)
-
-  return POMO_LAYOUT_PATHS.has(canonicalPathname)
 }

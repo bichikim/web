@@ -14,9 +14,22 @@ it('should convert temperature offsets and accept negative temperatures', () => 
   expect(convertUnit({from: 'C', to: 'F', value: '-40'})).toEqual({kind: 'valid', value: -40})
   expect(convertUnit({from: 'F', to: 'C', value: '32'})).toEqual({kind: 'valid', value: 0})
 })
+it('should convert temperatures pasted with a Unicode minus sign', () => {
+  expect(convertUnit({from: 'C', to: 'F', value: '−40'})).toEqual({kind: 'valid', value: -40})
+})
+it('should convert temperatures pasted with a fullwidth plus sign', () => {
+  expect(convertUnit({from: 'C', to: 'F', value: '＋40'})).toEqual({kind: 'valid', value: 104})
+  expect(convertUnit({from: 'C', to: 'F', value: '＋４０'})).toEqual({kind: 'valid', value: 104})
+})
+it('should convert values pasted with fullwidth digits', () => {
+  expect(convertUnit({from: 'm', to: 'ft', value: '１０'})).toEqual({
+    kind: 'valid',
+    value: 10 / 0.3048,
+  })
+})
 it('should reject malformed mismatched and overflowing values while keeping blank input empty', () => {
   expect(convertUnit({from: 'm', to: 'ft', value: ''}).kind).toBe('empty')
-  for (const value of ['abc', '0xff', '1,23', 'Infinity', '1e309']) {
+  for (const value of ['abc', '0xff', '1,23', 'Infinity', '1e2', '1E2', '1e309']) {
     expect(convertUnit({from: 'm', to: 'ft', value}).kind).toBe('invalid')
   }
   expect(convertUnit({from: 'm', to: 'kg', value: '1'}).kind).toBe('invalid')
@@ -28,4 +41,28 @@ it('should reject malformed mismatched and overflowing values while keeping blan
 it('should include pyeong only for Korean', () => {
   expect(getUnits('area', 'en').some((unit) => unit.id === 'pyeong')).toBe(false)
   expect(getUnits('area', 'ko').some((unit) => unit.id === 'pyeong')).toBe(true)
+})
+
+it('should convert fullwidth signed pasted values', () => {
+  expect(convertUnit({from: 'm', to: 'm', value: '＋５'})).toEqual({kind: 'valid', value: 5})
+  expect(convertUnit({from: 'm', to: 'm', value: '－５'})).toEqual({kind: 'valid', value: -5})
+})
+
+it('should convert grouped values pasted with fullwidth and mixed commas', () => {
+  for (const [value, expected] of [
+    ['1，000', 1000],
+    ['１，０００.５', 1000.5],
+    ['＋１，０００.５', 1000.5],
+    ['－１,０００.５', -1000.5],
+    ['1，000,000.5', 1000000.5],
+    ['1,000，000.5', 1000000.5],
+  ] as const) {
+    expect(convertUnit({from: 'm', to: 'm', value})).toEqual({kind: 'valid', value: expected})
+  }
+})
+
+it('should reject malformed groups and unrelated fullwidth punctuation', () => {
+  for (const value of ['1，23', '12，34', '1，00,000', '1,000，00', '1.000，5', '1，000．5']) {
+    expect(convertUnit({from: 'm', to: 'm', value}).kind).toBe('invalid')
+  }
 })

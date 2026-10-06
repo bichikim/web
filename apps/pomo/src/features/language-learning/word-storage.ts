@@ -1,4 +1,4 @@
-import {uniqBy} from 'es-toolkit/array'
+import {differenceBy, uniqBy} from 'es-toolkit/array'
 import {createCollectionStorage} from '../value-storage'
 import {z} from 'zod'
 
@@ -9,7 +9,8 @@ import {type LanguageLearningWord, languageLearningWordSchema} from './word-sche
 const STORAGE_KEY = 'pomo:language-learning:words:v1'
 export const LANGUAGE_LEARNING_WORDS_CHANGED_EVENT = 'pomo:language-learning:words-changed'
 const storedWordsSchema = z.array(languageLearningWordSchema).readonly()
-const normalizeLanguageLearningWordValue = (value: string): string => value.toLocaleLowerCase()
+const normalizeLanguageLearningWordValue = (value: string): string =>
+  value.trim().toLocaleLowerCase()
 
 export interface AppendLanguageLearningWordsResult {
   readonly addedCount: number
@@ -48,22 +49,21 @@ export const appendLanguageLearningWords = (
   options?: LanguageLearningStorageOptions,
 ): AppendLanguageLearningWordsResult => {
   const storedWords = readLanguageLearningWords(options)
-  const existingValues = new Set(
-    storedWords
-      .filter((word) => word.language === language)
-      .map((word) => normalizeLanguageLearningWordValue(word.value)),
-  )
+  const existingValues = storedWords
+    .filter((word) => word.language === language)
+    .map((word) => word.value)
   const createdAt = new Date().toISOString()
-  const newWords = values.flatMap((value): ReadonlyArray<LanguageLearningWord> => {
-    const normalizedValue = normalizeLanguageLearningWordValue(value)
-
-    if (existingValues.has(normalizedValue)) {
-      return []
-    }
-
-    existingValues.add(normalizedValue)
-    return [{createdAt, language, memorized: false, value, version: 1}]
-  })
+  const newValues = differenceBy(
+    uniqBy(
+      values.map((value) => value.trim()).filter((value) => value.length > 0),
+      normalizeLanguageLearningWordValue,
+    ),
+    existingValues,
+    normalizeLanguageLearningWordValue,
+  )
+  const newWords = newValues.map(
+    (value): LanguageLearningWord => ({createdAt, language, memorized: false, value, version: 1}),
+  )
 
   if (newWords.length > 0) {
     writeLanguageLearningWords([...storedWords, ...newWords], options)

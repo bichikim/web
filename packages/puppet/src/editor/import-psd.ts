@@ -19,7 +19,7 @@ export interface ImportPsdFailure {
 export type ImportPsdResult = ImportPsdSuccess | ImportPsdFailure
 const RGB_MODE = 3
 const CHANNEL_BITS = 8
-const MAXIMUM_FILE_BYTES = 134_217_728
+const MAXIMUM_FILE_BYTES = 268_435_456
 
 const readFile = (file: File): Promise<ArrayBuffer | undefined> =>
   new Promise((resolve) => {

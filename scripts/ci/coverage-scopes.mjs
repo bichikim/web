@@ -13,11 +13,9 @@ const isGlobalTestInput = (path) =>
   path === 'tsconfig.json' ||
   path === 'vite.config.mts' ||
   path === 'vitest.base.config.mts' ||
-  path === 'vitest.build-integration.config.mts' ||
+  path === 'vitest.integration.config.mts' ||
   path === 'vitest.d.ts' ||
   path === 'vitest.setup.ts' ||
-  path === 'vitest.source-coverage.config.mts' ||
-  path === 'vitest.stress.config.mts' ||
   path.startsWith('.github/actions/') ||
   path.startsWith('patches/')
 

@@ -49,39 +49,6 @@ afterEach(() => {
   vi.unstubAllGlobals()
 })
 
-it('should edit in a popup, retain the drawing ratio, and update the page preview', async () => {
-  render(() => {
-    const [strokes, setStrokes] = createSignal<ReadonlyArray<PictureDiaryStroke>>([])
-    return <PictureDiaryDrawing strokes={strokes()} onChange={setStrokes} />
-  })
-  const trigger = screen.getByRole('button', {name: '그림 그리기'})
-  const preview = trigger.querySelector('svg')!
-  expect(preview).toHaveAttribute('data-read-only')
-  expect(screen.queryByRole('button', {name: '한 획 취소'})).not.toBeInTheDocument()
-  fireEvent.click(trigger)
-  const dialog = screen.getByRole('dialog', {name: '그림 그리기'})
-  expect(dialog.querySelector('header')).toBeInTheDocument()
-  expect(within(dialog).getByRole('button', {name: '닫기'})).toBeInTheDocument()
-  const canvas = within(dialog).getByRole('img', {name: '그림 그리는 곳'})
-  expect(canvas.getAttribute('viewBox')).toBe(preview.getAttribute('viewBox'))
-  const event = new Event('pointerdown', {bubbles: true})
-  Object.defineProperties(event, {
-    button: {value: 0},
-    clientX: {value: 0},
-    clientY: {value: 0},
-    pointerId: {value: 1},
-  })
-  canvas.dispatchEvent(event)
-  expect(canvas.querySelectorAll('circle')).toHaveLength(1)
-  fireEvent.click(within(dialog).getByRole('button', {name: '완료'}))
-  await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument())
-  expect(preview.querySelectorAll('circle')).toHaveLength(1)
-  await waitFor(() => expect(trigger).toHaveFocus())
-  fireEvent.click(trigger)
-  expect(screen.getByRole('button', {name: '한 획 취소'})).toBeDisabled()
-  expect(preview.querySelectorAll('circle')).toHaveLength(1)
-})
-
 it('should clear existing drawing only from the popup', () => {
   render(() => {
     const [strokes, setStrokes] = createSignal<ReadonlyArray<PictureDiaryStroke>>([
@@ -217,4 +184,35 @@ it('should undo and redo clearing without losing stroke styles', () => {
   expect(footer).toContainElement(screen.getByRole('button', {name: '펜'}))
   expect(footer).toContainElement(screen.getByRole('button', {name: '굵게'}))
   expect(screen.queryByRole('button', {name: '파랑'})).not.toBeInTheDocument()
+})
+
+it('should capture a whole multi-point gesture as one undo entry', () => {
+  render(() => {
+    const [strokes, setStrokes] = createSignal<ReadonlyArray<PictureDiaryStroke>>([])
+    return <PictureDiaryDrawing strokes={strokes()} onChange={setStrokes} />
+  })
+  fireEvent.click(screen.getByRole('button', {name: '그림 그리기'}))
+  const canvas = within(screen.getByRole('dialog')).getByRole('img', {name: '그림 그리는 곳'})
+  const dispatchPointer = (type: string, clientX: number) => {
+    const event = new Event(type, {bubbles: true})
+    Object.defineProperties(event, {
+      button: {value: 0},
+      buttons: {value: 1},
+      clientX: {value: clientX},
+      clientY: {value: 0},
+      pointerId: {value: 1},
+    })
+    fireEvent(canvas, event)
+  }
+  dispatchPointer('pointerdown', 0)
+  dispatchPointer('pointermove', 10)
+  dispatchPointer('pointermove', 20)
+  dispatchPointer('pointerup', 20)
+  const stroke = canvas.querySelector('polyline')
+  expect(stroke?.getAttribute('points')?.split(' ')).toHaveLength(3)
+  fireEvent.click(screen.getByRole('button', {name: '한 획 취소'}))
+  expect(canvas.querySelector('polyline')).toBeNull()
+  expect(screen.getByRole('button', {name: '한 획 취소'})).toBeDisabled()
+  fireEvent.click(screen.getByRole('button', {name: '다시 실행'}))
+  expect(canvas.querySelector('polyline')?.getAttribute('points')?.split(' ')).toHaveLength(3)
 })

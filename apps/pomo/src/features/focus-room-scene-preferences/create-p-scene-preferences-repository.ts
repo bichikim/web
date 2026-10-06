@@ -1,3 +1,4 @@
+import {createAuthoritativePreferenceRepository} from '../authoritative-preference'
 import {z} from 'zod'
 import {DEFAULT_P_SCENE_PREFERENCES, type PScenePreferences} from './model'
 
@@ -18,7 +19,8 @@ export interface PScenePreferencesStorage {
   readonly readToss: (key: string) => Promise<unknown | null>
   readonly readWeb: (key: string) => unknown | null
   readonly writeToss: (key: string, value: unknown) => Promise<void>
-  readonly writeWeb: (key: string, value: unknown) => void
+  /** Returns null on success or the persistence error on failure. */
+  readonly writeWeb: (key: string, value: unknown) => unknown | null
 }
 
 export interface PScenePreferencesRepository {
@@ -35,100 +37,24 @@ export const createPScenePreferencesRepository = (
   options: CreatePScenePreferencesRepositoryOptions,
 ): PScenePreferencesRepository => {
   const {storage} = options
-  let writeRevision = 0
-  let pendingNativeWriteCount = 0
-  let nativeWriteFailed = false
-  const readWebPreferences = () =>
-    parsePScenePreferences(storage.readWeb(SCENE_PREFERENCES_STORAGE_KEY))
-  const writeWebPreferences = (preferences: PScenePreferences) => {
-    storage.writeWeb(SCENE_PREFERENCES_STORAGE_KEY, preferences)
-  }
-  const readWebPreferencesSafely = () => {
-    try {
-      return readWebPreferences()
-    } catch {
-      return null
-    }
-  }
-  const readNativeWriteFailure = () => {
-    try {
-      return storage.readWeb(NATIVE_WRITE_FAILURE_STORAGE_KEY) === true
-    } catch {
-      return false
-    }
-  }
-  const setNativeWriteFailure = (failed: boolean) => {
-    try {
-      storage.writeWeb(NATIVE_WRITE_FAILURE_STORAGE_KEY, failed)
-    } catch {}
-  }
-
-  const read = async (): Promise<PScenePreferences> => {
-    const initialWriteRevision = writeRevision
-
-    if (!storage.usesTossStorage()) {
-      return readWebPreferences() ?? DEFAULT_P_SCENE_PREFERENCES
-    }
-
-    if (pendingNativeWriteCount > 0) {
-      return readWebPreferencesSafely() ?? DEFAULT_P_SCENE_PREFERENCES
-    }
-
-    const webPreferences = readWebPreferencesSafely()
-    if (!nativeWriteFailed && webPreferences !== null && readNativeWriteFailure()) {
-      return webPreferences
-    }
-
-    try {
-      const storedPreferences = await storage.readToss(SCENE_PREFERENCES_STORAGE_KEY)
-      if (writeRevision !== initialWriteRevision) {
-        return readWebPreferencesSafely() ?? DEFAULT_P_SCENE_PREFERENCES
-      }
-
-      const tossPreferences = parsePScenePreferences(storedPreferences)
-
-      const restoredPreferences =
-        tossPreferences ?? readWebPreferences() ?? DEFAULT_P_SCENE_PREFERENCES
-      if (tossPreferences !== null) {
-        setNativeWriteFailure(false)
-      }
-      writeWebPreferences(restoredPreferences)
-      return restoredPreferences
-    } catch {
-      if (writeRevision !== initialWriteRevision) {
-        return readWebPreferencesSafely() ?? DEFAULT_P_SCENE_PREFERENCES
-      }
-
-      return readWebPreferences() ?? DEFAULT_P_SCENE_PREFERENCES
-    }
-  }
-
-  const write = async (preferences: PScenePreferences): Promise<void> => {
-    writeWebPreferences(preferences)
-    writeRevision += 1
-    const currentWriteRevision = writeRevision
-    if (!storage.usesTossStorage()) {
-      nativeWriteFailed = false
-      setNativeWriteFailure(false)
-      return
-    }
-
-    pendingNativeWriteCount += 1
-    try {
-      await storage.writeToss(SCENE_PREFERENCES_STORAGE_KEY, preferences)
-      if (writeRevision === currentWriteRevision) {
-        nativeWriteFailed = false
-        setNativeWriteFailure(false)
-      }
-    } catch {
-      if (writeRevision === currentWriteRevision) {
-        nativeWriteFailed = true
-        setNativeWriteFailure(true)
-      }
-    } finally {
-      pendingNativeWriteCount -= 1
-    }
-  }
-
-  return {read, write}
+  return createAuthoritativePreferenceRepository({
+    defaultValue: DEFAULT_P_SCENE_PREFERENCES,
+    nativeWriteFailure: {
+      read: () => storage.readWeb(NATIVE_WRITE_FAILURE_STORAGE_KEY) === true,
+      write: (failed) => {
+        storage.writeWeb(NATIVE_WRITE_FAILURE_STORAGE_KEY, failed)
+      },
+    },
+    readFailureMessage: 'Failed to read scene preferences.',
+    softNativeWrite: true,
+    storage: {
+      isNative: storage.usesTossStorage,
+      readNative: async () =>
+        parsePScenePreferences(await storage.readToss(SCENE_PREFERENCES_STORAGE_KEY)),
+      readWeb: () => parsePScenePreferences(storage.readWeb(SCENE_PREFERENCES_STORAGE_KEY)),
+      writeNative: (value) => storage.writeToss(SCENE_PREFERENCES_STORAGE_KEY, value),
+      writeWeb: (value) => storage.writeWeb(SCENE_PREFERENCES_STORAGE_KEY, value),
+    },
+    writeFailureMessage: 'Failed to persist scene preferences.',
+  })
 }

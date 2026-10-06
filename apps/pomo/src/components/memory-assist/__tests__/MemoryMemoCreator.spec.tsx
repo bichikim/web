@@ -8,6 +8,7 @@ import {MemoryMemoCreator} from '../MemoryMemoCreator'
 vi.mock('@apps-in-toss/web-framework', () => ({
   Storage: {getItem: vi.fn(), setItem: vi.fn()},
 }))
+vi.mock('../ReminderFields', () => ({ReminderFields: () => null}))
 
 beforeEach(() => {
   vi.clearAllMocks()
@@ -22,14 +23,19 @@ afterEach(() => {
 
 it('should preserve a new draft when the native storage write finishes late', async () => {
   const persistence = Promise.withResolvers<void>()
+  const writeStarted = Promise.withResolvers<void>()
   vi.stubGlobal('ReactNativeWebView', {})
   vi.mocked(TossStorage.getItem).mockResolvedValue('[]')
-  vi.mocked(TossStorage.setItem).mockReturnValue(persistence.promise)
+  vi.mocked(TossStorage.setItem).mockImplementation(() => {
+    writeStarted.resolve()
+    return persistence.promise
+  })
   render(() => <MemoryMemoCreator />)
   fireEvent.click(screen.getByRole('button', {name: '새 메모'}))
   fireEvent.input(screen.getByLabelText('기억할 메모'), {target: {value: '먼저 저장할 메모'}})
   fireEvent.click(screen.getByRole('button', {name: '메모 저장'}))
-  await waitFor(() => expect(TossStorage.setItem).toHaveBeenCalledOnce())
+  await writeStarted.promise
+  expect(TossStorage.setItem).toHaveBeenCalledOnce()
   fireEvent.click(screen.getByRole('button', {name: '닫기'}))
   fireEvent.click(screen.getByRole('button', {name: '새 메모'}))
   fireEvent.input(screen.getByLabelText('기억할 메모'), {target: {value: '새 초안'}})

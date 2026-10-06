@@ -82,6 +82,45 @@ it('should serialize writes while updating all consumers immediately', async () 
   await second.promise
 })
 
+it('should roll back an opted-in failed write to the last successful shared value', async () => {
+  const completion = Promise.withResolvers<unknown>()
+  const write = vi.fn().mockReturnValueOnce(null).mockReturnValueOnce(completion.promise)
+  const onError = vi.fn()
+  const {result} = renderPreference({read: () => 0, write}, onError)
+  result[0][1](1, {rollbackOnError: true})
+  result[0][1](2, {rollbackOnError: true})
+  expect(result[1][0]()).toBe(2)
+  completion.reject(new Error('write failed'))
+  await vi.waitFor(() => expect(onError).toHaveBeenCalledOnce())
+  expect(result[0][0]()).toBe(1)
+  expect(result[1][0]()).toBe(1)
+  expect(write).toHaveBeenCalledTimes(2)
+})
+
+it('should preserve a newer transient snapshot when an older opted-in write fails', async () => {
+  const completion = Promise.withResolvers<unknown>()
+  const onError = vi.fn()
+  const {result} = renderPreference({read: () => 0, write: () => completion.promise}, onError)
+  result[0][1](1, {rollbackOnError: true})
+  result[0][1](2, {persist: false})
+  completion.reject(new Error('write failed'))
+  await vi.waitFor(() => expect(onError).toHaveBeenCalledOnce())
+  expect(result[1][0]()).toBe(2)
+})
+
+it('should roll back a failed initial edit to the restored value when opted in', async () => {
+  const restoration = Promise.withResolvers<unknown>()
+  const onError = vi.fn()
+  const {result} = renderPreference(
+    {read: () => restoration.promise, write: () => new Error('write failed')},
+    onError,
+  )
+  result[0][1](50, {rollbackOnError: true})
+  restoration.resolve(25)
+  await vi.waitFor(() => expect(onError).toHaveBeenCalledOnce())
+  expect(result[1][0]()).toBe(25)
+})
+
 it('should continue queued writes after a rejection without reverting shared state', async () => {
   const first = Promise.withResolvers<unknown>()
   const started = Promise.withResolvers<void>()

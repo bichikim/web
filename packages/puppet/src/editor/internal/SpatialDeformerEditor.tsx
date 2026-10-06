@@ -1,7 +1,6 @@
 import {For, Show} from 'solid-js'
 import type {PuppetParameterValues} from '../../deformation'
 import type {PuppetDocument, PuppetPoint, PuppetSceneDeformerNode} from '../../player'
-import {resolveSpatialRotation} from '../../player/internal/spatial-part'
 import {isSceneNodeLocked} from './scene-graph'
 import {applySceneNodeAncestorsPoint, unapplySceneNodeAncestorsPoint} from './scene-deformation'
 import {setSpatialDeformerTransform} from './set-spatial-deformer-transform'
@@ -96,12 +95,7 @@ export const SpatialDeformerEditor = (props: SpatialDeformerEditorProps) => {
         })
   }
   const editable = () => !isSceneNodeLocked(props.document, props.node.id)
-  const rotation = () =>
-    resolveSpatialRotation({
-      document: props.previewDocument ?? props.document,
-      parameterIds: props.node.spatialRotationParameterIds,
-      rotation: props.node.spatialRotation,
-    })
+  const rotation = () => props.node.spatialRotation ?? [0, 0, 0]
   const setRotation = (axis: number, value: number) => {
     const next: [number, number, number] = [...(props.node.spatialRotation ?? [0, 0, 0])]
     next[axis] = value

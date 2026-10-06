@@ -1,3 +1,4 @@
+import {PAiSettingsPanel} from '../ai-settings/Panel'
 import {Background} from './background/Background'
 import {Tabs} from '@kobalte/core/tabs'
 import type {ScreenWakeLockController} from '../../features/screen-wake-lock'
@@ -12,7 +13,6 @@ import {App} from './app/App'
 
 interface PSettingsContentProps extends PSettingsProps {
   readonly wakeLock: ScreenWakeLockController
-  readonly onRequestClose?: () => void
 }
 
 export const PSettingsContent = (props: PSettingsContentProps) => {
@@ -30,7 +30,8 @@ export const PSettingsContent = (props: PSettingsContentProps) => {
       <PGuideSettings />
       <PCreditsSettings />
       <PFeedSettings />
-      <PDialogueSettings onRequestClose={props.onRequestClose} />
+      <PDialogueSettings />
+      <PAiSettingsPanel />
       <UserSettings />
     </>
   )

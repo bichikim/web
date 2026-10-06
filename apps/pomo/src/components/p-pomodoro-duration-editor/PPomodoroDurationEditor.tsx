@@ -5,12 +5,18 @@ import {POMODORO_TIMER_LIMITS, type PomodoroTimerConfig} from '../../features/po
 import * as m from '@paraglide/message'
 import {DurationField} from '../pomodoro-duration-editor/Field'
 import {CLASSES} from '../pomodoro-duration-editor/shared'
+import {normalizePasteNumericInput} from 'src/utils/normalize-paste-numeric-input'
 
 interface DurationDraft {
   readonly focus: string
   readonly longBreak: string
   readonly sessions: string
   readonly shortBreak: string
+}
+
+interface DurationDraftState {
+  readonly baseConfig: PomodoroTimerConfig
+  readonly draft: DurationDraft
 }
 
 const MIN_DURATION_MINUTES = 1
@@ -31,8 +37,17 @@ const createDurationDraft = (config: PomodoroTimerConfig): DurationDraft => ({
   shortBreak: String(config.shortBreakSeconds / SECONDS_PER_MINUTE),
 })
 
+const getDraftForConfig = (
+  config: PomodoroTimerConfig,
+  draftState: DurationDraftState,
+): DurationDraft => {
+  const {baseConfig, draft} = draftState
+
+  return baseConfig === config ? draft : createDurationDraft(config)
+}
+
 const parseDurationMinutes = (value: string) => {
-  const minutes = Number(value)
+  const minutes = Number(normalizePasteNumericInput(value))
 
   if (
     !Number.isInteger(minutes) ||
@@ -46,9 +61,19 @@ const parseDurationMinutes = (value: string) => {
 }
 
 export const PPomodoroDurationEditor = (props: PPomodoroDurationEditorProps) => {
-  const [draft, setDraft] = createSignal<DurationDraft>(
-    untrack(() => createDurationDraft(props.config)),
+  const [draftState, setDraftState] = createSignal<DurationDraftState>(
+    untrack(() => {
+      const config = props.config
+
+      return {baseConfig: config, draft: createDurationDraft(config)}
+    }),
   )
+  const draft = createMemo(() => getDraftForConfig(props.config, draftState()))
+  const updateDraft = (update: (current: DurationDraft) => DurationDraft) => {
+    const config = props.config
+
+    setDraftState({baseConfig: config, draft: update(getDraftForConfig(config, draftState()))})
+  }
   const summary = () =>
     m.pomodoro_cycle_summary({
       focus: props.config.focusSeconds / SECONDS_PER_MINUTE,
@@ -60,7 +85,7 @@ export const PPomodoroDurationEditor = (props: PPomodoroDurationEditorProps) => 
     const durationDraft = draft()
     const focusMinutes = parseDurationMinutes(durationDraft.focus)
     const longBreakMinutes = parseDurationMinutes(durationDraft.longBreak)
-    const sessionCount = Number(durationDraft.sessions)
+    const sessionCount = Number(normalizePasteNumericInput(durationDraft.sessions))
     const shortBreakMinutes = parseDurationMinutes(durationDraft.shortBreak)
 
     if (
@@ -85,7 +110,9 @@ export const PPomodoroDurationEditor = (props: PPomodoroDurationEditorProps) => 
     const nextEditing = !props.isEditing
 
     if (nextEditing) {
-      setDraft(createDurationDraft(props.config))
+      const config = props.config
+
+      setDraftState({baseConfig: config, draft: createDurationDraft(config)})
     }
 
     props.onEditingChange(nextEditing)
@@ -123,7 +150,7 @@ export const PPomodoroDurationEditor = (props: PPomodoroDurationEditorProps) => 
               label={m.pomodoro_focus_count_label()}
               max={POMODORO_TIMER_LIMITS.maxFocusSessions}
               min={MIN_FOCUS_SESSIONS}
-              onInput={(value) => setDraft((current) => ({...current, sessions: value}))}
+              onInput={(value) => updateDraft((current) => ({...current, sessions: value}))}
               suffix={m.pomodoro_count_suffix()}
               value={draft().sessions}
             />
@@ -134,7 +161,7 @@ export const PPomodoroDurationEditor = (props: PPomodoroDurationEditorProps) => 
               label={m.pomodoro_focus_duration()}
               max={POMODORO_TIMER_LIMITS.maxDurationMinutes}
               min={MIN_DURATION_MINUTES}
-              onInput={(value) => setDraft((current) => ({...current, focus: value}))}
+              onInput={(value) => updateDraft((current) => ({...current, focus: value}))}
               suffix={m.pomodoro_minute_suffix()}
               value={draft().focus}
             />
@@ -145,7 +172,7 @@ export const PPomodoroDurationEditor = (props: PPomodoroDurationEditorProps) => 
               label={m.pomodoro_short_break()}
               max={POMODORO_TIMER_LIMITS.maxDurationMinutes}
               min={MIN_DURATION_MINUTES}
-              onInput={(value) => setDraft((current) => ({...current, shortBreak: value}))}
+              onInput={(value) => updateDraft((current) => ({...current, shortBreak: value}))}
               suffix={m.pomodoro_minute_suffix()}
               value={draft().shortBreak}
             />
@@ -156,7 +183,7 @@ export const PPomodoroDurationEditor = (props: PPomodoroDurationEditorProps) => 
               label={m.pomodoro_long_break_duration()}
               max={POMODORO_TIMER_LIMITS.maxDurationMinutes}
               min={MIN_DURATION_MINUTES}
-              onInput={(value) => setDraft((current) => ({...current, longBreak: value}))}
+              onInput={(value) => updateDraft((current) => ({...current, longBreak: value}))}
               suffix={m.pomodoro_minute_suffix()}
               value={draft().longBreak}
             />

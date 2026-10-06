@@ -4,7 +4,7 @@ import {createSignal} from 'solid-js'
 import {describe, expect, it, vi} from 'vitest'
 
 import type {EventActionIds} from '../../event-context'
-import {RANDOM_DIALOGUE_EVENT} from '../../schema'
+import {FOCUS_ROOM_ENTRY_EVENT, RANDOM_DIALOGUE_EVENT} from '../../schema'
 import {createEventActionRunner} from '../event-action-runner'
 
 describe('createEventActionRunner', () => {
@@ -132,6 +132,28 @@ describe('createEventActionRunner', () => {
     await pendingActions.completion
 
     expect(executor).toHaveBeenCalledExactlyOnceWith('music-start')
+    runner.dispose()
+  })
+
+  it('should retain room-enter actions when an active noop executor is replaced', () => {
+    const actionIds: EventActionIds = {[FOCUS_ROOM_ENTRY_EVENT]: ['music-stop']}
+    const [getActionIds] = createSignal(actionIds)
+    const runner = createEventActionRunner(getActionIds)
+    const noopExecutor = vi.fn()
+    const unregisterNoop = runner.register(noopExecutor)
+
+    expect(runner.run([FOCUS_ROOM_ENTRY_EVENT])).toEqual({kind: 'completed'})
+    expect(noopExecutor).toHaveBeenCalledExactlyOnceWith('music-stop')
+
+    unregisterNoop()
+    const activeExecutor = vi.fn()
+    runner.register(activeExecutor)
+
+    expect(activeExecutor).toHaveBeenCalledExactlyOnceWith('music-stop')
+
+    const laterExecutor = vi.fn()
+    runner.register(laterExecutor)
+    expect(laterExecutor).not.toHaveBeenCalled()
     runner.dispose()
   })
 

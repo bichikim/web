@@ -199,6 +199,32 @@ it('should hide a recommendation already saved without a timezone query', () => 
   expect(screen.getByText('https://www.pomofi.io/api/feeds/today-in-history/rss.xml')).toBeDefined()
 })
 
+it('should hide the local recommendation for a saved public today-in-history feed', () => {
+  vi.stubEnv('DEV', true)
+  vi.stubEnv('VITE_POMO_PUBLIC_ORIGIN', 'https://www.pomofi.io')
+  localStorage.setItem(
+    'pomo:focus-room-feed-connections:v1',
+    JSON.stringify({
+      connections: [
+        {
+          createdAt: '2026-01-01T00:00:00.000Z',
+          id: 'public-history',
+          updatedAt: '2026-01-01T00:00:00.000Z',
+          url: 'https://www.pomofi.io/api/feeds/today-in-history/rss.xml',
+          version: 1,
+          voiceId: 'default',
+        },
+      ],
+      version: 1,
+    }),
+  )
+
+  renderSettings()
+
+  expect(screen.queryByRole('button', {name: '오늘의 역사 추천 피드 추가'})).toBeNull()
+  expect(screen.getByText('https://www.pomofi.io/api/feeds/today-in-history/rss.xml')).toBeDefined()
+})
+
 it('should omit development recommendations in production', () => {
   vi.stubEnv('DEV', false)
   vi.stubEnv('VITE_POMO_IS_MOBILE', 'true')
@@ -278,4 +304,20 @@ it('should save the automatic feed audio preparation switch', () => {
   first.unmount()
   renderSettings()
   expect(screen.getByRole('switch', {name: '새 피드 음성 자동 준비'})).not.toBeChecked()
+})
+
+it('should preserve the feed voice control and focus after a voice update', () => {
+  renderSettings()
+  const address = 'https://example.com/identity.xml'
+  fireEvent.input(screen.getByRole('textbox', {name: '피드 주소'}), {target: {value: address}})
+  fireEvent.click(screen.getByRole('button', {name: '추가'}))
+  const voice = screen.getByRole('combobox', {name: `음성 ${address} 피드 음성`})
+  voice.focus()
+  expect(document.activeElement).toBe(voice)
+  fireEvent.change(voice, {target: {value: 'M2'}})
+  const nextVoice = screen.getByRole('combobox', {name: `음성 ${address} 피드 음성`})
+  expect(nextVoice).toHaveValue('M2')
+  expect(nextVoice).toBe(voice)
+  expect(voice.isConnected).toBe(true)
+  expect(document.activeElement).toBe(nextVoice)
 })

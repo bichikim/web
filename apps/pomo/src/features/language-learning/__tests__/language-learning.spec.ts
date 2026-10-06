@@ -170,6 +170,14 @@ describe('language learning random word selection', () => {
     expect(maximum.every((value) => values.includes(value))).toBe(true)
   })
 
+  it('should cap the selection when the random source returns one', () => {
+    const selected = selectRandomLanguageLearningWords({random: () => 1, values})
+
+    expect(selected).toHaveLength(10)
+    expect(new Set(selected).size).toBe(10)
+    expect(selected.every((value) => values.includes(value))).toBe(true)
+  })
+
   it('should use the platform random source by default', () => {
     vi.spyOn(Math, 'random').mockReturnValue(0)
 
@@ -237,10 +245,25 @@ describe('language learning word source preference', () => {
     expect(readLanguageLearningWordSource()).toBe('saved')
   })
 
+  it('should restore a saved word source from a legacy unversioned preference', () => {
+    localStorage.setItem('pomo:language-learning:word-source:v1', JSON.stringify({source: 'saved'}))
+
+    expect(readLanguageLearningWordSource()).toBe('saved')
+  })
+
   it('should fall back to direct input when the stored value is invalid', () => {
     localStorage.setItem(
       'pomo:language-learning:word-source:v1',
       JSON.stringify({source: 'unknown', version: 1}),
+    )
+
+    expect(readLanguageLearningWordSource()).toBe('direct')
+  })
+
+  it('should fall back to direct input when the stored version is unsupported', () => {
+    localStorage.setItem(
+      'pomo:language-learning:word-source:v1',
+      JSON.stringify({source: 'saved', version: 2}),
     )
 
     expect(readLanguageLearningWordSource()).toBe('direct')

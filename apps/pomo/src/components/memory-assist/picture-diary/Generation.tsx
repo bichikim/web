@@ -1,6 +1,6 @@
 import {PTextarea} from 'src/components/p-textarea/PTextarea'
 import {isNonBlankString} from 'src/utils/is-non-blank-string'
-import {createEffect, onCleanup, Show, untrack} from 'solid-js'
+import {createEffect, createMemo, onCleanup, Show, untrack} from 'solid-js'
 import * as m from '@paraglide/message'
 import {type ArtStyle, useImageGeneration} from 'src/features/image-generation'
 import type {PictureDiaryImage} from 'src/features/picture-diary'
@@ -21,6 +21,7 @@ const PROGRESS_CLASSES =
   '[&:indeterminate::-webkit-progress-bar]:bg-transparent [&:indeterminate::-moz-progress-bar]:bg-transparent ' +
   'motion-reduce:[&:indeterminate]:animate-none motion-reduce:[&:indeterminate]:[background-position:50%_0] ' +
   'motion-reduce:[&::-webkit-progress-value]:transition-none'
+const MAXIMUM_DISPLAY_PERCENTAGE = 100
 
 export interface GenerationProps {
   readonly onPreviewChange?: (image: PictureDiaryImage | undefined) => void
@@ -48,7 +49,14 @@ const getStyles = () =>
   ] satisfies ReadonlyArray<StyleOption>
 
 export function Generation(props: GenerationProps) {
-  const studio = useImageGeneration()
+  const studio = useImageGeneration({clearPreviousResultOnGenerate: true})
+  const displayPercentage = createMemo(() => {
+    const percentage = studio.percentage()
+    if (percentage === undefined || !Number.isFinite(percentage)) {
+      return undefined
+    }
+    return Math.min(MAXIMUM_DISPLAY_PERCENTAGE, Math.max(0, percentage))
+  })
   studio.setIdea(untrack(() => props.initialIdea ?? ''))
   studio.setStyle('coloredPencil')
   studio.selectRatio('16:9')
@@ -121,26 +129,26 @@ export function Generation(props: GenerationProps) {
         <div class="flex items-center gap-2.5">
           <span aria-hidden="true" class="i-tabler-palette size-5 flex-none text-highlight" />
           <p class="m-0 min-w-0 flex-1">{studio.status()}</p>
-          <Show when={studio.busy() && studio.percentage() !== undefined}>
-            <strong class="text-highlight">{studio.percentage()}%</strong>
+          <Show when={studio.busy() && displayPercentage() !== undefined}>
+            <strong class="text-highlight">{displayPercentage()}%</strong>
           </Show>
         </div>
         <Show when={studio.busy()}>
           <Show
-            when={studio.percentage() !== undefined}
+            when={displayPercentage() !== undefined}
             fallback={
               <progress
                 class={PROGRESS_CLASSES}
                 aria-label={m.picture_diary_generation_progress()}
-                max={100}
+                max={MAXIMUM_DISPLAY_PERCENTAGE}
               />
             }
           >
             <progress
               class={PROGRESS_CLASSES}
               aria-label={m.picture_diary_generation_progress()}
-              max={100}
-              value={studio.percentage() ?? 0}
+              max={MAXIMUM_DISPLAY_PERCENTAGE}
+              value={displayPercentage() ?? 0}
             />
           </Show>
         </Show>

@@ -28,7 +28,7 @@ Blender 작업 이력과 중간 렌더·캐시는 로컬에 보존하며 Git에 
 
 ```sh
 blender --background --factory-startup --python apps/pomo/asset-library/character-studio/realtime/prepare.py
-POMO_CLOTH_SNAPSHOTS=/private/tmp/pomo-cloth-frames.json wallaby run apps/pomo/src/components/character-studio/__tests__/cloth-renderer.asset.spec.ts --config wallaby.js
+POMO_CLOTH_SNAPSHOTS=/private/tmp/pomo-cloth-frames.json wallaby run apps/pomo/src/components/character-studio/__tests__/cloth-renderer.asset.integration.ts --config wallaby.js
 blender --background --factory-startup --python apps/pomo/asset-library/character-studio/realtime/verify.py
 ```
 

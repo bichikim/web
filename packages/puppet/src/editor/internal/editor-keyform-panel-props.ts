@@ -1,10 +1,4 @@
-import type {JSX} from 'solid-js'
-
-import type {
-  PuppetParameter,
-  PuppetParameterBinding,
-  PuppetParameterInfluence,
-} from '../../player/document'
+import type {PuppetParameter, PuppetParameterBinding} from '../../player/document'
 import type {PuppetParameterValueMap, PuppetParameterValues} from '../../deformation'
 
 export interface EditorKeyformPanelProps {
@@ -12,17 +6,12 @@ export interface EditorKeyformPanelProps {
   readonly activeKeyformValues?: PuppetParameterValues | null
   readonly allParametersVisible?: boolean
   readonly bindings: ReadonlyArray<PuppetParameterBinding>
-  readonly getBindingSettingsLabel?: (
-    binding: PuppetParameterBinding,
-    parameters: ReadonlyArray<PuppetParameter>,
-  ) => string | undefined
   readonly influence?: number
   readonly onAllParametersVisibleChange?: (visible: boolean) => void
   readonly onBindingDelete?: (bindingId: string) => void
   readonly onBindingSelect?: (bindingId: string) => void
   readonly onEditEnd?: () => void
   readonly onEditStart?: () => void
-  readonly onInfluencesChange?: (influences: ReadonlyArray<PuppetParameterInfluence>) => boolean
   readonly onKeyformAdd?: () => void
   readonly onKeyformDelete?: () => void
   readonly onKeyformMove?: (
@@ -41,10 +30,6 @@ export interface EditorKeyformPanelProps {
   readonly parameters: ReadonlyArray<PuppetParameter>
   readonly parameterValueMap?: PuppetParameterValueMap
   readonly previewBindingIds?: ReadonlySet<string>
-  readonly renderBindingSettings?: (
-    binding: PuppetParameterBinding,
-    parameters: ReadonlyArray<PuppetParameter>,
-  ) => JSX.Element
   readonly setBrushControlsMount?: (element: HTMLDivElement | undefined) => void
   readonly selectedPartIds?: ReadonlyArray<string>
   readonly targetPartIds?: ReadonlyArray<string>

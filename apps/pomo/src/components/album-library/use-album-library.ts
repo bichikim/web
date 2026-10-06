@@ -7,18 +7,28 @@ import {
   type PResolvedAlbum,
   publishedAlbumCatalogQuery,
 } from '../../features/focus-room-audio'
+import {
+  deleteCustomAlbum as deleteCustomAlbumFromStorage,
+  readCustomAlbums,
+  type ResolvedCustomAlbum,
+} from '../../features/custom-albums'
 import {getLocale} from '@paraglide/runtime'
 
 export interface AlbumLibraryController {
   readonly albums: Accessor<readonly PResolvedAlbum[]>
   readonly catalogError: Accessor<Error | null>
+  readonly customAlbumError: Accessor<Error | null>
+  readonly customAlbums: Accessor<readonly ResolvedCustomAlbum[]>
+  readonly deleteCustomAlbum: (albumId: string) => Promise<void>
+  readonly isCustomAlbumsLoading: Accessor<boolean>
   readonly isCatalogRetrying: Accessor<boolean>
+  readonly reloadCustomAlbums: () => Promise<void>
   readonly retryCatalog: () => Promise<void>
   readonly retryLibrary: () => Promise<void>
 }
 
 type PublishedCatalogLoadState =
-  | {readonly error: unknown; readonly kind: 'rejected'}
+  | {readonly error: Error; readonly kind: 'rejected'}
   | {readonly kind: 'pending'}
   | {readonly catalog: PPublishedAlbumCatalog; readonly kind: 'resolved'}
 
@@ -31,6 +41,9 @@ export const useAlbumLibrary = (): AlbumLibraryController => {
   const [publishedCatalogState, setPublishedCatalogState] = createSignal<PublishedCatalogLoadState>(
     {kind: 'pending'},
   )
+  const [customAlbums, setCustomAlbums] = createSignal<readonly ResolvedCustomAlbum[]>([])
+  const [customAlbumError, setCustomAlbumError] = createSignal<Error | null>(null)
+  const [isCustomAlbumsLoading, setIsCustomAlbumsLoading] = createSignal(true)
   let isDisposed = false
   createAsync(async () => {
     if (!catalogActive()) {
@@ -47,7 +60,13 @@ export const useAlbumLibrary = (): AlbumLibraryController => {
       return catalog
     } catch (error: unknown) {
       if (!isDisposed) {
-        setPublishedCatalogState({error, kind: 'rejected'})
+        setPublishedCatalogState({
+          error:
+            error instanceof Error
+              ? error
+              : new Error('Published focus-room albums request failed', {cause: error}),
+          kind: 'rejected',
+        })
       }
 
       throw error
@@ -57,14 +76,50 @@ export const useAlbumLibrary = (): AlbumLibraryController => {
   const refreshPublishedCatalog = async () => {
     await revalidate(publishedAlbumCatalogQuery.keyFor(locale))
   }
+  const reloadCustomAlbums = async () => {
+    setIsCustomAlbumsLoading(true)
+    setCustomAlbumError(null)
+
+    try {
+      const albums = await readCustomAlbums()
+
+      if (!isDisposed) {
+        setCustomAlbums(albums)
+      }
+    } catch (error: unknown) {
+      if (!isDisposed) {
+        setCustomAlbumError(
+          error instanceof Error ? error : new Error('Failed to read custom albums.'),
+        )
+      }
+    } finally {
+      if (!isDisposed) {
+        setIsCustomAlbumsLoading(false)
+      }
+    }
+  }
+  const deleteCustomAlbum = async (albumId: string) => {
+    await deleteCustomAlbumFromStorage(albumId)
+
+    if (!isDisposed) {
+      setCustomAlbums((albums) => albums.filter((album) => album.id !== albumId))
+      setCustomAlbumError(null)
+    }
+  }
   const getPublishedCatalog = (): PPublishedAlbumCatalog | undefined => {
     const state = publishedCatalogState()
 
-    if (state.kind === 'rejected') {
-      throw state.error
+    switch (state.kind) {
+      case 'pending':
+      case 'rejected':
+        return undefined
+      case 'resolved':
+        return state.catalog
+      default: {
+        const unreachableState: never = state
+        return unreachableState
+      }
     }
-
-    return state.kind === 'resolved' ? state.catalog : undefined
   }
   const albums = () => {
     const bundled = bundledAlbums()
@@ -77,8 +132,20 @@ export const useAlbumLibrary = (): AlbumLibraryController => {
     return published?.status === 'ready' ? [...bundled, ...published.albums] : bundled
   }
   const catalogError = () => {
-    const catalog = getPublishedCatalog()
-    return catalog?.status === 'failed' ? catalog.error : null
+    const state = publishedCatalogState()
+
+    switch (state.kind) {
+      case 'pending':
+        return null
+      case 'rejected':
+        return state.error
+      case 'resolved':
+        return state.catalog.status === 'failed' ? state.catalog.error : null
+      default: {
+        const unreachableState: never = state
+        return unreachableState
+      }
+    }
   }
   const retryCatalog = async () => {
     if (isCatalogRetrying()) {
@@ -90,23 +157,37 @@ export const useAlbumLibrary = (): AlbumLibraryController => {
     try {
       await refreshPublishedCatalog()
     } catch {
-      // The resource preserves unexpected retry errors for the ErrorBoundary.
+      // The rejected query state exposes catalog errors through the inline banner.
     } finally {
       setIsCatalogRetrying(false)
     }
   }
   const retryLibrary = async () => {
     try {
-      await Promise.all([refetchBundledAlbums(), refreshPublishedCatalog()])
+      await Promise.all([refetchBundledAlbums(), refreshPublishedCatalog(), reloadCustomAlbums()])
     } catch {
-      // The resources preserve retry errors for the ErrorBoundary to render after reset.
+      // Bundled album errors use the boundary, while catalog errors use the inline banner.
     }
   }
 
-  onMount(() => setCatalogActive(true))
+  onMount(() => {
+    setCatalogActive(true)
+    reloadCustomAlbums()
+  })
   onCleanup(() => {
     isDisposed = true
   })
 
-  return {albums, catalogError, isCatalogRetrying, retryCatalog, retryLibrary}
+  return {
+    albums,
+    catalogError,
+    customAlbumError,
+    customAlbums,
+    deleteCustomAlbum,
+    isCatalogRetrying,
+    isCustomAlbumsLoading,
+    reloadCustomAlbums,
+    retryCatalog,
+    retryLibrary,
+  }
 }

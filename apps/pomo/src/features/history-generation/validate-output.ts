@@ -45,7 +45,19 @@ const normalizeUrl = (value: string): string => {
   const url = new URL(value)
   url.hostname = url.hostname.replace(/^www\./u, '')
   url.hash = ''
-  url.search = ''
+  const searchParameters = url.search.slice(1).split('&')
+  const retainedSearchParameters = searchParameters.filter((parameter) => {
+    const separatorIndex = parameter.indexOf('=')
+    const name = parameter.slice(0, separatorIndex === -1 ? undefined : separatorIndex)
+    const normalizedName = new URLSearchParams(`${name}=`).keys().next().value
+
+    return !normalizedName?.toLowerCase().startsWith('utm_')
+  })
+
+  if (retainedSearchParameters.length !== searchParameters.length) {
+    url.search =
+      retainedSearchParameters.length === 0 ? '' : `?${retainedSearchParameters.join('&')}`
+  }
 
   if (url.pathname !== '/') {
     url.pathname = url.pathname.replace(/\/+$/u, '')

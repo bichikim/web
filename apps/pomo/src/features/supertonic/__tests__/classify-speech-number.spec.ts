@@ -149,3 +149,14 @@ describe('classifySpeechNumber', () => {
     })
   })
 })
+
+it.each(['ko', 'en'] as const)(
+  'should classify fullwidth plus like ASCII plus in %s',
+  (language) => {
+    for (const value of ['5', '007', '12.5']) {
+      expect(classify(language, `＋${value}%`, `＋${value}`)).toEqual(
+        classify(language, `+${value}%`, `+${value}`),
+      )
+    }
+  },
+)

@@ -3,6 +3,8 @@ import * as m from '@paraglide/message'
 import {createSignal, createUniqueId} from 'solid-js'
 
 import type {PSceneStyle} from '../../features/focus-room-animation/index'
+import {PTooltip} from '../p-tooltip/PTooltip'
+import {useTooltipTrigger} from '../tooltip'
 import {PlayerIcon} from './PlayerIcon'
 import {CLASSES} from './styles'
 
@@ -11,6 +13,7 @@ interface VolumeControlProps {
 }
 
 export const VolumeControl = (props: VolumeControlProps) => {
+  const tooltip = useTooltipTrigger()
   const popoverId = `pomo-player-volume-${createUniqueId()}`
   const popoverAnchor = `--${popoverId}`
   const [popoverElement, setPopoverElement] = createSignal<HTMLElement>()
@@ -33,6 +36,7 @@ export const VolumeControl = (props: VolumeControlProps) => {
   return (
     <div class="flex min-w-0 items-center justify-end gap-0">
       <button
+        ref={tooltip.setTarget}
         aria-controls={popoverId}
         aria-haspopup="dialog"
         aria-label={m.player_volume()}
@@ -41,7 +45,14 @@ export const VolumeControl = (props: VolumeControlProps) => {
           'rounded-full text-muted-foreground transition',
           'hover:bg-secondary-soft hover:text-foreground',
           '[anchor-name:var(--pomo-volume-popover-anchor)]',
+          // oxlint-disable-next-line eslint-js/max-len -- UnoCSS requires the complete anchor-name utility.
+          '[&[data-pomo-tooltip-trigger]]:[anchor-name:var(--pomo-volume-popover-anchor),var(--pomo-tooltip-anchor)]',
         )}
+        onBlur={tooltip.onBlur}
+        onFocus={tooltip.onFocus}
+        onPointerDown={tooltip.onPointerDown}
+        onPointerEnter={tooltip.onPointerEnter}
+        onPointerLeave={tooltip.onPointerLeave}
         onClick={handleTriggerClick}
         popovertarget={popoverId}
         style={{'--pomo-volume-popover-anchor': popoverAnchor}}
@@ -49,6 +60,7 @@ export const VolumeControl = (props: VolumeControlProps) => {
       >
         <PlayerIcon icon="i-tabler-volume-2" sceneStyle={props.sceneStyle} size="size-6" />
       </button>
+      <PTooltip target={tooltip.target()} show={tooltip.show()} text={m.player_volume()} />
 
       <div
         aria-label={m.player_volume()}

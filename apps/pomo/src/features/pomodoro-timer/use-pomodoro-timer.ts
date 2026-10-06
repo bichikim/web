@@ -9,6 +9,7 @@ import {
   onMount,
   untrack,
 } from 'solid-js'
+import {createAnimationLoop} from '@winter-love/solid-use/animation-loop'
 import {useEvent} from '@winter-love/solid-use/event'
 import {z} from 'zod'
 
@@ -147,12 +148,15 @@ export const usePomodoroTimer = (props: UsePomodoroTimerProps = {}): PomodoroTim
   const [now, setNow] = createSignal(0)
   const [isStorageReady, setIsStorageReady] = createSignal(false)
 
-  const publishSnapshot = (options: TimerSyncPublishOptions = {}) =>
+  const publishSnapshot = (
+    options: TimerSyncPublishOptions = {},
+    timerState: PomodoroTimerState = state(),
+  ) =>
     syncController?.publish({
       config: config(),
       deferEvents: options.deferEvents === true,
       isAutoStartEnabled: isAutoStartEnabled(),
-      state: state(),
+      state: timerState,
     })
 
   const applyState = (
@@ -278,20 +282,21 @@ export const usePomodoroTimer = (props: UsePomodoroTimerProps = {}): PomodoroTim
       )
     })
 
-    const refreshFrame = () => {
-      refresh()
-      if (!isDisposed) {
-        frame = globalThis.requestAnimationFrame(refreshFrame)
+    const animation = createAnimationLoop()
+    animation.start(() => {
+      try {
+        refresh()
+      } catch (error) {
+        // Preserve the consumer's stop-on-error policy; the shared loop otherwise continues.
+        animation.stop()
+        throw error
       }
-    }
-    let frame = globalThis.requestAnimationFrame(refreshFrame)
+    })
     useEvent(document, 'visibilitychange', refresh)
 
     onCleanup(() => {
       isDisposed = true
-      globalThis.cancelAnimationFrame(frame)
-      syncController?.close()
-      syncController = null
+      animation.stop()
       const shouldPersistBeforeInitialization = !isStorageReady()
       const shouldPersistStateBeforeInitialization =
         shouldPersistBeforeInitialization && state().status !== 'idle'
@@ -308,16 +313,17 @@ export const usePomodoroTimer = (props: UsePomodoroTimerProps = {}): PomodoroTim
               autoStartNextPhase: true,
             })
           : currentState
-        writePomodoroTimerState(
-          stopPomodoroTimer(stateToStop, currentConfig, {
-            now: currentTime,
-            preserveRemainingProgress: true,
-          }),
-          props.storage,
-        )
+        const stoppedState = stopPomodoroTimer(stateToStop, currentConfig, {
+          now: currentTime,
+          preserveRemainingProgress: true,
+        })
+        writePomodoroTimerState(stoppedState, props.storage)
+        applyState(stoppedState)
       } else if (shouldPersistStateBeforeInitialization) {
         writePomodoroTimerState(state(), props.storage)
       }
+      syncController?.close()
+      syncController = null
     })
   })
 

@@ -11,7 +11,7 @@ import {
 
 const MIN_SECONDS = 5
 const MAX_SECONDS = 3600
-const STORAGE_KEY = 'pomo:ui-auto-hide:v1'
+export const UI_AUTO_HIDE_STORAGE_KEY = 'pomo:ui-auto-hide:v1'
 const preferencesSchema = z.object({
   enabled: z.boolean(),
   seconds: z.number().int().min(MIN_SECONDS).max(MAX_SECONDS),
@@ -74,11 +74,11 @@ export const createVisibilityPreferenceRepository = (
   }
 }
 export const visibilityPreferenceRepository = createVisibilityPreferenceRepository({
-  readToss: () => readTossStorageJson(STORAGE_KEY, parseVisibilityPreferences),
-  readWeb: () => readWebStorageJson(STORAGE_KEY, parseVisibilityPreferences),
+  readToss: () => readTossStorageJson(UI_AUTO_HIDE_STORAGE_KEY, parseVisibilityPreferences),
+  readWeb: () => readWebStorageJson(UI_AUTO_HIDE_STORAGE_KEY, parseVisibilityPreferences),
   usesNative: hasNativeStorageBridge,
-  writeToss: (value) => writeTossStorageJson(STORAGE_KEY, value),
-  writeWeb: (value) => writeWebStorageJson(STORAGE_KEY, value),
+  writeToss: (value) => writeTossStorageJson(UI_AUTO_HIDE_STORAGE_KEY, value),
+  writeWeb: (value) => writeWebStorageJson(UI_AUTO_HIDE_STORAGE_KEY, value),
 })
 
 /** Adapts web-first visibility restoration and native repair to the preference provider. */

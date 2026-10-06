@@ -1,6 +1,7 @@
 import {createPendingSave} from 'src/features/pending-save'
 import {PNumberInput} from 'src/components/p-number-input/PNumberInput'
 import {usePreference} from 'src/hooks/use-preference'
+import {normalizePasteNumericInput} from 'src/utils/normalize-paste-numeric-input'
 import {
   type Accessor,
   createEffect,
@@ -54,8 +55,8 @@ const logPreferenceError = (isSaveError: boolean, error: unknown) => {
 }
 
 const parseInterval = (draft: IntervalDraft): RandomEventInterval | null => {
-  const maximumMinutes = Number(draft.maximum)
-  const minimumMinutes = Number(draft.minimum)
+  const maximumMinutes = Number(normalizePasteNumericInput(draft.maximum))
+  const minimumMinutes = Number(normalizePasteNumericInput(draft.minimum))
 
   if (
     !Number.isInteger(maximumMinutes) ||
@@ -94,6 +95,7 @@ const RandomEventIntervalFields = (props: RandomEventIntervalFieldsProps): JSX.E
         onInputValueChange={props.onMinimumChange}
         onValueChange={(value) => props.onMinimumChange(String(value))}
         size="small"
+        type="text"
         value={props.draft().minimum}
       />
     </label>
@@ -111,6 +113,7 @@ const RandomEventIntervalFields = (props: RandomEventIntervalFieldsProps): JSX.E
         onInputValueChange={props.onMaximumChange}
         onValueChange={(value) => props.onMaximumChange(String(value))}
         size="small"
+        type="text"
         value={props.draft().maximum}
       />
     </label>

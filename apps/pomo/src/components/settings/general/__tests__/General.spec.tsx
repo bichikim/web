@@ -1,12 +1,16 @@
 /** @vitest-environment jsdom */
 import {render, screen} from '@solidjs/testing-library'
+import {type Locale, overwriteSetLocale, setLocale} from '@paraglide/runtime'
 import {PHealthCheck} from 'src/components/p-health-check/PHealthCheck'
 import {PSelect, type PSelectSingleProps} from 'src/components/p-select/PSelect'
 import {type DisplayThemePreference, useDisplayTheme} from 'src/features/display-theme'
 import {useScreenWakeLock} from 'src/features/screen-wake-lock'
-import {beforeEach, expect, it, vi} from 'vitest'
+import {afterEach, beforeEach, expect, it, vi} from 'vitest'
 import {PGeneralDisplaySettings} from '../Display'
 import {PGeneralSettings} from '../General'
+
+const originalSetLocale = setLocale
+
 vi.mock('src/components/p-select/PSelect', () => ({PSelect: vi.fn()}))
 vi.mock('src/features/display-theme', () => ({useDisplayTheme: vi.fn()}))
 vi.mock('src/features/screen-wake-lock', () => ({useScreenWakeLock: vi.fn()}))
@@ -42,6 +46,37 @@ beforeEach(() => {
   })
   vi.mocked(PHealthCheck).mockImplementation(() => <div>헬스 체크 진단</div>)
 })
+
+afterEach(() => {
+  overwriteSetLocale(originalSetLocale)
+})
+
+it("should pass the selected language without overriding Paraglide's reload policy", () => {
+  const activateLocale = vi.fn()
+  overwriteSetLocale(activateLocale)
+
+  render(() => <PGeneralSettings wakeLock={useScreenWakeLock()} />)
+
+  const languageSelect = vi
+    .mocked(PSelect)
+    .mock.calls.map(([props]) => props)
+    .find(
+      (props) =>
+        props.multiple !== true &&
+        props.options.some((option) => option.value === 'ko') &&
+        props.options.some((option) => option.value === 'en'),
+    ) as PSelectSingleProps<Locale> | undefined
+
+  expect(languageSelect?.value).toBe('ko')
+  expect(languageSelect?.options).toEqual([
+    {label: '한국어', value: 'ko'},
+    {label: 'English', value: 'en'},
+  ])
+  activateLocale.mockClear()
+  languageSelect?.onChange('en')
+  expect(activateLocale).toHaveBeenCalledExactlyOnceWith('en')
+})
+
 it('should expose and change the saved display theme in general settings', () => {
   const onPreferenceChange = vi.fn()
   vi.mocked(useDisplayTheme).mockReturnValue({

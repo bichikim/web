@@ -1,9 +1,9 @@
 import {describe, expect, test} from 'vitest'
 
 import type {PuppetDocument, PuppetPart} from '../../document'
+import {parseDocument} from '../../parse-document'
 import {getSpatialPartPose} from '../spatial-part'
 import {generateSpatialMesh} from '../../../deformation/generate-spatial-mesh'
-import {composeParameterScene} from '../../../deformation/scene'
 import {setSpatialMesh} from '../../../editor/internal/set-spatial-mesh'
 
 const part: PuppetPart = {
@@ -12,7 +12,6 @@ const part: PuppetPart = {
   spatial: {
     controlPoints: [0, 0, 0, 10, 0, 0, 0, 10, 0],
     origin: [0, 0, 0],
-    rotationParameterIds: [null, 'turn', null],
   },
   texture: {height: 10, src: 'front.png', width: 10},
 }
@@ -27,6 +26,30 @@ const document: PuppetDocument = {
 }
 
 describe('getSpatialPartPose', () => {
+  test('should ignore an obsolete direct rotation connection in an older document', () => {
+    const legacy = {
+      ...document,
+      parts: [
+        {
+          ...part,
+          spatial: {...part.spatial!, rotationParameterIds: [null, 'turn', null]},
+        },
+      ],
+    }
+    const parsed = parseDocument(JSON.stringify(legacy))
+    expect(parsed.ok).toBe(true)
+    if (!parsed.ok) {
+      return
+    }
+    expect(
+      getSpatialPartPose({
+        document: parsed.document,
+        parameterValues: {turn: 180},
+        part: parsed.document.parts[0]!,
+      })?.facing,
+    ).toBe(true)
+  })
+
   test('should apply 3D translation and scale to image vertices and depth', () => {
     const groupedPart: PuppetPart = {
       ...part,
@@ -50,7 +73,6 @@ describe('getSpatialPartPose', () => {
             rows: 1,
             spatialOrigin: [0, 0, 0],
             spatialRotation: [0, 0, 0],
-            spatialRotationParameterIds: [null, null, null],
             spatialScale: [2, 3, 4],
             spatialTranslation: [4, -2, 3],
             visible: true,
@@ -88,7 +110,6 @@ describe('getSpatialPartPose', () => {
             rows: 2,
             spatialOrigin: [0, 0, 0],
             spatialRotation: [0, 90, 0],
-            spatialRotationParameterIds: [null, null, null],
             visible: true,
           },
         ],
@@ -126,7 +147,6 @@ describe('getSpatialPartPose', () => {
       spatial: {
         ...part.spatial!,
         groupId: 'spatial',
-        rotationParameterIds: [null, null, null] as const,
       },
     }
     const node = {
@@ -142,7 +162,6 @@ describe('getSpatialPartPose', () => {
       rows: 1,
       spatialMeshPosition: [2, 0, 1] as const,
       spatialOrigin: [0, 0, 0] as const,
-      spatialRotationParameterIds: [null, null, null] as const,
       visible: true,
     }
     const source: PuppetDocument = {
@@ -244,7 +263,6 @@ describe('getSpatialPartPose', () => {
       spatialMesh: mesh,
       spatialOrigin: [0, 0, 0] as const,
       spatialRotation: [0, 90, 0] as const,
-      spatialRotationParameterIds: [null, null, null] as const,
       visible: true,
     }
     const beforeDocument: PuppetDocument = {
@@ -262,71 +280,6 @@ describe('getSpatialPartPose', () => {
     const after = getSpatialPartPose({document: afterDocument, part: legacyPart})!
     expect(after.vertices[0]! - before.vertices[0]!).toBeCloseTo(6)
     expect(legacyPart.spatial?.controlPoints[2]).toBe(7)
-  })
-
-  test('should show the front face at rest and cull it after a half turn', () => {
-    expect(getSpatialPartPose({document, part})?.facing).toBe(true)
-    expect(getSpatialPartPose({document, parameterValues: {turn: 180}, part})?.facing).toBe(false)
-  })
-
-  test('should reveal a separately textured side face at a quarter turn', () => {
-    const side: PuppetPart = {
-      ...part,
-      id: 'side',
-      spatial: {
-        ...part.spatial!,
-        controlPoints: [10, 0, 0, 10, 0, 4, 10, 10, 0],
-      },
-      texture: {height: 10, src: 'side.png', width: 4},
-    }
-    expect(getSpatialPartPose({document, part: side})?.facing).toBe(false)
-    expect(getSpatialPartPose({document, parameterValues: {turn: 90}, part: side})?.facing).toBe(
-      true,
-    )
-  })
-
-  test('should use the shared 3D deformer rotation for its child surface', () => {
-    const groupedPart: PuppetPart = {
-      ...part,
-      spatial: {...part.spatial!, groupId: 'spatial', rotationParameterIds: [null, null, null]},
-    }
-    const groupedDocument: PuppetDocument = {
-      ...document,
-      parts: [groupedPart],
-      scene: {
-        roots: [
-          {
-            bounds: {height: 10, width: 10, x: 0, y: 0},
-            children: [{id: 'front', kind: 'part', locked: false, name: 'Front', visible: true}],
-            columns: 2,
-            controlPoints: [0, 0, 10, 0, 0, 10, 10, 10],
-            deformerType: 'spatial',
-            id: 'spatial',
-            kind: 'deformer',
-            locked: false,
-            name: '3D',
-            rows: 2,
-            spatialOrigin: [0, 0, 0],
-            spatialRotationParameterIds: [null, 'turn', null],
-            visible: true,
-          },
-        ],
-      },
-    }
-    expect(getSpatialPartPose({document: groupedDocument, part: groupedPart})?.facing).toBe(true)
-    const parameterValues = {turn: 180}
-    const posedScene = composeParameterScene(groupedDocument, parameterValues)
-    expect(
-      getSpatialPartPose({document: groupedDocument, parameterValues, part: groupedPart})?.facing,
-    ).toBe(false)
-    expect(
-      getSpatialPartPose({
-        document: groupedDocument,
-        parameterValues,
-        part: groupedPart,
-        posedScene,
-      })?.facing,
-    ).toBe(false)
   })
 
   test('should include the deformer static rotation', () => {
@@ -352,7 +305,6 @@ describe('getSpatialPartPose', () => {
             rows: 2,
             spatialOrigin: [0, 0, 0],
             spatialRotation: [0, 180, 0],
-            spatialRotationParameterIds: [null, null, null],
             visible: true,
           },
         ],
@@ -364,7 +316,7 @@ describe('getSpatialPartPose', () => {
   test('should apply a connected parameter keyform to the shared 3D rotation', () => {
     const groupedPart: PuppetPart = {
       ...part,
-      spatial: {...part.spatial!, groupId: 'spatial', rotationParameterIds: [null, null, null]},
+      spatial: {...part.spatial!, groupId: 'spatial'},
     }
     const node = {
       bounds: {height: 10, width: 10, x: 0, y: 0},
@@ -379,7 +331,6 @@ describe('getSpatialPartPose', () => {
       rows: 2,
       spatialOrigin: [0, 0, 0] as const,
       spatialRotation: [0, 0, 0] as const,
-      spatialRotationParameterIds: [null, null, null] as const,
       visible: true,
     }
     const groupedDocument: PuppetDocument = {

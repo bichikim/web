@@ -90,7 +90,7 @@ export const CLASSES = {
     'motion-reduce:transition-none',
     '[--media-control-height:0.125rem] [--media-range-padding:0rem]',
     '[--media-range-bar-color:var(--pomo-color-foreground)]',
-    '[--media-time-range-buffered-color:var(--pomo-color-muted-foreground)]',
+    '[--media-time-range-buffered-color:rgb(var(--pomo-color-foreground-channels)_/_30%)]',
     '[--media-range-track-background:var(--pomo-color-range-track)]',
     'hover:[--media-range-thumb-opacity:1] focus-within:[--media-range-thumb-opacity:1]',
   ),

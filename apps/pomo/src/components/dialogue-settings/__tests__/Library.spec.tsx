@@ -1,7 +1,8 @@
 /** @vitest-environment jsdom */
 
 import {fireEvent, render, screen, within} from '@solidjs/testing-library'
-import {type JSX} from 'solid-js'
+import {createMemo, createSignal, type JSX} from 'solid-js'
+import {PModal} from '../../p-modal/PModal'
 import {afterEach, beforeEach, expect, it, vi} from 'vitest'
 
 import {
@@ -138,14 +139,8 @@ it('should ignore a superseded character playback request', async () => {
     .mockImplementationOnce(() => firstAudio.promise)
     .mockImplementationOnce(() => secondAudio.promise)
   vi.mocked(usePEvents).mockReturnValue(events)
-  const onRequestClose = vi.fn()
 
-  render(() => (
-    <DialogueLibrary
-      entries={[{dialogue: DIALOGUE}, {dialogue: secondDialogue}]}
-      onRequestClose={onRequestClose}
-    />
-  ))
+  render(() => <DialogueLibrary entries={[{dialogue: DIALOGUE}, {dialogue: secondDialogue}]} />)
 
   const rows = within(screen.getByRole('list', {name: '저장된 대화'})).getAllByRole('listitem')
   fireEvent.click(within(rows[0]!).getByRole('button', {name: '캐릭터로 듣기'}))
@@ -155,7 +150,6 @@ it('should ignore a superseded character playback request', async () => {
 
   await vi.waitFor(() => expect(events.playDialogue).toHaveBeenCalledOnce())
   expect(events.playDialogue).toHaveBeenCalledWith(secondDialogue.id)
-  expect(onRequestClose).toHaveBeenCalledOnce()
 })
 
 it('should not close the library for character playback superseded after starting', async () => {
@@ -169,25 +163,48 @@ it('should not close the library for character playback superseded after startin
       .mockResolvedValueOnce(true),
   })
   vi.mocked(usePEvents).mockReturnValue(events)
-  const onRequestClose = vi.fn()
 
-  render(() => (
-    <DialogueLibrary
-      entries={[{dialogue: DIALOGUE}, {dialogue: secondDialogue}]}
-      onRequestClose={onRequestClose}
-    />
-  ))
+  render(() => <DialogueLibrary entries={[{dialogue: DIALOGUE}, {dialogue: secondDialogue}]} />)
 
   const rows = within(screen.getByRole('list', {name: '저장된 대화'})).getAllByRole('listitem')
   fireEvent.click(within(rows[0]!).getByRole('button', {name: '캐릭터로 듣기'}))
   await vi.waitFor(() => expect(events.playDialogue).toHaveBeenCalledWith(DIALOGUE.id))
   fireEvent.click(within(rows[1]!).getByRole('button', {name: '캐릭터로 듣기'}))
   await vi.waitFor(() => expect(events.playDialogue).toHaveBeenCalledWith(secondDialogue.id))
-  await vi.waitFor(() => expect(onRequestClose).toHaveBeenCalledOnce())
 
   firstPlayback.resolve(true)
   await firstPlayback.promise
-  expect(onRequestClose).toHaveBeenCalledOnce()
+  expect(screen.getByRole('list', {name: '저장된 대화'})).toBeVisible()
+})
+
+it('should keep its containing modal open during and after character playback', async () => {
+  const playback = Promise.withResolvers<boolean>()
+  const events = createEvents({
+    getAudio: vi.fn(async () => new Blob(['audio'])),
+    playDialogue: vi.fn(() => playback.promise),
+  })
+  vi.mocked(usePEvents).mockReturnValue(events)
+
+  const [isOpen, setIsOpen] = createSignal(true)
+  render(() => (
+    <PModal isOpen={isOpen()} onOpenChange={setIsOpen} title="대화 목록">
+      <DialogueLibrary entries={[{dialogue: DIALOGUE}]} />
+    </PModal>
+  ))
+  fireEvent.click(screen.getByRole('button', {name: '캐릭터로 듣기'}))
+  await vi.waitFor(() => expect(events.playDialogue).toHaveBeenCalledWith(DIALOGUE.id))
+
+  expect(screen.getByRole('dialog', {name: '대화 목록'})).toBeVisible()
+  expect(screen.getByRole('list', {name: '저장된 대화'})).toBeVisible()
+
+  playback.resolve(true)
+  await playback.promise
+
+  expect(screen.getByRole('list', {name: '저장된 대화'})).toBeVisible()
+  expect(screen.getByRole('dialog', {name: '대화 목록'})).toBeVisible()
+  fireEvent.click(screen.getByRole('button', {name: '닫기'}))
+  expect(isOpen()).toBe(false)
+  expect(screen.getByRole('dialog', {name: '대화 목록'})).toHaveAttribute('data-closed')
 })
 
 it('should keep the library open when character playback does not start', async () => {
@@ -196,14 +213,12 @@ it('should keep the library open when character playback does not start', async 
     playDialogue: vi.fn(async () => false),
   })
   vi.mocked(usePEvents).mockReturnValue(events)
-  const onRequestClose = vi.fn()
 
-  render(() => <DialogueLibrary entries={[{dialogue: DIALOGUE}]} onRequestClose={onRequestClose} />)
+  render(() => <DialogueLibrary entries={[{dialogue: DIALOGUE}]} />)
 
   fireEvent.click(screen.getByRole('button', {name: '캐릭터로 듣기'}))
 
   await vi.waitFor(() => expect(events.playDialogue).toHaveBeenCalledWith(DIALOGUE.id))
-  expect(onRequestClose).not.toHaveBeenCalled()
 })
 
 it('should revoke a superseded inline playback URL', async () => {
@@ -237,4 +252,38 @@ it('should revoke a superseded inline playback URL', async () => {
   secondAudio.resolve(new Blob(['second audio']))
   await vi.waitFor(() => expect(play).toHaveBeenCalledOnce())
   expect(revokeObjectURL).toHaveBeenCalledWith('blob:dialogue-1')
+})
+
+it('should preserve the library row and focus when another dialogue is appended', () => {
+  const [dialogues, setDialogues] = createSignal<ReadonlyArray<PDialogue>>([DIALOGUE])
+  const entries = createMemo(() => dialogues().map((dialogue) => ({dialogue})))
+  const result = render(() => <DialogueLibrary entries={entries()} />)
+  const audio = result.container.querySelector('audio')
+  const button = screen.getByRole('button', {name: '듣기'})
+  button.focus()
+  expect(document.activeElement).toBe(button)
+  setDialogues([DIALOGUE, SECOND_DIALOGUE])
+  const nextButton = screen.getAllByRole('button', {name: '듣기'})[0]
+  expect(nextButton).toBe(button)
+  expect(button.isConnected).toBe(true)
+  expect(document.activeElement).toBe(nextButton)
+  expect(result.container.querySelector('audio')).toBe(audio)
+})
+
+it('should preserve the row while displaying and deleting the current dialogue', async () => {
+  const [dialogue, setDialogue] = createSignal(DIALOGUE)
+  const entries = createMemo(() => [{dialogue: dialogue(), metadata: dialogue().voiceId}])
+  const onDelete = vi.fn(async () => undefined)
+  render(() => <DialogueLibrary entries={entries()} onDelete={onDelete} />)
+  const button = screen.getByRole('button', {name: '듣기'})
+  button.focus()
+  const updated = {...DIALOGUE, text: '갱신한 대화', voiceId: 'Hana' as const}
+  setDialogue(updated)
+  expect(screen.getByRole('button', {name: '듣기'})).toBe(button)
+  expect(document.activeElement).toBe(button)
+  expect(screen.getByText('갱신한 대화')).toBeInTheDocument()
+  expect(screen.getByText('Hana')).toBeInTheDocument()
+  fireEvent.click(screen.getByRole('button', {name: '삭제'}))
+  fireEvent.click(screen.getByRole('button', {name: '삭제 확인'}))
+  await vi.waitFor(() => expect(onDelete).toHaveBeenCalledWith(updated))
 })

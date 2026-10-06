@@ -25,16 +25,10 @@ import {
 import {createTextGenerationExecutor} from '../text-generation/execution'
 import {partitionChatHistory} from './context'
 import type {ChatContext, ChatMessage, ChatWorkerRequest, ChatWorkerResponse} from './messages'
-import {
-  createChatMessages,
-  createSummaryMessages,
-  limitChatAnswer,
-  MAXIMUM_CHAT_ANSWER_CHARACTERS,
-  takeChatAnswerPrefix,
-} from './prompt'
+import {createChatMessages, createSummaryMessages} from './prompt'
 
 const CONTEXT_COMPACTION_TOKENS = 4608
-const MAXIMUM_ANSWER_TOKENS = 256
+const MAXIMUM_ANSWER_TOKENS = 2048
 const MAXIMUM_SUMMARY_TOKENS = 384
 const workerScope = globalThis.self as DedicatedWorkerGlobalScope
 
@@ -220,7 +214,6 @@ const generateAnswer = async (options: GenerateAnswerOptions) => {
     options.modelId,
     options.supplementaryContext,
   )
-  let streamedCharacters = 0
   sendResponse({contextTokens, type: 'started', wasCompacted: compacted.wasCompacted})
   const rawGeneratedText = await generateText({
     maximumTokens: MAXIMUM_ANSWER_TOKENS,
@@ -230,21 +223,17 @@ const generateAnswer = async (options: GenerateAnswerOptions) => {
     }),
     modelId: options.modelId,
     onToken: (token) => {
-      const remainingCharacters = MAXIMUM_CHAT_ANSWER_CHARACTERS - streamedCharacters
-      const visibleText = takeChatAnswerPrefix(token, remainingCharacters)
-
-      if (visibleText.length > 0) {
-        streamedCharacters += Array.from(visibleText).length
-        sendResponse({text: visibleText, type: 'token'})
+      if (token.length > 0) {
+        sendResponse({text: token, type: 'token'})
       }
     },
   })
-  const generatedText = limitChatAnswer(rawGeneratedText)
+  const generatedText = rawGeneratedText
   sendResponse({draft: {content: generatedText, id: options.replyId}, type: 'draft'})
   const refinedText = options.refineAnswer
     ? await refineKoreanAnswer(generatedText, options.modelId)
     : generatedText
-  const text = limitChatAnswer(refinedText)
+  const text = refinedText
   const message: ChatMessage = {content: text, id: options.replyId, role: 'assistant'}
   const completedContext: ChatContext = {
     messages: [...compacted.context.messages, message],
@@ -266,15 +255,16 @@ const generateAnswer = async (options: GenerateAnswerOptions) => {
   })
 }
 
-const handleRequest = (request: ChatWorkerRequest): Promise<void> => {
+const handleRequest = async (request: ChatWorkerRequest): Promise<void> => {
   switch (request.type) {
     case 'generate':
       return generation.run(() => generateAnswer(request))
     case 'prepare':
-      return prepareModel(request.modelId)
+      return generation.run(() => prepareModel(request.modelId))
+    default:
+      request satisfies never
+      throw new Error('지원하지 않는 채팅 요청이에요.')
   }
-
-  request satisfies never
 }
 
 workerScope.addEventListener('message', (event: MessageEvent<ChatWorkerRequest>) => {

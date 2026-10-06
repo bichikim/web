@@ -2,7 +2,8 @@ import {SERVER_AI_RELEASED} from '../../features/ai-job/release'
 import {type PSceneStyle} from '../../features/focus-room-animation/index'
 import type {PTrack} from '../../features/focus-room-audio/index'
 import type {PomodoroTimerEventDeliveryOptions} from '../../features/pomodoro-timer'
-import {createMemo, createSignal, For, onCleanup, onMount, Show} from 'solid-js'
+import {createEffect, createMemo, createSignal, on, onCleanup, onMount, Show} from 'solid-js'
+import {useToast} from '@winter-love/solid-components'
 import * as m from '@paraglide/message'
 import {
   RANDOM_DIALOGUE_EVENT,
@@ -15,14 +16,13 @@ import {PDialogueComposer} from '../p-dialogue-composer/PDialogueComposer'
 import {PDialoguePlayer} from '../p-dialogue-player/PDialoguePlayer'
 import {PAiJobStatus} from './PAiJobStatus'
 import {PFeedStatus} from '../p-feed-status/PFeedStatus'
-import {PFormMessage} from '../p-form-message/PFormMessage'
 import {PModelDownloadConsent} from '../p-model-download-consent/PModelDownloadConsent'
 import {PMusicPlayer} from '../p-music-player/PMusicPlayer'
 import type {MusicPlaybackActions} from '../music-player/types'
 import {type SoundEffectsController, useOptionalSoundEffects} from '../../features/sound-effects'
 import {PPomodoro, type PPomodoroPresentation} from '../p-pomodoro/PPomodoro'
 import {CLASSES} from './shared'
-import {ONE_OFF_CHAT_MODEL, useOneOffChat} from './use-one-off-chat'
+import {useOneOffChat} from './use-one-off-chat'
 import {useReplySpeechQueue} from './use-reply-speech-queue'
 import {useChildPresence} from './use-child-presence'
 import {useMobileLayout} from './use-mobile-layout'
@@ -97,6 +97,7 @@ export const PStudioEvents = (props: PStudioEventsProps) => {
     isEnabled: () => props.dialogueComposerVisible,
     isOccupied,
     speak: (text) => props.pomoSay.speak({text}),
+    speechRevision: () => props.pomoSay.speechRevision(),
     stop: () => props.pomoSay.stop(),
   })
   const oneOffChat = useOneOffChat({
@@ -179,6 +180,27 @@ export const PStudioEvents = (props: PStudioEventsProps) => {
   }
 
   const reminders = useMemoryReminders({events, onBeforePlayback: () => props.pomoSay.stop()})
+  const toast = useToast()
+  createEffect(
+    on(oneOffChat.errorMessage, (message) => {
+      if (message !== null) {
+        toast.showToast({message, tone: 'error'})
+      }
+    }),
+  )
+  createEffect(
+    on(reminders.skippedReminders, (memos, previous) => {
+      const previousIds = new Set(previous?.map((memo) => memo.id))
+      memos
+        .filter((memo) => !previousIds.has(memo.id))
+        .forEach((memo) => {
+          toast.showToast({
+            message: m.memory_reminder_playback_skipped({text: memo.text}),
+            tone: 'error',
+          })
+        })
+    }),
+  )
   useRandomEvent({onEvent: () => handlePomodoroEvents([RANDOM_DIALOGUE_EVENT])})
 
   return (
@@ -226,19 +248,9 @@ export const PStudioEvents = (props: PStudioEventsProps) => {
           </Show>
         </div>
         <div class={CLASSES.mediaMessages} ref={setMediaMessages}>
-          <Show when={oneOffChat.errorMessage()}>
-            {(message) => <PFormMessage tone="error">{message()}</PFormMessage>}
-          </Show>
           <Show when={SERVER_AI_RELEASED}>
             <PAiJobStatus job={oneOffChat.serverJob} />
           </Show>
-          <For each={reminders.skippedReminders()}>
-            {(memo) => (
-              <PFormMessage tone="error">
-                {m.memory_reminder_playback_skipped({text: memo.text})}
-              </PFormMessage>
-            )}
-          </For>
           <PFeedStatus sceneStyle={props.sceneStyle} />
           <PDialoguePlayer
             externalText={props.pomoSay.speechText()}
@@ -249,7 +261,7 @@ export const PStudioEvents = (props: PStudioEventsProps) => {
       </div>
       <PModelDownloadConsent
         actionLabel={m.dialogue_composer_download_action_label()}
-        downloadSize={ONE_OFF_CHAT_MODEL.downloadSize}
+        downloadSize={oneOffChat.downloadSize()}
         isOpen={oneOffChat.downloadConsentOpen()}
         onCancel={oneOffChat.cancelDownloadConsent}
         onConfirm={oneOffChat.startDownload}

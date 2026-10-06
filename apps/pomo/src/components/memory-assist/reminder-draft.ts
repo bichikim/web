@@ -1,4 +1,5 @@
 import dayjs from 'dayjs'
+import {parseDate} from 'src/features/civil-date'
 import {formatLocalDate} from 'src/utils/format-local-date'
 import {
   MEMORY_REINFORCEMENT_INTERVALS,
@@ -28,6 +29,10 @@ export const resolveReminderAt = (
     .toDate()
 
   const dateValue = day === 'custom' ? customDate : formatLocalDate(date)
+  if (day === 'custom' && parseDate(dateValue) === null) {
+    return null
+  }
+
   const reminder = new Date(`${dateValue}T${time}`)
   return Number.isNaN(reminder.getTime()) ? null : reminder.toISOString()
 }

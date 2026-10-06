@@ -4,9 +4,12 @@ import {sampleVideo, type VideoSample} from './sample'
 export * from './sample'
 export * from './timeline'
 
+const SAMPLE_CACHE_VERSION = 2
+
 interface CachedVideo {
   readonly id: string
   readonly samples: readonly VideoSample[]
+  readonly sampleVersion?: number
 }
 let table: Table<CachedVideo, string> | undefined
 const storage = () => {
@@ -38,12 +41,12 @@ export const prepareVideoBackground = (
     try {
       controller.signal.throwIfAborted()
       const cached = await storage().get(id)
-      if (cached !== undefined) {
+      if (cached?.sampleVersion === SAMPLE_CACHE_VERSION) {
         return cached.samples
       }
       const samples = await sampleVideo(blob, controller.signal)
       controller.signal.throwIfAborted()
-      await storage().put({id, samples})
+      await storage().put({id, samples, sampleVersion: SAMPLE_CACHE_VERSION})
       return samples
     } catch (error: unknown) {
       if (!controller.signal.aborted) {

@@ -7,6 +7,13 @@ import {createSerialTaskQueue} from 'src/utils/create-serial-task-queue'
 
 import {replaceBlobObjectUrl} from '../blob-object-url'
 import {
+  COVER_STORAGE_WARNING,
+  getAlbumDraftStorage,
+  persistDraftData,
+  persistPreparedCover,
+  removePreparedCoverDraft,
+} from './album-draft-persistence'
+import {
   type AlbumCreationCallbacks,
   type AlbumCreationServices,
   createAlbumSubmitHandler,
@@ -26,7 +33,6 @@ import {
   type DraftReferenceUpdater,
 } from './create-draft-reference-lifecycle'
 
-const getAlbumDraftStorage = () => import('./album-draft-storage')
 const coverFallbackSchema = z.enum(['lp', 'cd', 'music'])
 const COVER_SELECTION_ERROR = '커버 이미지를 선택하지 못했습니다.'
 
@@ -39,94 +45,6 @@ const clearCoverPreview = (
   if (currentUrl !== null) {
     setCoverPreviewUrl(replaceBlobObjectUrl(currentUrl, () => null))
   }
-}
-
-const persistDraftData = async (
-  draft: AlbumDraftData,
-  setMessage: Setter<string | null>,
-  updateDraftReference: DraftReferenceUpdater,
-): Promise<void> => {
-  try {
-    const {writeAlbumDraftData} = await getAlbumDraftStorage()
-
-    if (!writeAlbumDraftData(draft).success) {
-      setMessage('브라우저에 초안을 저장하지 못했습니다. 이 탭을 닫기 전에 다시 시도해 주세요.')
-      return
-    }
-
-    if (!(await updateDraftReference(draft.coverDraftId)).success) {
-      setMessage(
-        '브라우저 초안은 저장했지만 다른 탭과 커버 참조를 동기화하지 못했습니다. 이 탭을 닫기 전에 다시 시도해 주세요.',
-      )
-    }
-  } catch (error) {
-    console.warn('Failed to load the album draft storage.', error)
-    setMessage('브라우저 초안 저장 기능을 불러오지 못했습니다. 이 탭을 닫지 마세요.')
-  }
-}
-
-const removePreparedCoverDraft = async (
-  previousCoverDraftId: string | null,
-  draft: AlbumDraftData,
-  updateDraftReference: DraftReferenceUpdater,
-): Promise<string | null> => {
-  const {deleteAlbumDraftCover, writeAlbumDraftData} = await getAlbumDraftStorage()
-  const dataWriteResult = writeAlbumDraftData(draft)
-
-  if (!dataWriteResult.success) {
-    return '커버는 화면에서 지웠지만 브라우저 초안을 갱신하지 못했습니다. 이 탭을 닫기 전에 다시 시도해 주세요.'
-  }
-
-  if (!(await updateDraftReference(null)).success) {
-    return '커버는 화면에서 지웠지만 다른 탭과 커버 참조를 동기화하지 못했습니다. 이 탭을 닫기 전에 다시 시도해 주세요.'
-  }
-
-  if (previousCoverDraftId !== null) {
-    await deleteAlbumDraftCover(previousCoverDraftId)
-  }
-
-  return null
-}
-
-interface PersistPreparedCoverOptions {
-  readonly draft: AlbumDraftData
-  readonly file: File
-  readonly nextCoverDraftId: string
-  readonly previousCoverDraftId: string | null
-  readonly updateDraftReference: DraftReferenceUpdater
-}
-
-const persistPreparedCover = async ({
-  draft,
-  file,
-  nextCoverDraftId,
-  previousCoverDraftId,
-  updateDraftReference,
-}: PersistPreparedCoverOptions): Promise<string> => {
-  const {deleteAlbumDraftCover, writeAlbumDraftCover, writeAlbumDraftData} =
-    await getAlbumDraftStorage()
-  const coverWriteResult = await writeAlbumDraftCover(nextCoverDraftId, file)
-
-  if (!coverWriteResult.success) {
-    return '커버는 준비했지만 브라우저에 저장하지 못했습니다. 이 탭을 닫기 전에 앨범을 만들어 주세요.'
-  }
-
-  const dataWriteResult = writeAlbumDraftData(draft)
-
-  if (!dataWriteResult.success) {
-    await deleteAlbumDraftCover(nextCoverDraftId)
-    return '커버는 준비했지만 브라우저에 초안을 저장하지 못했습니다. 이 탭을 닫기 전에 앨범을 만들어 주세요.'
-  }
-
-  if (!(await updateDraftReference(nextCoverDraftId)).success) {
-    return '커버는 준비했지만 다른 탭과 커버 참조를 동기화하지 못했습니다. 이 탭을 닫기 전에 다시 시도해 주세요.'
-  }
-
-  if (previousCoverDraftId !== null) {
-    await deleteAlbumDraftCover(previousCoverDraftId)
-  }
-
-  return '커버를 중앙 정사각형으로 자르고 1200×1200 WebP로 준비했습니다.'
 }
 
 type DraftField = 'cover' | 'coverFallback' | 'coverImageUrl' | 'translations'
@@ -181,7 +99,9 @@ const createDraftDataGetter = (options: CreateDraftDataGetterOptions) => (): Alb
 
 interface DraftPersistence {
   readonly enqueue: <Value>(operation: () => Promise<Value>) => Promise<Value>
-  readonly persist: () => void
+  readonly persist: (
+    preserveLatestCoverMetadata?: boolean | (() => boolean),
+  ) => Promise<AlbumDraftData | null>
   readonly wait: () => Promise<void>
 }
 
@@ -195,9 +115,20 @@ const createDraftPersistence = (
 
   return {
     enqueue,
-    persist: () => {
+    persist: (preserveLatestCoverMetadata = true) => {
       const draft = getDraftData()
-      enqueue(() => persistDraftData(draft, setMessage, updateDraftReference))
+      return enqueue(() => {
+        const shouldPreserveCoverMetadata =
+          typeof preserveLatestCoverMetadata === 'function'
+            ? preserveLatestCoverMetadata()
+            : preserveLatestCoverMetadata
+        return persistDraftData(
+          draft,
+          setMessage,
+          updateDraftReference,
+          shouldPreserveCoverMetadata,
+        )
+      })
     },
     wait: queue.settle,
   }
@@ -340,10 +271,11 @@ const createActionAlbumCreationServices = (
   albumAction: ReturnType<typeof useCreateAlbumAction>,
   updateDraftReference: DraftReferenceUpdater,
 ): AlbumCreationServices => ({
-  clearDraft: async (coverDraftId) => {
+  clearDraft: async (coverDraftId, expectedDraft) => {
     const didClearReference = (await updateDraftReference(null)).success
     const didClearDraft = await albumCreationServices.clearDraft(
       didClearReference ? coverDraftId : null,
+      expectedDraft,
     )
 
     return didClearReference && didClearDraft
@@ -379,6 +311,7 @@ interface CreateCoverChangeHandlerOptions {
   readonly restorationBarrier: DraftRestorationBarrier
   readonly setCoverDraftId: Setter<string | null>
   readonly setCoverPreviewUrl: Setter<string | null>
+  readonly setCoverStorageWarning: Setter<string | null>
   readonly setIsProcessingCover: Setter<boolean>
   readonly setMessage: Setter<string | null>
   readonly setPreparedCoverFile: Setter<File | null>
@@ -440,16 +373,40 @@ const createCoverChangeHandler =
         return
       }
 
-      const message = await options.enqueuePersistence(() =>
-        persistPreparedCover({
-          draft: options.getDraftData(),
-          file: preparedFile,
-          nextCoverDraftId,
-          previousCoverDraftId,
-          updateDraftReference: options.updateDraftReference,
-        }),
-      )
-      options.setMessage(message)
+      options.setCoverStorageWarning(null)
+      try {
+        await options.enqueuePersistence(async () => {
+          try {
+            const result = await persistPreparedCover({
+              draft: options.getDraftData(),
+              file: preparedFile,
+              nextCoverDraftId,
+              previousCoverDraftId,
+              updateDraftReference: options.updateDraftReference,
+            })
+            options.setCoverStorageWarning(result.success ? null : result.message)
+            options.setMessage(result.message)
+            return result
+          } catch (error) {
+            const detail = getExceptionMessage(error, '')
+            const message =
+              detail === '' || detail === COVER_STORAGE_WARNING
+                ? COVER_STORAGE_WARNING
+                : `${COVER_STORAGE_WARNING}\n${detail}`
+            options.setCoverStorageWarning(message)
+            options.setMessage(message)
+            return {message, success: false}
+          }
+        })
+      } catch (error) {
+        const detail = getExceptionMessage(error, '')
+        const message =
+          detail === '' || detail === COVER_STORAGE_WARNING
+            ? COVER_STORAGE_WARNING
+            : `${COVER_STORAGE_WARNING}\n${detail}`
+        options.setCoverStorageWarning(message)
+        options.setMessage(message)
+      }
     } catch (error) {
       input.value = ''
       options.setMessage(getExceptionMessage(error, COVER_SELECTION_ERROR))
@@ -468,6 +425,7 @@ export const useAlbumDraft = (props: UseAlbumDraftProps) => {
   const [isProcessingCover, setIsProcessingCover] = createSignal(false)
   const [isRestoringDraft, setIsRestoringDraft] = createSignal(true)
   const [coverPreviewUrl, setCoverPreviewUrl] = createSignal<string | null>(null)
+  const [coverStorageWarning, setCoverStorageWarning] = createSignal<string | null>(null)
   const [preparedCoverFile, setPreparedCoverFile] = createSignal<File | null>(null)
   const [albumTranslations, setAlbumTranslations] = createSignal(createEmptyAlbumTranslations())
   const [coverImageUrl, setCoverImageUrl] = createSignal('')
@@ -506,6 +464,7 @@ export const useAlbumDraft = (props: UseAlbumDraftProps) => {
   const clearPreparedCover = (): void => {
     coverPreparation.id += 1
     clearCoverPreview(coverPreviewUrl(), setCoverPreviewUrl)
+    setCoverStorageWarning(null)
     setPreparedCoverFile(null)
     setIsProcessingCover(false)
   }
@@ -539,8 +498,11 @@ export const useAlbumDraft = (props: UseAlbumDraftProps) => {
     clearPreparedCover,
     getCoverDraftId: coverDraftId,
     getCoverFile: preparedCoverFile,
+    getCoverStorageWarning: coverStorageWarning,
     getDraftData,
-    persistDraft: draftPersistence.persist,
+    getIsProcessingCover: isProcessingCover,
+    persistDraft: () =>
+      draftPersistence.persist(() => coverStorageWarning() !== null || isProcessingCover()),
     renewAlbumId: albumCreationId.renew,
     services: createActionAlbumCreationServices(albumAction, draftReference.update),
     setAlbumId: albumCreationId.set,
@@ -565,6 +527,7 @@ export const useAlbumDraft = (props: UseAlbumDraftProps) => {
     restorationBarrier,
     setCoverDraftId,
     setCoverPreviewUrl,
+    setCoverStorageWarning,
     setIsProcessingCover,
     setMessage: props.setMessage,
     setPreparedCoverFile,

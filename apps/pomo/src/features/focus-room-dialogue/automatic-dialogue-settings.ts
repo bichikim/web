@@ -1,3 +1,9 @@
+import {
+  createBoundTossWebStorageAdapter,
+  createVersionedPreferenceRepository,
+  getWebRuntimeStorage,
+} from 'src/utils/runtime-storage'
+import {createPreferenceOptions} from 'src/features/preference-options'
 import {createParsedPreferenceStorage} from '../parsed-preference-storage'
 import {createJsonCodec, createValueStorage} from '../value-storage'
 import {z} from 'zod'
@@ -33,7 +39,7 @@ const voiceIdSchema = z.custom<SupertonicVoiceId>((value) =>
 )
 const automaticDialogueSettingsSchema: z.ZodType<AutomaticDialogueSettings> = z.object({
   modelId: modelIdSchema,
-  version: z.literal(1),
+  version: z.literal(1).default(1),
   voiceId: voiceIdSchema,
 })
 
@@ -44,29 +50,69 @@ export const parseAutomaticDialogueSettings = (
   return result.success ? result.data : null
 }
 
-const createRuntimeRepository = () =>
-  createAutomaticDialogueSettingsRepository(globalThis.localStorage)
+const codec = createJsonCodec(parseAutomaticDialogueSettings)
+const decodeAutomaticDialogueSettings = (stored: string): AutomaticDialogueSettings => {
+  try {
+    const settings = codec.decode(stored)
+    if (settings === null) {
+      throw new Error('Invalid automatic dialogue settings.')
+    }
+    return settings
+  } catch (error: unknown) {
+    throw new Error('저장된 자동 음성 생성 설정이 올바르지 않아요.', {cause: error})
+  }
+}
+
+/** Creates dual-runtime persistence with an optional injected browser storage boundary. */
+export const createAutomaticDialogueRuntimeRepository = (
+  webStorage?: AutomaticDialogueSettingsStorage,
+) => {
+  const adapter = createBoundTossWebStorageAdapter({
+    key: AUTOMATIC_DIALOGUE_SETTINGS_STORAGE_KEY,
+    parse: parseAutomaticDialogueSettings,
+  })
+  const readWeb = () => {
+    try {
+      const storage = webStorage ?? getWebRuntimeStorage()
+      const stored = storage.getItem(AUTOMATIC_DIALOGUE_SETTINGS_STORAGE_KEY)
+      return stored === null ? null : decodeAutomaticDialogueSettings(stored)
+    } catch (error: unknown) {
+      if (!adapter.isNative()) {
+        throw error
+      }
+      return null
+    }
+  }
+  const writeWeb = (value: AutomaticDialogueSettings) => {
+    try {
+      createAutomaticDialogueSettingsRepository(webStorage ?? getWebRuntimeStorage()).save(value)
+      return null
+    } catch (error: unknown) {
+      return error
+    }
+  }
+  return createVersionedPreferenceRepository({
+    defaultValue: DEFAULT_AUTOMATIC_DIALOGUE_SETTINGS,
+    parse: (value: AutomaticDialogueSettings) => automaticDialogueSettingsSchema.parse(value),
+    storage: {
+      isNative: adapter.isNative,
+      readNative: adapter.readToss,
+      readWeb,
+      writeNative: adapter.writeToss,
+      writeWeb,
+    },
+    writeFailureMessage: 'Failed to persist automatic dialogue settings.',
+  })
+}
+const runtimeRepository = createAutomaticDialogueRuntimeRepository()
 
 /** Persists the model and voice used for unattended dialogue generation. */
 export const createAutomaticDialogueSettingsRepository = (
   storage: AutomaticDialogueSettingsStorage,
 ): AutomaticDialogueSettingsRepository => {
-  const codec = createJsonCodec((value) => {
-    const settings = parseAutomaticDialogueSettings(value)
-    if (settings === null) {
-      throw new Error('Invalid automatic dialogue settings.')
-    }
-    return settings
-  })
   const value = createValueStorage({
     ...codec,
-    decode: (stored) => {
-      try {
-        return codec.decode(stored)
-      } catch (error: unknown) {
-        throw new Error('저장된 자동 음성 생성 설정이 올바르지 않아요.', {cause: error})
-      }
-    },
+    decode: decodeAutomaticDialogueSettings,
     key: AUTOMATIC_DIALOGUE_SETTINGS_STORAGE_KEY,
     storage: () => storage,
   })
@@ -79,16 +125,9 @@ export const createAutomaticDialogueSettingsRepository = (
 const automaticDialoguePreferenceStorage = createParsedPreferenceStorage({
   invalidMessage: 'Invalid automatic dialogue settings.',
   parse: parseAutomaticDialogueSettings,
-  read: () => createRuntimeRepository().load(),
+  read: () => runtimeRepository.read(),
   subscribe: webLocalStorage.subscribe,
-  write: (settings) => {
-    try {
-      createRuntimeRepository().save(settings)
-      return null
-    } catch (error: unknown) {
-      return error
-    }
-  },
+  write: (settings) => runtimeRepository.write(settings),
 })
 
 export interface AutomaticDialoguePreferenceOptions {
@@ -97,13 +136,9 @@ export interface AutomaticDialoguePreferenceOptions {
 }
 
 /** Creates the shared preference definition for automatic dialogue settings. */
-export const createAutomaticDialoguePreferenceOptions = (
-  options: AutomaticDialoguePreferenceOptions = {},
-) => ({
+export const createAutomaticDialoguePreferenceOptions = createPreferenceOptions({
   defaultValue: DEFAULT_AUTOMATIC_DIALOGUE_SETTINGS,
   key: AUTOMATIC_DIALOGUE_SETTINGS_STORAGE_KEY,
-  onError: options.onError,
-  onSaved: options.onSaved,
   parse: parseAutomaticDialogueSettings,
   storage: automaticDialoguePreferenceStorage,
 })

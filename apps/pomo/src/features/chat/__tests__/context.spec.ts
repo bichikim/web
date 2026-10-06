@@ -12,15 +12,22 @@ const createMessages = (count: number): ReadonlyArray<ChatMessage> =>
   }))
 
 describe('partitionChatHistory', () => {
-  it('should retain complete recent turns when the latest user is unanswered', () => {
+  it('should summarize complete turns while retaining a complete recent suffix', () => {
     const result = partitionChatHistory(createMessages(7))
 
-    expect(result.messagesToSummarize.map((message) => message.id)).toEqual(['0', '1'])
-    expect(result.recentMessages.map((message) => message.id)).toEqual(['2', '3', '4', '5', '6'])
+    expect(result.messagesToSummarize.map((message) => message.id)).toEqual(['0', '1', '2', '3'])
+    expect(result.recentMessages.map((message) => message.id)).toEqual(['4', '5', '6'])
   })
 
-  it('should keep short conversations unchanged', () => {
-    const messages = createMessages(3)
+  it('should summarize one complete turn from a five-message history', () => {
+    const result = partitionChatHistory(createMessages(5))
+
+    expect(result.messagesToSummarize.map((message) => message.id)).toEqual(['0', '1'])
+    expect(result.recentMessages.map((message) => message.id)).toEqual(['2', '3', '4'])
+  })
+
+  it('should keep a history at the retained count unchanged', () => {
+    const messages = createMessages(4)
 
     expect(partitionChatHistory(messages)).toEqual({
       messagesToSummarize: [],

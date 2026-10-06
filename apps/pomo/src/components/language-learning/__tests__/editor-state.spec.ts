@@ -22,7 +22,7 @@ it('should show matching text and voice model download progress', () => {
     }),
   ).toEqual({
     kind: 'draft',
-    message: 'Gemma 4 E2B 모델 받는 중 · 37%',
+    message: 'Gemma 4 E2B 모델 받는 중',
     progress: 37,
     progressLabel: '모델 다운로드 진행률',
   })
@@ -38,7 +38,7 @@ it('should show matching text and voice model download progress', () => {
       message: 'idle',
       phase: 'text',
     }),
-  ).toMatchObject({kind: 'voice', message: 'Full 음성 모델 받는 중 · 61%', progress: 61})
+  ).toMatchObject({kind: 'voice', message: 'Full 음성 모델 받는 중', progress: 61})
 })
 
 it('should preserve the editor status outside model downloads', () => {

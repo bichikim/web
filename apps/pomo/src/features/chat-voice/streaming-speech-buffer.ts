@@ -1,10 +1,12 @@
+import {isEnglishTitleAbbreviation} from 'src/utils/english-title-abbreviation'
 /* istanbul ignore next -- Wallaby inconsistently counts module initialization across workers. */
 const SENTENCE_END = /(?:[.!?…。！？]["'”’)}\]]*|\n)\s*$/u
 const TERMINAL_PUNCTUATION = /(?<punctuation>[.!?…。！？])(?<closingCharacters>["'”’)}\]]*)$/u
-const KNOWN_ABBREVIATION =
-  /^(?:Dr|Mr|Mrs|Ms|Prof|Rev|Hon|Gov|Pres|Sen|Rep|Gen|Lt|Col|Capt|Sgt|St|Mt|Jr|Sr|vs)\.$/iu
 const DOTTED_ABBREVIATION = /^(?:[A-Z]\.){2,}$/iu
 const SINGLE_INITIAL = /^[A-Z]\.$/u
+const KOREAN_LOCALE = /^ko(?:-|$)/iu
+const KOREAN_LIST_NUMBER_ABBREVIATION = /^No\.$/u
+const KOREAN_LIST_NUMBER_START = /^\s*\d/u
 const SINGLE_LETTER_LABEL_END =
   /(?:^|\s)(?:category|option|answer|choice|part|section|step|level|plan)\s+[A-Z]\.\s*$/iu
 const LAST_TOKEN = /(?:^|\s)[["'“‘({]*(?<token>\S+?)["'”’)}\]]*\s*$/u
@@ -19,7 +21,7 @@ export interface StreamingSpeechBuffer {
   readonly update: (text: string) => ReadonlyArray<string>
 }
 
-const endsWithAbbreviation = (segment: string) => {
+const endsWithAbbreviation = (segment: string, locale: string) => {
   if (SINGLE_LETTER_LABEL_END.test(segment)) {
     return false
   }
@@ -28,14 +30,32 @@ const endsWithAbbreviation = (segment: string) => {
 
   return (
     lastToken !== undefined &&
-    (KNOWN_ABBREVIATION.test(lastToken) ||
+    ((KOREAN_LOCALE.test(locale) && KOREAN_LIST_NUMBER_ABBREVIATION.test(lastToken)) ||
+      isEnglishTitleAbbreviation(lastToken) ||
       DOTTED_ABBREVIATION.test(lastToken) ||
       SINGLE_INITIAL.test(lastToken))
   )
 }
 
-const isCompletedSentence = (segment: string) =>
-  SENTENCE_END.test(segment) && !endsWithAbbreviation(segment)
+const shouldMergeSegments = (previousSegment: string, nextSegment: string, locale: string) => {
+  const lastToken = LAST_TOKEN.exec(previousSegment)?.groups?.token
+
+  if (
+    KOREAN_LOCALE.test(locale) &&
+    lastToken !== undefined &&
+    KOREAN_LIST_NUMBER_ABBREVIATION.test(lastToken)
+  ) {
+    return KOREAN_LIST_NUMBER_START.test(nextSegment)
+  }
+
+  return endsWithAbbreviation(previousSegment, locale)
+}
+
+const isCompletedSentence = (segment: string, locale: string) =>
+  SENTENCE_END.test(segment) && !endsWithAbbreviation(segment, locale)
+
+const isCompletedSegment = (segment: string, hasFollowingSegment: boolean, locale: string) =>
+  hasFollowingSegment || isCompletedSentence(segment, locale)
 
 const isOnlyTerminalPunctuationChanged = (previousText: string, nextText: string) => {
   const previousEnding = TERMINAL_PUNCTUATION.exec(previousText)
@@ -78,7 +98,10 @@ export const createStreamingSpeechBuffer = (
       (mergedSegments, segment) => {
         const previousSegment = mergedSegments.at(-1)
 
-        if (previousSegment !== undefined && endsWithAbbreviation(previousSegment.segment)) {
+        if (
+          previousSegment !== undefined &&
+          shouldMergeSegments(previousSegment.segment, segment.segment, options.locale)
+        ) {
           mergedSegments[mergedSegments.length - 1] = {
             ...previousSegment,
             segment: `${previousSegment.segment}${segment.segment}`,
@@ -92,34 +115,40 @@ export const createStreamingSpeechBuffer = (
       [] as typeof segments,
     )
 
-    return combinedSegments.filter(({segment}) => isCompletedSentence(segment))
+    return combinedSegments.filter(({segment}, index) =>
+      isCompletedSegment(segment, index < combinedSegments.length - 1, options.locale),
+    )
   }
 
-  const update = (text: string) => {
+  const reconcileConsumedText = (text: string) => {
     if (!text.startsWith(consumedText)) {
       const currentConsumedText = text.slice(0, consumedText.length)
 
       if (isOnlyTerminalPunctuationChanged(consumedText, currentConsumedText)) {
         consumedText = currentConsumedText
-      } else {
-        let commonPrefixLength = 0
-
-        while (
-          commonPrefixLength < consumedText.length &&
-          consumedText[commonPrefixLength] === text[commonPrefixLength]
-        ) {
-          commonPrefixLength += 1
-        }
-
-        const lastUnchangedSegment = getCompletedSegments(text.slice(0, commonPrefixLength)).at(-1)
-        consumedLength =
-          lastUnchangedSegment === undefined
-            ? 0
-            : lastUnchangedSegment.index + lastUnchangedSegment.segment.trimEnd().length
-        consumedText = text.slice(0, consumedLength)
+        return
       }
-    }
 
+      let commonPrefixLength = 0
+
+      while (
+        commonPrefixLength < consumedText.length &&
+        consumedText[commonPrefixLength] === text[commonPrefixLength]
+      ) {
+        commonPrefixLength += 1
+      }
+
+      const lastUnchangedSegment = getCompletedSegments(text.slice(0, commonPrefixLength)).at(-1)
+      consumedLength =
+        lastUnchangedSegment === undefined
+          ? 0
+          : lastUnchangedSegment.index + lastUnchangedSegment.segment.trimEnd().length
+      consumedText = text.slice(0, consumedLength)
+    }
+  }
+
+  const update = (text: string) => {
+    reconcileConsumedText(text)
     const remainingText = text.slice(consumedLength)
     const completedSegments = getCompletedSegments(remainingText)
     const lastSegment = completedSegments.at(-1)
@@ -139,6 +168,7 @@ export const createStreamingSpeechBuffer = (
       return null
     }
 
+    reconcileConsumedText(text)
     const remainingText = text.slice(consumedLength).trim()
     consumedLength = text.length
     consumedText = text

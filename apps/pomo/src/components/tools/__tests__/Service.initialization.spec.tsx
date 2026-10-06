@@ -21,7 +21,7 @@ vi.mock('../Result', () => ({
 }))
 
 it('should render the service result before the client date lifecycle refreshes', () => {
-  const dates = [new Date(2026, 0, 1), new Date(2026, 0, 2)]
+  const dates = [new Date('2026-01-01T00:00:00.000Z'), new Date('2026-01-02T00:00:00.000Z')]
   const runtime = {
     now: vi.fn(() => {
       resultState.events.push('now')

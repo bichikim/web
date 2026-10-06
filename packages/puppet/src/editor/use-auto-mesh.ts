@@ -23,7 +23,7 @@ export interface UseAutoMeshProps {
   readonly document: Accessor<PuppetDocument>
   readonly onBeforeApply?: () => void
   readonly onDocumentChange: (document: PuppetDocument) => void
-  readonly onNotice?: (message: string) => void
+  readonly onNotice?: (message: string | null) => void
   readonly partIds: Accessor<ReadonlyArray<string>>
 }
 
@@ -177,11 +177,7 @@ export const useAutoMesh = (props: UseAutoMeshProps): UseAutoMeshResult => {
 
     props.onBeforeApply?.()
     props.onDocumentChange(generatedDocument)
-    props.onNotice?.(
-      parts.length === 1
-        ? `${parts[0]!.id} 파트의 메시를 다시 생성했습니다.`
-        : `${parts.length}개 파트의 메시를 다시 생성했습니다.`,
-    )
+    props.onNotice?.(null)
     return true
   }
 

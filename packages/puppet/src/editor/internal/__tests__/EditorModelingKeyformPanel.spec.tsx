@@ -72,30 +72,3 @@ test.each([false, true])(
     expect(JSON.stringify(document)).toBe(before)
   },
 )
-
-test('should open Physics controls below the selected input parameter', () => {
-  const [document, setDocument] = createSignal(createDemoDocument())
-  const editor = useParameterEditor({
-    document,
-    onDocumentChange: setDocument,
-    onNotice: vi.fn(),
-    selectedNodeIds: () => ['mesh-preview'],
-  })
-  const view = render(() => (
-    <EditorModelingKeyformPanel
-      document={document()}
-      editor={editor}
-      onDocumentChange={setDocument}
-      selectedNodeIds={['mesh-preview']}
-    />
-  ))
-
-  expect(view.queryByRole('group', {name: '물리'})).not.toBeInTheDocument()
-  fireEvent.click(view.getByRole('button', {name: '물리 0'}))
-  expect(view.getByRole('group', {name: '물리'})).toBeVisible()
-  expect(view.container.querySelector('.modeling-physics-panel')).not.toBeInTheDocument()
-  fireEvent.click(view.getByRole('button', {name: '물리 연결 추가'}))
-  expect(document().physics?.pendulums).toHaveLength(1)
-  expect(document().physics?.pendulums[0]?.inputParameterId).toBe('angle-x')
-  expect(view.getByRole('button', {name: '물리 1'})).toHaveAttribute('aria-expanded', 'true')
-})

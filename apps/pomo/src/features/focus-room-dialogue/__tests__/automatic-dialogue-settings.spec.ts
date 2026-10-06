@@ -25,6 +25,15 @@ it('should parse only supported automatic generation settings', () => {
 
   expect(parseAutomaticDialogueSettings(settings)).toEqual(settings)
   expect(parseAutomaticDialogueSettings({...settings, modelId: 'unknown'})).toBeNull()
+  expect(parseAutomaticDialogueSettings({...settings, version: 2})).toBeNull()
+})
+
+it('should restore legacy automatic generation settings without a version', () => {
+  const repository = createAutomaticDialogueSettingsRepository(
+    createStorage('{"modelId":"int8","voiceId":"M2"}'),
+  )
+
+  expect(repository.load()).toEqual({modelId: 'int8', version: 1, voiceId: 'M2'})
 })
 
 it('should persist and restore the selected model and voice', () => {

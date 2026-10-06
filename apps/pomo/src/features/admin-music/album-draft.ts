@@ -24,3 +24,15 @@ export const createEmptyAlbumTranslations = (): AlbumDraftTranslations => ({
   ko: {description: '', title: ''},
   'zh-Hans': {description: '', title: ''},
 })
+
+export const hasSameAlbumDraft = (current: AlbumDraftData, expected: AlbumDraftData): boolean =>
+  current.albumId === expected.albumId &&
+  current.coverDraftId === expected.coverDraftId &&
+  current.coverFallback === expected.coverFallback &&
+  current.coverImageUrl === expected.coverImageUrl &&
+  current.hasCoverFile === expected.hasCoverFile &&
+  ALBUM_LOCALES.every(
+    (locale) =>
+      current.translations[locale].description === expected.translations[locale].description &&
+      current.translations[locale].title === expected.translations[locale].title,
+  )

@@ -27,6 +27,24 @@ const isPrimitive = (value: unknown) =>
       Number.isFinite(value.smoothness) &&
       value.smoothness >= 0))
 
+const isMeshObject = (value: Record<string, unknown>) =>
+  isTriple(value.center) &&
+  isTriple(value.rotation) &&
+  isTriple(value.size) &&
+  value.size.every((size) => size > 0) &&
+  hasValidGeometry(value)
+
+const isGroupObject = (value: Record<string, unknown>, depth: number) =>
+  Array.isArray(value.children) &&
+  value.children.length >= 2 &&
+  isRecord(value.children[0]) &&
+  value.children[0].mode === 'add' &&
+  value.children.every((child: unknown) => isObject(child, depth + 1)) &&
+  (value.smoothness === undefined ||
+    (typeof value.smoothness === 'number' &&
+      Number.isFinite(value.smoothness) &&
+      value.smoothness >= 0))
+
 const isObject = (value: unknown, depth = 0): boolean => {
   if (
     !isRecord(value) ||
@@ -39,21 +57,16 @@ const isObject = (value: unknown, depth = 0): boolean => {
   ) {
     return false
   }
-  if (value.kind === 'primitive') {
-    return isPrimitive(value) && isTriple(value.rotation)
+  switch (value.kind) {
+    case 'primitive':
+      return isPrimitive(value) && isTriple(value.rotation)
+    case 'mesh':
+      return isMeshObject(value)
+    case 'group':
+      return isGroupObject(value, depth)
+    default:
+      return false
   }
-  return (
-    value.kind === 'group' &&
-    Array.isArray(value.children) &&
-    value.children.length >= 2 &&
-    isRecord(value.children[0]) &&
-    value.children[0].mode === 'add' &&
-    value.children.every((child: unknown) => isObject(child, depth + 1)) &&
-    (value.smoothness === undefined ||
-      (typeof value.smoothness === 'number' &&
-        Number.isFinite(value.smoothness) &&
-        value.smoothness >= 0))
-  )
 }
 
 const hasValidGeometry = (value: Record<string, unknown>): boolean =>

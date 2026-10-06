@@ -1,6 +1,6 @@
 import {usePDisplayPreferences} from 'src/features/focus-room-display-preferences'
 import {cx} from 'class-variance-authority'
-import {createSignal, onCleanup, onMount} from 'solid-js'
+import {createSignal, onCleanup, onMount, untrack} from 'solid-js'
 import {usePSceneStyle} from '../../features/focus-room-animation'
 import {useDesktopMode, useDesktopSceneSettingsListener} from '../../features/desktop-mode'
 import {PMusicPlayer} from '../p-music-player/PMusicPlayer'
@@ -8,11 +8,14 @@ import type {MusicPlaybackActions} from '../music-player/types'
 import {DesktopSurfaceFrame} from './Frame'
 import * as m from '@paraglide/message'
 import {
-  createDesktopMusicActionChannel,
+  createDesktopMusicActionInbox,
   type DesktopMusicAction,
-  isDesktopMusicActionConnectionMessage,
-  isDesktopMusicActionMessage,
+  type DesktopMusicActionInbox,
 } from '../../features/desktop-mode/desktop-music-actions'
+
+interface DesktopPlayerProps {
+  readonly musicActionInbox?: DesktopMusicActionInbox
+}
 
 const runMusicAction = (actions: MusicPlaybackActions, actionId: DesktopMusicAction) => {
   switch (actionId) {
@@ -29,12 +32,15 @@ const runMusicAction = (actions: MusicPlaybackActions, actionId: DesktopMusicAct
   }
 }
 
-export const DesktopPlayer = () => {
+export const DesktopPlayer = (props: DesktopPlayerProps) => {
   const desktopMode = useDesktopMode()
   const displayPreferences = usePDisplayPreferences()
   const sceneStyle = usePSceneStyle()
   const [expanded, setExpanded] = createSignal(true)
   const [playbackActions, setPlaybackActions] = createSignal<MusicPlaybackActions | null>(null)
+  const suppliedMusicActionInbox = untrack(() => props.musicActionInbox)
+  const musicActionInbox = suppliedMusicActionInbox ?? createDesktopMusicActionInbox()
+  const ownsMusicActionInbox = suppliedMusicActionInbox === undefined
   let pendingMusicActions: DesktopMusicAction[] = []
   useDesktopSceneSettingsListener({onSceneStyleChange: sceneStyle.onSceneStyleChange})
 
@@ -56,39 +62,23 @@ export const DesktopPlayer = () => {
     }
   }
 
-  onMount(() => {
-    const channel = createDesktopMusicActionChannel()
-    if (channel === null) {
+  const handleMusicAction = (actionId: DesktopMusicAction) => {
+    const actions = playbackActions()
+    if (actions === null) {
+      pendingMusicActions.push(actionId)
       return
     }
 
-    const handleMessage = (event: MessageEvent<unknown>) => {
-      const message = event.data
-      if (isDesktopMusicActionConnectionMessage(message)) {
-        if (message.type === 'request-player-ready') {
-          channel.postMessage({type: 'player-ready'})
-        }
-        return
-      }
+    runMusicAction(actions, actionId)
+  }
 
-      const actions = playbackActions()
-      if (!isDesktopMusicActionMessage(message)) {
-        return
-      }
-
-      if (actions === null) {
-        pendingMusicActions.push(message.actionId)
-        return
-      }
-
-      runMusicAction(actions, message.actionId)
-    }
-    channel.addEventListener('message', handleMessage)
-    channel.postMessage({type: 'player-ready'})
+  onMount(() => {
+    const unregisterMusicAction = musicActionInbox.subscribe(handleMusicAction)
     onCleanup(() => {
-      channel.removeEventListener('message', handleMessage)
-      channel.postMessage({type: 'player-unavailable'})
-      channel.close()
+      unregisterMusicAction()
+      if (ownsMusicActionInbox) {
+        musicActionInbox.close()
+      }
     })
   })
 

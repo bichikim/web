@@ -79,3 +79,31 @@ it('should load the selected locale after the runtime requests a document reload
   expect(loadBundledPAlbums).toHaveBeenLastCalledWith({locale: 'en'})
   expect(revalidate).toHaveBeenLastCalledWith('catalog-en')
 })
+
+it('should keep bundled albums and expose the error when the published catalog query rejects', async () => {
+  const catalogError = new Error('catalog offline')
+  const locale = getLocale()
+  vi.mocked(publishedAlbumCatalogQuery).mockRejectedValue(catalogError)
+
+  const result = renderHook(useAlbumLibrary)
+
+  await waitFor(() => {
+    expect(result.result.albums().map((item) => item.title)).toEqual([`bundled-${locale}`])
+    expect(result.result.catalogError()).toBe(catalogError)
+  })
+})
+
+it('should normalize a non-Error published catalog rejection', async () => {
+  const cause = 'catalog offline'
+  const locale = getLocale()
+  vi.mocked(publishedAlbumCatalogQuery).mockRejectedValue(cause)
+
+  const result = renderHook(useAlbumLibrary)
+
+  await waitFor(() => {
+    expect(result.result.albums().map((item) => item.title)).toEqual([`bundled-${locale}`])
+    const error = result.result.catalogError()
+    expect(error).toBeInstanceOf(Error)
+    expect(error?.cause).toBe(cause)
+  })
+})

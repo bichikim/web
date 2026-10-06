@@ -76,7 +76,7 @@ describe('restorePPlayerState', () => {
     },
   )
 
-  it('should restore the playlist before delayed playback using the resolved queue', async () => {
+  it('should wait for delayed playback before restoring the resolved playlist', async () => {
     const playback = Promise.withResolvers<PPlaybackState | null>()
     const onRestore = vi.fn()
     const restoration = restorePPlayerState({
@@ -88,13 +88,31 @@ describe('restorePPlayerState', () => {
       tracks: [DEFAULT_TRACK, ALBUM_TRACK],
     })
     await Promise.resolve()
-    expect(onRestore).toHaveBeenCalledExactlyOnceWith([ALBUM_TRACK], null)
+    expect(onRestore).not.toHaveBeenCalled()
     playback.resolve(ALBUM_PLAYBACK)
     await restoration
-    expect(onRestore.mock.calls).toEqual([
-      [[ALBUM_TRACK], null],
-      [[ALBUM_TRACK], ALBUM_PLAYBACK],
-    ])
+    expect(onRestore).toHaveBeenCalledExactlyOnceWith([ALBUM_TRACK], ALBUM_PLAYBACK)
+  })
+
+  it('should restore a saved playlist after playback resolves without a saved state', async () => {
+    const playback = Promise.withResolvers<PPlaybackState | null>()
+    const onRestore = vi.fn()
+    const restoration = restorePPlayerState({
+      canRestore: () => true,
+      defaultTracks: [DEFAULT_TRACK, ALBUM_TRACK],
+      onRestore,
+      playbackRequest: playback.promise,
+      playlistRequest: Promise.resolve([ALBUM_TRACK.id]),
+      tracks: [DEFAULT_TRACK, ALBUM_TRACK],
+    })
+
+    await Promise.resolve()
+    expect(onRestore).not.toHaveBeenCalled()
+
+    playback.resolve(null)
+    await restoration
+
+    expect(onRestore).toHaveBeenCalledExactlyOnceWith([ALBUM_TRACK], null)
   })
 
   it('should discard playback invalidated while waiting for the playlist', async () => {
@@ -114,5 +132,27 @@ describe('restorePPlayerState', () => {
     playlist.resolve([ALBUM_TRACK.id])
     await restoration
     expect(onRestore).not.toHaveBeenCalled()
+  })
+
+  it('should keep playback restoration responsive while custom tracks are loading', async () => {
+    const customTracks = Promise.withResolvers<readonly PTrack[]>()
+    const onRestore = vi.fn()
+    const restoration = restorePPlayerState({
+      canRestore: () => true,
+      defaultTracks: [DEFAULT_TRACK],
+      onRestore,
+      playbackRequest: Promise.resolve(ALBUM_PLAYBACK),
+      playlistRequest: Promise.resolve([ALBUM_TRACK.id]),
+      resolveTracks: () => customTracks.promise,
+      tracks: [DEFAULT_TRACK],
+    })
+
+    await Promise.resolve()
+    expect(onRestore).not.toHaveBeenCalled()
+
+    customTracks.resolve([ALBUM_TRACK])
+    await restoration
+
+    expect(onRestore).toHaveBeenCalledExactlyOnceWith([ALBUM_TRACK], ALBUM_PLAYBACK)
   })
 })

@@ -1,18 +1,14 @@
-import {
-  createVitestConfig,
-  runtimeIntegrationTestProject,
-  unitTestProject,
-} from './vitest.base.config.mts'
+import type {ViteUserConfig} from 'vitest/config'
+import baseConfig from './vitest.base.config.mts'
 
-const visualRegressionProjects =
-  process.platform === 'darwin' ? ['./apps/pomo/vitest.visual-regression.config.mts'] : []
-
-export default createVitestConfig([
-  unitTestProject,
-  runtimeIntegrationTestProject,
-  './vitest.storybook.config.mts',
-  './apps/coong/vitest.storybook.config.mts',
-  './apps/pomo/vitest.storybook.config.mts',
-  ...visualRegressionProjects,
-  './packages/puppet/vitest.storybook.config.mts',
-])
+export default {
+  ...baseConfig,
+  test: {
+    ...baseConfig.test,
+    environment: 'jsdom',
+    include: ['**/*.spec.?(c|m)[jt]s?(x)'],
+    maxWorkers: 3,
+    name: 'unit',
+    testTimeout: 400,
+  },
+} satisfies ViteUserConfig

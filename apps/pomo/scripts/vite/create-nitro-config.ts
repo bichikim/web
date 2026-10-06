@@ -13,6 +13,7 @@ export interface CreateNitroConfigOptions extends ResolvePrerenderRoutesOptions 
   readonly fontAsset: PublicAssetDir
   readonly staticSecurityHeaders: Record<string, string>
   readonly steamAsset?: PublicAssetDir
+  readonly standaloneRelax?: boolean
   readonly workerSecurityHeaders: Record<string, string>
 }
 
@@ -31,6 +32,16 @@ interface NitroInstance {
 export const createNitroConfig = (options: CreateNitroConfigOptions) => {
   const isStaticBuild = options.target !== 'web'
   return {
+    features: {websocket: !isStaticBuild || options.command === 'serve'},
+    handlers:
+      options.standaloneRelax || (isStaticBuild && options.command === 'build')
+        ? []
+        : [
+            {
+              handler: './src/server/file-transfer/signaling.ts',
+              route: '/api/transfer/socket',
+            },
+          ],
     hooks: {
       'prerender:generate'(route: NitroPrerenderRoute, nitroInstance: NitroInstance) {
         if (route.contents === undefined || !route.contentType?.includes('html')) {
@@ -50,8 +61,8 @@ export const createNitroConfig = (options: CreateNitroConfigOptions) => {
       },
     },
     prerender: {
-      failOnError: isStaticBuild,
-      routes: resolvePrerenderRoutes(options),
+      failOnError: isStaticBuild || options.standaloneRelax === true,
+      routes: options.standaloneRelax ? ['/relax'] : resolvePrerenderRoutes(options),
     },
     publicAssets: [
       ...(options.command === 'serve' ? [{baseURL: '/', dir: './dev-public', maxAge: 0}] : []),

@@ -73,7 +73,6 @@ it('should detect only the exact legacy development failure', () => {
 
 it('should remove malformed dialogues, metadata, and legacy failed items', async () => {
   const invalidMetadata = metadata('invalid-source', 'not-a-url')
-  const malformedMetadata = metadata('malformed', 'https://example.test/__dev/feeds/rss.xml')
   const cleanMetadata = metadata('clean', 'https://example.test/article')
   const deleteDialogue = vi.fn(async () => undefined)
   const removeMetadata = vi.fn(async () => undefined)
@@ -81,12 +80,16 @@ it('should remove malformed dialogues, metadata, and legacy failed items', async
   const feedRepository = {
     listItems: vi.fn(async () => [
       failure(),
+      failure({
+        feedItemId: 'legacy-trailing-slash',
+        sourceUrl: 'https://example.test/__dev/feeds/rss.xml/',
+      }),
       failure({feedItemId: 'invalid-source', sourceUrl: 'not-a-url'}),
       failure({feedItemId: 'current', message: 'current'}),
     ]),
     listMetadata: vi.fn(async () => [
       invalidMetadata,
-      malformedMetadata,
+      metadata('malformed', 'https://example.test/__dev/feeds/rss.xml/'),
       cleanMetadata,
       metadata('missing', 'https://example.test/article'),
     ]),
@@ -123,6 +126,7 @@ it('should remove malformed dialogues, metadata, and legacy failed items', async
   expect(removeMetadata).toHaveBeenCalledWith('malformed')
   expect(removeItem).toHaveBeenCalledWith('feed', 'item-malformed')
   expect(removeItem).toHaveBeenCalledWith('feed', 'item')
+  expect(removeItem).toHaveBeenCalledWith('feed', 'legacy-trailing-slash')
   expect(deleteDialogue).not.toHaveBeenCalledWith('invalid-source')
   expect(removeItem).not.toHaveBeenCalledWith('feed', 'invalid-source')
 })

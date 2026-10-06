@@ -1,5 +1,6 @@
 import {EditorNumberField, EditorToggleButton} from '../design-system'
-import {createEffect, createSignal, createUniqueId, Index, Show} from 'solid-js'
+import {ToggleButton} from '@kobalte/core/toggle-button'
+import {createEffect, createSignal, createUniqueId, Index, type JSX, Show} from 'solid-js'
 import {Portal} from 'solid-js/web'
 
 import type {MeshEditorProps} from './mesh-editor-contract'
@@ -23,31 +24,49 @@ const getTrianglePoints = (triangle: MeshTriangle) =>
 
 interface DeformBrushControlsProps {
   readonly editor: UseMeshEditorResult
+  readonly modeControls?: JSX.Element
 }
 
 const DeformBrushControls = (props: DeformBrushControlsProps) => {
   return (
-    <div class="deform-brush-toolbar" role="group" aria-label="편집 도구">
-      <EditorToggleButton
-        size="md"
-        aria-label="일반 마우스"
-        title="일반 마우스"
-        pressed={!props.editor.brushEnabled()}
-        onClick={() => props.editor.setBrushEnabled(false)}
+    <div class="mesh-editing-toolbar" role="group" aria-label="메시 편집">
+      <Show when={props.modeControls}>{props.modeControls}</Show>
+      <Show when={props.modeControls}>
+        <span class="mesh-editing-separator" aria-hidden="true" />
+      </Show>
+      <div
+        class="editor-control editor-segmented-field deform-brush-toolbar"
+        data-control-size="md"
+        data-size="md"
+        data-icons=""
+        role="group"
+        aria-label="편집 도구"
       >
-        <span class="puppet-icon puppet-icon-pointer" aria-hidden="true" />
-        <span>일반 마우스</span>
-      </EditorToggleButton>
-      <EditorToggleButton
-        size="md"
-        aria-label="변형 브러시"
-        title="변형 브러시"
-        pressed={props.editor.brushEnabled()}
-        onClick={() => props.editor.setBrushEnabled(true)}
-      >
-        <span class="puppet-icon puppet-icon-brush" aria-hidden="true" />
-        <span>변형 브러시</span>
-      </EditorToggleButton>
+        <ToggleButton
+          type="button"
+          aria-label="정점 선택·이동"
+          title="정점 선택·이동"
+          pressed={!props.editor.brushEnabled()}
+          onClick={() => props.editor.setBrushEnabled(false)}
+        >
+          <span class="puppet-icon puppet-icon-pointer" aria-hidden="true" />
+          <span class="editor-segmented-label" aria-hidden="true">
+            정점 선택·이동
+          </span>
+        </ToggleButton>
+        <ToggleButton
+          type="button"
+          aria-label="변형 브러시"
+          title="변형 브러시"
+          pressed={props.editor.brushEnabled()}
+          onClick={() => props.editor.setBrushEnabled(true)}
+        >
+          <span class="puppet-icon puppet-icon-brush" aria-hidden="true" />
+          <span class="editor-segmented-label" aria-hidden="true">
+            변형 브러시
+          </span>
+        </ToggleButton>
+      </div>
     </div>
   )
 }
@@ -108,7 +127,7 @@ export const MeshEditor = (props: MeshEditorProps) => {
   const displayControls = (
     <div class="display-controls" role="group" aria-label="표시 설정">
       <Show when={!props.brushControlsExternal}>
-        <DeformBrushControls editor={editor} />
+        <DeformBrushControls editor={editor} modeControls={props.modeControls} />
       </Show>
       <Show when={editor.clippedPartViews().length > 0}>
         <EditorToggleButton
@@ -134,7 +153,7 @@ export const MeshEditor = (props: MeshEditorProps) => {
       <Show when={props.brushControlsMount}>
         {(mount) => (
           <Portal mount={mount()}>
-            <DeformBrushControls editor={editor} />
+            <DeformBrushControls editor={editor} modeControls={props.modeControls} />
           </Portal>
         )}
       </Show>

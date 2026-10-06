@@ -1,6 +1,7 @@
 /** @vitest-environment jsdom */
 
 import {render} from '@solidjs/testing-library'
+import {createSignal} from 'solid-js'
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 
 import {type DelayedEndEventController, useDelayedEndEvent} from '../use-delayed-end-event'
@@ -57,6 +58,34 @@ describe('useDelayedEndEvent', () => {
     expect(controller.isRunning()).toBe(false)
     await vi.advanceTimersByTimeAsync(60_000)
     expect(onEvent).not.toHaveBeenCalled()
+    view.unmount()
+  })
+
+  it('should queue a restarted timer until an earlier event settles after re-enabling', async () => {
+    let resolveEvent: (() => void) | undefined
+    const onEvent = vi.fn().mockImplementationOnce(
+      () =>
+        new Promise<void>((resolve) => {
+          resolveEvent = resolve
+        }),
+    )
+    const [isEnabled, setIsEnabled] = createSignal(true)
+    const {controller, view} = renderDelayedEndEvent(isEnabled, onEvent)
+
+    controller.start(1)
+    await vi.advanceTimersByTimeAsync(60_000)
+    expect(onEvent).toHaveBeenCalledOnce()
+
+    setIsEnabled(false)
+    await vi.advanceTimersByTimeAsync(0)
+    setIsEnabled(true)
+    controller.start(1)
+    await vi.advanceTimersByTimeAsync(60_000)
+    expect(onEvent).toHaveBeenCalledOnce()
+
+    resolveEvent?.()
+    await vi.advanceTimersByTimeAsync(0)
+    expect(onEvent).toHaveBeenCalledTimes(2)
     view.unmount()
   })
 

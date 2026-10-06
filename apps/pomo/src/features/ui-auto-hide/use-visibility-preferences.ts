@@ -2,18 +2,18 @@ import {usePreference} from 'src/hooks/use-preference'
 import {
   isVisibilitySeconds,
   parseVisibilityPreferences,
+  UI_AUTO_HIDE_STORAGE_KEY,
   type VisibilityPreferences,
   visibilityPreferenceStorage,
 } from './storage'
 
-const STORAGE_KEY = 'pomo:ui-auto-hide:v1'
 const DEFAULT_PREFERENCES: VisibilityPreferences = {enabled: false, seconds: 30}
 
 /** Reads and updates the persisted inactivity settings. */
 export const useVisibilityPreferences = () => {
   const [storedPreferences, setStoredPreferences] = usePreference<VisibilityPreferences>({
     defaultValue: DEFAULT_PREFERENCES,
-    key: STORAGE_KEY,
+    key: UI_AUTO_HIDE_STORAGE_KEY,
     parse: parseVisibilityPreferences,
     storage: visibilityPreferenceStorage,
   })
