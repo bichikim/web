@@ -1,5 +1,6 @@
+import {KeyedList} from 'src/components/keyed-list/KeyedList'
 import {clientOnly} from '@solidjs/start'
-import {createSignal, For, Show} from 'solid-js'
+import {createSignal, Show} from 'solid-js'
 import {
   type AdminAlbum,
   type AdminAsset,
@@ -114,17 +115,17 @@ export const TrackPanel = (props: TrackPanelProps) => {
         />
         <Show when={playableTracks().length > 0}>
           <ol class="mb-0 mt-6 list-none divide-y divide-white/8 p-0">
-            <For each={playableTracks()}>
+            <KeyedList by={(track) => track.id} each={playableTracks()}>
               {(track, index) => (
                 <li class="grid gap-x-4 gap-y-3 py-4 sm:grid-cols-[2rem_minmax(0,1fr)_auto]">
                   <span class="pt-2 text-center text-xs font-700 tabular-nums text-white/35">
                     {String(index() + 1).padStart(2, '0')}
                   </span>
                   <span class="flex min-w-0 items-center gap-3 pt-1">
-                    <Show when={trackArtwork(track.id)}>
+                    <Show when={trackArtwork(track().id)}>
                       {(artwork) => (
                         <img
-                          alt={`${track.title} 곡 이미지`}
+                          alt={`${track().title} 곡 이미지`}
                           class="size-12 shrink-0 rounded-3 object-cover"
                           loading="lazy"
                           src={artwork()}
@@ -133,36 +134,38 @@ export const TrackPanel = (props: TrackPanelProps) => {
                     </Show>
                     <span class="min-w-0">
                       <span class="block truncate text-sm font-750 text-white/90">
-                        {track.title}
+                        {track().title}
                       </span>
-                      <span class="mt-1 block truncate text-xs text-white/45">{track.artist}</span>
+                      <span class="mt-1 block truncate text-xs text-white/45">
+                        {track().artist}
+                      </span>
                     </span>
                   </span>
                   <button
-                    aria-label={`${track.title} 수록곡 삭제`}
+                    aria-label={`${track().title} 수록곡 삭제`}
                     class={`${DANGER_BUTTON_CLASSES} justify-self-end`}
-                    disabled={props.model.isRemovingTrack(track.id)}
-                    onClick={async (event) => handleTrackRemove(event, track)}
+                    disabled={props.model.isRemovingTrack(track().id)}
+                    onClick={async (event) => handleTrackRemove(event, track())}
                     type="button"
                   >
-                    {props.model.isRemovingTrack(track.id) ? '삭제 중…' : '삭제'}
+                    {props.model.isRemovingTrack(track().id) ? '삭제 중…' : '삭제'}
                   </button>
                   <div class="min-w-0 sm:col-start-2 sm:col-end-4">
                     <AdminTrackPreview
-                      active={playingTrackId() === track.id}
-                      autoplay={requestedTrackId() === track.id}
+                      active={playingTrackId() === track().id}
+                      autoplay={requestedTrackId() === track().id}
                       fallback={
                         <div class="h-10 animate-pulse rounded-3 bg-white/5" aria-hidden="true" />
                       }
-                      onPlay={() => setPlayingTrackId(track.id)}
-                      onRequest={() => setRequestedTrackId(track.id)}
-                      title={track.title}
-                      trackId={track.id}
+                      onPlay={() => setPlayingTrackId(track().id)}
+                      onRequest={() => setRequestedTrackId(track().id)}
+                      title={track().title}
+                      trackId={track().id}
                     />
                   </div>
                 </li>
               )}
-            </For>
+            </KeyedList>
           </ol>
         </Show>
       </Show>

@@ -1,3 +1,5 @@
+import {usePendingDeleteConfirmation} from 'src/hooks/use-pending-delete-confirmation'
+import {formatMediumDateTime} from 'src/utils/format-medium-date-time'
 import {KeyedList} from '../keyed-list'
 import {cx} from 'class-variance-authority'
 import {createMemo, createSignal, For, Show} from 'solid-js'
@@ -117,25 +119,13 @@ const SECONDS_PER_MINUTE = 60
 const MILLISECONDS_PER_SECOND = 1000
 const HOUR_MS = MINUTES_PER_HOUR * SECONDS_PER_MINUTE * MILLISECONDS_PER_SECOND
 const DIALOGUE_PAGE_SIZE = 20
-const publishedAtFormatters = new Map<string, Intl.DateTimeFormat>()
 
 export interface PFeedDialogueListProps {
   readonly controller: PFeedController
 }
 
-const getPublishedAtFormatter = () => {
-  const locale = getLocale() === 'ko' ? 'ko-KR' : 'en-US'
-  const cached = publishedAtFormatters.get(locale)
-  if (cached) {
-    return cached
-  }
-
-  const formatter = new Intl.DateTimeFormat(locale, {dateStyle: 'medium', timeStyle: 'short'})
-  publishedAtFormatters.set(locale, formatter)
-  return formatter
-}
-
-const formatPublishedAt = (value: string) => getPublishedAtFormatter().format(new Date(value))
+const formatPublishedAt = (value: string) =>
+  formatMediumDateTime(value, getLocale() === 'ko' ? 'ko-KR' : 'en-US')
 
 const formatRemaining = (value: string) => {
   const hours = Math.max(0, Math.ceil((Date.parse(value) - Date.now()) / HOUR_MS))
@@ -150,7 +140,7 @@ const formatLoadMore = (count: number) =>
 
 export const PFeedDialogueList = (props: PFeedDialogueListProps) => {
   const [visibleDialogueCount, setVisibleDialogueCount] = createSignal(DIALOGUE_PAGE_SIZE)
-  const [pendingDeleteId, setPendingDeleteId] = createSignal<string | null>(null)
+  const deletion = usePendingDeleteConfirmation()
   const [deleteError, setDeleteError] = createSignal<string | null>(null)
   const visibleDialogues = createMemo(() =>
     props.controller.dialogues().slice(0, visibleDialogueCount()),
@@ -168,7 +158,7 @@ export const PFeedDialogueList = (props: PFeedDialogueListProps) => {
 
     try {
       await props.controller.onDeleteDialogue(dialogueId)
-      setPendingDeleteId(null)
+      deletion.cancel()
     } catch (error: unknown) {
       console.error('Failed to delete saved feed dialogue.', error)
       setDeleteError(m.settings_feed_dialogue_delete_failed())
@@ -220,7 +210,7 @@ export const PFeedDialogueList = (props: PFeedDialogueListProps) => {
                       : m.settings_feed_listen_again()}
                   </button>
                   <Show
-                    when={pendingDeleteId() === item().dialogue.id}
+                    when={deletion.pendingId() === item().dialogue.id}
                     fallback={
                       <button
                         aria-label={m.settings_feed_dialogue_delete_label({
@@ -228,7 +218,7 @@ export const PFeedDialogueList = (props: PFeedDialogueListProps) => {
                         })}
                         onClick={() => {
                           setDeleteError(null)
-                          setPendingDeleteId(item().dialogue.id)
+                          deletion.request(item().dialogue.id)
                         }}
                         type="button"
                       >
@@ -236,7 +226,7 @@ export const PFeedDialogueList = (props: PFeedDialogueListProps) => {
                       </button>
                     }
                   >
-                    <button onClick={() => setPendingDeleteId(null)} type="button">
+                    <button onClick={() => deletion.cancel()} type="button">
                       {m.settings_feed_cancel()}
                     </button>
                     <button

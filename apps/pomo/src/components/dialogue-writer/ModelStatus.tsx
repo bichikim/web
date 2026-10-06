@@ -1,8 +1,7 @@
+import {clampDisplayedPercentage} from 'src/utils/clamp-displayed-percentage'
 import {cx} from 'class-variance-authority'
 import {createMemo, Show} from 'solid-js'
 import {type TextModelDefinition} from '../../features/text-generation/index'
-
-const MAXIMUM_DISPLAYED_PERCENTAGE = 100
 
 interface ModelStatusProps {
   readonly model: TextModelDefinition
@@ -26,7 +25,7 @@ export const ModelStatus = (props: ModelStatusProps) => {
       return undefined
     }
 
-    return Math.min(MAXIMUM_DISPLAYED_PERCENTAGE, Math.max(0, currentPercentage))
+    return clampDisplayedPercentage(currentPercentage)
   })
 
   return (

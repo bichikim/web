@@ -1,3 +1,4 @@
+import {replaceBlobObjectUrl} from 'src/features/blob-object-url'
 import {createStore} from 'solid-js/store'
 import {createBlobArchive} from 'src/utils/create-blob-archive'
 
@@ -34,10 +35,7 @@ export const createReceivedFiles = (maximumBytes = RECEIVED_BYTES_LIMIT) => {
   const contents = new Map<string, Blob>()
   let archiveUrl: string | null = null
   const releaseArchive = (): void => {
-    if (archiveUrl !== null) {
-      URL.revokeObjectURL(archiveUrl)
-      archiveUrl = null
-    }
+    archiveUrl = replaceBlobObjectUrl(archiveUrl, () => null)
   }
   const retainedBytes = () =>
     state.files.reduce((total, file) => total + (file.url === null ? 0 : file.size), 0)
@@ -48,7 +46,7 @@ export const createReceivedFiles = (maximumBytes = RECEIVED_BYTES_LIMIT) => {
     }
     releaseArchive()
     if (file.url !== null) {
-      URL.revokeObjectURL(file.url)
+      replaceBlobObjectUrl(file.url, () => null)
       contents.delete(id)
     }
     if (reason === 'manual') {
@@ -70,7 +68,7 @@ export const createReceivedFiles = (maximumBytes = RECEIVED_BYTES_LIMIT) => {
         removed: null,
         saved: false,
         size: blob.size,
-        url: URL.createObjectURL(blob),
+        url: replaceBlobObjectUrl(null, () => blob),
       },
     ])
     let bytes = retainedBytes()
@@ -114,8 +112,7 @@ export const createReceivedFiles = (maximumBytes = RECEIVED_BYTES_LIMIT) => {
     setState({error: false, saving: true})
     try {
       const archive = await createBlobArchive(entries)
-      releaseArchive()
-      archiveUrl = URL.createObjectURL(archive)
+      archiveUrl = replaceBlobObjectUrl(archiveUrl, () => archive)
       download(archiveUrl, 'pomo-files.zip')
       const ids = new Set(files.map((file) => file.id))
       setState('files', (file) => ids.has(file.id), {saved: true})

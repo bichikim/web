@@ -36,7 +36,7 @@ it('should show the newest changes and the first release from the public catalog
   render(() => <WhatsNewPage />)
 
   expect(await screen.findByRole('heading', {name: '새로운 소식'})).toBeTruthy()
-  expect(screen.getAllByRole('heading', {name: 'Pomo 업데이트 안내'})).toHaveLength(4)
+  expect(screen.getAllByRole('heading', {name: 'Pomo 업데이트 안내'})).toHaveLength(5)
 
   const release = (date: string) => {
     const releaseDate = screen.getByText(date)
@@ -47,6 +47,7 @@ it('should show the newest changes and the first release from the public catalog
     }
     return within(article)
   }
+  const october06 = release('2026. 10. 06 14:32')
   const september18 = release('2026. 09. 18 03:03')
   const september13 = release('2026. 09. 13 10:43')
   const september09 = release('2026. 09. 09 18:40')
@@ -54,6 +55,10 @@ it('should show the newest changes and the first release from the public catalog
   const september03 = release('2026. 09. 03 00:57')
   const firstRelease = release('2026. 08. 25 05:26')
 
+  expect(october06.getByText('AI 타로 리딩')).toBeVisible()
+  expect(october06.getByText('내 음악으로 만드는 앨범')).toBeVisible()
+  expect(october06.getByText('기기 간 파일 전송')).toBeVisible()
+  expect(october06.getAllByRole('listitem')).toHaveLength(14)
   expect(september18.getByText('기능 제안과 투표')).toBeVisible()
   expect(
     september13.getByText(
@@ -70,7 +75,7 @@ it('should show the newest changes and the first release from the public catalog
   expect(
     september03.getByText('집중 공간의 캐릭터 움직임과 표정을 더 자연스럽게 다듬었습니다.'),
   ).toBeVisible()
-  expect(screen.getAllByRole('listitem')).toHaveLength(44)
+  expect(screen.getAllByRole('listitem')).toHaveLength(58)
   expect(screen.getByRole('heading', {name: '첫 출시'})).toBeTruthy()
   expect(firstRelease.getByRole('heading', {name: '첫 출시'})).toBeTruthy()
   const returnLinks = screen.getAllByRole('link', {name: '앱으로 돌아가기'})
@@ -92,8 +97,8 @@ it('should persist the newest release after loading the public catalog', async (
   await waitFor(() =>
     expect(versionCatalogMocks.write).toHaveBeenCalledWith({
       formatVersion: 1,
-      releasedAt: '2026-09-18T03:03:00+09:00',
-      version: '2026. 09. 18 03:03',
+      releasedAt: '2026-10-06T14:32:00+09:00',
+      version: '2026. 10. 06 14:32',
     }),
   )
 })

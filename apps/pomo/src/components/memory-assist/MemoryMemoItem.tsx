@@ -1,3 +1,4 @@
+import {formatMediumDateTime} from 'src/utils/format-medium-date-time'
 import {cx} from 'class-variance-authority'
 import {createMemo, createSignal, Show, untrack} from 'solid-js'
 
@@ -35,11 +36,7 @@ const ITEM_ACTION_CLASSES = cx(
   'hover:border-border-hover hover:text-foreground focus-visible:shadow-focus',
 )
 
-const formatReminderTime = (value: string) =>
-  new Intl.DateTimeFormat(getLocale(), {
-    dateStyle: 'medium',
-    timeStyle: 'short',
-  }).format(new Date(value))
+const formatReminderTime = (value: string) => formatMediumDateTime(value, getLocale())
 
 export const MemoryMemoItem = (props: MemoryMemoItemProps) => {
   const initialReminderDraft = untrack(() => createStoredReminderDraft(props.memo))
