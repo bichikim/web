@@ -186,6 +186,43 @@ const createHeaders = (length: number) => ({
 })
 
 describe('createResumableModelFetch stream lifecycle', () => {
+  it('should persist ordered subarray bytes in a buffer independent of streamed views', async () => {
+    const url = 'https://models.test/model.onnx'
+    const backing = Uint8Array.of(99, 1, 2, 3, 4, 88)
+    const first = backing.subarray(1, 3)
+    const second = backing.subarray(3, 5)
+    const storage: PartialDownloadStorage = {
+      append: vi.fn(async () => undefined),
+      delete: vi.fn(async () => undefined),
+      get: vi.fn(async () => null),
+      reset: vi.fn(async () => undefined),
+    }
+    const fetcher = vi.fn<typeof fetch>(
+      async () =>
+        new Response(
+          new ReadableStream({
+            start(controller) {
+              controller.enqueue(first)
+              controller.enqueue(second)
+              controller.close()
+            },
+          }),
+          {headers: createHeaders(4)},
+        ),
+    )
+    const resumable = createResumableModelFetch({fetcher, partialStorage: storage})
+
+    expect(new Uint8Array(await (await resumable.fetch(url)).arrayBuffer())).toEqual(
+      Uint8Array.of(1, 2, 3, 4),
+    )
+    expect(storage.append).toHaveBeenCalledExactlyOnceWith(url, Uint8Array.of(1, 2, 3, 4))
+    const persisted = vi.mocked(storage.append).mock.calls[0]?.[1]
+    expect(persisted?.buffer).not.toBe(backing.buffer)
+    backing[1] = 9
+    expect(persisted).toEqual(Uint8Array.of(1, 2, 3, 4))
+    expect(backing).toEqual(Uint8Array.of(99, 9, 2, 3, 4, 88))
+  })
+
   it('should restart when a valid partial response has no body', async () => {
     const url = 'https://models.test/model.onnx'
     const partial = createPartialStorage({
