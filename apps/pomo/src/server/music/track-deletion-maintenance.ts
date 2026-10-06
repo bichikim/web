@@ -1,5 +1,7 @@
 import {asc, lte} from 'drizzle-orm'
 
+import {createSerialTaskQueue} from 'src/utils/create-serial-task-queue'
+
 import {getDatabase, musicTrackDeletionJobs, musicTrackRegistrations} from '../database'
 import {
   finalizeTrackDeletion,
@@ -85,21 +87,6 @@ const createRepository = (): TrackDeletionMaintenanceRepository => ({
     (await prepareTrackDeletion(trackId, {staleBefore})) !== null,
 })
 
-interface CandidateProgress {
-  readonly errors: ReadonlyArray<unknown>
-  readonly finalized: number
-}
-
-interface RegistrationProgress {
-  readonly errors: ReadonlyArray<unknown>
-}
-
-interface ProcessRegistrationsOptions {
-  readonly candidates: ReadonlyArray<TrackRegistrationCandidate>
-  readonly repository: TrackDeletionMaintenanceRepository
-  readonly staleBefore: Date
-}
-
 const resumeCandidate = async (
   candidate: TrackDeletionCandidate,
   repository: TrackDeletionMaintenanceRepository,
@@ -110,53 +97,6 @@ const resumeCandidate = async (
   }
 
   return repository.finalize(candidate.trackId)
-}
-
-const processCandidates = async (
-  candidates: ReadonlyArray<TrackDeletionCandidate>,
-  repository: TrackDeletionMaintenanceRepository,
-  index = 0,
-  progress: CandidateProgress = {errors: [], finalized: 0},
-): Promise<CandidateProgress> => {
-  const candidate = candidates[index]
-
-  if (candidate === undefined) {
-    return progress
-  }
-
-  try {
-    const deleted = await resumeCandidate(candidate, repository)
-    return processCandidates(candidates, repository, index + 1, {
-      ...progress,
-      finalized: progress.finalized + Number(deleted),
-    })
-  } catch (error: unknown) {
-    return processCandidates(candidates, repository, index + 1, {
-      ...progress,
-      errors: [...progress.errors, error],
-    })
-  }
-}
-
-const processRegistrations = async (
-  options: ProcessRegistrationsOptions,
-  index = 0,
-  progress: RegistrationProgress = {errors: []},
-): Promise<RegistrationProgress> => {
-  const candidate = options.candidates[index]
-
-  if (candidate === undefined) {
-    return progress
-  }
-
-  try {
-    await options.repository.prepareStale(candidate.trackId, options.staleBefore)
-    return processRegistrations(options, index + 1, progress)
-  } catch (error: unknown) {
-    return processRegistrations(options, index + 1, {
-      errors: [...progress.errors, error],
-    })
-  }
 }
 
 const assertWithinLookahead = (count: number, label: string): void => {
@@ -177,15 +117,22 @@ export const runTrackDeletionMaintenance = async (
     FINALIZE_BATCH_SIZE + BATCH_LOOKAHEAD,
   )
   assertWithinLookahead(registrations.length, 'Track registration maintenance')
-  const registrationProgress = await processRegistrations({
-    candidates: registrations.slice(0, FINALIZE_BATCH_SIZE),
-    repository,
-    staleBefore,
-  })
+  const queue = createSerialTaskQueue()
+  const registrationResults = await Promise.allSettled(
+    registrations
+      .slice(0, FINALIZE_BATCH_SIZE)
+      .map((candidate) => queue.run(() => repository.prepareStale(candidate.trackId, staleBefore))),
+  )
   const candidates = await repository.listPending(FINALIZE_BATCH_SIZE + BATCH_LOOKAHEAD)
   assertWithinLookahead(candidates.length, 'Track deletion maintenance')
-  const progress = await processCandidates(candidates.slice(0, FINALIZE_BATCH_SIZE), repository)
-  const errors = [...registrationProgress.errors, ...progress.errors]
+  const results = await Promise.allSettled(
+    candidates
+      .slice(0, FINALIZE_BATCH_SIZE)
+      .map((candidate) => queue.run(() => resumeCandidate(candidate, repository))),
+  )
+  const errors = [...registrationResults, ...results].flatMap((result) =>
+    result.status === 'rejected' ? [result.reason] : [],
+  )
 
   if (errors.length > 0) {
     throw new AggregateError(errors, 'One or more music track deletions failed')
@@ -194,6 +141,6 @@ export const runTrackDeletionMaintenance = async (
   return {
     complete:
       registrations.length <= FINALIZE_BATCH_SIZE && candidates.length <= FINALIZE_BATCH_SIZE,
-    finalized: progress.finalized,
+    finalized: results.filter((result) => result.status === 'fulfilled' && result.value).length,
   }
 }
