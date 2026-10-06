@@ -61,3 +61,57 @@ it('should default missing metadata and search sources', () => {
     searchSourceUrls: [],
   })
 })
+
+it('should retain first-seen source order across calls without normalizing URLs or changing output', async () => {
+  const sources = Object.freeze([
+    Object.freeze({url: 'https://b.example/path'}),
+    Object.freeze({url: 'https://a.example'}),
+  ])
+  const output = Object.freeze([
+    {action: {sources, type: 'search'}, type: 'web_search_call'},
+    {
+      action: {sources: [{url: 'https://ignored.example'}], type: 'open_page'},
+      type: 'web_search_call',
+    },
+    {action: {type: 'search'}, type: 'web_search_call'},
+    {content: [], type: 'message'},
+    {
+      action: {
+        sources: [
+          {url: 'https://a.example'},
+          {url: 'https://b.example/path'},
+          {url: 'https://a.example/'},
+          {url: 'https://c.example'},
+        ],
+        type: 'search',
+      },
+      type: 'web_search_call',
+    },
+  ])
+  const response = {
+    id: 'response-ordered',
+    metadata: {},
+    model: 'gpt-5.5',
+    output,
+    output_text: 'result',
+    status: 'completed',
+  }
+  openAiMocks.retrieve.mockResolvedValue(response)
+  const before = structuredClone(response)
+
+  await expect(retrieveHistoryResponse(response.id)).resolves.toMatchObject({
+    searchSourceUrls: [
+      'https://b.example/path',
+      'https://a.example',
+      'https://a.example/',
+      'https://c.example',
+    ],
+  })
+  expect(response).toEqual(before)
+})
+
+it('should propagate retrieval failures without creating a result', async () => {
+  const failure = new Error('OpenAI unavailable')
+  openAiMocks.retrieve.mockRejectedValue(failure)
+  await expect(retrieveHistoryResponse('response-failed')).rejects.toBe(failure)
+})
