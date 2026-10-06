@@ -1,3 +1,4 @@
+import {createPreferenceSaveQueue} from 'src/features/preference-save-queue'
 import {createPendingSave} from 'src/features/pending-save'
 import {PNumberInput} from 'src/components/p-number-input/PNumberInput'
 import {usePreference} from 'src/hooks/use-preference'
@@ -129,32 +130,33 @@ export const RandomEventSettings = () => {
   const interval = createMemo(() => parseInterval(draft()))
   let edited = false
   let isDisposed = false
-  let previousSettings: RandomEventSettingsValue | null = null
-  let pendingPreferenceSaves = 0
+  const saveQueue = createPreferenceSaveQueue<RandomEventSettingsValue>({
+    equal: (left, right) =>
+      left.minimumMinutes === right.minimumMinutes &&
+      left.maximumMinutes === right.maximumMinutes &&
+      left.version === right.version,
+    initial: DEFAULT_RANDOM_EVENT_SETTINGS,
+  })
 
   const handlePreferenceError = (error: unknown) => {
     const isSaveError = edited
-    if (isSaveError && pendingPreferenceSaves > 0) {
-      pendingPreferenceSaves -= 1
-    }
+    const settled = isSaveError ? saveQueue.settle(false) : null
     logPreferenceError(isSaveError, error)
 
     if (!isDisposed) {
-      if (isSaveError && previousSettings !== null) {
-        setSettings(previousSettings)
-        setDraft(createIntervalDraft(previousSettings))
+      if (settled !== null && !settled.hasPending) {
+        setSettings(settled.committed)
+        setDraft(createIntervalDraft(settled.committed))
       }
       setMessage(isSaveError ? m.settings_random_save_failed() : m.settings_random_load_failed())
     }
-    if (isSaveError && pendingPreferenceSaves === 0 && !pendingSave.hasPending()) {
+    if (isSaveError && !saveQueue.hasPending() && !pendingSave.hasPending()) {
       edited = false
     }
   }
   const handlePreferenceSaved = () => {
-    if (pendingPreferenceSaves > 0) {
-      pendingPreferenceSaves -= 1
-    }
-    if (pendingPreferenceSaves === 0 && !pendingSave.hasPending()) {
+    saveQueue.settle(true)
+    if (!saveQueue.hasPending() && !pendingSave.hasPending()) {
       edited = false
     }
     if (!isDisposed && message() !== m.settings_random_saved()) {
@@ -172,7 +174,7 @@ export const RandomEventSettings = () => {
   createEffect(() => {
     const nextSettings = storedSettings()
 
-    if (nextSettings === null || pendingSave.hasPending()) {
+    if (nextSettings === null || pendingSave.hasPending() || !saveQueue.synchronize(nextSettings)) {
       return
     }
 
@@ -181,8 +183,7 @@ export const RandomEventSettings = () => {
   })
 
   const saveSettings = (nextSettings: RandomEventSettingsValue) => {
-    pendingPreferenceSaves += 1
-    previousSettings = untrack(settings)
+    saveQueue.enqueue(nextSettings)
     setStoredSettings(nextSettings)
 
     if (!isDisposed) {

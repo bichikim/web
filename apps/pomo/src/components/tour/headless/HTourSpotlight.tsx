@@ -1,3 +1,4 @@
+import {useResizeObserver} from 'src/hooks/use-resize-observer'
 import {clamp} from 'es-toolkit/math'
 import {type Accessor, createEffect, createSignal, type JSX, onCleanup} from 'solid-js'
 
@@ -49,16 +50,15 @@ export const HTourSpotlight = (props: HTourSpotlightProps) => {
     }
 
     const updateBounds = () => setTargetBounds(resolveTargetBounds(element, padding))
-    const resizeObserver =
-      typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(updateBounds)
+    const resizeObserver = useResizeObserver({onResize: updateBounds, target: () => element})
 
     updateBounds()
-    resizeObserver?.observe(element)
+    resizeObserver.start()
     window.addEventListener('resize', updateBounds)
     window.addEventListener('scroll', updateBounds, true)
 
     onCleanup(() => {
-      resizeObserver?.disconnect()
+      resizeObserver.stop()
       window.removeEventListener('resize', updateBounds)
       window.removeEventListener('scroll', updateBounds, true)
     })

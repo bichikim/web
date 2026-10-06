@@ -1,3 +1,4 @@
+import {clampDisplayedPercentage} from 'src/utils/clamp-displayed-percentage'
 import {type Accessor, createMemo, createSignal, onCleanup, untrack} from 'solid-js'
 import {isNonBlankString} from 'src/utils/is-non-blank-string'
 
@@ -87,7 +88,6 @@ interface PendingUser {
 }
 
 const EMPTY_CONTEXT: ChatContext = {messages: [], summary: ''}
-const MAXIMUM_DISPLAYED_PERCENTAGE = 100
 const DEFAULT_RUNTIME: ChatRuntime = {
   createClient: createChatClient,
   createId: () => crypto.randomUUID(),
@@ -108,7 +108,7 @@ const getStatusMessage = (state: ChatState, modelId: TextModelId) => {
       return `${model.downloadSize} 모델을 처음 한 번 내려받아 보관해요.`
     case 'loading': {
       const displayProgress = Number.isFinite(state.percentage)
-        ? ` · ${Math.min(MAXIMUM_DISPLAYED_PERCENTAGE, Math.max(0, state.percentage))}%`
+        ? ` · ${clampDisplayedPercentage(state.percentage)}%`
         : ''
 
       return `${model.label} 내려받는 중${displayProgress}`

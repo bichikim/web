@@ -220,7 +220,7 @@ it('should keep a save failure classification while a later edit is pending', as
   await vi.advanceTimersByTimeAsync(0)
 
   expect(screen.getByRole('status')).toHaveTextContent('랜덤 이벤트 설정을 저장하지 못했어요.')
-  expect(minimumInput).toHaveValue(String(DEFAULT_RANDOM_EVENT_SETTINGS.minimumMinutes))
+  expect(minimumInput).toHaveValue('12')
   expect(consoleError).toHaveBeenCalledWith('Failed to save random event settings.', reloadFailure)
 })
 

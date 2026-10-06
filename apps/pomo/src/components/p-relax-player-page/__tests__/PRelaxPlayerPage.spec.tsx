@@ -397,6 +397,8 @@ it('should allow a new drag after changing the background during a drag', () => 
     }),
   )
   frames.shift()?.(16)
+  expect(Number(screen.getByRole('status', {name: '깊이 가로 이동'}).textContent)).toBe(0)
+  frames.shift()?.(16)
 
   expect(releasePointerCapture).toHaveBeenCalledWith(1)
   expect(Number(screen.getByRole('status', {name: '깊이 가로 이동'}).textContent)).toBeLessThan(0)

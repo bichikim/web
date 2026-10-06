@@ -1,4 +1,5 @@
-import {createEffect, createSignal, For, onCleanup, Show} from 'solid-js'
+import {useHorizontalScrollHints} from 'src/hooks/use-horizontal-scroll-hints'
+import {createSignal, For, Show} from 'solid-js'
 
 import * as m from '@paraglide/message'
 import {PButton} from 'src/components/p-button/PButton'
@@ -13,28 +14,12 @@ export interface PRelaxBackgroundListProps {
 
 export const PRelaxBackgroundList = (props: PRelaxBackgroundListProps) => {
   const [backgroundList, setBackgroundList] = createSignal<HTMLDivElement | null>(null)
-  const [canScrollLeft, setCanScrollLeft] = createSignal(false)
-  const [canScrollRight, setCanScrollRight] = createSignal(false)
-
-  const updateScrollEdges = (element: HTMLDivElement) => {
-    setCanScrollLeft(element.scrollLeft > 1)
-    setCanScrollRight(element.scrollLeft + element.clientWidth < element.scrollWidth - 1)
-  }
-  const scrollBackgrounds = (direction: -1 | 1) => {
-    const element = backgroundList()
-    element?.scrollBy({left: direction * element.clientWidth * SCROLL_RATIO})
-  }
-
-  createEffect(() => {
-    const element = backgroundList()
-    if (element === null) {
-      return
-    }
-    updateScrollEdges(element)
-    const observer = new ResizeObserver(() => updateScrollEdges(element))
-    observer.observe(element)
-    onCleanup(() => observer.disconnect())
-  })
+  const {
+    canScrollLeft,
+    canScrollRight,
+    onScroll,
+    scrollByPage: scrollBackgrounds,
+  } = useHorizontalScrollHints({ratio: SCROLL_RATIO, target: backgroundList})
 
   return (
     <div class="relative min-w-0">
@@ -43,7 +28,7 @@ export const PRelaxBackgroundList = (props: PRelaxBackgroundListProps) => {
         class="flex min-w-0 snap-x snap-mandatory gap-3 overflow-x-auto overscroll-x-contain
       scroll-px-1 scroll-smooth p-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden
       motion-reduce:scroll-auto"
-        onScroll={(event) => updateScrollEdges(event.currentTarget)}
+        onScroll={onScroll}
         ref={setBackgroundList}
         role="radiogroup"
       >

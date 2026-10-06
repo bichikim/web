@@ -1,20 +1,15 @@
+import {
+  ALL_IN_ONE_LAYOUT,
+  RelaxPlayerPage,
+} from 'src/components/p-relax-player-page/ClientRelaxPlayerPage'
 import {useSearchParams} from '@solidjs/router'
-import {clientOnly} from '@solidjs/start'
 import {Show} from 'solid-js'
 
 import {AppsInTossPrepare} from 'src/components/apps-in-toss-prepare'
 import {PHomePage} from 'src/components/p-home-page/PHomePage'
 
-const RelaxPlayerPage = clientOnly(
-  async () => {
-    const {PRelaxPlayerPage} = await import('src/components/p-relax-player-page/PRelaxPlayerPage')
-    return {default: PRelaxPlayerPage}
-  },
-  {lazy: true},
-)
-
 const isAllInOneLayout = (layout: string | string[] | undefined) =>
-  layout === 'all-in-one' || (Array.isArray(layout) && layout.includes('all-in-one'))
+  layout === ALL_IN_ONE_LAYOUT || (Array.isArray(layout) && layout.includes(ALL_IN_ONE_LAYOUT))
 
 export default function RootPage() {
   const [searchParams] = useSearchParams()

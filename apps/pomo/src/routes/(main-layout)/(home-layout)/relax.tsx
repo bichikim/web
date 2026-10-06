@@ -1,15 +1,10 @@
-import {clientOnly} from '@solidjs/start'
+import {
+  RELAX_RETURN_HREF,
+  RelaxPlayerPage,
+} from 'src/components/p-relax-player-page/ClientRelaxPlayerPage'
 import {Show} from 'solid-js'
 
 import {AppsInTossPrepare} from 'src/components/apps-in-toss-prepare'
-
-const RelaxPlayerPage = clientOnly(
-  async () => {
-    const {PRelaxPlayerPage} = await import('src/components/p-relax-player-page/PRelaxPlayerPage')
-    return {default: PRelaxPlayerPage}
-  },
-  {lazy: true},
-)
 
 export default function RelaxPage() {
   // /relax is also a dedicated-build alias: only the integrated Pomo build has
@@ -18,7 +13,7 @@ export default function RelaxPage() {
     import.meta.env.VITE_POMO_STANDALONE_RELAX === 'true' ||
     import.meta.env.VITE_APP_LAYOUT === 'relax-player'
       ? undefined
-      : '/?layout=all-in-one'
+      : RELAX_RETURN_HREF
 
   return (
     <Show

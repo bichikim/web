@@ -291,7 +291,7 @@ export const PPomodoro = (props: PPomodoroProps) => {
     untrack(() => props.onPresentationChange)?.(presentation)
   })
 
-  const panel = () => (
+  const Panel = () => (
     <PomodoroPanel
       actionContainer={setActionContainer}
       completedInCycle={completedInCycle}
@@ -340,12 +340,12 @@ export const PPomodoro = (props: PPomodoroProps) => {
             onOpenChange={handleOpenChange}
             title={m.pomodoro_title()}
           >
-            {panel()}
+            <Panel />
           </PModal>
         }
         when={props.desktopDialog}
       >
-        {panel()}
+        <Panel />
       </Show>
     </>
   )

@@ -1,3 +1,4 @@
+import {clampDisplayedPercentage} from 'src/utils/clamp-displayed-percentage'
 import {cx} from 'class-variance-authority'
 import {type Accessor, createMemo, Match, Switch} from 'solid-js'
 
@@ -20,12 +21,8 @@ const ERROR_CLASSES = cx(
   'text-foreground text-sm font-650 shadow-panel backdrop-blur-surface',
 )
 
-const MIN_DISPLAY_PERCENTAGE = 0
-const MAX_DISPLAY_PERCENTAGE = 100
 const getDisplayPercentage = (percentage: number) =>
-  Number.isFinite(percentage)
-    ? Math.min(MAX_DISPLAY_PERCENTAGE, Math.max(MIN_DISPLAY_PERCENTAGE, percentage))
-    : undefined
+  Number.isFinite(percentage) ? clampDisplayedPercentage(percentage) : undefined
 
 export interface PModelDownloadStatusItemProps {
   readonly item?: ModelDownloadItem

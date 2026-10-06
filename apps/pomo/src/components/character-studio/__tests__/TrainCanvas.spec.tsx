@@ -347,13 +347,16 @@ describe('TrainCanvas setup', () => {
 
   it('should tolerate effect cleanup after outer cleanup invalidates the load revision', async () => {
     const callbacks = createCallbacks()
-    render(() => <TrainCanvas modelUrl="/character.glb" {...callbacks} />)
+    let effectCleanup: (() => void) | undefined
+    const load = vi.mocked(LoadAssetContainerAsync).getMockImplementation()!
+    vi.mocked(LoadAssetContainerAsync).mockImplementationOnce((...args) => {
+      effectCleanup = vi.mocked(onCleanup).mock.calls.at(-1)?.[0]
+      return load(...args)
+    })
+    const view = render(() => <TrainCanvas modelUrl="/character.glb" {...callbacks} />)
     await waitFor(() => expect(callbacks.onLoadSuccess).toHaveBeenCalledOnce())
-    const cleanupCallbacks = vi.mocked(onCleanup).mock.calls.map(([callback]) => callback)
-    const effectCleanup = cleanupCallbacks.at(-2)
-    const outerCleanup = cleanupCallbacks.at(-1)
 
-    outerCleanup?.()
+    view.unmount()
     effectCleanup?.()
 
     expect(engines[0].dispose).toHaveBeenCalledOnce()

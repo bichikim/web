@@ -1,3 +1,6 @@
+import {observeReducedMotionPreference} from 'src/utils/observe-media-query'
+import {getDragDepthOffset} from 'src/utils/get-drag-depth-offset'
+import {createAnimationLoop} from '@winter-love/solid-use/animation-loop'
 import {
   getCalibratedOrientation,
   getOrientationOffset,
@@ -14,26 +17,11 @@ import {clamp} from 'es-toolkit/math'
 import {releaseCapturedPointer} from 'src/utils/release-captured-pointer'
 import type {RelaxDepthInput, RelaxDepthOffset, RelaxDepthStatus} from './types'
 
-const DRAG_RANGE_RATIO = 0.35
 const FRAME_DURATION_FALLBACK = 16
 const FOLLOW_TIME_CONSTANT = 180
 const MAXIMUM_FRAME_DURATION = 64
 const PARALLAX_SETTLE_DISTANCE = 0.002
 const ZERO_OFFSET = {x: 0, y: 0} as const
-
-const observeReducedMotionPreference = (onChange: (matches: boolean) => void) => {
-  const preference = globalThis.matchMedia?.('(prefers-reduced-motion: reduce)')
-  if (preference === undefined) {
-    return null
-  }
-  const handleChange = (event: MediaQueryListEvent) => {
-    onChange('matches' in event ? event.matches : preference.matches)
-  }
-  preference.addEventListener('change', handleChange)
-  onCleanup(() => preference.removeEventListener('change', handleChange))
-  onChange(preference.matches)
-  return preference
-}
 
 interface ActiveDrag {
   readonly host: HTMLDivElement
@@ -46,11 +34,11 @@ interface ActiveDrag {
 const createDepthOffsetSmoother = (isReducedMotion: () => boolean) => {
   const [offset, setOffset] = createSignal<RelaxDepthOffset>(ZERO_OFFSET)
   let target: RelaxDepthOffset = ZERO_OFFSET
-  let frame: number | null = null
+  const animation = createAnimationLoop()
+  let running = false
   let lastFrameTime: number | null = null
 
   const renderFrame = (time: number) => {
-    frame = null
     const duration = Math.min(
       MAXIMUM_FRAME_DURATION,
       Math.max(0, time - (lastFrameTime ?? time - FRAME_DURATION_FALLBACK)),
@@ -66,9 +54,9 @@ const createDepthOffsetSmoother = (isReducedMotion: () => boolean) => {
       Math.abs(next.x - target.x) > PARALLAX_SETTLE_DISTANCE ||
       Math.abs(next.y - target.y) > PARALLAX_SETTLE_DISTANCE
     setOffset(unsettled ? next : target)
-    if (unsettled) {
-      frame = globalThis.requestAnimationFrame(renderFrame)
-    } else {
+    if (!unsettled) {
+      animation.stop()
+      running = false
       lastFrameTime = null
     }
   }
@@ -82,17 +70,24 @@ const createDepthOffsetSmoother = (isReducedMotion: () => boolean) => {
       setOffset(target)
       return
     }
-    if (frame === null) {
-      frame = globalThis.requestAnimationFrame(renderFrame)
+    if (!running) {
+      running = true
+      animation.start((time) => {
+        try {
+          renderFrame(time)
+        } catch (error) {
+          animation.stop()
+          running = false
+          throw error
+        }
+      })
     }
   }
 
   const reset = () => {
     target = ZERO_OFFSET
-    if (frame !== null) {
-      globalThis.cancelAnimationFrame(frame)
-      frame = null
-    }
+    animation.stop()
+    running = false
     lastFrameTime = null
     setOffset(ZERO_OFFSET)
   }
@@ -141,11 +136,17 @@ const createDepthDragController = (
     if (bounds.width === 0 || bounds.height === 0) {
       return
     }
-    const horizontal = (event.clientX - drag.startX) / bounds.width
-    const vertical = (event.clientY - drag.startY) / bounds.height
     setTarget(
-      drag.startOffset.x - horizontal / DRAG_RANGE_RATIO,
-      drag.startOffset.y - vertical / DRAG_RANGE_RATIO,
+      getDragDepthOffset({
+        distance: event.clientX - drag.startX,
+        extent: bounds.width,
+        startOffset: drag.startOffset.x,
+      }),
+      getDragDepthOffset({
+        distance: event.clientY - drag.startY,
+        extent: bounds.height,
+        startOffset: drag.startOffset.y,
+      }),
     )
     event.preventDefault()
   }
@@ -159,14 +160,40 @@ const createDepthDragController = (
   return {endDrag, onPointerDown, onPointerMove, onPointerUp}
 }
 
+const useDepthMotionPreference = (onChange: (matches: boolean) => void) => {
+  let preference: MediaQueryList | undefined
+  createEffect(() => {
+    const matchMedia = globalThis.matchMedia?.bind(globalThis)
+    const unsubscribe = observeReducedMotionPreference(onChange, {
+      matchMedia:
+        matchMedia === undefined
+          ? undefined
+          : (query) => {
+              preference = matchMedia(query)
+              return preference
+            },
+    })
+    onCleanup(() => {
+      unsubscribe?.()
+      preference = undefined
+    })
+  })
+  return () => preference?.matches ?? false
+}
+
 /** Tracks background depth motion from a captured drag or calibrated device tilt. */
 export const useRelaxDepthMotion = () => {
   const [inputMode, setMode] = createSignal<RelaxDepthInput>('drag')
   const [status, setStatus] = createSignal<RelaxDepthStatus>('ready')
   let orientationReference: OrientationReference | null = null
   let requestVersion = 0
-  let reducedMotionPreference: MediaQueryList | null = null
-  const isReducedMotion = () => reducedMotionPreference?.matches === true
+  const isReducedMotion = useDepthMotionPreference((matches) => {
+    if (matches) {
+      disableMotionForReducedPreference()
+    } else {
+      setStatus('ready')
+    }
+  })
   const {offset, reset, setTarget} = createDepthOffsetSmoother(isReducedMotion)
   const {endDrag, onPointerDown, onPointerMove, onPointerUp} = createDepthDragController(
     offset,
@@ -211,16 +238,6 @@ export const useRelaxDepthMotion = () => {
     }
     globalThis.addEventListener('deviceorientation', handleOrientation)
     onCleanup(() => globalThis.removeEventListener('deviceorientation', handleOrientation))
-  })
-
-  createEffect(() => {
-    reducedMotionPreference = observeReducedMotionPreference((matches) => {
-      if (matches) {
-        disableMotionForReducedPreference()
-      } else {
-        setStatus('ready')
-      }
-    })
   })
 
   const activateGyroscope = async (version: number) => {
@@ -297,7 +314,6 @@ export const useRelaxDepthMotion = () => {
     requestVersion += 1
     endDrag()
     reset()
-    reducedMotionPreference = null
   })
 
   return {
