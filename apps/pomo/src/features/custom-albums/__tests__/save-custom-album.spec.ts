@@ -1,30 +1,14 @@
+import {clearCustomAlbumDatabase, stubCustomAlbumAudioMetadata} from './support'
 /** @vitest-environment node */
 
 import 'fake-indexeddb/auto'
 import {afterEach, expect, it, vi} from 'vitest'
-import {
-  ALBUM_STORE_NAME,
-  openCustomAlbumDatabase,
-  TRACK_STORE_NAME,
-  waitForTransaction,
-} from 'src/features/custom-albums/database'
 import {
   addCustomAlbumTracks,
   readCustomAlbumDraft,
   readCustomAlbums,
   saveCustomAlbum,
 } from 'src/features/custom-albums'
-
-const clearCustomAlbumDatabase = async (): Promise<void> => {
-  const database = await openCustomAlbumDatabase()
-  const transaction = database.transaction([ALBUM_STORE_NAME, TRACK_STORE_NAME], 'readwrite')
-  const finished = waitForTransaction(transaction)
-
-  transaction.objectStore(ALBUM_STORE_NAME).clear()
-  transaction.objectStore(TRACK_STORE_NAME).clear()
-
-  await finished
-}
 
 afterEach(async () => {
   try {
@@ -34,35 +18,6 @@ afterEach(async () => {
     vi.unstubAllGlobals()
   }
 })
-
-const stubAudioMetadata = (durationSeconds: number): void => {
-  vi.stubGlobal('document', {
-    createElement: (tagName: string) => {
-      if (tagName !== 'audio') {
-        throw new Error(`Unexpected element: ${tagName}`)
-      }
-
-      let loadedMetadataListener: (() => void) | undefined
-
-      return {
-        addEventListener: (eventName: string, listener: () => void) => {
-          if (eventName === 'loadedmetadata') {
-            loadedMetadataListener = listener
-          }
-        },
-        duration: durationSeconds,
-        load: () => {
-          queueMicrotask(() => loadedMetadataListener?.())
-        },
-        preload: '',
-        removeAttribute: vi.fn(),
-        removeEventListener: vi.fn(),
-      }
-    },
-  } as unknown as Document)
-  vi.spyOn(globalThis.URL, 'createObjectURL').mockReturnValue('blob:audio')
-  vi.spyOn(globalThis.URL, 'revokeObjectURL').mockImplementation(() => undefined)
-}
 
 it('should persist a changed track title when re-saving a custom album', async () => {
   vi.stubGlobal('crypto', {
@@ -261,7 +216,7 @@ it('should reject a track replacement when available quota only covers the exist
 })
 
 it('should reject audio whose rounded duration would be zero as invalid audio', async () => {
-  stubAudioMetadata(0.499)
+  stubCustomAlbumAudioMetadata({deferLoad: true, durationSeconds: 0.499})
   vi.stubGlobal('crypto', {randomUUID: () => 'track-1'})
 
   const file = new File([new Uint8Array(32)], 'short.mp3', {type: 'audio/mpeg'})
@@ -277,7 +232,7 @@ it('should reject audio whose rounded duration would be zero as invalid audio', 
 })
 
 it('should persist audio that rounds to one second', async () => {
-  stubAudioMetadata(0.5)
+  stubCustomAlbumAudioMetadata({deferLoad: true, durationSeconds: 0.5})
   vi.stubGlobal('crypto', {randomUUID: () => 'track-1'})
 
   const file = new File([new Uint8Array(32)], 'short.mp3', {type: 'audio/mpeg'})

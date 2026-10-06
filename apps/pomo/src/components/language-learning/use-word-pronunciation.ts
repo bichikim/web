@@ -1,6 +1,6 @@
 import {createEffect, createSignal, onCleanup} from 'solid-js'
 import {usePreference} from 'src/hooks/use-preference'
-import {replaceBlobObjectUrl, replaceObjectUrl} from '../../features/blob-object-url'
+import {replaceBlobObjectUrl} from '../../features/blob-object-url'
 
 import * as m from '@paraglide/message'
 import {
@@ -87,11 +87,7 @@ const createAudioPublisher = (options: AudioPublisherOptions) => {
 
     const key = getWordKey(word)
     const currentUrls = options.getAudioUrls()
-    const url = replaceObjectUrl(currentUrls[key] ?? null, () => audio, {
-      create: (blob) => URL.createObjectURL(blob),
-      order: 'create-first',
-      revoke: (previous) => URL.revokeObjectURL(previous),
-    })
+    const url = replaceBlobObjectUrl(currentUrls[key] ?? null, () => audio, {order: 'create-first'})
     options.setAudioUrls({...currentUrls, [key]: url})
     requestAutoplay(key)
   }
@@ -169,6 +165,8 @@ const generatePronunciation = (options: GeneratePronunciationOptions) => {
               } catch (reason: unknown) {
                 if (options.isCurrent()) {
                   options.setError(getFailureMessage(reason))
+                  options.setLoadingKey(null)
+                  return
                 }
               }
               if (!options.isCurrent()) {

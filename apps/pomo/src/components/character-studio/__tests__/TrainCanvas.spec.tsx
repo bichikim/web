@@ -1,5 +1,6 @@
 /** @vitest-environment jsdom */
 
+import type {AssetContainer} from '@babylonjs/core/assetContainer'
 import {ArcRotateCamera} from '@babylonjs/core/Cameras/arcRotateCamera'
 import {Engine} from '@babylonjs/core/Engines/engine'
 import {DirectionalLight} from '@babylonjs/core/Lights/directionalLight'
@@ -8,7 +9,7 @@ import {LoadAssetContainerAsync} from '@babylonjs/core/Loading/sceneLoader'
 import {Vector3} from '@babylonjs/core/Maths/math.vector'
 import {Scene} from '@babylonjs/core/scene'
 import {render, waitFor} from '@solidjs/testing-library'
-import {createSignal, onCleanup, onMount} from 'solid-js'
+import {createSignal} from 'solid-js'
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 
 import {reportClientError} from '../../../features/client-error-reporter'
@@ -25,17 +26,6 @@ vi.mock('@babylonjs/core/Loading/sceneLoader', () => ({LoadAssetContainerAsync: 
 vi.mock('@babylonjs/core/scene', () => ({Scene: vi.fn()}))
 vi.mock('@babylonjs/loaders/glTF', () => ({}))
 vi.mock('../../../features/client-error-reporter', () => ({reportClientError: vi.fn()}))
-vi.mock('solid-js', async () => {
-  const actual: typeof import('solid-js') = await vi.importActual('solid-js')
-
-  return {
-    ...actual,
-    createSignal: vi.fn(actual.createSignal),
-    onCleanup: vi.fn(actual.onCleanup),
-    onMount: vi.fn(actual.onMount),
-  }
-})
-
 interface MockEngine {
   dispose: ReturnType<typeof vi.fn>
   renderLoop: (() => void) | null
@@ -329,33 +319,46 @@ describe('TrainCanvas setup', () => {
     expect(cameras[0].autoRotationBehavior).toBeUndefined()
   })
 
-  it('should return from mount when no canvas ref is available', () => {
+  it('should dispose a model completed after unmount without publishing progress or success', async () => {
+    const pending = Promise.withResolvers<AssetContainer>()
+    vi.mocked(LoadAssetContainerAsync).mockReturnValueOnce(pending.promise)
     const callbacks = createCallbacks()
-    render(() => <TrainCanvas modelUrl="/unused.glb" {...callbacks} />)
-    const signalIndex = vi.mocked(createSignal).mock.calls.findIndex(([value]) => value === null)
-    const canvasSignal = vi.mocked(createSignal).mock.results[signalIndex]?.value as ReturnType<
-      typeof createSignal<HTMLCanvasElement | null>
-    >
-    const mountCallback = vi.mocked(onMount).mock.calls.at(-1)?.[0]
-    canvasSignal[1](null)
-    vi.clearAllMocks()
+    const view = render(() => <TrainCanvas modelUrl="/character.glb" {...callbacks} />)
+    const progress = getLoadCallbacks().onProgress
+    expect(callbacks.onLoadStart).toHaveBeenCalledOnce()
 
-    mountCallback?.()
+    view.unmount()
+    progress({loaded: 1, total: 2})
+    const container = createContainer()
+    pending.resolve(container as unknown as AssetContainer)
+    await waitFor(() => expect(container.dispose).toHaveBeenCalledOnce())
 
-    expect(Engine).not.toHaveBeenCalled()
+    expect(container.addAllToScene).not.toHaveBeenCalled()
+    expect(callbacks.onLoadProgress).not.toHaveBeenCalled()
+    expect(callbacks.onLoadSuccess).not.toHaveBeenCalled()
+    expect(callbacks.onLoadError).not.toHaveBeenCalled()
+    expect(reportClientError).not.toHaveBeenCalled()
+    expect(MockResizeObserver.instances[0]?.disconnect).toHaveBeenCalledOnce()
+    expect(engines[0].stopRenderLoop).toHaveBeenCalledOnce()
+    expect(scenes[0].dispose).toHaveBeenCalledOnce()
+    expect(engines[0].dispose).toHaveBeenCalledOnce()
   })
 
-  it('should tolerate effect cleanup after outer cleanup invalidates the load revision', async () => {
+  it('should ignore a model failure completed after unmount', async () => {
+    const pending = Promise.withResolvers<AssetContainer>()
+    vi.mocked(LoadAssetContainerAsync).mockReturnValueOnce(pending.promise)
     const callbacks = createCallbacks()
-    render(() => <TrainCanvas modelUrl="/character.glb" {...callbacks} />)
-    await waitFor(() => expect(callbacks.onLoadSuccess).toHaveBeenCalledOnce())
-    const cleanupCallbacks = vi.mocked(onCleanup).mock.calls.map(([callback]) => callback)
-    const effectCleanup = cleanupCallbacks.at(-2)
-    const outerCleanup = cleanupCallbacks.at(-1)
+    const view = render(() => <TrainCanvas modelUrl="/character.glb" {...callbacks} />)
+    expect(callbacks.onLoadStart).toHaveBeenCalledOnce()
 
-    outerCleanup?.()
-    effectCleanup?.()
+    view.unmount()
+    pending.reject(new Error('late failure'))
+    await flushPromises()
 
+    expect(reportClientError).not.toHaveBeenCalled()
+    expect(callbacks.onLoadError).not.toHaveBeenCalled()
+    expect(callbacks.onLoadSuccess).not.toHaveBeenCalled()
+    expect(scenes[0].dispose).toHaveBeenCalledOnce()
     expect(engines[0].dispose).toHaveBeenCalledOnce()
   })
 })

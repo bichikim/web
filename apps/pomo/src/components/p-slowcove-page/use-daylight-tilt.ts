@@ -1,3 +1,4 @@
+import {clampUnit} from 'src/utils/clamp-unit'
 import {type Accessor, createMemo} from 'solid-js'
 
 import type {VirtualLightPosition} from 'src/features/relax-glass-renderer'
@@ -9,9 +10,6 @@ interface TiltOffset {
   readonly y: number
 }
 
-const clamp = (value: number, minimum: number, maximum: number) =>
-  Math.min(maximum, Math.max(minimum, value))
-
 /** Adds device tilt or drag motion to a manually selected light position. */
 export const useDaylightTilt = (
   basePosition: Accessor<VirtualLightPosition>,
@@ -22,8 +20,8 @@ export const useDaylightTilt = (
     const movement = motionOffset()
     return {
       ...base,
-      x: clamp(base.x + movement.x * MAX_HORIZONTAL_OFFSET, 0, 1),
-      y: clamp(base.y + movement.y * MAX_VERTICAL_OFFSET, 0, 1),
+      x: clampUnit(base.x + movement.x * MAX_HORIZONTAL_OFFSET),
+      y: clampUnit(base.y + movement.y * MAX_VERTICAL_OFFSET),
     }
   })
 

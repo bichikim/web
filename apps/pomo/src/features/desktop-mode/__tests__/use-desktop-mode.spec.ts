@@ -1,3 +1,4 @@
+import flushPromises from 'flush-promises'
 import {createTestBroadcastChannel} from 'src/test-utils/create-test-broadcast-channel'
 /** @vitest-environment jsdom */
 
@@ -495,4 +496,84 @@ it('should remain inert in the web runtime', async () => {
   await view.result.onModeChange('desktop')
   expect(applyDesktopMode).not.toHaveBeenCalled()
   expect(TestBroadcastChannel.instances).toHaveLength(0)
+})
+
+it('should release a native listener acquired after owner disposal exactly once', async () => {
+  const registration = Promise.withResolvers<() => void>()
+  vi.mocked(listen).mockReturnValueOnce(registration.promise)
+  const view = renderHook(() => useDesktopMode({isSurfaceOwner: true}))
+  await flushPromises()
+  expect(listen).toHaveBeenCalledOnce()
+
+  view.cleanup()
+  registration.resolve(tauriMocks.unlisten)
+  await flushPromises()
+
+  expect(tauriMocks.unlisten).toHaveBeenCalledOnce()
+  expect(view.result.error()).toBeNull()
+})
+
+it('should release a listener acquired after handoff and reacquire on the next ownership grant', async () => {
+  const registration = Promise.withResolvers<() => void>()
+  const firstUnlisten = vi.fn()
+  vi.mocked(listen).mockReturnValueOnce(registration.promise)
+  const view = renderHook(() => useDesktopMode({isHandoffOwner: true}))
+  const channel = TestBroadcastChannel.instances[0]
+  channel?.dispatch({type: 'mode-owner-released'})
+  await flushPromises()
+  channel?.dispatch({type: 'mode-owner-reclaimed'})
+  registration.resolve(firstUnlisten)
+  await flushPromises()
+  expect(firstUnlisten).toHaveBeenCalledOnce()
+
+  channel?.dispatch({type: 'mode-owner-released'})
+  channel?.dispatch({type: 'mode-owner-released'})
+  await flushPromises()
+  expect(listen).toHaveBeenCalledTimes(2)
+  channel?.dispatch({type: 'mode-owner-reclaimed'})
+  expect(tauriMocks.unlisten).toHaveBeenCalledOnce()
+  view.cleanup()
+  expect(firstUnlisten).toHaveBeenCalledOnce()
+  expect(tauriMocks.unlisten).toHaveBeenCalledOnce()
+})
+
+it('should retain the pending registration when ownership returns before acquisition finishes', async () => {
+  const registration = Promise.withResolvers<() => void>()
+  let requestListener: Parameters<typeof listen>[1] | undefined
+  vi.mocked(listen).mockImplementationOnce((_event, listener) => {
+    requestListener = listener
+    return registration.promise
+  })
+  const view = renderHook(() => useDesktopMode({isHandoffOwner: true}))
+  const channel = TestBroadcastChannel.instances[0]
+  channel?.dispatch({type: 'mode-owner-released'})
+  await flushPromises()
+  channel?.dispatch({type: 'mode-owner-reclaimed'})
+  channel?.dispatch({type: 'mode-owner-released'})
+  registration.resolve(tauriMocks.unlisten)
+  await flushPromises()
+
+  expect(listen).toHaveBeenCalledOnce()
+  expect(tauriMocks.unlisten).not.toHaveBeenCalled()
+  requestListener?.({event: 'pomo:desktop-mode-requested', id: 1, payload: 'widget'})
+  await flushPromises()
+  expect(applyDesktopMode).toHaveBeenCalledWith('widget')
+  view.cleanup()
+  expect(tauriMocks.unlisten).toHaveBeenCalledOnce()
+})
+
+it('should retry failed listener registration on a later ownership grant', async () => {
+  vi.mocked(listen).mockRejectedValueOnce(new Error('registration failed'))
+  const view = renderHook(() => useDesktopMode({isHandoffOwner: true}))
+  const channel = TestBroadcastChannel.instances[0]
+  channel?.dispatch({type: 'mode-owner-released'})
+  await flushPromises()
+  expect(view.result.error()).toBe('registration failed')
+
+  channel?.dispatch({type: 'mode-owner-reclaimed'})
+  channel?.dispatch({type: 'mode-owner-released'})
+  await flushPromises()
+  expect(listen).toHaveBeenCalledTimes(2)
+  view.cleanup()
+  expect(tauriMocks.unlisten).toHaveBeenCalledOnce()
 })

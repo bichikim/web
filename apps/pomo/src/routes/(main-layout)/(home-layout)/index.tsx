@@ -1,20 +1,12 @@
+import {ALL_IN_ONE_LAYOUT, SlowcovePage} from 'src/components/p-slowcove-page/SlowcovePage'
 import {useSearchParams} from '@solidjs/router'
-import {clientOnly} from '@solidjs/start'
 import {Show} from 'solid-js'
 
 import {AppsInTossPrepare} from 'src/components/apps-in-toss-prepare'
 import {PHomePage} from 'src/components/p-home-page/PHomePage'
 
-const SlowcovePage = clientOnly(
-  async () => {
-    const {PSlowcovePage} = await import('src/components/p-slowcove-page/PSlowcovePage')
-    return {default: PSlowcovePage}
-  },
-  {lazy: true},
-)
-
 const isAllInOneLayout = (layout: string | string[] | undefined) =>
-  layout === 'all-in-one' || (Array.isArray(layout) && layout.includes('all-in-one'))
+  layout === ALL_IN_ONE_LAYOUT || (Array.isArray(layout) && layout.includes(ALL_IN_ONE_LAYOUT))
 
 export default function RootPage() {
   const [searchParams] = useSearchParams()

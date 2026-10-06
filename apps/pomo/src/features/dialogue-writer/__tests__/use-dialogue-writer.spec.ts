@@ -90,6 +90,22 @@ afterEach(() => {
 })
 
 describe('useDialogueWriter', () => {
+  it('should reject copying when clipboard permission is denied', async () => {
+    const failure = new Error('Clipboard permission denied')
+    vi.stubGlobal('navigator', {clipboard: {writeText: vi.fn().mockRejectedValue(failure)}})
+    const runtime = createRuntime(true)
+    const root = createDialogueRoot(runtime)
+    root.controller.prepare()
+    runtime.emit({type: 'ready'})
+    root.controller.generate()
+    runtime.emit({text: 'Completed answer', type: 'complete'})
+    try {
+      await expect(root.controller.copyOutput()).rejects.toBe(failure)
+    } finally {
+      root.dispose()
+    }
+  })
+
   it('should expose an unsupported state without creating a browser client', () => {
     const runtime = createRuntime(false)
     const root = createDialogueRoot(runtime)

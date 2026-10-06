@@ -51,7 +51,7 @@ export const PSettings = (props: PSettingsProps & PSettingsPresentationProps) =>
     setIsOpen(true)
   }
   const handleCloseAutoFocus = () => triggerElement()?.focus()
-  const settingsContent = () => (
+  const SettingsContent = () => (
     <ErrorBoundary fallback={<p role="alert">{m.modal_content_load_error()}</p>}>
       <Suspense
         fallback={
@@ -65,18 +65,14 @@ export const PSettings = (props: PSettingsProps & PSettingsPresentationProps) =>
     </ErrorBoundary>
   )
 
-  const dialogContent = () => {
-    if (props.presentation !== 'window') {
-      return null
-    }
-
+  const DialogContent = () => {
     return (
       <Tabs class="contents" value={activeTab()} onChange={setActiveTab}>
         <DesktopDialogFrame onClose={() => props.onRequestClose?.()} title={m.settings_title()}>
           <div class="-mx-5 -mt-5 mb-5 h-14 border-b border-solid border-border">
             <PSettingsTabList />
           </div>
-          {settingsContent()}
+          <SettingsContent />
         </DesktopDialogFrame>
       </Tabs>
     )
@@ -110,13 +106,13 @@ export const PSettings = (props: PSettingsProps & PSettingsPresentationProps) =>
                 title={m.settings_title()}
                 titleVisibility="visually-hidden"
               >
-                {settingsContent()}
+                <SettingsContent />
               </PModal>
             </Tabs>
           </>
         }
       >
-        {dialogContent()}
+        <DialogContent />
       </Show>
     </>
   )

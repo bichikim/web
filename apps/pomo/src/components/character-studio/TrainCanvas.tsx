@@ -1,3 +1,4 @@
+import {useResizeObserver} from 'src/hooks/use-resize-observer'
 import type {AssetContainer} from '@babylonjs/core/assetContainer'
 import {ArcRotateCamera} from '@babylonjs/core/Cameras/arcRotateCamera'
 import {Engine} from '@babylonjs/core/Engines/engine'
@@ -219,8 +220,8 @@ export const TrainCanvas = (props: TrainCanvasProps) => {
       activeContainer = null
     }
 
-    const resizeObserver = new ResizeObserver(() => engine.resize())
-    resizeObserver.observe(renderCanvas)
+    const resizeObserver = useResizeObserver({onResize: () => engine.resize(), target: canvas})
+    resizeObserver.start()
     engine.runRenderLoop(() => scene.render())
 
     createEffect(() => {
@@ -297,7 +298,7 @@ export const TrainCanvas = (props: TrainCanvasProps) => {
 
     onCleanup(() => {
       loadRevision += 1
-      resizeObserver.disconnect()
+      resizeObserver.stop()
       engine.stopRenderLoop()
       unloadModel()
       for (const container of modelCache.values()) {

@@ -1,4 +1,5 @@
 /// <reference lib="webworker" />
+import {resolveTextModelAssetUrl} from './resolve-text-model-asset-url'
 
 // oxlint-disable eslint-js/camelcase -- Transformers.js model names and options are fixed external contracts.
 
@@ -116,13 +117,10 @@ const loadProcessor = async (
     const tokenizer = await AutoTokenizer.from_pretrained(modelDefinition.repositoryId, {
       revision: modelDefinition.assetSource.revision,
     })
-    const path = modelDefinition.assetSource.pathTemplate
-      .replaceAll('{model}', modelDefinition.repositoryId)
-      .replaceAll('{revision}', modelDefinition.assetSource.revision)
-    const url = new URL(
-      `${path}${modelDefinition.tokenizerSubfolder}/chat_template.jinja`,
-      modelDefinition.assetSource.host,
-    ).href
+    const url = resolveTextModelAssetUrl({
+      ...modelDefinition,
+      relativePath: `${modelDefinition.tokenizerSubfolder}/chat_template.jinja`,
+    })
     const cached = await env.customCache?.match(url)
     const response = cached ?? (await (env.fetch ?? httpFetch)(url))
     if (!response.ok) {
@@ -250,10 +248,10 @@ export const createTransformersRuntime = (
           : assetSource.pathTemplate
       preparePromise = (async () => {
         if (modelId === 'gemma-4-e2b') {
-          const modelPath = assetSource.pathTemplate
-            .replaceAll('{model}', modelDefinition.repositoryId)
-            .replaceAll('{revision}', assetSource.revision)
-          const tokenizerUrl = new URL(`${modelPath}tokenizer.json`, assetSource.host).href
+          const tokenizerUrl = resolveTextModelAssetUrl({
+            ...modelDefinition,
+            relativePath: 'tokenizer.json',
+          })
           versionedCacheKeys.set(
             tokenizerUrl,
             `${tokenizerUrl}?pomo-cache-version=${GEMMA_TOKENIZER_CACHE_MIGRATION_VERSION}`,
