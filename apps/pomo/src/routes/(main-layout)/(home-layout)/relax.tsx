@@ -1,7 +1,4 @@
-import {
-  RELAX_RETURN_HREF,
-  RelaxPlayerPage,
-} from 'src/components/p-relax-player-page/RelaxPlayerPage'
+import {SLOWCOVE_RETURN_HREF, SlowcovePage} from 'src/components/p-slowcove-page/SlowcovePage'
 import {Show} from 'solid-js'
 
 import {AppsInTossPrepare} from 'src/components/apps-in-toss-prepare'
@@ -11,17 +8,17 @@ export default function RelaxPage() {
   // an app to return to. Missing returnHref in a player build is intentional.
   const returnHref =
     import.meta.env.VITE_POMO_STANDALONE_RELAX === 'true' ||
-    import.meta.env.VITE_APP_LAYOUT === 'relax-player'
+    import.meta.env.VITE_APP_LAYOUT === 'slowcove'
       ? undefined
-      : RELAX_RETURN_HREF
+      : SLOWCOVE_RETURN_HREF
 
   return (
     <Show
-      fallback={<RelaxPlayerPage returnHref={returnHref} />}
+      fallback={<SlowcovePage returnHref={returnHref} />}
       when={import.meta.env.VITE_POMO_IS_APPS_IN_TOSS === 'true'}
     >
       <AppsInTossPrepare>
-        <RelaxPlayerPage returnHref={returnHref} />
+        <SlowcovePage returnHref={returnHref} />
       </AppsInTossPrepare>
     </Show>
   )

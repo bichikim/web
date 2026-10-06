@@ -21,9 +21,9 @@ import {RainGlassFilter} from './rain-filter'
 import {RainRenderTargets} from './rain-render-targets'
 import {RainSimulation} from './rain-simulation'
 
-const RESIDUE_SOURCE = '/relax-player/glass-residue.png'
-const REFLECTION_SOURCE = '/relax-player/interior-reflection.png'
-const RAIN_NORMAL_SOURCE = '/relax-player/glass-raindrop-normal.png'
+const RESIDUE_SOURCE = '/slowcove/glass-residue.webp'
+const REFLECTION_SOURCE = '/slowcove/interior-reflection.webp'
+const RAIN_NORMAL_SOURCE = '/slowcove/glass-raindrop-normal.png'
 const MILLISECONDS_PER_SECOND = 1000
 const SOURCE_MIST_SECONDS = 10
 const DEMO_TIME_SCALE = 1.8

@@ -1,7 +1,4 @@
-import {
-  ALL_IN_ONE_LAYOUT,
-  RelaxPlayerPage,
-} from 'src/components/p-relax-player-page/RelaxPlayerPage'
+import {ALL_IN_ONE_LAYOUT, SlowcovePage} from 'src/components/p-slowcove-page/SlowcovePage'
 import {useSearchParams} from '@solidjs/router'
 import {Show} from 'solid-js'
 
@@ -18,18 +15,18 @@ export default function RootPage() {
   return (
     <>
       {import.meta.env.VITE_POMO_STANDALONE_RELAX === 'true' ? (
-        <RelaxPlayerPage />
+        <SlowcovePage />
       ) : (
         <Show
           fallback={
             <Show
               fallback={<PHomePage />}
               when={
-                import.meta.env.VITE_APP_LAYOUT === 'relax-player' &&
+                import.meta.env.VITE_APP_LAYOUT === 'slowcove' &&
                 !isAllInOneLayout(searchParams.layout)
               }
             >
-              <RelaxPlayerPage />
+              <SlowcovePage />
             </Show>
           }
           when={import.meta.env.VITE_POMO_IS_APPS_IN_TOSS === 'true'}
