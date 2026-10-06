@@ -7,7 +7,8 @@ import {setupDiary} from './fixtures/diary'
 
 vi.mock('src/features/model-download', () => ({useModelDownload: vi.fn()}))
 vi.mock('src/features/image-generation/client', () => ({runImageGeneration: vi.fn()}))
-const {createRepository, environment, finishPageTurn, getSpread, readyWeather, turns} = setupDiary()
+const {createRepository, environment, finishPageTurn, getSpread, readyWeather, turns, viewport} =
+  setupDiary()
 
 it('should save writing to local diary storage without a separate new-entry control', async () => {
   const repository = createRepository()
@@ -34,6 +35,28 @@ it('should save writing to local diary storage without a separate new-entry cont
       weather: {condition: 'clear', temperatureCelsius: 24.4},
     }),
   )
+})
+
+it('should retain a zero-width-only draft and prevent saving it as a new entry', () => {
+  const repository = createRepository()
+  const zeroWidthText = '\u200b'
+  viewport.compact = true
+  render(() => (
+    <PictureDiary
+      environment={environment}
+      turnEnvironment={turns.environment}
+      repository={repository}
+    />
+  ))
+
+  expect(repository.list).toHaveBeenCalledOnce()
+  const textInput = screen.getByLabelText('그림일기 내용')
+  const saveButton = screen.getByRole('button', {name: '일기 저장'})
+  fireEvent.input(textInput, {target: {value: zeroWidthText}})
+
+  expect(textInput).toHaveValue(zeroWidthText)
+  expect(saveButton).toBeDisabled()
+  expect(repository.save).not.toHaveBeenCalled()
 })
 
 it('should save an untouched draft with the current date after midnight', async () => {
