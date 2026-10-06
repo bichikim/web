@@ -78,6 +78,150 @@ describe('createCalendarQuery next-week weekdays', () => {
     },
   )
 
+  it('should not interpret a weekday substring in "지금" as a requested weekday', () => {
+    expect(
+      createCalendarQuery({
+        now: new Date('2026-09-04T10:30:00.000Z'),
+        text: '다음 주 일정 지금 알려줘',
+        timeZone: 'Asia/Seoul',
+      }),
+    ).toEqual({end: '2026-09-13T15:00:00.000Z', start: '2026-09-06T15:00:00.000Z'})
+  })
+
+  it('should not interpret the ability noun "수" as Wednesday', () => {
+    expect(
+      createCalendarQuery({
+        now: new Date('2026-09-04T10:30:00.000Z'),
+        text: '다음 주 월요일 일정 확인해 줄 수 있어?',
+        timeZone: 'Asia/Seoul',
+      }),
+    ).toEqual({end: '2026-09-07T15:00:00.000Z', start: '2026-09-06T15:00:00.000Z'})
+  })
+
+  it.each([
+    '다음 주 월요일 일정 알려줄 수는 있어?',
+    '다음 주 월요일 일정 중 할 일 알려줘',
+    '다음 주 월요일에 할 수 있는 일정 알려줘',
+    '다음 주 월요일 할 일과 일정 알려줘',
+  ])('should stop weekday matching after the requested date expression in "%s"', (text) => {
+    expect(
+      createCalendarQuery({
+        now: new Date('2026-09-04T10:30:00.000Z'),
+        text,
+        timeZone: 'Asia/Seoul',
+      }),
+    ).toEqual({end: '2026-09-07T15:00:00.000Z', start: '2026-09-06T15:00:00.000Z'})
+  })
+
+  it.each(['다음 주 월요일, 수요일 일정 알려줘', '다음 주 월요일부터 수요일까지 일정 알려줘'])(
+    'should keep connected weekday lists and ranges in "%s"',
+    (text) => {
+      expect(
+        createCalendarQuery({
+          now: new Date('2026-09-04T10:30:00.000Z'),
+          text,
+          timeZone: 'Asia/Seoul',
+        }),
+      ).toEqual({end: '2026-09-09T15:00:00.000Z', start: '2026-09-06T15:00:00.000Z'})
+    },
+  )
+
+  it.each([
+    '다음 주 수요일 말고 다다음 주 일정 알려줘',
+    '다다음 주 일정, 다음 주 수요일 말고 일정 알려줘',
+    '다음 주 수요일 일정 말고 다다음 주 일정 알려줘',
+    '다음 주 수요일은 일정 말고 다다음 주 일정 알려줘',
+    '다음 주 월요일 일정 말고 화요일 말고 다다음 주 일정 알려줘',
+  ])('should exclude a next-week weekday clause before or after another period in "%s"', (text) => {
+    expect(
+      createCalendarQuery({
+        now: new Date('2026-09-04T10:30:00.000Z'),
+        text,
+        timeZone: 'Asia/Seoul',
+      }),
+    ).toEqual({end: '2026-09-20T15:00:00.000Z', start: '2026-09-13T15:00:00.000Z'})
+  })
+
+  it('should not interpret the ability noun "수" in a negative question as Wednesday', () => {
+    expect(
+      createCalendarQuery({
+        now: new Date('2026-09-04T10:30:00.000Z'),
+        text: '다음 주 월요일 일정 확인해 줄 수 없을까?',
+        timeZone: 'Asia/Seoul',
+      }),
+    ).toEqual({end: '2026-09-07T15:00:00.000Z', start: '2026-09-06T15:00:00.000Z'})
+  })
+
+  it('should exclude a weekday followed by "에는 안 되고" before another weekday', () => {
+    expect(
+      createCalendarQuery({
+        now: new Date('2026-09-04T10:30:00.000Z'),
+        text: '다음 주 수요일에는 안 되고 목요일 일정 알려줘',
+        timeZone: 'Asia/Seoul',
+      }),
+    ).toEqual({end: '2026-09-10T15:00:00.000Z', start: '2026-09-09T15:00:00.000Z'})
+  })
+
+  it('should exclude a weekday when its particle introduces a schedule exclusion', () => {
+    expect(
+      createCalendarQuery({
+        now: new Date('2026-09-04T10:30:00.000Z'),
+        text: '다음 주 수요일은 일정 말고 목요일 일정 알려줘',
+        timeZone: 'Asia/Seoul',
+      }),
+    ).toEqual({end: '2026-09-10T15:00:00.000Z', start: '2026-09-09T15:00:00.000Z'})
+  })
+
+  it('should not use a later period weekday to narrow the whole next week', () => {
+    expect(
+      createCalendarQuery({
+        now: new Date('2026-09-04T10:30:00.000Z'),
+        text: '다음 주 일정, 다다음 주 수요일 일정 알려줘',
+        timeZone: 'Asia/Seoul',
+      }),
+    ).toEqual({end: '2026-09-20T15:00:00.000Z', start: '2026-09-06T15:00:00.000Z'})
+  })
+
+  it('should not stop weekday scanning inside a longer period-like word', () => {
+    expect(
+      createCalendarQuery({
+        now: new Date('2026-09-04T10:30:00.000Z'),
+        text: '다음 주 월요일 다다음 주식 화요일 일정 알려줘',
+        timeZone: 'Asia/Seoul',
+      }),
+    ).toEqual({end: '2026-09-08T15:00:00.000Z', start: '2026-09-06T15:00:00.000Z'})
+  })
+
+  it('should not treat an event-type exclusion as an excluded weekday', () => {
+    expect(
+      createCalendarQuery({
+        now: new Date('2026-09-04T10:30:00.000Z'),
+        text: '다음 주 수요일 일정은 회의 말고 약속만 알려줘',
+        timeZone: 'Asia/Seoul',
+      }),
+    ).toEqual({end: '2026-09-09T15:00:00.000Z', start: '2026-09-08T15:00:00.000Z'})
+  })
+
+  it('should not let a later-period exclusion remove an earlier weekday', () => {
+    expect(
+      createCalendarQuery({
+        now: new Date('2026-09-04T10:30:00.000Z'),
+        text: '다음 주 수요일 다다음 주 말고 일정 알려줘',
+        timeZone: 'Asia/Seoul',
+      }),
+    ).toEqual({end: '2026-09-09T15:00:00.000Z', start: '2026-09-08T15:00:00.000Z'})
+  })
+
+  it('should fall back to the whole week when every requested weekday is excluded', () => {
+    expect(
+      createCalendarQuery({
+        now: new Date('2026-09-04T10:30:00.000Z'),
+        text: '다음 주 월요일 말고 화요일 말고 일정 알려줘',
+        timeZone: 'Asia/Seoul',
+      }),
+    ).toEqual({end: '2026-09-13T15:00:00.000Z', start: '2026-09-06T15:00:00.000Z'})
+  })
+
   it('should resolve next Monday as the week start when today is Sunday', () => {
     expect(
       createCalendarQuery({
