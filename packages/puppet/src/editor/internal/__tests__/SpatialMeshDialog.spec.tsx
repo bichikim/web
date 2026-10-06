@@ -19,7 +19,9 @@ const findButton = (buttons: ReadonlyArray<HTMLElement>, name: string) => {
 
 vi.mock('../../../deformation/import-spatial-mesh', () => ({importSpatialMesh: imported.parse}))
 
-vi.mock('../SpatialMeshPreview', () => ({SpatialMeshPreview: () => null}))
+vi.mock('../SpatialMeshPreview', () => ({
+  SpatialMeshPreview: () => <canvas aria-label="3D 메시 회전 미리보기" role="group" />,
+}))
 
 vi.mock('../spatial-mesh-preview-renderer', () => ({
   createSpatialMeshPreviewRenderer: () => ({
@@ -30,6 +32,22 @@ vi.mock('../spatial-mesh-preview-renderer', () => ({
   }),
 }))
 
+test('should mount the mesh preview canvas when a shape is added', () => {
+  const view = render(() => (
+    <SpatialMeshDialog
+      bounds={{height: 100, width: 100, x: 0, y: 0}}
+      isOpen
+      onApply={() => true}
+      onOpenChange={vi.fn()}
+    />
+  ))
+
+  fireEvent.click(screen.getByRole('button', {name: '박스 추가'}))
+  const preview = screen.getByRole('group', {name: '3D 메시 회전 미리보기'})
+  expect(preview.tagName).toBe('CANVAS')
+  expect(screen.queryByRole('group', {name: '미리보기 방식'})).toBeNull()
+  view.unmount()
+})
 test('should expose an editor workspace without the introductory heading and description', () => {
   const view = render(() => (
     <SpatialMeshDialog
