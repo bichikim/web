@@ -1,3 +1,4 @@
+import {clampUnit} from 'src/utils/clamp-unit'
 // oxlint-disable no-magic-numbers, no-bitwise -- Transfer limits and CRC32 use fixed byte and bit constants.
 // oxlint-disable no-await-in-loop -- ICE candidates and file chunks must be applied in order with bounded buffering.
 import {createStore} from 'solid-js/store'
@@ -343,7 +344,7 @@ class TransferSession implements FileTransfer {
       }
       checksum = updateChecksum(checksum, new Uint8Array(chunk))
       dataChannel.send(chunk)
-      this.setState({progress: Math.min(1, (offset + chunk.byteLength) / file.size)})
+      this.setState({progress: clampUnit((offset + chunk.byteLength) / file.size)})
     }
     this.sendControl({checksum: (checksum ^ 0xffffffff) >>> 0, id, type: 'end'})
   }

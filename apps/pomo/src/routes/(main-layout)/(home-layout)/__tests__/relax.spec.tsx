@@ -5,18 +5,18 @@ import {clientOnly} from '@solidjs/start'
 import {type Component, lazy, Show} from 'solid-js'
 import {afterEach, beforeAll, expect, it, vi} from 'vitest'
 import {AppsInTossPrepare} from 'src/components/apps-in-toss-prepare'
-import {PRelaxPlayerPage} from 'src/components/p-relax-player-page/PRelaxPlayerPage'
+import {PSlowcovePage} from 'src/components/p-slowcove-page/PSlowcovePage'
 
 vi.mock('@solidjs/start', () => ({clientOnly: vi.fn()}))
 vi.mock('src/components/apps-in-toss-prepare', () => ({AppsInTossPrepare: vi.fn()}))
-vi.mock('src/components/p-relax-player-page/PRelaxPlayerPage', () => ({PRelaxPlayerPage: vi.fn()}))
+vi.mock('src/components/p-slowcove-page/PSlowcovePage', () => ({PSlowcovePage: vi.fn()}))
 
 let RelaxPage: Component
 
 beforeAll(async () => {
   vi.mocked(clientOnly).mockImplementation((loader) => lazy(loader))
   vi.mocked(AppsInTossPrepare).mockImplementation((props) => <>{props.children}</>)
-  vi.mocked(PRelaxPlayerPage).mockImplementation((props) => (
+  vi.mocked(PSlowcovePage).mockImplementation((props) => (
     <>
       <p>Relax player</p>
       <Show when={props.returnHref}>{(href) => <a href={href()}>Return to Pomo</a>}</Show>
@@ -48,10 +48,10 @@ it.each(['', 'true'])(
 )
 
 it.each([
-  ['relax-player', '', ''],
-  ['relax-player', '', 'true'],
+  ['slowcove', '', ''],
+  ['slowcove', '', 'true'],
   ['', 'true', ''],
-  ['relax-player', 'true', ''],
+  ['slowcove', 'true', ''],
 ])(
   'should omit integrated return navigation for layout=%s standalone=%s toss=%s',
   async (layout, standalone, toss) => {

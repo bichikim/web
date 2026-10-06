@@ -25,15 +25,10 @@ export const SummaryPlayButton = (props: SummaryPlayButtonProps) => {
           when={props.isPreparing === true}
           fallback={
             <media-play-button
-              ref={tooltip.setTarget}
+              {...tooltip.triggerProps}
               aria-label={props.isPlaying ? m.player_pause() : m.player_play()}
               class={cx(CLASSES.playerPlay, 'shrink-0')}
               disabled={props.currentTrack === undefined}
-              onBlur={tooltip.onBlur}
-              onFocus={tooltip.onFocus}
-              onPointerDown={tooltip.onPointerDown}
-              onPointerEnter={tooltip.onPointerEnter}
-              onPointerLeave={tooltip.onPointerLeave}
               attr:notooltip=""
             >
               <PlayerIcon
@@ -52,7 +47,7 @@ export const SummaryPlayButton = (props: SummaryPlayButtonProps) => {
           }
         >
           <button
-            ref={tooltip.setTarget}
+            {...tooltip.triggerProps}
             aria-busy="true"
             aria-label={m.player_pause()}
             class={cx(
@@ -60,12 +55,7 @@ export const SummaryPlayButton = (props: SummaryPlayButtonProps) => {
               'relative grid shrink-0 place-items-center rounded-full border-0 p-0',
             )}
             disabled={props.currentTrack === undefined || props.onPause === undefined}
-            onBlur={tooltip.onBlur}
             onClick={() => props.onPause?.()}
-            onFocus={tooltip.onFocus}
-            onPointerDown={tooltip.onPointerDown}
-            onPointerEnter={tooltip.onPointerEnter}
-            onPointerLeave={tooltip.onPointerLeave}
             type="button"
           >
             <PlayerIcon icon="i-tabler-player-pause" sceneStyle={props.sceneStyle} size="size-6" />

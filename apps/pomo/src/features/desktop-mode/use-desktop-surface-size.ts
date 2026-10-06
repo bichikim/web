@@ -1,3 +1,4 @@
+import {useResizeObserver} from 'src/hooks/use-resize-observer'
 import {type Accessor, createEffect, onCleanup} from 'solid-js'
 
 interface DesktopSurfaceSize {
@@ -40,7 +41,6 @@ export const useDesktopSurfaceSize = (props: UseDesktopSurfaceSizeProps): void =
     }
 
     let animationFrame: number | null = null
-    let observer: ResizeObserver | null = null
     let lastRequestedSize: DesktopSurfaceSize | null = null
     const synchronizeSize = () => {
       const nextSize = getElementSize(element)
@@ -71,11 +71,10 @@ export const useDesktopSurfaceSize = (props: UseDesktopSurfaceSizeProps): void =
       })
     }
 
-    observer =
-      typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(scheduleSynchronization)
-    observer?.observe(element)
+    const observer = useResizeObserver({onResize: scheduleSynchronization, target: () => element})
+    observer.start()
     scheduleSynchronization()
-    if (observer === null) {
+    if (typeof globalThis.ResizeObserver === 'undefined') {
       synchronizeSize()
     }
 
@@ -83,7 +82,7 @@ export const useDesktopSurfaceSize = (props: UseDesktopSurfaceSizeProps): void =
       if (animationFrame !== null) {
         cancelAnimationFrame(animationFrame)
       }
-      observer?.disconnect()
+      observer.stop()
     })
   })
 }

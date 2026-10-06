@@ -1,17 +1,13 @@
+import {drainLockedBatches, type DrainLockedBatchesResult} from '../database/drain-locked-batches'
+import {MILLISECONDS_PER_DAY, MILLISECONDS_PER_HOUR} from 'src/utils/time-units'
 import {
-  type AuthMaintenanceBatchResult,
   type AuthMaintenanceRepository,
   createAuthMaintenanceRepository,
 } from '../repositories/auth-maintenance'
 
-const MILLISECONDS_PER_SECOND = 1000
-const SECONDS_PER_MINUTE = 60
-const MINUTES_PER_HOUR = 60
-const HOURS_PER_DAY = 24
 const DAYS_PER_WEEK = 7
-const MILLISECONDS_PER_HOUR = MINUTES_PER_HOUR * SECONDS_PER_MINUTE * MILLISECONDS_PER_SECOND
-const EXPIRED_SESSION_RETENTION = HOURS_PER_DAY * MILLISECONDS_PER_HOUR
-const REVOKED_SESSION_RETENTION = DAYS_PER_WEEK * HOURS_PER_DAY * MILLISECONDS_PER_HOUR
+const EXPIRED_SESSION_RETENTION = MILLISECONDS_PER_DAY
+const REVOKED_SESSION_RETENTION = DAYS_PER_WEEK * MILLISECONDS_PER_DAY
 const ACCOUNT_LINK_CHALLENGE_RETENTION = MILLISECONDS_PER_HOUR
 const DELETE_BATCH_SIZE = 500
 const MAXIMUM_BATCHES = 20
@@ -21,10 +17,7 @@ interface AuthMaintenanceDependencies {
   readonly repository: AuthMaintenanceRepository
 }
 
-interface AuthMaintenanceTargetResult {
-  readonly complete: boolean
-  readonly deleted: number
-}
+type AuthMaintenanceTargetResult = DrainLockedBatchesResult
 
 export interface AuthMaintenanceResult {
   readonly accountLinkChallenges: AuthMaintenanceTargetResult
@@ -34,32 +27,6 @@ export interface AuthMaintenanceResult {
 
 const subtractMilliseconds = (date: Date, milliseconds: number): Date =>
   new Date(date.getTime() - milliseconds)
-
-const deleteInBatches = async (
-  deleteBatch: () => Promise<AuthMaintenanceBatchResult>,
-  batch = 0,
-  deleted = 0,
-): Promise<AuthMaintenanceTargetResult> => {
-  if (batch === MAXIMUM_BATCHES) {
-    return {complete: false, deleted}
-  }
-
-  const {deleted: batchDeleted, hasMore} = await deleteBatch()
-
-  if (
-    batchDeleted < 0 ||
-    batchDeleted > DELETE_BATCH_SIZE ||
-    (hasMore && batchDeleted !== DELETE_BATCH_SIZE)
-  ) {
-    throw new RangeError('Auth maintenance repository returned an invalid batch count')
-  }
-
-  const totalDeleted = deleted + batchDeleted
-
-  return hasMore
-    ? deleteInBatches(deleteBatch, batch + 1, totalDeleted)
-    : {complete: true, deleted: totalDeleted}
-}
 
 /** Deletes expired authentication data in bounded, idempotent batches. */
 export const runAuthMaintenance = async (
@@ -74,20 +41,28 @@ export const runAuthMaintenance = async (
   const revokedAtCutoff = subtractMilliseconds(now, REVOKED_SESSION_RETENTION)
   const challengeCutoff = subtractMilliseconds(now, ACCOUNT_LINK_CHALLENGE_RETENTION)
 
-  const appSessions = await deleteInBatches(() =>
-    resolvedDependencies.repository.deleteAppSessionBatch({
-      batchSize: DELETE_BATCH_SIZE,
-      expiresAtCutoff,
-      pendingExpiresAtCutoff: now,
-      revokedAtCutoff,
-    }),
-  )
-  const accountLinkChallenges = await deleteInBatches(() =>
-    resolvedDependencies.repository.deleteAccountLinkChallengeBatch({
-      batchSize: DELETE_BATCH_SIZE,
-      cutoff: challengeCutoff,
-    }),
-  )
+  const appSessions = await drainLockedBatches({
+    batchSize: DELETE_BATCH_SIZE,
+    deleteBatch: () =>
+      resolvedDependencies.repository.deleteAppSessionBatch({
+        batchSize: DELETE_BATCH_SIZE,
+        expiresAtCutoff,
+        pendingExpiresAtCutoff: now,
+        revokedAtCutoff,
+      }),
+    invalidCountMessage: 'Auth maintenance repository returned an invalid batch count',
+    maximumBatches: MAXIMUM_BATCHES,
+  })
+  const accountLinkChallenges = await drainLockedBatches({
+    batchSize: DELETE_BATCH_SIZE,
+    deleteBatch: () =>
+      resolvedDependencies.repository.deleteAccountLinkChallengeBatch({
+        batchSize: DELETE_BATCH_SIZE,
+        cutoff: challengeCutoff,
+      }),
+    invalidCountMessage: 'Auth maintenance repository returned an invalid batch count',
+    maximumBatches: MAXIMUM_BATCHES,
+  })
 
   return {
     accountLinkChallenges,

@@ -18,15 +18,7 @@ export const TrackSummary = (props: TrackSummaryProps) => {
       class={cx(CLASSES.playerTitle, 'relative min-w-0 flex-1 px-2 player-compact:px-1')}
       data-pomo-player-title=""
     >
-      <p
-        ref={tooltip.setTarget}
-        class={cx(CLASSES.playerTrackTitle, 'm-0 min-w-0')}
-        onBlur={tooltip.onBlur}
-        onFocus={tooltip.onFocus}
-        onPointerDown={tooltip.onPointerDown}
-        onPointerEnter={tooltip.onPointerEnter}
-        onPointerLeave={tooltip.onPointerLeave}
-      >
+      <p {...tooltip.triggerProps} class={cx(CLASSES.playerTrackTitle, 'm-0 min-w-0')}>
         <POverflowMarquee text={props.currentTrack?.title ?? m.player_fallback_title()} />
       </p>
       <PTooltip
