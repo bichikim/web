@@ -1,6 +1,7 @@
+import {createCustomAlbumAudioFile, stubCustomAlbumAudioMetadata} from './support'
 /** @vitest-environment node */
 
-import {afterEach, expect, it, vi} from 'vitest'
+import {afterEach, beforeEach, expect, it, vi} from 'vitest'
 
 const mocks = vi.hoisted(() => ({
   albumByteLimit: 1000,
@@ -21,57 +22,25 @@ vi.mock('src/features/custom-albums/read-embedded-audio-cover', () => ({
   ),
 }))
 
+beforeEach(() => vi.stubGlobal('crypto', {randomUUID: () => 'track-1'}))
+
 afterEach(() => {
   vi.restoreAllMocks()
   vi.unstubAllGlobals()
   vi.resetModules()
 })
 
-const stubAudioMetadata = () => {
-  const audio = Object.assign(new EventTarget(), {
-    delivered: vi.fn(),
-    duration: 60,
-    load: vi.fn(),
-    preload: '',
-    removeAttribute: vi.fn(),
-    src: '',
-  })
-  const addEventListener = audio.addEventListener.bind(audio)
-  vi.spyOn(audio, 'addEventListener').mockImplementation((event, listener, options) => {
-    addEventListener(
-      event,
-      (notification) => {
-        audio.delivered(notification.type)
-        if (typeof listener === 'function') {
-          listener.call(audio, notification)
-        } else {
-          listener?.handleEvent(notification)
-        }
-      },
-      options,
-    )
-  })
-  audio.load.mockImplementation(() => audio.dispatchEvent(new Event('loadedmetadata')))
-  vi.stubGlobal('document', {
-    createElement: () => audio,
-  })
-  vi.spyOn(globalThis.URL, 'createObjectURL').mockReturnValue('blob:audio')
-  vi.spyOn(globalThis.URL, 'revokeObjectURL').mockImplementation(() => undefined)
-  vi.stubGlobal('crypto', {randomUUID: () => 'track-1'})
-  return audio
-}
-
 const addTrack = async () => {
   const {addCustomAlbumTracks} = await import('src/features/custom-albums')
   return addCustomAlbumTracks({
     currentAlbumBytes: 0,
     currentTrackCount: 0,
-    files: [createAudioFile(100)],
+    files: [createCustomAlbumAudioFile(100)],
     readEmbeddedCover: false,
   })
 }
 
-const expectReleasedAudio = (audio: ReturnType<typeof stubAudioMetadata>) => {
+const expectReleasedAudio = (audio: ReturnType<typeof stubCustomAlbumAudioMetadata>) => {
   expect(audio.removeAttribute).toHaveBeenCalledExactlyOnceWith('src')
   expect(URL.revokeObjectURL).toHaveBeenCalledExactlyOnceWith('blob:audio')
   const deliveries = audio.delivered.mock.calls.length
@@ -82,11 +51,8 @@ const expectReleasedAudio = (audio: ReturnType<typeof stubAudioMetadata>) => {
   expect(URL.revokeObjectURL).toHaveBeenCalledOnce()
 }
 
-const createAudioFile = (size: number): File =>
-  new File([new Uint8Array(size)], 'song.mp3', {type: 'audio/mpeg'})
-
 it('should retain valid tracks and omit embedded artwork that would exceed the album limit', async () => {
-  stubAudioMetadata()
+  stubCustomAlbumAudioMetadata()
 
   const {addCustomAlbumTracks} = await import('src/features/custom-albums')
   const {readEmbeddedAudioCover} =
@@ -94,7 +60,7 @@ it('should retain valid tracks and omit embedded artwork that would exceed the a
   const result = await addCustomAlbumTracks({
     currentAlbumBytes: 0,
     currentTrackCount: 0,
-    files: [createAudioFile(mocks.albumByteLimit - 100)],
+    files: [createCustomAlbumAudioFile(mocks.albumByteLimit - 100)],
     readEmbeddedCover: true,
   })
 
@@ -108,13 +74,13 @@ it('should retain valid tracks and omit embedded artwork that would exceed the a
 })
 
 it('should retain embedded artwork when the persisted album is exactly at the byte limit', async () => {
-  stubAudioMetadata()
+  stubCustomAlbumAudioMetadata()
 
   const {addCustomAlbumTracks} = await import('src/features/custom-albums')
   const result = await addCustomAlbumTracks({
     currentAlbumBytes: 0,
     currentTrackCount: 0,
-    files: [createAudioFile(mocks.albumByteLimit - mocks.embeddedCoverBytes)],
+    files: [createCustomAlbumAudioFile(mocks.albumByteLimit - mocks.embeddedCoverBytes)],
     readEmbeddedCover: true,
   })
 
@@ -126,7 +92,7 @@ it('should retain embedded artwork when the persisted album is exactly at the by
 })
 
 it('should release metadata listeners and the source after a successful duration read', async () => {
-  const audio = stubAudioMetadata()
+  const audio = stubCustomAlbumAudioMetadata()
   audio.duration = 60.6
   const result = await addTrack()
   expect(result).toMatchObject({kind: 'added', tracks: [{durationSeconds: 61}]})
@@ -136,7 +102,7 @@ it('should release metadata listeners and the source after a successful duration
 it.each([NaN, Infinity, 0, -1, 0.4])(
   'should reject invalid duration %s and release the audio source',
   async (duration) => {
-    const audio = stubAudioMetadata()
+    const audio = stubCustomAlbumAudioMetadata()
     audio.duration = duration
     await expect(addTrack()).rejects.toMatchObject({code: 'invalid-audio'})
     expectReleasedAudio(audio)
@@ -144,7 +110,7 @@ it.each([NaN, Infinity, 0, -1, 0.4])(
 )
 
 it('should reject a media error and release both subscriptions', async () => {
-  const audio = stubAudioMetadata()
+  const audio = stubCustomAlbumAudioMetadata()
   audio.load.mockImplementation(() => audio.dispatchEvent(new Event('error')))
   await expect(addTrack()).rejects.toMatchObject({code: 'invalid-audio'})
   expectReleasedAudio(audio)
@@ -153,7 +119,7 @@ it('should reject a media error and release both subscriptions', async () => {
 it.each(['source', 'load'] as const)(
   'should preserve a synchronous %s failure and release audio resources',
   async (failure) => {
-    const audio = stubAudioMetadata()
+    const audio = stubCustomAlbumAudioMetadata()
     const error = new Error('Audio setup failed')
     const fail = () => {
       throw error

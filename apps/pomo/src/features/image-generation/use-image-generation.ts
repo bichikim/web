@@ -1,4 +1,4 @@
-import {replaceBlobObjectUrl, replaceObjectUrl} from 'src/features/blob-object-url'
+import {replaceBlobObjectUrl} from 'src/features/blob-object-url'
 import * as m from '@paraglide/message'
 import {isAbortError} from 'src/utils/is-cancellation-reason'
 import {getExceptionMessage} from '../error-detail'
@@ -91,12 +91,6 @@ const handleGenerationUpdate = (update: GenerationUpdate, handlers: GenerationUp
 
 export type ImageGenerationController = ReturnType<typeof useImageGeneration>
 
-const imageUrlRuntime = {
-  create: (blob: Blob) => URL.createObjectURL(blob),
-  order: 'create-first' as const,
-  revoke: (url: string) => URL.revokeObjectURL(url),
-}
-
 export const useImageGeneration = (options: UseImageGenerationOptions = {}) => {
   const downloads = useModelDownload()
   const [idea, setIdea] = createSignal('')
@@ -136,10 +130,7 @@ export const useImageGeneration = (options: UseImageGenerationOptions = {}) => {
   onCleanup(() => {
     disposed = true
     controller?.abort()
-    const image = result()
-    if (image !== null) {
-      replaceBlobObjectUrl(image.url, () => null)
-    }
+    clearGeneratedImage(result(), setResult, true)
   })
 
   const generate = async () => {
@@ -180,7 +171,9 @@ export const useImageGeneration = (options: UseImageGenerationOptions = {}) => {
         return
       }
       const previous = result()
-      const url = replaceObjectUrl(previous?.url ?? null, () => image.blob, imageUrlRuntime)
+      const url = replaceBlobObjectUrl(previous?.url ?? null, () => image.blob, {
+        order: 'create-first',
+      })
       setResult({...settings, blob: image.blob, prompt: image.prompt, url})
       setStatus(m.picture_diary_generation_complete())
     } catch (failure) {

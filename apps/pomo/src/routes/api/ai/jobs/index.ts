@@ -1,7 +1,7 @@
+import {invalidJsonBodyResponse} from 'src/server/http/invalid-json-body-response'
 import type {APIEvent} from '@solidjs/start/server'
 
-import {isUserRequestResolutionError} from 'src/server/auth/user-request-resolution-error'
-import {resolveUserRequest} from 'src/server/auth/resolve-user-request'
+import {resolveUserRequestOrUnavailable} from 'src/server/auth/resolve-user-request-or-unavailable'
 import {readJsonBody} from 'src/server/http/body'
 import {noStoreJson} from 'src/server/http/response'
 import {createAiJobRequestSchema} from 'src/server/ai/contracts'
@@ -17,20 +17,14 @@ const HTTP_TOO_MANY_REQUESTS = 429
 const HTTP_ACCEPTED = 202
 
 export const POST = async (event: APIEvent): Promise<Response> => {
-  let identity: Awaited<ReturnType<typeof resolveUserRequest>>
-  try {
-    identity = await resolveUserRequest(event.request)
-  } catch (error: unknown) {
-    if (!isUserRequestResolutionError(error)) {
-      throw error
-    }
-
-    console.error('Failed to resolve AI job user', error.cause)
-    return noStoreJson(
-      {error: 'ai_job_unavailable'},
-      {cookies: error.cookies, status: HTTP_SERVICE_UNAVAILABLE},
-    )
+  const resolved = await resolveUserRequestOrUnavailable(event.request, {
+    logMessage: 'Failed to resolve AI job user',
+    unavailableError: 'ai_job_unavailable',
+  })
+  if (resolved.kind === 'unavailable') {
+    return resolved.response
   }
+  const {identity} = resolved
 
   if (identity.userId === null) {
     return noStoreJson(
@@ -42,13 +36,10 @@ export const POST = async (event: APIEvent): Promise<Response> => {
   const bodyResult = await readJsonBody(event, MAXIMUM_BODY_SIZE)
   const parsedBody = createAiJobRequestSchema.safeParse(bodyResult.success ? bodyResult.body : null)
   if (!parsedBody.success) {
-    return noStoreJson(
-      {error: 'invalid_request'},
-      {
-        cookies: identity.cookies,
-        status: bodyResult.success ? HTTP_BAD_REQUEST : bodyResult.status,
-      },
-    )
+    return invalidJsonBodyResponse(bodyResult, {
+      cookies: identity.cookies,
+      error: 'invalid_request',
+    })
   }
 
   try {
