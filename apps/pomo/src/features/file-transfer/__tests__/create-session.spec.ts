@@ -79,6 +79,24 @@ afterEach(() => {
 })
 
 describe('createTransferSession', () => {
+  it('should enter connecting immediately after approval and ignore repeated approval', async () => {
+    await fileTransfer.create()
+    const socket = Socket.instances[0]
+    socket.message({type: 'join-request'})
+    fileTransfer.approve()
+    expect(fileTransfer.state.phase).toBe('connecting')
+    fileTransfer.approve()
+    expect(socket.send).toHaveBeenCalledExactlyOnceWith(JSON.stringify({type: 'approve'}))
+  })
+
+  it('should identify a direct connection failure and clear its guidance on retry', async () => {
+    const peer = await connect()
+    peer.connectionState = 'failed'
+    peer.dispatchEvent(new Event('connectionstatechange'))
+    expect(fileTransfer.state.errorCode).toBe('direct-connection')
+    await fileTransfer.create()
+    expect(fileTransfer.state.errorCode).toBeNull()
+  })
   it('should ignore failures from an offer belonging to a replaced connection', async () => {
     const offer = Promise.withResolvers<{type: string; sdp: string}>()
     const oldPeer = new Peer()
