@@ -82,8 +82,8 @@
 
 ## Unit test execution time
 
-- Write each Vitest unit test to complete within 100ms when that individual test is run by itself. This is per-test authoring guidance, not a timeout for a whole file or parallel suite.
-- When an individual unit test exceeds 100ms, diagnose in order: missing mocks; too many independent scenarios combined in one test; whether the test has integration-test characteristics. Preserve assertions, scenarios that require the same mount, and required coverage. Mock missing boundaries where appropriate, split only independent scenarios, and keep genuine integration behavior in integration tests.
+- Write each Vitest unit test to complete within 150ms when that individual test is run by itself. This is per-test authoring guidance, not a timeout for a whole file or parallel suite.
+- When an individual unit test exceeds 150ms, diagnose in order: missing mocks; too many independent scenarios combined in one test; whether the test has integration-test characteristics. Preserve assertions, scenarios that require the same mount, and required coverage. Mock missing boundaries where appropriate, split only independent scenarios, and keep genuine integration behavior in integration tests.
 
 ## Required after changes
 
