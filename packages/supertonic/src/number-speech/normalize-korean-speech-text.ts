@@ -68,6 +68,7 @@ const COLON_CLOCK_NON_TIME_PREFIX_PATTERN = new RegExp(
 const COLON_CLOCK_STRUCTURED_PREFIX_PATTERN = /[?&=%\\]\s*(?:(?:오전|오후)[:：]?\s*)?$/u
 const COLON_CLOCK_LABEL_PREFIX_PATTERN = /[:：]\s*(?:(?:오전|오후)\s*)?$/u
 const UNSIGNED_MONTH_NUMBER_PATTERN = /^[\d０-９]+$/u
+const JOINED_MONTH_NUMBER_PATTERN = /^(?:2|1[12])$/u
 const UNSIGNED_INTEGER_PATTERN = KOREAN_UNSIGNED_INTEGER_PATTERN_SOURCE
 const KOREAN_PARTICLE_PATTERN = KOREAN_PARTICLE_PATTERN_SOURCE
 const KOREAN_UNIT_END_PATTERN = KOREAN_UNIT_END_PATTERN_SOURCE
@@ -259,7 +260,8 @@ const replaceWhenPronounceable = (
     return match
   }
 
-  const unitSeparator = unit === '월' && /^1[12]$/u.test(value.normalize('NFKC')) ? '' : ' '
+  const unitSeparator =
+    unit === '월' && JOINED_MONTH_NUMBER_PATTERN.test(value.normalize('NFKC')) ? '' : ' '
   return `${pronunciation}${unitSeparator}${unit}`
 }
 
