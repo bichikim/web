@@ -1,4 +1,5 @@
 import {clearHtmlMediaElement} from 'src/utils/clear-html-media-element'
+import {waitForEvent} from 'src/utils/wait-for-event'
 import {replaceBlobObjectUrl} from 'src/features/blob-object-url'
 import {sampleTimes} from './timeline'
 
@@ -32,39 +33,6 @@ export const captureSample = (video: HTMLVideoElement): VideoSample => {
   }
 }
 
-const waitForMedia = (
-  video: HTMLVideoElement,
-  event: string,
-  signal: AbortSignal,
-  start: () => void,
-): Promise<void> =>
-  new Promise((resolve, reject) => {
-    signal.throwIfAborted()
-    const finish = (error?: unknown) => {
-      clearTimeout(timeout)
-      video.removeEventListener(event, ready)
-      video.removeEventListener('error', fail)
-      signal.removeEventListener('abort', abort)
-      if (error === undefined) {
-        resolve()
-      } else {
-        reject(error)
-      }
-    }
-    const ready = () => finish()
-    const fail = () => finish(new Error('Video background decoding failed.'))
-    const abort = () => finish(signal.reason)
-    const timeout = setTimeout(fail, DECODE_TIMEOUT)
-    video.addEventListener(event, ready, {once: true})
-    video.addEventListener('error', fail, {once: true})
-    signal.addEventListener('abort', abort, {once: true})
-    try {
-      start()
-    } catch (error) {
-      finish(error)
-    }
-  })
-
 /** Samples a separate muted decoder and releases it on completion, failure, or cancellation. */
 export const sampleVideo = async (blob: Blob, signal: AbortSignal): Promise<VideoSample[]> => {
   const video = document.createElement('video')
@@ -72,10 +40,20 @@ export const sampleVideo = async (blob: Blob, signal: AbortSignal): Promise<Vide
   video.muted = true
   video.playsInline = true
   video.preload = 'auto'
+  const waiting = {
+    failure: {event: 'error', reason: () => new Error('Video background decoding failed.')},
+    signal,
+    target: video,
+    timeout: DECODE_TIMEOUT,
+  }
   try {
-    await waitForMedia(video, 'loadeddata', signal, () => {
-      video.src = url
-      video.load()
+    await waitForEvent({
+      ...waiting,
+      event: 'loadeddata',
+      start: () => {
+        video.src = url
+        video.load()
+      },
     })
     const samples = [captureSample(video)]
     for (const time of sampleTimes(video.duration).slice(1)) {
@@ -83,8 +61,12 @@ export const sampleVideo = async (blob: Blob, signal: AbortSignal): Promise<Vide
       if (Math.abs(time - video.currentTime) > SEEK_EPSILON) {
         // One decoder must finish each seek before starting the next.
         // eslint-disable-next-line no-await-in-loop
-        await waitForMedia(video, 'seeked', signal, () => {
-          video.currentTime = time
+        await waitForEvent({
+          ...waiting,
+          event: 'seeked',
+          start: () => {
+            video.currentTime = time
+          },
         })
         samples.push(captureSample(video))
       }
