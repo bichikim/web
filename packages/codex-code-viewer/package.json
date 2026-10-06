@@ -1,0 +1,27 @@
+{
+  "name": "@winter-love/codex-code-viewer",
+  "version": "0.1.0",
+  "private": true,
+  "description": "A Codex file viewer with TypeScript definition and import navigation.",
+  "type": "module",
+  "dependencies": {
+    "@modelcontextprotocol/ext-apps": "1.7.5",
+    "@modelcontextprotocol/sdk": "1.32.1",
+    "@openai/mcp-extensions": "0.1.0",
+    "@typescript/typescript6": "catalog:",
+    "solid-js": "catalog:",
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "@types/node": "catalog:",
+    "esbuild": "^0.28.2",
+    "tsx": "catalog:",
+    "unocss": "catalog:",
+    "vite": "catalog:",
+    "vite-plugin-solid": "^2.11.12",
+    "vitest": "4.1.11"
+  },
+  "engines": {
+    "node": ">=24"
+  }
+}
