@@ -79,3 +79,61 @@ it.each(['generating', 'preparing'] as const)(
     expect(options.synchronize).not.toHaveBeenCalled()
   },
 )
+
+it.each(['synchronize', 'onSynchronized'] as const)(
+  'should stop scheduling and publishing after disposal during %s',
+  async (stage) => {
+    let release!: () => void
+    let started!: () => void
+    const blocked = new Promise<void>((resolve) => {
+      release = resolve
+    })
+    const entered = new Promise<void>((resolve) => {
+      started = resolve
+    })
+    const summary = {failures: [], queuedJobIds: ['job'], successfulConnections: 1}
+    const options = {
+      autoPrepare: () => stage !== 'onSynchronized',
+      cleanupExpiredDialogues: vi.fn(),
+      createFetcher: vi.fn(),
+      createId: () => 'id',
+      discardMissingConnections: vi.fn(),
+      getConnections: () => [
+        {
+          createdAt: '',
+          id: 'feed',
+          updatedAt: '',
+          url: 'https://example.com/feed',
+          version: 1 as const,
+          voiceId: 'default',
+        },
+      ],
+      getRepository: vi.fn(),
+      now: () => new Date('2026-09-12T00:00:00Z'),
+      onSynchronized: vi.fn(async () => {
+        started()
+        await blocked
+      }),
+      reloadIssues: vi.fn(),
+      resolveGenerationSettings: vi.fn(),
+      scheduleJobs: vi.fn(),
+      setState: vi.fn(),
+      synchronize: vi.fn(async () => {
+        if (stage === 'synchronize') {
+          started()
+          await blocked
+        }
+        return summary
+      }),
+    } satisfies CreateFeedSyncControllerOptions
+    const controller = createFeedSyncController(options)
+    const pending = controller.sync()
+    await entered
+    controller.dispose()
+    options.setState.mockClear()
+    release()
+    await pending
+    expect(options.scheduleJobs).not.toHaveBeenCalled()
+    expect(options.setState).not.toHaveBeenCalled()
+  },
+)

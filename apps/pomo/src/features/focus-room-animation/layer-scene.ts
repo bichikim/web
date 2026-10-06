@@ -1,3 +1,4 @@
+import {randomInRange} from 'src/utils/random-in-range'
 import {cosineEaseInOut} from 'src/utils/cosine-ease-in-out'
 import {Container, type Texture, Ticker} from 'pixi.js'
 
@@ -376,12 +377,13 @@ export class PixiLayerScene {
     if (travelProgress === 1) {
       if (motion.definition.kind === 'translation' && 'targets' in motion.definition) {
         state.currentTarget = state.nextTarget
-        state.nextTarget = getNextMotionTarget(
-          motion.definition,
-          state.currentTarget,
-          state.direction,
-          this.#random,
-        )
+        state.nextTarget =
+          getNextMotionTarget(
+            motion.definition,
+            state.currentTarget,
+            state.direction,
+            this.#random,
+          ) ?? state.currentTarget
       } else {
         state.direction = state.direction === 1 ? -1 : 1
         state.currentTarget = state.nextTarget
@@ -440,7 +442,7 @@ export class PixiLayerScene {
         motion.kind === 'visibility-cycle'
           ? (motion.phase ?? 0) * travelSeconds
           : 0,
-      nextTarget: getNextMotionTarget(motion, currentTarget, 1, this.#random),
+      nextTarget: getNextMotionTarget(motion, currentTarget, 1, this.#random) ?? currentTarget,
       travelSeconds,
       twinkleState:
         motion.kind === 'opacity-twinkle'
@@ -510,7 +512,7 @@ export class PixiLayerScene {
   }
 
   #randomDuration(range: PixiSceneTravelRange) {
-    return range.minimumSeconds + this.#random() * (range.maximumSeconds - range.minimumSeconds)
+    return randomInRange(range.minimumSeconds, range.maximumSeconds, this.#random)
   }
 
   #resetMotion() {
@@ -526,7 +528,8 @@ export class PixiLayerScene {
     motion.state.direction = 1
     motion.state.elapsedSeconds = 0
     motion.state.currentTarget = currentTarget
-    motion.state.nextTarget = getNextMotionTarget(motion.definition, currentTarget, 1, this.#random)
+    motion.state.nextTarget =
+      getNextMotionTarget(motion.definition, currentTarget, 1, this.#random) ?? currentTarget
     motion.state.travelSeconds = this.#randomDuration(motion.definition.travel)
     motion.state.elapsedSeconds =
       motion.definition.kind === 'looping-translation' ||

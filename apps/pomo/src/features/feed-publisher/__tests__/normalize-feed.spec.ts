@@ -24,6 +24,16 @@ describe('normalizeFeed', () => {
     })
   })
 
+  it('should not let an older entry update precede its publication time', () => {
+    const entry = {
+      ...createEntry('stale-update'),
+      publishedAt: '2026-08-20T12:00:00.000Z',
+      updatedAt: '2020-01-01T00:00:00.000Z',
+    }
+
+    expect(normalizeFeed([entry]).updatedAt).toBe('2026-08-20T12:00:00.000Z')
+  })
+
   it('should use a deterministic epoch update for an empty feed', () => {
     expect(normalizeFeed([])).toEqual({entries: [], updatedAt: '1970-01-01T00:00:00.000Z'})
   })

@@ -5,7 +5,7 @@ import {onCleanup} from 'solid-js'
 import {afterEach, beforeEach, expect, it, vi} from 'vitest'
 
 import {PModal, type PModalProps} from 'src/components/p-modal/PModal'
-import {useFullscreen} from 'src/features/fullscreen'
+import {useFullscreen} from 'src/hooks/use-fullscreen'
 import {useScreenWakeLock} from 'src/features/screen-wake-lock'
 import {PSettings} from '../PSettings'
 
@@ -23,7 +23,7 @@ vi.mock('src/components/p-credits-settings/PCreditsSettings', () => ({
 }))
 vi.mock('src/components/p-feed-settings/PFeedSettings', () => ({PFeedSettings: () => null}))
 vi.mock('src/components/p-guide-settings/PGuideSettings', () => ({PGuideSettings: () => null}))
-vi.mock('src/features/fullscreen', () => ({useFullscreen: vi.fn()}))
+vi.mock('src/hooks/use-fullscreen', () => ({useFullscreen: vi.fn()}))
 vi.mock('src/features/display-theme', () => ({
   useDisplayTheme: () => ({onPreferenceChange: vi.fn(), preference: () => 'system'}),
 }))

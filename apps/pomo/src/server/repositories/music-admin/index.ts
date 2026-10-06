@@ -106,26 +106,21 @@ export const listAdminMusic = async () => {
   const activeAssetTrackIds = new Set(
     assets.filter((asset) => asset.status === 'active').map((asset) => asset.trackId),
   )
-  const trackIdsByAlbum = new Map<string, string[]>()
-
-  for (const track of tracks) {
-    const trackIds = trackIdsByAlbum.get(track.albumId) ?? []
-    trackIds.push(track.id)
-    trackIdsByAlbum.set(track.albumId, trackIds)
-  }
+  const tracksByAlbum = Map.groupBy(tracks, (track) => track.albumId)
+  const translationsByAlbum = Map.groupBy(translations, (translation) => translation.albumId)
 
   return {
     albums: albums.map((album) => {
-      const albumTrackIds = trackIdsByAlbum.get(album.id) ?? []
+      const albumTracks = tracksByAlbum.get(album.id) ?? []
 
       return {
         ...album,
         release: getAlbumReleaseReadiness({
-          activeAssetTrackCount: albumTrackIds.filter((trackId) => activeAssetTrackIds.has(trackId))
+          activeAssetTrackCount: albumTracks.filter((track) => activeAssetTrackIds.has(track.id))
             .length,
-          trackCount: albumTrackIds.length,
+          trackCount: albumTracks.length,
         }),
-        translations: translations.filter((translation) => translation.albumId === album.id),
+        translations: translationsByAlbum.get(album.id) ?? [],
       }
     }),
     assets,

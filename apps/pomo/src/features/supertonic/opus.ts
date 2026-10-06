@@ -173,18 +173,6 @@ const createAudioPages = (packets: ReadonlyArray<OggPacket>, streamSerial: numbe
   })
 }
 
-const concatenate = (parts: ReadonlyArray<Uint8Array>) => {
-  const result = new Uint8Array(parts.reduce((total, part) => total + part.length, 0))
-  let offset = 0
-
-  for (const part of parts) {
-    result.set(part, offset)
-    offset += part.length
-  }
-
-  return result
-}
-
 const isOpusSampleRate = (sampleRate: number): sampleRate is SampleRate =>
   OPUS_SAMPLE_RATES.some((supportedRate) => supportedRate === sampleRate)
 
@@ -251,9 +239,7 @@ export const encodeOpusBlob = async (samples: Float32Array, sampleRate: number):
       }),
       ...createAudioPages(packets, streamSerial),
     ]
-    const file = concatenate(pages)
-
-    return new Blob([file], {type: OPUS_MEDIA_TYPE})
+    return new Blob(pages, {type: OPUS_MEDIA_TYPE})
   } finally {
     encoder.free()
   }

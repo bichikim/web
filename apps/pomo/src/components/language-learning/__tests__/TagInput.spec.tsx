@@ -6,13 +6,14 @@ import {beforeEach, expect, it} from 'vitest'
 
 import {LanguageLearningTagInput} from '../TagInput'
 
-const renderTagInput = (disabled = false) => {
+const renderTagInput = (disabled = false, maximumTags?: number) => {
   const [inputValue, setInputValue] = createSignal('')
   const [tags, setTags] = createSignal<ReadonlyArray<string>>([])
   const result = render(() => (
     <LanguageLearningTagInput
       disabled={disabled}
       inputValue={inputValue()}
+      maximumTags={maximumTags}
       onInputChange={setInputValue}
       onTagsChange={setTags}
       tags={tags()}
@@ -60,6 +61,16 @@ it('should commit tags when a fullwidth comma is typed', () => {
   expect(input).toHaveValue('')
 })
 
+it('should commit tags when a fullwidth semicolon is typed', () => {
+  const {tags} = renderTagInput()
+  const input = screen.getByRole('textbox', {name: '프롬프트 단어'})
+
+  fireEvent.input(input, {target: {value: 'home；work'}})
+
+  expect(tags()).toEqual(['home', 'work'])
+  expect(input).toHaveValue('')
+})
+
 it('should commit the current tag when a fullwidth comma key is pressed', () => {
   const {tags} = renderTagInput()
   const input = screen.getByRole('textbox', {name: '프롬프트 단어'})
@@ -71,19 +82,48 @@ it('should commit the current tag when a fullwidth comma key is pressed', () => 
   expect(input).toHaveValue('')
 })
 
+it('should commit the current tag when a fullwidth semicolon key is pressed', () => {
+  const {tags} = renderTagInput()
+  const input = screen.getByRole('textbox', {name: '프롬프트 단어'})
+
+  fireEvent.input(input, {target: {value: 'home'}})
+  fireEvent.keyDown(input, {key: '；'})
+
+  expect(tags()).toEqual(['home'])
+  expect(input).toHaveValue('')
+})
+
+it('should split semicolon input while preserving the two-tag limit and hint', () => {
+  const {tags} = renderTagInput(false, 2)
+  const input = screen.getByRole('textbox', {name: '프롬프트 단어'})
+
+  expect(
+    screen.getByText(
+      '쉼표, 세미콜론, 줄바꿈 또는 Enter로 태그를 나눌 수 있어요. 최대 2개까지 입력할 수 있습니다.',
+    ),
+  ).toBeDefined()
+
+  fireEvent.input(input, {target: {value: 'one;'}})
+  fireEvent.paste(input, {clipboardData: {getData: () => 'take off;three'}})
+
+  expect(tags()).toEqual(['one', 'take off'])
+  expect(input).toHaveValue('')
+})
+
 it('should commit a Korean IME word only once after composition ends', () => {
   const {tags} = renderTagInput()
   const input = screen.getByRole('textbox', {name: '프롬프트 단어'})
 
   fireEvent.compositionStart(input)
-  fireEvent.input(input, {isComposing: true, target: {value: '한글'}})
+  fireEvent.input(input, {isComposing: true, target: {value: '한글；'}})
   fireEvent.keyDown(input, {isComposing: true, key: ','})
+  fireEvent.keyDown(input, {isComposing: true, key: '；'})
 
   expect(tags()).toEqual([])
-  expect(input).toHaveValue('한글')
+  expect(input).toHaveValue('한글；')
 
   fireEvent.compositionEnd(input, {data: '한글'})
-  fireEvent.input(input, {target: {value: '한글,'}})
+  fireEvent.input(input, {target: {value: '한글；,'}})
 
   expect(tags()).toEqual(['한글'])
   expect(input).toHaveValue('')
@@ -114,6 +154,16 @@ it('should split pasted tags on a fullwidth comma', () => {
   const input = screen.getByRole('textbox', {name: '프롬프트 단어'})
 
   fireEvent.paste(input, {clipboardData: {getData: () => 'home，work'}})
+
+  expect(tags()).toEqual(['home', 'work'])
+  expect(input).toHaveValue('')
+})
+
+it('should split pasted tags on a fullwidth semicolon', () => {
+  const {tags} = renderTagInput()
+  const input = screen.getByRole('textbox', {name: '프롬프트 단어'})
+
+  fireEvent.paste(input, {clipboardData: {getData: () => 'home；work'}})
 
   expect(tags()).toEqual(['home', 'work'])
   expect(input).toHaveValue('')

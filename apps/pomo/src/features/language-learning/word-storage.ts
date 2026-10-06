@@ -1,4 +1,4 @@
-import {uniqBy} from 'es-toolkit/array'
+import {differenceBy, uniqBy} from 'es-toolkit/array'
 import {createCollectionStorage} from '../value-storage'
 import {z} from 'zod'
 
@@ -49,23 +49,21 @@ export const appendLanguageLearningWords = (
   options?: LanguageLearningStorageOptions,
 ): AppendLanguageLearningWordsResult => {
   const storedWords = readLanguageLearningWords(options)
-  const existingValues = new Set(
-    storedWords
-      .filter((word) => word.language === language)
-      .map((word) => normalizeLanguageLearningWordValue(word.value)),
-  )
+  const existingValues = storedWords
+    .filter((word) => word.language === language)
+    .map((word) => word.value)
   const createdAt = new Date().toISOString()
-  const newWords = values.flatMap((value): ReadonlyArray<LanguageLearningWord> => {
-    const trimmedValue = value.trim()
-    const normalizedValue = normalizeLanguageLearningWordValue(trimmedValue)
-
-    if (trimmedValue.length === 0 || existingValues.has(normalizedValue)) {
-      return []
-    }
-
-    existingValues.add(normalizedValue)
-    return [{createdAt, language, memorized: false, value: trimmedValue, version: 1}]
-  })
+  const newValues = differenceBy(
+    uniqBy(
+      values.map((value) => value.trim()).filter((value) => value.length > 0),
+      normalizeLanguageLearningWordValue,
+    ),
+    existingValues,
+    normalizeLanguageLearningWordValue,
+  )
+  const newWords = newValues.map(
+    (value): LanguageLearningWord => ({createdAt, language, memorized: false, value, version: 1}),
+  )
 
   if (newWords.length > 0) {
     writeLanguageLearningWords([...storedWords, ...newWords], options)

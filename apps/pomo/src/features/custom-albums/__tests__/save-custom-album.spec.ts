@@ -1,72 +1,37 @@
+import {clearCustomAlbumDatabase, stubCustomAlbumAudioMetadata} from './support'
 /** @vitest-environment node */
 
 import 'fake-indexeddb/auto'
-import {afterEach, beforeEach, expect, it, vi} from 'vitest'
-
-const DATABASE_NAME = 'pomo-custom-albums'
-
-const resetAlbumDatabase = async (): Promise<void> => {
-  try {
-    const {openCustomAlbumDatabase} = await import('src/features/custom-albums/database')
-    const database = await openCustomAlbumDatabase()
-    database.close()
-
-    await new Promise<void>((resolve, reject) => {
-      const request = indexedDB.deleteDatabase(DATABASE_NAME)
-      request.onsuccess = () => resolve()
-      request.onerror = () => reject(request.error)
-      request.onblocked = () => reject(new Error('Custom album database deletion was blocked.'))
-    })
-  } finally {
-    vi.resetModules()
-  }
-}
-
-beforeEach(async () => {
-  await import('src/features/custom-albums')
-})
+import {afterEach, expect, it, vi} from 'vitest'
+import {
+  addCustomAlbumTracks,
+  readCustomAlbumDraft,
+  readCustomAlbums,
+  saveCustomAlbum,
+} from 'src/features/custom-albums'
 
 afterEach(async () => {
   try {
-    await resetAlbumDatabase()
+    await clearCustomAlbumDatabase()
   } finally {
     vi.restoreAllMocks()
     vi.unstubAllGlobals()
   }
 })
 
-const stubAudioMetadata = (durationSeconds: number): void => {
-  vi.stubGlobal('document', {
-    createElement: (tagName: string) => {
-      if (tagName !== 'audio') {
-        throw new Error(`Unexpected element: ${tagName}`)
-      }
+it('should persist a changed track title when re-saving a custom album', async () => {
+  vi.stubGlobal('crypto', {
+    randomUUID: () => 'custom-album:album-1',
+  })
 
-      let loadedMetadataListener: (() => void) | undefined
-
-      return {
-        addEventListener: (eventName: string, listener: () => void) => {
-          if (eventName === 'loadedmetadata') {
-            loadedMetadataListener = listener
-          }
-        },
-        duration: durationSeconds,
-        load: () => {
-          queueMicrotask(() => loadedMetadataListener?.())
-        },
-        preload: '',
-        removeAttribute: vi.fn(),
-        removeEventListener: vi.fn(),
-      }
-    },
-  } as unknown as Document)
-  vi.spyOn(globalThis.URL, 'createObjectURL').mockReturnValue('blob:audio')
-  vi.spyOn(globalThis.URL, 'revokeObjectURL').mockImplementation(() => undefined)
-}
-
-const seedCustomAlbum = async (trackTitle: string, audio: Blob) => {
-  const albumId = 'custom-album:album-1'
   const trackId = 'custom-track:track-1'
+  const baseTrack = {
+    audio: new Blob(['audio'], {type: 'audio/mpeg'}),
+    durationSeconds: 60,
+    fileName: 'song.mp3',
+    id: trackId,
+    title: 'Original title',
+  }
   const albumOptions = {
     albumId: null,
     artist: 'Artist',
@@ -75,60 +40,13 @@ const seedCustomAlbum = async (trackTitle: string, audio: Blob) => {
     coverSource: 'automatic' as const,
     title: 'Album',
   }
-  const {ALBUM_STORE_NAME, TRACK_STORE_NAME, openCustomAlbumDatabase, waitForTransaction} =
-    await import('src/features/custom-albums/database')
-  const database = await openCustomAlbumDatabase()
-  const transaction = database.transaction([ALBUM_STORE_NAME, TRACK_STORE_NAME], 'readwrite')
-  const finished = waitForTransaction(transaction)
-  const now = Date.now()
 
-  transaction.objectStore(ALBUM_STORE_NAME).put({
-    artist: albumOptions.artist,
-    coverIcon: albumOptions.coverIcon,
-    coverSource: albumOptions.coverSource,
-    createdAt: now,
-    id: albumId,
-    title: albumOptions.title,
-    trackIds: [trackId],
-    updatedAt: now,
-  })
-  transaction.objectStore(TRACK_STORE_NAME).put({
-    albumId,
-    artist: albumOptions.artist,
-    audio,
-    durationSeconds: 60,
-    fileName: 'song.mp3',
-    id: trackId,
-    title: trackTitle,
-  })
-
-  await finished
-
-  return {
-    albumId,
-    albumOptions,
-    track: {
-      audio,
-      durationSeconds: 60,
-      fileName: 'song.mp3',
-      id: trackId,
-      title: trackTitle,
-    },
-  }
-}
-
-it('should persist a changed track title when re-saving a custom album', async () => {
-  const {albumId, albumOptions, track} = await seedCustomAlbum(
-    'Original title',
-    new Blob(['audio'], {type: 'audio/mpeg'}),
-  )
-  const {readCustomAlbumDraft, readCustomAlbums, saveCustomAlbum} =
-    await import('src/features/custom-albums')
+  const albumId = await saveCustomAlbum({...albumOptions, tracks: [baseTrack]})
 
   await saveCustomAlbum({
     ...albumOptions,
     albumId,
-    tracks: [{...track, title: 'Renamed title'}],
+    tracks: [{...baseTrack, title: 'Renamed title'}],
   })
 
   const draft = await readCustomAlbumDraft({albumId})
@@ -139,16 +57,33 @@ it('should persist a changed track title when re-saving a custom album', async (
 })
 
 it('should persist replaced track audio when re-saving with the same title and artist', async () => {
-  const {albumId, albumOptions, track} = await seedCustomAlbum(
-    'Same title',
-    new Blob(['audio-a'], {type: 'audio/mpeg'}),
-  )
-  const {readCustomAlbumDraft, saveCustomAlbum} = await import('src/features/custom-albums')
+  vi.stubGlobal('crypto', {
+    randomUUID: () => 'custom-album:album-1',
+  })
+
+  const trackId = 'custom-track:track-1'
+  const baseTrack = {
+    audio: new Blob(['audio-a'], {type: 'audio/mpeg'}),
+    durationSeconds: 60,
+    fileName: 'song.mp3',
+    id: trackId,
+    title: 'Same title',
+  }
+  const albumOptions = {
+    albumId: null,
+    artist: 'Artist',
+    coverIcon: 'disc' as const,
+    coverImage: {kind: 'keep' as const},
+    coverSource: 'automatic' as const,
+    title: 'Album',
+  }
+
+  const albumId = await saveCustomAlbum({...albumOptions, tracks: [baseTrack]})
 
   await saveCustomAlbum({
     ...albumOptions,
     albumId,
-    tracks: [{...track, audio: new Blob(['audio-b'], {type: 'audio/mpeg'})}],
+    tracks: [{...baseTrack, audio: new Blob(['audio-b'], {type: 'audio/mpeg'})}],
   })
 
   const draft = await readCustomAlbumDraft({albumId})
@@ -162,7 +97,6 @@ it('should persist changed track metadata when re-saving with the same title and
     randomUUID: () => 'custom-album:album-1',
   })
 
-  const {readCustomAlbumDraft, saveCustomAlbum} = await import('src/features/custom-albums')
   const baseTrack = {
     audio: new Blob(['audio'], {type: 'audio/mpeg'}),
     durationSeconds: 60,
@@ -206,7 +140,6 @@ it('should count replaced track bytes against the existing audio quota', async (
     },
   })
 
-  const {readCustomAlbumDraft, saveCustomAlbum} = await import('src/features/custom-albums')
   const baseTrack = {
     audio: new Blob(['audio-a'], {type: 'audio/mpeg'}),
     durationSeconds: 60,
@@ -283,10 +216,9 @@ it('should reject a track replacement when available quota only covers the exist
 })
 
 it('should reject audio whose rounded duration would be zero as invalid audio', async () => {
-  stubAudioMetadata(0.499)
+  stubCustomAlbumAudioMetadata({deferLoad: true, durationSeconds: 0.499})
   vi.stubGlobal('crypto', {randomUUID: () => 'track-1'})
 
-  const {addCustomAlbumTracks} = await import('src/features/custom-albums')
   const file = new File([new Uint8Array(32)], 'short.mp3', {type: 'audio/mpeg'})
 
   await expect(
@@ -300,11 +232,9 @@ it('should reject audio whose rounded duration would be zero as invalid audio', 
 })
 
 it('should persist audio that rounds to one second', async () => {
-  stubAudioMetadata(0.5)
+  stubCustomAlbumAudioMetadata({deferLoad: true, durationSeconds: 0.5})
   vi.stubGlobal('crypto', {randomUUID: () => 'track-1'})
 
-  const {addCustomAlbumTracks, readCustomAlbumDraft, saveCustomAlbum} =
-    await import('src/features/custom-albums')
   const file = new File([new Uint8Array(32)], 'short.mp3', {type: 'audio/mpeg'})
   const result = await addCustomAlbumTracks({
     currentAlbumBytes: 0,

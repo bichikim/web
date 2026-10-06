@@ -53,7 +53,7 @@ const renderExistingEntry = (
   return {savedEntry}
 }
 
-it('should leave an existing entry unchanged when cancelling an edit', async () => {
+it('should leave an existing entry unchanged when cancelling an edit', () => {
   const entry = createExistingEntry()
   const repository = createRepository([entry])
 
@@ -113,7 +113,7 @@ it('should preserve a new diary draft after saving an existing entry', async () 
   fireEvent.input(screen.getByLabelText('그림일기 내용'), {target: {value: '작성 중인 새 일기'}})
   fireEvent.click(screen.getByRole('button', {name: '이전 일기 보기'}))
   await finishPageTurn()
-  fireEvent.click(screen.getByRole('button', {name: '편집'}))
+  fireEvent.click(await screen.findByRole('button', {name: '편집'}))
   const editingPage = screen.getByLabelText('그림일기 내용').closest('section')!
   expect(within(editingPage).getByLabelText('그림일기 내용')).toHaveValue('기존 일기')
   fireEvent.input(within(editingPage).getByLabelText('그림일기 내용'), {

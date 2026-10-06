@@ -267,6 +267,22 @@
           ],
           "name": "Gemma 4 E2B ONNX",
           "use": "브라우저 안에서 대화 초안 생성"
+        },
+        {
+          "condition": "라이선스 사본과 저작권 및 귀속 고지를 보존하며, 라이선스의 상업적 사용 조건을 따릅니다.",
+          "license": "LFM Open License v1.0",
+          "links": [
+            {
+              "label": "라이선스 및 귀속 고지",
+              "url": "/licenses/lfm-2.5-2.6b.txt"
+            },
+            {
+              "label": "Liquid AI",
+              "url": "https://huggingface.co/LiquidAI/LFM2.5-2.6B-GGUF/blob/e7caca5d835a3901a8e0d63e94009429bafafdfc/LICENSE"
+            }
+          ],
+          "name": "LFM2.5-2.6B QAD Q4_0",
+          "use": "브라우저에서 타로 해석, 대화 및 문장 생성"
         }
       ],
       "id": "models",

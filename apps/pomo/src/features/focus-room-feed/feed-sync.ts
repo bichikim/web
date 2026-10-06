@@ -1,6 +1,7 @@
 // oxlint-disable no-await-in-loop -- A response stream must be read and size-checked in order.
 import {getErrorMessage} from 'src/utils/get-error-message'
 
+import {planFeedSync} from './plan-sync'
 import type {FeedGenerationSettings} from './generation-settings'
 import {type FeedConnection, normalizeFeedDocumentUrl} from './schema'
 import {
@@ -18,20 +19,8 @@ import {
   parseFeedXml,
 } from './feed-parser'
 
-const MAXIMUM_FEED_ITEM_AGE_DAYS = 3
-const HOURS_PER_DAY = 24
-const MINUTES_PER_HOUR = 60
-const SECONDS_PER_MINUTE = 60
-const MILLISECONDS_PER_SECOND = 1000
 const MAXIMUM_FEED_BYTES = 2_000_000
 const MAXIMUM_ARTICLE_BYTES = 5_000_000
-const MAXIMUM_ITEMS_PER_SYNC = 20
-const MAXIMUM_FEED_ITEM_AGE_MS =
-  MAXIMUM_FEED_ITEM_AGE_DAYS *
-  HOURS_PER_DAY *
-  MINUTES_PER_HOUR *
-  SECONDS_PER_MINUTE *
-  MILLISECONDS_PER_SECOND
 
 export interface FeedFetcher {
   (url: string): Promise<Response>
@@ -149,13 +138,6 @@ const resolveContent = async (options: ResolveContentOptions) => {
 
   return articleText
 }
-const sortItems = (items: ReadonlyArray<ParsedFeedItem>) =>
-  [...items].sort((left, right) => {
-    const leftTime = left.publishedAt === null ? 0 : Date.parse(left.publishedAt)
-    const rightTime = right.publishedAt === null ? 0 : Date.parse(right.publishedAt)
-    return leftTime - rightTime
-  })
-
 interface ProcessFeedItemOptions {
   readonly autoPrepare?: boolean
   readonly connection: FeedConnection
@@ -291,21 +273,6 @@ const createIgnoredItem = (options: CreateIgnoredItemOptions): FeedItemRecord =>
   version: 1,
 })
 
-const getSubscriptionTimestamp = (connection: FeedConnection) => Date.parse(connection.createdAt)
-const isHistoricalItem = (
-  connection: FeedConnection,
-  item: ParsedFeedItem,
-  isFirstSync: boolean,
-) => {
-  if (item.publishedAt === null) {
-    return isFirstSync
-  }
-
-  return Date.parse(item.publishedAt) < getSubscriptionTimestamp(connection)
-}
-const isStaleItem = (item: ParsedFeedItem, oldestAcceptedTimestamp: number) =>
-  item.publishedAt !== null && Date.parse(item.publishedAt) < oldestAcceptedTimestamp
-
 const synchronizeConnection = async (
   options: SynchronizeFeedsOptions,
   connection: FeedConnection,
@@ -313,62 +280,30 @@ const synchronizeConnection = async (
   const xml = await fetchText(options.fetcher, connection.url, MAXIMUM_FEED_BYTES)
   const feed = parseFeedXml(xml, connection.url)
   const storedItems = await options.repository.listItems(connection.id)
-  const storedIds = new Set(storedItems.map((item) => item.feedItemId))
-  const matchedLegacyIds = new Set<string>()
-  const isFirstSync = storedItems.length === 0
-  const firstUndatedFeedItem = isFirstSync
-    ? feed.items.find((item) => item.publishedAt === null)
-    : undefined
-  const unseenItems = sortItems(
-    feed.items.filter((item) => {
-      const isStoredItem = storedIds.has(item.id)
-      const isStoredLegacyItem =
-        item.legacyId !== undefined &&
-        storedIds.has(item.legacyId) &&
-        !matchedLegacyIds.has(item.legacyId)
+  const {ignoredItems, itemsToProcess} = planFeedSync({
+    items: feed.items,
+    now: options.now,
+    storedItemIds: storedItems.map((item) => item.feedItemId),
+    subscriptionCreatedAt: connection.createdAt,
+  })
 
-      if (isStoredItem || isStoredLegacyItem) {
-        if (item.legacyId !== undefined) {
-          matchedLegacyIds.add(item.legacyId)
-        }
-        return false
-      }
-
-      return true
-    }),
-  ).slice(-MAXIMUM_ITEMS_PER_SYNC)
-
-  if (unseenItems.length === 0) {
+  if (ignoredItems.length === 0 && itemsToProcess.length === 0) {
     return []
   }
 
   const nowIso = options.now.toISOString()
-  const oldestAcceptedTimestamp = options.now.getTime() - MAXIMUM_FEED_ITEM_AGE_MS
-  const staleItems = unseenItems.filter((item) => isStaleItem(item, oldestAcceptedTimestamp))
-  const staleIds = new Set(staleItems.map((item) => item.id))
-  const eligibleItems = unseenItems.filter((item) => !staleIds.has(item.id))
-  const historicalItems = eligibleItems.filter((item) =>
-    isHistoricalItem(connection, item, isFirstSync),
-  )
-  const historicalIds = new Set(historicalItems.map((item) => item.id))
-  const currentItems = eligibleItems.filter((item) => !historicalIds.has(item.id))
-  const itemsToProcess =
-    isFirstSync && currentItems.length === 0 && firstUndatedFeedItem !== undefined
-      ? [firstUndatedFeedItem]
-      : currentItems
-  const processedIds = new Set(itemsToProcess.map((item) => item.id))
-  const ignoredItems = unseenItems.filter((item) => !processedIds.has(item.id))
 
   if (ignoredItems.length > 0) {
     await options.repository.saveItems(
-      ignoredItems.map((item) =>
+      ignoredItems.map(({item, reason}) =>
         createIgnoredItem({
           connection,
           feedTitle: feed.title,
           item,
-          message: staleIds.has(item.id)
-            ? '발행 후 3일이 지난 이전 항목이에요.'
-            : '구독을 시작하기 전의 이전 항목이에요.',
+          message:
+            reason === 'stale'
+              ? '발행 후 3일이 지난 이전 항목이에요.'
+              : '구독을 시작하기 전의 이전 항목이에요.',
           nowIso,
         }),
       ),

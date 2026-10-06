@@ -3,7 +3,8 @@
 import {Tabs} from '@kobalte/core/tabs'
 import {fireEvent, render, screen, within} from '@solidjs/testing-library'
 import {createSignal, type JSX} from 'solid-js'
-import {beforeEach, describe, expect, it, vi} from 'vitest'
+import {getLocale, overwriteGetLocale} from '@paraglide/runtime'
+import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 
 import {
   type EventBindingItem,
@@ -19,11 +20,6 @@ import {
 import {PreferenceProvider} from '../../../hooks/use-preference'
 
 vi.mock('@kobalte/core/tabs', () => ({Tabs: {Content: vi.fn()}}))
-vi.mock('solid-js', async () => {
-  const actual: typeof import('solid-js') = await vi.importActual('solid-js')
-
-  return {...actual, createSignal: vi.fn(actual.createSignal)}
-})
 vi.mock('@solidjs/router', () => ({
   A: (props: {readonly children: JSX.Element; readonly class?: string; readonly href: string}) => (
     <a class={props.class} href={props.href}>
@@ -41,8 +37,9 @@ vi.mock('../../../features/focus-room-feed', () => ({
   excludeFeedDialogues: (dialogues: ReadonlyArray<PDialogue>) => dialogues,
   usePFeedContext: vi.fn(),
 }))
-vi.mock('../AutomaticSettings', () => ({AutomaticDialogueSettings: () => <div>자동 설정</div>}))
+vi.mock('../DelayedEndEventSettings', () => ({DelayedEndEventSettings: vi.fn()}))
 vi.mock('../RandomEventSettings', () => ({RandomEventSettings: () => <div>랜덤 설정</div>}))
+vi.mock('../VolumeDuckingSettings', () => ({DialogueVolumeDuckingSettings: vi.fn()}))
 vi.mock('../EventSettingRow', () => ({
   DialogueEventSettingRow: (props: {
     readonly children: JSX.Element
@@ -114,6 +111,8 @@ vi.mock('../PlaybackButton', () => ({
     </button>
   ),
 }))
+
+const originalGetLocale = getLocale
 
 import {PDialogueSettingsContent} from '../Content'
 
@@ -205,6 +204,10 @@ beforeEach(() => {
   vi.spyOn(HTMLMediaElement.prototype, 'pause').mockImplementation(() => undefined)
 })
 
+afterEach(() => {
+  overwriteGetLocale(originalGetLocale)
+})
+
 const renderSavedDialogues = () => {
   const second = {
     ...DIALOGUE,
@@ -221,13 +224,29 @@ const renderSavedDialogues = () => {
     eventPlaybackModes: () => ({'focus-start': 'random-all'}),
   })
   vi.mocked(usePEvents).mockReturnValue(events)
-  render(() => <PDialogueSettingsContent onRequestClose={vi.fn()} />, {
+  render(() => <PDialogueSettingsContent />, {
     wrapper: PreferenceProvider,
   })
   return events
 }
 
 describe('PDialogueSettingsContent', () => {
+  it('should render event and dialogue settings in English', () => {
+    overwriteGetLocale(() => 'en')
+    vi.mocked(usePEvents).mockReturnValue(createEvents())
+
+    render(() => <PDialogueSettingsContent />, {wrapper: PreferenceProvider})
+
+    const eventsHeading = screen.getByRole('heading', {name: 'Events'})
+    const eventsSection = eventsHeading.closest('section')
+
+    expect(within(eventsSection!).getByRole('heading', {name: 'Enter Pomofi'})).toBeDefined()
+    expect(within(eventsSection!).getByText('Play once when entering Pomofi')).toBeDefined()
+    expect(screen.getByRole('heading', {name: 'Saved dialogue'})).toBeDefined()
+    expect(screen.getByRole('link', {name: 'New dialogue'})).toBeDefined()
+    expect(screen.getByText('Yuna · 1:01 · 1 speech bubble')).toBeDefined()
+  })
+
   it('should show saved dialogue metadata and bind event items', () => {
     const events = renderSavedDialogues()
 
@@ -326,10 +345,9 @@ describe('PDialogueSettingsContent', () => {
   })
 
   it('should keep the library open and explain how to recreate missing audio', async () => {
-    const onRequestClose = vi.fn()
     const missingAudioEvents = createEvents()
     vi.mocked(usePEvents).mockReturnValue(missingAudioEvents)
-    render(() => <PDialogueSettingsContent onRequestClose={onRequestClose} />, {
+    render(() => <PDialogueSettingsContent />, {
       wrapper: PreferenceProvider,
     })
 
@@ -342,7 +360,6 @@ describe('PDialogueSettingsContent', () => {
     fireEvent.click(screen.getByRole('button', {name: '캐릭터로 듣기'}))
     await vi.waitFor(() => expect(missingAudioEvents.getAudio).toHaveBeenCalledTimes(2))
     expect(missingAudioEvents.playDialogue).not.toHaveBeenCalled()
-    expect(onRequestClose).not.toHaveBeenCalled()
     expect(
       screen.getByText('음성이 없는 대화예요. 편집을 눌러 음성을 다시 만들어 주세요.'),
     ).toHaveAttribute('role', 'status')
@@ -371,7 +388,6 @@ describe('PDialogueSettingsContent', () => {
   })
 
   it('should keep the library open when character audio cannot be loaded', async () => {
-    const onRequestClose = vi.fn()
     vi.spyOn(console, 'error').mockImplementation(() => undefined)
     const events = createEvents({
       getAudio: vi.fn(async () => {
@@ -379,7 +395,7 @@ describe('PDialogueSettingsContent', () => {
       }),
     })
     vi.mocked(usePEvents).mockReturnValue(events)
-    render(() => <PDialogueSettingsContent onRequestClose={onRequestClose} />, {
+    render(() => <PDialogueSettingsContent />, {
       wrapper: PreferenceProvider,
     })
 
@@ -388,16 +404,14 @@ describe('PDialogueSettingsContent', () => {
     await vi.waitFor(() =>
       expect(screen.getByText('음성을 재생하지 못했어요.')).toHaveAttribute('role', 'status'),
     )
-    expect(onRequestClose).not.toHaveBeenCalled()
     expect(events.playDialogue).not.toHaveBeenCalled()
   })
 
   it('should discard a character audio check after the library unmounts', async () => {
-    const onRequestClose = vi.fn()
     const audio = Promise.withResolvers<Blob>()
     const events = createEvents({getAudio: vi.fn(() => audio.promise)})
     vi.mocked(usePEvents).mockReturnValue(events)
-    const view = render(() => <PDialogueSettingsContent onRequestClose={onRequestClose} />, {
+    const view = render(() => <PDialogueSettingsContent />, {
       wrapper: PreferenceProvider,
     })
 
@@ -407,25 +421,6 @@ describe('PDialogueSettingsContent', () => {
     await audio.promise
 
     expect(events.playDialogue).not.toHaveBeenCalled()
-    expect(onRequestClose).not.toHaveBeenCalled()
-  })
-
-  it('should report when stored audio resolves before a player can be captured', async () => {
-    const actual: typeof import('solid-js') = await vi.importActual('solid-js')
-    vi.mocked(createSignal).mockImplementation(((initialValue?: unknown) =>
-      initialValue === undefined
-        ? [() => undefined, vi.fn()]
-        : actual.createSignal(initialValue)) as typeof createSignal)
-    const events = createEvents({getAudio: vi.fn(async () => new Blob(['audio']))})
-    vi.mocked(usePEvents).mockReturnValue(events)
-    render(() => <PDialogueSettingsContent />, {wrapper: PreferenceProvider})
-
-    fireEvent.click(screen.getByRole('button', {name: '듣기'}))
-
-    await vi.waitFor(() =>
-      expect(screen.getAllByText('음성 재생기를 준비하지 못했어요.')).toHaveLength(1),
-    )
-    vi.mocked(createSignal).mockImplementation(actual.createSignal)
   })
 
   it('should start and stop playable audio and report playback failures', async () => {

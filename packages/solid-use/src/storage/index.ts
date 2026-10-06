@@ -4,7 +4,7 @@ import {
   setAnyStorageItem,
   StorageOptions,
 } from '@winter-love/utils'
-import {Accessor, createEffect, createSignal, onMount, Setter} from 'solid-js'
+import {Accessor, batch, createEffect, createSignal, onMount, Setter, untrack} from 'solid-js'
 import {resolveAccessor} from 'src/resolve-accessor'
 import {MaybeAccessor} from 'src/types'
 
@@ -36,7 +36,7 @@ export interface UseStorageOptions<T> extends StorageOptions {
  * @param kind Storage type ('cookie' | 'local' | 'session')
  * @param key Storage key
  * @param options Storage options
- * @returns [value accessor, value setter, active state setter]
+ * @returns [value accessor, value setter]
  */
 interface UseStorage {
   <T>(
@@ -60,38 +60,45 @@ export const useStorage: UseStorage = (
   const {mounted, enforceValue, initValue = null, active = true} = options
   const keyAccessor = resolveAccessor(key)
   const initialKey = keyAccessor()
-  const beforeValue = mounted ? null : getAnyStorageItem(kind, initialKey, initValue)
-  const [value, _setValue] = createSignal(beforeValue)
+  const initialValue = mounted ? null : getAnyStorageItem(kind, initialKey, initValue)
+  const [value, setMemoryValue] = createSignal(initialValue)
   const activeAccessor = resolveAccessor(active)
+
   const hasEnforcedValue = Object.hasOwn(options, 'enforceValue')
   let isMounted = false
-  let wasActive = false
+  let previousActive = false
   let dirtyWhileInactive = false
   let currentKey = initialKey
 
+  const restoreValue = (isActive: boolean) => {
+    const nextValue = hasEnforcedValue
+      ? enforceValue
+      : isActive
+        ? getAnyStorageItem(kind, currentKey, initValue)
+        : initValue
+
+    setMemoryValue(() => nextValue)
+
+    if (hasEnforcedValue && isActive) {
+      setAnyStorageItem(kind, currentKey, nextValue, options)
+    }
+  }
+
   onMount(() => {
     const isActive = activeAccessor()
-    currentKey = keyAccessor()
+    const nextKey = keyAccessor()
+    const keyChanged = nextKey !== currentKey
+    currentKey = nextKey
 
-    if (hasEnforcedValue) {
-      _setValue(() => enforceValue)
-
-      if (isActive) {
-        setAnyStorageItem(kind, currentKey, enforceValue, options)
-      }
-    } else if (mounted && activeAccessor()) {
-      // once
-      _setValue(() => getAnyStorageItem(kind, currentKey, initValue))
-    } else if (mounted) {
-      _setValue(() => initValue)
+    if (hasEnforcedValue || mounted || keyChanged) {
+      restoreValue(isActive)
     }
 
-    wasActive = isActive
+    previousActive = isActive
     isMounted = true
   })
 
-  // Rehydrate when active flips true after mount unless value changed while inactive.
-  createEffect(() => {
+  const synchronizeStorage = () => {
     const isActive = activeAccessor()
     const nextKey = keyAccessor()
 
@@ -102,58 +109,35 @@ export const useStorage: UseStorage = (
     if (nextKey !== currentKey) {
       currentKey = nextKey
       dirtyWhileInactive = false
-
-      if (hasEnforcedValue) {
-        _setValue(() => enforceValue)
-
-        if (isActive) {
-          setAnyStorageItem(kind, currentKey, enforceValue, options)
-        }
-      } else if (isActive) {
-        _setValue(() => getAnyStorageItem(kind, currentKey, initValue))
-      } else {
-        _setValue(() => initValue)
-      }
-
-      wasActive = isActive
-
-      return
-    }
-
-    if (hasEnforcedValue) {
-      if (isActive && !wasActive) {
-        _setValue(() => enforceValue)
-        setAnyStorageItem(kind, currentKey, enforceValue, options)
-      }
-
-      wasActive = isActive
-
-      return
-    }
-
-    if (isActive && !wasActive && mounted) {
-      if (dirtyWhileInactive) {
-        setAnyStorageItem(kind, currentKey, value(), options)
+      restoreValue(isActive)
+    } else if (isActive && !previousActive && (dirtyWhileInactive || hasEnforcedValue || mounted)) {
+      if (dirtyWhileInactive && !hasEnforcedValue) {
+        setAnyStorageItem(kind, currentKey, untrack(value), options)
         dirtyWhileInactive = false
       } else {
-        _setValue(() => getAnyStorageItem(kind, currentKey, initValue))
+        restoreValue(isActive)
       }
     }
 
-    wasActive = isActive
-  })
-
-  const setValue: any = (_value) => {
-    const result = _setValue(_value)
-
-    if (isMounted && activeAccessor()) {
-      setAnyStorageItem(kind, currentKey, value(), options)
-    } else if (isMounted) {
-      dirtyWhileInactive = true
-    }
-
-    return result
+    previousActive = isActive
   }
+
+  createEffect(synchronizeStorage)
+
+  const setValue: typeof setMemoryValue = (nextValue?) =>
+    batch(() => {
+      // Reflect batched key and activation changes before applying an explicit edit.
+      untrack(synchronizeStorage)
+      const result = setMemoryValue(nextValue)
+
+      if (isMounted && activeAccessor()) {
+        setAnyStorageItem(kind, currentKey, value(), options)
+      } else if (isMounted) {
+        dirtyWhileInactive = true
+      }
+
+      return result
+    })
 
   return [value, setValue]
 }

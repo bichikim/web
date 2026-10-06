@@ -1,4 +1,5 @@
-import type {Response, ResponseFunctionWebSearch} from 'openai/resources/responses/responses'
+import {uniq} from 'es-toolkit/array'
+import type {Response} from 'openai/resources/responses/responses'
 
 export interface HistoryResponseResult {
   readonly metadata: Readonly<Record<string, string>>
@@ -9,23 +10,14 @@ export interface HistoryResponseResult {
   readonly status: Response['status']
 }
 
-const extractSearchSources = (response: Response): ReadonlyArray<string> => {
-  const urls = new Set<string>()
-
-  for (const item of response.output) {
-    if (item.type === 'web_search_call') {
-      const action: ResponseFunctionWebSearch['action'] = item.action
-
-      if (action.type === 'search') {
-        for (const source of action.sources ?? []) {
-          urls.add(source.url)
-        }
-      }
-    }
-  }
-
-  return [...urls]
-}
+const extractSearchSources = (response: Response): ReadonlyArray<string> =>
+  uniq(
+    response.output.flatMap((item) =>
+      item.type === 'web_search_call' && item.action.type === 'search'
+        ? (item.action.sources ?? []).map((source) => source.url)
+        : [],
+    ),
+  )
 
 /** Retrieves a background response with the complete web-search source list. */
 export const retrieveHistoryResponse = async (

@@ -1,6 +1,7 @@
 /** @vitest-environment jsdom */
 
 import {fireEvent, render, screen} from '@solidjs/testing-library'
+import {createSignal} from 'solid-js'
 import {expect, it, vi} from 'vitest'
 
 import {PGenerationStatus} from '../PGenerationStatus'
@@ -70,21 +71,59 @@ it('should expose zero percent progress with the requested semantic label', () =
   ).toBe('0')
 })
 
-it('should keep the semantic progress value valid when a volatile accessor becomes unavailable', () => {
+it('should keep finite and nonfinite progress presentation within its display range', () => {
+  const [progress, setProgress] = createSignal<number | null | undefined>(150)
+  const statusMessage = '대사 초안을 작성하고 있어요.'
+  render(() => (
+    <PGenerationStatus
+      kind="draft"
+      message={statusMessage}
+      progress={progress()}
+      progressLabel="대사 생성 진행률"
+    />
+  ))
+
+  const status = screen.getByRole('status')
+  const progressbar = screen.getByRole('progressbar', {name: '대사 생성 진행률'})
+  expect(status.textContent).toContain('100%')
+  expect(progressbar.getAttribute('aria-valuenow')).toBe('100')
+
+  setProgress(-25)
+  expect(status.textContent).toContain('0%')
+  expect(progressbar.getAttribute('aria-valuenow')).toBe('0')
+
+  setProgress(Number.NaN)
+  expect(status.textContent).toContain('0%')
+  expect(status.textContent).not.toContain('NaN%')
+  expect(progressbar.getAttribute('aria-valuenow')).toBe('0')
+
+  setProgress(Number.POSITIVE_INFINITY)
+  expect(status.textContent).toContain('0%')
+  expect(status.textContent).not.toContain('Infinity%')
+  expect(progressbar.getAttribute('aria-valuenow')).toBe('0')
+
+  setProgress(undefined)
+  expect(status.textContent).toBe(statusMessage)
+  expect(screen.queryByRole('progressbar')).toBeNull()
+})
+
+it('should snapshot a volatile progress accessor once', () => {
   let progressReads = 0
   const props = {
     kind: 'draft' as const,
     message: '대사 초안을 작성하고 있어요.',
     get progress() {
       progressReads += 1
-      return progressReads < 3 ? 20 : undefined
+      return progressReads === 1 ? 20 : undefined
     },
     progressLabel: '대사 생성 진행률',
   }
 
   render(() => PGenerationStatus(props))
 
+  expect(progressReads).toBe(1)
+  expect(screen.getByRole('status').textContent).toContain('20%')
   expect(
     screen.getByRole('progressbar', {name: '대사 생성 진행률'}).getAttribute('aria-valuenow'),
-  ).toBe('0')
+  ).toBe('20')
 })

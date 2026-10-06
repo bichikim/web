@@ -50,34 +50,40 @@ it('should fetch and validate the Korean public version catalog', async () => {
   const catalog = await loadVersionCatalog()
 
   expect(fetch).toHaveBeenCalledWith('/versions/v2/ko.json')
-  expect(catalog.releases).toHaveLength(6)
+  expect(catalog.releases).toHaveLength(7)
   expect(catalog.releases[0]).toMatchObject({
+    releasedAt: '2026-10-06T14:32:00+09:00',
+    title: 'Pomo 업데이트 안내',
+    version: '2026. 10. 06 14:32',
+  })
+  expect(catalog.releases[0]?.changes).toHaveLength(14)
+  expect(catalog.releases[1]).toMatchObject({
     releasedAt: '2026-09-18T03:03:00+09:00',
     title: 'Pomo 업데이트 안내',
     version: '2026. 09. 18 03:03',
   })
-  expect(catalog.releases[0]?.changes).toHaveLength(8)
-  expect(catalog.releases[1]).toMatchObject({
+  expect(catalog.releases[1]?.changes).toHaveLength(8)
+  expect(catalog.releases[2]).toMatchObject({
     releasedAt: '2026-09-13T10:43:00+09:00',
     title: 'Pomo 업데이트 안내',
     version: '2026. 09. 13 10:43',
   })
-  expect(catalog.releases[1]?.changes).toHaveLength(9)
-  expect(catalog.releases[2]).toMatchObject({
+  expect(catalog.releases[2]?.changes).toHaveLength(9)
+  expect(catalog.releases[3]).toMatchObject({
     releasedAt: '2026-09-09T18:40:00+09:00',
     version: '2026. 09. 09 18:40',
   })
-  expect(catalog.releases[2]?.changes).toHaveLength(6)
-  expect(catalog.releases[3]).toMatchObject({
+  expect(catalog.releases[3]?.changes).toHaveLength(6)
+  expect(catalog.releases[4]).toMatchObject({
     releasedAt: '2026-09-08T11:44:00+09:00',
     summary: '기억할 일부터 하루의 기록까지, Pomo에서 할 수 있는 일이 늘어났어요.',
     title: 'Pomo 업데이트 안내',
     version: '2026. 09. 08 11:44',
   })
-  expect(catalog.releases[3]?.changes).toHaveLength(8)
-  expect(catalog.releases[4]?.summary).toBeUndefined()
-  expect(catalog.releases[4]?.changes).toHaveLength(13)
-  expect(catalog.releases[5]).toEqual({
+  expect(catalog.releases[4]?.changes).toHaveLength(8)
+  expect(catalog.releases[5]?.summary).toBeUndefined()
+  expect(catalog.releases[5]?.changes).toHaveLength(13)
+  expect(catalog.releases[6]).toEqual({
     changes: [],
     releasedAt: '2026-08-25T05:26:00+09:00',
     title: '첫 출시',
@@ -93,24 +99,30 @@ it('should fetch the English catalog for the English locale', async () => {
 
   expect(fetch).toHaveBeenCalledWith('/versions/v2/en.json')
   expect(catalog.releases[0]).toMatchObject({
+    releasedAt: '2026-10-06T14:32:00+09:00',
+    title: 'Pomo update',
+    version: '2026. 10. 06 14:32',
+  })
+  expect(catalog.releases[0]?.changes).toHaveLength(14)
+  expect(catalog.releases[1]).toMatchObject({
     title: 'Pomo update',
     version: '2026. 09. 18 03:03',
   })
-  expect(catalog.releases[0]?.changes).toHaveLength(8)
-  expect(catalog.releases[3]).toMatchObject({
+  expect(catalog.releases[1]?.changes).toHaveLength(8)
+  expect(catalog.releases[4]).toMatchObject({
     summary: 'From reminders to daily memories, there is more you can do with Pomo.',
     title: 'Pomo update',
   })
-  expect(catalog.releases[3]?.changes[0]).toEqual({
+  expect(catalog.releases[4]?.changes[0]).toEqual({
     description:
       'Save things you want to remember and choose when to be notified. ' +
       'You can also set advance and repeat reminders.',
     title: 'Memos and reminders',
   })
-  expect(catalog.releases[3]?.notes).toEqual([
+  expect(catalog.releases[4]?.notes).toEqual([
     'Memo reminders and event alarms notify you through chat and voice while Pomo is open.',
   ])
-  expect(catalog.releases[5]).toMatchObject({title: 'Initial release'})
+  expect(catalog.releases[6]).toMatchObject({title: 'Initial release'})
 })
 
 it('should keep version and timezone data aligned across localized catalogs', () => {

@@ -5,6 +5,7 @@ import {POMODORO_TIMER_LIMITS, type PomodoroTimerConfig} from '../../features/po
 import * as m from '@paraglide/message'
 import {DurationField} from '../pomodoro-duration-editor/Field'
 import {CLASSES} from '../pomodoro-duration-editor/shared'
+import {normalizePasteNumericInput} from 'src/utils/normalize-paste-numeric-input'
 
 interface DurationDraft {
   readonly focus: string
@@ -46,7 +47,7 @@ const getDraftForConfig = (
 }
 
 const parseDurationMinutes = (value: string) => {
-  const minutes = Number(value)
+  const minutes = Number(normalizePasteNumericInput(value))
 
   if (
     !Number.isInteger(minutes) ||
@@ -84,7 +85,7 @@ export const PPomodoroDurationEditor = (props: PPomodoroDurationEditorProps) => 
     const durationDraft = draft()
     const focusMinutes = parseDurationMinutes(durationDraft.focus)
     const longBreakMinutes = parseDurationMinutes(durationDraft.longBreak)
-    const sessionCount = Number(durationDraft.sessions)
+    const sessionCount = Number(normalizePasteNumericInput(durationDraft.sessions))
     const shortBreakMinutes = parseDurationMinutes(durationDraft.shortBreak)
 
     if (

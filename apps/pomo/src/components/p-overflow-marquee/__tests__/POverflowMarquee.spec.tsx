@@ -1,6 +1,7 @@
 /** @vitest-environment jsdom */
 
 import {cleanup, render} from '@solidjs/testing-library'
+import {createSignal} from 'solid-js'
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 
 import {POverflowMarquee} from '../POverflowMarquee'
@@ -28,6 +29,7 @@ describe('POverflowMarquee', () => {
 
   afterEach(() => {
     cleanup()
+    vi.restoreAllMocks()
     vi.doUnmock('solid-js')
     vi.resetModules()
     vi.unstubAllGlobals()
@@ -110,6 +112,23 @@ describe('POverflowMarquee', () => {
     expect(viewport.hasAttribute('tabindex')).toBe(false)
     expect(viewport.hasAttribute('aria-label')).toBe(false)
     expect(track.lastElementChild).toBe(content)
+  })
+
+  it('should measure synchronously without observer notifications and update speed when text changes', () => {
+    let width = 200
+    vi.spyOn(HTMLElement.prototype, 'clientWidth', 'get').mockReturnValue(100)
+    vi.spyOn(HTMLElement.prototype, 'scrollWidth', 'get').mockImplementation(() => width)
+    const [text, setText] = createSignal('Initial title')
+    const result = render(() => <POverflowMarquee text={text()} />)
+    const viewport = result.container.firstElementChild
+    const track = viewport?.firstElementChild
+    expect(viewport).toHaveAttribute('data-overflowing', 'true')
+    expect(track).toHaveStyle('--pomo-marquee-distance: 232px')
+    expect(track).toHaveStyle(`--pomo-marquee-duration: ${232 / 28}s`)
+    width = 80
+    setText('Short title')
+    expect(viewport).not.toHaveAttribute('data-overflowing')
+    expect(resizeObservers).toHaveLength(1)
   })
 
   it('should observe both measured elements and disconnect on cleanup', () => {

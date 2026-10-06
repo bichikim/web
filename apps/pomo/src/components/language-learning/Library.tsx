@@ -12,11 +12,7 @@ import {PSettingsActionLink} from '../settings/ActionLink'
 import {PSettingsEmptyState} from '../settings/EmptyState'
 import {LanguageLearningLanguageSelect} from './LanguageSelect'
 
-export interface LanguageLearningLibraryProps {
-  readonly onRequestClose?: () => void
-}
-
-export const LanguageLearningLibrary = (props: LanguageLearningLibraryProps) => {
+export const LanguageLearningLibrary = () => {
   const events = usePEvents()
   const [language, setLanguage] = createSignal<LanguageLearningLanguage>('en')
   const sentences = useLanguageLearningSentences()
@@ -53,7 +49,6 @@ export const LanguageLearningLibrary = (props: LanguageLearningLibraryProps) => 
         <DialogueLibrary
           entries={filteredEntries()}
           onAfterDelete={(dialogue) => deleteLanguageLearningSentence(dialogue.id)}
-          onRequestClose={props.onRequestClose}
           textLineLimit="six"
         />
       </Show>

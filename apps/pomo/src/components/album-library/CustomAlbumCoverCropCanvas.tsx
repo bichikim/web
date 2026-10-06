@@ -97,10 +97,11 @@ export const CustomAlbumCoverCropCanvas = (props: CustomAlbumCoverCropCanvasProp
       aria-label={m.album_custom_cover_crop_canvas()}
       class="mx-auto block aspect-square w-full max-w-80 touch-none overflow-visible
         rounded-panel-inner bg-content-surface"
-      onPointerCancel={() => props.crop.handlePointerEnd()}
+      onLostPointerCapture={(event) => props.crop.handlePointerEnd(event)}
+      onPointerCancel={(event) => props.crop.handlePointerEnd(event)}
       onPointerDown={(event) => props.crop.handlePointerDown(event)}
       onPointerMove={(event) => props.crop.handlePointerMove(event)}
-      onPointerUp={() => props.crop.handlePointerEnd()}
+      onPointerUp={(event) => props.crop.handlePointerEnd(event)}
       role="group"
       viewBox={`0 0 ${CUSTOM_ALBUM_COVER_EDGE} ${CUSTOM_ALBUM_COVER_EDGE}`}
     >

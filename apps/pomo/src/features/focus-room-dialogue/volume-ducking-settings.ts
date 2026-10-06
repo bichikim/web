@@ -1,15 +1,10 @@
+import {createPreferenceOptions} from 'src/features/preference-options'
+import {createTossWebStorageAdapter} from 'src/utils/runtime-storage'
 import {createAuthoritativePreferenceRepository} from '../authoritative-preference'
 import {createParsedPreferenceStorage} from '../parsed-preference-storage'
 import {z} from 'zod'
 
 import {webLocalStorage} from 'src/utils/preference-storage'
-import {
-  hasNativeStorageBridge,
-  readTossStorageJson,
-  readWebStorageJson,
-  writeTossStorageJson,
-  writeWebStorageJson,
-} from 'src/utils/runtime-storage'
 
 export interface DialogueVolumeDuckingSettings {
   readonly enabled: boolean
@@ -156,16 +151,7 @@ export const createDialogueVolumeDuckingSettingsRepository = (
 
 const runtimeRepository = createDialogueVolumeDuckingSettingsRepository({
   storage: {
-    readToss: (key) => readTossStorageJson(key, (value) => value),
-    readWeb: (key) => readWebStorageJson(key, (value) => value),
-    usesTossStorage: hasNativeStorageBridge,
-    writeToss: writeTossStorageJson,
-    writeWeb(key, value) {
-      const error = writeWebStorageJson(key, value)
-      if (error !== null) {
-        throw error
-      }
-    },
+    ...createTossWebStorageAdapter(),
   },
 })
 
@@ -183,13 +169,9 @@ export interface DialogueVolumeDuckingPreferenceOptions {
 }
 
 /** Creates the shared preference definition for dialogue volume settings. */
-export const createDialogueVolumeDuckingPreferenceOptions = (
-  options: DialogueVolumeDuckingPreferenceOptions = {},
-) => ({
+export const createDialogueVolumeDuckingPreferenceOptions = createPreferenceOptions({
   defaultValue: DEFAULT_DIALOGUE_VOLUME_DUCKING_SETTINGS,
   key: STORAGE_KEY,
-  onError: options.onError,
-  onSaved: options.onSaved,
   parse: parseDialogueVolumeDuckingSettings,
   storage: preferenceStorage,
 })

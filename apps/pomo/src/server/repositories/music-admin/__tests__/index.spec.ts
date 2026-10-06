@@ -189,6 +189,50 @@ describe('listAdminMusic', () => {
     )
   })
 
+  it('should keep album relations ordered and isolated while counting repeated track rows', async () => {
+    const albums = ['album-2', 'album-1', 'empty'].map((id) => ({
+      coverFallback: 'music',
+      coverImageUrl: null,
+      id,
+      status: 'draft',
+    }))
+    const translations = [
+      {albumId: 'album-1', description: 'One', locale: 'en', title: 'One'},
+      {albumId: 'album-2', description: 'Two', locale: 'en', title: 'Two'},
+      {albumId: 'album-1', description: '하나', locale: 'ko', title: '하나'},
+      {albumId: 'unlisted', description: 'Other', locale: 'ko', title: 'Other'},
+      {albumId: 'album-2', description: '둘', locale: 'ko', title: '둘'},
+    ]
+    const tracks = [
+      {albumId: 'album-1', artist: 'Artist', id: 'active', position: 0, title: 'Active'},
+      {albumId: 'album-2', artist: 'Artist', id: 'pending', position: 0, title: 'Pending'},
+      {albumId: 'album-1', artist: 'Artist', id: 'active', position: 1, title: 'Repeated'},
+    ]
+    const assets = [
+      {id: 'asset-1', status: 'active', trackId: 'active'},
+      {id: 'asset-2', status: 'pending', trackId: 'pending'},
+    ]
+    queueAdminList(albums, translations, tracks, [], assets, [])
+
+    const result = await listAdminMusic()
+
+    expect(result.albums).toEqual([
+      {
+        ...albums[0],
+        release: {blockers: ['tracks_missing_active_asset'], ready: false},
+        translations: [translations[1], translations[4]],
+      },
+      {
+        ...albums[1],
+        release: {blockers: [], ready: true},
+        translations: [translations[0], translations[2]],
+      },
+      {...albums[2], release: {blockers: [], ready: true}, translations: []},
+    ])
+    expect(result.tracks).toBe(tracks)
+    expect(result.assets).toBe(assets)
+  })
+
   it('should return empty collections for an empty database', async () => {
     queueAdminList([], [], [], [], [], [])
     await expect(listAdminMusic()).resolves.toEqual({

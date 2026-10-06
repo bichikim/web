@@ -1,5 +1,6 @@
+import {createMaskedParticleEffect} from './create-masked-particle-effect'
 /* eslint-disable no-magic-numbers -- Snow depth, density, and movement are visually tuned against the fixed focus-room master. */
-import {Container, Particle, ParticleContainer, Rectangle, Sprite, Texture} from 'pixi.js'
+import {type Container, Particle, type ParticleContainer, Texture} from 'pixi.js'
 
 interface FallingFlake {
   readonly particles: readonly Particle[]
@@ -32,35 +33,26 @@ const BRANCH_ROTATIONS = [0, Math.PI / 3, (Math.PI * 2) / 3] as const
 
 /** Renders softly swaying, depth-layered snowflakes through a fixed scene mask. */
 export class FallingFlakesEffect {
-  readonly container = new Container()
+  readonly container: Container
   readonly #flakes: readonly FallingFlake[]
   readonly #height: number
   readonly #particleContainer: ParticleContainer<Particle>
   readonly #random: () => number
   readonly #width: number
-  #destroyed = false
+  readonly #effect: ReturnType<typeof createMaskedParticleEffect>
 
   constructor(options: FallingFlakesEffectOptions) {
     this.#height = options.height
     this.#random = options.random
     this.#width = options.width
-    this.#particleContainer = new ParticleContainer<Particle>({
-      boundsArea: new Rectangle(0, 0, options.width, options.height),
-      dynamicProperties: {
-        color: false,
-        position: true,
-        rotation: true,
-        uvs: false,
-        vertex: false,
-      },
-      texture: Texture.WHITE,
+    this.#effect = createMaskedParticleEffect({
+      height: options.height,
+      maskTexture: options.maskTexture,
+      rotation: true,
+      width: options.width,
     })
-
-    const maskedContent = new Container()
-    const maskSprite = new Sprite(options.maskTexture)
-    maskedContent.addChild(this.#particleContainer)
-    this.container.addChild(maskSprite, maskedContent)
-    maskedContent.setMask({channel: 'red', mask: maskSprite})
+    this.container = this.#effect.container
+    this.#particleContainer = this.#effect.particles
 
     const textureWidth = Texture.WHITE.width
     const textureHeight = Texture.WHITE.height
@@ -100,7 +92,7 @@ export class FallingFlakesEffect {
   }
 
   advance(deltaSeconds: number) {
-    if (this.#destroyed) {
+    if (this.#effect.isDestroyed()) {
       return
     }
 
@@ -125,16 +117,9 @@ export class FallingFlakesEffect {
   }
 
   setAnimationEnabled(animationEnabled: boolean) {
-    this.container.visible = animationEnabled
+    this.#effect.setAnimationEnabled(animationEnabled)
   }
-
   destroy() {
-    if (this.#destroyed) {
-      return
-    }
-
-    this.#destroyed = true
-    this.container.removeFromParent()
-    this.container.destroy({children: true})
+    this.#effect.destroy()
   }
 }
