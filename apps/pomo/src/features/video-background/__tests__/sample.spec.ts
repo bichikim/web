@@ -248,3 +248,129 @@ it('should stop the decoder and release its URL when loading is aborted', async 
   expect(load).toHaveBeenCalledTimes(2)
   expect(URL.revokeObjectURL).toHaveBeenCalledWith('blob:sample')
 })
+
+it.each([
+  {reason: undefined, stage: 'load'},
+  {reason: null, stage: 'load'},
+  {reason: 0, stage: 'load'},
+  {reason: false, stage: 'load'},
+  {reason: 'failure', stage: 'load'},
+  {reason: undefined, stage: 'seek'},
+  {reason: null, stage: 'seek'},
+  {reason: 0, stage: 'seek'},
+  {reason: false, stage: 'seek'},
+  {reason: 'failure', stage: 'seek'},
+])('should reject an arbitrary synchronous $stage failure: $reason', async ({reason, stage}) => {
+  vi.useFakeTimers()
+  const {load, seek, video} = createDecoder()
+  const start = stage === 'load' ? load : seek
+  start.mockImplementationOnce(() => {
+    throw reason
+  })
+  const pending = sampleVideo(new Blob(), new AbortController().signal)
+  if (stage === 'seek') {
+    video.dispatchEvent(new Event('loadeddata'))
+  }
+  await expect(pending).rejects.toBe(reason)
+  expect(video.hasAttribute('src')).toBe(false)
+  expect(URL.revokeObjectURL).toHaveBeenCalledExactlyOnceWith('blob:sample')
+  expect(vi.getTimerCount()).toBe(0)
+})
+
+it.each([null, undefined])('should preserve a nullish abort reason: %s', async (reason) => {
+  vi.useFakeTimers()
+  const {video} = createDecoder()
+  const controller = new AbortController()
+  if (reason === undefined) {
+    // Native abort(undefined) supplies a DOMException; pin the direct reason propagation contract.
+    vi.spyOn(controller.signal, 'reason', 'get').mockReturnValue(undefined)
+  }
+  const pending = sampleVideo(new Blob(), controller.signal)
+  const assertion = expect(pending).rejects.toBe(reason)
+  controller.abort(reason)
+  await assertion
+  expect(video.hasAttribute('src')).toBe(false)
+  expect(URL.revokeObjectURL).toHaveBeenCalledExactlyOnceWith('blob:sample')
+  expect(vi.getTimerCount()).toBe(0)
+})
+
+it('should retain readiness when later events and a start exception follow it', async () => {
+  vi.useFakeTimers()
+  const {load, video} = createDecoder(0)
+  const laterFailure: unknown = undefined
+  load.mockImplementationOnce(() => {
+    video.dispatchEvent(new Event('loadeddata'))
+    video.dispatchEvent(new Event('error'))
+    throw laterFailure
+  })
+  await expect(sampleVideo(new Blob(), new AbortController().signal)).resolves.toHaveLength(1)
+  expect(vi.getTimerCount()).toBe(0)
+})
+
+it('should retain the decoding error when readiness and a start exception follow it', async () => {
+  vi.useFakeTimers()
+  const {load, video} = createDecoder(0)
+  const laterFailure = new Error('later failure')
+  load.mockImplementationOnce(() => {
+    video.dispatchEvent(new Event('error'))
+    video.dispatchEvent(new Event('loadeddata'))
+    throw laterFailure
+  })
+  await expect(sampleVideo(new Blob(), new AbortController().signal)).rejects.toThrow(
+    'Video background decoding failed.',
+  )
+  expect(vi.getTimerCount()).toBe(0)
+})
+
+it.each(['success', 'error', 'abort', 'timeout', 'start failure'] as const)(
+  'should release every load subscription and deadline after %s',
+  async (outcome) => {
+    vi.useFakeTimers()
+    const {load, video} = createDecoder(0)
+    const controller = new AbortController()
+    const subscribeVideo = vi.spyOn(video, 'addEventListener')
+    const unsubscribeVideo = vi.spyOn(video, 'removeEventListener')
+    const subscribeSignal = vi.spyOn(controller.signal, 'addEventListener')
+    const unsubscribeSignal = vi.spyOn(controller.signal, 'removeEventListener')
+    if (outcome === 'start failure') {
+      load.mockImplementationOnce(() => {
+        throw new Error('start failure')
+      })
+    }
+    const pending = sampleVideo(new Blob(), controller.signal)
+    const assertion =
+      outcome === 'success'
+        ? expect(pending).resolves.toHaveLength(1)
+        : expect(pending).rejects.toBeDefined()
+    switch (outcome) {
+      case 'success':
+        video.dispatchEvent(new Event('loadeddata'))
+        break
+      case 'error':
+        video.dispatchEvent(new Event('error'))
+        break
+      case 'abort':
+        controller.abort('cancelled')
+        break
+      case 'timeout':
+        vi.advanceTimersByTime(10_000)
+        break
+      case 'start failure':
+        break
+      default: {
+        const unreachable: never = outcome
+        throw new Error(`Unknown outcome: ${unreachable}`)
+      }
+    }
+    await assertion
+    for (const [event, listener] of subscribeVideo.mock.calls) {
+      expect(unsubscribeVideo).toHaveBeenCalledWith(event, listener, false)
+    }
+    for (const [event, listener] of subscribeSignal.mock.calls) {
+      expect(unsubscribeSignal).toHaveBeenCalledWith(event, listener, false)
+    }
+    expect(subscribeVideo).toHaveBeenCalledTimes(2)
+    expect(subscribeSignal).toHaveBeenCalledOnce()
+    expect(vi.getTimerCount()).toBe(0)
+  },
+)
