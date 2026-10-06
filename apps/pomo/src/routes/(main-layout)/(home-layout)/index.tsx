@@ -1,7 +1,7 @@
 import {
   ALL_IN_ONE_LAYOUT,
   RelaxPlayerPage,
-} from 'src/components/p-relax-player-page/ClientRelaxPlayerPage'
+} from 'src/components/p-relax-player-page/RelaxPlayerPage'
 import {useSearchParams} from '@solidjs/router'
 import {Show} from 'solid-js'
 

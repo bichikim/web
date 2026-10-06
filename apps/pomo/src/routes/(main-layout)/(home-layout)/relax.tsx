@@ -1,7 +1,7 @@
 import {
   RELAX_RETURN_HREF,
   RelaxPlayerPage,
-} from 'src/components/p-relax-player-page/ClientRelaxPlayerPage'
+} from 'src/components/p-relax-player-page/RelaxPlayerPage'
 import {Show} from 'solid-js'
 
 import {AppsInTossPrepare} from 'src/components/apps-in-toss-prepare'
