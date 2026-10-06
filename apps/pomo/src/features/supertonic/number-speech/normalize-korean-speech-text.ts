@@ -47,6 +47,7 @@ const NATIVE_COUNTERS = '시간|개|명|마리|살|잔|권|대|장|점|곡'
 const SINO_UNITS = '개월|년대|년생|년형|년|초|층|월|일|도'
 const TOKEN_START_PATTERN = NUMBER_TOKEN_START_PATTERN_SOURCE
 const UNSIGNED_MONTH_NUMBER_PATTERN = /^[\d０-９]+$/u
+const JOINED_MONTH_NUMBER_PATTERN = /^(?:2|1[12])$/u
 const UNSIGNED_INTEGER_PATTERN = KOREAN_UNSIGNED_INTEGER_PATTERN_SOURCE
 const KOREAN_PARTICLE_PATTERN = KOREAN_PARTICLE_PATTERN_SOURCE
 const KOREAN_UNIT_END_PATTERN = KOREAN_UNIT_END_PATTERN_SOURCE
@@ -226,7 +227,8 @@ const replaceWhenPronounceable = (
     return match
   }
 
-  const unitSeparator = unit === '월' && /^1[12]$/u.test(value.normalize('NFKC')) ? '' : ' '
+  const unitSeparator =
+    unit === '월' && JOINED_MONTH_NUMBER_PATTERN.test(value.normalize('NFKC')) ? '' : ' '
   return `${pronunciation}${unitSeparator}${unit}`
 }
 
