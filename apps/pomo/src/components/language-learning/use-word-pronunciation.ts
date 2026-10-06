@@ -169,6 +169,8 @@ const generatePronunciation = (options: GeneratePronunciationOptions) => {
               } catch (reason: unknown) {
                 if (options.isCurrent()) {
                   options.setError(getFailureMessage(reason))
+                  options.setLoadingKey(null)
+                  return
                 }
               }
               if (!options.isCurrent()) {
