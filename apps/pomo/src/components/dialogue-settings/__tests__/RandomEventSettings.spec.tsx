@@ -220,9 +220,44 @@ it('should keep a save failure classification while a later edit is pending', as
   await vi.advanceTimersByTimeAsync(0)
 
   expect(screen.getByRole('status')).toHaveTextContent('랜덤 이벤트 설정을 저장하지 못했어요.')
-  expect(minimumInput).toHaveValue('12')
+  expect(minimumInput).toHaveValue('13')
   expect(consoleError).toHaveBeenCalledWith('Failed to save random event settings.', reloadFailure)
+  await vi.advanceTimersByTimeAsync(500)
+  expect(settingsMocks.write).toHaveBeenLastCalledWith({
+    ...DEFAULT_RANDOM_EVENT_SETTINGS,
+    minimumMinutes: 13,
+  })
 })
+
+it.each(['13', 'invalid'])(
+  'should preserve a newer draft %s after an earlier save fails',
+  async (draft) => {
+    const firstWrite = createDeferred<void>()
+    vi.spyOn(console, 'error').mockImplementation(() => undefined)
+    settingsMocks.write.mockReturnValueOnce(firstWrite.promise)
+    render(() => <RandomEventSettings />, {wrapper: PreferenceProvider})
+    await vi.advanceTimersByTimeAsync(0)
+
+    const minimumInput = screen.getByRole('spinbutton', {name: '랜덤 이벤트 최소 간격(분)'})
+    fireEvent.input(minimumInput, {target: {value: '12'}})
+    await vi.advanceTimersByTimeAsync(500)
+    fireEvent.input(minimumInput, {target: {value: draft}})
+    firstWrite.reject(new Error('Earlier save failed'))
+    await vi.advanceTimersByTimeAsync(0)
+
+    expect(minimumInput).toHaveValue(draft)
+    await vi.advanceTimersByTimeAsync(500)
+    if (draft === '13') {
+      expect(settingsMocks.write).toHaveBeenLastCalledWith({
+        ...DEFAULT_RANDOM_EVENT_SETTINGS,
+        minimumMinutes: 13,
+      })
+    } else {
+      expect(settingsMocks.write).toHaveBeenCalledOnce()
+      expect(minimumInput).toHaveAttribute('aria-invalid', 'true')
+    }
+  },
+)
 
 it('should report a failure for a later write queued behind an earlier save', async () => {
   const firstWrite = createDeferred<void>()

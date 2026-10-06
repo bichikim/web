@@ -1,5 +1,5 @@
 import {clampDisplayedPercentage} from 'src/utils/clamp-displayed-percentage'
-import {copyTextToClipboard} from 'src/utils/copy-text-to-clipboard'
+import {writeTextToClipboard} from 'src/utils/write-text-to-clipboard'
 import * as m from '@paraglide/message'
 import {type Accessor, createMemo, createSignal, onCleanup, untrack} from 'solid-js'
 import {isNonBlankString} from 'src/utils/is-non-blank-string'
@@ -337,7 +337,7 @@ export const useDialogueWriter = (props: UseDialogueWriterProps): DialogueWriter
 
   const copyOutput = async () => {
     if (canCopy()) {
-      await copyTextToClipboard(output())
+      await writeTextToClipboard(output())
     }
   }
 

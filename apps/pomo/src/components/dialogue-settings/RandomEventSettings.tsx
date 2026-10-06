@@ -144,9 +144,16 @@ export const RandomEventSettings = () => {
     logPreferenceError(isSaveError, error)
 
     if (!isDisposed) {
-      if (settled !== null && !settled.hasPending) {
+      if (settled !== null && settled.value !== null && !settled.hasPending) {
+        const currentInterval = untrack(interval)
+        const isFailedDraft =
+          currentInterval !== null &&
+          currentInterval.minimumMinutes === settled.value.minimumMinutes &&
+          currentInterval.maximumMinutes === settled.value.maximumMinutes
         setSettings(settled.committed)
-        setDraft(createIntervalDraft(settled.committed))
+        if (isFailedDraft) {
+          setDraft(createIntervalDraft(settled.committed))
+        }
       }
       setMessage(isSaveError ? m.settings_random_save_failed() : m.settings_random_load_failed())
     }
