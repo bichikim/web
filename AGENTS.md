@@ -34,6 +34,12 @@
 - **Declarative programming (required; very important)**: Write code declaratively by composing reusable operations. Judge readability by how clearly the composition expresses intent, not by code length.
 - Evaluate changes in repository-wide context, prioritizing compatibility, reusability, and readability over local optimization.
 
+## Side effects
+
+- Do not create side-effecting functions. Write function logic as input-to-result transformations whenever possible, without mutating caller-owned inputs or shared state.
+- Returning the same object after mutating it, or hiding mutation in a closure, does not remove the side effect.
+- If a side effect is genuinely unavoidable because of performance or other constraints after evaluating alternatives, stop before implementing it. Explain the concrete necessity, alternatives and tradeoffs, and discuss them with the user to obtain explicit approval. Convenience does not justify an exception.
+
 ## Evidence
 
 - Establish factual or technical conclusions only from evidence capable of proving them: the actual project's files, configuration, data, runtime, executed tests, current authoritative documentation, or a focused experiment.
