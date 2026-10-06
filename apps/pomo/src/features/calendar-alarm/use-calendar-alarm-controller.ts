@@ -139,6 +139,9 @@ export const useCalendarAlarmController = (
     const currentTimeZone = props.timeZone()
     const alarmAt = dayjs.tz(`${currentDate}T${currentTime}:00`, currentTimeZone).toDate()
     const now = props.clock()
+    // Only strictly future instants are accepted; the selected minute starts at :00.
+    // Rejecting the current minute is intentional, including exact equality with now.
+    // Do not round the clock to minutes or treat this as an immediate alarm request.
     if (Number.isNaN(alarmAt.getTime()) || alarmAt.getTime() <= now.getTime()) {
       setMessage(m.calendar_alarm_invalid_time())
       return
