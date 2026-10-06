@@ -124,3 +124,29 @@ it('should preserve a manual cover when the saved album is exactly at the byte l
   expect(draft?.coverImage?.size).toBe(manualCover.size)
   expect(draft?.coverSource).toBe('manual')
 })
+
+it('should stop processing a stalled import and show the existing generic error at the deadline', async () => {
+  const audio = stubCustomAlbumAudioMetadata()
+  audio.load.mockImplementation(() => undefined)
+  const {controller} = await createEditor()
+  const messages = await import('@paraglide/message')
+  const runtime = await import('@paraglide/runtime')
+  const originalGetLocale = runtime.getLocale
+  runtime.overwriteGetLocale(() => 'en')
+  vi.useFakeTimers()
+  try {
+    const pending = selectFiles(controller, [createCustomAlbumAudioFile(100)])
+    expect(controller.isProcessingFiles()).toBe(true)
+    await vi.advanceTimersByTimeAsync(30_000)
+    await pending
+    expect(controller.isProcessingFiles()).toBe(false)
+    expect(controller.tracks()).toHaveLength(0)
+    expect(controller.errorMessage()).toBe(messages.album_custom_error_save())
+    expect(audio.removeAttribute).toHaveBeenCalledExactlyOnceWith('src')
+    expect(URL.revokeObjectURL).toHaveBeenCalledExactlyOnceWith('blob:audio')
+    expect(vi.getTimerCount()).toBe(0)
+  } finally {
+    vi.useRealTimers()
+    runtime.overwriteGetLocale(originalGetLocale)
+  }
+})

@@ -1,4 +1,4 @@
-import {replaceBlobObjectUrl} from 'src/features/blob-object-url'
+import {readAudioDuration} from 'src/utils/read-audio-duration'
 import {
   CUSTOM_TRACK_ID_PREFIX,
   CustomAlbumError,
@@ -28,35 +28,17 @@ export type AddCustomAlbumTracksResult =
   | {readonly kind: 'track-count'}
   | {readonly kind: 'track-too-large'}
 
-const readAudioDuration = async (file: File): Promise<number> => {
-  const audio = globalThis.document.createElement('audio')
-  const source = replaceBlobObjectUrl(null, () => file)
-  const listeners = new AbortController()
-  return new Promise<number>((resolve, reject) => {
-    const handleLoadedMetadata = () => {
-      const {duration} = audio
-      const roundedDuration = Math.round(duration)
-      if (!Number.isFinite(duration) || duration <= 0 || roundedDuration <= 0) {
-        reject(new CustomAlbumError('invalid-audio'))
-        return
-      }
-      resolve(roundedDuration)
-    }
-    const handleError = () => reject(new CustomAlbumError('invalid-audio'))
+// Match the frame-renderer media loading budget: allow slower local metadata reads,
+// but bound imports when a browser emits neither metadata nor an error.
+const AUDIO_METADATA_TIMEOUT_MS = 30_000
 
-    audio.preload = 'metadata'
-    audio.addEventListener('loadedmetadata', handleLoadedMetadata, {
-      once: true,
-      signal: listeners.signal,
-    })
-    audio.addEventListener('error', handleError, {once: true, signal: listeners.signal})
-    audio.src = source
-    audio.load()
-  }).finally(() => {
-    listeners.abort()
-    audio.removeAttribute('src')
-    replaceBlobObjectUrl(source, () => null)
-  })
+const readTrackDuration = async (file: File): Promise<number> => {
+  const duration = await readAudioDuration(file, {timeoutMs: AUDIO_METADATA_TIMEOUT_MS})
+  const roundedDuration = Math.round(duration ?? 0)
+  if (duration === null || !Number.isFinite(duration) || duration <= 0 || roundedDuration <= 0) {
+    throw new CustomAlbumError('invalid-audio')
+  }
+  return roundedDuration
 }
 
 const getTrackTitle = (fileName: string): string => fileName.replace(/\.[^.]+$/u, '').trim()
@@ -82,7 +64,7 @@ export const addCustomAlbumTracks = async (
   const tracks = await Promise.all(
     options.files.map(async (file) => ({
       audio: file,
-      durationSeconds: await readAudioDuration(file),
+      durationSeconds: await readTrackDuration(file),
       fileName: file.name,
       id: `${CUSTOM_TRACK_ID_PREFIX}${globalThis.crypto.randomUUID()}`,
       title: getTrackTitle(file.name) || file.name,

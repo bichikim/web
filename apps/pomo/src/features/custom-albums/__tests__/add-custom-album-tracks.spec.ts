@@ -99,6 +99,12 @@ it('should release metadata listeners and the source after a successful duration
   expectReleasedAudio(audio)
 })
 
+it('should accept the half-second boundary after rounding and release the source', async () => {
+  const audio = stubCustomAlbumAudioMetadata({durationSeconds: 0.5})
+  await expect(addTrack()).resolves.toMatchObject({kind: 'added', tracks: [{durationSeconds: 1}]})
+  expectReleasedAudio(audio)
+})
+
 it.each([NaN, Infinity, 0, -1, 0.4])(
   'should reject invalid duration %s and release the audio source',
   async (duration) => {
@@ -133,3 +139,29 @@ it.each(['source', 'load'] as const)(
     expectReleasedAudio(audio)
   },
 )
+
+it('should end a stalled album metadata read at the 30-second media budget', async () => {
+  const audio = stubCustomAlbumAudioMetadata()
+  audio.load.mockImplementation(() => undefined)
+  const {addCustomAlbumTracks} = await import('src/features/custom-albums')
+  vi.useFakeTimers()
+  try {
+    const observed = vi.fn()
+    const result = addCustomAlbumTracks({
+      currentAlbumBytes: 0,
+      currentTrackCount: 0,
+      files: [createCustomAlbumAudioFile(100)],
+      readEmbeddedCover: false,
+    })
+    const outcome = result.then(observed, observed)
+    await vi.advanceTimersByTimeAsync(29_999)
+    expect(observed).not.toHaveBeenCalled()
+    await vi.advanceTimersByTimeAsync(1)
+    expect(observed).toHaveBeenCalledWith(expect.objectContaining({name: 'TimeoutError'}))
+    await outcome
+    expectReleasedAudio(audio)
+    expect(vi.getTimerCount()).toBe(0)
+  } finally {
+    vi.useRealTimers()
+  }
+})
