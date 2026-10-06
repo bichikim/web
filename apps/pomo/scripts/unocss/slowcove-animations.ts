@@ -1,4 +1,4 @@
-export const relaxPlayerAnimations = {
+export const slowcoveAnimations = {
   counts: {
     'relax-glass-reflection': 'infinite',
     'relax-sunlight-shift': 'infinite',

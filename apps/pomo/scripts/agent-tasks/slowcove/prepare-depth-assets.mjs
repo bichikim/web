@@ -6,9 +6,9 @@ import {fileURLToPath} from 'node:url'
 import {writeParallaxDepthWebp} from '../focus-room/depth-parallax-assets.mjs'
 
 const sourceDirectory = fileURLToPath(
-  new URL('../../../asset-library/relax-player-source/depth/', import.meta.url),
+  new URL('../../../asset-library/slowcove-source/depth/', import.meta.url),
 )
-const backgroundDirectory = fileURLToPath(new URL('../../../public/relax-player/', import.meta.url))
+const backgroundDirectory = fileURLToPath(new URL('../../../public/slowcove/', import.meta.url))
 const outputDirectory = path.join(backgroundDirectory, 'depth')
 const manifest = JSON.parse(await readFile(path.join(sourceDirectory, 'manifest.json'), 'utf8'))
 

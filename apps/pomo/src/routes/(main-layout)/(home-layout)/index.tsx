@@ -5,10 +5,10 @@ import {Show} from 'solid-js'
 import {AppsInTossPrepare} from 'src/components/apps-in-toss-prepare'
 import {PHomePage} from 'src/components/p-home-page/PHomePage'
 
-const RelaxPlayerPage = clientOnly(
+const SlowcovePage = clientOnly(
   async () => {
-    const {PRelaxPlayerPage} = await import('src/components/p-relax-player-page/PRelaxPlayerPage')
-    return {default: PRelaxPlayerPage}
+    const {PSlowcovePage} = await import('src/components/p-slowcove-page/PSlowcovePage')
+    return {default: PSlowcovePage}
   },
   {lazy: true},
 )
@@ -23,18 +23,18 @@ export default function RootPage() {
   return (
     <>
       {import.meta.env.VITE_POMO_STANDALONE_RELAX === 'true' ? (
-        <RelaxPlayerPage />
+        <SlowcovePage />
       ) : (
         <Show
           fallback={
             <Show
               fallback={<PHomePage />}
               when={
-                import.meta.env.VITE_APP_LAYOUT === 'relax-player' &&
+                import.meta.env.VITE_APP_LAYOUT === 'slowcove' &&
                 !isAllInOneLayout(searchParams.layout)
               }
             >
-              <RelaxPlayerPage />
+              <SlowcovePage />
             </Show>
           }
           when={import.meta.env.VITE_POMO_IS_APPS_IN_TOSS === 'true'}

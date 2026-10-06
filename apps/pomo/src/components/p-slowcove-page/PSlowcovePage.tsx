@@ -16,17 +16,17 @@ import type {RelaxWeather} from './types'
 import {useDaylightTilt} from './use-daylight-tilt'
 import {useRelaxDepthMotion} from './use-relax-depth-motion'
 
-export interface PRelaxPlayerPageProps {
+export interface PSlowcovePageProps {
   readonly backgroundSrc?: string
   readonly daylightPosition?: VirtualLightPosition
   readonly interiorPosition?: VirtualLightPosition
   readonly returnHref?: string
 }
 
-export const PRelaxPlayerPage = (props: PRelaxPlayerPageProps) => {
+export const PSlowcovePage = (props: PSlowcovePageProps) => {
   const [expanded, setExpanded] = createSignal(true)
   const [selectedBackground, setSelectedBackground] = createSignal<string | null>(null)
-  const [weather, setWeather] = createSignal<RelaxWeather>('sunny')
+  const [weather, setWeather] = createSignal<RelaxWeather>('rainy')
   const [mistIntensity, setMistIntensity] = createSignal(1)
   const [selectedDaylightPosition, setSelectedDaylightPosition] =
     createSignal<VirtualLightPosition | null>(null)
