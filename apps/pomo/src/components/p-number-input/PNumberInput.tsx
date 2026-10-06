@@ -1,3 +1,4 @@
+import {callEventHandler} from 'src/utils/call-event-handler'
 import {cva, cx} from 'class-variance-authority'
 import {createEffect, createSignal, type JSX, Show, splitProps, untrack} from 'solid-js'
 import {CONTROL_HEIGHT_CLASSES, CONTROL_PADDING_CLASSES} from '../control-size-classes'
@@ -134,11 +135,7 @@ const handleNumberInputKeyDown = (
   shouldStep: boolean,
   changeByStep: (direction: -1 | 1) => void,
 ) => {
-  if (typeof handler === 'function') {
-    handler(event)
-  } else if (handler !== undefined) {
-    handler[0](handler[1], event)
-  }
+  callEventHandler(handler, event)
 
   if (
     event.defaultPrevented ||

@@ -1,3 +1,4 @@
+import {createTimeout} from '@winter-love/solid-use/timeout'
 import {getDocument} from '@winter-love/utils'
 import {visibilityInterval} from 'src/utils/visibility-interval'
 import {visibility} from 'src/utils/visibility'
@@ -240,15 +241,12 @@ interface StudioRuntimeOptions {
 }
 
 const useAutomaticScenePeriodRefresh = (setAutomaticPeriod: Setter<ScenePeriod>) => {
-  let periodChangeTimeout: ReturnType<typeof globalThis.setTimeout> | null = null
-  const clearPeriodChangeTimeout = () => {
-    if (periodChangeTimeout === null) {
-      return
-    }
-
-    globalThis.clearTimeout(periodChangeTimeout)
-    periodChangeTimeout = null
-  }
+  let pendingDelay = 0
+  const timeout = createTimeout(
+    () => refreshAutomaticPeriod(),
+    () => pendingDelay,
+  )
+  const clearPeriodChangeTimeout = timeout.cancel
   const refreshAutomaticPeriod = () => {
     const now = new Date()
     setAutomaticPeriod(getAutomaticScenePeriod(now))
@@ -260,10 +258,8 @@ const useAutomaticScenePeriodRefresh = (setAutomaticPeriod: Setter<ScenePeriod>)
 
     const nextPeriodChange = getNextScenePeriodChange(now)
 
-    periodChangeTimeout = globalThis.setTimeout(() => {
-      periodChangeTimeout = null
-      refreshAutomaticPeriod()
-    }, nextPeriodChange.getTime() - now.getTime())
+    pendingDelay = nextPeriodChange.getTime() - now.getTime()
+    timeout.execute()
   }
   const stopPeriodRefresh = visibilityInterval({
     callback: refreshAutomaticPeriod,

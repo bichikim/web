@@ -1,4 +1,5 @@
-import {createSerialTaskQueue} from 'src/utils/create-serial-task-queue'
+import {settleSequentially} from 'src/utils/settle-sequentially'
+import {takeLookaheadBatch} from '../database/take-lookahead-batch'
 
 import {
   type AlbumCoverCleanupCandidate,
@@ -46,23 +47,18 @@ export const runAlbumCoverMaintenance = async (
   const now = options.now ?? new Date()
   const candidates = await repository.listCandidates(now, CLEANUP_BATCH_SIZE + BATCH_LOOKAHEAD)
 
-  if (candidates.length > CLEANUP_BATCH_SIZE + BATCH_LOOKAHEAD) {
-    throw new RangeError('Album cover maintenance repository exceeded the requested limit')
-  }
-
-  const queue = createSerialTaskQueue()
-  const results = await Promise.allSettled(
-    candidates.slice(0, CLEANUP_BATCH_SIZE).map((candidate) =>
-      queue.run(async () => {
-        const objectKey = await repository.prepare(candidate.id, now)
-        if (objectKey === null) {
-          return false
-        }
-        await repository.deleteStorage(objectKey)
-        return repository.finalize(candidate.id)
-      }),
-    ),
-  )
+  const selection = takeLookaheadBatch(candidates, {
+    batchSize: CLEANUP_BATCH_SIZE,
+    label: 'Album cover maintenance',
+  })
+  const results = await settleSequentially(selection.batch, async (candidate) => {
+    const objectKey = await repository.prepare(candidate.id, now)
+    if (objectKey === null) {
+      return false
+    }
+    await repository.deleteStorage(objectKey)
+    return repository.finalize(candidate.id)
+  })
   const errors = results.flatMap((result) => (result.status === 'rejected' ? [result.reason] : []))
 
   if (errors.length > 0) {
@@ -70,7 +66,7 @@ export const runAlbumCoverMaintenance = async (
   }
 
   return {
-    complete: candidates.length <= CLEANUP_BATCH_SIZE,
+    complete: selection.complete,
     finalized: results.filter((result) => result.status === 'fulfilled' && result.value).length,
   }
 }

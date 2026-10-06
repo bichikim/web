@@ -1,3 +1,4 @@
+import {clampDisplayedPercentage} from 'src/utils/clamp-displayed-percentage'
 import {PTextarea} from 'src/components/p-textarea/PTextarea'
 import {isNonBlankString} from 'src/utils/is-non-blank-string'
 import {createEffect, createMemo, onCleanup, Show, untrack} from 'solid-js'
@@ -55,7 +56,7 @@ export function Generation(props: GenerationProps) {
     if (percentage === undefined || !Number.isFinite(percentage)) {
       return undefined
     }
-    return Math.min(MAXIMUM_DISPLAY_PERCENTAGE, Math.max(0, percentage))
+    return clampDisplayedPercentage(percentage)
   })
   studio.setIdea(untrack(() => props.initialIdea ?? ''))
   studio.setStyle('coloredPencil')
