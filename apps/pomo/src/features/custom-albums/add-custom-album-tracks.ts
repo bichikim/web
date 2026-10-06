@@ -28,8 +28,12 @@ export type AddCustomAlbumTracksResult =
   | {readonly kind: 'track-count'}
   | {readonly kind: 'track-too-large'}
 
+// Match the frame-renderer media loading budget: allow slower local metadata reads,
+// but bound imports when a browser emits neither metadata nor an error.
+const AUDIO_METADATA_TIMEOUT_MS = 30_000
+
 const readTrackDuration = async (file: File): Promise<number> => {
-  const duration = await readAudioDuration(file)
+  const duration = await readAudioDuration(file, {timeoutMs: AUDIO_METADATA_TIMEOUT_MS})
   const roundedDuration = Math.round(duration ?? 0)
   if (duration === null || !Number.isFinite(duration) || duration <= 0 || roundedDuration <= 0) {
     throw new CustomAlbumError('invalid-audio')
