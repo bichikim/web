@@ -25,7 +25,7 @@ const THIS_MONTH_PATTERN = new RegExp(`이번 ?달${CALENDAR_PERIOD_BOUNDARY_PAT
 const NEXT_MONTH_PATTERN = new RegExp(`다음 ?달${CALENDAR_PERIOD_BOUNDARY_PATTERN.source}`, 'u')
 const PREVIOUS_MONTH_PATTERN = new RegExp(`지난 ?달${CALENDAR_PERIOD_BOUNDARY_PATTERN.source}`, 'u')
 const NEXT_WEEK_TERM_PATTERN = '(?<!다)다음 ?주'
-const WEEK_AFTER_NEXT_TERM_PATTERN = '다다음 ?주'
+const WEEK_AFTER_NEXT_TERM_PATTERN = `${CALENDAR_WORD_START_PATTERN}다다음 ?주`
 const PREVIOUS_WEEK_TERM_PATTERN = `${CALENDAR_WORD_START_PATTERN}(?:지난|저번) ?주`
 const TWO_WEEKS_AGO_TERM_PATTERN = `${CALENDAR_WORD_START_PATTERN}지지난 ?주`
 const createCalendarWeekPattern = (termPattern: string): RegExp =>
@@ -33,7 +33,7 @@ const createCalendarWeekPattern = (termPattern: string): RegExp =>
 const THIS_WEEK_EXCLUSION_PATTERN = createCalendarExclusionPattern('이번 ?주', '다음 ?주')
 const NEXT_WEEK_EXCLUSION_PATTERN = createCalendarExclusionPattern(
   NEXT_WEEK_TERM_PATTERN,
-  '이번 ?주',
+  `이번 ?주|${WEEK_AFTER_NEXT_TERM_PATTERN}`,
 )
 const WEEK_AFTER_NEXT_EXCLUSION_PATTERN = createCalendarExclusionPattern(
   WEEK_AFTER_NEXT_TERM_PATTERN,
