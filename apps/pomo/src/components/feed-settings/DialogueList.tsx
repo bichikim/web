@@ -1,3 +1,6 @@
+import {usePendingDeleteConfirmation} from 'src/hooks/use-pending-delete-confirmation'
+import {formatMediumDateTime} from 'src/utils/format-medium-date-time'
+import {KeyedList} from '../keyed-list'
 import {cx} from 'class-variance-authority'
 import {createMemo, createSignal, For, Show} from 'solid-js'
 
@@ -122,10 +125,7 @@ export interface PFeedDialogueListProps {
 }
 
 const formatPublishedAt = (value: string) =>
-  new Intl.DateTimeFormat(getLocale() === 'ko' ? 'ko-KR' : 'en-US', {
-    dateStyle: 'medium',
-    timeStyle: 'short',
-  }).format(new Date(value))
+  formatMediumDateTime(value, getLocale() === 'ko' ? 'ko-KR' : 'en-US')
 
 const formatRemaining = (value: string) => {
   const hours = Math.max(0, Math.ceil((Date.parse(value) - Date.now()) / HOUR_MS))
@@ -140,7 +140,7 @@ const formatLoadMore = (count: number) =>
 
 export const PFeedDialogueList = (props: PFeedDialogueListProps) => {
   const [visibleDialogueCount, setVisibleDialogueCount] = createSignal(DIALOGUE_PAGE_SIZE)
-  const [pendingDeleteId, setPendingDeleteId] = createSignal<string | null>(null)
+  const deletion = usePendingDeleteConfirmation()
   const [deleteError, setDeleteError] = createSignal<string | null>(null)
   const visibleDialogues = createMemo(() =>
     props.controller.dialogues().slice(0, visibleDialogueCount()),
@@ -158,7 +158,7 @@ export const PFeedDialogueList = (props: PFeedDialogueListProps) => {
 
     try {
       await props.controller.onDeleteDialogue(dialogueId)
-      setPendingDeleteId(null)
+      deletion.cancel()
     } catch (error: unknown) {
       console.error('Failed to delete saved feed dialogue.', error)
       setDeleteError(m.settings_feed_dialogue_delete_failed())
@@ -184,40 +184,41 @@ export const PFeedDialogueList = (props: PFeedDialogueListProps) => {
         fallback={<p class={CLASSES.feedSettingsEmpty}>{m.settings_feed_empty()}</p>}
       >
         <ul aria-labelledby="pomo-feed-dialogues-title" class={CLASSES.feedSettingsDialogueList}>
-          <For each={visibleDialogues()}>
+          <KeyedList each={visibleDialogues()} by={(item) => item.dialogue.id}>
             {(item) => (
               <li>
                 <span class={CLASSES.feedSettingsDialogueCopy}>
-                  <strong>{item.metadata.itemTitle}</strong>
+                  <strong>{item().metadata.itemTitle}</strong>
                   <small>
-                    {item.metadata.sourceTitle} · {formatPublishedAt(item.metadata.publishedAt)} ·{' '}
+                    {item().metadata.sourceTitle} · {formatPublishedAt(item().metadata.publishedAt)}{' '}
+                    ·{' '}
                     <span
                       class={CLASSES.feedSettingsListenedState}
-                      data-listened={item.metadata.listenedAt === null ? undefined : ''}
+                      data-listened={item().metadata.listenedAt === null ? undefined : ''}
                     >
-                      {item.metadata.listenedAt === null
+                      {item().metadata.listenedAt === null
                         ? m.settings_feed_not_listened()
                         : m.settings_feed_listened()}
                     </span>{' '}
-                    · {formatRemaining(item.metadata.expiresAt)}
+                    · {formatRemaining(item().metadata.expiresAt)}
                   </small>
                 </span>
                 <span class={CLASSES.feedSettingsDialogueActions}>
-                  <button onClick={() => handleListen(item.dialogue.id)} type="button">
-                    {item.metadata.listenedAt === null
+                  <button onClick={() => handleListen(item().dialogue.id)} type="button">
+                    {item().metadata.listenedAt === null
                       ? m.settings_feed_listen()
                       : m.settings_feed_listen_again()}
                   </button>
                   <Show
-                    when={pendingDeleteId() === item.dialogue.id}
+                    when={deletion.pendingId() === item().dialogue.id}
                     fallback={
                       <button
                         aria-label={m.settings_feed_dialogue_delete_label({
-                          title: item.metadata.itemTitle,
+                          title: item().metadata.itemTitle,
                         })}
                         onClick={() => {
                           setDeleteError(null)
-                          setPendingDeleteId(item.dialogue.id)
+                          deletion.request(item().dialogue.id)
                         }}
                         type="button"
                       >
@@ -225,15 +226,15 @@ export const PFeedDialogueList = (props: PFeedDialogueListProps) => {
                       </button>
                     }
                   >
-                    <button onClick={() => setPendingDeleteId(null)} type="button">
+                    <button onClick={() => deletion.cancel()} type="button">
                       {m.settings_feed_cancel()}
                     </button>
                     <button
                       aria-label={m.settings_feed_dialogue_delete_confirm_label({
-                        title: item.metadata.itemTitle,
+                        title: item().metadata.itemTitle,
                       })}
                       data-pomo-feed-delete-confirm=""
-                      onClick={() => handleDelete(item.dialogue.id)}
+                      onClick={() => handleDelete(item().dialogue.id)}
                       type="button"
                     >
                       {m.settings_feed_delete_confirm()}
@@ -242,7 +243,7 @@ export const PFeedDialogueList = (props: PFeedDialogueListProps) => {
                 </span>
               </li>
             )}
-          </For>
+          </KeyedList>
         </ul>
         <Show when={hiddenDialogueCount() > 0}>
           <button

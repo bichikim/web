@@ -1,7 +1,7 @@
 /**
  * @vitest-environment jsdom
  */
-import {fireEvent, render, screen, waitFor} from '@solidjs/testing-library'
+import {fireEvent, render, screen} from '@solidjs/testing-library'
 import {beforeEach, describe, expect, it, vi} from 'vitest'
 import type {JSX} from 'solid-js'
 import {ResetPassword} from '../ResetPassword'
@@ -62,9 +62,8 @@ describe('ResetPassword', () => {
     })
     fireEvent.submit(screen.getByRole('button', {name: '재설정 링크 전송'}))
 
-    await waitFor(() => {
-      expect(screen.getByText('Rate limit exceeded')).toBeInTheDocument()
-    })
+    await Promise.resolve()
+    expect(screen.getByText('Rate limit exceeded')).toBeInTheDocument()
   })
 
   it('should show success when reset password succeeds', async () => {
@@ -77,8 +76,7 @@ describe('ResetPassword', () => {
     })
     fireEvent.submit(screen.getByRole('button', {name: '재설정 링크 전송'}))
 
-    await waitFor(() => {
-      expect(screen.getByText('이메일로 패스워드 재설정 링크를 전송했습니다.')).toBeInTheDocument()
-    })
+    await Promise.resolve()
+    expect(screen.getByText('이메일로 패스워드 재설정 링크를 전송했습니다.')).toBeInTheDocument()
   })
 })

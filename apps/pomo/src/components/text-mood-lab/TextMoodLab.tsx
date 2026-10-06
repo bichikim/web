@@ -1,3 +1,4 @@
+import {clampDisplayedPercentage} from 'src/utils/clamp-displayed-percentage'
 import {PTextarea} from 'src/components/p-textarea/PTextarea'
 import {cx} from 'class-variance-authority'
 import {createMemo, For, type JSX, Show} from 'solid-js'
@@ -34,6 +35,7 @@ const SECONDARY_BUTTON_CLASSES = cx(
 
 export const TextMoodLab = () => {
   const mood = useTextMood({initialText: SAMPLE_TEXTS[0]})
+  const modelPercentage = createMemo(() => clampDisplayedPercentage(mood.progress()))
   const analysis = createMemo(() => {
     const state = mood.state()
     return state.status === 'complete' ? state.analysis : null
@@ -116,16 +118,16 @@ export const TextMoodLab = () => {
 
         <Show when={mood.state().status === 'loading'}>
           <div
-            aria-label={`모델 ${mood.progress()}% 준비됨`}
+            aria-label={`모델 ${modelPercentage() ?? 0}% 준비됨`}
             aria-valuemax="100"
             aria-valuemin="0"
-            aria-valuenow={mood.progress()}
+            aria-valuenow={modelPercentage()}
             class="h-1.5 overflow-hidden rounded-full bg-white/8"
             role="progressbar"
           >
             <div
               class="h-full rounded-full bg-#9ed6bb [width:var(--pomo-progress-width)] transition-[width]"
-              style={{'--pomo-progress-width': `${mood.progress()}%`}}
+              style={{'--pomo-progress-width': `${modelPercentage() ?? 0}%`}}
             />
           </div>
         </Show>

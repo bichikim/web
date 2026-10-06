@@ -1,5 +1,6 @@
 export {classifySpeechNumber} from './classify-speech-number'
 export {hasNumberKind} from './has-number-kind'
+export {parseClockTime} from './parse-clock-time'
 export {parseInteger} from './parse-integer'
 export {
   DECIMAL_PERCENT_PATTERN,

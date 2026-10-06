@@ -59,6 +59,7 @@ export interface PModalProps {
   readonly closeButtonVisibility?: 'hidden' | 'visible'
   readonly closeOnEscape?: boolean
   readonly contentOverflow?: 'auto' | 'hidden'
+  readonly contentPadding?: 'default' | 'none'
   readonly description?: string
   readonly footer?: JSX.Element
   readonly getInitialFocus?: () => HTMLElement | null
@@ -256,9 +257,12 @@ export const PModal = (props: PModalProps) => {
           </Show>
           <div
             class={cx(
-              'min-h-0 overscroll-contain p-5 ' +
+              'min-h-0 overscroll-contain ' +
                 '[scrollbar-color:var(--pomo-color-modal-scrollbar)_transparent] [scrollbar-width:thin]',
-              props.navigation !== undefined && 'settings-compact:p-4',
+              props.contentPadding === 'none' ? 'p-0' : 'p-5',
+              props.contentPadding !== 'none' &&
+                props.navigation !== undefined &&
+                'settings-compact:p-4',
               (props.contentOverflow ?? 'auto') === 'hidden'
                 ? 'overflow-hidden'
                 : 'overflow-y-auto',

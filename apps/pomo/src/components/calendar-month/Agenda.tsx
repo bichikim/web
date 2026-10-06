@@ -1,4 +1,5 @@
-import {For, Show} from 'solid-js'
+import {KeyedList} from '../keyed-list'
+import {Show} from 'solid-js'
 import * as m from '@paraglide/message'
 import {getLocale} from '@paraglide/runtime'
 import {type CalendarEvent, type CalendarEvents} from '../../features/calendar'
@@ -54,7 +55,7 @@ export const CalendarAgenda = (props: CalendarAgendaProps) => (
                 }
                 tabIndex={0}
               >
-                <For each={props.selectedEvents}>
+                <KeyedList each={props.selectedEvents} by={(event) => event.id}>
                   {(event) => (
                     <li
                       class={
@@ -63,23 +64,23 @@ export const CalendarAgenda = (props: CalendarAgendaProps) => (
                       }
                     >
                       <span class="text-sm leading-5 font-750 text-highlight">
-                        {formatEventTime(event, props.calendar?.timeZone ?? 'UTC')}
+                        {formatEventTime(event(), props.calendar?.timeZone ?? 'UTC')}
                       </span>
                       <div class="min-w-0">
-                        <p class="m-0 truncate text-sm font-750">{event.title}</p>
+                        <p class="m-0 truncate text-sm font-750">{event().title}</p>
                         <p class="mb-0 mt-1 truncate text-sm leading-5 text-muted-foreground">
-                          {event.calendarLabel} · {event.accountLabel}
+                          {event().calendarLabel} · {event().accountLabel}
                         </p>
                       </div>
                       <CalendarAlarmControl
                         defaultAlarmDate={props.selectedDate}
-                        event={event}
+                        event={event()}
                         memos={props.memos}
                         timeZone={props.calendar?.timeZone ?? 'UTC'}
                       />
                     </li>
                   )}
-                </For>
+                </KeyedList>
               </ul>
             </Show>
           </Show>

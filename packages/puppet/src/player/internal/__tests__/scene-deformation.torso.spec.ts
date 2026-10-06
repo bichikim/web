@@ -22,6 +22,7 @@ const render = (
   document: PuppetDocument,
   partId: string,
   values: Readonly<Record<string, number>>,
+  scene: ReturnType<typeof composeParameterScene> = composeParameterScene(document, values),
 ) => {
   const part = document.parts.find((candidate) => candidate.id === partId)!
   const vertices = [
@@ -33,11 +34,14 @@ const render = (
     }),
   ]
   applySceneDeformers({
-    document: {...document, scene: composeParameterScene(document, values)},
+    document: {...document, scene},
     verticesByPartId: new Map([[partId, vertices]]),
   })
   return vertices
 }
+const triangleArea = (vertices: ReadonlyArray<number>, a: number, b: number, c: number) =>
+  (vertices[b]! - vertices[a]!) * (vertices[c + 1]! - vertices[a + 1]!) -
+  (vertices[b + 1]! - vertices[a + 1]!) * (vertices[c]! - vertices[a]!)
 
 describe('development model torso cylinder', () => {
   test.each([-30, -7.5, 0, 7.5, 30].flatMap((body) => [-22, 0, 22].map((full) => ({body, full}))))(
@@ -118,9 +122,11 @@ describe('development model torso cylinder', () => {
     'should preserve mesh orientation and the lower skirt at body=$body, full=$full',
     ({body, full}) => {
       const values = {'body-x': body, breath: 1, 'full-body-x': full}
+      const originalScene = composeParameterScene(flat, values)
+      const curvedScene = composeParameterScene(model, values)
       for (const part of parts) {
-        const original = render(flat, part.id, values)
-        const curved = render(model, part.id, values)
+        const original = render(flat, part.id, values, originalScene)
+        const curved = render(model, part.id, values, curvedScene)
         expect(curved.every(Number.isFinite)).toBe(true)
         for (let index = 0; index < part.mesh.vertices.length; index += 2) {
           if (part.mesh.vertices[index + 1]! >= 3350) {
@@ -129,13 +135,13 @@ describe('development model torso cylinder', () => {
           }
         }
         for (let index = 0; index < part.mesh.indices.length; index += 3) {
-          const [a, b, c] = part.mesh.indices.slice(index, index + 3).map((point) => point * 2)
-          const area = (vertices: ReadonlyArray<number>) =>
-            (vertices[b!]! - vertices[a!]!) * (vertices[c! + 1]! - vertices[a! + 1]!) -
-            (vertices[b! + 1]! - vertices[a! + 1]!) * (vertices[c!]! - vertices[a!]!)
-          expect(area(curved) / area(original), `${part.id} triangle ${index / 3}`).toBeGreaterThan(
-            0.25,
-          )
+          const a = part.mesh.indices[index]! * 2
+          const b = part.mesh.indices[index + 1]! * 2
+          const c = part.mesh.indices[index + 2]! * 2
+          expect(
+            triangleArea(curved, a, b, c) / triangleArea(original, a, b, c),
+            `${part.id} triangle ${index / 3}`,
+          ).toBeGreaterThan(0.25)
         }
       }
     },

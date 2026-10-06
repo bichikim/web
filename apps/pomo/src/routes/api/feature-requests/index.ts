@@ -1,3 +1,4 @@
+import {listOffsetQuerySchema} from 'src/server/http/list-offset-query-schema'
 import {invalidJsonBodyResponse} from 'src/server/http/invalid-json-body-response'
 import type {APIEvent} from '@solidjs/start/server'
 import {z} from 'zod'
@@ -14,14 +15,10 @@ const HTTP_BAD_REQUEST = 400
 const HTTP_CREATED = 201
 const HTTP_INTERNAL_SERVER_ERROR = 500
 const HTTP_UNAUTHORIZED = 401
-const MAXIMUM_LIST_OFFSET = 10_000
 
 const createFeatureRequestSchema = z.object({
   description: z.string().trim().max(MAXIMUM_DESCRIPTION_LENGTH),
   title: z.string().trim().min(1).max(MAXIMUM_TITLE_LENGTH),
-})
-const listFeatureRequestQuerySchema = z.object({
-  offset: z.coerce.number().int().min(0).max(MAXIMUM_LIST_OFFSET).default(0),
 })
 
 const resolveIdentity = async (event: APIEvent) => {
@@ -41,7 +38,7 @@ export const GET = async (event: APIEvent): Promise<Response> => {
     return resolved.response
   }
 
-  const parsedQuery = listFeatureRequestQuerySchema.safeParse(
+  const parsedQuery = listOffsetQuerySchema.safeParse(
     Object.fromEntries(new URL(event.request.url).searchParams),
   )
 

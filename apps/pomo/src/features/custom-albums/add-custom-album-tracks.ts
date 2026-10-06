@@ -1,3 +1,4 @@
+import {replaceBlobObjectUrl} from 'src/features/blob-object-url'
 import {
   CUSTOM_TRACK_ID_PREFIX,
   CustomAlbumError,
@@ -27,39 +28,36 @@ export type AddCustomAlbumTracksResult =
   | {readonly kind: 'track-count'}
   | {readonly kind: 'track-too-large'}
 
-const readAudioDuration = (file: File): Promise<number> =>
-  new Promise((resolve, reject) => {
-    const audio = globalThis.document.createElement('audio')
-    const source = globalThis.URL.createObjectURL(file)
-    const cleanUp = () => {
-      audio.removeEventListener('loadedmetadata', handleLoadedMetadata)
-      audio.removeEventListener('error', handleError)
-      audio.removeAttribute('src')
-      globalThis.URL.revokeObjectURL(source)
-    }
+const readAudioDuration = async (file: File): Promise<number> => {
+  const audio = globalThis.document.createElement('audio')
+  const source = replaceBlobObjectUrl(null, () => file)
+  const listeners = new AbortController()
+  return new Promise<number>((resolve, reject) => {
     const handleLoadedMetadata = () => {
       const {duration} = audio
       const roundedDuration = Math.round(duration)
-      cleanUp()
-
       if (!Number.isFinite(duration) || duration <= 0 || roundedDuration <= 0) {
         reject(new CustomAlbumError('invalid-audio'))
         return
       }
-
       resolve(roundedDuration)
     }
-    const handleError = () => {
-      cleanUp()
-      reject(new CustomAlbumError('invalid-audio'))
-    }
+    const handleError = () => reject(new CustomAlbumError('invalid-audio'))
 
     audio.preload = 'metadata'
-    audio.addEventListener('loadedmetadata', handleLoadedMetadata, {once: true})
-    audio.addEventListener('error', handleError, {once: true})
+    audio.addEventListener('loadedmetadata', handleLoadedMetadata, {
+      once: true,
+      signal: listeners.signal,
+    })
+    audio.addEventListener('error', handleError, {once: true, signal: listeners.signal})
     audio.src = source
     audio.load()
+  }).finally(() => {
+    listeners.abort()
+    audio.removeAttribute('src')
+    replaceBlobObjectUrl(source, () => null)
   })
+}
 
 const getTrackTitle = (fileName: string): string => fileName.replace(/\.[^.]+$/u, '').trim()
 
@@ -90,9 +88,15 @@ export const addCustomAlbumTracks = async (
       title: getTrackTitle(file.name) || file.name,
     })),
   )
-  const embeddedCoverImage = options.readEmbeddedCover
+  const embeddedCoverCandidate = options.readEmbeddedCover
     ? await readFirstEmbeddedAudioCover(options.files)
     : null
+  const embeddedCoverImage =
+    embeddedCoverCandidate !== null &&
+    options.currentAlbumBytes + addedBytes + embeddedCoverCandidate.size >
+      MAXIMUM_CUSTOM_ALBUM_BYTES
+      ? null
+      : embeddedCoverCandidate
 
   return {embeddedCoverImage, kind: 'added', tracks}
 }

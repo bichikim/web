@@ -125,3 +125,93 @@ it('should restore catalog order when a random queue switches to sequential play
 
   expect(slide).toMatchObject({current: 'b', remaining: ['c', 'd']})
 })
+
+it('should reconcile deleted, seen, duplicated and newly added ids without changing queue order', () => {
+  const slide = nextSlide({
+    current: 'a',
+    ids: ['a', 'b', 'c', 'd', 'e'],
+    mode: 'sequential',
+    remaining: ['deleted', 'd', 'd', 'a', 'b'],
+    seen: ['deleted', 'a', 'a'],
+  })
+
+  expect(slide).toEqual({
+    current: 'd',
+    remaining: ['b', 'c', 'e'],
+    remainingMode: 'sequential',
+    seen: ['a', 'd'],
+  })
+})
+
+it('should reset the seen cycle only after every surviving item has been seen', () => {
+  expect(
+    nextSlide({
+      current: 'b',
+      ids: ['a', 'b'],
+      mode: 'sequential',
+      remaining: ['deleted', 'a'],
+      seen: ['deleted', 'b', 'a', 'a'],
+    }),
+  ).toEqual({
+    current: 'a',
+    remaining: ['b'],
+    remainingMode: 'sequential',
+    seen: ['a'],
+  })
+})
+
+it('should preserve catalog duplicates while removing duplicates inherited from the queue', () => {
+  expect(
+    nextSlide({
+      current: null,
+      ids: ['a', 'a', 'b', 'b'],
+      mode: 'sequential',
+      remaining: ['b', 'b'],
+    }),
+  ).toEqual({
+    current: 'b',
+    remaining: ['a', 'a'],
+    remainingMode: 'sequential',
+    seen: ['b'],
+  })
+})
+
+it('should restore catalog order including duplicates when switching modes', () => {
+  expect(
+    nextSlide({
+      current: 'a',
+      ids: ['a', 'b', 'b', 'c'],
+      mode: 'sequential',
+      remaining: ['c', 'b', 'b'],
+      remainingMode: 'random',
+      seen: ['a'],
+    }),
+  ).toEqual({
+    current: 'b',
+    remaining: ['b', 'c'],
+    remainingMode: 'sequential',
+    seen: ['a', 'b'],
+  })
+})
+
+it('should compare string ids exactly and leave caller-owned arrays unchanged', () => {
+  const ids = Object.freeze(['A', 'a', 'é', 'e\u0301', '__proto__', ''])
+  const remaining = Object.freeze(['__proto__', '__proto__', 'a', 'missing'])
+  const seen = Object.freeze(['A', 'é', 'é'])
+
+  expect(nextSlide({current: 'A', ids, mode: 'sequential', remaining, seen})).toEqual({
+    current: '__proto__',
+    remaining: ['a', 'e\u0301', ''],
+    remainingMode: 'sequential',
+    seen: ['A', 'é', '__proto__'],
+  })
+  expect(ids).toEqual(['A', 'a', 'é', 'e\u0301', '__proto__', ''])
+  expect(remaining).toEqual(['__proto__', '__proto__', 'a', 'missing'])
+  expect(seen).toEqual(['A', 'é', 'é'])
+})
+
+it('should distinguish an explicit empty seen cycle from the current-item fallback', () => {
+  const options = {current: 'a', ids: ['a', 'b'], mode: 'sequential' as const, remaining: []}
+  expect(nextSlide(options)).toMatchObject({current: 'b', remaining: []})
+  expect(nextSlide({...options, seen: []})).toMatchObject({current: 'a', remaining: ['b']})
+})

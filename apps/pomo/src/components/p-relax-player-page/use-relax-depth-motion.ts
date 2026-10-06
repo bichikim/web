@@ -1,15 +1,22 @@
-import {createEffect, createSignal, type JSX, onCleanup} from 'solid-js'
-import {clamp} from 'es-toolkit/math'
-
+import {observeReducedMotionPreference} from 'src/utils/observe-media-query'
+import {getDragDepthOffset} from 'src/utils/get-drag-depth-offset'
+import {createAnimationLoop} from '@winter-love/solid-use/animation-loop'
 import {
   getCalibratedOrientation,
   getOrientationOffset,
+  hasDeviceOrientation,
   type OrientationReference,
+  readDeviceOrientationRuntime,
+  requestDeviceOrientationPermission,
+  requiresDeviceOrientationPermission,
 } from 'src/features/device-orientation'
+import {exponentialApproachFactor} from 'src/utils/exponential-approach-factor'
+import {createEffect, createSignal, type JSX, onCleanup} from 'solid-js'
+import {clamp} from 'es-toolkit/math'
+
 import {releaseCapturedPointer} from 'src/utils/release-captured-pointer'
 import type {RelaxDepthInput, RelaxDepthOffset, RelaxDepthStatus} from './types'
 
-const DRAG_RANGE_RATIO = 0.35
 const FRAME_DURATION_FALLBACK = 16
 const FOLLOW_TIME_CONSTANT = 180
 const MAXIMUM_FRAME_DURATION = 64
@@ -27,17 +34,17 @@ interface ActiveDrag {
 const createDepthOffsetSmoother = (isReducedMotion: () => boolean) => {
   const [offset, setOffset] = createSignal<RelaxDepthOffset>(ZERO_OFFSET)
   let target: RelaxDepthOffset = ZERO_OFFSET
-  let frame: number | null = null
+  const animation = createAnimationLoop()
+  let running = false
   let lastFrameTime: number | null = null
 
   const renderFrame = (time: number) => {
-    frame = null
     const duration = Math.min(
       MAXIMUM_FRAME_DURATION,
       Math.max(0, time - (lastFrameTime ?? time - FRAME_DURATION_FALLBACK)),
     )
     lastFrameTime = time
-    const easing = 1 - Math.exp(-duration / FOLLOW_TIME_CONSTANT)
+    const easing = exponentialApproachFactor(duration, FOLLOW_TIME_CONSTANT)
     const current = offset()
     const next = {
       x: current.x + (target.x - current.x) * easing,
@@ -47,9 +54,9 @@ const createDepthOffsetSmoother = (isReducedMotion: () => boolean) => {
       Math.abs(next.x - target.x) > PARALLAX_SETTLE_DISTANCE ||
       Math.abs(next.y - target.y) > PARALLAX_SETTLE_DISTANCE
     setOffset(unsettled ? next : target)
-    if (unsettled) {
-      frame = globalThis.requestAnimationFrame(renderFrame)
-    } else {
+    if (!unsettled) {
+      animation.stop()
+      running = false
       lastFrameTime = null
     }
   }
@@ -63,17 +70,24 @@ const createDepthOffsetSmoother = (isReducedMotion: () => boolean) => {
       setOffset(target)
       return
     }
-    if (frame === null) {
-      frame = globalThis.requestAnimationFrame(renderFrame)
+    if (!running) {
+      running = true
+      animation.start((time) => {
+        try {
+          renderFrame(time)
+        } catch (error) {
+          animation.stop()
+          running = false
+          throw error
+        }
+      })
     }
   }
 
   const reset = () => {
     target = ZERO_OFFSET
-    if (frame !== null) {
-      globalThis.cancelAnimationFrame(frame)
-      frame = null
-    }
+    animation.stop()
+    running = false
     lastFrameTime = null
     setOffset(ZERO_OFFSET)
   }
@@ -122,11 +136,17 @@ const createDepthDragController = (
     if (bounds.width === 0 || bounds.height === 0) {
       return
     }
-    const horizontal = (event.clientX - drag.startX) / bounds.width
-    const vertical = (event.clientY - drag.startY) / bounds.height
     setTarget(
-      drag.startOffset.x - horizontal / DRAG_RANGE_RATIO,
-      drag.startOffset.y - vertical / DRAG_RANGE_RATIO,
+      getDragDepthOffset({
+        distance: event.clientX - drag.startX,
+        extent: bounds.width,
+        startOffset: drag.startOffset.x,
+      }),
+      getDragDepthOffset({
+        distance: event.clientY - drag.startY,
+        extent: bounds.height,
+        startOffset: drag.startOffset.y,
+      }),
     )
     event.preventDefault()
   }
@@ -140,26 +160,61 @@ const createDepthDragController = (
   return {endDrag, onPointerDown, onPointerMove, onPointerUp}
 }
 
+const useDepthMotionPreference = (onChange: (matches: boolean) => void) => {
+  let preference: MediaQueryList | undefined
+  createEffect(() => {
+    const matchMedia = globalThis.matchMedia?.bind(globalThis)
+    const unsubscribe = observeReducedMotionPreference(onChange, {
+      matchMedia:
+        matchMedia === undefined
+          ? undefined
+          : (query) => {
+              preference = matchMedia(query)
+              return preference
+            },
+    })
+    onCleanup(() => {
+      unsubscribe?.()
+      preference = undefined
+    })
+  })
+  return () => preference?.matches ?? false
+}
+
 /** Tracks background depth motion from a captured drag or calibrated device tilt. */
 export const useRelaxDepthMotion = () => {
   const [inputMode, setMode] = createSignal<RelaxDepthInput>('drag')
   const [status, setStatus] = createSignal<RelaxDepthStatus>('ready')
   let orientationReference: OrientationReference | null = null
   let requestVersion = 0
-  let reducedMotion = false
-  const {offset, reset, setTarget} = createDepthOffsetSmoother(() => reducedMotion)
+  const isReducedMotion = useDepthMotionPreference((matches) => {
+    if (matches) {
+      disableMotionForReducedPreference()
+    } else {
+      setStatus('ready')
+    }
+  })
+  const {offset, reset, setTarget} = createDepthOffsetSmoother(isReducedMotion)
   const {endDrag, onPointerDown, onPointerMove, onPointerUp} = createDepthDragController(
     offset,
     setTarget,
-    () => inputMode() === 'drag' && !reducedMotion,
+    () => inputMode() === 'drag' && !isReducedMotion(),
   )
   const cancelDrag = () => {
     endDrag()
     reset()
   }
+  const disableMotionForReducedPreference = () => {
+    requestVersion += 1
+    endDrag()
+    orientationReference = null
+    reset()
+    setMode('drag')
+    setStatus('reduced-motion')
+  }
 
   const handleOrientation = (event: DeviceOrientationEvent) => {
-    if (inputMode() !== 'gyroscope' || reducedMotion || globalThis.document.hidden) {
+    if (inputMode() !== 'gyroscope' || isReducedMotion() || globalThis.document.hidden) {
       return
     }
     const movement = getCalibratedOrientation(
@@ -185,46 +240,43 @@ export const useRelaxDepthMotion = () => {
     onCleanup(() => globalThis.removeEventListener('deviceorientation', handleOrientation))
   })
 
-  createEffect(() => {
-    const preference = globalThis.matchMedia?.('(prefers-reduced-motion: reduce)')
-    if (preference === undefined) {
+  const activateGyroscope = async (version: number) => {
+    if (isReducedMotion()) {
+      disableMotionForReducedPreference()
       return
     }
-    const handleChange = () => {
-      reducedMotion = preference.matches
-      if (reducedMotion) {
-        endDrag()
-        reset()
-      }
-    }
-    handleChange()
-    preference.addEventListener('change', handleChange)
-    onCleanup(() => preference.removeEventListener('change', handleChange))
-  })
-
-  const activateGyroscope = async (version: number) => {
-    const orientation = globalThis.DeviceOrientationEvent
-    if (orientation === undefined || globalThis.isSecureContext === false) {
+    const runtime = readDeviceOrientationRuntime()
+    if (!hasDeviceOrientation(runtime)) {
       setStatus('unavailable')
       return
     }
-    if ('requestPermission' in orientation && typeof orientation.requestPermission === 'function') {
+    if (requiresDeviceOrientationPermission(runtime)) {
       setStatus('requesting')
-      try {
-        const permission = await orientation.requestPermission()
-        if (version !== requestVersion) {
-          return
-        }
-        if (permission !== 'granted') {
-          setStatus('denied')
-          return
-        }
-      } catch {
-        if (version === requestVersion) {
-          setStatus('denied')
-        }
+    }
+    try {
+      const permissionRequest = requestDeviceOrientationPermission(runtime)
+      const permission =
+        typeof permissionRequest === 'string' ? permissionRequest : await permissionRequest
+      if (version !== requestVersion) {
         return
       }
+      if (isReducedMotion()) {
+        disableMotionForReducedPreference()
+        return
+      }
+      if (permission !== 'granted') {
+        setStatus(permission)
+        return
+      }
+    } catch {
+      if (version === requestVersion) {
+        if (isReducedMotion()) {
+          disableMotionForReducedPreference()
+        } else {
+          setStatus('denied')
+        }
+      }
+      return
     }
     if (version !== requestVersion) {
       return
@@ -238,6 +290,10 @@ export const useRelaxDepthMotion = () => {
 
   const setInputMode = (mode: RelaxDepthInput) => {
     requestVersion += 1
+    if (isReducedMotion()) {
+      disableMotionForReducedPreference()
+      return
+    }
     if (mode === 'gyroscope') {
       const version = requestVersion
       activateGyroscope(version).catch(() => {

@@ -8,7 +8,10 @@ import * as m from '@paraglide/message'
 import type {AuthController} from '../../../features/auth/controller'
 import type {AuthenticationState} from '../../../features/auth/machine'
 import type {FeatureRequestsController} from '../../../features/feature-requests'
+import {PModal, type PModalProps} from '../../p-modal/PModal'
 import {FeatureRequestForm} from '../FeatureRequestForm'
+
+vi.mock('../../p-modal/PModal', () => ({PModal: vi.fn()}))
 
 const [authenticationState, setAuthenticationState] = createSignal<AuthenticationState>({
   kind: 'authenticated',
@@ -43,17 +46,28 @@ beforeEach(() => {
   setAuthenticationState({kind: 'authenticated', provider: 'toss'})
   createRequest.mockReset()
   createRequest.mockResolvedValue({status: 'created'})
+  vi.mocked(PModal).mockImplementation((props: PModalProps) => (
+    <div aria-label={props.title} data-closed={props.isOpen ? undefined : ''} role="dialog">
+      {props.children}
+      <button onClick={() => props.onOpenChange(false)} type="button">
+        {m.common_close()}
+      </button>
+    </div>
+  ))
 })
 
 afterEach(() => {
   sessionStorage.clear()
 })
 
-it('should open a separate modal and restore a draft after the modal is closed', async () => {
+it('should open a separate modal and restore a draft after the modal is closed', () => {
   render(() => <FeatureRequestForm authentication={authentication} model={model} />)
 
+  expect(
+    screen.queryByRole('textbox', {name: m.feature_request_title_label()}),
+  ).not.toBeInTheDocument()
   fireEvent.click(screen.getByRole('button', {name: m.feature_request_new()}))
-  const titleInput = await screen.findByRole('textbox', {name: m.feature_request_title_label()})
+  const titleInput = screen.getByRole('textbox', {name: m.feature_request_title_label()})
   fireEvent.input(titleInput, {target: {value: '집중 세션 통계'}})
   fireEvent.input(screen.getByRole('textbox', {name: m.feature_request_details_label()}), {
     target: {value: '통계를 확인하고 싶어요.'},
@@ -62,10 +76,13 @@ it('should open a separate modal and restore a draft after the modal is closed',
   expect(sessionStorage.getItem('pomo:feature-request:draft:v1')).toContain('집중 세션 통계')
 
   fireEvent.click(screen.getByRole('button', {name: m.common_close()}))
-  await waitFor(() => expect(screen.getByRole('dialog')).toHaveAttribute('data-closed', ''))
+  expect(screen.getByRole('dialog')).toHaveAttribute('data-closed', '')
+  expect(
+    screen.queryByRole('textbox', {name: m.feature_request_title_label()}),
+  ).not.toBeInTheDocument()
 
   fireEvent.click(screen.getByRole('button', {name: m.feature_request_new()}))
-  expect(await screen.findByRole('textbox', {name: m.feature_request_title_label()})).toHaveValue(
+  expect(screen.getByRole('textbox', {name: m.feature_request_title_label()})).toHaveValue(
     '집중 세션 통계',
   )
   expect(screen.getByRole('textbox', {name: m.feature_request_details_label()})).toHaveValue(

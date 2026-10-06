@@ -1,3 +1,4 @@
+import {createAnimationLoop} from '@winter-love/solid-use/animation-loop'
 import {clamp} from 'es-toolkit/math'
 import {type Accessor, createSignal, onCleanup} from 'solid-js'
 
@@ -27,7 +28,7 @@ export const usePAudioVisualizer = (): PAudioVisualizer => {
   let mediaSource: MediaElementAudioSourceNode | undefined
   let outputGainNode: GainNode | undefined
   let spectrumData: Uint8Array<ArrayBuffer> | undefined
-  let animationFrame: number | undefined
+  const animation = createAnimationLoop()
   let active = false
   let disposed = false
   let outputGain = 1
@@ -45,10 +46,7 @@ export const usePAudioVisualizer = (): PAudioVisualizer => {
   }
 
   const stopAnimation = () => {
-    if (animationFrame !== undefined) {
-      cancelAnimationFrame(animationFrame)
-      animationFrame = undefined
-    }
+    animation.stop()
     if (!disposed) {
       setLevels(IDLE_LEVELS)
     }
@@ -101,7 +99,6 @@ export const usePAudioVisualizer = (): PAudioVisualizer => {
     })
 
     setLevels(nextLevels)
-    animationFrame = requestAnimationFrame(updateLevels)
   }
 
   const start = (audioElement: HTMLAudioElement) => {
@@ -112,10 +109,16 @@ export const usePAudioVisualizer = (): PAudioVisualizer => {
           return
         }
 
-        if (animationFrame !== undefined) {
-          cancelAnimationFrame(animationFrame)
-        }
+        animation.stop()
         updateLevels()
+        animation.start(() => {
+          try {
+            updateLevels()
+          } catch (error) {
+            animation.stop()
+            throw error
+          }
+        })
       })
       .catch(stopAnimation)
   }
@@ -128,9 +131,7 @@ export const usePAudioVisualizer = (): PAudioVisualizer => {
   onCleanup(() => {
     disposed = true
     active = false
-    if (animationFrame !== undefined) {
-      cancelAnimationFrame(animationFrame)
-    }
+    animation.stop()
     mediaSource?.disconnect()
     analyserNode?.disconnect()
     outputGainNode?.disconnect()

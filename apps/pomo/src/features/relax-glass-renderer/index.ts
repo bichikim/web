@@ -1,3 +1,12 @@
+import {clamp} from 'es-toolkit/math'
+import {clampUnit} from 'src/utils/clamp-unit'
+export * from './cover-uv'
+export * from './glass-light-filter'
+export * from './pixi-runtime'
+export * from './rain-filter'
+export * from './rain-map-eraser'
+export * from './rain-render-targets'
+export * from './rain-simulation'
 import {BlurFilter, Container, Rectangle, Sprite, Texture, type Ticker} from 'pixi.js'
 
 import {DropletEraseFilter} from './droplet-erase-filter'
@@ -11,12 +20,6 @@ import {GlassPixiRuntime} from './pixi-runtime'
 import {RainGlassFilter} from './rain-filter'
 import {RainRenderTargets} from './rain-render-targets'
 import {RainSimulation} from './rain-simulation'
-
-export * from './glass-light-filter'
-export * from './pixi-runtime'
-export * from './rain-filter'
-export * from './rain-render-targets'
-export * from './rain-simulation'
 
 const RESIDUE_SOURCE = '/relax-player/glass-residue.png'
 const REFLECTION_SOURCE = '/relax-player/interior-reflection.png'
@@ -192,7 +195,7 @@ export class RelaxGlassRenderer {
     if (this.#disposed || !Number.isFinite(intensity)) {
       return
     }
-    this.#mistIntensity = Math.min(1, Math.max(0, intensity))
+    this.#mistIntensity = clampUnit(intensity)
     this.#rainFilter?.setMistIntensity(this.#mistIntensity)
     if (this.#runtime.initialized && !this.#application.ticker.started) {
       this.#application.render()
@@ -203,7 +206,7 @@ export class RelaxGlassRenderer {
     if (this.#disposed || !Number.isFinite(x) || !Number.isFinite(y)) {
       return
     }
-    this.#depthOffset = {x: Math.max(-1, Math.min(1, x)), y: Math.max(-1, Math.min(1, y))}
+    this.#depthOffset = {x: clamp(x, -1, 1), y: clamp(y, -1, 1)}
     const horizontal = this.#depthAvailable ? this.#depthOffset.x * DEPTH_PARALLAX_MAXIMUM_X : 0
     const vertical = this.#depthAvailable ? this.#depthOffset.y * DEPTH_PARALLAX_MAXIMUM_Y : 0
     this.#filter?.setParallaxOffset(horizontal, vertical)

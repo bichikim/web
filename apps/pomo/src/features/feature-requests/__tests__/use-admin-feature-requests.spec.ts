@@ -1,9 +1,14 @@
 /** @vitest-environment jsdom */
 
+import {MemoryRouter, query} from '@solidjs/router'
 import {renderHook, waitFor} from '@solidjs/testing-library'
+import {createComponent, type ParentComponent} from 'solid-js'
 import {beforeEach, expect, it, vi} from 'vitest'
 
 import type {FeatureRequest, FeatureRequestPage} from '../types'
+
+const RouterWrapper: ParentComponent = (props) =>
+  createComponent(MemoryRouter, {root: () => props.children})
 
 const apiMocks = vi.hoisted(() => ({
   listAdminFeatureRequests: vi.fn(),
@@ -28,6 +33,7 @@ const NEXT_REQUEST = {...REQUEST, id: '019d1990-1dc9-7255-a7b5-f9459dfaf783'}
 
 beforeEach(() => {
   vi.clearAllMocks()
+  query.clear()
 })
 
 it('should load and append administrator request pages', async () => {
@@ -35,7 +41,7 @@ it('should load and append administrator request pages', async () => {
     .mockResolvedValueOnce({hasMore: true, requests: [REQUEST]})
     .mockResolvedValueOnce({hasMore: false, requests: [NEXT_REQUEST]})
 
-  const {cleanup, result} = renderHook(() => useAdminFeatureRequests())
+  const {cleanup, result} = renderHook(() => useAdminFeatureRequests(), {wrapper: RouterWrapper})
   await waitFor(() => expect(result.isLoading()).toBe(false))
 
   await result.loadMore()
@@ -53,7 +59,7 @@ it('should keep loaded pages visible after refreshing the first page', async () 
     .mockResolvedValueOnce({hasMore: false, requests: [NEXT_REQUEST]})
     .mockResolvedValueOnce({hasMore: true, requests: [refreshedRequest]})
 
-  const {cleanup, result} = renderHook(() => useAdminFeatureRequests())
+  const {cleanup, result} = renderHook(() => useAdminFeatureRequests(), {wrapper: RouterWrapper})
   await waitFor(() => expect(result.isLoading()).toBe(false))
 
   await result.loadMore()
@@ -62,6 +68,26 @@ it('should keep loaded pages visible after refreshing the first page', async () 
   await result.refresh()
 
   expect(result.requests()).toEqual([refreshedRequest, NEXT_REQUEST])
+  expect(result.hasMore()).toBe(false)
+  cleanup()
+})
+
+it('should adopt hasMore false after a manual refresh and keep loaded pages', async () => {
+  apiMocks.listAdminFeatureRequests
+    .mockResolvedValueOnce({hasMore: true, requests: [REQUEST]})
+    .mockResolvedValueOnce({hasMore: true, requests: [NEXT_REQUEST]})
+    .mockResolvedValueOnce({hasMore: false, requests: [REQUEST]})
+
+  const {cleanup, result} = renderHook(() => useAdminFeatureRequests(), {wrapper: RouterWrapper})
+  await waitFor(() => expect(result.isLoading()).toBe(false))
+
+  await result.loadMore()
+  expect(result.hasMore()).toBe(true)
+
+  await result.refresh()
+
+  expect(result.requests()).toEqual([REQUEST, NEXT_REQUEST])
+  expect(result.hasMore()).toBe(false)
   cleanup()
 })
 
@@ -73,7 +99,7 @@ it('should use the refreshed server page length for the next offset', async () =
     .mockResolvedValueOnce({hasMore: true, requests: [REQUEST]})
     .mockResolvedValueOnce({hasMore: false, requests: [NEXT_REQUEST]})
 
-  const {cleanup, result} = renderHook(() => useAdminFeatureRequests())
+  const {cleanup, result} = renderHook(() => useAdminFeatureRequests(), {wrapper: RouterWrapper})
   await waitFor(() => expect(result.isLoading()).toBe(false))
 
   await result.loadMore()
@@ -91,7 +117,7 @@ it('should preserve loaded pages and pagination when refreshing fails', async ()
     .mockResolvedValueOnce({hasMore: true, requests: [NEXT_REQUEST]})
     .mockRejectedValueOnce(new Error('refresh failed'))
 
-  const {cleanup, result} = renderHook(() => useAdminFeatureRequests())
+  const {cleanup, result} = renderHook(() => useAdminFeatureRequests(), {wrapper: RouterWrapper})
   await waitFor(() => expect(result.isLoading()).toBe(false))
 
   await result.loadMore()
@@ -112,7 +138,7 @@ it('should ignore a load more response that started before refresh', async () =>
     .mockReturnValueOnce(loadMoreResponse.promise)
     .mockReturnValueOnce(refreshResponse.promise)
 
-  const {cleanup, result} = renderHook(() => useAdminFeatureRequests())
+  const {cleanup, result} = renderHook(() => useAdminFeatureRequests(), {wrapper: RouterWrapper})
   await waitFor(() => expect(result.isLoading()).toBe(false))
 
   const loadMorePromise = result.loadMore()
@@ -121,13 +147,13 @@ it('should ignore a load more response that started before refresh', async () =>
   const refreshPromise = result.refresh()
   expect(result.isLoading()).toBe(true)
 
-  refreshResponse.resolve({hasMore: true, requests: [refreshedRequest]})
+  refreshResponse.resolve({hasMore: false, requests: [refreshedRequest]})
   await refreshPromise
-  loadMoreResponse.resolve({hasMore: false, requests: [NEXT_REQUEST]})
+  loadMoreResponse.resolve({hasMore: true, requests: [NEXT_REQUEST]})
   await loadMorePromise
 
   expect(result.requests()).toEqual([refreshedRequest])
-  expect(result.hasMore()).toBe(true)
+  expect(result.hasMore()).toBe(false)
   expect(result.isLoadingMore()).toBe(false)
   expect(result.loadMoreFailed()).toBe(false)
   cleanup()
@@ -141,7 +167,7 @@ it('should update a request in place without collapsing appended pages', async (
     .mockResolvedValueOnce({hasMore: false, requests: [NEXT_REQUEST]})
   apiMocks.updateAdminFeatureRequest.mockResolvedValueOnce({status: 'updated'})
 
-  const {cleanup, result} = renderHook(() => useAdminFeatureRequests())
+  const {cleanup, result} = renderHook(() => useAdminFeatureRequests(), {wrapper: RouterWrapper})
   await waitFor(() => expect(result.isLoading()).toBe(false))
 
   await result.loadMore()
@@ -157,7 +183,7 @@ it('should update status without another list request and expose failures', asyn
   apiMocks.listAdminFeatureRequests.mockResolvedValue({hasMore: false, requests: [REQUEST]})
   apiMocks.updateAdminFeatureRequest.mockResolvedValueOnce({status: 'updated'})
 
-  const {cleanup, result} = renderHook(() => useAdminFeatureRequests())
+  const {cleanup, result} = renderHook(() => useAdminFeatureRequests(), {wrapper: RouterWrapper})
   await waitFor(() => expect(result.isLoading()).toBe(false))
 
   const input = {requestId: REQUEST.id, status: 'voting' as const, targetVoteCount: 10}
@@ -176,7 +202,7 @@ it('should update status without another list request and expose failures', asyn
 it('should expose loading failures and ignore pagination without another page', async () => {
   apiMocks.listAdminFeatureRequests.mockRejectedValueOnce(new Error('load failed'))
 
-  const {cleanup, result} = renderHook(() => useAdminFeatureRequests())
+  const {cleanup, result} = renderHook(() => useAdminFeatureRequests(), {wrapper: RouterWrapper})
   await waitFor(() => expect(result.loadFailed()).toBe(true))
 
   await result.loadMore()

@@ -1,15 +1,12 @@
+import {createPreferenceOptions} from 'src/features/preference-options'
+import {
+  createBoundTossWebStorageAdapter,
+  createVersionedPreferenceRepository,
+} from 'src/utils/runtime-storage'
 import {createParsedPreferenceStorage} from '../parsed-preference-storage'
 import {z} from 'zod'
 
 import {webLocalStorage} from 'src/utils/preference-storage'
-import {
-  createVersionedPreferenceRepository,
-  hasNativeStorageBridge,
-  readTossStorageJson,
-  readWebStorageJson,
-  writeTossStorageJson,
-  writeWebStorageJson,
-} from 'src/utils/runtime-storage'
 
 export interface RandomEventSettings {
   readonly maximumMinutes: number
@@ -70,13 +67,9 @@ export const createRandomEventSettingsRepository = (
     writeFailureMessage: 'Failed to persist random event settings.',
   })
 
-const runtimeRepository = createRandomEventSettingsRepository({
-  isNative: hasNativeStorageBridge,
-  readToss: () => readTossStorageJson(STORAGE_KEY, parseRandomEventSettings),
-  readWeb: () => readWebStorageJson(STORAGE_KEY, parseRandomEventSettings),
-  writeToss: (settings) => writeTossStorageJson(STORAGE_KEY, settings),
-  writeWeb: (settings) => writeWebStorageJson(STORAGE_KEY, settings),
-})
+const runtimeRepository = createRandomEventSettingsRepository(
+  createBoundTossWebStorageAdapter({key: STORAGE_KEY, parse: parseRandomEventSettings}),
+)
 
 const preferenceStorage = createParsedPreferenceStorage({
   invalidMessage: 'Invalid random event settings.',
@@ -92,11 +85,9 @@ export interface RandomEventPreferenceOptions {
 }
 
 /** Creates the shared preference definition for random event settings. */
-export const createRandomEventPreferenceOptions = (options: RandomEventPreferenceOptions = {}) => ({
+export const createRandomEventPreferenceOptions = createPreferenceOptions({
   defaultValue: DEFAULT_RANDOM_EVENT_SETTINGS,
   key: STORAGE_KEY,
-  onError: options.onError,
-  onSaved: options.onSaved,
   parse: parseRandomEventSettings,
   storage: preferenceStorage,
 })

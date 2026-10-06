@@ -1,0 +1,126 @@
+import {
+  createCustomAlbumAudioFile,
+  resetCustomAlbumDatabase,
+  stubCustomAlbumAudioMetadata,
+} from 'src/features/custom-albums/__tests__/support'
+/** @vitest-environment node */
+
+import 'fake-indexeddb/auto'
+import {createRoot} from 'solid-js'
+import {afterEach, expect, it, vi} from 'vitest'
+
+const mocks = vi.hoisted(() => ({
+  albumByteLimit: 1000,
+  embeddedCoverBytes: 200,
+}))
+
+vi.mock('src/features/custom-albums/model', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('src/features/custom-albums/model')>()
+  return {
+    ...actual,
+    MAXIMUM_CUSTOM_ALBUM_BYTES: mocks.albumByteLimit,
+  }
+})
+
+vi.mock('src/features/custom-albums/read-embedded-audio-cover', () => ({
+  readEmbeddedAudioCover: vi.fn(
+    async () => new Blob([new Uint8Array(mocks.embeddedCoverBytes)], {type: 'image/jpeg'}),
+  ),
+}))
+
+const rootDisposers: Array<() => void> = []
+
+afterEach(async () => {
+  for (const dispose of rootDisposers.splice(0)) {
+    dispose()
+  }
+
+  try {
+    await resetCustomAlbumDatabase()
+  } finally {
+    vi.restoreAllMocks()
+    vi.unstubAllGlobals()
+  }
+})
+
+const createEditor = async () => {
+  const {useCustomAlbumEditor} = await import('../use-custom-album-editor')
+  const onOpenChange = vi.fn()
+  const onSaved = vi.fn(async (_removedTrackIds: ReadonlySet<string>) => undefined)
+
+  return createRoot((dispose) => {
+    rootDisposers.push(dispose)
+    return {
+      controller: useCustomAlbumEditor({albumId: null, onOpenChange, onSaved}),
+      onOpenChange,
+      onSaved,
+    }
+  })
+}
+
+const selectFiles = async (
+  controller: Awaited<ReturnType<typeof createEditor>>['controller'],
+  files: File[],
+) =>
+  controller.handleFilesSelected({
+    currentTarget: {files, value: 'selected'},
+    target: {},
+  } as unknown as Parameters<typeof controller.handleFilesSelected>[0])
+
+const submit = async (
+  controller: Awaited<ReturnType<typeof createEditor>>['controller'],
+): Promise<void> =>
+  controller.handleSubmit({preventDefault: vi.fn(), target: {}} as unknown as Parameters<
+    typeof controller.handleSubmit
+  >[0])
+
+it('should persist valid tracks when oversized automatic artwork is skipped', async () => {
+  stubCustomAlbumAudioMetadata()
+  vi.stubGlobal('crypto', {randomUUID: () => 'test-id'})
+
+  const {controller, onOpenChange, onSaved} = await createEditor()
+  controller.setTitle('Album')
+  await selectFiles(controller, [createCustomAlbumAudioFile(mocks.albumByteLimit - 100)])
+
+  expect(controller.tracks()).toHaveLength(1)
+  expect(controller.coverImage()).toBeNull()
+  expect(controller.totalAlbumBytes()).toBe(mocks.albumByteLimit - 100)
+  expect(controller.errorMessage()).toBeNull()
+
+  await submit(controller)
+
+  const {readCustomAlbumDraft} = await import('src/features/custom-albums')
+  const draft = await readCustomAlbumDraft({albumId: 'custom-album:test-id'})
+
+  expect(draft?.tracks).toHaveLength(1)
+  expect(draft?.tracks[0]?.audio.size).toBe(mocks.albumByteLimit - 100)
+  expect(draft?.coverImage).toBeNull()
+  expect(onSaved).toHaveBeenCalledOnce()
+  expect(onOpenChange).toHaveBeenCalledWith(false)
+})
+
+it('should preserve a manual cover when the saved album is exactly at the byte limit', async () => {
+  stubCustomAlbumAudioMetadata()
+  vi.stubGlobal('crypto', {randomUUID: () => 'test-id'})
+
+  const {controller} = await createEditor()
+  const manualCover = new Blob([new Uint8Array(mocks.embeddedCoverBytes)], {type: 'image/webp'})
+  controller.handleCoverCropApplied(manualCover)
+  controller.setTitle('Album')
+  await selectFiles(controller, [
+    createCustomAlbumAudioFile(mocks.albumByteLimit - manualCover.size),
+  ])
+
+  expect(controller.coverImage()).toBe(manualCover)
+  expect(controller.totalAlbumBytes()).toBe(mocks.albumByteLimit)
+  expect(controller.errorMessage()).toBeNull()
+
+  await submit(controller)
+
+  const {readCustomAlbumDraft} = await import('src/features/custom-albums')
+  const draft = await readCustomAlbumDraft({albumId: 'custom-album:test-id'})
+
+  expect(draft?.tracks[0]?.audio.size).toBe(mocks.albumByteLimit - manualCover.size)
+  expect(draft?.coverImage?.size).toBe(manualCover.size)
+  expect(draft?.coverSource).toBe('manual')
+})

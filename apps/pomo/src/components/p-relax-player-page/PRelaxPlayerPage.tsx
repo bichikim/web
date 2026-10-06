@@ -1,5 +1,9 @@
 import {createSignal, Show} from 'solid-js'
 import {cx} from 'class-variance-authority'
+import * as m from '@paraglide/message'
+
+import {GLASS_ICON_BUTTON} from '../button-presets'
+import {PButton} from '../p-button/PButton'
 
 import {PMusicPlayer} from '../p-music-player/PMusicPlayer'
 import {SoundEffects} from '../music-player-view/SoundEffects'
@@ -16,6 +20,7 @@ export interface PRelaxPlayerPageProps {
   readonly backgroundSrc?: string
   readonly daylightPosition?: VirtualLightPosition
   readonly interiorPosition?: VirtualLightPosition
+  readonly returnHref?: string
 }
 
 export const PRelaxPlayerPage = (props: PRelaxPlayerPageProps) => {
@@ -29,8 +34,8 @@ export const PRelaxPlayerPage = (props: PRelaxPlayerPageProps) => {
     selectedBackground() ?? props.backgroundSrc ?? DEFAULT_RELAX_BACKGROUND_SOURCE
   const daylightPosition = () =>
     selectedDaylightPosition() ?? props.daylightPosition ?? DEFAULT_DAYLIGHT_POSITION
-  const daylightTilt = useDaylightTilt(daylightPosition)
   const depthMotion = useRelaxDepthMotion()
+  const daylightTilt = useDaylightTilt(daylightPosition, depthMotion.offset)
   const depthSource = () => {
     const source = backgroundSource()
     return RELAX_BACKGROUND_OPTIONS.find((option) => option.source === source)?.depthSource
@@ -77,11 +82,20 @@ export const PRelaxPlayerPage = (props: PRelaxPlayerPageProps) => {
           mistIntensity={mistIntensity()}
           selectedSource={backgroundSource()}
           weather={weather()}
-          tiltEnabled={daylightTilt.enabled()}
-          tiltStatus={daylightTilt.status()}
-          onTiltEnabledChange={daylightTilt.setEnabled}
         />
         <SoundEffects trigger="toolbar" />
+        <Show when={props.returnHref}>
+          {(href) => (
+            <PButton
+              {...GLASS_ICON_BUTTON}
+              accessibleLabel={m.relax_return_to_app()}
+              href={href()}
+              icon="i-tabler-apps"
+              pill
+              tooltip={m.relax_return_to_app()}
+            />
+          )}
+        </Show>
       </div>
       <div
         class={cx(

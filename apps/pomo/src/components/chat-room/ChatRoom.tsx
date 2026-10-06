@@ -12,6 +12,25 @@ import {ContextSidebar} from './ContextSidebar'
 import {MAXIMUM_DRAFT_LENGTH} from './shared'
 import {useReplySpeech} from './use-reply-speech'
 import {useSend} from './use-send'
+
+const truncateDraftAtCodeUnitLimit = (draft: string) => {
+  const HIGH_SURROGATE_FIRST_CODE_UNIT = 0xd800
+  const HIGH_SURROGATE_LAST_CODE_UNIT = 0xdbff
+  const LOW_SURROGATE_FIRST_CODE_UNIT = 0xdc00
+  const LOW_SURROGATE_LAST_CODE_UNIT = 0xdfff
+  const boundedDraft = draft.slice(0, MAXIMUM_DRAFT_LENGTH)
+  const boundaryCodeUnit = boundedDraft.charCodeAt(boundedDraft.length - 1)
+  const nextCodeUnit = draft.charCodeAt(boundedDraft.length)
+  const splitsSurrogatePair =
+    boundedDraft.length < draft.length &&
+    boundaryCodeUnit >= HIGH_SURROGATE_FIRST_CODE_UNIT &&
+    boundaryCodeUnit <= HIGH_SURROGATE_LAST_CODE_UNIT &&
+    nextCodeUnit >= LOW_SURROGATE_FIRST_CODE_UNIT &&
+    nextCodeUnit <= LOW_SURROGATE_LAST_CODE_UNIT
+
+  return splitsSurrogatePair ? boundedDraft.slice(0, -1) : boundedDraft
+}
+
 const PANEL_CLASSES = cx(
   'overflow-hidden rounded-8 border border-white/10 bg-#211a2b/88',
   'shadow-[0_1.75rem_6.25rem_rgba(5,2,10,0.45)] backdrop-blur-xl',
@@ -33,7 +52,8 @@ export const ChatRoom = () => {
     modelId: 'whisper-base',
     onTranscript: (transcript) => {
       const currentDraft = chat.draft()
-      chat.setDraft(appendSpeechTranscript(currentDraft, transcript).slice(0, MAXIMUM_DRAFT_LENGTH))
+      const draftWithTranscript = appendSpeechTranscript(currentDraft, transcript)
+      chat.setDraft(truncateDraftAtCodeUnitLimit(draftWithTranscript))
     },
   })
 
