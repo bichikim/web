@@ -99,7 +99,7 @@ export const RelaxGlassBackground = (props: RelaxGlassBackgroundProps) => {
             class={cx(
               'absolute inset-0 bg-cover bg-left opacity-30 mix-blend-screen',
               'sm:bg-center sm:opacity-55',
-              "bg-[url('/relax-player/glass-residue.png')]",
+              "bg-[url('/slowcove/glass-residue.webp')]",
             )}
           />
           <div
@@ -112,7 +112,7 @@ export const RelaxGlassBackground = (props: RelaxGlassBackgroundProps) => {
           <div
             class={cx(
               'absolute inset-0 bg-cover bg-right opacity-35 blur-sm mix-blend-screen sm:bg-center',
-              "bg-[url('/relax-player/interior-reflection.png')]",
+              "bg-[url('/slowcove/interior-reflection.webp')]",
               'motion-safe:animate-relax-glass-reflection',
             )}
           />

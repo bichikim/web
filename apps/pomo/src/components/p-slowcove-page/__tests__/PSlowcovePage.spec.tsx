@@ -5,7 +5,7 @@ import {type JSX, Show} from 'solid-js'
 import {afterEach, beforeEach, expect, it, vi} from 'vitest'
 
 import {readDeviceOrientationRuntime} from 'src/features/device-orientation/read-device-orientation-runtime'
-import {PRelaxPlayerPage} from '../PRelaxPlayerPage'
+import {PSlowcovePage} from '../PSlowcovePage'
 
 vi.mock('src/features/device-orientation/read-device-orientation-runtime', () => ({
   readDeviceOrientationRuntime: vi.fn(),
@@ -87,11 +87,11 @@ const sendOrientation = (beta: number, gamma: number) => {
 }
 
 it('should start with the sunny riverside background', () => {
-  render(() => <PRelaxPlayerPage />)
+  render(() => <PSlowcovePage />)
 
   expect(screen.getByRole('img', {name: '현재 배경'})).toHaveAttribute(
     'src',
-    '/relax-player/city-sunny-riverside.png',
+    '/slowcove/city-sunny-riverside.webp',
   )
 })
 
@@ -108,7 +108,7 @@ it('should scroll backgrounds in both directions and disable arrows at the edges
       disconnect = disconnect
     },
   )
-  const view = render(() => <PRelaxPlayerPage />)
+  const view = render(() => <PSlowcovePage />)
   fireEvent.click(screen.getByRole('button', {name: '배경 선택'}))
   const list = screen.getByRole('radiogroup', {name: '배경 선택'})
   const scrollBy = vi.fn()
@@ -141,17 +141,16 @@ it('should scroll backgrounds in both directions and disable arrows at the edges
 })
 
 it('should switch between sunny and rainy glass without changing the background', () => {
-  render(() => <PRelaxPlayerPage />)
+  render(() => <PSlowcovePage />)
 
   fireEvent.click(screen.getByRole('button', {name: '배경 선택'}))
-  expect(screen.getByRole('radio', {name: '맑음'})).toBeChecked()
-  fireEvent.click(screen.getByRole('radio', {name: '비'}))
+  expect(screen.getByRole('radio', {name: '비'})).toBeChecked()
 
   expect(screen.getByRole('status', {name: '현재 날씨'})).toHaveTextContent('rainy')
   expect(screen.queryByRole('slider', {name: '햇빛 가로 위치'})).not.toBeInTheDocument()
   expect(screen.getByRole('img', {name: '현재 배경'})).toHaveAttribute(
     'src',
-    '/relax-player/city-sunny-riverside.png',
+    '/slowcove/city-sunny-riverside.webp',
   )
 
   fireEvent.click(screen.getByRole('radio', {name: '맑음'}))
@@ -159,14 +158,15 @@ it('should switch between sunny and rainy glass without changing the background'
   expect(screen.getByRole('slider', {name: '햇빛 가로 위치'})).toBeInTheDocument()
   expect(screen.getByRole('img', {name: '현재 배경'})).toHaveAttribute(
     'src',
-    '/relax-player/city-sunny-riverside.png',
+    '/slowcove/city-sunny-riverside.webp',
   )
 })
 
 it('should adjust visible condensation in rainy weather and retain the level across weather changes', () => {
-  const view = render(() => <PRelaxPlayerPage />)
+  const view = render(() => <PSlowcovePage />)
 
   fireEvent.click(view.getByRole('button', {name: '배경 선택'}))
+  fireEvent.click(view.getByRole('radio', {name: '맑음'}))
   expect(view.queryByRole('slider', {name: '습기 강도'})).not.toBeInTheDocument()
   const rain = view.getByRole('radio', {name: '비'})
   const sunny = view.getByRole('radio', {name: '맑음'})
@@ -187,7 +187,7 @@ it('should adjust visible condensation in rainy weather and retain the level acr
 })
 
 it('should offer four backgrounds beside sound effects', () => {
-  const view = render(() => <PRelaxPlayerPage />)
+  const view = render(() => <PSlowcovePage />)
 
   fireEvent.click(view.getByRole('button', {name: '배경 선택'}))
 
@@ -201,16 +201,16 @@ it('should offer four backgrounds beside sound effects', () => {
   expect(postRain).not.toBeChecked()
   expect(view.getByRole('radio', {name: '비 온 뒤 골목'})).not.toBeChecked()
   expect(view.getByRole('radio', {name: '바닷가 마을'})).not.toBeChecked()
-  expect(depthMap).toHaveTextContent('/relax-player/depth/city-sunny-riverside.webp')
+  expect(depthMap).toHaveTextContent('/slowcove/depth/city-sunny-riverside.webp')
 
   fireEvent.click(postRain)
 
   expect(view.getByRole('img', {name: '현재 배경'})).toHaveAttribute(
     'src',
-    '/relax-player/post-rain-square-upper-floor.png',
+    '/slowcove/post-rain-square-upper-floor.webp',
   )
   expect(view.getByRole('status', {name: '현재 깊이 맵'})).toHaveTextContent(
-    '/relax-player/depth/post-rain-square-upper-floor.webp',
+    '/slowcove/depth/post-rain-square-upper-floor.webp',
   )
 
   expect(dialog).toBeInTheDocument()
@@ -218,7 +218,7 @@ it('should offer four backgrounds beside sound effects', () => {
 
   expect(view.getByRole('img', {name: '현재 배경'})).toHaveAttribute(
     'src',
-    '/relax-player/city-sunny-riverside.png',
+    '/slowcove/city-sunny-riverside.webp',
   )
   expect(dialog).toBeInTheDocument()
   fireEvent.click(view.getByRole('button', {name: '닫기'}))
@@ -229,16 +229,16 @@ it.each([
   ['비 온 뒤 골목', 'rain-alley-upper-floor'],
   ['바닷가 마을', 'coastal-village-upper-floor'],
 ])('should select %s with its matching depth map and retain weather', (label, source) => {
-  render(() => <PRelaxPlayerPage />)
+  render(() => <PSlowcovePage />)
   fireEvent.click(screen.getByRole('button', {name: '배경 선택'}))
   fireEvent.click(screen.getByRole('radio', {name: '비'}))
   fireEvent.click(screen.getByRole('radio', {name: label}))
   expect(screen.getByRole('img', {name: '현재 배경'})).toHaveAttribute(
     'src',
-    `/relax-player/${source}.png`,
+    `/slowcove/${source}.webp`,
   )
   expect(screen.getByRole('status', {name: '현재 깊이 맵'})).toHaveTextContent(
-    `/relax-player/depth/${source}.webp`,
+    `/slowcove/depth/${source}.webp`,
   )
   expect(screen.getByRole('status', {name: '현재 날씨'})).toHaveTextContent('rainy')
   expect(screen.getByRole('dialog', {name: '배경 선택'})).toBeInTheDocument()
@@ -250,7 +250,7 @@ it('should let the listener choose drag or gyroscope depth movement', () => {
     available: true,
     requestPermission: null,
   })
-  render(() => <PRelaxPlayerPage />)
+  render(() => <PSlowcovePage />)
 
   fireEvent.click(screen.getByRole('button', {name: '배경 선택'}))
   expect(screen.getByRole('radio', {name: '드래그'})).toBeChecked()
@@ -274,9 +274,10 @@ it('should move depth and light with drag, then restore the manual light positio
     frames.clear()
     callbacks.forEach((callback) => callback(time))
   }
-  render(() => <PRelaxPlayerPage />)
+  render(() => <PSlowcovePage />)
 
   fireEvent.click(screen.getByRole('button', {name: '배경 선택'}))
+  fireEvent.click(screen.getByRole('radio', {name: '맑음'}))
   fireEvent.input(screen.getByRole('slider', {name: '햇빛 가로 위치'}), {target: {value: '40'}})
   fireEvent.input(screen.getByRole('slider', {name: '햇빛 세로 위치'}), {target: {value: '65'}})
   fireEvent.click(screen.getByRole('button', {name: '닫기'}))
@@ -324,7 +325,7 @@ it('should keep the first pointer in control when another finger touches the bac
     return frames.length
   })
   vi.stubGlobal('cancelAnimationFrame', vi.fn())
-  render(() => <PRelaxPlayerPage />)
+  render(() => <PSlowcovePage />)
 
   const surface = screen.getByLabelText('배경 깊이 드래그')
   vi.spyOn(surface, 'getBoundingClientRect').mockReturnValue({
@@ -361,7 +362,7 @@ it('should allow a new drag after changing the background during a drag', () => 
     return frames.length
   })
   vi.stubGlobal('cancelAnimationFrame', vi.fn())
-  render(() => <PRelaxPlayerPage />)
+  render(() => <PSlowcovePage />)
 
   const firstSurface = screen.getByLabelText('배경 깊이 드래그')
   Object.defineProperty(firstSurface, 'setPointerCapture', {value: vi.fn()})
@@ -415,7 +416,7 @@ it('should calibrate gyroscope motion and ignore drag while gyroscope is selecte
     return frames.length
   })
   vi.stubGlobal('cancelAnimationFrame', vi.fn())
-  render(() => <PRelaxPlayerPage />)
+  render(() => <PSlowcovePage />)
 
   fireEvent.click(screen.getByRole('button', {name: '배경 선택'}))
   fireEvent.click(screen.getByRole('radio', {name: '자이로'}))
@@ -429,9 +430,10 @@ it('should calibrate gyroscope motion and ignore drag while gyroscope is selecte
 })
 
 it('should update the daylight position without changing the selected background', () => {
-  render(() => <PRelaxPlayerPage />)
+  render(() => <PSlowcovePage />)
 
   fireEvent.click(screen.getByRole('button', {name: '배경 선택'}))
+  fireEvent.click(screen.getByRole('radio', {name: '맑음'}))
   fireEvent.input(screen.getByRole('slider', {name: '햇빛 가로 위치'}), {
     target: {value: '40'},
   })
@@ -443,7 +445,7 @@ it('should update the daylight position without changing the selected background
   expect(Number(screen.getByRole('status', {name: '햇빛 세로 값'}).textContent)).toBe(0.65)
   expect(screen.getByRole('img', {name: '현재 배경'})).toHaveAttribute(
     'src',
-    '/relax-player/city-sunny-riverside.png',
+    '/slowcove/city-sunny-riverside.webp',
   )
 })
 
@@ -456,9 +458,10 @@ it('should move depth and light together with gyroscope input and reset both wit
     return frames.length
   })
   vi.stubGlobal('cancelAnimationFrame', vi.fn())
-  render(() => <PRelaxPlayerPage />)
+  render(() => <PSlowcovePage />)
 
   fireEvent.click(screen.getByRole('button', {name: '배경 선택'}))
+  fireEvent.click(screen.getByRole('radio', {name: '맑음'}))
   fireEvent.input(screen.getByRole('slider', {name: '햇빛 가로 위치'}), {
     target: {value: '40'},
   })
@@ -501,8 +504,9 @@ it.each([true, false])(
     const preference = new EventTarget()
     const media = Object.assign(preference, {matches: initiallyReduced})
     vi.stubGlobal('matchMedia', () => media)
-    render(() => <PRelaxPlayerPage />)
+    render(() => <PSlowcovePage />)
     fireEvent.click(screen.getByRole('button', {name: '배경 선택'}))
+    fireEvent.click(screen.getByRole('radio', {name: '맑음'}))
     fireEvent.input(screen.getByRole('slider', {name: '햇빛 가로 위치'}), {
       target: {value: '40'},
     })
@@ -528,9 +532,10 @@ it.each([true, false])(
 it('should keep manual positioning available when orientation permission is denied', async () => {
   const requestPermission = vi.fn().mockResolvedValue('denied')
   vi.mocked(readDeviceOrientationRuntime).mockReturnValue({available: true, requestPermission})
-  render(() => <PRelaxPlayerPage />)
+  render(() => <PSlowcovePage />)
 
   fireEvent.click(screen.getByRole('button', {name: '배경 선택'}))
+  fireEvent.click(screen.getByRole('radio', {name: '맑음'}))
   fireEvent.click(screen.getByRole('radio', {name: '자이로'}))
 
   await waitFor(() => {
@@ -547,7 +552,7 @@ it('should keep manual positioning available when orientation permission is deni
 })
 
 it('should show the all-in-one app link when a return destination is provided', () => {
-  render(() => <PRelaxPlayerPage returnHref="/?layout=all-in-one" />)
+  render(() => <PSlowcovePage returnHref="/?layout=all-in-one" />)
 
   expect(screen.getByRole('link', {name: '통합앱으로 돌아가기'})).toHaveAttribute(
     'href',
@@ -556,7 +561,7 @@ it('should show the all-in-one app link when a return destination is provided', 
 })
 
 it('should omit the all-in-one app link without a return destination', () => {
-  render(() => <PRelaxPlayerPage />)
+  render(() => <PSlowcovePage />)
 
   expect(screen.queryByRole('link', {name: '통합앱으로 돌아가기'})).not.toBeInTheDocument()
 })

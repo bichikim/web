@@ -6,8 +6,8 @@
   "maps": [
     {
       "depth": "depth-city-sunny-riverside.png",
-      "source": "city-sunny-riverside.png",
-      "sourceSha256": "2ecf5f7f4c724b9778458d7eafcffd658770671948cb7f0d8cadc7c3274d88c5"
+      "source": "city-sunny-riverside.webp",
+      "sourceSha256": "cd5c0d3de16121f77a7121bb8bd723b24aea514a455302718d73c23a0f41c09a"
     },
     {
       "depth": "depth-coast.png",
@@ -17,13 +17,13 @@
     },
     {
       "depth": "depth-post-rain-square-upper-floor.png",
-      "source": "post-rain-square-upper-floor.png",
-      "sourceSha256": "f408327834756e67ed3c360bb82f50766fd26dfc85242d96fc5dfdf86542215d"
+      "source": "post-rain-square-upper-floor.webp",
+      "sourceSha256": "dbed06f78301ea48ed3a85af93cb0c269fd87decd3afc7245a9437abe5ee0d83"
     },
     {
       "depth": "depth-rain-alley-upper-floor.png",
-      "source": "rain-alley-upper-floor.png",
-      "sourceSha256": "f4f4e2e0698427bf062685ed4df5b74582febfc3ed24e3ec6b0f092fd05946ef",
+      "source": "rain-alley-upper-floor.webp",
+      "sourceSha256": "76664eb4e5afb040dedecda2a047cc91a3d1dea06116b9c793da63c36ef585dd",
       "generator": {
         "model": "Xenova/depth-anything-small-hf",
         "revision": "9103bc8e2d785bcfd024e4bfd7e7c4593bc50bba",
@@ -52,8 +52,8 @@
     },
     {
       "depth": "depth-coastal-village-upper-floor.png",
-      "source": "coastal-village-upper-floor.png",
-      "sourceSha256": "a543302a5ae57dc891efa7685cec087c8609de4b681e64223e821b9a2f2170ad",
+      "source": "coastal-village-upper-floor.webp",
+      "sourceSha256": "b9b82720408b526d70ef534d0fd5695e38f236d26773df8810883afd9ac23f0a",
       "generator": {
         "model": "Xenova/depth-anything-small-hf",
         "revision": "9103bc8e2d785bcfd024e4bfd7e7c4593bc50bba",

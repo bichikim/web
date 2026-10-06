@@ -370,7 +370,7 @@
     {
       "issue": 2544,
       "status": "implemented",
-      "file": "apps/pomo/src/components/p-relax-player-page/use-relax-depth-motion.ts",
+      "file": "apps/pomo/src/components/p-slowcove-page/use-relax-depth-motion.ts",
       "line": 44
     },
     {
@@ -1520,7 +1520,7 @@
         "failed": 0
       },
       {
-        "file": "apps/pomo/src/components/p-relax-player-page/__tests__/PRelaxPlayerPage.spec.tsx",
+        "file": "apps/pomo/src/components/p-slowcove-page/__tests__/PSlowcovePage.spec.tsx",
         "tests": 12,
         "failed": 0
       },
