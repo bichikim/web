@@ -50,6 +50,50 @@ describe('createStreamingSpeechBuffer', () => {
   })
 
   it.each([
+    ['원주율은 3.14입니다. 다음 문장이에요.', ['원주율은 3.14입니다.', '다음 문장이에요.']],
+    [
+      'Python 3.12 버전을 설치하세요. 다음 문장이에요.',
+      ['Python 3.12 버전을 설치하세요.', '다음 문장이에요.'],
+    ],
+    [
+      'Use version 3.12.4 before continuing. Next step.',
+      ['Use version 3.12.4 before continuing.', 'Next step.'],
+    ],
+  ] as const)(
+    'should preserve decimal and version sentences across real streaming prefixes: %s',
+    (text, expectedSegments) => {
+      expect(speakStreamed(text, 1)).toEqual(expectedSegments)
+    },
+  )
+
+  it('should hold a numeric period for possible decimal digits without delaying earlier sentences', () => {
+    const buffer = createStreamingSpeechBuffer({locale: 'ko'})
+    const prefix = '이전 문장은 끝났어요. 원주율은 3'
+    const completedText = `${prefix}.14입니다. 다음 문장이에요.`
+
+    expect(buffer.update(prefix)).toEqual(['이전 문장은 끝났어요.'])
+    expect(buffer.update(`${prefix}.`)).toEqual([])
+    expect(buffer.update(completedText)).toEqual(['원주율은 3.14입니다.', '다음 문장이에요.'])
+    expect(buffer.flush(completedText)).toBeNull()
+  })
+
+  it('should emit a numeric sentence when a following sentence disambiguates its period', () => {
+    const buffer = createStreamingSpeechBuffer({locale: 'ko'})
+
+    expect(buffer.update('There are 3.')).toEqual([])
+    expect(buffer.update('There are 3. Next sentence.')).toEqual(['There are 3.', 'Next sentence.'])
+  })
+
+  it('should flush a genuine sentence ending after a numeric value exactly once', () => {
+    const buffer = createStreamingSpeechBuffer({locale: 'ko'})
+    const finalText = 'There are 3.'
+
+    expect(buffer.update(finalText)).toEqual([])
+    expect(buffer.flush(finalText)).toBe(finalText)
+    expect(buffer.update(finalText)).toEqual([])
+  })
+
+  it.each([
     ['Dr.', 'Please ask', 'Smith', 'to call.'],
     ['“Dr.”', 'Please ask', 'Smith', 'to call.'],
     ['Prof.', 'Please ask', 'Smith', 'to call.'],
