@@ -1,15 +1,11 @@
 import {hasValidIsoCalendarDate} from 'src/utils/iso-calendar-date'
+import {fingerprintText} from 'src/utils/fingerprint-text'
 import DOMPurify from 'dompurify'
 import {groupBy} from 'es-toolkit/array'
 
 /* istanbul ignore next -- Wallaby inconsistently counts module initialization across workers. */
 const BLOCKED_CONTENT_SELECTOR =
   'script, style, noscript, nav, aside, form, button, iframe, svg, canvas, template, [data-pomo-speech="exclude"]'
-const ITEM_FINGERPRINT_PRIMARY_BASE = 31
-const ITEM_FINGERPRINT_PRIMARY_MODULUS = 2_147_483_647
-const ITEM_FINGERPRINT_RADIX = 36
-const ITEM_FINGERPRINT_SECONDARY_BASE = 37
-const ITEM_FINGERPRINT_SECONDARY_MODULUS = 2_147_483_629
 const ISO_DATE_PREFIX_PATTERN = /^(?<year>\d{4})-(?<month>\d{2})-(?<day>\d{2})/u
 const MONTH_ABBREVIATIONS = [
   'jan',
@@ -167,19 +163,7 @@ const getPublishedAt = (children: ChildGroups) => {
 }
 const getItemFingerprint = (element: Element) => {
   const serializedItem = new XMLSerializer().serializeToString(element).replace(/>\s+</gu, '><')
-  let primaryHash = 0
-  let secondaryHash = 0
-
-  for (const character of serializedItem) {
-    const codePoint = character.codePointAt(0) ?? 0
-    primaryHash =
-      (primaryHash * ITEM_FINGERPRINT_PRIMARY_BASE + codePoint) % ITEM_FINGERPRINT_PRIMARY_MODULUS
-    secondaryHash =
-      (secondaryHash * ITEM_FINGERPRINT_SECONDARY_BASE + codePoint) %
-      ITEM_FINGERPRINT_SECONDARY_MODULUS
-  }
-
-  return `${primaryHash.toString(ITEM_FINGERPRINT_RADIX)}-${secondaryHash.toString(ITEM_FINGERPRINT_RADIX)}`
+  return fingerprintText(serializedItem)
 }
 interface GetItemIdentityOptions {
   readonly children: ChildGroups

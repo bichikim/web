@@ -236,6 +236,10 @@ it('should keep dated RSS items with the same title distinct by their XML conten
   const repeatedFeed = parseFeedXml(xml, 'https://example.com/feed.xml')
   const ids = feed.items.map((item) => item.id)
 
+  expect(ids).toEqual([
+    '같은 제목\u00002026-08-14T00:00:00.000Z\u0000pdo3aq-sa1xg1',
+    '같은 제목\u00002026-08-14T00:00:00.000Z\u0000yn5djn-kxdp6o',
+  ])
   expect(ids).toHaveLength(2)
   expect(new Set(ids).size).toBe(2)
   expect(ids).toEqual(repeatedFeed.items.map((item) => item.id))
@@ -252,6 +256,10 @@ it('should keep dated Atom entries with the same title distinct by their XML con
   const repeatedFeed = parseFeedXml(xml, 'https://example.com/feed.xml')
   const ids = feed.items.map((item) => item.id)
 
+  expect(ids).toEqual([
+    '같은 제목\u00002026-08-14T00:00:00.000Z\u0000l80nmm-7pxrhf',
+    '같은 제목\u00002026-08-14T00:00:00.000Z\u00005ocb0s-kc2s2u',
+  ])
   expect(ids).toHaveLength(2)
   expect(new Set(ids).size).toBe(2)
   expect(ids).toEqual(repeatedFeed.items.map((item) => item.id))
@@ -265,6 +273,10 @@ it('should keep undated items without an id or link distinct by their XML conten
   const feed = parseFeedXml(xml, 'https://example.com/feed.xml')
   const repeatedFeed = parseFeedXml(xml, 'https://example.com/feed.xml')
 
+  expect(feed.items.map((item) => item.id)).toEqual([
+    '같은 제목\u0000\u0000cqut67-1qmtmb',
+    '같은 제목\u0000\u0000m0c3f4-twimbz',
+  ])
   expect(feed.items.map((item) => item.id)).toHaveLength(2)
   expect(new Set(feed.items.map((item) => item.id)).size).toBe(2)
   expect(feed.items.map((item) => item.id)).toEqual(repeatedFeed.items.map((item) => item.id))
@@ -283,6 +295,7 @@ it('should keep an undated item id stable when XML indentation changes', () => {
     'https://example.com/feed.xml',
   )
 
+  expect(compactFeed.items[0]?.id).toBe('같은 제목\u0000\u0000lzpie5-we5r93')
   expect(indentedFeed.items[0]?.id).toBe(compactFeed.items[0]?.id)
 })
 
