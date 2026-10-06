@@ -1,4 +1,3 @@
-import {affineDotProduct} from 'src/utils/affine-dot-product'
 import {numericallyStableSoftmax} from 'src/utils/numerically-stable-softmax'
 import {clamp} from 'es-toolkit/math'
 import classifierArtifact from './classifier-artifact.json'
@@ -157,11 +156,26 @@ const validateEmbedding = (embedding: ReadonlyArray<number>) => {
 
 const sigmoid = (value: number) => 1 / (1 + Math.exp(-clamp(value, -SIGMOID_LIMIT, SIGMOID_LIMIT)))
 
+const getLinearScore = (
+  embedding: ReadonlyArray<number>,
+  weights: ReadonlyArray<number>,
+  bias: number,
+  weightOffset = 0,
+) => {
+  let score = bias
+
+  for (let feature = 0; feature < embedding.length; feature += 1) {
+    score += weights[weightOffset + feature] * embedding[feature]
+  }
+
+  return score
+}
+
 const getPrimaryScores = (embedding: ReadonlyArray<number>) => {
   const logits = PRIMARY_MOOD_IDS.map((id, index) => ({
     id,
     logit:
-      affineDotProduct(
+      getLinearScore(
         embedding,
         ARTIFACT.primaryHead.weights,
         ARTIFACT.primaryHead.bias[index],
@@ -178,7 +192,7 @@ const getPrimaryScores = (embedding: ReadonlyArray<number>) => {
 const getModifierScores = (embedding: ReadonlyArray<number>) =>
   MOOD_MODIFIER_IDS.map((id) => {
     const head = ARTIFACT.modifierHeads[id]
-    const probability = sigmoid(affineDotProduct(embedding, head.weights, head.bias))
+    const probability = sigmoid(getLinearScore(embedding, head.weights, head.bias))
     return {active: probability >= head.threshold, id, probability, threshold: head.threshold}
   })
 
@@ -187,15 +201,10 @@ const getInsufficiencyProbability = (embedding: ReadonlyArray<number>) => {
   const hidden = head.hiddenBias.map((bias, hiddenIndex) =>
     Math.max(
       0,
-      affineDotProduct(
-        embedding,
-        head.hiddenWeights,
-        bias,
-        hiddenIndex * TEXT_MOOD_MODEL.dimension,
-      ),
+      getLinearScore(embedding, head.hiddenWeights, bias, hiddenIndex * TEXT_MOOD_MODEL.dimension),
     ),
   )
-  return sigmoid(affineDotProduct(hidden, head.outputWeights, head.outputBias))
+  return sigmoid(getLinearScore(hidden, head.outputWeights, head.outputBias))
 }
 
 /** Decides whether one normalized MiniLM embedding has enough semantic mood evidence. */
