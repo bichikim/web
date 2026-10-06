@@ -42,13 +42,67 @@ describe('createPAudioEnvelope', () => {
 
   it('should treat an empty runtime RMS window and level collection as silence', () => {
     const windowLengths = [1, 1, 0, 0]
+    let reads = 0
     const windowSamples = Object.defineProperty({}, 'length', {
-      get: () => windowLengths.shift() ?? 0,
+      get: () => {
+        reads += 1
+        return windowLengths.shift() ?? 0
+      },
     }) as Float32Array
     const emptyLevels = {length: -1} as unknown as Float32Array
 
     expect(createPAudioEnvelope({sampleRate: 1_000, samples: windowSamples}).levels).toEqual([0])
+    expect(reads).toBe(4)
     expect(createPAudioEnvelope({sampleRate: 1_000, samples: emptyLevels}).levels).toEqual([])
+  })
+
+  it('should normalize overlapping energy levels and a silent partial tail', () => {
+    const reference = Math.sqrt(25 / 2)
+    const floor = reference * 0.08
+
+    expect(createPAudioEnvelope({sampleRate: 50, samples: Float32Array.of(3, 4, 0)})).toEqual({
+      frameDurationMs: 20,
+      levels: [1, (Math.sqrt(16 / 2) - floor) / (reference - floor), 0],
+    })
+  })
+
+  it('should round frame and window counts independently before the RMS scan', () => {
+    expect(
+      createPAudioEnvelope({sampleRate: 125, samples: Float32Array.of(0, 0, 0, 0, 4, 0, 0, 0)})
+        .levels,
+    ).toEqual([1, 1, 0])
+  })
+
+  it('should retain one-sample windows for low positive sample rates', () => {
+    expect(createPAudioEnvelope({sampleRate: 1, samples: Float32Array.of(3, 0)}).levels).toEqual([
+      1, 0,
+    ])
+  })
+
+  it('should select the existing percentile index for the normalization reference', () => {
+    const samples = Float32Array.of(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)
+    const {levels} = createPAudioEnvelope({sampleRate: 1, samples})
+
+    expect(levels[0]).toBe((1 - 0.8) / (10 - 0.8))
+    expect(levels.at(-1)).toBe(1)
+  })
+
+  it.each([
+    {levels: [], sampleRate: -1},
+    {levels: [], sampleRate: -Infinity},
+    {levels: [0], sampleRate: NaN},
+    {levels: [1], sampleRate: Infinity},
+  ])('should preserve the envelope for sample rate $sampleRate', ({levels, sampleRate}) => {
+    expect(createPAudioEnvelope({sampleRate, samples: Float32Array.of(1, 2)})).toEqual({
+      frameDurationMs: 20,
+      levels,
+    })
+  })
+
+  it('should preserve NaN samples through normalization', () => {
+    expect(createPAudioEnvelope({sampleRate: 1, samples: Float32Array.of(NaN)}).levels).toEqual([
+      NaN,
+    ])
   })
 })
 

@@ -93,6 +93,38 @@ describe('createStreamingSpeechBuffer', () => {
     expect(buffer.update(finalText)).toEqual([])
   })
 
+  it('should not flush a numeric sentence already consumed before a shorter replacement', () => {
+    const buffer = createStreamingSpeechBuffer({locale: 'ko'})
+
+    expect(buffer.update('There are 3. Original ending.')).toEqual([
+      'There are 3.',
+      'Original ending.',
+    ])
+    expect(buffer.update('There are 3.')).toEqual([])
+    expect(buffer.flush('There are 3.')).toBeNull()
+  })
+
+  it('should speak a revised decimal sentence when replacement text adds fractional digits', () => {
+    const buffer = createStreamingSpeechBuffer({locale: 'ko'})
+
+    expect(buffer.update('There are 3. Original ending.')).toEqual([
+      'There are 3.',
+      'Original ending.',
+    ])
+    expect(buffer.update('There are 3.')).toEqual([])
+    expect(buffer.update('There are 3.14 units.')).toEqual(['There are 3.14 units.'])
+    expect(buffer.flush('There are 3.14 units.')).toBeNull()
+  })
+
+  it('should preserve sentence context when a shortened stream receives revised content', () => {
+    const buffer = createStreamingSpeechBuffer({locale: 'ko'})
+
+    expect(buffer.update('First sentence.')).toEqual(['First sentence.'])
+    expect(buffer.update('First')).toEqual([])
+    expect(buffer.update('First changed.')).toEqual(['First changed.'])
+    expect(buffer.flush('First changed.')).toBeNull()
+  })
+
   it.each([
     ['Dr.', 'Please ask', 'Smith', 'to call.'],
     ['“Dr.”', 'Please ask', 'Smith', 'to call.'],

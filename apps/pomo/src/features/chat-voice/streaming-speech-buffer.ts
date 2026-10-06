@@ -125,6 +125,10 @@ export const createStreamingSpeechBuffer = (
 
   const reconcileConsumedText = (text: string) => {
     if (!text.startsWith(consumedText)) {
+      if (consumedText.startsWith(text)) {
+        return
+      }
+
       const currentConsumedText = text.slice(0, consumedText.length)
 
       if (isOnlyTerminalPunctuationChanged(consumedText, currentConsumedText)) {
