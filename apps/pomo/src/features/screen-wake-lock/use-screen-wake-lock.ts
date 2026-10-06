@@ -1,5 +1,6 @@
 import {createSerialTaskQueue} from 'src/utils/create-serial-task-queue'
-import {type Accessor, createSignal, onCleanup, onMount} from 'solid-js'
+import {type Accessor, createEffect, createSignal, onCleanup, onMount, untrack} from 'solid-js'
+import {useAsyncTask} from '../async-task'
 import {browserWakeLock} from './browser-wake-lock'
 
 export type ScreenWakeLockAvailability = 'checking' | 'supported' | 'unsupported'
@@ -81,42 +82,34 @@ export const useScreenWakeLock = (): ScreenWakeLockController => {
   const [availability, setAvailability] = createSignal<ScreenWakeLockAvailability>('checking')
   const [errorMessage, setErrorMessage] = createSignal<string | null>(null)
   const [isEnabled, setIsEnabled] = createSignal(false)
-  const [isRequestPending, setIsRequestPending] = createSignal(false)
+  const [isBrowserRequestPending, setIsRequestPending] = createSignal(false)
   const requestQueue = createSerialTaskQueue()
+  const nativeRequest = useAsyncTask({
+    task: (enabled: boolean) => requestQueue.run(() => requestAppsInTossWakeLock(enabled)),
+  })
+  const isRequestPending = () =>
+    import.meta.env.VITE_POMO_IS_APPS_IN_TOSS === 'true'
+      ? nativeRequest.state().status === 'pending'
+      : isBrowserRequestPending()
   let requestRevision = 0
   let appsInTossWakeLockRequested = false
   let disposed = false
   let sentinel: WakeLockSentinel | null = null
 
-  const setAppsInTossWakeLock = (nextEnabled: boolean, reportResult = true): void => {
-    requestRevision += 1
-    const revision = requestRevision
-    appsInTossWakeLockRequested ||= nextEnabled
-
-    if (reportResult) {
-      setIsRequestPending(true)
-      setErrorMessage(null)
-    }
-
-    const request = requestQueue.run(() => requestAppsInTossWakeLock(nextEnabled))
-
-    request
-      .then(() => {
-        if (!reportResult || disposed || revision !== requestRevision) {
-          return
-        }
-
-        setIsRequestPending(false)
-      })
-      .catch(() => {
-        if (!reportResult || disposed || revision !== requestRevision) {
-          return
-        }
-
+  createEffect(() => {
+    const state = nativeRequest.state()
+    untrack(() => {
+      if (state.status === 'error') {
+        setErrorMessage(isEnabled() ? APPS_IN_TOSS_ENABLE_ERROR : SCREEN_WAKE_LOCK_DISABLE_ERROR)
         setIsEnabled(false)
-        setIsRequestPending(false)
-        setErrorMessage(nextEnabled ? APPS_IN_TOSS_ENABLE_ERROR : SCREEN_WAKE_LOCK_DISABLE_ERROR)
-      })
+      }
+    })
+  })
+
+  const setAppsInTossWakeLock = (nextEnabled: boolean): void => {
+    appsInTossWakeLockRequested ||= nextEnabled
+    setErrorMessage(null)
+    nativeRequest.execute(nextEnabled).catch(() => undefined)
   }
 
   const releaseWakeLock = () => {
@@ -215,8 +208,9 @@ export const useScreenWakeLock = (): ScreenWakeLockController => {
           disposed = true
           setIsEnabled(false)
 
+          nativeRequest.reset()
           if (appsInTossWakeLockRequested) {
-            setAppsInTossWakeLock(false, false)
+            requestQueue.run(() => requestAppsInTossWakeLock(false)).catch(() => undefined)
           }
         },
         onVisible: () => setAppsInTossWakeLock(true),
