@@ -1,5 +1,5 @@
 // @vitest-environment node
-import {unzipSync, ZipPassThrough} from 'fflate'
+import {unzipSync, Zip, ZipPassThrough} from 'fflate'
 import {describe, expect, it, vi} from 'vitest'
 import {createBlobArchive} from '..'
 
@@ -85,8 +85,34 @@ describe('createBlobArchive', () => {
     const error = new Error('encoding failed')
     const blob = new Blob(['content'])
     const stream = blob.stream()
+    const later = new Blob()
+    const next = vi.spyOn(later, 'stream')
+    const end = vi.spyOn(Zip.prototype, 'end')
     vi.spyOn(blob, 'stream').mockReturnValue(stream)
     const push = vi.spyOn(ZipPassThrough.prototype, 'push').mockImplementation(() => {
+      throw error
+    })
+    try {
+      const failure = await createBlobArchive([
+        {blob, name: 'file'},
+        {blob: later, name: 'later'},
+      ]).catch((reason: unknown) => reason)
+      expect(failure).toBe(error)
+      expect(stream.locked).toBe(false)
+      expect(next).not.toHaveBeenCalled()
+      expect(end).not.toHaveBeenCalled()
+    } finally {
+      push.mockRestore()
+      end.mockRestore()
+    }
+  })
+
+  it('should propagate finalization errors after releasing completed readers', async () => {
+    const error = new Error('finalization failed')
+    const blob = new Blob(['content'])
+    const stream = blob.stream()
+    vi.spyOn(blob, 'stream').mockReturnValue(stream)
+    const end = vi.spyOn(Zip.prototype, 'end').mockImplementation(() => {
       throw error
     })
     try {
@@ -95,8 +121,9 @@ describe('createBlobArchive', () => {
       )
       expect(failure).toBe(error)
       expect(stream.locked).toBe(false)
+      expect(end).toHaveBeenCalledTimes(1)
     } finally {
-      push.mockRestore()
+      end.mockRestore()
     }
   })
 

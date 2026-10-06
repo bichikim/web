@@ -1,11 +1,12 @@
 import {Zip, ZipPassThrough} from 'fflate'
+import {forEachSequential} from 'src/utils/for-each-sequential'
 
 export interface NamedBlob {
   readonly blob: Blob
   readonly name: string
 }
 
-// oxlint-disable no-await-in-loop -- Entries and chunks are read sequentially to bound input memory.
+// oxlint-disable no-await-in-loop -- Chunks are read sequentially to bound input memory.
 const appendArchive = async (archive: Zip, blob: Blob, name: string): Promise<void> => {
   const entry = new ZipPassThrough(name)
   archive.add(entry)
@@ -32,7 +33,7 @@ export const createBlobArchive = async (files: readonly NamedBlob[]): Promise<Bl
     chunks.push(new Uint8Array(data))
   })
   const names = new Set<string>()
-  for (const file of files) {
+  await forEachSequential(files, async (file) => {
     let {name} = file
     let suffix = 1
     while (names.has(name)) {
@@ -41,7 +42,7 @@ export const createBlobArchive = async (files: readonly NamedBlob[]): Promise<Bl
     }
     names.add(name)
     await appendArchive(archive, file.blob, name)
-  }
+  })
   archive.end()
   return new Blob(chunks, {type: 'application/zip'})
 }
