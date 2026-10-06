@@ -1,6 +1,7 @@
 /** @vitest-environment jsdom */
 import {cleanup, fireEvent, render, screen} from '@solidjs/testing-library'
 import {afterEach, describe, expect, it, vi} from 'vitest'
+import {createSignal} from 'solid-js'
 import * as m from '@paraglide/message'
 import {copyToolResult} from 'src/features/tools'
 import {TransferConnectionInfo} from '../TransferConnectionInfo'
@@ -13,6 +14,21 @@ afterEach(() => {
 const url = 'http://localhost:3300/?tool=transfer&session=invitation#secret'
 
 describe('TransferConnectionInfo', () => {
+  it('should keep the approval button while connecting and prevent duplicate approval', () => {
+    const onApprove = vi.fn()
+    const [connecting, setConnecting] = createSignal(false)
+    render(() => (
+      <TransferConnectionInfo url={url} connecting={connecting()} onApprove={onApprove} />
+    ))
+    const button = screen.getByRole('button', {name: m.transfer_approve()})
+    fireEvent.click(button)
+    setConnecting(true)
+    expect(screen.getByRole('button', {name: m.transfer_joining()})).toBe(button)
+    expect(button).toBeDisabled()
+    expect(button.parentElement).toHaveAttribute('aria-busy', 'true')
+    fireEvent.click(button)
+    expect(onApprove).toHaveBeenCalledOnce()
+  })
   it('should display the invitation as a QR code, selectable address, and waiting status', () => {
     render(() => <TransferConnectionInfo url={url} waiting />)
     expect(screen.getByRole('img', {name: m.transfer_qr()})).toBeVisible()
