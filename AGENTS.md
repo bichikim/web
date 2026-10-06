@@ -82,9 +82,8 @@
 
 ## Unit test execution time
 
-- Preserve the unit test time limit configured in Vitest. Never change or override it, including through test-specific timeout settings. No environment-based exceptions are allowed.
-- The recommended maximum execution-time target is 150ms per Vitest unit test. Write tests to execute as quickly as possible.
-- To reduce execution time, prioritize mocking over splitting tests, and splitting tests over moving integration-test portions into integration tests. Preserve the behavior and assertions that need verification.
+- Write each Vitest unit test to complete within 100ms when that individual test is run by itself. This is per-test authoring guidance, not a timeout for a whole file or parallel suite.
+- When an individual unit test exceeds 100ms, diagnose in order: missing mocks; too many independent scenarios combined in one test; whether the test has integration-test characteristics. Preserve assertions, scenarios that require the same mount, and required coverage. Mock missing boundaries where appropriate, split only independent scenarios, and keep genuine integration behavior in integration tests.
 
 ## Required after changes
 
