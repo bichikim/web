@@ -22,6 +22,11 @@ export interface TarotSpeechPreparation {
   readonly text: string
 }
 
+interface TarotSpeechPreparationResult {
+  readonly missing: boolean
+  readonly revision: number
+}
+
 export interface TarotSpeechAudioController {
   readonly audioUrl: Accessor<string | null>
   readonly currentRevision: () => number
@@ -32,9 +37,7 @@ export interface TarotSpeechAudioController {
   readonly onPlaybackError: () => void
   readonly onPlaybackRequest: () => boolean
   readonly onPlaybackStart: () => void
-  readonly prepare: (
-    preparation: TarotSpeechPreparation,
-  ) => Promise<{readonly missing: boolean; readonly revision: number}>
+  readonly prepare: (preparation: TarotSpeechPreparation) => Promise<TarotSpeechPreparationResult>
   readonly release: () => void
   readonly status: Accessor<TarotSpeechAudioStatus>
 }
@@ -45,6 +48,46 @@ export interface CreateTarotSpeechAudioOptions {
   readonly setPaused: Setter<boolean>
 }
 
+interface CreateSpeechPreviewOptions {
+  readonly client: SupertonicClient
+  readonly isCurrent: () => boolean
+  readonly preparation: TarotSpeechPreparation
+}
+
+const createSpeechPreview = async (options: CreateSpeechPreviewOptions): Promise<Blob | null> => {
+  const initialized = await options.client.initialize({
+    modelId: DEFAULT_DIALOGUE_MODEL_ID,
+    onProgress: () => undefined,
+    onStatus: () => undefined,
+  })
+  if (!options.isCurrent()) {
+    return null
+  }
+  if (!initialized.ok) {
+    throw new Error(getSupertonicErrorMessage(initialized.error))
+  }
+  const generated = await generateDialogueAudio({
+    client: options.client,
+    language: options.preparation.locale,
+    modelId: DEFAULT_DIALOGUE_MODEL_ID,
+    onChunk: () => undefined,
+    text: options.preparation.text,
+    voiceId: DEFAULT_DIALOGUE_VOICE_ID,
+  })
+  if (!options.isCurrent()) {
+    return null
+  }
+  if (!generated.ok) {
+    throw new Error(generated.message)
+  }
+  return createDialogueAudioPreview(generated.value, DEFAULT_DIALOGUE_MODEL_ID)
+}
+
+const hasSameSpeechContent = (
+  current: TarotSpeechPreparation | null,
+  next: TarotSpeechPreparation,
+): boolean => current?.text === next.text && current.locale === next.locale
+
 export const createTarotSpeechAudioController = (
   options: CreateTarotSpeechAudioOptions,
 ): TarotSpeechAudioController => {
@@ -54,26 +97,25 @@ export const createTarotSpeechAudioController = (
   let client: SupertonicClient | null = null
   let revision = 0
   let disposed = false
-
+  let currentPreparation: TarotSpeechPreparation | null = null
+  let pending: Promise<TarotSpeechPreparationResult> | null = null
   const release = () => {
     revision += 1
+    currentPreparation = null
+    pending = null
     client?.dispose()
     client = null
     options.setPaused(true)
+    options.setManualPlay(false)
     setAudioUrl((current) => replaceBlobObjectUrl(current, () => null))
     setError(null)
     setStatus('idle')
   }
   const isCurrent = (currentRevision: number) => !disposed && currentRevision === revision
-  const prepare = async (preparation: TarotSpeechPreparation) => {
-    release()
-    if (preparation.text.length === 0 || disposed) {
-      return {missing: false, revision}
-    }
-
-    const currentRevision = revision
-    options.setManualPlay(preparation.play)
-    setStatus('preparing')
+  const generate = async (
+    preparation: TarotSpeechPreparation,
+    currentRevision: number,
+  ): Promise<TarotSpeechPreparationResult> => {
     try {
       const result = await options.assets.runAfterVoiceModel({
         downloadIfMissing: false,
@@ -85,32 +127,11 @@ export const createTarotSpeechAudioController = (
           const activeClient = createSupertonicClient()
           client = activeClient
           try {
-            const initialized = await activeClient.initialize({
-              modelId: DEFAULT_DIALOGUE_MODEL_ID,
-              onProgress: () => undefined,
-              onStatus: () => undefined,
-            })
-            if (!isCurrent(currentRevision)) {
-              return null
-            }
-            if (!initialized.ok) {
-              throw new Error(getSupertonicErrorMessage(initialized.error))
-            }
-            const generated = await generateDialogueAudio({
+            return await createSpeechPreview({
               client: activeClient,
-              language: preparation.locale,
-              modelId: DEFAULT_DIALOGUE_MODEL_ID,
-              onChunk: () => undefined,
-              text: preparation.text,
-              voiceId: DEFAULT_DIALOGUE_VOICE_ID,
+              isCurrent: () => isCurrent(currentRevision),
+              preparation,
             })
-            if (!isCurrent(currentRevision)) {
-              return null
-            }
-            if (!generated.ok) {
-              throw new Error(generated.message)
-            }
-            return createDialogueAudioPreview(generated.value, DEFAULT_DIALOGUE_MODEL_ID)
           } finally {
             if (client === activeClient) {
               activeClient.dispose()
@@ -127,7 +148,7 @@ export const createTarotSpeechAudioController = (
           if (result.value === null) {
             setStatus('idle')
           } else {
-            options.setPaused(false)
+            options.setPaused(currentPreparation?.play !== true)
             setStatus('ready')
             setAudioUrl((current) => replaceBlobObjectUrl(current, () => result.value))
           }
@@ -152,6 +173,35 @@ export const createTarotSpeechAudioController = (
       return {missing: false, revision: currentRevision}
     }
   }
+  const prepare = (preparation: TarotSpeechPreparation): Promise<TarotSpeechPreparationResult> => {
+    if (!hasSameSpeechContent(currentPreparation, preparation)) {
+      release()
+    }
+    currentPreparation = preparation
+    if (preparation.text.length === 0 || disposed) {
+      return Promise.resolve({missing: false, revision})
+    }
+    options.setManualPlay(preparation.play)
+    options.setPaused(!preparation.play)
+    if (audioUrl() !== null) {
+      setError(null)
+      if (!preparation.play) {
+        setStatus('ready')
+      }
+      return Promise.resolve({missing: false, revision})
+    }
+    if (pending !== null) {
+      return pending
+    }
+    const currentRevision = revision
+    setStatus('preparing')
+    pending = generate(preparation, currentRevision).finally(() => {
+      if (isCurrent(currentRevision)) {
+        pending = null
+      }
+    })
+    return pending
+  }
   const onPlaybackStart = () => setStatus('playing')
   const onPlaybackEnd = () => {
     options.setPaused(true)
@@ -172,7 +222,6 @@ export const createTarotSpeechAudioController = (
     disposed = true
     release()
   }
-
   return {
     audioUrl,
     currentRevision: () => revision,

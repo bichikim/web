@@ -13,7 +13,9 @@ export interface TarotCard {
   readonly id: string
   readonly meaning: Readonly<Record<TarotLocale, string>>
   readonly name: Readonly<Record<TarotLocale, string>>
+  readonly readingMeaning: Readonly<Record<TarotLocale, string>>
   readonly reversedMeaning: Readonly<Record<TarotLocale, string>>
+  readonly reversedReadingMeaning: Readonly<Record<TarotLocale, string>>
   readonly suit?: TarotSuit
 }
 
@@ -294,10 +296,12 @@ export const TAROT_CARDS: ReadonlyArray<TarotCard> = [
         ko: `${context.ko} 정방향: ${meaningKo}.`,
       },
       name: {en: english, ko: korean},
+      readingMeaning: {en: meaningEn, ko: meaningKo},
       reversedMeaning: {
         en: `${context.en} Reversed: ${REVERSED_MEANINGS[id].en}`,
         ko: `${context.ko} 역방향: ${REVERSED_MEANINGS[id].ko}`,
       },
+      reversedReadingMeaning: REVERSED_MEANINGS[id],
     }
   }),
   ...SUITS.flatMap((suit) =>
@@ -321,10 +325,12 @@ export const TAROT_CARDS: ReadonlyArray<TarotCard> = [
           ko: `${context.ko} 정방향: ${meaningKo}.`,
         },
         name,
+        readingMeaning: {en: meaningEn, ko: meaningKo},
         reversedMeaning: {
           en: `${context.en} Reversed: ${REVERSED_MEANINGS[id].en}`,
           ko: `${context.ko} 역방향: ${REVERSED_MEANINGS[id].ko}`,
         },
+        reversedReadingMeaning: REVERSED_MEANINGS[id],
         suit: suit.id,
       }
     }),

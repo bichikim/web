@@ -11,7 +11,7 @@ export interface TarotClient {
   readonly generate: (request: TarotGenerateRequest) => void
 }
 
-/** Owns one Gemma worker for tarot interpretation. */
+/** Owns one worker for tarot interpretation. */
 export const createTarotClient = (options: CreateTarotClientOptions): TarotClient => {
   const worker = new Worker(new URL('./worker.ts', import.meta.url), {
     name: 'pomo-tarot',

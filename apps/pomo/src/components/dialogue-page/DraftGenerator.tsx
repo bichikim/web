@@ -1,3 +1,6 @@
+import {useDefaultTextModel} from 'src/features/text-generation/use-default-text-model'
+import type {DefaultTextModelId} from 'src/features/text-generation/settings'
+import {supportsTextModel} from 'src/features/text-generation/supports-text-model'
 import * as m from '@paraglide/message'
 import {PInput} from 'src/components/p-input/PInput'
 import {isNonBlankString} from 'src/utils/is-non-blank-string'
@@ -26,8 +29,6 @@ import {getTextModel, isTextModelDownloaded} from '../../features/text-generatio
 import {PGenerationStatus} from '../p-generation-status/PGenerationStatus'
 import {PModelDownloadConsent} from '../p-model-download-consent/PModelDownloadConsent'
 
-const GEMMA_MODEL_ID = 'gemma-4-e2b'
-const GEMMA_MODEL = getTextModel(GEMMA_MODEL_ID)
 const MAXIMUM_PROGRESS = 100
 const GENERATED_CONTENT_PROGRESS = 96
 const FINAL_GENERATING_PROGRESS = 99
@@ -77,6 +78,7 @@ interface DialogueGenerationStatus {
 }
 
 interface UseDialogueDraftModelProps {
+  readonly defaultModelId: Accessor<DefaultTextModelId>
   readonly disabled: Accessor<boolean>
   readonly length: Accessor<number>
   readonly onBusyChange: (busy: boolean) => void
@@ -156,7 +158,7 @@ const useDialogueGenerationStatus = (props: UseDialogueGenerationStatusProps) =>
     if (
       downloadState.status === 'loading' &&
       downloadState.target.kind === 'text' &&
-      downloadState.target.modelId === GEMMA_MODEL_ID
+      downloadState.target.modelId === props.writer.modelId()
     ) {
       return {
         message: m.dialogue_status_downloading_model_background(),
@@ -225,7 +227,7 @@ const useDialogueDraftModel = (props: UseDialogueDraftModelProps): DialogueDraft
     return (
       downloadState.status === 'loading' &&
       downloadState.target.kind === 'text' &&
-      downloadState.target.modelId === GEMMA_MODEL_ID
+      downloadState.target.modelId === props.writer.modelId()
     )
   }
   const isBusy = () => writer.isBusy() || isCheckingModel() || isModelDownloading()
@@ -244,9 +246,10 @@ const useDialogueDraftModel = (props: UseDialogueDraftModelProps): DialogueDraft
     !props.disabled() &&
     !isBusy() &&
     isNonBlankString(props.topic()) &&
-    writer.state().status !== 'unsupported'
+    (writer.state().status !== 'unsupported' ||
+      supportsTextModel({modelId: props.defaultModelId()}))
   const downloadAndGenerate = async () => {
-    const result = await modelDownload.startTextModel(GEMMA_MODEL_ID)
+    const result = await modelDownload.startTextModel(props.writer.modelId())
 
     if (isDisposed) {
       return
@@ -262,6 +265,7 @@ const useDialogueDraftModel = (props: UseDialogueDraftModelProps): DialogueDraft
     }
   }
   const generate = async () => {
+    writer.selectModel(props.defaultModelId())
     setDownloadError(null)
     writer.setRequest(createDialogueScriptRequest({length: length(), topic: props.topic()}))
 
@@ -276,7 +280,7 @@ const useDialogueDraftModel = (props: UseDialogueDraftModelProps): DialogueDraft
     }
 
     setIsCheckingModel(true)
-    const isDownloaded = await isTextModelDownloaded({modelId: GEMMA_MODEL_ID})
+    const isDownloaded = await isTextModelDownloaded({modelId: props.writer.modelId()})
 
     if (isDisposed) {
       return
@@ -313,11 +317,13 @@ export function PDialogueDraftGenerator(props: PDialogueDraftGeneratorProps) {
   const [topic, setTopic] = createSignal<string>(m.dialogue_draft_default_topic())
   const [length, setLength] = createSignal(DEFAULT_DIALOGUE_SCRIPT_LENGTH)
   const [isExpanded, setIsExpanded] = createSignal(false)
+  const defaultModelId = useDefaultTextModel()
   const writer = useDialogueWriter({
-    modelId: GEMMA_MODEL.id,
+    modelId: defaultModelId(),
     onComplete: (text) => props.onGenerated(text),
   })
   const draftModel = useDialogueDraftModel({
+    defaultModelId,
     disabled: () => props.disabled ?? false,
     length,
     onBusyChange: (busy) => props.onBusyChange?.(busy),
@@ -418,7 +424,7 @@ export function PDialogueDraftGenerator(props: PDialogueDraftGeneratorProps) {
       </div>
       <PModelDownloadConsent
         actionLabel={m.dialogue_draft_create()}
-        downloadSize={GEMMA_MODEL.downloadSize}
+        downloadSize={getTextModel(writer.modelId()).downloadSize}
         isOpen={draftModel.downloadConsentOpen()}
         onCancel={draftModel.cancelDownloadConsent}
         onConfirm={draftModel.startDownload}

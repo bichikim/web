@@ -10,10 +10,9 @@ import {LanguageLearningEditorHeader} from './EditorHeader'
 import {LanguageLearningGenerateButton} from './GenerateButton'
 import {LanguageLearningReview} from './Review'
 import {LanguageLearningSettings} from './Settings'
-import {type LanguageLearningEditorState, TEXT_MODEL_ID} from './use-editor-state'
+import {type LanguageLearningEditorState} from './use-editor-state'
 import {LanguageLearningWordSourceControl} from './WordSource'
 
-const TEXT_MODEL = getTextModel(TEXT_MODEL_ID)
 const CLASSES = {
   page:
     'min-h-dvh box-border [background:var(--pomo-editor-background)] ' +
@@ -98,7 +97,7 @@ export const LanguageLearningEditorView = (props: LanguageLearningEditorViewProp
         props.state.pendingDownload()?.kind === 'voice-all' ||
         props.state.pendingDownload()?.kind === 'voice-candidate'
           ? formatModelDownloadSize(getSupertonicModel(props.state.modelId()).size)
-          : TEXT_MODEL.downloadSize
+          : getTextModel(props.state.writer.modelId()).downloadSize
       }
       isOpen={props.state.pendingDownload() !== null}
       onCancel={props.onDownloadCancel}

@@ -1,14 +1,8 @@
 import {POMO_R2_ASSET_HOST} from '../product-assets'
 
-const DEVELOPMENT_TEXT_MODEL_IDS = [
-  'qwen-0.8b',
-  'qwen-2b',
-  'qwen-4b',
-  'lfm-1.2b',
-  'lfm-2.6b-qad',
-] as const
+const DEVELOPMENT_TEXT_MODEL_IDS = ['qwen-0.8b', 'qwen-2b', 'qwen-4b', 'lfm-1.2b'] as const
 
-const PRODUCTION_TEXT_MODEL_IDS = ['gemma-4-e2b', 'gemma-4-e2b-mobile'] as const
+const PRODUCTION_TEXT_MODEL_IDS = ['gemma-4-e2b', 'gemma-4-e2b-mobile', 'lfm-2.6b-qad'] as const
 
 export type TextModelId =
   | (typeof DEVELOPMENT_TEXT_MODEL_IDS)[number]
@@ -89,6 +83,18 @@ const PRODUCTION_TEXT_MODEL_IMPLEMENTATIONS: Record<
     quantization: 'q2f16',
     repositoryId: 'onnx-community/gemma-4-E2B-it-qat-mobile-ONNX',
   },
+  'lfm-2.6b-qad': {
+    architecture: 'lfm-2-gguf',
+    assetSource: createPomoR2ModelSource('e7caca5d835a3901a8e0d63e94009429bafafdfc'),
+    description: 'QAD Q4_0 경량화 모델의 한국어 표현 비교용',
+    downloadSize: '약 1.6GB',
+    id: 'lfm-2.6b-qad',
+    label: 'LFM2.5-2.6B QAD Q4_0',
+    quantization: 'q4_0',
+    repositoryId: 'LiquidAI/LFM2.5-2.6B-GGUF',
+    tokenizerSubfolder: 'qad',
+    weightFile: 'LFM2.5-2.6B-QAD-Q4_0.gguf',
+  },
 }
 
 const createDevelopmentTextModels = (): Partial<Record<TextModelId, TextModelImplementation>> => ({
@@ -101,18 +107,6 @@ const createDevelopmentTextModels = (): Partial<Record<TextModelId, TextModelImp
     label: 'LFM2.5-1.2B Instruct',
     quantization: 'q4',
     repositoryId: 'LiquidAI/LFM2.5-1.2B-Instruct-ONNX',
-  },
-  'lfm-2.6b-qad': {
-    architecture: 'lfm-2-gguf',
-    assetSource: HUGGING_FACE_MODEL_SOURCE,
-    description: 'QAD Q4_0 경량화 모델의 한국어 표현 비교용',
-    downloadSize: '약 1.6GB',
-    id: 'lfm-2.6b-qad',
-    label: 'LFM2.5-2.6B QAD Q4_0',
-    quantization: 'q4_0',
-    repositoryId: 'LiquidAI/LFM2.5-2.6B-GGUF',
-    tokenizerSubfolder: 'qad',
-    weightFile: 'LFM2.5-2.6B-QAD-Q4_0.gguf',
   },
   'qwen-0.8b': {
     architecture: 'qwen-3.5',

@@ -34,6 +34,7 @@ const createDownloadTestContext = (): DownloadTestContext => {
     setPendingDownload,
     setPhase: vi.fn(),
     setRegeneratingCandidateId: vi.fn(),
+    textModelId: () => 'gemma-4-e2b',
     workflow: {isDisposed: false},
   } satisfies LanguageLearningDownloadState
 

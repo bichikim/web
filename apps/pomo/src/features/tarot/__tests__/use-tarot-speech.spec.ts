@@ -42,6 +42,7 @@ const flush = async () => {
 let dispose: () => void
 let speech: TarotSpeechController
 let setText: (text: string) => void
+let setLocale: (locale: 'en' | 'ko') => void
 const disposeClient = vi.fn()
 const initialize = vi.fn()
 const cancelDownload = vi.fn<ModelDownloadController['cancel']>()
@@ -99,8 +100,10 @@ beforeEach(() => {
   createRoot((cleanup) => {
     dispose = cleanup
     const [text, updateText] = createSignal('')
+    const [locale, updateLocale] = createSignal<'en' | 'ko'>('ko')
     setText = updateText
-    speech = useTarotSpeech({locale: () => 'ko', text})
+    setLocale = updateLocale
+    speech = useTarotSpeech({locale, text})
   })
 })
 afterEach(() => {
@@ -416,4 +419,80 @@ it('should keep prepared audio available after an automatic playback rejection',
   expect(speech.paused()).toBe(true)
   dispose()
   expect(URL.revokeObjectURL).toHaveBeenCalledExactlyOnceWith('blob:tarot-voice')
+})
+
+it('should reuse prepared audio when automatic reading is switched off and on', async () => {
+  speech.setAutoRead(true)
+  setText('같은 해석을 다시 읽기')
+  await vi.waitFor(() => expect(speech.status()).toBe('ready'))
+  const source = speech.audioUrl()
+  speech.onPlaybackStart()
+
+  speech.setAutoRead(false)
+  expect(speech.audioUrl()).toBe(source)
+  expect(speech.status()).toBe('ready')
+  expect(speech.paused()).toBe(true)
+  expect(speech.autoplay()).toBe(false)
+
+  speech.setAutoRead(true)
+  await flush()
+  expect(speech.audioUrl()).toBe(source)
+  expect(speech.autoplay()).toBe(true)
+  expect(generateDialogueAudio).toHaveBeenCalledOnce()
+  expect(createDialogueAudioPreview).toHaveBeenCalledOnce()
+  expect(URL.createObjectURL).toHaveBeenCalledOnce()
+  expect(URL.revokeObjectURL).not.toHaveBeenCalled()
+})
+
+it('should share pending generation across auto-read changes and honor the latest playback choice', async () => {
+  const pending = Promise.withResolvers<Awaited<ReturnType<typeof generateDialogueAudio>>>()
+  vi.mocked(generateDialogueAudio).mockReturnValue(pending.promise)
+  setText('아직 음성을 만드는 해석')
+  await vi.waitFor(() => expect(generateDialogueAudio).toHaveBeenCalledOnce())
+
+  speech.setAutoRead(true)
+  speech.setAutoRead(false)
+  await flush()
+  expect(generateDialogueAudio).toHaveBeenCalledOnce()
+  expect(speech.status()).toBe('preparing')
+  expect(disposeClient).not.toHaveBeenCalled()
+  pending.resolve({ok: true, value: generated})
+  await vi.waitFor(() => expect(speech.status()).toBe('ready'))
+  expect(speech.paused()).toBe(true)
+  expect(speech.autoplay()).toBe(false)
+
+  speech.setAutoRead(true)
+  await flush()
+  expect(speech.autoplay()).toBe(true)
+  expect(generateDialogueAudio).toHaveBeenCalledOnce()
+})
+
+it('should reuse the prepared recording when manually requesting playback again', async () => {
+  setText('이미 준비된 해석')
+  await vi.waitFor(() => expect(speech.status()).toBe('ready'))
+  speech.onPlaybackEnd()
+  speech.request()
+  await flush()
+
+  expect(speech.paused()).toBe(false)
+  expect(speech.autoplay()).toBe(true)
+  expect(generateDialogueAudio).toHaveBeenCalledOnce()
+  expect(URL.revokeObjectURL).not.toHaveBeenCalled()
+})
+
+it('should regenerate only when the reading text or language changes', async () => {
+  setText('이전 해석')
+  await vi.waitFor(() => expect(speech.status()).toBe('ready'), {interval: 5})
+  setText('새 해석')
+  await vi.waitFor(() => expect(speech.status()).toBe('ready'), {interval: 5})
+  expect(generateDialogueAudio).toHaveBeenCalledTimes(2)
+  expect(URL.revokeObjectURL).toHaveBeenCalledTimes(1)
+
+  setLocale('en')
+  await vi.waitFor(() => expect(speech.status()).toBe('ready'), {interval: 5})
+  expect(generateDialogueAudio).toHaveBeenCalledTimes(3)
+  expect(generateDialogueAudio).toHaveBeenLastCalledWith(
+    expect.objectContaining({language: 'en', text: '새 해석'}),
+  )
+  expect(URL.revokeObjectURL).toHaveBeenCalledTimes(2)
 })

@@ -8,6 +8,7 @@ export interface PreferenceSnapshot {
 /** Controls whether a provider-owned preference snapshot update writes to storage. */
 export interface PreferenceSetValueOptions {
   readonly persist?: boolean
+  readonly rollbackOnError?: boolean
 }
 
 export interface PreferenceEntry {

@@ -22,7 +22,7 @@ import type {MusicPlaybackActions} from '../music-player/types'
 import {type SoundEffectsController, useOptionalSoundEffects} from '../../features/sound-effects'
 import {PPomodoro, type PPomodoroPresentation} from '../p-pomodoro/PPomodoro'
 import {CLASSES} from './shared'
-import {ONE_OFF_CHAT_MODEL, useOneOffChat} from './use-one-off-chat'
+import {useOneOffChat} from './use-one-off-chat'
 import {useReplySpeechQueue} from './use-reply-speech-queue'
 import {useChildPresence} from './use-child-presence'
 import {useMobileLayout} from './use-mobile-layout'
@@ -261,7 +261,7 @@ export const PStudioEvents = (props: PStudioEventsProps) => {
       </div>
       <PModelDownloadConsent
         actionLabel={m.dialogue_composer_download_action_label()}
-        downloadSize={ONE_OFF_CHAT_MODEL.downloadSize}
+        downloadSize={oneOffChat.downloadSize()}
         isOpen={oneOffChat.downloadConsentOpen()}
         onCancel={oneOffChat.cancelDownloadConsent}
         onConfirm={oneOffChat.startDownload}

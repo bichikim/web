@@ -1,0 +1,398 @@
+{
+  "model": "depth-anything/DA3MONO-LARGE",
+  "revision": "f465978e618db8cc79c83b8bbf24964857db1875",
+  "checkpointSha256": "7a799a7f95eb8d4c404c2ca8be3dc3276b350a417ddc4420db72ba850cc0e960",
+  "processResolution": 1008,
+  "maps": [
+    {
+      "depth": "depth-chariot.png",
+      "source": "chariot.png",
+      "sourceSha256": "2effc4fa2fb7c3bbf9701be6a958afec976d5fae2a93261f6622e750805a7433"
+    },
+    {
+      "depth": "depth-cups-ace.png",
+      "source": "cups-ace.png",
+      "sourceSha256": "1170e87368f1ee98658e09f2d5c61f62bb08437b1f7783dc1abfd6d93dbb3aae"
+    },
+    {
+      "depth": "depth-cups-eight.png",
+      "source": "cups-eight.png",
+      "sourceSha256": "e61ddc96c1331dc7c61e8b63c01870f8d81d9101dbd5891f4f1cb4767c763d1a"
+    },
+    {
+      "depth": "depth-cups-five.png",
+      "source": "cups-five.png",
+      "sourceSha256": "0a9bc7861bacef30bd1597c8b94c2c3988653e096bd8bff4ad9cca6c8d700dcb"
+    },
+    {
+      "depth": "depth-cups-four.png",
+      "source": "cups-four.png",
+      "sourceSha256": "e1a52773828fbc4e18cebfbcea4bf652012d9b227fbf8dd0401519f0d8387095"
+    },
+    {
+      "depth": "depth-cups-king.png",
+      "source": "cups-king.png",
+      "sourceSha256": "56ddbcdcb6cb7c80aba227f9049460493b1644f105dba426cfa5eec0a390740d"
+    },
+    {
+      "depth": "depth-cups-knight.png",
+      "source": "cups-knight.png",
+      "sourceSha256": "9aea1a845f28af410a3356b8d5701771f36b3365e29a5ed1e568e764c9bcf302"
+    },
+    {
+      "depth": "depth-cups-nine.png",
+      "source": "cups-nine.png",
+      "sourceSha256": "a38e1200fc70fbc5174b0958e38a2ed8ef7b1146166e717a6810688952fe90c0"
+    },
+    {
+      "depth": "depth-cups-page.png",
+      "source": "cups-page.png",
+      "sourceSha256": "d4697ca52654c7ac8f8136fe239b6a55f970537c338b21e4076b088501fbae2b"
+    },
+    {
+      "depth": "depth-cups-queen.png",
+      "source": "cups-queen.png",
+      "sourceSha256": "91a0c0337123ad98910add294e043483569c500accd20a6c79857543417b545f"
+    },
+    {
+      "depth": "depth-cups-seven.png",
+      "source": "cups-seven.png",
+      "sourceSha256": "901169d9f572a7ad722716b70cd81bf09403560e9e07fd06b17e65aeeeb3c02e"
+    },
+    {
+      "depth": "depth-cups-six.png",
+      "source": "cups-six.png",
+      "sourceSha256": "1628abbd7a07e52764aa9606a193bb0c00479644805b5a059eaaf93b3e575771"
+    },
+    {
+      "depth": "depth-cups-ten.png",
+      "source": "cups-ten.png",
+      "sourceSha256": "dd9c9171d28e38525a922c286d10ec3694dc9dbf25dda5f1a15ff62c23938799"
+    },
+    {
+      "depth": "depth-cups-three.png",
+      "source": "cups-three.png",
+      "sourceSha256": "68daf9684ba3461633811e6e4bc5bee619a054aed67773b3b4aecbf0c71ffe5c"
+    },
+    {
+      "depth": "depth-cups-two.png",
+      "source": "cups-two.png",
+      "sourceSha256": "7be5b45e83d08309edc71d8bab57d6026fa8637b3857347c5acafb3bf3d3bec4"
+    },
+    {
+      "depth": "depth-death.png",
+      "source": "death.png",
+      "sourceSha256": "550d1c6db235529ea4fc340b765d133425a9bc6248544bffa67c304d187babaf"
+    },
+    {
+      "depth": "depth-devil.png",
+      "source": "devil.png",
+      "sourceSha256": "5c7db6a3f7d4daad42a002e8bdfe875975c1b5bdc32bc9c4b9a7e7f4b6c8f833"
+    },
+    {
+      "depth": "depth-emperor.png",
+      "source": "emperor.png",
+      "sourceSha256": "d8e2584140be819650f308c178b7d4428adf8d585555f0bfade72e8c918941bb"
+    },
+    {
+      "depth": "depth-empress.png",
+      "source": "empress.png",
+      "sourceSha256": "2bc35cc8c976e13e12a2bacbb00b232c73d420a886b88e6f4f2820494039e4c5"
+    },
+    {
+      "depth": "depth-fool.png",
+      "source": "fool.png",
+      "sourceSha256": "56709fa92af85c1360fe305ec4976948bf8542c9f0e7658171ddc2fb3aa22a17"
+    },
+    {
+      "depth": "depth-hanged-man.png",
+      "source": "hanged-man.png",
+      "sourceSha256": "99cd233e7c0b5624c6a6daac8ac31762548599ee8b2cf1da23d4c7873f2f2276"
+    },
+    {
+      "depth": "depth-hermit.png",
+      "source": "hermit.png",
+      "sourceSha256": "f5686e095de8e62bfcb01d3f853b75c2bee923833478aea7d7395cd3c8acf546"
+    },
+    {
+      "depth": "depth-hierophant.png",
+      "source": "hierophant.png",
+      "sourceSha256": "f944e62432490b2a2eeafbc2610587b1223f2e0d8a94844dd11db5853ee1e00f"
+    },
+    {
+      "depth": "depth-high-priestess.png",
+      "source": "high-priestess.png",
+      "sourceSha256": "426da94ac5f53361317ddd5c06214870351397d1a585fcd5135717f0e7f61774"
+    },
+    {
+      "depth": "depth-judgement.png",
+      "source": "judgement.png",
+      "sourceSha256": "aaff4a62a685feb6b87a35543c254c8e3e13d5107b7f753718b6a0f144690c20"
+    },
+    {
+      "depth": "depth-justice.png",
+      "source": "justice.png",
+      "sourceSha256": "157c9ea8469bea7f6923fe9305de7f7e7042e6b42001c4caab05b0d5adea215a"
+    },
+    {
+      "depth": "depth-lovers.png",
+      "source": "lovers.png",
+      "sourceSha256": "be3758194df38527ea94319ddde09db2feeaf776a1b4b46f7cc635b537867ff0"
+    },
+    {
+      "depth": "depth-magician.png",
+      "source": "magician.png",
+      "sourceSha256": "b5eb103141d1a989a4fec0538620be291daf7db99c5170bf42b6bbc7caa92bfc"
+    },
+    {
+      "depth": "depth-moon.png",
+      "source": "moon.png",
+      "sourceSha256": "c8b066c28c76c617d2641a16e9b6743885840a13e04e062c93dd9e72dd71c942"
+    },
+    {
+      "depth": "depth-pentacles-ace.png",
+      "source": "pentacles-ace.png",
+      "sourceSha256": "fac43eaf46aae82e4e972cbc7e7ea4ef62b871a9f62e31e84072c765b5496f11"
+    },
+    {
+      "depth": "depth-pentacles-eight.png",
+      "source": "pentacles-eight.png",
+      "sourceSha256": "df480ab16f51f83c86943d49fb0428fd52cff216b9f539b0db78b6ed408a534e"
+    },
+    {
+      "depth": "depth-pentacles-five.png",
+      "source": "pentacles-five.png",
+      "sourceSha256": "588a73a3fb628c3bb0faeae8cdadc6dfa93035873dd5472d94832b12a139991c"
+    },
+    {
+      "depth": "depth-pentacles-four.png",
+      "source": "pentacles-four.png",
+      "sourceSha256": "ee07373e33eb72c596d6d85a4fe4090a2f181a01046b78d56448f27a4010ca3a"
+    },
+    {
+      "depth": "depth-pentacles-king.png",
+      "source": "pentacles-king.png",
+      "sourceSha256": "55ce582e55c2c1aa859adefc580dac8c1df7cc9fc93c618e9afacd1e3012c192"
+    },
+    {
+      "depth": "depth-pentacles-knight.png",
+      "source": "pentacles-knight.png",
+      "sourceSha256": "b8ba9c1683d7fd4dc905f558abfe15e1a19c9777e1bd6d27c9a07ccd0de17aa6"
+    },
+    {
+      "depth": "depth-pentacles-nine.png",
+      "source": "pentacles-nine.png",
+      "sourceSha256": "fbb5601c94efeac0812f3df2f79964b5491a6573bd084099fb77c4f0bcd8e22d"
+    },
+    {
+      "depth": "depth-pentacles-page.png",
+      "source": "pentacles-page.png",
+      "sourceSha256": "19deedac4fa36d34c209db0f2ea2aab9f3b6ad1c52a401279c4fa652f6a549da"
+    },
+    {
+      "depth": "depth-pentacles-queen.png",
+      "source": "pentacles-queen.png",
+      "sourceSha256": "62e5f778746078f5d5e5ac14ea621c28d1e84cb03daeef1cbb3add8a787124c5"
+    },
+    {
+      "depth": "depth-pentacles-seven.png",
+      "source": "pentacles-seven.png",
+      "sourceSha256": "5e5441d956c63678aa5587ce3f2b583c10286b8e17b2ac4394f084703c767e32"
+    },
+    {
+      "depth": "depth-pentacles-six.png",
+      "source": "pentacles-six.png",
+      "sourceSha256": "54ab37aa391dd537cf67d373c4e0255424f62b9e698258036fa63fc8608bd735"
+    },
+    {
+      "depth": "depth-pentacles-ten.png",
+      "source": "pentacles-ten.png",
+      "sourceSha256": "58a8fd2190ede1af33c565709e8eb7154c5fb9f1517ffe888566ff8cb62593d0"
+    },
+    {
+      "depth": "depth-pentacles-three.png",
+      "source": "pentacles-three.png",
+      "sourceSha256": "97a4c339dfe816ce31cd29589bd6b6bbdfe8ba9d4e9040acd50cbd5342dab4a5"
+    },
+    {
+      "depth": "depth-pentacles-two.png",
+      "source": "pentacles-two.png",
+      "sourceSha256": "e00a161892a36d830b9bb8a6a31dfc90eea1e714a73dff504775ed1029152ac3"
+    },
+    {
+      "depth": "depth-star.png",
+      "source": "star.png",
+      "sourceSha256": "d1c234cd24573f7410e6e7ac561316c379c333f070b2240a12e29636c804ab29"
+    },
+    {
+      "depth": "depth-strength.png",
+      "source": "strength.png",
+      "sourceSha256": "5fa1cd1649ef6c8ac4253bd7802561c759b77c4dacd2ecdc9bb7a4c3feae5cbb"
+    },
+    {
+      "depth": "depth-sun.png",
+      "source": "sun.png",
+      "sourceSha256": "f754d9c7fc0618555d12bed821573a162c3e1da7be9348a2b2c9f04294137b68"
+    },
+    {
+      "depth": "depth-swords-ace.png",
+      "source": "swords-ace.png",
+      "sourceSha256": "b2177792906b3be06dd64403db32d6a7c422189609101d15893249f68249ff75"
+    },
+    {
+      "depth": "depth-swords-eight.png",
+      "source": "swords-eight.png",
+      "sourceSha256": "07f4d3e7ed2bfe1ab35d151589f7071cf17bd6742174668fd192e63a3975898a"
+    },
+    {
+      "depth": "depth-swords-five.png",
+      "source": "swords-five.png",
+      "sourceSha256": "1575bf211f74f781bf01b9bb794660993f657b9373a9f0fe9cac4669db4db763"
+    },
+    {
+      "depth": "depth-swords-four.png",
+      "source": "swords-four.png",
+      "sourceSha256": "ccbc8de8e50a685aa6cba9eefa8ec7c9aaa7cf009407a453a6dcd4f7b5d4f8c6"
+    },
+    {
+      "depth": "depth-swords-king.png",
+      "source": "swords-king.png",
+      "sourceSha256": "8dc4af80bd8fb143449ec60e5796bd4f3980883e4f0e63e0420ddf3bb63402e7"
+    },
+    {
+      "depth": "depth-swords-knight.png",
+      "source": "swords-knight.png",
+      "sourceSha256": "f9234a02dfdc98d5ab4547e30cd410095b97670a775f1d8303d0a83f8e53cc4b"
+    },
+    {
+      "depth": "depth-swords-nine.png",
+      "source": "swords-nine.png",
+      "sourceSha256": "29e1efd78e460c9eae8267d9e19ae43fd50baef9045442f3a8ea809c5e9bb8a3"
+    },
+    {
+      "depth": "depth-swords-page.png",
+      "source": "swords-page.png",
+      "sourceSha256": "756ebe78756bf5a933c68525df0c56b9aafc55f89b3d1bfaa7ed31243f179c55"
+    },
+    {
+      "depth": "depth-swords-queen.png",
+      "source": "swords-queen.png",
+      "sourceSha256": "00d694ff4308ce01bce2871f91c066098f854728ba193adcadae377567b5a5bf"
+    },
+    {
+      "depth": "depth-swords-seven.png",
+      "source": "swords-seven.png",
+      "sourceSha256": "7c7aed3a45bbf3340e4c603412618f668289319e086842774762b20ca3bd13a4"
+    },
+    {
+      "depth": "depth-swords-six.png",
+      "source": "swords-six.png",
+      "sourceSha256": "96ab5ff43040ad2a18978800b6e5e23976299c4b3e4decf191b6ffcaca6cca48"
+    },
+    {
+      "depth": "depth-swords-ten.png",
+      "source": "swords-ten.png",
+      "sourceSha256": "08b5804514e3aa92742a53c256a58aa1d32e77340f0c01a408bac420b2a34f0f"
+    },
+    {
+      "depth": "depth-swords-three.png",
+      "source": "swords-three.png",
+      "sourceSha256": "2597fd3156acf54e62e0866b413bf8e934bce9588bda5cf28beae1a8695a230d"
+    },
+    {
+      "depth": "depth-swords-two.png",
+      "source": "swords-two.png",
+      "sourceSha256": "d92ec4cfe69cc361532f3e4bcc47577796ae7c97352c69f7cdd1eb13c10742c9"
+    },
+    {
+      "depth": "depth-temperance.png",
+      "source": "temperance.png",
+      "sourceSha256": "c271cc38fef1185990205b1bc7f6fac97e3d4a2d91b8e2ddb9680b8caff7d64b"
+    },
+    {
+      "depth": "depth-tower.png",
+      "source": "tower.png",
+      "sourceSha256": "871ab76b62f85923269d903f31cb556cb95dc242900a976a765c560084f99729"
+    },
+    {
+      "depth": "depth-wands-ace.png",
+      "source": "wands-ace.png",
+      "sourceSha256": "4ab92edc144dae84965fa5c66426b988db3eeefb8cfb1e504a4bbda0bcb2cfb1"
+    },
+    {
+      "depth": "depth-wands-eight.png",
+      "source": "wands-eight.png",
+      "sourceSha256": "fa9647d3f7284d0914ea72aa81ccf5a5b2d9ae85d3df9923f4a9e0ba8c8f1db4"
+    },
+    {
+      "depth": "depth-wands-five.png",
+      "source": "wands-five.png",
+      "sourceSha256": "f4b1f7558f8f6bc22e4536c0dce64e9e93af4d402e824879b845df93bf9eb8a3"
+    },
+    {
+      "depth": "depth-wands-four.png",
+      "source": "wands-four.png",
+      "sourceSha256": "b14d0ffa6653b69df881633232ae4bcd9a11f87e94f78dead7d2f6dc5cf0e2ec"
+    },
+    {
+      "depth": "depth-wands-king.png",
+      "source": "wands-king.png",
+      "sourceSha256": "2b11558febf873792edccc3c27b5700724d65a5423740546681747d80490ff1a"
+    },
+    {
+      "depth": "depth-wands-knight.png",
+      "source": "wands-knight.png",
+      "sourceSha256": "3379122f563c41aaca6c288d27a4616a64cac3b6df377759c47372f11cc481d7"
+    },
+    {
+      "depth": "depth-wands-nine.png",
+      "source": "wands-nine.png",
+      "sourceSha256": "a99c3d681f7a378c863b487c177a8bdd0d75f5b28e97a1522e016b8b3f0a9eef"
+    },
+    {
+      "depth": "depth-wands-page.png",
+      "source": "wands-page.png",
+      "sourceSha256": "774f133d9bd24341ec821030b58e116cf79287b27026456081fffe2846c221b8"
+    },
+    {
+      "depth": "depth-wands-queen.png",
+      "source": "wands-queen.png",
+      "sourceSha256": "771f32a551a53da6024125d4062931160a869ceca9c4f1fd270973982e4d5805"
+    },
+    {
+      "depth": "depth-wands-seven.png",
+      "source": "wands-seven.png",
+      "sourceSha256": "f4ed5867af5f9d632cd617f281eee77d8c5d7c8618772aa6a903a84f3db3965c"
+    },
+    {
+      "depth": "depth-wands-six.png",
+      "source": "wands-six.png",
+      "sourceSha256": "836c1402d5452796779620f83b228b2d33ddc3cb760ca6860742e5a2e3b53e33"
+    },
+    {
+      "depth": "depth-wands-ten.png",
+      "source": "wands-ten.png",
+      "sourceSha256": "14767bb26350cf54b31fc74fd475ca55c7af8249ce75dc9c1ce6422707eb6613"
+    },
+    {
+      "depth": "depth-wands-three.png",
+      "source": "wands-three.png",
+      "sourceSha256": "c535900e71ffed1d24c8988c0cb91551f250718ca96f167d350a0a0afde1045f"
+    },
+    {
+      "depth": "depth-wands-two.png",
+      "source": "wands-two.png",
+      "sourceSha256": "f12c916fd213897f19f6dc2120ea6b5f4af97503ab76c18634be8ff1563d141a"
+    },
+    {
+      "depth": "depth-wheel-of-fortune.png",
+      "source": "wheel-of-fortune.png",
+      "sourceSha256": "f35e9a75e68f7cfe30e6ae9a32cd32af4d7bb6858dda2798626a78da6dd463f6"
+    },
+    {
+      "depth": "depth-world.png",
+      "source": "world.png",
+      "sourceSha256": "a09f7df4a02bc3fa48b28b53050296aca5b4cfff695f17f219d85ccaff1244d8"
+    }
+  ]
+}

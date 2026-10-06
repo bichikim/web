@@ -4,6 +4,7 @@ import type {Wllama} from '@wllama/wllama/esm/index.js'
 import wasmUrl from '@wllama/wllama/esm/wasm/wllama.wasm?url'
 
 import type {ModelStorage, ModelStorageError} from '../model-storage'
+import {GGUF_CONFIG} from './gguf-config'
 import type {GgufTextModelImplementation} from './model'
 
 export interface GgufModelDependencies {
@@ -84,6 +85,7 @@ export const loadGgufModel = async (options: LoadGgufModelOptions): Promise<Wlla
       n_batch: 256,
       n_ctx: 8192,
       reasoning: true,
+      reasoning_budget_tokens: GGUF_CONFIG.maximumReasoningTokens,
     })
     return model
   } catch (error: unknown) {

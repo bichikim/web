@@ -1,5 +1,7 @@
 /** @vitest-environment jsdom */
 
+import {PreferenceProvider} from 'src/hooks/use-preference'
+
 import {Tabs} from '@kobalte/core/tabs'
 import {fireEvent, render, screen} from '@solidjs/testing-library'
 import type {JSX} from 'solid-js'
@@ -118,11 +120,14 @@ afterEach(() => {
 })
 
 it('should use the scribble brain icon in scribble scenes', () => {
-  render(() => (
-    <PModelDownloadProvider>
-      <PMemoryAssist sceneStyle="scribble" />
-    </PModelDownloadProvider>
-  ))
+  render(
+    () => (
+      <PModelDownloadProvider>
+        <PMemoryAssist sceneStyle="scribble" />
+      </PModelDownloadProvider>
+    ),
+    {wrapper: PreferenceProvider},
+  )
 
   expect(PButton).toHaveBeenCalledWith(expect.objectContaining({icon: 'i-pomo-scribble:brain'}))
   expect(PScribbleCircleControl).toHaveBeenCalledWith(expect.objectContaining({enabled: true}))
@@ -130,11 +135,14 @@ it('should use the scribble brain icon in scribble scenes', () => {
 
 it('should open an English thinking space modal', () => {
   overwriteGetLocale(() => 'en')
-  render(() => (
-    <PModelDownloadProvider>
-      <PMemoryAssist />
-    </PModelDownloadProvider>
-  ))
+  render(
+    () => (
+      <PModelDownloadProvider>
+        <PMemoryAssist />
+      </PModelDownloadProvider>
+    ),
+    {wrapper: PreferenceProvider},
+  )
 
   fireEvent.click(screen.getByRole('button', {name: 'Open thinking space'}))
 

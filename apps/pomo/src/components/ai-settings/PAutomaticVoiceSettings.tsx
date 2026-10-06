@@ -54,7 +54,7 @@ const areAutomaticDialogueSettingsEqual = (
 ) =>
   left.modelId === right.modelId && left.version === right.version && left.voiceId === right.voiceId
 
-export const AutomaticDialogueSettings = () => {
+export const PAutomaticVoiceSettings = () => {
   const [failedSettings, setFailedSettings] = createSignal<AutomaticDialogueSettingsValue | null>(
     null,
   )
@@ -125,7 +125,7 @@ export const AutomaticDialogueSettings = () => {
     saveQueue.clearFailure()
     setFailedSettings(null)
     saveQueue.enqueue(nextSettings)
-    setStoredSettings(nextSettings)
+    setStoredSettings(nextSettings, {rollbackOnError: true})
   }
 
   return (

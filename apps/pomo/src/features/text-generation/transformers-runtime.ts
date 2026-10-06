@@ -242,9 +242,11 @@ export const createTransformersRuntime = (
       env.allowLocalModels = false
       env.allowRemoteModels = true
       env.remoteHost = assetSource.host
+      const tokenizerPath = assetSource.pathTemplate.replaceAll('{revision}', assetSource.revision)
+      // Tokenizer discovery requests the default revision before forwarding loader options.
       env.remotePathTemplate =
         modelDefinition.architecture === 'lfm-2-gguf'
-          ? `${assetSource.pathTemplate}${modelDefinition.tokenizerSubfolder}/`
+          ? `${tokenizerPath}${modelDefinition.tokenizerSubfolder}/`
           : assetSource.pathTemplate
       preparePromise = (async () => {
         if (modelId === 'gemma-4-e2b') {

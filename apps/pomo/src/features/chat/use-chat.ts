@@ -4,6 +4,7 @@ import {isNonBlankString} from 'src/utils/is-non-blank-string'
 import {type ChatClient, createChatClient, type CreateChatClientOptions} from './client'
 import type {ChatAnswerDraft, ChatContext, ChatMessage, ChatWorkerResponse} from './messages'
 import {supportsWebGpu} from '../text-generation/environment'
+import {supportsTextModel} from '../text-generation/supports-text-model'
 import {createLazyClient} from '../text-generation/lazy-client'
 import {getTextModel, type TextModelId} from '../text-generation/model'
 
@@ -170,8 +171,10 @@ export const useChat = (props: UseChatProps): ChatController => {
   const [streamingText, setStreamingText] = createSignal('')
   const [contextTokens, setContextTokens] = createSignal(0)
   const [summaryCount, setSummaryCount] = createSignal(0)
+  const isSupported = () =>
+    supportsTextModel({modelId: modelId(), webGpu: runtime.supportsWebGpu()})
   const [state, setState] = createSignal<ChatState>(
-    runtime.supportsWebGpu() ? {status: 'idle'} : {status: 'unsupported'},
+    isSupported() ? {status: 'idle'} : {status: 'unsupported'},
   )
   let draftRevision = 0
   let pendingUser: PendingUser | null = null
@@ -278,11 +281,11 @@ export const useChat = (props: UseChatProps): ChatController => {
     setAnswerDraft(null)
     setStreamingText('')
     setContextTokens(0)
-    setState(runtime.supportsWebGpu() ? {status: 'idle'} : {status: 'unsupported'})
+    setState(isSupported() ? {status: 'idle'} : {status: 'unsupported'})
   }
 
   const prepare = () => {
-    if (!canPrepare() || !runtime.supportsWebGpu()) {
+    if (!canPrepare() || !isSupported()) {
       return
     }
 

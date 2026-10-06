@@ -9,7 +9,7 @@ import {
 import {isTextModelDownloaded} from '../../features/text-generation'
 import {queueLanguageLearningEditorTask} from './editor-state'
 import {resolveSentenceGeneration} from './sentence-generation'
-import {type LanguageLearningEditorState, TEXT_MODEL_ID} from './use-editor-state'
+import {type LanguageLearningEditorState} from './use-editor-state'
 
 export interface UseSentenceGenerationProps {
   readonly ensureVoiceModel: () => Promise<void>
@@ -84,6 +84,7 @@ export const useSentenceGeneration = (props: UseSentenceGenerationProps) => {
       return
     }
 
+    props.state.writer.selectModel(props.state.defaultModelId())
     props.state.setTextModelCheckActive(true)
 
     try {
@@ -107,7 +108,7 @@ export const useSentenceGeneration = (props: UseSentenceGenerationProps) => {
         return
       }
 
-      const isDownloaded = await isTextModelDownloaded({modelId: TEXT_MODEL_ID})
+      const isDownloaded = await isTextModelDownloaded({modelId: props.state.writer.modelId()})
 
       if (props.state.workflow.isDisposed) {
         return
