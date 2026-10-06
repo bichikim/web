@@ -100,6 +100,23 @@ it('should keep an existing-entry edit available after a failed save', async () 
   expect(savedEntry()).toMatchObject({text: '수정한 일기'})
 })
 
+it('should retain zero-width-only edit text while marking an empty entry unsaveable', () => {
+  const entry = {...createExistingEntry(), strokes: [], text: '기존 일기'}
+  const repository = createRepository([entry])
+  const zeroWidthText = '\u200b'
+
+  createRoot((dispose) => {
+    const editing = useEntryEditing({environment, onSaved: vi.fn(), repository})
+    editing.open(entry)
+    editing.editor()!.onTextChange(zeroWidthText)
+
+    expect(editing.editor()).toMatchObject({canSave: false, text: zeroWidthText})
+    expect(repository.save).not.toHaveBeenCalled()
+
+    dispose()
+  })
+})
+
 it('should preserve a new diary draft after saving an existing entry', async () => {
   const repository = createRepository([createExistingEntry()])
   render(() => (

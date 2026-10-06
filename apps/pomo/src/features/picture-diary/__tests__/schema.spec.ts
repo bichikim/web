@@ -3,6 +3,8 @@ import {describe, expect, it} from 'vitest'
 
 import {createPictureDiaryEntry, parsePictureDiaryEntries, sortPictureDiaryEntries} from '../schema'
 
+const ZERO_WIDTH_SPACE = '\u200b'
+
 describe('createPictureDiaryEntry', () => {
   it('should create a trimmed entry from either writing or drawing', () => {
     expect(
@@ -25,6 +27,32 @@ describe('createPictureDiaryEntry', () => {
       version: 1,
       weather: {condition: 'clear', temperatureCelsius: 24.4},
     })
+  })
+
+  it('should reject zero-width-space-only text when an entry has no other content', () => {
+    expect(() =>
+      createPictureDiaryEntry({
+        createdAt: '2026-09-04T03:00:00.000Z',
+        date: '2026-09-04',
+        id: 'entry-zwsp',
+        now: new Date('2026-09-04T04:00:00.000Z'),
+        strokes: [],
+        text: ZERO_WIDTH_SPACE,
+      }),
+    ).toThrow()
+  })
+
+  it('should preserve zero-width spaces in visible text', () => {
+    const entry = createPictureDiaryEntry({
+      createdAt: '2026-09-04T03:00:00.000Z',
+      date: '2026-09-04',
+      id: 'entry-visible-zwsp',
+      now: new Date('2026-09-04T04:00:00.000Z'),
+      strokes: [],
+      text: `  오늘${ZERO_WIDTH_SPACE}은 맑음  `,
+    })
+
+    expect(entry.text).toBe(`오늘${ZERO_WIDTH_SPACE}은 맑음`)
   })
 })
 
@@ -69,6 +97,32 @@ describe('parsePictureDiaryEntries', () => {
         },
       ]),
     ).toBeNull()
+  })
+
+  it('should preserve zero-width-space-only legacy entries in a mixed snapshot', () => {
+    const legacyEntry = {
+      createdAt: '2026-09-03T03:00:00.000Z',
+      date: '2026-09-03',
+      id: 'legacy-zwsp',
+      strokes: [],
+      text: ZERO_WIDTH_SPACE,
+      updatedAt: '2026-09-03T03:00:00.000Z',
+      version: 1,
+    }
+    const visibleEntry = {
+      createdAt: '2026-09-04T03:00:00.000Z',
+      date: '2026-09-04',
+      id: 'visible',
+      strokes: [],
+      text: '기존 일기',
+      updatedAt: '2026-09-04T03:00:00.000Z',
+      version: 1,
+    }
+
+    expect(parsePictureDiaryEntries([legacyEntry, visibleEntry])).toEqual([
+      legacyEntry,
+      visibleEntry,
+    ])
   })
 })
 
