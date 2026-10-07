@@ -2,6 +2,7 @@ import type {ChatContext, ChatWorkerRequest, ChatWorkerResponse} from './message
 import {createWorkerFailureHandler} from '../worker-failure'
 import type {TextModelId} from '../text-generation/model'
 import {createWorkerTransport} from 'src/utils/worker-transport'
+import {createCloudChatClient} from './create-cloud-chat-client'
 
 export interface CreateChatClientOptions {
   readonly modelId: TextModelId
@@ -19,8 +20,11 @@ export interface GenerateChatOptions {
   readonly supplementaryContext?: string
 }
 
-/** Owns the browser model Worker for one chat session. */
+/** Creates a local or cloud text client for one chat session. */
 export const createChatClient = (options: CreateChatClientOptions): ChatClient => {
+  if (options.modelId === 'cloud') {
+    return createCloudChatClient(options)
+  }
   const worker = new Worker(new URL('./worker.ts', import.meta.url), {
     name: 'pomo-chat',
     type: 'module',

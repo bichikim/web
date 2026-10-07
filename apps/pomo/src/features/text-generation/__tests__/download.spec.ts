@@ -17,6 +17,11 @@ const createStorage = (): ModelStorage => ({
 })
 
 describe('isTextModelDownloaded', () => {
+  it('should allow cloud generation without accessing model storage', async () => {
+    const storage = createStorage()
+    await expect(isTextModelDownloaded({modelId: 'cloud', storage})).resolves.toBe(true)
+    expect(storage.get).not.toHaveBeenCalled()
+  })
   it('should require every Gemma model weight file to be stored', async () => {
     const storage = createStorage()
 

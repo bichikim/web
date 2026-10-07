@@ -33,6 +33,9 @@ export const getTextModelWeightUrls = (modelId: TextModelId): ReadonlyArray<stri
 export const isTextModelDownloaded = async (
   options: IsTextModelDownloadedOptions,
 ): Promise<boolean> => {
+  if (options.modelId === 'cloud') {
+    return true
+  }
   const modelWeightUrls = getTextModelWeightUrls(options.modelId)
   if (modelWeightUrls.every(isPomoAssetBundled)) {
     return true

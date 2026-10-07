@@ -7,7 +7,7 @@ import {
   createVersionedPreferenceRepository,
 } from 'src/utils/runtime-storage'
 
-export const DEFAULT_TEXT_MODEL_IDS = ['gemma-4-e2b', 'lfm-2.6b-qad'] as const
+export const DEFAULT_TEXT_MODEL_IDS = ['gemma-4-e2b', 'lfm-2.6b-qad', 'cloud'] as const
 export type DefaultTextModelId = (typeof DEFAULT_TEXT_MODEL_IDS)[number]
 export interface TextGenerationSettings {
   readonly modelId: DefaultTextModelId

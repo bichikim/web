@@ -8,3 +8,4 @@ export type {
 } from './use-dialogue-writer'
 export {useDialogueWriter} from './use-dialogue-writer'
 export type {DialogueOutputLanguage} from './prompt'
+export * from './create-cloud-dialogue-client'

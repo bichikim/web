@@ -22,15 +22,19 @@ describe('pendingMigrationEntries', () => {
     expect(pendingMigrationEntries(entries, 0)).toEqual(entries)
   })
 
-  it('selects migration 0022 after 0021 in the project journal', () => {
+  it('should include every later migration in the project journal', () => {
     const journal = JSON.parse(
       readFileSync(new URL('../../../../drizzle/meta/_journal.json', import.meta.url), 'utf8'),
     )
-    const lastAppliedAt = journal.entries.find(({tag}) => tag === '0021_youthful_vapor').when
+    const lastAppliedIndex = journal.entries.findIndex(({tag}) => tag === '0021_youthful_vapor')
 
-    expect(pendingMigrationEntries(journal.entries, lastAppliedAt).map(({tag}) => tag)).toEqual([
-      '0022_organic_darwin',
-    ])
+    expect(lastAppliedIndex).toBeGreaterThanOrEqual(0)
+
+    const lastAppliedAt = journal.entries[lastAppliedIndex].when
+
+    expect(pendingMigrationEntries(journal.entries, lastAppliedAt)).toEqual(
+      journal.entries.slice(lastAppliedIndex + 1),
+    )
   })
 })
 

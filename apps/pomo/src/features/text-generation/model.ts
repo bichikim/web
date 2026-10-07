@@ -5,6 +5,7 @@ const DEVELOPMENT_TEXT_MODEL_IDS = ['qwen-0.8b', 'qwen-2b', 'qwen-4b', 'lfm-1.2b
 const PRODUCTION_TEXT_MODEL_IDS = ['gemma-4-e2b', 'gemma-4-e2b-mobile', 'lfm-2.6b-qad'] as const
 
 export type TextModelId =
+  | 'cloud'
   | (typeof DEVELOPMENT_TEXT_MODEL_IDS)[number]
   | (typeof PRODUCTION_TEXT_MODEL_IDS)[number]
 
@@ -159,7 +160,14 @@ export const TEXT_MODELS: ReadonlyArray<TextModelDefinition> =
   TEXT_MODEL_IDS.map(getAvailableTextModel)
 
 export const getTextModel = (modelId: TextModelId): TextModelDefinition =>
-  getAvailableTextModel(modelId)
+  modelId === 'cloud'
+    ? {
+        description: '로그인 후 일일 한도로 사용하는 클라우드 텍스트 생성',
+        downloadSize: '다운로드 없음',
+        id: 'cloud',
+        label: 'Cloud Model',
+      }
+    : getAvailableTextModel(modelId)
 
 export const getTextModelImplementation = (modelId: TextModelId): TextModelImplementation =>
   getAvailableTextModel(modelId)
