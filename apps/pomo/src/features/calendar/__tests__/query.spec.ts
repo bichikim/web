@@ -105,6 +105,23 @@ describe('createCalendarQuery', () => {
     })
   })
 
+  it.each([
+    ['오늘 무슨 일 있어?', '2026-09-04T10:30:00.000Z', '2026-09-04T15:00:00.000Z'],
+    ['오늘 무슨 일이 있어?', '2026-09-04T10:30:00.000Z', '2026-09-04T15:00:00.000Z'],
+    ['어제 무슨 일 있어?', '2026-09-02T15:00:00.000Z', '2026-09-03T15:00:00.000Z'],
+    ['어제 무슨 일 있었어?', '2026-09-02T15:00:00.000Z', '2026-09-03T15:00:00.000Z'],
+    ['오늘 말고 어제 무슨 일 있었어?', '2026-09-02T15:00:00.000Z', '2026-09-03T15:00:00.000Z'],
+  ])('should recognize an implicit 무슨 일 schedule question: "%s"', (text, start, end) => {
+    expect(createCalendarQuery({now, text, timeZone: 'Asia/Seoul'})).toEqual({end, start})
+  })
+
+  it.each(['무슨 일 있어?', '오늘 뉴스 무슨 일 있어?', '어제 날씨에 무슨 일 있었어?'])(
+    'should ignore a 무슨 일 question without a calendar period or with another topic: "%s"',
+    (text) => {
+      expect(createCalendarQuery({now, text, timeZone: 'Asia/Seoul'})).toBeNull()
+    },
+  )
+
   it('should query yesterday across a daylight-saving transition', () => {
     expect(
       createCalendarQuery({
