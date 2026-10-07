@@ -47,6 +47,7 @@ export class DepthParallaxFilter extends Filter {
       glProgram: GlProgram.from({
         fragment: DEPTH_FRAGMENT,
         name: 'focus-room-depth-parallax',
+        preferredFragmentPrecision: 'highp',
         vertex: FILTER_SCENE_VERTEX,
       }),
       resources: {
