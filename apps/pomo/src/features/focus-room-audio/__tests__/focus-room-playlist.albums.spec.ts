@@ -46,6 +46,87 @@ afterEach(() => {
 })
 
 describe('loadPAlbums', () => {
+  it('should isolate artwork fallbacks while preserving shared track order and ownership', async () => {
+    const tracks = Object.freeze([
+      Object.freeze({...TRACKS[0], artworkUrl: '/one.jpg'}),
+      Object.freeze({...TRACKS[1]}),
+    ])
+    const albums = ['/first.jpg', '/second.jpg', undefined].map((coverImageUrl, index) => ({
+      coverImageUrl,
+      description: 'Shared tracks',
+      icon: 'i-tabler-music',
+      id: String(index),
+      title: 'Shared tracks',
+      trackIds: ['two', 'one'],
+    }))
+    vi.stubGlobal(
+      'fetch',
+      vi
+        .fn()
+        .mockResolvedValueOnce(createJsonResponse({tracks, version: 1}))
+        .mockResolvedValueOnce(createJsonResponse({albums, version: 1}))
+        .mockResolvedValueOnce(createJsonResponse({albums: [], version: 1})),
+    )
+
+    const {bundledAlbums} = await loadPAlbums()
+
+    expect(bundledAlbums.map((album) => album.tracks.map((track) => track.id))).toEqual([
+      ['two', 'one'],
+      ['two', 'one'],
+      ['two', 'one'],
+    ])
+    expect(bundledAlbums.map((album) => album.tracks[0].artworkUrl)).toEqual([
+      '/first.jpg',
+      '/second.jpg',
+      undefined,
+    ])
+    expect(bundledAlbums[0].tracks[0]).not.toBe(bundledAlbums[1].tracks[0])
+    expect(bundledAlbums[0].tracks[1]).toBe(bundledAlbums[1].tracks[1])
+    expect(bundledAlbums[2].tracks[1].artworkUrl).toBe('/one.jpg')
+    expect(tracks[1]).toEqual(TRACKS[1])
+  })
+
+  it('should resolve each loading call against its own updated catalog', async () => {
+    const albums = [{description: '', icon: '', id: 'album', title: '', trackIds: ['one']}]
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(createJsonResponse({tracks: TRACKS, version: 1}))
+      .mockResolvedValueOnce(createJsonResponse({albums, version: 1}))
+      .mockResolvedValueOnce(createJsonResponse({albums: [], version: 1}))
+      .mockResolvedValueOnce(
+        createJsonResponse({tracks: [{...TRACKS[0], title: 'Updated'}], version: 1}),
+      )
+      .mockResolvedValueOnce(createJsonResponse({albums, version: 1}))
+      .mockResolvedValueOnce(createJsonResponse({albums: [], version: 1}))
+    vi.stubGlobal('fetch', fetchMock)
+
+    const first = await loadPAlbums()
+    const second = await loadPAlbums()
+
+    expect(first.bundledAlbums[0].tracks[0].title).toBe('One')
+    expect(second.bundledAlbums[0].tracks[0].title).toBe('Updated')
+    expect(second.bundledAlbums[0].tracks[0]).not.toBe(first.bundledAlbums[0].tracks[0])
+    expect(fetchMock).toHaveBeenCalledTimes(6)
+  })
+
+  it('should propagate cancellation during album body consumption before requesting public albums', async () => {
+    const controller = new AbortController()
+    const reason = new DOMException('cancelled', 'AbortError')
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(createJsonResponse({tracks: TRACKS, version: 1}))
+      .mockResolvedValueOnce({json: () => Promise.reject(reason), ok: true, status: 200})
+    vi.stubGlobal('fetch', fetchMock)
+
+    await expect(loadPAlbums({signal: controller.signal})).rejects.toBe(reason)
+    expect(fetchMock).toHaveBeenCalledTimes(2)
+    expect(fetchMock).toHaveBeenNthCalledWith(
+      2,
+      '/audio/albums.json',
+      expect.objectContaining({signal: controller.signal}),
+    )
+  })
+
   it('should resolve album track IDs and preserve albums without tracks', () => {
     const albums = [
       {
