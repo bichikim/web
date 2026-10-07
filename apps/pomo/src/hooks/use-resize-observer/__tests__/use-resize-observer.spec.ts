@@ -28,6 +28,30 @@ beforeEach(() => {
 afterEach(() => vi.unstubAllGlobals())
 
 describe('useResizeObserver', () => {
+  it.each([null, undefined])(
+    'should defer observation while the initial target is %s and observe it when available',
+    (initialTarget) => {
+      const [target, setTarget] = createSignal<Element | null | undefined>(initialTarget)
+      const onResize = vi.fn()
+      const {result, cleanup} = renderHook(() => useResizeObserver({onResize, target}))
+
+      result.start()
+      expect(TestResizeObserver.instances).toHaveLength(0)
+      expect(onResize).not.toHaveBeenCalled()
+
+      const element = document.createElement('span')
+      setTarget(element)
+      expect(TestResizeObserver.instances).toHaveLength(1)
+      const observer = TestResizeObserver.instances[0]!
+      expect(observer.observe).toHaveBeenCalledExactlyOnceWith(element)
+      observer.notify()
+      expect(onResize).toHaveBeenCalledExactlyOnceWith([], observer)
+
+      cleanup()
+      expect(observer.disconnect).toHaveBeenCalledOnce()
+    },
+  )
+
   it('should stay stopped until explicitly started and make repeated operations idempotent', () => {
     const target = document.createElement('div')
     const onResize = vi.fn()
