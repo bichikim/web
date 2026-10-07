@@ -11,6 +11,7 @@ export interface GetSquareCropFrameOptions {
 
 /**
  * Fits an image into the viewport and maps a normalized crop to its source pixels.
+ * Returns null for non-finite zoom or zoom below 1.
  * Requires finite zoom >= 1 and finite position axes in [-1, 1].
  * Returns null for non-finite or non-positive image or viewport dimensions.
  */
@@ -19,6 +20,10 @@ export const getSquareCropFrame = (options: GetSquareCropFrameOptions): SquareCr
 
   const contained = getContainedRect({container: viewport, content: image})
   if (contained === null) {
+    return null
+  }
+
+  if (!Number.isFinite(zoom) || zoom < 1) {
     return null
   }
 

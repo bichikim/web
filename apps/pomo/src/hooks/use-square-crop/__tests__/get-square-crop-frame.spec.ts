@@ -5,6 +5,26 @@ const viewport = {height: 300, width: 400}
 const position = {x: 0, y: 0}
 
 describe('getSquareCropFrame', () => {
+  it.each([
+    0,
+    -1,
+    0.5,
+    1 - Number.EPSILON,
+    Number.NaN,
+    Number.POSITIVE_INFINITY,
+    Number.NEGATIVE_INFINITY,
+  ])('should return null for an invalid zoom %s', (zoom) => {
+    expect(
+      getSquareCropFrame({image: {height: 400, width: 800}, position, viewport, zoom}),
+    ).toBeNull()
+  })
+
+  it('should preserve a finite fractional zoom above one', () => {
+    expect(
+      getSquareCropFrame({image: {height: 400, width: 800}, position, viewport, zoom: 2.5}),
+    ).toMatchObject({cropSize: 80, sourceSize: 160, sourceX: 320, sourceY: 120})
+  })
+
   it('should fit a landscape image and center the full shorter source edge', () => {
     expect(
       getSquareCropFrame({image: {height: 400, width: 800}, position, viewport, zoom: 1}),
