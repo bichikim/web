@@ -20,12 +20,19 @@ import {
 import {getCustomAlbumErrorMessage} from './custom-album-error-message'
 import {useCustomAlbumCoverEditor} from './use-custom-album-cover-editor'
 
-type TrackAdditionErrorKind = 'album-too-large' | 'file-type' | 'track-count' | 'track-too-large'
+type TrackAdditionErrorKind =
+  | 'album-too-large'
+  | 'file-type'
+  | 'library-too-large'
+  | 'track-count'
+  | 'track-too-large'
 
 const getTrackAdditionErrorMessage = (kind: TrackAdditionErrorKind): string => {
   switch (kind) {
     case 'album-too-large':
       return m.album_custom_error_album_too_large()
+    case 'library-too-large':
+      return m.album_custom_error_library_too_large()
     case 'file-type':
       return m.album_custom_error_file_type()
     case 'track-count':
@@ -126,24 +133,24 @@ export const useCustomAlbumEditor = (
 
     try {
       const result = await addCustomAlbumTracks({
+        albumId: initialAlbumId,
         currentAlbumBytes: totalAlbumBytes(),
         currentTrackCount: tracks().length,
         files,
         readEmbeddedCover: cover.shouldReadEmbeddedCover(),
       })
 
+      if (isDisposed) {
+        return
+      }
       if (result.kind !== 'added') {
-        if (!isDisposed) {
-          setErrorMessage(getTrackAdditionErrorMessage(result.kind))
-        }
+        setErrorMessage(getTrackAdditionErrorMessage(result.kind))
         return
       }
 
-      if (!isDisposed) {
-        setTracks((currentTracks) => [...currentTracks, ...result.tracks])
-        if (result.embeddedCoverImage !== null) {
-          cover.applyEmbeddedCover(result.embeddedCoverImage)
-        }
+      setTracks((currentTracks) => [...currentTracks, ...result.tracks])
+      if (result.embeddedCoverImage !== null) {
+        cover.applyEmbeddedCover(result.embeddedCoverImage)
       }
     } catch (error: unknown) {
       if (!isDisposed) {
