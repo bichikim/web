@@ -21,7 +21,7 @@ export interface TextModelDownloadClient {
   readonly prepare: (request: PrepareTextModelRequest) => void
 }
 
-/** Owns the Worker that downloads and prepares one text model. */
+/** Owns the Worker that downloads and stores one text model. */
 export const createTextModelDownloadClient = (
   options: CreateTextModelDownloadClientOptions,
 ): TextModelDownloadClient => {

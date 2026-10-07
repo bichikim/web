@@ -1,9 +1,15 @@
 /// <reference lib="webworker" />
 
-import {memoize} from 'es-toolkit/function'
 import {getErrorMessage} from 'src/utils/get-error-message'
+import {httpFetch} from '../http-client'
+import {
+  createModelStorage,
+  createResumableModelFetch,
+  reportModelStorageError,
+} from '../model-storage'
+import {createPomoAssetFetcher, isPomoAssetBundled, isPomoSteamRuntime} from '../product-assets'
 
-import {createTextGenerationExecutor} from '../text-generation/execution'
+import {downloadTextModel} from '../text-generation/download-text-model'
 import type {
   PrepareTextModelRequest,
   TextGenerationErrorResponse,
@@ -19,19 +25,19 @@ type TextModelDownloadWorkerResponse =
 const workerScope = globalThis.self as DedicatedWorkerGlobalScope
 const sendResponse = (response: TextModelDownloadWorkerResponse) =>
   workerScope.postMessage(response)
-const getTextExecutor = memoize((_modelId: PrepareTextModelRequest['modelId']) =>
-  createTextGenerationExecutor({
-    onProgress: (progress) => sendResponse({...progress, type: 'loading'}),
-  }),
-)
-
 const prepareModel = async (request: PrepareTextModelRequest) => {
-  const textExecutor = getTextExecutor(request.modelId)
-  const result = await textExecutor.prepare({kind: 'device', modelId: request.modelId})
-  if (!result.ok) {
-    throw new Error(result.error.detail ?? '모델 파일을 내려받지 못했어요.')
-  }
-
+  await downloadTextModel({
+    modelId: request.modelId,
+    onProgress: (progress) => sendResponse({...progress, type: 'loading'}),
+    runtime: {
+      isAssetBundled: isPomoAssetBundled,
+      onStorageError: reportModelStorageError,
+      resumable: createResumableModelFetch({
+        fetcher: createPomoAssetFetcher(isPomoSteamRuntime() ? globalThis.fetch : httpFetch),
+      }),
+      storage: createModelStorage(),
+    },
+  })
   sendResponse({type: 'ready'})
 }
 

@@ -1,4 +1,5 @@
 /// <reference lib="webworker" />
+import {getTextModelCacheKey} from './get-text-model-cache-key'
 import {resolveTextModelAssetUrl} from './resolve-text-model-asset-url'
 
 // oxlint-disable eslint-js/camelcase -- Transformers.js model names and options are fixed external contracts.
@@ -42,7 +43,6 @@ const CHAT_TEMPLATE_OPTIONS = {
   enable_thinking: false,
   tokenize: false,
 }
-const GEMMA_TOKENIZER_CACHE_MIGRATION_VERSION = 1
 
 type TextGenerationModel =
   | Awaited<ReturnType<typeof Gemma4ForCausalLM.from_pretrained>>
@@ -186,12 +186,11 @@ export const createTransformersRuntime = (
   options: CreateTextGenerationRuntimeOptions,
 ): TextGenerationRuntime => {
   const dependencies = createModelAssetDependencies()
-  const versionedCacheKeys = new Map<string, string>()
   env.fetch = dependencies.fetcher
   env.useBrowserCache = false
   env.useCustomCache = true
   env.customCache = createTransformersModelCache({
-    getStorageKey: (request) => versionedCacheKeys.get(request) ?? request,
+    getStorageKey: getTextModelCacheKey,
     onError: reportModelStorageError,
     onStored: dependencies.onStored,
     storage: dependencies.storage,
@@ -247,16 +246,6 @@ export const createTransformersRuntime = (
           ? `${tokenizerPath}${modelDefinition.tokenizerSubfolder}/`
           : assetSource.pathTemplate
       preparePromise = (async () => {
-        if (modelId === 'gemma-4-e2b') {
-          const tokenizerUrl = resolveTextModelAssetUrl({
-            ...modelDefinition,
-            relativePath: 'tokenizer.json',
-          })
-          versionedCacheKeys.set(
-            tokenizerUrl,
-            `${tokenizerUrl}?pomo-cache-version=${GEMMA_TOKENIZER_CACHE_MIGRATION_VERSION}`,
-          )
-        }
         const processorPromise = loadProcessor(modelDefinition)
         const startModel = () => loadModel(modelDefinition, reportProgress, dependencies)
         const modelPromise =
