@@ -1,3 +1,6 @@
+import {settleSequentially} from 'src/utils/settle-sequentially'
+import {takeLookaheadBatch} from '../database/take-lookahead-batch'
+
 import {
   type AlbumCoverCleanupCandidate,
   finalizeAlbumCoverDeletion,
@@ -36,49 +39,6 @@ const createRepository = (): AlbumCoverMaintenanceRepository => ({
   prepare: prepareAlbumCoverDeletion,
 })
 
-interface CleanupProgress {
-  readonly errors: ReadonlyArray<unknown>
-  readonly finalized: number
-}
-
-interface ProcessCandidatesOptions {
-  readonly candidates: ReadonlyArray<AlbumCoverCleanupCandidate>
-  readonly now: Date
-  readonly repository: AlbumCoverMaintenanceRepository
-}
-
-const processCandidates = async (
-  options: ProcessCandidatesOptions,
-  index = 0,
-  progress: CleanupProgress = {errors: [], finalized: 0},
-): Promise<CleanupProgress> => {
-  const candidate = options.candidates[index]
-
-  if (candidate === undefined) {
-    return progress
-  }
-
-  try {
-    const objectKey = await options.repository.prepare(candidate.id, options.now)
-
-    if (objectKey === null) {
-      return processCandidates(options, index + 1, progress)
-    }
-
-    await options.repository.deleteStorage(objectKey)
-    const finalized = await options.repository.finalize(candidate.id)
-    return processCandidates(options, index + 1, {
-      ...progress,
-      finalized: progress.finalized + Number(finalized),
-    })
-  } catch (error: unknown) {
-    return processCandidates(options, index + 1, {
-      ...progress,
-      errors: [...progress.errors, error],
-    })
-  }
-}
-
 /** Reclaims a bounded batch of expired, unclaimed album covers. */
 export const runAlbumCoverMaintenance = async (
   options: RunAlbumCoverMaintenanceOptions = {},
@@ -87,22 +47,26 @@ export const runAlbumCoverMaintenance = async (
   const now = options.now ?? new Date()
   const candidates = await repository.listCandidates(now, CLEANUP_BATCH_SIZE + BATCH_LOOKAHEAD)
 
-  if (candidates.length > CLEANUP_BATCH_SIZE + BATCH_LOOKAHEAD) {
-    throw new RangeError('Album cover maintenance repository exceeded the requested limit')
-  }
-
-  const progress = await processCandidates({
-    candidates: candidates.slice(0, CLEANUP_BATCH_SIZE),
-    now,
-    repository,
+  const selection = takeLookaheadBatch(candidates, {
+    batchSize: CLEANUP_BATCH_SIZE,
+    label: 'Album cover maintenance',
   })
+  const results = await settleSequentially(selection.batch, async (candidate) => {
+    const objectKey = await repository.prepare(candidate.id, now)
+    if (objectKey === null) {
+      return false
+    }
+    await repository.deleteStorage(objectKey)
+    return repository.finalize(candidate.id)
+  })
+  const errors = results.flatMap((result) => (result.status === 'rejected' ? [result.reason] : []))
 
-  if (progress.errors.length > 0) {
-    throw new AggregateError(progress.errors, 'One or more album cover cleanups failed')
+  if (errors.length > 0) {
+    throw new AggregateError(errors, 'One or more album cover cleanups failed')
   }
 
   return {
-    complete: candidates.length <= CLEANUP_BATCH_SIZE,
-    finalized: progress.finalized,
+    complete: selection.complete,
+    finalized: results.filter((result) => result.status === 'fulfilled' && result.value).length,
   }
 }

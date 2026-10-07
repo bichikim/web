@@ -6,6 +6,11 @@ export const MAXIMUM_PICTURE_DIARY_TEXT_LENGTH = 2_000
 export const MAXIMUM_STROKE_COUNT = 200
 export const MAXIMUM_POINT_COUNT = 2_000
 
+const ZERO_WIDTH_SPACE = '\u200b'
+
+export const hasPictureDiaryTextContent = (text: string): boolean =>
+  text.replaceAll(ZERO_WIDTH_SPACE, '').trim().length > 0
+
 const pointSchema = z
   .object({
     x: z.number().finite().min(0).max(1),
@@ -50,6 +55,11 @@ const pictureDiaryEntrySchema = z
   .refine((entry) => entry.text.length > 0 || entry.strokes.length > 0 || entry.image !== undefined)
   .readonly()
 
+const writablePictureDiaryEntrySchema = pictureDiaryEntrySchema.refine(
+  (entry) =>
+    hasPictureDiaryTextContent(entry.text) || entry.strokes.length > 0 || entry.image !== undefined,
+)
+
 export type PictureDiaryImage = z.infer<typeof imageSchema>
 export type PictureDiaryEntry = z.infer<typeof pictureDiaryEntrySchema>
 export type PictureDiaryPoint = z.infer<typeof pointSchema>
@@ -70,7 +80,7 @@ export interface CreatePictureDiaryEntryOptions {
 export const createPictureDiaryEntry = (
   options: CreatePictureDiaryEntryOptions,
 ): PictureDiaryEntry =>
-  pictureDiaryEntrySchema.parse({
+  writablePictureDiaryEntrySchema.parse({
     createdAt: options.createdAt,
     date: options.date,
     id: options.id,
@@ -84,6 +94,11 @@ export const createPictureDiaryEntry = (
 
 export const parsePictureDiaryEntry = (value: unknown): PictureDiaryEntry | null => {
   const result = pictureDiaryEntrySchema.safeParse(value)
+  return result.success ? result.data : null
+}
+
+export const parseWritablePictureDiaryEntry = (value: unknown): PictureDiaryEntry | null => {
+  const result = writablePictureDiaryEntrySchema.safeParse(value)
   return result.success ? result.data : null
 }
 

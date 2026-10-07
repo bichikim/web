@@ -72,3 +72,32 @@ test.each([false, true])(
     expect(JSON.stringify(document)).toBe(before)
   },
 )
+
+test('should insert and remove a double-clicked keyform through the document editor', () => {
+  const [document, setDocument] = createSignal(createDemoDocument())
+  const view = render(() => {
+    const editor = useParameterEditor({
+      document,
+      onDocumentChange: setDocument,
+      onNotice: vi.fn(),
+      selectedNodeIds: () => ['mesh-preview'],
+    })
+    return (
+      <EditorModelingKeyformPanel
+        document={document()}
+        editor={editor}
+        selectedNodeIds={['mesh-preview']}
+      />
+    )
+  })
+  const track = view.getByLabelText('Angle X와 Angle Y 2차원 키폼 grid')
+  const grid = track.querySelector('.parameter-grid')!
+  vi.spyOn(grid, 'getBoundingClientRect').mockReturnValue(new DOMRect(100, 100, 200, 200))
+  fireEvent.dblClick(grid, {clientX: 150, clientY: 150})
+  expect(document().parameterBindings?.[0]?.keyforms).toHaveLength(10)
+  const marker = view.getByRole('button', {name: '키폼 선택: -15, 15'})
+  expect(marker).toHaveAttribute('aria-pressed', 'true')
+  fireEvent.keyDown(marker, {key: 'Backspace'})
+  expect(document().parameterBindings?.[0]?.keyforms).toHaveLength(9)
+  expect(view.queryByRole('button', {name: '키폼 선택: -15, 15'})).not.toBeInTheDocument()
+})

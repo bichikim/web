@@ -25,23 +25,6 @@ const takeLatestDialogueIds = (
   return maxLatestDialogueIds <= 0 ? [] : dialogueIds.slice(-maxLatestDialogueIds)
 }
 
-const appendDialogueIdsWithinLimit = (
-  dialogueIds: ReadonlyArray<string>,
-  selectedDialogueIds: ReadonlyArray<string>,
-  maxLatestDialogueIds?: number,
-): ReadonlyArray<string> => {
-  if (maxLatestDialogueIds === undefined) {
-    return [...dialogueIds, ...selectedDialogueIds]
-  }
-
-  const remainingDialogueCount = maxLatestDialogueIds - dialogueIds.length
-  if (remainingDialogueCount <= 0) {
-    return [...dialogueIds]
-  }
-
-  return [...dialogueIds, ...selectedDialogueIds.slice(-remainingDialogueCount)]
-}
-
 /** Selects and orders the dialogues for one event occurrence. */
 export const selectEventDialogues = (
   options: SelectEventDialoguesOptions,
@@ -80,13 +63,27 @@ export const selectDialogueIdsForEvents = (
   bindings: EventDialogueIds,
   playbackModes: EventPlaybackModes,
   maxLatestDialogueIds?: number,
-): ReadonlyArray<string> =>
-  eventIds.reduce<ReadonlyArray<string>>((dialogueIds, eventId) => {
+): ReadonlyArray<string> => {
+  let dialogueCount = 0
+
+  return eventIds.flatMap((eventId) => {
     const selectedDialogueIds = selectEventDialogues({
       dialogueIds: bindings[eventId] ?? [],
       maxLatestDialogueIds,
       playbackMode: playbackModes[eventId] ?? DEFAULT_DIALOGUE_EVENT_PLAYBACK_MODE,
     })
 
-    return appendDialogueIdsWithinLimit(dialogueIds, selectedDialogueIds, maxLatestDialogueIds)
-  }, [])
+    const remainingCount =
+      maxLatestDialogueIds === undefined ? undefined : maxLatestDialogueIds - dialogueCount
+    const dialogueIds = Array.from(
+      remainingCount === undefined
+        ? selectedDialogueIds
+        : remainingCount <= 0
+          ? []
+          : selectedDialogueIds.slice(-remainingCount),
+    )
+
+    dialogueCount += dialogueIds.length
+    return dialogueIds
+  })
+}

@@ -12,20 +12,25 @@ export const brushShortcuts = {
     '[.puppet-editor_&]:flex [.puppet-editor_&]:w-max [.puppet-editor_&]:min-w-max',
     '[.puppet-editor_&]:items-center [.puppet-editor_&]:gap-4',
     '[.puppet-editor_&]:m-0 [.puppet-editor_&]:border-0 [.puppet-editor_&]:p-0',
-    '[.puppet-editor_&]:text-[#e4eee9]',
+    '[.puppet-editor_&]:text-[#e4eee9] [.puppet-editor_&]:[font-size:0.6875rem]',
     ...numberFieldDescendants,
     '[.puppet-editor_&_label]:flex [.puppet-editor_&_label]:w-40',
     '[.puppet-editor_&_label]:shrink-0 [.puppet-editor_&_label]:items-center',
     '[.puppet-editor_&_label]:gap-2 [.puppet-editor_&_label]:whitespace-nowrap',
   ],
-  'deform-brush-toolbar':
-    '[.puppet-editor_&_button]:inline-flex [.puppet-editor_&_button]:items-center [.puppet-editor_&_button]:gap-1',
+  'deform-brush-toolbar': [
+    '[.puppet-editor_&_button]:inline-flex [.puppet-editor_&_button]:flex-none',
+    '[.puppet-editor_&_button]:items-center [.puppet-editor_&_button]:gap-1',
+    '[.puppet-editor_&_button]:whitespace-nowrap',
+  ],
   'keyform-brush-mount':
     '[.puppet-editor_&]:ml-auto [.puppet-editor_&]:flex [.puppet-editor_&]:items-center',
   'mesh-editing-separator': [
     '[.puppet-editor_&]:block [.puppet-editor_&]:h-5 [.puppet-editor_&]:w-px',
     '[.puppet-editor_&]:shrink-0 [.puppet-editor_&]:bg-[#35413d]',
   ],
-  'mesh-editing-toolbar':
-    '[.puppet-editor_&]:flex [.puppet-editor_&]:min-w-0 [.puppet-editor_&]:items-center [.puppet-editor_&]:gap-2',
+  'mesh-editing-toolbar': [
+    '[.puppet-editor_&]:flex [.puppet-editor_&]:flex-wrap [.puppet-editor_&]:min-w-0',
+    '[.puppet-editor_&]:items-center [.puppet-editor_&]:gap-2',
+  ],
 }

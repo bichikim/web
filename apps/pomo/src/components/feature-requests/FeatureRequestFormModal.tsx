@@ -62,7 +62,6 @@ export const FeatureRequestFormModal = (props: FeatureRequestFormModalProps) => 
                 value={props.title}
               />
               <PTextField
-                description={m.feature_request_details_hint()}
                 disabled={props.isSubmitting || props.isCheckingAuthentication}
                 label={m.feature_request_details_label()}
                 multiline

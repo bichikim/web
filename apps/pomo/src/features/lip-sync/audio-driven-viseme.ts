@@ -2,6 +2,7 @@ import {clamp} from 'es-toolkit/math'
 import {exponentialApproachFactor} from 'src/utils/exponential-approach-factor'
 import {decodePcm16Wav} from 'src/utils/decode-pcm16-wav'
 import {clampUnit} from 'src/utils/clamp-unit'
+import {getWindowedRms} from 'src/utils/get-windowed-rms'
 
 import type {PViseme} from './index'
 
@@ -41,17 +42,6 @@ const PEAK_REFERENCE_PERCENTILE = 0.9
 const REFERENCE_FLOOR = 0.000_1
 const SILENCE_FLOOR_RATIO = 0.08
 
-const getRootMeanSquare = (samples: Float32Array, start: number, end: number) => {
-  let squareTotal = 0
-
-  for (let index = start; index < end; index += 1) {
-    const sample = samples[index] ?? 0
-    squareTotal += sample * sample
-  }
-
-  return end > start ? Math.sqrt(squareTotal / (end - start)) : 0
-}
-
 const getPeakReference = (levels: ReadonlyArray<number>) => {
   const sortedLevels = [...levels].sort((first, second) => first - second)
   const percentileIndex = clamp(
@@ -77,12 +67,11 @@ export const createPAudioEnvelope = (options: CreatePAudioEnvelopeOptions): PAud
     frameSamples,
     Math.round((options.sampleRate * ENVELOPE_WINDOW_DURATION_MS) / MILLISECONDS_PER_SECOND),
   )
-  const rawLevels: number[] = []
-
-  for (let start = 0; start < options.samples.length; start += frameSamples) {
-    const end = Math.min(options.samples.length, start + windowSamples)
-    rawLevels.push(getRootMeanSquare(options.samples, start, end))
-  }
+  const rawLevels = getWindowedRms({
+    hopSamples: frameSamples,
+    samples: options.samples,
+    windowSamples,
+  })
 
   const peakReference = getPeakReference(rawLevels)
   const silenceFloor = peakReference * SILENCE_FLOOR_RATIO

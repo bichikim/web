@@ -48,7 +48,10 @@ it('should update pointer and depth-transition uniforms and resources', () => {
   }
 
   expect(pixiMocks.from).toHaveBeenCalledWith(
-    expect.objectContaining({name: 'focus-room-depth-parallax'}),
+    expect.objectContaining({
+      name: 'focus-room-depth-parallax',
+      preferredFragmentPrecision: 'highp',
+    }),
   )
   filter.setPointerOffset(12, -8)
   expect([...uniforms.uPointerPixels]).toEqual([12, -8])

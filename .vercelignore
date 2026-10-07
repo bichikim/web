@@ -1,1 +1,3 @@
 apps/pomo/asset-library
+# Vercel's default .pnp* exclusion also matches pnpm's lockfile hook.
+!.pnpmfile.cjs

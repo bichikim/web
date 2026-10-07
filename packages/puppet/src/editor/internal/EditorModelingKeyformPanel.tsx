@@ -60,6 +60,9 @@ export const EditorModelingKeyformPanel = (props: EditorModelingKeyformPanelProp
     )
   return (
     <EditorKeyformPanel
+      keyformCenter={{x: props.document.viewport.width / 2, y: props.document.viewport.height / 2}}
+      onKeyformMirror={props.editor.mirrorKeyform}
+      onCornersGenerate={props.editor.generateCorners}
       setBrushControlsMount={props.setBrushControlsMount}
       influence={props.editor.influence()}
       activeBindingId={props.editor.activeBindingId() ?? undefined}

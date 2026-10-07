@@ -389,11 +389,14 @@ describe('PuppetEditor', () => {
     ))
     const opacityField = view.getByRole('spinbutton', {name: '파트 불투명도'})
     const undoButton = screen.getByRole('button', {name: '실행 취소'})
+    vi.spyOn(opacityField, 'getBoundingClientRect').mockReturnValue(
+      DOMRect.fromRect({width: 100, x: 0}),
+    )
 
     fireEvent(opacityField, new MouseEvent('pointerdown', {bubbles: true, button: 0, clientX: 100}))
+    fireEvent(globalThis.window, new MouseEvent('pointermove', {bubbles: true, clientX: 95}))
     fireEvent(globalThis.window, new MouseEvent('pointermove', {bubbles: true, clientX: 90}))
-    fireEvent(globalThis.window, new MouseEvent('pointermove', {bubbles: true, clientX: 80}))
-    fireEvent(globalThis.window, new MouseEvent('pointerup', {bubbles: true, clientX: 80}))
+    fireEvent(globalThis.window, new MouseEvent('pointerup', {bubbles: true, clientX: 90}))
 
     await waitFor(() => {
       const document = onDocumentChange.mock.calls.at(-1)?.[0]

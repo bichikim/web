@@ -85,6 +85,10 @@ interface EditingOverlaysProps {
 }
 
 const EditingOverlays = (props: EditingOverlaysProps) => {
+  const editingDeformer = () =>
+    getSceneNode(props.document, props.viewport.activeNodeId ?? '')?.kind === 'deformer'
+  const meshBrushMount = () =>
+    props.visible && !editingDeformer() ? props.viewport.brushControlsMount : undefined
   const renderControls = (controls: JSX.Element) => (
     <Show when={props.visible}>{props.viewport.renderEditingControls?.(controls) ?? controls}</Show>
   )
@@ -97,7 +101,7 @@ const EditingOverlays = (props: EditingOverlaysProps) => {
       aria-hidden={!props.visible}
     >
       <MeshEditor
-        brushControlsMount={props.viewport.brushControlsMount}
+        brushControlsMount={meshBrushMount()}
         brushSettingsMount={props.viewport.brushSettingsMount}
         brushControlsExternal
         meshEditing={props.editingMesh}
@@ -146,6 +150,9 @@ const EditingOverlays = (props: EditingOverlaysProps) => {
           renderControls={renderControls}
         />
         <DeformerEditor
+          brushControlsExternal
+          brushControlsMount={props.visible ? props.viewport.brushControlsMount : undefined}
+          brushSettingsMount={props.viewport.brushSettingsMount}
           deformerMode={props.viewport.deformerMode}
           onDeformerModeChange={props.viewport.onDeformerModeChange}
           renderControls={renderControls}

@@ -1,20 +1,9 @@
+import {callEventHandler} from 'src/utils/call-event-handler'
 import {type JSX, onCleanup, splitProps} from 'solid-js'
 
 import {useAudioPlayer} from './context'
 
 export type AudioPlayerMediaProps = Omit<JSX.AudioHTMLAttributes<HTMLAudioElement>, 'ref'>
-
-const callEventHandler = (
-  handler: JSX.EventHandlerUnion<HTMLAudioElement, Event> | undefined,
-  event: Parameters<JSX.EventHandler<HTMLAudioElement, Event>>[0],
-) => {
-  if (typeof handler === 'function') {
-    handler(event)
-    return
-  }
-
-  handler?.[0](handler[1], event)
-}
 
 export const AudioPlayerMedia = (props: AudioPlayerMediaProps) => {
   const player = useAudioPlayer()

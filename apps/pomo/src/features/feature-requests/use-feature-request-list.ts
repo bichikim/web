@@ -11,6 +11,7 @@ type LoadedPagesState = 'loaded' | 'none' | 'refreshed'
 export interface UseFeatureRequestListProps {
   readonly pageQuery: FeatureRequestPageQuery
   readonly scope: Accessor<string>
+  readonly refreshLoadedPages?: boolean
   readonly reconcileRefresh?: (
     current: ReadonlyArray<FeatureRequest>,
     refreshed: ReadonlyArray<FeatureRequest>,
@@ -43,13 +44,65 @@ export const useFeatureRequestList = (
     query: props.pageQuery,
   })
   const [hasMore, setHasMore] = createSignal(false)
+  const [isRefreshing, setIsRefreshing] = createSignal(false)
   let listGeneration = 0
   let loadedPagesState: LoadedPagesState = 'none'
   let refreshFallbackHasMore: boolean | undefined
+  let refreshingItemCount: number | undefined
+
+  const reloadNextPages = async (generation: number, itemCount: number): Promise<void> => {
+    if (generation !== listGeneration || !hasMore() || list.items().length >= itemCount) {
+      return
+    }
+    const next = await list.loadMore()
+    if (generation !== listGeneration || next.status !== 'loaded') {
+      return
+    }
+    setHasMore(next.page.hasMore)
+    return reloadNextPages(generation, itemCount)
+  }
+
+  const reloadVisiblePages = async (
+    refreshOptions: FeatureRequestsRefreshOptions,
+  ): Promise<void> => {
+    const itemCount = refreshingItemCount ?? list.items().length
+    refreshingItemCount = itemCount
+    const previousHasMore = refreshFallbackHasMore ?? hasMore()
+    refreshFallbackHasMore = previousHasMore
+    listGeneration += 1
+    const generation = listGeneration
+    setIsRefreshing(true)
+    setHasMore(false)
+
+    try {
+      const result = await list.refresh({
+        invalidate: refreshOptions.invalidate,
+        reconcileItems: props.reconcileRefresh,
+      })
+      if (generation !== listGeneration) {
+        return
+      }
+      refreshFallbackHasMore = undefined
+      if (result.status !== 'loaded') {
+        setHasMore(previousHasMore)
+        return
+      }
+      setHasMore(result.page.hasMore)
+      await reloadNextPages(generation, itemCount)
+    } finally {
+      if (generation === listGeneration) {
+        refreshingItemCount = undefined
+        setIsRefreshing(false)
+      }
+    }
+  }
 
   const loadFirstPage = async (
     refreshOptions: FeatureRequestsRefreshOptions = {},
   ): Promise<void> => {
+    if (props.refreshLoadedPages === true) {
+      return reloadVisiblePages(refreshOptions)
+    }
     const preserveLoadedPagesExplicitly = refreshOptions.preserveLoadedPages === true
     const preserveLoadedPages = preserveLoadedPagesExplicitly || loadedPagesState !== 'none'
     const previousHasMore = refreshFallbackHasMore ?? hasMore()
@@ -72,15 +125,10 @@ export const useFeatureRequestList = (
     switch (result.status) {
       case 'loaded': {
         refreshFallbackHasMore = undefined
-        if (preserveLoadedPages) {
-          setHasMore(
-            preservePreviousNoMore ? previousHasMore && result.page.hasMore : result.page.hasMore,
-          )
-          if (!preserveLoadedPagesExplicitly) {
-            loadedPagesState = 'refreshed'
-          }
-        } else {
-          setHasMore(result.page.hasMore)
+        const retainNoMore = preserveLoadedPages && preservePreviousNoMore
+        setHasMore(result.page.hasMore && (!retainNoMore || previousHasMore))
+        if (preserveLoadedPages && !preserveLoadedPagesExplicitly) {
+          loadedPagesState = 'refreshed'
         }
         break
       }
@@ -101,7 +149,7 @@ export const useFeatureRequestList = (
   }
 
   const loadMore = async (): Promise<void> => {
-    if (!hasMore() || list.isLoadingMore()) {
+    if (!hasMore() || isRefreshing() || list.isLoadingMore()) {
       return
     }
     const generation = listGeneration
@@ -120,6 +168,7 @@ export const useFeatureRequestList = (
       listGeneration += 1
       loadedPagesState = 'none'
       refreshFallbackHasMore = undefined
+      refreshingItemCount = undefined
       setHasMore(false)
       loadFirstPage({invalidate: false})
       onCleanup(() => {
@@ -130,7 +179,7 @@ export const useFeatureRequestList = (
   const refresh = () => loadFirstPage()
   return {
     hasMore,
-    isLoading: list.isLoading,
+    isLoading: () => list.isLoading() || isRefreshing(),
     isLoadingMore: list.isLoadingMore,
     loadFailed: list.loadFailed,
     loadMore,

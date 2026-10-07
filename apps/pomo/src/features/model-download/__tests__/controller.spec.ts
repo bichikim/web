@@ -257,31 +257,59 @@ it('should commit completion before notifying idle observers', async () => {
   disposeRoot()
 })
 
-it('should retain a safe resolver when Promise execution is deferred', () => {
-  const NativePromise = Promise
-  function DeferredExecutorPromise<Value>(
-    executor: (
-      resolve: (value: PromiseLike<Value> | Value) => void,
-      reject: (reason?: unknown) => void,
-    ) => void,
-  ) {
-    void executor
-    return NativePromise.resolve(undefined as Value)
-  }
-
+it('should settle synchronous completion before Promise reactions and ignore later responses', async () => {
   const testRuntime = createRuntime()
   const controller = createModelDownloadController(testRuntime.runtime)
   testRuntime.client.prepare.mockImplementation(() => testRuntime.emit({type: 'ready'}))
-  vi.stubGlobal('Promise', DeferredExecutorPromise)
 
-  try {
-    controller.startTextModel('gemma-4-e2b')
-  } finally {
-    vi.stubGlobal('Promise', NativePromise)
-  }
-
+  const download = controller.startTextModel('gemma-4-e2b')
+  const onSettled = vi.fn()
+  void download.then(onSettled)
   expect(controller.state()).toEqual({status: 'idle'})
   expect(testRuntime.client.dispose).toHaveBeenCalledOnce()
+  expect(onSettled).not.toHaveBeenCalled()
+
+  testRuntime.emit({message: 'late error', restartRequired: false, type: 'error'})
+  testRuntime.emit({type: 'ready'})
+  await expect(download).resolves.toEqual({status: 'complete'})
+  expect(onSettled).toHaveBeenCalledExactlyOnceWith({status: 'complete'})
+  expect(testRuntime.client.dispose).toHaveBeenCalledOnce()
+})
+
+it('should settle a synchronous error without accepting completion afterward', async () => {
+  const testRuntime = createRuntime()
+  const controller = createModelDownloadController(testRuntime.runtime)
+  testRuntime.client.prepare.mockImplementation(() => {
+    testRuntime.emit({message: 'download failed', restartRequired: false, type: 'error'})
+    testRuntime.emit({type: 'ready'})
+  })
+
+  const download = controller.startTextModel('gemma-4-e2b')
+  expect(controller.state()).toMatchObject({message: 'download failed', status: 'error'})
+  expect(testRuntime.client.dispose).toHaveBeenCalledOnce()
+  await expect(download).resolves.toEqual({message: 'download failed', status: 'error'})
+})
+
+it('should join the same download Promise from a reentrant loading observer', async () => {
+  const testRuntime = createRuntime()
+  const controller = createModelDownloadController(testRuntime.runtime)
+  let joined: Promise<unknown> | undefined
+  const disposeRoot = createRoot((dispose) => {
+    createComputed(() => {
+      if (controller.state().status === 'loading') {
+        joined = controller.startTextModel('gemma-4-e2b')
+      }
+    })
+    return dispose
+  })
+
+  const download = controller.startTextModel('gemma-4-e2b')
+  expect(joined).toBe(download)
+  expect(testRuntime.runtime.createTextClient).toHaveBeenCalledOnce()
+  controller.cancel()
+  await expect(download).resolves.toEqual({status: 'cancelled'})
+  expect(testRuntime.client.dispose).toHaveBeenCalledOnce()
+  disposeRoot()
 })
 
 it('should expose a client creation failure through the download result and state', async () => {

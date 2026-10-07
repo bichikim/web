@@ -1,3 +1,4 @@
+import {type AsyncTaskController, useAsyncTask} from '../async-task'
 import {createSerialTaskQueue} from 'src/utils/create-serial-task-queue'
 import {type Accessor, createSignal, onCleanup, onMount, type Setter} from 'solid-js'
 
@@ -182,10 +183,9 @@ interface ModeControllerState {
   readonly surfaceOwner: boolean
   channel: BroadcastChannel | null
   isDisposed: boolean
-  isNativeListenerStarting: boolean
+  readonly nativeListener: AsyncTaskController<[], () => void>
   ownsModeTransitions: boolean
   pendingRequest: PendingModeRequest | null
-  removeModeListener: (() => void) | null
   requestMode: ((mode: DesktopMode) => Promise<void>) | null
 }
 
@@ -197,32 +197,26 @@ const publishMode = (state: ModeControllerState, nextMode: DesktopMode) => {
 
 const relinquishModeOwnership = (state: ModeControllerState) => {
   state.ownsModeTransitions = false
-  state.removeModeListener?.()
-  state.removeModeListener = null
+  // Keep pending acquisition shared if ownership returns before registration completes.
+  if (state.nativeListener.state().status === 'success') {
+    state.nativeListener.reset()
+  }
 }
 
 const startNativeModeListener = (state: ModeControllerState) => {
-  if (state.removeModeListener !== null || state.isNativeListenerStarting) {
+  const {status} = state.nativeListener.state()
+  if (status === 'success' || status === 'pending') {
     return
   }
 
-  state.isNativeListenerStarting = true
-  listenToNativeModeRequests((nextMode) => {
-    if (state.ownsModeTransitions) {
-      const request = state.requestMode?.(nextMode)
-      request?.catch(() => undefined)
-    }
-  })
-    .then((unlisten) => {
-      state.isNativeListenerStarting = false
-      if (state.isDisposed || !state.ownsModeTransitions) {
-        unlisten()
-      } else {
-        state.removeModeListener = unlisten
+  state.nativeListener
+    .execute()
+    .then(() => {
+      if (!state.isDisposed && !state.ownsModeTransitions) {
+        state.nativeListener.reset()
       }
     })
     .catch((listenError: unknown) => {
-      state.isNativeListenerStarting = false
       if (!state.isDisposed) {
         state.setError(getDesktopErrorMessage(listenError))
       }
@@ -433,7 +427,6 @@ const mountModeController = (
     state.isDisposed = true
     state.pendingRequest?.reject(new Error('Desktop mode controller was disposed'))
     state.pendingRequest = null
-    state.removeModeListener?.()
     state.channel?.close()
     state.channel = null
   })
@@ -452,11 +445,19 @@ export const useDesktopMode = (props: UseDesktopModeProps = {}): DesktopModeCont
     handoffOwner,
     isChanging,
     isDisposed: false,
-    isNativeListenerStarting: false,
     mode,
+    nativeListener: useAsyncTask({
+      cleanupResult: (unlisten: () => void) => unlisten(),
+      concurrency: 'exhaust',
+      task: () =>
+        listenToNativeModeRequests((nextMode) => {
+          if (state.ownsModeTransitions) {
+            state.requestMode?.(nextMode).catch(() => undefined)
+          }
+        }),
+    }),
     ownsModeTransitions: surfaceOwner,
     pendingRequest: null,
-    removeModeListener: null,
     requestMode: null,
     setError,
     setIsChanging,
