@@ -1,3 +1,4 @@
+import {differenceBy} from 'es-toolkit/array'
 import {SERVER_AI_RELEASED} from '../../features/ai-job/release'
 import {type PSceneStyle} from '../../features/focus-room-animation/index'
 import type {PTrack} from '../../features/focus-room-audio/index'
@@ -190,15 +191,12 @@ export const PStudioEvents = (props: PStudioEventsProps) => {
   )
   createEffect(
     on(reminders.skippedReminders, (memos, previous) => {
-      const previousIds = new Set(previous?.map((memo) => memo.id))
-      memos
-        .filter((memo) => !previousIds.has(memo.id))
-        .forEach((memo) => {
-          toast.showToast({
-            message: m.memory_reminder_playback_skipped({text: memo.text}),
-            tone: 'error',
-          })
+      differenceBy(memos, previous ?? [], (memo) => memo.id).forEach((memo) => {
+        toast.showToast({
+          message: m.memory_reminder_playback_skipped({text: memo.text}),
+          tone: 'error',
         })
+      })
     }),
   )
   useRandomEvent({onEvent: () => handlePomodoroEvents([RANDOM_DIALOGUE_EVENT])})
