@@ -1,3 +1,4 @@
+/** @vitest-environment node */
 import {mkdir, readFile, writeFile} from 'node:fs/promises'
 import {beforeEach, describe, expect, it, vi} from 'vitest'
 import {installPlugin} from '../install-plugin'

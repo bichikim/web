@@ -1,3 +1,4 @@
+/** @vitest-environment node */
 import {EventEmitter} from 'node:events'
 import {PassThrough} from 'node:stream'
 import {pathToFileURL} from 'node:url'
