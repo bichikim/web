@@ -3,7 +3,7 @@ import {cleanup, fireEvent, render, screen} from '@solidjs/testing-library'
 import {createSignal} from 'solid-js'
 import {afterEach, beforeEach, expect, it, vi} from 'vitest'
 import type {CalendarEvent} from '../../../features/calendar'
-import {CalendarAgenda} from '../Agenda'
+import {CalendarAgenda} from '../CalendarAgenda'
 
 vi.mock('../../../features/focus-room-dialogue', () => ({usePEvents: vi.fn()}))
 

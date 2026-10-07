@@ -3,7 +3,7 @@ import * as m from '@paraglide/message'
 import {cleanup, render, screen} from '@solidjs/testing-library'
 import {type ComponentProps} from 'solid-js'
 import {afterEach, expect, it, vi} from 'vitest'
-import {CalendarAgenda} from '../Agenda'
+import {CalendarAgenda} from '../CalendarAgenda'
 import {groupCalendarEvents} from '../../../features/calendar'
 
 vi.mock('../../calendar-alarm-control/CalendarAlarmControl', () => ({
