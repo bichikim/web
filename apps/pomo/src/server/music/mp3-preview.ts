@@ -1,4 +1,6 @@
 // oxlint-disable no-magic-numbers, eslint/no-bitwise -- MPEG and ID3 use fixed binary fields.
+import {Buffer} from 'node:buffer'
+
 import {getMp3AudioOffset} from './get-mp3-audio-offset'
 
 const MAXIMUM_SYNC_SEARCH_BYTES = 64 * 1024
@@ -30,23 +32,21 @@ interface Mp3Frame {
   readonly durationMs: number
 }
 
-const matchesAscii = (bytes: Uint8Array, offset: number, value: string): boolean =>
-  [...value].every((character, index) => bytes[offset + index] === character.codePointAt(0))
-
 const findMarker = (
   bytes: Uint8Array,
   frameBytes: number,
   markers: readonly string[],
 ): number | null => {
-  const maximumOffset = Math.min(bytes.byteLength, frameBytes, MAXIMUM_VBR_HEADER_OFFSET) - 4
+  const header = Buffer.from(
+    bytes.buffer,
+    bytes.byteOffset,
+    Math.min(bytes.byteLength, frameBytes, MAXIMUM_VBR_HEADER_OFFSET),
+  )
+  const offsets = markers
+    .map((marker) => header.indexOf(marker, 4, 'ascii'))
+    .filter((offset) => offset !== -1)
 
-  for (let offset = 4; offset <= maximumOffset; offset += 1) {
-    if (markers.some((marker) => matchesAscii(bytes, offset, marker))) {
-      return offset
-    }
-  }
-
-  return null
+  return offsets.length === 0 ? null : Math.min(...offsets)
 }
 
 const rewriteXingHeader = (bytes: Uint8Array, frameBytes: number, frameCount: number): void => {
