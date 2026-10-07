@@ -35,15 +35,27 @@ beforeEach(() => {
   })
 })
 
-it('should preserve focused settings drafts across live prop changes', async () => {
-  const [style, setStyle] = createSignal<PSceneStyle>('original')
-  render(() => <PSettings sceneStyle={style()} />)
-  fireEvent.click(screen.getByRole('button', {name: '설정'}))
-  const input = await screen.findByRole('textbox', {name: '설정 초안'})
-  fireEvent.input(input, {target: {value: 'unsaved'}})
-  input.focus()
-  setStyle('scribble')
-  expect(screen.getByRole('textbox', {name: '설정 초안'})).toBe(input)
-  expect(input).toHaveValue('unsaved')
-  expect(document.activeElement).toBe(input)
-})
+it.each(['trigger', 'window'] as const)(
+  'should preserve focused settings drafts across live prop changes in the %s presentation',
+  async (presentation) => {
+    const [style, setStyle] = createSignal<PSceneStyle>('original')
+    const onRequestClose = vi.fn()
+    render(() => (
+      <PSettings onRequestClose={onRequestClose} presentation={presentation} sceneStyle={style()} />
+    ))
+    if (presentation === 'trigger') {
+      fireEvent.click(screen.getByRole('button', {name: '설정'}))
+    }
+    const input = await screen.findByRole('textbox', {name: '설정 초안'})
+    fireEvent.input(input, {target: {value: 'unsaved'}})
+    input.focus()
+    setStyle('scribble')
+    expect(screen.getByRole('textbox', {name: '설정 초안'})).toBe(input)
+    expect(input).toHaveValue('unsaved')
+    expect(document.activeElement).toBe(input)
+    if (presentation === 'window') {
+      fireEvent.click(screen.getByRole('button', {name: '닫기'}))
+      expect(onRequestClose).toHaveBeenCalledOnce()
+    }
+  },
+)
