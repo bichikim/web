@@ -1,6 +1,7 @@
 import {AppBridge, PostMessageTransport} from '@modelcontextprotocol/ext-apps/app-bridge'
 import {McpUiHostContextSchema} from '@modelcontextprotocol/ext-apps'
 import {CallToolResultSchema, type ContentBlock} from '@modelcontextprotocol/sdk/types.js'
+import manifest from '../../package.json'
 
 const frame = document.querySelector('iframe')
 if (frame === null || frame.contentWindow === null) {
@@ -8,7 +9,7 @@ if (frame === null || frame.contentWindow === null) {
 }
 const bridge = new AppBridge(
   null,
-  {name: 'Code Viewer Preview', version: '0.1.1'},
+  {name: 'Code Viewer Preview', version: manifest.version},
   {experimental: {'openai/modelContext': {}}, serverTools: {}, updateModelContext: {}},
 )
 const selection = document.querySelector<HTMLSelectElement>('select')

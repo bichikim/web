@@ -2,6 +2,7 @@ import {McpServer} from '@modelcontextprotocol/sdk/server/mcp.js'
 import {registerAppResource, RESOURCE_MIME_TYPE} from '@modelcontextprotocol/ext-apps/server'
 import {getResourcePath} from '@openai/mcp-extensions/server'
 import {z} from 'zod'
+import manifest from '../../package.json'
 import {failure, success} from '../shared/contracts'
 import {createSessions} from './create-sessions'
 import {toolResult} from './tool-result'
@@ -66,7 +67,11 @@ const registerMedia = (
 }
 
 export const createServer = (html: string) => {
-  const server = new McpServer({name: 'codex-code-viewer', title: 'Code Viewer', version: '0.1.1'})
+  const server = new McpServer({
+    name: 'codex-code-viewer',
+    title: 'Code Viewer',
+    version: manifest.version,
+  })
   const sessions = createSessions()
   const {open, withSession} = sessions
   const appMetadata = {ui: {resourceUri: VIEWER_URI}}
