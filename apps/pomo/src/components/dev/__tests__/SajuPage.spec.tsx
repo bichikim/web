@@ -2,8 +2,10 @@
 
 import {cleanup, fireEvent, render, screen} from '@solidjs/testing-library'
 import type {JSX} from 'solid-js'
-import {afterEach, expect, it, vi} from 'vitest'
+import {afterEach, beforeEach, expect, it, vi} from 'vitest'
 
+import {supportsTextModel} from 'src/features/text-generation'
+import {createWorkerTransport} from 'src/utils/worker-transport'
 import {SajuPage} from '../SajuPage'
 
 vi.mock('@solidjs/meta', () => ({
@@ -13,9 +15,27 @@ vi.mock('@solidjs/router', () => ({
   A: (props: {children?: JSX.Element; href: string}) => <a href={props.href}>{props.children}</a>,
 }))
 
-afterEach(cleanup)
+vi.mock('src/features/text-generation', () => ({supportsTextModel: vi.fn()}))
+vi.mock('src/utils/worker-transport', () => ({createWorkerTransport: vi.fn()}))
 
-it('should calculate and display each k-saju result for the entered birth', () => {
+const send = vi.fn()
+const dispose = vi.fn()
+
+beforeEach(() => {
+  vi.clearAllMocks()
+  vi.mocked(supportsTextModel).mockReturnValue(true)
+  vi.mocked(createWorkerTransport).mockReturnValue({dispose, send})
+  vi.stubGlobal('Worker', class {})
+})
+
+afterEach(async () => {
+  // Rendering a reading starts a clientOnly import; drain it before tearing down the environment.
+  await vi.dynamicImportSettled()
+  cleanup()
+  vi.unstubAllGlobals()
+})
+
+it('should calculate and display each k-saju result for the entered birth', async () => {
   render(() => <SajuPage />)
 
   fireEvent.input(screen.getByLabelText('질문'), {target: {value: '재물에 대해 알려줘'}})
@@ -34,19 +54,27 @@ it('should calculate and display each k-saju result for the entered birth', () =
   expect(messages[1].content).toContain('재물에 대해 알려줘')
   expect(messages[1].content).toContain('"재성"')
   expect(messages[1].content).toContain('"金"')
+  await vi.dynamicImportSettled()
+  expect(send).toHaveBeenCalledExactlyOnceWith(
+    expect.objectContaining({facts: {birthYear: 1995}, messages, type: 'generate'}),
+  )
 })
 
-it('should report an invalid date without retaining a previous result', () => {
+it('should report an invalid date without retaining a previous result', async () => {
   render(() => <SajuPage />)
 
   const form = screen.getByRole('button', {name: '사주 풀이 생성'}).closest('form')!
+  fireEvent.input(screen.getByLabelText('질문'), {target: {value: '재물에 대해 알려줘'}})
   fireEvent.submit(form)
+  await vi.dynamicImportSettled()
+  expect(send).toHaveBeenCalledOnce()
   fireEvent.input(screen.getByLabelText('생년월일'), {target: {value: '1899-01-01'}})
   fireEvent.submit(form)
 
   expect(screen.getByRole('alert')).toBeTruthy()
   expect(screen.queryByRole('heading', {name: '오행 · analyzeElements()'})).toBeNull()
   expect(screen.queryByRole('region', {name: 'LLM 전달 값'})).toBeNull()
+  expect(dispose).toHaveBeenCalledOnce()
 })
 
 it('should require a meaningful question before preparing LLM messages', () => {
