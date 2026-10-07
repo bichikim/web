@@ -73,6 +73,63 @@ describe('PStudioEvents', () => {
     expect(screen.queryByRole('alert')).toBeNull()
   })
 
+  it('should notify only newly skipped reminder IDs in input order after each update', () => {
+    const first = createMemoryMemo({
+      exactReminderAt: null,
+      id: 'first',
+      now: new Date('2026-09-04T02:00:00.000Z'),
+      random: () => 0,
+      recallMode: 'none',
+      text: '첫 알림',
+    })
+    const second = {...first, id: 'second', text: '두 번째 알림'}
+    const third = {...first, id: 'third', text: '세 번째 알림'}
+    const [skippedReminders, setSkippedReminders] = createSignal([first])
+    vi.mocked(useMemoryReminders).mockReturnValue({skippedReminders})
+    const result = renderEvents()
+
+    setSkippedReminders([third, {...first, text: '같은 ID의 수정된 알림'}, second])
+
+    const alerts = screen.getAllByRole('alert')
+    expect(alerts).toHaveLength(3)
+    expect(alerts[0]).toHaveTextContent(m.memory_reminder_playback_skipped({text: first.text}))
+    expect(alerts[1]).toHaveTextContent(m.memory_reminder_playback_skipped({text: third.text}))
+    expect(alerts[2]).toHaveTextContent(m.memory_reminder_playback_skipped({text: second.text}))
+    setSkippedReminders([])
+    expect(screen.getAllByRole('alert')).toHaveLength(3)
+    result.unmount()
+    setSkippedReminders([second])
+    expect(screen.queryByRole('alert')).toBeNull()
+  })
+
+  it('should preserve duplicate new reminders and notify an ID that reappears after removal', () => {
+    const memo = createMemoryMemo({
+      exactReminderAt: null,
+      id: 'same-id',
+      now: new Date('2026-09-04T02:00:00.000Z'),
+      random: () => 0,
+      recallMode: 'none',
+      text: '첫 알림',
+    })
+    const duplicate = {...memo, text: '같은 ID의 두 번째 알림'}
+    const [skippedReminders, setSkippedReminders] = createSignal([memo, duplicate])
+    vi.mocked(useMemoryReminders).mockReturnValue({skippedReminders})
+    renderEvents()
+
+    expect(screen.getAllByRole('alert')).toHaveLength(2)
+    expect(screen.getAllByRole('alert')[1]).toHaveTextContent(
+      m.memory_reminder_playback_skipped({text: duplicate.text}),
+    )
+    setSkippedReminders([duplicate, memo])
+    expect(screen.getAllByRole('alert')).toHaveLength(2)
+    setSkippedReminders([])
+    setSkippedReminders([memo])
+    expect(screen.getAllByRole('alert')).toHaveLength(3)
+    expect(screen.getAllByRole('alert')[2]).toHaveTextContent(
+      m.memory_reminder_playback_skipped({text: memo.text}),
+    )
+  })
+
   it('should auto-expand the composer on mobile only when dialogue messages are absent', () => {
     vi.mocked(useMobileLayout).mockReturnValue(() => true)
     const idleResult = renderEvents()
