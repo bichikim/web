@@ -11,7 +11,7 @@ export interface IsTextModelDownloadedOptions {
   readonly storage?: ModelStorage
 }
 
-const getModelWeightUrls = (modelId: TextModelId): ReadonlyArray<string> => {
+export const getTextModelWeightUrls = (modelId: TextModelId): ReadonlyArray<string> => {
   const model = getTextModelImplementation(modelId)
   if (model.architecture === 'lfm-2-gguf') {
     return [resolveTextModelAssetUrl({...model, relativePath: model.weightFile})]
@@ -33,7 +33,7 @@ const getModelWeightUrls = (modelId: TextModelId): ReadonlyArray<string> => {
 export const isTextModelDownloaded = async (
   options: IsTextModelDownloadedOptions,
 ): Promise<boolean> => {
-  const modelWeightUrls = getModelWeightUrls(options.modelId)
+  const modelWeightUrls = getTextModelWeightUrls(options.modelId)
   if (modelWeightUrls.every(isPomoAssetBundled)) {
     return true
   }
