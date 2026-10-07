@@ -160,7 +160,7 @@ jobs:
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
         run: |
           deployment_url="$(pnpm dlx vercel@${VERCEL_CLI_VERSION} deploy \
-            --target=staging --yes --skip-domain \
+            --target=staging --yes \
             --meta "githubCommitOrg=${GITHUB_REPOSITORY_OWNER}" \
             --meta "githubCommitRepo=${GITHUB_REPOSITORY#*/}" \
             --meta "githubCommitRef=${SOURCE_BRANCH}" \
