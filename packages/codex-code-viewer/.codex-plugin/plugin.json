@@ -1,6 +1,6 @@
 {
   "name": "codex-code-viewer",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Read code and follow imports and definitions inside Codex.",
   "mcpServers": "./.mcp.json",
   "interface": {

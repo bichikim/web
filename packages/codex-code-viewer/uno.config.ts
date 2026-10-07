@@ -68,6 +68,11 @@ export default defineConfig({
   presets: [presetWind3()],
   safelist: ['border-0', 'h-screen', 'w-full'],
   shortcuts: {
+    'tree-guides': [
+      '[background-image:repeating-linear-gradient(to_right,',
+      'transparent_0px,transparent_15px,var(--viewer-border)_15px,',
+      'var(--viewer-border)_16px)]',
+    ].join(''),
     'ui-button': [
       'ui-focus ui-transition inline-flex shrink-0 items-center justify-center gap-2 rounded-control',
       'border border-divider bg-canvas px-3 py-2 text-sm font-medium shadow-control',

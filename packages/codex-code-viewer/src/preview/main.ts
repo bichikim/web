@@ -8,7 +8,7 @@ if (frame === null || frame.contentWindow === null) {
 }
 const bridge = new AppBridge(
   null,
-  {name: 'Code Viewer Preview', version: '0.1.0'},
+  {name: 'Code Viewer Preview', version: '0.1.1'},
   {experimental: {'openai/modelContext': {}}, serverTools: {}, updateModelContext: {}},
 )
 const selection = document.querySelector<HTMLSelectElement>('select')

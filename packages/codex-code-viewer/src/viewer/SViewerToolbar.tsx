@@ -1,0 +1,60 @@
+import type {CodeLocation} from '../shared/contracts'
+import {SFileNavigation} from './SFileNavigation'
+import {SFilePicker} from './SFilePicker'
+import {SIcon} from './SIcon'
+import type {useViewer} from './use-viewer'
+
+interface SViewerToolbarProps {
+  viewer: Pick<
+    ReturnType<typeof useViewer>,
+    | 'busy'
+    | 'canBack'
+    | 'canForward'
+    | 'files'
+    | 'find'
+    | 'finding'
+    | 'move'
+    | 'opening'
+    | 'refresh'
+    | 'session'
+  >
+  onOpen: (location: CodeLocation) => void
+  onToggleTree?: () => void
+  focusRequest?: number
+  treeVisible?: boolean
+}
+
+export const SViewerToolbar = (props: SViewerToolbarProps) => (
+  <SFilePicker
+    actions={
+      <button
+        aria-label="파일 트리"
+        aria-controls={props.treeVisible ? 'workspace-files' : undefined}
+        aria-expanded={props.treeVisible ?? false}
+        class="ui-icon-button"
+        disabled={props.viewer.session() === null}
+        onClick={() => props.onToggleTree?.()}
+        title="파일 트리 열기/닫기"
+        type="button"
+      >
+        <SIcon name="folder" />
+      </button>
+    }
+    busy={props.viewer.opening() || props.viewer.busy()}
+    files={props.viewer.files()}
+    finding={props.viewer.finding()}
+    focusRequest={props.focusRequest}
+    onFind={props.viewer.find}
+    onOpen={props.onOpen}
+    searchable={props.viewer.session() !== null}
+  >
+    <SFileNavigation
+      canBack={props.viewer.canBack()}
+      canForward={props.viewer.canForward()}
+      busy={props.viewer.busy()}
+      hasDocument={props.viewer.session() !== null}
+      onMove={props.viewer.move}
+      onRefresh={props.viewer.refresh}
+    />
+  </SFilePicker>
+)

@@ -3,21 +3,23 @@ import type {CodeLocation} from '../shared/contracts'
 import {SCodeDocument} from './SCodeDocument'
 import type {ViewerPort} from './types'
 import {useViewer} from './use-viewer'
-import {SFilePicker} from './SFilePicker'
 import {SIcon} from './SIcon'
 import {SNotice} from './SNotice'
 import {useViewerShortcuts} from './use-viewer-shortcuts'
 import {useDocumentSearch} from './use-document-search'
 import {SFindBar} from './SFindBar'
-import {SFileNavigation} from './SFileNavigation'
 import {readCodeText} from './read-code-text'
+import {SFileTree} from './SFileTree'
+import {SViewerToolbar} from './SViewerToolbar'
 
 interface SCodeViewerProps {
   port: ViewerPort
 }
 export const SCodeViewer = (props: SCodeViewerProps) => {
-  const viewer = useViewer(untrack(() => props.port))
+  const port = untrack(() => props.port)
+  const viewer = useViewer(port)
   const [focusRequest, setFocusRequest] = createSignal(0)
+  const [treeVisible, setTreeVisible] = createSignal(false)
   const [element, setElement] = createSignal<HTMLElement | null>(null)
   const search = useDocumentSearch({source: () => viewer.session()?.document.source ?? ''})
   const handleFind = (text?: string): void => {
@@ -70,24 +72,13 @@ export const SCodeViewer = (props: SCodeViewerProps) => {
       class="h-screen min-h-0 flex flex-col bg-canvas font-sans text-foreground"
       ref={setElement}
     >
-      <SFilePicker
-        busy={viewer.opening() || viewer.busy()}
-        files={viewer.files()}
-        finding={viewer.finding()}
-        focusRequest={focusRequest()}
-        onFind={viewer.find}
+      <SViewerToolbar
+        viewer={viewer}
         onOpen={handleOpen}
-        searchable={viewer.session() !== null}
-      >
-        <SFileNavigation
-          canBack={viewer.canBack()}
-          canForward={viewer.canForward()}
-          busy={viewer.busy()}
-          hasDocument={viewer.session() !== null}
-          onMove={viewer.move}
-          onRefresh={viewer.refresh}
-        />
-      </SFilePicker>
+        focusRequest={focusRequest()}
+        treeVisible={treeVisible()}
+        onToggleTree={() => setTreeVisible((previous) => !previous)}
+      />
       <Show when={search.visible()}>
         <SFindBar
           query={search.query()}
@@ -99,36 +90,54 @@ export const SCodeViewer = (props: SCodeViewerProps) => {
           onClose={handleCloseSearch}
         />
       </Show>
-      <Show when={viewer.session()}>
-        {(session) => (
-          <>
-            <Show when={viewer.choices().length > 0}>
-              <nav aria-label="정의 선택" class="flex flex-wrap gap-2 border-b border-divider p-3">
-                <For each={viewer.choices()}>
-                  {(location) => (
-                    <button class="ui-button" onClick={() => handleChoice(location)} type="button">
-                      {location.path}:{location.line}
-                    </button>
-                  )}
-                </For>
-              </nav>
-            </Show>
-            <SCodeDocument
-              document={session().document}
-              onFollow={viewer.follow}
-              onSelect={viewer.selectLines}
-              onSelectText={viewer.selectText}
-              selection={viewer.selection() ?? undefined}
-              matches={search.matches()}
-              activeMatch={search.active()}
-              searchScrollRequest={search.scrollRequest()}
-              onCopy={viewer.copy}
-              onShare={viewer.share}
-              onFind={handleFind}
-            />
-          </>
-        )}
-      </Show>
+      <div class="flex min-h-0 flex-1">
+        <section aria-label="파일 내용" class="flex min-h-0 min-w-0 flex-1 flex-col">
+          <Show when={viewer.session()}>
+            {(session) => (
+              <>
+                <Show when={viewer.choices().length > 0}>
+                  <nav
+                    aria-label="정의 선택"
+                    class="flex flex-wrap gap-2 border-b border-divider p-3"
+                  >
+                    <For each={viewer.choices()}>
+                      {(location) => (
+                        <button
+                          class="ui-button"
+                          onClick={() => handleChoice(location)}
+                          type="button"
+                        >
+                          {location.path}:{location.line}
+                        </button>
+                      )}
+                    </For>
+                  </nav>
+                </Show>
+                <SCodeDocument
+                  document={session().document}
+                  onFollow={viewer.follow}
+                  onSelect={viewer.selectLines}
+                  onSelectText={viewer.selectText}
+                  selection={viewer.selection() ?? undefined}
+                  matches={search.matches()}
+                  activeMatch={search.active()}
+                  searchScrollRequest={search.scrollRequest()}
+                  onCopy={viewer.copy}
+                  onShare={viewer.share}
+                  onFind={handleFind}
+                />
+              </>
+            )}
+          </Show>
+        </section>
+        <SFileTree
+          port={port}
+          session={viewer.session() ?? undefined}
+          visible={treeVisible()}
+          onOpen={handleChoice}
+          onError={viewer.reportError}
+        />
+      </div>
       <footer class="mt-auto flex shrink-0 items-center gap-3 border-t border-divider px-4 py-1">
         <span class="min-w-0 flex-1 break-all text-sm text-muted">{viewer.address()}</span>
         <button

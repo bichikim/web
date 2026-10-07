@@ -24,6 +24,9 @@ export const sessionSchema = z.object({
 })
 export const navigationSchema = z.object({locations: z.array(locationSchema)})
 export const filesSchema = z.object({paths: z.array(z.string())})
+export const workspaceFileSchema = z.object({openable: z.boolean(), path: z.string()})
+export const treeSchema = z.object({files: z.array(workspaceFileSchema), truncated: z.boolean()})
+export type WorkspaceFile = z.infer<typeof workspaceFileSchema>
 export const errorSchema = z.object({
   code: z.enum([
     'not-found',
