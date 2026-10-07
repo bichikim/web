@@ -7,6 +7,7 @@ import {PHealthCheck} from '../../p-health-check/PHealthCheck'
 import {CLASSES} from '../classes'
 import type {PSettingsProps} from '../types'
 import {PGeneralDisplaySettings} from './Display'
+import {PWeatherSection} from './PWeatherSection'
 
 const LANGUAGE_OPTIONS = [
   {label: '한국어', value: 'ko'},
@@ -44,6 +45,7 @@ export const PGeneralSettings = (props: PGeneralSettingsProps) => {
         />
       </div>
       <PGeneralDisplaySettings {...props} />
+      <PWeatherSection {...props} />
       <PHealthCheck />
     </div>
   )

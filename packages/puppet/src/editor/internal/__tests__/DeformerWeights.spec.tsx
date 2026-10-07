@@ -2,21 +2,40 @@
 import {cleanup, fireEvent, render} from '@solidjs/testing-library'
 import {createSignal} from 'solid-js'
 import {afterEach, expect, test, vi} from 'vitest'
-import type {PuppetSceneDeformerNode} from '../../../player'
+import {createDemoDocument, type PuppetSceneDeformerNode} from '../../../player'
+import {createBoneDeformer, editBoneRest} from '../bone-editing'
 import {getSceneNode} from '../scene-graph'
 import {DeformerWeights} from '../DeformerWeights'
-import {BASE_BONE_DOCUMENT, EDITABLE_BONE_DOCUMENT} from './fixtures/deformer-weights'
 
-vi.mock('../WeightBrushControls', () => ({
-  WeightBrushControls: (props: {onModeChange: (mode: 'add' | 'subtract' | 'smooth') => void}) => (
-    <button onClick={() => props.onModeChange('subtract')}>빼기</button>
-  ),
-}))
+const boneDocument = createBoneDeformer(createDemoDocument(), ['mesh-preview'])!
+const editableBoneDocument = editBoneRest({
+  document: boneDocument,
+  nodeId: 'bone',
+  operation: 'append',
+  point: {x: 900, y: 240},
+})!
 
 afterEach(cleanup)
+test('should select a vertex, edit normalized bone weights and return to automatic weighting', () => {
+  const [document, setDocument] = createSignal(editableBoneDocument)
+  const node = () => getSceneNode(document(), 'bone') as PuppetSceneDeformerNode
+  const view = render(() => (
+    <DeformerWeights document={document()} node={node()} onDocumentChange={setDocument} />
+  ))
+  fireEvent.click(view.getByRole('button', {name: '영향도 편집'}))
+  fireEvent.click(view.getByRole('button', {name: '정점 선택'}))
+  fireEvent.click(view.getByRole('button', {name: 'mesh-preview 정점 1'}))
+  const weight = view.getByRole('spinbutton', {name: '본 1 영향도'})
+  fireEvent.input(weight, {target: {value: '25'}})
+  fireEvent.change(weight)
+  expect(node().boneWeights?.[0]?.weights).toEqual([0.25, 0.75])
+  expect(view.getByRole('spinbutton', {name: '본 2 영향도'})).toHaveValue(75)
+  fireEvent.click(view.getByRole('button', {name: '자동 영향도로 복원'}))
+  expect(node().boneWeights).toEqual([])
+})
 
 test('should paint multiple vertices as one undoable stroke and stop after capture loss', () => {
-  const initial = EDITABLE_BONE_DOCUMENT
+  const initial = editableBoneDocument
   const [document, setDocument] = createSignal(initial)
   const onEditStart = vi.fn()
   const onEditEnd = vi.fn()
@@ -58,7 +77,7 @@ test('should paint multiple vertices as one undoable stroke and stop after captu
 })
 
 test('should select multiple vertices with Shift and assign one weight to all', () => {
-  const [document, setDocument] = createSignal(EDITABLE_BONE_DOCUMENT)
+  const [document, setDocument] = createSignal(editableBoneDocument)
   const view = render(() => (
     <DeformerWeights
       document={document()}
@@ -79,7 +98,7 @@ test('should select multiple vertices with Shift and assign one weight to all', 
 })
 
 test('should subtract influence from a single bone with the brush', () => {
-  const initial = BASE_BONE_DOCUMENT
+  const initial = boneDocument
   const [document, setDocument] = createSignal(initial)
   const onEditStart = vi.fn()
   const onEditEnd = vi.fn()

@@ -1,7 +1,7 @@
 /** @vitest-environment node */
 import {EventEmitter} from 'node:events'
 
-import {beforeEach, describe, expect, it, vi} from 'vitest'
+import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 
 const dependencyMocks = vi.hoisted(() => ({
   env: {
@@ -60,7 +60,12 @@ interface HttpResponseFixture {
 }
 
 const queueHttpResponses = (fixtures: ReadonlyArray<HttpResponseFixture>) => {
-  const requests: Array<{options: Record<string, unknown>; request: MockRequest; url: URL}> = []
+  const requests: Array<{
+    options: Record<string, unknown>
+    request: MockRequest
+    response: MockResponse
+    url: URL
+  }> = []
   let responseIndex = 0
 
   dependencyMocks.httpsRequest.mockImplementation(
@@ -81,7 +86,7 @@ const queueHttpResponses = (fixtures: ReadonlyArray<HttpResponseFixture>) => {
           response.emit('end')
         })
       })
-      requests.push({options, request, url})
+      requests.push({options, request, response, url})
       return request
     },
   )
@@ -92,6 +97,10 @@ const queueHttpResponses = (fixtures: ReadonlyArray<HttpResponseFixture>) => {
 beforeEach(() => {
   vi.clearAllMocks()
   dependencyMocks.httpsRequest.mockReset()
+})
+
+afterEach(() => {
+  vi.restoreAllMocks()
 })
 
 describe('exchangeTossAuthorization', () => {
@@ -225,7 +234,7 @@ describe('mTLS Toss requester', () => {
     expect(requests.every(({request}) => request.end.mock.calls.length === 1)).toBe(true)
   })
 
-  it('should reject invalid JSON from Toss', async () => {
+  it('should reject invalid JSON without throwing from the response event', async () => {
     let response: MockResponse | undefined
     let request: MockRequest | undefined
     dependencyMocks.httpsRequest.mockImplementation(
@@ -241,11 +250,80 @@ describe('mTLS Toss requester', () => {
       referrer: 'DEFAULT',
     })
 
-    response?.emit('data', Buffer.from('not-json'))
-    expect(() => response?.emit('end')).toThrow('Toss returned an invalid JSON response')
-    request?.emit('error', new Error('request cleanup'))
+    const rejection = exchange.catch((error: unknown) => error)
 
-    await expect(exchange).rejects.toThrow('request cleanup')
+    response?.emit('data', Buffer.from('not-json'))
+    expect(() => response?.emit('end')).not.toThrow()
+
+    const error = await rejection
+    expect(error).toBeInstanceOf(Error)
+    expect(error).toMatchObject({message: 'Toss returned an invalid JSON response'})
+
+    expect(() => {
+      response?.emit('error', new Error('late response error'))
+      request?.emit('error', new Error('late request error'))
+      response?.emit('end')
+    }).not.toThrow()
+    await expect(exchange).rejects.toBe(error)
+    expect(request?.destroy).not.toHaveBeenCalled()
+    expect(dependencyMocks.httpsRequest).toHaveBeenCalledOnce()
+  })
+
+  it('should preserve the original response processing error as the rejection', async () => {
+    let response: MockResponse | undefined
+    dependencyMocks.httpsRequest.mockImplementation(
+      (_url: URL, _options: unknown, onResponse: (value: MockResponse) => void) => {
+        response = new MockResponse(200)
+        onResponse(response)
+        return new MockRequest()
+      },
+    )
+    const error = new Error('response processing failed')
+    const concatenate = vi.spyOn(Buffer, 'concat').mockImplementationOnce(() => {
+      throw error
+    })
+    const exchange = exchangeTossAuthorization({
+      authorizationCode: 'one-time-code',
+      referrer: 'DEFAULT',
+    })
+    const rejection = expect(exchange).rejects.toBe(error)
+
+    expect(() => response?.emit('end')).not.toThrow()
+    concatenate.mockRestore()
+
+    await rejection
+    expect(dependencyMocks.httpsRequest).toHaveBeenCalledOnce()
+  })
+
+  it('should retain the completed identity after late response and request events', async () => {
+    const requests = queueHttpResponses([
+      {
+        body: JSON.stringify({resultType: 'SUCCESS', success: {accessToken: 'toss-access'}}),
+        status: 200,
+      },
+      {
+        body: JSON.stringify({resultType: 'SUCCESS', success: {userKey: 'completed-user'}}),
+        status: 200,
+      },
+    ])
+    const exchange = exchangeTossAuthorization({
+      authorizationCode: 'one-time-code',
+      referrer: 'DEFAULT',
+    })
+    const identity = await exchange
+
+    expect(identity).toEqual({userKey: 'completed-user'})
+    expect(() => {
+      for (const {request, response} of requests) {
+        response.emit('error', new Error('late response error'))
+        request.emit('error', new Error('late request error'))
+        response.emit('data', Buffer.from('not-json'))
+        response.emit('end')
+      }
+    }).not.toThrow()
+    await expect(exchange).resolves.toBe(identity)
+    expect(dependencyMocks.httpsRequest).toHaveBeenCalledTimes(2)
+    expect(requests.every(({request}) => request.destroy.mock.calls.length === 0)).toBe(true)
   })
 
   it('should reject an empty successful response body', async () => {

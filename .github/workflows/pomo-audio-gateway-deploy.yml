@@ -19,6 +19,15 @@ on:
       - 'pnpm-workspace.yaml'
       - 'turbo.json'
   workflow_dispatch:
+    inputs:
+      environment:
+        description: Deployment environment (select a source branch for staging)
+        required: true
+        default: dev
+        type: choice
+        options:
+          - dev
+          - staging
 
 permissions:
   contents: read
@@ -237,7 +246,7 @@ jobs:
 
   dev:
     name: Deploy dev
-    if: github.event_name == 'workflow_dispatch'
+    if: github.event_name == 'workflow_dispatch' && inputs.environment != 'staging'
     runs-on: ubuntu-latest
     timeout-minutes: 30
     concurrency:
@@ -404,3 +413,11 @@ jobs:
             --wait \
             --timeout 15m
           echo "url=${deployment_url}" >> "${GITHUB_OUTPUT}"
+
+  staging:
+    name: Deploy staging
+    if: github.event_name == 'workflow_dispatch' && inputs.environment == 'staging'
+    uses: ./.github/workflows/pomo-staging-deploy.yml
+    with:
+      branch: ${{ github.ref_name }}
+    secrets: inherit

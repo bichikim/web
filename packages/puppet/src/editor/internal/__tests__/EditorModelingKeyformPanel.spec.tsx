@@ -65,10 +65,43 @@ test.each([false, true])(
     fireEvent.keyDown(view.getByRole('slider', {name: 'Angle X 현재 값'}), {key: 'End'})
     expect(editor.parameterValueMap()['angle-x']).toBe(30)
     expect(editor.parameterValueMap()['angle-y']).toBe(0)
-    expect(view.getByRole('button', {name: '현재 값에 키폼'})).toBeDisabled()
-    expect(view.getByRole('button', {name: '선택 키폼 삭제'})).toBeDisabled()
+    const track = view.getByLabelText('Angle X 키폼 트랙')
+    vi.spyOn(track, 'getBoundingClientRect').mockReturnValue(new DOMRect(100, 0, 200, 40))
+    fireEvent.contextMenu(track, {clientX: 150})
+    expect(view.queryByRole('menu', {name: '키폼 작업'})).not.toBeInTheDocument()
+    fireEvent.dblClick(track, {clientX: 150})
+    fireEvent.keyDown(track, {key: 'Backspace'})
     expect(view.getByText('물리 입력 미리보기')).toBeVisible()
     expect(onDocumentChange).not.toHaveBeenCalled()
     expect(JSON.stringify(document)).toBe(before)
   },
 )
+
+test('should insert and remove a double-clicked keyform through the document editor', () => {
+  const [document, setDocument] = createSignal(createDemoDocument())
+  const view = render(() => {
+    const editor = useParameterEditor({
+      document,
+      onDocumentChange: setDocument,
+      onNotice: vi.fn(),
+      selectedNodeIds: () => ['mesh-preview'],
+    })
+    return (
+      <EditorModelingKeyformPanel
+        document={document()}
+        editor={editor}
+        selectedNodeIds={['mesh-preview']}
+      />
+    )
+  })
+  const track = view.getByLabelText('Angle X와 Angle Y 2차원 키폼 grid')
+  const grid = track.querySelector('.parameter-grid')!
+  vi.spyOn(grid, 'getBoundingClientRect').mockReturnValue(new DOMRect(100, 100, 200, 200))
+  fireEvent.dblClick(grid, {clientX: 150, clientY: 150})
+  expect(document().parameterBindings?.[0]?.keyforms).toHaveLength(10)
+  const marker = view.getByRole('button', {name: '키폼 선택: -15, 15'})
+  expect(marker).toHaveAttribute('aria-pressed', 'true')
+  fireEvent.keyDown(marker, {key: 'Backspace'})
+  expect(document().parameterBindings?.[0]?.keyforms).toHaveLength(9)
+  expect(view.queryByRole('button', {name: '키폼 선택: -15, 15'})).not.toBeInTheDocument()
+})

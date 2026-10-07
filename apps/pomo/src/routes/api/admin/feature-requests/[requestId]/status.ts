@@ -1,3 +1,4 @@
+import {invalidJsonBodyResponse} from 'src/server/http/invalid-json-body-response'
 import type {APIEvent} from '@solidjs/start/server'
 import {z} from 'zod'
 
@@ -7,7 +8,6 @@ import {noStoreJson} from 'src/server/http/response'
 import {updateFeatureRequestStatus} from 'src/server/repositories/feature-requests'
 
 const MAXIMUM_BODY_SIZE = 4096
-const HTTP_BAD_REQUEST = 400
 const HTTP_INTERNAL_SERVER_ERROR = 500
 const HTTP_NOT_FOUND = 404
 const HTTP_CONFLICT = 409
@@ -29,13 +29,10 @@ export const PATCH = async (event: APIEvent): Promise<Response> => {
   const parsedBody = statusSchema.safeParse(bodyResult.success ? bodyResult.body : null)
 
   if (!requestId.success || !parsedBody.success) {
-    return noStoreJson(
-      {error: 'invalid_request'},
-      {
-        cookies: authorization.cookies,
-        status: bodyResult.success ? HTTP_BAD_REQUEST : bodyResult.status,
-      },
-    )
+    return invalidJsonBodyResponse(bodyResult, {
+      cookies: authorization.cookies,
+      error: 'invalid_request',
+    })
   }
 
   try {

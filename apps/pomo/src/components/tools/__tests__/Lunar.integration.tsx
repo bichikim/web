@@ -54,7 +54,7 @@ const selectOption = async (label: RegExp, value: string) => {
   await selectOpenOption(label, value)
 }
 
-it('should reconcile a selected day after changing to a 29-day month', async () => {
+it('should render 29-day months and reconcile a selected day after changing months', async () => {
   renderLunarInLunarMode()
   expect(await screen.findByText('2026-02-17')).toBeVisible()
 

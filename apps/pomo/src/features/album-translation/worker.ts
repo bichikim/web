@@ -1,13 +1,11 @@
 /// <reference lib="webworker" />
+import {listenTextGenerationRequests} from '../text-generation/listen-text-generation-requests'
+import {unwrapGenerationResult} from '../text-generation/unwrap-generation-result'
 
-import {
-  createDeviceTarget,
-  createGenerationFailure,
-  createRequestSequence,
-  trimRepetitiveTail,
-} from '../text-generation'
+import {trimRepetitiveTail} from '../text-generation/answer'
+import {createDeviceTarget} from '../text-generation/create-device-target'
+import {createRequestSequence} from '../text-generation/create-request-sequence'
 
-import {getErrorMessage} from 'src/utils/get-error-message'
 import {createExclusiveAsyncTask} from 'src/utils/create-exclusive-async-task'
 
 import {createTextGenerationExecutor} from '../text-generation/execution'
@@ -27,9 +25,7 @@ const createRequestId = createRequestSequence('album-translation')
 
 const translateAlbum = async (request: AlbumTranslationWorkerRequest) => {
   const preparation = await textExecutor.prepare(createDeviceTarget('gemma-4-e2b'))
-  if (!preparation.ok) {
-    throw createGenerationFailure(preparation.error, 'Gemma 4 번역을 실행하지 못했습니다.')
-  }
+  unwrapGenerationResult(preparation, 'Gemma 4 번역을 실행하지 못했습니다.')
 
   sendResponse({type: 'started'})
   const result = await textExecutor.generate(
@@ -48,11 +44,9 @@ const translateAlbum = async (request: AlbumTranslationWorkerRequest) => {
     },
     {onResponse: () => undefined},
   )
-  if (!result.ok) {
-    throw createGenerationFailure(result.error, 'Gemma 4 번역을 실행하지 못했습니다.')
-  }
+  const resultValue = unwrapGenerationResult(result, 'Gemma 4 번역을 실행하지 못했습니다.')
 
-  const output = result.value
+  const output = resultValue
   sendResponse({translations: parseAlbumTranslation(trimRepetitiveTail(output)), type: 'complete'})
 }
 
@@ -60,12 +54,9 @@ const handleRequest = (request: AlbumTranslationWorkerRequest): Promise<void> =>
   return translation.run(() => translateAlbum(request))
 }
 
-workerScope.addEventListener('message', (event: MessageEvent<AlbumTranslationWorkerRequest>) => {
-  handleRequest(event.data).catch((error: unknown) => {
-    sendResponse({
-      message: getErrorMessage(error, 'Gemma 4 번역을 실행하지 못했습니다.'),
-      restartRequired: false,
-      type: 'error',
-    })
-  })
+listenTextGenerationRequests<AlbumTranslationWorkerRequest>({
+  fallback: 'Gemma 4 번역을 실행하지 못했습니다.',
+  handle: handleRequest,
+  onError: sendResponse,
+  scope: workerScope,
 })

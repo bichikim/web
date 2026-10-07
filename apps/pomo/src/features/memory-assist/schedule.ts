@@ -102,9 +102,9 @@ interface GetLastExactReminderScheduledAtOptions {
 const getLastExactReminderScheduledAt = (
   options: GetLastExactReminderScheduledAtOptions,
 ): string | null => {
-  const lastExactReminderEvent = options.memo.reminderEvents
-    .filter((event) => event.kind === 'exact')
-    .at(-1)
+  const lastExactReminderEvent = options.memo.reminderEvents.findLast(
+    (event) => event.kind === 'exact',
+  )
 
   if (lastExactReminderEvent !== undefined) {
     return lastExactReminderEvent.scheduledAt
@@ -333,6 +333,13 @@ export const editMemoryMemo = (options: EditMemoryMemoOptions): MemoryMemo => {
     exactReminderRepeatIntervalMinutes: exactSchedule.exactReminderRepeatIntervalMinutes,
     exactReminderRepeatUntilMinutes: exactSchedule.exactReminderRepeatUntilMinutes,
     nextExactReminderAt,
+    nextExactReminderRearmed:
+      nextExactReminderAt !== null &&
+      options.memo.reminderEvents.some(
+        (event) => event.kind === 'exact' && event.scheduledAt === nextExactReminderAt,
+      )
+        ? true
+        : undefined,
     nextRecallAt: recallScheduleChanged
       ? getNextRecallAt({
           mode: recallMode,
@@ -403,6 +410,8 @@ export const advanceMemoryMemo = (options: AdvanceMemoryMemoOptions): MemoryMemo
         ? null
         : options.memo.exactReminderAt,
     nextExactReminderAt,
+    nextExactReminderRearmed:
+      options.kind === 'exact' ? undefined : options.memo.nextExactReminderRearmed,
     nextRecallAt: shouldAdvanceRecall
       ? getNextRecallAt({
           mode: options.memo.recallMode,

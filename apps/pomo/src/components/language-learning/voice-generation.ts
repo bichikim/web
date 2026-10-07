@@ -1,4 +1,4 @@
-import {replaceBlobObjectUrl, replaceObjectUrl} from 'src/features/blob-object-url'
+import {replaceBlobObjectUrl} from 'src/features/blob-object-url'
 
 import * as m from '@paraglide/message'
 import {generateCompressedDialogueAudio} from '../../features/focus-room-dialogue'
@@ -158,11 +158,11 @@ export const regenerateCandidateVoice = async (
           candidate: {
             ...options.candidate,
             audio: generated.value.audio,
-            audioUrl: replaceObjectUrl(options.candidate.audioUrl, () => generated.value.audio, {
-              create: (audio) => URL.createObjectURL(audio),
-              order: 'create-first',
-              revoke: (url) => URL.revokeObjectURL(url),
-            }),
+            audioUrl: replaceBlobObjectUrl(
+              options.candidate.audioUrl,
+              () => generated.value.audio,
+              {order: 'create-first'},
+            ),
             durationMs: generated.value.durationMs,
             modelId: options.modelId,
             segments: generated.value.segments,

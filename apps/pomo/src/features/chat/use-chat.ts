@@ -1,9 +1,11 @@
+import {clampDisplayedPercentage} from 'src/utils/clamp-displayed-percentage'
 import {type Accessor, createMemo, createSignal, onCleanup, untrack} from 'solid-js'
 import {isNonBlankString} from 'src/utils/is-non-blank-string'
 
 import {type ChatClient, createChatClient, type CreateChatClientOptions} from './client'
 import type {ChatAnswerDraft, ChatContext, ChatMessage, ChatWorkerResponse} from './messages'
 import {supportsWebGpu} from '../text-generation/environment'
+import {supportsTextModel} from '../text-generation/supports-text-model'
 import {createLazyClient} from '../text-generation/lazy-client'
 import {getTextModel, type TextModelId} from '../text-generation/model'
 
@@ -103,11 +105,20 @@ const getStatusMessage = (state: ChatState, modelId: TextModelId) => {
     case 'generating':
       return '답변을 만들고 있어요…'
     case 'idle':
-      return `${model.downloadSize} 모델을 처음 한 번 내려받아 보관해요.`
-    case 'loading':
-      return `${model.label} 내려받는 중 · ${state.percentage}%`
+      return modelId === 'cloud'
+        ? '클라우드 모델로 대화를 준비해요.'
+        : `${model.downloadSize} 모델을 처음 한 번 내려받아 보관해요.`
+    case 'loading': {
+      const displayProgress = Number.isFinite(state.percentage)
+        ? ` · ${clampDisplayedPercentage(state.percentage)}%`
+        : ''
+
+      return `${model.label} 내려받는 중${displayProgress}`
+    }
     case 'ready':
-      return '모델 준비 완료 · 대화는 이 브라우저 안에서 처리돼요.'
+      return modelId === 'cloud'
+        ? '모델 준비 완료 · 대화는 클라우드에서 처리돼요.'
+        : '모델 준비 완료 · 대화는 이 브라우저 안에서 처리돼요.'
     case 'refining':
       return '답변을 마무리하고 있어요…'
     case 'unsupported':
@@ -164,8 +175,10 @@ export const useChat = (props: UseChatProps): ChatController => {
   const [streamingText, setStreamingText] = createSignal('')
   const [contextTokens, setContextTokens] = createSignal(0)
   const [summaryCount, setSummaryCount] = createSignal(0)
+  const isSupported = () =>
+    supportsTextModel({modelId: modelId(), webGpu: runtime.supportsWebGpu()})
   const [state, setState] = createSignal<ChatState>(
-    runtime.supportsWebGpu() ? {status: 'idle'} : {status: 'unsupported'},
+    isSupported() ? {status: 'idle'} : {status: 'unsupported'},
   )
   let draftRevision = 0
   let pendingUser: PendingUser | null = null
@@ -272,11 +285,11 @@ export const useChat = (props: UseChatProps): ChatController => {
     setAnswerDraft(null)
     setStreamingText('')
     setContextTokens(0)
-    setState(runtime.supportsWebGpu() ? {status: 'idle'} : {status: 'unsupported'})
+    setState(isSupported() ? {status: 'idle'} : {status: 'unsupported'})
   }
 
   const prepare = () => {
-    if (!canPrepare() || !runtime.supportsWebGpu()) {
+    if (!canPrepare() || !isSupported()) {
       return
     }
 

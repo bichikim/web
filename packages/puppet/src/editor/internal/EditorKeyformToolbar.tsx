@@ -3,12 +3,14 @@ import {onCleanup, Show} from 'solid-js'
 
 import type {PuppetParameterValues} from '../../deformation'
 import type {PuppetParameterBinding} from '../../player/document'
+import {EditorKeyformTools, type EditorKeyformToolsProps} from './EditorKeyformTools'
 
-export interface EditorKeyformToolbarProps {
+export interface EditorKeyformToolbarProps extends Pick<
+  EditorKeyformToolsProps,
+  'center' | 'parameters' | 'onMirror' | 'onGenerate'
+> {
   readonly activeBinding?: PuppetParameterBinding
   readonly activeKeyformValues?: PuppetParameterValues | null
-  readonly onKeyformAdd?: () => void
-  readonly onKeyformDelete?: () => void
   readonly onParameterAdd?: () => void
   readonly onTwoDimensionalParameterAdd?: () => void
   readonly parameterCreationAvailable?: boolean
@@ -24,9 +26,6 @@ const BrushControlsMount = (props: {
 }
 
 export const EditorKeyformToolbar = (props: EditorKeyformToolbarProps) => {
-  const hasActiveKeyform = () =>
-    props.activeKeyformValues !== null && props.activeKeyformValues !== undefined
-
   return (
     <header class="keyform-toolbar">
       <div class="keyform-parameter-heading" id={props.titleId} aria-label="Parameters">
@@ -55,21 +54,16 @@ export const EditorKeyformToolbar = (props: EditorKeyformToolbarProps) => {
         </EditorButton>
       </div>
       <div class="keyform-actions">
-        <EditorButton
-          disabled={props.activeBinding === undefined || props.onKeyformAdd === undefined}
-          type="button"
-          onClick={() => props.onKeyformAdd?.()}
-        >
-          <span aria-hidden="true" class="puppet-icon puppet-icon-plus" /> 현재 값에 키폼
-        </EditorButton>
-        <EditorButton
-          class="danger"
-          disabled={!hasActiveKeyform() || props.onKeyformDelete === undefined}
-          type="button"
-          onClick={() => props.onKeyformDelete?.()}
-        >
-          선택 키폼 삭제
-        </EditorButton>
+        <Show when={props.onMirror !== undefined || props.onGenerate !== undefined}>
+          <EditorKeyformTools
+            binding={props.activeBinding}
+            values={props.activeKeyformValues}
+            parameters={props.parameters}
+            center={props.center}
+            onMirror={props.onMirror}
+            onGenerate={props.onGenerate}
+          />
+        </Show>
         <Show when={props.setBrushControlsMount}>
           {(setMount) => <BrushControlsMount setMount={setMount()} />}
         </Show>

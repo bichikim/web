@@ -2,72 +2,116 @@ import {describe, expect, it} from 'vitest'
 
 import {createCalendarQuery} from '../query'
 
-describe('createCalendarQuery for a standalone explicit weekday', () => {
-  const timeZone = 'Asia/Seoul'
-  const now = new Date('2026-09-04T10:30:00.000Z')
-
-  it('should query the next local occurrence of the requested weekday', () => {
-    expect(createCalendarQuery({now, text: '수요일 일정 알려줘', timeZone})).toEqual({
+describe('createCalendarQuery standalone weekdays', () => {
+  it('should query the next local occurrence of an explicit weekday', () => {
+    expect(
+      createCalendarQuery({
+        now: new Date('2026-09-04T10:30:00.000Z'),
+        text: '수요일 일정 알려줘',
+        timeZone: 'Asia/Seoul',
+      }),
+    ).toEqual({
       end: '2026-09-09T15:00:00.000Z',
       start: '2026-09-08T15:00:00.000Z',
     })
   })
 
-  it.each(['다음', '이번', '지난', '저번', '오는', '매주'])(
-    'should leave a weekday qualified by %s outside the standalone weekday path',
-    (qualifier) => {
-      const qualifiedWeekday = createCalendarQuery({
-        now,
-        text: `${qualifier} 수요일 일정 알려줘`,
-        timeZone,
+  it.each(['수요일 일정과 목요일 일정 알려줘', '수요일 일정과 목 일정 알려줘'])(
+    'should not narrow a second weekday after the calendar intent in "%s"',
+    (text) => {
+      expect(
+        createCalendarQuery({
+          now: new Date('2026-09-04T10:30:00.000Z'),
+          text,
+          timeZone: 'Asia/Seoul',
+        }),
+      ).toEqual({
+        end: '2026-10-04T10:30:00.000Z',
+        start: '2026-09-04T10:30:00.000Z',
       })
-      const existingFallback = createCalendarQuery({
-        now,
-        text: '다음 미팅 언제야?',
-        timeZone,
-      })
-
-      expect(qualifiedWeekday).toEqual(existingFallback)
     },
   )
 
-  it('should query the remaining local day when the requested weekday is today', () => {
-    const weekdayQuery = createCalendarQuery({now, text: '금요일 일정 알려줘', timeZone})
-    const todayQuery = createCalendarQuery({now, text: '오늘 일정 알려줘', timeZone})
-
-    expect(weekdayQuery).toEqual(todayQuery)
-    expect(weekdayQuery).toEqual({
-      end: '2026-09-04T15:00:00.000Z',
-      start: '2026-09-04T10:30:00.000Z',
-    })
-  })
-
-  it('should use local midnight when the requested same-day morning has passed', () => {
-    const query = createCalendarQuery({now, text: '금요일 오전 일정 알려줘', timeZone})
-
-    expect(query).toEqual({
-      end: '2026-09-04T03:00:00.000Z',
-      start: '2026-09-03T15:00:00.000Z',
-    })
-    expect(Date.parse(query?.start ?? '')).toBeLessThan(Date.parse(query?.end ?? ''))
+  it.each([
+    ['일요일', '2026-09-05T15:00:00.000Z', '2026-09-06T15:00:00.000Z'],
+    ['월요일', '2026-09-06T15:00:00.000Z', '2026-09-07T15:00:00.000Z'],
+    ['화요일', '2026-09-07T15:00:00.000Z', '2026-09-08T15:00:00.000Z'],
+    ['목요일', '2026-09-09T15:00:00.000Z', '2026-09-10T15:00:00.000Z'],
+    ['금요일', '2026-09-04T10:30:00.000Z', '2026-09-04T15:00:00.000Z'],
+    ['토요일', '2026-09-04T15:00:00.000Z', '2026-09-05T15:00:00.000Z'],
+  ])('should query the upcoming local day for %s', (weekday, start, end) => {
+    expect(
+      createCalendarQuery({
+        now: new Date('2026-09-04T10:30:00.000Z'),
+        text: `${weekday} 일정 알려줘`,
+        timeZone: 'Asia/Seoul',
+      }),
+    ).toEqual({end, start})
   })
 
   it.each([
-    {
-      end: '2026-09-04T15:00:00.000Z',
-      now: '2026-09-04T02:00:00.000Z',
-      start: '2026-09-04T03:00:00.000Z',
-      when: 'before noon',
-    },
-    {
-      end: '2026-09-04T15:00:00.000Z',
-      now: '2026-09-04T10:30:00.000Z',
-      start: '2026-09-04T10:30:00.000Z',
-      when: 'after noon',
-    },
-  ])('should query the remaining afternoon for today $when', ({end, now, start}) => {
+    '다음 수요일',
+    '이번 수요일',
+    '지난 수요일',
+    '저번 수요일',
+    '오는 수요일',
+    '다가오는 수요일',
+    '다다음 수요일',
+    '지지난 수요일',
+    '매주 수요일',
+  ])('should preserve existing behavior for qualified weekday "%s"', (weekday) => {
     expect(
-      createCalendarQuery({now: new Date(now), text: '금요일 오후 일정 알려줘', timeZone}),
+      createCalendarQuery({
+        now: new Date('2026-09-04T10:30:00.000Z'),
+        text: `${weekday} 일정 알려줘`,
+        timeZone: 'Asia/Seoul',
+      }),
+    ).toEqual({
+      end: '2026-10-04T10:30:00.000Z',
+      start: '2026-09-04T10:30:00.000Z',
+    })
+  })
+
+  it.each([
+    ['수요일 말고 목요일 일정 알려줘', '2026-10-04T10:30:00.000Z'],
+    ['수요일과 목요일 일정 알려줘', '2026-10-04T10:30:00.000Z'],
+    ['다음 주 수요일 일정 알려줘', '2026-09-09T15:00:00.000Z'],
+  ])('should preserve existing weekday context for "%s"', (text, end) => {
+    expect(
+      createCalendarQuery({
+        now: new Date('2026-09-04T10:30:00.000Z'),
+        text,
+        timeZone: 'Asia/Seoul',
+      }),
+    ).toEqual({
+      end,
+      start:
+        text === '다음 주 수요일 일정 알려줘'
+          ? '2026-09-08T15:00:00.000Z'
+          : '2026-09-04T10:30:00.000Z',
+    })
+  })
+
+  it.each([
+    ['금요일 오전 일정 알려줘', '2026-09-03T15:00:00.000Z', '2026-09-04T03:00:00.000Z'],
+    ['금요일 오후 일정 알려줘', '2026-09-04T10:30:00.000Z', '2026-09-04T15:00:00.000Z'],
+  ])('should preserve same-day daypart boundaries for "%s"', (text, start, end) => {
+    expect(
+      createCalendarQuery({
+        now: new Date('2026-09-04T10:30:00.000Z'),
+        text,
+        timeZone: 'Asia/Seoul',
+      }),
     ).toEqual({end, start})
+  })
+
+  it('should use date-specific local boundaries when the weekday crosses daylight saving time', () => {
+    expect(
+      createCalendarQuery({
+        now: new Date('2026-03-06T12:00:00.000Z'),
+        text: '일요일 일정 알려줘',
+        timeZone: 'America/New_York',
+      }),
+    ).toEqual({end: '2026-03-09T04:00:00.000Z', start: '2026-03-08T05:00:00.000Z'})
   })
 })

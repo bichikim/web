@@ -11,19 +11,37 @@ const REFERENCE_SUNDAY = 4
 const REFERENCE_YEAR = 2026
 const YEAR_LENGTH = 4
 
-const months = () =>
-  Array.from({length: 12}, (_, index) => ({
-    label: new Intl.DateTimeFormat(getLocale(), {month: 'short', timeZone: 'UTC'}).format(
-      Date.UTC(REFERENCE_YEAR, index, 1),
+const dateOptionsByLocale = new Map<
+  string,
+  {
+    readonly months: ReadonlyArray<{readonly label: string; readonly value: string}>
+    readonly weekdays: ReadonlyArray<string>
+  }
+>()
+
+const getDateOptions = (locale: string) => {
+  const cached = dateOptionsByLocale.get(locale)
+  if (cached) {
+    return cached
+  }
+
+  const monthFormatter = new Intl.DateTimeFormat(locale, {month: 'short', timeZone: 'UTC'})
+  const weekdayFormatter = new Intl.DateTimeFormat(locale, {timeZone: 'UTC', weekday: 'narrow'})
+  const options = {
+    months: Array.from({length: 12}, (_, index) => ({
+      label: monthFormatter.format(Date.UTC(REFERENCE_YEAR, index, 1)),
+      value: String(index + 1),
+    })),
+    weekdays: Array.from({length: 7}, (_, index) =>
+      weekdayFormatter.format(Date.UTC(REFERENCE_YEAR, 0, REFERENCE_SUNDAY + index)),
     ),
-    value: String(index + 1),
-  }))
-const weekdays = () =>
-  Array.from({length: 7}, (_, index) =>
-    new Intl.DateTimeFormat(getLocale(), {timeZone: 'UTC', weekday: 'narrow'}).format(
-      Date.UTC(REFERENCE_YEAR, 0, REFERENCE_SUNDAY + index),
-    ),
-  )
+  }
+  dateOptionsByLocale.set(locale, options)
+  return options
+}
+
+const months = () => getDateOptions(getLocale()).months
+const weekdays = () => getDateOptions(getLocale()).weekdays
 
 export interface PDatePickerProps extends UsePickerProps {
   readonly label?: string

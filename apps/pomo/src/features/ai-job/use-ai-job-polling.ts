@@ -1,3 +1,4 @@
+import {createTimeout} from '@winter-love/solid-use/timeout'
 import {type Accessor, onCleanup, onMount} from 'solid-js'
 import type {AiJob} from './contracts'
 import {type AiTextJobViewStatus, isActiveJobStatus} from './status'
@@ -11,23 +12,21 @@ export interface UseAiJobPollingProps {
 }
 
 export const useAiJobPolling = (props: UseAiJobPollingProps) => {
-  let timer: ReturnType<typeof setTimeout> | undefined
   let disposed = false
-  const clear = () => {
-    if (timer !== undefined) {
-      clearTimeout(timer)
-      timer = undefined
-    }
-  }
+  const poll = createTimeout(
+    (jobId: string) => {
+      props.refreshJob(jobId).catch(() => undefined)
+    },
+    () => props.delayMilliseconds,
+  )
+  const clear = poll.cancel
   const schedule = (job: AiJob) => {
     clear()
     if (disposed || !isActiveJobStatus(job.status)) {
       return
     }
     // The job API supplies snapshots, so retain the existing one-shot poll after each response.
-    timer = setTimeout(() => {
-      props.refreshJob(job.id).catch(() => undefined)
-    }, props.delayMilliseconds)
+    poll.execute(job.id)
   }
   onMount(() => {
     if (!SERVER_AI_RELEASED) {

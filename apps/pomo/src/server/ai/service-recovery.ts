@@ -1,3 +1,4 @@
+import {chunk} from 'es-toolkit/array'
 import type {
   AiJobRecord,
   listDispatchableAiJobs,
@@ -35,8 +36,7 @@ const runRecoveryTasks = async <Job, Result>(
 ): Promise<Array<Awaited<Result>>> => {
   const results: Array<Awaited<Result>> = []
 
-  for (let offset = 0; offset < jobs.length; offset += MAXIMUM_RECOVERY_CONCURRENCY) {
-    const batch = jobs.slice(offset, offset + MAXIMUM_RECOVERY_CONCURRENCY)
+  for (const batch of chunk(jobs, MAXIMUM_RECOVERY_CONCURRENCY)) {
     // oxlint-disable-next-line no-await-in-loop -- Bound provider calls without a burst of requests.
     const batchResults = await Promise.all(
       batch.map(async (job) => {

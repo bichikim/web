@@ -22,7 +22,10 @@ export const SpeechControls = (props: SpeechControlsProps) => {
     props.speech.onPlaybackEnd()
   }
   onCleanup(handleCleanup)
-  const isPreparing = () => props.generating || props.speech.status() === 'preparing'
+  const isBusy = () =>
+    props.generating ||
+    props.speech.status() === 'downloading' ||
+    props.speech.status() === 'preparing'
   const loadingLabel = () => (props.generating ? m.tarot_generating() : m.tarot_voice_preparing())
   const handleSource = (source: Accessor<string>) => (
     <AudioPlayer.Root
@@ -54,15 +57,15 @@ export const SpeechControls = (props: SpeechControlsProps) => {
     <div class="min-w-0 grid justify-items-end gap-2 text-[#d8b97e]">
       <div
         class={cx('flex min-w-0 items-center justify-end gap-3', props.class)}
-        aria-busy={isPreparing()}
+        aria-busy={isBusy()}
       >
         <Show
-          when={!isPreparing() && props.speech.audioUrl()}
+          when={!isBusy() && props.speech.audioUrl()}
           fallback={
             <button
-              aria-label={isPreparing() ? loadingLabel() : m.tarot_voice_play()}
+              aria-label={isBusy() ? loadingLabel() : m.tarot_voice_play()}
               class={PLAY_CLASSES}
-              disabled={isPreparing() || props.speech.status() === 'idle'}
+              disabled={isBusy() || props.speech.status() === 'consent'}
               onClick={props.speech.request}
               type="button"
             >
@@ -70,7 +73,7 @@ export const SpeechControls = (props: SpeechControlsProps) => {
                 aria-hidden="true"
                 class={cx(
                   'size-4.5',
-                  isPreparing()
+                  isBusy()
                     ? 'i-tabler-loader-2 animate-spin motion-reduce:animate-none'
                     : 'i-tabler-player-play',
                 )}

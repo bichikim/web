@@ -1,10 +1,13 @@
-import {createOffsetListController} from './create-offset-list-controller'
-import {createSignal} from 'solid-js'
+import {createEffect, createMemo, createSignal, on} from 'solid-js'
+
+import {useAuth} from '../auth/AuthProvider'
+import {featureRequestsQuery, invalidateFeatureRequestPages} from './page-query'
+import {getFeatureRequestsSessionKey} from './get-feature-requests-session-key'
+import {useFeatureRequestList} from './use-feature-request-list'
 
 import {
   createFeatureRequest,
   type CreateFeatureRequestResult,
-  listFeatureRequests,
   voteFeatureRequest,
   type VoteFeatureRequestResult,
 } from './api'
@@ -48,9 +51,13 @@ const preserveCurrentVotesInRefresh = (
 }
 
 export const useFeatureRequests = (): FeatureRequestsController => {
-  const list = createOffsetListController({
-    loadPage: listFeatureRequests,
+  const authentication = useAuth()
+  const scope = createMemo(() => getFeatureRequestsSessionKey(authentication.state()))
+  const list = useFeatureRequestList({
+    pageQuery: featureRequestsQuery,
     reconcileRefresh: preserveCurrentVotesInRefresh,
+    refreshLoadedPages: true,
+    scope,
   })
   const {
     requests,
@@ -64,23 +71,35 @@ export const useFeatureRequests = (): FeatureRequestsController => {
   } = list
   const [isSubmitting, setIsSubmitting] = createSignal(false)
   const [votingRequestId, setVotingRequestId] = createSignal<string | null>(null)
+  createEffect(
+    on(scope, () => {
+      setIsSubmitting(false)
+      setVotingRequestId(null)
+    }),
+  )
   const createRequest = async (
     input: CreateFeatureRequestInput,
   ): Promise<CreateFeatureRequestResult> => {
+    const session = scope()
     setIsSubmitting(true)
 
     try {
       const result = await createFeatureRequest(input)
 
       if (result.status === 'created') {
-        await list.refreshAfterMutation()
+        await invalidateFeatureRequestPages()
+        if (session === scope()) {
+          await list.refreshAfterMutation()
+        }
       }
 
       return result
     } catch {
       return {status: 'unavailable'}
     } finally {
-      setIsSubmitting(false)
+      if (session === scope()) {
+        setIsSubmitting(false)
+      }
     }
   }
 
@@ -93,20 +112,26 @@ export const useFeatureRequests = (): FeatureRequestsController => {
   }
 
   const voteRequest = async (requestId: string): Promise<VoteFeatureRequestResult> => {
+    const session = scope()
     setVotingRequestId(requestId)
 
     try {
       const result = await voteFeatureRequest(requestId)
 
       if (result.status === 'voted' || result.status === 'already-voted') {
-        updateRequestVote(requestId, result.status === 'voted')
+        await invalidateFeatureRequestPages()
+        if (session === scope()) {
+          updateRequestVote(requestId, result.status === 'voted')
+        }
       }
 
       return result
     } catch {
       return {status: 'unavailable'}
     } finally {
-      setVotingRequestId(null)
+      if (session === scope()) {
+        setVotingRequestId(null)
+      }
     }
   }
 

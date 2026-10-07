@@ -45,9 +45,7 @@ export const CustomAlbumSection = (props: CustomAlbumSectionProps) => {
     }
 
     props.onRemoveTracks?.(trackIds)
-    revokeCustomTrackObjectUrls(
-      new Set([...trackIds].filter((trackId) => !props.trackIds.has(trackId))),
-    )
+    revokeCustomTrackObjectUrls(new Set(trackIds).difference(props.trackIds))
   }
   const handleSaved = async (removedTrackIds: ReadonlySet<string>) => {
     removeTracksFromPlayer(removedTrackIds)

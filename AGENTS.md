@@ -6,6 +6,10 @@
 - **Intent gate**: State the concrete interpretation at task start and when the scope or direction changes.
 - **Existing code references**: When discussing existing code, always include a clickable link to its exact file and line number so the link opens at that line.
 
+## Code review
+
+- For Codex code reviews, read and follow the `critical-review` skill at `.agents/skills/critical-review/SKILL.md`.
+
 ## Styling ownership
 
 - Do not create standalone `.css` files on your own initiative. Before creating or adding usage of a standalone `.css` file, explain why it is needed and obtain explicit user approval.
@@ -33,6 +37,12 @@
 - When implementing a feature, prefer event-driven work whenever the relevant event or completion signal is available. Before using `setTimeout` or `setInterval`, explain why an event-driven approach is insufficient and obtain explicit user approval.
 - **Declarative programming (required; very important)**: Write code declaratively by composing reusable operations. Judge readability by how clearly the composition expresses intent, not by code length.
 - Evaluate changes in repository-wide context, prioritizing compatibility, reusability, and readability over local optimization.
+
+## Side effects
+
+- Do not create side-effecting functions. Write function logic as input-to-result transformations whenever possible, without mutating caller-owned inputs or shared state.
+- Returning the same object after mutating it, or hiding mutation in a closure, does not remove the side effect.
+- If a side effect is genuinely unavoidable because of performance or other constraints after evaluating alternatives, stop before implementing it. Explain the concrete necessity, alternatives and tradeoffs, and discuss them with the user to obtain explicit approval. Convenience does not justify an exception.
 
 ## Evidence
 
@@ -82,9 +92,8 @@
 
 ## Unit test execution time
 
-- Preserve the unit test time limit configured in Vitest. Never change or override it, including through test-specific timeout settings. No environment-based exceptions are allowed.
-- The recommended maximum execution-time target is 150ms per Vitest unit test. Write tests to execute as quickly as possible.
-- To reduce execution time, prioritize mocking over splitting tests, and splitting tests over moving integration-test portions into integration tests. Preserve the behavior and assertions that need verification.
+- Write each Vitest unit test to complete within 150ms when that individual test is run by itself. This is per-test authoring guidance, not a timeout for a whole file or parallel suite.
+- When an individual unit test exceeds 150ms, diagnose in order: missing mocks; too many independent scenarios combined in one test; whether the test has integration-test characteristics. Preserve assertions, scenarios that require the same mount, and required coverage. Mock missing boundaries where appropriate, split only independent scenarios, and keep genuine integration behavior in integration tests.
 
 ## Required after changes
 
@@ -122,47 +131,3 @@ pnpm + Turborepo (`@winter-love/web`) · Node ≥24 · pnpm 11.x (`package.json`
 **Commands:** `pnpm lint` · `pnpm test` · `turbo prepare-build` · `pnpm typecheck` (`apps/coong`)
 
 **Gotcha:** Without Supabase, auth/DB features error but the app renders. Re-run `turbo prepare-build` after cleaning `node_modules` or `dist/`.
-
-<!-- graft:start -->
-
-## Graft — repo context graph
-
-This repo is indexed in `graft/`: small linked markdown nodes that explain each
-system and carry exact file:line spans, kept in sync with the code through git.
-
-For ANY task here — understanding how something works, finding where code lives,
-or scoping a change — get context from the graph before grepping or opening
-source files. Re-ask freely (it's cheap) and reuse literal identifiers you
-already have (symbol, error string, file name) as the query. New to this repo?
-Run `graft map` first — a token-budgeted orientation (dir clusters, hubs,
-hotspots), no LLM, no key.
-
-- Run `graft ask "<your question>" --source` → ranked nodes with the relevant
-  code spans inlined (each hit's ≤8-line crux by default; `--full` for whole
-  definitions when the crux isn't enough). Match the tool to the task shape:
-  for understanding or editing, the top node IS the answer — cite its
-  `covers:` file:line spans and edit straight from `--source`. For
-  exhaustive tasks ("every occurrence / every caller of this pattern"), ranked
-  results are top-N, not complete — run `graft grep "<literal>"` instead
-  (exhaustive over indexed files, grouped by enclosing symbol), falling back
-  to raw `grep -rn` only for unindexed files.
-- `graft skeleton <file>` → every definition's signature + span, ~10× cheaper
-  than reading the file; use it to skim an API surface.
-- `graft callers <symbol>` gives precomputed, exact edges — who calls this.
-  Add `--direction out` for what it calls, or `--depth N` to walk
-  transitively for the full blast radius. For structural questions, skip
-  ranking and use this directly.
-- Or browse: `graft/INDEX.md` lists every node; follow the links.
-- Monorepos and folders of multiple repos rank fairly across sub-projects —
-  hits carry `[scope/]` labels naming which one they're from. Narrow with
-  `graft ask "<task>" --in <scope>/` once you know where you're working.
-
-If a returned span is truncated ("+N more lines"), open the file at that exact
-range before finalizing. Only open source files when a node genuinely lacks a
-needed detail, and then at the exact file:line the node points to — never
-re-read whole files.
-
-After big code changes, refresh the graph with `graft build` (deterministic,
-no API key, $0).
-
-<!-- graft:end -->

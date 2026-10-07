@@ -103,15 +103,7 @@ export const PSwipeTrackItem = (props: PSwipeTrackItemProps) => {
         type="button"
       >
         <span class="w-4 text-center tabular-nums">{props.index + 1}</span>
-        <span
-          ref={tooltip.setTarget}
-          class="min-w-0 flex-1"
-          onBlur={tooltip.onBlur}
-          onFocus={tooltip.onFocus}
-          onPointerDown={tooltip.onPointerDown}
-          onPointerEnter={tooltip.onPointerEnter}
-          onPointerLeave={tooltip.onPointerLeave}
-        >
+        <span {...tooltip.triggerProps} class="min-w-0 flex-1">
           <Show
             fallback={<span class="block truncate">{props.track.title}</span>}
             when={props.current}

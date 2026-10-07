@@ -24,11 +24,24 @@ vi.mock('../../calendar-alarm-control/CalendarAlarmControl', () => ({
     <button type="button">{props.event.title} 알람 설정</button>
   ),
 }))
-vi.mock('../../../features/memory-assist', () => ({
-  useMemoryMemos: () => () => [],
-}))
 
 const originalGetLocale = getLocale
+
+it('should show a notice when only part of the calendar could be loaded', async () => {
+  vi.mocked(listCalendarEvents).mockResolvedValue({
+    connectedConnections: 1,
+    events: [],
+    timeZone: 'Asia/Seoul',
+    truncated: true,
+    unavailableConnections: 0,
+  })
+  render(() => <CalendarMonth />)
+  expect(
+    await screen.findByText(
+      '일정이 많아 일부만 표시하고 있어요. 전체 일정은 연결된 캘린더에서 확인해 주세요.',
+    ),
+  ).toBeVisible()
+})
 
 vi.mock('../../../features/auth/AuthProvider', () => ({useAuth: vi.fn()}))
 
@@ -80,7 +93,7 @@ afterEach(() => {
 it('should show the selected day and its agenda events', async () => {
   render(() => <CalendarMonth settings={<button type="button">캘린더 설정</button>} />)
 
-  expect(screen.getByRole('heading', {name: '2026년 9월'})).toBeVisible()
+  expect(await screen.findByRole('heading', {name: '2026년 9월'})).toBeVisible()
   expect(screen.getAllByRole('columnheader').map((heading) => heading.textContent)).toEqual([
     '일',
     '월',

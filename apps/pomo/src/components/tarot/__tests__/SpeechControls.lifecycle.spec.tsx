@@ -2,7 +2,11 @@
 import {cleanup, render, waitFor} from '@solidjs/testing-library'
 import {createSignal, Show} from 'solid-js'
 import {afterEach, expect, it, vi} from 'vitest'
-import {useModelAssetManager} from '../../../features/model-download'
+import {
+  type ModelDownloadController,
+  useModelAssetManager,
+  useModelDownload,
+} from '../../../features/model-download'
 import {createSupertonicClient} from '../../../features/supertonic/client'
 import {
   createDialogueAudioPreview,
@@ -11,7 +15,10 @@ import {
 import {useTarotSpeech} from '../../../features/tarot/use-tarot-speech'
 import {SpeechControls} from '../SpeechControls'
 
-vi.mock('../../../features/model-download', () => ({useModelAssetManager: vi.fn()}))
+vi.mock('../../../features/model-download', () => ({
+  useModelAssetManager: vi.fn(),
+  useModelDownload: vi.fn(),
+}))
 vi.mock('../../../features/supertonic/client', () => ({createSupertonicClient: vi.fn()}))
 vi.mock('../../../features/focus-room-dialogue/dialogue-audio-runtime', () => ({
   createDialogueAudioPreview: vi.fn(),
@@ -40,6 +47,17 @@ it('should reuse prepared audio without repeating automatic playback after the v
     runAfterModel: vi.fn(),
     runAfterVoiceModel: async (options) => ({status: 'complete', value: await options.task()}),
   })
+  const modelDownload: ModelDownloadController = {
+    cancel: vi.fn(),
+    dismissError: vi.fn(),
+    dispose: vi.fn(),
+    downloads: () => [],
+    startImageModel: vi.fn(),
+    startTextModel: vi.fn(),
+    startVoiceModel: vi.fn().mockResolvedValue({status: 'complete'}),
+    state: () => ({status: 'idle'}),
+  }
+  vi.mocked(useModelDownload).mockReturnValue(modelDownload)
   vi.mocked(createSupertonicClient).mockReturnValue({
     cancelGeneration: vi.fn(),
     dispose: vi.fn(),

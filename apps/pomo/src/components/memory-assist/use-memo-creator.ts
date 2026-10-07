@@ -10,7 +10,7 @@ import {
   writeMemoryMemoDraft,
 } from '../../features/memory-assist'
 import type {ReminderDraft} from './ReminderFields'
-import {createReminderDraft, isFirstReminderInFuture, resolveReminderAt} from './reminder-draft'
+import {createReminderDraft, isFirstReminderInFuture, resolveReminderDraft} from './reminder-draft'
 
 const persistCreationDraft = (text: string, reminderDraft: ReminderDraft) => {
   writeMemoryMemoDraft({...reminderDraft, text, version: 1})
@@ -86,34 +86,21 @@ export const useMemoCreator = (): MemoCreator => {
     const now = new Date()
     const savedText = text()
     const currentDraft = reminderDraft()
-    const exactReminderAt = currentDraft.exactEnabled
-      ? resolveReminderAt(
-          currentDraft.reminderDay,
-          currentDraft.customDate,
-          currentDraft.reminderTime,
-          now,
-        )
-      : null
+    const reminder = resolveReminderDraft(currentDraft, now)
 
     if (
       currentDraft.exactEnabled &&
-      !isFirstReminderInFuture(exactReminderAt, currentDraft.exactReminderAdvanceMinutes, now)
+      !isFirstReminderInFuture(reminder.exactReminderAt, reminder.exactReminderAdvanceMinutes, now)
     ) {
       setMessage(m.memory_memo_invalid_time())
       return
     }
 
     const memo = createMemoryMemo({
-      exactReminderAdvanceMinutes: currentDraft.exactReminderAdvanceMinutes,
-      exactReminderAt,
-      exactReminderRepeatIntervalMinutes: currentDraft.exactReminderRepeatEnabled
-        ? currentDraft.exactReminderRepeatIntervalMinutes
-        : null,
-      exactReminderRepeatUntilMinutes: currentDraft.exactReminderRepeatUntilMinutes,
+      ...reminder,
       id: crypto.randomUUID(),
       now,
       random: Math.random,
-      recallMode: currentDraft.recallMode,
       text: savedText,
     })
 

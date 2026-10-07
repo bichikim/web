@@ -85,6 +85,8 @@ const POMO_DISTRIBUTION_TARGET = resolveDistributionTarget(
 )
 const POMO_BUILD_TARGET = REQUESTED_BUILD_TARGET === undefined ? 'web' : POMO_RUNTIME_TARGET
 const IS_APPS_IN_TOSS_BUILD = POMO_BUILD_TARGET === 'apps-in-toss'
+const IS_STANDALONE_RELAX =
+  POMO_BUILD_TARGET === 'web' && process.env.POMO_STANDALONE_RELAX === 'true'
 const IS_DESKTOP_BUILD = POMO_BUILD_TARGET === 'desktop'
 const IS_ANDROID_BUILD = POMO_BUILD_TARGET === 'android'
 const IS_IOS_BUILD = POMO_BUILD_TARGET === 'ios'
@@ -246,6 +248,7 @@ const createConfig = ({command, mode}: ConfigEnv): UserConfig => {
       VITE_POMO_REFUND_PATH: SERVICE_POLICY_PATHS.refund,
       VITE_POMO_RELEASE: RELEASE,
       VITE_POMO_RUNTIME_TARGET: POMO_RUNTIME_TARGET,
+      VITE_POMO_STANDALONE_RELAX: String(IS_STANDALONE_RELAX),
       VITE_POMO_WEB_PRIVACY_PATH: SERVICE_POLICY_PATHS.web.privacy,
       VITE_POMO_WEB_TERMS_PATH: SERVICE_POLICY_PATHS.web.terms,
     }),
@@ -259,6 +262,7 @@ const createConfig = ({command, mode}: ConfigEnv): UserConfig => {
       fontAsset: PRETENDARD_PUBLIC_ASSET,
       mobileStaticRoutes: MOBILE_STATIC_ROUTES,
       sharedStaticRoutes: SHARED_STATIC_ROUTES,
+      standaloneRelax: IS_STANDALONE_RELAX,
       staticSecurityHeaders,
       steamAsset: IS_STEAM_RUNTIME ? STEAM_ASSET_PUBLIC_ASSET : undefined,
       target: POMO_BUILD_TARGET,
@@ -273,6 +277,7 @@ const createConfig = ({command, mode}: ConfigEnv): UserConfig => {
       publicOrigin,
       runtimeTarget: POMO_RUNTIME_TARGET,
       scribbleIconPath: SCRIBBLE_ICON_SET_PATH,
+      standaloneRelax: IS_STANDALONE_RELAX,
       usesAppsInTossDevtools: USES_APPS_IN_TOSS_DEVTOOLS,
     }),
     resolve: {

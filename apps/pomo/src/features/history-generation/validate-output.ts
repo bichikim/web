@@ -1,3 +1,4 @@
+import {createHistorySourceResolver, normalizeHistorySourceUrl} from './source-resolver'
 import {
   type HistoricalMomentDraft,
   type HistoryGenerationOutput,
@@ -41,79 +42,11 @@ const requireSelectedTitles = (
   }
 }
 
-const normalizeUrl = (value: string): string => {
-  const url = new URL(value)
-  url.hostname = url.hostname.replace(/^www\./u, '')
-  url.hash = ''
-  const searchParameters = url.search.slice(1).split('&')
-  const retainedSearchParameters = searchParameters.filter((parameter) => {
-    const separatorIndex = parameter.indexOf('=')
-    const name = parameter.slice(0, separatorIndex === -1 ? undefined : separatorIndex)
-    const normalizedName = new URLSearchParams(`${name}=`).keys().next().value
-
-    return !normalizedName?.toLowerCase().startsWith('utm_')
-  })
-
-  if (retainedSearchParameters.length !== searchParameters.length) {
-    url.search =
-      retainedSearchParameters.length === 0 ? '' : `?${retainedSearchParameters.join('&')}`
-  }
-
-  if (url.pathname !== '/') {
-    url.pathname = url.pathname.replace(/\/+$/u, '')
-  }
-
-  return url.href
-}
-
 const getAllowedDomain = (
   hostname: string,
   allowedDomains: ReadonlyArray<string>,
 ): string | undefined =>
   allowedDomains.find((domain) => hostname === domain || hostname.endsWith(`.${domain}`))
-
-const getArticleIdentity = (value: string): string | undefined => {
-  const url = new URL(normalizeUrl(value))
-  const articleId = url.pathname.match(/-(?<articleId>\d{6,})$/u)?.groups?.articleId
-
-  return articleId === undefined ? undefined : `${url.hostname}:${articleId}`
-}
-
-const createSourceResolver = (searchSourceUrls: ReadonlyArray<string>) => {
-  const sourcesByUrl = new Map(searchSourceUrls.map((value) => [normalizeUrl(value), value]))
-  const sourcesByArticleIdentity = new Map<string, Array<string>>()
-
-  for (const value of searchSourceUrls) {
-    const identity = getArticleIdentity(value)
-
-    if (identity !== undefined) {
-      const sources = sourcesByArticleIdentity.get(identity) ?? []
-      sources.push(value)
-      sourcesByArticleIdentity.set(identity, sources)
-    }
-  }
-
-  return (value: string): string => {
-    const normalizedUrl = normalizeUrl(value)
-    const exactSource = sourcesByUrl.get(normalizedUrl)
-
-    if (exactSource !== undefined) {
-      return exactSource
-    }
-
-    const identity = getArticleIdentity(value)
-    const articleSources =
-      identity === undefined ? undefined : sourcesByArticleIdentity.get(identity)
-
-    if (articleSources?.length === 1) {
-      return articleSources[0]!
-    }
-
-    throw new TypeError(
-      `A generated source was not returned by OpenAI web search: ${normalizedUrl}`,
-    )
-  }
-}
 
 const getMomentSourceUrls = (moment: HistoricalMomentDraft): ReadonlyArray<string> => [
   ...moment.sources.map((source) => source.url),
@@ -139,7 +72,7 @@ export const validateHistoryOutput = (
   const parsedJson: unknown = JSON.parse(options.outputText)
   const output = historyGenerationOutputSchema.parse(parsedJson)
   requireSelectedTitles(output.moments, options.requiredTitles)
-  const resolveSource = createSourceResolver(options.searchSourceUrls)
+  const resolveSource = createHistorySourceResolver(options.searchSourceUrls)
   const momentKeys = new Set<string>()
 
   for (const moment of output.moments) {
@@ -164,21 +97,25 @@ export const validateHistoryOutput = (
       section.sourceUrls = section.sourceUrls.map(resolveSource)
     }
 
-    const momentSources = new Set(moment.sources.map((source) => normalizeUrl(source.url)))
-    const publishers = new Set(
+    const momentSources = new Set(
+      moment.sources.map((source) => normalizeHistorySourceUrl(source.url)),
+    )
+    const publishersByUrl = new Map(
       moment.sources.map((source) => {
         const {hostname} = new URL(source.url)
+        const publisher = requireAllowedDomain(hostname, options.policy.allowedDomains)
 
-        return requireAllowedDomain(hostname, options.policy.allowedDomains)
+        return [source.url, publisher] as const
       }),
     )
+    const publishers = new Set(publishersByUrl.values())
 
     if (publishers.size < 2) {
       throw new TypeError('A generated moment must cite at least two publishers')
     }
 
     for (const value of getMomentSourceUrls(moment)) {
-      const normalizedUrl = normalizeUrl(value)
+      const normalizedUrl = normalizeHistorySourceUrl(value)
       const {hostname} = new URL(normalizedUrl)
 
       requireAllowedDomain(hostname, options.policy.allowedDomains)
@@ -189,12 +126,9 @@ export const validateHistoryOutput = (
     }
 
     for (const section of Object.values(moment.sections)) {
+      // All citations resolve to searched URLs and pass moment membership before publisher lookup.
       const sectionPublishers = new Set(
-        section.sourceUrls.map((value) => {
-          const {hostname} = new URL(value)
-
-          return requireAllowedDomain(hostname, options.policy.allowedDomains)
-        }),
+        section.sourceUrls.map((value) => publishersByUrl.get(value)!),
       )
 
       if (sectionPublishers.size < 2) {

@@ -43,21 +43,6 @@ export const createTurnHarness = () => {
       }
     },
     environment,
-    finishCurrentAnimation: (milliseconds: number) => {
-      const firstFrame = [...frames.values()]
-      frames.clear()
-      time += FRAME_INTERVAL
-      for (const callback of firstFrame) {
-        callback(time)
-      }
-
-      const finalFrame = [...frames.values()]
-      frames.clear()
-      time += milliseconds
-      for (const callback of finalFrame) {
-        callback(time)
-      }
-    },
     reduceMotion: () => {
       reduced = true
     },

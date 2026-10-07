@@ -14,6 +14,7 @@ const mocks = vi.hoisted(() => ({
   dispose: vi.fn(),
   downloaded: vi.fn<() => Promise<boolean>>(),
   generate: vi.fn(),
+  modelId: 'gemma-4-e2b' as 'gemma-4-e2b' | 'lfm-2.6b-qad',
   onResponse: null as ((response: TarotWorkerResponse) => void) | null,
   startTextModel: vi.fn<() => Promise<ModelDownloadResult>>(),
   startVoiceModel: vi.fn<() => Promise<ModelDownloadResult>>(),
@@ -51,6 +52,7 @@ describe('useTarotReading', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     mocks.onResponse = null
+    mocks.modelId = 'gemma-4-e2b'
     mocks.supported = true
     mocks.downloaded.mockResolvedValue(true)
     mocks.startTextModel.mockResolvedValue({status: 'complete'})
@@ -108,6 +110,33 @@ describe('useTarotReading', () => {
     mocks.onResponse?.({requestId, text: '세 카드의 해석', type: 'complete'})
     expect(reading.status()).toBe('complete')
     expect(reading.output()).toBe('세 카드의 해석')
+  })
+
+  it('should start cached LFM interpretation when WebGPU is unavailable', async () => {
+    mocks.modelId = 'lfm-2.6b-qad'
+    mocks.supported = false
+    reading.draw()
+    await flush()
+    expect(mocks.generate).toHaveBeenCalledWith(expect.objectContaining({modelId: 'lfm-2.6b-qad'}))
+    expect(reading.status()).toBe('preparing')
+  })
+
+  it('starts text interpretation when Gemma is ready and the voice model is missing', async () => {
+    mocks.voiceDownloaded.mockResolvedValue(false)
+    mocks.generate.mockImplementation((request: {readonly requestId: string}) => {
+      mocks.onResponse?.({requestId: request.requestId, type: 'started'})
+    })
+    reading.setQuestion('오늘 운세')
+    reading.draw()
+    const selected = reading.cards()
+    await flush()
+
+    expect(reading.status()).toBe('generating')
+    expect(mocks.generate).toHaveBeenCalledWith(
+      expect.objectContaining({cards: selected, locale: 'ko', question: '오늘 운세'}),
+    )
+    expect(mocks.voiceDownloaded).not.toHaveBeenCalled()
+    expect(mocks.startVoiceModel).not.toHaveBeenCalled()
   })
 
   it('should interpret five cards in draw order and retain the result when editing the question', async () => {
@@ -225,87 +254,6 @@ describe('useTarotReading', () => {
     expect(mocks.generate).not.toHaveBeenCalled()
   })
 
-  it('should queue Gemma then voice before either download completes and wait for both', async () => {
-    const text = Promise.withResolvers<ModelDownloadResult>()
-    const voice = Promise.withResolvers<ModelDownloadResult>()
-    mocks.downloaded.mockResolvedValue(false)
-    mocks.voiceDownloaded.mockResolvedValue(false)
-    mocks.startTextModel.mockReturnValue(text.promise)
-    mocks.startVoiceModel.mockReturnValue(voice.promise)
-    reading.draw()
-    await flush()
-    expect(reading.status()).toBe('consent')
-    const pending = reading.startDownload()
-    expect(mocks.startTextModel).toHaveBeenCalledWith('gemma-4-e2b')
-    expect(mocks.startVoiceModel).toHaveBeenCalledWith('full')
-    expect(mocks.startTextModel.mock.invocationCallOrder[0]).toBeLessThan(
-      mocks.startVoiceModel.mock.invocationCallOrder[0]!,
-    )
-    text.resolve({status: 'complete'})
-    await flush()
-    expect(mocks.generate).not.toHaveBeenCalled()
-    voice.resolve({status: 'complete'})
-    await pending
-    expect(mocks.generate).toHaveBeenCalledOnce()
-  })
-
-  it('should ask for only the missing voice model when Gemma is cached', async () => {
-    mocks.voiceDownloaded.mockResolvedValue(false)
-    reading.draw()
-    await flush()
-    expect(reading.status()).toBe('consent')
-    await reading.startDownload()
-    expect(mocks.startTextModel).not.toHaveBeenCalled()
-    expect(mocks.startVoiceModel).toHaveBeenCalledWith('full')
-    expect(mocks.generate).toHaveBeenCalledOnce()
-  })
-
-  it('should continue the real provider queue from Gemma to voice after the tarot owner closes', async () => {
-    const textClients: Array<CreateTextModelDownloadClientOptions> = []
-    const voice = Promise.withResolvers<{ok: true; value: void}>()
-    const initialize = vi.fn(() => voice.promise)
-    const createVoiceClient = vi.fn(() => ({
-      cancelGeneration: vi.fn(),
-      dispose: vi.fn(),
-      generate: vi.fn(),
-      generateStream: vi.fn(),
-      initialize,
-    }))
-    const createTextClient = vi.fn((options: CreateTextModelDownloadClientOptions) => {
-      textClients.push(options)
-      return {dispose: vi.fn(), prepare: vi.fn()}
-    })
-    let disposeProvider: () => void = () => undefined
-    const controller = createRoot((cleanup) => {
-      disposeProvider = cleanup
-      const download = createModelDownloadController({createTextClient, createVoiceClient})
-      onCleanup(download.dispose)
-      return download
-    })
-    vi.mocked(useModelDownload).mockReturnValue(controller)
-    dispose()
-    createRoot((cleanup) => {
-      dispose = cleanup
-      reading = useTarotReading({locale: () => 'ko'})
-    })
-    mocks.downloaded.mockResolvedValue(false)
-    mocks.voiceDownloaded.mockResolvedValue(false)
-    reading.draw()
-    await flush()
-    const pending = reading.startDownload()
-    expect(createVoiceClient).not.toHaveBeenCalled()
-    expect(controller.downloads().map((item) => item.status)).toEqual(['loading', 'queued'])
-    dispose()
-    textClients[0]!.onResponse({type: 'ready'})
-    expect(createVoiceClient).toHaveBeenCalledOnce()
-    expect(initialize).toHaveBeenCalledWith(expect.objectContaining({modelId: 'full'}))
-    voice.resolve({ok: true, value: undefined})
-    await pending
-    expect(controller.downloads()).toEqual([])
-    expect(mocks.generate).not.toHaveBeenCalled()
-    disposeProvider()
-  })
-
   it('discards a cancelled result and retries with the same cards and question', async () => {
     reading.setQuestion('선택을 돌아보고 싶어요')
     reading.draw()
@@ -372,4 +320,19 @@ describe('useTarotReading', () => {
     await flush()
     expect(vi.mocked(mocks.generate).mock.lastCall?.[0].locale).toBe('en')
   })
+  it('should use the chosen LFM model for consent, download, and the worker request', async () => {
+    mocks.modelId = 'lfm-2.6b-qad'
+    mocks.downloaded.mockResolvedValue(false)
+    reading.draw()
+    await flush()
+    expect(mocks.downloaded).toHaveBeenCalledWith({modelId: 'lfm-2.6b-qad'})
+    mocks.modelId = 'gemma-4-e2b'
+    await reading.startDownload()
+    expect(mocks.startTextModel).toHaveBeenCalledWith('lfm-2.6b-qad')
+    expect(mocks.generate).toHaveBeenCalledWith(expect.objectContaining({modelId: 'lfm-2.6b-qad'}))
+  })
 })
+
+vi.mock('src/features/text-generation/use-default-text-model', () => ({
+  useDefaultTextModel: () => () => mocks.modelId,
+}))

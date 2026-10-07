@@ -3,24 +3,6 @@
 import {cleanup, fireEvent, screen, waitFor, within} from '@solidjs/testing-library'
 import {describe, expect, it, vi} from 'vitest'
 
-const albumDraftStorageMocks = vi.hoisted(() => ({
-  deleteAlbumDraftReference: vi.fn(async () => ({success: true as const})),
-  deleteExpiredAlbumDraftCovers: vi.fn(async () => ({success: true as const})),
-  readAlbumDraftCover: vi.fn(async () => ({data: null, success: true as const})),
-  readAlbumDraftData: vi.fn(() => ({data: null, success: true as const})),
-  writeAlbumDraftData: vi.fn(() => ({success: true as const})),
-  writeAlbumDraftReference: vi.fn(async () => ({success: true as const})),
-}))
-
-vi.mock('src/features/admin-music/album-draft-storage', () => albumDraftStorageMocks)
-vi.mock('../AlbumWorkspace', () => ({
-  AlbumWorkspace: (props: {readonly album: {readonly id: string}}) => (
-    <section aria-label="앨범 작업 공간" data-testid="album-workspace">
-      {props.album.id}
-    </section>
-  ),
-}))
-
 import {
   catalogWithAlbum,
   coverImageMocks,
@@ -28,13 +10,32 @@ import {
 } from '../../__tests__/fixtures/admin-music'
 
 describe('AdminMusic', () => {
-  it('should open the loaded album workspace automatically', async () => {
+  it('should organize selected album work into focused tabs', async () => {
     vi.stubGlobal('fetch', vi.fn<typeof fetch>().mockResolvedValue(Response.json(catalogWithAlbum)))
-    renderAdminMusic()
+    const view = renderAdminMusic()
 
-    expect(await screen.findByTestId('album-workspace')).toHaveTextContent('album-id')
+    const albumHeading = await screen.findByRole('heading', {name: '첫 앨범'})
+    const albumWorkspace = albumHeading.closest('header')?.parentElement
+    if (albumWorkspace === null || albumWorkspace === undefined) {
+      throw new Error('Expected the selected album workspace to render.')
+    }
+    const workspace = within(albumWorkspace)
+
     expect(screen.queryByLabelText('앨범 선택')).toBeNull()
     expect(screen.getByRole('button', {name: '+ 새 앨범 만들기'})).toBeTruthy()
+    expect(workspace.getByRole('tab', {name: '수록곡 0'}).getAttribute('aria-selected')).toBe(
+      'true',
+    )
+    expect(workspace.getByText('아직 수록곡이 없습니다.')).toBeTruthy()
+    expect(workspace.queryByLabelText(/^MP3 파일/u)).toBeNull()
+
+    fireEvent.click(workspace.getByRole('button', {name: '+ 곡 추가'}))
+
+    const audioInput = workspace.getByLabelText(/^MP3 파일/u)
+    expect(audioInput.getAttribute('type')).toBe('file')
+    expect(audioInput.hasAttribute('multiple')).toBe(true)
+    expect(workspace.getByRole('button', {name: '0곡 추가'})).toBeDisabled()
+    view.unmount()
   })
 
   it('should report HTTP and unknown catalog loading failures', async () => {

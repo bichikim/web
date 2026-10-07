@@ -77,24 +77,21 @@ it('should leave server bundles on the supported Node runtime without browser po
 
 it('should prebundle injected CommonJS polyfills in the dev server', async () => {
   const cacheDir = await mkdtemp(join(tmpdir(), 'pomo-polyfills-'))
+  const server = await createServer({
+    cacheDir,
+    configFile: false,
+    logLevel: 'silent',
+    plugins: [createPolyfillsPlugin()],
+    root: fileURLToPath(new URL('../../', import.meta.url)),
+    server: {port: 0},
+  })
   try {
-    const server = await createServer({
-      cacheDir,
-      configFile: false,
-      logLevel: 'silent',
-      plugins: [createPolyfillsPlugin()],
-      root: fileURLToPath(new URL('../../', import.meta.url)),
-      server: {port: 0},
-    })
-    try {
-      await server.listen()
-      const result = await server.transformRequest('/src/utils/create-latest-async-task/index.ts')
-      expect(result?.code).toMatch(/deps\/core-js/u)
-      expect(result?.code).not.toMatch(/@fs\/.*core-js\/modules/u)
-    } finally {
-      await server.close()
-    }
+    await server.listen()
+    const result = await server.transformRequest('/src/utils/create-latest-async-task/index.ts')
+    expect(result?.code).toMatch(/deps\/core-js/u)
+    expect(result?.code).not.toMatch(/@fs\/.*core-js\/modules/u)
   } finally {
+    await server.close()
     await rm(cacheDir, {force: true, recursive: true})
   }
 })

@@ -63,6 +63,7 @@ const applyReminderSchedule = (memo: MemoryMemo, scheduledMemo: MemoryMemo): Mem
   ...memo,
   exactReminderAt: scheduledMemo.exactReminderAt,
   nextExactReminderAt: scheduledMemo.nextExactReminderAt,
+  nextExactReminderRearmed: scheduledMemo.nextExactReminderRearmed,
   nextRecallAt: scheduledMemo.nextRecallAt,
   reinforcementIndex: scheduledMemo.reinforcementIndex,
 })

@@ -2,6 +2,7 @@
 import {render, screen} from '@solidjs/testing-library'
 import {type Locale, overwriteSetLocale, setLocale} from '@paraglide/runtime'
 import {PHealthCheck} from 'src/components/p-health-check/PHealthCheck'
+import {PWeatherSettings} from 'src/components/p-weather-settings/PWeatherSettings'
 import {PSelect, type PSelectSingleProps} from 'src/components/p-select/PSelect'
 import {type DisplayThemePreference, useDisplayTheme} from 'src/features/display-theme'
 import {useScreenWakeLock} from 'src/features/screen-wake-lock'
@@ -15,6 +16,7 @@ vi.mock('src/components/p-select/PSelect', () => ({PSelect: vi.fn()}))
 vi.mock('src/features/display-theme', () => ({useDisplayTheme: vi.fn()}))
 vi.mock('src/features/screen-wake-lock', () => ({useScreenWakeLock: vi.fn()}))
 vi.mock('src/components/p-health-check/PHealthCheck', () => ({PHealthCheck: vi.fn()}))
+vi.mock('src/components/p-weather-settings/PWeatherSettings', () => ({PWeatherSettings: vi.fn()}))
 vi.mock('../Display', () => ({PGeneralDisplaySettings: vi.fn()}))
 beforeEach(() => {
   vi.clearAllMocks()
@@ -137,16 +139,27 @@ it('should show health checks in the production web runtime', () => {
   vi.unstubAllEnvs()
 })
 
-it('should pass the weather display preference to the general display settings', () => {
+it('should expose weather controls and forward their preferences in general settings', () => {
   const onWeatherEnabledChange = vi.fn()
+  const onWeatherSceneModeChange = vi.fn()
+  const onWeatherLocationChange = vi.fn()
   render(() => (
     <PGeneralSettings
       onWeatherEnabledChange={onWeatherEnabledChange}
+      onWeatherLocationChange={onWeatherLocationChange}
+      onWeatherSceneModeChange={onWeatherSceneModeChange}
       wakeLock={useScreenWakeLock()}
       weatherEnabled={false}
+      weatherSceneMode="rain"
     />
   ))
 
+  expect(screen.getByRole('region', {name: '날씨 연동'})).toBeInTheDocument()
+  const weatherProps = vi.mocked(PWeatherSettings).mock.calls[0]?.[0]
+  expect(weatherProps?.sceneMode).toBe('rain')
+  weatherProps?.onSceneModeChange?.('snow')
+  expect(onWeatherSceneModeChange).toHaveBeenCalledWith('snow')
+  expect(weatherProps?.onLocationChange).toBe(onWeatherLocationChange)
   const displayProps = vi.mocked(PGeneralDisplaySettings).mock.calls[0]?.[0]
   expect(displayProps?.weatherEnabled).toBe(false)
   displayProps?.onWeatherEnabledChange?.(true)

@@ -1,3 +1,4 @@
+import {clampUnit} from 'src/utils/clamp-unit'
 // oxlint-disable no-magic-numbers, no-bitwise -- Transfer limits and CRC32 use fixed byte and bit constants.
 // oxlint-disable no-await-in-loop -- ICE candidates and file chunks must be applied in order with bounded buffering.
 import {createStore} from 'solid-js/store'
@@ -29,6 +30,7 @@ class TransferSession implements FileTransfer {
   private readonly store = createStore<TransferState>({
     autoAccept: false,
     error: null,
+    errorCode: null,
     incoming: null,
     joinUrl: null,
     outgoing: null,
@@ -37,10 +39,8 @@ class TransferSession implements FileTransfer {
     receivedName: null,
     sessionId: null,
   })
-
   readonly state = this.store[0]
   private readonly setState = this.store[1]
-
   private socket: WebSocket | null = null
   private connection: RTCPeerConnection | null = null
   private channel: RTCDataChannel | null = null
@@ -52,7 +52,6 @@ class TransferSession implements FileTransfer {
   private incomingChecksum = 0xffffffff
   private outgoingVersion = 0
   private pendingCandidates: Array<RTCIceCandidateInit> = []
-
   private readonly signalUrl = () =>
     new URL('/api/transfer/socket', this.options.getOrigin()).href.replace(/^http/u, 'ws')
   private readonly sendSignal = (type: string, data?: string) => {
@@ -61,12 +60,16 @@ class TransferSession implements FileTransfer {
     }
   }
   private readonly sendControl = (value: unknown) => this.channel?.send(JSON.stringify(value))
-
-  private readonly fail = (message: string): void => {
-    this.setState({autoAccept: false, error: message, outgoing: null, phase: 'error'})
+  private readonly fail = (message: string, code: TransferState['errorCode'] = null): void => {
+    this.setState({
+      autoAccept: false,
+      error: message,
+      errorCode: code,
+      outgoing: null,
+      phase: 'error',
+    })
     this.closeConnections()
   }
-
   private readonly closeConnections = (): void => {
     this.outgoingVersion += 1
     const previousChannel = this.channel
@@ -140,7 +143,7 @@ class TransferSession implements FileTransfer {
     })
     peer.addEventListener('connectionstatechange', () => {
       if (this.connection === peer && peer.connectionState === 'failed') {
-        this.fail(m.transfer_error_direct_connection())
+        this.fail(m.transfer_error_direct_connection(), 'direct-connection')
       }
     })
     peer.addEventListener('datachannel', (event) => {
@@ -343,7 +346,7 @@ class TransferSession implements FileTransfer {
       }
       checksum = updateChecksum(checksum, new Uint8Array(chunk))
       dataChannel.send(chunk)
-      this.setState({progress: Math.min(1, (offset + chunk.byteLength) / file.size)})
+      this.setState({progress: clampUnit((offset + chunk.byteLength) / file.size)})
     }
     this.sendControl({checksum: (checksum ^ 0xffffffff) >>> 0, id, type: 'end'})
   }
@@ -478,6 +481,7 @@ class TransferSession implements FileTransfer {
     this.setState({
       autoAccept: false,
       error: null,
+      errorCode: null,
       incoming: null,
       joinUrl: null,
       outgoing: null,
@@ -491,6 +495,7 @@ class TransferSession implements FileTransfer {
   readonly approve = (): void => {
     if (this.role === 'creator' && this.state.phase === 'approval-needed') {
       this.socket?.send(JSON.stringify({type: 'approve'}))
+      this.setState({phase: 'connecting'})
     }
   }
   get isConfigured() {
@@ -521,6 +526,7 @@ class TransferSession implements FileTransfer {
     this.setState({
       autoAccept: false,
       error: null,
+      errorCode: null,
       incoming: null,
       joinUrl: null,
       outgoing: null,
@@ -570,6 +576,7 @@ class TransferSession implements FileTransfer {
     this.setState({
       autoAccept: false,
       error: null,
+      errorCode: null,
       incoming: null,
       joinUrl: null,
       outgoing: null,

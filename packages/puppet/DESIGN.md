@@ -17,6 +17,8 @@ Shared primitives live in [design-system](src/design-system/index.ts), with thei
 | Parameters and keyform markers                | [Parameter styles](uno/shortcuts/parameters.ts)                                                          |
 | Dialogs and menus                             | [Dialog styles](uno/shortcuts/dialogs.ts), [portal provider](src/design-system/EditorPortalProvider.tsx) |
 | Icons and motion                              | [Icon shortcuts](uno/shortcuts/icons.ts), [UnoCSS configuration](uno.config.ts)                          |
+| Typography, default text, portal inheritance  | [Typography contract](uno/shortcuts/typography.ts)                                                       |
+| Spacing and density                           | [Spacing tokens](uno/spacing.ts), [foundation preview](src/editor/PuppetDesignLanguage.story.tsx)        |
 
 CSS and UnoCSS own visual values. TypeScript communicates semantic state through classes and data attributes, or runtime measurements through CSS custom properties. Follow the parent AGENTS.md restrictions on styling and layering; do not add `z-index`.
 
@@ -38,7 +40,28 @@ Use the existing palette by role. These are reference values from the current st
 
 Keep surfaces quiet, borders thin, and corners modestly rounded. Use existing semantic warning and error styles rather than decorative accent colors. Model artwork and weight visualizations may be colorful; that does not change the editor chrome palette. Do not introduce decorative gradients, oversized cards, hero headings, or a new font family.
 
-Inherit the editor's Inter/system sans-serif stack. Preserve the compact label and metadata hierarchy defined in the shortcuts. Numeric values, coordinates, and color codes use the existing field typography. Do not resize a label independently to make it look like a section heading.
+## Typography
+
+The editor defaults to the body role in the [typography contract](uno/shortcuts/typography.ts). Its theme owns font sizes and families; its semantic shortcuts own size, weight, and line height together. The document root font size remains unchanged: text uses `rem` so user font scaling also scales the existing layout dimensions.
+
+Use the Inter/system sans-serif stack for interface text. Use the shared monospace stack for units, code, coordinates, and shortcut hints; use tabular numbers for editable values. Keep normal text at regular weight, control labels at medium weight, and headings at semibold weight. Use line height to distinguish reading text from single-line controls; do not change control heights to fit larger text.
+
+| Role           | Shared shortcut              | Use                                                                           |
+| -------------- | ---------------------------- | ----------------------------------------------------------------------------- |
+| Body           | `editor-type-body`           | Ordinary interface text and labels; the inherited default                     |
+| Control        | `editor-type-control`        | Shared buttons, text inputs, selects, and mode actions                        |
+| Numeric        | `editor-type-numeric`        | Editable values with stable digit widths                                      |
+| Caption        | `editor-type-caption`        | Tooltips, compact explanatory text, and secondary status                      |
+| Metadata       | `editor-type-metadata`       | Dense layer details and unit hints                                            |
+| Micro          | `editor-type-micro`          | Short counts and ruler/marker metadata; never instructions or primary actions |
+| Section        | `editor-type-section`        | Panel and fieldset headings; hierarchy comes from weight and spacing          |
+| Title          | `editor-type-title`          | Dialog headings                                                               |
+| Reading        | `editor-type-reading`        | Multi-line help and longer explanatory content                                |
+| Document title | `editor-type-document-title` | The top heading of dedicated help or design reference content                 |
+
+New interface text must inherit the body role or choose one of these semantic shortcuts. Extend the closest owning shortcut when a nested selector needs a role. Use `text-editor-*` theme tokens only when composing an existing style that already owns its weight and line height. Do not use generic text-size utilities, arbitrary font sizes, native heading sizes, or an independently enlarged action label for ordinary interface text. Icon glyphs and model-space SVG annotations have separate geometry contracts.
+
+Apply `editor-type-root` to every independently mounted popup or portal surface. Existing surfaces compose it in their owning shortcuts. Its scoped, zero-specificity inheritance rule makes native controls and headings inherit typography without overriding explicit roles, including outside the editor main element and inside the custom element's Shadow DOM. Composing this shortcut also covers future portal surfaces without a separate selector registry. Validate computed sizes in both workspace and portal content when changing typography.
 
 Mesh vertex markers and deformer control points keep an 8px screen-space diameter at every document size and camera zoom. CSS compensates for camera zoom; do not derive marker size from document bounds. Deformer rotation centers retain a 16px visible diameter and a 20px hit diameter at every zoom. Mesh and deformer markers use a 2px screen-space stroke, including selected markers; selection changes their colors. Compensate the stroke for the outer camera scale as well as the marker radius.
 
@@ -70,6 +93,9 @@ Layout chrome and canvas manipulation handles are separate from form controls. D
 
 - Segmented fields fit their contents. Auto/Manual and Joint/Smooth switches must not stretch across the inspector. Modeling/Animation uses `md`; compact inspector switches use `sm`.
 - Give text buttons enough intrinsic width for their full label. In particular, parameter-add actions must not inherit a square icon-button width.
+- Number fields use the shared 11px numeric typography and stay within the control height. Unfocused display and scrubbing abbreviate decimals without rounding the stored value; direct input exposes the full value. Brush settings display at most two fractional digits.
+- Drag an unfocused number to scrub; focused pointer gestures select text. For bounded fields, the input and unit area spans the full range: its left edge is the minimum, its right edge is the maximum, and intermediate positions map linearly. Arrow buttons are outside that range. Unbounded fields use relative horizontal movement; Shift reduces subsequent movement only for those fields. Escape, pointer cancellation, or losing window focus cancels the drag. Wheel scrolling must not change numeric values. Keep this behavior in [EditorNumberField](src/design-system/EditorNumberField.tsx).
+- Bounded scrubbing follows an explicit numeric step while preserving both endpoints. Enter ends text editing with focus inside the control so modal focus containment does not restart text selection. Disabled fieldsets also block scrubbing. Numeric edits must remain mounted across document updates; match mutable list entries by their persistent identifiers. Ignore negligible numeric round-trip differences when tracking an active edit.
 - Use the existing Tabler icon vocabulary. Icon-only actions need accessible names and concise tooltips. [EditorTooltip](src/design-system/EditorTooltip.tsx) provides the shared top-layer surface, following Pomo: hover after 400ms, immediate keyboard-focus display, Escape/click dismissal, and a 150ms pointer grace period. Supply `title` on EditorButton or `data-tooltip` on other controls for explanatory copy; labeled icon buttons use their accessible name by default. CSS anchors own placement; unsupported browsers fall back to native titles.
 - Center color swatches horizontally and vertically inside their triggers.
 - Preserve hover, pressed, disabled, and visible keyboard-focus states. Do not use color alone to communicate a pending change or an error.
@@ -78,15 +104,36 @@ Layout chrome and canvas manipulation handles are separate from form controls. D
 
 Keep the toolbar above a central canvas, the layer tree on the left, the inspector on the right, and parameter/timeline editing below. Panels resize and close independently. Do not let inspector content establish the canvas width or force the entire workspace to scroll.
 
-Use the existing panel padding, fieldset spacing, and row gaps. Compact does not mean touching: retain clear space between a section label, its controls, and the next section. Avoid blank columns between disclosure arrows, layer icons, and titles.
+Use the shared spacing contract below. Compact does not mean touching: retain clear space between a section label, its controls, and the next section. Avoid blank columns between disclosure arrows, layer icons, and titles.
 
 Preserve `min-width: 0` and shrinkable grid tracks where names and fields share a row. Allow action rows to wrap where necessary instead of clipping text. Do not solve overflow by shrinking every control or enlarging every panel.
 
 Panel close gestures use half the minimum size as the release threshold. Reaching the minimum size alone must not close a panel. Keep the sizing and gesture policy in [use-panel-layout.ts](src/editor/use-panel-layout.ts).
 
+## Spacing
+
+The [spacing theme](uno/spacing.ts) owns a compact, rem-based scale. Pixel equivalents assume a 16px root font size. Compose its named tokens through UnoCSS padding, margin, and gap utilities in the owning shortcuts; do not introduce independent spacing values for ordinary interface layout.
+
+| Token            | Size | Role                                                          |
+| ---------------- | ---- | ------------------------------------------------------------- |
+| `editor-tight`   | 2px  | Joined segments and dense metadata                            |
+| `editor-related` | 4px  | Closely related actions, checkbox labels, and menu row detail |
+| `editor-control` | 6px  | Icon-to-label gaps and compact action groups                  |
+| `editor-field`   | 8px  | Field rows, inner group padding, and control text insets      |
+| `editor-group`   | 12px | Panel padding, toolbar side insets, and separate groups       |
+| `editor-section` | 16px | Dialog padding and separation between dialog sections         |
+| `editor-reading` | 24px | Dedicated help and design reference content                   |
+
+Keep spacing inside a group smaller than spacing between groups. Panels own their outer inset; layout parents own sibling gaps. Do not stack a parent's gap with a child's margin for the same separation, or add a first section's top margin to the panel inset. Inspector groups use the field inset and group separation; standard dialogs use the section inset. Menus retain a compact control inset around field-inset rows.
+
+Control heights remain governed by the shared size API. Text controls have zero block padding and field-size inline padding; square icon actions keep zero padding. Segmented frames use tight padding and gaps. Toolbars reserve only the vertical clearance their controls and focus outlines need, and preserve the existing horizontal scrolling behavior.
+
+Hierarchy indentation, model-space geometry, marker clearances, animation travel, resize handles, and reserved action slots have separate measurement contracts. Keep those dimensions with their owning geometry instead of rounding them to the spacing scale. Validate rendered grouping, focus outlines, portal insets, and local scrolling at narrow and wide viewport sizes after spacing changes.
+
 ## Layer tree
 
 - Keep hierarchy indentation restrained and reuse the shared row structure. Group nesting must not add unnecessary empty horizontal space.
+- Layer rows retain at least 256px of content width plus hierarchy indentation. When the panel is narrower, scroll the layer list horizontally instead of collapsing names, thumbnails, badges, or state actions into each other. Names still truncate within the available row width.
 - Group and part names support the same rename interaction.
 - Long unselected titles show an ellipsis. Only selected, overflowing titles scroll continuously in one direction; they do not bounce back and forth. Keep the full name available through the existing title treatment.
 - Respect reduced motion: retain readable truncated names without marquee animation.
@@ -109,6 +156,20 @@ Keep coordinate rulers at the top and left of the canvas. Pan and zoom change th
 Floating controls must remain inside the visible canvas and must not collide. Place temporary-change status at the upper-right, with other display controls stacked separately. Temporary-change actions use compact 10px labels and `sm` controls, with a square dismiss action joined to the status button: no gap, one outer outline, and an internal divider. When deletion confirmation hides the dismiss action, restore all corners of the remaining button. Mask-boundary visibility is an icon toggle beside the lower-right view actions, using the same 28px square size and a visible pressed state. Keep its accessible name and tooltip; do not restore the text card. Keep the parameter row's return arrow at the upper-right of its control area.
 
 Glue controls reuse the existing number fields and keyform/temporary-form workflow. Without a parameter targeting the A part, edit B ratio and attachment strength directly as static settings. Otherwise store them on the connection's A-part keyform. Show only connections related to the selected parts. When the B part is selected, identify the A part that owns editing. Edge attachments expose strength only. Creating or removing a connection remains a structural edit.
+
+## Brush and keyform tools
+
+Mesh editing offers move, expansion/contraction, and smoothing brushes with shared radius, strength, and hardness fields. Smoothing blends each interior vertex toward its unique triangle-connected neighbors, preserving inferred outlines, hole boundaries, and explicit boundary loops; it uses radius and strength and is disabled without interior vertices. Cache mesh connectivity between pointer events. Expansion uses horizontal drag distance: right expands, left contracts, and Shift forces contraction. A stroke previews while dragging and commits once on release; existing cancellation and undo behavior applies.
+
+A 2D warp grid offers point selection, move, expansion/contraction, and smoothing in the shared bottom brush selector. Selecting a mesh or warp deformer changes the tools in that single location; brush settings use the existing toolbar above the canvas. Move and expansion/contraction include boundary points and support one-cell grids; smoothing requires interior points and preserves the outer boundary. Share radius and strength across the modes, and expose hardness for move and expansion/contraction. Measure radius and displacement in displayed model coordinates, including ancestor deformations, then convert edited points back to the deformer coordinates. Carry curvature handles with their owning points. Escape, lost pointer capture, window blur, and changing brush modes discard an unfinished stroke.
+
+The parameter toolbar's Keyform Tools dialog provides motion mirroring and four-corner generation. Mirroring targets the parameter value reflected around its default, with a selected horizontal or vertical geometry axis and a configurable mesh center. Preserve vertex order and UVs. Meshes, warp grids, and rotation deformers are supported; show an actionable message for unsupported targets. Warp and rotation deformers use their own reference centers.
+
+Keep parameter creation, keyform tools, geometry editing modes, and brush tools on one horizontal toolbar row. Narrow workspaces scroll this toolbar horizontally; preserve intrinsic button and segmented-control widths, and keep keyboard-focused actions reachable through the same scroll container.
+
+Create and delete keyforms through the track/grid context menu rather than persistent toolbar buttons. Right-click selects the requested binding and value; addition is available only at an empty value, and deletion only on an existing keyform. Double-click an empty track/grid position to create a keyform at that value. Backspace or Delete removes the selected keyform while the track or a marker has focus; typing, composition, modifier chords, and key repeat must not delete keyforms. Preserve preview-only bindings and restore track focus after a menu closes or a marker is deleted. These actions use the existing document history.
+
+Corner generation requires exact center and four axial endpoint forms in a 2D parameter binding. Choose the parameter defaults or range midpoints as the center, and add both axial displacements to that reference. Preserve existing destination forms unless the overwrite checkbox is selected. Errors remain in the dialog; successful application closes it and records one undoable document edit. Mirroring also selects its destination value.
 
 ## Temporary changes
 

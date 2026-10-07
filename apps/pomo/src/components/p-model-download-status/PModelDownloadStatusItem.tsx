@@ -1,5 +1,6 @@
+import {clampDisplayedPercentage} from 'src/utils/clamp-displayed-percentage'
 import {cx} from 'class-variance-authority'
-import {type Accessor, Match, Switch} from 'solid-js'
+import {type Accessor, createMemo, Match, Switch} from 'solid-js'
 
 import type {
   ErrorModelDownloadState,
@@ -19,6 +20,9 @@ const ERROR_CLASSES = cx(
   'border border-solid border-border rounded-control bg-surface px-3',
   'text-foreground text-sm font-650 shadow-panel backdrop-blur-surface',
 )
+
+const getDisplayPercentage = (percentage: number) =>
+  Number.isFinite(percentage) ? clampDisplayedPercentage(percentage) : undefined
 
 export interface PModelDownloadStatusItemProps {
   readonly item?: ModelDownloadItem
@@ -40,17 +44,28 @@ export const PModelDownloadStatusItem = (props: PModelDownloadStatusItemProps) =
       props.onDismissError(current.target)
     }
   }
-  const handleLoading = (state: Accessor<LoadingModelDownloadState>) => (
-    <div aria-live="polite" class="pointer-events-auto" role="status">
-      <div class="border border-solid border-border rounded-control backdrop-blur-surface">
-        <PLoadingStatus
-          message={`${state().label} 모델 받는 중 · ${state().percentage}%`}
-          onCancel={handleCancel}
-        />
+  const handleLoading = (state: Accessor<LoadingModelDownloadState>) => {
+    const display = createMemo(() => {
+      const current = state()
+      const percentage = getDisplayPercentage(current.percentage)
+      return {
+        message:
+          percentage === undefined
+            ? `${current.label} 모델 받는 중`
+            : `${current.label} 모델 받는 중 · ${percentage}%`,
+        percentage,
+      }
+    })
+
+    return (
+      <div aria-live="polite" class="pointer-events-auto min-w-0" role="status">
+        <div class="border border-solid border-border rounded-control backdrop-blur-surface">
+          <PLoadingStatus message={display().message} onCancel={handleCancel} />
+        </div>
+        <PProgress label="모델 다운로드 진행률" value={display().percentage} />
       </div>
-      <PProgress label="모델 다운로드 진행률" value={state().percentage} />
-    </div>
-  )
+    )
+  }
   const handleError = (state: Accessor<ErrorModelDownloadState>) => (
     <PFormMessage class={ERROR_CLASSES} tone="error">
       <span aria-hidden="true" class="i-tabler-alert-circle size-4.5 flex-none text-danger" />
@@ -63,9 +78,18 @@ export const PModelDownloadStatusItem = (props: PModelDownloadStatusItemProps) =
     </PFormMessage>
   )
   const handleQueued = (state: Accessor<QueuedModelDownloadState>) => (
-    <div class={ERROR_CLASSES} role="status">
-      <span>{state().label} · 다운로드 대기 중</span>
-      <PButton bordered transparent size="small" tone="secondary" onPress={handleCancel}>
+    <div class={cx(ERROR_CLASSES, 'min-w-0')} role="status">
+      <span class="min-w-0 flex-1 truncate" title={state().label}>
+        {state().label} · 다운로드 대기 중
+      </span>
+      <PButton
+        bordered
+        transparent
+        class="flex-none"
+        size="small"
+        tone="secondary"
+        onPress={handleCancel}
+      >
         취소
       </PButton>
     </div>

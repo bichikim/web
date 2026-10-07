@@ -21,7 +21,6 @@ import {
 import {excludeMemoryMemoDialogues} from '../../features/memory-assist'
 import {SUPERTONIC_VOICES} from '../../features/supertonic'
 import * as m from '@paraglide/message'
-import {AutomaticDialogueSettings} from './AutomaticSettings'
 import {getDialogueEventActions, getDialogueEvents} from './event-definitions'
 import {DialogueConnectionMenu} from './ConnectionMenu'
 import {DelayedEndEventSettings} from './DelayedEndEventSettings'
@@ -252,8 +251,6 @@ export function PDialogueSettingsContent() {
       <Tabs.Content value="dialogue-library">
         <section class={CLASSES.dialogueSettings}>
           <DialogueVolumeDuckingSettings />
-
-          <AutomaticDialogueSettings />
 
           <PSettingsSectionHeading
             actions={

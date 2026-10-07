@@ -15,23 +15,20 @@ export const groupCalendarEvents = (
   const createDateKey = (timestamp: number) => dayjs(timestamp).tz(timeZone).format('YYYY-MM-DD')
   const grouped = new Map<string, CalendarEvent[]>()
   events.forEach((event) => {
-    const endTimestamp = Date.parse(event.end)
-    if (!Number.isFinite(endTimestamp)) {
+    const interval = event.allDay
+      ? {end: Date.parse(event.end), start: Date.parse(event.start)}
+      : parseTimedInterval(event.start, event.end)
+    if (interval === null || !Number.isFinite(interval.end)) {
       return
     }
 
-    const startTimestamp = Date.parse(event.start)
-    if (!event.allDay && parseTimedInterval(event.start, event.end) === null) {
-      return
-    }
-
-    const start = event.allDay ? parseAllDayDateKey(event.start) : createDateKey(startTimestamp)
+    const start = event.allDay ? parseAllDayDateKey(event.start) : createDateKey(interval.start)
     if (start === null) {
       return
     }
 
     // All-day ends retain their date key; timed events use the last instant for local-day boundaries.
-    const end = event.allDay ? parseAllDayDateKey(event.end) : createDateKey(endTimestamp - 1)
+    const end = event.allDay ? parseAllDayDateKey(event.end) : createDateKey(interval.end - 1)
     if (end === null) {
       return
     }

@@ -1,6 +1,7 @@
 import type {VertexPoint} from './edit-document'
 
 export interface DeformBrushVerticesOptions {
+  readonly mode?: 'move' | 'expand'
   readonly center: VertexPoint
   readonly delta: VertexPoint
   readonly hardness: number
@@ -8,6 +9,8 @@ export interface DeformBrushVerticesOptions {
   readonly strength: number
   readonly vertices: readonly number[]
 }
+
+const MINIMUM_EXPANSION_SCALE = 0.05
 
 /** Moves vertices within the brush radius, with a full-strength core and a linear outer falloff. */
 export const deformBrushVertices = (options: DeformBrushVerticesOptions): number[] => {
@@ -24,6 +27,14 @@ export const deformBrushVertices = (options: DeformBrushVerticesOptions): number
     )
     const progress = radius === 0 ? 1 : distance / radius
     const falloff = progress >= 1 ? 0 : progress <= core ? 1 : (1 - progress) / (1 - core)
+    if (options.mode === 'expand') {
+      const scale = Math.max(
+        MINIMUM_EXPANSION_SCALE,
+        1 + (options.delta.x / Math.max(1, radius)) * falloff * strength,
+      )
+      const center = offset === 0 ? options.center.x : options.center.y
+      return center + (coordinate - center) * scale
+    }
     return coordinate + (offset === 0 ? options.delta.x : options.delta.y) * falloff * strength
   })
 }

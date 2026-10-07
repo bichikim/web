@@ -16,41 +16,37 @@ const STEPS = [
   {description: '집중할 음악을 골라요.', id: 'music', title: '음악 플레이어'},
 ] as const satisfies ReadonlyArray<PTourStep>
 
-const renderTour = () => {
-  const timerElement = document.createElement('button')
-  const musicElement = document.createElement('button')
-  timerElement.getBoundingClientRect = () => new DOMRect(40, 60, 120, 48)
-  musicElement.getBoundingClientRect = () => new DOMRect(240, 180, 160, 64)
-  const elements = new Map<string, Element>([
-    ['timer', timerElement],
-    ['music', musicElement],
-  ])
-  const onEvent = vi.fn()
-  const onOpenChange = vi.fn()
-
-  const Harness = () => {
-    const [isOpen, setIsOpen] = createSignal(true)
-    return (
-      <PTour
-        getStepElement={(stepId) => elements.get(stepId) ?? null}
-        isOpen={isOpen()}
-        onEvent={onEvent}
-        onOpenChange={(nextOpen) => {
-          setIsOpen(nextOpen)
-          onOpenChange(nextOpen)
-        }}
-        steps={STEPS}
-      />
-    )
-  }
-
-  render(() => <Harness />)
-  return {musicElement, onEvent, onOpenChange, timerElement}
-}
-
 describe('PTour', () => {
-  it('should render the initial target and report the started event', async () => {
-    const {onEvent, timerElement} = renderTour()
+  it('should guide through targets and close after the final step', async () => {
+    const timerElement = document.createElement('button')
+    const musicElement = document.createElement('button')
+    timerElement.getBoundingClientRect = () => new DOMRect(40, 60, 120, 48)
+    musicElement.getBoundingClientRect = () => new DOMRect(240, 180, 160, 64)
+    const elements = new Map<string, Element>([
+      ['timer', timerElement],
+      ['music', musicElement],
+    ])
+    const onEvent = vi.fn()
+    const onOpenChange = vi.fn()
+
+    const Harness = () => {
+      const [isOpen, setIsOpen] = createSignal(true)
+      return (
+        <PTour
+          getStepElement={(stepId) => elements.get(stepId) ?? null}
+          isOpen={isOpen()}
+          onEvent={onEvent}
+          onOpenChange={(nextOpen) => {
+            setIsOpen(nextOpen)
+            onOpenChange(nextOpen)
+          }}
+          steps={STEPS}
+        />
+      )
+    }
+
+    render(() => <Harness />)
+
     expect(await screen.findByRole('dialog', {name: '집중 타이머'})).toBeInTheDocument()
     expect(screen.getByText('타이머 사용법을 확인해요.')).toBeInTheDocument()
     expect(screen.getByText('1 / 2')).toBeInTheDocument()
@@ -67,11 +63,7 @@ describe('PTour', () => {
       step: STEPS[0],
       type: 'started',
     })
-  })
 
-  it('should navigate between the previous and next tour targets', async () => {
-    renderTour()
-    expect(await screen.findByRole('dialog', {name: '집중 타이머'})).toBeInTheDocument()
     fireEvent.click(screen.getByRole('button', {name: '다음'}))
 
     await waitFor(() =>
@@ -85,11 +77,6 @@ describe('PTour', () => {
     await waitFor(() =>
       expect(screen.getByRole('dialog', {name: '집중 타이머'})).toBeInTheDocument(),
     )
-  })
-
-  it('should complete the final step and close the tour', async () => {
-    const {musicElement, onEvent, onOpenChange} = renderTour()
-    expect(await screen.findByRole('dialog', {name: '집중 타이머'})).toBeInTheDocument()
     fireEvent.click(screen.getByRole('button', {name: '다음'}))
     await waitFor(() =>
       expect(screen.getByRole('dialog', {name: '음악 플레이어'})).toBeInTheDocument(),

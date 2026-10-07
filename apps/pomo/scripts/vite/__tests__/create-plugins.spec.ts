@@ -50,6 +50,17 @@ beforeEach(() => {
 
 afterEach(() => vi.clearAllMocks())
 
+it('should isolate standalone player routes and middleware while retaining SSR', () => {
+  createPlugins({...options, command: 'build', standaloneRelax: true})
+
+  expect(solidStart).toHaveBeenCalledWith({
+    devOverlay: false,
+    middleware: './src/middleware/relax.ts',
+    routeDir: './routes-relax',
+    ssr: true,
+  })
+})
+
 it.each([
   {remote: false, ssr: true, target: 'web'},
   {remote: true, ssr: true, target: 'apps-in-toss'},
@@ -140,8 +151,8 @@ it.each(['web', 'apps-in-toss', 'desktop', 'android', 'ios'] as const)(
       expect.objectContaining({
         outdir:
           runtimeTarget === 'apps-in-toss'
-            ? './.i18n/paraglide/apps-in-toss'
-            : './.i18n/paraglide/web',
+            ? './.i18n/paraglide-development/apps-in-toss'
+            : './.i18n/paraglide-development/web',
         outputStructure: 'locale-modules',
         strategy:
           runtimeTarget === 'apps-in-toss'

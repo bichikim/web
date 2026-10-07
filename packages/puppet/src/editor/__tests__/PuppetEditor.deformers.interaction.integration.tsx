@@ -226,7 +226,9 @@ describe('PuppetEditor', () => {
 
     const parameterValue = view.getByRole('spinbutton', {name: 'Parameter 3 값'})
     fireEvent.input(parameterValue, {target: {value: '30'}})
-    fireEvent.click(view.getByRole('button', {name: '현재 값에 키폼'}))
+    const track = view.getByLabelText('Parameter 3 키폼 트랙')
+    vi.spyOn(track, 'getBoundingClientRect').mockReturnValue(new DOMRect(100, 0, 200, 40))
+    fireEvent.dblClick(track, {clientX: 300})
     fireEvent.input(view.getByRole('spinbutton', {name: '자유 변형 각도'}), {
       target: {value: '60'},
     })
@@ -377,11 +379,13 @@ describe('PuppetEditor', () => {
     const latest = () => onDocumentChange.mock.calls.at(-1)![0] as PuppetDocument
     const node = () => getSceneNode(latest(), 'group') as PuppetSceneDeformerNode
     fireEvent.input(view.getByLabelText('자유 변형 각도'), {target: {value: '30'}})
+    fireEvent.blur(view.getByLabelText('자유 변형 각도'))
     const before = node()
     const point = {x: 200, y: 100}
     const expected = transformDeformerPoint(before, point)
     fireEvent.click(view.getByRole('button', {name: '기준 배치'}))
     fireEvent.input(view.getByLabelText('자유 변형 각도'), {target: {value: '60'}})
+    fireEvent.blur(view.getByLabelText('자유 변형 각도'))
     expect(node().controlPoints).not.toEqual(before.controlPoints)
     expect(transformDeformerPoint(node(), point)).toEqual(expected)
     const placed = node()

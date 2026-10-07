@@ -81,7 +81,7 @@ export const renderEditor = (options: RenderEditorOptions = {}) =>
   ))
 
 const SETTLED_DURATION = 700
-export const finishPageTurn = () => turns.finishCurrentAnimation(SETTLED_DURATION)
+export const finishPageTurn = () => turns.advance(SETTLED_DURATION)
 
 export const sampleEntry = (text: string): PictureDiaryEntry => ({
   createdAt: '2026-09-04T03:00:00.000Z',

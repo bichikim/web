@@ -2,6 +2,7 @@ import {createEffect, createMemo, createSignal, onCleanup, onMount} from 'solid-
 
 import * as m from '@paraglide/message'
 import {usePreference} from 'src/hooks/use-preference'
+import {useDefaultTextModel} from 'src/features/text-generation/use-default-text-model'
 import {useDialogueWriter} from '../../features/dialogue-writer'
 import {
   getUnmemorizedLanguageLearningWordValues,
@@ -24,8 +25,6 @@ import {
   type LanguageLearningPendingDownload,
 } from './editor-state'
 import type {LanguageLearningCount} from './Settings'
-
-const TEXT_MODEL_ID = 'gemma-4-e2b'
 
 export const useLanguageLearningEditorState = () => {
   const modelDownload = useModelDownload()
@@ -57,7 +56,8 @@ export const useLanguageLearningEditorState = () => {
     isDisposed: false,
     retryCount: 0,
   }
-  const writer = useDialogueWriter({modelId: TEXT_MODEL_ID, outputLanguage: language})
+  const defaultModelId = useDefaultTextModel()
+  const writer = useDialogueWriter({modelId: defaultModelId(), outputLanguage: language})
   const isBusy = () =>
     isLanguageLearningEditorBusy(phase(), regeneratingCandidateId()) ||
     writer.isBusy() ||
@@ -133,6 +133,7 @@ export const useLanguageLearningEditorState = () => {
     candidates,
     clearCandidates,
     count,
+    defaultModelId,
     fail,
     generationStatus,
     handleLanguageChange,
@@ -163,6 +164,7 @@ export const useLanguageLearningEditorState = () => {
     tagInput,
     tags,
     textModelCheckActive,
+    textModelId: writer.modelId,
     voiceId,
     wordSource,
     workflow,
@@ -171,5 +173,3 @@ export const useLanguageLearningEditorState = () => {
 }
 
 export type LanguageLearningEditorState = ReturnType<typeof useLanguageLearningEditorState>
-
-export {TEXT_MODEL_ID}
