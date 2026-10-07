@@ -190,11 +190,11 @@ jobs:
             --build-env "DATABASE_URL=${DATABASE_URL}" \
             --build-env "DATABASE_URL_UNPOOLED=${DATABASE_URL_UNPOOLED}" \
             --build-env "NEON_AUTH_BASE_URL=${NEON_AUTH_BASE_URL}" \
-            --build-env 'VITE_POMO_PUBLIC_ORIGIN=https://staging.pomofi.io' \
+            --build-env 'POMO_PUBLIC_ORIGIN=https://staging.pomofi.io' \
             --env "DATABASE_URL=${DATABASE_URL}" \
             --env "DATABASE_URL_UNPOOLED=${DATABASE_URL_UNPOOLED}" \
             --env "NEON_AUTH_BASE_URL=${NEON_AUTH_BASE_URL}" \
-            --env 'VITE_POMO_PUBLIC_ORIGIN=https://staging.pomofi.io' \
+            --env 'POMO_PUBLIC_ORIGIN=https://staging.pomofi.io' \
             --env "CLOUDFLARE_R2_ACCOUNT_ID=${CLOUDFLARE_ACCOUNT_ID}" \
             --env 'POMO_PAID_AUDIO_R2_BUCKET=pomofi-paid-audio-dev' \
             --env 'POMO_PAID_AUDIO_R2_PREFIX=staging/' \
