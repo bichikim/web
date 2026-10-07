@@ -91,3 +91,28 @@ it('should keep multi-select keyboard focus when pending timers run', () => {
   expect(system).toHaveAttribute('aria-selected', 'true')
   expect(system).toHaveFocus()
 })
+
+it('should skip disabled options by keyboard and prevent selecting them by pointer', () => {
+  const change = vi.fn()
+  render(() => (
+    <PSelect
+      label="Model"
+      onChange={change}
+      options={[
+        {label: 'Local', value: 'local'},
+        {disabled: true, label: 'Cloud (Sign in)', value: 'cloud'},
+      ]}
+      value="local"
+    />
+  ))
+  const trigger = screen.getByRole('button', {name: 'Model Local'})
+  trigger.focus()
+  fireEvent.keyDown(trigger, {key: 'ArrowDown'})
+  const local = screen.getByRole('option', {name: 'Local'})
+  const cloud = screen.getByRole('option', {name: 'Cloud (Sign in)'})
+  expect(cloud).toHaveAttribute('aria-disabled', 'true')
+  fireEvent.keyDown(local, {key: 'End'})
+  expect(local).toHaveFocus()
+  fireEvent.click(cloud)
+  expect(change).not.toHaveBeenCalled()
+})

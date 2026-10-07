@@ -61,6 +61,15 @@ beforeEach(() => {
 })
 
 describe('useChat', () => {
+  it('should describe cloud execution instead of local downloads and browser-only processing', () => {
+    const {clients, runtime} = createRuntime()
+    const {result} = renderHook(() => useChat({modelId: 'cloud', runtime}))
+    expect(result.statusMessage()).toBe('클라우드 모델로 대화를 준비해요.')
+    result.prepare()
+    clients[0]?.respond({type: 'ready'})
+    expect(result.statusMessage()).toBe('모델 준비 완료 · 대화는 클라우드에서 처리돼요.')
+  })
+
   it('should prepare LFM without WebGPU while keeping Gemma unsupported', () => {
     const {clients, runtime, supportsWebGpu} = createRuntime()
     supportsWebGpu.mockReturnValue(false)
