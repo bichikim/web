@@ -3,6 +3,7 @@ import * as m from '@paraglide/message'
 
 import {PButton} from '../p-button/PButton'
 import type {FeatureRequest, FeatureRequestStatus} from '../../features/feature-requests'
+import {getStatusLabel} from './get-status-label'
 
 interface FeatureRequestCardProps {
   readonly isAuthenticated: boolean
@@ -14,25 +15,8 @@ interface FeatureRequestCardProps {
 const STATUS_CLASSES: Record<FeatureRequestStatus, string> = {
   completed: 'bg-secondary-soft text-muted-foreground',
   confirmed: 'bg-highlight/14 text-highlight',
-  requested: 'bg-surface-interactive text-muted-foreground',
+  requested: 'bg-highlight text-background',
   voting: 'bg-primary-soft text-foreground',
-}
-
-const getStatusLabel = (status: FeatureRequestStatus): string => {
-  switch (status) {
-    case 'requested':
-      return m.feature_request_status_requested()
-    case 'voting':
-      return m.feature_request_status_voting()
-    case 'confirmed':
-      return m.feature_request_status_confirmed()
-    case 'completed':
-      return m.feature_request_status_completed()
-    default: {
-      const exhaustiveStatus: never = status
-      return exhaustiveStatus
-    }
-  }
 }
 
 export const FeatureRequestCard = (props: FeatureRequestCardProps) => {
@@ -46,8 +30,7 @@ export const FeatureRequestCard = (props: FeatureRequestCardProps) => {
     props.isAuthenticated &&
     !props.isVoting &&
     !props.request.votedByCurrentUser &&
-    props.request.status !== 'confirmed' &&
-    props.request.status !== 'completed'
+    props.request.status === 'voting'
 
   return (
     <article
@@ -88,50 +71,59 @@ export const FeatureRequestCard = (props: FeatureRequestCardProps) => {
         </p>
       </Show>
 
-      <div class="flex flex-wrap items-center justify-between gap-3 border-t border-solid border-border pt-3">
-        <Show when={targetVoteCount()}>
-          {(target) => (
-            <div class="min-w-36 flex-1">
-              <div class="mb-1.5 flex items-center justify-between gap-3 text-xs text-muted-foreground">
-                <span>{m.feature_request_vote_progress()}</span>
-                <span>
-                  {m.feature_request_goal_progress({
-                    count: props.request.voteCount,
-                    target: target(),
-                  })}
-                </span>
+      <Show
+        fallback={
+          <p class="m-0 text-sm leading-6 text-muted-foreground">
+            {m.feature_request_pending_description()}
+          </p>
+        }
+        when={props.request.status !== 'requested'}
+      >
+        <div class="flex flex-wrap items-center justify-between gap-3 border-t border-solid border-border pt-3">
+          <Show when={targetVoteCount()}>
+            {(target) => (
+              <div class="min-w-36 flex-1">
+                <div class="mb-1.5 flex items-center justify-between gap-3 text-xs text-muted-foreground">
+                  <span>{m.feature_request_vote_progress()}</span>
+                  <span>
+                    {m.feature_request_goal_progress({
+                      count: props.request.voteCount,
+                      target: target(),
+                    })}
+                  </span>
+                </div>
+                <progress
+                  aria-label={m.feature_request_vote_progress()}
+                  class="h-2 w-full overflow-hidden rounded-full accent-highlight"
+                  max={target()}
+                  value={Math.min(props.request.voteCount, target())}
+                />
               </div>
-              <progress
-                aria-label={m.feature_request_vote_progress()}
-                class="h-2 w-full overflow-hidden rounded-full accent-highlight"
-                max={target()}
-                value={Math.min(props.request.voteCount, target())}
-              />
-            </div>
-          )}
-        </Show>
-        <div class="flex items-center gap-3">
-          <span class="text-sm font-700 text-foreground">
-            {m.feature_request_vote_count({count: props.request.voteCount})}
-          </span>
-          <PButton
-            bordered
-            disabled={!canVote()}
-            onPress={() => props.onVote(props.request.id)}
-            pressed={props.request.votedByCurrentUser}
-            size="small"
-            tone="secondary"
-            transparent
-          >
-            <span aria-hidden="true">+1</span>
-            <span class="sr-only">
-              {props.request.votedByCurrentUser
-                ? m.feature_request_voted()
-                : m.feature_request_vote()}
+            )}
+          </Show>
+          <div class="flex items-center gap-3">
+            <span class="text-sm font-700 text-foreground">
+              {m.feature_request_vote_count({count: props.request.voteCount})}
             </span>
-          </PButton>
+            <PButton
+              bordered
+              disabled={!canVote()}
+              onPress={() => props.onVote(props.request.id)}
+              pressed={props.request.votedByCurrentUser}
+              size="small"
+              tone="secondary"
+              transparent
+            >
+              <span aria-hidden="true">+1</span>
+              <span class="sr-only">
+                {props.request.votedByCurrentUser
+                  ? m.feature_request_voted()
+                  : m.feature_request_vote()}
+              </span>
+            </PButton>
+          </div>
         </div>
-      </div>
+      </Show>
     </article>
   )
 }

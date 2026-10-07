@@ -100,13 +100,15 @@ export const validateHistoryOutput = (
     const momentSources = new Set(
       moment.sources.map((source) => normalizeHistorySourceUrl(source.url)),
     )
-    const publishers = new Set(
+    const publishersByUrl = new Map(
       moment.sources.map((source) => {
         const {hostname} = new URL(source.url)
+        const publisher = requireAllowedDomain(hostname, options.policy.allowedDomains)
 
-        return requireAllowedDomain(hostname, options.policy.allowedDomains)
+        return [source.url, publisher] as const
       }),
     )
+    const publishers = new Set(publishersByUrl.values())
 
     if (publishers.size < 2) {
       throw new TypeError('A generated moment must cite at least two publishers')
@@ -124,12 +126,9 @@ export const validateHistoryOutput = (
     }
 
     for (const section of Object.values(moment.sections)) {
+      // All citations resolve to searched URLs and pass moment membership before publisher lookup.
       const sectionPublishers = new Set(
-        section.sourceUrls.map((value) => {
-          const {hostname} = new URL(value)
-
-          return requireAllowedDomain(hostname, options.policy.allowedDomains)
-        }),
+        section.sourceUrls.map((value) => publishersByUrl.get(value)!),
       )
 
       if (sectionPublishers.size < 2) {

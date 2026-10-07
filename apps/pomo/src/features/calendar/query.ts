@@ -1,14 +1,20 @@
 import {createCalendarExclusionPattern} from './create-calendar-exclusion-pattern'
 import {
   type CalendarWeekendIntent,
+  createCalendarMonthRange,
   createCalendarPeriodRange,
+  createCalendarWeekdayRange,
   DAY_AFTER_TOMORROW_START_DAYS,
   DAYS_PER_WEEK,
   getFirstRequestedDateOffset,
   getLastRequestedDateOffset,
   toRange,
 } from './period-range'
-import {createCalendarWeekdayParser, type WeekdayIntent} from './weekday-expression'
+import {
+  createCalendarWeekdayParser,
+  isImplicitWeekdaySchedule,
+  type WeekdayIntent,
+} from './weekday-expression'
 import {dayjs} from 'src/utils/zoned-dayjs'
 import type {CalendarEventQuery, CalendarEventRange} from './types'
 
@@ -95,24 +101,24 @@ const CALENDAR_OTHER_PERIOD_TERM_PATTERN = new RegExp(
 )
 const DAY_BEFORE_YESTERDAY_EXCLUSION_PATTERN = createCalendarExclusionPattern(
   DAY_BEFORE_YESTERDAY_PATTERN.source,
-  `어제|오늘|${TOMORROW_PHRASE}|모레|글피`,
+  `어제|오늘|${TOMORROW_PATTERN.source}|모레|글피`,
 )
 const TODAY_EXCLUSION_PATTERN = createCalendarExclusionPattern(
   TODAY_PATTERN.source,
-  TOMORROW_PHRASE,
+  TOMORROW_PATTERN.source,
 )
 const YESTERDAY_EXCLUSION_PATTERN = createCalendarExclusionPattern(
   YESTERDAY_PATTERN.source,
-  `오늘|${TOMORROW_PHRASE}`,
+  `오늘|${TOMORROW_PATTERN.source}`,
 )
 const TOMORROW_EXCLUSION_PATTERN = createCalendarExclusionPattern(TOMORROW_PATTERN.source, '오늘')
 const DAY_AFTER_TOMORROW_EXCLUSION_PATTERN = createCalendarExclusionPattern(
   DAY_AFTER_TOMORROW_PATTERN.source,
-  `오늘|${TOMORROW_PHRASE}`,
+  `오늘|${TOMORROW_PATTERN.source}`,
 )
 const THREE_DAYS_AHEAD_EXCLUSION_PATTERN = createCalendarExclusionPattern(
   THREE_DAYS_AHEAD_PATTERN.source,
-  `그저께|그제|어제|오늘|${TOMORROW_PHRASE}|모레`,
+  `그저께|그제|어제|오늘|${TOMORROW_PATTERN.source}|모레`,
 )
 const NEXT_WEEK_PATTERN = createCalendarWeekPattern(
   `${NEXT_WEEK_TERM_PATTERN}(?:\\s*${WEEKDAY_PATTERN_SOURCE})?`,
@@ -248,12 +254,6 @@ interface CreateStandaloneCalendarDateRangeOptions {
   readonly now: Date
   readonly relativeDayOffsets: ReadonlyArray<number>
   readonly text: string
-}
-
-interface CreateCalendarMonthRangeOptions {
-  readonly monthBoundary: (months: number) => Date
-  readonly monthOffsets: ReadonlyArray<number>
-  readonly now: Date
 }
 
 const getCalendarQueryIntent = (text: string): CalendarQueryIntent => {
@@ -456,22 +456,55 @@ const createStandaloneCalendarDateRange = ({
   return null
 }
 
-const createCalendarMonthRange = ({
-  monthBoundary,
-  monthOffsets,
+const createStandaloneCalendarWeekdayRange = ({
+  boundary,
+  currentWeekday,
   now,
-}: CreateCalendarMonthRangeOptions): CalendarEventRange | null => {
-  if (monthOffsets.length !== 1) {
+  text,
+  weekdays,
+}: {
+  readonly boundary: (days: number, time?: string) => Date
+  readonly currentWeekday: number
+  readonly now: Date
+  readonly text: string
+  readonly weekdays: ReadonlyArray<number>
+}): CalendarEventQuery | null => {
+  const calendarRange = createCalendarWeekdayRange({
+    boundary,
+    currentWeekday,
+    weekdayOffsets: weekdays,
+  })
+  if (calendarRange === null) {
     return null
   }
 
-  const monthOffset = monthOffsets[0] ?? 0
-  const start = monthOffset === 0 ? now : monthBoundary(monthOffset)
-  return toRange(start, monthBoundary(monthOffset + 1))
+  const {end, firstDayOffset, lastDayOffset} = calendarRange
+  const morningEnd = boundary(lastDayOffset, '12:00:00')
+  const isPastSameDayMorning =
+    firstDayOffset === 0 &&
+    text.includes('오전') &&
+    now.getTime() >= boundary(0, '12:00:00').getTime()
+  const start = firstDayOffset === 0 && !isPastSameDayMorning ? now : boundary(firstDayOffset)
+  const daypartQuery =
+    weekdays.length === 1
+      ? createCalendarDaypartQuery({boundary, dayOffset: firstDayOffset, now, text})
+      : null
+
+  return createCalendarDateRange({
+    afternoonStart: boundary(firstDayOffset, '12:00:00'),
+    daypartQuery,
+    end,
+    morningEnd,
+    now,
+    start,
+    text,
+  })
 }
 
 const hasCalendarQueryIntent = (text: string) =>
-  CALENDAR_INTENT_PATTERN.test(text) || IMPLICIT_SCHEDULE_PATTERN.test(text)
+  CALENDAR_INTENT_PATTERN.test(text) ||
+  IMPLICIT_SCHEDULE_PATTERN.test(text) ||
+  isImplicitWeekdaySchedule(text)
 
 /** Resolves a calendar lookup in the requested time zone. */
 export const createCalendarQuery = (
@@ -488,6 +521,16 @@ export const createCalendarQuery = (
   const boundary = (days: number, time = '00:00:00') => {
     const date = dayjs.utc(local.format('YYYY-MM-DD')).add(days, 'day').format('YYYY-MM-DD')
     return dayjs.tz(`${date}T${time}`, timeZone).toDate()
+  }
+
+  if (isImplicitWeekdaySchedule(options.text)) {
+    return createStandaloneCalendarWeekdayRange({
+      boundary,
+      currentWeekday: local.day(),
+      now,
+      text: options.text,
+      weekdays: getWeekdayIntent(options.text).offsets,
+    })
   }
 
   const {
@@ -532,7 +575,7 @@ export const createCalendarQuery = (
     const date = dayjs.utc(local.format('YYYY-MM-01')).add(months, 'month').format('YYYY-MM-DD')
     return dayjs.tz(`${date}T00:00:00`, timeZone).toDate()
   }
-  const monthRange = createCalendarMonthRange({monthBoundary, monthOffsets, now})
+  const monthRange = createCalendarMonthRange({boundary: monthBoundary, monthOffsets, now})
   if (monthRange !== null) {
     return monthRange
   }

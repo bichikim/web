@@ -50,10 +50,8 @@ const createRecordingSegment = (options: CreateRecordingSegmentOptions): Recordi
   const recorder = new MediaRecorder(options.stream)
   const chunks: Array<Blob> = []
   let cancelled = false
-  let resolveStop!: (result: Result<Float32Array, SpeechCaptureError>) => void
-  const stopResult = new Promise<Result<Float32Array, SpeechCaptureError>>((resolve) => {
-    resolveStop = resolve
-  })
+  const {promise: stopResult, resolve: resolveStop} =
+    Promise.withResolvers<Result<Float32Array, SpeechCaptureError>>()
 
   recorder.addEventListener('dataavailable', (event) => {
     options.onDataAvailable()

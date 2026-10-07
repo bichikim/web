@@ -216,6 +216,79 @@ describe('MP3 header boundaries', () => {
 })
 
 describe('VBR header rewriting', () => {
+  it.each([
+    ['Xing', 'Info'],
+    ['Info', 'Xing'],
+  ])('should rewrite the earliest %s marker before %s', (firstMarker, laterMarker) => {
+    const source = createMp3(3)
+    const sourceView = new DataView(source.buffer)
+    source.set(new TextEncoder().encode(firstMarker), 16)
+    sourceView.setUint32(20, 1)
+    sourceView.setUint32(24, 3)
+    source.set(new TextEncoder().encode(laterMarker), 48)
+    sourceView.setUint32(52, 1)
+    sourceView.setUint32(56, 3)
+    const original = source.slice()
+
+    const result = extractMp3Preview(source, Math.ceil(FRAME_DURATION_MS))
+    const view = new DataView(result.buffer, result.byteOffset, result.byteLength)
+
+    expect(view.getUint32(24)).toBe(1)
+    expect(view.getUint32(56)).toBe(3)
+    expect(source).toEqual(original)
+  })
+
+  it('should search within a source view with a nonzero byte offset', () => {
+    const backing = new Uint8Array(FRAME_BYTES * 3 + 64)
+    backing.set(createMp3(3), 32)
+    const source = backing.subarray(32, backing.length - 32)
+    source.set(new TextEncoder().encode('Xing'), 16)
+    const sourceView = new DataView(source.buffer, source.byteOffset, source.byteLength)
+    sourceView.setUint32(20, 1)
+    sourceView.setUint32(24, 3)
+    const original = backing.slice()
+
+    const result = extractMp3Preview(source, Math.ceil(FRAME_DURATION_MS))
+
+    expect(new DataView(result.buffer).getUint32(24)).toBe(1)
+    expect(backing).toEqual(original)
+  })
+
+  it.each([
+    [124, true],
+    [125, false],
+    [128, false],
+    [FRAME_BYTES + 16, false],
+    [3, false],
+  ])('should respect the marker search boundary at offset %i', (offset, rewritten) => {
+    const source = createMp3(3)
+    source.set(new TextEncoder().encode('Xing'), offset)
+    const sourceView = new DataView(source.buffer)
+    sourceView.setUint32(offset + 4, 1)
+    sourceView.setUint32(offset + 8, 3)
+
+    const result = extractMp3Preview(source, Math.ceil(FRAME_DURATION_MS * 2))
+
+    expect(new DataView(result.buffer).getUint32(offset + 8)).toBe(rewritten ? 2 : 3)
+  })
+
+  it.each([
+    [100, true],
+    [116, false],
+  ])('should bound VBRI searches to the first short frame at offset %i', (offset, rewritten) => {
+    const source = createCustomMp3([0xff, 0xfb, 0x10, 0], 104, 3)
+    source.set(new TextEncoder().encode('VBRI'), offset)
+    const sourceView = new DataView(source.buffer)
+    sourceView.setUint32(offset + 10, source.byteLength)
+    sourceView.setUint32(offset + 14, 3)
+
+    const result = extractMp3Preview(source, Math.ceil(FRAME_DURATION_MS * 2))
+    const view = new DataView(result.buffer)
+
+    expect(view.getUint32(offset + 10)).toBe(rewritten ? result.byteLength : source.byteLength)
+    expect(view.getUint32(offset + 14)).toBe(rewritten ? 2 : 3)
+  })
+
   it('should rewrite an Info TOC in the first frame', () => {
     const source = createMp3(3)
     const markerOffset = 32

@@ -1,6 +1,6 @@
 import {KeyedList} from 'src/components/keyed-list/KeyedList'
 import {clientOnly} from '@solidjs/start'
-import {createSignal, Show} from 'solid-js'
+import {createMemo, createSignal, Show} from 'solid-js'
 import {
   type AdminAlbum,
   type AdminAsset,
@@ -31,14 +31,19 @@ export const TrackPanel = (props: TrackPanelProps) => {
   const [isFormOpen, setIsFormOpen] = createSignal(false)
   const [playingTrackId, setPlayingTrackId] = createSignal<string | null>(null)
   const [requestedTrackId, setRequestedTrackId] = createSignal<string | null>(null)
-  const activeTrackIds = () =>
-    new Set(props.assets.filter((asset) => asset.status === 'active').map((asset) => asset.trackId))
-  const trackArtwork = (trackId: string) =>
-    props.assets.find((asset) => asset.trackId === trackId && asset.status === 'active')?.artworkUrl
-  const playableTracks = () =>
-    props.tracks
-      .filter((track) => activeTrackIds().has(track.id))
+  const activeAssetsByTrack = createMemo(() =>
+    Map.groupBy(
+      props.assets.filter((asset) => asset.status === 'active'),
+      (asset) => asset.trackId,
+    ),
+  )
+  const trackArtwork = (trackId: string) => activeAssetsByTrack().get(trackId)?.[0]?.artworkUrl
+  const playableTracks = createMemo(() => {
+    const assetsByTrack = activeAssetsByTrack()
+    return props.tracks
+      .filter((track) => assetsByTrack.has(track.id))
       .toSorted((leftTrack, rightTrack) => leftTrack.position - rightTrack.position)
+  })
   const handleTrackRemove = async (
     event: MouseEvent & {currentTarget: HTMLButtonElement},
     track: AdminTrack,

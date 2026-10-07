@@ -24,7 +24,7 @@ export interface AdminFeatureRequestsController {
   readonly updateRequest: (
     input: AdminFeatureRequestStatusInput,
   ) => Promise<UpdateFeatureRequestResult>
-  readonly updatingRequestId: () => string | null
+  readonly isUpdatingRequest: (requestId: string) => boolean
 }
 
 export const useAdminFeatureRequests = (): AdminFeatureRequestsController => {
@@ -41,11 +41,15 @@ export const useAdminFeatureRequests = (): AdminFeatureRequestsController => {
     loadMoreFailed,
     refresh,
   } = list
-  const [updatingRequestId, setUpdatingRequestId] = createSignal<string | null>(null)
+  const [updatingRequestIds, setUpdatingRequestIds] = createSignal<ReadonlyArray<string>>([])
+  const isUpdatingRequest = (requestId: string) => updatingRequestIds().includes(requestId)
   const updateRequest = async (
     input: AdminFeatureRequestStatusInput,
   ): Promise<UpdateFeatureRequestResult> => {
-    setUpdatingRequestId(input.requestId)
+    if (isUpdatingRequest(input.requestId)) {
+      return {status: 'conflict'}
+    }
+    setUpdatingRequestIds((current) => [...current, input.requestId])
 
     try {
       const result = await updateAdminFeatureRequest(input)
@@ -61,7 +65,9 @@ export const useAdminFeatureRequests = (): AdminFeatureRequestsController => {
     } catch {
       return {status: 'unavailable'}
     } finally {
-      setUpdatingRequestId(null)
+      setUpdatingRequestIds((current) =>
+        current.filter((requestId) => requestId !== input.requestId),
+      )
     }
   }
 
@@ -69,13 +75,13 @@ export const useAdminFeatureRequests = (): AdminFeatureRequestsController => {
     hasMore,
     isLoading,
     isLoadingMore,
+    isUpdatingRequest,
     loadFailed,
     loadMore,
     loadMoreFailed,
     refresh,
     requests,
     updateRequest,
-    updatingRequestId,
   }
 }
 
