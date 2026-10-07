@@ -13,6 +13,7 @@ export interface CreateNitroConfigOptions extends ResolvePrerenderRoutesOptions 
   readonly fontAsset: PublicAssetDir
   readonly staticSecurityHeaders: Record<string, string>
   readonly steamAsset?: PublicAssetDir
+  readonly standaloneRelax?: boolean
   readonly workerSecurityHeaders: Record<string, string>
 }
 
@@ -33,7 +34,7 @@ export const createNitroConfig = (options: CreateNitroConfigOptions) => {
   return {
     features: {websocket: !isStaticBuild || options.command === 'serve'},
     handlers:
-      isStaticBuild && options.command === 'build'
+      options.standaloneRelax || (isStaticBuild && options.command === 'build')
         ? []
         : [
             {
@@ -60,8 +61,8 @@ export const createNitroConfig = (options: CreateNitroConfigOptions) => {
       },
     },
     prerender: {
-      failOnError: isStaticBuild,
-      routes: resolvePrerenderRoutes(options),
+      failOnError: isStaticBuild || options.standaloneRelax === true,
+      routes: options.standaloneRelax ? ['/relax'] : resolvePrerenderRoutes(options),
     },
     publicAssets: [
       ...(options.command === 'serve' ? [{baseURL: '/', dir: './dev-public', maxAge: 0}] : []),

@@ -1,3 +1,4 @@
+export {createDeferred} from 'src/test-utils/create-deferred'
 import {useNavigate} from '@solidjs/router'
 import {cleanup, fireEvent, render, screen, waitFor} from '@solidjs/testing-library'
 import {type ComponentProps, createSignal} from 'solid-js'
@@ -95,11 +96,6 @@ const isWriterBusy = (state: DialogueWriterState) => {
   }
 }
 
-export function createDeferred<T>() {
-  const {promise, resolve} = Promise.withResolvers<T>()
-  return {promise, resolve}
-}
-
 export function getLatestProps<T>(mock: {
   readonly mock: {readonly calls: ReadonlyArray<readonly [T]>}
 }) {
@@ -165,11 +161,13 @@ beforeEach(() => {
     generateWithPreparation,
     isBusy: () => isWriterBusy(writerState()),
     isModelReady: () => true,
+    modelId: () => 'gemma-4-e2b',
     output: writerOutput,
     prepare: vi.fn(),
     progress: () => 0,
     release: vi.fn(),
     request: () => '',
+    selectModel: vi.fn(),
     setRequest: vi.fn(),
     state: writerState,
     statusMessage: () => '',
@@ -308,3 +306,7 @@ export const renderGeneratedReview = async () => {
   await completeTextGeneration()
   return view
 }
+
+vi.mock('src/features/text-generation/use-default-text-model', () => ({
+  useDefaultTextModel: () => () => 'gemma-4-e2b',
+}))

@@ -53,11 +53,24 @@ describe('createCalendarQuery', () => {
     ).toEqual({end: '2026-09-04T03:00:00.000Z', start: '2026-09-03T15:00:00.000Z'})
   })
 
+  it('should start a same-day weekday afternoon query at the current time', () => {
+    expect(
+      createCalendarQuery({now, text: '금요일 오후 뭐 있어?', timeZone: 'Asia/Seoul'}),
+    ).toEqual({end: '2026-09-04T15:00:00.000Z', start: '2026-09-04T10:30:00.000Z'})
+  })
+
   it('should ignore a weekday in an unrelated implicit question', () => {
     expect(
       createCalendarQuery({now, text: '수요일 날씨 뭐 있어?', timeZone: 'Asia/Seoul'}),
     ).toBeNull()
   })
+
+  it.each(['매수요일 뭐 있어?', '수요일날씨 뭐 있어?'])(
+    'should require a weekday boundary in "%s"',
+    (text) => {
+      expect(createCalendarQuery({now, text, timeZone: 'Asia/Seoul'})).toBeNull()
+    },
+  )
 
   it('should resolve tomorrow using local calendar dates across a year boundary', () => {
     const localNow = new Date(2026, 11, 31, 23, 30)
@@ -229,6 +242,40 @@ describe('createCalendarQuery', () => {
     },
   )
 
+  it('should query the day after tomorrow for the unspaced 내일모레 compound', () => {
+    expect(
+      createCalendarQuery({now, text: '내일모레 일정 알려줘', timeZone: 'Asia/Seoul'}),
+    ).toEqual({
+      end: '2026-09-06T15:00:00.000Z',
+      start: '2026-09-05T15:00:00.000Z',
+    })
+  })
+
+  it('should recognize the unspaced 내일모레 compound in an implicit schedule question', () => {
+    expect(createCalendarQuery({now, text: '내일모레 뭐 있어?', timeZone: 'Asia/Seoul'})).toEqual({
+      end: '2026-09-06T15:00:00.000Z',
+      start: '2026-09-05T15:00:00.000Z',
+    })
+  })
+
+  it('should preserve a separate tomorrow after excluding the 내일모레 compound', () => {
+    expect(
+      createCalendarQuery({now, text: '내일모레 말고 내일 일정 알려줘', timeZone: 'Asia/Seoul'}),
+    ).toEqual({
+      end: '2026-09-05T15:00:00.000Z',
+      start: '2026-09-04T15:00:00.000Z',
+    })
+  })
+
+  it('should include both dates when tomorrow and the compound are explicitly requested', () => {
+    expect(
+      createCalendarQuery({now, text: '내일모레와 내일 일정 알려줘', timeZone: 'Asia/Seoul'}),
+    ).toEqual({
+      end: '2026-09-06T15:00:00.000Z',
+      start: '2026-09-04T15:00:00.000Z',
+    })
+  })
+
   it.each([
     '오늘 말고',
     '오늘 일정 말고',
@@ -350,6 +397,20 @@ describe('createCalendarQuery', () => {
     })
   })
 
+  it('should query two days ago for the 엊그제 synonym', () => {
+    expect(createCalendarQuery({now, text: '엊그제 일정 알려줘', timeZone: 'Asia/Seoul'})).toEqual({
+      end: '2026-09-02T15:00:00.000Z',
+      start: '2026-09-01T15:00:00.000Z',
+    })
+  })
+
+  it('should recognize 엊그제 in an implicit schedule question', () => {
+    expect(createCalendarQuery({now, text: '엊그제 뭐 있었어?', timeZone: 'Asia/Seoul'})).toEqual({
+      end: '2026-09-02T15:00:00.000Z',
+      start: '2026-09-01T15:00:00.000Z',
+    })
+  })
+
   it('should query only the morning three days ahead', () => {
     expect(createCalendarQuery({now, text: '글피 오전 일정', timeZone: 'Asia/Seoul'})).toEqual({
       end: '2026-09-07T03:00:00.000Z',
@@ -365,6 +426,18 @@ describe('createCalendarQuery', () => {
     {
       expected: {end: '2026-09-02T15:00:00.000Z', start: '2026-09-01T15:00:00.000Z'},
       text: '글피 말고 그저께 일정 알려줘',
+    },
+    {
+      expected: {end: '2026-09-07T15:00:00.000Z', start: '2026-09-06T15:00:00.000Z'},
+      text: '엊그제 말고 글피 일정 알려줘',
+    },
+    {
+      expected: {end: '2026-09-02T15:00:00.000Z', start: '2026-09-01T15:00:00.000Z'},
+      text: '글피 말고 엊그제 일정 알려줘',
+    },
+    {
+      expected: {end: '2026-09-07T15:00:00.000Z', start: '2026-09-06T15:00:00.000Z'},
+      text: '글피 엊그제 말고 일정 알려줘',
     },
   ])('should ignore the excluded relative date in "$text"', ({expected, text}) => {
     expect(createCalendarQuery({now, text, timeZone: 'Asia/Seoul'})).toEqual(expected)

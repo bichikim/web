@@ -1,3 +1,5 @@
+import {clamp} from 'es-toolkit/math'
+import {shuffleWithRandom} from 'src/utils/shuffle-with-random'
 import {parseLanguageLearningTags} from './tags'
 import type {LanguageLearningLanguage} from './schema'
 import type {LanguageLearningWord} from './word-schema'
@@ -35,17 +37,9 @@ export const selectRandomLanguageLearningWords = (
   const random = options.random ?? Math.random
   const maximumCount = Math.min(options.values.length, MAXIMUM_RANDOM_LANGUAGE_LEARNING_WORDS)
   const countRange = maximumCount - MINIMUM_RANDOM_LANGUAGE_LEARNING_WORDS + 1
-  const randomIndex = (length: number) =>
-    Math.max(0, Math.min(Math.floor(random() * length), length - 1))
+  const randomIndex = (length: number) => clamp(Math.floor(random() * length), 0, length - 1)
   const count = MINIMUM_RANDOM_LANGUAGE_LEARNING_WORDS + randomIndex(countRange)
-  const shuffledValues = [...options.values]
-
-  for (let index = shuffledValues.length - 1; index > 0; index -= 1) {
-    const targetIndex = randomIndex(index + 1)
-    const currentValue = shuffledValues[index]
-    shuffledValues[index] = shuffledValues[targetIndex]
-    shuffledValues[targetIndex] = currentValue
-  }
+  const shuffledValues = shuffleWithRandom(options.values, options.random)
 
   return shuffledValues.slice(0, count)
 }

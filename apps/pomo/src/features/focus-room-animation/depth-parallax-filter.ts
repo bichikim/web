@@ -1,28 +1,10 @@
+import {FILTER_SCENE_VERTEX} from './filter-vertex'
+import {DEPTH_RESPONSE} from 'src/utils/depth-response'
 import {Filter, GlProgram, type Texture, UniformGroup} from 'pixi.js'
-
-const FILTER_VERTEX = `
-in vec2 aPosition;
-out vec2 vTextureCoord;
-out vec2 vDepthCoord;
-
-uniform vec4 uInputSize;
-uniform vec4 uOutputFrame;
-uniform vec4 uOutputTexture;
-
-void main(void) {
-  vec2 position = aPosition * uOutputFrame.zw + uOutputFrame.xy;
-  position.x = position.x * (2.0 / uOutputTexture.x) - 1.0;
-  position.y = position.y * (2.0 * uOutputTexture.z / uOutputTexture.y) - uOutputTexture.z;
-  gl_Position = vec4(position, 0.0, 1.0);
-  vTextureCoord = aPosition * (uOutputFrame.zw * uInputSize.zw);
-  // Filter textures may use padded render-target UVs; DA3 maps always use scene UVs.
-  vDepthCoord = aPosition;
-}
-`
 
 const DEPTH_FRAGMENT = `
 in vec2 vTextureCoord;
-in vec2 vDepthCoord;
+in vec2 vSceneCoord;
 out vec4 finalColor;
 
 uniform sampler2D uTexture;
@@ -33,27 +15,14 @@ uniform highp vec4 uInputSize;
 uniform vec2 uPointerPixels;
 uniform float uDepthMix;
 
-float getDepthResponse(float proximity) {
-  if (proximity < 0.45) {
-    float backgroundMix = smoothstep(0.05, 0.45, proximity);
-    return mix(-1.0, -0.5, backgroundMix);
-  }
-
-  if (proximity < 0.88) {
-    float characterMix = smoothstep(0.45, 0.88, proximity);
-    return mix(-0.5, 0.15, characterMix);
-  }
-
-  float foregroundMix = smoothstep(0.88, 1.0, proximity);
-  return mix(0.15, 0.3, foregroundMix);
-}
+${DEPTH_RESPONSE}
 
 void main(void) {
-  float currentDepth = texture(uDepthTexture, vDepthCoord).r;
-  float nextDepth = texture(uNextDepthTexture, vDepthCoord).r;
+  float currentDepth = texture(uDepthTexture, vSceneCoord).r;
+  float nextDepth = texture(uNextDepthTexture, vSceneCoord).r;
   float proximity = mix(currentDepth, nextDepth, uDepthMix);
   vec2 axisScale = vec2(1.0, 0.35);
-  vec2 depthOffset = uInputSize.zw * uPointerPixels * axisScale * getDepthResponse(proximity);
+  vec2 depthOffset = uInputSize.zw * uPointerPixels * axisScale * depthResponse(proximity);
   vec2 sampleCoordinate = clamp(vTextureCoord + depthOffset, uInputClamp.xy, uInputClamp.zw);
   finalColor = texture(uTexture, sampleCoordinate);
 }
@@ -78,7 +47,8 @@ export class DepthParallaxFilter extends Filter {
       glProgram: GlProgram.from({
         fragment: DEPTH_FRAGMENT,
         name: 'focus-room-depth-parallax',
-        vertex: FILTER_VERTEX,
+        preferredFragmentPrecision: 'highp',
+        vertex: FILTER_SCENE_VERTEX,
       }),
       resources: {
         parallaxUniforms: uniformGroup,

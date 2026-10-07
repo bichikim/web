@@ -17,22 +17,23 @@ import {isTextModelDownloaded} from '../../../features/text-generation'
 import {saveLanguageLearningCandidates} from '../save'
 import {generateVoiceCandidates, regenerateCandidateVoice} from '../voice-generation'
 
-it('should stop every pending workflow after the editor is disposed', async () => {
+it('should stop the pending text-model availability check after disposal', async () => {
   const textCheck = createDeferred<boolean>()
   vi.mocked(isTextModelDownloaded).mockReturnValueOnce(textCheck.promise)
-  let view = render(() => <LanguageLearningEditorWithPreferences />)
+  const view = render(() => <LanguageLearningEditorWithPreferences />)
   fireEvent.click(screen.getByRole('button', {name: 'generate'}))
   await waitFor(() => expect(isTextModelDownloaded).toHaveBeenCalled())
   view.unmount()
   textCheck.resolve(true)
   await flush()
+})
 
+it('should stop the pending text-model download after disposal', async () => {
   const textDownload =
     createDeferred<Awaited<ReturnType<ModelDownloadController['startTextModel']>>>()
-  setWriterState({status: 'idle'})
   vi.mocked(isTextModelDownloaded).mockResolvedValueOnce(false)
   startTextModel.mockReturnValueOnce(textDownload.promise)
-  view = render(() => <LanguageLearningEditorWithPreferences />)
+  const view = render(() => <LanguageLearningEditorWithPreferences />)
   fireEvent.click(screen.getByRole('button', {name: 'generate'}))
   await flush()
   fireEvent.click(screen.getByRole('button', {name: 'confirm download'}))
@@ -40,11 +41,12 @@ it('should stop every pending workflow after the editor is disposed', async () =
   view.unmount()
   textDownload.resolve({status: 'complete'})
   await flush()
+})
 
+it('should stop the pending voice-model availability check after disposal', async () => {
   const voiceCheck = createDeferred<boolean>()
-  setWriterState({status: 'idle'})
   vi.mocked(isSupertonicModelDownloaded).mockReturnValueOnce(voiceCheck.promise)
-  view = render(() => <LanguageLearningEditorWithPreferences />)
+  const view = render(() => <LanguageLearningEditorWithPreferences />)
   fireEvent.click(screen.getByRole('button', {name: 'generate'}))
   await flush()
   setWriterState({status: 'complete'})
@@ -52,11 +54,12 @@ it('should stop every pending workflow after the editor is disposed', async () =
   view.unmount()
   voiceCheck.resolve(true)
   await flush()
+})
 
+it('should stop pending voice generation after disposal', async () => {
   const voiceGeneration = createDeferred<Awaited<ReturnType<typeof generateVoiceCandidates>>>()
   vi.mocked(generateVoiceCandidates).mockReturnValueOnce(voiceGeneration.promise)
-  setWriterState({status: 'idle'})
-  view = render(() => <LanguageLearningEditorWithPreferences />)
+  const view = render(() => <LanguageLearningEditorWithPreferences />)
   fireEvent.click(screen.getByRole('button', {name: 'generate'}))
   await flush()
   setWriterState({status: 'complete'})
@@ -64,8 +67,10 @@ it('should stop every pending workflow after the editor is disposed', async () =
   view.unmount()
   voiceGeneration.resolve({candidates: [candidate()], status: 'complete'})
   await flush()
+})
 
-  view = await renderGeneratedReview()
+it('should stop the pending regeneration model check after disposal', async () => {
+  const view = await renderGeneratedReview()
   const regenerateCheck = createDeferred<boolean>()
   vi.mocked(isSupertonicModelDownloaded).mockReturnValueOnce(regenerateCheck.promise)
   fireEvent.click(screen.getByRole('button', {name: 'regenerate'}))
@@ -73,8 +78,10 @@ it('should stop every pending workflow after the editor is disposed', async () =
   view.unmount()
   regenerateCheck.resolve(true)
   await flush()
+})
 
-  view = await renderGeneratedReview()
+it('should stop pending voice regeneration after disposal', async () => {
+  const view = await renderGeneratedReview()
   const regeneration = createDeferred<Awaited<ReturnType<typeof regenerateCandidateVoice>>>()
   vi.mocked(regenerateCandidateVoice).mockReturnValueOnce(regeneration.promise)
   fireEvent.click(screen.getByRole('button', {name: 'regenerate'}))
@@ -85,8 +92,10 @@ it('should stop every pending workflow after the editor is disposed', async () =
     status: 'complete',
   })
   await flush()
+})
 
-  view = await renderGeneratedReview()
+it('should stop saving candidates after disposal', async () => {
+  const view = await renderGeneratedReview()
   const save = createDeferred<void>()
   vi.mocked(saveLanguageLearningCandidates).mockReturnValueOnce(save.promise)
   fireEvent.click(screen.getByRole('button', {name: 'save'}))

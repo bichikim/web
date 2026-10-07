@@ -1,3 +1,4 @@
+import {createTestBroadcastChannel} from 'src/test-utils/create-test-broadcast-channel'
 /** @vitest-environment jsdom */
 
 import {afterEach, beforeEach, expect, it, vi} from 'vitest'
@@ -8,15 +9,7 @@ import {
   isDesktopMusicActionMessage,
 } from '../desktop-music-actions'
 
-class TestBroadcastChannel {
-  static instances: TestBroadcastChannel[] = []
-
-  readonly close = vi.fn()
-
-  constructor(readonly name: string) {
-    TestBroadcastChannel.instances.push(this)
-  }
-}
+const TestBroadcastChannel = createTestBroadcastChannel()
 
 beforeEach(() => {
   TestBroadcastChannel.instances = []

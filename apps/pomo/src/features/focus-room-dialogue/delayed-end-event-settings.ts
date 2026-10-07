@@ -1,13 +1,8 @@
-import {z} from 'zod'
-
 import {
+  createBoundTossWebStorageAdapter,
   createVersionedPreferenceRepository,
-  hasNativeStorageBridge,
-  readTossStorageJson,
-  readWebStorageJson,
-  writeTossStorageJson,
-  writeWebStorageJson,
 } from 'src/utils/runtime-storage'
+import {z} from 'zod'
 
 export const MIN_DELAYED_END_EVENT_MINUTES = 1
 export const MAX_DELAYED_END_EVENT_MINUTES = 120
@@ -67,13 +62,9 @@ export const createDelayedEndEventSettingsRepository = (
     writeFailureMessage: 'Failed to persist delayed end event settings.',
   })
 
-const runtimeRepository = createDelayedEndEventSettingsRepository({
-  isNative: hasNativeStorageBridge,
-  readToss: () => readTossStorageJson(STORAGE_KEY, parseDelayedEndEventSettings),
-  readWeb: () => readWebStorageJson(STORAGE_KEY, parseDelayedEndEventSettings),
-  writeToss: (settings) => writeTossStorageJson(STORAGE_KEY, settings),
-  writeWeb: (settings) => writeWebStorageJson(STORAGE_KEY, settings),
-})
+const runtimeRepository = createDelayedEndEventSettingsRepository(
+  createBoundTossWebStorageAdapter({key: STORAGE_KEY, parse: parseDelayedEndEventSettings}),
+)
 
 export const readDelayedEndEventSettings = (): Promise<DelayedEndEventSettings> =>
   runtimeRepository.read()

@@ -1,3 +1,4 @@
+import {createTestBroadcastChannel} from 'src/test-utils/create-test-broadcast-channel'
 /** @vitest-environment jsdom */
 
 import {renderHook} from '@solidjs/testing-library'
@@ -34,28 +35,7 @@ vi.mock('../../../features/focus-room-scene-preferences', () => ({
 vi.mock('../../../features/screen-saver', () => ({useScreenSaver: hookMocks.useScreenSaver}))
 vi.mock('../../../features/weather', () => ({useWeather: hookMocks.useWeather}))
 
-class TestBroadcastChannel {
-  static instances: TestBroadcastChannel[] = []
-  readonly close = vi.fn()
-  readonly listeners: Array<(event: MessageEvent) => void> = []
-  readonly postMessage = vi.fn((data: unknown) => {
-    for (const channel of TestBroadcastChannel.instances) {
-      if (channel !== this) {
-        for (const listener of channel.listeners) {
-          listener(new MessageEvent('message', {data}))
-        }
-      }
-    }
-  })
-
-  constructor(readonly name: string) {
-    TestBroadcastChannel.instances.push(this)
-  }
-
-  addEventListener(_type: string, listener: (event: MessageEvent) => void) {
-    this.listeners.push(listener)
-  }
-}
+const TestBroadcastChannel = createTestBroadcastChannel({broadcast: true, matchName: false})
 
 beforeEach(() => {
   TestBroadcastChannel.instances = []

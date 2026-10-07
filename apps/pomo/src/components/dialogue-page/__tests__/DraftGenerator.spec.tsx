@@ -18,6 +18,8 @@ import {
 } from '../../../features/model-download'
 import {isTextModelDownloaded} from '../../../features/text-generation'
 import {PDialogueDraftGenerator} from '../DraftGenerator'
+import {useDefaultTextModel} from 'src/features/text-generation/use-default-text-model'
+import type {TextModelId} from 'src/features/text-generation/model'
 
 vi.mock('../../../features/dialogue-writer', () => ({
   useDialogueWriter: vi.fn(),
@@ -46,11 +48,13 @@ const createWriter = (): DialogueWriterController => ({
   generateWithPreparation: vi.fn(),
   isBusy: () => false,
   isModelReady: () => false,
+  modelId: () => 'gemma-4-e2b',
   output: () => '',
   prepare: vi.fn(),
   progress: () => 0,
   release: vi.fn(),
   request: () => '',
+  selectModel: vi.fn(),
   setRequest: vi.fn(),
   state: () => ({status: 'idle'}),
   statusMessage: () => '모델을 준비해 주세요.',
@@ -68,6 +72,7 @@ const createModelDownload = (): ModelDownloadController => ({
 })
 
 beforeEach(() => {
+  vi.mocked(useDefaultTextModel).mockReturnValue(() => 'gemma-4-e2b')
   vi.mocked(isTextModelDownloaded).mockResolvedValue(false)
   vi.mocked(useModelDownload).mockReturnValue(createModelDownload())
   vi.mocked(PModal).mockImplementation((props: PModalProps) => (
@@ -134,6 +139,31 @@ it('should generate without download consent when the Gemma model is already sto
   await waitFor(() => expect(writer.generateWithPreparation).toHaveBeenCalledTimes(1))
   expect(isTextModelDownloaded).toHaveBeenCalledWith({modelId: 'gemma-4-e2b'})
   expect(screen.queryByRole('dialog')).toBeNull()
+})
+
+it('should allow an LFM draft when the initial GPU model was unsupported before settings loaded', async () => {
+  vi.mocked(useDefaultTextModel).mockReturnValue(() => 'lfm-2.6b-qad')
+  vi.mocked(isTextModelDownloaded).mockResolvedValue(true)
+  const [modelId, setModelId] = createSignal<TextModelId>('gemma-4-e2b')
+  const [state, setState] = createSignal<DialogueWriterState>({status: 'unsupported'})
+  const writer = {
+    ...createWriter(),
+    modelId,
+    selectModel: vi.fn((nextModelId: TextModelId) => {
+      setModelId(nextModelId)
+      setState({status: 'idle'})
+    }),
+    state,
+  }
+  vi.mocked(useDialogueWriter).mockReturnValue(writer)
+  render(() => <PDialogueDraftGenerator onGenerated={vi.fn()} />)
+  fireEvent.click(screen.getByRole('button', {name: /초안 만들기/}))
+  const generate = screen.getByRole('button', {name: '대사 만들기'})
+  expect(generate).toBeEnabled()
+  fireEvent.click(generate)
+  await waitFor(() => expect(writer.generateWithPreparation).toHaveBeenCalledOnce())
+  expect(writer.selectModel).toHaveBeenCalledWith('lfm-2.6b-qad')
+  expect(isTextModelDownloaded).toHaveBeenCalledWith({modelId: 'lfm-2.6b-qad'})
 })
 
 it('should not continue generation after disposal during the stored-model check', async () => {
@@ -492,3 +522,7 @@ it('should describe a partial writer model download', () => {
   expect(screen.getByRole('status').textContent).toContain('대사 모델 파일을 내려받고 있어요.')
   expect(screen.getByRole('status').textContent).toContain('42%')
 })
+
+vi.mock('src/features/text-generation/use-default-text-model', () => ({
+  useDefaultTextModel: vi.fn(),
+}))

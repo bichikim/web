@@ -15,7 +15,7 @@ export const PPlayerUtilityButton = (props: PPlayerUtilityButtonProps) => {
   return (
     <>
       <button
-        ref={tooltip.setTarget}
+        {...tooltip.triggerProps}
         aria-expanded={props.expanded}
         aria-label={props.accessibleLabel}
         class={cx(
@@ -26,11 +26,6 @@ export const PPlayerUtilityButton = (props: PPlayerUtilityButtonProps) => {
         )}
         data-player-utility={props.purpose}
         onClick={(event) => props.onPress(event.currentTarget)}
-        onBlur={tooltip.onBlur}
-        onFocus={tooltip.onFocus}
-        onPointerDown={tooltip.onPointerDown}
-        onPointerEnter={tooltip.onPointerEnter}
-        onPointerLeave={tooltip.onPointerLeave}
         type="button"
       >
         <span aria-hidden="true" class={cx(props.icon, 'size-6 flex-none')} />

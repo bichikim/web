@@ -39,6 +39,8 @@ const render = (partId: string, values: Readonly<Record<string, number>>) => {
   })
   return vertices
 }
+const neutralLips = render('psd-88', {})
+const neutralTongue = render('psd-91', {})
 const bounds = (vertices: ReadonlyArray<number>) => {
   const xs = vertices.filter((_, index) => index % 2 === 0)
   const ys = vertices.filter((_, index) => index % 2 === 1)
@@ -95,8 +97,8 @@ describe('development model articulation', () => {
         'mouth-smile': 1,
         'tongue-raise': 1,
       }
-      expect(render('psd-88', values)).toEqual(render('psd-88', {}))
-      expect(render('psd-91', values)).toEqual(render('psd-91', {}))
+      expect(render('psd-88', values)).toEqual(neutralLips)
+      expect(render('psd-91', values)).toEqual(neutralTongue)
       for (const partId of ['psd-79', 'psd-80', 'psd-81', 'psd-83', 'psd-84', 'psd-85']) {
         expect(
           composeParameterPartProperties({document: model, parameterValues: values, partId})

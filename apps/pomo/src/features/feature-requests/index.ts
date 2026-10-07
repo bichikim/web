@@ -29,5 +29,10 @@ export type {
   FeatureRequest,
   FeatureRequestListOptions,
   FeatureRequestPage,
+  FeatureRequestPageQuery,
   FeatureRequestStatus,
 } from './types'
+
+export * from './get-feature-requests-session-key'
+export * from './page-query'
+export * from './use-feature-request-list'

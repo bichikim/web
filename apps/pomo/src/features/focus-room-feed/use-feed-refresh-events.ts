@@ -1,5 +1,5 @@
 import {visibilityInterval} from 'src/utils/visibility-interval'
-import {type Accessor, createEffect, on, onCleanup, onMount} from 'solid-js'
+import {type Accessor, createEffect, on, onCleanup, onMount, untrack} from 'solid-js'
 import {useEvent} from '@winter-love/solid-use/event'
 
 export interface UseFeedRefreshEventsProps {
@@ -29,7 +29,21 @@ export const useFeedRefreshEvents = (props: UseFeedRefreshEventsProps) => {
     })
 
     useEvent(globalThis, props.connectionChangedEvent, refreshChangedFeeds)
-    createEffect(on(props.settings, refreshChangedFeeds, {defer: true}))
+    let previousSettings = untrack(props.settings)
+    createEffect(
+      on(
+        props.settings,
+        (settings) => {
+          const previous = previousSettings
+          previousSettings = settings
+          // initialize already restores settings for the first feed sync.
+          if (settings !== null && previous !== null) {
+            refreshChangedFeeds()
+          }
+        },
+        {defer: true},
+      ),
+    )
     props.initialize().catch((error: unknown) => {
       console.error('Failed to initialize focus room feeds.', error)
       props.onInitializationFailure()

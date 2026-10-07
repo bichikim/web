@@ -14,6 +14,9 @@ export interface Position {
   y: number
 }
 
+/** A read-only two-dimensional point. */
+export type Point = Readonly<Position>
+
 /**
  * position and size of the rectangle
  */

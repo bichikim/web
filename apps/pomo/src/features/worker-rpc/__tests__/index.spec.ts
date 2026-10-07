@@ -1,7 +1,11 @@
 /** @vitest-environment node */
 import {afterEach, describe, expect, it, vi} from 'vitest'
 
-import {createWorkerRpcTransport, isWorkerRpcFailure} from '../index'
+import {
+  createWorkerRpcTransport,
+  type CreateWorkerRpcTransportOptions,
+  isWorkerRpcFailure,
+} from '../index'
 
 interface ProgressResponse {
   readonly progress: number
@@ -29,8 +33,8 @@ class FakeWorker {
     this.#listeners.set(type, listeners)
   }
 
-  emitError(message: string) {
-    this.#emit('error', {message} as ErrorEvent)
+  emitError(message: string, error?: unknown) {
+    this.#emit('error', {error, message} as ErrorEvent)
   }
 
   emitMessage(response: TestResponse) {
@@ -258,6 +262,161 @@ describe('createWorkerRpcTransport', () => {
     await expect(workerRequest).rejects.toMatchObject({
       code: 'worker-error',
       detail: 'Worker 실행 오류',
+    })
+  })
+
+  it('should keep concurrent work usable when creating a request throws', async () => {
+    const worker = new FakeWorker()
+    const transport = createTransport(worker)
+    const pending = transport.request({
+      createRequest: (requestId) => ({requestId, value: 'pending'}),
+    })
+    const cause = new Error('request construction failed')
+
+    await expect(
+      transport.request({
+        createRequest: () => {
+          throw cause
+        },
+      }),
+    ).rejects.toMatchObject({
+      cause,
+      code: 'send-error',
+      detail: cause.message,
+    })
+
+    expect(transport.getFailure()).toBeNull()
+    const next = transport.request({createRequest: (requestId) => ({requestId, value: 'next'})})
+    worker.emitMessage({requestId: 1, type: 'result', value: 'first'})
+    worker.emitMessage({requestId: 3, type: 'result', value: 'third'})
+    await expect(pending).resolves.toMatchObject({value: 'first'})
+    await expect(next).resolves.toMatchObject({value: 'third'})
+    expect(worker.postMessage).toHaveBeenCalledTimes(2)
+    expect(worker.terminate).not.toHaveBeenCalled()
+  })
+
+  it('should keep other pending requests usable after a send error', async () => {
+    const worker = new FakeWorker()
+    const transport = createTransport(worker)
+    const pending = transport.request({
+      createRequest: (requestId) => ({requestId, value: 'pending'}),
+    })
+    const cause = new DOMException('clone failed', 'DataCloneError')
+    worker.postMessage.mockImplementationOnce(() => {
+      throw cause
+    })
+
+    await expect(
+      transport.request({createRequest: (requestId) => ({requestId, value: 'invalid'})}),
+    ).rejects.toMatchObject({cause, code: 'send-error'})
+    worker.emitMessage({requestId: 1, type: 'result', value: 'done'})
+    await expect(pending).resolves.toMatchObject({value: 'done'})
+    expect(transport.getFailure()).toBeNull()
+    expect(worker.terminate).not.toHaveBeenCalled()
+  })
+
+  it.each(['messageerror', 'dispose', 'event-handler'] as const)(
+    'should reject all pending and future work and ignore late events after %s',
+    async (trigger) => {
+      const worker = new FakeWorker()
+      const cause = new Error('event failed')
+      const onEvent = vi.fn(() => {
+        if (trigger === 'event-handler') {
+          throw cause
+        }
+      })
+      const onFailure = vi.fn(() => {
+        throw new Error('observer failed')
+      })
+      const transport = createWorkerRpcTransport<
+        {readonly requestId: number; readonly value: string},
+        TestResponse
+      >({
+        getRequestId: (response) => (response.type === 'result' ? response.requestId : null),
+        onEvent,
+        onFailure,
+        worker: worker as unknown as Worker,
+      })
+      const first = transport.request({createRequest: (requestId) => ({requestId, value: 'first'})})
+      const second = transport.request({
+        createRequest: (requestId) => ({requestId, value: 'second'}),
+      })
+      switch (trigger) {
+        case 'messageerror':
+          worker.emitMessageError()
+          break
+        case 'dispose':
+          transport.dispose()
+          break
+        case 'event-handler':
+          worker.emitMessage({progress: 1, type: 'progress'})
+          break
+      }
+      const failure = transport.getFailure()
+      expect(failure).toMatchObject({code: trigger === 'dispose' ? 'disposed' : 'message-error'})
+      if (trigger === 'event-handler') {
+        expect(failure).toMatchObject({cause, detail: 'event failed'})
+      }
+      await expect(first).rejects.toBe(failure)
+      await expect(second).rejects.toBe(failure)
+      const createRequest = vi.fn((requestId: number) => ({requestId, value: 'late'}))
+      await expect(transport.request({createRequest})).rejects.toBe(failure)
+      expect(createRequest).not.toHaveBeenCalled()
+      onEvent.mockClear()
+      worker.emitMessage({progress: 2, type: 'progress'})
+      worker.emitMessage({requestId: 1, type: 'result', value: 'late'})
+      worker.emitError('late')
+      worker.emitMessageError()
+      transport.dispose()
+      expect(onEvent).not.toHaveBeenCalled()
+      expect(onFailure).toHaveBeenCalledTimes(1)
+      expect(worker.terminate).toHaveBeenCalledTimes(1)
+      expect(worker.postMessage).toHaveBeenCalledTimes(2)
+    },
+  )
+
+  it.each([
+    {
+      messageDetail: '응답 실패',
+      messageFailureMessage: '응답 실패',
+      workerDetail: '실행 실패',
+      workerFailureMessage: '실행 실패',
+    },
+    {
+      messageDetail: '',
+      messageFailureMessage: '',
+      workerDetail: 'Worker 실행 오류',
+      workerFailureMessage: '',
+    },
+  ])('should preserve configured fallback semantics: %j', async (messages) => {
+    const options: Omit<CreateWorkerRpcTransportOptions<TestResponse>, 'worker'> = {
+      getRequestId: (response) => (response.type === 'result' ? response.requestId : null),
+      messageFailureMessage: messages.messageFailureMessage,
+      onEvent: vi.fn(),
+      workerFailureMessage: messages.workerFailureMessage,
+    }
+    const worker = new FakeWorker()
+    const cause = new Error('worker cause')
+    const transport = createWorkerRpcTransport<never, TestResponse>({
+      ...options,
+      worker: worker as unknown as Worker,
+    })
+    worker.emitError('', cause)
+    expect(transport.getFailure()).toMatchObject({
+      cause,
+      code: 'worker-error',
+      detail: messages.workerDetail,
+    })
+    const messageWorker = new FakeWorker()
+    const messageTransport = createWorkerRpcTransport<never, TestResponse>({
+      ...options,
+      worker: messageWorker as unknown as Worker,
+    })
+    messageWorker.emitMessageError()
+    expect(messageTransport.getFailure()).toMatchObject({
+      cause: {message: 'Worker response deserialization failed', name: 'WorkerError'},
+      code: 'message-error',
+      detail: messages.messageDetail,
     })
   })
 })

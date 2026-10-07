@@ -1,3 +1,4 @@
+import {createOneShotWorkerRequest} from 'src/utils/worker-transport'
 import type {OpusWorkerRequest, OpusWorkerResponse} from './opus-messages'
 
 const OPUS_WORKER_FAILURE_MESSAGE = 'Opus 인코딩 Worker를 실행하지 못했어요.'
@@ -44,57 +45,27 @@ export const createOpusBlob = (options: CreateOpusBlobOptions): Promise<Blob> =>
       ? new Float32Array(options.samples.buffer)
       : options.samples.slice()
 
-  return new Promise((resolve, reject) => {
-    let isSettled = false
-    const settle = (result: {readonly audio: Blob} | {readonly error: Error}) => {
-      if (isSettled) {
-        return
-      }
-
-      isSettled = true
-      options.signal?.removeEventListener('abort', handleAbort)
-      worker.terminate()
-
-      if ('audio' in result) {
-        resolve(result.audio)
-      } else {
-        reject(result.error)
-      }
-    }
-    function handleAbort() {
-      if (options.signal !== undefined) {
-        settle({error: getAbortError(options.signal)})
-      }
-    }
-
-    options.signal?.addEventListener('abort', handleAbort, {once: true})
-    worker.addEventListener('message', (event: MessageEvent<OpusWorkerResponse>) => {
-      const response = event.data
-
+  return createOneShotWorkerRequest<OpusWorkerRequest, OpusWorkerResponse, Blob>({
+    abortError: getAbortError,
+    failureMessage: OPUS_WORKER_FAILURE_MESSAGE,
+    messageFailureMessage: 'Opus 인코딩 Worker 응답을 읽지 못했어요.',
+    onMessage: (response, reply) => {
       switch (response.type) {
         case 'complete':
-          settle({audio: response.audio})
+          reply.resolve(response.audio)
           return
         case 'error':
-          settle({error: new Error(response.detail)})
+          reply.reject(new Error(response.detail))
           return
       }
-
       response satisfies never
-    })
-    worker.addEventListener('error', (event) => {
-      settle({error: new Error(event.message || OPUS_WORKER_FAILURE_MESSAGE)})
-    })
-    worker.addEventListener('messageerror', () => {
-      settle({error: new Error('Opus 인코딩 Worker 응답을 읽지 못했어요.')})
-    })
-    try {
-      worker.postMessage(
-        {sampleRate: options.sampleRate, samples: workerSamples} satisfies OpusWorkerRequest,
-        [workerSamples.buffer],
-      )
-    } catch (error: unknown) {
-      settle({error: getWorkerError(error)})
-    }
+    },
+    request: {sampleRate: options.sampleRate, samples: workerSamples},
+    sendError: getWorkerError,
+    get signal() {
+      return options.signal
+    },
+    transfer: [workerSamples.buffer],
+    worker,
   })
 }

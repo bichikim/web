@@ -11,6 +11,23 @@ const options = [
   {label: 'System', value: 'system'},
 ] as const
 
+const getOptionByName = (name: string): HTMLElement => {
+  const matches = [...document.querySelectorAll<HTMLElement>('[role="option"]')].filter(
+    (option) => option.textContent?.trim() === name,
+  )
+  expect(matches).toHaveLength(1)
+  const [option] = matches
+  if (option === undefined) {
+    throw new Error(`Expected a visible ${name} option`)
+  }
+  expect(option).toHaveRole('option')
+  expect(option).toHaveAccessibleName(name)
+  expect(option).toBeVisible()
+  const accessibleOption = screen.getByRole('option', {name})
+  expect(accessibleOption).toBe(option)
+  return option
+}
+
 afterEach(() => {
   cleanup()
   vi.useRealTimers()
@@ -19,19 +36,29 @@ afterEach(() => {
 it.each(['ArrowDown', 'ArrowUp', 'Enter', ' '])(
   'should keep keyboard focus after opening with %j and running pending timers',
   (key) => {
-    render(() => {
+    const view = render(() => {
       const [value, setValue] = createSignal<'dark' | 'bright' | 'system'>('dark')
       return <PSelect label="Theme" onChange={setValue} options={options} value={value()} />
     })
-    const trigger = screen.getByRole('button', {name: 'Theme Dark'})
+    const triggers = [...view.container.querySelectorAll('button')]
+    expect(triggers).toHaveLength(1)
+    const trigger = triggers[0]
+    if (trigger === undefined) {
+      throw new Error('Expected one Theme select trigger')
+    }
+    expect(trigger).toHaveRole('button')
+    expect(trigger).toHaveAccessibleName('Theme Dark')
+    expect(trigger).toBeVisible()
+    expect(screen.getByRole('button', {name: 'Theme Dark'})).toBe(trigger)
     trigger.focus()
     vi.useFakeTimers()
 
     fireEvent.keyDown(trigger, {key})
-    const dark = screen.getByRole('option', {name: 'Dark'})
+    const dark = getOptionByName('Dark')
     expect(dark).toHaveFocus()
     fireEvent.keyDown(dark, {key: 'End'})
-    const system = screen.getByRole('option', {name: 'System'})
+    const system = getOptionByName('System')
+    expect(system).toBeInTheDocument()
     expect(system).toHaveFocus()
 
     vi.runOnlyPendingTimers()

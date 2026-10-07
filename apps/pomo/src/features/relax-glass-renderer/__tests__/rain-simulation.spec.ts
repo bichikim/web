@@ -46,5 +46,9 @@ it('should keep trail beads from growing into screen-sized raindrops after repea
     simulation.step(1 / 30)
   }
 
-  expect(Math.max(...simulation.drops.map((drop) => drop.width))).toBeLessThan(300)
+  const drops = simulation.drops
+  const maximumWidth = Math.max(...drops.map((drop) => drop.width))
+  expect(maximumWidth).toBeLessThan(300)
+  expect(drops).toHaveLength(371)
+  expect(maximumWidth).toBeCloseTo(178.8520514105216, 5)
 })

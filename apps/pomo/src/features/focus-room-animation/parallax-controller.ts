@@ -1,3 +1,6 @@
+import {observeReducedMotionPreference} from 'src/utils/observe-media-query'
+import {getDragDepthOffset} from 'src/utils/get-drag-depth-offset'
+import {exponentialApproachFactor} from 'src/utils/exponential-approach-factor'
 import {clamp} from 'es-toolkit/math'
 import {releaseCapturedPointer} from 'src/utils/release-captured-pointer'
 import {
@@ -8,7 +11,6 @@ import {
 import {createMotionEnvironment, type MotionEnvironment} from './motion-environment'
 import type {PSceneMotionInput} from './scene-motion'
 
-const DRAG_RANGE_RATIO = 0.35
 const DRAG_RETURN_DELAY = 150
 const FOLLOW_TIME_CONSTANT = 180
 const FULL_ROTATION_DEGREES = 360
@@ -27,9 +29,6 @@ export interface ParallaxControllerOptions {
   readonly onInputModeChange?: MotionInputChange
   readonly onMotionPreferenceChange?: MotionPreferenceChange
 }
-
-const getFrameEasing = (duration: number, timeConstant: number) =>
-  1 - Math.exp(-duration / timeConstant)
 
 const getScreenAngle = (angle: number) => {
   return ((angle % FULL_ROTATION_DEGREES) + FULL_ROTATION_DEGREES) % FULL_ROTATION_DEGREES
@@ -100,10 +99,16 @@ export class ParallaxController {
       return
     }
 
-    const horizontalDistance = (event.clientX - this.#dragStartX) / bounds.width
-    const verticalDistance = (event.clientY - this.#dragStartY) / bounds.height
-    this.#targetX = clamp(this.#dragStartOffsetX - horizontalDistance / DRAG_RANGE_RATIO, -1, 1)
-    this.#targetY = clamp(this.#dragStartOffsetY - verticalDistance / DRAG_RANGE_RATIO, -1, 1)
+    this.#targetX = getDragDepthOffset({
+      distance: event.clientX - this.#dragStartX,
+      extent: bounds.width,
+      startOffset: this.#dragStartOffsetX,
+    })
+    this.#targetY = getDragDepthOffset({
+      distance: event.clientY - this.#dragStartY,
+      extent: bounds.height,
+      startOffset: this.#dragStartOffsetY,
+    })
     this.#requestFrame()
     event.preventDefault()
   }
@@ -169,6 +174,7 @@ export class ParallaxController {
   #orientationBaseline: OrientationAxes | null = null
   #sensorActivationListening = false
   #sensorFallbackTimer: ReturnType<typeof globalThis.setTimeout> | null = null
+  #stopMotionPreference: (() => void) | null = null
   #started = false
   #targetX = 0
   #targetY = 0
@@ -223,7 +229,10 @@ export class ParallaxController {
     this.#started = true
     this.#environment.window.addEventListener('blur', this.#handleWindowBlur)
     this.#environment.document.addEventListener('visibilitychange', this.#handleVisibilityChange)
-    this.#motionPreference.addEventListener('change', this.#handleMotionPreference)
+    this.#stopMotionPreference = observeReducedMotionPreference(this.#handleMotionPreference, {
+      matchMedia: () => this.#motionPreference,
+      notifyInitial: false,
+    })
     this.#startInput()
   }
 
@@ -253,7 +262,7 @@ export class ParallaxController {
     this.#destroyed = true
     this.#environment.window.removeEventListener('blur', this.#handleWindowBlur)
     this.#environment.document.removeEventListener('visibilitychange', this.#handleVisibilityChange)
-    this.#motionPreference.removeEventListener('change', this.#handleMotionPreference)
+    this.#stopMotionPreference?.()
     this.#stopSensorActivation()
     this.#stopDeviceOrientation()
     this.#stopDragInput()
@@ -463,12 +472,9 @@ export class ParallaxController {
 
   #renderFrame(time: number) {
     this.#frame = null
-    const frameDuration = Math.min(
-      MAXIMUM_FRAME_DURATION,
-      Math.max(0, time - (this.#lastFrameTime ?? time)),
-    )
+    const frameDuration = clamp(time - (this.#lastFrameTime ?? time), 0, MAXIMUM_FRAME_DURATION)
     this.#lastFrameTime = time
-    const easing = getFrameEasing(
+    const easing = exponentialApproachFactor(
       frameDuration,
       this.#isReturning ? RETURN_TIME_CONSTANT : FOLLOW_TIME_CONSTANT,
     )

@@ -1,5 +1,8 @@
 /** @vitest-environment jsdom */
 
+import {createSignal} from 'solid-js'
+import type {PSceneStyle} from 'src/features/focus-room-animation'
+import {PFeatureRequest} from '../../p-feature-request/PFeatureRequest'
 import {fireEvent, render, screen, waitFor} from '@solidjs/testing-library'
 import {afterEach, beforeEach, expect, it, vi} from 'vitest'
 
@@ -307,4 +310,27 @@ it('should show both recent updates even when the older update was already viewe
   expect(screen.getAllByRole('article')).toHaveLength(2)
   expect(screen.getByText('2026. 09. 03 00:57')).toBeVisible()
   expect(screen.getByText('2026. 09. 03 00:52')).toBeVisible()
+})
+
+it('should preserve feature-request focus and draft when scene style changes', async () => {
+  versionMocks.load.mockResolvedValue({releases: []})
+  vi.mocked(PFeatureRequest).mockImplementation(() => {
+    const [draft, setDraft] = createSignal('')
+    return (
+      <input
+        aria-label="기능 요청 초안"
+        value={draft()}
+        onInput={(event) => setDraft(event.currentTarget.value)}
+      />
+    )
+  })
+  const [style, setStyle] = createSignal<PSceneStyle>('original')
+  render(() => <PVersionNotice sceneStyle={style()} />)
+  const input = await screen.findByRole('textbox', {name: '기능 요청 초안'})
+  fireEvent.input(input, {target: {value: 'unsaved request'}})
+  input.focus()
+  setStyle('scribble')
+  expect(screen.getByRole('textbox', {name: '기능 요청 초안'})).toBe(input)
+  expect(input).toHaveValue('unsaved request')
+  expect(document.activeElement).toBe(input)
 })

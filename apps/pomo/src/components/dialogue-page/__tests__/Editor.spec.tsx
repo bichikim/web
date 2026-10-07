@@ -409,7 +409,7 @@ describe('PDialogueEditor audio generation', () => {
     expect(getGenerateButton()).toBeEnabled()
   })
 
-  it('should report audio download errors and ignore a download completing after disposal', async () => {
+  it('should report a failed audio model download', async () => {
     const modelDownload = createModelDownload()
     vi.mocked(modelDownload.startVoiceModel).mockResolvedValue({
       message: '음성 모델을 내려받지 못했어요.',
@@ -429,8 +429,13 @@ describe('PDialogueEditor audio generation', () => {
       ),
     )
     errorView.unmount()
+  })
 
+  it('should report when an audio model download is cancelled', async () => {
+    const modelDownload = createModelDownload()
     vi.mocked(modelDownload.startVoiceModel).mockResolvedValueOnce({status: 'cancelled'})
+    vi.mocked(useModelDownload).mockReturnValue(modelDownload)
+    vi.mocked(isSupertonicModelDownloaded).mockResolvedValue(false)
     const cancelledHarness = createEditorHarness()
     const cancelledView = renderEditor(cancelledHarness)
     fireEvent.click(getGenerateButton())
@@ -438,7 +443,12 @@ describe('PDialogueEditor audio generation', () => {
     fireEvent.click(screen.getByRole('button', {name: '다운로드 확인'}))
     await waitFor(() => expect(screen.getByTestId('generation-status')).toHaveTextContent('준비됨'))
     cancelledView.unmount()
+  })
 
+  it('should ignore an audio model download completing after disposal', async () => {
+    const modelDownload = createModelDownload()
+    vi.mocked(useModelDownload).mockReturnValue(modelDownload)
+    vi.mocked(isSupertonicModelDownloaded).mockResolvedValue(false)
     let resolveDownload: ((result: ModelDownloadResult) => void) | undefined
     vi.mocked(modelDownload.startVoiceModel).mockImplementationOnce(
       () =>

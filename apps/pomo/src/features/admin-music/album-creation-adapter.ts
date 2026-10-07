@@ -56,10 +56,17 @@ const createAlbum = async (
   }
 }
 
-const clearDraft = async (coverDraftId: string | null): Promise<boolean> => {
+const clearDraft = async (
+  coverDraftId: string | null,
+  expectedDraft?: AlbumDraftData,
+): Promise<boolean> => {
   try {
     const {deleteAlbumDraft} = await getAlbumDraftStorage()
-    return (await deleteAlbumDraft(coverDraftId)).success
+    const result =
+      expectedDraft === undefined
+        ? await deleteAlbumDraft(coverDraftId)
+        : await deleteAlbumDraft(coverDraftId, {expectedDraft})
+    return result.success
   } catch (error) {
     console.warn('Failed to clear the created album draft.', error)
     return false
