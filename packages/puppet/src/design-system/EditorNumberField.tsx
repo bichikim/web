@@ -5,16 +5,18 @@ import {clamp} from 'es-toolkit/math'
 import {createEffect, createSignal, on, onCleanup, Show} from 'solid-js'
 
 const DEFAULT_STEP = 1
+const DISPLAY_FRACTION_DIGITS = 4
 const DRAG_THRESHOLD = 3
 const PRECISION_MULTIPLIER = 0.1
-const FALLBACK_SCRUB_DISTANCE = 200
 const SIGNIFICANT_DIGITS = 12
+const VALUE_TOLERANCE = 1e-12
 const WHOLE_PERCENT = 100
 
 export interface EditorNumberFieldProps extends ControlSizeProps {
   readonly describedBy?: string
   readonly disabled?: boolean
   readonly label: string
+  readonly maximumFractionDigits?: number
   readonly maximum?: number
   readonly minimum?: number
   readonly name?: string
@@ -32,14 +34,31 @@ const constrainValue = (value: number, minimum: number | undefined, maximum: num
 
 const roundValue = (value: number) => Number(value.toPrecision(SIGNIFICANT_DIGITS))
 
-const formatValue = (value: number | undefined) =>
-  value === undefined ? '' : String(roundValue(value))
+const sameValue = (value: number | undefined, emitted: number | null) =>
+  value === emitted ||
+  (value !== undefined &&
+    emitted !== null &&
+    Math.abs(value - emitted) <= Math.max(1, Math.abs(value), Math.abs(emitted)) * VALUE_TOLERANCE)
+
+const formatValue = (value: number | undefined, maximumFractionDigits?: number) => {
+  if (value === undefined) {
+    return ''
+  }
+  const rounded = roundValue(value)
+  return maximumFractionDigits === undefined
+    ? String(value)
+    : String(Number(rounded.toFixed(maximumFractionDigits)))
+}
+
+interface ScrubRange {
+  readonly left: number
+  readonly maximum: number
+  readonly minimum: number
+  readonly step?: number
+  readonly width: number
+}
 
 interface StartScrubOptions {
-  readonly bounds?: {
-    readonly left: number
-    readonly right: number
-  }
   readonly event: PointerEvent
   readonly maximum?: number
   readonly minimum?: number
@@ -47,61 +66,67 @@ interface StartScrubOptions {
   readonly onCancel: () => void
   readonly onChange: (value: number) => void
   readonly onFinish: () => void
+  readonly range?: ScrubRange
   readonly startValue: number
   readonly step: number
 }
 
-const getBoundedScrubValue = (options: StartScrubOptions, pointerX: number) => {
-  const {bounds} = options
-  const minimum = options.minimum!
-  const maximum = options.maximum!
-  const startPointerX = options.event.clientX
-  const startValue = constrainValue(options.startValue, minimum, maximum)
-
-  if (pointerX >= startPointerX) {
-    const distance = bounds!.right - startPointerX
-    const progress = distance <= 0 ? 1 : clamp((pointerX - startPointerX) / distance, 0, 1)
-
-    return startValue + (maximum - startValue) * progress
-  }
-
-  const distance = startPointerX - bounds!.left
-  const progress = distance <= 0 ? 1 : clamp((startPointerX - pointerX) / distance, 0, 1)
-
-  return startValue - (startValue - minimum) * progress
-}
-
 const startScrub = (options: StartScrubOptions) => {
   const startPointerX = options.event.clientX
+  const {pointerId} = options.event
+  const target = options.event.currentTarget
+  let previousX = startPointerX
+  let currentValue = constrainValue(options.startValue, options.minimum, options.maximum)
   let moved = false
   const remove = () => {
-    globalThis.removeEventListener('pointercancel', cancel)
+    globalThis.removeEventListener('pointercancel', handlePointerCancel)
     globalThis.removeEventListener('pointermove', move)
     globalThis.removeEventListener('pointerup', finish)
+    globalThis.removeEventListener('keydown', handleKeyDown)
+    globalThis.removeEventListener('blur', cancel)
+    if (
+      target instanceof Element &&
+      typeof pointerId === 'number' &&
+      target.hasPointerCapture?.(pointerId)
+    ) {
+      target.releasePointerCapture(pointerId)
+    }
   }
   const move = (event: PointerEvent) => {
-    const pointerDistance = event.clientX - startPointerX
-    if (!moved && Math.abs(pointerDistance) < DRAG_THRESHOLD) {
+    if (
+      event.pointerId !== pointerId ||
+      (!moved && Math.abs(event.clientX - startPointerX) < DRAG_THRESHOLD)
+    ) {
       return
     }
-
     if (!moved) {
       moved = true
+      if (target instanceof Element && typeof pointerId === 'number') {
+        target.setPointerCapture?.(pointerId)
+      }
       options.onBegin()
     }
     event.preventDefault()
     const precision = event.shiftKey ? PRECISION_MULTIPLIER : 1
-    const hasBoundedRange =
-      options.bounds !== undefined && options.minimum !== undefined && options.maximum !== undefined
-    const scrubbedValue = hasBoundedRange
-      ? getBoundedScrubValue(options, event.clientX)
-      : options.startValue + pointerDistance * options.step * precision
-    const nextValue = hasBoundedRange
-      ? options.startValue + (scrubbedValue - options.startValue) * precision
-      : scrubbedValue
-    options.onChange(constrainValue(roundValue(nextValue), options.minimum, options.maximum))
+    const delta = (event.clientX - previousX) * options.step * precision
+    previousX = event.clientX
+    const {range} = options
+    const nextValue =
+      range === undefined
+        ? currentValue + delta
+        : range.minimum +
+          (range.maximum - range.minimum) * clamp((event.clientX - range.left) / range.width, 0, 1)
+    const steppedValue =
+      range?.step === undefined || nextValue === range.minimum || nextValue === range.maximum
+        ? nextValue
+        : range.minimum + Math.round((nextValue - range.minimum) / range.step) * range.step
+    currentValue = constrainValue(roundValue(steppedValue), options.minimum, options.maximum)
+    options.onChange(currentValue)
   }
-  const finish = () => {
+  const finish = (event: PointerEvent) => {
+    if (event.pointerId !== pointerId) {
+      return
+    }
     remove()
     if (moved) {
       options.onFinish()
@@ -110,13 +135,27 @@ const startScrub = (options: StartScrubOptions) => {
   const cancel = () => {
     remove()
     if (moved) {
+      moved = false
       options.onCancel()
     }
   }
+  const handlePointerCancel = (event: PointerEvent) => {
+    if (event.pointerId === pointerId) {
+      cancel()
+    }
+  }
+  const handleKeyDown = (event: KeyboardEvent) => {
+    if (event.key === 'Escape') {
+      event.preventDefault()
+      cancel()
+    }
+  }
 
-  globalThis.addEventListener('pointercancel', cancel)
+  globalThis.addEventListener('pointercancel', handlePointerCancel)
   globalThis.addEventListener('pointermove', move)
   globalThis.addEventListener('pointerup', finish)
+  globalThis.addEventListener('keydown', handleKeyDown)
+  globalThis.addEventListener('blur', cancel)
   return remove
 }
 
@@ -125,6 +164,7 @@ export const EditorNumberField = (props: EditorNumberFieldProps) => {
   const [draft, setDraft] = createSignal<string | null>(null)
   const [input, setInput] = createSignal<HTMLInputElement | undefined>()
   const [scrubbing, setScrubbing] = createSignal(false)
+  let field: HTMLSpanElement | undefined
   let editActive = false
   let editStartValue = 0
   let ignoreNextClick = false
@@ -135,7 +175,13 @@ export const EditorNumberField = (props: EditorNumberFieldProps) => {
     on(
       () => props.value,
       (value) => {
-        if (value !== lastEmittedValue) {
+        if (!sameValue(value, lastEmittedValue)) {
+          if (scrubbing()) {
+            removeGestureListeners?.()
+            removeGestureListeners = undefined
+            setScrubbing(false)
+            endEdit()
+          }
           setDraft(null)
           editStartValue = value ?? 0
           lastEmittedValue = value ?? null
@@ -146,7 +192,13 @@ export const EditorNumberField = (props: EditorNumberFieldProps) => {
 
   const isBounded = () =>
     props.minimum !== undefined && props.maximum !== undefined && props.maximum > props.minimum
-  const displayedValue = () => draft() ?? formatValue(props.value)
+  const displayedValue = () => {
+    const pending = draft()
+    const digits = props.maximumFractionDigits ?? DISPLAY_FRACTION_DIGITS
+    return scrubbing()
+      ? formatValue(pending === null ? props.value : Number(pending), digits)
+      : (pending ?? formatValue(props.value, digits))
+  }
   const progress = () => {
     if (!isBounded()) {
       return 0
@@ -160,19 +212,14 @@ export const EditorNumberField = (props: EditorNumberFieldProps) => {
       : minimum
     return ((normalizedValue - minimum) / (maximum - minimum)) * WHOLE_PERCENT
   }
-  const scrubStep = (distance: number) => {
-    if (isBounded()) {
-      return (props.maximum! - props.minimum!) / distance
-    }
-    return typeof props.step === 'number' ? props.step : DEFAULT_STEP
-  }
   const arrowStep = () => (typeof props.step === 'number' ? props.step : DEFAULT_STEP)
+  const isDisabled = () => props.disabled === true || input()?.matches(':disabled') === true
   const canDecrease = () =>
-    props.disabled !== true &&
+    !isDisabled() &&
     props.onValueChange !== undefined &&
     (props.minimum === undefined || (props.value ?? 0) > props.minimum)
   const canIncrease = () =>
-    props.disabled !== true &&
+    !isDisabled() &&
     props.onValueChange !== undefined &&
     (props.maximum === undefined || (props.value ?? 0) < props.maximum)
   const emitValue = (value: number) => {
@@ -188,7 +235,7 @@ export const EditorNumberField = (props: EditorNumberFieldProps) => {
 
     editActive = true
     editStartValue = props.value ?? 0
-    lastEmittedValue = props.value ?? null
+    lastEmittedValue = props.value ?? 0
     props.onEditStart?.()
   }
   const endEdit = () => {
@@ -208,6 +255,8 @@ export const EditorNumberField = (props: EditorNumberFieldProps) => {
     endEdit()
   }
   const cancelEdit = () => {
+    removeGestureListeners?.()
+    removeGestureListeners = undefined
     if (editActive && lastEmittedValue !== editStartValue) {
       props.onValueChange?.(editStartValue)
     }
@@ -217,6 +266,9 @@ export const EditorNumberField = (props: EditorNumberFieldProps) => {
     endEdit()
   }
   const handleStep = (direction: -1 | 1) => {
+    if (isDisabled() || props.onValueChange === undefined) {
+      return
+    }
     beginEdit()
     emitValue(
       constrainValue(
@@ -227,21 +279,51 @@ export const EditorNumberField = (props: EditorNumberFieldProps) => {
     )
     endEdit()
   }
+  const handleKeyboardStep = (direction: -1 | 1) => {
+    if (isDisabled() || props.onValueChange === undefined) {
+      return
+    }
+    const pending = Number(draft() ?? props.value ?? 0)
+    const currentValue = Number.isFinite(pending) ? pending : (props.value ?? 0)
+    const nextValue = constrainValue(
+      roundValue(currentValue + arrowStep() * direction),
+      props.minimum,
+      props.maximum,
+    )
+    beginEdit()
+    setDraft(formatValue(nextValue))
+    emitValue(nextValue)
+  }
   const handlePointerDown = (event: PointerEvent) => {
-    if (event.button !== 0 || props.disabled === true || props.onValueChange === undefined) {
+    if (event.button !== 0 || isDisabled() || props.onValueChange === undefined) {
       return
     }
 
-    const isInputFocused = document.activeElement === input()
-    if (!isInputFocused) {
-      event.preventDefault()
+    if (document.activeElement === input()) {
+      return
     }
+    event.preventDefault()
     ignoreNextClick = false
-    const inputBounds = input()?.getBoundingClientRect()
-    const hasScrubBounds = inputBounds !== undefined && inputBounds.width > 0
+    const element = input()
+    const inputBounds = element?.getBoundingClientRect()
+    const unitBounds =
+      element?.nextElementSibling instanceof HTMLSpanElement
+        ? element.nextElementSibling.getBoundingClientRect()
+        : undefined
+    const width =
+      inputBounds === undefined ? 0 : (unitBounds?.right ?? inputBounds.right) - inputBounds.left
+    const range =
+      isBounded() && inputBounds !== undefined && width > 0
+        ? {
+            left: inputBounds.left,
+            maximum: props.maximum!,
+            minimum: props.minimum!,
+            step: typeof props.step === 'number' && props.step > 0 ? props.step : undefined,
+            width,
+          }
+        : undefined
     removeGestureListeners?.()
     removeGestureListeners = startScrub({
-      bounds: hasScrubBounds ? {left: inputBounds.left, right: inputBounds.right} : undefined,
       event,
       maximum: props.maximum,
       minimum: props.minimum,
@@ -254,6 +336,10 @@ export const EditorNumberField = (props: EditorNumberFieldProps) => {
         input()?.blur()
       },
       onChange(nextValue) {
+        if (isDisabled() || props.onValueChange === undefined) {
+          cancelEdit()
+          return
+        }
         setDraft(String(nextValue))
         emitValue(nextValue)
       },
@@ -264,9 +350,39 @@ export const EditorNumberField = (props: EditorNumberFieldProps) => {
         endEdit()
         input()?.blur()
       },
+      range,
       startValue: props.value ?? 0,
-      step: scrubStep(hasScrubBounds ? inputBounds.width : FALLBACK_SCRUB_DISTANCE),
+      step: arrowStep(),
     })
+  }
+
+  const handleDraftChange = (value: string) => {
+    if (isDisabled()) {
+      return
+    }
+    setDraft(value)
+    const number = Number(value)
+    if (
+      value !== '' &&
+      Number.isFinite(number) &&
+      number === constrainValue(number, props.minimum, props.maximum)
+    ) {
+      beginEdit()
+      emitValue(number)
+    }
+  }
+
+  const handleClick = (event: MouseEvent) => {
+    if (isDisabled()) {
+      return
+    }
+    if (ignoreNextClick) {
+      event.preventDefault()
+      ignoreNextClick = false
+      input()?.blur()
+    } else {
+      input()?.focus()
+    }
   }
 
   onCleanup(() => {
@@ -277,6 +393,10 @@ export const EditorNumberField = (props: EditorNumberFieldProps) => {
   return (
     <NumberField
       as="span"
+      ref={(element) => {
+        field = element
+      }}
+      tabIndex={-1}
       value={displayedValue()}
       format={false}
       minValue={props.minimum}
@@ -284,7 +404,9 @@ export const EditorNumberField = (props: EditorNumberFieldProps) => {
       disabled={props.disabled}
       required={props.required}
       name={props.name}
-      onChange={setDraft}
+      onChange={handleDraftChange}
+      step={arrowStep()}
+      changeOnWheel={false}
       data-control-size={props.size ?? 'sm'}
       classList={{'editor-control': true, 'editor-number-field': true, scrubbing: scrubbing()}}
       data-bounded={isBounded() ? '' : undefined}
@@ -312,21 +434,17 @@ export const EditorNumberField = (props: EditorNumberFieldProps) => {
         type="number"
         value={displayedValue()}
         onBlur={commitDraft}
-        onClick={(event: MouseEvent) => {
-          if (ignoreNextClick) {
-            event.preventDefault()
-            ignoreNextClick = false
-            input()?.blur()
-          } else {
-            input()?.focus()
-          }
-        }}
+        onClick={handleClick}
         onFocus={() => {
           beginEdit()
           setDraft(formatValue(props.value))
         }}
         onInput={(event) => {
+          if (isDisabled()) {
+            return
+          }
           const {value} = event.currentTarget
+          beginEdit()
           setDraft(value)
           if (
             value !== '' &&
@@ -338,10 +456,13 @@ export const EditorNumberField = (props: EditorNumberFieldProps) => {
           }
         }}
         onKeyDown={(event: KeyboardEvent) => {
-          if (event.key === 'Enter') {
+          if (event.key === 'ArrowUp' || event.key === 'ArrowDown') {
+            event.preventDefault()
+            handleKeyboardStep(event.key === 'ArrowUp' ? 1 : -1)
+          } else if (event.key === 'Enter') {
             event.preventDefault()
             commitDraft()
-            input()?.blur()
+            field?.focus()
           } else if (event.key === 'Escape') {
             event.preventDefault()
             cancelEdit()
@@ -350,9 +471,20 @@ export const EditorNumberField = (props: EditorNumberFieldProps) => {
             input()?.focus()
           }
         }}
+        onWheel={(event: WheelEvent) => {
+          if (document.activeElement === input()) {
+            event.preventDefault()
+          }
+        }}
         onPointerDown={handlePointerDown}
       />
-      <Show when={props.unit}>{(unit) => <span aria-hidden="true">{unit()}</span>}</Show>
+      <Show when={props.unit}>
+        {(unit) => (
+          <span aria-hidden="true" onClick={handleClick} onPointerDown={handlePointerDown}>
+            {unit()}
+          </span>
+        )}
+      </Show>
       <Button
         aria-label={`${props.label} 증가`}
         class="editor-number-step increment"

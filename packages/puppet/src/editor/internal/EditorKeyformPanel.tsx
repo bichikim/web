@@ -18,7 +18,7 @@ import {
 } from '../../deformation'
 import type {PuppetParameter, PuppetParameterBinding} from '../../player/document'
 import {EditorKeyformMarker} from './EditorKeyformMarker'
-import {EditorKeyformToolbar} from './EditorKeyformToolbar'
+import {EditorKeyformPanelToolbar} from './EditorKeyformPanelToolbar'
 import {EditorParameterItem} from './EditorParameterItem'
 import type {EditorKeyformPanelProps} from './editor-keyform-panel-props'
 import {createKeyformPanelModel} from './keyform-panel-model'
@@ -108,6 +108,7 @@ const ParameterValueScrubber = (props: ParameterValueScrubberProps) => {
   )
 }
 interface TwoDimensionalGridProps {
+  readonly onKeyformAdd?: (values: PuppetParameterValues) => void
   readonly active?: boolean
   readonly activeKeyformValues?: PuppetParameterValues | null
   readonly binding: PuppetParameterBinding
@@ -185,10 +186,32 @@ const TwoDimensionalGrid = (props: TwoDimensionalGridProps) => {
     globalThis.addEventListener('pointerup', finishPointerDrag)
   }
 
+  const handleDoubleClick = (event: MouseEvent & {readonly currentTarget: HTMLDivElement}) => {
+    const x = xParameter()
+    const y = yParameter()
+    if (
+      x === undefined ||
+      y === undefined ||
+      (event.target instanceof Element && event.target.closest('.parameter-grid-keyform') !== null)
+    ) {
+      return
+    }
+    const bounds = event.currentTarget.getBoundingClientRect()
+    event.currentTarget.parentElement?.focus()
+    props.onKeyformAdd?.([
+      getParameterPointerValue(x, bounds.left, bounds.width, event.clientX),
+      getParameterPointerValue(
+        y,
+        bounds.top,
+        bounds.height,
+        bounds.top + bounds.bottom - event.clientY,
+      ),
+    ])
+  }
   onCleanup(() => removePointerListeners?.())
 
   return (
-    <div aria-hidden="true" class="parameter-grid" onPointerDown={handlePointerDown}>
+    <div class="parameter-grid" onDblClick={handleDoubleClick} onPointerDown={handlePointerDown}>
       <Show when={xParameter() !== undefined && yParameter() !== undefined}>
         <span
           class="parameter-grid-current-x"
@@ -209,7 +232,11 @@ const TwoDimensionalGrid = (props: TwoDimensionalGridProps) => {
           const y = () => yParameter()
           return (
             <EditorDiamondButton
-              aria-hidden="true"
+              aria-label={`키폼 선택: ${keyform.values.join(', ')}`}
+              aria-pressed={
+                props.active === true &&
+                parameterValuesEqual(props.activeKeyformValues ?? [], keyform.values)
+              }
               data-tooltip={`키폼 선택: ${keyform.values.join(', ')}`}
               class="parameter-grid-keyform"
               classList={{
@@ -221,10 +248,10 @@ const TwoDimensionalGrid = (props: TwoDimensionalGridProps) => {
                 bottom: `${y() === undefined ? 0 : getParameterProgress(y()!, keyform.values[1] ?? 0)}%`,
                 left: `${x() === undefined ? 0 : getParameterProgress(x()!, keyform.values[0] ?? 0)}%`,
               }}
-              tabindex="-1"
               type="button"
               onClick={(event) => {
                 event.stopPropagation()
+                event.currentTarget.focus()
                 props.onKeyformSelect?.(props.binding.id, keyform.values)
               }}
             />
@@ -236,6 +263,8 @@ const TwoDimensionalGrid = (props: TwoDimensionalGridProps) => {
 }
 
 interface KeyformTrackProps {
+  readonly onKeyformAdd?: () => void
+  readonly onKeyformDelete?: () => void
   readonly footer?: JSX.Element
   readonly active: boolean
   readonly activeKeyformValues?: PuppetParameterValues | null
@@ -307,6 +336,47 @@ const KeyformTrackLabel = (props: KeyformTrackProps) => {
 }
 
 const KeyformTrack = (props: KeyformTrackProps) => {
+  const handleKeyformAdd = (values: PuppetParameterValues) => {
+    if (props.onKeyformAdd === undefined) {
+      return
+    }
+    props.onBindingSelect?.(props.binding.id)
+    props.onValueChange?.(values)
+    props.onKeyformAdd()
+  }
+  const handleKeyDown = (event: KeyboardEvent) => {
+    if (
+      (event.key !== 'Backspace' && event.key !== 'Delete') ||
+      event.defaultPrevented ||
+      event.altKey ||
+      event.ctrlKey ||
+      event.metaKey ||
+      event.shiftKey ||
+      !props.active ||
+      props.activeKeyformValues === null ||
+      props.activeKeyformValues === undefined ||
+      props.onKeyformDelete === undefined
+    ) {
+      return
+    }
+    event.preventDefault()
+    event.stopPropagation()
+    props.onKeyformDelete()
+  }
+  const handleDoubleClick = (event: MouseEvent & {readonly currentTarget: HTMLDivElement}) => {
+    const parameter = firstParameter()
+    if (
+      parameter === undefined ||
+      (event.target instanceof Element && event.target.closest('.keyform-marker') !== null)
+    ) {
+      return
+    }
+    const bounds = event.currentTarget.getBoundingClientRect()
+    event.currentTarget.focus()
+    handleKeyformAdd([
+      getParameterPointerValue(parameter, bounds.left, bounds.width, event.clientX),
+    ])
+  }
   const firstParameter = () => props.parameters[0]
   const secondParameter = () => props.parameters[1]
   const handleValueChange = (values: PuppetParameterValues) => {
@@ -342,6 +412,9 @@ const KeyformTrack = (props: KeyformTrackProps) => {
         <div
           class="keyform-track"
           aria-label={`${firstParameter()?.name ?? 'Parameter'} 키폼 트랙`}
+          tabindex="0"
+          onDblClick={handleDoubleClick}
+          onKeyDown={handleKeyDown}
           onPointerDown={handleOneDimensionalTrackPointerDown}
         >
           <Show when={firstParameter()}>
@@ -380,6 +453,8 @@ const KeyformTrack = (props: KeyformTrackProps) => {
       <div
         class="keyform-track parameter-grid-track"
         aria-label={`${firstParameter()?.name}와 ${secondParameter()?.name} 2차원 키폼 grid`}
+        tabindex="0"
+        onKeyDown={handleKeyDown}
       >
         <TwoDimensionalGrid
           active={props.active}
@@ -387,6 +462,7 @@ const KeyformTrack = (props: KeyformTrackProps) => {
           binding={props.binding}
           parameters={props.parameters}
           values={props.values ?? [0, 0]}
+          onKeyformAdd={handleKeyformAdd}
           onKeyformSelect={props.onKeyformSelect}
           onValueChange={handleValueChange}
         />
@@ -401,20 +477,6 @@ interface KeyformPanelSectionProps {
   readonly source: EditorKeyformPanelProps
   readonly titleId: string
 }
-
-const KeyformPanelToolbar = (props: KeyformPanelSectionProps) => (
-  <EditorKeyformToolbar
-    activeBinding={props.activeBinding()}
-    activeKeyformValues={props.source.activeKeyformValues}
-    onKeyformAdd={props.activePreview() ? undefined : props.source.onKeyformAdd}
-    onKeyformDelete={props.activePreview() ? undefined : props.source.onKeyformDelete}
-    onParameterAdd={props.source.onParameterAdd}
-    onTwoDimensionalParameterAdd={props.source.onTwoDimensionalParameterAdd}
-    parameterCreationAvailable={props.source.parameterCreationAvailable}
-    setBrushControlsMount={props.source.setBrushControlsMount}
-    titleId={props.titleId}
-  />
-)
 
 const KeyformPanelFooter = (props: Omit<KeyformPanelSectionProps, 'titleId'>) => (
   <EditorParameterFooter
@@ -436,7 +498,7 @@ export const EditorKeyformPanel = (props: EditorKeyformPanelProps) => {
     createKeyformPanelModel(props)
   return (
     <section class="keyform-panel" aria-labelledby={titleId}>
-      <KeyformPanelToolbar
+      <EditorKeyformPanelToolbar
         activeBinding={activeBinding}
         activePreview={activePreview}
         source={props}
@@ -476,6 +538,14 @@ export const EditorKeyformPanel = (props: EditorKeyformPanelProps) => {
                         parameters={parameters()}
                         values={bindingValues(binding())}
                         onBindingSelect={props.onBindingSelect}
+                        onKeyformAdd={
+                          props.previewBindingIds?.has(bindingId) ? undefined : props.onKeyformAdd
+                        }
+                        onKeyformDelete={
+                          props.previewBindingIds?.has(bindingId)
+                            ? undefined
+                            : props.onKeyformDelete
+                        }
                         onKeyformMove={props.onKeyformMove}
                         onKeyformSelect={props.onKeyformSelect}
                         onValueChange={props.onValueChange}

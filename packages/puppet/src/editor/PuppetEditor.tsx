@@ -1,3 +1,4 @@
+import {useEditorWorkspace} from './use-editor-workspace'
 import {PsdReimportDialog} from './internal/PsdReimportDialog'
 import {useEditorImports} from './use-editor-imports'
 import {EditorModelingKeyformPanel} from './internal/EditorModelingKeyformPanel'
@@ -147,7 +148,7 @@ export const PuppetEditor = (props: PuppetEditorProps) => {
     onDocumentChange: history.setDocument,
   })
   const deformerControlSelection = createDeformerControlSelection()
-  const [workspace, setWorkspace] = createSignal<'animation' | 'modeling'>(
+  const {workspace, setWorkspace} = useEditorWorkspace(
     untrack(() => props.initialWorkspace ?? 'modeling'),
   )
   const [playerStatus, setPlayerStatus] = createSignal<PlayerCanvasStatus>('loading')

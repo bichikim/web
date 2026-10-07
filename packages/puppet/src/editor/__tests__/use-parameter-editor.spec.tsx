@@ -1,4 +1,4 @@
-/** @vitest-environment jsdom */
+import {isTwoDimensionalParameterBinding} from '../../deformation'
 import {render} from '@solidjs/testing-library'
 import {createSignal} from 'solid-js'
 import {expect, test, vi} from 'vitest'
@@ -125,4 +125,58 @@ test('should select a visible parameter instead of an internal physics output', 
   editor.setAllParametersVisible(true)
   editor.selectBinding(hiddenBinding.id)
   expect(editor.activeBindingId()).toBe(visibleBinding.id)
+})
+
+test('should select the mirrored destination and record one document change', () => {
+  const [document, setDocument] = createSignal(createDemoDocument())
+  const save = vi.fn(setDocument)
+  let editor!: ParameterEditorResult
+  render(() => {
+    editor = useParameterEditor({
+      document,
+      onDocumentChange: save,
+      onNotice: vi.fn(),
+      selectedNodeIds: () => ['mesh-preview'],
+    })
+    return <div />
+  })
+  editor.selectKeyform([30, 0])
+  expect(
+    editor.mirrorKeyform({axis: 'x', center: 320, overwrite: true, parameterIndex: 0}),
+  ).toBeNull()
+  expect(save).toHaveBeenCalledTimes(1)
+  expect(editor.activeKeyformValues()).toEqual([-30, 0])
+  expect(editor.parameterValues()).toEqual([-30, 0])
+})
+
+test('should create four missing corners in one document change without moving the current value', () => {
+  const initial = createDemoDocument()
+  const [document, setDocument] = createSignal<PuppetDocument>({
+    ...initial,
+    parameterBindings: initial.parameterBindings!.map((binding) =>
+      isTwoDimensionalParameterBinding(binding)
+        ? {
+            ...binding,
+            keyforms: binding.keyforms.filter(
+              (keyform) => keyform.values[0] === 0 || keyform.values[1] === 0,
+            ),
+          }
+        : binding,
+    ),
+  })
+  const save = vi.fn(setDocument)
+  let editor!: ParameterEditorResult
+  render(() => {
+    editor = useParameterEditor({
+      document,
+      onDocumentChange: save,
+      onNotice: vi.fn(),
+      selectedNodeIds: () => ['mesh-preview'],
+    })
+    return <div />
+  })
+  expect(editor.generateCorners({overwrite: false})).toBeNull()
+  expect(save).toHaveBeenCalledTimes(1)
+  expect(document().parameterBindings![0]!.keyforms).toHaveLength(9)
+  expect(editor.parameterValues()).toEqual([0, 0])
 })
