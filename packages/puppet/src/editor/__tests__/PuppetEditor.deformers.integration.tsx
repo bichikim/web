@@ -91,7 +91,9 @@ describe('PuppetEditor', () => {
     })
     fireEvent.click(view.getByRole('button', {name: '1차원 Parameter 추가'}))
     fireEvent.input(view.getByRole('spinbutton', {name: 'Parameter 3 값'}), {target: {value: '30'}})
-    fireEvent.click(view.getByRole('button', {name: '현재 값에 키폼'}))
+    const track = view.getByLabelText('Parameter 3 키폼 트랙')
+    vi.spyOn(track, 'getBoundingClientRect').mockReturnValue(new DOMRect(100, 0, 200, 40))
+    fireEvent.dblClick(track, {clientX: 300})
     fireEvent.input(view.getByRole('spinbutton', {name: 'Parameter 3 값'}), {target: {value: '15'}})
     const before = onDocumentChange.mock.calls.at(-1)![0]
     fireEvent.input(view.getByRole('spinbutton', {name: '자유 변형 각도'}), {target: {value: '25'}})

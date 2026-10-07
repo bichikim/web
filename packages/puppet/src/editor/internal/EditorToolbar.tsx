@@ -127,7 +127,7 @@ const ToolbarMenu = (props: ToolbarMenuProps) => {
           <Show when={props.examples?.length}>
             <details>
               <summary class="toolbar-menu-examples-trigger">예제</summary>
-              <div aria-label="예제 문서" class="grid pl-3" role="group">
+              <div aria-label="예제 문서" class="grid pl-editor-group" role="group">
                 <For each={props.examples}>
                   {(example) => (
                     <Button type="button" onClick={() => handleExampleOpen(example)}>
