@@ -745,6 +745,9 @@ importers:
       h3:
         specifier: 'catalog:'
         version: 2.0.1-rc.26(crossws@0.4.12(srvx@1.0.5))
+      k-saju:
+        specifier: 0.1.4
+        version: 0.1.4
       korean-lunar-calendar:
         specifier: ^0.4.0
         version: 0.4.0
@@ -3512,6 +3515,10 @@ packages:
 
   '@floating-ui/utils@0.2.12':
     resolution: {integrity: sha512-HpCo8tmWzLVad5s2d19EhAz5zqrrQ6s69qd6moPMQvkOuSwDT1YgRfWSVuc4ennqrgv3OHppiOGMQ7oC13yIww==}
+
+  '@fullstackfamily/manseryeok@1.0.8':
+    resolution: {integrity: sha512-gzbnwpLwZpu2GNngykrjpXSCdDomjQCLomW3tF+PxIBSzd4fvQ2zv6En4WjmVED44hLnu0EIWRDd86Z/VuPN/A==}
+    engines: {node: '>=16.0.0'}
 
   '@hcaptcha/loader@2.4.2':
     resolution: {integrity: sha512-+Pf0Vin6iJlJj5u/mq6XMgbJT1mi/Sg5LWHxxqO4YHt2YvdZgecp5V2sbC6vRaNPJUqQGk2HOu1K/i12mqs5vw==}
@@ -7781,6 +7788,9 @@ packages:
     resolution: {integrity: sha512-LElXdjswlqjWrPpJFg1Fx4wpkOCxj1TDHlSV4PlaRxHGWko024xICaa97ZkMfs6DRKlCguiAI+rbXv5GWwXIkg==}
     hasBin: true
 
+  astronomy-engine@2.1.19:
+    resolution: {integrity: sha512-8yWKNf7UeNbH458h3sAJ6ZgAjE5jTXp/mNNRFoC20j2SHwZIjAQeEsBB2Q3uCFRaTCCJRv33K2XhkhZQMXoX6w==}
+
   async-sema@3.1.1:
     resolution: {integrity: sha512-tLRNUXati5MFePdAk8dw7Qt7DpxPB60ofAgn8WRhW6a2rcimZnYBP9oxHiv0OHy+Wz7kPMG+t4LGdt31+4EmGg==}
 
@@ -9893,6 +9903,11 @@ packages:
 
   jsonfile@6.2.1:
     resolution: {integrity: sha512-zwOTdL3rFQ/lRdBnntKVOX6k5cKJwEc1HdilT71BWEu7J41gXIB2MRp+vxduPSwZJPWBxEzv4yH1wYLJGUHX4Q==}
+
+  k-saju@0.1.4:
+    resolution: {integrity: sha512-OoEs4XXizjVfnfpisPfFNuWPKWKEs9n1jX/bN+SBUzxU+6HdFxuQyk47CKGfr+qZf9WZtVIdydQXr2QdpSVMQQ==}
+    engines: {node: '>=20'}
+    hasBin: true
 
   kebab-case@1.0.2:
     resolution: {integrity: sha512-7n6wXq4gNgBELfDCpzKc+mRrZFs7D+wgfF5WRFLNAr4DA/qtr9Js8uOAVAfHhuLMfAcQ0pRKqbpjx+TcJVdE1Q==}
@@ -15301,6 +15316,8 @@ snapshots:
 
   '@floating-ui/utils@0.2.12': {}
 
+  '@fullstackfamily/manseryeok@1.0.8': {}
+
   '@hcaptcha/loader@2.4.2': {}
 
   '@hcaptcha/react-hcaptcha@1.17.4(react-dom@19.2.5(react@19.2.5))(react@19.2.5)':
@@ -19573,6 +19590,8 @@ snapshots:
 
   astring@1.9.0: {}
 
+  astronomy-engine@2.1.19: {}
+
   async-sema@3.1.1: {}
 
   async@3.2.6: {}
@@ -21685,6 +21704,11 @@ snapshots:
       universalify: 2.0.1
     optionalDependencies:
       graceful-fs: 4.2.11
+
+  k-saju@0.1.4:
+    dependencies:
+      '@fullstackfamily/manseryeok': 1.0.8
+      astronomy-engine: 2.1.19
 
   kebab-case@1.0.2: {}
 
