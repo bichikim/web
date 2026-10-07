@@ -12,7 +12,6 @@ import {
   type DialogueEventId,
   type EventActionId,
   FOCUS_ROOM_ENTRY_EVENT,
-  RANDOM_DIALOGUE_EVENT,
 } from '../schema'
 
 interface EventActionRunner {
@@ -83,7 +82,6 @@ export const createEventActionRunner = (
 ): EventActionRunner => {
   let eventActionRegistration: RegisteredEventActionExecutor | null = null
   const eventActionHandlers = new Set<EventActionHandler>()
-  let hasRegisteredActiveEventActionExecutor = false
   let pendingEventActions: PendingEventAction[] = []
   let pendingActionWaiters: PendingActionWaiter[] = []
 
@@ -121,25 +119,12 @@ export const createEventActionRunner = (
     const isDeferredExecutor = registration?.mode === 'deferred'
     const isHandledByHandler = isDeferredExecutor && notifyEventActionHandlers(actionId)
     const executor = isDeferredExecutor ? null : (registration?.executor ?? null)
-    const shouldQueueAction =
-      isDeferredExecutor ||
-      (executor === null &&
-        (!hasRegisteredActiveEventActionExecutor ||
-          eventId === DELAYED_END_EVENT ||
-          eventId === FOCUS_ROOM_ENTRY_EVENT ||
-          eventId === 'break-end' ||
-          eventId === 'break-start' ||
-          eventId === 'focus-end' ||
-          eventId === 'focus-start' ||
-          eventId === 'long-break-end' ||
-          eventId === 'long-break-start' ||
-          eventId === RANDOM_DIALOGUE_EVENT))
 
     if (isHandledByHandler) {
       return
     }
 
-    if (!shouldQueueAction) {
+    if (executor !== null) {
       executeEventActionAndRetainRoomEntry(eventId, actionId, executor, queueEventAction)
       return
     }
@@ -204,7 +189,6 @@ export const createEventActionRunner = (
         executor,
         mode: options?.mode ?? 'active',
       } satisfies RegisteredEventActionExecutor
-      hasRegisteredActiveEventActionExecutor ||= registration.mode === 'active'
       eventActionRegistration = registration
       if (registration.mode === 'deferred') {
         resolvePendingActionWaiters()
