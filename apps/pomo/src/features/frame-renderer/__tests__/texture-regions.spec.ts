@@ -2,7 +2,7 @@
 import {Container, Rectangle, Sprite, Texture, TextureSource} from 'pixi.js'
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 
-import {createTextureRegions, type TextureRegion} from '..'
+import {createTextureRegions, type TextureRegion} from '../texture-regions'
 
 vi.mock('pixi.js', async (importOriginal) => ({
   ...(await importOriginal<typeof import('pixi.js')>()),

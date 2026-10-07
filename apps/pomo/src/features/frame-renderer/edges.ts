@@ -1,5 +1,5 @@
 import {textureResolutionForMaxSide} from './texture-resolution-for-max-side'
-import {createTextureRegions} from 'src/utils/create-texture-regions'
+import {createTextureRegions} from './texture-regions'
 import {BlurFilter, Container, Rectangle, type Renderer, Sprite, Texture} from 'pixi.js'
 
 const SAMPLE_LENGTH = 256
