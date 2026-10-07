@@ -1,3 +1,8 @@
+const numberProgressBackground =
+  '[background:linear-gradient(to_right,' +
+  '_#24443b_var(--number-field-progress),' +
+  '_transparent_var(--number-field-progress))]'
+
 export const numberFieldDescendants = [
   '[&_.editor-number-field]:[height:var(--editor-control-height,_1.40625rem)]',
   '[&_.editor-number-field]:relative [&_.editor-number-field]:flex [&_.editor-number-field]:box-border',
@@ -9,7 +14,7 @@ export const numberFieldDescendants = [
   '[&_.editor-number-field]:tabular-nums',
   '[&_.editor-number-field[data-bounded]::before]:absolute',
   '[&_.editor-number-field[data-bounded]::before]:[inset:0_1.25rem]',
-  '[&_.editor-number-field[data-bounded]::before]:[background:linear-gradient(to_right,_#24443b_var(--number-field-progress),_transparent_var(--number-field-progress))]',
+  `[&_.editor-number-field[data-bounded]::before]:${numberProgressBackground}`,
   "[&_.editor-number-field[data-bounded]::before]:[content:'']",
   '[&_.editor-number-field[data-bounded]::before]:pointer-events-none',
   '[&_.editor-number-field:focus-within]:[border-color:#64e5c4]',
@@ -190,7 +195,7 @@ export const controlShortcuts = {
     '[.puppet-editor_&]:[font-size:0.6875rem] [.puppet-editor_&]:leading-none [.puppet-editor_&]:tabular-nums',
     '[.puppet-editor_&[data-bounded]::before]:absolute',
     '[.puppet-editor_&[data-bounded]::before]:[inset:0_1.25rem]',
-    '[.puppet-editor_&[data-bounded]::before]:[background:linear-gradient(to_right,_#24443b_var(--number-field-progress),_transparent_var(--number-field-progress))]',
+    `[.puppet-editor_&[data-bounded]::before]:${numberProgressBackground}`,
     "[.puppet-editor_&[data-bounded]::before]:[content:'']",
     '[.puppet-editor_&[data-bounded]::before]:pointer-events-none',
     '[.puppet-editor_&:focus-within]:[border-color:#64e5c4]',
