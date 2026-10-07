@@ -5,6 +5,7 @@ import {resolve} from 'node:path'
 import {Client} from '@modelcontextprotocol/sdk/client/index.js'
 import {StdioClientTransport} from '@modelcontextprotocol/sdk/client/stdio.js'
 import {CallToolRequestSchema} from '@modelcontextprotocol/sdk/types.js'
+import manifest from './package.json' with {type: 'json'}
 
 const [, , path] = process.argv
 if (path === undefined) {
@@ -19,7 +20,7 @@ const status = {
   tooLarge: 413,
 }
 const anchor = resolve(path)
-const client = new Client({name: 'Code Viewer Preview', version: '0.1.1'})
+const client = new Client({name: 'Code Viewer Preview', version: manifest.version})
 const transport = new StdioClientTransport({
   args: [new URL('./dist/server.js', import.meta.url).pathname],
   command: process.execPath,

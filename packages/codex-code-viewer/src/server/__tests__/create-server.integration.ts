@@ -4,6 +4,7 @@ import {InMemoryTransport} from '@modelcontextprotocol/sdk/inMemory.js'
 import {afterEach, beforeEach, describe, expect, it} from 'vitest'
 import {sessionSchema, treeSchema} from '../../shared/contracts'
 import {createServer} from '../create-server'
+import {version} from '../../../package.json'
 
 describe('createServer', () => {
   let client: Client
@@ -19,6 +20,9 @@ describe('createServer', () => {
   afterEach(async () => {
     await client.close()
     await instance.dispose()
+  })
+  it('should advertise the released package version to the MCP client', () => {
+    expect(client.getServerVersion()?.version).toBe(version)
   })
   it('should advertise JavaScript and TypeScript file replacement and deliver the viewer resource', async () => {
     const listing = await client.listTools()

@@ -5,6 +5,7 @@ import {build as bundle} from 'esbuild'
 import {build} from 'vite'
 import typescript from '@typescript/typescript6'
 import {collectLicenseNotices} from './build/collect-license-notices'
+import {inlineScript} from './build/inline-script'
 
 const root = dirname(fileURLToPath(import.meta.url))
 const output = `${root}/dist`
@@ -23,8 +24,8 @@ const stylesheet = assets
 const template = await readFile(`${root}/index.html`, 'utf8')
 const html = template
   .replace(
-    /<script[^>]*src="[^"\n]+"[^>]*><\/script>/u,
-    () => `<script type="module">${javascript.replaceAll('</script', '<\\/script')}</script>`,
+    /<script[^>]*src="[^"\n]+"[^>]*><\/script\s*>/giu,
+    () => `<script type="module">${inlineScript(javascript)}</script>`,
   )
   .replace('</head>', `<style>${stylesheet}</style></head>`)
 await mkdir(output, {recursive: true})
@@ -60,7 +61,7 @@ await writeFile(
     '<summary>채팅 컨텍스트 미리보기 (<output>0</output>)</summary>',
     '<ul></ul><button type="button">컨텍스트 비우기</button></details>',
     '<iframe class="min-h-0 flex-1 w-full border-0" title="Code Viewer"></iframe>',
-    `<script type="module">${previewCode.replaceAll('</script', '<\\/script')}</script></body></html>`,
+    `<script type="module">${inlineScript(previewCode)}</script></body></html>`,
   ].join('\n'),
 )
 const server = await bundle({

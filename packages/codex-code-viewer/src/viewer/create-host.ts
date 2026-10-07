@@ -2,6 +2,7 @@ import {App} from '@modelcontextprotocol/ext-apps'
 import type {Protocol} from '@modelcontextprotocol/sdk/shared/protocol.js'
 import type {Notification, Request, Result} from '@modelcontextprotocol/sdk/types.js'
 import {z} from 'zod'
+import manifest from '../../package.json'
 import {OpenAIExtensions, OpenAIFileEntrypointInputSchema} from '@openai/mcp-extensions/app'
 import {sessionSchema} from '../shared/contracts'
 import type {ViewerPort} from './types'
@@ -10,7 +11,7 @@ import {formatContext} from './format-context'
 import {createPendingTasks} from './create-pending-tasks'
 
 export const createHost = (): ViewerPort => {
-  const app = new App({name: 'Code Viewer', version: '0.1.1'}, {}, {autoResize: false})
+  const app = new App({name: 'Code Viewer', version: manifest.version}, {}, {autoResize: false})
   const extensions = new OpenAIExtensions(app)
   // The base protocol carries custom methods, as in the OpenAI extensions adapter.
   const protocol = app as unknown as Protocol<Request, Notification, Result>
