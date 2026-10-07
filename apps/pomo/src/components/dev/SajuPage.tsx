@@ -18,29 +18,19 @@ import {getDayPillarFactAnswer} from './saju/get-day-pillar-fact-answer'
 import {getReadableFallback} from './saju/get-readable-fallback'
 import type {GenerateSajuRequest} from './saju/messages'
 import {requiresAnnualReading} from './saju/requires-annual-reading'
+import {SajuForm, type SajuFormInput} from './saju/SajuForm'
 
 interface CalculationSection {
   title: string
   value: string
 }
 
-const FIELD_CLASSES = cx(
-  'min-h-11 w-full rounded-3 border border-white/20 bg-#211a2b px-3 text-#f8edf1',
-  'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-#f0c99a',
-)
-const BUTTON_CLASSES = cx(
-  'min-h-11 rounded-3 bg-#f0c99a px-5 font-750 text-#241927 hover:bg-#f8dcba',
-  'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white',
-)
+const MINIMUM_BIRTH_DATE = '1900-01-01'
+const MAXIMUM_BIRTH_DATE = '2050-12-31'
 const JSON_CLASSES = cx(
   'mb-0 mt-4 overflow-x-auto whitespace-pre-wrap break-words rounded-3 bg-#100d16 p-4',
   'text-xs leading-6 text-#e8ddeb sm:text-sm',
 )
-const QUESTION_CLASSES = cx(
-  'min-h-24 w-full rounded-3 border border-white/20 bg-#211a2b p-3 text-#f8edf1',
-  'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-#f0c99a',
-)
-
 function formatResult(title: string, value: unknown): CalculationSection {
   return {title, value: JSON.stringify(value, null, 2)}
 }
@@ -119,45 +109,30 @@ export function SajuPage() {
 
   onMount(() => setReady(true))
 
-  function handleSubmit(event: SubmitEvent) {
-    event.preventDefault()
-    const form = event.currentTarget
-    if (!(form instanceof HTMLFormElement)) {
-      return
-    }
-
-    const values = new FormData(form)
-    const date = String(values.get('date') ?? '')
-    const time = String(values.get('time') ?? '')
-    const calendar = values.get('calendar') === 'lunar' ? 'lunar' : 'solar'
-    const genderValue = values.get('gender')
-    const gender = genderValue === 'F' || genderValue === 'N' ? genderValue : 'M'
-    const question = String(values.get('question') ?? '').trim()
-
+  function handleSubmit(input: SajuFormInput) {
     setSections([])
     setGeneration(null)
     setFactAnswer(null)
     setError(null)
     setNotice(null)
 
-    if (date < '1900-01-01' || date > '2050-12-31') {
+    if (input.birth.date === '') {
+      setError('생년월일을 선택해 주세요.')
+      return
+    }
+    if (input.birth.date < MINIMUM_BIRTH_DATE || input.birth.date > MAXIMUM_BIRTH_DATE) {
       setError('생년월일은 1900년부터 2050년까지 입력해 주세요.')
       return
     }
-    if (!question) {
+    if (!input.question) {
       setError('해석할 질문을 입력해 주세요.')
       return
     }
 
-    const birth: BirthInput = {calendar, date, ...(time ? {time} : {})}
-    if (calendar === 'lunar') {
-      birth.isLeapMonth = values.get('leapMonth') === 'on'
-    }
-
     try {
-      const result = calculateSections(birth, gender, question)
+      const result = calculateSections(input.birth, input.gender, input.question)
       setSections(result.sections)
-      if (requiresAnnualReading(question)) {
+      if (requiresAnnualReading(input.question)) {
         setNotice('특정 연도 운세는 계산하지 않아요. 연도를 빼고 다시 질문해 주세요.')
       } else if (result.factAnswer === null) {
         setGeneration(result.generation)
@@ -178,50 +153,7 @@ export function SajuPage() {
         </A>
         <SajuIntro />
 
-        <form
-          class="grid gap-4 rounded-6 border border-white/10 bg-white/5 p-5 sm:grid-cols-2"
-          onSubmit={handleSubmit}
-        >
-          <label class="grid gap-2 text-sm font-650">
-            생년월일
-            <input class={FIELD_CLASSES} name="date" required type="date" value="1995-03-16" />
-          </label>
-          <label class="grid gap-2 text-sm font-650">
-            출생 시각 (모르면 비워두기)
-            <input class={FIELD_CLASSES} name="time" type="time" value="07:30" />
-          </label>
-          <label class="grid gap-2 text-sm font-650">
-            달력
-            <select class={FIELD_CLASSES} name="calendar">
-              <option value="solar">양력</option>
-              <option value="lunar">음력</option>
-            </select>
-          </label>
-          <label class="grid gap-2 text-sm font-650">
-            대운 계산 입력
-            <select class={FIELD_CLASSES} name="gender">
-              <option value="M">남성</option>
-              <option value="F">여성</option>
-              <option value="N">지정하지 않음 (대운 생략)</option>
-            </select>
-          </label>
-          <label class="flex items-center gap-2 text-sm text-#d2c4d7">
-            <input name="leapMonth" type="checkbox" />
-            음력 윤달
-          </label>
-          <label class="grid gap-2 text-sm font-650 sm:col-span-2">
-            질문
-            <textarea
-              class={QUESTION_CLASSES}
-              name="question"
-              placeholder="예: 제 성향을 어떻게 해석하나요?"
-              required
-            />
-          </label>
-          <button class={BUTTON_CLASSES} disabled={!ready()} type="submit">
-            사주 풀이 생성
-          </button>
-        </form>
+        <SajuForm onSubmit={handleSubmit} ready={ready()} />
 
         <Show when={error()}>
           <p class="m-0 rounded-3 border border-#f2a7b8/50 bg-#f2a7b8/10 p-4 text-sm" role="alert">
