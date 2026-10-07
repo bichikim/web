@@ -1,5 +1,6 @@
 /// <reference lib="webworker" />
 import {resolveTextModelAssetUrl} from './resolve-text-model-asset-url'
+import {createTransformersLoadOptions} from './create-transformers-load-options'
 
 // oxlint-disable eslint-js/camelcase -- Transformers.js model names and options are fixed external contracts.
 
@@ -80,22 +81,14 @@ const loadModel = (
     )
   }
 
-  const loadOptions = {
-    device: 'webgpu',
-    dtype: {
-      decoder_model_merged: modelDefinition.quantization,
-      embed_tokens: modelDefinition.quantization,
-    },
-    progress_callback: reportProgress,
-    revision: modelDefinition.assetSource.revision,
-  } as const
+  const loadOptions = createTransformersLoadOptions({
+    model: modelDefinition,
+    onProgress: reportProgress,
+  })
 
   switch (modelDefinition.architecture) {
     case 'lfm-2':
-      return Lfm2ForCausalLM.from_pretrained(modelDefinition.repositoryId, {
-        ...loadOptions,
-        dtype: modelDefinition.quantization,
-      })
+      return Lfm2ForCausalLM.from_pretrained(modelDefinition.repositoryId, loadOptions)
     case 'gemma-4':
       return Gemma4ForCausalLM.from_pretrained(modelDefinition.repositoryId, loadOptions)
     case 'qwen-3.5': {

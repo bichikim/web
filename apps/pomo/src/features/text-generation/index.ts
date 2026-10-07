@@ -59,3 +59,9 @@ export * from './load-gguf-model'
 export * from './resolve-text-model-asset-url'
 export * from './supports-text-model'
 export * from './unwrap-generation-result'
+
+export {createTransformersLoadOptions} from './create-transformers-load-options'
+export type {
+  CreateTransformersLoadOptionsOptions,
+  TransformersLoadOptions,
+} from './create-transformers-load-options'
