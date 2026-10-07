@@ -1,4 +1,5 @@
 import {Show} from 'solid-js'
+import {cx} from 'class-variance-authority'
 import {ToastRegion, useToast} from '@winter-love/solid-components'
 import * as m from '@paraglide/message'
 import type {PSceneStyle} from 'src/features/focus-room-animation'
@@ -15,7 +16,10 @@ export const PToastRegion = (props: PToastRegionProps) => {
     <Show when={toast.count() > 0}>
       <section
         aria-label={m.toast_label()}
-        class="pointer-events-auto grid w-88 max-w-[calc(100vw_-_3.5rem_-_var(--pomo-safe-area-inset-left))] gap-2"
+        class={cx(
+          'pointer-events-auto grid w-88 gap-2 text-left',
+          'max-w-[calc(100vw_-_3.5rem_-_var(--pomo-safe-area-inset-left))]',
+        )}
       >
         <div class="max-h-[min(60dvh,_32rem)] flex flex-col overflow-y-auto">
           <ToastRegion deferDismiss>
