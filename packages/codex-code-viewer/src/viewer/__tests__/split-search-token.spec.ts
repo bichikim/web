@@ -2,6 +2,9 @@ import {describe, expect, it} from 'vitest'
 import {splitSearchToken} from '../split-search-token'
 
 describe('splitSearchToken', () => {
+  it('should not create a highlight for an empty PDF text item inside a search range', () => {
+    expect(splitSearchToken({offset: 5, text: ''}, [{end: 10, start: 0}])).toEqual([])
+  })
   it('should preserve original text and result indices when a match crosses token boundaries', () => {
     const token = {
       kind: 'identifier' as const,

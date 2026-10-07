@@ -25,9 +25,12 @@ const firstAfter = (
 
 /** Splits a token into original text fragments annotated with their search-result index. */
 export const splitSearchToken = (
-  token: CodeToken,
+  token: Pick<CodeToken, 'offset' | 'text'>,
   matches: readonly TextMatch[],
 ): readonly SearchFragment[] => {
+  if (token.text === '') {
+    return []
+  }
   const end = token.offset + token.text.length
   const low = firstAfter(matches, (match) => match.end <= token.offset)
   const high = firstAfter(matches, (match) => match.start < end)

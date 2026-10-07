@@ -36,6 +36,7 @@ const allowed = new Set([
   'code.list',
   'code.tree',
   'code.close',
+  'code.media',
 ])
 const server = createServer(async (request, response) => {
   const route = request.url?.slice(base.length)

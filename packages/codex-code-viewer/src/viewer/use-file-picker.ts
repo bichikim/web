@@ -1,4 +1,5 @@
 import {type Accessor, createMemo, createSignal} from 'solid-js'
+import type {NavigationOptions} from './types'
 import type {CodeLocation} from '../shared/contracts'
 import {parseFileInput} from './parse-file-input'
 
@@ -8,7 +9,7 @@ interface FilePickerOptions {
   finding: Accessor<boolean>
   searchable: Accessor<boolean>
   onFind: (query: string) => void
-  onOpen: (location: CodeLocation) => void
+  onOpen: (location: CodeLocation, options?: NavigationOptions) => void
 }
 
 export const useFilePicker = (options: FilePickerOptions) => {
@@ -55,7 +56,7 @@ export const useFilePicker = (options: FilePickerOptions) => {
     }
     setQuery(path)
     dismiss()
-    options.onOpen({column: 1, line: 1, path})
+    options.onOpen({column: 1, line: 1, path}, {restoreView: true})
   }
   const move = (direction: -1 | 1): void => {
     if (input().kind !== 'search') {
@@ -78,7 +79,7 @@ export const useFilePicker = (options: FilePickerOptions) => {
     const current = input()
     if (current.kind === 'path') {
       dismiss()
-      options.onOpen(current.location)
+      options.onOpen(current.location, {restoreView: current.restoreView})
       return
     }
     const path = activePath()

@@ -1,11 +1,12 @@
 import {createEffect, createSignal, createUniqueId, type JSX, on, Show} from 'solid-js'
+import type {NavigationOptions} from './types'
 import type {CodeLocation} from '../shared/contracts'
 import {SFileResults} from './SFileResults'
 import {SIcon} from './SIcon'
 import {useFilePicker} from './use-file-picker'
 
 interface SFilePickerProps {
-  onOpen: (location: CodeLocation) => void
+  onOpen: (location: CodeLocation, options?: NavigationOptions) => void
   onFind?: (query: string) => void
   files?: string[]
   searchable?: boolean
@@ -26,7 +27,7 @@ export const SFilePicker = (props: SFilePickerProps) => {
     files: () => props.files ?? [],
     finding: () => props.finding === true,
     onFind: (query) => props.onFind?.(query),
-    onOpen: (location) => props.onOpen(location),
+    onOpen: (location, options) => props.onOpen(location, options),
     searchable: () => props.searchable === true && props.onFind !== undefined,
   })
   createEffect(() => {
@@ -100,9 +101,15 @@ export const SFilePicker = (props: SFilePickerProps) => {
   }
   return (
     <section class="shrink-0" onFocusOut={handleBlur} style={{'--file-picker-anchor': anchor}}>
-      <form class="flex items-center gap-2 px-4 pt-3 pb-2" onSubmit={handleSubmit}>
+      <form
+        class="flex items-center gap-2 px-4 pt-3 pb-2 [--icon-size:16px] [--toolbar-control-height:33px]"
+        onSubmit={handleSubmit}
+      >
         {props.children}
-        <div class="ui-field min-w-0 flex-1 text-muted [anchor-name:var(--file-picker-anchor)]">
+        <div
+          class="ui-field h-[var(--toolbar-control-height)] min-w-0 flex-1 rounded-pill px-4
+            text-muted shadow-toolbar [anchor-name:var(--file-picker-anchor)]"
+        >
           <SIcon name="search" />
           <input
             aria-activedescendant={
@@ -112,7 +119,7 @@ export const SFilePicker = (props: SFilePickerProps) => {
             aria-controls={picker.expanded() ? 'file-results' : undefined}
             aria-expanded={picker.expanded()}
             aria-label="파일 경로 또는 검색어"
-            class="h-10 min-w-0 flex-1 bg-transparent text-sm text-foreground outline-none placeholder:text-muted"
+            class="h-full min-w-0 flex-1 bg-transparent text-sm text-foreground outline-none placeholder:text-muted"
             onCompositionEnd={handleComposition}
             onClick={handleClick}
             onFocus={handleFocus}
@@ -126,7 +133,11 @@ export const SFilePicker = (props: SFilePickerProps) => {
             value={picker.query()}
           />
         </div>
-        <button class="ui-primary h-10" disabled={!picker.canSubmit()} type="submit">
+        <button
+          class="ui-primary h-[var(--toolbar-control-height)] py-0 shadow-toolbar"
+          disabled={!picker.canSubmit()}
+          type="submit"
+        >
           {picker.input().kind === 'path' ? '파일 열기' : '검색'}
         </button>
         {props.actions}

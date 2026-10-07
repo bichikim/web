@@ -10,6 +10,7 @@ export default defineConfig({
       'src/**/*.spec.ts',
       'src/**/*.spec.tsx',
       'src/**/*.integration.ts',
+      'src/**/*.integration.tsx',
       'build/**/*.spec.ts',
     ],
   },

@@ -84,7 +84,10 @@ describe('SFilePicker', () => {
     expect(screen.queryByRole('listbox')).toBeNull()
     fireEvent.keyDown(input, {key: 'ArrowDown'})
     fireEvent.submit(input.closest('form')!)
-    expect(onOpen).toHaveBeenCalledWith({column: 1, line: 1, path: 'src/editor.tsx'})
+    expect(onOpen).toHaveBeenCalledWith(
+      {column: 1, line: 1, path: 'src/editor.tsx'},
+      {restoreView: true},
+    )
     expect(screen.queryByRole('listbox')).toBeNull()
   })
 })

@@ -2,12 +2,13 @@ import {createEffect, createSignal, For, onCleanup, Show, untrack} from 'solid-j
 import type {CodeDocument, CodeToken} from '../shared/contracts'
 import type {CodeSelection, CodeTextRange} from './types'
 import {SCodeLine} from './SCodeLine'
+import {useScrollRestoration} from './use-scroll-restoration'
 import {useCodeInteraction} from './use-code-interaction'
 import type {TextMatch} from './find-text'
 import {useCodeContextMenu} from './use-code-context-menu'
 import {SCodeContextMenu} from './SCodeContextMenu'
 
-interface SCodeDocumentProps {
+export interface SCodeDocumentProps {
   document: CodeDocument
   onFollow: (token: CodeToken) => void
   onSelect?: (anchor: number, focus: number) => void
@@ -23,6 +24,15 @@ interface SCodeDocumentProps {
 
 export const SCodeDocument = (props: SCodeDocumentProps) => {
   const [element, setElement] = createSignal<HTMLDivElement | null>(null)
+  const scroll = useScrollRestoration({
+    content: () => props.document,
+    element,
+    kind: 'codeScroll',
+    onLocate: (container) =>
+      container
+        .querySelector(`[data-line="${props.document.location.line}"]`)
+        ?.scrollIntoView({block: 'center', inline: 'nearest'}),
+  })
   const interaction = useCodeInteraction({
     container: element,
     document: () => props.document,
@@ -66,6 +76,7 @@ export const SCodeDocument = (props: SCodeDocumentProps) => {
       <div
         aria-label="소스 코드"
         class="min-h-0 flex-1 overflow-auto bg-canvas"
+        onScroll={scroll.record}
         onClick={interaction.handleClick}
         onContextMenu={menu.handleContextMenu}
         onKeyDown={handleKeyboard}

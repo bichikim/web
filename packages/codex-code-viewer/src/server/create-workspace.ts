@@ -1,26 +1,21 @@
-import {createHash} from 'node:crypto'
-import {readdirSync, realpathSync} from 'node:fs'
-import {dirname, join, relative, resolve} from 'node:path'
+import {realpathSync} from 'node:fs'
+import {dirname, extname, relative, resolve} from 'node:path'
 import typescript from '@typescript/typescript6'
-import {
-  type CodeDocument,
-  type CodeLocation,
-  failure,
-  type Result,
-  success,
-} from '../shared/contracts'
+import {type CodeLocation, failure, type Result, success} from '../shared/contracts'
+import {createRustNavigation} from './create-rust-navigation'
 import {createLanguageService} from './create-language-service'
 import {findWorkspace, readSource, resolveFile} from './file-access'
-import {tokenizeSource} from './tokenize-source'
-import {isBrowsablePath} from './is-browsable-path'
-import {readDirectory} from './read-directory'
-const MAX_FILES = 10000
-const MAX_RESULTS = 100
+import {createDocumentReader} from './create-document-reader'
+import {createFileIndex} from './create-file-index'
+import {readMedia} from './read-media'
 
 export const createWorkspace = (anchor: string) => {
   const canonical = realpathSync(anchor)
   const root = findWorkspace(canonical)
   const language = createLanguageService(canonical)
+  const rust = createRustNavigation(root)
+  const index = createFileIndex(root)
+  const reader = createDocumentReader(root)
   const getLocation = (path: string, offset: number): Result<CodeLocation> => {
     const source = readSource(root, path)
     if (!source.ok) {
@@ -34,31 +29,20 @@ export const createWorkspace = (anchor: string) => {
       path: relative(root, path),
     })
   }
-  const read = (path: string, line = 1, column = 1): Result<CodeDocument> => {
-    const resolved = resolveFile(root, path)
-    if (!resolved.ok) {
-      return resolved
-    }
-    const source = readSource(root, path)
-    if (!source.ok) {
-      return source
-    }
-    const lines = tokenizeSource(path, source.value)
-    const targetLine = Math.min(Math.max(1, line), lines.length)
-    return success({
-      lines,
-      location: {column, line: targetLine, path: relative(root, resolved.value)},
-      revision: createHash('sha256').update(source.value).digest('hex'),
-      source: source.value,
-    })
-  }
-  const definitions = (path: string, offset: number): Result<CodeLocation[]> => {
+  const definitions = (
+    path: string,
+    offset: number,
+  ): Result<CodeLocation[]> | Promise<Result<CodeLocation[]>> => {
     const source = readSource(root, path)
     if (!source.ok) {
       return source
     }
     if (offset < 0 || offset >= source.value.length) {
       return failure('invalid-position')
+    }
+    if (extname(path) === '.rs') {
+      const file = resolveFile(root, path)
+      return file.ok ? rust.definitions(file.value, source.value, offset) : file
     }
     const targets = language.definitions(resolve(root, path), offset)
     const locations = targets.flatMap((target) => {
@@ -67,10 +51,16 @@ export const createWorkspace = (anchor: string) => {
     })
     return success(locations)
   }
-  const followPath = (path: string, offset: number): Result<CodeLocation[]> => {
+  const followPath = (
+    path: string,
+    offset: number,
+  ): Result<CodeLocation[]> | Promise<Result<CodeLocation[]>> => {
     const source = readSource(root, path)
     if (!source.ok) {
       return source
+    }
+    if (extname(path) === '.rs') {
+      return definitions(path, offset)
     }
     const parsed = typescript.createSourceFile(
       path,
@@ -101,34 +91,20 @@ export const createWorkspace = (anchor: string) => {
       ? success([{column: 1, line: 1, path: relative(root, resolved.value)}])
       : resolved
   }
-  const list = (query: string): string[] => {
-    const paths: string[] = []
-    const visit = (directory: string): void => {
-      const entries = readdirSync(directory, {withFileTypes: true})
-      for (const entry of entries) {
-        if (paths.length < MAX_FILES && isBrowsablePath(entry.name)) {
-          const path = join(directory, entry.name)
-          if (entry.isDirectory()) {
-            visit(path)
-          } else if (entry.isFile() && resolveFile(root, path).ok) {
-            paths.push(relative(root, path))
-          }
-        }
-      }
-    }
-    visit(root)
-    return paths
-      .filter((path) => path.toLowerCase().includes(query.toLowerCase()))
-      .sort()
-      .slice(0, MAX_RESULTS)
-  }
   return {
     definitions,
-    dispose: language.dispose,
+    dispose: () => {
+      index.dispose()
+      reader.dispose()
+      language.dispose()
+      rust.dispose()
+    },
     followPath,
-    list,
-    read,
+    list: index.list,
+    media: (path: string, revision: string, offset: number) =>
+      readMedia({offset, path, revision, root}),
+    read: reader.read,
     root,
-    tree: () => readDirectory(root),
+    tree: index.tree,
   }
 }

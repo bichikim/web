@@ -5,6 +5,7 @@ import {z} from 'zod'
 import {failure, success} from '../shared/contracts'
 import {createSessions} from './create-sessions'
 import {toolResult} from './tool-result'
+import {FILE_EXTENSIONS} from '../shared/file-formats'
 
 const appOnly = {ui: {visibility: ['app']}}
 const VIEWER_URI = 'ui://codex-code-viewer/app.html'
@@ -39,6 +40,31 @@ const registerTree = (
   )
 }
 
+const registerMedia = (
+  server: McpServer,
+  withSession: ReturnType<typeof createSessions>['withSession'],
+): void => {
+  server.registerTool(
+    'code.media',
+    {
+      _meta: appOnly,
+      annotations,
+      inputSchema: {
+        offset: z.number().int().nonnegative(),
+        path: z.string(),
+        revision: z.string(),
+        session: z.string(),
+      },
+      title: 'Read local media chunk',
+    },
+    async ({session, path, revision, offset}) =>
+      withSession(session, (workspace) => {
+        const result = workspace.media(path, revision, offset)
+        return result.ok ? success({...result.value}) : result
+      }),
+  )
+}
+
 export const createServer = (html: string) => {
   const server = new McpServer({name: 'codex-code-viewer', title: 'Code Viewer', version: '0.1.1'})
   const sessions = createSessions()
@@ -70,7 +96,7 @@ export const createServer = (html: string) => {
         'openai/ui': {
           entrypoints: [
             {
-              extensions: ['.ts', '.tsx', '.mts', '.cts', '.js', '.jsx', '.mjs', '.cjs', '.json'],
+              extensions: FILE_EXTENSIONS,
               type: 'file',
             },
           ],
@@ -127,7 +153,7 @@ export const createServer = (html: string) => {
       title: 'Follow import or definition',
     },
     async ({session, path, offset, navigation, revision}) =>
-      withSession(session, (workspace) => {
+      withSession(session, async (workspace) => {
         const current = workspace.read(path)
         if (!current.ok) {
           return current
@@ -137,8 +163,8 @@ export const createServer = (html: string) => {
         }
         const locations =
           navigation === 'path'
-            ? workspace.followPath(path, offset)
-            : workspace.definitions(path, offset)
+            ? await workspace.followPath(path, offset)
+            : await workspace.definitions(path, offset)
         return locations.ok ? success({locations: locations.value}) : locations
       }),
   )
@@ -167,10 +193,11 @@ export const createServer = (html: string) => {
     },
   )
   registerTree(server, withSession)
+  registerMedia(server, withSession)
   registerAppResource(server, 'code-viewer', VIEWER_URI, {}, async () => ({
     contents: [
       {
-        _meta: {ui: {csp: {connectDomains: [], resourceDomains: []}, prefersBorder: false}},
+        _meta: {ui: {csp: {connectDomains: [], resourceDomains: ['blob:']}, prefersBorder: false}},
         mimeType: RESOURCE_MIME_TYPE,
         text: html,
         uri: VIEWER_URI,

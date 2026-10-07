@@ -18,6 +18,20 @@ export interface Notice {
   message: string
 }
 
+export interface WorkspaceSelection {
+  readonly kind: 'file' | 'directory'
+  readonly path: string
+}
+
+export type ViewerContext = CodeSelection | WorkspaceSelection
+
+export interface ContextMenuItem {
+  readonly label: string
+  readonly shortcut?: string
+  readonly key?: string
+  readonly onSelect?: () => void
+}
+
 export interface ContextMenuCloseOptions {
   restoreFocus?: boolean
 }
@@ -25,14 +39,21 @@ export interface ContextMenuCloseOptions {
 export interface NavigationOptions {
   historyIndex?: number
   preserveSelection?: boolean
+  restoreView?: boolean
 }
 
 export interface ViewerPort {
   call(name: string, arguments_: Record<string, unknown>): Promise<CallToolResult>
-  context(selection: CodeSelection): Promise<void>
+  context(selection: ViewerContext): Promise<void>
+  location?(location: ViewerFileLocation): Promise<void>
   start(
     receive: (session: ViewerSession) => void,
     report: (error: unknown) => void,
     refresh: () => void,
   ): Promise<() => void>
+}
+
+export interface ViewerFileLocation {
+  readonly path: string
+  readonly workspace: string
 }

@@ -1,18 +1,18 @@
 import {sessionSchema, type ViewerSession} from '../shared/contracts'
 import {errorMessage} from './error-message'
-import type {ViewerPort} from './types'
+import type {NavigationOptions, ViewerPort} from './types'
 import {useLatestRequest} from './use-latest-request'
 
 export const useOpenFile = (
   port: ViewerPort,
-  receive: (session: ViewerSession) => void,
+  receive: (session: ViewerSession, options?: NavigationOptions) => void,
   report: (error: unknown) => void,
 ) => {
   const request = useLatestRequest(report)
   const closeDiscarded = async (session: ViewerSession): Promise<void> => {
     await port.call('code.close', {session: session.session}).catch(report)
   }
-  const open = async (path: string): Promise<boolean> => {
+  const open = async (path: string, options?: NavigationOptions): Promise<boolean> => {
     const result = await request.run(async () => {
       const response = await port.call('code.open', {path})
       if (response.isError) {
@@ -21,7 +21,11 @@ export const useOpenFile = (
       return sessionSchema.parse(response.structuredContent)
     }, closeDiscarded)
     if (result !== null) {
-      receive(result)
+      if (options === undefined) {
+        receive(result)
+      } else {
+        receive(result, options)
+      }
     }
     return result !== null
   }

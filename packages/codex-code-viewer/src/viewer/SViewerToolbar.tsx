@@ -1,3 +1,4 @@
+import type {NavigationOptions} from './types'
 import type {CodeLocation} from '../shared/contracts'
 import {SFileNavigation} from './SFileNavigation'
 import {SFilePicker} from './SFilePicker'
@@ -18,7 +19,7 @@ interface SViewerToolbarProps {
     | 'refresh'
     | 'session'
   >
-  onOpen: (location: CodeLocation) => void
+  onOpen: (location: CodeLocation, options?: NavigationOptions) => void
   onToggleTree?: () => void
   focusRequest?: number
   treeVisible?: boolean
@@ -31,7 +32,7 @@ export const SViewerToolbar = (props: SViewerToolbarProps) => (
         aria-label="파일 트리"
         aria-controls={props.treeVisible ? 'workspace-files' : undefined}
         aria-expanded={props.treeVisible ?? false}
-        class="ui-icon-button"
+        class="ui-tree-toggle"
         disabled={props.viewer.session() === null}
         onClick={() => props.onToggleTree?.()}
         title="파일 트리 열기/닫기"

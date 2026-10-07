@@ -14,6 +14,7 @@ describe('SCodeViewer', () => {
   })
   afterEach(() => {
     cleanup()
+    vi.unstubAllGlobals()
     if (originalScroll === undefined) {
       Reflect.deleteProperty(HTMLElement.prototype, 'scrollIntoView')
     } else {
@@ -46,8 +47,43 @@ describe('SCodeViewer', () => {
     expect(await screen.findByRole('treeitem', {name: 'main.ts'})).toBeTruthy()
     expect(createPort).toHaveBeenCalledTimes(1)
     expect(port.call).toHaveBeenCalledWith('code.tree', {session: 'session'})
+    fireEvent.input(screen.getByRole('textbox', {name: '파일 필터링'}), {target: {value: 'main'}})
+    fireEvent.click(screen.getByRole('button', {name: '파일 트리'}))
+    fireEvent.click(screen.getByRole('button', {name: '파일 트리'}))
+    const filter = screen.getByRole('textbox', {name: '파일 필터링'})
+    expect(filter).toHaveProperty('value', 'main')
   })
 
+  it('should switch SVG to searchable source when the file-search shortcut is pressed', () => {
+    vi.stubGlobal('URL', {createObjectURL: vi.fn(() => 'blob:svg'), revokeObjectURL: vi.fn()})
+    const source = '<svg><path/></svg>'
+    const port: ViewerPort = {
+      call: vi.fn().mockResolvedValue({
+        content: [],
+        structuredContent: {data: btoa(source), next: source.length},
+      }),
+      context: vi.fn(),
+      start: vi.fn<ViewerPort['start']>().mockResolvedValue(() => {}),
+    }
+    render(() => <SCodeViewer port={port} />)
+    vi.mocked(port.start).mock.calls[0]![0]({
+      document: {
+        lines: [[{kind: 'plain', navigation: null, offset: 0, text: source}]],
+        location: {column: 1, line: 1, path: 'icon.svg'},
+        media: {kind: 'image', mimeType: 'image/svg+xml', size: source.length},
+        revision: 'svg-first',
+        source,
+      },
+      session: 'session',
+      workspace: '/project',
+    })
+    fireEvent.keyDown(document.body, {ctrlKey: true, key: 'f'})
+    fireEvent.input(screen.getByRole('textbox', {name: '파일 내 검색어'}), {
+      target: {value: 'path'},
+    })
+    expect(screen.getByLabelText('소스 코드').textContent).toContain(source)
+    expect(screen.getByRole('status').textContent).toBe('1/1')
+  })
   it('should accept local search while waiting for the first file and search that file on arrival', async () => {
     const port: ViewerPort = {
       call: vi.fn().mockResolvedValue({content: []}),

@@ -1,10 +1,22 @@
-import {defineConfig, presetWind3} from 'unocss'
+import {icons as tablerIcons} from '@iconify-json/tabler'
+import {defineConfig, presetIcons, presetWind3} from 'unocss'
+
+const tablerCollection = {
+  ...tablerIcons,
+  icons: Object.fromEntries(
+    Object.entries(tablerIcons.icons).map(([name, icon]) => [
+      name,
+      {...icon, body: icon.body.replaceAll('stroke-width="2"', 'stroke-width="1.6"')},
+    ]),
+  ),
+}
 
 export default defineConfig({
   preflights: [
     {
       getCSS: () => `
         *, ::before, ::after { box-sizing: border-box; border: 0 solid; }
+        .pdf-text-layer ::selection { background: rgb(0 100 255 / 0.25); color: transparent; }
         button, input, select { font: inherit; color: inherit; background: transparent; }
         button, input { appearance: none; }
         button { cursor: pointer; }
@@ -33,6 +45,10 @@ export default defineConfig({
           --viewer-action-hover: color-mix(in srgb, var(--viewer-action) 90%, var(--viewer-canvas));
           --viewer-action-pressed: color-mix(in srgb, var(--viewer-action) 82%, var(--viewer-canvas));
           --viewer-control-shadow: 0 1px 2px -1px rgb(0 0 0 / 0.08);
+          --viewer-toolbar-shadow: 0 2px 4px rgb(0 0 0 / 0.02), 0 6px 16px -6px rgb(0 0 0 / 0.06);
+          --viewer-tree-icon: #0169cc;
+          --viewer-tree-background: color-mix(in srgb, var(--viewer-tree-icon) 10%, var(--viewer-canvas));
+          --viewer-tree-hover: color-mix(in srgb, var(--viewer-tree-icon) 16%, var(--viewer-canvas));
           --viewer-panel-shadow: 0 2px 4px -1px rgb(0 0 0 / 0.08);
           --viewer-selection: #ecf2ff;
           --viewer-search: #fff0b5;
@@ -54,6 +70,10 @@ export default defineConfig({
           --viewer-outline-alpha: 4%;
           --viewer-outline-pressed-alpha: 6%;
           --viewer-border-hover-alpha: 30%;
+          --viewer-toolbar-shadow: 0 2px 4px rgb(0 0 0 / 0.12), 0 6px 16px -6px rgb(0 0 0 / 0.21);
+          --viewer-tree-icon: #70b9ff;
+          --viewer-tree-background: color-mix(in srgb, var(--viewer-tree-icon) 14%, var(--viewer-canvas));
+          --viewer-tree-hover: color-mix(in srgb, var(--viewer-tree-icon) 20%, var(--viewer-canvas));
           --viewer-selection: #28364b;
           --viewer-search: #514411;
           --viewer-accent: #0285ff;
@@ -65,8 +85,14 @@ export default defineConfig({
       `,
     },
   ],
-  presets: [presetWind3()],
-  safelist: ['border-0', 'h-screen', 'w-full'],
+  presets: [
+    presetWind3(),
+    presetIcons({
+      collections: {tabler: () => tablerCollection},
+      warn: true,
+    }),
+  ],
+  safelist: ['border-0', 'h-screen', 'ui-tree-toggle', 'w-full'],
   shortcuts: {
     'tree-guides': [
       '[background-image:repeating-linear-gradient(to_right,',
@@ -78,6 +104,8 @@ export default defineConfig({
       'border border-divider bg-canvas px-3 py-2 text-sm font-medium shadow-control',
       'enabled:hover:bg-control-hover enabled:hover:border-hover-border enabled:active:bg-control-pressed',
     ].join(' '),
+    'ui-document-button': 'ui-button ui-document-control py-1',
+    'ui-document-control': 'h-[calc(var(--font-text-sm-line-height,20px)_+_10px)]',
     'ui-field': [
       'ui-transition flex min-w-0 items-center gap-2 rounded-field border border-divider',
       'bg-canvas px-3 shadow-control',
@@ -88,7 +116,8 @@ export default defineConfig({
       'disabled:cursor-default disabled:opacity-40 disabled:shadow-none',
     ].join(' '),
     'ui-icon-button': [
-      'ui-focus ui-transition inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-pill',
+      'ui-focus ui-transition inline-flex h-[var(--icon-button-size,32px)] w-[var(--icon-button-size,32px)]',
+      'shrink-0 items-center justify-center rounded-pill',
       'bg-transparent text-muted enabled:hover:bg-hover enabled:hover:text-foreground enabled:active:bg-pressed',
       'aria-[expanded=true]:bg-hover aria-[expanded=true]:text-foreground',
     ].join(' '),
@@ -98,15 +127,24 @@ export default defineConfig({
       'shadow-control placeholder:text-muted',
       'enabled:hover:bg-control-hover enabled:hover:border-hover-border',
     ].join(' '),
+    'ui-navigation-button': 'ui-icon-button [--icon-button-size:26px] text-foreground',
     'ui-primary': [
       'ui-focus ui-transition inline-flex shrink-0 items-center justify-center gap-2 rounded-pill bg-action',
       'px-4 py-2 text-sm font-medium text-action-text shadow-control',
       'enabled:hover:bg-action-hover enabled:active:bg-action-pressed',
     ].join(' '),
     'ui-row': 'ui-focus ui-transition enabled:hover:bg-hover enabled:active:bg-pressed',
+    'ui-toolbar-icon-button':
+      'ui-icon-button [--icon-button-size:var(--toolbar-control-height,33px)]',
     'ui-transition': [
       'transition-[background-color,border-color,color,box-shadow,opacity] duration-150 ease-[ease]',
       'motion-reduce:transition-none',
+    ].join(' '),
+    'ui-tree-toggle': [
+      'ui-toolbar-icon-button border border-divider bg-canvas text-foreground shadow-toolbar',
+      'aria-[expanded=true]:bg-tree-background aria-[expanded=true]:text-tree-icon',
+      'aria-[expanded=true]:enabled:hover:bg-tree-hover aria-[expanded=true]:enabled:hover:text-tree-icon',
+      'aria-[expanded=true]:enabled:active:bg-tree-hover',
     ].join(' '),
   },
   theme: {
@@ -129,6 +167,7 @@ export default defineConfig({
       control: 'var(--shadow-sm, var(--viewer-control-shadow))',
       panel: 'var(--shadow-md, var(--viewer-panel-shadow))',
       toast: 'var(--shadow-lg, 0 8px 28px rgb(0 0 0 / 0.12))',
+      toolbar: 'var(--viewer-toolbar-shadow)',
     },
     colors: {
       accent: 'var(--color-ring-primary, var(--viewer-accent))',
@@ -152,6 +191,9 @@ export default defineConfig({
       selection: 'var(--color-background-info, var(--viewer-selection))',
       string: 'var(--viewer-string)',
       surface: 'var(--color-background-secondary, var(--viewer-surface))',
+      'tree-background': 'var(--viewer-tree-background)',
+      'tree-hover': 'var(--viewer-tree-hover)',
+      'tree-icon': 'var(--viewer-tree-icon)',
     },
     fontFamily: {
       mono: 'var(--font-mono, ui-monospace, monospace)',

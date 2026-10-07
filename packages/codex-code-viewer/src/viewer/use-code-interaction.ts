@@ -50,15 +50,9 @@ export const useCodeInteraction = (options: CodeInteractionOptions) => {
     return line >= location.line && line <= lastSelectedLine
   }
   createEffect(() => {
-    const {line} = options.document().location
+    options.document()
     setAnchor(null)
     setDrag(null)
-    const container = options.container()
-    queueMicrotask(() =>
-      container
-        ?.querySelector(`[data-line="${line}"]`)
-        ?.scrollIntoView({block: 'center', inline: 'nearest'}),
-    )
   })
   const selectLine = (line: number, extend: boolean): number => {
     const start = extend ? (anchor() ?? options.selection()?.line ?? line) : line

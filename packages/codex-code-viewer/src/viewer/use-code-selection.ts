@@ -1,6 +1,6 @@
 import {type Accessor, createMemo, createSignal} from 'solid-js'
 import type {CodeDocument, ViewerSession} from '../shared/contracts'
-import type {CodeSelection, CodeTextRange, ViewerPort} from './types'
+import type {CodeSelection, CodeTextRange, ViewerPort, WorkspaceSelection} from './types'
 import {formatSelection} from './format-selection'
 
 interface CodeSelectionOptions {
@@ -13,12 +13,19 @@ interface CodeSelectionOptions {
 export const useCodeSelection = (options: CodeSelectionOptions) => {
   const [selection, setSelection] = createSignal<CodeSelection | null>(null)
   const address = createMemo(() => {
+    const document = options.session()?.document
+    if (document?.media !== undefined) {
+      return document.location.path
+    }
     const selected = selection()
     return selected === null ? '' : formatSelection(selected)
   })
-  const reset = (document: CodeDocument): void => {
+  const reset = (document: CodeDocument, previous?: CodeSelection): void => {
     const selected = {...document.location, endLine: document.location.line}
-    setSelection(selected)
+    setSelection(previous ?? selected)
+    if (previous !== undefined) {
+      preserve(document)
+    }
   }
   const preserve = (document: CodeDocument): void => {
     const previous = selection()
@@ -85,6 +92,13 @@ export const useCodeSelection = (options: CodeSelectionOptions) => {
   }
   const share = async (snapshot?: CodeSelection): Promise<void> => {
     const current = options.session()
+    if (current?.document.media !== undefined && snapshot === undefined) {
+      await sharePath({
+        kind: 'file',
+        path: `${current.workspace}/${current.document.location.path}`,
+      })
+      return
+    }
     const selected = snapshot ?? selection()
     if (current !== null && selected !== null && selected.path === current.document.location.path) {
       try {
@@ -95,5 +109,24 @@ export const useCodeSelection = (options: CodeSelectionOptions) => {
       }
     }
   }
-  return {address, preserve, reset, selection, selectLines, selectText, share}
+  const sharePath = async (selected: WorkspaceSelection): Promise<void> => {
+    const current = options.session()
+    if (
+      current === null ||
+      !selected.path.startsWith(`${current.workspace.replace(/\/$/u, '')}/`)
+    ) {
+      return
+    }
+    try {
+      await options.port.context(selected)
+      options.onNotice(
+        selected.kind === 'file'
+          ? '파일을 다음 채팅 메시지에 추가했습니다.'
+          : '폴더를 다음 채팅 메시지에 추가했습니다.',
+      )
+    } catch (error) {
+      options.onError(error)
+    }
+  }
+  return {address, preserve, reset, selection, selectLines, selectText, share, sharePath}
 }

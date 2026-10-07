@@ -1,7 +1,7 @@
 /** @vitest-environment jsdom */
 import {createSignal} from 'solid-js'
 import {cleanup, fireEvent, render, screen, waitFor} from '@solidjs/testing-library'
-import {afterEach, describe, expect, it, vi} from 'vitest'
+import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 import type {ViewerSession} from '../../shared/contracts'
 import type {ViewerPort} from '../types'
 import {SFileTree} from '../SFileTree'
@@ -27,9 +27,101 @@ const createPort = (): ViewerPort => ({
   context: vi.fn(),
   start: vi.fn().mockResolvedValue(() => {}),
 })
-afterEach(cleanup)
+const originalPopover = Object.getOwnPropertyDescriptor(HTMLElement.prototype, 'showPopover')
+beforeEach(() =>
+  Object.defineProperty(HTMLElement.prototype, 'showPopover', {
+    configurable: true,
+    value: vi.fn(),
+  }),
+)
+afterEach(() => {
+  cleanup()
+  if (originalPopover === undefined) {
+    Reflect.deleteProperty(HTMLElement.prototype, 'showPopover')
+  } else {
+    Object.defineProperty(HTMLElement.prototype, 'showPopover', originalPopover)
+  }
+})
 
 describe('SFileTree', () => {
+  it.each([
+    ['editor.tsx', '/project/src/editor.tsx'],
+    ['src', '/project/src'],
+  ])('should copy the absolute path for %s without opening or toggling it', async (name, path) => {
+    const copy = vi.fn()
+    const open = vi.fn()
+    const share = vi.fn()
+    render(() => (
+      <SFileTree
+        port={createPort()}
+        session={session}
+        visible
+        onCopy={copy}
+        onOpen={open}
+        onShare={share}
+      />
+    ))
+    const item = await screen.findByRole('treeitem', {name})
+    const expanded = item.getAttribute('aria-expanded')
+    fireEvent.contextMenu(item)
+    fireEvent.click(screen.getByRole('menuitem', {name: /^경로 복사/u}))
+    expect(copy).toHaveBeenCalledWith(path)
+    expect(open).not.toHaveBeenCalled()
+    expect(share).not.toHaveBeenCalled()
+    expect(item.getAttribute('aria-expanded')).toBe(expanded)
+    expect(screen.queryByRole('menu')).toBeNull()
+    expect(document.activeElement).toBe(item)
+  })
+
+  it.each([
+    ['file', 'editor.tsx', 'src/editor.tsx'],
+    ['directory', 'src', 'src'],
+    ['file', 'README.md', 'README.md'],
+  ])('should add the %s path for %s without opening or toggling it', async (kind, name, path) => {
+    const open = vi.fn()
+    const share = vi.fn()
+    render(() => (
+      <SFileTree port={createPort()} session={session} visible onOpen={open} onShare={share} />
+    ))
+    const item = await screen.findByRole('treeitem', {name})
+    const expanded = item.getAttribute('aria-expanded')
+    fireEvent.contextMenu(item, {clientX: 100, clientY: 200})
+    const action = screen.getByRole('menuitem', {name: '채팅창에 추가'})
+    expect(document.activeElement).toBe(action)
+    fireEvent.click(action)
+    expect(share).toHaveBeenCalledWith({kind, path: `/project/${path}`})
+    expect(open).not.toHaveBeenCalled()
+    expect(item.getAttribute('aria-expanded')).toBe(expanded)
+    expect(screen.getByRole('treeitem', {name: 'main.ts'}).getAttribute('aria-selected')).toBe(
+      'true',
+    )
+    expect(screen.queryByRole('menu')).toBeNull()
+    expect(document.activeElement).toBe(item)
+  })
+
+  it('should open the folder menu with Shift+F10 and restore row focus on Escape', async () => {
+    render(() => <SFileTree port={createPort()} session={session} visible onShare={vi.fn()} />)
+    const item = await screen.findByRole('treeitem', {name: 'src'})
+    fireEvent.keyDown(item, {key: 'F10', shiftKey: true})
+    const action = screen.getByRole('menuitem', {name: '채팅창에 추가'})
+    fireEvent.keyDown(action, {key: 'Escape'})
+    expect(screen.queryByRole('menu')).toBeNull()
+    expect(document.activeElement).toBe(item)
+    expect(item.getAttribute('aria-expanded')).toBe('true')
+  })
+
+  it('should close the tree menu when the workspace changes', async () => {
+    const [current, setCurrent] = createSignal(session)
+    const share = vi.fn()
+    render(() => <SFileTree port={createPort()} session={current()} visible onShare={share} />)
+    const item = await screen.findByRole('treeitem', {name: 'src'})
+    fireEvent.contextMenu(item)
+    expect(screen.getByRole('menu')).toBeDefined()
+    setCurrent({...session, session: 'other', workspace: '/other'})
+    expect(screen.queryByRole('menu')).toBeNull()
+    expect(share).not.toHaveBeenCalled()
+  })
+
   it('should open current ancestors, select the current file, and filter without losing input focus', async () => {
     const port = createPort()
     const open = vi.fn()

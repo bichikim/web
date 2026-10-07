@@ -9,6 +9,46 @@ import {useViewer} from '../use-viewer'
 describe('createHost', () => {
   afterEach(() => vi.restoreAllMocks())
 
+  it('should leave native navigation untouched when the host has no location capability', async () => {
+    vi.spyOn(App.prototype, 'getHostCapabilities').mockReturnValue({})
+    const request = vi.spyOn(App.prototype, 'request').mockResolvedValue({})
+    await createHost().location?.({path: 'src/next.ts', workspace: '/project'})
+    expect(request).not.toHaveBeenCalled()
+  })
+
+  it('should update the current native file tab through the advertised location capability', async () => {
+    vi.spyOn(App.prototype, 'getHostCapabilities').mockReturnValue({
+      experimental: {'winter-love/file-viewer/location': {version: 1}},
+    })
+    const request = vi.spyOn(App.prototype, 'request').mockResolvedValue({})
+    await createHost().location?.({path: 'src/next.ts', workspace: '/project'})
+    expect(request).toHaveBeenCalledWith(
+      {
+        method: 'winter-love/file-viewer/location',
+        params: {path: 'src/next.ts', workspace: '/project'},
+      },
+      expect.anything(),
+    )
+  })
+
+  it('should accumulate files, folders and code ranges in the same chat context', async () => {
+    const update = vi.spyOn(App.prototype, 'updateModelContext').mockResolvedValue({})
+    const port = createHost()
+    await port.context({kind: 'file', path: '/project/src/my file.ts'})
+    await port.context({kind: 'directory', path: '/project/src'})
+    await port.context({column: 3, endColumn: 7, endLine: 5, line: 5, path: '/project/src/main.ts'})
+    expect(update).toHaveBeenLastCalledWith({
+      content: [
+        {
+          text: 'The user selected the file "/project/src/my file.ts" in Code Viewer.',
+          type: 'text',
+        },
+        {text: 'The user selected the folder "/project/src" in Code Viewer.', type: 'text'},
+        {text: 'The user selected /project/src/main.ts:5:3-5:7 in Code Viewer.', type: 'text'},
+      ],
+    })
+  })
+
   it('should accumulate precise locations in addition order for concurrent additions', async () => {
     const first = Promise.withResolvers<{}>()
     const update = vi

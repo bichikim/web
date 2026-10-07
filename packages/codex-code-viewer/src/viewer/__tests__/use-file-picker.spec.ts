@@ -32,7 +32,10 @@ describe('useFilePicker', () => {
     picker.change('/project/src/main.tsx:8:2')
     picker.submit()
     expect(onFind).not.toHaveBeenCalled()
-    expect(onOpen).toHaveBeenCalledWith({column: 2, line: 8, path: '/project/src/main.tsx'})
+    expect(onOpen).toHaveBeenCalledWith(
+      {column: 2, line: 8, path: '/project/src/main.tsx'},
+      {restoreView: false},
+    )
   })
 
   it('should open an embedded relative address directly rather than search it', () => {
@@ -40,7 +43,26 @@ describe('useFilePicker', () => {
     picker.change('위치: src/editor.tsx:9')
     picker.submit()
     expect(onFind).not.toHaveBeenCalled()
-    expect(onOpen).toHaveBeenCalledWith({column: 1, line: 9, path: 'src/editor.tsx'})
+    expect(onOpen).toHaveBeenCalledWith(
+      {column: 1, line: 9, path: 'src/editor.tsx'},
+      {restoreView: false},
+    )
+  })
+
+  it('should distinguish a plain path from an explicit first-line address', () => {
+    const picker = mount()
+    picker.change('src/main.tsx')
+    picker.submit()
+    expect(onOpen).toHaveBeenLastCalledWith(
+      {column: 1, line: 1, path: 'src/main.tsx'},
+      {restoreView: true},
+    )
+    picker.change('src/main.tsx:1:1')
+    picker.submit()
+    expect(onOpen).toHaveBeenLastCalledWith(
+      {column: 1, line: 1, path: 'src/main.tsx'},
+      {restoreView: false},
+    )
   })
 
   it('should search a keyword without opening the first result on submit', () => {
@@ -58,7 +80,10 @@ describe('useFilePicker', () => {
     picker.move(1)
     picker.move(1)
     picker.submit()
-    expect(onOpen).toHaveBeenCalledWith({column: 1, line: 1, path: 'src/editor.tsx'})
+    expect(onOpen).toHaveBeenCalledWith(
+      {column: 1, line: 1, path: 'src/editor.tsx'},
+      {restoreView: true},
+    )
     expect(picker.expanded()).toBe(false)
   })
 
