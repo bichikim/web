@@ -62,6 +62,7 @@ const renderSingleSelect = <TValue extends string>(props: PSelectSingleProps<TVa
         }
       }}
       optionTextValue="label"
+      optionDisabled="disabled"
       optionValue="value"
       options={options()}
       placement={appearance() === 'icon' ? 'bottom-end' : 'bottom-start'}
@@ -111,6 +112,7 @@ const renderMultipleSelect = <TValue extends string>(props: PSelectMultipleProps
       multiple
       onChange={(nextOptions) => props.onChange(nextOptions.map((option) => option.value))}
       optionTextValue="label"
+      optionDisabled="disabled"
       optionValue="value"
       options={options()}
       placement="bottom-start"

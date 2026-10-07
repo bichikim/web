@@ -1,37 +1,68 @@
 {
   "name": "@winter-love/codex-code-viewer",
   "version": "0.2.0",
-  "private": true,
+  "private": false,
   "description": "A Codex viewer for code, documents and media with file navigation and chat context.",
+  "keywords": [
+    "code-viewer",
+    "codex",
+    "codex-plugin",
+    "mcp",
+    "typescript"
+  ],
+  "homepage": "https://github.com/bichikim/web",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/bichikim/web.git",
+    "directory": "packages/codex-code-viewer"
+  },
+  "bin": {
+    "codex-code-viewer": "./dist/install.js"
+  },
+  "files": [
+    ".codex-plugin",
+    ".mcp.json",
+    "assets",
+    "dist/server.js",
+    "dist/app.html",
+    "dist/install.js",
+    "dist/lib.*.d.ts",
+    "dist/THIRD_PARTY_LICENSES.md"
+  ],
   "type": "module",
-  "dependencies": {
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org"
+  },
+  "scripts": {
+    "build": "node --import tsx build.ts"
+  },
+  "devDependencies": {
     "@modelcontextprotocol/ext-apps": "1.7.5",
     "@modelcontextprotocol/sdk": "1.32.1",
     "@openai/mcp-extensions": "0.1.0",
+    "@types/mdast": "4.0.4",
+    "@types/node": "catalog:",
+    "@types/prismjs": "1.26.5",
     "@typescript/typescript6": "catalog:",
     "csv-parse": "7.0.3",
+    "esbuild": "^0.28.2",
     "mdast-util-from-markdown": "2.0.3",
     "mdast-util-gfm": "3.1.0",
     "mdast-util-mdx": "3.0.0",
     "micromark-extension-gfm": "3.0.0",
     "micromark-extension-mdxjs": "3.0.0",
+    "parse5": "8.0.1",
     "pdfjs-dist": "6.4.299",
     "prismjs": "1.30.0",
     "solid-js": "catalog:",
-    "vscode-jsonrpc": "8.2.1",
-    "zod": "catalog:"
-  },
-  "devDependencies": {
-    "@types/mdast": "4.0.4",
-    "@types/node": "catalog:",
-    "@types/prismjs": "1.26.5",
-    "esbuild": "^0.28.2",
-    "parse5": "8.0.1",
     "tsx": "catalog:",
     "unocss": "catalog:",
     "vite": "catalog:",
     "vite-plugin-solid": "^2.11.12",
-    "vitest": "4.1.11"
+    "vitest": "4.1.11",
+    "vscode-jsonrpc": "8.2.1",
+    "zod": "catalog:"
   },
   "engines": {
     "node": ">=24"

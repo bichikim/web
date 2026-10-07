@@ -185,7 +185,7 @@ export const SceneToolbar = (props: SceneToolbarProps) => {
           </Show>
         </div>
       </div>
-      <div class="clear-both flex flex-col items-end gap-2">
+      <div class="clear-both min-w-0 flex flex-col items-end self-stretch gap-2">
         <PWeatherStatus sceneStyle={props.sceneStyle} state={props.weatherState} />
         <PModelDownloadStatus />
         <PToastRegion sceneStyle={props.sceneStyle} />

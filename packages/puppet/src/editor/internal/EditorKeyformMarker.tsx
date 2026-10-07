@@ -10,6 +10,7 @@ import {
 
 export interface EditorKeyformMarkerProps {
   readonly active: boolean
+  readonly onContextMenu?: () => void
   readonly onMove?: (value: number, nextValue: number) => void
   readonly onSelect?: () => void
   readonly parameter: PuppetParameter
@@ -30,6 +31,9 @@ export const EditorKeyformMarker = (props: EditorKeyformMarkerProps) => {
     }
   }
   const handlePointerDown = (event: PointerEvent & {readonly currentTarget: HTMLButtonElement}) => {
+    if (event.pointerType === 'touch' || event.pointerType === 'pen') {
+      props.onContextMenu?.()
+    }
     if (event.button !== 0 || props.onMove === undefined) {
       return
     }
@@ -109,6 +113,7 @@ export const EditorKeyformMarker = (props: EditorKeyformMarkerProps) => {
           props.onSelect?.()
         }
       }}
+      onContextMenu={() => props.onContextMenu?.()}
       onKeyDown={handleKeyDown}
       onPointerDown={handlePointerDown}
     >
