@@ -290,6 +290,16 @@ describe('createCalendarQuery implicit weekday questions', () => {
     expect(createCalendarQuery({now, text, timeZone: 'Asia/Seoul'})).toEqual({end, start})
   })
 
+  it.each(['수요일 뭐 있어요?', '수요일 무슨 일 있어?'])(
+    'should recognize polite and descriptive weekday questions in "%s"',
+    (text) => {
+      expect(createCalendarQuery({now, text, timeZone: 'Asia/Seoul'})).toEqual({
+        end: '2026-09-09T15:00:00.000Z',
+        start: '2026-09-08T15:00:00.000Z',
+      })
+    },
+  )
+
   it('should use local midnight boundaries when an implicit weekday crosses daylight saving time', () => {
     expect(
       createCalendarQuery({
@@ -302,6 +312,8 @@ describe('createCalendarQuery implicit weekday questions', () => {
 
   it.each([
     '수요일 말고 목요일 뭐 있어?',
+    '수요일엔 말고 목요일 뭐 있어?',
+    '수요일을 제외하고 목요일 뭐 있어?',
     '수요일 빼고 목요일 뭐 있어?',
     '수요일 제외하고 목요일 뭐 있어?',
     '수요일은 제외하고 목요일 뭐 있어?',
@@ -314,11 +326,12 @@ describe('createCalendarQuery implicit weekday questions', () => {
     })
   })
 
-  it('should not fall back to a broad window when the only weekday is excluded', () => {
-    expect(
-      createCalendarQuery({now, text: '수요일 말고 뭐 있어?', timeZone: 'Asia/Seoul'}),
-    ).toBeNull()
-  })
+  it.each(['수요일 말고 뭐 있어?', '수요일도 말고 뭐 있어?', '수요일을 제외하고 뭐 있어?'])(
+    'should not fall back to a broad window when the only weekday is excluded in "%s"',
+    (text) => {
+      expect(createCalendarQuery({now, text, timeZone: 'Asia/Seoul'})).toBeNull()
+    },
+  )
 
   it('should keep a same-day morning weekday query within the local day', () => {
     expect(

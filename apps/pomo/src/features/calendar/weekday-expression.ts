@@ -28,7 +28,7 @@ const IMPLICIT_WEEKDAY_SCHEDULE_PATTERN = new RegExp(
     `(?:\\s*(?:${WEEKDAY_EXCLUSION_TERM_PATTERN.source}|${WEEKDAY_LIST_CONNECTOR_PATTERN.source}))?\\s*)+` +
     `(?:\\s*(?:새벽|아침|오전|점심|오후|저녁|밤|낮|정오))?` +
     `(?:\\s*(?:${WEEKDAY_PARTICLE_PATTERN.source}))?\\s*` +
-    `(?:뭐|무엇)(?:가|이|은|는)?\\s*(?:있|하)(?:어)?[?.!…]*\\s*$`,
+    `(?:뭐|무엇|무슨\\s+일)(?:가|이|은|는)?\\s*(?:있|하)(?:어요|어)?[?.!…]*\\s*$`,
   'u',
 )
 
@@ -51,7 +51,7 @@ export const createCalendarWeekdayParser = ({
     'gu',
   )
   const weekdayExclusionContextPattern = new RegExp(
-    `^\\s*(?:(?:에는|에|은|는|이|가)\\s*)?(?:일정(?:은|는)?\\s*)?${WEEKDAY_EXCLUSION_PATTERN.source}`,
+    `^\\s*(?:${WEEKDAY_PARTICLE_PATTERN.source}\\s*)?(?:일정(?:은|는)?\\s*)?${WEEKDAY_EXCLUSION_PATTERN.source}`,
     'u',
   )
   const weekdayDateExpressionBoundaryPattern = new RegExp(
