@@ -1,3 +1,4 @@
+import {useLocalDate} from 'src/features/civil-date'
 import {PTextarea} from 'src/components/p-textarea/PTextarea'
 import {cx} from 'class-variance-authority'
 import {createSignal, Show} from 'solid-js'
@@ -7,7 +8,6 @@ import {MAXIMUM_MEMORY_MEMO_LENGTH} from '../../features/memory-assist'
 import {PButton} from '../p-button/PButton'
 import {PModal} from '../p-modal/PModal'
 import {type ReminderDraft, ReminderFields} from './ReminderFields'
-import {formatLocalDate} from 'src/utils/format-local-date'
 
 const TEXTAREA_CLASSES = cx(
   'box-border min-h-24 w-full resize-y rounded-5 border border-solid border-border',
@@ -16,6 +16,19 @@ const TEXTAREA_CLASSES = cx(
   'placeholder:text-muted-foreground focus-visible:border-highlight focus-visible:shadow-focus',
   'motion-reduce:transition-none',
 )
+
+interface MemoryMemoReminderFieldsProps {
+  readonly draft: () => ReminderDraft
+  readonly onChange: (draft: ReminderDraft) => void
+}
+
+const MemoryMemoReminderFields = (props: MemoryMemoReminderFieldsProps) => {
+  const minimumDate = useLocalDate({initialDate: new Date()})
+
+  return (
+    <ReminderFields draft={props.draft} minimumDate={minimumDate()} onChange={props.onChange} />
+  )
+}
 
 export interface MemoryMemoModalProps {
   readonly canSave: boolean
@@ -73,11 +86,9 @@ export const MemoryMemoModal = (props: MemoryMemoModalProps) => {
           />
         </label>
 
-        <ReminderFields
-          draft={props.reminderDraft}
-          minimumDate={formatLocalDate(new Date())}
-          onChange={props.onReminderChange}
-        />
+        <Show when={props.isOpen}>
+          <MemoryMemoReminderFields draft={props.reminderDraft} onChange={props.onReminderChange} />
+        </Show>
 
         <Show when={props.message()}>
           {(currentMessage) => (

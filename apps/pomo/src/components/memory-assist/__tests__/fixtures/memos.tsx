@@ -1,6 +1,7 @@
 import {cleanup} from '@solidjs/testing-library'
 import {For, untrack} from 'solid-js'
 import {afterEach, beforeEach, vi} from 'vitest'
+import {localDateRuntime} from '../../../../features/civil-date'
 import {deleteDialogueAudio, usePEvents} from '../../../../features/focus-room-dialogue'
 import {
   type MemoryMemo,
@@ -69,6 +70,7 @@ export const setupMemos = () => {
 
   beforeEach(async () => {
     vi.clearAllMocks()
+    vi.spyOn(localDateRuntime, 'schedule').mockImplementation(() => vi.fn())
     sessionStorage.clear()
     mocks.memos = []
     vi.mocked(useMemoryMemos).mockImplementation(() => () => mocks.memos)
