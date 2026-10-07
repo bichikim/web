@@ -267,7 +267,12 @@ describe('PuppetEditor', () => {
     fireEvent.input(view.getByRole('spinbutton', {name: 'Angle Y 값'}), {
       target: {value: '15'},
     })
-    fireEvent.click(view.getByRole('button', {name: '현재 값에 키폼'}))
+    const grid = view
+      .getByLabelText('Angle X와 Angle Y 2차원 키폼 grid')
+      .querySelector('.parameter-grid')!
+    vi.spyOn(grid, 'getBoundingClientRect').mockReturnValue(new DOMRect(100, 100, 200, 200))
+    fireEvent.contextMenu(grid, {clientX: 250, clientY: 150})
+    fireEvent.keyDown(await screen.findByRole('menuitem', {name: '키폼 추가'}), {key: 'Enter'})
 
     await waitFor(() => {
       expect(view.container.querySelectorAll('.parameter-grid-keyform')).toHaveLength(10)
@@ -276,7 +281,7 @@ describe('PuppetEditor', () => {
       ).toHaveLength(10)
     })
 
-    fireEvent.click(view.getByRole('button', {name: '선택 키폼 삭제'}))
+    fireEvent.keyDown(view.getByRole('button', {name: '키폼 선택: 15, 15'}), {key: 'Backspace'})
 
     await waitFor(() => {
       expect(view.container.querySelectorAll('.parameter-grid-keyform')).toHaveLength(9)

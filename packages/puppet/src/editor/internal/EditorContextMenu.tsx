@@ -26,6 +26,10 @@ export interface EditorContextMenuProps {
   readonly entries: ReadonlyArray<EditorContextMenuEntry>
   readonly label?: string
   readonly onOpenChange?: (open: boolean) => void
+  readonly onCloseAutoFocus?: (event: Event) => void
+  readonly onInteractOutside?: (event: Event) => void
+  readonly onContextMenu?: (event: MouseEvent) => void
+  readonly onPointerDown?: (event: PointerEvent) => void
 }
 
 interface EditorContextMenuEntryProps {
@@ -65,13 +69,20 @@ export const EditorContextMenu = (props: EditorContextMenuProps) => {
 
   return (
     <ContextMenu modal={false} onOpenChange={(open) => props.onOpenChange?.(open)}>
-      <ContextMenu.Trigger class="editor-context-menu-trigger" disabled={props.disabled}>
+      <ContextMenu.Trigger
+        class="editor-context-menu-trigger"
+        disabled={props.disabled}
+        onContextMenu={props.onContextMenu}
+        onPointerDown={props.onPointerDown}
+      >
         {props.children}
       </ContextMenu.Trigger>
       <ContextMenu.Portal mount={portalMount}>
         <ContextMenu.Content
           aria-label={props.label ?? '작업 메뉴'}
           class="editor-context-menu-content"
+          onCloseAutoFocus={props.onCloseAutoFocus}
+          onInteractOutside={props.onInteractOutside}
         >
           <For each={props.entries}>{(entry) => <EditorContextMenuEntryView entry={entry} />}</For>
         </ContextMenu.Content>
