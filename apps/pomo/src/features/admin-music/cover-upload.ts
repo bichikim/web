@@ -7,7 +7,7 @@ export const MAXIMUM_COVER_BYTES = 10 * 1024 * 1024
 // Keep the server upload below the Vercel Function request limit after client-side conversion.
 // oxlint-disable-next-line eslint/no-magic-numbers -- Prepared cover upload limit is four MiB.
 export const MAXIMUM_PREPARED_COVER_BYTES = 4 * 1024 * 1024
-const ALLOWED_COVER_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp'])
+const ALLOWED_COVER_TYPES = new Set(['image/jpeg', 'image/jpg', 'image/png', 'image/webp'])
 const uploadSchema = z.object({
   coverImageUrl: z.string().url(),
   coverReservationId: z.string().uuid(),
@@ -19,7 +19,12 @@ export interface UploadedAlbumCover {
 }
 
 export const validateAlbumCover = (file: File): void => {
-  if (!ALLOWED_COVER_TYPES.has(file.type)) {
+  const normalizedType = file.type.toLowerCase()
+  const hasJpegExtensionWithoutMime =
+    normalizedType.length === 0 && /\.(?:jpe?g)$/iu.test(file.name)
+
+  // The extension only identifies an empty-MIME candidate; preparation still decodes the bytes.
+  if (!ALLOWED_COVER_TYPES.has(normalizedType) && !hasJpegExtensionWithoutMime) {
     throw new TypeError('JPG, PNG 또는 WebP 이미지만 업로드할 수 있습니다.')
   }
 
