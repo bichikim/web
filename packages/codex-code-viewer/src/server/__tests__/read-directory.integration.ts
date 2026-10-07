@@ -20,7 +20,7 @@ describe('readDirectory', () => {
     }
     const result = readDirectory(root)
     expect(result.files).toHaveLength(122)
-    expect(result.files).toContainEqual({openable: false, path: 'README.md'})
+    expect(result.files).toContainEqual({openable: true, path: 'README.md'})
     expect(result.files).toContainEqual({openable: true, path: 'src/main.ts'})
     expect(result.truncated).toBe(false)
   })
@@ -37,6 +37,28 @@ describe('readDirectory', () => {
         .files.map((file) => file.path)
         .sort(),
     ).toEqual(['README.md', 'src/main.ts'])
+  })
+
+  it('should expose HTML, ordinary text, and named dotfiles in the tree', () => {
+    for (const path of [
+      'index.html',
+      '.dockerignore',
+      '.gitignore',
+      'Dockerfile',
+      'settings.custom',
+      '.env',
+    ]) {
+      writeFileSync(join(root, path), 'text')
+    }
+    const result = readDirectory(root)
+    expect(result.files).toEqual(
+      expect.arrayContaining(
+        ['index.html', '.dockerignore', '.gitignore', 'Dockerfile', 'settings.custom'].map(
+          (path) => ({openable: true, path}),
+        ),
+      ),
+    )
+    expect(result.files.map((file) => file.path)).not.toContain('.env')
   })
 
   it('should report truncation at the requested budget', () => {

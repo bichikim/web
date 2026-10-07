@@ -93,19 +93,36 @@ const installer = await bundle({
 })
 const EXECUTABLE_MODE = 0o755
 await chmod(`${output}/install.js`, EXECUTABLE_MODE)
-const licenses = await collectLicenseNotices(
+const packageLicenses = await collectLicenseNotices(
   root,
   [
     ...assets.flatMap((asset) => (asset.type === 'chunk' ? Object.keys(asset.modules) : [])),
     ...Object.keys(server.metafile.inputs),
     ...Object.keys(installer.metafile.inputs),
+    fileURLToPath(import.meta.resolve('@iconify-json/tabler/icons.json')),
     `${library}/typescript.js`,
   ],
   {
     // The published package omits the repository's license file.
     '@cfworker/json-schema@4.1.1': await readFile(`${root}/build/licenses/cfworker.txt`, 'utf8'),
+    '@iconify-json/tabler@1.2.33': await readFile(`${root}/build/licenses/tabler.txt`, 'utf8'),
   },
 )
+const pdfLicenses = await Promise.all(
+  ['cmaps', 'standard_fonts', 'wasm'].map(async (directory) => {
+    const path = `${root}/node_modules/pdfjs-dist/${directory}`
+    return Promise.all(
+      (await readdir(path))
+        .filter((file) => file.startsWith('LICENSE'))
+        .sort()
+        .map(
+          async (file) =>
+            `## pdfjs-dist/${directory}/${file}\n\n${await readFile(`${path}/${file}`, 'utf8')}`,
+        ),
+    )
+  }),
+)
+const licenses = `${packageLicenses}\n${pdfLicenses.flat().join('\n\n')}\n`
 const plugin = `${output}/plugin`
 await rm(plugin, {force: true, recursive: true})
 await mkdir(`${plugin}/dist`, {recursive: true})

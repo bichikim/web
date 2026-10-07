@@ -36,7 +36,148 @@ describe('useViewer', () => {
       dispose = cleanup
       return useViewer(port)
     })
-  afterEach(() => dispose())
+  afterEach(() => {
+    dispose()
+    vi.unstubAllGlobals()
+  })
+
+  it('should restore each file selection through history and override it for an explicit address', async () => {
+    const port = createPort()
+    const viewer = mount(port)
+    viewer.selectLines(3, 8)
+    await viewer.go(document('editor.tsx').location)
+    viewer.selectLines(5, 9)
+    await viewer.move(-1)
+    expect(viewer.selection()).toMatchObject({endLine: 8, line: 3, path: 'main.tsx'})
+    await viewer.move(1)
+    expect(viewer.selection()).toMatchObject({endLine: 9, line: 5, path: 'editor.tsx'})
+    await viewer.go(document('main.tsx').location, {restoreView: false})
+    expect(viewer.selection()).toMatchObject({endLine: 1, line: 1, path: 'main.tsx'})
+  })
+
+  it('should restore exact text columns after leaving the file', async () => {
+    const port = createPort()
+    const source = {
+      ...initial.document,
+      lines: [[{kind: 'plain' as const, navigation: null, offset: 0, text: 'hello world'}]],
+    }
+    port.start = async (receive) => {
+      receive({...initial, document: source})
+      return () => {}
+    }
+    const viewer = mount(port)
+    viewer.selectText({column: 3, endColumn: 7, endLine: 1, line: 1})
+    await viewer.go(document('editor.tsx').location)
+    vi.mocked(port.call).mockResolvedValueOnce({content: [], structuredContent: {document: source}})
+    await viewer.move(-1)
+    expect(viewer.address()).toBe('main.tsx:1:3-1:7')
+  })
+
+  it('should clamp a restored range when the revisited file becomes shorter', async () => {
+    const port = createPort()
+    const viewer = mount(port)
+    viewer.selectLines(8, 12)
+    await viewer.go(document('editor.tsx').location)
+    vi.mocked(port.call).mockResolvedValueOnce({
+      content: [],
+      structuredContent: {document: {...document('main.tsx'), lines: [[], []]}},
+    })
+    await viewer.move(-1)
+    expect(viewer.selection()).toMatchObject({endLine: 2, line: 2})
+  })
+
+  it('should synchronize accepted file navigation and history without resetting selection', async () => {
+    const port = createPort()
+    port.location = vi.fn(async () => {})
+    const viewer = mount(port)
+    await viewer.go({column: 1, line: 3, path: 'next.ts'})
+    viewer.selectLines(3, 5)
+    expect(port.location).toHaveBeenLastCalledWith({path: 'next.ts', workspace: '/project'})
+    expect(viewer.selection()).toMatchObject({endLine: 5, line: 3})
+    expect(viewer.canBack()).toBe(true)
+    await viewer.move(-1)
+    expect(port.location).toHaveBeenLastCalledWith({path: 'main.tsx', workspace: '/project'})
+    expect(viewer.canForward()).toBe(true)
+    await viewer.refresh()
+    expect(port.location).toHaveBeenCalledTimes(3)
+  })
+
+  it('should not synchronize failed or superseded file reads', async () => {
+    const port = createPort()
+    port.location = vi.fn(async () => {})
+    const pending = Promise.withResolvers<CallToolResult>()
+    vi.mocked(port.call)
+      .mockReturnValueOnce(pending.promise)
+      .mockResolvedValueOnce(result('latest.ts'))
+    const viewer = mount(port)
+    const earlier = viewer.go({column: 1, line: 1, path: 'earlier.ts'})
+    await viewer.go({column: 1, line: 1, path: 'latest.ts'})
+    pending.resolve(result('earlier.ts'))
+    await earlier
+    vi.mocked(port.call).mockRejectedValueOnce(new Error('not found'))
+    await viewer.go({column: 1, line: 1, path: 'missing.ts'})
+    expect(vi.mocked(port.location).mock.calls).toEqual([
+      [{path: 'main.tsx', workspace: '/project'}],
+      [{path: 'latest.ts', workspace: '/project'}],
+    ])
+  })
+
+  it('should copy an absolute tree path and preserve the viewed file and selection', async () => {
+    const writeText = vi.fn().mockResolvedValue(undefined)
+    vi.stubGlobal('navigator', {clipboard: {writeText}})
+    const port = createPort()
+    const viewer = mount(port)
+    viewer.selectLines(3, 5)
+    const previous = viewer.session()?.document
+    await viewer.copyPath('/project/src/my file.ts')
+    expect(writeText).toHaveBeenCalledWith('/project/src/my file.ts')
+    expect(viewer.notice()?.message).toBe('경로를 복사했습니다.')
+    expect(viewer.session()?.document).toBe(previous)
+    expect(viewer.selection()).toMatchObject({endLine: 5, line: 3})
+    expect(port.call).not.toHaveBeenCalled()
+    expect(port.context).not.toHaveBeenCalled()
+    await viewer.copy('code text')
+    expect(writeText).toHaveBeenLastCalledWith('code text')
+    expect(viewer.notice()?.message).toBe('코드를 복사했습니다.')
+  })
+
+  it('should report a rejected path copy without announcing success', async () => {
+    vi.stubGlobal('navigator', {
+      clipboard: {writeText: vi.fn().mockRejectedValue(new Error('clipboard denied'))},
+    })
+    const viewer = mount(createPort())
+    await viewer.copyPath('/project/src')
+    expect(viewer.notice()?.message).toBe('clipboard denied')
+  })
+
+  it('should add a tree path without changing the viewed document, line selection or history', async () => {
+    const port = createPort()
+    const viewer = mount(port)
+    viewer.selectLines(3, 5)
+    const previous = viewer.session()?.document
+    await viewer.sharePath({kind: 'directory', path: '/project/src'})
+    expect(port.context).toHaveBeenCalledWith({kind: 'directory', path: '/project/src'})
+    expect(viewer.session()?.document).toBe(previous)
+    expect(viewer.selection()).toMatchObject({endLine: 5, line: 3})
+    expect(port.call).not.toHaveBeenCalled()
+    expect(viewer.canBack()).toBe(false)
+    expect(viewer.notice()?.message).toBe('폴더를 다음 채팅 메시지에 추가했습니다.')
+  })
+
+  it('should report a rejected tree attachment without announcing success', async () => {
+    const port = createPort()
+    vi.mocked(port.context).mockRejectedValue(new Error('context failed'))
+    const viewer = mount(port)
+    await viewer.sharePath({kind: 'file', path: '/project/main.tsx'})
+    expect(viewer.notice()?.message).toBe('context failed')
+  })
+
+  it('should reject a tree attachment from a previous workspace', async () => {
+    const port = createPort()
+    const viewer = mount(port)
+    await viewer.sharePath({kind: 'file', path: '/other/file.ts'})
+    expect(port.context).not.toHaveBeenCalled()
+  })
 
   it('should preserve the rendered document when focus refresh returns unchanged code', async () => {
     const viewer = mount(createPort())
@@ -90,6 +231,30 @@ describe('useViewer', () => {
     })
   })
 
+  it('should attach SVG as a file by default and retain an explicit source selection', async () => {
+    const port = createPort()
+    port.start = async (receive) => {
+      receive({
+        ...initial,
+        document: {
+          ...document('icon.svg'),
+          media: {kind: 'image', mimeType: 'image/svg+xml', size: 10},
+        },
+      })
+      return () => {}
+    }
+    const viewer = mount(port)
+    await viewer.share()
+    expect(port.context).toHaveBeenLastCalledWith({kind: 'file', path: '/project/icon.svg'})
+    await viewer.share({column: 2, endColumn: 5, endLine: 1, line: 1, path: 'icon.svg'})
+    expect(port.context).toHaveBeenLastCalledWith({
+      column: 2,
+      endColumn: 5,
+      endLine: 1,
+      line: 1,
+      path: '/project/icon.svg',
+    })
+  })
   it('should normalize an upward selection and add the entire range to chat', async () => {
     const port = createPort()
     const viewer = mount(port)

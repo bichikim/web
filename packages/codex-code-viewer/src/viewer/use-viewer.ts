@@ -12,12 +12,16 @@ import {
 import {errorMessage} from './error-message'
 import type {NavigationOptions, ViewerPort} from './types'
 import {useCodeSelection} from './use-code-selection'
+import {useFileHistory} from './use-file-history'
 import {useLatestRequest} from './use-latest-request'
 import {useViewerConnection} from './use-viewer-connection'
 import {useOpenFile} from './use-open-file'
+import {createLocationOpener} from './create-location-opener'
+import {useSessionViewState} from './use-session-view-state'
 import {useNotice} from './use-notice'
 import {useCodeClipboard} from './use-code-clipboard'
-import {callViewerTool} from './call-viewer-tool'
+import {createSessionRequest} from './create-session-request'
+import {createLocationSynchronizer} from './create-location-synchronizer'
 
 const sameDocument = (previous: CodeDocument, next: CodeDocument): boolean =>
   previous.revision === next.revision &&
@@ -27,42 +31,40 @@ const sameDocument = (previous: CodeDocument, next: CodeDocument): boolean =>
 
 export const useViewer = (port: ViewerPort) => {
   const [session, setSession] = createSignal<ViewerSession | null>(null)
-  const [history, setHistory] = createSignal<CodeLocation[]>([])
-  const [cursor, setCursor] = createSignal(0)
+  const history = useFileHistory()
   const {notice, notify, dismiss} = useNotice()
   const [choices, setChoices] = createSignal<CodeLocation[]>([])
   const [files, setFiles] = createSignal<string[]>([])
   const [search, setSearch] = createSignal('')
 
-  const request = async <Value>(
-    name: string,
-    input: Record<string, unknown>,
-    schema: z.ZodType<Value>,
-  ): Promise<Value> => {
-    const current = session()
-    if (current === null) {
-      throw new Error('Codex에서 파일을 먼저 열어 주세요.')
-    }
-    return callViewerTool({input: {...input, session: current.session}, name, port, schema})
-  }
+  const request = createSessionRequest({port, session})
   const report = (error: unknown): void => notify(errorMessage(error))
   const copy = useCodeClipboard({onError: report, onNotice: notify})
+  const copyPath = (path: string): Promise<void> => copy(path, '경로를 복사했습니다.')
   const codeSelection = useCodeSelection({onError: report, onNotice: notify, port, session})
+  const viewState = useSessionViewState({selection: codeSelection.selection, session})
   const navigation = useLatestRequest(report)
   const searching = useLatestRequest(report)
-  const receive = (value: ViewerSession): void => {
+  const synchronizeLocation = createLocationSynchronizer({port, report})
+  const receive = (value: ViewerSession, options?: NavigationOptions): void => {
     const previous = session()
     if (previous !== null && previous.session !== value.session) {
       port.call('code.close', {session: previous.session}).catch(report)
     }
     navigation.cancel()
     searching.cancel()
-    setSession(value)
-    codeSelection.reset(value.document)
-    setHistory([value.document.location])
-    setCursor(0)
+    batch(() => {
+      const restore =
+        options?.restoreView ??
+        (value.document.location.line === 1 && value.document.location.column === 1)
+      const selected = viewState.restore(value, restore)
+      setSession(value)
+      codeSelection.reset(value.document, selected)
+    })
+    history.reset(value.document.location)
     setChoices([])
     setFiles([])
+    synchronizeLocation(value)
   }
   const go = async (location: CodeLocation, options?: NavigationOptions): Promise<void> => {
     const current = session()
@@ -77,23 +79,22 @@ export const useViewer = (port: ViewerPort) => {
     }
     const nextDocument = result.document
     batch(() => {
+      const selected = viewState.restore(
+        {...current, document: nextDocument},
+        options?.restoreView === true || options?.preserveSelection === true,
+      )
       if (!sameDocument(current.document, nextDocument)) {
         setSession({...current, document: nextDocument})
       }
       if (options?.preserveSelection) {
         codeSelection.preserve(nextDocument)
       } else {
-        codeSelection.reset(nextDocument)
+        codeSelection.reset(nextDocument, selected)
       }
     })
-    if (options?.historyIndex === undefined) {
-      const next = [...history().slice(0, cursor() + 1), result.document.location]
-      setHistory(next)
-      setCursor(next.length - 1)
-    } else {
-      setCursor(options.historyIndex)
-    }
+    history.record(result.document.location, options?.historyIndex)
     setChoices([])
+    synchronizeLocation({...current, document: nextDocument})
   }
   const follow = async (token: CodeToken): Promise<void> => {
     const current = session()
@@ -128,15 +129,15 @@ export const useViewer = (port: ViewerPort) => {
     }
   }
   const move = async (direction: -1 | 1): Promise<void> => {
-    const location = history()[cursor() + direction]
+    const location = history.destination(direction)
     if (location !== undefined) {
-      await go(location, {historyIndex: cursor() + direction})
+      await go(location, {historyIndex: history.index() + direction, restoreView: true})
     }
   }
   const refresh = async (): Promise<void> => {
     const current = session()
     if (current !== null && !navigation.pending()) {
-      await go(current.document.location, {historyIndex: cursor(), preserveSelection: true})
+      await go(current.document.location, {historyIndex: history.index(), preserveSelection: true})
     }
   }
   const find = async (query: string): Promise<void> => {
@@ -146,15 +147,18 @@ export const useViewer = (port: ViewerPort) => {
       setFiles(result.paths)
     }
   }
+  const opening = useOpenFile(port, receive, report)
+  const openLocation = createLocationOpener({go, open: opening.open, session})
   useViewerConnection({port, receive, refresh, report, session})
   return {
-    ...useOpenFile(port, receive, report),
+    ...opening,
     address: codeSelection.address,
     busy: navigation.pending,
-    canBack: () => cursor() > 0,
-    canForward: () => cursor() < history().length - 1,
+    canBack: history.canBack,
+    canForward: history.canForward,
     choices,
     copy,
+    copyPath,
     dismissNotice: dismiss,
     files,
     find,
@@ -163,6 +167,7 @@ export const useViewer = (port: ViewerPort) => {
     go,
     move,
     notice,
+    openLocation,
     refresh,
     reportError: report,
     search,
@@ -171,5 +176,7 @@ export const useViewer = (port: ViewerPort) => {
     selectText: codeSelection.selectText,
     session,
     share: codeSelection.share,
+    sharePath: codeSelection.sharePath,
+    viewState,
   }
 }

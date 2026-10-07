@@ -62,6 +62,14 @@ describe('createWorkspace', () => {
       })
     },
   )
+  it('should find general text and named ignore files by search', () => {
+    writeFileSync(join(root, '.dockerignore'), 'dist\n')
+    writeFileSync(join(root, 'index.html'), '<main>source</main>')
+    writeFileSync(join(root, 'settings.custom'), 'setting=value')
+    expect(workspace.list('dockerignore')).toEqual(['.dockerignore'])
+    expect(workspace.list('index.html')).toEqual(['index.html'])
+    expect(workspace.list('settings.custom')).toEqual(['settings.custom'])
+  })
   it('should resolve tsconfig aliases and relative module paths', () => {
     expect(workspace.followPath('src/main.ts', source.indexOf("'~/extra'"))).toEqual({
       ok: true,
@@ -96,5 +104,24 @@ describe('createWorkspace', () => {
     writeFileSync(join(root, 'node_modules/hidden.ts'), '')
     expect(workspace.list('answer')).toEqual(['src/answer.ts'])
     expect(workspace.list('hidden')).toEqual([])
+  })
+  it.each([
+    'md',
+    'mdx',
+    'txt',
+    'png',
+    'mp4',
+    'rs',
+    'yaml',
+    'yml',
+    'toml',
+    'jsonc',
+    'json5',
+    'lock',
+  ])('should expose %s files in search and the file tree', (extension) => {
+    const path = `src/document.${extension}`
+    writeFileSync(join(root, path), 'document')
+    expect(workspace.list(`document.${extension}`)).toEqual([path])
+    expect(workspace.tree().files).toContainEqual({openable: true, path})
   })
 })

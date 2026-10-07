@@ -35,16 +35,18 @@ export const createSessions = () => {
       )
     }
   }
-  const withSession = <Value extends Record<string, unknown>>(
+  const withSession = async <Value extends Record<string, unknown>>(
     session: string,
-    operation: (workspace: ReturnType<typeof createWorkspace>) => Result<Value>,
+    operation: (
+      workspace: ReturnType<typeof createWorkspace>,
+    ) => Result<Value> | Promise<Result<Value>>,
   ) => {
     const workspace = sessions.get(session)
     if (workspace === undefined) {
       return toolResult(failure('session-expired'))
     }
     try {
-      return toolResult(operation(workspace))
+      return toolResult(await operation(workspace))
     } catch {
       return toolResult(failure('read-failed'))
     }

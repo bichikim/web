@@ -2,8 +2,10 @@ import {createEffect, createMemo, createSignal, For, onCleanup, Show, untrack} f
 import type {CodeLocation, ViewerSession} from '../shared/contracts'
 import {SFileIcon} from './SFileIcon'
 import {SIcon} from './SIcon'
-import type {ViewerPort} from './types'
+import type {ViewerPort, WorkspaceSelection} from './types'
 import {useFileTree} from './use-file-tree'
+import {useTreeContextMenu} from './use-tree-context-menu'
+import {SFileTreeContextMenu} from './SFileTreeContextMenu'
 
 interface SFileTreeProps {
   port: ViewerPort
@@ -11,6 +13,8 @@ interface SFileTreeProps {
   visible?: boolean
   onOpen?: (location: CodeLocation) => void
   onError?: (error: unknown) => void
+  onShare?: (selection: WorkspaceSelection) => void
+  onCopy?: (path: string) => void
 }
 const INDENT_WIDTH = 16
 
@@ -20,6 +24,12 @@ export const SFileTree = (props: SFileTreeProps) => {
     onError: (error) => props.onError?.(error),
     onOpen: (location) => props.onOpen?.(location),
     port: untrack(() => props.port),
+    session: () => props.session ?? null,
+    visible: () => props.visible === true,
+  })
+  const menu = useTreeContextMenu({
+    node: tree.node,
+    onFocus: tree.focus,
     session: () => props.session ?? null,
     visible: () => props.visible === true,
   })
@@ -40,6 +50,9 @@ export const SFileTree = (props: SFileTreeProps) => {
     })
   })
   const handleKeyboard = (event: KeyboardEvent, path: string): void => {
+    if (menu.handleKeyboard(event, path)) {
+      return
+    }
     if (tree.navigate(path, event.key)) {
       event.preventDefault()
       const buttons = element()?.querySelectorAll<HTMLButtonElement>('[role="treeitem"]') ?? []
@@ -57,8 +70,7 @@ export const SFileTree = (props: SFileTreeProps) => {
       <aside
         aria-label="파일 트리"
         id="workspace-files"
-        class="flex min-h-0 w-[42%] max-w-80 shrink-0 flex-col
-        border-l border-divider bg-canvas pt-1 text-sm"
+        class="flex h-full min-h-0 w-full min-w-0 flex-col bg-canvas pt-1 text-sm"
         ref={setElement}
       >
         <label class="ui-field mx-2 mb-2 gap-2 rounded-control px-2 text-muted">
@@ -99,6 +111,7 @@ export const SFileTree = (props: SFileTreeProps) => {
                   tree.activate(path)
                 }}
                 onFocus={() => tree.focus(path)}
+                onContextMenu={(event) => menu.handleContextMenu(event, path)}
                 onKeyDown={(event) => handleKeyboard(event, path)}
                 role="treeitem"
                 style={{'--tree-indent': `${(path.split('/').length - 1) * INDENT_WIDTH}px`}}
@@ -136,6 +149,18 @@ export const SFileTree = (props: SFileTreeProps) => {
           <p class="m-0 border-t border-divider p-2 text-xs text-muted" role="status">
             파일 10,000개까지 표시합니다.
           </p>
+        </Show>
+        <Show when={menu.context()} keyed>
+          {(context) => (
+            <SFileTreeContextMenu
+              x={context.x}
+              y={context.y}
+              selection={context.selection}
+              onShare={props.onShare}
+              onCopy={props.onCopy}
+              onClose={menu.close}
+            />
+          )}
         </Show>
       </aside>
     </Show>

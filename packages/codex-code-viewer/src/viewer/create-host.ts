@@ -1,14 +1,19 @@
 import {App} from '@modelcontextprotocol/ext-apps'
+import type {Protocol} from '@modelcontextprotocol/sdk/shared/protocol.js'
+import type {Notification, Request, Result} from '@modelcontextprotocol/sdk/types.js'
+import {z} from 'zod'
 import {OpenAIExtensions, OpenAIFileEntrypointInputSchema} from '@openai/mcp-extensions/app'
 import {sessionSchema} from '../shared/contracts'
 import type {ViewerPort} from './types'
 import {connectHostAppearance} from './connect-host-appearance'
-import {formatSelection} from './format-selection'
+import {formatContext} from './format-context'
 import {createPendingTasks} from './create-pending-tasks'
 
 export const createHost = (): ViewerPort => {
   const app = new App({name: 'Code Viewer', version: '0.1.1'}, {}, {autoResize: false})
   const extensions = new OpenAIExtensions(app)
+  // The base protocol carries custom methods, as in the OpenAI extensions adapter.
+  const protocol = app as unknown as Protocol<Request, Notification, Result>
   const requests = createPendingTasks()
   const call: ViewerPort['call'] = (name, arguments_) =>
     requests.run(() => app.callServerTool({arguments: arguments_, name}))
@@ -31,7 +36,7 @@ export const createHost = (): ViewerPort => {
   return {
     call,
     context: (selection) => {
-      const text = `The user selected ${formatSelection(selection)} in Code Viewer.`
+      const text = formatContext(selection)
       const previous = contextQueue
       const task = requests.run(async () => {
         await previous
@@ -47,6 +52,19 @@ export const createHost = (): ViewerPort => {
         () => undefined,
       )
       return task
+    },
+    location: async (location) => {
+      const capability =
+        app.getHostCapabilities()?.experimental?.['winter-love/file-viewer/location']
+      if (!z.object({version: z.literal(1)}).safeParse(capability).success) {
+        return
+      }
+      await requests.run(() =>
+        protocol.request(
+          {method: 'winter-love/file-viewer/location', params: {...location}},
+          z.object({}),
+        ),
+      )
     },
     start: async (receive, report, refresh) => {
       let resource: string | null = null

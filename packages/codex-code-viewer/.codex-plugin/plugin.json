@@ -1,11 +1,11 @@
 {
   "name": "codex-code-viewer",
-  "version": "0.1.1",
-  "description": "Read code and follow imports and definitions inside Codex.",
+  "version": "0.2.0",
+  "description": "Read code, documents and media and add file context inside Codex.",
   "mcpServers": "./.mcp.json",
   "interface": {
     "displayName": "Code Viewer",
-    "shortDescription": "Follow imports and definitions",
+    "shortDescription": "Explore code, documents and media",
     "developerName": "Winter Love",
     "category": "Developer Tools",
     "capabilities": ["Interactive", "Read"],
