@@ -154,6 +154,10 @@ export const createEntryEventPlayback = (
       return
     }
 
+    // Entry actions have no product requirement to finish before dialogue starts.
+    // This wait preserves the existing executor-registration sequence only.
+    // A deliberately never-settling callback alone does not establish a product bug;
+    // confirm a real stalled executor path before adding retries or a timeout.
     isPlaybackPending = true
     const eventExecution = pendingEventExecution
     pendingEventExecution = eventExecution.then(startPlayback).catch((error: unknown) => {
