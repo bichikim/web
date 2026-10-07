@@ -1,3 +1,4 @@
+import {differenceBy} from 'es-toolkit/array'
 import {formatLocalDate} from 'src/utils/format-local-date'
 import {createMemo, createSignal, onCleanup, onMount, untrack} from 'solid-js'
 import * as m from '@paraglide/message'
@@ -70,9 +71,8 @@ const mergeLoadedEntries = (
   loaded: ReadonlyArray<PictureDiaryEntry>,
   current: ReadonlyArray<PictureDiaryEntry>,
 ) => {
-  const currentIds = new Set(current.map((entry) => entry.id))
   return sortPictureDiaryEntries([
-    ...loaded.filter((entry) => !currentIds.has(entry.id)),
+    ...differenceBy(loaded, current, (entry) => entry.id),
     ...current,
   ])
 }

@@ -150,6 +150,16 @@ export function HomeCards() {
       </A>
 
       <TextMoodCard />
+      <A class={CARD_CLASSES} href="/dev/saju">
+        <div>
+          <p class="m-0 text-xs font-700 tracking-[0.2em] text-#f0c99a uppercase">k-saju</p>
+          <h2 class="mb-0 mt-3 text-2xl font-750">사주 계산 실험실</h2>
+          <p class="mb-0 mt-3 max-w-sm text-sm leading-6 text-#aaa0b1">
+            생년월일시를 넣고 사주팔자·오행·십성·일주·대운의 실제 반환값을 확인해요.
+          </p>
+        </div>
+        <span class="mt-8 text-sm font-700 text-#f4d7b5">계산 결과 보기 →</span>
+      </A>
       <StorageCard />
       <OptionsCard />
     </div>

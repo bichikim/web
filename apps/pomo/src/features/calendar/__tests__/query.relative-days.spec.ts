@@ -59,6 +59,32 @@ describe('createCalendarQuery relative days', () => {
     expect(createCalendarQuery({now, text: '보낼 뭐 있어?', timeZone: 'Asia/Seoul'})).toBeNull()
   })
 
+  it.each(['그제', '어제', '오늘', '모레', '글피'])(
+    'should exclude %s when an embedded 낼 appears before the exclusion',
+    (day) => {
+      expect(
+        createCalendarQuery({
+          now,
+          text: `${day} 보낼 일정 말고 내일 일정 알려줘`,
+          timeZone: 'Asia/Seoul',
+        }),
+      ).toEqual({
+        end: '2026-09-05T15:00:00.000Z',
+        start: '2026-09-04T15:00:00.000Z',
+      })
+    },
+  )
+
+  it.each(['오늘 낼름 말고 내일 일정 알려줘', '오늘 돈을 낼 일정 말고 내일 일정 알려줘'])(
+    'should preserve exclusions around a non-date 낼 in "%s"',
+    (text) => {
+      expect(createCalendarQuery({now, text, timeZone: 'Asia/Seoul'})).toEqual({
+        end: '2026-09-05T15:00:00.000Z',
+        start: '2026-09-04T15:00:00.000Z',
+      })
+    },
+  )
+
   it('should query two days ago for the 그제 synonym', () => {
     expect(createCalendarQuery({now, text: '그제 일정 알려줘', timeZone: 'Asia/Seoul'})).toEqual({
       end: '2026-09-02T15:00:00.000Z',

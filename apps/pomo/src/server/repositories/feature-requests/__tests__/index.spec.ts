@@ -40,7 +40,7 @@ it('should return one page and indicate when another page exists', async () => {
   limit.mockReturnValue({offset})
   select.mockReturnValue({
     from: vi.fn(() => ({
-      orderBy: vi.fn(() => ({limit})),
+      where: vi.fn(() => ({orderBy: vi.fn(() => ({limit}))})),
     })),
   })
 
@@ -60,7 +60,7 @@ it('should apply an explicit page size and offset', async () => {
   limit.mockReturnValue({offset})
   select.mockReturnValue({
     from: vi.fn(() => ({
-      orderBy: vi.fn(() => ({limit})),
+      where: vi.fn(() => ({orderBy: vi.fn(() => ({limit}))})),
     })),
   })
 

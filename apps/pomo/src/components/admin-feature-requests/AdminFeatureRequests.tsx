@@ -28,7 +28,12 @@ export const AdminFeatureRequests = () => {
   return (
     <main class="min-h-dvh bg-#15120f px-5 py-8 text-#fffaf1 sm:px-8">
       <Title>{m.admin_feature_requests_page_title()}</Title>
-      <header class="mx-auto flex w-full max-w-4xl items-center justify-between gap-4">
+      <header
+        class={
+          'mx-auto flex w-full max-w-4xl flex-col items-start justify-between gap-4 ' +
+          'sm:flex-row sm:items-center'
+        }
+      >
         <div>
           <p class="m-0 text-xs font-750 tracking-[0.24em] text-#e8bc88 uppercase">
             {m.admin_feature_requests_eyebrow()}
@@ -36,14 +41,26 @@ export const AdminFeatureRequests = () => {
           <h1 class="mb-0 mt-2 text-2xl font-800 tracking--0.03em">
             {m.admin_feature_requests_heading()}
           </h1>
+          <p class="mb-0 mt-3 max-w-xl text-sm leading-6 text-white/75">
+            {m.admin_feature_request_dashboard_description()}
+          </p>
         </div>
         <A
-          class="rounded-2 border border-white/15 px-3 py-2 text-sm text-white/75 no-underline hover:bg-white/10"
+          class={
+            'flex-none whitespace-nowrap rounded-2 border border-white/15 px-3 py-2 ' +
+            'text-sm text-white/75 no-underline hover:bg-white/10'
+          }
           href="/admin"
         >
           {m.admin_feature_requests_home()}
         </A>
       </header>
+
+      <Show when={model.isLoading()}>
+        <p class="mx-auto mt-8 w-full max-w-4xl text-sm text-white/75" role="status">
+          {m.feature_request_list_loading()}
+        </p>
+      </Show>
 
       <Show when={model.loadFailed()}>
         <div
@@ -73,7 +90,7 @@ export const AdminFeatureRequests = () => {
             <KeyedList each={model.requests()} by={(request) => request.id}>
               {(request) => (
                 <AdminFeatureRequestCard
-                  disabled={model.updatingRequestId() === request().id}
+                  disabled={model.isUpdatingRequest(request().id)}
                   onSave={handleRequestSave}
                   request={request()}
                 />

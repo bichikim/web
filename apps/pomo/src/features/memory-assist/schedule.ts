@@ -102,9 +102,9 @@ interface GetLastExactReminderScheduledAtOptions {
 const getLastExactReminderScheduledAt = (
   options: GetLastExactReminderScheduledAtOptions,
 ): string | null => {
-  const lastExactReminderEvent = options.memo.reminderEvents
-    .filter((event) => event.kind === 'exact')
-    .at(-1)
+  const lastExactReminderEvent = options.memo.reminderEvents.findLast(
+    (event) => event.kind === 'exact',
+  )
 
   if (lastExactReminderEvent !== undefined) {
     return lastExactReminderEvent.scheduledAt

@@ -1,0 +1,5 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {"noImplicitAny": true, "types": ["node", "vite/client"]},
+  "include": ["src", "build.ts", "preview.ts", "*.config.ts"]
+}
