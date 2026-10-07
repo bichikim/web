@@ -172,10 +172,11 @@ const parseExpenseAssistantCandidate = (json: string): ExpenseParseResult => {
     return invalid('invalid-shape')
   }
 
-  const date = readDate(parsed.date)
+  const dateValue = typeof parsed.date === 'string' ? parsed.date.trim() : parsed.date
+  const date = readDate(dateValue)
   const questions = readQuestions(parsed.questions)
   const items = readItems(parsed.items)
-  if (parsed.date !== undefined && parsed.date !== null && date === null) {
+  if (dateValue !== undefined && dateValue !== null && dateValue !== '' && date === null) {
     return invalid('invalid-shape')
   }
   if (questions === null || items === null) {
