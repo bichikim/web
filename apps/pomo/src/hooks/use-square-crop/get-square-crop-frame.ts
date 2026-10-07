@@ -6,12 +6,12 @@ export interface GetSquareCropFrameOptions {
   readonly image: Readonly<Size>
   readonly position: Point
   readonly viewport: Readonly<Size>
+  /** Finite values >= 1 are accepted; other values produce a null frame. */
   readonly zoom: number
 }
 
 /**
  * Fits an image into the viewport and maps a normalized crop to its source pixels.
- * Returns null for non-finite zoom or zoom below 1.
  * Requires finite zoom >= 1 and finite position axes in [-1, 1].
  * Returns null for non-finite or non-positive image or viewport dimensions.
  */
