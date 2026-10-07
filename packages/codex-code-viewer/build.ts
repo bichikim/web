@@ -77,7 +77,6 @@ const server = await bundle({
   platform: 'node',
   target: 'node24',
 })
-const manifest = JSON.parse(await readFile(`${root}/package.json`, 'utf8'))
 const installer = await bundle({
   banner: {js: '#!/usr/bin/env node'},
   bundle: true,
@@ -135,30 +134,7 @@ await Promise.all([
   cp(`${root}/assets`, `${plugin}/assets`, {recursive: true}),
   copyFile(`${root}/README.md`, `${plugin}/README.md`),
   writeFile(`${plugin}/THIRD_PARTY_LICENSES.md`, licenses),
-  writeFile(
-    `${plugin}/package.json`,
-    JSON.stringify(
-      {
-        bin: {'codex-code-viewer': './dist/install.js'},
-        description: manifest.description,
-        engines: manifest.engines,
-        files: ['.codex-plugin', '.mcp.json', 'assets', 'dist', 'THIRD_PARTY_LICENSES.md'],
-        homepage: 'https://github.com/bichikim/web',
-        keywords: ['codex', 'codex-plugin', 'code-viewer', 'mcp', 'typescript'],
-        name: manifest.name,
-        publishConfig: {access: 'public', registry: 'https://registry.npmjs.org'},
-        repository: {
-          directory: 'packages/codex-code-viewer',
-          type: 'git',
-          url: 'git+https://github.com/bichikim/web.git',
-        },
-        type: 'module',
-        version: manifest.version,
-      },
-      null,
-      2,
-    ),
-  ),
+  writeFile(`${output}/THIRD_PARTY_LICENSES.md`, licenses),
   writeFile(
     `${output}/.agents/plugins/marketplace.json`,
     JSON.stringify(

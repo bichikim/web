@@ -33,7 +33,7 @@ export const rules: Rule[] = [
     'editor-workspace-grid',
     {
       'grid-template': [
-        "'toolbar toolbar toolbar toolbar toolbar' 4rem 'layers left-resizer viewport",
+        "'toolbar toolbar toolbar toolbar toolbar' 3rem 'layers left-resizer viewport",
         "right-resizer inspector' minmax(0, 1fr) 'bottom-resizer bottom-resizer bottom-resizer",
         "bottom-resizer bottom-resizer' var(--bottom-resizer-size) 'timeline timeline timeline",
         "timeline timeline' var(--bottom-grid-size) / var(--left-grid-size)",

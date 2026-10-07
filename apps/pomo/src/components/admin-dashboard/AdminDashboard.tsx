@@ -74,6 +74,16 @@ export const AdminDashboard = () => {
             {m.admin_feature_request_dashboard_open()}
           </span>
         </A>
+        <A class={ADMIN_CARD_CLASSES} href="/admin/cloud-text">
+          <p class="m-0 text-xs font-750 tracking-[0.18em] text-#e8bc88 uppercase">AI</p>
+          <h2 class="mb-0 mt-3 text-lg font-750">{m.admin_cloud_title()}</h2>
+          <p class="mb-0 mt-3 max-w-xl text-sm leading-6 text-white/60">
+            {m.admin_cloud_dashboard_description()}
+          </p>
+          <span class="mt-6 inline-block text-sm font-700 text-#f3d1a9 group-hover:underline">
+            {m.admin_cloud_open()}
+          </span>
+        </A>
       </section>
     </main>
   )

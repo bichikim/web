@@ -170,7 +170,7 @@ export const useTarotReading = (props: UseTarotReadingProps): TarotReadingContro
     setStatus('preparing')
     setModelProgress(null)
     try {
-      client ??= createTarotClient({onResponse: handleResponse})
+      client ??= createTarotClient({modelId: readingModelId(), onResponse: handleResponse})
       revision += 1
       const requestId = `tarot-${revision}`
       activeRequestId = requestId

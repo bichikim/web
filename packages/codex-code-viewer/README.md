@@ -161,12 +161,12 @@ PDF·이미지·영상·음악은 [미디어 캐시](src/viewer/create-media-cac
 저장소 의존성을 설치한 뒤 이 패키지 디렉터리에서 실행한다. Node 24 이상이 필요하다.
 
 ```sh
-node --import tsx build.ts
+pnpm build
 codex plugin marketplace add "$PWD/dist" --json
 codex plugin add codex-code-viewer@winter-love-code-viewer --json
 ```
 
-`dist/plugin`은 서버, HTML, TypeScript 표준 선언 파일, `.codex-plugin/plugin.json`, `.mcp.json`을 포함한 설치용 묶음이다. 실행 시 별도 npm 설치가 필요하지 않다. `dist/.agents/plugins/marketplace.json`은 이 묶음을 가리키는 로컬 카탈로그다. 새 `package.json` 스크립트는 추가하지 않았다.
+`dist/plugin`은 서버, HTML, TypeScript 표준 선언 파일, `.codex-plugin/plugin.json`, `.mcp.json`을 포함한 설치용 묶음이다. 실행 시 별도 npm 설치가 필요하지 않다. `dist/.agents/plugins/marketplace.json`은 이 묶음을 가리키는 로컬 카탈로그다.
 
 설치본은 공식 문서가 지원하는 Codex 호환 레이아웃을 사용한다. 초기 구현의 루트 `plugin.json`과 `extensions.com.openai.mcpServers` 조합은 설치 목록에 표시됐지만, 앱에 포함된 CLI 0.158.0-alpha.2.1의 `plugin/read` 결과에서 서버 목록이 비어 있었다. 호환 레이아웃으로 수정한 뒤에는 CLI 0.158.0-alpha.2.1과 현재 로컬 런타임 0.160.0 모두 서버와 8개 도구를 발견했다. 빌드는 이전 설치용 묶음을 먼저 비워 잘못된 루트 manifest가 남지 않게 한다.
 
@@ -178,16 +178,16 @@ codex plugin add codex-code-viewer@winter-love-code-viewer --json
 
 ## npm 배포
 
-소스 패키지는 `private: true`로 유지한다. 빌드는 npm에 배포할 독립 패키지를 `dist/plugin`에 생성한다. 이 패키지는 런타임 의존성과 설치 스크립트가 없으며 필요한 실행 파일과 라이선스 고지를 포함한다. `dist`는 Git에 포함하지 않는다.
+원본 [`package.json`](package.json)에서 공개 여부, 설치 명령, 배포 파일과 의존성을 관리한다. 실행에 필요한 라이브러리는 번들에 포함하고 `devDependencies`로 관리한다. 빌드는 실행 파일과 라이선스 고지를 `dist`에 생성하며 별도 npm manifest를 만들지 않는다. `dist/plugin`은 로컬 플러그인 설치용 묶음이다. `dist`는 Git에 포함하지 않는다.
 
 ```sh
-node --import tsx build.ts
-npm pack ./dist/plugin --pack-destination ./dist
+pnpm build
+pnpm pack --pack-destination ./dist
 # tarball 내용과 독립 실행을 검증한 뒤 배포
 npm publish ./dist/winter-love-codex-code-viewer-0.2.0.tgz --access public
 ```
 
-새 버전은 소스 `package.json`, 플러그인 manifest, 저장소 루트 `.agents/plugins/marketplace.json`의 npm 버전을 함께 갱신한다. 이 독립 번들은 현재 모노레포 `Release packages` Action의 대상이 아니다. 배포 소스와 태그는 저장소 [릴리스 규칙](../../RELEASE.md)을 따른다. npm 배포가 성공한 뒤 같은 소스 커밋에 `@winter-love/codex-code-viewer@버전` 태그를 만들고 push한다. 일반 사용자의 설치·업데이트는 npm의 `latest`를 사용하므로 Git 태그를 설치 명령에 넣지 않는다. GitHub 카탈로그를 사용하는 사람은 해당 태그를 `--ref`로 지정할 수 있다.
+새 버전은 소스 `package.json`, 플러그인 manifest, 저장소 루트 `.agents/plugins/marketplace.json`의 npm 버전을 함께 갱신한다. 이 패키지도 모노레포 `Release packages` Action에서 버전으로 배포 여부를 판정한다. 배포 소스와 태그는 저장소 [릴리스 규칙](../../RELEASE.md)을 따른다. npm 배포가 성공한 뒤 같은 소스 커밋에 `@winter-love/codex-code-viewer@버전` 태그를 만들고 push한다. 일반 사용자의 설치·업데이트는 npm의 `latest`를 사용하므로 Git 태그를 설치 명령에 넣지 않는다. GitHub 카탈로그를 사용하는 사람은 해당 태그를 `--ref`로 지정할 수 있다.
 
 ## 브라우저 미리보기
 

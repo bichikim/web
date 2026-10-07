@@ -105,7 +105,9 @@ const getStatusMessage = (state: ChatState, modelId: TextModelId) => {
     case 'generating':
       return '답변을 만들고 있어요…'
     case 'idle':
-      return `${model.downloadSize} 모델을 처음 한 번 내려받아 보관해요.`
+      return modelId === 'cloud'
+        ? '클라우드 모델로 대화를 준비해요.'
+        : `${model.downloadSize} 모델을 처음 한 번 내려받아 보관해요.`
     case 'loading': {
       const displayProgress = Number.isFinite(state.percentage)
         ? ` · ${clampDisplayedPercentage(state.percentage)}%`
@@ -114,7 +116,9 @@ const getStatusMessage = (state: ChatState, modelId: TextModelId) => {
       return `${model.label} 내려받는 중${displayProgress}`
     }
     case 'ready':
-      return '모델 준비 완료 · 대화는 이 브라우저 안에서 처리돼요.'
+      return modelId === 'cloud'
+        ? '모델 준비 완료 · 대화는 클라우드에서 처리돼요.'
+        : '모델 준비 완료 · 대화는 이 브라우저 안에서 처리돼요.'
     case 'refining':
       return '답변을 마무리하고 있어요…'
     case 'unsupported':

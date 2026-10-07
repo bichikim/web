@@ -27,6 +27,27 @@ interface PartialFileNames {
   readonly metadata: string
 }
 
+const supportsSynchronousAccess = (handle: FileSystemFileHandle): boolean =>
+  typeof handle.createSyncAccessHandle === 'function'
+
+const appendSynchronously = async (handle: FileSystemFileHandle, chunk: Uint8Array) => {
+  const access = await handle.createSyncAccessHandle()
+  try {
+    const offset = access.getSize()
+    let written = 0
+    while (written < chunk.byteLength) {
+      const count = access.write(chunk.subarray(written), {at: offset + written})
+      if (count <= 0) {
+        throw new Error('Partial model file write did not make progress.')
+      }
+      written += count
+    }
+    access.flush()
+  } finally {
+    access.close()
+  }
+}
+
 const createFileNames = async (url: string): Promise<PartialFileNames> => {
   const data = new TextEncoder().encode(url)
   const key = await sha256Hex(data)
@@ -81,6 +102,10 @@ export const createOpfsPartialDownloadStorage = (): PartialDownloadStorage | nul
       const directory = await getPartialDirectory()
       const names = await createFileNames(url)
       const handle = await directory.getFileHandle(names.data, {create: true})
+      if (supportsSynchronousAccess(handle)) {
+        await appendSynchronously(handle, chunk)
+        return
+      }
       const file = await handle.getFile()
       const writable = await handle.createWritable({keepExistingData: true})
 

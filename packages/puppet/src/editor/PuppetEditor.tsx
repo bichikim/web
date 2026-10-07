@@ -442,7 +442,7 @@ export const PuppetEditor = (props: PuppetEditorProps) => {
             selectedControlPointIndices={deformerControlSelection.selectedPointIndices()}
             targetNodeIds={temporary.targets()}
           >
-            <div ref={setInspectorMount} />
+            <div class="inspector-extension-mount" ref={setInspectorMount} />
             <SkinningEditor
               selectedNodeIds={layerSelection().nodeIds}
               document={sourceDocument()}
