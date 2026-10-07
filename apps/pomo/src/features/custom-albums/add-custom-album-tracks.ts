@@ -5,12 +5,15 @@ import {
   type CustomAlbumTrack,
   isSupportedCustomAudio,
   MAXIMUM_CUSTOM_ALBUM_BYTES,
+  MAXIMUM_CUSTOM_LIBRARY_BYTES,
   MAXIMUM_CUSTOM_TRACK_BYTES,
   MAXIMUM_CUSTOM_TRACK_COUNT,
 } from './model'
+import {readCustomAlbumLibraryBytes} from './read-custom-album-library-bytes'
 import {readEmbeddedAudioCover} from './read-embedded-audio-cover'
 
 export interface AddCustomAlbumTracksOptions {
+  readonly albumId?: string | null
   readonly currentAlbumBytes: number
   readonly currentTrackCount: number
   readonly files: readonly File[]
@@ -25,6 +28,7 @@ export type AddCustomAlbumTracksResult =
     }
   | {readonly kind: 'album-too-large'}
   | {readonly kind: 'file-type'}
+  | {readonly kind: 'library-too-large'}
   | {readonly kind: 'track-count'}
   | {readonly kind: 'track-too-large'}
 
@@ -57,8 +61,17 @@ export const addCustomAlbumTracks = async (
   }
 
   const addedBytes = options.files.reduce((total, file) => total + file.size, 0)
-  if (options.currentAlbumBytes + addedBytes > MAXIMUM_CUSTOM_ALBUM_BYTES) {
+  const albumBytes = options.currentAlbumBytes + addedBytes
+  if (albumBytes > MAXIMUM_CUSTOM_ALBUM_BYTES) {
     return {kind: 'album-too-large'}
+  }
+
+  const otherLibraryBytes = await readCustomAlbumLibraryBytes({
+    excludedAlbumId: options.albumId ?? null,
+  })
+  const libraryBytes = otherLibraryBytes + albumBytes
+  if (libraryBytes > MAXIMUM_CUSTOM_LIBRARY_BYTES) {
+    return {kind: 'library-too-large'}
   }
 
   const tracks = await Promise.all(
@@ -75,8 +88,8 @@ export const addCustomAlbumTracks = async (
     : null
   const embeddedCoverImage =
     embeddedCoverCandidate !== null &&
-    options.currentAlbumBytes + addedBytes + embeddedCoverCandidate.size >
-      MAXIMUM_CUSTOM_ALBUM_BYTES
+    (albumBytes + embeddedCoverCandidate.size > MAXIMUM_CUSTOM_ALBUM_BYTES ||
+      libraryBytes + embeddedCoverCandidate.size > MAXIMUM_CUSTOM_LIBRARY_BYTES)
       ? null
       : embeddedCoverCandidate
 

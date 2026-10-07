@@ -6,6 +6,7 @@ import {afterEach, beforeEach, expect, it, vi} from 'vitest'
 const mocks = vi.hoisted(() => ({
   albumByteLimit: 1000,
   embeddedCoverBytes: 200,
+  libraryByteLimit: 2000,
 }))
 
 vi.mock('src/features/custom-albums/model', async (importOriginal) => {
@@ -13,6 +14,7 @@ vi.mock('src/features/custom-albums/model', async (importOriginal) => {
   return {
     ...actual,
     MAXIMUM_CUSTOM_ALBUM_BYTES: mocks.albumByteLimit,
+    MAXIMUM_CUSTOM_LIBRARY_BYTES: mocks.libraryByteLimit,
   }
 })
 
@@ -22,7 +24,15 @@ vi.mock('src/features/custom-albums/read-embedded-audio-cover', () => ({
   ),
 }))
 
-beforeEach(() => vi.stubGlobal('crypto', {randomUUID: () => 'track-1'}))
+vi.mock('src/features/custom-albums/read-custom-album-library-bytes', () => ({
+  readCustomAlbumLibraryBytes: vi.fn(),
+}))
+
+beforeEach(async () => {
+  vi.stubGlobal('crypto', {randomUUID: () => 'track-1'})
+  const {readCustomAlbumLibraryBytes} = await import('../read-custom-album-library-bytes')
+  vi.mocked(readCustomAlbumLibraryBytes).mockReset().mockResolvedValue(0)
+})
 
 afterEach(() => {
   vi.restoreAllMocks()
@@ -165,3 +175,71 @@ it('should end a stalled album metadata read at the 30-second media budget', asy
     vi.useRealTimers()
   }
 })
+
+it('should reject tracks above the library limit before reading audio or artwork', async () => {
+  const audio = stubCustomAlbumAudioMetadata()
+  const {readCustomAlbumLibraryBytes} = await import('../read-custom-album-library-bytes')
+  const {readEmbeddedAudioCover} = await import('../read-embedded-audio-cover')
+  const {addCustomAlbumTracks} = await import('../add-custom-album-tracks')
+  vi.mocked(readCustomAlbumLibraryBytes).mockResolvedValue(mocks.libraryByteLimit - 100)
+  vi.mocked(readEmbeddedAudioCover).mockClear()
+
+  await expect(
+    addCustomAlbumTracks({
+      currentAlbumBytes: 100,
+      currentTrackCount: 1,
+      files: [createCustomAlbumAudioFile(100)],
+      readEmbeddedCover: true,
+    }),
+  ).resolves.toEqual({kind: 'library-too-large'})
+  expect(audio.load).not.toHaveBeenCalled()
+  expect(readEmbeddedAudioCover).not.toHaveBeenCalled()
+})
+
+it('should include unsaved draft bytes and reread library usage on repeated additions', async () => {
+  stubCustomAlbumAudioMetadata()
+  const {readCustomAlbumLibraryBytes} = await import('../read-custom-album-library-bytes')
+  const {addCustomAlbumTracks} = await import('../add-custom-album-tracks')
+  vi.mocked(readCustomAlbumLibraryBytes)
+    .mockResolvedValueOnce(mocks.libraryByteLimit - 200)
+    .mockResolvedValueOnce(mocks.libraryByteLimit - 150)
+  const options = {
+    albumId: 'editing-album',
+    currentAlbumBytes: 100,
+    currentTrackCount: 1,
+    files: [createCustomAlbumAudioFile(100)],
+    readEmbeddedCover: false,
+  }
+
+  await expect(addCustomAlbumTracks(options)).resolves.toMatchObject({kind: 'added'})
+  await expect(
+    addCustomAlbumTracks({...options, currentAlbumBytes: 200, currentTrackCount: 2}),
+  ).resolves.toEqual({kind: 'library-too-large'})
+  expect(readCustomAlbumLibraryBytes).toHaveBeenCalledTimes(2)
+  expect(readCustomAlbumLibraryBytes).toHaveBeenLastCalledWith({excludedAlbumId: 'editing-album'})
+})
+
+it.each([
+  {expectedCoverBytes: undefined, otherBytes: 1700},
+  {expectedCoverBytes: 200, otherBytes: 1600},
+])(
+  'should respect the library limit when considering embedded cover bytes: $otherBytes',
+  async ({otherBytes, expectedCoverBytes}) => {
+    stubCustomAlbumAudioMetadata()
+    const {readCustomAlbumLibraryBytes} = await import('../read-custom-album-library-bytes')
+    const {addCustomAlbumTracks} = await import('../add-custom-album-tracks')
+    vi.mocked(readCustomAlbumLibraryBytes).mockResolvedValue(otherBytes)
+
+    const result = await addCustomAlbumTracks({
+      currentAlbumBytes: 0,
+      currentTrackCount: 0,
+      files: [createCustomAlbumAudioFile(200)],
+      readEmbeddedCover: true,
+    })
+    expect(result.kind).toBe('added')
+    if (result.kind !== 'added') {
+      throw new Error('Expected the valid track to be added.')
+    }
+    expect(result.embeddedCoverImage?.size).toBe(expectedCoverBytes)
+  },
+)
