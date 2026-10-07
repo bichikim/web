@@ -9,13 +9,17 @@ import type {CreateTextModelDownloadClientOptions} from '../../model-download/te
 import type {TarotWorkerResponse} from '../messages'
 import {type TarotReadingController, useTarotReading} from '../use-tarot-reading'
 
+type TestTextModelId = 'cloud' | 'gemma-4-e2b' | 'lfm-2.6b-qad'
+
 const mocks = vi.hoisted(() => ({
   cancelDownload: vi.fn(),
   dispose: vi.fn(),
-  downloaded: vi.fn<() => Promise<boolean>>(),
+  downloaded: vi.fn<(options: {readonly modelId: TestTextModelId}) => Promise<boolean>>(),
   generate: vi.fn(),
-  modelId: 'gemma-4-e2b' as 'gemma-4-e2b' | 'lfm-2.6b-qad',
+  modelId: 'gemma-4-e2b' as TestTextModelId,
   onResponse: null as ((response: TarotWorkerResponse) => void) | null,
+  responses: [] as Array<(response: TarotWorkerResponse) => void>,
+  setModelId: null as ((modelId: TestTextModelId) => void) | null,
   startTextModel: vi.fn<() => Promise<ModelDownloadResult>>(),
   startVoiceModel: vi.fn<() => Promise<ModelDownloadResult>>(),
   supported: true,
@@ -33,6 +37,7 @@ vi.mock('../../supertonic/download', () => ({isSupertonicModelDownloaded: mocks.
 vi.mock('../client', () => ({
   createTarotClient: (options: {onResponse: (response: TarotWorkerResponse) => void}) => {
     mocks.onResponse = options.onResponse
+    mocks.responses.push(options.onResponse)
     return {dispose: mocks.dispose, generate: mocks.generate}
   },
 }))
@@ -51,7 +56,10 @@ describe('useTarotReading', () => {
 
   beforeEach(() => {
     vi.clearAllMocks()
+    mocks.generate.mockReset()
     mocks.onResponse = null
+    mocks.responses.length = 0
+    mocks.setModelId = null
     mocks.modelId = 'gemma-4-e2b'
     mocks.supported = true
     mocks.downloaded.mockResolvedValue(true)
@@ -113,7 +121,7 @@ describe('useTarotReading', () => {
   })
 
   it('should start cached LFM interpretation when WebGPU is unavailable', async () => {
-    mocks.modelId = 'lfm-2.6b-qad'
+    mocks.setModelId?.('lfm-2.6b-qad')
     mocks.supported = false
     reading.draw()
     await flush()
@@ -321,7 +329,7 @@ describe('useTarotReading', () => {
     expect(vi.mocked(mocks.generate).mock.lastCall?.[0].locale).toBe('en')
   })
   it('should use the chosen LFM model for consent, download, and the worker request', async () => {
-    mocks.modelId = 'lfm-2.6b-qad'
+    mocks.setModelId?.('lfm-2.6b-qad')
     mocks.downloaded.mockResolvedValue(false)
     reading.draw()
     await flush()
@@ -331,8 +339,176 @@ describe('useTarotReading', () => {
     expect(mocks.startTextModel).toHaveBeenCalledWith('lfm-2.6b-qad')
     expect(mocks.generate).toHaveBeenCalledWith(expect.objectContaining({modelId: 'lfm-2.6b-qad'}))
   })
+
+  it('should expose same-card interpretation when the default model becomes supported', async () => {
+    mocks.supported = false
+    reading.draw()
+    const selected = reading.cards()
+    expect(reading.status()).toBe('unsupported')
+
+    mocks.setModelId?.('lfm-2.6b-qad')
+    expect(reading.cards()).toBe(selected)
+    expect(reading.status()).toBe('idle')
+    expect(mocks.downloaded).not.toHaveBeenCalled()
+
+    reading.retry()
+    await flush()
+
+    expect(mocks.downloaded).toHaveBeenCalledWith({modelId: 'lfm-2.6b-qad'})
+    expect(mocks.generate).toHaveBeenCalledWith(
+      expect.objectContaining({cards: selected, modelId: 'lfm-2.6b-qad'}),
+    )
+    expect(reading.status()).toBe('preparing')
+  })
+
+  it('should ignore stale readiness after repeated model switches in the same mount', async () => {
+    const firstReadiness = Promise.withResolvers<boolean>()
+    const secondReadiness = Promise.withResolvers<boolean>()
+    let lfmReadinessCalls = 0
+    mocks.supported = false
+    mocks.downloaded.mockImplementation(({modelId}) => {
+      if (modelId === 'lfm-2.6b-qad') {
+        lfmReadinessCalls += 1
+        return lfmReadinessCalls === 1 ? firstReadiness.promise : secondReadiness.promise
+      }
+      return Promise.resolve(true)
+    })
+
+    reading.draw()
+    const selected = reading.cards()
+    mocks.setModelId?.('lfm-2.6b-qad')
+    expect(reading.status()).toBe('idle')
+    reading.retry()
+    await flush()
+    mocks.setModelId?.('gemma-4-e2b')
+    await flush()
+    expect(reading.status()).toBe('unsupported')
+    firstReadiness.resolve(true)
+    await flush()
+    expect(mocks.generate).not.toHaveBeenCalled()
+    expect(reading.cards()).toBe(selected)
+
+    reading.retry()
+    await flush()
+    expect(reading.status()).toBe('unsupported')
+    mocks.setModelId?.('lfm-2.6b-qad')
+    expect(reading.status()).toBe('idle')
+    reading.retry()
+    await flush()
+
+    firstReadiness.resolve(true)
+    await flush()
+    expect(mocks.generate).not.toHaveBeenCalled()
+    expect(reading.cards()).toBe(selected)
+    expect(reading.status()).toBe('checking')
+
+    secondReadiness.resolve(true)
+    await flush()
+    expect(mocks.generate).toHaveBeenCalledExactlyOnceWith(
+      expect.objectContaining({cards: selected, modelId: 'lfm-2.6b-qad'}),
+    )
+    expect(reading.status()).toBe('preparing')
+  })
+
+  it('should discard a previous model response after repeated switches without remounting', async () => {
+    mocks.supported = false
+    reading.draw()
+    const selected = reading.cards()
+    mocks.setModelId?.('lfm-2.6b-qad')
+    expect(reading.status()).toBe('idle')
+    reading.retry()
+    await flush()
+    const firstRequestId = mocks.generate.mock.lastCall?.[0].requestId as string
+    const firstResponse = mocks.responses[0]
+
+    mocks.setModelId?.('gemma-4-e2b')
+    reading.cancel()
+    reading.retry()
+    await flush()
+    expect(reading.status()).toBe('unsupported')
+    firstResponse?.({requestId: firstRequestId, text: '오래된 해석', type: 'complete'})
+    expect(reading.output()).toBe('')
+
+    mocks.setModelId?.('lfm-2.6b-qad')
+    expect(reading.status()).toBe('idle')
+    reading.retry()
+    await flush()
+    const secondRequestId = mocks.generate.mock.lastCall?.[0].requestId as string
+    expect(secondRequestId).not.toBe(firstRequestId)
+    expect(mocks.generate).toHaveBeenCalledTimes(2)
+    expect(mocks.generate.mock.lastCall?.[0]).toEqual(
+      expect.objectContaining({cards: selected, modelId: 'lfm-2.6b-qad'}),
+    )
+
+    mocks.responses[1]?.({requestId: firstRequestId, text: '오래된 해석', type: 'complete'})
+    expect(reading.output()).toBe('')
+    mocks.responses[1]?.({requestId: secondRequestId, text: '새 해석', type: 'complete'})
+    expect(reading.cards()).toBe(selected)
+    expect(reading.output()).toBe('새 해석')
+    expect(reading.status()).toBe('complete')
+  })
+
+  it('should ignore model readiness that resolves after the tarot owner is disposed', async () => {
+    const readiness = Promise.withResolvers<boolean>()
+    mocks.supported = false
+    mocks.downloaded.mockImplementation(({modelId}) =>
+      modelId === 'lfm-2.6b-qad' ? readiness.promise : Promise.resolve(true),
+    )
+    reading.draw()
+    mocks.setModelId?.('lfm-2.6b-qad')
+    expect(reading.status()).toBe('idle')
+    reading.retry()
+    await flush()
+    expect(reading.status()).toBe('checking')
+
+    dispose()
+    readiness.resolve(true)
+    await flush()
+
+    expect(mocks.generate).not.toHaveBeenCalled()
+  })
+
+  it('should recover locally after cloud inference errors without downloading cloud assets', async () => {
+    mocks.supported = false
+    reading.draw()
+    const selected = reading.cards()
+    mocks.setModelId?.('cloud')
+    expect(reading.status()).toBe('idle')
+    reading.retry()
+    await flush()
+
+    const cloudRequestId = mocks.generate.mock.lastCall?.[0].requestId as string
+    expect(mocks.downloaded).toHaveBeenCalledWith({modelId: 'cloud'})
+    expect(mocks.generate).toHaveBeenCalledWith(
+      expect.objectContaining({cards: selected, modelId: 'cloud'}),
+    )
+    expect(mocks.startTextModel).not.toHaveBeenCalled()
+    mocks.responses[0]?.({
+      message: '일일 한도에 도달했어요.',
+      requestId: cloudRequestId,
+      restartRequired: false,
+      type: 'error',
+    })
+    expect(reading.status()).toBe('error')
+    expect(reading.error()).toBe('일일 한도에 도달했어요.')
+
+    mocks.setModelId?.('lfm-2.6b-qad')
+    reading.retry()
+    await flush()
+    expect(mocks.generate).toHaveBeenCalledTimes(2)
+    expect(mocks.generate.mock.lastCall?.[0]).toEqual(
+      expect.objectContaining({cards: selected, modelId: 'lfm-2.6b-qad'}),
+    )
+    expect(mocks.startTextModel).not.toHaveBeenCalled()
+    expect(reading.error()).toBeNull()
+    expect(reading.status()).toBe('preparing')
+  })
 })
 
 vi.mock('src/features/text-generation/use-default-text-model', () => ({
-  useDefaultTextModel: () => () => mocks.modelId,
+  useDefaultTextModel: () => {
+    const [modelId, setModelId] = createSignal(mocks.modelId)
+    mocks.setModelId = setModelId
+    return modelId
+  },
 }))
