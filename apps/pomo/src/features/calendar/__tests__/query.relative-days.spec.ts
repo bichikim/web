@@ -5,6 +5,49 @@ import {createCalendarQuery} from '../query'
 describe('createCalendarQuery relative days', () => {
   const now = new Date('2026-09-04T10:30:00.000Z')
 
+  it.each(['낼 일정 알려줘', '낼 뭐 있어?', '낼은 뭐 있어?', '낼에 무슨 일 있어?'])(
+    'should query tomorrow for the 낼 synonym in "%s"',
+    (text) => {
+      expect(createCalendarQuery({now, text, timeZone: 'Asia/Seoul'})).toEqual({
+        end: '2026-09-05T15:00:00.000Z',
+        start: '2026-09-04T15:00:00.000Z',
+      })
+    },
+  )
+
+  it.each([
+    ['낼 오후 일정 알려줘', '내일 오후 일정 알려줘'],
+    ['낼 오후 뭐 있어?', '내일 오후 뭐 있어?'],
+    ['오늘과 낼 일정 알려줘', '오늘과 내일 일정 알려줘'],
+    ['오늘 말고 낼 일정 알려줘', '오늘 말고 내일 일정 알려줘'],
+    ['낼 말고 오늘 일정 알려줘', '내일 말고 오늘 일정 알려줘'],
+    ['어제 말고 낼 일정 알려줘', '어제 말고 내일 일정 알려줘'],
+    ['모레 말고 낼 일정 알려줘', '모레 말고 내일 일정 알려줘'],
+    ['글피 말고 낼 일정 알려줘', '글피 말고 내일 일정 알려줘'],
+    ['그제 말고 낼 일정 알려줘', '그제 말고 내일 일정 알려줘'],
+  ])('should preserve dayparts and exclusions in "%s"', (text, fullText) => {
+    const expected = createCalendarQuery({now, text: fullText, timeZone: 'Asia/Seoul'})
+    expect(expected).not.toBeNull()
+    expect(createCalendarQuery({now, text, timeZone: 'Asia/Seoul'})).toEqual(expected)
+  })
+
+  it.each([
+    '돈을 낼 일정 알려줘',
+    '서류를 낼 일정 알려줘',
+    '돈을   낼 일정 알려줘',
+    '보낼 일정 알려줘',
+    '낼름 일정 알려줘',
+  ])('should keep the default window for a non-date use of 낼 in "%s"', (text) => {
+    expect(createCalendarQuery({now, text, timeZone: 'Asia/Seoul'})).toEqual({
+      end: '2026-10-04T10:30:00.000Z',
+      start: '2026-09-04T10:30:00.000Z',
+    })
+  })
+
+  it('should not recognize an implicit question containing an embedded 낼', () => {
+    expect(createCalendarQuery({now, text: '보낼 뭐 있어?', timeZone: 'Asia/Seoul'})).toBeNull()
+  })
+
   it('should query two days ago for the 그제 synonym', () => {
     expect(createCalendarQuery({now, text: '그제 일정 알려줘', timeZone: 'Asia/Seoul'})).toEqual({
       end: '2026-09-02T15:00:00.000Z',

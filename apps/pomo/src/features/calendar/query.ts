@@ -72,12 +72,14 @@ const DAY_BEFORE_YESTERDAY_PHRASE = '(?:엊그제|그저께|그제)'
 const DAY_BEFORE_YESTERDAY_PATTERN = createCalendarRelativeDayPattern(DAY_BEFORE_YESTERDAY_PHRASE)
 const YESTERDAY_PATTERN = createCalendarRelativeDayPattern('어제')
 const TODAY_PATTERN = createCalendarRelativeDayPattern('오늘')
-const TOMORROW_PATTERN = createCalendarRelativeDayPattern('내일')
+// 목적격 조사 뒤의 '낼'은 '돈을 낼' 같은 동사 표현이므로 날짜로 해석하지 않는다.
+const TOMORROW_PHRASE = '(?:내일|(?<![을를]\\s+)낼)'
+const TOMORROW_PATTERN = createCalendarRelativeDayPattern(TOMORROW_PHRASE)
 const DAY_AFTER_TOMORROW_PHRASE = '(?:내일)?모레'
 const DAY_AFTER_TOMORROW_PATTERN = createCalendarRelativeDayPattern(DAY_AFTER_TOMORROW_PHRASE)
 const THREE_DAYS_AHEAD_PATTERN = createCalendarRelativeDayPattern('글피')
 const RELATIVE_DAY_PATTERN = createCalendarRelativeDayPattern(
-  `(?:${DAY_BEFORE_YESTERDAY_PHRASE}|어제|오늘|${DAY_AFTER_TOMORROW_PHRASE}|내일|글피)`,
+  `(?:${DAY_BEFORE_YESTERDAY_PHRASE}|어제|오늘|${DAY_AFTER_TOMORROW_PHRASE}|${TOMORROW_PHRASE}|글피)`,
 )
 const CALENDAR_OTHER_PERIOD_TERM_PATTERN = new RegExp(
   `(?:${WEEK_AFTER_NEXT_TERM_PATTERN}${CALENDAR_PERIOD_BOUNDARY_PATTERN.source}|` +
@@ -89,21 +91,24 @@ const CALENDAR_OTHER_PERIOD_TERM_PATTERN = new RegExp(
 )
 const DAY_BEFORE_YESTERDAY_EXCLUSION_PATTERN = createCalendarExclusionPattern(
   DAY_BEFORE_YESTERDAY_PATTERN.source,
-  '어제|오늘|내일|모레|글피',
+  `어제|오늘|${TOMORROW_PHRASE}|모레|글피`,
 )
-const TODAY_EXCLUSION_PATTERN = createCalendarExclusionPattern(TODAY_PATTERN.source, '내일')
+const TODAY_EXCLUSION_PATTERN = createCalendarExclusionPattern(
+  TODAY_PATTERN.source,
+  TOMORROW_PHRASE,
+)
 const YESTERDAY_EXCLUSION_PATTERN = createCalendarExclusionPattern(
   YESTERDAY_PATTERN.source,
-  '오늘|내일',
+  `오늘|${TOMORROW_PHRASE}`,
 )
 const TOMORROW_EXCLUSION_PATTERN = createCalendarExclusionPattern(TOMORROW_PATTERN.source, '오늘')
 const DAY_AFTER_TOMORROW_EXCLUSION_PATTERN = createCalendarExclusionPattern(
   DAY_AFTER_TOMORROW_PATTERN.source,
-  '오늘|내일',
+  `오늘|${TOMORROW_PHRASE}`,
 )
 const THREE_DAYS_AHEAD_EXCLUSION_PATTERN = createCalendarExclusionPattern(
   THREE_DAYS_AHEAD_PATTERN.source,
-  '그저께|그제|어제|오늘|내일|모레',
+  `그저께|그제|어제|오늘|${TOMORROW_PHRASE}|모레`,
 )
 const NEXT_WEEK_PATTERN = createCalendarWeekPattern(
   `${NEXT_WEEK_TERM_PATTERN}(?:\\s*${WEEKDAY_PATTERN_SOURCE})?`,
