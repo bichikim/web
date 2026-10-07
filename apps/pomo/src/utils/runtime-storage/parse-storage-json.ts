@@ -1,6 +1,6 @@
 import type {ParseStoredValue} from './types'
 
-/** Parses one JSON storage value and normalizes missing, malformed, or invalid data to null. */
+/** Removes one leading BOM, parses JSON, and normalizes missing, malformed, or invalid data to null. */
 export const parseStorageJson = <Value>(
   storedValue: string | null,
   parseValue: ParseStoredValue<Value>,
@@ -10,7 +10,8 @@ export const parseStorageJson = <Value>(
   }
 
   try {
-    return parseValue(JSON.parse(storedValue) as unknown)
+    const json = storedValue.replace(/^\uFEFF/u, '')
+    return parseValue(JSON.parse(json) as unknown)
   } catch {
     return null
   }

@@ -6,6 +6,10 @@
 - **Intent gate**: State the concrete interpretation at task start and when the scope or direction changes.
 - **Existing code references**: When discussing existing code, always include a clickable link to its exact file and line number so the link opens at that line.
 
+## Code review
+
+- For Codex code reviews, read and follow the `critical-review` skill at `.agents/skills/critical-review/SKILL.md`.
+
 ## Styling ownership
 
 - Do not create standalone `.css` files on your own initiative. Before creating or adding usage of a standalone `.css` file, explain why it is needed and obtain explicit user approval.
