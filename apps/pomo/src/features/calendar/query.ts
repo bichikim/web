@@ -95,24 +95,24 @@ const CALENDAR_OTHER_PERIOD_TERM_PATTERN = new RegExp(
 )
 const DAY_BEFORE_YESTERDAY_EXCLUSION_PATTERN = createCalendarExclusionPattern(
   DAY_BEFORE_YESTERDAY_PATTERN.source,
-  `어제|오늘|${TOMORROW_PHRASE}|모레|글피`,
+  `어제|오늘|${TOMORROW_PATTERN.source}|모레|글피`,
 )
 const TODAY_EXCLUSION_PATTERN = createCalendarExclusionPattern(
   TODAY_PATTERN.source,
-  TOMORROW_PHRASE,
+  TOMORROW_PATTERN.source,
 )
 const YESTERDAY_EXCLUSION_PATTERN = createCalendarExclusionPattern(
   YESTERDAY_PATTERN.source,
-  `오늘|${TOMORROW_PHRASE}`,
+  `오늘|${TOMORROW_PATTERN.source}`,
 )
 const TOMORROW_EXCLUSION_PATTERN = createCalendarExclusionPattern(TOMORROW_PATTERN.source, '오늘')
 const DAY_AFTER_TOMORROW_EXCLUSION_PATTERN = createCalendarExclusionPattern(
   DAY_AFTER_TOMORROW_PATTERN.source,
-  `오늘|${TOMORROW_PHRASE}`,
+  `오늘|${TOMORROW_PATTERN.source}`,
 )
 const THREE_DAYS_AHEAD_EXCLUSION_PATTERN = createCalendarExclusionPattern(
   THREE_DAYS_AHEAD_PATTERN.source,
-  `그저께|그제|어제|오늘|${TOMORROW_PHRASE}|모레`,
+  `그저께|그제|어제|오늘|${TOMORROW_PATTERN.source}|모레`,
 )
 const NEXT_WEEK_PATTERN = createCalendarWeekPattern(
   `${NEXT_WEEK_TERM_PATTERN}(?:\\s*${WEEKDAY_PATTERN_SOURCE})?`,
