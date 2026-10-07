@@ -141,18 +141,22 @@ jobs:
           CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           PLAYBACK_TOKEN_SECRET: ${{ secrets.POMO_AUDIO_GATEWAY_NON_PRODUCTION_TOKEN_SECRET }}
+          GH_TOKEN: ${{ github.token }}
+          WORKFLOW_SHA: ${{ github.workflow_sha }}
           WRANGLER_LOG_PATH: ${{ runner.temp }}/pomo-audio-gateway-staging.log
         run: |
+          config_file="${RUNNER_TEMP}/pomo-audio-gateway-staging.jsonc"
+          gh api "repos/${GITHUB_REPOSITORY}/contents/apps/pomo-audio-gateway/wrangler.jsonc?ref=${WORKFLOW_SHA}" \
+            --header 'Accept: application/vnd.github.raw+json' > "${config_file}"
           secret_file="${RUNNER_TEMP}/pomo-audio-gateway-staging-secrets.json"
           umask 077
           jq -n --arg secret "${PLAYBACK_TOKEN_SECRET}" \
             '{PLAYBACK_TOKEN_SECRET: $secret}' > "${secret_file}"
           deploy_output="$(NO_COLOR=1 pnpm --dir apps/pomo-audio-gateway exec wrangler deploy \
-            --env dev \
-            --name pomofi-audio-gateway-staging \
-            --var 'ALLOWED_ORIGINS:https://staging.pomofi.io' \
-            --var 'ALLOWED_ORIGIN_SUFFIXES:.vercel.app' \
-            --var 'R2_OBJECT_PREFIX:staging' \
+            "${GITHUB_WORKSPACE}/apps/pomo-audio-gateway/src/index.ts" \
+            --config "${config_file}" \
+            --tsconfig "${GITHUB_WORKSPACE}/apps/pomo-audio-gateway/tsconfig.json" \
+            --env staging \
             --secrets-file "${secret_file}")"
           printf '%s\n' "${deploy_output}"
           gateway_url="$(printf '%s\n' "${deploy_output}" | \
