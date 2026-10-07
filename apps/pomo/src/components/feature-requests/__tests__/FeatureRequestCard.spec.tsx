@@ -34,3 +34,21 @@ it('should show voting progress and send a +1 for an authenticated visitor', () 
 
   expect(onVote).toHaveBeenCalledWith(REQUEST.id)
 })
+
+it('should explain that a pending request is private and hide voting controls', () => {
+  const onVote = vi.fn()
+  render(() => (
+    <FeatureRequestCard
+      isAuthenticated
+      isVoting={false}
+      onVote={onVote}
+      request={{...REQUEST, status: 'requested', targetVoteCount: null, voteCount: 0}}
+    />
+  ))
+
+  expect(screen.getByText(m.feature_request_status_requested())).toBeVisible()
+  expect(screen.getByText(m.feature_request_pending_description())).toBeVisible()
+  expect(screen.queryByRole('button', {name: m.feature_request_vote()})).not.toBeInTheDocument()
+  expect(screen.queryByRole('progressbar')).not.toBeInTheDocument()
+  expect(onVote).not.toHaveBeenCalled()
+})

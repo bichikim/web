@@ -1,4 +1,5 @@
-import {createSignal, For, Show, untrack} from 'solid-js'
+import {createMemo, createSignal, For, Show, untrack} from 'solid-js'
+import {cx} from 'class-variance-authority'
 import * as m from '@paraglide/message'
 
 import {
@@ -7,28 +8,12 @@ import {
   type FeatureRequestStatus,
 } from '../../features/feature-requests'
 import type {AdminFeatureRequestStatusInput} from '../../features/feature-requests/use-admin-feature-requests'
+import {getStatusLabel} from '../feature-requests/get-status-label'
 
 interface AdminFeatureRequestCardProps {
   readonly disabled: boolean
   readonly onSave: (input: AdminFeatureRequestStatusInput) => Promise<string | null>
   readonly request: FeatureRequest
-}
-
-const getStatusLabel = (status: FeatureRequestStatus): string => {
-  switch (status) {
-    case 'completed':
-      return m.feature_request_status_completed()
-    case 'confirmed':
-      return m.feature_request_status_confirmed()
-    case 'requested':
-      return m.feature_request_status_requested()
-    case 'voting':
-      return m.feature_request_status_voting()
-    default: {
-      const exhaustiveStatus: never = status
-      return exhaustiveStatus
-    }
-  }
 }
 
 export const AdminFeatureRequestCard = (props: AdminFeatureRequestCardProps) => {
@@ -40,6 +25,9 @@ export const AdminFeatureRequestCard = (props: AdminFeatureRequestCardProps) => 
   )
   const [errorMessage, setErrorMessage] = createSignal<string | null>(null)
   const requiresTarget = () => status() === 'voting' || status() === 'confirmed'
+  const isApproving = createMemo(
+    () => props.request.status === 'requested' && status() !== 'requested',
+  )
 
   const handleSave = async (event: SubmitEvent) => {
     event.preventDefault()
@@ -67,7 +55,14 @@ export const AdminFeatureRequestCard = (props: AdminFeatureRequestCardProps) => 
     <article class="grid gap-5 rounded-5 border border-white/10 bg-white/4 p-5">
       <header>
         <div class="flex flex-wrap items-center gap-2">
-          <span class="text-xs font-750 tracking-[0.16em] text-#e8bc88 uppercase">
+          <span
+            class={cx(
+              'text-xs font-750',
+              props.request.status === 'requested'
+                ? 'rounded-full bg-#e8bc88 px-2.5 py-1 text-#17130f'
+                : 'text-#e8bc88',
+            )}
+          >
             {getStatusLabel(props.request.status)}
           </span>
           <span class="text-xs text-white/45">
@@ -81,6 +76,12 @@ export const AdminFeatureRequestCard = (props: AdminFeatureRequestCardProps) => 
           </p>
         </Show>
       </header>
+
+      <Show when={props.request.status === 'requested'}>
+        <p class="m-0 text-sm leading-6 text-white/75">
+          {m.admin_feature_request_pending_description()}
+        </p>
+      </Show>
 
       <form class="grid gap-4 border-t border-white/10 pt-4" onSubmit={handleSave}>
         <fieldset class="grid gap-2" disabled={props.disabled}>
@@ -132,7 +133,11 @@ export const AdminFeatureRequestCard = (props: AdminFeatureRequestCardProps) => 
             disabled={props.disabled}
             type="submit"
           >
-            {props.disabled ? m.admin_feature_request_saving() : m.admin_feature_request_save()}
+            {props.disabled
+              ? m.admin_feature_request_saving()
+              : isApproving()
+                ? m.admin_feature_request_approve()
+                : m.admin_feature_request_save()}
           </button>
           <Show when={errorMessage()}>
             {(message) => (
