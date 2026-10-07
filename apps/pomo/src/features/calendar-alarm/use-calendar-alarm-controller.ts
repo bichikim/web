@@ -39,7 +39,7 @@ const getEventAlarmAt = (
     return dayjs.tz(`${alarmDate}T${ALL_DAY_ALARM_TIME}`, timeZone).toDate()
   }
 
-  return new Date(event.start)
+  return new Date(event.start.trim())
 }
 
 interface UseCalendarAlarmControllerProps {
