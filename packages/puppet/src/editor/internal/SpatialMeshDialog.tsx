@@ -479,7 +479,7 @@ export const SpatialMeshDialog = (props: SpatialMeshDialogProps) => {
                             </Show>
                             <For each={['center', 'rotation', 'size'] as const}>
                               {(key) => (
-                                <div class="grid grid-cols-3 gap-2">
+                                <div class="grid grid-cols-3 gap-editor-field">
                                   <For each={AXES}>
                                     {(axis, index) => {
                                       let editRecorded = false
@@ -550,7 +550,7 @@ export const SpatialMeshDialog = (props: SpatialMeshDialogProps) => {
                             </Show>
                           </>
                         </Show>
-                        <div class="flex flex-wrap gap-2">
+                        <div class="flex flex-wrap gap-editor-field">
                           <Show when={object().kind === 'group'}>
                             <EditorButton type="button" onClick={() => split(object())}>
                               합치기 해제
