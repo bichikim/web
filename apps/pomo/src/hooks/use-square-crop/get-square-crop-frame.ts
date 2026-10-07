@@ -6,6 +6,7 @@ export interface GetSquareCropFrameOptions {
   readonly image: Readonly<Size>
   readonly position: Point
   readonly viewport: Readonly<Size>
+  /** Finite values >= 1 are accepted; other values produce a null frame. */
   readonly zoom: number
 }
 
@@ -19,6 +20,10 @@ export const getSquareCropFrame = (options: GetSquareCropFrameOptions): SquareCr
 
   const contained = getContainedRect({container: viewport, content: image})
   if (contained === null) {
+    return null
+  }
+
+  if (!Number.isFinite(zoom) || zoom < 1) {
     return null
   }
 
