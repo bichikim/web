@@ -26,6 +26,7 @@
     "@types/node": "catalog:",
     "@types/prismjs": "1.26.5",
     "esbuild": "^0.28.2",
+    "parse5": "8.0.1",
     "tsx": "catalog:",
     "unocss": "catalog:",
     "vite": "catalog:",

@@ -6,6 +6,7 @@ import {build} from 'vite'
 import typescript from '@typescript/typescript6'
 import {collectLicenseNotices} from './build/collect-license-notices'
 import {inlineScript} from './build/inline-script'
+import {inlineHtml} from './build/inline-html'
 
 const root = dirname(fileURLToPath(import.meta.url))
 const output = `${root}/dist`
@@ -22,12 +23,7 @@ const stylesheet = assets
   )
   .join('\n')
 const template = await readFile(`${root}/index.html`, 'utf8')
-const html = template
-  .replace(
-    /<script[^>]*src="[^"\n]+"[^>]*><\/script\s*>/giu,
-    () => `<script type="module">${inlineScript(javascript)}</script>`,
-  )
-  .replace('</head>', `<style>${stylesheet}</style></head>`)
+const html = inlineHtml({entrypoint: '/src/viewer/main.tsx', javascript, stylesheet, template})
 await mkdir(output, {recursive: true})
 const library = dirname(typescript.getDefaultLibFilePath({}))
 const declarations = (await readdir(library)).filter(
