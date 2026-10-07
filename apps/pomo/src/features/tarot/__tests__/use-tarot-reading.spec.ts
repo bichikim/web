@@ -334,7 +334,9 @@ describe('useTarotReading', () => {
     reading.draw()
     await flush()
     expect(mocks.downloaded).toHaveBeenCalledWith({modelId: 'lfm-2.6b-qad'})
-    mocks.modelId = 'gemma-4-e2b'
+    expect(reading.status()).toBe('consent')
+    mocks.setModelId?.('gemma-4-e2b')
+    expect(reading.status()).toBe('consent')
     await reading.startDownload()
     expect(mocks.startTextModel).toHaveBeenCalledWith('lfm-2.6b-qad')
     expect(mocks.generate).toHaveBeenCalledWith(expect.objectContaining({modelId: 'lfm-2.6b-qad'}))
@@ -364,12 +366,16 @@ describe('useTarotReading', () => {
   it('should ignore stale readiness after repeated model switches in the same mount', async () => {
     const firstReadiness = Promise.withResolvers<boolean>()
     const secondReadiness = Promise.withResolvers<boolean>()
+    const thirdReadiness = Promise.withResolvers<boolean>()
     let lfmReadinessCalls = 0
     mocks.supported = false
     mocks.downloaded.mockImplementation(({modelId}) => {
       if (modelId === 'lfm-2.6b-qad') {
         lfmReadinessCalls += 1
-        return lfmReadinessCalls === 1 ? firstReadiness.promise : secondReadiness.promise
+        if (lfmReadinessCalls === 1) {
+          return firstReadiness.promise
+        }
+        return lfmReadinessCalls === 2 ? secondReadiness.promise : thirdReadiness.promise
       }
       return Promise.resolve(true)
     })
@@ -391,20 +397,142 @@ describe('useTarotReading', () => {
     reading.retry()
     await flush()
     expect(reading.status()).toBe('unsupported')
+
     mocks.setModelId?.('lfm-2.6b-qad')
     expect(reading.status()).toBe('idle')
     reading.retry()
     await flush()
 
-    firstReadiness.resolve(true)
+    mocks.setModelId?.('gemma-4-e2b')
+    expect(reading.status()).toBe('unsupported')
+    secondReadiness.resolve(true)
     await flush()
     expect(mocks.generate).not.toHaveBeenCalled()
     expect(reading.cards()).toBe(selected)
-    expect(reading.status()).toBe('checking')
+    expect(reading.status()).toBe('unsupported')
 
-    secondReadiness.resolve(true)
+    mocks.setModelId?.('lfm-2.6b-qad')
+    expect(reading.status()).toBe('idle')
+    reading.retry()
+    await flush()
+    thirdReadiness.resolve(true)
     await flush()
     expect(mocks.generate).toHaveBeenCalledExactlyOnceWith(
+      expect.objectContaining({cards: selected, modelId: 'lfm-2.6b-qad'}),
+    )
+    expect(reading.status()).toBe('preparing')
+  })
+
+  it('should recover after a stale readiness rejection on a model round trip', async () => {
+    const firstReadiness = Promise.withResolvers<boolean>()
+    const retryReadiness = Promise.withResolvers<boolean>()
+    let lfmReadinessCalls = 0
+    mocks.supported = false
+    mocks.downloaded.mockImplementation(({modelId}) => {
+      if (modelId !== 'lfm-2.6b-qad') {
+        return Promise.resolve(true)
+      }
+      lfmReadinessCalls += 1
+      return lfmReadinessCalls === 1 ? firstReadiness.promise : retryReadiness.promise
+    })
+
+    reading.draw()
+    const selected = reading.cards()
+    mocks.setModelId?.('lfm-2.6b-qad')
+    reading.retry()
+    await flush()
+    mocks.setModelId?.('gemma-4-e2b')
+    expect(reading.status()).toBe('unsupported')
+    firstReadiness.reject(new Error('stale readiness failure'))
+    await flush()
+
+    expect(reading.error()).toBeNull()
+    expect(reading.status()).toBe('unsupported')
+    mocks.setModelId?.('lfm-2.6b-qad')
+    expect(reading.cards()).toBe(selected)
+    expect(reading.status()).toBe('idle')
+    reading.retry()
+    await flush()
+    retryReadiness.resolve(true)
+    await flush()
+    expect(mocks.generate).toHaveBeenCalledWith(
+      expect.objectContaining({cards: selected, modelId: 'lfm-2.6b-qad'}),
+    )
+    expect(reading.status()).toBe('preparing')
+  })
+
+  it('should invalidate pending readiness when locale changes behind a projected unsupported status', async () => {
+    const firstReadiness = Promise.withResolvers<boolean>()
+    const secondReadiness = Promise.withResolvers<boolean>()
+    let lfmReadinessCalls = 0
+    mocks.supported = false
+    mocks.downloaded.mockImplementation(({modelId}) => {
+      if (modelId !== 'lfm-2.6b-qad') {
+        return Promise.resolve(true)
+      }
+      lfmReadinessCalls += 1
+      return lfmReadinessCalls === 1 ? firstReadiness.promise : secondReadiness.promise
+    })
+
+    reading.draw()
+    const selected = reading.cards()
+    mocks.setModelId?.('lfm-2.6b-qad')
+    reading.retry()
+    await flush()
+    expect(reading.status()).toBe('checking')
+
+    mocks.setModelId?.('gemma-4-e2b')
+    expect(reading.status()).toBe('unsupported')
+    setLocale('en')
+    expect(reading.status()).toBe('idle')
+    mocks.setModelId?.('lfm-2.6b-qad')
+    expect(reading.cards()).toBe(selected)
+    expect(reading.status()).toBe('idle')
+
+    firstReadiness.resolve(true)
+    await flush()
+    expect(mocks.generate).not.toHaveBeenCalled()
+    expect(reading.status()).toBe('idle')
+
+    reading.retry()
+    await flush()
+    secondReadiness.resolve(true)
+    await flush()
+    expect(mocks.generate).toHaveBeenCalledWith(
+      expect.objectContaining({cards: selected, locale: 'en', modelId: 'lfm-2.6b-qad'}),
+    )
+    expect(reading.status()).toBe('preparing')
+  })
+
+  it('should recover an idle retry after returning to a model whose readiness completed stale', async () => {
+    const lfmReadiness = Promise.withResolvers<boolean>()
+    mocks.supported = false
+    mocks.downloaded.mockImplementation(({modelId}) =>
+      modelId === 'lfm-2.6b-qad' ? lfmReadiness.promise : Promise.resolve(true),
+    )
+
+    reading.draw()
+    const selected = reading.cards()
+    expect(reading.status()).toBe('unsupported')
+
+    mocks.setModelId?.('lfm-2.6b-qad')
+    expect(reading.status()).toBe('idle')
+    reading.retry()
+    await flush()
+    expect(reading.status()).toBe('checking')
+
+    mocks.setModelId?.('gemma-4-e2b')
+    expect(reading.status()).toBe('unsupported')
+    lfmReadiness.resolve(true)
+    await flush()
+    expect(mocks.generate).not.toHaveBeenCalled()
+
+    mocks.setModelId?.('lfm-2.6b-qad')
+    expect(reading.cards()).toBe(selected)
+    expect(reading.status()).toBe('idle')
+    reading.retry()
+    await flush()
+    expect(mocks.generate).toHaveBeenCalledWith(
       expect.objectContaining({cards: selected, modelId: 'lfm-2.6b-qad'}),
     )
     expect(reading.status()).toBe('preparing')
