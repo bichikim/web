@@ -4,13 +4,19 @@ import {z} from 'zod'
 
 import type {LanguageLearningLanguage} from './schema'
 import type {LanguageLearningStorageOptions} from './storage'
-import {type LanguageLearningWord, languageLearningWordSchema} from './word-schema'
+import {
+  type LanguageLearningWord,
+  languageLearningWordSchema,
+  normalizeLanguageLearningWordUnicodeValue,
+} from './word-schema'
 
 const STORAGE_KEY = 'pomo:language-learning:words:v1'
 export const LANGUAGE_LEARNING_WORDS_CHANGED_EVENT = 'pomo:language-learning:words-changed'
 const storedWordsSchema = z.array(languageLearningWordSchema).readonly()
 const normalizeLanguageLearningWordValue = (value: string): string =>
   value.trim().toLocaleLowerCase()
+const normalizeAppendedLanguageLearningWordValue = (value: string): string =>
+  normalizeLanguageLearningWordUnicodeValue(normalizeLanguageLearningWordValue(value))
 
 export interface AppendLanguageLearningWordsResult {
   readonly addedCount: number
@@ -56,10 +62,10 @@ export const appendLanguageLearningWords = (
   const newValues = differenceBy(
     uniqBy(
       values.map((value) => value.trim()).filter((value) => value.length > 0),
-      normalizeLanguageLearningWordValue,
+      normalizeAppendedLanguageLearningWordValue,
     ),
     existingValues,
-    normalizeLanguageLearningWordValue,
+    normalizeAppendedLanguageLearningWordValue,
   )
   const newWords = newValues.map(
     (value): LanguageLearningWord => ({createdAt, language, memorized: false, value, version: 1}),
