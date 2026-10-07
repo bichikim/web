@@ -13,7 +13,7 @@ export const SFileNavigation = (props: SFileNavigationProps) => (
   <nav aria-label="파일 탐색" class="flex shrink-0 items-center gap-1">
     <button
       aria-label="뒤로 이동"
-      class="ui-icon-button"
+      class="ui-icon-button disabled:text-muted disabled:opacity-30"
       disabled={!props.canBack || props.busy}
       onClick={() => props.onMove?.(-1)}
       type="button"
@@ -23,7 +23,7 @@ export const SFileNavigation = (props: SFileNavigationProps) => (
     </button>
     <button
       aria-label="앞으로 이동"
-      class="ui-icon-button"
+      class="ui-icon-button disabled:text-muted disabled:opacity-30"
       disabled={!props.canForward || props.busy}
       onClick={() => props.onMove?.(1)}
       type="button"

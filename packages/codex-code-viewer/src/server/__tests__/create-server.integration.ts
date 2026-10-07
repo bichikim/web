@@ -2,7 +2,7 @@ import {readFileSync} from 'node:fs'
 import {Client} from '@modelcontextprotocol/sdk/client/index.js'
 import {InMemoryTransport} from '@modelcontextprotocol/sdk/inMemory.js'
 import {afterEach, beforeEach, describe, expect, it} from 'vitest'
-import {sessionSchema} from '../../shared/contracts'
+import {sessionSchema, treeSchema} from '../../shared/contracts'
 import {createServer} from '../create-server'
 
 describe('createServer', () => {
@@ -88,6 +88,26 @@ describe('createServer', () => {
         name: 'code.navigate',
       }),
     ).toMatchObject({isError: true, structuredContent: {code: 'stale-document'}})
+  })
+
+  it('should list files through the app-only tree tool for an active workspace', async () => {
+    const listing = await client.listTools()
+    expect(listing.tools.find((tool) => tool.name === 'code.tree')).toMatchObject({
+      _meta: {ui: {visibility: ['app']}},
+      annotations: {readOnlyHint: true},
+    })
+    const result = await client.callTool({arguments: {path}, name: 'code.open'})
+    const session = sessionSchema.parse(result.structuredContent)
+    const tree = await client.callTool({arguments: {session: session.session}, name: 'code.tree'})
+    expect(tree.isError).not.toBe(true)
+    expect(treeSchema.parse(tree.structuredContent).files).toContainEqual({
+      openable: true,
+      path: session.document.location.path,
+    })
+    await client.callTool({arguments: {session: session.session}, name: 'code.close'})
+    expect(
+      await client.callTool({arguments: {session: session.session}, name: 'code.tree'}),
+    ).toMatchObject({isError: true, structuredContent: {code: 'session-expired'}})
   })
 
   it('should identify an absent absolute file as not found', async () => {

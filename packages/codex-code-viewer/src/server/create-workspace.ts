@@ -12,19 +12,8 @@ import {
 import {createLanguageService} from './create-language-service'
 import {findWorkspace, readSource, resolveFile} from './file-access'
 import {tokenizeSource} from './tokenize-source'
-
-const IGNORED = new Set([
-  'node_modules',
-  '.git',
-  '.codex',
-  '.aws',
-  '.ssh',
-  '.output',
-  '.server',
-  '.turbo',
-  'dist',
-  'coverage',
-])
+import {isBrowsablePath} from './is-browsable-path'
+import {readDirectory} from './read-directory'
 const MAX_FILES = 10000
 const MAX_RESULTS = 100
 
@@ -117,7 +106,7 @@ export const createWorkspace = (anchor: string) => {
     const visit = (directory: string): void => {
       const entries = readdirSync(directory, {withFileTypes: true})
       for (const entry of entries) {
-        if (paths.length < MAX_FILES && !entry.name.startsWith('.') && !IGNORED.has(entry.name)) {
+        if (paths.length < MAX_FILES && isBrowsablePath(entry.name)) {
           const path = join(directory, entry.name)
           if (entry.isDirectory()) {
             visit(path)
@@ -133,5 +122,13 @@ export const createWorkspace = (anchor: string) => {
       .sort()
       .slice(0, MAX_RESULTS)
   }
-  return {definitions, dispose: language.dispose, followPath, list, read, root}
+  return {
+    definitions,
+    dispose: language.dispose,
+    followPath,
+    list,
+    read,
+    root,
+    tree: () => readDirectory(root),
+  }
 }

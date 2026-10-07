@@ -13,6 +13,7 @@ interface SFilePickerProps {
   busy?: boolean
   focusRequest?: number
   children?: JSX.Element
+  actions?: JSX.Element
 }
 
 export const SFilePicker = (props: SFilePickerProps) => {
@@ -128,6 +129,7 @@ export const SFilePicker = (props: SFilePickerProps) => {
         <button class="ui-primary h-10" disabled={!picker.canSubmit()} type="submit">
           {picker.input().kind === 'path' ? '파일 열기' : '검색'}
         </button>
+        {props.actions}
       </form>
       <Show when={picker.expanded()}>
         <div

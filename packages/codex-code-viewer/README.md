@@ -10,29 +10,40 @@ Codex 대화 옆에서 코드를 읽고, import 경로나 심볼을 클릭해 �
 npm install -g @openai/codex
 ```
 
-터미널에서 아래 두 명령을 실행하세요.
+0.1.1부터는 GitHub 마켓플레이스 등록 없이 아래 명령 하나로 설치합니다. 0.1.0에는 설치 실행 파일이 없으므로 이 명령을 사용할 수 없습니다.
+
+```sh
+npx @winter-love/codex-code-viewer@latest install
+```
+
+npm이 설치 실행 파일을 내려받고, 실행 파일이 개인 Codex 설정 폴더 안에 npm 설치 목록을 만들어 등록한 뒤 플러그인을 설치합니다. ZIP 다운로드, 압축 해제, 저장소 빌드, 별도 미리보기 서버 실행은 필요하지 않습니다. 공개 패키지 설치에는 npm 로그인이 필요하지 않습니다. 기본 설정 폴더는 `~/.codex`이며 `CODEX_HOME`을 지정하면 해당 폴더를 사용합니다. CLI가 PATH에 없으면 `CODEX_BINARY`에 실행 파일 경로를 지정하세요.
+
+동일한 명령으로 업데이트할 수 있습니다. 이전 GitHub·개발용 목록에서 설치한 Code Viewer가 있으면 새 설치가 성공한 뒤 이전 사본을 제거해 중복 탭을 막습니다. 다른 플러그인과 마켓플레이스 등록은 유지합니다.
+
+설치 후 Codex 앱을 완전히 종료하고 다시 여세요. 프로젝트 대화의 오른쪽 패널에서 새 탭 목록의 **Code Viewer**를 선택한 다음, 처음 볼 파일의 **절대 경로**를 입력하고 Enter를 누르세요. 예: `/Users/사용자명/projects/my-project/src/main.tsx`.
+
+이후 import 경로나 심볼을 클릭해 이동할 수 있습니다. 코드를 선택하고 **채팅창에 추가**를 누르면 파일과 범위가 다음 채팅의 참고 정보에 추가됩니다. 기본 파일 뷰어의 **열기** 메뉴는 외부 앱 실행 메뉴입니다.
+
+설치 상태는 `codex plugin list --json --marketplace winter-love-code-viewer-npm`으로 확인할 수 있습니다.
+
+설치 실행 파일은 [공식 npm 플러그인·마켓플레이스 안내](https://developers.openai.com/plugins/build/plugins#marketplace-metadata)의 로컬 목록과 npm 소스를 사용합니다. OpenAI 공식 목록에 등재되는 것은 별도 절차입니다.
+
+### 기존 0.1.0 설치
+
+설치 실행 파일이 없는 0.1.0을 설치할 때만 아래 명령을 사용합니다.
 
 ```sh
 codex plugin marketplace add bichikim/web --ref '@winter-love/codex-code-viewer@0.1.0' --sparse .agents/plugins --json
 codex plugin add codex-code-viewer@winter-love-plugins --json
 ```
 
-첫 명령은 GitHub의 플러그인 목록을 등록하고, 두 번째 명령은 공개 npm 패키지 [`@winter-love/codex-code-viewer`](https://www.npmjs.com/package/@winter-love/codex-code-viewer)를 내려받아 Codex에 설치합니다. ZIP 다운로드, 압축 해제, 저장소 빌드, 별도 미리보기 서버 실행은 필요하지 않습니다. 공개 패키지 설치에는 npm 로그인이 필요하지 않습니다.
-
-설치 후 Codex 앱을 완전히 종료하고 다시 여세요. 프로젝트 대화의 오른쪽 패널에서 새 탭 목록의 **Code Viewer**를 선택한 다음, 처음 볼 파일의 **절대 경로**를 입력하고 Enter를 누르세요. 예: `/Users/사용자명/projects/my-project/src/main.tsx`.
-
-이후 import 경로나 심볼을 클릭해 이동할 수 있습니다. 코드를 선택하고 **채팅창에 추가**를 누르면 파일과 범위가 다음 채팅의 참고 정보에 추가됩니다. 기본 파일 뷰어의 **열기** 메뉴는 외부 앱 실행 메뉴입니다.
-
-업데이트할 때는 위 첫 명령의 `--ref`를 새 릴리스 태그로 바꾸고 두 명령을 다시 실행하세요. 설치 상태는 `codex plugin list --json`으로 확인할 수 있습니다.
-
-설치 방식은 [공식 npm 플러그인·마켓플레이스 안내](https://developers.openai.com/plugins/build/plugins#marketplace-metadata)를 따릅니다. 이 GitHub 마켓플레이스를 직접 등록하는 방식이며, OpenAI 공식 목록에 등재되는 것은 별도 절차입니다.
-
 ## 사용
 
 - 파일 진입점으로 실행되면 Codex 호스트가 전달한 파일 경로를 사용한다. 입력창 하나에서 파일 경로와 검색어를 받는다. 입력 내용에 지원 파일의 절대·상대 경로가 있으면 Enter 또는 **파일 열기**로 연다. `경로:줄:열` 주소와 문장에 포함된 경로도 인식한다. 파일을 처음 열 때는 절대 경로가 필요하며, 다른 절대 경로로 열면 작업 폴더와 이동 기록을 새로 시작한다.
 - import 문자열 클릭: 해당 모듈 파일 열기. 상대 경로, barrel의 `index.ts`, tsconfig의 `paths`를 해석한다.
 - 심볼 클릭: TypeScript Language Service로 정의 파일과 줄 찾기. 정의가 여러 개면 선택 목록을 표시한다.
-- 뒤로/앞으로: 이전 파일과 줄로 이동한다. 실패한 이동은 기록을 바꾸지 않는다.
+- 뒤로/앞으로: 이전 파일과 줄로 이동한다. 이동할 기록이 없으면 버튼을 흐리게 표시하고 비활성화한다. 실패한 이동은 기록을 바꾸지 않는다.
+- 검색 옆의 **파일 트리** 버튼으로 오른쪽 탐색 패널을 열거나 닫는다. 현재 파일의 상위 폴더는 자동으로 펼치고 현재 파일을 강조한다. 폴더를 클릭해 펼치거나 접고, 파일을 클릭해 이동한다. **파일 필터링**은 경로 일부로 목록을 좁히며 폴더 구조를 유지한다. 위·아래 방향키, `Home`·`End`로 항목을 선택하고 오른쪽·왼쪽 방향키로 폴더를 펼치거나 접는다. 트리는 숨김 경로·생성물·심볼릭 링크를 제외한 일반 파일을 최대 10,000개까지 표시하며, 지원하지 않는 형식은 열기를 비활성화한다.
 - 경로 없이 파일명이나 검색어만 입력하면 작업 폴더 안의 지원 파일을 검색한다. 결과를 클릭하거나 위·아래 방향키로 고른 뒤 Enter로 연다. `Cmd/Ctrl+P`는 같은 입력창을 선택하고 `Esc`는 검색 결과를 닫는다.
 - `Alt+←/→`: 뒤로/앞으로 이동한다.
 - `Cmd/Ctrl+F`: 현재 파일 안에서 문자열을 찾는다. 대소문자를 구분하지 않는 문자 그대로의 검색이며 결과를 코드 위에 강조한다. `Enter`·`Shift+Enter` 또는 이전·다음 버튼으로 결과를 순환하고 `Esc`로 닫는다. 선택한 한 줄 안의 텍스트가 있으면 검색어로 사용한다. 검색 결과로 이동해도 채팅에 추가할 줄 선택은 유지한다.
@@ -78,10 +89,10 @@ codex plugin add codex-code-viewer@winter-love-code-viewer --json
 node --import tsx build.ts
 npm pack ./dist/plugin --pack-destination ./dist
 # tarball 내용과 독립 실행을 검증한 뒤 배포
-npm publish ./dist/winter-love-codex-code-viewer-0.1.0.tgz --access public
+npm publish ./dist/winter-love-codex-code-viewer-0.1.1.tgz --access public
 ```
 
-새 버전은 소스 `package.json`, 플러그인 manifest, 저장소 루트 `.agents/plugins/marketplace.json`의 npm 버전을 함께 갱신한다. 이 독립 번들은 현재 모노레포 `Release packages` Action의 대상이 아니다. 배포 소스와 태그는 저장소 [릴리스 규칙](../../RELEASE.md)을 따른다. npm 배포가 성공한 뒤 같은 소스 커밋에 `@winter-love/codex-code-viewer@버전` 태그를 만들고 push한다. 설치 명령의 `--ref`도 해당 태그로 갱신한다.
+새 버전은 소스 `package.json`, 플러그인 manifest, 저장소 루트 `.agents/plugins/marketplace.json`의 npm 버전을 함께 갱신한다. 이 독립 번들은 현재 모노레포 `Release packages` Action의 대상이 아니다. 배포 소스와 태그는 저장소 [릴리스 규칙](../../RELEASE.md)을 따른다. npm 배포가 성공한 뒤 같은 소스 커밋에 `@winter-love/codex-code-viewer@버전` 태그를 만들고 push한다. 일반 사용자의 설치·업데이트는 npm의 `latest`를 사용하므로 Git 태그를 설치 명령에 넣지 않는다. GitHub 카탈로그를 사용하는 사람은 해당 태그를 `--ref`로 지정할 수 있다.
 
 ## 브라우저 미리보기
 

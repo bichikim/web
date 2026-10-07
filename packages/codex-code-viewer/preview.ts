@@ -19,7 +19,7 @@ const status = {
   tooLarge: 413,
 }
 const anchor = resolve(path)
-const client = new Client({name: 'Code Viewer Preview', version: '0.1.0'})
+const client = new Client({name: 'Code Viewer Preview', version: '0.1.1'})
 const transport = new StdioClientTransport({
   args: [new URL('./dist/server.js', import.meta.url).pathname],
   command: process.execPath,
@@ -34,6 +34,7 @@ const allowed = new Set([
   'code.read',
   'code.navigate',
   'code.list',
+  'code.tree',
   'code.close',
 ])
 const server = createServer(async (request, response) => {

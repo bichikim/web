@@ -1,4 +1,4 @@
-import {copyFile, cp, mkdir, readdir, readFile, rm, writeFile} from 'node:fs/promises'
+import {chmod, copyFile, cp, mkdir, readdir, readFile, rm, writeFile} from 'node:fs/promises'
 import {dirname} from 'node:path'
 import {fileURLToPath} from 'node:url'
 import {build as bundle} from 'esbuild'
@@ -81,11 +81,24 @@ const server = await bundle({
   target: 'node24',
 })
 const manifest = JSON.parse(await readFile(`${root}/package.json`, 'utf8'))
+const installer = await bundle({
+  banner: {js: '#!/usr/bin/env node'},
+  bundle: true,
+  entryPoints: [`${root}/src/installer/main.ts`],
+  format: 'esm',
+  metafile: true,
+  outfile: `${output}/install.js`,
+  platform: 'node',
+  target: 'node24',
+})
+const EXECUTABLE_MODE = 0o755
+await chmod(`${output}/install.js`, EXECUTABLE_MODE)
 const licenses = await collectLicenseNotices(
   root,
   [
     ...assets.flatMap((asset) => (asset.type === 'chunk' ? Object.keys(asset.modules) : [])),
     ...Object.keys(server.metafile.inputs),
+    ...Object.keys(installer.metafile.inputs),
     `${library}/typescript.js`,
   ],
   {
@@ -102,7 +115,7 @@ await Promise.all([
   ...['.codex-plugin/plugin.json', '.mcp.json'].map((file) =>
     copyFile(`${root}/${file}`, `${plugin}/${file}`),
   ),
-  ...['server.js', 'app.html', ...declarations].map((file) =>
+  ...['server.js', 'app.html', 'install.js', ...declarations].map((file) =>
     copyFile(`${output}/${file}`, `${plugin}/dist/${file}`),
   ),
   cp(`${root}/assets`, `${plugin}/assets`, {recursive: true}),
@@ -112,6 +125,7 @@ await Promise.all([
     `${plugin}/package.json`,
     JSON.stringify(
       {
+        bin: {'codex-code-viewer': './dist/install.js'},
         description: manifest.description,
         engines: manifest.engines,
         files: ['.codex-plugin', '.mcp.json', 'assets', 'dist', 'THIRD_PARTY_LICENSES.md'],

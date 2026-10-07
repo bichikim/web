@@ -17,6 +17,7 @@ import {useViewerConnection} from './use-viewer-connection'
 import {useOpenFile} from './use-open-file'
 import {useNotice} from './use-notice'
 import {useCodeClipboard} from './use-code-clipboard'
+import {callViewerTool} from './call-viewer-tool'
 
 const sameDocument = (previous: CodeDocument, next: CodeDocument): boolean =>
   previous.revision === next.revision &&
@@ -42,11 +43,7 @@ export const useViewer = (port: ViewerPort) => {
     if (current === null) {
       throw new Error('Codex에서 파일을 먼저 열어 주세요.')
     }
-    const result = await port.call(name, {...input, session: current.session})
-    if (result.isError) {
-      throw new Error(errorMessage(result.structuredContent))
-    }
-    return schema.parse(result.structuredContent)
+    return callViewerTool({input: {...input, session: current.session}, name, port, schema})
   }
   const report = (error: unknown): void => notify(errorMessage(error))
   const copy = useCodeClipboard({onError: report, onNotice: notify})
@@ -167,6 +164,7 @@ export const useViewer = (port: ViewerPort) => {
     move,
     notice,
     refresh,
+    reportError: report,
     search,
     selection: codeSelection.selection,
     selectLines: codeSelection.selectLines,

@@ -7,7 +7,7 @@ import {formatSelection} from './format-selection'
 import {createPendingTasks} from './create-pending-tasks'
 
 export const createHost = (): ViewerPort => {
-  const app = new App({name: 'Code Viewer', version: '0.1.0'}, {}, {autoResize: false})
+  const app = new App({name: 'Code Viewer', version: '0.1.1'}, {}, {autoResize: false})
   const extensions = new OpenAIExtensions(app)
   const requests = createPendingTasks()
   const call: ViewerPort['call'] = (name, arguments_) =>

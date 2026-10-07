@@ -6,6 +6,7 @@ import {failure, success} from '../shared/contracts'
 import {createSessions} from './create-sessions'
 import {toolResult} from './tool-result'
 
+const appOnly = {ui: {visibility: ['app']}}
 const VIEWER_URI = 'ui://codex-code-viewer/app.html'
 const annotations = {destructiveHint: false, openWorldHint: false, readOnlyHint: true}
 
@@ -22,12 +23,27 @@ const registerPanel = (server: McpServer): void => {
   )
 }
 
+const registerTree = (
+  server: McpServer,
+  withSession: ReturnType<typeof createSessions>['withSession'],
+): void => {
+  server.registerTool(
+    'code.tree',
+    {
+      _meta: appOnly,
+      annotations,
+      inputSchema: {session: z.string()},
+      title: 'List workspace file tree',
+    },
+    async ({session}) => withSession(session, (workspace) => success(workspace.tree())),
+  )
+}
+
 export const createServer = (html: string) => {
-  const server = new McpServer({name: 'codex-code-viewer', title: 'Code Viewer', version: '0.1.0'})
+  const server = new McpServer({name: 'codex-code-viewer', title: 'Code Viewer', version: '0.1.1'})
   const sessions = createSessions()
   const {open, withSession} = sessions
   const appMetadata = {ui: {resourceUri: VIEWER_URI}}
-  const appOnly = {ui: {visibility: ['app']}}
   const pathInput = {path: z.string(), session: z.string()}
   registerPanel(server)
   server.registerTool(
@@ -150,6 +166,7 @@ export const createServer = (html: string) => {
       return {content: [], structuredContent: {closed: true}}
     },
   )
+  registerTree(server, withSession)
   registerAppResource(server, 'code-viewer', VIEWER_URI, {}, async () => ({
     contents: [
       {

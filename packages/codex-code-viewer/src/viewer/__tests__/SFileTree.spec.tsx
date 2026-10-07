@@ -1,0 +1,107 @@
+/** @vitest-environment jsdom */
+import {createSignal} from 'solid-js'
+import {cleanup, fireEvent, render, screen, waitFor} from '@solidjs/testing-library'
+import {afterEach, describe, expect, it, vi} from 'vitest'
+import type {ViewerSession} from '../../shared/contracts'
+import type {ViewerPort} from '../types'
+import {SFileTree} from '../SFileTree'
+
+const session: ViewerSession = {
+  document: {
+    lines: [[]],
+    location: {column: 1, line: 1, path: 'src/main.ts'},
+    revision: 'first',
+    source: '',
+  },
+  session: 'first',
+  workspace: '/project',
+}
+const files = [
+  {openable: true, path: 'src/main.ts'},
+  {openable: true, path: 'src/editor.tsx'},
+  {openable: true, path: 'test/other.js'},
+  {openable: false, path: 'README.md'},
+]
+const createPort = (): ViewerPort => ({
+  call: vi.fn().mockResolvedValue({content: [], structuredContent: {files, truncated: false}}),
+  context: vi.fn(),
+  start: vi.fn().mockResolvedValue(() => {}),
+})
+afterEach(cleanup)
+
+describe('SFileTree', () => {
+  it('should open current ancestors, select the current file, and filter without losing input focus', async () => {
+    const port = createPort()
+    const open = vi.fn()
+    render(() => <SFileTree port={port} session={session} visible onOpen={open} />)
+    await waitFor(() =>
+      expect(screen.getByRole('treeitem', {name: 'main.ts'}).getAttribute('aria-selected')).toBe(
+        'true',
+      ),
+    )
+    expect(screen.getByRole('treeitem', {name: 'src'}).getAttribute('aria-expanded')).toBe('true')
+    expect(screen.getByRole('treeitem', {name: 'README.md'}).getAttribute('aria-disabled')).toBe(
+      'true',
+    )
+    const input = screen.getByRole('textbox', {name: '파일 필터링'})
+    fireEvent.input(input, {target: {value: 'other'}})
+    expect(screen.queryByRole('treeitem', {name: 'src'})).toBeNull()
+    fireEvent.click(screen.getByRole('treeitem', {name: 'other.js'}))
+    expect(open).toHaveBeenCalledWith({column: 1, line: 1, path: 'test/other.js'})
+    expect(screen.getByRole('textbox', {name: '파일 필터링'})).toBe(input)
+  })
+
+  it('should collapse and expand a folder while preserving its DOM and keyboard navigation', async () => {
+    render(() => <SFileTree port={createPort()} session={session} visible />)
+    const folder = await screen.findByRole('treeitem', {name: 'src'})
+    fireEvent.click(folder)
+    expect(screen.queryByRole('treeitem', {name: 'main.ts'})).toBeNull()
+    fireEvent.keyDown(folder, {key: 'ArrowRight'})
+    expect(screen.getByRole('treeitem', {name: 'src'})).toBe(folder)
+    const file = screen.getByRole('treeitem', {name: 'editor.tsx'})
+    fireEvent.keyDown(folder, {key: 'ArrowRight'})
+    expect(document.activeElement).toBe(file)
+    fireEvent.keyDown(file, {key: 'ArrowLeft'})
+    expect(document.activeElement).toBe(folder)
+  })
+
+  it('should discard a stale workspace response and reload when the tree is reopened', async () => {
+    const port = createPort()
+    const pending = Promise.withResolvers<Awaited<ReturnType<ViewerPort['call']>>>()
+    vi.mocked(port.call).mockReturnValueOnce(pending.promise)
+    const [current, setCurrent] = createSignal(session)
+    const [visible, setVisible] = createSignal(true)
+    render(() => <SFileTree port={port} session={current()} visible={visible()} />)
+    setCurrent({...session, session: 'second', workspace: '/other'})
+    await waitFor(() => expect(screen.getByRole('treeitem', {name: 'main.ts'})).toBeDefined())
+    pending.resolve({
+      content: [],
+      structuredContent: {files: [{openable: true, path: 'stale.ts'}], truncated: false},
+    })
+    await pending.promise
+    expect(screen.queryByRole('treeitem', {name: 'stale.ts'})).toBeNull()
+    setVisible(false)
+    expect(screen.queryByRole('tree')).toBeNull()
+    setVisible(true)
+    await waitFor(() => expect(port.call).toHaveBeenCalledTimes(3))
+    expect(port.call).toHaveBeenLastCalledWith('code.tree', {session: 'second'})
+  })
+
+  it('should retain files and the filter when navigating inside the same session', async () => {
+    const port = createPort()
+    const [current, setCurrent] = createSignal(session)
+    render(() => <SFileTree port={port} session={current()} visible />)
+    await screen.findByRole('treeitem', {name: 'main.ts'})
+    const input = screen.getByRole('textbox', {name: '파일 필터링'})
+    fireEvent.input(input, {target: {value: 'src/'}})
+    setCurrent({
+      ...session,
+      document: {...session.document, location: {column: 1, line: 1, path: 'src/editor.tsx'}},
+    })
+    expect(screen.getByRole('treeitem', {name: 'editor.tsx'}).getAttribute('aria-selected')).toBe(
+      'true',
+    )
+    expect((input as HTMLInputElement).value).toBe('src/')
+    expect(port.call).toHaveBeenCalledTimes(1)
+  })
+})
