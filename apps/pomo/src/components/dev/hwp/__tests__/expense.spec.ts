@@ -149,6 +149,51 @@ describe('parseExpenseText', () => {
 })
 
 describe('parseExpenseAssistantResponse', () => {
+  it.each([undefined, null, '', '   ', '\t\n', '\u3000'])(
+    'should treat an absent or blank date as missing: %j',
+    (date) => {
+      const result = parseExpenseAssistantResponse(
+        JSON.stringify({
+          date,
+          items: [{name: '두부', quantity: 1, unitPrice: 1500}],
+          questions: ['단가를 확인해 주세요.'],
+        }),
+      )
+
+      expect(result).toEqual({
+        ok: true,
+        value: {
+          date: null,
+          items: [{amount: 1500, name: '두부', quantity: 1, unitPrice: 1500}],
+          questions: ['단가를 확인해 주세요.'],
+          total: 1500,
+        },
+      })
+    },
+  )
+
+  it.each([0, false, [], {}])('should reject a non-string date: %j', (date) => {
+    expect(
+      parseExpenseAssistantResponse(
+        JSON.stringify({
+          date,
+          items: [{name: '두부', quantity: 1, unitPrice: 1500}],
+        }),
+      ),
+    ).toEqual({error: {code: 'invalid-shape'}, ok: false})
+  })
+
+  it.each([
+    {name: '', quantity: 1, unitPrice: 1500},
+    {name: '두부', quantity: 0, unitPrice: 1500},
+    {name: '두부', quantity: 1, unitPrice: 0},
+  ])('should still reject invalid items with a blank date: %j', (item) => {
+    expect(parseExpenseAssistantResponse(JSON.stringify({date: '', items: [item]}))).toEqual({
+      error: {code: 'invalid-shape'},
+      ok: false,
+    })
+  })
+
   it('should reject fullwidth digits in structured date values', () => {
     expect(
       parseExpenseAssistantResponse(
