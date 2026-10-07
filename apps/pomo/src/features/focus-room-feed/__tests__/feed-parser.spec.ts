@@ -299,6 +299,22 @@ it('should keep an undated item id stable when XML indentation changes', () => {
   expect(indentedFeed.items[0]?.id).toBe(compactFeed.items[0]?.id)
 })
 
+it.each([
+  ['', 'fk1cbw-9tdjf3'],
+  ['😀가', 'o5izkk-4mze5r'],
+  ['e\u0301', '5tlq38-d8e1iy'],
+  ['é', 'osl4oc-oqwnr1'],
+  ['😀가'.repeat(1000), '7ql2ry-mgwmgm'],
+])('should preserve persisted undated IDs for XML content %j', (content, fingerprint) => {
+  const feed = parseFeedXml(
+    `<rss><item><description>${content}</description></item></rss>`,
+    'https://example.com/feed.xml',
+  )
+
+  expect(feed.items[0]?.id).toBe(`제목 없는 피드\u0000\u0000${fingerprint}`)
+  expect(feed.items[0]?.legacyId).toBeUndefined()
+})
+
 it('should extract article text without navigation or scripts', () => {
   expect(
     extractArticleText(
