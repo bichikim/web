@@ -51,6 +51,10 @@ const DEV_PAGE_COMPONENTS: Readonly<Partial<Record<string, Component>>> = {
     const {RecoveryPage} = await import('./RecoveryPage')
     return {default: RecoveryPage}
   }),
+  '/dev/saju': lazy(async () => {
+    const {SajuPage} = await import('./SajuPage')
+    return {default: SajuPage}
+  }),
   '/dev/sound-generation': lazy(async () => {
     const {SoundGenerationPage} = await import('./SoundGenerationPage')
     return {default: SoundGenerationPage}
