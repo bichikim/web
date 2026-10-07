@@ -79,6 +79,15 @@ describe('normalizeSpeechText', () => {
     ).toBe('유월 십 일에 만나요. 시월 삼 일은 개천절이에요. 십일월 십오 일, 십이월 삼십일 일.')
   })
 
+  it('should keep irregular month readings alongside padded clock and duration readings', () => {
+    expect(
+      normalizeSpeechText({
+        language: 'ko',
+        text: '６월 １０월, ０９시 ０５분, 05분 남았어요.',
+      }),
+    ).toBe('유월 시월, 아홉 시 오 분, 오 분 남았어요.')
+  })
+
   it('should not apply irregular month readings to durations and other units', () => {
     expect(
       normalizeSpeechText({

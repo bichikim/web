@@ -1,3 +1,4 @@
+import {useResizeObserver} from 'src/hooks/use-resize-observer'
 import {Engine} from '@babylonjs/core/Engines/engine'
 import {createEffect, createSignal, onCleanup, onMount, Show, untrack} from 'solid-js'
 import {applyCameraCommand, type CameraCommand} from './camera-control'
@@ -64,8 +65,8 @@ export const CharacterCanvas = (props: CharacterCanvasProps) => {
       const url = props.modelUrl
       untrack(() => renderer.load(url))
     })
-    const observer = new ResizeObserver(() => engine.resize())
-    observer.observe(surface)
+    const observer = useResizeObserver({onResize: () => engine.resize(), target: () => surface})
+    observer.start()
     // eslint-disable-next-line solid/reactivity -- Read controls for each rendered frame.
     engine.runRenderLoop(() =>
       renderer.render(
@@ -75,7 +76,7 @@ export const CharacterCanvas = (props: CharacterCanvasProps) => {
       ),
     )
     onCleanup(() => {
-      observer.disconnect()
+      observer.stop()
       engine.stopRenderLoop()
       renderer.dispose()
       engine.dispose()

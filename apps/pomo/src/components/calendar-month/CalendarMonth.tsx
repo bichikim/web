@@ -5,7 +5,7 @@ import {monthEnvironment} from './environment'
 import {useMonth} from './use-month'
 import {CalendarHeader} from './Header'
 import {CalendarGrid} from './Grid'
-import {CalendarAgenda} from './Agenda'
+import {CalendarAgenda} from './CalendarAgenda'
 
 interface CalendarMonthProps {
   readonly revision?: number

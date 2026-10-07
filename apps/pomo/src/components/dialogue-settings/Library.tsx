@@ -1,3 +1,4 @@
+import {usePendingDeleteConfirmation} from 'src/hooks/use-pending-delete-confirmation'
 import {KeyedList} from '../keyed-list'
 import {clearHtmlMediaElement} from 'src/utils/clear-html-media-element'
 import {cx} from 'class-variance-authority'
@@ -29,7 +30,6 @@ export interface DialogueLibraryProps {
   readonly entries: ReadonlyArray<DialogueLibraryEntry>
   readonly onAfterDelete?: (dialogue: PDialogue) => void
   readonly onDelete?: (dialogue: PDialogue) => Promise<void>
-  readonly onRequestClose?: () => void
   readonly textLineLimit?: DialogueLibraryItemProps['lineLimit']
 }
 
@@ -40,7 +40,7 @@ export const DialogueLibrary = (props: DialogueLibraryProps) => {
   const [audioElement, setAudioElement] = createSignal<HTMLAudioElement | undefined>()
   const [missingDialogueId, setMissingDialogueId] = createSignal<string | null>(null)
   const [message, setMessage] = createSignal<string | null>(null)
-  const [pendingDeleteId, setPendingDeleteId] = createSignal<string | null>(null)
+  const deletion = usePendingDeleteConfirmation()
   let playbackUrl: string | null = null
   let playbackRequestId = 0
 
@@ -139,13 +139,7 @@ export const DialogueLibrary = (props: DialogueLibraryProps) => {
       }
 
       setMessage(null)
-      const didPlay = await events.playDialogue(dialogue.id)
-
-      if (currentRequestId !== playbackRequestId || !didPlay) {
-        return
-      }
-
-      props.onRequestClose?.()
+      await events.playDialogue(dialogue.id)
     } catch (error: unknown) {
       if (currentRequestId !== playbackRequestId) {
         return
@@ -165,7 +159,7 @@ export const DialogueLibrary = (props: DialogueLibraryProps) => {
         await props.onDelete(dialogue)
       }
       props.onAfterDelete?.(dialogue)
-      setPendingDeleteId(null)
+      deletion.cancel()
     } catch (error: unknown) {
       console.error('Failed to delete focus room dialogue.', error)
       setMessage(m.settings_dialogue_delete_failed())
@@ -203,14 +197,14 @@ export const DialogueLibrary = (props: DialogueLibraryProps) => {
                     {m.settings_dialogue_edit()}
                   </A>
                   <Show
-                    when={pendingDeleteId() === entry().dialogue.id}
+                    when={deletion.pendingId() === entry().dialogue.id}
                     fallback={
-                      <button onClick={() => setPendingDeleteId(entry().dialogue.id)} type="button">
+                      <button onClick={() => deletion.request(entry().dialogue.id)} type="button">
                         {m.settings_dialogue_delete()}
                       </button>
                     }
                   >
-                    <button onClick={() => setPendingDeleteId(null)} type="button">
+                    <button onClick={() => deletion.cancel()} type="button">
                       {m.settings_dialogue_cancel()}
                     </button>
                     <button

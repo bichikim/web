@@ -30,6 +30,8 @@ import {VersionNoticePanel} from './VersionNoticePanel'
 import {GLASS_ICON_BUTTON} from '../button-presets'
 import {PButton} from '../p-button/PButton'
 import {PTools} from '../p-tools/PTools'
+import {PToastRegion} from '../p-toast'
+import {PStudioTourHint} from './TourHint'
 
 interface SceneToolbarProps {
   readonly uiAutoHide?: ReturnType<typeof useUiAutoHide>
@@ -60,6 +62,8 @@ interface SceneToolbarProps {
   readonly onSceneStyleChange: (sceneStyle: PSceneStyle) => void
   readonly onTimeModeChange: (mode: SceneTimeMode) => void
   readonly onTourOpen?: () => void
+  readonly tourHintVisible?: boolean
+  readonly onDismissTourHint?: () => void
   readonly onWeatherEnabledChange: (enabled: boolean) => void
   readonly onWeatherLocationChange: (location: WeatherLocation) => void
   readonly onWeatherSceneModeChange: (mode: WeatherSceneMode) => void
@@ -184,6 +188,10 @@ export const SceneToolbar = (props: SceneToolbarProps) => {
       <div class="clear-both flex flex-col items-end gap-2">
         <PWeatherStatus sceneStyle={props.sceneStyle} state={props.weatherState} />
         <PModelDownloadStatus />
+        <PToastRegion sceneStyle={props.sceneStyle} />
+        <Show when={props.tourHintVisible}>
+          <PStudioTourHint onDismiss={props.onDismissTourHint} />
+        </Show>
         <Show when={props.isSceneTransitioning}>
           <span
             aria-live="polite"

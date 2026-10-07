@@ -7,6 +7,7 @@ import {createEffect, createMemo, createSignal, type JSX, onMount} from 'solid-j
 import {changeAdminAlbumStatusAction, connectAdminAlbumOfferAction} from './actions'
 import {type AdminCatalog, type AlbumStatusAction} from './catalog'
 import {adminCatalogQuery} from './catalog-query'
+import {getCatalogTrackCounts} from './catalog-track-counts'
 import {useAlbumDraft} from './use-album-draft'
 import {useTrackManagement} from './use-track-management'
 
@@ -89,16 +90,8 @@ export const useAdminMusic = () => {
     setMessage,
   })
   const albumStats = createMemo(() => getAlbumStats(catalog().albums))
-  const getTrackCount = (albumId: string): number => {
-    const currentCatalog = catalog()
-    const albumTrackIds = new Set(
-      currentCatalog.tracks.filter((track) => track.albumId === albumId).map((track) => track.id),
-    )
-
-    return currentCatalog.assets.filter(
-      (asset) => asset.status === 'active' && albumTrackIds.has(asset.trackId),
-    ).length
-  }
+  const trackCounts = createMemo(() => getCatalogTrackCounts(catalog()))
+  const getTrackCount = (albumId: string): number => trackCounts().get(albumId) ?? 0
 
   createEffect(() => {
     const result = catalogResult()

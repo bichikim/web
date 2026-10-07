@@ -1,3 +1,4 @@
+import {useResizeObserver} from 'src/hooks/use-resize-observer'
 import {type Accessor, createEffect, createSignal, onCleanup} from 'solid-js'
 import {shouldWrapToolbar} from './should-wrap-toolbar'
 
@@ -45,24 +46,18 @@ export const useToolbarWrap = (
           }),
       )
     }
-    const resize = new ResizeObserver(measure)
+    const [targets, setTargets] = createSignal<ReadonlyArray<Element>>([])
+    const resize = useResizeObserver({onResize: measure, target: targets})
+    resize.start()
     const observe = () => {
-      resize.disconnect()
       pomodoro = container.querySelector<HTMLElement>('.pomo-pomodoro')
-      resize.observe(toolbar)
-      if (pomodoro) {
-        resize.observe(pomodoro)
-      }
-      for (const child of actions.children) {
-        resize.observe(child)
-      }
+      setTargets([toolbar, ...(pomodoro === null ? [] : [pomodoro]), ...actions.children])
       measure()
     }
     const mutation = new MutationObserver(observe)
     mutation.observe(container, {childList: true, subtree: true})
     observe()
     onCleanup(() => {
-      resize.disconnect()
       mutation.disconnect()
     })
   })

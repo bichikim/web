@@ -9,6 +9,7 @@ import {
   onMount,
   untrack,
 } from 'solid-js'
+import {createAnimationLoop} from '@winter-love/solid-use/animation-loop'
 import {useEvent} from '@winter-love/solid-use/event'
 import {z} from 'zod'
 
@@ -281,18 +282,21 @@ export const usePomodoroTimer = (props: UsePomodoroTimerProps = {}): PomodoroTim
       )
     })
 
-    const refreshFrame = () => {
-      refresh()
-      if (!isDisposed) {
-        frame = globalThis.requestAnimationFrame(refreshFrame)
+    const animation = createAnimationLoop()
+    animation.start(() => {
+      try {
+        refresh()
+      } catch (error) {
+        // Preserve the consumer's stop-on-error policy; the shared loop otherwise continues.
+        animation.stop()
+        throw error
       }
-    }
-    let frame = globalThis.requestAnimationFrame(refreshFrame)
+    })
     useEvent(document, 'visibilitychange', refresh)
 
     onCleanup(() => {
       isDisposed = true
-      globalThis.cancelAnimationFrame(frame)
+      animation.stop()
       const shouldPersistBeforeInitialization = !isStorageReady()
       const shouldPersistStateBeforeInitialization =
         shouldPersistBeforeInitialization && state().status !== 'idle'

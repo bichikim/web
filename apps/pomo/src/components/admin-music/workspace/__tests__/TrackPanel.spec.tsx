@@ -1,9 +1,13 @@
+import {createSignal} from 'solid-js'
+import type {AdminTrack} from 'src/features/admin-music'
 /** @vitest-environment jsdom */
 import {cleanup, fireEvent, render, screen, waitFor} from '@solidjs/testing-library'
 import {afterEach, expect, it, vi} from 'vitest'
 import {BASE_CATALOG, createModelHarness} from '../../__tests__/fixtures/model'
 import {TrackPanel} from '../TrackPanel'
-vi.mock('@solidjs/start', () => ({clientOnly: vi.fn(() => () => null)}))
+vi.mock('@solidjs/start', () => ({
+  clientOnly: vi.fn(() => (props: {title: string}) => <audio aria-label={props.title} />),
+}))
 
 afterEach(() => {
   cleanup()
@@ -79,4 +83,33 @@ it('should show each active track artwork without using an inactive asset image'
     'https://images.example/two.png',
   )
   expect(screen.getAllByRole('img')).toHaveLength(2)
+})
+
+it('should preserve preview playback position when refreshed catalog objects replace tracks', () => {
+  const {model} = createModelHarness()
+  const initial = BASE_CATALOG.tracks.filter((track) => track.albumId === 'album')
+  const [tracks, setTracks] = createSignal<ReadonlyArray<AdminTrack>>(initial)
+  const result = render(() => (
+    <TrackPanel
+      albumId="album"
+      albumTitle="앨범"
+      albumStatus="draft"
+      model={model}
+      assets={BASE_CATALOG.assets}
+      pendingTracks={[]}
+      tracks={tracks()}
+    />
+  ))
+  const audio = result.container.querySelector<HTMLAudioElement>('audio[aria-label="Track one"]')!
+  audio.currentTime = 12
+  setTracks(
+    initial.map((track) => ({...track, title: track.id === 'one' ? 'Updated title' : track.title})),
+  )
+  const updated = result.container.querySelector<HTMLAudioElement>(
+    'audio[aria-label="Updated title"]',
+  )
+  expect(updated).toBe(audio)
+  expect(updated?.currentTime).toBe(12)
+  setTracks((current) => current.filter((track) => track.id !== 'one'))
+  expect(audio.isConnected).toBe(false)
 })

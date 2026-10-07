@@ -2,13 +2,13 @@
 import {fireEvent, render, screen} from '@solidjs/testing-library'
 import {PSelect} from 'src/components/p-select/PSelect'
 import {PSwitch} from 'src/components/p-switch/PSwitch'
-import {useFullscreen} from 'src/features/fullscreen'
+import {useFullscreen} from 'src/hooks/use-fullscreen'
 import {useScreenWakeLock} from 'src/features/screen-wake-lock'
 import {beforeEach, expect, it, vi} from 'vitest'
 import {PGeneralDisplaySettings} from '../Display'
 vi.mock('src/components/p-select/PSelect', () => ({PSelect: vi.fn()}))
 vi.mock('src/components/p-switch/PSwitch', () => ({PSwitch: vi.fn()}))
-vi.mock('src/features/fullscreen', () => ({useFullscreen: vi.fn()}))
+vi.mock('src/hooks/use-fullscreen', () => ({useFullscreen: vi.fn()}))
 vi.mock('src/features/screen-wake-lock', () => ({useScreenWakeLock: vi.fn()}))
 
 beforeEach(() => {
@@ -242,7 +242,7 @@ it('should show toolbar toggles enabled by default and emit hidden choices', () 
   for (const [label, change] of [
     ['기능 요청 표시', featureRequest],
     ['도구 표시', tools],
-    ['기억보조 표시', memory],
+    ['생각 보조 표시', memory],
   ] as const) {
     const control = screen.getByRole('button', {name: label})
     expect(control).toHaveAttribute('aria-pressed', 'true')
@@ -283,7 +283,7 @@ it('should describe every display switch', () => {
 
   for (const [label, description] of [
     ['대화 입력 버튼 표시', '집중 화면에 대화 입력 버튼을 표시해요.'],
-    ['기억보조 표시', '집중 화면에 기억보조 버튼을 표시해요.'],
+    ['생각 보조 표시', '집중 화면에 생각 보조 버튼을 표시해요.'],
     ['기능 요청 표시', '집중 화면에 기능 요청 버튼을 표시해요.'],
     ['플레이어 표시', '끄면 음악 재생이 중지돼요.'],
     ['뽀모도로 표시', '표시를 끄면 타이머도 멈춰요.'],

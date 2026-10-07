@@ -227,4 +227,67 @@ describe('runTrackDeletionMaintenance', () => {
     expect(repository.prepareStale).toHaveBeenCalledTimes(2)
     expect(repository.listPending).toHaveBeenCalledOnce()
   })
+
+  it('should finish serial registration attempts before serial deletion attempts', async () => {
+    const repository = createRepository()
+    const first = Promise.withResolvers<boolean>()
+    const started = Promise.withResolvers<void>()
+    const registrationError = new Error('registration failed')
+    const storageError = new Error('storage failed')
+    const markingError = new Error('marking failed')
+    const finalizationError = new Error('finalization failed')
+    const calls: string[] = []
+    vi.mocked(repository.listStale).mockResolvedValue([{trackId: 'stale-1'}, {trackId: 'stale-2'}])
+    vi.mocked(repository.prepareStale).mockImplementation((id) => {
+      calls.push(`prepare:${id}`)
+      started.resolve()
+      return id === 'stale-1' ? first.promise : Promise.resolve(false)
+    })
+    vi.mocked(repository.listPending).mockImplementation(async () => {
+      calls.push('listPending')
+      return [
+        createCandidate('track-1', false),
+        createCandidate('track-2', false),
+        createCandidate('track-3'),
+        createCandidate('track-4'),
+      ]
+    })
+    vi.mocked(repository.deleteStorage).mockImplementation(async (keys) => {
+      calls.push(`delete:${keys[0]}`)
+      if (keys[0]?.includes('track-1')) {
+        throw storageError
+      }
+    })
+    vi.mocked(repository.markStorageDeleted).mockImplementation(async (id) => {
+      calls.push(`mark:${id}`)
+      throw markingError
+    })
+    vi.mocked(repository.finalize).mockImplementation(async (id) => {
+      calls.push(`finalize:${id}`)
+      if (id === 'track-3') {
+        throw finalizationError
+      }
+      return true
+    })
+
+    const maintenance = runTrackDeletionMaintenance({repository})
+    const assertion = expect(maintenance).rejects.toMatchObject({
+      errors: [registrationError, storageError, markingError, finalizationError],
+      message: 'One or more music track deletions failed',
+    })
+    await started.promise
+    expect(calls).toEqual(['prepare:stale-1'])
+    first.reject(registrationError)
+    await assertion
+    expect(calls).toEqual([
+      'prepare:stale-1',
+      'prepare:stale-2',
+      'listPending',
+      'delete:tracks/track-1/asset/source.mp3',
+      'delete:tracks/track-2/asset/source.mp3',
+      'mark:track-2',
+      'finalize:track-3',
+      'finalize:track-4',
+    ])
+  })
 })

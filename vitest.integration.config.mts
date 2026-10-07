@@ -23,6 +23,7 @@ export default mergeConfig(baseConfig, {
       './vitest.storybook.config.mts',
       './apps/coong/vitest.storybook.config.mts',
       './apps/pomo/vitest.storybook.config.mts',
+      './apps/pomo/vitest.browser.config.mts',
       ...visualRegressionProjects,
       './packages/puppet/vitest.storybook.config.mts',
       './packages/puppet/vitest.browser.config.ts',

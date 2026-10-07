@@ -39,7 +39,7 @@ const getEventAlarmAt = (
     return dayjs.tz(`${alarmDate}T${ALL_DAY_ALARM_TIME}`, timeZone).toDate()
   }
 
-  return new Date(event.start)
+  return new Date(event.start.trim())
 }
 
 interface UseCalendarAlarmControllerProps {
@@ -137,9 +137,14 @@ export const useCalendarAlarmController = (
     const currentDate = date()
     const currentTime = time()
     const currentTimeZone = props.timeZone()
-    const alarmAt = dayjs.tz(`${currentDate}T${currentTime}:00`, currentTimeZone).toDate()
+    const zonedAlarmAt = dayjs.tz(`${currentDate}T${currentTime}:00`, currentTimeZone)
+    const alarmAt = zonedAlarmAt.toDate()
     const now = props.clock()
-    if (Number.isNaN(alarmAt.getTime()) || alarmAt.getTime() <= now.getTime()) {
+    if (
+      Number.isNaN(alarmAt.getTime()) ||
+      zonedAlarmAt.format('YYYY-MM-DDTHH:mm') !== `${currentDate}T${currentTime}` ||
+      alarmAt.getTime() <= now.getTime()
+    ) {
       setMessage(m.calendar_alarm_invalid_time())
       return
     }

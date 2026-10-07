@@ -1,55 +1,24 @@
 /** @vitest-environment jsdom */
 
-import {Tabs} from '@kobalte/core/tabs'
-import {fireEvent, render, screen} from '@solidjs/testing-library'
-import type {JSX} from 'solid-js'
+import {fireEvent, render, screen, waitFor, within} from '@solidjs/testing-library'
 import {afterEach, beforeEach, expect, it, vi} from 'vitest'
-
 import {getLocale, overwriteGetLocale} from '@paraglide/runtime'
-import {PModal, type PModalProps} from 'src/components/p-modal/PModal'
+import {PreferenceProvider} from 'src/hooks/use-preference'
 import {CalendarConnections} from '../../calendar-connections/CalendarConnections'
 import {CalendarMonth} from '../../calendar-month/CalendarMonth'
-import {PButton} from '../../p-button/PButton'
-import {PMemoryAssist} from '../PMemoryAssist'
 import {LanguageLearningLibrary} from '../../language-learning/Library'
+import {LanguageLearningWords} from '../../language-learning/Words'
 import {MemoryMemoList} from '../../memory-assist/Memos'
 import {PictureDiary} from '../../memory-assist/PictureDiary'
-import {PScribbleCircleControl} from '../../scribble/CircleControl'
+import {PModelDownloadProvider} from '../../../features/model-download'
+import {PMemoryAssist} from '../PMemoryAssist'
 
-vi.mock('@kobalte/core/tabs', () => ({Tabs: vi.fn()}))
-vi.mock('../../p-modal/PModal', () => ({PModal: vi.fn()}))
-vi.mock('../../calendar-connections/CalendarConnections', () => ({
-  CalendarConnections: vi.fn(() => <div>calendar connections</div>),
-}))
-vi.mock('../../calendar-month/CalendarMonth', () => ({
-  CalendarMonth: vi.fn((props: {settings?: JSX.Element}) => (
-    <div>
-      calendar month
-      {props.settings}
-    </div>
-  )),
-}))
-vi.mock('../../p-button/PButton', () => ({PButton: vi.fn()}))
-vi.mock('../../language-learning/Library', () => ({
-  LanguageLearningLibrary: vi.fn(),
-}))
-vi.mock('../../language-learning/Words', () => ({
-  LanguageLearningWords: () => <div>language learning words</div>,
-}))
-vi.mock('../../memory-assist/Memos', () => ({
-  MemoryMemoList: vi.fn(() => <div>memory memos</div>),
-}))
-vi.mock('../../memory-assist/PictureDiary', () => ({
-  PictureDiary: vi.fn(() => <div>picture diary</div>),
-}))
-vi.mock('../../scribble/CircleControl', () => ({PScribbleCircleControl: vi.fn()}))
-
-interface TabsRootProps {
-  readonly children?: JSX.Element
-  readonly class?: string
-  readonly onChange?: (value: string) => void
-  readonly value?: string
-}
+vi.mock('../../calendar-connections/CalendarConnections', () => ({CalendarConnections: vi.fn()}))
+vi.mock('../../calendar-month/CalendarMonth', () => ({CalendarMonth: vi.fn()}))
+vi.mock('../../language-learning/Library', () => ({LanguageLearningLibrary: vi.fn()}))
+vi.mock('../../language-learning/Words', () => ({LanguageLearningWords: vi.fn()}))
+vi.mock('../../memory-assist/Memos', () => ({MemoryMemoList: vi.fn()}))
+vi.mock('../../memory-assist/PictureDiary', () => ({PictureDiary: vi.fn()}))
 
 const originalGetLocale = getLocale
 
@@ -57,121 +26,100 @@ beforeEach(() => {
   vi.clearAllMocks()
   sessionStorage.clear()
   overwriteGetLocale(() => 'ko')
-  Object.assign(Tabs, {
-    Content: (props: {children: JSX.Element}) => <>{props.children}</>,
-    List: (props: {
-      readonly 'aria-label': string
-      readonly children: JSX.Element
-      readonly class?: string
-    }) => (
-      <div aria-label={props['aria-label']} class={props.class} role="tablist">
-        {props.children}
-      </div>
-    ),
-    Trigger: (props: {children: JSX.Element; class?: string}) => (
-      <button class={props.class} role="tab" type="button">
-        {props.children}
-      </button>
-    ),
+  vi.stubGlobal(
+    'ResizeObserver',
+    class {
+      disconnect = vi.fn()
+      observe = vi.fn()
+    },
+  )
+  const readStyles = globalThis.getComputedStyle.bind(globalThis)
+  vi.spyOn(globalThis, 'getComputedStyle').mockImplementation((element) => {
+    const styles = readStyles(element)
+    Object.defineProperty(styles, 'animationName', {configurable: true, value: 'none'})
+    return styles
   })
-  vi.mocked(Tabs).mockImplementation((props: TabsRootProps) => (
-    <div data-value={props.value}>
-      {props.children}
-      <button onClick={() => props.onChange?.('words')} type="button">
-        Change tab
-      </button>
-      <button onClick={() => props.onChange?.('calendar')} type="button">
-        Change to calendar
-      </button>
-    </div>
-  ))
-  vi.mocked(LanguageLearningLibrary).mockImplementation((props) => (
-    <button onClick={props.onRequestClose} type="button">
-      language learning library
+  vi.mocked(LanguageLearningLibrary).mockImplementation(() => <p>language learning library</p>)
+  vi.mocked(LanguageLearningWords).mockImplementation(() => <p>language learning words</p>)
+  vi.mocked(MemoryMemoList).mockImplementation(() => <p>memory memos</p>)
+  vi.mocked(PictureDiary).mockImplementation(() => <p>picture diary</p>)
+  vi.mocked(CalendarConnections).mockImplementation((props) => (
+    <button onClick={props.onConnectionsChange} type="button">
+      Update calendar connections
     </button>
   ))
-  vi.mocked(PModal).mockImplementation((props: PModalProps) => (
-    <div aria-label={props.title} hidden={!props.isOpen} role="dialog">
-      {props.navigation}
-      {props.children}
-      <button onClick={props.onCloseAutoFocus} type="button">
-        Restore focus
-      </button>
-      <button onClick={() => props.onOpenChange(false)} type="button">
-        Close modal
-      </button>
+  vi.mocked(CalendarMonth).mockImplementation((props) => (
+    <div>
+      calendar month
+      {props.settings}
     </div>
-  ))
-  vi.mocked(PButton).mockImplementation((props) => (
-    <button onClick={(event) => props.onPress?.(event.currentTarget)} type="button">
-      {props.accessibleLabel}
-      <span aria-hidden="true">
-        {props.tooltip} {props.icon}
-      </span>
-    </button>
-  ))
-  vi.mocked(PScribbleCircleControl).mockImplementation((props) => (
-    <div data-enabled={String(props.enabled)}>{props.children}</div>
   ))
 })
 
 afterEach(() => {
   overwriteGetLocale(originalGetLocale)
+  vi.unstubAllGlobals()
+  vi.restoreAllMocks()
 })
 
-it('should open a Korean memory assist modal', async () => {
+it('should switch Korean panels, refresh the calendar and restore focus after closing', async () => {
+  await import('../../memory-assist/Content')
   const weatherState = {status: 'disabled'} as const
-  render(() => <PMemoryAssist weatherState={weatherState} />)
+  render(
+    () => (
+      <PModelDownloadProvider>
+        <PMemoryAssist weatherState={weatherState} />
+      </PModelDownloadProvider>
+    ),
+    {wrapper: PreferenceProvider},
+  )
 
-  const trigger = screen.getByRole('button', {name: '기억보조'})
+  const trigger = screen.getByRole('button', {name: '생각 보조'})
   fireEvent.click(trigger)
+  const dialog = await screen.findByRole('dialog', {name: 'Pomofi 생각 보조'})
+  expect(dialog).toBeVisible()
+  expect(dialog).toHaveAttribute('data-size', 'expanded')
+  expect(within(dialog).getByRole('tablist', {name: '생각 보조 종류'})).toBeInTheDocument()
+  expect(
+    within(dialog)
+      .getAllByRole('tab')
+      .map((tab) => tab.textContent),
+  ).toEqual(['학습 문장', '학습 단어', '메모', '일기장', '캘린더', '타로'])
+  expect(await screen.findByRole('tabpanel', {name: '학습 문장'})).toHaveTextContent(
+    'language learning library',
+  )
+  expect(screen.queryByRole('tabpanel', {name: '학습 단어'})).not.toBeInTheDocument()
 
-  expect(screen.getByRole('dialog', {name: 'Pomofi 기억 보조'}).hasAttribute('hidden')).toBe(false)
-  expect(PButton).toHaveBeenCalledWith(
-    expect.objectContaining({
-      accessibleLabel: '기억보조',
-      icon: 'i-tabler-brain',
-      tooltip: '기억보조',
-    }),
+  fireEvent.click(screen.getByRole('tab', {name: '학습 단어'}))
+  expect(await screen.findByRole('tabpanel', {name: '학습 단어'})).toHaveTextContent(
+    'language learning words',
   )
-  expect(PModal).toHaveBeenCalledWith(expect.objectContaining({size: 'expanded'}))
-  expect(Tabs).toHaveBeenCalledWith(expect.objectContaining({class: 'contents'}))
-  expect(screen.getAllByRole('tab').map((tab) => tab.textContent)).toEqual([
-    '학습 문장',
-    '학습 단어',
-    '메모',
-    '일기장',
-    '캘린더',
-  ])
-  expect(screen.getByRole('tablist', {name: '기억 보조 종류'})).toBeInTheDocument()
-  expect(screen.getAllByRole('tab')[0]?.className).toContain('ui-selected:shadow-tab-active')
-  expect(await screen.findByText('language learning library')).toBeInTheDocument()
-  expect(screen.getByText('language learning words')).toBeInTheDocument()
-  expect(screen.getByText('memory memos')).toBeInTheDocument()
-  expect(screen.getByText('calendar connections')).toBeInTheDocument()
-  expect(screen.getByText('calendar month')).toBeInTheDocument()
-  expect(CalendarConnections).toHaveBeenCalledWith(
-    expect.objectContaining({onConnectionsChange: expect.any(Function)}),
-  )
-  expect(CalendarMonth).toHaveBeenCalledWith(expect.objectContaining({revision: 0}))
-  expect(MemoryMemoList).toHaveBeenCalled()
+  expect(screen.queryByRole('tabpanel', {name: '학습 문장'})).not.toBeInTheDocument()
+  fireEvent.click(screen.getByRole('tab', {name: '메모'}))
+  expect(await screen.findByRole('tabpanel', {name: '메모'})).toHaveTextContent('memory memos')
+  fireEvent.click(screen.getByRole('tab', {name: '일기장'}))
+  expect(await screen.findByRole('tabpanel', {name: '일기장'})).toHaveTextContent('picture diary')
   expect(PictureDiary).toHaveBeenCalledWith(expect.objectContaining({weatherState}))
 
-  fireEvent.click(screen.getByRole('button', {name: 'Change to calendar'}))
+  fireEvent.click(screen.getByRole('tab', {name: '캘린더'}))
+  expect(await screen.findByRole('tabpanel', {name: '캘린더'})).toHaveTextContent('calendar month')
+  expect(screen.getByRole('tab', {name: '캘린더'})).toHaveAttribute('aria-selected', 'true')
   expect(CalendarMonth).toHaveBeenLastCalledWith(expect.objectContaining({revision: 1}))
-  fireEvent.click(screen.getByRole('button', {name: 'Close modal'}))
-  fireEvent.click(trigger)
-  expect(CalendarMonth).toHaveBeenLastCalledWith(expect.objectContaining({revision: 2}))
+  fireEvent.click(within(dialog).getByRole('button', {name: '닫기'}))
+  await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument())
+  await waitFor(() => expect(trigger).toHaveFocus())
 
+  fireEvent.click(trigger)
+  await screen.findByRole('tabpanel', {name: '캘린더'})
+  expect(CalendarMonth).toHaveBeenLastCalledWith(expect.objectContaining({revision: 2}))
   sessionStorage.setItem('pomo:calendar-month-cache:v1', 'cached')
-  const connectionProps = vi.mocked(CalendarConnections).mock.calls[0]?.[0]
-  connectionProps?.onConnectionsChange?.()
+  fireEvent.click(screen.getByRole('button', {name: 'Update calendar connections'}))
   expect(sessionStorage.getItem('pomo:calendar-month-cache:v1')).toBeNull()
   expect(CalendarMonth).toHaveBeenLastCalledWith(expect.objectContaining({revision: 3}))
 
-  fireEvent.click(screen.getByRole('button', {name: 'Restore focus'}))
-  expect(document.activeElement).toBe(trigger)
-  fireEvent.click(screen.getByRole('button', {name: 'language learning library'}))
-  fireEvent.click(screen.getByRole('button', {hidden: true, name: 'Close modal'}))
-  fireEvent.click(screen.getByRole('button', {name: 'Change tab'}))
+  const calendarTab = screen.getByRole('tab', {name: '캘린더'})
+  calendarTab.focus()
+  fireEvent.keyDown(calendarTab, {key: 'Escape'})
+  await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument())
+  await waitFor(() => expect(trigger).toHaveFocus())
 })

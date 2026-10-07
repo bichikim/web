@@ -1,3 +1,4 @@
+import {createTimeout} from '@winter-love/solid-use/timeout'
 import {getDocument} from '@winter-love/utils'
 import {visibilityInterval} from 'src/utils/visibility-interval'
 import {visibility} from 'src/utils/visibility'
@@ -77,6 +78,10 @@ import {useDialogueSceneGaze} from '../use-dialogue-scene-gaze'
 import {StudioOverlay} from './StudioOverlay'
 import {useStudioTour} from './use-tour'
 import {DesktopSurfaceHandle} from '../desktop-surface/DesktopSurfaceHandle'
+import {
+  usePStudioMotionInput,
+  usePStudioMotionInputSession,
+} from './PStudioMotionInputSessionProvider'
 
 const AUTOMATIC_PERIOD_REFRESH = 60_000
 
@@ -229,21 +234,19 @@ const StudioSceneView = (props: StudioSceneViewProps) => (
 
 interface StudioRuntimeOptions {
   readonly entry: ReturnType<typeof useStudioEntry>
+  readonly motionInputSession: ReturnType<typeof usePStudioMotionInputSession>
   readonly setAutomaticPeriod: Setter<ScenePeriod>
   readonly setCanUseGyroscope: Setter<boolean>
-  readonly setMotionInput: Setter<PSceneMotionInput>
+  readonly setMotionInput: (motionInput: PSceneMotionInput) => void
 }
 
 const useAutomaticScenePeriodRefresh = (setAutomaticPeriod: Setter<ScenePeriod>) => {
-  let periodChangeTimeout: ReturnType<typeof globalThis.setTimeout> | null = null
-  const clearPeriodChangeTimeout = () => {
-    if (periodChangeTimeout === null) {
-      return
-    }
-
-    globalThis.clearTimeout(periodChangeTimeout)
-    periodChangeTimeout = null
-  }
+  let pendingDelay = 0
+  const timeout = createTimeout(
+    () => refreshAutomaticPeriod(),
+    () => pendingDelay,
+  )
+  const clearPeriodChangeTimeout = timeout.cancel
   const refreshAutomaticPeriod = () => {
     const now = new Date()
     setAutomaticPeriod(getAutomaticScenePeriod(now))
@@ -255,10 +258,8 @@ const useAutomaticScenePeriodRefresh = (setAutomaticPeriod: Setter<ScenePeriod>)
 
     const nextPeriodChange = getNextScenePeriodChange(now)
 
-    periodChangeTimeout = globalThis.setTimeout(() => {
-      periodChangeTimeout = null
-      refreshAutomaticPeriod()
-    }, nextPeriodChange.getTime() - now.getTime())
+    pendingDelay = nextPeriodChange.getTime() - now.getTime()
+    timeout.execute()
   }
   const stopPeriodRefresh = visibilityInterval({
     callback: refreshAutomaticPeriod,
@@ -285,9 +286,11 @@ const useStudioRuntime = (options: StudioRuntimeOptions) => {
     const gyroscopeAvailable = supportsPSceneGyroscope()
     options.entry.restore()
     options.setCanUseGyroscope(gyroscopeAvailable)
-    if (gyroscopeAvailable) {
-      options.setMotionInput('gyroscope')
-    }
+    const rememberedMotionInput = options.motionInputSession?.motionInput()
+    const motionInput = rememberedMotionInput ?? (gyroscopeAvailable ? 'gyroscope' : 'drag')
+    options.setMotionInput(
+      motionInput === 'gyroscope' && !gyroscopeAvailable ? 'drag' : motionInput,
+    )
 
     useAutomaticScenePeriodRefresh(options.setAutomaticPeriod)
   })
@@ -402,6 +405,13 @@ const StudioUi = (props: StudioUiProps) => (
               props.displayPreferences.onDialogueComposerVisibleChange
             }
             onTourOpen={props.tourHint.openTour}
+            tourHintVisible={
+              props.tourHint.visible() &&
+              !props.entry.isVisible() &&
+              props.displayPreferences.tourButtonVisible() &&
+              props.desktopMode.mode() !== 'desktop'
+            }
+            onDismissTourHint={props.tourHint.dismiss}
             tourButtonVisible={props.displayPreferences.tourButtonVisible()}
             onTourButtonVisibleChange={props.displayPreferences.onTourButtonVisibleChange}
             screenSaverDelay={props.screenSaver.delay()}
@@ -436,13 +446,9 @@ const StudioUi = (props: StudioUiProps) => (
         uiAutoHideEnabled={props.uiAutoHide.enabled()}
         displayPreferences={props.displayPreferences}
         desktopMode={props.desktopMode.mode()}
-        entryVisible={props.entry.isVisible()}
         hasEntered={props.hasEntered}
-        isTourHintVisible={props.tourHint.visible()}
-        onDismissTourHint={props.tourHint.dismiss}
         screenSaver={props.screenSaver}
         tour={props.tour}
-        tourButtonVisible={props.displayPreferences.tourButtonVisible()}
       />
     </div>
   </>
@@ -454,7 +460,7 @@ export const PStudio = () => {
   const events = usePEvents()
   const pomoSay = usePSay({onBeforeSpeech: events.onStopDialoguePlayback})
   const [automaticPeriod, setAutomaticPeriod] = createSignal<ScenePeriod>('day')
-  const [motionInput, setMotionInput] = createSignal<PSceneMotionInput>('drag')
+  const {motionInput, motionInputSession, setMotionInput} = usePStudioMotionInput()
   const [motionMode, setMotionMode] = createSignal<PSceneMotionMode>('depth')
   const [canUseGyroscope, setCanUseGyroscope] = createSignal(false)
   const [isSceneLoading, setIsSceneLoading] = createSignal(true)
@@ -511,7 +517,13 @@ export const PStudio = () => {
       synchronizeDesktopBackground().catch(() => undefined)
     }
   })
-  useStudioRuntime({entry, setAutomaticPeriod, setCanUseGyroscope, setMotionInput})
+  useStudioRuntime({
+    entry,
+    motionInputSession,
+    setAutomaticPeriod,
+    setCanUseGyroscope,
+    setMotionInput,
+  })
   return (
     <section
       aria-label="Pomo"

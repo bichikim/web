@@ -2,7 +2,7 @@
 import {readFile} from 'node:fs/promises'
 
 const HTTP_PARTIAL_CONTENT_STATUS = 206
-const manifestUrl = new URL('./assets.json', import.meta.url)
+const manifestUrl = new URL(process.argv[2] ?? './assets.json', import.meta.url)
 const manifest = JSON.parse(await readFile(manifestUrl, 'utf8'))
 const revisionPrefix = `models/text-generation/${manifest.repositoryId}/${manifest.revision}`
 const assets = [

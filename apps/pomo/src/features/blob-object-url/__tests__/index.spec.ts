@@ -38,3 +38,23 @@ it('should propagate creation failure after revoking the previous URL', () => {
   expect(() => replaceBlobObjectUrl('blob:old', () => new Blob())).toThrow(failure)
   expect(revoke).toHaveBeenCalledExactlyOnceWith('blob:old')
 })
+
+it('should retain the previous URL until replacement creation succeeds in create-first mode', () => {
+  const revoke = vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => undefined)
+  const create = vi.spyOn(URL, 'createObjectURL').mockImplementation(() => {
+    expect(revoke).not.toHaveBeenCalled()
+    return 'blob:new'
+  })
+  expect(replaceBlobObjectUrl('blob:old', () => new Blob(), {order: 'create-first'})).toBe(
+    'blob:new',
+  )
+  expect(revoke).toHaveBeenCalledExactlyOnceWith('blob:old')
+  create.mockImplementation(() => {
+    throw new Error('failed')
+  })
+  revoke.mockClear()
+  expect(() => replaceBlobObjectUrl('blob:new', () => new Blob(), {order: 'create-first'})).toThrow(
+    'failed',
+  )
+  expect(revoke).not.toHaveBeenCalled()
+})

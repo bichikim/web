@@ -34,13 +34,17 @@ it('should release resize and motion listeners when the canvas runtime is destro
 
   runtime.attachEnvironment(canvas, onResize, onMotion)
   expect(observe).toHaveBeenCalledWith(canvas)
-  expect(addEventListener).toHaveBeenCalledWith('change', onMotion)
+  expect(addEventListener).toHaveBeenCalledWith('change', expect.any(Function), {capture: false})
+  const motionListener = addEventListener.mock.calls[0]![1]
+  motionListener({matches: true})
+  expect(onMotion).toHaveBeenCalled()
+  motionListener({matches: false})
   expect(documentAdd).toHaveBeenCalledWith('visibilitychange', onMotion)
   expect(runtime.isMotionPaused()).toBe(false)
 
   runtime.destroy()
   expect(disconnect).toHaveBeenCalledOnce()
-  expect(removeEventListener).toHaveBeenCalledWith('change', onMotion)
+  expect(removeEventListener).toHaveBeenCalledWith('change', motionListener, false)
   expect(documentRemove).toHaveBeenCalledWith('visibilitychange', onMotion)
 })
 
