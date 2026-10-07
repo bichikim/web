@@ -17,6 +17,9 @@ export const useMediaQuery = (
     }
 
     const mediaQuery = globalThis.matchMedia(query)
+    // #2844: Vitest 브라우저 모드로 확인했고 matches 누락은 재현되지 않음.
+    // Chromium 147·Firefox 148·WebKit 26.4의 화면 폭·색상 테마 변경에서 확인했다.
+    // matches 없는 합성 Event만으로 폴백을 요구하지 않고, 실제 지원 환경의 재현을 먼저 확인한다.
     const handleChange = (event: MediaQueryListEvent) => setMatches(event.matches)
 
     setMatches(mediaQuery.matches)
