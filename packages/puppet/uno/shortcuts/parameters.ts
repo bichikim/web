@@ -1,6 +1,6 @@
 export const parametersShortcuts = {
   'keyform-actions': [
-    '[.puppet-editor_&]:flex [.puppet-editor_&]:min-w-0',
+    '[.puppet-editor_&]:flex [.puppet-editor_&]:flex-wrap [.puppet-editor_&]:min-w-0',
     '[.puppet-editor_&]:items-center [.puppet-editor_&]:[gap:0.5rem]',
     '[.puppet-editor_&_button]:[padding:0.375rem_0.625rem]',
     '[.puppet-editor_&_button]:[border:0.0625rem_solid_#3d5f56]',

@@ -1,7 +1,13 @@
 import type {PuppetParameter, PuppetParameterBinding} from '../../player/document'
 import type {PuppetParameterValueMap, PuppetParameterValues} from '../../deformation'
+import type {PuppetPoint} from '../../player'
+import type {CornerKeyformSettings} from './generate-corner-keyforms'
+import type {MirrorKeyformSettings} from './mirror-keyform'
 
 export interface EditorKeyformPanelProps {
+  readonly keyformCenter?: PuppetPoint
+  readonly onKeyformMirror?: (settings: MirrorKeyformSettings) => string | null
+  readonly onCornersGenerate?: (settings: CornerKeyformSettings) => string | null
   readonly activeBindingId?: string
   readonly activeKeyformValues?: PuppetParameterValues | null
   readonly allParametersVisible?: boolean

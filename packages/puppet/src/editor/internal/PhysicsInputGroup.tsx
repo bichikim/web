@@ -35,13 +35,13 @@ export const PhysicsInputGroup = (props: PhysicsInputGroupProps) => (
       <strong>{props.inputLabel}</strong>
       <span>연결 {props.pendulums.length}개</span>
     </header>
-    <For each={props.pendulums}>
-      {(pendulum) => (
+    <For each={props.pendulums.map((pendulum) => pendulum.id)}>
+      {(pendulumId) => (
         <PhysicsPendulumEditor
           disabled={props.disabled}
           document={props.document}
-          index={() => props.allPendulums.findIndex((candidate) => candidate.id === pendulum.id)}
-          pendulum={pendulum}
+          index={() => props.allPendulums.findIndex((candidate) => candidate.id === pendulumId)}
+          pendulum={props.pendulums.find((candidate) => candidate.id === pendulumId)!}
           pendulums={props.allPendulums}
           onEditEnd={props.onEditEnd}
           onEditStart={props.onEditStart}

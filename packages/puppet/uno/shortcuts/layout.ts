@@ -149,6 +149,7 @@ export const layoutShortcuts = {
   'toolbar-brush-settings-mount': [
     '[.puppet-editor_&]:flex [.puppet-editor_&]:min-w-0 [.puppet-editor_&]:flex-1',
     '[.puppet-editor_&]:[margin-left:1.5rem] [.puppet-editor_&]:overflow-x-auto',
+    '[.puppet-editor_&]:py-2',
     '[.puppet-editor_&]:[scrollbar-width:thin]',
   ],
   'toolbar-button': [

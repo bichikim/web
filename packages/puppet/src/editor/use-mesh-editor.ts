@@ -1,6 +1,6 @@
 import {moveMeshVertex} from './move-mesh-vertex'
 import {canEditSelectedKeyform, commitVertexMove} from './commit-vertex-move'
-import {useDeformBrush} from './use-deform-brush'
+import {type DeformBrushMode, useDeformBrush} from './use-deform-brush'
 import {type Accessor, createEffect, createMemo, createSignal, type Setter, untrack} from 'solid-js'
 
 import type {PuppetParameterValues} from '../deformation'
@@ -20,6 +20,9 @@ export type {IndexedVertex, MeshTriangle} from './internal/mesh-view'
 export type {MeshPartView} from './internal/part-views'
 
 export interface UseMeshEditorResult {
+  readonly canSmooth: Accessor<boolean>
+  readonly brushMode: Accessor<DeformBrushMode>
+  readonly setBrushMode: (mode: DeformBrushMode) => void
   readonly brushEnabled: Accessor<boolean>
   readonly brushRadius: Accessor<number>
   readonly brushStrength: Accessor<number>
@@ -35,9 +38,9 @@ export interface UseMeshEditorResult {
   readonly handleCanvasClick: (event: MouseEvent) => void
   readonly handleKeyDown: (event: KeyboardEvent) => void
   readonly handleDeleteVertex: () => void
-  readonly handlePointerCancel: () => void
+  readonly handlePointerCancel: (event: PointerEvent) => void
   readonly handlePointerDown: (event: PointerEvent, partId: string, vertex: IndexedVertex) => void
-  readonly handlePointerEnd: () => void
+  readonly handlePointerEnd: (event: PointerEvent) => void
   readonly handlePointerMove: (event: PointerEvent) => void
   readonly clippedPartViews: Accessor<ReadonlyArray<MeshPartView>>
   readonly part: Accessor<PuppetPart | undefined>
@@ -443,9 +446,11 @@ export const useMeshEditor = (props: MeshEditorProps): UseMeshEditorResult => {
     brushCursor: brush.cursor,
     brushEnabled: brush.enabled,
     brushHardness: brush.hardness,
+    brushMode: brush.mode,
     brushRadius: brush.radius,
     brushStrength: brush.strength,
     canEditTopology: () => canEditMeshTopology(props, state),
+    canSmooth: brush.canSmooth,
     clippedPartViews: state.clippedPartViews,
     handleAddVertex,
     handleBrushPointerDown: brush.handlePointerDown,
@@ -478,14 +483,14 @@ export const useMeshEditor = (props: MeshEditorProps): UseMeshEditorResult => {
       event.stopPropagation()
       handleDeleteVertex()
     },
-    handlePointerCancel: () => {
+    handlePointerCancel: (event) => {
       resetPointerState(state)
-      brush.cancel()
+      brush.cancel(event)
     },
     handlePointerDown,
-    handlePointerEnd: () => {
+    handlePointerEnd: (event) => {
       if (brush.enabled()) {
-        brush.handlePointerEnd()
+        brush.handlePointerEnd(event)
       } else {
         handlePointerEnd()
       }
@@ -496,6 +501,7 @@ export const useMeshEditor = (props: MeshEditorProps): UseMeshEditorResult => {
     selectedVertex: state.selectedVertex,
     setBrushEnabled: brush.setEnabled,
     setBrushHardness: brush.setHardness,
+    setBrushMode: brush.setMode,
     setBrushRadius: brush.setRadius,
     setBrushStrength: brush.setStrength,
     triangles: state.triangles,

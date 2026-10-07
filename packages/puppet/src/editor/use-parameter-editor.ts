@@ -32,6 +32,11 @@ import {
   renameParameter,
 } from './internal/parameter-keyforms'
 import {getParameterPresentation} from './internal/parameter-presentation'
+import {mirrorKeyform, type MirrorKeyformSettings} from './internal/mirror-keyform'
+import {
+  type CornerKeyformSettings,
+  generateCornerKeyforms,
+} from './internal/generate-corner-keyforms'
 
 interface UseParameterEditorProps {
   readonly document: Accessor<PuppetDocument>
@@ -41,6 +46,8 @@ interface UseParameterEditorProps {
 }
 
 export interface ParameterEditorResult {
+  readonly mirrorKeyform: (settings: MirrorKeyformSettings) => string | null
+  readonly generateCorners: (settings: CornerKeyformSettings) => string | null
   readonly previewDocument: Accessor<PuppetDocument>
   readonly previewInfluences: (influences: ReadonlyArray<PuppetParameterInfluence> | null) => void
   readonly influence: Accessor<number>
@@ -349,6 +356,56 @@ const applyParameterName = (
   }
 }
 
+interface KeyformGenerationHandlersOptions {
+  readonly props: UseParameterEditorProps
+  readonly activeBinding: Accessor<PuppetParameterBinding | undefined>
+  readonly activeKeyformValues: Accessor<PuppetParameterValues | null>
+  readonly updateValues: (values: PuppetParameterValues) => void
+}
+
+const createKeyformGenerationHandlers = (options: KeyformGenerationHandlersOptions) => {
+  const {props, activeBinding, activeKeyformValues, updateValues} = options
+  return {
+    generateCorners(settings: CornerKeyformSettings) {
+      const binding = activeBinding()
+      if (binding === undefined) {
+        return '2차원 파라미터를 선택하세요.'
+      }
+      const result = generateCornerKeyforms({
+        ...settings,
+        bindingId: binding.id,
+        document: props.document(),
+      })
+      if (!result.ok) {
+        return result.message
+      }
+      props.onDocumentChange(result.document)
+      props.onNotice(null)
+      return null
+    },
+    mirrorKeyform(settings: MirrorKeyformSettings) {
+      const binding = activeBinding()
+      const values = activeKeyformValues()
+      if (binding === undefined || values === null) {
+        return '반전할 키폼을 선택하세요.'
+      }
+      const result = mirrorKeyform({
+        ...settings,
+        bindingId: binding.id,
+        document: props.document(),
+        values,
+      })
+      if (!result.ok) {
+        return result.message
+      }
+      props.onDocumentChange(result.document)
+      updateValues(result.values)
+      props.onNotice(null)
+      return null
+    },
+  }
+}
+
 export const useParameterEditor = (props: UseParameterEditorProps): ParameterEditorResult => {
   const [initialBinding] = getSelectableBindings(
     props.document(),
@@ -432,6 +489,7 @@ export const useParameterEditor = (props: UseParameterEditorProps): ParameterEdi
     setParameterValueMap,
   })
   return {
+    ...createKeyformGenerationHandlers({activeBinding, activeKeyformValues, props, updateValues}),
     activeBinding,
     activeBindingId,
     activeKeyformValues,

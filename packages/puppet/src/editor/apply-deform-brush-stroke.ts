@@ -2,7 +2,7 @@ import type {PuppetParameterValues} from '../deformation'
 import type {PuppetDocument, PuppetPart} from '../player/document'
 import {commitVertexMove} from './commit-vertex-move'
 import type {IndexedVertex} from './internal/mesh-view'
-import {getDeformerPreviewDocument} from './internal/mesh-preview'
+import {getDeformerPreviewDocument, unapplyPartPreviewSpatialPose} from './internal/mesh-preview'
 import {unapplySceneDeformersPoint} from './internal/scene-deformation'
 import type {MeshEditorProps} from './mesh-editor-contract'
 import {moveMeshVertex} from './move-mesh-vertex'
@@ -61,8 +61,14 @@ export const applyDeformBrushStroke = (options: ApplyDeformBrushStrokeOptions): 
       if (part === undefined) {
         return {message: '편집할 파츠를 찾지 못했습니다.', ok: false}
       }
+      const localPoint = unapplyPartPreviewSpatialPose(
+        options.props,
+        options.part,
+        vertex.index,
+        point,
+      )
       const result = commitVertexMove({
-        ...point,
+        ...localPoint,
         bindingId: options.props.activeBindingId,
         document,
         editMode: options.props.editMode ?? 'motion',
