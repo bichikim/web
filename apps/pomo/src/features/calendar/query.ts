@@ -73,10 +73,11 @@ const DAY_BEFORE_YESTERDAY_PATTERN = createCalendarRelativeDayPattern(DAY_BEFORE
 const YESTERDAY_PATTERN = createCalendarRelativeDayPattern('어제')
 const TODAY_PATTERN = createCalendarRelativeDayPattern('오늘')
 const TOMORROW_PATTERN = createCalendarRelativeDayPattern('내일')
-const DAY_AFTER_TOMORROW_PATTERN = createCalendarRelativeDayPattern('모레')
+const DAY_AFTER_TOMORROW_PHRASE = '(?:내일)?모레'
+const DAY_AFTER_TOMORROW_PATTERN = createCalendarRelativeDayPattern(DAY_AFTER_TOMORROW_PHRASE)
 const THREE_DAYS_AHEAD_PATTERN = createCalendarRelativeDayPattern('글피')
 const RELATIVE_DAY_PATTERN = createCalendarRelativeDayPattern(
-  `(?:${DAY_BEFORE_YESTERDAY_PHRASE}|어제|오늘|내일|모레|글피)`,
+  `(?:${DAY_BEFORE_YESTERDAY_PHRASE}|어제|오늘|${DAY_AFTER_TOMORROW_PHRASE}|내일|글피)`,
 )
 const CALENDAR_OTHER_PERIOD_TERM_PATTERN = new RegExp(
   `(?:${WEEK_AFTER_NEXT_TERM_PATTERN}${CALENDAR_PERIOD_BOUNDARY_PATTERN.source}|` +
