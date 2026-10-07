@@ -14,7 +14,7 @@ const formatEventTime = (event: CalendarEvent, timeZone: string) =>
         hour: 'numeric',
         minute: '2-digit',
         timeZone,
-      }).format(new Date(event.start))
+      }).format(new Date(event.start.trim()))
 
 interface CalendarAgendaProps {
   readonly calendar: CalendarEvents | null

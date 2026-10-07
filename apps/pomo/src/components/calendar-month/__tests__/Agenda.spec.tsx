@@ -4,6 +4,7 @@ import {cleanup, render, screen} from '@solidjs/testing-library'
 import {type ComponentProps} from 'solid-js'
 import {afterEach, expect, it, vi} from 'vitest'
 import {CalendarAgenda} from '../Agenda'
+import {groupCalendarEvents} from '../../../features/calendar'
 
 vi.mock('../../calendar-alarm-control/CalendarAlarmControl', () => ({
   CalendarAlarmControl: (props: {readonly timeZone?: string}) => (
@@ -57,3 +58,18 @@ it('should pass the calendar time zone to event alarms', () => {
   render(() => <CalendarAgenda {...base} selectedEvents={[event]} />)
   expect(screen.getByLabelText('alarm time zone')).toHaveTextContent('Asia/Seoul')
 })
+
+it.each([' 2026-09-05T00:00:00Z', '2026-09-05T00:00:00Z ', '\t2026-09-05T09:00:00+09:00\n'])(
+  'should display a grouped timed event with surrounding whitespace: %j',
+  (start) => {
+    const source = {...event, allDay: false, end: '2026-09-05T01:00:00Z', start}
+    const selectedEvents = groupCalendarEvents([source], ['2026-09-05'], 'Asia/Seoul').get(
+      '2026-09-05',
+    )!
+
+    render(() => <CalendarAgenda {...base} selectedEvents={selectedEvents} />)
+
+    expect(screen.getByRole('listitem')).toHaveTextContent('Meeting')
+    expect(screen.getByRole('listitem')).toHaveTextContent('9:00')
+  },
+)

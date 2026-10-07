@@ -127,6 +127,26 @@ it('should preserve the all-day event date when no selected date is provided', (
   expect(screen.getByLabelText('시간')).toHaveValue('09:00')
 })
 
+it.each([' 2026-09-05T00:00:00Z', '2026-09-05T00:00:00Z ', '\t2026-09-05T09:00:00+09:00\n'])(
+  'should initialize a timed alarm from a start with surrounding whitespace: %j',
+  (start) => {
+    const source = {...event, allDay: false, end: '2026-09-05T01:00:00Z', start}
+    render(() => (
+      <CalendarAlarmControl
+        now={now}
+        event={source}
+        memos={() => mocks.memos}
+        timeZone="Asia/Seoul"
+      />
+    ))
+
+    fireEvent.click(screen.getByRole('button', {name: '팀 회의 알람 설정'}))
+
+    expect(screen.getByLabelText('날짜')).toHaveValue('2026-09-05')
+    expect(screen.getByLabelText('시간')).toHaveValue('09:00')
+  },
+)
+
 it('should preserve the all-day event calendar date for an ISO start', () => {
   const isoStartEvent: CalendarEvent = {
     ...event,
