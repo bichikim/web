@@ -18,7 +18,10 @@ export const PModelDownloadStatus = () => {
 
   return (
     <Show when={targetKeys().length > 0}>
-      <div class="grid max-h-64 gap-2 overflow-y-auto" aria-label="모델 다운로드 목록">
+      <div
+        class="grid min-w-0 max-w-full max-h-64 gap-2 overflow-y-auto"
+        aria-label="모델 다운로드 목록"
+      >
         <For each={targetKeys()}>{handleItem}</For>
       </div>
     </Show>
