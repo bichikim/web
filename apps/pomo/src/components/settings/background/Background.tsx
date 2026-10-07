@@ -8,7 +8,6 @@ import {CLASSES} from '../classes'
 import type {PSettingsProps} from '../types'
 import {Scene} from './Scene'
 import {Style} from './Style'
-import {Weather} from './Weather'
 import {Frame} from './Frame'
 import {Website} from './Website'
 
@@ -83,7 +82,6 @@ export const Background = (props: PSettingsProps) => {
         >
           <Scene {...props} />
           <Style {...props} />
-          <Weather {...props} />
         </Match>
         <Match when={background.preferences().mode === 'frame'}>
           <Frame background={background} />

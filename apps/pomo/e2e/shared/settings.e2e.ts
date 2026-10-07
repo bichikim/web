@@ -4,6 +4,37 @@ import {openSettings} from '../helpers/settings'
 
 test.use({locale: 'ko-KR'})
 
+test('should expose weather controls in general settings and preserve the selection', async ({
+  page,
+}) => {
+  await page.goto('/')
+  await page.getByRole('button', {exact: true, name: '시작하기'}).click()
+  const dialog = await openSettings(page)
+  const weather = dialog.getByRole('region', {exact: true, name: '날씨 연동'})
+  await expect(weather).toBeVisible()
+  const scene = weather.getByRole('button', {name: /^날씨 /u})
+  await scene.click()
+  await page.getByRole('option', {exact: true, name: '비'}).click()
+  await expect(scene).toContainText('비')
+  await expect
+    .poll(() =>
+      page.evaluate(
+        () => JSON.parse(localStorage.getItem('pomo:weather-preference:v2') ?? '{}').sceneMode,
+      ),
+    )
+    .toBe('rain')
+  await dialog.getByRole('tab', {exact: true, name: '배경'}).click()
+  await expect(dialog.getByRole('region', {exact: true, name: '날씨 연동'})).toHaveCount(0)
+  await dialog.getByRole('radio', {exact: true, name: '액자'}).focus()
+  await page.keyboard.press('Space')
+  await dialog.getByRole('tab', {exact: true, name: '일반'}).click()
+  await expect(weather).toBeVisible()
+  await expect(scene).toContainText('비')
+  await page.reload()
+  await openSettings(page)
+  await expect(scene).toContainText('비')
+})
+
 test('should restore the selected theme after reopening settings and reloading', async ({page}) => {
   await page.goto('/')
   await page.getByRole('button', {exact: true, name: '시작하기'}).click()
