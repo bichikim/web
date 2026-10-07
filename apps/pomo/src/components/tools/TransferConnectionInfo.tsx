@@ -23,6 +23,7 @@ export interface TransferConnectionInfoProps {
   readonly onApprove?: () => void
   readonly url: string
   readonly connected?: boolean
+  readonly connecting?: boolean
 }
 
 const handleAddressFocus = (event: FocusEvent & {currentTarget: HTMLInputElement}) =>
@@ -90,9 +91,18 @@ export const TransferConnectionInfo = (props: TransferConnectionInfoProps) => {
           {m.transfer_waiting()}
         </p>
       </Show>
-      <Show when={props.onApprove}>
-        <div class="flex justify-center">
-          <PButton onPress={props.onApprove}>{m.transfer_approve()}</PButton>
+      <Show when={props.onApprove || props.connecting}>
+        <div class="flex justify-center" aria-busy={props.connecting}>
+          <PButton
+            disabled={props.connecting}
+            icon={props.connecting ? 'i-tabler-loader-2' : undefined}
+            iconClass="size-5 animate-spin motion-reduce:animate-none"
+            onPress={props.onApprove}
+          >
+            <span aria-live="polite">
+              {props.connecting ? m.transfer_joining() : m.transfer_approve()}
+            </span>
+          </PButton>
         </div>
       </Show>
     </div>

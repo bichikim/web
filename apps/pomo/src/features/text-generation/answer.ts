@@ -1,7 +1,7 @@
 const URL_PATTERN = /\bhttps?:\/\/\S+/giu
 const URL_SEMICOLON_PATTERN = /;(?=\S)/gu
 const SEGMENT_PATTERN =
-  /(?:[^,;；.!?。！？，\n]|(?<=[\p{Script=Latin}\p{N}])\.(?=[\p{Script=Latin}\p{N}]))+(?:[,;；.!?。！？，]|\n|$)\s*/gu
+  /(?:[^,;；.!?。！？，\n\t]|(?<=[\p{Script=Latin}\p{N}])\.(?=[\p{Script=Latin}\p{N}]))+(?:[,;；.!?。！？，]|[\n\t]|$)\s*/gu
 const TRAILING_SEPARATOR_PATTERN = /[,，;；]$/u
 const NORMALIZATION_PATTERN = /[,;；.!?。！？，\s]+$/gu
 const WHITESPACE_PATTERN = /\s+/gu

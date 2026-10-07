@@ -24,6 +24,7 @@ interface CreateCalendarPeriodRangeOptions {
   readonly includesWeekAfterNext: boolean
   readonly now: Date
   readonly relativeDayOffsets: ReadonlyArray<number>
+  readonly requestedWeekdayOffsets: ReadonlyArray<number>
   readonly weekday: number
   readonly weekendIntent: CalendarWeekendIntent | null
 }
@@ -86,6 +87,87 @@ const getFirstIncludedCalendarBoundary = (
   fallback: Date,
 ): Date => candidates.find(({included}) => included)?.boundary ?? fallback
 
+export const createCalendarRangeFromDayOffsets = ({
+  boundary,
+  dayOffsets,
+}: {
+  readonly boundary: (days: number) => Date
+  readonly dayOffsets: ReadonlyArray<number>
+}): {readonly end: Date; readonly start: Date} | null => {
+  if (dayOffsets.length === 0) {
+    return null
+  }
+
+  const firstDayOffset = Math.min(...dayOffsets)
+  const lastDayOffset = Math.max(...dayOffsets)
+  return {end: boundary(lastDayOffset + 1), start: boundary(firstDayOffset)}
+}
+
+export const createCalendarMonthRange = ({
+  boundary,
+  monthOffsets,
+  now,
+}: {
+  readonly boundary: (months: number) => Date
+  readonly monthOffsets: ReadonlyArray<number>
+  readonly now: Date
+}): CalendarEventRange | null => {
+  if (monthOffsets.length !== 1) {
+    return null
+  }
+
+  const monthOffset = monthOffsets[0] ?? 0
+  const start = monthOffset === 0 ? now : boundary(monthOffset)
+  return toRange(start, boundary(monthOffset + 1))
+}
+
+export const createCalendarWeekdayRange = ({
+  boundary,
+  currentWeekday,
+  weekdayOffsets,
+}: {
+  readonly boundary: (days: number) => Date
+  readonly currentWeekday: number
+  readonly weekdayOffsets: ReadonlyArray<number>
+}): {
+  readonly end: Date
+  readonly firstDayOffset: number
+  readonly lastDayOffset: number
+  readonly start: Date
+} | null => {
+  const currentWeekdayFromMonday = currentWeekday === 0 ? DAYS_PER_WEEK - 1 : currentWeekday - 1
+  const dayOffsets = weekdayOffsets.map(
+    (weekdayOffset) => (weekdayOffset - currentWeekdayFromMonday + DAYS_PER_WEEK) % DAYS_PER_WEEK,
+  )
+  const calendarRange = createCalendarRangeFromDayOffsets({boundary, dayOffsets})
+  if (calendarRange === null) {
+    return null
+  }
+
+  return {
+    ...calendarRange,
+    firstDayOffset: Math.min(...dayOffsets),
+    lastDayOffset: Math.max(...dayOffsets),
+  }
+}
+
+interface CreateRequestedWeekdayRangeOptions {
+  readonly boundary: (days: number) => Date
+  readonly daysUntilNextMonday: number
+  readonly requestedWeekdayOffsets: ReadonlyArray<number>
+}
+
+const createRequestedWeekdayRange = ({
+  boundary,
+  daysUntilNextMonday,
+  requestedWeekdayOffsets,
+}: CreateRequestedWeekdayRangeOptions): {readonly end: Date; readonly start: Date} | null => {
+  return createCalendarRangeFromDayOffsets({
+    boundary,
+    dayOffsets: requestedWeekdayOffsets.map((offset) => daysUntilNextMonday + offset),
+  })
+}
+
 export const createCalendarPeriodRange = ({
   boundary,
   daysUntilNextMonday,
@@ -96,6 +178,7 @@ export const createCalendarPeriodRange = ({
   includesWeekAfterNext,
   now,
   relativeDayOffsets,
+  requestedWeekdayOffsets,
   weekday,
   weekendIntent,
 }: CreateCalendarPeriodRangeOptions): CalendarEventRange | null => {
@@ -110,11 +193,13 @@ export const createCalendarPeriodRange = ({
   }
 
   if (
-    !includesTwoWeeksAgo &&
-    !includesPreviousWeek &&
-    !includesThisWeek &&
-    !includesNextWeek &&
-    !includesWeekAfterNext
+    ![
+      includesTwoWeeksAgo,
+      includesPreviousWeek,
+      includesThisWeek,
+      includesNextWeek,
+      includesWeekAfterNext,
+    ].some(Boolean)
   ) {
     return null
   }
@@ -132,13 +217,19 @@ export const createCalendarPeriodRange = ({
   const lastRequestedDateOffset = relativeDayOffsets[relativeDayOffsets.length - 1] ?? 2
   const requestedDateStart = requestedDateOffset === 0 ? now : boundary(requestedDateOffset)
   const requestedDateEnd = boundary(lastRequestedDateOffset + 1)
+  const requestedWeekdayRange = includesNextWeek
+    ? createRequestedWeekdayRange({boundary, daysUntilNextMonday, requestedWeekdayOffsets})
+    : null
   const start = getFirstIncludedCalendarBoundary(
     [
       {boundary: twoWeeksAgoMonday, included: includesTwoWeeksAgo},
       {boundary: previousMonday, included: includesPreviousWeek},
       {boundary: requestedDateStart, included: includesRequestedDate},
       {boundary: now, included: startsThisWeek},
-      {boundary: nextMonday, included: includesNextWeek},
+      {
+        boundary: requestedWeekdayRange?.start ?? nextMonday,
+        included: includesNextWeek,
+      },
       {boundary: weekAfterNextMonday, included: includesWeekAfterNext},
     ],
     nextMonday,
@@ -146,7 +237,10 @@ export const createCalendarPeriodRange = ({
   const weekEnd = getFirstIncludedCalendarBoundary(
     [
       {boundary: weekAfterNextEnd, included: includesWeekAfterNext},
-      {boundary: weekAfterNextMonday, included: includesNextWeek},
+      {
+        boundary: requestedWeekdayRange?.end ?? weekAfterNextMonday,
+        included: includesNextWeek,
+      },
       {boundary: nextMonday, included: includesThisWeek},
       {boundary: currentMonday, included: includesPreviousWeek},
       {boundary: previousMonday, included: includesTwoWeeksAgo},

@@ -2,6 +2,8 @@ import {DeformerWeights} from './DeformerWeights'
 import {updateDraggedDeformer} from './deformer-drag'
 import {PinEditor} from './PinEditor'
 import {DeformerTools} from './DeformerTools'
+import {GridBrushControls} from './GridBrushControls'
+import {useGridBrush} from './use-grid-brush'
 import type {DeformerEditMode} from './DeformerMode'
 import {isDeformerRestEditable, preserveDeformerPlacement} from './deformer-placement'
 import {BoneEditor} from './BoneEditor'
@@ -37,6 +39,9 @@ export interface SelectedDeformerProps extends DeformerEditorProps {
 }
 
 export interface DeformerEditorProps {
+  readonly brushControlsExternal?: boolean
+  readonly brushControlsMount?: HTMLDivElement
+  readonly brushSettingsMount?: HTMLDivElement
   readonly deformerMode?: DeformerEditMode
   readonly onDeformerModeChange?: (mode: DeformerEditMode) => void
   readonly renderControls?: (controls: JSX.Element) => JSX.Element
@@ -211,25 +216,11 @@ const getRotationStart = (node: PuppetSceneDeformerNode | undefined, point: Pupp
   }
 }
 
-const useSurfaceEditor = (props: DeformerEditorProps) => {
-  const controlSelection = untrack(() => props.controlSelection) ?? createDeformerControlSelection()
-  let dragTarget: DragTarget | null = null
-  let pointerId: number | undefined
-  let rotationStart: {deformer: PuppetSceneDeformerNode; angle: number} | undefined
-  let svgElement: SVGSVGElement | undefined
-  const displayDocument = () => props.previewDocument ?? props.document
-  const deformer = () => getSelectedDeformer(displayDocument(), props.activeNodeId)
-  const editBlockMessage = () =>
-    getEditBlockMessage({activeNodeId: props.activeNodeId, document: props.document})
-  const restEditable = () => isDeformerRestEditable(props.document, props.activeNodeId ?? '')
-  const editable = () =>
-    editBlockMessage() === undefined && (props.deformerMode !== 'rest' || restEditable())
-  const save = (document: PuppetDocument) =>
-    props.onDocumentChange?.(
-      props.deformerMode === 'rest'
-        ? preserveDeformerPlacement(props.document, document, props.activeNodeId)
-        : document,
-    )
+const createSurfaceCoordinates = (
+  props: DeformerEditorProps,
+  displayDocument: Accessor<PuppetDocument>,
+  element: Accessor<SVGSVGElement | undefined>,
+) => {
   const viewBox = () => getEditorViewBox(displayDocument())
   const handleRadius = () => Math.min(viewBox().width, viewBox().height) / HANDLE_RADIUS_DIVISOR
   const transformPoint = (point: PuppetPoint) =>
@@ -247,8 +238,46 @@ const useSurfaceEditor = (props: DeformerEditorProps) => {
   const rotationOrigin = (activeDeformer: PuppetSceneDeformerNode) =>
     transformPoint(getDeformerRotationOrigin(activeDeformer))
   const getPointerPoint = (event: MouseEvent) =>
-    getPointerEditorPoint({element: svgElement, event, viewBox: viewBox()})
+    getPointerEditorPoint({element: element(), event, viewBox: viewBox()})
+  return {getPointerPoint, handleRadius, rotationOrigin, transformPoint, untransformPoint, viewBox}
+}
+
+const useSurfaceEditor = (props: DeformerEditorProps) => {
+  const controlSelection = untrack(() => props.controlSelection) ?? createDeformerControlSelection()
+  let dragTarget: DragTarget | null = null
+  let pointerId: number | undefined
+  let rotationStart: {deformer: PuppetSceneDeformerNode; angle: number} | undefined
+  let svgElement: SVGSVGElement | undefined
+  const displayDocument = () => props.previewDocument ?? props.document
+  const sourceDeformer = () => getSelectedDeformer(displayDocument(), props.activeNodeId)
+  const deformer = (): PuppetSceneDeformerNode | undefined => brush.draft() ?? sourceDeformer()
+  const editBlockMessage = () =>
+    getEditBlockMessage({activeNodeId: props.activeNodeId, document: props.document})
+  const restEditable = () => isDeformerRestEditable(props.document, props.activeNodeId ?? '')
+  const editable = () =>
+    editBlockMessage() === undefined && (props.deformerMode !== 'rest' || restEditable())
+  const save = (document: PuppetDocument) =>
+    props.onDocumentChange?.(
+      props.deformerMode === 'rest'
+        ? preserveDeformerPlacement(props.document, document, props.activeNodeId)
+        : document,
+    )
+  const {viewBox, handleRadius, transformPoint, untransformPoint, rotationOrigin, getPointerPoint} =
+    createSurfaceCoordinates(props, displayDocument, () => svgElement)
+  const brush = useGridBrush({
+    editable,
+    editor: props,
+    getPoint: getPointerPoint,
+    node: sourceDeformer,
+    save,
+    transform: transformPoint,
+    untransform: untransformPoint,
+  })
   const startDrag = (event: PointerEvent, target: DragTarget) => {
+    if (brush.enabled()) {
+      brush.start(event)
+      return
+    }
     if (event.button !== 0 || !editable()) {
       return
     }
@@ -302,6 +331,10 @@ const useSurfaceEditor = (props: DeformerEditorProps) => {
     }
   }
   const handlePointerMove = (event: PointerEvent) => {
+    if (brush.enabled()) {
+      brush.move(event)
+      return
+    }
     const target = dragTarget
     if (target === null || event.pointerId !== pointerId) {
       return
@@ -343,15 +376,14 @@ const useSurfaceEditor = (props: DeformerEditorProps) => {
     editable,
     focus: () => svgElement?.focus(),
     getPoint: getPointerPoint,
-    onDocumentChange: (document) => save(document),
+    onDocumentChange: save,
     selection: controlSelection,
     transform: transformPoint,
   })
 
   return {
-    bind: (element: SVGSVGElement) => {
-      svgElement = element
-    },
+    bind: (element: SVGSVGElement) => (svgElement = element),
+    brush,
     changeMode: (mode: DeformerEditMode) => {
       stopDrag()
       controlSelection.clear()
@@ -377,6 +409,11 @@ const useSurfaceEditor = (props: DeformerEditorProps) => {
 
 const SurfaceEditor = (props: DeformerEditorProps) => {
   const editor = useSurfaceEditor(props)
+  createEffect(() => {
+    if (props.brushControlsExternal && props.brushControlsMount === undefined) {
+      editor.brush.setMode('select')
+    }
+  })
   const controls = (
     <DeformerTools
       mode={props.deformerMode ?? 'pose'}
@@ -388,6 +425,13 @@ const SurfaceEditor = (props: DeformerEditorProps) => {
     <Show when={editor.deformer()}>
       {(activeDeformer) => (
         <div class="deformer-editor">
+          <GridBrushControls
+            brush={editor.brush}
+            brushControlsExternal={props.brushControlsExternal}
+            brushControlsMount={props.brushControlsMount}
+            brushSettingsMount={props.brushSettingsMount}
+            disabled={!editor.editable()}
+          />
           {props.renderControls === undefined ? controls : props.renderControls(controls)}
           <svg
             ref={editor.bind}
@@ -396,10 +440,20 @@ const SurfaceEditor = (props: DeformerEditorProps) => {
             viewBox={`${editor.viewBox().x} ${editor.viewBox().y} ${editor.viewBox().width} ${editor.viewBox().height}`}
             tabindex={0}
             onKeyDown={editor.topology.handleTopologyKey}
-            onLostPointerCapture={editor.stopDrag}
-            onPointerCancel={editor.stopDrag}
+            onLostPointerCapture={(event) => {
+              editor.brush.cancel()
+              editor.stopDrag(event)
+            }}
+            onPointerDown={editor.brush.start}
+            onPointerCancel={() => {
+              editor.brush.cancel()
+              editor.stopDrag()
+            }}
             onPointerMove={editor.handlePointerMove}
-            onPointerUp={editor.stopDrag}
+            onPointerUp={(event) => {
+              editor.brush.finish(event)
+              editor.stopDrag(event)
+            }}
           >
             <DeformerControls
               onCurveSplit={editor.topology.handleCurveSplit}
@@ -424,6 +478,16 @@ const SurfaceEditor = (props: DeformerEditorProps) => {
               startTranslationDrag={editor.startTranslationDrag}
               transform={editor.transformPoint}
             />
+            <Show when={editor.brush.enabled() && editor.brush.cursor()}>
+              {(cursor) => (
+                <circle
+                  class="deform-brush-ring"
+                  cx={cursor().x}
+                  cy={cursor().y}
+                  style={{'--brush-radius': editor.brush.radius()}}
+                />
+              )}
+            </Show>
           </svg>
           <DeformerWeights {...props} node={activeDeformer()} />
           <Show when={editor.editBlockMessage()}>

@@ -12,6 +12,7 @@ import {afterEach, expect, it, vi} from 'vitest'
 const mocks = vi.hoisted(() => ({
   albumByteLimit: 1000,
   embeddedCoverBytes: 200,
+  libraryByteLimit: 2000,
 }))
 
 vi.mock('src/features/custom-albums/model', async (importOriginal) => {
@@ -19,6 +20,7 @@ vi.mock('src/features/custom-albums/model', async (importOriginal) => {
   return {
     ...actual,
     MAXIMUM_CUSTOM_ALBUM_BYTES: mocks.albumByteLimit,
+    MAXIMUM_CUSTOM_LIBRARY_BYTES: mocks.libraryByteLimit,
   }
 })
 
@@ -123,4 +125,87 @@ it('should preserve a manual cover when the saved album is exactly at the byte l
   expect(draft?.tracks[0]?.audio.size).toBe(mocks.albumByteLimit - manualCover.size)
   expect(draft?.coverImage?.size).toBe(manualCover.size)
   expect(draft?.coverSource).toBe('manual')
+})
+
+it('should stop processing a stalled import and show the existing generic error at the deadline', async () => {
+  const audio = stubCustomAlbumAudioMetadata()
+  audio.load.mockImplementation(() => undefined)
+  const {controller} = await createEditor()
+  const messages = await import('@paraglide/message')
+  const runtime = await import('@paraglide/runtime')
+  const library = await import('src/features/custom-albums/read-custom-album-library-bytes')
+  vi.spyOn(library, 'readCustomAlbumLibraryBytes').mockResolvedValue(0)
+  const originalGetLocale = runtime.getLocale
+  runtime.overwriteGetLocale(() => 'en')
+  vi.useFakeTimers()
+  try {
+    const pending = selectFiles(controller, [createCustomAlbumAudioFile(100)])
+    expect(controller.isProcessingFiles()).toBe(true)
+    await vi.advanceTimersByTimeAsync(30_000)
+    await pending
+    expect(controller.isProcessingFiles()).toBe(false)
+    expect(controller.tracks()).toHaveLength(0)
+    expect(controller.errorMessage()).toBe(messages.album_custom_error_save())
+    expect(audio.removeAttribute).toHaveBeenCalledExactlyOnceWith('src')
+    expect(URL.revokeObjectURL).toHaveBeenCalledExactlyOnceWith('blob:audio')
+    expect(vi.getTimerCount()).toBe(0)
+  } finally {
+    vi.useRealTimers()
+    runtime.overwriteGetLocale(originalGetLocale)
+  }
+})
+
+it('should show the library limit during addition and preserve the existing draft', async () => {
+  const runtime = await import('@paraglide/runtime')
+  const originalGetLocale = runtime.getLocale
+  runtime.overwriteGetLocale(() => 'en')
+  try {
+    const audio = stubCustomAlbumAudioMetadata()
+    vi.stubGlobal('crypto', {
+      randomUUID: vi
+        .fn()
+        .mockReturnValueOnce('first')
+        .mockReturnValueOnce('second')
+        .mockReturnValue('test-id'),
+    })
+    const {saveCustomAlbum} = await import('src/features/custom-albums')
+    await Promise.all(
+      ['first', 'second'].map((id) =>
+        saveCustomAlbum({
+          albumId: null,
+          artist: '',
+          coverIcon: 'disc',
+          coverImage: {image: null, kind: 'replace'},
+          coverSource: 'manual',
+          title: id,
+          tracks: [
+            {
+              audio: createCustomAlbumAudioFile(800),
+              durationSeconds: 60,
+              fileName: `${id}.mp3`,
+              id: `custom-track:${id}`,
+              title: id,
+            },
+          ],
+        }),
+      ),
+    )
+    const {controller, onSaved} = await createEditor()
+    await selectFiles(controller, [createCustomAlbumAudioFile(100)])
+    const existingTracks = controller.tracks()
+    expect(controller.totalAlbumBytes()).toBe(300)
+    audio.load.mockClear()
+
+    await selectFiles(controller, [createCustomAlbumAudioFile(200)])
+
+    const messages = await import('@paraglide/message')
+    expect(controller.errorMessage()).toBe(messages.album_custom_error_library_too_large())
+    expect(controller.tracks()).toBe(existingTracks)
+    expect(controller.totalAlbumBytes()).toBe(300)
+    expect(controller.isProcessingFiles()).toBe(false)
+    expect(audio.load).not.toHaveBeenCalled()
+    expect(onSaved).not.toHaveBeenCalled()
+  } finally {
+    runtime.overwriteGetLocale(originalGetLocale)
+  }
 })

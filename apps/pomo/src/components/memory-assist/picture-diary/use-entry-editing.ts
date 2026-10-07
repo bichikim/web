@@ -3,6 +3,7 @@ import {useAsyncTask} from 'src/features/async-task'
 import * as m from '@paraglide/message'
 import {
   createPictureDiaryEntry,
+  hasPictureDiaryTextContent,
   type PictureDiaryEntry,
   type PictureDiaryImage,
   type PictureDiaryRepository,
@@ -69,7 +70,12 @@ export const useEntryEditing = (options: EntryEditingOptions) => {
         ...draft,
         canSave:
           !saving() &&
-          Boolean(draft.date && (draft.text.trim() || draft.strokes.length || draft.image)),
+          Boolean(
+            draft.date &&
+            (hasPictureDiaryTextContent(draft.text) ||
+              draft.strokes.length > 0 ||
+              draft.image !== undefined),
+          ),
         disabled: saving(),
         editingMessage: message(),
         onCancelEdit: close,

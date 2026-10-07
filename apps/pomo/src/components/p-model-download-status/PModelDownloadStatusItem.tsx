@@ -58,7 +58,7 @@ export const PModelDownloadStatusItem = (props: PModelDownloadStatusItemProps) =
     })
 
     return (
-      <div aria-live="polite" class="pointer-events-auto" role="status">
+      <div aria-live="polite" class="pointer-events-auto min-w-0" role="status">
         <div class="border border-solid border-border rounded-control backdrop-blur-surface">
           <PLoadingStatus message={display().message} onCancel={handleCancel} />
         </div>
@@ -78,9 +78,18 @@ export const PModelDownloadStatusItem = (props: PModelDownloadStatusItemProps) =
     </PFormMessage>
   )
   const handleQueued = (state: Accessor<QueuedModelDownloadState>) => (
-    <div class={ERROR_CLASSES} role="status">
-      <span>{state().label} · 다운로드 대기 중</span>
-      <PButton bordered transparent size="small" tone="secondary" onPress={handleCancel}>
+    <div class={cx(ERROR_CLASSES, 'min-w-0')} role="status">
+      <span class="min-w-0 flex-1 truncate" title={state().label}>
+        {state().label} · 다운로드 대기 중
+      </span>
+      <PButton
+        bordered
+        transparent
+        class="flex-none"
+        size="small"
+        tone="secondary"
+        onPress={handleCancel}
+      >
         취소
       </PButton>
     </div>

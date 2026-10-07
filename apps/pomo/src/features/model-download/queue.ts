@@ -18,7 +18,6 @@ interface DownloadJob {
 
 const sameTarget = (left: ModelDownloadTarget, right: ModelDownloadTarget) =>
   left.kind === right.kind && left.modelId === right.modelId
-const NOOP_RESOLVER = () => undefined
 
 /** Queues model preparations in request order and joins requests for the same model. */
 export const createDownloadQueue = () => {
@@ -132,11 +131,8 @@ export const createDownloadQueue = () => {
     if (existing !== undefined) {
       return existing.promise
     }
-    let resolveDownload: (result: ModelDownloadResult) => void = NOOP_RESOLVER
-    const promise = new Promise<ModelDownloadResult>((resolve) => {
-      resolveDownload = resolve
-    })
-    const job: DownloadJob = {client: null, options, promise, resolve: resolveDownload}
+    const {promise, resolve} = Promise.withResolvers<ModelDownloadResult>()
+    const job: DownloadJob = {client: null, options, promise, resolve}
     jobs.push(job)
     batch(() => {
       update(job, {label: options.label, status: 'queued', target: options.target})

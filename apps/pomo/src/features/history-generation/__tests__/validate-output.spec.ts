@@ -322,3 +322,86 @@ it('should require two publishers in every section', () => {
     'Each generated section must cite at least two publishers',
   )
 })
+
+it('should count canonical duplicate citations as one publisher', () => {
+  const output = createOutput()
+  const variantUrl = 'https://www.archive.example/a/?utm_source=openai#event'
+  const moment = output.moments[0]!
+  moment.sources.push({publisher: '다른 표기', title: '같은 기록', url: variantUrl})
+  moment.sections.context.sourceUrls = [SOURCE_URLS[0], variantUrl]
+
+  expect(() => validate(output, {searchSourceUrls: [...SOURCE_URLS, variantUrl]})).toThrow(
+    'Each generated section must cite at least two publishers',
+  )
+})
+
+it('should reuse the last searched canonical URL across moment and section citations', () => {
+  const output = createOutput()
+  const searchedUrl = 'https://www.archive.example/a/?utm_source=openai#event'
+  const moment = output.moments[0]!
+  moment.sources.push({publisher: '별칭', title: '같은 기록', url: searchedUrl})
+
+  const result = validate(output, {searchSourceUrls: [...SOURCE_URLS, searchedUrl]})
+
+  expect(result.moments[0]!.sources.map((source) => source.url)).toEqual([
+    searchedUrl,
+    SOURCE_URLS[1],
+    searchedUrl,
+  ])
+  for (const section of Object.values(result.moments[0]!.sections)) {
+    expect(section.sourceUrls).toEqual([searchedUrl, SOURCE_URLS[1]])
+  }
+  expect(moment.sources[0]!.url).toBe(SOURCE_URLS[0])
+})
+
+it('should preserve the first matching allowed domain for overlapping publisher policies', () => {
+  const output = createOutput()
+  const moment = output.moments[0]!
+  const subdomainUrl = 'https://records.archive.example/c'
+  moment.sources[1]!.url = subdomainUrl
+  for (const section of Object.values(moment.sections)) {
+    section.sourceUrls = [SOURCE_URLS[0], subdomainUrl]
+  }
+  const searchSourceUrls = [...SOURCE_URLS, subdomainUrl]
+
+  expect(() =>
+    validate(output, {
+      policy: {
+        ...POLICY,
+        allowedDomains: ['records.archive.example', ...POLICY.allowedDomains],
+      },
+      searchSourceUrls,
+    }),
+  ).not.toThrow()
+  expect(() =>
+    validate(output, {
+      policy: {
+        ...POLICY,
+        allowedDomains: [...POLICY.allowedDomains, 'records.archive.example'],
+      },
+      searchSourceUrls,
+    }),
+  ).toThrow('A generated moment must cite at least two publishers')
+})
+
+it('should reject a disallowed section domain before its missing source membership', () => {
+  const output = createOutput()
+  const disallowedUrl = 'https://untrusted.example/c'
+  output.moments[0]!.sections.context.sourceUrls = [SOURCE_URLS[0], disallowedUrl]
+
+  expect(() => validate(output, {searchSourceUrls: [...SOURCE_URLS, disallowedUrl]})).toThrow(
+    'A generated source uses a disallowed domain: untrusted.example',
+  )
+})
+
+it('should reject missing section membership before an earlier section publisher shortage', () => {
+  const output = createOutput()
+  const extraUrl = 'https://museum.example/extra'
+  const moment = output.moments[0]!
+  moment.sections.event.sourceUrls = [SOURCE_URLS[0], SOURCE_URLS[0]]
+  moment.sections.significance.sourceUrls = [SOURCE_URLS[0], extraUrl]
+
+  expect(() => validate(output, {searchSourceUrls: [...SOURCE_URLS, extraUrl]})).toThrow(
+    'A section cites a URL missing from the moment source list',
+  )
+})

@@ -48,8 +48,8 @@ const formatEventTime = (event: CalendarEvent, timeZone: string) => {
     return `${start}–${formatAllDayDate(event.end)} (종일, 종료일 미포함)`
   }
 
-  const start = dayjs(new Date(event.start)).tz(timeZone).locale('ko')
-  const end = dayjs(new Date(event.end)).tz(timeZone).locale('ko')
+  const start = dayjs(new Date(event.start.trim())).tz(timeZone).locale('ko')
+  const end = dayjs(new Date(event.end.trim())).tz(timeZone).locale('ko')
   const endFormat =
     start.format('YYYY-MM-DD') === end.format('YYYY-MM-DD') ? 'A h:mm' : 'YYYY. M. D. A h:mm'
   return `${start.format('YYYY. M. D. A h:mm')}–${end.format(endFormat)}`

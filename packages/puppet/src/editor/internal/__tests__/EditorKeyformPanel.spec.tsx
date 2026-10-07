@@ -515,3 +515,86 @@ describe('EditorKeyformPanel', () => {
     expect(onKeyformMove).toHaveBeenCalledWith(fixture.bindingId, [0], [15])
   })
 })
+
+test('should add a keyform at the double-clicked one-dimensional value', () => {
+  const {document, bindingId} = createOneDimensionalDocument()
+  const onBindingSelect = vi.fn()
+  const onValueChange = vi.fn()
+  const onKeyformAdd = vi.fn()
+  const view = render(() => (
+    <EditorKeyformPanel
+      bindings={document.parameterBindings ?? []}
+      parameters={document.parameters ?? []}
+      onBindingSelect={onBindingSelect}
+      onValueChange={onValueChange}
+      onKeyformAdd={onKeyformAdd}
+    />
+  ))
+  const track = view.getByLabelText('Parameter 3 키폼 트랙')
+  vi.spyOn(track, 'getBoundingClientRect').mockReturnValue(new DOMRect(100, 0, 200, 40))
+  fireEvent.dblClick(track, {clientX: 150})
+  expect(onBindingSelect).toHaveBeenCalledWith(bindingId)
+  expect(onValueChange).toHaveBeenCalledWith([-15])
+  expect(onKeyformAdd).toHaveBeenCalledTimes(1)
+  expect(track).toHaveFocus()
+})
+
+test('should add a keyform at the double-clicked two-dimensional values', () => {
+  const document = createDemoDocument()
+  const onValueChange = vi.fn()
+  const onKeyformAdd = vi.fn()
+  const view = render(() => (
+    <EditorKeyformPanel
+      bindings={document.parameterBindings ?? []}
+      parameters={document.parameters ?? []}
+      onValueChange={onValueChange}
+      onKeyformAdd={onKeyformAdd}
+    />
+  ))
+  const track = view.getByLabelText('Angle X와 Angle Y 2차원 키폼 grid')
+  const grid = track.querySelector('.parameter-grid')!
+  vi.spyOn(grid, 'getBoundingClientRect').mockReturnValue(new DOMRect(100, 100, 200, 200))
+  fireEvent.dblClick(grid, {clientX: 150, clientY: 150})
+  expect(onValueChange).toHaveBeenCalledWith([-15, 15])
+  expect(onKeyformAdd).toHaveBeenCalledTimes(1)
+})
+
+test('should delete the selected keyform with Backspace without deleting while typing', () => {
+  const {document, bindingId} = createOneDimensionalDocument()
+  const onKeyformDelete = vi.fn()
+  const view = render(() => (
+    <EditorKeyformPanel
+      activeBindingId={bindingId}
+      activeKeyformValues={[0]}
+      bindings={document.parameterBindings ?? []}
+      parameters={document.parameters ?? []}
+      onKeyformDelete={onKeyformDelete}
+    />
+  ))
+  fireEvent.keyDown(view.getByRole('spinbutton', {name: 'Parameter 3 값'}), {key: 'Backspace'})
+  expect(onKeyformDelete).not.toHaveBeenCalled()
+  fireEvent.keyDown(view.getByRole('button', {name: 'Parameter 3 0 키폼'}), {key: 'Backspace'})
+  expect(onKeyformDelete).toHaveBeenCalledTimes(1)
+})
+
+test('should keep preview bindings unchanged for double-click and Backspace', () => {
+  const document = createDemoDocument()
+  const onKeyformAdd = vi.fn()
+  const onKeyformDelete = vi.fn()
+  const view = render(() => (
+    <EditorKeyformPanel
+      activeBindingId="angle-xy"
+      activeKeyformValues={[0, 0]}
+      bindings={document.parameterBindings ?? []}
+      parameters={document.parameters ?? []}
+      previewBindingIds={new Set(['angle-xy'])}
+      onKeyformAdd={onKeyformAdd}
+      onKeyformDelete={onKeyformDelete}
+    />
+  ))
+  const track = view.getByLabelText('Angle X와 Angle Y 2차원 키폼 grid')
+  fireEvent.dblClick(track.querySelector('.parameter-grid')!, {clientX: 150, clientY: 150})
+  fireEvent.keyDown(track, {key: 'Backspace'})
+  expect(onKeyformAdd).not.toHaveBeenCalled()
+  expect(onKeyformDelete).not.toHaveBeenCalled()
+})

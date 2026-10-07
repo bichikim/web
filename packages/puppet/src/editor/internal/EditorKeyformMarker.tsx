@@ -63,6 +63,7 @@ export const EditorKeyformMarker = (props: EditorKeyformMarkerProps) => {
 
     event.preventDefault()
     event.stopPropagation()
+    event.currentTarget.focus()
     props.onSelect?.()
     removePointerListeners?.()
     // The stored callback only removes native gesture listeners during completion or cleanup.
