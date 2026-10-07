@@ -1,5 +1,6 @@
 /// <reference lib="webworker" />
 
+import {memoize} from 'es-toolkit/function'
 import {getErrorMessage} from 'src/utils/get-error-message'
 
 import {createTextGenerationExecutor} from '../text-generation/execution'
@@ -18,23 +19,11 @@ type TextModelDownloadWorkerResponse =
 const workerScope = globalThis.self as DedicatedWorkerGlobalScope
 const sendResponse = (response: TextModelDownloadWorkerResponse) =>
   workerScope.postMessage(response)
-const textExecutors = new Map<
-  PrepareTextModelRequest['modelId'],
-  ReturnType<typeof createTextGenerationExecutor>
->()
-
-const getTextExecutor = (modelId: PrepareTextModelRequest['modelId']) => {
-  const current = textExecutors.get(modelId)
-  if (current !== undefined) {
-    return current
-  }
-
-  const executor = createTextGenerationExecutor({
+const getTextExecutor = memoize((_modelId: PrepareTextModelRequest['modelId']) =>
+  createTextGenerationExecutor({
     onProgress: (progress) => sendResponse({...progress, type: 'loading'}),
-  })
-  textExecutors.set(modelId, executor)
-  return executor
-}
+  }),
+)
 
 const prepareModel = async (request: PrepareTextModelRequest) => {
   const textExecutor = getTextExecutor(request.modelId)
