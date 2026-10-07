@@ -1,3 +1,4 @@
+import {sampleWithRandom} from 'src/utils/sample-with-random'
 import type {PixiSceneMotion, PixiScenePoint} from './layer-scene-definition'
 
 const ORIGIN = {x: 0, y: 0}
@@ -35,7 +36,5 @@ export const getNextMotionTarget = (
   const candidates = motion.targets.filter(
     (target) => target.x !== currentTarget.x || target.y !== currentTarget.y,
   )
-  const index = Math.min(candidates.length - 1, Math.floor(random() * candidates.length))
-
-  return candidates[index]
+  return sampleWithRandom(candidates, random)
 }

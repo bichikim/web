@@ -1,4 +1,5 @@
 import {ENGLISH_TITLE_ABBREVIATIONS} from 'src/utils/english-title-abbreviation'
+import {stripTrailingSymbols} from 'src/utils/strip-trailing-symbols'
 import type {LanguageLearningLanguage} from './schema'
 
 export const LANGUAGE_LEARNING_SENTENCE_LIMITS = {
@@ -55,7 +56,7 @@ export const normalizeLanguageLearningSentence = (output: string) => {
   return hasWrappingQuotes &&
     !hasMatchingWrappingQuotes &&
     sentence.length > 0 &&
-    !ENDING_PATTERN.test(sentence)
+    !ENDING_PATTERN.test(stripTrailingSymbols(sentence))
     ? `${sentence}.`
     : sentence
 }
@@ -66,22 +67,25 @@ export const isValidLanguageLearningSentence = (
 ) => {
   const limits = LANGUAGE_LEARNING_SENTENCE_LIMITS[language]
   const characterCount = [...sentence].length
+  const sentenceWithoutTrailingSymbols = stripTrailingSymbols(sentence)
   const hasMultipleSentences =
     language === 'en'
-      ? hasMultipleEnglishSentences(sentence)
-      : hasMultipleNonEnglishSentences(sentence)
+      ? hasMultipleEnglishSentences(sentenceWithoutTrailingSymbols)
+      : hasMultipleNonEnglishSentences(sentenceWithoutTrailingSymbols)
 
   if (
     sentence.length === 0 ||
     sentence.includes('\n') ||
     characterCount > limits.characters ||
-    !ENDING_PATTERN.test(sentence) ||
+    !ENDING_PATTERN.test(sentenceWithoutTrailingSymbols) ||
     hasMultipleSentences
   ) {
     return false
   }
 
-  return limits.words === null || sentence.split(/\s+/u).length <= limits.words
+  return (
+    limits.words === null || sentenceWithoutTrailingSymbols.split(/\s+/u).length <= limits.words
+  )
 }
 
 const hasMultipleNonEnglishSentences = (sentence: string) => {

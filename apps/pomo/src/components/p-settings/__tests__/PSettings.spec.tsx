@@ -10,7 +10,7 @@ import {PRadioSwitch} from 'src/components/p-radio-switch/PRadioSwitch'
 import {PSelect} from 'src/components/p-select/PSelect'
 import {PSwitch} from 'src/components/p-switch/PSwitch'
 import {useDisplayTheme} from 'src/features/display-theme'
-import {useFullscreen} from 'src/features/fullscreen'
+import {useFullscreen} from 'src/hooks/use-fullscreen'
 import {useScreenWakeLock} from 'src/features/screen-wake-lock'
 import {LEGACY_WEATHER_LOCATIONS} from 'src/features/weather'
 import {PDialogueSettings} from '../../p-dialogue-settings/PDialogueSettings'
@@ -23,7 +23,7 @@ vi.mock('src/components/p-modal/PModal', () => ({PModal: vi.fn()}))
 vi.mock('src/components/p-radio-switch/PRadioSwitch', () => ({PRadioSwitch: vi.fn()}))
 vi.mock('src/components/p-select/PSelect', () => ({PSelect: vi.fn()}))
 vi.mock('src/components/p-switch/PSwitch', () => ({PSwitch: vi.fn()}))
-vi.mock('src/features/fullscreen', () => ({useFullscreen: vi.fn()}))
+vi.mock('src/hooks/use-fullscreen', () => ({useFullscreen: vi.fn()}))
 vi.mock('src/features/display-theme', () => ({useDisplayTheme: vi.fn()}))
 vi.mock('src/features/screen-wake-lock', () => ({useScreenWakeLock: vi.fn()}))
 vi.mock('../../p-credits-settings/PCreditsSettings', () => ({PCreditsSettings: vi.fn()}))
@@ -164,6 +164,7 @@ it('should expose the guide and credits as the final settings tabs', async () =>
     '이벤트',
     '피드',
     '대화',
+    'AI',
     '사용자',
     '설명서',
     '크레딧',

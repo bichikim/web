@@ -1,6 +1,7 @@
 export * from './artwork'
 export * from './cards'
 export * from './client'
+export * from './depth-artwork'
 export * from './meaning-context'
 export * from './messages'
 export * from './prompt'

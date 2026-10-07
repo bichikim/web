@@ -1,10 +1,9 @@
+import {useDefaultTextModel} from 'src/features/text-generation/use-default-text-model'
+import type {DefaultTextModelId} from 'src/features/text-generation/settings'
+import {supportsTextModel} from 'src/features/text-generation/supports-text-model'
 import {type Accessor, createEffect, createSignal, onCleanup} from 'solid-js'
 import {type ModelDownloadResult, useModelDownload} from '../model-download'
 import {getTextModel, isTextModelDownloaded, supportsWebGpu} from '../text-generation'
-import {DEFAULT_DIALOGUE_MODEL_ID} from '../focus-room-dialogue/speech-defaults'
-import {isSupertonicModelDownloaded} from '../supertonic/download'
-import {getSupertonicModel} from '../supertonic/model'
-import {formatModelDownloadSize} from '../model-storage/size'
 import {createTarotClient, type TarotClient} from './client'
 import {
   type DrawnTarotCard,
@@ -15,7 +14,6 @@ import {
 } from './cards'
 import type {TarotWorkerResponse} from './messages'
 
-const MODEL_ID = 'gemma-4-e2b'
 const MAXIMUM_QUESTION_LENGTH = 500
 type TarotReadingStatus =
   | 'checking'
@@ -39,7 +37,7 @@ export interface TarotReadingController {
   readonly cards: Accessor<ReadonlyArray<DrawnTarotCard>>
   readonly count: Accessor<TarotDrawCount>
   readonly draw: () => void
-  readonly downloadKind: Accessor<'text' | 'voice' | null>
+  readonly downloadKind: Accessor<'text' | null>
   readonly downloadSize: Accessor<string>
   readonly error: Accessor<string | null>
   readonly output: Accessor<string>
@@ -54,9 +52,11 @@ export interface TarotReadingController {
   readonly status: Accessor<TarotReadingStatus>
 }
 
-/** Owns the selected cards and one local Gemma interpretation at a time. */
+/** Owns the selected cards and one local interpretation at a time. */
 // oxlint-disable-next-line eslint/max-lines-per-function -- One owner coordinates the draw and worker lifecycle.
 export const useTarotReading = (props: UseTarotReadingProps): TarotReadingController => {
+  const defaultModelId = useDefaultTextModel()
+  const [readingModelId, setReadingModelId] = createSignal<DefaultTextModelId>(defaultModelId())
   const modelDownload = useModelDownload()
   const [count, setDrawCount] = createSignal<TarotDrawCount>(TAROT_DRAW_COUNTS.three)
   const [question, setDraftQuestion] = createSignal('')
@@ -67,7 +67,6 @@ export const useTarotReading = (props: UseTarotReadingProps): TarotReadingContro
   const [error, setError] = createSignal<string | null>(null)
   const [modelProgress, setModelProgress] = createSignal<number | null>(null)
   const [missingText, setMissingText] = createSignal(false)
-  const [missingVoice, setMissingVoice] = createSignal(false)
   let readingQuestion = ''
   let readingLocale: TarotLocale = 'ko'
   let client: TarotClient | null = null
@@ -86,22 +85,14 @@ export const useTarotReading = (props: UseTarotReadingProps): TarotReadingContro
       .find(
         (item) =>
           item.status === 'loading' &&
-          ((item.target.kind === 'text' && item.target.modelId === MODEL_ID) ||
-            (item.target.kind === 'voice' && item.target.modelId === DEFAULT_DIALOGUE_MODEL_ID)),
+          item.target.kind === 'text' &&
+          item.target.modelId === readingModelId(),
       )
   const downloadKind = () => {
     const kind = activeDownload()?.target.kind
-    return kind === 'text' || kind === 'voice' ? kind : null
+    return kind === 'text' ? kind : null
   }
-  const downloadSize = () =>
-    [
-      missingText() ? getTextModel(MODEL_ID).downloadSize : null,
-      missingVoice()
-        ? formatModelDownloadSize(getSupertonicModel(DEFAULT_DIALOGUE_MODEL_ID).size)
-        : null,
-    ]
-      .filter((size) => size !== null)
-      .join(' + ')
+  const downloadSize = () => (missingText() ? getTextModel(readingModelId()).downloadSize : '')
   const progress = () => {
     const download = activeDownload()
     return status() === 'downloading' && download?.status === 'loading'
@@ -131,11 +122,8 @@ export const useTarotReading = (props: UseTarotReadingProps): TarotReadingContro
     }
 
     cancel()
-    if (missingVoice()) {
-      modelDownload.cancel({kind: 'voice', modelId: DEFAULT_DIALOGUE_MODEL_ID})
-    }
     if (missingText()) {
-      modelDownload.cancel({kind: 'text', modelId: MODEL_ID})
+      modelDownload.cancel({kind: 'text', modelId: readingModelId()})
     }
   }
   const handleResponse = (response: TarotWorkerResponse) => {
@@ -189,6 +177,7 @@ export const useTarotReading = (props: UseTarotReadingProps): TarotReadingContro
       client.generate({
         cards: selectedCards,
         locale: readingLocale,
+        modelId: readingModelId(),
         question: readingQuestion,
         requestId,
         type: 'generate',
@@ -200,7 +189,8 @@ export const useTarotReading = (props: UseTarotReadingProps): TarotReadingContro
     }
   }
   const checkModel = async () => {
-    if (!supportsWebGpu()) {
+    setReadingModelId(defaultModelId())
+    if (!supportsTextModel({modelId: readingModelId(), webGpu: supportsWebGpu()})) {
       setStatus('unsupported')
       return
     }
@@ -210,32 +200,22 @@ export const useTarotReading = (props: UseTarotReadingProps): TarotReadingContro
     setStatus('checking')
     setError(null)
     try {
-      const [textDownloaded, voiceDownloaded] = await Promise.all([
-        isTextModelDownloaded({modelId: MODEL_ID}),
-        isSupertonicModelDownloaded({modelId: DEFAULT_DIALOGUE_MODEL_ID}),
-      ])
+      const textDownloaded = await isTextModelDownloaded({modelId: readingModelId()})
       if (disposed || checkRevision !== revision) {
         return
       }
 
       setMissingText(!textDownloaded)
-      setMissingVoice(!voiceDownloaded)
       const downloads = modelDownload.downloads()
       const textPending = downloads.some(
         (item) =>
           item.target.kind === 'text' &&
-          item.target.modelId === MODEL_ID &&
+          item.target.modelId === readingModelId() &&
           item.status !== 'error',
       )
-      const voicePending = downloads.some(
-        (item) =>
-          item.target.kind === 'voice' &&
-          item.target.modelId === DEFAULT_DIALOGUE_MODEL_ID &&
-          item.status !== 'error',
-      )
-      if (textDownloaded && voiceDownloaded) {
+      if (textDownloaded) {
         startGeneration()
-      } else if ((textDownloaded || textPending) && (voiceDownloaded || voicePending)) {
+      } else if (textPending) {
         await waitForDownload()
       } else {
         setStatus('consent')
@@ -280,14 +260,9 @@ export const useTarotReading = (props: UseTarotReadingProps): TarotReadingContro
     setStatus('downloading')
     try {
       const cached: ModelDownloadResult = {status: 'complete'}
-      const textDownload = missingText()
-        ? modelDownload.startTextModel(MODEL_ID)
-        : Promise.resolve(cached)
-      const voiceDownload = missingVoice()
-        ? modelDownload.startVoiceModel(DEFAULT_DIALOGUE_MODEL_ID)
-        : Promise.resolve(cached)
-      const results = await Promise.all([textDownload, voiceDownload])
-      const result = results.find((value) => value.status !== 'complete') ?? cached
+      const result = await (missingText()
+        ? modelDownload.startTextModel(readingModelId())
+        : Promise.resolve(cached))
       if (disposed || downloadRevision !== revision) {
         return
       }

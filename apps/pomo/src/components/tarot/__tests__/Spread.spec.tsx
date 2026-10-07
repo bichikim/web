@@ -95,6 +95,7 @@ it('should give five placeholders and drawn cards the same ordered positions and
   selected.forEach((card, index) => {
     const article = within(region).getByRole('article', {name: positions[index]})
     fireEvent.load(article.querySelector('img')!)
+    fireEvent.load(article.querySelectorAll('img')[1]!)
     expect(article).toHaveTextContent(card.name.ko)
     expect(article).toHaveTextContent('역방향')
     expect(article.querySelector('img')!.parentElement!.parentElement).not.toHaveClass('rotate-180')

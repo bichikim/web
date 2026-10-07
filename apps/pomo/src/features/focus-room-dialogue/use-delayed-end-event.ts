@@ -1,3 +1,4 @@
+import {createTimeout} from '@winter-love/solid-use/timeout'
 import {runPendingEvent} from './run-pending-event'
 import {createEffect, createSignal, onCleanup} from 'solid-js'
 
@@ -15,6 +16,7 @@ export interface UseDelayedEndEventProps {
 
 export interface DelayedEndEventController {
   readonly cancel: () => void
+  readonly getTimerGeneration: () => number
   readonly isRunning: () => boolean
   readonly start: (durationMinutes: number) => void
 }
@@ -27,7 +29,8 @@ const isValidDuration = (durationMinutes: number) =>
 /** Schedules one delayed-end event and cancels it when the owner or enabled scope closes. */
 export const useDelayedEndEvent = (props: UseDelayedEndEventProps): DelayedEndEventController => {
   const [isRunning, setIsRunning] = createSignal(false)
-  let timerId: ReturnType<typeof globalThis.setTimeout> | null = null
+  let pendingDelay = 0
+  let timerGeneration = 0
   let eventState: 'idle' | 'running' | 'queued' = 'idle'
 
   const runEvent = () => {
@@ -54,11 +57,19 @@ export const useDelayedEndEvent = (props: UseDelayedEndEventProps): DelayedEndEv
     runEvent()
   }
 
+  const timeout = createTimeout(
+    (generation: number) => {
+      if (generation === timerGeneration) {
+        setIsRunning(false)
+        triggerEvent()
+      }
+    },
+    () => pendingDelay,
+  )
+
   const cancel = () => {
-    if (timerId !== null) {
-      globalThis.clearTimeout(timerId)
-      timerId = null
-    }
+    timerGeneration += 1
+    timeout.cancel()
     setIsRunning(false)
   }
 
@@ -68,12 +79,10 @@ export const useDelayedEndEvent = (props: UseDelayedEndEventProps): DelayedEndEv
     }
 
     cancel()
+    const currentGeneration = timerGeneration
     setIsRunning(true)
-    timerId = globalThis.setTimeout(() => {
-      timerId = null
-      setIsRunning(false)
-      triggerEvent()
-    }, durationMinutes * MILLISECONDS_PER_MINUTE)
+    pendingDelay = durationMinutes * MILLISECONDS_PER_MINUTE
+    timeout.execute(currentGeneration)
   }
 
   createEffect(() => {
@@ -84,5 +93,5 @@ export const useDelayedEndEvent = (props: UseDelayedEndEventProps): DelayedEndEv
 
   onCleanup(cancel)
 
-  return {cancel, isRunning, start}
+  return {cancel, getTimerGeneration: () => timerGeneration, isRunning, start}
 }

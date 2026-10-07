@@ -1,10 +1,7 @@
 /// <reference lib="webworker" />
+import {unwrapGenerationResult} from '../text-generation/unwrap-generation-result'
 
-import {
-  createDeviceTarget,
-  createGenerationFailure,
-  createRequestSequence,
-} from '../text-generation'
+import {createDeviceTarget, createRequestSequence} from '../text-generation'
 import {getExceptionMessage} from '../error-detail'
 
 import {createTextGenerationExecutor} from '../text-generation/execution'
@@ -31,9 +28,7 @@ const generate = async (request: GenerationRequest) => {
   switch (request.type) {
     case 'prompt': {
       const preparation = await textExecutor.prepare(createDeviceTarget(request.modelId))
-      if (!preparation.ok) {
-        throw createGenerationFailure(preparation.error, '이미지를 생성하지 못했어요.')
-      }
+      unwrapGenerationResult(preparation, '이미지를 생성하지 못했어요.')
 
       send({label: '이미지 생성을 위한 프롬프트를 준비하고 있어요', type: 'progress'})
       const result = await textExecutor.generate(
@@ -52,11 +47,9 @@ const generate = async (request: GenerationRequest) => {
         },
         {onResponse: () => undefined},
       )
-      if (!result.ok) {
-        throw createGenerationFailure(result.error, '이미지를 생성하지 못했어요.')
-      }
+      const resultValue = unwrapGenerationResult(result, '이미지를 생성하지 못했어요.')
 
-      const prompt = result.value.trim()
+      const prompt = resultValue.trim()
       if (!/[a-z]/iu.test(prompt) || /[\p{Script=Hangul}\p{Script=Han}]/u.test(prompt)) {
         throw new Error(
           '이미지 생성을 위한 프롬프트를 만들지 못했어요. 내용을 조금 더 구체적으로 적고 다시 시도해 주세요.',

@@ -580,7 +580,7 @@
 | [#2519](https://github.com/bichikim/web/issues/2519) | 적용           | [src/features/custom-albums/to-custom-p-track.ts ](/Users/bichi/.codex/worktrees/aa4c/web/apps/pomo/src/features/custom-albums/to-custom-p-track.ts:7)                                                                        |
 | [#2543](https://github.com/bichikim/web/issues/2543) | 적용           | [src/features/device-orientation/request-device-orientation-permission.ts ](/Users/bichi/.codex/worktrees/aa4c/web/apps/pomo/src/features/device-orientation/request-device-orientation-permission.ts:2)                      |
 | [#2339](https://github.com/bichikim/web/issues/2339) | 적용           | [src/features/focus-room-animation/create-masked-particle-effect.ts ](/Users/bichi/.codex/worktrees/aa4c/web/apps/pomo/src/features/focus-room-animation/create-masked-particle-effect.ts:9)                                  |
-| [#2544](https://github.com/bichikim/web/issues/2544) | 적용           | [src/components/p-relax-player-page/use-relax-depth-motion.ts ](/Users/bichi/.codex/worktrees/aa4c/web/apps/pomo/src/components/p-relax-player-page/use-relax-depth-motion.ts:44)                                             |
+| [#2544](https://github.com/bichikim/web/issues/2544) | 적용           | [src/components/p-slowcove-page/use-relax-depth-motion.ts ](/Users/bichi/.codex/worktrees/aa4c/web/apps/pomo/src/components/p-slowcove-page/use-relax-depth-motion.ts:44)                                                     |
 | [#2545](https://github.com/bichikim/web/issues/2545) | 적용           | [src/utils/fullscreen-vertex/index.ts ](/Users/bichi/.codex/worktrees/aa4c/web/apps/pomo/src/utils/fullscreen-vertex/index.ts:1)                                                                                              |
 | [#2557](https://github.com/bichikim/web/issues/2557) | 적용           | [src/features/relax-glass-renderer/cover-uv.ts ](/Users/bichi/.codex/worktrees/aa4c/web/apps/pomo/src/features/relax-glass-renderer/cover-uv.ts:1)                                                                            |
 | [#2558](https://github.com/bichikim/web/issues/2558) | 적용           | [src/features/frame-renderer/effect.ts ](/Users/bichi/.codex/worktrees/aa4c/web/apps/pomo/src/features/frame-renderer/effect.ts:83)                                                                                           |
@@ -609,7 +609,7 @@
 - 남은 통합 실패: PMusicPlayerContent.queue-restoration의 “should stop restored playback before clearing every loaded track”. 저장 위치 기대값은 22초, 관찰값은 0초다. 실제 테스트 로더에 HEAD의 변경 전 production 소스를 주입해도 같은 실패(19개 통과·1개 실패)가 재현되어 이번 공통화와 분리했다. 관련 없는 playback 변경은 포함하지 않았다.
 - 실제 브라우저 WebGL: 데스크톱(128×96), 세로(96×128), 좁은 가로(128×40)의 필터 36개 + 입자 30개 비교. 65개는 RGBA가 완전히 동일했다. 데스크톱 rain의 49,152개 채널 중 3개만 최대 1/255 차이였다. 입자는 초기·advance·reset·숨김·재개를 비교했고 destroy 반복과 destroy 이후 advance도 예외 없이 실행했다. 합성 텍스처에 대한 독립 렌더 검증이며 전체 앱 화면 검증을 대신하지 않는다.
 - Pomo 타입 검사 통과. 저장소 `pnpm lint` 오류 0개; 기존 PPomodoroDurationEditor prefer-destructuring 경고 3개는 변경하지 않았다.
-- `pnpm format`, `pnpm format:check`, `git diff --check` 통과. 변경 후 graft graph를 다시 생성했다.
+- `pnpm format`, `pnpm format:check`, `git diff --check` 통과.
 
 ### 검증 한계와 원격 상태
 

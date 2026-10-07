@@ -1,14 +1,11 @@
+import {drainLockedBatches} from '../database/drain-locked-batches'
+import {MILLISECONDS_PER_DAY} from 'src/utils/time-units'
 import {
   createWeatherCacheMaintenanceRepository,
   type WeatherCacheMaintenanceRepository,
 } from '../repositories/weather-cache-maintenance'
 
-const MILLISECONDS_PER_SECOND = 1000
-const SECONDS_PER_MINUTE = 60
-const MINUTES_PER_HOUR = 60
-const HOURS_PER_DAY = 24
-const WEATHER_CACHE_RETENTION =
-  HOURS_PER_DAY * MINUTES_PER_HOUR * SECONDS_PER_MINUTE * MILLISECONDS_PER_SECOND
+const WEATHER_CACHE_RETENTION = MILLISECONDS_PER_DAY
 const DELETE_BATCH_SIZE = 500
 const MAXIMUM_BATCHES = 20
 
@@ -22,36 +19,6 @@ export interface WeatherCacheMaintenanceResult {
   readonly deleted: number
 }
 
-const deleteInBatches = async (
-  repository: WeatherCacheMaintenanceRepository,
-  cutoff: Date,
-  batch = 0,
-  deleted = 0,
-): Promise<WeatherCacheMaintenanceResult> => {
-  if (batch === MAXIMUM_BATCHES) {
-    return {complete: false, deleted}
-  }
-
-  const result = await repository.deleteWeatherBatch({
-    batchSize: DELETE_BATCH_SIZE,
-    cutoff,
-  })
-
-  if (
-    result.deleted < 0 ||
-    result.deleted > DELETE_BATCH_SIZE ||
-    (result.hasMore && result.deleted !== DELETE_BATCH_SIZE)
-  ) {
-    throw new RangeError('Weather cache maintenance repository returned an invalid batch count')
-  }
-
-  const totalDeleted = deleted + result.deleted
-
-  return result.hasMore
-    ? deleteInBatches(repository, cutoff, batch + 1, totalDeleted)
-    : {complete: true, deleted: totalDeleted}
-}
-
 /** Deletes weather observations collected at least 24 hours ago. */
 export const runWeatherCacheMaintenance = async (
   dependencies?: WeatherCacheMaintenanceDependencies,
@@ -62,5 +29,11 @@ export const runWeatherCacheMaintenance = async (
   }
   const cutoff = new Date(resolvedDependencies.now().getTime() - WEATHER_CACHE_RETENTION)
 
-  return deleteInBatches(resolvedDependencies.repository, cutoff)
+  return drainLockedBatches({
+    batchSize: DELETE_BATCH_SIZE,
+    deleteBatch: () =>
+      resolvedDependencies.repository.deleteWeatherBatch({batchSize: DELETE_BATCH_SIZE, cutoff}),
+    invalidCountMessage: 'Weather cache maintenance repository returned an invalid batch count',
+    maximumBatches: MAXIMUM_BATCHES,
+  })
 }

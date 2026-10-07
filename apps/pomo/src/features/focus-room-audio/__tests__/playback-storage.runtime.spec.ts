@@ -70,6 +70,26 @@ describe('playback-storage', () => {
     expect(await readPPlayback()).toBeNull()
   })
 
+  it('should retain legacy playback fields when optional queue entry metadata is malformed', async () => {
+    localStorage.setItem(
+      'pomo:focus-room-playback:v1',
+      JSON.stringify({
+        positionSeconds: 4,
+        queueEntryId: 42,
+        savedAt: 10,
+        trackId: 'legacy-track',
+        trackIndex: 1,
+      }),
+    )
+
+    expect(await readPPlayback()).toEqual({
+      isPlaying: false,
+      positionSeconds: 4,
+      trackId: 'legacy-track',
+      trackIndex: 1,
+    })
+  })
+
   it('should tolerate browser storage write failures', async () => {
     vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
       throw new DOMException('Storage is unavailable', 'SecurityError')

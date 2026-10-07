@@ -37,11 +37,11 @@ describe('resolvePPlaylist', () => {
     ).toEqual([])
   })
 
-  it('should use the default playlist when every saved track has left the catalog', () => {
+  it('should use the default playlist when only obsolete bundled tracks remain', () => {
     expect(
       resolvePPlaylist({
         defaultTracks: DEFAULT_TRACKS,
-        storedTrackIds: ['removed'],
+        storedTrackIds: ['obsolete-bundled-track'],
         tracks: TRACKS,
       }),
     ).toBe(DEFAULT_TRACKS)

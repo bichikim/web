@@ -61,6 +61,20 @@ beforeEach(() => {
 })
 
 describe('useChat', () => {
+  it('should prepare LFM without WebGPU while keeping Gemma unsupported', () => {
+    const {clients, runtime, supportsWebGpu} = createRuntime()
+    supportsWebGpu.mockReturnValue(false)
+    const {cleanup, result} = renderHook(() => useChat({modelId: 'lfm-2.6b-qad', runtime}))
+    expect(result.state().status).toBe('idle')
+    result.selectModel('gemma-4-e2b')
+    expect(result.state().status).toBe('unsupported')
+    result.selectModel('lfm-2.6b-qad')
+    result.prepare()
+    expect(clients[0].modelId).toBe('lfm-2.6b-qad')
+    expect(clients[0].client.prepare).toHaveBeenCalledOnce()
+    cleanup()
+  })
+
   it('should preserve conversation while replacing the model client', () => {
     const {clients, runtime} = createRuntime()
     const {cleanup, result} = renderHook(() => useChat({modelId: 'qwen-4b', runtime}))

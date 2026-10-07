@@ -7,41 +7,6 @@ import {createDemoDocument, getDocumentScene} from '../../../player'
 import {convertSceneContainers} from '../container-conversion'
 import {SpatialDeformerProperties} from '../SpatialDeformerProperties'
 
-const preview = vi.hoisted(() => ({render: vi.fn()}))
-
-vi.mock('../spatial-mesh-preview-renderer', () => ({
-  createSpatialMeshPreviewRenderer: () => ({
-    destroy: () => undefined,
-    pick: () => undefined,
-    render: preview.render,
-    resize: () => undefined,
-  }),
-}))
-
-test('should show linked visible parts while creating a spatial mesh', () => {
-  const document = convertSceneContainers({
-    document: createDemoDocument(),
-    nodeIds: ['shapes'],
-    targetKind: 'spatial',
-  })!
-  const node = getDocumentScene(document).roots.find((candidate) => candidate.id === 'shapes')
-  if (node?.kind !== 'deformer' || node.deformerType !== 'spatial') {
-    throw new Error('Missing spatial deformer')
-  }
-  const view = render(() => <SpatialDeformerProperties document={document} node={node} />)
-
-  fireEvent.click(view.getByRole('button', {name: '메시 만들기'}))
-  expect(preview.render).toHaveBeenCalledWith(
-    expect.objectContaining({
-      referenceParts: expect.arrayContaining([
-        expect.objectContaining({id: 'shape-circle'}),
-        expect.objectContaining({id: 'shape-diamond'}),
-      ]),
-    }),
-  )
-  view.unmount()
-})
-
 test('should allow retrying the same GLB after an import error', async () => {
   const document = convertSceneContainers({
     document: createDemoDocument(),

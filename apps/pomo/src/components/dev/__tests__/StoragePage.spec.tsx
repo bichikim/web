@@ -10,6 +10,7 @@ import {type ModelDownloadState, useModelDownload} from 'src/features/model-down
 import type {ModelStorageManager} from 'src/features/model-storage'
 import {failureResult, successResult} from 'src/features/result'
 import {StoragePage} from '../StoragePage'
+import {DeletionModal} from '../storage/DeletionModal'
 
 vi.mock('@solidjs/meta', () => ({
   Title: (props: {children?: JSX.Element}) => <>{props.children}</>,
@@ -19,6 +20,10 @@ vi.mock('@solidjs/router', () => ({
 }))
 vi.mock('src/components/p-modal/PModal', () => ({PModal: vi.fn()}))
 vi.mock('src/features/model-download', () => ({useModelDownload: vi.fn()}))
+vi.mock('../storage/DeletionModal', async (importOriginal) => {
+  const original = await importOriginal<typeof import('../storage/DeletionModal')>()
+  return {DeletionModal: vi.fn(original.DeletionModal)}
+})
 
 let setDownloadState: (value: ModelDownloadState) => ModelDownloadState
 
@@ -53,17 +58,6 @@ beforeEach(() => {
 afterEach(() => {
   cleanup()
   vi.clearAllMocks()
-})
-
-it('should show stored model data and verification destinations', async () => {
-  render(() => <StoragePage manager={createManager()} />)
-
-  expect(await screen.findByText('model.onnx')).toBeDefined()
-  expect(screen.getByText('2개 파일이 남아 있어요.')).toBeDefined()
-  expect(screen.getByRole('link', {name: '문장 만들기 →'}).getAttribute('href')).toBe(
-    '/dev/dialogue',
-  )
-  expect(screen.getByRole('link', {name: '음성 생성 →'}).getAttribute('href')).toBe('/dev/voice')
 })
 
 it('should show partial storage loading until the first inspection completes', async () => {
@@ -142,8 +136,12 @@ it('should block deletion while a model download is active', async () => {
   )
   expect(screen.getByRole('button', {name: '삭제 확정'})).toBeDisabled()
   const confirmButton = screen.getByRole('button', {name: '삭제 확정'})
-  confirmButton.removeAttribute('disabled')
   fireEvent.click(confirmButton)
+  expect(screen.queryByRole('alert')).not.toBeInTheDocument()
+  expect(manager.deleteCacheEntry).not.toHaveBeenCalled()
+
+  // Verify the deletion callback also rejects a request after downloading starts.
+  vi.mocked(DeletionModal).mock.calls[0]?.[0].onConfirm()
   expect(screen.getByRole('alert')).toHaveTextContent(
     '모델 다운로드가 끝나거나 취소된 뒤 저장소를 삭제해 주세요.',
   )

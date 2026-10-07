@@ -29,6 +29,7 @@ export interface TransferState {
   readonly receivedName: string | null
   readonly progress: number
   readonly error: string | null
+  readonly errorCode: 'direct-connection' | null
 }
 
 export interface ReceivedFileSink {

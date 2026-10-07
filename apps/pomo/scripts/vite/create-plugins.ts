@@ -20,6 +20,7 @@ export interface CreatePluginsOptions {
   readonly publicOrigin: string
   readonly runtimeTarget: PomoTarget
   readonly scribbleIconPath: string
+  readonly standaloneRelax?: boolean
   readonly usesAppsInTossDevtools: boolean
 }
 
@@ -67,11 +68,13 @@ export const createPlugins = (options: CreatePluginsOptions): Array<PluginOption
       : []),
     solidStart({
       devOverlay: false,
-      middleware:
-        isStaticBuild && options.command === 'build'
+      middleware: options.standaloneRelax
+        ? './src/middleware/relax.ts'
+        : isStaticBuild && options.command === 'build'
           ? './src/middleware/prerender.ts'
           : './src/middleware/index.ts',
       ssr: options.buildTarget === 'web' || options.buildTarget === 'apps-in-toss',
+      ...(options.standaloneRelax ? {routeDir: './routes-relax'} : {}),
     }),
     createDevFeedPlugin(),
     createScribbleIconRestartPlugin({iconSetPath: options.scribbleIconPath}),

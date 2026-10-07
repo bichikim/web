@@ -267,6 +267,22 @@
           ],
           "name": "Gemma 4 E2B ONNX",
           "use": "Generating dialogue drafts in the browser"
+        },
+        {
+          "condition": "Preserve the license copy, copyright, and attribution notices, and follow the license’s commercial-use conditions.",
+          "license": "LFM Open License v1.0",
+          "links": [
+            {
+              "label": "License and attribution notice",
+              "url": "/licenses/lfm-2.5-2.6b.txt"
+            },
+            {
+              "label": "Liquid AI",
+              "url": "https://huggingface.co/LiquidAI/LFM2.5-2.6B-GGUF/blob/e7caca5d835a3901a8e0d63e94009429bafafdfc/LICENSE"
+            }
+          ],
+          "name": "LFM2.5-2.6B QAD Q4_0",
+          "use": "Tarot interpretation, dialogue, and sentence generation in the browser"
         }
       ],
       "id": "models",

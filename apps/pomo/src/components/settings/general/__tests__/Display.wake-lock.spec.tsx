@@ -1,6 +1,6 @@
 /** @vitest-environment jsdom */
 
-import {fireEvent, render, screen, waitFor} from '@solidjs/testing-library'
+import {fireEvent, render, screen} from '@solidjs/testing-library'
 import {afterEach, beforeEach, expect, it, vi} from 'vitest'
 
 import {useScreenWakeLock} from 'src/features/screen-wake-lock'
@@ -44,9 +44,9 @@ it('should remove a stale acquire error after the user turns the real switch off
   render(() => <WakeLockDisplayHarness />)
 
   const wakeLockSwitch = screen.getByRole('switch', {name: '화면 자동 꺼짐 방지'})
-  await waitFor(() => expect(wakeLockSwitch).toBeEnabled())
+  expect(wakeLockSwitch).toBeEnabled()
   fireEvent.click(wakeLockSwitch)
-  await waitFor(() => expect(request).toHaveBeenCalledWith('screen'))
+  expect(request).toHaveBeenCalledWith('screen')
   expect(wakeLockSwitch).toBeChecked()
   expect(wakeLockSwitch).toBeEnabled()
 

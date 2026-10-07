@@ -1,6 +1,7 @@
 /** @vitest-environment jsdom */
 
 import {fireEvent, render, screen} from '@solidjs/testing-library'
+import userEvent from '@testing-library/user-event'
 import {createSignal} from 'solid-js'
 import {afterEach, beforeEach, expect, it, vi} from 'vitest'
 
@@ -122,6 +123,70 @@ it('should wait for a complete multi-digit waiting time before saving', async ()
   }
 })
 
+it.each([
+  {label: 'minimum duration', minutes: 1, pasted: '１'},
+  {label: 'default duration', minutes: 30, pasted: '３０'},
+  {label: 'maximum duration', minutes: 120, pasted: '１２０'},
+])('should accept fullwidth paste for the $label', async ({minutes, pasted}) => {
+  const events = createEvents()
+  eventMocks.usePEvents.mockReturnValue(events)
+  const user = userEvent.setup()
+  render(() => <DelayedEndEventSettings />)
+  const input = screen.getByRole('spinbutton', {name: '대기 시간(분)'})
+
+  await user.clear(input)
+  await user.paste(pasted)
+
+  expect(input).toHaveValue(pasted)
+  expect(screen.queryByText('대기 시간은 1~120분 사이의 정수여야 해요.')).toBeNull()
+  const startButton = screen.getByRole('button', {name: '시작'})
+  expect(startButton).not.toBeDisabled()
+
+  await user.click(startButton)
+
+  expect(events.setDelayedEndEventDuration).toHaveBeenCalledWith(minutes)
+  expect(events.startDelayedEndEvent).toHaveBeenCalledOnce()
+})
+
+it.each(['０', '１２１', '１.５'])(
+  'should reject invalid fullwidth duration %s after paste',
+  async (pasted) => {
+    const events = createEvents()
+    eventMocks.usePEvents.mockReturnValue(events)
+    const user = userEvent.setup()
+    render(() => <DelayedEndEventSettings />)
+    const input = screen.getByRole('spinbutton', {name: '대기 시간(분)'})
+
+    await user.clear(input)
+    await user.paste(pasted)
+
+    expect(input).toHaveValue(pasted)
+    expect(screen.getByText('대기 시간은 1~120분 사이의 정수여야 해요.')).toBeInTheDocument()
+    expect(screen.getByRole('button', {name: '시작'})).toBeDisabled()
+    expect(events.setDelayedEndEventDuration).not.toHaveBeenCalled()
+    expect(events.startDelayedEndEvent).not.toHaveBeenCalled()
+  },
+)
+
+it('should keep ArrowUp incrementing the waiting time after paste support is enabled', async () => {
+  const events = createEvents()
+  eventMocks.usePEvents.mockReturnValue(events)
+  const user = userEvent.setup()
+  render(() => <DelayedEndEventSettings />)
+  const input = screen.getByRole('spinbutton', {name: '대기 시간(분)'})
+
+  await user.click(input)
+  await user.keyboard('{ArrowUp}')
+
+  expect(input).toHaveValue('31')
+  expect(screen.getByRole('button', {name: '시작'})).not.toBeDisabled()
+
+  await user.click(screen.getByRole('button', {name: '시작'}))
+
+  expect(events.setDelayedEndEventDuration).toHaveBeenCalledWith(31)
+  expect(events.startDelayedEndEvent).toHaveBeenCalledOnce()
+})
+
 it('should use the latest waiting time when starting before the save debounce completes', () => {
   const [duration, setDuration] = createSignal(30)
   let startedWithDuration: number | null = null
@@ -174,7 +239,7 @@ it('should synchronize an externally changed waiting time after saving', async (
     await save.promise
     setDuration(60)
 
-    await vi.waitFor(() => expect(input).toHaveValue(60))
+    await vi.waitFor(() => expect(input).toHaveValue('60'))
   } finally {
     vi.useRealTimers()
   }

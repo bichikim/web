@@ -31,6 +31,21 @@ afterEach(async () => {
 })
 
 describe('signaling handshake', () => {
+  it('should encode all 32 invitation bytes as lowercase hex with leading zeros', () => {
+    const bytes = Uint8Array.from([
+      0, 1, 15, 16, 127, 128, 254, 255, 0, 1, 15, 16, 127, 128, 254, 255, 0, 1, 15, 16, 127, 128,
+      254, 255, 0, 1, 15, 16, 127, 128, 254, 255,
+    ])
+    const random = vi.spyOn(crypto, 'getRandomValues').mockReturnValue(bytes)
+    const creator = peer()
+    const {joinerSecret} = invitation(creator)
+
+    expect(random).toHaveBeenCalledTimes(1)
+    expect(random).toHaveBeenCalledWith(expect.any(Uint8Array))
+    expect(random.mock.calls[0][0]?.byteLength).toBe(32)
+    expect(joinerSecret).toBe('00010f107f80feff00010f107f80feff00010f107f80feff00010f107f80feff')
+  })
+
   it('should require the invitation secret and creator approval before relaying signals', () => {
     const creator = peer()
     const {id, joinerSecret} = invitation(creator)

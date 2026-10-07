@@ -1,14 +1,18 @@
 import * as m from '@paraglide/message'
-import {createMemo, Show} from 'solid-js'
-import {
-  type DrawnTarotCard,
-  TAROT_ARTWORK,
-  type TarotLocale,
-  type TarotSpreadPosition,
-} from '../../features/tarot'
-import {CARD_COLUMN_SIZE, CARD_FRAME_SIZE} from './card-layout'
-import {Image} from '../image'
-import {CardPlaceholder} from './CardPlaceholder'
+import {clientOnly} from '@solidjs/start'
+import {createMemo, createSignal, type JSX, Show} from 'solid-js'
+import {type DrawnTarotCard, type TarotLocale, type TarotSpreadPosition} from '../../features/tarot'
+import {CARD_COLUMN_SIZE} from './card-layout'
+import {TarotCardArtwork} from './TarotCardArtwork'
+import {useCardExpansion} from './use-card-expansion'
+
+const TarotCardDepthView = clientOnly(
+  async () => {
+    const {TarotCardDepthView: component} = await import('./TarotCardDepthView')
+    return {default: component}
+  },
+  {lazy: true},
+)
 
 export interface TarotCardViewProps {
   readonly showUpright?: boolean
@@ -17,12 +21,30 @@ export interface TarotCardViewProps {
   readonly position?: TarotSpreadPosition
 }
 
+const handleKeyDown: JSX.EventHandler<HTMLDialogElement, KeyboardEvent> = (event) => {
+  if (event.key === 'Escape') {
+    event.stopPropagation()
+  }
+}
+
 export const TarotCardView = (props: TarotCardViewProps) => {
   const direction = createMemo(() =>
     props.card.orientation === 'reversed' ? m.tarot_reversed() : m.tarot_upright(),
   )
-  const artwork = createMemo(() => TAROT_ARTWORK[props.card.id])
-  const isFlipped = () => props.card.orientation === 'reversed' && props.showUpright === false
+  const [dialogElement, setDialogElement] = createSignal<HTMLDialogElement | null>(null)
+  const [expandedCard, setExpandedCard] = createSignal<HTMLDivElement | null>(null)
+  const expansion = useCardExpansion({dialog: dialogElement, target: expandedCard})
+  const handleCancel: JSX.EventHandler<HTMLDialogElement, Event> = (event) => {
+    event.preventDefault()
+    expansion.handleClose()
+  }
+  const handleBackdrop: JSX.EventHandler<HTMLDialogElement, PointerEvent> = (event) => {
+    if (event.target !== event.currentTarget) {
+      return
+    }
+    event.preventDefault()
+    expansion.handleClose()
+  }
 
   return (
     <article
@@ -39,48 +61,65 @@ export const TarotCardView = (props: TarotCardViewProps) => {
         </Show>
         <span class="rounded-full bg-[#d8b97e15] px-2 py-0.5 font-500">{direction()}</span>
       </div>
-      <div
-        classList={{
-          'rotate-180': isFlipped(),
-        }}
-        class={`relative w-full shrink-0 overflow-hidden rounded-[5%]
-          bg-[#33251b] shadow-[0_8px_20px_#0004] [container-type:inline-size] ${CARD_FRAME_SIZE}`}
-      >
-        <Image
-          alt=""
-          class="h-full w-full"
-          imageClass="object-contain"
-          height={1536}
-          src={artwork()?.image}
-          width={1024}
-          placeholder={<CardPlaceholder />}
-          fallback={
-            <CardPlaceholder>
-              <h3
-                classList={{'rotate-180': isFlipped()}}
-                class="m-0 break-keep p-4 text-center text-base font-650 leading-relaxed text-[#d8b97e]"
-              >
-                {props.card.name[props.locale]}
-              </h3>
-            </CardPlaceholder>
-          }
-        >
-          <span
-            class="pointer-events-none absolute left-[41%] top-[1.7%] flex h-[5.2%] w-[18%]
-              items-center justify-center font-750 leading-none text-[#56391f]
-              [font-size:clamp(0.375rem,4cqi,0.875rem)]"
-          >
-            {artwork()?.marker[props.locale]}
-          </span>
-          <h3
-            class="pointer-events-none absolute bottom-[5.5%] left-[15%] m-0 flex h-[11%] w-[70%]
-              items-center justify-center break-keep text-center font-750 leading-tight text-[#56391f]
-              [font-size:clamp(0.5rem,5cqi,1.125rem)]"
-          >
-            {props.card.name[props.locale]}
-          </h3>
-        </Image>
+      <div class="w-full shrink-0" classList={{invisible: expansion.isExpanded()}}>
+        <TarotCardArtwork
+          card={props.card}
+          locale={props.locale}
+          showUpright={props.showUpright}
+          onInspect={expansion.handleOpen}
+        />
       </div>
+      <dialog
+        ref={setDialogElement}
+        aria-label={props.card.name[props.locale]}
+        class="fixed inset-0 m-0 h-dvh w-screen max-h-[none] max-w-[none] box-border
+          place-items-center overflow-hidden border-0 bg-transparent p-0 pointer-events-auto
+          [&[open]]:grid [&::backdrop]:bg-[#0008] [&::backdrop]:backdrop-blur-xl"
+        onCancel={handleCancel}
+        onClose={expansion.handleClosed}
+        onPointerDown={handleBackdrop}
+        on:keydown={handleKeyDown}
+      >
+        <Show when={expansion.isExpanded()}>
+          <div
+            ref={setExpandedCard}
+            data-phase={expansion.phase()}
+            style={expansion.style()}
+            class="w-[min(100vw,calc(100dvh*2/3))] aspect-[2/3] origin-center
+              transition-transform duration-420 ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none
+              [transform:translate(var(--card-expansion-x),var(--card-expansion-y))_scale(var(--card-expansion-scale))]
+              [&[data-phase=collapsed]]:transition-none [&[data-phase=expanding]]:[transform:none]
+              [&[data-phase=expanded]]:[transform:none]"
+            classList={{'pointer-events-none': expansion.phase() !== 'expanded'}}
+          >
+            <TarotCardDepthView
+              card={props.card}
+              locale={props.locale}
+              showUpright={props.showUpright}
+              fallback={
+                <TarotCardArtwork
+                  card={props.card}
+                  locale={props.locale}
+                  showUpright={props.showUpright}
+                  class="w-full aspect-[2/3]"
+                />
+              }
+            />
+          </div>
+          <button
+            type="button"
+            autofocus
+            aria-label={m.common_close()}
+            class="absolute left-[max(1rem,var(--pomo-safe-area-inset-left))]
+              top-[max(1rem,var(--pomo-safe-area-inset-top))] h-11 w-11 flex items-center justify-center
+              rounded-full border border-white/30 bg-black/60 text-xl text-white backdrop-blur-md cursor-pointer
+              focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+            onClick={expansion.handleClose}
+          >
+            <span aria-hidden="true" class="i-tabler-x" />
+          </button>
+        </Show>
+      </dialog>
     </article>
   )
 }

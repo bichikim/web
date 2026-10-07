@@ -1,3 +1,4 @@
+import {useDefaultTextModel} from 'src/features/text-generation/use-default-text-model'
 import {type Accessor, createEffect, createSignal, onCleanup, untrack} from 'solid-js'
 import {getErrorMessage} from 'src/utils/get-error-message'
 import {isCancellationReason} from 'src/utils/is-cancellation-reason'
@@ -7,15 +8,12 @@ import {useModelDownload} from '../../features/model-download'
 import {getTextModel, isTextModelDownloaded} from '../../features/text-generation'
 import {type AiTextJobController, useAiTextJob} from '../../features/ai-job/use-ai-text-job'
 
-const CHAT_MODEL_ID = 'gemma-4-e2b'
-
 const getChatErrorMessage = (error: unknown, fallback: string): string =>
   error instanceof Error ? getErrorMessage(error, fallback) : fallback
 
-export const ONE_OFF_CHAT_MODEL = getTextModel(CHAT_MODEL_ID)
-
 export interface OneOffChatController {
   readonly cancelDownloadConsent: () => void
+  readonly downloadSize: Accessor<string>
   readonly draft: Accessor<string>
   readonly downloadConsentOpen: Accessor<boolean>
   readonly errorMessage: Accessor<string | null>
@@ -39,7 +37,8 @@ interface PendingText {
 /** Generates one reply at a time without retaining its conversation context. */
 // oxlint-disable-next-line eslint/max-lines-per-function -- One hook owns one disposable chat flow and its download state.
 export const useOneOffChat = (props: UseOneOffChatProps): OneOffChatController => {
-  const chat = useChat({modelId: CHAT_MODEL_ID})
+  const defaultModelId = useDefaultTextModel()
+  const chat = useChat({modelId: defaultModelId()})
   const modelDownload = useModelDownload()
   const speakReply = async (text: string) => {
     try {
@@ -71,7 +70,7 @@ export const useOneOffChat = (props: UseOneOffChatProps): OneOffChatController =
     return (
       state.status === 'loading' &&
       state.target.kind === 'text' &&
-      state.target.modelId === CHAT_MODEL_ID
+      state.target.modelId === chat.modelId()
     )
   }
   const isBusy = () =>
@@ -137,6 +136,8 @@ export const useOneOffChat = (props: UseOneOffChatProps): OneOffChatController =
       return serverJob.submit(normalizedText)
     }
 
+    chat.selectModel(defaultModelId())
+
     if (chat.state().status === 'unsupported') {
       return false
     }
@@ -154,7 +155,7 @@ export const useOneOffChat = (props: UseOneOffChatProps): OneOffChatController =
     setIsCheckingModel(true)
 
     try {
-      const isDownloaded = await isTextModelDownloaded({modelId: CHAT_MODEL_ID})
+      const isDownloaded = await isTextModelDownloaded({modelId: chat.modelId()})
 
       if (disposed) {
         return false
@@ -183,7 +184,7 @@ export const useOneOffChat = (props: UseOneOffChatProps): OneOffChatController =
   const startDownload = async () => {
     setDownloadConsentOpen(false)
     try {
-      const result = await modelDownload.startTextModel(CHAT_MODEL_ID)
+      const result = await modelDownload.startTextModel(chat.modelId())
 
       if (disposed) {
         return
@@ -290,6 +291,7 @@ export const useOneOffChat = (props: UseOneOffChatProps): OneOffChatController =
   return {
     cancelDownloadConsent,
     downloadConsentOpen,
+    downloadSize: () => getTextModel(chat.modelId()).downloadSize,
     draft: chat.draft,
     errorMessage,
     isBusy,
