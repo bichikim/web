@@ -103,6 +103,24 @@ export const createCalendarRangeFromDayOffsets = ({
   return {end: boundary(lastDayOffset + 1), start: boundary(firstDayOffset)}
 }
 
+export const createCalendarMonthRange = ({
+  boundary,
+  monthOffsets,
+  now,
+}: {
+  readonly boundary: (months: number) => Date
+  readonly monthOffsets: ReadonlyArray<number>
+  readonly now: Date
+}): CalendarEventRange | null => {
+  if (monthOffsets.length !== 1) {
+    return null
+  }
+
+  const monthOffset = monthOffsets[0] ?? 0
+  const start = monthOffset === 0 ? now : boundary(monthOffset)
+  return toRange(start, boundary(monthOffset + 1))
+}
+
 export const createCalendarWeekdayRange = ({
   boundary,
   currentWeekday,

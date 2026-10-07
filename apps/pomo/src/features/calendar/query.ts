@@ -1,6 +1,7 @@
 import {createCalendarExclusionPattern} from './create-calendar-exclusion-pattern'
 import {
   type CalendarWeekendIntent,
+  createCalendarMonthRange,
   createCalendarPeriodRange,
   createCalendarWeekdayRange,
   DAY_AFTER_TOMORROW_START_DAYS,
@@ -244,12 +245,6 @@ interface CreateStandaloneCalendarDateRangeOptions {
   readonly now: Date
   readonly relativeDayOffsets: ReadonlyArray<number>
   readonly text: string
-}
-
-interface CreateCalendarMonthRangeOptions {
-  readonly monthBoundary: (months: number) => Date
-  readonly monthOffsets: ReadonlyArray<number>
-  readonly now: Date
 }
 
 const getCalendarQueryIntent = (text: string): CalendarQueryIntent => {
@@ -497,20 +492,6 @@ const createStandaloneCalendarWeekdayRange = ({
   })
 }
 
-const createCalendarMonthRange = ({
-  monthBoundary,
-  monthOffsets,
-  now,
-}: CreateCalendarMonthRangeOptions): CalendarEventRange | null => {
-  if (monthOffsets.length !== 1) {
-    return null
-  }
-
-  const monthOffset = monthOffsets[0] ?? 0
-  const start = monthOffset === 0 ? now : monthBoundary(monthOffset)
-  return toRange(start, monthBoundary(monthOffset + 1))
-}
-
 const hasCalendarQueryIntent = (text: string) =>
   CALENDAR_INTENT_PATTERN.test(text) ||
   IMPLICIT_SCHEDULE_PATTERN.test(text) ||
@@ -585,7 +566,7 @@ export const createCalendarQuery = (
     const date = dayjs.utc(local.format('YYYY-MM-01')).add(months, 'month').format('YYYY-MM-DD')
     return dayjs.tz(`${date}T00:00:00`, timeZone).toDate()
   }
-  const monthRange = createCalendarMonthRange({monthBoundary, monthOffsets, now})
+  const monthRange = createCalendarMonthRange({boundary: monthBoundary, monthOffsets, now})
   if (monthRange !== null) {
     return monthRange
   }
