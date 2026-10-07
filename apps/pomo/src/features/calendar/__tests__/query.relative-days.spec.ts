@@ -32,6 +32,17 @@ describe('createCalendarQuery relative days', () => {
   })
 
   it.each([
+    '약속을 낼로 옮긴 일정 알려줘',
+    '회의를 낼에 잡았는데 일정 알려줘',
+    '일정을 낼부터 알려줘',
+  ])('should recognize a date particle after 낼 despite a preceding object in "%s"', (text) => {
+    expect(createCalendarQuery({now, text, timeZone: 'Asia/Seoul'})).toEqual({
+      end: '2026-09-05T15:00:00.000Z',
+      start: '2026-09-04T15:00:00.000Z',
+    })
+  })
+
+  it.each([
     '돈을 낼 일정 알려줘',
     '서류를 낼 일정 알려줘',
     '돈을   낼 일정 알려줘',

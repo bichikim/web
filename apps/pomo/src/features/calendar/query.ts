@@ -13,8 +13,12 @@ import {dayjs} from 'src/utils/zoned-dayjs'
 import type {CalendarEventQuery, CalendarEventRange} from './types'
 
 const CALENDAR_INTENT_PATTERN = /(?:일정|미팅|회의|약속|스케줄)/u
-const CALENDAR_PERIOD_BOUNDARY_PATTERN =
-  /(?=$|[\s,.!?…]|(?:에는|에서|부터|까지|이랑|하고|은|는|이|가|을|를|에|엔|도|로|만|중|쯤|의|과|와|랑)(?=$|[\s,.!?…]))/u
+const CALENDAR_PERIOD_PARTICLE_PATTERN =
+  /(?:에는|에서|부터|까지|이랑|하고|은|는|이|가|을|를|에|엔|도|로|만|중|쯤|의|과|와|랑)(?=$|[\s,.!?…])/u
+const CALENDAR_PERIOD_BOUNDARY_PATTERN = new RegExp(
+  `(?=$|[\\s,.!?…]|${CALENDAR_PERIOD_PARTICLE_PATTERN.source})`,
+  'u',
+)
 const CALENDAR_WORD_START_PATTERN = '(?<![\\p{L}\\p{N}_])'
 const createCalendarRelativeDayPattern = (phrase: string): RegExp =>
   new RegExp(
@@ -72,8 +76,8 @@ const DAY_BEFORE_YESTERDAY_PHRASE = '(?:엊그제|그저께|그제)'
 const DAY_BEFORE_YESTERDAY_PATTERN = createCalendarRelativeDayPattern(DAY_BEFORE_YESTERDAY_PHRASE)
 const YESTERDAY_PATTERN = createCalendarRelativeDayPattern('어제')
 const TODAY_PATTERN = createCalendarRelativeDayPattern('오늘')
-// 목적격 조사 뒤의 '낼'은 '돈을 낼' 같은 동사 표현이므로 날짜로 해석하지 않는다.
-const TOMORROW_PHRASE = '(?:내일|(?<![을를]\\s+)낼)'
+// 날짜 조사가 붙은 '낼로' 등은 앞의 목적격 조사보다 우선하며, '돈을 낼'은 동사로 남긴다.
+const TOMORROW_PHRASE = `(?:내일|낼(?=${CALENDAR_PERIOD_PARTICLE_PATTERN.source})|(?<![을를]\\s+)낼)`
 const TOMORROW_PATTERN = createCalendarRelativeDayPattern(TOMORROW_PHRASE)
 const DAY_AFTER_TOMORROW_PHRASE = '(?:내일)?모레'
 const DAY_AFTER_TOMORROW_PATTERN = createCalendarRelativeDayPattern(DAY_AFTER_TOMORROW_PHRASE)
