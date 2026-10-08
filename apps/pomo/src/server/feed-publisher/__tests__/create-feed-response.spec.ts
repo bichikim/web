@@ -130,6 +130,38 @@ describe('createFeedResponse', () => {
     expect(response.headers.get('Content-Type')).toBe('application/atom+xml; charset=utf-8')
   })
 
+  it.each(['rss', 'atom'])(
+    'should return parseable %s after rendering invalid feed text',
+    async (format) => {
+      const provider = createProvider(async () => [
+        {
+          ...ENTRY,
+          summary: '요약\u0008 😀',
+          title: '사건\u0008 😀',
+        },
+      ])
+      const response = await createResponse(
+        new Request(`https://pomo.example/api/feeds/today-in-history/${format}.xml`),
+        provider,
+      )
+      const document = await response.text()
+      const parsed = new DOMParser().parseFromString(document, 'application/xml')
+
+      expect(response.status).toBe(200)
+      expect(parsed.querySelector('parsererror')).toBeNull()
+      expect(
+        format === 'rss'
+          ? parsed.getElementsByTagName('item').item(0)?.getElementsByTagName('title').item(0)
+              ?.textContent
+          : parsed
+              .getElementsByTagNameNS('http://www.w3.org/2005/Atom', 'entry')
+              .item(0)
+              ?.getElementsByTagNameNS('http://www.w3.org/2005/Atom', 'title')
+              .item(0)?.textContent,
+      ).toBe('사건 😀')
+    },
+  )
+
   it('should use the provider origin for a production canonical self URL', async () => {
     const response = await createResponse(
       new Request('https://deployment.vercel.app/api/feeds/today-in-history/rss.xml'),

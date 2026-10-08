@@ -49,14 +49,17 @@ it('should report an invalid date without retaining a previous result', () => {
   render(() => <SajuPage />)
 
   const form = screen.getByRole('button', {name: '사주 풀이 생성'}).closest('form')!
+  fireEvent.input(screen.getByLabelText('질문'), {target: {value: '재물에 대해 알려줘'}})
   fireEvent.submit(form)
+  expect(screen.getByRole('region', {name: 'LLM 전달 값'})).toBeTruthy()
+  expect(GenerationWorkspace).toHaveBeenCalledOnce()
   fireEvent.input(screen.getByLabelText('생년월일'), {target: {value: '1899-01-01'}})
   fireEvent.submit(form)
 
   expect(screen.getByRole('alert')).toBeTruthy()
   expect(screen.queryByRole('heading', {name: '오행 · analyzeElements()'})).toBeNull()
   expect(screen.queryByRole('region', {name: 'LLM 전달 값'})).toBeNull()
-  expect(GenerationWorkspace).not.toHaveBeenCalled()
+  expect(GenerationWorkspace).toHaveBeenCalledOnce()
 })
 
 it('should require a meaningful question before preparing LLM messages', () => {

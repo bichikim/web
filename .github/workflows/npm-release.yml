@@ -68,8 +68,7 @@ jobs:
     needs: validate
     if: >-
       github.repository == 'bichikim/web' &&
-      github.ref == 'refs/heads/main' &&
-      vars.NPM_RELEASE_ENABLED == 'true'
+      github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     timeout-minutes: 30
     permissions:

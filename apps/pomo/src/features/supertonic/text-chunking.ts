@@ -10,22 +10,23 @@ const getCharacterLength = (text: string) => getCharacters(text).length
 
 const findBreakIndex = (
   characters: ReadonlyArray<string>,
-  minimumLength: number,
-  preferredLength: number,
-  maximumLength: number,
+  offset: number,
+  policy: SupertonicSpeechPolicy,
 ) => {
-  const preferredEnd = Math.min(preferredLength, maximumLength, characters.length)
+  const {considerSplitLength, maximumLength, recommendedLength} = policy
+  const remainingLength = characters.length - offset
+  const preferredEnd = Math.min(recommendedLength, maximumLength, remainingLength)
 
-  for (let index = preferredEnd; index >= minimumLength; index -= 1) {
-    if (BREAK_CHARACTER.test(characters[index - 1]!)) {
+  for (let index = preferredEnd; index >= considerSplitLength; index -= 1) {
+    if (index > 0 && BREAK_CHARACTER.test(characters[offset + index - 1]!)) {
       return index
     }
   }
 
-  const maximumEnd = Math.min(maximumLength, characters.length)
+  const maximumEnd = Math.min(maximumLength, remainingLength)
 
   for (let index = preferredEnd + 1; index <= maximumEnd; index += 1) {
-    if (BREAK_CHARACTER.test(characters[index - 1]!)) {
+    if (index > 0 && BREAK_CHARACTER.test(characters[offset + index - 1]!)) {
       return index
     }
   }
@@ -38,20 +39,20 @@ const splitOversizedText = (
   policy: SupertonicSpeechPolicy,
 ): ReadonlyArray<string> => {
   const chunks: Array<string> = []
-  let remaining = getCharacters(text.trim())
+  const characters = getCharacters(text.trim())
+  let offset = 0
 
-  while (remaining.length > policy.maximumLength) {
-    const breakIndex = findBreakIndex(
-      remaining,
-      policy.considerSplitLength,
-      policy.recommendedLength,
-      policy.maximumLength,
-    )
-    chunks.push(remaining.slice(0, breakIndex).join('').trim())
-    remaining = remaining.slice(breakIndex)
+  while (characters.length - offset > policy.maximumLength) {
+    const breakIndex = Math.trunc(findBreakIndex(characters, offset, policy)) || 0
+    // Preserve slice's integer coercion and negative indexes for runtime policies.
+    const length =
+      breakIndex < 0 ? Math.max(0, characters.length - offset + breakIndex) : breakIndex
+    const end = offset + length
+    chunks.push(characters.slice(offset, end).join('').trim())
+    offset = end
   }
 
-  const finalChunk = remaining.join('').trim()
+  const finalChunk = characters.slice(offset).join('').trim()
   chunks.push(finalChunk)
 
   return chunks
