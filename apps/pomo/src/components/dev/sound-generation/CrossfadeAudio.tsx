@@ -28,12 +28,20 @@ export function CrossfadeAudio(props: CrossfadeAudioProps) {
   const [status, setStatus] = createSignal('재생 준비 중…')
   let playback: LoopPlayback | undefined
   let playRevision = 0
+  let playbackErrorRevision = 0
   let autoPlayed = false
   let currentConnection: number | undefined
   const controls = createLoopPlaybackControls({
     onSeekError: (cause) => {
+      playbackErrorRevision += 1
       setPlaying(false)
       setStatus(getExceptionMessage(cause, '위치를 이동하지 못했습니다.'))
+    },
+    onSeekResult: (active) => {
+      if (!active && playing()) {
+        setStatus('재생 준비 완료')
+      }
+      setPlaying(active)
     },
     player: () => playback,
   })
@@ -69,11 +77,14 @@ export function CrossfadeAudio(props: CrossfadeAudioProps) {
     const currentRevision = (playRevision += 1)
     const target = clamp(requestedPosition, 0, duration())
     controls.preparePlayback(target)
+    const currentErrorRevision = playbackErrorRevision
     try {
       const started = await current.play(connection(), false, target)
       if (current === playback && currentRevision === playRevision && !started) {
         setPlaying(false)
-        setStatus('재생 준비 완료')
+        if (currentErrorRevision === playbackErrorRevision) {
+          setStatus('재생 준비 완료')
+        }
       }
     } catch (cause) {
       if (current === playback && currentRevision === playRevision) {
@@ -98,6 +109,9 @@ export function CrossfadeAudio(props: CrossfadeAudioProps) {
       playback = createLoopPlayer(
         url,
         (message, active) => {
+          if (!active) {
+            playbackErrorRevision += 1
+          }
           setStatus(message)
           setPlaying(active)
         },

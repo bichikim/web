@@ -18,6 +18,12 @@ export function useLoopPlayer() {
       setPlaying(false)
       setStatus(getExceptionMessage(cause, '위치 이동 실패'))
     },
+    onSeekResult: (active) => {
+      if (!active && playing()) {
+        setStatus('재생 준비 완료')
+      }
+      setPlaying(active)
+    },
     player: () => player,
   })
   const {position, previewPosition, seek} = controls

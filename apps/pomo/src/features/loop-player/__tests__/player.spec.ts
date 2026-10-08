@@ -118,6 +118,23 @@ it.each(['resolve', 'reject'] as const)(
   },
 )
 
+it('should report a media error before resolving its invalidated pending play as cancelled', async () => {
+  const status = vi.fn()
+  const player = createLoopPlayer('blob:audio', status, vi.fn())
+  const pending = Promise.withResolvers<void>()
+  media[0].play.mockImplementationOnce(() => pending.promise)
+
+  const starting = player.play()
+  await Promise.resolve()
+  media[0].onerror?.()
+  expect(status).toHaveBeenLastCalledWith('이 오디오 파일을 재생할 수 없습니다.', false)
+
+  pending.reject(new DOMException('media error interrupted play', 'NotSupportedError'))
+  await expect(starting).resolves.toBe(false)
+  expect(status).toHaveBeenLastCalledWith('이 오디오 파일을 재생할 수 없습니다.', false)
+  await player.close()
+})
+
 it('should start the next copy at zero and crossfade both gains over four seconds', async () => {
   const status = vi.fn()
   const player = createLoopPlayer('blob:audio', status, vi.fn())
@@ -187,7 +204,7 @@ it('should seek during crossfade, cancel both ramps and resume only at the selec
   media[0].currentTime = 116
   media[0].ontimeupdate?.()
   await Promise.resolve()
-  await player.seek(60)
+  await expect(player.seek(60)).resolves.toBe(true)
   expect(media[0].currentTime).toBe(60)
   expect(media[0].paused).toBe(false)
   expect(media[1].paused).toBe(true)
@@ -197,12 +214,12 @@ it('should seek during crossfade, cancel both ramps and resume only at the selec
 it('should seek while stopped without autoplay and wrap an end-position seek to zero', async () => {
   const position = vi.fn()
   const player = createLoopPlayer('blob:audio', vi.fn(), vi.fn(), position)
-  await player.seek(42)
+  await expect(player.seek(42)).resolves.toBe(false)
   expect(media[0].play).not.toHaveBeenCalled()
   expect(position).toHaveBeenLastCalledWith(42)
   await player.play(4, false, 42)
   expect(media[0].currentTime).toBe(42)
-  await player.seek(120)
+  await expect(player.seek(120)).resolves.toBe(true)
   expect(media[0].currentTime).toBe(0)
   await expect(player.seek(NaN)).rejects.toThrow()
   await expect(player.seek(121)).rejects.toThrow()

@@ -68,9 +68,9 @@ export const useSoundEffectPlayback = (getEffect: Accessor<SoundEffect>): SoundE
     startingRevision = currentRevision
     pendingPlay = false
     try {
-      await current.play()
+      const started = await current.play()
       if (current === player && currentRevision === playbackRevision && volume() > 0) {
-        setPlaying(true)
+        setPlaying(started)
       }
     } catch (cause: unknown) {
       if (current === player && currentRevision === playbackRevision && volume() > 0) {

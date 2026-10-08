@@ -24,7 +24,7 @@ function createFile(): File {
 
 function createPlayback(
   close: () => Promise<void>,
-  seek: (seconds: number) => Promise<void> = vi.fn(async (_seconds: number) => {}),
+  seek: (seconds: number) => Promise<boolean> = vi.fn(async (_seconds: number) => false),
 ): LoopPlayback {
   return {close, play: vi.fn(async () => true), seek, setVolume: vi.fn(), stop: vi.fn()}
 }
@@ -158,9 +158,9 @@ it('should restore the confirmed position when seeking the preview fails', async
 })
 
 it('should ignore a stale failed seek after a newer preview starts', async () => {
-  const firstSeek = Promise.withResolvers<void>()
-  const secondSeek = Promise.withResolvers<void>()
-  const seek = vi.fn(async (_seconds: number) => {})
+  const firstSeek = Promise.withResolvers<boolean>()
+  const secondSeek = Promise.withResolvers<boolean>()
+  const seek = vi.fn(async (_seconds: number) => false)
   seek.mockReturnValueOnce(firstSeek.promise).mockReturnValueOnce(secondSeek.promise)
   const playback = createPlayback(async () => {}, seek)
   let callbacks: PlayerCallbacks | undefined
@@ -187,7 +187,7 @@ it('should ignore a stale failed seek after a newer preview starts', async () =>
   expect(root.player.position()).toBe(60)
   expect(root.player.status()).toBe('오디오를 읽고 있어요…')
 
-  secondSeek.resolve()
+  secondSeek.resolve(false)
   await secondOperation
   root.dispose()
 })

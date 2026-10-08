@@ -203,3 +203,31 @@ it('should keep active playback when seeking after a start completes', async () 
     root.dispose()
   }
 })
+
+it('should clear playing after a second seek cancels the first seek restart in the same owner', async () => {
+  const root = createRoot((dispose) => ({dispose, player: useLoopPlayer()}))
+  try {
+    root.player.select(new File(['audio'], 'tone.wav', {type: 'audio/wav'}))
+    for (const element of TestAudio.elements) {
+      element.onloadedmetadata?.()
+    }
+    await root.player.play(false)
+    expect(root.player.playing()).toBe(true)
+    expect(TestAudio.elements[0].paused).toBe(false)
+
+    TestAudio.playOutcomes = ['reject']
+    root.player.previewPosition(10)
+    const firstSeek = root.player.seek()
+    root.player.previewPosition(20)
+    const secondSeek = root.player.seek()
+
+    await Promise.all([firstSeek, secondSeek])
+
+    expect(root.player.position()).toBe(20)
+    expect(TestAudio.elements[0].currentTime).toBe(20)
+    expect(TestAudio.elements[0].paused).toBe(true)
+    expect(root.player.playing()).toBe(false)
+  } finally {
+    root.dispose()
+  }
+})

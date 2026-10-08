@@ -36,7 +36,7 @@ it('should suppress position updates during preview and restore position on fail
 it.each(['preview', 'invalidate', 'replace'] as const)(
   'should ignore a failed seek superseded by %s',
   async (action) => {
-    const deferred = Promise.withResolvers<void>()
+    const deferred = Promise.withResolvers<boolean>()
     let player = createPlayback(() => deferred.promise)
     const onSeekError = vi.fn()
     const root = createRoot((dispose) => ({
@@ -55,7 +55,7 @@ it.each(['preview', 'invalidate', 'replace'] as const)(
           root.controls.invalidate()
           break
         case 'replace':
-          player = createPlayback(async () => {})
+          player = createPlayback(async () => false)
           break
       }
       deferred.reject(new Error('stale seek'))

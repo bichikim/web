@@ -2,7 +2,8 @@ import {getExceptionMessage} from 'src/features/error-detail'
 import {DEFAULT_CONNECTION_SECONDS} from '../sound-generation/connection'
 
 export interface LoopPlayback {
-  seek: (seconds: number) => Promise<void>
+  /** Returns true when playback remains active after the seek. */
+  seek: (seconds: number) => Promise<boolean>
   setVolume: (volume: number) => void
   stop: () => void
   close: () => Promise<void>
@@ -139,13 +140,13 @@ export function createLoopPlayer(
   const seek = async (seconds: number) => {
     validatePosition(seconds, audio[0].duration, closed)
     if (playing) {
-      await play(connectionSeconds, false, seconds)
-      return
+      return play(connectionSeconds, false, seconds)
     }
     stop()
     current = 0
     audio[0].currentTime = seconds === audio[0].duration ? 0 : seconds
     onPosition?.(audio[0].currentTime)
+    return false
   }
   const setVolume = (volume: number) => setMasterVolume(context, masterGain, volume, closed)
   const close = async () => {
