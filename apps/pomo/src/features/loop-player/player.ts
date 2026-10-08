@@ -6,7 +6,8 @@ export interface LoopPlayback {
   setVolume: (volume: number) => void
   stop: () => void
   close: () => Promise<void>
-  play: (connectionSeconds?: number, preview?: boolean, position?: number) => Promise<void>
+  /** Returns false when a newer playback operation superseded this request. */
+  play: (connectionSeconds?: number, preview?: boolean, position?: number) => Promise<boolean>
 }
 
 /** Streams one URL through two alternating players; the connection duration defaults to four seconds. */
@@ -122,15 +123,17 @@ export function createLoopPlayer(
       const playRequest = audio[0].play()
       await Promise.all([resumeRequest, playRequest])
       if (token !== revision) {
-        return
+        return false
       }
       playing = true
       onStatus('루프 재생 중', true)
+      return true
     } catch (cause) {
       if (token === revision) {
         stop()
         throw cause
       }
+      return false
     }
   }
   const seek = async (seconds: number) => {

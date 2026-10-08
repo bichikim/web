@@ -6,7 +6,7 @@ import type {LoopPlayback} from '../player'
 
 const createPlayback = (seek: LoopPlayback['seek']): LoopPlayback => ({
   close: async () => {},
-  play: async () => {},
+  play: async () => true,
   seek,
   setVolume: () => {},
   stop: () => {},

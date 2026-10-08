@@ -12,6 +12,7 @@ export function useLoopPlayer() {
   const [status, setStatus] = createSignal('반복할 오디오 파일을 선택해 주세요.')
   let player: LoopPlayback | undefined
   let url: string | undefined
+  let playRevision = 0
   const controls = createLoopPlaybackControls({
     onSeekError: (cause) => {
       setPlaying(false)
@@ -21,6 +22,7 @@ export function useLoopPlayer() {
   })
   const {position, previewPosition, seek} = controls
   const clear = () => {
+    playRevision += 1
     controls.invalidate()
     const previous = player
     const previousUrl = url
@@ -85,17 +87,22 @@ export function useLoopPlayer() {
     if (current === undefined) {
       return
     }
+    const currentRevision = (playRevision += 1)
     setPlaying(true)
     try {
-      await current.play(connectionSeconds(), preview, position())
+      const started = await current.play(connectionSeconds(), preview, position())
+      if (current === player && currentRevision === playRevision && !started) {
+        setPlaying(false)
+      }
     } catch (cause) {
-      if (current === player) {
+      if (current === player && currentRevision === playRevision) {
         setPlaying(false)
         setStatus(getExceptionMessage(cause, '재생 실패'))
       }
     }
   }
   const stop = () => {
+    playRevision += 1
     controls.invalidate()
     player?.stop()
     setPlaying(false)

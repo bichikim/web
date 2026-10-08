@@ -89,9 +89,34 @@ it('should request media playback before awaiting an audio-context resume', asyn
   expect(media[0].play).toHaveBeenCalledOnce()
 
   releaseContextResume?.()
-  await playRequest
+  await expect(playRequest).resolves.toBe(true)
   await player.close()
 })
+
+it.each(['resolve', 'reject'] as const)(
+  'should report a pending play cancelled by seek when its media promise later %s',
+  async (outcome) => {
+    const status = vi.fn()
+    const player = createLoopPlayer('blob:audio', status, vi.fn())
+    const pending = Promise.withResolvers<void>()
+    media[0].play.mockImplementationOnce(() => pending.promise)
+    const starting = player.play()
+    await Promise.resolve()
+
+    await player.seek(42)
+    if (outcome === 'resolve') {
+      pending.resolve()
+    } else {
+      pending.reject(new DOMException('play interrupted', 'AbortError'))
+    }
+
+    await expect(starting).resolves.toBe(false)
+    expect(media[0].currentTime).toBe(42)
+    expect(media[0].paused).toBe(true)
+    expect(status).not.toHaveBeenCalled()
+    await player.close()
+  },
+)
 
 it('should start the next copy at zero and crossfade both gains over four seconds', async () => {
   const status = vi.fn()

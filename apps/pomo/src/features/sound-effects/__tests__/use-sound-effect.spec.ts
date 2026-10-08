@@ -20,7 +20,7 @@ const VOLUME_STORAGE_KEY = 'pomo:sound-effect-volume:v1:waves'
 
 const createPlayback = () => ({
   close: vi.fn(async () => undefined),
-  play: vi.fn(async () => undefined),
+  play: vi.fn(async () => true),
   seek: vi.fn(async () => undefined),
   setVolume: vi.fn(),
   stop: vi.fn(),
@@ -121,8 +121,8 @@ it('should keep playback stopped while changing volume until activation', async 
 })
 
 it('should resume when activation follows a stop during playback startup', async () => {
-  const firstPlayRequest = Promise.withResolvers<undefined>()
-  const secondPlayRequest = Promise.withResolvers<undefined>()
+  const firstPlayRequest = Promise.withResolvers<boolean>()
+  const secondPlayRequest = Promise.withResolvers<boolean>()
   const playback = createPlayback()
   playback.play
     .mockReturnValueOnce(firstPlayRequest.promise)
@@ -143,11 +143,11 @@ it('should resume when activation follows a stop during playback startup', async
 
   root.controller.stop()
   root.controller.activate()
-  firstPlayRequest.resolve(undefined)
+  firstPlayRequest.resolve(true)
   await Promise.resolve()
 
   expect(playback.play).toHaveBeenCalledTimes(2)
-  secondPlayRequest.resolve(undefined)
+  secondPlayRequest.resolve(true)
   root.dispose()
 })
 
@@ -177,7 +177,7 @@ it('should restore the saved volume before starting the effect', async () => {
 })
 
 it('should ignore duplicate activation while the effect is starting', async () => {
-  const playRequest = Promise.withResolvers<undefined>()
+  const playRequest = Promise.withResolvers<boolean>()
   const playback = createPlayback()
   playback.play.mockReturnValue(playRequest.promise)
   let onReady: ((duration: number) => void) | undefined
@@ -197,7 +197,7 @@ it('should ignore duplicate activation while the effect is starting', async () =
   root.controller.activate()
 
   expect(playback.play).toHaveBeenCalledOnce()
-  playRequest.resolve(undefined)
+  playRequest.resolve(true)
   await Promise.resolve()
   root.dispose()
 })
