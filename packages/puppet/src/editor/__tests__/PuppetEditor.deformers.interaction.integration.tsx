@@ -1,5 +1,7 @@
 /** @vitest-environment jsdom */
 
+import {createPlayerFixture} from './fixtures/player'
+
 import {cleanup, fireEvent, render, screen, waitFor, within} from '@solidjs/testing-library'
 
 import {afterEach, beforeEach, describe, expect, test, vi} from 'vitest'
@@ -25,20 +27,7 @@ const mocks = vi.hoisted(() => ({
   importPng: vi.fn(),
   readTexturePixels: vi.fn(),
 }))
-const player: Player = {
-  destroy: vi.fn(),
-  pause: vi.fn(),
-  play: vi.fn(),
-  playMotion: vi.fn(() => true),
-  redraw: vi.fn(),
-  resetPhysics: vi.fn(),
-  resize: vi.fn(),
-  seek: vi.fn(),
-  setMotion: vi.fn(() => true),
-  setParameterValues: vi.fn(),
-  setPhysicsPreview: vi.fn(),
-  updateDocument: vi.fn(() => true),
-}
+const player = createPlayerFixture()
 
 vi.mock('../../player', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../player')>()),
