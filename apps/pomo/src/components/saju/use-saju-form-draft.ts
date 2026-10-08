@@ -52,29 +52,33 @@ export function useSajuFormDraft(input: UseSajuFormDraftInput) {
     setDraft(next)
     input.persistence?.write(next)
   }
-  const dateYear = () => {
+  const calendar = createMemo(() => draft().calendar)
+  const gender = createMemo(() => draft().gender)
+  const leapMonth = createMemo(() => draft().leapMonth)
+  const question = createMemo(() => draft().question)
+  const time = createMemo(() => draft().time)
+  const dateYear = createMemo(() => {
     const current = draft()
     return current.calendar === 'solar' ? current.solarYear : current.lunarYear
-  }
-  const dateMonth = () => {
+  })
+  const dateMonth = createMemo(() => {
     const current = draft()
     return current.calendar === 'solar' ? current.solarMonth : current.lunarMonth
-  }
-  const dateDay = () => {
+  })
+  const dateDay = createMemo(() => {
     const current = draft()
     return current.calendar === 'solar' ? current.solarDay : current.lunarDay
-  }
-  const calendarLabel = () => (draft().calendar === 'solar' ? '양력' : '음력')
+  })
+  const calendarLabel = createMemo(() => (calendar() === 'solar' ? '양력' : '음력'))
   const dayOptions = createMemo(() => {
-    const current = draft()
     const year = Number(dateYear())
     const month = Number(dateMonth())
     if (!year || !month) {
       return []
     }
     const days = getCalendarDays({
-      calendar: current.calendar,
-      leap: current.leapMonth,
+      calendar: calendar(),
+      leap: leapMonth(),
       month,
       year,
     })
@@ -103,6 +107,7 @@ export function useSajuFormDraft(input: UseSajuFormDraftInput) {
   }
 
   return {
+    calendar,
     calendarLabel,
     changeDay,
     changeMonth,
@@ -111,8 +116,12 @@ export function useSajuFormDraft(input: UseSajuFormDraftInput) {
     dateYear,
     dayOptions,
     draft,
+    gender,
+    leapMonth,
+    question,
     resetDraft,
     selectedDay,
+    time,
     updateDraft,
   }
 }
