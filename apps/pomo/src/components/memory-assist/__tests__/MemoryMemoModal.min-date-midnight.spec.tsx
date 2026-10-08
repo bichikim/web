@@ -76,20 +76,18 @@ it.each([
 
     const dateInput = () => screen.getByLabelText('날짜') as HTMLInputElement
     expect(dateInput().min).toBe(minimumDate)
-    const cancelMidnightTimer = schedule.mock.results[0]?.value as (() => void) | undefined
+    expect(schedule).toHaveBeenCalledOnce()
+    const cancelMidnightTimer = schedule.mock.results[0]?.value as () => void
 
     await vi.advanceTimersByTimeAsync(999)
     expect(dateInput().min).toBe(minimumDate)
-    if (cancelMidnightTimer !== undefined) {
-      expect(cancelMidnightTimer).not.toHaveBeenCalled()
-    }
+    expect(schedule).toHaveBeenCalledOnce()
+    expect(cancelMidnightTimer).not.toHaveBeenCalled()
     await vi.advanceTimersByTimeAsync(1)
 
     expect(dateInput().min).toBe(nextMinimumDate)
     expect(schedule).toHaveBeenCalledTimes(2)
-    if (cancelMidnightTimer !== undefined) {
-      expect(cancelMidnightTimer).toHaveBeenCalledOnce()
-    }
+    expect(cancelMidnightTimer).toHaveBeenCalledOnce()
   },
 )
 
@@ -118,6 +116,7 @@ it('should refresh on visible return and dispose work when closed or unmounted',
 
   const dateInput = () => screen.getByLabelText('날짜') as HTMLInputElement
   expect(dateInput().min).toBe('2026-01-31')
+  expect(schedule).toHaveBeenCalledOnce()
   const cancelMidnightTimer = schedule.mock.results[0]?.value as () => void
 
   documentHidden.mockReturnValue(true)
