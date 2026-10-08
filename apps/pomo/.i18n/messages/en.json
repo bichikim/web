@@ -199,6 +199,8 @@
   "settings_feed_issue_too_long": "The source text has {count} characters and exceeds the 3,000-character limit.",
   "settings_feed_open_source": "View source",
   "settings_feed_cleanup_next": "Clean up on the next check",
+  "settings_feed_cleanup_minutes": "Clean up in {minutes} minutes",
+  "settings_feed_cleanup_minutes_one": "Clean up in 1 minute",
   "settings_feed_cleanup_hours": "Clean up in {hours} hours",
   "settings_feed_cleanup_hours_one": "Clean up in 1 hour",
   "settings_feed_dialogue_delete_failed": "Couldn't delete the feed dialogue.",

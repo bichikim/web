@@ -199,6 +199,84 @@ it('should use singular English copy for one remaining dialogue and one cleanup 
   expect(screen.getByRole('button', {name: 'Show 1 earlier feed dialogue'})).toBeDefined()
 })
 
+it('should show truthful cleanup copy at expiry and minute-hour boundaries', () => {
+  overwriteGetLocale(() => 'en')
+  const now = Date.parse('2026-08-16T00:00:00.000Z')
+  vi.spyOn(Date, 'now').mockReturnValue(now)
+  const countdowns = [
+    {expiresAt: new Date(now - 1).toISOString(), itemTitle: 'Expired feed update'},
+    {expiresAt: new Date(now).toISOString(), itemTitle: 'Zero-minute feed update'},
+    {expiresAt: new Date(now + 60_000).toISOString(), itemTitle: 'One-minute feed update'},
+    {
+      expiresAt: new Date(now + 59 * 60_000).toISOString(),
+      itemTitle: 'Fifty-nine-minute feed update',
+    },
+    {expiresAt: new Date(now + 60 * 60_000).toISOString(), itemTitle: 'One-hour feed update'},
+    {
+      expiresAt: new Date(now + 61 * 60_000).toISOString(),
+      itemTitle: 'Sixty-one-minute feed update',
+    },
+  ]
+  const dialogues = countdowns.map(({expiresAt, itemTitle}, index) => ({
+    ...FEED_DIALOGUE,
+    dialogue: {...FEED_DIALOGUE.dialogue, id: `dialogue-${index}`},
+    metadata: {
+      ...FEED_DIALOGUE.metadata,
+      dialogueId: `dialogue-${index}`,
+      expiresAt,
+      feedItemId: `item-${index}`,
+      itemTitle,
+    },
+  }))
+  const {controller} = createController(dialogues)
+
+  render(() => <PFeedDialogueList controller={controller} />)
+
+  const cleanupTextFor = (itemTitle: string) =>
+    screen.getByText(itemTitle).closest('li')?.querySelector('small')?.textContent ?? ''
+
+  expect(cleanupTextFor('Expired feed update')).toContain('Clean up on the next check')
+  expect(cleanupTextFor('Zero-minute feed update')).toContain('Clean up on the next check')
+  expect(cleanupTextFor('One-minute feed update')).toContain('Clean up in 1 minute')
+  expect(cleanupTextFor('Fifty-nine-minute feed update')).toContain('Clean up in 59 minutes')
+  expect(cleanupTextFor('One-hour feed update')).toContain('Clean up in 1 hour')
+  expect(cleanupTextFor('Sixty-one-minute feed update')).toContain('Clean up in 2 hours')
+})
+
+it('should update cleanup copy after time advances without remounting the dialogue row', () => {
+  const startingNow = Date.parse('2026-08-16T00:00:00.000Z')
+  let now = startingNow
+  vi.spyOn(Date, 'now').mockImplementation(() => now)
+  const dialogue = {
+    ...FEED_DIALOGUE,
+    metadata: {
+      ...FEED_DIALOGUE.metadata,
+      expiresAt: new Date(startingNow + 60 * 60_000).toISOString(),
+      itemTitle: 'Changing feed update',
+    },
+  }
+  const [dialogues, setDialogues] = createSignal<ReadonlyArray<FeedDialogueListItem>>([dialogue])
+  const {controller: baseController} = createController()
+  const controller: PFeedController = {...baseController, dialogues}
+
+  render(() => <PFeedDialogueList controller={controller} />)
+
+  const row = screen.getByText('Changing feed update').closest('li')
+  expect(row?.querySelector('small')?.textContent).toContain('1시간 후 정리')
+
+  now += 60_000
+  setDialogues((current) => current.map((item) => ({...item})))
+
+  expect(screen.getByText('Changing feed update').closest('li')).toBe(row)
+  expect(row?.querySelector('small')?.textContent).toContain('59분 후 정리')
+
+  now += 58 * 60_000
+  setDialogues((current) => current.map((item) => ({...item})))
+
+  expect(screen.getByText('Changing feed update').closest('li')).toBe(row)
+  expect(row?.querySelector('small')?.textContent).toContain('1분 후 정리')
+})
+
 it('should apply compact spacing to feed dialogue rows', () => {
   const {controller} = createController()
   render(() => <PFeedDialogueList controller={controller} />)

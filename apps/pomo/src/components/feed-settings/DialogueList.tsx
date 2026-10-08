@@ -117,7 +117,8 @@ const CLASSES = {
 const MINUTES_PER_HOUR = 60
 const SECONDS_PER_MINUTE = 60
 const MILLISECONDS_PER_SECOND = 1000
-const HOUR_MS = MINUTES_PER_HOUR * SECONDS_PER_MINUTE * MILLISECONDS_PER_SECOND
+const MINUTE_MS = SECONDS_PER_MINUTE * MILLISECONDS_PER_SECOND
+const HOUR_MS = MINUTES_PER_HOUR * MINUTE_MS
 const DIALOGUE_PAGE_SIZE = 20
 
 export interface PFeedDialogueListProps {
@@ -128,10 +129,19 @@ const formatPublishedAt = (value: string) =>
   formatMediumDateTime(value, getLocale() === 'ko' ? 'ko-KR' : 'en-US')
 
 const formatRemaining = (value: string) => {
-  const hours = Math.max(0, Math.ceil((Date.parse(value) - Date.now()) / HOUR_MS))
-  if (hours === 0) {
+  const remainingMilliseconds = Date.parse(value) - Date.now()
+  if (remainingMilliseconds <= 0) {
     return m.settings_feed_cleanup_next()
   }
+
+  if (remainingMilliseconds < HOUR_MS) {
+    const minutes = Math.ceil(remainingMilliseconds / MINUTE_MS)
+    return minutes === 1
+      ? m.settings_feed_cleanup_minutes_one()
+      : m.settings_feed_cleanup_minutes({minutes})
+  }
+
+  const hours = Math.ceil(remainingMilliseconds / HOUR_MS)
   return hours === 1 ? m.settings_feed_cleanup_hours_one() : m.settings_feed_cleanup_hours({hours})
 }
 
