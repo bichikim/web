@@ -1,4 +1,5 @@
 import {textureResolutionForMaxSide} from './texture-resolution-for-max-side'
+import {createTextureRegions} from './texture-regions'
 import {BlurFilter, Container, Rectangle, type Renderer, Sprite, Texture} from 'pixi.js'
 
 const SAMPLE_LENGTH = 256
@@ -114,33 +115,18 @@ export class PhotoEdges {
         texture: companion.texture,
       })
     }
-    const composite = new Container()
-    const crops: Texture[] = []
+    const composite = createTextureRegions({regions})
     try {
-      for (const {source, area, texture: regionTexture} of regions) {
-        if (area.width > 0 && area.height > 0) {
-          const crop = new Texture({frame: source, source: regionTexture.source})
-          crops.push(crop)
-          const sprite = new Sprite(crop)
-          sprite.position.set(area.x, area.y)
-          sprite.width = area.width
-          sprite.height = area.height
-          composite.addChild(sprite)
-        }
-      }
       const resolution = textureResolutionForMaxSide(Math.max(width, height), SAMPLE_LENGTH)
       // Rasterize the extended photo before blurring so the blur uses viewport proportions.
       const stretched = renderer.generateTexture({
         frame: new Rectangle(0, 0, width, height),
         resolution,
-        target: composite,
+        target: composite.view,
       })
       return this.#blur(stretched, width, height, resolution)
     } finally {
-      composite.destroy({children: true})
-      for (const crop of crops) {
-        crop.destroy(false)
-      }
+      composite.dispose()
     }
   }
 
