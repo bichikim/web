@@ -30,13 +30,18 @@ export const selectNoticeReleases = (
       : Date.parse(options.viewedRelease.releasedAt)
 
   const releases = options.catalog.releases
-    .filter((release) => {
-      const releasedAt = Date.parse(release.releasedAt)
+    .map((release) => ({release, releasedAt: Date.parse(release.releasedAt)}))
+    .filter(({releasedAt}) => {
       const age = now - releasedAt
 
       return age >= 0 && age < RECENT_RELEASE_DURATION_MS
     })
-    .sort((left, right) => Date.parse(right.releasedAt) - Date.parse(left.releasedAt))
 
-  return releases.some((release) => Date.parse(release.releasedAt) > viewedAt) ? releases : []
+  if (!releases.some(({releasedAt}) => releasedAt > viewedAt)) {
+    return []
+  }
+
+  return releases
+    .sort((left, right) => right.releasedAt - left.releasedAt)
+    .map(({release}) => release)
 }

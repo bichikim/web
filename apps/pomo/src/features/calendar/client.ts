@@ -1,4 +1,5 @@
 import {z} from 'zod'
+import {asyncPipe} from '@winter-love/utils'
 
 import {apiJson, apiJsonRequest} from '../api-json'
 import {readStoredAppSession} from '../user-auth/app-session'
@@ -125,6 +126,12 @@ export const openCalendarAuthorization = async (authorizationUrl: string): Promi
 
   globalThis.location.assign(authorizationUrl)
 }
+
+/** Requests provider consent and hands its validated URL to the current platform's navigation API. */
+export const authorizeCalendarConnection = asyncPipe(
+  createCalendarAuthorization,
+  openCalendarAuthorization,
+)
 
 /** Loads only the calendar range implied by the current question and returns local-model grounding. */
 export const loadCalendarPromptContext = async (

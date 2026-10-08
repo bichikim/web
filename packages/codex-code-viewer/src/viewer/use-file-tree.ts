@@ -44,13 +44,13 @@ export const useFileTree = (props: UseFileTreeProps) => {
   const paths = createMemo(() => nodes().map((node) => node.path))
   const lookup = createMemo(() => new Map(nodes().map((node) => [node.path, node])))
   const activePath = (): string | null => {
-    const list = paths()
+    const visible = lookup()
     const focus = focused()
-    return focus !== null && list.includes(focus)
+    return focus !== null && visible.has(focus)
       ? focus
-      : list.includes(currentPath())
+      : visible.has(currentPath())
         ? currentPath()
-        : (list[0] ?? null)
+        : (paths()[0] ?? null)
   }
   const reload = async (): Promise<void> => {
     const current = props.session()

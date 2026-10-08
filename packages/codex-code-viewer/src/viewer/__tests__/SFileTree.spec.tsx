@@ -44,6 +44,24 @@ afterEach(() => {
 })
 
 describe('SFileTree', () => {
+  it('keeps visible focus ahead of selection and falls back when the filter hides both', async () => {
+    render(() => <SFileTree port={createPort()} session={session} visible />)
+    const current = await screen.findByRole('treeitem', {name: 'main.ts'})
+    expect(current.tabIndex).toBe(0)
+    const other = screen.getByRole('treeitem', {name: 'editor.tsx'})
+    other.focus()
+    expect(other.tabIndex).toBe(0)
+    expect(current.tabIndex).toBe(-1)
+    expect(current.getAttribute('aria-selected')).toBe('true')
+    const input = screen.getByRole('textbox', {name: '파일 필터링'})
+    fireEvent.input(input, {target: {value: 'other'}})
+    expect(screen.getByRole('treeitem', {name: 'test'}).tabIndex).toBe(0)
+    fireEvent.input(input, {target: {value: 'missing'}})
+    expect(screen.queryAllByRole('treeitem')).toHaveLength(0)
+    fireEvent.input(input, {target: {value: ''}})
+    expect(screen.getByRole('treeitem', {name: 'main.ts'}).tabIndex).toBe(0)
+  })
+
   it.each([
     ['editor.tsx', '/project/src/editor.tsx'],
     ['src', '/project/src'],

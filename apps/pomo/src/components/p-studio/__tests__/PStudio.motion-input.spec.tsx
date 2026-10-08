@@ -14,6 +14,9 @@ import {PStudioMotionInputSessionProvider} from '../PStudioMotionInputSessionPro
 import {createMotionEnvironment} from '../../../features/focus-room-animation/motion-environment'
 import {ParallaxController} from '../../../features/focus-room-animation/parallax-controller'
 
+// Keep unrelated client-only imports out of the motion input session tests.
+vi.mock('../VersionNoticePanel', () => ({VersionNoticePanel: vi.fn()}))
+
 vi.mock('../../settings/Content', async () => {
   const {PRadioSwitch} = await vi.importActual<
     typeof import('src/components/p-radio-switch/PRadioSwitch')

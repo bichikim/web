@@ -26,10 +26,10 @@ class TestWorker {
   terminate = vi.fn()
 }
 
-function createAudioBuffer(seconds = 6): AudioBuffer {
+function createAudioBuffer(seconds = 6, duration = seconds): AudioBuffer {
   const channel = new Float32Array(seconds * RATE)
   return {
-    duration: seconds,
+    duration,
     getChannelData: vi.fn(() => channel),
     numberOfChannels: 2,
   } as unknown as AudioBuffer
@@ -56,6 +56,7 @@ function createRequest() {
 
 function installAudioContext(buffers: readonly (AudioBuffer | Promise<AudioBuffer>)[]) {
   let index = 0
+  const constructed = vi.fn()
   const close = vi.fn(async () => {})
   const decodeAudioData = vi.fn(async () => {
     const buffer = buffers[index]
@@ -65,11 +66,15 @@ function installAudioContext(buffers: readonly (AudioBuffer | Promise<AudioBuffe
   vi.stubGlobal(
     'AudioContext',
     class {
+      constructor() {
+        constructed()
+      }
+
       close = close
       decodeAudioData = decodeAudioData
     },
   )
-  return {close, decodeAudioData}
+  return {close, constructed, decodeAudioData}
 }
 
 function installWorker() {
@@ -89,6 +94,38 @@ beforeEach(() => {
 afterEach(() => {
   vi.restoreAllMocks()
   vi.unstubAllGlobals()
+})
+
+it.each(['trimEnd', 'trimStart'] as const)(
+  'should reject a non-finite %s value before reading either source file',
+  async (trim) => {
+    const workers = installWorker()
+    const audio = installAudioContext([createAudioBuffer(), createAudioBuffer()])
+    const request = createRequest()
+    const root = createRoot((dispose) => ({dispose, joining: useSoundJoining()}))
+
+    await root.joining.generate({...request, [trim]: Number.NaN})
+
+    expect(request.first.arrayBuffer).not.toHaveBeenCalled()
+    expect(request.second.arrayBuffer).not.toHaveBeenCalled()
+    expect(audio.constructed).not.toHaveBeenCalled()
+    expect(audio.decodeAudioData).not.toHaveBeenCalled()
+    expect(workers).toHaveLength(0)
+    expect(root.joining.error()).toBe('잘라낼 시간은 0 이상, 연결 구간은 1~10초로 지정해 주세요.')
+    root.dispose()
+  },
+)
+
+it('should reject source files longer than ten minutes before starting a worker', async () => {
+  const workers = installWorker()
+  const root = createRoot((dispose) => ({dispose, joining: useSoundJoining()}))
+  installAudioContext([createAudioBuffer(6, 601), createAudioBuffer()])
+
+  await root.joining.generate(createRequest())
+
+  expect(workers).toHaveLength(0)
+  expect(root.joining.error()).toBe('파일은 각각 10분 이하로 선택해 주세요.')
+  root.dispose()
 })
 
 it('should ignore a worker result delivered after cancellation', async () => {
