@@ -1,5 +1,5 @@
 import {getEditorViewBox} from './viewport'
-import {createMemo} from 'solid-js'
+import {type Accessor, createMemo} from 'solid-js'
 import {getDeformerWeights} from '../../deformation/weights'
 import {applySceneNodeDeformers} from '../../deformation/vertices'
 import {getDocumentScene, getScenePartStates, type PuppetVertexReference} from '../../player'
@@ -8,11 +8,21 @@ import {applySceneNodeAncestorsPoint} from './scene-deformation'
 import type {SelectedDeformerProps} from './DeformerEditor'
 export interface UseDeformerWeightPreviewProps extends SelectedDeformerProps {
   readonly boneIndex: number
+  readonly enabled?: Accessor<boolean>
 }
 export const useDeformerWeightPreview = (props: UseDeformerWeightPreviewProps) => {
-  const parts = createMemo(() => getDeformerParts(props.document, props.node))
-  const inputs = createMemo(() => getDeformerInputVertices(props.document, props.node))
+  const parts = createMemo(() =>
+    props.enabled?.() === false ? [] : getDeformerParts(props.document, props.node),
+  )
+  const inputs = createMemo(() =>
+    props.enabled?.() === false
+      ? new Map<string, ReadonlyArray<number>>()
+      : getDeformerInputVertices(props.document, props.node),
+  )
   const vertices = createMemo(() => {
+    if (props.enabled?.() === false) {
+      return []
+    }
     const document = props.previewDocument ?? props.document
     const positions = new Map(document.parts.map((part) => [part.id, [...part.mesh.vertices]]))
     applySceneNodeDeformers(getDocumentScene(document).roots, positions)

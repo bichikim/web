@@ -128,6 +128,7 @@ const EditingOverlays = (props: EditingOverlaysProps) => {
         onNotice={props.editingMesh ? props.onMeshNotice : props.viewport.onNotice}
         onVertexEditStart={props.viewport.onVertexEditStart}
         onVertexSelect={props.viewport.onVertexSelect}
+        motionId={props.viewport.motionId}
         previewTime={props.viewport.currentTime}
         parameterValues={props.viewport.parameterValues}
         parameterValueMap={props.viewport.parameterValueMap}
@@ -142,6 +143,7 @@ const EditingOverlays = (props: EditingOverlaysProps) => {
           activeBindingId={props.viewport.activeBindingId}
           parameterValues={props.viewport.parameterValues}
           parameterValueMap={props.viewport.parameterValueMap}
+          motionId={props.viewport.motionId}
           previewTime={props.viewport.currentTime}
           editMode={props.viewport.editMode}
           onDocumentChange={props.viewport.onDocumentChange}

@@ -18,6 +18,7 @@ export const useDeformerWeights = (props: SelectedDeformerProps) => {
       get boneIndex() {
         return boneIndex()
       },
+      enabled,
     }),
   )
   const {vertices, vertexWeights, influence, triangles, segments} = preview

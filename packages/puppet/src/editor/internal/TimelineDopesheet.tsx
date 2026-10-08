@@ -1,6 +1,8 @@
 import {Slider} from '@kobalte/core/slider'
 import {clamp} from 'es-toolkit/math'
-import {createMemo, For, Index, type JSX, Show} from 'solid-js'
+import {createMemo, For, type JSX, Show} from 'solid-js'
+import {KeyedFor} from './KeyedFor'
+import {useTimelineKeyframes} from './use-timeline-keyframes'
 
 import {DEFAULT_PUPPET_FRAMES_PER_SECOND, type PuppetMotion} from '../../player/document'
 import {
@@ -153,7 +155,10 @@ export const TimelineDopesheet = (props: TimelineDopesheetProps) => {
       >
         <div class="timeline-labels">
           <div class="timeline-ruler-label">{props.rulerLabel ?? 'Parameter'}</div>
-          <Index each={props.tracks}>
+          <KeyedFor
+            each={props.tracks}
+            key={(track) => `${props.motion?.id ?? ''}:${track.parameter.id}`}
+          >
             {(track) => (
               <TimelineParameterRowLabel
                 disabled={props.motion === undefined || props.onParameterValueChange === undefined}
@@ -167,7 +172,7 @@ export const TimelineDopesheet = (props: TimelineDopesheetProps) => {
                 value={props.values[track().parameter.id]}
               />
             )}
-          </Index>
+          </KeyedFor>
         </div>
         <div class="timeline-tracks-scroll">
           <div class="timeline-tracks">
@@ -182,10 +187,23 @@ export const TimelineDopesheet = (props: TimelineDopesheetProps) => {
               seekLabel={props.seekLabel}
               onSeek={props.onSeek}
             />
-            <Index each={props.tracks}>
+            <KeyedFor
+              each={props.tracks}
+              key={(track) => `${props.motion?.id ?? ''}:${track.parameter.id}`}
+            >
               {(track) => {
                 const parameterId = () => track().parameter.id
                 const parameterName = () => track().parameter.name
+                const keyframes = useTimelineKeyframes({
+                  get onMove() {
+                    return props.onKeyframeMove
+                  },
+                  selection: () => props.selection,
+                  track,
+                })
+                const move = createMemo(() =>
+                  props.onKeyframeMove === undefined ? undefined : keyframes.move,
+                )
 
                 return (
                   <div
@@ -194,33 +212,33 @@ export const TimelineDopesheet = (props: TimelineDopesheetProps) => {
                     data-selected={props.selectedParameterId === parameterId() ? '' : undefined}
                     onClick={(event) => handleTrackClick(event, parameterId())}
                   >
-                    <For each={track().keyframes}>
-                      {(keyframe) => (
+                    <KeyedFor each={keyframes.views()} key={(view) => String(view.key)}>
+                      {(view) => (
                         <TimelineKeyframeMarker
                           duration={props.duration}
                           framesPerSecond={framesPerSecond()}
                           getTime={(clientX, bounds) =>
                             getTimelineTime(clientX, bounds, props.duration, framesPerSecond())
                           }
-                          keyframe={keyframe}
+                          keyframe={view().keyframe}
                           onEditEnd={props.onEditEnd}
                           onEditStart={props.onEditStart}
-                          onMove={props.onKeyframeMove}
+                          onMove={move()}
                           onMovePreview={movePreview.previewMove}
                           onMovePreviewEnd={movePreview.endPreview}
                           onSelect={props.onKeyframeSelect}
                           parameterName={parameterName()}
-                          previewTime={movePreview.getPreviewTime(parameterId(), keyframe)}
+                          previewTime={movePreview.getPreviewTime(parameterId(), view().keyframe)}
                           selected={isKeyframeSelected(
                             props.selection,
                             parameterId(),
-                            keyframe.time,
+                            view().keyframe.time,
                           )}
                           snapTime={(time) => snapToFrame(time, props.duration, framesPerSecond())}
                           track={track()}
                         />
                       )}
-                    </For>
+                    </KeyedFor>
                     <span
                       aria-hidden="true"
                       class="timeline-row-playhead"
@@ -229,7 +247,7 @@ export const TimelineDopesheet = (props: TimelineDopesheetProps) => {
                   </div>
                 )
               }}
-            </Index>
+            </KeyedFor>
           </div>
         </div>
       </Show>
