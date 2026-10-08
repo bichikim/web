@@ -33,15 +33,18 @@ it('should explain ten-god categories relative to the actual day master', () => 
   expect(context.tenGodsByElement['金']).toBe('재성')
   expect(context.tenGodsByElement['水']).toBe('관성')
   expect(context.glossary['재성']).toContain('재물')
+  expect(Object.values(context.glossary).join(' ')).not.toMatch(/일간|오행|천간|지지|생하|제어/u)
   expect(messages[0].content).toContain('단정')
   expect(context.tenGodFacts).toContainEqual({category: '재성', count: 0, element: '金'})
   expect(messages[0].content).toContain('질문하지 않은 주제로 풀이를 확장하지 마라')
-  expect(messages[0].content).toContain('명리학 용어와 생한다·제어한다·기운·에너지·기둥')
+  expect(messages[0].content).toContain('분류명이나 계산 관계를 설명하지 마라')
+  expect(messages[0].content).toContain('사용자가 묻지 않은 용어 풀이를 덧붙이지 마라')
   expect(messages[0].content).toContain('Markdown')
   expect(messages[0].content).toContain('짧은 문단 2~3개')
-  expect(messages[0].content).toContain('십이운성으로, 십성 개수와 무관')
-  expect(messages[0].content).toContain('최다 개수')
+  expect(messages[0].content).toContain('ilju.twelveStage를 두 값의 근거로 삼지 마라')
+  expect(messages[0].content).toContain('counts의 가장 큰 값도')
   expect(messages[0].content).toContain('재성이 0개인 명식에서 재물 질문')
+  expect(messages[0].content).toContain('다른 분류로 돈을 버는 방식이나 성향을 추측하지 마라')
 })
 
 it('should explain omitted hour and daeun values instead of asking the model to infer them', () => {
@@ -83,7 +86,7 @@ it('should send only day-pillar facts for a day-pillar question', () => {
   expect(context).not.toHaveProperty('elements')
   expect(context).not.toHaveProperty('daeun')
   expect(messages[0].content).toContain('일주와 일간만 설명하라')
-  expect(messages[0].content).toContain('명리학 용어와 생한다·제어한다·기운·에너지·기둥')
+  expect(messages[0].content).toContain('분류명이나 계산 관계를 설명하지 마라')
 })
 
 it('should retain income facts when a question also mentions the day master', () => {
