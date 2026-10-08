@@ -2,6 +2,83 @@ import {describe, expect, it} from 'vitest'
 import {tokenizeSyntax} from '../tokenize-syntax'
 
 describe('tokenizeSyntax', () => {
+  it('should highlight Ruby and expose require paths, constants, methods and instance variables', () => {
+    const source = [
+      "require 'reports/models'\r\nrequire_relative('helpers')\n",
+      'module Reports\n  class Report\n    def render!\n',
+      '      @title = "한글 🦊"\n      ready? && render! # render! stays a comment\n',
+      '    end\n  end\nend\n',
+      'Reports::Report.new.render!\n',
+    ].join('')
+    const lines = tokenizeSyntax('ruby', source)
+    const tokens = lines.flat()
+    expect(lines.map((line) => line.map((token) => token.text).join(''))).toEqual(
+      source.split(/\r\n|\n|\r/u),
+    )
+    for (const text of ['Reports', 'Report', 'render!', 'ready?', '@title']) {
+      const matches = tokens.filter((token) => token.text === text)
+      expect(matches.length).toBeGreaterThan(0)
+      expect(matches.every((token) => token.navigation === 'definition')).toBe(true)
+    }
+    expect(
+      tokens.filter((token) => token.navigation === 'path').map((token) => token.text),
+    ).toEqual(['reports/models', 'helpers'])
+    expect(tokens).toContainEqual(expect.objectContaining({kind: 'keyword', text: 'module'}))
+    expect(tokens.find((token) => token.text === '"한글 🦊"')?.navigation).toBeNull()
+    expect(
+      tokens
+        .filter((token) => token.kind === 'comment')
+        .every((token) => token.navigation === null),
+    ).toBe(true)
+    for (const token of tokens) {
+      expect(source.slice(token.offset, token.offset + token.text.length)).toBe(token.text)
+    }
+  })
+  it('should keep Ruby strings, regexes and comments from creating require links', () => {
+    const source = [
+      '# require "secret"\n',
+      'text = %q{require "secret"}\n',
+      'pattern = /Report/\n',
+      'text = "require \'secret\'"\n',
+      'require_relative "#{name}"\n',
+    ].join('')
+    const tokens = tokenizeSyntax('ruby', source).flat()
+    expect(tokens.filter((token) => token.navigation === 'path')).toEqual([])
+    expect(
+      tokens.filter((token) => token.text === 'Report').every((token) => token.navigation === null),
+    ).toBe(true)
+  })
+  it('should highlight Python and expose imports, aliases, classes and Unicode identifiers at UTF-16 offsets', () => {
+    const source = [
+      'from .helpers import 인사 as welcome\r\n',
+      'class Report:\n    def render(self):\n',
+      '        변수 = "🦊"\n        return welcome(변수) # welcome stays a comment\n',
+    ].join('')
+    const lines = tokenizeSyntax('python', source)
+    const tokens = lines.flat()
+    expect(lines.map((line) => line.map((token) => token.text).join(''))).toEqual(
+      source.split(/\r\n|\n|\r/u),
+    )
+    for (const text of ['helpers', '인사', 'welcome', 'Report', 'render', 'self', '변수']) {
+      expect(
+        tokens
+          .filter((token) => token.text === text)
+          .every((token) => token.navigation === 'definition'),
+      ).toBe(true)
+      expect(tokens.some((token) => token.text === text)).toBe(true)
+    }
+    expect(tokens).toContainEqual(
+      expect.objectContaining({kind: 'keyword', navigation: null, text: 'from'}),
+    )
+    expect(
+      tokens
+        .filter((token) => token.kind === 'string' || token.kind === 'comment')
+        .every((token) => token.navigation === null),
+    ).toBe(true)
+    for (const token of tokens) {
+      expect(source.slice(token.offset, token.offset + token.text.length)).toBe(token.text)
+    }
+  })
   it('should color HTML markup and embedded JavaScript without changing text positions', () => {
     const source = [
       '<!doctype html>\r\n',

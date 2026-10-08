@@ -1,3 +1,4 @@
+import {ApiAiAdmissionError} from 'src/server/api-ai/admission-error'
 // oxlint-disable eslint-js/camelcase -- OpenAI request fields follow the external API contract.
 import OpenAI from 'openai'
 import {zodTextFormat} from 'openai/helpers/zod'
@@ -89,6 +90,7 @@ const buildHistoryResponseRequest = (
       requiredTitles: options.requiredTitles,
       targetDate: options.targetDate,
     }),
+    max_output_tokens: 32768,
     metadata,
     model: configuration.model,
     reasoning: {effort: configuration.reasoningEffort},
@@ -127,27 +129,31 @@ export const submitHistoryResponse = async (
   client?: OpenAI,
 ): Promise<SubmittedHistoryResponse> => {
   let request: ResponseCreateParamsNonStreaming
-  let responseClient: OpenAI
 
   try {
     const configuration = readOpenAiConfiguration()
     request = buildHistoryResponseRequest(options, configuration)
-    responseClient = client ?? getOpenAiClient()
   } catch (error) {
     throw new HistorySubmissionError('rejected', error)
   }
 
   try {
-    const response = await responseClient.responses.create(request, {maxRetries: 0})
+    if (client === undefined) {
+      const {submitQueuedHistoryResponse} =
+        await import('src/server/api-ai/submit-queued-history-response')
+      return await submitQueuedHistoryResponse(options.submissionKey, {...request})
+    }
+    const response = await client.responses.create(request, {maxRetries: 0})
 
     return {responseId: response.id}
   } catch (error) {
     const acceptance =
-      error instanceof OpenAI.APIError &&
-      error.status !== undefined &&
-      error.status >= HTTP_CLIENT_ERROR_MINIMUM &&
-      error.status < HTTP_SERVER_ERROR_MINIMUM &&
-      error.status !== HTTP_REQUEST_TIMEOUT
+      error instanceof ApiAiAdmissionError ||
+      (error instanceof OpenAI.APIError &&
+        error.status !== undefined &&
+        error.status >= HTTP_CLIENT_ERROR_MINIMUM &&
+        error.status < HTTP_SERVER_ERROR_MINIMUM &&
+        error.status !== HTTP_REQUEST_TIMEOUT)
         ? 'rejected'
         : 'unknown'
 

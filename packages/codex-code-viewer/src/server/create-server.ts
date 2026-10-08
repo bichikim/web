@@ -3,7 +3,7 @@ import {registerAppResource, RESOURCE_MIME_TYPE} from '@modelcontextprotocol/ext
 import {getResourcePath} from '@openai/mcp-extensions/server'
 import {z} from 'zod'
 import manifest from '../../package.json'
-import {failure, success} from '../shared/contracts'
+import {failure, type Result, success} from '../shared/contracts'
 import {createSessions} from './create-sessions'
 import {toolResult} from './tool-result'
 import {FILE_EXTENSIONS} from '../shared/file-formats'
@@ -12,7 +12,15 @@ const appOnly = {ui: {visibility: ['app']}}
 const VIEWER_URI = 'ui://codex-code-viewer/app.html'
 const annotations = {destructiveHint: false, openWorldHint: false, readOnlyHint: true}
 
-const registerPanel = (server: McpServer): void => {
+interface ServerOptions {
+  readonly workspace?: (metadata: unknown) => Result<string | undefined>
+}
+
+const registerPanel = (
+  server: McpServer,
+  sessions: ReturnType<typeof createSessions>,
+  options: ServerOptions,
+): void => {
   server.registerTool(
     'code.panel',
     {
@@ -21,7 +29,19 @@ const registerPanel = (server: McpServer): void => {
       inputSchema: {},
       title: 'Code Viewer',
     },
-    async () => ({content: [], structuredContent: {panel: true}}),
+    async (_input, context) => {
+      const hostPath = getResourcePath(context._meta)
+      const workspace =
+        hostPath === undefined
+          ? (options.workspace?.(context._meta) ?? success(undefined))
+          : success(hostPath)
+      if (!workspace.ok) {
+        return toolResult(workspace)
+      }
+      return workspace.value === undefined
+        ? {content: [], structuredContent: {panel: true}}
+        : toolResult(sessions.connect(workspace.value))
+    },
   )
 }
 
@@ -66,7 +86,7 @@ const registerMedia = (
   )
 }
 
-export const createServer = (html: string) => {
+export const createServer = (html: string, options: ServerOptions = {}) => {
   const server = new McpServer({
     name: 'codex-code-viewer',
     title: 'Code Viewer',
@@ -76,7 +96,7 @@ export const createServer = (html: string) => {
   const {open, withSession} = sessions
   const appMetadata = {ui: {resourceUri: VIEWER_URI}}
   const pathInput = {path: z.string(), session: z.string()}
-  registerPanel(server)
+  registerPanel(server, sessions, options)
   server.registerTool(
     'code.open',
     {

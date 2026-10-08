@@ -1,5 +1,5 @@
 import {type Accessor, createEffect, createMemo, createSignal, on, untrack} from 'solid-js'
-import type {ViewerSession} from '../shared/contracts'
+import type {WorkspaceSession} from '../shared/contracts'
 import type {FileTreeNode} from './file-tree/types'
 import type {ContextMenuCloseOptions, WorkspaceSelection} from './types'
 
@@ -11,7 +11,7 @@ interface TreeContext {
 }
 interface TreeContextMenuOptions {
   node: (path: string) => FileTreeNode | undefined
-  session: Accessor<ViewerSession | null>
+  session: Accessor<WorkspaceSession | null>
   visible: Accessor<boolean>
   onFocus: (path: string) => void
 }
