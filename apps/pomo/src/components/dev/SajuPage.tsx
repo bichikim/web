@@ -11,14 +11,13 @@ import {
   iljuInfo,
 } from 'k-saju'
 import {createSignal, For, onMount, Show} from 'solid-js'
-import {createMessages} from './saju/create-messages'
+import {createMessages} from 'src/features/saju/create-messages'
 import {GenerationWorkspace} from './saju/GenerationWorkspace'
-import {getBroadFutureAnswer} from './saju/get-broad-future-answer'
-import {getDayPillarFactAnswer} from './saju/get-day-pillar-fact-answer'
-import {getReadableFallback} from './saju/get-readable-fallback'
-import type {GenerateSajuRequest} from './saju/messages'
-import {requiresAnnualReading} from './saju/requires-annual-reading'
-import {SajuForm, type SajuFormInput} from './saju/SajuForm'
+import {getBroadFutureAnswer} from 'src/features/saju/get-broad-future-answer'
+import {getDayPillarFactAnswer} from 'src/features/saju/get-day-pillar-fact-answer'
+import type {GenerateSajuRequest} from 'src/features/saju/messages'
+import {requiresAnnualReading} from 'src/features/saju/requires-annual-reading'
+import {SajuForm, type SajuFormInput} from '../saju/SajuForm'
 
 interface CalculationSection {
   title: string
@@ -84,8 +83,6 @@ function calculateSections(birth: BirthInput, gender: 'M' | 'F' | 'N', question:
   return {
     factAnswer: getDayPillarFactAnswer(question, chart) ?? getBroadFutureAnswer(question),
     generation: {
-      facts: {birthYear: Number(birth.date.split('-')[0])},
-      fallbackAnswer: getReadableFallback(question, sipseong.counts),
       messages,
       type: 'generate',
     } satisfies GenerateSajuRequest,
@@ -168,13 +165,7 @@ export function SajuPage() {
         <Show when={factAnswer()}>{(answer) => <FactAnswer answer={answer()} />}</Show>
         <Show when={sections().length > 0}>
           <Show keyed when={generation()}>
-            {(value) => (
-              <GenerationWorkspace
-                facts={value.facts}
-                fallbackAnswer={value.fallbackAnswer}
-                messages={value.messages}
-              />
-            )}
+            {(value) => <GenerationWorkspace messages={value.messages} />}
           </Show>
           <Show when={generation()}>
             <section

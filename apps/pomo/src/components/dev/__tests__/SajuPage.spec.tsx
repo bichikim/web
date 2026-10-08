@@ -12,28 +12,16 @@ vi.mock('@solidjs/meta', () => ({
 vi.mock('@solidjs/router', () => ({
   A: (props: {children?: JSX.Element; href: string}) => <a href={props.href}>{props.children}</a>,
 }))
-vi.mock('../../p-date-picker/PDatePicker', () => ({
-  PDatePicker: (props: {label: string; value: string; onChange: (value: string) => void}) => (
-    <div>
-      <span>{`${props.label}: ${props.value}`}</span>
-      <button type="button" onClick={() => props.onChange('1995-03-17')}>
-        다른 생년월일 선택
-      </button>
-      <button type="button" onClick={() => props.onChange('')}>
-        선택 지우기
-      </button>
-    </div>
-  ),
-}))
 vi.mock('../../p-select/PSelect', () => ({
   PSelect: (props: {
+    accessibleLabel?: string
     label: string
     onChange: (value: string) => void
     options: ReadonlyArray<{label: string; value: string}>
     value: string
   }) => (
     <select
-      aria-label={props.label}
+      aria-label={props.accessibleLabel ?? props.label}
       value={props.value}
       onChange={(event) => props.onChange(event.currentTarget.value)}
     >
@@ -49,7 +37,7 @@ afterEach(cleanup)
 it('should calculate and display each k-saju result for the entered birth', () => {
   render(() => <SajuPage />)
 
-  fireEvent.click(screen.getByRole('button', {name: '다른 생년월일 선택'}))
+  fireEvent.change(screen.getByRole('combobox', {name: '양력 일'}), {target: {value: '17'}})
   fireEvent.input(screen.getByLabelText('질문'), {target: {value: '재물에 대해 알려줘'}})
   fireEvent.submit(screen.getByRole('button', {name: '사주 풀이 생성'}).closest('form')!)
 
@@ -65,29 +53,73 @@ it('should calculate and display each k-saju result for the entered birth', () =
   expect(messages.map((message) => message.role)).toEqual(['system', 'user'])
   expect(messages[1].content).toContain('재물에 대해 알려줘')
   expect(JSON.parse(messages[1].content)).toMatchObject({birth: {date: '1995-03-17'}})
+  expect(JSON.parse(messages[1].content).birth.time).toBeUndefined()
   expect(messages[1].content).toContain('"재성"')
   expect(messages[1].content).toContain('"金"')
 })
 
-it('should require a birth date without retaining a previous result', () => {
+it('should include a chosen birth time and omit it after clearing', () => {
   render(() => <SajuPage />)
 
   const form = screen.getByRole('button', {name: '사주 풀이 생성'}).closest('form')!
-  fireEvent.input(screen.getByLabelText('질문'), {target: {value: '재물에 대해 알려줘'}})
-  fireEvent.submit(form)
-  expect(screen.getByRole('heading', {name: '오행 · analyzeElements()'})).toBeTruthy()
-  fireEvent.click(screen.getByRole('button', {name: '선택 지우기'}))
+  fireEvent.input(screen.getByLabelText('질문'), {target: {value: '제 성향은 어떤가요?'}})
+  fireEvent.click(screen.getByRole('button', {name: /출생 시각.*선택/u}))
+  fireEvent.change(screen.getByRole('combobox', {name: /출생 시각.*시/u}), {
+    target: {value: '07'},
+  })
+  fireEvent.change(screen.getByRole('combobox', {name: /출생 시각.*분/u}), {
+    target: {value: '30'},
+  })
   fireEvent.submit(form)
 
-  expect(screen.getByRole('alert').textContent).toContain('생년월일')
-  expect(screen.queryByRole('heading', {name: '오행 · analyzeElements()'})).toBeNull()
-  expect(screen.queryByRole('region', {name: 'LLM 전달 값'})).toBeNull()
+  const userMessage = () => {
+    const messages = JSON.parse(
+      screen.getByRole('region', {name: 'LLM 전달 값'}).querySelector('code')!.textContent!,
+    ) as Array<{content: string}>
+    return JSON.parse(messages[1].content) as {birth: {time?: string}}
+  }
+  expect(userMessage().birth.time).toBe('07:30')
+
+  fireEvent.click(screen.getByRole('button', {name: /출생 시각.*지우기/u}))
+  fireEvent.submit(form)
+  expect(userMessage().birth.time).toBeUndefined()
+})
+
+it('should use the last valid solar day when the selected year changes', () => {
+  render(() => <SajuPage />)
+
+  fireEvent.change(screen.getByRole('combobox', {name: '양력 연도'}), {
+    target: {value: '2024'},
+  })
+  fireEvent.change(screen.getByRole('combobox', {name: '양력 월'}), {target: {value: '2'}})
+  fireEvent.change(screen.getByRole('combobox', {name: '양력 일'}), {target: {value: '29'}})
+  fireEvent.change(screen.getByRole('combobox', {name: '양력 연도'}), {
+    target: {value: '2025'},
+  })
+  fireEvent.input(screen.getByLabelText('질문'), {target: {value: '재물에 대해 알려줘'}})
+  fireEvent.submit(screen.getByRole('button', {name: '사주 풀이 생성'}).closest('form')!)
+
+  const messages = JSON.parse(
+    screen.getByRole('region', {name: 'LLM 전달 값'}).querySelector('code')!.textContent!,
+  ) as Array<{content: string}>
+  expect(JSON.parse(messages[1].content)).toMatchObject({
+    birth: {calendar: 'solar', date: '2025-02-28'},
+  })
 })
 
 it('should pass a lunar birth date and leap-month choice to the calculation', () => {
   render(() => <SajuPage />)
 
-  fireEvent.change(screen.getByLabelText('달력'), {target: {value: 'lunar'}})
+  expect(screen.getByRole('radio', {name: '양력'})).toHaveProperty('checked', true)
+  expect(screen.queryByRole('checkbox', {name: '윤달'})).toBeNull()
+  fireEvent.click(screen.getByRole('radio', {name: '음력'}))
+  expect(screen.getByRole('radio', {name: '음력'})).toHaveProperty('checked', true)
+  expect(screen.getByRole('checkbox', {name: '윤달'})).toBeTruthy()
+  expect(screen.queryByRole('combobox', {name: '양력 연도'})).toBeNull()
+  fireEvent.click(screen.getByRole('radio', {name: '양력'}))
+  expect(screen.queryByRole('checkbox', {name: '윤달'})).toBeNull()
+  expect(screen.getByRole('combobox', {name: '양력 연도'})).toBeTruthy()
+  fireEvent.click(screen.getByRole('radio', {name: '음력'}))
   fireEvent.change(screen.getByRole('combobox', {name: '음력 일'}), {target: {value: '17'}})
   fireEvent.input(screen.getByLabelText('질문'), {target: {value: '재물에 대해 알려줘'}})
   fireEvent.submit(screen.getByRole('button', {name: '사주 풀이 생성'}).closest('form')!)
@@ -136,7 +168,7 @@ it('should omit daeun when its calculation input is unspecified', () => {
   render(() => <SajuPage />)
 
   fireEvent.input(screen.getByLabelText('질문'), {target: {value: '제 성향은 어떤가요?'}})
-  fireEvent.change(screen.getByLabelText('대운 계산 입력'), {target: {value: 'N'}})
+  fireEvent.change(screen.getByRole('combobox', {name: '성별'}), {target: {value: 'N'}})
   fireEvent.submit(screen.getByRole('button', {name: '사주 풀이 생성'}).closest('form')!)
 
   const messages = JSON.parse(

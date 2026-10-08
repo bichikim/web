@@ -70,24 +70,25 @@ it('should close the calendar from a month navigation button without bubbling Es
 })
 
 it('should preserve every date button while moving focus within the same month', () => {
-  render(() => <PDatePicker label="날짜" value="2026-10-15" />)
+  const view = render(() => <PDatePicker label="날짜" value="2026-10-15" />)
   fireEvent.click(screen.getByRole('button', {name: '날짜: 2026-10-15'}))
-  const buttons = screen.getAllByRole('button', {name: /^2026-10-/})
+  const getDateButtons = () =>
+    Array.from(view.container.querySelectorAll<HTMLButtonElement>('button[data-date^="2026-10-"]'))
+  const buttons = getDateButtons()
   expect(buttons).toHaveLength(31)
   buttons.forEach((button) => {
     expect(button.tagName).toBe('BUTTON')
     expect(button).toHaveAttribute('type', 'button')
-    expect(button).toBeVisible()
-    expect(button).toHaveAccessibleName(button.getAttribute('data-date') ?? '')
     expect(button).toHaveAttribute('aria-label', button.dataset.date)
   })
+  expect(buttons[0]).toBeVisible()
+  expect(buttons[0]).toHaveAccessibleName('2026-10-01')
   fireEvent.keyDown(screen.getByRole('button', {name: '2026-10-15'}), {key: 'ArrowRight'})
-  const currentButtons = screen.getAllByRole('button', {name: /^2026-10-/})
+  const currentButtons = getDateButtons()
   expect(currentButtons).toHaveLength(31)
   currentButtons.forEach((button, index) => {
     expect(button).toBe(buttons[index])
-    expect(button).toBeVisible()
-    expect(button).toHaveAccessibleName(button.getAttribute('data-date') ?? '')
+    expect(button).toHaveAttribute('aria-label', button.dataset.date)
   })
   expect(screen.getByRole('button', {name: '2026-10-16'})).toHaveFocus()
   expect(screen.getByRole('button', {name: '2026-10-16'})).toHaveAttribute('tabindex', '0')

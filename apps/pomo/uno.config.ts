@@ -76,7 +76,7 @@ const config = mergeConfigs([
     blocklist: ['count(*)::integer'],
     content: {
       pipeline: {
-        exclude: ['**/.i18n/paraglide/**'],
+        exclude: ['**/.i18n/paraglide/**', '**/.i18n/paraglide-dev/**'],
       },
     },
     extendTheme: (theme) => {

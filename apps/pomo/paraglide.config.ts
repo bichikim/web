@@ -2,6 +2,7 @@ import type {CompilerOptions} from '@inlang/paraglide-js'
 
 const PARAGLIDE_PROJECT = './.i18n/project.inlang'
 const PARAGLIDE_OUTDIR = './.i18n/paraglide'
+const PARAGLIDE_DEVELOPMENT_OUTDIR = './.i18n/paraglide-dev'
 
 const PARAGLIDE_EXCLUDED_ROUTE_STRATEGIES = [
   {exclude: true, match: '/api/:path(.*)?'},
@@ -34,9 +35,9 @@ export const PARAGLIDE_CONFIG = {
     project: PARAGLIDE_PROJECT,
   },
   development: {
-    appsInTossOutdir: `${PARAGLIDE_OUTDIR}/apps-in-toss`,
+    appsInTossOutdir: `${PARAGLIDE_DEVELOPMENT_OUTDIR}/apps-in-toss`,
     outputStructure: PARAGLIDE_OUTPUT_STRUCTURE_DEVELOPMENT,
-    webOutdir: `${PARAGLIDE_OUTDIR}/web`,
+    webOutdir: `${PARAGLIDE_DEVELOPMENT_OUTDIR}/web`,
   },
   web: {
     routeStrategies: PARAGLIDE_EXCLUDED_ROUTE_STRATEGIES,
