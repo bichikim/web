@@ -9,6 +9,7 @@ import {
   COVER_IMAGE_EDGE,
   COVER_IMAGE_QUALITY,
   COVER_IMAGE_TYPE,
+  type CoverImageRuntime,
   prepareAlbumCover,
 } from '../cover-image'
 import {validateAlbumCover} from '../cover-upload'
@@ -42,7 +43,23 @@ const readFileContents = (file: File): Promise<ArrayBuffer> =>
 const createSharpBackedRuntime = () => {
   const close = vi.fn()
   const source = document.createElement('canvas')
-  const encode = vi.fn(async () => new Blob(['webp'], {type: COVER_IMAGE_TYPE}))
+  const encode: CoverImageRuntime['encode'] = vi.fn(
+    async ({quality, sourceSize, sourceX, sourceY, targetSize}) => {
+      const encodedImage = await sharp(new Uint8Array(JPEG_FIXTURE))
+        .rotate()
+        .extract({
+          height: Math.floor(sourceSize),
+          left: Math.floor(sourceX),
+          top: Math.floor(sourceY),
+          width: Math.floor(sourceSize),
+        })
+        .resize(targetSize, targetSize)
+        .webp({quality: Math.round(quality * 100)})
+        .toBuffer()
+
+      return new Blob([new Uint8Array(encodedImage)], {type: COVER_IMAGE_TYPE})
+    },
+  )
   const decode = vi.fn(async (file: File) => {
     const decodedImage = await sharp(new Uint8Array(await readFileContents(file)))
       .rotate()
@@ -73,10 +90,24 @@ describe('prepareAlbumCover', () => {
 
       expect(runtime.decode).toHaveBeenCalledExactlyOnceWith(file)
       expect(runtime.encode).toHaveBeenCalledWith(
-        expect.objectContaining({targetSize: COVER_IMAGE_EDGE, type: COVER_IMAGE_TYPE}),
+        expect.objectContaining({
+          quality: COVER_IMAGE_QUALITY,
+          targetSize: COVER_IMAGE_EDGE,
+          type: COVER_IMAGE_TYPE,
+        }),
       )
       expect(preparedFile.name).toBe('cover.webp')
       expect(preparedFile.type).toBe(COVER_IMAGE_TYPE)
+
+      const encodedImage = await sharp(
+        new Uint8Array(await readFileContents(preparedFile)),
+      ).metadata()
+
+      expect(encodedImage).toMatchObject({
+        format: 'webp',
+        height: COVER_IMAGE_EDGE,
+        width: COVER_IMAGE_EDGE,
+      })
     },
   )
 
