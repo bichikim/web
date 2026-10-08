@@ -13,7 +13,7 @@ export const parametersShortcuts = {
     '[.puppet-editor_&_button:disabled]:[opacity:0.42] [.puppet-editor_&_button:disabled]:cursor-not-allowed',
   ],
   'keyform-binding-row':
-    'grid min-w-0 [grid-template-columns:13.75rem_minmax(0,_1fr)] [border-top:0.0625rem_solid_#35413d]',
+    'grid min-w-0 [grid-template-columns:17.5rem_minmax(0,_1fr)] [border-top:0.0625rem_solid_#35413d]',
   'keyform-footer': [
     '[.puppet-editor_&]:flex-wrap [.puppet-editor_&]:gap-editor-field',
     '[.puppet-editor_&]:flex [.puppet-editor_&]:items-center [.puppet-editor_&]:justify-between',
@@ -68,8 +68,13 @@ export const parametersShortcuts = {
   'keyform-row-values': ['[.puppet-editor_&]:grid [.puppet-editor_&]:gap-editor-related'],
   'keyform-toolbar': [
     '[.puppet-editor_&]:grid [.puppet-editor_&]:min-w-0 [.puppet-editor_&]:overflow-x-auto',
+    '[.puppet-editor_&]:[container-type:inline-size] [.puppet-editor_&]:[container-name:keyform-toolbar]',
+    [
+      '[@container_keyform-toolbar_(max-width:_60rem)]:',
+      '[.puppet-editor_&_.editor-segmented-field_button:has(>_.puppet-icon)_.editor-segmented-label]:hidden',
+    ].join(''),
     '[.puppet-editor_&]:[min-height:2.8125rem]',
-    '[.puppet-editor_&]:[grid-template-columns:minmax(max-content,_13.125rem)_minmax(max-content,_1fr)]',
+    '[.puppet-editor_&]:[grid-template-columns:minmax(max-content,_16.875rem)_minmax(max-content,_1fr)]',
     '[.puppet-editor_&]:gap-editor-group',
     '[.puppet-editor_&]:items-center [.puppet-editor_&]:py-editor-field [.puppet-editor_&]:px-editor-group',
     '[.puppet-editor_&]:[border-bottom:0.0625rem_solid_#27302d]',
@@ -96,11 +101,12 @@ export const parametersShortcuts = {
     '[.puppet-editor_&_.parameter-swipe-row]:[border-radius:0]',
     '[.puppet-editor_&_.parameter-item]:[min-height:4.75rem]',
     '[.puppet-editor_&_.parameter-item]:[border-radius:0]',
-    '[.puppet-editor_&_.parameter-item]:[padding-bottom:2.375rem]',
+    '[.puppet-editor_&_.parameter-item]:pb-editor-field',
+    '[.puppet-editor_&_.parameter-item]:pr-editor-field',
+    '[.puppet-editor_&_.parameter-item]:[grid-template-rows:auto_1fr]',
     '[.puppet-editor_&_.parameter-item]:[border-width:0]',
     '[.puppet-editor_&.parameter-grid-label_.parameter-swipe-row]:[min-height:7.75rem]',
     '[.puppet-editor_&.parameter-grid-label_.parameter-item]:[min-height:7.75rem]',
-    '[.puppet-editor_&.parameter-grid-label_.parameter-item]:[padding-bottom:4.125rem]',
   ],
   'keyform-track-labels': [
     '[.puppet-editor_&]:grid [.puppet-editor_&]:[align-content:start] [grid-column:1] [grid-row:1_/_3]',
@@ -182,6 +188,7 @@ export const parametersShortcuts = {
     '[.puppet-editor_&]:[min-height:7.75rem]',
     '[.puppet-editor_&::before]:[top:50%]',
   ],
+  'parameter-influence-status': ['editor-type-metadata text-[#b9c5c0] whitespace-nowrap'],
   'parameter-inspector': [
     '[.puppet-editor_&]:grid [.puppet-editor_&]:min-w-0 [.puppet-editor_&]:gap-editor-field',
     '[.puppet-editor_&_>_.deformer-properties]:mt-0',
@@ -208,6 +215,10 @@ export const parametersShortcuts = {
     '[.puppet-editor_&]:left-editor-field [.puppet-editor_&]:[color:#a7b3af]',
 
     '[.puppet-editor_&]:[transition:transform_160ms_ease-out]',
+  ],
+  'parameter-item-heading': [
+    'grid grid-cols-[minmax(0,_1fr)_auto] items-center gap-editor-related min-w-0 pl-editor-reading',
+    '[&_small]:truncate',
   ],
   'parameter-item-main': 'relative',
   'parameter-item-surface': [
@@ -236,6 +247,9 @@ export const parametersShortcuts = {
     '[.puppet-editor_&_input:focus-visible]:[outline:0.125rem_solid_#64e5c4]',
     '[.puppet-editor_&_input:focus-visible]:[outline-offset:0.0625rem]',
   ],
+  'parameter-name-row':
+    'grid grid-cols-[minmax(0,_1fr)_auto] items-center gap-editor-field min-w-0',
+  'parameter-name-values': 'grid gap-editor-related min-w-0 self-end',
   'parameter-properties': [
     '[.puppet-editor_&]:min-w-0',
     '[.puppet-editor_&_button.influence-toggle]:justify-between',
@@ -317,6 +331,7 @@ export const parametersShortcuts = {
     '[.puppet-editor_&_li]:[border-radius:62.4375rem] [.puppet-editor_&_li]:[color:#bfeee1]',
     '[.puppet-editor_&_li]:[background:#17211e] [.puppet-editor_&_li]:text-editor-metadata',
   ],
+  'parameter-value-control': 'w-[7rem] min-w-0 [&_.editor-number-field]:w-full',
   'puppet-layer-parameter-links': [
     '[.puppet-editor_&]:flex [.puppet-editor_&]:min-w-0 [.puppet-editor_&]:gap-editor-related',
     '[.puppet-editor_&]:overflow-hidden',

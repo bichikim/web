@@ -61,11 +61,13 @@ export interface EditorParameterNamesProps {
   readonly children?: JSX.Element
   readonly descriptionId: string
   readonly groupName?: string
+  readonly primaryControl?: JSX.Element
+  readonly secondaryControl?: JSX.Element
+  readonly status?: JSX.Element
   readonly name: string
   readonly onKeyDown?: (event: KeyboardEvent) => void
   readonly onNameChange?: (name: string) => void
   readonly onNameEdit?: () => void
-  readonly onPointerDown?: (event: PointerEvent) => void
   readonly onSecondaryNameChange?: (name: string) => void
   readonly onSelect?: () => void
   readonly pressed?: boolean
@@ -113,67 +115,82 @@ export const EditorParameterNames = (props: EditorParameterNamesProps) => {
   return (
     <div class="parameter-item-main">
       <div class="parameter-item" data-selected={props.pressed ? '' : undefined}>
-        <Show when={props.groupName}>{(groupName) => <small>{groupName()}</small>}</Show>
-        <Show
-          when={editing() === 'primary'}
-          fallback={
-            <ToggleButton
-              aria-describedby={props.descriptionId}
-              aria-keyshortcuts="F2 Delete"
-              aria-label={props.name}
-              class="parameter-name-control"
-              pressed={props.pressed}
-              title="더블클릭하여 Parameter 이름 수정"
-              onClick={(event) => handleClick(event, 'primary')}
-              onDblClick={(event: MouseEvent) => {
-                event.preventDefault()
-                startNameEdit('primary')
-              }}
-              onKeyDown={(event) => handleKeyDown(event, 'primary')}
-              onPointerDown={(event) => props.onPointerDown?.(event)}
-            >
-              <strong>{props.name}</strong>
-            </ToggleButton>
-          }
-        >
-          <ParameterNameEditor
-            name={props.name}
-            onCancel={() => setEditing(null)}
-            onCommit={(name) => handleNameCommit('primary', name)}
-          />
+        <Show when={props.groupName !== undefined || props.status !== undefined}>
+          <div class="parameter-item-heading">
+            <small>{props.groupName}</small>
+            {props.status}
+          </div>
         </Show>
-        <Show when={props.secondaryName}>
-          {(secondaryName) => (
+        <div class="parameter-name-values">
+          <div class="parameter-name-row">
             <Show
-              when={editing() === 'secondary'}
+              when={editing() === 'primary'}
               fallback={
                 <ToggleButton
                   aria-describedby={props.descriptionId}
                   aria-keyshortcuts="F2 Delete"
-                  aria-label={secondaryName()}
+                  aria-label={props.name}
                   class="parameter-name-control"
                   pressed={props.pressed}
                   title="더블클릭하여 Parameter 이름 수정"
-                  onClick={(event) => handleClick(event, 'secondary')}
+                  onClick={(event) => handleClick(event, 'primary')}
                   onDblClick={(event: MouseEvent) => {
                     event.preventDefault()
-                    startNameEdit('secondary')
+                    startNameEdit('primary')
                   }}
-                  onKeyDown={(event) => handleKeyDown(event, 'secondary')}
-                  onPointerDown={(event) => props.onPointerDown?.(event)}
+                  onKeyDown={(event) => handleKeyDown(event, 'primary')}
                 >
-                  <strong>{secondaryName()}</strong>
+                  <strong>{props.name}</strong>
                 </ToggleButton>
               }
             >
               <ParameterNameEditor
-                name={secondaryName()}
+                name={props.name}
                 onCancel={() => setEditing(null)}
-                onCommit={(name) => handleNameCommit('secondary', name)}
+                onCommit={(name) => handleNameCommit('primary', name)}
               />
             </Show>
-          )}
-        </Show>
+            <Show when={props.primaryControl !== undefined}>
+              <span class="parameter-value-control">{props.primaryControl}</span>
+            </Show>
+          </div>
+          <Show when={props.secondaryName}>
+            {(secondaryName) => (
+              <div class="parameter-name-row">
+                <Show
+                  when={editing() === 'secondary'}
+                  fallback={
+                    <ToggleButton
+                      aria-describedby={props.descriptionId}
+                      aria-keyshortcuts="F2 Delete"
+                      aria-label={secondaryName()}
+                      class="parameter-name-control"
+                      pressed={props.pressed}
+                      title="더블클릭하여 Parameter 이름 수정"
+                      onClick={(event) => handleClick(event, 'secondary')}
+                      onDblClick={(event: MouseEvent) => {
+                        event.preventDefault()
+                        startNameEdit('secondary')
+                      }}
+                      onKeyDown={(event) => handleKeyDown(event, 'secondary')}
+                    >
+                      <strong>{secondaryName()}</strong>
+                    </ToggleButton>
+                  }
+                >
+                  <ParameterNameEditor
+                    name={secondaryName()}
+                    onCancel={() => setEditing(null)}
+                    onCommit={(name) => handleNameCommit('secondary', name)}
+                  />
+                </Show>
+                <Show when={props.secondaryControl !== undefined}>
+                  <span class="parameter-value-control">{props.secondaryControl}</span>
+                </Show>
+              </div>
+            )}
+          </Show>
+        </div>
         <span aria-hidden="true" class="puppet-icon puppet-icon-arrow-left parameter-swipe-hint" />
       </div>
       <Show when={editing() === null && props.children !== undefined}>
