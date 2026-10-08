@@ -52,6 +52,36 @@ afterEach(() => {
 })
 
 describe('PlayerCanvas', () => {
+  test('should keep consumer signal reads outside player effects', async () => {
+    const document = createDemoDocument()
+    const [external, setExternal] = createSignal(0)
+    const onFrame = vi.fn(() => external())
+    const onStatusChange = vi.fn(() => external())
+    const onPlayerChange = vi.fn(() => external())
+    const setParameterValues = vi.fn(() => {
+      mocks.createPlayer.mock.calls[0]?.[0].onFrame({duration: 2, motionId: 'idle-deform', time: 0})
+    })
+    mocks.createPlayer.mockResolvedValueOnce({...player, setParameterValues})
+    render(() => (
+      <PlayerCanvas
+        document={document}
+        onFrame={onFrame}
+        onStatusChange={onStatusChange}
+        onPlayerChange={onPlayerChange}
+      />
+    ))
+    await waitFor(() => expect(onStatusChange).toHaveBeenLastCalledWith('ready'))
+    const frames = onFrame.mock.calls.length
+    const statuses = onStatusChange.mock.calls.length
+    const players = onPlayerChange.mock.calls.length
+    expect(frames).toBeGreaterThan(0)
+    setExternal(1)
+    expect(onFrame).toHaveBeenCalledTimes(frames)
+    expect(onStatusChange).toHaveBeenCalledTimes(statuses)
+    expect(onPlayerChange).toHaveBeenCalledTimes(players)
+    expect(mocks.updateDocument).not.toHaveBeenCalled()
+  })
+
   test('should render the selected 3D surface in the Pixi canvas and release it', async () => {
     const document = createDemoDocument()
     const surface = {document, node: {} as SpatialThreeSurface['node']}

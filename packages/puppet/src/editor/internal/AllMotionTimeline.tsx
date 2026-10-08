@@ -1,4 +1,5 @@
-import {createEffect, createMemo, createSignal, For, on} from 'solid-js'
+import {createEffect, createMemo, createSignal, on} from 'solid-js'
+import {KeyedFor} from './KeyedFor'
 
 import {EditorButton, EditorSelect} from '../../design-system'
 import {getDefaultParameterValueMap, type PuppetParameterValueMap} from '../../deformation'
@@ -367,30 +368,30 @@ export const AllMotionTimeline = (props: AllMotionTimelineProps) => {
         titleId={props.titleId}
       />
       <div class="timeline-motion-groups">
-        <For each={props.document.motions}>
+        <KeyedFor each={props.document.motions} key={(motion) => motion.id}>
           {(motion) => {
             const selectedParameterId = () => {
               const selection = activeParameter()
-              return selection?.motionId === motion.id ? selection.parameterId : null
+              return selection?.motionId === motion().id ? selection.parameterId : null
             }
             const selection = () => {
               const current = keyframeSelection()
-              return current?.motionId === motion.id ? current.selection : null
+              return current?.motionId === motion().id ? current.selection : null
             }
             const handleParameterSelect = (parameterId: string) => {
-              setActiveParameter({motionId: motion.id, parameterId})
+              setActiveParameter({motionId: motion().id, parameterId})
             }
             const handleParameterRemove = (parameterId: string) => {
-              if (props.onParameterRemove?.(motion.id, parameterId) !== true) {
+              if (props.onParameterRemove?.(motion().id, parameterId) !== true) {
                 return
               }
               setActiveParameter((current) =>
-                current?.motionId === motion.id && current.parameterId === parameterId
+                current?.motionId === motion().id && current.parameterId === parameterId
                   ? null
                   : current,
               )
               setKeyframeSelection((current) =>
-                current?.motionId === motion.id && current.parameterId === parameterId
+                current?.motionId === motion().id && current.parameterId === parameterId
                   ? null
                   : current,
               )
@@ -398,27 +399,27 @@ export const AllMotionTimeline = (props: AllMotionTimelineProps) => {
 
             return (
               <AllMotionTimelineGroup
-                currentTime={props.getCurrentTime(motion)}
+                currentTime={props.getCurrentTime(motion())}
                 document={props.document}
                 framesPerSecond={props.framesPerSecond}
-                motion={motion}
+                motion={motion()}
                 motionIds={props.document.motions.map((candidate) => candidate.id)}
                 onDelete={
                   props.onMotionDelete === undefined
                     ? undefined
-                    : () => props.onMotionDelete?.(motion.id)
+                    : () => props.onMotionDelete?.(motion().id)
                 }
                 onDurationChange={
                   props.onDurationChange === undefined
                     ? undefined
-                    : (duration) => props.onDurationChange?.(motion.id, duration)
+                    : (duration) => props.onDurationChange?.(motion().id, duration)
                 }
                 onEditEnd={props.onEditEnd}
                 onEditStart={props.onEditStart}
                 onKeyframeMove={
                   props.onKeyframeMove === undefined
                     ? undefined
-                    : (move) => props.onKeyframeMove?.({...move, motionId: motion.id}) === true
+                    : (move) => props.onKeyframeMove?.({...move, motionId: motion().id}) === true
                 }
                 onParameterSelect={handleParameterSelect}
                 onParameterRemove={
@@ -427,19 +428,19 @@ export const AllMotionTimeline = (props: AllMotionTimelineProps) => {
                 onRename={
                   props.onMotionRename === undefined
                     ? undefined
-                    : (name) => props.onMotionRename?.(motion.id, name)
+                    : (name) => props.onMotionRename?.(motion().id, name)
                 }
                 onSeek={
                   props.onMotionSeek === undefined
                     ? undefined
-                    : (time) => props.onMotionSeek?.(motion.id, time)
+                    : (time) => props.onMotionSeek?.(motion().id, time)
                 }
                 onSelectionChange={(nextSelection) =>
                   setKeyframeSelection(
                     nextSelection === null
                       ? null
                       : {
-                          motionId: motion.id,
+                          motionId: motion().id,
                           parameterId: nextSelection.parameterId,
                           selection: nextSelection,
                         },
@@ -451,7 +452,7 @@ export const AllMotionTimeline = (props: AllMotionTimelineProps) => {
               />
             )
           }}
-        </For>
+        </KeyedFor>
       </div>
     </>
   )

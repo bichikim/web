@@ -10,6 +10,21 @@ import {EditorLayerPanel} from '../EditorLayerPanel'
 import {convertSceneContainers} from '../container-conversion'
 
 describe('EditorLayerPanel', () => {
+  test('should retain nested rows and focus while updating visibility', () => {
+    const [document, setDocument] = createSignal(createDemoDocument())
+    const view = render(() => (
+      <EditorLayerPanel document={document()} onDocumentChange={setDocument} />
+    ))
+    const rows = view.getAllByRole('treeitem')
+    const toggle = view.getByRole('button', {name: 'shape-circle 숨기기'})
+    toggle.focus()
+    fireEvent.click(toggle)
+
+    view.getAllByRole('treeitem').forEach((row, index) => expect(row).toBe(rows[index]))
+    expect(view.getByRole('button', {name: 'shape-circle 표시하기'})).toBe(toggle)
+    expect(toggle).toHaveFocus()
+  })
+
   test('should distinguish a 3D deformer from a free deformation deformer in the layer tree', () => {
     const spatial = convertSceneContainers({
       document: createDemoDocument(),

@@ -21,6 +21,50 @@ const prepareCanvas = (view: ReturnType<typeof render>) => {
   return svg
 }
 
+test.each([false, true])(
+  'should save smoothing to the selected motion or cancel on switching=$switchMotion',
+  (switchMotion) => {
+    const document = createDemoDocument()
+    const [motionId, setMotionId] = createSignal('blink')
+    const save = vi.fn()
+    const view = render(() => (
+      <MeshEditor
+        activePartId="mesh-preview"
+        document={document}
+        editMode="motion"
+        motionId={motionId()}
+        previewTime={0.2}
+        onDocumentChange={save}
+      />
+    ))
+    const svg = prepareCanvas(view)
+    const center = svg.querySelectorAll('circle')[4]!
+    fireEvent(
+      svg,
+      pointer(
+        'pointerdown',
+        Number(center.getAttribute('cx')) + 160,
+        Number(center.getAttribute('cy')) + 120,
+      ),
+    )
+    if (switchMotion) {
+      setMotionId('nod')
+    }
+    fireEvent(svg, pointer('pointerup', 0, 0))
+    if (switchMotion) {
+      expect(save).not.toHaveBeenCalled()
+    } else {
+      expect(save).toHaveBeenCalledOnce()
+      const updated: PuppetDocument = save.mock.calls[0]![0]
+      expect(updated.motions[0]).toBe(document.motions[0])
+      expect(updated.motions[2]).toBe(document.motions[2])
+      expect(updated.motions[1]?.tracks).toEqual(
+        expect.arrayContaining([expect.objectContaining({kind: 'vertex', partId: 'mesh-preview'})]),
+      )
+    }
+  },
+)
+
 test('should retain the displayed smoothing position when saving a spatially rotated part', () => {
   const demo = createDemoDocument()
   const original = demo.parts[0]!

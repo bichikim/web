@@ -1,4 +1,4 @@
-import {type Accessor, createMemo, createSignal} from 'solid-js'
+import {type Accessor, createMemo, createSignal, onCleanup} from 'solid-js'
 
 import type {PixelData} from '../mesh'
 import {
@@ -81,6 +81,9 @@ export const useAutoMesh = (props: UseAutoMeshProps): UseAutoMeshResult => {
   const [errorMessage, setErrorMessage] = createSignal<string | null>(null)
   const [isOpen, setIsOpen] = createSignal(false)
   let generation = 0
+  onCleanup(() => {
+    generation += 1
+  })
   const reportError = (message: string) => {
     setErrorMessage(message)
     props.onNotice?.(message)

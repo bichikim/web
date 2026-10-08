@@ -1,3 +1,5 @@
+import {getContainerIds} from './scene-tree'
+import {KeyedFor} from './KeyedFor'
 import {LayerName} from './LayerName'
 import {EditorTextInput} from '../../design-system'
 import {LayerContainerIcon} from './LayerContainerIcon'
@@ -63,21 +65,6 @@ interface SceneNodeItemProps {
   readonly onSelect: (event: MouseEvent, node: PuppetSceneNode) => void
   readonly onToggleExpanded: (groupId: string) => void
   readonly selectedNodeIds: ReadonlySet<string>
-}
-
-const getContainerIds = (nodes: ReadonlyArray<PuppetSceneNode>) => {
-  const groupIds = new Set<string>()
-
-  for (const node of nodes) {
-    if (isSceneContainerNode(node)) {
-      groupIds.add(node.id)
-      for (const childId of getContainerIds(node.children)) {
-        groupIds.add(childId)
-      }
-    }
-  }
-
-  return groupIds
 }
 
 const createGroup = (document: PuppetDocument, nodeIds: ReadonlyArray<string>) => {
@@ -385,7 +372,10 @@ const SceneNodeItem = (props: SceneNodeItemProps) => {
         <Show when={isSceneContainerNode(props.node)}>
           <Collapsible.Content>
             <ul role="group">
-              <For each={isSceneContainerNode(props.node) ? props.node.children.toReversed() : []}>
+              <KeyedFor
+                each={isSceneContainerNode(props.node) ? props.node.children.toReversed() : []}
+                key={(node) => node.id}
+              >
                 {(node) => (
                   <SceneNodeItem
                     depth={props.depth + 1}
@@ -396,7 +386,7 @@ const SceneNodeItem = (props: SceneNodeItemProps) => {
                     inheritedLocked={locked()}
                     inheritedVisible={visible()}
                     maskPickSourcePartId={props.maskPickSourcePartId}
-                    node={node}
+                    node={node()}
                     onDocumentChange={props.onDocumentChange}
                     onDragOver={props.onDragOver}
                     onDragStart={props.onDragStart}
@@ -406,7 +396,7 @@ const SceneNodeItem = (props: SceneNodeItemProps) => {
                     selectedNodeIds={props.selectedNodeIds}
                   />
                 )}
-              </For>
+              </KeyedFor>
             </ul>
           </Collapsible.Content>
         </Show>
@@ -553,7 +543,10 @@ export const EditorLayerPanel = (props: EditorLayerPanelProps) => {
               }
             }}
           >
-            <For each={getDocumentScene(props.document).roots.toReversed()}>
+            <KeyedFor
+              each={getDocumentScene(props.document).roots.toReversed()}
+              key={(node) => node.id}
+            >
               {(node) => (
                 <SceneNodeItem
                   depth={1}
@@ -564,7 +557,7 @@ export const EditorLayerPanel = (props: EditorLayerPanelProps) => {
                   inheritedLocked={false}
                   inheritedVisible={true}
                   maskPickSourcePartId={props.maskPickSourcePartId}
-                  node={node}
+                  node={node()}
                   onDocumentChange={props.onDocumentChange}
                   onDragOver={setDropTarget}
                   onDragStart={(nodeId) => {
@@ -587,7 +580,7 @@ export const EditorLayerPanel = (props: EditorLayerPanelProps) => {
                   selectedNodeIds={selectedNodeIds()}
                 />
               )}
-            </For>
+            </KeyedFor>
           </ul>
         </Show>
       </div>
