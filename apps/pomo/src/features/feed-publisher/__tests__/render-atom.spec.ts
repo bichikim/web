@@ -51,6 +51,46 @@ describe('renderAtom', () => {
     )
   })
 
+  it('should remove XML 1.0-disallowed characters while preserving valid text and attributes', () => {
+    const input = createInput()
+    const [entry] = input.entries
+
+    if (entry === undefined) {
+      throw new Error('Expected the fixture entry to exist')
+    }
+
+    const disallowedCharacters = '\u0000\u0001\u0008\u000B\u000C\u001F\uD800\uFFFE\uFFFF\uDFFF'
+    const validText = '시작\t탭\n다음 줄\r복귀\uD7FF\uE000\uFFFD 😀끝'
+    const entryUrl = `https://pomo.example/history/sample?discard=${disallowedCharacters}&emoji=😀&title="기록"&owner=민수's`
+    const document = renderAtom({
+      ...input,
+      entries: [
+        {
+          ...entry,
+          summary: `${validText}${disallowedCharacters}`,
+          title: `${validText}${disallowedCharacters}`,
+          url: entryUrl,
+        },
+      ],
+    })
+
+    const parsed = new DOMParser().parseFromString(document, 'application/xml')
+    expect(parsed.querySelector('parsererror')).toBeNull()
+    expect(document).toContain(`<title>${validText}</title>`)
+
+    const atomEntry = parsed.getElementsByTagNameNS('http://www.w3.org/2005/Atom', 'entry').item(0)
+    expect(
+      atomEntry?.getElementsByTagNameNS('http://www.w3.org/2005/Atom', 'title').item(0)
+        ?.textContent,
+    ).toBe(validText.replaceAll('\r', '\n'))
+    expect(
+      atomEntry
+        ?.getElementsByTagNameNS('http://www.w3.org/2005/Atom', 'link')
+        .item(0)
+        ?.getAttribute('href'),
+    ).toBe('https://pomo.example/history/sample?discard=&emoji=😀&title="기록"&owner=민수\'s')
+  })
+
   it('should sort by publication date while preserving each update date', () => {
     const document = renderAtom(createInput())
 
