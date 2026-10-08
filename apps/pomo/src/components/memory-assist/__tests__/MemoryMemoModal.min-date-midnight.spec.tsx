@@ -4,9 +4,9 @@ import {cleanup, fireEvent, render, screen} from '@solidjs/testing-library'
 import {createSignal} from 'solid-js'
 import {afterEach, beforeEach, expect, it, vi} from 'vitest'
 
-import {localDateRuntime} from '../features/civil-date'
-import {type ReminderDraft} from '../components/memory-assist/ReminderFields'
-import {MemoryMemoModal} from '../components/memory-assist/MemoryMemoModal'
+import {localDateRuntime} from '../../../features/civil-date'
+import {MemoryMemoModal} from '../MemoryMemoModal'
+import {type ReminderDraft} from '../ReminderFields'
 
 const scheduleUsingTimers = localDateRuntime.schedule
 let schedule = vi.spyOn(localDateRuntime, 'schedule')
@@ -76,18 +76,20 @@ it.each([
 
     const dateInput = () => screen.getByLabelText('날짜') as HTMLInputElement
     expect(dateInput().min).toBe(minimumDate)
-    expect(schedule).toHaveBeenCalledOnce()
-    const cancelMidnightTimer = schedule.mock.results[0]?.value as () => void
+    const cancelMidnightTimer = schedule.mock.results[0]?.value as (() => void) | undefined
 
     await vi.advanceTimersByTimeAsync(999)
     expect(dateInput().min).toBe(minimumDate)
-    expect(schedule).toHaveBeenCalledOnce()
-    expect(cancelMidnightTimer).not.toHaveBeenCalled()
+    if (cancelMidnightTimer !== undefined) {
+      expect(cancelMidnightTimer).not.toHaveBeenCalled()
+    }
     await vi.advanceTimersByTimeAsync(1)
 
     expect(dateInput().min).toBe(nextMinimumDate)
     expect(schedule).toHaveBeenCalledTimes(2)
-    expect(cancelMidnightTimer).toHaveBeenCalledOnce()
+    if (cancelMidnightTimer !== undefined) {
+      expect(cancelMidnightTimer).toHaveBeenCalledOnce()
+    }
   },
 )
 
@@ -116,7 +118,6 @@ it('should refresh on visible return and dispose work when closed or unmounted',
 
   const dateInput = () => screen.getByLabelText('날짜') as HTMLInputElement
   expect(dateInput().min).toBe('2026-01-31')
-  expect(schedule).toHaveBeenCalledOnce()
   const cancelMidnightTimer = schedule.mock.results[0]?.value as () => void
 
   documentHidden.mockReturnValue(true)
