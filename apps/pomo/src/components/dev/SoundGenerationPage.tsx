@@ -1,15 +1,72 @@
 import {Title} from '@solidjs/meta'
 import {A} from '@solidjs/router'
-import {createEffect, createSignal, Show} from 'solid-js'
+import {type Accessor, batch, createEffect, createSignal, type Setter, Show} from 'solid-js'
 import {clamp} from 'es-toolkit/math'
 
 import {DEFAULT_CONNECTION_SECONDS, useSoundGeneration} from 'src/features/sound-generation'
 import {ModelTerms} from './sound-generation/ModelTerms'
 import {CrossfadeAudio, type CrossfadePlaybackState} from './sound-generation/CrossfadeAudio'
+import {SoundGenerationResultActions} from './sound-generation/SoundGenerationResultActions'
 import {
   SoundGenerationForm,
   type SoundGenerationFormRequest,
 } from './sound-generation/SoundGenerationForm'
+
+type NativeHandoffInput = {
+  readonly connectionEnabled: boolean
+  readonly connectionSeconds: number
+  readonly handoff: CrossfadePlaybackState | null
+  readonly nativeAudio: HTMLAudioElement | undefined
+  readonly repeat: boolean
+  readonly seconds: number
+}
+
+const readNativeHandoff = (input: NativeHandoffInput): CrossfadePlaybackState | null => {
+  if (
+    !input.repeat ||
+    !input.connectionEnabled ||
+    input.connectionSeconds > 0 ||
+    !(input.seconds > 0) ||
+    input.handoff !== null ||
+    input.nativeAudio === undefined
+  ) {
+    return null
+  }
+  return {playing: !input.nativeAudio.paused, position: input.nativeAudio.currentTime}
+}
+
+type RepeatChangeContext = {
+  readonly handoff: Accessor<CrossfadePlaybackState | null>
+  readonly nativeAudio: HTMLAudioElement | undefined
+  readonly setHandoff: Setter<CrossfadePlaybackState | null>
+  readonly setRepeat: Setter<boolean>
+}
+
+const handleRepeatChange = (enabled: boolean, context: RepeatChangeContext) => {
+  if (enabled && context.nativeAudio !== undefined) {
+    const {nativeAudio} = context
+    const state = context.handoff() ?? {
+      playing: !nativeAudio.paused,
+      position: nativeAudio.currentTime,
+    }
+    batch(() => {
+      context.setHandoff(state)
+      context.setRepeat(enabled)
+    })
+    return
+  }
+  context.setRepeat(enabled)
+}
+
+const handleCurrentResultHandoffChange = (
+  state: CrossfadePlaybackState,
+  currentResultUrl: string | null,
+  setHandoff: Setter<CrossfadePlaybackState | null>,
+) => {
+  if (currentResultUrl !== null) {
+    setHandoff(state)
+  }
+}
 
 export function SoundGenerationPage() {
   const [repeat, setRepeat] = createSignal(false)
@@ -42,12 +99,28 @@ export function SoundGenerationPage() {
   })
   const handleConnectionEnabledChange = (enabled: boolean) => {
     if (enabled && repeat() && nativeAudio !== undefined) {
-      const state = {playing: !nativeAudio.paused, position: nativeAudio.currentTime}
-      setConnectionEnabled(true)
-      setHandoff(state)
+      const state = handoff() ?? {playing: !nativeAudio.paused, position: nativeAudio.currentTime}
+      batch(() => {
+        setConnectionEnabled(true)
+        setHandoff(state)
+      })
       return
     }
     setConnectionEnabled(enabled)
+  }
+  const handleConnectionSecondsChange = (seconds: number) => {
+    const state = readNativeHandoff({
+      connectionEnabled: connectionEnabled(),
+      connectionSeconds: connectionSeconds(),
+      handoff: handoff(),
+      nativeAudio,
+      repeat: repeat(),
+      seconds,
+    })
+    if (state !== null) {
+      setHandoff(state)
+    }
+    setConnectionSeconds(seconds)
   }
   const generate = (request: SoundGenerationFormRequest) => {
     setHandoff(null)
@@ -83,7 +156,7 @@ export function SoundGenerationPage() {
             connectionSeconds={connectionSeconds}
             error={generation.error}
             onConnectionEnabledChange={handleConnectionEnabledChange}
-            onConnectionSecondsChange={setConnectionSeconds}
+            onConnectionSecondsChange={handleConnectionSecondsChange}
             onGenerate={generate}
             onStop={generation.stop}
             status={generation.status}
@@ -116,34 +189,19 @@ export function SoundGenerationPage() {
                     autoPlay={handoff()?.playing ?? false}
                     connectionSeconds={connectionSeconds()}
                     initialPosition={handoff()?.position ?? 0}
-                    onStateChange={setHandoff}
+                    onStateChange={(state) =>
+                      handleCurrentResultHandoffChange(state, generation.url(), setHandoff)
+                    }
                     url={url()}
                   />
                 </Show>
-                <label class="inline-flex min-h-11 items-center gap-2 text-sm">
-                  <input
-                    type="checkbox"
-                    checked={repeat()}
-                    onChange={(event) => {
-                      const enabled = event.currentTarget.checked
-                      if (enabled && nativeAudio !== undefined) {
-                        setHandoff({
-                          playing: !nativeAudio.paused,
-                          position: nativeAudio.currentTime,
-                        })
-                      }
-                      setRepeat(enabled)
-                    }}
-                  />
-                  반복 재생
-                </label>
-                <a
-                  class="inline-flex min-h-11 items-center text-sm text-#b8e8d0 underline"
-                  download="environment.wav"
-                  href={url()}
-                >
-                  WAV 다운로드
-                </a>
+                <SoundGenerationResultActions
+                  checked={repeat()}
+                  onRepeatChange={(enabled) =>
+                    handleRepeatChange(enabled, {handoff, nativeAudio, setHandoff, setRepeat})
+                  }
+                  url={url()}
+                />
               </section>
             )}
           </Show>
