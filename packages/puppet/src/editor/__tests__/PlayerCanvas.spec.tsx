@@ -1,5 +1,7 @@
 /** @vitest-environment jsdom */
 
+import {createPlayerFixture} from './fixtures/player'
+
 import {render, waitFor} from '@solidjs/testing-library'
 import {createSignal} from 'solid-js'
 import {afterEach, describe, expect, test, vi} from 'vitest'
@@ -19,20 +21,7 @@ const mocks = vi.hoisted(() => ({
   },
   updateDocument: vi.fn(() => true),
 }))
-const player: Player = {
-  destroy: vi.fn(),
-  pause: vi.fn(),
-  play: vi.fn(),
-  playMotion: vi.fn(() => true),
-  redraw: vi.fn(),
-  resetPhysics: vi.fn(),
-  resize: vi.fn(),
-  seek: vi.fn(),
-  setMotion: vi.fn(() => true),
-  setParameterValues: vi.fn(),
-  setPhysicsPreview: vi.fn(),
-  updateDocument: mocks.updateDocument,
-}
+const player: Player = {...createPlayerFixture(), updateDocument: mocks.updateDocument}
 
 mocks.createPlayer.mockResolvedValue(player)
 mocks.createSpatialThreeOverlay.mockReturnValue(mocks.overlay)
