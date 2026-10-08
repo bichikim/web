@@ -56,7 +56,7 @@ export const AlbumDraftForm = (props: AdminMusicFormProps) => (
         <label class="grid gap-2 text-sm">
           이미지 파일
           <input
-            accept="image/jpeg,image/png,image/webp"
+            accept="image/jpeg,image/jpg,.jpg,.jpeg,image/png,image/webp"
             class={FIELD_CLASSES}
             name="coverFile"
             onChange={(event) => props.model.handleCoverChange(event)}

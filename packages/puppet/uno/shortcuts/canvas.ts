@@ -14,7 +14,7 @@ export const canvasShortcuts = {
     '[.puppet-editor_&:focus-visible]:[stroke:#ffffff] [.puppet-editor_&:focus-visible]:[stroke-width:3px]',
   ],
   'camera-frame': [
-    '[.puppet-editor_&]:relative',
+    '[.puppet-editor_&]:relative [.puppet-editor_&]:overflow-hidden',
     '[.puppet-editor_&]:grid [.puppet-editor_&]:min-h-0 [.puppet-editor_&]:min-w-0',
     '[.puppet-editor_&]:[grid-template-columns:24px_minmax(0,_1fr)]',
     '[.puppet-editor_&]:[grid-template-rows:24px_minmax(0,_1fr)]',
