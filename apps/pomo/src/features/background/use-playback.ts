@@ -1,4 +1,6 @@
 import {batch, createEffect, createMemo, createSignal, onCleanup, untrack} from 'solid-js'
+import {difference, intersection} from 'es-toolkit/array'
+import {excludeByIds} from 'src/utils/exclude-by-ids'
 import {getMonotonicTime} from 'src/utils/get-monotonic-time'
 import type {BackgroundController} from './use-background'
 import {nextSlide, type Slide} from './playlist'
@@ -18,10 +20,7 @@ export const usePlayback = (props: UsePlaybackProps) => {
   const [startedAt, setStartedAt] = createSignal<number | null>(null)
   const eligibleIds = createMemo(() => {
     const failed = props.background.failedIds()
-    return props.background
-      .items()
-      .filter((item) => !failed.includes(item.id))
-      .map((item) => item.id)
+    return excludeByIds(props.background.items(), failed).map((item) => item.id)
   })
   const current = createMemo(
     () => props.background.items().find((item) => item.id === slide().current) ?? null,
@@ -43,11 +42,12 @@ export const usePlayback = (props: UsePlaybackProps) => {
       if (previous.current === null || !ids.includes(previous.current)) {
         advance()
       } else {
-        const remaining = previous.remaining.filter((id) => ids.includes(id))
-        const additions = ids.filter(
-          (id) =>
-            id !== previous.current && !previous.seen?.includes(id) && !remaining.includes(id),
-        )
+        const remaining = intersection(previous.remaining, ids)
+        const additions = difference(ids, [
+          previous.current,
+          ...(previous.seen ?? []),
+          ...remaining,
+        ])
         setSlide({...previous, remaining: [...remaining, ...additions]})
       }
     })
