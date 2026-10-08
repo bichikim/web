@@ -111,12 +111,6 @@ it('should cancel the midnight timer and visibility subscription on close and un
   const subscribeSpy = vi
     .spyOn(localDateRuntime, 'subscribe')
     .mockImplementation((callback) => vi.fn(subscribe(callback)))
-  const dispatchToggle = (popover: Element, newState: 'open' | 'closed') => {
-    const toggle = new Event('toggle')
-    Object.defineProperty(toggle, 'newState', {value: newState})
-    popover.dispatchEvent(toggle)
-  }
-
   const view = render(() => (
     <CalendarAlarmControl event={event} memos={() => mocks.memos} timeZone="Asia/Seoul" />
   ))
@@ -126,7 +120,8 @@ it('should cancel the midnight timer and visibility subscription on close and un
   const cancelClosedTimer = scheduleSpy.mock.results[0]?.value as () => void
   const unsubscribeClosed = subscribeSpy.mock.results[0]?.value as () => void
 
-  dispatchToggle(view.container.querySelector('[popover]')!, 'closed')
+  const popover = view.container.querySelector('[popover]') as HTMLElement
+  popover.hidePopover()
   expect(view.container.querySelector('input[type="date"]')).toBeNull()
   expect(cancelClosedTimer).toHaveBeenCalledOnce()
   expect(unsubscribeClosed).toHaveBeenCalledOnce()

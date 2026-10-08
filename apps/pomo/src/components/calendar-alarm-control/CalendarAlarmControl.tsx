@@ -65,16 +65,6 @@ export const CalendarAlarmControl = (props: CalendarAlarmControlProps) => {
     memos: () => props.memos(),
     timeZone,
   })
-  const toggleAlarm = (event: MouseEvent) => {
-    event.preventDefault()
-    const popover =
-      event.currentTarget instanceof HTMLElement
-        ? event.currentTarget.ownerDocument.getElementById(alarm.popoverId)
-        : null
-    const willOpen = popover !== null && !popover.matches(':popover-open')
-    alarm.toggle()
-    setPopoverOpen(willOpen)
-  }
 
   return (
     <>
@@ -94,7 +84,10 @@ export const CalendarAlarmControl = (props: CalendarAlarmControlProps) => {
             ? 'border-highlight bg-primary-soft text-foreground'
             : 'border-border bg-transparent text-muted-foreground hover:bg-surface-interactive',
         )}
-        onClick={toggleAlarm}
+        onClick={(event) => {
+          event.preventDefault()
+          alarm.toggle()
+        }}
         popovertarget={alarm.popoverId}
         style={{'--pomo-calendar-alarm-anchor': alarm.popoverAnchor}}
         type="button"
