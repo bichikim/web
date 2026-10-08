@@ -7,18 +7,16 @@ import {beforeEach, expect, it, vi} from 'vitest'
 import {useAuth} from '../../../features/auth/AuthProvider'
 import type {AuthenticationState} from '../../../features/auth/machine'
 import {
-  createCalendarAuthorization,
+  authorizeCalendarConnection,
   deleteCalendarConnection,
   listCalendarConnections,
-  openCalendarAuthorization,
 } from '../../../features/calendar'
 import {CalendarConnections} from '../CalendarConnections'
 
 vi.mock('../../../features/calendar', () => ({
-  createCalendarAuthorization: vi.fn(),
+  authorizeCalendarConnection: vi.fn(),
   deleteCalendarConnection: vi.fn(),
   listCalendarConnections: vi.fn(),
-  openCalendarAuthorization: vi.fn(),
 }))
 
 vi.mock('../../../features/auth/AuthProvider', () => ({useAuth: vi.fn()}))
@@ -32,7 +30,7 @@ beforeEach(() => {
   vi.mocked(listCalendarConnections).mockResolvedValue([
     {accountLabel: 'person@example.com', id: 'connection-1', provider: 'google'},
   ])
-  vi.mocked(createCalendarAuthorization).mockResolvedValue('https://accounts.google.com/authorize')
+  vi.mocked(authorizeCalendarConnection).mockResolvedValue(undefined)
 })
 
 it('should show provider actions in a settings popover', async () => {
@@ -57,14 +55,54 @@ it('should show provider actions in a settings popover', async () => {
 
 it('should report a failed Google connection without offering Outlook', async () => {
   vi.mocked(listCalendarConnections).mockResolvedValue([])
-  vi.mocked(openCalendarAuthorization).mockRejectedValue(new Error('Authorization unavailable'))
+  vi.mocked(authorizeCalendarConnection).mockRejectedValue(new Error('Authorization unavailable'))
   render(() => <CalendarConnections />)
 
   fireEvent.click(await screen.findByRole('button', {name: 'Google Calendar 연결'}))
 
   expect(await screen.findByRole('alert')).toHaveTextContent('캘린더 연결을 확인하지 못했습니다.')
-  expect(createCalendarAuthorization).toHaveBeenCalledWith('google')
+  expect(authorizeCalendarConnection).toHaveBeenCalledExactlyOnceWith('google')
   expect(screen.queryByRole('button', {name: 'Microsoft Outlook 연결'})).not.toBeInTheDocument()
+})
+
+it('should keep the provider pending until the consent handoff finishes', async () => {
+  const authorization = Promise.withResolvers<void>()
+  vi.mocked(listCalendarConnections).mockResolvedValue([])
+  vi.mocked(authorizeCalendarConnection).mockReturnValueOnce(authorization.promise)
+  render(() => <CalendarConnections />)
+  const button = await screen.findByRole('button', {name: 'Google Calendar 연결'})
+
+  fireEvent.click(button)
+
+  expect(authorizeCalendarConnection).toHaveBeenCalledExactlyOnceWith('google')
+  expect(button).toBeDisabled()
+  expect(screen.queryByRole('alert')).not.toBeInTheDocument()
+  authorization.resolve()
+  await waitFor(() => expect(button).toBeEnabled())
+  expect(screen.queryByRole('alert')).not.toBeInTheDocument()
+})
+
+it('should clear a failed consent handoff when retrying and release pending state', async () => {
+  const retry = Promise.withResolvers<void>()
+  vi.mocked(listCalendarConnections).mockResolvedValue([])
+  vi.mocked(authorizeCalendarConnection)
+    .mockRejectedValueOnce(new Error('Authorization unavailable'))
+    .mockReturnValueOnce(retry.promise)
+  render(() => <CalendarConnections />)
+  const button = await screen.findByRole('button', {name: 'Google Calendar 연결'})
+  fireEvent.click(button)
+  expect(await screen.findByRole('alert')).toHaveTextContent('캘린더 연결을 확인하지 못했습니다.')
+  expect(button).toBeEnabled()
+
+  fireEvent.click(button)
+
+  expect(authorizeCalendarConnection).toHaveBeenCalledTimes(2)
+  expect(authorizeCalendarConnection).toHaveBeenLastCalledWith('google')
+  expect(button).toBeDisabled()
+  expect(screen.queryByRole('alert')).not.toBeInTheDocument()
+  retry.resolve()
+  await waitFor(() => expect(button).toBeEnabled())
+  expect(screen.queryByRole('alert')).not.toBeInTheDocument()
 })
 
 it('should require a second press before disconnecting a calendar', async () => {

@@ -2,11 +2,10 @@ import {cx} from 'class-variance-authority'
 import {createMemo, createResource, createSignal, createUniqueId, Show} from 'solid-js'
 import * as m from '@paraglide/message'
 import {
+  authorizeCalendarConnection,
   type CalendarConnection,
-  createCalendarAuthorization,
   deleteCalendarConnection,
   listCalendarConnections,
-  openCalendarAuthorization,
 } from '../../features/calendar'
 import {useAuth} from '../../features/auth/AuthProvider'
 import {CalendarProviderActions} from './ProviderActions'
@@ -49,8 +48,7 @@ export const CalendarConnections = (props: CalendarConnectionsProps) => {
     setPendingAction(provider)
     setErrorMessage(null)
     try {
-      const authorizationUrl = await createCalendarAuthorization(provider)
-      await openCalendarAuthorization(authorizationUrl)
+      await authorizeCalendarConnection(provider)
     } catch (error: unknown) {
       console.error('Failed to open calendar authorization', error)
       setErrorMessage(m.calendar_connections_failed())
