@@ -34,6 +34,8 @@ vi.mock('../../settings/Content', async () => {
   }
 })
 
+vi.mock('../VersionNoticePanel', () => ({VersionNoticePanel: () => null}))
+
 const modelDownloadRuntime: ModelDownloadRuntime = {
   createTextClient: () => {
     throw new Error('텍스트 모델 client를 만들면 안 됩니다.')

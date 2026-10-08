@@ -164,6 +164,91 @@ it.each([
   },
 )
 
+it.each([
+  {
+    initialPaused: false,
+    nextPaused: true,
+    nextPosition: 13,
+    transition: 'playing to paused',
+  },
+  {
+    initialPaused: true,
+    nextPaused: false,
+    nextPosition: 11,
+    transition: 'paused to playing',
+  },
+])(
+  'should use native playback state changed while repeat is enabled with a blank duration ($transition)',
+  ({initialPaused, nextPaused, nextPosition}) => {
+    render(() => <SoundGenerationPage />)
+    fireEvent.click(screen.getByRole('button', {name: '환경음 생성'}))
+    TestWorker.current.onmessage?.({data: {blob: new Blob(['wav']), type: 'result'}})
+    const audio = screen.getByLabelText('생성한 환경음 재생')
+    Object.defineProperty(audio, 'currentTime', {configurable: true, value: 7, writable: true})
+    Object.defineProperty(audio, 'duration', {configurable: true, value: 20})
+    Object.defineProperty(audio, 'paused', {configurable: true, value: initialPaused})
+    Object.defineProperty(audio, 'readyState', {configurable: true, value: 1})
+
+    fireEvent.input(screen.getByRole('spinbutton', {name: /^연결 구간 \(초\)/u}), {
+      target: {value: ''},
+    })
+    fireEvent.click(screen.getByRole('checkbox', {name: '반복 재생'}))
+
+    expect(screen.queryByRole('slider', {name: '크로스페이드 오디오 위치'})).not.toBeInTheDocument()
+    Object.defineProperty(audio, 'currentTime', {
+      configurable: true,
+      value: nextPosition,
+      writable: true,
+    })
+    Object.defineProperty(audio, 'paused', {configurable: true, value: nextPaused})
+    fireEvent.input(screen.getByRole('spinbutton', {name: /^연결 구간 \(초\)/u}), {
+      target: {value: '6'},
+    })
+
+    expect(screen.getByText(new RegExp(`${nextPosition}\\.0 / 20\\.0초`, 'u'))).toBeInTheDocument()
+    if (nextPaused) {
+      expect(loopPlayback.play).not.toHaveBeenCalled()
+      expect(screen.getByRole('button', {name: '재생'})).toBeInTheDocument()
+    } else {
+      expect(loopPlayback.play).toHaveBeenCalledWith(6, false, nextPosition)
+      loopPlayback.onStatus?.('루프 재생 중', true)
+      expect(screen.getByRole('button', {name: '일시정지'})).toBeInTheDocument()
+    }
+  },
+)
+
+it('should refresh native playback after connection is toggled while repeat has a blank duration', () => {
+  render(() => <SoundGenerationPage />)
+  fireEvent.click(screen.getByRole('button', {name: '환경음 생성'}))
+  TestWorker.current.onmessage?.({data: {blob: new Blob(['wav']), type: 'result'}})
+  const initialAudio = screen.getByLabelText('생성한 환경음 재생')
+  Object.defineProperty(initialAudio, 'currentTime', {configurable: true, value: 7, writable: true})
+  Object.defineProperty(initialAudio, 'duration', {configurable: true, value: 20})
+  Object.defineProperty(initialAudio, 'paused', {configurable: true, value: true})
+  Object.defineProperty(initialAudio, 'readyState', {configurable: true, value: 1})
+  fireEvent.click(screen.getByRole('checkbox', {name: '반복 재생'}))
+  fireEvent.input(screen.getByRole('spinbutton', {name: /^연결 구간 \(초\)/u}), {
+    target: {value: ''},
+  })
+
+  const audio = screen.getByLabelText('생성한 환경음 재생')
+  Object.defineProperty(audio, 'duration', {configurable: true, value: 20})
+  Object.defineProperty(audio, 'readyState', {configurable: true, value: 1})
+  fireEvent.click(screen.getByRole('checkbox', {name: '연결 구간 사용'}))
+  fireEvent.click(screen.getByRole('checkbox', {name: '연결 구간 사용'}))
+
+  Object.defineProperty(audio, 'currentTime', {configurable: true, value: 13, writable: true})
+  Object.defineProperty(audio, 'paused', {configurable: true, value: false})
+  fireEvent.input(screen.getByRole('spinbutton', {name: /^연결 구간 \(초\)/u}), {
+    target: {value: '6'},
+  })
+
+  expect(loopPlayback.play).toHaveBeenCalledWith(6, false, 13)
+  expect(screen.getByText(/13\.0 \/ 20\.0초/u)).toBeInTheDocument()
+  loopPlayback.onStatus?.('루프 재생 중', true)
+  expect(screen.getByRole('button', {name: '일시정지'})).toBeInTheDocument()
+})
+
 it('should restore the confirmed repeat position when seeking fails', async () => {
   render(() => <SoundGenerationPage />)
   fireEvent.click(screen.getByRole('button', {name: '환경음 생성'}))

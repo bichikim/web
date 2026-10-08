@@ -92,7 +92,7 @@ export function SoundGenerationPage() {
     setHandoff(null)
   }
   createEffect(() => {
-    if (!repeat() || !connectionEnabled()) {
+    if (!repeat() || !connectionEnabled() || !(connectionSeconds() > 0)) {
       handoff()
       applyNativeHandoff()
     }
@@ -117,10 +117,10 @@ export function SoundGenerationPage() {
       repeat: repeat(),
       seconds,
     })
-    if (state !== null) {
-      setHandoff(state)
-    }
-    setConnectionSeconds(seconds)
+    batch(() => {
+      setHandoff(state ?? handoff())
+      setConnectionSeconds(seconds)
+    })
   }
   const generate = (request: SoundGenerationFormRequest) => {
     setHandoff(null)
