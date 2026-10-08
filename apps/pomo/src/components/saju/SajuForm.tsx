@@ -75,6 +75,7 @@ function createSajuFormInput(current: SajuFormDraft, day: string): SajuFormInput
 
 export function SajuForm(props: SajuFormProps) {
   const {
+    calendar,
     calendarLabel,
     changeDay,
     changeMonth,
@@ -83,8 +84,12 @@ export function SajuForm(props: SajuFormProps) {
     dateYear,
     dayOptions,
     draft,
+    gender,
+    leapMonth,
+    question,
     resetDraft,
     selectedDay,
+    time,
     updateDraft,
   } = useSajuFormDraft(
     untrack(() => ({
@@ -111,10 +116,7 @@ export function SajuForm(props: SajuFormProps) {
   return (
     <form class="grid items-start gap-3 sm:grid-cols-2 sm:gap-4" onSubmit={handleSubmit}>
       <div class="grid min-w-0 gap-3 sm:col-span-2">
-        <SajuCalendarChoice
-          value={draft().calendar}
-          onChange={(calendar) => updateDraft({calendar})}
-        />
+        <SajuCalendarChoice value={calendar()} onChange={(calendar) => updateDraft({calendar})} />
         <div class="grid grid-cols-2 gap-2 sm:grid-cols-3">
           <PSelect
             class="col-span-2 sm:col-span-1"
@@ -138,7 +140,7 @@ export function SajuForm(props: SajuFormProps) {
             />
           </Show>
         </div>
-        <Show when={draft().calendar === 'lunar'}>
+        <Show when={calendar() === 'lunar'}>
           <Show when={dayOptions().length === 0}>
             <p class="m-0 text-sm text-#f2a7b8" role="status">
               선택한 음력 월 또는 윤달에 해당하는 날짜가 없습니다.
@@ -146,7 +148,7 @@ export function SajuForm(props: SajuFormProps) {
           </Show>
           <label class="flex items-center gap-2 text-sm text-#d2c4d7">
             <input
-              checked={draft().leapMonth}
+              checked={leapMonth()}
               name="leapMonth"
               type="checkbox"
               onChange={(event) => updateDraft({leapMonth: event.currentTarget.checked})}
@@ -157,14 +159,14 @@ export function SajuForm(props: SajuFormProps) {
       </div>
       <PTimePicker
         label="출생 시각 (모르면 비워두기)"
-        value={draft().time}
+        value={time()}
         clearable
         onChange={(time) => updateDraft({time})}
       />
       <PSelect
         label="성별"
         options={GENDER_OPTIONS}
-        value={draft().gender}
+        value={gender()}
         onChange={handleGenderChange}
       />
       <label class="grid gap-2 text-sm font-650 sm:col-span-2">
@@ -174,7 +176,7 @@ export function SajuForm(props: SajuFormProps) {
           name="question"
           placeholder="예: 제 성향을 어떻게 해석하나요?"
           required
-          value={draft().question}
+          value={question()}
           onInput={(event) => updateDraft({question: event.currentTarget.value})}
         />
       </label>
