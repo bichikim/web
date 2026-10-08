@@ -42,6 +42,7 @@ export const cloudTextRequestSchema = z.object({
 export type CloudTextRequest = z.infer<typeof cloudTextRequestSchema>
 
 export const cloudTextResponseSchema = z.object({
+  modelId: z.string().nullable().default(null),
   text: z.string().min(1),
   tokenCount: z.number().int().nonnegative(),
   usage: cloudTextUsageSchema,

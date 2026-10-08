@@ -5,7 +5,6 @@ export const API_AI_POLICY = {
   maximumAttempts: 5,
   maximumBatch: 10,
   maximumQueuedPerUser: 10,
-  maximumRunningPerUser: 2,
   queueMilliseconds: 900_000,
   recoveryDelayMilliseconds: 60_000,
   retryMilliseconds: 30_000,

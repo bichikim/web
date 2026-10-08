@@ -65,5 +65,6 @@ export const classifyApiAiSubmissionError = (error: unknown, now: number): ApiAi
         ? error.message.slice(0, MAXIMUM_ERROR_LENGTH)
         : 'AI provider submission failed',
     retryAt: readRetryAt(headers, now),
+    scope: code === 'model_not_found' ? 'model' : 'pool',
   }
 }

@@ -14,10 +14,16 @@ export const readCloudTextJob = async (userId: string, requestId: string) => {
     return null
   }
   const usage = await readCloudTextUsage(userId)
-  if (request.status === 'complete' && request.result !== null) {
-    return {kind: 'complete' as const, text: request.result, tokenCount: request.tokenCount, usage}
-  }
   const job = await findApiAiJob(requestId)
+  if (request.status === 'complete' && request.result !== null) {
+    return {
+      kind: 'complete' as const,
+      modelId: job?.ownerId === userId ? (job.result?.model ?? null) : null,
+      text: request.result,
+      tokenCount: request.tokenCount,
+      usage,
+    }
+  }
   if (job === null || job.ownerId !== userId) {
     return {kind: 'failed' as const, requestId, usage}
   }

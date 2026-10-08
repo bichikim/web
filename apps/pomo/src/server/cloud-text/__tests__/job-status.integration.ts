@@ -8,7 +8,7 @@ import {afterAll, afterEach, beforeAll, expect, it, vi} from 'vitest'
 import {apiAiJobs, getDatabase, withTransactionalDatabase} from 'src/server/database'
 import {prepareApiAiQueue} from './fixtures/api-ai-queue'
 import {prepareProductLimits} from './fixtures/product-limits'
-import {releaseCloudText, reserveCloudText} from '../quota'
+import {completeCloudText, releaseCloudText, reserveCloudText} from '../quota'
 import {readCloudTextJob} from '../job-status'
 
 vi.mock('src/server/database', async () => ({
@@ -84,4 +84,39 @@ it.each(['failed', 'cancelled'] as const)(
 it('should not expose a queued generation belonging to another account', async () => {
   await reserveCloudText({now, requestHash: 'a'.repeat(64), requestId, userId})
   expect(await readCloudTextJob('00000000-0000-4000-8000-000000000003', requestId)).toBeNull()
+})
+it('should expose the model from the final response after fallback', async () => {
+  await reserveCloudText({now, requestHash: 'a'.repeat(64), requestId, userId})
+  await client.insert(apiAiJobs).values({
+    body: {model: 'primary-model'},
+    generationMilliseconds: 120000,
+    id: requestId,
+    kind: 'cloud-text',
+    ownerId: userId,
+    queueExpiresAt: new Date(now.getTime() + 900000),
+    requestHash: 'a'.repeat(64),
+    result: {
+      failureCode: null,
+      fallback: false,
+      metadata: {},
+      model: 'actual-fallback-model',
+      outputText: '리딩',
+      responseId: 'response',
+      searchSourceUrls: [],
+      status: 'completed',
+      tokenCount: 10,
+    },
+    status: 'succeeded',
+  })
+  await completeCloudText({now, requestId, text: '리딩', tokenCount: 10, userId})
+  expect(await readCloudTextJob(userId, requestId)).toMatchObject({
+    kind: 'complete',
+    modelId: 'actual-fallback-model',
+    text: '리딩',
+  })
+})
+it('should return null model metadata for a completed legacy request without an API job', async () => {
+  await reserveCloudText({now, requestHash: 'a'.repeat(64), requestId, userId})
+  await completeCloudText({now, requestId, text: '과거 결과', tokenCount: 10, userId})
+  expect(await readCloudTextJob(userId, requestId)).toMatchObject({kind: 'complete', modelId: null})
 })

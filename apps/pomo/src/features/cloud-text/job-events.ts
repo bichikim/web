@@ -45,7 +45,12 @@ export const readCloudTextEvents = async (
         if (event.kind === 'complete') {
           return {
             kind: 'complete',
-            response: {text: event.text, tokenCount: event.tokenCount, usage: event.usage},
+            response: {
+              modelId: event.modelId,
+              text: event.text,
+              tokenCount: event.tokenCount,
+              usage: event.usage,
+            },
           }
         }
         if (event.kind !== 'pending') {

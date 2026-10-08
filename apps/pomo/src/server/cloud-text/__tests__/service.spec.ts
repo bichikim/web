@@ -58,20 +58,25 @@ it.each(['exhausted', 'queue_full', 'conflict', 'failed'] as const)(
     expect(findApiAiJob).not.toHaveBeenCalled()
   },
 )
-it('should replay a completed request without queueing or another charge', async () => {
+it('should replay a completed request with its actual model without queueing or another charge', async () => {
   vi.mocked(reserveCloudText).mockResolvedValue({
     kind: 'existing',
     text: '저장된 리딩',
     tokenCount: 200,
     usage,
   })
+  vi.mocked(findApiAiJob).mockResolvedValue({
+    ownerId: 'user',
+    result: {model: 'fallback-model'},
+  } as NonNullable<Awaited<ReturnType<typeof findApiAiJob>>>)
   expect(await generateCloudText('user', request)).toEqual({
     kind: 'complete',
+    modelId: 'fallback-model',
     text: '저장된 리딩',
     tokenCount: 200,
     usage,
   })
-  expect(findApiAiJob).not.toHaveBeenCalled()
+  expect(findApiAiJob).toHaveBeenCalledWith(request.requestId)
 })
 it('should reject a pending request belonging to another owner', async () => {
   vi.mocked(findApiAiJob).mockResolvedValue({ownerId: 'other'} as NonNullable<

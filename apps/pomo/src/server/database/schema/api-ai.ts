@@ -19,6 +19,21 @@ import type {
   ApiAiWebhookEvent,
 } from 'src/server/api-ai/types'
 import {pomoUsers} from './users'
+import type {ApiAiRoute, ApiAiRouting} from 'src/features/admin-api-ai/contracts'
+
+export const apiAiRouting = pgTable(
+  'api_ai_routing',
+  {
+    kind: varchar({length: 32}).$type<ApiAiKind>().primaryKey(),
+    revision: integer().notNull(),
+    routing: jsonb().$type<ApiAiRouting>().notNull(),
+    updatedAt: timestamp({withTimezone: true}).notNull().defaultNow(),
+  },
+  (table) => [
+    check('api_ai_routing_kind_check', sql`${table.kind} in ('cloud-text', 'history')`),
+    check('api_ai_routing_revision_check', sql`${table.revision} > 0`),
+  ],
+)
 
 export const apiAiJobs = pgTable(
   'api_ai_jobs',
@@ -39,6 +54,7 @@ export const apiAiJobs = pgTable(
     queueExpiresAt: timestamp({withTimezone: true}).notNull(),
     requestHash: varchar({length: 64}).notNull(),
     result: jsonb().$type<ApiAiResponse>(),
+    routing: jsonb().$type<ReadonlyArray<ApiAiRoute>>(),
     status: varchar({length: 32}).$type<ApiAiStatus>().notNull().default('queued'),
   },
   (table) => [
