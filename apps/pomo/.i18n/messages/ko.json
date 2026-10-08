@@ -230,6 +230,7 @@
   "feature_request_sign_in_required": "로그인한 뒤 이용할 수 있어요.",
   "feature_request_created": "기능 요청을 올렸어요. 승인 전까지 나에게만 보여요.",
   "feature_request_invalid": "기능 이름을 입력해 주세요.",
+  "feature_request_length_limit": "제목은 1~120자, 자세한 내용은 2,000자 이내로 입력해 주세요.",
   "feature_request_create_failed": "기능 요청을 올리지 못했어요. 잠시 후 다시 시도해 주세요.",
   "feature_request_list_title": "기능 요청 목록",
   "feature_request_list_loading": "기능 요청을 불러오는 중…",

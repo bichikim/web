@@ -230,6 +230,7 @@
   "feature_request_sign_in_required": "Sign in to use this feature.",
   "feature_request_created": "Your feature request was submitted. Only you can see it until it is approved.",
   "feature_request_invalid": "Enter a feature name.",
+  "feature_request_length_limit": "Use a title of 1–120 characters and details of no more than 2,000 characters.",
   "feature_request_create_failed": "Couldn't submit the feature request. Try again shortly.",
   "feature_request_list_title": "Feature request list",
   "feature_request_list_loading": "Loading feature requests…",
