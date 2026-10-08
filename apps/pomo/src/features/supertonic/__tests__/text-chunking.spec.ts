@@ -1,8 +1,9 @@
 /** @vitest-environment node */
-import {describe, expect, it} from 'vitest'
+import {describe, expect, it, vi} from 'vitest'
 
 import type {SupertonicSpeechPolicy} from '../model'
 import {splitSpeechText} from '../text-chunking'
+import {splitReferenceSpeechText} from './fixtures/text-chunking'
 
 const POLICY: SupertonicSpeechPolicy = {
   considerSplitLength: 120,
@@ -104,4 +105,130 @@ describe('splitSpeechText', () => {
 
     expect(splitSpeechText('하나. 둘.', policy)).toEqual(['하나.', '둘.'])
   })
+
+  it.each([0, 1, 119, 120, 149, 150, 151, 199, 200, 201, 299, 300, 301, 549])(
+    'should preserve code point boundaries and final chunks for %i characters',
+    (length) => {
+      const policy = Object.freeze({...POLICY})
+      const text = '😀'.repeat(length)
+      const chunks = splitSpeechText(text, policy)
+
+      expect(chunks).toEqual(splitReferenceSpeechText(text, policy))
+      expect(chunks.join('')).toBe(text)
+      expect(chunks.every((chunk) => Array.from(chunk).length <= policy.maximumLength)).toBe(true)
+      expect(policy).toEqual(POLICY)
+    },
+  )
+
+  it.each([
+    POLICY,
+    {...POLICY, considerSplitLength: 0},
+    {...POLICY, considerSplitLength: 1, maximumLength: 5, recommendedLength: 6},
+    {...POLICY, maximumLength: 4, recommendedLength: 10},
+    {...POLICY, considerSplitLength: 1, maximumLength: 7.5, recommendedLength: 5.5},
+    {...POLICY, considerSplitLength: 1, recommendedLength: -1},
+  ])(
+    'should match original splitting for seeded Unicode and whitespace with policy %j',
+    (policy) => {
+      const frozenPolicy = Object.freeze({...policy})
+      const tokens = [
+        '가',
+        '漢',
+        'a',
+        '😀',
+        'é',
+        'e\u0301',
+        '\uD800',
+        '\uDC00',
+        '\u200D',
+        ' ',
+        '\t',
+        '\u00A0',
+        '\n',
+        '\r\n',
+        '\n\n',
+        ',',
+        ';',
+        ':',
+        '!',
+        '?',
+        '。',
+        '，',
+      ]
+
+      expect(splitSpeechText('가'.repeat(549), frozenPolicy)).toEqual(
+        splitReferenceSpeechText('가'.repeat(549), frozenPolicy),
+      )
+
+      for (let seed = 1; seed <= 32; seed += 1) {
+        const text = Array.from({length: (seed * 73) % 900}, (_, index) => {
+          const position = Math.abs(
+            Math.imul(index + seed, 0x45d9f3b) + Math.imul(seed, 0x27d4eb2d),
+          )
+          return tokens[position % tokens.length]
+        }).join('')
+
+        expect(splitSpeechText(text, frozenPolicy)).toEqual(
+          splitReferenceSpeechText(text, frozenPolicy),
+        )
+      }
+
+      expect(frozenPolicy).toEqual(policy)
+    },
+  )
+
+  it.each([
+    `${'가'.repeat(124)},${'나'.repeat(120)}`,
+    `${'가'.repeat(150)} ${'나'.repeat(100)}`,
+    `${'가'.repeat(160)} ${'나'.repeat(100)}`,
+    `${'가'.repeat(200)} ${'나'.repeat(100)}`,
+    ` \t${'😀'.repeat(220)}\r\n다음 줄\n \t\n${'e\u0301'.repeat(160)}\u00A0 `,
+  ])('should preserve break priority, trimming, and paragraph packing for %s', (text) => {
+    expect(splitSpeechText(text, POLICY)).toEqual(splitReferenceSpeechText(text, POLICY))
+  })
+
+  it('should preserve the invalid locale exception', () => {
+    const policy = Object.freeze({...POLICY, locale: 'invalid_locale'})
+
+    expect(() => splitReferenceSpeechText('가'.repeat(250), policy)).toThrow(RangeError)
+    expect(() => splitSpeechText('가'.repeat(250), policy)).toThrow(RangeError)
+  })
+
+  it.each([-0.5, 0, Number.NaN])(
+    'should preserve nonprogressing runtime recommendation %s',
+    (recommendedLength) => {
+      const policy = Object.freeze({
+        ...POLICY,
+        considerSplitLength: 1,
+        maximumLength: 3,
+        recommendedLength,
+      })
+      const stop = new Error('bounded nonprogress probe')
+      const originalSlice = Array.prototype.slice
+      const probe = (split: typeof splitSpeechText) => {
+        let copies = 0
+        const spy = vi.spyOn(Array.prototype, 'slice').mockImplementation(function spy(
+          this: ReadonlyArray<unknown>,
+          start?: number,
+          end?: number,
+        ) {
+          copies += 1
+          if (copies > 8) {
+            throw stop
+          }
+          return originalSlice.call(this, start, end)
+        })
+        try {
+          return split('가나다라마바', policy)
+        } catch (error) {
+          return error
+        } finally {
+          spy.mockRestore()
+        }
+      }
+
+      expect(probe(splitReferenceSpeechText)).toBe(stop)
+      expect(probe(splitSpeechText)).toBe(stop)
+    },
+  )
 })

@@ -1,4 +1,5 @@
-import type {SupertonicSpeechPolicy} from './model'
+// Reference implementation from dev 654f34da2f5a1a05a933f80a777b5eff371faeb3.
+import type {SupertonicSpeechPolicy} from '../../model'
 
 const PARAGRAPH_SEPARATOR = /(?:\r?\n)[^\S\r\n]*(?:\r?\n)+/u
 const LINE_BREAK = /\r?\n/u
@@ -10,23 +11,22 @@ const getCharacterLength = (text: string) => getCharacters(text).length
 
 const findBreakIndex = (
   characters: ReadonlyArray<string>,
-  offset: number,
-  policy: SupertonicSpeechPolicy,
+  minimumLength: number,
+  preferredLength: number,
+  maximumLength: number,
 ) => {
-  const {considerSplitLength, maximumLength, recommendedLength} = policy
-  const remainingLength = characters.length - offset
-  const preferredEnd = Math.min(recommendedLength, maximumLength, remainingLength)
+  const preferredEnd = Math.min(preferredLength, maximumLength, characters.length)
 
-  for (let index = preferredEnd; index >= considerSplitLength; index -= 1) {
-    if (index > 0 && BREAK_CHARACTER.test(characters[offset + index - 1]!)) {
+  for (let index = preferredEnd; index >= minimumLength; index -= 1) {
+    if (BREAK_CHARACTER.test(characters[index - 1]!)) {
       return index
     }
   }
 
-  const maximumEnd = Math.min(maximumLength, remainingLength)
+  const maximumEnd = Math.min(maximumLength, characters.length)
 
   for (let index = preferredEnd + 1; index <= maximumEnd; index += 1) {
-    if (index > 0 && BREAK_CHARACTER.test(characters[offset + index - 1]!)) {
+    if (BREAK_CHARACTER.test(characters[index - 1]!)) {
       return index
     }
   }
@@ -39,20 +39,20 @@ const splitOversizedText = (
   policy: SupertonicSpeechPolicy,
 ): ReadonlyArray<string> => {
   const chunks: Array<string> = []
-  const characters = getCharacters(text.trim())
-  let offset = 0
+  let remaining = getCharacters(text.trim())
 
-  while (characters.length - offset > policy.maximumLength) {
-    const breakIndex = Math.trunc(findBreakIndex(characters, offset, policy)) || 0
-    // Preserve slice's integer coercion and negative indexes for runtime policies.
-    const length =
-      breakIndex < 0 ? Math.max(0, characters.length - offset + breakIndex) : breakIndex
-    const end = offset + length
-    chunks.push(characters.slice(offset, end).join('').trim())
-    offset = end
+  while (remaining.length > policy.maximumLength) {
+    const breakIndex = findBreakIndex(
+      remaining,
+      policy.considerSplitLength,
+      policy.recommendedLength,
+      policy.maximumLength,
+    )
+    chunks.push(remaining.slice(0, breakIndex).join('').trim())
+    remaining = remaining.slice(breakIndex)
   }
 
-  const finalChunk = characters.slice(offset).join('').trim()
+  const finalChunk = remaining.join('').trim()
   chunks.push(finalChunk)
 
   return chunks
@@ -97,7 +97,7 @@ const packSentences = (
 }
 
 /** Splits narration at paragraph and sentence boundaries while enforcing the model's hard limit. */
-export const splitSpeechText = (
+export const splitReferenceSpeechText = (
   text: string,
   policy: SupertonicSpeechPolicy,
 ): ReadonlyArray<string> =>
