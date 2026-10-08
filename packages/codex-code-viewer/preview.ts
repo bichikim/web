@@ -24,6 +24,12 @@ const client = new Client({name: 'Code Viewer Preview', version: manifest.versio
 const transport = new StdioClientTransport({
   args: [new URL('./dist/server.js', import.meta.url).pathname],
   command: process.execPath,
+  env: Object.fromEntries(
+    ['GEM_HOME', 'GEM_PATH', 'RUBY_BINARY', 'SOLARGRAPH_BINARY'].flatMap((name) => {
+      const value = process.env[name]
+      return value === undefined ? [] : [[name, value]]
+    }),
+  ),
   stderr: 'inherit',
 })
 await client.connect(transport)
@@ -79,7 +85,11 @@ const server = createServer(async (request, response) => {
     }
     if (request.method === 'GET' && route === 'initial') {
       if (process.argv.includes('--panel')) {
-        const result = await client.callTool({arguments: {}, name: 'code.panel'})
+        const result = await client.callTool({
+          _meta: process.argv.includes('--empty') ? undefined : {'openai/resource': {path: anchor}},
+          arguments: {},
+          name: 'code.panel',
+        })
         response
           .writeHead(status.ok, {'Content-Type': 'application/json'})
           .end(JSON.stringify(result))

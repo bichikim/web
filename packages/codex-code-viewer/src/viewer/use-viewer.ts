@@ -1,13 +1,10 @@
-import {batch, createSignal} from 'solid-js'
+import {batch, createMemo, createSignal} from 'solid-js'
 import {z} from 'zod'
 import {
   type CodeDocument,
   type CodeLocation,
-  type CodeToken,
   documentSchema,
-  filesSchema,
-  navigationSchema,
-  type ViewerSession,
+  type ViewerConnection,
 } from '../shared/contracts'
 import {errorMessage} from './error-message'
 import type {NavigationOptions, ViewerPort} from './types'
@@ -22,6 +19,8 @@ import {useNotice} from './use-notice'
 import {useCodeClipboard} from './use-code-clipboard'
 import {createSessionRequest} from './create-session-request'
 import {createLocationSynchronizer} from './create-location-synchronizer'
+import {useFileSearch} from './use-file-search'
+import {type DefinitionFeedback, useDefinitionNavigation} from './use-definition-navigation'
 
 const sameDocument = (previous: CodeDocument, next: CodeDocument): boolean =>
   previous.revision === next.revision &&
@@ -29,45 +28,74 @@ const sameDocument = (previous: CodeDocument, next: CodeDocument): boolean =>
   previous.location.line === next.location.line &&
   previous.location.column === next.location.column
 
-export const useViewer = (port: ViewerPort) => {
-  const [session, setSession] = createSignal<ViewerSession | null>(null)
-  const history = useFileHistory()
-  const {notice, notify, dismiss} = useNotice()
-  const [choices, setChoices] = createSignal<CodeLocation[]>([])
-  const [files, setFiles] = createSignal<string[]>([])
-  const [search, setSearch] = createSignal('')
+const definitionMessage = (feedback: DefinitionFeedback): string =>
+  feedback.kind === 'missing'
+    ? '이동 대상이 없습니다. 작업 폴더 밖의 정의는 표시하지 않습니다.'
+    : '이동할 정의를 선택하세요.'
 
-  const request = createSessionRequest({port, session})
+export const useViewer = (port: ViewerPort) => {
+  const [connection, setConnection] = createSignal<ViewerConnection | null>(null)
+  const session = createMemo(() => {
+    const current = connection()
+    return current !== null && 'document' in current ? current : null
+  })
+  const history = useFileHistory()
+  const notification = useNotice()
+  const notify = (message: string): void => {
+    batch(() => {
+      definitions.dismissFeedback()
+      notification.notify(message)
+    })
+  }
+  const dismiss = (): void => {
+    batch(() => {
+      definitions.dismissFeedback()
+      notification.dismiss()
+    })
+  }
+
+  const request = createSessionRequest({port, session: connection})
   const report = (error: unknown): void => notify(errorMessage(error))
   const copy = useCodeClipboard({onError: report, onNotice: notify})
   const copyPath = (path: string): Promise<void> => copy(path, '경로를 복사했습니다.')
-  const codeSelection = useCodeSelection({onError: report, onNotice: notify, port, session})
+  const codeSelection = useCodeSelection({
+    onError: report,
+    onNotice: notify,
+    port,
+    session,
+    workspace: () => connection()?.workspace,
+  })
   const viewState = useSessionViewState({selection: codeSelection.selection, session})
   const navigation = useLatestRequest(report)
-  const searching = useLatestRequest(report)
+  const search = useFileSearch({onError: report, port, session: connection})
   const synchronizeLocation = createLocationSynchronizer({port, report})
-  const receive = (value: ViewerSession, options?: NavigationOptions): void => {
-    const previous = session()
+  const receive = (value: ViewerConnection, options?: NavigationOptions): void => {
+    const previous = connection()
     if (previous !== null && previous.session !== value.session) {
       port.call('code.close', {session: previous.session}).catch(report)
     }
     navigation.cancel()
-    searching.cancel()
+    search.reset()
     batch(() => {
+      setConnection(value)
+      if (!('document' in value)) {
+        codeSelection.clear()
+        return
+      }
       const restore =
         options?.restoreView ??
         (value.document.location.line === 1 && value.document.location.column === 1)
       const selected = viewState.restore(value, restore)
-      setSession(value)
       codeSelection.reset(value.document, selected)
     })
-    history.reset(value.document.location)
-    setChoices([])
-    setFiles([])
-    synchronizeLocation(value)
+    history.reset('document' in value ? value.document.location : undefined)
+    definitions.reset()
+    if ('document' in value) {
+      synchronizeLocation(value)
+    }
   }
   const go = async (location: CodeLocation, options?: NavigationOptions): Promise<void> => {
-    const current = session()
+    const current = connection()
     if (current === null) {
       return
     }
@@ -83,8 +111,8 @@ export const useViewer = (port: ViewerPort) => {
         {...current, document: nextDocument},
         options?.restoreView === true || options?.preserveSelection === true,
       )
-      if (!sameDocument(current.document, nextDocument)) {
-        setSession({...current, document: nextDocument})
+      if (!('document' in current) || !sameDocument(current.document, nextDocument)) {
+        setConnection({...current, document: nextDocument})
       }
       if (options?.preserveSelection) {
         codeSelection.preserve(nextDocument)
@@ -93,41 +121,19 @@ export const useViewer = (port: ViewerPort) => {
       }
     })
     history.record(result.document.location, options?.historyIndex)
-    setChoices([])
+    definitions.reset()
     synchronizeLocation({...current, document: nextDocument})
   }
-  const follow = async (token: CodeToken): Promise<void> => {
-    const current = session()
-    if (current === null || token.navigation === null) {
-      return
-    }
-    const result = await navigation.run(() =>
-      request(
-        'code.navigate',
-        {
-          navigation: token.navigation,
-          offset: token.offset,
-          path: current.document.location.path,
-          revision: current.document.revision,
-        },
-        navigationSchema,
-      ),
-    )
-    if (result === null) {
-      return
-    }
-    const [location] = result.locations
-    if (result.locations.length === 1 && location !== undefined) {
-      await go(location)
-    } else {
-      setChoices(result.locations)
-      notify(
-        location === undefined
-          ? '이동 대상이 없습니다. 작업 폴더 밖의 정의는 표시하지 않습니다.'
-          : '이동할 정의를 선택하세요.',
-      )
-    }
-  }
+  const definitions = useDefinitionNavigation({
+    onOpen: go,
+    port,
+    run: navigation.run,
+    session,
+  })
+  const notice = createMemo(() => {
+    const feedback = definitions.feedback()
+    return feedback === null ? notification.notice() : {message: definitionMessage(feedback)}
+  })
   const move = async (direction: -1 | 1): Promise<void> => {
     const location = history.destination(direction)
     if (location !== undefined) {
@@ -140,37 +146,30 @@ export const useViewer = (port: ViewerPort) => {
       await go(current.document.location, {historyIndex: history.index(), preserveSelection: true})
     }
   }
-  const find = async (query: string): Promise<void> => {
-    setSearch(query)
-    const result = await searching.run(() => request('code.list', {query}, filesSchema))
-    if (result !== null) {
-      setFiles(result.paths)
-    }
-  }
   const opening = useOpenFile(port, receive, report)
   const openLocation = createLocationOpener({go, open: opening.open, session})
-  useViewerConnection({port, receive, refresh, report, session})
+  useViewerConnection({port, receive, refresh, report, session: connection})
   return {
     ...opening,
-    address: codeSelection.address,
+    address: () => codeSelection.address() || connection()?.workspace || '',
     busy: navigation.pending,
     canBack: history.canBack,
     canForward: history.canForward,
-    choices,
+    choices: definitions.choices,
     copy,
     copyPath,
     dismissNotice: dismiss,
-    files,
-    find,
-    finding: searching.pending,
-    follow,
+    files: search.files,
+    find: search.find,
+    finding: search.finding,
+    follow: definitions.follow,
     go,
     move,
     notice,
     openLocation,
     refresh,
     reportError: report,
-    search,
+    search: search.search,
     selection: codeSelection.selection,
     selectLines: codeSelection.selectLines,
     selectText: codeSelection.selectText,
@@ -178,5 +177,6 @@ export const useViewer = (port: ViewerPort) => {
     share: codeSelection.share,
     sharePath: codeSelection.sharePath,
     viewState,
+    workspaceSession: connection,
   }
 }

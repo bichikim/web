@@ -121,6 +121,14 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Setup Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '4.0'
+
+      - name: Install Solargraph
+        run: gem install solargraph --version 0.60.4 --no-document
+
       - name: Run integration tests
         run: pnpm test:integration --project=integration
 

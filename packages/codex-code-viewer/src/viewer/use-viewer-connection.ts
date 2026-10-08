@@ -1,22 +1,22 @@
 import {type Accessor, onCleanup} from 'solid-js'
-import type {ViewerSession} from '../shared/contracts'
+import type {ViewerConnection} from '../shared/contracts'
 import type {ViewerPort} from './types'
 import {createPendingTasks} from './create-pending-tasks'
 
-interface ViewerConnection {
+interface ConnectionOptions {
   port: ViewerPort
-  receive: (session: ViewerSession) => void
+  receive: (session: ViewerConnection) => void
   refresh: () => void
   report: (error: unknown) => void
-  session: Accessor<ViewerSession | null>
+  session: Accessor<ViewerConnection | null>
 }
 
-export const useViewerConnection = (connection: ViewerConnection): void => {
+export const useViewerConnection = (connection: ConnectionOptions): void => {
   let disposed = false
   let disposePort: (() => void) | null = null
   let released = false
   const closing = createPendingTasks()
-  const closeSession = (value: ViewerSession): void => {
+  const closeSession = (value: ViewerConnection): void => {
     closing
       .run(() => connection.port.call('code.close', {session: value.session}))
       .catch(connection.report)
@@ -28,7 +28,7 @@ export const useViewerConnection = (connection: ViewerConnection): void => {
       disposePort()
     }
   }
-  const receive = (value: ViewerSession): void => {
+  const receive = (value: ViewerConnection): void => {
     if (disposed) {
       closeSession(value)
     } else {
@@ -40,8 +40,18 @@ export const useViewerConnection = (connection: ViewerConnection): void => {
       connection.refresh()
     }
   }
+  const teardown = async (): Promise<void> => {
+    if (!disposed) {
+      disposed = true
+      const current = connection.session()
+      if (current !== null) {
+        closeSession(current)
+      }
+    }
+    await closing.settle()
+  }
   connection.port
-    .start(receive, connection.report, refresh)
+    .start(receive, connection.report, refresh, teardown)
     .then((dispose) => {
       disposePort = dispose
       if (disposed) {
@@ -50,11 +60,6 @@ export const useViewerConnection = (connection: ViewerConnection): void => {
     })
     .catch(connection.report)
   onCleanup(() => {
-    disposed = true
-    const current = connection.session()
-    if (current !== null) {
-      closeSession(current)
-    }
-    finish().catch(connection.report)
+    teardown().then(finish).catch(connection.report)
   })
 }

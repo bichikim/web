@@ -1,7 +1,21 @@
 const code = ['.ts', '.tsx', '.mts', '.cts', '.js', '.jsx', '.mjs', '.cjs']
-export type SyntaxLanguage = 'rust' | 'yaml' | 'toml' | 'json' | 'jsonc' | 'json5' | 'html'
+export type SyntaxLanguage =
+  | 'rust'
+  | 'python'
+  | 'ruby'
+  | 'yaml'
+  | 'toml'
+  | 'json'
+  | 'jsonc'
+  | 'json5'
+  | 'html'
 const syntax = new Map<string, SyntaxLanguage>([
   ['.rs', 'rust'],
+  ['.py', 'python'],
+  ['.pyi', 'python'],
+  ['.rb', 'ruby'],
+  ['.rake', 'ruby'],
+  ['.gemspec', 'ruby'],
   ['.yaml', 'yaml'],
   ['.yml', 'yaml'],
   ['.toml', 'toml'],
@@ -10,6 +24,11 @@ const syntax = new Map<string, SyntaxLanguage>([
   ['.json5', 'json5'],
   ['.html', 'html'],
   ['.htm', 'html'],
+])
+const namedSyntax = new Map<string, SyntaxLanguage>([
+  ['Cargo.lock', 'toml'],
+  ['Gemfile', 'ruby'],
+  ['Rakefile', 'ruby'],
 ])
 const markdown = ['.md', '.markdown', '.mdx']
 const table = ['.csv', '.tsv']
@@ -52,8 +71,6 @@ const text = [
   '.zsh',
   '.fish',
   '.sql',
-  '.py',
-  '.rb',
   '.go',
   '.java',
   '.kt',
@@ -110,6 +127,8 @@ export const FILE_EXTENSIONS = [
   ...video.keys(),
   ...audio.keys(),
   '.pdf',
+  '.docx',
+  '.xlsx',
 ]
 
 interface TextFormat {
@@ -120,7 +139,7 @@ interface SyntaxFormat {
   readonly language: SyntaxLanguage
 }
 interface MediaFormat {
-  readonly kind: 'image' | 'video' | 'audio' | 'pdf'
+  readonly kind: 'image' | 'video' | 'audio' | 'pdf' | 'word' | 'spreadsheet'
   readonly mimeType: string
 }
 export type FileFormat = TextFormat | SyntaxFormat | MediaFormat
@@ -131,7 +150,7 @@ export const fileFormat = (path: string): FileFormat | undefined => {
     return undefined
   }
   const extension = basename.slice(basename.lastIndexOf('.')).toLowerCase()
-  const language = basename === 'Cargo.lock' ? 'toml' : syntax.get(extension)
+  const language = namedSyntax.get(basename) ?? syntax.get(extension)
   if (language !== undefined) {
     return {kind: 'syntax', language}
   }
@@ -150,6 +169,18 @@ export const fileFormat = (path: string): FileFormat | undefined => {
   const imageType = image.get(extension)
   if (extension === '.pdf') {
     return {kind: 'pdf', mimeType: 'application/pdf'}
+  }
+  if (extension === '.docx') {
+    return {
+      kind: 'word',
+      mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    }
+  }
+  if (extension === '.xlsx') {
+    return {
+      kind: 'spreadsheet',
+      mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    }
   }
   if (imageType !== undefined) {
     return {kind: 'image', mimeType: imageType}

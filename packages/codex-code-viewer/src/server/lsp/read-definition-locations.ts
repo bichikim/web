@@ -1,6 +1,12 @@
 import {fileURLToPath} from 'node:url'
 import {z} from 'zod'
-import {type CodeLocation, failure, type Result, success} from '../../shared/contracts'
+import {
+  type CodeLocation,
+  failure,
+  type Result,
+  success,
+  type ViewerError,
+} from '../../shared/contracts'
 const position = z.object({
   character: z.number().int().nonnegative(),
   line: z.number().int().nonnegative(),
@@ -10,10 +16,13 @@ const location = z.object({range, uri: z.string()})
 const link = z.object({targetRange: range, targetSelectionRange: range, targetUri: z.string()})
 const response = z.union([location, z.array(z.union([location, link])), z.null()])
 
-export const readRustLocations = (value: unknown): Result<CodeLocation[]> => {
+export const readDefinitionLocations = (
+  value: unknown,
+  errorCode: ViewerError['code'],
+): Result<CodeLocation[]> => {
   const parsed = response.safeParse(value)
   if (!parsed.success) {
-    return failure('rust-analysis-failed')
+    return failure(errorCode)
   }
   const targets =
     parsed.data === null ? [] : Array.isArray(parsed.data) ? parsed.data : [parsed.data]
@@ -29,6 +38,6 @@ export const readRustLocations = (value: unknown): Result<CodeLocation[]> => {
       }),
     )
   } catch {
-    return failure('rust-analysis-failed')
+    return failure(errorCode)
   }
 }

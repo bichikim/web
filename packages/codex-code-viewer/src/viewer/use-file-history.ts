@@ -22,9 +22,9 @@ export const useFileHistory = () => {
     destination: (direction: -1 | 1) => locations()[index() + direction],
     index,
     record,
-    reset: (location: CodeLocation) =>
+    reset: (location?: CodeLocation) =>
       batch(() => {
-        setLocations([location])
+        setLocations(location === undefined ? [] : [location])
         setIndex(0)
       }),
   }

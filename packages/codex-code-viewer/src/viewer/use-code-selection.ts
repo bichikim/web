@@ -8,6 +8,7 @@ interface CodeSelectionOptions {
   onNotice: (message: string) => void
   port: ViewerPort
   session: Accessor<ViewerSession | null>
+  workspace?: Accessor<string | undefined>
 }
 
 export const useCodeSelection = (options: CodeSelectionOptions) => {
@@ -110,11 +111,8 @@ export const useCodeSelection = (options: CodeSelectionOptions) => {
     }
   }
   const sharePath = async (selected: WorkspaceSelection): Promise<void> => {
-    const current = options.session()
-    if (
-      current === null ||
-      !selected.path.startsWith(`${current.workspace.replace(/\/$/u, '')}/`)
-    ) {
+    const workspace = options.workspace?.() ?? options.session()?.workspace
+    if (workspace === undefined || !selected.path.startsWith(`${workspace.replace(/\/$/u, '')}/`)) {
       return
     }
     try {
@@ -128,5 +126,15 @@ export const useCodeSelection = (options: CodeSelectionOptions) => {
       options.onError(error)
     }
   }
-  return {address, preserve, reset, selection, selectLines, selectText, share, sharePath}
+  return {
+    address,
+    clear: () => setSelection(null),
+    preserve,
+    reset,
+    selection,
+    selectLines,
+    selectText,
+    share,
+    sharePath,
+  }
 }

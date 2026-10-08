@@ -1,10 +1,14 @@
 import {createEffect, For, Show} from 'solid-js'
 import {SIcon} from './SIcon'
 import {useTableView} from './use-table-view'
+import type {TableResult} from './table/types'
 
 interface STableDocumentProps {
-  source: string
-  delimiter: ',' | '\t'
+  source?: string
+  delimiter?: ',' | '\t'
+  data?: TableResult
+  initialHeader?: boolean
+  truncationMessage?: string
   onError?: (error: unknown) => void
 }
 const sortButtonClasses = [
@@ -12,7 +16,12 @@ const sortButtonClasses = [
   'px-3 py-2 text-left hover:bg-hover',
 ].join(' ')
 export const STableDocument = (props: STableDocumentProps) => {
-  const table = useTableView({delimiter: () => props.delimiter, source: () => props.source})
+  const table = useTableView({
+    data: () => props.data,
+    delimiter: () => props.delimiter ?? ',',
+    initialHeader: () => props.initialHeader ?? true,
+    source: () => props.source ?? '',
+  })
   createEffect(() => {
     const parsed = table.data()
     if (!parsed.ok) {
@@ -31,6 +40,7 @@ export const STableDocument = (props: STableDocumentProps) => {
         />
         <label class="flex items-center gap-2 text-sm text-muted">
           <input
+            class="ui-focus h-4 w-4 appearance-auto"
             type="checkbox"
             checked={table.header()}
             onChange={(event) => table.changeHeader(event.currentTarget.checked)}
@@ -40,7 +50,8 @@ export const STableDocument = (props: STableDocumentProps) => {
         <span class="text-sm text-muted">{table.count()}행</span>
         <Show when={table.truncated()}>
           <span class="text-xs text-muted">
-            표는 처음 10,000행·100열까지 표시합니다. 전체 내용은 원문에서 확인하세요.
+            {props.truncationMessage ??
+              '표는 처음 10,000행·100열까지 표시합니다. 전체 내용은 원문에서 확인하세요.'}
           </span>
         </Show>
       </div>
