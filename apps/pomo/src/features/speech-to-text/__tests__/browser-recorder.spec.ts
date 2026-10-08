@@ -22,6 +22,7 @@ vi.mock('../speech-end-detector', async () => {
 import {createBrowserSpeechRecorder} from '../index'
 
 type RecorderListener = (event: BlobEvent | Event) => void
+type TrackListener = (event: Event) => void
 
 class FakeMediaRecorder {
   static autoStop = true
@@ -71,6 +72,14 @@ class FakeMediaRecorder {
       listener(new Event('stop'))
     }
   }
+
+  emitError() {
+    this.state = 'inactive'
+    for (const listener of this.#listeners.get('error') ?? []) {
+      listener(new Event('error'))
+    }
+    this.emitStop()
+  }
 }
 
 const getMediaRecorder = () => {
@@ -84,14 +93,53 @@ const getMediaRecorder = () => {
 }
 
 const trackStop = vi.fn()
-const stream = {getTracks: () => [{stop: trackStop}]} as unknown as MediaStream
-const getUserMedia = vi.fn(async () => stream)
+const trackListeners = new Map<string, Array<TrackListener>>()
+const createTrack = () => {
+  let readyState: MediaStreamTrackState = 'live'
+  return {
+    addEventListener: (type: string, listener: TrackListener) => {
+      const listeners = trackListeners.get(type) ?? []
+      listeners.push(listener)
+      trackListeners.set(type, listeners)
+    },
+    get readyState() {
+      return readyState
+    },
+    set readyState(value: MediaStreamTrackState) {
+      readyState = value
+    },
+    removeEventListener: (type: string, listener: TrackListener) => {
+      trackListeners.set(
+        type,
+        (trackListeners.get(type) ?? []).filter((candidate) => candidate !== listener),
+      )
+    },
+    stop: vi.fn(() => {
+      readyState = 'ended'
+      trackStop()
+    }),
+  }
+}
+let track = createTrack()
+const emitTrackEnded = () => {
+  track.readyState = 'ended'
+  for (const listener of trackListeners.get('ended') ?? []) {
+    listener(new Event('ended'))
+  }
+}
+const stream = {getTracks: () => [track]} as unknown as MediaStream
+const getUserMedia = vi.fn(async () => {
+  track = createTrack()
+  return stream
+})
 
 beforeEach(() => {
   FakeMediaRecorder.autoStop = true
   FakeMediaRecorder.current = null
   FakeMediaRecorder.data = new Blob(['audio'])
   FakeMediaRecorder.throwOnConstruct = false
+  track = createTrack()
+  trackListeners.clear()
   dependencyMocks.createBrowserSpeechEndDetector.mockReset()
   dependencyMocks.decodeSpeechRecording.mockReset()
   vi.stubGlobal('MediaRecorder', FakeMediaRecorder)
@@ -130,6 +178,68 @@ describe('createBrowserSpeechRecorder', () => {
     await expect(stopResult).resolves.toEqual({ok: true, value: audio})
     expect(decodeRecording).toHaveBeenCalledWith(expect.any(Blob))
     expect(trackStop).toHaveBeenCalledTimes(1)
+  })
+
+  it('should report an ended track and decode its final recorder data', async () => {
+    const audio = Float32Array.of(0.1, 0.2)
+    const decodeRecording = vi.fn(async () => audio)
+    const onInterruption = vi.fn()
+    const recorder = createBrowserSpeechRecorder({decodeRecording})
+    const startResult = await recorder.start(undefined, onInterruption)
+
+    if (!startResult.ok) {
+      throw new Error('녹음을 시작하지 못했습니다.')
+    }
+
+    emitTrackEnded()
+    expect(onInterruption).toHaveBeenCalledOnce()
+    const stopResult = startResult.value.stop()
+    getMediaRecorder().emitStop()
+
+    await expect(stopResult).resolves.toEqual({ok: true, value: audio})
+    expect(decodeRecording).toHaveBeenCalledOnce()
+    expect(trackStop).toHaveBeenCalledOnce()
+  })
+
+  it('should detect a track that ended during segment rotation before starting another recorder', async () => {
+    FakeMediaRecorder.autoStop = false
+    const audio = Float32Array.of(0.1, 0.2)
+    const decodeRecording = vi.fn(async () => audio)
+    const onInterruption = vi.fn()
+    const recorder = createBrowserSpeechRecorder({decodeRecording})
+    const startResult = await recorder.start(undefined, onInterruption)
+
+    if (!startResult.ok) {
+      throw new Error('녹음을 시작하지 못했습니다.')
+    }
+
+    const segmentRecorder = getMediaRecorder()
+    const segment = startResult.value.takeSegment()
+    track.readyState = 'ended'
+    segmentRecorder.emitStop()
+
+    await expect(segment).resolves.toEqual({ok: true, value: audio})
+    expect(FakeMediaRecorder.current).toBe(segmentRecorder)
+    expect(onInterruption).toHaveBeenCalledOnce()
+    expect(trackStop).toHaveBeenCalledOnce()
+  })
+
+  it('should report a recorder error and its following stop only once', async () => {
+    const audio = Float32Array.of(0.1, 0.2)
+    const decodeRecording = vi.fn(async () => audio)
+    const onInterruption = vi.fn()
+    const recorder = createBrowserSpeechRecorder({decodeRecording})
+    const startResult = await recorder.start(undefined, onInterruption)
+
+    if (!startResult.ok) {
+      throw new Error('녹음을 시작하지 못했습니다.')
+    }
+
+    getMediaRecorder().emitError()
+    expect(onInterruption).toHaveBeenCalledOnce()
+    await expect(startResult.value.stop()).resolves.toEqual({ok: true, value: audio})
+    expect(decodeRecording).toHaveBeenCalledOnce()
+    expect(trackStop).toHaveBeenCalledOnce()
   })
 
   it('should rotate speech segments without reacquiring or releasing the microphone', async () => {
