@@ -55,8 +55,7 @@ it('should decode embedded track artwork with EXIF orientation before square cro
   await readEmbeddedAudioCover(new Blob(['mp3'], {type: 'audio/mpeg'}))
 
   expect(decode).toHaveBeenCalledOnce()
-  expect(decode).toHaveBeenCalledWith(
-    expect.objectContaining({type: 'image/jpeg'}),
-    {imageOrientation: 'from-image'},
-  )
+  expect(decode).toHaveBeenCalledWith(expect.objectContaining({type: 'image/jpeg'}), {
+    imageOrientation: 'from-image',
+  })
 })
