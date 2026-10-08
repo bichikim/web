@@ -17,6 +17,8 @@ export interface CreateNitroConfigOptions extends ResolvePrerenderRoutesOptions 
   readonly workerSecurityHeaders: Record<string, string>
 }
 
+const API_AI_FUNCTION_SECONDS = 300
+
 interface NitroPrerenderRoute {
   readonly contentType?: string
   readonly contents?: string
@@ -64,6 +66,18 @@ export const createNitroConfig = (options: CreateNitroConfigOptions) => {
       failOnError: isStaticBuild || options.standaloneRelax === true,
       routes: options.standaloneRelax ? ['/relax'] : resolvePrerenderRoutes(options),
     },
+    ...(isStaticBuild
+      ? {}
+      : {
+          vercel: {
+            functionRules: {
+              '/api/cloud-text': {maxDuration: API_AI_FUNCTION_SECONDS},
+              '/api/cron/api-ai': {maxDuration: API_AI_FUNCTION_SECONDS},
+              '/api/webhooks/api-ai/**': {maxDuration: API_AI_FUNCTION_SECONDS},
+              '/api/webhooks/openai': {maxDuration: API_AI_FUNCTION_SECONDS},
+            },
+          },
+        }),
     publicAssets: [
       ...(options.command === 'serve' ? [{baseURL: '/', dir: './dev-public', maxAge: 0}] : []),
       ...(options.steamAsset === undefined ? [] : [options.steamAsset]),

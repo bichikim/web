@@ -2,12 +2,21 @@
 import {beforeEach, expect, it, vi} from 'vitest'
 import {resolveUserRequest} from 'src/server/auth/resolve-user-request'
 import {readCloudTextUsage} from 'src/server/cloud-text/quota'
+import {completeApiAiJobs} from 'src/server/api-ai/service'
+import {waitUntil} from '@vercel/functions'
 import {generateCloudText} from 'src/server/cloud-text/service'
 import {invokeApiRoute} from './invoke'
 import {GET, POST} from '../cloud-text'
 
 vi.mock('src/server/auth/resolve-user-request', () => ({resolveUserRequest: vi.fn()}))
 vi.mock('src/server/cloud-text/quota', () => ({readCloudTextUsage: vi.fn()}))
+vi.mock('src/server/api-ai/service', () => ({
+  completeApiAiJobs: vi.fn().mockResolvedValue(undefined),
+}))
+vi.mock('src/server/cloud-text/job-events', () => ({streamCloudTextJob: vi.fn()}))
+vi.mock('src/server/cloud-text/job-status', () => ({readCloudTextJob: vi.fn()}))
+vi.mock('src/server/cloud-text/cancel-job', () => ({cancelCloudTextJob: vi.fn()}))
+vi.mock('@vercel/functions', () => ({waitUntil: vi.fn()}))
 vi.mock('src/server/cloud-text/service', () => ({generateCloudText: vi.fn()}))
 const usage = {
   day: '2026-10-07',
@@ -71,4 +80,19 @@ it('should enforce the daily limit through a 429 response', async () => {
   const response = await invokeApiRoute(POST, request())
   expect(response.status).toBe(429)
   await expect(response.json()).resolves.toEqual({error: 'daily_limit', usage: exhausted})
+})
+
+it('should acknowledge durable admission with 202 before generation completes', async () => {
+  const background = Promise.withResolvers<void>()
+  vi.mocked(completeApiAiJobs).mockReturnValueOnce(background.promise)
+  vi.mocked(generateCloudText).mockResolvedValue({
+    kind: 'accepted',
+    requestId: body.requestId,
+    usage,
+  })
+  const response = await invokeApiRoute(POST, request())
+  expect(response.status).toBe(202)
+  await expect(response.json()).resolves.toEqual({requestId: body.requestId, usage})
+  expect(waitUntil).toHaveBeenCalledWith(background.promise)
+  background.resolve()
 })

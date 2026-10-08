@@ -10,6 +10,8 @@ export type ServerEnv = z.output<z.ZodObject<typeof envSchema>>
 
 // Keys must stay aligned with envSchema. A static check is deferred.
 // List each key; Vite replaces import.meta.env.KEY only and does not expand a spread.
+const DATABASE_URL_UNPOOLED =
+  process.env.DATABASE_URL_UNPOOLED ?? import.meta.env.DATABASE_URL_UNPOOLED
 const GOOGLE_CALENDAR_CLIENT_ID =
   process.env.GOOGLE_CALENDAR_CLIENT_ID ?? import.meta.env.GOOGLE_CALENDAR_CLIENT_ID
 const GOOGLE_CALENDAR_CLIENT_SECRET =
@@ -44,10 +46,20 @@ const POMO_AI_STORAGE_QUOTA_BYTES =
   process.env.POMO_AI_STORAGE_QUOTA_BYTES ?? import.meta.env.POMO_AI_STORAGE_QUOTA_BYTES
 const POMO_AI_SUBSCRIPTION_PRODUCT_CODE =
   process.env.POMO_AI_SUBSCRIPTION_PRODUCT_CODE ?? import.meta.env.POMO_AI_SUBSCRIPTION_PRODUCT_CODE
+const POMO_API_AI_CONCURRENCY =
+  process.env.POMO_API_AI_CONCURRENCY ?? import.meta.env.POMO_API_AI_CONCURRENCY
+const POMO_API_AI_POOL_ID = process.env.POMO_API_AI_POOL_ID ?? import.meta.env.POMO_API_AI_POOL_ID
+const POMO_API_AI_PROVIDERS_JSON =
+  process.env.POMO_API_AI_PROVIDERS_JSON ?? import.meta.env.POMO_API_AI_PROVIDERS_JSON
+const POMO_API_AI_REQUESTS_PER_MINUTE =
+  process.env.POMO_API_AI_REQUESTS_PER_MINUTE ?? import.meta.env.POMO_API_AI_REQUESTS_PER_MINUTE
+const POMO_API_AI_TOKENS_PER_MINUTE =
+  process.env.POMO_API_AI_TOKENS_PER_MINUTE ?? import.meta.env.POMO_API_AI_TOKENS_PER_MINUTE
 const readRuntimeEnv = (): ServerEnv =>
   readServerEnv(envSchema, {
     CRON_SECRET: process.env.CRON_SECRET ?? import.meta.env.CRON_SECRET,
     DATABASE_URL: process.env.DATABASE_URL ?? import.meta.env.DATABASE_URL,
+    DATABASE_URL_UNPOOLED,
     GOOGLE_CALENDAR_CLIENT_ID,
     GOOGLE_CALENDAR_CLIENT_SECRET,
     KMA_SERVICE_KEY: process.env.KMA_SERVICE_KEY ?? import.meta.env.KMA_SERVICE_KEY,
@@ -77,6 +89,11 @@ const readRuntimeEnv = (): ServerEnv =>
     POMO_AI_RUNNER_URL,
     POMO_AI_STORAGE_QUOTA_BYTES,
     POMO_AI_SUBSCRIPTION_PRODUCT_CODE,
+    POMO_API_AI_CONCURRENCY,
+    POMO_API_AI_POOL_ID,
+    POMO_API_AI_PROVIDERS_JSON,
+    POMO_API_AI_REQUESTS_PER_MINUTE,
+    POMO_API_AI_TOKENS_PER_MINUTE,
     POMO_CALENDAR_TOKEN_ENCRYPTION_KEY,
     POMO_TOSS_CALLBACK_AUTHORIZATION:
       process.env.POMO_TOSS_CALLBACK_AUTHORIZATION ??
