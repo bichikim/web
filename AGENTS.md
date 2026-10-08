@@ -40,9 +40,9 @@
 
 ## Side effects
 
-- Do not create side-effecting functions. Write function logic as input-to-result transformations whenever possible, without mutating caller-owned inputs or shared state.
-- Returning the same object after mutating it, or hiding mutation in a closure, does not remove the side effect.
-- If a side effect is genuinely unavoidable because of performance or other constraints after evaluating alternatives, stop before implementing it. Explain the concrete necessity, alternatives and tradeoffs, and discuss them with the user to obtain explicit approval. Convenience does not justify an exception.
+- Write computation and transformation logic as pure functions whenever possible, and concentrate side effects at input/output boundaries.
+- Implement ordinary side effects needed to fulfill the user's requested functionality without separate approval.
+- Obtain approval before implementing external changes beyond the requested scope, destructive operations, or actions requiring new permissions or costs.
 
 ## Evidence
 
