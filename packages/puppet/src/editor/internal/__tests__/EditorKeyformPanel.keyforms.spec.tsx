@@ -8,6 +8,42 @@ import {EditorKeyformPanel} from '../EditorKeyformPanel'
 import {createOneDimensionalDocument, dispatchPointerEvent} from './keyform-panel/fixtures'
 
 describe('EditorKeyformPanel keyforms', () => {
+  test.each(['add', 'delete'] as const)(
+    'should not open an empty menu when only %s is supported',
+    (operation) => {
+      const {document} = createOneDimensionalDocument()
+      const onValueChange = vi.fn()
+      const view = render(() => (
+        <EditorKeyformPanel
+          bindings={document.parameterBindings ?? []}
+          parameters={document.parameters ?? []}
+          onValueChange={onValueChange}
+          onKeyformAdd={operation === 'add' ? vi.fn() : undefined}
+          onKeyformDelete={operation === 'delete' ? vi.fn() : undefined}
+        />
+      ))
+      const track = view.getByLabelText('Parameter 3 키폼 트랙')
+      vi.spyOn(track, 'getBoundingClientRect').mockReturnValue(new DOMRect(100, 0, 200, 76))
+
+      fireEvent.contextMenu(
+        operation === 'add' ? view.getByRole('button', {name: 'Parameter 3 30 키폼'}) : track,
+        {clientX: 150},
+      )
+
+      expect(onValueChange).toHaveBeenLastCalledWith(operation === 'add' ? [30] : [-15])
+      expect(screen.queryByRole('menu', {name: '키폼 작업'})).not.toBeInTheDocument()
+
+      fireEvent.contextMenu(
+        operation === 'add' ? track : view.getByRole('button', {name: 'Parameter 3 30 키폼'}),
+        {clientX: 150},
+      )
+
+      expect(
+        screen.getByRole('menuitem', {name: operation === 'add' ? '키폼 추가' : '키폼 삭제'}),
+      ).toBeVisible()
+    },
+  )
+
   test('should create a keyform at the context-menu position without toolbar actions', async () => {
     const document = createDemoDocument()
     const onBindingSelect = vi.fn()
@@ -30,7 +66,7 @@ describe('EditorKeyformPanel keyforms', () => {
     expect(await screen.findByRole('menu', {name: '키폼 작업'})).toBeVisible()
     const add = screen.getByRole('menuitem', {name: '키폼 추가'})
     expect(add).not.toHaveAttribute('data-disabled')
-    expect(screen.getByRole('menuitem', {name: '키폼 삭제'})).toHaveAttribute('data-disabled')
+    expect(screen.queryByRole('menuitem', {name: '키폼 삭제'})).not.toBeInTheDocument()
     fireEvent.keyDown(add, {key: 'Enter'})
     expect(onBindingSelect).toHaveBeenLastCalledWith('angle-xy')
     expect(onValueChange).toHaveBeenLastCalledWith([-15, 15])
@@ -57,7 +93,7 @@ describe('EditorKeyformPanel keyforms', () => {
     ))
     fireEvent.contextMenu(view.getByRole('button', {name: 'Parameter 3 30 키폼'}))
     await screen.findByRole('menu', {name: '키폼 작업'})
-    expect(screen.getByRole('menuitem', {name: '키폼 추가'})).toHaveAttribute('data-disabled')
+    expect(screen.queryByRole('menuitem', {name: '키폼 추가'})).not.toBeInTheDocument()
     const remove = screen.getByRole('menuitem', {name: '키폼 삭제'})
     expect(remove).not.toHaveAttribute('data-disabled')
     fireEvent.keyDown(remove, {key: 'Enter'})
