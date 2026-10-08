@@ -29,6 +29,7 @@ beforeEach(() => {
 })
 
 afterEach(() => {
+  vi.restoreAllMocks()
   vi.unstubAllGlobals()
 })
 
@@ -101,6 +102,49 @@ it('should persist the newest release after loading the public catalog', async (
       version: '2026. 10. 06 14:32',
     }),
   )
+})
+
+it('should retain the first newest instant and document order including future releases', async () => {
+  const earlier = {
+    ...catalog.releases[0],
+    releasedAt: '2099-01-01T08:30:00+09:00',
+    title: 'Earlier zoned release',
+    version: '2099. 01. 01 08:30',
+  }
+  const first = {
+    ...catalog.releases[0],
+    releasedAt: '2099-01-01T09:00:00+09:00',
+    title: 'First newest release',
+    version: '2099. 01. 01 09:00',
+  }
+  const second = {
+    ...catalog.releases[0],
+    releasedAt: '2099-01-01T00:00:00Z',
+    title: 'Second newest release',
+    version: '2099. 01. 01 00:00',
+  }
+  const releases = [earlier, first, second]
+  vi.mocked(fetch).mockResolvedValueOnce(new Response(JSON.stringify({releases})))
+  const parse = vi.spyOn(Date, 'parse')
+
+  render(() => <WhatsNewPage />)
+
+  expect(await screen.findByRole('heading', {name: '새로운 소식'})).toBeVisible()
+  await waitFor(() =>
+    expect(versionCatalogMocks.write).toHaveBeenCalledWith({
+      formatVersion: 1,
+      releasedAt: first.releasedAt,
+      version: first.version,
+    }),
+  )
+  expect(screen.getAllByRole('heading', {level: 2}).map((heading) => heading.textContent)).toEqual(
+    releases.map((release) => release.title),
+  )
+  for (const release of releases) {
+    expect(parse.mock.calls.filter(([timestamp]) => timestamp === release.releasedAt)).toHaveLength(
+      1,
+    )
+  }
 })
 
 it('should report a catalog fetch failure', async () => {
