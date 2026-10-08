@@ -1,8 +1,17 @@
 /** @vitest-environment jsdom */
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
+import {getMonotonicTime} from 'src/utils/get-monotonic-time'
 import {visibilityInterval} from '../visibility-interval'
 
 const INTERVAL = 1000
+const NativeEvent = Event
+
+class TimestampedEvent extends NativeEvent {
+  constructor(type: string) {
+    super(type)
+    Object.defineProperty(this, 'timeStamp', {value: performance.now()})
+  }
+}
 
 describe('visibilityInterval', () => {
   let documentHidden = false
@@ -10,12 +19,14 @@ describe('visibilityInterval', () => {
   beforeEach(() => {
     documentHidden = false
     vi.useFakeTimers()
+    vi.stubGlobal('Event', TimestampedEvent)
     vi.spyOn(document, 'hidden', 'get').mockImplementation(() => documentHidden)
   })
 
   afterEach(() => {
     vi.useRealTimers()
     vi.restoreAllMocks()
+    vi.unstubAllGlobals()
   })
 
   const changeVisibility = (hidden: boolean) => {
@@ -130,6 +141,48 @@ describe('visibilityInterval', () => {
     expect(callback).toHaveBeenCalledTimes(1)
     changeVisibility(false)
     expect(callback).toHaveBeenCalledTimes(2)
+    changeVisibility(false)
+    expect(callback).toHaveBeenCalledTimes(2)
+    vi.advanceTimersByTime(INTERVAL)
+    expect(callback).toHaveBeenCalledTimes(3)
+    stop()
+  })
+
+  it('should not treat a wall-clock adjustment without elapsed time as overdue', () => {
+    vi.setSystemTime(new Date('2026-10-08T00:00:00.000Z'))
+    const callback = vi.fn()
+    const stop = visibilityInterval({callback, interval: INTERVAL, runOverdueOnVisible: true})
+    vi.advanceTimersByTime(INTERVAL)
+    expect(callback).toHaveBeenCalledOnce()
+
+    const wallClockAtHide = Date.now()
+    const monotonicTimeAtHide = getMonotonicTime()
+    changeVisibility(true)
+    vi.setSystemTime(new Date(wallClockAtHide + INTERVAL * 5))
+    vi.setSystemTime(new Date(wallClockAtHide - INTERVAL * 10))
+    expect(getMonotonicTime()).toBe(monotonicTimeAtHide)
+
+    changeVisibility(false)
+    expect(callback).toHaveBeenCalledOnce()
+    stop()
+  })
+
+  it('should run overdue work after hidden elapsed time despite a backward wall-clock adjustment', () => {
+    vi.setSystemTime(new Date('2026-10-08T00:00:00.000Z'))
+    const callback = vi.fn()
+    const stop = visibilityInterval({callback, interval: INTERVAL, runOverdueOnVisible: true})
+    vi.advanceTimersByTime(INTERVAL)
+    expect(callback).toHaveBeenCalledOnce()
+
+    const wallClockAtHide = Date.now()
+    const overdueDeadline = wallClockAtHide + INTERVAL
+    const monotonicTimeAtHide = getMonotonicTime()
+    changeVisibility(true)
+    vi.advanceTimersByTime(INTERVAL * 3)
+    expect(getMonotonicTime() - monotonicTimeAtHide).toBe(INTERVAL * 3)
+    vi.setSystemTime(new Date(overdueDeadline - 1))
+    expect(Date.now()).toBeLessThan(overdueDeadline)
+
     changeVisibility(false)
     expect(callback).toHaveBeenCalledTimes(2)
     vi.advanceTimersByTime(INTERVAL)
