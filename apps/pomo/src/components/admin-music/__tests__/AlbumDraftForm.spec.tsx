@@ -35,7 +35,7 @@ it('should show cover previews and block submission while processing the cover',
   expect(screen.getByRole('img')).toHaveAttribute('src', '/preview.webp')
   expect(view.container.querySelector('input[type=file]')).toHaveAttribute(
     'accept',
-    'image/jpeg,image/png,image/webp',
+    'image/jpeg,image/jpg,.jpg,.jpeg,image/png,image/webp',
   )
   fireEvent.submit(view.container.querySelector('form')!)
   expect(handleAlbumSubmit).toHaveBeenCalledOnce()
