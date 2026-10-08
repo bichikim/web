@@ -1,4 +1,4 @@
-import {and, eq, gt, isNull, or} from 'drizzle-orm'
+import {and, eq, gt, isNotNull, isNull, or} from 'drizzle-orm'
 import {CLOUD_TEXT_DAILY_LIMIT, type CloudTextUsage} from 'src/features/cloud-text/contracts'
 import {cloudTextRequests} from '../database'
 import {getCloudTextDay} from './day'
@@ -10,7 +10,10 @@ export const getCloudTextUsageCondition = (now: Date) =>
     isNull(cloudTextRequests.usageResetAt),
     or(
       eq(cloudTextRequests.status, 'complete'),
-      and(eq(cloudTextRequests.status, 'pending'), gt(cloudTextRequests.expiresAt, now)),
+      and(
+        eq(cloudTextRequests.status, 'pending'),
+        or(gt(cloudTextRequests.expiresAt, now), isNotNull(cloudTextRequests.queueJobId)),
+      ),
     ),
   )
 

@@ -4,7 +4,7 @@ import {beforeEach, expect, it, vi} from 'vitest'
 
 const h3Mocks = vi.hoisted(() => ({assertBodySize: vi.fn()}))
 const webhookMocks = vi.hoisted(() => ({
-  handleOpenAiResponseEvent: vi.fn(),
+  enqueueApiAiCallback: vi.fn(),
   unwrapOpenAiWebhook: vi.fn(),
 }))
 
@@ -12,9 +12,13 @@ vi.mock('h3', async () => {
   const actual = await vi.importActual<typeof import('h3')>('h3')
   return {...actual, assertBodySize: h3Mocks.assertBodySize}
 })
-vi.mock('src/server/history-generation/handle-openai-webhook', () => ({
-  handleOpenAiResponseEvent: webhookMocks.handleOpenAiResponseEvent,
+vi.mock('src/server/repositories/api-ai', () => ({
+  enqueueApiAiCallback: webhookMocks.enqueueApiAiCallback,
 }))
+vi.mock('src/server/api-ai/service', () => ({
+  completeApiAiJobs: vi.fn().mockResolvedValue(undefined),
+}))
+vi.mock('@vercel/functions', () => ({waitUntil: vi.fn()}))
 vi.mock('src/server/history-generation/openai-client', () => ({
   unwrapOpenAiWebhook: webhookMocks.unwrapOpenAiWebhook,
 }))
@@ -32,7 +36,7 @@ const createRequest = (body = '{}'): Request =>
 beforeEach(() => {
   vi.restoreAllMocks()
   h3Mocks.assertBodySize.mockReset()
-  webhookMocks.handleOpenAiResponseEvent.mockReset()
+  webhookMocks.enqueueApiAiCallback.mockReset()
   webhookMocks.unwrapOpenAiWebhook.mockReset()
 })
 
@@ -76,27 +80,35 @@ it('should ignore a webhook unrelated to response completion', async () => {
   const response = await invokeApiRoute(POST, createRequest())
 
   expect(response.status).toBe(204)
-  expect(webhookMocks.handleOpenAiResponseEvent).not.toHaveBeenCalled()
+  expect(webhookMocks.enqueueApiAiCallback).not.toHaveBeenCalled()
 })
 
 it.each(['response.cancelled', 'response.completed', 'response.failed', 'response.incomplete'])(
   'should process a %s webhook',
   async (type) => {
-    const webhook = {response: {id: 'response-1'}, type}
+    const webhook = {data: {id: 'response-1'}, id: 'event-1', type}
     webhookMocks.unwrapOpenAiWebhook.mockResolvedValue(webhook)
 
     const response = await invokeApiRoute(POST, createRequest())
 
     expect(response.status).toBe(200)
     await expect(response.json()).resolves.toEqual({ok: true})
-    expect(webhookMocks.handleOpenAiResponseEvent).toHaveBeenCalledWith(webhook)
+    expect(webhookMocks.enqueueApiAiCallback).toHaveBeenCalledWith(
+      'openai',
+      webhook,
+      expect.any(Date),
+    )
   },
 )
 
 it('should return an internal error when response processing fails', async () => {
   vi.spyOn(console, 'error').mockImplementation(() => undefined)
-  webhookMocks.unwrapOpenAiWebhook.mockResolvedValue({type: 'response.completed'})
-  webhookMocks.handleOpenAiResponseEvent.mockRejectedValue(new Error('database unavailable'))
+  webhookMocks.unwrapOpenAiWebhook.mockResolvedValue({
+    data: {id: 'response-1'},
+    id: 'event-1',
+    type: 'response.completed',
+  })
+  webhookMocks.enqueueApiAiCallback.mockRejectedValue(new Error('database unavailable'))
 
   const response = await invokeApiRoute(POST, createRequest())
 

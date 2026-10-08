@@ -84,6 +84,9 @@ export const OPENAI_REASONING_EFFORTS_WITH_MINIMAL = [
 
 export const OPENAI_SERVICE_TIERS = ['auto', 'default', 'flex', 'priority'] as const
 
+const DEFAULT_API_AI_CONCURRENCY = 4
+const MAXIMUM_API_AI_CONCURRENCY = 1000
+
 const BASIC_AUTH_PREFIX = 'Basic '
 const DEFAULT_OPENAI_MODEL = 'gpt-6-luna'
 const DEFAULT_AI_QUEUE_LIMIT = 100
@@ -145,6 +148,7 @@ export const envSchema = {
     `CRON_SECRET must contain at least ${MINIMUM_CRON_SECRET_LENGTH} characters`,
   ),
   DATABASE_URL: postgresUrlSchema('DATABASE_URL'),
+  DATABASE_URL_UNPOOLED: optionalUrlSchema('DATABASE_URL_UNPOOLED', ['postgres:', 'postgresql:']),
   GOOGLE_CALENDAR_CLIENT_ID: optionalStringSchema,
   GOOGLE_CALENDAR_CLIENT_SECRET: optionalStringSchema,
   KMA_SERVICE_KEY: requiredStringSchema('KMA_SERVICE_KEY'),
@@ -186,6 +190,15 @@ export const envSchema = {
   POMO_AI_RUNNER_URL: optionalUrlSchema('POMO_AI_RUNNER_URL', ['https:']),
   POMO_AI_STORAGE_QUOTA_BYTES: optionalPositiveIntegerSchema,
   POMO_AI_SUBSCRIPTION_PRODUCT_CODE: defaultedStringSchema('pomo-ai-service'),
+  POMO_API_AI_CONCURRENCY: defaultedIntegerSchema(
+    DEFAULT_API_AI_CONCURRENCY,
+    1,
+    MAXIMUM_API_AI_CONCURRENCY,
+  ),
+  POMO_API_AI_POOL_ID: defaultedStringSchema('openai:default'),
+  POMO_API_AI_PROVIDERS_JSON: optionalStringSchema,
+  POMO_API_AI_REQUESTS_PER_MINUTE: optionalPositiveIntegerSchema,
+  POMO_API_AI_TOKENS_PER_MINUTE: optionalPositiveIntegerSchema,
   POMO_CALENDAR_TOKEN_ENCRYPTION_KEY: optionalStringSchema,
   POMO_TOSS_CALLBACK_AUTHORIZATION: optionalStringSchema.superRefine((authorization, context) => {
     if (authorization === undefined) {

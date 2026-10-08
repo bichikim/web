@@ -1,17 +1,15 @@
 import type {CloudTextRequest} from 'src/features/cloud-text/contracts'
 import {beforeEach, expect, it, vi} from 'vitest'
-import {getOpenAiClient} from 'src/server/history-generation/openai-client'
-import {completeCloudText, readCloudTextUsage, releaseCloudText, reserveCloudText} from '../quota'
+import {findApiAiJob} from 'src/server/repositories/api-ai'
+import {reserveCloudText} from '../quota'
 import {generateCloudText} from '../service'
 
-vi.mock('src/server/history-generation/openai-client', () => ({getOpenAiClient: vi.fn()}))
-vi.mock('../quota', () => ({
-  completeCloudText: vi.fn(),
-  readCloudTextUsage: vi.fn(),
-  releaseCloudText: vi.fn(),
-  reserveCloudText: vi.fn(),
+vi.mock('src/env', () => ({
+  env: {DATABASE_URL_UNPOOLED: 'postgresql://example/db', POMO_AI_QUEUE_LIMIT: 100},
 }))
-const create = vi.fn()
+vi.mock('src/server/api-ai/providers', () => ({getApiAiProviders: vi.fn().mockReturnValue([])}))
+vi.mock('src/server/repositories/api-ai', () => ({findApiAiJob: vi.fn()}))
+vi.mock('../quota', () => ({reserveCloudText: vi.fn()}))
 const usage = {
   day: '2026-10-07',
   limit: 3,
@@ -27,70 +25,40 @@ const request: CloudTextRequest = {
 
 beforeEach(() => {
   vi.resetAllMocks()
-  vi.mocked(getOpenAiClient).mockReturnValue({responses: {create}} as unknown as ReturnType<
-    typeof getOpenAiClient
-  >)
   vi.mocked(reserveCloudText).mockResolvedValue({kind: 'reserved', usage})
-  vi.mocked(readCloudTextUsage).mockResolvedValue(usage)
-  create.mockResolvedValue({
-    output_text: ' 타로 결과 ',
-    status: 'completed',
-    usage: {total_tokens: 500},
-  })
+  vi.mocked(findApiAiJob).mockResolvedValue({ownerId: 'user'} as NonNullable<
+    Awaited<ReturnType<typeof findApiAiJob>>
+  >)
 })
 
-it('should reuse the server OpenAI client and charge one complete Luna generation', async () => {
+it('should atomically reserve a queued request and acknowledge it without waiting for generation', async () => {
   expect(await generateCloudText('user', request)).toEqual({
-    kind: 'complete',
-    text: '타로 결과',
-    tokenCount: 500,
+    kind: 'accepted',
+    requestId: request.requestId,
     usage,
   })
-  expect(create).toHaveBeenCalledWith(
+  expect(reserveCloudText).toHaveBeenCalledWith(
     expect.objectContaining({
-      max_output_tokens: 2560,
-      model: 'gpt-6-luna',
-      reasoning: {effort: 'none'},
-      store: false,
+      queue: expect.objectContaining({
+        input: expect.objectContaining({
+          body: expect.objectContaining({max_output_tokens: 2560, reasoning: {effort: 'none'}}),
+          id: request.requestId,
+          ownerId: 'user',
+        }),
+      }),
+      requestId: request.requestId,
     }),
-    expect.objectContaining({idempotencyKey: request.requestId, maxRetries: 0}),
   )
-  expect(completeCloudText).toHaveBeenCalledWith({
-    requestId: request.requestId,
-    text: '타로 결과',
-    tokenCount: 500,
-    userId: 'user',
-  })
-  expect(releaseCloudText).not.toHaveBeenCalled()
 })
-
-it('should block exhausted accounts before calling the provider', async () => {
-  vi.mocked(reserveCloudText).mockResolvedValue({
-    kind: 'exhausted',
-    usage: {...usage, remaining: 0, used: 3},
-  })
-  expect(await generateCloudText('user', request)).toMatchObject({kind: 'exhausted'})
-  expect(create).not.toHaveBeenCalled()
-})
-
-it('should deliver a committed generation even if refreshing its usage fails', async () => {
-  vi.mocked(readCloudTextUsage).mockRejectedValue(new Error('Usage read unavailable'))
-  const logger = vi.spyOn(console, 'error').mockImplementation(() => undefined)
-  try {
-    await expect(generateCloudText('user', request)).resolves.toEqual({
-      kind: 'complete',
-      text: '타로 결과',
-      tokenCount: 500,
-      usage,
-    })
-    expect(completeCloudText).toHaveBeenCalledOnce()
-    expect(releaseCloudText).not.toHaveBeenCalled()
-  } finally {
-    logger.mockRestore()
-  }
-})
-
-it('should replay a completed request without provider work or another charge', async () => {
+it.each(['exhausted', 'queue_full', 'conflict', 'failed'] as const)(
+  'should return %s before reading a job',
+  async (kind) => {
+    vi.mocked(reserveCloudText).mockResolvedValue({kind, usage})
+    expect(await generateCloudText('user', request)).toEqual({kind, usage})
+    expect(findApiAiJob).not.toHaveBeenCalled()
+  },
+)
+it('should replay a completed request without queueing or another charge', async () => {
   vi.mocked(reserveCloudText).mockResolvedValue({
     kind: 'existing',
     text: '저장된 리딩',
@@ -103,23 +71,11 @@ it('should replay a completed request without provider work or another charge', 
     tokenCount: 200,
     usage,
   })
-  expect(create).not.toHaveBeenCalled()
-  expect(completeCloudText).not.toHaveBeenCalled()
+  expect(findApiAiJob).not.toHaveBeenCalled()
 })
-
-it('should return the reserved allowance after provider failure', async () => {
-  create.mockRejectedValue(new Error('Provider unavailable'))
-  await expect(generateCloudText('user', request)).rejects.toThrow('Provider unavailable')
-  expect(releaseCloudText).toHaveBeenCalledWith('user', request.requestId)
-  expect(completeCloudText).not.toHaveBeenCalled()
-})
-
-it('should refund incomplete text instead of charging it as a successful generation', async () => {
-  create.mockResolvedValue({
-    output_text: '부분 결과',
-    status: 'incomplete',
-    usage: {total_tokens: 100},
-  })
-  await expect(generateCloudText('user', request)).rejects.toThrow('did not complete')
-  expect(releaseCloudText).toHaveBeenCalledOnce()
+it('should reject a pending request belonging to another owner', async () => {
+  vi.mocked(findApiAiJob).mockResolvedValue({ownerId: 'other'} as NonNullable<
+    Awaited<ReturnType<typeof findApiAiJob>>
+  >)
+  expect(await generateCloudText('user', request)).toEqual({kind: 'failed', usage})
 })
