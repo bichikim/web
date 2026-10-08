@@ -5,7 +5,7 @@ import {Show} from 'solid-js'
 import {PSelectAppearance, PSelectOption} from './shared'
 
 const SELECT_CONTENT_CLASSES = cva(
-  'max-h-[min(18rem,var(--kb-popper-available-height))] border border-solid border-border ' +
+  'max-h-[min(18rem,var(--kb-popper-available-height,18rem))] border border-solid border-border ' +
     'backdrop-blur-surface overflow-hidden rounded-4 bg-surface-strong p-2 text-foreground ' +
     'shadow-panel [transform-origin:var(--kb-select-content-transform-origin)] ' +
     'animate-select-in motion-reduce:animate-none',
@@ -83,13 +83,7 @@ export const PSelectParts = <TValue extends string>(props: PSelectPartsProps<TVa
       <Show
         when={props.appearance === 'icon' ? props.selectedIcon : undefined}
         fallback={
-          <Select.Value<PSelectOption<TValue>>
-            class={
-              props.appearance === 'detailed'
-                ? 'min-w-0 flex-1 truncate text-left'
-                : 'min-w-0 break-words whitespace-normal'
-            }
-          >
+          <Select.Value<PSelectOption<TValue>> class="min-w-0 flex-1 truncate text-left">
             {(state) =>
               props.multiple
                 ? (props.selectionLabel?.(state.selectedOptions()) ??
@@ -142,7 +136,7 @@ export const PSelectParts = <TValue extends string>(props: PSelectPartsProps<TVa
             </button>
           )}
         </Show>
-        <Select.Listbox class="grid max-h-[inherit] gap-0.5 overflow-y-auto outline-none" />
+        <Select.Listbox class="grid max-h-72 gap-0.5 overflow-y-auto outline-none" />
       </Select.Content>
     </Select.Portal>
     <Select.HiddenSelect />

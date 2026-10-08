@@ -9,6 +9,7 @@ const getItems = () =>
     {icon: 'i-tabler-notebook', label: m.picture_diary_tab(), value: 'picture-diary'},
     {icon: 'i-tabler-calendar', label: m.calendar_tab(), value: 'calendar'},
     {icon: 'i-tabler-cards', label: m.tarot_tab(), value: 'tarot'},
+    {icon: 'i-tabler-yin-yang', label: m.saju_tab(), value: 'saju'},
   ] satisfies ReadonlyArray<PModalTabItem>
 
 export const PMemoryAssistTabList = () => (
