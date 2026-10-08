@@ -11,7 +11,13 @@ const PAST_CAREER_CONTEXT_PATTERN = new RegExp(
   ].join(''),
   'u',
 )
-const ANNUAL_FORTUNE_PATTERN = /[\p{L}]*운(?:세)?(?=$|[\s?!.:,은이을의가도만부터는로와과])/u
+const ANNUAL_FORTUNE_PATTERN = new RegExp(
+  [
+    String.raw`(?:세운|운세|(?:취업|재물|직업|직장|이직|금전|연애|결혼|건강)운|(?<!\p{L})운)`,
+    String.raw`(?=$|[\s?!.:,]|(?:은|는|이|가|을|를|의|에|도|만|부터|까지|로|으로|와|과|에서|에게))`,
+  ].join(''),
+  'u',
+)
 
 /** Identifies questions that require annual fortune data this experiment does not calculate. */
 export function requiresAnnualReading(question: string): boolean {
