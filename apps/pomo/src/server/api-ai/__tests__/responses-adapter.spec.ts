@@ -8,7 +8,6 @@ import type {ApiAiProvider} from '../types'
 const provider: ApiAiProvider = {
   apiKey: 'key',
   baseUrl: 'https://secondary.example/v1',
-  concurrency: 1,
   id: 'secondary',
   models: {'cloud-text': 'model'},
   poolId: 'secondary',

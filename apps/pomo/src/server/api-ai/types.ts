@@ -28,16 +28,18 @@ export interface ApiAiResponse {
   readonly tokenCount: number | null
 }
 
+export interface ApiAiTransport {
+  readonly fetch: typeof globalThis.fetch
+}
+
 export interface ApiAiProvider {
   readonly id: string
   readonly poolId: string
   readonly baseUrl: string
   readonly apiKey: string
-  readonly webhookSecret: string
+  readonly webhookSecret?: string
+  readonly protocol?: 'openai-responses-background' | 'openrouter-responses-queue'
   readonly models: Readonly<Partial<Record<ApiAiKind, string>>>
-  readonly concurrency: number
-  readonly requestsPerMinute?: number
-  readonly tokensPerMinute?: number
 }
 
 export interface ApiAiJobInput {
@@ -97,6 +99,12 @@ interface ApiAiJobDeclined {
 export type CreateApiAiJobResult = ApiAiJobAccepted | ApiAiJobDeclined
 
 export interface ApiAiRepository {
+  readonly resolveApiAiJobProviders: (
+    jobId: string,
+    providers: ReadonlyArray<ApiAiProvider>,
+    defaults: ReadonlyArray<ApiAiProvider>,
+  ) => Promise<ReadonlyArray<ApiAiProvider>>
+  readonly expireQueuedApiAiJobs: (now: Date) => Promise<void>
   readonly claimApiAiJob: (
     jobId: string,
     providers: ReadonlyArray<ApiAiProvider>,
@@ -134,7 +142,13 @@ export interface ApiAiRepository {
 export interface ApiAiServiceDependencies {
   readonly repository: ApiAiRepository
   readonly adapter: ApiAiAdapter
+  readonly queue?: {
+    readonly adapter: Pick<ApiAiAdapter, 'submit'>
+    readonly enqueue: (jobId: string) => Promise<void>
+    readonly monitorBackground?: boolean
+  }
   readonly providers: () => ReadonlyArray<ApiAiProvider>
+  readonly defaultProviders?: () => ReadonlyArray<ApiAiProvider>
   readonly clock: () => Date
   readonly createAttemptId: () => string
   readonly deliver: (job: ApiAiJob) => Promise<void>
@@ -145,10 +159,12 @@ export interface ApiAiService {
   readonly complete: () => Promise<void>
   readonly dispatch: (deadline?: number) => Promise<void>
   readonly dispatchJob: (jobId: string, deadline?: number) => Promise<void>
+  readonly executeQueuedJob: (jobId: string) => Promise<void>
   readonly recover: () => Promise<void>
 }
 
 export interface ApiAiSubmissionError {
+  readonly scope?: 'model' | 'pool'
   readonly acceptance: 'rejected' | 'unknown'
   readonly fallback: boolean
   readonly disabled: boolean
@@ -171,6 +187,7 @@ export interface ApiAiAdapter {
     provider: ApiAiProvider,
     body: Readonly<Record<string, unknown>>,
     attemptId: string,
+    timeoutMilliseconds?: number,
   ) => Promise<ApiAiResponse>
   readonly retrieve: (provider: ApiAiProvider, responseId: string) => Promise<ApiAiResponse>
   readonly cancel: (provider: ApiAiProvider, responseId: string) => Promise<ApiAiResponse>

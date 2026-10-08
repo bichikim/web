@@ -12,7 +12,7 @@ const MAXIMUM_BODY_BYTES = 1_048_576
 
 export const POST = async (event: APIEvent): Promise<Response> => {
   const provider = getApiAiProviders().find((candidate) => candidate.id === event.params.providerId)
-  if (provider === undefined) {
+  if (provider === undefined || provider.protocol === 'openrouter-responses-queue') {
     return noStoreText('Not found', {status: 404})
   }
   let body: string

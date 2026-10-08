@@ -5,6 +5,7 @@ import {readCloudTextUsage} from 'src/server/cloud-text/quota'
 import {completeApiAiJobs} from 'src/server/api-ai/service'
 import {waitUntil} from '@vercel/functions'
 import {generateCloudText} from 'src/server/cloud-text/service'
+import {readCloudTextJob} from 'src/server/cloud-text/job-status'
 import {invokeApiRoute} from './invoke'
 import {GET, POST} from '../cloud-text'
 
@@ -43,6 +44,7 @@ beforeEach(() => {
   vi.mocked(readCloudTextUsage).mockResolvedValue(usage)
   vi.mocked(generateCloudText).mockResolvedValue({
     kind: 'complete',
+    modelId: 'actual-fallback-model',
     text: '결과',
     tokenCount: 100,
     usage,
@@ -71,8 +73,31 @@ it('should validate input before reserving any generation', async () => {
 it('should return the generated text with authoritative usage', async () => {
   const response = await invokeApiRoute(POST, request())
   expect(response.status).toBe(200)
-  await expect(response.json()).resolves.toEqual({text: '결과', tokenCount: 100, usage})
+  await expect(response.json()).resolves.toEqual({
+    modelId: 'actual-fallback-model',
+    text: '결과',
+    tokenCount: 100,
+    usage,
+  })
   expect(generateCloudText).toHaveBeenCalledWith('user-1', body)
+})
+it('should include the completed model ID in status lookup responses', async () => {
+  vi.mocked(readCloudTextJob).mockResolvedValue({
+    kind: 'complete',
+    modelId: 'actual-fallback-model',
+    text: '결과',
+    tokenCount: 100,
+    usage,
+  })
+  const response = await invokeApiRoute(
+    GET,
+    new Request(`https://pomo.example/api/cloud-text?requestId=${body.requestId}`),
+  )
+  expect(response.status).toBe(200)
+  await expect(response.json()).resolves.toMatchObject({
+    modelId: 'actual-fallback-model',
+    text: '결과',
+  })
 })
 it('should enforce the daily limit through a 429 response', async () => {
   const exhausted = {...usage, remaining: 0, used: 3}

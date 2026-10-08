@@ -25,7 +25,6 @@ const now = new Date('2026-10-09T00:00:00Z')
 const provider: ApiAiProvider = {
   apiKey: 'key',
   baseUrl: 'https://api.example/v1',
-  concurrency: 1,
   id: 'openai',
   models: {history: 'model'},
   poolId: 'primary',
