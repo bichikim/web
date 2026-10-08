@@ -24,7 +24,11 @@ export const findWorkspace = (path: string): string => {
       (parent) =>
         existsSync(resolve(parent, 'pnpm-workspace.yaml')) || existsSync(resolve(parent, '.git')),
     ) ??
-    ancestors.find((parent) => existsSync(resolve(parent, 'Cargo.toml'))) ??
+    ancestors.find((parent) =>
+      ['Cargo.toml', 'pyproject.toml', 'pyrightconfig.json', 'Gemfile', 'gems.rb'].some((marker) =>
+        existsSync(resolve(parent, marker)),
+      ),
+    ) ??
     initial
   )
 }

@@ -2,7 +2,7 @@ import {readFileSync} from 'node:fs'
 import {Client} from '@modelcontextprotocol/sdk/client/index.js'
 import {InMemoryTransport} from '@modelcontextprotocol/sdk/inMemory.js'
 import {afterEach, beforeEach, describe, expect, it} from 'vitest'
-import {sessionSchema, treeSchema} from '../../shared/contracts'
+import {sessionSchema, success, treeSchema, workspaceSessionSchema} from '../../shared/contracts'
 import {createServer} from '../create-server'
 import {version} from '../../../package.json'
 
@@ -102,6 +102,36 @@ describe('createServer', () => {
     expect(sessionSchema.parse(result.structuredContent).document.source).toBe(
       readFileSync(path, 'utf8'),
     )
+  })
+  it('should connect the thread workspace without choosing a file and allow reading from its tree', async () => {
+    await client.close()
+    await instance.dispose()
+    const root = new URL('../', import.meta.url).pathname.replace(/\/$/u, '')
+    instance = createServer('<html>viewer</html>', {workspace: () => success(root)})
+    client = new Client({name: 'viewer-test', version: '1.0.0'})
+    const [server, transport] = InMemoryTransport.createLinkedPair()
+    await instance.server.connect(server)
+    await client.connect(transport)
+    const result = await client.callTool({arguments: {}, name: 'code.panel'})
+    const session = workspaceSessionSchema.parse(result.structuredContent)
+    expect(session.workspace).toBe(root)
+    expect(result.structuredContent).not.toHaveProperty('document')
+    const tree = await client.callTool({arguments: {session: session.session}, name: 'code.tree'})
+    expect(treeSchema.parse(tree.structuredContent).files).toContainEqual({
+      openable: true,
+      path: 'tokenize-source.ts',
+    })
+    const read = await client.callTool({
+      arguments: {path: 'tokenize-source.ts', session: session.session},
+      name: 'code.read',
+    })
+    expect(read.structuredContent).toMatchObject({document: {source: readFileSync(path, 'utf8')}})
+    expect(
+      await client.callTool({
+        arguments: {path: '../package.json', session: session.session},
+        name: 'code.read',
+      }),
+    ).toMatchObject({isError: true, structuredContent: {code: 'outside-workspace'}})
   })
   it('should reject offsets from a stale document', async () => {
     const result = await client.callTool({arguments: {path}, name: 'code.open'})

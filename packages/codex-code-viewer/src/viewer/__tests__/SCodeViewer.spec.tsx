@@ -53,6 +53,54 @@ describe('SCodeViewer', () => {
     const filter = screen.getByRole('textbox', {name: '파일 필터링'})
     expect(filter).toHaveProperty('value', 'main')
   })
+  it('should display the workspace tree before choosing the first file from a menu panel', async () => {
+    const port: ViewerPort = {
+      call: vi.fn().mockResolvedValue({
+        content: [],
+        structuredContent: {files: [{openable: true, path: 'main.ts'}], truncated: false},
+      }),
+      context: vi.fn().mockResolvedValue(undefined),
+      start: vi.fn<ViewerPort['start']>().mockResolvedValue(() => {}),
+    }
+    render(() => <SCodeViewer port={port} />)
+    vi.mocked(port.start).mock.calls[0]![0]({session: 'workspace', workspace: '/project'})
+    expect(await screen.findByRole('treeitem', {name: 'main.ts'})).toBeTruthy()
+    expect(screen.getByRole('region', {name: '파일 내용'}).textContent).toContain('파일 트리에서')
+    vi.mocked(port.call).mockResolvedValueOnce({
+      content: [],
+      structuredContent: {
+        document: {
+          lines: [[]],
+          location: {column: 1, line: 1, path: 'main.ts'},
+          revision: 'first',
+          source: '',
+        },
+      },
+    })
+    fireEvent.click(screen.getByRole('treeitem', {name: 'main.ts'}))
+    await screen.findByLabelText('소스 코드')
+    expect(port.call).toHaveBeenCalledWith(
+      'code.read',
+      expect.objectContaining({path: 'main.ts', session: 'workspace'}),
+    )
+    expect(port.call).not.toHaveBeenCalledWith('code.open', expect.anything())
+    expect(screen.getByRole('button', {name: '파일 트리'})).toHaveProperty('disabled', false)
+    expect(screen.getByRole('button', {name: '채팅창에 추가'})).toHaveProperty('disabled', false)
+    expect(port.call).toHaveBeenCalledWith('code.tree', {session: 'workspace'})
+    fireEvent.click(screen.getByRole('button', {name: '파일 트리'}))
+    expect(screen.queryByRole('tree')).toBeNull()
+  })
+  it('should show first-file guidance without listing the plugin installation directory', () => {
+    const port: ViewerPort = {
+      call: vi.fn(),
+      context: vi.fn(),
+      start: vi.fn<ViewerPort['start']>().mockResolvedValue(() => {}),
+    }
+    render(() => <SCodeViewer port={port} />)
+    expect(screen.getByRole('region', {name: '파일 내용'}).textContent).toContain('절대 경로')
+    expect(screen.getByRole('button', {name: '파일 트리'})).toHaveProperty('disabled', true)
+    expect(port.call).not.toHaveBeenCalled()
+  })
 
   it('should switch SVG to searchable source when the file-search shortcut is pressed', () => {
     vi.stubGlobal('URL', {createObjectURL: vi.fn(() => 'blob:svg'), revokeObjectURL: vi.fn()})

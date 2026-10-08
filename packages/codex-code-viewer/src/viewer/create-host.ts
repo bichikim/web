@@ -4,7 +4,7 @@ import type {Notification, Request, Result} from '@modelcontextprotocol/sdk/type
 import {z} from 'zod'
 import manifest from '../../package.json'
 import {OpenAIExtensions, OpenAIFileEntrypointInputSchema} from '@openai/mcp-extensions/app'
-import {sessionSchema} from '../shared/contracts'
+import {connectionSchema} from '../shared/contracts'
 import type {ViewerPort} from './types'
 import {connectHostAppearance} from './connect-host-appearance'
 import {formatContext} from './format-context'
@@ -67,11 +67,18 @@ export const createHost = (): ViewerPort => {
         ),
       )
     },
-    start: async (receive, report, refresh) => {
+    start: async (receive, report, refresh, onTeardown) => {
       let resource: string | null = null
       let stopped = false
-      const handleResult = (result: {structuredContent?: Record<string, unknown>}): void => {
-        const parsed = sessionSchema.safeParse(result.structuredContent)
+      const handleResult = (result: {
+        isError?: boolean
+        structuredContent?: Record<string, unknown>
+      }): void => {
+        if (result.isError) {
+          report(result.structuredContent)
+          return
+        }
+        const parsed = connectionSchema.safeParse(result.structuredContent)
         if (parsed.success) {
           receive(parsed.data)
         }
@@ -114,6 +121,10 @@ export const createHost = (): ViewerPort => {
       app.addEventListener('toolresult', handleResult)
       app.addEventListener('toolinput', handleInput)
       app.addEventListener('hostcontextchanged', synchronizeContext)
+      app.onteardown = async () => {
+        await onTeardown?.()
+        return {}
+      }
       const connected = app.connect()
       try {
         await connected

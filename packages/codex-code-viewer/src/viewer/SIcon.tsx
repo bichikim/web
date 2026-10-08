@@ -7,6 +7,8 @@ const icons = {
   arrowLeft: 'i-tabler-arrow-left',
   arrowRight: 'i-tabler-arrow-right',
   back: 'i-tabler-chevron-left',
+  check: 'i-tabler-check',
+  chevronDown: 'i-tabler-chevron-down',
   close: 'i-tabler-x',
   code: 'i-tabler-code',
   folder: 'i-tabler-folder',
