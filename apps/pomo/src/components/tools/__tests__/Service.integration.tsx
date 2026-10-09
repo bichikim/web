@@ -3,24 +3,33 @@
 import {fireEvent, render, screen, waitFor} from '@solidjs/testing-library'
 import {afterEach, expect, it} from 'vitest'
 
+import type {LocalDateRuntime} from 'src/features/civil-date'
 import {Service} from '../Service'
 import {PreferenceProvider} from 'src/hooks/use-preference'
 
-const mountService = () =>
+const createFixedRuntime = () =>
+  ({
+    now: () => new Date('2026-01-01T00:00:00.000Z'),
+    schedule: () => () => undefined,
+    subscribe: () => () => undefined,
+  }) satisfies LocalDateRuntime
+
+const mountService = (runtime: LocalDateRuntime) =>
   render(() => (
     <PreferenceProvider>
-      <Service />
+      <Service runtime={runtime} />
     </PreferenceProvider>
   ))
 
 afterEach(() => localStorage.clear())
 
 it('should persist and restore pasted service days with surrounding whitespace', async () => {
+  const runtime = createFixedRuntime()
   localStorage.setItem(
     'pomo:service-settings:v1',
     JSON.stringify({branch: 'army', days: '300', manual: true, start: '2026-01-01'}),
   )
-  const firstView = mountService()
+  const firstView = mountService(runtime)
   const manual = screen.getByRole('switch', {name: '복무기간 직접 입력'})
 
   await waitFor(() => expect(manual).toBeEnabled())
@@ -46,7 +55,7 @@ it('should persist and restore pasted service days with surrounding whitespace',
   const updatedResult = result.textContent
 
   firstView.unmount()
-  const secondView = mountService()
+  const secondView = mountService(runtime)
 
   await waitFor(() => {
     expect(screen.getByRole('textbox', {name: /복무기간 \(일\)/u})).toHaveValue('301')
