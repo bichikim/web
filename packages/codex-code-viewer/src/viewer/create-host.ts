@@ -4,6 +4,7 @@ import type {Notification, Request, Result} from '@modelcontextprotocol/sdk/type
 import {z} from 'zod'
 import manifest from '../../package.json'
 import {OpenAIExtensions, OpenAIFileEntrypointInputSchema} from '@openai/mcp-extensions/app'
+import {subscribeWorkspace} from './subscribe-workspace'
 import {connectionSchema} from '../shared/contracts'
 import type {ViewerPort} from './types'
 import {connectHostAppearance} from './connect-host-appearance'
@@ -137,7 +138,11 @@ export const createHost = (): ViewerPort => {
       }
       synchronizeContext()
       const disposeAppearance = connectHostAppearance(app)
-      const disposeUpdates = extensions.resources?.addUpdateHandler(() => refresh())
+      const disposeUpdates = extensions.resources?.addUpdateHandler(({params}) => {
+        if (params.uri === resource) {
+          refresh()
+        }
+      })
       return async () => {
         stopped = true
         disposeAppearance()
@@ -150,5 +155,6 @@ export const createHost = (): ViewerPort => {
         await app.close().catch(report)
       }
     },
+    watch: (session, receive) => subscribeWorkspace({call, receive, session}),
   }
 }

@@ -143,6 +143,7 @@ export default defineConfig({
     'ui-document-control': 'h-[calc(var(--font-text-sm-line-height,20px)_+_10px)]',
     'ui-editor-link':
       'cursor-text decoration-accent decoration-dotted underline-offset-4 hover:underline',
+    'ui-entry-dialog': 'ui-unsaved-dialog w-[min(360px,90vw)]',
     'ui-field': [
       'ui-transition flex min-w-0 items-center gap-2 rounded-field border border-divider',
       'bg-canvas px-3 shadow-control',

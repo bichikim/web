@@ -6,7 +6,7 @@ import {createEditorExtensions} from './create-editor-extensions'
 import type {CodeLocation, CodeToken} from '../../shared/contracts'
 import type {TextMatch} from '../find-text'
 import type {ViewRequest} from '../view-state/types'
-import type {CodeSnippet, CodeTextRange} from '../types'
+import type {CodeSnippet, CodeTextRange, NavigationPoint} from '../types'
 import {useEditorContextMenu} from './use-editor-context-menu'
 import {SEditorContextMenu} from './SEditorContextMenu'
 import {fileFormat} from '../../shared/file-formats'
@@ -23,7 +23,7 @@ interface SCodeEditorProps {
   readonly searchScrollRequest: number
   readonly onChange: (source: string) => void
   readonly onSave: () => void
-  readonly onFollow: (token: CodeToken) => void
+  readonly onFollow: (token: CodeToken, point?: NavigationPoint) => void
   readonly onSelect: (range: CodeTextRange) => void
   readonly onShare?: (selection: CodeSnippet) => void
   readonly onFind?: (text?: string) => void
@@ -73,7 +73,7 @@ export const SCodeEditor = (props: SCodeEditorProps) => {
       get onFind() {
         return props.onFind
       },
-      onFollow: (token) => props.onFollow(token),
+      onFollow: (token, point) => props.onFollow(token, point),
       onSave: () => props.onSave(),
       onSelect: (range) => props.onSelect(range),
       separator,

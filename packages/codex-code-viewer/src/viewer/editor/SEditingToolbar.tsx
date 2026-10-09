@@ -50,7 +50,7 @@ export const SEditingToolbar = (props: SEditingToolbarProps) => {
         />
         편집
       </button>
-      <Show when={props.editing.enabled()}>
+      <Show when={props.editing.enabled() || props.editing.deleted()}>
         <span class="flex-1" />
         <button
           type="button"

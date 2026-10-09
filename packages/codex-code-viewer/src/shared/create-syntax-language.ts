@@ -26,6 +26,16 @@ const configuration = StreamLanguage.define({
   },
   tokenTable: {quote: tags.string},
 })
+const rustLanguage = StreamLanguage.define({
+  ...rust,
+  token: (stream, state) => {
+    const token = rust.token(stream, state)
+    if ((token === 'variable' || token === 'def') && stream.current() === 'r') {
+      stream.match(/#[\p{XID_Start}_][\p{XID_Continue}]*/u)
+    }
+    return token
+  },
+})
 
 const languages = {
   astro,
@@ -39,7 +49,7 @@ const languages = {
   properties: () => new LanguageSupport(configuration),
   python: () => new LanguageSupport(StreamLanguage.define(python)),
   ruby: () => new LanguageSupport(StreamLanguage.define(ruby)),
-  rust: () => new LanguageSupport(StreamLanguage.define(rust)),
+  rust: () => new LanguageSupport(rustLanguage),
   sass: () => new LanguageSupport(StreamLanguage.define(sass)),
   scss: () => new LanguageSupport(StreamLanguage.define(sCSS)),
   svelte,

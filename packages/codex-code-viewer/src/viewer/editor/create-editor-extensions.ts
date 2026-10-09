@@ -14,7 +14,7 @@ import {defaultKeymap, history, historyKeymap, indentWithTab} from '@codemirror/
 import {bracketMatching, indentOnInput, syntaxHighlighting} from '@codemirror/language'
 import {classHighlighter} from '@lezer/highlight'
 import type {CodeToken} from '../../shared/contracts'
-import type {CodeTextRange} from '../types'
+import type {CodeTextRange, NavigationPoint} from '../types'
 import {createEditorNavigation} from './create-editor-navigation'
 import {createEditorLanguage} from './create-editor-language'
 interface EditorExtensionsOptions {
@@ -25,7 +25,7 @@ interface EditorExtensionsOptions {
   readonly marks: Compartment
   readonly onChange: (source: string) => void
   readonly onSave: () => void
-  readonly onFollow: (token: CodeToken) => void
+  readonly onFollow: (token: CodeToken, point?: NavigationPoint) => void
   readonly onSelect: (range: CodeTextRange) => void
   readonly onFind?: (text?: string) => void
   readonly states: Pick<BoundedCache<EditorState>, 'get' | 'set'>

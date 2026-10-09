@@ -5,6 +5,28 @@ import {describe, expect, it} from 'vitest'
 import {navigationToken} from '../navigation-token'
 
 describe('navigationToken', () => {
+  it.each([0, 2, 5])('should navigate a Rust raw identifier at offset %s', (relative) => {
+    const doc = 'fn r#type() {}\nfn main() { r#type(); }'
+    const state = EditorState.create({doc, extensions: createEditorLanguage('main.rs')})
+    for (const start of [doc.indexOf('r#type'), doc.lastIndexOf('r#type')]) {
+      expect(navigationToken(state, start + relative, 'main.rs')).toEqual({
+        kind: 'identifier',
+        navigation: 'definition',
+        offset: start + relative,
+        text: 'r#type',
+      })
+    }
+  })
+  it.each([
+    '// r#type',
+    '/* r#type */',
+    '/* comment\nr#type\n*/',
+    'let text = "r#type";',
+    'let text = r###"r#type"###;',
+  ])('should exclude a Rust raw identifier inside comments and strings: %s', (doc) => {
+    const state = EditorState.create({doc, extensions: createEditorLanguage('main.rs')})
+    expect(navigationToken(state, doc.indexOf('r#type') + 2, 'main.rs')).toBeNull()
+  })
   it.each([
     [
       'main.py',

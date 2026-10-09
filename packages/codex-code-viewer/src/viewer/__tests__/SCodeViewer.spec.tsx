@@ -27,7 +27,7 @@ describe('SCodeViewer', () => {
     fireEvent.click(screen.getByRole('button', {name: '편집'}))
     const textbox = screen.getByRole('textbox', {name: '코드 편집기'})
     const editor = EditorView.findFromDOM(textbox)!
-    return {editor, textbox}
+    return {editor, port, textbox}
   }
   const originalScroll = Object.getOwnPropertyDescriptor(HTMLElement.prototype, 'scrollIntoView')
   beforeEach(() => {
@@ -63,6 +63,50 @@ describe('SCodeViewer', () => {
     fireEvent.keyDown(screen.getByRole('textbox', {name: '파일 내 검색어'}), {key: 'Escape'})
     expect(document.activeElement).toBe(textbox)
     expect(screen.queryByRole('textbox', {name: '파일 내 검색어'})).toBeNull()
+  })
+
+  it('should show a persistent deletion status without replacing the unsaved editor', async () => {
+    const {editor, port, textbox} = mountEditor()
+    editor.dispatch({changes: {from: 0, insert: 'unsaved text', to: editor.state.doc.length}})
+    vi.mocked(port.call).mockResolvedValue({
+      content: [],
+      isError: true,
+      structuredContent: {code: 'not-found'},
+    })
+    globalThis.dispatchEvent(new Event('focus'))
+    await vi.waitFor(
+      () => {
+        expect(screen.getByRole('status', {name: '파일 삭제 상태'})).toHaveTextContent(
+          '파일이 삭제되었습니다. 다시 편집 후 저장하면 파일이 만들어집니다.',
+        )
+      },
+      {interval: 1},
+    )
+    expect(screen.getByRole('textbox', {name: '코드 편집기'})).toBe(textbox)
+    expect(editor.state.sliceDoc()).toBe('unsaved text')
+  })
+
+  it('should offer saving unchanged contents after a clean file is deleted', async () => {
+    const {port} = mountEditor()
+    fireEvent.click(screen.getByRole('button', {name: '편집'}))
+    vi.mocked(port.call).mockResolvedValue({
+      content: [],
+      isError: true,
+      structuredContent: {code: 'not-found'},
+    })
+    globalThis.dispatchEvent(new Event('focus'))
+    await vi.waitFor(
+      () => {
+        expect(screen.getByRole('status', {name: '파일 삭제 상태'})).toHaveTextContent(
+          '파일이 삭제되었습니다. 다시 편집 후 저장하면 파일이 만들어집니다.',
+        )
+      },
+      {interval: 1},
+    )
+    expect(screen.getByRole('button', {name: '저장'})).toBeEnabled()
+    expect(screen.getByRole('textbox', {name: '코드 편집기'})).toHaveTextContent(
+      'hello selected world',
+    )
   })
 
   it('should share the started host connection with the file tree', async () => {

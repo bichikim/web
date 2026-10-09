@@ -19,6 +19,7 @@ describe('createEditorNavigation', () => {
         extensions: [createEditorLanguage(path), createEditorNavigation({onFollow, path})],
       }),
     })
+    vi.spyOn(view, 'coordsAtPos').mockReturnValue({bottom: 40, left: 10, right: 20, top: 30})
     return onFollow
   }
   afterEach(() => {
@@ -44,7 +45,10 @@ describe('createEditorNavigation', () => {
       vi.spyOn(view, 'posAtCoords').mockReturnValue(source.indexOf('./helper') + 2)
       const event = new MouseEvent('mousedown', {bubbles: true, cancelable: true, [modifier]: true})
       view.contentDOM.dispatchEvent(event)
-      expect(onFollow).toHaveBeenCalledWith(expect.objectContaining({navigation: 'path'}))
+      expect(onFollow).toHaveBeenCalledWith(
+        expect.objectContaining({navigation: 'path'}),
+        expect.anything(),
+      )
       expect(event.defaultPrevented).toBe(true)
       expect(view.state.sliceDoc()).toBe(source)
     },
@@ -55,7 +59,24 @@ describe('createEditorNavigation', () => {
     view.contentDOM.dispatchEvent(
       new KeyboardEvent('keydown', {bubbles: true, cancelable: true, key: 'F12'}),
     )
-    expect(onFollow).toHaveBeenCalledWith(expect.objectContaining({navigation: 'definition'}))
+    expect(onFollow).toHaveBeenCalledWith(expect.objectContaining({navigation: 'definition'}), {
+      x: 10,
+      y: 40,
+    })
+  })
+  it('should mark and follow the complete Rust raw identifier from its middle', () => {
+    const doc = 'fn r#type() {}\nfn main() { r#type(); }'
+    const onFollow = mount('main.rs', doc)
+    const links = [...view.contentDOM.querySelectorAll('[data-navigation]')]
+    expect(links.map((link) => link.textContent)).toEqual(['r#type', 'main', 'r#type'])
+    view.dispatch({selection: {anchor: doc.indexOf('r#type') + 3}})
+    view.contentDOM.dispatchEvent(
+      new KeyboardEvent('keydown', {bubbles: true, cancelable: true, key: 'F12'}),
+    )
+    expect(onFollow).toHaveBeenCalledWith(
+      expect.objectContaining({navigation: 'definition', text: 'r#type'}),
+      {x: 10, y: 40},
+    )
   })
   it('should expose and follow JSON file references', () => {
     const doc = '{"extends":"./base.json","label":"hello"}'
@@ -65,7 +86,10 @@ describe('createEditorNavigation', () => {
     view.contentDOM.dispatchEvent(
       new KeyboardEvent('keydown', {bubbles: true, cancelable: true, key: 'F12'}),
     )
-    expect(onFollow).toHaveBeenCalledWith(expect.objectContaining({navigation: 'path'}))
+    expect(onFollow).toHaveBeenCalledWith(expect.objectContaining({navigation: 'path'}), {
+      x: 10,
+      y: 40,
+    })
   })
   it('should reset modifier styling when a cached editor is reconfigured', () => {
     const onFollow = mount()
@@ -94,6 +118,7 @@ describe('createEditorNavigation', () => {
     )
     expect(onFollow).toHaveBeenCalledWith(
       expect.objectContaining({navigation: 'path', text: '"./other.json"'}),
+      {x: 10, y: 40},
     )
   })
 })

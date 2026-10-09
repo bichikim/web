@@ -1,3 +1,4 @@
+import {createProjectLanguages} from './create-project-languages'
 import {getCodeLocation} from './get-code-location'
 import {realpathSync, statSync} from 'node:fs'
 import {dirname, relative, resolve} from 'node:path'
@@ -6,11 +7,15 @@ import {
   type CodeLocation,
   type CodeSource,
   failure,
+  type NavigationKind,
   type Result,
   success,
+  type WorkspaceEntry,
 } from '../shared/contracts'
 import {readCodeSources} from './read-code-sources'
 import {writeSource} from './write-source'
+import {createEntry} from './create-entry'
+import {createFileOperations} from './file-operations'
 import {createRustNavigation} from './create-rust-navigation'
 import {createPythonNavigation} from './create-python-navigation'
 import {createRubyNavigation} from './create-ruby-navigation'
@@ -25,20 +30,7 @@ export const createWorkspace = (anchor: string) => {
   const canonical = realpathSync(anchor)
   const directory = statSync(canonical).isDirectory()
   const root = directory ? canonical : findWorkspace(canonical)
-  const languages = new Map<string, ReturnType<typeof createLanguageService>>()
-  const languageFor = (path: string): ReturnType<typeof createLanguageService> => {
-    const file = resolve(root, path)
-    const directory = dirname(file)
-    const configuration = typescript.findConfigFile(directory, typescript.sys.fileExists)
-    const key = configuration ?? directory
-    const existing = languages.get(key)
-    if (existing !== undefined) {
-      return existing
-    }
-    const service = createLanguageService(file)
-    languages.set(key, service)
-    return service
-  }
+  const languages = createProjectLanguages(root)
   const rust = createRustNavigation(root)
   const python = createPythonNavigation(root)
   const ruby = createRubyNavigation(root)
@@ -49,10 +41,11 @@ export const createWorkspace = (anchor: string) => {
   ])
   const index = createFileIndex(root)
   const reader = createDocumentReader(root)
-  const definitions = (
+  const symbols = (
     path: string,
     offset: number,
     drafts: readonly CodeSource[] = [],
+    kind: NavigationKind = 'definition',
   ): Result<CodeLocation[]> | Promise<Result<CodeLocation[]>> => {
     const sources = readCodeSources(root, drafts)
     if (!sources.ok) {
@@ -74,11 +67,24 @@ export const createWorkspace = (anchor: string) => {
     const analyzer = format?.kind === 'syntax' ? navigation.get(format.language) : undefined
     if (analyzer !== undefined) {
       const file = resolveFile(root, path)
-      return file.ok ? analyzer.definitions(file.value, source.value, offset) : file
+      return file.ok ? analyzer.lookupSymbols(file.value, source.value, offset, kind) : file
     }
     const language =
-      drafts.length === 0 ? languageFor(path) : createLanguageService(file.value, sources.value)
-    const targets = language.definitions(file.value, offset)
+      drafts.length === 0 ? languages.get(path) : createLanguageService(file.value, sources.value)
+    const targets =
+      kind === 'definition'
+        ? language.definitions(file.value, offset)
+        : language.references(
+            file.value,
+            offset,
+            index
+              .tree()
+              .files.filter((entry) => fileFormat(entry.path)?.kind === 'code')
+              .flatMap((entry) => {
+                const resolved = resolveFile(root, entry.path)
+                return resolved.ok ? [resolved.value] : []
+              }),
+          )
     if (drafts.length > 0) {
       language.dispose()
     }
@@ -108,7 +114,7 @@ export const createWorkspace = (anchor: string) => {
     }
     const format = fileFormat(path)
     if (format?.kind === 'syntax' && navigation.has(format.language)) {
-      return definitions(path, offset, drafts)
+      return symbols(path, offset, drafts)
     }
     const parsed = typescript.createSourceFile(
       path,
@@ -132,7 +138,7 @@ export const createWorkspace = (anchor: string) => {
       return failure('invalid-position')
     }
     const file = resolve(root, path)
-    const module = languageFor(path).resolveModule(file, specifier)
+    const module = languages.get(path).resolveModule(file, specifier)
     const target = module ?? resolve(dirname(file), specifier)
     const resolved = resolveFile(root, target)
     return resolved.ok
@@ -140,14 +146,14 @@ export const createWorkspace = (anchor: string) => {
       : resolved
   }
   return {
-    definitions,
+    create: (parent: string, name: string, kind: WorkspaceEntry['kind']) =>
+      createEntry({kind, name, parent, root}),
+    definitions: (path: string, offset: number, drafts: readonly CodeSource[] = []) =>
+      symbols(path, offset, drafts),
     dispose: () => {
       index.dispose()
       reader.dispose()
-      for (const language of languages.values()) {
-        language.dispose()
-      }
-      languages.clear()
+      languages.dispose()
       rust.dispose()
       python.dispose()
       ruby.dispose()
@@ -156,10 +162,14 @@ export const createWorkspace = (anchor: string) => {
     list: index.list,
     media: (path: string, revision: string, offset: number) =>
       readMedia({offset, path, revision, root}),
+    operations: createFileOperations(root),
     read: reader.read,
+    references: (path: string, offset: number, drafts: readonly CodeSource[] = []) =>
+      symbols(path, offset, drafts, 'references'),
     root,
+    subscribe: index.subscribe,
     tree: index.tree,
-    write: (path: string, source: string, revision: string) =>
+    write: (path: string, source: string, revision: string | null) =>
       writeSource({path, revision, root, source}),
   }
 }

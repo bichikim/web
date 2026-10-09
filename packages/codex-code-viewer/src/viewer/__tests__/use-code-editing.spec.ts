@@ -30,6 +30,86 @@ describe('useCodeEditing', () => {
       return {editing, port, setCurrent}
     })
   afterEach(() => dispose())
+  it.each(['original', '', 'edited draft'])(
+    'should consider deletion a pending change and recreate %j on save',
+    async (source) => {
+      const {editing, port} = mount()
+      editing.change(source)
+      editing.markDeleted(session())
+      expect(editing.dirty()).toBe(true)
+      expect(editing.pendingFiles()).toEqual(['main.ts'])
+      expect(await editing.save()).toBe(true)
+      expect(port.call).toHaveBeenCalledWith('code.write', {
+        path: 'main.ts',
+        revision: null,
+        session: 'session',
+        source,
+      })
+      expect(editing.dirty()).toBe(false)
+    },
+  )
+  it('should remove the deleted draft when discarding it', () => {
+    const {editing} = mount()
+    editing.change('edited draft')
+    editing.markDeleted(session())
+    editing.discard()
+    expect(editing.source()).toBe('original')
+    expect(editing.dirty()).toBe(false)
+    expect(editing.deleted()).toBe(false)
+    expect(editing.pendingFiles()).toEqual([])
+  })
+  it('should recreate on save when deletion was not yet reported by the watcher', async () => {
+    const {editing, port} = mount()
+    editing.change('my draft')
+    vi.mocked(port.call).mockResolvedValueOnce({
+      content: [],
+      isError: true,
+      structuredContent: {code: 'not-found'},
+    })
+    expect(await editing.save()).toBe(true)
+    expect(port.call).toHaveBeenNthCalledWith(1, 'code.write', {
+      path: 'main.ts',
+      revision: 'v1',
+      session: 'session',
+      source: 'my draft',
+    })
+    expect(port.call).toHaveBeenNthCalledWith(2, 'code.write', {
+      path: 'main.ts',
+      revision: null,
+      session: 'session',
+      source: 'my draft',
+    })
+    expect(editing.dirty()).toBe(false)
+  })
+  it('should retain a deleted draft if recreation fails', async () => {
+    const {editing, port} = mount()
+    editing.change('my draft')
+    vi.mocked(port.call)
+      .mockResolvedValueOnce({content: [], isError: true, structuredContent: {code: 'not-found'}})
+      .mockResolvedValueOnce({
+        content: [],
+        isError: true,
+        structuredContent: {code: 'write-failed'},
+      })
+    expect(await editing.save()).toBe(false)
+    expect(editing.deleted()).toBe(true)
+    expect(editing.source()).toBe('my draft')
+    expect(editing.dirty()).toBe(true)
+  })
+  it('should offer saving a deleted file before closing even when its text is unchanged', async () => {
+    const {editing, port} = mount()
+    editing.markDeleted(session())
+    const leave = editing.confirmLeave()
+    expect(editing.confirming()).toBe(true)
+    await editing.resolveLeave('save')
+    expect(await leave).toBe(true)
+    expect(port.call).toHaveBeenCalledWith('code.write', {
+      path: 'main.ts',
+      revision: null,
+      session: 'session',
+      source: 'original',
+    })
+  })
   it.each(['image.svg', 'document.docx'])(
     'should keep %s read-only without saving a draft',
     async (path) => {

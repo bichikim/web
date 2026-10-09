@@ -54,7 +54,7 @@ describe('createPythonService', () => {
   it('should initialize once and translate UTF-16 positions and definition links', async () => {
     const source = 'fn main() {\r\n let text = "🦊"; answer();\n}'
     const offset = source.indexOf('answer')
-    expect(await service.definitions(path, source, offset)).toEqual({
+    expect(await service.lookupSymbols(path, source, offset, 'definition')).toEqual({
       ok: true,
       value: [{column: 8, line: 3, path: `${root}/src/math.py`}],
     })
@@ -69,7 +69,7 @@ describe('createPythonService', () => {
         targetUri: pathToFileURL(path).href,
       },
     ])
-    expect(await service.definitions(path, source, offset)).toEqual({
+    expect(await service.lookupSymbols(path, source, offset, 'definition')).toEqual({
       ok: true,
       value: [{column: 4, line: 1, path}],
     })
@@ -83,14 +83,14 @@ describe('createPythonService', () => {
       requested.resolve()
       return new Promise(() => {})
     })
-    const pending = service.definitions(path, 'main()', 0)
+    const pending = service.lookupSymbols(path, 'main()', 0, 'definition')
     await requested.promise
     process.emit('exit', 1)
     expect(await pending).toMatchObject({error: {code: 'python-analysis-failed'}, ok: false})
   })
   it('should synchronize edited source before requesting a new definition', async () => {
-    await service.definitions(path, 'fn main() {}', 3)
-    await service.definitions(path, '\nfn main() {}', 4)
+    await service.lookupSymbols(path, 'fn main() {}', 3, 'definition')
+    await service.lookupSymbols(path, '\nfn main() {}', 4, 'definition')
     expect(changed).toEqual([
       {
         contentChanges: [{text: '\nfn main() {}'}],
@@ -101,7 +101,10 @@ describe('createPythonService', () => {
   })
   it('should return no targets for an unresolved symbol', async () => {
     definition.mockReturnValue(null)
-    expect(await service.definitions(path, 'unknown()', 0)).toEqual({ok: true, value: []})
+    expect(await service.lookupSymbols(path, 'unknown()', 0, 'definition')).toEqual({
+      ok: true,
+      value: [],
+    })
   })
   it('should reject malformed or non-file navigation results', async () => {
     definition.mockReturnValue([
@@ -110,19 +113,19 @@ describe('createPythonService', () => {
         uri: 'https://example.com/file.rs',
       },
     ])
-    expect(await service.definitions(path, 'main()', 0)).toMatchObject({
+    expect(await service.lookupSymbols(path, 'main()', 0, 'definition')).toMatchObject({
       error: {code: 'python-analysis-failed'},
       ok: false,
     })
   })
   it('should report missing analyzer and finish pending initialization', async () => {
-    const pending = service.definitions(path, 'main()', 0)
+    const pending = service.lookupSymbols(path, 'main()', 0, 'definition')
     process.emit('error', Object.assign(new Error('missing'), {code: 'ENOENT'}))
     expect(await pending).toMatchObject({error: {code: 'python-analyzer-unavailable'}, ok: false})
   })
   it('should terminate the analyzer when initialization is rejected', async () => {
     initialize.mockRejectedValue(new Error('Initialization failed'))
-    expect(await service.definitions(path, 'greet()', 0)).toMatchObject({
+    expect(await service.lookupSymbols(path, 'greet()', 0, 'definition')).toMatchObject({
       error: {code: 'python-analysis-failed'},
       ok: false,
     })
@@ -134,7 +137,7 @@ describe('createPythonService', () => {
       requested.resolve()
       return new Promise(() => {})
     })
-    const pending = service.definitions(path, 'main()', 0)
+    const pending = service.lookupSymbols(path, 'main()', 0, 'definition')
     await requested.promise
     service.dispose()
     expect(await pending).toMatchObject({error: {code: 'python-analysis-failed'}, ok: false})
@@ -142,7 +145,7 @@ describe('createPythonService', () => {
     expect(Reflect.get(process, 'kill')).toHaveBeenCalledTimes(1)
   })
   it('should initialize Python definitions and request configuration before navigation', async () => {
-    await service.definitions(path, 'greet()', 0)
+    await service.lookupSymbols(path, 'greet()', 0, 'definition')
     expect(initialize.mock.calls[0][0]).toMatchObject({
       capabilities: {
         textDocument: {definition: {linkSupport: true}},

@@ -6,6 +6,7 @@ import type {ViewerPort} from './types'
 import type {useViewer} from './use-viewer'
 import type {useDocumentSearch} from './use-document-search'
 import {SWorkspacePrompt} from './SWorkspacePrompt'
+import {SReferenceChoices} from './SReferenceChoices'
 import {SDefinitionChoices} from './SDefinitionChoices'
 import {SFileDocument} from './SFileDocument'
 import {SCodeEditor} from './editor/SCodeEditor'
@@ -33,6 +34,24 @@ export const SViewerDocument = (props: SViewerDocumentProps) => {
       >
         {(session) => (
           <>
+            <Show when={props.viewer.deleted()}>
+              <div
+                role="status"
+                aria-label="파일 삭제 상태"
+                class="shrink-0 border-b border-divider bg-selection px-4 py-3 text-sm text-foreground"
+              >
+                <p>
+                  {props.viewer.editing.editable()
+                    ? '파일이 삭제되었습니다. 다시 편집 후 저장하면 파일이 만들어집니다.'
+                    : '파일이 삭제되었습니다.'}
+                </p>
+              </div>
+            </Show>
+            <Show when={props.viewer.references()} keyed>
+              {(references) => (
+                <SReferenceChoices references={references} onOpen={props.viewer.openLocation} />
+              )}
+            </Show>
             <SDefinitionChoices
               locations={props.viewer.choices()}
               onOpen={props.viewer.openLocation}

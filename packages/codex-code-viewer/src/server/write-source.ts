@@ -2,9 +2,12 @@ import {MAX_CODE_BYTES} from '../shared/editing-limits'
 import {createHash, randomUUID} from 'node:crypto'
 import {
   closeSync,
+  constants,
+  copyFileSync,
   fchmodSync,
   fsyncSync,
   openSync,
+  realpathSync,
   renameSync,
   rmSync,
   statSync,
@@ -13,17 +16,41 @@ import {
 import {dirname, relative, resolve} from 'node:path'
 import {type CodeDocument, failure, type Result, success} from '../shared/contracts'
 import {isEditableFile} from '../shared/is-editable-file'
-import {readSource, resolveFile} from './file-access'
+import {isWithin, readSource, resolveFile} from './file-access'
 import {tokenizeDocument} from './tokenize-document'
 
 interface WriteSourceOptions {
   readonly root: string
   readonly path: string
   readonly source: string
-  readonly revision: string
+  readonly revision: string | null
 }
 const PERMISSION_BITS = 0o1000
+const DEFAULT_FILE_MODE = 0o666
 const revisionOf = (source: string): string => createHash('sha256').update(source).digest('hex')
+
+const resolveMissingTarget = (options: WriteSourceOptions): Result<string> => {
+  const target = resolve(options.root, options.path)
+  if (!isWithin(options.root, target)) {
+    return failure('outside-workspace')
+  }
+  const existing = resolveFile(options.root, options.path)
+  if (existing.ok) {
+    return failure('write-conflict')
+  }
+  if (existing.error.code !== 'not-found') {
+    return existing
+  }
+  try {
+    const parent = realpathSync(dirname(target))
+    if (parent !== dirname(target)) {
+      return failure('protected-entry')
+    }
+    return success(target)
+  } catch {
+    return failure('write-failed')
+  }
+}
 
 const readWriteTarget = (options: WriteSourceOptions): Result<string> => {
   const file = resolveFile(options.root, options.path)
@@ -44,7 +71,7 @@ const readWriteTarget = (options: WriteSourceOptions): Result<string> => {
   return file
 }
 
-/** Replaces an editable UTF-8 file when its current content matches the supplied revision. */
+/** Saves editable UTF-8 content against a revision, or exclusively creates a missing file for null. */
 export const writeSource = (options: WriteSourceOptions): Result<CodeDocument> => {
   if (!isEditableFile(options.path) || options.source.includes('\0')) {
     return failure('unsupported-file')
@@ -52,7 +79,7 @@ export const writeSource = (options: WriteSourceOptions): Result<CodeDocument> =
   if (Buffer.byteLength(options.source, 'utf8') > MAX_CODE_BYTES) {
     return failure('too-large')
   }
-  const file = readWriteTarget(options)
+  const file = options.revision === null ? resolveMissingTarget(options) : readWriteTarget(options)
   if (!file.ok) {
     return file
   }
@@ -66,25 +93,36 @@ export const writeSource = (options: WriteSourceOptions): Result<CodeDocument> =
   let descriptor: number | undefined
   let created = false
   try {
-    const mode = statSync(file.value).mode % PERMISSION_BITS
+    const mode =
+      options.revision === null ? DEFAULT_FILE_MODE : statSync(file.value).mode % PERMISSION_BITS
     descriptor = openSync(temporary, 'wx', mode)
     created = true
     writeFileSync(descriptor, options.source, 'utf8')
-    fchmodSync(descriptor, mode)
+    if (options.revision !== null) {
+      fchmodSync(descriptor, mode)
+    }
     fsyncSync(descriptor)
     closeSync(descriptor)
     descriptor = undefined
-    const destination = readWriteTarget(options)
-    if (!destination.ok) {
-      return destination
+    if (options.revision === null) {
+      copyFileSync(temporary, file.value, constants.COPYFILE_EXCL)
+    } else {
+      const destination = readWriteTarget(options)
+      if (!destination.ok) {
+        return destination
+      }
+      if (destination.value !== file.value) {
+        return failure('write-conflict')
+      }
+      renameSync(temporary, file.value)
     }
-    if (destination.value !== file.value) {
-      return failure('write-conflict')
-    }
-    renameSync(temporary, file.value)
     return success(document)
-  } catch {
-    return failure('write-failed')
+  } catch (error) {
+    return failure(
+      error instanceof Error && 'code' in error && error.code === 'EEXIST'
+        ? 'write-conflict'
+        : 'write-failed',
+    )
   } finally {
     if (descriptor !== undefined) {
       closeSync(descriptor)

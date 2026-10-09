@@ -24,6 +24,28 @@ describe('createFileIndex', () => {
     vi.clearAllMocks()
     fs.rmSync(root, {force: true, recursive: true})
   })
+  it('should report content and directory events without scanning and stop after unsubscribe', () => {
+    const notify = vi.fn()
+    const stop = index.subscribe(notify)
+    const calls: readonly unknown[][] = vi.mocked(fs.watch).mock.calls
+    const listener = calls.at(-1)?.[2]
+    if (typeof listener !== 'function') {
+      throw new Error('Missing watcher listener')
+    }
+    index.tree()
+    const scans = vi.mocked(fs.readdirSync).mock.calls.length
+    listener('change', 'src/main.ts')
+    listener('rename', 'src/new.ts')
+    listener('change', 'node_modules/ignored.ts')
+    expect(notify).toHaveBeenCalledTimes(2)
+    expect(fs.readdirSync).toHaveBeenCalledTimes(scans)
+    stop()
+    listener('change', 'src/main.ts')
+    expect(notify).toHaveBeenCalledTimes(2)
+    index.dispose()
+    listener('rename', 'src/new.ts')
+    expect(notify).toHaveBeenCalledTimes(2)
+  })
   it('should share a single scan between tree and incremental searches', () => {
     const scan = vi.mocked(fs.readdirSync)
     expect(index.tree().files).toContainEqual({openable: true, path: 'src/main.ts'})

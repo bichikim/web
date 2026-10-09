@@ -1,6 +1,6 @@
-import {type Accessor, createEffect, on, onCleanup} from 'solid-js'
+import {type Accessor, createEffect, createSignal, on, onCleanup} from 'solid-js'
 
-interface TreeSelectionScrollOptions {
+interface UseTreeSelectionScrollProps {
   readonly element: Accessor<HTMLElement | null>
   readonly path: Accessor<string>
   readonly paths: Accessor<string[]>
@@ -9,16 +9,23 @@ interface TreeSelectionScrollOptions {
 interface TreeScrollTarget {
   readonly container: HTMLElement | null
   readonly path: string
+  readonly revision: number
   revealed: boolean
 }
 
-/** Reveals the opened file once per navigation or tree mount, after its row is rendered. */
-export const useTreeSelectionScroll = (options: TreeSelectionScrollOptions): void => {
+/** Reveals the opened file on navigation, tree mount, or an explicit request after its row renders. */
+export const useTreeSelectionScroll = (props: UseTreeSelectionScrollProps): (() => void) => {
+  const [revision, setRevision] = createSignal(0)
   let target: TreeScrollTarget | null = null
   createEffect(
-    on([options.paths, options.path, options.element], ([, path, container]) => {
-      if (target === null || target.path !== path || target.container !== container) {
-        target = {container, path, revealed: false}
+    on([props.paths, props.path, props.element, revision], ([, path, container, revision]) => {
+      if (
+        target === null ||
+        target.path !== path ||
+        target.container !== container ||
+        target.revision !== revision
+      ) {
+        target = {container, path, revealed: false, revision}
       }
       const current = target
       if (current.revealed || container === null) {
@@ -39,4 +46,5 @@ export const useTreeSelectionScroll = (options: TreeSelectionScrollOptions): voi
       })
     }),
   )
+  return () => setRevision((previous) => previous + 1)
 }

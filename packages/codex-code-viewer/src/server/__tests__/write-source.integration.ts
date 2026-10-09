@@ -89,6 +89,45 @@ describe('writeSource', () => {
     })
     expect(readFileSync(join(root, 'notes.txt'), 'utf8')).toBe('external text')
   })
+  it.each(['', initial, 'edited draft'])(
+    'should recreate a missing file with its current content %j',
+    (source) => {
+      rmSync(join(root, 'main.ts'))
+      expect(writeSource({path: 'main.ts', revision: null, root, source})).toEqual(
+        readDocument(root, 'main.ts'),
+      )
+      expect(readFileSync(join(root, 'main.ts'), 'utf8')).toBe(source)
+      expect(readdirSync(root).sort()).toEqual(['.git', 'main.ts'])
+    },
+  )
+  it('should not overwrite a file restored before recreation', () => {
+    expect(writeSource({path: 'main.ts', revision: null, root, source: 'draft'})).toMatchObject({
+      error: {code: 'write-conflict'},
+      ok: false,
+    })
+    expect(readFileSync(join(root, 'main.ts'), 'utf8')).toBe(initial)
+  })
+  it('should reject recreation through a symbolic link or private directory', () => {
+    symlinkSync(join(root, 'missing.ts'), join(root, 'link.ts'))
+    expect(writeSource({path: 'link.ts', revision: null, root, source: 'draft'}).ok).toBe(false)
+    expect(writeSource({path: '.git/new.ts', revision: null, root, source: 'draft'}).ok).toBe(false)
+    symlinkSync(join(root, '.git'), join(root, 'alias'))
+    expect(writeSource({path: 'alias/new.ts', revision: null, root, source: 'draft'}).ok).toBe(
+      false,
+    )
+    expect(readdirSync(join(root, '.git'))).toEqual([])
+  })
+  it('should reject recreation outside the workspace', () => {
+    const outside = realpathSync(mkdtempSync(join(tmpdir(), 'viewer-outside-')))
+    try {
+      expect(
+        writeSource({path: join(outside, 'new.ts'), revision: null, root, source: 'draft'}).ok,
+      ).toBe(false)
+      expect(readdirSync(outside)).toEqual([])
+    } finally {
+      rmSync(outside, {recursive: true})
+    }
+  })
   it('should reject a text alias to a media file without replacing the target', () => {
     writeFileSync(join(root, 'image.png'), 'image bytes')
     symlinkSync(join(root, 'image.png'), join(root, 'notes.txt'))

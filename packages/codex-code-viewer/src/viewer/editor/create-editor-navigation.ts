@@ -1,3 +1,4 @@
+import type {NavigationPoint} from '../types'
 import {type Extension, StateEffect, StateField} from '@codemirror/state'
 import {syntaxTree} from '@codemirror/language'
 import {
@@ -14,7 +15,7 @@ import {isNavigableFile} from '../../shared/is-navigable-file'
 
 interface EditorNavigationOptions {
   readonly path: string
-  readonly onFollow: (token: CodeToken) => void
+  readonly onFollow: (token: CodeToken, point?: NavigationPoint) => void
 }
 const modifierChange = StateEffect.define<boolean>()
 
@@ -113,7 +114,7 @@ export const createEditorNavigation = (options: EditorNavigationOptions): Extens
           return false
         }
         event.preventDefault()
-        options.onFollow(token)
+        options.onFollow(token, {x: event.clientX, y: event.clientY})
         return true
       },
     }),
@@ -125,7 +126,8 @@ export const createEditorNavigation = (options: EditorNavigationOptions): Extens
           if (token === null) {
             return false
           }
-          options.onFollow(token)
+          const rect = view.coordsAtPos(view.state.selection.main.head)
+          options.onFollow(token, rect === null ? undefined : {x: rect.left, y: rect.bottom})
           return true
         },
       },

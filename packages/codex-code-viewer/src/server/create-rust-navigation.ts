@@ -1,5 +1,11 @@
 import {relative} from 'node:path'
-import {type CodeLocation, failure, type Result, success} from '../shared/contracts'
+import {
+  type CodeLocation,
+  failure,
+  type NavigationKind,
+  type Result,
+  success,
+} from '../shared/contracts'
 import {createRustService} from './create-rust-service'
 import {resolveFile} from './file-access'
 import {readProject} from './rust/read-project'
@@ -10,10 +16,11 @@ export const createRustNavigation = (root: string) => {
     {signature: string; service: ReturnType<typeof createRustService>}
   >()
   let disposed = false
-  const definitions = async (
+  const lookupSymbols = async (
     path: string,
     source: string,
     offset: number,
+    kind: NavigationKind,
   ): Promise<Result<CodeLocation[]>> => {
     if (disposed) {
       return failure('rust-analysis-failed')
@@ -30,7 +37,7 @@ export const createRustNavigation = (root: string) => {
       entry = {service: createRustService(project.value), signature}
       services.set(directory, entry)
     }
-    const targets = await entry.service.definitions(path, source, offset)
+    const targets = await entry.service.lookupSymbols(path, source, offset, kind)
     if (!targets.ok) {
       return targets
     }
@@ -47,5 +54,5 @@ export const createRustNavigation = (root: string) => {
     }
     services.clear()
   }
-  return {definitions, dispose}
+  return {dispose, lookupSymbols}
 }

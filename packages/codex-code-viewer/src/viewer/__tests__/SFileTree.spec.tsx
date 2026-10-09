@@ -59,6 +59,141 @@ describe('SFileTree', () => {
     })
   }
 
+  it('should refresh automatically after a workspace event without opening collapsed folders', async () => {
+    recordScroll()
+    const port = createPort()
+    const [revision, changeRevision] = createSignal(0)
+    render(() => <SFileTree port={port} session={session} visible revision={revision()} />)
+    await screen.findByRole('treeitem', {name: 'main.ts'})
+    fireEvent.click(screen.getByRole('treeitem', {name: 'src'}))
+    const tree = screen.getByRole('tree', {name: '프로젝트 파일'})
+    tree.scrollTop = 80
+    scrollIntoView.mockClear()
+    vi.mocked(port.call).mockResolvedValueOnce({
+      content: [],
+      structuredContent: {
+        files: [...files, {openable: true, path: 'added.txt'}],
+        truncated: false,
+      },
+    })
+    changeRevision(1)
+    await screen.findByRole('treeitem', {name: 'added.txt'})
+    expect(screen.getByRole('treeitem', {name: 'src'}).getAttribute('aria-expanded')).toBe('false')
+    expect(screen.queryByRole('treeitem', {name: 'main.ts'})).toBeNull()
+    expect(tree.scrollTop).toBe(80)
+    expect(scrollIntoView).not.toHaveBeenCalled()
+  })
+  it('should expand every ancestor and scroll to the current file on every reveal request', async () => {
+    recordScroll()
+    const port = createPort()
+    vi.mocked(port.call).mockResolvedValue({
+      content: [],
+      structuredContent: {
+        files: [{openable: true, path: 'src/deep/main.ts'}],
+        truncated: false,
+      },
+    })
+    const current = {
+      ...session,
+      document: {...session.document, location: {column: 1, line: 1, path: 'src/deep/main.ts'}},
+    }
+    const open = vi.fn()
+    render(() => <SFileTree port={port} session={current} visible onOpen={open} />)
+    await screen.findByRole('treeitem', {name: 'main.ts'})
+    await Promise.resolve()
+    scrollIntoView.mockClear()
+    fireEvent.click(screen.getByRole('treeitem', {name: 'deep'}))
+    fireEvent.click(screen.getByRole('treeitem', {name: 'src'}))
+    expect(screen.queryByRole('treeitem', {name: 'main.ts'})).toBeNull()
+    const reveal = screen.getByRole('button', {name: '현재 파일 위치로 이동'})
+    fireEvent.click(reveal)
+    await Promise.resolve()
+    const file = screen.getByRole('treeitem', {name: 'main.ts'})
+    expect(screen.getByRole('treeitem', {name: 'src'}).getAttribute('aria-expanded')).toBe('true')
+    expect(screen.getByRole('treeitem', {name: 'deep'}).getAttribute('aria-expanded')).toBe('true')
+    expect(file.getAttribute('aria-selected')).toBe('true')
+    expect(file.tabIndex).toBe(0)
+    expect(scrollIntoView).toHaveBeenCalledTimes(1)
+    expect(scrollIntoView.mock.contexts.at(-1)).toBe(file)
+    fireEvent.click(reveal)
+    await Promise.resolve()
+    expect(scrollIntoView).toHaveBeenCalledTimes(2)
+    expect(scrollIntoView.mock.contexts.at(-1)).toBe(file)
+    expect(open).not.toHaveBeenCalled()
+  })
+
+  it('should refresh the tree without reopening folders or scrolling back to the current file', async () => {
+    recordScroll()
+    const port = createPort()
+    render(() => <SFileTree port={port} session={session} visible />)
+    await screen.findByRole('treeitem', {name: 'main.ts'})
+    await Promise.resolve()
+    const calls = scrollIntoView.mock.calls.length
+    fireEvent.click(screen.getByRole('treeitem', {name: 'src'}))
+    const pending = Promise.withResolvers<Awaited<ReturnType<ViewerPort['call']>>>()
+    vi.mocked(port.call).mockReturnValueOnce(pending.promise)
+    const refresh = screen.getByRole('button', {name: '파일 트리 새로고침'})
+    fireEvent.click(refresh)
+    expect(refresh).toBeDisabled()
+    pending.resolve({
+      content: [],
+      structuredContent: {directories: ['src', 'empty'], files, truncated: false},
+    })
+    await screen.findByRole('treeitem', {name: 'empty'})
+    expect(refresh).not.toBeDisabled()
+    expect(screen.getByRole('treeitem', {name: 'src'})).toHaveAttribute('aria-expanded', 'false')
+    expect(scrollIntoView).toHaveBeenCalledTimes(calls)
+    expect(port.call).toHaveBeenCalledTimes(2)
+    expect(port.call).toHaveBeenLastCalledWith('code.tree', {session: 'first'})
+  })
+  it('should retain the tree filter and display newly discovered matching files after refresh', async () => {
+    const port = createPort()
+    render(() => <SFileTree port={port} session={session} visible />)
+    await screen.findByRole('treeitem', {name: 'main.ts'})
+    const filter = screen.getByRole('textbox', {name: '파일 필터링'})
+    fireEvent.input(filter, {target: {value: 'editor'}})
+    vi.mocked(port.call).mockResolvedValueOnce({
+      content: [],
+      structuredContent: {
+        files: [...files, {openable: true, path: 'src/editor-new.ts'}],
+        truncated: false,
+      },
+    })
+    fireEvent.click(screen.getByRole('button', {name: '파일 트리 새로고침'}))
+    await screen.findByRole('treeitem', {name: 'editor-new.ts'})
+    expect(filter).toHaveValue('editor')
+    expect(screen.queryByRole('treeitem', {name: 'main.ts'})).toBeNull()
+  })
+
+  it('should clear a filter that hides the current file before revealing it', async () => {
+    recordScroll()
+    render(() => <SFileTree port={createPort()} session={session} visible />)
+    await screen.findByRole('treeitem', {name: 'main.ts'})
+    await Promise.resolve()
+    fireEvent.click(screen.getByRole('treeitem', {name: 'src'}))
+    const filter = screen.getByRole('textbox', {name: '파일 필터링'})
+    fireEvent.input(filter, {target: {value: 'other'}})
+    expect(screen.queryByRole('treeitem', {name: 'main.ts'})).toBeNull()
+    scrollIntoView.mockClear()
+    fireEvent.click(screen.getByRole('button', {name: '현재 파일 위치로 이동'}))
+    await Promise.resolve()
+    expect(filter).toHaveProperty('value', '')
+    const file = screen.getByRole('treeitem', {name: 'main.ts'})
+    expect(scrollIntoView).toHaveBeenCalledTimes(1)
+    expect(scrollIntoView.mock.contexts.at(-1)).toBe(file)
+  })
+
+  it('should disable reveal when no document is open in the workspace', async () => {
+    render(() => (
+      <SFileTree port={createPort()} session={{session: 'first', workspace: '/project'}} visible />
+    ))
+    await screen.findByRole('treeitem', {name: 'src'})
+    expect(screen.getByRole('button', {name: '현재 파일 위치로 이동'})).toHaveProperty(
+      'disabled',
+      true,
+    )
+  })
+
   it('should preserve scroll when folders toggle and the filter changes after revealing the file', async () => {
     recordScroll()
     render(() => <SFileTree port={createPort()} session={session} visible />)
@@ -164,7 +299,7 @@ describe('SFileTree', () => {
     const expanded = item.getAttribute('aria-expanded')
     fireEvent.contextMenu(item, {clientX: 100, clientY: 200})
     const action = screen.getByRole('menuitem', {name: '채팅창에 추가'})
-    expect(document.activeElement).toBe(action)
+    expect(document.activeElement).toBe(screen.getByRole('menuitem', {name: /^복사/u}))
     fireEvent.click(action)
     expect(share).toHaveBeenCalledWith({kind, path: `/project/${path}`})
     expect(open).not.toHaveBeenCalled()

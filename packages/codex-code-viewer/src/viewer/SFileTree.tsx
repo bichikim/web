@@ -1,12 +1,13 @@
 import {createSignal, For, Show, untrack} from 'solid-js'
-import type {CodeLocation, ViewerConnection} from '../shared/contracts'
-import {SFileIcon} from './SFileIcon'
+import type {CodeLocation, ViewerConnection, WorkspaceEntry} from '../shared/contracts'
+import {SFileTreeItem} from './SFileTreeItem'
 import {SIcon} from './SIcon'
-import type {ViewerPort, WorkspaceSelection} from './types'
+import type {FileMutation, ViewerPort, WorkspaceSelection} from './types'
 import {useFileTree} from './use-file-tree'
-import {useTreeContextMenu} from './use-tree-context-menu'
-import {SFileTreeContextMenu} from './SFileTreeContextMenu'
+import {useTreeFileActions} from './use-tree-file-actions'
+import {SFileTreeActions} from './SFileTreeActions'
 import {useTreeSelectionScroll} from './use-tree-selection-scroll'
+import {SFileTreeToolbar} from './SFileTreeToolbar'
 
 interface SFileTreeProps {
   port: ViewerPort
@@ -16,8 +17,18 @@ interface SFileTreeProps {
   onError?: (error: unknown) => void
   onShare?: (selection: WorkspaceSelection) => void
   onCopy?: (path: string) => void
+  onMutation?: (change: FileMutation) => Promise<void>
+  pendingPaths?: readonly string[]
+  saving?: boolean
+  revision?: number
 }
-const INDENT_WIDTH = 16
+
+const focusTreeItem = (element: HTMLElement | null, path: string | null): void => {
+  const buttons = element?.querySelectorAll<HTMLButtonElement>('[role="treeitem"]') ?? []
+  Array.from(buttons)
+    .find((button) => button.dataset.treePath === path)
+    ?.focus()
+}
 
 export const SFileTree = (props: SFileTreeProps) => {
   const [element, setElement] = createSignal<HTMLElement | null>(null)
@@ -25,31 +36,67 @@ export const SFileTree = (props: SFileTreeProps) => {
     onError: (error) => props.onError?.(error),
     onOpen: (location) => props.onOpen?.(location),
     port: untrack(() => props.port),
+    revision: () => props.revision ?? 0,
     session: () => props.session ?? null,
     visible: () => props.visible === true,
   })
-  const menu = useTreeContextMenu({
-    node: tree.node,
-    onFocus: tree.focus,
+  const handleMutation = async (change: FileMutation): Promise<void> => {
+    const session = props.session?.session
+    await props.onMutation?.(change)
+    if (props.session?.session !== session) {
+      return
+    }
+    await tree.reload()
+    if (props.session?.session !== session) {
+      return
+    }
+    if (change.action !== 'delete') {
+      tree.reveal(change.entry.path)
+    }
+  }
+  const actions = useTreeFileActions({
+    onChanged: handleMutation,
+    pendingPaths: () => props.pendingPaths ?? [],
+    port: untrack(() => props.port),
+    saving: () => props.saving === true,
     session: () => props.session ?? null,
+    tree,
     visible: () => props.visible === true,
   })
-  useTreeSelectionScroll({element, path: tree.currentPath, paths: tree.paths})
+  const revealSelection = useTreeSelectionScroll({
+    element,
+    path: tree.currentPath,
+    paths: tree.paths,
+  })
+  const handleReveal = (): void => {
+    tree.reveal()
+    revealSelection()
+  }
+  const creationParent = (): string => {
+    const path = tree.activePath() ?? ''
+    return tree.node(path)?.kind === 'directory' ? path : path.split('/').slice(0, -1).join('/')
+  }
+  const handleCreated = async (entry: WorkspaceEntry): Promise<void> => {
+    const session = props.session?.session
+    await tree.reload()
+    if (props.session?.session !== session || !props.visible) {
+      return
+    }
+    tree.reveal(entry.path)
+    focusTreeItem(element(), entry.path)
+    const node = tree.node(entry.path)
+    if (node?.kind === 'file' && node.openable) {
+      props.onOpen?.({column: 1, line: 1, path: entry.path})
+    }
+  }
   const handleKeyboard = (event: KeyboardEvent, path: string): void => {
-    if (menu.handleKeyboard(event, path)) {
+    if (actions.keyboard(event, path)) {
       return
     }
     if (tree.navigate(path, event.key)) {
       event.preventDefault()
-      const buttons = element()?.querySelectorAll<HTMLButtonElement>('[role="treeitem"]') ?? []
-      Array.from(buttons)
-        .find((button) => button.dataset.treePath === tree.activePath())
-        ?.focus()
+      focusTreeItem(element(), tree.activePath())
     }
-  }
-  const openable = (path: string): boolean => {
-    const node = tree.node(path)
-    return node?.kind === 'directory' || node?.openable === true
   }
   return (
     <Show when={props.visible}>
@@ -59,6 +106,17 @@ export const SFileTree = (props: SFileTreeProps) => {
         class="flex h-full min-h-0 w-full min-w-0 flex-col bg-canvas pt-1 text-sm"
         ref={setElement}
       >
+        <SFileTreeToolbar
+          canReveal={tree.canReveal()}
+          onCreated={handleCreated}
+          onReveal={handleReveal}
+          onRefresh={tree.reload}
+          refreshing={tree.pending()}
+          parent={creationParent()}
+          port={props.port}
+          session={props.session}
+          visible={props.visible === true}
+        />
         <label class="ui-field mx-2 mb-2 gap-2 rounded-control px-2 text-muted">
           <SIcon name="search" />
           <input
@@ -74,55 +132,17 @@ export const SFileTree = (props: SFileTreeProps) => {
           aria-busy={tree.pending()}
           class="min-h-0 flex-1 overflow-auto px-2 pb-2"
           role="tree"
+          onContextMenu={actions.handleBackground}
         >
           <For each={tree.paths()}>
             {(path) => (
-              <button
-                aria-label={tree.node(path)?.name}
-                aria-disabled={!openable(path)}
-                aria-expanded={
-                  tree.node(path)?.kind === 'directory' ? tree.isExpanded(path) : undefined
-                }
-                aria-level={path.split('/').length}
-                aria-selected={
-                  tree.node(path)?.kind === 'file' ? path === tree.currentPath() : undefined
-                }
-                class="ui-transition relative flex h-7 w-full items-center gap-2 rounded-row pr-2 text-left
-                    [padding-left:calc(var(--tree-indent)+8px)]
-                  hover:bg-hover aria-selected:bg-hover aria-disabled:cursor-default aria-disabled:text-muted
-                    focus-visible:bg-hover focus-visible:outline-none"
-                data-tree-path={path}
-                onClick={() => {
-                  tree.focus(path)
-                  tree.activate(path)
-                }}
-                onFocus={() => tree.focus(path)}
-                onContextMenu={(event) => menu.handleContextMenu(event, path)}
-                onKeyDown={(event) => handleKeyboard(event, path)}
-                role="treeitem"
-                style={{'--tree-indent': `${(path.split('/').length - 1) * INDENT_WIDTH}px`}}
-                tabindex={tree.activePath() === path ? 0 : -1}
-                title={openable(path) ? path : `${path} · 아직 지원하지 않는 파일 형식`}
-                type="button"
-              >
-                <span
-                  aria-hidden="true"
-                  class="pointer-events-none absolute inset-y-0 left-2 w-[var(--tree-indent)]
-                  tree-guides"
-                />
-                <Show
-                  when={tree.node(path)?.kind === 'directory'}
-                  fallback={<SFileIcon path={path} />}
-                >
-                  <span
-                    class="flex h-4 w-4 shrink-0 items-center justify-center text-muted"
-                    classList={{'rotate-90': tree.isExpanded(path)}}
-                  >
-                    <SIcon name="forward" />
-                  </span>
-                </Show>
-                <span class="min-w-0 flex-1 truncate">{tree.node(path)?.name}</span>
-              </button>
+              <SFileTreeItem
+                path={path}
+                tree={tree}
+                onContextMenu={(event) => actions.handleContextMenu(event, path)}
+                cutPath={actions.cutPath()}
+                onKeyboard={(event) => handleKeyboard(event, path)}
+              />
             )}
           </For>
           <Show when={tree.paths().length === 0}>
@@ -133,21 +153,16 @@ export const SFileTree = (props: SFileTreeProps) => {
         </div>
         <Show when={tree.truncated()}>
           <p class="m-0 border-t border-divider p-2 text-xs text-muted" role="status">
-            파일 10,000개까지 표시합니다.
+            파일과 폴더 10,000개까지 표시합니다.
           </p>
         </Show>
-        <Show when={menu.context()} keyed>
-          {(context) => (
-            <SFileTreeContextMenu
-              x={context.x}
-              y={context.y}
-              selection={context.selection}
-              onShare={props.onShare}
-              onCopy={props.onCopy}
-              onClose={menu.close}
-            />
-          )}
-        </Show>
+        <SFileTreeActions
+          actions={actions}
+          workspace={props.session?.workspace}
+          onCopy={props.onCopy}
+          onShare={props.onShare}
+          onClose={() => focusTreeItem(element(), tree.activePath())}
+        />
       </aside>
     </Show>
   )

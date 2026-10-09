@@ -1,14 +1,8 @@
 import {type Accessor, batch, createMemo, createSignal} from 'solid-js'
-import {z} from 'zod'
-import {
-  type CodeDocument,
-  type CodeSource,
-  documentSchema,
-  type ViewerSession,
-} from '../shared/contracts'
+import {type CodeDocument, type CodeSource, type ViewerSession} from '../shared/contracts'
 import {isNavigableFile} from '../shared/is-navigable-file'
 import {isEditableFile} from '../shared/is-editable-file'
-import {callViewerTool} from './call-viewer-tool'
+import {saveCodeSource} from './save-code-source'
 import {errorMessage} from './error-message'
 import type {ViewerPort} from './types'
 import {useUnsavedChanges} from './use-unsaved-changes'
@@ -18,17 +12,60 @@ interface Draft {
   readonly base: CodeDocument
   readonly source: string
   readonly session: ViewerSession
+  readonly deleted: boolean
 }
 interface EditingOptions {
   readonly port: ViewerPort
   readonly session: Accessor<ViewerSession | null>
   readonly onSaved?: (value: ViewerSession) => void
+  readonly onDiscardDeleted?: (value: ViewerSession) => void
 }
 const keyOf = (value: ViewerSession): string =>
   JSON.stringify([value.workspace, value.document.location.path])
-const changed = (draft: Draft): boolean => draft.source !== draft.base.source
+const changed = (draft: Draft): boolean => draft.deleted || draft.source !== draft.base.source
+const editDraft = (
+  drafts: Readonly<Record<string, Draft>>,
+  value: ViewerSession,
+  source: string,
+) => {
+  const key = keyOf(value)
+  return {
+    ...drafts,
+    [key]: {
+      base: drafts[key]?.base ?? value.document,
+      deleted: drafts[key]?.deleted ?? false,
+      session: value,
+      source,
+    },
+  }
+}
 const omitDraft = (drafts: Readonly<Record<string, Draft>>, key: string) =>
   Object.fromEntries(Object.entries(drafts).filter(([entry]) => entry !== key))
+const deletedDraft = (drafts: Readonly<Record<string, Draft>>, value: ViewerSession) => {
+  const key = keyOf(value)
+  const draft = drafts[key]
+  return draft?.deleted
+    ? drafts
+    : {
+        ...drafts,
+        [key]: {
+          base: draft?.base ?? value.document,
+          deleted: true,
+          session: value,
+          source: draft?.source ?? value.document.source,
+        },
+      }
+}
+const acceptDraft = (drafts: Readonly<Record<string, Draft>>, value: ViewerSession) => {
+  const key = keyOf(value)
+  const draft = drafts[key]
+  if (draft === undefined) {
+    return drafts
+  }
+  return draft.source === draft.base.source
+    ? omitDraft(drafts, key)
+    : {...drafts, [key]: {...draft, deleted: false}}
+}
 const analysisSources = (
   entries: readonly (readonly [string, Draft])[],
   workspace: string | undefined,
@@ -57,22 +94,13 @@ export const useCodeEditing = (options: EditingOptions) => {
     Object.entries(drafts()).filter(([, value]) => changed(value)),
   )
   const dirty = (): boolean => current() !== undefined && changed(current()!)
-  const source = (): string => current()?.source ?? options.session()?.document.source ?? ''
   const editable = (): boolean => isEditableFile(options.session()?.document.location.path ?? '')
   const change = (source: string): void => {
     const value = options.session()
     if (value === null || !editable()) {
       return
     }
-    const key = keyOf(value)
-    setDrafts((previous) => ({
-      ...previous,
-      [key]: {
-        base: previous[key]?.base ?? value.document,
-        session: value,
-        source,
-      },
-    }))
+    setDrafts((previous) => editDraft(previous, value, source))
   }
   const saveDraft = async (key: string): Promise<boolean> => {
     const draft = drafts()[key]
@@ -82,22 +110,26 @@ export const useCodeEditing = (options: EditingOptions) => {
     setSaving(true)
     setFeedback(null)
     try {
-      const result = await callViewerTool({
+      const result = await saveCodeSource({
         input: {
           path: draft.base.location.path,
-          revision: draft.base.revision,
+          revision: draft.deleted ? null : draft.base.revision,
           session: draft.session.session,
           source: draft.source,
         },
-        name: 'code.write',
+        onMissing: () => markDeleted(draft.session),
         port: options.port,
-        schema: z.object({document: documentSchema}),
       })
       const session = {...draft.session, document: result.document}
       batch(() => {
         setDrafts((previous) => ({
           ...previous,
-          [key]: {base: result.document, session, source: previous[key]?.source ?? draft.source},
+          [key]: {
+            base: result.document,
+            deleted: false,
+            session,
+            source: previous[key]?.source ?? draft.source,
+          },
         }))
         options.onSaved?.(session)
         setFeedback('저장했습니다.')
@@ -131,16 +163,24 @@ export const useCodeEditing = (options: EditingOptions) => {
     const value = options.session()
     if (value !== null && !saving()) {
       const key = keyOf(value)
-      setDrafts((previous) => omitDraft(previous, key))
-      setFeedback(null)
+      const deleted = drafts()[key]?.deleted === true
+      batch(() => {
+        setDrafts((previous) => omitDraft(previous, key))
+        setFeedback(null)
+        if (deleted) {
+          options.onDiscardDeleted?.(value)
+        }
+      })
     }
   }
   const accept = (value: ViewerSession): void => {
-    const key = keyOf(value)
-    const draft = drafts()[key]
-    if (draft !== undefined && !changed(draft)) {
-      setDrafts((previous) => omitDraft(previous, key))
+    setDrafts((previous) => acceptDraft(previous, value))
+  }
+  const markDeleted = (value: ViewerSession): void => {
+    if (!isEditableFile(value.document.location.path)) {
+      return
     }
+    setDrafts((previous) => deletedDraft(previous, value))
   }
   const protection = useUnsavedChanges({
     discardAll: () => setDrafts({}),
@@ -157,12 +197,14 @@ export const useCodeEditing = (options: EditingOptions) => {
     accept,
     change,
     ...protection,
+    deleted: () => current()?.deleted ?? false,
     dirty,
     discard,
     dismissFeedback: () => setFeedback(null),
     editable,
     enabled,
     feedback,
+    markDeleted,
     pendingFiles: () => pendingDrafts().map(([, value]) => value.base.location.path),
     revision: () => current()?.base.revision ?? options.session()?.document.revision ?? '',
     save,
@@ -174,14 +216,14 @@ export const useCodeEditing = (options: EditingOptions) => {
         : shareCodeChanges({
             onError: (error) => setFeedback(errorMessage(error)),
             onNotice: setFeedback,
-            original: draft.base.source,
+            original: draft.deleted ? '' : draft.base.source,
             port: options.port,
             revision: draft.base.revision,
             session: draft.session,
             source: draft.source,
           })
     },
-    source,
+    source: (): string => current()?.source ?? options.session()?.document.source ?? '',
     sources: () => analysisSources(pendingDrafts(), options.session()?.workspace),
     toggle: () => setEnabled((previous) => !previous),
   }

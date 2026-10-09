@@ -1,3 +1,4 @@
+import {resolveNavigation} from './resolve-navigation'
 import {MAX_CODE_BYTES, MAX_DRAFT_FILES} from '../shared/editing-limits'
 import {McpServer} from '@modelcontextprotocol/sdk/server/mcp.js'
 import {registerAppResource, RESOURCE_MIME_TYPE} from '@modelcontextprotocol/ext-apps/server'
@@ -8,9 +9,12 @@ import {codeSourceSchema, failure, type Result, success} from '../shared/contrac
 import {createSessions} from './create-sessions'
 import {toolResult} from './tool-result'
 import {FILE_EXTENSIONS} from '../shared/file-formats'
+import {createWorkspaceEvents} from './create-workspace-events'
+import {registerFileOperations} from './register-file-operations'
 
 const appOnly = {ui: {visibility: ['app']}}
 const VIEWER_URI = 'ui://codex-code-viewer/app.html'
+const MAX_ENTRY_NAME_LENGTH = 255
 const annotations = {destructiveHint: false, openWorldHint: false, readOnlyHint: true}
 
 interface ServerOptions {
@@ -92,17 +96,33 @@ const registerEditing = (
   withSession: ReturnType<typeof createSessions>['withSession'],
 ): void => {
   server.registerTool(
+    'code.create',
+    {
+      _meta: appOnly,
+      annotations: {destructiveHint: false, openWorldHint: false, readOnlyHint: false},
+      inputSchema: {
+        kind: z.enum(['file', 'directory']),
+        name: z.string().min(1).max(MAX_ENTRY_NAME_LENGTH),
+        parent: z.string(),
+        session: z.string(),
+      },
+      title: 'Create an empty workspace file or folder',
+    },
+    async ({session, parent, name, kind}) =>
+      withSession(session, (workspace) => workspace.create(parent, name, kind)),
+  )
+  server.registerTool(
     'code.write',
     {
       _meta: appOnly,
       annotations: {destructiveHint: true, openWorldHint: false, readOnlyHint: false},
       inputSchema: {
         path: z.string(),
-        revision: z.string(),
+        revision: z.string().nullable(),
         session: z.string(),
         source: z.string().max(MAX_CODE_BYTES),
       },
-      title: 'Save an existing editable text file',
+      title: 'Save or recreate an editable text file',
     },
     async ({session, path, source, revision}) =>
       withSession(session, (workspace) => {
@@ -140,11 +160,14 @@ const registerNavigation = (
         if (current.value.revision !== revision) {
           return failure('stale-document')
         }
-        const locations =
-          navigation === 'path'
-            ? await workspace.followPath(path, offset, sources)
-            : await workspace.definitions(path, offset, sources)
-        return locations.ok ? success({locations: locations.value}) : locations
+        return resolveNavigation({
+          document: current.value,
+          navigation,
+          offset,
+          path,
+          sources,
+          workspace,
+        })
       }),
   )
 }
@@ -155,7 +178,11 @@ export const createServer = (html: string, options: ServerOptions = {}) => {
     title: 'Code Viewer',
     version: manifest.version,
   })
-  const sessions = createSessions()
+  const updates = createWorkspaceEvents()
+  const sessions = createSessions({
+    onChange: (session) => updates.changed(session),
+    onClose: (session) => updates.closed(session),
+  })
   const {open, withSession} = sessions
   const appMetadata = {ui: {resourceUri: VIEWER_URI}}
   const pathInput = {path: z.string(), session: z.string()}
@@ -252,13 +279,30 @@ export const createServer = (html: string, options: ServerOptions = {}) => {
       return {content: [], structuredContent: {closed: true}}
     },
   )
+  server.registerTool(
+    'code.watch',
+    {
+      _meta: appOnly,
+      annotations,
+      inputSchema: {session: z.string()},
+      title: 'Subscribe to workspace changes',
+    },
+    async ({session}) =>
+      withSession(session, async () => success({url: await updates.watch(session)})),
+  )
   registerTree(server, withSession)
   registerEditing(server, withSession)
+  registerFileOperations(server, withSession)
   registerMedia(server, withSession)
   registerAppResource(server, 'code-viewer', VIEWER_URI, {}, async () => ({
     contents: [
       {
-        _meta: {ui: {csp: {connectDomains: [], resourceDomains: ['blob:']}, prefersBorder: false}},
+        _meta: {
+          ui: {
+            csp: {connectDomains: ['http://127.0.0.1:*'], resourceDomains: ['blob:']},
+            prefersBorder: false,
+          },
+        },
         mimeType: RESOURCE_MIME_TYPE,
         text: html,
         uri: VIEWER_URI,
@@ -267,6 +311,7 @@ export const createServer = (html: string, options: ServerOptions = {}) => {
   }))
   const dispose = async () => {
     sessions.dispose()
+    await updates.dispose()
     await server.close()
   }
   return {dispose, server}

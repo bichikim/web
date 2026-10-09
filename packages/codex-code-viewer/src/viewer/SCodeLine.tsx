@@ -59,7 +59,7 @@ export const SCodeLine = (props: SCodeLineProps) => (
             </span>
           ) : (
             <a
-              aria-label={`${token.navigation === 'path' ? '파일' : '정의'}로 이동: ${token.text}`}
+              aria-label={`${token.navigation === 'path' ? '파일로 이동' : '정의·사용처 찾기'}: ${token.text}`}
               class={`${tokenClasses[token.kind]} ${linkClasses}`}
               data-code-offset={token.offset}
               data-offset={token.offset}

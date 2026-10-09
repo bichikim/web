@@ -104,6 +104,10 @@ export const SCodeViewer = (props: SCodeViewerProps) => {
                 onError={viewer.reportError}
                 onShare={viewer.sharePath}
                 onCopy={viewer.copyPath}
+                onMutation={viewer.fileMutation}
+                pendingPaths={viewer.editing.pendingFiles()}
+                saving={viewer.editing.saving()}
+                revision={viewer.workspaceRevision()}
               />
             }
           >

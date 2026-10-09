@@ -1,15 +1,23 @@
-import {createSignal, For, onCleanup, onMount, Show} from 'solid-js'
+import {createMemo, createSignal, For, onCleanup, onMount, Show} from 'solid-js'
 import type {ContextMenuCloseOptions, ContextMenuItem} from './types'
+import {SContextMenuItem} from './SContextMenuItem'
 
 interface SContextMenuProps {
   x: number
   y: number
   items: readonly ContextMenuItem[]
   label?: string
+  title?: string
+  emptyMessage?: string
+  maxHeight?: number
+  width?: number
   onClose?: (options?: ContextMenuCloseOptions) => void
 }
 
 export const SContextMenu = (props: SContextMenuProps) => {
+  const groups = createMemo(() =>
+    [...Map.groupBy(props.items, (item) => item.group)].map(([label, items]) => ({items, label})),
+  )
   const [element, setElement] = createSignal<HTMLDivElement | null>(null)
   const [size, setSize] = createSignal({height: 0, width: 0})
   const [keyboard, setKeyboard] = createSignal(false)
@@ -24,7 +32,8 @@ export const SContextMenu = (props: SContextMenuProps) => {
     }
     menu.showPopover()
     measure()
-    menu.querySelector<HTMLButtonElement>('button:not(:disabled)')?.focus({preventScroll: true})
+    const initial = menu.querySelector<HTMLButtonElement>('button:not(:disabled)') ?? menu
+    initial.focus({preventScroll: true})
     if (typeof ResizeObserver !== 'undefined') {
       const observer = new ResizeObserver(measure)
       observer.observe(menu, {box: 'border-box'})
@@ -76,7 +85,8 @@ export const SContextMenu = (props: SContextMenuProps) => {
   return (
     <div
       aria-label={props.label ?? '작업'}
-      class="fixed inset-auto m-0 w-52 max-w-[calc(100vw-16px)] max-h-[calc(100dvh-16px)]
+      class="fixed inset-auto m-0 w-[var(--menu-preferred-width)] max-w-[calc(100vw-16px)]
+        max-h-[min(var(--menu-limit),calc(100dvh-16px))]
         overflow-y-auto rounded-control border border-divider
         bg-canvas p-1 font-sans text-foreground shadow-panel
         left-[clamp(8px,var(--menu-x),calc(100vw-var(--menu-width)-8px))]
@@ -92,39 +102,42 @@ export const SContextMenu = (props: SContextMenuProps) => {
       popover="auto"
       ref={setElement}
       role="menu"
+      tabindex="-1"
       style={{
         '--menu-height': `${size().height}px`,
+        '--menu-limit': props.maxHeight === undefined ? '100dvh' : `${props.maxHeight}px`,
+        '--menu-preferred-width': props.width === undefined ? '13rem' : `${props.width}px`,
         '--menu-width': `${size().width}px`,
         '--menu-x': `${props.x}px`,
         '--menu-y': `${props.y}px`,
       }}
     >
-      <For each={props.items}>
-        {(item) => (
-          <>
-            <Show when={item.separatorBefore}>
-              <div
-                role="separator"
-                aria-orientation="horizontal"
-                class="mx-2 my-1 border-t border-divider"
-              />
+      <Show when={props.title}>
+        <p class="m-0 border-b border-divider px-3 py-2 text-xs font-semibold text-muted">
+          {props.title}
+        </p>
+      </Show>
+      <Show when={props.items.length === 0 && props.emptyMessage}>
+        <p class="m-0 px-3 py-3 text-sm text-muted">{props.emptyMessage}</p>
+      </Show>
+      <For each={groups()}>
+        {(group) => (
+          <div
+            role={group.label === undefined ? 'presentation' : 'group'}
+            aria-label={
+              group.label === undefined ? undefined : `${group.label} · ${group.items.length}개`
+            }
+          >
+            <Show when={group.label}>
+              <p class="m-0 flex items-start justify-between gap-3 px-3 pt-3 pb-1 text-xs font-semibold">
+                <span class="min-w-0 [overflow-wrap:anywhere]">{group.label}</span>
+                <span class="shrink-0 font-normal text-muted">{group.items.length}개</span>
+              </p>
             </Show>
-            <button
-              class="ui-transition flex w-full items-center justify-between gap-3 rounded-row px-3 py-2
-              text-left text-sm outline-none enabled:hover:bg-hover enabled:active:bg-pressed"
-              classList={{'focus:bg-hover': keyboard(), 'ui-focus': keyboard()}}
-              disabled={item.onSelect === undefined}
-              onClick={() => invoke(item)}
-              role="menuitem"
-              tabindex="-1"
-              type="button"
-            >
-              {item.label}
-              <Show when={item.shortcut}>
-                <span class="text-xs text-muted">{item.shortcut}</span>
-              </Show>
-            </button>
-          </>
+            <For each={group.items}>
+              {(item) => <SContextMenuItem item={item} keyboard={keyboard()} onSelect={invoke} />}
+            </For>
+          </div>
         )}
       </For>
     </div>

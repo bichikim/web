@@ -3,6 +3,7 @@ import {tmpdir} from 'node:os'
 import {join} from 'node:path'
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 import {createWorkspace} from '../create-workspace'
+import {resolveNavigation} from '../resolve-navigation'
 
 describe('createWorkspace embedded Rust navigation', () => {
   let root: string
@@ -26,6 +27,34 @@ describe('createWorkspace embedded Rust navigation', () => {
     rmSync(root, {force: true, recursive: true})
   })
 
+  it('should find a Rust function usage across modules without a toolchain', async () => {
+    write('main.rs', 'mod helper;\nfn main() { helper::answer(); }')
+    write('helper.rs', 'pub fn answer() {}')
+    const document = workspace.read('helper.rs')
+    expect(document.ok).toBe(true)
+    if (document.ok) {
+      expect(
+        await resolveNavigation({
+          document: document.value,
+          navigation: 'definition',
+          offset: 9,
+          path: 'helper.rs',
+          workspace,
+        }),
+      ).toMatchObject({
+        ok: true,
+        value: {
+          kind: 'references',
+          locations: expect.arrayContaining([expect.objectContaining({line: 2, path: 'main.rs'})]),
+        },
+      })
+    }
+
+    expect(await workspace.references('helper.rs', 7)).toMatchObject({
+      ok: true,
+      value: expect.arrayContaining([expect.objectContaining({line: 2, path: 'main.rs'})]),
+    })
+  })
   it('should follow modules, imports and inferred methods without a Rust toolchain', async () => {
     const main =
       'mod helper;\nuse helper::Item;\nfn main() { let item = Item {}; item.answer(); }\n'

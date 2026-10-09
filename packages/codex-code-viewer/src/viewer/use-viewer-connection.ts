@@ -1,18 +1,20 @@
 import {type Accessor, onCleanup} from 'solid-js'
 import type {ViewerConnection} from '../shared/contracts'
 import type {ViewerPort} from './types'
+import {useWorkspaceUpdates} from './use-workspace-updates'
 import {createPendingTasks} from './create-pending-tasks'
 
 interface ConnectionOptions {
   port: ViewerPort
   receive: (session: ViewerConnection) => void
-  refresh: () => void
+  refresh: () => Promise<void>
   report: (error: unknown) => void
   session: Accessor<ViewerConnection | null>
+  blocked?: Accessor<boolean>
   beforeClose?: () => Promise<boolean>
 }
 
-export const useViewerConnection = (connection: ConnectionOptions): void => {
+export const useViewerConnection = (connection: ConnectionOptions): Accessor<number> => {
   let disposed = false
   let disposePort: (() => void) | null = null
   let released = false
@@ -65,7 +67,15 @@ export const useViewerConnection = (connection: ConnectionOptions): void => {
       }
     })
     .catch(connection.report)
+  const revision = useWorkspaceUpdates({
+    blocked: () => disposed || (connection.blocked?.() ?? false),
+    port: connection.port,
+    refresh: connection.refresh,
+    report: connection.report,
+    session: connection.session,
+  })
   onCleanup(() => {
     teardown().then(finish).catch(connection.report)
   })
+  return revision
 }

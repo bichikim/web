@@ -1,5 +1,10 @@
 import type {CallToolResult} from '@modelcontextprotocol/sdk/types.js'
-import type {CodeLocation, ViewerConnection} from '../shared/contracts'
+import type {
+  CodeLocation,
+  NavigationLocation,
+  ViewerConnection,
+  WorkspaceEntry,
+} from '../shared/contracts'
 
 export interface CodeSelection extends CodeLocation {
   endLine: number
@@ -27,6 +32,11 @@ export interface WorkspaceSelection {
   readonly kind: 'file' | 'directory'
   readonly path: string
 }
+export interface FileMutation {
+  readonly action: 'copy' | 'cut' | 'delete' | 'rename'
+  readonly source: string
+  readonly entry: WorkspaceEntry
+}
 
 export interface CodeChanges {
   readonly kind: 'changes'
@@ -38,6 +48,8 @@ export interface CodeChanges {
 export type ViewerContext = CodeSelection | CodeSnippet | WorkspaceSelection | CodeChanges
 
 export interface ContextMenuItem {
+  readonly group?: string
+  readonly description?: string
   readonly label: string
   readonly separatorBefore?: boolean
   readonly shortcut?: string
@@ -56,6 +68,7 @@ export interface NavigationOptions {
 }
 
 export interface ViewerPort {
+  watch?(session: string, receive: () => void): Promise<() => Promise<void>>
   call(name: string, arguments_: Record<string, unknown>): Promise<CallToolResult>
   context(selection: ViewerContext): Promise<void>
   location?(location: ViewerFileLocation): Promise<void>
@@ -70,4 +83,14 @@ export interface ViewerPort {
 export interface ViewerFileLocation {
   readonly path: string
   readonly workspace: string
+}
+
+export interface NavigationPoint {
+  readonly x: number
+  readonly y: number
+}
+export interface ReferenceChoices {
+  readonly label: string
+  readonly locations: readonly NavigationLocation[]
+  readonly point: NavigationPoint
 }

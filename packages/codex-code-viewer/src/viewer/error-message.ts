@@ -1,12 +1,22 @@
 import {errorSchema, type ViewerError} from '../shared/contracts'
 
 const messages: Record<ViewerError['code'], string> = {
+  'already-exists': '같은 이름의 파일이나 폴더가 이미 있습니다. 다른 이름을 입력해 주세요.',
+  'create-failed': '만들지 못했습니다. 대상 폴더와 파일 권한을 확인해 주세요.',
+  'entry-changed': '파일이나 폴더가 변경되었습니다. 다시 선택한 뒤 작업해 주세요.',
+  'file-operation-failed':
+    '파일 작업을 완료하지 못했습니다. 목록을 확인하고 파일 권한과 남은 공간을 확인해 주세요.',
   'host-path-missing':
     'Codex가 파일 경로를 전달하지 않았습니다. code.open 도구로 파일을 열어 주세요.',
+  'invalid-destination': '이 위치에 붙여넣을 수 없습니다. 다른 폴더를 선택해 주세요.',
+  'invalid-name':
+    '파일이나 폴더 이름을 확인해 주세요. 경로 구분자와 숨김·생성 폴더 이름은 사용할 수 없습니다.',
   'invalid-position': '이 위치에서는 이동할 대상을 찾을 수 없습니다.',
   'media-too-large': '128 MiB보다 큰 문서·이미지·영상·음악은 이 뷰어에서 열 수 없습니다.',
   'not-found': '파일을 찾을 수 없습니다.',
+  'operation-too-large': '파일과 폴더가 10,000개를 넘는 항목은 한 번에 처리할 수 없습니다.',
   'outside-workspace': '작업 폴더 밖의 파일은 열 수 없습니다.',
+  'protected-entry': '보호된 경로나 심볼릭 링크가 포함되어 이 작업을 수행할 수 없습니다.',
   'python-analysis-failed':
     '파이썬 정의를 분석하지 못했습니다. 프로젝트 설정을 확인하고 뷰어를 다시 열어 주세요.',
   'python-analyzer-unavailable':

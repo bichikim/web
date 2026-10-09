@@ -21,7 +21,7 @@ export const createLanguageService = (
           typescript.sys,
           dirname(configuration),
         ).options
-  const files = new Set([path])
+  let files = new Set([path])
   let version = 0
   const service = typescript.createLanguageService({
     ...typescript.sys,
@@ -57,6 +57,13 @@ export const createLanguageService = (
       return service.getDefinitionAtPosition(file, offset) ?? []
     },
     dispose: () => service.dispose(),
+    references: (file: string, offset: number, projectFiles: readonly string[]) => {
+      files = new Set([resolve(file), ...projectFiles.map((entry) => resolve(entry))])
+      version += 1
+      return (service.findReferences(file, offset) ?? []).flatMap((symbol) =>
+        symbol.references.filter((reference) => reference.isDefinition !== true),
+      )
+    },
     resolveModule: (file: string, specifier: string) =>
       typescript.resolveModuleName(specifier, file, options, typescript.sys).resolvedModule
         ?.resolvedFileName,
