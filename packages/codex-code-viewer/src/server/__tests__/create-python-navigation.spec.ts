@@ -9,17 +9,17 @@ vi.mock('../create-python-service', () => ({createPythonService: vi.fn()}))
 describe('createPythonNavigation', () => {
   let root: string
   let navigation: ReturnType<typeof createPythonNavigation>
-  const definitions = vi.fn()
+  const lookupSymbols = vi.fn()
   const dispose = vi.fn()
   beforeEach(() => {
     root = realpathSync(mkdtempSync(join(tmpdir(), 'python-navigation-')))
     writeFileSync(join(root, 'main.py'), 'greet()')
     writeFileSync(join(root, 'helper.py'), 'def greet(): pass')
-    definitions.mockResolvedValue({
+    lookupSymbols.mockResolvedValue({
       ok: true,
       value: [{column: 5, line: 1, path: join(root, 'helper.py')}],
     })
-    vi.mocked(createPythonService).mockReturnValue({definitions, dispose})
+    vi.mocked(createPythonService).mockReturnValue({dispose, lookupSymbols})
     navigation = createPythonNavigation(root)
   })
   afterEach(() => {
@@ -29,14 +29,18 @@ describe('createPythonNavigation', () => {
   })
   it('should start lazily, reuse the analyzer and release it without restarting a closed session', async () => {
     expect(createPythonService).not.toHaveBeenCalled()
-    expect(await navigation.definitions(join(root, 'main.py'), 'greet()', 0)).toEqual({
+    expect(
+      await navigation.lookupSymbols(join(root, 'main.py'), 'greet()', 0, 'definition'),
+    ).toEqual({
       ok: true,
       value: [{column: 5, line: 1, path: 'helper.py'}],
     })
-    await navigation.definitions(join(root, 'helper.py'), 'greet()', 0)
+    await navigation.lookupSymbols(join(root, 'helper.py'), 'greet()', 0, 'definition')
     expect(createPythonService).toHaveBeenCalledOnce()
     navigation.dispose()
-    expect(await navigation.definitions(join(root, 'main.py'), 'greet()', 0)).toMatchObject({
+    expect(
+      await navigation.lookupSymbols(join(root, 'main.py'), 'greet()', 0, 'definition'),
+    ).toMatchObject({
       error: {code: 'python-analysis-failed'},
       ok: false,
     })
@@ -44,7 +48,7 @@ describe('createPythonNavigation', () => {
     expect(dispose).toHaveBeenCalledOnce()
   })
   it('should filter unavailable and external destinations before returning workspace-relative locations', async () => {
-    definitions.mockResolvedValue({
+    lookupSymbols.mockResolvedValue({
       ok: true,
       value: [
         {column: 1, line: 1, path: '/outside/module.py'},
@@ -52,7 +56,9 @@ describe('createPythonNavigation', () => {
         {column: 1, line: 1, path: join(root, 'missing.py')},
       ],
     })
-    expect(await navigation.definitions(join(root, 'main.py'), 'greet()', 0)).toEqual({
+    expect(
+      await navigation.lookupSymbols(join(root, 'main.py'), 'greet()', 0, 'definition'),
+    ).toEqual({
       ok: true,
       value: [],
     })
@@ -61,7 +67,9 @@ describe('createPythonNavigation', () => {
     vi.mocked(createPythonService).mockImplementation(() => {
       throw new Error('missing runtime')
     })
-    expect(await navigation.definitions(join(root, 'main.py'), 'greet()', 0)).toMatchObject({
+    expect(
+      await navigation.lookupSymbols(join(root, 'main.py'), 'greet()', 0, 'definition'),
+    ).toMatchObject({
       error: {code: 'python-analyzer-unavailable'},
       ok: false,
     })

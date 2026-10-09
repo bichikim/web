@@ -1,4 +1,4 @@
-import {clampDisplayedPercentage} from 'src/utils/clamp-displayed-percentage'
+import {clampFiniteNumber} from 'src/utils/clamp-finite-number'
 import {PTextarea} from 'src/components/p-textarea/PTextarea'
 import {isNonBlankString} from 'src/utils/is-non-blank-string'
 import {createEffect, createMemo, onCleanup, Show, untrack} from 'solid-js'
@@ -51,13 +51,9 @@ const getStyles = () =>
 
 export function Generation(props: GenerationProps) {
   const studio = useImageGeneration({clearPreviousResultOnGenerate: true})
-  const displayPercentage = createMemo(() => {
-    const percentage = studio.percentage()
-    if (percentage === undefined || !Number.isFinite(percentage)) {
-      return undefined
-    }
-    return clampDisplayedPercentage(percentage)
-  })
+  const displayPercentage = createMemo(() =>
+    clampFiniteNumber(studio.percentage(), 0, MAXIMUM_DISPLAY_PERCENTAGE),
+  )
   studio.setIdea(untrack(() => props.initialIdea ?? ''))
   studio.setStyle('coloredPencil')
   studio.selectRatio('16:9')

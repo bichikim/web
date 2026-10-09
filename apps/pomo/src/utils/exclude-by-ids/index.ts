@@ -1,8 +1,9 @@
-/** Excludes matching IDs while preserving item order, duplicates, and identities. */
-export const excludeByIds = <Item extends {readonly id: string}>(
+/** Excludes items by selected IDs while preserving order, duplicates, and identities. */
+export const excludeByIds = <Item, Id>(
   items: ReadonlyArray<Item>,
-  ids: ReadonlyArray<string>,
+  ids: ReadonlyArray<Id>,
+  getId: (item: Item) => Id,
 ): ReadonlyArray<Item> => {
   const excluded = new Set(ids)
-  return items.filter((item) => !excluded.has(item.id))
+  return items.filter((item) => !excluded.has(getId(item)))
 }

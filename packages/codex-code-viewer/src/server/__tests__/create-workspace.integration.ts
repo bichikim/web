@@ -116,6 +116,67 @@ describe('createWorkspace', () => {
       value: [{line: 3}],
     })
   })
+  it('should navigate unsaved imports and dependency definitions without persisting drafts', () => {
+    const draft = "import {renamed} from '~/extra'\nexport const result = renamed\n"
+    const sources = [
+      {path: 'src/main.ts', source: draft},
+      {path: 'src/extra.ts', source: '\n\nexport const renamed = 7\n'},
+    ]
+    expect(workspace.definitions('src/main.ts', draft.lastIndexOf('renamed'), sources)).toEqual({
+      ok: true,
+      value: [{column: 14, line: 3, path: 'src/extra.ts'}],
+    })
+    expect(workspace.followPath('src/main.ts', draft.indexOf("'~/extra'"), sources)).toEqual({
+      ok: true,
+      value: [{column: 1, line: 1, path: 'src/extra.ts'}],
+    })
+    expect(workspace.read('src/main.ts')).toMatchObject({ok: true, value: {source}})
+    expect(workspace.definitions('src/main.ts', source.lastIndexOf('value'))).toEqual({
+      ok: true,
+      value: [{column: 14, line: 1, path: 'src/answer.ts'}],
+    })
+  })
+
+  it.each(['json', 'jsonc', 'json5'])(
+    'should navigate %s path values from an unsaved document',
+    (extension) => {
+      const path = `src/settings.${extension}`
+      writeFileSync(join(root, path), '{"extends":"./missing.json"}')
+      writeFileSync(join(root, 'src/base.json'), '{"name":"viewer"}')
+      const draft = '{"extends":"./base.json"}'
+      const sources = [{path, source: draft}]
+      expect(workspace.followPath(path, draft.indexOf('./base') + 1, sources)).toMatchObject({
+        ok: true,
+        value: [{column: 1, line: 1, path: 'src/base.json'}],
+      })
+      expect(workspace.read(path)).toMatchObject({
+        ok: true,
+        value: {source: '{"extends":"./missing.json"}'},
+      })
+    },
+  )
+  it('should reject draft overlays outside the workspace', () => {
+    expect(
+      workspace.definitions('src/main.ts', 0, [{path: '../other.ts', source: 'draft'}]),
+    ).toMatchObject({error: {code: 'outside-workspace'}, ok: false})
+  })
+  it('should navigate an unsaved Ruby require path without writing the draft', async () => {
+    writeFileSync(join(root, 'src/main.rb'), "require_relative 'missing'\n")
+    writeFileSync(join(root, 'src/helper.rb'), 'def greet; "Ruby"; end\n')
+    const draft = "require_relative 'helper'\n"
+    expect(
+      await workspace.followPath('src/main.rb', draft.indexOf('helper') + 1, [
+        {path: 'src/main.rb', source: draft},
+      ]),
+    ).toMatchObject({
+      ok: true,
+      value: [{column: 1, line: 1, path: 'src/helper.rb'}],
+    })
+    expect(workspace.read('src/main.rb')).toMatchObject({
+      ok: true,
+      value: {source: "require_relative 'missing'\n"},
+    })
+  })
   it('should reject traversal and symlinks outside the workspace', () => {
     symlinkSync('/etc/hosts', join(root, 'src/outside.ts'))
     expect(workspace.read('../outside.ts')).toMatchObject({

@@ -3,6 +3,7 @@ import {tmpdir} from 'node:os'
 import {join} from 'node:path'
 import {afterEach, beforeEach, describe, expect, it} from 'vitest'
 import {createWorkspace} from '../create-workspace'
+import {resolveNavigation} from '../resolve-navigation'
 
 describe('createWorkspace Ruby navigation', () => {
   let root: string
@@ -18,6 +19,32 @@ describe('createWorkspace Ruby navigation', () => {
     workspace.dispose()
     rmSync(root, {force: true, recursive: true})
   })
+  it('should find a Ruby method usage with Solargraph', async () => {
+    const helper = readFileSync(join(root, 'lib/helpers.rb'), 'utf8')
+    const document = workspace.read('lib/helpers.rb')
+    expect(document.ok).toBe(true)
+    if (document.ok) {
+      expect(
+        await resolveNavigation({
+          document: document.value,
+          navigation: 'definition',
+          offset: helper.indexOf('greet') + 2,
+          path: 'lib/helpers.rb',
+          workspace,
+        }),
+      ).toMatchObject({
+        ok: true,
+        value: {
+          kind: 'references',
+          locations: expect.arrayContaining([expect.objectContaining({path: 'main.rb'})]),
+        },
+      })
+    }
+    expect(await workspace.references('lib/helpers.rb', helper.indexOf('greet'))).toMatchObject({
+      ok: true,
+      value: expect.arrayContaining([expect.objectContaining({path: 'main.rb'})]),
+    })
+  }, 30000)
   it('should resolve require paths, namespaced classes and methods with Solargraph', async () => {
     expect(workspace.read('main.rb')).toMatchObject({ok: true, value: {source}})
     expect(await workspace.followPath('main.rb', source.indexOf('lib/reports/report'))).toEqual({

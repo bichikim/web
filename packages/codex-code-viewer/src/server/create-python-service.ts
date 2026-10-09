@@ -25,6 +25,8 @@ export const createPythonService = (directory: string) => {
     directory,
     failed: 'python-analysis-failed',
     language: 'python',
+    // Pyright discovers unopened workspace files during its first analysis pass.
     unavailable: 'python-analyzer-unavailable',
+    waitForReferenceDiagnostics: true,
   })
 }
