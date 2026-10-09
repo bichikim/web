@@ -1,6 +1,7 @@
 import {defineConfig} from 'vite'
 import solid from 'vite-plugin-solid'
 import unocss from 'unocss/vite'
+import {fileURLToPath} from 'node:url'
 
 export default defineConfig({
   build: {
@@ -9,5 +10,8 @@ export default defineConfig({
     emptyOutDir: false,
     target: 'esnext',
   },
-  plugins: [solid({hot: false}), unocss()],
+  plugins: [
+    unocss({configFile: fileURLToPath(new URL('./uno.config.ts', import.meta.url))}),
+    solid({hot: false}),
+  ],
 })

@@ -16,6 +16,46 @@ const initial: ViewerSession = {
 }
 
 describe('useViewerConnection', () => {
+  it('should keep the session available when host teardown is cancelled and allow a later close', async () => {
+    const decision = Promise.withResolvers<boolean>()
+    const handlers: {teardown?: () => Promise<void>; refresh?: () => void} = {}
+    const refresh = vi.fn()
+    const disposePort = vi.fn()
+    const beforeClose = vi.fn().mockReturnValueOnce(decision.promise).mockResolvedValue(true)
+    const port: ViewerPort = {
+      call: vi.fn(async () => ({content: []})),
+      context: async () => {},
+      start: async (_receive, _report, onRefresh, teardown) => {
+        handlers.refresh = onRefresh
+        handlers.teardown = teardown
+        return disposePort
+      },
+    }
+    const dispose = createRoot((dispose) => {
+      useViewerConnection({
+        beforeClose,
+        port,
+        receive: vi.fn(),
+        refresh,
+        report: vi.fn(),
+        session: () => initial,
+      })
+      return dispose
+    })
+    await Promise.resolve()
+    const closing = handlers.teardown!()
+    const rejected = expect(closing).rejects.toThrow('미저장 변경으로 종료를 취소했습니다.')
+    expect(port.call).not.toHaveBeenCalled()
+    decision.resolve(false)
+    await rejected
+    handlers.refresh!()
+    expect(refresh).toHaveBeenCalledOnce()
+    expect(port.call).not.toHaveBeenCalled()
+    expect(disposePort).not.toHaveBeenCalled()
+    await handlers.teardown!()
+    expect(port.call).toHaveBeenCalledWith('code.close', {session: 'session'})
+    dispose()
+  })
   it('should finish closing the session on host teardown before the transport is unmounted', async () => {
     const closed = Promise.withResolvers<{content: []}>()
     const disposed = Promise.withResolvers<void>()

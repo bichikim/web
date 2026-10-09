@@ -1,14 +1,41 @@
 /** @vitest-environment jsdom */
+import type {CallToolResult} from '@modelcontextprotocol/sdk/types.js'
 import {App} from '@modelcontextprotocol/ext-apps'
 import {afterEach, describe, expect, it, vi} from 'vitest'
 import {createRoot} from 'solid-js'
-import type {CallToolResult} from '@modelcontextprotocol/sdk/types.js'
 import {createHost} from '../create-host'
 import {useViewer} from '../use-viewer'
 
 describe('createHost', () => {
   afterEach(() => vi.restoreAllMocks())
 
+  it('should subscribe to workspace signals through its server tool and close the local event stream', async () => {
+    const events = Object.assign(new EventTarget(), {close: vi.fn()})
+    const source = vi.fn(function source() {
+      return events
+    })
+    vi.stubGlobal('EventSource', source)
+    const call = vi.spyOn(App.prototype, 'callServerTool').mockResolvedValue({
+      content: [],
+      structuredContent: {url: 'http://127.0.0.1:1234/token'},
+    })
+    try {
+      const notify = vi.fn()
+      const stop = await createHost().watch?.('first', notify)
+      events.dispatchEvent(new MessageEvent('message', {data: '0'}))
+      events.dispatchEvent(new MessageEvent('message', {data: '0'}))
+      events.dispatchEvent(new MessageEvent('message', {data: '1'}))
+      expect(notify).toHaveBeenCalledTimes(2)
+      expect(source).toHaveBeenCalledWith('http://127.0.0.1:1234/token')
+      expect(call).toHaveBeenCalledWith({arguments: {session: 'first'}, name: 'code.watch'})
+      await stop?.()
+      expect(events.close).toHaveBeenCalledOnce()
+      events.dispatchEvent(new MessageEvent('message', {data: '2'}))
+      expect(notify).toHaveBeenCalledTimes(2)
+    } finally {
+      vi.unstubAllGlobals()
+    }
+  })
   it('should await the consumer cleanup when the host requests teardown', async () => {
     vi.spyOn(App.prototype, 'connect').mockResolvedValue()
     vi.spyOn(App.prototype, 'close').mockResolvedValue()
@@ -70,6 +97,29 @@ describe('createHost', () => {
         },
         {text: 'The user selected the folder "/project/src" in Code Viewer.', type: 'text'},
         {text: 'The user selected /project/src/main.ts:5:3-5:7 in Code Viewer.', type: 'text'},
+      ],
+    })
+  })
+
+  it('should append the actual draft patch and baseline to existing pending chat context', async () => {
+    const update = vi.spyOn(App.prototype, 'updateModelContext').mockResolvedValue({})
+    const port = createHost()
+    await port.context({kind: 'file', path: '/project/helper.ts'})
+    const patch = '--- src/main.ts\n+++ src/main.ts\n@@ -1 +1 @@\n-before\n+after\n'
+    await port.context({kind: 'changes', patch, path: '/project/src/main.ts', revision: 'baseline'})
+    expect(update).toHaveBeenLastCalledWith({
+      content: [
+        {text: 'The user selected the file "/project/helper.ts" in Code Viewer.', type: 'text'},
+        {
+          text: [
+            'The user attached unsaved changes to "/project/src/main.ts" in Code Viewer.',
+            'Base revision (last read or saved): "baseline".',
+            'This is a draft snapshot, not a disk save.',
+            '',
+            patch,
+          ].join('\n'),
+          type: 'text',
+        },
       ],
     })
   })

@@ -51,6 +51,7 @@ export default defineConfig({
           --viewer-tree-hover: color-mix(in srgb, var(--viewer-tree-icon) 16%, var(--viewer-canvas));
           --viewer-panel-shadow: 0 2px 4px -1px rgb(0 0 0 / 0.08);
           --viewer-selection: #ecf2ff;
+          --viewer-code-selection: color-mix(in srgb, var(--viewer-accent) 24%, var(--viewer-canvas));
           --viewer-search: #fff0b5;
           --viewer-accent: #0169cc;
           --viewer-comment: #596b60;
@@ -92,7 +93,7 @@ export default defineConfig({
       warn: true,
     }),
   ],
-  safelist: ['border-0', 'h-screen', 'ui-tree-toggle', 'w-full'],
+  safelist: ['border-0', 'h-screen', 'ui-editor-link', 'ui-tree-toggle', 'w-full'],
   shortcuts: {
     'tree-guides': [
       '[background-image:repeating-linear-gradient(to_right,',
@@ -104,8 +105,45 @@ export default defineConfig({
       'border border-divider bg-canvas px-3 py-2 text-sm font-medium shadow-control',
       'enabled:hover:bg-control-hover enabled:hover:border-hover-border enabled:active:bg-control-pressed',
     ].join(' '),
+    'ui-code-editor': [
+      'min-h-0 min-w-0',
+      'flex-1 overflow-hidden [&_.cm-editor]:h-full',
+      '[&_.cm-editor_.cm-scroller]:ui-code-text [&_.cm-scroller]:overflow-auto',
+      '[&_.cm-editor_.cm-content]:pt-0 [&_.cm-editor_.cm-content]:pb-4',
+      '[&_.cm-line]:pl-4 [&_.cm-line]:pr-6 [&_.cm-gutters]:bg-surface',
+      '[&_.cm-editor_.cm-gutters]:border-r-0 [&_.cm-lineNumbers]:w-12',
+      '[&_.cm-lineNumbers_.cm-gutterElement]:ui-code-gutter',
+      '[&_.cm-gutters]:text-muted [&_.cm-gutters]:border-divider [&_.cm-activeLine]:bg-selection',
+      '[&_.cm-activeLineGutter]:bg-selection [&_.cm-activeLineGutter]:text-foreground',
+      '[&_.cm-editor:has(.cm-selectionBackground)_.cm-activeLine]:bg-transparent',
+      '[&_.cm-cursor]:border-foreground [&_.cm-focused]:outline-none',
+      '[&_[data-navigation-modifier=true]_.ui-editor-link]:cursor-pointer',
+      '[&_.cm-editor_.cm-selectionBackground]:bg-code-selection',
+      '[&_.cm-editor.cm-focused>.cm-scroller>.cm-selectionLayer_.cm-selectionBackground]:bg-code-selection',
+      '[&_.tok-keyword]:text-keyword [&_.tok-string]:text-string',
+      '[&_.tok-bool]:text-keyword [&_.tok-atom]:text-keyword',
+      '[&[data-language=html]_.tok-typeName]:text-keyword [&[data-language=html]_.tok-propertyName]:text-keyword',
+      '[&[data-language=html]_.tok-meta]:text-comment',
+      '[&[data-language=yaml]_.tok-propertyName]:text-keyword',
+      '[&[data-language=toml]_.tok-propertyName]:text-keyword',
+      '[&[data-language=ini]_.tok-propertyName]:text-keyword',
+      '[&[data-language=properties]_.tok-propertyName]:text-keyword',
+      '[&_.tok-content]:text-string [&_.tok-heading]:text-keyword',
+      ...['css', 'scss', 'sass', 'less', 'xml', 'vue', 'svelte', 'astro'].flatMap((language) => [
+        `[&[data-language=${language}]_.tok-typeName]:text-keyword`,
+        `[&[data-language=${language}]_.tok-propertyName]:text-keyword`,
+        `[&[data-language=${language}]_.tok-meta]:text-comment`,
+      ]),
+      '[&_.tok-comment]:text-comment [&_.tok-number]:text-number [&_.cm-search-match]:bg-search',
+      '[&_.cm-search-active]:outline [&_.cm-search-active]:outline-accent',
+    ].join(' '),
+    'ui-code-gutter': 'w-12 pl-0 pr-3',
+    'ui-code-text': 'font-mono text-[13px] leading-6 [tab-size:2]',
     'ui-document-button': 'ui-button ui-document-control py-1',
     'ui-document-control': 'h-[calc(var(--font-text-sm-line-height,20px)_+_10px)]',
+    'ui-editor-link':
+      'cursor-text decoration-accent decoration-dotted underline-offset-4 hover:underline',
+    'ui-entry-dialog': 'ui-unsaved-dialog w-[min(360px,90vw)]',
     'ui-field': [
       'ui-transition flex min-w-0 items-center gap-2 rounded-field border border-divider',
       'bg-canvas px-3 shadow-control',
@@ -146,6 +184,10 @@ export default defineConfig({
       'aria-[expanded=true]:enabled:hover:bg-tree-hover aria-[expanded=true]:enabled:hover:text-tree-icon',
       'aria-[expanded=true]:enabled:active:bg-tree-hover',
     ].join(' '),
+    'ui-unsaved-dialog': [
+      'm-auto max-w-[min(480px,90vw)] rounded-panel border border-divider bg-canvas',
+      'p-6 text-foreground shadow-toast backdrop:bg-black/30',
+    ].join(' '),
   },
   theme: {
     animation: {
@@ -176,6 +218,7 @@ export default defineConfig({
       'action-pressed': 'var(--viewer-action-pressed)',
       'action-text': 'var(--color-text-inverse, var(--viewer-background))',
       canvas: 'var(--color-background-primary, var(--viewer-background))',
+      'code-selection': 'var(--viewer-code-selection)',
       comment: 'var(--viewer-comment)',
       'control-hover': 'var(--viewer-field-hover)',
       'control-pressed': 'var(--viewer-field-pressed)',
