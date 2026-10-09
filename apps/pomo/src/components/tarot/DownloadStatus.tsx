@@ -1,8 +1,10 @@
-import {clampDisplayedPercentage} from 'src/utils/clamp-displayed-percentage'
+import {clampFiniteNumber} from 'src/utils/clamp-finite-number'
 import * as m from '@paraglide/message'
 import {createMemo} from 'solid-js'
 import {PButton} from '../p-button/PButton'
 import {PProgress} from '../p-progress/PProgress'
+
+const MAXIMUM_PERCENTAGE = 100
 
 export interface DownloadStatusProps {
   readonly onCancel: () => void
@@ -16,7 +18,7 @@ export const DownloadStatus = (props: DownloadStatusProps) => {
       return undefined
     }
 
-    return clampDisplayedPercentage(Math.round(props.progress))
+    return clampFiniteNumber(Math.round(props.progress), 0, MAXIMUM_PERCENTAGE)
   })
   const message = createMemo(() => {
     const currentPercentage = percentage()
