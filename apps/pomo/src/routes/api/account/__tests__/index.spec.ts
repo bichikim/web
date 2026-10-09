@@ -1,5 +1,5 @@
 /** @vitest-environment node */
-import {beforeEach, expect, it, vi} from 'vitest'
+import {afterEach, beforeEach, expect, it, vi} from 'vitest'
 
 const sessionMocks = vi.hoisted(() => ({getAuthSession: vi.fn()}))
 const repositoryMocks = vi.hoisted(() => ({findOrCreateNeonUser: vi.fn()}))
@@ -12,6 +12,10 @@ import {invokeApiRoute} from '../../__tests__/invoke'
 
 beforeEach(() => {
   vi.clearAllMocks()
+})
+
+afterEach(() => {
+  vi.restoreAllMocks()
 })
 
 it('should return an unauthorized response with refreshed session cookies', async () => {
@@ -65,4 +69,28 @@ it('should return the linked Pomo user for an authenticated Neon identity', asyn
     userId: 'pomo-1',
   })
   expect(repositoryMocks.findOrCreateNeonUser).toHaveBeenCalledWith('neon-1')
+})
+
+it('should return a private unavailable response when Neon user provisioning fails', async () => {
+  const request = new Request('https://pomo.example/api/account')
+  const error = new Error('database unavailable')
+  sessionMocks.getAuthSession.mockResolvedValue({
+    access: 'user',
+    identity: {email: 'user@example.com', id: 'neon-1'},
+    provider: 'neon',
+    setCookies: ['session=refreshed'],
+  })
+  repositoryMocks.findOrCreateNeonUser.mockRejectedValue(error)
+  const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+
+  const response = await invokeApiRoute(GET, request)
+
+  expect(response.status).toBe(503)
+  expect(response.headers.get('cache-control')).toBe('no-store')
+  expect(response.headers.get('pragma')).toBe('no-cache')
+  expect(response.headers.getSetCookie()).toEqual(['session=refreshed'])
+  await expect(response.json()).resolves.toEqual({error: 'authentication_unavailable'})
+  expect(sessionMocks.getAuthSession).toHaveBeenCalledWith(request, {provider: 'neon'})
+  expect(repositoryMocks.findOrCreateNeonUser).toHaveBeenCalledWith('neon-1')
+  expect(errorSpy).toHaveBeenCalledWith('Failed to provision Neon user for account API', error)
 })
