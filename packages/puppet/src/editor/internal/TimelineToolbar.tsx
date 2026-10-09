@@ -6,8 +6,6 @@ import {TimelineParameterPicker} from './TimelineParameterPicker'
 import type {PuppetParameter} from '../../player'
 
 export interface TimelineToolbarProps {
-  readonly canAddKeyframe: boolean
-  readonly canDeleteKeyframe: boolean
   readonly easing: PuppetEasing
   readonly framesPerSecond: number
   readonly hasEditableSelection: boolean
@@ -22,79 +20,77 @@ export interface TimelineToolbarProps {
   readonly onMotionRename?: (name: string) => void
   readonly onParameterAdd?: (parameterId: string) => void
   readonly onEasingChange?: (value: string) => void
-  readonly onKeyframeAdd?: () => void
-  readonly onKeyframeDelete?: () => void
   readonly onEditEnd?: () => void
   readonly onEditStart?: () => void
   readonly onFramesPerSecondChange?: (framesPerSecond: number) => void
   readonly onPlaybackToggle?: () => void
-  readonly selectedKeyframeCount?: number
   readonly titleId: string
 }
 
 export const TimelineToolbar = (props: TimelineToolbarProps) => (
   <header class="timeline-toolbar">
-    <div class="timeline-label">
-      <span id={props.titleId}>Timeline</span>
-    </div>
     <div class="timeline-actions">
-      <TimelineMotionControls
-        editableMotionId={props.motionId}
-        motionIds={props.motionIds}
-        onAdd={props.onMotionAdd}
-        onDelete={props.onMotionDelete}
-        onDuplicate={props.onMotionDuplicate}
-        onRename={props.onMotionRename}
-        onViewChange={(value) => props.onMotionChange?.(value)}
-        options={props.motionIds}
-        value={props.motionId}
-      />
-      <TimelineParameterPicker
-        parameters={props.availableParameters}
-        onAdd={props.onParameterAdd}
-      />
-      <TimelineSettingsControls
-        framesPerSecond={props.framesPerSecond}
-        onEditEnd={props.onEditEnd}
-        onEditStart={props.onEditStart}
-        onFramesPerSecondChange={props.onFramesPerSecondChange}
-      />
-      <EditorButton
-        class="timeline-playback"
-        disabled={props.motionId === undefined || props.onPlaybackToggle === undefined}
-        type="button"
-        onClick={() => props.onPlaybackToggle?.()}
+      <div
+        class="timeline-control-group timeline-document-controls"
+        role="group"
+        aria-label="모션 관리"
       >
-        {props.isPlaying === false ? '재생' : '정지'}
-      </EditorButton>
-      <EditorButton
-        class="timeline-keyframe-add"
-        disabled={!props.canAddKeyframe || props.onKeyframeAdd === undefined}
-        type="button"
-        onClick={() => props.onKeyframeAdd?.()}
-      >
-        <span aria-hidden="true" class="puppet-icon puppet-icon-plus" /> 현재 위치에 키프레임
-      </EditorButton>
-      <EditorButton
-        class="timeline-keyframe-delete"
-        disabled={!props.canDeleteKeyframe || props.onKeyframeDelete === undefined}
-        type="button"
-        onClick={() => props.onKeyframeDelete?.()}
-      >
-        {props.selectedKeyframeCount === undefined || props.selectedKeyframeCount <= 1
-          ? '선택 키프레임 삭제'
-          : `선택 키프레임 ${props.selectedKeyframeCount}개 삭제`}
-      </EditorButton>
-      <label class="timeline-easing">
-        <span>다음 키프레임까지</span>
-        <EditorSelect
-          label="키프레임 이징"
-          disabled={!props.hasEditableSelection || props.onEasingChange === undefined}
-          value={props.easing}
-          options={[...PUPPET_EASINGS]}
-          onChange={(value) => props.onEasingChange?.(value)}
+        <div class="timeline-label">
+          <span id={props.titleId}>Timeline</span>
+        </div>
+        <TimelineMotionControls
+          editableMotionId={props.motionId}
+          motionIds={props.motionIds}
+          onAdd={props.onMotionAdd}
+          onDelete={props.onMotionDelete}
+          onDuplicate={props.onMotionDuplicate}
+          onRename={props.onMotionRename}
+          onViewChange={(value) => props.onMotionChange?.(value)}
+          options={props.motionIds}
+          value={props.motionId}
         />
-      </label>
+        <TimelineParameterPicker
+          parameters={props.availableParameters}
+          onAdd={props.onParameterAdd}
+        />
+      </div>
+      <div class="timeline-control-group" role="group" aria-label="재생 설정">
+        <EditorButton
+          aria-label={props.isPlaying === false ? '재생' : '정지'}
+          class="timeline-playback timeline-compact-action"
+          disabled={props.motionId === undefined || props.onPlaybackToggle === undefined}
+          type="button"
+          onClick={() => props.onPlaybackToggle?.()}
+        >
+          <span
+            aria-hidden="true"
+            class={`puppet-icon ${props.isPlaying === false ? 'puppet-icon-player-play' : 'puppet-icon-player-stop'}`}
+          />
+          <span class="timeline-action-label">{props.isPlaying === false ? '재생' : '정지'}</span>
+        </EditorButton>
+        <TimelineSettingsControls
+          framesPerSecond={props.framesPerSecond}
+          onEditEnd={props.onEditEnd}
+          onEditStart={props.onEditStart}
+          onFramesPerSecondChange={props.onFramesPerSecondChange}
+        />
+      </div>
+      <div
+        class="timeline-control-group timeline-keyframe-controls"
+        role="group"
+        aria-label="키프레임 편집"
+      >
+        <label class="timeline-easing">
+          <span data-tooltip="다음 키프레임까지의 보간 방식">이징</span>
+          <EditorSelect
+            label="키프레임 이징"
+            disabled={!props.hasEditableSelection || props.onEasingChange === undefined}
+            value={props.easing}
+            options={[...PUPPET_EASINGS]}
+            onChange={(value) => props.onEasingChange?.(value)}
+          />
+        </label>
+      </div>
     </div>
   </header>
 )

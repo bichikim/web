@@ -1,4 +1,3 @@
-import {clearHtmlMediaElement} from 'src/utils/clear-html-media-element'
 export interface FocusRoomTourAudioRuntime {
   readonly createAudio: (source: string) => HTMLAudioElement
 }
@@ -18,7 +17,9 @@ const defaultRuntime: FocusRoomTourAudioRuntime = {
 }
 
 const stopAudio = (audio: HTMLAudioElement) => {
-  clearHtmlMediaElement(audio)
+  audio.pause()
+  audio.removeAttribute('src')
+  audio.load()
 }
 
 /** Creates a single-player controller for pre-recorded focus-room tour narration. */

@@ -1,6 +1,12 @@
 import {existsSync} from 'node:fs'
 import {dirname, join, relative, resolve} from 'node:path'
-import {type CodeLocation, failure, type Result, success} from '../shared/contracts'
+import {
+  type CodeLocation,
+  failure,
+  type NavigationKind,
+  type Result,
+  success,
+} from '../shared/contracts'
 import {createRubyService} from './create-ruby-service'
 import {isWithin, readSource, resolveFile} from './file-access'
 import {readRubyRequire} from './read-ruby-require'
@@ -22,16 +28,17 @@ export const createRubyNavigation = (root: string) => {
     }
     return root
   }
-  const definitions = async (
+  const lookupSymbols = async (
     path: string,
     source: string,
     offset: number,
+    kind: NavigationKind,
   ): Promise<Result<CodeLocation[]>> => {
     if (disposed) {
       return failure('ruby-analysis-failed')
     }
     const required = readRubyRequire(source, offset)
-    if (required?.kind === 'relative') {
+    if (kind === 'definition' && required?.kind === 'relative') {
       const extension = required.path.endsWith('.rb') ? '' : '.rb'
       const file = resolveFile(root, resolve(dirname(path), `${required.path}${extension}`))
       return success(file.ok ? [{column: 1, line: 1, path: relative(root, file.value)}] : [])
@@ -46,7 +53,7 @@ export const createRubyNavigation = (root: string) => {
         return failure('ruby-analyzer-unavailable')
       }
     }
-    const result = await service.definitions(path, source, offset)
+    const result = await service.lookupSymbols(path, source, offset, kind)
     if (!result.ok) {
       return result
     }
@@ -76,5 +83,5 @@ export const createRubyNavigation = (root: string) => {
     }
     services.clear()
   }
-  return {definitions, dispose}
+  return {dispose, lookupSymbols}
 }

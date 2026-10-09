@@ -48,6 +48,23 @@ describe('readDocument', () => {
     ['config.json5', "{name: 'hello',}", "'hello'", 'string'],
     ['index.html', '<h1 class="title">HTML 원문</h1>', 'h1', 'keyword'],
     ['index.htm', '<h1>HTML 원문</h1>', 'h1', 'keyword'],
+    ['styles.css', '.card {color: red}', 'color', 'keyword'],
+    ['styles.scss', '$color: red; .card {color: $color}', 'color', 'keyword'],
+    ['styles.sass', '.card\n  color: red\n', 'color', 'keyword'],
+    ['styles.less', '@color: red; .card {color: @color}', 'color', 'keyword'],
+    [
+      'Panel.vue',
+      '<script setup>const title = "viewer"</script><template><h1>{{title}}</h1></template>',
+      'const',
+      'keyword',
+    ],
+    ['Panel.svelte', '<script>const title = "viewer"</script><h1>{title}</h1>', 'const', 'keyword'],
+    ['Panel.astro', '---\nconst title = "viewer"\n---\n<h1>{title}</h1>', 'const', 'keyword'],
+    ['document.xml', '<viewer name="hello"/>', 'viewer', 'keyword'],
+    ['settings.ini', '[viewer]\nname=hello', 'name', 'keyword'],
+    ['settings.conf', 'name=hello', 'name', 'keyword'],
+    ['settings.cfg', 'name=hello', 'name', 'keyword'],
+    ['settings.properties', 'name=hello', 'name', 'keyword'],
     ['INDEX.HTML', '<h1>HTML 원문</h1>', 'h1', 'keyword'],
   ])('should read and highlight %s at the requested location', (path, source, text, kind) => {
     writeFileSync(join(root, path), source)

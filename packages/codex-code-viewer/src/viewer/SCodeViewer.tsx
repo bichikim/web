@@ -1,9 +1,7 @@
+import {SViewerDocument} from './SViewerDocument'
 import {createSignal, onCleanup, onMount, Show, untrack} from 'solid-js'
-import {SDefinitionChoices} from './SDefinitionChoices'
-import {SFileDocument} from './SFileDocument'
 import type {ViewerPort} from './types'
 import {useViewer} from './use-viewer'
-import {SIcon} from './SIcon'
 import {SNotice} from './SNotice'
 import {useViewerShortcuts} from './use-viewer-shortcuts'
 import {useDocumentSearch} from './use-document-search'
@@ -16,8 +14,8 @@ import {useMediaCache} from './use-media-cache'
 import {MediaCacheContext} from './media-cache-context'
 import {ViewStateContext} from './view-state/context'
 import {hasDocumentSource} from '../shared/has-document-source'
-import {SWorkspacePrompt} from './SWorkspacePrompt'
 import {useFileTreeVisibility} from './use-file-tree-visibility'
+import {SUnsavedChanges} from './editor/SUnsavedChanges'
 
 interface SCodeViewerProps {
   port: ViewerPort
@@ -29,7 +27,7 @@ export const SCodeViewer = (props: SCodeViewerProps) => {
   const [focusRequest, setFocusRequest] = createSignal(0)
   const tree = useFileTreeVisibility(viewer.workspaceSession)
   const [element, setElement] = createSignal<HTMLElement | null>(null)
-  const search = useDocumentSearch({source: () => viewer.session()?.document.source ?? ''})
+  const search = useDocumentSearch({source: viewer.editing.source})
   const sourceAvailable = (): boolean => {
     const document = viewer.session()?.document
     return document === undefined || hasDocumentSource(document)
@@ -49,7 +47,7 @@ export const SCodeViewer = (props: SCodeViewerProps) => {
   const handleCloseSearch = (): void => {
     search.close()
     element()
-      ?.querySelector<HTMLButtonElement>('[data-line-number][tabindex="0"]')
+      ?.querySelector<HTMLElement>('[aria-label="코드 편집기"], [data-line-number][tabindex="0"]')
       ?.focus({preventScroll: true})
   }
   useViewerShortcuts({
@@ -62,6 +60,7 @@ export const SCodeViewer = (props: SCodeViewerProps) => {
     },
     onFind: handleFind,
     onMove: viewer.move,
+    onSave: () => viewer.editing.save(),
     onSearch: () => setFocusRequest((previous) => previous + 1),
   })
   onMount(() => {
@@ -105,66 +104,36 @@ export const SCodeViewer = (props: SCodeViewerProps) => {
                 onError={viewer.reportError}
                 onShare={viewer.sharePath}
                 onCopy={viewer.copyPath}
+                onMutation={viewer.fileMutation}
+                pendingPaths={viewer.editing.pendingFiles()}
+                saving={viewer.editing.saving()}
+                revision={viewer.workspaceRevision()}
               />
             }
           >
-            <section aria-label="파일 내용" class="flex min-h-0 min-w-0 flex-1 flex-col">
-              <Show
-                when={viewer.session()}
-                fallback={<SWorkspacePrompt workspace={viewer.workspaceSession()?.workspace} />}
-              >
-                {(session) => (
-                  <>
-                    <SDefinitionChoices locations={viewer.choices()} onOpen={viewer.openLocation} />
-                    <Show when={viewer.viewState.fileKey()} keyed>
-                      {(_key) => (
-                        <SFileDocument
-                          port={port}
-                          session={session().session}
-                          searchVisible={search.visible()}
-                          onPreview={search.close}
-                          onOpen={viewer.openLocation}
-                          onError={viewer.reportError}
-                          document={session().document}
-                          onFollow={viewer.follow}
-                          onSelect={viewer.selectLines}
-                          onSelectText={viewer.selectText}
-                          selection={viewer.selection() ?? undefined}
-                          matches={search.matches()}
-                          activeMatch={search.active()}
-                          searchScrollRequest={search.scrollRequest()}
-                          onCopy={viewer.copy}
-                          onShare={viewer.share}
-                          onFind={handleFind}
-                        />
-                      )}
-                    </Show>
-                  </>
-                )}
-              </Show>
-            </section>
+            <SViewerDocument port={port} viewer={viewer} search={search} onFind={handleFind} />
           </SResizablePanels>
           <footer class="mt-auto flex shrink-0 items-center gap-3 border-t border-divider px-4 py-1">
-            <span class="min-w-0 flex-1 break-all text-sm text-muted">{viewer.address()}</span>
-            <button
-              aria-label="채팅창에 추가"
-              class="ui-button shrink-0 py-1"
-              disabled={viewer.session() === null}
-              onClick={() => viewer.share()}
-              title={
-                viewer.session()?.document.media === undefined
-                  ? '선택한 파일과 줄 정보를 다음 채팅 메시지에 추가'
-                  : '파일 전체를 다음 채팅 메시지에 추가'
-              }
-              type="button"
-            >
-              <SIcon name="add" />
-              채팅창에 추가
-            </button>
+            <span class="min-w-0 flex-1 truncate text-sm text-muted" title={viewer.address()}>
+              {viewer.address()}
+            </span>
+            <Show when={viewer.workspaceSession()}>
+              {(session) => (
+                <span
+                  aria-label="작업 폴더"
+                  class="max-w-1/2 min-w-0 truncate text-sm text-muted"
+                  title={session().workspace}
+                >
+                  {session().workspace.split(/[/\\]/u).filter(Boolean).at(-1) ??
+                    session().workspace}
+                </span>
+              )}
+            </Show>
           </footer>
           <Show when={viewer.notice()} keyed>
             {(notice) => <SNotice message={notice.message} onDismiss={viewer.dismissNotice} />}
           </Show>
+          <SUnsavedChanges editing={viewer.editing} />
         </main>
       </ViewStateContext.Provider>
     </MediaCacheContext.Provider>

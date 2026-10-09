@@ -1,4 +1,4 @@
-import {clampDisplayedPercentage} from 'src/utils/clamp-displayed-percentage'
+import {clampFiniteNumber} from 'src/utils/clamp-finite-number'
 import {PTextarea} from 'src/components/p-textarea/PTextarea'
 import {cx} from 'class-variance-authority'
 import {createMemo, type JSX, Match, Show, Switch, untrack} from 'solid-js'
@@ -7,13 +7,17 @@ import {isSpeechBusyActivity} from '../../features/speech-to-text/is-speech-busy
 import {MicrophoneIcon} from './MicrophoneIcon'
 import {SPEECH_BUTTON_CLASSES, SPEECH_TEXTAREA_CLASSES} from './style'
 
+const MAXIMUM_PERCENTAGE = 100
+
 interface SpeechModelWorkspaceProps {
   readonly model: SpeechModelDefinition
 }
 
 export const SpeechModelWorkspace = (props: SpeechModelWorkspaceProps) => {
   const speech = useSpeechToText({modelId: untrack(() => props.model.id)})
-  const modelPercentage = createMemo(() => clampDisplayedPercentage(speech.modelProgress()))
+  const modelPercentage = createMemo(() =>
+    clampFiniteNumber(speech.modelProgress(), 0, MAXIMUM_PERCENTAGE),
+  )
   const isBusy = () => isSpeechBusyActivity(speech.activity())
   const isRecording = () => speech.activity() === 'recording'
   const buttonLabel = () => {

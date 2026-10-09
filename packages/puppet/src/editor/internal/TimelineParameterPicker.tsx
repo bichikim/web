@@ -1,5 +1,5 @@
 import {DropdownMenu} from '@kobalte/core/dropdown-menu'
-import {For} from 'solid-js'
+import {createMemo, For} from 'solid-js'
 
 import {EditorButton, useEditorPortalMount} from '../../design-system'
 import type {PuppetParameter} from '../../player'
@@ -11,15 +11,17 @@ export interface TimelineParameterPickerProps {
 
 export const TimelineParameterPicker = (props: TimelineParameterPickerProps) => {
   const mount = useEditorPortalMount()
+  const disabled = createMemo(() => props.onAdd === undefined || props.parameters.length === 0)
 
   return (
     <DropdownMenu modal={false} placement="bottom-start">
       <DropdownMenu.Trigger
         as={EditorButton}
         aria-label="타임라인 파라미터 추가"
-        disabled={props.onAdd === undefined || props.parameters.length === 0}
+        disabled={disabled()}
       >
-        <span aria-hidden="true" class="puppet-icon puppet-icon-plus" /> 파라미터 추가
+        <span aria-hidden="true" class="puppet-icon puppet-icon-circle-plus" />
+        <span>파라미터 추가</span>
       </DropdownMenu.Trigger>
       <DropdownMenu.Portal mount={mount}>
         <DropdownMenu.Content
