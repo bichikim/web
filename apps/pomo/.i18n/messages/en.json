@@ -766,6 +766,8 @@
   "feed_checking": "Checking…",
   "feed_retrying": "Recreating feed dialogues…",
   "feed_downloading_model": "Downloading the {label} model · {percentage}%",
+  "feed_generation_started": "Generating audio for {title}.",
+  "feed_generation_progress": "Generating audio for {title} · {completed}/{total} segments.",
   "feed_stop": "Stop",
   "feed_stopping": "Stopping feed processing…",
   "feed_retry": "Try again",

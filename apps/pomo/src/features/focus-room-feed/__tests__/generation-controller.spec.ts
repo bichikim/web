@@ -144,6 +144,17 @@ it('should generate and persist a queued feed job through the controller boundar
     options.onStatus('WASM 준비 중')
     return {ok: true, value: undefined}
   })
+  fixture.runtime.generateDialogueAudio.mockImplementation(async ({onChunk}) => {
+    onChunk(1, 2)
+    return {
+      ok: true,
+      value: {
+        audio: new Blob(['audio']),
+        durationMs: 1000,
+        segments: [{durationMs: 1000, index: 0, startMs: 0, text: '새 소식'}],
+      },
+    }
+  })
   fixture.controller.schedule({jobIds: ['job-1']})
 
   await vi.waitFor(() => expect(fixture.onCompleted).toHaveBeenCalledOnce())
@@ -153,6 +164,19 @@ it('should generate and persist a queued feed job through the controller boundar
     progress: 50,
     status: 'preparing',
   })
+  expect(fixture.setState).toHaveBeenCalledWith({
+    message: '새 피드 음성을 만들고 있어요.',
+    progress: null,
+    status: 'generating',
+  })
+  expect(fixture.setState).toHaveBeenCalledWith({
+    message: '새 피드 · 1/2 구간 생성 중',
+    progress: 50,
+    status: 'generating',
+  })
+  expect(fixture.runtime.generateDialogueAudio).toHaveBeenCalledWith(
+    expect.objectContaining({language: 'ko', modelId: 'int8', text: '새 소식', voiceId: 'Yuna'}),
+  )
   expect(fixture.dialogueRepository.saveDialogue).toHaveBeenCalledOnce()
   expect(fixture.feedRepository.complete).toHaveBeenCalledOnce()
 })
