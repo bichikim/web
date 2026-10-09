@@ -16,6 +16,35 @@ describe('createCalendarQuery standalone weekdays', () => {
     })
   })
 
+  it('should retain the standalone weekday range when excluding an event type', () => {
+    expect(
+      createCalendarQuery({
+        now: new Date('2026-09-04T10:30:00.000Z'),
+        text: '수요일 일정은 회의 말고 약속만 알려줘',
+        timeZone: 'Asia/Seoul',
+      }),
+    ).toEqual({
+      end: '2026-09-09T15:00:00.000Z',
+      start: '2026-09-08T15:00:00.000Z',
+    })
+  })
+
+  it.each(['수요일 일정은 회의 말고 목요일 일정 알려줘', '수요일 일정은 회의 말고 목 일정 알려줘'])(
+    'should not narrow a second weekday after an event-type exclusion in "%s"',
+    (text) => {
+      expect(
+        createCalendarQuery({
+          now: new Date('2026-09-04T10:30:00.000Z'),
+          text,
+          timeZone: 'Asia/Seoul',
+        }),
+      ).toEqual({
+        end: '2026-10-04T10:30:00.000Z',
+        start: '2026-09-04T10:30:00.000Z',
+      })
+    },
+  )
+
   it.each(['수요일 일정과 목요일 일정 알려줘', '수요일 일정과 목 일정 알려줘'])(
     'should not narrow a second weekday after the calendar intent in "%s"',
     (text) => {
