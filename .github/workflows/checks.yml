@@ -129,6 +129,9 @@ jobs:
       - name: Install Solargraph
         run: gem install solargraph --version 0.60.4 --no-document
 
+      - name: Build Code Viewer distribution
+        run: pnpm --filter @winter-love/codex-code-viewer build
+
       - name: Run integration tests
         run: pnpm test:integration --project=integration
 
