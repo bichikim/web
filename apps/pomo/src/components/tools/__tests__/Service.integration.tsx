@@ -28,17 +28,29 @@ it('should persist and restore pasted service days with surrounding whitespace',
   fireEvent.input(days, {target: {value: ' 300 '}})
 
   expect(days).toHaveAttribute('aria-invalid', 'false')
-  expect(screen.getByRole('region', {name: '예상 전역일'})).toBeVisible()
+  const result = screen.getByRole('region', {name: '예상 전역일'})
+  expect(result).toBeVisible()
   await waitFor(() => {
     const saved = JSON.parse(localStorage.getItem('pomo:service-settings:v1') ?? 'null')
     expect(saved.days).toBe(' 300 ')
   })
 
+  const firstResult = result.textContent
+  fireEvent.input(days, {target: {value: ' 301 '}})
+  expect(days).toHaveAttribute('aria-invalid', 'false')
+  await waitFor(() => {
+    const saved = JSON.parse(localStorage.getItem('pomo:service-settings:v1') ?? 'null')
+    expect(saved.days).toBe(' 301 ')
+    expect(result.textContent).not.toBe(firstResult)
+  })
+  const updatedResult = result.textContent
+
   firstView.unmount()
-  mountService()
+  const secondView = mountService()
 
   await waitFor(() => {
-    expect(screen.getByRole('textbox', {name: /복무기간 \(일\)/u})).toHaveValue('300')
-    expect(screen.getByRole('region', {name: '예상 전역일'})).toBeVisible()
+    expect(screen.getByRole('textbox', {name: /복무기간 \(일\)/u})).toHaveValue('301')
+    expect(screen.getByRole('region', {name: '예상 전역일'}).textContent).toBe(updatedResult)
   })
+  secondView.unmount()
 })
