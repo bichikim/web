@@ -96,6 +96,44 @@ describe('createCalendarQuery standalone weekdays', () => {
   })
 
   it.each([
+    '수요일 일정과 목 저녁 남은 일정 알려줘',
+    '수요일 일정은 회의 말고 목 저녁 남은 일정 알려줘',
+    '수요일 일정과 목 저녁에 남은 일정 알려줘',
+    '수요일 일정과 목 점심 말고 저녁 일정 알려줘',
+    '수요일 일정과 목 정오 말고 점심 일정 알려줘',
+  ])(
+    'should retain the multi-weekday range with existing remaining/daypart syntax in "%s"',
+    (text) => {
+      expect(
+        createCalendarQuery({
+          now: new Date('2026-09-04T10:30:00.000Z'),
+          text,
+          timeZone: 'Asia/Seoul',
+        }),
+      ).toEqual({
+        end: '2026-10-04T10:30:00.000Z',
+        start: '2026-09-04T10:30:00.000Z',
+      })
+    },
+  )
+
+  it.each(['수요일 할 일과 일정 알려줘', '수요일 일정 중 할 일과 일정 알려줘'])(
+    'should not reinterpret a task noun plus conjunction as another weekday in "%s"',
+    (text) => {
+      expect(
+        createCalendarQuery({
+          now: new Date('2026-09-04T10:30:00.000Z'),
+          text,
+          timeZone: 'Asia/Seoul',
+        }),
+      ).toEqual({
+        end: '2026-09-09T15:00:00.000Z',
+        start: '2026-09-08T15:00:00.000Z',
+      })
+    },
+  )
+
+  it.each([
     ['일요일', '2026-09-05T15:00:00.000Z', '2026-09-06T15:00:00.000Z'],
     ['월요일', '2026-09-06T15:00:00.000Z', '2026-09-07T15:00:00.000Z'],
     ['화요일', '2026-09-07T15:00:00.000Z', '2026-09-08T15:00:00.000Z'],

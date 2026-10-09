@@ -20,6 +20,7 @@ import {dayjs} from 'src/utils/zoned-dayjs'
 import type {CalendarEventQuery, CalendarEventRange} from './types'
 
 const CALENDAR_INTENT_PATTERN = /(?:일정|미팅|회의|약속|스케줄)/u
+const REMAINING_SCHEDULE_PATTERN = /남은\s*(?:일정|미팅|회의|약속|스케줄)/u
 const CALENDAR_PERIOD_PARTICLE_PATTERN =
   /(?:에는|에서|부터|까지|이랑|하고|은|는|이|가|을|를|에|엔|도|로|만|중|쯤|의|과|와|랑)(?=$|[\s,.!?…])/u
 const CALENDAR_PERIOD_BOUNDARY_PATTERN = new RegExp(
@@ -46,6 +47,7 @@ const {
   calendarIntentPattern: CALENDAR_INTENT_PATTERN,
   calendarPeriodBoundaryPattern: CALENDAR_PERIOD_BOUNDARY_PATTERN,
   calendarPeriodParticlePattern: CALENDAR_PERIOD_PARTICLE_PATTERN,
+  calendarRemainingSchedulePattern: REMAINING_SCHEDULE_PATTERN,
   calendarWordStartPattern: CALENDAR_WORD_START_PATTERN,
 })
 const WEEK_AFTER_NEXT_TERM_PATTERN = `${CALENDAR_WORD_START_PATTERN}다다음 ?주`
@@ -157,7 +159,6 @@ const CALENDAR_DAYPART_WINDOWS = [
   {end: '21:00:00', endDayOffset: 0, name: '저녁', start: '18:00:00'},
   {end: '00:00:00', endDayOffset: 1, name: '밤', start: '21:00:00'},
 ] as const
-const REMAINING_SCHEDULE_PATTERN = /남은\s*(?:일정|미팅|회의|약속|스케줄)/u
 const CALENDAR_DAYPART_NAMES = ['정오', ...CALENDAR_DAYPART_WINDOWS.map(({name}) => name)]
 
 const includesUnexcludedCalendarDaypart = (text: string, name: string) =>
