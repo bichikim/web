@@ -3,7 +3,7 @@ export interface DecimalProduct {
   readonly quantity: bigint
 }
 
-export interface CeilDecimalProductsOptions {
+export interface CeilWeightedSumOptions {
   readonly products: ReadonlyArray<DecimalProduct>
 }
 
@@ -17,7 +17,7 @@ interface DecimalTerm {
  * numbers interpreted through their canonical decimal string representations.
  * Returns 0n for an empty sum; throws RangeError for negative quantities or invalid multipliers.
  */
-export const ceilDecimalProducts = (options: CeilDecimalProductsOptions): bigint => {
+export const ceilWeightedSum = (options: CeilWeightedSumOptions): bigint => {
   const terms = options.products.map(({multiplier, quantity}): DecimalTerm => {
     if (quantity < 0n || !Number.isFinite(multiplier) || multiplier < 0) {
       throw new RangeError(
