@@ -1,7 +1,7 @@
 import {useDefaultTextModel} from 'src/features/text-generation/use-default-text-model'
 import type {DefaultTextModelId} from 'src/features/text-generation/settings'
 import {supportsTextModel} from 'src/features/text-generation/supports-text-model'
-import {type Accessor, createEffect, createSignal, onCleanup} from 'solid-js'
+import {type Accessor, createEffect, createMemo, createSignal, onCleanup} from 'solid-js'
 import {type ModelDownloadResult, useModelDownload} from '../model-download'
 import {getTextModel, isTextModelDownloaded, supportsWebGpu} from '../text-generation'
 import {createTarotClient, type TarotClient} from './client'
@@ -56,19 +56,41 @@ export interface TarotReadingController {
 // oxlint-disable-next-line eslint/max-lines-per-function -- One owner coordinates the draw and worker lifecycle.
 export const useTarotReading = (props: UseTarotReadingProps): TarotReadingController => {
   const defaultModelId = useDefaultTextModel()
-  const [readingModelId, setReadingModelId] = createSignal<DefaultTextModelId>(defaultModelId())
+  const defaultModelSelection = createMemo(
+    (previous: {readonly modelId: DefaultTextModelId; readonly revision: number}) => {
+      const modelId = defaultModelId()
+      return modelId === previous.modelId ? previous : {modelId, revision: previous.revision + 1}
+    },
+    {modelId: defaultModelId(), revision: 0},
+  )
+  const [readingModelSelection, setReadingModelSelection] = createSignal(defaultModelSelection())
   const modelDownload = useModelDownload()
   const [count, setDrawCount] = createSignal<TarotDrawCount>(TAROT_DRAW_COUNTS.three)
   const [question, setDraftQuestion] = createSignal('')
   const [showCardsUpright, setShowCardsUpright] = createSignal(true)
   const [cards, setCards] = createSignal<ReadonlyArray<DrawnTarotCard>>([])
   const [output, setOutput] = createSignal('')
-  const [status, setStatus] = createSignal<TarotReadingStatus>('idle')
+  const [readingStatus, setStatus] = createSignal<TarotReadingStatus>('idle')
+  const status = createMemo(() => {
+    const currentStatus = readingStatus()
+    const selection = defaultModelSelection()
+    const readingSelection = readingModelSelection()
+    const {modelId} = selection
+    if (
+      (currentStatus === 'unsupported' || currentStatus === 'checking') &&
+      (selection.revision !== readingSelection.revision || modelId !== readingSelection.modelId)
+    ) {
+      return supportsTextModel({modelId, webGpu: supportsWebGpu()}) ? 'idle' : 'unsupported'
+    }
+    return currentStatus
+  })
   const [error, setError] = createSignal<string | null>(null)
   const [modelProgress, setModelProgress] = createSignal<number | null>(null)
   const [missingText, setMissingText] = createSignal(false)
-  let readingQuestion = ''
-  let readingLocale: TarotLocale = 'ko'
+  const readingContext: {locale: TarotLocale; question: string} = {
+    locale: props.locale(),
+    question: '',
+  }
   let client: TarotClient | null = null
   let activeRequestId: string | null = null
   let revision = 0
@@ -86,13 +108,14 @@ export const useTarotReading = (props: UseTarotReadingProps): TarotReadingContro
         (item) =>
           item.status === 'loading' &&
           item.target.kind === 'text' &&
-          item.target.modelId === readingModelId(),
+          item.target.modelId === readingModelSelection().modelId,
       )
   const downloadKind = () => {
     const kind = activeDownload()?.target.kind
     return kind === 'text' ? kind : null
   }
-  const downloadSize = () => (missingText() ? getTextModel(readingModelId()).downloadSize : '')
+  const downloadSize = () =>
+    missingText() ? getTextModel(readingModelSelection().modelId).downloadSize : ''
   const progress = () => {
     const download = activeDownload()
     return status() === 'downloading' && download?.status === 'loading'
@@ -105,7 +128,7 @@ export const useTarotReading = (props: UseTarotReadingProps): TarotReadingContro
     activeRequestId = null
   }
   const cancel = () => {
-    if (!isBusy() && status() !== 'consent') {
+    if (!isBusy() && readingStatus() !== 'checking' && status() !== 'consent') {
       return
     }
 
@@ -123,7 +146,7 @@ export const useTarotReading = (props: UseTarotReadingProps): TarotReadingContro
 
     cancel()
     if (missingText()) {
-      modelDownload.cancel({kind: 'text', modelId: readingModelId()})
+      modelDownload.cancel({kind: 'text', modelId: readingModelSelection().modelId})
     }
   }
   const handleResponse = (response: TarotWorkerResponse) => {
@@ -161,7 +184,7 @@ export const useTarotReading = (props: UseTarotReadingProps): TarotReadingContro
 
     response satisfies never
   }
-  const startGeneration = () => {
+  const startGeneration = (modelId: DefaultTextModelId) => {
     const selectedCards = cards()
     if (selectedCards.length === 0 || disposed) {
       return
@@ -170,15 +193,15 @@ export const useTarotReading = (props: UseTarotReadingProps): TarotReadingContro
     setStatus('preparing')
     setModelProgress(null)
     try {
-      client ??= createTarotClient({modelId: readingModelId(), onResponse: handleResponse})
+      client ??= createTarotClient({modelId, onResponse: handleResponse})
       revision += 1
       const requestId = `tarot-${revision}`
       activeRequestId = requestId
       client.generate({
         cards: selectedCards,
-        locale: readingLocale,
-        modelId: readingModelId(),
-        question: readingQuestion,
+        locale: readingContext.locale,
+        modelId,
+        question: readingContext.question,
         requestId,
         type: 'generate',
       })
@@ -188,40 +211,52 @@ export const useTarotReading = (props: UseTarotReadingProps): TarotReadingContro
       setStatus('error')
     }
   }
-  const checkModel = async () => {
-    setReadingModelId(defaultModelId())
-    if (!supportsTextModel({modelId: readingModelId(), webGpu: supportsWebGpu()})) {
+  const checkModel = async (modelId: DefaultTextModelId) => {
+    revision += 1
+    const checkRevision = revision
+    const readingSelection = defaultModelSelection()
+    setReadingModelSelection(readingSelection)
+    if (!supportsTextModel({modelId, webGpu: supportsWebGpu()})) {
       setStatus('unsupported')
       return
     }
 
-    revision += 1
-    const checkRevision = revision
     setStatus('checking')
     setError(null)
     try {
-      const textDownloaded = await isTextModelDownloaded({modelId: readingModelId()})
-      if (disposed || checkRevision !== revision) {
+      const textDownloaded = await isTextModelDownloaded({modelId})
+      if (
+        disposed ||
+        checkRevision !== revision ||
+        readingSelection.revision !== defaultModelSelection().revision ||
+        modelId !== defaultModelId()
+      ) {
         return
       }
 
       setMissingText(!textDownloaded)
       const downloads = modelDownload.downloads()
-      const textPending = downloads.some(
-        (item) =>
-          item.target.kind === 'text' &&
-          item.target.modelId === readingModelId() &&
-          item.status !== 'error',
-      )
       if (textDownloaded) {
-        startGeneration()
-      } else if (textPending) {
+        startGeneration(modelId)
+      } else if (
+        downloads.some(
+          (item) =>
+            item.target.kind === 'text' &&
+            item.target.modelId === modelId &&
+            item.status !== 'error',
+        )
+      ) {
         await waitForDownload()
       } else {
         setStatus('consent')
       }
     } catch (cause: unknown) {
-      if (disposed || checkRevision !== revision) {
+      if (
+        disposed ||
+        checkRevision !== revision ||
+        readingSelection.revision !== defaultModelSelection().revision ||
+        modelId !== defaultModelId()
+      ) {
         return
       }
       setError(cause instanceof Error ? cause.message : '모델 상태를 확인하지 못했어요.')
@@ -237,9 +272,9 @@ export const useTarotReading = (props: UseTarotReadingProps): TarotReadingContro
     setCards(drawTarotCards({count: count()}))
     setOutput('')
     setError(null)
-    readingQuestion = question().trim()
-    readingLocale = props.locale()
-    checkModel()
+    readingContext.question = question().trim()
+    readingContext.locale = props.locale()
+    checkModel(defaultModelId())
   }
   const retry = () => {
     if (cards().length === 0 || isBusy() || status() === 'consent') {
@@ -247,21 +282,22 @@ export const useTarotReading = (props: UseTarotReadingProps): TarotReadingContro
     }
 
     discardClient()
-    readingQuestion = question().trim()
-    readingLocale = props.locale()
+    readingContext.question = question().trim()
+    readingContext.locale = props.locale()
     setOutput('')
     setError(null)
-    checkModel()
+    checkModel(defaultModelId())
   }
   const waitForDownload = async () => {
     revision += 1
-    readingQuestion = question().trim()
+    const {modelId} = readingModelSelection()
+    readingContext.question = question().trim()
     const downloadRevision = revision
     setStatus('downloading')
     try {
       const cached: ModelDownloadResult = {status: 'complete'}
       const result = await (missingText()
-        ? modelDownload.startTextModel(readingModelId())
+        ? modelDownload.startTextModel(modelId)
         : Promise.resolve(cached))
       if (disposed || downloadRevision !== revision) {
         return
@@ -269,7 +305,7 @@ export const useTarotReading = (props: UseTarotReadingProps): TarotReadingContro
 
       switch (result.status) {
         case 'complete':
-          startGeneration()
+          startGeneration(modelId)
           return
         case 'cancelled':
           setStatus('idle')
@@ -294,22 +330,16 @@ export const useTarotReading = (props: UseTarotReadingProps): TarotReadingContro
       await waitForDownload()
     }
   }
-  const resetReading = () => {
-    if (isBusy()) {
-      return
-    }
-    discardClient()
-    setCards([])
-    setOutput('')
-    setError(null)
-    setStatus('idle')
-  }
   const setCount = (nextCount: TarotDrawCount) => {
     if (nextCount === count() || isBusy()) {
       return
     }
     setDrawCount(nextCount)
-    resetReading()
+    discardClient()
+    setCards([])
+    setOutput('')
+    setError(null)
+    setStatus('idle')
   }
   const setQuestion = (nextQuestion: string) => {
     const limitedQuestion = nextQuestion.slice(0, MAXIMUM_QUESTION_LENGTH)
@@ -326,12 +356,12 @@ export const useTarotReading = (props: UseTarotReadingProps): TarotReadingContro
 
   createEffect(() => {
     const currentLocale = props.locale()
-    if (currentLocale === readingLocale) {
+    if (currentLocale === readingContext.locale) {
       return
     }
 
     cancel()
-    readingLocale = currentLocale
+    readingContext.locale = currentLocale
     setOutput('')
     setError(null)
     setStatus('idle')
