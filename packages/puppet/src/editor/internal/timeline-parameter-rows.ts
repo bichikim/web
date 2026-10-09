@@ -107,5 +107,12 @@ export const createTimelineParameterRowActions = (options: TimelineParameterRowA
     return true
   }
 
-  return {add, available, remove}
+  const removeActive = (parameterId: string) => {
+    const motionId = options.motionId()
+    if (motionId !== undefined) {
+      remove(motionId, parameterId)
+    }
+  }
+
+  return {add, available, remove, removeActive}
 }

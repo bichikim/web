@@ -4,6 +4,7 @@ import {fileURLToPath} from 'node:url'
 import {build as bundle} from 'esbuild'
 import {build} from 'vite'
 import typescript from '@typescript/typescript6'
+import {z} from 'zod'
 import {collectLicenseNotices} from './build/collect-license-notices'
 import {inlineScript} from './build/inline-script'
 import {inlineHtml} from './build/inline-html'
@@ -31,6 +32,24 @@ const declarations = (await readdir(library)).filter(
 )
 await Promise.all(declarations.map((file) => copyFile(`${library}/${file}`, `${output}/${file}`)))
 await writeFile(`${output}/app.html`, html)
+const python = dirname(fileURLToPath(import.meta.resolve('pyright/package.json')))
+const pythonManifest = z
+  .object({license: z.string(), name: z.string(), version: z.string()})
+  .parse(JSON.parse(await readFile(`${python}/package.json`, 'utf8')))
+await mkdir(`${output}/python`, {recursive: true})
+await cp(`${python}/dist`, `${output}/python/dist`, {
+  filter: (path) => !path.endsWith('.map'),
+  recursive: true,
+})
+await Promise.all(
+  ['langserver.index.js', 'LICENSE.txt'].map((file) =>
+    copyFile(`${python}/${file}`, `${output}/python/${file}`),
+  ),
+)
+await writeFile(
+  `${output}/python/package.json`,
+  JSON.stringify({...pythonManifest, type: 'commonjs'}, null, 2),
+)
 const preview = await bundle({
   bundle: true,
   entryPoints: [`${root}/src/preview/main.ts`],
@@ -97,6 +116,7 @@ const packageLicenses = await collectLicenseNotices(
     ...Object.keys(installer.metafile.inputs),
     fileURLToPath(import.meta.resolve('@iconify-json/tabler/icons.json')),
     `${library}/typescript.js`,
+    `${python}/langserver.index.js`,
   ],
   {
     // The published package omits the repository's license file.
@@ -132,6 +152,7 @@ await Promise.all([
     copyFile(`${output}/${file}`, `${plugin}/dist/${file}`),
   ),
   cp(`${root}/assets`, `${plugin}/assets`, {recursive: true}),
+  cp(`${output}/python`, `${plugin}/dist/python`, {recursive: true}),
   copyFile(`${root}/README.md`, `${plugin}/README.md`),
   writeFile(`${plugin}/THIRD_PARTY_LICENSES.md`, licenses),
   writeFile(`${output}/THIRD_PARTY_LICENSES.md`, licenses),

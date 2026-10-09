@@ -1,5 +1,5 @@
 import type {CallToolResult} from '@modelcontextprotocol/sdk/types.js'
-import type {CodeLocation, ViewerSession} from '../shared/contracts'
+import type {CodeLocation, ViewerConnection} from '../shared/contracts'
 
 export interface CodeSelection extends CodeLocation {
   endLine: number
@@ -47,9 +47,10 @@ export interface ViewerPort {
   context(selection: ViewerContext): Promise<void>
   location?(location: ViewerFileLocation): Promise<void>
   start(
-    receive: (session: ViewerSession) => void,
+    receive: (session: ViewerConnection) => void,
     report: (error: unknown) => void,
     refresh: () => void,
+    onTeardown?: () => Promise<void>,
   ): Promise<() => void>
 }
 

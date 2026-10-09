@@ -1,6 +1,6 @@
 {
   "name": "@winter-love/codex-code-viewer",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "private": false,
   "description": "A Codex viewer for code, documents and media with file navigation and chat context.",
   "keywords": [
@@ -26,6 +26,7 @@
     "dist/server.js",
     "dist/app.html",
     "dist/install.js",
+    "dist/python",
     "dist/lib.*.d.ts",
     "dist/THIRD_PARTY_LICENSES.md"
   ],
@@ -47,6 +48,7 @@
     "@typescript/typescript6": "catalog:",
     "csv-parse": "7.0.3",
     "esbuild": "^0.28.2",
+    "mammoth": "1.13.0",
     "mdast-util-from-markdown": "2.0.3",
     "mdast-util-gfm": "3.1.0",
     "mdast-util-mdx": "3.0.0",
@@ -55,6 +57,7 @@
     "parse5": "8.0.1",
     "pdfjs-dist": "6.4.299",
     "prismjs": "1.30.0",
+    "pyright": "1.1.414",
     "solid-js": "catalog:",
     "tsx": "catalog:",
     "unocss": "catalog:",
@@ -62,6 +65,7 @@
     "vite-plugin-solid": "^2.11.12",
     "vitest": "4.1.11",
     "vscode-jsonrpc": "8.2.1",
+    "xlsx": "https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz",
     "zod": "catalog:"
   },
   "engines": {

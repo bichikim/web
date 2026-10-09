@@ -16,7 +16,7 @@ export const documentSchema = z.object({
   location: locationSchema,
   media: z
     .object({
-      kind: z.enum(['image', 'video', 'audio', 'pdf']),
+      kind: z.enum(['image', 'video', 'audio', 'pdf', 'word', 'spreadsheet']),
       mimeType: z.string(),
       size: z.number().int().nonnegative(),
     })
@@ -25,11 +25,12 @@ export const documentSchema = z.object({
   source: z.string(),
 })
 export const mediaChunkSchema = z.object({data: z.string(), next: z.number().int().nonnegative()})
-export const sessionSchema = z.object({
-  document: documentSchema,
+export const workspaceSessionSchema = z.object({
   session: z.string(),
   workspace: z.string(),
 })
+export const sessionSchema = workspaceSessionSchema.extend({document: documentSchema})
+export const connectionSchema = z.union([sessionSchema, workspaceSessionSchema.strict()])
 export const navigationSchema = z.object({locations: z.array(locationSchema)})
 export const filesSchema = z.object({paths: z.array(z.string())})
 export const workspaceFileSchema = z.object({openable: z.boolean(), path: z.string()})
@@ -50,12 +51,18 @@ export const errorSchema = z.object({
     'stale-document',
     'rust-analyzer-unavailable',
     'rust-analysis-failed',
+    'python-analyzer-unavailable',
+    'python-analysis-failed',
+    'ruby-analyzer-unavailable',
+    'ruby-analysis-failed',
   ]),
 })
 export type CodeLocation = z.infer<typeof locationSchema>
 export type CodeToken = z.infer<typeof tokenSchema>
 export type CodeDocument = z.infer<typeof documentSchema>
 export type ViewerSession = z.infer<typeof sessionSchema>
+export type WorkspaceSession = z.infer<typeof workspaceSessionSchema>
+export type ViewerConnection = z.infer<typeof connectionSchema>
 export type ViewerError = z.infer<typeof errorSchema>
 
 export interface Success<Value> {

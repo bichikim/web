@@ -1,10 +1,10 @@
 // oxlint-disable eslint-js/camelcase -- Responses wire fields follow the external API contract.
 import OpenAI from 'openai'
-import type {Response, ResponseCreateParamsNonStreaming} from 'openai/resources/responses/responses'
-import type {ApiAiAdapter, ApiAiProvider, ApiAiResponse, ApiAiWebhookEvent} from './types'
+import {normalizeResponse} from './normalize-response'
+import type {ResponseCreateParamsNonStreaming} from 'openai/resources/responses/responses'
+import type {ApiAiAdapter, ApiAiProvider, ApiAiWebhookEvent} from './types'
 
 const PROVIDER_TIMEOUT_MILLISECONDS = 30_000
-const MAXIMUM_PERSISTED_TOKENS = 2_147_483_647
 
 const createClient = (provider: ApiAiProvider): OpenAI =>
   new OpenAI({
@@ -14,49 +14,6 @@ const createClient = (provider: ApiAiProvider): OpenAI =>
     timeout: PROVIDER_TIMEOUT_MILLISECONDS,
     webhookSecret: provider.webhookSecret,
   })
-
-const normalizeResponse = (response: Response): ApiAiResponse => {
-  if (response.status === undefined) {
-    throw new TypeError('AI provider response has no status')
-  }
-  const outputText = response.output
-    .flatMap((item) =>
-      item.type === 'message'
-        ? item.content.flatMap((content) => (content.type === 'output_text' ? [content.text] : []))
-        : [],
-    )
-    .join('')
-  const reportedTokens = response.usage?.total_tokens
-  const tokenCount =
-    typeof reportedTokens === 'number' &&
-    Number.isInteger(reportedTokens) &&
-    reportedTokens >= 0 &&
-    reportedTokens <= MAXIMUM_PERSISTED_TOKENS
-      ? reportedTokens
-      : null
-  const invalidCompletion =
-    response.status === 'completed' && (!outputText.trim() || tokenCount === null)
-  const failureCode = invalidCompletion ? 'invalid_completion' : (response.error?.code ?? null)
-  return {
-    failureCode,
-    fallback: failureCode === 'server_error' || failureCode === 'rate_limit_exceeded',
-    metadata: response.metadata ?? {},
-    model: response.model,
-    outputText,
-    responseId: response.id,
-    searchSourceUrls: [
-      ...new Set(
-        response.output.flatMap((item) =>
-          item.type === 'web_search_call' && item.action.type === 'search'
-            ? (item.action.sources ?? []).map((source) => source.url)
-            : [],
-        ),
-      ),
-    ],
-    status: invalidCompletion ? 'failed' : response.status,
-    tokenCount,
-  }
-}
 
 export const responsesAdapter: ApiAiAdapter = {
   cancel: async (provider, responseId) =>
@@ -88,6 +45,9 @@ export const unwrapApiAiWebhook = async (
   body: string,
   headers: Headers,
 ): Promise<ApiAiWebhookEvent | null> => {
+  if (provider.protocol === 'openrouter-responses-queue' || !provider.webhookSecret) {
+    throw new TypeError('AI provider does not support signed background callbacks')
+  }
   const event = await createClient(provider).webhooks.unwrap(body, headers)
   switch (event.type) {
     case 'response.cancelled':

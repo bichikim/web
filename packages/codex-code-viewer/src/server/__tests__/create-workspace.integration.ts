@@ -80,6 +80,34 @@ describe('createWorkspace', () => {
       value: [{column: 1, line: 1, path: 'src/barrel.ts'}],
     })
   })
+  it('should use the opened file project config after connecting a folder-only workspace', () => {
+    mkdirSync(join(root, 'packages/example/lib'), {recursive: true})
+    writeFileSync(
+      join(root, 'packages/example/tsconfig.json'),
+      JSON.stringify({
+        compilerOptions: {
+          module: 'esnext',
+          moduleResolution: 'bundler',
+          noLib: true,
+          paths: {'@/*': ['./lib/*']},
+          types: [],
+        },
+      }),
+    )
+    const text = "import {answer} from '@/answer'\nexport const result = answer\n"
+    writeFileSync(join(root, 'packages/example/main.ts'), text)
+    writeFileSync(join(root, 'packages/example/lib/answer.ts'), 'export const answer = 42\n')
+    workspace.dispose()
+    workspace = createWorkspace(root)
+    expect(workspace.followPath('packages/example/main.ts', text.indexOf("'@/answer'"))).toEqual({
+      ok: true,
+      value: [{column: 1, line: 1, path: 'packages/example/lib/answer.ts'}],
+    })
+    expect(workspace.definitions('packages/example/main.ts', text.lastIndexOf('answer'))).toEqual({
+      ok: true,
+      value: [{column: 14, line: 1, path: 'packages/example/lib/answer.ts'}],
+    })
+  })
   it('should reload edited dependency definitions', () => {
     workspace.definitions('src/main.ts', source.lastIndexOf('value'))
     writeFileSync(join(root, 'src/answer.ts'), '\n\nexport const answer = 43\n')
@@ -112,6 +140,8 @@ describe('createWorkspace', () => {
     'png',
     'mp4',
     'rs',
+    'py',
+    'pyi',
     'yaml',
     'yml',
     'toml',

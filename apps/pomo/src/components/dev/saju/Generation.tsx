@@ -1,11 +1,9 @@
 import {createSignal, onCleanup, onMount, Show} from 'solid-js'
 import {supportsTextModel, type TextGenerationMessage} from 'src/features/text-generation'
 import {createWorkerTransport, type WorkerTransport} from 'src/utils/worker-transport'
-import type {GenerateSajuRequest, SajuAnswerFacts, SajuWorkerResponse} from './messages'
+import type {GenerateSajuRequest, SajuWorkerResponse} from 'src/features/saju/messages'
 
 interface GenerationProps {
-  readonly facts: SajuAnswerFacts
-  readonly fallbackAnswer: string | null
   readonly messages: ReadonlyArray<TextGenerationMessage>
 }
 
@@ -16,7 +14,6 @@ export function Generation(props: GenerationProps) {
   const [supported, setSupported] = createSignal(true)
   const [progress, setProgress] = createSignal<number | null>(null)
   const [output, setOutput] = createSignal('')
-  const [outputSource, setOutputSource] = createSignal<'calculation' | 'model'>('model')
   const [error, setError] = createSignal<string | null>(null)
   let transport: WorkerTransport<GenerateSajuRequest> | null = null
 
@@ -41,7 +38,6 @@ export function Generation(props: GenerationProps) {
         return
       case 'complete':
         setOutput(response.text)
-        setOutputSource(response.source)
         setState('complete')
         return
       case 'error':
@@ -76,8 +72,6 @@ export function Generation(props: GenerationProps) {
       }),
     })
     transport.send({
-      facts: props.facts,
-      fallbackAnswer: props.fallbackAnswer,
       messages: props.messages,
       type: 'generate',
     })
@@ -121,9 +115,6 @@ export function Generation(props: GenerationProps) {
         </p>
       </Show>
       <Show when={output()}>
-        <Show when={outputSource() === 'calculation'}>
-          <p class="mt-4 text-sm text-#cbbfd0">계산값을 쉬운 말로 정리한 답변입니다.</p>
-        </Show>
         <div
           aria-label="생성된 사주 풀이"
           class="mt-4 whitespace-pre-wrap break-words text-sm leading-7 text-#f8edf1"

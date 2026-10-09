@@ -11,7 +11,11 @@ export const mediaRevision = (stats: Stats): string =>
 interface MediaInfo {
   readonly path: string
   readonly revision: string
-  readonly media: {kind: 'image' | 'video' | 'audio' | 'pdf'; mimeType: string; size: number}
+  readonly media: {
+    kind: 'image' | 'video' | 'audio' | 'pdf' | 'word' | 'spreadsheet'
+    mimeType: string
+    size: number
+  }
 }
 export const readMediaInfo = (root: string, path: string): Result<MediaInfo> => {
   const resolved = resolveFile(root, path)

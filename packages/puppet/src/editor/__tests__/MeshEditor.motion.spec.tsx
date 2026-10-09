@@ -14,6 +14,43 @@ import {
 import {createDeformer, getSceneNode} from '../internal/scene-graph'
 
 describe('MeshEditor motion', () => {
+  test('should cancel a vertex drag when the selected motion changes', () => {
+    const document = createDemoDocument()
+    const [motionId, setMotionId] = createSignal('idle-deform')
+    const save = vi.fn()
+    const view = render(() => (
+      <MeshEditor
+        document={document}
+        motionId={motionId()}
+        previewTime={0.2}
+        onDocumentChange={save}
+      />
+    ))
+    const svg = view.getByLabelText('메시 정점 편집 영역')
+    vi.spyOn(svg, 'getBoundingClientRect').mockReturnValue(new DOMRect(0, 0, 960, 720))
+    const center = svg.querySelectorAll('circle')[4]!
+    fireEvent(center, new MouseEvent('pointerdown', {bubbles: true, button: 0}))
+    fireEvent(svg, new MouseEvent('pointermove', {bubbles: true, clientX: 500, clientY: 360}))
+    setMotionId('blink')
+    fireEvent(svg, new MouseEvent('pointerup', {bubbles: true}))
+    expect(save).not.toHaveBeenCalled()
+    expect(center).toHaveAttribute('cx', '384')
+  })
+
+  test('should follow the selected motion while preserving vertex elements', () => {
+    const document = createDemoDocument()
+    const [motionId, setMotionId] = createSignal('idle-deform')
+    const view = render(() => (
+      <MeshEditor document={document} motionId={motionId()} previewTime={0.2} />
+    ))
+    const center = view.container.querySelectorAll('circle')[4]!
+    expect(Number(center.getAttribute('cy'))).toBeCloseTo(227.2)
+    setMotionId('blink')
+    expect(view.container.querySelectorAll('circle')[4]).toBe(center)
+    expect(center).toHaveAttribute('cx', '384')
+    expect(center).toHaveAttribute('cy', '240')
+  })
+
   test('should render animated vertices without mutating the source mesh', () => {
     const document = createDemoDocument()
     const [previewTime, setPreviewTime] = createSignal(0)

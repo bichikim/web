@@ -2,7 +2,7 @@ import {type Accessor, batch, createEffect, createMemo, createSignal, on, untrac
 import {
   type CodeLocation,
   treeSchema,
-  type ViewerSession,
+  type ViewerConnection,
   type WorkspaceFile,
 } from '../shared/contracts'
 import {callViewerTool} from './call-viewer-tool'
@@ -14,7 +14,7 @@ interface UseFileTreeProps {
   onError: (error: unknown) => void
   onOpen: (location: CodeLocation) => void
   port: ViewerPort
-  session: Accessor<ViewerSession | null>
+  session: Accessor<ViewerConnection | null>
   visible: Accessor<boolean>
 }
 
@@ -33,7 +33,10 @@ export const useFileTree = (props: UseFileTreeProps) => {
   const [focused, setFocused] = createSignal<string | null>(null)
   const request = useLatestRequest(props.onError)
   const sessionId = createMemo(() => props.session()?.session)
-  const currentPath = () => props.session()?.document.location.path ?? ''
+  const currentPath = () => {
+    const session = props.session()
+    return session !== null && 'document' in session ? session.document.location.path : ''
+  }
   const filtered = createMemo(() => {
     const value = query().trim().toLowerCase()
     return buildFileTree(files().filter((file) => file.path.toLowerCase().includes(value)))

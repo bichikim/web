@@ -25,7 +25,6 @@ const now = new Date('2026-10-09T00:00:00Z')
 const provider: ApiAiProvider = {
   apiKey: 'key',
   baseUrl: 'https://api.example/v1',
-  concurrency: 1,
   id: 'openai',
   models: {history: 'model'},
   poolId: 'primary',
@@ -84,6 +83,7 @@ it('should process a later callback despite a full batch of repeatedly failing c
     Array.from({length: 11}, (_, index) => ({
       eventId: `event-${index}`,
       eventType: 'response.completed' as const,
+      nextAttemptAt: now,
       providerId: 'openai',
       receivedAt: new Date(now.getTime() - 1000 + index),
       responseId: `response-${index}`,

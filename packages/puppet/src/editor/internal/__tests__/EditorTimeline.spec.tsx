@@ -260,8 +260,9 @@ describe('EditorTimeline', () => {
       />
     ))
 
-    fireEvent.click(view.getByText('Angle X', {exact: true}))
-    fireEvent.click(view.getByRole('button', {name: '현재 위치에 키프레임'}))
+    const track = view.getByLabelText('Angle X 트랙')
+    vi.spyOn(track, 'getBoundingClientRect').mockReturnValue(DOMRect.fromRect({width: 240}))
+    fireEvent.dblClick(track, {clientX: 60})
 
     expect(document().motions[0]?.tracks).toHaveLength(2)
     expect(document().motions[0]?.tracks[1]).toEqual({
@@ -307,11 +308,13 @@ describe('EditorTimeline', () => {
       />
     ))
     fireEvent.click(view.getByRole('button', {name: 'Angle Y 1.00초 키프레임'}))
-    fireEvent.click(view.getByRole('button', {name: '선택 키프레임 삭제'}))
+    fireEvent.keyDown(view.getByRole('button', {name: 'Angle Y 1.00초 키프레임'}), {
+      key: 'Backspace',
+    })
 
     expect(document().motions[0]?.tracks).toHaveLength(1)
     expect(document().motions[0]?.tracks[0]?.keyframes).toHaveLength(2)
-    expect(view.getByRole('button', {name: '선택 키프레임 삭제'})).toBeDisabled()
+    expect(view.getByRole('button', {name: /^키프레임 이징/})).toBeDisabled()
   })
 
   test('should preview a keyframe drag and commit its snapped time on release', async () => {
@@ -459,7 +462,7 @@ describe('EditorTimeline', () => {
       'aria-pressed',
       'false',
     )
-    expect(view.getByRole('button', {name: '선택 키프레임 삭제'})).toBeDisabled()
+    expect(view.getByRole('button', {name: /^키프레임 이징/})).toBeDisabled()
     expect(view.getByLabelText('Angle X 트랙')).toHaveAttribute('data-selected', '')
     expect(onDocumentChange).not.toHaveBeenCalled()
   })
@@ -517,8 +520,8 @@ describe('EditorTimeline', () => {
     expect(view.queryByLabelText('Angle X 트랙')).not.toBeInTheDocument()
     expect(view.getByRole('button', {name: '타임라인 파라미터 추가'})).toBeDisabled()
     expect(view.getByRole('button', {name: '정지'})).toBeDisabled()
-    expect(view.getByRole('button', {name: '현재 위치에 키프레임'})).toBeDisabled()
-    expect(view.getByRole('button', {name: '선택 키프레임 삭제'})).toBeDisabled()
+    expect(view.queryByRole('button', {name: '현재 위치에 키프레임'})).not.toBeInTheDocument()
+    expect(view.getByRole('button', {name: /^키프레임 이징/})).toBeDisabled()
     expect(view.queryByRole('slider', {name: '재생 위치'})).not.toBeInTheDocument()
   })
 })

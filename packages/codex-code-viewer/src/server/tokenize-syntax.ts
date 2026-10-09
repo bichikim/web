@@ -1,5 +1,7 @@
 import Prism from 'prismjs'
 import 'prismjs/components/prism-rust.js'
+import 'prismjs/components/prism-python.js'
+import 'prismjs/components/prism-ruby.js'
 import 'prismjs/components/prism-yaml.js'
 import 'prismjs/components/prism-toml.js'
 import 'prismjs/components/prism-json.js'
@@ -22,6 +24,11 @@ const kinds = new Map<string, CodeToken['kind']>([
   ['property', 'identifier'],
   ['function', 'identifier'],
   ['class-name', 'identifier'],
+  ['variable', 'identifier'],
+  ['constant', 'identifier'],
+  ['symbol', 'string'],
+  ['regex', 'string'],
+  ['ruby-identifier', 'identifier'],
   ['tag', 'keyword'],
   ['attr-name', 'keyword'],
   ['attr-value', 'string'],
@@ -67,11 +74,120 @@ const rustGrammar = Prism.languages.insertBefore('rust', 'function-definition', 
   'raw-identifier': /r#[\p{XID_Start}_][\p{XID_Continue}]*/u,
 })
 
+const rubyGrammar: Prism.Grammar = Object.fromEntries(
+  Object.entries(Prism.languages.ruby).flatMap(([name, grammar]) => {
+    if (name === 'operator') {
+      return [
+        ['ruby-identifier', /[@$]{0,2}[\p{XID_Start}_][\p{XID_Continue}]*[!?]?/u],
+        [name, grammar],
+      ]
+    }
+    if (name === 'method-definition') {
+      return [
+        [
+          name,
+          {
+            alias: 'function',
+            lookbehind: true,
+            pattern:
+              /(?<prefix>\bdef\s+)(?:[\p{XID_Start}_][\p{XID_Continue}]*\.)?[\p{XID_Start}_][\p{XID_Continue}]*[!?]?/u,
+          },
+        ],
+      ]
+    }
+    return [[name, grammar]]
+  }),
+)
+
+const pythonIdentifiers = (token: SyntaxToken): SyntaxToken[] => {
+  if (['keyword', 'string', 'comment', 'number'].includes(token.kind)) {
+    return [token]
+  }
+  return token.text
+    .split(/(?<identifier>[\p{XID_Start}_][\p{XID_Continue}]*)/u)
+    .map((text, index) => ({
+      ...token,
+      navigation: index % 2 === 1 ? ('definition' as const) : null,
+      text,
+    }))
+    .filter((entry) => entry.text.length > 0)
+}
+
+const rubyIdentifiers = (token: SyntaxToken): SyntaxToken[] => {
+  if (['keyword', 'string', 'comment', 'number'].includes(token.kind)) {
+    return [token]
+  }
+  return token.text
+    .split(/(?<identifier>[@$]{0,2}[\p{XID_Start}_][\p{XID_Continue}]*[!?]?)/u)
+    .map((text, index) => ({
+      ...token,
+      navigation: index % 2 === 1 ? ('definition' as const) : null,
+      text,
+    }))
+    .filter((entry) => entry.text.length > 0)
+}
+
+const rubyPaths = (token: SyntaxToken, index: number, tokens: SyntaxToken[]): SyntaxToken[] => {
+  if (token.kind !== 'string') {
+    return [token]
+  }
+  const literal = /^(?<quote>['"])(?<path>[^\\\r\n#'"]+)\k<quote>$/u.exec(token.text)
+  if (literal?.groups === undefined) {
+    return [token]
+  }
+  const previous = previousToken(tokens, index)
+  const call = tokens[previous]?.text === '(' ? previousToken(tokens, previous) : previous
+  const method = tokens[call]
+  if (method === undefined || !['require', 'require_relative'].includes(method.text)) {
+    return [token]
+  }
+  return [
+    {...token, text: literal.groups.quote},
+    {...token, navigation: 'path', text: literal.groups.path},
+    {...token, text: literal.groups.quote},
+  ]
+}
+
+const previousToken = (tokens: readonly SyntaxToken[], index: number): number => {
+  for (let position = index - 1; position >= 0; position -= 1) {
+    if (tokens[position].text.trim() !== '') {
+      return position
+    }
+  }
+  return -1
+}
+
+const navigableTokens = (language: SyntaxLanguage, tokens: SyntaxToken[]): SyntaxToken[] => {
+  switch (language) {
+    case 'rust':
+      return tokens.flatMap(rustIdentifiers)
+    case 'python':
+      return tokens.flatMap(pythonIdentifiers)
+    case 'ruby':
+      return tokens.flatMap(rubyIdentifiers).flatMap(rubyPaths)
+    case 'yaml':
+    case 'toml':
+    case 'json':
+    case 'jsonc':
+    case 'json5':
+    case 'html':
+      return tokens
+    default: {
+      const unsupported: never = language
+      return unsupported
+    }
+  }
+}
+
 export const tokenizeSyntax = (language: SyntaxLanguage, source: string): CodeToken[][] => {
+  const grammars = new Map<SyntaxLanguage, Prism.Grammar>([
+    ['rust', rustGrammar],
+    ['ruby', rubyGrammar],
+  ])
   const grammar =
-    language === 'rust' ? rustGrammar : Prism.languages[language === 'jsonc' ? 'json' : language]
+    grammars.get(language) ?? Prism.languages[language === 'jsonc' ? 'json' : language]
   const highlighted = flattenTokens(Prism.tokenize(source, grammar))
-  const tokens = language === 'rust' ? highlighted.flatMap(rustIdentifiers) : highlighted
+  const tokens = navigableTokens(language, highlighted)
   const lines: CodeToken[][] = [[]]
   let offset = 0
   for (const token of tokens) {

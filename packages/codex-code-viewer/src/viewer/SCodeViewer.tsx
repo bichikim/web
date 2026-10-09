@@ -16,6 +16,8 @@ import {useMediaCache} from './use-media-cache'
 import {MediaCacheContext} from './media-cache-context'
 import {ViewStateContext} from './view-state/context'
 import {hasDocumentSource} from '../shared/has-document-source'
+import {SWorkspacePrompt} from './SWorkspacePrompt'
+import {useFileTreeVisibility} from './use-file-tree-visibility'
 
 interface SCodeViewerProps {
   port: ViewerPort
@@ -25,7 +27,7 @@ export const SCodeViewer = (props: SCodeViewerProps) => {
   const viewer = useViewer(port)
   const mediaCache = useMediaCache(() => viewer.session()?.session ?? null)
   const [focusRequest, setFocusRequest] = createSignal(0)
-  const [treeVisible, setTreeVisible] = createSignal(false)
+  const tree = useFileTreeVisibility(viewer.workspaceSession)
   const [element, setElement] = createSignal<HTMLElement | null>(null)
   const search = useDocumentSearch({source: () => viewer.session()?.document.source ?? ''})
   const sourceAvailable = (): boolean => {
@@ -77,8 +79,8 @@ export const SCodeViewer = (props: SCodeViewerProps) => {
             viewer={viewer}
             onOpen={viewer.openLocation}
             focusRequest={focusRequest()}
-            treeVisible={treeVisible()}
-            onToggleTree={() => setTreeVisible((previous) => !previous)}
+            treeVisible={tree.visible()}
+            onToggleTree={tree.toggle}
           />
           <Show when={search.visible() && sourceAvailable()}>
             <SFindBar
@@ -92,13 +94,13 @@ export const SCodeViewer = (props: SCodeViewerProps) => {
             />
           </Show>
           <SResizablePanels
-            visible={treeVisible()}
+            visible={tree.visible()}
             controls="workspace-files"
             sidebar={
               <SFileTree
                 port={port}
-                session={viewer.session() ?? undefined}
-                visible={treeVisible()}
+                session={viewer.workspaceSession() ?? undefined}
+                visible={tree.visible()}
                 onOpen={(location) => viewer.openLocation(location, {restoreView: true})}
                 onError={viewer.reportError}
                 onShare={viewer.sharePath}
@@ -107,7 +109,10 @@ export const SCodeViewer = (props: SCodeViewerProps) => {
             }
           >
             <section aria-label="파일 내용" class="flex min-h-0 min-w-0 flex-1 flex-col">
-              <Show when={viewer.session()}>
+              <Show
+                when={viewer.session()}
+                fallback={<SWorkspacePrompt workspace={viewer.workspaceSession()?.workspace} />}
+              >
                 {(session) => (
                   <>
                     <SDefinitionChoices locations={viewer.choices()} onOpen={viewer.openLocation} />

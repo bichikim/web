@@ -1,9 +1,12 @@
 import {type Accessor, batch, createEffect, createMemo, createSignal} from 'solid-js'
 import {parseDelimitedText} from './parse-delimited-text'
+import type {TableResult} from './table/types'
 
 interface TableViewOptions {
-  readonly source: Accessor<string>
-  readonly delimiter: Accessor<',' | '\t'>
+  readonly source?: Accessor<string>
+  readonly delimiter?: Accessor<',' | '\t'>
+  readonly data?: Accessor<TableResult | undefined>
+  readonly initialHeader?: Accessor<boolean>
 }
 interface TableSort {
   readonly column: number
@@ -25,17 +28,22 @@ const compareCells = (left: string, right: string): number => {
 }
 
 export const useTableView = (options: TableViewOptions) => {
-  const data = createMemo(() =>
-    parseDelimitedText({delimiter: options.delimiter(), source: options.source()}),
+  const data = createMemo(
+    () =>
+      options.data?.() ??
+      parseDelimitedText({
+        delimiter: options.delimiter?.() ?? ',',
+        source: options.source?.() ?? '',
+      }),
   )
-  const [header, setHeader] = createSignal(true)
+  const [header, setHeader] = createSignal(options.initialHeader?.() ?? true)
   const [query, setQuery] = createSignal('')
   const [sort, setSort] = createSignal<TableSort | null>(null)
   const [page, setPage] = createSignal(1)
   createEffect(() => {
     data()
     batch(() => {
-      setHeader(true)
+      setHeader(options.initialHeader?.() ?? true)
       setQuery('')
       setSort(null)
       setPage(1)
@@ -45,7 +53,9 @@ export const useTableView = (options: TableViewOptions) => {
     const parsed = data()
     return parsed.ok
       ? Array.from({length: parsed.columns}, (_, index) =>
-          header() ? parsed.rows[0]?.[index] || `열 ${index + 1}` : `열 ${index + 1}`,
+          header()
+            ? parsed.rows[0]?.[index] || `열 ${index + 1}`
+            : (parsed.columnNames?.[index] ?? `열 ${index + 1}`),
         )
       : []
   })

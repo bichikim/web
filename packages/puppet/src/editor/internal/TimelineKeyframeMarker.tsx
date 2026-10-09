@@ -1,4 +1,4 @@
-import {createSignal} from 'solid-js'
+import {createEffect, createSignal, on, onCleanup} from 'solid-js'
 
 import {EditorDiamondButton} from '../../design-system'
 import type {ParameterTimelineKeyframe, ParameterTimelineTrack} from './timeline-keyframe-selection'
@@ -9,6 +9,7 @@ interface KeyframeDrag {
 }
 
 export interface TimelineKeyframeMarkerProps {
+  readonly onContextMenu?: () => void
   readonly duration: number
   readonly framesPerSecond: number
   readonly getTime: (clientX: number, bounds: DOMRect) => number
@@ -44,6 +45,18 @@ export const TimelineKeyframeMarker = (props: TimelineKeyframeMarkerProps) => {
   const [drag, setDrag] = createSignal<KeyframeDrag | null>(null)
   let suppressClick = false
   const displayTime = () => props.previewTime ?? drag()?.targetTime ?? props.keyframe.time
+  const move = (time: number, target: HTMLButtonElement) => {
+    const root = target.getRootNode()
+    const focused = 'activeElement' in root && root.activeElement === target
+    const document = target.ownerDocument
+    try {
+      props.onMove?.(props.track, props.keyframe, time)
+    } finally {
+      if (focused && target.isConnected && document.activeElement === document.body) {
+        target.focus({preventScroll: true})
+      }
+    }
+  }
   const handlePointerDown = (event: PointerEvent & {currentTarget: HTMLButtonElement}) => {
     if (event.button !== 0 || props.onMove === undefined) {
       return
@@ -75,24 +88,33 @@ export const TimelineKeyframeMarker = (props: TimelineKeyframeMarkerProps) => {
     })
   }
   const finishDrag = (
-    event: PointerEvent & {currentTarget: HTMLButtonElement},
     commit: boolean,
+    pointerId = drag()?.pointerId,
+    target?: HTMLButtonElement,
   ) => {
     const currentDrag = drag()
 
-    if (currentDrag === null || currentDrag.pointerId !== event.pointerId) {
+    if (currentDrag === null || currentDrag.pointerId !== pointerId) {
       return
     }
 
     suppressClick ||= currentDrag.targetTime !== props.keyframe.time
     setDrag(null)
-    if (commit && suppressClick) {
-      props.onMove?.(props.track, props.keyframe, currentDrag.targetTime)
+    if (commit && suppressClick && target !== undefined) {
+      move(currentDrag.targetTime, target)
     }
     props.onMovePreviewEnd?.()
     props.onEditEnd?.()
   }
-  const handleKeyDown = (event: KeyboardEvent) => {
+  onCleanup(() => finishDrag(false))
+  createEffect(
+    on(
+      () => props.keyframe,
+      () => finishDrag(false),
+      {defer: true},
+    ),
+  )
+  const handleKeyDown = (event: KeyboardEvent & {currentTarget: HTMLButtonElement}) => {
     const frameDirection = event.key === 'ArrowLeft' ? -1 : event.key === 'ArrowRight' ? 1 : 0
 
     if (frameDirection === 0 || props.onMove === undefined) {
@@ -108,7 +130,7 @@ export const TimelineKeyframeMarker = (props: TimelineKeyframeMarkerProps) => {
     }
 
     props.onEditStart?.()
-    props.onMove(props.track, props.keyframe, targetTime)
+    move(targetTime, event.currentTarget)
     props.onEditEnd?.()
   }
   const handleClick = (event: MouseEvent) => {
@@ -133,13 +155,14 @@ export const TimelineKeyframeMarker = (props: TimelineKeyframeMarkerProps) => {
       }}
       type="button"
       title="Shift+클릭하여 키프레임 다중 선택"
+      onContextMenu={() => props.onContextMenu?.()}
       onClick={handleClick}
       onKeyDown={handleKeyDown}
-      onLostPointerCapture={(event) => finishDrag(event, false)}
-      onPointerCancel={(event) => finishDrag(event, false)}
+      onLostPointerCapture={(event) => finishDrag(false, event.pointerId)}
+      onPointerCancel={(event) => finishDrag(false, event.pointerId)}
       onPointerDown={handlePointerDown}
       onPointerMove={handlePointerMove}
-      onPointerUp={(event) => finishDrag(event, true)}
+      onPointerUp={(event) => finishDrag(true, event.pointerId, event.currentTarget)}
     />
   )
 }

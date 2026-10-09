@@ -11,7 +11,35 @@ describe('readDocument', () => {
   })
   afterEach(() => rmSync(root, {force: true, recursive: true}))
   it.each([
+    [
+      'report.docx',
+      'word',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    ],
+    [
+      'workbook.XLSX',
+      'spreadsheet',
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    ],
+  ])('should open %s as a binary document with a transferable revision', (path, kind, mimeType) => {
+    writeFileSync(join(root, path), Buffer.from([80, 75, 0, 255]))
+    const result = readDocument(root, path)
+    expect(result).toMatchObject({
+      ok: true,
+      value: {lines: [[]], media: {kind, mimeType, size: 4}, source: ''},
+    })
+    if (result.ok) {
+      expect(result.value.revision).not.toBe('')
+    }
+  })
+  it.each([
     ['main.rs', 'fn main() {}', 'fn', 'keyword'],
+    ['main.rb', 'class Report\nend', 'class', 'keyword'],
+    ['MAIN.RB', 'module Reports\nend', 'module', 'keyword'],
+    ['tasks.rake', 'def build\nend', 'def', 'keyword'],
+    ['viewer.gemspec', 'if true\nend', 'if', 'keyword'],
+    ['Gemfile', "source 'https://rubygems.org'\nif true\nend", 'if', 'keyword'],
+    ['Rakefile', 'def build\nend', 'def', 'keyword'],
     ['Cargo.lock', '# Generated\nversion = 4', '4', 'number'],
     ['Cargo.toml', '[package]\nname = "hello"', '"hello"', 'string'],
     ['config.yaml', '# comment\nname: hello', '# comment', 'comment'],

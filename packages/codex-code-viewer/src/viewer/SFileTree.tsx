@@ -1,15 +1,16 @@
-import {createEffect, createMemo, createSignal, For, onCleanup, Show, untrack} from 'solid-js'
-import type {CodeLocation, ViewerSession} from '../shared/contracts'
+import {createSignal, For, Show, untrack} from 'solid-js'
+import type {CodeLocation, ViewerConnection} from '../shared/contracts'
 import {SFileIcon} from './SFileIcon'
 import {SIcon} from './SIcon'
 import type {ViewerPort, WorkspaceSelection} from './types'
 import {useFileTree} from './use-file-tree'
 import {useTreeContextMenu} from './use-tree-context-menu'
 import {SFileTreeContextMenu} from './SFileTreeContextMenu'
+import {useTreeSelectionScroll} from './use-tree-selection-scroll'
 
 interface SFileTreeProps {
   port: ViewerPort
-  session?: ViewerSession
+  session?: ViewerConnection
   visible?: boolean
   onOpen?: (location: CodeLocation) => void
   onError?: (error: unknown) => void
@@ -33,22 +34,7 @@ export const SFileTree = (props: SFileTreeProps) => {
     session: () => props.session ?? null,
     visible: () => props.visible === true,
   })
-  const selectedPath = createMemo(() =>
-    tree.paths().includes(tree.currentPath()) ? tree.currentPath() : null,
-  )
-  createEffect(() => {
-    selectedPath()
-    const container = element()
-    let disposed = false
-    onCleanup(() => {
-      disposed = true
-    })
-    queueMicrotask(() => {
-      if (!disposed) {
-        container?.querySelector('[aria-selected="true"]')?.scrollIntoView?.({block: 'nearest'})
-      }
-    })
-  })
+  useTreeSelectionScroll({element, path: tree.currentPath, paths: tree.paths})
   const handleKeyboard = (event: KeyboardEvent, path: string): void => {
     if (menu.handleKeyboard(event, path)) {
       return
@@ -73,6 +59,13 @@ export const SFileTree = (props: SFileTreeProps) => {
         class="flex h-full min-h-0 w-full min-w-0 flex-col bg-canvas pt-1 text-sm"
         ref={setElement}
       >
+        <Show when={props.session}>
+          {(session) => (
+            <p class="m-0 truncate px-4 py-2 font-medium" title={session().workspace}>
+              {session().workspace.split('/').filter(Boolean).at(-1) ?? session().workspace}
+            </p>
+          )}
+        </Show>
         <label class="ui-field mx-2 mb-2 gap-2 rounded-control px-2 text-muted">
           <SIcon name="search" />
           <input

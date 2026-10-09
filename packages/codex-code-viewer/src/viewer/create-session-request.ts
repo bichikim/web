@@ -1,12 +1,12 @@
 import type {Accessor} from 'solid-js'
 import type {z} from 'zod'
-import type {ViewerSession} from '../shared/contracts'
+import type {WorkspaceSession} from '../shared/contracts'
 import type {ViewerPort} from './types'
 import {callViewerTool} from './call-viewer-tool'
 
 interface SessionRequest {
   readonly port: ViewerPort
-  readonly session: Accessor<ViewerSession | null>
+  readonly session: Accessor<WorkspaceSession | null>
 }
 
 /** Calls a viewer tool with the currently active session. */

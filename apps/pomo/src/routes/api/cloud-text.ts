@@ -73,7 +73,12 @@ export const GET = async (event: APIEvent): Promise<Response> => {
         ? noStoreJson({error: 'not_found'}, {cookies: identity.cookies, status: HTTP_NOT_FOUND})
         : noStoreJson(
             result.kind === 'complete'
-              ? {text: result.text, tokenCount: result.tokenCount, usage: result.usage}
+              ? {
+                  modelId: result.modelId,
+                  text: result.text,
+                  tokenCount: result.tokenCount,
+                  usage: result.usage,
+                }
               : result,
             {
               cookies: identity.cookies,
@@ -135,7 +140,12 @@ export const POST = async (event: APIEvent): Promise<Response> => {
         )
       case 'complete':
         return noStoreJson(
-          {text: result.text, tokenCount: result.tokenCount, usage: result.usage},
+          {
+            modelId: result.modelId,
+            text: result.text,
+            tokenCount: result.tokenCount,
+            usage: result.usage,
+          },
           {cookies: identity.cookies},
         )
       case 'exhausted':

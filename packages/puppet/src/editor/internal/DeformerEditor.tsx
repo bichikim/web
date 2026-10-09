@@ -4,22 +4,14 @@ import {PinEditor} from './PinEditor'
 import {DeformerTools} from './DeformerTools'
 import {GridBrushControls} from './GridBrushControls'
 import {useGridBrush} from './use-grid-brush'
+import {useDeformerGestureCancellation} from './use-deformer-gesture-cancellation'
 import type {DeformerEditMode} from './DeformerMode'
 import {isDeformerRestEditable, preserveDeformerPlacement} from './deformer-placement'
 import {BoneEditor} from './BoneEditor'
 import {SpatialDeformerEditor} from './SpatialDeformerEditor'
 import {editCurveTopology} from './curve-topology'
 import {findCurveSplit} from './deformer-paths'
-import {
-  type Accessor,
-  createEffect,
-  createSignal,
-  type JSX,
-  on,
-  onCleanup,
-  Show,
-  untrack,
-} from 'solid-js'
+import {type Accessor, createEffect, createSignal, type JSX, Show, untrack} from 'solid-js'
 
 import type {PuppetParameterValues} from '../../deformation'
 import type {PuppetDocument, PuppetPoint, PuppetSceneDeformerNode} from '../../player'
@@ -257,7 +249,7 @@ const useSurfaceEditor = (props: DeformerEditorProps) => {
   const editable = () =>
     editBlockMessage() === undefined && (props.deformerMode !== 'rest' || restEditable())
   const save = (document: PuppetDocument) =>
-    props.onDocumentChange?.(
+    changeDocument(
       props.deformerMode === 'rest'
         ? preserveDeformerPlacement(props.document, document, props.activeNodeId)
         : document,
@@ -366,9 +358,7 @@ const useSurfaceEditor = (props: DeformerEditorProps) => {
     }
     props.onEditEnd?.()
   }
-  const selectedId = () => props.activeNodeId
-  createEffect(on(selectedId, () => stopDrag()))
-  onCleanup(stopDrag)
+  const {changeDocument} = useDeformerGestureCancellation(props, stopDrag)
 
   const topology = createCurveTopologyHandlers({
     deformer,

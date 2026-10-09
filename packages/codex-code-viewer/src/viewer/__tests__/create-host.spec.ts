@@ -9,6 +9,31 @@ import {useViewer} from '../use-viewer'
 describe('createHost', () => {
   afterEach(() => vi.restoreAllMocks())
 
+  it('should await the consumer cleanup when the host requests teardown', async () => {
+    vi.spyOn(App.prototype, 'connect').mockResolvedValue()
+    vi.spyOn(App.prototype, 'close').mockResolvedValue()
+    vi.spyOn(App.prototype, 'getHostCapabilities').mockReturnValue({})
+    const setter = vi.spyOn(App.prototype, 'onteardown', 'set')
+    const cleaned = Promise.withResolvers<void>()
+    const onTeardown = vi.fn(() => cleaned.promise)
+    const port = createHost()
+    const stop = await port.start(vi.fn(), vi.fn(), vi.fn(), onTeardown)
+    const callback = setter.mock.calls[0][0]
+    const completion = callback?.(
+      {},
+      {
+        requestId: 'teardown',
+        sendNotification: vi.fn(),
+        sendRequest: vi.fn(),
+        signal: new AbortController().signal,
+      },
+    )
+    expect(onTeardown).toHaveBeenCalledOnce()
+    cleaned.resolve()
+    expect(await completion).toEqual({})
+    await stop()
+  })
+
   it('should leave native navigation untouched when the host has no location capability', async () => {
     vi.spyOn(App.prototype, 'getHostCapabilities').mockReturnValue({})
     const request = vi.spyOn(App.prototype, 'request').mockResolvedValue({})
@@ -148,6 +173,23 @@ describe('createHost', () => {
     expect(removed).toHaveBeenCalledWith('toolinput', expect.any(Function))
     expect(removed).toHaveBeenCalledWith('toolresult', expect.any(Function))
     expect(close).toHaveBeenCalledOnce()
+  })
+  it('should receive a folder-only menu result without attaching a file resource', async () => {
+    vi.spyOn(App.prototype, 'connect').mockResolvedValue()
+    vi.spyOn(App.prototype, 'close').mockResolvedValue()
+    vi.spyOn(App.prototype, 'getHostCapabilities').mockReturnValue({})
+    const listeners = vi.spyOn(App.prototype, 'addEventListener')
+    const call = vi.spyOn(App.prototype, 'callServerTool')
+    const receive = vi.fn()
+    const port = createHost()
+    const stop = await port.start(receive, vi.fn(), vi.fn())
+    const result = {structuredContent: {session: 'folder', workspace: '/project'}}
+    listeners.mock.calls
+      .filter(([event]) => event === 'toolresult')
+      .forEach(([, listener]) => listener(result))
+    expect(receive).toHaveBeenCalledWith(result.structuredContent)
+    expect(call).not.toHaveBeenCalled()
+    await stop()
   })
 
   it('should close a discarded session before closing the transport after unmount', async () => {

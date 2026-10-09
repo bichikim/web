@@ -1,4 +1,5 @@
 /** @vitest-environment node */
+// oxlint-disable no-await-in-loop -- Each fallback requires the previous rejection to be recorded first.
 import {PGlite} from '@electric-sql/pglite'
 import {drizzle} from 'drizzle-orm/pglite'
 import {eq} from 'drizzle-orm'
@@ -17,7 +18,9 @@ import {
   claimApiAiAttemptRecovery,
   claimApiAiJob,
   createApiAiJob,
+  expireQueuedApiAiJobs,
   findApiAiJob,
+  listQueuedApiAiJobs,
   recordApiAiResponse,
   recordApiAiSubmissionError,
 } from '..'
@@ -33,7 +36,6 @@ const now = new Date('2026-10-08T00:00:00Z')
 const provider: ApiAiProvider = {
   apiKey: 'key',
   baseUrl: 'https://api.example/v1',
-  concurrency: 1,
   id: 'primary',
   models: {'cloud-text': 'model', history: 'history-model'},
   poolId: 'shared',
@@ -84,7 +86,18 @@ afterAll(async () => {
   await database.close()
 })
 
-it('should reserve only one provider slot across concurrent dispatchers and jobs', async () => {
+it('should let the API decide availability despite a legacy disabled or cooling pool', async () => {
+  await client.insert(apiAiPools).values({
+    blockedUntil: new Date(now.getTime() + 90000),
+    disabled: 'previous rejection',
+    id: provider.poolId,
+  })
+  expect(
+    (await claimApiAiJob(await enqueue(), [provider], now, crypto.randomUUID()))?.provider.id,
+  ).toBe('primary')
+})
+
+it('should claim each job once while allowing different jobs to run concurrently', async () => {
   const ids = await Promise.all([enqueue(), enqueue(), enqueue()])
   const claims = await Promise.all(
     ids.flatMap((id) => [
@@ -92,18 +105,18 @@ it('should reserve only one provider slot across concurrent dispatchers and jobs
       claimApiAiJob(id, [provider], now, crypto.randomUUID()),
     ]),
   )
-  expect(claims.filter((claim) => claim !== null)).toHaveLength(1)
-  expect(await client.select().from(apiAiAttempts)).toHaveLength(1)
+  expect(claims.filter((claim) => claim !== null)).toHaveLength(3)
+  expect(await client.select().from(apiAiAttempts)).toHaveLength(3)
   expect(
     (await client.select().from(apiAiJobs)).filter((job) => job.status === 'queued'),
-  ).toHaveLength(2)
+  ).toHaveLength(0)
   expect(
     (await client.select().from(apiAiJobs)).every(
       (job) => job.createdAt.getTime() === now.getTime(),
     ),
   ).toBe(true)
 })
-it('should share one slot across models and API keys belonging to the same pool', async () => {
+it('should allow concurrent models and API keys in the same pool', async () => {
   const first = await enqueue()
   const second = await enqueue()
   expect(await claimApiAiJob(first, [provider], now, crypto.randomUUID())).not.toBeNull()
@@ -114,9 +127,9 @@ it('should share one slot across models and API keys belonging to the same pool'
       now,
       crypto.randomUUID(),
     ),
-  ).toBeNull()
+  ).not.toBeNull()
 })
-it('should use an independent pool when the primary pool has reached capacity', async () => {
+it('should keep the first model despite other active requests', async () => {
   await claimApiAiJob(await enqueue(), [provider], now, crypto.randomUUID())
   const claim = await claimApiAiJob(
     await enqueue(),
@@ -124,7 +137,7 @@ it('should use an independent pool when the primary pool has reached capacity', 
     now,
     crypto.randomUUID(),
   )
-  expect(claim?.provider.id).toBe('secondary')
+  expect(claim?.provider.id).toBe('primary')
 })
 it('should release capacity on completion and reject a stale queued response', async () => {
   const id = await enqueue()
@@ -140,7 +153,7 @@ it('should release capacity on completion and reject a stale queued response', a
   })
   expect(await claimApiAiJob(await enqueue(), [provider], now, crypto.randomUUID())).not.toBeNull()
 })
-it('should persist a rate cooldown and switch providers without a duplicate active attempt', async () => {
+it('should switch models on actual rate-limit rejection without a duplicate active attempt', async () => {
   const id = await enqueue()
   const first = await claimApiAiJob(id, [provider], now, crypto.randomUUID())
   if (first === null) {
@@ -161,16 +174,13 @@ it('should persist a rate cooldown and switch providers without a duplicate acti
     crypto.randomUUID(),
   )
   expect(second?.provider.id).toBe('secondary')
-  expect(
-    await client.select().from(apiAiPools).where(eq(apiAiPools.id, provider.poolId)),
-  ).toMatchObject([{blockedUntil: new Date(now.getTime() + 90000)}])
   await recordApiAiResponse(first.attempt.id, response, now)
   expect(await findApiAiJob(id)).toMatchObject({
     activeAttemptId: second?.attempt.id,
     status: 'submitting',
   })
 })
-it('should keep an ambiguous submission occupying its slot without a fallback', async () => {
+it('should avoid duplicate ambiguous submissions without blocking other jobs', async () => {
   const id = await enqueue()
   const claim = await claimApiAiJob(id, [provider], now, crypto.randomUUID())
   if (claim === null) {
@@ -189,20 +199,37 @@ it('should keep an ambiguous submission occupying its slot without a fallback', 
       crypto.randomUUID(),
     ),
   ).toBeNull()
-  expect(await claimApiAiJob(await enqueue(), [provider], now, crypto.randomUUID())).toBeNull()
+  expect(await claimApiAiJob(await enqueue(), [provider], now, crypto.randomUUID())).not.toBeNull()
 })
-it('should retain the minute request budget after a slot is released', async () => {
-  const limited = {...provider, requestsPerMinute: 1}
+it('should ignore legacy minute, daily and token budgets after completed requests', async () => {
+  const limited = {...provider, requestsPerDay: 1, requestsPerMinute: 1, tokensPerMinute: 1}
   const claim = await claimApiAiJob(await enqueue(), [limited], now, crypto.randomUUID())
   if (claim === null) {
     throw new Error('Expected claim')
   }
   await recordApiAiResponse(claim.attempt.id, response, now)
+  expect(await claimApiAiJob(await enqueue(), [limited], now, crypto.randomUUID())).not.toBeNull()
+})
+it('should fail after all models reject without retrying previously rejected models', async () => {
   const id = await enqueue()
-  expect(await claimApiAiJob(id, [limited], now, crypto.randomUUID())).toBeNull()
+  const providers = [provider, {...provider, id: 'secondary', poolId: 'independent'}]
+  for (const selected of providers) {
+    const claim = await claimApiAiJob(id, providers, now, crypto.randomUUID())
+    expect(claim?.provider.id).toBe(selected.id)
+    if (claim === null) {
+      throw new Error('Expected claim')
+    }
+    await recordApiAiSubmissionError(
+      claim.attempt.id,
+      classifyApiAiSubmissionError({status: 429}, now.getTime()),
+      now,
+    )
+  }
   expect(
-    await claimApiAiJob(id, [limited], new Date(now.getTime() + 61000), crypto.randomUUID()),
-  ).not.toBeNull()
+    await claimApiAiJob(id, providers, new Date(now.getTime() + 61000), crypto.randomUUID()),
+  ).toBeNull()
+  expect(await findApiAiJob(id)).toMatchObject({status: 'failed'})
+  expect(await client.select().from(apiAiAttempts)).toHaveLength(2)
 })
 it('should refund cancellation semantics without reopening a job when the provider reports completion', async () => {
   const id = await enqueue()
@@ -242,4 +269,11 @@ it('should grant one recovery check across concurrent invocations and defer its 
   expect(await claimApiAiAttemptRecovery(claim.attempt.id, new Date(now.getTime() + 61000))).toBe(
     true,
   )
+})
+
+it('should expire old queued jobs before selecting the next dispatch batch', async () => {
+  const id = await enqueue()
+  await expireQueuedApiAiJobs(new Date(now.getTime() + 900001))
+  expect(await listQueuedApiAiJobs(new Date(now.getTime() + 900001))).toEqual([])
+  expect(await findApiAiJob(id)).toMatchObject({status: 'failed'})
 })
