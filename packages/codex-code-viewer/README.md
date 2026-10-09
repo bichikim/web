@@ -144,7 +144,7 @@ gem install solargraph
 
 열린 파일의 변경을 분석기에 전달하며, 분석기의 문자 단위 좌표를 뷰어의 UTF-16 좌표로 변환한다. 종료 시 분석기와 Unix의 하위 프로세스를 함께 정리한다. 작업 폴더 밖의 gem·표준 라이브러리 소스는 이동 대상에서 제외한다. 분석기를 실행하지 못해도 파일 열기·문법 강조·선택·검색은 사용할 수 있다.
 
-Rust 탐색에는 플러그인에 포함된 `rust-analyzer`를 사용한다. Node 24 이상 외에 Rust·Cargo·rustup을 설치할 필요가 없고 첫 탐색 때 추가 다운로드도 하지 않는다. macOS·Linux·Windows의 x64·arm64 분석기를 빌드 때 고정 버전·SHA-256으로 검증해 포함한다. Linux arm64 배포본은 glibc 환경을 대상으로 한다. 분석기 경로를 직접 지정하려면 `RUST_ANALYZER_BINARY`를 사용할 수 있다.
+Rust 탐색에는 플러그인에 포함된 `rust-analyzer`를 사용한다. Node 24 이상 외에 Rust·Cargo·rustup을 설치할 필요가 없고 첫 탐색 때 추가 다운로드도 하지 않는다. macOS·Linux·Windows의 x64·arm64 분석기를 빌드 때 고정 버전·SHA-256으로 검증해 포함한다. Linux 배포본은 glibc 환경을 대상으로 한다. 분석기 경로를 직접 지정하려면 `RUST_ANALYZER_BINARY`를 사용할 수 있다.
 
 뷰어가 `Cargo.toml`에서 라이브러리·바이너리 소스 경로, 워크스페이스 멤버, 로컬 `path` 의존성과 별칭, 워크스페이스에서 상속한 의존성·edition, 기본 feature를 읽고 [공식 프로젝트 구조 형식](https://rust-analyzer.github.io/book/non_cargo_based_projects.html)으로 전달한다. 독립 `.rs` 파일과 `mod`로 연결된 파일도 분석한다. 같은 프로젝트의 분석기를 재사용하고 로컬 패키지 구조가 바뀌면 다시 연결한다. 모듈 파일 변경은 분석기의 파일 감시로 반영한다.
 

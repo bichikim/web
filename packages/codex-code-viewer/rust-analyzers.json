@@ -18,8 +18,8 @@
     },
     {
       "host": "linux-x64",
-      "archive": "rust-analyzer-x86_64-unknown-linux-musl.gz",
-      "sha256": "c7f8b193d3b226fd69c899c3b991a961dd9afebbe53cefca0595e089ed5285de"
+      "archive": "rust-analyzer-x86_64-unknown-linux-gnu.gz",
+      "sha256": "28070188df63b6f217768040781decc8db43bc9d29b126847acb365575b09bc9"
     },
     {
       "host": "win32-arm64",
