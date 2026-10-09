@@ -148,6 +148,32 @@ it.each(['수요일 일정 알려줄 수 있어?', '수요일 일정 중 할 일
   },
 )
 
+it.each([
+  '수요일 일정과 목 오후 일정 알려줘',
+  '수요일 일정은 회의 말고 목 오후 일정 알려줘',
+  '수요일 일정과 목 오전 약속 알려줘',
+  '수요일 일정과 목요일 오후 일정 알려줘',
+])('should request the full multi-weekday range for "%s"', async (text) => {
+  vi.mocked(apiJson).mockResolvedValue({
+    connectedConnections: 1,
+    events: [],
+    timeZone: 'Asia/Seoul',
+    truncated: false,
+    unavailableConnections: 0,
+  })
+
+  await loadCalendarPromptContext({
+    now: new Date('2026-09-04T10:30:00.000Z'),
+    text,
+    timeZone: 'Asia/Seoul',
+  })
+
+  const requestUrl = new URL(String(vi.mocked(apiJson).mock.calls[0]?.[0]), 'https://pomofi.io')
+  expect(requestUrl.searchParams.get('start')).toBe('2026-09-04T10:30:00.000Z')
+  expect(requestUrl.searchParams.get('end')).toBe('2026-10-04T10:30:00.000Z')
+  expect(requestUrl.searchParams.get('timeZone')).toBe('Asia/Seoul')
+})
+
 it('should send an exact local-noon instant query to the calendar API', async () => {
   vi.mocked(apiJson).mockResolvedValue({
     connectedConnections: 1,

@@ -21,6 +21,7 @@ interface WeekdayDateExpression {
 const WEEKDAY_NAME_PATTERN_SOURCE = '[월화수목금토일]'
 const WEEKDAY_PATTERN_SOURCE = `${WEEKDAY_NAME_PATTERN_SOURCE}(?:요일)?`
 const IMPLICIT_WEEKDAY_NAME_PATTERN_SOURCE = `${WEEKDAY_NAME_PATTERN_SOURCE}요일`
+const CALENDAR_DAYPART_PATTERN_SOURCE = '(?:새벽|아침|오전|점심|오후|저녁|밤|낮|정오)'
 const STANDALONE_WEEKDAY_QUALIFIER_PATTERN =
   /(?:다가오는|다다음|다음|이번|지난|저번|지지난|오는|매주)\s*[월화수목금토일](?:요일)?/u
 const WEEKDAY_PARTICLE_PATTERN = /(?:에는|에|엔|은|는|이|가|을|를|도)/u
@@ -31,7 +32,7 @@ const IMPLICIT_WEEKDAY_SCHEDULE_PATTERN = new RegExp(
   `^\\s*(?:${IMPLICIT_WEEKDAY_NAME_PATTERN_SOURCE}` +
     `(?:\\s*(?:${WEEKDAY_PARTICLE_PATTERN.source}))?` +
     `(?:\\s*(?:${WEEKDAY_EXCLUSION_TERM_PATTERN.source}|${WEEKDAY_LIST_CONNECTOR_PATTERN.source}))?\\s*)+` +
-    `(?:\\s*(?:새벽|아침|오전|점심|오후|저녁|밤|낮|정오))?` +
+    `(?:\\s*${CALENDAR_DAYPART_PATTERN_SOURCE})?` +
     `(?:\\s*(?:${WEEKDAY_PARTICLE_PATTERN.source}))?\\s*` +
     `(?:뭐|무엇|무슨\\s+일)(?:가|이|은|는)?\\s*(?:있|하)(?:어요|어)?[?.!…]*\\s*$`,
   'u',
@@ -96,7 +97,9 @@ const hasMultipleWeekdayExpressions = ({
     'gu',
   )
   const calendarIntentAfterWeekdayPattern = new RegExp(
-    `^\\s*(?:${calendarPeriodParticlePattern.source}\\s*)?${calendarIntentPattern.source}`,
+    `^\\s*(?:${calendarPeriodParticlePattern.source}\\s*)?` +
+      `(?:${CALENDAR_DAYPART_PATTERN_SOURCE}(?:\\s*${calendarPeriodParticlePattern.source})?\\s*)?` +
+      `${calendarIntentPattern.source}`,
     'u',
   )
   const weekdayExpressions = Array.from(text.matchAll(weekdayExpressionPattern))
