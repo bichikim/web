@@ -78,7 +78,7 @@
     "korean-lunar-calendar": "^0.4.0",
     "libopus-wasm": "0.2.0",
     "media-chrome": "^4.19.2",
-    "music-metadata": "^11.15.0",
+    "music-metadata": "^11.16.0",
     "nitro": "catalog:pomo",
     "ofetch": "^1.5.1",
     "onnxruntime-node": "1.24.3",
