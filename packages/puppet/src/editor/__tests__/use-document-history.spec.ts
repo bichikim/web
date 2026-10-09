@@ -62,11 +62,14 @@ describe('useDocumentHistory', () => {
       history.beginTransaction()
       history.setDocument(firstDocument)
       history.setDocument(secondDocument)
+      expect(history.committedDocument()).toBe(initialDocument)
       history.endTransaction()
+      expect(history.committedDocument()).toBe(secondDocument)
 
       expect(history.undoCount()).toBe(1)
       expect(history.undo()).toBe(true)
       expect(history.document()).toBe(initialDocument)
+      expect(history.committedDocument()).toBe(initialDocument)
 
       dispose()
     })

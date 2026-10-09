@@ -11,6 +11,7 @@ export interface UseDocumentHistoryProps {
 }
 
 export interface DocumentHistoryResult {
+  readonly committedDocument: Accessor<PuppetDocument>
   readonly beginTransaction: () => void
   readonly canRedo: Accessor<boolean>
   readonly canUndo: Accessor<boolean>
@@ -32,6 +33,7 @@ const retainLatest = (
 export const useDocumentHistory = (props: UseDocumentHistoryProps): DocumentHistoryResult => {
   const limit = Math.max(1, Math.floor(props.limit ?? DEFAULT_HISTORY_LIMIT))
   const [document, setCurrentDocument] = createSignal(props.initialDocument)
+  const [committedDocument, setCommittedDocument] = createSignal(props.initialDocument)
   const [past, setPast] = createSignal<ReadonlyArray<PuppetDocument>>([])
   const [future, setFuture] = createSignal<ReadonlyArray<PuppetDocument>>([])
   let transactionStart: PuppetDocument | null = null
@@ -45,6 +47,7 @@ export const useDocumentHistory = (props: UseDocumentHistoryProps): DocumentHist
 
     if (snapshot !== null && document() !== snapshot) {
       appendPast(snapshot)
+      setCommittedDocument(document())
     }
   }
   const setDocument = (nextDocument: PuppetDocument) => {
@@ -58,7 +61,11 @@ export const useDocumentHistory = (props: UseDocumentHistoryProps): DocumentHist
       appendPast(currentDocument)
     }
     setFuture([])
-    setCurrentDocument(reconcileSkinning(currentDocument, nextDocument))
+    const reconciled = reconcileSkinning(currentDocument, nextDocument)
+    setCurrentDocument(reconciled)
+    if (transactionStart === null) {
+      setCommittedDocument(reconciled)
+    }
   }
   const undo = () => {
     endTransaction()
@@ -71,6 +78,7 @@ export const useDocumentHistory = (props: UseDocumentHistoryProps): DocumentHist
     setPast(previousDocuments.slice(0, -1))
     setFuture((documents) => [document(), ...documents])
     setCurrentDocument(previousDocument)
+    setCommittedDocument(previousDocument)
     return true
   }
   const redo = () => {
@@ -84,6 +92,7 @@ export const useDocumentHistory = (props: UseDocumentHistoryProps): DocumentHist
     appendPast(document())
     setFuture(nextDocuments.slice(1))
     setCurrentDocument(nextDocument)
+    setCommittedDocument(nextDocument)
     return true
   }
 
@@ -93,6 +102,7 @@ export const useDocumentHistory = (props: UseDocumentHistoryProps): DocumentHist
     },
     canRedo: () => future().length > 0,
     canUndo: () => past().length > 0,
+    committedDocument,
     document,
     endTransaction,
     redo,
@@ -102,6 +112,7 @@ export const useDocumentHistory = (props: UseDocumentHistoryProps): DocumentHist
       setPast([])
       setFuture([])
       setCurrentDocument(nextDocument)
+      setCommittedDocument(nextDocument)
     },
     setDocument,
     undo,

@@ -4,6 +4,7 @@ import {createEffect, createSignal, type JSX, on, onCleanup, untrack} from 'soli
 import {ViewCameraControls} from './ViewCameraControls'
 import {MAXIMUM_VIEW_ZOOM, MINIMUM_VIEW_ZOOM, type ViewCamera} from './view-camera'
 import {EDITOR_VIEWPORT_PADDING} from './viewport'
+import {useElementSize} from './use-element-size'
 
 interface CameraViewportProps {
   readonly fitRevision?: number
@@ -17,13 +18,21 @@ interface CameraViewportProps {
 export const CameraViewport = (props: CameraViewportProps) => {
   const GRID_STEP = 20
   const [camera, setCamera] = createSignal<ViewCamera>({x: 0, y: 0, zoom: 1})
-  let viewport: HTMLDivElement | undefined
+  const [viewport, setViewport] = createSignal<HTMLDivElement | null>(null)
+  const size = useElementSize(viewport)
+  const [fitted, setFitted] = createSignal(true)
   let drag: {pointer: number; x: number; y: number; camera: ViewCamera} | undefined
   const [dragging, setDragging] = createSignal(false)
+  const navigate = (nextCamera: ViewCamera) => {
+    setFitted(false)
+    setCamera(nextCamera)
+  }
   const fit = () => {
-    if (viewport === undefined || viewport.clientWidth === 0 || viewport.clientHeight === 0) {
+    const element = viewport()
+    if (element === null || element.clientWidth === 0 || element.clientHeight === 0) {
       return
     }
+    setFitted(true)
     setCamera({
       x: 0,
       y: 0,
@@ -31,12 +40,24 @@ export const CameraViewport = (props: CameraViewportProps) => {
         MINIMUM_VIEW_ZOOM,
         Math.min(
           MAXIMUM_VIEW_ZOOM,
-          viewport.clientWidth / props.width,
-          viewport.clientHeight / props.height,
+          element.clientWidth / props.width,
+          element.clientHeight / props.height,
         ),
       ),
     })
   }
+  createEffect(() => {
+    const measured = size()
+    if (fitted() && measured.width > 0 && measured.height > 0) {
+      untrack(fit)
+    }
+  })
+  createEffect(() => {
+    const element = viewport()
+    if (element !== null) {
+      onCleanup(attachViewNavigation({camera, element, onChange: navigate}))
+    }
+  })
   createEffect(
     on(
       () => props.fitRevision,
@@ -63,10 +84,7 @@ export const CameraViewport = (props: CameraViewportProps) => {
           class="viewport"
           role="region"
           aria-label="모델 보기"
-          ref={(element) => {
-            viewport = element
-            onCleanup(attachViewNavigation({camera, element, onChange: setCamera}))
-          }}
+          ref={setViewport}
           data-panning={dragging()}
           style={{
             '--camera-grid': `${GRID_STEP * camera().zoom}px`,
@@ -91,7 +109,7 @@ export const CameraViewport = (props: CameraViewportProps) => {
             if (drag === undefined || drag.pointer !== event.pointerId) {
               return
             }
-            setCamera({
+            navigate({
               ...drag.camera,
               x: drag.camera.x - (event.clientX - drag.x) / drag.camera.zoom,
               y: drag.camera.y - (event.clientY - drag.y) / drag.camera.zoom,
@@ -115,7 +133,7 @@ export const CameraViewport = (props: CameraViewportProps) => {
         <ViewCameraControls
           children={props.viewControls}
           camera={camera()}
-          onChange={setCamera}
+          onChange={navigate}
           onFit={fit}
         />
       </div>

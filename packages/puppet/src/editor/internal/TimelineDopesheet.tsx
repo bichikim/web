@@ -1,6 +1,6 @@
 import {Slider} from '@kobalte/core/slider'
 import {clamp} from 'es-toolkit/math'
-import {createMemo, For, type JSX, Show} from 'solid-js'
+import {createMemo, createSignal, For, type JSX, Show} from 'solid-js'
 import {KeyedFor} from './KeyedFor'
 import {TimelineTrack} from './TimelineTrack'
 
@@ -14,9 +14,11 @@ import {
 } from './timeline-keyframe-selection'
 import {TimelineParameterRowLabel} from './TimelineParameterRowLabel'
 import {useTimelineKeyframeMovePreview} from './use-timeline-keyframe-move-preview'
+import {useElementSize} from './use-element-size'
 
 const PERCENT = 100
 const RULER_LABEL_FRAME_INTERVAL = 6
+const MINIMUM_LABEL_SPACING = 60
 
 const getTimelineTime = (
   clientX: number,
@@ -32,7 +34,38 @@ const getTimelineTime = (
 const getSliderMaximum = (duration: number, framesPerSecond: number) =>
   Math.max(1 / framesPerSecond, Math.ceil(duration * framesPerSecond) / framesPerSecond)
 
+interface GetRulerTimesOptions {
+  readonly duration: number
+  readonly framesPerSecond: number
+  readonly width: number
+}
+
+const getRulerTimes = (options: GetRulerTimesOptions): ReadonlyArray<number> => {
+  if (options.duration === 0) {
+    return [0]
+  }
+  const frameCount = Math.max(1, getFrame(options.duration, options.framesPerSecond))
+  const frameWidth = options.width / frameCount
+  const interval =
+    frameWidth > 0
+      ? RULER_LABEL_FRAME_INTERVAL *
+        Math.max(1, Math.ceil(MINIMUM_LABEL_SPACING / (frameWidth * RULER_LABEL_FRAME_INTERVAL)))
+      : RULER_LABEL_FRAME_INTERVAL
+  const frames = Array.from(
+    {length: Math.ceil(frameCount / interval)},
+    (_, index) => index * interval,
+  ).filter(
+    (frame) =>
+      frame === 0 ||
+      frameWidth === 0 ||
+      ((options.duration - frame / options.framesPerSecond) / options.duration) * options.width >=
+        MINIMUM_LABEL_SPACING,
+  )
+  return [...frames.map((frame) => frame / options.framesPerSecond), options.duration]
+}
+
 export interface TimelineDopesheetProps {
+  readonly zoom?: number | 'fit'
   readonly currentTime: number
   readonly duration: number
   readonly framesPerSecond?: number
@@ -83,7 +116,10 @@ const TimelineRuler = (props: TimelineRulerProps) => (
   <div class="timeline-ruler">
     <For each={props.rulerTimes}>
       {(time) => (
-        <span style={{left: `${props.duration === 0 ? 0 : (time / props.duration) * PERCENT}%`}}>
+        <span
+          data-end={time === props.duration}
+          style={{left: `${props.duration === 0 ? 0 : (time / props.duration) * PERCENT}%`}}
+        >
           {getFrame(time, props.framesPerSecond)}f
         </span>
       )}
@@ -115,30 +151,32 @@ const TimelineRuler = (props: TimelineRulerProps) => (
 )
 
 export const TimelineDopesheet = (props: TimelineDopesheetProps) => {
+  const [tracksElement, setTracksElement] = createSignal<HTMLDivElement | null>(null)
+  const size = useElementSize(tracksElement)
   const movePreview = useTimelineKeyframeMovePreview({
     duration: () => props.duration,
     selection: () => props.selection,
   })
   const framesPerSecond = () => props.framesPerSecond ?? DEFAULT_PUPPET_FRAMES_PER_SECOND
   const progress = () => (props.duration === 0 ? 0 : (props.currentTime / props.duration) * PERCENT)
-  const rulerTimes = createMemo(() => {
-    const frameCount = Math.max(1, getFrame(props.duration, framesPerSecond()))
-    const intervalFrames = Array.from(
-      {length: Math.floor(frameCount / RULER_LABEL_FRAME_INTERVAL) + 1},
-      (_, index) => index * RULER_LABEL_FRAME_INTERVAL,
-    )
-
-    return (
-      intervalFrames.at(-1) === frameCount ? intervalFrames : [...intervalFrames, frameCount]
-    ).map((frame) => frame / framesPerSecond())
-  })
+  const rulerTimes = createMemo(() =>
+    getRulerTimes({
+      duration: props.duration,
+      framesPerSecond: framesPerSecond(),
+      width: size().width,
+    }),
+  )
 
   return (
     <div
       aria-label="키프레임 타임라인"
       class="timeline-dopesheet"
+      data-fit={props.zoom === 'fit'}
       role="group"
-      style={{'--timeline-frame-count': Math.max(1, getFrame(props.duration, framesPerSecond()))}}
+      style={{
+        '--timeline-frame-count': Math.max(1, getFrame(props.duration, framesPerSecond())),
+        '--timeline-zoom': props.zoom === 'fit' ? 1 : (props.zoom ?? PERCENT) / PERCENT,
+      }}
     >
       <Show
         when={props.tracks.length > 0}
@@ -166,7 +204,7 @@ export const TimelineDopesheet = (props: TimelineDopesheetProps) => {
           </KeyedFor>
         </div>
         <div class="timeline-tracks-scroll">
-          <div class="timeline-tracks">
+          <div class="timeline-tracks" ref={setTracksElement}>
             <TimelineRuler
               currentTime={props.currentTime}
               duration={props.duration}

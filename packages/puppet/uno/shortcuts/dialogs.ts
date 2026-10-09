@@ -99,6 +99,13 @@ export const dialogsShortcuts = {
     '[&_button:focus-visible]:[outline:2px_solid_#64e5c4] [&_button:focus-visible]:[outline-offset:2px]',
   ],
 
+  'editor-toast': [
+    'editor-type-root',
+    'fixed [inset:auto] right-editor-group bottom-editor-group m-0 box-border',
+    'flex items-center gap-editor-group [max-width:calc(100vw_-_2rem)] p-editor-group',
+    'border border-solid border-[#35413d] rounded-md bg-[#101513] text-[#edf4f0] text-editor-reading shadow-xl',
+    '[&_>span]:min-w-0 [&_>span]:break-words [&_>button]:shrink-0',
+  ],
   'influence-actions': 'flex flex-wrap items-center gap-editor-group',
   'influence-chevron': 'transition-transform duration-200 motion-reduce:transition-none',
 

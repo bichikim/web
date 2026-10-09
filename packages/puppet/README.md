@@ -177,6 +177,14 @@ pnpm dev
 저장소 루트에서는 `pnpm --filter @winter-love/puppet dev`로 실행한다. `/`는 SolidJS 컴포넌트,
 `/element.html`은 일반 HTML에서 웹 컴포넌트를 불러오는 개발 화면이다.
 
+`/`에서는 편집을 확정할 때 문서를 IndexedDB에 저장하고, sessionStorage의 탭별 키로
+새로고침 후 복원한다. 저장과 복원 성공은 별도로 알리지 않는다.
+브라우저 저장소가 차단되거나 저장에 실패하면 토스트로 JSON 내보내기를 안내한다. 같은
+오류는 저장이 정상화될 때까지 반복해서 알리지 않는다. 탭을 닫은 뒤의
+복원이나 별도 파일 백업을 대신하지 않는다. 연결은
+[`EditorApp`](src/EditorApp.tsx), 저장 경계는
+[`createDocumentSession`](src/create-document-session.ts)에 둔다.
+
 ## 앱에서 플레이어 제어
 
 공개 계약은 [`Player`](src/player/create-player.ts)와
