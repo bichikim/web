@@ -9,6 +9,7 @@ interface KeyframeDrag {
 }
 
 export interface TimelineKeyframeMarkerProps {
+  readonly onContextMenu?: () => void
   readonly duration: number
   readonly framesPerSecond: number
   readonly getTime: (clientX: number, bounds: DOMRect) => number
@@ -154,6 +155,7 @@ export const TimelineKeyframeMarker = (props: TimelineKeyframeMarkerProps) => {
       }}
       type="button"
       title="Shift+클릭하여 키프레임 다중 선택"
+      onContextMenu={() => props.onContextMenu?.()}
       onClick={handleClick}
       onKeyDown={handleKeyDown}
       onLostPointerCapture={(event) => finishDrag(false, event.pointerId)}

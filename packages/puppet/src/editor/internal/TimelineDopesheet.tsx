@@ -2,18 +2,16 @@ import {Slider} from '@kobalte/core/slider'
 import {clamp} from 'es-toolkit/math'
 import {createMemo, For, type JSX, Show} from 'solid-js'
 import {KeyedFor} from './KeyedFor'
-import {useTimelineKeyframes} from './use-timeline-keyframes'
+import {TimelineTrack} from './TimelineTrack'
 
 import {DEFAULT_PUPPET_FRAMES_PER_SECOND, type PuppetMotion} from '../../player/document'
 import {
   getFrame,
-  isKeyframeSelected,
   type KeyframeSelection,
   type ParameterTimelineKeyframe,
   type ParameterTimelineTrack,
   snapToFrame,
 } from './timeline-keyframe-selection'
-import {TimelineKeyframeMarker} from './TimelineKeyframeMarker'
 import {TimelineParameterRowLabel} from './TimelineParameterRowLabel'
 import {useTimelineKeyframeMovePreview} from './use-timeline-keyframe-move-preview'
 
@@ -41,6 +39,11 @@ export interface TimelineDopesheetProps {
   readonly motion?: PuppetMotion
   readonly onEditEnd?: () => void
   readonly onEditStart?: () => void
+  readonly onKeyframeAdd?: (track: ParameterTimelineTrack, time: number) => boolean
+  readonly onKeyframesDelete?: (
+    track: ParameterTimelineTrack,
+    times: ReadonlyArray<number>,
+  ) => boolean
   readonly onKeyframeSelect?: (
     track: ParameterTimelineTrack,
     keyframe: ParameterTimelineKeyframe,
@@ -118,18 +121,6 @@ export const TimelineDopesheet = (props: TimelineDopesheetProps) => {
   })
   const framesPerSecond = () => props.framesPerSecond ?? DEFAULT_PUPPET_FRAMES_PER_SECOND
   const progress = () => (props.duration === 0 ? 0 : (props.currentTime / props.duration) * PERCENT)
-  const handleTrackClick = (event: MouseEvent, parameterId: string) => {
-    props.onParameterSelect?.(parameterId)
-    props.onSeek?.(
-      getTimelineTime(
-        event.clientX,
-        (event.currentTarget as HTMLDivElement).getBoundingClientRect(),
-        props.duration,
-        framesPerSecond(),
-      ),
-      parameterId,
-    )
-  }
   const rulerTimes = createMemo(() => {
     const frameCount = Math.max(1, getFrame(props.duration, framesPerSecond()))
     const intervalFrames = Array.from(
@@ -191,62 +182,28 @@ export const TimelineDopesheet = (props: TimelineDopesheetProps) => {
               each={props.tracks}
               key={(track) => `${props.motion?.id ?? ''}:${track.parameter.id}`}
             >
-              {(track) => {
-                const parameterId = () => track().parameter.id
-                const parameterName = () => track().parameter.name
-                const keyframes = useTimelineKeyframes({
-                  get onMove() {
-                    return props.onKeyframeMove
-                  },
-                  selection: () => props.selection,
-                  track,
-                })
-                const move = createMemo(() =>
-                  props.onKeyframeMove === undefined ? undefined : keyframes.move,
-                )
-
-                return (
-                  <div
-                    class="timeline-row"
-                    aria-label={`${parameterName()} 트랙`}
-                    data-selected={props.selectedParameterId === parameterId() ? '' : undefined}
-                    onClick={(event) => handleTrackClick(event, parameterId())}
-                  >
-                    <KeyedFor each={keyframes.views()} key={(view) => String(view.key)}>
-                      {(view) => (
-                        <TimelineKeyframeMarker
-                          duration={props.duration}
-                          framesPerSecond={framesPerSecond()}
-                          getTime={(clientX, bounds) =>
-                            getTimelineTime(clientX, bounds, props.duration, framesPerSecond())
-                          }
-                          keyframe={view().keyframe}
-                          onEditEnd={props.onEditEnd}
-                          onEditStart={props.onEditStart}
-                          onMove={move()}
-                          onMovePreview={movePreview.previewMove}
-                          onMovePreviewEnd={movePreview.endPreview}
-                          onSelect={props.onKeyframeSelect}
-                          parameterName={parameterName()}
-                          previewTime={movePreview.getPreviewTime(parameterId(), view().keyframe)}
-                          selected={isKeyframeSelected(
-                            props.selection,
-                            parameterId(),
-                            view().keyframe.time,
-                          )}
-                          snapTime={(time) => snapToFrame(time, props.duration, framesPerSecond())}
-                          track={track()}
-                        />
-                      )}
-                    </KeyedFor>
-                    <span
-                      aria-hidden="true"
-                      class="timeline-row-playhead"
-                      style={{left: `${progress()}%`}}
-                    />
-                  </div>
-                )
-              }}
+              {(track) => (
+                <TimelineTrack
+                  currentTime={props.currentTime}
+                  duration={props.duration}
+                  framesPerSecond={framesPerSecond()}
+                  getTime={(clientX, bounds) =>
+                    getTimelineTime(clientX, bounds, props.duration, framesPerSecond())
+                  }
+                  movePreview={movePreview}
+                  onEditEnd={props.onEditEnd}
+                  onEditStart={props.onEditStart}
+                  onKeyframeAdd={props.onKeyframeAdd}
+                  onKeyframesDelete={props.onKeyframesDelete}
+                  onKeyframeMove={props.onKeyframeMove}
+                  onKeyframeSelect={props.onKeyframeSelect}
+                  onSeek={props.onSeek}
+                  progress={progress()}
+                  selected={props.selectedParameterId === track().parameter.id}
+                  selection={props.selection}
+                  track={track()}
+                />
+              )}
             </KeyedFor>
           </div>
         </div>
