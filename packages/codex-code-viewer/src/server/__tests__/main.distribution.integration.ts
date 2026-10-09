@@ -54,6 +54,7 @@ it('should navigate Rust from the isolated distribution using Node and its embed
     })
     expect(result.isError).not.toBe(true)
     expect(navigationSchema.parse(result.structuredContent)).toEqual({
+      kind: 'definition',
       locations: [{column: 8, line: 1, path: 'helper.rs'}],
     })
   } finally {
