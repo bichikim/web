@@ -16,6 +16,22 @@ describe('createCalendarQuery standalone weekdays', () => {
     })
   })
 
+  it.each(['수요일 일정 알려줄 수 있어?', '수요일 일정 중 할 일 알려줘'])(
+    'should keep a standalone weekday range when the text contains weekday-like nouns in "%s"',
+    (text) => {
+      expect(
+        createCalendarQuery({
+          now: new Date('2026-09-04T10:30:00.000Z'),
+          text,
+          timeZone: 'Asia/Seoul',
+        }),
+      ).toEqual({
+        end: '2026-09-09T15:00:00.000Z',
+        start: '2026-09-08T15:00:00.000Z',
+      })
+    },
+  )
+
   it('should retain the standalone weekday range when excluding an event type', () => {
     expect(
       createCalendarQuery({

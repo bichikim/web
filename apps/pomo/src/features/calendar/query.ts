@@ -45,6 +45,7 @@ const {
 } = createCalendarWeekdayParser({
   calendarIntentPattern: CALENDAR_INTENT_PATTERN,
   calendarPeriodBoundaryPattern: CALENDAR_PERIOD_BOUNDARY_PATTERN,
+  calendarPeriodParticlePattern: CALENDAR_PERIOD_PARTICLE_PATTERN,
   calendarWordStartPattern: CALENDAR_WORD_START_PATTERN,
 })
 const WEEK_AFTER_NEXT_TERM_PATTERN = `${CALENDAR_WORD_START_PATTERN}다다음 ?주`
