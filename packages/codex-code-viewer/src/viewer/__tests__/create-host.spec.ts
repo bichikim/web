@@ -74,6 +74,29 @@ describe('createHost', () => {
     })
   })
 
+  it('should append the actual draft patch and baseline to existing pending chat context', async () => {
+    const update = vi.spyOn(App.prototype, 'updateModelContext').mockResolvedValue({})
+    const port = createHost()
+    await port.context({kind: 'file', path: '/project/helper.ts'})
+    const patch = '--- src/main.ts\n+++ src/main.ts\n@@ -1 +1 @@\n-before\n+after\n'
+    await port.context({kind: 'changes', patch, path: '/project/src/main.ts', revision: 'baseline'})
+    expect(update).toHaveBeenLastCalledWith({
+      content: [
+        {text: 'The user selected the file "/project/helper.ts" in Code Viewer.', type: 'text'},
+        {
+          text: [
+            'The user attached unsaved changes to "/project/src/main.ts" in Code Viewer.',
+            'Base revision (last read or saved): "baseline".',
+            'This is a draft snapshot, not a disk save.',
+            '',
+            patch,
+          ].join('\n'),
+          type: 'text',
+        },
+      ],
+    })
+  })
+
   it('should accumulate precise locations in addition order for concurrent additions', async () => {
     const first = Promise.withResolvers<{}>()
     const update = vi

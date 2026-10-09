@@ -1,10 +1,34 @@
 /** @vitest-environment jsdom */
 import {cleanup, fireEvent, render, screen} from '@solidjs/testing-library'
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
+import {EditorView} from '@codemirror/view'
 import {SCodeViewer} from '../SCodeViewer'
 import type {ViewerPort} from '../types'
 
 describe('SCodeViewer', () => {
+  const mountEditor = () => {
+    const source = 'hello selected world'
+    const port: ViewerPort = {
+      call: vi.fn().mockResolvedValue({content: []}),
+      context: vi.fn(),
+      start: vi.fn<ViewerPort['start']>().mockResolvedValue(() => {}),
+    }
+    render(() => <SCodeViewer port={port} />)
+    vi.mocked(port.start).mock.calls[0]![0]({
+      document: {
+        lines: [[{kind: 'plain', navigation: null, offset: 0, text: source}]],
+        location: {column: 1, line: 1, path: 'notes.txt'},
+        revision: 'first',
+        source,
+      },
+      session: 'session',
+      workspace: '/project',
+    })
+    fireEvent.click(screen.getByRole('button', {name: '편집'}))
+    const textbox = screen.getByRole('textbox', {name: '코드 편집기'})
+    const editor = EditorView.findFromDOM(textbox)!
+    return {editor, textbox}
+  }
   const originalScroll = Object.getOwnPropertyDescriptor(HTMLElement.prototype, 'scrollIntoView')
   beforeEach(() => {
     Object.defineProperty(HTMLElement.prototype, 'scrollIntoView', {
@@ -20,6 +44,25 @@ describe('SCodeViewer', () => {
     } else {
       Object.defineProperty(HTMLElement.prototype, 'scrollIntoView', originalScroll)
     }
+  })
+
+  it.each(['ctrlKey', 'metaKey'] as const)(
+    'should search the editor selection with %s and retain the draft',
+    (modifier) => {
+      const {editor, textbox} = mountEditor()
+      editor.dispatch({selection: {anchor: 6, head: 14}})
+      fireEvent.keyDown(textbox, {key: 'f', [modifier]: true})
+      expect(screen.getByRole('textbox', {name: '파일 내 검색어'})).toHaveValue('selected')
+      expect(editor.state.sliceDoc()).toBe('hello selected world')
+    },
+  )
+
+  it('should return focus to the editor after closing file search', () => {
+    const {textbox} = mountEditor()
+    fireEvent.keyDown(textbox, {ctrlKey: true, key: 'f'})
+    fireEvent.keyDown(screen.getByRole('textbox', {name: '파일 내 검색어'}), {key: 'Escape'})
+    expect(document.activeElement).toBe(textbox)
+    expect(screen.queryByRole('textbox', {name: '파일 내 검색어'})).toBeNull()
   })
 
   it('should share the started host connection with the file tree', async () => {
@@ -43,8 +86,12 @@ describe('SCodeViewer', () => {
       session: 'session',
       workspace: '/project',
     })
+    expect(screen.getByLabelText('작업 폴더')).toHaveTextContent('project')
+    expect(screen.getByLabelText('작업 폴더')).toHaveAttribute('title', '/project')
+    expect(screen.queryByRole('button', {name: '채팅창에 추가'})).toBeNull()
     fireEvent.click(screen.getByRole('button', {name: '파일 트리'}))
     expect(await screen.findByRole('treeitem', {name: 'main.ts'})).toBeTruthy()
+    expect(screen.getByRole('complementary', {name: '파일 트리'})).not.toHaveTextContent('project')
     expect(createPort).toHaveBeenCalledTimes(1)
     expect(port.call).toHaveBeenCalledWith('code.tree', {session: 'session'})
     fireEvent.input(screen.getByRole('textbox', {name: '파일 필터링'}), {target: {value: 'main'}})
@@ -64,6 +111,7 @@ describe('SCodeViewer', () => {
     }
     render(() => <SCodeViewer port={port} />)
     vi.mocked(port.start).mock.calls[0]![0]({session: 'workspace', workspace: '/project'})
+    expect(screen.getByLabelText('작업 폴더')).toHaveTextContent('project')
     expect(await screen.findByRole('treeitem', {name: 'main.ts'})).toBeTruthy()
     expect(screen.getByRole('region', {name: '파일 내용'}).textContent).toContain('파일 트리에서')
     vi.mocked(port.call).mockResolvedValueOnce({
@@ -85,10 +133,11 @@ describe('SCodeViewer', () => {
     )
     expect(port.call).not.toHaveBeenCalledWith('code.open', expect.anything())
     expect(screen.getByRole('button', {name: '파일 트리'})).toHaveProperty('disabled', false)
-    expect(screen.getByRole('button', {name: '채팅창에 추가'})).toHaveProperty('disabled', false)
+    expect(screen.queryByRole('button', {name: '채팅창에 추가'})).toBeNull()
     expect(port.call).toHaveBeenCalledWith('code.tree', {session: 'workspace'})
     fireEvent.click(screen.getByRole('button', {name: '파일 트리'}))
     expect(screen.queryByRole('tree')).toBeNull()
+    expect(screen.getByLabelText('작업 폴더')).toHaveTextContent('project')
   })
   it('should show first-file guidance without listing the plugin installation directory', () => {
     const port: ViewerPort = {
@@ -99,6 +148,7 @@ describe('SCodeViewer', () => {
     render(() => <SCodeViewer port={port} />)
     expect(screen.getByRole('region', {name: '파일 내용'}).textContent).toContain('절대 경로')
     expect(screen.getByRole('button', {name: '파일 트리'})).toHaveProperty('disabled', true)
+    expect(screen.queryByLabelText('작업 폴더')).toBeNull()
     expect(port.call).not.toHaveBeenCalled()
   })
 

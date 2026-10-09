@@ -1,9 +1,10 @@
+import {MAX_CODE_BYTES, MAX_DRAFT_FILES} from '../shared/editing-limits'
 import {McpServer} from '@modelcontextprotocol/sdk/server/mcp.js'
 import {registerAppResource, RESOURCE_MIME_TYPE} from '@modelcontextprotocol/ext-apps/server'
 import {getResourcePath} from '@openai/mcp-extensions/server'
 import {z} from 'zod'
 import manifest from '../../package.json'
-import {failure, type Result, success} from '../shared/contracts'
+import {codeSourceSchema, failure, type Result, success} from '../shared/contracts'
 import {createSessions} from './create-sessions'
 import {toolResult} from './tool-result'
 import {FILE_EXTENSIONS} from '../shared/file-formats'
@@ -86,6 +87,68 @@ const registerMedia = (
   )
 }
 
+const registerEditing = (
+  server: McpServer,
+  withSession: ReturnType<typeof createSessions>['withSession'],
+): void => {
+  server.registerTool(
+    'code.write',
+    {
+      _meta: appOnly,
+      annotations: {destructiveHint: true, openWorldHint: false, readOnlyHint: false},
+      inputSchema: {
+        path: z.string(),
+        revision: z.string(),
+        session: z.string(),
+        source: z.string().max(MAX_CODE_BYTES),
+      },
+      title: 'Save an existing editable text file',
+    },
+    async ({session, path, source, revision}) =>
+      withSession(session, (workspace) => {
+        const result = workspace.write(path, source, revision)
+        return result.ok ? success({document: result.value}) : result
+      }),
+  )
+}
+
+const registerNavigation = (
+  server: McpServer,
+  withSession: ReturnType<typeof createSessions>['withSession'],
+): void => {
+  const pathInput = {path: z.string(), session: z.string()}
+  server.registerTool(
+    'code.navigate',
+    {
+      _meta: appOnly,
+      annotations,
+      inputSchema: {
+        ...pathInput,
+        navigation: z.enum(['definition', 'path']),
+        offset: z.number().int().nonnegative(),
+        revision: z.string(),
+        sources: z.array(codeSourceSchema).max(MAX_DRAFT_FILES).optional(),
+      },
+      title: 'Follow import or definition',
+    },
+    async ({session, path, offset, navigation, revision, sources}) =>
+      withSession(session, async (workspace) => {
+        const current = workspace.read(path)
+        if (!current.ok) {
+          return current
+        }
+        if (current.value.revision !== revision) {
+          return failure('stale-document')
+        }
+        const locations =
+          navigation === 'path'
+            ? await workspace.followPath(path, offset, sources)
+            : await workspace.definitions(path, offset, sources)
+        return locations.ok ? success({locations: locations.value}) : locations
+      }),
+  )
+}
+
 export const createServer = (html: string, options: ServerOptions = {}) => {
   const server = new McpServer({
     name: 'codex-code-viewer',
@@ -164,35 +227,7 @@ export const createServer = (html: string, options: ServerOptions = {}) => {
         return document.ok ? success({document: document.value}) : document
       }),
   )
-  server.registerTool(
-    'code.navigate',
-    {
-      _meta: appOnly,
-      annotations,
-      inputSchema: {
-        ...pathInput,
-        navigation: z.enum(['definition', 'path']),
-        offset: z.number().int().nonnegative(),
-        revision: z.string(),
-      },
-      title: 'Follow import or definition',
-    },
-    async ({session, path, offset, navigation, revision}) =>
-      withSession(session, async (workspace) => {
-        const current = workspace.read(path)
-        if (!current.ok) {
-          return current
-        }
-        if (current.value.revision !== revision) {
-          return failure('stale-document')
-        }
-        const locations =
-          navigation === 'path'
-            ? await workspace.followPath(path, offset)
-            : await workspace.definitions(path, offset)
-        return locations.ok ? success({locations: locations.value}) : locations
-      }),
-  )
+  registerNavigation(server, withSession)
   server.registerTool(
     'code.list',
     {
@@ -218,6 +253,7 @@ export const createServer = (html: string, options: ServerOptions = {}) => {
     },
   )
   registerTree(server, withSession)
+  registerEditing(server, withSession)
   registerMedia(server, withSession)
   registerAppResource(server, 'code-viewer', VIEWER_URI, {}, async () => ({
     contents: [

@@ -28,6 +28,8 @@ const createPort = (): ViewerPort => ({
   start: vi.fn().mockResolvedValue(() => {}),
 })
 const originalPopover = Object.getOwnPropertyDescriptor(HTMLElement.prototype, 'showPopover')
+const originalScroll = Object.getOwnPropertyDescriptor(HTMLElement.prototype, 'scrollIntoView')
+const scrollIntoView = vi.fn()
 beforeEach(() =>
   Object.defineProperty(HTMLElement.prototype, 'showPopover', {
     configurable: true,
@@ -36,6 +38,11 @@ beforeEach(() =>
 )
 afterEach(() => {
   cleanup()
+  if (originalScroll === undefined) {
+    Reflect.deleteProperty(HTMLElement.prototype, 'scrollIntoView')
+  } else {
+    Object.defineProperty(HTMLElement.prototype, 'scrollIntoView', originalScroll)
+  }
   if (originalPopover === undefined) {
     Reflect.deleteProperty(HTMLElement.prototype, 'showPopover')
   } else {
@@ -44,6 +51,58 @@ afterEach(() => {
 })
 
 describe('SFileTree', () => {
+  const recordScroll = (): void => {
+    scrollIntoView.mockClear()
+    Object.defineProperty(HTMLElement.prototype, 'scrollIntoView', {
+      configurable: true,
+      value: scrollIntoView,
+    })
+  }
+
+  it('should preserve scroll when folders toggle and the filter changes after revealing the file', async () => {
+    recordScroll()
+    render(() => <SFileTree port={createPort()} session={session} visible />)
+    await screen.findByRole('treeitem', {name: 'main.ts'})
+    await Promise.resolve()
+    expect(scrollIntoView).toHaveBeenCalledTimes(1)
+    const folder = screen.getByRole('treeitem', {name: 'test'})
+    fireEvent.click(folder)
+    await Promise.resolve()
+    expect(screen.getByRole('treeitem', {name: 'other.js'})).toBeDefined()
+    expect(scrollIntoView).toHaveBeenCalledTimes(1)
+    fireEvent.click(folder)
+    await Promise.resolve()
+    expect(screen.queryByRole('treeitem', {name: 'other.js'})).toBeNull()
+    fireEvent.input(screen.getByRole('textbox', {name: '파일 필터링'}), {target: {value: 'src/'}})
+    await Promise.resolve()
+    expect(scrollIntoView).toHaveBeenCalledTimes(1)
+  })
+
+  it('should reveal a different opened file and reveal it again when the tree reopens', async () => {
+    recordScroll()
+    const [current, setCurrent] = createSignal(session)
+    const [visible, setVisible] = createSignal(true)
+    render(() => <SFileTree port={createPort()} session={current()} visible={visible()} />)
+    await screen.findByRole('treeitem', {name: 'main.ts'})
+    await Promise.resolve()
+    expect(scrollIntoView).toHaveBeenCalledTimes(1)
+    setCurrent({
+      ...session,
+      document: {...session.document, location: {column: 1, line: 1, path: 'test/other.js'}},
+    })
+    await Promise.resolve()
+    const currentItem = screen.getByRole('treeitem', {name: 'other.js'})
+    expect(scrollIntoView).toHaveBeenCalledTimes(2)
+    expect(scrollIntoView.mock.contexts.at(-1)).toBe(currentItem)
+    setVisible(false)
+    setVisible(true)
+    await Promise.resolve()
+    expect(scrollIntoView).toHaveBeenCalledTimes(3)
+    expect(scrollIntoView.mock.contexts.at(-1)).toBe(
+      screen.getByRole('treeitem', {name: 'other.js'}),
+    )
+  })
+
   it('keeps visible focus ahead of selection and falls back when the filter hides both', async () => {
     render(() => <SFileTree port={createPort()} session={session} visible />)
     const current = await screen.findByRole('treeitem', {name: 'main.ts'})

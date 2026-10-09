@@ -2,7 +2,10 @@ import {statSync} from 'node:fs'
 import {dirname, resolve} from 'node:path'
 import typescript from '@typescript/typescript6'
 
-export const createLanguageService = (path: string) => {
+export const createLanguageService = (
+  path: string,
+  sources: ReadonlyMap<string, string> = new Map(),
+) => {
   const configuration = typescript.findConfigFile(dirname(path), typescript.sys.fileExists)
   const options =
     configuration === undefined
@@ -34,7 +37,7 @@ export const createLanguageService = (path: string) => {
     getProjectVersion: () => String(version),
     getScriptFileNames: () => [...files],
     getScriptSnapshot: (file) => {
-      const text = typescript.sys.readFile(file)
+      const text = sources.get(resolve(file)) ?? typescript.sys.readFile(file)
       return text === undefined ? undefined : typescript.ScriptSnapshot.fromString(text)
     },
     getScriptVersion: (file) => {

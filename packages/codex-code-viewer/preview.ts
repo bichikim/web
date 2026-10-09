@@ -39,6 +39,7 @@ const allowed = new Set([
   'code.open',
   'code.attach',
   'code.read',
+  'code.write',
   'code.navigate',
   'code.list',
   'code.tree',
@@ -55,7 +56,7 @@ const server = createServer(async (request, response) => {
   try {
     if (request.method === 'POST' && route === 'tool') {
       const chunks: Buffer[] = []
-      const maximumBytes = 65536
+      const maximumBytes = 8388608
       let bytes = 0
       for await (const chunk of request) {
         const buffer = Buffer.from(chunk)

@@ -19,11 +19,15 @@ const messages: Record<ViewerError['code'], string> = {
   'rust-analysis-failed':
     'Rust 정의를 분석하지 못했습니다. Cargo 프로젝트 설정을 확인하고 뷰어를 다시 열어 주세요.',
   'rust-analyzer-unavailable':
-    'Rust 분석기를 실행할 수 없습니다. 터미널에서 rustup component add rust-analyzer rust-src를 실행한 뒤 뷰어를 다시 열어 주세요.',
+    '내장 Rust 분석기를 실행할 수 없습니다. 플러그인 설치 상태를 확인하고 뷰어를 다시 열어 주세요.',
   'session-expired': '연결이 종료되었습니다. Codex에서 파일을 다시 열어 주세요.',
   'stale-document': '파일이 변경되었습니다. 새로고침한 뒤 다시 이동해 주세요.',
   'too-large': '512 KiB보다 큰 파일은 이 뷰어에서 열 수 없습니다.',
   'unsupported-file': '지원하지 않는 파일 형식입니다.',
+  'write-conflict':
+    '다른 곳에서 파일이 변경되어 저장하지 않았습니다. 초안을 복사하거나 변경을 버린 뒤 원본을 다시 확인해 주세요.',
+  'write-failed':
+    '파일을 저장하지 못했습니다. 파일 권한과 남은 공간을 확인해 주세요. 초안은 유지됩니다.',
 }
 
 export const errorMessage = (error: unknown): string => {

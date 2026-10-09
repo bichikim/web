@@ -1,6 +1,7 @@
 import {type Accessor, createSignal} from 'solid-js'
 import {
   type CodeLocation,
+  type CodeSource,
   type CodeToken,
   navigationSchema,
   type ViewerSession,
@@ -14,6 +15,8 @@ interface DefinitionNavigationOptions {
   readonly port: ViewerPort
   readonly run: ReturnType<typeof useLatestRequest>['run']
   readonly session: Accessor<ViewerSession | null>
+  readonly sources?: Accessor<readonly CodeSource[]>
+  readonly revision?: Accessor<string>
 }
 export interface DefinitionFeedback {
   readonly kind: 'missing' | 'choose'
@@ -45,7 +48,8 @@ export const useDefinitionNavigation = (
           navigation: token.navigation,
           offset: token.offset,
           path: current.document.location.path,
-          revision: current.document.revision,
+          revision: options.revision?.() ?? current.document.revision,
+          ...(options.sources === undefined ? {} : {sources: options.sources()}),
         },
         navigationSchema,
       ),

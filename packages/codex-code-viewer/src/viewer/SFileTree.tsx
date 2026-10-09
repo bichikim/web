@@ -59,13 +59,6 @@ export const SFileTree = (props: SFileTreeProps) => {
         class="flex h-full min-h-0 w-full min-w-0 flex-col bg-canvas pt-1 text-sm"
         ref={setElement}
       >
-        <Show when={props.session}>
-          {(session) => (
-            <p class="m-0 truncate px-4 py-2 font-medium" title={session().workspace}>
-              {session().workspace.split('/').filter(Boolean).at(-1) ?? session().workspace}
-            </p>
-          )}
-        </Show>
         <label class="ui-field mx-2 mb-2 gap-2 rounded-control px-2 text-muted">
           <SIcon name="search" />
           <input

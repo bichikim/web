@@ -28,7 +28,7 @@ const tokenClasses = {
 }
 
 const numberClasses = [
-  'sticky left-0 mr-4 w-12 shrink-0 touch-none select-none bg-surface p-0 pr-3 text-right text-muted',
+  'ui-code-gutter sticky left-0 mr-4 shrink-0 touch-none select-none bg-surface py-0 text-right text-muted',
   'outline-none hover:text-foreground aria-pressed:bg-selection aria-pressed:text-foreground',
   'focus-visible:font-semibold',
 ].join(' ')

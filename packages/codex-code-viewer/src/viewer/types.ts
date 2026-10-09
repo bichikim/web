@@ -14,6 +14,11 @@ export interface CodeTextRange {
   endColumn: number
 }
 
+export interface CodeSnippet extends CodeSelection {
+  readonly kind: 'code'
+  readonly text: string
+}
+
 export interface Notice {
   message: string
 }
@@ -23,10 +28,18 @@ export interface WorkspaceSelection {
   readonly path: string
 }
 
-export type ViewerContext = CodeSelection | WorkspaceSelection
+export interface CodeChanges {
+  readonly kind: 'changes'
+  readonly path: string
+  readonly revision: string
+  readonly patch: string
+}
+
+export type ViewerContext = CodeSelection | CodeSnippet | WorkspaceSelection | CodeChanges
 
 export interface ContextMenuItem {
   readonly label: string
+  readonly separatorBefore?: boolean
   readonly shortcut?: string
   readonly key?: string
   readonly onSelect?: () => void

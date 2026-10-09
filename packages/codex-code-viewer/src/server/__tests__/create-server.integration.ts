@@ -1,4 +1,6 @@
-import {readFileSync} from 'node:fs'
+import {mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync} from 'node:fs'
+import {tmpdir} from 'node:os'
+import {join} from 'node:path'
 import {Client} from '@modelcontextprotocol/sdk/client/index.js'
 import {InMemoryTransport} from '@modelcontextprotocol/sdk/inMemory.js'
 import {afterEach, beforeEach, describe, expect, it} from 'vitest'
@@ -174,5 +176,45 @@ describe('createServer', () => {
     expect(
       await client.callTool({arguments: {path: `${path}.missing.ts`}, name: 'code.open'}),
     ).toMatchObject({isError: true, structuredContent: {code: 'not-found'}})
+  })
+  it('should expose revision-checked writes only to the app and report conflicts', async () => {
+    const tools = await client.listTools()
+    expect(tools.tools.find((tool) => tool.name === 'code.write')).toMatchObject({
+      _meta: {ui: {visibility: ['app']}},
+      annotations: {destructiveHint: true, openWorldHint: false, readOnlyHint: false},
+    })
+    const root = mkdtempSync(join(tmpdir(), 'viewer-save-tool-'))
+    try {
+      mkdirSync(join(root, '.git'))
+      const path = join(root, 'main.ts')
+      writeFileSync(path, 'export const value = 1\n')
+      const opened = sessionSchema.parse(
+        (await client.callTool({arguments: {path}, name: 'code.open'})).structuredContent,
+      )
+      const input = {
+        path: 'main.ts',
+        revision: opened.document.revision,
+        session: opened.session,
+        source: 'export const value = 2\n',
+      }
+      expect(await client.callTool({arguments: input, name: 'code.write'})).toMatchObject({
+        structuredContent: {document: {source: input.source}},
+      })
+      expect(readFileSync(path, 'utf8')).toBe(input.source)
+      expect(
+        await client.callTool({
+          arguments: {...input, source: 'export const value = 3\n'},
+          name: 'code.write',
+        }),
+      ).toMatchObject({isError: true, structuredContent: {code: 'write-conflict'}})
+      expect(readFileSync(path, 'utf8')).toBe(input.source)
+      await client.callTool({arguments: {session: opened.session}, name: 'code.close'})
+      expect(await client.callTool({arguments: input, name: 'code.write'})).toMatchObject({
+        isError: true,
+        structuredContent: {code: 'session-expired'},
+      })
+    } finally {
+      rmSync(root, {force: true, recursive: true})
+    }
   })
 })

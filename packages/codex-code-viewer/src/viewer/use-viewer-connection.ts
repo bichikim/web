@@ -9,6 +9,7 @@ interface ConnectionOptions {
   refresh: () => void
   report: (error: unknown) => void
   session: Accessor<ViewerConnection | null>
+  beforeClose?: () => Promise<boolean>
 }
 
 export const useViewerConnection = (connection: ConnectionOptions): void => {
@@ -51,7 +52,12 @@ export const useViewerConnection = (connection: ConnectionOptions): void => {
     await closing.settle()
   }
   connection.port
-    .start(receive, connection.report, refresh, teardown)
+    .start(receive, connection.report, refresh, async () => {
+      if (connection.beforeClose !== undefined && !(await connection.beforeClose())) {
+        throw new Error('미저장 변경으로 종료를 취소했습니다.')
+      }
+      await teardown()
+    })
     .then((dispose) => {
       disposePort = dispose
       if (disposed) {

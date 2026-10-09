@@ -87,7 +87,7 @@ export const SCodeDocument = (props: SCodeDocumentProps) => {
         onPointerUp={interaction.handlePointerEnd}
         ref={setElement}
       >
-        <pre class="m-0 w-max min-w-full pb-4 font-mono text-[13px] leading-6 tab-size-2">
+        <pre class="ui-code-text m-0 w-max min-w-full pb-4 selection:bg-code-selection">
           <For each={props.document.lines}>
             {(tokens, index) => (
               <SCodeLine

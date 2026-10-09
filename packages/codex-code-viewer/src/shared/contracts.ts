@@ -1,3 +1,4 @@
+import {MAX_CODE_BYTES} from './editing-limits'
 import {z} from 'zod'
 
 export const locationSchema = z.object({
@@ -32,6 +33,8 @@ export const workspaceSessionSchema = z.object({
 export const sessionSchema = workspaceSessionSchema.extend({document: documentSchema})
 export const connectionSchema = z.union([sessionSchema, workspaceSessionSchema.strict()])
 export const navigationSchema = z.object({locations: z.array(locationSchema)})
+export const codeSourceSchema = z.object({path: z.string(), source: z.string().max(MAX_CODE_BYTES)})
+export type CodeSource = z.infer<typeof codeSourceSchema>
 export const filesSchema = z.object({paths: z.array(z.string())})
 export const workspaceFileSchema = z.object({openable: z.boolean(), path: z.string()})
 export const treeSchema = z.object({files: z.array(workspaceFileSchema), truncated: z.boolean()})
@@ -49,6 +52,8 @@ export const errorSchema = z.object({
     'invalid-position',
     'read-failed',
     'stale-document',
+    'write-conflict',
+    'write-failed',
     'rust-analyzer-unavailable',
     'rust-analysis-failed',
     'python-analyzer-unavailable',

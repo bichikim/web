@@ -47,7 +47,20 @@ describe('createRustService', () => {
     server.onNotification('textDocument/didChange', (value) => changed.push(value))
     server.onRequest('textDocument/definition', (value: unknown) => definition(value))
     server.listen()
-    service = createRustService({directory: root, file: path, manifest: true})
+    service = createRustService({
+      crates: [
+        {
+          cfg: [],
+          deps: [],
+          display_name: 'example',
+          edition: '2021',
+          is_workspace_member: true,
+          root_module: path,
+          source: {exclude_dirs: [], include_dirs: [root]},
+        },
+      ],
+      directory: root,
+    })
   })
   afterEach(() => {
     service.dispose()
@@ -152,9 +165,10 @@ describe('createRustService', () => {
     await service.definitions(path, 'main()', 0)
     expect(initialize.mock.calls[0][0]).toMatchObject({
       initializationOptions: {
-        cargo: {buildScripts: {enable: false}, noDeps: true},
+        cargo: {buildScripts: {enable: false}, noDeps: true, sysroot: null},
         checkOnSave: false,
         files: {watcher: 'server'},
+        linkedProjects: [{crates: [{root_module: path}]}],
         procMacro: {enable: false},
       },
     })

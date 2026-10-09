@@ -86,6 +86,17 @@ describe('useViewer', () => {
     expect(viewer.selection()).toMatchObject({endLine: 2, line: 2})
   })
 
+  it('should return to a cursor address after clearing a text range', () => {
+    const viewer = mount(createPort())
+    viewer.editing.change('hello world')
+    viewer.selectText({column: 1, endColumn: 7, endLine: 1, line: 1})
+    expect(viewer.address()).toBe('main.tsx:1:1-1:7')
+    viewer.selectText({column: 7, endColumn: 7, endLine: 1, line: 1})
+    expect(viewer.address()).toBe('main.tsx:1:7')
+    viewer.selectText({column: 1, endColumn: 1, endLine: 1, line: 1})
+    expect(viewer.address()).toBe('main.tsx:1:1')
+  })
+
   it('should synchronize accepted file navigation and history without resetting selection', async () => {
     const port = createPort()
     port.location = vi.fn(async () => {})
@@ -162,6 +173,27 @@ describe('useViewer', () => {
     expect(port.call).not.toHaveBeenCalled()
     expect(viewer.canBack()).toBe(false)
     expect(viewer.notice()?.message).toBe('폴더를 다음 채팅 메시지에 추가했습니다.')
+  })
+
+  it('should attach selected draft text without saving it or replacing it with disk content', async () => {
+    const port = createPort()
+    const viewer = mount(port)
+    viewer.editing.toggle()
+    viewer.editing.change('const draft = 42')
+    const snippet = {
+      column: 1,
+      endColumn: 17,
+      endLine: 1,
+      kind: 'code' as const,
+      line: 1,
+      path: 'main.tsx',
+      text: 'const draft = 42',
+    }
+    await viewer.share(snippet)
+    expect(port.context).toHaveBeenCalledWith({...snippet, path: '/project/main.tsx'})
+    expect(port.call).not.toHaveBeenCalled()
+    expect(viewer.editing.dirty()).toBe(true)
+    expect(viewer.notice()?.message).toBe('선택한 코드를 다음 채팅 메시지에 추가했습니다.')
   })
 
   it('should report a rejected tree attachment without announcing success', async () => {
@@ -399,6 +431,26 @@ describe('useViewer', () => {
     )
   })
 
+  it('should attach an unsaved diff without saving or changing the selected address', async () => {
+    const port = createPort()
+    const viewer = mount(port)
+    viewer.selectLines(3, 5)
+    viewer.editing.change('edited source')
+    await viewer.shareChanges()
+    expect(port.context).toHaveBeenCalledWith(
+      expect.objectContaining({
+        kind: 'changes',
+        patch: expect.stringContaining('+edited source\n'),
+        path: '/project/main.tsx',
+        revision: 'main.tsx',
+      }),
+    )
+    expect(port.call).not.toHaveBeenCalled()
+    expect(viewer.editing.dirty()).toBe(true)
+    expect(viewer.notice()?.message).toBe('변경 내용을 다음 채팅 메시지에 추가했습니다.')
+    expect(viewer.address()).toBe('main.tsx:3:1-5:1')
+  })
+
   it('should show unavailable definition feedback separately from the file address', async () => {
     const port = createPort()
     const viewer = mount(port)
@@ -408,6 +460,33 @@ describe('useViewer', () => {
       '이동 대상이 없습니다. 작업 폴더 밖의 정의는 표시하지 않습니다.',
     )
     expect(viewer.address()).toBe('main.tsx:1:1')
+  })
+  it('should replace a save notice with a later missing-definition notice', async () => {
+    const port = createPort()
+    const viewer = mount(port)
+    viewer.editing.change('saved draft')
+    vi.mocked(port.call).mockResolvedValueOnce({
+      content: [],
+      structuredContent: {
+        document: {...initial.document, revision: 'saved', source: 'saved draft'},
+      },
+    })
+    await viewer.editing.save()
+    expect(viewer.notice()?.message).toBe('저장했습니다.')
+    vi.mocked(port.call).mockResolvedValueOnce({content: [], structuredContent: {locations: []}})
+    await viewer.follow({kind: 'identifier', navigation: 'definition', offset: 0, text: 'Missing'})
+    expect(viewer.notice()?.message).toBe(
+      '이동 대상이 없습니다. 작업 폴더 밖의 정의는 표시하지 않습니다.',
+    )
+    viewer.editing.change('another draft')
+    vi.mocked(port.call).mockResolvedValueOnce({
+      content: [],
+      structuredContent: {
+        document: {...initial.document, revision: 'saved-again', source: 'another draft'},
+      },
+    })
+    await viewer.editing.save()
+    expect(viewer.notice()?.message).toBe('저장했습니다.')
   })
   it('should retain the latest notice and dismiss without restoring older feedback', async () => {
     const port = createPort()
@@ -440,5 +519,25 @@ describe('useViewer', () => {
     await viewer.go(locations[0])
     expect(viewer.choices()).toEqual([])
     expect(viewer.session()?.document.location.path).toBe('first.ts')
+  })
+  it('should follow a draft definition to lines that do not exist on disk yet', async () => {
+    const port = createPort()
+    const viewer = mount(port)
+    await viewer.go(document('helper.ts').location)
+    viewer.editing.change('\n\nexport const helper = 1\n')
+    await viewer.go(document('main.tsx').location)
+    vi.mocked(port.call).mockResolvedValueOnce({
+      content: [],
+      structuredContent: {locations: [{column: 14, line: 3, path: 'helper.ts'}]},
+    })
+    await viewer.follow({kind: 'identifier', navigation: 'definition', offset: 0, text: 'helper'})
+    expect(viewer.session()?.document.location).toEqual({column: 14, line: 3, path: 'helper.ts'})
+    expect(viewer.editing.source()).toBe('\n\nexport const helper = 1\n')
+    expect(port.call).toHaveBeenCalledWith(
+      'code.navigate',
+      expect.objectContaining({
+        sources: [{path: 'helper.ts', source: '\n\nexport const helper = 1\n'}],
+      }),
+    )
   })
 })

@@ -16,7 +16,7 @@ describe('createRustNavigation', () => {
   beforeEach(() => {
     root = realpathSync(mkdtempSync(join(tmpdir(), 'rust-navigation-')))
     mkdirSync(join(root, 'crate/src'), {recursive: true})
-    writeFileSync(join(root, 'crate/Cargo.toml'), '')
+    writeFileSync(join(root, 'crate/Cargo.toml'), '[package]\nname = "example"\nedition = "2021"\n')
     writeFileSync(join(root, 'crate/src/main.rs'), 'fn main() {}')
     writeFileSync(join(root, 'crate/src/module.rs'), 'pub fn answer() {}')
     definitions.mockResolvedValue({
@@ -36,11 +36,12 @@ describe('createRustNavigation', () => {
     ).toEqual({ok: true, value: [{column: 8, line: 1, path: 'crate/src/module.rs'}]})
     await navigation.definitions(join(root, 'crate/src/module.rs'), 'pub fn answer() {}', 7)
     expect(createRustService).toHaveBeenCalledOnce()
-    expect(createRustService).toHaveBeenCalledWith({
-      directory: join(root, 'crate'),
-      file: join(root, 'crate/src/main.rs'),
-      manifest: true,
-    })
+    expect(createRustService).toHaveBeenCalledWith(
+      expect.objectContaining({
+        crates: [expect.objectContaining({root_module: join(root, 'crate/src/main.rs')})],
+        directory: join(root, 'crate'),
+      }),
+    )
     navigation.dispose()
     expect(dispose).toHaveBeenCalledOnce()
   })
@@ -60,11 +61,12 @@ describe('createRustNavigation', () => {
   it('should support standalone Rust files without a Cargo manifest', async () => {
     writeFileSync(join(root, 'example.rs'), 'fn main() {}')
     await navigation.definitions(join(root, 'example.rs'), 'fn main() {}', 3)
-    expect(createRustService).toHaveBeenCalledWith({
-      directory: root,
-      file: join(root, 'example.rs'),
-      manifest: false,
-    })
+    expect(createRustService).toHaveBeenCalledWith(
+      expect.objectContaining({
+        crates: [expect.objectContaining({root_module: join(root, 'example.rs')})],
+        directory: root,
+      }),
+    )
   })
   it('should propagate analyzer failures', async () => {
     definitions.mockResolvedValue({error: {code: 'rust-analyzer-unavailable'}, ok: false})
@@ -72,5 +74,32 @@ describe('createRustNavigation', () => {
       error: {code: 'rust-analyzer-unavailable'},
       ok: false,
     })
+  })
+  it('should replace the analyzer when the local crate graph changes', async () => {
+    await navigation.definitions(join(root, 'crate/src/main.rs'), 'fn main() {}', 3)
+    writeFileSync(join(root, 'crate/src/lib.rs'), 'pub fn answer() {}')
+    await navigation.definitions(join(root, 'crate/src/main.rs'), 'fn main() {}', 3)
+    expect(dispose).toHaveBeenCalledOnce()
+    expect(createRustService).toHaveBeenCalledTimes(2)
+  })
+  it('should reuse the workspace analyzer when navigating between different member crates', async () => {
+    writeFileSync(join(root, 'Cargo.toml'), '[workspace]\nmembers = ["crate", "helper"]\n')
+    mkdirSync(join(root, 'helper/src'), {recursive: true})
+    writeFileSync(join(root, 'helper/Cargo.toml'), '[package]\nname = "helper"\nedition = "2021"\n')
+    writeFileSync(join(root, 'helper/src/lib.rs'), 'pub fn answer() {}')
+    await navigation.definitions(join(root, 'crate/src/main.rs'), 'fn main() {}', 3)
+    await navigation.definitions(join(root, 'helper/src/lib.rs'), 'pub fn answer() {}', 7)
+    expect(createRustService).toHaveBeenCalledOnce()
+    expect(dispose).not.toHaveBeenCalled()
+  })
+  it('should reject navigation after disposal without starting another analyzer', async () => {
+    navigation.dispose()
+    expect(
+      await navigation.definitions(join(root, 'crate/src/main.rs'), 'fn main() {}', 3),
+    ).toEqual({
+      error: {code: 'rust-analysis-failed'},
+      ok: false,
+    })
+    expect(createRustService).not.toHaveBeenCalled()
   })
 })
