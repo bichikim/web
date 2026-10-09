@@ -5,6 +5,11 @@ import {EditorView} from '@codemirror/view'
 import {SCodeViewer} from '../SCodeViewer'
 import type {ViewerPort} from '../types'
 
+Object.defineProperty(Range.prototype, 'getClientRects', {
+  configurable: true,
+  value: () => [] as unknown as DOMRectList,
+})
+
 describe('SCodeViewer', () => {
   const mountEditor = () => {
     const source = 'hello selected world'
