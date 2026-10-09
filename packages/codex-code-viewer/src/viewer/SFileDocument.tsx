@@ -1,4 +1,4 @@
-import {createEffect, createMemo, createSignal, Match, Show, Switch} from 'solid-js'
+import {type JSX, Match, Show, Switch} from 'solid-js'
 import type {CodeLocation} from '../shared/contracts'
 import {fileFormat} from '../shared/file-formats'
 import {SCodeDocument, type SCodeDocumentProps} from './SCodeDocument'
@@ -6,7 +6,9 @@ import {SMarkdown} from './SMarkdown'
 import {SMediaDocument} from './SMediaDocument'
 import {STableDocument} from './STableDocument'
 import {hasDocumentSource} from '../shared/has-document-source'
-import {useFileViewState} from './view-state/context'
+import {useDocumentMode} from './use-document-mode'
+import type {useCodeEditing} from './use-code-editing'
+import {SEditingToolbar} from './editor/SEditingToolbar'
 import type {ViewerPort} from './types'
 
 interface SFileDocumentProps extends SCodeDocumentProps {
@@ -16,74 +18,80 @@ interface SFileDocumentProps extends SCodeDocumentProps {
   onOpen?: (location: CodeLocation) => void
   onPreview?: () => void
   onError?: (error: unknown) => void
+  editing?: ReturnType<typeof useCodeEditing>
+  editor?: JSX.Element
+  onDiscard?: () => void
+  onShareChanges?: () => void
 }
 export const SFileDocument = (props: SFileDocumentProps) => {
-  const state = useFileViewState()
   const markdown = () => fileFormat(props.document.location.path)?.kind === 'markdown'
   const table = () => fileFormat(props.document.location.path)?.kind === 'table'
   const svg = () => props.document.media?.mimeType === 'image/svg+xml'
   const sourceAvailable = () => hasDocumentSource(props.document)
-  const path = createMemo(() => props.document.location.path)
-  const mode = createMemo(() => {
-    path()
-    const [originalMode, setOriginalMode] = createSignal(state?.read()?.original ?? false)
-    return {original: originalMode, setOriginal: setOriginalMode}
+  const mode = useDocumentMode({
+    document: () => props.document,
+    onError: (error) => props.onError?.(error),
+    onPreview: () => props.onPreview?.(),
+    searchVisible: () => props.searchVisible === true,
+    sourceAvailable,
   })
-  const original = (): boolean => mode().original()
-  const setOriginal = (value: boolean): void => {
-    mode().setOriginal(value)
-    state?.update({original: value})
-  }
-  createEffect(() => {
-    if (
-      sourceAvailable() &&
-      (props.searchVisible ||
-        props.document.location.line > 1 ||
-        state?.request().restore === false)
-    ) {
-      setOriginal(true)
-    }
-  })
-  const handlePreview = (): void => {
-    props.onPreview?.()
-    setOriginal(false)
-  }
-  const handleTableError = (error: unknown): void => {
-    setOriginal(true)
-    props.onError?.(error)
-  }
+  const previewAvailable = (): boolean => markdown() || table() || svg()
+  const editable = (): boolean => props.editing?.editable() === true
+  const editingEnabled = (): boolean => editable() && props.editing?.enabled() === true
+  const editorVisible = (): boolean =>
+    editable() &&
+    (editingEnabled() ||
+      (props.editing?.dirty() === true && (mode.original() || !previewAvailable())))
+  const source = (): string => (editable() ? props.editing!.source() : props.document.source)
   return (
     <>
-      <Show when={markdown() || table() || svg()}>
+      <Show when={previewAvailable() || editable()}>
         <div
-          aria-label="문서 표시 방식"
-          class="flex shrink-0 flex-wrap items-center gap-2 border-b border-divider px-4 py-2"
+          aria-label="문서 도구"
+          role="group"
+          class="flex shrink-0 items-center gap-2 border-b border-divider px-4 py-2"
         >
-          <button
-            class="ui-document-button"
-            type="button"
-            aria-pressed={!original()}
-            onClick={handlePreview}
-          >
-            미리보기
-          </button>
-          <button
-            class="ui-document-button"
-            type="button"
-            aria-pressed={original()}
-            disabled={!sourceAvailable()}
-            title={sourceAvailable() ? undefined : '512 KiB 이하 SVG에서 원문을 볼 수 있습니다.'}
-            onClick={() => setOriginal(true)}
-          >
-            원문
-          </button>
-          <Show when={props.document.location.path.toLowerCase().endsWith('.mdx')}>
-            <span class="self-center text-xs text-muted">MDX 코드는 실행하지 않습니다.</span>
+          <Show when={previewAvailable() && !editingEnabled()}>
+            <div aria-label="문서 표시 방식" role="group" class="flex min-w-0 items-center gap-2">
+              <button
+                class="ui-document-button"
+                type="button"
+                aria-pressed={!mode.original()}
+                onClick={mode.showPreview}
+              >
+                미리보기
+              </button>
+              <button
+                class="ui-document-button"
+                type="button"
+                aria-pressed={mode.original()}
+                disabled={!sourceAvailable()}
+                title={
+                  sourceAvailable() ? undefined : '512 KiB 이하 SVG에서 원문을 볼 수 있습니다.'
+                }
+                onClick={mode.showOriginal}
+              >
+                원문
+              </button>
+              <Show when={props.document.location.path.toLowerCase().endsWith('.mdx')}>
+                <span class="self-center text-xs text-muted">MDX 코드는 실행하지 않습니다.</span>
+              </Show>
+            </div>
+          </Show>
+          <Show when={editable() ? props.editing : undefined}>
+            {(editing) => (
+              <SEditingToolbar
+                editing={editing()}
+                onDiscard={props.onDiscard}
+                onShareChanges={props.onShareChanges}
+              />
+            )}
           </Show>
         </div>
       </Show>
       <Switch fallback={<SCodeDocument {...props} />}>
-        <Match when={props.document.media !== undefined && !original()}>
+        <Match when={editorVisible()}>{props.editor}</Match>
+        <Match when={props.document.media !== undefined && !mode.original()}>
           <Show
             when={`${props.session}:${props.document.location.path}:${props.document.revision}`}
             keyed
@@ -98,20 +106,20 @@ export const SFileDocument = (props: SFileDocumentProps) => {
             )}
           </Show>
         </Match>
-        <Match when={markdown() && !original()}>
+        <Match when={markdown() && !mode.original()}>
           <SMarkdown
-            source={props.document.source}
+            source={source()}
             path={props.document.location.path}
             port={props.port}
             session={props.session}
             onOpen={props.onOpen}
           />
         </Match>
-        <Match when={table() && !original()}>
+        <Match when={table() && !mode.original()}>
           <STableDocument
-            source={props.document.source}
+            source={source()}
             delimiter={props.document.location.path.toLowerCase().endsWith('.tsv') ? '\t' : ','}
-            onError={handleTableError}
+            onError={mode.reportTableError}
           />
         </Match>
       </Switch>

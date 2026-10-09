@@ -3,8 +3,7 @@ import {createEffect, createMemo, createSignal, type JSX, on} from 'solid-js'
 import {useSkinPaintGesture} from './use-skin-paint-gesture'
 import {getDocumentScene, type PuppetDocument} from '../../player'
 import type {MeshEditorProps} from '../mesh-editor-contract'
-import {getDeformerPreviewDocument, getPartPreviewVertices} from './mesh-preview'
-import {applySceneDeformers} from './scene-deformation'
+import {createPreviewVertices} from './part-views'
 import {findNode, findNodeLock} from './scene-tree'
 import {setPartSkinning} from './skinning'
 import {createSkinStroke, inspectSkinTriangles, replaceSkinWeights} from './skinning-edit'
@@ -41,11 +40,10 @@ export const useSkinningTools = (props: SkinningToolsProps) => {
     props.onDocumentChange === undefined ||
     findNodeLock(getDocumentScene(props.sourceDocument).roots, props.activePartId ?? '')
   const positions = createMemo(() => {
-    const vertices = new Map(
-      props.document.parts.map((part) => [part.id, [...getPartPreviewVertices(props, part)]]),
-    )
-    applySceneDeformers({document: getDeformerPreviewDocument(props), verticesByPartId: vertices})
-    return vertices.get(props.activePartId ?? '') ?? []
+    if (!enabled() || part() === undefined || binding() === undefined) {
+      return []
+    }
+    return Array.from(createPreviewVertices(props).get(props.activePartId ?? '') ?? [])
   })
   const triangles = createMemo(() =>
     inspectSkinTriangles(part()?.mesh.vertices ?? [], positions(), part()?.mesh.indices ?? []),
@@ -69,6 +67,7 @@ export const useSkinningTools = (props: SkinningToolsProps) => {
         protect(),
         props.editMode,
         JSON.stringify(props.parameterValueMap),
+        props.motionId,
         props.previewTime,
       ].join(':'),
     create: () => {

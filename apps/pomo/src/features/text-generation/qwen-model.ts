@@ -3,6 +3,7 @@
 import {type ProgressInfo, Qwen3_5ForCausalLM} from '@huggingface/transformers'
 
 import type {TransformersTextModelImplementation} from './model'
+import {createTransformersLoadOptions} from './create-transformers-load-options'
 
 export type QwenTextGenerationModel = Awaited<ReturnType<typeof Qwen3_5ForCausalLM.from_pretrained>>
 
@@ -15,12 +16,7 @@ export const loadQwenModel = ({
   model,
   onProgress,
 }: LoadQwenModelOptions): Promise<QwenTextGenerationModel> =>
-  Qwen3_5ForCausalLM.from_pretrained(model.repositoryId, {
-    device: 'webgpu',
-    dtype: {
-      decoder_model_merged: model.quantization,
-      embed_tokens: model.quantization,
-    },
-    progress_callback: onProgress,
-    revision: model.assetSource.revision,
-  })
+  Qwen3_5ForCausalLM.from_pretrained(
+    model.repositoryId,
+    createTransformersLoadOptions({model, onProgress}),
+  )

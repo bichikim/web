@@ -1,7 +1,10 @@
 import type {APIEvent} from '@solidjs/start/server'
 import {assertBodySize, HTTPError} from 'h3'
 
-import {handleOpenAiResponseEvent} from 'src/server/history-generation/handle-openai-webhook'
+import type {ApiAiWebhookEvent} from 'src/server/api-ai/types'
+import {enqueueApiAiCallback} from 'src/server/repositories/api-ai'
+import {completeApiAiJobs} from 'src/server/api-ai/service'
+import {waitUntil} from '@vercel/functions'
 import {unwrapOpenAiWebhook} from 'src/server/history-generation/openai-client'
 import {noStoreEmpty, noStoreJson, noStoreText} from 'src/server/http/response'
 
@@ -16,7 +19,7 @@ const RESPONSE_EVENTS = new Set([
   'response.incomplete',
 ])
 
-type ResponseEvent = Parameters<typeof handleOpenAiResponseEvent>[0]
+type ResponseEvent = ApiAiWebhookEvent
 
 const isResponseEvent = (event: {readonly type: string}): event is ResponseEvent =>
   RESPONSE_EVENTS.has(event.type)
@@ -49,7 +52,8 @@ export const POST = async (event: APIEvent): Promise<Response> => {
   }
 
   try {
-    await handleOpenAiResponseEvent(webhook)
+    await enqueueApiAiCallback('openai', webhook, new Date())
+    waitUntil(completeApiAiJobs())
     return noStoreJson({ok: true})
   } catch (error) {
     console.error('Failed to process OpenAI webhook', error)

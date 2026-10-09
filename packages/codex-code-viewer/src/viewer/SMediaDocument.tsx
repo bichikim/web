@@ -4,6 +4,7 @@ import type {ViewerPort} from './types'
 import {SImageDocument} from './SImageDocument'
 import {useMediaUrl} from './use-media-url'
 import {SPdfDocument} from './SPdfDocument'
+import {SOfficeDocument} from './office/SOfficeDocument'
 
 interface SMediaDocumentProps {
   document: CodeDocument
@@ -42,6 +43,21 @@ export const SMediaDocument = (props: SMediaDocumentProps) => {
           >
             {(url) => (
               <Switch>
+                <Match
+                  when={
+                    props.document.media?.kind === 'word' ||
+                    props.document.media?.kind === 'spreadsheet'
+                  }
+                >
+                  <Show when={media.blob()}>
+                    {(blob) => (
+                      <SOfficeDocument
+                        blob={blob()}
+                        kind={props.document.media?.kind === 'word' ? 'word' : 'spreadsheet'}
+                      />
+                    )}
+                  </Show>
+                </Match>
                 <Match when={props.document.media?.kind === 'pdf'}>
                   <Show when={media.blob()}>
                     {(blob) => (

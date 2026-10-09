@@ -6,6 +6,7 @@ import type {CloudTextResponse} from '../contracts'
 
 vi.mock('../client', () => ({requestCloudText: vi.fn()}))
 const response = {
+  modelId: 'actual-fallback-model',
   text: '완료',
   tokenCount: 200,
   usage: {day: '2026-10-07', limit: 3, remaining: 2, resetsAt: '2026-10-07T15:00:00.000Z', used: 1},

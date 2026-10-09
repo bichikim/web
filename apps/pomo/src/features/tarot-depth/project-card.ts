@@ -22,6 +22,10 @@ export const projectCard = (options: ProjectCardOptions): CardCorners => {
   const yaw = clamp(options.x, -1, 1) * MAXIMUM_YAW
   const pitch = clamp(options.y, -1, 1) * MAXIMUM_PITCH
   const distance = options.height * CAMERA_DISTANCE_RATIO
+  const yawCosine = Math.cos(yaw)
+  const yawSine = Math.sin(yaw)
+  const pitchCosine = Math.cos(pitch)
+  const pitchSine = Math.sin(pitch)
   const points = [
     [-1, -1],
     [1, -1],
@@ -30,9 +34,9 @@ export const projectCard = (options: ProjectCardOptions): CardCorners => {
   ].map(([horizontal, vertical]) => {
     const x = (horizontal! * options.width) / 2
     const y = (vertical! * options.height) / 2
-    const rotatedX = x * Math.cos(yaw)
-    const rotatedY = y * Math.cos(pitch) + x * Math.sin(yaw) * Math.sin(pitch)
-    const depth = y * Math.sin(pitch) - x * Math.sin(yaw) * Math.cos(pitch)
+    const rotatedX = x * yawCosine
+    const rotatedY = y * pitchCosine + x * yawSine * pitchSine
+    const depth = y * pitchSine - x * yawSine * pitchCosine
     const perspective = distance / (distance - depth)
     return {x: rotatedX * perspective, y: rotatedY * perspective}
   })

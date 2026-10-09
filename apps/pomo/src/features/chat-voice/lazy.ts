@@ -1,4 +1,4 @@
-import {createRetryableLazyPromise} from 'src/utils/create-retryable-lazy-promise'
+import {createLazyInitializer} from 'src/utils/create-lazy-initializer'
 import {createSignal, getOwner, onCleanup, runWithOwner} from 'solid-js'
 
 import type {ChatVoiceController, ChatVoiceState, UseChatVoiceProps} from './index'
@@ -24,7 +24,7 @@ export const useLazyChatVoice = (props: UseChatVoiceProps = {}): ChatVoiceContro
 
     return loadController()
   }
-  const loadController = createRetryableLazyPromise(() => {
+  const loadController = createLazyInitializer(() => {
     return import('./index').then(({useChatVoice}) => {
       if (disposed) {
         throw new DOMException('Voice runtime was disposed.', 'AbortError')

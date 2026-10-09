@@ -16,6 +16,7 @@ const COORDINATES_PER_VERTEX = 2
 interface CommitVertexMoveOptions extends VertexPoint {
   readonly editMode: 'motion' | 'parameter'
   readonly document: PuppetDocument
+  readonly motionId?: string
   readonly keyframeTime: number | null
   readonly bindingId?: string
   readonly parameterValueMap?: PuppetParameterValueMap
@@ -79,7 +80,10 @@ export const commitVertexMove = (options: CommitVertexMoveOptions): CommitVertex
       : {document, ok: true}
   }
 
-  const [motion] = options.document.motions
+  const motion =
+    options.motionId === undefined
+      ? options.document.motions[0]
+      : options.document.motions.find((motion) => motion.id === options.motionId)
   const sampledVertices =
     options.keyframeTime === null || motion === undefined
       ? options.part.mesh.vertices

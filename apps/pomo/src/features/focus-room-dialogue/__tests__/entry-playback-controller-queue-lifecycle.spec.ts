@@ -27,6 +27,7 @@ vi.mock('../../lip-sync', () => ({
     reset: playbackMocks.driverReset,
     update: playbackMocks.driverUpdate,
   }),
+  createPVisemeTrack: vi.fn().mockReturnValue([]),
   createPWaveEnvelope: playbackMocks.createEnvelope,
   getPAudioEnvelopeLevel: playbackMocks.envelopeLevel,
 }))

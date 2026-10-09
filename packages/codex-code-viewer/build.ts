@@ -4,9 +4,12 @@ import {fileURLToPath} from 'node:url'
 import {build as bundle} from 'esbuild'
 import {build} from 'vite'
 import typescript from '@typescript/typescript6'
+import {z} from 'zod'
 import {collectLicenseNotices} from './build/collect-license-notices'
 import {inlineScript} from './build/inline-script'
 import {inlineHtml} from './build/inline-html'
+import {bundleRustAnalyzers} from './build/bundle-rust-analyzers'
+import rustAnalyzers from './rust-analyzers.json' with {type: 'json'}
 
 const root = dirname(fileURLToPath(import.meta.url))
 const output = `${root}/dist`
@@ -25,12 +28,31 @@ const stylesheet = assets
 const template = await readFile(`${root}/index.html`, 'utf8')
 const html = inlineHtml({entrypoint: '/src/viewer/main.tsx', javascript, stylesheet, template})
 await mkdir(output, {recursive: true})
+await bundleRustAnalyzers({output, ...rustAnalyzers})
 const library = dirname(typescript.getDefaultLibFilePath({}))
 const declarations = (await readdir(library)).filter(
   (file) => file.startsWith('lib.') && file.endsWith('.d.ts'),
 )
 await Promise.all(declarations.map((file) => copyFile(`${library}/${file}`, `${output}/${file}`)))
 await writeFile(`${output}/app.html`, html)
+const python = dirname(fileURLToPath(import.meta.resolve('pyright/package.json')))
+const pythonManifest = z
+  .object({license: z.string(), name: z.string(), version: z.string()})
+  .parse(JSON.parse(await readFile(`${python}/package.json`, 'utf8')))
+await mkdir(`${output}/python`, {recursive: true})
+await cp(`${python}/dist`, `${output}/python/dist`, {
+  filter: (path) => !path.endsWith('.map'),
+  recursive: true,
+})
+await Promise.all(
+  ['langserver.index.js', 'LICENSE.txt'].map((file) =>
+    copyFile(`${python}/${file}`, `${output}/python/${file}`),
+  ),
+)
+await writeFile(
+  `${output}/python/package.json`,
+  JSON.stringify({...pythonManifest, type: 'commonjs'}, null, 2),
+)
 const preview = await bundle({
   bundle: true,
   entryPoints: [`${root}/src/preview/main.ts`],
@@ -97,6 +119,7 @@ const packageLicenses = await collectLicenseNotices(
     ...Object.keys(installer.metafile.inputs),
     fileURLToPath(import.meta.resolve('@iconify-json/tabler/icons.json')),
     `${library}/typescript.js`,
+    `${python}/langserver.index.js`,
   ],
   {
     // The published package omits the repository's license file.
@@ -118,7 +141,13 @@ const pdfLicenses = await Promise.all(
     )
   }),
 )
-const licenses = `${packageLicenses}\n${pdfLicenses.flat().join('\n\n')}\n`
+const rustLicenses = await Promise.all(
+  ['rust-analyzer-mit.txt', 'rust-analyzer-apache.txt'].map(
+    async (file) =>
+      `## rust-analyzer/${file}\n\n${await readFile(`${root}/build/licenses/${file}`, 'utf8')}`,
+  ),
+)
+const licenses = `${packageLicenses}\n${pdfLicenses.flat().join('\n\n')}\n${rustLicenses.join('\n\n')}\n`
 const plugin = `${output}/plugin`
 await rm(plugin, {force: true, recursive: true})
 await mkdir(`${plugin}/dist`, {recursive: true})
@@ -132,6 +161,12 @@ await Promise.all([
     copyFile(`${output}/${file}`, `${plugin}/dist/${file}`),
   ),
   cp(`${root}/assets`, `${plugin}/assets`, {recursive: true}),
+  cp(`${output}/python`, `${plugin}/dist/python`, {recursive: true}),
+  ...rustAnalyzers.assets.map(async ({host}) => {
+    const binary = host.startsWith('win32-') ? 'rust-analyzer.exe' : 'rust-analyzer'
+    await mkdir(`${plugin}/dist/rust/${host}`, {recursive: true})
+    await copyFile(`${output}/rust/${host}/${binary}`, `${plugin}/dist/rust/${host}/${binary}`)
+  }),
   copyFile(`${root}/README.md`, `${plugin}/README.md`),
   writeFile(`${plugin}/THIRD_PARTY_LICENSES.md`, licenses),
   writeFile(`${output}/THIRD_PARTY_LICENSES.md`, licenses),

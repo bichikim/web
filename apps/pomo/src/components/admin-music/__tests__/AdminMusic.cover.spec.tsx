@@ -24,7 +24,9 @@ describe('AdminMusic', () => {
     const coverInput = await screen.findByLabelText(/^이미지 파일/u)
 
     expect(coverInput.getAttribute('type')).toBe('file')
-    expect(coverInput.getAttribute('accept')).toBe('image/jpeg,image/png,image/webp')
+    expect(coverInput.getAttribute('accept')).toBe(
+      'image/jpeg,image/jpg,.jpg,.jpeg,image/png,image/webp',
+    )
     expect(screen.getByText(/중앙 정사각형 크롭 · 1200×1200 WebP/u)).toBeTruthy()
   })
 

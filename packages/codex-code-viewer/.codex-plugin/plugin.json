@@ -1,6 +1,6 @@
 {
   "name": "codex-code-viewer",
-  "version": "0.2.0",
+  "version": "0.4.0",
   "description": "Read code, documents and media and add file context inside Codex.",
   "mcpServers": "./.mcp.json",
   "interface": {

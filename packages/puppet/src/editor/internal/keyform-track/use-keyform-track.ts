@@ -5,7 +5,7 @@ import {
   type PuppetParameterValues,
 } from '../../../deformation'
 import type {PuppetParameter} from '../../../player/document'
-import type {EditorContextMenuEntry} from '../EditorContextMenu'
+import type {EditorContextMenuAction, EditorContextMenuEntry} from '../EditorContextMenu'
 import {getParameterPointerValue} from '../parameter-value'
 import {isTouchContextRequest} from './is-touch-context-request'
 import type {EditorKeyformTrackProps} from './types'
@@ -111,24 +111,29 @@ export const useKeyformTrack = (props: UseKeyformTrackProps): UseKeyformTrackRes
     selectValues(contextValues())
     props.source().onKeyformDelete?.()
   }
-  const contextEntries = (): ReadonlyArray<EditorContextMenuEntry> => [
-    {
-      disabled: props.source().onKeyformAdd === undefined || hasKeyform(contextValues()),
-      id: 'add-keyform',
-      label: '키폼 추가',
-      onSelect: () => handleKeyformAdd(contextValues()),
-      type: 'action',
-    },
-    {
-      disabled: props.source().onKeyformDelete === undefined || !hasKeyform(contextValues()),
-      id: 'delete-keyform',
-      label: '키폼 삭제',
-      onSelect: handleContextDelete,
-      shortcut: 'Backspace',
-      tone: 'danger',
-      type: 'action',
-    },
-  ]
+  const contextEntries = (): ReadonlyArray<EditorContextMenuEntry> => {
+    const source = props.source()
+    const occupied = hasKeyform(contextValues())
+    const entries: ReadonlyArray<EditorContextMenuAction> = [
+      {
+        disabled: source.onKeyformAdd === undefined || occupied,
+        id: 'add-keyform',
+        label: '키폼 추가',
+        onSelect: () => handleKeyformAdd(contextValues()),
+        type: 'action',
+      },
+      {
+        disabled: source.onKeyformDelete === undefined || !occupied,
+        id: 'delete-keyform',
+        label: '키폼 삭제',
+        onSelect: handleContextDelete,
+        shortcut: 'Backspace',
+        tone: 'danger',
+        type: 'action',
+      },
+    ]
+    return entries.filter((entry) => !entry.disabled)
+  }
   const handleDoubleClick = (event: MouseEvent & {readonly currentTarget: HTMLDivElement}) => {
     const values = getTrackValues(props.source(), event)
     if (values !== undefined) {

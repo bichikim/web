@@ -1,3 +1,4 @@
+import {maxBy} from 'es-toolkit/array'
 import {createEffect, createResource, ErrorBoundary, Show, Suspense} from 'solid-js'
 import * as m from '@paraglide/message'
 import {loadVersionCatalog, writeViewedRelease} from 'src/features/version-catalog'
@@ -16,9 +17,7 @@ export default function WhatsNewPage() {
       return
     }
 
-    const [newestRelease] = loadedCatalog.releases.toSorted(
-      (left, right) => Date.parse(right.releasedAt) - Date.parse(left.releasedAt),
-    )
+    const newestRelease = maxBy(loadedCatalog.releases, (release) => Date.parse(release.releasedAt))
     if (newestRelease === undefined) {
       return
     }

@@ -42,8 +42,25 @@ export const cloudTextRequestSchema = z.object({
 export type CloudTextRequest = z.infer<typeof cloudTextRequestSchema>
 
 export const cloudTextResponseSchema = z.object({
+  modelId: z.string().nullable().default(null),
   text: z.string().min(1),
   tokenCount: z.number().int().nonnegative(),
   usage: cloudTextUsageSchema,
 })
 export type CloudTextResponse = z.infer<typeof cloudTextResponseSchema>
+
+export const cloudTextAcceptedSchema = z.object({requestId: z.uuid(), usage: cloudTextUsageSchema})
+export const cloudTextJobEventSchema = z.discriminatedUnion('kind', [
+  cloudTextResponseSchema.extend({kind: z.literal('complete')}),
+  z.object({
+    kind: z.literal('pending'),
+    requestId: z.uuid(),
+    status: z.enum(['queued', 'submitting', 'running', 'recovery_pending']),
+    usage: cloudTextUsageSchema,
+  }),
+  z.object({
+    kind: z.enum(['failed', 'cancelled']),
+    requestId: z.uuid(),
+    usage: cloudTextUsageSchema,
+  }),
+])

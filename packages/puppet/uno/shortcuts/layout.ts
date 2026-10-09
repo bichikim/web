@@ -82,6 +82,7 @@ export const layoutShortcuts = {
   ],
   'puppet-editor': [
     'editor-type-root',
+    '[container-type:inline-size]',
     '[--editor-control-height:1.40625rem]',
     '[--bottom-grid-size:var(--bottom-panel-size,_16.25rem)] [--bottom-resizer-size:0.375rem]',
     '[--left-grid-size:var(--left-panel-size,_18.75rem)] [--left-resizer-size:0.375rem]',
@@ -145,10 +146,10 @@ export const layoutShortcuts = {
     '[@media(max-width:67.5rem)]:[.puppet-editor_&]:gap-editor-control',
   ],
   'toolbar-brush-settings-mount': [
+    'editor-scrollbar-compact',
     '[.puppet-editor_&]:flex [.puppet-editor_&]:min-w-0 [.puppet-editor_&]:flex-1',
     '[.puppet-editor_&]:ml-editor-group [.puppet-editor_&]:overflow-x-auto',
     '[.puppet-editor_&]:py-editor-field',
-    '[.puppet-editor_&]:[scrollbar-width:thin]',
   ],
   'toolbar-button': [
     '[.puppet-editor_&]:p-editor-field [.puppet-editor_&]:[border:0.0625rem_solid_#35413d]',

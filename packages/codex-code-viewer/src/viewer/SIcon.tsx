@@ -7,14 +7,19 @@ const icons = {
   arrowLeft: 'i-tabler-arrow-left',
   arrowRight: 'i-tabler-arrow-right',
   back: 'i-tabler-chevron-left',
+  check: 'i-tabler-check',
+  chevronDown: 'i-tabler-chevron-down',
   close: 'i-tabler-x',
   code: 'i-tabler-code',
   folder: 'i-tabler-folder',
   forward: 'i-tabler-chevron-right',
   info: 'i-tabler-info-circle',
   minus: 'i-tabler-minus',
+  newFile: 'i-tabler-file-plus',
+  newFolder: 'i-tabler-folder-plus',
   refresh: 'i-tabler-reload',
   search: 'i-tabler-search',
+  target: 'i-tabler-target',
 }
 
 export const SIcon = (props: SIconProps) => (

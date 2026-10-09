@@ -1,6 +1,12 @@
 import {type Accessor, createMemo, createSignal} from 'solid-js'
 import type {CodeDocument, ViewerSession} from '../shared/contracts'
-import type {CodeSelection, CodeTextRange, ViewerPort, WorkspaceSelection} from './types'
+import type {
+  CodeSelection,
+  CodeSnippet,
+  CodeTextRange,
+  ViewerPort,
+  WorkspaceSelection,
+} from './types'
 import {formatSelection} from './format-selection'
 
 interface CodeSelectionOptions {
@@ -8,6 +14,8 @@ interface CodeSelectionOptions {
   onNotice: (message: string) => void
   port: ViewerPort
   session: Accessor<ViewerSession | null>
+  source?: Accessor<string | undefined>
+  workspace?: Accessor<string | undefined>
 }
 
 export const useCodeSelection = (options: CodeSelectionOptions) => {
@@ -76,7 +84,11 @@ export const useCodeSelection = (options: CodeSelectionOptions) => {
     ) {
       return
     }
-    const rows = current.document.lines.map((tokens) => tokens.map((token) => token.text).join(''))
+    const draft = options.source?.()
+    const rows =
+      draft === undefined
+        ? current.document.lines.map((tokens) => tokens.map((token) => token.text).join(''))
+        : draft.split(/\r\n|\n|\r/u)
     const last = Math.max(1, rows.length)
     const line = Math.min(last, range.line)
     const endLine = Math.max(line, Math.min(last, range.endLine))
@@ -90,7 +102,7 @@ export const useCodeSelection = (options: CodeSelectionOptions) => {
       line,
     })
   }
-  const share = async (snapshot?: CodeSelection): Promise<void> => {
+  const share = async (snapshot?: CodeSelection | CodeSnippet): Promise<void> => {
     const current = options.session()
     if (current?.document.media !== undefined && snapshot === undefined) {
       await sharePath({
@@ -103,18 +115,19 @@ export const useCodeSelection = (options: CodeSelectionOptions) => {
     if (current !== null && selected !== null && selected.path === current.document.location.path) {
       try {
         await options.port.context({...selected, path: `${current.workspace}/${selected.path}`})
-        options.onNotice('선택한 파일과 줄 정보를 다음 채팅 메시지에 추가했습니다.')
+        options.onNotice(
+          'kind' in selected
+            ? '선택한 코드를 다음 채팅 메시지에 추가했습니다.'
+            : '선택한 파일과 줄 정보를 다음 채팅 메시지에 추가했습니다.',
+        )
       } catch (error) {
         options.onError(error)
       }
     }
   }
   const sharePath = async (selected: WorkspaceSelection): Promise<void> => {
-    const current = options.session()
-    if (
-      current === null ||
-      !selected.path.startsWith(`${current.workspace.replace(/\/$/u, '')}/`)
-    ) {
+    const workspace = options.workspace?.() ?? options.session()?.workspace
+    if (workspace === undefined || !selected.path.startsWith(`${workspace.replace(/\/$/u, '')}/`)) {
       return
     }
     try {
@@ -128,5 +141,15 @@ export const useCodeSelection = (options: CodeSelectionOptions) => {
       options.onError(error)
     }
   }
-  return {address, preserve, reset, selection, selectLines, selectText, share, sharePath}
+  return {
+    address,
+    clear: () => setSelection(null),
+    preserve,
+    reset,
+    selection,
+    selectLines,
+    selectText,
+    share,
+    sharePath,
+  }
 }

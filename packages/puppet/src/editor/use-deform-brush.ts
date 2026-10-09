@@ -137,6 +137,7 @@ const useBrushCancellation = (context: DeformBrushContext, cancel: () => void) =
         props.activeKeyformValues,
         props.parameterValues,
         props.parameterValueMap,
+        props.motionId,
         props.previewTime,
       ],
       cancel,

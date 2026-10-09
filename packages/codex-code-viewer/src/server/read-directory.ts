@@ -31,7 +31,7 @@ export const readDirectory = (root: string, limit = MAX_FILES): DirectoryListing
       )
       .sort((left, right) => left.name.localeCompare(right.name, undefined, {numeric: true}))
     for (const entry of entries) {
-      if (files.length >= limit) {
+      if (files.length + directories.length - 1 >= limit) {
         truncated = true
         return
       }

@@ -24,7 +24,15 @@ export const useSwipeDelete = (onDelete: Accessor<(() => void) | undefined>) => 
   }
 
   const handlePointerDown = (event: PointerEvent) => {
-    if (event.button !== 0 || dragging() || onDelete() === undefined) {
+    if (
+      event.button !== 0 ||
+      dragging() ||
+      onDelete() === undefined ||
+      (event.target instanceof Element &&
+        event.target.closest(
+          'input, textarea, select, [contenteditable="true"], .editor-number-field, .parameter-value-control',
+        ) !== null)
+    ) {
       return
     }
     const initialPointerX = event.clientX

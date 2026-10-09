@@ -1,7 +1,14 @@
 import {expect, it} from 'vitest'
-import {cloudTextUsageSchema} from '../contracts'
+import {cloudTextResponseSchema, cloudTextUsageSchema} from '../contracts'
 
 const daily = {day: '2026-10-07', resetsAt: '2026-10-07T15:00:00.000Z', used: 10}
+it('should preserve the actual model ID and represent missing historical metadata as null', () => {
+  const response = {text: '결과', tokenCount: 10, usage: {...daily, limit: null, remaining: null}}
+  expect(cloudTextResponseSchema.parse({...response, modelId: 'fallback-model'}).modelId).toBe(
+    'fallback-model',
+  )
+  expect(cloudTextResponseSchema.parse(response).modelId).toBeNull()
+})
 it('should accept an explicit unlimited usage contract', () => {
   expect(cloudTextUsageSchema.parse({...daily, limit: null, remaining: null})).toEqual({
     ...daily,

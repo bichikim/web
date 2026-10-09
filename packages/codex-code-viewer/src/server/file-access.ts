@@ -1,9 +1,9 @@
+import {MAX_CODE_BYTES} from '../shared/editing-limits'
 import {existsSync, readFileSync, realpathSync, statSync} from 'node:fs'
 import {dirname, isAbsolute, relative, resolve, sep} from 'node:path'
 import {failure, type Result, success} from '../shared/contracts'
 import {fileFormat} from '../shared/file-formats'
 
-const MAX_BYTES = 524288
 const PRIVATE_DIRECTORIES = new Set(['.git', '.codex', '.aws', '.ssh'])
 
 export const isWithin = (root: string, path: string): boolean => {
@@ -24,7 +24,11 @@ export const findWorkspace = (path: string): string => {
       (parent) =>
         existsSync(resolve(parent, 'pnpm-workspace.yaml')) || existsSync(resolve(parent, '.git')),
     ) ??
-    ancestors.find((parent) => existsSync(resolve(parent, 'Cargo.toml'))) ??
+    ancestors.find((parent) =>
+      ['Cargo.toml', 'pyproject.toml', 'pyrightconfig.json', 'Gemfile', 'gems.rb'].some((marker) =>
+        existsSync(resolve(parent, marker)),
+      ),
+    ) ??
     initial
   )
 }
@@ -73,7 +77,7 @@ export const readSource = (root: string, path: string): Result<string> => {
     if (!stats.isFile()) {
       return failure('unsupported-file')
     }
-    if (stats.size > MAX_BYTES) {
+    if (stats.size > MAX_CODE_BYTES) {
       return failure('too-large')
     }
     const bytes = readFileSync(resolved.value)

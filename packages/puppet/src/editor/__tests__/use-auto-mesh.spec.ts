@@ -29,6 +29,39 @@ afterEach(() => {
 })
 
 describe('useAutoMesh', () => {
+  test('should discard pending generation when its owner is disposed', async () => {
+    let resolve!: (value: {readonly ok: true; readonly pixels: typeof pixels}) => void
+    const pendingResult = new Promise<{readonly ok: true; readonly pixels: typeof pixels}>(
+      (done) => {
+        resolve = done
+      },
+    )
+    mocks.readTexturePixels.mockReturnValueOnce(pendingResult)
+    const onDocumentChange = vi.fn()
+    const onBeforeApply = vi.fn()
+    const onNotice = vi.fn()
+    const document = createDemoDocument()
+    const root = createRoot((dispose) => ({
+      autoMesh: useAutoMesh({
+        document: () => document,
+        onBeforeApply,
+        onDocumentChange,
+        onNotice,
+        partIds: () => ['mesh-preview'],
+      }),
+      dispose,
+    }))
+    const pending = root.autoMesh.generate({alphaThreshold: 16, cellSize: 32})
+    root.dispose()
+    resolve({ok: true, pixels})
+
+    await expect(pending).resolves.toBe(false)
+    expect(mocks.autoMeshPart).not.toHaveBeenCalled()
+    expect(onDocumentChange).not.toHaveBeenCalled()
+    expect(onBeforeApply).not.toHaveBeenCalled()
+    expect(onNotice).not.toHaveBeenCalled()
+  })
+
   test('should apply a generated document through the latest callbacks', async () => {
     const document = createDemoDocument()
     const generatedDocument = {...document, motions: []}

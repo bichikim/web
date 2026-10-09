@@ -1,66 +1,88 @@
 # Code Viewer
 
-Codex 대화 옆에서 코드를 읽고 탐색하는 플러그인입니다. import 경로나 심볼을 클릭해 관련 코드를 찾아가고, 선택한 파일·줄·열 범위를 다음 채팅의 참고 자료로 추가할 수 있습니다.
+[한국어 README](https://github.com/bichikim/web/blob/dev/packages/codex-code-viewer/README.ko.md)
 
-## 할 수 있는 일 (0.2.0)
+A plugin for reading and navigating code beside your Codex conversation. The current development source also supports editing TypeScript, JavaScript, stylesheets, component and configuration files, and plain text. Follow imports and symbols to related code, then add a file or an exact line and column range as context for your next chat message.
 
-| 기능                      | 사용 방법                                                                                                                                |
-| ------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
-| 코드 읽기                 | TypeScript·JavaScript·Rust와 HTML·설정 파일을 줄 번호와 구문 강조로 봅니다.                                                              |
-| 관련 코드로 이동          | import 경로를 눌러 모듈 파일을 열고, 심볼을 눌러 정의가 있는 파일과 줄로 이동합니다.                                                     |
-| 파일 찾기                 | 파일 트리에서 폴더를 펼치거나 경로·파일명으로 검색합니다. `Cmd/Ctrl+P`로 검색 입력창을 선택합니다.                                       |
-| 현재 파일 검색            | `Cmd/Ctrl+F`로 문자열을 찾고 이전·다음 결과로 이동합니다.                                                                                |
-| 선택한 코드를 채팅에 추가 | 줄 번호를 누르거나 본문을 드래그해 선택한 뒤 **채팅창에 추가** 또는 우클릭 메뉴를 사용합니다. 파일 경로와 정확한 범위가 함께 전달됩니다. |
-| 탐색 기록과 테마          | 뒤로·앞으로 버튼으로 방문한 파일로 돌아가고, Codex가 전달한 밝음·어두움 테마와 글꼴을 따릅니다.                                          |
-| 문서 읽기                 | Markdown·MDX 미리보기, CSV·TSV 표의 정렬·필터, 일반 텍스트 원문을 봅니다.                                                                |
-| PDF 읽기                  | 페이지 이동·배율·화면 맞춤, 텍스트 선택·복사와 문서 전체 검색을 사용합니다.                                                              |
-| 미디어 보기               | 이미지·SVG 확대/축소와 드래그 이동, 영상·음악 재생을 지원합니다.                                                                         |
-| 보기 상태 유지            | 같은 뷰어 탭에서 파일을 다시 열면 선택 범위·스크롤·미리보기 모드·배율·PDF 페이지를 복원합니다.                                           |
+## Features (0.4.0)
 
-지원하는 코드 확장자는 `.ts`, `.tsx`, `.mts`, `.cts`, `.js`, `.jsx`, `.mjs`, `.cjs`입니다. 코드를 수정하거나 실행하는 편집 기능은 제공하지 않습니다.
+| Feature                 | How to use it                                                                                                                                      |
+| ----------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Read code               | View TypeScript, JavaScript, Rust, HTML and configuration files with line numbers and syntax highlighting.                                         |
+| Navigate related code   | Click an import to open its module, or a symbol to jump to its definition.                                                                         |
+| Find files              | Expand folders in the file tree or search by path or filename. `Cmd/Ctrl+P` focuses search.                                                        |
+| Search the current file | Use `Cmd/Ctrl+F` to find text and move between matches.                                                                                            |
+| Add code to chat        | Select line numbers or drag across text, then choose **Add to chat** from the context menu. The file path and exact range accompany the selection. |
+| History and themes      | Navigate back and forward through visited files, using the light/dark theme and fonts provided by Codex.                                           |
+| Read documents          | Preview Markdown and MDX, sort and filter CSV/TSV tables, or read plain text.                                                                      |
+| Read PDFs               | Navigate pages, zoom, fit to width, select and copy text, and search the document.                                                                 |
+| Word                    | Preview headings, paragraphs, lists, tables and embedded images in `.docx` files.                                                                  |
+| Excel                   | Select sheets in `.xlsx` files and inspect cells, sort columns, filter rows and navigate pages.                                                    |
+| View media              | Zoom and pan images and SVGs, or play video and audio.                                                                                             |
+| Restore view state      | Reopening a file in the same viewer tab restores its selection, scrolling, preview mode, zoom and PDF page.                                        |
 
-예를 들어 컴포넌트의 import를 따라 구현 파일을 열고, 궁금한 함수의 코드를 드래그해 **채팅창에 추가**한 뒤 Codex에 설명이나 수정을 요청할 수 있습니다.
+Supported TS/JS extensions are `.ts`, `.tsx`, `.mts`, `.cts`, `.js`, `.jsx`, `.mjs` and `.cjs`. The current development source can edit and save these files along with Ruby, Python, Rust, CSS/SCSS/SASS/LESS, Vue/Svelte/Astro, XML/INI/CONF/CFG/PROPERTIES, JSON variants, TOML, YAML/YML, HTML/HTM and plain text. Ruby includes `.rb`, `.rake`, `.gemspec`, `Gemfile` and `Rakefile`; Python includes `.py` and `.pyi`; Rust uses `.rs`. The [shared editing rules](https://github.com/bichikim/web/blob/dev/packages/codex-code-viewer/src/shared/is-editable-file.ts) define editable files. Markdown and CSV/TSV are edited as source text.
 
-형식별 기능과 필요한 도구는 [지원 파일 형식](#지원-파일-형식)에서 확인하세요.
+For example, follow a component's import to its implementation, select a function and choose **Add to chat**, then ask Codex to explain or modify it. See [Supported formats](#supported-formats) for format-specific features and required tools.
 
-## 설치하기 (0.2.0)
+## Code editing (current development source)
 
-[Node.js](https://nodejs.org/en/download) 24 이상, npm, 최신 Codex 데스크톱 앱과 [Codex CLI](https://developers.openai.com/codex/cli)가 필요합니다. `codex` 명령이 없거나 `plugin` 하위 명령을 지원하지 않으면 먼저 CLI를 설치·업데이트하세요.
+Choose **Edit** in the document toolbar to open the editor with line numbers and syntax highlighting. Undo with `Cmd/Ctrl+Z` and redo with `Cmd/Ctrl+Shift+Z`. Choose **Save** or press `Cmd/Ctrl+S` to save the current file. There is no autosave. Reading and editing both highlight TS/JS, Ruby, Python, Rust, CSS/SCSS/SASS/LESS, Vue/Svelte/Astro, XML/INI/CONF/CFG/PROPERTIES, JSON/JSONC/JSON5, TOML, YAML/YML and HTML/HTM. Other text formats use plain-text editing. HTML, Vue, Svelte and Astro are edited as source and never executed. `.conf` and `.cfg` use INI-style highlighting for sections, keys, values and comments.
+
+In the editor, a normal click places the cursor. Use `Cmd/Ctrl+click` or `F12` on a definition name to open its usages. Select a result with the arrow keys and Enter, or close the list with Escape. On TS/JS imports and symbols, Ruby/Python/Rust symbols, Ruby require paths, and relative or absolute file path values in JSON/JSONC/JSON5, the same gesture opens the corresponding file or definition. Navigable text is underlined on hover.
+
+TS/JS and JSON navigation uses unsaved drafts. Ruby, Python and Rust send the current file's draft to their analyzer; they do not analyze unsaved drafts from other files together. Required analyzers and environments are listed under [Supported formats](#supported-formats). Editing, highlighting and saving remain available without an analyzer. JSON navigation follows file path values only; ordinary strings and property keys do not have definitions.
+
+Drafts remain available when you navigate to another file in the workspace. Toggle **Edit** off to read the content without editing, including any unsaved draft. Markdown and CSV/TSV share **Preview / Source** controls in the same toolbar, and previews reflect unsaved content. Choose **Discard changes** from the **⋯** menu while editing.
+
+**⋯ → Add changes to chat** attaches a diff of the current file's unsaved changes to the next chat message. It compares against the last content read or saved and includes the file path and original revision. It captures the content when you choose the action; later edits require another attachment. Saving and sending the message are separate actions. If the diff exceeds calculation limits, the viewer reports an error instead of silently omitting content.
+
+If another program changes the original file, saving is rejected and your draft is retained. Use **Add changes to chat** to review it, or **Discard changes** to reload the original. Switching the workspace connection or receiving a host close request offers save-all, discard or continue-editing choices. Reloading or closing the browser also requests an unsaved-change warning. Drafts are held in memory and cannot be recovered after a forced shutdown.
+
+The editor's context menu attaches the selected range including unsaved content. File-tree attachments refer to the file on disk. Code execution, completion and symbol rename/refactoring are outside this scope.
+
+Saving supports editable UTF-8 files. If an open file is deleted externally, the viewer retains its content and treats deletion itself as an unsaved change. Save stays available even without edits and recreates the file at the same path. If another program restores it first, the viewer reports a conflict instead of overwriting it. **Discard changes** closes a deleted document and removes its draft while keeping the workspace and tree open.
+
+Saving applies the [workspace and file restrictions](https://github.com/bichikim/web/blob/dev/packages/codex-code-viewer/src/server/file-access.ts) and [save checks](https://github.com/bichikim/web/blob/dev/packages/codex-code-viewer/src/server/write-source.ts), using a temporary file in the same directory before replacement. JSON can be saved with incomplete syntax; no automatic formatting is applied. Drafts sent for analysis follow the [count and size limits](https://github.com/bichikim/web/blob/dev/packages/codex-code-viewer/src/shared/editing-limits.ts).
+
+## Installation (0.4.0)
+
+You need [Node.js](https://nodejs.org/en/download) 24 or later, npm, a current Codex desktop app and the [Codex CLI](https://developers.openai.com/codex/cli). If `codex` is missing or does not support the `plugin` subcommand, install or update the CLI first:
 
 ```sh
 npm install -g @openai/codex
 ```
 
-터미널에서 아래 명령을 실행하세요.
+Then run:
 
 ```sh
-npx @winter-love/codex-code-viewer@0.2.0 install
+npx @winter-love/codex-code-viewer@0.4.0 install
 ```
 
-npm이 설치 실행 파일을 내려받고, 실행 파일이 개인 Codex 설정 폴더 안에 npm 설치 목록을 만들어 등록한 뒤 플러그인을 설치합니다. ZIP 다운로드, 압축 해제, 저장소 빌드, 별도 미리보기 서버 실행은 필요하지 않습니다. 공개 패키지 설치에는 npm 로그인이 필요하지 않습니다. 기본 설정 폴더는 `~/.codex`이며 `CODEX_HOME`을 지정하면 해당 폴더를 사용합니다. CLI가 PATH에 없으면 `CODEX_BINARY`에 실행 파일 경로를 지정하세요.
+npm downloads the installer, which creates and registers an npm plugin catalog inside your personal Codex configuration directory and installs the plugin. No ZIP download, manual extraction, repository build or separate preview server is required. Installing the public package does not require an npm login. The default configuration directory is `~/.codex`; set `CODEX_HOME` to use another directory. If the CLI is not on `PATH`, set `CODEX_BINARY` to its executable path.
 
-설치 후 Codex 앱을 완전히 종료하고 다시 여세요. 프로젝트 대화의 오른쪽 패널에서 새 탭 목록의 **Code Viewer**를 선택한 다음, 처음 볼 파일의 **절대 경로**를 입력하고 Enter를 누르세요. 예: `/Users/사용자명/projects/my-project/src/main.tsx`.
+Fully quit and reopen Codex after installation. In a project conversation, select **Code Viewer** from the new-tab menu in the right panel, enter the first file's **absolute path**, and press Enter. For example: `/Users/yourname/projects/my-project/src/main.tsx`.
 
-이후 import 경로나 심볼을 클릭해 이동할 수 있습니다. 코드를 선택하고 **채팅창에 추가**를 누르면 파일과 범위가 다음 채팅의 참고 정보에 추가됩니다. 기본 파일 뷰어의 **열기** 메뉴는 외부 앱 실행 메뉴입니다.
+Follow imports or symbols to navigate. Select code and choose **Add to chat** from the context menu to add the file and range to the next message. The default file viewer's **Open** menu launches external applications.
 
-설치 상태는 `codex plugin list --json --marketplace winter-love-code-viewer-npm`으로 확인할 수 있습니다.
+Check installation with `codex plugin list --json --marketplace winter-love-code-viewer-npm`.
 
-설치 실행 파일은 [공식 npm 플러그인·마켓플레이스 안내](https://developers.openai.com/plugins/build/plugins#marketplace-metadata)의 로컬 목록과 npm 소스를 사용합니다. OpenAI 공식 목록에 등재되는 것은 별도 절차입니다.
+The installer uses a local catalog and npm source described in the [official plugin marketplace documentation](https://developers.openai.com/plugins/build/plugins#marketplace-metadata). Listing in OpenAI's official catalog is a separate process.
 
-### 업데이트
+### Updating
 
-최신 공개 버전으로 업데이트하려면 아래 명령을 실행한 뒤 Codex 앱을 완전히 종료하고 다시 여세요.
+To install the latest public version, run this command, then fully quit and reopen Codex:
 
 ```sh
 npx @winter-love/codex-code-viewer@latest install
 ```
 
-이전 GitHub·개발용 목록에서 설치한 Code Viewer가 있으면 새 설치가 성공한 뒤 이전 사본을 제거해 중복 탭을 막습니다. 다른 플러그인과 마켓플레이스 등록은 유지합니다.
+After a successful installation, the installer removes previous Code Viewer copies installed through GitHub or development catalogs to avoid duplicate tabs. Other plugins and marketplace registrations are retained.
 
 <details>
-<summary>참고: 이전 버전(0.1.0) 설치</summary>
+<summary>Reference: installing version 0.1.0</summary>
 
-0.1.0이 필요한 경우 GitHub의 마켓플레이스 설치 목록을 등록한 뒤 설치하세요. `bichikim/web`은 설치 목록을 제공하는 GitHub 저장소이며, 사용자 계정으로 바꾸는 값이 아닙니다.
+If you need 0.1.0, register the GitHub marketplace catalog and install from it. `bichikim/web` identifies the catalog repository; do not replace it with your username.
 
 ```sh
 codex plugin marketplace add bichikim/web --ref '@winter-love/codex-code-viewer@0.1.0' --sparse .agents/plugins --json
@@ -69,96 +91,139 @@ codex plugin add codex-code-viewer@winter-love-plugins --json
 
 </details>
 
-## 자세한 사용법
+## Usage
 
-- 파일 진입점으로 실행되면 Codex 호스트가 전달한 파일 경로를 사용한다. 입력창 하나에서 파일 경로와 검색어를 받는다. 입력 내용에 지원 파일의 절대·상대 경로가 있으면 Enter 또는 **파일 열기**로 연다. `경로:줄:열` 주소와 문장에 포함된 경로도 인식한다. 파일을 처음 열 때는 절대 경로가 필요하며, 다른 절대 경로로 열면 작업 폴더와 이동 기록을 새로 시작한다.
-- import 문자열 클릭: 해당 모듈 파일 열기. 상대 경로, barrel의 `index.ts`, tsconfig의 `paths`를 해석한다.
-- 심볼 클릭: TypeScript Language Service로 정의 파일과 줄 찾기. 정의가 여러 개면 선택 목록을 표시한다.
-- 뒤로/앞으로: 이전 파일과 줄로 이동한다. 이동할 기록이 없으면 버튼을 흐리게 표시하고 비활성화한다. 실패한 이동은 기록을 바꾸지 않는다.
-- 검색 옆의 **파일 트리** 버튼으로 오른쪽 탐색 패널을 열거나 닫는다. 현재 파일의 상위 폴더는 자동으로 펼치고 현재 파일을 강조한다. 폴더를 클릭해 펼치거나 접고, 파일을 클릭해 이동한다. **파일 필터링**은 경로 일부로 목록을 좁히며 폴더 구조를 유지한다. 위·아래 방향키, `Home`·`End`로 항목을 선택하고 오른쪽·왼쪽 방향키로 폴더를 펼치거나 접는다. 파일·폴더를 우클릭하거나 `Shift+F10`을 누르면 **채팅창에 추가**와 **경로 복사** 메뉴를 연다. 경로 복사는 파일·폴더의 절대 경로를 클립보드에 복사한다. 채팅창에 추가는 해당 경로 전체를 줄 번호 없이 첨부하며, 미지원 형식의 파일도 경로를 추가할 수 있다. 메뉴를 여는 것만으로 파일을 이동하거나 폴더를 펼치고 접지는 않는다. 트리는 숨김 경로·생성물·심볼릭 링크를 제외한 일반 파일을 최대 10,000개까지 표시하며, 지원하지 않는 형식은 열기를 비활성화한다.
-- 경로 없이 파일명이나 검색어만 입력하면 작업 폴더 안의 지원 파일을 검색한다. 결과를 클릭하거나 위·아래 방향키로 고른 뒤 Enter로 연다. `Cmd/Ctrl+P`는 같은 입력창을 선택하고 `Esc`는 검색 결과를 닫는다.
-- `Alt+←/→`: 뒤로/앞으로 이동한다.
-- 뷰어와 파일 트리 사이 경계선을 좌우로 드래그해 트리 너비를 조절한다. 기본 너비는 288px이며 트리는 200px, 뷰어는 240px 이상을 유지한다. 경계선에 포커스를 두고 좌우 방향키로 16px씩 조절하거나 `Home`·`End`로 최소·최대 너비를 선택한다. 트리를 닫았다 다시 열어도 같은 탭의 너비와 필터를 유지한다. 창이 두 영역의 최소 너비보다 좁으면 내용 영역에 가로 스크롤을 제공한다.
-- `Cmd/Ctrl+F`: 현재 파일 안에서 문자열을 찾는다. 대소문자를 구분하지 않는 문자 그대로의 검색이며 결과를 코드 위에 강조한다. `Enter`·`Shift+Enter` 또는 이전·다음 버튼으로 결과를 순환하고 `Esc`로 닫는다. 선택한 한 줄 안의 텍스트가 있으면 검색어로 사용한다. 검색 결과로 이동해도 채팅에 추가할 줄 선택은 유지한다.
-- 코드 영역 우클릭 또는 줄 번호에서 `Shift+F10`: **코드 복사**, **채팅창에 추가**, **파일 내 검색** 메뉴를 연다. 선택한 텍스트 위를 우클릭하면 그 범위를 유지한다. 코드 토큰을 우클릭하면 해당 토큰의 정확한 줄·열 범위를 사용한다. 줄 번호나 줄의 빈 부분을 우클릭하면 기존 범위 안에 있어도 해당 줄을 선택하며, 줄 밖의 빈 공간에서는 기존 선택을 유지한다. 메뉴를 여는 순간의 범위를 저장하므로 메뉴 포커스가 텍스트 선택을 풀어도 첨부 범위는 바뀌지 않는다. 복사할 때 줄 번호는 제외한다. 메뉴에서 위·아래 방향키와 `Home`·`End`로 이동하고 `Esc`로 닫는다.
-- 줄 번호 클릭: 해당 줄을 선택한다. 줄 번호에서 드래그하거나 `Shift`를 누른 채 다른 줄 번호를 클릭하면 범위를 선택한다. 선택한 줄은 배경으로 강조하고 아래의 코드 주소도 갱신한다. 줄 번호에 포커스를 둔 상태에서 위·아래 방향키, `Home`·`End`로 이동하며 `Shift`로 범위를 확장한다. 선택은 파일 재요청이나 이동 기록 추가 없이 화면에서 처리한다.
-- 코드 본문의 텍스트를 드래그하면 시작·끝 줄과 열을 선택한다. 주소의 열은 UTF-16 기준이고 끝 위치는 선택에 포함되지 않는다. 예를 들어 `5:3-5:7`은 5번째 줄의 3~6번째 열이다. 브라우저의 텍스트 선택과 복사를 유지하며 주소와 줄 강조를 함께 갱신한다. 선택 드래그는 import나 심볼 이동으로 처리하지 않는다.
-- 채팅창에 추가: 선택한 파일과 줄 또는 정확한 텍스트 범위를 다음 채팅 메시지의 참고 정보에 추가한다. 반복해서 추가한 범위는 Code Viewer 컨텍스트 하나에 순서대로 누적하며, 서로 다른 파일의 범위도 유지한다. 호스트가 컨텍스트를 소비하거나 제거했다는 알림을 받으면 누적 목록을 비운다. 입력란에 텍스트를 쓰거나 메시지를 자동 전송하지 않는다.
-- 오류와 완료 안내는 둥근 토스트로 표시하며 5초 뒤 자동으로 닫힌다. 새 알림은 같은 내용이어도 수명을 다시 시작한다. 토스트에 마우스를 올리거나 키보드 포커스를 두면 자동 닫기를 잠시 멈춘다. 닫기 버튼 또는 `Esc`로도 닫을 수 있다. 하단의 선택 주소는 안내 문구로 바꾸지 않는다. 토스트가 떠 있어도 코드 선택과 파일 이동을 계속 할 수 있다.
-- 파일 변경 알림과 뷰어 포커스 복귀 시 현재 파일을 다시 읽는다. 이전 내용으로 계산한 이동 요청은 거절한다.
-- 호스트가 전달한 밝음·어두움 테마, 배경·글자·테두리 색상과 글꼴을 사용하며 테마 변경 이벤트도 반영한다. 호스트가 색상을 전달하지 않으면 해당 밝음·어두움 기본값을 사용한다. 표준 호스트 컨텍스트에는 코드 구문 강조 테마의 전체 팔레트가 없으므로 구문 강조는 별도 팔레트를 사용한다.
-- 라운드, 그림자, UI 글자 크기와 굵기도 호스트 디자인 값을 사용한다. 값이 없으면 12px 컨트롤·16px 입력 영역·20px 검색 영역과 옅은 그림자를 기본값으로 사용한다. 도구 모음은 선형 아이콘과 둥근 호버 영역을 사용한다.
-- 입력창은 호버 시 배경과 테두리를 옅게 강조하며, 포커스 시 별도의 테두리나 링을 추가하지 않는다. 버튼의 호버·눌림 스타일은 활성 상태에만 적용한다. 상태 전환은 150ms이며 동작 줄이기 환경에서는 전환 효과를 끈다.
+- **Opening files:** A file entry point uses the path supplied by the Codex host. The same input accepts paths and search terms. Enter an absolute or relative supported path and press Enter or **Open file**. It also recognizes `path:line:column` addresses and paths inside sentences. The first file requires an absolute path; opening another absolute path starts a new workspace and navigation history.
+- **Imports:** Click an import string to open its module. Relative paths, barrel `index.ts` files and tsconfig `paths` are resolved.
+- **Symbols and usages:** Click a usage to open its definition, or a definition name to list usages inside the workspace. TS/JS, Python, Ruby and Rust use their existing analyzers. Results are grouped by file with its path and usage count shown once; each item displays line, column and a one-line code preview. Groups stay expanded and long lists scroll as a whole. Previews prefer unsaved drafts; an unreadable preview does not remove a destination. Select an item to navigate. Empty usages show an empty result, while multiple definitions show a definition picker.
+- **History:** Back and forward navigate to visited files and lines. Unavailable directions are disabled. Failed navigation does not change history. `Alt+←/→` also navigates back and forward.
+- **Renaming:** Choose **Rename** in a file or folder's context menu to change its name in the same directory without overwriting an existing entry. Open documents and history paths update together. Save or discard drafts before renaming their files or a containing folder.
+- **File tree:** The **File tree** button beside search toggles the right panel. Ancestors of the current file expand automatically and the file is highlighted. Click a folder to expand/collapse or a file to open it. **Filter files** matches part of a path while preserving hierarchy. Use Up/Down, `Home` and `End` to select, and Left/Right to collapse/expand folders. Right-click or `Shift+F10` opens copy, cut, paste, chat attachment, path copy and deletion actions. **Copy path** copies the absolute path. **Add to chat** attaches a whole file/folder path without line numbers, including unsupported formats. Opening a menu does not navigate or toggle folders. The tree displays up to 10,000 files and folders, excluding hidden paths, generated files and symlinks; unsupported files cannot be opened.
+- **File search:** Enter a filename or query without a path to search supported workspace files. Click a result or select it with Up/Down and Enter. `Cmd/Ctrl+P` focuses the input and Escape closes results.
+- **Reveal and creation:** **Reveal current file** above the filter clears it, expands ancestors and scrolls to the open file. **New file** and **New folder** create siblings of the selected file, children of a selected folder, or entries at an empty workspace's root. The name dialog shows the destination. Existing entries are never overwritten. The tree shows the new entry and supported files open immediately. Empty folders are included. Names cannot contain path separators, colons, or hidden/generated names excluded by the tree.
+- **Copy, cut and paste:** The tree context menu manages actual disk entries. With tree focus, `Cmd/Ctrl+C`, `X`, `V` and `Delete` are also available. Copy/cut uses an internal clipboard limited to this viewer's workspace; it differs from **Copy path**. Paste into a folder creates a child; paste on a file uses its parent. The empty-space context menu supports pasting at the workspace root. Copy collisions generate a copy name; cut collisions report an error without overwriting. Cut removes the source only after the complete copy succeeds and its original snapshot is rechecked.
+- **Deletion:** A confirmation dialog identifies the target. Deletion is **permanent and bypasses the trash**. Entries with unsaved drafts or saves in progress cannot be changed. If the source changes after inspection, the action stops; repeat the copy/cut/delete request. The workspace itself, symlinks and folders containing `.git`, `.codex`, `.aws` or `.ssh` are protected. Inspection is limited to 10,000 entries per operation.
+- **Tree width:** Drag the divider between document and tree. Default tree width is 288px, with minimum widths of 200px for the tree and 240px for the viewer. Focus the divider and use Left/Right for 16px steps or `Home`/`End` for minimum/maximum width. Width and filter remain when the panel reopens in the same tab. Narrow windows allow horizontal scrolling.
+- **Find in file:** `Cmd/Ctrl+F` searches literal text without case sensitivity and highlights matches above the code. Enter/Shift+Enter or previous/next buttons cycle results; Escape closes search. A single-line text selection supplies the initial query. Search navigation retains the line selection used for chat context.
+- **Code context menu:** Right-click code or press `Shift+F10` on a line number for **Copy code**, **Add to chat** and **Find in file**. Right-clicking selected text preserves its range; right-clicking a token uses its exact range. A line number or blank area within a line selects that line even inside a previous range; space outside lines preserves selection. The range is captured when the menu opens, so menu focus cannot alter the attachment. Copy excludes line numbers. Use Up/Down, `Home`, `End` and Escape to navigate or close.
+- **Line selection:** Click a line number, drag across numbers or Shift-click another number to select a range. Highlight and code address update together. Focused line numbers support Up/Down, `Home`, `End` and Shift to extend the range. Selection requires no new file request or history entry.
+- **Text selection:** Drag code text to select exact start/end lines and columns. Columns use UTF-16 and the end is exclusive: `5:3-5:7` selects columns 3–6 on line 5. Native selection/copying are preserved while the address and highlights update. A selection drag does not trigger import or symbol navigation.
+- **Chat context:** Attach the selected file, lines or exact text range to the next message. Repeated attachments accumulate in order in one Code Viewer context, including ranges from different files. The list clears when the host reports consuming or removing it. The viewer does not type into the composer or send messages automatically.
+- **Feedback:** Rounded toasts show errors and completion messages and close after five seconds. New notifications restart their lifetime even for identical text. Hover or keyboard focus pauses dismissal; the close button or Escape dismisses. The footer shows the selected address and workspace name, with the full path on hover. Selection and navigation remain available while a toast is visible.
+- **External changes:** File-change events and returning focus refresh the current file. Navigation requests based on old content are rejected.
+- **Host appearance:** The viewer uses the host's light/dark theme, background/text/border colors and fonts, including theme-change events. Missing colors use light/dark defaults. Syntax highlighting has its own palette because standard host context does not provide a full syntax palette.
+- **Controls:** Rounding, shadows, UI font sizes and weights follow host design values. Defaults use 12px controls, 16px input areas, a 20px search area and light shadows. Toolbars use line icons and rounded hover areas. Inputs lightly emphasize background/border on hover without an extra focus ring or border. Button hover/pressed styles apply only when enabled. Transitions take 150ms and are disabled for reduced-motion preferences.
 
-### 지원 파일 형식
+### Supported formats
 
-| 형식        | 확장자                                                                    | 표시와 조작                                                |
-| ----------- | ------------------------------------------------------------------------- | ---------------------------------------------------------- |
-| 코드        | `.ts`, `.tsx`, `.mts`, `.cts`, `.js`, `.jsx`, `.mjs`, `.cjs`              | 기존 구문 강조·정의 이동                                   |
-| Rust        | `.rs`                                                                     | 구문 강조·정의 및 모듈 이동·줄 선택·검색·채팅 추가         |
-| 설정 파일   | `.yaml`, `.yml`, `.toml`, `.json`, `.jsonc`, `.json5`, `Cargo.lock`       | 형식별 구문 강조·줄 선택·검색·채팅 추가                    |
-| Markdown    | `.md`, `.markdown`, `.mdx`                                                | 미리보기·원문 전환, 표·체크리스트, 상대 문서 링크·이미지   |
-| PDF         | `.pdf`                                                                    | 페이지 이동·배율·화면 맞춤·텍스트 선택·복사·문서 전체 검색 |
-| HTML        | `.html`, `.htm`                                                           | 태그·속성·값·주석과 내장 JavaScript 구문 강조·원문 보기    |
-| CSV / TSV   | `.csv`, `.tsv`                                                            | 표·원문 전환, 열 정렬·행 필터·페이지 이동                  |
-| SVG         | `.svg`                                                                    | 이미지 미리보기·XML 원문 전환, 구문 강조·검색              |
-| 일반 텍스트 | CSS·XML, 확장자 없는 파일, `.dockerignore`·`.gitignore` 등 UTF-8 텍스트   | 원문과 줄 번호, 범위 선택·복사·검색                        |
-| 이미지      | `.png`, `.jpg`, `.jpeg`, `.gif`, `.webp`, `.avif`, `.bmp`, `.ico`         | 화면에 맞춤·배율 입력·핀치 확대/축소·드래그 이동           |
-| 영상        | `.mp4`, `.m4v`, `.webm`, `.mov`, `.ogv`                                   | 브라우저 기본 재생·음량·탐색 컨트롤                        |
-| 음악        | `.mp3`, `.wav`, `.m4a`, `.aac`, `.ogg`, `.oga`, `.opus`, `.flac`, `.weba` | 브라우저 기본 재생·일시정지·음량·탐색 컨트롤               |
+| Format              | Extensions                                                                  | Display and interaction                                                         |
+| ------------------- | --------------------------------------------------------------------------- | ------------------------------------------------------------------------------- |
+| Code                | `.ts`, `.tsx`, `.mts`, `.cts`, `.js`, `.jsx`, `.mjs`, `.cjs`                | Syntax highlighting and definition navigation                                   |
+| Rust                | `.rs`                                                                       | Highlighting, definition/module navigation, selection, search and chat context  |
+| Python              | `.py`, `.pyi`                                                               | Highlighting, import/definition navigation, selection, search and chat context  |
+| Ruby                | `.rb`, `.rake`, `.gemspec`, `Gemfile`, `Rakefile`                           | Highlighting, require/definition navigation, selection, search and chat context |
+| Configuration       | `.yaml`, `.yml`, `.toml`, `.json`, `.jsonc`, `.json5`, `Cargo.lock`         | Format-specific highlighting, selection, search and chat context                |
+| Markdown            | `.md`, `.markdown`, `.mdx`                                                  | Preview/source modes, tables, task lists, relative document links and images    |
+| PDF                 | `.pdf`                                                                      | Page navigation, zoom, fit to width, text selection/copy and document search    |
+| HTML                | `.html`, `.htm`                                                             | Source with tag, attribute, value, comment and embedded JavaScript highlighting |
+| CSV / TSV           | `.csv`, `.tsv`                                                              | Table/source modes, column sorting, row filtering and pagination                |
+| SVG                 | `.svg`                                                                      | Image preview/XML source modes, highlighting and search                         |
+| Stylesheets         | `.css`, `.scss`, `.sass`, `.less`                                           | Reading/editing highlighting and saving                                         |
+| Components          | `.vue`, `.svelte`, `.astro`                                                 | Markup, embedded script/style highlighting, editing and saving                  |
+| XML / configuration | `.xml`, `.ini`, `.conf`, `.cfg`, `.properties`                              | Reading/editing highlighting and saving                                         |
+| Plain text          | Extensionless files and UTF-8 text such as `.dockerignore` and `.gitignore` | Source, line numbers, range selection, copy and search                          |
+| Images              | `.png`, `.jpg`, `.jpeg`, `.gif`, `.webp`, `.avif`, `.bmp`, `.ico`           | Fit to view, zoom input, pinch zoom and panning                                 |
+| Video               | `.mp4`, `.m4v`, `.webm`, `.mov`, `.ogv`                                     | Native playback, volume and seek controls                                       |
+| Audio               | `.mp3`, `.wav`, `.m4a`, `.aac`, `.ogg`, `.oga`, `.opus`, `.flac`, `.weba`   | Native play/pause, volume and seek controls                                     |
 
-Rust·설정 파일은 Prism 문법으로 강조한다. Rust의 함수·타입·변수·`use` 별칭·`mod` 이름을 클릭하면 `rust-analyzer`로 정의나 모듈 파일을 찾아 이동한다. 설정 파일에는 정의 이동을 제공하지 않는다. `Cargo.lock`만 TOML로 처리하고 다른 `.lock` 파일은 일반 텍스트로 읽는다. 일반 UTF-8 텍스트는 검색·트리·경로 입력으로 열 수 있다. HTML은 태그와 스크립트를 실행하지 않고 원문과 줄 번호만 표시한다. Codex 파일 진입점에는 알려진 확장자를 등록하며, 확장자 없는 파일이나 임의 확장자는 뷰어의 트리·경로 입력을 사용한다.
+Rust, Python, Ruby, JSON variants, TOML and YAML use Prism highlighting in reading mode. Rust functions, types, variables, `use` aliases and `mod` names navigate through `rust-analyzer`. Stylesheets, components, XML, INI and PROPERTIES share CodeMirror language parsers between reading and editing. Configuration and component files do not provide symbol definition navigation. JSON/JSONC/JSON5 path values navigate to files inside the workspace. Only `Cargo.lock` is treated as TOML; other `.lock` files use plain text.
 
-Rust 탐색에는 서버가 실행되는 컴퓨터에 Rust 도구 체인과 `rust-analyzer`가 필요하다. rustup을 사용한다면 한 번 설치한다.
+Open general UTF-8 text through search, the tree or path input. HTML displays source and line numbers without executing tags or scripts. The Codex file entry point registers known extensions; use the tree or path input for extensionless or arbitrary extensions.
+
+#### Python
+
+Python navigation uses the bundled [Pyright language server](https://github.com/microsoft/pyright). Click module names in `import`/`from`, imported aliases, functions, classes, methods or variables to reach analyzed definitions. Relative imports, package re-exports and `.pyi` stubs are supported. The analyzer uses Pyright configuration and search paths from the workspace's `pyrightconfig.json` or `pyproject.toml`. No separate Pyright installation is needed.
+
+First navigation starts a local Node analyzer process reused for the workspace. It may invoke the environment's Python interpreter to discover its version/search paths; navigation does not execute Python project code. Open-file changes are sent to the analyzer. A host close notification, session closure or server shutdown disposes it. Standard-library and external-package definitions outside the workspace are excluded. Highlighting, selection and search remain available if it cannot start.
+
+#### Ruby
+
+Ruby definition navigation uses the [Solargraph language server](https://solargraph.org/guides/language-server). Install it once in the project's Ruby environment on the server host:
 
 ```sh
-rustup component add rust-analyzer rust-src
+gem install solargraph
 ```
 
-분석기가 없어도 파일 열기·구문 강조·선택·검색은 사용할 수 있다. 첫 탐색 때 Cargo 프로젝트를 분석하고 이후 같은 프로젝트의 분석기를 재사용한다. Cargo 프로젝트가 없는 독립 `.rs` 파일도 분석한다. 분석기 경로는 `RUST_ANALYZER_BINARY`로 지정할 수 있으며, 기본적으로 `~/.cargo/bin` 또는 `PATH`에서 찾는다. 모듈 파일 변경은 분석기의 파일 감시로 반영한다. [공식 설정](https://rust-analyzer.github.io/book/configuration.html)에 따라 빌드 스크립트·프로시저 매크로 실행·저장 시 컴파일 검사·의존성 다운로드를 끄므로 이 기능이 필요한 생성 코드의 탐색은 제한될 수 있다. 작업 폴더 밖의 표준 라이브러리·외부 의존성 소스는 이동 대상으로 표시하지 않는다.
+Require paths, modules, classes, methods and instance variables navigate to analyzed definitions. Literal `require_relative` resolves from the current file without an analyzer; dynamically constructed require paths do not receive links. The first definition lookup starts the analyzer and reuses it within the same Gemfile project. `Gemfile`/`gems.rb` distinguish nested projects; `.solargraph.yml` supplies configuration. Override the executable with `SOLARGRAPH_BINARY` or interpreter with `RUBY_BINARY`. By default the current Ruby environment's Solargraph gem is used, so its gem executable need not be on `PATH`.
 
-Markdown에서 `Cmd/Ctrl+F`를 누르면 원문으로 전환해 검색한다. 줄·열을 선택해 채팅에 추가하려면 원문을 사용한다. MDX의 import·JSX·표현식은 실행하지 않고 정적으로 표시하며, 문법 오류가 있으면 일반 Markdown으로 표시한다. 원문은 항상 확인할 수 있다. HTML은 실행하지 않고 문자로 표시한다. 상대 문서 링크는 같은 작업 폴더의 파일을 열며, 상대 이미지도 같은 경로 제한을 적용한다. 외부 이미지 URL은 다운로드하지 않고 링크로 표시한다.
+Open-file changes are synchronized and analyzer character positions are converted to UTF-16 coordinates. Shutdown cleans up the analyzer and its Unix child processes. Gem and standard-library definitions outside the workspace are excluded. Opening, highlighting, selecting and searching remain available if it cannot run.
 
-CSV/TSV는 기본적으로 첫 행을 열 이름으로 사용하는 표로 표시한다. 헤더 없는 파일은 **첫 행을 열 이름으로**를 끈다. 열 이름을 누르면 오름차순·내림차순으로 정렬하며, **행 필터링**은 셀 내용으로 행을 좁힌다. 쉼표·탭·여러 줄이 들어 있는 인용 셀, 이중 인용부호, UTF-8 BOM과 빈 셀을 처리한다. 셀의 HTML이나 수식은 실행하지 않고 문자로 표시한다. [csv-parse의 브라우저 배포본](https://csv.js.org/parse/distributions/)을 번들에 포함해 로컬에서 해석한다.
+#### Rust
 
-표는 한 번에 50행을 그리며, 헤더를 포함해 처음 10,000행·100열까지만 미리 본다. 표시 범위를 넘으면 안내하고 전체 내용은 **원문**으로 확인할 수 있다. 정렬·필터는 미리보기 범위에 적용한다. 표의 행 번호와 실제 텍스트 줄 번호는 여러 줄 셀 때문에 다를 수 있으므로, 줄·열 범위 선택과 채팅 추가는 원문에서 사용한다. `Cmd/Ctrl+F`도 원문으로 전환한다. 읽기 제한은 기존 텍스트 파일과 같은 512 KiB이며 UTF-8 파일을 지원한다. CSV 인용부호 오류가 있으면 안내 후 원문으로 전환한다.
+Rust navigation uses the bundled `rust-analyzer`. Beyond Node 24 or later, no Rust, Cargo or rustup installation is required, and first navigation does not download anything. Builds include pinned, SHA-256-verified analyzers for macOS, Linux and Windows on x64 and arm64. Linux binaries target glibc environments. Set `RUST_ANALYZER_BINARY` to use a specific analyzer path.
 
-SVG는 이미지 미리보기와 XML 원문을 전환할 수 있다. 원문은 HTML과 같은 마크업 구문 강조를 사용하며, `Cmd/Ctrl+F` 검색과 원문 컨텍스트 메뉴의 줄·열 범위 추가를 지원한다. 이미지 미리보기에는 기존 확대·축소·드래그 이동을 적용한다. 512 KiB를 넘는 SVG는 기존 이미지 크기 제한 내에서 미리보기만 제공하고 원문 버튼을 비활성화한다. SVG의 하단 **채팅창에 추가**는 파일 전체를 추가하며, 원문의 특정 범위는 오른쪽 클릭 메뉴에서 추가한다.
+The viewer reads library/binary source paths, workspace members, local `path` dependencies and aliases, inherited workspace dependencies/editions and default features from `Cargo.toml`, then supplies the [official project structure format](https://rust-analyzer.github.io/book/non_cargo_based_projects.html). Standalone `.rs` files and files connected with `mod` are also analyzed. The analyzer is reused within a project and reconnected when local package structure changes. Its file watcher handles module-file changes.
 
-PDF·이미지·영상·음악의 **채팅창에 추가**는 줄 번호 없이 파일 전체 경로를 추가한다. 미디어는 세션에 연결된 MCP 도구로 256 KiB씩 읽어 Blob으로 표시하고, 파일 전환·뷰어 종료 때 해제한다. 서버가 연결된 호스트의 로컬 파일을 사용하며 별도 미디어 서버는 필요하지 않다. 영상·음악은 확장자뿐 아니라 Codex에 포함된 브라우저의 코덱 지원에 따라 재생 가능 여부가 달라진다. 표시 오류는 안내한다.
+This minimal setup navigates functions, types, variables, methods and modules inside the workspace. It does not bundle or download standard-library source or crates.io/Git dependencies, limiting inference and navigation through those types. Platform-specific and dev dependencies, feature propagation between dependencies, non-default feature selection, Cargo patch/replace, build-script-generated code, procedural macros and compile-on-save checks are not provided. Viewing, highlighting, editing and saving remain available independently of these limits.
 
-PDF는 번들에 포함한 PDF.js worker로 로컬에서 해석하고 현재 페이지만 그린다. 글꼴·CMap·디코더도 번들에서 읽으며 외부 PDF 서비스에 파일을 보내지 않는다. 페이지 번호와 배율(25–400%)을 입력하고 Enter를 누르거나 입력란을 벗어나면 적용한다. **화면에 맞춤**은 뷰어 폭을 따라 다시 맞춘다. 파일 전환 때 해석 작업을 종료하고, 페이지·배율 변경 때 이전 렌더링을 취소한다. PDF 페이지 위의 글자를 드래그해 선택하고 Cmd/Ctrl+C로 복사할 수 있다. 검색 버튼 또는 Cmd/Ctrl+F로 PDF 전체 텍스트를 검색하며, 선택한 글자가 있으면 검색어로 사용한다. 검색 결과를 페이지 위에 강조하고 현재 결과가 보이도록 스크롤한다. Enter·Shift+Enter와 이전·다음 결과 버튼으로 해당 페이지로 이동하고 Esc로 검색을 닫는다. 검색은 대소문자를 구분하지 않으며 줄바꿈을 사이에 둔 문장도 찾는다. 추출한 텍스트를 재사용하고 검색 범위를 최대 2,048페이지·4,194,304자·검색 결과 10,000개로 제한하며, 상한에 도달하면 안내한다. 텍스트가 없는 스캔 PDF는 검색할 수 없으며 OCR·암호 입력은 제공하지 않는다.
+#### Markdown and tables
 
-이미지는 배율 입력란에 1–1600%를 입력한 뒤 Enter를 누르거나 입력란을 벗어나면 적용된다. 확대·축소 버튼과 두 손가락 핀치를 사용할 수 있다. 트랙패드 핀치와 Ctrl/Cmd+휠은 커서 위치를 기준으로 확대·축소한다([wheel 이벤트](https://developer.mozilla.org/en-US/docs/Web/API/Element/wheel_event)). 이미지가 화면보다 크면 드래그·휠·방향키로 가장자리 안에서 이동한다. **화면에 맞춤**은 창 크기에 맞춰 표시하며 원본보다 크게 늘리지 않는다. 이미지 영역에 포커스가 있을 때 `+`·`-`로 배율 조절, `0`으로 100%, `Home`으로 화면 맞춤을 할 수 있다.
+`Cmd/Ctrl+F` in Markdown switches to source for searching. Use source to select line/column ranges for chat. MDX imports, JSX and expressions display statically without execution; invalid MDX falls back to ordinary Markdown. Source is always available. HTML is text. Relative document links open files in the workspace, and relative images follow the same restrictions. External image URLs appear as links rather than downloaded images.
 
-음악 파일은 자동 재생하지 않는다. 재생 버튼을 눌러 시작하고 파일을 바꾸거나 뷰어를 닫으면 재생을 멈춘다. 플레이어는 [HTML 오디오 컨트롤](https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Elements/audio#controls)을 사용한다.
+CSV/TSV tables use the first row as column names by default; disable **Use first row as headers** for headerless files. Click a column name to sort ascending/descending or use **Filter rows** to match cells. Quoted cells containing commas, tabs or newlines, escaped double quotes, UTF-8 BOMs and empty cells are supported. HTML and formulas remain text. Parsing is local using the bundled [csv-parse browser distribution](https://csv.js.org/parse/distributions/).
 
-작업 폴더는 처음 연 파일의 상위 `.git` 또는 `pnpm-workspace.yaml` 디렉터리로 정한다. 해당 표시가 없는 Rust 프로젝트는 상위 `Cargo.toml` 디렉터리를 사용한다. 파일을 실행하거나 수정하지 않는다. 텍스트는 파일당 512 KiB, PDF·이미지·영상·음악은 128 MiB까지 읽는다. 작업 폴더 밖과 `.git`, `.codex`, `.aws`, `.ssh` 경로는 열지 않는다. 숨김 파일은 [파일 형식 목록](src/shared/file-formats.ts)의 `HIDDEN_TEXT_FILES`에 있는 설정 파일만 허용하며, `.env` 등 다른 숨김 파일은 제외한다. UTF-8로 읽을 수 없거나 NUL 바이트가 포함된 파일은 텍스트로 열지 않는다. 검색은 생성물과 `node_modules`를 제외하고 최대 10,000개 파일에서 100개 결과를 표시한다.
+Tables display 50 rows at a time and preview only the first 10,000 rows, including headers, and 100 columns. A notice identifies truncation; **Source** exposes the full text. Sorting/filtering applies to the preview range. Multiline cells can make table row numbers differ from text line numbers, so range selection and chat attachment use source; `Cmd/Ctrl+F` also switches to source. UTF-8 CSV/TSV files have the same 512 KiB limit as other text. Invalid quoting shows a notice and falls back to source.
 
-### 파일별 보기 상태 복원 (현재 개발 소스)
+#### Word and Excel
 
-파일 트리·검색 결과에서 파일을 다시 열거나 앞뒤로 이동하면, 코드·텍스트의 가로·세로 스크롤과 선택한 줄·열 범위, Markdown 미리보기·원문 모드와 스크롤, PDF 페이지·배율·화면 맞춤, 이미지·SVG 배율과 이동 위치를 복원한다. 줄·열을 포함한 경로 입력과 정의로 이동은 지정한 위치를 우선한다. 파일이 짧아지면 선택 범위와 PDF 페이지를 새 범위에 맞춘다.
+DOCX is converted locally with [Mammoth](https://github.com/mwilliamson/mammoth.js) to display headings, paragraphs, lists, tables and embedded images. Original pagination, fonts and detailed formatting are not reproduced. Expand conversion notices to inspect them. Executable tags, event attributes and style attributes are excluded; links allow only HTTP(S), email and document footnotes. External images are not read.
 
-보기 상태는 이 뷰어가 열려 있는 동안 작업 폴더별로 최근 64개 파일만 메모리에 보관한다. 뷰어를 닫거나 페이지를 다시 불러오면 초기화한다. 디스크에는 저장하지 않는다.
+XLSX is parsed locally with [SheetJS](https://docs.sheetjs.com/docs/). Select a sheet to inspect cells with the same table controls as CSV/TSV. The first row is data by default. Numbers/dates use stored display formats; formulas show stored results without recalculation. Each sheet previews up to 10,000 rows and 100 columns, with 50 rows per page. Cell styling, merged layouts, charts, images, editing and password entry are not provided. Legacy `.doc` and `.xls` are unsupported.
 
-### 반복 탐색 캐시 (현재 개발 소스)
+#### SVG, PDF and media
 
-검색과 파일 트리는 작업 폴더별 파일 목록을 공유한다. 파일 감시 이벤트와 조회 시 디렉터리 변경 검증으로 추가·이름 변경·삭제를 반영한다. 감시가 불가능한 환경에서도 변경 검증을 유지한다.
+SVG supports image preview and XML source modes. Source uses HTML-style markup highlighting, `Cmd/Ctrl+F` and exact range attachments from its context menu. Preview supports zoom and pan. SVGs above 512 KiB offer preview only within the image limit, with source disabled. Attach a whole SVG through the tree context menu or a source range through its code context menu.
 
-최근 문서는 [문서 캐시](src/server/create-document-reader.ts)의 상한 안에서 원문·토큰을 재사용한다. 조회할 때 파일 경로와 나노초 단위 변경 정보를 검증하며, 파일이 변경되거나 없어지면 캐시 내용을 사용하지 않는다. 세션이 닫히면 파일 감시와 문서 캐시를 해제한다.
+Attach PDF, DOCX, XLSX, image, video and audio files through **Add to chat** in the tree context menu. This attaches the whole path without line numbers. Media is read in 256 KiB chunks through session-bound MCP tools and displayed as Blobs, released on file changes or viewer closure. Files come from the connected server host; no separate media server is required. Video/audio playback also depends on embedded browser codec support. Display errors are reported.
 
-PDF·이미지·영상·음악은 [미디어 캐시](src/viewer/create-media-cache.ts)의 개수·바이트 상한 안에서 받은 Blob을 재사용하고, 같은 파일의 동시 전송을 합친다. 파일 revision이나 세션이 다르면 별도로 읽는다. 사용 중인 Blob URL은 파일을 떠날 때 해제하고, 저장된 Blob은 세션 변경·뷰어 종료 때 비운다. 전송 오류와 취소 결과는 저장하지 않는다.
+PDF parsing uses a bundled PDF.js worker and renders only the current page. Fonts, CMaps and decoders are bundled; files are not sent to an external PDF service. Enter a page number or zoom (25–400%) and press Enter or leave the field to apply it. **Fit to width** follows the viewer width. Switching files terminates parsing; page/zoom changes cancel previous rendering.
 
-큰 문서에서 화면 밖 줄의 DOM을 제거하는 가상화는 적용하지 않았다. 브라우저에서 드래그한 2~4줄을 DOM에서 제거하는 실험에서 선택 내용이 빈 문자열로 바뀌고 범위가 접혔다. 현재 텍스트 선택·복사·채팅 범위 추가는 원래 DOM과 동작을 유지한다. 최초 파일 전송과 큰 문서의 전체 DOM 렌더링 비용은 남아 있다.
+Drag PDF text to select it and copy with `Cmd/Ctrl+C`. The search button or `Cmd/Ctrl+F` searches the whole document, using selected text as the initial query. Matches are highlighted and the current result scrolls into view. Enter/Shift+Enter and previous/next controls navigate to the result's page; Escape closes search. Search is case-insensitive and can match across line breaks. Extracted text is reused, with limits of 2,048 pages, 4,194,304 characters and 10,000 results; reaching a limit shows a notice. Scanned PDFs without text cannot be searched. OCR and password entry are not provided.
+
+Images accept zoom from 1–1600%, applied on Enter or blur. Use zoom buttons, pinch gestures, or Ctrl/Cmd+wheel; trackpad pinch and modified wheel zoom around the cursor ([wheel events](https://developer.mozilla.org/en-US/docs/Web/API/Element/wheel_event)). Larger images can be panned within their bounds by dragging, wheel or arrow keys. **Fit to view** follows the window without enlarging past native size. With image focus, `+`/`-` zoom, `0` resets to 100%, and `Home` fits to view.
+
+Audio never autoplays. Choose Play to start; switching files or closing the viewer stops playback. The player uses [HTML audio controls](https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Elements/audio#controls).
+
+### Workspace connection and limits
+
+Opening from the tools menu connects the conversation's workspace and shows its tree before file selection. The conversation ID supplied by Codex reads only the working-directory field in local metadata, not the conversation body. If no path is found, the viewer asks for an absolute file path. New conversations whose metadata has not yet been saved show the same prompt.
+
+Opening a file directly determines the workspace from an ancestor containing `.git` or `pnpm-workspace.yaml`. Rust projects without these markers use an ancestor `Cargo.toml`. Reading does not execute or modify files. Text is limited to 512 KiB per file; PDF, DOCX, XLSX, images, video and audio to 128 MiB. Paths outside the workspace and `.git`, `.codex`, `.aws` and `.ssh` are excluded. Only hidden configuration files in [`HIDDEN_TEXT_FILES`](https://github.com/bichikim/web/blob/dev/packages/codex-code-viewer/src/shared/file-formats.ts) are allowed; others such as `.env` are excluded. Non-UTF-8 content and files with NUL bytes cannot open as text. Search excludes generated files and `node_modules`, inspecting up to 10,000 files and returning up to 100 results.
+
+### Per-file view state (current development source)
+
+Reopening from the tree, search or history restores code/text horizontal and vertical scrolling and line/column selection; Markdown preview/source mode and scrolling; PDF page/zoom/fit mode; and image/SVG zoom and pan. An explicit line/column address or definition destination takes priority. Selections and PDF pages are clamped if content becomes shorter.
+
+View state is held in memory for the 64 most recent files per workspace while the viewer remains open. Closing or reloading resets it; nothing is written to disk.
+
+### Navigation caches (current development source)
+
+Search and the tree share a file index per workspace. File-watcher events refresh added, renamed or deleted entries and open document content. Filters, expanded folders and scroll positions are retained; document replacement waits while an unsaved draft exists. A loopback event stream with a random token per session carries change signals instead of periodic scans. No external network connection or additional installation is required. When watching is unavailable, manual refresh and directory-change validation during reads remain available.
+
+Recent documents reuse source and tokens within [document cache limits](https://github.com/bichikim/web/blob/dev/packages/codex-code-viewer/src/server/create-document-reader.ts). Reads validate the path and nanosecond change metadata; changed or missing files cannot use stale entries. Closing a session releases watchers and the document cache.
+
+PDF, DOCX, XLSX, images, video and audio reuse received Blobs within the [media cache's count and byte limits](https://github.com/bichikim/web/blob/dev/packages/codex-code-viewer/src/viewer/create-media-cache.ts), combining concurrent transfers for the same file. Different revisions/sessions read separately. Active Blob URLs are released when leaving a file; cached Blobs clear on session changes or viewer closure. Errors and canceled transfers are not cached.
+
+Offscreen-line DOM virtualization is not enabled. In a browser experiment, removing selected lines 2–4 emptied the selected text and collapsed its range. Keeping the original DOM preserves selection, copying and chat-range attachment. Initial transfer and full-DOM rendering costs for large documents remain.
 
 <details>
-<summary>개발자 안내: 빌드·로컬 설치·npm 배포·미리보기·검증</summary>
+<summary>Developer guide: building, local installation, npm publishing, preview and verification</summary>
 
-## 빌드와 로컬 설치
+## Building and local installation
 
-이 절은 소스에서 개발하거나 빌드하는 사람을 위한 안내다. 일반 사용자는 위의 설치 절차만 따르면 된다. Solid와 UnoCSS를 사용하며 React 의존성은 없다. 루트 `.pnpmfile.cjs`는 이 패키지에서 사용하는 MCP SDK 1.7.5의 선택적 React peer만 제외한다.
+This section is for source development/builds; end users can follow installation above. The viewer uses Solid and UnoCSS without React dependencies. The root `.pnpmfile.cjs` excludes only the optional React peer of the MCP SDK 1.7.5 used by this package.
 
-저장소 의존성을 설치한 뒤 이 패키지 디렉터리에서 실행한다. Node 24 이상이 필요하다.
+After installing repository dependencies, run these commands in the package directory with Node 24 or later:
 
 ```sh
 pnpm build
@@ -166,52 +231,56 @@ codex plugin marketplace add "$PWD/dist" --json
 codex plugin add codex-code-viewer@winter-love-code-viewer --json
 ```
 
-`dist/plugin`은 서버, HTML, TypeScript 표준 선언 파일, `.codex-plugin/plugin.json`, `.mcp.json`을 포함한 설치용 묶음이다. 실행 시 별도 npm 설치가 필요하지 않다. `dist/.agents/plugins/marketplace.json`은 이 묶음을 가리키는 로컬 카탈로그다.
+`dist/plugin` contains the server, HTML, TypeScript standard declarations, `.codex-plugin/plugin.json` and `.mcp.json`. It needs no separate npm install at runtime. `dist/.agents/plugins/marketplace.json` is the local catalog pointing to this bundle.
 
-설치본은 공식 문서가 지원하는 Codex 호환 레이아웃을 사용한다. 초기 구현의 루트 `plugin.json`과 `extensions.com.openai.mcpServers` 조합은 설치 목록에 표시됐지만, 앱에 포함된 CLI 0.158.0-alpha.2.1의 `plugin/read` 결과에서 서버 목록이 비어 있었다. 호환 레이아웃으로 수정한 뒤에는 CLI 0.158.0-alpha.2.1과 현재 로컬 런타임 0.160.0 모두 서버와 8개 도구를 발견했다. 빌드는 이전 설치용 묶음을 먼저 비워 잘못된 루트 manifest가 남지 않게 한다.
+The installation bundle follows the documented Codex-compatible layout. The original root `plugin.json` plus `extensions.com.openai.mcpServers` appeared in the catalog, but desktop CLI 0.158.0-alpha.2.1 returned no servers from `plugin/read`. After adopting the compatible layout, CLI 0.158.0-alpha.2.1 and local runtime 0.160.0 discovered the server and its then-eight tools. Builds clear the previous installation bundle to avoid retaining an obsolete root manifest.
 
-설치나 갱신 후 Codex 앱을 다시 열어 대화 오른쪽 패널의 새 탭 목록에서 **Code Viewer**를 확인한다. 대화 패널 진입점은 [공식 확장 문서](https://developers.openai.com/plugins/build/extensions)의 `thread` 계약을 따른다. 설치된 Codex 26.924.22138의 소스에는 오른쪽 패널 메뉴에서 `thread` 도구를 표시하는 처리와 `file` 도구에 호스트 파일 경로를 전달하는 처리가 있다. 실제 화면의 표시와 파일 연결은 아직 검증하지 못했다.
+After installation/update, reopen Codex and look for **Code Viewer** in the conversation right panel's new-tab menu. The conversation entry point follows the `thread` contract in the [extension documentation](https://developers.openai.com/plugins/build/extensions). Inspection of Codex 26.924.22138 found support for listing `thread` tools in the right-panel menu and passing host paths to `file` tools. That inspection did not verify native display or file connection.
 
-파일 패널 오른쪽 위의 **열기 옆 메뉴는 외부 앱 실행 메뉴**이며, Code Viewer를 선택하는 메뉴가 아니다. `file` 진입점도 선언했지만, 기본 `.tsx` 뷰어 교체는 검증되지 않았다. 패키징은 [OpenAI 플러그인 문서](https://developers.openai.com/plugins/build/plugins)를 따른다.
+The file panel's menu beside **Open** launches external applications; it is not a Code Viewer picker. A `file` entry point is declared, but replacing the built-in `.tsx` viewer has not been verified. Packaging follows the [OpenAI plugin documentation](https://developers.openai.com/plugins/build/plugins).
 
-코드를 바꾼 뒤에는 다시 빌드하고 `codex plugin add codex-code-viewer@winter-love-code-viewer --json`을 실행해 설치 사본을 갱신한다. 데스크톱이 사용 중인 서버를 다시 읽으려면 앱을 다시 열어야 할 수 있다.
+After code changes, rebuild and run `codex plugin add codex-code-viewer@winter-love-code-viewer --json` to update the installed copy. Reopening the app may be necessary to reload the running server.
 
-## npm 배포
+## npm publishing
 
-원본 [`package.json`](package.json)에서 공개 여부, 설치 명령, 배포 파일과 의존성을 관리한다. 실행에 필요한 라이브러리는 번들에 포함하고 `devDependencies`로 관리한다. 빌드는 실행 파일과 라이선스 고지를 `dist`에 생성하며 별도 npm manifest를 만들지 않는다. `dist/plugin`은 로컬 플러그인 설치용 묶음이다. `dist`는 Git에 포함하지 않는다.
+The source [`package.json`](https://github.com/bichikim/web/blob/dev/packages/codex-code-viewer/package.json) controls public access, the installer command, distributed files and dependencies. Runtime libraries are bundled and listed as `devDependencies`. Builds generate executables and license notices in `dist` without a separate npm manifest. `dist/plugin` is the local installation bundle; `dist` is not committed to Git.
 
 ```sh
 pnpm build
 pnpm pack --pack-destination ./dist
-# tarball 내용과 독립 실행을 검증한 뒤 배포
-npm publish ./dist/winter-love-codex-code-viewer-0.2.0.tgz --access public
+# Inspect the tarball and verify standalone execution before publishing.
+npm publish ./dist/winter-love-codex-code-viewer-0.4.0.tgz --access public
 ```
 
-새 버전은 소스 `package.json`, 플러그인 manifest, 저장소 루트 `.agents/plugins/marketplace.json`의 npm 버전을 함께 갱신한다. 이 패키지도 모노레포 `Release packages` Action에서 버전으로 배포 여부를 판정한다. 배포 소스와 태그는 저장소 [릴리스 규칙](../../RELEASE.md)을 따른다. npm 배포가 성공한 뒤 같은 소스 커밋에 `@winter-love/codex-code-viewer@버전` 태그를 만들고 push한다. 일반 사용자의 설치·업데이트는 npm의 `latest`를 사용하므로 Git 태그를 설치 명령에 넣지 않는다. GitHub 카탈로그를 사용하는 사람은 해당 태그를 `--ref`로 지정할 수 있다.
+For a new version, update source `package.json`, the plugin manifest and npm version in root `.agents/plugins/marketplace.json` together. The monorepo's `Release packages` Action decides whether to publish based on version. Sources and tags follow the repository [release rules](https://github.com/bichikim/web/blob/dev/RELEASE.md). After a successful npm publish, create and push an `@winter-love/codex-code-viewer@<version>` tag on the same source commit. Normal installation/updates use npm's `latest`, so Git tags are not part of those commands. GitHub-catalog users can select a tag with `--ref`.
 
-## 브라우저 미리보기
+## Browser preview
 
 ```sh
 node --import tsx preview.ts /absolute/path/to/file.tsx
-# 파일을 자동으로 열지 않고 대화 탭의 빈 시작 화면으로 검증
-node --import tsx preview.ts /absolute/path/to/file.tsx --panel
+# Preview the conversation panel's workspace tree before choosing a file.
+node --import tsx preview.ts /absolute/path/to/workspace --panel
+# Preview the prompt when a conversation has no known workspace.
+node --import tsx preview.ts /absolute/path/to/workspace --panel --empty
 ```
 
-출력 URL을 Codex 브라우저에서 연다. 임의 토큰 경로를 가진 loopback 서버가 실제 빌드된 stdio MCP 서버와 AppBridge를 연결한다. 네이티브 파일 도구 입력과 호스트 경로 메타데이터를 전달하여 동일한 뷰어를 실행한다. 상단의 **호스트 테마** 선택으로 실제 브리지의 테마 변경 이벤트를 검증할 수 있다. 다시 빌드한 뒤 같은 주소를 새로고침하면 최신 UI를 읽는다. `Ctrl+C`로 종료한다. 상단의 **채팅 컨텍스트 미리보기**를 펼치면 호스트가 받은 모든 범위를 확인할 수 있다. **컨텍스트 비우기**로 호스트의 소비·제거 이벤트를 검증한다. 네이티브 뷰어 메뉴 등록 여부나 개별 첨부 칩의 표시를 대신 검증하는 것은 아니다.
+Open the printed URL in the Codex browser. A loopback server with a random-token path connects the actual built stdio MCP server to AppBridge. It supplies native file-tool inputs and host-path metadata to run the same viewer. **Host theme** tests real bridge theme-change events. Rebuild and refresh the same URL to load the updated UI; stop with `Ctrl+C`.
 
-## 검증과 한계
+Expand **Chat context preview** to inspect all ranges received by the host. **Clear context** tests host consumption/removal events. This preview does not verify native viewer-menu registration or individual attachment-chip rendering.
+
+## Verification and limitations
 
 ```sh
 pnpm exec vitest run --config vitest.config.ts
 pnpm exec tsc --noEmit -p tsconfig.json
 ```
 
-통합 테스트는 별칭/barrel 해석, 의존 파일 변경, 경로 제한, MCP 대화/파일 진입점, 누락된 호스트 경로, 오래된 코드 위치 거절을 검증한다. 뷰어 테스트는 첫 파일 열기, 실패한 이동 후 기록 보존, 포커스 갱신과 클릭의 경합, 검색 응답 순서, 초기 테마 적용과 변경 이벤트를 검증한다. 현재 검증 결과는 릴리스별로 기록한다. 브라우저의 실제 AppBridge에서도 밝음·어두움 전환에 따라 뷰어 색상이 바뀌는 것을 확인했다.
+Integration tests cover alias/barrel resolution, dependency-file changes, path restrictions, MCP conversation/file entry points, missing host paths and stale-position rejection. Viewer tests cover opening the first file, retaining history after failed navigation, focus-refresh/click races, search-response ordering and initial/theme-change handling. Results are recorded per release. Browser AppBridge checks confirmed viewer color changes for light/dark transitions.
 
-브라우저에서 빈 대화 패널로 시작해 Puppet의 실제 `main.tsx`를 경로 입력으로 열고 `PuppetEditor` 정의의 127번째 줄로 이동하는 것을 확인했다. 네이티브 Codex의 탭 선택 UI와 기본 `.tsx` 뷰어 교체는 앱 자동 조작 제한으로 확인하지 못했다.
+A browser check started with an empty conversation panel, opened Puppet's actual `main.tsx` through path input and navigated to the `PuppetEditor` definition on line 127. Native Codex tab selection and replacement of the default `.tsx` viewer were not verified because of app automation restrictions.
 
-패키징 수정 후 실제 데스크톱 CLI 0.160.0의 `mcpServerStatus/list`에서 `toolsError: null`, `code.panel`의 `thread` 메타데이터, `code.file`의 `file` 메타데이터와 HTML 리소스를 확인했다. `mcpServer/resource/read`로 뷰어 HTML을 읽었다. 이 결과는 서버 발견과 UI 리소스 로딩을 검증하며, 네이티브 화면의 렌더링이나 파일 연결 성공을 대신 증명하지 않는다.
+After packaging changes, desktop CLI 0.160.0's `mcpServerStatus/list` reported `toolsError: null`, `thread` metadata for `code.panel`, `file` metadata for `code.file` and an HTML resource. `mcpServer/resource/read` loaded the viewer HTML. These checks establish server discovery and UI-resource loading, not native rendering or successful file connection.
 
-TypeScript 해석은 처음 연 파일에 가까운 tsconfig를 사용한다. 서로 다른 tsconfig를 가진 패키지로 이동했을 때 그 패키지 고유 별칭은 새 파일로 뷰어를 다시 열어야 한다. 번들러 전용 alias, 브라우저 public URL, 계산된 동적 경로는 완전히 해석하지 않는다. pnpm symlink가 작업 폴더 밖의 전역 store를 가리키면 해당 의존성 정의는 열리지 않는다. 자동완성, 코드 편집, rename/refactor는 포함하지 않는다.
+TypeScript resolution uses the tsconfig nearest the analyzed file. Bundler-only aliases, browser public URLs and computed dynamic paths are not fully resolved. If a pnpm symlink points to a global store outside the workspace, that dependency's definition cannot open. Completion and symbol rename/refactoring are not included. Editing scope is described above.
 
 </details>

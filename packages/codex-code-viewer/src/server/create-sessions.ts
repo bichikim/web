@@ -1,12 +1,45 @@
 import {randomUUID} from 'node:crypto'
+import {statSync} from 'node:fs'
 import {resolve} from 'node:path'
 import {failure, type Result, success} from '../shared/contracts'
 import {createWorkspace} from './create-workspace'
 import {toolResult} from './tool-result'
 const MAX_SESSIONS = 16
 
-export const createSessions = () => {
+interface SessionEvents {
+  onChange?: (session: string) => void
+  onClose?: (session: string) => void
+}
+
+export const createSessions = (events: SessionEvents = {}) => {
   const sessions = new Map<string, ReturnType<typeof createWorkspace>>()
+  const close = (session: string): void => {
+    sessions.get(session)?.dispose()
+    sessions.delete(session)
+    events.onClose?.(session)
+  }
+  const register = (workspace: ReturnType<typeof createWorkspace>) => {
+    if (sessions.size >= MAX_SESSIONS) {
+      const oldest = sessions.keys().next().value
+      if (oldest !== undefined) {
+        close(oldest)
+      }
+    }
+    const session = randomUUID()
+    sessions.set(session, workspace)
+    workspace.subscribe(() => events.onChange?.(session))
+    return {session, workspace: workspace.root}
+  }
+  const connect = (path: string) => {
+    try {
+      if (!statSync(path).isDirectory()) {
+        return failure('not-found')
+      }
+      return success(register(createWorkspace(path)))
+    } catch {
+      return failure('read-failed')
+    }
+  }
   const open = (path: string, line = 1, column = 1) => {
     try {
       const workspace = createWorkspace(resolve(path))
@@ -15,16 +48,7 @@ export const createSessions = () => {
         workspace.dispose()
         return document
       }
-      if (sessions.size >= MAX_SESSIONS) {
-        const oldest = sessions.keys().next().value
-        if (oldest !== undefined) {
-          sessions.get(oldest)?.dispose()
-          sessions.delete(oldest)
-        }
-      }
-      const session = randomUUID()
-      sessions.set(session, workspace)
-      return success({document: document.value, session, workspace: workspace.root})
+      return success({...register(workspace), document: document.value})
     } catch (error) {
       return failure(
         error instanceof Error &&
@@ -52,14 +76,9 @@ export const createSessions = () => {
     }
   }
   const dispose = (): void => {
-    for (const workspace of sessions.values()) {
-      workspace.dispose()
+    for (const session of sessions.keys()) {
+      close(session)
     }
-    sessions.clear()
   }
-  const close = (session: string): void => {
-    sessions.get(session)?.dispose()
-    sessions.delete(session)
-  }
-  return {close, dispose, open, withSession}
+  return {close, connect, dispose, open, withSession}
 }

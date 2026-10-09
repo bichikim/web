@@ -162,5 +162,6 @@ it('should open an English thinking space modal', () => {
     'Diary',
     'Calendar',
     'Tarot',
+    'Saju',
   ])
 })

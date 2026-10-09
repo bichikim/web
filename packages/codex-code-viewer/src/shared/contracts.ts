@@ -1,3 +1,4 @@
+import {MAX_CODE_BYTES} from './editing-limits'
 import {z} from 'zod'
 
 export const locationSchema = z.object({
@@ -16,7 +17,7 @@ export const documentSchema = z.object({
   location: locationSchema,
   media: z
     .object({
-      kind: z.enum(['image', 'video', 'audio', 'pdf']),
+      kind: z.enum(['image', 'video', 'audio', 'pdf', 'word', 'spreadsheet']),
       mimeType: z.string(),
       size: z.number().int().nonnegative(),
     })
@@ -25,15 +26,36 @@ export const documentSchema = z.object({
   source: z.string(),
 })
 export const mediaChunkSchema = z.object({data: z.string(), next: z.number().int().nonnegative()})
-export const sessionSchema = z.object({
-  document: documentSchema,
+export const workspaceSessionSchema = z.object({
   session: z.string(),
   workspace: z.string(),
 })
-export const navigationSchema = z.object({locations: z.array(locationSchema)})
+export const sessionSchema = workspaceSessionSchema.extend({document: documentSchema})
+export const connectionSchema = z.union([sessionSchema, workspaceSessionSchema.strict()])
+export const MAX_REFERENCE_PREVIEW = 400
+export const navigationLocationSchema = locationSchema.extend({
+  preview: z.string().max(MAX_REFERENCE_PREVIEW).optional(),
+})
+export type NavigationLocation = z.infer<typeof navigationLocationSchema>
+export const navigationSchema = z.object({
+  kind: z.enum(['definition', 'references']).optional(),
+  locations: z.array(navigationLocationSchema),
+})
+export type NavigationKind = NonNullable<z.infer<typeof navigationSchema>['kind']>
+export type NavigationResult = Required<z.infer<typeof navigationSchema>>
+export const codeSourceSchema = z.object({path: z.string(), source: z.string().max(MAX_CODE_BYTES)})
+export type CodeSource = z.infer<typeof codeSourceSchema>
 export const filesSchema = z.object({paths: z.array(z.string())})
 export const workspaceFileSchema = z.object({openable: z.boolean(), path: z.string()})
-export const treeSchema = z.object({files: z.array(workspaceFileSchema), truncated: z.boolean()})
+export const treeSchema = z.object({
+  directories: z.array(z.string()).optional(),
+  files: z.array(workspaceFileSchema),
+  truncated: z.boolean(),
+})
+export const entrySchema = z.object({kind: z.enum(['file', 'directory']), path: z.string()})
+export const entrySnapshotSchema = entrySchema.extend({revision: z.string()})
+export type EntrySnapshot = z.infer<typeof entrySnapshotSchema>
+export type WorkspaceEntry = z.infer<typeof entrySchema>
 export type WorkspaceTree = z.infer<typeof treeSchema>
 export type WorkspaceFile = z.infer<typeof workspaceFileSchema>
 export const errorSchema = z.object({
@@ -48,14 +70,30 @@ export const errorSchema = z.object({
     'invalid-position',
     'read-failed',
     'stale-document',
+    'write-conflict',
+    'write-failed',
+    'invalid-name',
+    'already-exists',
+    'create-failed',
+    'file-operation-failed',
+    'entry-changed',
+    'protected-entry',
+    'operation-too-large',
+    'invalid-destination',
     'rust-analyzer-unavailable',
     'rust-analysis-failed',
+    'python-analyzer-unavailable',
+    'python-analysis-failed',
+    'ruby-analyzer-unavailable',
+    'ruby-analysis-failed',
   ]),
 })
 export type CodeLocation = z.infer<typeof locationSchema>
 export type CodeToken = z.infer<typeof tokenSchema>
 export type CodeDocument = z.infer<typeof documentSchema>
 export type ViewerSession = z.infer<typeof sessionSchema>
+export type WorkspaceSession = z.infer<typeof workspaceSessionSchema>
+export type ViewerConnection = z.infer<typeof connectionSchema>
 export type ViewerError = z.infer<typeof errorSchema>
 
 export interface Success<Value> {

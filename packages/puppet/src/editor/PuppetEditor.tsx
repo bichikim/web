@@ -287,7 +287,7 @@ export const PuppetEditor = (props: PuppetEditorProps) => {
 
   createEffect(() => {
     const document = sourceDocument()
-    untrack(() => props.onDocumentChange)?.(document)
+    untrack(() => props.onDocumentChange?.(document))
   })
   const handlePlayerChange = (nextPlayer: Player | null) => {
     setPlayer(syncPlayerPlayback(nextPlayer, isPlaying()))

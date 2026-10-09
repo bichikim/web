@@ -1,7 +1,31 @@
 const code = ['.ts', '.tsx', '.mts', '.cts', '.js', '.jsx', '.mjs', '.cjs']
-export type SyntaxLanguage = 'rust' | 'yaml' | 'toml' | 'json' | 'jsonc' | 'json5' | 'html'
+export type SyntaxLanguage =
+  | 'rust'
+  | 'python'
+  | 'ruby'
+  | 'yaml'
+  | 'toml'
+  | 'json'
+  | 'jsonc'
+  | 'json5'
+  | 'html'
+  | 'css'
+  | 'scss'
+  | 'sass'
+  | 'less'
+  | 'vue'
+  | 'svelte'
+  | 'astro'
+  | 'xml'
+  | 'ini'
+  | 'properties'
 const syntax = new Map<string, SyntaxLanguage>([
   ['.rs', 'rust'],
+  ['.py', 'python'],
+  ['.pyi', 'python'],
+  ['.rb', 'ruby'],
+  ['.rake', 'ruby'],
+  ['.gemspec', 'ruby'],
   ['.yaml', 'yaml'],
   ['.yml', 'yaml'],
   ['.toml', 'toml'],
@@ -10,6 +34,23 @@ const syntax = new Map<string, SyntaxLanguage>([
   ['.json5', 'json5'],
   ['.html', 'html'],
   ['.htm', 'html'],
+  ['.css', 'css'],
+  ['.scss', 'scss'],
+  ['.sass', 'sass'],
+  ['.less', 'less'],
+  ['.vue', 'vue'],
+  ['.svelte', 'svelte'],
+  ['.astro', 'astro'],
+  ['.xml', 'xml'],
+  ['.ini', 'ini'],
+  ['.properties', 'properties'],
+  ['.conf', 'ini'],
+  ['.cfg', 'ini'],
+])
+const namedSyntax = new Map<string, SyntaxLanguage>([
+  ['Cargo.lock', 'toml'],
+  ['Gemfile', 'ruby'],
+  ['Rakefile', 'ruby'],
 ])
 const markdown = ['.md', '.markdown', '.mdx']
 const table = ['.csv', '.tsv']
@@ -37,23 +78,12 @@ const text = [
   '.txt',
   '.text',
   '.lock',
-  '.css',
-  '.scss',
-  '.sass',
-  '.less',
-  '.xml',
-  '.ini',
-  '.conf',
-  '.cfg',
-  '.properties',
   '.log',
   '.sh',
   '.bash',
   '.zsh',
   '.fish',
   '.sql',
-  '.py',
-  '.rb',
   '.go',
   '.java',
   '.kt',
@@ -63,9 +93,6 @@ const text = [
   '.hpp',
   '.cs',
   '.swift',
-  '.vue',
-  '.svelte',
-  '.astro',
   '.graphql',
   '.gql',
   '.proto',
@@ -110,6 +137,8 @@ export const FILE_EXTENSIONS = [
   ...video.keys(),
   ...audio.keys(),
   '.pdf',
+  '.docx',
+  '.xlsx',
 ]
 
 interface TextFormat {
@@ -120,7 +149,7 @@ interface SyntaxFormat {
   readonly language: SyntaxLanguage
 }
 interface MediaFormat {
-  readonly kind: 'image' | 'video' | 'audio' | 'pdf'
+  readonly kind: 'image' | 'video' | 'audio' | 'pdf' | 'word' | 'spreadsheet'
   readonly mimeType: string
 }
 export type FileFormat = TextFormat | SyntaxFormat | MediaFormat
@@ -131,7 +160,7 @@ export const fileFormat = (path: string): FileFormat | undefined => {
     return undefined
   }
   const extension = basename.slice(basename.lastIndexOf('.')).toLowerCase()
-  const language = basename === 'Cargo.lock' ? 'toml' : syntax.get(extension)
+  const language = namedSyntax.get(basename) ?? syntax.get(extension)
   if (language !== undefined) {
     return {kind: 'syntax', language}
   }
@@ -150,6 +179,18 @@ export const fileFormat = (path: string): FileFormat | undefined => {
   const imageType = image.get(extension)
   if (extension === '.pdf') {
     return {kind: 'pdf', mimeType: 'application/pdf'}
+  }
+  if (extension === '.docx') {
+    return {
+      kind: 'word',
+      mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    }
+  }
+  if (extension === '.xlsx') {
+    return {
+      kind: 'spreadsheet',
+      mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    }
   }
   if (imageType !== undefined) {
     return {kind: 'image', mimeType: imageType}

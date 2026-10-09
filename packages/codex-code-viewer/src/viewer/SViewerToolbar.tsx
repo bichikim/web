@@ -18,6 +18,7 @@ interface SViewerToolbarProps {
     | 'opening'
     | 'refresh'
     | 'session'
+    | 'workspaceSession'
   >
   onOpen: (location: CodeLocation, options?: NavigationOptions) => void
   onToggleTree?: () => void
@@ -33,7 +34,7 @@ export const SViewerToolbar = (props: SViewerToolbarProps) => (
         aria-controls={props.treeVisible ? 'workspace-files' : undefined}
         aria-expanded={props.treeVisible ?? false}
         class="ui-tree-toggle"
-        disabled={props.viewer.session() === null}
+        disabled={props.viewer.workspaceSession() === null}
         onClick={() => props.onToggleTree?.()}
         title="파일 트리 열기/닫기"
         type="button"
@@ -47,7 +48,7 @@ export const SViewerToolbar = (props: SViewerToolbarProps) => (
     focusRequest={props.focusRequest}
     onFind={props.viewer.find}
     onOpen={props.onOpen}
-    searchable={props.viewer.session() !== null}
+    searchable={props.viewer.workspaceSession() !== null}
   >
     <SFileNavigation
       canBack={props.viewer.canBack()}
