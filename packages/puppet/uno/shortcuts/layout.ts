@@ -82,6 +82,7 @@ export const layoutShortcuts = {
   ],
   'puppet-editor': [
     'editor-type-root',
+    '[container-type:inline-size]',
     '[--editor-control-height:1.40625rem]',
     '[--bottom-grid-size:var(--bottom-panel-size,_16.25rem)] [--bottom-resizer-size:0.375rem]',
     '[--left-grid-size:var(--left-panel-size,_18.75rem)] [--left-resizer-size:0.375rem]',

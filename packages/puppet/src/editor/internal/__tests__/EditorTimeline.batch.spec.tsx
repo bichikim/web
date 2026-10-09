@@ -64,7 +64,6 @@ describe('EditorTimeline batch editing', () => {
   it('should move selected keyframes together in the all-motions view', () => {
     expect(batch.firstMarker).toHaveAttribute('aria-pressed', 'true')
     expect(batch.middleMarker).toHaveAttribute('aria-pressed', 'true')
-    expect(batch.view.getByRole('button', {name: '선택 키프레임 2개 삭제'})).toBeEnabled()
 
     moveBatchSelection(batch)
 
@@ -86,7 +85,7 @@ describe('EditorTimeline batch editing', () => {
   it('should delete moved selected keyframes while preserving unselected keyframes', () => {
     moveBatchSelection(batch)
 
-    fireEvent.click(batch.view.getByRole('button', {name: '선택 키프레임 2개 삭제'}))
+    fireEvent.keyDown(batch.track, {key: 'Backspace'})
 
     expect(batch.keyframes()).toEqual([{time: 0.4, value: 0}])
   })

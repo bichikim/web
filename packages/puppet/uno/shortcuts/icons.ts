@@ -38,6 +38,8 @@ export const iconShortcuts = {
   'puppet-icon-mesh': 'i-tabler-mesh',
   'puppet-icon-minus': 'i-tabler-minus',
   'puppet-icon-pin': 'i-tabler-pin',
+  'puppet-icon-player-play': 'i-tabler-player-play',
+  'puppet-icon-player-stop': 'i-tabler-player-stop',
   'puppet-icon-plus': 'i-tabler-plus',
   'puppet-icon-pointer': 'i-tabler-pointer',
   'puppet-icon-prism': 'i-tabler-prism',
