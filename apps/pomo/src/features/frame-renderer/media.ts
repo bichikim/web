@@ -1,4 +1,3 @@
-import {clearHtmlMediaElement} from 'src/utils/clear-html-media-element'
 import {replaceBlobObjectUrl} from 'src/features/blob-object-url'
 import type {MediaKind} from '../background'
 
@@ -74,7 +73,9 @@ export const createMedia = (options: MediaOptions): MediaResource => {
     if (video === null) {
       source.removeAttribute('src')
     } else {
-      clearHtmlMediaElement(video)
+      video.pause()
+      video.removeAttribute('src')
+      video.load()
     }
     replaceBlobObjectUrl(url, () => null)
   }

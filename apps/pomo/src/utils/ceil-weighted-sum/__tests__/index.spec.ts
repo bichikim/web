@@ -1,9 +1,9 @@
 /** @vitest-environment node */
 import {describe, expect, it} from 'vitest'
 
-import {ceilDecimalProducts} from '..'
+import {ceilWeightedSum} from '..'
 
-describe('ceilDecimalProducts', () => {
+describe('ceilWeightedSum', () => {
   it.each([
     {expected: 0n, name: 'empty sum', products: []},
     {expected: 0n, name: 'zero multiplier', products: [{multiplier: 0, quantity: 10n}]},
@@ -73,22 +73,18 @@ describe('ceilDecimalProducts', () => {
       ],
     },
   ])('should ceil the $name exactly', ({products, expected}) => {
-    expect(ceilDecimalProducts({products})).toBe(expected)
+    expect(ceilWeightedSum({products})).toBe(expected)
   })
 
   it.each([-1, -Number.MIN_VALUE, Number.NaN, Number.POSITIVE_INFINITY, Number.NEGATIVE_INFINITY])(
     'should reject a multiplier outside the nonnegative finite contract: %s',
     (multiplier) => {
-      expect(() => ceilDecimalProducts({products: [{multiplier, quantity: 1n}]})).toThrow(
-        RangeError,
-      )
+      expect(() => ceilWeightedSum({products: [{multiplier, quantity: 1n}]})).toThrow(RangeError)
     },
   )
 
   it('should reject a negative quantity even with a zero multiplier', () => {
-    expect(() => ceilDecimalProducts({products: [{multiplier: 0, quantity: -1n}]})).toThrow(
-      RangeError,
-    )
+    expect(() => ceilWeightedSum({products: [{multiplier: 0, quantity: -1n}]})).toThrow(RangeError)
   })
 
   it('should preserve frozen inputs and return the same result in either order', () => {
@@ -97,9 +93,9 @@ describe('ceilDecimalProducts', () => {
     const products = Object.freeze([first, second])
     const options = Object.freeze({products})
 
-    expect(ceilDecimalProducts(options)).toBe(8n)
-    expect(ceilDecimalProducts(options)).toBe(8n)
-    expect(ceilDecimalProducts({products: [second, first]})).toBe(8n)
+    expect(ceilWeightedSum(options)).toBe(8n)
+    expect(ceilWeightedSum(options)).toBe(8n)
+    expect(ceilWeightedSum({products: [second, first]})).toBe(8n)
     expect(products).toEqual([
       {multiplier: 0.07, quantity: 100n},
       {multiplier: Number.MIN_VALUE, quantity: 1n},
