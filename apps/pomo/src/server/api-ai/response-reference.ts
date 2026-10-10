@@ -1,5 +1,6 @@
+import {regexes} from 'zod/v4/core'
+
 const RESPONSE_PREFIX = 'pomo-api:'
-const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/iu
 
 export const createApiAiResponseReference = (jobId: string): string => `${RESPONSE_PREFIX}${jobId}`
 
@@ -9,5 +10,5 @@ export const parseApiAiResponseReference = (reference: string): string | null =>
     return null
   }
   const jobId = reference.slice(RESPONSE_PREFIX.length)
-  return UUID_PATTERN.test(jobId) ? jobId : null
+  return regexes.guid.test(jobId) ? jobId : null
 }
