@@ -1,4 +1,5 @@
 import {isObject} from 'src/utils/is-object'
+import {sumBy} from 'es-toolkit/math'
 import {normalizePasteNumericInput} from 'src/utils/normalize-paste-numeric-input'
 import {parseDate} from 'src/features/civil-date'
 import {iterateJsonObjectSlices} from 'src/utils/json'
@@ -47,8 +48,6 @@ const invalid = (code: ExpenseParseError['code']): ExpenseParseResult => ({
   error: {code},
   ok: false,
 })
-
-const isRecord = (value: unknown): value is Record<string, unknown> => isObject(value)
 
 const toPositiveInteger = (value: unknown) => {
   if (typeof value === 'number' && Number.isSafeInteger(value) && value > 0) {
@@ -120,7 +119,7 @@ const readItems = (value: unknown) => {
 
   const items: Array<ExpenseItem> = []
   for (const item of value) {
-    if (!isRecord(item) || typeof item.name !== 'string' || !isNonBlankString(item.name)) {
+    if (!isObject(item) || typeof item.name !== 'string' || !isNonBlankString(item.name)) {
       return null
     }
 
@@ -152,7 +151,7 @@ const createExpenseForm = (
   questions: ReadonlyArray<string>,
   overflowCode: ExpenseParseError['code'] = 'invalid-shape',
 ): ExpenseParseResult => {
-  const total = items.reduce((sum, item) => sum + item.amount, 0)
+  const total = sumBy(items, (item) => item.amount)
   if (!Number.isSafeInteger(total)) {
     return invalid(overflowCode)
   }
@@ -168,7 +167,7 @@ const parseExpenseAssistantCandidate = (json: string): ExpenseParseResult => {
     return invalid('invalid-json')
   }
 
-  if (!isRecord(parsed)) {
+  if (!isObject(parsed)) {
     return invalid('invalid-shape')
   }
 

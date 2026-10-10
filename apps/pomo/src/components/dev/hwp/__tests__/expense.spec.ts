@@ -149,6 +149,35 @@ describe('parseExpenseText', () => {
 })
 
 describe('parseExpenseAssistantResponse', () => {
+  it.each([[null], [[]], [false], [42], ['두부']])(
+    'should reject a non-object structured item: %j',
+    (item) => {
+      expect(parseExpenseAssistantResponse(JSON.stringify({items: [item]}))).toEqual({
+        error: {code: 'invalid-shape'},
+        ok: false,
+      })
+    },
+  )
+
+  it.each([
+    [Number.MAX_SAFE_INTEGER - 1, {ok: true, value: {total: Number.MAX_SAFE_INTEGER}}],
+    [Number.MAX_SAFE_INTEGER, {error: {code: 'invalid-shape'}, ok: false}],
+  ])(
+    'should preserve the structured total boundary for a unit price of %i',
+    (unitPrice, result) => {
+      expect(
+        parseExpenseAssistantResponse(
+          JSON.stringify({
+            items: [
+              {name: '식사', quantity: 1, unitPrice},
+              {name: '차', quantity: 1, unitPrice: 1},
+            ],
+          }),
+        ),
+      ).toMatchObject(result)
+    },
+  )
+
   it.each([undefined, null, '', '   ', '\t\n', '\u3000'])(
     'should treat an absent or blank date as missing: %j',
     (date) => {
