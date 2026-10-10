@@ -1,6 +1,7 @@
 import type {APIEvent} from '@solidjs/start/server'
 import {z} from 'zod'
 
+import {hasUniqueIds} from 'src/features/catalog-policy'
 import type {HistoryTargetDate} from 'src/features/history-generation'
 import {isAuthorizedCronRequest} from 'src/server/cron/environment'
 import {startHistoryRegeneration} from 'src/server/history-generation/start-regeneration'
@@ -25,7 +26,7 @@ const requestSchema = z
       .max(MAX_MOMENT_COUNT),
   })
   .superRefine((request, context) => {
-    if (new Set(request.titles).size !== request.titles.length) {
+    if (!hasUniqueIds(request.titles)) {
       context.addIssue({code: 'custom', message: 'Titles must be unique', path: ['titles']})
     }
   })
