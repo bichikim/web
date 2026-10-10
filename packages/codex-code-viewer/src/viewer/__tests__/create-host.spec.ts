@@ -5,44 +5,98 @@ import {afterEach, describe, expect, it, vi} from 'vitest'
 import {createRoot} from 'solid-js'
 import {createHost} from '../create-host'
 import {useViewer} from '../use-viewer'
+import {initial} from './fixtures/viewer'
 
 describe('createHost', () => {
   afterEach(() => vi.restoreAllMocks())
 
-  it('should subscribe to workspace changes through MCP without opening a browser event stream', async () => {
+  it('should attach native files and receive workspace changes without resource subscriptions', async () => {
+    vi.spyOn(App.prototype, 'connect').mockResolvedValue()
+    const closed = Promise.withResolvers<void>()
+    vi.spyOn(App.prototype, 'close').mockImplementation(async () => closed.resolve())
     vi.spyOn(App.prototype, 'getHostCapabilities').mockReturnValue({
       experimental: {'openai/resource': {}},
     })
-    const request = vi.spyOn(App.prototype, 'request').mockResolvedValue({})
-    const source = vi.fn()
-    vi.stubGlobal('EventSource', source)
-    const uri = 'file:///tmp/code-viewer-watch-first/revision.json'
-    const call = vi
-      .spyOn(App.prototype, 'callServerTool')
-      .mockResolvedValue({content: [], structuredContent: {resourceUri: uri}})
-    try {
-      const notify = vi.fn()
-      const stop = await createHost().watch?.('first', notify)
+    const listeners = vi.spyOn(App.prototype, 'addEventListener')
+    const uri = 'codex-resource://opened/main.tsx'
+    const request = vi
+      .spyOn(App.prototype, 'request')
+      .mockRejectedValue(new Error('MCP resource is not subscribable'))
+    const waiting = Promise.withResolvers<void>()
+    vi.spyOn(App.prototype, 'callServerTool').mockImplementation(async ({name}, options) => {
+      if (name === 'code.attach') {
+        return {content: [], structuredContent: {...initial}}
+      }
+      if (name === 'code.watch') {
+        return {content: [], structuredContent: {revision: 0}}
+      }
+      if (name === 'code.watch.next') {
+        waiting.resolve()
+        return new Promise((_resolve, reject) => {
+          options?.signal?.addEventListener('abort', () => reject(options.signal?.reason), {
+            once: true,
+          })
+        })
+      }
+      return {content: [], structuredContent: {document: initial.document}}
+    })
+    const root = createRoot((dispose) => ({dispose, viewer: useViewer(createHost())}))
+    const input = listeners.mock.calls.find(([event]) => event === 'toolinput')?.[1]
+    input?.({arguments: {file: {name: 'main.tsx', resourceUri: uri}}})
+    await waiting.promise
+    expect(root.viewer.session()?.document.location.path).toBe('main.tsx')
+    expect(root.viewer.notice()).toBeNull()
+    expect(request).not.toHaveBeenCalled()
+    root.dispose()
+    await closed.promise
+    expect(request).not.toHaveBeenCalled()
+  })
+
+  it.each([{}, {experimental: {'openai/resource': {}}}])(
+    'should receive workspace events without subscribing plugin resources in host %j',
+    async (capabilities) => {
+      vi.spyOn(App.prototype, 'getHostCapabilities').mockReturnValue(capabilities)
+      const request = vi
+        .spyOn(App.prototype, 'request')
+        .mockRejectedValue(new Error('MCP resource is not subscribable'))
+      const waiting = Promise.withResolvers<void>()
+      const call = vi
+        .spyOn(App.prototype, 'callServerTool')
+        .mockImplementation(async ({name}, options) => {
+          if (name === 'code.watch') {
+            return {
+              content: [],
+              structuredContent: {resourceUri: 'file:///tmp/workspace/revision.json', revision: 0},
+            }
+          }
+          waiting.resolve()
+          return new Promise((_resolve, reject) => {
+            options?.signal?.addEventListener('abort', () => reject(options.signal?.reason), {
+              once: true,
+            })
+          })
+        })
+      const receive = vi.fn()
+      const report = vi.fn()
+      const stop = await createHost().watch?.('first', receive, report)
+      await waiting.promise
+      expect(receive).toHaveBeenCalledOnce()
+      expect(request).not.toHaveBeenCalled()
       expect(call).toHaveBeenCalledWith({
         arguments: {session: 'first', transport: 'mcp'},
         name: 'code.watch',
       })
-      expect(request).toHaveBeenCalledWith(
-        {method: 'resources/subscribe', params: {uri}},
-        expect.anything(),
+      expect(call).toHaveBeenCalledWith(
+        {
+          arguments: {revision: 0, session: 'first'},
+          name: 'code.watch.next',
+        },
+        expect.objectContaining({signal: expect.any(AbortSignal)}),
       )
-      expect(notify).toHaveBeenCalledOnce()
-      expect(source).not.toHaveBeenCalled()
       await stop?.()
-      expect(request).toHaveBeenLastCalledWith(
-        {method: 'resources/unsubscribe', params: {uri}},
-        expect.anything(),
-      )
-      expect(notify).toHaveBeenCalledOnce()
-    } finally {
-      vi.unstubAllGlobals()
-    }
-  })
+      expect(report).not.toHaveBeenCalled()
+    },
+  )
   it('should request scan cursors through MCP in the installed host', async () => {
     const call = vi.spyOn(App.prototype, 'callServerTool').mockResolvedValue({content: []})
     await createHost().call('code.tree', {session: 'first', stream: true})
@@ -79,7 +133,7 @@ describe('createHost', () => {
     })
     try {
       const receive = vi.fn()
-      const stop = await createHost().watch?.('first', receive)
+      const stop = await createHost().watch?.('first', receive, vi.fn())
       expect(source).toHaveBeenCalledWith('http://127.0.0.1:1234/events/first')
       const handler = addEventListener.mock.calls[0][1]
       handler(new MessageEvent('message', {data: '1'}))
@@ -90,50 +144,6 @@ describe('createHost', () => {
     } finally {
       vi.unstubAllGlobals()
     }
-  })
-  it('should subscribe through standard MCP when the tool panel omits the OpenAI resource extension', async () => {
-    vi.spyOn(App.prototype, 'getHostCapabilities').mockReturnValue({serverResources: {}})
-    const request = vi.spyOn(App.prototype, 'request').mockResolvedValue({})
-    const uri = 'file:///tmp/code-viewer-watch-panel/revision.json'
-    const call = vi.spyOn(App.prototype, 'callServerTool').mockResolvedValue({
-      content: [],
-      structuredContent: {resourceUri: uri},
-    })
-    const source = vi.fn()
-    vi.stubGlobal('EventSource', source)
-    try {
-      const receive = vi.fn()
-      const stop = await createHost().watch?.('panel', receive)
-      expect(call).toHaveBeenCalledWith({
-        arguments: {session: 'panel', transport: 'mcp'},
-        name: 'code.watch',
-      })
-      expect(request).toHaveBeenCalledWith(
-        {method: 'resources/subscribe', params: {uri}},
-        expect.anything(),
-      )
-      expect(receive).toHaveBeenCalledOnce()
-      await stop?.()
-      expect(request).toHaveBeenLastCalledWith(
-        {method: 'resources/unsubscribe', params: {uri}},
-        expect.anything(),
-      )
-      expect(source).not.toHaveBeenCalled()
-    } finally {
-      vi.unstubAllGlobals()
-    }
-  })
-  it('should propagate a standard subscription failure instead of silently opening HTTP', async () => {
-    vi.spyOn(App.prototype, 'getHostCapabilities').mockReturnValue({serverResources: {}})
-    vi.spyOn(App.prototype, 'request').mockRejectedValue(new Error('subscription unavailable'))
-    const uri = 'file:///tmp/code-viewer-watch-panel/revision.json'
-    vi.spyOn(App.prototype, 'callServerTool').mockResolvedValue({
-      content: [],
-      structuredContent: {resourceUri: uri},
-    })
-    const receive = vi.fn()
-    await expect(createHost().watch?.('panel', receive)).rejects.toThrow('subscription unavailable')
-    expect(receive).not.toHaveBeenCalled()
   })
   it('should await the consumer cleanup when the host requests teardown', async () => {
     vi.spyOn(App.prototype, 'connect').mockResolvedValue()

@@ -1,11 +1,9 @@
 import {existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync} from 'node:fs'
 import {tmpdir} from 'node:os'
 import {join} from 'node:path'
-import {fileURLToPath} from 'node:url'
 import {z} from 'zod'
 import {Client} from '@modelcontextprotocol/sdk/client/index.js'
 import {InMemoryTransport} from '@modelcontextprotocol/sdk/inMemory.js'
-import {ResourceUpdatedNotificationSchema} from '@modelcontextprotocol/sdk/types.js'
 import {afterEach, beforeEach, describe, expect, it} from 'vitest'
 import {
   entrySchema,
@@ -107,7 +105,7 @@ describe('createServer', () => {
       isError: true,
     })
   })
-  it('should notify subscribed MCP resources when a watched file changes and stop after unsubscribe', async () => {
+  it('should deliver file changes through cancellable MCP waits and reject closed sessions', async () => {
     const root = mkdtempSync(join(tmpdir(), 'viewer-mcp-watch-'))
     try {
       mkdirSync(join(root, '.git'))
@@ -120,22 +118,59 @@ describe('createServer', () => {
         arguments: {session: opened.session, transport: 'mcp'},
         name: 'code.watch',
       })
-      const {resourceUri} = z.object({resourceUri: z.string()}).parse(watched.structuredContent)
-      expect(resourceUri).toMatch(/^file:\/\//u)
-      const signalPath = fileURLToPath(resourceUri)
-      expect(JSON.parse(readFileSync(signalPath, 'utf8'))).toEqual({revision: 0})
-      const changed = Promise.withResolvers<string>()
-      client.setNotificationHandler(ResourceUpdatedNotificationSchema, ({params}) => {
-        changed.resolve(params.uri)
+      const schema = z.object({revision: z.number().int().nonnegative()})
+      const {revision} = schema.parse(watched.structuredContent)
+      expect(revision).toBe(0)
+      const changed = client.callTool({
+        arguments: {revision, session: opened.session},
+        name: 'code.watch.next',
       })
-      await client.subscribeResource({uri: resourceUri})
       writeFileSync(join(root, 'main.ts'), 'after')
-      expect(await changed.promise).toBe(resourceUri)
-      expect(JSON.parse(readFileSync(signalPath, 'utf8')).revision).toBeGreaterThan(0)
-      await client.unsubscribeResource({uri: resourceUri})
+      const next = schema.parse((await changed).structuredContent)
+      expect(next.revision).toBeGreaterThan(revision)
+      const stale = await client.callTool({
+        arguments: {revision, session: opened.session},
+        name: 'code.watch.next',
+      })
+      expect(schema.parse(stale.structuredContent).revision).toBeGreaterThan(revision)
+      expect(
+        await client.callTool({
+          arguments: {path: 'main.ts', session: opened.session},
+          name: 'code.read',
+        }),
+      ).toMatchObject({structuredContent: {document: {source: 'after'}}})
+      const controller = new AbortController()
+      const latest = schema.parse(
+        (
+          await client.callTool({
+            arguments: {session: opened.session, transport: 'mcp'},
+            name: 'code.watch',
+          })
+        ).structuredContent,
+      )
+      const cancelled = client.callTool(
+        {
+          arguments: {revision: latest.revision, session: opened.session},
+          name: 'code.watch.next',
+        },
+        undefined,
+        {signal: controller.signal},
+      )
+      const rejected = expect(cancelled).rejects.toThrow()
+      controller.abort()
+      await rejected
+      const closing = client.callTool({
+        arguments: {revision: latest.revision, session: opened.session},
+        name: 'code.watch.next',
+      })
       await client.callTool({arguments: {session: opened.session}, name: 'code.close'})
-      expect(existsSync(signalPath)).toBe(false)
-      await expect(client.subscribeResource({uri: resourceUri})).rejects.toThrow()
+      expect(await closing).toMatchObject({isError: true})
+      expect(
+        await client.callTool({
+          arguments: {revision: latest.revision, session: opened.session},
+          name: 'code.watch.next',
+        }),
+      ).toMatchObject({isError: true, structuredContent: {code: 'session-expired'}})
     } finally {
       rmSync(root, {force: true, recursive: true})
     }

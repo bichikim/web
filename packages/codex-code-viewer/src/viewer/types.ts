@@ -68,8 +68,16 @@ export interface NavigationOptions {
 }
 
 export interface ViewerPort {
-  watch?(session: string, receive: () => void): Promise<() => Promise<void>>
-  call(name: string, arguments_: Record<string, unknown>): Promise<CallToolResult>
+  watch?(
+    session: string,
+    receive: () => void,
+    report: (error: unknown) => void,
+  ): Promise<() => Promise<void>>
+  call(
+    name: string,
+    arguments_: Record<string, unknown>,
+    options?: ViewerRequestOptions,
+  ): Promise<CallToolResult>
   context(selection: ViewerContext): Promise<void>
   location?(location: ViewerFileLocation): Promise<void>
   start(
@@ -78,6 +86,11 @@ export interface ViewerPort {
     refresh: () => void,
     onTeardown?: () => Promise<void>,
   ): Promise<() => void>
+}
+
+export interface ViewerRequestOptions {
+  readonly signal?: AbortSignal
+  readonly timeout?: number
 }
 
 export interface ViewerFileLocation {

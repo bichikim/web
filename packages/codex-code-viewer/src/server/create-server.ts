@@ -19,7 +19,7 @@ import {filterScan} from './filter-scan'
 import {registerFileOperations} from './register-file-operations'
 import {registerViewerResource} from './register-viewer-resource'
 import {createMcpStreams} from './create-mcp-streams'
-import {registerWorkspaceUpdates} from './register-workspace-updates'
+import {createWorkspaceNotifications} from './create-workspace-notifications'
 
 const appOnly = {ui: {visibility: ['app']}}
 const MAX_ENTRY_NAME_LENGTH = 255
@@ -284,7 +284,7 @@ export const createServer = (html: string, options: ServerOptions = {}) => {
   })
   const updates = createWorkspaceEvents()
   const streams = createMcpStreams()
-  const notifications = registerWorkspaceUpdates(server)
+  const notifications = createWorkspaceNotifications()
   const sessions = createSessions({
     onChange: (session) => {
       updates.changed(session)
@@ -394,10 +394,23 @@ export const createServer = (html: string, options: ServerOptions = {}) => {
     async ({session, transport}) =>
       withSession(
         session,
-        async (): Promise<Result<{resourceUri: string} | {url: string}>> =>
+        async (): Promise<Result<{revision: number} | {url: string}>> =>
           transport === 'mcp'
-            ? success({resourceUri: notifications.watch(session)})
+            ? success({revision: notifications.watch(session)})
             : success({url: await updates.watch(session)}),
+      ),
+  )
+  server.registerTool(
+    'code.watch.next',
+    {
+      _meta: appOnly,
+      annotations,
+      inputSchema: {revision: z.number().int().nonnegative(), session: z.string()},
+      title: 'Wait for a workspace change',
+    },
+    async ({session, revision}, context) =>
+      withSession(session, async () =>
+        success({revision: await notifications.wait(session, revision, context.signal)}),
       ),
   )
   registerScanTools(server, streams)

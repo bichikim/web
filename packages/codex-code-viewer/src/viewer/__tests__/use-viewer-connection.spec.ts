@@ -45,7 +45,7 @@ describe('useViewerConnection', () => {
     expect(watch).not.toHaveBeenCalled()
     ready.resolve(disposePort)
     await subscribed.promise
-    expect(watch).toHaveBeenCalledWith('session', expect.any(Function))
+    expect(watch).toHaveBeenCalledWith('session', expect.any(Function), expect.any(Function))
     dispose()
   })
   it('should keep the session available when host teardown is cancelled and allow a later close', async () => {

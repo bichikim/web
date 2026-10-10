@@ -10,7 +10,7 @@ import type {ViewerPort} from './types'
 import {connectHostAppearance} from './connect-host-appearance'
 import {formatContext} from './format-context'
 import {createPendingTasks} from './create-pending-tasks'
-import {createResourceSubscriptions} from './create-resource-subscriptions'
+import {subscribeWorkspaceChanges} from './subscribe-workspace-changes'
 
 const httpStreams = (app: App): boolean =>
   z
@@ -19,23 +19,23 @@ const httpStreams = (app: App): boolean =>
 
 const createToolCall =
   (app: App, requests: ReturnType<typeof createPendingTasks>): ViewerPort['call'] =>
-  (name, arguments_) =>
-    requests.run(() =>
-      app.callServerTool({
+  (name, arguments_, options) =>
+    requests.run(() => {
+      const input = {
         arguments:
           arguments_.stream === true
             ? {...arguments_, transport: httpStreams(app) ? 'http' : 'mcp'}
             : arguments_,
         name,
-      }),
-    )
+      }
+      return options === undefined ? app.callServerTool(input) : app.callServerTool(input, options)
+    })
 
 export const createHost = (): ViewerPort => {
   const app = new App({name: 'Code Viewer', version: manifest.version}, {}, {autoResize: false})
   const extensions = new OpenAIExtensions(app)
   // The base protocol carries custom methods, as in the OpenAI extensions adapter.
   const protocol = app as unknown as Protocol<Request, Notification, Result>
-  const resources = createResourceSubscriptions(protocol)
   const requests = createPendingTasks()
   const call = createToolCall(app, requests)
   let contexts: string[] = []
@@ -87,8 +87,7 @@ export const createHost = (): ViewerPort => {
         ),
       )
     },
-    start: async (receive, report, refresh, onTeardown) => {
-      let resource: string | null = null
+    start: async (receive, report, _refresh, onTeardown) => {
       let stopped = false
       const handleResult = (result: {
         isError?: boolean
@@ -118,17 +117,6 @@ export const createHost = (): ViewerPort => {
           return
         }
         handleResult(result)
-        if (stopped) {
-          return
-        }
-        if (resource !== null) {
-          await resources.unsubscribe({uri: resource})
-        }
-        if (stopped) {
-          return
-        }
-        resource = parsed.data.file.resourceUri
-        await resources.subscribe({uri: resource})
       }
       const handleInput = (input: {arguments?: Record<string, unknown>}): void => {
         requests.run(() => handleFile(input)).catch(report)
@@ -157,24 +145,17 @@ export const createHost = (): ViewerPort => {
       }
       synchronizeContext()
       const disposeAppearance = connectHostAppearance(app)
-      const disposeUpdates = resources.addUpdateHandler(({params}) => {
-        if (params.uri === resource) {
-          refresh()
-        }
-      })
       return async () => {
         stopped = true
         disposeAppearance()
-        disposeUpdates()
         removeListeners()
         await requests.settle()
-        if (resource !== null) {
-          await resources.unsubscribe({uri: resource}).catch(report)
-        }
         await app.close().catch(report)
       }
     },
-    watch: (session, receive) =>
-      subscribeWorkspace({call, receive, session, ...(httpStreams(app) ? {} : {resources})}),
+    watch: (session, receive, report) =>
+      httpStreams(app)
+        ? subscribeWorkspace({call, receive, session})
+        : subscribeWorkspaceChanges({call, receive, report, session}),
   }
 }
