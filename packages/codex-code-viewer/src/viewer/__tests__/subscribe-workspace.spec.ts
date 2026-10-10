@@ -1,7 +1,52 @@
 import {afterEach, describe, expect, it, vi} from 'vitest'
+import type {OpenAIExtensions} from '@openai/mcp-extensions/app'
 import {subscribeWorkspace} from '../subscribe-workspace'
 
 describe('subscribeWorkspace', () => {
+  it('should refresh only for its subscribed MCP resource and remove the listener on cleanup', async () => {
+    const remove = vi.fn()
+    const resources = {
+      addUpdateHandler: vi.fn<NonNullable<OpenAIExtensions['resources']>['addUpdateHandler']>(
+        () => remove,
+      ),
+      subscribe: vi.fn().mockResolvedValue({}),
+      unsubscribe: vi.fn().mockResolvedValue({}),
+    }
+    const resourceUri = 'code-viewer://workspace/first'
+    const call = vi.fn().mockResolvedValue({content: [], structuredContent: {resourceUri}})
+    const receive = vi.fn()
+    const dispose = await subscribeWorkspace({call, receive, resources, session: 'first'})
+    const handler = resources.addUpdateHandler.mock.calls[0]?.[0]
+    expect(handler).toEqual(expect.any(Function))
+    handler?.({
+      method: 'notifications/resources/updated',
+      params: {uri: 'code-viewer://workspace/other'},
+    })
+    expect(receive).toHaveBeenCalledOnce()
+    handler?.({method: 'notifications/resources/updated', params: {uri: resourceUri}})
+    expect(receive).toHaveBeenCalledTimes(2)
+    await dispose()
+    expect(remove).toHaveBeenCalledOnce()
+    expect(resources.unsubscribe).toHaveBeenCalledWith({uri: resourceUri})
+  })
+  it('should remove its MCP listener when subscription fails', async () => {
+    const remove = vi.fn()
+    const resources = {
+      addUpdateHandler: vi.fn<NonNullable<OpenAIExtensions['resources']>['addUpdateHandler']>(
+        () => remove,
+      ),
+      subscribe: vi.fn().mockRejectedValue(new Error('subscription failed')),
+      unsubscribe: vi.fn(),
+    }
+    const call = vi.fn().mockResolvedValue({
+      content: [],
+      structuredContent: {resourceUri: 'code-viewer://workspace/first'},
+    })
+    await expect(
+      subscribeWorkspace({call, receive: vi.fn(), resources, session: 'first'}),
+    ).rejects.toThrow('subscription failed')
+    expect(remove).toHaveBeenCalledOnce()
+  })
   it('should connect to a preview stream on its own origin and release the subscription', async () => {
     vi.stubGlobal('location', {origin: 'http://192.168.1.20:8000'})
     const close = vi.fn()

@@ -25,8 +25,8 @@ export const readWorkspaceStream = async (options: WorkspaceStreamOptions): Prom
     port: options.port,
     schema: z.union([streamEndpointSchema, treeSchema, filesSchema]),
   })
-  options.signal.throwIfAborted()
   if (!('url' in result)) {
+    options.signal.throwIfAborted()
     options.receive({
       complete: true,
       directories: 'directories' in result ? (result.directories ?? []) : [],
@@ -38,5 +38,10 @@ export const readWorkspaceStream = async (options: WorkspaceStreamOptions): Prom
     })
     return
   }
-  await readJsonStream({...options, schema: scanBatchSchema, url: result.url})
+  await readJsonStream({
+    ...options,
+    call: options.port.call,
+    schema: scanBatchSchema,
+    url: result.url,
+  })
 }

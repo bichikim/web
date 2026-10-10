@@ -1,8 +1,10 @@
 import {type NavigationLocation, type NavigationResult, navigationSchema} from '../shared/contracts'
 import {nextAnimationFrame} from './next-animation-frame'
 import {readJsonStream} from './read-json-stream'
+import type {ViewerPort} from './types'
 
 interface NavigationStreamOptions {
+  readonly call?: ViewerPort['call']
   readonly url: string
   readonly signal: AbortSignal
   readonly receive: (locations: readonly NavigationLocation[]) => void
@@ -14,6 +16,7 @@ export const readNavigationStream = async (
 ): Promise<NavigationResult | null> => {
   const definitions: NavigationResult[] = []
   await readJsonStream({
+    call: options.call,
     receive: async (batch) => {
       if (batch.kind === 'definition') {
         definitions.push(batch)

@@ -11,6 +11,18 @@ import {connectHostAppearance} from './connect-host-appearance'
 import {formatContext} from './format-context'
 import {createPendingTasks} from './create-pending-tasks'
 
+const watchWorkspace = async (
+  resources: OpenAIExtensions['resources'],
+  call: ViewerPort['call'],
+  session: string,
+  receive: () => void,
+): Promise<() => Promise<void>> => {
+  if (resources === undefined) {
+    throw new Error('이 앱은 파일 변경 알림 연결을 지원하지 않습니다.')
+  }
+  return subscribeWorkspace({call, receive, resources, session})
+}
+
 export const createHost = (): ViewerPort => {
   const app = new App({name: 'Code Viewer', version: manifest.version}, {}, {autoResize: false})
   const extensions = new OpenAIExtensions(app)
@@ -18,7 +30,12 @@ export const createHost = (): ViewerPort => {
   const protocol = app as unknown as Protocol<Request, Notification, Result>
   const requests = createPendingTasks()
   const call: ViewerPort['call'] = (name, arguments_) =>
-    requests.run(() => app.callServerTool({arguments: arguments_, name}))
+    requests.run(() =>
+      app.callServerTool({
+        arguments: arguments_.stream === true ? {...arguments_, transport: 'mcp'} : arguments_,
+        name,
+      }),
+    )
   let contexts: string[] = []
   let observedContextId: string | null | undefined
   let contextQueue: Promise<void> = Promise.resolve()
@@ -155,6 +172,6 @@ export const createHost = (): ViewerPort => {
         await app.close().catch(report)
       }
     },
-    watch: (session, receive) => subscribeWorkspace({call, receive, session}),
+    watch: (session, receive) => watchWorkspace(extensions.resources, call, session, receive),
   }
 }

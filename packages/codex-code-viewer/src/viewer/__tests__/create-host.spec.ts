@@ -9,32 +9,49 @@ import {useViewer} from '../use-viewer'
 describe('createHost', () => {
   afterEach(() => vi.restoreAllMocks())
 
-  it('should subscribe to workspace signals through its server tool and close the local event stream', async () => {
-    const events = Object.assign(new EventTarget(), {close: vi.fn()})
-    const source = vi.fn(function source() {
-      return events
+  it('should subscribe to workspace changes through MCP without opening a browser event stream', async () => {
+    vi.spyOn(App.prototype, 'getHostCapabilities').mockReturnValue({
+      experimental: {'openai/resource': {}},
     })
+    const request = vi.spyOn(App.prototype, 'request').mockResolvedValue({})
+    const source = vi.fn()
     vi.stubGlobal('EventSource', source)
-    const call = vi.spyOn(App.prototype, 'callServerTool').mockResolvedValue({
-      content: [],
-      structuredContent: {url: 'http://127.0.0.1:1234/token'},
-    })
+    const uri = 'code-viewer://workspace/first'
+    const call = vi
+      .spyOn(App.prototype, 'callServerTool')
+      .mockResolvedValue({content: [], structuredContent: {resourceUri: uri}})
     try {
       const notify = vi.fn()
       const stop = await createHost().watch?.('first', notify)
-      events.dispatchEvent(new MessageEvent('message', {data: '0'}))
-      events.dispatchEvent(new MessageEvent('message', {data: '0'}))
-      events.dispatchEvent(new MessageEvent('message', {data: '1'}))
-      expect(notify).toHaveBeenCalledTimes(2)
-      expect(source).toHaveBeenCalledWith('http://127.0.0.1:1234/token')
-      expect(call).toHaveBeenCalledWith({arguments: {session: 'first'}, name: 'code.watch'})
+      expect(call).toHaveBeenCalledWith({
+        arguments: {session: 'first', transport: 'mcp'},
+        name: 'code.watch',
+      })
+      expect(request).toHaveBeenCalledWith(
+        {method: 'resources/subscribe', params: {uri}},
+        expect.anything(),
+        undefined,
+      )
+      expect(notify).toHaveBeenCalledOnce()
+      expect(source).not.toHaveBeenCalled()
       await stop?.()
-      expect(events.close).toHaveBeenCalledOnce()
-      events.dispatchEvent(new MessageEvent('message', {data: '2'}))
-      expect(notify).toHaveBeenCalledTimes(2)
+      expect(request).toHaveBeenLastCalledWith(
+        {method: 'resources/unsubscribe', params: {uri}},
+        expect.anything(),
+        undefined,
+      )
+      expect(notify).toHaveBeenCalledOnce()
     } finally {
       vi.unstubAllGlobals()
     }
+  })
+  it('should request scan cursors through MCP in the installed host', async () => {
+    const call = vi.spyOn(App.prototype, 'callServerTool').mockResolvedValue({content: []})
+    await createHost().call('code.tree', {session: 'first', stream: true})
+    expect(call).toHaveBeenCalledWith({
+      arguments: {session: 'first', stream: true, transport: 'mcp'},
+      name: 'code.tree',
+    })
   })
   it('should await the consumer cleanup when the host requests teardown', async () => {
     vi.spyOn(App.prototype, 'connect').mockResolvedValue()

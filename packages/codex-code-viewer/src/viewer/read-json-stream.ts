@@ -1,6 +1,9 @@
 import {z} from 'zod'
+import type {ViewerPort} from './types'
+import {readMcpStream} from './read-mcp-stream'
 
 interface JsonStreamOptions<Value extends object> {
+  readonly call?: ViewerPort['call']
   readonly url: string
   readonly signal: AbortSignal
   readonly schema: z.ZodType<Value>
@@ -8,7 +11,7 @@ interface JsonStreamOptions<Value extends object> {
 }
 
 /** Consumes validated NDJSON batches until a terminal message, releasing the reader on cancellation. */
-export const readJsonStream = async <Value extends object>(
+const readHttpStream = async <Value extends object>(
   options: JsonStreamOptions<Value>,
 ): Promise<void> => {
   const messageSchema = z.union([
@@ -65,4 +68,17 @@ export const readJsonStream = async <Value extends object>(
     await reader.cancel().catch(() => undefined)
     reader.releaseLock()
   }
+}
+
+/** Consumes validated batches using the endpoint's transport. */
+export const readJsonStream = async <Value extends object>(
+  options: JsonStreamOptions<Value>,
+): Promise<void> => {
+  if (options.url.startsWith('code-viewer://scan/')) {
+    if (options.call === undefined) {
+      throw new Error('MCP 연결이 필요합니다.')
+    }
+    return readMcpStream({...options, call: options.call})
+  }
+  return readHttpStream(options)
 }

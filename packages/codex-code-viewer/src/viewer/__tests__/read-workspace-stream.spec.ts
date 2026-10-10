@@ -20,6 +20,33 @@ const setup = () => {
 
 describe('readWorkspaceStream', () => {
   afterEach(() => vi.unstubAllGlobals())
+  it('should deliver MCP batches before completion without making a browser network request', async () => {
+    const fetch = vi.fn()
+    vi.stubGlobal('fetch', fetch)
+    const finished = Promise.withResolvers<unknown>()
+    const received = Promise.withResolvers<void>()
+    const call = vi
+      .fn()
+      .mockResolvedValueOnce({content: [], structuredContent: {url: 'code-viewer://scan/token'}})
+      .mockResolvedValueOnce({content: [], structuredContent: {batch, done: false}})
+      .mockImplementationOnce(() => finished.promise)
+      .mockResolvedValue({content: [], structuredContent: {closed: true}})
+    const receive = vi.fn(() => received.resolve())
+    const operation = readWorkspaceStream({
+      input: {},
+      name: 'code.tree',
+      port: {call},
+      receive,
+      signal: new AbortController().signal,
+    })
+    await received.promise
+    expect(receive).toHaveBeenCalledWith(batch)
+    expect(fetch).not.toHaveBeenCalled()
+    finished.resolve({content: [], structuredContent: {done: true}})
+    await operation
+    expect(call).toHaveBeenCalledWith('code.stream.read', {url: 'code-viewer://scan/token'})
+    expect(call).toHaveBeenCalledWith('code.stream.close', {url: 'code-viewer://scan/token'})
+  })
   it('should deliver split UTF-8 batches before completion and recognize the terminal message', async () => {
     const {call, writer} = setup()
     const received = Promise.withResolvers<void>()

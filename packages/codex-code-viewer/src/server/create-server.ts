@@ -18,6 +18,8 @@ import {createWorkspaceEvents} from './create-workspace-events'
 import {filterScan} from './filter-scan'
 import {registerFileOperations} from './register-file-operations'
 import {registerViewerResource} from './register-viewer-resource'
+import {createMcpStreams} from './create-mcp-streams'
+import {registerWorkspaceUpdates} from './register-workspace-updates'
 
 const appOnly = {ui: {visibility: ['app']}}
 const MAX_ENTRY_NAME_LENGTH = 255
@@ -61,6 +63,7 @@ const registerTree = (
   server: McpServer,
   withSession: ReturnType<typeof createSessions>['withSession'],
   updates: ReturnType<typeof createWorkspaceEvents>,
+  streams: ReturnType<typeof createMcpStreams>,
 ): void => {
   server.registerTool(
     'code.tree',
@@ -72,18 +75,21 @@ const registerTree = (
         query: z.string().default(''),
         session: z.string(),
         stream: z.boolean().default(false),
+        transport: z.enum(['http', 'mcp']).default('http'),
       },
       title: 'List workspace file tree',
     },
-    async ({session, directories, query, stream}) =>
+    async ({session, directories, query, stream, transport}) =>
       stream
         ? withSession(session, async (workspace) => {
             if (directories !== undefined) {
               workspace.observe(directories)
             }
             return success({
-              url: await updates.scan(session, 'tree', (signal) =>
-                filterScan(workspace.scan(directories, signal), query),
+              url: await (transport === 'mcp' ? streams.open : updates.scan)(
+                session,
+                'tree',
+                (signal) => filterScan(workspace.scan(directories, signal), query),
               ),
             })
           })
@@ -95,6 +101,7 @@ const registerList = (
   server: McpServer,
   withSession: ReturnType<typeof createSessions>['withSession'],
   updates: ReturnType<typeof createWorkspaceEvents>,
+  streams: ReturnType<typeof createMcpStreams>,
 ): void => {
   server.registerTool(
     'code.list',
@@ -105,15 +112,18 @@ const registerList = (
         query: z.string().default(''),
         session: z.string(),
         stream: z.boolean().default(false),
+        transport: z.enum(['http', 'mcp']).default('http'),
       },
       title: 'Find workspace files',
     },
-    async ({session, query, stream}) =>
+    async ({session, query, stream, transport}) =>
       stream
         ? withSession(session, async (workspace) => {
             return success({
-              url: await updates.scan(session, 'search', (signal) =>
-                filterScan(workspace.scan(undefined, signal), query, true),
+              url: await (transport === 'mcp' ? streams.open : updates.scan)(
+                session,
+                'search',
+                (signal) => filterScan(workspace.scan(undefined, signal), query, true),
               ),
             })
           })
@@ -191,6 +201,7 @@ const registerNavigation = (
   server: McpServer,
   withSession: ReturnType<typeof createSessions>['withSession'],
   updates: ReturnType<typeof createWorkspaceEvents>,
+  streams: ReturnType<typeof createMcpStreams>,
 ): void => {
   const pathInput = {path: z.string(), session: z.string()}
   server.registerTool(
@@ -205,15 +216,19 @@ const registerNavigation = (
         revision: z.string(),
         sources: z.array(codeSourceSchema).max(MAX_DRAFT_FILES).optional(),
         stream: z.boolean().default(false),
+        transport: z.enum(['http', 'mcp']).default('http'),
       },
       title: 'Follow import or definition',
     },
-    async ({session, path, offset, navigation, revision, sources, stream}) =>
+    async ({session, path, offset, navigation, revision, sources, stream, transport}) =>
       withSession(session, async (workspace): Promise<Result<NavigationResult | {url: string}>> => {
         if (stream) {
           return success({
-            url: await updates.scan(session, 'navigation', (signal) =>
-              workspace.scanNavigation({navigation, offset, path, revision, sources}, signal),
+            url: await (transport === 'mcp' ? streams.open : updates.scan)(
+              session,
+              'navigation',
+              (signal) =>
+                workspace.scanNavigation({navigation, offset, path, revision, sources}, signal),
             ),
           })
         }
@@ -236,6 +251,31 @@ const registerNavigation = (
   )
 }
 
+const registerScanTools = (
+  server: McpServer,
+  streams: ReturnType<typeof createMcpStreams>,
+): void => {
+  server.registerTool(
+    'code.stream.read',
+    {_meta: appOnly, annotations, inputSchema: {url: z.string()}, title: 'Read next scan batch'},
+    async ({url}) => {
+      try {
+        return toolResult(success(await streams.read(url)))
+      } catch {
+        return toolResult(failure('read-failed'))
+      }
+    },
+  )
+  server.registerTool(
+    'code.stream.close',
+    {_meta: appOnly, annotations, inputSchema: {url: z.string()}, title: 'Close scan cursor'},
+    async ({url}) => {
+      streams.close(url)
+      return toolResult(success({closed: true}))
+    },
+  )
+}
+
 export const createServer = (html: string, options: ServerOptions = {}) => {
   const server = new McpServer({
     name: 'codex-code-viewer',
@@ -243,9 +283,18 @@ export const createServer = (html: string, options: ServerOptions = {}) => {
     version: manifest.version,
   })
   const updates = createWorkspaceEvents()
+  const streams = createMcpStreams()
+  const notifications = registerWorkspaceUpdates(server)
   const sessions = createSessions({
-    onChange: (session) => updates.changed(session),
-    onClose: (session) => updates.closed(session),
+    onChange: (session) => {
+      updates.changed(session)
+      notifications.changed(session)
+    },
+    onClose: (session) => {
+      updates.closed(session)
+      streams.closeSession(session)
+      notifications.close(session)
+    },
   })
   const {open, withSession} = sessions
   const resourceUri = registerViewerResource(server, html)
@@ -319,8 +368,8 @@ export const createServer = (html: string, options: ServerOptions = {}) => {
         return document.ok ? success({document: document.value}) : document
       }),
   )
-  registerNavigation(server, withSession, updates)
-  registerList(server, withSession, updates)
+  registerNavigation(server, withSession, updates, streams)
+  registerList(server, withSession, updates, streams)
   server.registerTool(
     'code.close',
     {
@@ -339,18 +388,26 @@ export const createServer = (html: string, options: ServerOptions = {}) => {
     {
       _meta: appOnly,
       annotations,
-      inputSchema: {session: z.string()},
+      inputSchema: {session: z.string(), transport: z.enum(['http', 'mcp']).default('http')},
       title: 'Subscribe to workspace changes',
     },
-    async ({session}) =>
-      withSession(session, async () => success({url: await updates.watch(session)})),
+    async ({session, transport}) =>
+      withSession(
+        session,
+        async (): Promise<Result<{resourceUri: string} | {url: string}>> =>
+          transport === 'mcp'
+            ? success({resourceUri: notifications.watch(session)})
+            : success({url: await updates.watch(session)}),
+      ),
   )
-  registerTree(server, withSession, updates)
+  registerScanTools(server, streams)
+  registerTree(server, withSession, updates, streams)
   registerEditing(server, withSession)
   registerFileOperations(server, withSession)
   registerMedia(server, withSession)
   const dispose = async () => {
     sessions.dispose()
+    streams.dispose()
     await updates.dispose()
     await server.close()
   }

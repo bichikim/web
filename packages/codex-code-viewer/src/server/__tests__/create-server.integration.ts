@@ -4,6 +4,7 @@ import {join} from 'node:path'
 import {z} from 'zod'
 import {Client} from '@modelcontextprotocol/sdk/client/index.js'
 import {InMemoryTransport} from '@modelcontextprotocol/sdk/inMemory.js'
+import {ResourceUpdatedNotificationSchema} from '@modelcontextprotocol/sdk/types.js'
 import {afterEach, beforeEach, describe, expect, it} from 'vitest'
 import {
   entrySchema,
@@ -87,6 +88,51 @@ describe('createServer', () => {
   })
   it('should advertise the released package version to the MCP client', () => {
     expect(client.getServerVersion()?.version).toBe(version)
+  })
+  it('should stream file batches over MCP and release them when the viewer session closes', async () => {
+    const opened = sessionSchema.parse(
+      (await client.callTool({arguments: {path}, name: 'code.open'})).structuredContent,
+    )
+    const endpoint = await client.callTool({
+      arguments: {directories: [''], session: opened.session, stream: true, transport: 'mcp'},
+      name: 'code.tree',
+    })
+    const {url} = z.object({url: z.string()}).parse(endpoint.structuredContent)
+    expect(url).toMatch(/^code-viewer:\/\/scan\//u)
+    const first = await client.callTool({arguments: {url}, name: 'code.stream.read'})
+    expect(first).toMatchObject({structuredContent: {batch: {directory: ''}, done: false}})
+    await client.callTool({arguments: {session: opened.session}, name: 'code.close'})
+    expect(await client.callTool({arguments: {url}, name: 'code.stream.read'})).toMatchObject({
+      isError: true,
+    })
+  })
+  it('should notify subscribed MCP resources when a watched file changes and stop after unsubscribe', async () => {
+    const root = mkdtempSync(join(tmpdir(), 'viewer-mcp-watch-'))
+    try {
+      mkdirSync(join(root, '.git'))
+      writeFileSync(join(root, 'main.ts'), 'before')
+      const opened = sessionSchema.parse(
+        (await client.callTool({arguments: {path: join(root, 'main.ts')}, name: 'code.open'}))
+          .structuredContent,
+      )
+      const watched = await client.callTool({
+        arguments: {session: opened.session, transport: 'mcp'},
+        name: 'code.watch',
+      })
+      const {resourceUri} = z.object({resourceUri: z.string()}).parse(watched.structuredContent)
+      const changed = Promise.withResolvers<string>()
+      client.setNotificationHandler(ResourceUpdatedNotificationSchema, ({params}) => {
+        changed.resolve(params.uri)
+      })
+      await client.subscribeResource({uri: resourceUri})
+      writeFileSync(join(root, 'main.ts'), 'after')
+      expect(await changed.promise).toBe(resourceUri)
+      await client.unsubscribeResource({uri: resourceUri})
+      await client.callTool({arguments: {session: opened.session}, name: 'code.close'})
+      await expect(client.subscribeResource({uri: resourceUri})).rejects.toThrow()
+    } finally {
+      rmSync(root, {force: true, recursive: true})
+    }
   })
   it('should share the viewer build address across entry points and preserve saved file connections', async () => {
     const listing = await client.listTools()

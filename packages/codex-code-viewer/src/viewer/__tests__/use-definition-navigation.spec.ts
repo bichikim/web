@@ -244,6 +244,26 @@ describe('useDefinitionNavigation', () => {
     expect(navigation.choices()).toEqual([])
     expect(open).not.toHaveBeenCalled()
   })
+  it.each(['cancel', 'dismiss'] as const)(
+    'should release a late MCP cursor after %s',
+    async (action) => {
+      const pending = Promise.withResolvers<CallToolResult>()
+      vi.mocked(port.call).mockReturnValueOnce(pending.promise)
+      const {cancel, navigation} = mount()
+      const following = navigation.follow(token)
+      if (action === 'cancel') {
+        cancel()
+      } else {
+        navigation.dismissReferences()
+      }
+      pending.resolve({content: [], structuredContent: {url: 'code-viewer://scan/late'}})
+      await following
+      expect(port.call).toHaveBeenLastCalledWith('code.stream.close', {
+        url: 'code-viewer://scan/late',
+      })
+      expect(navigation.references()).toBeNull()
+    },
+  )
   it.each([
     {kind: 'definition', locations: [location]},
     {kind: 'definition', locations: [location, {...location, path: 'other.rb'}]},

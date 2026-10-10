@@ -11,7 +11,7 @@ export const registerViewerResource = (server: McpServer, html: string): string 
       {
         _meta: {
           ui: {
-            csp: {connectDomains: ['http://127.0.0.1:*'], resourceDomains: ['blob:']},
+            csp: {connectDomains: [], resourceDomains: ['blob:']},
             prefersBorder: false,
           },
         },

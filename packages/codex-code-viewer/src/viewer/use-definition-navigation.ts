@@ -57,6 +57,15 @@ const sameNavigation = (before: NavigationSnapshot, after: NavigationSnapshot | 
   )
 }
 
+const closeStream = async (
+  call: ViewerPort['call'],
+  result: z.infer<typeof navigationSchema> | {url: string},
+): Promise<void> => {
+  if ('url' in result && result.url.startsWith('code-viewer://scan/')) {
+    await call('code.stream.close', {url: result.url}).catch(() => undefined)
+  }
+}
+
 /** Follows a unique definition or exposes destinations and unresolved/ambiguous result feedback. */
 export const useDefinitionNavigation = (
   options: DefinitionNavigationOptions,
@@ -121,30 +130,35 @@ export const useDefinitionNavigation = (
     const operation = new AbortController()
     controller = operation
     origin = current
-    const result = await options.run(() =>
-      request(
-        'code.navigate',
-        {
-          navigation: token.navigation,
-          offset: token.offset,
-          path: current.path,
-          revision: current.revision,
-          stream: true,
-          ...(options.sources === undefined ? {} : {sources: current.sources}),
-        },
-        z.union([streamEndpointSchema, navigationSchema]),
-      ),
+    const result = await options.run(
+      () =>
+        request(
+          'code.navigate',
+          {
+            navigation: token.navigation,
+            offset: token.offset,
+            path: current.path,
+            revision: current.revision,
+            stream: true,
+            ...(options.sources === undefined ? {} : {sources: current.sources}),
+          },
+          z.union([streamEndpointSchema, navigationSchema]),
+        ),
+      (discarded) => closeStream(options.port.call, discarded),
     )
-    if (operation.signal.aborted) {
-      return
-    }
-    if (result === null || !sameNavigation(current, snapshot())) {
-      dismissReferences()
+    if (operation.signal.aborted || result === null || !sameNavigation(current, snapshot())) {
+      if (result !== null) {
+        await closeStream(options.port.call, result)
+      }
+      if (!operation.signal.aborted) {
+        dismissReferences()
+      }
       return
     }
     if ('url' in result) {
       try {
         const definition = await readNavigationStream({
+          call: options.port.call,
           receive: (locations) => {
             if (!sameNavigation(current, snapshot())) {
               operation.abort()

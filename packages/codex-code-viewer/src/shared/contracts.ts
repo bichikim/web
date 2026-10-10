@@ -82,13 +82,22 @@ export type ScanBatch = z.infer<typeof scanBatchSchema>
 export const streamEndpointSchema = z.object({
   url: z.url().refine((value) => {
     const url = new URL(value)
+    if (url.username !== '' || url.password !== '') {
+      return false
+    }
+    if (url.protocol === 'code-viewer:') {
+      return (
+        url.hostname === 'scan' &&
+        url.port === '' &&
+        /^\/[a-zA-Z0-9-]+$/u.test(url.pathname) &&
+        url.search === '' &&
+        url.hash === ''
+      )
+    }
     return (
       url.protocol === 'http:' &&
       (url.hostname === '127.0.0.1' ||
-        (typeof globalThis.location !== 'undefined' &&
-          url.origin === globalThis.location.origin)) &&
-      url.username === '' &&
-      url.password === ''
+        (typeof globalThis.location !== 'undefined' && url.origin === globalThis.location.origin))
     )
   }),
 })
