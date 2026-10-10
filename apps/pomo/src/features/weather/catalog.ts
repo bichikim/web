@@ -1,3 +1,5 @@
+import {keyBy} from 'es-toolkit/array'
+
 export const WEATHER_CITY_CATALOG = [
   {names: {en: 'Seoul', ko: '서울'}, region: '서울특별시', slug: 'seoul'},
   {names: {en: 'Busan', ko: '부산'}, region: '부산광역시', slug: 'busan'},
@@ -43,6 +45,6 @@ export const WEATHER_CITY_SLUGS: ReadonlyArray<WeatherCitySlug> = WEATHER_CITY_C
   (city) => city.slug,
 )
 
-export const WEATHER_CITIES_BY_SLUG = Object.fromEntries(
-  WEATHER_CITY_CATALOG.map((city) => [city.slug, city]),
-) as Readonly<Record<WeatherCitySlug, (typeof WEATHER_CITY_CATALOG)[number]>>
+export const WEATHER_CITIES_BY_SLUG: Readonly<
+  Record<WeatherCitySlug, (typeof WEATHER_CITY_CATALOG)[number]>
+> = keyBy(WEATHER_CITY_CATALOG, (city) => city.slug)
