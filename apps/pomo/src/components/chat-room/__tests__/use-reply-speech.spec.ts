@@ -157,6 +157,39 @@ describe('useReplySpeech', () => {
     expect(voice.finish).not.toHaveBeenCalled()
   })
 
+  it('should not replay a spoken numeric sentence when its following separator changes to a newline', () => {
+    const {result, voice, setStreamingText} = setup()
+    result.start()
+
+    setStreamingText('There are 3. Original ending.')
+    expect(voice.speak.mock.calls.map(([text]) => text)).toEqual([
+      'There are 3.',
+      'Original ending.',
+    ])
+
+    setStreamingText('There are 3.\nRevised ending.')
+    expect(voice.speak.mock.calls.map(([text]) => text)).toEqual([
+      'There are 3.',
+      'Original ending.',
+      'Revised ending.',
+    ])
+  })
+
+  it('should not replay a flushed numeric tail when revised text adds a newline', () => {
+    const {result, voice, setAnswerDraft, setStreamingText} = setup()
+    result.start()
+
+    setStreamingText('There are 3.')
+    setAnswerDraft({content: 'There are 3.', id: 'reply'})
+    expect(voice.speak.mock.calls.map(([text]) => text)).toEqual(['There are 3.'])
+
+    setStreamingText('There are 3.\nRevised ending.')
+    expect(voice.speak.mock.calls.map(([text]) => text)).toEqual([
+      'There are 3.',
+      'Revised ending.',
+    ])
+  })
+
   it('should not repeat a completed sentence when streaming text shrinks', async () => {
     const {result, voice, setStreamingText} = setup()
     result.start()

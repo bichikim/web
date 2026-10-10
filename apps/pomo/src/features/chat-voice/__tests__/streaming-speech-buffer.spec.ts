@@ -104,6 +104,25 @@ describe('createStreamingSpeechBuffer', () => {
     expect(buffer.flush('There are 3.')).toBeNull()
   })
 
+  it('should not repeat a consumed numeric sentence when a later separator changes to a newline', () => {
+    const buffer = createStreamingSpeechBuffer({locale: 'ko'})
+
+    expect(buffer.update('There are 3. Original ending.')).toEqual([
+      'There are 3.',
+      'Original ending.',
+    ])
+    expect(buffer.update('There are 3.\nRevised ending.')).toEqual(['Revised ending.'])
+    expect(buffer.update('There are 3. Corrected ending.')).toEqual(['Corrected ending.'])
+  })
+
+  it('should preserve a numeric sentence consumed by flush when later text changes its separator', () => {
+    const buffer = createStreamingSpeechBuffer({locale: 'ko'})
+
+    expect(buffer.update('There are 3.')).toEqual([])
+    expect(buffer.flush('There are 3.')).toBe('There are 3.')
+    expect(buffer.update('There are 3.\nRevised ending.')).toEqual(['Revised ending.'])
+  })
+
   it('should speak a revised decimal sentence when replacement text adds fractional digits', () => {
     const buffer = createStreamingSpeechBuffer({locale: 'ko'})
 

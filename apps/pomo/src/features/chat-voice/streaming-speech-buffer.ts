@@ -145,7 +145,10 @@ export const createStreamingSpeechBuffer = (
         commonPrefixLength += 1
       }
 
-      const lastUnchangedSegment = getCompletedSegments(text.slice(0, commonPrefixLength)).at(-1)
+      // Keep current lookahead for boundary detection, but retain only the unchanged prefix.
+      const lastUnchangedSegment = getCompletedSegments(text)
+        .filter(({index, segment}) => index + segment.trimEnd().length <= commonPrefixLength)
+        .at(-1)
       consumedLength =
         lastUnchangedSegment === undefined
           ? 0
