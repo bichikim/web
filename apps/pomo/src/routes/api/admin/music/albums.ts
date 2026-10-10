@@ -7,6 +7,7 @@ import {readJsonBody} from 'src/server/http/body'
 import {noStoreJson} from 'src/server/http/response'
 import {createAlbum} from 'src/server/repositories/music-album-creation'
 import {isManagedAlbumCoverUrl} from 'src/server/music/cover-upload'
+import {hasUniqueIds} from 'src/features/catalog-policy'
 
 const MAXIMUM_BODY_SIZE = 65_536
 const MAXIMUM_DESCRIPTION_LENGTH = 2000
@@ -34,10 +35,7 @@ const albumSchema = z.object({
     .array(translationSchema)
     .min(1)
     .max(REQUIRED_TRANSLATION_COUNT)
-    .refine(
-      (translations) =>
-        new Set(translations.map(({locale}) => locale)).size === translations.length,
-    )
+    .refine((translations) => hasUniqueIds(translations.map(({locale}) => locale)))
     .refine((translations) =>
       translations.some(
         (translation) =>
