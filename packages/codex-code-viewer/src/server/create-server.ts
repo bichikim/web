@@ -1,7 +1,6 @@
 import {resolveNavigation} from './resolve-navigation'
 import {MAX_CODE_BYTES, MAX_DRAFT_FILES} from '../shared/editing-limits'
 import {McpServer} from '@modelcontextprotocol/sdk/server/mcp.js'
-import {registerAppResource, RESOURCE_MIME_TYPE} from '@modelcontextprotocol/ext-apps/server'
 import {getResourcePath} from '@openai/mcp-extensions/server'
 import {z} from 'zod'
 import manifest from '../../package.json'
@@ -18,9 +17,9 @@ import {FILE_EXTENSIONS} from '../shared/file-formats'
 import {createWorkspaceEvents} from './create-workspace-events'
 import {filterScan} from './filter-scan'
 import {registerFileOperations} from './register-file-operations'
+import {registerViewerResource} from './register-viewer-resource'
 
 const appOnly = {ui: {visibility: ['app']}}
-const VIEWER_URI = 'ui://codex-code-viewer/app.html'
 const MAX_ENTRY_NAME_LENGTH = 255
 const annotations = {destructiveHint: false, openWorldHint: false, readOnlyHint: true}
 
@@ -32,11 +31,12 @@ const registerPanel = (
   server: McpServer,
   sessions: ReturnType<typeof createSessions>,
   options: ServerOptions,
+  resourceUri: string,
 ): void => {
   server.registerTool(
     'code.panel',
     {
-      _meta: {'openai/ui': {entrypoints: [{type: 'thread'}]}, ui: {resourceUri: VIEWER_URI}},
+      _meta: {'openai/ui': {entrypoints: [{type: 'thread'}]}, ui: {resourceUri}},
       annotations,
       inputSchema: {},
       title: 'Code Viewer',
@@ -248,9 +248,10 @@ export const createServer = (html: string, options: ServerOptions = {}) => {
     onClose: (session) => updates.closed(session),
   })
   const {open, withSession} = sessions
-  const appMetadata = {ui: {resourceUri: VIEWER_URI}}
+  const resourceUri = registerViewerResource(server, html)
+  const appMetadata = {ui: {resourceUri}}
   const pathInput = {path: z.string(), session: z.string()}
-  registerPanel(server, sessions, options)
+  registerPanel(server, sessions, options, resourceUri)
   server.registerTool(
     'code.open',
     {
@@ -348,21 +349,6 @@ export const createServer = (html: string, options: ServerOptions = {}) => {
   registerEditing(server, withSession)
   registerFileOperations(server, withSession)
   registerMedia(server, withSession)
-  registerAppResource(server, 'code-viewer', VIEWER_URI, {}, async () => ({
-    contents: [
-      {
-        _meta: {
-          ui: {
-            csp: {connectDomains: ['http://127.0.0.1:*'], resourceDomains: ['blob:']},
-            prefersBorder: false,
-          },
-        },
-        mimeType: RESOURCE_MIME_TYPE,
-        text: html,
-        uri: VIEWER_URI,
-      },
-    ],
-  }))
   const dispose = async () => {
     sessions.dispose()
     await updates.dispose()

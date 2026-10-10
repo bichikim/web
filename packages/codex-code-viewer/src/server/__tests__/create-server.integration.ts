@@ -88,6 +88,48 @@ describe('createServer', () => {
   it('should advertise the released package version to the MCP client', () => {
     expect(client.getServerVersion()?.version).toBe(version)
   })
+  it('should share the viewer build address across entry points and preserve saved file connections', async () => {
+    const listing = await client.listTools()
+    const metadata = z.object({ui: z.object({resourceUri: z.string()})})
+    const uri = metadata.parse(listing.tools.find((tool) => tool.name === 'code.panel')?._meta).ui
+      .resourceUri
+    expect(uri).toMatch(/^ui:\/\/codex-code-viewer\/app-[a-f0-9]{64}\.html$/u)
+    for (const name of ['code.open', 'code.file']) {
+      expect(
+        metadata.parse(listing.tools.find((tool) => tool.name === name)?._meta).ui.resourceUri,
+      ).toBe(uri)
+    }
+    const resource = await client.readResource({uri})
+    expect(resource.contents[0]).toMatchObject({text: '<html>viewer</html>', uri})
+    expect(
+      (await client.readResource({uri: 'ui://codex-code-viewer/app.html'})).contents[0],
+    ).toMatchObject({text: '<html>viewer</html>'})
+  })
+  it.each([
+    {html: '<html>viewer</html>', unchanged: true},
+    {html: '<html>viewer with settings</html>', unchanged: false},
+  ])(
+    'should reuse a resource address only for unchanged viewer content ($unchanged)',
+    async ({html, unchanged}) => {
+      const metadata = z.object({ui: z.object({resourceUri: z.string()})})
+      const original = metadata.parse(
+        (await client.listTools()).tools.find((tool) => tool.name === 'code.panel')?._meta,
+      ).ui.resourceUri
+      await client.close()
+      await instance.dispose()
+      instance = createServer(html)
+      client = new Client({name: 'viewer-test', version: '1.0.0'})
+      const [server, transport] = InMemoryTransport.createLinkedPair()
+      await instance.server.connect(server)
+      await client.connect(transport)
+      const next = metadata.parse(
+        (await client.listTools()).tools.find((tool) => tool.name === 'code.panel')?._meta,
+      ).ui.resourceUri
+      expect(next === original).toBe(unchanged)
+      expect((await client.readResource({uri: next})).contents[0]).toMatchObject({text: html})
+      expect((await client.readResource({uri: original})).contents[0]).toMatchObject({text: html})
+    },
+  )
   it('should create session-scoped entries, list empty folders and reject collisions or expired sessions', async () => {
     const root = mkdtempSync(join(tmpdir(), 'viewer-create-tool-'))
     try {
