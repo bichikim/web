@@ -108,6 +108,18 @@ Layout chrome and canvas manipulation handles are separate from form controls. D
 
 Keep the toolbar above a central canvas, the layer tree on the left, the inspector on the right, and parameter/timeline editing below. Panels resize and close independently. Do not let inspector content establish the canvas width or force the entire workspace to scroll.
 
+Show the existing editor frame immediately while the initial document is loading. Use its empty
+document state, announce loading to assistive technology without visible status text, and make the pending frame inert. Never
+connect this temporary frame to document persistence. Replace it with the loaded editor when ready.
+
+Keep routine save and restore success silent. Show actionable failures in a dismissible top-layer
+toast without consuming workspace layout space. Suppress repeated failures until saving recovers.
+
+Fit a newly opened document to the measured canvas viewport. While the camera remains fitted,
+follow viewport size changes; manual pan or zoom retains the user's view until the next fit.
+Layer name filtering ignores surrounding whitespace and letter case, retains ancestors for context,
+and preserves selection and the unfiltered tree's expanded state when cleared.
+
 Use the shared spacing contract below. Compact does not mean touching: retain clear space between a section label, its controls, and the next section. Avoid blank columns between disclosure arrows, layer icons, and titles.
 
 Preserve `min-width: 0` and shrinkable grid tracks where names and fields share a row. Allow action rows to wrap where necessary instead of clipping text. Do not solve overflow by shrinking every control or enlarging every panel.
@@ -176,6 +188,10 @@ Parameter deletion swipes start anywhere on the parameter row except value contr
 Keep parameter creation, keyform tools, geometry editing modes, and brush tools on one horizontal toolbar row. When the toolbar itself is at most 60rem wide, show icon-bearing geometry modes and mesh/deformer brush choices as icon-only buttons; preserve accessible names, tooltips, selected states, and control heights. Keep text for choices without icons. Scroll horizontally only when the compact controls still exceed the available width, and keep keyboard-focused actions reachable through the same scroll container.
 
 The animation timeline toolbar groups motion management, playback settings, and keyframe editing in that order. Keep its title beside the motion selector instead of reserving an empty title column. Wrap related groups as available width decreases; at most 60rem of toolbar width, compact icon-bearing actions while retaining accessible names, tooltips, and selected states. Always show the parameter-add label so users can discover how to populate the timeline. Keep easing in the editing group and retain readable, truncated motion names. Constrain the timeline to the editor's actual width even when side panels exceed it. Apply the same layout to the all-motions view.
+
+Place timeline zoom after editing controls. Scale frame widths or fit the duration to the available
+track width without changing keyframe times, selection, or focus. Share zoom with the all-motions
+view and adjust ruler label density to the measured track width.
 
 Create animation keyframes by double-clicking an empty track position, sampling the parameter value at the clicked frame. Backspace or Delete removes selected keyframes while their track or marker has focus. Right-click an empty position to add a keyframe, or an existing marker to delete it; right-clicking a selected marker preserves multi-selection and offers deletion of the selected group. Open the same menu with the Context Menu key or Shift+F10, using the focused marker or the playhead on a focused track. Retain the parameter row when its last keyframe is deleted, including imported motions without explicit timeline row IDs. Hide unavailable menu actions and remove persistent add/delete buttons from the toolbar. Ignore typing, composition, modifier chords, and key repeat, and restore track focus after deletion or closing the menu. Apply the same interactions independently to each motion in the all-motions view, through the existing document history.
 

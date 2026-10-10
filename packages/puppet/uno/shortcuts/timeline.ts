@@ -213,12 +213,13 @@ export const timelineShortcuts = {
     '[.puppet-editor_&]:[background-color:#101513]',
     '[.puppet-editor_&_>_span:not(.timeline-ruler-playhead)]:absolute',
     '[.puppet-editor_&_>_span:not(.timeline-ruler-playhead)]:[top:0.5rem]',
+    '[.puppet-editor_&:has(.timeline-ruler-status)_>_span:not(.timeline-ruler-playhead)]:[top:0.125rem]',
     '[.puppet-editor_&_>_span:not(.timeline-ruler-playhead)]:[color:#788580]',
     '[.puppet-editor_&_>_span:not(.timeline-ruler-playhead)]:font-editor-mono',
     '[.puppet-editor_&_>_span:not(.timeline-ruler-playhead)]:text-editor-micro',
     '[.puppet-editor_&_>_span:not(.timeline-ruler-playhead)]:[transform:translateX(-50%)]',
     '[.puppet-editor_&_>_span:first-child]:[transform:none]',
-    '[.puppet-editor_&_>_span:nth-child(9)]:[transform:translateX(-100%)]',
+    "[.puppet-editor_&_>_span[data-end='true']]:[transform:translateX(-100%)]",
     '[.puppet-editor_&_input]:absolute [.puppet-editor_&_input]:[inset:0] [.puppet-editor_&_input]:w-full',
     '[.puppet-editor_&_input]:h-full [.puppet-editor_&_input]:m-0 [.puppet-editor_&_input]:[opacity:0]',
     '[.puppet-editor_&_input]:[cursor:ew-resize]',
@@ -243,7 +244,7 @@ export const timelineShortcuts = {
     '[.puppet-editor_&::before]:[transform:translateX(-50%)]',
   ],
   'timeline-ruler-status': [
-    '[.puppet-editor_&]:absolute [.puppet-editor_&]:[top:0.375rem] [.puppet-editor_&]:[right:0.75rem]',
+    '[.puppet-editor_&]:absolute [.puppet-editor_&]:[top:1rem] [.puppet-editor_&]:[right:0.75rem]',
     '[.puppet-editor_&]:py-editor-tight [.puppet-editor_&]:px-editor-related [.puppet-editor_&]:[color:#7f8d88]',
     '[.puppet-editor_&]:[background:#101513] [.puppet-editor_&]:text-editor-micro',
     '[.puppet-editor_&]:font-editor-mono',
@@ -271,7 +272,8 @@ export const timelineShortcuts = {
   ],
   'timeline-tracks': [
     '[.puppet-editor_&]:grid [.puppet-editor_&]:[align-content:start]',
-    '[.puppet-editor_&]:[width:calc(var(--timeline-frame-count)_*_0.75rem)]',
+    '[.puppet-editor_&]:[width:calc(var(--timeline-frame-count)_*_0.75rem_*_var(--timeline-zoom,_1))]',
+    "[.puppet-editor_[data-fit='true']_&]:w-full",
   ],
   'timeline-tracks-scroll': [
     '[.puppet-editor_&]:min-w-0 [.puppet-editor_&]:overflow-x-auto',

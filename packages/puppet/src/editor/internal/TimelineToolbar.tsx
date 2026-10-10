@@ -4,8 +4,11 @@ import {TimelineSettingsControls} from './TimelineSettingsControls'
 import {TimelineMotionControls} from './TimelineMotionControls'
 import {TimelineParameterPicker} from './TimelineParameterPicker'
 import type {PuppetParameter} from '../../player'
+import {TimelineZoomControls} from './TimelineZoomControls'
 
 export interface TimelineToolbarProps {
+  readonly zoom?: number | 'fit'
+  readonly onZoomChange?: (zoom: number | 'fit') => void
   readonly easing: PuppetEasing
   readonly framesPerSecond: number
   readonly hasEditableSelection: boolean
@@ -90,6 +93,9 @@ export const TimelineToolbar = (props: TimelineToolbarProps) => (
             onChange={(value) => props.onEasingChange?.(value)}
           />
         </label>
+      </div>
+      <div class="timeline-control-group" role="group" aria-label="타임라인 보기">
+        <TimelineZoomControls zoom={props.zoom} onChange={props.onZoomChange} />
       </div>
     </div>
   </header>

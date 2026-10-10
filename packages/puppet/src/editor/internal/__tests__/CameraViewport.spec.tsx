@@ -1,8 +1,63 @@
 /** @vitest-environment jsdom */
 import {fireEvent, render} from '@solidjs/testing-library'
 import {createSignal} from 'solid-js'
-import {expect, test} from 'vitest'
+import {afterEach, expect, test, vi} from 'vitest'
 import {CameraViewport} from '../CameraViewport'
+
+afterEach(() => {
+  vi.restoreAllMocks()
+  vi.unstubAllGlobals()
+})
+
+test('should refit after layout settles while retaining manual navigation on later resizes', () => {
+  let resize = () => undefined as void
+  vi.stubGlobal(
+    'ResizeObserver',
+    class {
+      constructor(readonly callback: () => void) {}
+      observe(element: HTMLElement) {
+        if (element.getAttribute('aria-label') === '모델 보기') {
+          resize = this.callback
+        }
+      }
+      disconnect = vi.fn()
+    },
+  )
+  vi.spyOn(HTMLElement.prototype, 'clientWidth', 'get').mockReturnValue(400)
+  const height = vi.spyOn(HTMLElement.prototype, 'clientHeight', 'get').mockReturnValue(568)
+  const view = render(() => (
+    <CameraViewport width={4000} height={7100}>
+      model
+    </CameraViewport>
+  ))
+  const viewport = view.getByRole('region', {name: '모델 보기'})
+  height.mockReturnValue(355)
+  resize()
+  expect(Number(viewport.style.getPropertyValue('--camera-zoom'))).toBeCloseTo(0.05)
+  fireEvent.wheel(viewport, {deltaX: 40, deltaY: 60})
+  const offset = viewport.style.getPropertyValue('--camera-x')
+  height.mockReturnValue(500)
+  resize()
+  expect(viewport.style.getPropertyValue('--camera-x')).toBe(offset)
+  expect(Number(viewport.style.getPropertyValue('--camera-zoom'))).toBeCloseTo(0.05)
+})
+
+test('should fit the initial document once layout is measured without resetting navigation', () => {
+  vi.spyOn(HTMLElement.prototype, 'clientWidth', 'get').mockReturnValue(400)
+  vi.spyOn(HTMLElement.prototype, 'clientHeight', 'get').mockReturnValue(568)
+  const [width, setWidth] = createSignal(4000)
+  const view = render(() => (
+    <CameraViewport width={width()} height={7100}>
+      model
+    </CameraViewport>
+  ))
+  const viewport = view.getByRole('region', {name: '모델 보기'})
+  expect(Number(viewport.style.getPropertyValue('--camera-zoom'))).toBeCloseTo(0.08)
+  fireEvent.wheel(viewport, {deltaX: 40, deltaY: 60})
+  const offset = viewport.style.getPropertyValue('--camera-x')
+  setWidth(4100)
+  expect(viewport.style.getPropertyValue('--camera-x')).toBe(offset)
+})
 
 test('should move and zoom only the viewing surface and reset to the origin', () => {
   const view = render(() => (

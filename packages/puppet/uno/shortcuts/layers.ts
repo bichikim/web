@@ -35,6 +35,15 @@ export const layersShortcuts = {
     '[.puppet-editor_&]:[border-radius:0.375rem] [.puppet-editor_&]:[color:#84918c]',
     '[.puppet-editor_&]:text-editor-caption',
   ],
+  'layer-filter': [
+    'flex min-w-0 items-center gap-editor-control pb-editor-field',
+    '[&_.layer-filter-input]:min-w-0 [&_.layer-filter-input]:flex-1',
+    '[&_.editor-text-input]:min-w-0 [&_.editor-text-input]:w-full',
+    '[&_.editor-text-input]:border [&_.editor-text-input]:border-solid [&_.editor-text-input]:border-[#35413d]',
+    '[&_.editor-text-input]:rounded-md [&_.editor-text-input]:bg-[#121816] [&_.editor-text-input]:text-[#edf4f0]',
+    '[&_.editor-text-input::placeholder]:text-[#84918c]',
+    '[&_.editor-text-input:focus-visible]:outline [&_.editor-text-input:focus-visible]:outline-[#64e5c4]',
+  ],
   'layer-kind-badge': [
     'inline-block mr-editor-related px-editor-related rounded-sm bg-[#254c40] text-[#a4f3d9]',
     'font-semibold',

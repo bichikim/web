@@ -10,7 +10,7 @@ import type {PuppetVertexReference} from '../player/document'
 import {GlueEditor} from './internal/GlueEditor'
 import {useDeformerMode} from './internal/use-deformer-mode'
 import {Portal} from 'solid-js/web'
-import {batch, createEffect, createMemo, createSignal, Show, untrack} from 'solid-js'
+import {batch, createEffect, createMemo, createSignal, on, Show, untrack} from 'solid-js'
 import {createEmptyDocument, type Player, type PuppetDocument} from '../player'
 import {useDocumentExport} from './use-document-export'
 import {EditorViewport} from './EditorViewport'
@@ -48,6 +48,7 @@ import {useDocumentHistoryShortcuts} from './use-document-history-shortcuts'
 import type {PlayerCanvasStatus} from './PlayerCanvas'
 import {EditorStyles} from './internal/EditorStyles'
 export interface PuppetEditorProps {
+  readonly onDocumentCommit?: (document: PuppetDocument) => void
   readonly examples?: ReadonlyArray<PuppetExampleDocument>
   readonly initialDocument?: PuppetDocument
   readonly initialMotionId?: string
@@ -289,6 +290,9 @@ export const PuppetEditor = (props: PuppetEditorProps) => {
     const document = sourceDocument()
     untrack(() => props.onDocumentChange?.(document))
   })
+  createEffect(
+    on(history.committedDocument, (document) => props.onDocumentCommit?.(document), {defer: true}),
+  )
   const handlePlayerChange = (nextPlayer: Player | null) => {
     setPlayer(syncPlayerPlayback(nextPlayer, isPlaying()))
   }
