@@ -24,6 +24,49 @@ const queued = {
 afterEach(() => {
   vi.unstubAllGlobals()
 })
+it('should retrieve search sources in first-seen order while preserving completion and metadata', async () => {
+  const fetch = vi.fn().mockResolvedValue(
+    Response.json({
+      ...queued,
+      output: [
+        {content: [{annotations: [], text: 'hello', type: 'output_text'}], type: 'message'},
+        {
+          action: {
+            sources: [
+              {type: 'url', url: 'https://b.example'},
+              {type: 'url', url: 'https://a.example'},
+            ],
+            type: 'search',
+          },
+          type: 'web_search_call',
+        },
+        {
+          action: {
+            sources: [
+              {type: 'url', url: 'https://b.example'},
+              {type: 'url', url: 'https://a.example/'},
+            ],
+            type: 'search',
+          },
+          type: 'web_search_call',
+        },
+        {action: {type: 'open_page', url: 'https://ignored.example'}, type: 'web_search_call'},
+      ],
+      status: 'completed',
+      usage: {total_tokens: 10},
+    }),
+  )
+  vi.stubGlobal('fetch', fetch)
+  expect(await responsesAdapter.retrieve(provider, 'resp_1')).toMatchObject({
+    failureCode: null,
+    metadata: queued.metadata,
+    outputText: 'hello',
+    searchSourceUrls: ['https://b.example', 'https://a.example', 'https://a.example/'],
+    status: 'completed',
+    tokenCount: 10,
+  })
+  expect(String(fetch.mock.calls[0][0])).toContain('include%5B%5D=web_search_call.action.sources')
+})
 it('should send a background stored request with stable attempt idempotency to the chosen API', async () => {
   const fetch = vi.fn().mockResolvedValue(Response.json(queued))
   vi.stubGlobal('fetch', fetch)
