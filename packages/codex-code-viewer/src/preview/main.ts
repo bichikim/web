@@ -10,7 +10,14 @@ if (frame === null || frame.contentWindow === null) {
 const bridge = new AppBridge(
   null,
   {name: 'Code Viewer Preview', version: manifest.version},
-  {experimental: {'openai/modelContext': {}}, serverTools: {}, updateModelContext: {}},
+  {
+    experimental: {
+      'openai/modelContext': {},
+      'winter-love/code-viewer/http': {version: 1},
+    },
+    serverTools: {},
+    updateModelContext: {},
+  },
 )
 const selection = document.querySelector<HTMLSelectElement>('select')
 const count = document.querySelector('output')

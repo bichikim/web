@@ -130,6 +130,7 @@ export const useDefinitionNavigation = (
     const operation = new AbortController()
     controller = operation
     origin = current
+    setReferences({label: token.text, locations: [], point, status: 'resolving'})
     const result = await options.run(
       () =>
         request(
@@ -183,7 +184,11 @@ export const useDefinitionNavigation = (
         }
       } catch (error) {
         if (!operation.signal.aborted) {
-          setReferences((previous) => (previous === null ? null : {...previous, status: 'failed'}))
+          setReferences((previous) =>
+            previous === null || previous.status === 'resolving'
+              ? null
+              : {...previous, status: 'failed'},
+          )
           options.onError?.(error)
         }
       }

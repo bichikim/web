@@ -11,16 +11,32 @@ import {connectHostAppearance} from './connect-host-appearance'
 import {formatContext} from './format-context'
 import {createPendingTasks} from './create-pending-tasks'
 
+const httpStreams = (app: App): boolean =>
+  z
+    .object({version: z.literal(1)})
+    .safeParse(app.getHostCapabilities()?.experimental?.['winter-love/code-viewer/http']).success
+
+const createToolCall =
+  (app: App, requests: ReturnType<typeof createPendingTasks>): ViewerPort['call'] =>
+  (name, arguments_) =>
+    requests.run(() =>
+      app.callServerTool({
+        arguments:
+          arguments_.stream === true
+            ? {...arguments_, transport: httpStreams(app) ? 'http' : 'mcp'}
+            : arguments_,
+        name,
+      }),
+    )
+
 const watchWorkspace = async (
-  resources: OpenAIExtensions['resources'],
-  call: ViewerPort['call'],
-  session: string,
-  receive: () => void,
+  options: Parameters<typeof subscribeWorkspace>[0],
+  http: boolean,
 ): Promise<() => Promise<void>> => {
-  if (resources === undefined) {
+  if (options.resources === undefined && !http) {
     throw new Error('이 앱은 파일 변경 알림 연결을 지원하지 않습니다.')
   }
-  return subscribeWorkspace({call, receive, resources, session})
+  return subscribeWorkspace(options)
 }
 
 export const createHost = (): ViewerPort => {
@@ -29,13 +45,7 @@ export const createHost = (): ViewerPort => {
   // The base protocol carries custom methods, as in the OpenAI extensions adapter.
   const protocol = app as unknown as Protocol<Request, Notification, Result>
   const requests = createPendingTasks()
-  const call: ViewerPort['call'] = (name, arguments_) =>
-    requests.run(() =>
-      app.callServerTool({
-        arguments: arguments_.stream === true ? {...arguments_, transport: 'mcp'} : arguments_,
-        name,
-      }),
-    )
+  const call = createToolCall(app, requests)
   let contexts: string[] = []
   let observedContextId: string | null | undefined
   let contextQueue: Promise<void> = Promise.resolve()
@@ -172,6 +182,7 @@ export const createHost = (): ViewerPort => {
         await app.close().catch(report)
       }
     },
-    watch: (session, receive) => watchWorkspace(extensions.resources, call, session, receive),
+    watch: (session, receive) =>
+      watchWorkspace({call, receive, resources: extensions.resources, session}, httpStreams(app)),
   }
 }

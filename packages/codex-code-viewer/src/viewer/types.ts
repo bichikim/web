@@ -94,5 +94,5 @@ export interface ReferenceChoices {
   readonly label: string
   readonly locations: readonly NavigationLocation[]
   readonly point: NavigationPoint
-  readonly status?: 'searching' | 'complete' | 'failed'
+  readonly status?: 'resolving' | 'searching' | 'complete' | 'failed'
 }

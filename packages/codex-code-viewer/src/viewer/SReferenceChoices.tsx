@@ -4,6 +4,9 @@ import type {ContextMenuCloseOptions, ReferenceChoices} from './types'
 import {SContextMenu} from './SContextMenu'
 import {SReferenceList} from './SReferenceList'
 
+const LOADING_WIDTH = 240
+const RESULT_WIDTH = 480
+
 interface SReferenceChoicesProps {
   readonly references: ReferenceChoices
   readonly previewLines?: number
@@ -13,7 +16,12 @@ interface SReferenceChoicesProps {
 /** Displays reference destinations beside the selected symbol with bounded scrolling. */
 export const SReferenceChoices = (props: SReferenceChoicesProps) => {
   const [closed, setClosed] = createSignal(false)
-  const title = createMemo(() => (props.references.kind === 'definition' ? '정의 위치' : '사용처'))
+  const resolving = createMemo(() => props.references.status === 'resolving')
+  const searching = createMemo(() => resolving() || props.references.status === 'searching')
+  const title = createMemo(() =>
+    resolving() ? '위치 확인' : props.references.kind === 'definition' ? '정의 위치' : '사용처',
+  )
+  const statusLabel = createMemo(() => (resolving() ? '위치 확인 중' : `${title()} 검색 중`))
   const returnFocus = globalThis.document?.activeElement
   const close = (options?: ContextMenuCloseOptions): void => {
     setClosed(true)
@@ -35,10 +43,10 @@ export const SReferenceChoices = (props: SReferenceChoicesProps) => {
         title={
           <>
             {`${props.references.label} · `}
-            <Show when={props.references.status === 'searching'}>
+            <Show when={searching()}>
               <span
                 role="status"
-                aria-label={`${title()} 검색 중`}
+                aria-label={statusLabel()}
                 class="mr-1.5 inline-flex align-middle"
               >
                 <span
@@ -47,20 +55,22 @@ export const SReferenceChoices = (props: SReferenceChoicesProps) => {
                 />
               </span>
             </Show>
-            {`${title()} ${props.references.locations.length}개`}
+            <Show when={resolving()} fallback={`${title()} ${props.references.locations.length}개`}>
+              위치 확인 중
+            </Show>
           </>
         }
         emptyMessage={
           props.references.status === 'failed'
             ? `검색이 중단됐습니다. 찾은 ${title()}는 계속 확인할 수 있습니다.`
-            : props.references.status === 'searching'
+            : searching()
               ? undefined
               : props.references.locations.length === 0
                 ? `작업 폴더 안에서 ${title()}를 찾지 못했습니다.`
                 : undefined
         }
         maxHeight={320}
-        width={480}
+        width={resolving() ? LOADING_WIDTH : RESULT_WIDTH}
         items={[]}
         onClose={close}
       >

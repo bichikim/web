@@ -18,6 +18,34 @@ afterEach(() => {
   }
 })
 describe('SReferenceChoices', () => {
+  it('should show an accessible loading indicator immediately and reuse the menu for results', () => {
+    const [references, setReferences] = createSignal<ReferenceChoices>({
+      label: 'greet',
+      locations: [],
+      point: {x: 40, y: 80},
+      status: 'resolving',
+    })
+    const close = vi.fn()
+    render(() => <SReferenceChoices references={references()} onClose={close} />)
+    const menu = screen.getByRole('menu', {name: '위치 확인'})
+    expect(screen.getByRole('status', {name: '위치 확인 중'})).toBeInTheDocument()
+    expect(screen.getByText('greet · 위치 확인 중')).toBeInTheDocument()
+    expect(screen.queryByText(/0개/u)).toBeNull()
+    expect(screen.queryByText(/찾지 못했습니다/u)).toBeNull()
+    expect(menu).toHaveFocus()
+    setReferences((previous) => ({
+      ...previous,
+      locations: [{column: 1, line: 2, path: 'main.ts'}],
+      status: 'searching',
+    }))
+    expect(screen.getByRole('menu', {name: '사용처'})).toBe(menu)
+    expect(screen.getByRole('status', {name: '사용처 검색 중'})).toBeInTheDocument()
+    expect(screen.getByText('greet · 사용처 1개')).toBeInTheDocument()
+    fireEvent.keyDown(menu, {key: 'ArrowDown'})
+    expect(screen.getByRole('menuitem', {name: 'main.ts · 1개'})).toHaveFocus()
+    fireEvent.keyDown(menu, {key: 'Escape'})
+    expect(close).toHaveBeenCalledOnce()
+  })
   it.each(['definition', 'references'] as const)(
     'should change visible code lines for %s without losing the destination',
     (kind) => {

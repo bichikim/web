@@ -53,6 +53,54 @@ describe('createHost', () => {
       name: 'code.tree',
     })
   })
+  it('should use HTTP streams when the preview explicitly advertises them', async () => {
+    vi.spyOn(App.prototype, 'getHostCapabilities').mockReturnValue({
+      experimental: {'winter-love/code-viewer/http': {version: 1}},
+    })
+    const call = vi.spyOn(App.prototype, 'callServerTool').mockResolvedValue({content: []})
+    await createHost().call('code.navigate', {session: 'first', stream: true})
+    expect(call).toHaveBeenCalledWith({
+      arguments: {session: 'first', stream: true, transport: 'http'},
+      name: 'code.navigate',
+    })
+  })
+  it('should open and close workspace events in the HTTP preview', async () => {
+    vi.spyOn(App.prototype, 'getHostCapabilities').mockReturnValue({
+      experimental: {'winter-love/code-viewer/http': {version: 1}},
+    })
+    const close = vi.fn()
+    const removeEventListener = vi.fn()
+    const addEventListener = vi.fn()
+    const source = vi.fn(function source() {
+      return {addEventListener, close, removeEventListener}
+    })
+    vi.stubGlobal('EventSource', source)
+    vi.spyOn(App.prototype, 'callServerTool').mockResolvedValue({
+      content: [],
+      structuredContent: {url: 'http://127.0.0.1:1234/events/first'},
+    })
+    try {
+      const receive = vi.fn()
+      const stop = await createHost().watch?.('first', receive)
+      expect(source).toHaveBeenCalledWith('http://127.0.0.1:1234/events/first')
+      const handler = addEventListener.mock.calls[0][1]
+      handler(new MessageEvent('message', {data: '1'}))
+      expect(receive).toHaveBeenCalledOnce()
+      await stop?.()
+      expect(removeEventListener).toHaveBeenCalledWith('message', handler)
+      expect(close).toHaveBeenCalledOnce()
+    } finally {
+      vi.unstubAllGlobals()
+    }
+  })
+  it('should report unsupported workspace subscriptions without attempting HTTP in an installed host', async () => {
+    vi.spyOn(App.prototype, 'getHostCapabilities').mockReturnValue({})
+    const call = vi.spyOn(App.prototype, 'callServerTool')
+    await expect(createHost().watch?.('first', vi.fn())).rejects.toThrow(
+      '이 앱은 파일 변경 알림 연결을 지원하지 않습니다.',
+    )
+    expect(call).not.toHaveBeenCalled()
+  })
   it('should await the consumer cleanup when the host requests teardown', async () => {
     vi.spyOn(App.prototype, 'connect').mockResolvedValue()
     vi.spyOn(App.prototype, 'close').mockResolvedValue()

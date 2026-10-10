@@ -56,7 +56,7 @@ describe('useDefinitionNavigation', () => {
       })
       return {cancel: request.cancel, navigation}
     })
-  it('should expose the popup after confirming references and append usages before completion', async () => {
+  it('should show immediate loading and append usages before completion', async () => {
     const output = new TransformStream<Uint8Array, Uint8Array>()
     const writer = output.writable.getWriter()
     const attached = Promise.withResolvers<void>()
@@ -73,7 +73,11 @@ describe('useDefinitionNavigation', () => {
     })
     const {navigation} = mount()
     const following = navigation.follow(token)
-    expect(navigation.references()).toBeNull()
+    expect(navigation.references()).toMatchObject({
+      label: 'Report',
+      locations: [],
+      status: 'resolving',
+    })
     await attached.promise
     await writer.write(
       new TextEncoder().encode(`${JSON.stringify({kind: 'references', locations: [location]})}\n`),
@@ -108,13 +112,13 @@ describe('useDefinitionNavigation', () => {
       })
       const {navigation} = mount()
       const following = navigation.follow(token, {x: 40, y: 80})
-      expect(navigation.references()).toBeNull()
+      expect(navigation.references()?.status).toBe('resolving')
       await attached.promise
-      expect(navigation.references()).toBeNull()
+      expect(navigation.references()?.status).toBe('resolving')
       await writer.write(
         new TextEncoder().encode(`${JSON.stringify({kind: 'definition', locations})}\n`),
       )
-      expect(navigation.references()).toBeNull()
+      expect(navigation.references()?.status).toBe('resolving')
       await writer.write(new TextEncoder().encode('{"done":true}\n'))
       await following
       if (locations.length === 1) {
@@ -131,6 +135,22 @@ describe('useDefinitionNavigation', () => {
       }
     },
   )
+  it('should show loading before the tool responds and dismiss it when the tool fails', async () => {
+    const response = Promise.withResolvers<CallToolResult>()
+    vi.mocked(port.call).mockReturnValueOnce(response.promise)
+    const {navigation} = mount()
+    const following = navigation.follow(token, {x: 40, y: 80})
+    expect(navigation.references()).toEqual({
+      label: 'Report',
+      locations: [],
+      point: {x: 40, y: 80},
+      status: 'resolving',
+    })
+    response.resolve({content: [], isError: true, structuredContent: {code: 'read-failed'}})
+    await following
+    expect(navigation.references()).toBeNull()
+    expect(report).toHaveBeenCalledOnce()
+  })
   it('should cancel an unfinished stream when its popup is dismissed', async () => {
     const attached = Promise.withResolvers<AbortSignal>()
     vi.stubGlobal(
