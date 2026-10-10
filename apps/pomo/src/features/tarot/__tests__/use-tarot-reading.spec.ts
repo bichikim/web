@@ -204,12 +204,16 @@ describe('useTarotReading', () => {
     expect(createTextClient).toHaveBeenCalledOnce()
     clients[0]!.onResponse({
       files: [],
-      loadedBytes: 64,
-      percentage: 64,
+      loadedBytes: 133,
+      percentage: 133,
       totalBytes: 100,
       type: 'loading',
     })
-    expect(reading.progress()).toBe(64)
+    expect(reading.progress()).toBe(133)
+    expect(reading.status()).toBe('downloading')
+    expect(controller.downloads()).toEqual([
+      expect.objectContaining({percentage: 133, status: 'loading'}),
+    ])
     clients[0]!.onResponse({type: 'ready'})
     await pending
     await flush()
