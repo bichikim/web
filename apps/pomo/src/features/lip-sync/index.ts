@@ -1,3 +1,5 @@
+import {sumBy} from 'es-toolkit/math'
+
 export const P_VISEMES = ['rest', 'closed', 'open', 'wide', 'round', 'narrow'] as const
 export const P_VISEME_COARTICULATION_MS = 50
 
@@ -206,7 +208,7 @@ export const createPVisemeTrack = (
   }
 
   const visemes = createWeightedVisemes(options.text)
-  const totalWeight = visemes.reduce((total, viseme) => total + viseme.weight, 0)
+  const totalWeight = sumBy(visemes, (viseme) => viseme.weight)
   let startMs = 0
   const cues = visemes.map((weightedViseme, index): PVisemeCue => {
     const isLast = index === visemes.length - 1
