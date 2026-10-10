@@ -35,12 +35,18 @@ export const calculateService = (options: CalculateServiceOptions): ServiceResul
     options.days === undefined
       ? periodEnd(start, SERVICE_MONTHS[options.branch])
       : addDays(start, options.days - 1)
-  if (parseDate(formatDate(end)) === null || dateEpoch(end) < dateEpoch(start)) {
+  if (parseDate(formatDate(end)) === null) {
     return null
   }
-  const total = (dateEpoch(end) - dateEpoch(start)) / DAY_MILLISECONDS + 1
-  const elapsed = (dateEpoch(today) - dateEpoch(start)) / DAY_MILLISECONDS
-  const remaining = clamp((dateEpoch(end) - dateEpoch(today)) / DAY_MILLISECONDS, 0, total)
+  const endEpoch = dateEpoch(end)
+  const startEpoch = dateEpoch(start)
+  if (endEpoch < startEpoch) {
+    return null
+  }
+  const todayEpoch = dateEpoch(today)
+  const total = (endEpoch - startEpoch) / DAY_MILLISECONDS + 1
+  const elapsed = (todayEpoch - startEpoch) / DAY_MILLISECONDS
+  const remaining = clamp((endEpoch - todayEpoch) / DAY_MILLISECONDS, 0, total)
   return {
     end: formatDate(end),
     progress: remaining === 0 ? PERCENT_SCALE : Math.max(0, (elapsed / total) * PERCENT_SCALE),
