@@ -1,6 +1,7 @@
 export * from './assets'
 export * from './audio'
 export * from './connection'
+export * from './copy-stereo-pcm16'
 export * from './create-sound-worker'
 export * from './extension'
 export * from './guidance'
