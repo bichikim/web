@@ -55,4 +55,37 @@ describe('concatBytes', () => {
 
     expect(() => concatBytes([input])).toThrow(expect.objectContaining({name: 'TypeError'}))
   })
+
+  it('should preserve a supplied destination length and independent ownership', () => {
+    const input = Uint8Array.of(1, 2)
+    const result = concatBytes([input], 4)
+
+    expect(result).toEqual(Uint8Array.of(1, 2, 0, 0))
+    expect(result.buffer).not.toBe(input.buffer)
+    expectTypeOf(result).toEqualTypeOf<Uint8Array<ArrayBuffer>>()
+  })
+
+  it('should propagate the native error when the supplied capacity is insufficient', () => {
+    expect(() => concatBytes([Uint8Array.of(1, 2)], 1)).toThrow(
+      expect.objectContaining({name: 'RangeError'}),
+    )
+  })
+
+  it('should copy before reading source lengths when capacity was already captured', () => {
+    const input = Uint8Array.of(1, 2)
+    let reads = 0
+    Object.defineProperty(input, 'byteLength', {
+      get: () => {
+        reads += 1
+        input[0] = 9
+        return 2
+      },
+    })
+
+    const result = concatBytes([input], 2)
+
+    expect(result).toEqual(Uint8Array.of(1, 2))
+    expect(input).toEqual(Uint8Array.of(9, 2))
+    expect(reads).toBe(1)
+  })
 })

@@ -1,6 +1,11 @@
-/** Copies byte views in order into a new buffer, including for empty or single inputs. */
-export const concatBytes = (chunks: ReadonlyArray<Uint8Array>): Uint8Array<ArrayBuffer> => {
-  const totalBytes = chunks.reduce((total, chunk) => total + chunk.byteLength, 0)
+/**
+ * Copies byte views in order into a new buffer, optionally using an already captured output length.
+ * Extra capacity stays zero-filled; insufficient capacity throws the native RangeError.
+ */
+export const concatBytes = (
+  chunks: ReadonlyArray<Uint8Array>,
+  totalBytes = chunks.reduce((total, chunk) => total + chunk.byteLength, 0),
+): Uint8Array<ArrayBuffer> => {
   const result = new Uint8Array(totalBytes)
   let offset = 0
 
