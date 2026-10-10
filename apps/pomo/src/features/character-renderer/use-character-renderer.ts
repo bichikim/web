@@ -57,9 +57,9 @@ export const useCharacterRenderer = (
 
   const setModel = (url: string, name: string) => {
     setModelName(name)
-    setModelUrl(url)
     setProgress(0)
     setStatus('loading')
+    setModelUrl(url)
   }
 
   const replaceModel = (url: string, name: string) => {
