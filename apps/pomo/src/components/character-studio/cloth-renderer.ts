@@ -1,4 +1,5 @@
 import {clampUnit} from 'src/utils/clamp-unit'
+import {sumBy} from 'es-toolkit/math'
 const AXES = 3
 const INFLUENCES = 4
 const EPSILON = 0.000001
@@ -61,7 +62,7 @@ export const attachCloth = (container: AssetContainer) => {
               mapping[vertex * INFLUENCES + slot] = particle
             }
           }
-          const total = nearest.reduce((sum, distance) => sum + 1 / Math.max(distance, EPSILON), 0)
+          const total = sumBy(nearest, (distance) => 1 / Math.max(distance, EPSILON))
           for (let slot = 0; slot < INFLUENCES; slot += 1) {
             weights[vertex * INFLUENCES + slot] = 1 / Math.max(nearest[slot], EPSILON) / total
           }
