@@ -27,10 +27,7 @@ export const createMedia = (options: MediaOptions): MediaResource => {
   let cancelled = false
   let loaded = false
   let settled = false
-  let resolve!: (value: boolean) => void
-  const ready = new Promise<boolean>((finish) => {
-    resolve = finish
-  })
+  const {promise: ready, resolve} = Promise.withResolvers<boolean>()
   const settle = (value: boolean) => {
     if (settled) {
       return
