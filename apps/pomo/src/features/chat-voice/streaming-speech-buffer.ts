@@ -10,6 +10,7 @@ const KOREAN_LIST_NUMBER_START = /^\s*\d/u
 const SINGLE_LETTER_LABEL_END =
   /(?:^|\s)(?:category|option|answer|choice|part|section|step|level|plan)\s+[A-Z]\.\s*$/iu
 const LAST_TOKEN = /(?:^|\s)[["'“‘({]*(?<token>\S+?)["'”’)}\]]*\s*$/u
+const UNRESOLVED_DECIMAL_POINT = /\p{Nd}\.$/u
 
 export interface CreateStreamingSpeechBufferOptions {
   readonly locale: string
@@ -52,7 +53,9 @@ const shouldMergeSegments = (previousSegment: string, nextSegment: string, local
 }
 
 const isCompletedSentence = (segment: string, locale: string) =>
-  SENTENCE_END.test(segment) && !endsWithAbbreviation(segment, locale)
+  SENTENCE_END.test(segment) &&
+  !endsWithAbbreviation(segment, locale) &&
+  !UNRESOLVED_DECIMAL_POINT.test(segment)
 
 const isCompletedSegment = (segment: string, hasFollowingSegment: boolean, locale: string) =>
   hasFollowingSegment || isCompletedSentence(segment, locale)
@@ -121,7 +124,16 @@ export const createStreamingSpeechBuffer = (
   }
 
   const reconcileConsumedText = (text: string) => {
-    if (!text.startsWith(consumedText)) {
+    const extendsConsumedDecimalPrefix =
+      text.length > consumedText.length &&
+      text.startsWith(consumedText) &&
+      UNRESOLVED_DECIMAL_POINT.test(consumedText)
+
+    if (!text.startsWith(consumedText) || extendsConsumedDecimalPrefix) {
+      if (consumedText.startsWith(text)) {
+        return
+      }
+
       const currentConsumedText = text.slice(0, consumedText.length)
 
       if (isOnlyTerminalPunctuationChanged(consumedText, currentConsumedText)) {
@@ -138,7 +150,10 @@ export const createStreamingSpeechBuffer = (
         commonPrefixLength += 1
       }
 
-      const lastUnchangedSegment = getCompletedSegments(text.slice(0, commonPrefixLength)).at(-1)
+      // Keep current lookahead for boundary detection, but retain only the unchanged prefix.
+      const lastUnchangedSegment = getCompletedSegments(text)
+        .filter(({index, segment}) => index + segment.trimEnd().length <= commonPrefixLength)
+        .at(-1)
       consumedLength =
         lastUnchangedSegment === undefined
           ? 0
