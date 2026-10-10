@@ -16,20 +16,11 @@ export const revokeCustomTrackObjectUrls = (trackIds: ReadonlySet<string>): void
 }
 
 export const toCustomPTrack = (track: StoredCustomTrack): PTrack => {
-  const existingSource = trackObjectUrls.get(track.id)
-
-  if (existingSource !== undefined) {
-    return {
-      artist: track.artist,
-      durationSeconds: track.durationSeconds,
-      id: track.id,
-      source: existingSource,
-      title: track.title,
-    }
+  let source = trackObjectUrls.get(track.id)
+  if (source === undefined) {
+    source = replaceBlobObjectUrl(null, () => track.audio)
+    trackObjectUrls.set(track.id, source)
   }
-
-  const source = replaceBlobObjectUrl(null, () => track.audio)
-  trackObjectUrls.set(track.id, source)
 
   return {
     artist: track.artist,
