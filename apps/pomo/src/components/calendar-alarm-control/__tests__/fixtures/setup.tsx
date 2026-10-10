@@ -61,6 +61,21 @@ export const clock = {current: new Date('2026-09-04T03:00:00.000Z')}
 export const now = () => new Date(clock.current)
 const {matches} = HTMLElement.prototype
 
+const setPopoverState = (popover: HTMLElement, newState: 'open' | 'closed') => {
+  const oldState = popover.dataset.testPopoverOpen === 'true' ? 'open' : 'closed'
+  if (oldState === newState) {
+    return
+  }
+
+  popover.dataset.testPopoverOpen = String(newState === 'open')
+  const toggle = new Event('toggle')
+  Object.defineProperties(toggle, {
+    newState: {value: newState},
+    oldState: {value: oldState},
+  })
+  popover.dispatchEvent(toggle)
+}
+
 export const ownedAlarm = () => ({
   ...createMemoryMemo({
     exactReminderAt: '2026-09-05T09:00:00.000Z',
@@ -97,16 +112,22 @@ export const setupCalendarAlarmControl = () => {
     })
     Object.defineProperty(HTMLElement.prototype, 'hidePopover', {
       configurable: true,
-      value: vi.fn(),
+      value: vi.fn(function hidePopover(this: HTMLElement) {
+        setPopoverState(this, 'closed')
+      }),
     })
     Object.defineProperty(HTMLElement.prototype, 'showPopover', {
       configurable: true,
-      value: vi.fn(),
+      value: vi.fn(function showPopover(this: HTMLElement) {
+        setPopoverState(this, 'open')
+      }),
     })
     Object.defineProperty(HTMLElement.prototype, 'matches', {
       configurable: true,
       value(this: HTMLElement, selector: string) {
-        return selector === ':popover-open' ? false : matches.call(this, selector)
+        return selector === ':popover-open'
+          ? this.dataset.testPopoverOpen === 'true'
+          : matches.call(this, selector)
       },
     })
   })
