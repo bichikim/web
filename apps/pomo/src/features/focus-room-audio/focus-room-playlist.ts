@@ -89,11 +89,10 @@ const isPPlaylist = (value: unknown): value is PPlaylist => {
 
 const resolveTrackIds = (
   trackIds: readonly string[],
-  tracks: readonly PTrack[],
+  tracksById: ReadonlyMap<string, PTrack>,
   invalidReferenceMessage: string,
-) => {
-  const tracksById = new Map(tracks.map((track) => [track.id, track]))
-  return trackIds.map((trackId) => {
+): readonly PTrack[] =>
+  trackIds.map((trackId) => {
     const track = tracksById.get(trackId)
 
     if (track === undefined) {
@@ -102,10 +101,12 @@ const resolveTrackIds = (
 
     return track
   })
-}
 
-const resolveAlbumTracks = (album: PAlbum, tracks: readonly PTrack[]): readonly PTrack[] =>
-  resolveTrackIds(album.trackIds, tracks, 'Focus-room albums reference unknown tracks').map(
+const resolveAlbumTracks = (
+  album: PAlbum,
+  tracksById: ReadonlyMap<string, PTrack>,
+): readonly PTrack[] =>
+  resolveTrackIds(album.trackIds, tracksById, 'Focus-room albums reference unknown tracks').map(
     (track) =>
       track.artworkUrl !== undefined || album.coverImageUrl === undefined
         ? track
@@ -185,9 +186,10 @@ export const loadBundledPAlbums = async (
   }
 
   const tracks = catalogTracks.map(resolveBundledTrack)
+  const tracksById = new Map(tracks.map((track) => [track.id, track]))
   const bundledAlbums = albumCollection.albums.map((album) => ({
     ...localizeBundledAlbum(album, options.locale),
-    tracks: resolveAlbumTracks(album, tracks),
+    tracks: resolveAlbumTracks(album, tracksById),
   }))
   return bundledAlbums
 }
@@ -220,10 +222,11 @@ export const loadPTrackQueueSource = async (
   }
 
   const tracks = catalogTracks.map(resolveBundledTrack)
+  const tracksById = new Map(tracks.map((track) => [track.id, track]))
   return {
     defaultTracks: resolveTrackIds(
       playlist.trackIds,
-      tracks,
+      tracksById,
       'Focus-room playlist references unknown tracks',
     ),
     tracks,

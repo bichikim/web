@@ -2,7 +2,7 @@
 
 import {cleanup, fireEvent, render, screen} from '@solidjs/testing-library'
 import userEvent from '@testing-library/user-event'
-import {createSignal, type JSX} from 'solid-js'
+import {createSignal} from 'solid-js'
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 
 import {PNumberInput} from '../PNumberInput'
@@ -293,12 +293,11 @@ describe('PNumberInput', () => {
     expect(input).toHaveValue('5')
   })
 
-  it('should forward a bound native number keydown handler without preventing default', () => {
-    const onKeyDown = vi.fn((_source: string, _event: Event) => {})
-    const handler: JSX.EventHandlerUnion<HTMLInputElement, KeyboardEvent> = [onKeyDown, 'test']
+  it('should forward a native number keydown handler without preventing default', () => {
+    const onKeyDown = vi.fn()
 
     render(() => (
-      <PNumberInput aria-label="Native duration" onKeyDown={handler} readOnly value="5" />
+      <PNumberInput aria-label="Native duration" onKeyDown={onKeyDown} readOnly value="5" />
     ))
 
     const input = screen.getByRole('spinbutton', {name: 'Native duration'})
@@ -306,8 +305,7 @@ describe('PNumberInput', () => {
     input.dispatchEvent(event)
 
     expect(onKeyDown).toHaveBeenCalledOnce()
-    expect(onKeyDown.mock.calls[0]?.[0]).toBe('test')
-    expect(onKeyDown.mock.calls[0]?.[1]).toBe(event)
+    expect(onKeyDown).toHaveBeenCalledWith(event)
     expect(event.defaultPrevented).toBe(false)
   })
 

@@ -60,6 +60,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v6
@@ -85,7 +87,9 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Run unit tests
-        run: pnpm test:vitest
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: pnpm run test:vitest --changed="$BASE_SHA" --passWithNoTests
 
   integration-tests:
     name: Integration tests
@@ -117,68 +121,19 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Setup Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '4.0'
+
+      - name: Install Solargraph
+        run: gem install solargraph --version 0.60.4 --no-document
+
+      - name: Build Code Viewer distribution
+        run: pnpm --filter @winter-love/codex-code-viewer build
+
       - name: Run integration tests
-        run: |
-          NODE_OPTIONS=--no-experimental-webstorage pnpm exec vitest run --config vitest.integration.config.mts --project=integration \
-            apps/coong/src/components/instruments/__tests__/SPiano.integration.tsx \
-            apps/pomo/src/components/admin-music/__tests__/AdminMusic.import.integration.tsx \
-            apps/pomo/src/components/admin-music/__tests__/AlbumWorkspace.integration.tsx \
-            apps/pomo/src/components/chat-room/__tests__/ChatRoom.stt-draft.integration.tsx \
-            apps/pomo/src/components/album-library/__tests__/use-custom-album-editor.integration.ts \
-            apps/pomo/src/components/album-library/__tests__/Content.catalog.integration.tsx \
-            apps/pomo/src/components/dialogue-page/__tests__/Editor.integration.tsx \
-            apps/pomo/src/components/dev/__tests__/StoragePage.integration.tsx \
-            apps/pomo/src/components/layer-review/__tests__/MouthFramePicker.integration.tsx \
-            apps/pomo/src/components/music-player/__tests__/PMusicPlayerContent.queue-restoration.integration.tsx \
-            apps/pomo/src/components/media-player/__tests__/playlist-entry-identity.integration.tsx \
-            apps/pomo/src/components/p-memory-assist/__tests__/PMemoryAssist.loading.integration.tsx \
-            apps/pomo/src/components/memory-assist/__tests__/PictureDiary.generation.integration.tsx \
-            apps/pomo/src/components/memory-assist/picture-diary/__tests__/Generation.progress.integration.tsx \
-            apps/pomo/src/components/p-memory-assist/__tests__/PMemoryAssist.navigation.integration.tsx \
-            apps/pomo/src/features/memory-assist/__tests__/repository.read.integration.ts \
-            apps/pomo/src/components/memory-assist/picture-diary/__tests__/Canvas.integration.tsx \
-            apps/pomo/src/components/memory-assist/picture-diary/__tests__/Drawing.integration.tsx \
-            apps/pomo/src/components/p-credits-settings/__tests__/PCreditsSettings.integration.tsx \
-            apps/pomo/src/components/p-time-picker/__tests__/PTimePicker.integration.tsx \
-            apps/pomo/src/components/tools/__tests__/Lunar.integration.tsx \
-            apps/pomo/src/components/p-layer-review/__tests__/PLayerReview.mouth-time-mode.integration.tsx \
-            apps/pomo/src/components/p-settings/__tests__/PSettings.failure.integration.tsx \
-            apps/pomo/src/components/p-service-terms/__tests__/PServiceTerms.integration.tsx \
-            apps/pomo/src/components/tarot/__tests__/Tarot.integration.tsx \
-            apps/pomo/src/components/tools/__tests__/Moving.integration.tsx \
-            apps/pomo/src/routes/__tests__/third-party-notices.integration.tsx \
-            apps/pomo/src/routes/api/admin/music/__tests__/assets.artwork.integration.ts \
-            packages/puppet/src/design-system/__tests__/EditorColorField.integration.tsx \
-            packages/puppet/src/editor/__tests__/PuppetEditor.deformers.interaction.integration.tsx \
-            packages/puppet/src/editor/__tests__/PuppetEditor.integration.tsx \
-            packages/puppet/src/editor/__tests__/PuppetEditor.parameters.integration.tsx \
-            packages/puppet/src/editor/internal/__tests__/EditorInspector.integration.tsx \
-            packages/puppet/src/editor/internal/__tests__/EditorInspector.interaction.integration.tsx \
-            packages/puppet/src/editor/internal/__tests__/EditorTimeline.integration.tsx \
-            packages/puppet/src/editor/internal/__tests__/InfluenceEditor.integration.tsx \
-            packages/puppet/src/editor/internal/__tests__/PhysicsProperties.interaction.integration.tsx \
-            packages/puppet/src/editor/internal/__tests__/SpatialMeshDialog.integration.tsx \
-            packages/puppet/src/editor/internal/__tests__/ViewCameraControls.integration.tsx \
-            packages/puppet/src/player/internal/__tests__/physics.development-model.ear-attachment.integration.ts \
-            packages/puppet/src/player/internal/__tests__/physics.ribbon.integration.ts \
-            packages/puppet/src/player/internal/__tests__/scene-deformation.chest.attachment.integration.ts \
-            apps/pomo/__tests__/build/polyfills.integration.ts \
-            apps/pomo/scripts/vite/__tests__/prune-transform-cache.integration.ts \
-            apps/pomo/scripts/vite/__tests__/transform-cache.integration.ts \
-            apps/pomo/scripts/vite/__tests__/validate-steam-assets.integration.ts \
-            apps/pomo/src/features/album-translation/__tests__/worker.integration.ts \
-            apps/pomo/src/features/chat/__tests__/worker.lifecycle.integration.ts \
-            apps/pomo/src/features/dialogue-writer/__tests__/worker.integration.ts \
-            apps/pomo/src/features/image-generation/__tests__/worker.lifecycle.integration.ts \
-            apps/pomo/src/features/model-download/__tests__/text-worker.integration.ts \
-            apps/pomo/src/features/sound-generation/__tests__/worker.integration.ts \
-            apps/pomo/src/features/speech-to-text/__tests__/worker.integration.ts \
-            apps/pomo/src/features/supertonic/__tests__/opus-worker.integration.ts \
-            apps/pomo/src/features/supertonic/__tests__/worker.download-failures.integration.ts \
-            apps/pomo/src/features/supertonic/__tests__/worker.integration.ts \
-            apps/pomo/src/features/text-mood/__tests__/worker.integration.ts \
-            packages/vite-plugin-key-similarity/src/__tests__/vite.integration.ts \
-            apps/pomo/src/server/ai-runner/__tests__/index.integration.ts
+        run: pnpm test:integration --project=integration
 
   tests:
     name: Tests

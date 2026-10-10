@@ -1,8 +1,11 @@
 import {createWorkerTransport} from 'src/utils/worker-transport'
 import {createWorkerFailureHandler} from '../worker-failure'
 import type {TarotGenerateRequest, TarotWorkerRequest, TarotWorkerResponse} from './messages'
+import {createCloudTarotClient} from './create-cloud-tarot-client'
+import type {TextModelId} from '../text-generation/model'
 
 export interface CreateTarotClientOptions {
+  readonly modelId?: TextModelId
   readonly onResponse: (response: TarotWorkerResponse) => void
 }
 
@@ -11,8 +14,11 @@ export interface TarotClient {
   readonly generate: (request: TarotGenerateRequest) => void
 }
 
-/** Owns one worker for tarot interpretation. */
+/** Creates a local or cloud tarot interpretation client. */
 export const createTarotClient = (options: CreateTarotClientOptions): TarotClient => {
+  if (options.modelId === 'cloud') {
+    return createCloudTarotClient(options)
+  }
   const worker = new Worker(new URL('./worker.ts', import.meta.url), {
     name: 'pomo-tarot',
     type: 'module',

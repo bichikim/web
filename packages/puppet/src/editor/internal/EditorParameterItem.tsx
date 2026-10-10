@@ -7,6 +7,9 @@ export interface EditorParameterItemProps {
   readonly footer?: JSX.Element
   readonly children?: JSX.Element
   readonly groupName?: string
+  readonly primaryControl?: JSX.Element
+  readonly secondaryControl?: JSX.Element
+  readonly status?: JSX.Element
   readonly name: string
   readonly onDelete?: () => void
   readonly onNameChange?: (name: string) => void
@@ -19,12 +22,10 @@ export interface EditorParameterItemProps {
 
 interface ParameterFooterProps {
   readonly children?: JSX.Element
-  readonly onPointerDown: (event: PointerEvent) => void
   readonly clickState: {ignore: boolean}
 }
 const ParameterFooter = (props: ParameterFooterProps) => (
   <div
-    onPointerDown={(event) => props.onPointerDown(event)}
     ref={(element) => {
       const capture = (event: MouseEvent) => {
         if (props.clickState.ignore) {
@@ -62,10 +63,13 @@ export const EditorParameterItem = (props: EditorParameterItemProps) => {
         <span aria-hidden="true" class="puppet-icon puppet-icon-trash" />
         <span>{swipe.armed() ? '놓아 삭제' : '삭제'}</span>
       </div>
-      <div class="parameter-item-surface">
+      <div class="parameter-item-surface" onPointerDown={swipe.handlePointerDown}>
         <EditorParameterNames
           descriptionId={descriptionId}
           groupName={props.groupName}
+          primaryControl={props.primaryControl}
+          secondaryControl={props.secondaryControl}
+          status={props.status}
           name={props.name}
           onKeyDown={swipe.handleKeyDown}
           onNameChange={props.onNameChange}
@@ -73,7 +77,6 @@ export const EditorParameterItem = (props: EditorParameterItemProps) => {
             props.onNameEdit?.()
             swipe.reset()
           }}
-          onPointerDown={swipe.handlePointerDown}
           onSecondaryNameChange={props.onSecondaryNameChange}
           onSelect={handleSelect}
           pressed={props.pressed}
@@ -81,9 +84,7 @@ export const EditorParameterItem = (props: EditorParameterItemProps) => {
         >
           {props.children}
         </EditorParameterNames>
-        <ParameterFooter onPointerDown={swipe.handlePointerDown} clickState={swipe.clickState}>
-          {props.footer}
-        </ParameterFooter>
+        <ParameterFooter clickState={swipe.clickState}>{props.footer}</ParameterFooter>
       </div>
       <span id={descriptionId} class="visually-hidden">
         오른쪽으로 밀어 놓으면 삭제합니다. 키보드에서는 Delete 키를 두 번 누릅니다.

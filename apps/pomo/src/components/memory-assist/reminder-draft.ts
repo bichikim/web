@@ -34,8 +34,25 @@ export const resolveReminderAt = (
   }
 
   const reminder = new Date(`${dateValue}T${time}`)
-  return Number.isNaN(reminder.getTime()) ? null : reminder.toISOString()
+  return Number.isNaN(reminder.getTime()) ||
+    formatLocalDate(reminder) !== dateValue ||
+    getTimeInputValue(reminder) !== time
+    ? null
+    : reminder.toISOString()
 }
+
+/** Resolves form date/time and repeat toggles into persisted reminder settings at save time. */
+export const resolveReminderDraft = (draft: ReminderDraft, now: Date) => ({
+  exactReminderAdvanceMinutes: draft.exactReminderAdvanceMinutes,
+  exactReminderAt: draft.exactEnabled
+    ? resolveReminderAt(draft.reminderDay, draft.customDate, draft.reminderTime, now)
+    : null,
+  exactReminderRepeatIntervalMinutes: draft.exactReminderRepeatEnabled
+    ? draft.exactReminderRepeatIntervalMinutes
+    : null,
+  exactReminderRepeatUntilMinutes: draft.exactReminderRepeatUntilMinutes,
+  recallMode: draft.recallMode,
+})
 
 export const isFirstReminderInFuture = (
   exactReminderAt: string | null,

@@ -9,7 +9,7 @@ import {MemoryMemoModal} from './MemoryMemoModal'
 import {
   areReminderDraftsEqual,
   createStoredReminderDraft,
-  resolveReminderAt,
+  resolveReminderDraft,
 } from './reminder-draft'
 import type {ReminderDraft} from './ReminderFields'
 
@@ -87,23 +87,9 @@ export const MemoryMemoItem = (props: MemoryMemoItemProps) => {
 
     const currentReminderDraft = reminderDraft()
     const now = new Date()
-    const exactReminderAt = currentReminderDraft.exactEnabled
-      ? resolveReminderAt(
-          currentReminderDraft.reminderDay,
-          currentReminderDraft.customDate,
-          currentReminderDraft.reminderTime,
-          now,
-        )
-      : null
     const errorMessage = await props.onSave(props.memo, {
+      ...resolveReminderDraft(currentReminderDraft, now),
       exactEnabled: currentReminderDraft.exactEnabled,
-      exactReminderAdvanceMinutes: currentReminderDraft.exactReminderAdvanceMinutes,
-      exactReminderAt,
-      exactReminderRepeatIntervalMinutes: currentReminderDraft.exactReminderRepeatEnabled
-        ? currentReminderDraft.exactReminderRepeatIntervalMinutes
-        : null,
-      exactReminderRepeatUntilMinutes: currentReminderDraft.exactReminderRepeatUntilMinutes,
-      recallMode: currentReminderDraft.recallMode,
       text: draft(),
     })
 

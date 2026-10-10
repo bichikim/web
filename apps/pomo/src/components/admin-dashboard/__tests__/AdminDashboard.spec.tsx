@@ -55,6 +55,10 @@ describe('AdminDashboard', () => {
       'href',
       '/admin/music',
     )
+    expect(screen.getByRole('link', {name: /사용자 사용 한도 관리/})).toHaveAttribute(
+      'href',
+      '/admin/cloud-text',
+    )
     const form = screen.getByRole('button', {name: '로그아웃'}).closest('form')
 
     expect(form).toHaveAttribute('method', 'post')

@@ -5,6 +5,7 @@ import {type Accessor, createSignal} from 'solid-js'
 
 import {
   createPVisemeDriver,
+  createPVisemeTrack,
   createPWaveEnvelope,
   getPAudioEnvelopeLevel,
   type PAudioEnvelope,
@@ -300,7 +301,17 @@ export const createEntryPlaybackController = (): EntryPlaybackController => {
       return null
     }
 
-    dialogue = storedDialogue
+    dialogue = {
+      ...storedDialogue,
+      segments: storedDialogue.segments.map((segment) =>
+        segment.visemes === undefined
+          ? {
+              ...segment,
+              visemes: createPVisemeTrack({durationMs: segment.durationMs, text: segment.text}),
+            }
+          : segment,
+      ),
+    }
     audioEnvelope = storedAudioEnvelope
     setActiveSegmentCount(storedDialogue.segments.length)
     audioUrl = replaceBlobObjectUrl(null, () => storedAudio)

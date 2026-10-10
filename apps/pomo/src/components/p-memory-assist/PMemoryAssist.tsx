@@ -16,6 +16,7 @@ import {PScribbleCircleControl} from '../scribble/CircleControl'
 import {openDesktopDialog} from '../../features/desktop-mode/dialogs'
 import {getLocale} from '@paraglide/runtime'
 import {useTarotReading, useTarotSpeech} from '../../features/tarot'
+import {useSajuReading} from '../../features/saju'
 
 export interface PMemoryAssistProps {
   readonly desktopSurface?: boolean
@@ -40,6 +41,7 @@ const PMemoryAssistContent = lazy(async () => {
 export const PMemoryAssist = (props: PMemoryAssistProps) => {
   onMount(() => PMemoryAssistContent.preload())
   const tarot = useTarotReading({locale: getLocale})
+  const saju = useSajuReading()
   const tarotSpeech = useTarotSpeech({
     locale: getLocale,
     text: () => (tarot.status() === 'complete' ? tarot.output() : ''),
@@ -68,6 +70,9 @@ export const PMemoryAssist = (props: PMemoryAssistProps) => {
     if (value !== 'tarot') {
       tarot.cancel()
     }
+    if (value !== 'saju') {
+      saju.cancel()
+    }
     setActiveTab(value)
     if (value === 'calendar') {
       refreshCalendar()
@@ -77,6 +82,7 @@ export const PMemoryAssist = (props: PMemoryAssistProps) => {
   const handleOpenChange = (open: boolean) => {
     if (!open) {
       tarot.cancel()
+      saju.cancel()
     }
     setIsOpen(open)
   }
@@ -95,7 +101,7 @@ export const PMemoryAssist = (props: PMemoryAssistProps) => {
       </PScribbleCircleControl>
       <Tabs class="contents" value={activeTab()} onChange={handleTabChange}>
         <PModal
-          contentPadding={activeTab() === 'tarot' ? 'none' : 'default'}
+          contentPadding={activeTab() === 'tarot' || activeTab() === 'saju' ? 'none' : 'default'}
           isOpen={isOpen()}
           navigation={<PMemoryAssistTabList />}
           onCloseAutoFocus={handleCloseAutoFocus}
@@ -116,6 +122,7 @@ export const PMemoryAssist = (props: PMemoryAssistProps) => {
               <PMemoryAssistContent
                 tarot={tarot}
                 tarotSpeech={tarotSpeech}
+                saju={saju}
                 weatherState={props.weatherState}
                 calendarRevision={calendarRevision()}
                 onRefreshCalendar={refreshCalendar}

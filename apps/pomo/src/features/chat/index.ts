@@ -9,3 +9,4 @@ export type {
   UseChatProps,
 } from './use-chat'
 export {useChat} from './use-chat'
+export * from './create-cloud-chat-client'

@@ -155,6 +155,9 @@ const parseFeedTimestamp = (value: string): number | null => {
     }
   }
 
+  // #2827 정책: ISO 형식의 24:00:00은 다음 날 00:00:00으로 허용한다.
+  // 두 표기는 같은 순간이므로 ISO 문자열로 정규화해 날짜가 바뀌어도 발행 시각 오류로 취급하지 않는다.
+  // 근거: https://tc39.es/ecma262/multipage/numbers-and-dates.html#sec-date-time-string-format
   const timestamp = Date.parse(normalizedValue)
   return Number.isNaN(timestamp) ? null : timestamp
 }

@@ -6,6 +6,18 @@
 - **Intent gate**: State the concrete interpretation at task start and when the scope or direction changes.
 - **Existing code references**: When discussing existing code, always include a clickable link to its exact file and line number so the link opens at that line.
 
+## UI communication
+
+Explanations and notices tend to accumulate as AI adds features, crowding the workspace and competing with the user's actual task. Keep feedback proportionate so the interface remains focused on the work.
+
+- Keep user-facing UI text concise; avoid verbose explanations and persistent status text whenever possible.
+- Prefer toasts or other transient feedback that does not consume layout space. Keep routine success silent; show concise feedback when the user needs to act.
+- Use persistent inline guidance only when it is necessary to complete the current task or understand the current state.
+
+## Code review
+
+- For Codex code reviews, read and follow the `critical-review` skill at `.agents/skills/critical-review/SKILL.md`.
+
 ## Styling ownership
 
 - Do not create standalone `.css` files on your own initiative. Before creating or adding usage of a standalone `.css` file, explain why it is needed and obtain explicit user approval.
@@ -33,6 +45,12 @@
 - When implementing a feature, prefer event-driven work whenever the relevant event or completion signal is available. Before using `setTimeout` or `setInterval`, explain why an event-driven approach is insufficient and obtain explicit user approval.
 - **Declarative programming (required; very important)**: Write code declaratively by composing reusable operations. Judge readability by how clearly the composition expresses intent, not by code length.
 - Evaluate changes in repository-wide context, prioritizing compatibility, reusability, and readability over local optimization.
+
+## Side effects
+
+- Write computation and transformation logic as pure functions whenever possible, and concentrate side effects at input/output boundaries.
+- Implement ordinary side effects needed to fulfill the user's requested functionality without separate approval.
+- Obtain approval before implementing external changes beyond the requested scope, destructive operations, or actions requiring new permissions or costs.
 
 ## Evidence
 

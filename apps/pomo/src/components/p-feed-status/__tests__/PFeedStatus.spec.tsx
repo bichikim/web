@@ -3,6 +3,7 @@
 import {PreferenceProvider} from 'src/hooks/use-preference'
 import {createSignal} from 'solid-js'
 import {isSupertonicModelDownloaded} from 'src/features/supertonic'
+import {getLocale, overwriteGetLocale} from '@paraglide/runtime'
 
 import {fireEvent, render, screen} from '@solidjs/testing-library'
 import {afterEach, beforeEach, expect, it, vi} from 'vitest'
@@ -42,7 +43,10 @@ beforeEach(() => {
 
 afterEach(() => {
   vi.clearAllMocks()
+  overwriteGetLocale(originalGetLocale)
 })
+
+const originalGetLocale = getLocale
 
 it('should show a ready feed notice', () => {
   const feeds = createFeeds()
@@ -127,6 +131,45 @@ it('should hide idle status after an empty feed sync', async () => {
   await vi.waitFor(() => expect(screen.queryByRole('status')).toBeNull())
   expect(screen.queryByText(generationMessage)).toBeNull()
   expect(screen.queryByText(message)).toBeNull()
+})
+
+it('should localize generation start, chunks, completion, and cancellation in the same studio mount', async () => {
+  overwriteGetLocale(() => 'en')
+  const [state, setState] = createSignal<PFeedState>({
+    message: '새 피드 음성을 만들고 있어요.',
+    progress: null,
+    status: 'generating',
+  })
+  const cancellation = Promise.withResolvers<void>()
+  const feeds = createFeeds([], false, [], {
+    cancelProcessing: vi.fn(async () => {
+      await cancellation.promise
+      setState({message: '다음 피드 확인을 기다리고 있어요.', status: 'idle'})
+    }),
+    state,
+  })
+  vi.mocked(usePFeedContext).mockReturnValue(feeds)
+
+  render(() => <PFeedStatus />, {wrapper: PreferenceProvider})
+
+  expect(screen.getByText('Generating audio for 새 피드.')).toBeInTheDocument()
+  setState({message: '새 피드 · 1/2 구간 생성 중', progress: 50, status: 'generating'})
+  expect(screen.getByText('Generating audio for 새 피드 · 1/2 segments.')).toBeInTheDocument()
+
+  setState({message: '새 피드가 준비됐어요.', status: 'idle'})
+  await vi.waitFor(() => expect(screen.queryByRole('status')).toBeNull())
+
+  setState({message: '다른 피드 음성을 만들고 있어요.', progress: null, status: 'generating'})
+  expect(screen.getByText('Generating audio for 다른 피드.')).toBeInTheDocument()
+  setState({message: '다른 피드 · 1/2 구간 생성 중', progress: 50, status: 'generating'})
+  expect(screen.getByText('Generating audio for 다른 피드 · 1/2 segments.')).toBeInTheDocument()
+  fireEvent.click(screen.getByRole('button', {name: 'Stop'}))
+
+  expect(screen.getByText('Stopping feed processing…')).toBeInTheDocument()
+  expect(screen.getByRole('button', {name: 'Stop'})).toBeDisabled()
+  cancellation.resolve()
+  await vi.waitFor(() => expect(screen.queryByRole('status')).toBeNull())
+  expect(feeds.cancelProcessing).toHaveBeenCalledOnce()
 })
 
 it('should hide feed syncing activity', () => {

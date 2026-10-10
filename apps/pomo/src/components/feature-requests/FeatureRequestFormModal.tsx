@@ -7,7 +7,12 @@ import {PFormMessage} from '../p-form-message/PFormMessage'
 import {PModal} from '../p-modal/PModal'
 import {PTextField} from '../p-text-field/PTextField'
 
-export type FeatureRequestFormMessage = 'created' | 'failed' | 'invalid' | 'unauthorized'
+export type FeatureRequestFormMessage =
+  | 'created'
+  | 'failed'
+  | 'invalid'
+  | 'invalid_request'
+  | 'unauthorized'
 
 interface FeatureRequestFormModalProps {
   readonly authentication: AuthController
@@ -62,7 +67,6 @@ export const FeatureRequestFormModal = (props: FeatureRequestFormModalProps) => 
                 value={props.title}
               />
               <PTextField
-                description={m.feature_request_details_hint()}
                 disabled={props.isSubmitting || props.isCheckingAuthentication}
                 label={m.feature_request_details_label()}
                 multiline
@@ -89,9 +93,11 @@ export const FeatureRequestFormModal = (props: FeatureRequestFormModalProps) => 
                   <PFormMessage tone="error">
                     {message() === 'invalid'
                       ? m.feature_request_invalid()
-                      : message() === 'unauthorized'
-                        ? m.feature_request_sign_in_required()
-                        : m.feature_request_create_failed()}
+                      : message() === 'invalid_request'
+                        ? m.feature_request_length_limit()
+                        : message() === 'unauthorized'
+                          ? m.feature_request_sign_in_required()
+                          : m.feature_request_create_failed()}
                   </PFormMessage>
                 }
                 when={message() === 'created'}

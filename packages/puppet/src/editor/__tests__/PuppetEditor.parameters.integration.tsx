@@ -1,5 +1,7 @@
 /** @vitest-environment jsdom */
 
+import {createPlayerFixture} from './fixtures/player'
+
 import {cleanup, fireEvent, render, screen, waitFor, within} from '@solidjs/testing-library'
 
 import {afterEach, beforeEach, describe, expect, test, vi} from 'vitest'
@@ -19,20 +21,7 @@ const mocks = vi.hoisted(() => ({
   importPng: vi.fn(),
   readTexturePixels: vi.fn(),
 }))
-const player: Player = {
-  destroy: vi.fn(),
-  pause: vi.fn(),
-  play: vi.fn(),
-  playMotion: vi.fn(() => true),
-  redraw: vi.fn(),
-  resetPhysics: vi.fn(),
-  resize: vi.fn(),
-  seek: vi.fn(),
-  setMotion: vi.fn(() => true),
-  setParameterValues: vi.fn(),
-  setPhysicsPreview: vi.fn(),
-  updateDocument: vi.fn(() => true),
-}
+const player = createPlayerFixture()
 
 vi.mock('../../player', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../player')>()),
@@ -208,6 +197,7 @@ describe('PuppetEditor', () => {
           {keyframes: [{time: 0, value: 15}], kind: 'parameter', parameterId: 'angle-x'},
         ]),
       )
+      expect(vi.mocked(player.setParameterValues).mock.lastCall?.[0]).not.toHaveProperty('angle-x')
     })
   })
 
@@ -267,7 +257,12 @@ describe('PuppetEditor', () => {
     fireEvent.input(view.getByRole('spinbutton', {name: 'Angle Y 값'}), {
       target: {value: '15'},
     })
-    fireEvent.click(view.getByRole('button', {name: '현재 값에 키폼'}))
+    const grid = view
+      .getByLabelText('Angle X와 Angle Y 2차원 키폼 grid')
+      .querySelector('.parameter-grid')!
+    vi.spyOn(grid, 'getBoundingClientRect').mockReturnValue(new DOMRect(100, 100, 200, 200))
+    fireEvent.contextMenu(grid, {clientX: 250, clientY: 150})
+    fireEvent.keyDown(await screen.findByRole('menuitem', {name: '키폼 추가'}), {key: 'Enter'})
 
     await waitFor(() => {
       expect(view.container.querySelectorAll('.parameter-grid-keyform')).toHaveLength(10)
@@ -276,7 +271,7 @@ describe('PuppetEditor', () => {
       ).toHaveLength(10)
     })
 
-    fireEvent.click(view.getByRole('button', {name: '선택 키폼 삭제'}))
+    fireEvent.keyDown(view.getByRole('button', {name: '키폼 선택: 15, 15'}), {key: 'Backspace'})
 
     await waitFor(() => {
       expect(view.container.querySelectorAll('.parameter-grid-keyform')).toHaveLength(9)

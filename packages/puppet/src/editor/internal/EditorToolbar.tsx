@@ -13,7 +13,7 @@ import type {EditorPanelVisibility} from './EditorPanelLayout'
 const STATUS_LABEL: Readonly<Record<PlayerCanvasStatus, string>> = {
   error: '플레이어 오류',
   loading: '데이터 적용 중',
-  ready: '배포 데이터 재생 중',
+  ready: '',
 }
 
 export interface EditorToolbarProps {
@@ -127,7 +127,7 @@ const ToolbarMenu = (props: ToolbarMenuProps) => {
           <Show when={props.examples?.length}>
             <details>
               <summary class="toolbar-menu-examples-trigger">예제</summary>
-              <div aria-label="예제 문서" class="grid pl-3" role="group">
+              <div aria-label="예제 문서" class="grid pl-editor-group" role="group">
                 <For each={props.examples}>
                   {(example) => (
                     <Button type="button" onClick={() => handleExampleOpen(example)}>
@@ -209,10 +209,17 @@ export const EditorToolbar = (props: EditorToolbarProps) => (
       {(setMount) => <BrushSettingsMount setMount={setMount()} />}
     </Show>
     <div class="toolbar-actions">
-      <div class="renderer-status" data-status={props.playerStatus}>
-        <span class="status-dot" aria-hidden="true" />
-        {STATUS_LABEL[props.playerStatus]}
-      </div>
+      <Show when={props.playerStatus !== 'ready'}>
+        <span
+          class="renderer-status"
+          data-status={props.playerStatus}
+          role="status"
+          aria-label={STATUS_LABEL[props.playerStatus]}
+          title={STATUS_LABEL[props.playerStatus]}
+        >
+          <span class="status-dot" aria-hidden="true" />
+        </span>
+      </Show>
 
       <EditorSegmentedField<'modeling' | 'animation'>
         label="편집 작업 공간"

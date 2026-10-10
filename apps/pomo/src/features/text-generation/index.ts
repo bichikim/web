@@ -1,5 +1,5 @@
 export {trimRepetitiveTail} from './answer'
-export {isTextModelDownloaded} from './download'
+export {isTextModelDownloaded, getTextModelWeightUrls} from './download'
 export type {IsTextModelDownloadedOptions} from './download'
 export {supportsWebGpu} from './environment'
 export {createLazyClient} from './lazy-client'
@@ -52,10 +52,18 @@ export * from './create-device-target'
 export * from './create-generation-failure'
 export * from './create-request-sequence'
 export * from './create-token-ids-matching'
+export * from './download-text-model'
 export * from './generate-gguf-text'
+export * from './get-text-model-cache-key'
 export * from './gguf-config'
 export * from './listen-text-generation-requests'
 export * from './load-gguf-model'
 export * from './resolve-text-model-asset-url'
 export * from './supports-text-model'
 export * from './unwrap-generation-result'
+
+export {createTransformersLoadOptions} from './create-transformers-load-options'
+export type {
+  CreateTransformersLoadOptionsOptions,
+  TransformersLoadOptions,
+} from './create-transformers-load-options'

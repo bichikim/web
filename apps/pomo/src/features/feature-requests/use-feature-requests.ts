@@ -56,6 +56,7 @@ export const useFeatureRequests = (): FeatureRequestsController => {
   const list = useFeatureRequestList({
     pageQuery: featureRequestsQuery,
     reconcileRefresh: preserveCurrentVotesInRefresh,
+    refreshLoadedPages: true,
     scope,
   })
   const {

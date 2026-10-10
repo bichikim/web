@@ -7,7 +7,8 @@ import {PSelectAppearance, PSelectOption} from './shared'
 const SELECT_ITEM_CLASSES = cva(
   'min-h-10 min-w-0 cursor-pointer items-center gap-3 rounded-3 px-3 py-2 outline-none ' +
     'transition-[background-color_120ms_ease,color_120ms_ease] ' +
-    'ui-highlighted:bg-secondary-soft motion-reduce:transition-none',
+    'ui-highlighted:bg-secondary-soft ui-disabled:cursor-not-allowed ' +
+    'ui-disabled:opacity-50 motion-reduce:transition-none',
   {
     defaultVariants: {appearance: 'default'},
     variants: {

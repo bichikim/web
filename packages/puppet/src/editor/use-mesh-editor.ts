@@ -1,6 +1,6 @@
 import {moveMeshVertex} from './move-mesh-vertex'
 import {canEditSelectedKeyform, commitVertexMove} from './commit-vertex-move'
-import {useDeformBrush} from './use-deform-brush'
+import {type DeformBrushMode, useDeformBrush} from './use-deform-brush'
 import {type Accessor, createEffect, createMemo, createSignal, type Setter, untrack} from 'solid-js'
 
 import type {PuppetParameterValues} from '../deformation'
@@ -11,7 +11,7 @@ import {type IndexedVertex, type MeshTriangle, snapPointToEdge} from './internal
 import {setVertexKeyframe} from './internal/motion-keyframes'
 import {getDeformerPreviewDocument, unapplyPartPreviewSpatialPose} from './internal/mesh-preview'
 import {getEditErrorMessage} from './internal/notices'
-import {createPartViews, type MeshPartView} from './internal/part-views'
+import {createPartViews, createPreviewVertices, type MeshPartView} from './internal/part-views'
 import {unapplySceneDeformersPoint} from './internal/scene-deformation'
 import {getEditorPoint, getEditorViewBox} from './internal/viewport'
 import type {MeshEditorProps} from './mesh-editor-contract'
@@ -20,6 +20,9 @@ export type {IndexedVertex, MeshTriangle} from './internal/mesh-view'
 export type {MeshPartView} from './internal/part-views'
 
 export interface UseMeshEditorResult {
+  readonly canSmooth: Accessor<boolean>
+  readonly brushMode: Accessor<DeformBrushMode>
+  readonly setBrushMode: (mode: DeformBrushMode) => void
   readonly brushEnabled: Accessor<boolean>
   readonly brushRadius: Accessor<number>
   readonly brushStrength: Accessor<number>
@@ -35,9 +38,9 @@ export interface UseMeshEditorResult {
   readonly handleCanvasClick: (event: MouseEvent) => void
   readonly handleKeyDown: (event: KeyboardEvent) => void
   readonly handleDeleteVertex: () => void
-  readonly handlePointerCancel: () => void
+  readonly handlePointerCancel: (event: PointerEvent) => void
   readonly handlePointerDown: (event: PointerEvent, partId: string, vertex: IndexedVertex) => void
-  readonly handlePointerEnd: () => void
+  readonly handlePointerEnd: (event: PointerEvent) => void
   readonly handlePointerMove: (event: PointerEvent) => void
   readonly clippedPartViews: Accessor<ReadonlyArray<MeshPartView>>
   readonly part: Accessor<PuppetPart | undefined>
@@ -95,6 +98,7 @@ const createMeshEditorState = (props: MeshEditorProps): MeshEditorState => {
   const [dragStartPoint, setDragStartPoint] = createSignal<VertexPoint | null>(null)
   const [focusedPartId, setFocusedPartId] = createSignal<string | null>(null)
   let activeDocument = untrack(() => props.document)
+  let activeMotionId = untrack(() => props.motionId)
   let activeEditing = untrack(() => props.meshEditing)
   let activePartId = untrack(() => props.activePartId)
   const selectedPartIds = createMemo<ReadonlyArray<string>>(() => {
@@ -132,26 +136,34 @@ const createMeshEditorState = (props: MeshEditorProps): MeshEditorState => {
         VERTEX_RADIUS_DIVISOR,
     ),
   )
+  const clippedParts = createMemo(() => {
+    const maskPartId = part()?.id
+    return maskPartId === undefined
+      ? []
+      : props.document.parts.filter((candidate) =>
+          candidate.properties?.clippingMaskIds?.includes(maskPartId),
+        )
+  })
+  const hasPreviewParts = createMemo(() => parts().length > 0 || clippedParts().length > 0)
+  const previewVertices = createMemo(() =>
+    hasPreviewParts() ? createPreviewVertices(props) : new Map<string, Float32Array>(),
+  )
   const partViews = createMemo<ReadonlyArray<MeshPartView>>(() => {
     const activePart = part()
     return createPartViews({
       activePartId: activePart?.id,
       candidates: parts(),
       draftPoint: draftPoint(),
-      props,
       selectedVertex: selectedVertex(),
+      verticesByPartId: previewVertices(),
     })
   })
   const clippedPartViews = createMemo<ReadonlyArray<MeshPartView>>(() => {
-    const maskPartId = part()?.id
     return createPartViews({
-      candidates: props.document.parts.filter(
-        (candidate) =>
-          maskPartId !== undefined && candidate.properties?.clippingMaskIds?.includes(maskPartId),
-      ),
+      candidates: clippedParts(),
       draftPoint: null,
-      props,
       selectedVertex: null,
+      verticesByPartId: previewVertices(),
     })
   })
   const vertices = createMemo<ReadonlyArray<IndexedVertex>>(() => {
@@ -164,14 +176,16 @@ const createMeshEditorState = (props: MeshEditorProps): MeshEditorState => {
   })
 
   createEffect(() => {
-    const {activePartId: nextActivePartId, document, meshEditing} = props
+    const {activePartId: nextActivePartId, document, meshEditing, motionId} = props
 
     if (
       document !== activeDocument ||
+      motionId !== activeMotionId ||
       meshEditing !== activeEditing ||
       nextActivePartId !== activePartId
     ) {
       activeDocument = document
+      activeMotionId = motionId
       activeEditing = meshEditing
       activePartId = nextActivePartId
       setDraggingVertex(null)
@@ -377,6 +391,7 @@ const createPointerEndHandler = (props: MeshEditorProps, state: MeshEditorState)
     document: props.document,
     editMode: props.editMode ?? 'motion',
     keyframeTime,
+    motionId: props.motionId,
     parameterValueMap: props.parameterValueMap,
     parameterValues,
     part: activePart,
@@ -443,9 +458,11 @@ export const useMeshEditor = (props: MeshEditorProps): UseMeshEditorResult => {
     brushCursor: brush.cursor,
     brushEnabled: brush.enabled,
     brushHardness: brush.hardness,
+    brushMode: brush.mode,
     brushRadius: brush.radius,
     brushStrength: brush.strength,
     canEditTopology: () => canEditMeshTopology(props, state),
+    canSmooth: brush.canSmooth,
     clippedPartViews: state.clippedPartViews,
     handleAddVertex,
     handleBrushPointerDown: brush.handlePointerDown,
@@ -478,14 +495,14 @@ export const useMeshEditor = (props: MeshEditorProps): UseMeshEditorResult => {
       event.stopPropagation()
       handleDeleteVertex()
     },
-    handlePointerCancel: () => {
+    handlePointerCancel: (event) => {
       resetPointerState(state)
-      brush.cancel()
+      brush.cancel(event)
     },
     handlePointerDown,
-    handlePointerEnd: () => {
+    handlePointerEnd: (event) => {
       if (brush.enabled()) {
-        brush.handlePointerEnd()
+        brush.handlePointerEnd(event)
       } else {
         handlePointerEnd()
       }
@@ -496,6 +513,7 @@ export const useMeshEditor = (props: MeshEditorProps): UseMeshEditorResult => {
     selectedVertex: state.selectedVertex,
     setBrushEnabled: brush.setEnabled,
     setBrushHardness: brush.setHardness,
+    setBrushMode: brush.setMode,
     setBrushRadius: brush.setRadius,
     setBrushStrength: brush.setStrength,
     triangles: state.triangles,

@@ -110,14 +110,14 @@ export const SpatialDeformerProperties = (props: SpatialDeformerPropertiesProps)
   return (
     <fieldset class="deformer-properties spatial-deformer-properties" aria-label="3D 디포머">
       <legend>3D 디포머</legend>
-      <section aria-label="3D 메시" class="grid gap-2">
+      <section aria-label="3D 메시" class="grid gap-editor-field">
         <Show when={meshSummary()}>
-          {(summary) => <p class="m-0 text-xs opacity-70">{summary()}</p>}
+          {(summary) => <p class="m-0 editor-type-caption opacity-70">{summary()}</p>}
         </Show>
         <Show when={props.node.spatialMesh !== undefined}>
-          <div class="grid gap-2" role="group" aria-label="3D 메시 위치">
+          <div class="grid gap-editor-field" role="group" aria-label="3D 메시 위치">
             <strong>메시 위치</strong>
-            <p class="m-0 text-xs opacity-70">
+            <p class="m-0 editor-type-caption opacity-70">
               키폼에서는 메시 표면만 옮깁니다. 아래 이동은 변형된 이미지를 옮깁니다.
             </p>
             <For each={axes}>
@@ -138,7 +138,7 @@ export const SpatialDeformerProperties = (props: SpatialDeformerPropertiesProps)
             </For>
           </div>
         </Show>
-        <div class="flex flex-wrap gap-2">
+        <div class="flex flex-wrap gap-editor-field">
           <EditorButton type="button" disabled={props.disabled} onClick={() => setDialogOpen(true)}>
             {props.node.spatialMesh === undefined ? '메시 만들기' : '메시 편집'}
           </EditorButton>

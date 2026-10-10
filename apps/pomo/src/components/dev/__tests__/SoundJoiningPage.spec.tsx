@@ -7,7 +7,7 @@ import {A} from '@solidjs/router'
 import {afterEach, beforeEach, expect, it, vi} from 'vitest'
 
 import {SoundJoiningPage} from '../SoundJoiningPage'
-import {useSoundJoining} from 'src/features/sound-joining'
+import {getJoinParameterError, useSoundJoining} from 'src/features/sound-joining'
 import {ModelTerms} from '../sound-generation/ModelTerms'
 
 const generate = vi.fn()
@@ -16,13 +16,17 @@ const [busy, setBusy] = createSignal(false)
 
 vi.mock('@solidjs/meta', () => ({Title: vi.fn()}))
 vi.mock('@solidjs/router', () => ({A: vi.fn()}))
-vi.mock('src/features/sound-joining', () => ({useSoundJoining: vi.fn()}))
+vi.mock('src/features/sound-joining', () => ({
+  getJoinParameterError: vi.fn(),
+  useSoundJoining: vi.fn(),
+}))
 vi.mock('../sound-generation/ModelTerms', () => ({ModelTerms: vi.fn()}))
 
 beforeEach(() => {
   vi.mocked(Title).mockImplementation(() => null)
   vi.mocked(A).mockImplementation((props) => props.children)
   vi.mocked(ModelTerms).mockImplementation(() => null)
+  vi.mocked(getJoinParameterError).mockReturnValue(null)
   vi.mocked(useSoundJoining).mockReturnValue({
     busy,
     error: () => null,
@@ -64,4 +68,21 @@ it('should submit both selected files with the configured joining values', () =>
   expect(generate).toHaveBeenCalledWith(
     expect.objectContaining({connectionSeconds: 6, first, second, trimEnd: 2, trimStart: 2}),
   )
+})
+
+it('should submit zero trim values', () => {
+  render(() => <SoundJoiningPage />)
+  const first = new File(['first'], 'first.wav', {type: 'audio/wav'})
+  const second = new File(['second'], 'second.wav', {type: 'audio/wav'})
+  fireEvent.change(screen.getByLabelText('첫 번째 오디오'), {target: {files: [first]}})
+  fireEvent.change(screen.getByLabelText('두 번째 오디오'), {target: {files: [second]}})
+  fireEvent.input(screen.getByRole('spinbutton', {name: '첫 번째 끝에서 자르기 (초)'}), {
+    target: {value: '0'},
+  })
+  fireEvent.input(screen.getByRole('spinbutton', {name: '두 번째 시작에서 자르기 (초)'}), {
+    target: {value: '0'},
+  })
+  fireEvent.click(screen.getByRole('button', {name: 'AI로 연결하기'}))
+
+  expect(generate).toHaveBeenCalledWith(expect.objectContaining({trimEnd: 0, trimStart: 0}))
 })

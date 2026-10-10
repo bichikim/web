@@ -1,4 +1,4 @@
-import {createContext, createSignal, useContext} from 'solid-js'
+import {createContext, createSignal, onCleanup, useContext} from 'solid-js'
 import {getDocumentScene, type PuppetDocument, type PuppetSkinBinding} from '../../player'
 import {findNode} from './scene-tree'
 
@@ -39,6 +39,14 @@ export const useSkinSessionControls = (
   const session = useSkinSession()
   const [localEnabled, setLocalEnabled] = createSignal(false)
   const [localTarget, setTarget] = createSignal(0)
+  let editingPartId: string | undefined
+  const stop = () => {
+    if (editingPartId !== undefined && session?.partId() === editingPartId) {
+      session.stop()
+    }
+    editingPartId = undefined
+  }
+  onCleanup(stop)
   return {
     enabled: () =>
       session === undefined
@@ -48,9 +56,10 @@ export const useSkinSessionControls = (
       setLocalEnabled(value)
       const id = part()
       if (value && id !== undefined) {
+        editingPartId = id
         session?.start(id)
       } else {
-        session?.stop()
+        stop()
       }
     },
     setTarget,

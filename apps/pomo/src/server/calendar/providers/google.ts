@@ -8,6 +8,7 @@ import type {
   ProviderEventsResult,
 } from './types'
 import {aggregateProviderEvents} from './aggregate-provider-events'
+import {listPaginatedEvents} from './list-paginated-events'
 import {createOAuthTokenMethods} from './create-oauth-token-methods'
 import {paginate, PAGINATION_LIMITS} from './paginate'
 import {isValidTimeZone} from 'src/utils/is-valid-time-zone'
@@ -89,48 +90,30 @@ const listCalendarEvents = async ({
   ...options
 }: ListCalendarEventsOptions): Promise<ProviderEventsResult> => {
   const headers = {Authorization: `Bearer ${options.accessToken}`}
-  let unavailableCalendars = 0
-  const result = await paginate<ProviderEvent, string>({
-    loadPage: async (pageToken) => {
-      try {
-        const url = new URL(
-          `${GOOGLE_CALENDAR_API}/calendars/${encodeURIComponent(calendarId)}/events`,
-        )
-        url.searchParams.set('maxResults', String(PAGINATION_LIMITS.events.pageSize))
-        url.searchParams.set('orderBy', 'startTime')
-        url.searchParams.set('showDeleted', 'false')
-        url.searchParams.set('singleEvents', 'true')
-        url.searchParams.set('timeMax', options.end)
-        url.searchParams.set('timeMin', options.start)
-        if (pageToken !== null) {
-          url.searchParams.set('pageToken', pageToken)
-        }
-        const response = await fetch(url, {headers})
+  return listPaginatedEvents<string>(async (pageToken) => {
+    const url = new URL(`${GOOGLE_CALENDAR_API}/calendars/${encodeURIComponent(calendarId)}/events`)
+    url.searchParams.set('maxResults', String(PAGINATION_LIMITS.events.pageSize))
+    url.searchParams.set('orderBy', 'startTime')
+    url.searchParams.set('showDeleted', 'false')
+    url.searchParams.set('singleEvents', 'true')
+    url.searchParams.set('timeMax', options.end)
+    url.searchParams.set('timeMin', options.start)
+    if (pageToken !== null) {
+      url.searchParams.set('pageToken', pageToken)
+    }
+    const response = await fetch(url, {headers})
 
-        if (!response.ok) {
-          throw new Error(`Google Calendar events request failed with status ${response.status}`)
-        }
+    if (!response.ok) {
+      throw new Error(`Google Calendar events request failed with status ${response.status}`)
+    }
 
-        const body = googleEventsSchema.parse(await response.json())
-        const items = body.items.flatMap((event) => {
-          const normalized = normalizeEvent(event, calendarId, calendarLabel, calendarTimeZone)
-          return normalized === null ? [] : [normalized]
-        })
-        return {items, nextCursor: body.nextPageToken ?? null}
-      } catch {
-        unavailableCalendars = 1
-        return {items: [], nextCursor: null}
-      }
-    },
-    maximumItems: PAGINATION_LIMITS.events.maximumItems,
-    maximumPages: PAGINATION_LIMITS.events.maximumPages,
+    const body = googleEventsSchema.parse(await response.json())
+    const items = body.items.flatMap((event) => {
+      const normalized = normalizeEvent(event, calendarId, calendarLabel, calendarTimeZone)
+      return normalized === null ? [] : [normalized]
+    })
+    return {items, nextCursor: body.nextPageToken ?? null}
   })
-
-  return {
-    events: result.items,
-    truncated: unavailableCalendars === 0 && result.truncated,
-    unavailableCalendars,
-  }
 }
 
 interface CalendarListResult {

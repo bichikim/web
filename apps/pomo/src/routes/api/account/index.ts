@@ -24,7 +24,16 @@ export const GET = async (event: APIEvent): Promise<Response> => {
     )
   }
 
-  const userId = await findOrCreateNeonUser(session.identity.id)
+  let userId: string
+  try {
+    userId = await findOrCreateNeonUser(session.identity.id)
+  } catch (error: unknown) {
+    console.error('Failed to provision Neon user for account API', error)
+    return noStoreJson(
+      {error: 'authentication_unavailable'},
+      {cookies: session.setCookies, status: HTTP_SERVICE_UNAVAILABLE},
+    )
+  }
 
   return noStoreJson(
     {

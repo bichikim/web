@@ -223,3 +223,18 @@ it('should keep an incomplete empty result when all events have invalid times', 
   expect(context).toContain('확인된 일정이 없습니다.')
   expect(context).not.toContain('조회 기간에 등록된 일정이 없습니다.')
 })
+
+it.each([
+  [' 2026-09-05T00:00:00Z', '2026-09-05T01:00:00Z'],
+  ['2026-09-05T00:00:00Z', '2026-09-05T01:00:00Z '],
+  ['\t2026-09-05T09:00:00+09:00\n', '\n2026-09-05T10:00:00+09:00\t'],
+])('should include and format trimmed timed intervals: %s through %s', (start, end) => {
+  const context = createCalendarPromptContext({
+    events: [createEvent({end, start})],
+    timeZone: 'Asia/Seoul',
+  })
+
+  expect(context).toContain('2026. 9. 5. 오전 9:00–오전 10:00 · 주간 회의')
+  expect(context).not.toContain('일부 일정만 확인했습니다.')
+  expect(context).not.toContain('Invalid Date')
+})

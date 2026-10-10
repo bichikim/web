@@ -12,8 +12,13 @@ import {canvasShortcuts} from './uno/shortcuts/canvas'
 import {parametersShortcuts} from './uno/shortcuts/parameters'
 import {timelineShortcuts} from './uno/shortcuts/timeline'
 import {dialogsShortcuts} from './uno/shortcuts/dialogs'
+import {typographyShortcuts, typographyTheme} from './uno/shortcuts/typography'
+import {spacingTheme} from './uno/spacing'
+import {scrollbarShortcuts} from './uno/shortcuts/scrollbars'
 
 const shortcuts = {
+  ...typographyShortcuts,
+  ...scrollbarShortcuts,
   'puppet-demo': [
     'w-full h-full m-0 [&_body]:w-full [&_body]:h-full [&_body]:m-0 [&_body]:overflow-hidden',
     '[&_#root]:w-full [&_#root]:h-full [&_puppet-editor]:w-full [&_puppet-editor]:h-full',
@@ -49,6 +54,8 @@ export default defineConfig({
   safelist: Object.keys(shortcuts),
   shortcuts,
   theme: {
+    ...spacingTheme,
+    ...typographyTheme,
     animation: {
       counts: {'layer-name': 'infinite', 'mask-march': 'infinite'},
       durations: {

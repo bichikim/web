@@ -1,5 +1,11 @@
 /** @vitest-environment node */
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
+import {createDeferred} from 'src/test-utils/create-deferred'
+import {requestCloudText} from 'src/features/cloud-text/client'
+import type {CloudTextResponse} from 'src/features/cloud-text/contracts'
+import {CLOUD_TEXT_RESPONSE} from 'src/features/cloud-text/__tests__/fixtures/response'
+
+vi.mock('src/features/cloud-text/client', () => ({requestCloudText: vi.fn()}))
 
 const reportClientError = vi.hoisted(() => vi.fn())
 
@@ -67,6 +73,20 @@ afterEach(() => {
 })
 
 describe('createDialogueClient', () => {
+  it('should use the shared cloud request for dialogue drafts and learning text', async () => {
+    const deferred = createDeferred<CloudTextResponse>()
+    vi.mocked(requestCloudText).mockReturnValue(deferred.promise)
+    const onResponse = vi.fn()
+    const client = createDialogueClient({modelId: 'cloud', onResponse})
+    client.generate('집중하는 사람에게 짧게 격려해 줘', 'ko')
+    deferred.resolve(CLOUD_TEXT_RESPONSE)
+    await deferred.promise
+    expect(requestCloudText).toHaveBeenCalledOnce()
+    expect(FakeWorker.current).toBe(null)
+    expect(onResponse).toHaveBeenLastCalledWith({text: CLOUD_TEXT_RESPONSE.text, type: 'complete'})
+    client.dispose()
+  })
+
   it('should send requests and forward worker responses', () => {
     const onResponse = vi.fn()
     const client = createDialogueClient({modelId: 'qwen-2b', onResponse})

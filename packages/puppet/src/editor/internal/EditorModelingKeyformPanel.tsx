@@ -1,7 +1,7 @@
 import type {PuppetDocument} from '../../player'
 import type {ParameterEditorResult} from '../use-parameter-editor'
 import {createMemo} from 'solid-js'
-import type {PuppetParameterValues} from '../../deformation'
+import {getBindingInfluence, type PuppetParameterValues} from '../../deformation'
 import {getParameterPresentation} from './parameter-presentation'
 import {getDocumentParameterBindings, getParameterBindingsForNodeIds} from './parameter-keyforms'
 import {EditorKeyformPanel} from './EditorKeyformPanel'
@@ -39,6 +39,16 @@ export const EditorModelingKeyformPanel = (props: EditorModelingKeyformPanelProp
     )
   }
   const presentation = createMemo(() => getParameterPresentation(props.document, bindings()))
+  const bindingInfluences = createMemo(() => {
+    const document = props.editor.previewDocument()
+    const parameterValues = props.editor.parameterValueMap()
+    return new Map(
+      getDocumentParameterBindings(document).map((binding) => [
+        binding.id,
+        getBindingInfluence({binding, document, parameterValues}),
+      ]),
+    )
+  })
   const handleValueChange = (values: PuppetParameterValues) => {
     const bindingId = props.editor.activeBindingId()
     if (bindingId === null) {
@@ -60,8 +70,11 @@ export const EditorModelingKeyformPanel = (props: EditorModelingKeyformPanelProp
     )
   return (
     <EditorKeyformPanel
+      keyformCenter={{x: props.document.viewport.width / 2, y: props.document.viewport.height / 2}}
+      onKeyformMirror={props.editor.mirrorKeyform}
+      onCornersGenerate={props.editor.generateCorners}
       setBrushControlsMount={props.setBrushControlsMount}
-      influence={props.editor.influence()}
+      bindingInfluences={bindingInfluences()}
       activeBindingId={props.editor.activeBindingId() ?? undefined}
       activeKeyformValues={props.editor.activeKeyformValues()}
       allParametersVisible={props.editor.allParametersVisible()}

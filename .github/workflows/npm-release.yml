@@ -68,8 +68,7 @@ jobs:
     needs: validate
     if: >-
       github.repository == 'bichikim/web' &&
-      github.ref == 'refs/heads/main' &&
-      vars.NPM_RELEASE_ENABLED == 'true'
+      github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     timeout-minutes: 30
     permissions:
@@ -103,4 +102,5 @@ jobs:
       - name: Publish packages and record releases
         env:
           GH_TOKEN: ${{ github.token }}
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: node scripts/npm-release/run.mjs publish

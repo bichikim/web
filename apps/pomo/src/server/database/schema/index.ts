@@ -1,5 +1,7 @@
 export * from './ai-jobs'
+export * from './api-ai'
 export * from './calendar'
+export * from './cloud-text'
 export * from './commerce'
 export * from './feature-requests'
 export * from './feed-channels'
