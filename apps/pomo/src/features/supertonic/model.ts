@@ -1,3 +1,5 @@
+import {sumBy} from 'es-toolkit/math'
+
 export interface SupertonicModelFile {
   readonly key: 'durationPredictor' | 'textEncoder' | 'vectorEstimator' | 'vocoder'
   readonly name: string
@@ -192,9 +194,6 @@ const INT8_MODEL_FILES: ReadonlyArray<SupertonicModelFile> = [
   },
 ]
 
-const getModelSize = (files: ReadonlyArray<SupertonicModelFile>) =>
-  files.reduce((total, file) => total + file.size, 0)
-
 // Keep both profiles: product decisions need side-by-side quality and latency evidence, not a forced quantized migration.
 export const SUPERTONIC_MODELS = [
   {
@@ -204,7 +203,7 @@ export const SUPERTONIC_MODELS = [
     id: 'full',
     label: 'Full',
     preferredBackend: 'webgpu',
-    size: getModelSize(FULL_MODEL_FILES),
+    size: sumBy(FULL_MODEL_FILES, (file) => file.size),
     speechPolicy: KOREAN_SPEECH_POLICY,
   },
   {
@@ -214,7 +213,7 @@ export const SUPERTONIC_MODELS = [
     id: 'int8',
     label: 'INT8',
     preferredBackend: 'wasm',
-    size: getModelSize(INT8_MODEL_FILES),
+    size: sumBy(INT8_MODEL_FILES, (file) => file.size),
     speechPolicy: KOREAN_SPEECH_POLICY,
   },
 ] as const satisfies ReadonlyArray<SupertonicModel>
