@@ -11,3 +11,6 @@ export const languageLearningWordSchema = z.object({
 })
 
 export type LanguageLearningWord = z.infer<typeof languageLearningWordSchema>
+
+export const normalizeLanguageLearningWordUnicodeValue = (value: string): string =>
+  value.normalize('NFC')

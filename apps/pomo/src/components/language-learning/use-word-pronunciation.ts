@@ -12,12 +12,15 @@ import {
   type LanguageLearningWord,
   type LanguageLearningWordAudioRepository,
   LanguageLearningWordAudioStorageError,
+  normalizeLanguageLearningWordUnicodeValue,
 } from '../../features/language-learning'
 import {type ModelAssetManager, useModelAssetManager} from '../../features/model-download'
 import {isSupertonicModelDownloaded} from '../../features/supertonic'
 import {generateLanguageLearningWordPronunciation} from './word-pronunciation'
 
-const getWordKey = (word: LanguageLearningWord) => `${word.language}:${word.value}`
+const getWordKey = (word: LanguageLearningWord) =>
+  `${word.language}:${normalizeLanguageLearningWordUnicodeValue(word.value)}`
+const getWordAutoplayKey = (word: LanguageLearningWord) => `${word.language}:${word.value}`
 
 interface PendingPronunciation extends PendingSettingsPronunciation {
   readonly audioOwner: string
@@ -87,11 +90,11 @@ const createAudioPublisher = (options: AudioPublisherOptions) => {
     const currentUrls = options.getAudioUrls()
     const url = replaceBlobObjectUrl(currentUrls[key] ?? null, () => audio, {order: 'create-first'})
     options.setAudioUrls({...currentUrls, [key]: url})
-    requestAutoplay(key)
+    requestAutoplay(getWordAutoplayKey(word))
   }
 
   const replay = (word: LanguageLearningWord) => {
-    requestAutoplay(getWordKey(word))
+    requestAutoplay(getWordAutoplayKey(word))
   }
 
   return {publish, replay}
