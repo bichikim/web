@@ -91,6 +91,8 @@ describe('useViewerConnection', () => {
   it('should finish closing the session on host teardown before the transport is unmounted', async () => {
     const closed = Promise.withResolvers<{content: []}>()
     const disposed = Promise.withResolvers<void>()
+    const subscribed = Promise.withResolvers<void>()
+    const stop = vi.fn(async () => {})
     const handlers: {teardown?: () => Promise<void>} = {}
     const disposePort = vi.fn(disposed.resolve)
     const port: ViewerPort = {
@@ -99,6 +101,10 @@ describe('useViewerConnection', () => {
       start: async (_receive, _report, _refresh, teardown) => {
         handlers.teardown = teardown
         return disposePort
+      },
+      watch: async () => {
+        subscribed.resolve()
+        return stop
       },
     }
     const root = createRoot((dispose) => {
@@ -111,9 +117,11 @@ describe('useViewerConnection', () => {
       })
       return {dispose}
     })
+    await subscribed.promise
     await Promise.resolve()
     const teardown = handlers.teardown?.()
     await Promise.resolve()
+    expect(stop).toHaveBeenCalledOnce()
     expect(port.call).toHaveBeenCalledWith('code.close', {session: 'session'})
     expect(disposePort).not.toHaveBeenCalled()
     closed.resolve({content: []})

@@ -47,6 +47,7 @@ export const useViewerConnection = (connection: ConnectionOptions): Accessor<num
   const teardown = async (): Promise<void> => {
     if (!disposed) {
       disposed = true
+      setReady(false)
       const current = connection.session()
       if (current !== null) {
         closeSession(current)
