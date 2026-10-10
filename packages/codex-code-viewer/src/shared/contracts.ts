@@ -33,8 +33,12 @@ export const workspaceSessionSchema = z.object({
 export const sessionSchema = workspaceSessionSchema.extend({document: documentSchema})
 export const connectionSchema = z.union([sessionSchema, workspaceSessionSchema.strict()])
 export const MAX_REFERENCE_PREVIEW = 400
+export const MAX_NAVIGATION_PREVIEW_LINES = 5
 export const navigationLocationSchema = locationSchema.extend({
-  preview: z.string().max(MAX_REFERENCE_PREVIEW).optional(),
+  preview: z
+    .string()
+    .max((MAX_REFERENCE_PREVIEW + 1) * MAX_NAVIGATION_PREVIEW_LINES - 1)
+    .optional(),
 })
 export type NavigationLocation = z.infer<typeof navigationLocationSchema>
 export const navigationSchema = z.object({
@@ -45,6 +49,14 @@ export type NavigationKind = NonNullable<z.infer<typeof navigationSchema>['kind'
 export type NavigationResult = Required<z.infer<typeof navigationSchema>>
 export const codeSourceSchema = z.object({path: z.string(), source: z.string().max(MAX_CODE_BYTES)})
 export type CodeSource = z.infer<typeof codeSourceSchema>
+export const navigationInputSchema = z.object({
+  navigation: z.enum(['definition', 'path']),
+  offset: z.number().int().nonnegative(),
+  path: z.string(),
+  revision: z.string(),
+  sources: z.array(codeSourceSchema).optional(),
+})
+export type NavigationInput = z.infer<typeof navigationInputSchema>
 export const filesSchema = z.object({paths: z.array(z.string())})
 export const workspaceFileSchema = z.object({openable: z.boolean(), path: z.string()})
 export const treeSchema = z.object({
@@ -58,6 +70,28 @@ export type EntrySnapshot = z.infer<typeof entrySnapshotSchema>
 export type WorkspaceEntry = z.infer<typeof entrySchema>
 export type WorkspaceTree = z.infer<typeof treeSchema>
 export type WorkspaceFile = z.infer<typeof workspaceFileSchema>
+export const scanBatchSchema = z.object({
+  complete: z.boolean(),
+  directories: z.array(z.string()),
+  directory: z.string(),
+  failed: z.boolean().optional(),
+  files: z.array(workspaceFileSchema),
+  snapshot: z.boolean().optional(),
+})
+export type ScanBatch = z.infer<typeof scanBatchSchema>
+export const streamEndpointSchema = z.object({
+  url: z.url().refine((value) => {
+    const url = new URL(value)
+    return (
+      url.protocol === 'http:' &&
+      (url.hostname === '127.0.0.1' ||
+        (typeof globalThis.location !== 'undefined' &&
+          url.origin === globalThis.location.origin)) &&
+      url.username === '' &&
+      url.password === ''
+    )
+  }),
+})
 export const errorSchema = z.object({
   code: z.enum([
     'not-found',

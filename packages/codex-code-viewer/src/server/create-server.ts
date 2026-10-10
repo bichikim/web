@@ -5,11 +5,18 @@ import {registerAppResource, RESOURCE_MIME_TYPE} from '@modelcontextprotocol/ext
 import {getResourcePath} from '@openai/mcp-extensions/server'
 import {z} from 'zod'
 import manifest from '../../package.json'
-import {codeSourceSchema, failure, type Result, success} from '../shared/contracts'
+import {
+  codeSourceSchema,
+  failure,
+  type NavigationResult,
+  type Result,
+  success,
+} from '../shared/contracts'
 import {createSessions} from './create-sessions'
 import {toolResult} from './tool-result'
 import {FILE_EXTENSIONS} from '../shared/file-formats'
 import {createWorkspaceEvents} from './create-workspace-events'
+import {filterScan} from './filter-scan'
 import {registerFileOperations} from './register-file-operations'
 
 const appOnly = {ui: {visibility: ['app']}}
@@ -53,16 +60,64 @@ const registerPanel = (
 const registerTree = (
   server: McpServer,
   withSession: ReturnType<typeof createSessions>['withSession'],
+  updates: ReturnType<typeof createWorkspaceEvents>,
 ): void => {
   server.registerTool(
     'code.tree',
     {
       _meta: appOnly,
       annotations,
-      inputSchema: {session: z.string()},
+      inputSchema: {
+        directories: z.array(z.string()).optional(),
+        query: z.string().default(''),
+        session: z.string(),
+        stream: z.boolean().default(false),
+      },
       title: 'List workspace file tree',
     },
-    async ({session}) => withSession(session, (workspace) => success(workspace.tree())),
+    async ({session, directories, query, stream}) =>
+      stream
+        ? withSession(session, async (workspace) => {
+            if (directories !== undefined) {
+              workspace.observe(directories)
+            }
+            return success({
+              url: await updates.scan(session, 'tree', (signal) =>
+                filterScan(workspace.scan(directories, signal), query),
+              ),
+            })
+          })
+        : withSession(session, async (workspace) => success(await workspace.tree())),
+  )
+}
+
+const registerList = (
+  server: McpServer,
+  withSession: ReturnType<typeof createSessions>['withSession'],
+  updates: ReturnType<typeof createWorkspaceEvents>,
+): void => {
+  server.registerTool(
+    'code.list',
+    {
+      _meta: appOnly,
+      annotations,
+      inputSchema: {
+        query: z.string().default(''),
+        session: z.string(),
+        stream: z.boolean().default(false),
+      },
+      title: 'Find workspace files',
+    },
+    async ({session, query, stream}) =>
+      stream
+        ? withSession(session, async (workspace) => {
+            return success({
+              url: await updates.scan(session, 'search', (signal) =>
+                filterScan(workspace.scan(undefined, signal), query, true),
+              ),
+            })
+          })
+        : withSession(session, async (workspace) => success({paths: await workspace.list(query)})),
   )
 }
 
@@ -135,6 +190,7 @@ const registerEditing = (
 const registerNavigation = (
   server: McpServer,
   withSession: ReturnType<typeof createSessions>['withSession'],
+  updates: ReturnType<typeof createWorkspaceEvents>,
 ): void => {
   const pathInput = {path: z.string(), session: z.string()}
   server.registerTool(
@@ -148,11 +204,19 @@ const registerNavigation = (
         offset: z.number().int().nonnegative(),
         revision: z.string(),
         sources: z.array(codeSourceSchema).max(MAX_DRAFT_FILES).optional(),
+        stream: z.boolean().default(false),
       },
       title: 'Follow import or definition',
     },
-    async ({session, path, offset, navigation, revision, sources}) =>
-      withSession(session, async (workspace) => {
+    async ({session, path, offset, navigation, revision, sources, stream}) =>
+      withSession(session, async (workspace): Promise<Result<NavigationResult | {url: string}>> => {
+        if (stream) {
+          return success({
+            url: await updates.scan(session, 'navigation', (signal) =>
+              workspace.scanNavigation({navigation, offset, path, revision, sources}, signal),
+            ),
+          })
+        }
         const current = workspace.read(path)
         if (!current.ok) {
           return current
@@ -254,18 +318,8 @@ export const createServer = (html: string, options: ServerOptions = {}) => {
         return document.ok ? success({document: document.value}) : document
       }),
   )
-  registerNavigation(server, withSession)
-  server.registerTool(
-    'code.list',
-    {
-      _meta: appOnly,
-      annotations,
-      inputSchema: {query: z.string().default(''), session: z.string()},
-      title: 'Find workspace files',
-    },
-    async ({session, query}) =>
-      withSession(session, (workspace) => success({paths: workspace.list(query)})),
-  )
+  registerNavigation(server, withSession, updates)
+  registerList(server, withSession, updates)
   server.registerTool(
     'code.close',
     {
@@ -290,7 +344,7 @@ export const createServer = (html: string, options: ServerOptions = {}) => {
     async ({session}) =>
       withSession(session, async () => success({url: await updates.watch(session)})),
   )
-  registerTree(server, withSession)
+  registerTree(server, withSession, updates)
   registerEditing(server, withSession)
   registerFileOperations(server, withSession)
   registerMedia(server, withSession)

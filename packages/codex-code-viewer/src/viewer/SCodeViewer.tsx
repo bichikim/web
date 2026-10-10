@@ -15,6 +15,8 @@ import {MediaCacheContext} from './media-cache-context'
 import {ViewStateContext} from './view-state/context'
 import {hasDocumentSource} from '../shared/has-document-source'
 import {useFileTreeVisibility} from './use-file-tree-visibility'
+import {SViewerSettings} from './SViewerSettings'
+import {useViewerSettings} from './use-viewer-settings'
 import {SUnsavedChanges} from './editor/SUnsavedChanges'
 
 interface SCodeViewerProps {
@@ -23,6 +25,8 @@ interface SCodeViewerProps {
 export const SCodeViewer = (props: SCodeViewerProps) => {
   const port = untrack(() => props.port)
   const viewer = useViewer(port)
+  const settings = useViewerSettings()
+  const [settingsOpen, setSettingsOpen] = createSignal(false)
   const mediaCache = useMediaCache(() => viewer.session()?.session ?? null)
   const [focusRequest, setFocusRequest] = createSignal(0)
   const tree = useFileTreeVisibility(viewer.workspaceSession)
@@ -80,6 +84,7 @@ export const SCodeViewer = (props: SCodeViewerProps) => {
             focusRequest={focusRequest()}
             treeVisible={tree.visible()}
             onToggleTree={tree.toggle}
+            onSettings={() => setSettingsOpen(true)}
           />
           <Show when={search.visible() && sourceAvailable()}>
             <SFindBar
@@ -111,7 +116,13 @@ export const SCodeViewer = (props: SCodeViewerProps) => {
               />
             }
           >
-            <SViewerDocument port={port} viewer={viewer} search={search} onFind={handleFind} />
+            <SViewerDocument
+              port={port}
+              viewer={viewer}
+              search={search}
+              onFind={handleFind}
+              previewLines={settings.previewLines()}
+            />
           </SResizablePanels>
           <footer class="mt-auto flex shrink-0 items-center gap-3 border-t border-divider px-4 py-1">
             <span class="min-w-0 flex-1 truncate text-sm text-muted" title={viewer.address()}>
@@ -134,6 +145,12 @@ export const SCodeViewer = (props: SCodeViewerProps) => {
             {(notice) => <SNotice message={notice.message} onDismiss={viewer.dismissNotice} />}
           </Show>
           <SUnsavedChanges editing={viewer.editing} />
+          <SViewerSettings
+            open={settingsOpen()}
+            previewLines={settings.previewLines()}
+            onChange={settings.changePreviewLines}
+            onClose={() => setSettingsOpen(false)}
+          />
         </main>
       </ViewStateContext.Provider>
     </MediaCacheContext.Provider>

@@ -1,4 +1,4 @@
-import {z} from 'zod'
+import {streamEndpointSchema} from '../shared/contracts'
 import type {ViewerPort} from './types'
 import {callViewerTool} from './call-viewer-tool'
 
@@ -7,18 +7,6 @@ interface WorkspaceSubscriptionOptions {
   readonly session: string
   readonly receive: () => void
 }
-const endpointSchema = z.object({
-  url: z.url().refine((value) => {
-    const url = new URL(value)
-    return (
-      url.protocol === 'http:' &&
-      url.hostname === '127.0.0.1' &&
-      url.username === '' &&
-      url.password === ''
-    )
-  }),
-})
-
 /** Subscribes to local workspace signals until the caller releases the subscription. */
 export const subscribeWorkspace = async (
   options: WorkspaceSubscriptionOptions,
@@ -27,7 +15,7 @@ export const subscribeWorkspace = async (
     input: {session: options.session},
     name: 'code.watch',
     port: {call: options.call},
-    schema: endpointSchema,
+    schema: streamEndpointSchema,
   })
   const events = new EventSource(result.url)
   let revision: string | null = null

@@ -1,10 +1,12 @@
 import {createEffect, createSignal, createUniqueId, For, Show} from 'solid-js'
 import {SIcon} from './SIcon'
+import {SSelectOption} from './SSelectOption'
 import {useSelect} from './use-select'
 
 interface SSelectProps {
   readonly label: string
   readonly options: readonly string[]
+  readonly variant?: 'button' | 'field'
   readonly value?: string
   readonly onChange?: (value: string) => void
 }
@@ -41,7 +43,11 @@ export const SSelect = (props: SSelectProps) => {
     }
   }
   return (
-    <span class="inline-flex min-w-0" style={{'--select-anchor': `--${id}`}}>
+    <span
+      class="inline-flex min-w-0"
+      classList={{'w-full': props.variant === 'field'}}
+      style={{'--select-anchor': `--${id}`}}
+    >
       <button
         aria-activedescendant={
           selection.expanded() ? `${id}-option-${selection.activeIndex()}` : undefined
@@ -50,7 +56,11 @@ export const SSelect = (props: SSelectProps) => {
         aria-expanded={selection.expanded()}
         aria-haspopup="listbox"
         aria-label={props.label}
-        class="ui-document-button min-w-26 max-w-64 justify-between gap-3 [anchor-name:var(--select-anchor)]"
+        class="ui-focus inline-flex items-center justify-between gap-3 [anchor-name:var(--select-anchor)]"
+        classList={{
+          'ui-document-button min-w-26 max-w-64': props.variant !== 'field',
+          'ui-input h-10 w-full': props.variant === 'field',
+        }}
         disabled={props.options.length === 0}
         onBlur={selection.dismiss}
         onClick={selection.toggle}
@@ -60,7 +70,10 @@ export const SSelect = (props: SSelectProps) => {
         type="button"
       >
         <span class="truncate">{selection.value() ?? '선택 항목 없음'}</span>
-        <span class="flex text-muted">
+        <span
+          class="flex shrink-0 text-muted transition-transform duration-150 motion-reduce:transition-none"
+          classList={{'rotate-180': selection.expanded()}}
+        >
           <SIcon name="chevronDown" />
         </span>
       </button>
@@ -80,26 +93,13 @@ export const SSelect = (props: SSelectProps) => {
         >
           <For each={props.options}>
             {(option, index) => (
-              <button
-                aria-selected={option === selection.value()}
-                class="ui-row flex w-full items-center justify-between gap-4 rounded-row px-3 py-2 text-left
-                  data-[active=true]:bg-hover aria-selected:font-medium"
-                data-active={index() === selection.activeIndex()}
+              <SSelectOption
+                label={option}
+                selected={option === selection.value()}
+                active={index() === selection.activeIndex()}
                 id={`${id}-option-${index()}`}
-                onClick={() => selection.choose(option)}
-                onPointerDown={(event) => event.preventDefault()}
-                role="option"
-                tabIndex={-1}
-                title={option}
-                type="button"
-              >
-                <span class="truncate">{option}</span>
-                <span class="flex w-4 shrink-0 text-muted">
-                  <Show when={option === selection.value()}>
-                    <SIcon name="check" />
-                  </Show>
-                </span>
-              </button>
+                onSelect={() => selection.choose(option)}
+              />
             )}
           </For>
         </div>

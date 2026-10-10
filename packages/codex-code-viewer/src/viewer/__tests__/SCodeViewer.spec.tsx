@@ -29,8 +29,28 @@ describe('SCodeViewer', () => {
     const editor = EditorView.findFromDOM(textbox)!
     return {editor, port, textbox}
   }
+  const dialogs = ['showModal', 'close'].map(
+    (name) => [name, Object.getOwnPropertyDescriptor(HTMLDialogElement.prototype, name)] as const,
+  )
+  const originalPopover = Object.getOwnPropertyDescriptor(HTMLElement.prototype, 'showPopover')
   const originalScroll = Object.getOwnPropertyDescriptor(HTMLElement.prototype, 'scrollIntoView')
   beforeEach(() => {
+    Object.defineProperty(HTMLElement.prototype, 'showPopover', {
+      configurable: true,
+      value: vi.fn(),
+    })
+    Object.defineProperty(HTMLDialogElement.prototype, 'showModal', {
+      configurable: true,
+      value(this: HTMLDialogElement) {
+        this.open = true
+      },
+    })
+    Object.defineProperty(HTMLDialogElement.prototype, 'close', {
+      configurable: true,
+      value(this: HTMLDialogElement) {
+        this.open = false
+      },
+    })
     Object.defineProperty(HTMLElement.prototype, 'scrollIntoView', {
       configurable: true,
       value: vi.fn(),
@@ -39,11 +59,44 @@ describe('SCodeViewer', () => {
   afterEach(() => {
     cleanup()
     vi.unstubAllGlobals()
+    localStorage.clear()
+    if (originalPopover === undefined) {
+      Reflect.deleteProperty(HTMLElement.prototype, 'showPopover')
+    } else {
+      Object.defineProperty(HTMLElement.prototype, 'showPopover', originalPopover)
+    }
+    for (const [name, descriptor] of dialogs) {
+      if (descriptor === undefined) {
+        Reflect.deleteProperty(HTMLDialogElement.prototype, name)
+      } else {
+        Object.defineProperty(HTMLDialogElement.prototype, name, descriptor)
+      }
+    }
     if (originalScroll === undefined) {
       Reflect.deleteProperty(HTMLElement.prototype, 'scrollIntoView')
     } else {
       Object.defineProperty(HTMLElement.prototype, 'scrollIntoView', originalScroll)
     }
+  })
+
+  it('should open settings beside the tree toggle and persist the selected preview lines', () => {
+    const {textbox} = mountEditor()
+    const button = screen.getByRole('button', {name: '설정'})
+    expect(screen.getByRole('button', {name: '파일 트리'}).nextElementSibling).toBe(button)
+    fireEvent.click(button)
+    const dialog = screen.getByRole('dialog', {name: '설정'})
+    const select = screen.getByRole('combobox', {name: '미리보기 줄 수'})
+    expect(select).toHaveTextContent('2줄')
+    fireEvent.click(select)
+    expect(screen.getByRole('option', {name: '2줄'})).toHaveAttribute('aria-selected', 'true')
+    fireEvent.click(screen.getByRole('option', {name: '4줄'}))
+    fireEvent.click(screen.getByRole('button', {name: '닫기'}))
+    expect(dialog).not.toHaveAttribute('open')
+    expect(screen.getByRole('textbox', {name: '코드 편집기'})).toBe(textbox)
+    fireEvent.click(button)
+    expect(screen.getByRole('combobox', {name: '미리보기 줄 수'})).toHaveTextContent('4줄')
+    fireEvent(dialog, new Event('cancel', {cancelable: true}))
+    expect(dialog).not.toHaveAttribute('open')
   })
 
   it.each(['ctrlKey', 'metaKey'] as const)(
@@ -137,7 +190,11 @@ describe('SCodeViewer', () => {
     expect(await screen.findByRole('treeitem', {name: 'main.ts'})).toBeTruthy()
     expect(screen.getByRole('complementary', {name: '파일 트리'})).not.toHaveTextContent('project')
     expect(createPort).toHaveBeenCalledTimes(1)
-    expect(port.call).toHaveBeenCalledWith('code.tree', {session: 'session'})
+    expect(port.call).toHaveBeenCalledWith('code.tree', {
+      directories: [''],
+      session: 'session',
+      stream: true,
+    })
     fireEvent.input(screen.getByRole('textbox', {name: '파일 필터링'}), {target: {value: 'main'}})
     fireEvent.click(screen.getByRole('button', {name: '파일 트리'}))
     fireEvent.click(screen.getByRole('button', {name: '파일 트리'}))
@@ -178,7 +235,11 @@ describe('SCodeViewer', () => {
     expect(port.call).not.toHaveBeenCalledWith('code.open', expect.anything())
     expect(screen.getByRole('button', {name: '파일 트리'})).toHaveProperty('disabled', false)
     expect(screen.queryByRole('button', {name: '채팅창에 추가'})).toBeNull()
-    expect(port.call).toHaveBeenCalledWith('code.tree', {session: 'workspace'})
+    expect(port.call).toHaveBeenCalledWith('code.tree', {
+      directories: [''],
+      session: 'workspace',
+      stream: true,
+    })
     fireEvent.click(screen.getByRole('button', {name: '파일 트리'}))
     expect(screen.queryByRole('tree')).toBeNull()
     expect(screen.getByLabelText('작업 폴더')).toHaveTextContent('project')

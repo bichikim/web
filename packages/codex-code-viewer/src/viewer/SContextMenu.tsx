@@ -1,13 +1,14 @@
-import {createMemo, createSignal, For, onCleanup, onMount, Show} from 'solid-js'
+import {createMemo, createSignal, For, type JSX, onCleanup, onMount, Show} from 'solid-js'
 import type {ContextMenuCloseOptions, ContextMenuItem} from './types'
 import {SContextMenuItem} from './SContextMenuItem'
 
 interface SContextMenuProps {
+  children?: JSX.Element
   x: number
   y: number
   items: readonly ContextMenuItem[]
   label?: string
-  title?: string
+  title?: JSX.Element
   emptyMessage?: string
   maxHeight?: number
   width?: number
@@ -45,7 +46,7 @@ export const SContextMenu = (props: SContextMenuProps) => {
     item.onSelect?.()
   }
   const handleKeyboard = (event: KeyboardEvent): void => {
-    if (event.isComposing) {
+    if (event.isComposing || event.defaultPrevented) {
       return
     }
     setKeyboard(true)
@@ -88,7 +89,7 @@ export const SContextMenu = (props: SContextMenuProps) => {
       class="fixed inset-auto m-0 w-[var(--menu-preferred-width)] max-w-[calc(100vw-16px)]
         max-h-[min(var(--menu-limit),calc(100dvh-16px))]
         overflow-y-auto rounded-control border border-divider
-        bg-canvas p-1 font-sans text-foreground shadow-panel
+        bg-canvas p-1 font-sans text-foreground shadow-panel outline-none
         left-[clamp(8px,var(--menu-x),calc(100vw-var(--menu-width)-8px))]
         top-[clamp(8px,var(--menu-y),calc(100dvh-var(--menu-height)-8px))]"
       onKeyDown={handleKeyboard}
@@ -120,6 +121,7 @@ export const SContextMenu = (props: SContextMenuProps) => {
       <Show when={props.items.length === 0 && props.emptyMessage}>
         <p class="m-0 px-3 py-3 text-sm text-muted">{props.emptyMessage}</p>
       </Show>
+      {props.children}
       <For each={groups()}>
         {(group) => (
           <div

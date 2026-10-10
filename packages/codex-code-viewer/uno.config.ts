@@ -171,6 +171,12 @@ export default defineConfig({
       'px-4 py-2 text-sm font-medium text-action-text shadow-control',
       'enabled:hover:bg-action-hover enabled:active:bg-action-pressed',
     ].join(' '),
+    'ui-reference-row': [
+      'ui-transition outline-none enabled:hover:bg-hover enabled:active:bg-pressed',
+      'focus-visible:bg-selection',
+      'focus-visible:shadow-[inset_3px_0_0_var(--color-ring-primary,var(--viewer-accent))]',
+      'focus-visible:outline focus-visible:outline-2 focus-visible:outline-transparent focus-visible:-outline-offset-2',
+    ].join(' '),
     'ui-row': 'ui-focus ui-transition enabled:hover:bg-hover enabled:active:bg-pressed',
     'ui-toolbar-icon-button':
       'ui-icon-button [--icon-button-size:var(--toolbar-control-height,33px)]',

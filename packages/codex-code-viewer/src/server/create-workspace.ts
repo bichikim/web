@@ -1,13 +1,12 @@
 import {createProjectLanguages} from './create-project-languages'
-import {getCodeLocation} from './get-code-location'
+import {createCodeLocationReader} from './create-code-location-reader'
 import {realpathSync, statSync} from 'node:fs'
-import {dirname, relative, resolve} from 'node:path'
-import typescript from '@typescript/typescript6'
+import {relative, resolve, sep} from 'node:path'
+import {createPathNavigation} from './create-path-navigation'
 import {
   type CodeLocation,
   type CodeSource,
   failure,
-  type NavigationKind,
   type Result,
   success,
   type WorkspaceEntry,
@@ -16,37 +15,43 @@ import {readCodeSources} from './read-code-sources'
 import {writeSource} from './write-source'
 import {createEntry} from './create-entry'
 import {createFileOperations} from './file-operations'
-import {createRustNavigation} from './create-rust-navigation'
-import {createPythonNavigation} from './create-python-navigation'
-import {createRubyNavigation} from './create-ruby-navigation'
-import {fileFormat, type SyntaxLanguage} from '../shared/file-formats'
+import {createSyntaxNavigation} from './create-syntax-navigation'
+import {fileFormat} from '../shared/file-formats'
 import {createLanguageService} from './create-language-service'
 import {findWorkspace, readSource, resolveFile} from './file-access'
 import {createDocumentReader} from './create-document-reader'
 import {createFileIndex} from './create-file-index'
 import {readMedia} from './read-media'
+import {createNavigationWorker} from './create-navigation-worker'
+import {createNavigationStream, type SymbolLookupOptions} from './create-navigation-stream'
+import {
+  createNavigationCache,
+  createNavigationIndex,
+  type NavigationReview,
+} from './navigation-cache'
+import {observeNavigationConfiguration} from './observe-navigation-configuration'
 
 export const createWorkspace = (anchor: string) => {
   const canonical = realpathSync(anchor)
-  const directory = statSync(canonical).isDirectory()
-  const root = directory ? canonical : findWorkspace(canonical)
+  const root = statSync(canonical).isDirectory() ? canonical : findWorkspace(canonical)
   const languages = createProjectLanguages(root)
-  const rust = createRustNavigation(root)
-  const python = createPythonNavigation(root)
-  const ruby = createRubyNavigation(root)
-  const navigation = new Map<SyntaxLanguage, typeof python>([
-    ['python', python],
-    ['rust', rust],
-    ['ruby', ruby],
-  ])
+  const navigation = createSyntaxNavigation(root)
   const index = createFileIndex(root)
   const reader = createDocumentReader(root)
+  const background = createNavigationWorker(root)
+  const configuration = observeNavigationConfiguration(index, {
+    background,
+    languages,
+    navigation,
+  })
   const symbols = (
     path: string,
     offset: number,
     drafts: readonly CodeSource[] = [],
-    kind: NavigationKind = 'definition',
+    lookup: SymbolLookupOptions = {kind: 'definition'},
   ): Result<CodeLocation[]> | Promise<Result<CodeLocation[]>> => {
+    configuration.refresh()
+    const {kind, retained = [], files: reviewed} = lookup
     const sources = readCodeSources(root, drafts)
     if (!sources.ok) {
       return sources
@@ -71,102 +76,99 @@ export const createWorkspace = (anchor: string) => {
     }
     const language =
       drafts.length === 0 ? languages.get(path) : createLanguageService(file.value, sources.value)
-    const targets =
-      kind === 'definition'
-        ? language.definitions(file.value, offset)
-        : language.references(
-            file.value,
-            offset,
-            index
-              .tree()
-              .files.filter((entry) => fileFormat(entry.path)?.kind === 'code')
-              .flatMap((entry) => {
-                const resolved = resolveFile(root, entry.path)
-                return resolved.ok ? [resolved.value] : []
-              }),
-          )
-    if (drafts.length > 0) {
-      language.dispose()
-    }
-    const locations = targets.flatMap((target) => {
-      const location = getCodeLocation(root, target.fileName, target.textSpan.start, sources.value)
-      return location.ok ? [location.value] : []
-    })
-    return success(locations)
-  }
-  const followPath = (
-    path: string,
-    offset: number,
-    drafts: readonly CodeSource[] = [],
-  ): Result<CodeLocation[]> | Promise<Result<CodeLocation[]>> => {
-    const sources = readCodeSources(root, drafts)
-    if (!sources.ok) {
-      return sources
-    }
-    const resolvedSource = resolveFile(root, path)
-    if (!resolvedSource.ok) {
-      return resolvedSource
-    }
-    const draft = sources.value.get(resolvedSource.value)
-    const source = draft === undefined ? readSource(root, path) : success(draft)
-    if (!source.ok) {
-      return source
-    }
-    const format = fileFormat(path)
-    if (format?.kind === 'syntax' && navigation.has(format.language)) {
-      return symbols(path, offset, drafts)
-    }
-    const parsed = typescript.createSourceFile(
-      path,
-      source.value,
-      typescript.ScriptTarget.Latest,
-      true,
-    )
-    let specifier: string | null = null
-    const visit = (node: typescript.Node): void => {
-      if (
-        typescript.isStringLiteralLike(node) &&
-        node.getStart(parsed) <= offset &&
-        offset < node.end
-      ) {
-        specifier = node.text
+    const locations = (
+      targets: readonly {fileName: string; textSpan: {start: number}}[],
+    ): Result<CodeLocation[]> => {
+      if (drafts.length > 0) {
+        language.dispose()
       }
-      typescript.forEachChild(node, visit)
+      const readLocation = createCodeLocationReader(root, sources.value)
+      const unchanged = new Set(retained)
+      return success(
+        targets.flatMap((target) => {
+          if (unchanged.has(relative(root, target.fileName).split(sep).join('/'))) {
+            return []
+          }
+          const location = readLocation(target.fileName, target.textSpan.start)
+          return location.ok ? [location.value] : []
+        }),
+      )
     }
-    visit(parsed)
-    if (specifier === null) {
-      return failure('invalid-position')
+    if (kind === 'definition') {
+      return locations(language.definitions(file.value, offset))
     }
-    const file = resolve(root, path)
-    const module = languages.get(path).resolveModule(file, specifier)
-    const target = module ?? resolve(dirname(file), specifier)
-    const resolved = resolveFile(root, target)
-    return resolved.ok
-      ? success([{column: 1, line: 1, path: relative(root, resolved.value)}])
-      : resolved
+    const projectFiles =
+      reviewed === undefined
+        ? index.tree().then((tree) => tree.files.map((entry) => entry.path))
+        : Promise.resolve(reviewed)
+    return projectFiles.then((paths) =>
+      locations(
+        language.references(
+          file.value,
+          offset,
+          paths
+            .filter((path) => fileFormat(path)?.kind === 'code')
+            .flatMap((path) => {
+              const resolved = resolveFile(root, path)
+              return resolved.ok ? [resolved.value] : []
+            }),
+        ),
+      ),
+    )
   }
+  const followPath = createPathNavigation({
+    hasAnalyzer: navigation.has,
+    refresh: configuration.refresh,
+    resolveModule: (path, specifier) =>
+      languages.get(path).resolveModule(resolve(root, path), specifier),
+    root,
+    symbols,
+  })
+  const cachedNavigation = createNavigationCache({
+    index: createNavigationIndex({
+      changes: index,
+      onConfigurationChange: configuration.reset,
+      root,
+    }),
+    read: reader.read,
+    scan: createNavigationStream({background, followPath, read: reader.read, root, symbols}),
+  })
   return {
     create: (parent: string, name: string, kind: WorkspaceEntry['kind']) =>
       createEntry({kind, name, parent, root}),
     definitions: (path: string, offset: number, drafts: readonly CodeSource[] = []) =>
       symbols(path, offset, drafts),
     dispose: () => {
+      configuration.dispose()
+      cachedNavigation.dispose()
+      background.dispose()
       index.dispose()
       reader.dispose()
       languages.dispose()
-      rust.dispose()
-      python.dispose()
-      ruby.dispose()
+      navigation.dispose()
     },
     followPath,
     list: index.list,
     media: (path: string, revision: string, offset: number) =>
       readMedia({offset, path, revision, root}),
+    observe: index.observe,
     operations: createFileOperations(root),
-    read: reader.read,
-    references: (path: string, offset: number, drafts: readonly CodeSource[] = []) =>
-      symbols(path, offset, drafts, 'references'),
+    read: (...input: Parameters<typeof reader.read>) => {
+      const result = reader.read(...input)
+      if (result.ok) {
+        index.open(result.value.location.path)
+      }
+      return result
+    },
+    references: (
+      path: string,
+      offset: number,
+      drafts: readonly CodeSource[] = [],
+      review: NavigationReview = {},
+    ) => symbols(path, offset, drafts, {...review, kind: 'references'}),
     root,
+    scan: index.scan,
+    scanNavigation: cachedNavigation.scan,
     subscribe: index.subscribe,
     tree: index.tree,
     write: (path: string, source: string, revision: string | null) =>
