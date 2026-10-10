@@ -1,6 +1,7 @@
 import {z} from 'zod'
 import {env} from 'src/env'
 import {CLOUD_TEXT_MODEL} from 'src/features/cloud-text/contracts'
+import {hasUniqueIds} from 'src/features/catalog-policy'
 import type {ApiAiProvider} from './types'
 
 const MAXIMUM_POOL_ID_LENGTH = 128
@@ -84,7 +85,7 @@ export const getConfiguredApiAiProviders = (): ReadonlyArray<ApiAiProvider> => {
         ]
       : []),
   ]
-  if (new Set(providers.map((provider) => provider.id)).size !== providers.length) {
+  if (!hasUniqueIds(providers.map((provider) => provider.id))) {
     throw new TypeError('AI provider IDs must be unique')
   }
   return providers

@@ -57,6 +57,26 @@ it('should reject duplicate provider identities', () => {
   environment.POMO_API_AI_PROVIDERS_JSON = JSON.stringify([{...secondary, id: 'openai'}])
   expect(getApiAiProviders).toThrow('unique')
 })
+it('should reject repeated fallback identities with the catalog error', () => {
+  environment.POMO_API_AI_PROVIDERS_JSON = JSON.stringify([
+    secondary,
+    {...secondary, poolId: 'another-pool'},
+  ])
+  expect(getConfiguredApiAiProviders).toThrow(TypeError)
+  expect(getConfiguredApiAiProviders).toThrow(new TypeError('AI provider IDs must be unique'))
+})
+it('should resolve later credentials before rejecting earlier duplicate identities', () => {
+  environment.POMO_API_AI_PROVIDERS_JSON = JSON.stringify([
+    secondary,
+    secondary,
+    {...secondary, apiKeyEnv: 'UNAVAILABLE_AI_API_KEY', id: 'unavailable'},
+  ])
+  vi.stubEnv('UNAVAILABLE_AI_API_KEY', '')
+  expect(getConfiguredApiAiProviders).toThrow(TypeError)
+  expect(getConfiguredApiAiProviders).toThrow(
+    new TypeError('AI provider credentials are missing: unavailable'),
+  )
+})
 it('should ignore legacy limit settings for a shared provider pool', () => {
   environment.POMO_API_AI_PROVIDERS_JSON = JSON.stringify([
     {...secondary, concurrency: 1, poolId: 'primary', requestsPerMinute: 1},
