@@ -1,4 +1,5 @@
 import {Vector3} from '@babylonjs/core/Maths/math.vector'
+import {sum} from 'es-toolkit/math'
 import type {ClothTriangle} from './cloth-constraints'
 
 const EPSILON = 0.00000001
@@ -33,7 +34,7 @@ const coordinates = (point: Vector3, first: Vector3, second: Vector3, third: Vec
   const weights = [1 - secondWeight - thirdWeight, secondWeight, thirdWeight].map((weight) =>
     Math.max(0, weight),
   )
-  const total = weights.reduce((sum, weight) => sum + weight, 0)
+  const total = sum(weights)
   return weights.map((weight) => weight / total)
 }
 
