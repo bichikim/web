@@ -1,6 +1,7 @@
 import {existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync} from 'node:fs'
 import {tmpdir} from 'node:os'
 import {join} from 'node:path'
+import {fileURLToPath} from 'node:url'
 import {z} from 'zod'
 import {Client} from '@modelcontextprotocol/sdk/client/index.js'
 import {InMemoryTransport} from '@modelcontextprotocol/sdk/inMemory.js'
@@ -120,6 +121,9 @@ describe('createServer', () => {
         name: 'code.watch',
       })
       const {resourceUri} = z.object({resourceUri: z.string()}).parse(watched.structuredContent)
+      expect(resourceUri).toMatch(/^file:\/\//u)
+      const signalPath = fileURLToPath(resourceUri)
+      expect(JSON.parse(readFileSync(signalPath, 'utf8'))).toEqual({revision: 0})
       const changed = Promise.withResolvers<string>()
       client.setNotificationHandler(ResourceUpdatedNotificationSchema, ({params}) => {
         changed.resolve(params.uri)
@@ -127,8 +131,10 @@ describe('createServer', () => {
       await client.subscribeResource({uri: resourceUri})
       writeFileSync(join(root, 'main.ts'), 'after')
       expect(await changed.promise).toBe(resourceUri)
+      expect(JSON.parse(readFileSync(signalPath, 'utf8')).revision).toBeGreaterThan(0)
       await client.unsubscribeResource({uri: resourceUri})
       await client.callTool({arguments: {session: opened.session}, name: 'code.close'})
+      expect(existsSync(signalPath)).toBe(false)
       await expect(client.subscribeResource({uri: resourceUri})).rejects.toThrow()
     } finally {
       rmSync(root, {force: true, recursive: true})

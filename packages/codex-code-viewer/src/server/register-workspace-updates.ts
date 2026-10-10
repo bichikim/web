@@ -1,29 +1,26 @@
-import {McpServer, ResourceTemplate} from '@modelcontextprotocol/sdk/server/mcp.js'
+import {mkdtempSync, rmSync, writeFileSync} from 'node:fs'
+import {tmpdir} from 'node:os'
+import {join} from 'node:path'
+import {pathToFileURL} from 'node:url'
+import {McpServer, type RegisteredResource} from '@modelcontextprotocol/sdk/server/mcp.js'
 import {SubscribeRequestSchema, UnsubscribeRequestSchema} from '@modelcontextprotocol/sdk/types.js'
 
-const uriFor = (session: string): string => `code-viewer://workspace/${session}`
+interface WorkspaceRevision {
+  readonly directory: string
+  readonly path: string
+  readonly uri: string
+  readonly resource: RegisteredResource
+  revision: number
+}
 
-/** Publishes subscribed workspace revisions through the host's MCP resource channel. */
+/** Publishes workspace revisions through MCP and host filesystem subscriptions. */
 export const registerWorkspaceUpdates = (server: McpServer) => {
-  const revisions = new Map<string, number>()
+  const workspaces = new Map<string, WorkspaceRevision>()
+  const resources = new Map<string, WorkspaceRevision>()
   const subscribers = new Set<string>()
   server.server.registerCapabilities({resources: {subscribe: true}})
-  server.registerResource(
-    'workspace-updates',
-    new ResourceTemplate('code-viewer://workspace/{session}', {list: undefined}),
-    {mimeType: 'application/json'},
-    async (uri) => {
-      const revision = revisions.get(uri.href)
-      if (revision === undefined) {
-        throw new Error('Workspace subscription expired')
-      }
-      return {
-        contents: [{mimeType: 'application/json', text: JSON.stringify({revision}), uri: uri.href}],
-      }
-    },
-  )
   server.server.setRequestHandler(SubscribeRequestSchema, async ({params}) => {
-    if (!revisions.has(params.uri)) {
+    if (!resources.has(params.uri)) {
       throw new Error('Workspace subscription expired')
     }
     subscribers.add(params.uri)
@@ -35,25 +32,52 @@ export const registerWorkspaceUpdates = (server: McpServer) => {
   })
   return {
     changed: (session: string): void => {
-      const uri = uriFor(session)
-      const revision = revisions.get(uri)
-      if (revision !== undefined) {
-        revisions.set(uri, revision + 1)
-        if (subscribers.has(uri)) {
-          server.server.sendResourceUpdated({uri}).catch(() => undefined)
+      const current = workspaces.get(session)
+      if (current !== undefined) {
+        current.revision += 1
+        writeFileSync(current.path, JSON.stringify({revision: current.revision}))
+        if (subscribers.has(current.uri)) {
+          server.server.sendResourceUpdated({uri: current.uri}).catch(() => undefined)
         }
       }
     },
     close: (session: string): void => {
-      const uri = uriFor(session)
-      subscribers.delete(uri)
-      revisions.delete(uri)
+      const current = workspaces.get(session)
+      if (current !== undefined) {
+        subscribers.delete(current.uri)
+        resources.delete(current.uri)
+        workspaces.delete(session)
+        current.resource.remove()
+        rmSync(current.directory, {force: true, recursive: true})
+      }
     },
     watch: (session: string): string => {
-      const uri = uriFor(session)
-      if (!revisions.has(uri)) {
-        revisions.set(uri, 0)
+      const current = workspaces.get(session)
+      if (current !== undefined) {
+        return current.uri
       }
+      // The desktop host subscribes only to file URIs; its watcher observes this signal file.
+      const directory = mkdtempSync(join(tmpdir(), 'code-viewer-watch-'))
+      const path = join(directory, 'revision.json')
+      const uri = pathToFileURL(path).href
+      writeFileSync(path, JSON.stringify({revision: 0}))
+      const resource = server.registerResource(
+        `workspace-${session}`,
+        uri,
+        {mimeType: 'application/json'},
+        async () => ({
+          contents: [
+            {
+              mimeType: 'application/json',
+              text: JSON.stringify({revision: workspaces.get(session)?.revision ?? 0}),
+              uri,
+            },
+          ],
+        }),
+      )
+      const workspace: WorkspaceRevision = {directory, path, resource, revision: 0, uri}
+      workspaces.set(session, workspace)
+      resources.set(uri, workspace)
       return uri
     },
   }

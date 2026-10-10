@@ -12,7 +12,7 @@ describe('subscribeWorkspace', () => {
       subscribe: vi.fn().mockResolvedValue({}),
       unsubscribe: vi.fn().mockResolvedValue({}),
     }
-    const resourceUri = 'code-viewer://workspace/first'
+    const resourceUri = 'file:///tmp/code-viewer-watch-first/revision.json'
     const call = vi.fn().mockResolvedValue({content: [], structuredContent: {resourceUri}})
     const receive = vi.fn()
     const dispose = await subscribeWorkspace({call, receive, resources, session: 'first'})
@@ -20,7 +20,7 @@ describe('subscribeWorkspace', () => {
     expect(handler).toEqual(expect.any(Function))
     handler?.({
       method: 'notifications/resources/updated',
-      params: {uri: 'code-viewer://workspace/other'},
+      params: {uri: 'file:///tmp/code-viewer-watch-other/revision.json'},
     })
     expect(receive).toHaveBeenCalledOnce()
     handler?.({method: 'notifications/resources/updated', params: {uri: resourceUri}})
@@ -40,7 +40,7 @@ describe('subscribeWorkspace', () => {
     }
     const call = vi.fn().mockResolvedValue({
       content: [],
-      structuredContent: {resourceUri: 'code-viewer://workspace/first'},
+      structuredContent: {resourceUri: 'file:///tmp/code-viewer-watch-first/revision.json'},
     })
     await expect(
       subscribeWorkspace({call, receive: vi.fn(), resources, session: 'first'}),

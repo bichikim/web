@@ -16,7 +16,7 @@ describe('createHost', () => {
     const request = vi.spyOn(App.prototype, 'request').mockResolvedValue({})
     const source = vi.fn()
     vi.stubGlobal('EventSource', source)
-    const uri = 'code-viewer://workspace/first'
+    const uri = 'file:///tmp/code-viewer-watch-first/revision.json'
     const call = vi
       .spyOn(App.prototype, 'callServerTool')
       .mockResolvedValue({content: [], structuredContent: {resourceUri: uri}})

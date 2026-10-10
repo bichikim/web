@@ -23,7 +23,7 @@ export const subscribeWorkspace = async (
       input: {session: options.session, transport: 'mcp'},
       name: 'code.watch',
       port: {call: options.call},
-      schema: z.object({resourceUri: z.string().startsWith('code-viewer://workspace/')}),
+      schema: z.object({resourceUri: z.url().refine((uri) => new URL(uri).protocol === 'file:')}),
     })
     const remove = resources.addUpdateHandler(({params}) => {
       if (params.uri === resourceUri) {
