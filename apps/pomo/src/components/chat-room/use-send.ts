@@ -18,7 +18,7 @@ export interface SendController {
 
 /** Owns pending sends within the current Solid owner; borrows chat and speech controllers. */
 export const useSend = (props: UseSendProps): SendController => {
-  let calendarRequestPending = false
+  let pendingCalendarRequestRevision: number | null = null
   let disposed = false
   let sendRevision = 0
 
@@ -27,13 +27,13 @@ export const useSend = (props: UseSendProps): SendController => {
   })
 
   const sendDraft = async () => {
-    if (disposed || !props.chat.canSend() || calendarRequestPending) {
+    if (disposed || !props.chat.canSend() || pendingCalendarRequestRevision === sendRevision) {
       return
     }
 
     const submittedRevision = sendRevision
     const submittedDraft = props.chat.draft()
-    calendarRequestPending = true
+    pendingCalendarRequestRevision = submittedRevision
     let supplementaryContext: string | null = null
 
     try {
@@ -47,7 +47,9 @@ export const useSend = (props: UseSendProps): SendController => {
       supplementaryContext =
         '캘린더 일정을 조회하지 못했습니다. 일정을 추측하지 말고 현재 조회할 수 없다고 안내하세요.'
     } finally {
-      calendarRequestPending = false
+      if (pendingCalendarRequestRevision === submittedRevision) {
+        pendingCalendarRequestRevision = null
+      }
     }
 
     if (
