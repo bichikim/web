@@ -38,3 +38,19 @@ it('should render indeterminate progress on generation start and keep the stop a
   expect(options?.signal.aborted).toBe(true)
   expect(screen.queryByRole('progressbar')).toBe(null)
 })
+
+it('should accept fullwidth digits in the seed input and pass the numeric seed to generation', async () => {
+  render(() => <Workspace />)
+  fireEvent.input(screen.getByLabelText('어떤 장면을 만들까요?'), {
+    target: {value: '춤추는 햄버거'},
+  })
+  const seed = screen.getByLabelText('시드') as HTMLInputElement
+  fireEvent.input(seed, {target: {value: '１２３'}})
+  expect(seed.checkValidity()).toBe(true)
+  const generate = screen.getByRole('button', {name: '이미지 생성'})
+  await waitFor(() => expect(generate).toBeEnabled())
+  fireEvent.click(generate)
+  expect(runImageGeneration).toHaveBeenCalledWith(
+    expect.objectContaining({settings: expect.objectContaining({seed: 123})}),
+  )
+})
