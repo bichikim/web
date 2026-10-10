@@ -1,4 +1,5 @@
 import {AwsClient} from 'aws4fetch'
+import {trim} from 'es-toolkit'
 
 const DEFAULT_BUCKET = 'pomofi-paid-audio'
 const STORAGE_PREFIX_SEGMENT_PATTERN = /^[a-z\d](?:[a-z\d-]*[a-z\d])?$/u
@@ -31,22 +32,7 @@ const requireEnvironmentValue = (
   return normalizedValue
 }
 
-const normalizeStoragePrefix = (value: string): string => {
-  const trimmedValue = value.trim()
-  let startIndex = 0
-
-  while (trimmedValue[startIndex] === '/') {
-    startIndex += 1
-  }
-
-  let endIndex = trimmedValue.length
-
-  while (endIndex > startIndex && trimmedValue[endIndex - 1] === '/') {
-    endIndex -= 1
-  }
-
-  return trimmedValue.slice(startIndex, endIndex)
-}
+const normalizeStoragePrefix = (value: string): string => trim(value.trim(), '/')
 
 const createStorageObjectKey = (objectKey: string, environment: PaidAudioEnvironment): string => {
   const normalizedPrefix = normalizeStoragePrefix(environment.POMO_PAID_AUDIO_R2_PREFIX ?? '')
