@@ -24,6 +24,7 @@
     ".mcp.json",
     "assets",
     "dist/server.js",
+    "dist/navigation-worker.js",
     "dist/app.html",
     "dist/install.js",
     "dist/python",

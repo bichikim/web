@@ -92,10 +92,13 @@ const server = await bundle({
     ].join('\n'),
   },
   bundle: true,
-  entryPoints: [`${root}/src/server/main.ts`],
+  entryPoints: {
+    'navigation-worker': `${root}/src/server/navigation-worker.ts`,
+    server: `${root}/src/server/main.ts`,
+  },
   format: 'esm',
   metafile: true,
-  outfile: `${output}/server.js`,
+  outdir: output,
   platform: 'node',
   target: 'node24',
 })
@@ -157,7 +160,7 @@ await Promise.all([
   ...['.codex-plugin/plugin.json', '.mcp.json'].map((file) =>
     copyFile(`${root}/${file}`, `${plugin}/${file}`),
   ),
-  ...['server.js', 'app.html', 'install.js', ...declarations].map((file) =>
+  ...['server.js', 'navigation-worker.js', 'app.html', 'install.js', ...declarations].map((file) =>
     copyFile(`${output}/${file}`, `${plugin}/dist/${file}`),
   ),
   cp(`${root}/assets`, `${plugin}/assets`, {recursive: true}),

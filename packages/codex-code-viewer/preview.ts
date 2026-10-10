@@ -1,10 +1,12 @@
 import {randomUUID} from 'node:crypto'
 import {readFile} from 'node:fs/promises'
-import {createServer} from 'node:http'
+import {createServer, type IncomingMessage, type ServerResponse} from 'node:http'
 import {resolve} from 'node:path'
+import {networkInterfaces} from 'node:os'
 import {Client} from '@modelcontextprotocol/sdk/client/index.js'
 import {StdioClientTransport} from '@modelcontextprotocol/sdk/client/stdio.js'
-import {CallToolRequestSchema} from '@modelcontextprotocol/sdk/types.js'
+import {CallToolRequestSchema, CallToolResultSchema} from '@modelcontextprotocol/sdk/types.js'
+import {createPreviewStreams} from './build/create-preview-streams'
 import manifest from './package.json' with {type: 'json'}
 
 const [, , path] = process.argv
@@ -19,6 +21,7 @@ const status = {
   ok: 200,
   tooLarge: 413,
 }
+const host = process.argv.includes('--host') ? '0.0.0.0' : '127.0.0.1'
 const anchor = resolve(path)
 const client = new Client({name: 'Code Viewer Preview', version: manifest.version})
 const transport = new StdioClientTransport({
@@ -35,6 +38,7 @@ const transport = new StdioClientTransport({
 await client.connect(transport)
 const token = randomUUID()
 const base = `/${token}/`
+const streams = createPreviewStreams(base)
 const allowed = new Set([
   'code.open',
   'code.attach',
@@ -52,6 +56,50 @@ const allowed = new Set([
   'code.close',
   'code.media',
 ])
+const serveTool = async (request: IncomingMessage, response: ServerResponse): Promise<void> => {
+  const chunks: Buffer[] = []
+  const maximumBytes = 8388608
+  let bytes = 0
+  for await (const chunk of request) {
+    const buffer = Buffer.from(chunk)
+    bytes += buffer.length
+    if (bytes > maximumBytes) {
+      response.writeHead(status.tooLarge).end()
+      return
+    }
+    chunks.push(buffer)
+  }
+  const input = CallToolRequestSchema.parse({
+    method: 'tools/call',
+    params: JSON.parse(Buffer.concat(chunks).toString('utf8')),
+  })
+  if (!allowed.has(input.params.name)) {
+    response.writeHead(status.forbidden).end()
+    return
+  }
+  const result = CallToolResultSchema.parse(
+    await client.callTool({
+      ...input.params,
+      _meta: {'openai/resource': {path: anchor}},
+    }),
+  )
+  const endpoint = streams.expose(result.structuredContent?.url, `http://${request.headers.host}`)
+  const content =
+    endpoint === null ? result.structuredContent : {...result.structuredContent, url: endpoint}
+  response
+    .writeHead(status.ok, {'Content-Type': 'application/json'})
+    .end(JSON.stringify({...result, structuredContent: content}))
+}
+const reportFailure = (error: unknown, response: ServerResponse): void => {
+  if (response.destroyed) {
+    return
+  }
+  console.error(error)
+  if (!response.headersSent) {
+    response.writeHead(status.failure)
+  }
+  response.end('Code Viewer preview request failed.')
+}
 const server = createServer(async (request, response) => {
   const route = request.url?.slice(base.length)
   const origin = request.headers['sec-fetch-site']
@@ -60,34 +108,12 @@ const server = createServer(async (request, response) => {
     return
   }
   try {
+    if (request.method === 'GET' && route?.startsWith('stream/')) {
+      await streams.forward(route, response)
+      return
+    }
     if (request.method === 'POST' && route === 'tool') {
-      const chunks: Buffer[] = []
-      const maximumBytes = 8388608
-      let bytes = 0
-      for await (const chunk of request) {
-        const buffer = Buffer.from(chunk)
-        bytes += buffer.length
-        if (bytes > maximumBytes) {
-          response.writeHead(status.tooLarge).end()
-          return
-        }
-        chunks.push(buffer)
-      }
-      const input = CallToolRequestSchema.parse({
-        method: 'tools/call',
-        params: JSON.parse(Buffer.concat(chunks).toString('utf8')),
-      })
-      if (!allowed.has(input.params.name)) {
-        response.writeHead(status.forbidden).end()
-        return
-      }
-      const result = await client.callTool({
-        ...input.params,
-        _meta: {'openai/resource': {path: anchor}},
-      })
-      response
-        .writeHead(status.ok, {'Content-Type': 'application/json'})
-        .end(JSON.stringify(result))
+      await serveTool(request, response)
       return
     }
     if (request.method === 'GET' && route === 'initial') {
@@ -124,14 +150,20 @@ const server = createServer(async (request, response) => {
     }
     response.writeHead(status.notFound).end()
   } catch (error) {
-    console.error(error)
-    response.writeHead(status.failure).end('Code Viewer preview request failed.')
+    reportFailure(error, response)
   }
 })
-server.listen(0, '127.0.0.1', () => {
+server.listen(0, host, () => {
   const address = server.address()
   if (address !== null && typeof address !== 'string') {
     console.log(`Code Viewer preview: http://127.0.0.1:${address.port}${base}`)
+    if (host === '0.0.0.0') {
+      for (const network of Object.values(networkInterfaces()).flat()) {
+        if (network?.family === 'IPv4' && !network.internal) {
+          console.log(`Network preview: http://${network.address}:${address.port}${base}`)
+        }
+      }
+    }
   }
 })
 const close = async (): Promise<void> => {

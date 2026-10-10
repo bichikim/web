@@ -90,7 +90,9 @@ export interface NavigationPoint {
   readonly y: number
 }
 export interface ReferenceChoices {
+  readonly kind?: 'definition' | 'references'
   readonly label: string
   readonly locations: readonly NavigationLocation[]
   readonly point: NavigationPoint
+  readonly status?: 'searching' | 'complete' | 'failed'
 }

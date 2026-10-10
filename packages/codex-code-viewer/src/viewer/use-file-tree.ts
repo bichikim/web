@@ -1,15 +1,8 @@
 import {type Accessor, batch, createEffect, createMemo, createSignal, on, untrack} from 'solid-js'
-import {
-  type CodeLocation,
-  treeSchema,
-  type ViewerConnection,
-  type WorkspaceFile,
-  type WorkspaceTree,
-} from '../shared/contracts'
-import {callViewerTool} from './call-viewer-tool'
+import {type CodeLocation, type ViewerConnection, type WorkspaceFile} from '../shared/contracts'
+import {useTreeListing} from './use-tree-listing'
+import {getTreePositions} from './file-tree/get-tree-positions'
 import {buildFileTree, getTreeDestination, getVisibleNodes} from './file-tree'
-import {createRefreshQueue} from './create-refresh-queue'
-import {useLatestRequest} from './use-latest-request'
 import type {ViewerPort} from './types'
 
 interface UseFileTreeProps {
@@ -55,20 +48,43 @@ const visibleSelection = (props: {
       : (props.paths[0] ?? null)
 
 export const useFileTree = (props: UseFileTreeProps) => {
-  const [listing, setListing] = createSignal<WorkspaceTree>({
-    directories: [],
-    files: [],
-    truncated: false,
-  })
-  const files = () => listing().files
-  const directories = () => listing().directories ?? []
   const [query, setQuery] = createSignal('')
   const [expanded, setExpanded] = createSignal(new Set<string>())
   const [collapsed, setCollapsed] = createSignal(new Set<string>())
   const [focused, setFocused] = createSignal<string | null>(null)
-  const request = useLatestRequest(props.onError)
   const sessionId = createMemo(() => props.session()?.session)
   const currentPath = () => documentPath(props.session())
+  createEffect(
+    on(sessionId, () => {
+      batch(() => {
+        setQuery('')
+        setExpanded(new Set(parents(untrack(currentPath))))
+        setCollapsed(new Set<string>())
+        setFocused(null)
+      })
+    }),
+  )
+  const scope = createMemo(() =>
+    query().trim() === ''
+      ? [
+          '',
+          ...[...expanded()].filter((path) =>
+            parents(path).every((parent) => expanded().has(parent)),
+          ),
+        ].sort()
+      : undefined,
+  )
+  const listing = useTreeListing({
+    directories: scope,
+    onError: props.onError,
+    port: props.port,
+    query,
+    revision: () => (query().trim() === '' ? (props.revision?.() ?? 0) : 0),
+    session: sessionId,
+    visible: props.visible,
+  })
+  const files = () => listing.listing().files
+  const directories = () => listing.listing().directories ?? []
   const filtered = createMemo(() => {
     const value = query().trim().toLowerCase()
     return buildFileTree(
@@ -81,52 +97,17 @@ export const useFileTree = (props: UseFileTreeProps) => {
   const nodes = createMemo(() => getVisibleNodes(filtered(), isExpanded))
   const paths = createMemo(() => nodes().map((node) => node.path))
   const lookup = createMemo(() => new Map(nodes().map((node) => [node.path, node])))
+  const positions = createMemo(() => getTreePositions(paths()))
   const activePath = createMemo(() =>
     visibleSelection({current: currentPath(), focused: focused(), paths: paths()}),
   )
-  const loader = createMemo(() => {
-    const session = sessionId()
-    return createRefreshQueue(async (): Promise<void> => {
-      const current = props.session()
-      if (current === null || current.session !== session) {
-        return
-      }
-      const result = await request.run(() =>
-        callViewerTool({
-          input: {session: current.session},
-          name: 'code.tree',
-          port: props.port,
-          schema: treeSchema,
-        }),
-      )
-      if (result !== null) {
-        setListing(result)
-      }
-    })
-  })
-  const reload = (): Promise<void> => loader()()
-  createEffect(
-    on(sessionId, () => {
-      request.cancel()
-      batch(() => {
-        setListing({directories: [], files: [], truncated: false})
-        setQuery('')
-        setExpanded(new Set(parents(untrack(currentPath))))
-        setCollapsed(new Set<string>())
-        setFocused(null)
-      })
-    }),
-  )
-  createEffect(
-    on([props.visible, sessionId, () => props.revision?.() ?? 0], ([visible]) => {
-      if (visible) {
-        reload()
-      }
-    }),
-  )
   createEffect(
     on(currentPath, (path) => {
-      setExpanded((previous) => new Set([...previous, ...parents(path)]))
+      setExpanded((previous) =>
+        parents(path).every((parent) => previous.has(parent))
+          ? previous
+          : new Set([...previous, ...parents(path)]),
+      )
     }),
   )
   const toggle = (path: string): void => {
@@ -182,7 +163,11 @@ export const useFileTree = (props: UseFileTreeProps) => {
     }
     batch(() => {
       change('')
-      setExpanded((previous) => new Set([...previous, ...parents(path)]))
+      setExpanded((previous) =>
+        parents(path).every((parent) => previous.has(parent))
+          ? previous
+          : new Set([...previous, ...parents(path)]),
+      )
       setFocused(path)
     })
   }
@@ -193,14 +178,15 @@ export const useFileTree = (props: UseFileTreeProps) => {
     change,
     currentPath,
     focus: setFocused,
+    incomplete: listing.incomplete,
     isExpanded,
     navigate,
     node: (path: string) => lookup().get(path),
     paths,
-    pending: request.pending,
+    pending: listing.pending,
+    position: (path: string) => positions().get(path),
     query,
-    reload,
+    reload: listing.reload,
     reveal,
-    truncated: () => listing().truncated,
   }
 }

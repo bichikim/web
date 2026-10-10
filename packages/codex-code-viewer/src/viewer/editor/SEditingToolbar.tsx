@@ -36,22 +36,8 @@ export const SEditingToolbar = (props: SEditingToolbarProps) => {
       aria-label="코드 편집"
       role="group"
       class="ml-auto flex min-w-0 shrink-0 items-center gap-2"
-      classList={{'flex-1': props.editing.enabled()}}
     >
-      <button
-        type="button"
-        class="ui-document-button aria-pressed:bg-selection aria-pressed:text-tree-icon"
-        aria-pressed={props.editing.enabled()}
-        onClick={() => props.editing.toggle()}
-      >
-        <span
-          aria-hidden="true"
-          class={props.editing.enabled() ? 'i-tabler-check' : 'i-tabler-pencil'}
-        />
-        편집
-      </button>
       <Show when={props.editing.enabled() || props.editing.deleted()}>
-        <span class="flex-1" />
         <button
           type="button"
           class="ui-document-button"
@@ -74,6 +60,18 @@ export const SEditingToolbar = (props: SEditingToolbarProps) => {
           <span aria-hidden="true" class="i-tabler-dots" />
         </button>
       </Show>
+      <button
+        type="button"
+        class="ui-document-button aria-pressed:bg-selection aria-pressed:text-tree-icon"
+        aria-pressed={props.editing.enabled()}
+        onClick={() => props.editing.toggle()}
+      >
+        <span
+          aria-hidden="true"
+          class={props.editing.enabled() ? 'i-tabler-check' : 'i-tabler-pencil'}
+        />
+        편집
+      </button>
       <Show when={menu()} keyed>
         {(position) => (
           <SContextMenu

@@ -22,6 +22,7 @@ interface SViewerToolbarProps {
   >
   onOpen: (location: CodeLocation, options?: NavigationOptions) => void
   onToggleTree?: () => void
+  onSettings?: () => void
   focusRequest?: number
   treeVisible?: boolean
 }
@@ -29,18 +30,30 @@ interface SViewerToolbarProps {
 export const SViewerToolbar = (props: SViewerToolbarProps) => (
   <SFilePicker
     actions={
-      <button
-        aria-label="파일 트리"
-        aria-controls={props.treeVisible ? 'workspace-files' : undefined}
-        aria-expanded={props.treeVisible ?? false}
-        class="ui-tree-toggle"
-        disabled={props.viewer.workspaceSession() === null}
-        onClick={() => props.onToggleTree?.()}
-        title="파일 트리 열기/닫기"
-        type="button"
-      >
-        <SIcon name="folder" />
-      </button>
+      <>
+        <button
+          aria-label="파일 트리"
+          aria-controls={props.treeVisible ? 'workspace-files' : undefined}
+          aria-expanded={props.treeVisible ?? false}
+          class="ui-tree-toggle"
+          disabled={props.viewer.workspaceSession() === null}
+          onClick={() => props.onToggleTree?.()}
+          title="파일 트리 열기/닫기"
+          type="button"
+        >
+          <SIcon name="folder" />
+        </button>
+        <button
+          type="button"
+          aria-label="설정"
+          title="설정"
+          class="ui-tree-toggle"
+          onClick={() => props.onSettings?.()}
+          aria-haspopup="dialog"
+        >
+          <span aria-hidden="true" class="i-tabler-settings" />
+        </button>
+      </>
     }
     busy={props.viewer.opening() || props.viewer.busy()}
     files={props.viewer.files()}

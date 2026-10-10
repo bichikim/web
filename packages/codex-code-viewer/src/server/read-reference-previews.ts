@@ -1,6 +1,7 @@
 import {
   type CodeLocation,
   type CodeSource,
+  MAX_NAVIGATION_PREVIEW_LINES,
   MAX_REFERENCE_PREVIEW,
   type NavigationLocation,
 } from '../shared/contracts'
@@ -11,7 +12,7 @@ interface ReadReferencePreviewsProps {
   readonly locations: readonly CodeLocation[]
   readonly sources?: readonly CodeSource[]
 }
-/** Adds bounded source-line previews, retaining destinations when a preview is unavailable. */
+/** Adds bounded source context, retaining destinations when a preview is unavailable. */
 export const readReferencePreviews = (props: ReadReferencePreviewsProps): NavigationLocation[] => {
   const drafts = new Map(
     (props.sources ?? []).flatMap((source) => {
@@ -34,10 +35,15 @@ export const readReferencePreviews = (props: ReadReferencePreviewsProps): Naviga
     }),
   )
   return props.locations.map((location) => {
-    const preview = lines
-      .get(location.path)
-      ?.[location.line - 1]?.trim()
-      .slice(0, MAX_REFERENCE_PREVIEW)
-    return preview === undefined ? location : {...location, preview}
+    const source = lines.get(location.path)
+    if (source?.[location.line - 1] === undefined) {
+      return location
+    }
+    const preview = source
+      .slice(location.line - 1, location.line - 1 + MAX_NAVIGATION_PREVIEW_LINES)
+      .map((line) => line.trimEnd().slice(0, MAX_REFERENCE_PREVIEW))
+      .join('\n')
+      .trim()
+    return {...location, preview}
   })
 }

@@ -39,12 +39,14 @@ describe('useDefinitionNavigation', () => {
   afterEach(() => {
     dispose()
     vi.clearAllMocks()
+    vi.unstubAllGlobals()
   })
   const mount = (options: MountOptions = {}) =>
     createRoot((cleanup) => {
       dispose = cleanup
       const request = useLatestRequest(report)
       const navigation = useDefinitionNavigation({
+        onError: report,
         onOpen: open,
         port,
         revision: options.revision,
@@ -54,6 +56,122 @@ describe('useDefinitionNavigation', () => {
       })
       return {cancel: request.cancel, navigation}
     })
+  it('should expose the popup after confirming references and append usages before completion', async () => {
+    const output = new TransformStream<Uint8Array, Uint8Array>()
+    const writer = output.writable.getWriter()
+    const attached = Promise.withResolvers<void>()
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => {
+        attached.resolve()
+        return new Response(output.readable)
+      }),
+    )
+    vi.mocked(port.call).mockResolvedValueOnce({
+      content: [],
+      structuredContent: {url: 'http://127.0.0.1:4321/scan/navigation'},
+    })
+    const {navigation} = mount()
+    const following = navigation.follow(token)
+    expect(navigation.references()).toBeNull()
+    await attached.promise
+    await writer.write(
+      new TextEncoder().encode(`${JSON.stringify({kind: 'references', locations: [location]})}\n`),
+    )
+    await vi.waitFor(() => expect(navigation.references()?.locations).toEqual([location]))
+    expect(navigation.references()?.status).toBe('searching')
+    await writer.write(
+      new TextEncoder().encode(
+        `${JSON.stringify({kind: 'references', locations: [{...location, path: 'second.rb'}]})}\n{"done":true}\n`,
+      ),
+    )
+    await following
+    expect(navigation.references()?.locations).toHaveLength(2)
+    expect(navigation.references()?.status).toBe('complete')
+  })
+  it.each([[location], [location, {...location, path: 'other.rb'}]])(
+    'should avoid a reference popup while streaming definition destinations %j',
+    async (...locations) => {
+      const output = new TransformStream<Uint8Array, Uint8Array>()
+      const writer = output.writable.getWriter()
+      const attached = Promise.withResolvers<void>()
+      vi.stubGlobal(
+        'fetch',
+        vi.fn(async () => {
+          attached.resolve()
+          return new Response(output.readable)
+        }),
+      )
+      vi.mocked(port.call).mockResolvedValueOnce({
+        content: [],
+        structuredContent: {url: 'http://127.0.0.1:4321/scan/navigation'},
+      })
+      const {navigation} = mount()
+      const following = navigation.follow(token, {x: 40, y: 80})
+      expect(navigation.references()).toBeNull()
+      await attached.promise
+      expect(navigation.references()).toBeNull()
+      await writer.write(
+        new TextEncoder().encode(`${JSON.stringify({kind: 'definition', locations})}\n`),
+      )
+      expect(navigation.references()).toBeNull()
+      await writer.write(new TextEncoder().encode('{"done":true}\n'))
+      await following
+      if (locations.length === 1) {
+        expect(open).toHaveBeenCalledWith(location)
+        expect(navigation.references()).toBeNull()
+      } else {
+        expect(open).not.toHaveBeenCalled()
+        expect(navigation.references()).toEqual({
+          kind: 'definition',
+          label: 'Report',
+          locations,
+          point: {x: 40, y: 80},
+        })
+      }
+    },
+  )
+  it('should cancel an unfinished stream when its popup is dismissed', async () => {
+    const attached = Promise.withResolvers<AbortSignal>()
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (_url, options: RequestInit) => {
+        attached.resolve(options.signal!)
+        return new Response(new ReadableStream())
+      }),
+    )
+    vi.mocked(port.call).mockResolvedValueOnce({
+      content: [],
+      structuredContent: {url: 'http://127.0.0.1:4321/scan/navigation'},
+    })
+    const {navigation} = mount()
+    const following = navigation.follow(token)
+    const signal = await attached.promise
+    navigation.dismissReferences()
+    await following
+    expect(signal.aborted).toBe(true)
+    expect(navigation.references()).toBeNull()
+    expect(report).not.toHaveBeenCalled()
+  })
+  it('should retain references and mark an interrupted search instead of reporting a complete count', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(
+        async () =>
+          new Response(
+            `${JSON.stringify({kind: 'references', locations: [location]})}\n{"error":"read-failed"}\n`,
+          ),
+      ),
+    )
+    vi.mocked(port.call).mockResolvedValueOnce({
+      content: [],
+      structuredContent: {url: 'http://127.0.0.1:4321/scan/navigation'},
+    })
+    const {navigation} = mount()
+    await navigation.follow(token)
+    expect(navigation.references()).toMatchObject({locations: [location], status: 'failed'})
+    expect(report).toHaveBeenCalledOnce()
+  })
   it('should open a unique definition without producing feedback', async () => {
     vi.mocked(port.call).mockResolvedValueOnce({
       content: [],

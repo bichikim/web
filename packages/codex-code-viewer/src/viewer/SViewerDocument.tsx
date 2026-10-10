@@ -7,13 +7,13 @@ import type {useViewer} from './use-viewer'
 import type {useDocumentSearch} from './use-document-search'
 import {SWorkspacePrompt} from './SWorkspacePrompt'
 import {SReferenceChoices} from './SReferenceChoices'
-import {SDefinitionChoices} from './SDefinitionChoices'
 import {SFileDocument} from './SFileDocument'
 import {SCodeEditor} from './editor/SCodeEditor'
 interface SViewerDocumentProps {
   readonly port: ViewerPort
   readonly viewer: ReturnType<typeof useViewer>
   readonly search: ReturnType<typeof useDocumentSearch>
+  readonly previewLines?: number
   readonly onFind: (text?: string) => void
 }
 export const SViewerDocument = (props: SViewerDocumentProps) => {
@@ -47,15 +47,16 @@ export const SViewerDocument = (props: SViewerDocumentProps) => {
                 </p>
               </div>
             </Show>
-            <Show when={props.viewer.references()} keyed>
+            <Show when={props.viewer.references()}>
               {(references) => (
-                <SReferenceChoices references={references} onOpen={props.viewer.openLocation} />
+                <SReferenceChoices
+                  references={references()}
+                  previewLines={props.previewLines}
+                  onOpen={props.viewer.openLocation}
+                  onClose={props.viewer.dismissReferences}
+                />
               )}
             </Show>
-            <SDefinitionChoices
-              locations={props.viewer.choices()}
-              onOpen={props.viewer.openLocation}
-            />
             <Show when={props.viewer.viewState.fileKey()} keyed>
               {(_key) => (
                 <SFileDocument
