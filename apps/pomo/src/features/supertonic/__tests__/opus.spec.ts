@@ -18,6 +18,7 @@ vi.mock('libopus-wasm', () => ({
 interface OggPage {
   readonly granulePosition: number
   readonly headerType: number
+  readonly lacingValues: ReadonlyArray<number>
   readonly payload: Uint8Array
   readonly sequence: number
 }
@@ -50,6 +51,7 @@ const readPages = (data: Uint8Array): ReadonlyArray<OggPage> => {
     pages.push({
       granulePosition: view.getUint32(6, true) + view.getUint32(10, true) * 0x1_0000_0000,
       headerType: data[offset + 5] ?? 0,
+      lacingValues: Array.from(segmentTable),
       payload: data.slice(payloadStart, payloadStart + payloadLength),
       sequence: view.getUint32(18, true),
     })
@@ -102,6 +104,24 @@ it('should split long audio across valid Ogg pages', async () => {
   expect(pages).toHaveLength(4)
   expect(pages[2]).toMatchObject({headerType: 0, sequence: 2})
   expect(pages[3]).toMatchObject({headerType: 0x04, sequence: 3})
+})
+
+it('should size and pack unequal packets at exact lacing boundaries', async () => {
+  const packets = [new Uint8Array(255).fill(7), new Uint8Array(510).fill(8), Uint8Array.of(9)]
+  for (const packet of packets) {
+    encoderMocks.encodeFloat.mockReturnValueOnce(packet)
+  }
+
+  const blob = await encodeOpusBlob(new Float32Array(960), 24_000)
+  const pages = readPages(new Uint8Array(await readBlob(blob)))
+
+  expect(pages).toHaveLength(3)
+  expect(pages[2]?.lacingValues).toEqual([255, 0, 255, 255, 0, 1])
+  expect(pages[2]?.payload).toEqual(
+    Uint8Array.from([...new Array(255).fill(7), ...new Array(510).fill(8), 9]),
+  )
+  expect(pages[2]).toMatchObject({granulePosition: 2232, headerType: 0x04, sequence: 2})
+  expect(encoderMocks.free).toHaveBeenCalledOnce()
 })
 
 it('should reject an oversized encoded packet and release the encoder', async () => {

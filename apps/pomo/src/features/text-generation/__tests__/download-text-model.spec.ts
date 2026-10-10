@@ -100,6 +100,29 @@ it('should reuse cached files without network requests', async () => {
   expect(runtime.storage.set).not.toHaveBeenCalled()
 })
 
+it('should report cached bytes and each streamed asset against the complete download size', async () => {
+  runtime.storage.get.mockResolvedValueOnce(
+    successResult(new Response('cached', {headers: {'content-length': '6'}})),
+  )
+  const onProgress = vi.fn()
+
+  await downloadTextModel({modelId: 'lfm-2.6b-qad', onProgress, runtime})
+
+  expect(
+    onProgress.mock.calls.map(([progress]) => ({
+      loadedBytes: progress.loadedBytes,
+      totalBytes: progress.totalBytes,
+    })),
+  ).toEqual([
+    {loadedBytes: 6, totalBytes: 22},
+    {loadedBytes: 10, totalBytes: 22},
+    {loadedBytes: 14, totalBytes: 22},
+    {loadedBytes: 18, totalBytes: 22},
+    {loadedBytes: 22, totalBytes: 22},
+  ])
+  expect(onProgress).toHaveBeenLastCalledWith(expect.objectContaining({percentage: 100}))
+})
+
 it('should skip storage and network access for a bundled model', async () => {
   runtime.isAssetBundled.mockReturnValue(true)
   await downloadTextModel({modelId: 'lfm-2.6b-qad', onProgress: vi.fn(), runtime})
