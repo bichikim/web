@@ -10,6 +10,7 @@ import type {ViewerPort} from './types'
 import {connectHostAppearance} from './connect-host-appearance'
 import {formatContext} from './format-context'
 import {createPendingTasks} from './create-pending-tasks'
+import {createResourceSubscriptions} from './create-resource-subscriptions'
 
 const httpStreams = (app: App): boolean =>
   z
@@ -29,21 +30,12 @@ const createToolCall =
       }),
     )
 
-const watchWorkspace = async (
-  options: Parameters<typeof subscribeWorkspace>[0],
-  http: boolean,
-): Promise<() => Promise<void>> => {
-  if (options.resources === undefined && !http) {
-    throw new Error('이 앱은 파일 변경 알림 연결을 지원하지 않습니다.')
-  }
-  return subscribeWorkspace(options)
-}
-
 export const createHost = (): ViewerPort => {
   const app = new App({name: 'Code Viewer', version: manifest.version}, {}, {autoResize: false})
   const extensions = new OpenAIExtensions(app)
   // The base protocol carries custom methods, as in the OpenAI extensions adapter.
   const protocol = app as unknown as Protocol<Request, Notification, Result>
+  const resources = createResourceSubscriptions(protocol)
   const requests = createPendingTasks()
   const call = createToolCall(app, requests)
   let contexts: string[] = []
@@ -130,13 +122,13 @@ export const createHost = (): ViewerPort => {
           return
         }
         if (resource !== null) {
-          await extensions.resources?.unsubscribe({uri: resource})
+          await resources.unsubscribe({uri: resource})
         }
         if (stopped) {
           return
         }
         resource = parsed.data.file.resourceUri
-        await extensions.resources?.subscribe({uri: resource})
+        await resources.subscribe({uri: resource})
       }
       const handleInput = (input: {arguments?: Record<string, unknown>}): void => {
         requests.run(() => handleFile(input)).catch(report)
@@ -165,7 +157,7 @@ export const createHost = (): ViewerPort => {
       }
       synchronizeContext()
       const disposeAppearance = connectHostAppearance(app)
-      const disposeUpdates = extensions.resources?.addUpdateHandler(({params}) => {
+      const disposeUpdates = resources.addUpdateHandler(({params}) => {
         if (params.uri === resource) {
           refresh()
         }
@@ -173,16 +165,16 @@ export const createHost = (): ViewerPort => {
       return async () => {
         stopped = true
         disposeAppearance()
-        disposeUpdates?.()
+        disposeUpdates()
         removeListeners()
         await requests.settle()
         if (resource !== null) {
-          await extensions.resources?.unsubscribe({uri: resource}).catch(report)
+          await resources.unsubscribe({uri: resource}).catch(report)
         }
         await app.close().catch(report)
       }
     },
     watch: (session, receive) =>
-      watchWorkspace({call, receive, resources: extensions.resources, session}, httpStreams(app)),
+      subscribeWorkspace({call, receive, session, ...(httpStreams(app) ? {} : {resources})}),
   }
 }

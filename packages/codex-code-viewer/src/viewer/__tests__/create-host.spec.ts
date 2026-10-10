@@ -30,7 +30,6 @@ describe('createHost', () => {
       expect(request).toHaveBeenCalledWith(
         {method: 'resources/subscribe', params: {uri}},
         expect.anything(),
-        undefined,
       )
       expect(notify).toHaveBeenCalledOnce()
       expect(source).not.toHaveBeenCalled()
@@ -38,7 +37,6 @@ describe('createHost', () => {
       expect(request).toHaveBeenLastCalledWith(
         {method: 'resources/unsubscribe', params: {uri}},
         expect.anything(),
-        undefined,
       )
       expect(notify).toHaveBeenCalledOnce()
     } finally {
@@ -93,13 +91,49 @@ describe('createHost', () => {
       vi.unstubAllGlobals()
     }
   })
-  it('should report unsupported workspace subscriptions without attempting HTTP in an installed host', async () => {
-    vi.spyOn(App.prototype, 'getHostCapabilities').mockReturnValue({})
-    const call = vi.spyOn(App.prototype, 'callServerTool')
-    await expect(createHost().watch?.('first', vi.fn())).rejects.toThrow(
-      '이 앱은 파일 변경 알림 연결을 지원하지 않습니다.',
-    )
-    expect(call).not.toHaveBeenCalled()
+  it('should subscribe through standard MCP when the tool panel omits the OpenAI resource extension', async () => {
+    vi.spyOn(App.prototype, 'getHostCapabilities').mockReturnValue({serverResources: {}})
+    const request = vi.spyOn(App.prototype, 'request').mockResolvedValue({})
+    const uri = 'file:///tmp/code-viewer-watch-panel/revision.json'
+    const call = vi.spyOn(App.prototype, 'callServerTool').mockResolvedValue({
+      content: [],
+      structuredContent: {resourceUri: uri},
+    })
+    const source = vi.fn()
+    vi.stubGlobal('EventSource', source)
+    try {
+      const receive = vi.fn()
+      const stop = await createHost().watch?.('panel', receive)
+      expect(call).toHaveBeenCalledWith({
+        arguments: {session: 'panel', transport: 'mcp'},
+        name: 'code.watch',
+      })
+      expect(request).toHaveBeenCalledWith(
+        {method: 'resources/subscribe', params: {uri}},
+        expect.anything(),
+      )
+      expect(receive).toHaveBeenCalledOnce()
+      await stop?.()
+      expect(request).toHaveBeenLastCalledWith(
+        {method: 'resources/unsubscribe', params: {uri}},
+        expect.anything(),
+      )
+      expect(source).not.toHaveBeenCalled()
+    } finally {
+      vi.unstubAllGlobals()
+    }
+  })
+  it('should propagate a standard subscription failure instead of silently opening HTTP', async () => {
+    vi.spyOn(App.prototype, 'getHostCapabilities').mockReturnValue({serverResources: {}})
+    vi.spyOn(App.prototype, 'request').mockRejectedValue(new Error('subscription unavailable'))
+    const uri = 'file:///tmp/code-viewer-watch-panel/revision.json'
+    vi.spyOn(App.prototype, 'callServerTool').mockResolvedValue({
+      content: [],
+      structuredContent: {resourceUri: uri},
+    })
+    const receive = vi.fn()
+    await expect(createHost().watch?.('panel', receive)).rejects.toThrow('subscription unavailable')
+    expect(receive).not.toHaveBeenCalled()
   })
   it('should await the consumer cleanup when the host requests teardown', async () => {
     vi.spyOn(App.prototype, 'connect').mockResolvedValue()

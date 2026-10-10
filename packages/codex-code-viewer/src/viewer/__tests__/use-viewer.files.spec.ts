@@ -10,6 +10,7 @@ describe('useViewer files', () => {
   })
   it('should check workspace events while dirty and defer replacing the document until discard', async () => {
     const port = createPort()
+    const subscribed = Promise.withResolvers<void>()
     const listener = {
       receive: () => {
         /* Installed by watch. */
@@ -17,11 +18,13 @@ describe('useViewer files', () => {
     }
     port.watch = vi.fn(async (_session, receive) => {
       listener.receive = receive
+      subscribed.resolve()
       return async () => {
         /* No transport in this fixture. */
       }
     })
     const viewer = mount(port)
+    await subscribed.promise
     viewer.selectLines(3, 5)
     vi.mocked(port.call).mockResolvedValue({
       content: [],

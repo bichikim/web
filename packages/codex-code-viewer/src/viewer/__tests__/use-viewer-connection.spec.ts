@@ -16,6 +16,38 @@ const initial: ViewerSession = {
 }
 
 describe('useViewerConnection', () => {
+  it('should wait for host initialization before subscribing to the initial workspace', async () => {
+    const ready = Promise.withResolvers<() => void>()
+    const subscribed = Promise.withResolvers<void>()
+    const stop = vi.fn(async () => {})
+    const watch = vi.fn(async () => {
+      subscribed.resolve()
+      return stop
+    })
+    const disposePort = vi.fn()
+    const port: ViewerPort = {
+      call: vi.fn(async () => ({content: []})),
+      context: async () => {},
+      start: () => ready.promise,
+      watch,
+    }
+    const dispose = createRoot((dispose) => {
+      useViewerConnection({
+        blocked: () => true,
+        port,
+        receive: vi.fn(),
+        refresh: vi.fn(),
+        report: vi.fn(),
+        session: () => initial,
+      })
+      return dispose
+    })
+    expect(watch).not.toHaveBeenCalled()
+    ready.resolve(disposePort)
+    await subscribed.promise
+    expect(watch).toHaveBeenCalledWith('session', expect.any(Function))
+    dispose()
+  })
   it('should keep the session available when host teardown is cancelled and allow a later close', async () => {
     const decision = Promise.withResolvers<boolean>()
     const handlers: {teardown?: () => Promise<void>; refresh?: () => void} = {}
