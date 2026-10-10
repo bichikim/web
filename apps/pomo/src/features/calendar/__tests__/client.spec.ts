@@ -204,6 +204,44 @@ it.each([
   },
 )
 
+it.each([
+  '말고',
+  '빼고',
+  '제외',
+  '제외하고',
+  '아니',
+  '아닌',
+  '아니고',
+  '안 되',
+  '안 되고',
+  '안되',
+  '안 돼',
+  '안돼',
+  '안되고',
+])(
+  'should request the multi-weekday range with the existing daypart exclusion token "%s"',
+  async (exclusion) => {
+    vi.mocked(apiJson).mockResolvedValue({
+      connectedConnections: 1,
+      events: [],
+      timeZone: 'Asia/Seoul',
+      truncated: false,
+      unavailableConnections: 0,
+    })
+
+    await loadCalendarPromptContext({
+      now: new Date('2026-09-04T10:30:00.000Z'),
+      text: `수요일 일정과 목 점심 ${exclusion} 저녁 일정 알려줘`,
+      timeZone: 'Asia/Seoul',
+    })
+
+    const requestUrl = new URL(String(vi.mocked(apiJson).mock.calls[0]?.[0]), 'https://pomofi.io')
+    expect(requestUrl.searchParams.get('start')).toBe('2026-09-04T10:30:00.000Z')
+    expect(requestUrl.searchParams.get('end')).toBe('2026-10-04T10:30:00.000Z')
+    expect(requestUrl.searchParams.get('timeZone')).toBe('Asia/Seoul')
+  },
+)
+
 it.each(['수요일 할 일과 일정 알려줘', '수요일 일정 중 할 일과 일정 알려줘'])(
   'should request a standalone weekday range for a task noun plus conjunction in "%s"',
   async (text) => {

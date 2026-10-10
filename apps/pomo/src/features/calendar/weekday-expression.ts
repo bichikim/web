@@ -107,7 +107,7 @@ const hasMultipleWeekdayExpressions = ({
   const calendarDaypartExpressionPattern = new RegExp(
     `(?:${CALENDAR_DAYPART_PATTERN_SOURCE}` +
       `(?:\\s*${calendarPeriodParticleAfterWeekdayPatternSource})?` +
-      `(?:\\s*${WEEKDAY_EXCLUSION_PATTERN.source}\\s*${CALENDAR_DAYPART_PATTERN_SOURCE}` +
+      `(?:\\s*${WEEKDAY_EXCLUSION_TERM_PATTERN.source}\\s*${CALENDAR_DAYPART_PATTERN_SOURCE}` +
       `(?:\\s*${calendarPeriodParticleAfterWeekdayPatternSource})?)?` +
       `)`,
     'u',

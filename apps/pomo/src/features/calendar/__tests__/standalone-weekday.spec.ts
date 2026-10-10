@@ -117,6 +117,36 @@ describe('createCalendarQuery standalone weekdays', () => {
     },
   )
 
+  it.each([
+    '말고',
+    '빼고',
+    '제외',
+    '제외하고',
+    '아니',
+    '아닌',
+    '아니고',
+    '안 되',
+    '안 되고',
+    '안되',
+    '안 돼',
+    '안돼',
+    '안되고',
+  ])(
+    'should retain the multi-weekday range with the existing daypart exclusion token "%s"',
+    (exclusion) => {
+      expect(
+        createCalendarQuery({
+          now: new Date('2026-09-04T10:30:00.000Z'),
+          text: `수요일 일정과 목 점심 ${exclusion} 저녁 일정 알려줘`,
+          timeZone: 'Asia/Seoul',
+        }),
+      ).toEqual({
+        end: '2026-10-04T10:30:00.000Z',
+        start: '2026-09-04T10:30:00.000Z',
+      })
+    },
+  )
+
   it.each(['수요일 할 일과 일정 알려줘', '수요일 일정 중 할 일과 일정 알려줘'])(
     'should not reinterpret a task noun plus conjunction as another weekday in "%s"',
     (text) => {
