@@ -10,8 +10,8 @@ const loopPlayback = vi.hoisted(() => ({
   duration: 20,
   onPosition: undefined as ((seconds: number) => void) | undefined,
   onStatus: undefined as ((message: string, playing: boolean) => void) | undefined,
-  play: vi.fn(async () => {}),
-  seek: vi.fn(async () => {}),
+  play: vi.fn(async () => true),
+  seek: vi.fn(async () => false),
   setVolume: vi.fn(),
   stop: vi.fn(),
 }))
@@ -203,6 +203,61 @@ it('should preserve playback when connection mode changes during repeat playback
   fireEvent.click(screen.getByRole('checkbox', {name: '연결 구간 사용'}))
 
   await vi.waitFor(() => expect(loopPlayback.play).toHaveBeenCalledWith(4, false, 9))
+})
+
+it('should stop showing playback when seeking cancels a pending connection restart', async () => {
+  render(() => <SoundGenerationPage />)
+  fireEvent.click(screen.getByRole('button', {name: '환경음 생성'}))
+  TestWorker.current.onmessage?.({data: {blob: new Blob(['wav']), type: 'result'}})
+  fireEvent.click(screen.getByRole('checkbox', {name: '반복 재생'}))
+  fireEvent.click(screen.getByRole('button', {name: '재생'}))
+  await vi.waitFor(() => expect(loopPlayback.play).toHaveBeenCalledOnce())
+  loopPlayback.onStatus?.('루프 재생 중', true)
+  loopPlayback.onPosition?.(7)
+
+  const restart = Promise.withResolvers<boolean>()
+  loopPlayback.play.mockReturnValueOnce(restart.promise)
+  fireEvent.input(screen.getByRole('spinbutton', {name: /^연결 구간 \(초\)/u}), {
+    target: {value: '10'},
+  })
+  await vi.waitFor(() => expect(loopPlayback.play).toHaveBeenCalledWith(10, false, 7))
+
+  const position = screen.getByRole('slider', {name: '크로스페이드 오디오 위치'})
+  fireEvent.input(position, {target: {value: '15'}})
+  fireEvent.change(position)
+  await vi.waitFor(() => expect(loopPlayback.seek).toHaveBeenCalledWith(15))
+  restart.resolve(false)
+
+  expect(await screen.findByRole('button', {name: '재생'})).toBeInTheDocument()
+  expect(screen.queryByRole('button', {name: '일시정지'})).not.toBeInTheDocument()
+  expect(screen.getByText('재생 준비 완료')).toBeInTheDocument()
+})
+
+it('should preserve a media error reported while a connection restart is pending', async () => {
+  render(() => <SoundGenerationPage />)
+  fireEvent.click(screen.getByRole('button', {name: '환경음 생성'}))
+  TestWorker.current.onmessage?.({data: {blob: new Blob(['wav']), type: 'result'}})
+  fireEvent.click(screen.getByRole('checkbox', {name: '반복 재생'}))
+  fireEvent.click(screen.getByRole('button', {name: '재생'}))
+  await vi.waitFor(() => expect(loopPlayback.play).toHaveBeenCalledOnce())
+  loopPlayback.onStatus?.('루프 재생 중', true)
+  loopPlayback.onPosition?.(7)
+
+  const restart = Promise.withResolvers<boolean>()
+  loopPlayback.play.mockReturnValueOnce(restart.promise)
+  fireEvent.input(screen.getByRole('spinbutton', {name: /^연결 구간 \(초\)/u}), {
+    target: {value: '10'},
+  })
+  await vi.waitFor(() => expect(loopPlayback.play).toHaveBeenCalledWith(10, false, 7))
+
+  const errorMessage = '이 오디오 파일을 재생할 수 없습니다.'
+  loopPlayback.onStatus?.(errorMessage, false)
+  expect(screen.getByText(errorMessage)).toBeInTheDocument()
+  restart.resolve(false)
+  await restart.promise
+
+  expect(screen.getByText(errorMessage)).toBeInTheDocument()
+  expect(screen.getByRole('button', {name: '재생'})).toBeInTheDocument()
 })
 
 it('should apply a changed connection duration to active repeat playback', () => {
