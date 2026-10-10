@@ -2,6 +2,7 @@ import {describe, expect, it} from 'vitest'
 import {
   areReminderDraftsEqual,
   createReminderDraft,
+  isFirstReminderInFuture,
   resolveReminderAt,
   resolveReminderDraft,
 } from '../reminder-draft'
@@ -20,6 +21,15 @@ describe('reminder draft dates', () => {
     expect(resolveReminderAt('custom', '2026-02-03', '09:05', savedAt)).toBe(
       new Date(2026, 1, 3, 9, 5).toISOString(),
     )
+  })
+  it('should keep a 00:00 reminder strictly future only until that instant', () => {
+    const beforeMidnight = new Date(2026, 0, 31, 23, 59, 59)
+    const midnight = new Date(2026, 1, 1, 0, 0)
+    const reminderAt = resolveReminderAt('custom', '2026-02-01', '00:00', beforeMidnight)
+
+    expect(reminderAt).toBe(midnight.toISOString())
+    expect(isFirstReminderInFuture(reminderAt, 0, beforeMidnight)).toBe(true)
+    expect(isFirstReminderInFuture(reminderAt, 0, midnight)).toBe(false)
   })
   it('should reject invalid custom calendar dates instead of rolling them over', () => {
     const savedAt = new Date(2026, 1, 1, 0, 30)
