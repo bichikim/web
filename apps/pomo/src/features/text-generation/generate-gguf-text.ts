@@ -1,5 +1,6 @@
 // oxlint-disable eslint-js/camelcase -- Wllama generation options are fixed external contracts.
 import type {Wllama} from '@wllama/wllama/esm/index.js'
+import {isNonBlankString} from 'src/utils/is-non-blank-string'
 
 import {GGUF_CONFIG} from './gguf-config'
 import type {GenerateTextOptions} from './runtime'
@@ -64,10 +65,10 @@ const generateAnswer = async ({model, options}: GenerateGgufTextOptions): Promis
     top_p: options.topP,
   })
   options.signal?.throwIfAborted()
-  if (answerPrefix.trim().length > 0) {
+  if (isNonBlankString(answerPrefix)) {
     appendAnswer(answerPrefix)
   }
-  if (output.trim().length === 0) {
+  if (!isNonBlankString(output)) {
     console.warn('GGUF completion ended without a visible answer.', {
       completionTokens,
       finishReason,
@@ -81,7 +82,7 @@ const generateAnswer = async ({model, options}: GenerateGgufTextOptions): Promis
 /** Streams the visible GGUF answer, retrying once when no answer was generated. */
 export const generateGgufText = async (options: GenerateGgufTextOptions): Promise<string> => {
   const answer = await generateAnswer(options)
-  if (answer.trim().length > 0) {
+  if (isNonBlankString(answer)) {
     return answer
   }
   const retry = await generateAnswer({
@@ -99,7 +100,7 @@ export const generateGgufText = async (options: GenerateGgufTextOptions): Promis
       ],
     },
   })
-  if (retry.trim().length > 0) {
+  if (isNonBlankString(retry)) {
     return retry
   }
   throw new Error('모델이 추론 후 답변 본문을 만들지 못했어요. 다시 시도해 주세요.')

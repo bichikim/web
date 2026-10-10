@@ -197,3 +197,70 @@ it('should preserve an inference failure without retrying it', async () => {
   await expect(generateGgufText({model, options})).rejects.toBe(failure)
   expect(createChatCompletion).toHaveBeenCalledOnce()
 })
+
+it('should retry content containing only Unicode whitespace without streaming it', async () => {
+  const onToken = vi.fn()
+  const createChatCompletion = vi
+    .fn()
+    .mockImplementationOnce(async ({onData}) => {
+      onData({choices: [{delta: {content: '\u00a0\ufeff'}}]})
+    })
+    .mockImplementationOnce(async ({onData}) => {
+      onData({choices: [{delta: {content: '본문'}}]})
+    })
+  const model = {createChatCompletion} as unknown as Wllama
+
+  expect(await generateGgufText({model, options: {...options, onToken}})).toBe('본문')
+  expect(createChatCompletion).toHaveBeenCalledTimes(2)
+  expect(onToken.mock.calls).toEqual([['본문']])
+  expect(console.warn).toHaveBeenCalledOnce()
+})
+
+it.each(['\u200b', '\u00a0 본문 \ufeff'])(
+  'should preserve non-blank content %j without trimming or retrying it',
+  async (content) => {
+    const onToken = vi.fn()
+    const createChatCompletion = vi.fn(async ({onData}) => {
+      onData({choices: [{delta: {content}}]})
+    })
+    const model = {createChatCompletion} as unknown as Wllama
+
+    expect(await generateGgufText({model, options: {...options, onToken}})).toBe(content)
+    expect(onToken.mock.calls).toEqual([[content]])
+    expect(createChatCompletion).toHaveBeenCalledOnce()
+    expect(console.warn).not.toHaveBeenCalled()
+  },
+)
+
+it('should preserve a token callback failure without retrying it', async () => {
+  const failure = new Error('token callback failed')
+  const onToken = vi.fn(() => {
+    throw failure
+  })
+  const createChatCompletion = vi.fn(async ({onData}) => {
+    onData({choices: [{delta: {content: '본문'}}]})
+  })
+  const model = {createChatCompletion} as unknown as Wllama
+
+  await expect(generateGgufText({model, options: {...options, onToken}})).rejects.toBe(failure)
+  expect(createChatCompletion).toHaveBeenCalledOnce()
+  expect(console.warn).not.toHaveBeenCalled()
+})
+
+it('should preserve cancellation after a visible answer without retrying it', async () => {
+  const controller = new AbortController()
+  const reason = new Error('request cancelled')
+  const onToken = vi.fn()
+  const createChatCompletion = vi.fn(async ({onData}) => {
+    onData({choices: [{delta: {content: '본문'}}]})
+    controller.abort(reason)
+  })
+  const model = {createChatCompletion} as unknown as Wllama
+
+  await expect(
+    generateGgufText({model, options: {...options, onToken, signal: controller.signal}}),
+  ).rejects.toBe(reason)
+  expect(onToken.mock.calls).toEqual([['본문']])
+  expect(createChatCompletion).toHaveBeenCalledOnce()
+  expect(console.warn).not.toHaveBeenCalled()
+})
