@@ -25,20 +25,22 @@ export interface CreateTransferSessionOptions {
   readonly receivedFiles: ReceivedFileSink
 }
 
+const INITIAL_STATE = {
+  autoAccept: false,
+  error: null,
+  errorCode: null,
+  incoming: null,
+  joinUrl: null,
+  outgoing: null,
+  phase: 'idle',
+  progress: 0,
+  receivedName: null,
+  sessionId: null,
+} as const satisfies TransferState
+
 class TransferSession implements FileTransfer {
   constructor(private readonly options: CreateTransferSessionOptions) {}
-  private readonly store = createStore<TransferState>({
-    autoAccept: false,
-    error: null,
-    errorCode: null,
-    incoming: null,
-    joinUrl: null,
-    outgoing: null,
-    phase: 'idle',
-    progress: 0,
-    receivedName: null,
-    sessionId: null,
-  })
+  private readonly store = createStore<TransferState>({...INITIAL_STATE})
   readonly state = this.store[0]
   private readonly setState = this.store[1]
   private socket: WebSocket | null = null
@@ -479,16 +481,8 @@ class TransferSession implements FileTransfer {
     }
     this.closeConnections()
     this.setState({
-      autoAccept: false,
-      error: null,
-      errorCode: null,
-      incoming: null,
-      joinUrl: null,
-      outgoing: null,
+      ...INITIAL_STATE,
       phase: 'creating',
-      progress: 0,
-      receivedName: null,
-      sessionId: null,
     })
     this.connectSocket('creator')
   }
@@ -524,15 +518,8 @@ class TransferSession implements FileTransfer {
     }
     this.closeConnections()
     this.setState({
-      autoAccept: false,
-      error: null,
-      errorCode: null,
-      incoming: null,
-      joinUrl: null,
-      outgoing: null,
+      ...INITIAL_STATE,
       phase: 'connecting',
-      progress: 0,
-      receivedName: null,
       sessionId,
     })
     this.connectSocket('joiner', sessionId, secret)
@@ -573,18 +560,7 @@ class TransferSession implements FileTransfer {
   }
   readonly cancel = (): void => {
     this.sendControl({type: 'cancel'})
-    this.setState({
-      autoAccept: false,
-      error: null,
-      errorCode: null,
-      incoming: null,
-      joinUrl: null,
-      outgoing: null,
-      phase: 'idle',
-      progress: 0,
-      receivedName: null,
-      sessionId: null,
-    })
+    this.setState({...INITIAL_STATE})
     this.closeConnections()
   }
   readonly save = (): void => {
