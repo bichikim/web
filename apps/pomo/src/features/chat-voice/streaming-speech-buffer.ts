@@ -124,7 +124,12 @@ export const createStreamingSpeechBuffer = (
   }
 
   const reconcileConsumedText = (text: string) => {
-    if (!text.startsWith(consumedText)) {
+    const extendsConsumedDecimalPrefix =
+      text.length > consumedText.length &&
+      text.startsWith(consumedText) &&
+      UNRESOLVED_DECIMAL_POINT.test(consumedText)
+
+    if (!text.startsWith(consumedText) || extendsConsumedDecimalPrefix) {
       if (consumedText.startsWith(text)) {
         return
       }

@@ -115,6 +115,26 @@ describe('createStreamingSpeechBuffer', () => {
     expect(buffer.update('There are 3. Corrected ending.')).toEqual(['Corrected ending.'])
   })
 
+  it('should re-evaluate a consumed numeric period when later text extends it into a decimal', () => {
+    const buffer = createStreamingSpeechBuffer({locale: 'ko'})
+
+    expect(buffer.update('There are 3. Original ending.')).toEqual([
+      'There are 3.',
+      'Original ending.',
+    ])
+    expect(buffer.update('There are 3.\n')).toEqual([])
+
+    const updatedText = 'There are 3.14 units.'
+
+    for (let end = 1; end <= updatedText.length; end += 1) {
+      const emittedSegments = buffer.update(updatedText.slice(0, end))
+
+      expect(emittedSegments).toEqual(end < updatedText.length ? [] : [updatedText])
+    }
+
+    expect(buffer.flush(updatedText)).toBeNull()
+  })
+
   it('should preserve a numeric sentence consumed by flush when later text changes its separator', () => {
     const buffer = createStreamingSpeechBuffer({locale: 'ko'})
 

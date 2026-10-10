@@ -190,6 +190,30 @@ describe('useReplySpeech', () => {
     ])
   })
 
+  it('should speak the full decimal sentence when a consumed number extends after a newline', () => {
+    const {result, voice, setStreamingText} = setup()
+    result.start()
+
+    setStreamingText('There are 3. Original ending.')
+    expect(voice.speak.mock.calls.map(([text]) => text)).toEqual([
+      'There are 3.',
+      'Original ending.',
+    ])
+
+    setStreamingText('There are 3.\n')
+    expect(voice.speak.mock.calls.map(([text]) => text)).toEqual([
+      'There are 3.',
+      'Original ending.',
+    ])
+
+    setStreamingText('There are 3.14 units.')
+    expect(voice.speak.mock.calls.map(([text]) => text)).toEqual([
+      'There are 3.',
+      'Original ending.',
+      'There are 3.14 units.',
+    ])
+  })
+
   it('should not repeat a completed sentence when streaming text shrinks', async () => {
     const {result, voice, setStreamingText} = setup()
     result.start()
