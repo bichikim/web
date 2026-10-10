@@ -56,7 +56,7 @@
     "@fazelstudio/codemirror-lang-astro": "0.2.0",
     "@lezer/highlight": "1.2.5",
     "@modelcontextprotocol/ext-apps": "1.7.5",
-    "@modelcontextprotocol/sdk": "1.32.1",
+    "@modelcontextprotocol/sdk": "1.31.0",
     "@openai/mcp-extensions": "0.1.0",
     "@replit/codemirror-lang-svelte": "6.0.0",
     "@types/mdast": "4.0.4",
