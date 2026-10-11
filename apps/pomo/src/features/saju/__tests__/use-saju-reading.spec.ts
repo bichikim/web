@@ -31,6 +31,7 @@ describe('useSajuReading', () => {
 
   beforeEach(() => {
     vi.clearAllMocks()
+    mocks.generate.mockReset()
     modelId = 'gemma-4-e2b'
     supported = true
     receive = null
@@ -107,5 +108,76 @@ describe('useSajuReading', () => {
     expect(reading.status()).toBe('error')
     expect(reading.error()).toBe('모델 저장소 오류')
     expect(mocks.generate).not.toHaveBeenCalled()
+  })
+
+  describe.each([
+    ['detail', new TypeError('detail'), 'detail'],
+    ['empty message', new Error(''), ''],
+    ['whitespace message', new Error(' '), ' '],
+    ['message-like object', {message: 'ignored'}, null],
+    ['null', null, null],
+  ])('%s failure', (_label, cause, message) => {
+    it('should select the calculation error and stop before model checks', () => {
+      const input = {
+        birth,
+        gender: 'N' as const,
+        get question(): string {
+          throw cause
+        },
+      }
+      reading.submit(input)
+      expect(reading.error()).toBe(message ?? '사주 계산에 실패했어요.')
+      expect(reading.status()).toBe('error')
+      expect(reading.canRetry()).toBe(false)
+      expect(mocks.downloaded).not.toHaveBeenCalled()
+    })
+
+    it('should select the model-check error and retain retry', async () => {
+      mocks.downloaded.mockRejectedValueOnce(cause)
+      reading.submit({birth, gender: 'N', question: '제 일은 어떨까요?'})
+      await flush()
+      expect(reading.error()).toBe(message ?? '모델 상태를 확인하지 못했어요.')
+      expect(reading.status()).toBe('error')
+      expect(reading.canRetry()).toBe(true)
+      expect(mocks.generate).not.toHaveBeenCalled()
+    })
+
+    it('should select the generation error after disposing the client', async () => {
+      mocks.generate.mockImplementationOnce(() => {
+        throw cause
+      })
+      reading.submit({birth, gender: 'N', question: '제 일은 어떨까요?'})
+      await flush()
+      expect(reading.error()).toBe(message ?? '사주 풀이를 시작하지 못했어요.')
+      expect(reading.status()).toBe('error')
+      expect(mocks.dispose).toHaveBeenCalledOnce()
+    })
+
+    it('should select the download error and retain retry', async () => {
+      mocks.downloaded.mockResolvedValueOnce(false)
+      mocks.startTextModel.mockRejectedValueOnce(cause)
+      reading.submit({birth, gender: 'N', question: '제 일은 어떨까요?'})
+      await flush()
+      await reading.startDownload()
+      expect(reading.error()).toBe(message ?? '모델을 내려받지 못했어요.')
+      expect(reading.status()).toBe('error')
+      expect(reading.canRetry()).toBe(true)
+      expect(mocks.generate).not.toHaveBeenCalled()
+    })
+  })
+
+  it('should ignore a rejected model check after cancellation without reading its message', async () => {
+    const pending = Promise.withResolvers<boolean>()
+    const cause = new Error()
+    const readMessage = vi.fn(() => 'late failure')
+    Object.defineProperty(cause, 'message', {get: readMessage})
+    mocks.downloaded.mockReturnValueOnce(pending.promise)
+    reading.submit({birth, gender: 'N', question: '제 일은 어떨까요?'})
+    reading.cancel()
+    pending.reject(cause)
+    await flush()
+    expect(reading.status()).toBe('idle')
+    expect(reading.error()).toBeNull()
+    expect(readMessage).not.toHaveBeenCalled()
   })
 })
