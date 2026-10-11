@@ -5,17 +5,7 @@ import {
   type LanguageLearningLanguage,
 } from '../../features/language-learning'
 import {PSelect, type PSelectOption} from '../p-select/PSelect'
-
-const getLanguageLabel = (language: LanguageLearningLanguage) => {
-  switch (language) {
-    case 'en':
-      return m.learning_language_en()
-    case 'ja':
-      return m.learning_language_ja()
-    case 'ko':
-      return m.learning_language_ko()
-  }
-}
+import {getLanguageLabel} from './get-language-label'
 
 const getLanguageOptions = () =>
   LANGUAGE_LEARNING_LANGUAGES.map((language) => ({
