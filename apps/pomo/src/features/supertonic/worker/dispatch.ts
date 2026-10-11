@@ -1,10 +1,11 @@
 /// <reference lib="webworker" />
 
 import {type Result} from 'src/features/result'
-import {getErrorDetail, type SupertonicError, type WorkerFailedError} from '../errors'
+import {type SupertonicError} from '../errors'
 import type {SupertonicWorkerInput, SupertonicWorkerOutput} from '../messages'
 import {getSupertonicModel} from '../model'
 import type {SupertonicBackend} from '../runtime'
+import {createWorkerError} from './create-worker-error'
 
 interface GeneratedAudio {
   readonly generationTime: number
@@ -26,16 +27,6 @@ export interface CreateSupertonicWorkerDispatchOptions {
     transfer?: ReadonlyArray<Transferable>,
   ) => void
 }
-
-const createWorkerError = (
-  phase: WorkerFailedError['phase'],
-  error: unknown,
-): WorkerFailedError => ({
-  code: 'worker-failed',
-  detail: getErrorDetail(error),
-  phase,
-  retryable: true,
-})
 
 /** Translates worker messages into runtime operations and protocol responses. */
 export const createSupertonicWorkerDispatch =
