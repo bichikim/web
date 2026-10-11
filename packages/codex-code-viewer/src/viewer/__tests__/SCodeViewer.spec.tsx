@@ -35,6 +35,7 @@ describe('SCodeViewer', () => {
   const originalPopover = Object.getOwnPropertyDescriptor(HTMLElement.prototype, 'showPopover')
   const originalScroll = Object.getOwnPropertyDescriptor(HTMLElement.prototype, 'scrollIntoView')
   beforeEach(() => {
+    vi.spyOn(navigator, 'language', 'get').mockReturnValue('ko-KR')
     Object.defineProperty(HTMLElement.prototype, 'showPopover', {
       configurable: true,
       value: vi.fn(),
@@ -59,6 +60,7 @@ describe('SCodeViewer', () => {
   afterEach(() => {
     cleanup()
     vi.unstubAllGlobals()
+    vi.restoreAllMocks()
     localStorage.clear()
     if (originalPopover === undefined) {
       Reflect.deleteProperty(HTMLElement.prototype, 'showPopover')
@@ -82,7 +84,10 @@ describe('SCodeViewer', () => {
   it('should open settings beside the tree toggle and persist the selected preview lines', () => {
     const {textbox} = mountEditor()
     const button = screen.getByRole('button', {name: '설정'})
-    expect(screen.getByRole('button', {name: '파일 트리'}).nextElementSibling).toBe(button)
+    const controls = screen.getAllByRole('button')
+    expect(controls.indexOf(button)).toBe(
+      controls.indexOf(screen.getByRole('button', {name: '파일 트리'})) + 1,
+    )
     fireEvent.click(button)
     const dialog = screen.getByRole('dialog', {name: '설정'})
     const select = screen.getByRole('combobox', {name: '미리보기 줄 수'})

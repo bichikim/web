@@ -1,3 +1,4 @@
+import {useTranslations} from './locale/use-translations'
 import {createEffect, createSignal, For, onCleanup, Show, untrack} from 'solid-js'
 import type {CodeDocument, CodeToken} from '../shared/contracts'
 import type {CodeSelection, CodeTextRange, NavigationPoint} from './types'
@@ -23,6 +24,7 @@ export interface SCodeDocumentProps {
 }
 
 export const SCodeDocument = (props: SCodeDocumentProps) => {
+  const t = useTranslations()
   const [element, setElement] = createSignal<HTMLDivElement | null>(null)
   const scroll = useScrollRestoration({
     content: () => props.document,
@@ -74,7 +76,8 @@ export const SCodeDocument = (props: SCodeDocumentProps) => {
   return (
     <>
       <div
-        aria-label="소스 코드"
+        data-code-source
+        aria-label={t('소스 코드')}
         class="min-h-0 flex-1 overflow-auto bg-canvas"
         onScroll={scroll.record}
         onClick={interaction.handleClick}

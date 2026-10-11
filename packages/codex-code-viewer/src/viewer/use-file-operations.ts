@@ -1,3 +1,5 @@
+import {useLocalizedMessage} from './locale/use-localized-message'
+import type {LocalizedMessage} from './locale/types'
 import {type Accessor, batch, createEffect, createSignal, on} from 'solid-js'
 import {
   entrySchema,
@@ -27,10 +29,15 @@ interface ClipboardEntry extends EntrySnapshot {
 interface DeleteEntry extends EntrySnapshot {
   readonly session: string
 }
+const clipboardMessages = {
+  copy: '{path} · 복사했습니다. 대상 폴더에 붙여넣으세요.',
+  cut: '{path} · 잘라냈습니다. 대상 폴더에 붙여넣으세요.',
+} as const
 export const useFileOperations = (props: UseFileOperationsProps) => {
+  const localize = useLocalizedMessage()
   const [clipboard, setClipboard] = createSignal<ClipboardEntry | null>(null)
   const [deleting, setDeleting] = createSignal<DeleteEntry | null>(null)
-  const [feedback, setFeedback] = createSignal('')
+  const [feedback, setFeedback] = createSignal<string | LocalizedMessage>('')
   const [pasting, setPasting] = createSignal(false)
   const request = useLatestRequest((error) => {
     setFeedback(errorMessage(error))
@@ -84,9 +91,7 @@ export const useFileOperations = (props: UseFileOperationsProps) => {
     const entry = await inspect(selection)
     if (entry !== null) {
       setClipboard({...entry, action})
-      setFeedback(
-        `${entry.path} · ${action === 'copy' ? '복사' : '잘라내기'}했습니다. 대상 폴더에 붙여넣으세요.`,
-      )
+      setFeedback({key: clipboardMessages[action], values: {path: entry.path}})
     }
   }
   const mutate = async (
@@ -129,7 +134,7 @@ export const useFileOperations = (props: UseFileOperationsProps) => {
       if (current.action === 'cut') {
         setClipboard(null)
       }
-      setFeedback(`${result.path} · 붙여넣었습니다.`)
+      setFeedback({key: '{path} · 붙여넣었습니다.', values: {path: result.path}})
     }
   }
   const askDelete = async (selection: WorkspaceSelection): Promise<void> => {
@@ -153,7 +158,7 @@ export const useFileOperations = (props: UseFileOperationsProps) => {
       ) {
         setClipboard(null)
       }
-      setFeedback(`${result.path} · 삭제했습니다.`)
+      setFeedback({key: '{path} · 삭제했습니다.', values: {path: result.path}})
     }
   }
   return {
@@ -170,7 +175,7 @@ export const useFileOperations = (props: UseFileOperationsProps) => {
     cutPath: () => (clipboard()?.action === 'cut' ? clipboard()?.path : undefined),
     deleting,
     dismissFeedback: () => setFeedback(''),
-    feedback,
+    feedback: () => localize(feedback()),
     paste,
     pasting,
     pending: request.pending,

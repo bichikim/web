@@ -1,3 +1,4 @@
+import {useTranslations} from './locale/use-translations'
 import {createSignal, For, Show, untrack} from 'solid-js'
 import type {CodeLocation, ViewerConnection, WorkspaceEntry} from '../shared/contracts'
 import {SFileTreeItem} from './SFileTreeItem'
@@ -43,6 +44,7 @@ const focusTreeDestination = (options: TreeFocusOptions): void => {
 }
 
 export const SFileTree = (props: SFileTreeProps) => {
+  const t = useTranslations()
   const [element, setElement] = createSignal<HTMLElement | null>(null)
   const [viewportElement, setViewportElement] = createSignal<HTMLElement | null>(null)
   const tree = useFileTree({
@@ -123,7 +125,7 @@ export const SFileTree = (props: SFileTreeProps) => {
   return (
     <Show when={props.visible}>
       <aside
-        aria-label="파일 트리"
+        aria-label={t('파일 트리')}
         id="workspace-files"
         class="flex h-full min-h-0 w-full min-w-0 flex-col bg-canvas pt-1 text-sm"
         ref={setElement}
@@ -141,7 +143,7 @@ export const SFileTree = (props: SFileTreeProps) => {
         />
         <SFileTreeFilter query={tree.query()} onChange={tree.change} />
         <div
-          aria-label="프로젝트 파일"
+          aria-label={t('프로젝트 파일')}
           aria-busy={tree.pending()}
           class="min-h-0 flex-1 overflow-auto px-2 pb-2"
           role="tree"
@@ -168,13 +170,13 @@ export const SFileTree = (props: SFileTreeProps) => {
           />
           <Show when={tree.paths().length === 0}>
             <p class="m-0 px-2 py-3 text-muted" role="status">
-              {tree.pending() ? '파일 목록을 불러오는 중…' : '표시할 파일이 없습니다.'}
+              {tree.pending() ? t('파일 목록을 불러오는 중…') : t('표시할 파일이 없습니다.')}
             </p>
           </Show>
         </div>
         <Show when={tree.incomplete()}>
           <p class="m-0 border-t border-divider p-2 text-xs text-muted" role="status">
-            일부 폴더를 읽지 못했습니다. 새로고침하여 다시 탐색해 주세요.
+            {t('일부 폴더를 읽지 못했습니다. 새로고침하여 다시 탐색해 주세요.')}
           </p>
         </Show>
         <SFileTreeActions

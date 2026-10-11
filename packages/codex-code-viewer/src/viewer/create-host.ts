@@ -38,6 +38,11 @@ export const createHost = (): ViewerPort => {
   const protocol = app as unknown as Protocol<Request, Notification, Result>
   const requests = createPendingTasks()
   const call = createToolCall(app, requests)
+  const localeListeners = new Set<(locale: string | undefined) => void>()
+  const publishLocale = (): void => {
+    const locale = app.getHostContext()?.locale
+    localeListeners.forEach((receive) => receive(locale))
+  }
   let contexts: string[] = []
   let observedContextId: string | null | undefined
   let contextQueue: Promise<void> = Promise.resolve()
@@ -125,10 +130,12 @@ export const createHost = (): ViewerPort => {
         app.removeEventListener('toolresult', handleResult)
         app.removeEventListener('toolinput', handleInput)
         app.removeEventListener('hostcontextchanged', synchronizeContext)
+        app.removeEventListener('hostcontextchanged', publishLocale)
       }
       app.addEventListener('toolresult', handleResult)
       app.addEventListener('toolinput', handleInput)
       app.addEventListener('hostcontextchanged', synchronizeContext)
+      app.addEventListener('hostcontextchanged', publishLocale)
       app.onteardown = async () => {
         await onTeardown?.()
         return {}
@@ -144,6 +151,7 @@ export const createHost = (): ViewerPort => {
         throw error
       }
       synchronizeContext()
+      publishLocale()
       const disposeAppearance = connectHostAppearance(app)
       return async () => {
         stopped = true
@@ -151,6 +159,13 @@ export const createHost = (): ViewerPort => {
         removeListeners()
         await requests.settle()
         await app.close().catch(report)
+      }
+    },
+    subscribeLocale: (receive) => {
+      localeListeners.add(receive)
+      receive(app.getHostContext()?.locale)
+      return () => {
+        localeListeners.delete(receive)
       }
     },
     watch: (session, receive, report) =>

@@ -64,6 +64,7 @@
     "@types/node": "catalog:",
     "@types/prismjs": "1.26.5",
     "@typescript/typescript6": "catalog:",
+    "class-variance-authority": "catalog:",
     "csv-parse": "7.0.3",
     "diff": "8.0.3",
     "esbuild": "^0.28.2",

@@ -1,3 +1,4 @@
+import {useTranslations} from './locale/use-translations'
 import {createEffect, createSignal, createUniqueId, For, Show} from 'solid-js'
 import {SIcon} from './SIcon'
 import {SSelectOption} from './SSelectOption'
@@ -12,6 +13,7 @@ interface SSelectProps {
 }
 
 export const SSelect = (props: SSelectProps) => {
+  const t = useTranslations()
   const id = `select-${createUniqueId()}`
   const [trigger, setTrigger] = createSignal<HTMLButtonElement | null>(null)
   const [popup, setPopup] = createSignal<HTMLDivElement | null>(null)
@@ -69,7 +71,7 @@ export const SSelect = (props: SSelectProps) => {
         role="combobox"
         type="button"
       >
-        <span class="truncate">{selection.value() ?? '선택 항목 없음'}</span>
+        <span class="truncate">{selection.value() ?? t('선택 항목 없음')}</span>
         <span
           class="flex shrink-0 text-muted transition-transform duration-150 motion-reduce:transition-none"
           classList={{'rotate-180': selection.expanded()}}

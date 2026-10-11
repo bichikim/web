@@ -1,5 +1,8 @@
 /** @vitest-environment jsdom */
-import {createRoot, createSignal} from 'solid-js'
+import {createComponent, createRoot, createSignal} from 'solid-js'
+import {renderHook} from '@solidjs/testing-library'
+import {LocaleContext} from '../locale/context'
+import type {ViewerLanguage} from '../locale/types'
 import {afterEach, describe, expect, it, vi} from 'vitest'
 import type {ViewerConnection} from '../../shared/contracts'
 import type {ViewerPort} from '../types'
@@ -40,6 +43,26 @@ const mount = () =>
 const file = {kind: 'file', path: '/project/src/main.ts'} as const
 
 describe('useFileRenaming', () => {
+  it('should translate completed rename feedback when the language changes', async () => {
+    const [language, setLanguage] = createSignal<ViewerLanguage>('en')
+    const hook = renderHook(() => mount(), {
+      wrapper: (props) =>
+        createComponent(LocaleContext.Provider, {
+          get children() {
+            return props.children
+          },
+          value: language,
+        }),
+    })
+    const {operations} = hook.result
+    await operations.askRename(file)
+    operations.changeRename('이름.ts')
+    await operations.confirmRename()
+    expect(operations.renameFeedback()).toBe('src/이름.ts · Renamed.')
+    setLanguage('ko')
+    expect(operations.renameFeedback()).toBe('src/이름.ts · 이름을 변경했습니다.')
+    hook.cleanup()
+  })
   it('should retain the dialog and typed name after a collision and retry successfully', async () => {
     const {operations, port, changed} = mount()
     await operations.askRename(file)

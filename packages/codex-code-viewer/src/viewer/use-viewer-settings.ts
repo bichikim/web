@@ -1,31 +1,68 @@
-import {createSignal} from 'solid-js'
+import {createMemo, createSignal, onCleanup, onMount} from 'solid-js'
 import {MAX_NAVIGATION_PREVIEW_LINES} from '../shared/contracts'
+import type {ViewerPort, ViewerSettingsEnvironment} from './types'
+import type {LanguagePreference, ViewerLanguage} from './locale/types'
 
 const STORAGE_KEY = 'codex-code-viewer.preview-lines'
+const LANGUAGE_KEY = 'codex-code-viewer.language'
+interface UseViewerSettingsProps {
+  readonly environment: ViewerSettingsEnvironment
+  readonly port?: Pick<ViewerPort, 'subscribeLocale'>
+}
+const readLanguage = (environment: ViewerSettingsEnvironment): LanguagePreference => {
+  try {
+    const value = environment.localStorage?.getItem(LANGUAGE_KEY)
+    return value === 'ko' || value === 'en' ? value : 'auto'
+  } catch {
+    return 'auto'
+  }
+}
 const validLines = (value: number): boolean =>
   Number.isInteger(value) && value >= 1 && value <= MAX_NAVIGATION_PREVIEW_LINES
-const readPreviewLines = (): number => {
+const readPreviewLines = (environment: ViewerSettingsEnvironment): number => {
   try {
-    const value = Number(globalThis.localStorage?.getItem(STORAGE_KEY))
+    const value = Number(environment.localStorage?.getItem(STORAGE_KEY))
     return validLines(value) ? value : 2
   } catch {
     // Embedded hosts may deny browser storage; retain the default in this session.
     return 2
   }
 }
-/** Maintains the navigation preview preference across viewer mounts when storage is available. */
-export const useViewerSettings = () => {
-  const [previewLines, setPreviewLines] = createSignal(readPreviewLines())
+/** Maintains viewer language and preview preferences, following host locale in automatic mode. */
+export const useViewerSettings = (props: UseViewerSettingsProps) => {
+  const [previewLines, setPreviewLines] = createSignal(readPreviewLines(props.environment))
+  const [preference, setPreference] = createSignal(readLanguage(props.environment))
+  const [hostLocale, setHostLocale] = createSignal<string | null>(null)
+  const language = createMemo((): ViewerLanguage => {
+    const selected = preference()
+    if (selected !== 'auto') {
+      return selected
+    }
+    const locale = hostLocale() || props.environment.navigator?.language || 'en'
+    return locale.toLowerCase().split(/[-_]/u)[0] === 'ko' ? 'ko' : 'en'
+  })
+  onMount(() => {
+    const stop = props.port?.subscribeLocale?.((locale) => setHostLocale(locale ?? null))
+    onCleanup(() => stop?.())
+  })
+  const changeLanguage = (value: LanguagePreference): void => {
+    setPreference(value)
+    try {
+      props.environment.localStorage?.setItem(LANGUAGE_KEY, value)
+    } catch {
+      // The selected language still applies when the host denies storage.
+    }
+  }
   const changePreviewLines = (value: number): void => {
     if (!validLines(value)) {
       return
     }
     setPreviewLines(value)
     try {
-      globalThis.localStorage?.setItem(STORAGE_KEY, String(value))
+      props.environment.localStorage?.setItem(STORAGE_KEY, String(value))
     } catch {
       // The current session remains configurable when the host denies persistence.
     }
   }
-  return {changePreviewLines, previewLines}
+  return {changeLanguage, changePreviewLines, language, preference, previewLines}
 }

@@ -1,3 +1,4 @@
+import {useTranslations} from './locale/use-translations'
 import {createEffect, createSignal, onCleanup, Show} from 'solid-js'
 import {type CodeDocument, documentSchema} from '../shared/contracts'
 import type {ViewerPort} from './types'
@@ -10,6 +11,7 @@ interface SMarkdownImageProps {
   session?: string
 }
 export const SMarkdownImage = (props: SMarkdownImageProps) => {
+  const t = useTranslations()
   const [document, setDocument] = createSignal<CodeDocument>()
   const [failed, setFailed] = createSignal(false)
   createEffect(() => {
@@ -51,7 +53,7 @@ export const SMarkdownImage = (props: SMarkdownImageProps) => {
       fallback={
         <span class="text-sm text-muted">
           {props.alt || props.path}
-          {failed() || media?.error() ? ' (이미지를 표시할 수 없습니다)' : ' (이미지)'}
+          {failed() || media?.error() ? t(' (이미지를 표시할 수 없습니다)') : t(' (이미지)')}
         </span>
       }
     >

@@ -1,3 +1,4 @@
+import {useTranslations} from './locale/use-translations'
 import {createMemo, createSignal, Show} from 'solid-js'
 import type {CodeLocation} from '../shared/contracts'
 import type {ContextMenuCloseOptions, ReferenceChoices} from './types'
@@ -15,13 +16,20 @@ interface SReferenceChoicesProps {
 }
 /** Displays reference destinations beside the selected symbol with bounded scrolling. */
 export const SReferenceChoices = (props: SReferenceChoicesProps) => {
+  const t = useTranslations()
   const [closed, setClosed] = createSignal(false)
   const resolving = createMemo(() => props.references.status === 'resolving')
   const searching = createMemo(() => resolving() || props.references.status === 'searching')
   const title = createMemo(() =>
-    resolving() ? '위치 확인' : props.references.kind === 'definition' ? '정의 위치' : '사용처',
+    resolving()
+      ? t('위치 확인')
+      : props.references.kind === 'definition'
+        ? t('정의 위치')
+        : t('사용처'),
   )
-  const statusLabel = createMemo(() => (resolving() ? '위치 확인 중' : `${title()} 검색 중`))
+  const statusLabel = createMemo(() =>
+    resolving() ? t('위치 확인 중') : t('{title} 검색 중', {title: title()}),
+  )
   const returnFocus = globalThis.document?.activeElement
   const close = (options?: ContextMenuCloseOptions): void => {
     setClosed(true)
@@ -55,18 +63,24 @@ export const SReferenceChoices = (props: SReferenceChoicesProps) => {
                 />
               </span>
             </Show>
-            <Show when={resolving()} fallback={`${title()} ${props.references.locations.length}개`}>
-              위치 확인 중
+            <Show
+              when={resolving()}
+              fallback={t('{title} {count}개', {
+                count: props.references.locations.length,
+                title: title(),
+              })}
+            >
+              {t('위치 확인 중')}
             </Show>
           </>
         }
         emptyMessage={
           props.references.status === 'failed'
-            ? `검색이 중단됐습니다. 찾은 ${title()}는 계속 확인할 수 있습니다.`
+            ? t('검색이 중단됐습니다. 찾은 {title}는 계속 확인할 수 있습니다.', {title: title()})
             : searching()
               ? undefined
               : props.references.locations.length === 0
-                ? `작업 폴더 안에서 ${title()}를 찾지 못했습니다.`
+                ? t('작업 폴더 안에서 {title}를 찾지 못했습니다.', {title: title()})
                 : undefined
         }
         maxHeight={320}

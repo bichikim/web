@@ -1,3 +1,4 @@
+import {useTranslations} from './locale/use-translations'
 import {Show} from 'solid-js'
 import {SFileIcon} from './SFileIcon'
 import {SIcon} from './SIcon'
@@ -14,6 +15,7 @@ interface SFileTreeItemProps {
 const INDENT_WIDTH = 16
 
 export const SFileTreeItem = (props: SFileTreeItemProps) => {
+  const t = useTranslations()
   const openable = (): boolean => {
     const node = props.tree.node(props.path)
     return node?.kind === 'directory' || node?.openable === true
@@ -61,7 +63,9 @@ export const SFileTreeItem = (props: SFileTreeItemProps) => {
         role="treeitem"
         style={{'--tree-indent': `${(props.path.split('/').length - 1) * INDENT_WIDTH}px`}}
         tabindex={props.tree.activePath() === props.path ? 0 : -1}
-        title={openable() ? props.path : `${props.path} · 아직 지원하지 않는 파일 형식`}
+        title={
+          openable() ? props.path : t('{path} · 아직 지원하지 않는 파일 형식', {path: props.path})
+        }
         type="button"
       >
         <span

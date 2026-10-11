@@ -10,6 +10,36 @@ import {initial} from './fixtures/viewer'
 describe('createHost', () => {
   afterEach(() => vi.restoreAllMocks())
 
+  it('should publish the initial locale after connecting and subsequent host language changes', async () => {
+    const context = vi.spyOn(App.prototype, 'getHostContext').mockReturnValue(undefined)
+    vi.spyOn(App.prototype, 'connect').mockImplementation(async () => {
+      context.mockReturnValue({locale: 'ko-KR'})
+    })
+    vi.spyOn(App.prototype, 'close').mockResolvedValue()
+    const listeners = vi.spyOn(App.prototype, 'addEventListener')
+    const remove = vi.spyOn(App.prototype, 'removeEventListener')
+    const host = createHost()
+    const receive = vi.fn()
+    const unsubscribe = host.subscribeLocale?.(receive)
+    expect(receive).toHaveBeenLastCalledWith(undefined)
+    const stop = await host.start(vi.fn(), vi.fn(), vi.fn())
+    expect(receive).toHaveBeenLastCalledWith('ko-KR')
+    context.mockReturnValue({locale: 'en-US'})
+    listeners.mock.calls
+      .filter(([name]) => name === 'hostcontextchanged')
+      .forEach(([, listener]) => listener({locale: 'en-US'}))
+    expect(receive).toHaveBeenLastCalledWith('en-US')
+    unsubscribe?.()
+    receive.mockClear()
+    context.mockReturnValue({locale: 'ja-JP'})
+    listeners.mock.calls
+      .filter(([name]) => name === 'hostcontextchanged')
+      .forEach(([, listener]) => listener({locale: 'ja-JP'}))
+    expect(receive).not.toHaveBeenCalled()
+    await stop()
+    expect(remove).toHaveBeenCalledWith('hostcontextchanged', expect.any(Function))
+  })
+
   it('should attach native files and receive workspace changes without resource subscriptions', async () => {
     vi.spyOn(App.prototype, 'connect').mockResolvedValue()
     const closed = Promise.withResolvers<void>()

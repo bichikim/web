@@ -67,7 +67,13 @@ export interface NavigationOptions {
   restoreView?: boolean
 }
 
+export interface ViewerSettingsEnvironment {
+  readonly navigator?: Pick<Navigator, 'language'>
+  readonly localStorage?: Pick<Storage, 'getItem' | 'setItem'>
+}
+
 export interface ViewerPort {
+  subscribeLocale?(receive: (locale: string | undefined) => void): () => void
   watch?(
     session: string,
     receive: () => void,

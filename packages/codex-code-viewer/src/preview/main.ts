@@ -19,7 +19,8 @@ const bridge = new AppBridge(
     updateModelContext: {},
   },
 )
-const selection = document.querySelector<HTMLSelectElement>('select')
+const selection = document.querySelector<HTMLSelectElement>('#host-theme')
+const language = document.querySelector<HTMLSelectElement>('#host-locale')
 const count = document.querySelector('output')
 const contextList = document.querySelector('ul')
 let modelContext: {updateId: string; content: ContentBlock[]} | null = null
@@ -33,6 +34,10 @@ const updateAppearance = (): void => {
   const styles = getComputedStyle(document.documentElement)
   bridge.setHostContext(
     McpUiHostContextSchema.parse({
+      locale:
+        language?.value === 'auto' || language?.value === undefined
+          ? navigator.language
+          : language.value,
       'openai/modelContext': modelContext,
       styles: {
         variables: {
@@ -54,6 +59,7 @@ const updateAppearance = (): void => {
   )
 }
 selection?.addEventListener('change', updateAppearance)
+language?.addEventListener('change', updateAppearance)
 preference.addEventListener('change', updateAppearance)
 const request = async (name: string, arguments_: Record<string, unknown>) => {
   const response = await fetch('./tool', {

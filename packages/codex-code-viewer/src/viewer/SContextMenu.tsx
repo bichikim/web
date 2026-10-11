@@ -1,3 +1,4 @@
+import {useTranslations} from './locale/use-translations'
 import {createMemo, createSignal, For, type JSX, onCleanup, onMount, Show} from 'solid-js'
 import type {ContextMenuCloseOptions, ContextMenuItem} from './types'
 import {SContextMenuItem} from './SContextMenuItem'
@@ -16,6 +17,7 @@ interface SContextMenuProps {
 }
 
 export const SContextMenu = (props: SContextMenuProps) => {
+  const t = useTranslations()
   const groups = createMemo(() =>
     [...Map.groupBy(props.items, (item) => item.group)].map(([label, items]) => ({items, label})),
   )
@@ -85,7 +87,7 @@ export const SContextMenu = (props: SContextMenuProps) => {
   }
   return (
     <div
-      aria-label={props.label ?? '작업'}
+      aria-label={props.label ?? t('작업')}
       class="fixed inset-auto m-0 w-[var(--menu-preferred-width)] max-w-[calc(100vw-16px)]
         max-h-[min(var(--menu-limit),calc(100dvh-16px))]
         overflow-y-auto rounded-control border border-divider
@@ -127,13 +129,17 @@ export const SContextMenu = (props: SContextMenuProps) => {
           <div
             role={group.label === undefined ? 'presentation' : 'group'}
             aria-label={
-              group.label === undefined ? undefined : `${group.label} · ${group.items.length}개`
+              group.label === undefined
+                ? undefined
+                : `${group.label} · ${t('{count}개', {count: group.items.length})}`
             }
           >
             <Show when={group.label}>
               <p class="m-0 flex items-start justify-between gap-3 px-3 pt-3 pb-1 text-xs font-semibold">
                 <span class="min-w-0 [overflow-wrap:anywhere]">{group.label}</span>
-                <span class="shrink-0 font-normal text-muted">{group.items.length}개</span>
+                <span class="shrink-0 font-normal text-muted">
+                  {t('{count}개', {count: group.items.length})}
+                </span>
               </p>
             </Show>
             <For each={group.items}>

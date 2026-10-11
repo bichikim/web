@@ -1,3 +1,4 @@
+import {useTranslations} from './locale/use-translations'
 import {createMemo, createSignal, For, Show} from 'solid-js'
 import type {NavigationLocation} from '../shared/contracts'
 import {REFERENCE_ROW_HEIGHT, useReferenceList} from './use-reference-list'
@@ -9,6 +10,7 @@ interface SReferenceListProps {
 }
 /** Renders collapsible file groups with bounded scrolling and keyboard access. */
 export const SReferenceList = (props: SReferenceListProps) => {
+  const t = useTranslations()
   const [element, setElement] = createSignal<HTMLDivElement | null>(null)
   const lineHeight = 18
   const rowPadding = 12
@@ -36,7 +38,7 @@ export const SReferenceList = (props: SReferenceListProps) => {
                   tabindex="-1"
                   type="button"
                   value={key}
-                  aria-label={`${header().path} · ${header().count}개`}
+                  aria-label={`${header().path} · ${t('{count}개', {count: header().count})}`}
                   aria-expanded={list.expanded(header().path)}
                   aria-posinset={list.position(key)}
                   aria-setsize={list.size()}
@@ -50,7 +52,9 @@ export const SReferenceList = (props: SReferenceListProps) => {
                     classList={{'rotate-90': list.expanded(header().path)}}
                   />
                   <span class="min-w-0 flex-1 truncate">{header().path}</span>
-                  <span class="shrink-0 font-normal text-muted">{header().count}개</span>
+                  <span class="shrink-0 font-normal text-muted">
+                    {t('{count}개', {count: header().count})}
+                  </span>
                 </button>
               )}
             </Show>
