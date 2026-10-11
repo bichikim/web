@@ -10,7 +10,7 @@ describe('syncPluginVersion', () => {
   let pluginPath: string
   let marketplacePath: string
   const plugin = {
-    interface: {displayName: 'File Viewer'},
+    interface: {capabilities: ['Interactive', 'Read'], displayName: 'File Viewer'},
     mcpServers: './.mcp.json',
     name: 'file-viewer',
     version: '1.0.0',
@@ -51,7 +51,9 @@ describe('syncPluginVersion', () => {
         JSON.stringify({name: '@example/file-viewer', version}),
       )
       await syncPluginVersion({marketplacePath, packageRoot: root})
-      expect(JSON.parse(await readFile(pluginPath, 'utf8'))).toEqual({...plugin, version})
+      const pluginText = await readFile(pluginPath, 'utf8')
+      expect(JSON.parse(pluginText)).toEqual({...plugin, version})
+      expect(pluginText).toContain('"capabilities": ["Interactive", "Read"]')
       expect(JSON.parse(await readFile(marketplacePath, 'utf8'))).toEqual({
         ...catalog,
         plugins: [{...entry, source: {...entry.source, version}}, catalog.plugins[1]],

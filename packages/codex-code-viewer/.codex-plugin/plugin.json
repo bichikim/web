@@ -9,10 +9,7 @@
     "developerName": "Bichi kim",
     "websiteURL": "https://github.com/bichikim/web/tree/dev/packages/codex-code-viewer",
     "category": "Developer Tools",
-    "capabilities": [
-      "Interactive",
-      "Read"
-    ],
+    "capabilities": ["Interactive", "Read"],
     "logo": "./assets/icon.svg",
     "composerIcon": "./assets/icon.svg"
   }

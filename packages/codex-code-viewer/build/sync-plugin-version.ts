@@ -1,10 +1,20 @@
 import {readFile, writeFile} from 'node:fs/promises'
 import {join} from 'node:path'
+import {format} from 'oxfmt'
 import {z} from 'zod'
+import formatConfig from '../../../.oxfmtrc.json' with {type: 'json'}
 
 interface SyncPluginVersionOptions {
   readonly marketplacePath: string
   readonly packageRoot: string
+}
+
+const formatJson = async (path: string, value: unknown): Promise<string> => {
+  const result = await format(path, JSON.stringify(value, null, 2), formatConfig)
+  if (result.errors.length > 0) {
+    throw new Error(`Cannot format plugin metadata: ${path}`)
+  }
+  return result.code
 }
 
 /** Updates plugin and npm marketplace versions from the package manifest, preserving other metadata. */
@@ -35,8 +45,12 @@ export const syncPluginVersion = async (options: SyncPluginVersionOptions): Prom
         : candidate,
     ),
   }
+  const [pluginOutput, marketplaceOutput] = await Promise.all([
+    formatJson(pluginPath, {...plugin, version: manifest.version}),
+    formatJson(options.marketplacePath, updated),
+  ])
   await Promise.all([
-    writeFile(pluginPath, `${JSON.stringify({...plugin, version: manifest.version}, null, 2)}\n`),
-    writeFile(options.marketplacePath, `${JSON.stringify(updated, null, 2)}\n`),
+    writeFile(pluginPath, pluginOutput),
+    writeFile(options.marketplacePath, marketplaceOutput),
   ])
 }
