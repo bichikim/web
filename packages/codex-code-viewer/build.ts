@@ -9,10 +9,17 @@ import {collectLicenseNotices} from './build/collect-license-notices'
 import {inlineScript} from './build/inline-script'
 import {inlineHtml} from './build/inline-html'
 import {bundleRustAnalyzers} from './build/bundle-rust-analyzers'
+import {syncPluginVersion} from './build/sync-plugin-version'
 import rustAnalyzers from './rust-analyzers.json' with {type: 'json'}
 
 const root = dirname(fileURLToPath(import.meta.url))
 const output = `${root}/dist`
+await syncPluginVersion({
+  marketplacePath: fileURLToPath(
+    new URL('../../.agents/plugins/marketplace.json', import.meta.url),
+  ),
+  packageRoot: root,
+})
 const result = await build({build: {write: false}, configFile: `${root}/vite.config.ts`, root})
 const bundles = Array.isArray(result) ? result : [result]
 const assets = bundles.flatMap((entry) => ('output' in entry ? entry.output : []))

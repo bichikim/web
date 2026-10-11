@@ -1,13 +1,14 @@
 import {z} from 'zod'
+import {failure, type Failure, type Result, success} from '../shared/contracts'
 import {createLspService} from './create-lsp-service'
 import type {RustProject} from './rust/types'
 import {resolveAnalyzer} from './rust/resolve-analyzer'
 const statusSchema = z.object({quiescent: z.boolean()})
-export const createRustService = (project: RustProject) =>
+const startService = (project: RustProject, command: string) =>
   createLspService({
     arguments: [],
     capabilities: {experimental: {serverStatusNotification: true}},
-    command: resolveAnalyzer(),
+    command,
     directory: project.directory,
     failed: 'rust-analysis-failed',
     initialization: {
@@ -28,3 +29,44 @@ export const createRustService = (project: RustProject) =>
     },
     unavailable: 'rust-analyzer-unavailable',
   })
+
+/** Creates a Rust service that provisions its analyzer on first lookup and owns its process. */
+export const createRustService = (project: RustProject): ReturnType<typeof createLspService> => {
+  type Service = ReturnType<typeof createLspService>
+  let service: Service | undefined
+  let pending: Promise<Result<Service>> | undefined
+  let disposed = false
+  const stopped = Promise.withResolvers<Failure>()
+  const prepare = (): Promise<Result<Service>> => {
+    if (pending === undefined) {
+      pending = resolveAnalyzer()
+        .then((command) => {
+          if (disposed) {
+            return failure('rust-analysis-failed')
+          }
+          service = startService(project, command)
+          return success(service)
+        })
+        .catch(() => {
+          pending = undefined
+          return failure('rust-analyzer-unavailable')
+        })
+    }
+    return pending
+  }
+  return {
+    dispose: () => {
+      disposed = true
+      stopped.resolve(failure('rust-analysis-failed'))
+      service?.dispose()
+    },
+    lookupSymbols: async (path, source, offset, lookup) => {
+      if (disposed) {
+        return failure('rust-analysis-failed')
+      }
+      const prepared = await Promise.race([prepare(), stopped.promise])
+      return prepared.ok ? prepared.value.lookupSymbols(path, source, offset, lookup) : prepared
+    },
+    update: (root, changes) => service?.update(root, changes),
+  }
+}
