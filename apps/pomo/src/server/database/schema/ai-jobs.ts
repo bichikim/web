@@ -1,4 +1,5 @@
 import {sql} from 'drizzle-orm'
+import {AI_JOB_STATUSES} from 'src/features/ai-job/job-statuses'
 import {
   bigint,
   check,
@@ -26,15 +27,7 @@ export const aiJobCapabilityEnum = pgEnum('ai_job_capability', [
   'sound',
 ])
 
-export const aiJobStatusEnum = pgEnum('ai_job_status', [
-  'queued',
-  'running',
-  'recovery_pending',
-  'succeeded',
-  'failed',
-  'cancelled',
-  'timed_out',
-])
+export const aiJobStatusEnum = pgEnum('ai_job_status', AI_JOB_STATUSES)
 
 export const aiJobSubmissionStateEnum = pgEnum('ai_job_submission_state', [
   'not_submitted',
