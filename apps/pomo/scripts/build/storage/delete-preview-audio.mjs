@@ -2,19 +2,11 @@ import {pathToFileURL} from 'node:url'
 
 import {AwsClient} from 'aws4fetch'
 
+import {requireValue} from '../require-value.mjs'
+
 const PREVIEW_PREFIX_PATTERN = /^previews\/pr-\d+\/$/u
 
 /** @typedef {{sign: (request: Request) => Promise<Request>}} RequestSigner */
-
-const requireValue = (value, name) => {
-  const normalizedValue = value?.trim()
-
-  if (!normalizedValue) {
-    throw new TypeError(`${name} is required.`)
-  }
-
-  return normalizedValue
-}
 
 const decodeXmlValue = (value) =>
   value

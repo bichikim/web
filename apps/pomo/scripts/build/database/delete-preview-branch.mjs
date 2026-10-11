@@ -1,17 +1,9 @@
 // Deletes the exact Neon Preview branch requested by the Preview cleanup workflow.
 import {pathToFileURL} from 'node:url'
 
+import {requireValue} from '../require-value.mjs'
+
 const NEON_API_ORIGIN = 'https://console.neon.tech'
-
-const requireValue = (value, name) => {
-  const normalizedValue = value?.trim()
-
-  if (!normalizedValue) {
-    throw new TypeError(`${name} is required.`)
-  }
-
-  return normalizedValue
-}
 
 const requestNeon = async (path, apiKey, options = {}, fetchImplementation = fetch) => {
   const response = await fetchImplementation(new URL(path, NEON_API_ORIGIN), {
