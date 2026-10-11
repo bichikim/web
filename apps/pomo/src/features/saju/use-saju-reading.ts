@@ -1,3 +1,4 @@
+import {getExceptionMessage} from '../error-detail'
 import {type Accessor, createSignal, onCleanup} from 'solid-js'
 import {
   type ModelDownloadItem,
@@ -172,7 +173,7 @@ export function useSajuReading(props: UseSajuReadingProps = {}): SajuReadingCont
       client.generate({...request, modelId: modelId(), requestId: activeRequestId})
     } catch (cause: unknown) {
       discardClient()
-      setError(cause instanceof Error ? cause.message : '사주 풀이를 시작하지 못했어요.')
+      setError(getExceptionMessage(cause, '사주 풀이를 시작하지 못했어요.'))
       setStatus('error')
     }
   }
@@ -202,7 +203,7 @@ export function useSajuReading(props: UseSajuReadingProps = {}): SajuReadingCont
       if (disposed || currentRevision !== revision) {
         return
       }
-      setError(cause instanceof Error ? cause.message : '모델을 내려받지 못했어요.')
+      setError(getExceptionMessage(cause, '모델을 내려받지 못했어요.'))
       setStatus('error')
     }
   }
@@ -243,7 +244,7 @@ export function useSajuReading(props: UseSajuReadingProps = {}): SajuReadingCont
       if (disposed || currentRevision !== revision) {
         return
       }
-      setError(cause instanceof Error ? cause.message : '모델 상태를 확인하지 못했어요.')
+      setError(getExceptionMessage(cause, '모델 상태를 확인하지 못했어요.'))
       setStatus('error')
     }
   }
@@ -271,7 +272,7 @@ export function useSajuReading(props: UseSajuReadingProps = {}): SajuReadingCont
       }
     } catch (cause: unknown) {
       request = null
-      setError(cause instanceof Error ? cause.message : '사주 계산에 실패했어요.')
+      setError(getExceptionMessage(cause, '사주 계산에 실패했어요.'))
       setStatus('error')
     }
   }
