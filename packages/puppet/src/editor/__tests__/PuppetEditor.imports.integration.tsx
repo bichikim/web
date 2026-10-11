@@ -171,7 +171,7 @@ describe('PuppetEditor', () => {
 
   test('should retain paused playback when the player is recreated', async () => {
     const replacementPlayer: Player = {...player, pause: vi.fn()}
-    const replacementDocument = createDemoDocument()
+    const replacementDocument = {...createDemoDocument(), viewport: {height: 240, width: 320}}
     mocks.createPlayer.mockResolvedValueOnce(player).mockResolvedValueOnce(replacementPlayer)
     mocks.importPng.mockResolvedValue({document: replacementDocument, ok: true})
     player.updateDocument = vi.fn(() => false)
