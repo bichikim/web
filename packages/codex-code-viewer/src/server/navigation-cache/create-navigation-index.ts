@@ -7,10 +7,12 @@ import {readSourceUpdates} from './read-source-updates'
 import {readChangedPaths} from './read-changed-paths'
 import {isAnalyzableFile, readNavigationFiles} from './read-navigation-files'
 import type {IndexedSource, NavigationIndex} from './types'
+import type {SourceChange} from '../types'
 interface NavigationIndexOptions {
   readonly root: string
   readonly changes: Pick<FileIndex, 'subscribeChanges'>
   readonly onConfigurationChange?: () => void
+  readonly onSourcesChange?: (changes: readonly SourceChange[]) => void
 }
 const relevantChange = (path: string | null, event: string): boolean =>
   path === null || isNavigationConfiguration(path) || isAnalyzableFile(path) || event === 'rename'
@@ -109,16 +111,19 @@ export const createNavigationIndex = (options: NavigationIndexOptions): Navigati
         }
         const candidates = [...paths].filter(isAnalyzableFile)
         const version = revision
+        const updated: SourceChange[] = []
         // oxlint-disable-next-line no-await-in-loop -- Apply bounded source updates before resolving graph edges.
-        for await (const {path, source} of readSourceUpdates({
+        for await (const {change, path, source} of readSourceUpdates({
           generation,
           paths: candidates,
           root: options.root,
           signal: lifetime.signal,
           sources,
         })) {
+          updated.push(...(change === null ? [] : [change]))
           apply(path, entries !== null && !entries.has(path) ? null : source, version)
         }
+        options.onSourcesChange?.(updated)
         const resolve = createModuleResolver(options.root, sources)
         // File additions can make previously unresolved imports resolvable.
         const relationships = discover ? [...sources.keys()] : candidates

@@ -11,6 +11,7 @@ import {offsetPosition} from './lsp/offset-position'
 import {readReferencePreviews} from './read-reference-previews'
 import {fileFormat} from '../shared/file-formats'
 import {tokenizeDocument} from './tokenize-document'
+import {isRubyDeclaration} from './is-ruby-declaration'
 
 export interface NavigationWorkspace {
   readonly root: string
@@ -72,11 +73,7 @@ export const resolveNavigation = async (
         location.path === options.document.location.path &&
         location.line === position.line + 1 &&
         (location.column === nameColumn ||
-          (ruby &&
-            location.column < nameColumn &&
-            /^(?:def|class|module)\s+(?:[\p{ID_Continue}]+(?:::|\.))*$/u.test(
-              line.slice(location.column - 1, nameColumn - 1),
-            ))),
+          (ruby && location.column < nameColumn && isRubyDeclaration(line, nameColumn))),
     )
   if (!own) {
     return success({

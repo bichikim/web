@@ -1,14 +1,9 @@
 import {relative} from 'node:path'
-import {
-  type CodeLocation,
-  failure,
-  type NavigationKind,
-  type Result,
-  success,
-} from '../shared/contracts'
+import {type CodeLocation, failure, type Result, success} from '../shared/contracts'
 import {createRustService} from './create-rust-service'
 import {resolveFile} from './file-access'
 import {readProject} from './rust/read-project'
+import type {SourceChange, SymbolLookup} from './types'
 
 export const createRustNavigation = (root: string) => {
   const services = new Map<
@@ -20,7 +15,7 @@ export const createRustNavigation = (root: string) => {
     path: string,
     source: string,
     offset: number,
-    kind: NavigationKind,
+    lookup: SymbolLookup,
   ): Promise<Result<CodeLocation[]>> => {
     if (disposed) {
       return failure('rust-analysis-failed')
@@ -37,7 +32,7 @@ export const createRustNavigation = (root: string) => {
       entry = {service: createRustService(project.value), signature}
       services.set(directory, entry)
     }
-    const targets = await entry.service.lookupSymbols(path, source, offset, kind)
+    const targets = await entry.service.lookupSymbols(path, source, offset, lookup)
     if (!targets.ok) {
       return targets
     }
@@ -54,5 +49,13 @@ export const createRustNavigation = (root: string) => {
     }
     services.clear()
   }
-  return {dispose, lookupSymbols}
+  return {
+    dispose,
+    lookupSymbols,
+    update: (changes: readonly SourceChange[]) => {
+      for (const entry of services.values()) {
+        entry.service.update(root, changes)
+      }
+    },
+  }
 }

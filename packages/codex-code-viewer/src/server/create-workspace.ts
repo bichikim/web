@@ -20,7 +20,7 @@ import {fileFormat} from '../shared/file-formats'
 import {createLanguageService} from './create-language-service'
 import {findWorkspace, readSource, resolveFile} from './file-access'
 import {createDocumentReader} from './create-document-reader'
-import {createFileIndex} from './create-file-index'
+import {createFileIndex, type FileIndex} from './create-file-index'
 import {readMedia} from './read-media'
 import {createNavigationWorker} from './create-navigation-worker'
 import {createNavigationStream, type SymbolLookupOptions} from './create-navigation-stream'
@@ -30,6 +30,16 @@ import {
   type NavigationReview,
 } from './navigation-cache'
 import {observeNavigationConfiguration} from './observe-navigation-configuration'
+
+const createOpenedReader =
+  (reader: ReturnType<typeof createDocumentReader>, index: Pick<FileIndex, 'open'>) =>
+  (...input: Parameters<typeof reader.read>) => {
+    const result = reader.read(...input)
+    if (result.ok) {
+      index.open(result.value.location.path)
+    }
+    return result
+  }
 
 export const createWorkspace = (anchor: string) => {
   const canonical = realpathSync(anchor)
@@ -43,6 +53,14 @@ export const createWorkspace = (anchor: string) => {
     background,
     languages,
     navigation,
+  })
+  const lifetime = new AbortController()
+  const navigationIndex = createNavigationIndex({
+    changes: index,
+    onConfigurationChange: configuration.reset,
+    onSourcesChange: (changes) =>
+      navigation.update(changes.map((change) => ({...change, path: resolve(root, change.path)}))),
+    root,
   })
   const symbols = (
     path: string,
@@ -69,10 +87,16 @@ export const createWorkspace = (anchor: string) => {
       return failure('invalid-position')
     }
     const format = fileFormat(path)
-    const analyzer = format?.kind === 'syntax' ? navigation.get(format.language) : undefined
-    if (analyzer !== undefined) {
-      const file = resolveFile(root, path)
-      return file.ok ? analyzer.lookupSymbols(file.value, source.value, offset, kind) : file
+    if (format?.kind === 'syntax' && navigation.has(format.language)) {
+      return navigationIndex.refresh(lifetime.signal).then(() =>
+        navigation.lookupSymbols({
+          draft: draft !== undefined,
+          kind,
+          offset,
+          path: file.value,
+          source: source.value,
+        }),
+      )
     }
     const language =
       drafts.length === 0 ? languages.get(path) : createLanguageService(file.value, sources.value)
@@ -125,11 +149,7 @@ export const createWorkspace = (anchor: string) => {
     symbols,
   })
   const cachedNavigation = createNavigationCache({
-    index: createNavigationIndex({
-      changes: index,
-      onConfigurationChange: configuration.reset,
-      root,
-    }),
+    index: navigationIndex,
     read: reader.read,
     scan: createNavigationStream({background, followPath, read: reader.read, root, symbols}),
   })
@@ -139,6 +159,7 @@ export const createWorkspace = (anchor: string) => {
     definitions: (path: string, offset: number, drafts: readonly CodeSource[] = []) =>
       symbols(path, offset, drafts),
     dispose: () => {
+      lifetime.abort()
       configuration.dispose()
       cachedNavigation.dispose()
       background.dispose()
@@ -153,13 +174,7 @@ export const createWorkspace = (anchor: string) => {
       readMedia({offset, path, revision, root}),
     observe: index.observe,
     operations: createFileOperations(root),
-    read: (...input: Parameters<typeof reader.read>) => {
-      const result = reader.read(...input)
-      if (result.ok) {
-        index.open(result.value.location.path)
-      }
-      return result
-    },
+    read: createOpenedReader(reader, index),
     references: (
       path: string,
       offset: number,

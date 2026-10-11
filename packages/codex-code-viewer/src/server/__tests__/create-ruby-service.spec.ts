@@ -56,7 +56,7 @@ describe('createRubyService', () => {
   it('should negotiate codepoint positions and launch the selected Ruby gem', async () => {
     const source = '# 한글 🦊\r\nReport.new\n'
     expect(
-      await service.lookupSymbols(path, source, source.indexOf('Report'), 'definition'),
+      await service.lookupSymbols(path, source, source.indexOf('Report'), {kind: 'definition'}),
     ).toEqual({
       ok: true,
       value: [{column: 7, line: 2, path: `${root}/report.rb`}],
@@ -80,12 +80,12 @@ describe('createRubyService', () => {
     expect(opened).toHaveBeenCalledWith(
       expect.objectContaining({textDocument: expect.objectContaining({languageId: 'ruby'})}),
     )
-    await service.lookupSymbols(path, 'label = "🦊"; Report.new', 14, 'definition')
+    await service.lookupSymbols(path, 'label = "🦊"; Report.new', 14, {kind: 'definition'})
     expect(definition.mock.calls.at(-1)?.[0]).toMatchObject({position: {character: 13, line: 0}})
   })
   it('should replace edited Ruby source using its previous codepoint range', async () => {
-    await service.lookupSymbols(path, '# 🦊\r\nReport.new; "🦊"', 7, 'definition')
-    await service.lookupSymbols(path, '# changed\nReport.new', 10, 'definition')
+    await service.lookupSymbols(path, '# 🦊\r\nReport.new; "🦊"', 7, {kind: 'definition'})
+    await service.lookupSymbols(path, '# changed\nReport.new', 10, {kind: 'definition'})
     expect(changed).toHaveBeenCalledWith({
       contentChanges: [
         {
@@ -117,7 +117,7 @@ describe('createRubyService', () => {
     )
   })
   it('should report unavailable analyzers and finish pending startup', async () => {
-    const pending = service.lookupSymbols(path, 'Report.new', 0, 'definition')
+    const pending = service.lookupSymbols(path, 'Report.new', 0, {kind: 'definition'})
     child.emit('error', new Error('missing Ruby'))
     expect(await pending).toMatchObject({error: {code: 'ruby-analyzer-unavailable'}, ok: false})
   })
@@ -127,7 +127,7 @@ describe('createRubyService', () => {
       requested.resolve()
       return new Promise(() => {})
     })
-    const pending = service.lookupSymbols(path, 'Report.new', 0, 'definition')
+    const pending = service.lookupSymbols(path, 'Report.new', 0, {kind: 'definition'})
     await requested.promise
     service.dispose()
     expect(await pending).toMatchObject({error: {code: 'ruby-analysis-failed'}, ok: false})
