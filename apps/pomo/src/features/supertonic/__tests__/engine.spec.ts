@@ -2,7 +2,7 @@
 // oxlint-disable no-magic-numbers -- Compact model fixtures intentionally use explicit tensor dimensions.
 import * as runtime from 'onnxruntime-web/wasm'
 import type {InferenceSession, Tensor} from 'onnxruntime-web/wasm'
-import {describe, expect, it, vi} from 'vitest'
+import {afterEach, describe, expect, it, vi} from 'vitest'
 
 import {
   parseSupertonicConfig,
@@ -17,6 +17,8 @@ const createConfig = () => ({
   ae: {base_chunk_size: 2, sample_rate: 4},
   ttl: {chunk_compress_factor: 1, latent_dim: 1},
 })
+
+afterEach(() => vi.restoreAllMocks())
 
 const createSession = (run: ReturnType<typeof vi.fn>) =>
   ({release: vi.fn(async () => undefined), run}) as unknown as InferenceSession
@@ -86,15 +88,26 @@ describe('Supertonic parsers', () => {
 
 describe('SupertonicEngine', () => {
   it('should execute duration, text, eight denoising steps, and vocoder in order', async () => {
+    let draws = 0
+    const random = vi.spyOn(Math, 'random').mockImplementation(() => {
+      draws += 1
+      return draws % 2 === 1 ? Math.exp(-0.5) : 0.5
+    })
     const durationRun = vi.fn(async (_feeds: Record<string, Tensor>) => ({
       duration: new runtime.Tensor('float32', Float32Array.of(1), [1]),
     }))
     const textRun = vi.fn(async () => ({
       text_emb: new runtime.Tensor('float32', Float32Array.of(1), [1]),
     }))
-    const vectorRun = vi.fn(async () => ({
-      denoised_latent: new runtime.Tensor('float32', Float32Array.of(0, 0), [1, 1, 2]),
-    }))
+    const vectorRun = vi.fn(async (feeds: Record<string, Tensor>) => {
+      if (vectorRun.mock.calls.length === 1) {
+        expect(feeds.noisy_latent.data).toEqual(Float32Array.of(-1, -1))
+        expect(random).toHaveBeenCalledTimes(4)
+      }
+      return {
+        denoised_latent: new runtime.Tensor('float32', Float32Array.of(0, 0), [1, 1, 2]),
+      }
+    })
     const vocoderRun = vi.fn(async () => ({
       wav_tts: new runtime.Tensor('float32', Float32Array.of(0.1, 0.2, 0.3, 0.4), [1, 1, 4]),
     }))
@@ -139,6 +152,7 @@ describe('SupertonicEngine', () => {
     expect(vectorRun).toHaveBeenCalledTimes(8)
     expect(vocoderRun).toHaveBeenCalledTimes(1)
     expect(onProgress).toHaveBeenCalledTimes(8)
+    expect(random).toHaveBeenCalledTimes(4)
     expect(Array.from(samples)).toEqual([
       expect.closeTo(0.1),
       expect.closeTo(0.2),

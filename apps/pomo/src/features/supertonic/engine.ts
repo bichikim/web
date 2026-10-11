@@ -2,6 +2,7 @@
 // oxlint-disable no-await-in-loop -- Every denoising step consumes the result of the previous step.
 import type {InferenceSession, Tensor} from 'onnxruntime-web/wasm'
 import {z} from 'zod'
+import {createGaussianNoise} from 'src/utils/create-gaussian-noise'
 
 import type {InvalidModelDataError} from './errors'
 import type {SupertonicLanguage} from './language'
@@ -14,8 +15,6 @@ const configSchema = z.object({
   ttl: z.object({chunk_compress_factor: z.number(), latent_dim: z.number()}),
 })
 const indexerSchema = z.array(z.number().int())
-const MINIMUM_RANDOM_VALUE = 0.0001
-const BOX_MULLER_SCALE = -2
 
 export interface SupertonicSessions {
   readonly durationPredictor: InferenceSession
@@ -141,20 +140,6 @@ const getFloatData = (tensor: Tensor) => {
   return tensor.data
 }
 
-const createNoise = (length: number) => {
-  const noise = new Float32Array(length)
-
-  for (let index = 0; index < length; index += 1) {
-    const firstRandom = Math.max(MINIMUM_RANDOM_VALUE, Math.random())
-    const secondRandom = Math.random()
-    noise[index] =
-      Math.sqrt(BOX_MULLER_SCALE * Math.log(firstRandom)) *
-      Math.cos(-BOX_MULLER_SCALE * Math.PI * secondRandom)
-  }
-
-  return noise
-}
-
 export class SupertonicEngine {
   readonly #config: SupertonicConfig
   readonly #indexer: SupertonicIndexer
@@ -208,7 +193,10 @@ export class SupertonicEngine {
     ])
     const totalSteps = 8
     const totalStepTensor = new this.#runtime.Tensor('float32', Float32Array.of(totalSteps), [1])
-    const latent = createNoise(latentDimension * latentLength)
+    const latent = createGaussianNoise({
+      length: latentDimension * latentLength,
+      random: () => Math.random(),
+    })
 
     for (let step = 0; step < totalSteps; step += 1) {
       options.onProgress(step + 1, totalSteps)
