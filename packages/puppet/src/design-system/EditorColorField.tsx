@@ -26,7 +26,10 @@ export const EditorColorField = (props: EditorColorFieldProps) => {
   })
   const handleChange = (value: ReturnType<typeof parseColor>) => {
     setColor(value.toFormat('hsb'))
-    props.onValueChange(value.toString('hex'))
+    const hex = value.toString('hex')
+    if (hex !== parseColor(props.value).toString('hex')) {
+      props.onValueChange(hex)
+    }
   }
 
   return (

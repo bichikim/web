@@ -49,7 +49,6 @@ export const dialogsShortcuts = {
     '[&_input]:[border:0.0625rem_solid_#3b4743] [&_input]:[border-radius:0.375rem] [&_input]:[color:#eef5f2]',
     '[&_input]:[background:#0d1210]',
   ],
-
   'auto-mesh-presets': [
     'grid [grid-template-columns:repeat(3,_minmax(0,_1fr))] gap-editor-field m-0 p-0 [border:0]',
     '[&_legend]:mb-editor-field [&_legend]:[color:#bec9c5] [&_legend]:text-editor-body',
@@ -69,6 +68,7 @@ export const dialogsShortcuts = {
     '[@media(max-width:35rem)]:[grid-template-columns:1fr]',
     '[@media(max-width:35rem)]:[&_label_>_span]:min-h-0',
   ],
+
   'auto-mesh-settings': [
     'grid [grid-template-columns:repeat(2,_minmax(0,_1fr))] gap-editor-section',
     '[&_>_label]:grid [&_>_label]:gap-editor-field [&_>_label]:[color:#bdc8c4] [&_>_label]:text-editor-body',
@@ -80,6 +80,15 @@ export const dialogsShortcuts = {
   'auto-mesh-warning': [
     'm-0 py-editor-field px-editor-group [border-left:0.1875rem_solid_#e5b55a] [color:#c7b889] [background:#211d13]',
     'text-editor-caption [line-height:1.6]',
+  ],
+  'document-recovery-dialog': [
+    'auto-mesh-dialog-content',
+    '[&_section]:grid [&_section]:gap-editor-section [&_section]:p-editor-section [&_p]:m-0',
+    '[&_ul]:m-0 [&_ul]:grid [&_ul]:list-none [&_ul]:gap-editor-group [&_ul]:p-0',
+    '[&_li]:flex [&_li]:items-center [&_li]:justify-between [&_li]:gap-editor-group',
+    '[&_li]:border-b [&_li]:border-[#35413d] [&_li]:pb-editor-group',
+    '[&_li_>div]:grid [&_li_>div]:min-w-0 [&_li_>div]:gap-editor-related',
+    '[&_li_strong]:text-editor-body [&_li_span]:text-editor-caption [&_li_span]:text-[#91a09a]',
   ],
   'editor-help': [
     'editor-type-root',

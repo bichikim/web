@@ -312,15 +312,27 @@ describe('PuppetEditor', () => {
     expect(view.getAllByRole('button', {name: /^곡선 (제어점|핸들) \d+$/})).toHaveLength(7)
     fireEvent.keyDown(svg, {key: 'Delete'})
     expect(view.getAllByRole('button', {name: /^곡선 (제어점|핸들) \d+$/})).toHaveLength(4)
-    fireEvent.click(screen.getByRole('button', {name: '실행 취소'}))
+    fireEvent.click(
+      within(screen.getByRole('region', {name: '작업 기록'})).getByRole('button', {
+        name: '실행 취소',
+      }),
+    )
     await waitFor(() =>
       expect(view.getAllByRole('button', {name: /^곡선 (제어점|핸들) \d+$/})).toHaveLength(7),
     )
-    fireEvent.click(screen.getByRole('button', {name: '실행 취소'}))
+    fireEvent.click(
+      within(screen.getByRole('region', {name: '작업 기록'})).getByRole('button', {
+        name: '실행 취소',
+      }),
+    )
     await waitFor(() =>
       expect(view.getAllByRole('button', {name: /^곡선 (제어점|핸들) \d+$/})).toHaveLength(4),
     )
-    fireEvent.click(screen.getByRole('button', {name: '다시 실행'}))
+    fireEvent.click(
+      within(screen.getByRole('region', {name: '작업 기록'})).getByRole('button', {
+        name: '다시 실행',
+      }),
+    )
     await waitFor(() =>
       expect(view.getAllByRole('button', {name: /^곡선 (제어점|핸들) \d+$/})).toHaveLength(7),
     )
@@ -349,9 +361,17 @@ describe('PuppetEditor', () => {
     })
     fireEvent.dblClick(svg, {clientX: 840, clientY: 430})
     expect(view.getAllByRole('button', {name: /본 관절/})).toHaveLength(3)
-    fireEvent.click(screen.getByRole('button', {name: '실행 취소'}))
+    fireEvent.click(
+      within(screen.getByRole('region', {name: '작업 기록'})).getByRole('button', {
+        name: '실행 취소',
+      }),
+    )
     await waitFor(() => expect(view.getAllByRole('button', {name: /본 관절/})).toHaveLength(2))
-    fireEvent.click(screen.getByRole('button', {name: '다시 실행'}))
+    fireEvent.click(
+      within(screen.getByRole('region', {name: '작업 기록'})).getByRole('button', {
+        name: '다시 실행',
+      }),
+    )
     await waitFor(() => expect(view.getAllByRole('button', {name: /본 관절/})).toHaveLength(3))
   })
 
@@ -378,9 +398,17 @@ describe('PuppetEditor', () => {
     expect(node().controlPoints).not.toEqual(before.controlPoints)
     expect(transformDeformerPoint(node(), point)).toEqual(expected)
     const placed = node()
-    fireEvent.click(screen.getByRole('button', {name: '실행 취소'}))
+    fireEvent.click(
+      within(screen.getByRole('region', {name: '작업 기록'})).getByRole('button', {
+        name: '실행 취소',
+      }),
+    )
     expect(node()).toEqual(before)
-    fireEvent.click(screen.getByRole('button', {name: '다시 실행'}))
+    fireEvent.click(
+      within(screen.getByRole('region', {name: '작업 기록'})).getByRole('button', {
+        name: '다시 실행',
+      }),
+    )
     expect(node()).toEqual(placed)
     expect(parseDocument(serializeDocument(latest())).ok).toBe(true)
     fireEvent.click(view.getByRole('button', {name: '변형 편집'}))
