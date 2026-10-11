@@ -1,0 +1,14 @@
+{
+  "$schema": "https://turbo.build/schema.json",
+  "extends": ["//"],
+  "tasks": {
+    "build": {
+      "inputs": ["$TURBO_EXTENDS$", "$TURBO_ROOT$/.agents/plugins/marketplace.json"],
+      "outputs": [
+        "$TURBO_EXTENDS$",
+        ".codex-plugin/plugin.json",
+        "$TURBO_ROOT$/.agents/plugins/marketplace.json"
+      ]
+    }
+  }
+}

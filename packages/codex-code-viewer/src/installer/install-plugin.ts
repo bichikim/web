@@ -1,18 +1,20 @@
-import {mkdir, readFile, writeFile} from 'node:fs/promises'
+import {mkdir, readFile, rm, writeFile} from 'node:fs/promises'
 import {dirname, join} from 'node:path'
 import {z} from 'zod'
 import {runCodex} from './run-codex'
+import {resolvePreviousSource} from './resolve-previous-source'
 
 interface InstallPluginOptions {
-  codex: string
-  home: string
-  version: string
+  readonly codex: string
+  readonly home: string
+  readonly version: string
 }
 const MARKETPLACE = 'winter-love-code-viewer-npm'
 const listingSchema = z.object({installed: z.array(z.object({pluginId: z.string()}))})
 
 /** Registers this version's npm source, installs it, then removes earlier Code Viewer installations. */
 export const installPlugin = async (options: InstallPluginOptions): Promise<void> => {
+  await mkdir(options.home, {recursive: true})
   const listing = listingSchema.parse(
     JSON.parse(
       await runCodex({
@@ -46,19 +48,30 @@ export const installPlugin = async (options: InstallPluginOptions): Promise<void
       },
     ],
   }
-  await mkdir(dirname(path), {recursive: true})
-  await writeFile(path, `${JSON.stringify(catalog, null, 2)}\n`, 'utf8')
   try {
+    await mkdir(dirname(path), {recursive: true})
+    await writeFile(path, `${JSON.stringify(catalog, null, 2)}\n`, 'utf8')
     await runCodex({...options, args: ['plugin', 'marketplace', 'add', root, '--json']})
     await runCodex({
       ...options,
       args: ['plugin', 'add', `codex-code-viewer@${MARKETPLACE}`, '--json'],
     })
   } catch (error) {
-    if (previousCatalog !== null) {
+    if (previousCatalog === null) {
+      await rm(path, {force: true})
+    } else {
       await writeFile(path, previousCatalog, 'utf8')
     }
     throw error
+  }
+  const previousSource = resolvePreviousSource({
+    catalog: previousCatalog,
+    marketplace: MARKETPLACE,
+    plugin: 'codex-code-viewer',
+    root,
+  })
+  if (previousSource !== undefined) {
+    await rm(previousSource, {force: true, recursive: true})
   }
   const previous = listing.installed.filter(({pluginId}) =>
     ['codex-code-viewer@winter-love-plugins', 'codex-code-viewer@winter-love-code-viewer'].includes(

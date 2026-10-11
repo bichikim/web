@@ -4,7 +4,7 @@
 
 Codex 대화 옆에서 코드를 읽고 탐색하는 플러그인입니다. 현재 개발 소스에서는 TypeScript·JavaScript와 스타일·컴포넌트·설정 파일, 일반 텍스트 편집도 지원합니다. import 경로나 심볼을 클릭해 관련 코드를 찾아가고, 선택한 파일·줄·열 범위를 다음 채팅의 참고 자료로 추가할 수 있습니다.
 
-## 할 수 있는 일 (0.4.0)
+## 할 수 있는 일
 
 | 기능                      | 사용 방법                                                                                                                             |
 | ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
@@ -41,7 +41,7 @@ Codex 대화 옆에서 코드를 읽고 탐색하는 플러그인입니다. 현�
 
 저장은 편집 가능한 형식의 UTF-8 파일을 지원합니다. 열린 파일이 외부에서 삭제되면 현재 내용을 보존하고 삭제 자체를 미저장 변경으로 처리합니다. 내용을 바꾸지 않아도 저장 버튼을 사용할 수 있으며, 저장하면 같은 경로에 파일을 다시 만듭니다. 그 사이 다른 프로그램이 파일을 복원했다면 덮어쓰지 않고 충돌을 안내합니다. 삭제된 파일에서 **변경 버리기**를 누르면 해당 문서를 닫고 초안을 제거하며 작업 폴더와 파일 트리는 유지합니다. [작업 폴더·파일 제한](https://github.com/bichikim/web/blob/dev/packages/codex-code-viewer/src/server/file-access.ts)과 [저장 검사](https://github.com/bichikim/web/blob/dev/packages/codex-code-viewer/src/server/write-source.ts)를 적용하고, 같은 폴더의 임시 파일에 기록한 뒤 교체합니다. JSON은 작성 중 문법이 완성되지 않아도 저장할 수 있으며, 자동 서식 변경은 하지 않습니다. 분석에 함께 전달하는 초안은 [개수·크기 제한](https://github.com/bichikim/web/blob/dev/packages/codex-code-viewer/src/shared/editing-limits.ts)을 따릅니다.
 
-## 설치하기 (0.4.0)
+## 설치하기
 
 [Node.js](https://nodejs.org/en/download) 24 이상, npm, 최신 Codex 데스크톱 앱과 [Codex CLI](https://developers.openai.com/codex/cli)가 필요합니다. `codex` 명령이 없거나 `plugin` 하위 명령을 지원하지 않으면 먼저 CLI를 설치·업데이트하세요.
 
@@ -52,7 +52,7 @@ npm install -g @openai/codex
 터미널에서 아래 명령을 실행하세요.
 
 ```sh
-npx @winter-love/codex-code-viewer@0.4.0 install
+npx @winter-love/codex-code-viewer@latest install
 ```
 
 npm이 설치 실행 파일을 내려받고, 실행 파일이 개인 Codex 설정 폴더 안에 npm 설치 목록을 만들어 등록한 뒤 플러그인을 설치합니다. ZIP 다운로드, 압축 해제, 저장소 빌드, 별도 미리보기 서버 실행은 필요하지 않습니다. 공개 패키지 설치에는 npm 로그인이 필요하지 않습니다. 기본 설정 폴더는 `~/.codex`이며 `CODEX_HOME`을 지정하면 해당 폴더를 사용합니다. CLI가 PATH에 없으면 `CODEX_BINARY`에 실행 파일 경로를 지정하세요.
@@ -151,7 +151,7 @@ gem install solargraph
 
 열린 파일의 변경을 분석기에 전달하며, 분석기의 문자 단위 좌표를 뷰어의 UTF-16 좌표로 변환한다. 종료 시 분석기와 Unix의 하위 프로세스를 함께 정리한다. 작업 폴더 밖의 gem·표준 라이브러리 소스는 이동 대상에서 제외한다. 분석기를 실행하지 못해도 파일 열기·문법 강조·선택·검색은 사용할 수 있다.
 
-Rust 탐색에는 플러그인에 포함된 `rust-analyzer`를 사용한다. Node 24 이상 외에 Rust·Cargo·rustup을 설치할 필요가 없고 첫 탐색 때 추가 다운로드도 하지 않는다. macOS·Linux·Windows의 x64·arm64 분석기를 빌드 때 고정 버전·SHA-256으로 검증해 포함한다. Linux 배포본은 glibc 환경을 대상으로 한다. 분석기 경로를 직접 지정하려면 `RUST_ANALYZER_BINARY`를 사용할 수 있다.
+Rust 탐색에는 `rust-analyzer`를 사용하며, Node 24 이상 외에 Rust·Cargo·rustup을 설치할 필요는 없다. npm으로 설치하면 처음 Rust 탐색을 할 때 현재 컴퓨터용 고정 버전 분석기를 받아 SHA-256으로 검증하고 `CODEX_HOME/cache/codex-code-viewer/rust`에 보관한다. 기본 경로는 `~/.codex/cache/codex-code-viewer/rust`다. 첫 사용에는 GitHub Releases에 연결할 수 있어야 하며, 검증된 캐시가 있으면 이후에는 오프라인으로 사용할 수 있다. macOS·Linux·Windows의 x64·arm64를 지원하고 Linux 배포본은 glibc 환경을 대상으로 한다. 로컬 ZIP 빌드에는 분석기를 계속 포함한다. 다운로드 없이 기존 분석기를 쓰려면 `RUST_ANALYZER_BINARY`에 경로를 지정한다. [실행 경로 결정 코드](./src/server/rust/resolve-analyzer.ts)는 공통 [고정 릴리스 정보](./rust-analyzers.json)를 사용한다.
 
 뷰어가 `Cargo.toml`에서 라이브러리·바이너리 소스 경로, 워크스페이스 멤버, 로컬 `path` 의존성과 별칭, 워크스페이스에서 상속한 의존성·edition, 기본 feature를 읽고 [공식 프로젝트 구조 형식](https://rust-analyzer.github.io/book/non_cargo_based_projects.html)으로 전달한다. 독립 `.rs` 파일과 `mod`로 연결된 파일도 분석한다. 같은 프로젝트의 분석기를 재사용하고 로컬 패키지 구조가 바뀌면 다시 연결한다. 모듈 파일 변경은 분석기의 파일 감시로 반영한다.
 
@@ -230,10 +230,10 @@ codex plugin add codex-code-viewer@winter-love-code-viewer --json
 pnpm build
 pnpm pack --pack-destination ./dist
 # tarball 내용과 독립 실행을 검증한 뒤 배포
-npm publish ./dist/winter-love-codex-code-viewer-0.4.0.tgz --access public
+npm publish "./dist/winter-love-codex-code-viewer-<version>.tgz" --access public
 ```
 
-새 버전은 소스 `package.json`, 플러그인 manifest, 저장소 루트 `.agents/plugins/marketplace.json`의 npm 버전을 함께 갱신한다. 이 패키지도 모노레포 `Release packages` Action에서 버전으로 배포 여부를 판정한다. 배포 소스와 태그는 저장소 [릴리스 규칙](https://github.com/bichikim/web/blob/dev/RELEASE.md)을 따른다. npm 배포가 성공한 뒤 같은 소스 커밋에 `@winter-love/codex-code-viewer@버전` 태그를 만들고 push한다. 일반 사용자의 설치·업데이트는 npm의 `latest`를 사용하므로 Git 태그를 설치 명령에 넣지 않는다. GitHub 카탈로그를 사용하는 사람은 해당 태그를 `--ref`로 지정할 수 있다.
+새 버전은 `package.json.version`만 수정한 뒤 `pnpm build`를 실행한다. [버전 동기화 단계](./build/sync-plugin-version.ts)가 플러그인 manifest와 저장소 루트 `.agents/plugins/marketplace.json`의 npm 버전을 갱신하므로, 생성된 변경도 `package.json`과 함께 커밋한다. 이 패키지도 모노레포 `Release packages` Action에서 버전으로 배포 여부를 판정한다. 배포 소스와 태그는 저장소 [릴리스 규칙](https://github.com/bichikim/web/blob/dev/RELEASE.md)을 따른다. npm 배포가 성공한 뒤 같은 소스 커밋에 `@winter-love/codex-code-viewer@버전` 태그를 만들고 push한다. 일반 사용자의 설치·업데이트는 npm의 `latest`를 사용하므로 Git 태그를 설치 명령에 넣지 않는다. GitHub 카탈로그를 사용하는 사람은 해당 태그를 `--ref`로 지정할 수 있다.
 
 ## 브라우저 미리보기
 

@@ -4,7 +4,7 @@
 
 A plugin for reading and navigating code beside your Codex conversation. The current development source also supports editing TypeScript, JavaScript, stylesheets, component and configuration files, and plain text. Follow imports and symbols to related code, then add a file or an exact line and column range as context for your next chat message.
 
-## Features (0.4.0)
+## Features
 
 | Feature                 | How to use it                                                                                                                                      |
 | ----------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -45,7 +45,7 @@ Saving supports editable UTF-8 files. If an open file is deleted externally, the
 
 Saving applies the [workspace and file restrictions](https://github.com/bichikim/web/blob/dev/packages/codex-code-viewer/src/server/file-access.ts) and [save checks](https://github.com/bichikim/web/blob/dev/packages/codex-code-viewer/src/server/write-source.ts), using a temporary file in the same directory before replacement. JSON can be saved with incomplete syntax; no automatic formatting is applied. Drafts sent for analysis follow the [count and size limits](https://github.com/bichikim/web/blob/dev/packages/codex-code-viewer/src/shared/editing-limits.ts).
 
-## Installation (0.4.0)
+## Installation
 
 You need [Node.js](https://nodejs.org/en/download) 24 or later, npm, a current Codex desktop app and the [Codex CLI](https://developers.openai.com/codex/cli). If `codex` is missing or does not support the `plugin` subcommand, install or update the CLI first:
 
@@ -56,7 +56,7 @@ npm install -g @openai/codex
 Then run:
 
 ```sh
-npx @winter-love/codex-code-viewer@0.4.0 install
+npx @winter-love/codex-code-viewer@latest install
 ```
 
 npm downloads the installer, which creates and registers an npm plugin catalog inside your personal Codex configuration directory and installs the plugin. No ZIP download, manual extraction, repository build or separate preview server is required. Installing the public package does not require an npm login. The default configuration directory is `~/.codex`; set `CODEX_HOME` to use another directory. If the CLI is not on `PATH`, set `CODEX_BINARY` to its executable path.
@@ -160,7 +160,7 @@ Open-file changes are synchronized and analyzer character positions are converte
 
 #### Rust
 
-Rust navigation uses the bundled `rust-analyzer`. Beyond Node 24 or later, no Rust, Cargo or rustup installation is required, and first navigation does not download anything. Builds include pinned, SHA-256-verified analyzers for macOS, Linux and Windows on x64 and arm64. Linux binaries target glibc environments. Set `RUST_ANALYZER_BINARY` to use a specific analyzer path.
+Rust navigation uses `rust-analyzer`; no Rust, Cargo or rustup installation is required beyond Node 24 or later. npm installs download the pinned analyzer for the current host on first Rust navigation, verify its SHA-256 checksum and cache it under `CODEX_HOME/cache/codex-code-viewer/rust` (default: `~/.codex/cache/codex-code-viewer/rust`). First use requires access to GitHub Releases; later use works offline with the verified cache. Downloads support macOS, Linux and Windows on x64 and arm64; Linux binaries target glibc environments. Local ZIP builds retain bundled analyzers. Set `RUST_ANALYZER_BINARY` to use an existing analyzer without downloading. The [resolver](./src/server/rust/resolve-analyzer.ts) uses the shared [pinned release metadata](./rust-analyzers.json).
 
 The viewer reads library/binary source paths, workspace members, local `path` dependencies and aliases, inherited workspace dependencies/editions and default features from `Cargo.toml`, then supplies the [official project structure format](https://rust-analyzer.github.io/book/non_cargo_based_projects.html). Standalone `.rs` files and files connected with `mod` are also analyzed. The analyzer is reused within a project and reconnected when local package structure changes. Its file watcher handles module-file changes.
 
@@ -249,10 +249,10 @@ The source [`package.json`](https://github.com/bichikim/web/blob/dev/packages/co
 pnpm build
 pnpm pack --pack-destination ./dist
 # Inspect the tarball and verify standalone execution before publishing.
-npm publish ./dist/winter-love-codex-code-viewer-0.4.0.tgz --access public
+npm publish "./dist/winter-love-codex-code-viewer-<version>.tgz" --access public
 ```
 
-For a new version, update source `package.json`, the plugin manifest and npm version in root `.agents/plugins/marketplace.json` together. The monorepo's `Release packages` Action decides whether to publish based on version. Sources and tags follow the repository [release rules](https://github.com/bichikim/web/blob/dev/RELEASE.md). After a successful npm publish, create and push an `@winter-love/codex-code-viewer@<version>` tag on the same source commit. Normal installation/updates use npm's `latest`, so Git tags are not part of those commands. GitHub-catalog users can select a tag with `--ref`.
+For a new version, change only `package.json.version`, then run `pnpm build`. The [version synchronization step](./build/sync-plugin-version.ts) updates the plugin manifest and the npm version in root `.agents/plugins/marketplace.json`; commit those generated changes with `package.json`. The monorepo's `Release packages` Action decides whether to publish based on version. Sources and tags follow the repository [release rules](https://github.com/bichikim/web/blob/dev/RELEASE.md). After a successful npm publish, create and push an `@winter-love/codex-code-viewer@<version>` tag on the same source commit. Normal installation/updates use npm's `latest`, so Git tags are not part of those commands. GitHub-catalog users can select a tag with `--ref`.
 
 ## Browser preview
 

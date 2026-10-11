@@ -1,6 +1,6 @@
 {
   "name": "codex-code-viewer",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "description": "Read code, documents and media and add file context inside Codex.",
   "mcpServers": "./.mcp.json",
   "interface": {
@@ -9,7 +9,10 @@
     "developerName": "Bichi kim",
     "websiteURL": "https://github.com/bichikim/web/tree/dev/packages/codex-code-viewer",
     "category": "Developer Tools",
-    "capabilities": ["Interactive", "Read"],
+    "capabilities": [
+      "Interactive",
+      "Read"
+    ],
     "logo": "./assets/icon.svg",
     "composerIcon": "./assets/icon.svg"
   }

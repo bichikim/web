@@ -5,9 +5,11 @@ import {pathToFileURL} from 'node:url'
 import {createMessageConnection} from 'vscode-jsonrpc/node.js'
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 import {createRustService} from '../create-rust-service'
+import {resolveAnalyzer} from '../rust/resolve-analyzer'
 
 const {spawn} = vi.hoisted(() => ({spawn: vi.fn()}))
 vi.mock('node:child_process', () => ({spawn}))
+vi.mock('../rust/resolve-analyzer', () => ({resolveAnalyzer: vi.fn()}))
 
 describe('createRustService', () => {
   let process: EventEmitter
@@ -20,6 +22,7 @@ describe('createRustService', () => {
   const root = '/workspace/example'
   const path = `${root}/src/main.rs`
   beforeEach(() => {
+    vi.mocked(resolveAnalyzer).mockResolvedValue('/cached/rust-analyzer')
     const input = new PassThrough()
     const output = new PassThrough()
     process = Object.assign(new EventEmitter(), {
@@ -147,9 +150,45 @@ describe('createRustService', () => {
     })
   })
   it('should report missing analyzer and finish pending initialization', async () => {
+    const spawned = Promise.withResolvers<void>()
+    spawn.mockImplementationOnce(() => {
+      spawned.resolve()
+      return process
+    })
     const pending = service.lookupSymbols(path, 'main()', 0, {kind: 'definition'})
+    await spawned.promise
     process.emit('error', Object.assign(new Error('missing'), {code: 'ENOENT'}))
     expect(await pending).toMatchObject({error: {code: 'rust-analyzer-unavailable'}, ok: false})
+  })
+  it('should wait for the analyzer download before starting its process', async () => {
+    const downloaded = Promise.withResolvers<string>()
+    vi.mocked(resolveAnalyzer).mockReturnValueOnce(downloaded.promise)
+    const pending = service.lookupSymbols(path, 'main()', 0, {kind: 'definition'})
+    expect(spawn).not.toHaveBeenCalled()
+    downloaded.resolve('/cached/downloaded-analyzer')
+    expect(await pending).toMatchObject({ok: true})
+    expect(spawn).toHaveBeenCalledWith('/cached/downloaded-analyzer', [], expect.any(Object))
+  })
+  it('should retry provisioning after a temporary download failure', async () => {
+    vi.mocked(resolveAnalyzer).mockRejectedValueOnce(new Error('offline'))
+    expect(await service.lookupSymbols(path, 'main()', 0, {kind: 'definition'})).toEqual({
+      error: {code: 'rust-analyzer-unavailable'},
+      ok: false,
+    })
+    expect(await service.lookupSymbols(path, 'main()', 0, {kind: 'definition'})).toMatchObject({
+      ok: true,
+    })
+    expect(resolveAnalyzer).toHaveBeenCalledTimes(2)
+  })
+  it('should finish a pending lookup on disposal without spawning after the download', async () => {
+    const downloaded = Promise.withResolvers<string>()
+    vi.mocked(resolveAnalyzer).mockReturnValueOnce(downloaded.promise)
+    const pending = service.lookupSymbols(path, 'main()', 0, {kind: 'definition'})
+    service.dispose()
+    expect(await pending).toMatchObject({error: {code: 'rust-analysis-failed'}, ok: false})
+    downloaded.resolve('/cached/downloaded-analyzer')
+    await downloaded.promise
+    expect(spawn).not.toHaveBeenCalled()
   })
   it('should release pending requests and stop the process on disposal', async () => {
     const requested = Promise.withResolvers<void>()
