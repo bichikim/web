@@ -2,8 +2,8 @@ import {z} from 'zod'
 
 import {P_VISEMES} from '../lip-sync'
 import {
+  isSupertonicVoiceId,
   SUPERTONIC_LANGUAGES,
-  SUPERTONIC_VOICES,
   type SupertonicLanguage,
   type SupertonicVoiceId,
 } from '../supertonic'
@@ -73,9 +73,7 @@ const dialogueSegmentSchema = z.object({
   text: z.string().min(1),
   visemes: z.array(visemeCueSchema).readonly().optional(),
 })
-const supertonicVoiceIdSchema = z.custom<SupertonicVoiceId>((value) =>
-  SUPERTONIC_VOICES.some((voice) => voice.id === value),
-)
+const supertonicVoiceIdSchema = z.custom<SupertonicVoiceId>(isSupertonicVoiceId)
 
 export const focusRoomDialogueSchema = z.object({
   audioKey: z.string().min(1),
