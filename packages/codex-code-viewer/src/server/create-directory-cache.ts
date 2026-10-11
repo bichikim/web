@@ -7,17 +7,25 @@ import {type DirectoryListing, scanShallowDirectory} from './read-directory'
 export const createDirectoryCache = (root: string) => {
   const listings = new Map<string, DirectoryListing>()
   const policies = new Map<string, readonly string[]>()
-  let mutation = 0
+  const revisions = new Map<string, number>()
+  let epoch = 0
+  let generation = 0
   async function* scan(directory: string, signal: AbortSignal): AsyncGenerator<DirectoryListing> {
     signal.throwIfAborted()
     const cached = listings.get(directory)
     const revision =
       cached === undefined ? null : fileRevision(await stat(directory, {bigint: true}))
-    if (cached !== undefined && cached.directories[0].revision === revision) {
+    if (
+      cached !== undefined &&
+      listings.get(directory) === cached &&
+      cached.directories[0].revision === revision
+    ) {
       yield cached
       return
     }
-    const version = mutation
+    const version = revisions.get(directory) ?? 0
+    revisions.set(directory, version)
+    const reset = epoch
     const directories = new Map<string, DirectoryListing['directories'][number]>()
     const files: DirectoryListing['files'][number][] = []
     const inherited = [...policies.entries()]
@@ -32,18 +40,27 @@ export const createDirectoryCache = (root: string) => {
         directories.set(entry.path, entry)
       }
       files.push(...listing.files)
-      if (listing.complete && version === mutation) {
+      let completed = listing
+      if (
+        listing.complete &&
+        !listing.truncated &&
+        reset === epoch &&
+        version === revisions.get(directory)
+      ) {
+        generation += 1
+        completed = {...listing, version: String(generation)}
         policies.set(directory, listing.excludedPaths)
-        listings.set(directory, {...listing, directories: [...directories.values()], files})
+        listings.set(directory, {...completed, directories: [...directories.values()], files})
       }
-      yield listing
+      yield completed
     }
   }
   return {
     clear: (): void => {
       listings.clear()
       policies.clear()
-      mutation += 1
+      revisions.clear()
+      epoch += 1
     },
     excluded: (path: string): boolean =>
       [...policies.values()].some((paths) =>
@@ -51,7 +68,10 @@ export const createDirectoryCache = (root: string) => {
       ),
     invalidate: (path: string): void => {
       listings.delete(path)
-      mutation += 1
+      const revision = revisions.get(path)
+      if (revision !== undefined) {
+        revisions.set(path, revision + 1)
+      }
     },
     resetPolicy: (directory: string): void => {
       policies.delete(directory)

@@ -17,6 +17,7 @@ export interface DirectoryListing {
   readonly excludedPaths: readonly string[]
   readonly truncated: boolean
   readonly complete?: boolean
+  readonly version?: string
 }
 export interface DirectoryScanOptions {
   readonly signal?: AbortSignal

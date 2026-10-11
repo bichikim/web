@@ -80,6 +80,86 @@ describe('SFileTree streaming', () => {
     cleanup()
     vi.unstubAllGlobals()
   })
+  it('should retain unchanged branches when the server sends only the changed directory', async () => {
+    const {port, stream} = setup()
+    const [revision, setRevision] = createSignal(0)
+    const initial = stream()
+    render(() => <SFileTree port={port} session={session} visible revision={revision()} />)
+    const root = await initial
+    root.send({...rootBatch, version: 'root'})
+    root.finish()
+    const folder = await screen.findByRole('treeitem', {name: 'src'})
+    const expansion = stream()
+    fireEvent.click(folder)
+    const expanded = await expansion
+    expect(port.call).toHaveBeenLastCalledWith('code.tree', {
+      directories: ['', 'src'],
+      session: 'first',
+      stream: true,
+      versions: {'': 'root'},
+    })
+    expanded.send({...sourceBatch, version: 'source'})
+    expanded.finish()
+    await screen.findByRole('treeitem', {name: 'main.ts'})
+    const update = stream()
+    setRevision(1)
+    const refreshed = await update
+    expect(port.call).toHaveBeenLastCalledWith('code.tree', {
+      directories: ['', 'src'],
+      session: 'first',
+      stream: true,
+      versions: {'': 'root', src: 'source'},
+    })
+    refreshed.send({...sourceBatch, files: [{openable: true, path: 'src/new.ts'}], version: 'next'})
+    refreshed.finish()
+    await screen.findByRole('treeitem', {name: 'new.ts'})
+    expect(screen.queryByRole('treeitem', {name: 'main.ts'})).toBeNull()
+    expect(screen.getByRole('treeitem', {name: 'src'})).toBe(folder)
+    const collapse = stream()
+    fireEvent.click(folder)
+    const collapsed = await collapse
+    collapsed.finish()
+    await waitFor(() => expect(screen.getByRole('tree')).toHaveAttribute('aria-busy', 'false'))
+    expect(screen.getByRole('treeitem', {name: 'src'})).toBe(folder)
+    expect(screen.queryByRole('treeitem', {name: 'new.ts'})).toBeNull()
+  })
+  it('should show the first batch before the frame and cancel the pending frame on disposal', async () => {
+    const frames: FrameRequestCallback[] = []
+    const cancel = vi.fn()
+    vi.stubGlobal(
+      'requestAnimationFrame',
+      vi.fn((callback: FrameRequestCallback) => frames.push(callback)),
+    )
+    vi.stubGlobal('cancelAnimationFrame', cancel)
+    const {port, stream} = setup()
+    const initial = stream()
+    const mounted = render(() => <SFileTree port={port} session={session} visible />)
+    const root = await initial
+    root.send(rootBatch)
+    await screen.findByRole('treeitem', {name: 'src'})
+    expect(frames).toHaveLength(1)
+    expect(screen.getByRole('tree')).toHaveAttribute('aria-busy', 'true')
+    mounted.unmount()
+    expect(cancel).toHaveBeenCalledWith(1)
+    expect(root.signal.aborted).toBe(true)
+    await waitFor(() => expect(root.cancelled).toHaveBeenCalledOnce())
+  })
+  it('should clear cached search previews when the server completes without any matching batches', async () => {
+    const {port, stream} = setup()
+    const initial = stream()
+    render(() => <SFileTree port={port} session={session} visible />)
+    const root = await initial
+    root.send({...rootBatch, directories: [], files: [{openable: true, path: 'main.ts'}]})
+    root.finish()
+    await screen.findByRole('treeitem', {name: 'main.ts'})
+    const search = stream()
+    fireEvent.input(screen.getByRole('textbox', {name: '파일 필터링'}), {target: {value: 'main'}})
+    expect(screen.getByRole('treeitem', {name: 'main.ts'})).toBeVisible()
+    const result = await search
+    result.finish()
+    await waitFor(() => expect(screen.getByRole('tree')).toHaveAttribute('aria-busy', 'false'))
+    expect(screen.queryByRole('treeitem', {name: 'main.ts'})).toBeNull()
+  })
   it('should show early results and request only expanded folders after clicks and updates', async () => {
     const {port, stream} = setup()
     const [revision, setRevision] = createSignal(0)
@@ -171,5 +251,33 @@ describe('SFileTree streaming', () => {
     second.finish()
     await waitFor(() => expect(screen.queryByRole('treeitem', {name: 'src'})).toBeNull())
     expect(screen.queryByRole('treeitem', {name: 'main.ts'})).toBeNull()
+  })
+  it('should not restore a deleted expanded folder when its scoped request fails', async () => {
+    const {port, stream} = setup()
+    const [revision, setRevision] = createSignal(0)
+    const initial = stream()
+    render(() => <SFileTree port={port} session={session} visible revision={revision()} />)
+    const root = await initial
+    root.send(rootBatch)
+    root.finish()
+    const folder = await screen.findByRole('treeitem', {name: 'src'})
+    const expansion = stream()
+    fireEvent.click(folder)
+    const expanded = await expansion
+    expanded.send(sourceBatch)
+    expanded.finish()
+    await screen.findByRole('treeitem', {name: 'main.ts'})
+    const update = stream()
+    setRevision(1)
+    const refreshed = await update
+    refreshed.send({...rootBatch, directories: []})
+    refreshed.send({...sourceBatch, failed: true, files: []})
+    refreshed.finish()
+    await waitFor(() => expect(screen.getByRole('tree')).toHaveAttribute('aria-busy', 'false'))
+    expect(screen.queryByRole('treeitem', {name: 'src'})).toBeNull()
+    expect(screen.queryByRole('treeitem', {name: 'main.ts'})).toBeNull()
+    expect(screen.getAllByRole('status').map((node) => node.textContent)).toContain(
+      '일부 폴더를 읽지 못했습니다. 새로고침하여 다시 탐색해 주세요.',
+    )
   })
 })

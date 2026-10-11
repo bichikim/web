@@ -76,10 +76,11 @@ const registerTree = (
         session: z.string(),
         stream: z.boolean().default(false),
         transport: z.enum(['http', 'mcp']).default('http'),
+        versions: z.record(z.string(), z.string()).optional(),
       },
       title: 'List workspace file tree',
     },
-    async ({session, directories, query, stream, transport}) =>
+    async ({session, directories, versions, query, stream, transport}) =>
       stream
         ? withSession(session, async (workspace) => {
             if (directories !== undefined) {
@@ -89,7 +90,7 @@ const registerTree = (
               url: await (transport === 'mcp' ? streams.open : updates.scan)(
                 session,
                 'tree',
-                (signal) => filterScan(workspace.scan(directories, signal), query),
+                (signal) => filterScan(workspace.scan(directories, signal, versions), query),
               ),
             })
           })

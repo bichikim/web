@@ -1,14 +1,9 @@
 import type {WorkspaceFile} from '../../shared/contracts'
 import type {FileTreeFolder, FileTreeNode} from './types'
+import {compareTreeNodes} from './compare-tree-nodes'
 
 const sortNodes = (nodes: FileTreeNode[]): void => {
-  nodes.sort((left, right) =>
-    left.kind === right.kind
-      ? left.name.localeCompare(right.name, undefined, {numeric: true})
-      : left.kind === 'directory'
-        ? -1
-        : 1,
-  )
+  nodes.sort(compareTreeNodes)
   for (const node of nodes) {
     if (node.kind === 'directory') {
       sortNodes(node.children)

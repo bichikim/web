@@ -1,8 +1,8 @@
 import {type Accessor, batch, createEffect, createMemo, createSignal, on, untrack} from 'solid-js'
-import {type CodeLocation, type ViewerConnection, type WorkspaceFile} from '../shared/contracts'
+import {type CodeLocation, type ViewerConnection} from '../shared/contracts'
 import {useTreeListing} from './use-tree-listing'
 import {getTreePositions} from './file-tree/get-tree-positions'
-import {buildFileTree, getTreeDestination, getVisibleNodes} from './file-tree'
+import {getTreeDestination, getVisibleNodes} from './file-tree'
 import type {ViewerPort} from './types'
 
 interface UseFileTreeProps {
@@ -22,9 +22,6 @@ const parents = (path: string): string[] =>
 
 const documentPath = (session: ViewerConnection | null): string =>
   session !== null && 'document' in session ? session.document.location.path : ''
-
-const containsPath = (files: readonly WorkspaceFile[], path: string): boolean =>
-  files.some((file) => file.path === path)
 
 const toggleExpansion = (previous: Set<string>, path: string): Set<string> => {
   const next = new Set(previous)
@@ -83,18 +80,9 @@ export const useFileTree = (props: UseFileTreeProps) => {
     session: sessionId,
     visible: props.visible,
   })
-  const files = () => listing.listing().files
-  const directories = () => listing.listing().directories ?? []
-  const filtered = createMemo(() => {
-    const value = query().trim().toLowerCase()
-    return buildFileTree(
-      files().filter((file) => file.path.toLowerCase().includes(value)),
-      directories().filter((path) => path.toLowerCase().includes(value)),
-    )
-  })
   const isExpanded = (path: string): boolean =>
     query().trim() === '' ? expanded().has(path) : !collapsed().has(path)
-  const nodes = createMemo(() => getVisibleNodes(filtered(), isExpanded))
+  const nodes = createMemo(() => getVisibleNodes(listing.tree(), isExpanded))
   const paths = createMemo(() => nodes().map((node) => node.path))
   const lookup = createMemo(() => new Map(nodes().map((node) => [node.path, node])))
   const positions = createMemo(() => getTreePositions(paths()))
@@ -158,7 +146,7 @@ export const useFileTree = (props: UseFileTreeProps) => {
     })
   }
   const reveal = (path = currentPath()): void => {
-    if (!containsPath(files(), path) && !directories().includes(path)) {
+    if (listing.node(path) === undefined) {
       return
     }
     batch(() => {
@@ -174,7 +162,7 @@ export const useFileTree = (props: UseFileTreeProps) => {
   return {
     activate,
     activePath,
-    canReveal: createMemo(() => containsPath(files(), currentPath())),
+    canReveal: createMemo(() => listing.node(currentPath())?.kind === 'file'),
     change,
     currentPath,
     focus: setFocused,

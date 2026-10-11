@@ -20,7 +20,7 @@ describe('createFileIndex', () => {
   let index: ReturnType<typeof createFileIndex>
   const scan = async (directories: string[]) =>
     Array.fromAsync(index.scan(directories, new AbortController().signal))
-  const notifyChange = (event: string, path: string) => {
+  const notifyChange = (event: string, path: string | null) => {
     const calls: readonly unknown[][] = vi.mocked(fs.watch).mock.calls
     const listener = calls.at(-1)?.[2]
     if (typeof listener !== 'function') {
@@ -98,6 +98,66 @@ describe('createFileIndex', () => {
     await expect(iterator.next()).rejects.toThrow()
     expect(asynchronous.readdir).toHaveBeenCalledTimes(1)
   })
+  it('should return only changed directory contents when the caller already has completed versions', async () => {
+    index.observe(['', 'src'])
+    const first = await scan(['', 'src'])
+    const versions = Object.fromEntries(
+      first
+        .filter((batch) => batch.version !== undefined)
+        .map((batch) => [batch.directory, batch.version!]),
+    )
+    expect(Object.keys(versions)).toEqual(['', 'src'])
+    const signal = new AbortController().signal
+    expect(await Array.fromAsync(index.scan(['', 'src'], signal, versions))).toEqual([])
+    fs.writeFileSync(join(root, 'src/new.ts'), '')
+    notifyChange('rename', 'src/new.ts')
+    const changed = await Array.fromAsync(index.scan(['', 'src'], signal, versions))
+    expect(changed.map((batch) => batch.directory)).toEqual(['src'])
+    expect(changed[0].files).toContainEqual({openable: true, path: 'src/new.ts'})
+    expect(changed[0].version).not.toBe(versions.src)
+  })
+  it('should reuse recursive search listings and discover additions in previously closed folders', async () => {
+    const signal = new AbortController().signal
+    await Array.fromAsync(index.scan(undefined, signal))
+    const reads = vi.mocked(asynchronous.readdir).mock.calls.length
+    await Array.fromAsync(index.scan(undefined, signal))
+    expect(asynchronous.readdir).toHaveBeenCalledTimes(reads)
+    fs.writeFileSync(join(root, 'src/added.ts'), '')
+    notifyChange('rename', 'src/added.ts')
+    const next = await Array.fromAsync(index.scan(undefined, signal))
+    expect(next.flatMap((batch) => batch.files)).toContainEqual({
+      openable: true,
+      path: 'src/added.ts',
+    })
+    expect(asynchronous.readdir).toHaveBeenCalledTimes(reads + 1)
+  })
+  it('should replace all completed versions when a watcher cannot identify the changed path', async () => {
+    const first = await scan(['', 'src'])
+    const versions = Object.fromEntries(first.map((batch) => [batch.directory, batch.version!]))
+    notifyChange('rename', null)
+    const next = await Array.fromAsync(
+      index.scan(['', 'src'], new AbortController().signal, versions),
+    )
+    expect(next.map((batch) => batch.directory)).toEqual(['', 'src'])
+    expect(next.every((batch) => batch.version !== versions[batch.directory])).toBe(true)
+  })
+  it('should keep a completed directory cache when an unrelated folder changes during its scan', async () => {
+    for (let entry = 0; entry < 300; entry += 1) {
+      fs.writeFileSync(join(root, 'src', `file-${entry}.ts`), '')
+    }
+    const signal = new AbortController().signal
+    const iterator = index.scan(['src'], signal)
+    const first = await iterator.next()
+    expect(first.value?.complete).toBe(false)
+    fs.writeFileSync(join(root, 'new.ts'), '')
+    notifyChange('rename', 'new.ts')
+    const remaining = await Array.fromAsync(iterator)
+    const version = remaining.at(-1)?.version
+    expect(version).toBeTypeOf('string')
+    const reads = vi.mocked(asynchronous.readdir).mock.calls.length
+    expect(await Array.fromAsync(index.scan(['src'], signal, {src: version!}))).toEqual([])
+    expect(asynchronous.readdir).toHaveBeenCalledTimes(reads)
+  })
   it('should refresh reopened folders and search the latest closed subtree on demand', async () => {
     index.observe(['', 'src'])
     await scan(['', 'src'])
@@ -120,9 +180,11 @@ describe('createFileIndex', () => {
     })
     const fallback = createFileIndex(root)
     try {
-      await Array.fromAsync(fallback.scan([''], new AbortController().signal))
+      const first = await Array.fromAsync(fallback.scan([''], new AbortController().signal))
       fs.writeFileSync(join(root, 'created.txt'), 'created')
-      const result = await Array.fromAsync(fallback.scan([''], new AbortController().signal))
+      const result = await Array.fromAsync(
+        fallback.scan([''], new AbortController().signal, {'': first[0].version!}),
+      )
       expect(result.flatMap((batch) => batch.files)).toContainEqual({
         openable: true,
         path: 'created.txt',

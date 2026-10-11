@@ -141,7 +141,7 @@ describe('SFileTree', () => {
       structuredContent: {directories: ['src', 'empty'], files, truncated: false},
     })
     await screen.findByRole('treeitem', {name: 'empty'})
-    expect(refresh).not.toBeDisabled()
+    await waitFor(() => expect(refresh).not.toBeDisabled())
     expect(screen.getByRole('treeitem', {name: 'src'})).toHaveAttribute('aria-expanded', 'false')
     expect(scrollIntoView).toHaveBeenCalledTimes(calls)
     expect(port.call).toHaveBeenCalledTimes(3)

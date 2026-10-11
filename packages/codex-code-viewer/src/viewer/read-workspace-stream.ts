@@ -15,7 +15,7 @@ interface WorkspaceStreamOptions {
   readonly name: 'code.tree' | 'code.list'
   readonly input: Record<string, unknown>
   readonly signal: AbortSignal
-  readonly receive: (batch: ScanBatch) => void
+  readonly receive: (batch: ScanBatch) => void | Promise<void>
 }
 /** Consumes a cancellable local scan, retaining compatibility with snapshot-only servers. */
 export const readWorkspaceStream = async (options: WorkspaceStreamOptions): Promise<void> => {
@@ -27,7 +27,7 @@ export const readWorkspaceStream = async (options: WorkspaceStreamOptions): Prom
   })
   if (!('url' in result)) {
     options.signal.throwIfAborted()
-    options.receive({
+    await options.receive({
       complete: true,
       directories: 'directories' in result ? (result.directories ?? []) : [],
       directory: '',

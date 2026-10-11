@@ -1,7 +1,7 @@
 import {type FSWatcher, realpathSync, watch} from 'node:fs'
 import {basename, dirname, relative, resolve, sep} from 'node:path'
 import type {ScanBatch, WorkspaceTree} from '../shared/contracts'
-import {type DirectoryListing, readDirectory, walkDirectory} from './read-directory'
+import {type DirectoryListing} from './read-directory'
 import {createDirectoryCache} from './create-directory-cache'
 import {isWithin} from './file-access'
 import {isBrowsablePath} from './is-browsable-path'
@@ -15,7 +15,11 @@ export interface FileIndex {
   list(query: string): Promise<string[]>
   observe(directories: readonly string[]): void
   open(path: string): void
-  scan(directories: readonly string[] | undefined, signal: AbortSignal): AsyncGenerator<ScanBatch>
+  scan(
+    directories: readonly string[] | undefined,
+    signal: AbortSignal,
+    versions?: Readonly<Record<string, string>>,
+  ): AsyncGenerator<ScanBatch>
   subscribe(listener: () => void): () => void
   subscribeChanges(listener: (change: FileChange) => void): () => void
   tree(): Promise<WorkspaceTree>
@@ -35,8 +39,28 @@ function* batches(root: string, listing: DirectoryListing): Generator<ScanBatch>
       directory,
       failed: listing.truncated,
       files: listing.files.slice(offset, offset + BATCH_SIZE).map((file) => ({...file})),
+      ...(listing.version !== undefined && offset + BATCH_SIZE >= count
+        ? {version: listing.version}
+        : {}),
     }
   }
+}
+
+const collectFilePaths = async (
+  source: AsyncIterable<ScanBatch>,
+  query: string,
+): Promise<string[]> => {
+  const listings = await Array.fromAsync(source)
+  if (listings.some((listing) => listing.failed)) {
+    throw new Error('Some workspace directories could not be read')
+  }
+  const needle = query.toLowerCase()
+  return listings
+    .flatMap((listing) => listing.files)
+    .filter((file) => file.openable && file.path.toLowerCase().includes(needle))
+    .map((file) => file.path)
+    .sort()
+    .slice(0, MAX_RESULTS)
 }
 
 /** Discovers paths asynchronously and limits live invalidation to observed directories and the opened file. */
@@ -101,33 +125,43 @@ export const createFileIndex = (root: string): FileIndex => {
   async function* scan(
     directories: readonly string[] | undefined,
     requestedSignal: AbortSignal,
+    versions: Readonly<Record<string, string>> = {},
   ): AsyncGenerator<ScanBatch> {
     const signal = AbortSignal.any([lifetime.signal, requestedSignal])
     signal.throwIfAborted()
-    if (directories === undefined) {
-      for await (const listing of walkDirectory(canonical, {signal})) {
-        // oxlint-disable-next-line eslint-js/yield-star-spacing -- Oxfmt formats generator delegation with this spacing.
-        yield* batches(canonical, listing)
-      }
-      return
-    }
-    for (const path of [...new Set(directories)].sort(
+    const recursive = directories === undefined
+    const pending = [...new Set(directories ?? [''])].sort(
       (left, right) => left.split('/').length - right.split('/').length,
-    )) {
+    )
+    async function* visit(path: string): AsyncGenerator<ScanBatch> {
       signal.throwIfAborted()
       const directory = resolve(canonical, path)
-      if (isWithin(canonical, directory) && (path === '' || !ignored(directory))) {
-        try {
-          // oxlint-disable-next-line no-await-in-loop -- Scan one directory at a time to bound I/O and honour cancellation.
-          for await (const listing of cache.scan(directory, signal)) {
+      if (!isWithin(canonical, directory) || (path !== '' && ignored(directory))) {
+        return
+      }
+      try {
+        for await (const listing of cache.scan(directory, signal)) {
+          if (recursive) {
+            pending.push(
+              ...listing.directories.slice(1).map((entry) => normalize(canonical, entry.path)),
+            )
+          }
+          if (recursive || listing.version === undefined || versions[path] !== listing.version) {
             // oxlint-disable-next-line eslint-js/yield-star-spacing -- Oxfmt formats generator delegation with this spacing.
             yield* batches(canonical, listing)
           }
-        } catch {
-          signal.throwIfAborted()
-          yield {complete: true, directories: [], directory: path, failed: true, files: []}
         }
+      } catch (error) {
+        signal.throwIfAborted()
+        if (recursive && path === '') {
+          throw error
+        }
+        yield {complete: true, directories: [], directory: path, failed: true, files: []}
       }
+    }
+    for (let cursor = 0; cursor < pending.length; cursor += 1) {
+      // oxlint-disable-next-line eslint-js/yield-star-spacing -- Oxfmt formats generator delegation with this spacing.
+      yield* visit(pending[cursor])
     }
   }
   return {
@@ -138,17 +172,7 @@ export const createFileIndex = (root: string): FileIndex => {
       watcher?.close()
       cache.clear()
     },
-    list: async (query) => {
-      const listing = await readDirectory(canonical, {signal: lifetime.signal})
-      if (listing.truncated) {
-        throw new Error('Some workspace directories could not be read')
-      }
-      return listing.files
-        .filter((file) => file.openable && file.path.toLowerCase().includes(query.toLowerCase()))
-        .map((file) => file.path)
-        .sort()
-        .slice(0, MAX_RESULTS)
-    },
+    list: (query) => collectFilePaths(scan(undefined, lifetime.signal), query),
     observe: (directories) => {
       const next = new Set(
         directories
@@ -179,11 +203,11 @@ export const createFileIndex = (root: string): FileIndex => {
       return () => changes.delete(listener)
     },
     tree: async () => {
-      const listing = await readDirectory(canonical, {signal: lifetime.signal})
+      const listings = await Array.fromAsync(scan(undefined, lifetime.signal))
       return {
-        directories: listing.directories.slice(1).map((entry) => normalize(canonical, entry.path)),
-        files: listing.files.map((file) => ({...file})),
-        truncated: listing.truncated,
+        directories: listings.flatMap((listing) => listing.directories),
+        files: listings.flatMap((listing) => listing.files),
+        truncated: listings.some((listing) => listing.failed),
       }
     },
   }

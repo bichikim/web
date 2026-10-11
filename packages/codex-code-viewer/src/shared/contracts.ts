@@ -77,6 +77,7 @@ export const scanBatchSchema = z.object({
   failed: z.boolean().optional(),
   files: z.array(workspaceFileSchema),
   snapshot: z.boolean().optional(),
+  version: z.string().optional(),
 })
 export type ScanBatch = z.infer<typeof scanBatchSchema>
 export const streamEndpointSchema = z.object({
