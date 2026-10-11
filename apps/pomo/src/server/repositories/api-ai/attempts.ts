@@ -1,12 +1,6 @@
 import {API_AI_POLICY} from 'src/server/api-ai/policy'
 import {and, asc, eq, gt, inArray, isNull, lt, lte, or, sql} from 'drizzle-orm'
-import {
-  apiAiAttempts,
-  apiAiJobs,
-  apiAiPools,
-  getDatabase,
-  withTransactionalDatabase,
-} from 'src/server/database'
+import {apiAiAttempts, apiAiJobs, getDatabase, withTransactionalDatabase} from 'src/server/database'
 import {getApiAiResponseTransition} from 'src/server/api-ai/response-transition'
 import {isApiAiAttemptActive, isApiAiJobActive} from 'src/server/api-ai/status'
 import type {ApiAiAttempt, ApiAiResponse, ApiAiSubmissionError} from 'src/server/api-ai/types'
@@ -107,12 +101,6 @@ const persistSubmissionError = async (
       .update(apiAiJobs)
       .set({nextAttemptAt: now})
       .where(and(eq(apiAiJobs.status, 'queued'), gt(apiAiJobs.nextAttemptAt, now)))
-  }
-  if (error.fallback) {
-    await transaction
-      .update(apiAiPools)
-      .set(error.disabled ? {disabled: error.message} : {blockedUntil: new Date(error.retryAt)})
-      .where(eq(apiAiPools.id, attempt.poolId))
   }
   await transaction
     .update(apiAiJobs)

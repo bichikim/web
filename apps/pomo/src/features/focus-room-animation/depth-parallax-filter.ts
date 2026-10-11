@@ -1,5 +1,5 @@
 import {FILTER_SCENE_VERTEX} from './filter-vertex'
-import {DEPTH_RESPONSE} from 'src/utils/depth-response'
+import {DEPTH_RESPONSE} from 'src/utils/shader'
 import {Filter, GlProgram, type Texture, UniformGroup} from 'pixi.js'
 
 const DEPTH_FRAGMENT = `

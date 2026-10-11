@@ -1,5 +1,6 @@
 import {type Accessor, createSignal} from 'solid-js'
 import * as m from '@paraglide/message'
+import {getExceptionMessage} from '../error-detail'
 import {type ModelDownloadController, type ModelDownloadResult} from '../model-download'
 import {formatModelDownloadSize} from '../model-storage/size'
 import {DEFAULT_DIALOGUE_MODEL_ID} from '../focus-room-dialogue/speech-defaults'
@@ -59,7 +60,7 @@ export const createTarotSpeechDownloads = (
       await handleResult(result, isCurrent, onComplete)
     } catch (cause: unknown) {
       if (currentStartRevision === startRevision) {
-        setError(cause instanceof Error ? cause.message : m.tarot_voice_failed())
+        setError(getExceptionMessage(cause, () => m.tarot_voice_failed()))
         setStatus('error')
       }
     }

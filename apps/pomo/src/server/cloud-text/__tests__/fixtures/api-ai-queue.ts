@@ -8,4 +8,10 @@ export const prepareApiAiQueue = async (database: PGlite): Promise<void> => {
       'utf8',
     ),
   )
+  await database.exec(
+    await readFile(
+      new URL('../../../../../drizzle/0028_api_ai_routing.sql', import.meta.url),
+      'utf8',
+    ),
+  )
 }

@@ -9,6 +9,16 @@ export type SyntaxLanguage =
   | 'jsonc'
   | 'json5'
   | 'html'
+  | 'css'
+  | 'scss'
+  | 'sass'
+  | 'less'
+  | 'vue'
+  | 'svelte'
+  | 'astro'
+  | 'xml'
+  | 'ini'
+  | 'properties'
 const syntax = new Map<string, SyntaxLanguage>([
   ['.rs', 'rust'],
   ['.py', 'python'],
@@ -24,6 +34,18 @@ const syntax = new Map<string, SyntaxLanguage>([
   ['.json5', 'json5'],
   ['.html', 'html'],
   ['.htm', 'html'],
+  ['.css', 'css'],
+  ['.scss', 'scss'],
+  ['.sass', 'sass'],
+  ['.less', 'less'],
+  ['.vue', 'vue'],
+  ['.svelte', 'svelte'],
+  ['.astro', 'astro'],
+  ['.xml', 'xml'],
+  ['.ini', 'ini'],
+  ['.properties', 'properties'],
+  ['.conf', 'ini'],
+  ['.cfg', 'ini'],
 ])
 const namedSyntax = new Map<string, SyntaxLanguage>([
   ['Cargo.lock', 'toml'],
@@ -56,15 +78,6 @@ const text = [
   '.txt',
   '.text',
   '.lock',
-  '.css',
-  '.scss',
-  '.sass',
-  '.less',
-  '.xml',
-  '.ini',
-  '.conf',
-  '.cfg',
-  '.properties',
   '.log',
   '.sh',
   '.bash',
@@ -80,9 +93,6 @@ const text = [
   '.hpp',
   '.cs',
   '.swift',
-  '.vue',
-  '.svelte',
-  '.astro',
   '.graphql',
   '.gql',
   '.proto',

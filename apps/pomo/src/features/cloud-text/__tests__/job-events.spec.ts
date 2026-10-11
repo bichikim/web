@@ -9,7 +9,13 @@ const pending = {
   status: 'running',
   usage,
 }
-const complete = {kind: 'complete', text: '타로 결과', tokenCount: 10, usage}
+const complete = {
+  kind: 'complete',
+  modelId: 'fallback-model',
+  text: '타로 결과',
+  tokenCount: 10,
+  usage,
+}
 it('should consume a completion split across frames and Korean UTF-8 byte boundaries', async () => {
   const bytes = new TextEncoder().encode(
     `${JSON.stringify(pending)}\n${JSON.stringify(complete)}\n`,
@@ -24,7 +30,7 @@ it('should consume a completion split across frames and Korean UTF-8 byte bounda
   })
   expect(await readCloudTextEvents(stream, new AbortController().signal)).toEqual({
     kind: 'complete',
-    response: {text: complete.text, tokenCount: 10, usage},
+    response: {modelId: 'fallback-model', text: complete.text, tokenCount: 10, usage},
   })
 })
 it('should reconnect after a pending connection closes without posting a new generation', async () => {

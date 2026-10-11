@@ -42,6 +42,7 @@ test('should accumulate a layer draft, hide on navigation, preview and explicitl
       )
     }
     edit()
+    expect(session.hasChanges()).toBe(true)
     const first = session.form()!.parts[0]!.vertices[0]!
     edit()
     expect(session.form()!.parts[0]!.vertices[0]).toBe(first + 10)
@@ -49,6 +50,7 @@ test('should accumulate a layer draft, hide on navigation, preview and explicitl
     session.hide()
     setNode('shape-diamond')
     expect(session.form()).toBeUndefined()
+    expect(session.hasChanges()).toBe(true)
     setNode(nodeId)
     expect(session.form()).toBeDefined()
     expect(session.showing()).toBe(false)
@@ -61,6 +63,7 @@ test('should accumulate a layer draft, hide on navigation, preview and explicitl
     expect(session.save()).toBe(true)
     expect(onChange).toHaveBeenCalledOnce()
     expect(session.form()).toBeUndefined()
+    expect(session.hasChanges()).toBe(false)
     dispose()
   }))
 

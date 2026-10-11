@@ -1,6 +1,10 @@
+import type {CalendarWeekendIntent} from './period-range'
+
 interface CreateCalendarWeekdayParserOptions {
   readonly calendarIntentPattern: RegExp
   readonly calendarPeriodBoundaryPattern: RegExp
+  readonly calendarPeriodParticlePattern: RegExp
+  readonly calendarRemainingSchedulePattern: RegExp
   readonly calendarWordStartPattern: string
 }
 
@@ -18,6 +22,9 @@ interface WeekdayDateExpression {
 const WEEKDAY_NAME_PATTERN_SOURCE = '[월화수목금토일]'
 const WEEKDAY_PATTERN_SOURCE = `${WEEKDAY_NAME_PATTERN_SOURCE}(?:요일)?`
 const IMPLICIT_WEEKDAY_NAME_PATTERN_SOURCE = `${WEEKDAY_NAME_PATTERN_SOURCE}요일`
+const CALENDAR_DAYPART_PATTERN_SOURCE = '(?:새벽|아침|오전|점심|오후|저녁|밤|낮|정오)'
+const STANDALONE_WEEKDAY_QUALIFIER_PATTERN =
+  /(?:다가오는|다다음|다음|이번|지난|저번|지지난|오는|매주)\s*[월화수목금토일](?:요일)?/u
 const WEEKDAY_PARTICLE_PATTERN = /(?:에는|에|엔|은|는|이|가|을|를|도)/u
 const WEEKDAY_EXCLUSION_PATTERN = /(?:말고|빼고|제외(?:하고)?|아니|아닌|안\s*(?:되|돼))/u
 const WEEKDAY_EXCLUSION_TERM_PATTERN = new RegExp(`${WEEKDAY_EXCLUSION_PATTERN.source}(?:고)?`, 'u')
@@ -26,7 +33,7 @@ const IMPLICIT_WEEKDAY_SCHEDULE_PATTERN = new RegExp(
   `^\\s*(?:${IMPLICIT_WEEKDAY_NAME_PATTERN_SOURCE}` +
     `(?:\\s*(?:${WEEKDAY_PARTICLE_PATTERN.source}))?` +
     `(?:\\s*(?:${WEEKDAY_EXCLUSION_TERM_PATTERN.source}|${WEEKDAY_LIST_CONNECTOR_PATTERN.source}))?\\s*)+` +
-    `(?:\\s*(?:새벽|아침|오전|점심|오후|저녁|밤|낮|정오))?` +
+    `(?:\\s*${CALENDAR_DAYPART_PATTERN_SOURCE})?` +
     `(?:\\s*(?:${WEEKDAY_PARTICLE_PATTERN.source}))?\\s*` +
     `(?:뭐|무엇|무슨\\s+일)(?:가|이|은|는)?\\s*(?:있|하)(?:어요|어)?[?.!…]*\\s*$`,
   'u',
@@ -40,9 +47,134 @@ export interface WeekdayIntent {
   readonly offsets: ReadonlyArray<number>
 }
 
+export interface WeekdayQueryPeriodContext {
+  readonly includesNextWeek: boolean
+  readonly includesPreviousWeek: boolean
+  readonly includesThisWeek: boolean
+  readonly includesTwoWeeksAgo: boolean
+  readonly includesWeekAfterNext: boolean
+  readonly monthOffsets: ReadonlyArray<number>
+  readonly relativeDayOffsets: ReadonlyArray<number>
+  readonly requestedWeekdayOffsets: ReadonlyArray<number>
+  readonly weekendIntent: CalendarWeekendIntent | null
+}
+
+const hasOtherCalendarPeriod = ({
+  includesNextWeek,
+  includesPreviousWeek,
+  includesThisWeek,
+  includesTwoWeeksAgo,
+  includesWeekAfterNext,
+  monthOffsets,
+  relativeDayOffsets,
+  requestedWeekdayOffsets,
+  weekendIntent,
+}: WeekdayQueryPeriodContext) =>
+  includesNextWeek ||
+  includesPreviousWeek ||
+  includesThisWeek ||
+  includesTwoWeeksAgo ||
+  includesWeekAfterNext ||
+  monthOffsets.length > 0 ||
+  relativeDayOffsets.length > 0 ||
+  requestedWeekdayOffsets.length > 0 ||
+  weekendIntent !== null
+
+const hasMultipleWeekdayExpressions = ({
+  calendarIntentPattern,
+  calendarPeriodBoundaryPattern,
+  calendarPeriodParticlePattern,
+  calendarRemainingSchedulePattern,
+  calendarWordStartPattern,
+  text,
+}: {
+  readonly calendarIntentPattern: RegExp
+  readonly calendarPeriodBoundaryPattern: RegExp
+  readonly calendarPeriodParticlePattern: RegExp
+  readonly calendarRemainingSchedulePattern: RegExp
+  readonly calendarWordStartPattern: string
+  readonly text: string
+}) => {
+  const weekdayExpressionPattern = new RegExp(
+    `${calendarWordStartPattern}${WEEKDAY_PATTERN_SOURCE}${calendarPeriodBoundaryPattern.source}`,
+    'gu',
+  )
+  const calendarListConnectorPatternSource = `${WEEKDAY_LIST_CONNECTOR_PATTERN.source}|이랑|랑`
+  const calendarPeriodParticleAfterWeekdayPatternSource = [
+    `(?!(?:${calendarListConnectorPatternSource})(?=$|[\\s,.!?…]))`,
+    calendarPeriodParticlePattern.source,
+  ].join('')
+  const calendarDaypartExpressionPattern = new RegExp(
+    `(?:${CALENDAR_DAYPART_PATTERN_SOURCE}` +
+      `(?:\\s*${calendarPeriodParticleAfterWeekdayPatternSource})?` +
+      `(?:\\s*${WEEKDAY_EXCLUSION_TERM_PATTERN.source}\\s*${CALENDAR_DAYPART_PATTERN_SOURCE}` +
+      `(?:\\s*${calendarPeriodParticleAfterWeekdayPatternSource})?)?` +
+      `)`,
+    'u',
+  )
+  const calendarIntentAfterWeekdayPattern = new RegExp(
+    `^\\s*(?:${calendarPeriodParticleAfterWeekdayPatternSource}\\s*)?` +
+      `(?:${calendarDaypartExpressionPattern.source}\\s*)?` +
+      `(?:${calendarIntentPattern.source}|${calendarRemainingSchedulePattern.source})`,
+    'u',
+  )
+  const weekdayExpressions = Array.from(text.matchAll(weekdayExpressionPattern))
+  return (
+    weekdayExpressions.filter((match) => {
+      if (match[0].endsWith('요일')) {
+        return true
+      }
+
+      const end = (match.index ?? 0) + match[0].length
+      return calendarIntentAfterWeekdayPattern.test(text.slice(end))
+    }).length > 1
+  )
+}
+
+const createStandaloneWeekdayIntentResolver =
+  ({
+    calendarIntentPattern,
+    calendarPeriodBoundaryPattern,
+    calendarPeriodParticlePattern,
+    calendarRemainingSchedulePattern,
+    calendarWordStartPattern,
+    getWeekdayIntent,
+  }: {
+    readonly calendarIntentPattern: RegExp
+    readonly calendarPeriodBoundaryPattern: RegExp
+    readonly calendarPeriodParticlePattern: RegExp
+    readonly calendarRemainingSchedulePattern: RegExp
+    readonly calendarWordStartPattern: string
+    readonly getWeekdayIntent: (text: string) => WeekdayIntent
+  }) =>
+  (text: string, periodContext: WeekdayQueryPeriodContext): WeekdayIntent | null => {
+    const weekdayIntent = getWeekdayIntent(text)
+    if (
+      !calendarIntentPattern.test(text) ||
+      weekdayIntent.offsets.length !== 1 ||
+      hasMultipleWeekdayExpressions({
+        calendarIntentPattern,
+        calendarPeriodBoundaryPattern,
+        calendarPeriodParticlePattern,
+        calendarRemainingSchedulePattern,
+        calendarWordStartPattern,
+        text,
+      }) ||
+      weekdayIntent.hasExcludedWeekday ||
+      STANDALONE_WEEKDAY_QUALIFIER_PATTERN.test(text) ||
+      hasOtherCalendarPeriod(periodContext)
+    ) {
+      return null
+    }
+
+    return weekdayIntent
+  }
+
 export const createCalendarWeekdayParser = ({
   calendarIntentPattern,
   calendarPeriodBoundaryPattern,
+  calendarPeriodParticlePattern,
+  calendarRemainingSchedulePattern,
   calendarWordStartPattern,
 }: CreateCalendarWeekdayParserOptions) => {
   const weekdayPattern = new RegExp(
@@ -163,7 +295,17 @@ export const createCalendarWeekdayParser = ({
     return {hasExcludedWeekday, offsets: Array.from(weekdayOffsets)}
   }
 
+  const getStandaloneWeekdayIntent = createStandaloneWeekdayIntentResolver({
+    calendarIntentPattern,
+    calendarPeriodBoundaryPattern,
+    calendarPeriodParticlePattern,
+    calendarRemainingSchedulePattern,
+    calendarWordStartPattern,
+    getWeekdayIntent,
+  })
+
   return {
+    getStandaloneWeekdayIntent,
     getWeekdayIntent,
     weekdayExclusionPattern: WEEKDAY_EXCLUSION_PATTERN,
     weekdayPatternSource: WEEKDAY_PATTERN_SOURCE,

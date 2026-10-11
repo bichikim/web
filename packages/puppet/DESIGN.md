@@ -108,6 +108,18 @@ Layout chrome and canvas manipulation handles are separate from form controls. D
 
 Keep the toolbar above a central canvas, the layer tree on the left, the inspector on the right, and parameter/timeline editing below. Panels resize and close independently. Do not let inspector content establish the canvas width or force the entire workspace to scroll.
 
+Show the existing editor frame immediately while the initial document is loading. Use its empty
+document state, announce loading to assistive technology without visible status text, and make the pending frame inert. Never
+connect this temporary frame to document persistence. Replace it with the loaded editor when ready.
+
+Keep routine save and restore success silent. Show actionable failures in a dismissible top-layer
+toast without consuming workspace layout space. Suppress repeated failures until saving recovers.
+
+Fit a newly opened document to the measured canvas viewport. While the camera remains fitted,
+follow viewport size changes; manual pan or zoom retains the user's view until the next fit.
+Layer name filtering ignores surrounding whitespace and letter case, retains ancestors for context,
+and preserves selection and the unfiltered tree's expanded state when cleared.
+
 Use the shared spacing contract below. Compact does not mean touching: retain clear space between a section label, its controls, and the next section. Avoid blank columns between disclosure arrows, layer icons, and titles.
 
 Preserve `min-width: 0` and shrinkable grid tracks where names and fields share a row. Allow action rows to wrap where necessary instead of clipping text. Do not solve overflow by shrinking every control or enlarging every panel.
@@ -175,6 +187,14 @@ Parameter deletion swipes start anywhere on the parameter row except value contr
 
 Keep parameter creation, keyform tools, geometry editing modes, and brush tools on one horizontal toolbar row. When the toolbar itself is at most 60rem wide, show icon-bearing geometry modes and mesh/deformer brush choices as icon-only buttons; preserve accessible names, tooltips, selected states, and control heights. Keep text for choices without icons. Scroll horizontally only when the compact controls still exceed the available width, and keep keyboard-focused actions reachable through the same scroll container.
 
+The animation timeline toolbar groups motion management, playback settings, and keyframe editing in that order. Keep its title beside the motion selector instead of reserving an empty title column. Wrap related groups as available width decreases; at most 60rem of toolbar width, compact icon-bearing actions while retaining accessible names, tooltips, and selected states. Always show the parameter-add label so users can discover how to populate the timeline. Keep easing in the editing group and retain readable, truncated motion names. Constrain the timeline to the editor's actual width even when side panels exceed it. Apply the same layout to the all-motions view.
+
+Place timeline zoom after editing controls. Scale frame widths or fit the duration to the available
+track width without changing keyframe times, selection, or focus. Share zoom with the all-motions
+view and adjust ruler label density to the measured track width.
+
+Create animation keyframes by double-clicking an empty track position, sampling the parameter value at the clicked frame. Backspace or Delete removes selected keyframes while their track or marker has focus. Right-click an empty position to add a keyframe, or an existing marker to delete it; right-clicking a selected marker preserves multi-selection and offers deletion of the selected group. Open the same menu with the Context Menu key or Shift+F10, using the focused marker or the playhead on a focused track. Retain the parameter row when its last keyframe is deleted, including imported motions without explicit timeline row IDs. Hide unavailable menu actions and remove persistent add/delete buttons from the toolbar. Ignore typing, composition, modifier chords, and key repeat, and restore track focus after deletion or closing the menu. Apply the same interactions independently to each motion in the all-motions view, through the existing document history.
+
 Create and delete keyforms through the track/grid context menu rather than persistent toolbar buttons. Right-click selects the requested binding and value; addition is available only at an empty value, and deletion only on an existing keyform. Hide unavailable keyform actions instead of displaying disabled menu items. Double-click an empty track/grid position to create a keyform at that value. Backspace or Delete removes the selected keyform while the track or a marker has focus; typing, composition, modifier chords, and key repeat must not delete keyforms. Preserve preview-only bindings and restore track focus after a menu closes or a marker is deleted. These actions use the existing document history.
 
 Corner generation requires exact center and four axial endpoint forms in a 2D parameter binding. Choose the parameter defaults or range midpoints as the center, and add both axial displacements to that reference. Preserve existing destination forms unless the overwrite checkbox is selected. Errors remain in the dialog; successful application closes it and records one undoable document edit. Mirroring also selects its destination value.
@@ -191,6 +211,12 @@ Reference: [TemporaryFormButton](src/editor/internal/TemporaryFormButton.tsx), [
 - The adjacent close action changes the button to a deletion question. A second click deletes; clicking elsewhere cancels that confirmation.
 
 Keep document edits and temporary previews distinct. Do not describe an unsaved preview as a saved keyform.
+
+## Document history
+
+Keep named document history first in the right inspector's scrollable content, moving with the other properties. Display the newest entry first without changing the underlying undo/redo order. Name property edits by the affected part or deformer and changed property, including keyform edits; summarize multiple targets with the first name and remaining count. Reuse `EditorPropertyGroup` for its legend, border, and inset so it matches the neighboring properties. Let short histories fit their contents and bound longer lists. Keep automatic current-row scrolling within the history list so edits do not move the inspector. Selecting a row restores that document state; distinguish the current row and redoable rows with text as well as color. Continuous edits remain one history entry. Temporary previews belong to the temporary-edit workflow until committed. History lasts for the current editor session; automatic document recovery is a separate action.
+
+Reference: [DocumentHistoryPanel](src/editor/internal/DocumentHistoryPanel.tsx), [document history](src/editor/use-document-history.ts).
 
 ## Preventing drift
 

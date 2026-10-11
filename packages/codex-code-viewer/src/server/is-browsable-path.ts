@@ -11,6 +11,8 @@ const IGNORED = new Set([
   '.turbo',
   'dist',
   'coverage',
+  '__pycache__',
+  'site-packages',
 ])
 
 /** Checks whether a workspace-relative path belongs in file discovery. */

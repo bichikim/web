@@ -12,7 +12,6 @@ import type {
 const provider: ApiAiProvider = {
   apiKey: 'key',
   baseUrl: 'https://api.example/v1',
-  concurrency: 1,
   id: 'primary',
   models: {'cloud-text': 'text-model'},
   poolId: 'primary',
@@ -57,6 +56,7 @@ const repository = {
   claimApiAiCallback: vi.fn(),
   claimApiAiJob: vi.fn(),
   claimApiAiJobDelivery: vi.fn(),
+  expireQueuedApiAiJobs: vi.fn(),
   failUnknownApiAiJob: vi.fn(),
   findApiAiAttempt: vi.fn(),
   findApiAiJob: vi.fn(),
@@ -69,6 +69,7 @@ const repository = {
   markApiAiJobDelivered: vi.fn(),
   recordApiAiResponse: vi.fn(),
   recordApiAiSubmissionError: vi.fn(),
+  resolveApiAiJobProviders: vi.fn(),
 } satisfies ApiAiRepository
 const adapter = {cancel: vi.fn(), retrieve: vi.fn(), submit: vi.fn()}
 const dependencies: ApiAiServiceDependencies = {
@@ -83,6 +84,7 @@ const dependencies: ApiAiServiceDependencies = {
 
 beforeEach(() => {
   vi.resetAllMocks()
+  repository.resolveApiAiJobProviders.mockImplementation(async (_jobId, providers) => providers)
   repository.claimApiAiJob.mockResolvedValue(null)
   repository.claimApiAiAttemptRecovery.mockResolvedValue(true)
   repository.claimApiAiCallback.mockResolvedValue(true)
@@ -92,6 +94,136 @@ beforeEach(() => {
   repository.listQueuedApiAiJobs.mockResolvedValue([])
   repository.listUndeliveredApiAiJobs.mockResolvedValue([])
   adapter.submit.mockResolvedValue(response)
+})
+
+const queuedProvider: ApiAiProvider = {...provider, protocol: 'openrouter-responses-queue'}
+const queue = {adapter: {submit: vi.fn()}, enqueue: vi.fn()}
+const queuedDependencies = {...dependencies, providers: () => [queuedProvider], queue}
+
+it('should route local background execution through the queue without changing provider order', async () => {
+  repository.findApiAiJob.mockResolvedValue({...claim.job, status: 'queued'})
+  await createApiAiService({
+    ...dependencies,
+    queue: {...queue, monitorBackground: true},
+  }).dispatchJob('job-1')
+  expect(queue.enqueue).toHaveBeenCalledExactlyOnceWith('job-1')
+  expect(repository.claimApiAiJob).not.toHaveBeenCalled()
+})
+
+it('should retrieve and deliver a completed background response without a local webhook', async () => {
+  repository.findApiAiJob.mockResolvedValue({...claim.job, status: 'running'})
+  repository.findApiAiAttempt.mockResolvedValue({...claim.attempt, responseId: 'response-1'})
+  adapter.retrieve.mockResolvedValue({...response, outputText: '해석 완료', status: 'completed'})
+  repository.recordApiAiResponse.mockImplementation(async () => {
+    repository.findApiAiJob.mockResolvedValue({...claim.job, status: 'succeeded'})
+  })
+  repository.listUndeliveredApiAiJobs.mockResolvedValue([{...claim.job, status: 'succeeded'}])
+  await createApiAiService({
+    ...dependencies,
+    queue: {...queue, monitorBackground: true},
+  }).executeQueuedJob('job-1')
+  expect(adapter.submit).not.toHaveBeenCalled()
+  expect(adapter.retrieve).toHaveBeenCalledExactlyOnceWith(provider, 'response-1')
+  expect(repository.recordApiAiResponse).toHaveBeenCalledWith(
+    'attempt-1',
+    expect.objectContaining({status: 'completed'}),
+    now,
+  )
+  expect(dependencies.deliver).toHaveBeenCalledOnce()
+})
+
+it('should request local redelivery while the accepted background response is still running', async () => {
+  repository.findApiAiJob.mockResolvedValue({...claim.job, status: 'running'})
+  repository.findApiAiAttempt.mockResolvedValue({...claim.attempt, responseId: 'response-1'})
+  adapter.retrieve.mockResolvedValue({...response, status: 'in_progress'})
+  await expect(
+    createApiAiService({
+      ...dependencies,
+      queue: {...queue, monitorBackground: true},
+    }).executeQueuedJob('job-1'),
+  ).rejects.toThrow('waiting')
+  expect(adapter.submit).not.toHaveBeenCalled()
+})
+
+it('should expire ambiguous local background acceptance without resubmitting', async () => {
+  repository.findApiAiJob.mockResolvedValue({...claim.job, status: 'recovery_pending'})
+  repository.findApiAiAttempt.mockResolvedValue({...claim.attempt, deadlineAt: now})
+  await expect(
+    createApiAiService({
+      ...dependencies,
+      queue: {...queue, monitorBackground: true},
+    }).executeQueuedJob('job-1'),
+  ).rejects.toThrow('waiting')
+  expect(repository.failUnknownApiAiJob).toHaveBeenCalledExactlyOnceWith('job-1', now)
+  expect(adapter.submit).not.toHaveBeenCalled()
+  expect(adapter.retrieve).not.toHaveBeenCalled()
+})
+
+it('should execute a mixed queued order through the correct adapters after definite rejection', async () => {
+  repository.findApiAiJob.mockResolvedValue({...claim.job, status: 'running'})
+  repository.claimApiAiJob
+    .mockResolvedValueOnce({...claim, provider: queuedProvider})
+    .mockResolvedValueOnce({...claim, provider: secondary})
+  queue.adapter.submit.mockRejectedValue({status: 429})
+  await createApiAiService({
+    ...dependencies,
+    providers: () => [queuedProvider, secondary],
+    queue,
+  }).executeQueuedJob('job-1')
+  expect(repository.claimApiAiJob).toHaveBeenCalledWith(
+    'job-1',
+    [queuedProvider, secondary],
+    now,
+    'attempt-1',
+  )
+  expect(queue.adapter.submit).toHaveBeenCalledOnce()
+  expect(adapter.submit).toHaveBeenCalledOnce()
+  expect(repository.recordApiAiSubmissionError).toHaveBeenCalledWith(
+    'attempt-1',
+    expect.objectContaining({acceptance: 'rejected', fallback: true}),
+    now,
+  )
+})
+
+it('should publish only the job ID before acquiring provider capacity', async () => {
+  repository.findApiAiJob.mockResolvedValue({...claim.job, status: 'queued'})
+  await createApiAiService(queuedDependencies).dispatchJob('job-1')
+  expect(queue.enqueue).toHaveBeenCalledExactlyOnceWith('job-1')
+  expect(repository.claimApiAiJob).not.toHaveBeenCalled()
+  expect(queue.adapter.submit).not.toHaveBeenCalled()
+})
+
+it('should execute a queued claim through its adapter and the common result repository', async () => {
+  repository.findApiAiJob.mockResolvedValue({...claim.job, status: 'succeeded'})
+  repository.claimApiAiJob.mockResolvedValueOnce({...claim, provider: queuedProvider})
+  queue.adapter.submit.mockResolvedValue({...response, outputText: '해석', status: 'completed'})
+  await createApiAiService(queuedDependencies).executeQueuedJob('job-1')
+  expect(queue.adapter.submit).toHaveBeenCalledOnce()
+  expect(adapter.submit).not.toHaveBeenCalled()
+  expect(repository.recordApiAiResponse).toHaveBeenCalledWith(
+    'attempt-1',
+    expect.objectContaining({
+      outputText: '해석',
+      status: 'completed',
+    }),
+    now,
+  )
+})
+
+it('should request queue redelivery when shared capacity leaves the job waiting', async () => {
+  repository.findApiAiJob.mockResolvedValue({...claim.job, status: 'queued'})
+  await expect(createApiAiService(queuedDependencies).executeQueuedJob('job-1')).rejects.toThrow(
+    'waiting',
+  )
+  expect(queue.adapter.submit).not.toHaveBeenCalled()
+})
+
+it('should acknowledge cancelled and duplicate running deliveries without submitting again', async () => {
+  repository.findApiAiJob.mockResolvedValue({...claim.job, status: 'cancelled'})
+  await createApiAiService(queuedDependencies).executeQueuedJob('job-1')
+  repository.findApiAiJob.mockResolvedValue({...claim.job, status: 'submitting'})
+  await createApiAiService(queuedDependencies).executeQueuedJob('job-1')
+  expect(queue.adapter.submit).not.toHaveBeenCalled()
 })
 
 it('should submit once and return before background generation completes', async () => {

@@ -143,12 +143,12 @@ describe('SCodeDocument', () => {
         activeMatch={0}
       />
     ))
-    const link = screen.getByRole('link', {name: '정의로 이동: hello'})
+    const link = screen.getByRole('link', {name: '정의·사용처 찾기: hello'})
     const highlight = link.querySelector('mark')!
     expect(link.textContent).toBe('hello')
     expect(highlight.textContent).toBe('el')
     fireEvent.click(highlight)
-    expect(onFollow).toHaveBeenCalledWith(documentFixture.lines[1]![0])
+    expect(onFollow).toHaveBeenCalledWith(documentFixture.lines[1]![0], {x: 0, y: 0})
   })
 
   it('should retain a selected range for context actions and select an outside clicked row', () => {
@@ -184,7 +184,7 @@ describe('SCodeDocument', () => {
         onShare={onShare}
       />
     ))
-    fireEvent.contextMenu(screen.getByRole('link', {name: '정의로 이동: hello'}))
+    fireEvent.contextMenu(screen.getByRole('link', {name: '정의·사용처 찾기: hello'}))
     expect(onSelectText).toHaveBeenCalledWith({
       column: 1,
       endColumn: 6,
@@ -214,7 +214,7 @@ describe('SCodeDocument', () => {
         onSelectText={onSelectText}
       />
     ))
-    const link = screen.getByRole('link', {name: '정의로 이동: hello'})
+    const link = screen.getByRole('link', {name: '정의·사용처 찾기: hello'})
     document.getSelection()!.setBaseAndExtent(link.firstChild!, 1, link.firstChild!, 4)
     fireEvent.click(link, {detail: 1})
     expect(onFollow).not.toHaveBeenCalled()
@@ -232,7 +232,7 @@ describe('SCodeDocument', () => {
         onShare={onShare}
       />
     ))
-    const link = screen.getByRole('link', {name: '정의로 이동: hello'})
+    const link = screen.getByRole('link', {name: '정의·사용처 찾기: hello'})
     document.getSelection()!.setBaseAndExtent(link.firstChild!, 1, link.firstChild!, 4)
     const range = document.getSelection()!.getRangeAt(0)
     range.getClientRects = () =>
@@ -261,7 +261,7 @@ describe('SCodeDocument', () => {
         selection={{...documentFixture.location, endLine: 3}}
       />
     ))
-    const link = screen.getByRole('link', {name: '정의로 이동: hello'})
+    const link = screen.getByRole('link', {name: '정의·사용처 찾기: hello'})
     document.getSelection()!.setBaseAndExtent(link.firstChild!, 1, link.firstChild!, 4)
     document.getSelection()!.getRangeAt(0).getClientRects = () =>
       [{bottom: 30, left: 10, right: 40, top: 10}] as unknown as DOMRectList
@@ -284,7 +284,7 @@ describe('SCodeDocument', () => {
         onShare={onShare}
       />
     ))
-    const link = screen.getByRole('link', {name: '정의로 이동: hello'})
+    const link = screen.getByRole('link', {name: '정의·사용처 찾기: hello'})
     document.getSelection()!.setBaseAndExtent(link.firstChild!, 1, link.firstChild!, 3)
     document.getSelection()!.getRangeAt(0).getClientRects = () =>
       [{bottom: 30, left: 10, right: 30, top: 10}] as unknown as DOMRectList
@@ -334,7 +334,7 @@ describe('SCodeDocument', () => {
   it('should dismiss stale context actions when another file is opened', () => {
     const [file, setFile] = createSignal(documentFixture)
     render(() => <SCodeDocument document={file()} onFollow={vi.fn()} onCopy={vi.fn()} />)
-    fireEvent.contextMenu(screen.getByRole('link', {name: '정의로 이동: hello'}))
+    fireEvent.contextMenu(screen.getByRole('link', {name: '정의·사용처 찾기: hello'}))
     expect(screen.getByRole('menu', {name: '코드 작업'})).toBeDefined()
     setFile({...documentFixture, location: {...documentFixture.location, path: 'src/other.ts'}})
     expect(screen.queryByRole('menu', {name: '코드 작업'})).toBeNull()

@@ -1,3 +1,5 @@
+import {useLocalizedMessage} from '../locale/use-localized-message'
+import {useTranslations} from '../locale/use-translations'
 import {createResource, ErrorBoundary, Show, Suspense} from 'solid-js'
 import {parseSpreadsheet} from './parse-spreadsheet'
 import {parseWordDocument} from './parse-word-document'
@@ -9,6 +11,8 @@ interface SOfficeDocumentProps {
   kind: 'word' | 'spreadsheet'
 }
 export const SOfficeDocument = (props: SOfficeDocumentProps) => {
+  const t = useTranslations()
+  const localize = useLocalizedMessage()
   const [document] = createResource(
     () => ({blob: props.blob, kind: props.kind}),
     async ({blob, kind}) => {
@@ -20,14 +24,14 @@ export const SOfficeDocument = (props: SOfficeDocumentProps) => {
     <ErrorBoundary
       fallback={
         <p role="status" class="m-0 p-4 text-sm text-muted">
-          문서를 불러오지 못했습니다.
+          {t('문서를 불러오지 못했습니다.')}
         </p>
       }
     >
       <Suspense
         fallback={
           <p role="status" class="m-0 p-4 text-sm text-muted">
-            문서 해석 중…
+            {t('문서 해석 중…')}
           </p>
         }
       >
@@ -41,7 +45,7 @@ export const SOfficeDocument = (props: SOfficeDocumentProps) => {
               )
             ) : (
               <p role="status" class="m-0 p-4 text-sm text-muted">
-                {result.message}
+                {localize(result.message)}
               </p>
             )
           }

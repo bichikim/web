@@ -10,6 +10,91 @@ import {EditorLayerPanel} from '../EditorLayerPanel'
 import {convertSceneContainers} from '../container-conversion'
 
 describe('EditorLayerPanel', () => {
+  test('should preserve the filter while Escape is cancelling IME composition', () => {
+    const view = render(() => <EditorLayerPanel document={createDemoDocument()} />)
+    const input = view.getByRole('textbox', {name: '레이어 이름 필터'})
+    fireEvent.input(input, {target: {value: '한글'}})
+    fireEvent.keyDown(input, {isComposing: true, key: 'Escape'})
+    expect(input).toHaveValue('한글')
+    fireEvent.keyDown(input, {key: 'Escape'})
+    expect(input).toHaveValue('')
+  })
+  test('should keep matching descendants visible when a new ancestor is introduced while filtering', () => {
+    const [document, setDocument] = createSignal(createDemoDocument())
+    const view = render(() => <EditorLayerPanel document={document()} />)
+    fireEvent.input(view.getByRole('textbox', {name: '레이어 이름 필터'}), {
+      target: {value: 'circle'},
+    })
+    expect(view.getByRole('button', {name: 'shape-circle 레이어 선택'})).toBeVisible()
+    setDocument(createDeformer(document(), ['shape-circle'])!)
+    expect(view.getByRole('button', {name: 'shape-circle 레이어 선택'})).toBeVisible()
+  })
+
+  test('should return keyboard focus to the filter input after clearing it', () => {
+    const view = render(() => <EditorLayerPanel document={createDemoDocument()} />)
+    const input = view.getByRole('textbox', {name: '레이어 이름 필터'})
+    fireEvent.input(input, {target: {value: 'circle'}})
+    const clear = view.getByRole('button', {name: '레이어 필터 지우기'})
+    clear.focus()
+    fireEvent.click(clear)
+    expect(input).toHaveValue('')
+    expect(input).toHaveFocus()
+  })
+
+  test('should retain a manually collapsed filtered group across document edits', () => {
+    const [document, setDocument] = createSignal(createDemoDocument())
+    const view = render(() => (
+      <EditorLayerPanel document={document()} onDocumentChange={setDocument} />
+    ))
+    fireEvent.input(view.getByRole('textbox', {name: '레이어 이름 필터'}), {
+      target: {value: 'circle'},
+    })
+    fireEvent.click(view.getByRole('button', {name: 'Shapes 접기'}))
+    fireEvent.click(view.getByRole('button', {name: 'Shapes 숨기기'}))
+    const expand = view.getByRole('button', {name: 'Shapes 펼치기'})
+    expect(expand).toBeVisible()
+    expect(expand.closest('[role="treeitem"]')).toHaveAttribute('aria-expanded', 'false')
+    expect(expand.closest('.layer-tree-node')).toHaveAttribute('data-closed')
+  })
+
+  test('should filter layer names while retaining their ancestors and selection', () => {
+    const onSelectionChange = vi.fn()
+    const view = render(() => (
+      <EditorLayerPanel
+        document={createDemoDocument()}
+        selection={{activeNodeId: 'shape-diamond', nodeIds: ['shape-diamond']}}
+        onSelectionChange={onSelectionChange}
+      />
+    ))
+    fireEvent.click(view.getByRole('button', {name: 'Shapes 접기'}))
+    const filter = view.getByRole('textbox', {name: '레이어 이름 필터'})
+    fireEvent.input(filter, {target: {value: '  CIRCLE  '}})
+    expect(view.getByRole('button', {name: 'Shapes 레이어 선택'})).toBeInTheDocument()
+    expect(view.getByRole('button', {name: 'shape-circle 레이어 선택'})).toBeInTheDocument()
+    expect(view.queryByRole('button', {name: 'shape-diamond 레이어 선택'})).not.toBeInTheDocument()
+    expect(onSelectionChange).not.toHaveBeenCalled()
+    fireEvent.input(filter, {target: {value: '없는 레이어'}})
+    expect(view.getByRole('status')).toHaveTextContent('일치하는 레이어가 없습니다.')
+    fireEvent.click(view.getByRole('button', {name: '레이어 필터 지우기'}))
+    expect(filter).toHaveValue('')
+    expect(view.getByRole('button', {name: 'Shapes 펼치기'})).toBeInTheDocument()
+    expect(onSelectionChange).not.toHaveBeenCalled()
+  })
+  test('should retain nested rows and focus while updating visibility', () => {
+    const [document, setDocument] = createSignal(createDemoDocument())
+    const view = render(() => (
+      <EditorLayerPanel document={document()} onDocumentChange={setDocument} />
+    ))
+    const rows = view.getAllByRole('treeitem')
+    const toggle = view.getByRole('button', {name: 'shape-circle 숨기기'})
+    toggle.focus()
+    fireEvent.click(toggle)
+
+    view.getAllByRole('treeitem').forEach((row, index) => expect(row).toBe(rows[index]))
+    expect(view.getByRole('button', {name: 'shape-circle 표시하기'})).toBe(toggle)
+    expect(toggle).toHaveFocus()
+  })
+
   test('should distinguish a 3D deformer from a free deformation deformer in the layer tree', () => {
     const spatial = convertSceneContainers({
       document: createDemoDocument(),

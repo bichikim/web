@@ -5,7 +5,7 @@ import {useLatestRequest} from './use-latest-request'
 
 export const useOpenFile = (
   port: ViewerPort,
-  receive: (session: ViewerSession, options?: NavigationOptions) => void,
+  receive: (session: ViewerSession, options?: NavigationOptions) => void | Promise<void>,
   report: (error: unknown) => void,
 ) => {
   const request = useLatestRequest(report)
@@ -22,9 +22,9 @@ export const useOpenFile = (
     }, closeDiscarded)
     if (result !== null) {
       if (options === undefined) {
-        receive(result)
+        await receive(result)
       } else {
-        receive(result, options)
+        await receive(result, options)
       }
     }
     return result !== null

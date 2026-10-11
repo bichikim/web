@@ -8,6 +8,8 @@ import {z} from 'zod'
 import {collectLicenseNotices} from './build/collect-license-notices'
 import {inlineScript} from './build/inline-script'
 import {inlineHtml} from './build/inline-html'
+import {bundleRustAnalyzers} from './build/bundle-rust-analyzers'
+import rustAnalyzers from './rust-analyzers.json' with {type: 'json'}
 
 const root = dirname(fileURLToPath(import.meta.url))
 const output = `${root}/dist`
@@ -26,6 +28,7 @@ const stylesheet = assets
 const template = await readFile(`${root}/index.html`, 'utf8')
 const html = inlineHtml({entrypoint: '/src/viewer/main.tsx', javascript, stylesheet, template})
 await mkdir(output, {recursive: true})
+await bundleRustAnalyzers({output, ...rustAnalyzers})
 const library = dirname(typescript.getDefaultLibFilePath({}))
 const declarations = (await readdir(library)).filter(
   (file) => file.startsWith('lib.') && file.endsWith('.d.ts'),
@@ -70,8 +73,13 @@ await writeFile(
     `<style>${stylesheet}</style></head>`,
     '<body class="m-0 p-0 h-screen flex flex-col bg-surface font-sans text-foreground">',
     '<label class="flex items-center gap-2 px-4 py-2 text-sm">테마 미리보기',
-    '<select aria-label="호스트 테마" class="ui-input py-1">',
+    '<select id="host-theme" aria-label="호스트 테마" class="ui-input py-1">',
     '<option value="system">시스템</option><option value="light">밝게</option><option value="dark">어둡게</option>',
+    '</select></label>',
+    '<label class="flex items-center gap-2 px-4 pb-2 text-sm">Host language',
+    '<select id="host-locale" aria-label="Host language" class="ui-input py-1">',
+    '<option value="auto">Browser</option><option value="ko-KR">한국어</option>',
+    '<option value="en-US">English</option><option value="ja-JP">日本語 (fallback)</option>',
     '</select></label><details class="px-4 text-sm">',
     '<summary>채팅 컨텍스트 미리보기 (<output>0</output>)</summary>',
     '<ul></ul><button type="button">컨텍스트 비우기</button></details>',
@@ -89,10 +97,13 @@ const server = await bundle({
     ].join('\n'),
   },
   bundle: true,
-  entryPoints: [`${root}/src/server/main.ts`],
+  entryPoints: {
+    'navigation-worker': `${root}/src/server/navigation-worker.ts`,
+    server: `${root}/src/server/main.ts`,
+  },
   format: 'esm',
   metafile: true,
-  outfile: `${output}/server.js`,
+  outdir: output,
   platform: 'node',
   target: 'node24',
 })
@@ -138,7 +149,13 @@ const pdfLicenses = await Promise.all(
     )
   }),
 )
-const licenses = `${packageLicenses}\n${pdfLicenses.flat().join('\n\n')}\n`
+const rustLicenses = await Promise.all(
+  ['rust-analyzer-mit.txt', 'rust-analyzer-apache.txt'].map(
+    async (file) =>
+      `## rust-analyzer/${file}\n\n${await readFile(`${root}/build/licenses/${file}`, 'utf8')}`,
+  ),
+)
+const licenses = `${packageLicenses}\n${pdfLicenses.flat().join('\n\n')}\n${rustLicenses.join('\n\n')}\n`
 const plugin = `${output}/plugin`
 await rm(plugin, {force: true, recursive: true})
 await mkdir(`${plugin}/dist`, {recursive: true})
@@ -148,11 +165,16 @@ await Promise.all([
   ...['.codex-plugin/plugin.json', '.mcp.json'].map((file) =>
     copyFile(`${root}/${file}`, `${plugin}/${file}`),
   ),
-  ...['server.js', 'app.html', 'install.js', ...declarations].map((file) =>
+  ...['server.js', 'navigation-worker.js', 'app.html', 'install.js', ...declarations].map((file) =>
     copyFile(`${output}/${file}`, `${plugin}/dist/${file}`),
   ),
   cp(`${root}/assets`, `${plugin}/assets`, {recursive: true}),
   cp(`${output}/python`, `${plugin}/dist/python`, {recursive: true}),
+  ...rustAnalyzers.assets.map(async ({host}) => {
+    const binary = host.startsWith('win32-') ? 'rust-analyzer.exe' : 'rust-analyzer'
+    await mkdir(`${plugin}/dist/rust/${host}`, {recursive: true})
+    await copyFile(`${output}/rust/${host}/${binary}`, `${plugin}/dist/rust/${host}/${binary}`)
+  }),
   copyFile(`${root}/README.md`, `${plugin}/README.md`),
   writeFile(`${plugin}/THIRD_PARTY_LICENSES.md`, licenses),
   writeFile(`${output}/THIRD_PARTY_LICENSES.md`, licenses),

@@ -14,11 +14,13 @@ import {
   createCalendarWeekdayParser,
   isImplicitWeekdaySchedule,
   type WeekdayIntent,
+  type WeekdayQueryPeriodContext,
 } from './weekday-expression'
 import {dayjs} from 'src/utils/zoned-dayjs'
 import type {CalendarEventQuery, CalendarEventRange} from './types'
 
 const CALENDAR_INTENT_PATTERN = /(?:일정|미팅|회의|약속|스케줄)/u
+const REMAINING_SCHEDULE_PATTERN = /남은\s*(?:일정|미팅|회의|약속|스케줄)/u
 const CALENDAR_PERIOD_PARTICLE_PATTERN =
   /(?:에는|에서|부터|까지|이랑|하고|은|는|이|가|을|를|에|엔|도|로|만|중|쯤|의|과|와|랑)(?=$|[\s,.!?…])/u
 const CALENDAR_PERIOD_BOUNDARY_PATTERN = new RegExp(
@@ -38,12 +40,14 @@ const PREVIOUS_MONTH_PATTERN = new RegExp(`지난 ?달${CALENDAR_PERIOD_BOUNDARY
 const NEXT_WEEK_TERM_PATTERN = '(?<!다)다음 ?주'
 const NEXT_WEEK_TERM_REGEXP = new RegExp(NEXT_WEEK_TERM_PATTERN, 'u')
 const {
+  getStandaloneWeekdayIntent,
   getWeekdayIntent,
-  weekdayExclusionPattern: WEEKDAY_EXCLUSION_PATTERN,
   weekdayPatternSource: WEEKDAY_PATTERN_SOURCE,
 } = createCalendarWeekdayParser({
   calendarIntentPattern: CALENDAR_INTENT_PATTERN,
   calendarPeriodBoundaryPattern: CALENDAR_PERIOD_BOUNDARY_PATTERN,
+  calendarPeriodParticlePattern: CALENDAR_PERIOD_PARTICLE_PATTERN,
+  calendarRemainingSchedulePattern: REMAINING_SCHEDULE_PATTERN,
   calendarWordStartPattern: CALENDAR_WORD_START_PATTERN,
 })
 const WEEK_AFTER_NEXT_TERM_PATTERN = `${CALENDAR_WORD_START_PATTERN}다다음 ?주`
@@ -155,7 +159,6 @@ const CALENDAR_DAYPART_WINDOWS = [
   {end: '21:00:00', endDayOffset: 0, name: '저녁', start: '18:00:00'},
   {end: '00:00:00', endDayOffset: 1, name: '밤', start: '21:00:00'},
 ] as const
-const REMAINING_SCHEDULE_PATTERN = /남은\s*(?:일정|미팅|회의|약속|스케줄)/u
 const CALENDAR_DAYPART_NAMES = ['정오', ...CALENDAR_DAYPART_WINDOWS.map(({name}) => name)]
 
 const includesUnexcludedCalendarDaypart = (text: string, name: string) =>
@@ -222,17 +225,7 @@ interface CreateCalendarQueryOptions {
   readonly timeZone?: string
 }
 
-interface CalendarQueryIntent {
-  readonly includesNextWeek: boolean
-  readonly includesPreviousWeek: boolean
-  readonly includesThisWeek: boolean
-  readonly includesTwoWeeksAgo: boolean
-  readonly includesWeekAfterNext: boolean
-  readonly monthOffsets: ReadonlyArray<number>
-  readonly relativeDayOffsets: ReadonlyArray<number>
-  readonly requestedWeekdayOffsets: ReadonlyArray<number>
-  readonly weekendIntent: CalendarWeekendIntent | null
-}
+type CalendarQueryIntent = WeekdayQueryPeriodContext
 
 interface CreateCalendarDateRangeOptions {
   readonly afternoonStart: Date
@@ -522,17 +515,20 @@ export const createCalendarQuery = (
     const date = dayjs.utc(local.format('YYYY-MM-DD')).add(days, 'day').format('YYYY-MM-DD')
     return dayjs.tz(`${date}T${time}`, timeZone).toDate()
   }
-
-  if (isImplicitWeekdaySchedule(options.text)) {
-    return createStandaloneCalendarWeekdayRange({
+  const createWeekdayRange = (text: string, weekdays: ReadonlyArray<number>) =>
+    createStandaloneCalendarWeekdayRange({
       boundary,
       currentWeekday: local.day(),
       now,
-      text: options.text,
-      weekdays: getWeekdayIntent(options.text).offsets,
+      text,
+      weekdays,
     })
+
+  if (isImplicitWeekdaySchedule(options.text)) {
+    return createWeekdayRange(options.text, getWeekdayIntent(options.text).offsets)
   }
 
+  const queryIntent = getCalendarQueryIntent(options.text)
   const {
     includesNextWeek,
     includesPreviousWeek,
@@ -543,7 +539,11 @@ export const createCalendarQuery = (
     relativeDayOffsets,
     requestedWeekdayOffsets,
     weekendIntent,
-  } = getCalendarQueryIntent(options.text)
+  } = queryIntent
+  const standaloneWeekdayIntent = getStandaloneWeekdayIntent(options.text, queryIntent)
+  if (standaloneWeekdayIntent !== null) {
+    return createWeekdayRange(options.text, standaloneWeekdayIntent.offsets)
+  }
   const standaloneDateRange = createStandaloneCalendarDateRange({
     boundary,
     includesNextWeek,

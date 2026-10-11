@@ -20,7 +20,7 @@ export const usePlayback = (props: UsePlaybackProps) => {
   const [startedAt, setStartedAt] = createSignal<number | null>(null)
   const eligibleIds = createMemo(() => {
     const failed = props.background.failedIds()
-    return excludeByIds(props.background.items(), failed).map((item) => item.id)
+    return excludeByIds(props.background.items(), failed, (item) => item.id).map((item) => item.id)
   })
   const current = createMemo(
     () => props.background.items().find((item) => item.id === slide().current) ?? null,

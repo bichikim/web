@@ -5,6 +5,7 @@ import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 import type {CodeDocument} from '../../shared/contracts'
 import {SFileDocument} from '../SFileDocument'
 import type {ViewerPort} from '../types'
+import {useCodeEditing} from '../use-code-editing'
 
 describe('SFileDocument', () => {
   const originalScroll = Object.getOwnPropertyDescriptor(HTMLElement.prototype, 'scrollIntoView')
@@ -31,6 +32,48 @@ describe('SFileDocument', () => {
     revision: 'first',
     source: '# 문서',
   }
+  it('should combine display and editing controls in one toolbar and preview unsaved Markdown', () => {
+    let editing: ReturnType<typeof useCodeEditing>
+    render(() => {
+      editing = useCodeEditing({
+        port,
+        session: () => ({document, session: 'session', workspace: '/project'}),
+      })
+      return (
+        <SFileDocument
+          document={document}
+          port={port}
+          session="session"
+          editing={editing}
+          editor={
+            <textarea
+              aria-label="예제 편집기"
+              value={editing.source()}
+              readOnly={!editing.enabled()}
+            />
+          }
+          onFollow={vi.fn()}
+        />
+      )
+    })
+    const toolbar = screen.getByRole('group', {name: '문서 도구'})
+    expect(toolbar.contains(screen.getByRole('button', {name: '미리보기'}))).toBe(true)
+    expect(toolbar.contains(screen.getByRole('button', {name: '편집'}))).toBe(true)
+    fireEvent.click(screen.getByRole('button', {name: '편집'}))
+    expect(screen.getAllByRole('group', {name: '문서 도구'})).toHaveLength(1)
+    expect(screen.queryByRole('button', {name: '미리보기'})).toBeNull()
+    expect(screen.getByRole('textbox', {name: '예제 편집기'})).not.toHaveAttribute('readonly')
+    expect(screen.getByRole('button', {name: '저장'})).toBeDisabled()
+    editing!.change('# 수정한 문서')
+    expect(screen.getByRole('button', {name: '저장'})).toBeEnabled()
+    fireEvent.click(screen.getByRole('button', {name: '편집'}))
+    expect(screen.getByRole('heading', {name: '수정한 문서'})).toBeTruthy()
+    expect(editing!.dirty()).toBe(true)
+    expect(screen.queryByRole('button', {name: '저장'})).toBeNull()
+    fireEvent.click(screen.getByRole('button', {name: '원문'}))
+    expect(screen.getByRole('textbox', {name: '예제 편집기'})).toHaveAttribute('readonly')
+    expect(screen.getByRole('textbox', {name: '예제 편집기'})).toHaveValue('# 수정한 문서')
+  })
   it('should switch Markdown to original during search and keep it after search closes', () => {
     const [visible, setVisible] = createSignal(false)
     render(() => (

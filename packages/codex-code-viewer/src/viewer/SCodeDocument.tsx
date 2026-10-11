@@ -1,6 +1,7 @@
+import {useTranslations} from './locale/use-translations'
 import {createEffect, createSignal, For, onCleanup, Show, untrack} from 'solid-js'
 import type {CodeDocument, CodeToken} from '../shared/contracts'
-import type {CodeSelection, CodeTextRange} from './types'
+import type {CodeSelection, CodeTextRange, NavigationPoint} from './types'
 import {SCodeLine} from './SCodeLine'
 import {useScrollRestoration} from './use-scroll-restoration'
 import {useCodeInteraction} from './use-code-interaction'
@@ -10,7 +11,7 @@ import {SCodeContextMenu} from './SCodeContextMenu'
 
 export interface SCodeDocumentProps {
   document: CodeDocument
-  onFollow: (token: CodeToken) => void
+  onFollow: (token: CodeToken, point?: NavigationPoint) => void
   onSelect?: (anchor: number, focus: number) => void
   onSelectText?: (range: CodeTextRange) => void
   selection?: CodeSelection
@@ -23,6 +24,7 @@ export interface SCodeDocumentProps {
 }
 
 export const SCodeDocument = (props: SCodeDocumentProps) => {
+  const t = useTranslations()
   const [element, setElement] = createSignal<HTMLDivElement | null>(null)
   const scroll = useScrollRestoration({
     content: () => props.document,
@@ -36,7 +38,7 @@ export const SCodeDocument = (props: SCodeDocumentProps) => {
   const interaction = useCodeInteraction({
     container: element,
     document: () => props.document,
-    onFollow: (token) => props.onFollow(token),
+    onFollow: (token, point) => props.onFollow(token, point),
     onSelect: (line, endLine) => props.onSelect?.(line, endLine),
     onSelectText: (range) => props.onSelectText?.(range),
     selectable: () => props.onSelect !== undefined,
@@ -74,7 +76,8 @@ export const SCodeDocument = (props: SCodeDocumentProps) => {
   return (
     <>
       <div
-        aria-label="소스 코드"
+        data-code-source
+        aria-label={t('소스 코드')}
         class="min-h-0 flex-1 overflow-auto bg-canvas"
         onScroll={scroll.record}
         onClick={interaction.handleClick}
@@ -87,7 +90,7 @@ export const SCodeDocument = (props: SCodeDocumentProps) => {
         onPointerUp={interaction.handlePointerEnd}
         ref={setElement}
       >
-        <pre class="m-0 w-max min-w-full pb-4 font-mono text-[13px] leading-6 tab-size-2">
+        <pre class="ui-code-text m-0 w-max min-w-full pb-4 selection:bg-code-selection">
           <For each={props.document.lines}>
             {(tokens, index) => (
               <SCodeLine

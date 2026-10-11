@@ -15,19 +15,24 @@ import {
   type ViewerError,
 } from '../shared/contracts'
 import {readDefinitionLocations} from './lsp/read-definition-locations'
+import {readConfiguration} from './lsp/read-configuration'
+import {createWorkspaceSync} from './lsp/create-workspace-sync'
 import {offsetPosition} from './lsp/offset-position'
+import type {SourceChange, SymbolLookup} from './types'
 
 interface LspReadiness {
   readonly method: string
   readonly complete: (value: unknown) => boolean
 }
-interface LspDocument {
-  readonly source: string
-  readonly version: number
-}
 interface LspService {
-  definitions(path: string, source: string, offset: number): Promise<Result<CodeLocation[]>>
+  lookupSymbols(
+    path: string,
+    source: string,
+    offset: number,
+    lookup: SymbolLookup,
+  ): Promise<Result<CodeLocation[]>>
   dispose(): void
+  update(root: string, changes: readonly SourceChange[]): void
 }
 interface CreateLspServiceOptions {
   readonly command: string
@@ -42,6 +47,7 @@ interface CreateLspServiceOptions {
   readonly initialization?: Readonly<Record<string, unknown>>
   readonly configuration?: Readonly<Record<string, unknown>>
   readonly readiness?: LspReadiness
+  readonly waitForReferenceDiagnostics?: boolean
 }
 
 const incrementalSchema = z.object({
@@ -62,7 +68,12 @@ export const createLspService = (options: CreateLspServiceOptions): LspService =
     new StreamMessageWriter(child.stdin),
   )
   const ready = Promise.withResolvers<Result<void>>()
-  const documents = new Map<string, LspDocument>()
+  const documents = createWorkspaceSync({
+    connection,
+    diagnostics: options.waitForReferenceDiagnostics,
+    encoding: options.positionEncoding,
+    language: options.language,
+  })
   let terminal: Failure | undefined
   let initialized = false
   let incremental = false
@@ -72,6 +83,7 @@ export const createLspService = (options: CreateLspServiceOptions): LspService =
     }
     terminal = error
     ready.resolve(error)
+    documents.dispose()
     connection.dispose()
     if (grouped && child.pid !== undefined) {
       try {
@@ -95,14 +107,9 @@ export const createLspService = (options: CreateLspServiceOptions): LspService =
       }
     })
   }
-  connection.onRequest('workspace/configuration', (value: unknown) => {
-    const request = z
-      .object({items: z.array(z.object({section: z.string().optional()}))})
-      .parse(value)
-    return request.items.map((item) =>
-      item.section === undefined ? null : (options.configuration?.[item.section] ?? null),
-    )
-  })
+  connection.onRequest('workspace/configuration', (value: unknown) =>
+    readConfiguration(value, options.configuration),
+  )
   connection.listen()
   const initialize = async (): Promise<Result<void>> => {
     try {
@@ -137,7 +144,9 @@ export const createLspService = (options: CreateLspServiceOptions): LspService =
     path: string,
     source: string,
     offset: number,
+    lookup: SymbolLookup,
   ): Promise<Result<CodeLocation[]>> => {
+    const {kind, draft = false} = lookup
     const prepared = await initialization
     if (!prepared.ok) {
       return prepared
@@ -145,39 +154,16 @@ export const createLspService = (options: CreateLspServiceOptions): LspService =
     if (terminal !== undefined) {
       return terminal
     }
-    const uri = pathToFileURL(path).href
-    const previous = documents.get(uri)
     try {
-      if (previous === undefined) {
-        await connection.sendNotification('textDocument/didOpen', {
-          textDocument: {languageId: options.language, text: source, uri, version: 1},
-        })
-        documents.set(uri, {source, version: 1})
-      } else if (previous.source !== source) {
-        const version = previous.version + 1
-        await connection.sendNotification('textDocument/didChange', {
-          contentChanges: [
-            {
-              ...(incremental
-                ? {
-                    range: {
-                      end: offsetPosition(
-                        previous.source,
-                        previous.source.length,
-                        options.positionEncoding,
-                      ),
-                      start: {character: 0, line: 0},
-                    },
-                  }
-                : {}),
-              text: source,
-            },
-          ],
-          textDocument: {uri, version},
-        })
-        documents.set(uri, {source, version})
+      const uri = await documents.synchronize(path, source, incremental, draft)
+      if (kind === 'references') {
+        await documents.waitForAnalysis(uri)
       }
-      const targets = await connection.sendRequest<unknown>('textDocument/definition', {
+      if (terminal !== undefined) {
+        return terminal
+      }
+      const targets = await connection.sendRequest<unknown>(`textDocument/${kind}`, {
+        ...(kind === 'references' ? {context: {includeDeclaration: false}} : {}),
         position: offsetPosition(source, offset, options.positionEncoding),
         textDocument: {uri},
       })
@@ -187,14 +173,19 @@ export const createLspService = (options: CreateLspServiceOptions): LspService =
     }
   }
   let pending = Promise.resolve()
-  const definitions = (
+  const lookupSymbols = (
     path: string,
     source: string,
     offset: number,
+    request: SymbolLookup,
   ): Promise<Result<CodeLocation[]>> => {
-    const result = pending.then(() => lookup(path, source, offset))
+    const result = pending.then(() => lookup(path, source, offset, request))
     pending = result.then(() => undefined)
     return result
   }
-  return {definitions, dispose: () => stop(failure(options.failed))}
+  return {
+    dispose: () => stop(failure(options.failed)),
+    lookupSymbols,
+    update: documents.update,
+  }
 }

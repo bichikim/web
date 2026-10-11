@@ -1,4 +1,5 @@
 import {uniq} from 'es-toolkit/array'
+import {once} from 'es-toolkit/function'
 export {
   deleteStoredDialogueAudio,
   type DialogueAudioDeletionResult,
@@ -110,12 +111,10 @@ interface TossReadResult {
 }
 
 const COMPLETE_RESET_RESULT: CompleteOptionResetResult = {status: 'complete'}
-let tossStoragePromise: Promise<TossOptionResetStorage> | null = null
-
-const loadTossStorage = (): Promise<TossOptionResetStorage> => {
-  tossStoragePromise ??= import('@apps-in-toss/web-framework').then(({Storage}) => Storage)
-  return tossStoragePromise
-}
+const loadTossStorage = once(
+  (): Promise<TossOptionResetStorage> =>
+    import('@apps-in-toss/web-framework').then(({Storage}) => Storage),
+)
 
 const withResetError = async <Result>(operation: () => Promise<Result>): Promise<Result> => {
   try {

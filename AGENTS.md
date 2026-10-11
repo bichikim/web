@@ -6,6 +6,14 @@
 - **Intent gate**: State the concrete interpretation at task start and when the scope or direction changes.
 - **Existing code references**: When discussing existing code, always include a clickable link to its exact file and line number so the link opens at that line.
 
+## UI communication
+
+Explanations and notices tend to accumulate as AI adds features, crowding the workspace and competing with the user's actual task. Keep feedback proportionate so the interface remains focused on the work.
+
+- Keep user-facing UI text concise; avoid verbose explanations and persistent status text whenever possible.
+- Prefer toasts or other transient feedback that does not consume layout space. Keep routine success silent; show concise feedback when the user needs to act.
+- Use persistent inline guidance only when it is necessary to complete the current task or understand the current state.
+
 ## Code review
 
 - For Codex code reviews, read and follow the `critical-review` skill at `.agents/skills/critical-review/SKILL.md`.

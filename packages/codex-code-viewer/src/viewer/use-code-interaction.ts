@@ -1,6 +1,6 @@
 import {type Accessor, createEffect, createSignal} from 'solid-js'
 import type {CodeDocument, CodeToken} from '../shared/contracts'
-import type {CodeSelection, CodeTextRange} from './types'
+import type {CodeSelection, CodeTextRange, NavigationPoint} from './types'
 import {useTextSelection} from './use-text-selection'
 import {getKeyboardLine} from './get-keyboard-line'
 
@@ -11,7 +11,7 @@ interface CodeInteractionOptions {
   selectable: Accessor<boolean>
   onSelect?: (anchor: number, focus: number) => void
   onSelectText?: (range: CodeTextRange) => void
-  onFollow: (token: CodeToken) => void
+  onFollow: (token: CodeToken, point?: NavigationPoint) => void
 }
 
 interface LineDrag {
@@ -147,7 +147,8 @@ export const useCodeInteraction = (options: CodeInteractionOptions) => {
       .lines.flat()
       .find((entry) => entry.offset === offset && entry.navigation !== null)
     if (token !== undefined) {
-      options.onFollow(token)
+      const rect = link.getBoundingClientRect()
+      options.onFollow(token, {x: rect.left, y: rect.bottom})
     }
   }
   return {

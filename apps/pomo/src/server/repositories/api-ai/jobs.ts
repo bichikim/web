@@ -77,6 +77,24 @@ export const findApiAiJob = async (jobId: string): Promise<ApiAiJob | null> => {
   return job ?? null
 }
 
+/** Ends waiting jobs whose queue or existing generation deadline has elapsed. */
+export const expireQueuedApiAiJobs = async (now: Date): Promise<void> => {
+  await getDatabase()
+    .update(apiAiJobs)
+    .set({
+      completedAt: now,
+      errorMessage: 'AI job deadline exceeded',
+      nextAttemptAt: now,
+      status: 'failed',
+    })
+    .where(
+      and(
+        eq(apiAiJobs.status, 'queued'),
+        sql`coalesce(${apiAiJobs.executionExpiresAt}, ${apiAiJobs.queueExpiresAt}) <= ${now}`,
+      ),
+    )
+}
+
 export const listQueuedApiAiJobs = (now: Date): Promise<ReadonlyArray<ApiAiJobReference>> =>
   getDatabase()
     .select({id: apiAiJobs.id})

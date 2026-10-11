@@ -14,6 +14,7 @@ import {reserveCloudText} from './quota'
 export type CloudTextResult =
   | {
       readonly kind: 'complete'
+      readonly modelId: string | null
       readonly text: string
       readonly tokenCount: number
       readonly usage: CloudTextUsage
@@ -64,8 +65,14 @@ export const generateCloudText = async (
     userId,
   })
   switch (reservation.kind) {
-    case 'existing':
-      return {...reservation, kind: 'complete'}
+    case 'existing': {
+      const job = await findApiAiJob(request.requestId)
+      return {
+        ...reservation,
+        kind: 'complete',
+        modelId: job?.ownerId === userId ? (job.result?.model ?? null) : null,
+      }
+    }
     case 'conflict':
     case 'failed':
     case 'exhausted':

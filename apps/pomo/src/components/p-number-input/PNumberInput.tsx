@@ -1,4 +1,3 @@
-import {callEventHandler} from 'src/utils/call-event-handler'
 import {cva, cx} from 'class-variance-authority'
 import {createEffect, createSignal, type JSX, Show, splitProps, untrack} from 'solid-js'
 import {CONTROL_HEIGHT_CLASSES, CONTROL_PADDING_CLASSES} from '../control-size-classes'
@@ -48,6 +47,7 @@ type NativeInputProps = Omit<
   | 'min'
   | 'onChange'
   | 'onInput'
+  | 'onKeyDown'
   | 'readOnly'
   | 'size'
   | 'step'
@@ -64,6 +64,7 @@ export interface PNumberInputProps extends NativeInputProps {
   readonly max?: number
   readonly min?: number
   readonly onInputValueChange?: (value: string) => void
+  readonly onKeyDown?: JSX.EventHandler<HTMLInputElement, KeyboardEvent>
   readonly onValueChange?: (value: number) => void
   readonly readOnly?: boolean
   readonly size?: 'medium' | 'small'
@@ -131,11 +132,11 @@ const getRange = (min: number | undefined, max: number | undefined) => {
 
 const handleNumberInputKeyDown = (
   event: Parameters<JSX.EventHandler<HTMLInputElement, KeyboardEvent>>[0],
-  handler: JSX.EventHandlerUnion<HTMLInputElement, KeyboardEvent> | undefined,
+  handler: JSX.EventHandler<HTMLInputElement, KeyboardEvent> | undefined,
   shouldStep: boolean,
   changeByStep: (direction: -1 | 1) => void,
 ) => {
-  callEventHandler(handler, event)
+  handler?.(event)
 
   if (
     event.defaultPrevented ||

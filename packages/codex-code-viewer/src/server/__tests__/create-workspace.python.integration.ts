@@ -3,6 +3,7 @@ import {tmpdir} from 'node:os'
 import {join} from 'node:path'
 import {afterEach, beforeEach, describe, expect, it} from 'vitest'
 import {createWorkspace} from '../create-workspace'
+import {resolveNavigation} from '../resolve-navigation'
 
 describe('createWorkspace Python navigation', () => {
   let root: string
@@ -17,6 +18,46 @@ describe('createWorkspace Python navigation', () => {
   afterEach(() => {
     workspace.dispose()
     rmSync(root, {force: true, recursive: true})
+  })
+  it('should find usages of a Python definition with the bundled analyzer', async () => {
+    const helper = readFileSync(join(root, 'helpers.py'), 'utf8')
+    const document = workspace.read('helpers.py')
+    expect(document.ok).toBe(true)
+    if (document.ok) {
+      expect(
+        await resolveNavigation({
+          document: document.value,
+          navigation: 'definition',
+          offset: helper.indexOf('greet') + 2,
+          path: 'helpers.py',
+          workspace,
+        }),
+      ).toMatchObject({
+        ok: true,
+        value: {
+          kind: 'references',
+          locations: expect.arrayContaining([expect.objectContaining({path: 'main.py'})]),
+        },
+      })
+    }
+    const draft = `# unsaved header\n${helper}`
+    const edited = await workspace.references('helpers.py', draft.indexOf('greet'), [
+      {path: 'helpers.py', source: draft},
+    ])
+    expect(edited).toMatchObject({
+      ok: true,
+      value: expect.arrayContaining([expect.objectContaining({path: 'main.py'})]),
+    })
+    const references = await workspace.references('helpers.py', helper.indexOf('greet'))
+    expect(references).toMatchObject({
+      ok: true,
+      value: expect.arrayContaining([expect.objectContaining({path: 'main.py'})]),
+    })
+    if (references.ok) {
+      expect(
+        references.value.some((entry) => entry.path === 'helpers.py' && entry.line === 1),
+      ).toBe(false)
+    }
   })
   it('should follow imports, aliases, reexports, classes and methods with Pyright', async () => {
     const document = workspace.read('main.py')

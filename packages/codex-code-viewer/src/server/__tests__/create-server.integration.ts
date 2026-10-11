@@ -1,4 +1,7 @@
-import {readFileSync} from 'node:fs'
+import {mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync} from 'node:fs'
+import {tmpdir} from 'node:os'
+import {join} from 'node:path'
+import {z} from 'zod'
 import {Client} from '@modelcontextprotocol/sdk/client/index.js'
 import {InMemoryTransport} from '@modelcontextprotocol/sdk/inMemory.js'
 import {afterEach, beforeEach, describe, expect, it} from 'vitest'
@@ -24,6 +27,48 @@ describe('createServer', () => {
   it('should advertise the released package version to the MCP client', () => {
     expect(client.getServerVersion()?.version).toBe(version)
   })
+  it('should share the viewer build address across entry points and preserve saved file connections', async () => {
+    const listing = await client.listTools()
+    const metadata = z.object({ui: z.object({resourceUri: z.string()})})
+    const uri = metadata.parse(listing.tools.find((tool) => tool.name === 'code.panel')?._meta).ui
+      .resourceUri
+    expect(uri).toMatch(/^ui:\/\/codex-code-viewer\/app-[a-f0-9]{64}\.html$/u)
+    for (const name of ['code.open', 'code.file']) {
+      expect(
+        metadata.parse(listing.tools.find((tool) => tool.name === name)?._meta).ui.resourceUri,
+      ).toBe(uri)
+    }
+    const resource = await client.readResource({uri})
+    expect(resource.contents[0]).toMatchObject({text: '<html>viewer</html>', uri})
+    expect(
+      (await client.readResource({uri: 'ui://codex-code-viewer/app.html'})).contents[0],
+    ).toMatchObject({text: '<html>viewer</html>'})
+  })
+  it.each([
+    {html: '<html>viewer</html>', unchanged: true},
+    {html: '<html>viewer with settings</html>', unchanged: false},
+  ])(
+    'should reuse a resource address only for unchanged viewer content ($unchanged)',
+    async ({html, unchanged}) => {
+      const metadata = z.object({ui: z.object({resourceUri: z.string()})})
+      const original = metadata.parse(
+        (await client.listTools()).tools.find((tool) => tool.name === 'code.panel')?._meta,
+      ).ui.resourceUri
+      await client.close()
+      await instance.dispose()
+      instance = createServer(html)
+      client = new Client({name: 'viewer-test', version: '1.0.0'})
+      const [server, transport] = InMemoryTransport.createLinkedPair()
+      await instance.server.connect(server)
+      await client.connect(transport)
+      const next = metadata.parse(
+        (await client.listTools()).tools.find((tool) => tool.name === 'code.panel')?._meta,
+      ).ui.resourceUri
+      expect(next === original).toBe(unchanged)
+      expect((await client.readResource({uri: next})).contents[0]).toMatchObject({text: html})
+      expect((await client.readResource({uri: original})).contents[0]).toMatchObject({text: html})
+    },
+  )
   it('should advertise JavaScript and TypeScript file replacement and deliver the viewer resource', async () => {
     const listing = await client.listTools()
     const viewer = listing.tools.find((tool) => tool.name === 'code.file')
@@ -133,6 +178,73 @@ describe('createServer', () => {
       }),
     ).toMatchObject({isError: true, structuredContent: {code: 'outside-workspace'}})
   })
+  it('should expose declaration usages and preserve definition navigation', async () => {
+    const root = mkdtempSync(join(tmpdir(), 'viewer-reference-tool-'))
+    try {
+      mkdirSync(join(root, '.git'))
+      const source = 'export const greet = () => 1\n'
+      writeFileSync(join(root, 'helper.ts'), source)
+      writeFileSync(join(root, 'main.ts'), "import {greet} from './helper'\ngreet()\n")
+      const opened = sessionSchema.parse(
+        (await client.callTool({arguments: {path: join(root, 'helper.ts')}, name: 'code.open'}))
+          .structuredContent,
+      )
+      const input = {
+        navigation: 'definition',
+        offset: source.indexOf('greet') + 2,
+        path: 'helper.ts',
+        revision: opened.document.revision,
+        session: opened.session,
+      }
+      expect(await client.callTool({arguments: input, name: 'code.navigate'})).toMatchObject({
+        structuredContent: {
+          kind: 'references',
+          locations: expect.arrayContaining([
+            {column: 1, line: 2, path: 'main.ts', preview: 'greet()'},
+          ]),
+        },
+      })
+      const main = sessionSchema.parse(
+        (await client.callTool({arguments: {path: join(root, 'main.ts')}, name: 'code.open'}))
+          .structuredContent,
+      )
+      const next = {path: 'main.ts', revision: main.document.revision, session: main.session}
+      expect(
+        await client.callTool({
+          arguments: {
+            ...next,
+            navigation: 'definition',
+            offset: main.document.source.lastIndexOf('greet'),
+          },
+          name: 'code.navigate',
+        }),
+      ).toMatchObject({
+        structuredContent: {
+          kind: 'definition',
+          locations: [{column: 14, line: 1, path: 'helper.ts'}],
+        },
+      })
+      expect(
+        await client.callTool({
+          arguments: {
+            ...next,
+            navigation: 'path',
+            offset: main.document.source.indexOf('./helper'),
+          },
+          name: 'code.navigate',
+        }),
+      ).toMatchObject({
+        structuredContent: {
+          kind: 'definition',
+          locations: [{column: 1, line: 1, path: 'helper.ts'}],
+        },
+      })
+      await client.callTool({arguments: {session: opened.session}, name: 'code.close'})
+      await client.callTool({arguments: {session: main.session}, name: 'code.close'})
+    } finally {
+      rmSync(root, {force: true, recursive: true})
+    }
+  })
   it('should reject offsets from a stale document', async () => {
     const result = await client.callTool({arguments: {path}, name: 'code.open'})
     const session = sessionSchema.parse(result.structuredContent)
@@ -149,7 +261,6 @@ describe('createServer', () => {
       }),
     ).toMatchObject({isError: true, structuredContent: {code: 'stale-document'}})
   })
-
   it('should list files through the app-only tree tool for an active workspace', async () => {
     const listing = await client.listTools()
     expect(listing.tools.find((tool) => tool.name === 'code.tree')).toMatchObject({
@@ -169,7 +280,6 @@ describe('createServer', () => {
       await client.callTool({arguments: {session: session.session}, name: 'code.tree'}),
     ).toMatchObject({isError: true, structuredContent: {code: 'session-expired'}})
   })
-
   it('should identify an absent absolute file as not found', async () => {
     expect(
       await client.callTool({arguments: {path: `${path}.missing.ts`}, name: 'code.open'}),

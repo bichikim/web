@@ -2,7 +2,10 @@ import {statSync} from 'node:fs'
 import {dirname, resolve} from 'node:path'
 import typescript from '@typescript/typescript6'
 
-export const createLanguageService = (path: string) => {
+export const createLanguageService = (
+  path: string,
+  sources: ReadonlyMap<string, string> = new Map(),
+) => {
   const configuration = typescript.findConfigFile(dirname(path), typescript.sys.fileExists)
   const options =
     configuration === undefined
@@ -18,7 +21,7 @@ export const createLanguageService = (path: string) => {
           typescript.sys,
           dirname(configuration),
         ).options
-  const files = new Set([path])
+  let files = new Set([path])
   let version = 0
   const service = typescript.createLanguageService({
     ...typescript.sys,
@@ -34,7 +37,7 @@ export const createLanguageService = (path: string) => {
     getProjectVersion: () => String(version),
     getScriptFileNames: () => [...files],
     getScriptSnapshot: (file) => {
-      const text = typescript.sys.readFile(file)
+      const text = sources.get(resolve(file)) ?? typescript.sys.readFile(file)
       return text === undefined ? undefined : typescript.ScriptSnapshot.fromString(text)
     },
     getScriptVersion: (file) => {
@@ -54,6 +57,13 @@ export const createLanguageService = (path: string) => {
       return service.getDefinitionAtPosition(file, offset) ?? []
     },
     dispose: () => service.dispose(),
+    references: (file: string, offset: number, projectFiles: readonly string[]) => {
+      files = new Set([resolve(file), ...projectFiles.map((entry) => resolve(entry))])
+      version += 1
+      return (service.findReferences(file, offset) ?? []).flatMap((symbol) =>
+        symbol.references.filter((reference) => reference.isDefinition !== true),
+      )
+    },
     resolveModule: (file: string, specifier: string) =>
       typescript.resolveModuleName(specifier, file, options, typescript.sys).resolvedModule
         ?.resolvedFileName,

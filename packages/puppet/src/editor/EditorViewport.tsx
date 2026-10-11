@@ -1,6 +1,7 @@
 import {getMeshEditingIssue} from './move-mesh-vertex'
 import {MeshModeControl} from './internal/MeshModeControl'
 import {getRestPreview} from './internal/rest-preview'
+import {getMotionParameterOverrides} from './internal/get-motion-parameter-overrides'
 import {getSceneNode} from './internal/scene-graph'
 import {EditorToggleButton} from '../design-system'
 import {CameraViewport} from './internal/CameraViewport'
@@ -128,6 +129,7 @@ const EditingOverlays = (props: EditingOverlaysProps) => {
         onNotice={props.editingMesh ? props.onMeshNotice : props.viewport.onNotice}
         onVertexEditStart={props.viewport.onVertexEditStart}
         onVertexSelect={props.viewport.onVertexSelect}
+        motionId={props.viewport.motionId}
         previewTime={props.viewport.currentTime}
         parameterValues={props.viewport.parameterValues}
         parameterValueMap={props.viewport.parameterValueMap}
@@ -142,6 +144,7 @@ const EditingOverlays = (props: EditingOverlaysProps) => {
           activeBindingId={props.viewport.activeBindingId}
           parameterValues={props.viewport.parameterValues}
           parameterValueMap={props.viewport.parameterValueMap}
+          motionId={props.viewport.motionId}
           previewTime={props.viewport.currentTime}
           editMode={props.viewport.editMode}
           onDocumentChange={props.viewport.onDocumentChange}
@@ -188,6 +191,18 @@ export const EditorViewport = (props: EditorViewportProps) => {
   const displayDocument = createMemo(() =>
     editingMesh() ? getRestPreview(editDocument()) : getPlaybackDocument(props),
   )
+  const playbackParameters = createMemo(() => {
+    if (editingMesh()) {
+      return undefined
+    }
+    return props.editMode === 'motion'
+      ? getMotionParameterOverrides({
+          document: displayDocument(),
+          motionId: props.motionId,
+          parameterValues: props.parameterValueMap,
+        })
+      : props.parameterValueMap
+  })
   const [editingVisible, setEditingVisible] = createSignal(true)
   const editingControlsVisible = () => editingVisible() && !props.playbackActive
   const spatialSurface = createMemo(() => {
@@ -272,7 +287,7 @@ export const EditorViewport = (props: EditorViewportProps) => {
           onFrame={(frame: PlayerFrame) => props.onTimeChange?.(frame.time)}
           onPlayerChange={props.onPlayerChange}
           onStatusChange={props.onStatusChange}
-          parameterValues={editingMesh() ? undefined : props.parameterValueMap}
+          parameterValues={playbackParameters()}
           spatialSurface={spatialSurface()}
         />
         <EditingOverlays

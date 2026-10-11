@@ -1,3 +1,4 @@
+import {useTranslations} from './locale/use-translations'
 import {For} from 'solid-js'
 import type {CodeToken} from '../shared/contracts'
 import type {TextMatch} from './find-text'
@@ -28,49 +29,52 @@ const tokenClasses = {
 }
 
 const numberClasses = [
-  'sticky left-0 mr-4 w-12 shrink-0 touch-none select-none bg-surface p-0 pr-3 text-right text-muted',
+  'ui-code-gutter sticky left-0 mr-4 shrink-0 touch-none select-none bg-surface py-0 text-right text-muted',
   'outline-none hover:text-foreground aria-pressed:bg-selection aria-pressed:text-foreground',
   'focus-visible:font-semibold',
 ].join(' ')
 
-export const SCodeLine = (props: SCodeLineProps) => (
-  <div
-    class="flex min-h-6 data-[selected=true]:bg-selection"
-    data-line={props.line}
-    data-selected={props.selected}
-  >
-    <button
-      aria-label={`${props.line}줄 선택`}
-      aria-pressed={props.selected}
-      class={numberClasses}
-      data-line-number={props.line}
-      disabled={!props.selectable}
-      tabindex={props.focusable ? 0 : -1}
-      type="button"
+export const SCodeLine = (props: SCodeLineProps) => {
+  const t = useTranslations()
+  return (
+    <div
+      class="flex min-h-6 data-[selected=true]:bg-selection"
+      data-line={props.line}
+      data-selected={props.selected}
     >
-      {props.line}
-    </button>
-    <code class="block flex-1 pr-6">
-      <For each={props.tokens}>
-        {(token) =>
-          token.navigation === null ? (
-            <span class={tokenClasses[token.kind]} data-code-offset={token.offset}>
-              <STokenText token={token} matches={props.matches} activeMatch={props.activeMatch} />
-            </span>
-          ) : (
-            <a
-              aria-label={`${token.navigation === 'path' ? '파일' : '정의'}로 이동: ${token.text}`}
-              class={`${tokenClasses[token.kind]} ${linkClasses}`}
-              data-code-offset={token.offset}
-              data-offset={token.offset}
-              draggable={false}
-              href="#"
-            >
-              <STokenText token={token} matches={props.matches} activeMatch={props.activeMatch} />
-            </a>
-          )
-        }
-      </For>
-    </code>
-  </div>
-)
+      <button
+        aria-label={t('{line}줄 선택', {line: props.line})}
+        aria-pressed={props.selected}
+        class={numberClasses}
+        data-line-number={props.line}
+        disabled={!props.selectable}
+        tabindex={props.focusable ? 0 : -1}
+        type="button"
+      >
+        {props.line}
+      </button>
+      <code class="block flex-1 pr-6">
+        <For each={props.tokens}>
+          {(token) =>
+            token.navigation === null ? (
+              <span class={tokenClasses[token.kind]} data-code-offset={token.offset}>
+                <STokenText token={token} matches={props.matches} activeMatch={props.activeMatch} />
+              </span>
+            ) : (
+              <a
+                aria-label={`${token.navigation === 'path' ? t('파일로 이동') : t('정의·사용처 찾기')}: ${token.text}`}
+                class={`${tokenClasses[token.kind]} ${linkClasses}`}
+                data-code-offset={token.offset}
+                data-offset={token.offset}
+                draggable={false}
+                href="#"
+              >
+                <STokenText token={token} matches={props.matches} activeMatch={props.activeMatch} />
+              </a>
+            )
+          }
+        </For>
+      </code>
+    </div>
+  )
+}
