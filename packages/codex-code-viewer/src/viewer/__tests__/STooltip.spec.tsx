@@ -29,7 +29,7 @@ describe('STooltip', () => {
       Object.defineProperty(HTMLElement.prototype, 'showPopover', originalPopover)
     }
   })
-  it('should describe its trigger on hover and stay visible while the pointer enters the tooltip', () => {
+  it('should describe its trigger on hover and close when the pointer moves into the tooltip', () => {
     render(Trigger)
     const trigger = screen.getByRole('button', {name: '도구'})
     expect(screen.queryByRole('tooltip')).toBeNull()
@@ -39,9 +39,31 @@ describe('STooltip', () => {
     expect(trigger.getAttribute('aria-describedby')).toBe(tooltip.id)
     expect(tooltip.showPopover).toHaveBeenCalled()
     leave(trigger, tooltip)
-    expect(screen.getByRole('tooltip')).toBe(tooltip)
-    leave(tooltip)
     expect(screen.queryByRole('tooltip')).toBeNull()
+  })
+  it('should let pointer input pass through the tooltip and close when moving into its text', () => {
+    render(Trigger)
+    const trigger = screen.getByRole('button', {name: '도구'})
+    enter(trigger)
+    const tooltip = screen.getByRole('tooltip')
+    expect(tooltip).toHaveClass('pointer-events-none')
+    leave(trigger, screen.getByText('설정'))
+    expect(screen.queryByRole('tooltip')).toBeNull()
+  })
+  it('should remain visible when the pointer moves between parts of its trigger', () => {
+    render(() => (
+      <STooltip content="설정">
+        {(description) => (
+          <button aria-describedby={description}>
+            <span>도구</span>
+          </button>
+        )}
+      </STooltip>
+    ))
+    const trigger = screen.getByRole('button', {name: '도구'})
+    enter(trigger)
+    leave(trigger, screen.getByText('도구'))
+    expect(screen.getByRole('tooltip')).toBeInTheDocument()
   })
   it('should show for keyboard focus and retain focus when Escape dismisses it', () => {
     render(Trigger)

@@ -38,8 +38,14 @@ export const STooltip = (props: STooltipProps) => {
     }
   }
   const handleLeave = (event: PointerEvent & {currentTarget: HTMLSpanElement}): void => {
+    const related = event.relatedTarget
+    const panel = popup()
     if (
-      !(event.relatedTarget instanceof Node && event.currentTarget.contains(event.relatedTarget))
+      !(
+        related instanceof Node &&
+        event.currentTarget.contains(related) &&
+        !panel?.contains(related)
+      )
     ) {
       setHovered(false)
     }
@@ -93,7 +99,7 @@ export const STooltip = (props: STooltipProps) => {
           role="tooltip"
           popover="manual"
           ref={setPopup}
-          class="fixed inset-auto m-0 w-max max-w-[min(20rem,calc(100dvw-16px))] overflow-visible
+          class="pointer-events-none fixed inset-auto m-0 w-max max-w-[min(20rem,calc(100dvw-16px))] overflow-visible
             border-0 bg-transparent p-2 [position-anchor:var(--tooltip-anchor)]
             [position-area:var(--tooltip-placement)] [position-try-fallbacks:flip-block,flip-inline]
             [position-visibility:anchors-visible]"
