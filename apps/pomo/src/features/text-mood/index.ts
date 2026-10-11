@@ -35,3 +35,5 @@ export type {
   TextMoodState,
   UseTextMoodProps,
 } from './use-text-mood'
+export {validateClassifierArtifact} from './validate-classifier-artifact'
+export type {ClassifierArtifact} from './validate-classifier-artifact'
