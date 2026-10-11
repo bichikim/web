@@ -66,21 +66,6 @@ export const parseCreditProfile = (value: string | undefined): AiCreditProfile |
   return profile
 }
 
-export const toDatabaseCapability = (capability: AiCapability): DatabaseAiCapability => {
-  switch (capability) {
-    case 'image':
-      return 'image'
-    case 'sound':
-      return 'sound'
-    case 'speech-to-text':
-      return 'speech_to_text'
-    case 'text':
-      return 'text'
-    case 'text-to-speech':
-      return 'text_to_speech'
-  }
-}
-
 export const calculateRequestHash = (request: CreateAiJobRequest): string =>
   createHash('sha256')
     .update(
