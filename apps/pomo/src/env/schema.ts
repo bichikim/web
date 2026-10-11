@@ -96,24 +96,22 @@ const MINIMUM_AI_RUNNER_TIMEOUT_MS = 5_000
 const NODE_ENVIRONMENTS = ['development', 'production', 'test'] as const
 const VERCEL_ENVIRONMENTS = ['development', 'preview', 'production'] as const
 
+const blankToUndefined = (value: unknown) =>
+  typeof value === 'string' && value.trim() === '' ? undefined : value
+
 const defaultedIntegerSchema = (defaultValue: number, minimum: number, maximum: number) =>
   z.preprocess(
-    (value) =>
-      value === undefined || (typeof value === 'string' && value.trim() === '')
-        ? defaultValue
-        : value,
-    z.coerce.number().int().min(minimum).max(maximum),
+    blankToUndefined,
+    z.coerce.number().int().min(minimum).max(maximum).prefault(defaultValue),
   )
 
 const optionalPositiveIntegerSchema = z.preprocess(
-  (value) =>
-    value === undefined || (typeof value === 'string' && value.trim() === '') ? undefined : value,
+  blankToUndefined,
   z.coerce.number().int().positive().optional(),
 )
 
 const optionalMonthlyCreditCapSchema = z.preprocess(
-  (value) =>
-    value === undefined || (typeof value === 'string' && value.trim() === '') ? undefined : value,
+  blankToUndefined,
   z.coerce.number().int().positive().max(MAXIMUM_AI_MONTHLY_CREDIT_CAP).optional(),
 )
 
