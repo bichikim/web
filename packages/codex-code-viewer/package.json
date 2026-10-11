@@ -1,6 +1,6 @@
 {
   "name": "@winter-love/codex-code-viewer",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "private": false,
   "description": "A Codex viewer for code, documents and media with file navigation and chat context.",
   "keywords": [
@@ -28,8 +28,6 @@
     "dist/app.html",
     "dist/install.js",
     "dist/python",
-    "dist/rust/*/rust-analyzer",
-    "dist/rust/*/rust-analyzer.exe",
     "dist/lib.*.d.ts",
     "dist/THIRD_PARTY_LICENSES.md"
   ],
