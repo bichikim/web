@@ -7,6 +7,8 @@ import {useDocumentSession} from '../use-document-session'
 
 vi.mock('../create-document-session', () => ({createDocumentSession: vi.fn()}))
 
+const recoveryMethods = () => ({listRecoveries: vi.fn(), loadRecovery: vi.fn()})
+
 afterEach(() => {
   vi.resetAllMocks()
   vi.restoreAllMocks()
@@ -15,6 +17,7 @@ afterEach(() => {
 test('should prefer the restored document over the initial example', async () => {
   const restored = createDemoDocument()
   vi.mocked(createDocumentSession).mockReturnValue({
+    ...recoveryMethods(),
     read: vi.fn().mockResolvedValue(restored),
     write: vi.fn(),
   })
@@ -32,7 +35,11 @@ test('should write the latest queued edit after the current write finishes', asy
     finish = resolve
   })
   const write = vi.fn().mockReturnValueOnce(pending).mockResolvedValue(undefined)
-  vi.mocked(createDocumentSession).mockReturnValue({read: vi.fn().mockResolvedValue(null), write})
+  vi.mocked(createDocumentSession).mockReturnValue({
+    ...recoveryMethods(),
+    read: vi.fn().mockResolvedValue(null),
+    write,
+  })
   const {result} = renderHook(() => useDocumentSession({loadInitialDocument: async () => document}))
   await waitFor(() => expect(result.document()).toBe(document))
   const first = result.save(document)
@@ -52,7 +59,11 @@ test('should report a failed write and allow the next edit to be saved', async (
   vi.spyOn(console, 'warn').mockImplementation(() => undefined)
   const document = createDemoDocument()
   const write = vi.fn().mockRejectedValueOnce(new Error('quota')).mockResolvedValue(undefined)
-  vi.mocked(createDocumentSession).mockReturnValue({read: vi.fn().mockResolvedValue(null), write})
+  vi.mocked(createDocumentSession).mockReturnValue({
+    ...recoveryMethods(),
+    read: vi.fn().mockResolvedValue(null),
+    write,
+  })
   const {result} = renderHook(() => useDocumentSession({loadInitialDocument: async () => document}))
   await waitFor(() => expect(result.document()).toBe(document))
   await result.save(document)
@@ -68,7 +79,11 @@ test('should discard queued edits when the editor is disposed', async () => {
     finish = resolve
   })
   const write = vi.fn().mockReturnValueOnce(pending).mockResolvedValue(undefined)
-  vi.mocked(createDocumentSession).mockReturnValue({read: vi.fn().mockResolvedValue(null), write})
+  vi.mocked(createDocumentSession).mockReturnValue({
+    ...recoveryMethods(),
+    read: vi.fn().mockResolvedValue(null),
+    write,
+  })
   const {result, cleanup} = renderHook(() =>
     useDocumentSession({loadInitialDocument: async () => document}),
   )
@@ -92,6 +107,27 @@ test('should still open the initial document when browser storage is unavailable
   await waitFor(() => expect(result.document()).toBe(document))
   await result.save(document)
   expect(result.failure()).toBe('restore')
+  await expect(result.listRecoveries()).rejects.toThrow('Recovery storage is unavailable')
+  await expect(result.loadRecovery('previous')).rejects.toThrow('Recovery storage is unavailable')
+})
+
+test('should expose other saved documents without replacing the current document', async () => {
+  const document = createDemoDocument()
+  const entries = [{id: 'previous', motionCount: 0, partCount: 3, savedAt: 1000}]
+  const listRecoveries = vi.fn().mockResolvedValue(entries)
+  const loadRecovery = vi.fn().mockResolvedValue({...document, motions: []})
+  vi.mocked(createDocumentSession).mockReturnValue({
+    listRecoveries,
+    loadRecovery,
+    read: vi.fn().mockResolvedValue(document),
+    write: vi.fn(),
+  })
+  const {result} = renderHook(() => useDocumentSession({loadInitialDocument: vi.fn()}))
+  await waitFor(() => expect(result.document()).toBe(document))
+  expect(await result.listRecoveries()).toEqual(entries)
+  expect(await result.loadRecovery('previous')).toMatchObject({motions: []})
+  expect(loadRecovery).toHaveBeenCalledExactlyOnceWith('previous')
+  expect(result.document()).toBe(document)
 })
 
 test('should suppress repeated failed writes after dismissal until saving recovers', async () => {
@@ -103,7 +139,11 @@ test('should suppress repeated failed writes after dismissal until saving recove
     .mockRejectedValueOnce(new Error('quota'))
     .mockResolvedValueOnce(undefined)
     .mockRejectedValueOnce(new Error('quota'))
-  vi.mocked(createDocumentSession).mockReturnValue({read: vi.fn().mockResolvedValue(null), write})
+  vi.mocked(createDocumentSession).mockReturnValue({
+    ...recoveryMethods(),
+    read: vi.fn().mockResolvedValue(null),
+    write,
+  })
   const {result} = renderHook(() => useDocumentSession({loadInitialDocument: async () => document}))
   await waitFor(() => expect(result.document()).toBe(document))
   await result.save(document)

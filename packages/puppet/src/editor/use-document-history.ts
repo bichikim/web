@@ -1,5 +1,7 @@
 import {reconcileSkinning} from './internal/skinning'
-import {type Accessor, createSignal} from 'solid-js'
+import {getDocumentChangeTitle} from './get-document-change-title'
+import {type Accessor, batch, createMemo, createSignal} from 'solid-js'
+import {isEqual} from 'es-toolkit'
 
 import type {PuppetDocument} from '../player/document'
 
@@ -10,112 +12,161 @@ export interface UseDocumentHistoryProps {
   readonly limit?: number
 }
 
+export interface DocumentHistoryEntry {
+  readonly id: number
+  readonly title: string
+  readonly state: 'past' | 'current' | 'future'
+}
+
+interface DocumentSnapshot {
+  readonly id: number
+  readonly title: string
+  readonly document: PuppetDocument
+}
+
+interface HistoryState {
+  readonly snapshots: ReadonlyArray<DocumentSnapshot>
+  readonly index: number
+}
+
 export interface DocumentHistoryResult {
   readonly committedDocument: Accessor<PuppetDocument>
-  readonly beginTransaction: () => void
+  readonly beginTransaction: (title?: string) => void
   readonly canRedo: Accessor<boolean>
   readonly canUndo: Accessor<boolean>
   readonly document: Accessor<PuppetDocument>
   readonly endTransaction: () => void
+  readonly entries: Accessor<ReadonlyArray<DocumentHistoryEntry>>
+  readonly goTo: (id: number) => boolean
   readonly redo: () => boolean
   readonly redoCount: Accessor<number>
   readonly resetDocument: (document: PuppetDocument) => void
-  readonly setDocument: (document: PuppetDocument) => void
+  readonly setDocument: (document: PuppetDocument, title?: string) => void
   readonly undo: () => boolean
   readonly undoCount: Accessor<number>
 }
-
-const retainLatest = (
-  documents: ReadonlyArray<PuppetDocument>,
-  limit: number,
-): ReadonlyArray<PuppetDocument> => documents.slice(Math.max(0, documents.length - limit))
 
 export const useDocumentHistory = (props: UseDocumentHistoryProps): DocumentHistoryResult => {
   const limit = Math.max(1, Math.floor(props.limit ?? DEFAULT_HISTORY_LIMIT))
   const [document, setCurrentDocument] = createSignal(props.initialDocument)
   const [committedDocument, setCommittedDocument] = createSignal(props.initialDocument)
-  const [past, setPast] = createSignal<ReadonlyArray<PuppetDocument>>([])
-  const [future, setFuture] = createSignal<ReadonlyArray<PuppetDocument>>([])
+  const [state, setState] = createSignal<HistoryState>({
+    index: 0,
+    snapshots: [{document: props.initialDocument, id: 0, title: '문서 열기'}],
+  })
+  let sequence = 0
   let transactionStart: PuppetDocument | null = null
-
-  const appendPast = (snapshot: PuppetDocument) => {
-    setPast((documents) => retainLatest([...documents, snapshot], limit))
+  let transactionTitle: string | undefined
+  const entries = createMemo(() => {
+    const current = state()
+    return current.snapshots.map(
+      ({id, title}, index): DocumentHistoryEntry => ({
+        id,
+        state: index === current.index ? 'current' : index < current.index ? 'past' : 'future',
+        title,
+      }),
+    )
+  })
+  const commit = (before: PuppetDocument, next: PuppetDocument, title?: string) => {
+    sequence += 1
+    const current = state()
+    const snapshots = [
+      ...current.snapshots.slice(0, current.index + 1),
+      {document: next, id: sequence, title: title ?? getDocumentChangeTitle(before, next)},
+    ].slice(-(limit + 1))
+    batch(() => {
+      setState({index: snapshots.length - 1, snapshots})
+      setCommittedDocument(next)
+    })
   }
   const endTransaction = () => {
     const snapshot = transactionStart
+    const title = transactionTitle
     transactionStart = null
-
-    if (snapshot !== null && document() !== snapshot) {
-      appendPast(snapshot)
-      setCommittedDocument(document())
+    transactionTitle = undefined
+    const current = document()
+    if (snapshot !== null) {
+      if (isEqual(current, snapshot)) {
+        setCurrentDocument(snapshot)
+      } else {
+        commit(snapshot, current, title)
+      }
     }
   }
-  const setDocument = (nextDocument: PuppetDocument) => {
-    const currentDocument = document()
-
-    if (nextDocument === currentDocument) {
+  const setDocument = (nextDocument: PuppetDocument, title?: string) => {
+    const current = document()
+    if (isEqual(nextDocument, current)) {
       return
     }
-
-    if (transactionStart === null) {
-      appendPast(currentDocument)
+    const reconciled = reconcileSkinning(current, nextDocument)
+    batch(() => {
+      setCurrentDocument(reconciled)
+      if (transactionStart === null) {
+        commit(current, reconciled, title)
+      } else {
+        transactionTitle ??= title
+      }
+    })
+  }
+  const moveTo = (index: number) => {
+    const current = state()
+    const snapshot = current.snapshots[index]
+    if (snapshot === undefined || index === current.index) {
+      return false
     }
-    setFuture([])
-    const reconciled = reconcileSkinning(currentDocument, nextDocument)
-    setCurrentDocument(reconciled)
-    if (transactionStart === null) {
-      setCommittedDocument(reconciled)
-    }
+    batch(() => {
+      setState({...current, index})
+      setCurrentDocument(snapshot.document)
+      setCommittedDocument(snapshot.document)
+    })
+    return true
   }
   const undo = () => {
     endTransaction()
-    const previousDocuments = past()
-    const previousDocument = previousDocuments.at(-1)
-    if (previousDocument === undefined) {
-      return false
-    }
-
-    setPast(previousDocuments.slice(0, -1))
-    setFuture((documents) => [document(), ...documents])
-    setCurrentDocument(previousDocument)
-    setCommittedDocument(previousDocument)
-    return true
+    return moveTo(state().index - 1)
   }
   const redo = () => {
     endTransaction()
-    const nextDocuments = future()
-    const [nextDocument] = nextDocuments
-    if (nextDocument === undefined) {
-      return false
-    }
-
-    appendPast(document())
-    setFuture(nextDocuments.slice(1))
-    setCurrentDocument(nextDocument)
-    setCommittedDocument(nextDocument)
-    return true
+    return moveTo(state().index + 1)
   }
-
   return {
-    beginTransaction() {
+    beginTransaction(title) {
       transactionStart ??= document()
+      transactionTitle ??= title
     },
-    canRedo: () => future().length > 0,
-    canUndo: () => past().length > 0,
+    canRedo: () => {
+      const current = state()
+      return current.index < current.snapshots.length - 1
+    },
+    canUndo: () => state().index > 0,
     committedDocument,
     document,
     endTransaction,
+    entries,
+    goTo(id) {
+      endTransaction()
+      return moveTo(state().snapshots.findIndex((snapshot) => snapshot.id === id))
+    },
     redo,
-    redoCount: () => future().length,
+    redoCount: () => {
+      const current = state()
+      return current.snapshots.length - current.index - 1
+    },
     resetDocument(nextDocument) {
       transactionStart = null
-      setPast([])
-      setFuture([])
-      setCurrentDocument(nextDocument)
-      setCommittedDocument(nextDocument)
+      transactionTitle = undefined
+      sequence += 1
+      batch(() => {
+        setState({
+          index: 0,
+          snapshots: [{document: nextDocument, id: sequence, title: '문서 열기'}],
+        })
+        setCurrentDocument(nextDocument)
+        setCommittedDocument(nextDocument)
+      })
     },
     setDocument,
     undo,
-    undoCount: () => past().length,
+    undoCount: () => state().index,
   }
 }

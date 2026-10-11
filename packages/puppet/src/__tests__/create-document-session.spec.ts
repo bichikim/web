@@ -1,10 +1,27 @@
 /** @vitest-environment jsdom */
 import {IDBFactory} from 'fake-indexeddb'
-import {beforeEach, expect, test} from 'vitest'
+import {afterEach, beforeEach, expect, test, vi} from 'vitest'
 import {createDocumentSession} from '../create-document-session'
-import {createDemoDocument} from '../player'
+import {createDemoDocument, createEmptyDocument} from '../player'
 
 beforeEach(() => sessionStorage.clear())
+afterEach(() => vi.restoreAllMocks())
+
+const writeRecord = (factory: IDBFactory, id: string, value: unknown): Promise<void> =>
+  new Promise((resolve, reject) => {
+    const request = factory.open('puppet-editor-recovery', 1)
+    request.onsuccess = () => {
+      const database = request.result
+      const transaction = database.transaction('documents', 'readwrite')
+      transaction.objectStore('documents').put(value, id)
+      transaction.oncomplete = () => {
+        database.close()
+        resolve()
+      }
+      transaction.onabort = () => reject(transaction.error)
+    }
+    request.onerror = () => reject(request.error)
+  })
 
 test('should restore edits with only the session key in sessionStorage', async () => {
   const database = new IDBFactory()
@@ -45,4 +62,44 @@ test('should report unavailable storage instead of claiming that recovery was sa
   expect(() => createDocumentSession({database: new IDBFactory(), storage})).toThrow(
     'storage denied',
   )
+})
+
+test('should find other tabs newest first and restore without overwriting their documents', async () => {
+  const database = new IDBFactory()
+  const clock = vi.spyOn(Date, 'now').mockReturnValue(1000)
+  const first = createDocumentSession({database, storage: sessionStorage})
+  const document = createDemoDocument()
+  await first.write(document)
+  sessionStorage.clear()
+  clock.mockReturnValue(2000)
+  const second = createDocumentSession({database, storage: sessionStorage})
+  await second.write({...document, motions: []})
+  sessionStorage.clear()
+  const current = createDocumentSession({database, storage: sessionStorage})
+  await current.write(createEmptyDocument())
+  const entries = await current.listRecoveries()
+  expect(entries.map((entry) => entry.savedAt)).toEqual([2000, 1000])
+  expect(entries[0]).toMatchObject({motionCount: 0, partCount: document.parts.length})
+  const restored = await current.loadRecovery(entries[1]!.id)
+  expect(restored).toEqual(document)
+  await current.write(createEmptyDocument())
+  expect(await first.read()).toEqual(document)
+  expect(await current.read()).toMatchObject({parts: []})
+  expect(await current.loadRecovery('missing')).toBeNull()
+})
+
+test('should find legacy documents and skip invalid records', async () => {
+  const database = new IDBFactory()
+  const session = createDocumentSession({database, storage: sessionStorage})
+  await session.write(createDemoDocument())
+  const document = {...createDemoDocument(), motions: []}
+  await writeRecord(database, 'legacy', document)
+  await writeRecord(database, 'invalid', {parts: 'broken'})
+  expect(await session.listRecoveries()).toEqual([
+    expect.objectContaining({id: 'legacy', partCount: document.parts.length, savedAt: null}),
+  ])
+  expect(await session.loadRecovery('legacy')).toEqual(document)
+  await expect(session.loadRecovery('invalid')).rejects.toThrow('Recovery document is invalid')
+  sessionStorage.setItem('puppet:document-session:v1', 'legacy')
+  expect(await createDocumentSession({database, storage: sessionStorage}).read()).toEqual(document)
 })

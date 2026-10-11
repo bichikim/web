@@ -1,11 +1,12 @@
 import {parseDocumentValue, type PuppetDocument} from './player'
+import type {DocumentRecovery, DocumentRecoveryEntry} from './editor/document-recovery'
 
 interface CreateDocumentSessionOptions {
   readonly database: IDBFactory
   readonly storage: Pick<Storage, 'getItem' | 'setItem'>
 }
 
-export interface DocumentSession {
+export interface DocumentSession extends DocumentRecovery {
   readonly read: () => Promise<PuppetDocument | null>
   readonly write: (document: PuppetDocument) => Promise<void>
 }
@@ -13,6 +14,18 @@ export interface DocumentSession {
 const SESSION_KEY = 'puppet:document-session:v1'
 const DATABASE_NAME = 'puppet-editor-recovery'
 const STORE_NAME = 'documents'
+
+const readRecord = (value: unknown) => {
+  const stored =
+    typeof value === 'object' && value !== null && 'document' in value && 'savedAt' in value
+      ? value
+      : {document: value, savedAt: null}
+  return {
+    result: parseDocumentValue(stored.document),
+    savedAt:
+      typeof stored.savedAt === 'number' && Number.isFinite(stored.savedAt) ? stored.savedAt : null,
+  }
+}
 
 const openDatabase = (factory: IDBFactory): Promise<IDBDatabase> =>
   new Promise((resolve, reject) => {
@@ -33,33 +46,66 @@ const finishTransaction = (transaction: IDBTransaction): Promise<void> =>
 export const createDocumentSession = (options: CreateDocumentSessionOptions): DocumentSession => {
   const key = options.storage.getItem(SESSION_KEY) ?? crypto.randomUUID()
   options.storage.setItem(SESSION_KEY, key)
+  const loadRecovery = async (id: string) => {
+    const database = await openDatabase(options.database)
+    try {
+      const transaction = database.transaction(STORE_NAME, 'readonly')
+      const completed = finishTransaction(transaction)
+      const request = transaction.objectStore(STORE_NAME).get(id)
+      await completed
+      const value: unknown = request.result
+      if (value === undefined) {
+        return null
+      }
+      const {result} = readRecord(value)
+      if (!result.ok) {
+        throw new Error('Recovery document is invalid')
+      }
+      return result.document
+    } finally {
+      database.close()
+    }
+  }
   return {
-    async read() {
+    async listRecoveries() {
       const database = await openDatabase(options.database)
       try {
         const transaction = database.transaction(STORE_NAME, 'readonly')
         const completed = finishTransaction(transaction)
-        const request = transaction.objectStore(STORE_NAME).get(key)
+        const entries: DocumentRecoveryEntry[] = []
+        const request = transaction.objectStore(STORE_NAME).openCursor()
+        request.onsuccess = () => {
+          const cursor = request.result
+          if (cursor === null) {
+            return
+          }
+          if (typeof cursor.key === 'string' && cursor.key !== key) {
+            const {result, savedAt} = readRecord(cursor.value)
+            if (result.ok) {
+              entries.push({
+                id: cursor.key,
+                motionCount: result.document.motions.length,
+                partCount: result.document.parts.length,
+                savedAt,
+              })
+            }
+          }
+          cursor.continue()
+        }
         await completed
-        const value: unknown = request.result
-        if (value === undefined) {
-          return null
-        }
-        const result = parseDocumentValue(value)
-        if (!result.ok) {
-          throw new Error('Recovery document is invalid')
-        }
-        return result.document
+        return entries.toSorted((left, right) => (right.savedAt ?? 0) - (left.savedAt ?? 0))
       } finally {
         database.close()
       }
     },
+    loadRecovery,
+    read: () => loadRecovery(key),
     async write(document) {
       const database = await openDatabase(options.database)
       try {
         const transaction = database.transaction(STORE_NAME, 'readwrite')
         const completed = finishTransaction(transaction)
-        transaction.objectStore(STORE_NAME).put(document, key)
+        transaction.objectStore(STORE_NAME).put({document, savedAt: Date.now()}, key)
         await completed
       } finally {
         database.close()

@@ -31,6 +31,7 @@ export interface EditorToolbarProps {
   readonly panelVisibility?: EditorPanelVisibility
   readonly playerStatus: PlayerCanvasStatus
   readonly onExport: () => void
+  readonly onRecoveryOpen?: (returnFocus: () => void) => void
   readonly onExampleOpen?: (example: PuppetExampleDocument) => void
   readonly onFileImport: (file: File | undefined) => void
   readonly onPsdReimport?: (file: File | undefined) => void
@@ -75,6 +76,7 @@ const PanelVisibilityControls = (props: PanelVisibilityControlsProps) => (
 )
 
 interface ToolbarMenuProps {
+  readonly onRecoveryOpen?: (returnFocus: () => void) => void
   readonly examples?: ReadonlyArray<PuppetExampleDocument>
   readonly exportUrl?: string | null
   readonly canUndo?: boolean
@@ -92,15 +94,26 @@ interface ToolbarMenuProps {
 
 const ToolbarMenu = (props: ToolbarMenuProps) => {
   const [menuOpen, setMenuOpen] = createSignal(false)
+  const [trigger, setTrigger] = createSignal<HTMLButtonElement>()
   const portalMount = useEditorPortalMount()
   const handleExampleOpen = (example: PuppetExampleDocument) => {
     setMenuOpen(false)
     props.onExampleOpen?.(example)
   }
+  const handleRecoveryOpen = () => {
+    const element = trigger()
+    setMenuOpen(false)
+    props.onRecoveryOpen?.(() => element?.focus())
+  }
 
   return (
     <Popover forceMount open={menuOpen()} onOpenChange={setMenuOpen}>
-      <Popover.Trigger aria-label="메인 메뉴" class="toolbar-menu-trigger" type="button">
+      <Popover.Trigger
+        ref={setTrigger}
+        aria-label="메인 메뉴"
+        class="toolbar-menu-trigger"
+        type="button"
+      >
         <span aria-hidden="true" class="puppet-icon puppet-icon-menu-2" />
       </Popover.Trigger>
       <Popover.Portal mount={portalMount}>
@@ -137,6 +150,11 @@ const ToolbarMenu = (props: ToolbarMenuProps) => {
                 </For>
               </div>
             </details>
+          </Show>
+          <Show when={props.onRecoveryOpen}>
+            <Button type="button" onClick={handleRecoveryOpen}>
+              복구 찾기
+            </Button>
           </Show>
           <hr />
           <Button
@@ -200,6 +218,7 @@ export const EditorToolbar = (props: EditorToolbarProps) => (
       onUndo={props.onUndo}
       onRedo={props.onRedo}
       onExport={props.onExport}
+      onRecoveryOpen={props.onRecoveryOpen}
       onExampleOpen={props.onExampleOpen}
       onFileImport={props.onFileImport}
       onPsdReimport={props.onPsdReimport}

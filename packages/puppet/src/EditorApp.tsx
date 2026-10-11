@@ -40,6 +40,7 @@ const DocumentEditor = (props: EditorAppProps) => {
               initialMotionId={props.initialMotionId}
               initialWorkspace={props.initialWorkspace}
               onDocumentCommit={session.save}
+              recovery={session}
             />
           )}
         </Show>

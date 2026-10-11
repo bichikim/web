@@ -212,6 +212,12 @@ Reference: [TemporaryFormButton](src/editor/internal/TemporaryFormButton.tsx), [
 
 Keep document edits and temporary previews distinct. Do not describe an unsaved preview as a saved keyform.
 
+## Document history
+
+Keep named document history first in the right inspector's scrollable content, moving with the other properties. Display the newest entry first without changing the underlying undo/redo order. Name property edits by the affected part or deformer and changed property, including keyform edits; summarize multiple targets with the first name and remaining count. Reuse `EditorPropertyGroup` for its legend, border, and inset so it matches the neighboring properties. Let short histories fit their contents and bound longer lists. Keep automatic current-row scrolling within the history list so edits do not move the inspector. Selecting a row restores that document state; distinguish the current row and redoable rows with text as well as color. Continuous edits remain one history entry. Temporary previews belong to the temporary-edit workflow until committed. History lasts for the current editor session; automatic document recovery is a separate action.
+
+Reference: [DocumentHistoryPanel](src/editor/internal/DocumentHistoryPanel.tsx), [document history](src/editor/use-document-history.ts).
+
 ## Preventing drift
 
 For a design change, use the closest existing component before introducing a new primitive. Fix a recurring visual problem at the shared component or shortcut that owns it. Keep behavioral policy in its existing state owner. Update this document for accepted design decisions rather than copying every CSS declaration into prose.

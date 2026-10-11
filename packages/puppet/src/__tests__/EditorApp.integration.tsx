@@ -19,6 +19,8 @@ test('should retain the recovery failure without overwriting stored work with th
   vi.spyOn(console, 'warn').mockImplementation(() => undefined)
   const write = vi.fn().mockResolvedValue(undefined)
   vi.mocked(createDocumentSession).mockReturnValue({
+    listRecoveries: vi.fn().mockResolvedValue([]),
+    loadRecovery: vi.fn(),
     read: vi.fn().mockRejectedValue(new Error('temporary read failure')),
     write,
   })
@@ -45,7 +47,12 @@ test('should render the editor frame while recovery is pending without saving it
     resolveSaving = resolve
   })
   const write = vi.fn(async () => resolveSaving())
-  vi.mocked(createDocumentSession).mockReturnValue({read: vi.fn(() => recovered), write})
+  vi.mocked(createDocumentSession).mockReturnValue({
+    listRecoveries: vi.fn().mockResolvedValue([]),
+    loadRecovery: vi.fn(),
+    read: vi.fn(() => recovered),
+    write,
+  })
   const loadInitialDocument = vi.fn()
   const view = render(() => (
     <EditorApp initialWorkspace="animation" loadInitialDocument={loadInitialDocument} />
@@ -79,6 +86,8 @@ test('should render the editor frame while recovery is pending without saving it
 
 test('should offer a retry when loading a document fails', async () => {
   vi.mocked(createDocumentSession).mockReturnValue({
+    listRecoveries: vi.fn().mockResolvedValue([]),
+    loadRecovery: vi.fn(),
     read: vi.fn().mockResolvedValue(null),
     write: vi.fn(),
   })
