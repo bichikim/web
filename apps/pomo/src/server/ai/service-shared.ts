@@ -1,4 +1,5 @@
 import {createHash} from 'node:crypto'
+import {isObject} from 'src/utils/is-object'
 
 import type {AiJobPayload} from 'src/server/database'
 import type {AiJobRecord} from 'src/server/repositories/ai-jobs'
@@ -50,7 +51,7 @@ export const parseCreditProfile = (value: string | undefined): AiCreditProfile |
   }
 
   const parsed: unknown = JSON.parse(value)
-  if (typeof parsed !== 'object' || parsed === null || Array.isArray(parsed)) {
+  if (!isObject(parsed)) {
     throw new TypeError('POMO_AI_CREDIT_PROFILE_JSON must be a JSON object')
   }
 
@@ -95,9 +96,7 @@ export const createTimeout = (now: Date, runnerTimeoutMs: number): Date =>
   new Date(now.getTime() + Math.max(runnerTimeoutMs, MINIMUM_JOB_TIMEOUT_MS))
 
 export const asBilledUsage = (value: unknown): AiJobPayload | null =>
-  typeof value === 'object' && value !== null && !Array.isArray(value)
-    ? (value as AiJobPayload)
-    : null
+  isObject(value) ? value : null
 
 export const toCatalogCapability = (capability: DatabaseAiCapability): AiCapability => {
   switch (capability) {
