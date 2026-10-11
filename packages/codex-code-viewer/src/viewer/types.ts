@@ -67,9 +67,23 @@ export interface NavigationOptions {
   restoreView?: boolean
 }
 
+export interface ViewerSettingsEnvironment {
+  readonly navigator?: Pick<Navigator, 'language'>
+  readonly localStorage?: Pick<Storage, 'getItem' | 'setItem'>
+}
+
 export interface ViewerPort {
-  watch?(session: string, receive: () => void): Promise<() => Promise<void>>
-  call(name: string, arguments_: Record<string, unknown>): Promise<CallToolResult>
+  subscribeLocale?(receive: (locale: string | undefined) => void): () => void
+  watch?(
+    session: string,
+    receive: () => void,
+    report: (error: unknown) => void,
+  ): Promise<() => Promise<void>>
+  call(
+    name: string,
+    arguments_: Record<string, unknown>,
+    options?: ViewerRequestOptions,
+  ): Promise<CallToolResult>
   context(selection: ViewerContext): Promise<void>
   location?(location: ViewerFileLocation): Promise<void>
   start(
@@ -78,6 +92,11 @@ export interface ViewerPort {
     refresh: () => void,
     onTeardown?: () => Promise<void>,
   ): Promise<() => void>
+}
+
+export interface ViewerRequestOptions {
+  readonly signal?: AbortSignal
+  readonly timeout?: number
 }
 
 export interface ViewerFileLocation {
@@ -90,7 +109,9 @@ export interface NavigationPoint {
   readonly y: number
 }
 export interface ReferenceChoices {
+  readonly kind?: 'definition' | 'references'
   readonly label: string
   readonly locations: readonly NavigationLocation[]
   readonly point: NavigationPoint
+  readonly status?: 'resolving' | 'searching' | 'complete' | 'failed'
 }

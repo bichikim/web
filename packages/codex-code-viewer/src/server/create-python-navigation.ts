@@ -1,13 +1,8 @@
 import {relative} from 'node:path'
-import {
-  type CodeLocation,
-  failure,
-  type NavigationKind,
-  type Result,
-  success,
-} from '../shared/contracts'
+import {type CodeLocation, failure, type Result, success} from '../shared/contracts'
 import {createPythonService} from './create-python-service'
 import {resolveFile} from './file-access'
+import type {SourceChange, SymbolLookup} from './types'
 
 export const createPythonNavigation = (root: string) => {
   let service: ReturnType<typeof createPythonService> | null = null
@@ -16,7 +11,7 @@ export const createPythonNavigation = (root: string) => {
     path: string,
     source: string,
     offset: number,
-    kind: NavigationKind,
+    lookup: SymbolLookup,
   ): Promise<Result<CodeLocation[]>> => {
     if (disposed) {
       return failure('python-analysis-failed')
@@ -28,7 +23,7 @@ export const createPythonNavigation = (root: string) => {
         return failure('python-analyzer-unavailable')
       }
     }
-    const result = await service.lookupSymbols(path, source, offset, kind)
+    const result = await service.lookupSymbols(path, source, offset, lookup)
     if (!result.ok) {
       return result
     }
@@ -44,5 +39,9 @@ export const createPythonNavigation = (root: string) => {
     service?.dispose()
     service = null
   }
-  return {dispose, lookupSymbols}
+  return {
+    dispose,
+    lookupSymbols,
+    update: (changes: readonly SourceChange[]) => service?.update(root, changes),
+  }
 }

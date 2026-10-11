@@ -1,4 +1,4 @@
-import {type Accessor, onCleanup} from 'solid-js'
+import {type Accessor, createSignal, onCleanup} from 'solid-js'
 import type {ViewerConnection} from '../shared/contracts'
 import type {ViewerPort} from './types'
 import {useWorkspaceUpdates} from './use-workspace-updates'
@@ -15,6 +15,7 @@ interface ConnectionOptions {
 }
 
 export const useViewerConnection = (connection: ConnectionOptions): Accessor<number> => {
+  const [ready, setReady] = createSignal(false)
   let disposed = false
   let disposePort: (() => void) | null = null
   let released = false
@@ -46,6 +47,7 @@ export const useViewerConnection = (connection: ConnectionOptions): Accessor<num
   const teardown = async (): Promise<void> => {
     if (!disposed) {
       disposed = true
+      setReady(false)
       const current = connection.session()
       if (current !== null) {
         closeSession(current)
@@ -65,6 +67,7 @@ export const useViewerConnection = (connection: ConnectionOptions): Accessor<num
       if (disposed) {
         return finish()
       }
+      setReady(true)
     })
     .catch(connection.report)
   const revision = useWorkspaceUpdates({
@@ -72,7 +75,7 @@ export const useViewerConnection = (connection: ConnectionOptions): Accessor<num
     port: connection.port,
     refresh: connection.refresh,
     report: connection.report,
-    session: connection.session,
+    session: () => (ready() ? connection.session() : null),
   })
   onCleanup(() => {
     teardown().then(finish).catch(connection.report)

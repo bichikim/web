@@ -1,3 +1,4 @@
+import {useTranslations} from './locale/use-translations'
 import {type JSX, Match, Show, Switch} from 'solid-js'
 import type {CodeLocation} from '../shared/contracts'
 import {fileFormat} from '../shared/file-formats'
@@ -24,6 +25,7 @@ interface SFileDocumentProps extends SCodeDocumentProps {
   onShareChanges?: () => void
 }
 export const SFileDocument = (props: SFileDocumentProps) => {
+  const t = useTranslations()
   const markdown = () => fileFormat(props.document.location.path)?.kind === 'markdown'
   const table = () => fileFormat(props.document.location.path)?.kind === 'table'
   const svg = () => props.document.media?.mimeType === 'image/svg+xml'
@@ -47,19 +49,23 @@ export const SFileDocument = (props: SFileDocumentProps) => {
     <>
       <Show when={previewAvailable() || editable()}>
         <div
-          aria-label="문서 도구"
+          aria-label={t('문서 도구')}
           role="group"
           class="flex shrink-0 items-center gap-2 border-b border-divider px-4 py-2"
         >
           <Show when={previewAvailable() && !editingEnabled()}>
-            <div aria-label="문서 표시 방식" role="group" class="flex min-w-0 items-center gap-2">
+            <div
+              aria-label={t('문서 표시 방식')}
+              role="group"
+              class="flex min-w-0 items-center gap-2"
+            >
               <button
                 class="ui-document-button"
                 type="button"
                 aria-pressed={!mode.original()}
                 onClick={mode.showPreview}
               >
-                미리보기
+                {t('미리보기')}
               </button>
               <button
                 class="ui-document-button"
@@ -67,14 +73,16 @@ export const SFileDocument = (props: SFileDocumentProps) => {
                 aria-pressed={mode.original()}
                 disabled={!sourceAvailable()}
                 title={
-                  sourceAvailable() ? undefined : '512 KiB 이하 SVG에서 원문을 볼 수 있습니다.'
+                  sourceAvailable() ? undefined : t('512 KiB 이하 SVG에서 원문을 볼 수 있습니다.')
                 }
                 onClick={mode.showOriginal}
               >
-                원문
+                {t('원문')}
               </button>
               <Show when={props.document.location.path.toLowerCase().endsWith('.mdx')}>
-                <span class="self-center text-xs text-muted">MDX 코드는 실행하지 않습니다.</span>
+                <span class="self-center text-xs text-muted">
+                  {t('MDX 코드는 실행하지 않습니다.')}
+                </span>
               </Show>
             </div>
           </Show>

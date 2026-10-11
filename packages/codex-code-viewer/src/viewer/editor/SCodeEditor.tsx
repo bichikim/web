@@ -10,6 +10,7 @@ import type {CodeSnippet, CodeTextRange, NavigationPoint} from '../types'
 import {useEditorContextMenu} from './use-editor-context-menu'
 import {SEditorContextMenu} from './SEditorContextMenu'
 import {fileFormat} from '../../shared/file-formats'
+import {useEditorAccessibility} from './use-editor-accessibility'
 
 interface SCodeEditorProps {
   readonly source: string
@@ -36,6 +37,7 @@ const positionOf = (source: string, offset: number): number =>
 export const SCodeEditor = (props: SCodeEditorProps) => {
   const [container, setContainer] = createSignal<HTMLDivElement>()
   const [view, setView] = createSignal<EditorView>()
+  const accessibility = useEditorAccessibility(view)
   const menu = useEditorContextMenu({
     onError: (error) => props.onError?.(error),
     get onFind() {
@@ -63,8 +65,9 @@ export const SCodeEditor = (props: SCodeEditorProps) => {
     EditorState.readOnly.of(props.readOnly),
     EditorView.editable.of(!props.readOnly),
   ]
-  const extensions = (): Extension[] =>
-    createEditorExtensions({
+  const extensions = (): Extension[] => [
+    accessibility(),
+    ...createEditorExtensions({
       editability,
       fileKey: props.fileKey,
       location: props.location,
@@ -79,7 +82,8 @@ export const SCodeEditor = (props: SCodeEditorProps) => {
       separator,
       states: props.states,
       writable: writable(),
-    })
+    }),
+  ]
   onMount(() => {
     const key = props.fileKey
     const cache = props.states

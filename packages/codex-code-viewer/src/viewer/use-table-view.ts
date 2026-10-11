@@ -1,3 +1,4 @@
+import {useTranslations} from './locale/use-translations'
 import {type Accessor, batch, createEffect, createMemo, createSignal} from 'solid-js'
 import {parseDelimitedText} from './parse-delimited-text'
 import type {TableResult} from './table/types'
@@ -28,6 +29,7 @@ const compareCells = (left: string, right: string): number => {
 }
 
 export const useTableView = (options: TableViewOptions) => {
+  const t = useTranslations()
   const data = createMemo(
     () =>
       options.data?.() ??
@@ -54,8 +56,8 @@ export const useTableView = (options: TableViewOptions) => {
     return parsed.ok
       ? Array.from({length: parsed.columns}, (_, index) =>
           header()
-            ? parsed.rows[0]?.[index] || `열 ${index + 1}`
-            : (parsed.columnNames?.[index] ?? `열 ${index + 1}`),
+            ? parsed.rows[0]?.[index] || t('열 {count}', {count: index + 1})
+            : (parsed.columnNames?.[index] ?? t('열 {count}', {count: index + 1})),
         )
       : []
   })

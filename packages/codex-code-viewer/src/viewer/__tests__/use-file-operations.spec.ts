@@ -1,5 +1,8 @@
 /** @vitest-environment jsdom */
-import {createRoot, createSignal} from 'solid-js'
+import {createComponent, createRoot, createSignal} from 'solid-js'
+import {renderHook} from '@solidjs/testing-library'
+import {LocaleContext} from '../locale/context'
+import type {ViewerLanguage} from '../locale/types'
 import {afterEach, describe, expect, it, vi} from 'vitest'
 import type {ViewerConnection} from '../../shared/contracts'
 import type {ViewerPort, WorkspaceSelection} from '../types'
@@ -39,6 +42,23 @@ const mount = () =>
     return {changed, operations, port, setDrafts, setSession}
   })
 describe('useFileOperations', () => {
+  it('should translate existing path feedback without changing the file name', async () => {
+    const [language, setLanguage] = createSignal<ViewerLanguage>('en')
+    const hook = renderHook(() => mount(), {
+      wrapper: (props) =>
+        createComponent(LocaleContext.Provider, {
+          get children() {
+            return props.children
+          },
+          value: language,
+        }),
+    })
+    await hook.result.operations.copy(file)
+    expect(hook.result.operations.feedback()).toContain('src/main.ts · Copied.')
+    setLanguage('ko')
+    expect(hook.result.operations.feedback()).toContain('src/main.ts · 복사했습니다.')
+    hook.cleanup()
+  })
   it('should copy and repeatedly paste a revision-checked file into the selected folder', async () => {
     const {changed, operations, port} = mount()
     await operations.copy(file)

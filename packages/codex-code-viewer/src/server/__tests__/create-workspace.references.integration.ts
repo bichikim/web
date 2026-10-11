@@ -60,6 +60,42 @@ describe('createWorkspace references', () => {
     )
     expect(result.value.some((location) => location.path === 'other.ts')).toBe(false)
   })
+  it('should return every destination for ten thousand calls across unopened files', async () => {
+    const paths = Array.from({length: 10}, (_, index) => `calls-${index}.ts`)
+    const calls = Array.from({length: 1000}, (_, index) => `greet("${index}")`).join('\n')
+    paths.forEach((path) =>
+      writeFileSync(join(root, path), `import {greet} from './helper'\n${calls}\n`),
+    )
+    const result = await workspace.references('helper.ts', definition.indexOf('greet'))
+    if (!result.ok) {
+      throw new Error(result.error.code)
+    }
+    const expected = paths.flatMap((path) => [
+      {column: 9, line: 1, path},
+      ...Array.from({length: 1000}, (_, index) => ({column: 1, line: index + 2, path})),
+    ])
+    expect(result.value.filter((location) => paths.includes(location.path))).toEqual(expected)
+    expect(result.value.some((location) => location.path === 'unrelated.ts')).toBe(false)
+  }, 15000)
+  it('should find usages spread over one thousand unopened files', async () => {
+    const paths = Array.from(
+      {length: 1000},
+      (_, index) => `usage-${String(index).padStart(4, '0')}.ts`,
+    )
+    paths.forEach((path) =>
+      writeFileSync(join(root, path), "import {greet} from './helper'\ngreet('many files')\n"),
+    )
+    const result = await workspace.references('helper.ts', definition.indexOf('greet'))
+    if (!result.ok) {
+      throw new Error(result.error.code)
+    }
+    expect(result.value.filter((location) => paths.includes(location.path))).toEqual(
+      paths.flatMap((path) => [
+        {column: 9, line: 1, path},
+        {column: 1, line: 2, path},
+      ]),
+    )
+  })
   it('should support JavaScript usages without a tsconfig', async () => {
     workspace.dispose()
     rmSync(join(root, 'tsconfig.json'))

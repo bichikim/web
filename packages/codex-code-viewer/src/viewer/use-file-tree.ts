@@ -1,15 +1,8 @@
 import {type Accessor, batch, createEffect, createMemo, createSignal, on, untrack} from 'solid-js'
-import {
-  type CodeLocation,
-  treeSchema,
-  type ViewerConnection,
-  type WorkspaceFile,
-  type WorkspaceTree,
-} from '../shared/contracts'
-import {callViewerTool} from './call-viewer-tool'
-import {buildFileTree, getTreeDestination, getVisibleNodes} from './file-tree'
-import {createRefreshQueue} from './create-refresh-queue'
-import {useLatestRequest} from './use-latest-request'
+import {type CodeLocation, type ViewerConnection} from '../shared/contracts'
+import {useTreeListing} from './use-tree-listing'
+import {getTreePositions} from './file-tree/get-tree-positions'
+import {getTreeDestination, getVisibleNodes} from './file-tree'
 import type {ViewerPort} from './types'
 
 interface UseFileTreeProps {
@@ -29,9 +22,6 @@ const parents = (path: string): string[] =>
 
 const documentPath = (session: ViewerConnection | null): string =>
   session !== null && 'document' in session ? session.document.location.path : ''
-
-const containsPath = (files: readonly WorkspaceFile[], path: string): boolean =>
-  files.some((file) => file.path === path)
 
 const toggleExpansion = (previous: Set<string>, path: string): Set<string> => {
   const next = new Set(previous)
@@ -55,61 +45,15 @@ const visibleSelection = (props: {
       : (props.paths[0] ?? null)
 
 export const useFileTree = (props: UseFileTreeProps) => {
-  const [listing, setListing] = createSignal<WorkspaceTree>({
-    directories: [],
-    files: [],
-    truncated: false,
-  })
-  const files = () => listing().files
-  const directories = () => listing().directories ?? []
   const [query, setQuery] = createSignal('')
   const [expanded, setExpanded] = createSignal(new Set<string>())
   const [collapsed, setCollapsed] = createSignal(new Set<string>())
   const [focused, setFocused] = createSignal<string | null>(null)
-  const request = useLatestRequest(props.onError)
   const sessionId = createMemo(() => props.session()?.session)
   const currentPath = () => documentPath(props.session())
-  const filtered = createMemo(() => {
-    const value = query().trim().toLowerCase()
-    return buildFileTree(
-      files().filter((file) => file.path.toLowerCase().includes(value)),
-      directories().filter((path) => path.toLowerCase().includes(value)),
-    )
-  })
-  const isExpanded = (path: string): boolean =>
-    query().trim() === '' ? expanded().has(path) : !collapsed().has(path)
-  const nodes = createMemo(() => getVisibleNodes(filtered(), isExpanded))
-  const paths = createMemo(() => nodes().map((node) => node.path))
-  const lookup = createMemo(() => new Map(nodes().map((node) => [node.path, node])))
-  const activePath = createMemo(() =>
-    visibleSelection({current: currentPath(), focused: focused(), paths: paths()}),
-  )
-  const loader = createMemo(() => {
-    const session = sessionId()
-    return createRefreshQueue(async (): Promise<void> => {
-      const current = props.session()
-      if (current === null || current.session !== session) {
-        return
-      }
-      const result = await request.run(() =>
-        callViewerTool({
-          input: {session: current.session},
-          name: 'code.tree',
-          port: props.port,
-          schema: treeSchema,
-        }),
-      )
-      if (result !== null) {
-        setListing(result)
-      }
-    })
-  })
-  const reload = (): Promise<void> => loader()()
   createEffect(
     on(sessionId, () => {
-      request.cancel()
       batch(() => {
-        setListing({directories: [], files: [], truncated: false})
         setQuery('')
         setExpanded(new Set(parents(untrack(currentPath))))
         setCollapsed(new Set<string>())
@@ -117,16 +61,41 @@ export const useFileTree = (props: UseFileTreeProps) => {
       })
     }),
   )
-  createEffect(
-    on([props.visible, sessionId, () => props.revision?.() ?? 0], ([visible]) => {
-      if (visible) {
-        reload()
-      }
-    }),
+  const scope = createMemo(() =>
+    query().trim() === ''
+      ? [
+          '',
+          ...[...expanded()].filter((path) =>
+            parents(path).every((parent) => expanded().has(parent)),
+          ),
+        ].sort()
+      : undefined,
+  )
+  const listing = useTreeListing({
+    directories: scope,
+    onError: props.onError,
+    port: props.port,
+    query,
+    revision: () => (query().trim() === '' ? (props.revision?.() ?? 0) : 0),
+    session: sessionId,
+    visible: props.visible,
+  })
+  const isExpanded = (path: string): boolean =>
+    query().trim() === '' ? expanded().has(path) : !collapsed().has(path)
+  const nodes = createMemo(() => getVisibleNodes(listing.tree(), isExpanded))
+  const paths = createMemo(() => nodes().map((node) => node.path))
+  const lookup = createMemo(() => new Map(nodes().map((node) => [node.path, node])))
+  const positions = createMemo(() => getTreePositions(paths()))
+  const activePath = createMemo(() =>
+    visibleSelection({current: currentPath(), focused: focused(), paths: paths()}),
   )
   createEffect(
     on(currentPath, (path) => {
-      setExpanded((previous) => new Set([...previous, ...parents(path)]))
+      setExpanded((previous) =>
+        parents(path).every((parent) => previous.has(parent))
+          ? previous
+          : new Set([...previous, ...parents(path)]),
+      )
     }),
   )
   const toggle = (path: string): void => {
@@ -177,30 +146,35 @@ export const useFileTree = (props: UseFileTreeProps) => {
     })
   }
   const reveal = (path = currentPath()): void => {
-    if (!containsPath(files(), path) && !directories().includes(path)) {
+    if (listing.node(path) === undefined) {
       return
     }
     batch(() => {
       change('')
-      setExpanded((previous) => new Set([...previous, ...parents(path)]))
+      setExpanded((previous) =>
+        parents(path).every((parent) => previous.has(parent))
+          ? previous
+          : new Set([...previous, ...parents(path)]),
+      )
       setFocused(path)
     })
   }
   return {
     activate,
     activePath,
-    canReveal: createMemo(() => containsPath(files(), currentPath())),
+    canReveal: createMemo(() => listing.node(currentPath())?.kind === 'file'),
     change,
     currentPath,
     focus: setFocused,
+    incomplete: listing.incomplete,
     isExpanded,
     navigate,
     node: (path: string) => lookup().get(path),
     paths,
-    pending: request.pending,
+    pending: listing.pending,
+    position: (path: string) => positions().get(path),
     query,
-    reload,
+    reload: listing.reload,
     reveal,
-    truncated: () => listing().truncated,
   }
 }

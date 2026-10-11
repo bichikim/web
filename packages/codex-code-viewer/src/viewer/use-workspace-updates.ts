@@ -21,12 +21,16 @@ export const useWorkspaceUpdates = (options: WorkspaceUpdatesOptions): Accessor<
       setPending(false)
       if (current !== undefined) {
         options.port
-          .watch?.(current, () => {
-            if (!disposed) {
-              setRevision((value) => value + 1)
-              setPending(true)
-            }
-          })
+          .watch?.(
+            current,
+            () => {
+              if (!disposed) {
+                setRevision((value) => value + 1)
+                setPending(true)
+              }
+            },
+            options.report,
+          )
           .then(async (dispose) => {
             if (disposed) {
               await dispose()

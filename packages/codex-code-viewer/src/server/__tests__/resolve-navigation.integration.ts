@@ -18,6 +18,33 @@ describe('resolveNavigation declaration boundaries', () => {
     workspace.dispose()
     rmSync(root, {force: true, recursive: true})
   })
+  it('should include the source line for each merged type definition', async () => {
+    const source =
+      'interface User {id: string}\ninterface User {name: string}\nconst user: User = {}'
+    writeFileSync(join(root, 'main.ts'), source)
+    const document = workspace.read('main.ts')
+    if (!document.ok) {
+      throw new Error(document.error.code)
+    }
+    expect(
+      await resolveNavigation({
+        document: document.value,
+        navigation: 'definition',
+        offset: source.lastIndexOf('User'),
+        path: 'main.ts',
+        workspace,
+      }),
+    ).toEqual({
+      ok: true,
+      value: {
+        kind: 'definition',
+        locations: [
+          {column: 11, line: 1, path: 'main.ts', preview: source},
+          {column: 11, line: 2, path: 'main.ts', preview: source.split('\n').slice(1).join('\n')},
+        ],
+      },
+    })
+  })
   const declarations = [
     {name: 'r#type', path: 'main.rs', source: 'fn r#type() {}\nfn main() {r#type();}'},
     {

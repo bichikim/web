@@ -47,12 +47,6 @@ export const createEditorExtensions = (options: EditorExtensionsOptions): Extens
   syntaxHighlighting(classHighlighter),
   options.editability.of(options.writable),
   options.marks.of(EditorView.decorations.of(Decoration.none)),
-  EditorView.contentAttributes.of({
-    'aria-label': '코드 편집기',
-    'aria-multiline': 'true',
-    role: 'textbox',
-    spellcheck: 'false',
-  }),
   EditorView.updateListener.of((update) => {
     options.states.set(options.fileKey, update.state)
     if (update.docChanged) {

@@ -1008,6 +1008,9 @@ importers:
       '@typescript/typescript6':
         specifier: 'catalog:'
         version: 6.0.2
+      class-variance-authority:
+        specifier: 'catalog:'
+        version: 0.7.1
       csv-parse:
         specifier: 7.0.3
         version: 7.0.3

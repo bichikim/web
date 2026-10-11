@@ -1,13 +1,15 @@
-import {createMemo, createSignal, For, onCleanup, onMount, Show} from 'solid-js'
+import {useTranslations} from './locale/use-translations'
+import {createMemo, createSignal, For, type JSX, onCleanup, onMount, Show} from 'solid-js'
 import type {ContextMenuCloseOptions, ContextMenuItem} from './types'
 import {SContextMenuItem} from './SContextMenuItem'
 
 interface SContextMenuProps {
+  children?: JSX.Element
   x: number
   y: number
   items: readonly ContextMenuItem[]
   label?: string
-  title?: string
+  title?: JSX.Element
   emptyMessage?: string
   maxHeight?: number
   width?: number
@@ -15,6 +17,7 @@ interface SContextMenuProps {
 }
 
 export const SContextMenu = (props: SContextMenuProps) => {
+  const t = useTranslations()
   const groups = createMemo(() =>
     [...Map.groupBy(props.items, (item) => item.group)].map(([label, items]) => ({items, label})),
   )
@@ -45,7 +48,7 @@ export const SContextMenu = (props: SContextMenuProps) => {
     item.onSelect?.()
   }
   const handleKeyboard = (event: KeyboardEvent): void => {
-    if (event.isComposing) {
+    if (event.isComposing || event.defaultPrevented) {
       return
     }
     setKeyboard(true)
@@ -84,11 +87,11 @@ export const SContextMenu = (props: SContextMenuProps) => {
   }
   return (
     <div
-      aria-label={props.label ?? '작업'}
+      aria-label={props.label ?? t('작업')}
       class="fixed inset-auto m-0 w-[var(--menu-preferred-width)] max-w-[calc(100vw-16px)]
         max-h-[min(var(--menu-limit),calc(100dvh-16px))]
         overflow-y-auto rounded-control border border-divider
-        bg-canvas p-1 font-sans text-foreground shadow-panel
+        bg-canvas p-1 font-sans text-foreground shadow-panel outline-none
         left-[clamp(8px,var(--menu-x),calc(100vw-var(--menu-width)-8px))]
         top-[clamp(8px,var(--menu-y),calc(100dvh-var(--menu-height)-8px))]"
       onKeyDown={handleKeyboard}
@@ -120,18 +123,23 @@ export const SContextMenu = (props: SContextMenuProps) => {
       <Show when={props.items.length === 0 && props.emptyMessage}>
         <p class="m-0 px-3 py-3 text-sm text-muted">{props.emptyMessage}</p>
       </Show>
+      {props.children}
       <For each={groups()}>
         {(group) => (
           <div
             role={group.label === undefined ? 'presentation' : 'group'}
             aria-label={
-              group.label === undefined ? undefined : `${group.label} · ${group.items.length}개`
+              group.label === undefined
+                ? undefined
+                : `${group.label} · ${t('{count}개', {count: group.items.length})}`
             }
           >
             <Show when={group.label}>
               <p class="m-0 flex items-start justify-between gap-3 px-3 pt-3 pb-1 text-xs font-semibold">
                 <span class="min-w-0 [overflow-wrap:anywhere]">{group.label}</span>
-                <span class="shrink-0 font-normal text-muted">{group.items.length}개</span>
+                <span class="shrink-0 font-normal text-muted">
+                  {t('{count}개', {count: group.items.length})}
+                </span>
               </p>
             </Show>
             <For each={group.items}>

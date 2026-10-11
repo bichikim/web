@@ -239,6 +239,7 @@ export const useViewer = (port: ViewerPort) => {
     }
   }
   const definitions = useDefinitionNavigation({
+    onError: report,
     onOpen: go,
     port,
     revision: editing.revision,

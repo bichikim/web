@@ -10,7 +10,7 @@
     "mcp",
     "typescript"
   ],
-  "homepage": "https://github.com/bichikim/web",
+  "homepage": "https://github.com/bichikim/web/tree/dev/packages/codex-code-viewer",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/bichikim/web.git",
@@ -24,6 +24,7 @@
     ".mcp.json",
     "assets",
     "dist/server.js",
+    "dist/navigation-worker.js",
     "dist/app.html",
     "dist/install.js",
     "dist/python",
@@ -63,6 +64,7 @@
     "@types/node": "catalog:",
     "@types/prismjs": "1.26.5",
     "@typescript/typescript6": "catalog:",
+    "class-variance-authority": "catalog:",
     "csv-parse": "7.0.3",
     "diff": "8.0.3",
     "esbuild": "^0.28.2",
