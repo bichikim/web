@@ -48,7 +48,9 @@ describe('appendSetCookies', () => {
     const cookies = ['first=1', 'invalid=1\n2', 'last=1']
     cookies[Symbol.iterator] = function* readInvalidCookies(): Generator<string, undefined> {
       try {
-        yield* ['first=1', 'invalid=1\n2', 'last=1']
+        for (const cookie of ['first=1', 'invalid=1\n2', 'last=1']) {
+          yield cookie
+        }
       } finally {
         closed()
       }
