@@ -9,6 +9,35 @@ const response = (revision: number): CallToolResult => ({
 })
 
 describe('subscribeWorkspaceChanges', () => {
+  it('should reconnect completed idle waits without refreshing files or overlapping calls', async () => {
+    const resumed = Promise.withResolvers<void>()
+    const call = vi
+      .fn<ViewerPort['call']>()
+      .mockResolvedValueOnce(response(7))
+      .mockResolvedValueOnce(response(7))
+      .mockImplementationOnce(async (_name, _input, options) => {
+        resumed.resolve()
+        return new Promise((_resolve, reject) => {
+          options?.signal?.addEventListener('abort', () => reject(options.signal?.reason), {
+            once: true,
+          })
+        })
+      })
+    const receive = vi.fn()
+    const report = vi.fn()
+    const stop = await subscribeWorkspaceChanges({call, receive, report, session: 'first'})
+    await resumed.promise
+    expect(call).toHaveBeenCalledTimes(3)
+    expect(call.mock.calls.map(([name]) => name)).toEqual([
+      'code.watch',
+      'code.watch.next',
+      'code.watch.next',
+    ])
+    expect(receive).toHaveBeenCalledOnce()
+    expect(report).not.toHaveBeenCalled()
+    await stop()
+  })
+
   it('should refresh on changes and abort the outstanding wait when released', async () => {
     const changed = Promise.withResolvers<CallToolResult>()
     const waiting = Promise.withResolvers<void>()

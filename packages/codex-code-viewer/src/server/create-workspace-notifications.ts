@@ -1,5 +1,7 @@
 import {addAbortListener} from 'node:events'
 
+const MAX_WAIT_MS = 20_000
+
 interface WorkspaceRevision {
   revision: number
   readonly listeners: Set<(revision: number | null) => void>
@@ -12,7 +14,7 @@ interface WorkspaceNotifications {
   readonly watch: (session: string) => number
 }
 
-/** Retains workspace revisions and wakes pending requests on changes, cancellation or closure. */
+/** Retains revisions and finishes waits on changes, cancellation, closure or an idle deadline. */
 export const createWorkspaceNotifications = (): WorkspaceNotifications => {
   const workspaces = new Map<string, WorkspaceRevision>()
   return {
@@ -41,6 +43,9 @@ export const createWorkspaceNotifications = (): WorkspaceNotifications => {
       if (current.revision !== revision) {
         return current.revision
       }
+      // The app bridge may not forward client cancellation; finish before its 30-second deadline.
+      const deadline = AbortSignal.timeout(MAX_WAIT_MS)
+      const waiting = AbortSignal.any([signal, deadline])
       return new Promise((resolve, reject) => {
         const receive = (next: number | null): void => {
           current.listeners.delete(receive)
@@ -51,9 +56,14 @@ export const createWorkspaceNotifications = (): WorkspaceNotifications => {
             resolve(next)
           }
         }
-        const cancellation = addAbortListener(signal, () => {
+        const cancellation = addAbortListener(waiting, () => {
           current.listeners.delete(receive)
-          reject(signal.reason)
+          cancellation[Symbol.dispose]()
+          if (signal.aborted) {
+            reject(signal.reason)
+          } else {
+            resolve(current.revision)
+          }
         })
         current.listeners.add(receive)
       })

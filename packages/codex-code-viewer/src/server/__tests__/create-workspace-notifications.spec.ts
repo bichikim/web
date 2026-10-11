@@ -1,7 +1,43 @@
-import {describe, expect, it, vi} from 'vitest'
+import {afterEach, describe, expect, it, vi} from 'vitest'
 import {createWorkspaceNotifications} from '../create-workspace-notifications'
 
 describe('createWorkspaceNotifications', () => {
+  afterEach(() => vi.restoreAllMocks())
+
+  it('should finish idle waits before the app deadline without changing the revision', async () => {
+    const deadline = new AbortController()
+    const timeout = vi.spyOn(AbortSignal, 'timeout').mockReturnValue(deadline.signal)
+    const notifications = createWorkspaceNotifications()
+    notifications.watch('first')
+    const received = vi.fn()
+    const waiting = notifications.wait('first', 0, new AbortController().signal).then(received)
+    await Promise.resolve()
+    expect(received).not.toHaveBeenCalled()
+    expect(timeout).toHaveBeenCalledWith(20_000)
+    deadline.abort(new DOMException('Idle deadline', 'TimeoutError'))
+    await waiting
+    expect(received).toHaveBeenCalledWith(0)
+    notifications.changed('first')
+    expect(received).toHaveBeenCalledOnce()
+    expect(notifications.watch('first')).toBe(1)
+    notifications.close('first')
+  })
+
+  it('should still reject caller cancellation when an idle deadline exists', async () => {
+    const deadline = new AbortController()
+    vi.spyOn(AbortSignal, 'timeout').mockReturnValue(deadline.signal)
+    const notifications = createWorkspaceNotifications()
+    notifications.watch('first')
+    const caller = new AbortController()
+    const reason = new Error('Caller cancelled')
+    const waiting = notifications.wait('first', 0, caller.signal)
+    const rejected = expect(waiting).rejects.toBe(reason)
+    caller.abort(reason)
+    await rejected
+    deadline.abort()
+    notifications.close('first')
+  })
+
   it('should wait for a change and retain changes between requests', async () => {
     const notifications = createWorkspaceNotifications()
     expect(notifications.watch('first')).toBe(0)
