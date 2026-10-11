@@ -8,11 +8,9 @@ import {
 } from 'src/utils/runtime-storage'
 
 import {getDefaultPSceneStyle, type PSceneStyle} from './scene-style'
+import {parseSceneStyle} from './parse-scene-style'
 
 const SCENE_STYLE_STORAGE_KEY = 'pomo:focus-room-scene-style:v1'
-const parseSceneStyle = (value: unknown): PSceneStyle | null => {
-  return value === 'original' || value === 'scribble' ? value : null
-}
 
 export interface PSceneStyleStorage {
   readonly getDefault: () => PSceneStyle
