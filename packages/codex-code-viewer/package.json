@@ -10,7 +10,7 @@
     "mcp",
     "typescript"
   ],
-  "homepage": "https://github.com/bichikim/web",
+  "homepage": "https://github.com/bichikim/web/tree/dev/packages/codex-code-viewer",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/bichikim/web.git",
