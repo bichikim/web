@@ -1,3 +1,5 @@
+import {sumBy} from 'es-toolkit/math'
+
 import {
   expireGenerationSubmission,
   listRecoverableGenerationRuns,
@@ -94,8 +96,8 @@ export const recoverHistoryGenerations = async (now = new Date()): Promise<Recov
   } satisfies RecoveryCutoffs
   const runs = await listRecoverableGenerationRuns(cutoffs)
   const results = await Promise.all(runs.map((run) => recoverGenerationRun(run, cutoffs)))
-  const failed = results.filter((result) => result === 'failed').length
-  const terminal = results.filter((result) => result === 'terminal').length
+  const failed = sumBy(results, (result) => (result === 'failed' ? 1 : 0))
+  const terminal = sumBy(results, (result) => (result === 'terminal' ? 1 : 0))
 
   // Continue daily generation after polling stale work; ambiguous expirations stay terminal.
   await startHistoryGeneration()
