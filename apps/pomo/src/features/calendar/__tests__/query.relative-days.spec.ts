@@ -123,6 +123,39 @@ describe('createCalendarQuery relative days', () => {
   })
 
   it.each([
+    ['낼이나 일정이 있나요?', '2026-09-05T15:00:00.000Z', '2026-09-04T15:00:00.000Z'],
+    ['낼나 일정이 있나요?', '2026-09-05T15:00:00.000Z', '2026-09-04T15:00:00.000Z'],
+    ['내일이나 일정이 있나요?', '2026-09-05T15:00:00.000Z', '2026-09-04T15:00:00.000Z'],
+    ['내일나 일정이 있나요?', '2026-09-05T15:00:00.000Z', '2026-09-04T15:00:00.000Z'],
+    ['그저께나 일정이 있나요?', '2026-09-02T15:00:00.000Z', '2026-09-01T15:00:00.000Z'],
+    ['어제나 일정이 있나요?', '2026-09-03T15:00:00.000Z', '2026-09-02T15:00:00.000Z'],
+    ['오늘이나 일정이 있나요?', '2026-09-04T15:00:00.000Z', '2026-09-04T10:30:00.000Z'],
+    ['모레나 일정이 있나요?', '2026-09-06T15:00:00.000Z', '2026-09-05T15:00:00.000Z'],
+    ['글피나 일정이 있나요?', '2026-09-07T15:00:00.000Z', '2026-09-06T15:00:00.000Z'],
+  ])(
+    'should recognize a relative day followed by the selection particle in "%s"',
+    (text, end, start) => {
+      expect(createCalendarQuery({now, text, timeZone: 'Asia/Seoul'})).toEqual({end, start})
+    },
+  )
+
+  it('should recognize an implicit schedule question with the selection particle', () => {
+    expect(createCalendarQuery({now, text: '모레나 뭐 있어?', timeZone: 'Asia/Seoul'})).toEqual({
+      end: '2026-09-06T15:00:00.000Z',
+      start: '2026-09-05T15:00:00.000Z',
+    })
+  })
+
+  it('should keep the default window when relative-day text continues into a longer word', () => {
+    expect(
+      createCalendarQuery({now, text: '내일나무 일정이 있나요?', timeZone: 'Asia/Seoul'}),
+    ).toEqual({
+      end: '2026-10-04T10:30:00.000Z',
+      start: '2026-09-04T10:30:00.000Z',
+    })
+  })
+
+  it.each([
     ['오늘과 내일 일정 알려줘', '2026-09-05T15:00:00.000Z', '2026-09-04T10:30:00.000Z'],
     ['어제와 오늘 일정 알려줘', '2026-09-04T15:00:00.000Z', '2026-09-02T15:00:00.000Z'],
     ['내일하고 오늘 일정 알려줘', '2026-09-05T15:00:00.000Z', '2026-09-04T10:30:00.000Z'],
