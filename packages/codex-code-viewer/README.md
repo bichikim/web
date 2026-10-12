@@ -49,7 +49,7 @@ In reading mode, click an import path to open its module, or a symbol usage to o
 
 Definition and usage navigation supports TypeScript, JavaScript, Python, Ruby and Rust. JSON/JSONC/JSON5 supports file-path navigation only. Other highlighted formats do not provide symbol navigation. Language requirements are listed under [Navigation setup](#navigation-setup).
 
-In editing mode, a normal click places the cursor. Use `Cmd/Ctrl+click` or `F12` for navigation; use arrow keys and Enter in a result list and Escape to close it.
+While editing or reading an unsaved draft as source, a normal click places the cursor. Use `Cmd/Ctrl+click` or `F12` for navigation in these views; use arrow keys and Enter in a result list and Escape to close it.
 
 Press `Cmd/Ctrl+F` to find literal text without case sensitivity. Enter/Shift+Enter moves between matches; Escape closes search. Markdown and CSV/TSV switch to source mode for this search. PDF uses its own document search.
 
@@ -59,11 +59,11 @@ Press `Cmd/Ctrl+F` to find literal text without case sensitivity. Enter/Shift+En
 2. Make changes. Use `Cmd/Ctrl+Z` to undo and `Cmd/Ctrl+Shift+Z` to redo.
 3. Choose **Save** or press `Cmd/Ctrl+S`. There is no autosave or automatic formatting.
 
-All text formats in the support table can be edited, including Markdown and CSV/TSV source. PDF, Word, Excel, SVG and other media cannot be edited. HTML, Vue, Svelte and Astro are edited as source without executing them. Editing and saving do not require a navigation analyzer.
+See [Supported formats](#supported-formats) for editable file types. Markdown and CSV/TSV are edited as source.
 
-You can move between files without losing drafts. Toggle **Edit** off to read the draft; this does not discard it. Markdown and CSV/TSV previews reflect unsaved content. To discard a draft, choose **⋯ → Discard changes** while editing.
+You can move between files without losing drafts. Toggle **Edit** off to read unsaved content without editing it. For Markdown and CSV/TSV, turn **Edit** off to access **Preview / Source**; previews include unsaved content. To discard a draft, turn **Edit** on and choose **⋯ → Discard changes**.
 
-TS/JS and JSON navigation uses unsaved drafts. Python, Ruby and Rust analyze the current file's draft, without combining drafts from other files.
+TS/JS and JSON navigation includes unsaved changes from multiple files. Python, Ruby and Rust include changes from the current file only; save changes to other files before navigating to them.
 
 If another program changes the original, saving is rejected and your draft remains. Attach its changes to chat for review, or discard it to reload the original. If the file was deleted externally, **Save** recreates it at the same path; **Discard changes** closes it. If another program restores the file first, saving reports a conflict.
 
@@ -74,21 +74,22 @@ When you change workspace or Codex requests viewer closure, choose save-all, dis
 | What to attach       | Action                                                                                                                               |
 | -------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
 | Whole file or folder | Right-click it in the tree and choose **Add to chat**. This attaches its path, including media or files the viewer cannot open.      |
-| Lines                | Click a line number, drag across numbers or Shift-click another number, then choose **Add to chat** from the context menu.           |
-| Exact text           | Drag across text and choose **Add to chat** from the context menu. The path and start/end lines and columns accompany the selection. |
+| Code range           | Drag across text and choose **Add to chat** from the context menu. The path and start/end lines and columns accompany the selection. |
 | Unsaved changes      | While editing, choose **⋯ → Add changes to chat** to attach the current file's diff.                                                 |
+
+In the reading view without an unsaved draft, you can also select lines by clicking or dragging across line numbers, or Shift-clicking another number. In the editor, drag across the text.
 
 Editor selections include unsaved content. Tree attachments refer to the file on disk. A diff compares against the last content read or saved and captures changes at the moment you attach it; attach again after further edits.
 
 Attachments accumulate for the next message, including ranges from multiple files. Saving and sending the message are separate actions. Code Viewer does not send messages automatically.
 
-Use **Copy code** in the code context menu to copy without line numbers, or **Copy path** in the tree to copy an absolute path. The end position in a selection address is excluded: `5:3-5:7` selects columns 3–6 on line 5.
+Select text, then choose **Copy code** or **Copy** from its context menu to copy without line numbers. Use **Copy path** in the tree to copy an absolute path.
 
 ## 6. Manage files and folders
 
 Use **New file** or **New folder** in the tree toolbar. A selected folder becomes the destination; a selected file uses its parent. An empty workspace uses its root. The name dialog shows the destination, and existing entries are never overwritten.
 
-Right-click a file or folder for **Rename**, **Copy**, **Cut**, **Paste** or **Delete**. With tree focus, `Cmd/Ctrl+C`, `X`, `V` and Delete are also available. Copy/cut uses an internal clipboard within this viewer's workspace. Paste on a folder places entries inside it; paste on a file uses its parent. The empty-space menu pastes at the workspace root. Copy collisions create a copy name; cut/rename collisions report an error.
+Right-click a file or folder for **Rename**, **Copy**, **Cut**, **Paste** or **Delete**. With tree focus, `Cmd/Ctrl+C`, `Cmd/Ctrl+X`, `Cmd/Ctrl+V` and Delete are also available. Copy/cut uses an internal clipboard within this viewer's workspace. Paste on a folder places entries inside it; paste on a file uses its parent. The empty-space menu pastes at the workspace root. Copy collisions create a copy name; cut/rename collisions report an error.
 
 **Deletion is permanent and bypasses the trash.** Confirm the target in the dialog. Save or discard affected drafts before renaming, moving or deleting entries. The workspace root, symlinks and folders containing `.git`, `.codex`, `.aws` or `.ssh` are protected. Operations can handle up to 10,000 entries at a time. If the source changes during an operation, check its contents before trying again.
 
@@ -127,7 +128,7 @@ Only `Cargo.lock` uses TOML highlighting; other `.lock` files are plain text. `.
 
 Rust navigation covers standalone files, modules and local Cargo dependencies. Definitions that depend on the standard library, external packages, additional features or generated code may not resolve.
 
-Library definitions outside the workspace cannot be opened. Viewing, highlighting, editing and saving remain available if an analyzer cannot start. Completion, symbol rename/refactoring and code execution are not provided; tree **Rename** changes file/folder names only.
+Library definitions outside the workspace cannot be opened. Viewing, highlighting, editing and saving remain available if an analyzer cannot start. Completion, symbol rename/refactoring and code execution are not provided.
 
 ### Documents and media
 
@@ -149,8 +150,8 @@ Library definitions outside the workspace cannot be opened. Viewing, highlightin
 | Save reports a conflict          | Keep or attach the draft, then discard it to reload the disk version when ready.                                             |
 | Changes disappear after restart  | Drafts cannot be recovered after closing. Save before you close.                                                             |
 
-Text files must be UTF-8 without NUL bytes and at most 512 KiB. Documents and media are limited to 128 MiB. Paths outside the workspace and `.git`, `.codex`, `.aws`, `.ssh` are excluded. The only hidden files you can open are `.dockerignore`, `.gitignore`, `.gitattributes`, `.gitmodules`, `.editorconfig`, `.prettierignore`, `.eslintignore`, `.npmignore` and `.browserslistrc`. `.env` cannot be opened. Search returns up to 100 results. Search and the tree exclude generated and dependency directories.
+Text files, including code, Markdown and CSV/TSV, must be UTF-8 and at most 512 KiB each. Files containing NUL bytes cannot be opened as text. PDF, DOCX, XLSX, images, video and audio are limited to 128 MiB per file. Paths outside the workspace and `.git`, `.codex`, `.aws`, `.ssh` are excluded. The only hidden files you can open are `.dockerignore`, `.gitignore`, `.gitattributes`, `.gitmodules`, `.editorconfig`, `.prettierignore`, `.eslintignore`, `.npmignore` and `.browserslistrc`. `.env` cannot be opened. Search returns up to 100 results. Search and the tree exclude generated and dependency directories.
 
-Changes made in another program refresh the viewer while preserving unsaved drafts. Refresh manually if changes do not appear. The viewer follows Codex's light/dark theme and fonts.
+Changes made in another program refresh the viewer. Unsaved drafts are not replaced automatically. If the file list does not update, use **Refresh file tree**.
 
 [Development guide](./development.md)
