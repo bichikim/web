@@ -65,6 +65,17 @@ const getTagStart = (characters: readonly string[], index: number) => {
   return tagSpecificationIndex === index - 1 ? -1 : getTagBase(characters, tagSpecificationIndex)
 }
 
+const getSymbolStart = (characters: readonly string[], index: number) => {
+  const tagStartIndex = getTagStart(characters, index)
+  const keycapBaseIndex = getKeycapBase(characters, index)
+
+  if (TRAILING_SYMBOL_PATTERN.test(characters[index]!)) {
+    return index
+  }
+
+  return tagStartIndex >= 0 ? tagStartIndex : keycapBaseIndex
+}
+
 /**
  * Removes a suffix of Unicode Symbol code points and adjacent Unicode White_Space.
  * Supports keycaps, terminated pictographic tags, U+FE0E/FE0F/20E0 marks, and symbol-linked joiners.
@@ -79,22 +90,13 @@ export const stripTrailingSymbols = (value: string): string => {
 
   while (index >= 0) {
     const character = characters[index]!
-    const tagStartIndex = getTagStart(characters, index)
-    const keycapBaseIndex = getKeycapBase(characters, index)
+    const symbolStartIndex = getSymbolStart(characters, index)
 
     if (requiresPrecedingSymbol) {
-      if (TRAILING_SYMBOL_PATTERN.test(character)) {
+      if (symbolStartIndex >= 0) {
         requiresPrecedingSymbol = false
         hasTrailingSymbols = true
-        index -= 1
-      } else if (tagStartIndex >= 0) {
-        requiresPrecedingSymbol = false
-        hasTrailingSymbols = true
-        index = tagStartIndex - 1
-      } else if (keycapBaseIndex >= 0) {
-        requiresPrecedingSymbol = false
-        hasTrailingSymbols = true
-        index = keycapBaseIndex - 1
+        index = symbolStartIndex - 1
       } else if (ATTACHED_MARK_PATTERN.test(character)) {
         index -= 1
       } else {
@@ -105,17 +107,11 @@ export const stripTrailingSymbols = (value: string): string => {
     } else if (character === '\u200D' && hasTrailingSymbols) {
       requiresPrecedingSymbol = true
       index -= 1
-    } else if (tagStartIndex >= 0) {
+    } else if (symbolStartIndex >= 0) {
       hasTrailingSymbols = true
-      index = tagStartIndex - 1
-    } else if (keycapBaseIndex >= 0) {
-      hasTrailingSymbols = true
-      index = keycapBaseIndex - 1
+      index = symbolStartIndex - 1
     } else if (ATTACHED_MARK_PATTERN.test(character)) {
       requiresPrecedingSymbol = true
-      index -= 1
-    } else if (TRAILING_SYMBOL_PATTERN.test(character)) {
-      hasTrailingSymbols = true
       index -= 1
     } else {
       break

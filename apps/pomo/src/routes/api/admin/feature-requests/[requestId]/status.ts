@@ -1,6 +1,7 @@
 import {invalidJsonBodyResponse} from 'src/server/http/invalid-json-body-response'
 import type {APIEvent} from '@solidjs/start/server'
 import {z} from 'zod'
+import {FEATURE_REQUEST_STATUSES} from 'src/features/feature-requests/types'
 
 import {authorizeAdminRequest} from 'src/server/auth/authorize-admin-request'
 import {readJsonBody} from 'src/server/http/body'
@@ -13,7 +14,7 @@ const HTTP_NOT_FOUND = 404
 const HTTP_CONFLICT = 409
 const requestIdSchema = z.string().uuid()
 const statusSchema = z.object({
-  status: z.enum(['requested', 'voting', 'confirmed', 'completed']),
+  status: z.enum(FEATURE_REQUEST_STATUSES),
   targetVoteCount: z.number().int().positive().nullable().optional(),
 })
 

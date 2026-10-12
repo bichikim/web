@@ -19,3 +19,18 @@ it('should emit a selected language', () => {
 
   expect(onChange).toHaveBeenCalledWith('ja')
 })
+
+it('should preserve language option order and translated labels', () => {
+  render(() => <LanguageLearningLanguageSelect />)
+
+  const select = screen.getByRole('group').querySelector('select')!
+  expect(
+    Array.from(select.querySelectorAll('option'))
+      .filter((option) => option.value !== '')
+      .map((option) => ({label: option.textContent, value: option.value})),
+  ).toEqual([
+    {label: '한국어', value: 'ko'},
+    {label: '영어', value: 'en'},
+    {label: '일본어', value: 'ja'},
+  ])
+})

@@ -55,7 +55,7 @@ npm install -g @openai/codex
 npx @winter-love/codex-code-viewer@latest install
 ```
 
-npm이 설치 실행 파일을 내려받고, 실행 파일이 개인 Codex 설정 폴더 안에 npm 설치 목록을 만들어 등록한 뒤 플러그인을 설치합니다. ZIP 다운로드, 압축 해제, 저장소 빌드, 별도 미리보기 서버 실행은 필요하지 않습니다. 공개 패키지 설치에는 npm 로그인이 필요하지 않습니다. 기본 설정 폴더는 `~/.codex`이며 `CODEX_HOME`을 지정하면 해당 폴더를 사용합니다. CLI가 PATH에 없으면 `CODEX_BINARY`에 실행 파일 경로를 지정하세요.
+npm이 설치 실행 파일을 내려받으면, 실행 파일이 진행 단계를 표시하며 개인 Codex 설정 폴더에 npm 설치 목록을 등록하고 플러그인을 설치합니다. 설치에 실패하면 이전 설치 목록과 마켓플레이스 등록을 복원합니다. ZIP 다운로드, 압축 해제, 저장소 빌드, 별도 미리보기 서버 실행은 필요하지 않습니다. 공개 패키지 설치에는 npm 로그인이 필요하지 않습니다. 기본 설정 폴더는 `~/.codex`이며 `CODEX_HOME`을 지정하면 해당 폴더를 사용합니다. CLI가 PATH에 없으면 `CODEX_BINARY`에 실행 파일 경로를 지정하세요.
 
 설치 후 Codex 앱을 완전히 종료하고 다시 여세요. 프로젝트 대화의 오른쪽 패널에서 새 탭 목록의 **Code Viewer**를 선택한 다음, 처음 볼 파일의 **절대 경로**를 입력하고 Enter를 누르세요. 예: `/Users/사용자명/projects/my-project/src/main.tsx`.
 
@@ -73,7 +73,7 @@ npm이 설치 실행 파일을 내려받고, 실행 파일이 개인 Codex 설�
 npx @winter-love/codex-code-viewer@latest install
 ```
 
-이전 GitHub·개발용 목록에서 설치한 Code Viewer가 있으면 새 설치가 성공한 뒤 이전 사본을 제거해 중복 탭을 막습니다. 다른 플러그인과 마켓플레이스 등록은 유지합니다.
+이전 GitHub·개발용 목록에서 설치한 Code Viewer가 있으면 새 설치가 성공한 뒤 이전 사본을 제거해 중복 탭을 막습니다. 개발용 마켓플레이스의 로컬 폴더가 사라진 경우 해당 등록도 정리합니다. 폴더가 남아 있는 로컬 등록, Git 등록, 다른 플러그인과 마켓플레이스는 유지합니다.
 
 <details>
 <summary>참고: 이전 버전(0.1.0) 설치</summary>
@@ -234,6 +234,8 @@ npm publish "./dist/winter-love-codex-code-viewer-<version>.tgz" --access public
 ```
 
 새 버전은 `package.json.version`만 수정한 뒤 `pnpm build`를 실행한다. [버전 동기화 단계](./build/sync-plugin-version.ts)가 플러그인 manifest와 저장소 루트 `.agents/plugins/marketplace.json`의 npm 버전을 갱신하므로, 생성된 변경도 `package.json`과 함께 커밋한다. 이 패키지도 모노레포 `Release packages` Action에서 버전으로 배포 여부를 판정한다. 배포 소스와 태그는 저장소 [릴리스 규칙](https://github.com/bichikim/web/blob/dev/RELEASE.md)을 따른다. npm 배포가 성공한 뒤 같은 소스 커밋에 `@winter-love/codex-code-viewer@버전` 태그를 만들고 push한다. 일반 사용자의 설치·업데이트는 npm의 `latest`를 사용하므로 Git 태그를 설치 명령에 넣지 않는다. GitHub 카탈로그를 사용하는 사람은 해당 태그를 `--ref`로 지정할 수 있다.
+
+릴리스의 압축 파일 검증 단계는 배포 전에 실제 Code Viewer tarball로 [설치와 런타임을 검증](../../scripts/npm-release/verify-code-viewer.md)한다.
 
 ## 브라우저 미리보기
 

@@ -1,21 +1,26 @@
 import {execFile} from 'node:child_process'
 import {promisify} from 'node:util'
 
-interface RunCodexOptions {
+export interface RunCodexOptions {
   args: string[]
   codex: string
   home: string
+  onStderr?: (output: string) => void
 }
 const execute = promisify(execFile)
 const MAX_OUTPUT_BYTES = 4194304
 
-/** Runs a Codex CLI command in the selected configuration directory, returning its output. */
+/** Runs Codex in the selected configuration directory, streaming stderr and returning stdout. */
 export const runCodex = async (options: RunCodexOptions): Promise<string> => {
   try {
-    const result = await execute(options.codex, options.args, {
+    const pending = execute(options.codex, options.args, {
       env: {...process.env, CODEX_HOME: options.home},
       maxBuffer: MAX_OUTPUT_BYTES,
     })
+    if (options.onStderr !== undefined) {
+      pending.child.stderr?.setEncoding('utf8').on('data', options.onStderr)
+    }
+    const result = await pending
     return result.stdout
   } catch (error) {
     const detail =

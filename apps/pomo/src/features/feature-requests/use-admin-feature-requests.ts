@@ -1,10 +1,10 @@
 import {createSignal, createUniqueId} from 'solid-js'
 
 import {adminFeatureRequestsQuery, invalidateFeatureRequestPages} from './page-query'
-import {useFeatureRequestList} from './use-feature-request-list'
+import {type FeatureRequestListView, useFeatureRequestList} from './use-feature-request-list'
 
 import {updateAdminFeatureRequest, type UpdateFeatureRequestResult} from './api'
-import {FEATURE_REQUEST_STATUSES, type FeatureRequest, type FeatureRequestStatus} from './types'
+import {FEATURE_REQUEST_STATUSES, type FeatureRequestStatus} from './types'
 
 export interface AdminFeatureRequestStatusInput {
   readonly requestId: string
@@ -12,15 +12,7 @@ export interface AdminFeatureRequestStatusInput {
   readonly targetVoteCount: number | null
 }
 
-export interface AdminFeatureRequestsController {
-  readonly hasMore: () => boolean
-  readonly isLoading: () => boolean
-  readonly isLoadingMore: () => boolean
-  readonly loadFailed: () => boolean
-  readonly loadMore: () => Promise<void>
-  readonly loadMoreFailed: () => boolean
-  readonly refresh: () => Promise<void>
-  readonly requests: () => ReadonlyArray<FeatureRequest>
+export interface AdminFeatureRequestsController extends FeatureRequestListView {
   readonly updateRequest: (
     input: AdminFeatureRequestStatusInput,
   ) => Promise<UpdateFeatureRequestResult>

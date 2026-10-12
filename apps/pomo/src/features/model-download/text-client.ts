@@ -1,16 +1,11 @@
 import type {
   PrepareTextModelRequest,
-  TextGenerationErrorResponse,
-  TextGenerationLoadingResponse,
-  TextGenerationReadyResponse,
+  TextModelPreparationResponse,
 } from '../text-generation/messages'
 import {createWorkerFailureHandler} from '../worker-failure'
 import {createWorkerTransport} from 'src/utils/worker-transport'
 
-export type TextModelDownloadResponse =
-  | TextGenerationErrorResponse
-  | TextGenerationLoadingResponse
-  | TextGenerationReadyResponse
+export type TextModelDownloadResponse = TextModelPreparationResponse
 
 export interface CreateTextModelDownloadClientOptions {
   readonly onResponse: (response: TextModelDownloadResponse) => void

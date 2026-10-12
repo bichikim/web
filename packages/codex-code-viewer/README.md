@@ -59,7 +59,7 @@ Then run:
 npx @winter-love/codex-code-viewer@latest install
 ```
 
-npm downloads the installer, which creates and registers an npm plugin catalog inside your personal Codex configuration directory and installs the plugin. No ZIP download, manual extraction, repository build or separate preview server is required. Installing the public package does not require an npm login. The default configuration directory is `~/.codex`; set `CODEX_HOME` to use another directory. If the CLI is not on `PATH`, set `CODEX_BINARY` to its executable path.
+npm downloads the installer, which reports each stage while registering an npm plugin catalog inside your personal Codex configuration directory and installing the plugin. If installation fails, it restores the previous catalog and marketplace registration. No ZIP download, manual extraction, repository build or separate preview server is required. Installing the public package does not require an npm login. The default configuration directory is `~/.codex`; set `CODEX_HOME` to use another directory. If the CLI is not on `PATH`, set `CODEX_BINARY` to its executable path.
 
 Fully quit and reopen Codex after installation. In a project conversation, select **Code Viewer** from the new-tab menu in the right panel, enter the first file's **absolute path**, and press Enter. For example: `/Users/yourname/projects/my-project/src/main.tsx`.
 
@@ -77,7 +77,7 @@ To install the latest public version, run this command, then fully quit and reop
 npx @winter-love/codex-code-viewer@latest install
 ```
 
-After a successful installation, the installer removes previous Code Viewer copies installed through GitHub or development catalogs to avoid duplicate tabs. Other plugins and marketplace registrations are retained.
+After a successful installation, the installer removes previous Code Viewer copies installed through GitHub or development catalogs to avoid duplicate tabs. It also unregisters the previous development marketplace if its local source directory is missing. Existing source directories, Git marketplace registrations and unrelated plugins and marketplaces are retained.
 
 <details>
 <summary>Reference: installing version 0.1.0</summary>
@@ -253,6 +253,8 @@ npm publish "./dist/winter-love-codex-code-viewer-<version>.tgz" --access public
 ```
 
 For a new version, change only `package.json.version`, then run `pnpm build`. The [version synchronization step](./build/sync-plugin-version.ts) updates the plugin manifest and the npm version in root `.agents/plugins/marketplace.json`; commit those generated changes with `package.json`. The monorepo's `Release packages` Action decides whether to publish based on version. Sources and tags follow the repository [release rules](https://github.com/bichikim/web/blob/dev/RELEASE.md). After a successful npm publish, create and push an `@winter-love/codex-code-viewer@<version>` tag on the same source commit. Normal installation/updates use npm's `latest`, so Git tags are not part of those commands. GitHub-catalog users can select a tag with `--ref`.
+
+The release archive check also runs [installation and runtime verification](../../scripts/npm-release/verify-code-viewer.md) against the packed Code Viewer before publishing.
 
 ## Browser preview
 

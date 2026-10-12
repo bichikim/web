@@ -62,6 +62,31 @@ describe('parseExpenseText', () => {
     })
   })
 
+  it.each([
+    ['２0２6-０9-０５', '2026-09-05'],
+    ['２０２６-9-５', '2026-9-5'],
+    ['202６-0９-5', '2026-09-5'],
+    ['２０２４-０２-２９', '2024-02-29'],
+  ])('should preserve mixed-width date parts in %s', (date, normalizedDate) => {
+    expect(parseExpenseText(`${date}\n두부 1,500원`)).toMatchObject({
+      ok: true,
+      value: {date: normalizedDate, total: 1500},
+    })
+  })
+
+  it.each([
+    '＋２０２６-０９-０５',
+    '２０２６－０９－０５',
+    '２０２６，０９，０５',
+    '２０２６-０９-⑤',
+    '２０２６-０９-₅',
+  ])('should reject unrelated compatibility characters in date line %s', (date) => {
+    expect(parseExpenseText(`${date}\n두부 1,500원`)).toEqual({
+      error: {code: 'invalid-input'},
+      ok: false,
+    })
+  })
+
   it('should not normalize fullwidth digits in quantities or separators', () => {
     expect(parseExpenseText('두부 1,500원 ２개')).toEqual({
       error: {code: 'invalid-input'},
@@ -223,16 +248,19 @@ describe('parseExpenseAssistantResponse', () => {
     })
   })
 
-  it('should reject fullwidth digits in structured date values', () => {
-    expect(
-      parseExpenseAssistantResponse(
-        '{"date":"２０２６-０９-０５","items":[{"name":"두부","quantity":1,"unitPrice":1500}]}',
-      ),
-    ).toEqual({
-      error: {code: 'invalid-shape'},
-      ok: false,
-    })
-  })
+  it.each(['２０２６-０９-０５', '２0２6-０9-０５', '２０２６-9-５', '202６-0９-5'])(
+    'should reject fullwidth digits in structured date value %s',
+    (date) => {
+      expect(
+        parseExpenseAssistantResponse(
+          JSON.stringify({date, items: [{name: '두부', quantity: 1, unitPrice: 1500}]}),
+        ),
+      ).toEqual({
+        error: {code: 'invalid-shape'},
+        ok: false,
+      })
+    },
+  )
 
   it('should parse JSON after brace-delimited prose', () => {
     expect(

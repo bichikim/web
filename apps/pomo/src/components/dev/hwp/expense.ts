@@ -33,16 +33,10 @@ export type ExpenseParseResult =
   | {readonly error: ExpenseParseError; readonly ok: false}
 
 const MAXIMUM_ITEMS = 20
-const FULLWIDTH_TO_ASCII_DIGIT_OFFSET = 0xfee0
 const EXPENSE_LINE_PATTERN =
   /^\s*(?<name>.+?)\s+(?<unitPrice>[\d０-９,]+)\s*원(?:\s+(?<quantity>[\d,]+)\s*개)?\s*$/u
 const DATE_LINE_PATTERN =
   /^\s*(?<year>[0-9０-９]{4})-(?<month>[0-9０-９]{1,2})-(?<day>[0-9０-９]{1,2})(?:\s+[월화수목금토일]요일)?\s*$/u
-
-const normalizeDateDigits = (value: string) =>
-  value.replace(/[０-９]/gu, (digit) =>
-    String.fromCharCode(digit.charCodeAt(0) - FULLWIDTH_TO_ASCII_DIGIT_OFFSET),
-  )
 
 const invalid = (code: ExpenseParseError['code']): ExpenseParseResult => ({
   error: {code},
@@ -79,9 +73,9 @@ const readExpenseDate = (value: string, allowFullwidthDateDigits = false) => {
     return null
   }
 
-  const normalizedYear = normalizeDateDigits(year)
-  const normalizedMonth = normalizeDateDigits(month)
-  const normalizedDay = normalizeDateDigits(day)
+  const normalizedYear = normalizePasteNumericInput(year)
+  const normalizedMonth = normalizePasteNumericInput(month)
+  const normalizedDay = normalizePasteNumericInput(day)
   const normalizedDate = `${normalizedYear}-${normalizedMonth.padStart(2, '0')}-${normalizedDay.padStart(2, '0')}`
   return parseDate(normalizedDate) === null
     ? null
