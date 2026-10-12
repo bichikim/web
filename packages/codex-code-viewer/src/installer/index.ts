@@ -1,3 +1,7 @@
 export * from './install-plugin'
+export * from './read-marketplace-sources'
+export * from './remove-missing-marketplace'
 export * from './resolve-previous-source'
+export * from './restore-marketplace-source'
 export * from './run-codex'
+export * from './types'

@@ -18,16 +18,32 @@ if ((command === '--help' || command === '-h') && args.length === 1) {
     const manifest = z
       .object({version: z.string()})
       .parse(JSON.parse(await readFile(new URL('../package.json', import.meta.url), 'utf8')))
+    const progress = {
+      cleaning: '[4/4] 이전 버전 정리 중…',
+      installing: '[3/4] Code Viewer 다운로드 및 설치 중…',
+      preparing: '[1/4] 설치 준비 중…',
+      registering: '[2/4] Marketplace 등록 중…',
+      restoring: '설치 설정 복원 중…',
+    }
+    console.error(`Code Viewer ${manifest.version} 설치를 시작합니다.`)
     await installPlugin({
       codex: process.env.CODEX_BINARY ?? 'codex',
       home: resolve(process.env.CODEX_HOME || join(homedir(), '.codex')),
+      onProgress: (stage) => {
+        console.error(progress[stage])
+      },
+      onStderr: (output) => {
+        process.stderr.write(output)
+      },
       version: manifest.version,
     })
     console.log(
       `Code Viewer ${manifest.version} 설치 완료. Codex 앱을 완전히 종료하고 다시 열어 주세요.`,
     )
   } catch (error) {
-    console.error(error instanceof Error ? error.message : String(error))
+    console.error(
+      `Code Viewer 설치 실패: ${error instanceof Error ? error.message : String(error)}`,
+    )
     process.exitCode = 1
   }
 } else {

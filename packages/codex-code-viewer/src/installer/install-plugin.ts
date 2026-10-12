@@ -1,28 +1,30 @@
 import {mkdir, readFile, rm, writeFile} from 'node:fs/promises'
 import {dirname, join} from 'node:path'
-import {z} from 'zod'
 import {runCodex} from './run-codex'
 import {resolvePreviousSource} from './resolve-previous-source'
+import {readMarketplaceSources} from './read-marketplace-sources'
+import {restoreMarketplaceSource} from './restore-marketplace-source'
+import {removeMissingMarketplace} from './remove-missing-marketplace'
+
+export type InstallStage = 'preparing' | 'registering' | 'installing' | 'cleaning' | 'restoring'
 
 interface InstallPluginOptions {
   readonly codex: string
   readonly home: string
+  readonly onProgress?: (stage: InstallStage) => void
+  readonly onStderr?: (output: string) => void
   readonly version: string
 }
 const MARKETPLACE = 'winter-love-code-viewer-npm'
-const listingSchema = z.object({installed: z.array(z.object({pluginId: z.string()}))})
 
 /** Registers this version's npm source, installs it, then removes earlier Code Viewer installations. */
 export const installPlugin = async (options: InstallPluginOptions): Promise<void> => {
+  options.onProgress?.('preparing')
   await mkdir(options.home, {recursive: true})
-  const listing = listingSchema.parse(
-    JSON.parse(
-      await runCodex({
-        ...options,
-        args: ['plugin', 'list', '--json'],
-      }),
-    ),
-  )
+  const sources = await readMarketplaceSources({
+    home: options.home,
+    marketplaces: [MARKETPLACE, 'winter-love-code-viewer'],
+  })
   const root = join(options.home, 'marketplace-sources', MARKETPLACE)
   const path = join(root, '.agents/plugins/marketplace.json')
   const previousCatalog = await readFile(path, 'utf8').catch((error: unknown) => {
@@ -48,22 +50,45 @@ export const installPlugin = async (options: InstallPluginOptions): Promise<void
       },
     ],
   }
+  let registered = false
   try {
     await mkdir(dirname(path), {recursive: true})
     await writeFile(path, `${JSON.stringify(catalog, null, 2)}\n`, 'utf8')
+    options.onProgress?.('registering')
     await runCodex({...options, args: ['plugin', 'marketplace', 'add', root, '--json']})
+    registered = true
+    options.onProgress?.('installing')
     await runCodex({
       ...options,
       args: ['plugin', 'add', `codex-code-viewer@${MARKETPLACE}`, '--json'],
     })
   } catch (error) {
-    if (previousCatalog === null) {
-      await rm(path, {force: true})
-    } else {
-      await writeFile(path, previousCatalog, 'utf8')
+    options.onProgress?.('restoring')
+    try {
+      if (previousCatalog === null) {
+        await rm(path, {force: true})
+      } else {
+        await writeFile(path, previousCatalog, 'utf8')
+      }
+      if (registered) {
+        await restoreMarketplaceSource({
+          ...options,
+          marketplace: MARKETPLACE,
+          source: sources.get(MARKETPLACE),
+        })
+      }
+    } catch (restoration) {
+      const initial = error instanceof Error ? error.message : String(error)
+      const detail = restoration instanceof Error ? restoration.message : String(restoration)
+      throw new AggregateError(
+        [error, restoration],
+        `설치 실패 후 설정 복원도 실패했습니다: ${detail}\n최초 설치 오류: ${initial}`,
+        {cause: error},
+      )
     }
     throw error
   }
+  options.onProgress?.('cleaning')
   const previousSource = resolvePreviousSource({
     catalog: previousCatalog,
     marketplace: MARKETPLACE,
@@ -73,14 +98,18 @@ export const installPlugin = async (options: InstallPluginOptions): Promise<void
   if (previousSource !== undefined) {
     await rm(previousSource, {force: true, recursive: true})
   }
-  const previous = listing.installed.filter(({pluginId}) =>
-    ['codex-code-viewer@winter-love-plugins', 'codex-code-viewer@winter-love-code-viewer'].includes(
-      pluginId,
-    ),
-  )
-  // Codex commands write the same configuration; run removals in sequence.
-  await previous.reduce(async (pending, plugin) => {
-    await pending
-    await runCodex({...options, args: ['plugin', 'remove', plugin.pluginId, '--json']})
-  }, Promise.resolve())
+  // Removal is idempotent and avoids loading unrelated marketplace manifests.
+  await runCodex({
+    ...options,
+    args: ['plugin', 'remove', 'codex-code-viewer@winter-love-plugins', '--json'],
+  })
+  await runCodex({
+    ...options,
+    args: ['plugin', 'remove', 'codex-code-viewer@winter-love-code-viewer', '--json'],
+  })
+  await removeMissingMarketplace({
+    ...options,
+    marketplace: 'winter-love-code-viewer',
+    source: sources.get('winter-love-code-viewer'),
+  })
 }

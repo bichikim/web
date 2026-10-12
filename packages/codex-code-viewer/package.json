@@ -1,6 +1,6 @@
 {
   "name": "@winter-love/codex-code-viewer",
-  "version": "0.4.1",
+  "version": "0.4.2",
   "private": false,
   "description": "A Codex viewer for code, documents and media with file navigation and chat context.",
   "keywords": [
