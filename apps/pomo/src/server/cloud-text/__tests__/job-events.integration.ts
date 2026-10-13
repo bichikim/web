@@ -167,3 +167,66 @@ it('should keep receiving notifications until the failed generation allowance is
   expect(connection.end).toHaveBeenCalledOnce()
   reader.releaseLock()
 })
+
+it('should release its session and notification listeners when subscribing fails', async () => {
+  const failure = new Error('subscription failed')
+  const emitter = new EventEmitter()
+  const query = vi.fn().mockRejectedValue(failure)
+  const release = vi.fn()
+  connection.connect.mockResolvedValue(Object.assign(emitter, {query, release}))
+  const response = streamCloudTextJob(userId, requestId, new AbortController().signal, [])
+  if (response.body === null) {
+    throw new Error('Expected stream')
+  }
+  const reader = response.body.getReader()
+
+  await expect(reader.read()).rejects.toBe(failure)
+  expect(query).toHaveBeenCalledExactlyOnceWith(
+    `LISTEN "pomo_cloud_text_${requestId.replaceAll('-', '')}"`,
+  )
+  expect(release).toHaveBeenCalledExactlyOnceWith(true)
+  expect(connection.end).toHaveBeenCalledOnce()
+  expect(emitter.listenerCount('notification')).toBe(0)
+  expect(emitter.listenerCount('error')).toBe(0)
+  reader.releaseLock()
+})
+
+it('should release its session and notification listeners when a pending reader cancels', async () => {
+  await reserveCloudText({
+    now,
+    queue: {
+      input: {
+        body: {max_output_tokens: 100},
+        generationMilliseconds: 120000,
+        id: requestId,
+        kind: 'cloud-text',
+        ownerId: userId,
+        queueExpiresAt: new Date(now.getTime() + 900000),
+        requestHash: 'a'.repeat(64),
+      },
+      limit: 10,
+    },
+    requestHash: 'a'.repeat(64),
+    requestId,
+    userId,
+  })
+  const emitter = new EventEmitter()
+  const query = vi.fn().mockResolvedValue({})
+  const release = vi.fn()
+  connection.connect.mockResolvedValue(Object.assign(emitter, {query, release}))
+  const response = streamCloudTextJob(userId, requestId, new AbortController().signal, [])
+  if (response.body === null) {
+    throw new Error('Expected stream')
+  }
+  const reader = response.body.getReader()
+  const frame = await reader.read()
+  expect(JSON.parse(new TextDecoder().decode(frame.value))).toMatchObject({kind: 'pending'})
+  expect(emitter.listenerCount('notification')).toBe(1)
+
+  await reader.cancel()
+  expect(release).toHaveBeenCalledExactlyOnceWith(true)
+  expect(connection.end).toHaveBeenCalledOnce()
+  expect(emitter.listenerCount('notification')).toBe(0)
+  expect(emitter.listenerCount('error')).toBe(0)
+  reader.releaseLock()
+})

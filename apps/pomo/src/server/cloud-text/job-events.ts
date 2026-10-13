@@ -40,9 +40,8 @@ async function* readJobEvents(userId: string, requestId: string, signal: AbortSi
   try {
     const client = await pool.connect()
     try {
-      for await (const event of readSubscribedJobEvents(client, userId, requestId, signal)) {
-        yield event
-      }
+      // oxlint-disable-next-line eslint-js/yield-star-spacing -- Preserve oxfmt's generator delegation format.
+      yield* readSubscribedJobEvents(client, userId, requestId, signal)
     } finally {
       client.release(true)
     }
