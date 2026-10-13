@@ -1,7 +1,7 @@
-/** @vitest-environment jsdom */
-
-import 'fake-indexeddb/auto'
+/** @vitest-environment node */
 import {afterEach, expect, it, vi} from 'vitest'
+import * as database from 'src/features/custom-albums/database'
+import {CustomAlbumError, saveCustomAlbum} from 'src/features/custom-albums'
 
 const mocks = vi.hoisted(() => ({
   albumByteLimit: 1000,
@@ -15,20 +15,8 @@ vi.mock('src/features/custom-albums/model', async (importOriginal) => {
   }
 })
 
-const DATABASE_NAME = 'pomo-custom-albums'
-
-const resetCustomAlbumStorage = async (): Promise<void> => {
-  await new Promise<void>((resolve, reject) => {
-    const request = indexedDB.deleteDatabase(DATABASE_NAME)
-    request.onsuccess = () => resolve()
-    request.onerror = () => reject(request.error)
-    request.onblocked = () => resolve()
-  })
-  vi.resetModules()
-}
-
-afterEach(async () => {
-  await resetCustomAlbumStorage()
+afterEach(() => {
+  vi.restoreAllMocks()
   vi.unstubAllGlobals()
 })
 
@@ -37,9 +25,7 @@ it('should reject oversized track-plus-cover albums before opening IndexedDB', a
     randomUUID: () => 'custom-album:album-1',
   })
 
-  const database = await import('src/features/custom-albums/database')
   const openSpy = vi.spyOn(database, 'openCustomAlbumDatabase')
-  const {CustomAlbumError, saveCustomAlbum} = await import('src/features/custom-albums')
   const trackBytes = mocks.albumByteLimit - 100
   const coverBytes = 200
   const audio = new Blob([new Uint8Array(trackBytes)], {type: 'audio/mpeg'})

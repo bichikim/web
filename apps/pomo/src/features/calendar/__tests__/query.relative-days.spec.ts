@@ -5,6 +5,35 @@ import {createCalendarQuery} from '../query'
 describe('createCalendarQuery relative days', () => {
   const now = new Date('2026-09-04T10:30:00.000Z')
 
+  it.each([
+    {
+      expected: {end: '2026-09-02T15:00:00.000Z', start: '2026-09-01T15:00:00.000Z'},
+      phrase: '그저께',
+      queryKind: 'explicit schedule query',
+      text: '그저께 일정 알려줘',
+    },
+    {
+      expected: {end: '2026-09-02T15:00:00.000Z', start: '2026-09-01T15:00:00.000Z'},
+      phrase: '그저께',
+      queryKind: 'implicit schedule question',
+      text: '그저께 뭐 있었어?',
+    },
+    {
+      expected: {end: '2026-09-07T15:00:00.000Z', start: '2026-09-06T15:00:00.000Z'},
+      phrase: '글피',
+      queryKind: 'explicit schedule query',
+      text: '글피 일정 알려줘',
+    },
+    {
+      expected: {end: '2026-09-07T15:00:00.000Z', start: '2026-09-06T15:00:00.000Z'},
+      phrase: '글피',
+      queryKind: 'implicit schedule question',
+      text: '글피 뭐 있어?',
+    },
+  ])('should query the exact local day for a $queryKind using $phrase', ({expected, text}) => {
+    expect(createCalendarQuery({now, text, timeZone: 'Asia/Seoul'})).toEqual(expected)
+  })
+
   it.each(['낼 일정 알려줘', '낼 뭐 있어?', '낼은 뭐 있어?', '낼에 무슨 일 있어?'])(
     'should query tomorrow for the 낼 synonym in "%s"',
     (text) => {

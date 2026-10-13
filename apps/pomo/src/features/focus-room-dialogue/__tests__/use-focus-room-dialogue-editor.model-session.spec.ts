@@ -3,8 +3,8 @@ import {expect, it, vi} from 'vitest'
 
 import {failureResult} from 'src/features/result'
 import type {SupertonicClient} from 'src/features/supertonic'
-import type {DialogueEditorState} from '../features/focus-room-dialogue/dialogue-editor-state'
-import {createDialogueModelSession} from '../features/focus-room-dialogue/use-focus-room-dialogue-editor/model-session'
+import type {DialogueEditorState} from '../dialogue-editor-state'
+import {createDialogueModelSession} from '../use-focus-room-dialogue-editor/model-session'
 
 const supertonicMocks = vi.hoisted(() => ({
   createClient: vi.fn(),
