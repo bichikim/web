@@ -3,8 +3,8 @@ import {type FeedConnection, normalizeFeedDocumentUrl} from './schema'
 import type {FeedDialogueListItem} from './feed-controller'
 import type {FeedDialogueRepository} from './feed-dialogue-repository'
 import type {FeedDialogueMetadata, FeedItemRecord} from './feed-dialogue-schema'
+import {isDevelopmentFeedPath} from './is-development-feed-path'
 
-const DEV_FEED_PATHS = new Set(['/__dev/feeds/atom.xml', '/__dev/feeds/rss.xml'])
 const LEAKED_RSS_ID = 'pomo-dev-feed:'
 const LEAKED_ATOM_ID = 'urn:pomo:dev-feed:'
 const LEGACY_SELF_LINK_ERROR = '피드 항목이 원문 대신 피드 자체 주소를 가리키고 있어요.'
@@ -32,7 +32,7 @@ export interface RepairStoredDevFeedDialoguesOptions {
 export const isMalformedDevFeedDialogue = (options: IsMalformedDevFeedDialogueOptions) => {
   const sourcePath = getSourcePath(options.metadata.sourceUrl)
 
-  if (sourcePath === null || !DEV_FEED_PATHS.has(sourcePath)) {
+  if (sourcePath === null || !isDevelopmentFeedPath(sourcePath)) {
     return false
   }
 
@@ -46,7 +46,7 @@ export const isLegacyDevFeedFailure = (item: FeedItemRecord) => {
   const sourcePath = getSourcePath(item.sourceUrl)
   return (
     sourcePath !== null &&
-    DEV_FEED_PATHS.has(sourcePath) &&
+    isDevelopmentFeedPath(sourcePath) &&
     item.status === 'failed' &&
     item.message === LEGACY_SELF_LINK_ERROR
   )
