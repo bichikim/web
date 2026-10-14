@@ -1,6 +1,6 @@
 /* eslint-disable require-unicode-regexp */
 import {describe, expect, it} from 'vitest'
-import {trimNewLine} from './trim-new-line'
+import {trimNewLine} from '../trim-new-line'
 
 describe('trigger', () => {
   it.each([

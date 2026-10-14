@@ -1,7 +1,7 @@
 /** @vitest-environment node */
 import {afterEach, describe, expect, it, vi} from 'vitest'
 
-import {createWorkerTransport, type WorkerTransportFailure} from '../index'
+import {createWorkerTransport, type WorkerTransportFailure} from '..'
 
 interface TestRequest {
   readonly type: 'request'
@@ -62,6 +62,60 @@ afterEach(() => {
 })
 
 describe('createWorkerTransport', () => {
+  it('should keep the original response and failure callbacks after options change', () => {
+    const worker = new FakeWorker()
+    const onResponse = vi.fn()
+    const onFailure = vi.fn()
+    const options = {onFailure, onResponse, worker: worker as unknown as Worker}
+    createWorkerTransport<TestRequest, TestResponse>(options)
+    options.onResponse = vi.fn()
+    options.onFailure = vi.fn()
+    const response = {type: 'complete'} as const
+    const cause = new Error('worker failed')
+
+    worker.emitMessage(response)
+    worker.emitError('worker failed', cause)
+    worker.emitMessageError()
+
+    expect(onResponse).toHaveBeenCalledWith(response)
+    expect(onFailure).toHaveBeenNthCalledWith(1, {
+      cause,
+      code: 'worker-error',
+      detail: 'worker failed',
+    })
+    expect(onFailure).toHaveBeenNthCalledWith(2, {
+      cause: {message: 'Worker response deserialization failed', name: 'WorkerError'},
+      code: 'message-error',
+      detail: '',
+    })
+    expect(options.onResponse).not.toHaveBeenCalled()
+    expect(options.onFailure).not.toHaveBeenCalled()
+  })
+
+  it('should send and dispose through the original Worker after its option changes', () => {
+    const worker = new FakeWorker()
+    const replacement = new FakeWorker()
+    const options = {
+      onFailure: vi.fn(),
+      onResponse: vi.fn(),
+      worker: worker as unknown as Worker,
+    }
+    const transport = createWorkerTransport<TestRequest, TestResponse>(options)
+    options.worker = replacement as unknown as Worker
+    const request = {type: 'request'} as const
+    const transfer = [new ArrayBuffer(4)]
+
+    transport.send(request)
+    transport.send(request, transfer)
+    transport.dispose()
+
+    expect(worker.postMessage).toHaveBeenNthCalledWith(1, request)
+    expect(worker.postMessage).toHaveBeenNthCalledWith(2, request, transfer)
+    expect(worker.terminate).toHaveBeenCalledOnce()
+    expect(replacement.postMessage).not.toHaveBeenCalled()
+    expect(replacement.terminate).not.toHaveBeenCalled()
+  })
+
   it('should forward messages and requests', () => {
     const worker = new FakeWorker()
     const {onResponse, transport} = createTransport(worker)

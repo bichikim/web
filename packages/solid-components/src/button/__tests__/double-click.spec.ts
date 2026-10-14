@@ -1,5 +1,5 @@
 import {describe, expect, it, vi} from 'vitest'
-import {useDoubleClick} from './double-click'
+import {useDoubleClick} from '../double-click'
 
 const event = new MouseEvent('click')
 

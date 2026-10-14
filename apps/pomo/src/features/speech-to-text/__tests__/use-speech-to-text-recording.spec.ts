@@ -1,4 +1,4 @@
-import {createDeferred} from 'src/test-utils/create-deferred'
+import {createDeferred} from 'src/__tests__/create-deferred'
 import {getMonotonicTime} from 'src/utils/get-monotonic-time'
 
 vi.mock('src/utils/get-monotonic-time', () => ({getMonotonicTime: vi.fn()}))

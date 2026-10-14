@@ -1,6 +1,6 @@
 import {describe, expect, it} from 'vitest'
 
-import {createUnoCssInlineResolver} from './vite'
+import {createUnoCssInlineResolver} from '../vite'
 
 describe('createUnoCssInlineResolver', () => {
   it('should mark UnoCSS inline requests as virtual modules', () => {
