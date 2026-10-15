@@ -7,7 +7,7 @@ const mocks = vi.hoisted(() => ({createBrowserClient: vi.fn(), getSupabaseClient
 vi.mock('@supabase/ssr', () => ({createBrowserClient: mocks.createBrowserClient}))
 vi.mock('src/env', () => ({getSupabaseClientKeys: mocks.getSupabaseClientKeys}))
 
-import {createSupabase} from '../index'
+import {createSupabase} from '..'
 
 describe('createSupabase', () => {
   it('should create a browser client from public Supabase keys', () => {

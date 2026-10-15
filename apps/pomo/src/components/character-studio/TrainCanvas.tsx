@@ -228,14 +228,12 @@ export const TrainCanvas = (props: TrainCanvasProps) => {
       if (props.seatedCharacters !== undefined) {
         return
       }
-      /* eslint-disable prefer-destructuring -- Solid props stay tracked through direct access. */
       const modelUrl = props.modelUrl
       const cacheModels = props.cacheModels
       const onLoadError = props.onLoadError
       const onLoadProgress = props.onLoadProgress
       const onLoadStart = props.onLoadStart
       const onLoadSuccess = props.onLoadSuccess
-      /* eslint-enable prefer-destructuring */
       loadRevision += 1
       const revision = loadRevision
       unloadModel()

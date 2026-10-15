@@ -5,7 +5,7 @@ import {createSignal, Suspense} from 'solid-js'
 import {beforeEach, expect, it, vi} from 'vitest'
 import {PreferenceProvider} from 'src/hooks/use-preference'
 import type {AuthenticatedSession} from 'src/features/auth/machine'
-import {createDeferred} from 'src/test-utils/create-deferred'
+import {createDeferred} from 'src/__tests__/create-deferred'
 import type {CloudTextUsage} from 'src/features/cloud-text/contracts'
 import {PDefaultTextGenerationSettings} from '../PDefaultTextGenerationSettings'
 
