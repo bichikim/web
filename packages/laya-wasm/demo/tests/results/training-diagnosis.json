@@ -1,0 +1,355 @@
+{
+  "method": "Native ONNX frozen feature extraction, same FP32 scorer equations in PyTorch, single-example sequential updates from original weights per condition",
+  "scorer": "LayerNorm -> Linear -> exact GELU -> Linear; cross_entropy(logits / temperature, target)",
+  "trainingCount": 90,
+  "evaluationCount": 30,
+  "evaluationUsedForGradients": false,
+  "datasets": {
+    "ko": {
+      "train": "7263770959b3e48ba1cee5c3e96dab625bb180b5d4f05983194b272f95af9def",
+      "evaluation": "76f474a944624923f3b5441cda5bf7809eb78a30ffd2a5b6966df0311e2deb20"
+    },
+    "en": {
+      "train": "5ef77de51cd0e671276df6ce551286b62d09da74dc09517f822bf59498c5060b",
+      "evaluation": "6e4831b0af53e5c0da85f117fdc6dfd86e89523b25f2f05e5d63a98f96117aa3"
+    }
+  },
+  "comparisons": [
+    {
+      "model": "laya-multilingual-browser",
+      "language": "ko",
+      "runs": [
+        {
+          "optimizer": "sgd",
+          "rate": 0.001,
+          "epochs": 5,
+          "train": {
+            "correct": 77,
+            "total": 90,
+            "loss": 0.27739110589027405
+          },
+          "evaluation": {
+            "correct": 27,
+            "total": 30,
+            "loss": 0.2200453281402588
+          },
+          "parameterL2Change": 0.03412200589817583
+        },
+        {
+          "optimizer": "sgd",
+          "rate": 0.01,
+          "epochs": 5,
+          "train": {
+            "correct": 77,
+            "total": 90,
+            "loss": 0.267672061920166
+          },
+          "evaluation": {
+            "correct": 27,
+            "total": 30,
+            "loss": 0.2056237906217575
+          },
+          "parameterL2Change": 0.44719333623106006
+        },
+        {
+          "optimizer": "adam",
+          "rate": 0.001,
+          "epochs": 5,
+          "train": {
+            "correct": 76,
+            "total": 90,
+            "loss": 0.32289448380470276
+          },
+          "evaluation": {
+            "correct": 27,
+            "total": 30,
+            "loss": 0.2588188350200653
+          },
+          "parameterL2Change": 10.181912944974888
+        },
+        {
+          "optimizer": "adam",
+          "rate": 0.0001,
+          "epochs": 5,
+          "train": {
+            "correct": 77,
+            "total": 90,
+            "loss": 0.27232012152671814
+          },
+          "evaluation": {
+            "correct": 27,
+            "total": 30,
+            "loss": 0.2079772651195526
+          },
+          "parameterL2Change": 2.1914040162081
+        }
+      ],
+      "before": {
+        "train": {
+          "correct": 77,
+          "total": 90,
+          "loss": 0.2786884009838104
+        },
+        "evaluation": {
+          "correct": 27,
+          "total": 30,
+          "loss": 0.21599547564983368
+        }
+      },
+      "sgdAutogradMaxDifference": 3.725290298461914e-9,
+      "modelId": "d822bd79e30b2abf910f82f65e4cc539bbc254dd2a4695489cd934dfd94d2c79"
+    },
+    {
+      "model": "laya-multilingual-browser",
+      "language": "en",
+      "runs": [
+        {
+          "optimizer": "sgd",
+          "rate": 0.001,
+          "epochs": 5,
+          "train": {
+            "correct": 89,
+            "total": 90,
+            "loss": 0.052072376012802124
+          },
+          "evaluation": {
+            "correct": 30,
+            "total": 30,
+            "loss": 0.01769285276532173
+          },
+          "parameterL2Change": 0.0681471642144576
+        },
+        {
+          "optimizer": "sgd",
+          "rate": 0.01,
+          "epochs": 5,
+          "train": {
+            "correct": 89,
+            "total": 90,
+            "loss": 0.07313220947980881
+          },
+          "evaluation": {
+            "correct": 30,
+            "total": 30,
+            "loss": 0.053209248930215836
+          },
+          "parameterL2Change": 0.19180041192043337
+        },
+        {
+          "optimizer": "adam",
+          "rate": 0.001,
+          "epochs": 5,
+          "train": {
+            "correct": 90,
+            "total": 90,
+            "loss": 0.014124325476586819
+          },
+          "evaluation": {
+            "correct": 30,
+            "total": 30,
+            "loss": 0.0005808855057694018
+          },
+          "parameterL2Change": 10.18996480548455
+        },
+        {
+          "optimizer": "adam",
+          "rate": 0.0001,
+          "epochs": 5,
+          "train": {
+            "correct": 89,
+            "total": 90,
+            "loss": 0.03452041372656822
+          },
+          "evaluation": {
+            "correct": 30,
+            "total": 30,
+            "loss": 0.006734506692737341
+          },
+          "parameterL2Change": 5.035738509830787
+        }
+      ],
+      "before": {
+        "train": {
+          "correct": 89,
+          "total": 90,
+          "loss": 0.07735854387283325
+        },
+        "evaluation": {
+          "correct": 30,
+          "total": 30,
+          "loss": 0.05572120100259781
+        }
+      },
+      "sgdAutogradMaxDifference": 1.4901161193847656e-8,
+      "modelId": "d822bd79e30b2abf910f82f65e4cc539bbc254dd2a4695489cd934dfd94d2c79"
+    },
+    {
+      "model": "laya-browser",
+      "language": "ko",
+      "runs": [
+        {
+          "optimizer": "sgd",
+          "rate": 0.001,
+          "epochs": 5,
+          "train": {
+            "correct": 67,
+            "total": 90,
+            "loss": 0.7209831476211548
+          },
+          "evaluation": {
+            "correct": 23,
+            "total": 30,
+            "loss": 0.6254850625991821
+          },
+          "parameterL2Change": 0.3261452226283649
+        },
+        {
+          "optimizer": "sgd",
+          "rate": 0.01,
+          "epochs": 5,
+          "train": {
+            "correct": 67,
+            "total": 90,
+            "loss": 0.6443333029747009
+          },
+          "evaluation": {
+            "correct": 23,
+            "total": 30,
+            "loss": 0.5225096940994263
+          },
+          "parameterL2Change": 0.6643402064704361
+        },
+        {
+          "optimizer": "adam",
+          "rate": 0.001,
+          "epochs": 5,
+          "train": {
+            "correct": 68,
+            "total": 90,
+            "loss": 0.6874865293502808
+          },
+          "evaluation": {
+            "correct": 23,
+            "total": 30,
+            "loss": 0.5816178917884827
+          },
+          "parameterL2Change": 13.116534713192282
+        },
+        {
+          "optimizer": "adam",
+          "rate": 0.0001,
+          "epochs": 5,
+          "train": {
+            "correct": 67,
+            "total": 90,
+            "loss": 0.648671567440033
+          },
+          "evaluation": {
+            "correct": 23,
+            "total": 30,
+            "loss": 0.5298476815223694
+          },
+          "parameterL2Change": 7.767471179606825
+        }
+      ],
+      "before": {
+        "train": {
+          "correct": 67,
+          "total": 90,
+          "loss": 0.9871630072593689
+        },
+        "evaluation": {
+          "correct": 23,
+          "total": 30,
+          "loss": 0.96511310338974
+        }
+      },
+      "sgdAutogradMaxDifference": 4.842877388000488e-8,
+      "modelId": "eb08cfe773290b149cd2189dfe5bc7e8377dec219217082a1d1758ddcc001693"
+    },
+    {
+      "model": "laya-browser",
+      "language": "en",
+      "runs": [
+        {
+          "optimizer": "sgd",
+          "rate": 0.001,
+          "epochs": 5,
+          "train": {
+            "correct": 90,
+            "total": 90,
+            "loss": 0.027858572080731392
+          },
+          "evaluation": {
+            "correct": 30,
+            "total": 30,
+            "loss": 0.021325668320059776
+          },
+          "parameterL2Change": 0.19377315052182362
+        },
+        {
+          "optimizer": "sgd",
+          "rate": 0.01,
+          "epochs": 5,
+          "train": {
+            "correct": 90,
+            "total": 90,
+            "loss": 0.01372302882373333
+          },
+          "evaluation": {
+            "correct": 30,
+            "total": 30,
+            "loss": 0.005974131636321545
+          },
+          "parameterL2Change": 0.4112540284169062
+        },
+        {
+          "optimizer": "adam",
+          "rate": 0.001,
+          "epochs": 5,
+          "train": {
+            "correct": 90,
+            "total": 90,
+            "loss": 0.0024973610416054726
+          },
+          "evaluation": {
+            "correct": 30,
+            "total": 30,
+            "loss": 0.0
+          },
+          "parameterL2Change": 16.50310472663233
+        },
+        {
+          "optimizer": "adam",
+          "rate": 0.0001,
+          "epochs": 5,
+          "train": {
+            "correct": 90,
+            "total": 90,
+            "loss": 0.011911554262042046
+          },
+          "evaluation": {
+            "correct": 30,
+            "total": 30,
+            "loss": 0.003714165184646845
+          },
+          "parameterL2Change": 6.639526259191913
+        }
+      ],
+      "before": {
+        "train": {
+          "correct": 90,
+          "total": 90,
+          "loss": 0.20519988238811493
+        },
+        "evaluation": {
+          "correct": 30,
+          "total": 30,
+          "loss": 0.1763172596693039
+        }
+      },
+      "sgdAutogradMaxDifference": 3.725290298461914e-8,
+      "modelId": "eb08cfe773290b149cd2189dfe5bc7e8377dec219217082a1d1758ddcc001693"
+    }
+  ]
+}

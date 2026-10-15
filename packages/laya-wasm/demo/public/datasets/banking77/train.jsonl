@@ -1,0 +1,90 @@
+{"state":"카드가 전부 들어 있는 가방을 도둑맞았어요. 카드를 정지하고 새로 보내주실 수 있나요?","question":{"type":"choice","instructions":"이 은행 고객의 요청을 분류하세요.","criteria":["카드 분실·도난","송금 실패","개인정보 변경"]},"target":[1,0,0]}
+{"state":"제 송금은 왜 실패한 건가요?","question":{"type":"choice","instructions":"이 은행 고객의 요청을 분류하세요.","criteria":["카드 분실·도난","송금 실패","개인정보 변경"]},"target":[0,1,0]}
+{"state":"제 개인정보를 변경하고 싶습니다.","question":{"type":"choice","instructions":"이 은행 고객의 요청을 분류하세요.","criteria":["카드 분실·도난","송금 실패","개인정보 변경"]},"target":[0,0,1]}
+{"state":"카드를 잃어버린 것 같아요.","question":{"type":"choice","instructions":"이 은행 고객의 요청을 분류하세요.","criteria":["카드 분실·도난","송금 실패","개인정보 변경"]},"target":[1,0,0]}
+{"state":"송금이 계속 실패해요. 오늘 아침 친구들에게 돈을 보내려고 했는데, 무슨 이유인지 계속 거절돼요. 왜 그런지 모르겠어요.","question":{"type":"choice","instructions":"이 은행 고객의 요청을 분류하세요.","criteria":["카드 분실·도난","송금 실패","개인정보 변경"]},"target":[0,1,0]}
+{"state":"정보를 수정하려면 어디로 가야 하나요?","question":{"type":"choice","instructions":"이 은행 고객의 요청을 분류하세요.","criteria":["카드 분실·도난","송금 실패","개인정보 변경"]},"target":[0,0,1]}
+{"state":"새 카드를 보내주시고 지금 카드는 정지해 주세요. 스페인에 있는데 지갑을 도둑맞았어요.","question":{"type":"choice","instructions":"이 은행 고객의 요청을 분류하세요.","criteria":["카드 분실·도난","송금 실패","개인정보 변경"]},"target":[1,0,0]}
+{"state":"송금을 완료할 수 있도록 도와주실 수 있나요? 시도할 때마다 오류가 나요. 아파트를 구매하려고 주택담보대출 첫 납입금을 보내려는데 계속 오류만 나옵니다. 무슨 일인지 확인해 주실 수 있나요?","question":{"type":"choice","instructions":"이 은행 고객의 요청을 분류하세요.","criteria":["카드 분실·도난","송금 실패","개인정보 변경"]},"target":[0,1,0]}
+{"state":"정보를 꼭 변경해야 하는데, 어떤 절차를 거쳐야 하나요?","question":{"type":"choice","instructions":"이 은행 고객의 요청을 분류하세요.","criteria":["카드 분실·도난","송금 실패","개인정보 변경"]},"target":[0,0,1]}
+{"state":"카드를 도둑맞아서 다른 사람이 쓰지 못하도록 정지하거나 해지하고 싶어요. 바로 처리해 주세요.","question":{"type":"choice","instructions":"이 은행 고객의 요청을 분류하세요.","criteria":["카드 분실·도난","송금 실패","개인정보 변경"]},"target":[1,0,0]}
+{"state":"송금에 실패했습니다.","question":{"type":"choice","instructions":"이 은행 고객의 요청을 분류하세요.","criteria":["카드 분실·도난","송금 실패","개인정보 변경"]},"target":[0,1,0]}
+{"state":"제 정보를 변경해야 하는데, 어떻게 하면 되나요?","question":{"type":"choice","instructions":"이 은행 고객의 요청을 분류하세요.","criteria":["카드 분실·도난","송금 실패","개인정보 변경"]},"target":[0,0,1]}
+{"state":"카드를 분실한 것 같아요. 어떻게 해야 하죠?","question":{"type":"choice","instructions":"이 은행 고객의 요청을 분류하세요.","criteria":["카드 분실·도난","송금 실패","개인정보 변경"]},"target":[1,0,0]}
+{"state":"제 계좌에서 돈을 이체할 수 없었어요.","question":{"type":"choice","instructions":"이 은행 고객의 요청을 분류하세요.","criteria":["카드 분실·도난","송금 실패","개인정보 변경"]},"target":[0,1,0]}
+{"state":"결혼해서 이름을 변경하고 싶습니다.","question":{"type":"choice","instructions":"이 은행 고객의 요청을 분류하세요.","criteria":["카드 분실·도난","송금 실패","개인정보 변경"]},"target":[0,0,1]}
+{"state":"휴가 중에 카드를 잃어버렸고 어디에 있는지 모르겠어요. 바로 처리할 수 있도록 도와주실 수 있나요?","question":{"type":"choice","instructions":"이 은행 고객의 요청을 분류하세요.","criteria":["카드 분실·도난","송금 실패","개인정보 변경"]},"target":[1,0,0]}
+{"state":"송금을 완료할 수 없는 이유가 뭔가요?","question":{"type":"choice","instructions":"이 은행 고객의 요청을 분류하세요.","criteria":["카드 분실·도난","송금 실패","개인정보 변경"]},"target":[0,1,0]}
+{"state":"연락처 정보를 바꿔야 합니다.","question":{"type":"choice","instructions":"이 은행 고객의 요청을 분류하세요.","criteria":["카드 분실·도난","송금 실패","개인정보 변경"]},"target":[0,0,1]}
+{"state":"안녕하세요. 스페인에서 휴가 중인데 누군가 휴대폰과 카드가 든 지갑 등 소지품이 들어 있는 가방을 훔쳐 갔어요. 최대한 빨리 카드를 정지하고 새 카드도 발급받고 싶어요.","question":{"type":"choice","instructions":"이 은행 고객의 요청을 분류하세요.","criteria":["카드 분실·도난","송금 실패","개인정보 변경"]},"target":[1,0,0]}
+{"state":"송금을 시도했지만 실패했어요. 이유를 알려주시겠어요?","question":{"type":"choice","instructions":"이 은행 고객의 요청을 분류하세요.","criteria":["카드 분실·도난","송금 실패","개인정보 변경"]},"target":[0,1,0]}
+{"state":"결혼해서 이름을 바꿔야 해요.","question":{"type":"choice","instructions":"이 은행 고객의 요청을 분류하세요.","criteria":["카드 분실·도난","송금 실패","개인정보 변경"]},"target":[0,0,1]}
+{"state":"카드를 어디에 뒀는지 모르겠어요.","question":{"type":"choice","instructions":"이 은행 고객의 요청을 분류하세요.","criteria":["카드 분실·도난","송금 실패","개인정보 변경"]},"target":[1,0,0]}
+{"state":"제 송금이 처리되지 않은 이유가 뭔가요?","question":{"type":"choice","instructions":"이 은행 고객의 요청을 분류하세요.","criteria":["카드 분실·도난","송금 실패","개인정보 변경"]},"target":[0,1,0]}
+{"state":"개인정보는 어디에서 수정하나요?","question":{"type":"choice","instructions":"이 은행 고객의 요청을 분류하세요.","criteria":["카드 분실·도난","송금 실패","개인정보 변경"]},"target":[0,0,1]}
+{"state":"잃어버린 카드를 찾는 걸 도와주실 수 있나요?","question":{"type":"choice","instructions":"이 은행 고객의 요청을 분류하세요.","criteria":["카드 분실·도난","송금 실패","개인정보 변경"]},"target":[1,0,0]}
+{"state":"주택담보대출 납입금을 보내려는데 오류 메시지가 떠요. 이번이 첫 납입인데 무엇이 잘못됐는지 알고 싶어요.","question":{"type":"choice","instructions":"이 은행 고객의 요청을 분류하세요.","criteria":["카드 분실·도난","송금 실패","개인정보 변경"]},"target":[0,1,0]}
+{"state":"개인정보에 등록된 주소를 바꿔야 합니다.","question":{"type":"choice","instructions":"이 은행 고객의 요청을 분류하세요.","criteria":["카드 분실·도난","송금 실패","개인정보 변경"]},"target":[0,0,1]}
+{"state":"카드가 보이지 않아요.","question":{"type":"choice","instructions":"이 은행 고객의 요청을 분류하세요.","criteria":["카드 분실·도난","송금 실패","개인정보 변경"]},"target":[1,0,0]}
+{"state":"송금을 할 수 없었어요.","question":{"type":"choice","instructions":"이 은행 고객의 요청을 분류하세요.","criteria":["카드 분실·도난","송금 실패","개인정보 변경"]},"target":[0,1,0]}
+{"state":"계좌에 등록된 개인정보는 어떻게 수정하나요?","question":{"type":"choice","instructions":"이 은행 고객의 요청을 분류하세요.","criteria":["카드 분실·도난","송금 실패","개인정보 변경"]},"target":[0,0,1]}
+{"state":"카드를 분실했어요! 제발 도와주세요!","question":{"type":"choice","instructions":"이 은행 고객의 요청을 분류하세요.","criteria":["카드 분실·도난","송금 실패","개인정보 변경"]},"target":[1,0,0]}
+{"state":"송금이 끝까지 처리되지 않는 이유가 뭔가요?","question":{"type":"choice","instructions":"이 은행 고객의 요청을 분류하세요.","criteria":["카드 분실·도난","송금 실패","개인정보 변경"]},"target":[0,1,0]}
+{"state":"막 결혼했는데 이름을 어떻게 변경하나요?","question":{"type":"choice","instructions":"이 은행 고객의 요청을 분류하세요.","criteria":["카드 분실·도난","송금 실패","개인정보 변경"]},"target":[0,0,1]}
+{"state":"카드를 되찾을 수 있도록 도와주실 수 있나요?","question":{"type":"choice","instructions":"이 은행 고객의 요청을 분류하세요.","criteria":["카드 분실·도난","송금 실패","개인정보 변경"]},"target":[1,0,0]}
+{"state":"왜 제 송금이 안 된 거죠?","question":{"type":"choice","instructions":"이 은행 고객의 요청을 분류하세요.","criteria":["카드 분실·도난","송금 실패","개인정보 변경"]},"target":[0,1,0]}
+{"state":"제 정보를 수정할 수 있나요?","question":{"type":"choice","instructions":"이 은행 고객의 요청을 분류하세요.","criteria":["카드 분실·도난","송금 실패","개인정보 변경"]},"target":[0,0,1]}
+{"state":"카드를 도둑맞은 것 같아요. 이제 무엇을 해야 하나요?","question":{"type":"choice","instructions":"이 은행 고객의 요청을 분류하세요.","criteria":["카드 분실·도난","송금 실패","개인정보 변경"]},"target":[1,0,0]}
+{"state":"송금을 시도할 때 무엇이 잘못된 건가요?","question":{"type":"choice","instructions":"이 은행 고객의 요청을 분류하세요.","criteria":["카드 분실·도난","송금 실패","개인정보 변경"]},"target":[0,1,0]}
+{"state":"주소를 반드시 바꿔야 해요.","question":{"type":"choice","instructions":"이 은행 고객의 요청을 분류하세요.","criteria":["카드 분실·도난","송금 실패","개인정보 변경"]},"target":[0,0,1]}
+{"state":"누군가 제 허락 없이 카드를 가져갔어요.","question":{"type":"choice","instructions":"이 은행 고객의 요청을 분류하세요.","criteria":["카드 분실·도난","송금 실패","개인정보 변경"]},"target":[1,0,0]}
+{"state":"안녕하세요. 아파트를 구매하는 중이고 주택담보대출 관련 송금이 처리되기를 기다리고 있는데, 계속 오류로 표시돼요. 원인이 무엇인지 알아봐 주시고 돈을 보낼 수 있게 도와주실 수 있나요?","question":{"type":"choice","instructions":"이 은행 고객의 요청을 분류하세요.","criteria":["카드 분실·도난","송금 실패","개인정보 변경"]},"target":[0,1,0]}
+{"state":"제 개인정보를 수정하고 싶어요.","question":{"type":"choice","instructions":"이 은행 고객의 요청을 분류하세요.","criteria":["카드 분실·도난","송금 실패","개인정보 변경"]},"target":[0,0,1]}
+{"state":"스페인에서 휴가를 보내던 중 카드가 든 지갑을 도둑맞았어요. 꼭 카드를 정지하고 새로 발급받아야 해요.","question":{"type":"choice","instructions":"이 은행 고객의 요청을 분류하세요.","criteria":["카드 분실·도난","송금 실패","개인정보 변경"]},"target":[1,0,0]}
+{"state":"송금 실패의 원인이 무엇인가요?","question":{"type":"choice","instructions":"이 은행 고객의 요청을 분류하세요.","criteria":["카드 분실·도난","송금 실패","개인정보 변경"]},"target":[0,1,0]}
+{"state":"앱에서 개인정보를 어떻게 수정하나요?","question":{"type":"choice","instructions":"이 은행 고객의 요청을 분류하세요.","criteria":["카드 분실·도난","송금 실패","개인정보 변경"]},"target":[0,0,1]}
+{"state":"카드가 없어졌어요! 도와주세요!","question":{"type":"choice","instructions":"이 은행 고객의 요청을 분류하세요.","criteria":["카드 분실·도난","송금 실패","개인정보 변경"]},"target":[1,0,0]}
+{"state":"안녕하세요. 아파트를 구매하려고 해서 주택담보대출 첫 납입금이 처리되어야 하는데, 자꾸 오류가 나요. 송금을 도와주실 수 있나요? 무슨 일이죠?","question":{"type":"choice","instructions":"이 은행 고객의 요청을 분류하세요.","criteria":["카드 분실·도난","송금 실패","개인정보 변경"]},"target":[0,1,0]}
+{"state":"주소는 어떻게 수정하나요?","question":{"type":"choice","instructions":"이 은행 고객의 요청을 분류하세요.","criteria":["카드 분실·도난","송금 실패","개인정보 변경"]},"target":[0,0,1]}
+{"state":"도와주세요! 카드를 잃어버렸어요!","question":{"type":"choice","instructions":"이 은행 고객의 요청을 분류하세요.","criteria":["카드 분실·도난","송금 실패","개인정보 변경"]},"target":[1,0,0]}
+{"state":"송금이 안 되나요?","question":{"type":"choice","instructions":"이 은행 고객의 요청을 분류하세요.","criteria":["카드 분실·도난","송금 실패","개인정보 변경"]},"target":[0,1,0]}
+{"state":"새 주소로 이사해서 정보를 바꿔야 해요.","question":{"type":"choice","instructions":"이 은행 고객의 요청을 분류하세요.","criteria":["카드 분실·도난","송금 실패","개인정보 변경"]},"target":[0,0,1]}
+{"state":"도와주세요! 카드를 분실했는데 어떻게 해야 하나요?","question":{"type":"choice","instructions":"이 은행 고객의 요청을 분류하세요.","criteria":["카드 분실·도난","송금 실패","개인정보 변경"]},"target":[1,0,0]}
+{"state":"송금을 완료하지 못한 이유가 무엇인가요?","question":{"type":"choice","instructions":"이 은행 고객의 요청을 분류하세요.","criteria":["카드 분실·도난","송금 실패","개인정보 변경"]},"target":[0,1,0]}
+{"state":"새 이메일 주소가 생겼어요.","question":{"type":"choice","instructions":"이 은행 고객의 요청을 분류하세요.","criteria":["카드 분실·도난","송금 실패","개인정보 변경"]},"target":[0,0,1]}
+{"state":"카드를 도둑맞았어요. 도와주세요!","question":{"type":"choice","instructions":"이 은행 고객의 요청을 분류하세요.","criteria":["카드 분실·도난","송금 실패","개인정보 변경"]},"target":[1,0,0]}
+{"state":"송금을 다섯 번이나 시도했는데 안 돼서 시스템에 문제가 있는 것 같아요! 복잡한 작업도 아니고 평소에 하던 송금이에요.","question":{"type":"choice","instructions":"이 은행 고객의 요청을 분류하세요.","criteria":["카드 분실·도난","송금 실패","개인정보 변경"]},"target":[0,1,0]}
+{"state":"계좌 정보는 어떻게 변경하나요?","question":{"type":"choice","instructions":"이 은행 고객의 요청을 분류하세요.","criteria":["카드 분실·도난","송금 실패","개인정보 변경"]},"target":[0,0,1]}
+{"state":"도와주세요! 카드를 도둑맞은 것 같아 걱정돼요.","question":{"type":"choice","instructions":"이 은행 고객의 요청을 분류하세요.","criteria":["카드 분실·도난","송금 실패","개인정보 변경"]},"target":[1,0,0]}
+{"state":"제 송금은 왜 계속 실패하나요?","question":{"type":"choice","instructions":"이 은행 고객의 요청을 분류하세요.","criteria":["카드 분실·도난","송금 실패","개인정보 변경"]},"target":[0,1,0]}
+{"state":"방금 결혼해서 이름을 바꾸고 싶어요.","question":{"type":"choice","instructions":"이 은행 고객의 요청을 분류하세요.","criteria":["카드 분실·도난","송금 실패","개인정보 변경"]},"target":[0,0,1]}
+{"state":"너무 당황스러워요! 카드를 잃어버렸어요! 도와주세요!","question":{"type":"choice","instructions":"이 은행 고객의 요청을 분류하세요.","criteria":["카드 분실·도난","송금 실패","개인정보 변경"]},"target":[1,0,0]}
+{"state":"친구의 은행 계좌로 돈을 보내는 걸 도와주실 수 있나요? 시도할 때마다 거절돼요. 최대한 빨리 보내야 합니다. 잔액도 충분하고 계좌 정보도 모두 맞아요.","question":{"type":"choice","instructions":"이 은행 고객의 요청을 분류하세요.","criteria":["카드 분실·도난","송금 실패","개인정보 변경"]},"target":[0,1,0]}
+{"state":"집 주소를 바꿔야 해요.","question":{"type":"choice","instructions":"이 은행 고객의 요청을 분류하세요.","criteria":["카드 분실·도난","송금 실패","개인정보 변경"]},"target":[0,0,1]}
+{"state":"카드를 도둑맞으면 가장 먼저 무엇을 해야 하나요?","question":{"type":"choice","instructions":"이 은행 고객의 요청을 분류하세요.","criteria":["카드 분실·도난","송금 실패","개인정보 변경"]},"target":[1,0,0]}
+{"state":"시스템이 중단됐거나 다른 문제가 있나요? 평범한 송금을 벌써 다섯 번 시도했는데도 아무 진전이 없어요.","question":{"type":"choice","instructions":"이 은행 고객의 요청을 분류하세요.","criteria":["카드 분실·도난","송금 실패","개인정보 변경"]},"target":[0,1,0]}
+{"state":"성이 바뀌어서 계좌 정보를 수정해야 해요.","question":{"type":"choice","instructions":"이 은행 고객의 요청을 분류하세요.","criteria":["카드 분실·도난","송금 실패","개인정보 변경"]},"target":[0,0,1]}
+{"state":"카드를 찾을 수가 없어서 누군가 훔쳐 간 것 같아요.","question":{"type":"choice","instructions":"이 은행 고객의 요청을 분류하세요.","criteria":["카드 분실·도난","송금 실패","개인정보 변경"]},"target":[1,0,0]}
+{"state":"아파트를 구매하려는데 주택담보대출 첫 납입금이 먼저 처리되어야 해요. 계속 오류가 납니다. 무슨 상황인지 모르겠는데 송금하는 걸 도와주세요.","question":{"type":"choice","instructions":"이 은행 고객의 요청을 분류하세요.","criteria":["카드 분실·도난","송금 실패","개인정보 변경"]},"target":[0,1,0]}
+{"state":"주소를 변경하고 싶습니다.","question":{"type":"choice","instructions":"이 은행 고객의 요청을 분류하세요.","criteria":["카드 분실·도난","송금 실패","개인정보 변경"]},"target":[0,0,1]}
+{"state":"도난당한 카드는 어떻게 재발급받나요?","question":{"type":"choice","instructions":"이 은행 고객의 요청을 분류하세요.","criteria":["카드 분실·도난","송금 실패","개인정보 변경"]},"target":[1,0,0]}
+{"state":"왜 송금을 완료할 수 없었던 건가요?","question":{"type":"choice","instructions":"이 은행 고객의 요청을 분류하세요.","criteria":["카드 분실·도난","송금 실패","개인정보 변경"]},"target":[0,1,0]}
+{"state":"등록된 주소를 변경해야 합니다.","question":{"type":"choice","instructions":"이 은행 고객의 요청을 분류하세요.","criteria":["카드 분실·도난","송금 실패","개인정보 변경"]},"target":[0,0,1]}
+{"state":"카드를 잃어버리거나 도둑맞으면 어떻게 해야 하나요?","question":{"type":"choice","instructions":"이 은행 고객의 요청을 분류하세요.","criteria":["카드 분실·도난","송금 실패","개인정보 변경"]},"target":[1,0,0]}
+{"state":"안녕하세요. 거래하는 투자은행으로 돈을 보내는데 거래가 거절돼요. 입력한 정보는 맞는 것 같은데 왜 그런지 모르겠어요.","question":{"type":"choice","instructions":"이 은행 고객의 요청을 분류하세요.","criteria":["카드 분실·도난","송금 실패","개인정보 변경"]},"target":[0,1,0]}
+{"state":"제 계정에 들어가서 정보를 수정하려면 어떻게 하나요?","question":{"type":"choice","instructions":"이 은행 고객의 요청을 분류하세요.","criteria":["카드 분실·도난","송금 실패","개인정보 변경"]},"target":[0,0,1]}
+{"state":"카드 도난을 신고해야 합니다.","question":{"type":"choice","instructions":"이 은행 고객의 요청을 분류하세요.","criteria":["카드 분실·도난","송금 실패","개인정보 변경"]},"target":[1,0,0]}
+{"state":"송금이 안 됐어요! 도와주세요!","question":{"type":"choice","instructions":"이 은행 고객의 요청을 분류하세요.","criteria":["카드 분실·도난","송금 실패","개인정보 변경"]},"target":[0,1,0]}
+{"state":"제 정보는 어떻게 변경하나요?","question":{"type":"choice","instructions":"이 은행 고객의 요청을 분류하세요.","criteria":["카드 분실·도난","송금 실패","개인정보 변경"]},"target":[0,0,1]}
+{"state":"어떻게 해야 하죠? 카드를 도둑맞았어요!","question":{"type":"choice","instructions":"이 은행 고객의 요청을 분류하세요.","criteria":["카드 분실·도난","송금 실패","개인정보 변경"]},"target":[1,0,0]}
+{"state":"이 송금을 도와주세요. 계속 오류가 나요. 아파트를 구매하려는데 주택담보대출 납입금이 먼저 처리되어야 합니다. 도와주실 수 있나요?","question":{"type":"choice","instructions":"이 은행 고객의 요청을 분류하세요.","criteria":["카드 분실·도난","송금 실패","개인정보 변경"]},"target":[0,1,0]}
+{"state":"방금 결혼식을 올렸고 배우자의 성으로 바꾸고 싶어요.","question":{"type":"choice","instructions":"이 은행 고객의 요청을 분류하세요.","criteria":["카드 분실·도난","송금 실패","개인정보 변경"]},"target":[0,0,1]}
+{"state":"카드 도난 신고","question":{"type":"choice","instructions":"이 은행 고객의 요청을 분류하세요.","criteria":["카드 분실·도난","송금 실패","개인정보 변경"]},"target":[1,0,0]}
+{"state":"아주 일반적인 설문조사를 다섯 번 시도했는데도 제대로 되지 않아요. 무엇이 문제인가요? 시스템에 문제가 있나요?","question":{"type":"choice","instructions":"이 은행 고객의 요청을 분류하세요.","criteria":["카드 분실·도난","송금 실패","개인정보 변경"]},"target":[0,1,0]}
+{"state":"제 정보를 편집할 수 있나요?","question":{"type":"choice","instructions":"이 은행 고객의 요청을 분류하세요.","criteria":["카드 분실·도난","송금 실패","개인정보 변경"]},"target":[0,0,1]}
+{"state":"카드를 잃어버렸는데 도와주실 수 있나요?","question":{"type":"choice","instructions":"이 은행 고객의 요청을 분류하세요.","criteria":["카드 분실·도난","송금 실패","개인정보 변경"]},"target":[1,0,0]}
+{"state":"오늘 친구에게 돈을 보내려고 했는데 안 됐어요. 왜 그런가요?","question":{"type":"choice","instructions":"이 은행 고객의 요청을 분류하세요.","criteria":["카드 분실·도난","송금 실패","개인정보 변경"]},"target":[0,1,0]}
+{"state":"프로필에 있는 이름을 어떻게 바꾸나요?","question":{"type":"choice","instructions":"이 은행 고객의 요청을 분류하세요.","criteria":["카드 분실·도난","송금 실패","개인정보 변경"]},"target":[0,0,1]}
+{"state":"오늘 제 카드에 사용 내역이 있었나요?","question":{"type":"choice","instructions":"이 은행 고객의 요청을 분류하세요.","criteria":["카드 분실·도난","송금 실패","개인정보 변경"]},"target":[1,0,0]}
+{"state":"송금을 시도하고 있지만 잘되지 않아요. 도와주실 수 있나요?","question":{"type":"choice","instructions":"이 은행 고객의 요청을 분류하세요.","criteria":["카드 분실·도난","송금 실패","개인정보 변경"]},"target":[0,1,0]}
+{"state":"결혼했으니 이름을 변경해야 해요.","question":{"type":"choice","instructions":"이 은행 고객의 요청을 분류하세요.","criteria":["카드 분실·도난","송금 실패","개인정보 변경"]},"target":[0,0,1]}
