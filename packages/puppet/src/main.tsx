@@ -62,6 +62,17 @@ if (!(rootElement instanceof HTMLElement)) {
 if (import.meta.env.DEV && /^\/converter\/?$/u.test(location.pathname)) {
   const {ConverterPage} = await import('./converter/ConverterPage')
   render(() => <ConverterPage />, rootElement)
+} else if (import.meta.env.DEV && /^\/(?:viewer|studio)\/?$/u.test(location.pathname)) {
+  const {RuntimePage} = await import('./runtime/RuntimePage')
+  render(
+    () => (
+      <RuntimePage
+        mode={location.pathname.startsWith('/studio') ? 'studio' : 'viewer'}
+        loadInitialDocument={loadInitialDocument}
+      />
+    ),
+    rootElement,
+  )
 } else {
   render(
     () => (

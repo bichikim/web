@@ -1,9 +1,9 @@
-import {createMemo, createSignal, For, Show} from 'solid-js'
+import {createEffect, createMemo, For, on, Show} from 'solid-js'
 import {TextField} from '@kobalte/core/text-field'
 import {ToggleButton} from '@kobalte/core/toggle-button'
 import {EditorTextInput} from '../../design-system'
 import {isSceneContainerNode, type PuppetDocument, type PuppetSceneNode} from '../../player'
-import {renameSceneNode} from './scene-graph'
+import {useSceneNodeName} from './use-scene-node-name'
 import {LayerName} from './LayerName'
 import {LayerContainerIcon} from './LayerContainerIcon'
 import {ContainerKindSelect} from './ContainerKindSelect'
@@ -11,6 +11,8 @@ import {EditorLayerMaskUsage} from './EditorLayerMaskUsage'
 import {getLayerSelectionLabel, LayerNodeSummary} from './LayerNodeSummary'
 
 interface SceneNodeSelectProps {
+  readonly onRenamingChange: (renaming: boolean) => void
+  readonly renameRequest: number
   readonly document: PuppetDocument
   readonly locked: boolean
   readonly maskPickDisabled: boolean
@@ -24,40 +26,35 @@ interface SceneNodeSelectProps {
 }
 
 export const SceneNodeSelect = (props: SceneNodeSelectProps) => {
-  const [isRenaming, setIsRenaming] = createSignal(false)
-  const [nameDraft, setNameDraft] = createSignal('')
+  const nameEditor = useSceneNodeName({
+    disabled: () => props.locked || props.maskPicking || props.onDocumentChange === undefined,
+    document: () => props.document,
+    node: () => props.node,
+    onDocumentChange: (document) => props.onDocumentChange?.(document),
+  })
+  createEffect(() => props.onRenamingChange(nameEditor.isRenaming()))
   const part = createMemo(() => props.document.parts.find((part) => part.id === props.node.id))
-  let nameInput: HTMLInputElement | undefined
 
-  const startRenaming = (event: MouseEvent) => {
-    if (props.locked || props.maskPicking) {
+  const handleSelect = (event: MouseEvent) => {
+    const nameClicked =
+      event.target instanceof Element && event.target.closest('.layer-name') !== null
+    if (props.selected && nameClicked && !event.ctrlKey && !event.metaKey && !event.shiftKey) {
+      nameEditor.startRenaming()
       return
     }
-    event.preventDefault()
-    event.stopPropagation()
-    setNameDraft(props.node.name)
-    setIsRenaming(true)
-    queueMicrotask(() => {
-      nameInput?.focus()
-      nameInput?.select()
-    })
+    props.onSelect(event, props.node)
   }
-
-  const finishRenaming = () => {
-    if (!isRenaming()) {
-      return
-    }
-
-    const document = renameSceneNode(props.document, props.node.id, nameDraft())
-    if (document !== undefined) {
-      props.onDocumentChange?.(document)
-    }
-    setIsRenaming(false)
-  }
+  createEffect(
+    on(
+      () => props.renameRequest,
+      () => nameEditor.startRenaming(),
+      {defer: true},
+    ),
+  )
 
   return (
     <Show
-      when={isRenaming()}
+      when={nameEditor.isRenaming()}
       fallback={
         <div class="puppet-layer-choice">
           <Show when={isSceneContainerNode(props.node)}>
@@ -80,8 +77,14 @@ export const SceneNodeSelect = (props: SceneNodeSelectProps) => {
                 ? '이 레이어에는 현재 파트의 마스크를 적용할 수 없습니다.'
                 : '더블클릭하여 이름 수정'
             }
-            onClick={(event) => props.onSelect(event, props.node)}
-            onDblClick={startRenaming}
+            onClick={handleSelect}
+            onDblClick={nameEditor.startRenaming}
+            onKeyDown={(event: KeyboardEvent) => {
+              if (event.key === 'F2') {
+                event.preventDefault()
+                nameEditor.startRenaming()
+              }
+            }}
           >
             <Show when={props.node.kind === 'part'}>
               <span class="layer-thumbnail" aria-hidden="true">
@@ -105,7 +108,11 @@ export const SceneNodeSelect = (props: SceneNodeSelectProps) => {
         </div>
       }
     >
-      <TextField class="puppet-layer-name-editor" value={nameDraft()} onChange={setNameDraft}>
+      <TextField
+        class="puppet-layer-name-editor"
+        value={nameEditor.nameDraft()}
+        onChange={nameEditor.setNameDraft}
+      >
         <Show
           when={props.node.kind !== 'part'}
           fallback={
@@ -124,18 +131,16 @@ export const SceneNodeSelect = (props: SceneNodeSelectProps) => {
           />
         </Show>
         <EditorTextInput
-          ref={(element) => {
-            nameInput = element
-          }}
+          ref={nameEditor.setInput}
           aria-label={`${props.node.name} ${props.node.kind === 'part' ? '파츠' : '그룹'} 이름`}
-          onBlur={finishRenaming}
-          onKeyDown={(event) => {
+          onBlur={nameEditor.finishRenaming}
+          onKeyDown={(event: KeyboardEvent) => {
             if (event.key === 'Enter') {
               event.preventDefault()
-              finishRenaming()
+              nameEditor.finishRenaming()
             } else if (event.key === 'Escape') {
               event.preventDefault()
-              setIsRenaming(false)
+              nameEditor.cancelRenaming()
             }
           }}
         />

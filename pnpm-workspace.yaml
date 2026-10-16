@@ -196,4 +196,5 @@ minimumReleaseAgeExclude:
   - '@modelcontextprotocol/sdk@1.32.1'
 # Preserve an already focused option when Kobalte runs its deferred autofocus.
 patchedDependencies:
+  '@dschz/solid-flow@0.2.6': patches/@dschz__solid-flow@0.2.6.patch
   '@kobalte/core@0.13.11': patches/@kobalte__core@0.13.11.patch
