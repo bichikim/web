@@ -7,11 +7,15 @@ import type {ReferenceTransform} from './types'
 
 const mapForm = <T extends PuppetParameterKeyform>(form: T, transform: ReferenceTransform): T => ({
   ...form,
-  deformers: form.deformers?.map((deformer) => ({
-    ...deformer,
-    nodeId: transform.rename(deformer.nodeId),
-  })),
-  groups: form.groups?.map((group) => ({...group, groupId: transform.rename(group.groupId)})),
+  deformers: form.deformers
+    ?.filter((deformer) => transform.keepNode?.(deformer.nodeId) !== false)
+    .map((deformer) => ({
+      ...deformer,
+      nodeId: transform.rename(deformer.nodeId),
+    })),
+  groups: form.groups
+    ?.filter((group) => transform.keepNode?.(group.groupId) !== false)
+    .map((group) => ({...group, groupId: transform.rename(group.groupId)})),
   parts: form.parts
     .filter((part) => transform.keepPart(part.partId))
     .map((part) => ({
@@ -34,8 +38,12 @@ export const mapBindingReferences = (
       ...influence,
       parameterId: transform.rename(influence.parameterId),
     })),
-    targetDeformerIds: binding.targetDeformerIds?.map(transform.rename),
-    targetGroupIds: binding.targetGroupIds?.map(transform.rename),
+    targetDeformerIds: binding.targetDeformerIds
+      ?.filter((id) => transform.keepNode?.(id) !== false)
+      .map(transform.rename),
+    targetGroupIds: binding.targetGroupIds
+      ?.filter((id) => transform.keepNode?.(id) !== false)
+      .map(transform.rename),
     targetPartIds: binding.targetPartIds?.filter(transform.keepPart).map(transform.rename),
   }
   const {rename} = transform

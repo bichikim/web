@@ -1,3 +1,4 @@
+import {attachViewPan} from './attach-view-pan'
 import {attachViewNavigation} from './view-navigation'
 import {ViewRuler} from './ViewRuler'
 import {createEffect, createSignal, type JSX, on, onCleanup, untrack} from 'solid-js'
@@ -21,7 +22,6 @@ export const CameraViewport = (props: CameraViewportProps) => {
   const [viewport, setViewport] = createSignal<HTMLDivElement | null>(null)
   const size = useElementSize(viewport)
   const [fitted, setFitted] = createSignal(true)
-  let drag: {pointer: number; x: number; y: number; camera: ViewCamera} | undefined
   const [dragging, setDragging] = createSignal(false)
   const navigate = (nextCamera: ViewCamera) => {
     setFitted(false)
@@ -56,6 +56,7 @@ export const CameraViewport = (props: CameraViewportProps) => {
     const element = viewport()
     if (element !== null) {
       onCleanup(attachViewNavigation({camera, element, onChange: navigate}))
+      onCleanup(attachViewPan({camera, element, onChange: navigate, onPanningChange: setDragging}))
     }
   })
   createEffect(
@@ -68,10 +69,6 @@ export const CameraViewport = (props: CameraViewportProps) => {
       },
     ),
   )
-  const stop = () => {
-    drag = undefined
-    setDragging(false)
-  }
   return (
     <>
       <div class="camera-frame">
@@ -96,33 +93,6 @@ export const CameraViewport = (props: CameraViewportProps) => {
             '--stage-x': `${(-camera().x - props.width * EDITOR_VIEWPORT_PADDING) * camera().zoom}px`,
             '--stage-y': `${(-camera().y - props.height * EDITOR_VIEWPORT_PADDING) * camera().zoom}px`,
           }}
-          onPointerDown={(event) => {
-            if (event.button !== 1) {
-              return
-            }
-            event.preventDefault()
-            drag = {camera: camera(), pointer: event.pointerId, x: event.clientX, y: event.clientY}
-            event.currentTarget.setPointerCapture(event.pointerId)
-            setDragging(true)
-          }}
-          onPointerMove={(event) => {
-            if (drag === undefined || drag.pointer !== event.pointerId) {
-              return
-            }
-            navigate({
-              ...drag.camera,
-              x: drag.camera.x - (event.clientX - drag.x) / drag.camera.zoom,
-              y: drag.camera.y - (event.clientY - drag.y) / drag.camera.zoom,
-            })
-          }}
-          onPointerUp={(event) => {
-            if (drag?.pointer === event.pointerId) {
-              stop()
-              event.currentTarget.releasePointerCapture(event.pointerId)
-            }
-          }}
-          onPointerCancel={stop}
-          onLostPointerCapture={stop}
         >
           <div class="camera-stage">{props.children}</div>
           <div class="camera-origin" aria-hidden="true">

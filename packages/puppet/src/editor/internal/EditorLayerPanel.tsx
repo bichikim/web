@@ -1,3 +1,6 @@
+import {type LayerClipboard, useLayerClipboard} from './use-layer-clipboard'
+import {EditorLayerRowMenu} from './EditorLayerRowMenu'
+import {EditorContextMenu} from './EditorContextMenu'
 import {SceneNodeSelect} from './SceneNodeSelect'
 import {getContainerIds} from './scene-tree'
 import {KeyedFor} from './KeyedFor'
@@ -45,6 +48,7 @@ export interface EditorLayerPanelProps {
 }
 
 interface SceneNodeItemProps {
+  readonly clipboard: LayerClipboard
   readonly visibleNodeIds?: ReadonlySet<string>
   readonly depth: number
   readonly document: PuppetDocument
@@ -120,7 +124,22 @@ const getNodeDropTarget = (
   position: getLayerDropPosition(node, event.currentTarget.getBoundingClientRect(), event.clientY),
 })
 
+const handleLayerDragStart = (
+  event: DragEvent,
+  nodeId: string,
+  onDragStart: (nodeId: string) => void,
+) => {
+  event.stopPropagation()
+  event.dataTransfer?.setData('text/plain', nodeId)
+  if (event.dataTransfer) {
+    event.dataTransfer.effectAllowed = 'move'
+  }
+  onDragStart(nodeId)
+}
+
 const SceneNodeItem = (props: SceneNodeItemProps) => {
+  const [renameRequest, setRenameRequest] = createSignal(0)
+  const [renaming, setRenaming] = createSignal(false)
   const isExpanded = () =>
     isSceneContainerNode(props.node) && props.expandedGroupIds.has(props.node.id)
   const locked = () => props.inheritedLocked || props.node.locked
@@ -147,14 +166,7 @@ const SceneNodeItem = (props: SceneNodeItemProps) => {
         draggable={!locked() && props.maskPickSourcePartId === undefined}
         role="treeitem"
         onDragEnd={() => props.onDragStart('')}
-        onDragStart={(event) => {
-          event.stopPropagation()
-          event.dataTransfer?.setData('text/plain', props.node.id)
-          if (event.dataTransfer) {
-            event.dataTransfer.effectAllowed = 'move'
-          }
-          props.onDragStart(props.node.id)
-        }}
+        onDragStart={(event) => handleLayerDragStart(event, props.node.id, props.onDragStart)}
       >
         <Collapsible
           class="layer-tree-node"
@@ -165,67 +177,80 @@ const SceneNodeItem = (props: SceneNodeItemProps) => {
             }
           }}
         >
-          <div
-            class="layer-row"
-            classList={{
-              'drop-after': dropPosition() === 'after',
-              'drop-before': dropPosition() === 'before',
-              'drop-inside': dropPosition() === 'inside',
-            }}
-            style={{'--layer-depth': props.depth - 1}}
-            onDragOver={(event) => {
-              if (props.draggedNodeId === null) {
-                return
-              }
-
-              event.preventDefault()
-              event.stopPropagation()
-              if (event.dataTransfer) {
-                event.dataTransfer.dropEffect = 'move'
-              }
-              props.onDragOver(getNodeDropTarget(props.node, event))
-            }}
-            onDrop={(event) => {
-              if (props.draggedNodeId === null) {
-                return
-              }
-
-              event.preventDefault()
-              event.stopPropagation()
-              props.onDrop(getNodeDropTarget(props.node, event))
-            }}
+          <EditorLayerRowMenu
+            clipboard={props.clipboard}
+            disabled={props.maskPickSourcePartId !== undefined || renaming()}
+            editable={props.onDocumentChange !== undefined}
+            locked={locked()}
+            node={props.node}
+            selected={props.selectedNodeIds.has(props.node.id)}
+            onSelect={props.onSelect}
+            onRename={() => setRenameRequest((request) => request + 1)}
           >
-            <Show
-              when={isSceneContainerNode(props.node)}
-              fallback={
-                <span class="layer-tree-spacer puppet-layer-tree-spacer" aria-hidden="true" />
-              }
+            <div
+              class="layer-row"
+              classList={{
+                'drop-after': dropPosition() === 'after',
+                'drop-before': dropPosition() === 'before',
+                'drop-inside': dropPosition() === 'inside',
+              }}
+              style={{'--layer-depth': props.depth - 1}}
+              onDragOver={(event) => {
+                if (props.draggedNodeId === null) {
+                  return
+                }
+
+                event.preventDefault()
+                event.stopPropagation()
+                if (event.dataTransfer) {
+                  event.dataTransfer.dropEffect = 'move'
+                }
+                props.onDragOver(getNodeDropTarget(props.node, event))
+              }}
+              onDrop={(event) => {
+                if (props.draggedNodeId === null) {
+                  return
+                }
+
+                event.preventDefault()
+                event.stopPropagation()
+                props.onDrop(getNodeDropTarget(props.node, event))
+              }}
             >
-              <EditorLayerTreeToggle expanded={isExpanded()} name={props.node.name} />
-            </Show>
+              <Show
+                when={isSceneContainerNode(props.node)}
+                fallback={
+                  <span class="layer-tree-spacer puppet-layer-tree-spacer" aria-hidden="true" />
+                }
+              >
+                <EditorLayerTreeToggle expanded={isExpanded()} name={props.node.name} />
+              </Show>
 
-            <SceneNodeSelect
-              document={props.document}
-              locked={locked()}
-              maskPickDisabled={maskPickDisabled()}
-              maskPicking={props.maskPickSourcePartId !== undefined}
-              maskUsageCount={maskUsageCount()}
-              node={props.node}
-              parameterLinks={parameterLinks()}
-              selected={props.selectedNodeIds.has(props.node.id)}
-              onDocumentChange={props.onDocumentChange}
-              onSelect={props.onSelect}
-            />
+              <SceneNodeSelect
+                onRenamingChange={setRenaming}
+                renameRequest={renameRequest()}
+                document={props.document}
+                locked={locked()}
+                maskPickDisabled={maskPickDisabled()}
+                maskPicking={props.maskPickSourcePartId !== undefined}
+                maskUsageCount={maskUsageCount()}
+                node={props.node}
+                parameterLinks={parameterLinks()}
+                selected={props.selectedNodeIds.has(props.node.id)}
+                onDocumentChange={props.onDocumentChange}
+                onSelect={props.onSelect}
+              />
 
-            <EditorLayerStateActions
-              document={props.document}
-              inheritedLocked={props.inheritedLocked}
-              locked={locked()}
-              node={props.node}
-              visible={visible()}
-              onDocumentChange={props.onDocumentChange}
-            />
-          </div>
+              <EditorLayerStateActions
+                document={props.document}
+                inheritedLocked={props.inheritedLocked}
+                locked={locked()}
+                node={props.node}
+                visible={visible()}
+                onDocumentChange={props.onDocumentChange}
+              />
+            </div>
+          </EditorLayerRowMenu>
 
           <Show when={isSceneContainerNode(props.node)}>
             <Collapsible.Content>
@@ -236,6 +261,7 @@ const SceneNodeItem = (props: SceneNodeItemProps) => {
                 >
                   {(node) => (
                     <SceneNodeItem
+                      clipboard={props.clipboard}
                       visibleNodeIds={props.visibleNodeIds}
                       depth={props.depth + 1}
                       document={props.document}
@@ -306,6 +332,12 @@ export const EditorLayerPanel = (props: EditorLayerPanelProps) => {
         nodeIds: props.activePartId === undefined ? [] : [props.activePartId],
       },
   )
+  const clipboard = useLayerClipboard({
+    document: () => props.document,
+    onDocumentChange: (document) => props.onDocumentChange?.(document),
+    onSelectionChange: (selection) => props.onSelectionChange?.(selection),
+    selection,
+  })
   const selectedNodeIds = createMemo(() => new Set(selection().nodeIds))
   const activeLocked = createMemo(() => {
     const {activeNodeId} = selection()
@@ -430,67 +462,87 @@ export const EditorLayerPanel = (props: EditorLayerPanelProps) => {
           마스크를 적용할 대상 레이어를 선택하세요.
         </p>
       </Show>
-      <div class="layer-scroll" tabindex={0} aria-label="레이어 목록 스크롤">
-        <Show
-          when={props.document.parts.length > 0}
-          fallback={<p class="panel-note">PNG를 불러오세요.</p>}
-        >
-          <ul
-            class="layer-tree"
-            classList={{'root-drop-active': dropTarget()?.nodeId === null}}
-            role="tree"
-            aria-label="모델 레이어"
-            onDragOver={(event) => {
-              if (draggedNodeId() === null) {
-                return
-              }
-
-              event.preventDefault()
-              if (event.target === event.currentTarget) {
-                setDropTarget({nodeId: null, position: 'inside'})
-              }
-            }}
-            onDrop={(event) => {
-              if (draggedNodeId() !== null && event.target === event.currentTarget) {
-                event.preventDefault()
-                handleDrop({nodeId: null, position: 'inside'})
-              }
-            }}
+      <EditorContextMenu
+        label="레이어 목록 작업"
+        triggerClass="puppet-layer-list-menu"
+        disabled={props.maskPickSourcePartId !== undefined}
+        entries={
+          clipboard.canPaste()
+            ? [
+                {
+                  disabled: props.onDocumentChange === undefined,
+                  id: 'paste',
+                  label: '붙여넣기',
+                  onSelect: () => clipboard.paste(null),
+                  type: 'action',
+                },
+              ]
+            : []
+        }
+      >
+        <div class="layer-scroll" tabindex={0} aria-label="레이어 목록 스크롤">
+          <Show
+            when={props.document.parts.length > 0}
+            fallback={<p class="panel-note">PNG를 불러오세요.</p>}
           >
-            <KeyedFor
-              each={getDocumentScene(props.document).roots.toReversed()}
-              key={(node) => node.id}
+            <ul
+              class="layer-tree"
+              classList={{'root-drop-active': dropTarget()?.nodeId === null}}
+              role="tree"
+              aria-label="모델 레이어"
+              onDragOver={(event) => {
+                if (draggedNodeId() === null) {
+                  return
+                }
+
+                event.preventDefault()
+                if (event.target === event.currentTarget) {
+                  setDropTarget({nodeId: null, position: 'inside'})
+                }
+              }}
+              onDrop={(event) => {
+                if (draggedNodeId() !== null && event.target === event.currentTarget) {
+                  event.preventDefault()
+                  handleDrop({nodeId: null, position: 'inside'})
+                }
+              }}
             >
-              {(node) => (
-                <SceneNodeItem
-                  depth={1}
-                  visibleNodeIds={visibleNodeIds()}
-                  document={props.document}
-                  draggedNodeId={draggedNodeId()}
-                  dropTarget={dropTarget()}
-                  expandedGroupIds={filtering() ? filteredExpandedIds() : expandedGroupIds()}
-                  inheritedLocked={false}
-                  inheritedVisible={true}
-                  maskPickSourcePartId={props.maskPickSourcePartId}
-                  node={node()}
-                  onDocumentChange={props.onDocumentChange}
-                  onDragOver={setDropTarget}
-                  onDragStart={(nodeId) => {
-                    setDraggedNodeId(nodeId.length === 0 ? null : nodeId)
-                    if (nodeId.length === 0) {
-                      setDropTarget(null)
-                    }
-                  }}
-                  onDrop={handleDrop}
-                  onSelect={handleSelect}
-                  onToggleExpanded={handleToggleExpanded}
-                  selectedNodeIds={selectedNodeIds()}
-                />
-              )}
-            </KeyedFor>
-          </ul>
-        </Show>
-      </div>
+              <KeyedFor
+                each={getDocumentScene(props.document).roots.toReversed()}
+                key={(node) => node.id}
+              >
+                {(node) => (
+                  <SceneNodeItem
+                    clipboard={clipboard}
+                    depth={1}
+                    visibleNodeIds={visibleNodeIds()}
+                    document={props.document}
+                    draggedNodeId={draggedNodeId()}
+                    dropTarget={dropTarget()}
+                    expandedGroupIds={filtering() ? filteredExpandedIds() : expandedGroupIds()}
+                    inheritedLocked={false}
+                    inheritedVisible={true}
+                    maskPickSourcePartId={props.maskPickSourcePartId}
+                    node={node()}
+                    onDocumentChange={props.onDocumentChange}
+                    onDragOver={setDropTarget}
+                    onDragStart={(nodeId) => {
+                      setDraggedNodeId(nodeId.length === 0 ? null : nodeId)
+                      if (nodeId.length === 0) {
+                        setDropTarget(null)
+                      }
+                    }}
+                    onDrop={handleDrop}
+                    onSelect={handleSelect}
+                    onToggleExpanded={handleToggleExpanded}
+                    selectedNodeIds={selectedNodeIds()}
+                  />
+                )}
+              </KeyedFor>
+            </ul>
+          </Show>
+        </div>
+      </EditorContextMenu>
       <footer class="layer-statistics" aria-label="전체 정점 수">
         {props.document.parts.reduce((total, part) => total + part.mesh.vertices.length / 2, 0)}{' '}
         vertices

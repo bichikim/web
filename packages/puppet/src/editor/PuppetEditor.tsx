@@ -14,6 +14,7 @@ import {useDeformerMode} from './internal/use-deformer-mode'
 import {Portal} from 'solid-js/web'
 import {batch, createEffect, createMemo, createSignal, on, Show, untrack} from 'solid-js'
 import {createEmptyDocument, type Player, type PuppetDocument} from '../player'
+import {createRuntimeLauncher} from '../runtime/create-runtime-launcher'
 import {useDocumentExport} from './use-document-export'
 import {EditorViewport} from './EditorViewport'
 import {createDeformerControlSelection} from './internal/deformer-control-selection'
@@ -152,6 +153,11 @@ export const PuppetEditor = (props: PuppetEditorProps) => {
     onDocumentChange: history.setDocument,
     parameterValueMap: parameterEditor.parameterValueMap,
     parameterValues: parameterEditor.parameterValues,
+  })
+  const runtimeLauncher = createRuntimeLauncher({
+    document: temporary.document,
+    motionId: () => activeMotionId() ?? undefined,
+    onError: setNotice,
   })
   const documentExport = useDocumentExport(sourceDocument, temporary.hasChanges, setNotice)
   const parameterPreviewDocument = createMemo(() =>
@@ -477,6 +483,8 @@ export const PuppetEditor = (props: PuppetEditorProps) => {
             exportUrl={documentExport.url()}
             onExport={documentExport.exportDocument}
             onAtlasExport={documentExport.exportAtlasDocument}
+            onViewerOpen={import.meta.env.DEV ? runtimeLauncher.openViewer : undefined}
+            onStudioOpen={import.meta.env.DEV ? runtimeLauncher.openStudio : undefined}
             onRecoveryOpen={props.recovery === undefined ? undefined : handleRecoveryOpen}
             onExampleOpen={editorImports.handleOpenExample}
             onFileImport={editorImports.handleImport}

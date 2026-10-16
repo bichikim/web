@@ -1,5 +1,28 @@
-import type {PuppetDeformerShape, PuppetSceneNode} from '../../../player/document'
+import type {
+  PuppetDeformerShape,
+  PuppetSceneNode,
+  PuppetSkinBinding,
+} from '../../../player/document'
 import type {ReferenceTransform} from './types'
+
+const mapSkinning = (
+  skinning: PuppetSkinBinding | undefined,
+  transform: ReferenceTransform,
+): PuppetSkinBinding | undefined => {
+  if (
+    skinning === undefined ||
+    skinning.influences.some((influence) => transform.keepNode?.(influence.nodeId) === false)
+  ) {
+    return undefined
+  }
+  return {
+    ...skinning,
+    influences: skinning.influences.map((influence) => ({
+      ...influence,
+      nodeId: transform.rename(influence.nodeId),
+    })),
+  }
+}
 
 const mapShape = (
   shape: PuppetDeformerShape,
@@ -19,6 +42,9 @@ export const mapSceneReferences = (
   transform: ReferenceTransform,
 ): Array<PuppetSceneNode> =>
   nodes.flatMap<PuppetSceneNode>((node) => {
+    if (transform.keepNode?.(node.id) === false) {
+      return []
+    }
     switch (node.kind) {
       case 'part':
         return transform.keepPart(node.id)
@@ -26,16 +52,7 @@ export const mapSceneReferences = (
               {
                 ...node,
                 id: transform.rename(node.id),
-                skinning:
-                  node.skinning === undefined
-                    ? undefined
-                    : {
-                        ...node.skinning,
-                        influences: node.skinning.influences.map((influence) => ({
-                          ...influence,
-                          nodeId: transform.rename(influence.nodeId),
-                        })),
-                      },
+                skinning: mapSkinning(node.skinning, transform),
               },
             ]
           : []

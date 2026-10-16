@@ -1,3 +1,6 @@
+const propertyTextInputSelector =
+  "[.puppet-editor_&_input:not([type='checkbox'],_[type='color'],_[type='number'],_.editor-color-input)]"
+
 export const canvasShortcuts = {
   'bone-tools': [
     'mt-editor-group min-w-0 pointer-events-auto',
@@ -148,15 +151,17 @@ export const canvasShortcuts = {
     '[.puppet-editor_&_label]:grid [.puppet-editor_&_label]:[grid-template-columns:3.375rem_minmax(0,_1fr)]',
     '[.puppet-editor_&_label]:gap-editor-field [.puppet-editor_&_label]:items-center',
     '[.puppet-editor_&_label]:[color:#84918c] [.puppet-editor_&_label]:text-editor-metadata',
-    "[.puppet-editor_&_input:not([type='checkbox'],_[type='color'],_[type='number'])]:w-full",
-    "[.puppet-editor_&_input:not([type='checkbox'],_[type='color'],_[type='number'])]:min-w-0",
-    "[.puppet-editor_&_input:not([type='checkbox'],_[type='color'],_[type='number'])]:py-editor-related",
-    "[.puppet-editor_&_input:not([type='checkbox'],_[type='color'],_[type='number'])]:px-editor-control",
-    "[.puppet-editor_&_input:not([type='checkbox'],_[type='color'],_[type='number'])]:[border:0.0625rem_solid_#35413d]",
-    "[.puppet-editor_&_input:not([type='checkbox'],_[type='color'],_[type='number'])]:[border-radius:0.3125rem]",
-    "[.puppet-editor_&_input:not([type='checkbox'],_[type='color'],_[type='number'])]:[color:#dfe8e4]",
-    "[.puppet-editor_&_input:not([type='checkbox'],_[type='color'],_[type='number'])]:[background:#121816]",
-    "[.puppet-editor_&_input:not([type='checkbox'],_[type='color'],_[type='number'])]:[font:inherit]",
+    ...[
+      'w-full',
+      'min-w-0',
+      'py-editor-related',
+      'px-editor-control',
+      '[border:0.0625rem_solid_#35413d]',
+      '[border-radius:0.3125rem]',
+      '[color:#dfe8e4]',
+      '[background:#121816]',
+      '[font:inherit]',
+    ].map((rule) => `${propertyTextInputSelector}:${rule}`),
     '[.puppet-editor_&_select]:w-full [.puppet-editor_&_select]:min-w-0',
     '[.puppet-editor_&_select]:py-editor-related [.puppet-editor_&_select]:px-editor-control',
     '[.puppet-editor_&_select]:[border:0.0625rem_solid_#35413d]',
@@ -302,8 +307,9 @@ export const canvasShortcuts = {
   'view-camera-controls': [
     '[.puppet-editor_&]:absolute [.puppet-editor_&]:[right:12px] [.puppet-editor_&]:[bottom:12px]',
     '[.puppet-editor_&]:flex [.puppet-editor_&]:gap-editor-related',
-    '[.puppet-editor_&_>_button]:[width:28px] [.puppet-editor_&_>_button]:p-0',
-    '[.puppet-editor_&_>_button]:[background-color:#18231f]',
+    '[.puppet-editor_&_>_button]:canvas-view-button',
+    '[.puppet-editor_&_>_button:hover]:editor-button-hover',
+    '[.puppet-editor_&_>_button:focus-visible]:editor-button-focus',
     '[.puppet-editor_&_.display-controls_button]:w-7 [.puppet-editor_&_.display-controls_button]:p-0',
   ],
   'view-camera-settings': [

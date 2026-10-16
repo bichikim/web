@@ -1,3 +1,4 @@
+import {runtimeShortcuts, viewerShortcuts} from './uno/shortcuts/viewer'
 import {controlShortcuts} from './uno/shortcuts/controls'
 import {brushShortcuts} from './uno/shortcuts/brush'
 import {icons as tablerIcons} from '@iconify-json/tabler'
@@ -19,6 +20,8 @@ import {spacingTheme} from './uno/spacing'
 import {scrollbarShortcuts} from './uno/shortcuts/scrollbars'
 
 const shortcuts = {
+  ...viewerShortcuts,
+  ...runtimeShortcuts,
   ...typographyShortcuts,
   ...scrollbarShortcuts,
   'puppet-demo': [

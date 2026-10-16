@@ -76,7 +76,6 @@ export function CrossfadeAudio(props: CrossfadeAudioProps) {
 
   createEffect(() => {
     // Read the prop inside the effect so a changed generated URL recreates the player.
-    // oxlint-disable-next-line eslint/prefer-destructuring -- Reactive prop access must stay inside the tracked effect.
     const url = props.url
     const initialPosition = untrack(() => props.initialPosition ?? 0)
     close()

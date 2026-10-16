@@ -17,6 +17,15 @@ const removeRoleParameters = (document: PuppetDocument, kept: (id: string) => bo
     : {...rest, parameterRoles: roles}
 }
 
+/** Breath and look entries of kept parameters; lists left empty are omitted. */
+const keepEffectParameters = (document: PuppetDocument, kept: (id: string) => boolean) => {
+  const listed = <T extends {readonly parameterId: string}>(entries?: ReadonlyArray<T>) => {
+    const remaining = entries?.filter((entry) => kept(entry.parameterId))
+    return remaining?.length === 0 ? undefined : remaining
+  }
+  return {breath: listed(document.breath), look: listed(document.look)}
+}
+
 /** Drops document references to `removedParameterIds` outside parameter bindings. */
 export const removeParameterReferences = (
   document: PuppetDocument,
@@ -34,12 +43,9 @@ export const removeParameterReferences = (
   }))
   const roles = document.parameterRoles
   const withoutRoles = roles === undefined ? document : removeRoleParameters(document, kept)
-  const breath = document.breath?.filter((entry) => kept(entry.parameterId))
-  const look = document.look?.filter((entry) => kept(entry.parameterId))
   return {
     ...removeMouthShapeParameters(withoutRoles, removedParameterIds),
-    breath: breath?.length === 0 ? undefined : breath,
-    look: look?.length === 0 ? undefined : look,
+    ...keepEffectParameters(document, kept),
     expressions: document.expressions?.map((expression) => ({
       ...expression,
       parameters: expression.parameters.filter((parameter) => kept(parameter.parameterId)),

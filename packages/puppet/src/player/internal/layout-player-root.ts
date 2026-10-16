@@ -1,5 +1,7 @@
 import type {Container} from 'pixi.js'
 
+import type {PlayerViewCamera} from '../view-camera'
+
 import type {PuppetDocument} from '../document'
 
 /** `layout` frames the document's default rectangle; `viewport` frames the whole document. */
@@ -59,7 +61,19 @@ export const fitDocument = (options: FitDocumentOptions): DocumentFit => {
   }
 }
 
-export const layoutPlayerRoot = (options: FitDocumentOptions & {readonly root: Container}) => {
+interface LayoutPlayerRootOptions extends FitDocumentOptions {
+  /** Shows this document point and zoom instead of fitting the document. */
+  readonly camera?: PlayerViewCamera
+  readonly root: Container
+}
+
+export const layoutPlayerRoot = (options: LayoutPlayerRootOptions) => {
+  if (options.camera !== undefined) {
+    const {x, y, zoom} = options.camera
+    options.root.scale.set(zoom)
+    options.root.position.set(-x * zoom, -y * zoom)
+    return
+  }
   const {offset, scale} = fitDocument(options)
   options.root.scale.set(scale)
   options.root.position.set(offset.x, offset.y)

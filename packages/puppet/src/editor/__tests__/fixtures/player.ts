@@ -29,6 +29,7 @@ export const createPlayerFixture = (): Player => ({
   setParameterValues: vi.fn(),
   setPhysicsPreview: vi.fn(),
   setPlaybackSpeed: vi.fn(),
+  setViewCamera: vi.fn(),
   setVowelWeights: vi.fn(),
   startMotion: vi.fn(),
   stop: vi.fn(),

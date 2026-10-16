@@ -24,11 +24,11 @@ const ACCELERATION = LOOK_MAXIMUM_SPEED / LOOK_TIME_TO_MAXIMUM_SPEED
 
 const length = (x: number, y: number) => Math.sqrt(x * x + y * y)
 
+const clampAxis = (value: number) => (Number.isFinite(value) ? Math.min(1, Math.max(-1, value)) : 0)
+
 /** The target limited to `-1..1` on each axis; the center when there is none. */
-export const clampLookTarget = (target: LookTarget | undefined): LookTarget => {
-  const clamp = (value: number) => (Number.isFinite(value) ? Math.min(1, Math.max(-1, value)) : 0)
-  return target === undefined ? {x: 0, y: 0} : {x: clamp(target.x), y: clamp(target.y)}
-}
+export const clampLookTarget = (target: LookTarget | undefined): LookTarget =>
+  target === undefined ? {x: 0, y: 0} : {x: clampAxis(target.x), y: clampAxis(target.y)}
 
 /**
  * Moves the look point toward `target` for `deltaTime` seconds with limited speed and

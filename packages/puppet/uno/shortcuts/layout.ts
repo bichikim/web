@@ -76,16 +76,7 @@ export const layoutShortcuts = {
   'panel-visibility-controls': [
     '[.puppet-editor_&]:flex [.puppet-editor_&]:gap-editor-related [.puppet-editor_&]:pl-editor-field',
     '[.puppet-editor_&]:[border-left:0.0625rem_solid_#313b37]',
-    '[.puppet-editor_&_button]:grid [.puppet-editor_&_button]:[width:1.75rem]',
-    '[.puppet-editor_&_button]:[height:1.75rem] [.puppet-editor_&_button]:p-0',
-    '[.puppet-editor_&_button]:place-items-center [.puppet-editor_&_button]:[border:0.0625rem_solid_#35413d]',
-    '[.puppet-editor_&_button]:[border-radius:0.375rem] [.puppet-editor_&_button]:[color:#788681]',
-    '[.puppet-editor_&_button]:[background:#121816] [.puppet-editor_&_button]:cursor-pointer',
-    "[.puppet-editor_&_button[aria-pressed='true']]:[border-color:#4b756a]",
-    "[.puppet-editor_&_button[aria-pressed='true']]:[color:#bfeee1]",
-    "[.puppet-editor_&_button[aria-pressed='true']]:[background:#1a2925]",
-    '[.puppet-editor_&_button:focus-visible]:[outline:0.125rem_solid_#64e5c4]',
-    '[.puppet-editor_&_button:focus-visible]:[outline-offset:0.125rem]',
+    '[.puppet-editor_&_button]:[width:var(--editor-control-height)] [.puppet-editor_&_button]:p-0',
     '[.puppet-editor_&_.puppet-icon]:[width:1rem] [.puppet-editor_&_.puppet-icon]:[height:1rem]',
   ],
   'puppet-editor': [
@@ -141,20 +132,24 @@ export const layoutShortcuts = {
     '[.puppet-editor_&]:[box-shadow:0_0_0_0.25rem_rgb(229_181_90_/_10%)]',
   ],
   toolbar: [
+    '[.puppet-editor_&]:min-w-0 [.puppet-editor_&]:[max-width:100cqw]',
     '[.puppet-editor_&]:[grid-area:toolbar] [.puppet-editor_&]:flex [.puppet-editor_&]:items-center',
-    '[.puppet-editor_&]:justify-between [.puppet-editor_&]:py-0 [.puppet-editor_&]:px-editor-group',
+    '[.puppet-editor_&]:justify-between [.puppet-editor_&]:py-editor-control [.puppet-editor_&]:px-editor-group',
+    '[.puppet-editor_&]:flex-wrap [.puppet-editor_&]:content-center',
+    '[.puppet-editor_&]:gap-x-editor-group [.puppet-editor_&]:gap-y-editor-related',
     '[.puppet-editor_&]:[border-bottom:0.0625rem_solid_#27302d] [.puppet-editor_&]:[background:#111614]',
   ],
   'toolbar-actions': [
     '[.puppet-editor_&]:flex [.puppet-editor_&]:items-center',
     '[.puppet-editor_&]:gap-editor-field',
-    '[.puppet-editor_&]:shrink-0 [.puppet-editor_&]:ml-editor-group',
+    '[.puppet-editor_&]:shrink-0 [.puppet-editor_&]:ml-auto [.puppet-editor_&]:max-w-full',
+    '[.puppet-editor_&]:flex-wrap [.puppet-editor_&]:justify-end',
     '[@media(max-width:67.5rem)]:[.puppet-editor_&]:gap-editor-control',
   ],
   'toolbar-brush-settings-mount': [
     'editor-scrollbar-compact',
     '[.puppet-editor_&]:flex [.puppet-editor_&]:min-w-0 [.puppet-editor_&]:flex-1',
-    '[.puppet-editor_&]:ml-editor-group [.puppet-editor_&]:overflow-x-auto',
+    '[.puppet-editor_&]:overflow-x-auto',
     '[.puppet-editor_&]:py-editor-field',
   ],
   'toolbar-button': [
@@ -169,6 +164,7 @@ export const layoutShortcuts = {
     '[.puppet-editor_&_input]:[block-size:0.0625rem] [.puppet-editor_&_input]:[opacity:0]',
     '[.puppet-editor_&_input]:pointer-events-none',
   ],
+  'toolbar-identity': 'flex items-center gap-editor-group shrink-0',
   'toolbar-menu': ['[.puppet-editor_&]:[anchor-scope:\\-\\-toolbar-menu]'],
   'toolbar-menu-content': [
     'editor-type-root',
@@ -193,6 +189,7 @@ export const layoutShortcuts = {
     'cursor-pointer rounded px-editor-group py-editor-field text-editor-body',
     'hover:bg-[#26332f] focus-visible:outline-2 focus-visible:outline-[#64e5c4]',
   ],
+  'toolbar-menu-history-action': ['flex items-center gap-editor-group'],
   'toolbar-menu-trigger': [
     '[.puppet-editor_&]:[anchor-name:\\-\\-toolbar-menu] [.puppet-editor_&]:grid',
     '[.puppet-editor_&]:place-items-center [.puppet-editor_&]:[width:2rem] [.puppet-editor_&]:[height:2rem]',
@@ -208,6 +205,7 @@ export const layoutShortcuts = {
     '[.puppet-editor_&]:[block-size:0.0625rem] [.puppet-editor_&]:overflow-hidden',
     '[.puppet-editor_&]:[clip-path:inset(50%)] [.puppet-editor_&]:whitespace-nowrap',
   ],
+  'workspace-navigation': 'flex items-center gap-editor-related shrink-0',
   'workspace-switcher': [
     '[.puppet-editor_&]:flex [.puppet-editor_&]:items-center',
     '[.puppet-editor_&]:gap-editor-related [.puppet-editor_&]:p-editor-related',

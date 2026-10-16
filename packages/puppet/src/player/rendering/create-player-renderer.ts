@@ -1,3 +1,4 @@
+import type {PlayerViewCamera} from '../view-camera'
 import {Application, Container, UPDATE_PRIORITY} from 'pixi.js'
 import type {PuppetParameterValueMap} from '../../deformation'
 import type {PuppetDocument} from '../document'
@@ -39,6 +40,7 @@ export interface PlayerRenderer {
   toDocumentPoint(point: {readonly x: number; readonly y: number}): {x: number; y: number}
   redraw(): void
   resize(): void
+  setViewCamera(camera: PlayerViewCamera): void
   setRunning(running: boolean): void
   subscribeFrame(onFrame: (deltaTime: number) => void): void
   updateDocument(document: PuppetDocument): boolean
@@ -127,6 +129,17 @@ const createApplication = async (options: CreatePlayerRendererOptions) => {
   return application
 }
 
+/** Releases the masks and filters of parts and offscreen layers. */
+const destroyRuntimeFilters = (items: ReadonlyArray<RuntimeLayer | RuntimePart>) => {
+  for (const item of items) {
+    if (item.mask !== undefined) {
+      destroyRuntimeMask(item.mask)
+    }
+    item.colorFilter?.destroy()
+    item.blendFilter?.filter.destroy()
+  }
+}
+
 export const createPlayerRenderer = async (
   options: CreatePlayerRendererOptions,
 ): Promise<PlayerRenderer> => {
@@ -135,6 +148,7 @@ export const createPlayerRenderer = async (
   const partById = new Map<string, RuntimePart>()
   const layerById = new Map<string, RuntimeLayer>()
   let {document} = options
+  let camera: PlayerViewCamera | undefined
   let paintOrder: ReadonlyArray<string> = []
   let destroyed = false
   let running = true
@@ -143,20 +157,7 @@ export const createPlayerRenderer = async (
       return
     }
     destroyed = true
-    for (const part of partById.values()) {
-      if (part.mask !== undefined) {
-        destroyRuntimeMask(part.mask)
-      }
-      part.colorFilter?.destroy()
-      part.blendFilter?.filter.destroy()
-    }
-    for (const layer of layerById.values()) {
-      if (layer.mask !== undefined) {
-        destroyRuntimeMask(layer.mask)
-      }
-      layer.colorFilter?.destroy()
-      layer.blendFilter?.filter.destroy()
-    }
+    destroyRuntimeFilters([...partById.values(), ...layerById.values()])
     application.destroy(
       {removeView: false},
       {children: true, context: false, texture: true, textureSource: true},
@@ -171,6 +172,7 @@ export const createPlayerRenderer = async (
   }
   const layoutRoot = () =>
     layoutPlayerRoot({
+      camera,
       document,
       framing: options.framing,
       root,
@@ -240,6 +242,13 @@ export const createPlayerRenderer = async (
       } else {
         application.stop()
       }
+    },
+    setViewCamera(nextCamera) {
+      if (destroyed) {
+        return
+      }
+      camera = nextCamera
+      layoutRoot()
     },
     subscribeFrame(onFrame) {
       application.ticker.add((ticker) => {

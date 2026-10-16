@@ -46,6 +46,31 @@ export const advanceMouthShapes = (
 }
 
 /**
+ * The mouth after `deltaTime` toward `target`: the playing motion sounds' vowels for documents
+ * with mouth shapes, else the app's (`voiceTarget`); `undefined` once faded out with neither.
+ */
+export const followMouthShapes = (options: {
+  readonly deltaTime: number
+  readonly document: PuppetDocument
+  readonly soundWeights?: PuppetVowelWeights
+  readonly state?: MouthShapesState
+  readonly voiceTarget?: PuppetVowelWeights
+}): MouthShapesState | undefined => {
+  const {document, soundWeights, state} = options
+  const target =
+    soundWeights !== undefined && document.mouthShapes !== undefined
+      ? normalizeVowelWeights(soundWeights)
+      : options.voiceTarget
+  return state === undefined && target === undefined
+    ? undefined
+    : advanceMouthShapes(
+        {shown: state?.shown ?? toVowelWeights([]), ...(target === undefined ? {} : {target})},
+        options.deltaTime,
+        document.mouthShapes?.smoothing,
+      )
+}
+
+/**
  * Blends each vowel's mouth shape into its parameters over their current values:
  * `value · (1 − Σ w) + Σ w · shape`, so silence keeps the motion's mouth.
  */

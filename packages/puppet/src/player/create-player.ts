@@ -1,3 +1,4 @@
+import type {PlayerViewCamera} from './view-camera'
 import type {PuppetParameterValueMap} from '../deformation'
 import {
   assertPreparedPuppetDocument,
@@ -9,8 +10,8 @@ import type {MotionSoundError} from './audio/motion-sound-loader'
 import type {PuppetVowelWeights} from './document'
 import {toVowelWeights} from './voice/analyze-vowels'
 import {
-  advanceMouthShapes,
   applyMouthShapes,
+  followMouthShapes,
   type MouthShapesState,
   normalizeVowelWeights,
 } from './voice/mouth-shapes'
@@ -82,6 +83,8 @@ export interface Player {
   setLipSync(level?: number): void
   /** Scales every part's opacity (0..1); motions' model opacity tracks start from it. */
   setModelOpacity(opacity: number): void
+  /** Shows this document point and zoom instead of fitting the document. */
+  setViewCamera(camera: PlayerViewCamera): void
   /**
    * Vowel weights, such as `analyzeVowels` results, that blend the document's mouth shapes
    * after physics. Shown weights follow with the shapes' smoothing; omitted fades them out.
@@ -218,21 +221,6 @@ export const createPlayer = async (options: CreatePlayerOptions): Promise<Player
     eyeBlink = next.state
     return next.openness
   }
-  /** Mouth shapes after physics: the motion sounds' vowels, else `setVowelWeights`'s. */
-  const advanceMouth = (deltaTime: number, soundWeights: PuppetVowelWeights | undefined) => {
-    const target =
-      soundWeights !== undefined && document.mouthShapes !== undefined
-        ? normalizeVowelWeights(soundWeights)
-        : voiceTarget
-    mouth =
-      mouth === undefined && target === undefined
-        ? undefined
-        : advanceMouthShapes(
-            {shown: mouth?.shown ?? toVowelWeights([]), ...(target === undefined ? {} : {target})},
-            deltaTime,
-            document.mouthShapes?.smoothing,
-          )
-  }
   const applyFrame = (deltaTime = 0, settlePhysics = !physicsPreview) => {
     const frames = [...playback.frames(), ...playbacks.frames()]
     const soundMouth = sounds.mouth(frames)
@@ -253,7 +241,13 @@ export const createPlayer = async (options: CreatePlayerOptions): Promise<Player
       settle: settlePhysics,
     })
     ;({chainState, physicsState} = result)
-    advanceMouth(deltaTime, soundMouth?.weights)
+    mouth = followMouthShapes({
+      deltaTime,
+      document,
+      soundWeights: soundMouth?.weights,
+      state: mouth,
+      voiceTarget,
+    })
     const shaped =
       mouth === undefined
         ? result.parameterValues
@@ -515,21 +509,22 @@ export const createPlayer = async (options: CreatePlayerOptions): Promise<Player
       refresh()
       syncTicker()
     },
+    setLipSync(level) {
+      lipSyncLevel = level !== undefined && Number.isFinite(level) ? level : undefined
+      refresh()
+    },
     setLookTarget(target) {
       if (!destroyed) {
         lookAndBreath.setLookTarget(target)
         syncTicker()
       }
     },
-    setLipSync(level) {
-      lipSyncLevel = level !== undefined && Number.isFinite(level) ? level : undefined
-      refresh()
-    },
     setModelOpacity(opacity) {
       modelOpacity = Number.isFinite(opacity) ? Math.min(1, Math.max(0, opacity)) : 1
       refresh()
     },
     setMotion,
+
     setParameterValue(parameterId, value) {
       const parameter = document.parameters?.find((candidate) => candidate.id === parameterId)
       if (destroyed || parameter === undefined) {
@@ -567,6 +562,18 @@ export const createPlayer = async (options: CreatePlayerOptions): Promise<Player
       if (!destroyed) {
         syncTicker()
       }
+    },
+    setViewCamera(camera) {
+      if (
+        destroyed ||
+        ![camera.x, camera.y, camera.zoom].every(Number.isFinite) ||
+        camera.zoom <= 0
+      ) {
+        return
+      }
+      renderer.setViewCamera(camera)
+      applyFrame()
+      redraw()
     },
     setVowelWeights(weights) {
       if (destroyed) {
